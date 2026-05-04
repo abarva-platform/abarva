@@ -1,0 +1,1438 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>AbarVa · Strategic Moves</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700;9..144,900&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">tylesheet">
+<style>
+:root {
+  /* AbarVa brand-aligned palette
+     Source: tokens.css (locked Apr 28, 2026)
+     Black + Signal Blue is the brand. Status (red/amber/teal) is canon semantic. */
+
+  /* Surfaces — page is white, cards are warm cream */
+  --page-bg:    #ffffff;   /* canon-bg-page */
+  --cream:      #f8f1e5;   /* abarva-paper — card surface */
+  --cream-2:    #faf6ec;   /* lighter cream — hero */
+  --cream-card: #f8f1e5;   /* alias for cards */
+  --border:     rgba(10, 10, 11, 0.10);
+
+  /* Brand */
+  --ink:    #000000;       /* abarva-ink-black */
+  --ink-2:  #2c2c2a;       /* canon-gray-900 */
+  --panel:  #0c1a3a;       /* abarva-navy-ink — Nexus brief, chat pane */
+  --gray:   #888780;       /* abarva-stone */
+  --gray-dk:#5F5E5A;       /* abarva-slate */
+
+  /* Brand accent */
+  --blue:    #0066CC;      /* abarva-signal-blue */
+  --blue-dk: #0052a3;      /* abarva-signal-blue-dark */
+
+  /* Eyebrow gold — used for mono uppercase labels */
+  --gold:    #9C7B3F;      /* abarva-eyebrow-gold */
+
+  /* Aliases kept for legacy class names (.teal etc.) — both resolve to brand blue
+     so we don't have to rewrite every selector. The "teal" status family
+     (the green-ish gate-pass color) is now driven by --green / canon-teal. */
+  --teal:    var(--blue);
+  --teal-dk: var(--blue-dk);
+  --rust:    #a32d2d;
+
+  /* Semantic status — canon values */
+  --green:    #1d9e75;     /* canon-teal — pass / on-track / validated */
+  --green-bg: #e1f5ee;     /* canon-teal-light */
+  --amber:    #ba7517;     /* canon-amber — awaiting decision */
+  --amber-bg: #faeeda;     /* canon-amber-light */
+  --red:      #a32d2d;     /* canon-red — needs attention / contradiction */
+  --red-bg:   #fceded;     /* canon-red-light */
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; }
+body { font-family: 'Inter', system-ui, sans-serif; background: var(--page-bg); color: var(--ink); font-size: 14px; line-height: 1.5; }
+.mono { font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 1.8px; text-transform: uppercase; font-weight: 600; color: var(--gold); }
+button { font-family: inherit; }
+[hidden] { display: none !important; }
+
+nav.top { display: flex; align-items: center; padding: 16px 36px; border-bottom: 1px solid var(--border); }
+.brand { font-family: Georgia, serif; font-weight: 900; font-size: 22px; margin-right: 56px; }
+.brand .va { color: var(--teal); }
+.nav-items { display: flex; gap: 30px; flex: 1; }
+.nav-items a { color: var(--gray-dk); font-weight: 500; font-size: 14px; cursor: pointer; padding: 4px 0; }
+.nav-items a.active { color: var(--ink); font-weight: 700; border-bottom: 2px solid var(--ink); padding-bottom: 2px; }
+.user-pill { display: flex; align-items: center; gap: 14px; }
+.tenant-mono { font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 1.5px; font-weight: 600; color: var(--rust); }
+.avatar { width: 28px; height: 28px; background: var(--ink); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--cream); font-size: 11px; font-weight: 700; }
+.user-name { font-weight: 600; font-size: 13px; }
+.signout { font-size: 12px; color: var(--gray-dk); cursor: pointer; border: 1px solid var(--border); padding: 4px 10px; border-radius: 6px; }
+
+.submenu { display: flex; align-items: center; gap: 12px; padding: 22px 36px 18px; border-bottom: 1px solid var(--border); }
+.page-title { font-family: 'Fraunces', serif; font-size: 22px; font-weight: 900; letter-spacing: -0.5px; margin-right: 24px; }
+.tab { background: transparent; border: 1px solid var(--border); padding: 8px 18px; border-radius: 24px; font-size: 13px; font-weight: 600; color: var(--ink); cursor: pointer; transition: all 150ms; }
+.tab:hover { border-color: var(--ink); }
+.tab.active { background: var(--ink); color: var(--cream); border-color: var(--ink); }
+.tab .count { font-family: 'JetBrains Mono', monospace; font-size: 9px; letter-spacing: 1.5px; opacity: 0.7; margin-left: 6px; padding: 2px 6px; background: rgba(255,255,255,0.08); border-radius: 8px; }
+.tab.active .count { color: var(--teal); }
+.filter-btn { background: transparent; border: 1px solid var(--border); padding: 8px 14px; border-radius: 8px; font-size: 13px; font-weight: 500; color: var(--ink); cursor: pointer; }
+.spacer { flex: 1; }
+.btn-cta { background: var(--ink); color: var(--cream); border: none; padding: 10px 20px; border-radius: 8px; font-weight: 700; font-size: 13px; cursor: pointer; transition: background 150ms; }
+.btn-cta:hover { background: var(--ink-2); }
+.btn-secondary { background: transparent; color: var(--ink); border: 1px solid var(--border); padding: 10px 16px; border-radius: 8px; font-weight: 600; font-size: 13px; cursor: pointer; }
+
+main { padding: 28px 36px 60px; }
+
+/* Nexus brief — cream card on white, with navy stat sidebar */
+.nexus-brief { display: grid; grid-template-columns: 1fr 320px; gap: 20px; margin-bottom: 24px; }
+.brief-main { background: var(--cream-2); border-radius: 14px; padding: 32px 36px; }
+.brief-head { display: flex; justify-content: space-between; margin-bottom: 18px; }
+.brief-head .mono { color: var(--gold); }
+.brief-head .updated { color: var(--gray-dk); }
+.prose { font-family: 'Fraunces', serif; font-size: 22px; font-weight: 400; line-height: 1.45; letter-spacing: -0.4px; margin-bottom: 22px; color: var(--ink); }
+.prose .ref { color: var(--blue-dk); text-decoration: underline; font-weight: 700; cursor: pointer; }
+.ask-input { background: rgba(0, 102, 204, 0.05); border: 1px solid var(--border); border-radius: 8px; padding: 12px 16px; display: flex; align-items: center; cursor: text; }
+.ask-input span { color: var(--gray-dk); font-size: 13px; flex: 1; }
+.ask-input .send-icon { color: var(--blue); font-size: 14px; }
+
+.brief-stats { background: var(--panel); color: #EFF6FF; border-radius: 14px; padding: 24px 26px; display: flex; flex-direction: column; }
+.brief-stats .stats-eyebrow { font-family: 'JetBrains Mono', monospace; font-size: 9px; letter-spacing: 1.8px; text-transform: uppercase; font-weight: 600; color: var(--gold); margin-bottom: 16px; }
+.stat-row { display: flex; justify-content: space-between; align-items: baseline; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.08); }
+.stat-row:last-of-type { border-bottom: none; }
+.stat-row .num { font-family: 'Fraunces', serif; font-size: 28px; font-weight: 600; letter-spacing: -0.5px; color: #ffffff; }
+.stat-row .lbl { font-family: 'JetBrains Mono', monospace; font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase; font-weight: 600; color: rgba(239, 246, 255, 0.55); }
+.stats-foot { font-family: 'Fraunces', serif; font-style: italic; font-size: 13px; line-height: 1.5; color: rgba(239, 246, 255, 0.75); margin-top: 18px; padding-top: 16px; border-top: 1px solid rgba(255,255,255,0.08); }
+@media (max-width: 1100px) { .nexus-brief { grid-template-columns: 1fr; } }
+
+/* ─── Editorial top zone (replaces nexus-brief + map card chrome) ─── */
+.ribbon { display: grid; grid-template-columns: repeat(4, 1fr) auto; align-items: stretch; margin: 28px 0 0; padding: 0; }
+.ribbon-seg { position: relative; padding: 14px 16px 14px 14px; text-align: left; cursor: pointer; background: transparent; border: 0; min-height: 64px; display: flex; align-items: baseline; gap: 10px; transition: opacity 150ms; }
+.ribbon-seg + .ribbon-seg::before { content: ''; position: absolute; left: 0; top: 12px; bottom: 12px; width: 1px; background: var(--border); }
+.ribbon-seg .num { font-family: 'Fraunces', serif; font-size: 36px; font-weight: 700; line-height: 1; letter-spacing: -0.8px; color: var(--ink); position: relative; }
+.ribbon-seg .num::after { content: ''; position: absolute; left: 0; bottom: -6px; width: 0; height: 2px; background: var(--gold); transition: width 220ms cubic-bezier(0.2, 0.7, 0.2, 1); }
+.ribbon-seg:hover .num::after, .ribbon-seg.active .num::after { width: 28px; }
+.ribbon-seg.attn .num { color: var(--red); }
+.ribbon-seg.attn .num::after { background: var(--red); }
+.ribbon-seg .lbl { font-family: 'JetBrains Mono', monospace; font-size: 9.5px; letter-spacing: 1.6px; text-transform: uppercase; font-weight: 600; color: var(--gold); white-space: nowrap; }
+.ribbon-seg.attn .lbl { color: var(--red); }
+.ribbon-seg:hover:not(.active) { opacity: 0.78; }
+.ribbon-meta { display: flex; align-items: center; padding: 0 4px 0 24px; font-family: 'JetBrains Mono', monospace; font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase; font-weight: 500; color: var(--gray); }
+
+.attn-drilldown { margin: 24px 0 0; display: flex; flex-direction: column; gap: 8px; }
+.attn-row { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 12px; min-height: 44px; padding: 0 14px 0 12px; cursor: pointer; transition: background 120ms, border-color 120ms; background: #ffffff; border: 1px solid var(--ink); border-radius: 0; }
+.attn-row:hover { background: rgba(163, 45, 45, 0.04); }
+.attn-row .branch { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--gray); font-weight: 500; }
+.attn-row .body { font-size: 14px; color: var(--ink-2); line-height: 1.4; }
+.attn-row .body .move-id { font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 1px; text-transform: uppercase; font-weight: 600; color: var(--ink); margin-right: 6px; }
+.attn-row .arrow { font-size: 14px; color: var(--gray); transition: transform 150ms, color 150ms; }
+.attn-row:hover .arrow { color: var(--ink); transform: translateX(2px); }
+
+.map-title-block { margin: 48px 0 24px; }
+.map-title-block h2 { font-family: 'Fraunces', serif; font-size: 26px; font-weight: 700; letter-spacing: -0.5px; color: var(--ink); margin-bottom: 4px; }
+.map-title-block .sub { font-size: 14px; color: var(--gray-dk); }
+
+.map-section { margin-bottom: 32px; }
+.map-head { display: flex; justify-content: flex-end; margin-bottom: 12px; flex-wrap: wrap; gap: 16px; }
+.map-sub { display: none; }
+.map-legend { display: flex; gap: 18px; align-items: center; flex-wrap: wrap; }
+.legend-dot { display: inline-flex; align-items: center; gap: 6px; font-family: 'JetBrains Mono', monospace; font-size: 9.5px; letter-spacing: 1.5px; text-transform: uppercase; font-weight: 600; color: var(--gold); white-space: nowrap; }
+.legend-dot::before { content: ''; width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.legend-dot.red::before { background: var(--red); }
+.legend-dot.amber::before { background: var(--amber); }
+.legend-dot.green::before { background: var(--green); }
+.legend-dot.teal::before { background: var(--teal); }
+
+#scatter { width: 100%; height: 420px; display: block; }
+.bubble-g { cursor: pointer; transition: transform 150ms; transform-origin: center; transform-box: fill-box; }
+.bubble-g:hover { transform: scale(1.15); }
+.bubble-label { font-family: 'Inter', sans-serif; font-size: 10px; font-weight: 700; fill: white; pointer-events: none; }
+
+.tooltip { position: absolute; background: var(--ink); color: white; padding: 10px 14px; border-radius: 8px; font-size: 12px; pointer-events: none; opacity: 0; transition: opacity 150ms; z-index: 100; white-space: nowrap; box-shadow: 0 4px 14px rgba(0,0,0,0.25); border: 1px solid #1C2D45; }
+.tooltip.show { opacity: 1; }
+.tooltip .tt-title { font-family: 'Fraunces', serif; font-weight: 700; font-size: 14px; margin-bottom: 4px; }
+.tooltip .tt-meta { color: var(--teal); font-family: 'JetBrains Mono', monospace; font-size: 9px; letter-spacing: 1.2px; }
+.tooltip .tt-line { color: #CBD5E1; font-size: 11px; margin-top: 4px; }
+
+.cards-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 16px; gap: 16px; flex-wrap: wrap; }
+.cards-head h2 { font-family: 'Fraunces', serif; font-size: 18px; font-weight: 700; }
+.cards-head .controls { display: flex; align-items: center; gap: 14px; flex: 1; justify-content: flex-end; }
+.sort-select { background: var(--cream-card); border: 1px solid var(--border); border-radius: 8px; padding: 6px 10px; font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 1.2px; font-weight: 600; color: var(--ink); cursor: pointer; }
+.view-toggle { display: inline-flex; background: var(--cream-card); border: 1px solid var(--border); border-radius: 8px; padding: 3px; }
+.view-toggle button { background: transparent; border: none; padding: 5px 12px; border-radius: 6px; font-family: 'JetBrains Mono', monospace; font-size: 9.5px; letter-spacing: 1.3px; font-weight: 600; color: var(--gray-dk); cursor: pointer; text-transform: uppercase; }
+.view-toggle button.active { background: var(--ink); color: var(--cream); }
+.cards { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+
+/* Kanban view */
+.kanban { display: grid; grid-template-columns: repeat(8, 1fr); gap: 10px; }
+.kanban-col { background: var(--cream-card); border: 1px solid var(--border); border-radius: 10px; padding: 10px 8px; min-height: 320px; display: flex; flex-direction: column; gap: 8px; }
+.kanban-col-head { font-family: 'JetBrains Mono', monospace; font-size: 9.5px; letter-spacing: 1.2px; font-weight: 700; color: var(--ink); text-align: center; padding: 4px 0 8px; border-bottom: 1px solid var(--border); }
+.kanban-col-head .label { display: block; font-family: 'Inter', sans-serif; font-size: 10px; letter-spacing: 0; font-weight: 500; color: var(--gray-dk); margin-top: 2px; text-transform: none; }
+.kanban-col-head .count { display: inline-block; margin-left: 4px; background: var(--ink); color: var(--cream); padding: 0 5px; border-radius: 8px; font-size: 8.5px; }
+.kanban-card { background: var(--cream); border: 1px solid var(--border); border-left-width: 3px; border-radius: 6px; padding: 9px 10px; cursor: pointer; transition: all 150ms; }
+.kanban-card:hover { transform: translateX(2px); box-shadow: 0 2px 8px rgba(15,23,41,0.08); }
+.kanban-card.red { border-left-color: var(--red); }
+.kanban-card.amber { border-left-color: var(--amber); }
+.kanban-card.green { border-left-color: var(--green); }
+.kanban-card.teal { border-left-color: var(--teal); }
+.kanban-card .id { font-family: 'JetBrains Mono', monospace; font-size: 8.5px; letter-spacing: 1px; font-weight: 600; color: var(--gray-dk); margin-bottom: 4px; }
+.kanban-card .name { font-family: 'Fraunces', serif; font-size: 12.5px; font-weight: 700; line-height: 1.2; letter-spacing: -0.2px; margin-bottom: 6px; }
+.kanban-card .val { font-family: 'JetBrains Mono', monospace; font-size: 9.5px; font-weight: 600; color: var(--ink); }
+.card { background: var(--cream-card); border: 1px solid var(--border); border-radius: 14px; padding: 20px 22px; position: relative; cursor: pointer; transition: all 200ms; overflow: hidden; }
+.card:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(15, 23, 41, 0.08); }
+.card .strip { position: absolute; left: 0; top: 0; bottom: 0; width: 4px; }
+.card.red .strip { background: var(--red); }
+.card.amber .strip { background: var(--amber); }
+.card.green .strip { background: var(--green); }
+.card.teal .strip { background: var(--teal); }
+.card-head { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; gap: 12px; }
+.card-title { font-family: 'Fraunces', serif; font-size: 17px; font-weight: 700; letter-spacing: -0.3px; line-height: 1.25; }
+.card-id { font-family: 'JetBrains Mono', monospace; font-size: 9.5px; letter-spacing: 1.3px; text-transform: uppercase; font-weight: 600; color: var(--gray-dk); margin-top: 2px; }
+.archetype-tag { background: rgba(15, 23, 41, 0.06); padding: 4px 9px; border-radius: 12px; font-size: 9px; letter-spacing: 1px; text-transform: uppercase; font-weight: 600; font-family: 'JetBrains Mono', monospace; white-space: nowrap; }
+.gate-line { display: flex; align-items: center; gap: 8px; font-size: 12px; margin-bottom: 10px; flex-wrap: wrap; }
+.gate-line .pulse { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+.gate-line.red .pulse { background: var(--red); animation: pulse 2s infinite; }
+.gate-line.amber .pulse { background: var(--amber); }
+.gate-line.green .pulse { background: var(--green); }
+.gate-line.teal .pulse { background: var(--teal); }
+.gate-line .status-text { font-weight: 700; font-size: 11px; font-family: 'JetBrains Mono', monospace; letter-spacing: 1.2px; text-transform: uppercase; }
+.gate-line.red .status-text { color: var(--red); }
+.gate-line.amber .status-text { color: var(--amber); }
+.gate-line.green .status-text { color: var(--green); }
+.gate-line.teal .status-text { color: var(--blue-dk); }
+.gate-line .detail { font-size: 12px; color: var(--ink-2); }
+@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
+.card-meta { display: flex; gap: 16px; font-size: 12px; color: var(--gray-dk); flex-wrap: wrap; }
+.card-meta strong { color: var(--ink); font-weight: 600; }
+.card-meta .val { color: var(--green); font-weight: 700; }
+
+#detail-view { padding: 24px 36px 40px; }
+.detail-shell { display: grid; grid-template-columns: 460px 1fr; gap: 20px; height: calc(100vh - 220px); min-height: 620px; }
+
+.chat-pane { background: var(--panel); color: #EFF6FF; border-radius: 14px; display: flex; flex-direction: column; overflow: hidden; }
+.chat-head { padding: 18px 22px; border-bottom: 1px solid rgba(255, 255, 255, 0.10); }
+.agent-row { display: flex; align-items: center; gap: 10px; margin-bottom: 4px; }
+.agent-avatar { width: 32px; height: 32px; border-radius: 50%; background: rgba(0, 102, 204, 0.18); border: 1px solid var(--blue); display: flex; align-items: center; justify-content: center; font-family: 'Fraunces', serif; font-weight: 700; font-size: 14px; color: var(--cream); }
+.agent-name { font-weight: 700; font-size: 14px; }
+.agent-status { font-family: 'JetBrains Mono', monospace; font-size: 9px; letter-spacing: 1.5px; color: var(--teal); }
+.chat-subhead { font-size: 12px; color: var(--gray); margin-left: 42px; }
+.chat-thread { flex: 1; overflow-y: auto; padding: 20px 22px; display: flex; flex-direction: column; gap: 12px; }
+.bubble { max-width: 92%; padding: 11px 15px; border-radius: 12px; font-size: 13px; line-height: 1.5; animation: fadeIn 280ms ease-out; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+.bubble.nexus { background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.10); }
+.bubble.nexus em { color: #6aa9ff; font-style: normal; font-weight: 600; }
+.bubble.user { background: var(--blue); color: white; font-weight: 500; align-self: flex-end; }
+.chat-input { padding: 14px 18px 16px; border-top: 1px solid rgba(255, 255, 255, 0.10); }
+.suggested-label { font-family: 'JetBrains Mono', monospace; font-size: 9px; letter-spacing: 1.5px; color: var(--gray); margin-bottom: 8px; font-weight: 600; }
+.suggested-prompts { display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; }
+.prompt-chip { background: rgba(0, 102, 204, 0.12); border: 1px solid rgba(0, 102, 204, 0.35); color: #DCE7F5; padding: 9px 14px; border-radius: 10px; font-size: 12px; font-weight: 500; cursor: pointer; text-align: left; line-height: 1.4; }
+.prompt-chip:hover { background: rgba(0, 102, 204, 0.22); color: white; border-color: var(--blue); }
+.input-row { display: flex; align-items: center; background: rgba(255,255,255,0.04); border: 1px solid rgba(255, 255, 255, 0.10); border-radius: 10px; padding: 9px 12px; gap: 10px; }
+.input-row input { flex: 1; background: transparent; border: none; outline: none; color: white; font-size: 13px; font-family: inherit; }
+.input-row input::placeholder { color: var(--gray); }
+.send-btn { background: var(--blue); color: white; border: none; width: 28px; height: 28px; border-radius: 50%; cursor: pointer; font-weight: 700; }
+
+.detail-pane { background: var(--cream-card); border: 1px solid var(--border); border-radius: 14px; display: flex; flex-direction: column; overflow: hidden; }
+.detail-head { padding: 20px 26px; border-bottom: 1px solid var(--border); }
+.detail-head-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; margin-bottom: 6px; }
+.detail-head-left { flex: 1; min-width: 0; }
+.detail-head-actions { display: flex; gap: 8px; flex-shrink: 0; }
+.btn-phase { background: var(--blue); color: #ffffff; border: none; padding: 9px 16px; border-radius: 8px; font-family: 'Inter', sans-serif; font-weight: 600; font-size: 12.5px; letter-spacing: 0.1px; cursor: pointer; transition: background 150ms; white-space: nowrap; }
+.btn-phase:hover { background: var(--blue-dk); }
+.btn-phase .arrow { display: inline-block; margin-left: 4px; transition: transform 150ms; }
+.btn-phase:hover .arrow { transform: translateX(2px); }
+.btn-ghost { background: transparent; color: var(--gray-dk); border: 1px solid var(--border); padding: 9px 14px; border-radius: 8px; font-family: 'Inter', sans-serif; font-weight: 500; font-size: 12.5px; cursor: pointer; transition: all 150ms; white-space: nowrap; }
+.btn-ghost:hover { color: var(--ink); border-color: var(--ink); }
+.detail-breadcrumb { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--gray-dk); margin-bottom: 8px; font-family: 'JetBrains Mono', monospace; letter-spacing: 1.2px; }
+.detail-breadcrumb .crumb { cursor: pointer; }
+.detail-breadcrumb .crumb:hover { color: var(--ink); }
+.detail-title { font-family: 'Fraunces', serif; font-size: 26px; font-weight: 900; letter-spacing: -0.6px; line-height: 1.1; margin-bottom: 4px; }
+.detail-id { font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 1.3px; color: var(--gray-dk); font-weight: 600; }
+.detail-rail { margin-top: 14px; }
+.rail-track { position: relative; height: 14px; }
+.rail-line { position: absolute; left: 8px; right: 8px; top: 6px; height: 2px; background: var(--border); }
+.dot { position: absolute; width: 14px; height: 14px; border-radius: 50%; background: var(--cream); border: 1.5px solid var(--border); top: 0; transform: translateX(-50%); }
+.dot.done { background: var(--teal); border-color: var(--teal); }
+.dot.current { width: 18px; height: 18px; top: -2px; }
+.dot.current.red { background: var(--red); border-color: var(--red); box-shadow: 0 0 0 4px rgba(163, 45, 45, 0.18); }
+.dot.current.amber { background: var(--amber); border-color: var(--amber); box-shadow: 0 0 0 4px rgba(186, 117, 23, 0.18); }
+.dot.current.green { background: var(--green); border-color: var(--green); box-shadow: 0 0 0 4px rgba(29, 158, 117, 0.18); }
+.dot.current.teal { background: var(--teal); border-color: var(--teal); box-shadow: 0 0 0 4px rgba(0, 102, 204, 0.18); }
+.rail-labels { display: flex; justify-content: space-between; margin-top: 8px; padding: 0 2px; }
+.rail-labels span { font-family: 'JetBrains Mono', monospace; font-size: 9px; letter-spacing: 1.2px; color: var(--gray-dk); font-weight: 600; }
+.rail-labels .current.red { color: var(--red); font-weight: 700; }
+.rail-labels .current.amber { color: var(--amber); font-weight: 700; }
+.rail-labels .current.green { color: var(--green); font-weight: 700; }
+.rail-labels .current.teal { color: var(--teal-dk); font-weight: 700; }
+
+.detail-body { flex: 1; overflow-y: auto; padding: 20px 26px; }
+.detail-status-banner { padding: 14px 18px; border-radius: 10px; margin-bottom: 18px; display: flex; align-items: center; gap: 12px; }
+.detail-status-banner.red { background: var(--red-bg); border: 1px solid rgba(163, 45, 45, 0.30); }
+.detail-status-banner.amber { background: var(--amber-bg); border: 1px solid rgba(186, 117, 23, 0.30); }
+.detail-status-banner.green { background: var(--green-bg); border: 1px solid rgba(29, 158, 117, 0.30); }
+.detail-status-banner.teal { background: rgba(0, 102, 204, 0.10); border: 1px solid rgba(0, 102, 204, 0.30); }
+.detail-status-banner .pulse { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+.detail-status-banner.red .pulse { background: var(--red); animation: pulse 2s infinite; }
+.detail-status-banner.amber .pulse { background: var(--amber); }
+.detail-status-banner.green .pulse { background: var(--green); }
+.detail-status-banner.teal .pulse { background: var(--teal); }
+.banner-text .status { font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 1.5px; font-weight: 700; }
+.detail-status-banner.red .banner-text .status { color: var(--red); }
+.detail-status-banner.amber .banner-text .status { color: var(--amber); }
+.detail-status-banner.green .banner-text .status { color: var(--green); }
+.detail-status-banner.teal .banner-text .status { color: var(--blue-dk); }
+.banner-text .desc { font-size: 13px; color: var(--ink); font-weight: 500; }
+
+.section-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px; }
+.detail-section { background: white; border: 1px solid var(--border); border-radius: 12px; padding: 16px 18px; margin-bottom: 14px; }
+.detail-section.full { grid-column: 1 / -1; }
+.section-title { font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 1.5px; font-weight: 600; color: var(--gray-dk); text-transform: uppercase; margin-bottom: 10px; }
+.crit-list { list-style: none; }
+.crit-list li { display: flex; gap: 10px; padding: 8px 0; border-bottom: 1px solid #F0E8D8; font-size: 13px; line-height: 1.4; }
+.crit-list li:last-child { border-bottom: none; }
+.crit-check { width: 20px; height: 20px; border-radius: 50%; background: var(--cream-2); border: 1.5px solid var(--border); display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 11px; color: var(--gray); }
+.crit-check.done { background: var(--teal); border-color: var(--teal); color: var(--ink); font-weight: 700; }
+
+.kv-pair { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #F0E8D8; font-size: 13px; }
+.kv-pair:last-child { border-bottom: none; }
+.kv-pair .k { color: var(--gray-dk); }
+.kv-pair .v { font-weight: 600; color: var(--ink); }
+.kv-pair .v.green { color: var(--green); }
+
+.timeline { display: flex; flex-direction: column; gap: 10px; }
+.tl-item { display: flex; gap: 12px; font-size: 12.5px; line-height: 1.45; }
+.tl-time { font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 1px; color: var(--gray-dk); flex-shrink: 0; width: 70px; padding-top: 2px; }
+.tl-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green); margin-top: 7px; flex-shrink: 0; }
+.tl-text strong { font-weight: 700; color: var(--ink); }
+.tl-more { display: inline-block; margin-top: 12px; font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 1.4px; text-transform: uppercase; font-weight: 600; color: var(--blue-dk); cursor: pointer; }
+.tl-more:hover { color: var(--blue); }
+.tl-text strong { font-weight: 600; }
+
+.evidence-list { display: flex; flex-direction: column; gap: 8px; }
+.ev-item { display: flex; gap: 10px; padding: 10px 12px; background: rgba(0, 102, 204, 0.05); border-left: 2px solid var(--blue); border-radius: 0 6px 6px 0; font-size: 12.5px; line-height: 1.45; cursor: pointer; transition: background 150ms; align-items: flex-start; }
+.ev-item:hover { background: rgba(0, 102, 204, 0.10); }
+.ev-item .num { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--blue-dk); font-weight: 700; flex-shrink: 0; }
+.ev-item .ev-text { flex: 1; }
+.ev-item .ev-link { color: var(--blue); font-size: 13px; opacity: 0; transition: opacity 150ms; flex-shrink: 0; }
+.ev-item:hover .ev-link { opacity: 1; }
+
+/* ─── Origination overlay (P0 New Move with Nexus) ─── */
+/* ─── Originate view (P0 New Move — same shell as Detail) ─── */
+.origin-context { display: flex; align-items: center; justify-content: space-between; padding: 12px 36px; border-bottom: 1px solid var(--border); background: var(--cream-2); }
+.origin-context-left { display: flex; align-items: center; gap: 8px; }
+.origin-context-left .branch { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--gray); }
+.origin-context-left .label { font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; font-weight: 600; color: var(--gold); }
+.origin-context-left .draft-badge { font-family: 'JetBrains Mono', monospace; font-size: 9px; letter-spacing: 1.4px; text-transform: uppercase; font-weight: 600; color: var(--gray-dk); padding: 3px 8px; border: 1px solid var(--border); border-radius: 10px; margin-left: 6px; }
+.origin-cancel { background: transparent; border: 1px solid var(--border); color: var(--gray-dk); padding: 5px 12px; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 120ms; }
+.origin-cancel:hover { color: var(--ink); border-color: var(--ink); }
+
+.scaffold-list { display: flex; flex-direction: column; gap: 10px; padding: 20px 26px 16px; overflow-y: auto; flex: 1; }
+.scaffold-row { display: grid; grid-template-columns: 28px 1fr auto; gap: 12px; align-items: flex-start; padding: 14px 16px; border: 1.5px dashed rgba(10,10,11,0.20); border-radius: 10px; background: transparent; transition: all 280ms cubic-bezier(0.2, 0.7, 0.2, 1); }
+.scaffold-row.filled { border-style: solid; border-color: var(--ink); background: #ffffff; animation: fillIn 360ms cubic-bezier(0.2, 0.7, 0.2, 1); }
+@keyframes fillIn { from { opacity: 0.5; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+.scaffold-num { font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 1.2px; font-weight: 600; color: var(--gray); padding-top: 2px; }
+.scaffold-row.filled .scaffold-num { color: var(--ink); }
+.scaffold-body .label { font-family: 'JetBrains Mono', monospace; font-size: 9.5px; letter-spacing: 1.5px; text-transform: uppercase; font-weight: 600; color: var(--gray-dk); margin-bottom: 4px; }
+.scaffold-row.filled .scaffold-body .label { color: var(--gold); }
+.scaffold-body .name { font-family: 'Fraunces', serif; font-size: 16px; font-weight: 700; letter-spacing: -0.3px; color: var(--ink); line-height: 1.25; }
+.scaffold-body .empty { font-size: 13px; color: var(--gray-dk); font-style: italic; line-height: 1.4; margin-top: 2px; }
+.scaffold-body .content { font-size: 13.5px; color: var(--ink-2); line-height: 1.45; margin-top: 6px; }
+.scaffold-body .content strong { color: var(--ink); font-weight: 600; }
+.scaffold-indicator { width: 16px; height: 16px; border-radius: 50%; border: 1.5px solid rgba(10,10,11,0.25); margin-top: 4px; flex-shrink: 0; transition: all 200ms; }
+.scaffold-row.filled .scaffold-indicator { border-color: var(--green); background: var(--green); box-shadow: inset 0 0 0 3px var(--cream-card); }
+
+.scaffold-foot { padding: 16px 26px 22px; border-top: 1px solid var(--border); }
+.btn-promote { width: 100%; background: var(--ink); color: var(--cream); border: none; padding: 14px 22px; border-radius: 10px; font-weight: 700; font-size: 14px; cursor: pointer; transition: all 150ms; display: flex; align-items: center; justify-content: center; gap: 10px; letter-spacing: 0.2px; }
+.btn-promote:hover:not(:disabled) { background: var(--ink-2); transform: translateY(-1px); box-shadow: 0 6px 18px rgba(0,0,0,0.18); }
+.btn-promote:disabled { background: rgba(10,10,11,0.10); color: var(--gray); cursor: not-allowed; }
+.btn-promote .arrow { font-size: 16px; transition: transform 150ms; }
+.btn-promote:hover:not(:disabled) .arrow { transform: translateX(3px); }
+.promote-helper { font-family: 'JetBrains Mono', monospace; font-size: 9px; letter-spacing: 1.4px; text-transform: uppercase; font-weight: 600; color: var(--gray); text-align: center; margin-top: 8px; }
+
+.start-from-block { padding: 14px 22px 4px; border-top: 1px solid rgba(255, 255, 255, 0.08); }
+.start-from-label { font-family: 'JetBrains Mono', monospace; font-size: 9px; letter-spacing: 1.5px; color: var(--gold); margin-bottom: 10px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+.start-from-label .branch { color: var(--gray); }
+.start-from-chips { display: flex; flex-direction: column; gap: 6px; margin-bottom: 6px; }
+.start-chip { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.12); color: #EFF6FF; text-align: left; padding: 10px 14px; border-radius: 8px; font-size: 12.5px; font-weight: 500; cursor: pointer; transition: all 150ms; display: flex; align-items: center; gap: 10px; }
+.start-chip:hover { background: rgba(255,255,255,0.08); border-color: var(--gold); }
+.start-chip .chip-arrow { margin-left: auto; color: var(--gold); transition: transform 150ms; }
+.start-chip:hover .chip-arrow { transform: translateX(2px); }
+.start-chip.used { opacity: 0.45; pointer-events: none; }
+
+.confirm-overlay { position: fixed; inset: 0; background: rgba(12, 26, 58, 0.55); backdrop-filter: blur(3px); z-index: 250; display: none; align-items: center; justify-content: center; }
+.confirm-overlay.show { display: flex; }
+.confirm-dialog { background: white; border: 1px solid var(--ink); border-radius: 12px; padding: 26px 28px; max-width: 420px; width: 90%; box-shadow: 0 24px 60px rgba(0,0,0,0.35); }
+.confirm-dialog h3 { font-family: 'Fraunces', serif; font-size: 20px; font-weight: 700; margin-bottom: 6px; }
+.confirm-dialog p { font-size: 13.5px; color: var(--gray-dk); line-height: 1.5; margin-bottom: 18px; }
+.confirm-actions { display: flex; gap: 8px; justify-content: flex-end; flex-wrap: wrap; }
+.confirm-actions button { font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 600; padding: 8px 16px; border-radius: 8px; cursor: pointer; border: 1px solid var(--border); background: white; color: var(--ink); }
+.confirm-actions button.primary { background: var(--ink); color: var(--cream); border-color: var(--ink); }
+.confirm-actions button.danger { background: white; color: var(--red); border-color: var(--red); }
+.confirm-actions button:hover { transform: translateY(-1px); }
+
+/* ─── Tweaks panel (vanilla, host-protocol-compliant) ─── */
+#tweaks-panel { position: fixed; right: 22px; bottom: 22px; width: 280px; background: var(--cream-card); border: 1px solid var(--border); border-radius: 12px; box-shadow: 0 12px 32px rgba(15,23,41,0.18); padding: 0; z-index: 150; display: none; font-family: 'DM Sans', sans-serif; }
+#tweaks-panel.show { display: block; }
+#tweaks-panel .tw-head { display: flex; align-items: center; padding: 12px 14px; border-bottom: 1px solid var(--border); }
+#tweaks-panel .tw-title { font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 1.5px; font-weight: 700; color: var(--ink); flex: 1; }
+#tweaks-panel .tw-close { background: transparent; border: none; color: var(--gray-dk); cursor: pointer; font-size: 18px; line-height: 1; padding: 0 4px; }
+#tweaks-panel .tw-close:hover { color: var(--ink); }
+#tweaks-panel .tw-body { padding: 14px; display: flex; flex-direction: column; gap: 14px; }
+#tweaks-panel .tw-section-title { font-family: 'JetBrains Mono', monospace; font-size: 9px; letter-spacing: 1.4px; font-weight: 600; color: var(--gray-dk); margin-bottom: 6px; }
+#tweaks-panel .tw-radio-row { display: flex; gap: 4px; background: var(--cream); border: 1px solid var(--border); border-radius: 8px; padding: 3px; }
+#tweaks-panel .tw-radio-row button { flex: 1; background: transparent; border: none; padding: 6px 8px; border-radius: 5px; font-family: 'JetBrains Mono', monospace; font-size: 9px; letter-spacing: 1.1px; font-weight: 600; color: var(--gray-dk); cursor: pointer; text-transform: uppercase; }
+#tweaks-panel .tw-radio-row button.active { background: var(--ink); color: var(--cream); }
+</style>
+</head>
+<body data-screen-label="Strategic Moves home">
+
+<nav class="top">
+  <div class="brand">Abar<span class="va">Va</span></div>
+  <div class="nav-items">
+    <a>Home</a><a>Setup</a><a class="active">Strategic Moves</a><a>Source</a><a>Intelligence</a><a>Tower</a><a>Learn</a><a>Product</a>
+  </div>
+  <div class="user-pill">
+    <span class="tenant-mono">APEX RETAIL · CIO</span>
+    <div class="avatar">NP</div>
+    <span class="user-name">Nina Patel</span>
+    <span class="signout">Sign out</span>
+  </div>
+</nav>
+
+<div class="submenu">
+  <div class="page-title">Strategic Moves</div>
+  <button class="tab active">All <span class="count">12</span></button>
+  <button class="tab">Need attention <span class="count">3</span></button>
+  <button class="filter-btn">Filter ▾</button>
+  <div class="spacer"></div>
+  <button id="back-btn" class="btn-secondary" hidden onclick="showView('dashboard')">← Back</button>
+  <button id="new-btn" class="btn-cta" onclick="openOrigination()">+ New Move</button>
+</div>
+
+<main id="dashboard-view" data-screen-label="Strategic Moves · dashboard">
+  <div class="ribbon" id="ribbon">
+    <button class="ribbon-seg active" data-filter="all" onclick="setRibbonFilter('all')">
+      <span class="num">12</span><span class="lbl">Moves</span>
+    </button>
+    <button class="ribbon-seg attn" data-filter="red" onclick="setRibbonFilter('red')">
+      <span class="num">3</span><span class="lbl">Need attention</span>
+    </button>
+    <button class="ribbon-seg" data-filter="green" onclick="setRibbonFilter('green')">
+      <span class="num">5</span><span class="lbl">On track</span>
+    </button>
+    <button class="ribbon-seg" data-filter="value" onclick="setRibbonFilter('value')">
+      <span class="num">$84M</span><span class="lbl">At stake</span>
+    </button>
+    <div class="ribbon-meta">Updated 2 min ago</div>
+  </div>
+
+  <div class="attn-drilldown" id="attn-drilldown">
+    <div class="attn-row" onclick="openMoveById('APX-CDP-2026')">
+      <span class="branch">└─</span>
+      <span class="body"><span class="move-id">APX-CDP-2026</span> · stalled at P3 → P4 Build gate (2 of 5)</span>
+      <span class="arrow">→</span>
+    </div>
+    <div class="attn-row" onclick="openMoveById('MER-RR-2026')">
+      <span class="branch">└─</span>
+      <span class="body"><span class="move-id">MER-RR-2026</span> · contradiction flagged in Tower yesterday</span>
+      <span class="arrow">→</span>
+    </div>
+    <div class="attn-row" onclick="openMoveById('ARC-PDLC-2026')">
+      <span class="branch">└─</span>
+      <span class="body"><span class="move-id">ARC-PDLC-2026</span> · awaiting sponsor decision (R. Chen)</span>
+      <span class="arrow">→</span>
+    </div>
+  </div>
+
+  <div class="map-title-block">
+    <h2>Portfolio map</h2>
+    <div class="sub">Phase × value at stake. Twelve moves in flight.</div>
+  </div>
+
+  <div class="map-section">
+    <div class="map-head">
+      <div class="map-legend">
+        <span class="legend-dot red">Needs attention</span>
+        <span class="legend-dot amber">Awaiting decision</span>
+        <span class="legend-dot green">On track</span>
+        <span class="legend-dot teal">Healthy / early</span>
+      </div>
+    </div>
+    <div class="map-sub">Phase (left to right) × Value at stake. Bubble size scales with value. Click any move to open it.</div>
+    <svg id="scatter" viewBox="0 0 1300 420" preserveAspectRatio="xMidYMid meet"></svg>
+  </div>
+
+  <div class="cards-head">
+    <h2>Strategic moves</h2>
+    <div class="controls">
+      <span class="mono" style="color: var(--gray-dk);" id="cards-count-label">12 MOVES · APEX RETAIL TENANT</span>
+      <select id="sort-select" class="sort-select" onchange="setSort(this.value)">
+        <option value="attention">Sort: Attention</option>
+        <option value="value">Sort: Value</option>
+        <option value="phase">Sort: Phase</option>
+      </select>
+      <div class="view-toggle" role="tablist">
+        <button id="view-cards" class="active" onclick="setListView('cards')">Cards</button>
+        <button id="view-kanban" onclick="setListView('kanban')">Kanban</button>
+      </div>
+    </div>
+  </div>
+  <div class="cards" id="cards-grid"></div>
+  <div class="kanban" id="kanban-grid" hidden></div>
+</main>
+
+<main id="detail-view" hidden data-screen-label="Strategic Moves · move detail">
+  <div class="detail-shell">
+    <div class="chat-pane">
+      <div class="chat-head">
+        <div class="agent-row">
+          <div class="agent-avatar" title="Nexus">✦</div>
+          <div>
+            <div class="agent-name">Nexus</div>
+            <div class="agent-status">● <span id="detail-move-id">SCOPED TO MOVE</span></div>
+          </div>
+        </div>
+        <div class="chat-subhead">Ask anything about this move. I'll work in the right pane.</div>
+      </div>
+      <div class="chat-thread" id="detail-chat-thread"></div>
+      <div class="chat-input">
+        <div class="suggested-label">↳ SUGGESTED QUESTIONS</div>
+        <div class="suggested-prompts" id="detail-prompts"></div>
+        <div class="input-row">
+          <input type="text" placeholder="Ask Nexus about this move…">
+          <button class="send-btn">↑</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="detail-pane">
+      <div class="detail-head">
+        <div class="detail-head-top">
+          <div class="detail-head-left">
+            <div class="detail-breadcrumb">
+              <span class="crumb" onclick="showView('dashboard')">STRATEGIC MOVES</span>
+              <span>›</span>
+              <span id="detail-bc-tenant">APEX RETAIL</span>
+              <span>›</span>
+              <span id="detail-bc-id">APX-CDP-2026</span>
+            </div>
+            <div class="detail-title" id="detail-title">Customer Data Platform Modernization</div>
+            <div class="detail-id" id="detail-meta">PLATFORM MODERNIZATION · SPONSOR: M. PATEL, CDO</div>
+          </div>
+          <div class="detail-head-actions" id="detail-head-actions"></div>
+        </div>
+        <div class="detail-rail" id="detail-rail"></div>
+      </div>
+      <div class="detail-body" id="detail-body"></div>
+    </div>
+  </div>
+</main>
+
+<div class="tooltip" id="tooltip">
+  <div class="tt-meta" id="tt-meta">PLATFORM MODERNIZATION</div>
+  <div class="tt-title" id="tt-title">Move name</div>
+  <div class="tt-line" id="tt-line">Phase · Value · Status</div>
+  <div class="tt-line" style="color: var(--teal); margin-top: 6px; font-family: 'JetBrains Mono', monospace; font-size: 9px; letter-spacing: 1.2px;">CLICK TO OPEN →</div>
+</div>
+
+<!-- Originate view — full Maestro canvas, P0 origination state -->
+<main id="originate-view" hidden data-screen-label="Strategic Moves · originate">
+  <div class="origin-context">
+    <div class="origin-context-left">
+      <span class="branch">↳</span>
+      <span class="label">Originating new move</span>
+      <span class="draft-badge" id="origin-draft-badge">UNTITLED · DRAFT</span>
+    </div>
+    <button class="origin-cancel" onclick="cancelOrigination()">✕ Cancel</button>
+  </div>
+
+  <div class="detail-shell" style="height: calc(100vh - 268px);">
+    <div class="chat-pane">
+      <div class="chat-head">
+        <div class="agent-row">
+          <div class="agent-avatar" title="Nexus">✦</div>
+          <div class="agent-name">Nexus</div>
+          <div class="agent-tag">NEW MOVE · P0 ORIGINATE</div>
+        </div>
+        <div class="chat-subhead">I draft, you decide. Tell me the bet — or pick a starting point below.</div>
+      </div>
+      <div class="chat-thread" id="origin-chat-thread">
+        <div class="bubble nexus">A new move starts as a hypothesis. Tell me the outcome you want, the tenant it sits in, and any signals you've already seen — I'll draft a P0 charter you can sponsor.</div>
+        <div class="bubble nexus">If you'd rather start from <em>existing evidence in Intelligence</em> or a <em>Foundation Readiness gap</em>, pick one of the prompts below.</div>
+      </div>
+
+      <div class="start-from-block" id="origin-start-from-block">
+        <div class="start-from-label"><span class="branch">↳</span> START FROM</div>
+        <div class="start-from-chips">
+          <button class="start-chip" data-entry="intel" onclick="originStart('intel')">An Intelligence finding<span class="chip-arrow">→</span></button>
+          <button class="start-chip" data-entry="foundation" onclick="originStart('foundation')">A Foundation Readiness gap<span class="chip-arrow">→</span></button>
+          <button class="start-chip" data-entry="premortem" onclick="originStart('premortem')">A pre-mortem result<span class="chip-arrow">→</span></button>
+          <button class="start-chip" data-entry="transfer" onclick="originStart('transfer')">Cross-industry transfer<span class="chip-arrow">→</span></button>
+          <button class="start-chip" data-entry="blank" onclick="originStart('blank')">A blank hypothesis<span class="chip-arrow">→</span></button>
+        </div>
+      </div>
+
+      <div class="chat-input">
+        <div class="input-row">
+          <input type="text" id="origin-input" placeholder="Describe the outcome, tenant, and any signals…">
+          <button class="send-btn" onclick="originSend()">↑</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="detail-pane">
+      <div class="detail-head">
+        <div class="detail-head-top">
+          <div class="detail-head-left">
+            <div class="detail-breadcrumb">
+              <span class="crumb" onclick="cancelOrigination()">STRATEGIC MOVES</span>
+              <span>›</span>
+              <span>APEX RETAIL</span>
+              <span>›</span>
+              <span>NEW</span>
+            </div>
+            <div class="detail-title">Originate a strategic move</div>
+            <div class="detail-id">P0 ORIGINATE · DRAFTING</div>
+          </div>
+        </div>
+        <div class="detail-rail" id="origin-rail"></div>
+      </div>
+
+      <div class="scaffold-list" id="origin-scaffold"></div>
+
+      <div class="scaffold-foot">
+        <button class="btn-promote" id="origin-promote-btn" disabled onclick="promoteToP1()">
+          <span>Promote to P1 Charter</span><span class="arrow">→</span>
+        </button>
+        <div class="promote-helper" id="origin-promote-helper">0 of 7 sections complete</div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<div class="confirm-overlay" id="confirm-overlay">
+  <div class="confirm-dialog">
+    <h3>Discard this move?</h3>
+    <p id="confirm-msg">You've drafted some sections. Save it as a draft to come back to, or discard and start fresh.</p>
+    <div class="confirm-actions">
+      <button onclick="closeConfirm()">Continue working</button>
+      <button class="danger" onclick="discardOrigination()">Discard</button>
+      <button class="primary" onclick="saveOriginationDraft()">Save as draft</button>
+    </div>
+  </div>
+</div>
+
+<!-- Tweaks panel (vanilla, host-protocol-compliant) -->
+<div id="tweaks-panel" role="dialog" aria-label="Tweaks">
+  <div class="tw-head">
+    <span class="tw-title">Tweaks</span>
+    <button class="tw-close" id="tw-close-btn" aria-label="Close">×</button>
+  </div>
+  <div class="tw-body">
+    <div>
+      <div class="tw-section-title">Map view</div>
+      <div class="tw-radio-row" id="tw-mapview">
+        <button data-val="scatter">Scatter</button>
+        <button data-val="kanban">Kanban</button>
+      </div>
+    </div>
+    <div>
+      <div class="tw-section-title">Sort moves by</div>
+      <div class="tw-radio-row" id="tw-sort">
+        <button data-val="attention">Attention</button>
+        <button data-val="value">Value</button>
+        <button data-val="phase">Phase</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const moves = [
+  { id: 'APX-CDP-2026', name: 'Customer Data Platform Modernization', tenant: 'APEX RETAIL', archetype: 'PLATFORM MODERNIZATION', phase: 3, phaseLabel: 'P3 Solution Design', value: 28, status: 'red', sponsor: 'M. Patel, CDO',
+    statusText: 'GATE BLOCKED', statusDesc: 'P3 → P4 Build · 2 / 5 criteria met',
+    criteria: [
+      { done: true, text: 'Solution architecture approved by EA council' },
+      { done: true, text: 'Vendor shortlist of 3 with capability scoring complete' },
+      { done: false, text: 'Total cost of ownership model with 3-year projection' },
+      { done: false, text: 'Vendor reference calls (min 2 per shortlisted vendor)' },
+      { done: false, text: 'Contract terms reviewed by Legal and Procurement' }
+    ],
+    timeline: [
+      { time: '2h ago', text: '<strong>Steward</strong> requested final TCO inputs from Finance' },
+      { time: 'Yesterday', text: 'Vendor capability scoring locked · Salesforce 8.4, Treasure Data 7.9, ActionIQ 7.6' },
+      { time: '3d ago', text: '<strong>EA council</strong> approved target architecture · 4 of 5 voting' },
+      { time: '1w ago', text: 'P3 Solution Design entered · diagnose evidence handed off from Sentinel' }
+    ],
+    evidence: [
+      { n: 'A1', text: 'Customer-360 identified as top-3 strategic capability gap (Intelligence · 2026-04-26)' },
+      { n: 'A2', text: 'Walmart CDP migration · 12 mo · $34M return verified (cross-industry transfer)' },
+      { n: 'A3', text: 'Foundation Readiness flagged MDM partial maturity (P3 risk surfaced)' }
+    ],
+    value_meta: { proj: '$28.4M', range: '$22M – $33M', verified: '— pending P3 lock' },
+    prompts: ["What's blocking the gate?", "Show me the vendor shortlist", "Compare to Walmart's CDP migration"]
+  },
+  { id: 'MER-RR-2026', name: 'Revenue Resilience Program', tenant: 'MERIDIAN HEALTH', archetype: 'STRATEGIC TRANSFORMATION', phase: 4, phaseLabel: 'P4 Build', value: 22.4, status: 'red', sponsor: 'J. Hwang, CFO',
+    statusText: 'CONTRADICTION', statusDesc: 'Tower · CFO vs COO baseline conflict',
+    criteria: [
+      { done: true, text: 'Build plan signed off by sponsor' },
+      { done: true, text: 'Vendor contract executed' },
+      { done: false, text: 'Baseline metric reconciled (CFO vs COO)' },
+      { done: false, text: 'Pilot environment provisioned and validated' }
+    ],
+    timeline: [
+      { time: '1d ago', text: '<strong>Tower</strong> flagged contradiction: CFO uses Q3 baseline, COO uses YTD average' },
+      { time: '4d ago', text: 'Build kickoff completed · workstreams assigned' }
+    ],
+    evidence: [
+      { n: 'A1', text: 'Denial-rate baseline established at 8.2% (CFO position)' },
+      { n: 'A2', text: 'Operational denial rate calc shows 6.4% (COO position)' }
+    ],
+    value_meta: { proj: '$22.4M', range: '$18M – $27M', verified: '— pending baseline lock' },
+    prompts: ["Show me the contradiction in Tower", "Resolve the baseline disagreement", "Who needs to weigh in?"]
+  },
+  { id: 'ARC-PDLC-2026', name: 'AI-Powered Product Development Lifecycle', tenant: 'ARCTURUS FINANCIAL', archetype: 'AI / COPILOT ENABLEMENT', phase: 1, phaseLabel: 'P1 Charter', value: 18.2, status: 'amber', sponsor: 'R. Chen, CTO',
+    statusText: 'AWAITING SPONSOR', statusDesc: 'P1 Charter ready for R. Chen approval',
+    criteria: [
+      { done: true, text: 'Charter drafted with hypothesis and value range' },
+      { done: true, text: 'Foundation readiness check complete' },
+      { done: false, text: 'Sponsor signoff on charter (R. Chen)' }
+    ],
+    timeline: [
+      { time: '6h ago', text: 'Charter sent to <strong>R. Chen</strong> for review' },
+      { time: '1d ago', text: '<strong>Nexus</strong> drafted P1 Charter from origination evidence' }
+    ],
+    evidence: [
+      { n: 'A1', text: 'Originated from AI Strategy Definition · 2026-04-30' },
+      { n: 'A2', text: 'Cross-industry: Goldman Sachs developer copilot rollout (success)' }
+    ],
+    value_meta: { proj: '$18.2M', range: '$14M – $22M', verified: '— pending P3' },
+    prompts: ["What is R. Chen waiting on?", "Send a reminder to the sponsor", "Show me the charter draft"]
+  },
+  { id: 'APX-MARGIN-2026', name: 'Owned-Brand Margin Recovery', tenant: 'APEX RETAIL', archetype: 'OPERATIONAL OPTIMIZATION', phase: 5, phaseLabel: 'P5 Execute', value: 47.2, status: 'green', sponsor: 'D. Morrison, COO',
+    statusText: 'ON TRACK', statusDesc: 'Month 3 of 6 · 47% delivered · 8% ahead of plan',
+    criteria: [
+      { done: true, text: 'Build phase milestones met' },
+      { done: true, text: 'Pilot deployment in 3 categories' },
+      { done: true, text: 'Month-1 outcome metrics verified' },
+      { done: true, text: 'Month-2 outcome metrics verified' },
+      { done: false, text: 'Month-3 outcome metrics (Tower verifying now)' }
+    ],
+    timeline: [
+      { time: '1d ago', text: '<strong>Tower</strong> month-3 verification kicked off · 4 of 7 metrics in' },
+      { time: '1w ago', text: 'Category 4 pilot launched (Home Goods)' },
+      { time: '2w ago', text: 'Month-2 verified · $4.1M tracked vs $3.8M target' }
+    ],
+    evidence: [
+      { n: 'A1', text: 'Q1 baseline locked at 18.2% gross margin' },
+      { n: 'A2', text: 'Pilot results: +2.4 pp margin uplift in Categories 1-3' }
+    ],
+    value_meta: { proj: '$47.2M annual', range: 'committed', verified: '$12.1M tracked YTD' },
+    prompts: ["Show me month-3 progress", "Which category is performing best?", "What's the risk to verification?"]
+  },
+  { id: 'APX-LEGAL-AI', name: 'AI Legal Copilot', tenant: 'APEX RETAIL', archetype: 'WORKFLOW AUTOMATION', phase: 2, phaseLabel: 'P2 Diagnose', value: 6.8, status: 'teal', sponsor: 'L. Reyes, GC',
+    statusText: 'DIAGNOSE ACTIVE', statusDesc: 'Sentinel mapping contract corpus · 12 of 18 sources',
+    criteria: [{ done: true, text: 'Diagnose plan approved' }, { done: false, text: 'Source corpus mapped' }, { done: false, text: 'Failure modes identified' }],
+    timeline: [{ time: '3h ago', text: '<strong>Sentinel</strong> completed source 12 of 18' }, { time: '1w ago', text: 'P2 Diagnose entered' }],
+    evidence: [{ n: 'A1', text: 'Originated from Pre-Mortem · 2026-04-15' }],
+    value_meta: { proj: '$6.8M', range: '$5M – $9M', verified: '— pending P3' },
+    prompts: ["What sources are still unmapped?", "Show me the failure modes so far"]
+  },
+  { id: 'ARC-AML-2026', name: 'AML Detection Modernization', tenant: 'ARCTURUS FINANCIAL', archetype: 'PLATFORM MODERNIZATION', phase: 6, phaseLabel: 'P6 Verify', value: 34, status: 'green', sponsor: 'K. Bose, CRO',
+    statusText: 'VERIFY PHASE', statusDesc: 'Tower confirming outcome metrics · 4 of 5 verified',
+    criteria: [
+      { done: true, text: 'Detection accuracy benchmarks met' },
+      { done: true, text: 'False-positive rate reduced 38% (target 35%)' },
+      { done: true, text: 'Regulatory sign-off received' },
+      { done: true, text: 'BAU operations runbook complete' },
+      { done: false, text: 'Final regulatory KPI verification (in flight)' }
+    ],
+    timeline: [{ time: '1d ago', text: 'Regulatory KPI 4 of 5 verified' }, { time: '2w ago', text: 'BAU handoff plan locked' }],
+    evidence: [{ n: 'A1', text: 'Pre-mortem identified false-positive rate as critical risk' }],
+    value_meta: { proj: '$34M annual', range: 'committed', verified: '$31.7M tracked' },
+    prompts: ["What's the final KPI verification?", "When does this hand off to BAU?"]
+  },
+  { id: 'APX-WMS-2027', name: 'Warehouse Management Modernization', tenant: 'APEX RETAIL', archetype: 'PLATFORM MODERNIZATION', phase: 0, phaseLabel: 'P0 Originate', value: 15, status: 'teal', sponsor: 'D. Morrison, COO',
+    statusText: 'ORIGINATING', statusDesc: 'Hypothesis drafted · pending sponsor confirmation',
+    criteria: [{ done: true, text: 'Hypothesis drafted' }, { done: false, text: 'Sponsor confirmed' }, { done: false, text: 'Foundation readiness check' }],
+    timeline: [{ time: '2d ago', text: 'Move created from Foundation Readiness gap' }],
+    evidence: [{ n: 'A1', text: 'Foundation Readiness flagged WMS as Q4 risk' }],
+    value_meta: { proj: '$15M', range: '$12M – $18M', verified: '— pending P3' },
+    prompts: ["What's the next step?", "Show me the hypothesis"]
+  },
+  { id: 'MER-DENIAL', name: 'Denial Management AI', tenant: 'MERIDIAN HEALTH', archetype: 'AI / COPILOT ENABLEMENT', phase: 3, phaseLabel: 'P3 Solution Design', value: 8.5, status: 'amber', sponsor: 'J. Hwang, CFO',
+    statusText: 'AWAITING DECISION', statusDesc: 'P3 design choice: build vs buy',
+    criteria: [{ done: true, text: 'Solution options drafted' }, { done: false, text: 'Build vs buy decision' }],
+    timeline: [{ time: '4d ago', text: 'Build vs buy decision package ready for sponsor' }],
+    evidence: [{ n: 'A1', text: 'Industry baseline: AI denial mgmt = 4.2% lift on average' }],
+    value_meta: { proj: '$8.5M', range: '$6M – $11M', verified: '— pending P3' },
+    prompts: ["Show me the build vs buy comparison", "Who needs to decide?"]
+  },
+  { id: 'ARC-FRAUD-AI', name: 'Real-Time Fraud Scoring', tenant: 'ARCTURUS FINANCIAL', archetype: 'AI / COPILOT ENABLEMENT', phase: 5, phaseLabel: 'P5 Execute', value: 12, status: 'green', sponsor: 'K. Bose, CRO',
+    statusText: 'ON TRACK', statusDesc: 'Month 2 of 4 · pilot deployed',
+    criteria: [{ done: true, text: 'Pilot deployed in 2 markets' }, { done: false, text: 'Month-2 outcome verified' }],
+    timeline: [{ time: '1w ago', text: 'Pilot expanded to second market' }],
+    evidence: [{ n: 'A1', text: 'Detection latency target met (<200ms)' }],
+    value_meta: { proj: '$12M annual', range: 'committed', verified: '$2.1M YTD' },
+    prompts: ["How's the pilot performing?", "What are next milestones?"]
+  },
+  { id: 'APX-LOYALTY', name: 'Loyalty Program Refresh', tenant: 'APEX RETAIL', archetype: 'STRATEGIC TRANSFORMATION', phase: 1, phaseLabel: 'P1 Charter', value: 9, status: 'teal', sponsor: 'M. Patel, CDO',
+    statusText: 'CHARTER ACTIVE', statusDesc: 'Drafting charter from origination evidence',
+    criteria: [{ done: true, text: 'Hypothesis confirmed' }, { done: false, text: 'Charter complete' }],
+    timeline: [{ time: '5d ago', text: 'P1 Charter started' }],
+    evidence: [{ n: 'A1', text: 'Tied to CDP modernization (APX-CDP-2026) as downstream beneficiary' }],
+    value_meta: { proj: '$9M', range: '$7M – $12M', verified: '— pending P3' },
+    prompts: ["When will the charter be ready?", "How does this connect to APX-CDP?"]
+  },
+  { id: 'MER-CDP', name: 'Patient Identity Resolution', tenant: 'MERIDIAN HEALTH', archetype: 'PLATFORM MODERNIZATION', phase: 0, phaseLabel: 'P0 Originate', value: 24, status: 'teal', sponsor: 'TBD',
+    statusText: 'ORIGINATING', statusDesc: 'Hypothesis being scoped from AI Strategy Definition',
+    criteria: [{ done: true, text: 'Hypothesis drafted' }, { done: false, text: 'Sponsor identified' }],
+    timeline: [{ time: '1d ago', text: 'Originated from AI Strategy session' }],
+    evidence: [{ n: 'A1', text: 'AI Strategy session flagged identity gaps as top capability need' }],
+    value_meta: { proj: '$24M', range: '$18M – $30M', verified: '— pending P3' },
+    prompts: ["Who should sponsor this?", "What's the foundation readiness?"]
+  },
+  { id: 'ARC-CC-AI', name: 'Contact Center AI Assist', tenant: 'ARCTURUS FINANCIAL', archetype: 'AI / COPILOT ENABLEMENT', phase: 4, phaseLabel: 'P4 Build', value: 11, status: 'green', sponsor: 'R. Chen, CTO',
+    statusText: 'BUILD ON TRACK', statusDesc: 'Sprint 4 of 8 complete',
+    criteria: [{ done: true, text: 'Foundation built' }, { done: true, text: 'First copilot deployed' }, { done: false, text: 'Full rollout' }],
+    timeline: [{ time: '3d ago', text: 'Sprint 4 retro · velocity steady' }],
+    evidence: [{ n: 'A1', text: 'Pilot CSAT lift = 0.8 points' }],
+    value_meta: { proj: '$11M', range: 'committed', verified: '— pending P5' },
+    prompts: ["Show me sprint progress", "What's left to ship?"]
+  }
+];
+
+/* ─── Tweaks state (persisted via host EDITMODE markers) ─── */
+const TWEAKS = /*EDITMODE-BEGIN*/{
+  "listView": "kanban",
+  "sort": "value"
+}/*EDITMODE-END*/;
+
+function persistTweaks() {
+  window.parent.postMessage({ type: '__edit_mode_set_keys', edits: { ...TWEAKS } }, '*');
+}
+
+function buildScatter() {
+  const svg = document.getElementById('scatter');
+  const w = 1300, h = 420;
+  const padL = 80, padR = 30, padT = 40, padB = 60;
+  const phases = ['P0\nOriginate','P1\nCharter','P2\nDiagnose','P3\nSolution','P4\nBuild','P5\nExecute','P6\nVerify','P7\nHandoff'];
+  const xColW = (w - padL - padR) / 8;
+  const xOf = (p) => padL + xColW * (p + 0.5);
+  const maxVal = 50;
+  const yOf = (v) => padT + (h - padT - padB) * (1 - v / maxVal);
+
+  let html = '';
+  for (let i = 0; i < 8; i += 2) {
+    html += `<rect x="${padL + xColW * i}" y="${padT}" width="${xColW}" height="${h - padT - padB}" fill="#0c1a3a" opacity="0.025"/>`;
+  }
+  [0, 10, 20, 30, 40, 50].forEach(v => {
+    const y = yOf(v);
+    html += `<line x1="${padL}" y1="${y}" x2="${w - padR}" y2="${y}" stroke="#D3D1C7" stroke-width="0.5" stroke-dasharray="2 4"/>`;
+    html += `<text x="${padL - 10}" y="${y + 4}" text-anchor="end" font-family="JetBrains Mono, monospace" font-size="10" font-weight="600" fill="#000000" letter-spacing="0.5">$${v}M</text>`;
+  });
+  html += `<line x1="${padL}" y1="${padT}" x2="${padL}" y2="${h - padB}" stroke="#0c1a3a" stroke-width="1.2"/>`;
+  html += `<line x1="${padL}" y1="${h - padB}" x2="${w - padR}" y2="${h - padB}" stroke="#0c1a3a" stroke-width="1.2"/>`;
+  phases.forEach((p, i) => {
+    const lines = p.split('\n');
+    const x = xOf(i);
+    html += `<text x="${x}" y="${h - padB + 22}" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" font-weight="700" fill="#9C7B3F" letter-spacing="1.8">${lines[0]}</text>`;
+    html += `<text x="${x}" y="${h - padB + 38}" text-anchor="middle" font-family="Inter, sans-serif" font-size="11" font-weight="500" fill="#000000">${lines[1]}</text>`;
+  });
+  html += `<text x="20" y="${h / 2}" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="10" font-weight="600" fill="#9C7B3F" letter-spacing="1.8" transform="rotate(-90, 20, ${h/2})">VALUE AT STAKE</text>`;
+
+  const colorMap  = { red: '#a32d2d', amber: '#ba7517', green: '#1d9e75', teal: '#0066CC' };
+  const strokeMap = { red: '#7a2222', amber: '#8a5611', green: '#155b44', teal: '#0052a3' };
+  moves.forEach((m, idx) => {
+    const x = xOf(m.phase);
+    const y = yOf(m.value);
+    const r = 18 + (m.value / maxVal) * 18;
+    const fill = colorMap[m.status];
+    const stroke = strokeMap[m.status];
+    const label = m.id.split('-')[1] || m.id;
+    // Auto-fit label by character count — every bubble keeps its label
+    const labelFontSize = label.length <= 2 ? 11 : (label.length === 3 ? 10 : (label.length === 4 ? 9 : 8));
+    html += `<g class="bubble-g" data-idx="${idx}" onclick="openMove(${idx})">`;
+    if (m.status === 'red') {
+      html += `<circle cx="${x}" cy="${y}" r="${r + 3}" fill="none" stroke="${fill}" stroke-width="1.5" opacity="0.4"><animate attributeName="r" from="${r}" to="${r + 8}" dur="2s" repeatCount="indefinite"/><animate attributeName="opacity" from="0.5" to="0" dur="2s" repeatCount="indefinite"/></circle>`;
+    }
+    html += `<circle cx="${x}" cy="${y}" r="${r}" fill="${fill}" stroke="${stroke}" stroke-width="1.5" opacity="0.88"/>`;
+    if (true) {
+      html += `<text class="bubble-label" x="${x}" y="${y + labelFontSize * 0.35}" text-anchor="middle" font-size="${labelFontSize}">${label}</text>`;
+    }
+    html += `</g>`;
+  });
+  svg.innerHTML = html;
+
+  const tip = document.getElementById('tooltip');
+  document.querySelectorAll('.bubble-g').forEach(g => {
+    g.addEventListener('mouseenter', () => {
+      const m = moves[+g.dataset.idx];
+      document.getElementById('tt-title').textContent = m.name;
+      document.getElementById('tt-meta').textContent = m.archetype;
+      document.getElementById('tt-line').textContent = `${m.phaseLabel} · $${m.value}M · ${m.statusText}`;
+      tip.classList.add('show');
+    });
+    g.addEventListener('mousemove', (e) => {
+      tip.style.left = (e.pageX + 14) + 'px';
+      tip.style.top = (e.pageY - 60) + 'px';
+    });
+    g.addEventListener('mouseleave', () => tip.classList.remove('show'));
+  });
+}
+
+function buildCards() {
+  const wrap = document.getElementById('cards-grid');
+  const sorted = sortedMoves();
+  document.getElementById('cards-count-label').textContent =
+    `${moves.length} MOVES · ALL TENANTS`;
+  wrap.innerHTML = sorted.map(m => {
+    const idx = moves.indexOf(m);
+    return `
+    <div class="card ${m.status}" onclick="openMove(${idx})">
+      <div class="strip"></div>
+      <div class="card-head">
+        <div>
+          <div class="card-title">${m.name}</div>
+          <div class="card-id">${m.id} · ${m.tenant}</div>
+        </div>
+        <div class="archetype-tag">${m.archetype}</div>
+      </div>
+      <div class="gate-line ${m.status}">
+        <span class="pulse"></span>
+        <span class="status-text">${m.statusText}</span>
+        <span class="detail">· ${m.statusDesc}</span>
+      </div>
+      <div class="card-meta">
+        <span>Sponsor: <strong>${m.sponsor}</strong></span>
+        <span>Value: <span class="val">$${m.value}M ${m.status === 'green' ? 'tracked' : 'projected'}</span></span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function sortedMoves() {
+  const order = { red: 0, amber: 1, green: 2, teal: 3 };
+  let list = [...moves];
+  const sf = window.__ribbonStatusFilter;
+  if (sf === 'red')   list = list.filter(m => m.status === 'red' || m.status === 'amber');
+  if (sf === 'green') list = list.filter(m => m.status === 'green' || m.status === 'teal');
+  if (TWEAKS.sort === 'value')      list.sort((a, b) => b.value - a.value);
+  else if (TWEAKS.sort === 'phase') list.sort((a, b) => a.phase - b.phase || b.value - a.value);
+  else                              list.sort((a, b) => order[a.status] - order[b.status] || b.value - a.value);
+  return list;
+}
+
+function buildKanban() {
+  const wrap = document.getElementById('kanban-grid');
+  const phases = [
+    { code: 'P0', label: 'Originate' },
+    { code: 'P1', label: 'Charter' },
+    { code: 'P2', label: 'Diagnose' },
+    { code: 'P3', label: 'Solution' },
+    { code: 'P4', label: 'Build' },
+    { code: 'P5', label: 'Execute' },
+    { code: 'P6', label: 'Verify' },
+    { code: 'P7', label: 'Handoff' }
+  ];
+  wrap.innerHTML = phases.map((p, i) => {
+    const inPhase = moves
+      .map((m, idx) => ({ m, idx }))
+      .filter(x => x.m.phase === i)
+      .sort((a, b) => b.m.value - a.m.value);
+    const cards = inPhase.map(({ m, idx }) => `
+      <div class="kanban-card ${m.status}" onclick="openMove(${idx})">
+        <div class="id">${m.id}</div>
+        <div class="name">${m.name}</div>
+        <div class="val">$${m.value}M</div>
+      </div>`).join('');
+    return `
+      <div class="kanban-col">
+        <div class="kanban-col-head">${p.code}<span class="count">${inPhase.length}</span><span class="label">${p.label}</span></div>
+        ${cards}
+      </div>`;
+  }).join('');
+}
+
+function setListView(view) {
+  TWEAKS.listView = view;
+  document.getElementById('cards-grid').hidden = view !== 'cards';
+  document.getElementById('kanban-grid').hidden = view !== 'kanban';
+  document.getElementById('view-cards').classList.toggle('active', view === 'cards');
+  document.getElementById('view-kanban').classList.toggle('active', view === 'kanban');
+  syncTweakButtons();
+  persistTweaks();
+}
+
+function setSort(sort) {
+  TWEAKS.sort = sort;
+  document.getElementById('sort-select').value = sort;
+  buildCards();
+  syncTweakButtons();
+  persistTweaks();
+}
+
+/* ─── Originate view (P0 New Move) ─── */
+const ORIGIN_SECTIONS = [
+  { key: 'hypothesis', label: 'Bet hypothesis',       empty: 'Nexus will draft from your input' },
+  { key: 'archetype',  label: 'Archetype',            empty: 'Suggested from the 5-archetype model' },
+  { key: 'sponsor',    label: 'Sponsor',              empty: 'Who commits on the business side?' },
+  { key: 'tenant',     label: 'Tenant + scope',       empty: 'Which tenant, which function' },
+  { key: 'foundation', label: 'Foundation readiness', empty: 'Nexus checks Setup + Intelligence' },
+  { key: 'value',      label: 'Value at stake',       empty: 'Rough range you\'re committing to' },
+  { key: 'evidence',   label: 'Originating evidence', empty: 'Pulled from Intelligence if applicable' },
+];
+
+let originState = {};
+let originEntry = null;
+
+function buildOriginateRail() {
+  const rail = document.getElementById('origin-rail');
+  let html = `<div class="rail-track"><div class="rail-line"></div>`;
+  for (let i = 0; i < 8; i++) {
+    let cls = i === 0 ? 'active' : '';
+    const x = (i / 7) * 100;
+    html += `<div class="dot ${cls}" style="left: ${x}%;"></div>`;
+  }
+  html += `</div><div class="rail-labels">`;
+  ['P0','P1','P2','P3','P4','P5','P6','P7'].forEach((p, i) => {
+    const x = (i / 7) * 100;
+    html += `<span class="rail-label ${i === 0 ? 'active' : ''}" style="left: ${x}%;">${p}</span>`;
+  });
+  html += `</div>`;
+  rail.innerHTML = html;
+}
+
+function buildScaffold() {
+  const wrap = document.getElementById('origin-scaffold');
+  wrap.innerHTML = ORIGIN_SECTIONS.map((s, i) => {
+    const filled = !!originState[s.key];
+    const idx = String(i + 1).padStart(2, '0');
+    return `
+      <div class="scaffold-row ${filled ? 'filled' : ''}" data-key="${s.key}">
+        <div class="scaffold-num">${idx}</div>
+        <div class="scaffold-body">
+          <div class="label">${s.label}</div>
+          ${filled
+            ? `<div class="content">${originState[s.key]}</div>`
+            : `<div class="empty">${s.empty}</div>`}
+        </div>
+        <div class="scaffold-indicator"></div>
+      </div>`;
+  }).join('');
+  updatePromote();
+}
+
+function updatePromote() {
+  const filled = ORIGIN_SECTIONS.filter(s => originState[s.key]).length;
+  const btn = document.getElementById('origin-promote-btn');
+  const helper = document.getElementById('origin-promote-helper');
+  btn.disabled = filled < ORIGIN_SECTIONS.length;
+  helper.textContent = filled === ORIGIN_SECTIONS.length
+    ? 'Ready to promote'
+    : `${filled} of ${ORIGIN_SECTIONS.length} sections complete`;
+}
+
+function fillSections(updates, delayBetween = 240) {
+  // Animate fills with a small stagger so the user sees Nexus "doing the work"
+  const keys = Object.keys(updates);
+  keys.forEach((k, i) => {
+    setTimeout(() => {
+      originState[k] = updates[k];
+      buildScaffold();
+    }, i * delayBetween);
+  });
+}
+
+function pushNexus(html) {
+  const thread = document.getElementById('origin-chat-thread');
+  const b = document.createElement('div');
+  b.className = 'bubble nexus';
+  b.innerHTML = html;
+  thread.appendChild(b);
+  thread.scrollTop = thread.scrollHeight;
+}
+function pushUser(text) {
+  const thread = document.getElementById('origin-chat-thread');
+  const b = document.createElement('div');
+  b.className = 'bubble user';
+  b.textContent = text;
+  thread.appendChild(b);
+  thread.scrollTop = thread.scrollHeight;
+}
+
+function originStart(entry) {
+  originEntry = entry;
+  document.querySelectorAll('.start-chip').forEach(c => c.classList.add('used'));
+  const labels = {
+    intel: 'Start from an Intelligence finding',
+    foundation: 'Start from a Foundation Readiness gap',
+    premortem: 'Start from a pre-mortem result',
+    transfer: 'Start from a cross-industry transfer',
+    blank: 'Start from a blank hypothesis',
+  };
+  pushUser(labels[entry]);
+
+  if (entry === 'intel') {
+    pushNexus(`Which Intelligence finding? Three are recent and relevant for <em>Apex Retail</em>:<br><br>
+      • <strong>A1</strong> · Price-elasticity gap in private-label grocery — 4 of 7 categories underpricing<br>
+      • <strong>A2</strong> · Loyalty churn cohort widening Q3 — 11k high-LTV at risk<br>
+      • <strong>A3</strong> · Store-ops productivity drift in West region — 6% YoY`);
+    setTimeout(() => {
+      pushNexus(`I'll start with <strong>A2</strong> unless you say otherwise. Drafting from the finding now…`);
+      setTimeout(() => fillSections({
+        hypothesis: 'Recover <strong>$18M</strong> in revenue by closing the loyalty churn gap in the high-LTV cohort identified in <strong>A2</strong> — through targeted reactivation and cross-channel offer modeling.',
+        archetype:  '<strong>Customer-Side Growth</strong> · ↑ revenue retention',
+        foundation: 'Setup: ✓ CDP source connected · ✓ Loyalty schema mapped · Intelligence: A2 grounded in 11k-cohort behavior signal.',
+        evidence:   'Intelligence finding <strong>A2</strong> · Q3 cohort analysis · Confidence: high',
+      }, 380), 700);
+      setTimeout(() => {
+        pushNexus(`Three sections drafted from A2. I still need: <strong>sponsor</strong>, <strong>tenant + scope</strong>, and a <strong>value range</strong>. Who's owning this on the business side?`);
+      }, 700 + 4 * 380 + 200);
+    }, 900);
+  }
+
+  else if (entry === 'foundation') {
+    pushNexus(`Two open Foundation gaps for Apex Retail:<br><br>
+      • <strong>F1</strong> · Customer 360 is fragmented across CDP and CRM — no canonical join<br>
+      • <strong>F2</strong> · Store-ops telemetry not landing in the warehouse on time`);
+    setTimeout(() => {
+      pushNexus(`Picking <strong>F1</strong> — it gates two other moves. Treating the gap as the seed.`);
+      setTimeout(() => fillSections({
+        foundation: 'Open gap <strong>F1</strong> · Customer 360 fragmentation. Closing this unblocks A2 + A3 downstream.',
+        hypothesis: 'Build a canonical Customer 360 join across CDP + CRM so downstream moves can ground in unified identity.',
+      }, 380), 700);
+      setTimeout(() => {
+        pushNexus(`Foundation move drafted. I still need: <strong>archetype</strong>, <strong>sponsor</strong>, <strong>tenant</strong>, <strong>value</strong>, <strong>evidence</strong>. What's the rough order-of-magnitude value?`);
+      }, 700 + 2 * 380 + 200);
+    }, 900);
+  }
+
+  else if (entry === 'premortem') {
+    pushNexus(`Two recent pre-mortems on file:<br><br>
+      • <strong>PM-007</strong> · "Why might the loyalty rebuild fail in 12 months?" — top failure mode: data hygiene<br>
+      • <strong>PM-009</strong> · "Why might the new pricing engine fail at launch?" — top failure mode: ops change-management`);
+    setTimeout(() => {
+      pushNexus(`Using <strong>PM-007</strong>. The pre-mortem already names the bet and the trap.`);
+      setTimeout(() => fillSections({
+        hypothesis: 'Rebuild the loyalty program for the high-LTV cohort, holding the line on data-hygiene risk surfaced in <strong>PM-007</strong>.',
+        evidence:   'Pre-mortem <strong>PM-007</strong> · Data-hygiene named as #1 failure mode · Mitigation plan required.',
+      }, 380), 700);
+      setTimeout(() => {
+        pushNexus(`Two sections seeded from the pre-mortem. I still need: <strong>archetype</strong>, <strong>sponsor</strong>, <strong>tenant + scope</strong>, <strong>foundation</strong>, <strong>value</strong>. Where does this sit organizationally?`);
+      }, 700 + 2 * 380 + 200);
+    }, 900);
+  }
+
+  else if (entry === 'transfer') {
+    pushNexus(`Three cross-industry transfers in the library worth pulling on:<br><br>
+      • <strong>T-014</strong> · CPG → Retail · margin recovery via SKU rationalization<br>
+      • <strong>T-021</strong> · Banking → Retail · attrition modeling on transactional signal<br>
+      • <strong>T-033</strong> · Telco → Retail · win-back ladder for lapsed customers`);
+    setTimeout(() => {
+      pushNexus(`Going with <strong>T-021</strong> — strong analog to A2 above.`);
+      setTimeout(() => fillSections({
+        evidence:   'Cross-industry transfer <strong>T-021</strong> · Banking attrition model adapted to retail transactional signal.',
+        hypothesis: 'Adapt the T-021 attrition framework to predict and intervene on high-LTV churn before behavior signal degrades.',
+      }, 380), 700);
+      setTimeout(() => {
+        pushNexus(`Two sections drafted from the transfer. Still need: <strong>archetype</strong>, <strong>sponsor</strong>, <strong>tenant</strong>, <strong>foundation</strong>, <strong>value</strong>. Who would sponsor this?`);
+      }, 700 + 2 * 380 + 200);
+    }, 900);
+  }
+
+  else if (entry === 'blank') {
+    pushNexus(`Got it — let's build from scratch. Four questions, in order:<br><br>
+      <strong>1.</strong> What outcome do you want? (revenue, cost, risk, capability)<br>
+      <strong>2.</strong> Which tenant does this live in?<br>
+      <strong>3.</strong> Any signals you've already seen?<br>
+      <strong>4.</strong> Who's the natural sponsor?<br><br>
+      Answer in any format — I'll draft as you go.`);
+  }
+}
+
+function originSend() {
+  const inp = document.getElementById('origin-input');
+  const txt = inp.value.trim();
+  if (!txt) return;
+  pushUser(txt);
+  inp.value = '';
+  // Demo: free-form input fills any remaining empty section in order, with a Nexus paraphrase.
+  const next = ORIGIN_SECTIONS.find(s => !originState[s.key]);
+  if (next) {
+    setTimeout(() => {
+      pushNexus(`Logged as <strong>${next.label}</strong>. Drafted into the scaffold.`);
+      fillSections({ [next.key]: txt });
+    }, 500);
+  }
+}
+
+function openOrigination() {
+  // Reset state — origination is always a fresh slate
+  originState = {};
+  originEntry = null;
+  document.getElementById('origin-chat-thread').innerHTML = `
+    <div class="bubble nexus">A new move starts as a hypothesis. Tell me the outcome you want, the tenant it sits in, and any signals you've already seen — I'll draft a P0 charter you can sponsor.</div>
+    <div class="bubble nexus">If you'd rather start from <em>existing evidence in Intelligence</em> or a <em>Foundation Readiness gap</em>, pick one of the prompts below.</div>
+  `;
+  document.querySelectorAll('.start-chip').forEach(c => c.classList.remove('used'));
+  buildOriginateRail();
+  buildScaffold();
+  showView('originate');
+}
+
+function cancelOrigination() {
+  const filledCount = ORIGIN_SECTIONS.filter(s => originState[s.key]).length;
+  if (filledCount === 0) {
+    showView('dashboard'); // silent exit
+    return;
+  }
+  document.getElementById('confirm-msg').textContent =
+    `You've drafted ${filledCount} of ${ORIGIN_SECTIONS.length} sections. Save it as a draft to come back to, or discard and start fresh.`;
+  document.getElementById('confirm-overlay').classList.add('show');
+}
+function closeConfirm() {
+  document.getElementById('confirm-overlay').classList.remove('show');
+}
+function discardOrigination() {
+  closeConfirm();
+  showView('dashboard');
+}
+function saveOriginationDraft() {
+  closeConfirm();
+  // Stub — no draft tray yet on home. Visual feedback only.
+  showView('dashboard');
+}
+
+function promoteToP1() {
+  // Stub: in a real flow, create the move with a synthetic ID and open its Detail page.
+  // For the prototype, navigate to APX-CDP-2026 (already in the list) so the transition is visible.
+  showView('dashboard');
+  setTimeout(() => {
+    const idx = moves.findIndex(m => m.id === 'APX-CDP-2026');
+    if (idx >= 0) openMove(idx);
+  }, 120);
+}
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    if (document.getElementById('confirm-overlay').classList.contains('show')) {
+      closeConfirm();
+    } else if (!document.getElementById('originate-view').hidden) {
+      cancelOrigination();
+    }
+  }
+});
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') closeOrigination();
+});
+
+function phaseAction(m) {
+  const phaseVerbs = {
+    0: 'Continue origination',
+    1: `Resume P1 Charter`,
+    2: 'Continue diagnose',
+    3: 'Continue solutioning',
+    4: 'Continue build',
+    5: 'Continue execute',
+    6: 'Continue verify',
+    7: 'Continue handoff'
+  };
+  if (m.status === 'red') return { primary: 'Open gate review', secondary: null };
+  if (m.status === 'amber') return { primary: 'Resolve decision', secondary: 'Reopen brief' };
+  return { primary: phaseVerbs[m.phase] || 'Continue move', secondary: null };
+}
+
+function openMoveById(id) {
+  const idx = moves.findIndex(m => m.id === id);
+  if (idx >= 0) openMove(idx);
+}
+
+function setRibbonFilter(filter) {
+  document.querySelectorAll('.ribbon-seg').forEach(b => {
+    b.classList.toggle('active', b.dataset.filter === filter);
+  });
+  // Apply filter — 'all' shows everything; red/green narrow by status; value re-sorts.
+  if (filter === 'red' || filter === 'green') {
+    setSort('attention');
+    window.__ribbonStatusFilter = filter;
+  } else if (filter === 'value') {
+    setSort('value');
+    window.__ribbonStatusFilter = null;
+  } else {
+    window.__ribbonStatusFilter = null;
+  }
+  buildCards();
+  buildKanban();
+  // Show/hide the attention drilldown — only visible when "Need attention" is active or "all" with attn items
+  const dd = document.getElementById('attn-drilldown');
+  if (dd) dd.style.display = (filter === 'green' || filter === 'value') ? 'none' : 'flex';
+}
+
+function openMove(idx) {
+  const m = moves[idx];
+  document.getElementById('detail-move-id').textContent = m.id;
+  document.getElementById('detail-bc-tenant').textContent = m.tenant;
+  document.getElementById('detail-bc-id').textContent = m.id;
+  document.getElementById('detail-title').textContent = m.name;
+  document.getElementById('detail-meta').textContent = `${m.archetype} · SPONSOR: ${m.sponsor.toUpperCase()}`;
+
+  const act = phaseAction(m);
+  const actionsEl = document.getElementById('detail-head-actions');
+  actionsEl.innerHTML = `
+    ${act.secondary ? `<button class="btn-ghost" onclick="alert('${act.secondary} — Maestro stub')">${act.secondary}</button>` : ''}
+    <button class="btn-phase" onclick="alert('${act.primary} — opens Maestro for ${m.id}')">${act.primary} <span class="arrow">→</span></button>
+  `;
+
+  const rail = document.getElementById('detail-rail');
+  let railHtml = `<div class="rail-track"><div class="rail-line"></div>`;
+  for (let i = 0; i < 8; i++) {
+    let cls = '';
+    if (i < m.phase) cls = 'done';
+    else if (i === m.phase) cls = `current ${m.status}`;
+    railHtml += `<div class="dot ${cls}" style="left: ${(i / 7) * 100}%"></div>`;
+  }
+  railHtml += `</div><div class="rail-labels">`;
+  ['P0','P1','P2','P3','P4','P5','P6','P7'].forEach((p, i) => {
+    railHtml += `<span class="${i === m.phase ? 'current ' + m.status : ''}">${p}</span>`;
+  });
+  railHtml += `</div>`;
+  rail.innerHTML = railHtml;
+
+  const body = document.getElementById('detail-body');
+  body.innerHTML = `
+    <div class="detail-status-banner ${m.status}">
+      <span class="pulse"></span>
+      <div class="banner-text">
+        <div class="status">${m.statusText}</div>
+        <div class="desc">${m.statusDesc}</div>
+      </div>
+    </div>
+
+    <div class="detail-section">
+      <div class="section-title">${m.phaseLabel.toUpperCase()} · GATE CRITERIA</div>
+      <ul class="crit-list">
+        ${m.criteria.map(c => `<li><span class="crit-check ${c.done ? 'done' : ''}">${c.done ? '✓' : ''}</span><span>${c.text}</span></li>`).join('')}
+      </ul>
+    </div>
+
+    <div class="section-grid">
+      <div class="detail-section" style="margin-bottom: 0;">
+        <div class="section-title">Sponsor & Team</div>
+        <div class="kv-pair"><span class="k">Sponsor</span><span class="v">${m.sponsor}</span></div>
+        <div class="kv-pair"><span class="k">Tenant</span><span class="v">${m.tenant}</span></div>
+        <div class="kv-pair"><span class="k">Archetype</span><span class="v" style="font-size: 11px;">${m.archetype}</span></div>
+      </div>
+      <div class="detail-section" style="margin-bottom: 0;">
+        <div class="section-title">Value at Stake</div>
+        <div class="kv-pair"><span class="k">Projected</span><span class="v">${m.value_meta.proj}</span></div>
+        <div class="kv-pair"><span class="k">Range</span><span class="v">${m.value_meta.range}</span></div>
+        <div class="kv-pair"><span class="k">Verified</span><span class="v green">${m.value_meta.verified}</span></div>
+      </div>
+    </div>
+
+    <div class="detail-section">
+      <div class="section-title">Recent Activity</div>
+      <div class="timeline">
+        ${m.timeline.map(t => `<div class="tl-item"><span class="tl-time">${t.time}</span><span class="tl-dot"></span><span class="tl-text">${t.text}</span></div>`).join('')}
+      </div>
+      ${m.timeline.length >= 3 ? '<a class="tl-more">View all activity →</a>' : ''}
+    </div>
+
+    <div class="detail-section">
+      <div class="section-title">Evidence from Intelligence</div>
+      <div class="evidence-list">
+        ${m.evidence.map(e => `<div class="ev-item"><span class="num">${e.n}</span><span class="ev-text">${e.text}</span><span class="ev-link">↗</span></div>`).join('')}
+      </div>
+    </div>
+  `;
+
+  const thread = document.getElementById('detail-chat-thread');
+  thread.innerHTML = `
+    <div class="bubble nexus">I'm scoped to <em>${m.id}</em> — ${m.name}. Currently in <em>${m.phaseLabel}</em>. Status: <em>${m.statusText.toLowerCase()}</em>.</div>
+    <div class="bubble nexus">${m.statusDesc}. Want me to walk through what's needed to advance?</div>
+  `;
+
+  const promptsWrap = document.getElementById('detail-prompts');
+  promptsWrap.innerHTML = m.prompts.map(p => `<button class="prompt-chip">${p}</button>`).join('');
+
+  showView('detail');
+}
+
+function showView(view) {
+  document.getElementById('dashboard-view').hidden = view !== 'dashboard';
+  document.getElementById('detail-view').hidden = view !== 'detail';
+  document.getElementById('originate-view').hidden = view !== 'originate';
+  document.getElementById('back-btn').hidden = view === 'dashboard';
+  document.getElementById('new-btn').hidden = view !== 'dashboard';
+  window.scrollTo(0, 0);
+}
+
+buildScatter();
+buildCards();
+buildKanban();
+
+/* Apply persisted tweaks on init */
+setListView(TWEAKS.listView);
+setSort(TWEAKS.sort);
+
+/* ─── Tweaks panel UI wiring ─── */
+function syncTweakButtons() {
+  document.querySelectorAll('#tw-mapview button').forEach(b => {
+    b.classList.toggle('active', b.dataset.val === TWEAKS.listView);
+  });
+  document.querySelectorAll('#tw-sort button').forEach(b => {
+    b.classList.toggle('active', b.dataset.val === TWEAKS.sort);
+  });
+}
+document.querySelectorAll('#tw-mapview button').forEach(b => {
+  b.addEventListener('click', () => setListView(b.dataset.val));
+});
+document.querySelectorAll('#tw-sort button').forEach(b => {
+  b.addEventListener('click', () => setSort(b.dataset.val));
+});
+
+/* ─── Edit-mode host protocol ─── */
+const tweaksPanel = document.getElementById('tweaks-panel');
+document.getElementById('tw-close-btn').addEventListener('click', () => {
+  tweaksPanel.classList.remove('show');
+  window.parent.postMessage({ type: '__edit_mode_dismissed' }, '*');
+});
+window.addEventListener('message', (e) => {
+  const t = e.data && e.data.type;
+  if (t === '__activate_edit_mode')   tweaksPanel.classList.add('show');
+  if (t === '__deactivate_edit_mode') tweaksPanel.classList.remove('show');
+});
+window.parent.postMessage({ type: '__edit_mode_available' }, '*');
+</script>
+
+<!-- Floating Ask Nexus button — persistent across all Strategic Moves screens -->
+<button id="ask-nexus-fab" type="button" aria-label="Ask Nexus"
+  style="position: fixed; bottom: 28px; right: 28px; z-index: 200;
+         display: inline-flex; align-items: center; gap: 10px;
+         padding: 14px 22px 14px 18px; border-radius: 999px;
+         background: var(--ink); color: var(--cream);
+         border: none; cursor: pointer;
+         font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 600;
+         box-shadow: 0 8px 24px rgba(0,0,0,0.18), 0 2px 6px rgba(0,0,0,0.10);
+         transition: transform 150ms, box-shadow 150ms;">
+  <span style="color: var(--gold); font-size: 14px; line-height: 1;">✦</span>
+  <span>Ask Nexus</span>
+</button>
+<script>
+(function(){
+  const fab = document.getElementById('ask-nexus-fab');
+  if (!fab) return;
+  fab.addEventListener('mouseenter', () => {
+    fab.style.transform = 'translateY(-1px)';
+    fab.style.boxShadow = '0 12px 28px rgba(0,0,0,0.22), 0 3px 8px rgba(0,0,0,0.12)';
+  });
+  fab.addEventListener('mouseleave', () => {
+    fab.style.transform = '';
+    fab.style.boxShadow = '0 8px 24px rgba(0,0,0,0.18), 0 2px 6px rgba(0,0,0,0.10)';
+  });
+  // Stub: in a real flow this opens the Nexus chat drawer.
+  fab.addEventListener('click', () => {
+    // No-op for now — visual placeholder for the persistent entry point.
+  });
+})();
+</script>
+
+</body>
+</html>

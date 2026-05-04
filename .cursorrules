@@ -1,0 +1,50 @@
+# AbarVa — Cursor Rules (Strategic Moves + Programs)
+
+## Visual reference (binding)
+
+Canonical reference: `docs/design/strategic-moves/`
+
+- `tokens.css` — single source of truth for colors, type, spacing, radius, motion. Never introduce new tokens. Never change committed token values.
+- `14-strategic-moves-home.html` — high-fidelity prototype (`#dashboard-view`, `#detail-view`, `#originate-view`). Pixel-match layout when implementing.
+- `README.md` — implementation brief (acceptance checklist at end).
+- `INTEGRATION.md` — what to touch, what to leave alone; **`--gold` → `--abarva-signal-blue`** (never add `--gold` to `tokens.css`).
+
+## Token discipline
+
+- Use only tokens from `tokens.css` (brand + canon).
+- No new colors, fonts, radius values, gradients, decorative SVG icons, emoji, or stock illustration.
+
+## Type ramp
+
+- Display headings: Fraunces 500/700 (`--abarva-serif`).
+- UI body: Inter 400/500/600 (`--abarva-sans`).
+- Mono eyebrows / labels / code: JetBrains Mono 600 (`--abarva-mono`), uppercase, `letter-spacing: 0.12em`. Do not replace mono eyebrows with sans-serif uppercase.
+
+## Surfaces
+
+- Public/marketing/investor: paper `#faf7f1`, navy ink `#0c1a3a`, signal blue accent `#0066CC`.
+- Authenticated app (Strategic Moves): cream `--canon-bg-cream`, white cards, ink text. Red/amber/teal are **semantic only**, never decorative.
+
+## Naming doctrine
+
+- User-facing: "Strategic Move" / "Move" / "your moves".
+- Internal: `engagements`, `program_*` — **no DB table renames**.
+- Routes: `/strategic-moves`, `/strategic-moves/[moveId]`, `/strategic-moves/new`.
+- APIs: `/api/v1/programs/*`, `programId`, `getProgramById`, etc. stay.
+- Rule: user-visible strings → Move vocabulary; developer-facing → keep program/engagement names.
+
+## Phase labels
+
+- Use `src/lib/programs/phase-labels.ts` (`getPhaseLabel`, `PHASE_LABELS`) for all user-visible phase text. Never duplicate inline maps.
+
+## Phase rail component
+
+- Shared: `src/components/strategic-moves/PhaseRail.tsx` — `<PhaseRail current={n} totalPhases={8} />`. Reuse on Detail, Originate, future surfaces. Do not inline duplicate rails.
+
+## Hard “do not”
+
+- Do not ship the prototype **tweaks** panel to production.
+- Do not add `--gold` to `tokens.css`.
+- Do not use signal-blue as the in-app **primary** CTA (use ink-on-cream). Signal blue: public surfaces + one accent per page.
+- Do not gate edit rights on “participant on move”; any `tenant_member` may edit any move (locked product decision).
+- Do not bypass app-layer **`client_id` / tenant** filters on Strategic Moves data paths.
