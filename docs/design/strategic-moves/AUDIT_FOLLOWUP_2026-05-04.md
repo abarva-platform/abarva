@@ -6,16 +6,18 @@ Format mirrors the original audit.
 
 ---
 
-## F1 — PR-2 and PR-3 merged into dangling base branches (process issue)
+## F1 — PRs merged into dangling base branches (process issue, 3 occurrences)
 
 - **Severity:** **High** (release-path correctness)
-- **Symptom:** PR-2 (#1501) and PR-3 (#1503) both merged cleanly on GitHub, but their commits did not reach `main`. Both had been opened against a sibling branch (PR-1's branch for PR-2, PR-1502's branch for PR-3). By the time each was merged, its base had already merged into `main`, leaving the PR's merge target as an orphan branch tip.
-- **Evidence:**
-  - PR-1501 merge commit `28cb0523…` reachable only from `fix/strategic-moves-load-design-tokens-2026-05-04-bae9` remote branch, not from `main`. Restored via PR-1502.
-  - PR-1503 merge commit `28970a8c…` reachable only from `fix/strategic-moves-restore-pr2-to-main-bae9` remote branch, not from `main`. PR-3's 3 commits (default cards, scatter gate, detail-shell) restored via this PR (PR-A).
-- **Root cause:** Draft PRs stacked on a sequence of sibling branches (PR-1 → PR-2 → PR-3 → PR-3b → PR-4) where each PR's base was its predecessor. When the predecessor merged to `main`, its branch was not automatically deleted and the stacked PR's base did not auto-retarget.
-- **Fix:** `AUDIT_FOLLOWUP` hard rule going forward — **all PRs target `main` directly** and rebase on top as upstream lands. No more stacked-PR-over-sibling-branch patterns on this project.
-- **Status:** ✅ Mitigated via PR-1502 (PR-2 restoration) and this PR (PR-3 restoration). New PRs (PR-A, PR-B, all subsequent) target `main`.
+- **Symptom:** Three consecutive PRs merged cleanly on GitHub, but their commits did not reach `main`. Each had been opened against a sibling branch (its predecessor in a stack). By the time each was merged, its base had already merged into `main`, leaving the PR's merge target as an orphan branch tip.
+- **Evidence (chronological):**
+  - **PR-1501** (PR-2, pixel-match) — merge commit `28cb0523…` reachable only from `fix/strategic-moves-load-design-tokens-2026-05-04-bae9`. Restored via PR-1502.
+  - **PR-1503** (PR-3, polish) — merge commit `28970a8c…` reachable only from `fix/strategic-moves-restore-pr2-to-main-bae9`. Restored via PR-1506 (PR-A).
+  - **PR-1507** (PR-B, substrate v2 + gate-criteria doctrine) — merge commit `02186c1a…` reachable only from `audit/strategic-moves-audit-status-2026-05-04-bae9` (PR-A's branch tip post-merge). Restored via PR-1508 (this PR).
+- **Root cause:** PR bases were set to the predecessor's branch rather than `main`. When the predecessor merged, its branch was not auto-deleted and the stacked PR's base did not auto-retarget. The `ManagePullRequest` tool offers a `base_branch` parameter when creating PRs; three times in a row I set it to the predecessor's branch "so it includes the predecessor's commits." That's the wrong mental model — it only matters what's reachable from `main` at merge time.
+- **The actual fix (lesson learned on the third occurrence):** No PR on this project can ever have a `base_branch` other than `main`. Full stop. If a sequential PR needs its predecessor's state for diff hygiene, **branch off the predecessor locally, then push and open the PR against `main`**. The diff will show only the new commits because the predecessor's commits are already merged to main (or will be, at which point the rebase is a no-op).
+- **Policy enforcement for me (the agent):** treat `base_branch != 'main'` on any `ManagePullRequest` call as a hard error to self-correct. Branch locally off the latest `origin/main`, push, open PR targeting `main`.
+- **Status:** ✅ Mitigated via three restoration PRs (#1502, PR-A #1506, and this one #1508). Going forward, PR-B's lesson is the policy: `base_branch: 'main'` only.
 
 ---
 
@@ -94,6 +96,6 @@ Format mirrors the original audit.
 
 1. **Every PR against this surface cites its audit-doctrine row.** Either `[audit #N]` or `[follow-up F-N]` in the commit message or PR body.
 2. **Nothing silently fixed.** If work surfaces a divergence not in the original audit, it's logged here as a new F-row before (or at commit time with) the fix.
-3. **All PRs target `main` directly.** No sibling-branch stacking.
+3. **All PRs target `main` directly.** No sibling-branch stacking. If a sequential change needs its predecessor's state, branch off the predecessor locally, then push and open the PR against `main`. The `ManagePullRequest` tool's `base_branch` parameter is **always** `'main'` on this surface — treat anything else as a hard error after the three F1 occurrences above.
 4. **Vercel preview wait SLA: 10 minutes.** If preview hasn't deployed within 10 minutes of a push, surface and pause.
 5. **Data migrations:** dry-run → review report → apply → re-run for idempotency → commit with report in PR body. Every migration stamped for one-statement reversal.
