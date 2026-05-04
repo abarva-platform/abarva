@@ -186,9 +186,22 @@
   transform: translateX(2px);
 }
 
-/* ─── Portfolio map title block */
+/* ─── Portfolio map title block + right-aligned status legend
+   Reference: .map-title-block (title/sub) + .map-head (legend) per
+   docs/design/strategic-moves/14-strategic-moves-home.html. Audit #10
+   called out that the legend used to live inside the scatter block
+   (only visible on scatter view); it now sits alongside the title
+   block so it's visible for cards/kanban/scatter equally. */
 .mapTitleBlock {
   margin: 48px 0 24px;
+}
+
+.mapTitleRow {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
 }
 
 .mapTitleH2 {
@@ -203,6 +216,27 @@
 .mapTitleSub {
   font-size: 14px;
   color: var(--abarva-slate);
+}
+
+.mapLegend {
+  display: inline-flex;
+  align-items: center;
+  gap: 18px;
+  flex-wrap: wrap;
+  padding-bottom: 4px;
+}
+
+.mapLegendItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--abarva-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  font-weight: 600;
+  color: var(--abarva-signal-blue);
+  white-space: nowrap;
 }
 
 
@@ -590,27 +624,6 @@
   background: var(--canon-gray-100);
   overflow: hidden;
   padding: 44px 28px 72px 54px;
-}
-
-.scatterLegend {
-  position: absolute;
-  top: 12px;
-  right: 16px;
-  display: inline-flex;
-  gap: 18px;
-  align-items: center;
-  z-index: 30;
-  font-family: var(--abarva-mono);
-  font-size: 10px;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: var(--abarva-signal-blue);
-}
-
-.scatterLegend span {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
 }
 
 .legendDot {

@@ -175,10 +175,32 @@ export function StrategicMovesHomeClient({
       ) : null}
 
       <div className={styles.mapTitleBlock}>
-        <h2 className={styles.mapTitleH2}>Portfolio map</h2>
-        <div className={styles.mapTitleSub}>
-          Phase × value at stake.{' '}
-          {portfolio.counts.total} {portfolio.counts.total === 1 ? 'move' : 'moves'} in flight.
+        <div className={styles.mapTitleRow}>
+          <div>
+            <h2 className={styles.mapTitleH2}>Portfolio map</h2>
+            <div className={styles.mapTitleSub}>
+              Phase × value at stake.{' '}
+              {portfolio.counts.total} {portfolio.counts.total === 1 ? 'move' : 'moves'} in flight.
+            </div>
+          </div>
+          <div className={styles.mapLegend} aria-label="Status legend">
+            <span className={styles.mapLegendItem}>
+              <i className={`${styles.legendDot} ${styles.legendRed}`} aria-hidden />
+              Needs attention
+            </span>
+            <span className={styles.mapLegendItem}>
+              <i className={`${styles.legendDot} ${styles.legendAmber}`} aria-hidden />
+              Awaiting decision
+            </span>
+            <span className={styles.mapLegendItem}>
+              <i className={`${styles.legendDot} ${styles.legendGreen}`} aria-hidden />
+              On track
+            </span>
+            <span className={styles.mapLegendItem}>
+              <i className={`${styles.legendDot} ${styles.legendTeal}`} aria-hidden />
+              Healthy / early
+            </span>
+          </div>
         </div>
       </div>
 
@@ -335,12 +357,6 @@ export function StrategicMovesHomeClient({
 
         {listView === 'scatter' ? (
           <div className={styles.scatter}>
-            <div className={styles.scatterLegend}>
-              <span><i className={`${styles.legendDot} ${styles.legendRed}`} />Needs attention</span>
-              <span><i className={`${styles.legendDot} ${styles.legendAmber}`} />Awaiting decision</span>
-              <span><i className={`${styles.legendDot} ${styles.legendGreen}`} />On track</span>
-              <span><i className={`${styles.legendDot} ${styles.legendTeal}`} />Healthy / early</span>
-            </div>
             <div className={styles.scatterBands} aria-hidden>
               {PHASE_AXIS.map((phase) => (
                 <div className={styles.scatterBand} key={`band-${phase.code}`} />
