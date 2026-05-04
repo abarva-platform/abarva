@@ -169,6 +169,22 @@ export function StrategicMoveOriginateClient({ tenantName }: Props) {
   );
   const canPromote = completedCount === 7 && !isPending;
 
+  useEffect(() => {
+    function handleKey(event: KeyboardEvent) {
+      if (event.key !== 'Escape') return;
+      if (showConfirm) {
+        event.preventDefault();
+        setShowConfirm(false);
+        return;
+      }
+      event.preventDefault();
+      cancelFlow();
+    }
+    window.addEventListener('keydown', handleKey);
+    return () => window.removeEventListener('keydown', handleKey);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [showConfirm, completedCount, programName]);
+
   function addTurn(role: ChatTurn['role'], text: string) {
     setTurns((prev) => [...prev, { id: `${role}-${Date.now()}-${Math.random()}`, role, text }]);
   }
