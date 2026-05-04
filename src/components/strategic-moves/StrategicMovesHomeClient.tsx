@@ -113,52 +113,55 @@ export function StrategicMovesHomeClient({
   return (
     <div className={styles.page}>
       <div className={styles.topbar}>
-        <div>
-          <div className={styles.eyebrow}>Strategic Moves</div>
-          <h1 className={styles.title}>Portfolio command center</h1>
-        </div>
+        <h1 className={styles.pageTitle}>Strategic Moves</h1>
         <Link className={styles.newMove} href="/strategic-moves/new">
           + New Move
         </Link>
       </div>
 
-      <section className={styles.editorialRibbon}>
-        <article className={styles.editorialMetric}>
-          <div className={styles.ribbonValue}>{portfolio.counts.total}</div>
-          <div className={styles.ribbonLabel}>Moves</div>
-        </article>
-        <article className={styles.editorialMetric}>
-          <div className={styles.ribbonValue}>{portfolio.counts.needAttention}</div>
-          <div className={styles.ribbonLabel}>Need Attention</div>
-        </article>
-        <article className={styles.editorialMetric}>
-          <div className={styles.ribbonValue}>{portfolio.counts.onTrack}</div>
-          <div className={styles.ribbonLabel}>On Track</div>
-        </article>
-        <article className={styles.editorialMetric}>
-          <div className={styles.ribbonValue}>{formatValueAtStake(totalCapturedValue)}</div>
-          <div className={styles.ribbonLabel}>At Stake</div>
-        </article>
+      <section className={styles.ribbon} aria-label="Portfolio summary">
+        <div className={styles.ribbonSeg}>
+          <span className={styles.ribbonNum}>{portfolio.counts.total}</span>
+          <span className={styles.ribbonLbl}>Moves</span>
+        </div>
+        <div className={`${styles.ribbonSeg} ${portfolio.counts.needAttention > 0 ? styles.ribbonSegAttn : ''}`}>
+          <span className={styles.ribbonNum}>{portfolio.counts.needAttention}</span>
+          <span className={styles.ribbonLbl}>Need attention</span>
+        </div>
+        <div className={styles.ribbonSeg}>
+          <span className={styles.ribbonNum}>{portfolio.counts.onTrack}</span>
+          <span className={styles.ribbonLbl}>On track</span>
+        </div>
+        <div className={styles.ribbonSeg}>
+          <span className={styles.ribbonNum}>{formatValueAtStake(totalCapturedValue)}</span>
+          <span className={styles.ribbonLbl}>At stake</span>
+        </div>
+        <div className={styles.ribbonMeta}>Live</div>
       </section>
 
-      <section className={styles.attentionPanel}>
-        <div className={styles.sectionTitle}>Need Attention</div>
-        {portfolio.needAttentionMoves.length === 0 ? (
-          <div className={styles.attentionEmpty}>
-            No immediate gate blockers or pending decisions. Value captured for {mapStats.capturedCount} of {portfolio.counts.total} moves.
-          </div>
-        ) : (
-          <div className={styles.rowList}>
-            {portfolio.needAttentionMoves.map((row) => (
-              <Link className={styles.attentionRow} key={row.id} href={`/strategic-moves/${row.id}`}>
-                <span className={styles.attentionCode}>{row.displayCode}</span>
-                <span>{row.statusText}</span>
-                <span className={styles.attentionLink}>Review →</span>
-              </Link>
-            ))}
-          </div>
-        )}
-      </section>
+      {portfolio.needAttentionMoves.length > 0 ? (
+        <div className={styles.attnDrilldown}>
+          {portfolio.needAttentionMoves.map((row) => (
+            <Link className={styles.attnRow} key={row.id} href={`/strategic-moves/${row.id}`}>
+              <span className={styles.attnBranch}>└─</span>
+              <span className={styles.attnBody}>
+                <span className={styles.attnMoveId}>{row.displayCode}</span>
+                <span className={styles.attnSep}>·</span>
+                <span className={styles.attnText}>{row.statusDescription || row.statusText}</span>
+              </span>
+              <span className={styles.attnArrow}>→</span>
+            </Link>
+          ))}
+        </div>
+      ) : null}
+
+      <div className={styles.mapTitleBlock}>
+        <h2 className={styles.mapTitleH2}>Portfolio map</h2>
+        <div className={styles.mapTitleSub}>
+          Phase × value at stake.{' '}
+          {portfolio.counts.total} {portfolio.counts.total === 1 ? 'move' : 'moves'} in flight.
+        </div>
+      </div>
 
       <div className={styles.toolbar}>
         <div className={styles.toggleGroup}>

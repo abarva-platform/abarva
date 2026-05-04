@@ -1,11 +1,213 @@
 .page {
-  background: #f8f5ef;
+  background: var(--canon-bg-surface);
   color: var(--canon-gray-900);
   min-height: calc(100vh - 64px);
   padding: 20px 28px 28px;
   font-family: var(--abarva-sans);
 }
 
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.pageTitle {
+  margin: 0;
+  font-family: var(--abarva-serif);
+  font-size: 22px;
+  font-weight: 900;
+  letter-spacing: -0.5px;
+  color: var(--abarva-ink-black);
+}
+
+.newMove {
+  display: inline-flex;
+  align-items: center;
+  border: none;
+  border-radius: 8px;
+  background: var(--abarva-ink-black);
+  color: var(--canon-bg-cream);
+  font-size: 13px;
+  font-weight: 700;
+  padding: 10px 20px;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background 150ms var(--ease-out);
+}
+
+.newMove:hover {
+  background: var(--canon-gray-900);
+}
+
+/* ─── Editorial ribbon (transparent strip with serif numerals + mono labels)
+   Ref: docs/design/strategic-moves/14-strategic-moves-home.html .ribbon */
+.ribbon {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr) auto;
+  align-items: stretch;
+  margin: 28px 0 0;
+  padding: 0;
+}
+
+.ribbonSeg {
+  position: relative;
+  padding: 14px 16px 14px 14px;
+  text-align: left;
+  background: transparent;
+  border: 0;
+  min-height: 64px;
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+
+.ribbonSeg + .ribbonSeg::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 12px;
+  bottom: 12px;
+  width: 1px;
+  background: var(--canon-border);
+}
+
+.ribbonNum {
+  font-family: var(--abarva-serif);
+  font-size: 36px;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.8px;
+  color: var(--abarva-ink-black);
+}
+
+.ribbonLbl {
+  font-family: var(--abarva-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  font-weight: 600;
+  color: var(--abarva-signal-blue);
+  white-space: nowrap;
+}
+
+.ribbonSegAttn .ribbonNum {
+  color: var(--canon-red);
+}
+
+.ribbonSegAttn .ribbonLbl {
+  color: var(--canon-red);
+}
+
+.ribbonMeta {
+  display: flex;
+  align-items: center;
+  padding: 0 4px 0 24px;
+  font-family: var(--abarva-mono);
+  font-size: 9px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  font-weight: 500;
+  color: var(--abarva-stone);
+}
+
+/* ─── Need-attention drilldown (full-bleed rows, no wrapper card) */
+.attnDrilldown {
+  margin: 24px 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.attnRow {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 12px;
+  min-height: 44px;
+  padding: 0 14px 0 12px;
+  cursor: pointer;
+  transition: background 120ms var(--ease-out), border-color 120ms var(--ease-out);
+  background: var(--canon-bg-surface);
+  border: 1px solid var(--abarva-ink-black);
+  border-radius: 0;
+  text-decoration: none;
+  color: inherit;
+}
+
+.attnRow:hover {
+  background: rgba(163, 45, 45, 0.04);
+}
+
+.attnBranch {
+  font-family: var(--abarva-mono);
+  font-size: 11px;
+  color: var(--abarva-stone);
+  font-weight: 500;
+}
+
+.attnBody {
+  font-size: 14px;
+  color: var(--canon-gray-900);
+  line-height: 1.4;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  min-width: 0;
+  flex-wrap: wrap;
+}
+
+.attnMoveId {
+  font-family: var(--abarva-mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-weight: 600;
+  color: var(--abarva-ink-black);
+}
+
+.attnSep {
+  color: var(--abarva-stone);
+}
+
+.attnText {
+  color: var(--canon-gray-900);
+}
+
+.attnArrow {
+  font-size: 14px;
+  color: var(--abarva-stone);
+  transition: transform 150ms var(--ease-out), color 150ms var(--ease-out);
+}
+
+.attnRow:hover .attnArrow {
+  color: var(--abarva-ink-black);
+  transform: translateX(2px);
+}
+
+/* ─── Portfolio map title block */
+.mapTitleBlock {
+  margin: 48px 0 24px;
+}
+
+.mapTitleH2 {
+  font-family: var(--abarva-serif);
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  color: var(--abarva-ink-black);
+  margin: 0 0 4px;
+}
+
+.mapTitleSub {
+  font-size: 14px;
+  color: var(--abarva-slate);
+}
+
+/* ─── Legacy classes (transitional)
+   Kept while subsequent commits in this PR refactor StrategicMoveDetailView
+   and StrategicMoveOriginateClient. Removed in the cleanup commit. */
 .backRow {
   margin-bottom: 8px;
 }
@@ -17,8 +219,8 @@
   border: 1px solid var(--canon-border);
   border-radius: 8px;
   padding: 7px 10px;
-  background: #fff;
-  color: var(--canon-gray-800);
+  background: var(--canon-bg-surface);
+  color: var(--canon-gray-700);
   font-family: var(--abarva-mono);
   font-size: 10px;
   letter-spacing: 0.08em;
@@ -26,87 +228,22 @@
   text-decoration: none;
 }
 
-.backLink:hover {
-  border-color: var(--canon-border-strong);
-  color: var(--canon-gray-900);
-}
-
-.topbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 14px;
-}
-
 .eyebrow {
   font-family: var(--abarva-mono);
   font-size: 10px;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: #9b6a1a;
+  color: var(--abarva-stone);
   font-weight: 600;
 }
 
 .title {
   margin: 4px 0 0;
   font-family: var(--abarva-serif);
-  font-size: 48px;
+  font-size: 26px;
+  font-weight: 700;
   line-height: 1.15;
   letter-spacing: -0.02em;
-}
-
-.newMove {
-  border: 1px solid var(--abarva-ink-black);
-  border-radius: 8px;
-  background: var(--abarva-ink-black);
-  color: var(--canon-bg-cream);
-  font-size: 13px;
-  font-weight: 600;
-  padding: 10px 14px;
-  text-decoration: none;
-}
-
-.ribbon {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(120px, 1fr));
-  gap: 10px;
-  margin-bottom: 14px;
-}
-
-.editorialRibbon {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(140px, 1fr));
-  gap: 10px;
-  margin-bottom: 14px;
-}
-
-.editorialMetric {
-  background: #f6f2e8;
-  border: 1px solid var(--canon-border);
-  border-radius: 10px;
-  padding: 14px 14px 12px;
-}
-
-.ribbonCard {
-  background: #fff;
-  border: 1px solid var(--canon-border);
-  border-radius: 10px;
-  padding: 12px;
-}
-
-.ribbonLabel {
-  font-family: var(--abarva-mono);
-  font-size: 10px;
-  letter-spacing: 0.11em;
-  color: #716754;
-  text-transform: uppercase;
-}
-
-.ribbonValue {
-  margin-top: 4px;
-  font-family: var(--abarva-serif);
-  font-size: 50px;
-  line-height: 0.95;
 }
 
 .toolbar {

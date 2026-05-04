@@ -471,5 +471,6 @@ export interface StrategicMovePortfolio {
     id: string;
     displayCode: string;
     statusText: string;
+    statusDescription: string;
   }>;
 }
