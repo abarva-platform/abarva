@@ -500,16 +500,23 @@ export function StrategicMoveOriginateClient({ tenantName }: Props) {
       </section>
 
       {showConfirm ? (
-        <div className={styles.dialogOverlay}>
-          <div className={styles.dialog}>
-            <div className={styles.sectionTitle}>Unsaved origination</div>
-            <div>You have scaffold content in progress. What do you want to do?</div>
-            <div className={styles.dialogActions}>
-              <button className={styles.textButton} onClick={() => setShowConfirm(false)} type="button">
+        <div className={`${styles.confirmOverlay} ${styles.confirmOverlayShow}`} role="presentation">
+          <div className={styles.confirmDialog} role="dialog" aria-modal="true" aria-labelledby="confirm-discard-title">
+            <h3 id="confirm-discard-title" className={styles.confirmDialogTitle}>Discard this move?</h3>
+            <p className={styles.confirmDialogBody}>
+              You&rsquo;ve drafted {completedCount} of {SCAFFOLD_ORDER.length} sections. Save it as a draft to come
+              back to, or discard and start fresh.
+            </p>
+            <div className={styles.confirmActions}>
+              <button
+                className={styles.confirmBtn}
+                onClick={() => setShowConfirm(false)}
+                type="button"
+              >
                 Continue working
               </button>
               <button
-                className={styles.textButton}
+                className={`${styles.confirmBtn} ${styles.confirmBtnDanger}`}
                 onClick={() => {
                   setShowConfirm(false);
                   setProgramName('');
@@ -521,7 +528,7 @@ export function StrategicMoveOriginateClient({ tenantName }: Props) {
                 Discard
               </button>
               <button
-                className={styles.primaryAction}
+                className={`${styles.confirmBtn} ${styles.confirmBtnPrimary}`}
                 onClick={() => {
                   setShowConfirm(false);
                   router.push('/strategic-moves');
