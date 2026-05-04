@@ -22,6 +22,7 @@ import type {
 } from './types.db';
 import type { ArchetypeKey } from './types.ui';
 import type { StrategicMove, StrategicMovePortfolio } from './types.ui';
+import { extractProjectedValueFromLegacyBaseline } from './value-utils';
 
 function assertTenancy(ctx: TenancyCtx): void {
   if (!ctx?.clientId || !ctx?.userId) {
@@ -43,6 +44,7 @@ interface EngagementRow {
   value_verified_status: 'pending' | 'tracked' | 'final' | null;
   value_currency: string | null;
   value_assumptions_jsonb: Record<string, unknown> | null;
+  baseline_metrics: Record<string, unknown> | null;
   program_archetype: ArchetypeKey | null;
   origin_source: OriginSource | null;
   origin_source_ref: string | null;
@@ -63,6 +65,9 @@ interface EngagementRow {
 }
 
 function rowToProgram(r: EngagementRow): ProgramCore {
+  const legacyProjected = extractProjectedValueFromLegacyBaseline(r.baseline_metrics);
+  const projectedLow = r.value_projected_low_usd ?? legacyProjected?.low ?? null;
+  const projectedHigh = r.value_projected_high_usd ?? legacyProjected?.high ?? null;
   return {
     id: r.id,
     clientId: r.client_id,
@@ -71,12 +76,19 @@ function rowToProgram(r: EngagementRow): ProgramCore {
     problemStatement: r.problem_statement,
     targetOutcome: r.target_outcome,
     timelineHorizon: r.timeline_horizon,
-    valueProjectedLowUsd: r.value_projected_low_usd,
-    valueProjectedHighUsd: r.value_projected_high_usd,
+    valueProjectedLowUsd: projectedLow,
+    valueProjectedHighUsd: projectedHigh,
     valueVerifiedUsd: r.value_verified_usd,
     valueVerifiedStatus: r.value_verified_status,
     valueCurrency: r.value_currency,
-    valueAssumptions: r.value_assumptions_jsonb,
+    valueAssumptions:
+      r.value_assumptions_jsonb ??
+      (legacyProjected
+        ? {
+            source: 'legacy_baseline_metrics',
+            backfilled_projected_range: legacyProjected,
+          }
+        : null),
     archetype: r.program_archetype,
     originSource: r.origin_source,
     originSourceRef: r.origin_source_ref,
@@ -111,7 +123,7 @@ export async function getProgramPortfolio(
   if (allowedProgramIds && allowedProgramIds.length === 0) return [];
   let query = sb
     .from('engagements')
-    .select('id, client_id, name, sponsor_person_id, problem_statement, target_outcome, timeline_horizon, value_projected_low_usd, value_projected_high_usd, value_verified_usd, value_verified_status, value_currency, value_assumptions_jsonb, program_archetype, origin_source, origin_source_ref, status, lifecycle_state, current_phase, current_module_key, maestro_oversight_level, founder_approval_required, phase_locked_at, phase_locked_by_user_id, data_residency_region, retention_policy_years, archived_at, deleted_at, created_at, updated_at')
+    .select('id, client_id, name, sponsor_person_id, problem_statement, target_outcome, timeline_horizon, value_projected_low_usd, value_projected_high_usd, value_verified_usd, value_verified_status, value_currency, value_assumptions_jsonb, baseline_metrics, program_archetype, origin_source, origin_source_ref, status, lifecycle_state, current_phase, current_module_key, maestro_oversight_level, founder_approval_required, phase_locked_at, phase_locked_by_user_id, data_residency_region, retention_policy_years, archived_at, deleted_at, created_at, updated_at')
     .eq('client_id', ctx.clientId)
     .is('archived_at', null)
     .is('deleted_at', null)
@@ -134,7 +146,7 @@ export async function getProgramById(
   const sb = opts.supabase ?? getServerSupabase();
   const { data, error } = await sb
     .from('engagements')
-    .select('id, client_id, name, sponsor_person_id, problem_statement, target_outcome, timeline_horizon, value_projected_low_usd, value_projected_high_usd, value_verified_usd, value_verified_status, value_currency, value_assumptions_jsonb, program_archetype, origin_source, origin_source_ref, status, lifecycle_state, current_phase, current_module_key, maestro_oversight_level, founder_approval_required, phase_locked_at, phase_locked_by_user_id, data_residency_region, retention_policy_years, archived_at, deleted_at, created_at, updated_at')
+    .select('id, client_id, name, sponsor_person_id, problem_statement, target_outcome, timeline_horizon, value_projected_low_usd, value_projected_high_usd, value_verified_usd, value_verified_status, value_currency, value_assumptions_jsonb, baseline_metrics, program_archetype, origin_source, origin_source_ref, status, lifecycle_state, current_phase, current_module_key, maestro_oversight_level, founder_approval_required, phase_locked_at, phase_locked_by_user_id, data_residency_region, retention_policy_years, archived_at, deleted_at, created_at, updated_at')
     .eq('id', programId)
     .eq('client_id', ctx.clientId)
     .maybeSingle();

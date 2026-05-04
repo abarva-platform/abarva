@@ -10,6 +10,7 @@ import { markDraftCommitted } from '@/lib/programs/origination-drafts';
 import type { OriginSource } from '@/lib/programs/types.db';
 import { normalizeProgramArchetype } from '@/lib/programs/archetype-normalization';
 import { buildEngagementGraphNodeId } from '@/lib/programs/mutations';
+import { parseUsdRangeFromText } from '@/lib/programs/value-utils';
 
 export interface SubmitOriginationBriefInput {
   surface: string;
@@ -330,6 +331,13 @@ export async function submitOriginationBrief(
 
   const derived = classifyBrief(input);
   const programArchetype = normalizeProgramArchetype(input.classification);
+  const parsedValueRange = parseUsdRangeFromText(input.targetOutcome);
+  const valueAssumptions = input.targetOutcome
+    ? {
+        source: 'origination_scaffold',
+        captured_text: input.targetOutcome,
+      }
+    : null;
   const industryCode = (
     activeClient.industry_code?.trim() || CLIENT_KEY_TO_INDUSTRY_CODE[activeClient.key]
   ).toUpperCase();
@@ -354,6 +362,11 @@ export async function submitOriginationBrief(
       status: 'draft',
       lifecycle_state: 'submitted_for_approval',
       current_phase: 0,
+      value_projected_low_usd: parsedValueRange?.low ?? null,
+      value_projected_high_usd: parsedValueRange?.high ?? null,
+      value_verified_status: parsedValueRange ? 'pending' : null,
+      value_currency: 'USD',
+      value_assumptions_jsonb: valueAssumptions,
       program_archetype: programArchetype,
       origin_source: 'user_initiated' as OriginSource,
       origin_source_ref: null,

@@ -305,61 +305,213 @@
 .kanban {
   display: grid;
   grid-template-columns: repeat(8, minmax(190px, 1fr));
-  gap: 8px;
+  gap: 10px;
   overflow-x: auto;
 }
 
 .kanbanCol {
-  background: var(--canon-gray-100);
+  background: #f8f1e5;
   border: 1px solid var(--canon-border);
   border-radius: 10px;
-  padding: 10px;
-  min-height: 240px;
+  padding: 10px 10px 12px;
+  min-height: 290px;
 }
 
 .kanbanCard {
   min-height: 0;
+  border-color: rgba(10, 10, 11, 0.12);
+  background: #f6efdf;
+}
+
+.kanbanCardFoot {
+  margin-top: 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.kanbanValue {
+  font-family: var(--abarva-serif);
+  font-size: 15px;
+  font-weight: 700;
+  color: #151515;
 }
 
 .kanbanHead {
   font-family: var(--abarva-mono);
-  font-size: 10px;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
+  font-size: 11px;
+  letter-spacing: 0.09em;
   margin-bottom: 8px;
+  text-align: center;
+  padding-bottom: 7px;
+  border-bottom: 1px solid rgba(10, 10, 11, 0.12);
+}
+
+.cardRed {
+  border-left: 3px solid #a32d2d;
+}
+
+.cardAmber {
+  border-left: 3px solid #ba7517;
+}
+
+.cardGreen {
+  border-left: 3px solid #1d9e75;
+}
+
+.cardTeal {
+  border-left: 3px solid #0066cc;
 }
 
 .scatter {
   position: relative;
-  min-height: 400px;
-  border: 1px dashed var(--canon-border);
+  min-height: 430px;
+  border: 1px solid var(--canon-border);
   border-radius: 10px;
-  background: linear-gradient(to top, rgba(0, 0, 0, 0.03) 1px, transparent 1px) 0 0 / 100% 25%;
+  background: #f6f5f3;
   overflow: hidden;
+  padding: 44px 28px 72px 54px;
+}
+
+.scatterLegend {
+  position: absolute;
+  top: 12px;
+  right: 16px;
+  display: inline-flex;
+  gap: 18px;
+  align-items: center;
+  z-index: 30;
+  font-family: var(--abarva-mono);
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #81612b;
+}
+
+.scatterLegend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.legendDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.legendRed { background: #a32d2d; }
+.legendAmber { background: #ba7517; }
+.legendGreen { background: #1d9e75; }
+.legendTeal { background: #0066cc; }
+
+.scatterBands {
+  position: absolute;
+  inset: 44px 28px 72px 54px;
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  z-index: 1;
+}
+
+.scatterBand:nth-child(odd) {
+  background: rgba(8, 12, 24, 0.02);
+}
+
+.scatterGrid {
+  position: absolute;
+  inset: 44px 28px 72px 54px;
+  display: grid;
+  grid-template-rows: repeat(6, 1fr);
+  z-index: 2;
+}
+
+.scatterGridLine {
+  border-top: 1px dashed rgba(8, 20, 40, 0.1);
+}
+
+.scatterNotice {
+  position: absolute;
+  left: 64px;
+  top: 56px;
+  right: 34px;
+  border: 1px solid var(--canon-border);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.9);
+  padding: 8px 10px;
+  color: var(--canon-gray-700);
+  font-size: 12px;
+  line-height: 1.35;
+  z-index: 40;
 }
 
 .scatterXAxis {
   position: absolute;
-  right: 12px;
-  bottom: 8px;
+  right: 24px;
+  bottom: 14px;
   font-family: var(--abarva-mono);
-  font-size: 10px;
-  letter-spacing: 0.08em;
+  font-size: 11px;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: var(--canon-gray-600);
+  color: var(--canon-gray-700);
 }
 
 .scatterYAxis {
   position: absolute;
-  left: 8px;
-  top: 12px;
+  left: 14px;
+  top: 48px;
   writing-mode: vertical-rl;
   transform: rotate(180deg);
   font-family: var(--abarva-mono);
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #8b6830;
+}
+
+.scatterYTicks {
+  position: absolute;
+  left: 18px;
+  top: 44px;
+  bottom: 72px;
+  display: grid;
+  grid-template-rows: repeat(6, 1fr);
+  align-items: start;
+  z-index: 12;
+  font-family: var(--abarva-mono);
   font-size: 10px;
   letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--canon-gray-600);
+  color: #1f1f1d;
+}
+
+.scatterXTicks {
+  position: absolute;
+  left: 54px;
+  right: 28px;
+  bottom: 26px;
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  z-index: 12;
+}
+
+.scatterXTick {
+  display: grid;
+  gap: 2px;
+  justify-items: center;
+}
+
+.scatterPhaseCode {
+  font-family: var(--abarva-mono);
+  font-size: 10px;
+  letter-spacing: 0.11em;
+  color: #8b6830;
+}
+
+.scatterPhaseName {
+  font-size: 12px;
+  font-weight: 600;
+  color: #141413;
 }
 
 .bubble {
@@ -372,11 +524,12 @@
   justify-content: center;
   color: #0d1a34;
   text-decoration: none;
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.04em;
   padding: 4px;
   box-shadow: 0 4px 10px rgba(4, 16, 42, 0.12);
+  z-index: 20;
 }
 
 .bubbleGreen {
@@ -409,9 +562,9 @@
 }
 
 .chatPane {
-  background: var(--abarva-navy-ink);
+  background: #0c1a3a;
   border-radius: 12px;
-  color: #fff;
+  color: #eff6ff;
   display: flex;
   flex-direction: column;
   min-width: 0;
@@ -420,13 +573,34 @@
 }
 
 .chatHead {
-  padding: 14px 16px;
+  padding: 18px 22px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   overflow-wrap: anywhere;
+  color: #eff6ff;
+}
+
+.chatHead .eyebrow {
+  color: #69a9ff;
+}
+
+.chatHead > div:last-child {
+  margin-top: 4px;
+  font-family: var(--abarva-serif);
+  font-size: 30px;
+  line-height: 1.08;
+  letter-spacing: -0.02em;
+  color: #ffffff;
+}
+
+.chatSubhead {
+  margin-top: 8px;
+  font-size: 12px;
+  line-height: 1.45;
+  color: rgba(239, 246, 255, 0.78);
 }
 
 .chatBody {
-  padding: 14px 16px;
+  padding: 20px 22px;
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -437,25 +611,32 @@
 
 .bubbleNexus {
   align-self: flex-start;
-  max-width: min(100%, 330px);
-  background: #f8f1e5;
-  color: #1f2430;
+  max-width: min(92%, 360px);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #eff6ff;
   border-radius: 12px;
-  padding: 10px 11px;
+  padding: 11px 15px;
   font-size: 13px;
   line-height: 1.45;
   overflow-wrap: anywhere;
   word-break: break-word;
 }
 
+.bubbleNexus strong {
+  color: #9dc5ff;
+  font-weight: 600;
+}
+
 .bubbleUser {
   align-self: flex-end;
-  max-width: min(100%, 330px);
-  background: #111;
+  max-width: min(92%, 360px);
+  background: var(--abarva-signal-blue);
   color: #fff;
   border-radius: 12px;
-  padding: 10px 11px;
+  padding: 11px 15px;
   font-size: 13px;
+  font-weight: 500;
   line-height: 1.45;
   overflow-wrap: anywhere;
   word-break: break-word;

@@ -10,7 +10,7 @@ export interface StrategicMovesPreferences {
 }
 
 export const DEFAULT_STRATEGIC_MOVES_PREFERENCES: StrategicMovesPreferences = {
-  listView: 'scatter',
+  listView: 'kanban',
   sort: 'value',
 };
 
@@ -94,4 +94,3 @@ export async function setStrategicMovesPreferences(
     default_filters: nextDefaultFilters,
   });
 }
-

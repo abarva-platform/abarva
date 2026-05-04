@@ -49,6 +49,7 @@ export function StrategicMoveDetailView({ move }: Props) {
           <div className={styles.chatHead}>
             <div className={styles.eyebrow}>Nexus</div>
             <div>Move Orchestrator</div>
+            <div className={styles.chatSubhead}>Ask anything about this move. I will work in the right pane.</div>
           </div>
           <div className={styles.chatBody}>
             <div className={styles.bubbleNexus}>
@@ -65,6 +66,19 @@ export function StrategicMoveDetailView({ move }: Props) {
         </aside>
 
         <article className={styles.rightPane}>
+          <div className={styles.detailHeadBlock}>
+            <div className={styles.detailBreadcrumb}>
+              <span>Strategic Moves</span>
+              <span>·</span>
+              <span>{move.tenant.name}</span>
+              <span>·</span>
+              <span>{move.displayCode}</span>
+            </div>
+            <div className={styles.detailMetaLine}>
+              {move.archetype} · Sponsor: {move.sponsor?.name ?? 'Unassigned'}
+            </div>
+          </div>
+
           <div className={styles.statusBanner}>
             <div className={styles.eyebrow}>{move.status.text}</div>
             <div>{move.status.description}</div>
@@ -134,7 +148,7 @@ export function StrategicMoveDetailView({ move }: Props) {
               {move.deliverables.length === 0 ? (
                 <div className={styles.rowItem}>No deliverables captured yet.</div>
               ) : (
-                move.deliverables.slice(0, 5).map((deliverable) => (
+                move.deliverables.slice(0, 3).map((deliverable) => (
                   <details className={styles.rowItem} key={deliverable.id}>
                     <summary className={styles.deliverableSummary}>
                       <span>
@@ -149,6 +163,11 @@ export function StrategicMoveDetailView({ move }: Props) {
                   </details>
                 ))
               )}
+              {move.deliverables.length > 3 ? (
+                <div className={styles.rowItem}>
+                  Showing 3 of {move.deliverables.length} deliverables.
+                </div>
+              ) : null}
             </div>
           </section>
 

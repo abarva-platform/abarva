@@ -7,7 +7,7 @@ import { resolveSessionRole } from '@/lib/auth/access-routing'
 import { clearActiveClientContext } from '@/lib/auth/client-context-storage'
 import { resolveModuleAccess, type ProductModule } from '@/lib/auth/module-access'
 import { useClientContext } from '@/lib/use-client-context'
-import { AbarvaWordmark } from './abarva/AbarVaWordmark'
+import { AbarVaLogo } from './abarva/AbarVaLogo'
 import { COLORS, FONT, BORDER, SPACING } from '@/lib/design/abarva-theme'
 
 const NAV_BG = COLORS.surface
@@ -240,9 +240,11 @@ function NavInner({ activePage, compact = false }: NavProps) {
 
         {/* ── Wordmark ─────────────────────────────────────────────────────── */}
         <Link href="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: `${SPACING.md}px`, marginRight: `${SPACING.xl}px`, flexShrink: 0 }}>
-          <AbarvaWordmark
-            size="md"
-            inkColor={NAV_TEXT}
+          <AbarVaLogo
+            variant="lockup"
+            size="sm"
+            label="AbarVa"
+            style={{ height: 22, width: 'auto' }}
           />
         </Link>
 
