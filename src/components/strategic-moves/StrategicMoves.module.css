@@ -424,9 +424,9 @@
 }
 
 .chatPane {
-  background: linear-gradient(180deg, #121a2a 0%, #17233a 100%);
+  background: #0c1a3a;
   border-radius: 12px;
-  color: #fff;
+  color: #eff6ff;
   display: flex;
   flex-direction: column;
   min-width: 0;
@@ -435,27 +435,34 @@
 }
 
 .chatHead {
-  padding: 14px 16px;
+  padding: 18px 22px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   overflow-wrap: anywhere;
-  color: #f4f7ff;
+  color: #eff6ff;
 }
 
 .chatHead .eyebrow {
-  color: #9dc5ff;
+  color: #69a9ff;
 }
 
 .chatHead > div:last-child {
   margin-top: 4px;
   font-family: var(--abarva-serif);
-  font-size: 34px;
-  line-height: 1.06;
+  font-size: 30px;
+  line-height: 1.08;
   letter-spacing: -0.02em;
   color: #ffffff;
 }
 
+.chatSubhead {
+  margin-top: 8px;
+  font-size: 12px;
+  line-height: 1.45;
+  color: rgba(239, 246, 255, 0.78);
+}
+
 .chatBody {
-  padding: 14px 16px;
+  padding: 20px 22px;
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -466,25 +473,32 @@
 
 .bubbleNexus {
   align-self: flex-start;
-  max-width: min(100%, 330px);
-  background: rgba(255, 255, 255, 0.94);
-  color: #142037;
+  max-width: min(92%, 360px);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #eff6ff;
   border-radius: 12px;
-  padding: 10px 11px;
-  font-size: 15px;
+  padding: 11px 15px;
+  font-size: 13px;
   line-height: 1.45;
   overflow-wrap: anywhere;
   word-break: break-word;
 }
 
+.bubbleNexus strong {
+  color: #9dc5ff;
+  font-weight: 600;
+}
+
 .bubbleUser {
   align-self: flex-end;
-  max-width: min(100%, 330px);
-  background: #05080f;
+  max-width: min(92%, 360px);
+  background: var(--abarva-signal-blue);
   color: #fff;
   border-radius: 12px;
-  padding: 10px 11px;
-  font-size: 15px;
+  padding: 11px 15px;
+  font-size: 13px;
+  font-weight: 500;
   line-height: 1.45;
   overflow-wrap: anywhere;
   word-break: break-word;

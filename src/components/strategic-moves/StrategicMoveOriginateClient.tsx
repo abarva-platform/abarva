@@ -329,6 +329,7 @@ export function StrategicMoveOriginateClient({ tenantName }: Props) {
           <div className={styles.chatHead}>
             <div className={styles.eyebrow}>New Move · P0 Originate</div>
             <div>Nexus drafting mode</div>
+            <div className={styles.chatSubhead}>I draft, you decide. Tell me the bet, or pick a starting point below.</div>
           </div>
           <div className={styles.chatBody}>
             {turns.map((turn) => (

@@ -49,6 +49,7 @@ export function StrategicMoveDetailView({ move }: Props) {
           <div className={styles.chatHead}>
             <div className={styles.eyebrow}>Nexus</div>
             <div>Move Orchestrator</div>
+            <div className={styles.chatSubhead}>Ask anything about this move. I will work in the right pane.</div>
           </div>
           <div className={styles.chatBody}>
             <div className={styles.bubbleNexus}>
