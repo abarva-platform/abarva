@@ -1,0 +1,16 @@
+/* Canonical AbarVa design tokens for the authenticated app.
+ *
+ * This file is a thin shim that re-exports the binding tokens from
+ * docs/design/strategic-moves/tokens.css. That file is the single source
+ * of truth per docs/design/strategic-moves/README.md ("Do not duplicate.
+ * Map.") and .cursorrules.
+ *
+ * The maestro layout imports this file so that surfaces that use
+ * --canon-*, --abarva-ink-black, --abarva-signal-blue, --abarva-serif,
+ * --abarva-sans, --abarva-mono, etc. resolve at runtime.
+ *
+ * If you need to change a token value, change it in the canonical
+ * source (docs/design/strategic-moves/tokens.css) — never here.
+ */
+
+@import url('../../docs/design/strategic-moves/tokens.css');
