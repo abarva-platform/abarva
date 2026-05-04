@@ -1814,39 +1814,81 @@
   text-align: center;
 }
 
-.dialogOverlay {
+/* ─── Confirm dialog (cancel-with-content) ─────────────────────── */
+.confirmOverlay {
   position: fixed;
   inset: 0;
-  background: rgba(8, 12, 20, 0.45);
-  display: flex;
+  background: rgba(12, 26, 58, 0.55);
+  backdrop-filter: blur(3px);
+  z-index: 250;
+  display: none;
   align-items: center;
   justify-content: center;
-  z-index: 60;
 }
 
-.dialog {
-  background: #fff;
-  border-radius: 12px;
-  border: 1px solid var(--canon-border);
-  width: min(500px, calc(100vw - 24px));
-  padding: 14px;
-}
-
-.dialogActions {
-  margin-top: 12px;
+.confirmOverlayShow {
   display: flex;
-  justify-content: flex-end;
-  gap: 8px;
 }
 
-.textButton {
-  border: 1px solid var(--canon-border);
+.confirmDialog {
+  background: var(--canon-bg-surface);
+  border: 1px solid var(--abarva-ink-black);
+  border-radius: 12px;
+  padding: 26px 28px;
+  max-width: 420px;
+  width: 90%;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.35);
+}
+
+.confirmDialogTitle {
+  margin: 0 0 6px;
+  font-family: var(--abarva-serif);
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--abarva-ink-black);
+}
+
+.confirmDialogBody {
+  margin: 0 0 18px;
+  font-size: 13.5px;
+  color: var(--abarva-slate);
+  line-height: 1.5;
+}
+
+.confirmActions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+}
+
+.confirmBtn {
+  font-family: var(--abarva-sans);
+  font-size: 13px;
+  font-weight: 600;
+  padding: 8px 16px;
   border-radius: 8px;
-  background: #fff;
-  color: var(--canon-gray-700);
-  padding: 8px 10px;
-  font-size: 12px;
   cursor: pointer;
+  border: 1px solid var(--canon-border);
+  background: var(--canon-bg-surface);
+  color: var(--abarva-ink-black);
+  transition: transform 120ms var(--ease-out);
+}
+
+.confirmBtn:hover {
+  transform: translateY(-1px);
+}
+
+.confirmBtnPrimary {
+  background: var(--abarva-ink-black);
+  color: var(--canon-bg-cream);
+  border-color: var(--abarva-ink-black);
+}
+
+.confirmBtnDanger {
+  background: var(--canon-bg-surface);
+  color: var(--canon-red);
+  border-color: var(--canon-red);
 }
 
 @media (max-width: 1100px) {
