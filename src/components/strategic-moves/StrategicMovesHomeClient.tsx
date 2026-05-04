@@ -22,6 +22,7 @@ const PHASE_AXIS: Array<{ code: string; name: string }> = [
 
 interface Props {
   portfolio: StrategicMovePortfolio;
+  initialListView: StrategicMovesListView;
   initialSort: StrategicMovesSort;
 }
 
@@ -54,9 +55,10 @@ function statusRank(value: string): number {
 
 export function StrategicMovesHomeClient({
   portfolio,
+  initialListView,
   initialSort,
 }: Props) {
-  const [listView, setListView] = useState<StrategicMovesListView>('kanban');
+  const [listView, setListView] = useState<StrategicMovesListView>(initialListView);
   const [sort, setSort] = useState<StrategicMovesSort>(initialSort);
   const [, startTransition] = useTransition();
 
