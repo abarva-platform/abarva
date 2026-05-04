@@ -1043,18 +1043,215 @@
 }
 
 .rightPane {
-  background: #f6f2e8;
-  border-radius: 12px;
+  background: var(--canon-bg-cream);
+  border-radius: 14px;
   border: 1px solid var(--canon-border);
-  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
   min-width: 0;
 }
 
-.statusBanner {
+/* ─── Detail head (lives at the top of the right pane) ─────────── */
+.detailHead {
+  padding: 20px 26px;
+  border-bottom: 1px solid var(--canon-border);
+}
+
+.detailHeadTop {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 6px;
+}
+
+.detailHeadLeft {
+  flex: 1;
+  min-width: 0;
+}
+
+.detailHeadActions {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.detailBreadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 8px;
+  font-family: var(--abarva-mono);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--abarva-slate);
+}
+
+.detailCrumb {
+  color: inherit;
+  text-decoration: none;
+  cursor: pointer;
+  transition: color 120ms var(--ease-out);
+}
+
+.detailCrumb:hover {
+  color: var(--abarva-ink-black);
+}
+
+.detailTitle {
+  margin: 0 0 4px;
+  font-family: var(--abarva-serif);
+  font-size: 26px;
+  font-weight: 900;
+  letter-spacing: -0.6px;
+  line-height: 1.1;
+  color: var(--abarva-ink-black);
+}
+
+.detailId {
+  font-family: var(--abarva-mono);
+  font-size: 10px;
+  letter-spacing: 0.13em;
+  color: var(--abarva-slate);
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.btnPhase {
+  background: var(--abarva-signal-blue);
+  color: #ffffff;
+  border: none;
+  padding: 9px 16px;
+  border-radius: 8px;
+  font-family: var(--abarva-sans);
+  font-weight: 600;
+  font-size: 12.5px;
+  letter-spacing: 0.1px;
+  cursor: pointer;
+  text-decoration: none;
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition: background 150ms var(--ease-out);
+}
+
+.btnPhase:hover {
+  background: var(--abarva-signal-blue-dark);
+}
+
+.btnPhase .btnArrow {
+  display: inline-block;
+  transition: transform 150ms var(--ease-out);
+}
+
+.btnPhase:hover .btnArrow {
+  transform: translateX(2px);
+}
+
+.btnArrow {
+  display: inline-block;
+}
+
+.btnGhost {
+  background: transparent;
+  color: var(--abarva-slate);
   border: 1px solid var(--canon-border);
+  padding: 9px 14px;
+  border-radius: 8px;
+  font-family: var(--abarva-sans);
+  font-weight: 500;
+  font-size: 12.5px;
+  cursor: pointer;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: color 150ms var(--ease-out), border-color 150ms var(--ease-out);
+}
+
+.btnGhost:hover {
+  color: var(--abarva-ink-black);
+  border-color: var(--abarva-ink-black);
+}
+
+/* ─── Status banner (status-keyed background + pulse) ───────────── */
+.statusBanner {
+  margin: 18px 26px 0;
+  padding: 14px 18px;
   border-radius: 10px;
-  padding: 10px 12px;
-  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.statusBannerRed {
+  background: var(--canon-red-light);
+  border: 1px solid rgba(163, 45, 45, 0.30);
+}
+
+.statusBannerAmber {
+  background: var(--canon-amber-light);
+  border: 1px solid rgba(186, 117, 23, 0.30);
+}
+
+.statusBannerGreen {
+  background: var(--canon-teal-light);
+  border: 1px solid rgba(29, 158, 117, 0.30);
+}
+
+.statusBannerTeal {
+  background: rgba(0, 102, 204, 0.10);
+  border: 1px solid rgba(0, 102, 204, 0.30);
+}
+
+.statusBannerPulse {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.statusBannerRed .statusBannerPulse {
+  background: var(--canon-red);
+  animation: pulse 2s infinite;
+}
+
+.statusBannerAmber .statusBannerPulse { background: var(--canon-amber); }
+.statusBannerGreen .statusBannerPulse { background: var(--canon-teal); }
+.statusBannerTeal .statusBannerPulse { background: var(--abarva-signal-blue); }
+
+.statusBannerText {
+  min-width: 0;
+}
+
+.statusBannerStatus {
+  font-family: var(--abarva-mono);
+  font-size: 10px;
+  letter-spacing: 0.15em;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.statusBannerRed .statusBannerStatus { color: var(--canon-red); }
+.statusBannerAmber .statusBannerStatus { color: var(--canon-amber); }
+.statusBannerGreen .statusBannerStatus { color: var(--canon-teal); }
+.statusBannerTeal .statusBannerStatus { color: var(--abarva-signal-blue-dark); }
+
+.statusBannerDesc {
+  font-size: 13px;
+  color: var(--abarva-ink-black);
+  font-weight: 500;
+}
+
+.detailBody {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px 26px;
+}
+
+.detailBody > .statusBanner:first-child {
+  margin: 0 0 18px;
 }
 
 .twoCol {
