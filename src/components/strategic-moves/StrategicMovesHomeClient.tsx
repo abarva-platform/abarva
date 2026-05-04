@@ -200,35 +200,49 @@ export function StrategicMovesHomeClient({
         {listView === 'cards' ? (
           <div className={styles.cards}>
             {sortedMoves.map((move) => (
-              <Link className={styles.card} key={move.id} href={`/strategic-moves/${move.id}`}>
-                <div className={styles.eyebrow}>
-                  {move.tenant.name} · {move.archetype}
+              <Link
+                className={`${styles.card} ${
+                  move.statusColor === 'red' ? styles.cardRed :
+                  move.statusColor === 'amber' ? styles.cardAmber :
+                  move.statusColor === 'teal' ? styles.cardTeal :
+                  styles.cardGreen
+                }`}
+                key={move.id}
+                href={`/strategic-moves/${move.id}`}
+              >
+                <div className={styles.cardStrip} aria-hidden />
+                <div className={styles.cardHead}>
+                  <div className={styles.cardHeadLeft}>
+                    <div className={styles.cardTitle}>{move.name}</div>
+                    <div className={styles.cardId}>
+                      {move.displayCode} · {move.tenant.name}
+                    </div>
+                  </div>
+                  <span className={styles.archetypeTag}>{move.archetype}</span>
                 </div>
-                <div className={styles.cardTitle}>{move.name}</div>
-                <div className={styles.metaRow}>
-                  <span className={`${styles.chip} ${
-                    move.statusColor === 'red' ? styles.chipRed :
-                    move.statusColor === 'amber' ? styles.chipAmber :
-                    move.statusColor === 'teal' ? styles.chipTeal :
-                    styles.chipGreen
-                  }`}>
-                    {move.status.text}
+                <div
+                  className={`${styles.gateLine} ${
+                    move.statusColor === 'red' ? styles.gateLineRed :
+                    move.statusColor === 'amber' ? styles.gateLineAmber :
+                    move.statusColor === 'teal' ? styles.gateLineTeal :
+                    styles.gateLineGreen
+                  }`}
+                >
+                  <span className={styles.pulse} aria-hidden />
+                  <span className={styles.statusText}>{move.status.text}</span>
+                  <span className={styles.gateDetail}>· {move.status.description}</span>
+                </div>
+                <div className={styles.cardMeta}>
+                  <span>
+                    Sponsor: <strong>{move.sponsor?.name ?? 'Unassigned'}</strong>
                   </span>
-                  <span className={styles.phaseTag}>{move.phaseLabel}</span>
-                </div>
-                <div className={styles.phaseRail}>
-                  {Array.from({ length: 8 }).map((_, index) => (
-                    <span
-                      key={`${move.id}-phase-${index}`}
-                      className={`${styles.phaseDot} ${
-                        index < move.currentPhase
-                          ? styles.phaseDotDone
-                          : index === move.currentPhase
-                            ? styles.phaseDotCurrent
-                            : ''
-                      }`}
-                    />
-                  ))}
+                  <span>
+                    Value:{' '}
+                    <span className={styles.cardMetaVal}>
+                      {formatValueAtStake(move.valueAtStake.projected?.high ?? move.valueAtStake.verified?.amount ?? 0)}{' '}
+                      {move.valueAtStake.verified?.status === 'tracked' ? 'tracked' : 'projected'}
+                    </span>
+                  </span>
                 </div>
               </Link>
             ))}
@@ -237,43 +251,39 @@ export function StrategicMovesHomeClient({
 
         {listView === 'kanban' ? (
           <div className={styles.kanban}>
-            {Array.from({ length: 8 }).map((_, phase) => (
-              <section className={styles.kanbanCol} key={`kanban-${phase}`}>
-                <div className={styles.kanbanHead}>P{phase}</div>
-                <div className={styles.rowList}>
-                  {sortedMoves
-                    .filter((move) => move.currentPhase === phase)
-                    .map((move) => (
+            {Array.from({ length: 8 }).map((_, phase) => {
+              const inPhase = sortedMoves.filter((move) => move.currentPhase === phase);
+              const phaseLabel = PHASE_AXIS[phase]?.name ?? '';
+              return (
+                <section className={styles.kanbanCol} key={`kanban-${phase}`}>
+                  <div className={styles.kanbanHead}>
+                    P{phase}
+                    <span className={styles.kanbanCount}>{inPhase.length}</span>
+                    <span className={styles.kanbanHeadLabel}>{phaseLabel}</span>
+                  </div>
+                  <div className={styles.kanbanList}>
+                    {inPhase.map((move) => (
                       <Link
-                        className={`${styles.card} ${styles.kanbanCard} ${
-                          move.statusColor === 'red' ? styles.cardRed :
-                          move.statusColor === 'amber' ? styles.cardAmber :
-                          move.statusColor === 'teal' ? styles.cardTeal :
-                          styles.cardGreen
+                        className={`${styles.kanbanCard} ${
+                          move.statusColor === 'red' ? styles.kanbanCardRed :
+                          move.statusColor === 'amber' ? styles.kanbanCardAmber :
+                          move.statusColor === 'teal' ? styles.kanbanCardTeal :
+                          styles.kanbanCardGreen
                         }`}
                         key={move.id}
                         href={`/strategic-moves/${move.id}`}
                       >
-                        <div className={styles.eyebrow}>{move.displayCode}</div>
-                        <div className={styles.cardTitle}>{move.name}</div>
-                        <div className={styles.kanbanCardFoot}>
-                          <span className={`${styles.chip} ${
-                            move.statusColor === 'red' ? styles.chipRed :
-                            move.statusColor === 'amber' ? styles.chipAmber :
-                            move.statusColor === 'teal' ? styles.chipTeal :
-                            styles.chipGreen
-                          }`}>
-                            {move.status.text}
-                          </span>
-                          <span className={styles.kanbanValue}>
-                            {formatValueAtStake(move.valueAtStake.projected?.high ?? move.valueAtStake.verified?.amount ?? 0)}
-                          </span>
+                        <div className={styles.kanbanId}>{move.displayCode}</div>
+                        <div className={styles.kanbanName}>{move.name}</div>
+                        <div className={styles.kanbanVal}>
+                          {formatValueAtStake(move.valueAtStake.projected?.high ?? move.valueAtStake.verified?.amount ?? 0)}
                         </div>
                       </Link>
                     ))}
-                </div>
-              </section>
-            ))}
+                  </div>
+                </section>
+              );
+            })}
           </div>
         ) : null}
 
