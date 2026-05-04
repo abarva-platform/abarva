@@ -22,7 +22,6 @@ const PHASE_AXIS: Array<{ code: string; name: string }> = [
 
 interface Props {
   portfolio: StrategicMovePortfolio;
-  initialListView: StrategicMovesListView;
   initialSort: StrategicMovesSort;
 }
 
@@ -55,10 +54,9 @@ function statusRank(value: string): number {
 
 export function StrategicMovesHomeClient({
   portfolio,
-  initialListView,
   initialSort,
 }: Props) {
-  const [listView, setListView] = useState<StrategicMovesListView>(initialListView);
+  const [listView, setListView] = useState<StrategicMovesListView>('kanban');
   const [sort, setSort] = useState<StrategicMovesSort>(initialSort);
   const [, startTransition] = useTransition();
 
@@ -98,6 +96,7 @@ export function StrategicMovesHomeClient({
       min,
       max,
       capturedCount: values.length,
+      unknownCount: sortedMoves.length - values.length,
     };
   }, [sortedMoves]);
 
@@ -299,6 +298,11 @@ export function StrategicMovesHomeClient({
                 Bubbles are pinned to the unknown-value lane until projected or verified values are entered.
               </div>
             ) : null}
+            {mapStats.unknownCount > 0 ? (
+              <div className={styles.scatterNoticeSecondary}>
+                {mapStats.unknownCount} move{mapStats.unknownCount === 1 ? '' : 's'} currently missing projected or verified value.
+              </div>
+            ) : null}
             <div className={styles.scatterXAxis}>Phase progression →</div>
             <div className={styles.scatterYAxis}>Value at stake</div>
             <div className={styles.scatterYTicks} aria-hidden>
@@ -334,8 +338,10 @@ export function StrategicMovesHomeClient({
               const xBase = 8 + move.currentPhase * 11.5;
               const xSpread = phaseCount > 1 ? ((phaseIndex / (phaseCount - 1)) - 0.5) * 6.4 : 0;
               const x = Math.min(94, Math.max(6, xBase + xSpread));
-              const unknownJitter = ((index % 3) - 1) * 2.6;
-              const y = valueKnown ? Math.max(14, 82 - normalized * 68) : Math.max(72, 82 + unknownJitter);
+              const unknownBandRows = Math.max(1, Math.min(4, phaseCount));
+              const unknownRow = phaseIndex % unknownBandRows;
+              const unknownY = 84 - unknownRow * 5.3;
+              const y = valueKnown ? Math.max(14, 82 - normalized * 68) : unknownY;
               return (
                 <Link
                   key={move.id}

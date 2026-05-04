@@ -241,10 +241,10 @@ function NavInner({ activePage, compact = false }: NavProps) {
         {/* ── Wordmark ─────────────────────────────────────────────────────── */}
         <Link href="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: `${SPACING.md}px`, marginRight: `${SPACING.xl}px`, flexShrink: 0 }}>
           <AbarVaLogo
-            variant="lockup"
-            size="sm"
+            variant="wordmark"
+            size="md"
             label="AbarVa"
-            style={{ height: 22, width: 'auto' }}
+            style={{ height: 26, width: 'auto' }}
           />
         </Link>
 

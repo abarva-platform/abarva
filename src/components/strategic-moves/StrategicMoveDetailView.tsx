@@ -39,9 +39,14 @@ export function StrategicMoveDetailView({ move }: Props) {
           <div className={styles.eyebrow}>Strategic Move</div>
           <h1 className={styles.title}>{move.name}</h1>
         </div>
-        <Link className={styles.newMove} href="/strategic-moves/new">
-          + New Move
-        </Link>
+        <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+          <Link className={styles.backLink} href="/strategic-moves">
+            ← Back
+          </Link>
+          <Link className={styles.newMove} href="/strategic-moves/new">
+            + New Move
+          </Link>
+        </div>
       </div>
 
       <section className={styles.detailShell}>
