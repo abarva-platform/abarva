@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import styles from './StrategicMoves.module.css';
+import { PhaseRail } from './PhaseRail';
 
 type ScaffoldKey =
   | 'hypothesis'
@@ -70,6 +71,7 @@ export function StrategicMoveOriginateClient({ tenantName }: Props) {
   const [blankQuestionIndex, setBlankQuestionIndex] = useState<number | null>(null);
   const [showConfirm, setShowConfirm] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [originEntry, setOriginEntry] = useState<'intel' | 'foundation' | 'premortem' | 'transfer' | 'blank' | null>(null);
   const [isPending, startTransition] = useTransition();
   const [turns, setTurns] = useState<ChatTurn[]>([
     {
@@ -167,6 +169,22 @@ export function StrategicMoveOriginateClient({ tenantName }: Props) {
   );
   const canPromote = completedCount === 7 && !isPending;
 
+  useEffect(() => {
+    function handleKey(event: KeyboardEvent) {
+      if (event.key !== 'Escape') return;
+      if (showConfirm) {
+        event.preventDefault();
+        setShowConfirm(false);
+        return;
+      }
+      event.preventDefault();
+      cancelFlow();
+    }
+    window.addEventListener('keydown', handleKey);
+    return () => window.removeEventListener('keydown', handleKey);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [showConfirm, completedCount, programName]);
+
   function addTurn(role: ChatTurn['role'], text: string) {
     setTurns((prev) => [...prev, { id: `${role}-${Date.now()}-${Math.random()}`, role, text }]);
   }
@@ -182,6 +200,7 @@ export function StrategicMoveOriginateClient({ tenantName }: Props) {
 
   async function startFrom(type: 'intel' | 'foundation' | 'premortem' | 'transfer' | 'blank') {
     setBlankQuestionIndex(null);
+    setOriginEntry(type);
     if (type === 'intel') {
       addTurn('user', 'Start from an Intelligence finding.');
       const res = await fetch('/api/v1/intelligence/signals?limit=3', { cache: 'no-store' });
@@ -317,111 +336,187 @@ export function StrategicMoveOriginateClient({ tenantName }: Props) {
 
   return (
     <div className={styles.page}>
-      <div className={styles.topbar}>
-        <div>
-          <div className={styles.eyebrow}>Strategic Moves</div>
-          <h1 className={styles.title}>Originate new move</h1>
+      <div className={styles.originContextBar}>
+        <div className={styles.originContextLeft}>
+          <span className={styles.originBranch} aria-hidden>&#8627;</span>
+          <span className={styles.originLabel}>Originating new move</span>
+          <span className={styles.originDraftBadge}>
+            {programName.trim() ? programName.toUpperCase() : 'UNTITLED'} &middot; DRAFT
+          </span>
         </div>
+        <button className={styles.originCancel} onClick={cancelFlow} type="button">
+          &#10005; Cancel
+        </button>
       </div>
 
-      <section className={styles.originateShell}>
+      <section className={styles.detailShell}>
         <aside className={styles.chatPane}>
           <div className={styles.chatHead}>
-            <div className={styles.eyebrow}>New Move · P0 Originate</div>
-            <div>Nexus drafting mode</div>
-            <div className={styles.chatSubhead}>I draft, you decide. Tell me the bet, or pick a starting point below.</div>
+            <div className={styles.agentRow}>
+              <div className={styles.agentAvatar} aria-hidden>&#10022;</div>
+              <div>
+                <div className={styles.agentName}>Nexus</div>
+                <div className={styles.agentStatus}>
+                  <span className={styles.agentStatusDot} aria-hidden />
+                  NEW MOVE &middot; P0 ORIGINATE
+                </div>
+              </div>
+            </div>
+            <div className={styles.chatSubhead}>
+              I draft, you decide. Tell me the bet &mdash; or pick a starting point below.
+            </div>
           </div>
-          <div className={styles.chatBody}>
+          <div className={styles.chatThread}>
             {turns.map((turn) => (
-              <div key={turn.id} className={turn.role === 'nexus' ? styles.bubbleNexus : styles.bubbleUser}>
+              <div
+                key={turn.id}
+                className={turn.role === 'nexus' ? styles.bubbleNexus : styles.bubbleUser}
+              >
                 {turn.text}
               </div>
             ))}
           </div>
-          <div className={styles.startFromLabel}>↳ Start from</div>
-          <div className={styles.chipColumn}>
-            <button className={styles.startChip} onClick={() => void startFrom('intel')} type="button">An Intelligence finding</button>
-            <button className={styles.startChip} onClick={() => void startFrom('foundation')} type="button">A Foundation Readiness gap</button>
-            <button className={styles.startChip} onClick={() => void startFrom('premortem')} type="button">A pre-mortem result</button>
-            <button className={styles.startChip} onClick={() => void startFrom('transfer')} type="button">Cross-industry transfer</button>
-            <button className={styles.startChip} onClick={() => void startFrom('blank')} type="button">A blank hypothesis</button>
+          <div className={styles.startFromBlock}>
+            <div className={styles.startFromLabel}>
+              <span aria-hidden>&#8627;</span> Start from
+            </div>
+            <div className={styles.startFromChips}>
+              {(
+                [
+                  { entry: 'intel' as const, label: 'An Intelligence finding' },
+                  { entry: 'foundation' as const, label: 'A Foundation Readiness gap' },
+                  { entry: 'premortem' as const, label: 'A pre-mortem result' },
+                  { entry: 'transfer' as const, label: 'Cross-industry transfer' },
+                  { entry: 'blank' as const, label: 'A blank hypothesis' },
+                ]
+              ).map(({ entry, label }) => (
+                <button
+                  key={entry}
+                  className={`${styles.startChip} ${originEntry !== null ? styles.startChipUsed : ''}`}
+                  onClick={() => void startFrom(entry)}
+                  type="button"
+                  disabled={originEntry !== null}
+                >
+                  <span>{label}</span>
+                  <span className={styles.startChipArrow} aria-hidden>&rarr;</span>
+                </button>
+              ))}
+            </div>
           </div>
-          <div className={styles.originateComposer}>
-            <textarea
-              className={styles.originateComposerInput}
-              value={composer}
-              onChange={(event) => setComposer(event.target.value)}
-              placeholder="Reply to Nexus…"
-            />
-            <button className={styles.primaryAction} type="button" onClick={handleSend}>
-              Send
-            </button>
+          <div className={styles.chatInput}>
+            <div className={styles.inputRow}>
+              <input
+                type="text"
+                value={composer}
+                onChange={(event) => setComposer(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter' && !event.shiftKey) {
+                    event.preventDefault();
+                    handleSend();
+                  }
+                }}
+                placeholder="Describe the outcome, tenant, and any signals\u2026"
+              />
+              <button
+                className={styles.sendBtn}
+                type="button"
+                onClick={handleSend}
+                aria-label="Send"
+              >
+                &#8593;
+              </button>
+            </div>
           </div>
         </aside>
 
         <article className={styles.rightPane}>
-          <div className={styles.originContext}>
-            <div>
-              <div className={styles.eyebrow}>↳ Originating new move · draft</div>
-              <input
-                className={styles.scaffoldTextarea}
-                onChange={(event) => setProgramName(event.target.value)}
-                placeholder="Move name"
-                value={programName}
-              />
+          <div className={styles.detailHead}>
+            <div className={styles.detailHeadTop}>
+              <div className={styles.detailHeadLeft}>
+                <div className={styles.detailBreadcrumb}>
+                  <button
+                    className={styles.detailCrumb}
+                    onClick={cancelFlow}
+                    type="button"
+                  >
+                    Strategic Moves
+                  </button>
+                  <span aria-hidden>&rsaquo;</span>
+                  <span>{tenantName}</span>
+                  <span aria-hidden>&rsaquo;</span>
+                  <span>NEW</span>
+                </div>
+                <h1 className={styles.detailTitle}>Originate a strategic move</h1>
+                <div className={styles.detailId}>P0 Originate &middot; Drafting</div>
+              </div>
             </div>
-            <button className={styles.textButton} onClick={cancelFlow} type="button">
-              Cancel
-            </button>
+            <PhaseRail current={0} totalPhases={8} status="teal" />
           </div>
 
-          <div className={styles.scaffold}>
+          <div className={styles.scaffoldList}>
             {SCAFFOLD_ORDER.map((key, index) => {
               const filled = scaffold[key].trim().length > 0;
+              const num = String(index + 1).padStart(2, '0');
               return (
                 <section
                   className={`${styles.scaffoldRow} ${filled ? styles.scaffoldRowFilled : ''}`}
                   key={key}
                 >
-                  <div className={`${styles.scaffoldLabel} ${filled ? styles.scaffoldLabelFilled : ''}`}>
-                    {index + 1}. {SECTION_LABELS[key]}
+                  <div className={styles.scaffoldNum}>{num}</div>
+                  <div className={styles.scaffoldBody}>
+                    <div className={styles.scaffoldLabel}>{SECTION_LABELS[key]}</div>
+                    {filled ? (
+                      <div className={styles.scaffoldName}>{scaffold[key]}</div>
+                    ) : (
+                      <div className={styles.scaffoldEmpty}>
+                        Nexus will draft {SECTION_LABELS[key].toLowerCase()} from your conversation.
+                      </div>
+                    )}
                   </div>
-                  <div className={styles.scaffoldReadOnly}>
-                    {filled ? scaffold[key] : `Nexus will draft ${SECTION_LABELS[key].toLowerCase()} from your conversation.`}
-                  </div>
+                  <div className={styles.scaffoldIndicator} aria-hidden />
                 </section>
               );
             })}
           </div>
 
           <footer className={styles.scaffoldFoot}>
-            <div>{completedCount} of 7 sections complete</div>
             <button
-              className={`${styles.primaryAction} ${canPromote ? '' : styles.disabled}`}
+              className={styles.btnPromote}
               disabled={!canPromote}
               onClick={() => void promote()}
               type="button"
             >
-              Promote to P1 Charter →
+              <span>Promote to P1 Charter</span>
+              <span className={styles.btnPromoteArrow} aria-hidden>&rarr;</span>
             </button>
+            <div className={styles.promoteHelper}>
+              {completedCount === 7 ? 'Ready to promote' : `${completedCount} of 7 sections complete`}
+            </div>
+            {submitError ? (
+              <div className={styles.submitError}>{submitError}</div>
+            ) : null}
           </footer>
-          {submitError ? (
-            <div style={{ color: 'var(--canon-red)', marginTop: 8, fontSize: 13 }}>{submitError}</div>
-          ) : null}
         </article>
       </section>
 
       {showConfirm ? (
-        <div className={styles.dialogOverlay}>
-          <div className={styles.dialog}>
-            <div className={styles.sectionTitle}>Unsaved origination</div>
-            <div>You have scaffold content in progress. What do you want to do?</div>
-            <div className={styles.dialogActions}>
-              <button className={styles.textButton} onClick={() => setShowConfirm(false)} type="button">
+        <div className={`${styles.confirmOverlay} ${styles.confirmOverlayShow}`} role="presentation">
+          <div className={styles.confirmDialog} role="dialog" aria-modal="true" aria-labelledby="confirm-discard-title">
+            <h3 id="confirm-discard-title" className={styles.confirmDialogTitle}>Discard this move?</h3>
+            <p className={styles.confirmDialogBody}>
+              You&rsquo;ve drafted {completedCount} of {SCAFFOLD_ORDER.length} sections. Save it as a draft to come
+              back to, or discard and start fresh.
+            </p>
+            <div className={styles.confirmActions}>
+              <button
+                className={styles.confirmBtn}
+                onClick={() => setShowConfirm(false)}
+                type="button"
+              >
                 Continue working
               </button>
               <button
-                className={styles.textButton}
+                className={`${styles.confirmBtn} ${styles.confirmBtnDanger}`}
                 onClick={() => {
                   setShowConfirm(false);
                   setProgramName('');
@@ -433,7 +528,7 @@ export function StrategicMoveOriginateClient({ tenantName }: Props) {
                 Discard
               </button>
               <button
-                className={styles.primaryAction}
+                className={`${styles.confirmBtn} ${styles.confirmBtnPrimary}`}
                 onClick={() => {
                   setShowConfirm(false);
                   router.push('/strategic-moves');

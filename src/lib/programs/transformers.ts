@@ -994,6 +994,7 @@ export async function buildStrategicMovePortfolio(
         id: move.id,
         displayCode: move.displayCode,
         statusText: move.status.text,
+        statusDescription: move.status.description,
       })),
   };
 }

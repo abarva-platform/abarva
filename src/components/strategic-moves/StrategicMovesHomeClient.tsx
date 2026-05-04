@@ -113,83 +113,93 @@ export function StrategicMovesHomeClient({
   return (
     <div className={styles.page}>
       <div className={styles.topbar}>
-        <div>
-          <div className={styles.eyebrow}>Strategic Moves</div>
-          <h1 className={styles.title}>Portfolio command center</h1>
-        </div>
+        <h1 className={styles.pageTitle}>Strategic Moves</h1>
         <Link className={styles.newMove} href="/strategic-moves/new">
           + New Move
         </Link>
       </div>
 
-      <section className={styles.editorialRibbon}>
-        <article className={styles.editorialMetric}>
-          <div className={styles.ribbonValue}>{portfolio.counts.total}</div>
-          <div className={styles.ribbonLabel}>Moves</div>
-        </article>
-        <article className={styles.editorialMetric}>
-          <div className={styles.ribbonValue}>{portfolio.counts.needAttention}</div>
-          <div className={styles.ribbonLabel}>Need Attention</div>
-        </article>
-        <article className={styles.editorialMetric}>
-          <div className={styles.ribbonValue}>{portfolio.counts.onTrack}</div>
-          <div className={styles.ribbonLabel}>On Track</div>
-        </article>
-        <article className={styles.editorialMetric}>
-          <div className={styles.ribbonValue}>{formatValueAtStake(totalCapturedValue)}</div>
-          <div className={styles.ribbonLabel}>At Stake</div>
-        </article>
+      <section className={styles.ribbon} aria-label="Portfolio summary">
+        <div className={styles.ribbonSeg}>
+          <span className={styles.ribbonNum}>{portfolio.counts.total}</span>
+          <span className={styles.ribbonLbl}>Moves</span>
+        </div>
+        <div className={`${styles.ribbonSeg} ${portfolio.counts.needAttention > 0 ? styles.ribbonSegAttn : ''}`}>
+          <span className={styles.ribbonNum}>{portfolio.counts.needAttention}</span>
+          <span className={styles.ribbonLbl}>Need attention</span>
+        </div>
+        <div className={styles.ribbonSeg}>
+          <span className={styles.ribbonNum}>{portfolio.counts.onTrack}</span>
+          <span className={styles.ribbonLbl}>On track</span>
+        </div>
+        <div className={styles.ribbonSeg}>
+          <span className={styles.ribbonNum}>{formatValueAtStake(totalCapturedValue)}</span>
+          <span className={styles.ribbonLbl}>At stake</span>
+        </div>
+        <div className={styles.ribbonMeta}>Live</div>
       </section>
 
-      <section className={styles.attentionPanel}>
-        <div className={styles.sectionTitle}>Need Attention</div>
-        {portfolio.needAttentionMoves.length === 0 ? (
-          <div className={styles.attentionEmpty}>
-            No immediate gate blockers or pending decisions. Value captured for {mapStats.capturedCount} of {portfolio.counts.total} moves.
-          </div>
-        ) : (
-          <div className={styles.rowList}>
-            {portfolio.needAttentionMoves.map((row) => (
-              <Link className={styles.attentionRow} key={row.id} href={`/strategic-moves/${row.id}`}>
-                <span className={styles.attentionCode}>{row.displayCode}</span>
-                <span>{row.statusText}</span>
-                <span className={styles.attentionLink}>Review →</span>
-              </Link>
-            ))}
-          </div>
-        )}
-      </section>
-
-      <div className={styles.toolbar}>
-        <div className={styles.toggleGroup}>
-          {(['scatter', 'cards', 'kanban'] as const).map((mode) => (
-            <button
-              key={mode}
-              className={`${styles.toggleButton} ${listView === mode ? styles.toggleButtonActive : ''}`}
-              onClick={() => {
-                setListView(mode);
-                persist(mode, sort);
-              }}
-              type="button"
-            >
-              {mode}
-            </button>
+      {portfolio.needAttentionMoves.length > 0 ? (
+        <div className={styles.attnDrilldown}>
+          {portfolio.needAttentionMoves.map((row) => (
+            <Link className={styles.attnRow} key={row.id} href={`/strategic-moves/${row.id}`}>
+              <span className={styles.attnBranch}>└─</span>
+              <span className={styles.attnBody}>
+                <span className={styles.attnMoveId}>{row.displayCode}</span>
+                <span className={styles.attnSep}>·</span>
+                <span className={styles.attnText}>{row.statusDescription || row.statusText}</span>
+              </span>
+              <span className={styles.attnArrow}>→</span>
+            </Link>
           ))}
         </div>
-        <div className={styles.toggleGroup}>
-          {(['value', 'phase', 'status', 'name'] as const).map((candidate) => (
-            <button
-              key={candidate}
-              className={`${styles.toggleButton} ${sort === candidate ? styles.toggleButtonActive : ''}`}
-              onClick={() => {
-                setSort(candidate);
-                persist(listView, candidate);
-              }}
-              type="button"
-            >
-              {candidate}
-            </button>
-          ))}
+      ) : null}
+
+      <div className={styles.mapTitleBlock}>
+        <h2 className={styles.mapTitleH2}>Portfolio map</h2>
+        <div className={styles.mapTitleSub}>
+          Phase × value at stake.{' '}
+          {portfolio.counts.total} {portfolio.counts.total === 1 ? 'move' : 'moves'} in flight.
+        </div>
+      </div>
+
+      <div className={styles.cardsHead}>
+        <h2 className={styles.cardsHeadH2}>Strategic moves</h2>
+        <div className={styles.cardsHeadControls}>
+          <span className={styles.cardsHeadCount}>
+            {portfolio.counts.total} {portfolio.counts.total === 1 ? 'move' : 'moves'} · all tenants
+          </span>
+          <select
+            className={styles.sortSelect}
+            value={sort}
+            onChange={(event) => {
+              const next = event.target.value as typeof sort;
+              setSort(next);
+              persist(listView, next);
+            }}
+          >
+            <option value="value">Sort: Value</option>
+            <option value="phase">Sort: Phase</option>
+            <option value="status">Sort: Attention</option>
+            <option value="name">Sort: Name</option>
+          </select>
+          <div className={styles.viewToggle} role="tablist">
+            {(['cards', 'kanban', 'scatter'] as const).map((mode) => (
+              <button
+                key={mode}
+                className={`${styles.viewToggleBtn} ${listView === mode ? styles.viewToggleBtnActive : ''}`}
+                onClick={() => {
+                  setListView(mode);
+                  persist(mode, sort);
+                }}
+                role="tab"
+                aria-selected={listView === mode}
+                type="button"
+              >
+                {mode}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
@@ -197,35 +207,49 @@ export function StrategicMovesHomeClient({
         {listView === 'cards' ? (
           <div className={styles.cards}>
             {sortedMoves.map((move) => (
-              <Link className={styles.card} key={move.id} href={`/strategic-moves/${move.id}`}>
-                <div className={styles.eyebrow}>
-                  {move.tenant.name} · {move.archetype}
+              <Link
+                className={`${styles.card} ${
+                  move.statusColor === 'red' ? styles.cardRed :
+                  move.statusColor === 'amber' ? styles.cardAmber :
+                  move.statusColor === 'teal' ? styles.cardTeal :
+                  styles.cardGreen
+                }`}
+                key={move.id}
+                href={`/strategic-moves/${move.id}`}
+              >
+                <div className={styles.cardStrip} aria-hidden />
+                <div className={styles.cardHead}>
+                  <div className={styles.cardHeadLeft}>
+                    <div className={styles.cardTitle}>{move.name}</div>
+                    <div className={styles.cardId}>
+                      {move.displayCode} · {move.tenant.name}
+                    </div>
+                  </div>
+                  <span className={styles.archetypeTag}>{move.archetype}</span>
                 </div>
-                <div className={styles.cardTitle}>{move.name}</div>
-                <div className={styles.metaRow}>
-                  <span className={`${styles.chip} ${
-                    move.statusColor === 'red' ? styles.chipRed :
-                    move.statusColor === 'amber' ? styles.chipAmber :
-                    move.statusColor === 'teal' ? styles.chipTeal :
-                    styles.chipGreen
-                  }`}>
-                    {move.status.text}
+                <div
+                  className={`${styles.gateLine} ${
+                    move.statusColor === 'red' ? styles.gateLineRed :
+                    move.statusColor === 'amber' ? styles.gateLineAmber :
+                    move.statusColor === 'teal' ? styles.gateLineTeal :
+                    styles.gateLineGreen
+                  }`}
+                >
+                  <span className={styles.pulse} aria-hidden />
+                  <span className={styles.statusText}>{move.status.text}</span>
+                  <span className={styles.gateDetail}>· {move.status.description}</span>
+                </div>
+                <div className={styles.cardMeta}>
+                  <span>
+                    Sponsor: <strong>{move.sponsor?.name ?? 'Unassigned'}</strong>
                   </span>
-                  <span className={styles.phaseTag}>{move.phaseLabel}</span>
-                </div>
-                <div className={styles.phaseRail}>
-                  {Array.from({ length: 8 }).map((_, index) => (
-                    <span
-                      key={`${move.id}-phase-${index}`}
-                      className={`${styles.phaseDot} ${
-                        index < move.currentPhase
-                          ? styles.phaseDotDone
-                          : index === move.currentPhase
-                            ? styles.phaseDotCurrent
-                            : ''
-                      }`}
-                    />
-                  ))}
+                  <span>
+                    Value:{' '}
+                    <span className={styles.cardMetaVal}>
+                      {formatValueAtStake(move.valueAtStake.projected?.high ?? move.valueAtStake.verified?.amount ?? 0)}{' '}
+                      {move.valueAtStake.verified?.status === 'tracked' ? 'tracked' : 'projected'}
+                    </span>
+                  </span>
                 </div>
               </Link>
             ))}
@@ -234,43 +258,39 @@ export function StrategicMovesHomeClient({
 
         {listView === 'kanban' ? (
           <div className={styles.kanban}>
-            {Array.from({ length: 8 }).map((_, phase) => (
-              <section className={styles.kanbanCol} key={`kanban-${phase}`}>
-                <div className={styles.kanbanHead}>P{phase}</div>
-                <div className={styles.rowList}>
-                  {sortedMoves
-                    .filter((move) => move.currentPhase === phase)
-                    .map((move) => (
+            {Array.from({ length: 8 }).map((_, phase) => {
+              const inPhase = sortedMoves.filter((move) => move.currentPhase === phase);
+              const phaseLabel = PHASE_AXIS[phase]?.name ?? '';
+              return (
+                <section className={styles.kanbanCol} key={`kanban-${phase}`}>
+                  <div className={styles.kanbanHead}>
+                    P{phase}
+                    <span className={styles.kanbanCount}>{inPhase.length}</span>
+                    <span className={styles.kanbanHeadLabel}>{phaseLabel}</span>
+                  </div>
+                  <div className={styles.kanbanList}>
+                    {inPhase.map((move) => (
                       <Link
-                        className={`${styles.card} ${styles.kanbanCard} ${
-                          move.statusColor === 'red' ? styles.cardRed :
-                          move.statusColor === 'amber' ? styles.cardAmber :
-                          move.statusColor === 'teal' ? styles.cardTeal :
-                          styles.cardGreen
+                        className={`${styles.kanbanCard} ${
+                          move.statusColor === 'red' ? styles.kanbanCardRed :
+                          move.statusColor === 'amber' ? styles.kanbanCardAmber :
+                          move.statusColor === 'teal' ? styles.kanbanCardTeal :
+                          styles.kanbanCardGreen
                         }`}
                         key={move.id}
                         href={`/strategic-moves/${move.id}`}
                       >
-                        <div className={styles.eyebrow}>{move.displayCode}</div>
-                        <div className={styles.cardTitle}>{move.name}</div>
-                        <div className={styles.kanbanCardFoot}>
-                          <span className={`${styles.chip} ${
-                            move.statusColor === 'red' ? styles.chipRed :
-                            move.statusColor === 'amber' ? styles.chipAmber :
-                            move.statusColor === 'teal' ? styles.chipTeal :
-                            styles.chipGreen
-                          }`}>
-                            {move.status.text}
-                          </span>
-                          <span className={styles.kanbanValue}>
-                            {formatValueAtStake(move.valueAtStake.projected?.high ?? move.valueAtStake.verified?.amount ?? 0)}
-                          </span>
+                        <div className={styles.kanbanId}>{move.displayCode}</div>
+                        <div className={styles.kanbanName}>{move.name}</div>
+                        <div className={styles.kanbanVal}>
+                          {formatValueAtStake(move.valueAtStake.projected?.high ?? move.valueAtStake.verified?.amount ?? 0)}
                         </div>
                       </Link>
                     ))}
-                </div>
-              </section>
-            ))}
+                  </div>
+                </section>
+              );
+            })}
           </div>
         ) : null}
 
