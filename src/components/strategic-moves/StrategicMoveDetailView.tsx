@@ -123,111 +123,131 @@ export function StrategicMoveDetailView({ move }: Props) {
               </div>
             </div>
 
-          <div className={styles.twoCol} style={{ marginBottom: 10 }}>
-            <section className={styles.section}>
-              <div className={styles.sectionTitle}>Sponsor & Team</div>
-              <div className={styles.rowList}>
-                <div className={styles.rowItem}>
-                  <strong>Sponsor:</strong> {move.sponsor ? `${move.sponsor.name} · ${move.sponsor.role}` : 'Unassigned'}
+            <section className={styles.detailSection}>
+              <div className={styles.detailSectionTitle}>
+                {move.phaseLabel.toUpperCase()} &middot; Gate criteria
+              </div>
+              <ul className={styles.critList}>
+                {move.gateCriteria.map((criterion) => (
+                  <li key={criterion.id}>
+                    <span
+                      className={`${styles.critCheck} ${criterion.completed ? styles.critCheckDone : ''}`}
+                      aria-hidden
+                    >
+                      {criterion.completed ? '\u2713' : ''}
+                    </span>
+                    <span>{criterion.label}</span>
+                  </li>
+                ))}
+              </ul>
+            </section>
+
+            <div className={styles.sectionGrid}>
+              <section className={styles.detailSection}>
+                <div className={styles.detailSectionTitle}>Sponsor &amp; team</div>
+                <div className={styles.kvPair}>
+                  <span className={styles.kvK}>Sponsor</span>
+                  <span className={styles.kvV}>
+                    {move.sponsor ? `${move.sponsor.name} · ${formatRole(move.sponsor.role)}` : 'Unassigned'}
+                  </span>
                 </div>
-                {move.participants.slice(0, 4).map((participant) => (
-                  <div className={styles.rowItem} key={participant.personId}>
-                    {participant.name} · {formatRole(participant.role)}
+                <div className={styles.kvPair}>
+                  <span className={styles.kvK}>Tenant</span>
+                  <span className={styles.kvV}>{move.tenant.name}</span>
+                </div>
+                <div className={styles.kvPair}>
+                  <span className={styles.kvK}>Archetype</span>
+                  <span className={`${styles.kvV} ${styles.kvVMono}`}>{move.archetype}</span>
+                </div>
+                {move.participants.slice(0, 3).map((participant) => (
+                  <div className={styles.kvPair} key={participant.personId}>
+                    <span className={styles.kvK}>{formatRole(participant.role)}</span>
+                    <span className={styles.kvV}>{participant.name}</span>
+                  </div>
+                ))}
+              </section>
+              <section className={styles.detailSection}>
+                <div className={styles.detailSectionTitle}>Value at stake</div>
+                <div className={styles.kvPair}>
+                  <span className={styles.kvK}>Projected</span>
+                  <span className={styles.kvV}>
+                    {move.valueAtStake.projected
+                      ? `${move.valueAtStake.projected.currency} ${move.valueAtStake.projected.low.toLocaleString()}\u2013${move.valueAtStake.projected.high.toLocaleString()}`
+                      : 'Not set'}
+                  </span>
+                </div>
+                <div className={styles.kvPair}>
+                  <span className={styles.kvK}>Range</span>
+                  <span className={styles.kvV}>
+                    {move.valueAtStake.projected ? 'projected' : 'pending capture'}
+                  </span>
+                </div>
+                <div className={styles.kvPair}>
+                  <span className={styles.kvK}>Verified</span>
+                  <span className={`${styles.kvV} ${move.valueAtStake.verified ? styles.kvVGreen : ''}`}>
+                    {move.valueAtStake.verified
+                      ? `${move.valueAtStake.verified.amount.toLocaleString()} (${move.valueAtStake.verified.status})`
+                      : '\u2014 pending P3'}
+                  </span>
+                </div>
+              </section>
+            </div>
+
+            <section className={styles.detailSection}>
+              <div className={styles.detailSectionTitle}>Recent activity</div>
+              <div className={styles.timeline}>
+                {move.recentActivity.slice(0, 8).map((activity) => (
+                  <div className={styles.tlItem} key={`${activity.at}-${activity.action}`}>
+                    <span className={styles.tlTime}>{formatActivityTime(activity.at)}</span>
+                    <span className={styles.tlDot} aria-hidden />
+                    <span className={styles.tlText}>
+                      <strong>{activity.action}</strong> &middot; {activity.summary}
+                    </span>
                   </div>
                 ))}
               </div>
+              {move.recentActivity.length >= 3 ? (
+                <a className={styles.tlMore} href={`/strategic-moves/${move.id}?panel=activity`}>
+                  View all activity &rarr;
+                </a>
+              ) : null}
             </section>
-            <section className={styles.section}>
-              <div className={styles.sectionTitle}>Value at Stake</div>
-              <div className={styles.rowList}>
-                <div className={styles.rowItem}>
-                  Projected:{' '}
-                  {move.valueAtStake.projected
-                    ? `${move.valueAtStake.projected.currency} ${move.valueAtStake.projected.low.toLocaleString()}–${move.valueAtStake.projected.high.toLocaleString()}`
-                    : 'Not set'}
-                </div>
-                <div className={styles.rowItem}>
-                  Verified:{' '}
-                  {move.valueAtStake.verified
-                    ? `${move.valueAtStake.verified.amount.toLocaleString()} (${move.valueAtStake.verified.status})`
-                    : 'Pending'}
-                </div>
+
+            <section className={styles.detailSection}>
+              <div className={styles.detailSectionTitle}>Evidence from intelligence</div>
+              <div className={styles.evidenceList}>
+                {move.linkedEvidence.length === 0 ? (
+                  <div className={styles.evEmpty}>No linked evidence yet.</div>
+                ) : (
+                  move.linkedEvidence.map((evidence) => (
+                    <a className={styles.evItem} href={evidence.url} key={evidence.id}>
+                      <span className={styles.evNum}>{evidence.anchor}</span>
+                      <span className={styles.evText}>{evidence.summary}</span>
+                      <span className={styles.evLink} aria-hidden>&#8599;</span>
+                    </a>
+                  ))
+                )}
               </div>
             </section>
-          </div>
-
-          <section className={styles.section} style={{ marginBottom: 10 }}>
-            <div className={styles.sectionTitle}>Deliverables</div>
-            <div className={styles.rowList}>
-              {move.deliverables.length === 0 ? (
-                <div className={styles.rowItem}>No deliverables captured yet.</div>
-              ) : (
-                move.deliverables.slice(0, 3).map((deliverable) => (
-                  <details className={styles.rowItem} key={deliverable.id}>
-                    <summary className={styles.deliverableSummary}>
-                      <span>
-                        <strong>{deliverable.title}</strong>
-                      </span>
-                      <span className={styles.deliverableStatus}>{deliverable.status}</span>
-                    </summary>
-                    <p className={styles.deliverablePreview}>{deliverable.preview}</p>
-                    <a className={styles.deliverableLink} href={deliverable.url} target="_blank" rel="noreferrer">
-                      Open module state →
-                    </a>
-                  </details>
-                ))
-              )}
-              {move.deliverables.length > 3 ? (
-                <div className={styles.rowItem}>
-                  Showing 3 of {move.deliverables.length} deliverables.
-                </div>
-              ) : null}
-            </div>
-          </section>
-
-          <section className={styles.section} style={{ marginBottom: 10 }}>
-            <div className={styles.sectionTitle}>{move.phaseLabel} · Gate Criteria</div>
-            <div className={styles.rowList}>
-              {move.gateCriteria.map((criterion) => (
-                <div className={styles.rowItem} key={criterion.id}>
-                  {criterion.completed ? '●' : '○'} {criterion.label}
-                </div>
-              ))}
-            </div>
-          </section>
-
-          <section className={styles.section} style={{ marginBottom: 10 }}>
-            <div className={styles.sectionTitle}>Recent Activity</div>
-            <div className={styles.rowList}>
-              {move.recentActivity.slice(0, 8).map((activity) => (
-                <div className={styles.rowItem} key={`${activity.at}-${activity.action}`}>
-                  <strong>{activity.action}</strong> · {activity.summary}
-                </div>
-              ))}
-            </div>
-          </section>
-
-          <section className={styles.section}>
-            <div className={styles.sectionTitle}>Linked Evidence</div>
-            <div className={styles.rowList}>
-              {move.linkedEvidence.length === 0 ? (
-                <div className={styles.rowItem}>No linked evidence yet.</div>
-              ) : (
-                move.linkedEvidence.map((evidence) => (
-                  <a
-                    className={styles.rowItem}
-                    href={evidence.url}
-                    key={evidence.id}
-                  >
-                    <strong>{evidence.anchor}</strong> &middot; {evidence.summary}
-                  </a>
-                ))
-              )}
-            </div>
-          </section>
           </div>
         </article>
       </section>
     </div>
   );
+}
+
+function formatActivityTime(iso: string): string {
+  if (!iso) return '';
+  const then = new Date(iso);
+  if (Number.isNaN(then.getTime())) return iso;
+  const now = Date.now();
+  const diffMs = now - then.getTime();
+  const min = Math.round(diffMs / 60_000);
+  if (min < 60) return `${Math.max(1, min)}m ago`;
+  const hr = Math.round(diffMs / 3_600_000);
+  if (hr < 24) return `${hr}h ago`;
+  const d = Math.round(diffMs / 86_400_000);
+  if (d < 7) return `${d}d ago`;
+  if (d < 30) return `${Math.round(d / 7)}w ago`;
+  return then.toLocaleDateString();
 }

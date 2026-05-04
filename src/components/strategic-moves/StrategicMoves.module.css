@@ -1254,6 +1254,227 @@
   margin: 0 0 18px;
 }
 
+/* ─── Detail body sections (kv pairs, crit list, timeline, evidence) ─── */
+.sectionGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin-bottom: 14px;
+}
+
+.detailSection {
+  background: var(--canon-bg-surface);
+  border: 1px solid var(--canon-border);
+  border-radius: 12px;
+  padding: 16px 18px;
+  margin-bottom: 14px;
+}
+
+.detailSection:last-child {
+  margin-bottom: 0;
+}
+
+.sectionGrid > .detailSection {
+  margin-bottom: 0;
+}
+
+.detailSectionTitle {
+  font-family: var(--abarva-mono);
+  font-size: 10px;
+  letter-spacing: 0.15em;
+  font-weight: 600;
+  color: var(--abarva-slate);
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+
+.kvPair {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--canon-gray-200);
+  font-size: 13px;
+}
+
+.kvPair:last-child {
+  border-bottom: none;
+}
+
+.kvK {
+  color: var(--abarva-slate);
+}
+
+.kvV {
+  font-weight: 600;
+  color: var(--abarva-ink-black);
+  text-align: right;
+}
+
+.kvVMono {
+  font-family: var(--abarva-mono);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.kvVGreen {
+  color: var(--canon-teal);
+}
+
+.critList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.critList li {
+  display: flex;
+  gap: 10px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--canon-gray-200);
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.critList li:last-child {
+  border-bottom: none;
+}
+
+.critCheck {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--canon-bg-cream);
+  border: 1.5px solid var(--canon-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-size: 11px;
+  color: var(--abarva-stone);
+}
+
+.critCheckDone {
+  background: var(--canon-teal);
+  border-color: var(--canon-teal);
+  color: var(--abarva-ink-black);
+  font-weight: 700;
+}
+
+.timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.tlItem {
+  display: flex;
+  gap: 12px;
+  font-size: 12.5px;
+  line-height: 1.45;
+}
+
+.tlTime {
+  font-family: var(--abarva-mono);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  color: var(--abarva-slate);
+  flex-shrink: 0;
+  width: 70px;
+  padding-top: 2px;
+}
+
+.tlDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--canon-teal);
+  margin-top: 7px;
+  flex-shrink: 0;
+}
+
+.tlText strong {
+  font-weight: 600;
+  color: var(--abarva-ink-black);
+}
+
+.tlMore {
+  display: inline-block;
+  margin-top: 12px;
+  font-family: var(--abarva-mono);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  font-weight: 600;
+  color: var(--abarva-signal-blue-dark);
+  cursor: pointer;
+  text-decoration: none;
+  transition: color 150ms var(--ease-out);
+}
+
+.tlMore:hover {
+  color: var(--abarva-signal-blue);
+}
+
+.evidenceList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.evEmpty {
+  font-size: 13px;
+  color: var(--abarva-slate);
+}
+
+.evItem {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 12px;
+  background: rgba(0, 102, 204, 0.05);
+  border-left: 2px solid var(--abarva-signal-blue);
+  border-radius: 0 6px 6px 0;
+  font-size: 12.5px;
+  line-height: 1.45;
+  cursor: pointer;
+  text-decoration: none;
+  color: inherit;
+  transition: background 150ms var(--ease-out);
+}
+
+.evItem:hover {
+  background: rgba(0, 102, 204, 0.10);
+}
+
+.evNum {
+  font-family: var(--abarva-mono);
+  font-size: 11px;
+  color: var(--abarva-signal-blue-dark);
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.evText {
+  flex: 1;
+  color: var(--abarva-ink-black);
+}
+
+.evLink {
+  color: var(--abarva-signal-blue);
+  font-size: 13px;
+  opacity: 0;
+  transition: opacity 150ms var(--ease-out);
+  flex-shrink: 0;
+}
+
+.evItem:hover .evLink {
+  opacity: 1;
+}
+
+/* ─── Legacy classes used by Originate (transitional, removed in cleanup) */
 .twoCol {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -1261,9 +1482,10 @@
 }
 
 .section {
-  border: 1px solid #d6cec0;
+  border: 1px solid var(--canon-border);
   border-radius: 10px;
   padding: 10px 12px;
+  background: var(--canon-bg-surface);
 }
 
 .sectionTitle {
@@ -1271,7 +1493,7 @@
   font-size: 11px;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: var(--canon-gray-500);
+  color: var(--abarva-slate);
   margin-bottom: 8px;
 }
 
@@ -1281,23 +1503,11 @@
 }
 
 .rowItem {
-  border: 1px solid #d9d1c3;
+  border: 1px solid var(--canon-border);
   border-radius: 8px;
   padding: 8px 10px;
   font-size: 14px;
   line-height: 1.45;
-}
-
-.rowItem summary {
-  list-style: none;
-}
-
-.rowItem summary::-webkit-details-marker {
-  display: none;
-}
-
-.rowItem a {
-  color: inherit;
 }
 
 .primaryAction {
@@ -1306,67 +1516,12 @@
   gap: 4px;
   border: none;
   border-radius: 8px;
-  background: var(--abarva-signal-blue);
-  color: #fff;
+  background: var(--abarva-ink-black);
+  color: var(--canon-bg-cream);
   padding: 9px 12px;
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
-}
-
-.primaryActionLink {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  border-radius: 8px;
-  background: var(--abarva-signal-blue);
-  color: #fff;
-  padding: 9px 12px;
-  font-size: 13px;
-  font-weight: 600;
-  text-decoration: none;
-}
-
-.primaryActionLink:hover {
-  filter: brightness(0.95);
-}
-
-.deliverableSummary {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 8px;
-  cursor: pointer;
-}
-
-.deliverableStatus {
-  border-radius: 999px;
-  border: 1px solid var(--canon-border-strong);
-  padding: 2px 7px;
-  font-family: var(--abarva-mono);
-  font-size: 9px;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-.deliverablePreview {
-  margin: 8px 0 0;
-  color: var(--canon-gray-700);
-  font-size: 13px;
-  line-height: 1.45;
-}
-
-.deliverableLink {
-  display: inline-block;
-  margin-top: 8px;
-  color: var(--abarva-signal-blue);
-  text-decoration: none;
-  font-weight: 600;
-  font-size: 12px;
-}
-
-.deliverableLink:hover {
-  text-decoration: underline;
 }
 
 .originateShell {
