@@ -1,0 +1,137 @@
+/* Phase rail — shared across detail head, originate head, future surfaces.
+ * Pixel-matches docs/design/strategic-moves/14-strategic-moves-home.html
+ * `.detail-rail` / `.rail-track` / `.rail-line` / `.dot` / `.rail-labels`.
+ *
+ * Status-keyed current-dot color and halo follow the canon semantic palette
+ * (red/amber/teal=blue/green) — never decorative. */
+
+.rail {
+  margin-top: 14px;
+}
+
+.track {
+  position: relative;
+  height: 14px;
+}
+
+.line {
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  top: 6px;
+  height: 2px;
+  background: var(--canon-border);
+}
+
+.dot {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--canon-bg-cream);
+  border: 1.5px solid var(--canon-border);
+  top: 0;
+  transform: translateX(-50%);
+  transition: background 200ms var(--ease-out), border-color 200ms var(--ease-out), box-shadow 200ms var(--ease-out);
+}
+
+.dotDone {
+  background: var(--canon-teal);
+  border-color: var(--canon-teal);
+}
+
+.dotCurrent {
+  width: 18px;
+  height: 18px;
+  top: -2px;
+}
+
+/* Status-keyed current-dot colors and halos. The "teal" status family is
+ * driven by the brand signal blue (legacy alias from prototype). */
+.dotStatus_red {
+  background: var(--canon-red);
+  border-color: var(--canon-red);
+  box-shadow: 0 0 0 4px rgba(163, 45, 45, 0.18);
+}
+
+.dotStatus_amber {
+  background: var(--canon-amber);
+  border-color: var(--canon-amber);
+  box-shadow: 0 0 0 4px rgba(186, 117, 23, 0.18);
+}
+
+.dotStatus_green {
+  background: var(--canon-teal);
+  border-color: var(--canon-teal);
+  box-shadow: 0 0 0 4px rgba(29, 158, 117, 0.18);
+}
+
+.dotStatus_teal {
+  background: var(--abarva-signal-blue);
+  border-color: var(--abarva-signal-blue);
+  box-shadow: 0 0 0 4px rgba(0, 102, 204, 0.18);
+}
+
+.labels {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 8px;
+  padding: 0 2px;
+}
+
+.label {
+  font-family: var(--abarva-mono);
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  color: var(--abarva-slate);
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.labelCurrent {
+  font-weight: 700;
+}
+
+.labelStatus_red {
+  color: var(--canon-red);
+}
+
+.labelStatus_amber {
+  color: var(--canon-amber);
+}
+
+.labelStatus_green {
+  color: var(--canon-teal-dark);
+}
+
+.labelStatus_teal {
+  color: var(--abarva-signal-blue-dark);
+}
+
+/* Mini variant (e.g. inside a card; smaller dots, no labels). */
+.railMini {
+  margin-top: 8px;
+}
+
+.railMini .track {
+  height: 8px;
+}
+
+.railMini .line {
+  top: 3px;
+  left: 4px;
+  right: 4px;
+  height: 1.5px;
+}
+
+.railMini .dot {
+  width: 8px;
+  height: 8px;
+  border-width: 1px;
+}
+
+.railMini .dotCurrent {
+  width: 10px;
+  height: 10px;
+  top: -1px;
+}
