@@ -693,12 +693,14 @@ export async function getMoveStatus(
 async function fetchLinkedEvidence(
   sb: ReturnType<typeof getServerSupabase>,
   moveId: string,
+  clientId: string,
 ): Promise<StrategicMove['linkedEvidence']> {
   // Evidence binding convention for move-level retrieval:
   // related_entity_type='engagement' AND related_entity_id=<moveId>
   const { data } = await sb
     .from('evidence')
     .select('id, summary')
+    .eq('client_id', clientId)
     .eq('related_entity_type', 'engagement')
     .eq('related_entity_id', moveId)
     .order('created_at', { ascending: false })
@@ -808,7 +810,7 @@ export async function buildStrategicMove(
       .eq('engagement_id', move.id)
       .order('created_at', { ascending: false })
       .limit(8),
-    fetchLinkedEvidence(sb, move.id),
+    fetchLinkedEvidence(sb, move.id, move.clientId),
     fetchMoveDeliverables(sb, move.id),
     getMoveStatus(ctx, move),
   ]);
