@@ -52,20 +52,43 @@ export function StrategicMoveDetailView({ move }: Props) {
       <section className={styles.detailShell}>
         <aside className={styles.chatPane}>
           <div className={styles.chatHead}>
-            <div className={styles.eyebrow}>Nexus</div>
-            <div>Move Orchestrator</div>
-            <div className={styles.chatSubhead}>Ask anything about this move. I will work in the right pane.</div>
+            <div className={styles.agentRow}>
+              <div className={styles.agentAvatar} aria-hidden>✦</div>
+              <div>
+                <div className={styles.agentName}>Nexus</div>
+                <div className={styles.agentStatus}>
+                  <span className={styles.agentStatusDot} aria-hidden />
+                  SCOPED TO {move.displayCode}
+                </div>
+              </div>
+            </div>
+            <div className={styles.chatSubhead}>
+              Ask anything about this move. I&rsquo;ll work in the right pane.
+            </div>
           </div>
-          <div className={styles.chatBody}>
+          <div className={styles.chatThread}>
             <div className={styles.bubbleNexus}>
-              I am scoped to <strong>{move.displayCode}</strong>. You are in {move.phaseLabel}. Current status: {move.status.text.toLowerCase()}.
+              I&rsquo;m scoped to <em>{move.displayCode}</em> &mdash; {move.name}. Currently in{' '}
+              <em>{move.phaseLabel}</em>. Status: <em>{move.status.text.toLowerCase()}</em>.
             </div>
             <div className={styles.bubbleNexus}>
-              Next best action: {actionLabel(move.status.key, move.phaseLabel)}.
+              {move.status.description}. Want me to walk through what&rsquo;s needed to advance?
             </div>
             <div className={styles.bubbleUser}>Show me what is still missing for this gate.</div>
             <div className={styles.bubbleNexus}>
               I mapped the criteria on the right rail and linked the latest evidence so you can review quickly.
+            </div>
+          </div>
+          <div className={styles.chatInput}>
+            <div className={styles.suggestedLabel}>&#8627; Suggested questions</div>
+            <div className={styles.suggestedPrompts}>
+              <button className={styles.promptChip} type="button">What&rsquo;s blocking the gate?</button>
+              <button className={styles.promptChip} type="button">Show me the evidence trail</button>
+              <button className={styles.promptChip} type="button">Who needs to weigh in next?</button>
+            </div>
+            <div className={styles.inputRow}>
+              <input type="text" placeholder={`Ask Nexus about ${move.displayCode}\u2026`} />
+              <button className={styles.sendBtn} type="button" aria-label="Send">&#8593;</button>
             </div>
           </div>
         </aside>
