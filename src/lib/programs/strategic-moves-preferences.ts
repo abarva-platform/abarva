@@ -10,7 +10,7 @@ export interface StrategicMovesPreferences {
 }
 
 export const DEFAULT_STRATEGIC_MOVES_PREFERENCES: StrategicMovesPreferences = {
-  listView: 'kanban',
+  listView: 'cards',
   sort: 'value',
 };
 
