@@ -25,6 +25,7 @@ export default async function StrategicMovesPage() {
 
   return (
     <StrategicMovesHomeClient
+      initialListView={prefs.listView}
       initialSort={prefs.sort}
       portfolio={portfolio}
     />

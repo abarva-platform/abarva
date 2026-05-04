@@ -257,6 +257,26 @@
   color: var(--canon-bg-cream);
 }
 
+.viewToggleBtnDisabled {
+  color: var(--canon-gray-300);
+  cursor: not-allowed;
+}
+
+.viewToggleBtnDisabled:hover {
+  color: var(--canon-gray-300);
+}
+
+.scatterGateCaption {
+  margin: 8px 0 16px;
+  font-family: var(--abarva-mono);
+  font-size: 10px;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  font-weight: 600;
+  color: var(--abarva-stone);
+  text-align: right;
+}
+
 /* No surrounding card / wrapper background — cards layer directly on
    the canon-bg-surface page background. */
 .canvas {
@@ -768,8 +788,9 @@
 
 .detailShell {
   display: grid;
-  grid-template-columns: minmax(320px, 420px) minmax(0, 1fr);
-  gap: 10px;
+  grid-template-columns: 460px minmax(0, 1fr);
+  gap: 20px;
+  height: calc(100vh - 220px);
   min-height: 620px;
   align-items: stretch;
 }
