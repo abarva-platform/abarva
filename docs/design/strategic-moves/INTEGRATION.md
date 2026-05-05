@@ -4,10 +4,12 @@ Read this **after** the README. This file tells you what to touch, what to leave
 
 ## Where this lives
 
-- **Route.** `/app/strategic-moves` (dashboard) · `/app/strategic-moves/:moveId` (detail) · `/app/strategic-moves/new` (originate / P0).
+- **Route.** `/app/strategic-moves` (dashboard) · `/app/strategic-moves/:moveId` (workspace) · `/app/strategic-moves/new` (originate / P0).
 - **Nav.** Authenticated app navbar, sits between **Programs** and **Control Tower**.
 - **Auth.** Maestro role required. Sponsor and observer roles see read-only.
-- **Module folder (suggested).** `app/modules/strategic-moves/` with subfolders `dashboard/`, `detail/`, `originate/`, `shared/`.
+- **Module folder (suggested).** `app/modules/strategic-moves/` with subfolders `dashboard/`, `workspace/`, `originate/`, `shared/`.
+
+> **Navigation pivot (v0.2).** The Detail page evolves into the **Move Workspace** — a phase-navigable surface where clicking any phase node in the rail shows that phase's gate criteria, deliverables, and context in past/current/future state. The binding reference spec is `15-workspace-v0.2.html`. The Originate flow (P0) is now also rendered inside the Workspace shell (View D) rather than as a standalone page. Implementation pending.
 
 ## What to touch
 
@@ -41,7 +43,7 @@ Read this **after** the README. This file tells you what to touch, what to leave
 
 These are intentional and load-bearing — don't refactor them away on a first pass:
 
-- **The two-pane shell** (`.detail-shell` = chat-left + content-right). It's the canon shape for any agent-mediated work surface. Detail and originate share it on purpose; future surfaces (Charter, Decision, Run) will too.
+- **The two-pane shell** (`.ws-shell` / `.detail-shell` = chat-left + canvas-right). It's the canon shape for any agent-mediated work surface. The Move Workspace (v0.2) and Originate share it on purpose; future surfaces (Charter, Decision, Run) will too.
 - **The 7-section P0 scaffold structure.** The order and the keys (`hypothesis` → `archetype` → `sponsor` → `tenant` → `foundation` → `value` → `evidence`) match the canon P0 charter template. Don't reorder; don't merge.
 - **The fill-in animation timing** (~380ms stagger, `cubic-bezier(0.2, 0.7, 0.2, 1)`). It's there to make Nexus feel like it's *drafting*, not just dumping. Don't shorten.
 - **Status colors are semantic.** A red chip means a real gate-blocked condition. Never apply red/amber/teal as decoration.

@@ -22,6 +22,7 @@ It is **a design reference, not production code**. The bundled HTML inlines styl
 |---|---|
 | `README.md` | This document. Self-sufficient — implement from this alone. |
 | `14-strategic-moves-home.html` | The prototype. All three views live in one file, toggled by a `showView(name)` function. Inline `<style>` + `<script>`. |
+| `15-workspace-v0.2.html` | Move Workspace v0.2 binding reference. Four views (current/past/future/originate-inside-workspace). Supersedes earlier Detail concept. |
 | `tokens.css` | Canonical design tokens — colors, type, spacing, radius, motion. The HTML inlines these via `:root`; the production codebase already has them at `tokens.css` / `brand-tokens.css` / `abarva-canon.css`. **Do not duplicate. Map.** |
 | `INTEGRATION.md` | What to touch, what to leave alone, where this surface fits in routing and data. **Read this second.** |
 
@@ -219,6 +220,38 @@ The prototype stores section content as HTML strings (`<strong>` allowed) — pr
 - `assets/logos/abarva-monogram-v-white.svg` — FAB glyph.
 
 Both are already in the AbarVa repo. The prototype loads from a relative path; in production, import via the app's existing logo component.
+
+---
+
+---
+
+## Move Workspace v0.2
+
+v0.2 is the binding reference spec for the Move Workspace surface. Implementation pending. Supersedes any earlier Workspace concept; Detail page evolves into Workspace per the navigation pivot.
+
+**File:** `15-workspace-v0.2.html`
+
+### Four views
+
+| View | Section ID | Description |
+|------|-----------|-------------|
+| View A — Current | `#view-a` | Active phase (P4 Build shown). Full workspace shell: chat pane + canvas with gate criteria, artifact shelf, and context rail (team / value / activity). |
+| View B — Past | `#view-b` | Reviewing a completed phase (P2 Diagnose). Read-only retrospective: closed gate, signed deliverables, "Jump to current" affordance. |
+| View C — Future | `#view-c` | Previewing an upcoming phase (P6 Verify). Dashed borders, scheduled artifacts, gate preview with roadmap helper. |
+| View D — Originate inside Workspace | `#view-d` | P0 origination rendered inside the Workspace shell (not the standalone originate page). Chat drives a 7-section scaffold with section-by-section fill-in. Promote locked until sponsor signs. |
+
+### Key design elements
+
+- **Phase rail** — clickable, navigates between past/current/future views in a single workspace. Done dots are filled ink, current is blue with halo, future is dashed.
+- **Gate panel** — criteria checklist with promote button; disabled until gate passes. Past gates show "Closed" stamp.
+- **Artifact shelf** — grouped by required/optional, status vocabulary: signed / drafting / not started / scheduled / not active.
+- **Context rail** — tabbed panel (Sponsor & team / Value at stake / Recent activity) adapts per temporal state.
+- **Nav placeholder** — spec explicitly notes "Global AbarVa nav assumed above · not redrawn" — same constraint as `14-strategic-moves-home.html`.
+
+### Footnotes (v0.2 → v0.3)
+
+1. **Confidence bands** on value ranges and role templates (e.g., "Verify owner: Finance-of-record + observer") are aspirational v2 features pending substrate support. Shown as design language only.
+2. **Tower references** — the "Handoff Plan" deliverable is bound to `tower_handoff_plan` catalog code that will resolve once the Tower surface is designed; treated here as a generic handoff artifact.
 
 ---
 
