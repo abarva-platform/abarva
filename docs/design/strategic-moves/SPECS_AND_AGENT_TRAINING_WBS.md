@@ -1004,7 +1004,17 @@ Every decision made during WBS execution gets logged here. Format:
 
 ---
 
-## 13.1 · Sign-off Log
+## 13.1 · Sign-Off Log
+
+Records when each spec layer is accepted and frozen by Anand.
+
+### SIGN-OFF · 2026-05-05 · Foundation complete
+
+**Steps signed:** F-01 (#1528) · F-02 (#1530) · F-03 (#1529) · F-05 (#1531)
+**Key finding from F-05:** SQL phase migration already applied; B-027 is TypeScript-only renames; D-11 draft persistence already shipped via `program_origination_drafts` table
+**Unblocks:** All Phase 2+ spec work
+
+---
 
 ### SIGN-OFF · 2026-05-05 · O-1.3 Originate Layer 1 frozen
 
@@ -1014,11 +1024,35 @@ Every decision made during WBS execution gets logged here. Format:
 **Verification:** Anatomy covers all elements from cascade Flow 2 Frame 2; scaffold-in-chat-lane placement explicit; PHASE_SHORT_NAMES substrate gap logged as B-101; annotated layout spot-checked 5 IDs
 **Unblocks:** Phase 3 (Originate Layers 2–4): O-2.1, O-2.2, O-2.3
 
-### SIGN-OFF · 2026-05-05 · Foundation complete
+---
 
-**Steps signed:** F-01 (#1528) · F-02 (#1530) · F-03 (#1529) · F-05 (#1531)
-**Key finding from F-05:** SQL phase migration already applied; B-027 is TypeScript-only renames; D-11 draft persistence already shipped via `program_origination_drafts` table
-**Unblocks:** All Phase 2+ spec work
+### O-2.4 · 2026-05-05 · Originate Layer 2 State — ready for sign-off
+
+**Context:** Layer 2 State (O-2.1, O-2.2, O-2.3) drafted via PR #1539 on branch `spec/originate-l2-state`. Deliverable: `docs/design/strategic-moves/specs/originate/02-state.md`.
+**Layer status:** Draft — pending Anand review and sign-off.
+**Acceptance bar (per SPEC_METHODOLOGY.md §2.2):**
+- Every meaningful state combination has a row: PASS (22 rows including 6 edge cases)
+- Every element from Layer 1 has a column: PASS (matrix covers all state-driven elements)
+- All required edge cases are rows (EDGE-A through EDGE-E): PASS
+- No "TBD" in any cell: PASS
+- Substrate gaps logged B-104 through B-107: PASS
+**Unblocks:** O-3 (Interactions) full execution on sign-off.
+**Sign-off date:** Pending
+
+---
+
+### O-3.5 · 2026-05-05 · Originate Layer 3 Interactions — ready for sign-off
+
+**Context:** Layer 3 Interactions (O-3.1, O-3.2, O-3.3, O-3.4) drafted via PR on branch `spec/originate-l3-interactions`. Deliverable: `docs/design/strategic-moves/specs/originate/03-interactions.md`.
+**Layer status:** Draft — pending Anand review and sign-off.
+**Acceptance bar (per SPEC_METHODOLOGY.md §2.3):**
+- Every clickable from Layer 1 has a row: PASS
+- Keyboard navigation order specified end-to-end: PASS
+- URL behavior aligns with D-10: PASS
+- All loading and error states documented: PASS
+- Future phase rail nodes P1–P5 documented as non-interactive: PASS
+**Unblocks:** O-4 (Data Binding) sign-off path.
+**Sign-off date:** Pending
 
 ---
 
