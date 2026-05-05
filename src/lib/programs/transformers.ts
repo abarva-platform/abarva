@@ -840,7 +840,9 @@ async function fetchMoveDeliverables(
     updated_at: string | null;
   }> | null) ?? [];
 
-  if (rows.length === 0) return [];
+  if (rows.length === 0) {
+    return fetchArtifactIndexFallback(sb, moveId);
+  }
 
   const deliverableIds = rows.map((row) => row.id);
   const { data: versionRows } = await sb
@@ -876,6 +878,39 @@ async function fetchMoveDeliverables(
       url: `/api/v1/programs/${moveId}/module/${encodeURIComponent(row.deliverable_type_key)}`,
     };
   });
+}
+
+async function fetchArtifactIndexFallback(
+  sb: ReturnType<typeof getServerSupabase>,
+  moveId: string,
+): Promise<StrategicMove['deliverables']> {
+  const { data } = await sb
+    .from('move_artifact_index')
+    .select('artifact_id, artifact_type, title, summary, artifact_kind, status, created_at, updated_at')
+    .eq('engagement_id', moveId)
+    .order('created_at', { ascending: false })
+    .limit(24);
+
+  const artifactRows = (data as Array<{
+    artifact_id: string;
+    artifact_type: string;
+    title: string | null;
+    summary: string | null;
+    artifact_kind: string | null;
+    status: string | null;
+    created_at: string | null;
+    updated_at: string | null;
+  }> | null) ?? [];
+
+  return artifactRows.map((row) => ({
+    id: row.artifact_id,
+    typeKey: row.artifact_kind ?? row.artifact_type,
+    title: row.title?.trim() || row.artifact_type.replace(/_/g, ' '),
+    status: row.status ?? row.artifact_type,
+    updatedAt: row.updated_at,
+    preview: row.summary ? compactDeliverablePreview(row.summary) : '',
+    url: `/api/v1/programs/${moveId}/module/${encodeURIComponent(row.artifact_kind ?? row.artifact_type)}`,
+  }));
 }
 
 export async function buildStrategicMove(
