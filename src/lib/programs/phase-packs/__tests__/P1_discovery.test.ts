@@ -33,7 +33,7 @@ describe('P1 Discovery · PhasePack contract still satisfied', () => {
   it('P1_DISCOVERY conforms to PhasePack', () => {
     const pack: PhasePack = P1_DISCOVERY;
     expect(pack.phase).toBe(1);
-    expect(pack.label).toBe('P1 Discovery');
+    expect(pack.label).toBe('P1 Charter');
     expect(pack.outcome.length).toBeGreaterThan(80);
     expect(Array.isArray(pack.definitionOfDone)).toBe(true);
     expect(Array.isArray(pack.antiPatterns)).toBe(true);

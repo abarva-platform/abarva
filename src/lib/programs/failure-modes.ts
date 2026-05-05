@@ -24,7 +24,7 @@ export interface FailureMode {
   name: string;
   /** One-sentence description, senior-practitioner voice. */
   shortDescription: string;
-  /** Phase numbers (0..6) where prevention is most efficient. */
+  /** Phase numbers (0..5) where prevention is most efficient. */
   primaryPhases: number[];
   /** At least two anchors; cited from major-firm research. */
   researchAnchors: ResearchAnchor[];
@@ -142,7 +142,7 @@ export const FAILURE_MODES: readonly FailureMode[] = [
     name: 'Lack of business commitment to operating-model and workflow change',
     shortDescription:
       'The business will not redesign the workflow or operating model the AI capability is supposed to change, so value never lands.',
-    primaryPhases: [3, 5, 6],
+    primaryPhases: [3, 5],
     researchAnchors: [
       {
         source: 'McKinsey',
@@ -161,7 +161,7 @@ export const FAILURE_MODES: readonly FailureMode[] = [
       },
     ],
     preventionMechanism:
-      'P3 Design requires an explicit operating-model delta and named change-owners; P5 Activate requires evidence of workflow changes in production, not just deployed models; P6 Operate measures sustained behavior change.',
+      'P3 Design Future State requires an explicit operating-model delta and named change-owners; P5 Mobilize & Handoff requires a readiness plan, named change owner, and adoption tracking setup; value realization and sustained behavior measurement pass to Control Tower after handoff.',
   },
   {
     id: 6,
@@ -246,7 +246,7 @@ export const FAILURE_MODES: readonly FailureMode[] = [
     name: 'Inability to measure outcomes and impact',
     shortDescription:
       'No baseline, no leading KPIs, no causal link between the AI capability and the business outcome being claimed.',
-    primaryPhases: [1, 5, 6],
+    primaryPhases: [1, 5],
     researchAnchors: [
       {
         source: 'McKinsey',
@@ -265,14 +265,14 @@ export const FAILURE_MODES: readonly FailureMode[] = [
       },
     ],
     preventionMechanism:
-      'P1 Discovery captures a baseline with provenance keyed to the pattern (e.g. AHT/CSAT for Contact Center, MAPE/WAPE for Demand Forecasting); P5 and P6 require post-deployment measurement against that baseline before outcomes can be settled.',
+      'P1 Charter captures a baseline with provenance keyed to the pattern (e.g. AHT/CSAT for Contact Center, MAPE/WAPE for Demand Forecasting); P5 Mobilize & Handoff locks the value tracking cadence, measurement owner, and baseline anchors; Control Tower carries post-handoff measurement.',
   },
   {
     id: 10,
     name: 'Unrealistic expectations and use-case sprawl',
     shortDescription:
       'Too many concurrent initiatives, each over-promising; portfolio cannot focus and no single program gets to value.',
-    primaryPhases: [0, 6],
+    primaryPhases: [0, 5],
     researchAnchors: [
       {
         source: 'Gartner',
@@ -291,7 +291,7 @@ export const FAILURE_MODES: readonly FailureMode[] = [
       },
     ],
     preventionMechanism:
-      'P0 Tenant Admin approval gate filters new programs against the active portfolio for overlap and capacity; P6 closeout harvests outcomes into the pattern catalog so unrealistic claims surface in the next program of the same archetype.',
+      'P0 Tenant Admin approval gate filters new programs against the active portfolio for overlap and capacity; P5 Mobilize & Handoff passes value tracking to Control Tower, which harvests outcomes into the pattern catalog so unrealistic claims surface in the next program of the same archetype.',
   },
 ] as const;
 
@@ -304,7 +304,7 @@ export function getFailureMode(id: number): FailureMode | null {
 
 /**
  * Return every failure mode whose `primaryPhases` includes the given phase
- * number (0..6). Order matches the catalog order.
+ * number (0..5). Order matches the catalog order.
  */
 export function getFailureModesForPhase(phase: number): FailureMode[] {
   return FAILURE_MODES.filter((mode) => mode.primaryPhases.includes(phase));

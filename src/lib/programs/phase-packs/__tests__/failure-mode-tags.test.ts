@@ -15,7 +15,6 @@ import { P2_SYNTHESIS } from '../P2_synthesis';
 import { P3_DESIGN } from '../P3_design';
 import { P4_BUILD } from '../P4_build';
 import { P5_ACTIVATE } from '../P5_activate';
-import { P6_OPERATE } from '../P6_operate';
 import type { PhasePack } from '../types';
 import { FAILURE_MODES, getFailureMode } from '../../failure-modes';
 
@@ -36,10 +35,8 @@ const PACKS_UNDER_TEST: readonly PackUnderTest[] = [
   { pack: P3_DESIGN, expectedPrimaryFailureModes: [1, 5, 6, 7] },
   // D.4.1 — P4 Execution Roadmap prevents #5, #8, #3 (operational).
   { pack: P4_BUILD, expectedPrimaryFailureModes: [3, 5, 8] },
-  // D.5.1 — P5 Approval & Mobilization prevents #5, #8, #9 (instrumentation).
+  // D.5.1 — P5 Mobilize & Handoff prevents #5, #8, #9 (instrumentation).
   { pack: P5_ACTIVATE, expectedPrimaryFailureModes: [5, 8, 9] },
-  // D.6.1 — P6 Tower Handoff prevents #9 (sustained), #5 (sustained), #10 (re-tested).
-  { pack: P6_OPERATE, expectedPrimaryFailureModes: [5, 9, 10] },
 ] as const;
 
 function collectTagUnion(pack: PhasePack): Set<number> {

@@ -27,7 +27,7 @@ import type { PhasePack } from './types';
 
 export const P1_DISCOVERY: PhasePack = {
   phase: 1,
-  label: 'P1 Discovery',
+  label: 'P1 Charter',
   outcome:
     'A Discovery package that validates or rejects the P0 seed with current-state ' +
     'evidence: a problem statement with observed severity and boundary, OKR ' +

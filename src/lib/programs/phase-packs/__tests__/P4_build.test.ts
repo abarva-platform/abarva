@@ -5,7 +5,7 @@ describe('P4 Execution Roadmap · PhasePack contract', () => {
   it('conforms to PhasePack and uses corrected strategy-tool label', () => {
     const pack: PhasePack = P4_BUILD;
     expect(pack.phase).toBe(4);
-    expect(pack.label).toBe('P4 Execution Roadmap');
+    expect(pack.label).toBe('P4 Roadmap & Business Case');
     expect(pack.outcome).toContain('external delivery');
     expect(pack.outcome).toContain('P4 is not where Nexus executes the build');
   });

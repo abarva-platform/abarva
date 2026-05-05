@@ -19,7 +19,7 @@ import type {
 describe('PhasePack · OV2-5-types compatibility', () => {
   it('every authored pack still satisfies the PhasePack contract', () => {
     const phases = listAuthoredPhases();
-    expect(phases).toEqual([0, 1, 2, 3, 4, 5, 6]);
+    expect(phases).toEqual([0, 1, 2, 3, 4, 5]);
     for (const p of phases) {
       const pack: PhasePack | null = getPhasePack(p);
       expect(pack).not.toBeNull();
@@ -38,7 +38,7 @@ describe('PhasePack · OV2-5-types compatibility', () => {
     // OV2-5-P4 authored steps for P4; OV2-5-P5 authored steps for P5;
     // OV2-5-P6 authored steps for P6 (this slice). The phase-pack step
     // doctrine is now complete end-to-end across all 7 authored phases.
-    const PHASES_WITH_STEPS = new Set([0, 1, 2, 3, 4, 5, 6]);
+    const PHASES_WITH_STEPS = new Set([0, 1, 2, 3, 4, 5]);
     for (const p of listAuthoredPhases()) {
       const pack = getPhasePack(p);
       if (PHASES_WITH_STEPS.has(p)) {

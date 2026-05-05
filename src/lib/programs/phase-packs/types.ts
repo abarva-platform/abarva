@@ -37,7 +37,7 @@
 //   • Coaching arc text must change Nexus's *posture*, not just describe
 //     the phase.
 
-export type PhaseNumber = 0 | 1 | 2 | 3 | 4 | 5 | 6;
+export type PhaseNumber = 0 | 1 | 2 | 3 | 4 | 5;
 
 // ── Step decomposition · OV2-5-types ────────────────────────────────────────
 //
