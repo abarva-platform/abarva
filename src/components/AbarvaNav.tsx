@@ -259,7 +259,6 @@ function NavInner({ activePage, compact = false }: NavProps) {
           <>
             {staticClientLabel()}
             {!compact && navLink('Home', '/home', homeActive)}
-            {!compact && canShow('programs') && navLink('Programs', '/programs', engagementsActive)}
             {!compact && canShow('programs') && navLink('Strategic Moves', '/strategic-moves', strategicMovesActive)}
             {!compact && canShow('source') && navLink('Source', '/source', sourceActive)}
             {!compact && canShow('intelligence') && navLink('Intelligence', intelligencePath, intelligenceActive)}
@@ -277,7 +276,6 @@ function NavInner({ activePage, compact = false }: NavProps) {
           <>
             {staticClientLabel()}
             {!compact && navLink('Home', '/home', homeActive)}
-            {!compact && canShow('programs') && navLink('Programs', '/programs', engagementsActive)}
             {!compact && canShow('programs') && navLink('Strategic Moves', '/strategic-moves', strategicMovesActive)}
             {!compact && canShow('source') && navLink('Source', '/source', sourceActive)}
             {!compact && canShow('intelligence') && navLink('Intelligence', intelligencePath, intelligenceActive)}
