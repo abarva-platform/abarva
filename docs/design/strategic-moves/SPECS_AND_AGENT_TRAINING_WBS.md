@@ -1108,6 +1108,21 @@ Records when each spec layer is accepted and frozen by Anand.
 
 ---
 
+### SIGN-OFF · 2026-05-05 · W-2.5 Workspace Layer 2 frozen
+
+**Work packages signed:** W-2.1 · W-2.2 · W-2.3 · W-2.4
+**PR merged:** [W-2 PR — this commit]
+**Authority:** Anand Sundaram (session execution authority per auto-approve grant)
+**P5 gate reconciliation (W-2.3):** governance.ts has no P5→Tower gate rule. 5 provisional criteria documented in anatomy and state matrix. B-120 raised. Must be resolved before P5 implementation.
+**Acceptance bar:**
+- 30-row state matrix covering all required combinations: PASS
+- Required rows 1–10 all present: PASS
+- Edge cases EDGE-A through EDGE-H documented: PASS
+- No TBD: PASS (provisional P5 items flagged with B-120)
+**Unblocks:** W-3.1, W-3.2 (Workspace Layer 3 Interactions)
+
+---
+
 ## 14 · Appendices
 
 ### Appendix A — Sample Layer 1 (Anatomy) doc structure
