@@ -513,7 +513,7 @@
 /* ─── Kanban ────────────────────────────────────────────────────── */
 .kanban {
   display: grid;
-  grid-template-columns: repeat(8, 1fr);
+  grid-template-columns: repeat(6, 1fr);
   gap: 10px;
 }
 
@@ -642,7 +642,7 @@
   position: absolute;
   inset: 44px 28px 72px 54px;
   display: grid;
-  grid-template-columns: repeat(8, 1fr);
+  grid-template-columns: repeat(6, 1fr);
   z-index: 1;
 }
 
@@ -736,7 +736,7 @@
   right: 28px;
   bottom: 26px;
   display: grid;
-  grid-template-columns: repeat(8, 1fr);
+  grid-template-columns: repeat(6, 1fr);
   z-index: 12;
 }
 
