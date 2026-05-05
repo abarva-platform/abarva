@@ -319,7 +319,12 @@ export function AppTopBar({ showProductNav = true }: AppTopBarProps) {
             flexShrink: 0,
           }}
         >
-          <AbarVaLogo variant="wordmark" size="md" label="AbarVa" />
+          <AbarVaLogo
+            variant="wordmark"
+            size="md"
+            label="AbarVa"
+            style={{ height: 26, width: 'auto' }}
+          />
         </Link>
 
         {navItems.length > 0 ? (
