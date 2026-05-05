@@ -10,6 +10,7 @@ import {
   type ProductModule,
 } from "@/lib/auth/module-access";
 import { getAtriumProductNavLabel } from "@/lib/shell/atrium-contract";
+import { AbarVaLogo } from "@/components/abarva/AbarVaLogo";
 
 export interface AppTopBarProps {
   tenantName?: string;
@@ -52,9 +53,11 @@ const NAV_ITEMS: CockpitNavItem[] = [
   {
     key: "programs",
     label: getAtriumProductNavLabel("programs"),
-    href: "/programs",
+    href: "/strategic-moves",
     module: "programs",
     match: (pathname) =>
+      pathname === "/strategic-moves" ||
+      pathname.startsWith("/strategic-moves/") ||
       pathname === "/programs" ||
       pathname.startsWith("/programs/") ||
       pathname === "/engagements" ||
@@ -313,16 +316,9 @@ export function AppTopBar({ showProductNav = true }: AppTopBarProps) {
             display: "flex",
             alignItems: "center",
             textDecoration: "none",
-            color: SHELL.INK,
-            fontFamily: SHELL.SERIF,
-            fontSize: 24,
-            fontWeight: 700,
-            letterSpacing: "-0.03em",
-            lineHeight: 1,
-            whiteSpace: "nowrap",
           }}
         >
-          AbarVa
+          <AbarVaLogo variant="wordmark" size="md" label="AbarVa" />
         </Link>
 
         {navItems.length > 0 ? (
