@@ -316,9 +316,22 @@ export function AppTopBar({ showProductNav = true }: AppTopBarProps) {
             display: "flex",
             alignItems: "center",
             textDecoration: "none",
+<<<<<<< cursor/nav-regression-diagnosis-ac9d
           }}
         >
           <AbarVaLogo variant="wordmark" size="md" label="AbarVa" />
+=======
+            flexShrink: 0,
+          }}
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/brand/abarva-wordmark-color.svg"
+            alt="AbarVa"
+            height={22}
+            style={{ display: "block", height: 22, width: "auto" }}
+          />
+>>>>>>> main
         </Link>
 
         {navItems.length > 0 ? (
