@@ -13,11 +13,13 @@ Read this **after** the README. This file tells you what to touch, what to leave
 
 - Add the three views as routes/pages in the existing app router.
 - Reuse existing canon components wherever possible (see README's "Component identification" table).
-- Extract the **phase rail** (`.detail-rail`) into a single shared component — it's used in both detail and originate, and will be used by future surfaces (Charter, Decision, Run, etc.). Suggested API:
+- Extract the **phase rail** (`.detail-rail`) into a single shared component — it's used in both detail and originate, and will be used by future surfaces (Charter, Decision, Run, etc.). The rail follows the 6-phase doctrine (`PHASE_MODEL_V2_DOCTRINE.md`):
 
   ```tsx
-  <PhaseRail current={3} totalPhases={8} />
-  // renders P0…P7 dots with the current phase highlighted
+  <PhaseRail current={3} />
+  // renders P0..P5 dots with the current phase highlighted, plus a
+  // "→ TOWER" terminal indicator (Tower owns post-P5 tracking).
+  // totalPhases defaults to TOTAL_PHASES (6) — do not pass {8}.
   ```
 
 - Wire the originate flow's "start from" chips to real data:
@@ -75,12 +77,12 @@ type Move = {
     | 'COST EFFICIENCY'
     | 'RISK / COMPLIANCE'
     | 'CAPABILITY';
-  phase: 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7;
-  phaseLabel: string;                  // "P3 Solution Design"
+  phase: 0 | 1 | 2 | 3 | 4 | 5;
+  phaseLabel: string;                  // "P3 Design Future State"
   valueAtStakeMUSD: number;            // canonical value at stake in $M
   status: 'on-track' | 'awaiting-decision' | 'gate-blocked' | 'validated';
   statusText: string;                  // human label e.g. "GATE BLOCKED"
-  statusDesc: string;                  // sub-line e.g. "P3 → P4 Build · 2 / 5 criteria met"
+  statusDesc: string;                  // sub-line e.g. "P3 → P4 Roadmap · 2 / 5 criteria met"
   sponsor: { name: string; role: string };
   updatedAt: string;                   // ISO
 };
@@ -97,11 +99,21 @@ type P0Charter = {
 };
 ```
 
+## Phase model — six phases (P0..P5)
+
+This surface is governed by `docs/design/strategic-moves/PHASE_MODEL_V2_DOCTRINE.md`. Strategic Moves runs P0..P5; Tower owns post-P5 execution tracking. Five gate transitions exist (P0→P1, P1→P2, P2→P3, P3→P4, P4→P5); there is no P5→P6 gate. The rail surfaces a "→ TOWER" indicator after P5.
+
+DB substrate:
+
+- `engagements.current_phase` is constrained to `0..5`.
+- Existing moves at legacy phases 6/7 are remapped into P5 with status `complete` / `handed_off` (see migration `20260505000000_strategic_moves_six_phase_remap.sql`).
+- `deliverable_types.applicable_phases`, `program_milestones.phase_number`, `program_modules.phase_number`, `program_work_items.phase_number`, and `program_risks.phase_number` are clamped into `[0..5]`.
+
 ## Test cases worth pinning
 
 1. Open dashboard → all 7 sample moves render in scatter view by default.
-2. Toggle to kanban → 8 columns P0–P7, moves grouped by phase.
-3. Click a move → detail view loads with phase rail showing the move's current phase.
+2. Toggle to kanban → 6 columns P0–P5, moves grouped by phase.
+3. Click a move → detail view loads with phase rail showing the move's current phase and a "→ TOWER" indicator after P5.
 4. Click "+ New Move" → originate view loads, scaffold all empty, all 5 start-from chips active, Promote disabled.
 5. Click "An Intelligence finding" chip → 4 of 7 sections fill in over ~1.5s, helper text reads "4 of 7 sections complete", Promote still disabled.
 6. Type free-form text and send → next empty section fills with that text.
@@ -110,6 +122,7 @@ type P0Charter = {
 9. Esc key with dialog open → dialog closes, returns to originate view.
 10. Esc key with no dialog → triggers cancel flow.
 11. Refresh on detail page → URL state restores the correct move.
+12. Phase rail on a P5 move → shows P0..P5 dots and the "→ TOWER" terminal indicator.
 
 ## Out of scope for this handoff
 

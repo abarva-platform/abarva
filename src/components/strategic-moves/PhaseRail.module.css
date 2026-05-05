@@ -74,9 +74,27 @@
 
 .labels {
   display: flex;
+  align-items: center;
   justify-content: space-between;
   margin-top: 8px;
   padding: 0 2px;
+}
+
+/* "→ TOWER" terminal indicator on the rail. After P5 the move hands off
+ * to Control Tower — that surface is not a Strategic Move phase, so the
+ * indicator sits outside the dot row but inside the labels row to cue
+ * the reader that downstream tracking lives elsewhere. */
+.towerIndicator {
+  font-family: var(--abarva-mono);
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--abarva-slate);
+  font-weight: 600;
+  padding-left: 8px;
+  margin-left: 4px;
+  border-left: 1px solid var(--canon-border);
+  white-space: nowrap;
 }
 
 .label {

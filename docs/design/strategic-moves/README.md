@@ -53,9 +53,9 @@ Vertical stack:
 1. **Ribbon** (`.ribbon`) — segmented filter row: All · By tenant · By archetype · By phase · By status. Active segment is ink-on-cream pill.
 2. **KPI strip** — 4 tiles: Active moves, Value at stake, Gate-blocked, Awaiting decision. Each tile is a card on cream with a serif (Fraunces) numeric value and a mono eyebrow label.
 3. **List view** — toggled between three modes via the Tweaks panel (`listView` ∈ `scatter` / `cards` / `kanban`):
-   - **Scatter** (`.scatter`) — phase (P0–P7) on the x-axis, value bands on the y-axis. Each move is a circle sized to value, colored by status. Hover → tooltip card. Click → detail.
+   - **Scatter** (`.scatter`) — phase (P0–P5) on the x-axis, value bands on the y-axis. Each move is a circle sized to value, colored by status. Hover → tooltip card. Click → detail.
    - **Cards** (`.cards-grid`) — 3-up grid of move cards. Title (Fraunces 500 / 18px), tenant + archetype eyebrow, status chip, phase rail at the bottom.
-   - **Kanban** (`.kanban`) — 8 columns P0…P7, each a stack of move cards. Status chips colored by `--green` / `--amber` / `--red`.
+   - **Kanban** (`.kanban`) — 6 columns P0…P5, each a stack of move cards. Status chips colored by `--green` / `--amber` / `--red`.
 4. **Sort** — also tweakable: `value` / `phase` / `status` / `name`.
 
 Tweaks panel persists `listView` and `sort` to disk via the host edit-mode protocol — production should persist via user preferences instead.
@@ -65,7 +65,7 @@ Tweaks panel persists `listView` and `sort` to disk via the host edit-mode proto
 Two-pane shell (`.detail-shell`):
 
 - **Left, 480px wide** — `.chat-pane`. Nexus avatar header, scrollable thread of bubbles (`.bubble.nexus` and `.bubble.user`), suggested-prompt chips, input row with up-arrow send.
-- **Right, fluid** — `.detail-pane`. Breadcrumb + title (Fraunces 28px / 700) + meta + phase rail (P0–P7 dots, current phase active). Below the head: detail body — currently a placeholder section showing the move charter, sponsor, value range, gate criteria, evidence trail.
+- **Right, fluid** — `.detail-pane`. Breadcrumb + title (Fraunces 28px / 700) + meta + phase rail (P0–P5 dots with a "→ TOWER" terminal indicator, current phase active). Below the head: detail body — currently a placeholder section showing the move charter, sponsor, value range, gate criteria, evidence trail.
 
 The phase rail (`.detail-rail` → `.rail-track` + `.rail-line` + `.dot` + `.rail-labels`) is the single most identifying piece of this design. It is reused in the Originate view.
 
@@ -94,7 +94,7 @@ This surface is built almost entirely from primitives that already exist in `wir
 | Mono eyebrow label (e.g. `STRATEGIC MOVES`, `PLATFORM MODERNIZATION`) | `.av-eyebrow` (from `tokens.css`) | Already canonical. Color via `.stone` / `.teal` / `.amber` / `.red`. |
 | Status chip (red / amber / teal) | Canon `<chip>` / `Chip` | Variants `gate-blocked` / `awaiting-decision` / `on-track` / `validated`. |
 | Move card | Canon `<section-card>` / `SectionCard` | Wrap with the phase rail at the bottom. |
-| Phase rail (P0–P7 dots) | **New shared component.** | Extract `.detail-rail` markup into `<phase-rail current="P3" />`. Reused in both detail and originate. |
+| Phase rail (P0–P5 dots + "→ TOWER" indicator) | **New shared component.** | Extract `.detail-rail` markup into `<PhaseRail current={3} />`. Reused in both detail and originate. Defaults to `totalPhases=6`. |
 | Scatter dot | New, but trivial — `<button>` with absolute position. | Tooltip is a single shared `#tooltip` div, positioned by JS. |
 | KPI tile | Canon `<kpi-tile>` / `KpiTile` | Already exists. Value (Fraunces 500 / 32px), eyebrow, optional delta. |
 | Ribbon / segmented filter | Canon `<segmented>` | If missing, build as a flex row of buttons with `aria-pressed`. |
@@ -222,6 +222,25 @@ Both are already in the AbarVa repo. The prototype loads from a relative path; i
 
 ---
 
+## Phase model — six phases, not eight
+
+Strategic Moves runs on a **6-phase model** (P0..P5). AbarVa does not execute the transformation. After P5 Mobilize & Handoff, **Control Tower** owns downstream execution tracking, value realization, and risk monitoring. Build / Execute / Verify are not Strategic Move phases.
+
+The binding reference is `docs/design/strategic-moves/PHASE_MODEL_V2_DOCTRINE.md`. Phases:
+
+| # | Full label | Short (rail) |
+|---|------------|--------------|
+| 0 | P0 Originate | Originate |
+| 1 | P1 Charter | Charter |
+| 2 | P2 Discover & Diagnose | Diagnose |
+| 3 | P3 Design Future State | Design |
+| 4 | P4 Roadmap & Business Case | Roadmap |
+| 5 | P5 Mobilize & Handoff | Mobilize |
+
+The rail surfaces a "→ TOWER" terminal indicator after P5 (different surface, not a phase). The 8-column kanban referenced in older versions of this doc was a 5-phase + execution-tracker concept and has been replaced by a 6-column kanban (P0..P5).
+
+---
+
 ## Acceptance checklist
 
 - [ ] All three views render at parity with the prototype, using existing canon components.
@@ -231,7 +250,8 @@ Both are already in the AbarVa repo. The prototype loads from a relative path; i
 - [ ] Promote button enables only when all 7 sections are filled.
 - [ ] Cancel-with-content opens the confirm dialog; Cancel-empty exits silently.
 - [ ] Esc key dismisses the dialog if open, else cancels origination.
-- [ ] Scatter / cards / kanban list views toggle from a user preference (not a tweaks panel).
+- [ ] Scatter / cards / kanban list views toggle from a user preference (not a tweaks panel). Kanban renders 6 columns P0..P5.
+- [ ] Phase rail uses `<PhaseRail>` from `src/components/strategic-moves/PhaseRail.tsx` with `TOTAL_PHASES = 6` and the "→ TOWER" terminal indicator.
 - [ ] Status colors are semantic — never used decoratively.
 - [ ] No tweaks panel ships in production.
 - [ ] No gradients, no decorative SVG icons, no emoji, no stock illustration.

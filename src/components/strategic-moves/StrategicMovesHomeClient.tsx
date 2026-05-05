@@ -18,11 +18,9 @@ const PHASE_AXIS: Array<{ code: string; name: string }> = [
   { code: 'P0', name: 'Originate' },
   { code: 'P1', name: 'Charter' },
   { code: 'P2', name: 'Diagnose' },
-  { code: 'P3', name: 'Solution' },
-  { code: 'P4', name: 'Build' },
-  { code: 'P5', name: 'Execute' },
-  { code: 'P6', name: 'Verify' },
-  { code: 'P7', name: 'Handoff' },
+  { code: 'P3', name: 'Design' },
+  { code: 'P4', name: 'Roadmap' },
+  { code: 'P5', name: 'Mobilize' },
 ];
 
 interface Props {
@@ -319,7 +317,7 @@ export function StrategicMovesHomeClient({
 
         {listView === 'kanban' ? (
           <div className={styles.kanban}>
-            {Array.from({ length: 8 }).map((_, phase) => {
+            {Array.from({ length: PHASE_AXIS.length }).map((_, phase) => {
               const inPhase = sortedMoves.filter((move) => move.currentPhase === phase);
               const phaseLabel = PHASE_AXIS[phase]?.name ?? '';
               return (
@@ -410,7 +408,8 @@ export function StrategicMovesHomeClient({
                     ? 0.5
                     : 0;
               const bubbleSize = valueKnown ? Math.max(42, Math.min(92, 48 + normalized * 36)) : 52;
-              const xBase = 8 + move.currentPhase * 11.5;
+              const phaseSlots = Math.max(1, PHASE_AXIS.length - 1);
+              const xBase = 8 + move.currentPhase * (80 / phaseSlots);
               const xSpread = phaseCount > 1 ? ((phaseIndex / (phaseCount - 1)) - 0.5) * 6.4 : 0;
               const x = Math.min(94, Math.max(6, xBase + xSpread));
               const unknownBandRows = Math.max(1, Math.min(4, phaseCount));
