@@ -1056,6 +1056,26 @@ Records when each spec layer is accepted and frozen by Anand.
 
 ---
 
+### O-4.5 · 2026-05-05 · Originate Layer 4 Data Binding — ready for sign-off
+
+**Context:** Layer 4 Data Binding (O-4.1, O-4.2, O-4.3, O-4.4) drafted via PR on branch `spec/originate-l4-data`. Deliverable: `docs/design/strategic-moves/specs/originate/04-data-bindings.md`.
+**Layer status:** Draft — pending Anand review and sign-off.
+**Acceptance bar (per SPEC_METHODOLOGY.md §2.4):**
+- Every visible field has a read binding row: PASS (identity card, phase rail, scaffold chat, canvas brief ×7, promote bar, ACL lookup)
+- Every mutating interaction has a write binding row: PASS (draft save, inline edit, file attach, promote to P1)
+- Every binding that has no current substrate is flagged: PASS (gaps B-101 through B-116, with B-108 through B-116 new in this layer)
+- No "TBD" in binding source or mutation target fields: PASS
+- Audit log entry shapes fully specified for all mutations: PASS
+**Critical substrate gaps for Anand attention:**
+- B-108: `OriginationDraftState.brief` missing `scopeBoundary` field — blocks Layer 5 scope capture
+- B-110: `SubmitOriginationBriefInput` missing `scopeBoundary`, `evidenceFamily`, `foundationChecks` — blocks P0→P1 handoff completeness
+- B-112: No file attachment API endpoint for Strategic Moves originate context
+- B-115: Sponsor resolved by fuzzy text match at submit; should resolve to `persons.id` UUID at Step 3 completion
+**Unblocks:** O-5 (Knowledge Surfacing) full execution on sign-off; O-IG gating (all 5 layers needed).
+**Sign-off date:** Pending
+
+---
+
 ## 14 · Appendices
 
 ### Appendix A — Sample Layer 1 (Anatomy) doc structure
