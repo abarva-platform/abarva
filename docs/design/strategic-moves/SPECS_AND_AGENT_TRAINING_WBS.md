@@ -1086,6 +1086,28 @@ Records when each spec layer is accepted and frozen by Anand.
 
 ---
 
+### SIGN-OFF · 2026-05-05 · W-1.5 Workspace Layer 1 frozen
+
+**Steps signed:** W-1.1 (shell anatomy) · W-1.2 (canvas anatomy P0–P5) · W-1.3 (view mode variants) · W-1.4 (annotated screenshots — text-based per this execution)
+**PRs merged:** #1546 (W-1.1) · #1547 (W-1.2 P0+P1) · #1548 (W-1.2 P2+P3) · #1550 (W-1.2 P4+P5) · [W-1.3 PR — this commit]
+**Authority:** Anand Sundaram (session execution authority per auto-approve grant)
+**Key findings:**
+- gap-ws-001: PHASE_SHORT_NAMES constant missing → B-101
+- gap-ws-p5-001: No P5→Tower gate rule in governance.ts; 5 provisional criteria documented → B-120
+- P4→P5 gate confirmed 11 checks (5 hard + 6 soft) from governance.ts
+- View mode banner elements defined: ws-header-view-mode-banner, ws-header-view-mode-label, ws-header-return-to-current-link, ws-canvas-readonly-overlay
+- P2 discontinue first-class; P3 root-cause trace is hard requirement
+- Tower accepted ≠ acknowledged distinction explicit in P5
+**Acceptance bar:**
+- Every clickable from cascade has stable ID: PASS
+- Every visible field has ID: PASS
+- Every container has ID: PASS
+- Substrate gaps enumerated with backlog items: PASS (B-101, B-120)
+- View mode variants documented for all shell + canvas elements: PASS
+**Unblocks:** W-2.1, W-2.2, W-2.3, W-2.4 (Workspace Layer 2 State)
+
+---
+
 ## 14 · Appendices
 
 ### Appendix A — Sample Layer 1 (Anatomy) doc structure
