@@ -324,7 +324,7 @@ describe('phase-pack evidence binding', () => {
   });
 
   it('keeps producesForNext vocabulary connected to the next phase requiresFromPrior', () => {
-    for (let phase = 0; phase < 6; phase += 1) {
+    for (let phase = 0; phase < 5; phase += 1) {
       const current = getPhasePack(phase);
       const next = getPhasePack(phase + 1);
       if (!current || !next) throw new Error(`Missing phase pack transition ${phase} -> ${phase + 1}`);

@@ -39,7 +39,7 @@ import type { PhasePack } from './types';
 
 export const P2_SYNTHESIS: PhasePack = {
   phase: 2,
-  label: 'P2 Synthesis',
+  label: 'P2 Discover & Diagnose',
   outcome:
     'A signed gate package combining (a) a synthesis recommendation that names ' +
     'at least two viable target-state options, makes the trade-offs explicit, and ' +

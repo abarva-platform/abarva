@@ -10,20 +10,20 @@ import { P2_SYNTHESIS } from '../P2_synthesis';
 import type { PhasePack } from '../types';
 
 describe('getPhasePack', () => {
-  it('returns the P2 Synthesis pack', () => {
+  it('returns the P2 Discover & Diagnose pack', () => {
     const pack = getPhasePack(2);
     expect(pack).toBe(P2_SYNTHESIS);
     expect(pack?.phase).toBe(2);
-    expect(pack?.label).toBe('P2 Synthesis');
+    expect(pack?.label).toBe('P2 Discover & Diagnose');
   });
 
   it('returns every authored phase pack', () => {
     expect(getPhasePack(0)?.label).toBe('P0 Originate');
-    expect(getPhasePack(1)?.label).toBe('P1 Discovery');
+    expect(getPhasePack(1)?.label).toBe('P1 Charter');
     expect(getPhasePack(3)?.label).toBe('P3 Design');
-    expect(getPhasePack(4)?.label).toBe('P4 Execution Roadmap');
-    expect(getPhasePack(5)?.label).toBe('P5 Approval & Mobilization');
-    expect(getPhasePack(6)?.label).toBe('P6 Tower Handoff');
+    expect(getPhasePack(4)?.label).toBe('P4 Roadmap & Business Case');
+    expect(getPhasePack(5)?.label).toBe('P5 Mobilize & Handoff');
+    expect(getPhasePack(6)).toBeNull();
   });
 
   it('returns null cleanly for null/undefined/out-of-range', () => {
@@ -38,15 +38,15 @@ describe('getPhasePack', () => {
 describe('listAuthoredPhases', () => {
   it('returns the set of phases that have packs (sorted)', () => {
     const phases = listAuthoredPhases();
-    expect(phases).toEqual([0, 1, 2, 3, 4, 5, 6]);
+    expect(phases).toEqual([0, 1, 2, 3, 4, 5]);
   });
 });
 
 describe('formatPhasePackForPrompt', () => {
-  it('renders the P2 Synthesis pack into a coherent prompt block', () => {
+  it('renders the P2 Discover & Diagnose pack into a coherent prompt block', () => {
     const out = formatPhasePackForPrompt(P2_SYNTHESIS);
     expect(out).toContain('ACTIVE PHASE PLAYBOOK');
-    expect(out).toContain('P2 Synthesis');
+    expect(out).toContain('P2 Discover & Diagnose');
     expect(out).toContain('Phase outcome');
     expect(out).toContain('Definition of done');
     expect(out).toContain('Right questions');
@@ -95,9 +95,9 @@ const ALL_PACKS: PhasePack[] = listAuthoredPhases().map((p) => {
 });
 
 describe('schema sanity (runs over every authored pack)', () => {
-  it.each(ALL_PACKS)('$label · phase number is in [0,6]', (pack) => {
+  it.each(ALL_PACKS)('$label · phase number is in [0,5]', (pack) => {
     expect(pack.phase).toBeGreaterThanOrEqual(0);
-    expect(pack.phase).toBeLessThanOrEqual(6);
+    expect(pack.phase).toBeLessThanOrEqual(5);
   });
 
   it.each(ALL_PACKS)('$label · outcome is non-trivial prose', (pack) => {

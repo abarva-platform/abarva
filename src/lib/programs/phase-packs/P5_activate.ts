@@ -7,9 +7,9 @@ import type { PhasePack } from './types';
 
 export const P5_ACTIVATE: PhasePack = {
   phase: 5,
-  label: 'P5 Approval & Mobilization',
+  label: 'P5 Mobilize & Handoff',
   outcome:
-    'A funding-and-authority package that lets the sponsor, CFO/CIO, and required approvers decide whether execution should start outside AbarVa. The package includes business case, funding request, stakeholder alignment, readiness assessment, change and communications plan, governance structure, risk acceptance, decision memo, and Tower handoff plan. P5 is complete when approval authority is explicit, funding or non-funding is recorded, readiness gaps are accepted or remediated, and P6 can configure Tower monitoring.',
+    'A funding-and-authority package that lets the sponsor, CFO/CIO, and required approvers decide whether execution should start outside AbarVa. The package includes business case, funding request, stakeholder alignment, readiness assessment, change and communications plan, governance structure, risk acceptance, decision memo, and Tower handoff plan. P5 is complete when approval authority is explicit, funding or non-funding is recorded, readiness gaps are accepted or remediated, and Control Tower can begin monitoring setup.',
 
   definitionOfDone: [
     { id: 'business-case-approved', label: 'Business case and funding request approved', severity: 'hard', evaluationHint: 'Approval package contains business case, value model defense, funding request, assumptions, and decision record. Exact financial values must be redacted for users without finance visibility.', preventsFailureModes: [1, 2, 9] },
@@ -44,7 +44,7 @@ export const P5_ACTIVATE: PhasePack = {
   coachingArc: {
     entry: 'Shift the user from design confidence to executive decision readiness. Identify decision owners, funding ask, and required evidence immediately.',
     midPhase: 'Build the approval package: business case, stakeholder alignment, readiness/change/comms, governance, risks, decision memo, and Tower handoff plan. Keep financial redaction active.',
-    exit: 'Force a real decision: approve, reject, defer, or approve with conditions. Capture rationale, conditions, owners, and P6 handoff requirements.',
+    exit: 'Force a real decision: approve, reject, defer, or approve with conditions. Capture rationale, conditions, owners, and Tower handoff requirements.',
   },
 
   dependencies: {
@@ -68,6 +68,6 @@ export const P5_ACTIVATE: PhasePack = {
     { id: 'p5-risk-acceptance', label: 'Record governance and risk acceptance', complexity: 'simple', agentRole: 'evaluate_evidence', inputs: ['risk register'], outputs: ['risk acceptance package'], templateRefs: ['decision-log'], preventsFailureModes: [6, 10], intentCaptureRequired: false, postMeetingUploadExpected: false },
     { id: 'p5-decision-memo', label: 'Compose decision / approval memo', complexity: 'simple', agentRole: 'compose_artifact', inputs: ['approval package'], outputs: ['decision memo'], templateRefs: ['program-charter'], preventsFailureModes: [1, 2], intentCaptureRequired: false, postMeetingUploadExpected: false },
     { id: 'p5-multi-approval', label: 'Route multi-approver decision', complexity: 'complex', agentRole: 'request_approval', inputs: ['decision memo'], outputs: ['approval decisions'], templateRefs: [], preventsFailureModes: [1, 10], intentCaptureRequired: false, postMeetingUploadExpected: false },
-    { id: 'p5-p6-readiness', label: 'Prepare Tower handoff readiness', complexity: 'simple', agentRole: 'validate', inputs: ['approval decision', 'tower plan'], outputs: ['P6 entry package'], templateRefs: ['roadmap'], preventsFailureModes: [5, 9], intentCaptureRequired: false, postMeetingUploadExpected: false },
+    { id: 'p5-p6-readiness', label: 'Prepare Tower handoff readiness', complexity: 'simple', agentRole: 'validate', inputs: ['approval decision', 'tower plan'], outputs: ['Tower handoff pack'], templateRefs: ['roadmap'], preventsFailureModes: [5, 9], intentCaptureRequired: false, postMeetingUploadExpected: false },
   ],
 };

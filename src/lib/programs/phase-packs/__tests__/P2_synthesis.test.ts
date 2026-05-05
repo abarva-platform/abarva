@@ -28,7 +28,7 @@ describe('P2 Synthesis · PhasePack contract still satisfied', () => {
   it('P2_SYNTHESIS conforms to PhasePack', () => {
     const pack: PhasePack = P2_SYNTHESIS;
     expect(pack.phase).toBe(2);
-    expect(pack.label).toBe('P2 Synthesis');
+    expect(pack.label).toBe('P2 Discover & Diagnose');
     expect(pack.outcome.length).toBeGreaterThan(80);
     expect(Array.isArray(pack.definitionOfDone)).toBe(true);
     expect(Array.isArray(pack.antiPatterns)).toBe(true);

@@ -19,7 +19,6 @@ import { P2_SYNTHESIS } from './P2_synthesis';
 import { P3_DESIGN } from './P3_design';
 import { P4_BUILD } from './P4_build';
 import { P5_ACTIVATE } from './P5_activate';
-import { P6_OPERATE } from './P6_operate';
 
 const PACKS: Partial<Record<PhaseNumber, PhasePack>> = {
   0: P0_ORIGINATE,
@@ -28,12 +27,11 @@ const PACKS: Partial<Record<PhaseNumber, PhasePack>> = {
   3: P3_DESIGN,
   4: P4_BUILD,
   5: P5_ACTIVATE,
-  6: P6_OPERATE,
 };
 
 export function getPhasePack(phase: number | null | undefined): PhasePack | null {
   if (phase === null || phase === undefined) return null;
-  if (phase < 0 || phase > 6) return null;
+  if (phase < 0 || phase > 5) return null;
   return PACKS[phase as PhaseNumber] ?? null;
 }
 

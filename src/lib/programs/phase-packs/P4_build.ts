@@ -9,7 +9,7 @@ import type { PhasePack } from './types';
 
 export const P4_BUILD: PhasePack = {
   phase: 4,
-  label: 'P4 Execution Roadmap',
+  label: 'P4 Roadmap & Business Case',
   outcome:
     'An execution-ready roadmap package that translates the signed P3 solution design into external delivery workstreams, phases, milestones, estimates, assumptions, dependencies, owners, governance cadence, success criteria, and Tower monitoring requirements. P4 is complete when a sponsor can see exactly how execution will run outside AbarVa, what it will require, what choices drive the estimate range, which milestones matter, and what evidence Tower will monitor after funding is approved. P4 is not where Nexus executes the build.',
 

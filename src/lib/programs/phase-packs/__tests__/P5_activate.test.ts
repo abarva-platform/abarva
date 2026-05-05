@@ -5,9 +5,9 @@ describe('P5 Approval & Mobilization · PhasePack contract', () => {
   it('conforms to PhasePack and uses corrected approval package label', () => {
     const pack: PhasePack = P5_ACTIVATE;
     expect(pack.phase).toBe(5);
-    expect(pack.label).toBe('P5 Approval & Mobilization');
+    expect(pack.label).toBe('P5 Mobilize & Handoff');
     expect(pack.outcome).toContain('funding-and-authority package');
-    expect(pack.outcome).toContain('P6 can configure Tower monitoring');
+    expect(pack.outcome).toContain('Control Tower can begin monitoring setup');
   });
 
   it('requires business case, sponsor alignment, readiness, and Tower handoff plan', () => {
