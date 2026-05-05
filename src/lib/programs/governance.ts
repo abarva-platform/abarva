@@ -1,19 +1,25 @@
-// Governance · Packet 4.
+// Governance · Packet 4 · 6-Phase doctrine.
 //
-// Hard gates block advance until approval; soft gates allow advance with
-// an unresolved marker. Every check returns a GateCheck (shape in
+// Doctrine: docs/design/strategic-moves/PHASE_MODEL_V2_DOCTRINE.md
+//
+// AbarVa Strategic Moves runs P0..P5. Tower owns execution tracking
+// downstream of P5. Strategic Moves therefore has FIVE gate
+// transitions:
+//
+//   • P0 → P1 — Originate seed becomes a chartered move
+//   • P1 → P2 — signed charter unlocks Discover & Diagnose
+//   • P2 → P3 — diagnosed baseline + readiness unlocks Design Future State
+//   • P3 → P4 — signed-off future-state design unlocks Roadmap & Business Case
+//   • P4 → P5 — approved roadmap + business case unlocks Mobilize & Handoff
+//
+// Hard gates block advance until approval; soft gates allow advance
+// with an unresolved marker. Every check returns a GateCheck (shape in
 // types.ts). Approvals route through founder_approval_requests.
 //
-// Hard gates (per application-control-plane lifecycle):
-//   • P0 → P1 — approved seed can enter Discovery
-//   • P2 → P3 — sponsor-signed charter can enter Design
-//   • P3 → P4 — signed design can become an execution roadmap
-//   • P4 → P5 — roadmap package can become approval/mobilization package
-//   • P5 → P6 — funded, ready package can hand off monitoring to Tower
-//
-// Soft gates: later phase advances can bypass with reason. P0 exit is
-// deliberately hard because it is where an idea becomes a funded
-// Discovery motion.
+// P2 may return a "discontinue" recommendation — the gate is allowed
+// to kill the move. P3 explicitly rejects tool-first solutions without
+// a workflow integration plan. P5 gate-out (handoff to Tower) requires
+// execution team acceptance, not just Strategic Moves team signoff.
 
 import { getServerSupabase } from '@/lib/supabase-server';
 import type { SupabaseClient } from '@supabase/supabase-js';
@@ -41,63 +47,78 @@ interface GateRule {
 }
 
 const GATE_RULES: GateRule[] = [
+  // P0 Originate → P1 Charter
+  // The seed must be concrete enough to charter: hypothesis, sponsor
+  // candidate, scope boundary, archetype, first evidence family.
   {
     fromPhase: 0, toPhase: 1, hard: true, approverRole: 'sponsor',
     checks: [
-      { key: 'program_seed_recorded', describe: 'Program seed recorded with classification', severity: 'hard' },
-      { key: 'value_hypothesis_seed', describe: 'Value hypothesis seed names problem and target outcome', severity: 'hard' },
-      { key: 'sponsor_assigned', describe: 'Sponsor candidate assigned for Phase 0 exit', severity: 'hard' },
-      { key: 'discovery_funding_envelope', describe: 'Discovery funding or capacity envelope stated', severity: 'soft' },
+      { key: 'program_seed_recorded', describe: 'Origination brief signed off with archetype classification', severity: 'hard' },
+      { key: 'value_hypothesis_seed', describe: 'Value hypothesis seed names problem trigger and target outcome', severity: 'hard' },
+      { key: 'sponsor_assigned', describe: 'Sponsor candidate identified for Charter', severity: 'hard' },
+      { key: 'discovery_funding_envelope', describe: 'Charter funding or capacity envelope stated', severity: 'soft' },
       { key: 'initial_scope_boundary', describe: 'Initial scope boundary names the first cohort or use case', severity: 'soft' },
-      { key: 'evidence_family_selected', describe: 'Evidence family selected for Phase 1 Discovery', severity: 'soft' },
+      { key: 'evidence_family_selected', describe: 'Evidence family selected for Discover & Diagnose', severity: 'soft' },
     ],
   },
+  // P1 Charter → P2 Discover & Diagnose
+  // The signed charter must lock sponsor, value range, success metrics,
+  // and stakeholder map before the move is allowed to spend Discovery
+  // capacity on baselining and root cause work.
   {
     fromPhase: 1, toPhase: 2, hard: true, approverRole: 'sponsor',
+    checks: [
+      { key: 'charter_signed_off', describe: 'Charter signed off by sponsor', severity: 'hard' },
+      { key: 'sponsor_assigned', describe: 'Sponsor committed and decision rights named', severity: 'hard' },
+      { key: 'baseline_captured', describe: 'Initial value range and success metrics ratified', severity: 'soft' },
+    ],
+  },
+  // P2 Discover & Diagnose → P3 Design Future State
+  // Discovery synthesis must lock baseline, stakeholders, root causes,
+  // and confirm the move clears P2 without unresolved hard gaps. P2 is
+  // allowed to recommend "discontinue" — the gate enforces that the
+  // diagnosis is honest before design effort is spent.
+  {
+    fromPhase: 2, toPhase: 3, hard: true, approverRole: 'sponsor',
     checks: [
       { key: 'discovery_report_signed_off', describe: 'Discovery synthesis report signed off', severity: 'hard' },
       { key: 'discovery_notes_ingested', describe: 'Discovery notes or workshop logs ingested', severity: 'hard' },
       { key: 'discovery_baseline_attested', describe: 'Baseline metrics are captured and attested, not merely planned', severity: 'hard' },
       { key: 'discovery_stakeholders_named', describe: 'Stakeholder map names required human owners with no hard-owner gaps', severity: 'hard' },
-      { key: 'p2_readiness_cleared', describe: 'Discovery recommendation clears P2 without unresolved hard gaps', severity: 'hard' },
+      { key: 'p2_readiness_cleared', describe: 'Diagnosis clears P2 without unresolved hard gaps or kill recommendation', severity: 'hard' },
     ],
   },
-  {
-    fromPhase: 2, toPhase: 3, hard: true, approverRole: 'sponsor',
-    checks: [
-      { key: 'charter_signed_off', describe: 'Charter signed off by sponsor', severity: 'hard' },
-      { key: 'baseline_captured', describe: 'Baseline metrics captured', severity: 'soft' },
-      { key: 'sponsor_assigned', describe: 'Sponsor assigned', severity: 'hard' },
-    ],
-  },
+  // P3 Design Future State → P4 Roadmap & Business Case
+  // The signed-off future-state design names target state, operating
+  // model shift, and risks/tradeoffs. P3 explicitly rejects tool-first
+  // solutions without a workflow integration plan.
   {
     fromPhase: 3, toPhase: 4, hard: true, approverRole: 'sponsor',
     checks: [
-      { key: 'design_approved', describe: 'Solution and operating-model design signed off', severity: 'hard' },
+      { key: 'design_approved', describe: 'Future-state design and operating-model shift signed off', severity: 'hard' },
       { key: 'requirements_design_outcome_trace', describe: 'Requirements-to-design-to-outcomes traceability captured', severity: 'hard' },
-      { key: 'phase_3_findings_written', describe: 'Phase 3 findings written', severity: 'soft' },
-      { key: 'cxo_interview_complete', describe: 'CXO interview completed', severity: 'soft' },
+      { key: 'phase_3_findings_written', describe: 'Risks and tradeoffs named with mitigations', severity: 'soft' },
+      { key: 'cxo_interview_complete', describe: 'Operating-model owners interviewed', severity: 'soft' },
     ],
   },
+  // P4 Roadmap & Business Case → P5 Mobilize & Handoff
+  // Approved roadmap + business case + value plan + cost model + change
+  // readiness. This is the funding/mobilization gate. P5 then runs the
+  // handoff to Tower; Tower owns downstream execution tracking.
   {
     fromPhase: 4, toPhase: 5, hard: true, approverRole: 'sponsor',
     checks: [
-      { key: 'execution_roadmap_drafted', describe: 'Execution roadmap drafted with workstreams, estimates, timeline, milestones, dependencies, RACI, and risks', severity: 'hard' },
+      { key: 'execution_roadmap_drafted', describe: 'Roadmap drafted with workstreams, estimates, timeline, milestones, dependencies, RACI, and risks', severity: 'hard' },
+      { key: 'business_case_approved', describe: 'Business case and value plan approved', severity: 'hard' },
       { key: 'execution_milestones_defined', describe: 'Critical execution milestones defined', severity: 'hard' },
-      { key: 'execution_success_criteria_defined', describe: 'Success criteria defined by execution phase', severity: 'hard' },
+      { key: 'execution_success_criteria_defined', describe: 'Success criteria defined for execution', severity: 'hard' },
+      { key: 'readiness_and_change_plan_signed_off', describe: 'Change readiness and adoption plan signed off', severity: 'hard' },
+      { key: 'funding_approval_recorded', describe: 'Funding or capacity approval recorded', severity: 'soft' },
+      { key: 'sponsor_alignment_confirmed', describe: 'Sponsor and stakeholder alignment confirmed', severity: 'soft' },
       { key: 'delivery_raci_named', describe: 'Delivery RACI names business, technology, vendor, finance, change, and Tower owners', severity: 'soft' },
       { key: 'vendor_selection_approved', describe: 'Vendor selection approved if applicable', severity: 'soft' },
       { key: 'tower_metric_plan_drafted', describe: 'Tower monitoring metric plan drafted', severity: 'soft' },
-    ],
-  },
-  {
-    fromPhase: 5, toPhase: 6, hard: true, approverRole: 'sponsor',
-    checks: [
-      { key: 'business_case_approved', describe: 'Business case approved for funding and mobilization', severity: 'hard' },
-      { key: 'funding_approval_recorded', describe: 'Funding or capacity approval recorded', severity: 'hard' },
-      { key: 'sponsor_alignment_confirmed', describe: 'Sponsor and stakeholder alignment confirmed', severity: 'hard' },
-      { key: 'readiness_and_change_plan_signed_off', describe: 'Business readiness and change-management plan signed off', severity: 'hard' },
-      { key: 'tower_handoff_plan_accepted', describe: 'Tower handoff and execution monitoring setup accepted', severity: 'hard' },
+      { key: 'tower_handoff_plan_accepted', describe: 'Tower handoff plan drafted (final acceptance occurs during P5)', severity: 'soft' },
     ],
   },
 ];
@@ -230,15 +251,19 @@ export async function evaluateGate(
     ].join('\n').toLowerCase();
   }
 
+  // The 6-phase doctrine moved Discovery to P2 (Discover & Diagnose),
+  // so the legacy "before P2 gate close" cues now refer to P3-entry
+  // risks. We accept either phrasing here so prior synthesis content
+  // remains compatible with the new model.
   const discoveryReportNamesFutureGateRisk =
-    /\bbefore p2 gate close\b/.test(latestDiscoveryReportText) ||
-    /\bat p2 entry\b/.test(latestDiscoveryReportText) ||
-    /\bfor p2 entry resolution\b/.test(latestDiscoveryReportText) ||
-    /\bbefore p2 scoping begins\b/.test(latestDiscoveryReportText) ||
-    /\bbefore synthesis (?:wraps|closes)\b/.test(latestDiscoveryReportText) ||
-    /\bwill block p2[→-]p3\b/.test(latestDiscoveryReportText) ||
-    /\bbecomes a hard blocker at p2[→-]p3\b/.test(latestDiscoveryReportText) ||
-    /\bp2 architecture trade-?off\b/.test(latestDiscoveryReportText) ||
+    /\bbefore p[2-4] gate close\b/.test(latestDiscoveryReportText) ||
+    /\bat p[2-4] entry\b/.test(latestDiscoveryReportText) ||
+    /\bfor p[2-4] entry resolution\b/.test(latestDiscoveryReportText) ||
+    /\bbefore p[2-4] scoping begins\b/.test(latestDiscoveryReportText) ||
+    /\bbefore (?:synthesis|design) (?:wraps|closes)\b/.test(latestDiscoveryReportText) ||
+    /\bwill block p[2-4][→-]p[3-5]\b/.test(latestDiscoveryReportText) ||
+    /\bbecomes a hard blocker at p[2-4][→-]p[3-5]\b/.test(latestDiscoveryReportText) ||
+    /\bp[2-4] architecture trade-?off\b/.test(latestDiscoveryReportText) ||
     /\bnot blocking (?:advance|the gate|gate advancement)\b/.test(latestDiscoveryReportText) ||
     /\bdoes not block (?:advance|the gate|gate advancement)\b/.test(latestDiscoveryReportText);
   const discoveryReportExplicitlyClearsHardGaps =

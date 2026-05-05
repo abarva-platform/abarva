@@ -55,24 +55,36 @@ Two surfaces, one brand:
 - Rule: if a string is read by a user, rebrand. If read by a
   developer, keep.
 
-## Phase labels (hard rule)
+## Phase model (hard rule)
+
+Strategic Moves runs a six-phase model — P0..P5. AbarVa does not
+execute the transformation. After P5 Mobilize & Handoff, Control
+Tower owns execution tracking, value realization, and risk monitoring.
+Build / Execute / Verify are NOT Strategic Move phases.
+
+Binding reference: `docs/design/strategic-moves/PHASE_MODEL_V2_DOCTRINE.md`.
 
 Use the static lookup `src/lib/programs/phase-labels.ts` for all
 user-visible phase references:
 
-  0 → "P0 Originate"     4 → "P4 Build"
-  1 → "P1 Charter"       5 → "P5 Execute"
-  2 → "P2 Diagnose"      6 → "P6 Verify"
-  3 → "P3 Solution Design"  7 → "P7 Handoff"
+  0 → "P0 Originate"               (short: "Originate")
+  1 → "P1 Charter"                 (short: "Charter")
+  2 → "P2 Discover & Diagnose"     (short: "Diagnose")
+  3 → "P3 Design Future State"     (short: "Design")
+  4 → "P4 Roadmap & Business Case" (short: "Roadmap")
+  5 → "P5 Mobilize & Handoff"      (short: "Mobilize")
 
-Never hard-code phase labels inline.
+Never hard-code phase labels inline. Never reintroduce P6/P7 as
+Strategic Move phases. The rail surfaces a "→ Tower" terminal
+indicator after P5 — that is a different surface, not a phase.
 
 ## Component reuse (hard rule)
 
-The Phase Rail (`<PhaseRail current={n} totalPhases={8} />`) is
-shared across Detail, Originate, and all future phase surfaces.
-Build once at `src/components/strategic-moves/PhaseRail.tsx`,
-reuse everywhere. Do not inline.
+The Phase Rail (`<PhaseRail current={n} />`) is shared across Detail,
+Originate, and all future phase surfaces. Build once at
+`src/components/strategic-moves/PhaseRail.tsx`, reuse everywhere. Do
+not inline. The rail defaults to `totalPhases=6` from
+`TOTAL_PHASES` in `phase-labels.ts`; do not pass `totalPhases={8}`.
 
 ## Hard "do not" list
 
