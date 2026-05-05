@@ -450,7 +450,7 @@ export function StrategicMoveOriginateClient({ tenantName }: Props) {
                 <div className={styles.detailId}>P0 Originate &middot; Drafting</div>
               </div>
             </div>
-            <PhaseRail current={0} totalPhases={8} status="teal" />
+            <PhaseRail current={0} status="teal" />
           </div>
 
           <div className={styles.scaffoldList}>

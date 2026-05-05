@@ -32,14 +32,23 @@ export type FlagType =
   | 'risk_detected' | 'policy_violation' | 'scope_drift';
 export type FlagSeverity = 'critical' | 'warning' | 'info';
 
+// 6-Phase Strategic Moves model.
+// Doctrine: docs/design/strategic-moves/PHASE_MODEL_V2_DOCTRINE.md
+//
+// AbarVa runs P0..P5. Tower owns downstream execution tracking, so
+// Build / Execute / Verify are intentionally absent from this map.
+// `current_phase` on engagements is constrained to 0..5.
+//
+// User-facing copy lives in `phase-labels.ts`; this constant retains
+// the internal short name for back-compat with transformers and audit
+// callers that key on the seed-era short labels.
 export const PHASE_LABELS: Record<number, string> = {
-  0: 'Origination',
-  1: 'Discovery',
-  2: 'Synthesis',
-  3: 'Design',
-  4: 'Execution Roadmap',
-  5: 'Approval & Mobilization',
-  6: 'Tower Handoff',
+  0: 'Originate',
+  1: 'Charter',
+  2: 'Discover & Diagnose',
+  3: 'Design Future State',
+  4: 'Roadmap & Business Case',
+  5: 'Mobilize & Handoff',
 };
 
 export interface TenancyCtx {

@@ -107,13 +107,13 @@ describe('evaluateGate', () => {
     jest.clearAllMocks();
     getProgramByIdMock.mockResolvedValue({
       id: 'program-1',
-      currentPhase: 5,
+      currentPhase: 4,
       archetype: 'analytics_modernization',
     });
     deliverablesFixture = [
       { id: 'business-case', deliverable_type_key: 'business_case', status: 'signed_off' },
       { id: 'readiness', deliverable_type_key: 'readiness_and_change_plan', status: 'signed_off' },
-      { id: 'tower', deliverable_type_key: 'tower_handoff_plan', status: 'signed_off' },
+      { id: 'roadmap', deliverable_type_key: 'execution_roadmap', status: 'signed_off' },
     ];
     modulesFixture = [
       { module_key: 'funding_approval', status: 'completed' },
@@ -121,44 +121,50 @@ describe('evaluateGate', () => {
     ];
     participantsFixture = [];
     approvalRequestsFixture = [];
-    milestonesFixture = [];
+    milestonesFixture = [{ id: 'm-1', name: 'Mobilize', status: 'upcoming' }];
     evidenceFixture = [];
     deliverableVersionsFixture = [];
     fromMock.mockImplementation(tableResult);
   });
 
-  it('does not let P5 module completion replace signed funding and sponsor artifacts', async () => {
+  it('does not let P4 module completion replace signed roadmap, business case, and change plan artifacts', async () => {
+    // The P4→P5 gate folds in funding/mobilization concerns under the
+    // 6-phase doctrine. Module completion alone (without the signed
+    // execution_roadmap, business_case, and readiness_and_change_plan
+    // deliverables) must not pass the hard checks.
+    deliverablesFixture = [];
     const result = await evaluateGate(
       { clientId: 'client-1', userId: 'person-1' },
       'program-1',
+      4,
       5,
-      6,
     );
 
     expect(result.pass).toBe(false);
     expect(result.failedChecks).toEqual(
       expect.arrayContaining([
-        expect.objectContaining({ check: 'funding_approval_recorded', severity: 'hard' }),
-        expect.objectContaining({ check: 'sponsor_alignment_confirmed', severity: 'hard' }),
+        expect.objectContaining({ check: 'execution_roadmap_drafted', severity: 'hard' }),
+        expect.objectContaining({ check: 'business_case_approved', severity: 'hard' }),
+        expect.objectContaining({ check: 'readiness_and_change_plan_signed_off', severity: 'hard' }),
       ]),
     );
   });
 
-  it('blocks P1 to P2 when the signed Discovery report declares unresolved hard gaps', async () => {
+  it('blocks P2 to P3 when the signed Discovery report declares unresolved hard gaps', async () => {
     getProgramByIdMock.mockResolvedValue({
       id: 'program-1',
-      currentPhase: 1,
+      currentPhase: 2,
       archetype: 'ams_consolidation',
     });
     deliverablesFixture = [
       { id: 'discovery-report', deliverable_type_key: 'discovery_report', status: 'signed_off' },
     ];
-    evidenceFixture = [{ id: 'p1-workshop-notes' }];
+    evidenceFixture = [{ id: 'p2-workshop-notes' }];
     deliverableVersionsFixture = [
       {
         content:
-          'P1 Discovery Synthesis. HARD gaps: Technical Owner not yet named; ' +
-          'MTTR baseline not yet pulled from ITSM. CONDITIONAL PROCEED. Do not advance to P2 charter until baseline attestation is complete.',
+          'P2 Discover & Diagnose synthesis. HARD gaps: Technical Owner not yet named; ' +
+          'MTTR baseline not yet pulled from ITSM. CONDITIONAL PROCEED. Do not advance to P3 design until baseline attestation is complete.',
         structured_data: null,
         generated_at: '2026-05-02T00:00:00.000Z',
       },
@@ -167,8 +173,8 @@ describe('evaluateGate', () => {
     const result = await evaluateGate(
       { clientId: 'client-1', userId: 'person-1' },
       'program-1',
-      1,
       2,
+      3,
     );
 
     expect(result.pass).toBe(false);
@@ -182,10 +188,10 @@ describe('evaluateGate', () => {
     expect(result.requiresApproval).toBe(false);
   });
 
-  it('accepts signed P1 Discovery Report content as ingested workshop evidence', async () => {
+  it('accepts signed P2 Discovery Report content as ingested workshop evidence', async () => {
     getProgramByIdMock.mockResolvedValue({
       id: 'program-1',
-      currentPhase: 1,
+      currentPhase: 2,
       archetype: 'analytics_modernization',
     });
     deliverablesFixture = [
@@ -195,12 +201,12 @@ describe('evaluateGate', () => {
     deliverableVersionsFixture = [
       {
         content:
-          'P1 Discovery Report. Attendees: Katherine Oshima sponsor, Marcus Chen data owner, ' +
+          'P2 Discovery Report. Attendees: Katherine Oshima sponsor, Marcus Chen data owner, ' +
           'Linda Tran clinical informatics, Priya Nair revenue cycle, and Omar Haddad security. ' +
           'Workshop notes: data discovery session mapped Epic, claims, coding, prior auth, and VBC feeds. ' +
           'Baselines captured and owner attestation recorded. Source of record: Meridian analytics intake log and Epic/claims lineage workshop. ' +
           'Stakeholder map names required owners. Contradiction: shadow SaaS tools bypass central lineage. ' +
-          'P2 readiness recommendation: proceed to Synthesis.',
+          'P3 readiness recommendation: proceed to Design.',
         structured_data: null,
         generated_at: '2026-05-02T00:00:00.000Z',
       },
@@ -209,8 +215,8 @@ describe('evaluateGate', () => {
     const result = await evaluateGate(
       { clientId: 'client-1', userId: 'person-1' },
       'program-1',
-      1,
       2,
+      3,
     );
 
     expect(result.failedChecks.map((check) => check.check)).not.toContain('discovery_notes_ingested');
@@ -218,10 +224,10 @@ describe('evaluateGate', () => {
     expect(result.requiresApproval).toBe(true);
   });
 
-  it('does not block P1 to P2 on future-looking P2 gate risks in the signed Discovery Report', async () => {
+  it('does not block P2 to P3 on future-looking P3 gate risks in the signed Discovery Report', async () => {
     getProgramByIdMock.mockResolvedValue({
       id: 'program-1',
-      currentPhase: 1,
+      currentPhase: 2,
       archetype: 'store_operations_analytics',
     });
     deliverablesFixture = [
@@ -237,8 +243,8 @@ describe('evaluateGate', () => {
           'digital substitution rate, store task SLA, and demand forecast override rate. ' +
           'Baselines captured and owner attestation recorded. Source of record: POS/RMS/WMS lineage workshop and store operations intake log. ' +
           'Stakeholder map names required owners. Contradiction: digital promise accuracy depends on near-real-time item availability, but Oracle RMS and WMS are batch-lagged. ' +
-          'Security/compliance owner not yet named; this is a soft gap at P1 but becomes a hard blocker at P2→P3 and must be named before P2 gate close. ' +
-          'P2 readiness recommendation: proceed to Synthesis.',
+          'Security/compliance owner not yet named; this is a soft gap at P2 but becomes a hard blocker at P3→P4 and must be named before P3 gate close. ' +
+          'P3 readiness recommendation: proceed to Design.',
         structured_data: null,
         generated_at: '2026-05-02T00:00:00.000Z',
       },
@@ -247,18 +253,18 @@ describe('evaluateGate', () => {
     const result = await evaluateGate(
       { clientId: 'client-1', userId: 'person-1' },
       'program-1',
-      1,
       2,
+      3,
     );
 
     expect(result.failedChecks.filter((check) => check.severity === 'hard')).toEqual([]);
     expect(result.requiresApproval).toBe(true);
   });
 
-  it('does not block P1 to P2 on P2-entry soft follow-ups in the signed Discovery Report', async () => {
+  it('does not block P2 to P3 on P3-entry soft follow-ups in the signed Discovery Report', async () => {
     getProgramByIdMock.mockResolvedValue({
       id: 'program-1',
-      currentPhase: 1,
+      currentPhase: 2,
       archetype: 'digital_banking_risk_controls',
     });
     deliverablesFixture = [
@@ -274,9 +280,9 @@ describe('evaluateGate', () => {
           'Baselines captured and owner attestation recorded. Source of record: First Capital risk-control intake log and workshop notes. ' +
           'Stakeholder map names required human owners with no hard-owner gaps. ' +
           'Contradiction: audit remediation urgency is high, but evidence lineage is scattered across control teams. ' +
-          'Two soft items outstanding — Kevin Walsh to confirm audit-finding register extract at P2 entry and Lena Ortiz to confirm system-level data access rights before P2 scoping begins. ' +
-          'These are flagged for P2 entry resolution, not blocking advance. No unresolved hard gaps. ' +
-          'P2 readiness recommendation: proceed to Synthesis.',
+          'Two soft items outstanding — Kevin Walsh to confirm audit-finding register extract at P3 entry and Lena Ortiz to confirm system-level data access rights before P3 scoping begins. ' +
+          'These are flagged for P3 entry resolution, not blocking advance. No unresolved hard gaps. ' +
+          'P3 readiness recommendation: proceed to Design.',
         structured_data: null,
         generated_at: '2026-05-02T00:00:00.000Z',
       },
@@ -285,8 +291,8 @@ describe('evaluateGate', () => {
     const result = await evaluateGate(
       { clientId: 'client-1', userId: 'person-1' },
       'program-1',
-      1,
       2,
+      3,
     );
 
     expect(result.failedChecks.filter((check) => check.severity === 'hard')).toEqual([]);

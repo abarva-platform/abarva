@@ -109,7 +109,7 @@ export function StrategicMoveDetailView({ move }: Props) {
                 </Link>
               </div>
             </div>
-            <PhaseRail current={move.currentPhase} totalPhases={8} status={move.statusColor} />
+            <PhaseRail current={move.currentPhase} status={move.statusColor} />
           </div>
 
           <div className={styles.detailBody}>
