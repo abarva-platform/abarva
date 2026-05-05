@@ -1,5 +1,4 @@
 import Link from 'next/link';
-import { AppShell } from '@/components/shell/AppShell';
 import styles from './StrategicMoves.module.css';
 import { PhaseRail } from './PhaseRail';
 import type { StrategicMove } from '@/lib/programs/types.ui';
@@ -36,7 +35,6 @@ export function StrategicMoveDetailView({ move }: Props) {
   const primary = primaryAction(move);
   const secondary = secondaryAction(move);
   return (
-    <AppShell surface="programs-detail">
     <div className={styles.page}>
       <section className={styles.detailShell}>
         <aside className={styles.chatPane}>
@@ -240,7 +238,6 @@ export function StrategicMoveDetailView({ move }: Props) {
         </article>
       </section>
     </div>
-    </AppShell>
   );
 }
 

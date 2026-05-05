@@ -2,7 +2,6 @@
 
 import Link from 'next/link';
 import { useEffect, useMemo, useState, useTransition } from 'react';
-import { AppShell } from '@/components/shell/AppShell';
 import styles from './StrategicMoves.module.css';
 import type { StrategicMovePortfolio } from '@/lib/programs/types.ui';
 import type {
@@ -131,7 +130,6 @@ export function StrategicMovesHomeClient({
   }, [sortedMoves]);
 
   return (
-    <AppShell surface="programs">
     <div className={styles.page}>
       <div className={styles.topbar}>
         <h1 className={styles.pageTitle}>Strategic Moves</h1>
@@ -446,6 +444,5 @@ export function StrategicMovesHomeClient({
         ) : null}
       </section>
     </div>
-    </AppShell>
   );
 }

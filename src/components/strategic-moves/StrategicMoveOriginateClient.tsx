@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
-import { AppShell } from '@/components/shell/AppShell';
 import styles from './StrategicMoves.module.css';
 import { PhaseRail } from './PhaseRail';
 
@@ -336,7 +335,6 @@ export function StrategicMoveOriginateClient({ tenantName }: Props) {
   }
 
   return (
-    <AppShell surface="programs">
     <div className={styles.page}>
       <div className={styles.originContextBar}>
         <div className={styles.originContextLeft}>
@@ -544,6 +542,5 @@ export function StrategicMoveOriginateClient({ tenantName }: Props) {
         </div>
       ) : null}
     </div>
-    </AppShell>
   );
 }
