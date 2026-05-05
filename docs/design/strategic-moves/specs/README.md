@@ -1,0 +1,3 @@
+# Strategic Moves Spec Directory
+
+This directory contains the five-layer specification for the two Strategic Moves detail pages: **Originate** (`/strategic-moves/new`) and **Workspace** (`/strategic-moves/[moveId]`). Each page is specified across five layers — Anatomy (Layer 1), State (Layer 2), Click & Interaction (Layer 3), Data Binding (Layer 4), and Knowledge Surfacing (Layer 5) — in that order, since each layer references stable IDs and contracts established by the one before it. Companion agent-training documents live in `../agent-training/`. The methodology governing all spec work is in `SPEC_METHODOLOGY.md`; the stable ID convention is in `STABLE_ID_CONVENTION.md`.
