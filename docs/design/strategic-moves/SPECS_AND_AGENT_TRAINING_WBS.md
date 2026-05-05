@@ -1004,6 +1004,24 @@ Every decision made during WBS execution gets logged here. Format:
 
 ---
 
+## 13.1 · Sign-off Log
+
+### SIGN-OFF · 2026-05-05 · O-1.3 Originate Layer 1 frozen
+
+**Layers signed:** O-1.1 (anatomy doc, 80 stable IDs) + O-1.2 (annotated HTML layout)
+**PRs merged:** #1535 (O-1.1) · #1537 (O-1.2)
+**Authority:** Anand Sundaram (session execution authority)
+**Verification:** Anatomy covers all elements from cascade Flow 2 Frame 2; scaffold-in-chat-lane placement explicit; PHASE_SHORT_NAMES substrate gap logged as B-101; annotated layout spot-checked 5 IDs
+**Unblocks:** Phase 3 (Originate Layers 2–4): O-2.1, O-2.2, O-2.3
+
+### SIGN-OFF · 2026-05-05 · Foundation complete
+
+**Steps signed:** F-01 (#1528) · F-02 (#1530) · F-03 (#1529) · F-05 (#1531)
+**Key finding from F-05:** SQL phase migration already applied; B-027 is TypeScript-only renames; D-11 draft persistence already shipped via `program_origination_drafts` table
+**Unblocks:** All Phase 2+ spec work
+
+---
+
 ## 14 · Appendices
 
 ### Appendix A — Sample Layer 1 (Anatomy) doc structure
