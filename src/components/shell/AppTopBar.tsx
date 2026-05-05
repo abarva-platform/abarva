@@ -10,6 +10,7 @@ import {
   type ProductModule,
 } from "@/lib/auth/module-access";
 import { getAtriumProductNavLabel } from "@/lib/shell/atrium-contract";
+import { AbarVaLogo } from "@/components/abarva/AbarVaLogo";
 
 export interface AppTopBarProps {
   tenantName?: string;
@@ -315,6 +316,11 @@ export function AppTopBar({ showProductNav = true }: AppTopBarProps) {
             display: "flex",
             alignItems: "center",
             textDecoration: "none",
+<<<<<<< cursor/nav-regression-diagnosis-ac9d
+          }}
+        >
+          <AbarVaLogo variant="wordmark" size="md" label="AbarVa" />
+=======
             flexShrink: 0,
           }}
         >
@@ -325,6 +331,7 @@ export function AppTopBar({ showProductNav = true }: AppTopBarProps) {
             height={22}
             style={{ display: "block", height: 22, width: "auto" }}
           />
+>>>>>>> main
         </Link>
 
         {navItems.length > 0 ? (
