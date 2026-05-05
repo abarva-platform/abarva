@@ -1,0 +1,1763 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>AbarVa · Strategic Moves Lifecycle Journey</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #f5f1eb;
+  --paper: #faf7f1;
+  --cream: #efe9dd;
+  --cream-deep: #e8e1d2;
+  --ink: #000000;
+  --ink-2: #2c2c2a;
+  --gray: #888780;
+  --gray-dk: #5F5E5A;
+  --border: rgba(10,10,11,0.10);
+  --border-strong: rgba(10,10,11,0.24);
+  --blue: #0066CC;
+  --gold: #9C7B3F;
+  --green: #1d9e75;
+  --green-bg: #e1f5ee;
+  --amber: #ba7517;
+  --amber-bg: #faeeda;
+  --red: #a32d2d;
+  --red-bg: #fceded;
+  --purple: #6B42B8;
+  --purple-bg: #f0ebfc;
+  --navy: #0c1a3a;
+  --serif: Fraunces, Georgia, serif;
+  --sans: Inter, -apple-system, sans-serif;
+  --mono: 'JetBrains Mono', ui-monospace, monospace;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: var(--sans);
+  background: var(--bg);
+  color: var(--ink);
+  font-size: 14px;
+  line-height: 1.5;
+  padding: 40px 32px 120px;
+}
+.doc-head {
+  max-width: 1320px;
+  margin: 0 auto 40px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid var(--border);
+}
+.doc-eyebrow {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 1.8px;
+  text-transform: uppercase;
+  font-weight: 700;
+  color: var(--gold);
+  margin-bottom: 8px;
+}
+.doc-title {
+  font-family: var(--serif);
+  font-size: 34px;
+  font-weight: 600;
+  letter-spacing: -0.6px;
+  margin-bottom: 6px;
+}
+.doc-sub {
+  font-size: 14px;
+  color: var(--gray-dk);
+  max-width: 780px;
+  margin-bottom: 20px;
+}
+.doc-meta {
+  display: flex;
+  gap: 32px;
+  font-size: 12px;
+  color: var(--gray);
+}
+.doc-meta strong { color: var(--ink-2); font-weight: 600; }
+
+/* ── Scenario banner ─────────────────────────────── */
+.scenario-banner {
+  max-width: 1320px;
+  margin: 0 auto 48px;
+  background: var(--navy);
+  border-radius: 10px;
+  padding: 24px 28px;
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr 1fr;
+  gap: 0;
+}
+.scenario-banner .sc-label {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 1.4px;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.4);
+  margin-bottom: 4px;
+}
+.scenario-banner .sc-value {
+  font-size: 14px;
+  color: #fff;
+  font-weight: 500;
+}
+.scenario-banner .sc-divider {
+  width: 1px;
+  background: rgba(255,255,255,0.12);
+  margin: 0 20px;
+}
+
+/* ── Phase timeline rail ─────────────────────────── */
+.timeline-rail {
+  max-width: 1320px;
+  margin: 0 auto 56px;
+  display: flex;
+  align-items: center;
+  gap: 0;
+}
+.rail-phase {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+}
+.rail-phase + .rail-phase::before {
+  content: '';
+  position: absolute;
+  left: -50%;
+  top: 18px;
+  width: 100%;
+  height: 2px;
+  background: var(--cream-deep);
+  z-index: 0;
+}
+.rail-dot {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--paper);
+  border: 2px solid var(--border-strong);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--gray-dk);
+  position: relative;
+  z-index: 1;
+}
+.rail-dot.p0 { background: #e8f4fd; border-color: #4da8e8; color: #0066CC; }
+.rail-dot.p1 { background: var(--amber-bg); border-color: var(--amber); color: var(--amber); }
+.rail-dot.p2 { background: var(--purple-bg); border-color: var(--purple); color: var(--purple); }
+.rail-dot.p3 { background: var(--green-bg); border-color: var(--green); color: var(--green); }
+.rail-dot.p4 { background: #fff3e0; border-color: #e67e22; color: #c0392b; }
+.rail-dot.p5 { background: var(--navy); border-color: var(--navy); color: #fff; }
+.rail-label {
+  font-size: 11px;
+  font-weight: 600;
+  margin-top: 8px;
+  color: var(--ink-2);
+  text-align: center;
+}
+.rail-duration {
+  font-size: 10px;
+  color: var(--gray);
+  text-align: center;
+  margin-top: 2px;
+}
+.tower-arrow {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-left: 16px;
+}
+.tower-arrow-line {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--navy);
+  letter-spacing: 0.6px;
+}
+.tower-arrow-line svg { flex-shrink: 0; }
+
+/* ── Phase cards ─────────────────────────────────── */
+.phases-container {
+  max-width: 1320px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+.phase-card {
+  background: var(--paper);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+}
+.phase-header {
+  display: flex;
+  align-items: stretch;
+  border-bottom: 1px solid var(--border);
+}
+.phase-badge {
+  width: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-family: var(--mono);
+  font-size: 13px;
+  font-weight: 700;
+}
+.phase-badge.p0 { background: #e8f4fd; color: #0066CC; }
+.phase-badge.p1 { background: var(--amber-bg); color: var(--amber); }
+.phase-badge.p2 { background: var(--purple-bg); color: var(--purple); }
+.phase-badge.p3 { background: var(--green-bg); color: var(--green); }
+.phase-badge.p4 { background: #fff3e0; color: #c0392b; }
+.phase-badge.p5 { background: var(--navy); color: #fff; }
+.phase-title-block {
+  flex: 1;
+  padding: 16px 20px;
+}
+.phase-name {
+  font-family: var(--serif);
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: -0.3px;
+  margin-bottom: 2px;
+}
+.phase-mission {
+  font-size: 13px;
+  color: var(--gray-dk);
+}
+.phase-meta-row {
+  display: flex;
+  gap: 24px;
+  padding: 14px 20px;
+  font-size: 12px;
+  background: var(--cream);
+  border-bottom: 1px solid var(--border);
+}
+.meta-pill {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--ink-2);
+}
+.meta-pill .label { color: var(--gray-dk); }
+.meta-pill strong { font-weight: 600; }
+.phase-body {
+  display: grid;
+  grid-template-columns: 2fr 1.4fr 1.4fr;
+  gap: 0;
+}
+.phase-col {
+  padding: 20px 20px 24px;
+  border-right: 1px solid var(--border);
+}
+.phase-col:last-child { border-right: none; }
+.col-head {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 1.4px;
+  text-transform: uppercase;
+  font-weight: 700;
+  color: var(--gold);
+  margin-bottom: 14px;
+}
+
+/* Activities */
+.activity-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.activity-step {
+  display: flex;
+  gap: 10px;
+}
+.step-num {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--cream);
+  border: 1px solid var(--border-strong);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--gray-dk);
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+.step-body .step-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink-2);
+  margin-bottom: 2px;
+}
+.step-body .step-desc {
+  font-size: 12px;
+  color: var(--gray-dk);
+  line-height: 1.4;
+}
+.step-body .nexus-note {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10px;
+  color: var(--blue);
+  font-weight: 500;
+  background: #e8f4fd;
+  border-radius: 4px;
+  padding: 2px 6px;
+  margin-top: 4px;
+}
+.step-body .authority-note {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10px;
+  color: var(--red);
+  font-weight: 500;
+  background: var(--red-bg);
+  border-radius: 4px;
+  padding: 2px 6px;
+  margin-top: 4px;
+}
+.step-body .tower-note {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10px;
+  color: var(--navy);
+  font-weight: 500;
+  background: #e5e8f0;
+  border-radius: 4px;
+  padding: 2px 6px;
+  margin-top: 4px;
+}
+
+/* Artifacts */
+.artifact-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.artifact-item {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+}
+.artifact-icon {
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+.artifact-icon.hard { background: var(--green-bg); color: var(--green); }
+.artifact-icon.soft { background: var(--amber-bg); color: var(--amber); }
+.artifact-icon.auto { background: #e8f4fd; color: var(--blue); }
+.artifact-name { font-size: 12px; font-weight: 500; color: var(--ink-2); line-height: 1.35; }
+.artifact-src { font-size: 11px; color: var(--gray); }
+.artifact-legend {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 12px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border);
+}
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10px;
+  color: var(--gray-dk);
+}
+
+/* Gate & approvals */
+.gate-section { margin-bottom: 16px; }
+.gate-head {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--ink-2);
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.badge-hard {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  background: var(--red-bg);
+  color: var(--red);
+  padding: 1px 5px;
+  border-radius: 3px;
+}
+.badge-soft {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  background: var(--amber-bg);
+  color: var(--amber);
+  padding: 1px 5px;
+  border-radius: 3px;
+}
+.gate-criteria {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.gate-crit {
+  display: flex;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--ink-2);
+  align-items: flex-start;
+}
+.gate-crit .dot-hard {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--red);
+  flex-shrink: 0;
+  margin-top: 5px;
+}
+.gate-crit .dot-soft {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--amber);
+  flex-shrink: 0;
+  margin-top: 5px;
+}
+.approval-block {
+  background: var(--cream);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 10px 12px;
+  margin-top: 12px;
+}
+.approval-head {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: var(--gray-dk);
+  margin-bottom: 6px;
+}
+.approval-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  color: var(--ink-2);
+  padding: 3px 0;
+  border-bottom: 1px solid var(--border);
+}
+.approval-row:last-child { border-bottom: none; }
+.approval-row .who { font-weight: 500; }
+.approval-row .tier-pilot {
+  font-size: 10px;
+  background: var(--green-bg);
+  color: var(--green);
+  padding: 1px 5px;
+  border-radius: 3px;
+  font-weight: 600;
+}
+.approval-row .tier-prod {
+  font-size: 10px;
+  background: var(--red-bg);
+  color: var(--red);
+  padding: 1px 5px;
+  border-radius: 3px;
+  font-weight: 600;
+}
+
+/* Phase connector */
+.phase-connector {
+  max-width: 1320px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 0;
+  padding: 0 32px;
+  position: relative;
+  height: 32px;
+}
+.connector-line {
+  position: absolute;
+  left: 32px;
+  right: 32px;
+  height: 1px;
+  background: var(--cream-deep);
+  top: 50%;
+}
+.connector-label {
+  position: relative;
+  z-index: 1;
+  background: var(--bg);
+  padding: 4px 16px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--gray-dk);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.connector-label .arrow { color: var(--green); }
+
+/* Discontinue callout */
+.discontinue-callout {
+  background: var(--red-bg);
+  border: 1px solid var(--red);
+  border-radius: 6px;
+  padding: 10px 12px;
+  margin-top: 12px;
+  font-size: 11px;
+  color: var(--red);
+}
+.discontinue-callout strong { font-weight: 700; display: block; margin-bottom: 2px; }
+
+/* Tower handoff banner */
+.tower-banner {
+  max-width: 1320px;
+  margin: 32px auto 0;
+  background: var(--navy);
+  border-radius: 10px;
+  padding: 20px 28px;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 20px;
+  align-items: center;
+}
+.tower-banner .t-label {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 1.4px;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.45);
+  margin-bottom: 3px;
+}
+.tower-banner .t-title {
+  font-family: var(--serif);
+  font-size: 18px;
+  color: #fff;
+  font-weight: 600;
+}
+.tower-banner .t-desc {
+  font-size: 13px;
+  color: rgba(255,255,255,0.65);
+}
+.tower-banner .t-divider {
+  width: 1px;
+  background: rgba(255,255,255,0.15);
+  height: 100%;
+}
+.handoff-items {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.handoff-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: rgba(255,255,255,0.8);
+}
+.handoff-item::before { content: '→'; color: rgba(255,255,255,0.35); }
+
+/* Appendix: artifact lineage */
+.appendix {
+  max-width: 1320px;
+  margin: 64px auto 0;
+  padding-top: 32px;
+  border-top: 1px solid var(--border);
+}
+.appendix-head {
+  font-family: var(--serif);
+  font-size: 22px;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+.appendix-sub {
+  font-size: 13px;
+  color: var(--gray-dk);
+  margin-bottom: 28px;
+}
+.lineage-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+.lineage-table th {
+  background: var(--cream);
+  padding: 8px 12px;
+  text-align: left;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  color: var(--gray-dk);
+  border-bottom: 1px solid var(--border-strong);
+}
+.lineage-table td {
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border);
+  color: var(--ink-2);
+  vertical-align: top;
+}
+.lineage-table tr:hover td { background: var(--cream-light, #faf6ec); }
+.phase-tag {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 3px;
+  display: inline-block;
+}
+.phase-tag.p0 { background: #e8f4fd; color: #0066CC; }
+.phase-tag.p1 { background: var(--amber-bg); color: var(--amber); }
+.phase-tag.p2 { background: var(--purple-bg); color: var(--purple); }
+.phase-tag.p3 { background: var(--green-bg); color: var(--green); }
+.phase-tag.p4 { background: #fff3e0; color: #c0392b; }
+.phase-tag.p5 { background: var(--navy); color: #fff; }
+.type-tag {
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 3px;
+  display: inline-block;
+}
+.type-tag.hard { background: var(--red-bg); color: var(--red); }
+.type-tag.soft { background: var(--amber-bg); color: var(--amber); }
+.type-tag.agent { background: #e8f4fd; color: var(--blue); }
+</style>
+</head>
+<body>
+
+<!-- ─── Document header ──────────────────────────── -->
+<div class="doc-head">
+  <div class="doc-eyebrow">AbarVa Strategic Moves · Reference Document 17</div>
+  <div class="doc-title">Lifecycle Journey: P0 → P5</div>
+  <div class="doc-sub">Every step, approval, artifact, and agent touchpoint for a Move from signal to Tower handoff. Illustrated with a real-life Apex Retail Contact Center AI program.</div>
+  <div class="doc-meta">
+    <span><span class="label">Version</span> <strong>0.1</strong></span>
+    <span><span class="label">Date</span> <strong>2026-05-05</strong></span>
+    <span><span class="label">Reference</span> <strong>PHASE_MODEL_V2_DOCTRINE.md · SPECS_AND_AGENT_TRAINING_WBS.md</strong></span>
+    <span><span class="label">Companion</span> <strong>16-flow-cascade.html</strong></span>
+  </div>
+</div>
+
+<!-- ─── Scenario banner ──────────────────────────── -->
+<div class="scenario-banner">
+  <div>
+    <div class="sc-label">Example Program</div>
+    <div class="sc-value">Contact Center AI Transformation</div>
+  </div>
+  <div class="sc-divider"></div>
+  <div>
+    <div class="sc-label">Client</div>
+    <div class="sc-value">Apex Retail (8,400 employees · 1,200 CC agents)</div>
+  </div>
+  <div class="sc-divider"></div>
+  <div>
+    <div class="sc-label">Projected Value</div>
+    <div class="sc-value">$1.8M – $2.6M annual savings</div>
+  </div>
+  <div class="sc-divider"></div>
+  <div>
+    <div class="sc-label">Total Calendar Duration</div>
+    <div class="sc-value">~18 weeks P0 → P5 gate-out</div>
+  </div>
+</div>
+
+<!-- ─── Timeline rail ────────────────────────────── -->
+<div class="timeline-rail">
+  <div class="rail-phase">
+    <div class="rail-dot p0">P0</div>
+    <div class="rail-label">Originate</div>
+    <div class="rail-duration">~1 week</div>
+  </div>
+  <div class="rail-phase">
+    <div class="rail-dot p1">P1</div>
+    <div class="rail-label">Charter</div>
+    <div class="rail-duration">~2 weeks</div>
+  </div>
+  <div class="rail-phase">
+    <div class="rail-dot p2">P2</div>
+    <div class="rail-label">Diagnose</div>
+    <div class="rail-duration">~4 weeks</div>
+  </div>
+  <div class="rail-phase">
+    <div class="rail-dot p3">P3</div>
+    <div class="rail-label">Design</div>
+    <div class="rail-duration">~3 weeks</div>
+  </div>
+  <div class="rail-phase">
+    <div class="rail-dot p4">P4</div>
+    <div class="rail-label">Roadmap</div>
+    <div class="rail-duration">~4 weeks</div>
+  </div>
+  <div class="rail-phase">
+    <div class="rail-dot p5">P5</div>
+    <div class="rail-label">Mobilize</div>
+    <div class="rail-duration">~4 weeks</div>
+  </div>
+  <div class="tower-arrow" style="margin-left:16px;padding-left:0;">
+    <div class="tower-arrow-line">
+      <svg width="20" height="16" viewBox="0 0 20 16"><path d="M0 8h18M12 2l6 6-6 6" stroke="#0c1a3a" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      TOWER
+    </div>
+    <div style="font-size:10px;color:var(--gray);margin-top:2px;text-align:center;">Atlas agent</div>
+  </div>
+</div>
+
+<!-- ─── Phase cards ──────────────────────────────── -->
+<div class="phases-container">
+
+  <!-- P0 ─────────────────────────────────────────── -->
+  <div class="phase-card">
+    <div class="phase-header">
+      <div class="phase-badge p0">P0</div>
+      <div class="phase-title-block">
+        <div class="phase-name">P0 · Originate</div>
+        <div class="phase-mission">Convert a signal or hypothesis into a structured Move with a sponsor candidate</div>
+      </div>
+    </div>
+    <div class="phase-meta-row">
+      <div class="meta-pill"><span class="label">Entry point:</span> <strong>Signal from leadership, market event, or Nexus proactive alert</strong></div>
+      <div class="meta-pill"><span class="label">Surface:</span> <strong>/strategic-moves/new (Originate page)</strong></div>
+      <div class="meta-pill"><span class="label">Duration:</span> <strong>~1 week</strong></div>
+      <div class="meta-pill"><span class="label">Gate out to:</span> <strong>P1 Charter (on approval)</strong></div>
+    </div>
+    <div class="phase-body">
+
+      <div class="phase-col">
+        <div class="col-head">Activities &amp; Workflow Steps</div>
+        <div class="activity-list">
+          <div class="activity-step">
+            <div class="step-num">1</div>
+            <div class="step-body">
+              <div class="step-title">P0.1 — Paste or describe the signal</div>
+              <div class="step-desc">User pastes a leadership memo, market report, or describes a pain point. Nexus extracts and structures the problem hypothesis.</div>
+              <div class="nexus-note">↝ Nexus: classifies archetype, surfaces 3 entry-context chips</div>
+            </div>
+          </div>
+          <div class="activity-step">
+            <div class="step-num">2</div>
+            <div class="step-body">
+              <div class="step-title">P0.2 — Complete scaffold (7 sections)</div>
+              <div class="step-desc">Problem statement · Classification · Target outcome · Timeline horizon · Sponsor candidate · Foundation checks (F1–F4) · Pattern match review</div>
+              <div class="nexus-note">↝ Nexus: auto-drafts each section; user refines; evidence cited per field</div>
+            </div>
+          </div>
+          <div class="activity-step">
+            <div class="step-num">3</div>
+            <div class="step-body">
+              <div class="step-title">P0.3 — Foundation check</div>
+              <div class="step-desc">F1 Budget authority · F2 Data access · F3 Sponsor candidate availability · F4 Scope boundary check</div>
+              <div class="nexus-note">↝ Nexus: surfaces red-flag if any foundation check fails</div>
+            </div>
+          </div>
+          <div class="activity-step">
+            <div class="step-num">4</div>
+            <div class="step-body">
+              <div class="step-title">P0.4 — Pattern match review</div>
+              <div class="step-desc">Nexus surfaces similar programs from the pattern catalog: archetype match, typical value range, known failure modes for this archetype.</div>
+            </div>
+          </div>
+          <div class="activity-step">
+            <div class="step-num">5</div>
+            <div class="step-body">
+              <div class="step-title">P0.5 — Review brief and submit for approval</div>
+              <div class="step-desc">User reviews the P0 brief on the canvas and clicks "Submit for P1 Charter." Approval creates Move in DB, transitions to P1.</div>
+            </div>
+          </div>
+          <div class="activity-step">
+            <div class="step-num">6</div>
+            <div class="step-body">
+              <div class="step-title">P0.6 — Gate &amp; Promote</div>
+              <div class="step-desc">P0 gate: brief_complete · sponsor_candidate_identified · foundation_checks_complete</div>
+              <div class="approval-block" style="margin-top:6px;">
+                <div class="approval-head">Gate Approval</div>
+                <div class="approval-row"><span class="who">Any authenticated user</span><span class="tier-pilot">PILOT</span></div>
+                <div class="approval-row"><span class="who">Admin / Maestro only</span><span class="tier-prod">PRODUCTION</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="phase-col">
+        <div class="col-head">Artifacts Created</div>
+        <div class="artifact-legend">
+          <div class="legend-item"><div class="artifact-icon hard" style="width:14px;height:14px;border-radius:3px;font-size:8px;">H</div> Hard gate artifact</div>
+          <div class="legend-item"><div class="artifact-icon auto" style="width:14px;height:14px;border-radius:3px;font-size:8px;">A</div> Agent-generated</div>
+        </div>
+        <div class="artifact-list">
+          <div class="artifact-item">
+            <div class="artifact-icon hard">H</div>
+            <div>
+              <div class="artifact-name">P0 Brief (origination_brief)</div>
+              <div class="artifact-src">problem_statement · classification · target_outcome · sponsor_candidate</div>
+            </div>
+          </div>
+          <div class="artifact-item">
+            <div class="artifact-icon hard">H</div>
+            <div>
+              <div class="artifact-name">Foundation Check Record (foundation_checks)</div>
+              <div class="artifact-src">F1–F4 pass/fail with notes</div>
+            </div>
+          </div>
+          <div class="artifact-item">
+            <div class="artifact-icon auto">A</div>
+            <div>
+              <div class="artifact-name">Pattern Match Summary</div>
+              <div class="artifact-src">Nexus-generated · archetype + similar program refs</div>
+            </div>
+          </div>
+          <div class="artifact-item">
+            <div class="artifact-icon auto">A</div>
+            <div>
+              <div class="artifact-name">Origination Draft (auto-save)</div>
+              <div class="artifact-src">program_origination_drafts.state JSONB</div>
+            </div>
+          </div>
+          <div class="artifact-item" style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border);">
+            <div>
+              <div class="artifact-name" style="font-weight:700;">Apex example:</div>
+              <div class="artifact-src">"Contact center agents spend 45% of handle time on routine queries (top-25 query types). AI-assisted routing + auto-resolution estimated to reduce AHT by 20–30%. Sponsor candidate: SVP Operations."</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="phase-col">
+        <div class="col-head">Gate Criteria &amp; Approvals</div>
+        <div class="gate-section">
+          <div class="gate-head">Hard criteria <span class="badge-hard">BLOCKS PROMOTE</span></div>
+          <div class="gate-criteria">
+            <div class="gate-crit"><div class="dot-hard"></div><span>brief_complete — all 7 scaffold sections filled</span></div>
+            <div class="gate-crit"><div class="dot-hard"></div><span>sponsor_candidate_identified — named person in substrate</span></div>
+            <div class="gate-crit"><div class="dot-hard"></div><span>foundation_checks_complete — F1–F4 all reviewed</span></div>
+          </div>
+        </div>
+        <div class="gate-section">
+          <div class="gate-head">Soft criteria <span class="badge-soft">WARNING IF MISSING</span></div>
+          <div class="gate-criteria">
+            <div class="gate-crit"><div class="dot-soft"></div><span>pattern_match_reviewed</span></div>
+            <div class="gate-crit"><div class="dot-soft"></div><span>classification_confirmed</span></div>
+          </div>
+        </div>
+        <div class="approval-block">
+          <div class="approval-head">Audit log entry on promote</div>
+          <div class="approval-row"><span>action</span><span style="font-family:var(--mono);font-size:10px;">move_originated</span></div>
+          <div class="approval-row"><span>from_state</span><span style="font-family:var(--mono);font-size:10px;">draft</span></div>
+          <div class="approval-row"><span>to_state</span><span style="font-family:var(--mono);font-size:10px;">P0 → P1</span></div>
+          <div class="approval-row"><span>actor_role</span><span style="font-family:var(--mono);font-size:10px;">any (pilot) / admin (prod)</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- connector P0→P1 -->
+  <div class="phase-connector">
+    <div class="connector-line"></div>
+    <div class="connector-label">
+      <span class="arrow">✓</span> P0 gate passed → Move created in DB · current_phase = 1 · Workspace page opens
+    </div>
+  </div>
+
+  <!-- P1 ─────────────────────────────────────────── -->
+  <div class="phase-card">
+    <div class="phase-header">
+      <div class="phase-badge p1">P1</div>
+      <div class="phase-title-block">
+        <div class="phase-name">P1 · Charter</div>
+        <div class="phase-mission">Convert the P0 hypothesis into a sponsor-committed charter with a locked value range</div>
+      </div>
+    </div>
+    <div class="phase-meta-row">
+      <div class="meta-pill"><span class="label">Entry:</span> <strong>P0 gate passed · Move in DB</strong></div>
+      <div class="meta-pill"><span class="label">Surface:</span> <strong>/strategic-moves/[moveId]?phase=1</strong></div>
+      <div class="meta-pill"><span class="label">Duration:</span> <strong>~2 weeks</strong></div>
+      <div class="meta-pill"><span class="label">Gate out to:</span> <strong>P2 Discover &amp; Diagnose</strong></div>
+    </div>
+    <div class="phase-body">
+      <div class="phase-col">
+        <div class="col-head">Activities &amp; Workflow Steps</div>
+        <div class="activity-list">
+          <div class="activity-step">
+            <div class="step-num">1</div>
+            <div class="step-body">
+              <div class="step-title">P1.1 — Sponsor kickoff</div>
+              <div class="step-desc">Named sponsor reviews P0 brief and confirms commitment. Nexus captures confirmation and records in substrate.</div>
+              <div class="nexus-note">↝ Nexus: cannot name sponsor without ACL evidence (AH rule)</div>
+            </div>
+          </div>
+          <div class="activity-step">
+            <div class="step-num">2</div>
+            <div class="step-body">
+              <div class="step-title">P1.2 — Hypothesis testing</div>
+              <div class="step-desc">Test the P0 problem hypothesis against available data. Validate that the problem is real, in-scope, and addressable by this organization.</div>
+            </div>
+          </div>
+          <div class="activity-step">
+            <div class="step-num">3</div>
+            <div class="step-body">
+              <div class="step-title">P1.3 — Value range definition</div>
+              <div class="step-desc">Define low/high value estimate with assumptions documented. Nexus generates ROM from archetype benchmarks; sponsor refines.</div>
+              <div class="nexus-note">↝ Nexus: every value claim cites source (R1 evidence rule)</div>
+            </div>
+          </div>
+          <div class="activity-step">
+            <div class="step-num">4</div>
+            <div class="step-body">
+              <div class="step-title">P1.4 — Stakeholder map</div>
+              <div class="step-desc">Identify program stakeholders: executive sponsor, steering committee, SMEs, affected teams. Capture roles in substrate.</div>
+            </div>
+          </div>
+          <div class="activity-step">
+            <div class="step-num">5</div>
+            <div class="step-body">
+              <div class="step-title">P1.5 — Charter gate &amp; promote</div>
+              <div class="step-desc">Sponsor signs off on charter. All hard criteria met. Team promotes to P2.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="phase-col">
+        <div class="col-head">Artifacts Created</div>
+        <div class="artifact-list">
+          <div class="artifact-item">
+            <div class="artifact-icon hard">H</div>
+            <div>
+              <div class="artifact-name">Program Charter (program_charter)</div>
+              <div class="artifact-src">Sponsor-signed · hypothesis · value range · scope boundary</div>
+            </div>
+          </div>
+          <div class="artifact-item">
+            <div class="artifact-icon hard">H</div>
+            <div>
+              <div class="artifact-name">Sponsor Commitment Record</div>
+              <div class="artifact-src">engagement_participants role=sponsor · confirmed_at timestamp</div>
+            </div>
+          </div>
+          <div class="artifact-item">
+            <div class="artifact-icon hard">H</div>
+            <div>
+              <div class="artifact-name">Value Range Definition (FIN-BASE-P1)</div>
+              <div class="artifact-src">value_projected_low_usd · value_projected_high_usd · assumptions_jsonb</div>
+            </div>
+          </div>
+          <div class="artifact-item">
+            <div class="artifact-icon auto">A</div>
+            <div>
+              <div class="artifact-name">Stakeholder Map</div>
+              <div class="artifact-src">engagement_participants rows with roles</div>
+            </div>
+          </div>
+          <div class="artifact-item" style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border);">
+            <div>
+              <div class="artifact-name" style="font-weight:700;">Apex example:</div>
+              <div class="artifact-src">Charter signed by SVP Operations. Value range: $1.8M–$2.6M annual savings on 1,200-agent base, 3-year horizon. Scope: top-25 query types (73% of volume). Stakeholders: CX Analytics team, IT/data engineering, change management lead.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="phase-col">
+        <div class="col-head">Gate Criteria &amp; Approvals</div>
+        <div class="gate-section">
+          <div class="gate-head">Hard criteria <span class="badge-hard">BLOCKS PROMOTE</span></div>
+          <div class="gate-criteria">
+            <div class="gate-crit"><div class="dot-hard"></div><span>sponsor_commitment_confirmed</span></div>
+            <div class="gate-crit"><div class="dot-hard"></div><span>hypothesis_validated</span></div>
+            <div class="gate-crit"><div class="dot-hard"></div><span>value_range_defined</span></div>
+            <div class="gate-crit"><div class="dot-hard"></div><span>scope_boundary_confirmed</span></div>
+          </div>
+        </div>
+        <div class="gate-section">
+          <div class="gate-head">Soft criteria <span class="badge-soft">WARNING IF MISSING</span></div>
+          <div class="gate-criteria">
+            <div class="gate-crit"><div class="dot-soft"></div><span>stakeholder_map_complete</span></div>
+            <div class="gate-crit"><div class="dot-soft"></div><span>data_access_confirmed</span></div>
+          </div>
+        </div>
+        <div class="approval-block">
+          <div class="approval-head">Audit log on promote</div>
+          <div class="approval-row"><span>action</span><span style="font-family:var(--mono);font-size:10px;">move_promoted_p0_to_p1</span></div>
+          <div class="approval-row"><span>actor</span><span style="font-family:var(--mono);font-size:10px;">user (pilot self-approval)</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- connector P1→P2 -->
+  <div class="phase-connector">
+    <div class="connector-line"></div>
+    <div class="connector-label">
+      <span class="arrow">✓</span> P1 gate passed → charter locked · current_phase = 2 · Evidence collection begins
+    </div>
+  </div>
+
+  <!-- P2 ─────────────────────────────────────────── -->
+  <div class="phase-card">
+    <div class="phase-header">
+      <div class="phase-badge p2">P2</div>
+      <div class="phase-title-block">
+        <div class="phase-name">P2 · Discover &amp; Diagnose</div>
+        <div class="phase-mission">Lock the current-state baseline with auditable evidence and produce a ranked root cause analysis</div>
+      </div>
+    </div>
+    <div class="phase-meta-row">
+      <div class="meta-pill"><span class="label">Entry:</span> <strong>P1 charter signed · sponsor confirmed</strong></div>
+      <div class="meta-pill"><span class="label">Surface:</span> <strong>/strategic-moves/[moveId]?phase=2</strong></div>
+      <div class="meta-pill"><span class="label">Duration:</span> <strong>~4 weeks</strong></div>
+      <div class="meta-pill"><span class="label">Gate out to:</span> <strong>P3 Design OR Discontinue</strong></div>
+    </div>
+    <div class="phase-body">
+      <div class="phase-col">
+        <div class="col-head">Activities &amp; Workflow Steps</div>
+        <div class="activity-list">
+          <div class="activity-step">
+            <div class="step-num">1</div>
+            <div class="step-body">
+              <div class="step-title">P2.1 — Current state baseline</div>
+              <div class="step-desc">Collect and upload baseline data: AHT by queue type, FCR, volume by query category, agent utilization. Nexus structures and cites each metric.</div>
+              <div class="nexus-note">↝ Nexus: records FIN-BASE-P2 with source citations required</div>
+            </div>
+          </div>
+          <div class="activity-step">
+            <div class="step-num">2</div>
+            <div class="step-body">
+              <div class="step-title">P2.2 — Root cause analysis</div>
+              <div class="step-desc">Structured analysis of WHY the baseline is where it is. Nexus surfaces ≥2 ranked root causes from evidence collected.</div>
+            </div>
+          </div>
+          <div class="activity-step">
+            <div class="step-num">3</div>
+            <div class="step-body">
+              <div class="step-title">P2.3 — Stakeholder interviews &amp; synthesis</div>
+              <div class="step-desc">Interview agents, supervisors, and IT leads. Nexus synthesizes patterns across sessions into a discovery report.</div>
+              <div class="nexus-note">↝ Nexus: synthesize capability from cross-phase pack</div>
+            </div>
+          </div>
+          <div class="activity-step">
+            <div class="step-num">4</div>
+            <div class="step-body">
+              <div class="step-title">P2.4 — Discovery report &amp; gate</div>
+              <div class="step-desc">Publish the P2 discovery report. Gate verdict: CONTINUE_TO_P3 or DISCONTINUE.</div>
+              <div class="authority-note">⚠ Nexus authority: can recommend DISCONTINUE if evidence doesn't support hypothesis</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="phase-col">
+        <div class="col-head">Artifacts Created</div>
+        <div class="artifact-list">
+          <div class="artifact-item">
+            <div class="artifact-icon hard">H</div>
+            <div>
+              <div class="artifact-name">Baseline Metrics (FIN-BASE-P2)</div>
+              <div class="artifact-src">AHT · FCR · volume distribution · utilization · source citations</div>
+            </div>
+          </div>
+          <div class="artifact-item">
+            <div class="artifact-icon hard">H</div>
+            <div>
+              <div class="artifact-name">Root Cause Analysis (RCA-P2)</div>
+              <div class="artifact-src">≥2 ranked root causes · evidence chain · confidence level</div>
+            </div>
+          </div>
+          <div class="artifact-item">
+            <div class="artifact-icon hard">H</div>
+            <div>
+              <div class="artifact-name">P2 Discovery Report</div>
+              <div class="artifact-src">Synthesized findings · gap analysis · recommendation</div>
+            </div>
+          </div>
+          <div class="artifact-item">
+            <div class="artifact-icon hard">H</div>
+            <div>
+              <div class="artifact-name">P2 Gate Verdict (CONTINUE_TO_P3)</div>
+              <div class="artifact-src">Must exist with verdict before promote is enabled</div>
+            </div>
+          </div>
+          <div class="artifact-item" style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border);">
+            <div>
+              <div class="artifact-name" style="font-weight:700;">Apex example:</div>
+              <div class="artifact-src">Baseline: AHT = 8.2 min (top-25 queries = 6.1 min avg, complex queries = 12.4 min). FCR = 61%. Root cause 1: agents lack real-time knowledge (no integrated KB). Root cause 2: routing logic sends 40% of AI-resolvable queries to agents. Verdict: CONTINUE_TO_P3.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="phase-col">
+        <div class="col-head">Gate Criteria &amp; Approvals</div>
+        <div class="gate-section">
+          <div class="gate-head">Hard criteria <span class="badge-hard">BLOCKS PROMOTE</span></div>
+          <div class="gate-criteria">
+            <div class="gate-crit"><div class="dot-hard"></div><span>baseline_metrics_locked (FIN-BASE-P2)</span></div>
+            <div class="gate-crit"><div class="dot-hard"></div><span>root_cause_analysis_complete (RCA-P2)</span></div>
+            <div class="gate-crit"><div class="dot-hard"></div><span>discovery_report_published</span></div>
+            <div class="gate-crit"><div class="dot-hard"></div><span>gate_verdict_recorded (CONTINUE or DISCONTINUE)</span></div>
+          </div>
+        </div>
+        <div class="gate-section">
+          <div class="gate-head">Soft criteria <span class="badge-soft">WARNING IF MISSING</span></div>
+          <div class="gate-criteria">
+            <div class="gate-crit"><div class="dot-soft"></div><span>sponsor_review_confirmed</span></div>
+            <div class="gate-crit"><div class="dot-soft"></div><span>data_quality_assessed</span></div>
+          </div>
+        </div>
+        <div class="discontinue-callout">
+          <strong>Discontinue authority (P2 only)</strong>
+          If evidence doesn't support the P0 hypothesis, Nexus must recommend discontinuation directly — not hedged. User can override; Nexus records the override.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- connector P2→P3 -->
+  <div class="phase-connector">
+    <div class="connector-line"></div>
+    <div class="connector-label">
+      <span class="arrow">✓</span> CONTINUE_TO_P3 verdict · baseline locked · RCA confirmed → current_phase = 3
+    </div>
+  </div>
+
+  <!-- P3 ─────────────────────────────────────────── -->
+  <div class="phase-card">
+    <div class="phase-header">
+      <div class="phase-badge p3">P3</div>
+      <div class="phase-title-block">
+        <div class="phase-name">P3 · Design Future State</div>
+        <div class="phase-mission">Convert the P2 diagnosis into a signed decision: architecture, operating model, target capability</div>
+      </div>
+    </div>
+    <div class="phase-meta-row">
+      <div class="meta-pill"><span class="label">Entry:</span> <strong>P3 gate · CONTINUE_TO_P3 verdict · signed RCA</strong></div>
+      <div class="meta-pill"><span class="label">Duration:</span> <strong>~3 weeks</strong></div>
+      <div class="meta-pill"><span class="label">Gate out to:</span> <strong>P4 Roadmap &amp; Business Case</strong></div>
+    </div>
+    <div class="phase-body">
+      <div class="phase-col">
+        <div class="col-head">Activities &amp; Workflow Steps</div>
+        <div class="activity-list">
+          <div class="activity-step">
+            <div class="step-num">1</div>
+            <div class="step-body">
+              <div class="step-title">P3.1 — Root cause → design traceability</div>
+              <div class="step-desc">For each RCA root cause, document the design element that addresses it. Every design decision must trace to a root cause.</div>
+              <div class="nexus-note">↝ Nexus: R6 — rejects tool proposals without operating model first</div>
+            </div>
+          </div>
+          <div class="activity-step">
+            <div class="step-num">2</div>
+            <div class="step-body">
+              <div class="step-title">P3.2 — Operating model design</div>
+              <div class="step-desc">Define who does what differently: roles, responsibilities, workflows, handoffs. The AI capability must be named AFTER the workflow change.</div>
+              <div class="authority-note">⚠ R6: "We'll use [Tool]" without workflow design → rejected</div>
+            </div>
+          </div>
+          <div class="activity-step">
+            <div class="step-num">3</div>
+            <div class="step-body">
+              <div class="step-title">P3.3 — Solution architecture</div>
+              <div class="step-desc">Given the operating model, what technology and AI capabilities enable it. Vendor shortlist only after workflow is defined.</div>
+            </div>
+          </div>
+          <div class="activity-step">
+            <div class="step-num">4</div>
+            <div class="step-body">
+              <div class="step-title">P3.4 — Design sign-off</div>
+              <div class="step-desc">Sponsor reviews and signs. P3 design record created. Gate evaluated.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="phase-col">
+        <div class="col-head">Artifacts Created</div>
+        <div class="artifact-list">
+          <div class="artifact-item">
+            <div class="artifact-icon hard">H</div>
+            <div>
+              <div class="artifact-name">Design Traceability Record (DESIGN-TRACE-P3)</div>
+              <div class="artifact-src">RCA root cause → design element mapping</div>
+            </div>
+          </div>
+          <div class="artifact-item">
+            <div class="artifact-icon hard">H</div>
+            <div>
+              <div class="artifact-name">Operating Model Design</div>
+              <div class="artifact-src">Who does what differently · workflow delta · handoff points</div>
+            </div>
+          </div>
+          <div class="artifact-item">
+            <div class="artifact-icon hard">H</div>
+            <div>
+              <div class="artifact-name">Solution Architecture Record</div>
+              <div class="artifact-src">Technology stack · integration points · AI capability spec</div>
+            </div>
+          </div>
+          <div class="artifact-item">
+            <div class="artifact-icon hard">H</div>
+            <div>
+              <div class="artifact-name">Signed P3 Design Decision (P3_DESIGN_SIGNED)</div>
+              <div class="artifact-src">Sponsor sign-off required to unblock P4</div>
+            </div>
+          </div>
+          <div class="artifact-item" style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border);">
+            <div>
+              <div class="artifact-name" style="font-weight:700;">Apex example:</div>
+              <div class="artifact-src">RC1 (no KB) → AI-powered KB surfacing in agent desktop. RC2 (routing) → AI auto-resolution for top-25 query types before agent routing. Operating model: agents shift from answering to confirming; KB authors shift to curating. Technology: conversational AI + routing engine integration.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="phase-col">
+        <div class="col-head">Gate Criteria &amp; Approvals</div>
+        <div class="gate-section">
+          <div class="gate-head">Hard criteria <span class="badge-hard">BLOCKS PROMOTE</span></div>
+          <div class="gate-criteria">
+            <div class="gate-crit"><div class="dot-hard"></div><span>design_traceability_complete</span></div>
+            <div class="gate-crit"><div class="dot-hard"></div><span>operating_model_designed</span></div>
+            <div class="gate-crit"><div class="dot-hard"></div><span>solution_architecture_defined</span></div>
+            <div class="gate-crit"><div class="dot-hard"></div><span>design_sponsor_signoff</span></div>
+          </div>
+        </div>
+        <div class="gate-section">
+          <div class="gate-head">Soft criteria <span class="badge-soft">WARNING IF MISSING</span></div>
+          <div class="gate-criteria">
+            <div class="gate-crit"><div class="dot-soft"></div><span>vendor_shortlist_reviewed</span></div>
+            <div class="gate-crit"><div class="dot-soft"></div><span>change_impact_assessed</span></div>
+          </div>
+        </div>
+        <div class="approval-block">
+          <div class="approval-head">Audit log on promote</div>
+          <div class="approval-row"><span>action</span><span style="font-family:var(--mono);font-size:10px;">move_promoted_p2_to_p3</span></div>
+          <div class="approval-row"><span>requires</span><span style="font-family:var(--mono);font-size:10px;">P3_DESIGN_SIGNED artifact</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- connector P3→P4 -->
+  <div class="phase-connector">
+    <div class="connector-line"></div>
+    <div class="connector-label">
+      <span class="arrow">✓</span> Signed P3 design · sponsor confirmed → current_phase = 4 · Execution planning begins
+    </div>
+  </div>
+
+  <!-- P4 ─────────────────────────────────────────── -->
+  <div class="phase-card">
+    <div class="phase-header">
+      <div class="phase-badge p4">P4</div>
+      <div class="phase-title-block">
+        <div class="phase-name">P4 · Roadmap &amp; Business Case</div>
+        <div class="phase-mission">Convert the P3 design into an executable plan with full economics — and lock the Tower metric plan before handoff</div>
+      </div>
+    </div>
+    <div class="phase-meta-row">
+      <div class="meta-pill"><span class="label">Entry:</span> <strong>P3 gate · CONTINUE_TO_P4 · signed P3 design · locked P2 baseline</strong></div>
+      <div class="meta-pill"><span class="label">Duration:</span> <strong>~4 weeks</strong></div>
+      <div class="meta-pill"><span class="label">Gate out to:</span> <strong>P5 Mobilize &amp; Handoff</strong></div>
+    </div>
+    <div class="phase-body">
+      <div class="phase-col">
+        <div class="col-head">Activities &amp; Workflow Steps</div>
+        <div class="activity-list">
+          <div class="activity-step">
+            <div class="step-num">1</div>
+            <div class="step-body">
+              <div class="step-title">P4.1 — Roadmap construction</div>
+              <div class="step-desc">For each P3 design element: workstream, responsible owner, estimated effort, dependencies, milestones, RACI.</div>
+              <div class="nexus-note">↝ Nexus: no timeline without resource plan (AH rule)</div>
+            </div>
+          </div>
+          <div class="activity-step">
+            <div class="step-num">2</div>
+            <div class="step-body">
+              <div class="step-title">P4.2 — Business case economics</div>
+              <div class="step-desc">Cost model (ROM from archetype benchmarks, user-refined). Value plan against P2 baseline. NPV/IRR where required. Change readiness plan.</div>
+              <div class="nexus-note">↝ Nexus: ROM estimate labeled as ROM; every assumption listed</div>
+            </div>
+          </div>
+          <div class="activity-step">
+            <div class="step-num">3</div>
+            <div class="step-body">
+              <div class="step-title">P4.3 — Tower metric plan (proactive, mid-P4)</div>
+              <div class="step-desc">For each value lever from P2+P3: measurable signal, data source, baseline, target, timeline. Atlas agent metric plan locked here — not at gate.</div>
+              <div class="authority-note">⚠ P4 authority: Nexus proactively surfaces Tower metric plan mid-P4, not at gate</div>
+            </div>
+          </div>
+          <div class="activity-step">
+            <div class="step-num">4</div>
+            <div class="step-body">
+              <div class="step-title">P4.4 — Gate review &amp; funding approval</div>
+              <div class="step-desc">5 hard + 6 soft gate criteria. Sponsor signs business case. Funding approval recorded. RACI, vendor, and Tower metric plan all locked.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="phase-col">
+        <div class="col-head">Artifacts Created</div>
+        <div class="artifact-list">
+          <div class="artifact-item">
+            <div class="artifact-icon hard">H</div>
+            <div>
+              <div class="artifact-name">Execution Roadmap</div>
+              <div class="artifact-src">Workstreams · milestones · timeline · dependencies · RACI · risks</div>
+            </div>
+          </div>
+          <div class="artifact-item">
+            <div class="artifact-icon hard">H</div>
+            <div>
+              <div class="artifact-name">Business Case (sponsor-approved)</div>
+              <div class="artifact-src">Cost model · value plan · NPV · assumptions · sponsor sign-off</div>
+            </div>
+          </div>
+          <div class="artifact-icon hard" style="display:flex;gap:8px;align-items:flex-start;">
+            <div style="width:20px;height:20px;border-radius:4px;background:var(--green-bg);color:var(--green);display:flex;align-items:center;justify-content:center;font-size:10px;flex-shrink:0;margin-top:1px;">H</div>
+            <div>
+              <div class="artifact-name">Execution Milestones</div>
+              <div class="artifact-src">program_milestones rows · per-milestone owner · date · success criteria</div>
+            </div>
+          </div>
+          <div class="artifact-item" style="margin-top:4px;">
+            <div class="artifact-icon hard">H</div>
+            <div>
+              <div class="artifact-name">Tower Metric Plan</div>
+              <div class="artifact-src">Signal · data source · baseline · target · Atlas handoff spec</div>
+            </div>
+          </div>
+          <div class="artifact-item">
+            <div class="artifact-icon hard">H</div>
+            <div>
+              <div class="artifact-name">Change Readiness Plan</div>
+              <div class="artifact-src">Org impact · change management approach · readiness checklist</div>
+            </div>
+          </div>
+          <div class="artifact-item" style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border);">
+            <div>
+              <div class="artifact-name" style="font-weight:700;">Apex example:</div>
+              <div class="artifact-src">Roadmap: 3 workstreams (AI routing, KB integration, agent training) · 14 milestones · 22 weeks. Business case: $420K implementation cost · $2.1M NPV (3yr) · 18-month payback. Tower metrics: AHT reduction (target 6.5 min from 8.2 min baseline), FCR (target 72% from 61%), AI containment rate (target 35%).</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="phase-col">
+        <div class="col-head">Gate Criteria &amp; Approvals</div>
+        <div class="gate-section">
+          <div class="gate-head">Hard criteria <span class="badge-hard">BLOCKS PROMOTE</span></div>
+          <div class="gate-criteria">
+            <div class="gate-crit"><div class="dot-hard"></div><span>execution_roadmap_drafted</span></div>
+            <div class="gate-crit"><div class="dot-hard"></div><span>business_case_approved</span></div>
+            <div class="gate-crit"><div class="dot-hard"></div><span>execution_milestones_defined</span></div>
+            <div class="gate-crit"><div class="dot-hard"></div><span>execution_success_criteria_defined</span></div>
+            <div class="gate-crit"><div class="dot-hard"></div><span>readiness_and_change_plan_signed_off</span></div>
+          </div>
+        </div>
+        <div class="gate-section">
+          <div class="gate-head">Soft criteria <span class="badge-soft">WARNING IF MISSING</span></div>
+          <div class="gate-criteria">
+            <div class="gate-crit"><div class="dot-soft"></div><span>funding_approval_recorded</span></div>
+            <div class="gate-crit"><div class="dot-soft"></div><span>sponsor_alignment_confirmed</span></div>
+            <div class="gate-crit"><div class="dot-soft"></div><span>delivery_raci_named</span></div>
+            <div class="gate-crit"><div class="dot-soft"></div><span>vendor_selection_approved</span></div>
+            <div class="gate-crit"><div class="dot-soft"></div><span>tower_metric_plan_drafted ← proactive mid-P4</span></div>
+            <div class="gate-crit"><div class="dot-soft"></div><span>tower_handoff_plan_accepted</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- connector P4→P5 -->
+  <div class="phase-connector">
+    <div class="connector-line"></div>
+    <div class="connector-label">
+      <span class="arrow">✓</span> Business case approved · Tower metric plan locked → current_phase = 5 · Mobilization begins
+    </div>
+  </div>
+
+  <!-- P5 ─────────────────────────────────────────── -->
+  <div class="phase-card">
+    <div class="phase-header">
+      <div class="phase-badge p5">P5</div>
+      <div class="phase-title-block">
+        <div class="phase-name">P5 · Mobilize &amp; Handoff</div>
+        <div class="phase-mission">Prepare the delivery team and hand off to Tower — explicit named acceptance required, not passive acknowledgment</div>
+      </div>
+    </div>
+    <div class="phase-meta-row">
+      <div class="meta-pill"><span class="label">Entry:</span> <strong>P4 gate · approved business case · locked Tower metric plan</strong></div>
+      <div class="meta-pill"><span class="label">Duration:</span> <strong>~4 weeks</strong></div>
+      <div class="meta-pill"><span class="label">Gate out to:</span> <strong>Tower (status = handed_off)</strong></div>
+    </div>
+    <div class="phase-body">
+      <div class="phase-col">
+        <div class="col-head">Activities &amp; Workflow Steps</div>
+        <div class="activity-list">
+          <div class="activity-step">
+            <div class="step-num">1</div>
+            <div class="step-body">
+              <div class="step-title">P5.1 — Team assembly &amp; RACI confirmation</div>
+              <div class="step-desc">Confirm delivery team is in place. Every workstream from P4 roadmap has a named lead. RACI finalized.</div>
+              <div class="nexus-note">↝ Nexus: verify named owner per workstream before marking ready</div>
+            </div>
+          </div>
+          <div class="activity-step">
+            <div class="step-num">2</div>
+            <div class="step-body">
+              <div class="step-title">P5.2 — Handoff package assembly</div>
+              <div class="step-desc">Package: P0 brief + P1 charter + P2 baseline + P3 design + P4 roadmap + Tower metric plan. Nexus assembles and formats for Tower/Atlas consumption.</div>
+              <div class="tower-note">↝ Tower: Atlas agent receives this package at handoff</div>
+            </div>
+          </div>
+          <div class="activity-step">
+            <div class="step-num">3</div>
+            <div class="step-body">
+              <div class="step-title">P5.3 — Readiness verification</div>
+              <div class="step-desc">Verify data access, tooling, environments, and change management readiness. No open blockers.</div>
+            </div>
+          </div>
+          <div class="activity-step">
+            <div class="step-num">4</div>
+            <div class="step-body">
+              <div class="step-title">P5.4 — Explicit Tower acceptance</div>
+              <div class="step-desc">Named delivery owner explicitly confirms in writing that they've reviewed the handoff pack and accept it as executable. "Noted" or "present in room" does not count.</div>
+              <div class="authority-note">⚠ R7: explicit named acceptance required — passive acknowledgment is not acceptance</div>
+            </div>
+          </div>
+          <div class="activity-step">
+            <div class="step-num">5</div>
+            <div class="step-body">
+              <div class="step-title">P5.5 — Gate-out &amp; handoff</div>
+              <div class="step-desc">All gate criteria met. Status set to handed_off. Move transitions to Tower. Atlas agent activated with metric plan.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="phase-col">
+        <div class="col-head">Artifacts Created</div>
+        <div class="artifact-list">
+          <div class="artifact-item">
+            <div class="artifact-icon hard">H</div>
+            <div>
+              <div class="artifact-name">Handoff Package</div>
+              <div class="artifact-src">All phase artifacts bundled · Atlas-formatted · signed</div>
+            </div>
+          </div>
+          <div class="artifact-item">
+            <div class="artifact-icon hard">H</div>
+            <div>
+              <div class="artifact-name">Delivery Team Confirmation</div>
+              <div class="artifact-src">Named owners per workstream · acceptance confirmed</div>
+            </div>
+          </div>
+          <div class="artifact-item">
+            <div class="artifact-icon hard">H</div>
+            <div>
+              <div class="artifact-name">Tower Acceptance Record</div>
+              <div class="artifact-src">Named individual · role · confirmed_at · stated acceptance</div>
+            </div>
+          </div>
+          <div class="artifact-item">
+            <div class="artifact-icon hard">H</div>
+            <div>
+              <div class="artifact-name">Readiness Checklist (signed)</div>
+              <div class="artifact-src">Data · tooling · environments · change management</div>
+            </div>
+          </div>
+          <div class="artifact-item" style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border);">
+            <div>
+              <div class="artifact-name" style="font-weight:700;">Apex example:</div>
+              <div class="artifact-src">Delivery team: 2 AI engineers, 1 data analyst, 1 CC operations lead, 1 change manager. Tower acceptance: "VP IT Operations confirms receipt and acceptance of handoff package on 2026-07-12. Program is executable as specified." Atlas activated with AHT, FCR, and containment rate tracking.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="phase-col">
+        <div class="col-head">Gate Criteria &amp; Approvals</div>
+        <div class="gate-section">
+          <div class="gate-head">Hard criteria <span class="badge-hard">BLOCKS HANDOFF</span></div>
+          <div class="gate-criteria">
+            <div class="gate-crit"><div class="dot-hard"></div><span>delivery_team_assembled</span></div>
+            <div class="gate-crit"><div class="dot-hard"></div><span>handoff_package_complete</span></div>
+            <div class="gate-crit"><div class="dot-hard"></div><span>readiness_checklist_signed</span></div>
+            <div class="gate-crit"><div class="dot-hard"></div><span>tower_acceptance_confirmed (named + explicit)</span></div>
+          </div>
+        </div>
+        <div class="gate-section">
+          <div class="gate-head">Soft criteria <span class="badge-soft">WARNING IF MISSING</span></div>
+          <div class="gate-criteria">
+            <div class="gate-crit"><div class="dot-soft"></div><span>sponsor_farewell_recorded</span></div>
+            <div class="gate-crit"><div class="dot-soft"></div><span>lessons_learned_captured</span></div>
+            <div class="gate-crit"><div class="dot-soft"></div><span>risk_register_handed_off</span></div>
+          </div>
+        </div>
+        <div class="approval-block">
+          <div class="approval-head">Audit log on handoff</div>
+          <div class="approval-row"><span>action</span><span style="font-family:var(--mono);font-size:10px;">move_promoted_p4_to_p5</span></div>
+          <div class="approval-row"><span>then</span><span style="font-family:var(--mono);font-size:10px;">status = handed_off</span></div>
+          <div class="approval-row"><span>tower_receiver</span><span style="font-family:var(--mono);font-size:10px;">named + explicit</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ─── Tower handoff banner ─────────────────────── -->
+<div class="tower-banner">
+  <div>
+    <div class="t-label">Handoff complete</div>
+    <div class="t-title">→ Tower</div>
+    <div class="t-desc">Move status = <code style="font-family:var(--mono);font-size:12px;background:rgba(255,255,255,0.1);padding:1px 5px;border-radius:3px;">handed_off</code></div>
+  </div>
+  <div class="t-divider"></div>
+  <div>
+    <div class="t-label">What Tower / Atlas receives</div>
+    <div class="handoff-items">
+      <div class="handoff-item">Full 5-phase artifact package (P0 brief through P4 roadmap)</div>
+      <div class="handoff-item">Tower metric plan: AHT · FCR · AI containment rate with baselines and targets</div>
+      <div class="handoff-item">Execution roadmap with milestone dates and RACI</div>
+      <div class="handoff-item">Named delivery team with workstream ownership</div>
+      <div class="handoff-item">Audit trail: every promote action, gate verdict, and approver role</div>
+    </div>
+  </div>
+  <div class="t-divider"></div>
+  <div>
+    <div class="t-label">Apex outcome</div>
+    <div style="font-size:13px;color:rgba(255,255,255,0.75);">
+      Atlas tracks AHT, FCR, and containment rate from Day 1. Any deviation from trajectory triggers an alert back to the program sponsor via Strategic Moves.
+    </div>
+  </div>
+</div>
+
+<!-- ─── Appendix: full artifact lineage ─────────── -->
+<div class="appendix">
+  <div class="appendix-head">Appendix A · Complete Artifact Lineage</div>
+  <div class="appendix-sub">Every artifact produced across all 6 phases, its type, and what it unlocks.</div>
+  <table class="lineage-table">
+    <thead>
+      <tr>
+        <th>Phase</th>
+        <th>Artifact</th>
+        <th>Type</th>
+        <th>DB location</th>
+        <th>Unlocks / Required by</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><span class="phase-tag p0">P0</span></td>
+        <td>P0 Brief (origination_brief)</td>
+        <td><span class="type-tag hard">Hard gate</span></td>
+        <td>program_origination_drafts.state</td>
+        <td>P0 gate · P1 entry</td>
+      </tr>
+      <tr>
+        <td><span class="phase-tag p0">P0</span></td>
+        <td>Foundation Check Record</td>
+        <td><span class="type-tag hard">Hard gate</span></td>
+        <td>program_deliverables (type=foundation_checks)</td>
+        <td>P0 gate</td>
+      </tr>
+      <tr>
+        <td><span class="phase-tag p0">P0</span></td>
+        <td>Pattern Match Summary</td>
+        <td><span class="type-tag agent">Agent-generated</span></td>
+        <td>program_deliverables (type=pattern_match)</td>
+        <td>P1 hypothesis testing</td>
+      </tr>
+      <tr>
+        <td><span class="phase-tag p1">P1</span></td>
+        <td>Program Charter</td>
+        <td><span class="type-tag hard">Hard gate</span></td>
+        <td>program_deliverables (type=program_charter)</td>
+        <td>P1 gate · P2 entry · P4 business case reference</td>
+      </tr>
+      <tr>
+        <td><span class="phase-tag p1">P1</span></td>
+        <td>Sponsor Commitment Record</td>
+        <td><span class="type-tag hard">Hard gate</span></td>
+        <td>engagement_participants (role=sponsor, confirmed_at)</td>
+        <td>P1 gate · all subsequent gate approvals</td>
+      </tr>
+      <tr>
+        <td><span class="phase-tag p1">P1</span></td>
+        <td>Value Range Definition (FIN-BASE-P1)</td>
+        <td><span class="type-tag hard">Hard gate</span></td>
+        <td>engagements.value_projected_low/high_usd</td>
+        <td>P1 gate · P4 business case carryover</td>
+      </tr>
+      <tr>
+        <td><span class="phase-tag p2">P2</span></td>
+        <td>Baseline Metrics (FIN-BASE-P2)</td>
+        <td><span class="type-tag hard">Hard gate</span></td>
+        <td>program_deliverables (type=baseline_metrics)</td>
+        <td>P2 gate · P3 design traceability · P4 business case</td>
+      </tr>
+      <tr>
+        <td><span class="phase-tag p2">P2</span></td>
+        <td>Root Cause Analysis (RCA-P2)</td>
+        <td><span class="type-tag hard">Hard gate</span></td>
+        <td>program_deliverables (type=root_cause_analysis)</td>
+        <td>P2 gate · P3.1 traceability (hard dependency)</td>
+      </tr>
+      <tr>
+        <td><span class="phase-tag p2">P2</span></td>
+        <td>P2 Discovery Report</td>
+        <td><span class="type-tag hard">Hard gate</span></td>
+        <td>program_deliverables (type=discovery_report)</td>
+        <td>P2 gate · P3 context</td>
+      </tr>
+      <tr>
+        <td><span class="phase-tag p2">P2</span></td>
+        <td>P2 Gate Verdict (CONTINUE or DISCONTINUE)</td>
+        <td><span class="type-tag hard">Hard gate</span></td>
+        <td>program_audit_log (action=gate_verdict_p2)</td>
+        <td>P2 promote · P3 entry gating</td>
+      </tr>
+      <tr>
+        <td><span class="phase-tag p3">P3</span></td>
+        <td>Design Traceability Record</td>
+        <td><span class="type-tag hard">Hard gate</span></td>
+        <td>program_deliverables (type=design_traceability)</td>
+        <td>P3 gate · P4 roadmap workstream basis</td>
+      </tr>
+      <tr>
+        <td><span class="phase-tag p3">P3</span></td>
+        <td>Operating Model Design</td>
+        <td><span class="type-tag hard">Hard gate</span></td>
+        <td>program_deliverables (type=operating_model)</td>
+        <td>P3 gate · P4 RACI definition</td>
+      </tr>
+      <tr>
+        <td><span class="phase-tag p3">P3</span></td>
+        <td>Signed P3 Design Decision (P3_DESIGN_SIGNED)</td>
+        <td><span class="type-tag hard">Hard gate</span></td>
+        <td>program_deliverables (type=design_decision, signed_at)</td>
+        <td>P3 gate · P4 entry criterion (hard block)</td>
+      </tr>
+      <tr>
+        <td><span class="phase-tag p4">P4</span></td>
+        <td>Execution Roadmap</td>
+        <td><span class="type-tag hard">Hard gate</span></td>
+        <td>program_deliverables + program_milestones rows</td>
+        <td>P4 gate · P5 RACI confirmation · Tower handoff</td>
+      </tr>
+      <tr>
+        <td><span class="phase-tag p4">P4</span></td>
+        <td>Business Case (sponsor-approved)</td>
+        <td><span class="type-tag hard">Hard gate</span></td>
+        <td>program_deliverables (type=business_case, sponsor_approved_at)</td>
+        <td>P4 gate · funding approval</td>
+      </tr>
+      <tr>
+        <td><span class="phase-tag p4">P4</span></td>
+        <td>Tower Metric Plan</td>
+        <td><span class="type-tag hard">Hard gate</span></td>
+        <td>program_deliverables (type=tower_metric_plan)</td>
+        <td>P4 gate · Atlas agent activation · P5 handoff package</td>
+      </tr>
+      <tr>
+        <td><span class="phase-tag p5">P5</span></td>
+        <td>Handoff Package</td>
+        <td><span class="type-tag hard">Hard gate</span></td>
+        <td>Assembled from all phase artifacts</td>
+        <td>P5 gate · Tower/Atlas consumption</td>
+      </tr>
+      <tr>
+        <td><span class="phase-tag p5">P5</span></td>
+        <td>Tower Acceptance Record (named + explicit)</td>
+        <td><span class="type-tag hard">Hard gate</span></td>
+        <td>program_audit_log (action=tower_acceptance)</td>
+        <td>P5 gate · status=handed_off · Atlas activation</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- Approval model reference -->
+  <div style="margin-top:40px;padding-top:24px;border-top:1px solid var(--border);">
+    <div class="appendix-head" style="font-size:18px;margin-bottom:4px;">Appendix B · Gate Approval Model</div>
+    <div class="appendix-sub">All phase transitions (P0→P1 through P4→P5 + P5 handoff)</div>
+    <table class="lineage-table">
+      <thead>
+        <tr>
+          <th>Transition</th>
+          <th>Pilot behavior</th>
+          <th>Production behavior</th>
+          <th>API</th>
+          <th>Audit log action</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>P0 → P1 (originate → charter)</td>
+          <td>Any authenticated user</td>
+          <td>Admin / Maestro only (B-120)</td>
+          <td>POST /api/programs/phase-gate</td>
+          <td>move_originated + move_promoted_p0_to_p1</td>
+        </tr>
+        <tr>
+          <td>P1 → P2 (charter → diagnose)</td>
+          <td>Any authenticated user</td>
+          <td>Admin / Maestro only (B-120)</td>
+          <td>POST /api/programs/phase-gate</td>
+          <td>move_promoted_p1_to_p2</td>
+        </tr>
+        <tr>
+          <td>P2 → P3 or DISCONTINUE</td>
+          <td>Any authenticated user</td>
+          <td>Admin / Maestro only (B-120)</td>
+          <td>POST /api/programs/phase-gate</td>
+          <td>move_promoted_p2_to_p3 OR move_discontinued</td>
+        </tr>
+        <tr>
+          <td>P3 → P4 (design → roadmap)</td>
+          <td>Any authenticated user</td>
+          <td>Admin / Maestro only (B-120)</td>
+          <td>POST /api/programs/phase-gate</td>
+          <td>move_promoted_p3_to_p4</td>
+        </tr>
+        <tr>
+          <td>P4 → P5 (roadmap → mobilize)</td>
+          <td>Any authenticated user</td>
+          <td>Admin / Maestro only (B-120)</td>
+          <td>POST /api/programs/phase-gate</td>
+          <td>move_promoted_p4_to_p5</td>
+        </tr>
+        <tr>
+          <td>P5 gate-out → Tower handoff</td>
+          <td>Any authenticated user</td>
+          <td>Admin / Maestro only (B-120)</td>
+          <td>POST /api/programs/phase-gate</td>
+          <td>move_handed_off_to_tower (status=handed_off)</td>
+        </tr>
+      </tbody>
+    </table>
+    <div style="margin-top:12px;font-size:12px;color:var(--gray-dk);background:var(--amber-bg);border:1px solid var(--amber);border-radius:6px;padding:10px 14px;">
+      <strong>B-120 — GATE_APPROVAL_STRICT_MODE:</strong> The phase-gate route currently has no role enforcement. Production requires admin/maestro-only approval. Implement as a feature flag before first enterprise pilot client. All audit log entries must include <code style="font-family:var(--mono)">actor_role</code> to distinguish pilot self-approvals from production admin approvals.
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
