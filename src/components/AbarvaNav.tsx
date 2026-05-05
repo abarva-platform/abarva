@@ -100,7 +100,7 @@ function NavInner({ activePage, compact = false }: NavProps) {
   const navLink = (label: string, href: string, active: boolean) => (
     <a href={href} key={label} className={active ? 'abarva-nav-link abarva-nav-link--active' : 'abarva-nav-link'} style={{
       fontSize: '15px',
-      fontWeight: active ? 700 : 500,
+      fontWeight: active ? 700 : 600,
       letterSpacing: '-0.01em',
       color: active ? NAVY : NAV_TEXT,
       padding: '8px 20px', fontFamily: SANS, textDecoration: 'none', flexShrink: 0,
