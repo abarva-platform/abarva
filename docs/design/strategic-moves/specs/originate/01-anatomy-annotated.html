@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Originate Page · Layer 1 Annotated Layout (O-1.2)</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'DM Sans', system-ui, sans-serif; background: #F8F7F4; padding: 24px; }
+
+  h1 { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+  p.meta { font-size: 11px; color: #666; margin-bottom: 20px; }
+
+  /* ID label style */
+  .id {
+    font-family: 'Menlo', monospace;
+    font-size: 9px;
+    background: #1a1a2e;
+    color: #7ec8e3;
+    padding: 2px 5px;
+    border-radius: 3px;
+    white-space: nowrap;
+    display: inline-block;
+    margin-bottom: 3px;
+  }
+  .id-note { font-size: 9px; color: #888; }
+  .gap-tag { background: #ff6b35; color: white; font-size: 9px; padding: 1px 4px; border-radius: 2px; }
+
+  /* Layout */
+  .page-frame {
+    border: 2px solid #333;
+    border-radius: 8px;
+    overflow: hidden;
+    background: white;
+    max-width: 1080px;
+    position: relative;
+  }
+
+  /* Nav */
+  .nav {
+    background: #111;
+    color: white;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    padding: 0 16px;
+    gap: 8px;
+    position: relative;
+  }
+  .nav .wordmark { font-weight: 700; font-size: 13px; color: white; }
+  .nav .nav-links { display: flex; gap: 20px; font-size: 11px; color: #aaa; }
+
+  /* Identity card */
+  .identity-card {
+    background: white;
+    border-bottom: 1px solid #e5e5e5;
+    padding: 12px 20px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    position: relative;
+  }
+  .eyebrow { font-size: 10px; color: #888; letter-spacing: 0.05em; }
+  .title { font-size: 18px; font-weight: 600; }
+  .status-pill { background: #FFF3CD; color: #856404; font-size: 10px; padding: 2px 8px; border-radius: 12px; border: 1px solid #ffc107; }
+
+  /* Phase rail */
+  .phase-rail {
+    background: white;
+    border-bottom: 1px solid #e5e5e5;
+    padding: 12px 20px;
+    display: flex;
+    align-items: center;
+    gap: 0;
+    position: relative;
+  }
+  .phase-node {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    position: relative;
+  }
+  .phase-dot {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    font-weight: 600;
+    z-index: 1;
+  }
+  .phase-dot.active { background: #111; color: white; box-shadow: 0 0 0 3px #ddd; }
+  .phase-dot.inactive { background: #f0f0f0; color: #aaa; border: 1px solid #e0e0e0; }
+  .phase-dot.tower { background: transparent; color: #aaa; border: 1px dashed #ccc; font-size: 8px; }
+  .phase-label { font-size: 9px; color: #777; }
+  .phase-label.active { color: #111; font-weight: 600; }
+  .phase-connector { flex: 1; height: 1px; background: #e0e0e0; min-width: 20px; }
+
+  /* Workspace grid */
+  .workspace {
+    display: grid;
+    grid-template-columns: 400px 1fr;
+    height: 520px;
+    border-bottom: 1px solid #e5e5e5;
+  }
+
+  /* Chat lane */
+  .chat-lane {
+    border-right: 1px solid #e5e5e5;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    background: #fafafa;
+  }
+  .chat-header {
+    padding: 10px 14px;
+    font-size: 11px;
+    color: #666;
+    border-bottom: 1px solid #eee;
+    background: white;
+  }
+
+  /* Nexus message */
+  .nexus-message {
+    margin: 12px 14px 8px;
+    background: white;
+    border: 1px solid #e5e5e5;
+    border-radius: 8px;
+    padding: 10px 12px;
+    font-size: 11px;
+    color: #333;
+  }
+
+  /* Scaffold step list */
+  .scaffold-list {
+    margin: 0 14px;
+    flex: 1;
+    overflow-y: auto;
+  }
+  .scaffold-list-label {
+    font-size: 9px;
+    color: #888;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin: 8px 0 4px;
+  }
+  .scaffold-step {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 8px;
+    border-radius: 6px;
+    border: 1px solid #e5e5e5;
+    background: white;
+    margin-bottom: 4px;
+    font-size: 10px;
+  }
+  .scaffold-step.done { border-color: #c3e6cb; background: #f0fff4; }
+  .scaffold-step.partial { border-color: #ffc107; background: #fffbf0; }
+  .step-icon { width: 16px; height: 16px; border-radius: 50%; flex-shrink: 0; }
+  .step-icon.empty { background: #e0e0e0; }
+  .step-icon.done { background: #28a745; }
+  .step-icon.partial { background: #ffc107; }
+  .step-num { font-size: 9px; color: #aaa; width: 14px; text-align: right; }
+  .step-name { flex: 1; color: #333; }
+
+  /* Chat input */
+  .chat-input-area {
+    padding: 10px 14px;
+    border-top: 1px solid #e5e5e5;
+    background: white;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .chat-input-field {
+    flex: 1;
+    height: 32px;
+    border: 1px solid #e0e0e0;
+    border-radius: 6px;
+    padding: 0 10px;
+    font-size: 11px;
+    background: #fafafa;
+  }
+  .send-btn {
+    width: 32px;
+    height: 32px;
+    background: #111;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 14px;
+  }
+
+  /* Canvas lane */
+  .canvas-lane {
+    display: flex;
+    flex-direction: column;
+    padding: 14px;
+    gap: 8px;
+    overflow-y: auto;
+    background: white;
+  }
+  .brief-section {
+    border: 1px solid #e5e5e5;
+    border-radius: 6px;
+    padding: 8px 12px;
+  }
+  .brief-section.filled { border-color: #c3e6cb; background: #f0fff4; }
+  .brief-section-label { font-size: 9px; text-transform: uppercase; letter-spacing: 0.06em; color: #888; margin-bottom: 4px; }
+  .brief-section-content { font-size: 10px; color: #555; min-height: 20px; }
+  .brief-section-placeholder { font-size: 10px; color: #ccc; font-style: italic; }
+
+  /* Promote bar */
+  .promote-bar {
+    background: white;
+    border-top: 1px solid #e5e5e5;
+    padding: 12px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .gate-summary { font-size: 11px; color: #666; }
+  .promote-btn {
+    padding: 8px 20px;
+    background: #f0f0f0;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 11px;
+    color: #999;
+  }
+  .promote-btn.enabled { background: #111; color: white; border-color: #111; }
+
+  /* Annotation overlay */
+  .ann {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  /* Annotation sidebar */
+  .annotations {
+    max-width: 1080px;
+    margin-top: 20px;
+    background: white;
+    border: 1px solid #e5e5e5;
+    border-radius: 8px;
+    padding: 16px;
+  }
+  .annotations h2 { font-size: 12px; font-weight: 600; margin-bottom: 12px; }
+  .ann-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; }
+  .ann-item { display: flex; align-items: flex-start; gap: 6px; font-size: 10px; }
+  .ann-item .id { flex-shrink: 0; }
+  .ann-item .desc { color: #555; }
+
+  .section-label-bar {
+    background: #f0f0f0;
+    font-size: 9px;
+    color: #666;
+    padding: 3px 14px;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    border-bottom: 1px solid #e5e5e5;
+  }
+  .critical-note {
+    background: #fff3cd;
+    border: 1px solid #ffc107;
+    border-radius: 4px;
+    padding: 6px 10px;
+    font-size: 10px;
+    margin: 8px 14px;
+    color: #666;
+  }
+  .critical-note strong { color: #333; }
+</style>
+</head>
+<body>
+
+<h1>Originate Page · Layer 1 Annotated Layout · O-1.2</h1>
+<p class="meta">Work Package: O-1.2 · Companion to 01-anatomy.md (O-1.1) · Cascade reference: 16-flow-cascade.html Flow 2 Frame 2 · Status: Layer 1 frozen</p>
+
+<div class="page-frame">
+
+  <!-- Navigation -->
+  <div class="nav">
+    <span class="wordmark">AbarVa</span>
+    <div style="flex:1; display:flex; gap:16px; margin-left:20px;">
+      <span style="font-size:11px;color:#aaa">Strategic Moves</span>
+      <span style="font-size:11px;color:#aaa">Programs</span>
+      <span style="font-size:11px;color:#aaa">Intelligence</span>
+    </div>
+    <div class="ann">
+      <span class="id">orig-nav</span>
+      <span class="id-note">shared shell</span>
+    </div>
+  </div>
+
+  <!-- Identity card -->
+  <div class="identity-card">
+    <div style="flex:1">
+      <div class="eyebrow">DRAFT-20260505 · P0 ORIGINATE</div>
+      <div class="title">New Strategic Move</div>
+    </div>
+    <div class="status-pill">Drafting</div>
+    <div style="margin-left:16px;">
+      <div class="ann">
+        <span class="id">orig-identity</span>
+      </div>
+      <div style="margin-top:4px; display:flex; gap:4px; flex-wrap:wrap;">
+        <span class="id">orig-identity-eyebrow</span>
+        <span class="id">orig-identity-title</span>
+        <span class="id">orig-identity-status-pill</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Phase rail -->
+  <div class="phase-rail">
+    <div class="ann" style="position:absolute; top:4px; right:12px;">
+      <span class="id">orig-rail</span>
+      <span class="gap-tag">gap-orig-001: PHASE_SHORT_NAMES missing</span>
+    </div>
+    <div class="phase-node">
+      <div class="phase-dot active">P0</div>
+      <div class="phase-label active">Originate</div>
+      <span class="id" style="font-size:8px;">orig-rail-phase-node-p0</span>
+    </div>
+    <div class="phase-connector"></div>
+    <div class="phase-node">
+      <div class="phase-dot inactive">P1</div>
+      <div class="phase-label">Charter</div>
+      <span class="id" style="font-size:8px;">orig-rail-phase-node-p1</span>
+      <span class="id-note" style="font-size:8px;">aria-disabled</span>
+    </div>
+    <div class="phase-connector"></div>
+    <div class="phase-node">
+      <div class="phase-dot inactive">P2</div>
+      <div class="phase-label">Diagnose</div>
+      <span class="id" style="font-size:8px;">orig-rail-phase-node-p2</span>
+      <span class="id-note" style="font-size:8px;">aria-disabled</span>
+    </div>
+    <div class="phase-connector"></div>
+    <div class="phase-node">
+      <div class="phase-dot inactive">P3</div>
+      <div class="phase-label">Design</div>
+      <span class="id" style="font-size:8px;">orig-rail-phase-node-p3</span>
+      <span class="id-note" style="font-size:8px;">aria-disabled</span>
+    </div>
+    <div class="phase-connector"></div>
+    <div class="phase-node">
+      <div class="phase-dot inactive">P4</div>
+      <div class="phase-label">Roadmap</div>
+      <span class="id" style="font-size:8px;">orig-rail-phase-node-p4</span>
+      <span class="id-note" style="font-size:8px;">aria-disabled</span>
+    </div>
+    <div class="phase-connector"></div>
+    <div class="phase-node">
+      <div class="phase-dot inactive">P5</div>
+      <div class="phase-label">Mobilize</div>
+      <span class="id" style="font-size:8px;">orig-rail-phase-node-p5</span>
+      <span class="id-note" style="font-size:8px;">aria-disabled</span>
+    </div>
+    <div class="phase-connector"></div>
+    <div class="phase-node">
+      <div class="phase-dot tower">→T</div>
+      <div class="phase-label">Tower</div>
+      <span class="id" style="font-size:8px;">orig-rail-tower-indicator</span>
+      <span class="id-note" style="font-size:8px;">non-interactive</span>
+    </div>
+  </div>
+
+  <!-- Workspace grid -->
+  <div style="display:flex; font-size:9px; color:#555; padding:4px 20px; background:#f7f7f7; border-bottom:1px solid #eee;">
+    <div style="width:400px; font-weight:600;">
+      <span class="id">orig-grid</span> — workspace grid (chat | canvas)
+    </div>
+  </div>
+
+  <div class="workspace">
+
+    <!-- Chat lane -->
+    <div class="chat-lane">
+      <div class="section-label-bar">
+        <span class="id">orig-chat</span> — CHAT LANE (left)
+      </div>
+
+      <!-- Nexus message -->
+      <div class="nexus-message">
+        <div style="font-size:9px;color:#888;margin-bottom:4px;">Nexus</div>
+        Tell me four things — what outcome you want, who cares, what evidence you have, and what value might be at stake. Or just paste what you have.
+        <div style="margin-top:4px;"><span class="id">orig-chat-nexus-message</span></div>
+      </div>
+
+      <!-- CRITICAL NOTE -->
+      <div class="critical-note">
+        <strong>⚠ SCAFFOLD STEP LIST IS IN THE CHAT LANE</strong> — not the canvas. The brief section panels are in the canvas (right). See A.7 in anatomy doc.
+      </div>
+
+      <!-- Scaffold step list -->
+      <div class="scaffold-list">
+        <div class="scaffold-list-label"><span class="id">orig-chat-scaffold</span></div>
+
+        <div class="scaffold-step done">
+          <span class="step-num">1</span>
+          <div class="step-icon done"></div>
+          <span class="step-name">Bet / hypothesis</span>
+          <span class="id" style="font-size:8px;">orig-chat-scaffold-step-1</span>
+        </div>
+        <div class="scaffold-step done">
+          <span class="step-num">2</span>
+          <div class="step-icon done"></div>
+          <span class="step-name">Archetype classification</span>
+          <span class="id" style="font-size:8px;">orig-chat-scaffold-step-2</span>
+        </div>
+        <div class="scaffold-step partial">
+          <span class="step-num">3</span>
+          <div class="step-icon partial"></div>
+          <span class="step-name">Sponsor candidate</span>
+          <span class="id" style="font-size:8px;">orig-chat-scaffold-step-3</span>
+        </div>
+        <div class="scaffold-step">
+          <span class="step-num">4</span>
+          <div class="step-icon empty"></div>
+          <span class="step-name">Scope / boundary</span>
+          <span class="id" style="font-size:8px;">orig-chat-scaffold-step-4</span>
+        </div>
+        <div class="scaffold-step">
+          <span class="step-num">5</span>
+          <div class="step-icon empty"></div>
+          <span class="step-name">Evidence family</span>
+          <span class="id" style="font-size:8px;">orig-chat-scaffold-step-5</span>
+        </div>
+        <div class="scaffold-step">
+          <span class="step-num">6</span>
+          <div class="step-icon empty"></div>
+          <span class="step-name">Value hypothesis seed</span>
+          <span class="id" style="font-size:8px;">orig-chat-scaffold-step-6</span>
+        </div>
+        <div class="scaffold-step">
+          <span class="step-num">7</span>
+          <div class="step-icon empty"></div>
+          <span class="step-name">Foundation readiness (F1–F4)</span>
+          <span class="id" style="font-size:8px;">orig-chat-scaffold-step-7</span>
+        </div>
+      </div>
+
+      <!-- Chat input -->
+      <div class="chat-input-area">
+        <div class="chat-input-field" style="display:flex;align-items:center;color:#aaa;">Type or paste…</div>
+        <div style="font-size:16px;color:#aaa;">📎</div>
+        <div class="send-btn">↑</div>
+        <div style="margin-left:4px;">
+          <div class="id" style="font-size:8px;">orig-chat-input-area</div>
+          <div style="display:flex;gap:2px;margin-top:2px;flex-wrap:wrap;">
+            <span class="id" style="font-size:7px;">orig-chat-input-field</span>
+            <span class="id" style="font-size:7px;">orig-chat-attach-button</span>
+            <span class="id" style="font-size:7px;">orig-chat-send-button</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Canvas lane -->
+    <div class="canvas-lane">
+      <div class="section-label-bar">
+        <span class="id">orig-canvas</span> — CANVAS LANE (right) — brief section panels live here
+      </div>
+
+      <div class="brief-section filled">
+        <div class="brief-section-label">Bet / Hypothesis <span class="id" style="font-size:8px;">orig-canvas-brief-section-1</span></div>
+        <div class="brief-section-content">AI-assisted scheduling can recover 2+ hrs/day per clinician in burnout-prone departments.</div>
+      </div>
+      <div class="brief-section filled">
+        <div class="brief-section-label">Archetype <span class="id" style="font-size:8px;">orig-canvas-brief-section-2</span></div>
+        <div class="brief-section-content">Contact Center AI (workflow automation, conversational interfaces)</div>
+      </div>
+      <div class="brief-section">
+        <div class="brief-section-label">Sponsor Candidate <span class="id" style="font-size:8px;">orig-canvas-brief-section-3</span></div>
+        <div class="brief-section-placeholder">Proposed: Dr. Miranda Chen (CMIO) — not yet confirmed</div>
+      </div>
+      <div class="brief-section">
+        <div class="brief-section-label">Scope / Boundary <span class="id" style="font-size:8px;">orig-canvas-brief-section-4</span></div>
+        <div class="brief-section-placeholder">Not yet defined</div>
+      </div>
+      <div class="brief-section">
+        <div class="brief-section-label">Evidence Family <span class="id" style="font-size:8px;">orig-canvas-brief-section-5</span></div>
+        <div class="brief-section-placeholder">Not yet defined</div>
+      </div>
+      <div class="brief-section">
+        <div class="brief-section-label">Value Hypothesis <span class="id" style="font-size:8px;">orig-canvas-brief-section-6</span></div>
+        <div class="brief-section-placeholder">Not yet defined</div>
+      </div>
+      <div class="brief-section">
+        <div class="brief-section-label">Foundation Readiness (F1–F4) <span class="id" style="font-size:8px;">orig-canvas-brief-section-7</span></div>
+        <div class="brief-section-placeholder">Not yet assessed <span class="gap-tag">gap-orig-003: F1–F4 constants</span></div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Promote bar -->
+  <div class="promote-bar">
+    <div>
+      <div class="gate-summary">3 of 7 sections complete · Sponsor sign-off required</div>
+      <div style="margin-top:4px;display:flex;gap:4px;">
+        <span class="id">orig-promote-bar</span>
+        <span class="id">orig-promote-bar-gate-summary</span>
+        <span class="id">orig-promote-bar-status-text</span>
+      </div>
+    </div>
+    <div>
+      <div class="promote-btn">Promote to P1 Charter →</div>
+      <div style="margin-top:4px;"><span class="id">orig-shell-promote-button</span> <span class="id-note">[disabled state]</span></div>
+    </div>
+  </div>
+
+</div><!-- /page-frame -->
+
+<!-- Annotation reference table -->
+<div class="annotations">
+  <h2>All Stable IDs — Originate Page (80 IDs from 01-anatomy.md)</h2>
+  <div class="ann-grid">
+    <div><div class="ann-item"><span class="id">orig-page</span><span class="desc">Root page wrapper</span></div></div>
+    <div><div class="ann-item"><span class="id">orig-nav</span><span class="desc">App nav bar (shared shell)</span></div></div>
+    <div><div class="ann-item"><span class="id">orig-identity</span><span class="desc">Identity card container</span></div></div>
+    <div><div class="ann-item"><span class="id">orig-identity-eyebrow</span><span class="desc">DRAFT-{date} eyebrow text</span></div></div>
+    <div><div class="ann-item"><span class="id">orig-identity-title</span><span class="desc">Auto-derived move title</span></div></div>
+    <div><div class="ann-item"><span class="id">orig-identity-status-pill</span><span class="desc">Status pill (Drafting / Ready / etc.)</span></div></div>
+    <div><div class="ann-item"><span class="id">orig-rail</span><span class="desc">Phase rail container</span></div></div>
+    <div><div class="ann-item"><span class="id">orig-rail-phase-node-p0</span><span class="desc">P0 active node</span></div></div>
+    <div><div class="ann-item"><span class="id">orig-rail-phase-node-p1</span><span class="desc">P1 node (disabled)</span></div></div>
+    <div><div class="ann-item"><span class="id">orig-rail-phase-node-p2</span><span class="desc">P2 node (disabled)</span></div></div>
+    <div><div class="ann-item"><span class="id">orig-rail-phase-node-p3</span><span class="desc">P3 node (disabled)</span></div></div>
+    <div><div class="ann-item"><span class="id">orig-rail-phase-node-p4</span><span class="desc">P4 node (disabled)</span></div></div>
+    <div><div class="ann-item"><span class="id">orig-rail-phase-node-p5</span><span class="desc">P5 node (disabled)</span></div></div>
+    <div><div class="ann-item"><span class="id">orig-rail-tower-indicator</span><span class="desc">→ Tower indicator (non-interactive)</span></div></div>
+    <div><div class="ann-item"><span class="id">orig-grid</span><span class="desc">Workspace two-column grid</span></div></div>
+    <div><div class="ann-item"><span class="id">orig-chat</span><span class="desc">Chat lane (left column)</span></div></div>
+    <div><div class="ann-item"><span class="id">orig-chat-header</span><span class="desc">Chat lane header bar</span></div></div>
+    <div><div class="ann-item"><span class="id">orig-chat-message-list</span><span class="desc">Scrollable Nexus + user messages</span></div></div>
+    <div><div class="ann-item"><span class="id">orig-chat-nexus-message</span><span class="desc">Individual Nexus message bubble</span></div></div>
+    <div><div class="ann-item"><span class="id">orig-chat-user-message</span><span class="desc">Individual user message bubble</span></div></div>
+    <div><div class="ann-item"><span class="id">orig-chat-scaffold</span><span class="desc">Scaffold step list (IN CHAT LANE)</span></div></div>
+    <div><div class="ann-item"><span class="id">orig-chat-scaffold-step-1</span><span class="desc">Scaffold step 1: Bet/hypothesis</span></div></div>
+    <div><div class="ann-item"><span class="id">orig-chat-scaffold-step-2</span><span class="desc">Scaffold step 2: Archetype</span></div></div>
+    <div><div class="ann-item"><span class="id">orig-chat-scaffold-step-3</span><span class="desc">Scaffold step 3: Sponsor candidate</span></div></div>
+    <div><div class="ann-item"><span class="id">orig-chat-scaffold-step-4</span><span class="desc">Scaffold step 4: Scope/boundary</span></div></div>
+    <div><div class="ann-item"><span class="id">orig-chat-scaffold-step-5</span><span class="desc">Scaffold step 5: Evidence family</span></div></div>
+    <div><div class="ann-item"><span class="id">orig-chat-scaffold-step-6</span><span class="desc">Scaffold step 6: Value hypothesis</span></div></div>
+    <div><div class="ann-item"><span class="id">orig-chat-scaffold-step-7</span><span class="desc">Scaffold step 7: Foundation (F1–F4)</span></div></div>
+    <div><div class="ann-item"><span class="id">orig-chat-scaffold-step-status</span><span class="desc">Per-step status icon (empty/partial/done)</span></div></div>
+    <div><div class="ann-item"><span class="id">orig-chat-input-area</span><span class="desc">Chat input bar</span></div></div>
+    <div><div class="ann-item"><span class="id">orig-chat-input-field</span><span class="desc">Text input field</span></div></div>
+    <div><div class="ann-item"><span class="id">orig-chat-attach-button</span><span class="desc">File attachment button (paperclip)</span></div></div>
+    <div><div class="ann-item"><span class="id">orig-chat-send-button</span><span class="desc">Send / submit button</span></div></div>
+    <div><div class="ann-item"><span class="id">orig-chat-char-count</span><span class="desc">Character count display</span></div></div>
+    <div><div class="ann-item"><span class="id">orig-canvas</span><span class="desc">Canvas lane (right column)</span></div></div>
+    <div><div class="ann-item"><span class="id">orig-canvas-brief-section-1</span><span class="desc">Brief panel: Bet/hypothesis</span></div></div>
+    <div><div class="ann-item"><span class="id">orig-canvas-brief-section-2</span><span class="desc">Brief panel: Archetype</span></div></div>
+    <div><div class="ann-item"><span class="id">orig-canvas-brief-section-3</span><span class="desc">Brief panel: Sponsor candidate</span></div></div>
+    <div><div class="ann-item"><span class="id">orig-canvas-brief-section-4</span><span class="desc">Brief panel: Scope/boundary</span></div></div>
+    <div><div class="ann-item"><span class="id">orig-canvas-brief-section-5</span><span class="desc">Brief panel: Evidence family</span></div></div>
+    <div><div class="ann-item"><span class="id">orig-canvas-brief-section-6</span><span class="desc">Brief panel: Value hypothesis</span></div></div>
+    <div><div class="ann-item"><span class="id">orig-canvas-brief-section-7</span><span class="desc">Brief panel: Foundation (F1–F4)</span></div></div>
+    <div><div class="ann-item"><span class="id">orig-canvas-brief-label</span><span class="desc">Brief section label text</span></div></div>
+    <div><div class="ann-item"><span class="id">orig-canvas-brief-content</span><span class="desc">Brief section content area</span></div></div>
+    <div><div class="ann-item"><span class="id">orig-canvas-brief-edit-btn</span><span class="desc">Edit button on filled brief section</span></div></div>
+    <div><div class="ann-item"><span class="id">orig-promote-bar</span><span class="desc">Promote bar at page bottom</span></div></div>
+    <div><div class="ann-item"><span class="id">orig-promote-bar-gate-summary</span><span class="desc">"X of 7 sections complete" text</span></div></div>
+    <div><div class="ann-item"><span class="id">orig-promote-bar-status-text</span><span class="desc">Status guidance (what's blocking promote)</span></div></div>
+    <div><div class="ann-item"><span class="id">orig-shell-promote-button</span><span class="desc">Promote to P1 Charter button</span></div></div>
+  </div>
+
+  <div style="margin-top:16px; padding-top:12px; border-top:1px solid #eee;">
+    <h2 style="margin-bottom:8px;">Substrate gaps logged in this Layer 1</h2>
+    <div style="font-size:10px; display:grid; grid-template-columns:100px 180px 1fr 80px; gap:4px; font-family:monospace;">
+      <div style="font-weight:600;color:#888">Gap ID</div><div style="font-weight:600;color:#888">Element</div><div style="font-weight:600;color:#888">Missing</div><div style="font-weight:600;color:#888">Backlog</div>
+      <span class="gap-tag">gap-orig-001</span><div>orig-rail (phase node labels)</div><div>PHASE_SHORT_NAMES constant not in codebase</div><div>B-101</div>
+      <span class="gap-tag">gap-orig-002</span><div>orig-canvas-brief-section-* (persistence)</div><div>engagement_drafts / origination draft state in DB</div><div>B-102 (D-11)</div>
+      <span class="gap-tag">gap-orig-003</span><div>orig-canvas-brief-section-7 (F1–F4 checks)</div><div>Foundation readiness check constants not exposed to UI</div><div>B-103</div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
