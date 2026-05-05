@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation';
 import { requireProductModule } from '@/lib/auth/server-module-access';
 import { getActiveClientRow } from '@/lib/active-client';
 import { StrategicMoveOriginateClient } from '@/components/strategic-moves/StrategicMoveOriginateClient';
+import { AppShell } from '@/components/shell/AppShell';
 
 export const dynamic = 'force-dynamic';
 
@@ -16,6 +17,10 @@ export default async function StrategicMoveOriginatePage() {
     redirect('/sign-in');
   }
 
-  return <StrategicMoveOriginateClient tenantName={activeClient.name} />;
+  return (
+    <AppShell surface="programs">
+      <StrategicMoveOriginateClient tenantName={activeClient.name} />
+    </AppShell>
+  );
 }
 

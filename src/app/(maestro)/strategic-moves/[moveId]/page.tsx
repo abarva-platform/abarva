@@ -3,6 +3,7 @@ import { requireProductModule } from '@/lib/auth/server-module-access';
 import { getStrategicMoveById } from '@/lib/programs/queries';
 import { getStrategicMovesTenancy } from '@/lib/programs/strategic-moves-context';
 import { StrategicMoveDetailView } from '@/components/strategic-moves/StrategicMoveDetailView';
+import { AppShell } from '@/components/shell/AppShell';
 
 export const dynamic = 'force-dynamic';
 
@@ -21,6 +22,10 @@ export default async function StrategicMoveDetailPage({ params }: Props) {
   const move = await getStrategicMoveById(ctx, moveId);
   if (!move) notFound();
 
-  return <StrategicMoveDetailView move={move} />;
+  return (
+    <AppShell surface="programs-detail">
+      <StrategicMoveDetailView move={move} />
+    </AppShell>
+  );
 }
 

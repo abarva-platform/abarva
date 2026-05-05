@@ -4,6 +4,7 @@ import { getStrategicMovePortfolio } from '@/lib/programs/queries';
 import { getStrategicMovesTenancy } from '@/lib/programs/strategic-moves-context';
 import { DEFAULT_STRATEGIC_MOVES_PREFERENCES, getStrategicMovesPreferences } from '@/lib/programs/strategic-moves-preferences';
 import { StrategicMovesHomeClient } from '@/components/strategic-moves/StrategicMovesHomeClient';
+import { AppShell } from '@/components/shell/AppShell';
 
 export const dynamic = 'force-dynamic';
 
@@ -24,10 +25,12 @@ export default async function StrategicMovesPage() {
   ]);
 
   return (
-    <StrategicMovesHomeClient
-      initialListView={prefs.listView}
-      initialSort={prefs.sort}
-      portfolio={portfolio}
-    />
+    <AppShell surface="programs">
+      <StrategicMovesHomeClient
+        initialListView={prefs.listView}
+        initialSort={prefs.sort}
+        portfolio={portfolio}
+      />
+    </AppShell>
   );
 }

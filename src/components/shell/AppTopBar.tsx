@@ -52,9 +52,11 @@ const NAV_ITEMS: CockpitNavItem[] = [
   {
     key: "programs",
     label: getAtriumProductNavLabel("programs"),
-    href: "/programs",
+    href: "/strategic-moves",
     module: "programs",
     match: (pathname) =>
+      pathname === "/strategic-moves" ||
+      pathname.startsWith("/strategic-moves/") ||
       pathname === "/programs" ||
       pathname.startsWith("/programs/") ||
       pathname === "/engagements" ||
@@ -313,16 +315,16 @@ export function AppTopBar({ showProductNav = true }: AppTopBarProps) {
             display: "flex",
             alignItems: "center",
             textDecoration: "none",
-            color: SHELL.INK,
-            fontFamily: SHELL.SERIF,
-            fontSize: 24,
-            fontWeight: 700,
-            letterSpacing: "-0.03em",
-            lineHeight: 1,
-            whiteSpace: "nowrap",
+            flexShrink: 0,
           }}
         >
-          AbarVa
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/brand/abarva-wordmark-color.svg"
+            alt="AbarVa"
+            height={22}
+            style={{ display: "block", height: 22, width: "auto" }}
+          />
         </Link>
 
         {navItems.length > 0 ? (
