@@ -17,10 +17,10 @@ Tracks every step from `EXECUTION_PLAYBOOK.md` against its current state. Update
 | Step | Work Package | Owner | Status | PR | Notes |
 |---|---|---|---|---|---|
 | 0.1 | WBS v0.3 §12 decisions resolved | Anand | ✅ | [#1527](https://github.com/anandsundaram-hash/abarva/pull/1527) | All 12 decisions resolved 2026-05-05 |
-| 0.2 | F-01 Spec methodology doc | Claude Code | 🔄 | open | |
+| 0.2 | F-01 Spec methodology doc | Claude Code | ✅ | [#1528](https://github.com/anandsundaram-hash/abarva/pull/1528) | Methodology + execution status tracker |
 | 0.3 | F-04 Audit completion | Claude Code | ✅ | [#1526](https://github.com/anandsundaram-hash/abarva/pull/1526) | All 7 audit docs merged 2026-05-05 |
 
-**Phase 0 gate:** Steps 0.1 ✅ · 0.2 🔄 · 0.3 ✅
+**Phase 0 gate:** Steps 0.1 ✅ · 0.2 ✅ · 0.3 ✅ — **COMPLETE**
 
 ---
 
@@ -28,9 +28,11 @@ Tracks every step from `EXECUTION_PLAYBOOK.md` against its current state. Update
 
 | Step | Work Package | Owner | Status | PR | Notes |
 |---|---|---|---|---|---|
-| 1.1 | F-02 Spec repo skeleton | Claude Code | 🔒 | — | Blocked on 0.2 |
-| 1.2 | F-03 Stable ID convention | Claude Code | 🔒 | — | Blocked on 0.2 |
-| 1.3 | F-05 Substrate migration plan | Claude Code | 🔒 | — | Blocked on 0.2 (and 0.3 ✅) |
+| 1.1 | F-02 Spec repo skeleton | Claude Code | ✅ | [#1530](https://github.com/anandsundaram-hash/abarva/pull/1530) | 60 placeholder files; unblocks Layer 1 |
+| 1.2 | F-03 Stable ID convention | Claude Code | ✅ | [#1529](https://github.com/anandsundaram-hash/abarva/pull/1529) | 67 examples, 10 anti-patterns |
+| 1.3 | F-05 Substrate migration plan | Claude Code | ✅ | [#1531](https://github.com/anandsundaram-hash/abarva/pull/1531) | SQL migration already applied; B-027 is TS-only |
+
+**Phase 1 gate:** Steps 1.1 ✅ · 1.2 ✅ · 1.3 ✅ — **COMPLETE**
 
 ---
 
@@ -38,9 +40,9 @@ Tracks every step from `EXECUTION_PLAYBOOK.md` against its current state. Update
 
 | Step | Work Package | Owner | Status | PR | Notes |
 |---|---|---|---|---|---|
-| 2.1 | T-X Cross-phase capability spec | Claude Code | 🔒 | — | Blocked on 0.3 ✅, 1.2 |
+| 2.1 | T-X Cross-phase capability spec | Claude Code | 🔄 | open | In progress |
 | 2.2 | T-P0 P0 training pack | Claude Code | 🔒 | — | Blocked on 2.1 |
-| 2.3 | O-1.1 Originate anatomy | Claude Code | 🔒 | — | Blocked on 1.1, 1.2 |
+| 2.3 | O-1.1 Originate anatomy | Claude Code | 🔄 | open | In progress |
 | 2.4 | O-1.2 Originate annotated screenshot | Claude Code | 🔒 | — | Blocked on 2.3 |
 | 2.5 | O-1.3 Originate Layer 1 sign-off | Anand | 🔒 | — | Blocked on 2.4 |
 
@@ -155,9 +157,9 @@ Tracks every step from `EXECUTION_PLAYBOOK.md` against its current state. Update
 
 | Phase | Steps | Done | In progress | Blocked |
 |---|---|---|---|---|
-| Phase 0 | 3 | 2 | 1 | 0 |
-| Phase 1 | 3 | 0 | 0 | 3 |
-| Phase 2 | 5 | 0 | 0 | 5 |
+| Phase 0 | 3 | 3 | 0 | 0 |
+| Phase 1 | 3 | 3 | 0 | 0 |
+| Phase 2 | 5 | 0 | 2 | 3 |
 | Phase 3 | 6 | 0 | 0 | 6 |
 | Phase 4 | 5 | 0 | 0 | 5 |
 | Phase 5 | 16 | 0 | 0 | 16 |
@@ -165,6 +167,6 @@ Tracks every step from `EXECUTION_PLAYBOOK.md` against its current state. Update
 | Phase 7 | 12 | 0 | 0 | 12 |
 | Phase 8 | 2 | 0 | 0 | 2 |
 | Phase 9 | 5 | 0 | 0 | 5 |
-| **Total** | **67** | **2** | **1** | **64** |
+| **Total** | **67** | **6** | **2** | **59** |
 
-_Last updated: 2026-05-05 · Step 0.2 (F-01) in progress_
+_Last updated: 2026-05-05 · Phase 0+1 complete · Phase 2 steps 2.1+2.3 in progress_
