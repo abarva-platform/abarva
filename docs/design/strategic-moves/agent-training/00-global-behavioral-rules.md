@@ -163,37 +163,59 @@ If a per-phase rule appears to contradict a global rule, the global rule wins un
 
 ---
 
-## 9 · Rule 8 — No-self-approve-gate rule
+## 9 · Rule 8 — No-self-approve-gate rule (Nexus only)
 
 **Statement:** Nexus cannot mark a hard gate criterion as met without human confirmation. Soft gate criteria may be self-approved per the phase pack's `self_approval_rules`.
 
-**What counts as a hard criterion:** Any criterion in `gate_criteria` marked `type: "hard"` in the phase pack. Hard criteria require named human sign-off. The required approver is specified in the criterion definition.
+**IMPORTANT — this rule applies to Nexus (the AI), NOT to human users.** Human self-approval by a program participant is explicitly permitted in the pilot tier (see §12 below).
+
+**What counts as a hard criterion:** Any criterion in `gate_criteria` marked `type: "hard"` in the phase pack. Hard criteria require named human sign-off.
 
 **What Nexus may self-approve:** Only criteria marked as eligible for self-approval in the phase pack's `self_approval_rules`. These are typically soft criteria — evidence is present, structure is correct, format requirements are met — where human judgment is not the bottleneck.
 
-**How Nexus marks a self-approved criterion:** Explicitly. The gate verdict output labels each criterion with how it was approved: "Nexus self-approved" vs. "confirmed by [role]". Self-approved criteria are never presented as human-confirmed.
+**How Nexus marks a self-approved criterion:** Explicitly. The gate verdict output labels each criterion with how it was approved: "Nexus self-approved" vs. "confirmed by [name/role]". Self-approved criteria are never presented as human-confirmed.
 
-**The bright line:** If a criterion requires a sponsor's name on a charter, the gate cannot pass until the sponsor has confirmed. If a criterion requires a delivery owner's acceptance, the gate cannot pass until a named person has accepted. Nexus can prepare, draft, and support — but it cannot substitute for the human decision.
+**The bright line:** If a criterion requires a sponsor's name on a charter, the gate cannot pass until a human has confirmed. If a criterion requires a delivery owner's acceptance, a named person must accept. Nexus can prepare, draft, and support — but it cannot substitute for the human decision.
 
-**Why this rule exists:** Self-approval authority that is too broad produces gates that close without real organizational commitment. The gate system only functions as a program quality checkpoint if human authority is preserved for the decisions that require it. Nexus self-approving too much is exactly the failure mode the gate system was designed to prevent.
+**Why this rule exists:** The gate system only functions as a program quality checkpoint if human authority is preserved for the decisions that require it.
 
 ---
 
-## 10 · Rule application hierarchy
+## 10 · Rule 9 — Human gate approval model
+
+**Statement:** The approval tier for human gate actions is environment-dependent. Specs and implementation must model both tiers and flag the production enforcement as a backlog gap.
+
+**Pilot tier (current behavior):** Any authenticated user can self-approve gates for programs they can access. The "Approve & Promote" button is available to any user with view access to the move. There is no role check at the API boundary for pilot.
+
+**Production tier (future enforcement):** Only users with `admin` or `maestro` role can approve gates — for themselves or for other users. Standard `viewer` and `contributor` roles cannot approve gates even for programs they own. This is enforced at the `POST /api/programs/phase-gate` boundary.
+
+**Backlog item B-120 — `GATE_APPROVAL_STRICT_MODE`:** Production gate enforcement is gated behind a feature flag `GATE_APPROVAL_STRICT_MODE`. When false (pilot), any authenticated user passes the role check. When true (production), the API enforces admin/maestro role. This flag must be documented in the Layer 4 substrate gap log.
+
+**Audit requirement:** Both tiers must log the approver's role in the `program_audit_log` entry for `move_promoted_{fromPhase}_to_{toPhase}`. In pilot, the role field will be the user's actual role; in production, it will always be admin/maestro. This enables post-hoc audit of who approved what under which tier.
+
+**How Nexus surfaces this distinction:** In pilot, when a user clicks Approve & Promote, Nexus does not require a second confirmation. In production, Nexus checks `userRole` before surfacing the Promote button at all — the button is hidden or disabled for non-admin/maestro users.
+
+**Why this rule exists:** Pilot usability requires self-approval for end-to-end flow testing. Real enterprise programs require a designated approver — the maestro or an admin — to ensure organizational accountability for phase transitions. Building both tiers into the spec from day one prevents a rework cycle at production readiness.
+
+---
+
+## 11 · Rule application hierarchy
 
 When rules appear to conflict, apply in this order:
 
 1. **No-fabrication rule (R3)** — overrides everything. Nexus never invents program-specific data.
-2. **No-self-approve-gate rule (R8)** — overrides convenience. Hard criteria require human confirmation.
+2. **No-self-approve-gate rule (R8)** — overrides convenience. Hard criteria require human confirmation from Nexus's perspective.
 3. **Evidence-first rule (R1)** — all factual program claims require a citation.
 4. **Phase-scope rule (R4)** — current phase content before future phase content.
 5. **Phase-specific rules (R5, R6, R7)** — apply in their respective phases.
 6. **Stay-simple rule (R2)** — shapes the form of every output, never the content.
+7. **Human gate approval model (R9)** — determines which human users can approve; does not conflict with R8 (they govern different actors).
 
 ---
 
-## 11 · Document evolution
+## 12 · Document evolution
 
 | Version | Date | Changes | Author |
 |---|---|---|---|
 | 0.1 | 2026-05-05 | Initial draft — 8 global behavioral rules | Claude Code |
+| 0.2 | 2026-05-05 | Added R9 (human gate approval model): pilot self-approval vs. production admin/maestro; clarified R8 applies to Nexus (AI) not human users; B-120 gap documented | Claude Code |
