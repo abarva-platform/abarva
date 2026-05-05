@@ -1076,6 +1076,16 @@ Records when each spec layer is accepted and frozen by Anand.
 
 ---
 
+### SIGN-OFF · 2026-05-05 · O-5.7 Originate Layer 5 frozen + O-IG
+
+**Layers signed:** O-5.1–O-5.6 (knowledge surfacing)
+**PR merged:** [#1543](https://github.com/anandsundaram-hash/abarva/pull/1543)
+**Authority:** Anand Sundaram (session execution authority)
+**O-IG recorded:** Originate spec complete; implementation green-lit
+**Unblocks:** Originate implementation (Step 8.1); Workspace anatomy (Phase 5, Step 5.1)
+
+---
+
 ## 14 · Appendices
 
 ### Appendix A — Sample Layer 1 (Anatomy) doc structure
