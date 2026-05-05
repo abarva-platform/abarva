@@ -100,7 +100,7 @@ function NavInner({ activePage, compact = false }: NavProps) {
   const navLink = (label: string, href: string, active: boolean) => (
     <a href={href} key={label} className={active ? 'abarva-nav-link abarva-nav-link--active' : 'abarva-nav-link'} style={{
       fontSize: '15px',
-      fontWeight: active ? 700 : 500,
+      fontWeight: active ? 700 : 600,
       letterSpacing: '-0.01em',
       color: active ? NAVY : NAV_TEXT,
       padding: '8px 20px', fontFamily: SANS, textDecoration: 'none', flexShrink: 0,
@@ -259,7 +259,6 @@ function NavInner({ activePage, compact = false }: NavProps) {
           <>
             {staticClientLabel()}
             {!compact && navLink('Home', '/home', homeActive)}
-            {!compact && canShow('programs') && navLink('Programs', '/programs', engagementsActive)}
             {!compact && canShow('programs') && navLink('Strategic Moves', '/strategic-moves', strategicMovesActive)}
             {!compact && canShow('source') && navLink('Source', '/source', sourceActive)}
             {!compact && canShow('intelligence') && navLink('Intelligence', intelligencePath, intelligenceActive)}
@@ -277,7 +276,6 @@ function NavInner({ activePage, compact = false }: NavProps) {
           <>
             {staticClientLabel()}
             {!compact && navLink('Home', '/home', homeActive)}
-            {!compact && canShow('programs') && navLink('Programs', '/programs', engagementsActive)}
             {!compact && canShow('programs') && navLink('Strategic Moves', '/strategic-moves', strategicMovesActive)}
             {!compact && canShow('source') && navLink('Source', '/source', sourceActive)}
             {!compact && canShow('intelligence') && navLink('Intelligence', intelligencePath, intelligenceActive)}

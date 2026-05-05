@@ -1820,6 +1820,8 @@
 @media (max-width: 1100px) {
   .detailShell {
     grid-template-columns: 1fr;
+    height: auto;
+    overflow: visible;
   }
 
   .chatPane {

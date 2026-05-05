@@ -11,6 +11,11 @@ function formatRole(role: string): string {
   return role.replace(/_/g, ' ').replace(/\b\w/g, (char) => char.toUpperCase());
 }
 
+function verifiedFallback(phase: number): string {
+  if (phase >= 5) return '\u2014 tracked (pending)';
+  return '\u2014 pending verification';
+}
+
 function primaryAction(move: StrategicMove): { label: string; href: string } {
   const { status, currentPhase, phaseLabel, id } = move;
   if (status.key === 'gate_blocked') return { label: 'Open gate review', href: `/strategic-moves/${id}?panel=gate` };
@@ -187,7 +192,7 @@ export function StrategicMoveDetailView({ move }: Props) {
                   <span className={`${styles.kvV} ${move.valueAtStake.verified ? styles.kvVGreen : ''}`}>
                     {move.valueAtStake.verified
                       ? `${move.valueAtStake.verified.amount.toLocaleString()} (${move.valueAtStake.verified.status})`
-                      : '\u2014 pending P3'}
+                      : verifiedFallback(move.currentPhase)}
                   </span>
                 </div>
               </section>
