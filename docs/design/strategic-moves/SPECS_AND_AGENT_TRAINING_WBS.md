@@ -1004,6 +1004,40 @@ Every decision made during WBS execution gets logged here. Format:
 
 ---
 
+## 13.1 · Sign-Off Log
+
+Records when each spec layer is accepted and frozen by Anand.
+
+### O-2.4 · 2026-05-05 · Originate Layer 2 State — ready for sign-off
+
+**Context:** Layer 2 State (O-2.1, O-2.2, O-2.3) drafted via PR on branch `spec/originate-l2-state`. Deliverable: `docs/design/strategic-moves/specs/originate/02-state.md`.
+**Layer status:** Draft — pending Anand review and sign-off.
+**Acceptance bar (per SPEC_METHODOLOGY.md §2.2):**
+- Every meaningful state combination has a row: PASS (22 rows including 6 edge cases)
+- Every element from Layer 1 has a column: PASS (matrix covers all state-driven elements)
+- All required edge cases are rows (EDGE-A through EDGE-E): PASS
+- No "TBD" in any cell: PASS
+- Substrate gaps logged B-104 through B-107: PASS
+**Unblocks:** O-3 (Interactions) full execution on sign-off.
+**Sign-off date:** Pending
+
+---
+
+### O-3.5 · 2026-05-05 · Originate Layer 3 Interactions — ready for sign-off
+
+**Context:** Layer 3 Interactions (O-3.1, O-3.2, O-3.3, O-3.4) drafted via PR on branch `spec/originate-l3-interactions`. Deliverable: `docs/design/strategic-moves/specs/originate/03-interactions.md`.
+**Layer status:** Draft — pending Anand review and sign-off.
+**Acceptance bar (per SPEC_METHODOLOGY.md §2.3):**
+- Every clickable from Layer 1 has a row: PASS
+- Keyboard navigation order specified end-to-end: PASS
+- URL behavior aligns with D-10: PASS
+- All loading and error states documented: PASS
+- Future phase rail nodes P1–P5 documented as non-interactive: PASS
+**Unblocks:** O-4 (Data Binding) sign-off path.
+**Sign-off date:** Pending
+
+---
+
 ## 14 · Appendices
 
 ### Appendix A — Sample Layer 1 (Anatomy) doc structure
