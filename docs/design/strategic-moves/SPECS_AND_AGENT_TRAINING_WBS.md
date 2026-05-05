@@ -1123,6 +1123,32 @@ Records when each spec layer is accepted and frozen by Anand.
 
 ---
 
+### SIGN-OFF · 2026-05-05 · W-3.7 Workspace Layer 3 frozen
+
+**Work packages signed:** W-3.1 (shell interactions) · W-3.2 (canvas interactions P0–P5) · W-3.3 (view mode variants) · W-3.4 (URL state) · W-3.5 (keyboard navigation) · W-3.6 (loading and error states)
+**PRs merged:** #1553 (W-3.1 shell) · #1554 (W-3.2 P0+P1+P2) · #1555 (W-3.2 P3+P4+P5) · [W-3.3 through W-3.6 — this commit]
+**Authority:** Anand Sundaram (session execution authority per auto-approve grant)
+**Key findings:**
+- D-10 resolution confirmed: rail clicks do NOT push URL history; only promote/attention-banner/shared-URL/portfolio-drill add `?phase=N`
+- P2 discontinue is documented as a terminal first-class outcome; promote button permanently hidden after discontinue decision
+- P3 root-cause trace is a hard requirement per doctrine; `root_causes_traced` gate item fails until every design element has at least one link
+- P4 Tower metric plan proactive prompt banner specified; triggers at mid-P4 when panel has no entries
+- P5 handoff button pre-conditions: Tower status must be `accepted` (NOT merely `acknowledged`); B-120 provisional gate still applies
+- future mode chat lane is ENABLED (user can ask Nexus preview questions); `ws-canvas-readonly-overlay` absent in future mode
+- `ws-skip-to-canvas-link` skip link specified for accessibility
+- Global shortcuts: `Cmd+K` focuses Nexus chat; `?` opens keyboard shortcut help
+**Acceptance bar:**
+- Every clickable element from Layer 1 has a corresponding interaction row: PASS
+- Keyboard equivalents specified for all interactive elements: PASS
+- URL behavior documented for all triggers (consistent with D-10): PASS
+- Loading and error treatment documented for all async operations: PASS
+- View mode constraints table covers all 4 modes × all interaction types: PASS
+- Focus management on all state transitions documented: PASS
+- ARIA roles and labels specified: PASS
+**Unblocks:** W-4.1 through W-4.8 (Workspace Layer 4 Data Binding); W-IG gating requires all 5 layers
+
+---
+
 ## 14 · Appendices
 
 ### Appendix A — Sample Layer 1 (Anatomy) doc structure
