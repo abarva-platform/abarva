@@ -1,0 +1,2115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>AbarVa · Moves User Flows</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #f5f1eb;
+  --paper: #faf7f1;
+  --cream: #efe9dd;
+  --cream-light: #faf6ec;
+  --cream-deep: #e8e1d2;
+  --ink: #000000;
+  --ink-2: #2c2c2a;
+  --gray: #888780;
+  --gray-dk: #5F5E5A;
+  --border: rgba(10, 10, 11, 0.10);
+  --border-strong: rgba(10, 10, 11, 0.24);
+
+  --blue: #0066CC;
+  --blue-dk: #0052a3;
+  --gold: #9C7B3F;
+
+  --green: #1d9e75;
+  --green-bg: #e1f5ee;
+  --amber: #ba7517;
+  --amber-bg: #faeeda;
+  --red: #a32d2d;
+  --red-bg: #fceded;
+  --navy: #0c1a3a;
+
+  --serif: Fraunces, Georgia, serif;
+  --sans: Inter, -apple-system, sans-serif;
+  --mono: 'JetBrains Mono', ui-monospace, monospace;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: var(--sans);
+  background: var(--bg);
+  color: var(--ink);
+  font-size: 14px;
+  line-height: 1.5;
+  padding: 40px 32px 80px;
+}
+
+/* Top header */
+.doc-head {
+  max-width: 1280px;
+  margin: 0 auto 32px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--border);
+}
+.doc-eyebrow {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 1.8px;
+  text-transform: uppercase;
+  font-weight: 700;
+  color: var(--gold);
+  margin-bottom: 8px;
+}
+.doc-title {
+  font-family: var(--serif);
+  font-size: 32px;
+  font-weight: 600;
+  letter-spacing: -0.6px;
+  margin-bottom: 8px;
+}
+.doc-sub {
+  font-size: 14px;
+  color: var(--gray-dk);
+  max-width: 740px;
+}
+
+/* Flow section */
+.flow {
+  max-width: 1280px;
+  margin: 0 auto 80px;
+}
+.flow-head {
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+  margin-bottom: 8px;
+}
+.flow-tag {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 1.6px;
+  text-transform: uppercase;
+  font-weight: 700;
+  color: var(--blue-dk);
+  background: var(--cream-light);
+  border: 1px solid var(--border);
+  padding: 4px 10px;
+  border-radius: 999px;
+}
+.flow-title {
+  font-family: var(--serif);
+  font-size: 24px;
+  font-weight: 600;
+  letter-spacing: -0.4px;
+}
+.flow-sub {
+  font-size: 14px;
+  color: var(--gray-dk);
+  margin-bottom: 32px;
+  max-width: 720px;
+}
+
+/* Step cascade */
+.cascade {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+.step {
+  display: grid;
+  grid-template-columns: 200px 1fr;
+  gap: 24px;
+  align-items: start;
+}
+.step-meta {
+  position: sticky;
+  top: 20px;
+  padding-top: 4px;
+}
+.step-num {
+  display: inline-block;
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 1.4px;
+  font-weight: 700;
+  color: var(--ink);
+  background: var(--cream-deep);
+  padding: 4px 10px;
+  border-radius: 4px;
+  margin-bottom: 8px;
+}
+.step-action {
+  font-family: var(--serif);
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 1.25;
+  margin-bottom: 6px;
+}
+.step-note {
+  font-size: 12px;
+  color: var(--gray-dk);
+  line-height: 1.5;
+}
+.step-arrow {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--gray);
+  margin-top: 12px;
+  letter-spacing: 1px;
+}
+
+/* Frame (the screen mockup) */
+.frame {
+  background: var(--bg);
+  border: 1px solid var(--border-strong);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+}
+.frame-chrome {
+  background: var(--cream-deep);
+  padding: 8px 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-bottom: 1px solid var(--border);
+}
+.chrome-dots {
+  display: flex;
+  gap: 6px;
+}
+.chrome-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--gray);
+  opacity: 0.4;
+}
+.chrome-url {
+  flex: 1;
+  background: var(--paper);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 4px 12px;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--gray-dk);
+  margin: 0 8px;
+}
+.frame-body {
+  padding: 0;
+  background: var(--bg);
+  min-height: 420px;
+}
+
+/* Global app nav (compact for frames) */
+.app-nav {
+  background: var(--bg);
+  padding: 10px 24px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  border-bottom: 1px solid var(--border);
+}
+.app-logo {
+  font-family: var(--serif);
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+}
+.app-logo .va { color: var(--blue); }
+.app-nav-items {
+  display: flex;
+  gap: 18px;
+  flex: 1;
+  margin-left: 16px;
+}
+.app-nav-item {
+  font-size: 13px;
+  color: var(--gray-dk);
+  font-weight: 500;
+}
+.app-nav-item.active {
+  color: var(--ink);
+  font-weight: 600;
+  border-bottom: 2px solid var(--ink);
+  padding-bottom: 4px;
+}
+.app-nav-user {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 12px;
+  color: var(--gray-dk);
+}
+.app-nav-avatar {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--blue);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+/* Page content area */
+.page {
+  padding: 24px;
+}
+.page-head {
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+  margin-bottom: 18px;
+}
+.page-title {
+  font-family: var(--serif);
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.4px;
+}
+.btn {
+  font-family: var(--sans);
+  font-size: 12px;
+  font-weight: 600;
+  padding: 8px 14px;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.btn-primary { background: var(--ink); color: var(--paper); }
+.btn-primary.disabled { opacity: 0.4; cursor: not-allowed; }
+.btn-ghost { background: transparent; color: var(--ink); border: 1px solid var(--border-strong); }
+.spacer { flex: 1; }
+
+/* KPI strip */
+.kpi-strip {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 24px;
+  padding: 16px 0;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 18px;
+}
+.kpi {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+.kpi-num {
+  font-family: var(--serif);
+  font-size: 26px;
+  font-weight: 700;
+  line-height: 1;
+}
+.kpi-num.amber { color: var(--amber); }
+.kpi-num.green { color: var(--green); }
+.kpi-label {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 1.4px;
+  text-transform: uppercase;
+  color: var(--gray);
+  font-weight: 600;
+}
+
+/* Need Attention banner */
+.attention-banner {
+  background: var(--cream-light);
+  border: 1px solid var(--amber);
+  border-left-width: 4px;
+  border-radius: 8px;
+  padding: 14px 16px;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+}
+.attention-banner.glow {
+  box-shadow: 0 0 0 3px rgba(186, 117, 23, 0.18);
+}
+.attention-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--amber-bg);
+  color: var(--amber);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 14px;
+}
+.attention-body { flex: 1; }
+.attention-title {
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 2px;
+}
+.attention-meta {
+  font-family: var(--mono);
+  font-size: 9.5px;
+  letter-spacing: 1.2px;
+  color: var(--gray-dk);
+  text-transform: uppercase;
+  font-weight: 600;
+}
+.attention-arrow {
+  color: var(--gray-dk);
+  font-size: 14px;
+}
+
+/* Cards grid */
+.cards-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+.move-card {
+  background: var(--cream);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 14px 16px;
+  cursor: pointer;
+  transition: all 150ms;
+}
+.move-card:hover {
+  border-color: var(--ink);
+}
+.move-card.selected {
+  border-color: var(--ink);
+  border-width: 2px;
+  padding: 13px 15px;
+}
+.card-eyebrow {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 1.3px;
+  text-transform: uppercase;
+  color: var(--gray);
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+.card-title {
+  font-family: var(--serif);
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.3;
+  margin-bottom: 8px;
+}
+.card-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11.5px;
+  color: var(--gray-dk);
+  margin-bottom: 6px;
+}
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+.status-dot.green { background: var(--green); }
+.status-dot.amber { background: var(--amber); }
+.status-dot.red { background: var(--red); }
+.card-value {
+  font-size: 11.5px;
+  color: var(--gray-dk);
+}
+.card-value strong { color: var(--ink); font-weight: 600; }
+
+/* Move identity in workspace */
+.move-identity {
+  background: var(--cream-light);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 16px 20px;
+  margin-bottom: 14px;
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+}
+.mi-left { flex: 1; }
+.mi-breadcrumb {
+  font-family: var(--mono);
+  font-size: 9.5px;
+  letter-spacing: 1.4px;
+  text-transform: uppercase;
+  color: var(--gray-dk);
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+.mi-title {
+  font-family: var(--serif);
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1.25;
+  margin-bottom: 4px;
+}
+.mi-meta {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  color: var(--gray);
+  font-weight: 600;
+}
+.mi-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 5px 10px;
+  border-radius: 999px;
+  background: var(--green-bg);
+  color: var(--green);
+}
+.mi-status.amber { background: var(--amber-bg); color: var(--amber); }
+.mi-status.red { background: var(--red-bg); color: var(--red); }
+
+/* Phase rail */
+.rail {
+  background: var(--cream-light);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 16px 20px 14px;
+  margin-bottom: 14px;
+}
+.rail-track {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+}
+.rail-line {
+  position: absolute;
+  left: 8%;
+  right: 8%;
+  top: 12px;
+  height: 2px;
+  background: var(--border);
+  z-index: 0;
+}
+.rail-line-done {
+  position: absolute;
+  left: 8%;
+  top: 12px;
+  height: 2px;
+  background: var(--ink);
+  z-index: 1;
+}
+.phase-node {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.phase-dot {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--cream-light);
+  border: 1.5px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--mono);
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--gray-dk);
+}
+.phase-node.done .phase-dot { background: var(--ink); border-color: var(--ink); color: var(--paper); }
+.phase-node.current .phase-dot {
+  background: var(--blue);
+  border-color: var(--blue);
+  color: white;
+  box-shadow: 0 0 0 4px rgba(0,102,204,0.18);
+}
+.phase-node.current.attention .phase-dot {
+  background: var(--amber);
+  border-color: var(--amber);
+  box-shadow: 0 0 0 4px rgba(186, 117, 23, 0.22);
+}
+.phase-node.future .phase-dot {
+  border-style: dashed;
+  color: var(--gray);
+}
+.phase-node.selected:not(.current) .phase-dot {
+  border-color: var(--ink);
+  border-width: 2px;
+  box-shadow: 0 0 0 3px rgba(0,0,0,0.08);
+}
+.phase-name {
+  margin-top: 6px;
+  font-family: var(--mono);
+  font-size: 8.5px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--gray-dk);
+  font-weight: 600;
+  text-align: center;
+}
+.phase-node.current .phase-name { color: var(--blue-dk); font-weight: 700; }
+.phase-node.current.attention .phase-name { color: var(--amber); font-weight: 700; }
+
+/* Workspace shell */
+.ws-shell {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  gap: 12px;
+}
+.chat-pane {
+  background: var(--navy);
+  color: var(--paper);
+  border-radius: 10px;
+  padding: 14px;
+  min-height: 320px;
+}
+.chat-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+.chat-avatar {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.12);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  color: white;
+}
+.chat-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: white;
+}
+.chat-status {
+  font-family: var(--mono);
+  font-size: 8.5px;
+  letter-spacing: 1.2px;
+  color: rgba(255,255,255,0.6);
+  text-transform: uppercase;
+  font-weight: 600;
+}
+.bubble {
+  background: rgba(255,255,255,0.08);
+  border-radius: 8px;
+  padding: 10px 12px;
+  margin-bottom: 8px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: rgba(255,255,255,0.92);
+}
+.bubble strong { color: white; }
+.suggested-row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 12px;
+}
+.prompt-chip {
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 6px;
+  padding: 7px 10px;
+  font-size: 11px;
+  color: rgba(255,255,255,0.85);
+  text-align: left;
+  cursor: pointer;
+}
+
+/* Canvas */
+.canvas-pane {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.panel {
+  background: var(--cream);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 14px 16px;
+}
+.panel-eyebrow {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 1.4px;
+  text-transform: uppercase;
+  color: var(--gray);
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+.panel-title {
+  font-family: var(--serif);
+  font-size: 16px;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+.panel-intent {
+  font-size: 12.5px;
+  color: var(--gray-dk);
+  line-height: 1.5;
+}
+
+/* Gate */
+.gate-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+.gate-counter {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 1.2px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 4px;
+  background: var(--amber-bg);
+  color: var(--amber);
+}
+.gate-counter.green { background: var(--green-bg); color: var(--green); }
+.gate-counter.muted { background: var(--cream-deep); color: var(--gray-dk); }
+.crit-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.crit-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 12px;
+  line-height: 1.4;
+}
+.crit-check {
+  width: 16px;
+  height: 16px;
+  border: 1.5px solid var(--border-strong);
+  border-radius: 4px;
+  flex-shrink: 0;
+  margin-top: 1px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+}
+.crit-check.done { background: var(--green); border-color: var(--green); color: white; }
+.crit-text {
+  flex: 1;
+  color: var(--ink);
+}
+.crit-text.done {
+  color: var(--gray-dk);
+  text-decoration: line-through;
+  text-decoration-color: var(--gray);
+}
+.crit-blocker {
+  font-family: var(--mono);
+  font-size: 9.5px;
+  color: var(--amber);
+  letter-spacing: 1px;
+  font-weight: 600;
+  margin-top: 2px;
+}
+
+/* Promote action */
+.promote {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+}
+.promote-helper {
+  font-size: 11.5px;
+  color: var(--gray-dk);
+}
+.promote-helper.amber { color: var(--amber); }
+.promote-helper.green { color: var(--green); font-weight: 600; }
+
+/* Originate scaffold list */
+.scaffold-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(255,255,255,0.1);
+}
+.scaffold-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 0;
+  font-size: 11px;
+}
+.scaffold-step {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.18);
+  font-family: var(--mono);
+  font-size: 9px;
+  font-weight: 700;
+  color: rgba(255,255,255,0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.scaffold-item.done .scaffold-step {
+  background: var(--green);
+  border-color: var(--green);
+  color: white;
+}
+.scaffold-item.active .scaffold-step {
+  background: var(--blue);
+  border-color: var(--blue);
+  color: white;
+  box-shadow: 0 0 0 3px rgba(0,102,204,0.25);
+}
+.scaffold-name {
+  flex: 1;
+  color: rgba(255,255,255,0.92);
+}
+.scaffold-meta {
+  font-family: var(--mono);
+  font-size: 9px;
+  color: rgba(255,255,255,0.55);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+/* Brief sections (Originate canvas) */
+.brief-section {
+  background: var(--cream);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px 14px;
+  margin-bottom: 8px;
+}
+.brief-section.active {
+  border-color: var(--blue);
+  background: var(--cream-light);
+}
+.brief-section.empty {
+  background: var(--cream-deep);
+  opacity: 0.7;
+}
+.brief-section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+.brief-section-title {
+  font-family: var(--mono);
+  font-size: 9.5px;
+  letter-spacing: 1.3px;
+  text-transform: uppercase;
+  font-weight: 700;
+  color: var(--ink);
+}
+.brief-section.empty .brief-section-title {
+  color: var(--gray-dk);
+}
+.brief-state {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 1px;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: 4px;
+  background: var(--green-bg);
+  color: var(--green);
+  text-transform: uppercase;
+}
+.brief-state.amber { background: var(--amber-bg); color: var(--amber); }
+.brief-state.muted { background: var(--cream-deep); color: var(--gray-dk); }
+.brief-state.blue { background: rgba(0,102,204,0.12); color: var(--blue-dk); }
+.brief-content {
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--gray-dk);
+}
+.brief-content strong { color: var(--ink); }
+
+/* Banner — viewing state */
+.view-banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  background: var(--cream-deep);
+  border-radius: 8px;
+  margin-bottom: 10px;
+  font-size: 11.5px;
+  color: var(--gray-dk);
+}
+.view-banner.success {
+  background: var(--green-bg);
+  color: var(--green);
+}
+.view-banner-link {
+  margin-left: auto;
+  font-family: var(--mono);
+  font-size: 9.5px;
+  letter-spacing: 1.2px;
+  font-weight: 700;
+  color: var(--blue-dk);
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+/* Click indicator overlay (highlights what user clicks) */
+.click-target {
+  position: relative;
+}
+.click-target::after {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border: 2px dashed var(--blue);
+  border-radius: 10px;
+  pointer-events: none;
+  animation: pulse 1.6s ease-in-out infinite;
+}
+.click-target.amber::after { border-color: var(--amber); }
+.click-target.green::after { border-color: var(--green); }
+@keyframes pulse {
+  0%, 100% { opacity: 0.7; }
+  50% { opacity: 1; }
+}
+
+/* Annotation tag inside frame */
+.annotation {
+  position: absolute;
+  background: var(--ink);
+  color: var(--paper);
+  font-family: var(--mono);
+  font-size: 9.5px;
+  letter-spacing: 1px;
+  font-weight: 700;
+  text-transform: uppercase;
+  padding: 5px 9px;
+  border-radius: 4px;
+  z-index: 10;
+  pointer-events: none;
+}
+
+/* Empty state for bottom of canvas */
+.celebration {
+  background: linear-gradient(135deg, var(--green-bg) 0%, var(--cream-light) 100%);
+  border: 1px solid var(--green);
+  border-radius: 10px;
+  padding: 24px;
+  text-align: center;
+}
+.celebration-eyebrow {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 1.6px;
+  text-transform: uppercase;
+  font-weight: 700;
+  color: var(--green);
+  margin-bottom: 8px;
+}
+.celebration-title {
+  font-family: var(--serif);
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.4px;
+  margin-bottom: 8px;
+}
+.celebration-body {
+  font-size: 13px;
+  color: var(--gray-dk);
+  line-height: 1.5;
+  max-width: 440px;
+  margin: 0 auto;
+}
+.celebration-meta {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 1.4px;
+  color: var(--gray-dk);
+  text-transform: uppercase;
+  font-weight: 600;
+  margin-top: 12px;
+}
+
+/* Section divider between flows */
+.flow-divider {
+  max-width: 1280px;
+  margin: 0 auto 80px;
+  height: 1px;
+  background: var(--border-strong);
+}
+
+/* Footer notes */
+.footer-note {
+  max-width: 1280px;
+  margin: 40px auto 0;
+  padding-top: 24px;
+  border-top: 1px solid var(--border);
+  font-size: 12px;
+  color: var(--gray-dk);
+  line-height: 1.6;
+}
+.footer-note strong { color: var(--ink); }
+</style>
+</head>
+<body>
+
+<!-- ─────────────────── DOC HEAD ─────────────────── -->
+<div class="doc-head">
+  <div class="doc-eyebrow">AbarVa · Strategic Moves · User Flow Cascade · v0.1</div>
+  <h1 class="doc-title">How a user moves through Moves</h1>
+  <p class="doc-sub">Two flows shown step-by-step. Each frame is a screen the user sees. Each step shows what they clicked, where they land, and what changes. The dashed blue outline shows what to focus on in each frame.</p>
+</div>
+
+<!-- ═════════════════════════════════════════════════════════════════════ -->
+<!-- FLOW 1 — User comes in, acts on a Move stuck at P2, completes phases  -->
+<!-- ═════════════════════════════════════════════════════════════════════ -->
+
+<div class="flow">
+  <div class="flow-head">
+    <span class="flow-tag">Flow 1</span>
+    <span class="flow-title">Maya logs in to act on a Move stuck at P2 — and walks it through to handoff</span>
+  </div>
+  <p class="flow-sub">The most common day-1 user pattern: a sponsor or lead arrives with limited time, finds the one Move that needs attention, works the gate, and hands off when ready. Every step happens within the same Move workspace; phase navigation is internal — no page jumps.</p>
+
+  <div class="cascade">
+
+    <!-- STEP 1 — Land on dashboard -->
+    <div class="step">
+      <div class="step-meta">
+        <div class="step-num">Step 1 · Landing</div>
+        <div class="step-action">Maya lands on Strategic Moves dashboard</div>
+        <div class="step-note">She sees her portfolio at a glance. The "2 Need Attention" indicator is the most prominent signal — Nexus has flagged moves that need her decision today.</div>
+        <div class="step-arrow">↓ she clicks the top Need-Attention banner</div>
+      </div>
+      <div class="frame">
+        <div class="frame-chrome">
+          <div class="chrome-dots"><span class="chrome-dot"></span><span class="chrome-dot"></span><span class="chrome-dot"></span></div>
+          <div class="chrome-url">app.abarva.ai/strategic-moves</div>
+        </div>
+        <div class="frame-body">
+          <div class="app-nav">
+            <div class="app-logo">Abar<span class="va">Va</span></div>
+            <div class="app-nav-items">
+              <div class="app-nav-item">Home</div>
+              <div class="app-nav-item">Setup</div>
+              <div class="app-nav-item active">Strategic Moves</div>
+              <div class="app-nav-item">Source</div>
+              <div class="app-nav-item">Intelligence</div>
+              <div class="app-nav-item">Tower</div>
+              <div class="app-nav-item">Learn</div>
+            </div>
+            <div class="app-nav-user">
+              <span>Maya Desai</span>
+              <div class="app-nav-avatar">MD</div>
+            </div>
+          </div>
+          <div class="page">
+            <div class="page-head">
+              <div class="page-title">Strategic Moves</div>
+              <div class="spacer"></div>
+              <button class="btn btn-primary">+ New Move</button>
+            </div>
+            <div class="kpi-strip">
+              <div class="kpi"><span class="kpi-num">21</span><span class="kpi-label">Moves</span></div>
+              <div class="kpi"><span class="kpi-num amber">2</span><span class="kpi-label">Need Attention</span></div>
+              <div class="kpi"><span class="kpi-num green">17</span><span class="kpi-label">On Track</span></div>
+              <div class="kpi"><span class="kpi-num">$388M</span><span class="kpi-label">At Stake</span></div>
+            </div>
+
+            <div class="attention-banner glow click-target amber">
+              <div class="attention-icon">!</div>
+              <div class="attention-body">
+                <div class="attention-title">Healthcare Data Analytics Modernization · Stuck at P2 · Baseline lock pending finance signoff</div>
+                <div class="attention-meta">RETAIL-AMS-2026 · 11 days at gate · K. Oshima awaiting input</div>
+              </div>
+              <div class="attention-arrow">→</div>
+            </div>
+            <div class="attention-banner">
+              <div class="attention-icon" style="background:var(--red-bg); color:var(--red)">!</div>
+              <div class="attention-body">
+                <div class="attention-title">AMS Consolidation Renewal · P3 design decision overdue</div>
+                <div class="attention-meta">RETAIL-AMS-2026 · sponsor blocked on vendor scoring</div>
+              </div>
+              <div class="attention-arrow">→</div>
+            </div>
+
+            <div style="font-family: var(--mono); font-size: 10px; letter-spacing: 1.4px; color: var(--gray); font-weight: 600; margin: 20px 0 10px;">PORTFOLIO · 21 MOVES · ALL TENANTS</div>
+            <div class="cards-grid">
+              <div class="move-card">
+                <div class="card-eyebrow">RETAIL-SUPPLY-2026 · PLATFORM MOD</div>
+                <div class="card-title">Supply Chain Control Tower</div>
+                <div class="card-meta"><span class="status-dot green"></span>On track · P0 Originate</div>
+                <div class="card-value">Sponsor: <strong>S. Chen</strong> · Value: <strong>$21M projected</strong></div>
+              </div>
+              <div class="move-card">
+                <div class="card-eyebrow">RETAIL-UNIFIED-2026 · STRATEGIC TRANS</div>
+                <div class="card-title">Unified Customer Data Platform</div>
+                <div class="card-meta"><span class="status-dot green"></span>On track · P1 Charter</div>
+                <div class="card-value">Sponsor: <strong>S. Chen</strong> · Value: <strong>$30M projected</strong></div>
+              </div>
+              <div class="move-card">
+                <div class="card-eyebrow">RETAIL-DEMAND-2026 · WORKFLOW AUTO</div>
+                <div class="card-title">Demand Forecasting Modernization</div>
+                <div class="card-meta"><span class="status-dot green"></span>On track · P2 Diagnose</div>
+                <div class="card-value">Sponsor: <strong>J. Park</strong> · Value: <strong>$13M projected</strong></div>
+              </div>
+              <div class="move-card">
+                <div class="card-eyebrow">RETAIL-RETURNS-2026 · AI ENABLEMENT</div>
+                <div class="card-title">Returns Fraud Detection</div>
+                <div class="card-meta"><span class="status-dot green"></span>On track · P3 Design</div>
+                <div class="card-value">Sponsor: <strong>M. Delgado</strong> · Value: <strong>$9M projected</strong></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 2 — Lands in Workspace at P2 -->
+    <div class="step">
+      <div class="step-meta">
+        <div class="step-num">Step 2 · Workspace opens</div>
+        <div class="step-action">Workspace opens at P2 — the phase needing attention</div>
+        <div class="step-note">URL changed to <code style="font-family:var(--mono); font-size:11px">.../healthcare-data-analytics</code>. Same window, no full page reload feel. The phase rail shows P2 is current, with the amber glow signaling attention. Nexus has loaded with the blocker context.</div>
+        <div class="step-arrow">↓ she reads Nexus and clicks the missing gate criterion</div>
+      </div>
+      <div class="frame">
+        <div class="frame-chrome">
+          <div class="chrome-dots"><span class="chrome-dot"></span><span class="chrome-dot"></span><span class="chrome-dot"></span></div>
+          <div class="chrome-url">app.abarva.ai/strategic-moves/healthcare-data-analytics</div>
+        </div>
+        <div class="frame-body">
+          <div class="app-nav">
+            <div class="app-logo">Abar<span class="va">Va</span></div>
+            <div class="app-nav-items">
+              <div class="app-nav-item">Home</div>
+              <div class="app-nav-item">Setup</div>
+              <div class="app-nav-item active">Strategic Moves</div>
+              <div class="app-nav-item">Source</div>
+              <div class="app-nav-item">Intelligence</div>
+              <div class="app-nav-item">Tower</div>
+              <div class="app-nav-item">Learn</div>
+            </div>
+            <div class="app-nav-user">
+              <span>Maya Desai</span>
+              <div class="app-nav-avatar">MD</div>
+            </div>
+          </div>
+          <div class="page">
+            <div class="move-identity">
+              <div class="mi-left">
+                <div class="mi-breadcrumb">STRATEGIC MOVES › MERIDIAN HEALTH › MER-HDA-2026</div>
+                <div class="mi-title">Healthcare Data Analytics Modernization</div>
+                <div class="mi-meta">PLATFORM MODERNIZATION · SPONSOR: K. OSHIMA · LEAD: E. RIVERA</div>
+              </div>
+              <div class="mi-status amber"><span class="status-dot amber"></span>Awaiting decision</div>
+            </div>
+
+            <div class="rail">
+              <div class="rail-track">
+                <div class="rail-line"></div>
+                <div class="rail-line-done" style="width: calc((100% - 16%) * (2/5));"></div>
+                <div class="phase-node done"><div class="phase-dot">P0</div><div class="phase-name">Originate</div></div>
+                <div class="phase-node done"><div class="phase-dot">P1</div><div class="phase-name">Charter</div></div>
+                <div class="phase-node current attention selected"><div class="phase-dot">P2</div><div class="phase-name">Diagnose</div></div>
+                <div class="phase-node future"><div class="phase-dot">P3</div><div class="phase-name">Design</div></div>
+                <div class="phase-node future"><div class="phase-dot">P4</div><div class="phase-name">Plan</div></div>
+                <div class="phase-node future"><div class="phase-dot">P5</div><div class="phase-name">Mobilize</div></div>
+              </div>
+            </div>
+
+            <div class="ws-shell">
+              <div class="chat-pane">
+                <div class="chat-head">
+                  <div class="chat-avatar">✦</div>
+                  <div>
+                    <div class="chat-name">Nexus</div>
+                    <div class="chat-status">Scoped · MER-HDA · P2</div>
+                  </div>
+                </div>
+                <div class="bubble">P2 has been at gate for <strong>11 days</strong>. Four of five gate criteria are met. The hold is on <strong>finance signoff of the locked baseline</strong>.</div>
+                <div class="bubble">M. Delgado from Finance has the baseline pack but hasn't signed. Want me to draft a 2-line follow-up note to her, or summarize what's in the baseline so you can decide if it's ready?</div>
+                <div class="suggested-row">
+                  <button class="prompt-chip">Draft a follow-up to M. Delgado</button>
+                  <button class="prompt-chip">Show me what's in the baseline pack</button>
+                  <button class="prompt-chip">What signoff format does Finance need?</button>
+                </div>
+              </div>
+
+              <div class="canvas-pane">
+                <div class="panel">
+                  <div class="panel-eyebrow">P2 · PHASE INTENT</div>
+                  <div class="panel-title">Discover &amp; Diagnose</div>
+                  <div class="panel-intent">Lock current-state baseline with auditable evidence. Diagnostic findings, baseline metrics, and root-cause analysis signed by sponsor and finance partner.</div>
+                </div>
+
+                <div class="panel">
+                  <div class="gate-head">
+                    <div class="panel-eyebrow">Gate criteria · P2 → P3</div>
+                    <div class="gate-counter">4 / 5 met</div>
+                  </div>
+                  <ul class="crit-list">
+                    <li class="crit-item"><div class="crit-check done">✓</div><div class="crit-text done">Process map complete and validated by ops owner</div></li>
+                    <li class="crit-item"><div class="crit-check done">✓</div><div class="crit-text done">Root causes identified with evidence chain</div></li>
+                    <li class="crit-item"><div class="crit-check done">✓</div><div class="crit-text done">Pain points registered and ranked</div></li>
+                    <li class="crit-item"><div class="crit-check done">✓</div><div class="crit-text done">Hypotheses re-confirmed against findings</div></li>
+                    <li class="crit-item click-target amber"><div class="crit-check"></div><div class="crit-text">Financial baseline locked and signed by finance<div class="crit-blocker">Pending · M. Delgado · 11 days at gate</div></div></li>
+                  </ul>
+                  <div class="promote">
+                    <button class="btn btn-primary disabled">Promote to P3 Design →</button>
+                    <span class="promote-helper amber">1 criterion remaining · Finance signoff blocking</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 3 — Maya acts: drafts message, gets signoff -->
+    <div class="step">
+      <div class="step-meta">
+        <div class="step-num">Step 3 · Action</div>
+        <div class="step-action">Maya drafts the follow-up via Nexus, sends, gets signoff back the same day</div>
+        <div class="step-note">She didn't have to leave the workspace. Nexus drafted, she edited two lines, sent. Six hours later M. Delgado signs. The gate criterion flips to met. The "Promote" button activates.</div>
+        <div class="step-arrow">↓ she clicks Promote to P3 Design</div>
+      </div>
+      <div class="frame">
+        <div class="frame-chrome">
+          <div class="chrome-dots"><span class="chrome-dot"></span><span class="chrome-dot"></span><span class="chrome-dot"></span></div>
+          <div class="chrome-url">app.abarva.ai/strategic-moves/healthcare-data-analytics</div>
+        </div>
+        <div class="frame-body">
+          <div class="app-nav">
+            <div class="app-logo">Abar<span class="va">Va</span></div>
+            <div class="app-nav-items">
+              <div class="app-nav-item">Home</div>
+              <div class="app-nav-item">Setup</div>
+              <div class="app-nav-item active">Strategic Moves</div>
+              <div class="app-nav-item">Source</div>
+              <div class="app-nav-item">Intelligence</div>
+              <div class="app-nav-item">Tower</div>
+              <div class="app-nav-item">Learn</div>
+            </div>
+            <div class="app-nav-user">
+              <span>Maya Desai</span>
+              <div class="app-nav-avatar">MD</div>
+            </div>
+          </div>
+          <div class="page">
+            <div class="move-identity">
+              <div class="mi-left">
+                <div class="mi-breadcrumb">STRATEGIC MOVES › MERIDIAN HEALTH › MER-HDA-2026</div>
+                <div class="mi-title">Healthcare Data Analytics Modernization</div>
+                <div class="mi-meta">PLATFORM MODERNIZATION · SPONSOR: K. OSHIMA · LEAD: E. RIVERA</div>
+              </div>
+              <div class="mi-status"><span class="status-dot green"></span>Gate ready</div>
+            </div>
+
+            <div class="rail">
+              <div class="rail-track">
+                <div class="rail-line"></div>
+                <div class="rail-line-done" style="width: calc((100% - 16%) * (2/5));"></div>
+                <div class="phase-node done"><div class="phase-dot">P0</div><div class="phase-name">Originate</div></div>
+                <div class="phase-node done"><div class="phase-dot">P1</div><div class="phase-name">Charter</div></div>
+                <div class="phase-node current selected"><div class="phase-dot">P2</div><div class="phase-name">Diagnose</div></div>
+                <div class="phase-node future"><div class="phase-dot">P3</div><div class="phase-name">Design</div></div>
+                <div class="phase-node future"><div class="phase-dot">P4</div><div class="phase-name">Plan</div></div>
+                <div class="phase-node future"><div class="phase-dot">P5</div><div class="phase-name">Mobilize</div></div>
+              </div>
+            </div>
+
+            <div class="ws-shell">
+              <div class="chat-pane">
+                <div class="chat-head">
+                  <div class="chat-avatar">✦</div>
+                  <div>
+                    <div class="chat-name">Nexus</div>
+                    <div class="chat-status">Scoped · MER-HDA · P2</div>
+                  </div>
+                </div>
+                <div class="bubble" style="background: rgba(29, 158, 117, 0.18); border-left: 3px solid var(--green);"><strong>Update:</strong> M. Delgado signed off on the baseline 6 hours ago. All 5 P2 gate criteria are now met. P2 is ready to close.</div>
+                <div class="bubble">P3 Design Future State is the next phase. The bet calls for an agentic clinical workflow — I can pre-load architecture patterns and pre-mortem templates the moment you promote.</div>
+                <div class="suggested-row">
+                  <button class="prompt-chip">Show me the P3 entry checklist</button>
+                  <button class="prompt-chip">Who needs to be in the design workshop?</button>
+                </div>
+              </div>
+
+              <div class="canvas-pane">
+                <div class="panel">
+                  <div class="panel-eyebrow">P2 · PHASE INTENT</div>
+                  <div class="panel-title">Discover &amp; Diagnose</div>
+                  <div class="panel-intent">Lock current-state baseline with auditable evidence. Diagnostic findings, baseline metrics, and root-cause analysis signed by sponsor and finance partner.</div>
+                </div>
+
+                <div class="panel">
+                  <div class="gate-head">
+                    <div class="panel-eyebrow">Gate criteria · P2 → P3</div>
+                    <div class="gate-counter green">5 / 5 met</div>
+                  </div>
+                  <ul class="crit-list">
+                    <li class="crit-item"><div class="crit-check done">✓</div><div class="crit-text done">Process map complete and validated by ops owner</div></li>
+                    <li class="crit-item"><div class="crit-check done">✓</div><div class="crit-text done">Root causes identified with evidence chain</div></li>
+                    <li class="crit-item"><div class="crit-check done">✓</div><div class="crit-text done">Pain points registered and ranked</div></li>
+                    <li class="crit-item"><div class="crit-check done">✓</div><div class="crit-text done">Hypotheses re-confirmed against findings</div></li>
+                    <li class="crit-item"><div class="crit-check done">✓</div><div class="crit-text done">Financial baseline locked and signed by finance<div class="crit-blocker" style="color:var(--green)">Signed M. Delgado · 6 hours ago</div></div></li>
+                  </ul>
+                  <div class="promote">
+                    <div class="click-target green" style="padding:0; border-radius:6px;">
+                      <button class="btn btn-primary">Promote to P3 Design →</button>
+                    </div>
+                    <span class="promote-helper green">All criteria met · ready to advance</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 4 — Promoted to P3 -->
+    <div class="step">
+      <div class="step-meta">
+        <div class="step-num">Step 4 · Phase advance</div>
+        <div class="step-action">Move advances to P3. Same workspace, canvas swaps to P3 view.</div>
+        <div class="step-note">P2 node fills with ink (closed). P3 lights up blue (current). Nexus immediately re-scopes to P3 context — loads design patterns, suggests workshop attendees, drafts decision memo skeleton. The team works the design phase over the following weeks.</div>
+        <div class="step-arrow">↓ time passes — phases advance one by one</div>
+      </div>
+      <div class="frame">
+        <div class="frame-chrome">
+          <div class="chrome-dots"><span class="chrome-dot"></span><span class="chrome-dot"></span><span class="chrome-dot"></span></div>
+          <div class="chrome-url">app.abarva.ai/strategic-moves/healthcare-data-analytics</div>
+        </div>
+        <div class="frame-body">
+          <div class="app-nav">
+            <div class="app-logo">Abar<span class="va">Va</span></div>
+            <div class="app-nav-items">
+              <div class="app-nav-item">Home</div>
+              <div class="app-nav-item">Setup</div>
+              <div class="app-nav-item active">Strategic Moves</div>
+              <div class="app-nav-item">Source</div>
+              <div class="app-nav-item">Intelligence</div>
+              <div class="app-nav-item">Tower</div>
+              <div class="app-nav-item">Learn</div>
+            </div>
+            <div class="app-nav-user">
+              <span>Maya Desai</span>
+              <div class="app-nav-avatar">MD</div>
+            </div>
+          </div>
+          <div class="page">
+            <div class="move-identity">
+              <div class="mi-left">
+                <div class="mi-breadcrumb">STRATEGIC MOVES › MERIDIAN HEALTH › MER-HDA-2026</div>
+                <div class="mi-title">Healthcare Data Analytics Modernization</div>
+                <div class="mi-meta">PLATFORM MODERNIZATION · SPONSOR: K. OSHIMA · LEAD: E. RIVERA</div>
+              </div>
+              <div class="mi-status"><span class="status-dot green"></span>On track</div>
+            </div>
+
+            <div class="rail">
+              <div class="rail-track">
+                <div class="rail-line"></div>
+                <div class="rail-line-done" style="width: calc((100% - 16%) * (3/5));"></div>
+                <div class="phase-node done"><div class="phase-dot">P0</div><div class="phase-name">Originate</div></div>
+                <div class="phase-node done"><div class="phase-dot">P1</div><div class="phase-name">Charter</div></div>
+                <div class="phase-node done"><div class="phase-dot">P2</div><div class="phase-name">Diagnose</div></div>
+                <div class="phase-node current selected"><div class="phase-dot">P3</div><div class="phase-name">Design</div></div>
+                <div class="phase-node future"><div class="phase-dot">P4</div><div class="phase-name">Plan</div></div>
+                <div class="phase-node future"><div class="phase-dot">P5</div><div class="phase-name">Mobilize</div></div>
+              </div>
+            </div>
+
+            <div class="view-banner success">
+              <span style="font-weight:700;">✓</span>
+              <span>P2 closed · advanced to P3 Design Future State · Nexus has rescoped</span>
+            </div>
+
+            <div class="ws-shell">
+              <div class="chat-pane">
+                <div class="chat-head">
+                  <div class="chat-avatar">✦</div>
+                  <div>
+                    <div class="chat-name">Nexus</div>
+                    <div class="chat-status">Scoped · MER-HDA · P3</div>
+                  </div>
+                </div>
+                <div class="bubble">P3 Design Future State entered. Bet calls for agentic clinical workflow — I've loaded <strong>3 architecture patterns</strong> from prior healthcare deployments and the AI risk-review template.</div>
+                <div class="bubble">First decision: <strong>architecture-first build</strong> or <strong>vendor evaluation</strong> path? The diagnosis pointed at MDM gap (F2) — that argues for vendor-led if a platform already solves it.</div>
+                <div class="suggested-row">
+                  <button class="prompt-chip">Compare architecture-first vs vendor-led</button>
+                  <button class="prompt-chip">Pull vendor matrix template</button>
+                  <button class="prompt-chip">Schedule architecture review workshop</button>
+                </div>
+              </div>
+
+              <div class="canvas-pane">
+                <div class="panel">
+                  <div class="panel-eyebrow">P3 · PHASE INTENT</div>
+                  <div class="panel-title">Design Future State</div>
+                  <div class="panel-intent">Convert diagnosis into a signed decision. Target architecture, business case, decision memo for sponsor + CFO.</div>
+                </div>
+                <div class="panel">
+                  <div class="gate-head">
+                    <div class="panel-eyebrow">Gate criteria · P3 → P4</div>
+                    <div class="gate-counter muted">0 / 5 · just entered</div>
+                  </div>
+                  <ul class="crit-list">
+                    <li class="crit-item"><div class="crit-check"></div><div class="crit-text">Target architecture approved by tech leadership</div></li>
+                    <li class="crit-item"><div class="crit-check"></div><div class="crit-text">Business case validated by finance</div></li>
+                    <li class="crit-item"><div class="crit-check"></div><div class="crit-text">Decision memo signed by sponsor + CFO</div></li>
+                    <li class="crit-item"><div class="crit-check"></div><div class="crit-text">Vendor selection finalized (if applicable)</div></li>
+                    <li class="crit-item"><div class="crit-check"></div><div class="crit-text">AI risk review complete</div></li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 5 — Now at P5 Mobilize, ready to handoff -->
+    <div class="step">
+      <div class="step-meta">
+        <div class="step-num">Step 5 · Last gate</div>
+        <div class="step-action">Weeks later — Move is at P5 Mobilize, all gates met, ready to hand off to Tower</div>
+        <div class="step-note">Maya jumps to this Move once she sees the "Ready to handoff" indicator. P3 and P4 closed cleanly. Mobilization is complete: SI onboarded, governance live, value tracking configured. Final action: hand off to Control Tower.</div>
+        <div class="step-arrow">↓ she clicks the final Promote — Hand off to Tower</div>
+      </div>
+      <div class="frame">
+        <div class="frame-chrome">
+          <div class="chrome-dots"><span class="chrome-dot"></span><span class="chrome-dot"></span><span class="chrome-dot"></span></div>
+          <div class="chrome-url">app.abarva.ai/strategic-moves/healthcare-data-analytics</div>
+        </div>
+        <div class="frame-body">
+          <div class="app-nav">
+            <div class="app-logo">Abar<span class="va">Va</span></div>
+            <div class="app-nav-items">
+              <div class="app-nav-item">Home</div>
+              <div class="app-nav-item">Setup</div>
+              <div class="app-nav-item active">Strategic Moves</div>
+              <div class="app-nav-item">Source</div>
+              <div class="app-nav-item">Intelligence</div>
+              <div class="app-nav-item">Tower</div>
+              <div class="app-nav-item">Learn</div>
+            </div>
+            <div class="app-nav-user">
+              <span>Maya Desai</span>
+              <div class="app-nav-avatar">MD</div>
+            </div>
+          </div>
+          <div class="page">
+            <div class="move-identity">
+              <div class="mi-left">
+                <div class="mi-breadcrumb">STRATEGIC MOVES › MERIDIAN HEALTH › MER-HDA-2026</div>
+                <div class="mi-title">Healthcare Data Analytics Modernization</div>
+                <div class="mi-meta">PLATFORM MODERNIZATION · SPONSOR: K. OSHIMA · LEAD: E. RIVERA</div>
+              </div>
+              <div class="mi-status"><span class="status-dot green"></span>Ready to handoff</div>
+            </div>
+
+            <div class="rail">
+              <div class="rail-track">
+                <div class="rail-line"></div>
+                <div class="rail-line-done" style="width: calc((100% - 16%) * (5/5));"></div>
+                <div class="phase-node done"><div class="phase-dot">P0</div><div class="phase-name">Originate</div></div>
+                <div class="phase-node done"><div class="phase-dot">P1</div><div class="phase-name">Charter</div></div>
+                <div class="phase-node done"><div class="phase-dot">P2</div><div class="phase-name">Diagnose</div></div>
+                <div class="phase-node done"><div class="phase-dot">P3</div><div class="phase-name">Design</div></div>
+                <div class="phase-node done"><div class="phase-dot">P4</div><div class="phase-name">Plan</div></div>
+                <div class="phase-node current selected"><div class="phase-dot">P5</div><div class="phase-name">Mobilize</div></div>
+              </div>
+            </div>
+
+            <div class="ws-shell">
+              <div class="chat-pane">
+                <div class="chat-head">
+                  <div class="chat-avatar">✦</div>
+                  <div>
+                    <div class="chat-name">Nexus</div>
+                    <div class="chat-status">Scoped · MER-HDA · P5</div>
+                  </div>
+                </div>
+                <div class="bubble">P5 Mobilize complete. Delivery owner named (E. Rivera), governance cadence set, value tracking configured in Control Tower. SI onboarded with countersigned MSA.</div>
+                <div class="bubble">All 5 P5 gate criteria are met. <strong>Handoff to Tower</strong> is the final action. After this, Strategic Moves' work on MER-HDA is complete; Tower owns the value-realization tracking.</div>
+                <div class="suggested-row">
+                  <button class="prompt-chip">Show me the handoff pack contents</button>
+                  <button class="prompt-chip">Confirm Tower observer is ready</button>
+                </div>
+              </div>
+
+              <div class="canvas-pane">
+                <div class="panel">
+                  <div class="panel-eyebrow">P5 · PHASE INTENT</div>
+                  <div class="panel-title">Mobilize &amp; Handoff</div>
+                  <div class="panel-intent">Prepare delivery team, governance, and operating model. Hand off to Control Tower for value realization tracking.</div>
+                </div>
+                <div class="panel">
+                  <div class="gate-head">
+                    <div class="panel-eyebrow">Gate criteria · P5 → Tower</div>
+                    <div class="gate-counter green">5 / 5 met</div>
+                  </div>
+                  <ul class="crit-list">
+                    <li class="crit-item"><div class="crit-check done">✓</div><div class="crit-text done">Delivery owner named with RACI signed</div></li>
+                    <li class="crit-item"><div class="crit-check done">✓</div><div class="crit-text done">Governance cadence active</div></li>
+                    <li class="crit-item"><div class="crit-check done">✓</div><div class="crit-text done">SI/vendor onboarded</div></li>
+                    <li class="crit-item"><div class="crit-check done">✓</div><div class="crit-text done">Change management plan in execution</div></li>
+                    <li class="crit-item"><div class="crit-check done">✓</div><div class="crit-text done">Tower handoff plan accepted by Tower team</div></li>
+                  </ul>
+                  <div class="promote">
+                    <div class="click-target green" style="padding:0; border-radius:6px;">
+                      <button class="btn btn-primary">Hand off to Tower →</button>
+                    </div>
+                    <span class="promote-helper green">Final gate · Tower will own value realization</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 6 — Move complete, handed off to Tower -->
+    <div class="step">
+      <div class="step-meta">
+        <div class="step-num">Step 6 · Handoff complete</div>
+        <div class="step-action">Move successfully handed off — visible state changes</div>
+        <div class="step-note">All 6 phase nodes filled. Status banner switches to "Handed off — tracking in Tower". The "Continue in Tower →" link is the new primary action. Maya can still come back and view any phase as history. The Move stays in her portfolio (greyed) for reference.</div>
+        <div class="step-arrow">↓ end of Flow 1</div>
+      </div>
+      <div class="frame">
+        <div class="frame-chrome">
+          <div class="chrome-dots"><span class="chrome-dot"></span><span class="chrome-dot"></span><span class="chrome-dot"></span></div>
+          <div class="chrome-url">app.abarva.ai/strategic-moves/healthcare-data-analytics</div>
+        </div>
+        <div class="frame-body">
+          <div class="app-nav">
+            <div class="app-logo">Abar<span class="va">Va</span></div>
+            <div class="app-nav-items">
+              <div class="app-nav-item">Home</div>
+              <div class="app-nav-item">Setup</div>
+              <div class="app-nav-item active">Strategic Moves</div>
+              <div class="app-nav-item">Source</div>
+              <div class="app-nav-item">Intelligence</div>
+              <div class="app-nav-item">Tower</div>
+              <div class="app-nav-item">Learn</div>
+            </div>
+            <div class="app-nav-user">
+              <span>Maya Desai</span>
+              <div class="app-nav-avatar">MD</div>
+            </div>
+          </div>
+          <div class="page">
+            <div class="move-identity">
+              <div class="mi-left">
+                <div class="mi-breadcrumb">STRATEGIC MOVES › MERIDIAN HEALTH › MER-HDA-2026</div>
+                <div class="mi-title">Healthcare Data Analytics Modernization</div>
+                <div class="mi-meta">PLATFORM MODERNIZATION · SPONSOR: K. OSHIMA · HANDED TO TOWER · 2026-09-12</div>
+              </div>
+              <div class="mi-status"><span class="status-dot green"></span>Handed off · tracking in Tower</div>
+            </div>
+
+            <div class="rail">
+              <div class="rail-track">
+                <div class="rail-line"></div>
+                <div class="rail-line-done" style="width: calc((100% - 16%) * (5/5)); background: var(--green);"></div>
+                <div class="phase-node done"><div class="phase-dot" style="background:var(--green); border-color:var(--green);">P0</div><div class="phase-name">Originate</div></div>
+                <div class="phase-node done"><div class="phase-dot" style="background:var(--green); border-color:var(--green);">P1</div><div class="phase-name">Charter</div></div>
+                <div class="phase-node done"><div class="phase-dot" style="background:var(--green); border-color:var(--green);">P2</div><div class="phase-name">Diagnose</div></div>
+                <div class="phase-node done"><div class="phase-dot" style="background:var(--green); border-color:var(--green);">P3</div><div class="phase-name">Design</div></div>
+                <div class="phase-node done"><div class="phase-dot" style="background:var(--green); border-color:var(--green);">P4</div><div class="phase-name">Plan</div></div>
+                <div class="phase-node done"><div class="phase-dot" style="background:var(--green); border-color:var(--green);">P5</div><div class="phase-name">Mobilize</div></div>
+              </div>
+            </div>
+
+            <div class="celebration">
+              <div class="celebration-eyebrow">✓ Handoff complete</div>
+              <div class="celebration-title">Healthcare Data Analytics is live in Tower</div>
+              <div class="celebration-body">Strategic Moves' work is complete. Control Tower now owns value realization. Atlas (the Tower agent) will track adoption, surface variance from the $12.2M–$25.4M committed value, and flag if the Move drifts from its outcome plan.</div>
+              <div class="celebration-meta">YOU CAN STILL VIEW ANY PHASE AS HISTORY · TOWER WILL FLAG ISSUES BACK HERE IF NEEDED</div>
+              <div style="margin-top: 18px; display: flex; gap: 10px; justify-content: center;">
+                <button class="btn btn-primary">Continue in Tower →</button>
+                <button class="btn btn-ghost">View any phase as history</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="flow-divider"></div>
+
+<!-- ═════════════════════════════════════════════════════════════════════ -->
+<!-- FLOW 2 — User originates a new Move                                    -->
+<!-- ═════════════════════════════════════════════════════════════════════ -->
+
+<div class="flow">
+  <div class="flow-head">
+    <span class="flow-tag">Flow 2</span>
+    <span class="flow-title">Maya originates a new Move from a hypothesis she just heard from her CEO</span>
+  </div>
+  <p class="flow-sub">A signal arrives. Maya needs to convert it into a structured Move with a sponsor candidate and an archetype, ready to be chartered. Originate is a focused side flow — once the brief is complete and a sponsor commits, the new Move appears in the portfolio at P1 Charter.</p>
+
+  <div class="cascade">
+
+    <!-- STEP 1 — Click + New Move from dashboard -->
+    <div class="step">
+      <div class="step-meta">
+        <div class="step-num">Step 1 · Trigger</div>
+        <div class="step-action">From dashboard, Maya clicks "+ New Move"</div>
+        <div class="step-note">The button is in the same place on every Strategic Moves screen — top right. She doesn't have to remember a separate path to start something new.</div>
+        <div class="step-arrow">↓ click "+ New Move"</div>
+      </div>
+      <div class="frame">
+        <div class="frame-chrome">
+          <div class="chrome-dots"><span class="chrome-dot"></span><span class="chrome-dot"></span><span class="chrome-dot"></span></div>
+          <div class="chrome-url">app.abarva.ai/strategic-moves</div>
+        </div>
+        <div class="frame-body">
+          <div class="app-nav">
+            <div class="app-logo">Abar<span class="va">Va</span></div>
+            <div class="app-nav-items">
+              <div class="app-nav-item">Home</div>
+              <div class="app-nav-item">Setup</div>
+              <div class="app-nav-item active">Strategic Moves</div>
+              <div class="app-nav-item">Source</div>
+              <div class="app-nav-item">Intelligence</div>
+              <div class="app-nav-item">Tower</div>
+              <div class="app-nav-item">Learn</div>
+            </div>
+            <div class="app-nav-user">
+              <span>Maya Desai</span>
+              <div class="app-nav-avatar">MD</div>
+            </div>
+          </div>
+          <div class="page">
+            <div class="page-head">
+              <div class="page-title">Strategic Moves</div>
+              <div class="spacer"></div>
+              <div class="click-target" style="border-radius:6px;">
+                <button class="btn btn-primary">+ New Move</button>
+              </div>
+            </div>
+            <div class="kpi-strip">
+              <div class="kpi"><span class="kpi-num">21</span><span class="kpi-label">Moves</span></div>
+              <div class="kpi"><span class="kpi-num amber">2</span><span class="kpi-label">Need Attention</span></div>
+              <div class="kpi"><span class="kpi-num green">17</span><span class="kpi-label">On Track</span></div>
+              <div class="kpi"><span class="kpi-num">$388M</span><span class="kpi-label">At Stake</span></div>
+            </div>
+            <div style="font-family: var(--mono); font-size: 10px; letter-spacing: 1.4px; color: var(--gray); font-weight: 600; margin: 0 0 10px;">PORTFOLIO · 21 MOVES · ALL TENANTS</div>
+            <div class="cards-grid">
+              <div class="move-card">
+                <div class="card-eyebrow">RETAIL-SUPPLY-2026 · PLATFORM MOD</div>
+                <div class="card-title">Supply Chain Control Tower</div>
+                <div class="card-meta"><span class="status-dot green"></span>On track · P0 Originate</div>
+                <div class="card-value">Sponsor: <strong>S. Chen</strong> · Value: <strong>$21M projected</strong></div>
+              </div>
+              <div class="move-card">
+                <div class="card-eyebrow">RETAIL-UNIFIED-2026 · STRATEGIC TRANS</div>
+                <div class="card-title">Unified Customer Data Platform</div>
+                <div class="card-meta"><span class="status-dot green"></span>On track · P1 Charter</div>
+                <div class="card-value">Sponsor: <strong>S. Chen</strong> · Value: <strong>$30M projected</strong></div>
+              </div>
+              <div class="move-card">
+                <div class="card-eyebrow">RETAIL-DEMAND-2026 · WORKFLOW AUTO</div>
+                <div class="card-title">Demand Forecasting Modernization</div>
+                <div class="card-meta"><span class="status-dot green"></span>On track · P2 Diagnose</div>
+                <div class="card-value">Sponsor: <strong>J. Park</strong> · Value: <strong>$13M projected</strong></div>
+              </div>
+              <div class="move-card">
+                <div class="card-eyebrow">RETAIL-RETURNS-2026 · AI ENABLEMENT</div>
+                <div class="card-title">Returns Fraud Detection</div>
+                <div class="card-meta"><span class="status-dot green"></span>On track · P3 Design</div>
+                <div class="card-value">Sponsor: <strong>M. Delgado</strong> · Value: <strong>$9M projected</strong></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 2 — Originate canvas opens, Nexus prompts -->
+    <div class="step">
+      <div class="step-meta">
+        <div class="step-num">Step 2 · Originate opens</div>
+        <div class="step-action">Originate workspace opens — empty scaffold, Nexus asks the first question</div>
+        <div class="step-note">URL is now <code style="font-family:var(--mono); font-size:11px">/strategic-moves/new</code>. The 7-section scaffold is visible in the chat lane. Nexus opens with the simplest possible prompt. Maya can paste her CEO's note, type freely, or upload an artifact.</div>
+        <div class="step-arrow">↓ she pastes the CEO note about clinician burnout</div>
+      </div>
+      <div class="frame">
+        <div class="frame-chrome">
+          <div class="chrome-dots"><span class="chrome-dot"></span><span class="chrome-dot"></span><span class="chrome-dot"></span></div>
+          <div class="chrome-url">app.abarva.ai/strategic-moves/new</div>
+        </div>
+        <div class="frame-body">
+          <div class="app-nav">
+            <div class="app-logo">Abar<span class="va">Va</span></div>
+            <div class="app-nav-items">
+              <div class="app-nav-item">Home</div>
+              <div class="app-nav-item">Setup</div>
+              <div class="app-nav-item active">Strategic Moves</div>
+              <div class="app-nav-item">Source</div>
+              <div class="app-nav-item">Intelligence</div>
+              <div class="app-nav-item">Tower</div>
+              <div class="app-nav-item">Learn</div>
+            </div>
+            <div class="app-nav-user">
+              <span>Maya Desai</span>
+              <div class="app-nav-avatar">MD</div>
+            </div>
+          </div>
+          <div class="page">
+            <div class="move-identity">
+              <div class="mi-left">
+                <div class="mi-breadcrumb">STRATEGIC MOVES › NEW</div>
+                <div class="mi-title">Originate a new strategic Move</div>
+                <div class="mi-meta">DRAFT · UNTITLED · STARTED 14:32 TODAY</div>
+              </div>
+              <div class="mi-status" style="background:var(--cream-deep); color:var(--gray-dk)"><span class="status-dot" style="background:var(--gray)"></span>Drafting</div>
+            </div>
+
+            <div class="rail">
+              <div class="rail-track">
+                <div class="rail-line"></div>
+                <div class="rail-line-done" style="width: 0%;"></div>
+                <div class="phase-node current selected"><div class="phase-dot">P0</div><div class="phase-name">Originate</div></div>
+                <div class="phase-node future"><div class="phase-dot">P1</div><div class="phase-name">Charter</div></div>
+                <div class="phase-node future"><div class="phase-dot">P2</div><div class="phase-name">Diagnose</div></div>
+                <div class="phase-node future"><div class="phase-dot">P3</div><div class="phase-name">Design</div></div>
+                <div class="phase-node future"><div class="phase-dot">P4</div><div class="phase-name">Plan</div></div>
+                <div class="phase-node future"><div class="phase-dot">P5</div><div class="phase-name">Mobilize</div></div>
+              </div>
+            </div>
+
+            <div class="ws-shell">
+              <div class="chat-pane">
+                <div class="chat-head">
+                  <div class="chat-avatar">✦</div>
+                  <div>
+                    <div class="chat-name">Nexus</div>
+                    <div class="chat-status">Originate scaffold · empty</div>
+                  </div>
+                </div>
+                <div class="bubble">I can help turn this into a Move. <strong>Tell me four things</strong> — or just paste what you have and I'll extract them:</div>
+                <div class="bubble">(1) What outcome you want · (2) Who cares · (3) What evidence you have · (4) What value might be at stake.</div>
+                <div class="scaffold-list">
+                  <div class="scaffold-item active"><div class="scaffold-step">1</div><div class="scaffold-name">Bet Hypothesis</div><div class="scaffold-meta">In progress</div></div>
+                  <div class="scaffold-item"><div class="scaffold-step">2</div><div class="scaffold-name">Archetype</div><div class="scaffold-meta">—</div></div>
+                  <div class="scaffold-item"><div class="scaffold-step">3</div><div class="scaffold-name">Sponsor</div><div class="scaffold-meta">—</div></div>
+                  <div class="scaffold-item"><div class="scaffold-step">4</div><div class="scaffold-name">Tenant + Scope</div><div class="scaffold-meta">—</div></div>
+                  <div class="scaffold-item"><div class="scaffold-step">5</div><div class="scaffold-name">Foundation Readiness</div><div class="scaffold-meta">—</div></div>
+                  <div class="scaffold-item"><div class="scaffold-step">6</div><div class="scaffold-name">Classification</div><div class="scaffold-meta">—</div></div>
+                  <div class="scaffold-item"><div class="scaffold-step">7</div><div class="scaffold-name">P1 Handoff</div><div class="scaffold-meta">Locked</div></div>
+                </div>
+              </div>
+
+              <div class="canvas-pane">
+                <div class="panel">
+                  <div class="panel-eyebrow">P0 · PHASE INTENT</div>
+                  <div class="panel-title">Originate</div>
+                  <div class="panel-intent">Convert a signal, pain point, or hypothesis into a structured Move. Promote to P1 Charter only when a sponsor commits.</div>
+                </div>
+
+                <div class="brief-section empty">
+                  <div class="brief-section-head">
+                    <div class="brief-section-title">1 · Bet Hypothesis</div>
+                    <span class="brief-state muted">Not started</span>
+                  </div>
+                  <div class="brief-content">Paste a CEO note, board hypothesis, or executive ask. Nexus will extract the outcome, falsification metric, and originating evidence.</div>
+                </div>
+                <div class="brief-section empty">
+                  <div class="brief-section-head">
+                    <div class="brief-section-title">2 · Archetype</div>
+                    <span class="brief-state muted">Not started</span>
+                  </div>
+                  <div class="brief-content">Will be classified after the bet is captured. Nexus suggests one of: strategic_transformation, platform_modernization, ai_product_enablement, workflow_automation, operational_optimization.</div>
+                </div>
+                <div class="brief-section empty">
+                  <div class="brief-section-head">
+                    <div class="brief-section-title">3 · Sponsor Commitment</div>
+                    <span class="brief-state muted">Not started · gate to P1</span>
+                  </div>
+                  <div class="brief-content">A sponsor candidate is needed before promotion. Verbal interest is fine to advance to draft; written commitment is required to promote to Charter.</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 3 — Maya pastes the CEO note, Nexus extracts -->
+    <div class="step">
+      <div class="step-meta">
+        <div class="step-num">Step 3 · Extraction</div>
+        <div class="step-action">Maya pastes the CEO note. Nexus extracts the bet hypothesis, classifies the archetype, and proposes a sponsor.</div>
+        <div class="step-note">She didn't fill out a form. She pasted natural-language text. Nexus pulled out the falsifiable hypothesis, classified the archetype as <strong>ai_product_enablement</strong>, and suggested K. Oshima as sponsor (the CIO of Meridian, where the bet lives). Three of seven scaffold steps just turned green.</div>
+        <div class="step-arrow">↓ she confirms the sponsor and clicks "Schedule sponsor session"</div>
+      </div>
+      <div class="frame">
+        <div class="frame-chrome">
+          <div class="chrome-dots"><span class="chrome-dot"></span><span class="chrome-dot"></span><span class="chrome-dot"></span></div>
+          <div class="chrome-url">app.abarva.ai/strategic-moves/new</div>
+        </div>
+        <div class="frame-body">
+          <div class="app-nav">
+            <div class="app-logo">Abar<span class="va">Va</span></div>
+            <div class="app-nav-items">
+              <div class="app-nav-item">Home</div>
+              <div class="app-nav-item">Setup</div>
+              <div class="app-nav-item active">Strategic Moves</div>
+              <div class="app-nav-item">Source</div>
+              <div class="app-nav-item">Intelligence</div>
+              <div class="app-nav-item">Tower</div>
+              <div class="app-nav-item">Learn</div>
+            </div>
+            <div class="app-nav-user">
+              <span>Maya Desai</span>
+              <div class="app-nav-avatar">MD</div>
+            </div>
+          </div>
+          <div class="page">
+            <div class="move-identity">
+              <div class="mi-left">
+                <div class="mi-breadcrumb">STRATEGIC MOVES › DRAFT-2026-05-05</div>
+                <div class="mi-title">Clinician Burnout Reduction via Ambient Documentation</div>
+                <div class="mi-meta">DRAFT · ARCHETYPE: AI PRODUCT ENABLEMENT · SPONSOR PROPOSED: K. OSHIMA</div>
+              </div>
+              <div class="mi-status amber"><span class="status-dot amber"></span>Pending sponsor</div>
+            </div>
+
+            <div class="rail">
+              <div class="rail-track">
+                <div class="rail-line"></div>
+                <div class="rail-line-done" style="width: 0%;"></div>
+                <div class="phase-node current selected"><div class="phase-dot">P0</div><div class="phase-name">Originate</div></div>
+                <div class="phase-node future"><div class="phase-dot">P1</div><div class="phase-name">Charter</div></div>
+                <div class="phase-node future"><div class="phase-dot">P2</div><div class="phase-name">Diagnose</div></div>
+                <div class="phase-node future"><div class="phase-dot">P3</div><div class="phase-name">Design</div></div>
+                <div class="phase-node future"><div class="phase-dot">P4</div><div class="phase-name">Plan</div></div>
+                <div class="phase-node future"><div class="phase-dot">P5</div><div class="phase-name">Mobilize</div></div>
+              </div>
+            </div>
+
+            <div class="ws-shell">
+              <div class="chat-pane">
+                <div class="chat-head">
+                  <div class="chat-avatar">✦</div>
+                  <div>
+                    <div class="chat-name">Nexus</div>
+                    <div class="chat-status">Drafted from CEO note · 4 of 7</div>
+                  </div>
+                </div>
+                <div class="bubble">Got it. From the CEO note I extracted: <strong>1.4M clinician minutes lost annually to charting</strong> at Meridian, hypothesis is that ambient documentation can recover ≥50% of those minutes. I've drafted the bet, classified the archetype as <strong>AI Product Enablement</strong>, and Meridian is the tenant.</div>
+                <div class="bubble">Best sponsor candidate: <strong>K. Oshima (CIO)</strong> — she owns the EHR platform and sponsored the prior data analytics modernization. Want me to draft a 2-line sponsor outreach and schedule a 30-min framing session?</div>
+                <div class="scaffold-list">
+                  <div class="scaffold-item done"><div class="scaffold-step">✓</div><div class="scaffold-name">Bet Hypothesis</div><div class="scaffold-meta">Drafted</div></div>
+                  <div class="scaffold-item done"><div class="scaffold-step">✓</div><div class="scaffold-name">Archetype</div><div class="scaffold-meta">AI Product Enab.</div></div>
+                  <div class="scaffold-item active"><div class="scaffold-step">3</div><div class="scaffold-name">Sponsor</div><div class="scaffold-meta">K. Oshima · proposed</div></div>
+                  <div class="scaffold-item done"><div class="scaffold-step">✓</div><div class="scaffold-name">Tenant + Scope</div><div class="scaffold-meta">Meridian</div></div>
+                  <div class="scaffold-item"><div class="scaffold-step">5</div><div class="scaffold-name">Foundation Readiness</div><div class="scaffold-meta">—</div></div>
+                  <div class="scaffold-item"><div class="scaffold-step">6</div><div class="scaffold-name">Classification</div><div class="scaffold-meta">—</div></div>
+                  <div class="scaffold-item"><div class="scaffold-step">7</div><div class="scaffold-name">P1 Handoff</div><div class="scaffold-meta">Locked</div></div>
+                </div>
+              </div>
+
+              <div class="canvas-pane">
+                <div class="brief-section">
+                  <div class="brief-section-head">
+                    <div class="brief-section-title">1 · Bet Hypothesis</div>
+                    <span class="brief-state">Drafted</span>
+                  </div>
+                  <div class="brief-content"><strong>"Ambient clinical documentation will recover ≥700K clinician minutes annually at Meridian — 50% of the 1.4M minutes currently lost to chart-review and after-hours documentation — within 9 months of go-live."</strong> Falsifiable: minutes saved + after-hours documentation rate. Originating evidence: Meridian 2025 burnout survey + EHR access-log audit.</div>
+                </div>
+                <div class="brief-section">
+                  <div class="brief-section-head">
+                    <div class="brief-section-title">2 · Archetype · 4 · Tenant + Scope</div>
+                    <span class="brief-state">Captured</span>
+                  </div>
+                  <div class="brief-content"><strong>AI Product Enablement</strong> · <strong>Meridian Health</strong> · Scope: Inpatient + Ambulatory · Excludes: Behavioral Health</div>
+                </div>
+                <div class="brief-section active">
+                  <div class="brief-section-head">
+                    <div class="brief-section-title">3 · Sponsor Commitment</div>
+                    <span class="brief-state amber">Pending</span>
+                  </div>
+                  <div class="brief-content">Proposed: <strong>Katherine Oshima · CIO</strong> · Rationale: owns EHR platform, sponsored prior data modernization Move (HDA-2026), already aware of clinician burnout signal.<br>
+                  <div style="margin-top: 10px; display: flex; gap: 8px;">
+                    <div class="click-target blue" style="border-radius:6px;">
+                      <button class="btn btn-primary" style="font-size: 11px; padding: 6px 12px;">Schedule sponsor session</button>
+                    </div>
+                    <button class="btn btn-ghost" style="font-size: 11px; padding: 6px 12px;">Suggest a different sponsor</button>
+                  </div>
+                  </div>
+                </div>
+                <div class="brief-section empty">
+                  <div class="brief-section-head">
+                    <div class="brief-section-title">5 · Foundation Readiness</div>
+                    <span class="brief-state muted">Not started</span>
+                  </div>
+                  <div class="brief-content">Will scan F1-F4 (Identity, MDM, Observability, Data Governance) once sponsor is confirmed.</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 4 — Sponsor commits, brief 6 of 7 complete -->
+    <div class="step">
+      <div class="step-meta">
+        <div class="step-num">Step 4 · Sponsor commits</div>
+        <div class="step-action">K. Oshima signs the brief in a 30-min session — 6 of 7 scaffold steps green</div>
+        <div class="step-note">Maya doesn't fill the foundation readiness or classification herself — Nexus pre-fills both from the archetype and tenant context. Maya just confirms or edits. Brief is now ready to promote.</div>
+        <div class="step-arrow">↓ she clicks "Promote to P1 Charter"</div>
+      </div>
+      <div class="frame">
+        <div class="frame-chrome">
+          <div class="chrome-dots"><span class="chrome-dot"></span><span class="chrome-dot"></span><span class="chrome-dot"></span></div>
+          <div class="chrome-url">app.abarva.ai/strategic-moves/new</div>
+        </div>
+        <div class="frame-body">
+          <div class="app-nav">
+            <div class="app-logo">Abar<span class="va">Va</span></div>
+            <div class="app-nav-items">
+              <div class="app-nav-item">Home</div>
+              <div class="app-nav-item">Setup</div>
+              <div class="app-nav-item active">Strategic Moves</div>
+              <div class="app-nav-item">Source</div>
+              <div class="app-nav-item">Intelligence</div>
+              <div class="app-nav-item">Tower</div>
+              <div class="app-nav-item">Learn</div>
+            </div>
+            <div class="app-nav-user">
+              <span>Maya Desai</span>
+              <div class="app-nav-avatar">MD</div>
+            </div>
+          </div>
+          <div class="page">
+            <div class="move-identity">
+              <div class="mi-left">
+                <div class="mi-breadcrumb">STRATEGIC MOVES › DRAFT-2026-05-05</div>
+                <div class="mi-title">Clinician Burnout Reduction via Ambient Documentation</div>
+                <div class="mi-meta">DRAFT · ARCHETYPE: AI PRODUCT ENABLEMENT · SPONSOR: K. OSHIMA · SIGNED</div>
+              </div>
+              <div class="mi-status"><span class="status-dot green"></span>Ready to charter</div>
+            </div>
+
+            <div class="rail">
+              <div class="rail-track">
+                <div class="rail-line"></div>
+                <div class="rail-line-done" style="width: 0%;"></div>
+                <div class="phase-node current selected"><div class="phase-dot">P0</div><div class="phase-name">Originate</div></div>
+                <div class="phase-node future"><div class="phase-dot">P1</div><div class="phase-name">Charter</div></div>
+                <div class="phase-node future"><div class="phase-dot">P2</div><div class="phase-name">Diagnose</div></div>
+                <div class="phase-node future"><div class="phase-dot">P3</div><div class="phase-name">Design</div></div>
+                <div class="phase-node future"><div class="phase-dot">P4</div><div class="phase-name">Plan</div></div>
+                <div class="phase-node future"><div class="phase-dot">P5</div><div class="phase-name">Mobilize</div></div>
+              </div>
+            </div>
+
+            <div class="ws-shell">
+              <div class="chat-pane">
+                <div class="chat-head">
+                  <div class="chat-avatar">✦</div>
+                  <div>
+                    <div class="chat-name">Nexus</div>
+                    <div class="chat-status">Brief complete · 6 of 7</div>
+                  </div>
+                </div>
+                <div class="bubble" style="background: rgba(29, 158, 117, 0.18); border-left: 3px solid var(--green);"><strong>Update:</strong> K. Oshima signed the brief in your 30-min session. Foundation Readiness scan flagged <strong>F2 MDM partial</strong> (patient ID resolution fragmented across Epic and legacy ambulatory) — this becomes a P3 Design risk to address.</div>
+                <div class="bubble">Brief is ready to promote. Once you click <strong>Promote to P1 Charter</strong>, this Move appears in your portfolio and Nexus rescopes to P1.</div>
+                <div class="scaffold-list">
+                  <div class="scaffold-item done"><div class="scaffold-step">✓</div><div class="scaffold-name">Bet Hypothesis</div><div class="scaffold-meta">Drafted</div></div>
+                  <div class="scaffold-item done"><div class="scaffold-step">✓</div><div class="scaffold-name">Archetype</div><div class="scaffold-meta">AI Product Enab.</div></div>
+                  <div class="scaffold-item done"><div class="scaffold-step">✓</div><div class="scaffold-name">Sponsor</div><div class="scaffold-meta">K. Oshima · signed</div></div>
+                  <div class="scaffold-item done"><div class="scaffold-step">✓</div><div class="scaffold-name">Tenant + Scope</div><div class="scaffold-meta">Meridian</div></div>
+                  <div class="scaffold-item done"><div class="scaffold-step">✓</div><div class="scaffold-name">Foundation Readiness</div><div class="scaffold-meta">F2 partial flagged</div></div>
+                  <div class="scaffold-item done"><div class="scaffold-step">✓</div><div class="scaffold-name">Classification</div><div class="scaffold-meta">Tier 2 · pre-filled</div></div>
+                  <div class="scaffold-item active"><div class="scaffold-step">7</div><div class="scaffold-name">P1 Handoff</div><div class="scaffold-meta">Ready</div></div>
+                </div>
+              </div>
+
+              <div class="canvas-pane">
+                <div class="panel">
+                  <div class="panel-eyebrow">Originate brief · ready to promote</div>
+                  <div class="panel-title">Clinician Burnout Reduction via Ambient Documentation</div>
+                  <div class="panel-intent" style="margin-bottom: 12px;">All 6 origination criteria met. Sponsor signed. Foundation readiness scanned. Move is ready to enter P1 Charter, where Nexus will help convert this hypothesis into a sponsor-backed charter with success metrics and value range.</div>
+                  <div class="gate-head">
+                    <div class="panel-eyebrow">Gate to P1</div>
+                    <div class="gate-counter green">6 / 6 met</div>
+                  </div>
+                  <ul class="crit-list">
+                    <li class="crit-item"><div class="crit-check done">✓</div><div class="crit-text done">Bet hypothesis stated and falsifiable</div></li>
+                    <li class="crit-item"><div class="crit-check done">✓</div><div class="crit-text done">Archetype assigned</div></li>
+                    <li class="crit-item"><div class="crit-check done">✓</div><div class="crit-text done">Sponsor candidate signed</div></li>
+                    <li class="crit-item"><div class="crit-check done">✓</div><div class="crit-text done">Tenant scope locked</div></li>
+                    <li class="crit-item"><div class="crit-check done">✓</div><div class="crit-text done">Foundation readiness assessed</div></li>
+                    <li class="crit-item"><div class="crit-check done">✓</div><div class="crit-text done">Classification scored</div></li>
+                  </ul>
+                  <div class="promote">
+                    <div class="click-target green" style="padding:0; border-radius:6px;">
+                      <button class="btn btn-primary">Promote to P1 Charter →</button>
+                    </div>
+                    <span class="promote-helper green">Move will appear in portfolio · Nexus rescopes to P1</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 5 — Move created, lands in workspace at P1 -->
+    <div class="step">
+      <div class="step-meta">
+        <div class="step-num">Step 5 · Move created</div>
+        <div class="step-action">Move appears in portfolio. Maya is auto-redirected to its workspace at P1 Charter.</div>
+        <div class="step-note">URL changes from <code style="font-family:var(--mono); font-size:11px">/new</code> to <code style="font-family:var(--mono); font-size:11px">/clinician-burnout-ambient-doc</code>. Same workspace shell as every other Move. P0 node is filled (closed), P1 lights up. Nexus has rescoped — opens with P1-specific context. The new Move is now part of her portfolio of 22.</div>
+        <div class="step-arrow">↓ end of Flow 2</div>
+      </div>
+      <div class="frame">
+        <div class="frame-chrome">
+          <div class="chrome-dots"><span class="chrome-dot"></span><span class="chrome-dot"></span><span class="chrome-dot"></span></div>
+          <div class="chrome-url">app.abarva.ai/strategic-moves/clinician-burnout-ambient-doc</div>
+        </div>
+        <div class="frame-body">
+          <div class="app-nav">
+            <div class="app-logo">Abar<span class="va">Va</span></div>
+            <div class="app-nav-items">
+              <div class="app-nav-item">Home</div>
+              <div class="app-nav-item">Setup</div>
+              <div class="app-nav-item active">Strategic Moves</div>
+              <div class="app-nav-item">Source</div>
+              <div class="app-nav-item">Intelligence</div>
+              <div class="app-nav-item">Tower</div>
+              <div class="app-nav-item">Learn</div>
+            </div>
+            <div class="app-nav-user">
+              <span>Maya Desai</span>
+              <div class="app-nav-avatar">MD</div>
+            </div>
+          </div>
+          <div class="page">
+            <div class="move-identity">
+              <div class="mi-left">
+                <div class="mi-breadcrumb">STRATEGIC MOVES › MERIDIAN HEALTH › MER-CBA-2026</div>
+                <div class="mi-title">Clinician Burnout Reduction via Ambient Documentation</div>
+                <div class="mi-meta">AI PRODUCT ENABLEMENT · SPONSOR: K. OSHIMA · CHARTERED 14:58 TODAY</div>
+              </div>
+              <div class="mi-status"><span class="status-dot green"></span>On track</div>
+            </div>
+
+            <div class="rail">
+              <div class="rail-track">
+                <div class="rail-line"></div>
+                <div class="rail-line-done" style="width: calc((100% - 16%) * (1/5));"></div>
+                <div class="phase-node done"><div class="phase-dot">P0</div><div class="phase-name">Originate</div></div>
+                <div class="phase-node current selected"><div class="phase-dot">P1</div><div class="phase-name">Charter</div></div>
+                <div class="phase-node future"><div class="phase-dot">P2</div><div class="phase-name">Diagnose</div></div>
+                <div class="phase-node future"><div class="phase-dot">P3</div><div class="phase-name">Design</div></div>
+                <div class="phase-node future"><div class="phase-dot">P4</div><div class="phase-name">Plan</div></div>
+                <div class="phase-node future"><div class="phase-dot">P5</div><div class="phase-name">Mobilize</div></div>
+              </div>
+            </div>
+
+            <div class="view-banner success">
+              <span style="font-weight:700;">✓</span>
+              <span>P0 closed · Move chartered · added to portfolio (now 22 Moves) · Nexus rescoped to P1</span>
+            </div>
+
+            <div class="ws-shell">
+              <div class="chat-pane">
+                <div class="chat-head">
+                  <div class="chat-avatar">✦</div>
+                  <div>
+                    <div class="chat-name">Nexus</div>
+                    <div class="chat-status">Scoped · MER-CBA · P1</div>
+                  </div>
+                </div>
+                <div class="bubble">P1 Charter entered. The bet is captured but the charter needs sharper edges — <strong>tightened scope, locked success metrics, value range</strong>.</div>
+                <div class="bubble">From the bet, the natural success metrics are: clinician minutes recovered, after-hours documentation rate, and physician burnout-survey delta. Want me to scaffold a charter draft with these as the metric tree?</div>
+                <div class="suggested-row">
+                  <button class="prompt-chip">Scaffold the charter draft</button>
+                  <button class="prompt-chip">Build the stakeholder map</button>
+                  <button class="prompt-chip">Schedule charter review with K. Oshima</button>
+                </div>
+              </div>
+
+              <div class="canvas-pane">
+                <div class="panel">
+                  <div class="panel-eyebrow">P1 · PHASE INTENT</div>
+                  <div class="panel-title">Charter</div>
+                  <div class="panel-intent">Convert hypothesis into a sponsor-committed charter with value range. Charter signed, stakeholder map locked, success metrics ratified.</div>
+                </div>
+
+                <div class="panel">
+                  <div class="gate-head">
+                    <div class="panel-eyebrow">Gate criteria · P1 → P2</div>
+                    <div class="gate-counter muted">0 / 5 · just entered</div>
+                  </div>
+                  <ul class="crit-list">
+                    <li class="crit-item"><div class="crit-check"></div><div class="crit-text">Charter signed by sponsor with value range</div></li>
+                    <li class="crit-item"><div class="crit-check"></div><div class="crit-text">Stakeholder map and decision-rights chain locked</div></li>
+                    <li class="crit-item"><div class="crit-check"></div><div class="crit-text">Success metric tree ratified by steering committee</div></li>
+                    <li class="crit-item"><div class="crit-check"></div><div class="crit-text">Foundation readiness check complete</div></li>
+                    <li class="crit-item"><div class="crit-check"></div><div class="crit-text">Workstream charters scoped and owners assigned</div></li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ─────────────────── FOOTER NOTES ─────────────────── -->
+<div class="footer-note">
+  <strong>Reading this cascade:</strong> Each step shows a frame (the screen the user sees). The dashed blue/amber/green outline highlights what the user clicks or what just changed. The left column explains what's happening in user terms — what they did, what they see, what's next. <br><br>
+  <strong>What stays consistent across both flows:</strong> Same global AbarVa nav. Same Move identity card at the top of every workspace. Same chat-left / canvas-right shell. Same phase rail (interactive — clicking past phases lets you review history, clicking future phases lets you preview what's coming). Same "+ New Move" CTA placement. The visual continuity is the point — the user is always in the "Moves" world, just at different stages of one Move's journey or starting a new one.<br><br>
+  <strong>What we deliberately did NOT show here (out of scope for v0.1):</strong> Move switcher (cmd+K to jump to another Move from inside a workspace) · Past phase view (clicking a closed phase in the rail to review what was decided) · Future phase preview · The "viewing past" / "previewing future" banners from Workspace v0.2 spec. Those are in the workspace v0.2 reference at <code style="font-family:var(--mono); font-size:11px">docs/design/strategic-moves/15-workspace-v0.2.html</code>. This cascade focuses on the linear journey, not the navigation freedom.
+</div>
+
+</body>
+</html>
