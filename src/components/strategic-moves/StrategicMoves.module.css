@@ -1,9 +1,12 @@
 .page {
+  flex: 1;
+  min-width: 0;
   background: var(--canon-bg-surface);
   color: var(--canon-gray-900);
   min-height: calc(100vh - 64px);
   padding: 20px 28px 28px;
   font-family: var(--abarva-sans);
+  overflow-y: auto;
 }
 
 .topbar {
