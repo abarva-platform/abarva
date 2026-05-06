@@ -453,7 +453,7 @@ export const SOURCE_AGENT_VALIDATION_FIXTURES: SourceAgentValidationFixture[] = 
       contextScope: 'stage',
       expectedEventId: DIGITAL_EVENT_ID,
       expectedEventName: 'Digital App Build Partner Selection',
-      expectedStageKey: 'vendor_responses',
+      expectedStageKey: 'responses',
       expectedLifecycleStatus: 'waiting_on_vendor',
       requiresStage: true,
       requiresMissingInputs: true,
