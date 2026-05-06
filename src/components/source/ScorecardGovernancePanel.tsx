@@ -49,7 +49,7 @@ const CANONICAL_DIMENSIONS: Array<{
     key: 'commercial',
     label: 'Commercial',
     keywords: ['pricing', 'commercial', 'vendor', 'bafo', 'award', 'cost'],
-    fallbackOwner: 'Nexus',
+    fallbackOwner: 'Sentinel',
   },
   {
     key: 'transition',
@@ -67,7 +67,7 @@ const CANONICAL_DIMENSIONS: Array<{
     key: 'automation',
     label: 'Automation',
     keywords: ['automation', 'tool', 'platform', 'workflow', 'service', 'ai'],
-    fallbackOwner: 'Nexus',
+    fallbackOwner: 'Sentinel',
   },
   {
     key: 'risk',

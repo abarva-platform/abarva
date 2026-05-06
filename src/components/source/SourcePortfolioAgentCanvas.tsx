@@ -19,9 +19,9 @@ interface SourcePortfolioAgentCanvasProps {
   canViewFinancialValues?: boolean;
 }
 
-const NEXUS_AGENT = {
-  initials: 'Nx',
-  name: 'Nexus',
+const SENTINEL_SOURCE_AGENT = {
+  initials: 'Se',
+  name: 'Sentinel',
   role: 'Source Orchestrator',
 } as const;
 
@@ -51,7 +51,7 @@ export function SourcePortfolioAgentCanvas({
           onClose={() => {
             // Embedded Source command workspace stays visible; it is not a drawer overlay.
           }}
-          agent={NEXUS_AGENT}
+          agent={SENTINEL_SOURCE_AGENT}
           quote={quote}
           surface="/source"
           onArtifact={onArtifact}
@@ -116,7 +116,7 @@ function SourcePortfolioPromptDeck({ events }: { events: SourcingEventSummary[] 
       <div style={CHOICE_HEADER}>
         <div style={DARK_EYEBROW}>Start with one move</div>
         <p style={CHOICE_LEAD}>
-          Pick a path. Nexus will keep it crisp: one question, then the readiness rail updates.
+          Pick a path. Sentinel will keep it crisp: one question, then the readiness rail updates.
         </p>
       </div>
 
@@ -206,7 +206,7 @@ function SourceFormationPanel({
         <div style={{ ...PROGRESS_BAR, width: `${readiness}%` }} />
       </div>
       <p style={INTRO_COPY}>
-        As Nexus asks questions, this rail tracks the event shape, the next gate, and whether outputs are
+        As Sentinel asks questions, this rail tracks the event shape, the next gate, and whether outputs are
         draft, parsed, citeable, or still waiting on evidence.
       </p>
 
@@ -246,7 +246,7 @@ function SourceFormationPanel({
             ? `${createdEvent.eventCode}: tenant admin approval is next. Then decision owner and sourcing lead co-sign S0 exit.`
             : topEvent
             ? `${topEvent.currentStageLabel}: ${topEvent.nextAction}.`
-            : `Pick a sourcing type for ${filterLabel}, then Nexus will ask for the first missing fact.`}
+            : `Pick a sourcing type for ${filterLabel}, then Sentinel will ask for the first missing fact.`}
         </p>
         {createdEvent ? (
           <a href={createdEvent.approvalUrl ?? '/source/events'} style={APPROVAL_LINK}>
@@ -275,7 +275,7 @@ function ArtifactStateReceipt({ artifacts }: { artifacts: Artifact[] }) {
       <p style={RECEIPT_COPY}>
         {artifacts.length > 0
           ? `${stateLabel}: visible cards are conversation receipts. Source still labels generated outputs as drafts until parsing, citation, and approval state are explicit.`
-          : 'Nothing has been created or parsed in this chat yet. When Nexus creates an event or stage card, the receipt appears here before it is treated as citeable evidence.'}
+          : 'Nothing has been created or parsed in this chat yet. When Sentinel creates an event or stage card, the receipt appears here before it is treated as citeable evidence.'}
       </p>
     </div>
   );

@@ -34,7 +34,7 @@ const INTAKE_FIELDS: IntakeFieldDefinition[] = [
     label: 'Why now / trigger',
     prompt: 'What event makes this sourcing work necessary now?',
     placeholder: 'Renewal date, spend pressure, service issue, merger, cloud-cost spike...',
-    agent: 'Nexus',
+    agent: 'Sentinel',
   },
   {
     id: 'decisionOwner',
@@ -48,7 +48,7 @@ const INTAKE_FIELDS: IntakeFieldDefinition[] = [
     label: 'Scope boundary',
     prompt: 'Which IT services, platforms, software, cloud, data, or delivery towers are in and out?',
     placeholder: 'In: AMS for SAP and eCommerce. Out: security operations and deskside support.',
-    agent: 'Nexus',
+    agent: 'Sentinel',
   },
   {
     id: 'valueTarget',
@@ -109,7 +109,7 @@ const CLIENT_CONTEXT_FACTS: Record<string, string[][]> = {
 
 const AGENT_GUIDANCE = [
   {
-    agent: 'Nexus',
+    agent: 'Sentinel',
     label: 'Sourcing lead',
     body: 'Use Apex tenant context to frame the event, then ask only for the trigger, owner, boundary, value basis, and baseline owner.',
   },
