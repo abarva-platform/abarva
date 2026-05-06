@@ -985,7 +985,8 @@
   gap: 10px;
 }
 
-.inputRow input {
+.inputRow input,
+.inputRow textarea {
   flex: 1;
   background: transparent;
   border: none;
@@ -993,9 +994,11 @@
   color: #ffffff;
   font-size: 12px;
   font-family: inherit;
+  resize: none;
 }
 
-.inputRow input::placeholder {
+.inputRow input::placeholder,
+.inputRow textarea::placeholder {
   color: var(--abarva-stone);
 }
 
