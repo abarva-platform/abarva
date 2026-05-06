@@ -3,6 +3,7 @@
 | Date | Wave | Status | PR | Notes |
 |---|---|---|---|---|
 | 2026-04-28 | P0 | complete | — | Audit, roadmap, and P1-P7 skeleton plans authored after Session 1 spec merge so Programs code waves can begin from an explicit execution ledger. |
+| 2026-05-06 | P1 | complete | #1593 | Route family convergence: /programs/patterns converted from unstyled client component to server component with AppShell; preview routes simplified from double-hop to direct canonical redirects; WAVE-P1-PLAN.md updated with actual findings. |
 | 2026-04-28 | P2a | complete | #618 | Portfolio index shell + ProgramsIndexPage fixture wiring; apex-retail 4-program layout with stats row. |
 | 2026-04-28 | P2b | complete | #625 | Phase filter view + FilterPillStrip integration + Meridian fixture; phase-filter-view.ts with 33 tests. |
 | 2026-04-28 | P3 | complete | #629 | APX-LPM-2026 P2 Synthesis detail workbench + phase panel (3 Nexus actions, 2 evidence items, hasContradiction flag). |
