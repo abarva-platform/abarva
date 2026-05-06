@@ -208,7 +208,7 @@ export interface SourceWorkflowValidationFixture {
   fixtureState: SourceWorkflowValidationFixtureState;
   attemptedAction: SourceWorkflowValidationAttemptedAction;
   expectedOutcome: SourceWorkflowValidationOutcome;
-  expectedNexusExplanation: string;
+  expectedSentinelExplanation: string;
   expectedStewardEnforcement: string;
   evidenceNeeded: SourceWorkflowValidationEvidenceRequirement[];
   acceptanceCriteria: string[];
@@ -221,7 +221,7 @@ export interface SourceWorkflowValidationFixtureResult {
   actualOutcome: SourceWorkflowValidationOutcome;
   passesExpectation: boolean;
   findings: SourceWorkflowValidationFinding[];
-  nexusExplanation: string;
+  sentinelExplanation: string;
   stewardEnforcement: string;
   evidenceNeeded: SourceWorkflowValidationEvidenceRequirement[];
 }
@@ -239,7 +239,7 @@ export function evaluateSourceWorkflowValidationFixture(
     actualOutcome,
     passesExpectation: actualOutcome === fixture.expectedOutcome,
     findings,
-    nexusExplanation: fixture.expectedNexusExplanation,
+    sentinelExplanation: fixture.expectedSentinelExplanation,
     stewardEnforcement: fixture.expectedStewardEnforcement,
     evidenceNeeded: fixture.evidenceNeeded,
   };
