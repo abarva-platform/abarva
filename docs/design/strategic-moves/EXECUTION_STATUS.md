@@ -129,15 +129,15 @@ Tracks every step from `EXECUTION_PLAYBOOK.md` against its current state. Update
 |---|---|---|---|---|---|
 | 7.1 | T-D.4 Pack rollout | Claude Code | ⏳ | — | Unblocked: T-P5 ✅, T-D.1/T-D.2 ✅, T-D.3 ✅; requires W-4.8 sign-off |
 | 7.2 | S-4 Phase-pack file migration | Claude Code | 🔒 | — | Blocked on 7.1, B-027/B-028 |
-| 7.3 | W-5.1 Knowledge surfacing overview | Claude Code | 🔒 | — | Blocked on 6.7, all T-P* |
-| 7.4 | W-5.2 First-message scaffolds P0+P1 | Claude Code | 🔒 | — | Blocked on 7.3 |
-| 7.5 | W-5.2 First-message scaffolds P2+P3 | Claude Code | 🔒 | — | Blocked on 7.4 |
-| 7.6 | W-5.2 First-message scaffolds P4+P5 | Claude Code | 🔒 | — | Blocked on 7.5 |
-| 7.7 | W-5.3 Per-phase chip ladders | Claude Code | 🔒 | — | Blocked on 7.6 |
-| 7.8 | W-5.4, W-5.5, W-5.6 View-mode scaffolds | Claude Code | 🔒 | — | Blocked on 7.3 |
-| 7.9 | W-5.7 Evidence + anti-hallucination rules | Claude Code | 🔒 | — | Blocked on 7.6 |
-| 7.10 | W-5.8 Workspace Layer 5 fixtures | Claude Code | 🔒 | — | Blocked on 7.9 |
-| 7.11 | W-5.9 Workspace Layer 5 sign-off | Anand | 🔒 | — | Blocked on 7.10 |
+| 7.3 | W-5.1 Knowledge surfacing overview | Claude Code | ✅ | [#1569](https://github.com/anandsundaram-hash/abarva/pull/1569) | 6×4 phase×viewMode matrix; pattern loading; rail click map |
+| 7.4 | W-5.2 First-message scaffolds P0+P1 | Claude Code | ✅ | [#1568](https://github.com/anandsundaram-hash/abarva/pull/1568) | P0: 3 variants; P1: 3 variants incl. sponsor-candidate distinction |
+| 7.5 | W-5.2 First-message scaffolds P2+P3 | Claude Code | ✅ | [#1568](https://github.com/anandsundaram-hash/abarva/pull/1568) [#1567](https://github.com/anandsundaram-hash/abarva/pull/1567) | P2: 4 variants incl. discontinue-risk; P3: 3 variants incl. R6 tool-first |
+| 7.6 | W-5.2 First-message scaffolds P4+P5 | Claude Code | ✅ | [#1567](https://github.com/anandsundaram-hash/abarva/pull/1567) | P4: 4 variants + Tower metric plan authority; P5: 4 variants + R7 handoff |
+| 7.7 | W-5.3 Per-phase chip ladders | Claude Code | 🔄 | — | In progress |
+| 7.8 | W-5.4, W-5.5, W-5.6 View-mode scaffolds | Claude Code | ✅ | [#1569](https://github.com/anandsundaram-hash/abarva/pull/1569) | Replay + preview + cross-phase nav; permitted/prohibited action tables |
+| 7.9 | W-5.7 Evidence + anti-hallucination rules | Claude Code | 🔄 | — | In progress |
+| 7.10 | W-5.8 Workspace Layer 5 fixtures | Claude Code | 🔄 | — | In progress |
+| 7.11 | W-5.9 Workspace Layer 5 sign-off | Anand | ⏳ | — | Ready after 7.7/7.9/7.10 complete |
 | 7.12 | W-IG Workspace Implementation Gate | Anand | 🔒 | — | Blocked on 7.11, substrate migration |
 
 ---
@@ -183,9 +183,9 @@ Tracks every step from `EXECUTION_PLAYBOOK.md` against its current state. Update
 | Phase 4 | 5 | 5 | 0 | 0 |
 | Phase 5 | 16 | 16 | 0 | 0 |
 | Phase 6 | 10 | 9 | 0 | 1 (6.7 Anand) |
-| Phase 7 | 12 | 0 | 0 | 11 (7.1 unblocked) |
+| Phase 7 | 12 | 5 | 3 | 4 |
 | Phase 8 | 2 | 0 | 0 | 1 (8.1 unblocked) |
 | Phase 9 | 5 | 0 | 0 | 5 |
-| **Total** | **67** | **48** | **0** | **19** |
+| **Total** | **67** | **53** | **3** | **11** |
 
-_Last updated: 2026-05-05 · Phases 0–5 complete · Phase 6: 9/10 done (W-4.8 awaiting Anand) · T-D.1/T-D.2/T-D.3 complete · Phase 7 unblocked after W-4.8_
+_Last updated: 2026-05-05 · Phases 0–6 nearly done · Phase 7: W-5.1/W-5.2/W-5.4/W-5.5/W-5.6 complete (53/67); W-5.3/W-5.7/W-5.8 in progress_
