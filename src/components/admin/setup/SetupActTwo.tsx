@@ -92,8 +92,8 @@ function CapabilityCard({ capability }: { capability: CapabilityNode }) {
       role="listitem"
       data-testid={`admin-setup-capability-${capability.family}`}
       style={{
-        background: SHELL.PAPER_SOFT,
-        border: `1px solid ${tone.border}`,
+        background: tone.cardBackground,
+        borderLeft: `4px solid ${tone.accent}`,
         borderRadius: RADIUS.md,
         padding: SPACING.md,
         display: 'flex',
@@ -192,27 +192,31 @@ function DepthPill({ depthState }: { depthState: CapabilityDepthState }) {
 }
 
 function depthTone(state: CapabilityDepthState): {
+  cardBackground: string;
+  accent: string;
   background: string;
-  border: string;
   text: string;
 } {
   switch (state) {
     case 'grounded':
       return {
+        cardBackground: COLORS.mintSoft,
+        accent: COLORS.mintInk,
         background: COLORS.mintSoft,
-        border: `${COLORS.mintInk}33`,
         text: COLORS.mintInk,
       };
     case 'partial':
       return {
+        cardBackground: COLORS.amberSoft,
+        accent: COLORS.amberInk,
         background: COLORS.amberSoft,
-        border: `${COLORS.amberInk}33`,
         text: COLORS.amberInk,
       };
     case 'missing':
       return {
+        cardBackground: COLORS.coralSoft,
+        accent: COLORS.coralInk,
         background: COLORS.coralSoft,
-        border: `${COLORS.coralInk}33`,
         text: COLORS.coralInk,
       };
   }
