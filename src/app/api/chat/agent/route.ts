@@ -270,7 +270,7 @@ export async function POST(request: Request) {
 
   const tenantName          =
     canonicalClientDisplayName({ name: body.tenantName }) ?? "Apex Retail Group";
-  const agentName           = body.agentName  ?? "Atlas";
+  const agentName           = body.agentName  ?? null;
   const stage               = body.stage      ?? null;
   // PR-G surface canonicalization. Two surface-key conventions exist
   // in the codebase: semantic ('programs-detail') from
@@ -300,7 +300,7 @@ export async function POST(request: Request) {
   // honesty modes). Doctrine is gated behind
   // `SENTINEL_VOICE_DOCTRINE_DRAFT`; default-on in dev/staging,
   // default-off in production until founder signs off.
-  let voiceLine = AGENT_VOICE[agentName] ?? DEFAULT_VOICE;
+  let voiceLine = (agentName ? AGENT_VOICE[agentName] : undefined) ?? DEFAULT_VOICE;
   if (
     agentName === 'Sentinel' &&
     typeof surface === 'string' &&
@@ -1299,7 +1299,7 @@ function formatContextBundleReceiptForPrompt(
   ].filter(Boolean).join('\n');
 }
 
-function normalizeEnterpriseAgentName(agentName: string): EnterpriseAgentName {
+function normalizeEnterpriseAgentName(agentName: string | null): EnterpriseAgentName {
   return agentName === 'Nexus' ||
     agentName === 'Sentinel' ||
     agentName === 'Atlas' ||
