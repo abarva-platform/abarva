@@ -244,4 +244,36 @@ One identity, two broker scopes. Intelligence has a dedicated `sentinel-broker-a
 
 End of addendum 2.
 
+---
+
+## Addendum 3 · 2026-05-07 · Phase wave execution status
+
+### Resolved findings (closed)
+
+| Finding | Description | Resolution |
+|---|---|---|
+| **F-M4-101** ✅ | Parallel-all multi-agent pattern | Phase 3 shipped 2026-05-07: `sentinel-source-orchestrator.ts` replaces `buildSourceMultiAgentBriefing`; 7 ranked specialists behind Sentinel front; 9 tests in `__tests__/sentinel-source-orchestrator.test.ts` |
+| **F-M2-102** ✅ | `SOURCE_LEAD_AGENT = 'Nexus'` constant | Fixed in Phase 1a: constant renamed to `'Sentinel'` in `src/lib/source/constants.ts` |
+| **F-SU-103** ✅ | `/admin/agents/atlas` violates workflow-first | `/admin/agents/atlas/page.tsx` now redirects to `/admin/cross-program-signals` |
+| **F-SU-106** ✅ | No per-user RLS | Phase 5 shipped 2026-05-07: 6 migrations + 108 tests + ops runbook at `docs/build/RLS_OPERATIONS_RUNBOOK.md` |
+| **F-SU-107** ✅ | No Ask Anything bar in Setup | `StewardAskBar` with progressive scaffold disclosure shipped 2026-05-07 |
+| **F-M2-103** ✅ | `SOURCE_NEXUS_API_STUB_VERSION` naming | Wave 1: renamed to `SOURCE_SENTINEL_API_VERSION`; back-compat aliases retained |
+| **F-M1-103** ✅ | 4 artifact families missing | Wave 1 migration `20260507160000`: added `minimum_data_request`, `vendor_qa`, `response_checklist`, `selection_memo` |
+| **F-M1-101** ✅ | 5 evidence states missing | Wave 2 migration `20260507160000`: added `stale`, `access_restricted`, `not_applicable`, `waived` to evidence_state |
+| **F-M1-203** ✅ | No `lead_agent` column | Wave 1 migration `20260507160000`: `lead_agent TEXT` added to source_events |
+
+### Open findings (active backlog)
+
+| Finding | Description | Status |
+|---|---|---|
+| **F-M4-103** | Per-stage voice depth for Sentinel/Nexus/Atlas | Wave 3 in progress (pure TypeScript, no schema) |
+| **F-SU-104** | Specialist registry substrate | Wave 4 in progress (new tables) |
+| **F-M1-204** | Gate criteria per-criterion state | Wave 4 in progress |
+| **F-M1-205** | Value ledger per-line state | Wave 5 queued |
+| **F-SU-201** | Generalize agent_threads/observations | Wave 5 queued |
+| **F-M1-102** | Artifact lifecycle multi-column vs unified enum | Decision deferred; multi-column is authoritative |
+| **F-M2-104** | Legacy stage_keys migration | Commented in `20260507160000`; backfill in Phase 6 |
+
+End of addendum 3.
+
 End of executive summary.
