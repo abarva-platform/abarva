@@ -10,7 +10,7 @@ import type {
 } from './types';
 
 export const SOURCE_PRODUCT_NAME = 'AbarVa Source';
-export const SOURCE_LEAD_AGENT = 'Nexus';
+export const SOURCE_LEAD_AGENT = 'Sentinel';
 
 export const SOURCE_ROUTE_LABELS: Record<SourceRouteKey, string> = {
   dashboard: 'Dashboard',
@@ -164,7 +164,7 @@ export const SOURCE_FOUNDATIONS: SourcePlatformFoundation[] = [
   {
     key: 'agent_fabric',
     label: 'Agent Fabric',
-    summary: 'Nexus-led workflow orchestration with specialist rails and cited, fail-honest responses.',
+    summary: 'Sentinel-led workflow orchestration with specialist rails and cited, fail-honest responses.',
   },
   {
     key: 'artifact_studio',

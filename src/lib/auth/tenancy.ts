@@ -10,7 +10,10 @@ export class TenancyError extends Error {
 }
 
 export async function requireTenancy(): Promise<TenancyCtx> {
-  const [person, user] = await Promise.all([getCurrentPerson(), getCurrentUser()]);
+  // Auth helpers (Clerk) can throw on missing/invalid session rather than returning null.
+  const [person, user] = await Promise.all([getCurrentPerson(), getCurrentUser()]).catch(() => {
+    throw new TenancyError('unauthenticated');
+  });
   const userId = person?.id
     ?? user?.personId
     ?? (user?.clerkUserId ? `clerk:${user.clerkUserId}` : null);
