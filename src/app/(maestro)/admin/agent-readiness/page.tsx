@@ -16,7 +16,7 @@ import {
 } from '@/lib/admin/agent-readiness-page-view';
 
 export const metadata = {
-  title: 'Agent Readiness | Nexus Admin',
+  title: 'Agent Readiness | AbarVa Setup',
 };
 
 const BASE_URL = '/admin/agent-readiness';

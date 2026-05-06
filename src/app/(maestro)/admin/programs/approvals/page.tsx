@@ -18,7 +18,7 @@ import { getServerSupabase } from '@/lib/supabase-server';
 import { ApprovalQueueTable } from '@/components/admin/programs/ApprovalQueueTable';
 import { loadApprovalPersonDisplayMap } from '@/lib/programs/approval-person-resolver';
 
-export const metadata = { title: 'Program Approvals · Nexus Admin' };
+export const metadata = { title: 'Program Approvals · AbarVa Setup' };
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
