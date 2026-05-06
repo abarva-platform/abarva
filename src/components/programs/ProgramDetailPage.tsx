@@ -4749,7 +4749,7 @@ export function ProgramDetailPage({
                 view.lifecycleState === 'submitted_for_approval'
                   ? 'Setup approval is required before Phase 0 can start.'
                   : view.lifecycleState === 'completed'
-                  ? 'Program lifecycle is complete. Tower owns observation from here.'
+                  ? 'Strategic move lifecycle is complete. Tower owns observation from here.'
                   : view.lifecycleState === 'approved' && view.currentPhase === 0 && view.gateStatus === 'pending'
                   ? 'Complete and sign off the P0 seed artifacts before requesting Discovery.'
                   : null
@@ -4928,7 +4928,7 @@ export function ProgramDetailPage({
         <AgentCanvas
           surface={`/programs/${view.programId}`}
           programId={view.programId}
-          agent={{ initials: 'Nx', name: 'Nexus', role: 'Program Orchestrator' }}
+          agent={{ initials: 'Nx', name: 'Nexus', role: 'Move Orchestrator' }}
           quote={view.workbench.prose}
           artifacts={nexusArtifacts}
           onArtifact={handleNexusArtifact}
@@ -4998,7 +4998,7 @@ export function ProgramDetailPage({
                   AgentCanvas reactive panel above. */}
               <MissionListInteractive
                 missions={missions}
-                title="Pending gates · this program"
+                title="Pending gates · this move"
                 maxRows={6}
               />
               <RecentMissionStates instanceId={recentInstanceId} limit={3} />
@@ -5168,7 +5168,7 @@ export function ProgramDetailPage({
               <ReasoningErrorBoundary section="Risk Register">
                 <RiskRegisterPanel
                   risks={riskRegisterInfo.risks}
-                  title="Risk register · this program"
+                  title="Risk register · this move"
                 />
               </ReasoningErrorBoundary>
             )}
