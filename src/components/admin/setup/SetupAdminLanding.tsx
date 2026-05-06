@@ -19,7 +19,7 @@ import Link from 'next/link';
 
 import { SetupActOne } from './SetupActOne';
 import { SetupActThree } from './SetupActThree';
-import { SetupActTwo } from './SetupActTwo';
+import { SetupCapabilityMatrix } from './SetupCapabilityMatrix';
 import { SetupAgentStrip } from './SetupAgentStrip';
 import { SetupRecentActivity } from './SetupRecentActivity';
 import { SetupSentinelOpener } from './SetupSentinelOpener';
@@ -287,7 +287,10 @@ export function SetupAdminLanding({
           lastIngestedRelative={lastIngestedRelative}
         />
         <SetupActOne facts={content.actOneFacts} segmentRollups={segmentRollups} />
-        <SetupActTwo capabilities={content.actTwoCapabilityNodes} />
+        <SetupCapabilityMatrix
+          matrix={content.capabilityMatrix}
+          narrativeCards={content.capabilityNarrativeCards}
+        />
         <SetupActThree gains={content.actThreeGainEntries} />
         <SetupRecentActivity events={content.recentActivity} />
       </div>
