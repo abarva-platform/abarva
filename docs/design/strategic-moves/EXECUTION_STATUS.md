@@ -185,9 +185,9 @@ Tracks every step from `EXECUTION_PLAYBOOK.md` against its current state. Update
 | Phase 4 | 5 | 5 | 0 | 0 |
 | Phase 5 | 16 | 16 | 0 | 0 |
 | Phase 6 | 10 | 9 | 0 | 1 (6.7 Anand) |
-| Phase 7 | 12 | 5 | 3 | 4 |
-| Phase 8 | 2 | 0 | 0 | 1 (8.1 unblocked) |
+| Phase 7 | 12 | 8 | 0 | 4 (7.1/7.11 ⏳ · 7.2/7.12 🔒) |
+| Phase 8 | 2 | 0 | 0 | 2 (8.1 ⏳ · 8.2 🔒) |
 | Phase 9 | 5 | 0 | 0 | 5 |
-| **Total** | **67** | **53** | **3** | **11** |
+| **Total** | **67** | **55** | **0** | **12** |
 
-_Last updated: 2026-05-05 · Phases 0–6 nearly done · Phase 7: W-5.1/W-5.2/W-5.4/W-5.5/W-5.6 complete (53/67); W-5.3/W-5.7/W-5.8 in progress_
+_Last updated: 2026-05-06 · Phases 0–5 complete · Phase 6: 9/10 (6.7 awaiting Anand) · Phase 7: W-5.1–W-5.8 all merged (55/67); W-5.9 ready for Anand review_
