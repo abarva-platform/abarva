@@ -823,7 +823,7 @@
 }
 
 .chatHead {
-  padding: 18px 22px;
+  padding: 12px 18px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.10);
 }
 
@@ -835,8 +835,8 @@
 }
 
 .agentAvatar {
-  width: 32px;
-  height: 32px;
+  width: 28px;
+  height: 28px;
   border-radius: 50%;
   background: rgba(0, 102, 204, 0.18);
   border: 1px solid var(--abarva-signal-blue);
@@ -845,7 +845,7 @@
   justify-content: center;
   font-family: var(--abarva-serif);
   font-weight: 700;
-  font-size: 14px;
+  font-size: 12px;
   color: var(--canon-bg-cream);
   flex-shrink: 0;
 }
@@ -853,7 +853,7 @@
 .agentName {
   font-family: var(--abarva-sans);
   font-weight: 700;
-  font-size: 14px;
+  font-size: 12px;
   color: #ffffff;
 }
 
@@ -876,18 +876,18 @@
 }
 
 .chatSubhead {
-  margin-top: 4px;
-  margin-left: 42px;
-  font-size: 12px;
-  line-height: 1.45;
+  margin-top: 3px;
+  margin-left: 38px;
+  font-size: 10.5px;
+  line-height: 1.4;
   color: var(--abarva-stone);
 }
 
 .chatThread {
-  padding: 16px 20px;
+  padding: 12px 16px;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 7px;
   flex: 1 1 auto;
   min-height: 0;
   overflow-y: auto;
@@ -898,10 +898,10 @@
   max-width: 92%;
   background: rgba(255, 255, 255, 0.05);
   color: #eff6ff;
-  border-radius: 10px;
-  padding: 9px 14px;
-  font-size: 12px;
-  line-height: 1.55;
+  border-radius: 8px;
+  padding: 7px 11px;
+  font-size: 11px;
+  line-height: 1.5;
   overflow-wrap: anywhere;
   word-break: break-word;
   animation: bubbleFadeIn 280ms var(--ease-out);
@@ -918,11 +918,11 @@
   max-width: 92%;
   background: var(--abarva-signal-blue);
   color: #ffffff;
-  border-radius: 10px;
-  padding: 9px 14px;
-  font-size: 12px;
+  border-radius: 8px;
+  padding: 7px 11px;
+  font-size: 11px;
   font-weight: 500;
-  line-height: 1.55;
+  line-height: 1.5;
   overflow-wrap: anywhere;
   word-break: break-word;
   animation: bubbleFadeIn 280ms var(--ease-out);
@@ -991,7 +991,7 @@
   border: none;
   outline: none;
   color: #ffffff;
-  font-size: 13px;
+  font-size: 12px;
   font-family: inherit;
 }
 
