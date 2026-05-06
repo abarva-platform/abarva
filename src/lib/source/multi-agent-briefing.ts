@@ -11,6 +11,8 @@ import type {
   SourceSuggestedAgentAction,
   SourceSuggestedAgentActionType,
 } from './multi-agent-types';
+import { getStageVoiceDepth } from './stage-voice-depth';
+import { normalizeSourceStageKey } from './constants';
 
 const SOURCE_MULTI_AGENT_BRIEFING_VERSION = 'source-multi-agent-briefing/v1';
 const DEFAULT_GENERATED_AT = '2026-04-25T00:00:00.000Z';
@@ -69,11 +71,17 @@ export function buildNexusBriefing(input: SourceAgentBriefingInput): SourceAgent
   const blockers = [...bundle.blockers];
   const hasWorkflowBlockers = Boolean(input.workflowValidationReport?.blockerExplanations.length);
   const confidence = getBriefingConfidence(input, missingInputs.length > 0 || blockers.length > 0);
-  const primaryFinding = missingInputs.length > 0
+  const stageDepth = getStageVoiceDepth(normalizeSourceStageKey(bundle.workflowStage?.key));
+  const genericFinding = missingInputs.length > 0
     ? `${eventName} cannot move cleanly until ${missingInputs.length} missing input${plural(missingInputs.length)} are resolved.`
     : blockers.length > 0
       ? `${eventName} is blocked by ${blockers[0]}.`
       : `${eventName} has enough deterministic context for current-state sourcing guidance.`;
+  // Prepend stage-specific focus lens when a known stageKey is present so the
+  // briefing is contextually differentiated from other stages.
+  const primaryFinding = stageDepth
+    ? `${stageDepth.nexusFocus} ${genericFinding}`
+    : genericFinding;
 
   return {
     agentName: 'nexus',
@@ -111,6 +119,20 @@ export function buildSentinelBriefing(input: SourceAgentBriefingInput): SourceAg
   const deferNotes = input.contextValidationReport?.deferReasons.map((defer) => `${defer.fixtureId}: ${defer.reason}`) ?? [];
   const evidenceNotes = formatEvidenceNotes(input);
   const weakEvidence = missingCitationClaims.length > 0 || contextGaps.length > 0 || deferNotes.length > 0;
+  const stageDepth = getStageVoiceDepth(normalizeSourceStageKey(bundle.workflowStage?.key));
+
+  // Generic evidence/validation finding — unchanged logic.
+  const genericPrimaryFinding = missingCitationClaims.length > 0
+    ? `Client-specific citation coverage is incomplete for ${missingCitationClaims.join(', ')}.`
+    : input.contextValidationReport
+      ? `Context validation verdict is ${input.contextValidationReport.suite.verdict}.`
+      : 'No context validation report was provided; evidence confidence should stay bounded.';
+  // Prepend stage-specific Sentinel focus lens when a known stageKey is present.
+  // This fires regardless of evidence quality so the stage-specific angle is
+  // always surfaced — evidence weakness is already captured in the generic finding.
+  const primaryFinding = stageDepth
+    ? `${stageDepth.sentinelFocus} ${genericPrimaryFinding}`
+    : genericPrimaryFinding;
 
   return {
     agentName: 'sentinel',
@@ -118,11 +140,7 @@ export function buildSentinelBriefing(input: SourceAgentBriefingInput): SourceAg
     summary: weakEvidence
       ? 'Evidence is usable for deterministic context checks, but some claims remain low-confidence or intentionally deferred.'
       : 'Evidence and context validation show no current reject condition in the provided reports.',
-    primaryFinding: missingCitationClaims.length > 0
-      ? `Client-specific citation coverage is incomplete for ${missingCitationClaims.join(', ')}.`
-      : input.contextValidationReport
-        ? `Context validation verdict is ${input.contextValidationReport.suite.verdict}.`
-        : 'No context validation report was provided; evidence confidence should stay bounded.',
+    primaryFinding,
     confidence: weakEvidence ? 'medium' : getBriefingConfidence(input),
     contextUsed: getSourceContextUsed(bundle),
     risks: unique([
@@ -170,14 +188,20 @@ export function buildAtlasBriefing(input: SourceAgentBriefingInput): SourceAgent
     ...bundle.blockers.map((blocker) => `Execution blocker: ${blocker}`),
     ...(input.workflowValidationReport?.intentionalDefers.map((defer) => `Deferred workflow confidence: ${defer.explanation}`) ?? []),
   ]);
+  const stageDepth = getStageVoiceDepth(normalizeSourceStageKey(bundle.workflowStage?.key));
+  const genericAtlasFinding = realizedValue > 0
+    ? 'Value has realized entries, but executive confidence still depends on evidence and measurement ownership.'
+    : 'Value is projected or seeded; Atlas should not present it as realized savings.';
+  // Prepend stage-specific Atlas focus lens when a known stageKey is present.
+  const atlasPrimaryFinding = stageDepth
+    ? `${stageDepth.atlasFocus} ${genericAtlasFinding}`
+    : genericAtlasFinding;
 
   return {
     agentName: 'atlas',
     title: 'Atlas executive synthesis',
     summary: `${getEventName(input)} executive read: ${valueSummary}.`,
-    primaryFinding: realizedValue > 0
-      ? 'Value has realized entries, but executive confidence still depends on evidence and measurement ownership.'
-      : 'Value is projected or seeded; Atlas should not present it as realized savings.',
+    primaryFinding: atlasPrimaryFinding,
     confidence: bundle.evidenceCitations.length > 0 ? 'medium' : 'low',
     contextUsed: getSourceContextUsed(bundle),
     risks: executiveRisks,
