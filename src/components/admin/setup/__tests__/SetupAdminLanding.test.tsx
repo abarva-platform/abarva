@@ -37,7 +37,7 @@ describe('SetupAdminLanding', () => {
     expect(screen.getByTestId('admin-setup-landing')).toBeInTheDocument();
     expect(screen.getByTestId('admin-setup-sentinel-opener')).toBeInTheDocument();
     expect(screen.getByTestId('admin-setup-act-one')).toBeInTheDocument();
-    expect(screen.getByTestId('admin-setup-act-two')).toBeInTheDocument();
+    expect(screen.getByTestId('admin-setup-capability-matrix')).toBeInTheDocument();
     expect(screen.getByTestId('admin-setup-act-three')).toBeInTheDocument();
     expect(screen.getByTestId('admin-setup-activity')).toBeInTheDocument();
   });
@@ -173,7 +173,7 @@ describe('SetupAdminLanding', () => {
     );
   });
 
-  it('Act 2 capability cards have a depth pill for grounded/partial/missing', () => {
+  it('capability matrix renders narrative cards covering depth states', () => {
     const content = getSetupActsContent('apexretail');
     render(
       <SetupAdminLanding
@@ -188,7 +188,8 @@ describe('SetupAdminLanding', () => {
         stewardFindingCount={11}
       />,
     );
-    const grounded = screen.getAllByTestId('admin-setup-depth-grounded');
-    expect(grounded.length).toBeGreaterThan(0);
+    expect(screen.getByTestId('admin-setup-capability-matrix')).toBeInTheDocument();
+    expect(screen.getByTestId('admin-setup-narrative-deep')).toBeInTheDocument();
+    expect(screen.getByTestId('admin-setup-narrative-blocked')).toBeInTheDocument();
   });
 });
