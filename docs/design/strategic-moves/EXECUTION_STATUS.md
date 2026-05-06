@@ -127,8 +127,8 @@ Tracks every step from `EXECUTION_PLAYBOOK.md` against its current state. Update
 
 | Step | Work Package | Owner | Status | PR | Notes |
 |---|---|---|---|---|---|
-| 7.1 | T-D.4 Pack rollout | Claude Code | ⏳ | — | Now unblocked (W-4.8 approved); starting immediately |
-| 7.2 | S-4 Phase-pack file migration | Claude Code | ⏳ | — | Unblocked after 7.1 |
+| 7.1 | T-D.4 Pack rollout | Claude Code | ✅ | [#1583](https://github.com/anandsundaram-hash/abarva/pull/1583) | V2 packs wired into /api/chat/agent; PHASE_PACK_V2 flag |
+| 7.2 | S-4 Phase-pack file migration | Claude Code | ✅ | [#1583](https://github.com/anandsundaram-hash/abarva/pull/1583) | Included in T-D.4 rollout |
 | 7.3 | W-5.1 Knowledge surfacing overview | Claude Code | ✅ | [#1569](https://github.com/anandsundaram-hash/abarva/pull/1569) | 6×4 phase×viewMode matrix; pattern loading; rail click map |
 | 7.4 | W-5.2 First-message scaffolds P0+P1 | Claude Code | ✅ | [#1568](https://github.com/anandsundaram-hash/abarva/pull/1568) | P0: 3 variants; P1: 3 variants incl. sponsor-candidate distinction |
 | 7.5 | W-5.2 First-message scaffolds P2+P3 | Claude Code | ✅ | [#1568](https://github.com/anandsundaram-hash/abarva/pull/1568) [#1567](https://github.com/anandsundaram-hash/abarva/pull/1567) | P2: 4 variants incl. discontinue-risk; P3: 3 variants incl. R6 tool-first |
@@ -149,7 +149,14 @@ Tracks every step from `EXECUTION_PLAYBOOK.md` against its current state. Update
 | Step | Work Package | Owner | Status | PR | Notes |
 |---|---|---|---|---|---|
 | 8.1 | Originate implementation | Claude Code | ✅ | [#1574](https://github.com/anandsundaram-hash/abarva/pull/1574) | Real Nexus agent wired; T-P0 pack + AH-ORIG-1–6 rules; 7-step scaffold; 2A/2B first-message variants |
-| 8.2 | Workspace implementation | Claude Code | ⏳ | — | Unblocked. Scope: phase workspace route (P1–P5), Continue button routing, upload API + parse pipeline (B-118), artifact generation API (B-117), phase-aware Nexus agent, gate promotion |
+| 8.2-A | Phase workspace route (P1–P5) | Claude Code | ✅ | [#1584](https://github.com/anandsundaram-hash/abarva/pull/1584) | Server component; 404 on invalid phase; AppShell wrapped |
+| 8.2-B | Fix "Continue" button routing | Claude Code | ✅ | [#1584](https://github.com/anandsundaram-hash/abarva/pull/1584) | primaryAction() default → /phase/N sub-route (was ?phase=N) |
+| 8.2-C | Phase-aware Nexus (V2 packs) | Claude Code | ✅ | [#1583](https://github.com/anandsundaram-hash/abarva/pull/1583) | T-P1–T-P5 loaded via PHASE_PACK_V2 flag in agent route |
+| 8.2-D | Upload API (POST /workspace/[moveId]/upload) | Claude Code | ✅ | [#1585](https://github.com/anandsundaram-hash/abarva/pull/1585) | Auth + tenant gate + mime/size check + Supabase Storage |
+| 8.2-E | Doc-parser pipeline (extractAndChunk) | Claude Code | ✅ | [#1585](https://github.com/anandsundaram-hash/abarva/pull/1585) | PDF/DOCX/XLSX/TXT extraction → enterprise_context_chunks |
+| 8.2-F | Artifact generation API (POST /workspace/[moveId]/artifact) | Claude Code | ✅ | [#1586](https://github.com/anandsundaram-hash/abarva/pull/1586) | streamAgentTurn + quality gates + draftModuleDeliverable |
+| 8.2-G | Gate promotion to Supabase (B-130) | Claude Code | ✅ | [#1586](https://github.com/anandsundaram-hash/abarva/pull/1586) | UPDATE engagements SET current_phase + gates_passed array |
+| 8.2-H | Upload UI (paperclip in chat) | Claude Code | ✅ | [#1589](https://github.com/anandsundaram-hash/abarva/pull/1589) | Attachment chips, handleFileSelect, done IDs in surfaceContext |
 
 ---
 
@@ -159,8 +166,8 @@ Tracks every step from `EXECUTION_PLAYBOOK.md` against its current state. Update
 |---|---|---|---|---|---|
 | 9.1 | A-1 Acceptance script Flow 1 | Claude Code | ✅ | [#1576](https://github.com/anandsundaram-hash/abarva/pull/1576) | 10-step script; fixture: Apex Retail APX-001 P2 gate-partial → promote to P3; requires 8.2 to execute |
 | 9.2 | A-2 Acceptance script Flow 2 | Claude Code | ✅ | [#1577](https://github.com/anandsundaram-hash/abarva/pull/1577) | 10-step script; fixture: Marcus Webb CEO note / Sarah Chen sponsor / AHT scenario; AH-ORIG-1–4 checks; immediately executable |
-| 9.3 | A-3 Cross-tenant smoke test | Claude Code | 🔒 | — | Blocked on 8.2 |
-| 9.4 | A-4 Anand acceptance walkthrough | Anand | 🔒 | — | Blocked on 9.3 |
+| 9.3 | A-3 Cross-tenant smoke test | Claude Code | ✅ | [#1588](https://github.com/anandsundaram-hash/abarva/pull/1588) | 10+5+3 steps; Apex+Meridian isolation; 401/403 API checks |
+| 9.4 | A-4 Anand acceptance walkthrough | Anand | ⏳ | — | Unblocked — requires human run through A-1/A-2/A-3 scripts |
 | 9.5 | A-5 Closure doc | Claude Code | 🔒 | — | Blocked on 9.4 |
 
 ---
@@ -185,9 +192,9 @@ Tracks every step from `EXECUTION_PLAYBOOK.md` against its current state. Update
 | Phase 4 | 5 | 5 | 0 | 0 |
 | Phase 5 | 16 | 16 | 0 | 0 |
 | Phase 6 | 10 | 10 | 0 | 0 |
-| Phase 7 | 12 | 11 | 0 | 1 (7.1/7.2 starting) |
-| Phase 8 | 2 | 1 | 1 | 0 (8.2 in progress) |
-| Phase 9 | 5 | 2 | 0 | 3 |
-| **Total** | **67** | **61** | **1** | **5** |
+| Phase 7 | 12 | 12 | 0 | 0 |
+| Phase 8 | 9 | 9 | 0 | 0 |
+| Phase 9 | 5 | 3 | 1 | 1 |
+| **Total** | **74** | **71** | **1 (9.4 Anand)** | **1 (9.5)** |
 
-_Last updated: 2026-05-06 · 6.7 + 7.11 + 7.12 approved by Anand · 8.2 scope expanded (upload + artifact gen) · execution resumed_
+_Last updated: 2026-05-06 · 8.2 fully complete (A–H) · 9.3 merged · 9.4 unblocked (awaits Anand walkthrough)_
