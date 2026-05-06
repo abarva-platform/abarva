@@ -1685,6 +1685,31 @@
   border-top: 1px solid var(--canon-border);
 }
 
+.programNameRow {
+  margin-bottom: 10px;
+}
+
+.programNameInput {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid var(--canon-border);
+  border-radius: 6px;
+  font-family: var(--abarva-sans);
+  font-size: 13px;
+  background: var(--canon-bg-cream);
+  color: var(--abarva-ink-black);
+  box-sizing: border-box;
+}
+
+.programNameInput::placeholder {
+  color: var(--canon-muted-text, #999);
+}
+
+.programNameInput:focus {
+  outline: none;
+  border-color: var(--abarva-ink-black);
+}
+
 .btnPromote {
   width: 100%;
   background: var(--abarva-ink-black);

@@ -71,8 +71,9 @@ export function canonicalizeSurface(
       return '/intelligence';
     case 'setup':
       return '/setup';
+    case 'strategic-moves-new':
+      return '/strategic-moves/new';
     // Add cases here as detail-level surfaces gain canonical URL forms.
-    // 'source-detail', 'evidence-detail', 'setup-detail' (when they need it).
     default:
       return surface;
   }
