@@ -4,13 +4,16 @@ import {
   buildSourceStageGateReadiness,
   getSourceArtifactStatusStripSeed,
   buildSourceAgentContextBundle,
-  buildSourceMultiAgentBriefing,
   createSourceAgentMissionReport,
   getSourceContextValidationReadableReport,
   getSourceWorkflowValidationReadableReport,
   type SourceAgentMission,
   type SourceAgentMissionReport,
 } from '@/lib/source';
+import {
+  buildSentinelSourceBriefing,
+  adaptSentinelBriefingToMultiAgent,
+} from '@/lib/source/sentinel-source-orchestrator';
 import type { SourcingEventDetail } from '@/lib/source/types';
 import { SourceActiveStageWorkspace } from './SourceActiveStageWorkspace';
 import { SourceAlertPanel } from './SourceAlertPanel';
@@ -199,7 +202,7 @@ function buildEventCanvasMissionReport(event: SourcingEventDetail): SourceAgentM
   const workflowValidationReport = getSourceWorkflowValidationReadableReport({
     generatedAt: EVENT_CANVAS_MISSION_GENERATED_AT,
   });
-  const multiAgentBriefing = buildSourceMultiAgentBriefing({
+  const sentinelBriefing = buildSentinelSourceBriefing({
     contextBundle,
     contextValidationReport,
     workflowValidationReport,
@@ -212,7 +215,7 @@ function buildEventCanvasMissionReport(event: SourcingEventDetail): SourceAgentM
     contextBundle,
     contextValidationReport,
     workflowValidationReport,
-    multiAgentBriefing,
+    multiAgentBriefing: adaptSentinelBriefingToMultiAgent(sentinelBriefing),
     userRole: 'sourcingLead',
     mode: 'event',
     generatedAt: EVENT_CANVAS_MISSION_GENERATED_AT,

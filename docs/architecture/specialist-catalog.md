@@ -4,7 +4,7 @@
 |---|---|
 | **Doc ID** | `SPECIALIST_CATALOG_v0.1` |
 | **Established** | 2026-05-06 |
-| **Status** | Scaffold · Source partially populated · Moves / Tower / Intelligence / Setup pending |
+| **Status** | Source §3 shipped — 12 specialists route through sentinel-orchestrator · Setup / Moves / Tower / Intelligence pending |
 | **Purpose** | The published inventory of every narrow specialist that runs behind the front agents. Architecture reviews use this. Primary product UI does not. |
 
 ---
@@ -1166,7 +1166,7 @@ outputs:
 cite_tag_format: int-voice-doctrine-v1
 implementation_pointer: src/lib/agent/voice-doctrine/sentinel.ts (17 banned patterns, checkSentinelVoice)
 status: shipped
-notes: Tests in voice-doctrine/__tests__/sentinel.test.ts. Doctrine gated behind SENTINEL_VOICE_DOCTRINE_DRAFT flag (P1 — needs founder sign-off to flip to prod).
+notes: Tests in voice-doctrine/__tests__/sentinel.test.ts. Doctrine signed off 2026-05-06 — enabled by default in all environments. SENTINEL_VOICE_DOCTRINE_DRAFT=disabled as emergency escape hatch. Nexus/Atlas/Steward doctrines also shipped.
 ```
 
 ```yaml

@@ -12,15 +12,18 @@ import {
   buildSourceContextAssemblyResultFromSeed,
 } from './context-builder';
 import {
-  buildSourceMultiAgentBriefing,
   getSourceMultiAgentSuggestedActions,
-  summarizeSourceMultiAgentBriefing,
 } from './multi-agent-briefing';
 import type {
   SourceAgentBriefingMode,
   SourceMultiAgentBriefing,
+  SentinelSourceBriefing,
   SourceSuggestedAgentAction,
 } from './multi-agent-types';
+import {
+  buildSentinelSourceBriefing,
+  adaptSentinelBriefingToMultiAgent,
+} from './sentinel-source-orchestrator';
 import type { SourceStageKey } from './types';
 import {
   getSourceWorkflowValidationReadableReport,
@@ -110,6 +113,8 @@ export interface SourceNexusApiStubResponse {
     blockers: string[];
     selectedAttachmentIds: string[];
   };
+  sentinelBriefing: SentinelSourceBriefing | null;
+  /** @deprecated Use sentinelBriefing. Reconstructed via adapter for back-compat; retire in next wave. */
   multiAgentBriefing: SourceMultiAgentBriefing | null;
   nexusSummary: {
     title: string;
@@ -188,7 +193,7 @@ export function createSourceNexusApiStubResponse(
 
   const contextValidationReport = getSourceContextValidationReadableReport({ generatedAt });
   const workflowValidationReport = getSourceWorkflowValidationReadableReport({ generatedAt });
-  const multiAgentBriefing = buildSourceMultiAgentBriefing({
+  const sentinelBriefing = buildSentinelSourceBriefing({
     contextBundle: contextResult.bundle,
     contextValidationReport,
     workflowValidationReport,
@@ -197,12 +202,13 @@ export function createSourceNexusApiStubResponse(
     mode,
     generatedAt,
   });
+  const multiAgentBriefing = adaptSentinelBriefingToMultiAgent(sentinelBriefing);
   const suggestedActions = getSourceMultiAgentSuggestedActions(multiAgentBriefing);
-  const answerStatus = deriveAnswerStatus(contextResult.bundle, contextValidationReport, workflowValidationReport, multiAgentBriefing);
+  const answerStatus = deriveAnswerStatus(contextResult.bundle, contextValidationReport, workflowValidationReport, sentinelBriefing);
   const intakeGuidance = maybeBuildIntakeGuidance(prompt);
   const summary = intakeGuidance
     ? formatIntakeGuidanceSummary(intakeGuidance)
-    : summarizeSourceMultiAgentBriefing(multiAgentBriefing);
+    : sentinelBriefing.combinedSummary;
 
   return {
     ok: answerStatus !== 'error',
@@ -224,15 +230,16 @@ export function createSourceNexusApiStubResponse(
       blockers: [...contextResult.bundle.blockers],
       selectedAttachmentIds: [...contextResult.bundle.selectedAttachmentIds],
     },
+    sentinelBriefing,
     multiAgentBriefing,
     nexusSummary: {
-      title: intakeGuidance ? 'Event intake facts required' : multiAgentBriefing.nexus.title,
-      summary: intakeGuidance?.opening ?? multiAgentBriefing.nexus.summary,
+      title: intakeGuidance ? 'Event intake facts required' : sentinelBriefing.primaryVoice.title,
+      summary: intakeGuidance?.opening ?? sentinelBriefing.primaryVoice.summary,
       primaryFinding: intakeGuidance
         ? 'The event can be opened once the minimum facts are captured.'
-        : multiAgentBriefing.nexus.primaryFinding,
-      recommendedNextAction: intakeGuidance?.nextStep ?? multiAgentBriefing.nexus.recommendedNextAction,
-      confidence: intakeGuidance ? 'medium' : multiAgentBriefing.nexus.confidence,
+        : sentinelBriefing.primaryVoice.primaryFinding,
+      recommendedNextAction: intakeGuidance?.nextStep ?? sentinelBriefing.primaryVoice.recommendedNextAction,
+      confidence: intakeGuidance ? 'medium' : sentinelBriefing.primaryVoice.confidence,
     },
     suggestedActions,
     contextValidationSummary: summarizeContextValidation(contextValidationReport),
@@ -242,10 +249,7 @@ export function createSourceNexusApiStubResponse(
       ...contextValidationReport.deferReasons.map((defer) => `${defer.fixtureId}: ${defer.reason}`),
       ...workflowValidationReport.intentionalDefers.map((defer) => `${defer.fixtureId}: ${defer.explanation}`),
     ],
-    cannotProceedReasons: [
-      ...multiAgentBriefing.nexus.cannotProceedReasons,
-      ...multiAgentBriefing.steward.cannotProceedReasons,
-    ],
+    cannotProceedReasons: sentinelBriefing.primaryVoice.cannotProceedReasons,
     summary,
     intakeGuidance,
   };
@@ -293,6 +297,7 @@ function createErrorResponse(args: {
       blockers: [],
       selectedAttachmentIds: [],
     },
+    sentinelBriefing: null,
     multiAgentBriefing: null,
     nexusSummary: null,
     suggestedActions: [],
@@ -310,7 +315,7 @@ function deriveAnswerStatus(
   bundle: SourceAgentContextBundle,
   contextValidationReport: SourceContextValidationReadableReport,
   workflowValidationReport: SourceWorkflowValidationReadableReport,
-  briefing: SourceMultiAgentBriefing,
+  briefing: Pick<SentinelSourceBriefing, 'overallReadiness' | 'blockers' | 'defers'>,
 ): SourceNexusApiAnswerStatus {
   if (contextValidationReport.suite.rejectCount > 0 || workflowValidationReport.failedExpectations.length > 0) {
     return 'error';
