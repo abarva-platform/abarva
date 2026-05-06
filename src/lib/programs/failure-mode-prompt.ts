@@ -15,7 +15,7 @@ import type { AttachmentChipRef } from '@/lib/programs/attachments/types';
 import type { AttachmentTextPreview } from '@/lib/programs/attachments/extract-text';
 import type { EnterpriseAgentContextItem } from '@/lib/knowledge/agent-context-broker';
 
-const PROGRAMS_SURFACE_PREFIXES = ['/programs', '/demo/programs', '/tower'];
+const PROGRAMS_SURFACE_PREFIXES = ['/programs', '/demo/programs', '/tower', '/strategic-moves'];
 
 /** Programs surfaces eligible for the failure-mode catalog block. */
 export function isProgramsSurface(surface: string | null | undefined): boolean {
@@ -168,7 +168,8 @@ export function composeBriefProgressCadenceDirective(
   if (
     surface !== '/programs' &&
     surface !== '/programs/new' &&
-    surface !== '/demo/programs/new'
+    surface !== '/demo/programs/new' &&
+    surface !== '/strategic-moves/new'
   ) {
     return '';
   }

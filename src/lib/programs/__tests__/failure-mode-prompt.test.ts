@@ -64,6 +64,8 @@ describe('isProgramsSurface', () => {
     expect(isProgramsSurface('/demo/programs/new')).toBe(true);
     expect(isProgramsSurface('/tower')).toBe(true);
     expect(isProgramsSurface('/tower/portfolio')).toBe(true);
+    expect(isProgramsSurface('/strategic-moves/new')).toBe(true);
+    expect(isProgramsSurface('/strategic-moves/apx-001')).toBe(true);
   });
 
   it('rejects non-Programs surfaces', () => {
@@ -294,6 +296,9 @@ describe('composeBriefProgressCadenceDirective', () => {
     );
     expect(
       composeBriefProgressCadenceDirective('/demo/programs/new'),
+    ).toContain('brief-progress');
+    expect(
+      composeBriefProgressCadenceDirective('/strategic-moves/new'),
     ).toContain('brief-progress');
   });
 

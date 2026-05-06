@@ -214,6 +214,7 @@ export function getAgentResponseTokenBudget(surface: string): number {
   if (
     surface === '/programs' ||
     surface === '/programs/new' ||
+    surface === '/strategic-moves/new' ||
     surface.startsWith('/programs/')
   ) {
     return PROGRAM_AGENT_RESPONSE_MAX_TOKENS;
@@ -388,6 +389,16 @@ export async function POST(request: Request) {
     }
   }
 
+  // /strategic-moves/new — load T-P0 phase pack so Nexus has origination
+  // playbook context (scaffold steps, AH rules, gate criteria) without a
+  // programId. The pack is always phase 0 on the origination surface.
+  if (surface === '/strategic-moves/new' && !phasePackBlock) {
+    const p0Pack = getPhasePack(0);
+    if (p0Pack) {
+      phasePackBlock = formatPhasePackForPrompt(p0Pack);
+    }
+  }
+
   // If we have source event context, enrich with live event data.
   // Reuse the surfaceContext extracted above (PR-G surface canonicalization
   // already aliased it as `surfaceContext`).
@@ -558,6 +569,7 @@ export async function POST(request: Request) {
   const surfacesWithArtifactChannel = new Set([
     '/programs/new',
     '/demo/programs/new',
+    '/strategic-moves/new',
     '/programs',
     '/home',
     '/intelligence',
@@ -842,6 +854,21 @@ export async function POST(request: Request) {
     // OV2-WIRE-AND-FM-PROMPT Part 2 — brief-progress cadence directive.
     // Empty string off /programs/new so the join-filter strips it.
     briefProgressCadenceDirective,
+    // /strategic-moves/new: P0 Originate AH rules + origination style.
+    // AH-ORIG-1 through AH-ORIG-6 adapted from the Layer 5 spec.
+    ...(surface === '/strategic-moves/new'
+      ? [
+          "- P0 ORIGINATE STYLE: guide the user through 7 scaffold steps in order. Ask at most ONE question per reply. Never suggest a name, sponsor, or executive unless it comes from people data, an org chart the user uploaded, or an explicit user statement.",
+          "- AH-ORIG-1 (SPONSOR): NEVER propose any sponsor candidate name unless sourced from: (a) ACL/people data lookup, (b) an uploaded org chart or stakeholder list, or (c) the user explicitly naming the person. Refusal: 'I can only propose a sponsor from your organization's people data or a name you provide. Can you name the exec who owns this function or upload an org chart?'",
+          "- AH-ORIG-2 (ARCHETYPE): when classifier confidence is low or no_match, NEVER state an archetype as definitive. Always flag uncertainty explicitly: 'This classification is tentative — [reason]. Let me ask a clarifying question before I lock in the archetype.'",
+          "- AH-ORIG-3 (VALUE): NEVER state any dollar figure, percentage, or quantified outcome as validated at P0. Always label numeric claims 'UNVALIDATED_HYPOTHESIS' and add a caveat: 'We'll validate this against your baseline in P2.'",
+          "- AH-ORIG-4 (BENCHMARKS): NEVER state a benchmark figure as fact without citing a specific AbarVa pattern library entry (e.g., 'per industry pattern PAT-IND-003'). Say 'Per [specific pattern citation], the range for [metric] is approximately [range].'",
+          "- AH-ORIG-5 (SPONSOR SECTION): NEVER populate the sponsor section of the brief without citing the source of the name in the same message. Source must be ACL result, user input, or uploaded document.",
+          "- AH-ORIG-6 (STEP COMPLETION): NEVER mark a scaffold step complete without user confirmation. Extract content and show it; wait for explicit confirmation ('Yes, that's right') or implicit acceptance before proceeding.",
+          "- P0 SCAFFOLD STEPS: there are 7 steps — (1) What's the bet / hypothesis, (2) Archetype classification, (3) Sponsor candidate, (4) Scope / boundary, (5) Evidence family selection, (6) Value hypothesis seed, (7) Foundation readiness (F1–F4 checks). Complete them in order.",
+          "- FOUNDATION READINESS: F1 = data readiness, F2 = operating model clarity, F3 = sponsor commitment, F4 = change capacity. Ask the user to confirm each check directly; never infer status from indirect signals.",
+        ]
+      : []),
     ...(isSourceSurface(surface)
       ? [
           "- SOURCE CONSULTING PARTNER STYLE: short, calm, commercially sharp. No lengthy passages. No intake-form behavior. No 'Acknowledged' opener.",
