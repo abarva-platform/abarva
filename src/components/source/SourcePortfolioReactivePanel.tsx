@@ -94,7 +94,7 @@ export function SourcePortfolioReactivePanel({
           fontWeight: 700,
         }}
       >
-        Nexus mission preview - seeded
+        Sentinel mission preview - seeded
       </header>
 
       <SourceOperatingModelCard />
@@ -107,7 +107,7 @@ export function SourcePortfolioReactivePanel({
           <Metric label="Value" value={formatUsd(valueAtStake)} />
         </div>
         <p style={{ ...MUTED, marginTop: 10 }}>
-          Current view: {filterLabel}. Nexus is using seeded portfolio facts only; no live procurement write-back is implied.
+          Current view: {filterLabel}. Sentinel is using seeded portfolio facts only; no live procurement write-back is implied.
         </p>
       </Card>
 
@@ -125,7 +125,7 @@ export function SourcePortfolioReactivePanel({
         </Card>
       ) : (
         <Card kind="Top mission signal">
-            <p style={MUTED}>No seeded source events match this filter posture. Reset filters to restore the Nexus portfolio read.</p>
+            <p style={MUTED}>No seeded source events match this filter posture. Reset filters to restore the Sentinel portfolio read.</p>
         </Card>
       )}
 
@@ -185,7 +185,7 @@ function SourceOperatingModelCard() {
   return (
     <Card kind="Operating model">
       <p style={{ ...MUTED, marginBottom: 10 }}>
-        Source is the IT sourcing command center. Nexus leads the sourcing motion while Sentinel challenges evidence,
+        Source is the IT sourcing command center. Sentinel leads the sourcing motion while Sentinel challenges evidence,
         Steward protects gates, and Atlas frames value and executive consequence.
       </p>
       <div style={{ display: 'grid', gap: 7 }}>
@@ -355,7 +355,7 @@ function selectSourceArtifacts(artifacts: Artifact[]): Artifact[] {
 function Card({ kind, children }: { kind: string; children: React.ReactNode }) {
   return (
     <article style={CARD}>
-      <div style={EYEBROW}>Nexus - {kind}</div>
+      <div style={EYEBROW}>Sentinel - {kind}</div>
       {children}
     </article>
   );

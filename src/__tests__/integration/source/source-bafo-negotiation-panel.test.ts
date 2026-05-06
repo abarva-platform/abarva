@@ -3,7 +3,7 @@ import { join } from 'node:path';
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { SOURCE_GOLDEN_EVENT_IDS, SOURCE_STAGE_LABELS, buildSourceBafoNegotiationPlan, getSourcingEvent } from '@/lib/source';
-import { NexusEngagementCanvas } from '@/components/source/NexusEngagementCanvas';
+import { SentinelEngagementCanvas } from '@/components/source/SentinelEngagementCanvas';
 import { SourceBafoNegotiationPanel } from '@/components/source/SourceBafoNegotiationPanel';
 import type { SourceStageStatus, StageGateStatus, WorkflowStage } from '@/lib/source/types';
 
@@ -54,7 +54,7 @@ describe('Source BAFO negotiation panel', () => {
     const sourceEvent = await getSourcingEvent(SOURCE_GOLDEN_EVENT_IDS.digitalAppBuild);
     const event = buildOralsBafoEvent(sourceEvent!);
 
-    const html = renderToStaticMarkup(createElement(NexusEngagementCanvas, { event }));
+    const html = renderToStaticMarkup(createElement(SentinelEngagementCanvas, { event }));
 
     expect(html).toContain('BAFO negotiation');
     expect(html).toContain('Event negotiation readiness');

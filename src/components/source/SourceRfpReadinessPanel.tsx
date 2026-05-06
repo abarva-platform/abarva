@@ -50,7 +50,7 @@ export function SourceRfpReadinessPanel({ readiness }: { readiness: SourceRfpRea
           </div>
         </InfoCard>
 
-        <InfoCard title="Nexus recommendation">
+        <InfoCard title="Sentinel recommendation">
           <div style={{ color: SHELL.INK, fontWeight: 700 }}>{readiness.recommendedNextAction}</div>
         </InfoCard>
       </div>

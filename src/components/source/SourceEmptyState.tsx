@@ -6,9 +6,9 @@ export function SourceEmptyState() {
   return (
     <>
       <AgentColumn
-        agent={{ initials: 'St', name: 'Steward', role: 'Setup & governance' }}
+        agent={{ initials: 'Se', name: 'Sentinel', role: 'Source Orchestrator' }}
         quote="No source events have been created yet for this tenant. Start by creating your first sourcing event."
-        agentContext="Steward · Source · No events"
+        agentContext="Sentinel · Source · No events"
         actions={[
           { letter: 'A', text: 'Create first event', detail: 'Open the intake wizard to originate a new sourcing event' },
           { letter: 'B', text: 'Review setup connectors', detail: 'Ensure data connectors are configured before sourcing' },

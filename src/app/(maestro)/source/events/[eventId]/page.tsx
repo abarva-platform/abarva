@@ -5,7 +5,7 @@ import { SentinelSynthesisQuote } from '@/components/source/SentinelSynthesisQuo
 import { SourceProvenanceRibbon } from '@/components/source/SourceProvenanceRibbon';
 import { DownloadContextButton } from '@/components/reasoning/DownloadContextButton';
 import { SourceEventAgentCanvas } from '@/components/source/SourceEventAgentCanvas';
-import { NexusEngagementCanvas } from '@/components/source/NexusEngagementCanvas';
+import { SentinelEngagementCanvas } from '@/components/source/SentinelEngagementCanvas';
 import { SourceCommercialEventSection } from '@/components/source/SourceCommercialEventSection';
 import { GateCriteriaPanel } from '@/components/source/GateCriteriaPanel';
 import { FailureModeWarningChip } from '@/components/_shared/FailureModeWarningChip';
@@ -187,7 +187,7 @@ export default async function SourceEventDetailPage({
         />
       }
     >
-      <NexusEngagementCanvas
+      <SentinelEngagementCanvas
         event={displayEvent}
         canViewFinancialValues={canViewFinancialValues}
       />

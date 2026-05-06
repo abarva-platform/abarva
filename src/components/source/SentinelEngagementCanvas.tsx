@@ -16,7 +16,7 @@ import { SourceActiveStageWorkspace } from './SourceActiveStageWorkspace';
 import { SourceAlertPanel } from './SourceAlertPanel';
 import { SourceJourneyTrackerClient } from './SourceJourneyTrackerClient';
 import { SourceStagePanel } from './SourceStagePanel';
-import { PersistentNexusPanel } from './PersistentNexusPanel';
+import { SentinelMissionPanel } from './SentinelMissionPanel';
 import { SourceStageGatePanel } from './SourceStageGatePanel';
 import { SourceArtifactStatusStrip } from './SourceArtifactStatusStrip';
 import { PAT_SRC_AMS_001 } from '@/lib/intelligence/source-lifecycle-patterns';
@@ -65,7 +65,7 @@ const AMS_PATTERN_STAGE_MAP: Record<string, string> = Object.fromEntries(
 );
 const AMS_HANDOFF_NARRATIVES = buildStageHandoffNarratives(PAT_SRC_AMS_001);
 
-export function NexusEngagementCanvas({
+export function SentinelEngagementCanvas({
   event,
   canViewFinancialValues = true,
 }: {
@@ -117,13 +117,13 @@ export function NexusEngagementCanvas({
             <SourceAlertPanel
               alerts={event.alerts}
               title="Event pressure signals"
-              emptyLabel="No open event alerts. Nexus will keep this shell focused on the current stage."
+              emptyLabel="No open event alerts. Sentinel will keep this shell focused on the current stage."
               variant="light"
             />
           </div>
           <SourceStagePanel event={event} />
         </div>
-        <PersistentNexusPanel event={event} missionReport={missionReport} />
+        <SentinelMissionPanel event={event} missionReport={missionReport} />
       </div>
     </section>
   );

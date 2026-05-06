@@ -366,7 +366,7 @@ export function formatSourceVendorSelectionReadinessAsMarkdown(readiness: Source
     `- Required approvals: ${readiness.requiredApprovals.join(', ')}`,
     `- Required approvals for selection: ${readiness.requiredApprovalsForSelection.join(', ')}`,
     '',
-    `- Nexus recommendation: ${readiness.nexusRecommendation}`,
+    `- Sentinel recommendation: ${readiness.nexusRecommendation}`,
     `- Atlas executive implication: ${readiness.atlasExecutiveImplication}`,
     `- Sentinel cautions: ${readiness.sentinelCautions.join('; ')}`,
     '',

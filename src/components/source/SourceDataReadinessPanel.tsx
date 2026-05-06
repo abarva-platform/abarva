@@ -97,7 +97,7 @@ export function SourceDataReadinessPanel({
       {items.length === 0 ? (
         <div style={EMPTY_STATE}>
           No deterministic readiness items are available for this event yet. Steward should route setup readiness
-          back to Admin/Setup before Nexus treats evidence as usable.
+          back to Admin/Setup before Sentinel treats evidence as usable.
         </div>
       ) : (
         <div style={{ maxWidth: '100%', overflowX: 'auto' }}>

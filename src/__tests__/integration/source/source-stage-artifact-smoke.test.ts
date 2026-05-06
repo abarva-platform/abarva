@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
-import { NexusEngagementCanvas } from '@/components/source/NexusEngagementCanvas';
+import { SentinelEngagementCanvas } from '@/components/source/SentinelEngagementCanvas';
 import {
   SOURCE_GOLDEN_EVENT_IDS,
   buildSourceCommercialDemoScenario,
@@ -25,7 +25,7 @@ describe('Source stage gate + artifact smoke coverage', () => {
 
   it('renders stage gate and artifact sections together in event canvas shell', () => {
     const event = getSourceEventSeed(SOURCE_GOLDEN_EVENT_IDS.dataAiModernization);
-    const html = renderToStaticMarkup(createElement(NexusEngagementCanvas, { event: event! }));
+    const html = renderToStaticMarkup(createElement(SentinelEngagementCanvas, { event: event! }));
 
     expect(html).toContain('Stage gate readiness');
     expect(html).toContain('Current gate signal');

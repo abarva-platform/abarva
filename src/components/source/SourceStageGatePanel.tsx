@@ -43,9 +43,9 @@ export function SourceStageGatePanel({ readiness }: { readiness: SourceStageGate
             Blocker: {currentGate.blocker ?? 'none'}
           </div>
         </Card>
-        <Card title="Nexus / Steward guidance">
+        <Card title="Sentinel / Steward guidance">
           <div style={{ fontFamily: SHELL.SANS, fontSize: 12, lineHeight: 1.4, color: SHELL.INK_MUTED }}>
-            Nexus next action: {readiness.recommendedNextAction}
+            Sentinel next action: {readiness.recommendedNextAction}
           </div>
           <div style={{ fontFamily: SHELL.SANS, fontSize: 12, lineHeight: 1.4, color: SHELL.INK_MUTED }}>
             Steward gate posture: {readiness.blockers.length > 0 ? 'Resolve blockers before progression.' : 'No blocker escalation required.'}

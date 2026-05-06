@@ -139,8 +139,8 @@ function sourceAttentionItem(tone: 'info' | 'warning' | 'critical'): CSSProperti
 
 export function SourceAlertPanel({
   alerts,
-  title = 'Nexus alerts / decisions needed',
-  emptyLabel = 'No open Source alerts. Nexus will surface aging, missing inputs, and decision risks here.',
+  title = 'Sentinel alerts / decisions needed',
+  emptyLabel = 'No open Source alerts. Sentinel will surface aging, missing inputs, and decision risks here.',
   framed = true,
   eventContextById,
   variant = 'dark',

@@ -102,7 +102,7 @@ export function SourcePortfolioPage({
   return (
     <AppShell
       surface="source"
-      agentName="Nexus"
+      agentName="Sentinel"
       surfaceContext={{
         sourcePortfolioMode: true,
         sourceEventCount: eventsInView.length,
@@ -262,7 +262,7 @@ function SourceCommandHeader({
           }}
         >
           Source is the operating room for technology and IT sourcing: scope, evidence, gates, vendor risk,
-          value, and next action stay visible while Nexus runs the thread.
+          value, and next action stay visible while Sentinel runs the thread.
         </p>
       </div>
       <div
@@ -397,7 +397,7 @@ function SourceWorkDock() {
           key={item.label}
           type="button"
           data-testid={`source-work-dock-${item.label.toLowerCase().replaceAll(' ', '-')}`}
-          aria-label={`Ask Nexus: ${item.label}`}
+          aria-label={`Ask Sentinel: ${item.label}`}
           disabled={!pageState || pageState.isStreaming}
           onClick={() => pageState?.ask(item.prompt)}
           style={{
@@ -406,7 +406,7 @@ function SourceWorkDock() {
             cursor: !pageState || pageState.isStreaming ? 'not-allowed' : 'pointer',
           }}
         >
-          <div style={WORK_DOCK_PROMPT}>Ask Nexus</div>
+          <div style={WORK_DOCK_PROMPT}>Ask Sentinel</div>
           <div style={WORK_DOCK_LABEL}>{item.label}</div>
           <p style={WORK_DOCK_COPY}>{item.detail}</p>
         </button>
@@ -461,7 +461,7 @@ function SourceMissionPreview({
             fontWeight: 800,
           }}
         >
-          Nexus mission preview
+          Sentinel mission preview
         </div>
         <div
           style={{

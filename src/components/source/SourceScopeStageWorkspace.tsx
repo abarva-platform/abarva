@@ -145,7 +145,7 @@ export function SourceScopeStageWorkspace({
             Placeholder state only. No artifact creation, drawer, or approval behavior in this slice.
           </div>
         </WorkspaceCard>
-        <WorkspaceCard title="Nexus guidance" tone="teal">
+        <WorkspaceCard title="Sentinel guidance" tone="teal">
           <div style={{ color: SHELL.INK, fontWeight: 700 }}>{missionReport.recommendedNextAction}</div>
           <p style={{ ...sourceMuted, color: SHELL.INK_MUTED, margin: '6px 0 0' }}>
             Context used:{' '}

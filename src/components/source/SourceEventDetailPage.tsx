@@ -1190,7 +1190,7 @@ function RiskDetectionTab() {
         'Vendor architecture selection for AMS must align with APX-CDP-2026 Design gate. If Design gate is delayed, the AMS award may need to hold to avoid scope lock-in.',
       severity: 'info' as const,
       owner: 'Program Director',
-      action: 'Monitor APX-CDP-2026 gate status — linked in Nexus',
+      action: 'Monitor APX-CDP-2026 gate status — linked in Sentinel',
     },
   ];
 
@@ -1315,7 +1315,7 @@ function SignalsStreamTab() {
     {
       id: 'S3',
       type: 'Pricing Trend',
-      text: 'Managed services pricing indices flat for Q2 2026. Vendor C\'s below-median positioning is structurally unusual — Nexus recommends confirming scope assumptions before accepting headline price.',
+      text: 'Managed services pricing indices flat for Q2 2026. Vendor C\'s below-median positioning is structurally unusual — Sentinel recommends confirming scope assumptions before accepting headline price.',
       date: 'Apr 22 2026',
       relevance: 'Medium',
     },
@@ -1513,7 +1513,7 @@ function LinkedProgramTab() {
             fontStyle: 'italic',
           }}
         >
-          Link is deterministic seed for demonstration. In production, Nexus maintains a live
+          Link is deterministic seed for demonstration. In production, Sentinel maintains a live
           dependency graph between source events and program phases — gate transitions in either
           surface propagate signals to the linked entity.
         </p>

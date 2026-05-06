@@ -22,7 +22,7 @@ describe('Source stage gate panel', () => {
   it('keeps panel files free of model/upload/workflow engine imports', () => {
     const sources = [
       'src/components/source/SourceStageGatePanel.tsx',
-      'src/components/source/NexusEngagementCanvas.tsx',
+      'src/components/source/SentinelEngagementCanvas.tsx',
       'src/lib/source/source-stage-gates.ts',
       'src/lib/source/mock-seed.ts',
     ].map((filePath) => readFileSync(join(process.cwd(), filePath), 'utf8')).join('\n');

@@ -31,9 +31,9 @@ export function SourceExecutiveDecisionSummaryPanel({
       <div style={GRID_TWO}>
         <Card title="Decision needed">
           <div style={{ color: EXPERIENCE_COLORS.textPrimary, fontWeight: 700 }}>{summary.decisionNeeded}</div>
-          <div style={{ ...sourceSectionLabel, marginTop: 8 }}>Nexus recommended next action</div>
+          <div style={{ ...sourceSectionLabel, marginTop: 8 }}>Sentinel recommended next action</div>
           <div style={{ ...TEXT.small, color: EXPERIENCE_COLORS.textSecondary }}>{summary.recommendedNextAction}</div>
-          <div style={{ ...sourceSectionLabel, marginTop: 8 }}>Nexus recommendation</div>
+          <div style={{ ...sourceSectionLabel, marginTop: 8 }}>Sentinel recommendation</div>
           <div style={{ ...TEXT.small, color: EXPERIENCE_COLORS.textSecondary }}>{summary.nexusRecommendation}</div>
         </Card>
 
