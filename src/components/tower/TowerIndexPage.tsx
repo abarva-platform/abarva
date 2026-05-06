@@ -960,6 +960,22 @@ export function TowerIndexPage({
             <span>→</span>
             <span>Risk lens · open risk items</span>
           </a>
+          <a href="/tower/lens/inventory" style={{
+            display: 'inline-flex', alignItems: 'center', gap: 8,
+            fontFamily: SHELL.MONO, fontSize: 11, color: SHELL.INK_SOFT,
+            textDecoration: 'none',
+          }}>
+            <span>→</span>
+            <span>Inventory lens · use cases &amp; vendor stack</span>
+          </a>
+          <a href="/tower/lens/cost" style={{
+            display: 'inline-flex', alignItems: 'center', gap: 8,
+            fontFamily: SHELL.MONO, fontSize: 11, color: SHELL.INK_SOFT,
+            textDecoration: 'none',
+          }}>
+            <span>→</span>
+            <span>Cost lens · AI cloud spend &amp; budget variance</span>
+          </a>
         </div>
       </div>
 

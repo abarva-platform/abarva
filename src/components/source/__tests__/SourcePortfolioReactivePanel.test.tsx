@@ -8,7 +8,7 @@ const EVENT: SourcingEventSummary = {
   code: 'SRC-TST-001',
   name: 'AMS Consolidation Test',
   accountName: 'Apex Retail',
-  leadAgent: 'Nexus',
+  leadAgent: 'Sentinel',
   archetype: 'Managed Services / Outsourcing',
   rigor: 'strategic',
   status: 'active',

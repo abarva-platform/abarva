@@ -53,7 +53,19 @@ import { ARTIFACT_CHANNEL_INSTRUCTIONS } from "@/lib/agent/artifacts";
 import {
   composeSentinelSystemPrompt,
   isSentinelVoiceDoctrineEnabled,
-} from "@/lib/agent/voice-doctrine/sentinel";
+} from '@/lib/agent/voice-doctrine/sentinel';
+import {
+  composeNexusSystemPrompt,
+  isNexusVoiceDoctrineEnabled,
+} from '@/lib/agent/voice-doctrine/nexus';
+import {
+  composeAtlasSystemPrompt,
+  isAtlasVoiceDoctrineEnabled,
+} from '@/lib/agent/voice-doctrine/atlas';
+import {
+  composeStewardSystemPrompt,
+  isStewardVoiceDoctrineEnabled,
+} from '@/lib/agent/voice-doctrine/steward';
 // PR-G surface canonicalization — translates semantic surface keys
 // ('programs-detail') into URL-shaped keys ('/programs/<id>') so tool
 // resolution and the artifact-channel gate stay aligned.
@@ -318,6 +330,36 @@ export async function POST(request: Request) {
     });
   }
 
+  // Phase 4 doctrine wiring — Nexus on Moves/Programs surfaces.
+  if (
+    agentName === 'Nexus' &&
+    typeof surface === 'string' &&
+    (surface.startsWith('/moves') || surface.startsWith('/programs') || surface.startsWith('/strategic-moves')) &&
+    isNexusVoiceDoctrineEnabled()
+  ) {
+    voiceLine = composeNexusSystemPrompt({ surface });
+  }
+
+  // Phase 4 doctrine wiring — Atlas on Tower surface.
+  if (
+    agentName === 'Atlas' &&
+    typeof surface === 'string' &&
+    surface.startsWith('/tower') &&
+    isAtlasVoiceDoctrineEnabled()
+  ) {
+    voiceLine = composeAtlasSystemPrompt({ surface });
+  }
+
+  // Phase 4 doctrine wiring — Steward on Setup/Admin surface.
+  if (
+    agentName === 'Steward' &&
+    typeof surface === 'string' &&
+    surface.startsWith('/admin') &&
+    isStewardVoiceDoctrineEnabled()
+  ) {
+    voiceLine = composeStewardSystemPrompt({ surface });
+  }
+
   const contextLines: string[] = [
     `Active tenant: ${tenantName} (locked — this is the user's client account).`,
     surface ? `Current surface: ${surface}.` : "",
@@ -385,7 +427,7 @@ export async function POST(request: Request) {
         );
 
         // Phase pack — V2 when PHASE_PACK_V2=true, else V1 (T-D.2)
-        const useV2Pack = process.env.PHASE_PACK_V2 === 'true';
+        const useV2Pack = process.env.PHASE_PACK_V2 !== 'false';
         if (useV2Pack) {
           const packV2 = getPhasePackV2(promptPhase);
           if (packV2) {
@@ -407,7 +449,7 @@ export async function POST(request: Request) {
   // /strategic-moves/new always loads P0 (origination).
   // /strategic-moves/:id loads the pack for surfaceContext.phase (P1–P5).
   // The useV2Pack flag applies here too (T-D.2 migration bridge).
-  const useV2Pack = process.env.PHASE_PACK_V2 === 'true';
+  const useV2Pack = process.env.PHASE_PACK_V2 !== 'false';
   if (!phasePackBlock) {
     let smPhase: number | null = null;
     if (surface === '/strategic-moves/new') {

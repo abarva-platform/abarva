@@ -439,16 +439,16 @@ describe('isSentinelVoiceDoctrineEnabled', () => {
     expect(isSentinelVoiceDoctrineEnabled()).toBe(false);
   });
 
-  it('defaults to disabled in production', () => {
+  it('defaults to enabled in production after 2026-05-06 founder sign-off', () => {
     delete process.env.SENTINEL_VOICE_DOCTRINE_DRAFT;
     (process.env as Record<string, string | undefined>).NODE_ENV = 'production';
-    expect(isSentinelVoiceDoctrineEnabled()).toBe(false);
+    expect(isSentinelVoiceDoctrineEnabled()).toBe(true);
   });
 
-  it('is enabled in production only when explicit prod opt-in', () => {
-    process.env.SENTINEL_VOICE_DOCTRINE_DRAFT = 'enabled-in-prod';
+  it('can be disabled in production via emergency escape hatch', () => {
+    process.env.SENTINEL_VOICE_DOCTRINE_DRAFT = 'disabled';
     (process.env as Record<string, string | undefined>).NODE_ENV = 'production';
-    expect(isSentinelVoiceDoctrineEnabled()).toBe(true);
+    expect(isSentinelVoiceDoctrineEnabled()).toBe(false);
   });
 });
 

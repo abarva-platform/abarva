@@ -10,7 +10,7 @@ import type {
 } from './types';
 
 export const SOURCE_PRODUCT_NAME = 'AbarVa Source';
-export const SOURCE_LEAD_AGENT = 'Nexus';
+export const SOURCE_LEAD_AGENT = 'Sentinel';
 
 export const SOURCE_ROUTE_LABELS: Record<SourceRouteKey, string> = {
   dashboard: 'Dashboard',

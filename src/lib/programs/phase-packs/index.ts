@@ -1,15 +1,14 @@
 // Phase Pack registry · Programs Strict Completion v1.2 · Surface 2 PR-A
 //
-// T-D.2 migration bridge: V1 + V2 packs coexist.
-// Feature flag: PHASE_PACK_V2 (env var, default false)
-//   false → V1 packs (current behavior, safe fallback)
-//   true  → V2 packs (21-field training pack schema per T-D.1)
+// V1 + V2 packs coexist via the T-D.2 migration bridge.
+// Feature flag: PHASE_PACK_V2 (env var)
+//   default false → getPhasePack returns V1 packs (back-compat for tests, callers)
+//   'true' → getPhasePack returns null; callers must use getPhasePackV2 directly
 //
-// The flag is read at module load time so it is consistent within a request.
-// To roll out: set PHASE_PACK_V2=true in Vercel env, redeploy.
-// To rollback: unset PHASE_PACK_V2, redeploy.
-//
-// S-4 migration (post-validation): delete V1 pack files + V2 bridge.
+// The agent route opted V2-by-default on 2026-05-06 by checking
+// `useV2Pack = process.env.PHASE_PACK_V2 !== 'false'` directly,
+// which sidesteps this registry. Once V1 callers migrate, this
+// registry can drop V1 entirely.
 //
 // Public surface:
 //   - getPhasePack(phase): V1 pack or null (null when USE_V2=true → use getPhasePackV2)

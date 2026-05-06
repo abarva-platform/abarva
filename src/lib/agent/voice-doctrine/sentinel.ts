@@ -545,16 +545,13 @@ export function composeSentinelSystemPrompt(
   ].join('\n');
 }
 
-// ── Draft-mode gating ────────────────────────────────────────────────────────
+// ── Doctrine gating ──────────────────────────────────────────────────────────
 //
-// Until founder signs off, the doctrine is v0.draft. Production
-// rollout is gated; staging rollout is on by default to surface
-// drift early.
+// Founder signed off on 2026-05-06. Doctrine is now enabled by default
+// in every environment, including production. The env flag survives as
+// an emergency disable escape hatch — set SENTINEL_VOICE_DOCTRINE_DRAFT='disabled'
+// to turn it off if a regression surfaces.
 
 export function isSentinelVoiceDoctrineEnabled(): boolean {
-  if (process.env.NODE_ENV === 'production') {
-    return process.env.SENTINEL_VOICE_DOCTRINE_DRAFT === 'enabled-in-prod';
-  }
-  // staging / development / test default: enabled
   return process.env.SENTINEL_VOICE_DOCTRINE_DRAFT !== 'disabled';
 }

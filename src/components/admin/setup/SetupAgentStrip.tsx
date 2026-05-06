@@ -68,8 +68,8 @@ function buildAgents(props: SetupAgentStripProps): AgentSummary[] {
         props.atlasSignalCount > 0
           ? `${props.atlasSignalCount} signals tracked · ${props.atlasHighSeverityCount} HIGH severity open`
           : 'No cross-program signals yet · needs ≥2 active programs',
-      href: '/admin/agents/atlas',
-      ctaLabel: 'Open Atlas',
+      href: '/admin/cross-program-signals',
+      ctaLabel: 'Open cross-program signals',
       testid: 'admin-agent-card-atlas',
     },
     {

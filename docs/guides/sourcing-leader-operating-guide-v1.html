@@ -1,0 +1,2104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The AbarVa Operating Guide · Vision · Agents · Knowledge · Sourcing Journey</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700;9..144,800;9..144,900&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --page-bg: #f5f1eb;
+    --cream: #efe9dd;
+    --cream-2: #faf6ec;
+    --cream-deep: #e8e1d2;
+    --border: rgba(10,10,11,0.10);
+    --border-strong: rgba(10,10,11,0.24);
+    --ink: #000000;
+    --ink-2: #2c2c2a;
+    --panel: #0c1a3a;
+    --gray: #888780;
+    --gray-dk: #5F5E5A;
+    --blue: #0066CC;
+    --blue-dk: #0052a3;
+    --gold: #9C7B3F;
+    --green: #1d9e75;
+    --green-bg: #e1f5ee;
+    --amber: #ba7517;
+    --amber-bg: #faeeda;
+    --red: #a32d2d;
+    --red-bg: #fceded;
+    --purple: #6b3fa0;
+    --purple-bg: #efe6f7;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: 'Inter', system-ui, sans-serif;
+    background: var(--page-bg);
+    color: var(--ink);
+    font-size: 15px;
+    line-height: 1.6;
+  }
+  .layout {
+    display: grid;
+    grid-template-columns: 280px 1fr;
+    min-height: 100vh;
+    max-width: 1480px;
+    margin: 0 auto;
+  }
+
+  /* Sidebar */
+  .sidebar {
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow-y: auto;
+    padding: 28px 22px 28px 32px;
+    background: var(--cream-2);
+    border-right: 1px solid var(--border);
+  }
+  .sidebar .brand {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 1.6px;
+    text-transform: uppercase;
+    color: var(--gold);
+    font-weight: 700;
+    margin-bottom: 8px;
+  }
+  .sidebar h1 {
+    font-family: 'Fraunces', serif;
+    font-size: 22px;
+    font-weight: 800;
+    letter-spacing: -0.4px;
+    line-height: 1.15;
+    margin-bottom: 4px;
+  }
+  .sidebar .subtitle {
+    font-size: 12px;
+    color: var(--gray-dk);
+    line-height: 1.5;
+    margin-bottom: 24px;
+  }
+  .sidebar nav {
+    border-top: 1px solid var(--border);
+    padding-top: 18px;
+  }
+  .sidebar nav .label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9.5px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--gray);
+    font-weight: 600;
+    margin-bottom: 8px;
+    display: block;
+  }
+  .sidebar nav a {
+    display: block;
+    color: var(--ink-2);
+    text-decoration: none;
+    padding: 6px 10px;
+    border-radius: 5px;
+    font-size: 13px;
+    line-height: 1.4;
+    transition: all 120ms;
+    margin-bottom: 1px;
+  }
+  .sidebar nav a:hover {
+    background: var(--cream);
+    color: var(--ink);
+  }
+  .sidebar nav a.current {
+    background: var(--ink);
+    color: var(--cream);
+    font-weight: 600;
+  }
+  .sidebar nav a.sub {
+    padding-left: 22px;
+    font-size: 12.5px;
+    color: var(--gray-dk);
+  }
+  .sidebar nav a.sub::before {
+    content: '·';
+    margin-right: 8px;
+    color: var(--gray);
+  }
+  .sidebar nav .group {
+    margin-bottom: 14px;
+  }
+
+  /* Main */
+  main {
+    padding: 56px 64px 96px;
+    max-width: 920px;
+  }
+
+  /* Cover */
+  .cover {
+    padding-bottom: 48px;
+    margin-bottom: 48px;
+    border-bottom: 1px solid var(--border);
+  }
+  .cover .eyebrow {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 1.8px;
+    color: var(--gold);
+    font-weight: 700;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+  .cover h1 {
+    font-family: 'Fraunces', serif;
+    font-size: 56px;
+    font-weight: 800;
+    letter-spacing: -1.2px;
+    line-height: 1.05;
+    margin-bottom: 16px;
+    max-width: 18ch;
+  }
+  .cover .subtitle {
+    font-size: 18px;
+    color: var(--gray-dk);
+    line-height: 1.5;
+    max-width: 42ch;
+    margin-bottom: 28px;
+  }
+  .cover .meta {
+    display: flex;
+    gap: 28px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 1.4px;
+    text-transform: uppercase;
+    color: var(--gray-dk);
+    font-weight: 600;
+  }
+  .cover .meta strong { color: var(--ink); }
+
+  /* Sections */
+  section {
+    padding: 36px 0 48px;
+    border-bottom: 1px solid var(--border);
+    scroll-margin-top: 24px;
+  }
+  section:last-of-type { border-bottom: none; }
+  section .section-num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 1.6px;
+    color: var(--gold);
+    font-weight: 700;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+  section h2 {
+    font-family: 'Fraunces', serif;
+    font-size: 38px;
+    font-weight: 800;
+    letter-spacing: -0.8px;
+    line-height: 1.1;
+    margin-bottom: 14px;
+  }
+  section .lede {
+    font-size: 17px;
+    color: var(--gray-dk);
+    line-height: 1.55;
+    margin-bottom: 28px;
+    max-width: 56ch;
+  }
+  section h3 {
+    font-family: 'Fraunces', serif;
+    font-size: 24px;
+    font-weight: 700;
+    letter-spacing: -0.4px;
+    line-height: 1.2;
+    margin: 32px 0 10px;
+    scroll-margin-top: 24px;
+  }
+  section h4 {
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 0.4px;
+    text-transform: uppercase;
+    color: var(--ink);
+    margin: 20px 0 8px;
+  }
+  section p {
+    margin-bottom: 14px;
+    max-width: 70ch;
+  }
+  section ul, section ol {
+    margin-bottom: 16px;
+    padding-left: 22px;
+    max-width: 70ch;
+  }
+  section ul li, section ol li { margin-bottom: 6px; }
+  section strong { font-weight: 600; color: var(--ink); }
+  section em { font-style: italic; color: var(--ink-2); }
+
+  /* Inline elements */
+  code {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12.5px;
+    background: rgba(0,0,0,0.06);
+    padding: 1px 6px;
+    border-radius: 3px;
+    color: var(--ink);
+  }
+
+  /* Callouts */
+  .callout {
+    background: var(--cream-2);
+    border-left: 3px solid var(--ink);
+    padding: 16px 20px;
+    margin: 20px 0;
+    border-radius: 0 8px 8px 0;
+    font-size: 14px;
+    line-height: 1.55;
+  }
+  .callout .label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 1.4px;
+    text-transform: uppercase;
+    font-weight: 700;
+    color: var(--ink);
+    margin-bottom: 4px;
+  }
+  .callout.amber { border-left-color: var(--amber); background: var(--amber-bg); }
+  .callout.amber .label { color: var(--amber); }
+  .callout.green { border-left-color: var(--green); background: var(--green-bg); }
+  .callout.green .label { color: var(--green); }
+  .callout.red { border-left-color: var(--red); background: var(--red-bg); }
+  .callout.red .label { color: var(--red); }
+  .callout.purple { border-left-color: var(--purple); background: var(--purple-bg); }
+  .callout.purple .label { color: var(--purple); }
+
+  /* Stat blocks */
+  .stat-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 14px;
+    margin: 22px 0;
+  }
+  .stat {
+    background: var(--cream-2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 18px 20px;
+  }
+  .stat .num {
+    font-family: 'Fraunces', serif;
+    font-size: 36px;
+    font-weight: 800;
+    letter-spacing: -0.8px;
+    line-height: 1;
+    color: var(--ink);
+    margin-bottom: 6px;
+  }
+  .stat .label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 1.3px;
+    text-transform: uppercase;
+    color: var(--gold);
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
+  .stat .desc {
+    font-size: 12.5px;
+    color: var(--gray-dk);
+    line-height: 1.45;
+  }
+
+  /* Step card */
+  .step-card {
+    background: var(--cream-2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px 28px;
+    margin: 18px 0 24px;
+  }
+  .step-card .step-meta {
+    display: flex;
+    align-items: baseline;
+    gap: 14px;
+    margin-bottom: 6px;
+    flex-wrap: wrap;
+  }
+  .step-card .step-num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 1.6px;
+    color: var(--gold);
+    font-weight: 700;
+  }
+  .step-card .step-agent {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 1.4px;
+    color: var(--blue-dk);
+    font-weight: 700;
+    text-transform: uppercase;
+  }
+  .step-card h3 {
+    margin: 0 0 6px;
+  }
+  .step-card .step-q {
+    font-size: 14.5px;
+    color: var(--gray-dk);
+    font-style: italic;
+    margin-bottom: 18px;
+    line-height: 1.5;
+  }
+  .step-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 18px;
+    margin-top: 14px;
+  }
+  .step-grid h4 {
+    margin-top: 0;
+    font-size: 11px;
+    color: var(--gold);
+    letter-spacing: 1.4px;
+  }
+  .step-grid ul {
+    padding-left: 18px;
+    font-size: 13.5px;
+    margin-bottom: 0;
+  }
+  .step-grid ul li { margin-bottom: 4px; line-height: 1.5; }
+  .step-source {
+    margin-top: 18px;
+    padding-top: 14px;
+    border-top: 1px solid var(--border);
+    font-size: 13px;
+    line-height: 1.55;
+  }
+  .step-source .src-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 1.4px;
+    color: var(--gold);
+    font-weight: 700;
+    margin-right: 8px;
+    text-transform: uppercase;
+  }
+  .step-savings {
+    margin-top: 10px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.8px;
+    color: var(--green);
+    font-weight: 700;
+  }
+
+  /* Tables */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 18px 0;
+    font-size: 13.5px;
+  }
+  table th {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 1.3px;
+    text-transform: uppercase;
+    font-weight: 700;
+    color: var(--gray-dk);
+    text-align: left;
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--border-strong);
+    background: var(--cream-2);
+  }
+  table td {
+    padding: 11px 12px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+    line-height: 1.5;
+  }
+  table tr:last-child td { border-bottom: none; }
+
+  /* Agent cards */
+  .agent-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 16px;
+    margin: 22px 0;
+  }
+  .agent-card {
+    background: var(--cream-2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px 22px;
+  }
+  .agent-card .agent-head {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border);
+  }
+  .agent-avatar {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Fraunces', serif;
+    font-weight: 700;
+    font-size: 16px;
+    background: rgba(0,102,204,0.15);
+    border: 1.5px solid var(--blue);
+    color: var(--blue-dk);
+  }
+  .agent-avatar.steward { background: rgba(156,123,63,0.15); border-color: var(--gold); color: var(--gold); }
+  .agent-avatar.atlas { background: rgba(107,63,160,0.15); border-color: var(--purple); color: var(--purple); }
+  .agent-avatar.sentinel { background: rgba(186,117,23,0.15); border-color: var(--amber); color: var(--amber); }
+  .agent-card .agent-name {
+    font-family: 'Fraunces', serif;
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: -0.4px;
+    line-height: 1;
+  }
+  .agent-card .agent-role {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9.5px;
+    letter-spacing: 1.3px;
+    text-transform: uppercase;
+    color: var(--gray-dk);
+    font-weight: 600;
+    margin-top: 3px;
+  }
+  .agent-card p { font-size: 13.5px; margin-bottom: 8px; }
+  .agent-card .what-they-do {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9.5px;
+    letter-spacing: 1.3px;
+    text-transform: uppercase;
+    font-weight: 700;
+    color: var(--gold);
+    margin: 12px 0 6px;
+  }
+  .agent-card ul {
+    padding-left: 16px;
+    font-size: 13px;
+    margin-bottom: 0;
+  }
+  .agent-card ul li { margin-bottom: 3px; line-height: 1.45; }
+
+  /* Truth cards */
+  .truth {
+    background: var(--cream-2);
+    border: 1px solid var(--border);
+    border-left: 4px solid var(--ink);
+    border-radius: 0 10px 10px 0;
+    padding: 18px 22px;
+    margin: 14px 0;
+  }
+  .truth .truth-num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 1.5px;
+    color: var(--gold);
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
+  .truth h3 {
+    font-size: 19px;
+    font-family: 'Fraunces', serif;
+    font-weight: 700;
+    letter-spacing: -0.3px;
+    margin: 0 0 8px;
+  }
+  .truth p { font-size: 13.5px; margin-bottom: 8px; line-height: 1.55; }
+  .truth p:last-child { margin-bottom: 0; }
+  .truth .why {
+    font-size: 12.5px;
+    color: var(--gray-dk);
+    font-style: italic;
+  }
+
+  /* Readiness ramp */
+  .ramp {
+    background: var(--cream-2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px 24px;
+    margin: 20px 0;
+  }
+  .ramp-row {
+    display: grid;
+    grid-template-columns: 24px 180px 1fr;
+    gap: 14px;
+    align-items: baseline;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 13.5px;
+  }
+  .ramp-row:last-child { border-bottom: none; }
+  .ramp-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    margin-top: 6px;
+  }
+  .ramp-name {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+    font-weight: 700;
+    color: var(--ink);
+  }
+  .ramp-desc { color: var(--ink-2); line-height: 1.5; }
+
+  /* Failure modes */
+  .failure {
+    background: var(--red-bg);
+    border-left: 3px solid var(--red);
+    border-radius: 0 8px 8px 0;
+    padding: 16px 20px;
+    margin: 14px 0;
+  }
+  .failure h4 {
+    font-family: 'Fraunces', serif;
+    font-size: 17px;
+    color: var(--red);
+    font-weight: 700;
+    letter-spacing: -0.2px;
+    margin: 0 0 6px;
+    text-transform: none;
+  }
+  .failure p { font-size: 13.5px; margin-bottom: 6px; line-height: 1.55; }
+  .failure p:last-child { margin-bottom: 0; }
+  .failure .signal {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+    font-weight: 700;
+    color: var(--red);
+    margin-top: 8px;
+    display: block;
+  }
+
+  /* Glossary */
+  .glossary dt {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+    font-weight: 700;
+    color: var(--ink);
+    margin-top: 14px;
+  }
+  .glossary dd {
+    font-size: 13.5px;
+    color: var(--ink-2);
+    margin: 4px 0 0;
+    line-height: 1.55;
+  }
+
+  /* Footer */
+  .footer {
+    margin-top: 64px;
+    padding-top: 28px;
+    border-top: 1px solid var(--border);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 1.4px;
+    color: var(--gray);
+    text-transform: uppercase;
+    line-height: 1.6;
+  }
+
+  /* Print */
+  @media print {
+    .sidebar { display: none; }
+    .layout { grid-template-columns: 1fr; }
+    main { padding: 24px; max-width: none; }
+    section { page-break-inside: avoid; }
+    .cover h1 { font-size: 36px; }
+    a { color: var(--ink); text-decoration: none; }
+  }
+
+  @media (max-width: 1024px) {
+    .layout { grid-template-columns: 1fr; }
+    .sidebar { position: relative; height: auto; border-right: none; border-bottom: 1px solid var(--border); }
+    main { padding: 32px 28px 64px; }
+    .cover h1 { font-size: 40px; }
+    .step-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<div class="layout">
+
+  <!-- ───── Sidebar ───── -->
+  <aside class="sidebar">
+    <div class="brand">AbarVa · Operating Guide v2</div>
+    <h1>The AbarVa Operating Guide</h1>
+    <div class="subtitle">Vision, agents, knowledge layer, industry depth, and the sourcing operating journey — for technology leaders running AI-driven enterprise transformation.</div>
+
+    <nav>
+      <span class="label">Vision &amp; architecture</span>
+      <div class="group">
+        <a href="#vision">01 · The Vision</a>
+        <a href="#agents">02 · The Agent Architecture</a>
+        <a href="#knowledge">03 · The Knowledge Layer</a>
+      </div>
+
+      <span class="label">Industry depth</span>
+      <div class="group">
+        <a href="#industry">04 · Industry Patterns</a>
+        <a href="#industry-healthcare" class="sub">Healthcare</a>
+        <a href="#industry-fs" class="sub">Financial Services</a>
+        <a href="#industry-retail" class="sub">Retail</a>
+        <a href="#cross-industry">05 · Cross-Industry Insights</a>
+      </div>
+
+      <span class="label">Sourcing fundamentals</span>
+      <div class="group">
+        <a href="#sec-01">06 · The Sourcing Leader's Reality</a>
+        <a href="#sec-02">07 · Sourcing Fundamentals</a>
+      </div>
+
+      <span class="label">The 11-step journey</span>
+      <div class="group">
+        <a href="#sec-03">08 · The Operating Journey</a>
+        <a href="#step-01" class="sub">Strategy</a>
+        <a href="#step-02" class="sub">Scope</a>
+        <a href="#step-03" class="sub">RFP / RFI Readiness</a>
+        <a href="#step-04" class="sub">Vendor Responses</a>
+        <a href="#step-05" class="sub">Evaluation</a>
+        <a href="#step-06" class="sub">Pricing Normalization</a>
+        <a href="#step-07" class="sub">BAFO / Negotiation</a>
+        <a href="#step-08" class="sub">Executive Decision</a>
+        <a href="#step-09" class="sub">Selection Readiness</a>
+        <a href="#step-10" class="sub">Transition</a>
+        <a href="#step-11" class="sub">Value Realization</a>
+      </div>
+
+      <span class="label">Doctrines</span>
+      <div class="group">
+        <a href="#sec-04">09 · The Four Front Agents</a>
+        <a href="#sec-05">10 · The Seven Truths</a>
+        <a href="#sec-06">11 · The 13 Data Readiness States</a>
+      </div>
+
+      <span class="label">Outcomes</span>
+      <div class="group">
+        <a href="#sec-07">12 · The Savings Model</a>
+        <a href="#sec-08">13 · Failure Modes &amp; Tells</a>
+        <a href="#sec-09">14 · Operating Cadence</a>
+      </div>
+
+      <span class="label">Reference</span>
+      <div class="group">
+        <a href="#sec-10">15 · Glossary &amp; Quick Reference</a>
+      </div>
+    </nav>
+  </aside>
+
+  <!-- ───── Main ───── -->
+  <main>
+
+    <!-- Cover -->
+    <div class="cover">
+      <div class="eyebrow">Operating Guide · v2 · 2026</div>
+      <h1>An operating system for AI-driven enterprise transformation.</h1>
+      <p class="subtitle">Five products. Four front agents. Hundreds of specialists. Three corpora. One promise: better technology outcomes with full provenance and cross-industry intelligence — for CIOs, CTOs, and the technology leaders driving AI-driven moves.</p>
+      <div class="meta">
+        <span><strong>Audience</strong> · Technology leaders</span>
+        <span><strong>Reading time</strong> · 55 min</span>
+        <span><strong>Coverage</strong> · Vision · Agents · Knowledge · Sourcing</span>
+      </div>
+    </div>
+
+    <!-- ════════════ 01 · The Vision ════════════ -->
+    <section id="vision">
+      <div class="section-num">Section 01 · Vision</div>
+      <h2>An operating system for AI-driven enterprise transformation</h2>
+      <p class="lede">AbarVa is not a tool. It is the operating system for the technology decisions enterprises make when AI changes the economics of every workstream — sourcing, programs, portfolio reasoning, knowledge work, and operations.</p>
+
+      <h3>The reality this product addresses</h3>
+      <p>Most enterprises are spending more on AI than at any prior moment in technology history, while having less ground truth about what's working than they had during the cloud era. The investment cycle has accelerated; the evidence cycle has not. Decisions that used to be made annually now compress into quarterly windows, while the underlying data — vendor capability, contract posture, value realization, cross-program signals — remains scattered across disconnected systems.</p>
+      <p>AbarVa exists to close that gap. The product makes evidence-grounded technology decisions a default, not an aspiration. Every recommendation cites its sources. Every value claim has measurement state. Every gate decision has named criteria and an audit trail.</p>
+
+      <h3>Five products, one operating system</h3>
+      <p>The product surface is five integrated workflow areas, each with a single named conversational front agent and hundreds of specialists working behind:</p>
+
+      <table>
+        <thead><tr><th>Product</th><th>Workflow concern</th><th>Front agent</th><th>What it produces</th></tr></thead>
+        <tbody>
+          <tr>
+            <td><strong>Moves / Programs</strong></td>
+            <td>The strategic-moves journey — six phases (P0 Originate → P5 Operate)</td>
+            <td>Nexus</td>
+            <td>Phase deliverables, gate decisions, SME workshops, readiness reports</td>
+          </tr>
+          <tr>
+            <td><strong>Source</strong></td>
+            <td>The 11-step sourcing journey for technology vendors</td>
+            <td>Sentinel</td>
+            <td>RFPs, evaluations, normalized pricing, BAFO question packs, decision briefs, value ledgers</td>
+          </tr>
+          <tr>
+            <td><strong>Tower</strong></td>
+            <td>Portfolio-level rollup — adoption, value, risk, cost, productivity</td>
+            <td>Atlas</td>
+            <td>Executive briefings, portfolio pressure narratives, contradiction detection, board-ready synthesis</td>
+          </tr>
+          <tr>
+            <td><strong>Intelligence</strong></td>
+            <td>Pattern-anchored reasoning across worldview, industry, tenant corpora</td>
+            <td>Sentinel</td>
+            <td>Citation-grounded answers, contradiction surfacing, four-mode reasoning, pattern matching</td>
+          </tr>
+          <tr>
+            <td><strong>Setup / Admin</strong></td>
+            <td>Data readiness, integrations, governance, permissions, audit</td>
+            <td>Steward</td>
+            <td>Trust-rung promotion, gap detection, provenance trail, audit log, blocker tracking</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <p>The five products share substrate, share the four front agents, share the specialist catalog, and share the three corpora. A program in Moves draws on Source's vendor data; Source's sourcing events feed Tower's portfolio rollup; both consume Intelligence's pattern packs; all run on Setup's data foundation.</p>
+
+      <h3>The three architectural pillars</h3>
+
+      <div class="agent-grid">
+        <div class="agent-card">
+          <div class="agent-head">
+            <div class="agent-avatar" style="background: rgba(0,102,204,0.15); border-color: var(--blue); color: var(--blue-dk);">①</div>
+            <div>
+              <div class="agent-name">Workflow operating room</div>
+              <div class="agent-role">User-facing surface · what users see</div>
+            </div>
+          </div>
+          <p>Primary navigation, page headers, and chat windows are workflow-anchored. Users fire verbs at outcomes — "draft decision brief," "check gate readiness," "run sourcing event." They do not navigate through agent personas to find features.</p>
+        </div>
+        <div class="agent-card">
+          <div class="agent-head">
+            <div class="agent-avatar" style="background: rgba(28,158,117,0.15); border-color: var(--green); color: var(--green);">②</div>
+            <div>
+              <div class="agent-name">Knowledge layer</div>
+              <div class="agent-role">Substrate · what the system reasons over</div>
+            </div>
+          </div>
+          <p>Three corpora — worldview (AbarVa's strategic theses), industry (healthcare, financial services, retail), tenant (your enterprise) — feed every agent decision. Pattern packs codify what works. The evidence ledger tracks every claim's provenance.</p>
+        </div>
+        <div class="agent-card">
+          <div class="agent-head">
+            <div class="agent-avatar" style="background: rgba(156,123,63,0.15); border-color: var(--gold); color: var(--gold);">③</div>
+            <div>
+              <div class="agent-name">Agent specialization</div>
+              <div class="agent-role">Capability layer · what does the work</div>
+            </div>
+          </div>
+          <p>Four front agents (Nexus, Sentinel, Atlas, Steward) anchor product chat surfaces. Behind each, dozens of narrow specialists do the actual work — pricing normalization, gate evaluation, evidence validation, decision-brief composition. The specialists are catalogued, versioned, and never user-named.</p>
+        </div>
+      </div>
+
+      <div class="callout">
+        <div class="label">The product promise · in one sentence</div>
+        Better technology outcomes — measured in TCO recovery, value realization, decision defensibility, transition success — through workflows backed by evidence-grounded specialists that learn from cross-industry pattern intelligence.
+      </div>
+    </section>
+
+    <!-- ════════════ 02 · The Agent Architecture ════════════ -->
+    <section id="agents">
+      <div class="section-num">Section 02 · Architecture</div>
+      <h2>The agent architecture</h2>
+      <p class="lede">Behind the chat window: four front agents users see, hundreds of specialists they don't, a master orchestrator routing intent, and a published catalog that makes every capability auditable.</p>
+
+      <h3>The layered model</h3>
+      <p>AbarVa's agent architecture has four distinct layers. Only the top layer is user-facing.</p>
+
+      <table>
+        <thead><tr><th>Layer</th><th>What lives here</th><th>User sees?</th></tr></thead>
+        <tbody>
+          <tr><td><strong>1 · Primary surface</strong></td><td>Workflow nav, page headers, action buttons. Verbs and outcomes.</td><td>Yes — workflow-anchored UI</td></tr>
+          <tr><td><strong>2 · Chat window</strong></td><td>One brand-named front agent per product</td><td>Yes — Sentinel in Source, Nexus in Moves, Atlas in Tower, Steward in Setup</td></tr>
+          <tr><td><strong>3 · Master orchestrator</strong></td><td>Routes user intent to the right specialist; presents unified output</td><td>No</td></tr>
+          <tr><td><strong>4 · Specialists</strong></td><td>~67 narrow function-named workers (PricingNormalizer, GateChecker, EvidenceValidator, etc.)</td><td>No — catalogued in architecture docs</td></tr>
+          <tr><td><strong>+ Trace</strong></td><td>"Show me how this was produced" drill-down exposes the specialists for auditability</td><td>Optional — on demand</td></tr>
+        </tbody>
+      </table>
+
+      <h3>The four front agents</h3>
+      <p>Each front agent has a distinct role at the conversational layer. The same character appears across surfaces where it makes sense (Sentinel fronts both Source and Intelligence because evidence integrity is the through-line for both); each agent never appears in a product where the workflow concern doesn't fit.</p>
+
+      <div class="agent-grid">
+        <div class="agent-card">
+          <div class="agent-head">
+            <div class="agent-avatar">N</div>
+            <div>
+              <div class="agent-name">Nexus</div>
+              <div class="agent-role">Lead orchestration · fronts Moves</div>
+            </div>
+          </div>
+          <p>Nexus runs the strategic-moves journey for AI programs. Phase pacing, gate readiness, SME workshop sequencing, deliverable scaffolding, blocker triage — Nexus is the agent who knows what should happen next. Specialists behind: phase-gate-advancement, SME-recommendation engine, workshop-readiness validator, quality-gates enforcer, pattern-match classifier, deliverable-versioning tracker, evidence-trace indexer, and 5+ more.</p>
+        </div>
+
+        <div class="agent-card">
+          <div class="agent-head">
+            <div class="agent-avatar sentinel">S</div>
+            <div>
+              <div class="agent-name">Sentinel</div>
+              <div class="agent-role">Evidence integrity · fronts Source &amp; Intelligence</div>
+            </div>
+          </div>
+          <p>Sentinel guards the evidence ledger. In Source, that means scope-tier classification, vendor pricing trap detection, BAFO question generation, gate readiness verification. In Intelligence, that means three-corpus retrieval, pattern matching, four-mode answering, citation grounding, contradiction detection. Same identity, two broker scopes — Intelligence is the deeper application.</p>
+        </div>
+
+        <div class="agent-card">
+          <div class="agent-head">
+            <div class="agent-avatar atlas">A</div>
+            <div>
+              <div class="agent-name">Atlas</div>
+              <div class="agent-role">Executive synthesis · fronts Tower</div>
+            </div>
+          </div>
+          <p>Atlas writes for executives. Portfolio rollup, decision tradeoff cards, value-at-stake summarization, risk register, contradiction detection across programs — all rendered in a CIO/CFO-ready voice. Specialists behind: portfolio analyzer, AI adoption tracker, DORA productivity scorer, value-outcome ledger, AI cost analyzer, risk-governance tracker, technical readiness assessor, signal classifier, and 7+ more.</p>
+        </div>
+
+        <div class="agent-card">
+          <div class="agent-head">
+            <div class="agent-avatar steward">St</div>
+            <div>
+              <div class="agent-name">Steward</div>
+              <div class="agent-role">Governance &amp; gates · fronts Setup</div>
+            </div>
+          </div>
+          <p>Steward enforces the discipline that makes outcomes defensible. Trust-rung promotion (raw → verified → blessed → ground_truth → audit_trail), connector readiness, permission mapping, blocker tracking, audit log integrity, schema validation, classification enforcement, tenant-isolation enforcement. Steward is also the agent users encounter at every stage gate — the one who explains why a stage isn't yet ready to advance.</p>
+        </div>
+      </div>
+
+      <h3>The specialist catalog</h3>
+      <p>Behind the four front agents sits a published catalog of <strong>67+ narrow specialists</strong>, each with a single purpose and a versioned cite-tag. Specialists are function-named (never user-named), implementation-pointer'd to a code path, and tagged with the surfaces they serve. The catalog is browsable in architecture documentation; it never crowds the product UI.</p>
+
+      <p>Examples of how specialists compose into work:</p>
+      <ul>
+        <li>A user asks Sentinel in Source for help with the Pricing Normalization step. Sentinel routes to <code>PricingNormalizer</code> + <code>PricingTrapDetector</code> + <code>GateCriteriaChecker</code>; presents output as Sentinel's voice. The user never sees the specialist names.</li>
+        <li>A user asks Atlas in Tower for the quarterly executive brief. Atlas routes to <code>PortfolioAnalyzer</code> + <code>ValueOutcomeLedger</code> + <code>RiskGovernanceTracker</code> + <code>PortfolioExecutiveBriefWriter</code>. The output is one Atlas-voice document with a five-pillar tradeoff card.</li>
+        <li>A user asks Steward in Setup whether their data is ready for a new sourcing event. Steward routes to <code>CoverageScorer</code> + <code>StalenessDetector</code> + <code>GapDetector</code>. The answer cites which segments are short and what to upload.</li>
+      </ul>
+
+      <h3>Why this beats the alternatives</h3>
+      <table>
+        <thead><tr><th>Alternative architecture</th><th>What goes wrong</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Single generalist agent</strong></td><td>Voice flattens; depth is shallow at every step; no specialization rewards expertise.</td></tr>
+          <tr><td><strong>Many named user-facing personas</strong></td><td>Cognitive overhead — users must learn 30+ characters; decisions get muddled when "Who do I ask?" becomes a question itself.</td></tr>
+          <tr><td><strong>All four agents on every surface</strong></td><td>Voice fragmentation; each stage shows four parallel perspectives without orchestration; users see noise instead of signal.</td></tr>
+          <tr><td><strong>Workflow-only with no chat</strong></td><td>Loses the conversational interface that makes complex decisions tractable; no place for "explain that," "what would change my mind," or "show me what you're not telling me."</td></tr>
+        </tbody>
+      </table>
+      <p>The four-front + many-specialists model is what every successful agent product (Cursor, Claude Code, Replit Agent, Devin) has converged on. AbarVa's specialization is the depth at which it has worked through the specialists for enterprise technology decisions specifically.</p>
+    </section>
+
+    <!-- ════════════ 03 · The Knowledge Layer ════════════ -->
+    <section id="knowledge">
+      <div class="section-num">Section 03 · Knowledge layer</div>
+      <h2>The knowledge layer</h2>
+      <p class="lede">What the agents reason over. Three corpora, pattern packs, evidence ledger, four-mode answering, and provenance trail that runs from upload to citation.</p>
+
+      <h3>Three corpora · simultaneous query</h3>
+      <p>Every Sentinel-led answer in AbarVa queries three corpora in parallel and ranks results by freshness-decayed relevance:</p>
+
+      <div class="agent-grid">
+        <div class="agent-card">
+          <div class="agent-head">
+            <div class="agent-avatar" style="background: rgba(107,63,160,0.15); border-color: var(--purple); color: var(--purple);">W</div>
+            <div>
+              <div class="agent-name">Worldview corpus</div>
+              <div class="agent-role">AbarVa's strategic theses</div>
+            </div>
+          </div>
+          <p>Five strategic theses (W1-W5) covering the AI investment cycle, vendor landscape evolution, evidence-grounded decision-making, governance pattern shifts, and value realization discipline. ~80 chunks. Versioned. Updated quarterly. Cited as <code>worldview:W3.2</code> when an answer rests on a thesis.</p>
+        </div>
+        <div class="agent-card">
+          <div class="agent-head">
+            <div class="agent-avatar steward">I</div>
+            <div>
+              <div class="agent-name">Industry corpus</div>
+              <div class="agent-role">Vertical-specific patterns</div>
+            </div>
+          </div>
+          <p>Per-industry pattern libraries: healthcare, financial services, retail, plus general macro. Each contains regulatory frameworks, vendor archetypes, sourcing failure modes, and industry-specific value patterns. Cited as <code>industry:retail:CDP-pattern-3</code> when an answer borrows industry-specific reasoning.</p>
+        </div>
+        <div class="agent-card">
+          <div class="agent-head">
+            <div class="agent-avatar sentinel">T</div>
+            <div>
+              <div class="agent-name">Tenant corpus</div>
+              <div class="agent-role">Your enterprise data</div>
+            </div>
+          </div>
+          <p>Your organization's enterprise profile, IT system landscape, KPI dictionary, vendor contracts, evidence ledger, active programs, compliance posture, operating telemetry. Tenant-isolated by Postgres RLS and Pinecone metadata filter. Cited as <code>tenant:your-tenant:evidence:042</code>.</p>
+        </div>
+      </div>
+
+      <h3>Pattern packs — codified domain expertise</h3>
+      <p>Pattern packs are versioned, citable artifacts containing the domain expertise that makes specialists smart. A pattern pack for "AMS Managed Services Sourcing" includes typical deal shapes, common pricing traps, vendor archetypes, transition failure modes, and value lever taxonomy. Specialists call into these when reasoning about a sourcing event.</p>
+      <p>Pattern packs live in the industry corpus and are scoped by archetype:</p>
+      <ul>
+        <li><strong>Sourcing archetypes:</strong> AMS, Cloud &amp; Infrastructure, Data &amp; Analytics, Enterprise Software</li>
+        <li><strong>Program archetypes:</strong> CDP/Customer Data, Contact Center AI, AMS Consolidation, Demand Forecasting, plus 20+ more</li>
+        <li><strong>Failure-mode catalogs:</strong> 50+ AI program failure modes with prevention guidance</li>
+      </ul>
+
+      <h3>Evidence ledger and citation rigor</h3>
+      <p>Every claim that any agent makes is backed by the evidence ledger. Each evidence item has: source document, source section, data classification (Public / Internal / Confidential / Restricted), confidence score, last-reviewed timestamp, owner, and the claims it supports. The discipline is enforced by Sentinel: nothing is "Usable Evidence" until it has been parsed, sample-checked against truth, and citation-stamped.</p>
+      <p>The thirteen readiness states distinguish how evidence-ready any piece of data is. The five most consequential states:</p>
+      <ul>
+        <li><strong>Loaded</strong> — file ingested, content not yet parsed. Cannot be cited.</li>
+        <li><strong>Parsed</strong> — fields extracted. Citable as low-confidence; not yet sample-checked.</li>
+        <li><strong>Available</strong> — parsed and sample-checked. The threshold of usable evidence.</li>
+        <li><strong>Usable Evidence</strong> — Available + citation-stamped. The threshold for inclusion in artifacts and decisions.</li>
+        <li><strong>Stale</strong> — older than the freshness window for its category. Auto-flagged.</li>
+      </ul>
+
+      <h3>The four-mode answer model</h3>
+      <p>Sentinel answers questions in one of four modes, with the answer's provenance shown in the response:</p>
+      <table>
+        <thead><tr><th>Mode</th><th>What it grounds in</th><th>When to expect it</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Generic</strong></td><td>No corpus retrieval — base reasoning only</td><td>Definitional questions; "what is BAFO," "explain Outline-tier"</td></tr>
+          <tr><td><strong>Corpus-grounded</strong></td><td>Worldview + industry corpora</td><td>Pattern questions; "what's the typical pricing trap on cloud renewals"</td></tr>
+          <tr><td><strong>Tenant-grounded</strong></td><td>Tenant corpus only</td><td>Your-data questions; "which of our programs is at risk"</td></tr>
+          <tr><td><strong>Cross-corpus</strong></td><td>All three corpora composed</td><td>Strategic questions; "given our portfolio, which industry patterns apply, and how do they intersect with worldview thesis W3"</td></tr>
+        </tbody>
+      </table>
+
+      <h3>The provenance chain · upload to citation</h3>
+      <div class="callout">
+        <div class="label">Trace example</div>
+        Tenant admin uploads vendor contract PDF → ingestion validates schema → record persisted with classification → graph projector creates vendor + contract nodes + edges → vector embedder chunks contract clauses → Source's <code>BafoQuestionGenerator</code> retrieves clause chunks during BAFO step → Sentinel's response cites the contract → user clicks "show provenance" → trace renders the full chain back to the upload event with timestamp and uploader.
+      </div>
+      <p>The provenance chain is what makes the platform's promise verifiable. Every claim every agent makes can be traced back to its source. This is the discipline that separates "AI that sounds right" from "AI that holds up to scrutiny."</p>
+    </section>
+
+    <!-- ════════════ 04 · Industry Patterns ════════════ -->
+    <section id="industry">
+      <div class="section-num">Section 04 · Industry depth</div>
+      <h2>Industry patterns &amp; depth</h2>
+      <p class="lede">AbarVa's industry corpus codifies the sourcing dynamics, regulatory constraints, and value patterns specific to three high-stakes verticals: healthcare, financial services, and retail.</p>
+
+      <h3 id="industry-healthcare">Healthcare</h3>
+      <p>Healthcare technology sourcing operates under unique constraints: PHI sensitivity, EMR vendor consolidation pressure, multi-year payer contract cycles, and regulatory frameworks (HIPAA, HITECH, HITRUST CSF) that shape every vendor evaluation. The stakes are amplified by the operational reality that downtime or data integrity issues affect patient care directly.</p>
+
+      <h4>Key sourcing patterns</h4>
+      <ul>
+        <li><strong>EMR-adjacent vendor selection</strong> — Epic, Cerner/Oracle Health, Meditech ecosystems lock in specific integration patterns. Sourcing decisions in claims, RCM, patient engagement, and clinical decision support all defer to EMR posture.</li>
+        <li><strong>HITRUST CSF certification gates</strong> — vendors must hold appropriate certification for the data they touch; the certification level (e1/i1/r2) determines which scope of PHI a vendor can process.</li>
+        <li><strong>BAA discipline</strong> — Business Associate Agreements have a precise legal shape; treating BAA review as a checkbox during selection produces compliance audit findings 9-12 months later.</li>
+        <li><strong>Provider network technology consolidation</strong> — payer-provider data exchange (HL7, FHIR) drives vendor lock-in; consolidation moves often rest on misjudged interoperability claims.</li>
+        <li><strong>AI for clinical workflows</strong> — ambient documentation, clinical decision support, prior authorization automation all carry FDA SaMD considerations that change the regulatory burden.</li>
+      </ul>
+
+      <h4>Failure modes specific to healthcare</h4>
+      <ul>
+        <li><strong>Pricing trap on PHI residency</strong> — vendors quote with assumed AWS/Azure region; cross-region replication for DR may push PHI out of compliant zones, requiring contract amendments at 12-18% TCO impact.</li>
+        <li><strong>Realized savings overstated for clinical AI</strong> — claimed "physician time savings" that don't account for documentation friction and reimbursement-coding effects.</li>
+        <li><strong>Late-stage compliance discovery</strong> — programs reach P3-P4 (build/activate) before legal/risk surfaces a HIPAA implementation gap that requires re-architecture.</li>
+      </ul>
+
+      <h4>Where AbarVa adds depth</h4>
+      <p>The healthcare industry corpus contains: vendor archetypes for EMR-adjacent ecosystems, HITRUST certification taxonomy, BAA clause library, FDA SaMD decision trees, claims/RCM vendor patterns, payer-provider integration patterns, and a catalog of 18+ healthcare-specific failure modes. Sentinel grounds healthcare answers in this corpus by default when tenant industry is healthcare.</p>
+
+      <h3 id="industry-fs">Financial services</h3>
+      <p>Financial services technology sourcing operates under model risk management (SR 11-7), Basel III/IV operational risk capital, vendor concentration constraints (OCC 2013-29 third-party guidance), and intense audit scrutiny. The pace of vendor evaluation is slower; the rigor required is higher.</p>
+
+      <h4>Key sourcing patterns</h4>
+      <ul>
+        <li><strong>Vendor concentration limits</strong> — regulators care about single-vendor dependence. Sourcing decisions for core banking, payments, market data, and increasingly cloud infrastructure must show concentration analysis.</li>
+        <li><strong>Model risk management for AI</strong> — SR 11-7 framework applies to any model decisioning customer outcomes; vendor models must produce evidence of validation, monitoring, and remediation processes.</li>
+        <li><strong>FedRAMP for federal-adjacent work</strong> — even private-sector financial services often need FedRAMP Moderate-equivalent posture for treasury or settlement-related vendors.</li>
+        <li><strong>Core banking modernization</strong> — multi-year, multi-vendor programs (mainframe → cloud) where wrong vendor selection compounds for a decade.</li>
+        <li><strong>AI for fraud, AML, compliance</strong> — vendors selling here face especially deep evaluation depth around model explainability, drift detection, and false-positive economics.</li>
+      </ul>
+
+      <h4>Failure modes specific to financial services</h4>
+      <ul>
+        <li><strong>Pricing trap on model retraining</strong> — initial license includes one model retrain per year; production AI typically needs quarterly retrains, doubling effective cost.</li>
+        <li><strong>Concentration risk discovery during pilot</strong> — vendor's downstream dependencies (e.g., single market-data provider) create concentration even when the vendor itself is "diversified."</li>
+        <li><strong>Realized savings invisible to model risk</strong> — savings claimed against staffing levels that the bank cannot reduce because of model-monitoring obligations.</li>
+      </ul>
+
+      <h4>Where AbarVa adds depth</h4>
+      <p>The financial services corpus contains: SR 11-7 evidence requirements, Basel III/IV operational risk taxonomy, vendor concentration analysis frameworks, FedRAMP posture mapping, fraud/AML vendor archetypes, core banking modernization patterns, and 22+ FSI-specific failure modes. Cross-references to AML and KYC regulatory shifts are auto-surfaced when tenant industry includes banking or insurance.</p>
+
+      <h3 id="industry-retail">Retail</h3>
+      <p>Retail technology sourcing has a faster decision cycle and broader vendor landscape. Customer-data-platform consolidation, store technology refresh, supply chain visibility, and omnichannel personalization drive most large sourcing events. AI investment is concentrated in demand forecasting, recommendation systems, customer service automation, and store associate productivity.</p>
+
+      <h4>Key sourcing patterns</h4>
+      <ul>
+        <li><strong>CDP/martech consolidation</strong> — most retailers run 4-8 overlapping martech tools; consolidation is the highest-ROI sourcing event in the category, but identity-resolution match-rate baselines often go untracked, creating selection regret.</li>
+        <li><strong>Store technology refresh cycles</strong> — POS, in-store inventory, RFID, computer vision for shrink — refresh cycles intersect with seasonality. Sourcing windows are tight; transition windows even tighter.</li>
+        <li><strong>Supply chain visibility</strong> — consolidating SCM tools (planning, S&amp;OP, transportation, warehouse) where vendor lock-in compounds over decades.</li>
+        <li><strong>Forecasting and replenishment AI</strong> — typical 2-3% margin lift; the trap is mistaking algorithmic uplift for organizational uplift.</li>
+        <li><strong>Customer service AI</strong> — contact center automation, conversational AI for support, where vendor proof-of-concept results often don't survive integration with the brand voice and the existing CSR workflow.</li>
+      </ul>
+
+      <h4>Failure modes specific to retail</h4>
+      <ul>
+        <li><strong>CDP identity match rate inflated</strong> — vendor demos use clean data; real-world match rates are typically 18-25 points lower, eroding the projected use cases.</li>
+        <li><strong>Forecasting uplift not realized</strong> — algorithm performs as advertised, but planners override the system in 40-60% of decisions, dissolving the projected benefit.</li>
+        <li><strong>Store-tech transitions during peak season</strong> — refresh decisions made in March go-live in October just as Q4 ramps; failure mode P5 transitions consume Q4 entirely.</li>
+      </ul>
+
+      <h4>Where AbarVa adds depth</h4>
+      <p>The retail industry corpus contains: CDP archetype map, retail martech vendor landscape, omnichannel integration patterns, supply chain technology stacks, demand-forecasting failure modes, store technology refresh patterns, and 16+ retail-specific failure modes. Pattern cross-references include peer benchmarks for typical match rates, forecasting accuracy norms, and contact center deflection rates.</p>
+    </section>
+
+    <!-- ════════════ 05 · Cross-Industry Insights ════════════ -->
+    <section id="cross-industry">
+      <div class="section-num">Section 05 · Cross-industry</div>
+      <h2>Cross-industry insights</h2>
+      <p class="lede">Patterns that transfer across verticals — and the universal AI-specific patterns that apply regardless of industry. The cross-industry view is what lets AbarVa accelerate new-industry adoption.</p>
+
+      <h3>Patterns that transfer cleanly</h3>
+      <p>Some sourcing dynamics are remarkably consistent across healthcare, financial services, and retail. AbarVa's worldview corpus codifies the patterns that travel:</p>
+
+      <ul>
+        <li><strong>Pricing trap shapes</strong> — transition cost as opex, escalator on undefined index, capped commitment with hidden minimums, exclusions on egress and overages, premium support tiers required for SLA. These appear across every industry the corpus covers.</li>
+        <li><strong>Evidence integrity failure modes</strong> — uploaded ≠ usable, parsed ≠ sample-checked, claimed ≠ measured, projected ≠ committed. These are universal.</li>
+        <li><strong>Scorecard governance violations</strong> — single-rater scoring, weight changes mid-evaluation, evidence-free score citations. Same patterns whether the deal is healthcare AI or retail CDP.</li>
+        <li><strong>Decision posture vs vendor selection</strong> — confusing "approve direction" with "select vendor" produces re-work cycles regardless of industry.</li>
+        <li><strong>Value realization discipline</strong> — distinguishing projected / committed / measuring / realized is the universal discipline that protects savings stories.</li>
+      </ul>
+
+      <h3>Universal AI-specific patterns</h3>
+      <p>AI investment introduces a set of patterns that hold regardless of industry. AbarVa's worldview corpus tracks them as a separate layer:</p>
+
+      <ul>
+        <li><strong>Model retraining cost modeling</strong> — every AI vendor has a retraining cadence; pricing must include realistic retrain frequency, not vendor-quoted minimum.</li>
+        <li><strong>Data residency for model training</strong> — vendors training on tenant data create residency exposure; audit clauses must lock data location.</li>
+        <li><strong>Drift detection and remediation</strong> — model performance degrades; SLAs must specify drift thresholds and remediation timing, not just availability.</li>
+        <li><strong>Explainability requirements</strong> — regulatory pressure is converging globally; assume explainability requirement increases over deal term.</li>
+        <li><strong>Vendor model dependency</strong> — many "AI vendors" depend on OpenAI, Anthropic, or Google upstream; vendor concentration analysis must trace to the underlying foundation model.</li>
+        <li><strong>Token economics and TCO</strong> — wrap-rate around foundation model tokens varies 10x across vendors; understand this before committing.</li>
+        <li><strong>Human-in-the-loop friction</strong> — savings claims often assume HITL goes away on schedule; in practice HITL remains for 30-50% longer than projected.</li>
+      </ul>
+
+      <h3>Vendor playbooks that span industries</h3>
+      <p>Several vendor archetypes appear across all three industries with similar tactics. Knowing the playbook accelerates your evaluation:</p>
+
+      <ul>
+        <li><strong>Hyperscaler bundling</strong> — AWS / Azure / GCP land discount on commit; over-commit eats the discount via overage. Pattern repeats whether the consumer is a healthcare system or a retailer.</li>
+        <li><strong>Best-of-suite consolidation pitch</strong> — large vendor pitches "one platform" against incumbent point solutions; the integration complexity that justified the point solutions doesn't go away.</li>
+        <li><strong>Carve-out specialist</strong> — vertical specialist vendor pitches against the horizontal incumbent. They win on capability depth; lose on roadmap stability and integration breadth. The tradeoff math is industry-independent.</li>
+        <li><strong>Foundation model wrappers</strong> — many AI vendors are GPT/Claude/Gemini wrappers with vertical UI. The wrap is real value but not unique value; commit-term should reflect the model dependency risk.</li>
+      </ul>
+
+      <h3>Why cross-industry intelligence matters</h3>
+      <p>A retail CIO sourcing a CDP benefits from knowing how a healthcare CIO sourced a customer-data system 18 months earlier — not because the patterns are identical, but because the failure modes the healthcare team avoided suggest pre-mortems for the retail program. AbarVa's worldview + industry corpora together create a portable expertise that travels with the sourcing leader, regardless of which vertical they work in or move to.</p>
+
+      <p>For a sourcing leader changing industries — common in C-level roles — this is the difference between starting over and arriving with applied judgment. The pattern packs are the institutional memory that vertical change normally erases.</p>
+
+      <h3>How AbarVa accelerates new-industry adoption</h3>
+      <p>When a new industry corpus is added (e.g., manufacturing, energy, public sector), the following composes automatically:</p>
+      <ul>
+        <li>The 7 universal AI-specific patterns transfer with no rewrite.</li>
+        <li>The pricing trap shapes transfer with minor industry-specific examples added.</li>
+        <li>The evidence integrity discipline transfers entirely — these are workflow concerns, not industry concerns.</li>
+        <li>What needs new authoring: regulatory frameworks specific to the industry, vendor archetypes specific to the vertical, failure modes that emerge from industry operational reality.</li>
+      </ul>
+      <p>This is why the architecture is workflow-anchored with corpus depth — the workflow primitive stays constant; the corpus adds the industry intelligence on top. New industries are accretive, not rewrite events.</p>
+
+      <div class="callout green">
+        <div class="label">The cross-industry promise</div>
+        Whatever industry you operate in, AbarVa's worldview + industry + tenant corpora compose into reasoning that's grounded in your enterprise, sharpened by your industry's pattern library, and informed by the universal lessons that apply to every technology sourcing leader at this moment in the AI cycle.
+      </div>
+    </section>
+
+    <!-- ════════════ 06 · The Sourcing Leader's Reality ════════════ -->
+    <section id="sec-01">
+      <div class="section-num">Section 06</div>
+      <h2>The sourcing leader's reality</h2>
+      <p class="lede">If you run technology sourcing at scale, you already know what's broken. This section names it precisely so the rest of the guide can fix it.</p>
+
+      <div class="stat-grid">
+        <div class="stat">
+          <div class="label">Industry baseline</div>
+          <div class="num">40–60%</div>
+          <div class="desc">Of enterprise IT budget flows through third parties — software, infrastructure, managed services, professional services.</div>
+        </div>
+        <div class="stat">
+          <div class="label">Typical leakage</div>
+          <div class="num">18–30%</div>
+          <div class="desc">Of that spend leaks against achievable benchmarks when sourcing is reactive, evidence-light, and weakly governed.</div>
+        </div>
+        <div class="stat">
+          <div class="label">First-year miss</div>
+          <div class="num">~$1 in $4</div>
+          <div class="desc">Of projected savings on a typical multi-year IT deal is unrealized 18 months after go-live, mostly because no one tracks it.</div>
+        </div>
+        <div class="stat">
+          <div class="label">Selection regret</div>
+          <div class="num">1 in 3</div>
+          <div class="desc">Sourcing decisions over $5M get re-litigated within 24 months. Almost always over scope, pricing assumptions, or transition reality.</div>
+        </div>
+      </div>
+
+      <h3>Why most sourcing decisions leak value</h3>
+      <p>The leakage is not random. It clusters into four patterns, and they compound.</p>
+
+      <ol>
+        <li><strong>Missing baseline.</strong> Decisions get made without ticket history, run-rate data, or current-state cost. Vendors quote against assumptions that prove wrong in transition.</li>
+        <li><strong>Weak normalization.</strong> Pricing is compared at the headline number. Transition cost, escalators, exclusions, and bundled-vs-unbundled differences hide. The cheapest list price is rarely the lowest TCO.</li>
+        <li><strong>Weak gate discipline.</strong> Stages advance because deadlines move, not because evidence supports promotion. Decisions get made on Outline-tier artifacts that are missing the gating data.</li>
+        <li><strong>No value tracking.</strong> Once the deal signs, the savings projection becomes an artifact of the procurement deck. Twelve months later, no one can tell you what was actually realized.</li>
+      </ol>
+
+      <div class="callout">
+        <div class="label">What this guide will give you</div>
+        A working operating model that addresses all four leakage patterns by design — eleven canonical sourcing steps with explicit gates, four agents that hold specific accountabilities, and a value posture that distinguishes <em>projected</em> from <em>committed</em> from <em>measuring</em> from <em>realized</em>.
+      </div>
+    </section>
+
+    <!-- ════════════ 02 · Sourcing Fundamentals ════════════ -->
+    <section id="sec-02">
+      <div class="section-num">Section 07</div>
+      <h2>Sourcing fundamentals</h2>
+      <p class="lede">Before the eleven steps, four anchors. Get these right and the rest follows.</p>
+
+      <h3>IT sourcing is not procurement</h3>
+      <p>Procurement runs the transaction. Sourcing decides what the enterprise buys, from whom, on what terms, and how much risk it accepts. Procurement is tactical; sourcing is strategic. A great procurement function on top of a sloppy sourcing process still yields mediocre outcomes.</p>
+      <p>For technology specifically, sourcing is also a <strong>capability decision</strong>. Choosing an AMS partner shapes which roles you keep in-house. Choosing a hyperscaler shapes which engineering skills you invest in. Sourcing leaders are deciding more than price — they are shaping the operating model.</p>
+
+      <h3>The four sourcing categories</h3>
+      <p>Different categories reward different agent line-ups, gate disciplines, and pricing techniques. The four canonical categories the operating guide covers:</p>
+
+      <table>
+        <thead>
+          <tr><th>Category</th><th>What you're buying</th><th>Lead agents</th><th>Where money is won</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Application Managed Services</strong></td>
+            <td>Outsourced support for an application portfolio. Tier-based SLA. Multi-year retained labor.</td>
+            <td>Nexus</td>
+            <td>Labor arbitrage, ticket-deflection automation, scope discipline, transition cost surfacing.</td>
+          </tr>
+          <tr>
+            <td><strong>Cloud &amp; Infrastructure</strong></td>
+            <td>Platform consolidation, hyperscaler renewals, FinOps, network and security infrastructure.</td>
+            <td>Sentinel + Atlas</td>
+            <td>Reserved-capacity discounts, egress modeling, license consolidation, platform standardization.</td>
+          </tr>
+          <tr>
+            <td><strong>Data &amp; Analytics</strong></td>
+            <td>Data platforms, analytics tooling, MDM, BI, governance products.</td>
+            <td>Steward + Sentinel</td>
+            <td>Tooling consolidation, query-cost optimization, license rationalization, contract-term restructure.</td>
+          </tr>
+          <tr>
+            <td><strong>Enterprise Software</strong></td>
+            <td>ERP, CRM, ITSM, HCM platforms. License plus implementation.</td>
+            <td>Atlas</td>
+            <td>Bundled-vs-unbundled scrutiny, escalator caps, true-up management, implementation-cost ringfencing.</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h3>The four operating principles</h3>
+
+      <h4>1. Evidence over claims</h4>
+      <p>Every artifact, every score, every commitment cites the data it's built on. A vendor's claim about TCO is a starting point; your evidence ledger is what closes the deal. The principle is enforced by Sentinel: nothing is "Usable Evidence" until it's parsed, sample-checked, and linked.</p>
+
+      <h4>2. Normalize before you compare</h4>
+      <p>Vendors quote against different assumption sets. Some bundle transition cost. Some exclude egress. Some carry a year-3 escalator. Pricing comparison <em>before</em> normalization is theater. The normalization workbook is the only basis on which apples-to-apples comparison can stand.</p>
+
+      <h4>3. Gates over deadlines</h4>
+      <p>A stage advances when its gate criteria are met, not when the calendar says so. Gate slippage is information; ignoring gate slippage to hold the deadline is how leakage compounds. The gate panel exists to make slippage visible early.</p>
+
+      <h4>4. Value posture, not savings claim</h4>
+      <p>You don't <em>realize</em> savings at signing. You <em>project</em> savings at signing, <em>commit</em> to a subset at decision, start <em>measuring</em> after go-live, and only call something <em>realized</em> when measurement evidence exists with a named owner. The four-state ledger is the discipline that makes savings stories defensible.</p>
+    </section>
+
+    <!-- ════════════ 03 · The Operating Journey ════════════ -->
+    <section id="sec-03">
+      <div class="section-num">Section 08</div>
+      <h2>The 11-step operating journey</h2>
+      <p class="lede">A canonical sourcing event passes through eleven steps. Each step has a primary question, a lead agent, gating evidence, and a savings impact. Skip a step and you usually pay for it later.</p>
+
+      <!-- Step 01 -->
+      <div class="step-card" id="step-01">
+        <div class="step-meta">
+          <span class="step-num">Step 01</span>
+          <span class="step-agent">Lead · Nexus</span>
+        </div>
+        <h3>Strategy</h3>
+        <div class="step-q">What technology service, platform, or vendor capability are we sourcing — and why?</div>
+        <p>Strategy frames the sourcing event before any vendor is contacted. Business objective, current vendor posture, target outcomes, owner, and the initial value hypothesis all get named on the record. A weak strategy step shows up later as a wandering scope and a confused decision.</p>
+
+        <div class="step-grid">
+          <div>
+            <h4>What good looks like</h4>
+            <ul>
+              <li>One-paragraph business objective the sponsor can recite</li>
+              <li>Current vendor posture explicit (renew / consolidate / replace / new)</li>
+              <li>Stakeholder map with named decision owner and approval chain</li>
+              <li>Initial value range with stated confidence band</li>
+            </ul>
+          </div>
+          <div>
+            <h4>Common mistakes</h4>
+            <ul>
+              <li>Skipping straight to RFP without naming the outcome</li>
+              <li>Cost reduction as the only stated goal (ignores capability, risk)</li>
+              <li>No named decision owner — slows everything downstream</li>
+              <li>Value range stated as a single point with no confidence</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="step-source">
+          <span class="src-label">Source helps</span> Sourcing Strategy Memo is auto-scaffolded from the category template. Nexus drafts the value hypothesis with a confidence band. Sentinel cross-checks against historic spend data.
+          <div class="step-savings">→ Savings impact: shapes the entire downstream value capture. Skipping costs 5–10% of the deal.</div>
+        </div>
+      </div>
+
+      <!-- Step 02 -->
+      <div class="step-card" id="step-02">
+        <div class="step-meta">
+          <span class="step-num">Step 02</span>
+          <span class="step-agent">Lead · Nexus</span>
+        </div>
+        <h3>Scope</h3>
+        <div class="step-q">Is the IT service scope clear enough for vendor pricing and delivery accountability?</div>
+        <p>Scope defines the boundary, target tier, and exclusions of the sourcing event with auditable evidence. For AMS, scope means application inventory with tier classification and ticket history. For Cloud, it means workload inventory and SLA baseline. Scope ambiguity is the single largest cause of post-signing disputes.</p>
+
+        <div class="step-grid">
+          <div>
+            <h4>What good looks like</h4>
+            <ul>
+              <li>Application or workload inventory locked with tier classification</li>
+              <li>Ticket history parsed and analyzed by tier and time-of-day</li>
+              <li>Out-of-scope explicit with named alternative paths</li>
+              <li>Sponsor + EA council sign-off on scope memo</li>
+            </ul>
+          </div>
+          <div>
+            <h4>Common mistakes</h4>
+            <ul>
+              <li>Treating the app list as inventory without tier classification</li>
+              <li>Skipping ticket history "to save time" — guarantees mispriced support tier</li>
+              <li>Out-of-scope items left implicit, leading to scope creep claims</li>
+              <li>Locking scope with sponsor only, no EA review</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="step-source">
+          <span class="src-label">Source helps</span> The Scope canvas surfaces required artifacts (App Inventory, Scope Memo, Exclusion Log, Ticket Synthesis) with their readiness state. Outline-tier vs. full-tier scope is explicit; you cannot pretend full scope when ticket history is still <code>Loaded · Not Parsed</code>.
+          <div class="step-savings">→ Savings impact: 8–15% of TCO is at stake. Mis-tiered support eats 12–18% of an AMS deal.</div>
+        </div>
+      </div>
+
+      <!-- Step 03 -->
+      <div class="step-card" id="step-03">
+        <div class="step-meta">
+          <span class="step-num">Step 03</span>
+          <span class="step-agent">Lead · Nexus</span>
+        </div>
+        <h3>RFP / RFI Readiness</h3>
+        <div class="step-q">Can we release a defensible technology services RFP / RFI package?</div>
+        <p>RFP readiness is conditional on prior steps. If Scope is Outline-tier (because ticket history is missing), RFP can only be Outline-tier — which means vendor responses will rest on assumptions you can't verify. The discipline is to release at the appropriate tier and tag it explicitly.</p>
+
+        <div class="step-grid">
+          <div>
+            <h4>What good looks like</h4>
+            <ul>
+              <li>Scope memo, app inventory, and pricing template are signed</li>
+              <li>RFP tier (Outline / Full) is explicit and matches data state</li>
+              <li>Pricing template has all assumption fields, not just rate cards</li>
+              <li>Scorecard criteria locked before RFP releases (no goal-shifting)</li>
+            </ul>
+          </div>
+          <div>
+            <h4>Common mistakes</h4>
+            <ul>
+              <li>Releasing Full-tier RFP on Outline-tier data — guarantees rework</li>
+              <li>Pricing template that only captures list prices, not assumptions</li>
+              <li>Scorecard finalized after responses arrive (favors known vendors)</li>
+              <li>Missing data residency, SLA, exit-clause language</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="step-source">
+          <span class="src-label">Source helps</span> The RFP Readiness panel flags every prerequisite. Pricing Template includes the assumption fields by default. Scorecard governance locks weights before RFP release with audit trail.
+          <div class="step-savings">→ Savings impact: ensures vendor responses are comparable from arrival, saving 3–4 weeks of clarification.</div>
+        </div>
+      </div>
+
+      <!-- Step 04 -->
+      <div class="step-card" id="step-04">
+        <div class="step-meta">
+          <span class="step-num">Step 04</span>
+          <span class="step-agent">Lead · Nexus · Sentinel observes</span>
+        </div>
+        <h3>Vendor Responses</h3>
+        <div class="step-q">Are vendor responses complete enough to compare?</div>
+        <p>Response completeness is the gate before evaluation. Mandatory items, optional items, and clarifications all need to be tracked. A response with 9 unresolved clarifications is not ready for scoring; pretending it is biases evaluation.</p>
+
+        <div class="step-grid">
+          <div>
+            <h4>What good looks like</h4>
+            <ul>
+              <li>Mandatory items 100% complete for every vendor in evaluation</li>
+              <li>Q&amp;A tracker with every clarification logged and resolved</li>
+              <li>Sentinel completeness checklist signed before scoring begins</li>
+              <li>Disqualified vendors have written rationale</li>
+            </ul>
+          </div>
+          <div>
+            <h4>Common mistakes</h4>
+            <ul>
+              <li>Scoring with mandatory gaps — biases toward vendors who answered fully</li>
+              <li>Q&amp;A handled by phone with no audit trail</li>
+              <li>Marketing collateral counted as response evidence</li>
+              <li>Late-stage disqualification without documented rationale (legal risk)</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="step-source">
+          <span class="src-label">Source helps</span> Vendor Response Completeness Checklist is a Sentinel artifact. Each vendor has a completeness score with cited gaps. Nothing advances to Evaluation until completeness gate passes.
+          <div class="step-savings">→ Savings impact: prevents the wrong vendor from being selected on incomplete data — a 6–10% TCO error in selection-by-aesthetics scenarios.</div>
+        </div>
+      </div>
+
+      <!-- Step 05 -->
+      <div class="step-card" id="step-05">
+        <div class="step-meta">
+          <span class="step-num">Step 05</span>
+          <span class="step-agent">Lead · Steward</span>
+        </div>
+        <h3>Evaluation</h3>
+        <div class="step-q">Is evaluation governed enough to support a defensible recommendation?</div>
+        <p>Evaluation is the most disputed step in any sourcing event. Governance discipline is the antidote: at least two raters per criterion, evidence cited for every score, deviation logged, and weight set signed before scoring. Without that, scoring is opinion theater.</p>
+
+        <div class="step-grid">
+          <div>
+            <h4>What good looks like</h4>
+            <ul>
+              <li>Two-rater minimum on every score, deviation logged where &gt; 5pts</li>
+              <li>Evidence cited for every score — at least one citation per criterion-vendor cell</li>
+              <li>Weight set signed by EA council before scoring begins</li>
+              <li>Sensitivity report for any disputed weight</li>
+            </ul>
+          </div>
+          <div>
+            <h4>Common mistakes</h4>
+            <ul>
+              <li>Single rater per criterion — vulnerable to bias and pressure</li>
+              <li>Scores without cited evidence (Steward will not lock)</li>
+              <li>Weights changed mid-scoring to influence ranking</li>
+              <li>No sensitivity test — leaves tight ranks looking decisive when they aren't</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="step-source">
+          <span class="src-label">Source helps</span> Steward enforces two-rater minimum, evidence citation, and weight-set lock. Sensitivity report runs on demand. Audit trail captures every weight change with timestamp and rationale.
+          <div class="step-savings">→ Savings impact: prevents weight-gaming that flips decisions. Gaming a single 5% weight can shift the ranking on tight scorecards.</div>
+        </div>
+      </div>
+
+      <!-- Step 06 -->
+      <div class="step-card" id="step-06">
+        <div class="step-meta">
+          <span class="step-num">Step 06</span>
+          <span class="step-agent">Lead · Nexus · Sentinel co-leads</span>
+        </div>
+        <h3>Pricing Normalization</h3>
+        <div class="step-q">Are vendor prices comparable on a like-for-like basis?</div>
+        <p>List prices are not comparable. Vendor A bundles transition cost as opex; vendor B excludes egress beyond 2TB; vendor C has an 18-month minimum commit. Pricing normalization surfaces every assumption, exclusion, and trapped cost. The normalized TCO is the only basis on which BAFO and decision should rest.</p>
+
+        <div class="step-grid">
+          <div>
+            <h4>What good looks like</h4>
+            <ul>
+              <li>Every vendor's pricing reduced to a single common assumption set</li>
+              <li>Trap log enumerates every found assumption (P0 / P1 / P2 priority)</li>
+              <li>Transition cost amortized and included in TCO</li>
+              <li>Migration risk reserve modeled (typically 15% of transition)</li>
+            </ul>
+          </div>
+          <div>
+            <h4>Common mistakes</h4>
+            <ul>
+              <li>Comparing list TCO and ranking from there</li>
+              <li>Treating vendor's "all-in" rate at face value (always check exclusions)</li>
+              <li>Ignoring escalator structure (Year-3 cap on undefined index = trap)</li>
+              <li>Skipping transition cost because it's "one-time"</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="step-source">
+          <span class="src-label">Source helps</span> Pricing Normalization Workbook with all vendors on common assumption set. Trap log auto-generates from the assumption diff. Δ-vs-list column makes the normalization impact visible.
+          <div class="step-savings">→ Savings impact: typical normalization shifts apparent TCO ranking on 1 in 3 deals. The normalized winner is often $1–3M cheaper than the list-price winner.</div>
+        </div>
+      </div>
+
+      <!-- Step 07 -->
+      <div class="step-card" id="step-07">
+        <div class="step-meta">
+          <span class="step-num">Step 07</span>
+          <span class="step-agent">Lead · Nexus</span>
+        </div>
+        <h3>BAFO / Negotiation</h3>
+        <div class="step-q">What vendor-specific commercial questions reduce risk and improve value?</div>
+        <p>BAFO (Best And Final Offer) is widely misunderstood as a "send everyone the same letter and ask for 5% off" exercise. The high-leverage approach is vendor-specific question packs that resolve the traps surfaced in Pricing Normalization. BAFO questions are <em>guidance</em>, not automated messaging.</p>
+
+        <div class="step-grid">
+          <div>
+            <h4>What good looks like</h4>
+            <ul>
+              <li>Vendor-specific question packs targeted at their unique pricing traps</li>
+              <li>Round 1 sets the issues; Round 2 closes them</li>
+              <li>Every commercial concession captured in writing with TCO impact</li>
+              <li>BAFO completes before Decision, not concurrent with it</li>
+            </ul>
+          </div>
+          <div>
+            <h4>Common mistakes</h4>
+            <ul>
+              <li>Generic BAFO letter — leaves vendor-specific savings on the table</li>
+              <li>Verbal commitments that don't make it into the contract</li>
+              <li>BAFO concurrent with Decision — pressure forces premature commitment</li>
+              <li>"Best and final" used twice (legally weakens future negotiations)</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="step-source">
+          <span class="src-label">Source helps</span> Nexus drafts vendor-specific question packs from the trap log. BAFO history captures every round and concession with TCO impact. <em>Source does not auto-send messages to vendors</em> — questions are guidance for the human-led negotiation.
+          <div class="step-savings">→ Savings impact: a well-run BAFO recovers 4–9% of TCO by closing trapped assumptions. On a $30M deal, that's $1.2M–$2.7M.</div>
+        </div>
+      </div>
+
+      <!-- Step 08 -->
+      <div class="step-card" id="step-08">
+        <div class="step-meta">
+          <span class="step-num">Step 08</span>
+          <span class="step-agent">Lead · Atlas</span>
+        </div>
+        <h3>Executive Decision</h3>
+        <div class="step-q">What is the executive decision posture given evidence and risk?</div>
+        <p>Executive Decision is not <em>vendor selection</em>. It is the moment where the sourcing leader presents a recommendation with evidence, the executive sponsor decides decision posture (approve / approve-with-conditions / send-back), and the decision is recorded with rationale. Selection happens in Step 09 and only after Decision passes its gate.</p>
+
+        <div class="step-grid">
+          <div>
+            <h4>What good looks like</h4>
+            <ul>
+              <li>Atlas decision brief: 1 page, recommendation + tradeoff card</li>
+              <li>Three tradeoff axes: value, risk, transition</li>
+              <li>Steward and Sentinel sign-off attestations attached</li>
+              <li>Sponsor commitment letter completes the decision</li>
+            </ul>
+          </div>
+          <div>
+            <h4>Common mistakes</h4>
+            <ul>
+              <li>Deck-driven decision with 40 slides and no tradeoff card</li>
+              <li>Recommendation without explicit "what would change my mind"</li>
+              <li>Sponsor approves verbally; no commitment letter on record</li>
+              <li>Skipping Atlas brief because "everyone already knows"</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="step-source">
+          <span class="src-label">Source helps</span> Atlas drafts the decision brief from the evidence trail. The tradeoff card is canonical: value posture, risk posture, transition posture. Decision posture is captured (approve / conditions / re-work) — not a "final selection" button.
+          <div class="step-savings">→ Savings impact: prevents avoidable selection regret. Re-litigation costs run 3–6 months and erode 15–25% of negotiated value.</div>
+        </div>
+      </div>
+
+      <!-- Step 09 -->
+      <div class="step-card" id="step-09">
+        <div class="step-meta">
+          <span class="step-num">Step 09</span>
+          <span class="step-agent">Lead · Steward</span>
+        </div>
+        <h3>Vendor Selection Readiness</h3>
+        <div class="step-q">Is selection review ready, deferred, or blocked?</div>
+        <p>Selection Readiness is the governance step between Decision and contract. It verifies all approvals are in place, evidence is complete, commercial issues are resolved, and the vendor is contractually viable. This is the last off-ramp before legal commitment.</p>
+
+        <div class="step-grid">
+          <div>
+            <h4>What good looks like</h4>
+            <ul>
+              <li>Decision brief signed by sponsor + decision owner</li>
+              <li>All commercial issues from BAFO closed in writing</li>
+              <li>Vendor financial viability re-verified within 30 days</li>
+              <li>Legal review complete with named risks accepted</li>
+            </ul>
+          </div>
+          <div>
+            <h4>Common mistakes</h4>
+            <ul>
+              <li>Treating Selection Readiness as a rubber stamp</li>
+              <li>Stale vendor financial viability check (over 90 days)</li>
+              <li>Open commercial issues at this gate ("we'll close in MSA")</li>
+              <li>Legal risks identified but not explicitly accepted by name</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="step-source">
+          <span class="src-label">Source helps</span> Steward runs the Selection Readiness checklist. Vendor financial viability re-checked. Commercial issue tracker linked to BAFO history. Legal review state captured with named risk acceptances.
+          <div class="step-savings">→ Savings impact: catches the 1-in-20 deal that should not proceed. The cost of catching it here vs. after signing is the difference between $0 and 15–30% of TCO.</div>
+        </div>
+      </div>
+
+      <!-- Step 10 -->
+      <div class="step-card" id="step-10">
+        <div class="step-meta">
+          <span class="step-num">Step 10</span>
+          <span class="step-agent">Lead · Steward</span>
+        </div>
+        <h3>Transition Readiness</h3>
+        <div class="step-q">Are KT, access, runbook, RACI, and continuity plans complete?</div>
+        <p>Transition is where deals go to fail quietly. The vendor is named, the contract is signed, but knowledge transfer is incomplete, access controls aren't migrated, runbooks are stubs, and the retained-vs-vendor RACI has gaps. The savings projected at Decision dissolve in transition friction.</p>
+
+        <div class="step-grid">
+          <div>
+            <h4>What good looks like</h4>
+            <ul>
+              <li>Knowledge transfer plan with named owners and dates per Tier 1 app</li>
+              <li>Access provisioning matrix complete before KT begins</li>
+              <li>Runbooks at Full-tier for Tier 1 apps; Outline for Tier 2/3 acceptable</li>
+              <li>Retained-vs-vendor RACI signed by both parties</li>
+            </ul>
+          </div>
+          <div>
+            <h4>Common mistakes</h4>
+            <ul>
+              <li>Treating transition as the vendor's problem to manage</li>
+              <li>Identity federation deferred — the most common Month 2 fire</li>
+              <li>Runbook copy-paste from old vendor without validation</li>
+              <li>RACI ambiguity that surfaces in the first incident</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="step-source">
+          <span class="src-label">Source helps</span> Transition Readiness Checklist runs through KT, access, runbook, RACI, and security onboarding. Steward attests at each milestone. Critical-path items (typically identity federation) are surfaced explicitly.
+          <div class="step-savings">→ Savings impact: bad transitions consume 6–14 months of value-realization. Doing transition right protects 100% of the savings projection.</div>
+        </div>
+      </div>
+
+      <!-- Step 11 -->
+      <div class="step-card" id="step-11">
+        <div class="step-meta">
+          <span class="step-num">Step 11</span>
+          <span class="step-agent">Lead · Atlas</span>
+        </div>
+        <h3>Value Realization</h3>
+        <div class="step-q">What is projected, committed, measuring, or realized — and how confident?</div>
+        <p>Value realization is the step most enterprises skip. Once the deal signs, the savings projection becomes a memory. The discipline is to maintain a value ledger: every commitment named, an owner assigned, and the state advanced from <em>committed</em> to <em>measuring</em> to <em>realized</em> with evidence.</p>
+
+        <div class="step-grid">
+          <div>
+            <h4>What good looks like</h4>
+            <ul>
+              <li>Value ledger with every commitment as a line item</li>
+              <li>Each line has a named measurement owner (not "the team")</li>
+              <li>States distinguish projected → committed → measuring → realized</li>
+              <li>Realized requires both measurement evidence and owner attestation</li>
+            </ul>
+          </div>
+          <div>
+            <h4>Common mistakes</h4>
+            <ul>
+              <li>"The savings happened" — claimed without measurement</li>
+              <li>Single measurement owner for 12 lines (overload, no real tracking)</li>
+              <li>Re-baselining projections without documenting the change</li>
+              <li>Skipping Step 11 entirely after go-live</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="step-source">
+          <span class="src-label">Source helps</span> Value Ledger runs at portfolio level (across all events) and event level. Atlas drives quarterly review. Realized state requires measurement evidence linked. <em>The UI explicitly cannot mark something "Realized" without owner + evidence.</em>
+          <div class="step-savings">→ Savings impact: enterprises with disciplined value tracking realize 70–85% of projected savings. Enterprises without it realize 30–55%. This step protects the entire deal.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ════════════ 04 · The Four Operating Agents ════════════ -->
+    <section id="sec-04">
+      <div class="section-num">Section 09</div>
+      <h2>The four operating agents</h2>
+      <p class="lede">Source runs four agents with distinct accountabilities. Calling on the right agent at the right moment is half of running a sourcing event well.</p>
+
+      <div class="agent-grid">
+
+        <div class="agent-card">
+          <div class="agent-head">
+            <div class="agent-avatar">✦</div>
+            <div>
+              <div class="agent-name">Nexus</div>
+              <div class="agent-role">Lead orchestration</div>
+            </div>
+          </div>
+          <p>Nexus runs the thread on most sourcing steps. Stage readiness, next action, artifact guidance, vendor clarification, BAFO question generation, RFP tier explanation. When you need to know what should happen next, you ask Nexus.</p>
+          <div class="what-they-do">When to call</div>
+          <ul>
+            <li>You're starting a new event and need it scaffolded</li>
+            <li>You're stuck mid-step and need to know what's blocking</li>
+            <li>You need a vendor clarification drafted</li>
+            <li>You need BAFO questions tailored to a specific vendor</li>
+          </ul>
+        </div>
+
+        <div class="agent-card">
+          <div class="agent-head">
+            <div class="agent-avatar sentinel">✦</div>
+            <div>
+              <div class="agent-name">Sentinel</div>
+              <div class="agent-role">Evidence &amp; pattern integrity</div>
+            </div>
+          </div>
+          <p>Sentinel guards the evidence trail. Confidence levels, unsupported vendor claims, the difference between Loaded data and Usable Evidence, citation readiness, stale or restricted data. Sentinel is the agent who keeps you from accepting plausible-sounding fiction.</p>
+          <div class="what-they-do">When to call</div>
+          <ul>
+            <li>You need to know which data sources are usable as evidence</li>
+            <li>A vendor claim sounds too good — verify the supporting evidence</li>
+            <li>You're about to cite something in an artifact and want it sample-checked</li>
+            <li>You suspect data has gone stale</li>
+          </ul>
+        </div>
+
+        <div class="agent-card">
+          <div class="agent-head">
+            <div class="agent-avatar steward">✦</div>
+            <div>
+              <div class="agent-name">Steward</div>
+              <div class="agent-role">Governance &amp; readiness</div>
+            </div>
+          </div>
+          <p>Steward enforces the gates. Stage promotion criteria, approvals, data readiness handoffs, audit posture, waiver and defer logic, scorecard governance. Steward is the agent who tells you when the gate is not yet met — and exactly why.</p>
+          <div class="what-they-do">When to call</div>
+          <ul>
+            <li>You want to know if a stage is ready to advance</li>
+            <li>You need scorecard weights signed and locked</li>
+            <li>A waiver path is being considered — get Steward's read</li>
+            <li>You're about to enter Selection Readiness</li>
+          </ul>
+        </div>
+
+        <div class="agent-card">
+          <div class="agent-head">
+            <div class="agent-avatar atlas">✦</div>
+            <div>
+              <div class="agent-name">Atlas</div>
+              <div class="agent-role">Executive synthesis</div>
+            </div>
+          </div>
+          <p>Atlas writes for executives. Decision briefs, value posture summaries, tradeoff cards, CFO/CIO ready language. Atlas takes the evidence ledger, gate state, and commercial signals and turns them into a one-page recommendation that holds up to steering committee scrutiny.</p>
+          <div class="what-they-do">When to call</div>
+          <ul>
+            <li>You're going into an executive review next week</li>
+            <li>You need the tradeoff card before a decision meeting</li>
+            <li>You need value posture for a quarterly portfolio review</li>
+            <li>The CFO is asking what's been realized vs committed</li>
+          </ul>
+        </div>
+
+      </div>
+
+      <div class="callout">
+        <div class="label">Working with multiple agents</div>
+        Most sourcing events touch all four agents at different moments. The best operators learn to call the right one for the question at hand. If you're asking Nexus what's the executive recommendation, you're asking the wrong agent — that's Atlas's question. If you're asking Atlas whether the gate is met, that's Steward's question.
+      </div>
+    </section>
+
+    <!-- ════════════ 05 · The Seven Truths ════════════ -->
+    <section id="sec-05">
+      <div class="section-num">Section 10</div>
+      <h2>The seven truths</h2>
+      <p class="lede">Operating principles the platform refuses to violate, and the reasoning behind each. If you remember nothing else from this guide, remember these.</p>
+
+      <div class="truth">
+        <div class="truth-num">Truth 01</div>
+        <h3>Loaded data is not usable evidence</h3>
+        <p>A file uploaded to the platform is not the same as evidence you can cite. Between Loaded and Usable Evidence sit three states: Parsed, Available, and Sample-Checked. Treating Loaded as Usable is the single most common cause of decisions made on data that doesn't say what people think it says.</p>
+        <p class="why">Why this matters: Sentinel will refuse to citation-stamp Loaded data. Artifacts built on Loaded data carry an Outline-tier flag. Decisions made on Outline-tier artifacts carry their confidence band visibly.</p>
+      </div>
+
+      <div class="truth">
+        <div class="truth-num">Truth 02</div>
+        <h3>Vendor pricing is not comparable until normalized</h3>
+        <p>List prices live in different assumption universes. Vendor A bundles transition cost as opex. Vendor B excludes egress beyond a hidden cap. Vendor C carries an escalator tied to an undefined index. Comparing list TCO ranks vendors on assumption-set differences, not actual cost.</p>
+        <p class="why">Why this matters: Pricing Normalization is a step, not a footnote. The trap log makes hidden costs visible. The Δ-vs-list column shows how much each vendor's apparent cheapness depends on what they're not telling you.</p>
+      </div>
+
+      <div class="truth">
+        <div class="truth-num">Truth 03</div>
+        <h3>Scope drives everything</h3>
+        <p>Every downstream artifact rests on Scope. If Scope is Outline-tier (because ticket history is missing or app inventory isn't classified), the RFP can only be Outline-tier, the responses can only be Outline-tier, the evaluation can only be Outline-tier. The fix is to land Scope correctly, not to pretend it's better than it is.</p>
+        <p class="why">Why this matters: Source surfaces tier explicitly. You can release Outline-tier RFPs — but you must label them. You cannot label an Outline-tier package as Full.</p>
+      </div>
+
+      <div class="truth">
+        <div class="truth-num">Truth 04</div>
+        <h3>BAFO questions are guidance, not automated messaging</h3>
+        <p>BAFO is a high-leverage negotiation step that requires human judgment. The platform drafts vendor-specific question packs from the trap log; it does not send them. Sending a BAFO letter is a legal commitment moment that belongs to a person, not a system.</p>
+        <p class="why">Why this matters: Source generates the question pack with rationale. The sourcing leader sends, holds the call, and captures the response. The audit trail records what was sent and what came back, but the action is human.</p>
+      </div>
+
+      <div class="truth">
+        <div class="truth-num">Truth 05</div>
+        <h3>Executive decision is decision posture, not vendor selection</h3>
+        <p>The executive decision step produces a posture: approve, approve-with-conditions, or send back. It does not produce a "winning vendor" automation. Vendor selection is Step 09 and requires Selection Readiness governance. Conflating Decision and Selection skips the legal viability check.</p>
+        <p class="why">Why this matters: Source's Decision page has approve / approve-with-conditions / re-work buttons — not a "select vendor" button. Selection happens after Decision and only when Selection Readiness gate passes.</p>
+      </div>
+
+      <div class="truth">
+        <div class="truth-num">Truth 06</div>
+        <h3>Stage gates are governance signals, not bureaucracy</h3>
+        <p>Gates exist to make slippage visible early. A gate that won't pass tells you what data is missing, what approval is held up, what trap is unresolved. Bypassing a gate to "save time" is borrowing time you'll repay 3x in transition or value realization.</p>
+        <p class="why">Why this matters: Source shows the gate state on every event canvas. You can request a waiver — but the waiver is recorded and a low-confidence flag is appended to all downstream artifacts.</p>
+      </div>
+
+      <div class="truth">
+        <div class="truth-num">Truth 07</div>
+        <h3>Realized savings require a measurement owner and evidence</h3>
+        <p>"Realized" is the strongest claim in the value ledger. It requires both a named measurement owner who attests to the number, and linked evidence (financial system, operational metric, audit report). Without both, the highest a value line can reach is "Measuring."</p>
+        <p class="why">Why this matters: This is the discipline that makes savings stories defensible to the CFO. The platform refuses to mark a line "Realized" without owner + evidence. That refusal is a feature, not a bug.</p>
+      </div>
+    </section>
+
+    <!-- ════════════ 06 · The 13 Data Readiness States ════════════ -->
+    <section id="sec-06">
+      <div class="section-num">Section 11</div>
+      <h2>The 13 data readiness states</h2>
+      <p class="lede">Why so many states? Because "we have the data" is rarely a single binary. Sourcing decisions live or die on knowing precisely how usable each piece of data is.</p>
+
+      <h3>The seven-state ramp</h3>
+      <p>The forward path from no-data to citation-ready evidence has seven distinguishable states. Each state is meaningfully different in what you can do with the data.</p>
+
+      <div class="ramp">
+        <div class="ramp-row">
+          <div class="ramp-dot" style="background: #888780;"></div>
+          <div class="ramp-name">Missing</div>
+          <div class="ramp-desc">The source isn't even known. The first job is to identify what you'd ideally have.</div>
+        </div>
+        <div class="ramp-row">
+          <div class="ramp-dot" style="background: #888780;"></div>
+          <div class="ramp-name">Requested</div>
+          <div class="ramp-desc">The source is known and someone has asked for it, but it hasn't arrived yet.</div>
+        </div>
+        <div class="ramp-row">
+          <div class="ramp-dot" style="background: var(--amber);"></div>
+          <div class="ramp-name">Uploaded</div>
+          <div class="ramp-desc">A file landed on the platform. Existence confirmed; content not validated.</div>
+        </div>
+        <div class="ramp-row">
+          <div class="ramp-dot" style="background: var(--amber);"></div>
+          <div class="ramp-name">Connected</div>
+          <div class="ramp-desc">A live system connection exists (e.g., ServiceNow). Connectivity established; data not yet pulled.</div>
+        </div>
+        <div class="ramp-row">
+          <div class="ramp-dot" style="background: var(--amber);"></div>
+          <div class="ramp-name">Loaded</div>
+          <div class="ramp-desc">Data is on the platform. Not yet parsed into queryable fields. <strong>Critical: this is not Usable Evidence.</strong></div>
+        </div>
+        <div class="ramp-row">
+          <div class="ramp-dot" style="background: var(--amber);"></div>
+          <div class="ramp-name">Parsed</div>
+          <div class="ramp-desc">Fields extracted, structure understood, queryable. Not yet sample-checked for accuracy.</div>
+        </div>
+        <div class="ramp-row">
+          <div class="ramp-dot" style="background: var(--green);"></div>
+          <div class="ramp-name">Available</div>
+          <div class="ramp-desc">Parsed and sample-checked. Sentinel attests to integrity. <strong>This is the threshold of usable evidence.</strong></div>
+        </div>
+        <div class="ramp-row">
+          <div class="ramp-dot" style="background: var(--green);"></div>
+          <div class="ramp-name">Usable Evidence</div>
+          <div class="ramp-desc">Available <em>and</em> citation-stamped. Can be cited in artifacts and decisions with full provenance.</div>
+        </div>
+      </div>
+
+      <h3>The five lateral states</h3>
+      <p>Plus five states that aren't on the forward ramp but matter for governance:</p>
+
+      <table>
+        <thead><tr><th>State</th><th>What it means</th><th>What to do</th></tr></thead>
+        <tbody>
+          <tr>
+            <td><strong>Low Confidence</strong></td>
+            <td>Data is parsed but quality concerns exist (sample mismatch, suspect provenance, narrow sample).</td>
+            <td>Cite with low-confidence flag. Don't gate decisions on it.</td>
+          </tr>
+          <tr>
+            <td><strong>Stale</strong></td>
+            <td>Data is older than the freshness window for its category (e.g., 60 days for ticket data, 12 months for org charts).</td>
+            <td>Refresh before using. Sentinel will flag in any new artifact citing stale data.</td>
+          </tr>
+          <tr>
+            <td><strong>Access Restricted</strong></td>
+            <td>Data exists but the requester doesn't have access (security, classification, legal).</td>
+            <td>Request access through Steward or accept a redacted version.</td>
+          </tr>
+          <tr>
+            <td><strong>Not Applicable</strong></td>
+            <td>The data category doesn't apply to this sourcing event (e.g., on-prem migration data for an all-cloud event).</td>
+            <td>Mark NA explicitly. Don't leave as Missing — that's confusing.</td>
+          </tr>
+          <tr>
+            <td><strong>Waived</strong></td>
+            <td>The data is needed by spec but a sponsor has waived the requirement to advance the stage.</td>
+            <td>Waiver is recorded; downstream artifacts carry a low-confidence flag.</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- ════════════ 07 · The Savings Model ════════════ -->
+    <section id="sec-07">
+      <div class="section-num">Section 12</div>
+      <h2>The savings model</h2>
+      <p class="lede">Where the money comes from. Six levers, each with a typical impact range and the steps that surface them.</p>
+
+      <h3>Lever 1 · Labor arbitrage and capability optimization</h3>
+      <p>For Application Managed Services and IT Operations, the biggest lever is rebalancing labor between retained, near-shore, and far-shore. The savings come not from "cheap labor" but from <strong>matching tier of work to tier of labor</strong>. Tier 1 incidents stay close; Tier 3 standard work moves.</p>
+      <p><strong>Typical impact:</strong> 22–38% reduction in labor cost on Tier 2/3 work, with no quality regression if scope is well-tiered. Surfaced at: Step 02 (Scope), Step 06 (Pricing).</p>
+
+      <h3>Lever 2 · License and platform consolidation</h3>
+      <p>Most enterprises run 2–4 overlapping tools per category (endpoint, observability, MDM, BI). Consolidation eliminates parallel licenses, simplifies operations, and concentrates negotiating leverage. The savings compound: fewer integrations to maintain, fewer admin teams, fewer renewal cycles.</p>
+      <p><strong>Typical impact:</strong> 30–55% reduction in license spend per consolidated category, plus a 10–20% reduction in admin labor. Surfaced at: Step 01 (Strategy), Step 05 (Evaluation).</p>
+
+      <h3>Lever 3 · Automation and ticket deflection</h3>
+      <p>Self-service automation, runbook automation, and AIOps reduce the volume of human-handled work. Savings show up as both reduced labor and faster mean-time-to-resolution. The trap is treating automation as a one-time deployment rather than an ongoing program.</p>
+      <p><strong>Typical impact:</strong> 18–35% ticket deflection on standard categories within 18 months, translating to 8–14% TCO reduction. Surfaced at: Step 02 (Scope), Step 11 (Value).</p>
+
+      <h3>Lever 4 · Pricing trap surfacing</h3>
+      <p>Surfacing trapped assumptions during Pricing Normalization recovers value before contract. The traps to watch: transition cost as opex, escalators on undefined indexes, capped commitments with hidden minimums, exclusions on egress and overages, premium support tiers required for SLA.</p>
+      <p><strong>Typical impact:</strong> 4–9% of TCO recovered through BAFO closure. On a $30M deal, that's $1.2M–$2.7M. Surfaced at: Step 06 (Pricing), Step 07 (BAFO).</p>
+
+      <h3>Lever 5 · Escalator caps and term restructuring</h3>
+      <p>Multi-year deals carry escalators. The structure of those escalators (uncapped, cap on undefined index, cap on CPI, cap on a fixed percent) drives 5-year TCO more than the headline year-1 rate. Restructuring escalators during BAFO is one of the highest-ROI activities in sourcing.</p>
+      <p><strong>Typical impact:</strong> 3–7% TCO reduction over 5-year term per percentage-point escalator improvement. Surfaced at: Step 06 (Pricing), Step 07 (BAFO).</p>
+
+      <h3>Lever 6 · Audit and compliance reduction</h3>
+      <p>The right vendor reduces the cost of compliance, not just the cost of operations. SOC2, ISO27001, and industry-specific audits require evidence — vendors with mature evidence automation save weeks of internal audit work each cycle.</p>
+      <p><strong>Typical impact:</strong> 25–60% reduction in audit preparation time, translating to $200K–$800K annually for a typical mid-market enterprise. Surfaced at: Step 05 (Evaluation), Step 11 (Value).</p>
+
+      <div class="callout green">
+        <div class="label">Composite impact</div>
+        On a typical $20M five-year IT sourcing deal, disciplined operation across all six levers recovers $4M–$7M (20–35% of TCO) versus a reactive sourcing baseline. The compounding effect — better scope drives better pricing drives better selection drives better transition drives better realization — is the deal.
+      </div>
+    </section>
+
+    <!-- ════════════ 08 · Failure Modes ════════════ -->
+    <section id="sec-08">
+      <div class="section-num">Section 13</div>
+      <h2>Failure modes &amp; tells</h2>
+      <p class="lede">Eight patterns that consistently produce bad sourcing outcomes. Each has specific tells you can spot before the damage is irreversible.</p>
+
+      <div class="failure">
+        <h4>Selection by proposal aesthetics</h4>
+        <p>The vendor with the best deck wins. This usually means the team didn't dig into the actual capability — they responded to confidence and polish. Big-firm sales teams optimize for this; smaller firms with better capability often lose on slide design.</p>
+        <span class="signal">Tell: scoring rationale references "presentation quality" or "professionalism" without capability evidence.</span>
+      </div>
+
+      <div class="failure">
+        <h4>Pricing trap by carried-cost ambiguity</h4>
+        <p>Vendor's headline TCO is lowest, but the assumption set hides carried costs (transition as opex, egress excluded, year-3 escalator on an index nobody has heard of). The deal looks great until month 14.</p>
+        <span class="signal">Tell: vendor's TCO is more than 10% below the median of finalists, with no obvious capability or scope difference.</span>
+      </div>
+
+      <div class="failure">
+        <h4>Scorecard weight gaming</h4>
+        <p>Weights get shifted late in the process — usually after responses arrive — to favor a preferred vendor. A 5% shift on a tight scorecard can flip the ranking. The audit trail catches this; the Steward gate prevents it.</p>
+        <span class="signal">Tell: weight changes proposed after vendor scoring has begun. Especially when the change "improves" the preferred vendor's ranking.</span>
+      </div>
+
+      <div class="failure">
+        <h4>Realized claimed without evidence</h4>
+        <p>Twelve months post-go-live, someone tells the steering committee that "we realized $4M of the projected $5M." When you ask for the measurement source, no one can produce it. The claim is aspirational, not factual.</p>
+        <span class="signal">Tell: realized savings reported without a named measurement owner or linked evidence. The number is round (e.g., $4M, not $3.78M).</span>
+      </div>
+
+      <div class="failure">
+        <h4>Apples-to-apples that isn't</h4>
+        <p>Pricing comparison labeled "normalized" but in fact compares different scope sets. One vendor's price includes transformation services; another's doesn't. The label is reassuring; the comparison is broken.</p>
+        <span class="signal">Tell: normalization workbook missing the assumption diff column. Or assumption diff column has fewer rows than there are vendors.</span>
+      </div>
+
+      <div class="failure">
+        <h4>Decision before BAFO closes</h4>
+        <p>Decision meeting calendared before BAFO Round 2 completes. Pressure from the schedule means BAFO concessions either get rushed or lost entirely. The vendor knows the schedule too — and uses it.</p>
+        <span class="signal">Tell: Decision meeting locked while BAFO history shows open rounds. Schedule trumps process.</span>
+      </div>
+
+      <div class="failure">
+        <h4>Identity federation as Month 2 fire</h4>
+        <p>Transition plan looked clean at signing. Month 2, identity federation hasn't worked, vendor's engineers and your IT-Ops team are in a ticket war, and the go-live slips a quarter. Almost always preventable; almost never prevented.</p>
+        <span class="signal">Tell: Transition Readiness Checklist marks identity federation as "in progress" at go-live minus 30 days. It should be done by go-live minus 60 days.</span>
+      </div>
+
+      <div class="failure">
+        <h4>Value tracking dies after Quarter 2</h4>
+        <p>Value ledger maintained diligently for two quarters post-go-live. Then attention shifts to the next deal. The remaining 18 months of value lines drift unmeasured. The CFO asks for a rollup; the answer is "we'll get back to you."</p>
+        <span class="signal">Tell: value ledger last updated more than 90 days ago. Realized lines stuck at a low percentage with no progression.</span>
+      </div>
+    </section>
+
+    <!-- ════════════ 09 · Operating Cadence ════════════ -->
+    <section id="sec-09">
+      <div class="section-num">Section 14</div>
+      <h2>Operating cadence</h2>
+      <p class="lede">Sourcing rhythms that keep events on track without devolving into status meeting theater.</p>
+
+      <h3>Weekly · the active-event check</h3>
+      <p>For each active event, a 20-minute check: where on the 11-step rail, what's the current gate state, what blocker is at risk of slipping the next milestone, who owns the next move. The check is per-event, not per-portfolio. The point is concrete momentum, not generic update.</p>
+      <p><strong>Best done:</strong> Tuesdays. Monday for context-gathering, Tuesday for action. Avoid Friday — anything blocking on Friday slips to Monday.</p>
+
+      <h3>Bi-weekly · the agent review</h3>
+      <p>Every two weeks, review what each agent surfaced across the portfolio. Sentinel: any new low-confidence flags? Steward: any waivers requested? Atlas: any value posture changes? Nexus: any scope drift? The review takes 30 minutes and catches systemic issues before they cluster.</p>
+
+      <h3>Monthly · the portfolio rollup</h3>
+      <p>Once a month, view the Source Value Ledger across all events. Total projected, committed, measuring, realized. Aggregate measured-vs-committed percentage. Which events have advanced; which are stuck. This is the view that goes to the CIO and (in summary form) to the CFO.</p>
+
+      <h3>Quarterly · the value posture review</h3>
+      <p>Once a quarter, deep review of every post-go-live event still in Value Realization. Which value lines have advanced state? Which are trending under and need re-baselining? Which need additional measurement-owner support? This is the review that protects the savings stories the CFO repeats to the board.</p>
+
+      <h3>Per-event · the gate ceremony</h3>
+      <p>Each gate is its own moment. Not a meeting necessarily — sometimes a 15-minute Steward sign-off is all that's needed. But every gate gets a ceremony: a moment where the criteria are explicitly checked, the sign-off is captured, and the advancement is recorded. Skipping the ceremony is how gates degrade into rubber stamps.</p>
+
+      <div class="callout">
+        <div class="label">The cadence anti-pattern</div>
+        Daily standups for sourcing events are almost always a mistake. Sourcing happens on a slower clock than software delivery — events advance over weeks, not days. Daily standups create the feeling of progress without the substance. Weekly per-event + monthly portfolio is the right rhythm for almost every team.
+      </div>
+    </section>
+
+    <!-- ════════════ 10 · Glossary ════════════ -->
+    <section id="sec-10">
+      <div class="section-num">Section 15</div>
+      <h2>Glossary &amp; quick reference</h2>
+      <p class="lede">The vocabulary used across this guide and inside Source. Bookmark this section.</p>
+
+      <h3>Core terms</h3>
+      <dl class="glossary">
+        <dt>AMS</dt>
+        <dd>Application Managed Services. Outsourced support for an application portfolio, typically multi-year, tier-based SLA.</dd>
+
+        <dt>BAFO</dt>
+        <dd>Best And Final Offer. The structured negotiation step where vendor-specific question packs resolve traps from Pricing Normalization. Two rounds typical.</dd>
+
+        <dt>Evidence Ledger</dt>
+        <dd>The provenance trail for every claim made in artifacts. Each piece of evidence has a state on the seven-state ramp, a citation, a sample-check attestation.</dd>
+
+        <dt>Gate</dt>
+        <dd>The advancement criteria between two stages of a sourcing event. A gate has named criteria, sign-offs, and either passes or doesn't. Bypassing a gate produces a recorded waiver.</dd>
+
+        <dt>Normalized TCO</dt>
+        <dd>Vendor pricing reduced to a single common assumption set, with all carried costs surfaced and all exclusions enumerated. The basis on which apples-to-apples comparison can stand.</dd>
+
+        <dt>Outline-tier</dt>
+        <dd>An artifact built on incomplete data. Outline-tier artifacts are usable for decisions only when their tier is explicit and a low-confidence flag is appended.</dd>
+
+        <dt>Scorecard Governance</dt>
+        <dd>The discipline of locking weights, citing evidence, and capturing two-rater scoring before evaluation begins. Steward-led; audit-trail backed.</dd>
+
+        <dt>Trap Log</dt>
+        <dd>The record of carried costs, hidden assumptions, and pricing exclusions discovered during Pricing Normalization. P0 / P1 / P2 priority. Resolved through BAFO.</dd>
+
+        <dt>Usable Evidence</dt>
+        <dd>The seventh state on the readiness ramp. Data that has been parsed, sample-checked, and citation-stamped. The threshold for inclusion in artifacts and decisions.</dd>
+
+        <dt>Value Ledger</dt>
+        <dd>The named record of every value commitment made by a sourcing event. Each line has projected / committed / measuring / realized state, owner, and evidence.</dd>
+
+        <dt>Waiver</dt>
+        <dd>An explicit decision by a sponsor to advance a gate that has not passed. Waivers are recorded; downstream artifacts carry a low-confidence flag.</dd>
+      </dl>
+
+      <h3>The 11 steps · quick reference</h3>
+      <table>
+        <thead><tr><th>#</th><th>Step</th><th>Lead agent</th><th>Primary question</th></tr></thead>
+        <tbody>
+          <tr><td>01</td><td><strong>Strategy</strong></td><td>Nexus</td><td>What are we sourcing and why?</td></tr>
+          <tr><td>02</td><td><strong>Scope</strong></td><td>Nexus</td><td>Is the boundary clear enough for vendor pricing?</td></tr>
+          <tr><td>03</td><td><strong>RFP / RFI Readiness</strong></td><td>Nexus</td><td>Can we release a defensible package?</td></tr>
+          <tr><td>04</td><td><strong>Vendor Responses</strong></td><td>Nexus</td><td>Are responses complete enough to compare?</td></tr>
+          <tr><td>05</td><td><strong>Evaluation</strong></td><td>Steward</td><td>Is evaluation governed enough to defend?</td></tr>
+          <tr><td>06</td><td><strong>Pricing Normalization</strong></td><td>Nexus + Sentinel</td><td>Are prices comparable like-for-like?</td></tr>
+          <tr><td>07</td><td><strong>BAFO / Negotiation</strong></td><td>Nexus</td><td>What questions reduce risk and improve value?</td></tr>
+          <tr><td>08</td><td><strong>Executive Decision</strong></td><td>Atlas</td><td>What is the decision posture?</td></tr>
+          <tr><td>09</td><td><strong>Selection Readiness</strong></td><td>Steward</td><td>Is selection ready, deferred, or blocked?</td></tr>
+          <tr><td>10</td><td><strong>Transition</strong></td><td>Steward</td><td>Are KT, access, runbook, RACI complete?</td></tr>
+          <tr><td>11</td><td><strong>Value Realization</strong></td><td>Atlas</td><td>What is projected, committed, measuring, realized?</td></tr>
+        </tbody>
+      </table>
+
+      <h3>The 13 readiness states · quick reference</h3>
+      <p>
+        <code>Missing</code> · <code>Requested</code> · <code>Uploaded</code> · <code>Connected</code> · <code>Loaded</code> · <code>Parsed</code> · <code>Available</code> · <code>Usable Evidence</code> · <code>Low Confidence</code> · <code>Stale</code> · <code>Access Restricted</code> · <code>Not Applicable</code> · <code>Waived</code>
+      </p>
+
+      <h3>The 4 value states · quick reference</h3>
+      <p>
+        <code>Projected</code> → <code>Committed</code> → <code>Measuring</code> → <code>Realized</code>
+      </p>
+      <p>Realized requires <strong>both</strong> a named measurement owner <strong>and</strong> linked evidence. The platform refuses to mark a line Realized without both.</p>
+
+      <h3>The 4 agents · quick reference</h3>
+      <ul>
+        <li><strong>Nexus</strong> — Lead orchestration. Most steps. The agent who knows what should happen next.</li>
+        <li><strong>Sentinel</strong> — Evidence integrity. The agent who keeps you from accepting plausible fiction.</li>
+        <li><strong>Steward</strong> — Governance &amp; gates. The agent who enforces the discipline that makes outcomes defensible.</li>
+        <li><strong>Atlas</strong> — Executive synthesis. The agent who writes for the CFO, CIO, and steering committee.</li>
+      </ul>
+    </section>
+
+    <div class="footer">
+      Operating Guide · v1 · 2026 · AbarVa Source · This document was prepared for sourcing leaders adopting Source as an operating system for technology sourcing. Vocabulary, agent boundaries, and step model are aligned to the Source product and the Source IT Sourcing Product Requirements Design Dossier v1.
+    </div>
+
+  </main>
+</div>
+
+<script>
+  // Sticky-nav active section highlighting
+  const links = document.querySelectorAll('.sidebar nav a');
+  const targets = Array.from(links).map(l => {
+    const href = l.getAttribute('href');
+    return href && href.startsWith('#') ? document.querySelector(href) : null;
+  });
+
+  function setCurrent() {
+    const y = window.scrollY + 80;
+    let idx = 0;
+    targets.forEach((s, i) => { if (s && s.offsetTop <= y) idx = i; });
+    links.forEach((l, i) => l.classList.toggle('current', i === idx));
+  }
+
+  window.addEventListener('scroll', setCurrent, { passive: true });
+  window.addEventListener('load', setCurrent);
+</script>
+
+</body>
+</html>
