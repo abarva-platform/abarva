@@ -30,8 +30,11 @@ import {
   type SourceWorkflowValidationReadableReport,
 } from './workflow-validation-report';
 
-export const SOURCE_NEXUS_API_STUB_VERSION = 'source-nexus-api-stub/v1';
-export const SOURCE_NEXUS_API_STUB_GENERATED_AT = '2026-04-25T00:00:00.000Z';
+export const SOURCE_SENTINEL_API_VERSION = 'source-sentinel-api/v1';
+export const SOURCE_SENTINEL_API_GENERATED_AT = '2026-04-25T00:00:00.000Z';
+// Back-compat aliases — remove in next major version
+export const SOURCE_NEXUS_API_STUB_VERSION = SOURCE_SENTINEL_API_VERSION;
+export const SOURCE_NEXUS_API_STUB_GENERATED_AT = SOURCE_SENTINEL_API_GENERATED_AT;
 
 export type SourceNexusApiAnswerStatus =
   | 'answered'
@@ -379,7 +382,7 @@ function createWarnings(
 }
 
 function createRequestId(eventId: string, generatedAt: string): string {
-  return `source-nexus-api-stub:${eventId}:${generatedAt}`;
+  return `source-sentinel-api:${eventId}:${generatedAt}`;
 }
 
 function maybeBuildIntakeGuidance(prompt: string): SourceNexusIntakeGuidance | undefined {
