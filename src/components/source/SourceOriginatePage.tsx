@@ -17,7 +17,7 @@ interface IntakeFieldDefinition {
   label: string;
   prompt: string;
   placeholder: string;
-  agent: 'Nexus' | 'Steward' | 'Sentinel' | 'Atlas';
+  agent: 'Steward' | 'Sentinel' | 'Atlas';
 }
 
 type IntakeState = Record<IntakeFieldId, string>;
@@ -548,12 +548,12 @@ export function SourceOriginatePage({
 
           <aside className="source-new-intake-rail">
             <section style={{ ...sectionCard, padding: 18 }}>
-              <Eyebrow>Nexus guidance</Eyebrow>
+              <Eyebrow>Sentinel guidance</Eyebrow>
               <div style={{ fontFamily: SHELL.SERIF, fontSize: 22, color: SHELL.INK, margin: '10px 0 8px' }}>
                 Start from {clientShortName} context, then fill the floor.
               </div>
               <p style={{ fontFamily: SHELL.SANS, fontSize: 13, color: SHELL.INK_SOFT, lineHeight: 1.5, margin: 0 }}>
-                Source can use {clientShortName} org, IT, program, evidence, vendor, and risk context when it is loaded. Nexus still needs these five event-specific facts before moving to Strategy or Scope.
+                Source can use {clientShortName} org, IT, program, evidence, vendor, and risk context when it is loaded. Sentinel still needs these five event-specific facts before moving to Strategy or Scope.
               </p>
               <div style={{ display: 'grid', gap: 8, marginTop: 14 }}>
                 {['Check IT category fit', 'Name missing intake fact', 'Prepare minimum data request'].map((choice) => (
@@ -586,7 +586,7 @@ export function SourceOriginatePage({
             <section style={{ ...sectionCard, padding: 18 }}>
               <Eyebrow>Create and approval</Eyebrow>
               <p style={{ fontFamily: SHELL.SANS, fontSize: 13, color: SHELL.INK_SOFT, lineHeight: 1.5, margin: '10px 0 14px' }}>
-                When all five facts are captured, Nexus creates a persisted Source event and routes it to tenant-admin approval before sourcing motion begins.
+                When all five facts are captured, Sentinel creates a persisted Source event and routes it to tenant-admin approval before sourcing motion begins.
               </p>
               <button
                 type="button"

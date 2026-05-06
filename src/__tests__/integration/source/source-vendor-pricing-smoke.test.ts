@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
-import { NexusEngagementCanvas } from '@/components/source/NexusEngagementCanvas';
+import { SentinelEngagementCanvas } from '@/components/source/SentinelEngagementCanvas';
 import {
   SOURCE_GOLDEN_EVENT_IDS,
   buildSourcePricingNormalization,
@@ -17,7 +17,7 @@ describe('Source vendor pricing smoke coverage', () => {
     const event = await getSourcingEvent(SOURCE_GOLDEN_EVENT_IDS.digitalAppBuild);
     expect(event?.currentStageKey).toBe('responses');
 
-    const html = renderToStaticMarkup(createElement(NexusEngagementCanvas, { event: event! }));
+    const html = renderToStaticMarkup(createElement(SentinelEngagementCanvas, { event: event! }));
 
     expect(html).toContain('Vendor Response Completeness');
     expect(html).toContain('Event vendor response readiness');
@@ -78,7 +78,7 @@ describe('Source vendor pricing smoke coverage', () => {
     expect(event).toBeTruthy();
 
     const sources = [
-      'src/components/source/NexusEngagementCanvas.tsx',
+      'src/components/source/SentinelEngagementCanvas.tsx',
       'src/components/source/SourceActiveStageWorkspace.tsx',
       'src/components/source/SourceVendorResponseCompletenessPanel.tsx',
       'src/lib/source/vendor-response-completeness.ts',

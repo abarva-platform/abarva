@@ -378,7 +378,7 @@ export function sourceEventRowToDetail(row: SourceEventRow, accountName: string)
 
   return {
     ...summary,
-    synopsis: `${summary.name} is a persisted Source event for ${accountName}. Nexus is tracking intake, evidence, artifacts, approvals, and value from the live source_events row.`,
+    synopsis: `${summary.name} is a persisted Source event for ${accountName}. Sentinel is tracking intake, evidence, artifacts, approvals, and value from the live source_events row.`,
     problemStatement: trigger,
     stages: buildWorkflowStagesForRow(row),
     alerts: buildAlertsForRow(row),
@@ -543,7 +543,7 @@ function buildAlertsForRow(row: SourceEventRow): SourceAlert[] {
     alerts.push({
       id: `${row.id}:scope-gap`,
       title: 'Scope boundary incomplete',
-      detail: 'Nexus needs the first application, tower, vendor, or service boundary before market work begins.',
+      detail: 'Sentinel needs the first application, tower, vendor, or service boundary before market work begins.',
       severity: 'info',
       status: 'open',
     });

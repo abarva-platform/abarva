@@ -29,7 +29,7 @@ const sourceMuted = {
   lineHeight: 1.5,
 };
 
-export function PersistentNexusPanel({
+export function SentinelMissionPanel({
   event,
   missionReport,
 }: {
@@ -50,7 +50,7 @@ export function PersistentNexusPanel({
       }}
     >
       <div>
-        <div style={{ ...sourceSectionLabel, color: SHELL.INK_SOFT }}>Nexus guidance</div>
+        <div style={{ ...sourceSectionLabel, color: SHELL.INK_SOFT }}>Sentinel guidance</div>
         <div style={{ fontSize: 22, fontWeight: 800, color: SHELL.INK }}>
           Lead sourcing agent
         </div>
@@ -129,7 +129,7 @@ export function PersistentNexusPanel({
         </div>
         <div style={{ color: SHELL.INK, fontWeight: 800 }}>Event, stage, gate, and mission state</div>
         <div style={{ ...sourceMuted, color: SHELL.INK_MUTED }}>
-          Nexus guidance is limited to the current event context and readiness signals.
+          Sentinel guidance is limited to the current event context and readiness signals.
         </div>
       </div>
     </aside>

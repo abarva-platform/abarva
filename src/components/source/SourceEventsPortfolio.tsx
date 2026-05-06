@@ -280,7 +280,7 @@ export function SourceEventsPortfolio({
 
       <div style={TWO_COL}>
         <article style={BRIEF_CARD}>
-          <div style={{ ...SOURCE_SECTION_LABEL, color: '#1B2B5C' }}>Nexus brief</div>
+          <div style={{ ...SOURCE_SECTION_LABEL, color: '#1B2B5C' }}>Sentinel brief</div>
           <h2
             style={{
               margin: '2px 0 8px',
@@ -314,7 +314,7 @@ export function SourceEventsPortfolio({
               Seeded event list, stage labels, alert counts, value-at-stake, and linked-program hints. Vendor counts and live bid timelines are not surfaced at the portfolio layer yet.
             </div>
             <label htmlFor="source-events-custom-input" style={{ display: 'grid', gap: 6 }}>
-              <div style={{ ...FILTER_LABEL, marginTop: 8 }}>Ask Nexus (deferred)</div>
+              <div style={{ ...FILTER_LABEL, marginTop: 8 }}>Ask Sentinel (deferred)</div>
               <div style={{ display: 'flex', gap: 8 }}>
                 <input
                   id="source-events-custom-input"
@@ -322,7 +322,7 @@ export function SourceEventsPortfolio({
                   readOnly
                   disabled
                   aria-disabled="true"
-                  placeholder="Ask Nexus about this event portfolio, stage priorities, blockers, or evidence..."
+                  placeholder="Ask Sentinel about this event portfolio, stage priorities, blockers, or evidence..."
                   style={{
                     ...SOURCE_SECTION_LABEL,
                     background: '#F8FAFC',
@@ -340,7 +340,7 @@ export function SourceEventsPortfolio({
                   type="button"
                   disabled
                   aria-disabled="true"
-                  title="Open a Source event to talk to Nexus. Portfolio Nexus runtime is deferred."
+                  title="Open a Source event to talk to Sentinel. Portfolio Sentinel runtime is deferred."
                   style={{
                     ...SOURCE_ACTION_LINK_SECONDARY,
                     whiteSpace: 'nowrap',
@@ -470,7 +470,7 @@ export function SourceEventsPortfolio({
       <div style={TWO_COL}>
         <SourceAlertPanel
           alerts={attentionItems}
-          title="Nexus mission strip"
+          title="Sentinel mission strip"
           emptyLabel="No seeded attention items are open in the current filter view."
           eventContextById={eventContextById}
           variant="light"
@@ -543,7 +543,7 @@ function buildBriefBody(
   const stageLabel = activeStage ? STAGE_LABELS.find((stage) => stage.key === activeStage)?.label ?? activeStage : 'all stages';
   const statusLabel = activeStatus ? STATUS_LABELS.find((status) => status.key === activeStatus)?.label ?? activeStatus : 'all lifecycle states';
 
-  return `Nexus is using the seeded Source portfolio to compare ${events.length} event${events.length === 1 ? '' : 's'} across ${stageLabel.toLowerCase()} and ${statusLabel.toLowerCase()} posture. ${riskCount} open alert${riskCount === 1 ? '' : 's'} remain in view, and commercial detail beyond stage, blocker, value, and next action still belongs inside each event canvas.`;
+  return `Sentinel is using the seeded Source portfolio to compare ${events.length} event${events.length === 1 ? '' : 's'} across ${stageLabel.toLowerCase()} and ${statusLabel.toLowerCase()} posture. ${riskCount} open alert${riskCount === 1 ? '' : 's'} remain in view, and commercial detail beyond stage, blocker, value, and next action still belongs inside each event canvas.`;
 }
 
 function buildChoiceHref({

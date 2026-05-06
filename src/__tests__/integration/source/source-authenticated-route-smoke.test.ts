@@ -76,7 +76,7 @@ describe('Source authenticated route smoke', () => {
     const sources = [
       'src/proxy.ts',
       ...sourceRouteFiles,
-      'src/components/source/NexusEngagementCanvas.tsx',
+      'src/components/source/SentinelEngagementCanvas.tsx',
       'src/components/source/SourceDataReadinessPanel.tsx',
     ].map(readWorkspaceFile).join('\n');
 

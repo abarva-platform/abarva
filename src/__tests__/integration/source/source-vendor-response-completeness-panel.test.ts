@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
-import { NexusEngagementCanvas } from '@/components/source/NexusEngagementCanvas';
+import { SentinelEngagementCanvas } from '@/components/source/SentinelEngagementCanvas';
 import { SourceVendorResponseCompletenessPanel } from '@/components/source/SourceVendorResponseCompletenessPanel';
 import {
   SOURCE_GOLDEN_EVENT_IDS,
@@ -32,7 +32,7 @@ describe('Source vendor response completeness panel', () => {
     expect(event).toBeTruthy();
     expect(event?.currentStageKey).toBe('responses');
 
-    const html = renderToStaticMarkup(createElement(NexusEngagementCanvas, { event: event! }));
+    const html = renderToStaticMarkup(createElement(SentinelEngagementCanvas, { event: event! }));
 
     expect(html).toContain('Vendor Response Completeness');
     expect(html).toContain('Event vendor response readiness');

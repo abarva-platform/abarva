@@ -61,7 +61,7 @@ export function buildSentinelWorkflowMissions(input: SourceAgentMissionInput): S
       evidenceStatus: deriveEvidenceStatus(input),
       blockerReason: firstOrUndefined(bundle.blockers),
       recommendedAction: bundle.nextAction ?? getFallbackNextAction(input),
-      suggestedActions: getNexusSuggestedActions(input),
+      suggestedActions: getSentinelSuggestedActions(input),
       handoffTarget: bundle.blockers.length > 0 ? 'steward' : undefined,
     }),
   ];
@@ -430,7 +430,7 @@ function createMissionId(
   ].join(':');
 }
 
-function getNexusSuggestedActions(input: SourceAgentMissionInput): SourceSuggestedAgentAction[] {
+function getSentinelSuggestedActions(input: SourceAgentMissionInput): SourceSuggestedAgentAction[] {
   const bundle = input.contextBundle;
 
   if (bundle.blockers.length > 0 || input.workflowValidationReport?.blockerExplanations.length) {
@@ -462,7 +462,7 @@ function getEvidenceActions(agentName: SourceAgentName): SourceSuggestedAgentAct
   return [
     suggestedAction(`${agentName}-show-evidence-gaps`, 'Show evidence gaps', 'Review missing citations, weak evidence, and deferred context checks.', 'showEvidenceGaps', agentName),
     suggestedAction(`${agentName}-show-context-validation`, 'Show context validation', 'Inspect pass, defer, and reject results before using agent output.', 'showContextValidation', agentName),
-    suggestedAction(`${agentName}-explain-weak-claims`, 'Explain weak claims', 'List claims Nexus should not overstate yet.', 'showEvidenceGaps', agentName),
+    suggestedAction(`${agentName}-explain-weak-claims`, 'Explain weak claims', 'List claims Sentinel should not overstate yet.', 'showEvidenceGaps', agentName),
     customAction(agentName),
   ];
 }

@@ -60,7 +60,7 @@ export function SourceJourneyTracker({ stages, onSynthesisClick }: SourceJourney
           </div>
         </div>
         <div style={{ ...sourceMuted, maxWidth: 340, color: SHELL.INK_MUTED, fontSize: 12 }}>
-          Stages are read-only in this shell. Blocked and waiting states explain what Nexus needs before movement.
+          Stages are read-only in this shell. Blocked and waiting states explain what Sentinel needs before movement.
         </div>
       </div>
       <div

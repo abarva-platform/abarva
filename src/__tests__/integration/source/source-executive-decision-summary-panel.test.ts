@@ -8,7 +8,7 @@ import {
   buildSourceExecutiveDecisionSummary,
   getSourcingEvent,
 } from '@/lib/source';
-import { NexusEngagementCanvas } from '@/components/source/NexusEngagementCanvas';
+import { SentinelEngagementCanvas } from '@/components/source/SentinelEngagementCanvas';
 import { SourceExecutiveDecisionSummaryPanel } from '@/components/source/SourceExecutiveDecisionSummaryPanel';
 import type { SourceStageStatus, StageGateStatus, WorkflowStage } from '@/lib/source/types';
 
@@ -60,7 +60,7 @@ describe('Source executive decision summary panel', () => {
   it('renders executive decision panel in event canvas when selection stage is active', async () => {
     const sourceEvent = await getSourcingEvent(SOURCE_GOLDEN_EVENT_IDS.digitalAppBuild);
     const event = buildSelectionEvent(sourceEvent!);
-    const html = renderToStaticMarkup(createElement(NexusEngagementCanvas, { event }));
+    const html = renderToStaticMarkup(createElement(SentinelEngagementCanvas, { event }));
 
     expect(html).toContain('Vendor selection readiness');
     expect(html).toContain('Selection posture');

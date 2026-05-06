@@ -146,7 +146,7 @@ export function formatSourceAgentMissionReportAsMarkdown(
     '## Counts',
     '',
     `Mission count: ${report.missionCount}`,
-    `By agent: Nexus ${report.countByAgent.nexus}; Sentinel ${report.countByAgent.sentinel}; Atlas ${report.countByAgent.atlas}; Steward ${report.countByAgent.steward}`,
+    `By agent: Sentinel ${report.countByAgent.nexus}; Sentinel ${report.countByAgent.sentinel}; Atlas ${report.countByAgent.atlas}; Steward ${report.countByAgent.steward}`,
     `By priority: critical ${report.countByPriority.critical}; high ${report.countByPriority.high}; medium ${report.countByPriority.medium}; low ${report.countByPriority.low}`,
     `By state: blocked ${report.countByState.blocked}; active ${report.countByState.active}; waiting ${report.countByState.waiting}; deferred ${report.countByState.deferred}; proposed ${report.countByState.proposed}`,
     '',

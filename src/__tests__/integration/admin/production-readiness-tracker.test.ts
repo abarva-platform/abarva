@@ -391,7 +391,7 @@ describe('production readiness component map and PROD4B slice', () => {
     expect(componentMap).toContain('docs/abarva-source/SOURCE_PRODUCTION_READINESS_TRACKER.md');
     expect(componentMap).toContain('docs/abarva-source/SOURCE_LAYERED_PROGRESS_TRACKER.md');
     expect(componentMap).toContain('src/components/source/AbarVaSourceDashboard.tsx');
-    expect(componentMap).toContain('src/components/source/NexusEngagementCanvas.tsx');
+    expect(componentMap).toContain('src/components/source/SentinelEngagementCanvas.tsx');
     expect(componentMap).toContain('src/components/source/SourceDataReadinessPanel.tsx');
     expect(componentMap).toContain('src/lib/source/nexus-api.ts');
     expect(componentMap).toContain('src/lib/source/context-builder.ts');

@@ -22,7 +22,7 @@ describe('Source artifact status strip', () => {
   it('keeps artifact strip implementation free of model/upload/workflow imports', () => {
     const sources = [
       'src/components/source/SourceArtifactStatusStrip.tsx',
-      'src/components/source/NexusEngagementCanvas.tsx',
+      'src/components/source/SentinelEngagementCanvas.tsx',
       'src/lib/source/mock-seed.ts',
     ].map((filePath) => readFileSync(join(process.cwd(), filePath), 'utf8')).join('\n');
 

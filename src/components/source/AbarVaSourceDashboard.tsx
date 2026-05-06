@@ -326,11 +326,11 @@ export function AbarVaSourceDashboard({ data }: { data: AbarvaSourceDashboardDat
                         style={{
                           display: 'grid',
                           gap: 5,
-                          border: mission.agentName === 'nexus'
+                          border: mission.agentName === 'sentinel'
                             ? '1px solid rgba(94,234,212,0.30)'
                             : '1px solid rgba(255,255,255,0.10)',
                           borderRadius: 10,
-                          background: mission.agentName === 'nexus'
+                          background: mission.agentName === 'sentinel'
                             ? 'rgba(94,234,212,0.10)'
                             : 'rgba(255,255,255,0.045)',
                           padding: '9px 10px',
@@ -338,7 +338,7 @@ export function AbarVaSourceDashboard({ data }: { data: AbarvaSourceDashboardDat
                       >
                         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center' }}>
                           <span style={{ ...SOURCE_METRIC_LABEL, color: '#5EEAD4' }}>
-                            {mission.agentName === 'nexus' ? 'Nexus lead' : agentLabel(mission.agentName)}
+                            {mission.agentName === 'sentinel' ? 'Sentinel lead' : agentLabel(mission.agentName)}
                           </span>
                           <span style={{ ...SOURCE_METRIC_DETAIL, color: 'rgba(248,250,252,0.70)', fontWeight: 800 }}>
                             {mission.priority} / {mission.state}
@@ -484,7 +484,7 @@ function buildDashboardMissionReport(event: SourceDashboardEvent): SourceAgentMi
 function getDashboardMissionPreviewMissions(report: SourceAgentMissionReport): SourceAgentMission[] {
   const selected: SourceAgentMission[] = [];
   const seenAgents = new Set<string>();
-  const nexusMission = report.topMissions.find((mission) => mission.agentName === 'nexus');
+  const nexusMission = report.topMissions.find((mission) => mission.agentName === 'sentinel');
 
   if (nexusMission) {
     selected.push(nexusMission);
@@ -510,7 +510,7 @@ function getDashboardMissionPreviewMissions(report: SourceAgentMissionReport): S
 }
 
 function agentLabel(agentName: SourceAgentMission['agentName']): string {
-  if (agentName === 'nexus') return 'Nexus';
+  if (agentName === 'nexus') return 'Sentinel';
   if (agentName === 'sentinel') return 'Sentinel';
   if (agentName === 'atlas') return 'Atlas';
   return 'Steward';

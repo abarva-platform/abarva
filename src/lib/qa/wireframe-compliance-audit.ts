@@ -438,7 +438,7 @@ const PAGE_RESULTS: PageComplianceResult[] = [
       {
         dimension: 'design_canon',
         description:
-          'NexusEngagementCanvas imports from @/lib/design-system which contains banned teal: \'#14B8A6\' and accentTeal: \'#0E9F8C\' tokens — dependency risk even though direct rendering audit shows no teal usage',
+          'SentinelEngagementCanvas imports from @/lib/design-system which contains banned teal: \'#14B8A6\' and accentTeal: \'#0E9F8C\' tokens — dependency risk even though direct rendering audit shows no teal usage',
         severity: 'medium',
         safeFixApplied: false,
         remainingFix: 'Refactor design-system.ts to remove banned teal tokens',

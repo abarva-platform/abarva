@@ -4,7 +4,7 @@ import { createElement } from 'react';
 import type { ComponentProps } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import SourceEventDetailPage from '@/app/(maestro)/source/events/[eventId]/page';
-import { NexusEngagementCanvas } from '@/components/source/NexusEngagementCanvas';
+import { SentinelEngagementCanvas } from '@/components/source/SentinelEngagementCanvas';
 import { SourceEventAgentCanvas } from '@/components/source/SourceEventAgentCanvas';
 import {
   SOURCE_GOLDEN_EVENT_IDS,
@@ -90,7 +90,7 @@ describe('Source event canvas shell', () => {
     const event = await getSourcingEvent(SOURCE_GOLDEN_EVENT_IDS.dataAiModernization);
     expect(event).toBeDefined();
 
-    const html = renderToStaticMarkup(createElement(NexusEngagementCanvas, { event: event! }));
+    const html = renderToStaticMarkup(createElement(SentinelEngagementCanvas, { event: event! }));
 
     expect(html).toContain('Journey map');
     expect(html).toContain('Stage gate readiness');
@@ -113,7 +113,7 @@ describe('Source event canvas shell', () => {
   it('keeps Scope visible as the current blocked stage with required baseline inputs', async () => {
     const event = await getSourcingEvent(SOURCE_GOLDEN_EVENT_IDS.dataAiModernization);
     const readiness = buildSourceRfpReadiness({ event: event! });
-    const html = renderToStaticMarkup(createElement(NexusEngagementCanvas, { event: event! }));
+    const html = renderToStaticMarkup(createElement(SentinelEngagementCanvas, { event: event! }));
 
     expect(html).toContain('Scope');
     expect(html).toContain('Blocked');
@@ -207,7 +207,7 @@ describe('Source event canvas shell', () => {
   it('surfaces BAFO negotiation panel signals in event canvas when orals/BAFO is active', async () => {
     const sourceEvent = await getSourcingEvent(SOURCE_GOLDEN_EVENT_IDS.digitalAppBuild);
     const event = buildOralsBafoEvent(sourceEvent!);
-    const html = renderToStaticMarkup(createElement(NexusEngagementCanvas, { event }));
+    const html = renderToStaticMarkup(createElement(SentinelEngagementCanvas, { event }));
 
     expect(html).toContain('BAFO negotiation');
     expect(html).toContain('Overall negotiation readiness');
@@ -220,7 +220,7 @@ describe('Source event canvas shell', () => {
     const sourceEvent = await getSourcingEvent(SOURCE_GOLDEN_EVENT_IDS.digitalAppBuild);
     const event = buildSelectionEvent(sourceEvent!);
     const summary = buildSourceExecutiveDecisionSummary({ event });
-    const html = renderToStaticMarkup(createElement(NexusEngagementCanvas, { event }));
+    const html = renderToStaticMarkup(createElement(SentinelEngagementCanvas, { event }));
     const selectionReadiness = buildSourceVendorSelectionReadiness({ event });
 
     expect(html).toContain('Vendor selection readiness');
@@ -240,7 +240,7 @@ describe('Source event canvas shell', () => {
     expect(readiness.selectionReviewReady).toBe(false);
     expect(readiness.selectionPosture).not.toBe('ready_for_selection_review');
 
-    const html = renderToStaticMarkup(createElement(NexusEngagementCanvas, { event }));
+    const html = renderToStaticMarkup(createElement(SentinelEngagementCanvas, { event }));
 
     expect(html).toContain('Vendor selection readiness');
     expect(html).toContain('Selection posture');
@@ -254,7 +254,7 @@ describe('Source event canvas shell', () => {
 
   it('includes the deterministic data readiness panel with missing and usable evidence states', async () => {
     const event = await getSourcingEvent(SOURCE_GOLDEN_EVENT_IDS.dataAiModernization);
-    const html = renderToStaticMarkup(createElement(NexusEngagementCanvas, { event: event! }));
+    const html = renderToStaticMarkup(createElement(SentinelEngagementCanvas, { event: event! }));
 
     expect(html).toContain('Data readiness');
     expect(html).toContain('Workload Baseline');
@@ -282,7 +282,7 @@ describe('Source event canvas shell', () => {
       ...event!,
       dataReadiness: [],
     };
-    const html = renderToStaticMarkup(createElement(NexusEngagementCanvas, { event: eventWithoutLocalReadiness }));
+    const html = renderToStaticMarkup(createElement(SentinelEngagementCanvas, { event: eventWithoutLocalReadiness }));
 
     expect(html).toContain('34% toward event data readiness');
     expect(html).toContain('Admin/Setup readiness contract projection');
@@ -294,12 +294,12 @@ describe('Source event canvas shell', () => {
   it('keeps the event canvas shell inside the approved Source boundary', () => {
     const sources = [
       'src/app/(maestro)/source/events/[eventId]/page.tsx',
-      'src/components/source/NexusEngagementCanvas.tsx',
+      'src/components/source/SentinelEngagementCanvas.tsx',
       'src/components/source/SourceJourneyTracker.tsx',
       'src/components/source/SourceStagePanel.tsx',
       'src/components/source/SourceActiveStageWorkspace.tsx',
       'src/components/source/SourceDataReadinessPanel.tsx',
-      'src/components/source/PersistentNexusPanel.tsx',
+      'src/components/source/SentinelMissionPanel.tsx',
       'src/lib/source/admin-setup-readiness-contract.ts',
     ].map((filePath) => readFileSync(join(process.cwd(), filePath), 'utf8')).join('\n');
 

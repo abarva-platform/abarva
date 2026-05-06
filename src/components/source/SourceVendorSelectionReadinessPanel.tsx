@@ -149,8 +149,8 @@ export function SourceVendorSelectionReadinessPanel({
           </ul>
         </Section>
 
-        <Section title="Nexus guidance">
-          <div style={sourceSectionLabel}>Nexus recommendation</div>
+        <Section title="Sentinel guidance">
+          <div style={sourceSectionLabel}>Sentinel recommendation</div>
           <div style={{ fontFamily: SHELL.SANS, fontSize: 12, lineHeight: 1.4, color: SHELL.INK_MUTED }}>
             {readiness.nexusRecommendation}
           </div>

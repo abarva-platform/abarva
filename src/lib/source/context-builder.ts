@@ -428,7 +428,7 @@ function createPortfolioContextBundle(input: SourceContextBuilderInput): SourceA
     ...createEmptySourceContextBundle(input),
     contextScope: 'portfolio',
     nextAction: 'Review Source portfolio attention items',
-    nextActionOwner: 'Nexus',
+    nextActionOwner: 'Sentinel',
     blockers: waitingOrBlocked.map((event) => `${event.name}: ${event.blocker ?? event.statusLabel}`),
     risks: dashboard.attentionItems.map((item) => ({
       id: item.id,

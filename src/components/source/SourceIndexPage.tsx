@@ -293,7 +293,7 @@ function VendorResponseModal({ onClose }: VendorResponseModalProps) {
           </div>
         )}
 
-        {/* Nexus parsing note */}
+        {/* Sentinel parsing note */}
         <div
           style={{
             background: SHELL.PAPER_SOFT,
@@ -321,7 +321,7 @@ function VendorResponseModal({ onClose }: VendorResponseModalProps) {
               color: SHELL.INK_MUTED,
             }}
           >
-            Nexus will extract scoring signals from this response and update the vendor comparison matrix.
+            Sentinel will extract scoring signals from this response and update the vendor comparison matrix.
           </span>
         </div>
 
@@ -336,7 +336,7 @@ function VendorResponseModal({ onClose }: VendorResponseModalProps) {
               letterSpacing: '0.04em',
             }}
           >
-            ✓ {vendorName} response recorded · Nexus will process and update rankings
+            ✓ {vendorName} response recorded · Sentinel will process and update rankings
           </div>
         )}
 

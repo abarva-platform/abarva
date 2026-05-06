@@ -51,7 +51,7 @@ const events: SourcingEventDetail[] = [
     realizedValueUsd: 0,
     nextDecision: 'Confirm whether the scope is narrow enough to start SI strategy design.',
     synopsis:
-      'Nexus is structuring a modernization sourcing event that needs the baseline inventory before the strategy can be trusted.',
+      'Sentinel is structuring a modernization sourcing event that needs the baseline inventory before the strategy can be trusted.',
     problemStatement:
       'The estate is large enough to support a major sourcing event, but the scope is still vulnerable to narrative inflation because the application and analytics baselines are incomplete.',
     stages: [
@@ -260,7 +260,7 @@ const events: SourcingEventDetail[] = [
         lastUpdated: '2026-04-24',
         confidence: 'high',
         workflowImpact: 'Can support Scope framing and RFP application portfolio language.',
-        agentRecommendation: 'Nexus can use this as scope evidence, but should still caveat workload sizing.',
+        agentRecommendation: 'Sentinel can use this as scope evidence, but should still caveat workload sizing.',
         stewardAdminHandoffLabel: 'Admin/Setup evidence record',
       },
       {
@@ -274,7 +274,7 @@ const events: SourcingEventDetail[] = [
         lastUpdated: null,
         confidence: 'low',
         workflowImpact: 'Blocks Rich-tier Scope and makes pricing normalization unsafe.',
-        agentRecommendation: 'Nexus should request workload volumes before strategy design expands.',
+        agentRecommendation: 'Sentinel should request workload volumes before strategy design expands.',
         stewardAdminHandoffLabel: 'Steward to data owner',
       },
       {
@@ -288,7 +288,7 @@ const events: SourcingEventDetail[] = [
         lastUpdated: null,
         confidence: 'low',
         workflowImpact: 'Limits support sizing and weakens vendor run-cost comparison.',
-        agentRecommendation: 'Nexus should include ticket history in the minimum data request.',
+        agentRecommendation: 'Sentinel should include ticket history in the minimum data request.',
         stewardAdminHandoffLabel: 'Steward to Admin/Setup intake',
       },
       {
@@ -316,7 +316,7 @@ const events: SourcingEventDetail[] = [
         lastUpdated: null,
         confidence: 'low',
         workflowImpact: 'Prevents confident service-level requirements and transition risk sizing.',
-        agentRecommendation: 'Nexus should request current SLA performance before RFP release.',
+        agentRecommendation: 'Sentinel should request current SLA performance before RFP release.',
         stewardAdminHandoffLabel: 'Steward to operations owner',
       },
       {
@@ -358,7 +358,7 @@ const events: SourcingEventDetail[] = [
         lastUpdated: null,
         confidence: 'low',
         workflowImpact: 'Blocks clear scope split and transition responsibility language.',
-        agentRecommendation: 'Nexus should ask the client to confirm retained roles before RFP drafting.',
+        agentRecommendation: 'Sentinel should ask the client to confirm retained roles before RFP drafting.',
         stewardAdminHandoffLabel: 'Steward to client owner',
       },
     ],
@@ -387,7 +387,7 @@ const events: SourcingEventDetail[] = [
     realizedValueUsd: 0,
     nextDecision: 'Lock the sourcing model before packaging the vendor exercise.',
     synopsis:
-      'Nexus has enough baseline coverage to move through sourcing strategy, but the shortlist and model shape still need an executive-quality decision.',
+      'Sentinel has enough baseline coverage to move through sourcing strategy, but the shortlist and model shape still need an executive-quality decision.',
     problemStatement:
       'The consolidation opportunity is large, but the organization needs a clear sourcing model before downstream work becomes expensive to unwind.',
     stages: [
@@ -756,7 +756,7 @@ const events: SourcingEventDetail[] = [
     realizedValueUsd: 0,
     nextDecision: 'Select preferred AMS partner from BAFO responses by May 30, 2026.',
     synopsis:
-      'Apex Retail is consolidating three incumbent AMS providers into a preferred-supplier structure. Nexus has guided the event through scope, strategy, RFP, vendor responses, and evaluation. Two vendors (Northstar Managed Services and ArcVault Managed) have been invited to BAFO. A BAFO round decision is expected by end of May 2026.',
+      'Apex Retail is consolidating three incumbent AMS providers into a preferred-supplier structure. Sentinel has guided the event through scope, strategy, RFP, vendor responses, and evaluation. Two vendors (Northstar Managed Services and ArcVault Managed) have been invited to BAFO. A BAFO round decision is expected by end of May 2026.',
     problemStatement:
       'Apex Retail\'s fragmented AMS landscape — three incumbent providers with overlapping scope — creates delivery risk for the CDP Implementation programme (APX-CDP-2026). A consolidated AMS partner must be selected before the CDP data migration window in Q3 2026.',
     stages: [
@@ -905,7 +905,7 @@ const events: SourcingEventDetail[] = [
       {
         id: 'alert-src-004-bafo-deadline',
         title: 'BAFO response deadline: May 15, 2026',
-        detail: 'Northstar Managed Services and ArcVault Managed responses due in 19 days. Nexus will prompt follow-up if no confirmation received by May 10.',
+        detail: 'Northstar Managed Services and ArcVault Managed responses due in 19 days. Sentinel will prompt follow-up if no confirmation received by May 10.',
         severity: 'info',
         status: 'open',
       },
@@ -1293,7 +1293,7 @@ const digitalVendorResponsePlaceholderSummary: SourceAttachmentSummary = {
   attachmentId: 'attachment-source-003-vendor-response-placeholder',
   purpose: 'vendorResponse',
   summary:
-    'Seed placeholder only: no actual uploaded vendor response exists. Nexus may acknowledge that a vendor-response summary was requested, but must not summarize vendor facts until a real parsed file is available.',
+    'Seed placeholder only: no actual uploaded vendor response exists. Sentinel may acknowledge that a vendor-response summary was requested, but must not summarize vendor facts until a real parsed file is available.',
   keyFields: {
     placeholder: true,
     clientEvidence: false,
@@ -1431,7 +1431,7 @@ export function getSourceDashboardSeed(): AbarvaSourceDashboardData {
   const summaries = listSourceEventSeed();
   return {
     description:
-      'Nexus structures sourcing events into one operating surface so the team can see what is moving, what is stalled, and what action should happen next.',
+      'Sentinel structures sourcing events into one operating surface so the team can see what is moving, what is stalled, and what action should happen next.',
     nexusSummary:
       'Three live sourcing events are in motion. One is at risk because the client baseline is late, one is moving well through strategy, and one is waiting on vendor response normalization.',
     metrics: {
@@ -1751,7 +1751,7 @@ export function getSourceRfpReadinessSeed(eventId: string): SourceRfpReadinessSe
 export interface SourceArtifactStatusStripSeedItem {
   artifactName: string;
   status: 'not_started' | 'draft' | 'needs_inputs' | 'in_review' | 'changes_requested' | 'approved' | 'locked';
-  ownerAgent: 'Nexus' | 'Sentinel' | 'Atlas' | 'Steward';
+  ownerAgent: 'Sentinel' | 'Atlas' | 'Steward';
   version: string;
   evidenceState: 'missing' | 'partial' | 'seeded';
   approvalState: 'not_started' | 'in_review' | 'approved' | 'changes_requested';
@@ -1766,7 +1766,7 @@ const DEFAULT_SOURCE_ARTIFACT_STATUS_STRIP_ITEMS: SourceArtifactStatusStripSeedI
   {
     artifactName: 'Sourcing Strategy Memo',
     status: 'draft',
-    ownerAgent: 'Nexus',
+    ownerAgent: 'Sentinel',
     version: 'v0.3',
     evidenceState: 'partial',
     approvalState: 'in_review',
@@ -1782,7 +1782,7 @@ const DEFAULT_SOURCE_ARTIFACT_STATUS_STRIP_ITEMS: SourceArtifactStatusStripSeedI
   {
     artifactName: 'Scope Document',
     status: 'in_review',
-    ownerAgent: 'Nexus',
+    ownerAgent: 'Sentinel',
     version: 'v0.7',
     evidenceState: 'partial',
     approvalState: 'changes_requested',
@@ -1814,7 +1814,7 @@ const DEFAULT_SOURCE_ARTIFACT_STATUS_STRIP_ITEMS: SourceArtifactStatusStripSeedI
   {
     artifactName: 'BAFO Question Pack',
     status: 'draft',
-    ownerAgent: 'Nexus',
+    ownerAgent: 'Sentinel',
     version: 'v0.3',
     evidenceState: 'partial',
     approvalState: 'not_started',

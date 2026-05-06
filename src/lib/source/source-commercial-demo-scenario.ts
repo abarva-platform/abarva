@@ -43,7 +43,7 @@ export interface DemoRiskItem {
 
 export interface DemoMissionItem {
   missionId: string;
-  agentOwner: string;            // "Nexus" | "Sentinel" | "Atlas" | "Steward"
+  agentOwner: string;            // "Sentinel" | "Sentinel" | "Atlas" | "Steward"
   label: string;
   priority: DemoMissionPriority;
 }
@@ -70,7 +70,7 @@ export interface DemoArtifactMetadataSeed {
   artifactKey: string;
   artifactName: string;
   status: 'not_started' | 'draft' | 'needs_inputs' | 'in_review' | 'changes_requested' | 'approved' | 'locked';
-  ownerAgent: 'Nexus' | 'Sentinel' | 'Atlas' | 'Steward';
+  ownerAgent: 'Sentinel' | 'Atlas' | 'Steward';
   version: string;
   evidenceState: 'missing' | 'partial' | 'seeded';
   approvalState: 'not_started' | 'in_review' | 'approved' | 'changes_requested';
@@ -351,7 +351,7 @@ export function buildSourceCommercialDemoScenario(): SourceCommercialDemoScenari
       state: 'ready',
       blocker: null,
       requiredArtifacts: ['Sourcing Strategy Memo'],
-      requiredApprovals: ['Nexus lead review'],
+      requiredApprovals: ['Sentinel lead review'],
       evidenceGap: null,
     },
     {

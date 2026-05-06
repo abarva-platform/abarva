@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
-import { NexusEngagementCanvas } from '@/components/source/NexusEngagementCanvas';
+import { SentinelEngagementCanvas } from '@/components/source/SentinelEngagementCanvas';
 import { SourceVendorSelectionReadinessPanel } from '@/components/source/SourceVendorSelectionReadinessPanel';
 import {
   SOURCE_GOLDEN_EVENT_IDS,
@@ -62,7 +62,7 @@ describe('Source vendor selection readiness panel', () => {
   it('surfaces selection readiness in event canvas when selection is active', async () => {
     const sourceEvent = await getSourcingEvent(SOURCE_GOLDEN_EVENT_IDS.digitalAppBuild);
     const event = buildSelectionEvent(sourceEvent!);
-    const html = renderToStaticMarkup(createElement(NexusEngagementCanvas, { event }));
+    const html = renderToStaticMarkup(createElement(SentinelEngagementCanvas, { event }));
 
     expect(html).toContain('Vendor selection readiness');
     expect(html).toContain('Selection-readiness readiness signal');

@@ -36,7 +36,7 @@ export function SourceBafoNegotiationPanel({ plan }: { plan: SourceBafoNegotiati
           <div style={{ color: SHELL.INK, fontWeight: 700 }}>
             {plan.executiveTradeoffSummary}
           </div>
-          <div style={sourceSectionLabel}>Nexus recommendation</div>
+          <div style={sourceSectionLabel}>Sentinel recommendation</div>
           <div style={{ color: SHELL.INK_MUTED }}>{plan.nexusGuidance}</div>
           <div style={{ ...sourceSectionLabel, color: SHELL.INK_MUTED, marginTop: 8 }}>
             Atlas: {plan.atlasExecutiveImplication}
