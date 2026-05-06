@@ -26,6 +26,15 @@ export type ChatTurn = {
   text: string;
 };
 
+type AttachmentStatus = 'uploading' | 'done' | 'error';
+interface PendingAttachment {
+  id: string;
+  name: string;
+  status: AttachmentStatus;
+  attachmentId?: string;
+  errorMsg?: string;
+}
+
 // ── Phase metadata ─────────────────────────────────────────────────────────────
 
 interface PhaseConfig {
@@ -222,10 +231,12 @@ export function StrategicMovePhaseClient({ move, phaseNum }: Props) {
   ]);
   const [composer, setComposer] = useState('');
   const [streaming, setStreaming] = useState(false);
+  const [attachments, setAttachments] = useState<PendingAttachment[]>([]);
 
   const turnsRef = useRef<ChatTurn[]>(turns);
   turnsRef.current = turns;
   const threadRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Auto-scroll thread
   useEffect(() => {
@@ -243,18 +254,63 @@ export function StrategicMovePhaseClient({ move, phaseNum }: Props) {
     [],
   );
 
+  const handleFileSelect = useCallback(
+    async (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      e.target.value = '';
+      if (!file) return;
+      const pendingId = `att-${Date.now()}`;
+      setAttachments((prev) => [...prev, { id: pendingId, name: file.name, status: 'uploading' }]);
+      try {
+        const fd = new FormData();
+        fd.append('file', file);
+        fd.append('phase', String(phaseNum));
+        const res = await fetch(`/api/programs/workspace/${move.id}/upload`, {
+          method: 'POST',
+          body: fd,
+        });
+        if (!res.ok) {
+          const body = await res.json().catch(() => ({})) as { error?: string };
+          throw new Error(body.error ?? `HTTP ${res.status}`);
+        }
+        const data = await res.json() as { attachmentId: string };
+        setAttachments((prev) =>
+          prev.map((a) =>
+            a.id === pendingId ? { ...a, status: 'done', attachmentId: data.attachmentId } : a,
+          ),
+        );
+      } catch (err) {
+        setAttachments((prev) =>
+          prev.map((a) =>
+            a.id === pendingId
+              ? { ...a, status: 'error', errorMsg: err instanceof Error ? err.message : 'upload failed' }
+              : a,
+          ),
+        );
+      }
+    },
+    [move.id, phaseNum],
+  );
+
   const send = useCallback(
     async (messageOverride?: string) => {
       const message = (messageOverride ?? composer).trim();
       if (!message || streaming) return;
 
+      const doneAttachments = attachments.filter((a) => a.status === 'done');
+      const attachmentSuffix = doneAttachments.length > 0
+        ? `\n\n[Attached: ${doneAttachments.map((a) => a.name).join(', ')}]`
+        : '';
+      const fullMessage = message + attachmentSuffix;
+
       const assistantTurnId = generateTurnId();
       updateTurns((prev) => [
         ...prev,
-        { id: generateTurnId(), role: 'user', text: message },
+        { id: generateTurnId(), role: 'user', text: fullMessage },
         { id: assistantTurnId, role: 'assistant', agentName: 'Nexus', text: '' },
       ]);
       if (!messageOverride) setComposer('');
+      setAttachments([]);
       setStreaming(true);
 
       try {
@@ -268,7 +324,7 @@ export function StrategicMovePhaseClient({ move, phaseNum }: Props) {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            message,
+            message: fullMessage,
             tenantName: move.tenant.name,
             agentName: 'Nexus',
             surface: `strategic-moves-workspace`,
@@ -279,6 +335,7 @@ export function StrategicMovePhaseClient({ move, phaseNum }: Props) {
               moveDisplayCode: move.displayCode,
               moveName: move.name,
               phaseLabel: config.label,
+              attachmentIds: doneAttachments.map((a) => a.attachmentId).filter(Boolean),
             },
           }),
         });
@@ -341,7 +398,7 @@ export function StrategicMovePhaseClient({ move, phaseNum }: Props) {
         setStreaming(false);
       }
     },
-    [composer, streaming, move, phaseNum, config.label, updateTurns],
+    [composer, streaming, attachments, move, phaseNum, config.label, updateTurns],
   );
 
   const hardGateCount = gateItemsWithStatus.filter((g) => g.severity === 'hard').length;
@@ -417,7 +474,41 @@ export function StrategicMovePhaseClient({ move, phaseNum }: Props) {
 
           {/* Chat input */}
           <div id={`ws-chat-p${phaseNum}-input`} className={styles.chatInput}>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".pdf,.docx,.xlsx,.csv,.txt,.md,.json"
+              style={{ display: 'none' }}
+              onChange={(e) => void handleFileSelect(e)}
+            />
+            {attachments.length > 0 && (
+              <div className={styles.attachmentStrip}>
+                {attachments.map((a) => (
+                  <span
+                    key={a.id}
+                    className={`${styles.attachmentChip} ${
+                      a.status === 'done' ? styles.attachmentChipDone :
+                      a.status === 'error' ? styles.attachmentChipError : ''
+                    }`}
+                    title={a.status === 'error' ? (a.errorMsg ?? 'upload failed') : a.name}
+                  >
+                    {a.status === 'uploading' ? '⏳' : a.status === 'done' ? '✓' : '✗'}{' '}
+                    {a.name}
+                  </span>
+                ))}
+              </div>
+            )}
             <div className={styles.inputRow}>
+              <button
+                className={styles.uploadBtn}
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={streaming}
+                aria-label="Attach file"
+                title="Attach file"
+              >
+                &#x1F4CE;
+              </button>
               <textarea
                 id={`ws-chat-p${phaseNum}-input-field`}
                 rows={1}
