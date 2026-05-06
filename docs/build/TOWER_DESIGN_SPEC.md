@@ -708,13 +708,15 @@ This is critical. A black-box vendor-promised number is worse than an honest "we
 
 ---
 
-## §9 · Agent voice · Nexus on Tower
+## §9 · Agent voice · Atlas on Tower
 
-Tower is **Nexus-led**. Nexus's voice on Tower is *portfolio strategist* — different from Nexus on Programs (operational maestro) or Sentinel on Source (validator).
+Tower is **Atlas-led**. Atlas's voice on Tower is *portfolio strategist* — different from Nexus on Programs (operational maestro) or Sentinel on Source/Intelligence (validator and pattern reasoner).
+
+> **Note:** This spec was originally drafted with "Nexus" as the Tower agent. The 3-layer agent architecture (ratified 2026-05-06) assigns Atlas to Tower. All code already uses Atlas correctly; this section has been updated to match.
 
 ### Voice register on Tower
 
-Nexus on Tower:
+Atlas on Tower:
 - Speaks in **portfolio terms** (totals, ratios, comparisons)
 - **Surfaces tradeoffs**, not individual moves
 - **Quantifies confidence** explicitly when proposing reallocation
@@ -725,9 +727,9 @@ Compare:
 
 > **Nexus on Programs** (per APX-CDP-2026): *"Workshop 5 is blocking the Design gate. Highest-leverage move today is to clear it. AMS BAFO is also on the path; do it Friday after the workshop."*
 >
-> **Nexus on Tower** (portfolio): *"AI portfolio at 0.69x ROI; M365 Copilot is the largest negative contributor at -$1.7M. Two reallocation paths produce 0.94x by Q3: (a) shift Copilot seats from Finance to Engineering, or (b) consolidate Copilot + Now Assist for Finance use cases. Path (b) requires Microsoft renewal leverage analysis — that work is in flight."*
+> **Atlas on Tower** (portfolio): *"AI portfolio at 0.69x ROI; M365 Copilot is the largest negative contributor at -$1.7M. Two reallocation paths produce 0.94x by Q3: (a) shift Copilot seats from Finance to Engineering, or (b) consolidate Copilot + Now Assist for Finance use cases. Path (b) requires Microsoft renewal leverage analysis — that work is in flight."*
 
-### What Nexus on Tower never says
+### What Atlas on Tower never says
 
 - Vague optimism ("adoption is strong"). Always quantified.
 - Single-program recommendations without portfolio context.
@@ -969,21 +971,21 @@ If T-SMOKE-PORTFOLIO breaks, no Tower wave merges — same discipline as S-SMOKE
 
 ---
 
-## §14 · Open decisions for founder
+## §14 · Founder decisions — ratified 2026-05-06
 
-Before the Tower spec is finalized to v1.0 and Wave T0 launches, six decisions need founder input:
+All six open decisions have been resolved by the founder.
 
-1. **Pressure $ thresholds.** Critical at >$500K, High at $100K-500K, Medium at $25K-100K. These are best-guess for a mid-market enterprise. For larger tenants (e.g., 50K+ employees), thresholds should scale up. For smaller tenants, scale down. Recommend: add tenant-tier configuration, default thresholds per tier.
+1. **Pressure $ thresholds.** ✅ **Decided: tenant-tier configurable.** Default thresholds (Critical >$500K, High $100K–$500K, Medium $25K–$100K) are per-tier defaults, not hard-coded. Expose as `tower-config.ts` settings adjustable per tenant tier. Mid-market defaults stay as specified.
 
-2. **Confidence-haircut multipliers.** I prescribed 1.0 / 0.85 / 0.6 / 0.4 for experimental / cohort-match / survey / self-report. These are defensible but adjustable. Recommend: lock for v1.0; revisit after 90 days of real data.
+2. **Confidence-haircut multipliers.** ✅ **Decided: adjustable.** The 1.0 / 0.85 / 0.6 / 0.4 values (experimental / cohort-match / survey / self-report) are tenant-configurable. Expose in Setup. Defaults stay as specified; tenants with strong internal measurement cultures can adjust upward for survey methods if they have validation data.
 
-3. **Renewal calendar lookahead.** I prescribed 12 months. For long-cycle vendors (3-5 year contracts) this might extend to 18-24. Recommend: tunable per vendor.
+3. **Renewal calendar lookahead.** ✅ **Decided: tunable per vendor.** Default 12 months; tunable up to 24 months for long-cycle enterprise contracts. Configurable in the vendor record at onboarding time (TWR-FLW-ONBOARD step "Cost model").
 
-4. **T-FOW visualization.** I prescribed dashed bubble outline for low-confidence programs. Founder may prefer a different convention — e.g., separate "strategic bets" lane. Recommend: validate with one tenant before locking.
+4. **T-FOW visualization.** ✅ **Decided: dashed bubble outline** (as specified). Strategic bets lane alternative rejected — dashed outline is already in the design vocabulary and correctly signals epistemic humility without fragmenting the portfolio view.
 
-5. **Reallocation simulator scope.** TWR-FLW-REALLOCATE is the most ambitious page. It implies the Tower can predict counterfactuals, which is hard. Two approaches: (a) deterministic ("if you cut 20% of Copilot seats, here's the linear projection"), or (b) inferred-causal ("here's our best estimate with confidence interval"). Recommend (a) for v1.0; (b) is a v2 ambition.
+5. **Reallocation simulator scope.** ✅ **Decided: deterministic v1.** TWR-FLW-REALLOCATE ships with linear projections only: "If you cut 20% of Copilot seats: $1M spend reduction, $600K value loss, ROI improves from 0.72x to 0.81x." Fully explainable, no black boxes. Inferred-causal counterfactuals are v2 — requires 12+ months of longitudinal data to fit a defensible model.
 
-6. **External benchmarking data.** I described "vs peer set" comparisons. This requires anonymized peer-tenant data via the knowledge fabric. That's a privacy/architecture question that touches the Private Data Plane spec. Recommend: defer "vs peer set" to v2; v1.0 ships with internal-only normalization.
+6. **External benchmarking data.** ✅ **Decided: v2, with northstar defined.** v1.0 ships with internal-only normalization (four normalized metrics compared against each other across the tenant's own portfolio). v2 northstar: the **AbarVa peer benchmark network** — as tenants instrument their programs through Tower, the platform accumulates anonymized aggregate data across the customer base. Peer set becomes tenant-specific: "Companies at your scale (10K–50K employees), your industry (retail), and your Copilot phase (18 months post-rollout) are seeing 28% median adoption and 0.7x ROI — you're at 24% and 0.72x." Near-term calibration inputs (while building the network): Microsoft Work Trend Index (Copilot adoption rates), GitHub Octoverse (PR throughput benchmarks), IDC/Gartner AI ROI ranges by program type, ServiceNow deflection rate surveys. The knowledge fabric is the accumulation architecture; the evidence ledger is where cross-tenant signals land. This is the long-term network-effect moat.
 
 ---
 
@@ -1007,10 +1009,11 @@ The Tower is not in any of these categories. It is the **first portfolio-CFO sur
 ## §16 · Document control
 
 - **Authoritative location:** `docs/build/TOWER_DESIGN_SPEC.md`
-- **Version:** 1.0
+- **Version:** 1.1
 - **Authored:** April 28 2026
+- **Revised:** May 6 2026 — §9 Atlas correction, §14 all six decisions ratified
 - **Owner:** Founder (Anand)
-- **Status:** Prescriptive — to be ratified by founder before Wave T0 launches
+- **Status:** Ratified — §14 decisions recorded; Wave T2 ready to build against this spec
 - **Companion specs:**
   - `abarva-orchestration-spec.md` — outer build loop
   - `abarva-source-build-spec.md` — Source module
