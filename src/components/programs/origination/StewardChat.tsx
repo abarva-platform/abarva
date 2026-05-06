@@ -141,13 +141,16 @@ export function StewardChat({
   const router = useRouter();
   const [draft, setDraft] = useState('');
   const [streaming, setStreaming] = useState(false);
+  const [inputFocused, setInputFocused] = useState(false);
   const [handoffTarget, setHandoffTarget] = useState<{
     programId: string;
     programName: string;
   } | null>(null);
   const threadRef = useRef<HTMLDivElement | null>(null);
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
-  const showStarterPrompts = !turns.some((turn) => turn.role === 'user');
+  const everUserTurn = turns.some((turn) => turn.role === 'user');
+  // Collapse scaffold when input is focused or has a draft; hide permanently after first send
+  const showStarterPrompts = !everUserTurn && !inputFocused && !draft.trim();
   // Mirror lifted `turns` into a ref so the streaming send() can read the
   // latest array without re-creating the callback each render. Avoids a
   // stale-closure issue where conversationHistory misses turns appended
@@ -453,73 +456,84 @@ export function StewardChat({
           </div>
         ))}
 
-        {showStarterPrompts ? (
-          <section
-            aria-label="Starter prompts"
+        {/* Starter prompts — collapse on input focus/typing, hide permanently after first send */}
+        {!everUserTurn ? (
+          <div
             style={{
-              border: `1px solid rgba(12,26,58,0.10)`,
-              borderRadius: 10,
-              padding: '12px 14px',
-              background: BrandColors.paper,
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 10,
+              maxHeight: showStarterPrompts ? '500px' : 0,
+              opacity: showStarterPrompts ? 1 : 0,
+              overflow: 'hidden',
+              pointerEvents: showStarterPrompts ? undefined : 'none',
+              transition: 'max-height 0.22s ease, opacity 0.18s ease',
             }}
           >
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-              <span
-                style={{
-                  fontFamily: BrandTypography.mono,
-                  fontSize: 10,
-                  letterSpacing: '0.08em',
-                  textTransform: 'uppercase',
-                  color: BrandColors.stone,
-                  fontWeight: 700,
-                }}
-              >
-                Fast-start setup
-              </span>
-              <span
-                style={{
-                  fontFamily: BrandTypography.sans,
-                  fontSize: 13,
-                  color: BrandColors.slate,
-                  lineHeight: 1.45,
-                }}
-              >
-                Pick a realistic starter brief, then edit before sending.
-              </span>
-            </div>
-            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-              {STARTER_PROMPTS.map((starter) => (
-                <button
-                  key={starter.label}
-                  type="button"
-                  onClick={() => {
-                    setDraft(starter.prompt);
-                    if (typeof requestAnimationFrame === 'function') {
-                      requestAnimationFrame(() => inputRef.current?.focus());
-                    } else {
-                      inputRef.current?.focus();
-                    }
-                  }}
+            <section
+              aria-label="Starter prompts"
+              style={{
+                border: `1px solid rgba(12,26,58,0.10)`,
+                borderRadius: 10,
+                padding: '12px 14px',
+                background: BrandColors.paper,
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 10,
+              }}
+            >
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+                <span
                   style={{
-                    border: `1px solid rgba(12,26,58,0.16)`,
-                    borderRadius: 999,
-                    background: '#FFFFFF',
-                    color: BrandColors.inkBlack,
-                    cursor: 'pointer',
-                    fontFamily: BrandTypography.sans,
-                    fontSize: 12,
-                    fontWeight: 600,
-                    padding: '7px 10px',
+                    fontFamily: BrandTypography.mono,
+                    fontSize: 10,
+                    letterSpacing: '0.08em',
+                    textTransform: 'uppercase',
+                    color: BrandColors.stone,
+                    fontWeight: 700,
                   }}
                 >
-                  {starter.label}
-                </button>
-              ))}
-            </div>
-          </section>
+                  Fast-start setup
+                </span>
+                <span
+                  style={{
+                    fontFamily: BrandTypography.sans,
+                    fontSize: 13,
+                    color: BrandColors.slate,
+                    lineHeight: 1.45,
+                  }}
+                >
+                  Pick a realistic starter brief, then edit before sending.
+                </span>
+              </div>
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                {STARTER_PROMPTS.map((starter) => (
+                  <button
+                    key={starter.label}
+                    type="button"
+                    onClick={() => {
+                      setDraft(starter.prompt);
+                      if (typeof requestAnimationFrame === 'function') {
+                        requestAnimationFrame(() => inputRef.current?.focus());
+                      } else {
+                        inputRef.current?.focus();
+                      }
+                    }}
+                    style={{
+                      border: `1px solid rgba(12,26,58,0.16)`,
+                      borderRadius: 999,
+                      background: '#FFFFFF',
+                      color: BrandColors.inkBlack,
+                      cursor: 'pointer',
+                      fontFamily: BrandTypography.sans,
+                      fontSize: 12,
+                      fontWeight: 600,
+                      padding: '7px 10px',
+                    }}
+                  >
+                    {starter.label}
+                  </button>
+                ))}
+              </div>
+            </section>
+          </div>
         ) : null}
       </div>
 
@@ -630,6 +644,10 @@ export function StewardChat({
           ref={inputRef}
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
+          onFocus={() => setInputFocused(true)}
+          onBlur={(e) => {
+            if (!e.currentTarget.value.trim()) setInputFocused(false);
+          }}
           onKeyDown={(e) => {
             if (e.key === 'Enter' && !e.shiftKey) {
               e.preventDefault();
