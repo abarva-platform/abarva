@@ -1734,19 +1734,19 @@ a wrongly-flagged Phantom Sponsor will erode trust in the platform.
     Example (the tool emits this for you — shown for parser reference):
     [[artifact:navigate-to]]{"target":"/programs/new","rationale":"Origination intent; Steward owns the new-program flow."}[[/artifact]]
 
-21. brief-progress — Surface 1 (/programs/new) origination only. Emit
-    on EVERY Steward turn after each new field is captured so the right
-    pane materializes the brief filling in field-by-field. This REPLACES
-    pattern-match cards on /programs/new — pattern-match was wrong
-    content for that surface (founder feedback). The 8-field P0 brief
-    set comes from the design doc; emit one card per turn covering all
-    fields with their current status, not one per field.
-    Shape: {"fieldsTotal": <int>, "fieldsFilled": <int>,
-            "fields": [{"id": <kebab-id>, "label": <human label>,
+21. brief-progress — Strategic Moves origination (/strategic-moves/new) only. Emit
+    on EVERY Nexus turn after each new field is captured so the right
+    pane materializes the brief filling in field-by-field. The 7-field P0 scaffold
+    uses FIXED ids — any other id is silently ignored by the right pane.
+    Required ids (in order): problem-statement, archetype, sponsor-candidate,
+    scope-boundary, evidence-family, value-hypothesis, foundation-readiness.
+    Emit one artifact per turn covering all 7 fields with their current status.
+    Shape: {"fieldsTotal": 7, "fieldsFilled": <int>,
+            "fields": [{"id": <one-of-7-ids-above>, "label": <human label>,
                         "status": "empty"|"partial"|"filled",
                         "value"?: <short current value>}]}
     Example:
-    [[artifact:brief-progress]]{"fieldsTotal":8,"fieldsFilled":2,"fields":[{"id":"sponsor-candidate","label":"Sponsor candidate","status":"filled","value":"Sarah Chen (CIO)"},{"id":"problem-statement","label":"Problem statement","status":"filled","value":"AMS spend up 22% YoY"},{"id":"target-outcome","label":"Target outcome","status":"empty"},{"id":"archetype","label":"Archetype","status":"empty"},{"id":"timeline","label":"Timeline","status":"empty"},{"id":"named-systems","label":"Named systems","status":"empty"},{"id":"named-vendors","label":"Named vendors","status":"empty"},{"id":"lead","label":"Program lead","status":"empty"}]}[[/artifact]]
+    [[artifact:brief-progress]]{"fieldsTotal":7,"fieldsFilled":2,"fields":[{"id":"problem-statement","label":"What's the bet / hypothesis","status":"filled","value":"AMS spend up 22% YoY — consolidate to 3 vendors"},{"id":"archetype","label":"Archetype classification","status":"empty"},{"id":"sponsor-candidate","label":"Sponsor candidate","status":"filled","value":"Sarah Chen (CIO)"},{"id":"scope-boundary","label":"Scope / boundary","status":"empty"},{"id":"evidence-family","label":"Evidence family selection","status":"empty"},{"id":"value-hypothesis","label":"Value hypothesis seed","status":"empty"},{"id":"foundation-readiness","label":"Foundation readiness","status":"empty"}]}[[/artifact]]
 
 22. overlap-alert — Surface 1 (/programs/new) origination only. Emit
     when the broker bundle (tenant program inventory) reveals an
