@@ -71,20 +71,72 @@ Each specialist entry has:
 
 ## Moves / Programs specialists (Nexus-front)
 
-> Status: inventory pending. Entries below are placeholders from the Moves workspace
-> implementation. Full inventory follows the Source model once M4-equivalent audit runs on
-> `src/lib/programs/`.
+> Design doc: `docs/architecture/NEXUS_SPECIALIST_DESIGN.md`
+> Phase packs: `src/lib/programs/phase-packs/P{0-5}_*.ts`
 
-| Name | Purpose | Front-agent | Status |
+### P0 · Originate specialists
+
+| Name | Purpose | Surfaces | Inputs | Cite-tag | Status |
+|---|---|---|---|---|---|
+| **DuplicateDetector** | Cross-references new origination input against existing programs; detects scope overlap; raises deduplication alert before brief-filling proceeds. | `/strategic-moves/new` | Broker bundle (program inventory), hypothesis text | `[DuplicateDetector:v1]` | active |
+| **HypothesisExtractor** | Extracts structured hypothesis from unstructured input (CEO note, email, problem statement): bet, metric, current vs. target state, value stake label. | `/strategic-moves/new` | Raw user input text | `[HypothesisExtractor:v1]` | active |
+| **ArchetypeClassifier** | Classifies program archetype with confidence band (e.g., "Contact Center AI — tentative"). Must label confidence; must not assert final archetype without user confirmation. | `/strategic-moves/new` | Hypothesis text, program domain signals | `[ArchetypeClassifier:v1]` | active |
+| **SponsorIdentifier** | Identifies sponsor candidate from input text; attributes to source; distinguishes business-case lead from executive budget authority. Must NOT confirm sponsor — only identify candidate. | `/strategic-moves/new` | Raw input, org structure from broker bundle | `[SponsorIdentifier:v1]` | active |
+| **BriefProgressTracker** | Tracks scaffold section fill state (0–7); emits `[[artifact:brief-progress]]` after each extraction turn; updates gate summary and scaffold checkmarks. | `/strategic-moves/new` | Section fill state, current turn extractions | `[BriefProgressTracker:v1]` | active |
+
+### P1 · Charter specialists
+
+| Name | Purpose | Cite-tag | Status |
 |---|---|---|---|
-| **BriefProgressTracker** | Tracks which origination scaffold sections are complete; fires `brief-progress` artifacts. | Nexus | active |
-| **PhaseGateChecker** | Evaluates gate criteria for the current program phase and emits pass/fail/partial. | Nexus | active |
-| **SponsorCandidateExtractor** | Extracts sponsor candidate from pasted input (CEO note, email, board memo). | Nexus | active |
-| **ArchetypeClassifier** | Classifies program archetype from hypothesis text with confidence band. | Nexus | active |
-| **HypothesisExtractor** | Identifies core bet, value stake, and benchmark citations from pasted input. | Nexus | active |
-| **DeliverableStatusAggregator** | Summarizes deliverable completion state across move artifact index. | Nexus | planned |
-| **ValueHypothesisSeedComposer** | Drafts preliminary value hypothesis from extracted signals. | Nexus | active |
-| **FoundationReadinessChecker** | Checks F1–F4 foundation readiness criteria for origination. | Nexus | active |
+| **SponsorConfirmationValidator** | Validates that sponsor is fully confirmed: named, budget authority explicit, RACI set. Flags FM-1 if sponsor is soft or assumed. | `[SponsorConfirmationValidator:v1]` | active |
+| **SuccessMetricDefiner** | Ensures KPI is measurable and baseline plan exists. Flags FM-4/FM-9 if metric is output-only (model accuracy) rather than business outcome. | `[SuccessMetricDefiner:v1]` | active |
+| **ScopeBoundarySpecifier** | Captures in-scope / out-of-scope boundary. Flags FM-2 (vague objective) and FM-10 (scope sprawl) at origination. | `[ScopeBoundarySpecifier:v1]` | active |
+| **FoundationReadinessChecker** | Checks four foundation criteria: F1 data access, F2 sponsor confirmed, F3 platform available, F4 team capacity. Gate-blocking if any F criterion is red. | `[FoundationReadinessChecker:v1]` | active |
+
+### P2 · Diagnose specialists
+
+| Name | Purpose | Cite-tag | Status |
+|---|---|---|---|
+| **GateChecker** | Evaluates all gate criteria for the current phase; emits pass/partial/blocked; generates gate summary. | `[GateChecker:v1]` | active |
+| **EvidenceGapMapper** | For each unmet gate criterion: maps what evidence is needed, what sources exist, what is missing. | `[EvidenceGapMapper:v1]` | active |
+| **BaselineDataValidator** | Confirms baseline measurement is live and contamination-free. Flags FM-9 if baseline is projected, not measured. | `[BaselineDataValidator:v1]` | planned |
+| **DataOwnershipAuditor** | Confirms data custodian is named, access is confirmed, quality gate is defined. Flags FM-3 if ownership is unclear. | `[DataOwnershipAuditor:v1]` | planned |
+
+### P3 · Design specialists
+
+| Name | Purpose | Cite-tag | Status |
+|---|---|---|---|
+| **ScopeBoundaryGuard** | Detects scope additions; quantifies impact on P4 timeline; recommends gate review before accepting. Flags FM-10. | `[ScopeBoundaryGuard:v1]` | planned |
+| **DeliveryPlanValidator** | Validates delivery plan has milestones, handoffs, sprint cadence. Flags FM-8 if "agile will figure it out" gaps exist. | `[DeliveryPlanValidator:v1]` | planned |
+| **InfrastructureReadinessChecker** | Confirms vendor/platform decision made, architecture sized, no mid-build rework risk. Flags FM-6. | `[InfrastructureReadinessChecker:v1]` | planned |
+| **StakeholderAlignmentAuditor** | Checks that all critical teams are engaged, change management plan exists, training is planned. Flags FM-7. | `[StakeholderAlignmentAuditor:v1]` | planned |
+
+### P4 · Deliver specialists
+
+| Name | Purpose | Cite-tag | Status |
+|---|---|---|---|
+| **RiskMonitor** | Scans program state against all 10 FM hooks on every turn; emits `failure-mode-flagged` artifacts when signals detected. | `[RiskMonitor:v1]` | partial |
+| **DeliverableStatusAggregator** | Summarizes deliverable completion: done / in-progress / blocked per artifact. | `[DeliverableStatusAggregator:v1]` | active |
+| **PhaseVelocityTracker** | Compares phase velocity to plan; surfaces drift signal; projects completion. Flags FM-8 on pace risk. | `[PhaseVelocityTracker:v1]` | planned |
+| **GovernanceGateValidator** | Validates security review, HITL plan, privacy impact assessment are not deferred. Flags FM-5. | `[GovernanceGateValidator:v1]` | planned |
+
+### P5 · Validate specialists
+
+| Name | Purpose | Cite-tag | Status |
+|---|---|---|---|
+| **ValueRealizationVerifier** | Compares measured outcome to P0 hypothesis; labels value state (projected → measured); never removes `[UNVALIDATED_HYPOTHESIS]` until measured evidence exists. | `[ValueRealizationVerifier:v1]` | planned |
+| **OutcomeAttributionValidator** | Validates that value is attributable to the AI intervention (A/B or equivalent), not confounders. Flags FM-4 if attribution is missing. | `[OutcomeAttributionValidator:v1]` | planned |
+| **ClosureReadinessChecker** | Evaluates all P5 gate criteria; checks handoff to operations; confirms value variance explained. | `[ClosureReadinessChecker:v1]` | planned |
+
+### Cross-cutting (all Moves phases)
+
+| Name | Purpose | Cite-tag | Status |
+|---|---|---|---|
+| **CitationGuard** | Blocks any dollar figure or benchmark claim without an evidence label (`[UNVALIDATED_HYPOTHESIS]`, `[PRELIMINARY_ESTIMATE]`, `[MEASURED_RESULT]`). Fires on every response draft. | `[CitationGuard:v1]` | active |
+| **CrossProgramDependencyAnalyzer** | Detects dependencies between programs; flags shared sponsor conflicts and resource contention; reads broker bundle cross-program signals. | `[CrossProgramDependencyAnalyzer:v1]` | active |
+| **FailureModeDetector** | Scans message and program state against FM-1–FM-10 detection hooks; emits `failure-mode-flagged` artifact with severity when signal detected. | `[FailureModeDetector:v1]` | active |
+| **ValueLineTracker** | Maintains value lifecycle state: projected → committed → measuring → realized. Prevents backward transitions. | `[ValueLineTracker:v1]` | planned |
+| **AuditTrailComposer** | Logs each turn with: specialist chain invoked, artifacts emitted, FM flags raised, evidence citations. | `[AuditTrailComposer:v1]` | partial |
 
 ---
 
