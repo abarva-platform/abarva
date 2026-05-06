@@ -1,0 +1,985 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>AbarVa · Move Workspace · v0.2</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700;9..144,900&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --page-bg:    #f5f1eb;
+  --cream:      #efe9dd;
+  --cream-2:    #faf6ec;
+  --cream-deep: #e8e1d2;
+  --border:     rgba(10, 10, 11, 0.10);
+  --border-strong: rgba(10, 10, 11, 0.24);
+
+  --ink:    #000000;
+  --ink-2:  #2c2c2a;
+  --panel:  #0c1a3a;
+  --gray:   #888780;
+  --gray-dk:#5F5E5A;
+
+  --blue:    #0066CC;
+  --blue-dk: #0052a3;
+  --gold:    #9C7B3F;
+
+  /* Two-system status: green=met/done, amber=in-progress, neutral=not-started/inactive */
+  --green:    #1d9e75;
+  --green-bg: #e1f5ee;
+  --amber:    #ba7517;
+  --amber-bg: #faeeda;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; }
+body { font-family: 'Inter', system-ui, sans-serif; background: var(--page-bg); color: var(--ink); font-size: 14px; line-height: 1.5; }
+button { font-family: inherit; cursor: pointer; }
+[hidden] { display: none !important; }
+
+.nav-placeholder { padding: 10px 36px; border-bottom: 1px dashed var(--border-strong); display: flex; align-items: center; justify-content: space-between; }
+.nav-placeholder .label { font-family: 'JetBrains Mono', monospace; font-size: 9.5px; letter-spacing: 1.5px; text-transform: uppercase; font-weight: 600; color: var(--gray); }
+.nav-placeholder .label strong { color: var(--ink); font-weight: 700; }
+.nav-placeholder .meta { font-family: 'JetBrains Mono', monospace; font-size: 9.5px; letter-spacing: 1.4px; color: var(--gray-dk); }
+
+.workspace { padding: 0 36px 80px; }
+.view-section { padding-top: 40px; scroll-margin-top: 24px; }
+.view-section + .view-section { border-top: 1px solid var(--border); margin-top: 56px; }
+
+.move-identity { display: flex; align-items: flex-start; gap: 18px; padding: 22px 28px; background: var(--cream); border: 1px solid var(--border); border-radius: 14px 14px 0 0; border-bottom: none; }
+.mi-left { flex: 1; min-width: 0; }
+.mi-breadcrumb { font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 1.3px; color: var(--gray-dk); margin-bottom: 8px; font-weight: 600; }
+.mi-title { font-family: 'Fraunces', serif; font-size: 24px; font-weight: 800; letter-spacing: -0.4px; line-height: 1.15; margin-bottom: 4px; }
+.mi-meta { font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 1.2px; color: var(--gray-dk); font-weight: 500; }
+.mi-right { display: flex; flex-direction: column; align-items: flex-end; gap: 10px; }
+.mi-status-chip { display: inline-flex; align-items: center; gap: 7px; padding: 5px 11px; border-radius: 999px; font-family: 'JetBrains Mono', monospace; font-size: 9.5px; letter-spacing: 1.3px; text-transform: uppercase; font-weight: 700; }
+.mi-status-chip.green { background: var(--green-bg); color: var(--green); }
+.mi-status-chip.neutral { background: var(--cream-deep); color: var(--gray-dk); }
+.mi-status-chip .dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+
+.btn-continue { background: var(--ink); color: var(--cream-2); border: none; padding: 9px 16px; border-radius: 8px; font-weight: 700; font-size: 12.5px; display: inline-flex; align-items: center; gap: 8px; transition: all 150ms; }
+.btn-continue:hover { background: var(--ink-2); transform: translateY(-1px); }
+.btn-continue .arrow { transition: transform 150ms; }
+.btn-continue:hover .arrow { transform: translateX(2px); }
+.closed-stamp { font-family: 'JetBrains Mono', monospace; font-size: 9.5px; letter-spacing: 1.3px; text-transform: uppercase; font-weight: 700; color: var(--green); display: inline-flex; align-items: center; gap: 7px; padding: 6px 11px; border: 1px solid rgba(29,158,117,0.30); border-radius: 999px; background: var(--green-bg); }
+.roadmap-helper { font-family: 'JetBrains Mono', monospace; font-size: 9.5px; letter-spacing: 1.3px; text-transform: uppercase; font-weight: 600; color: var(--gray-dk); padding: 6px 11px; border: 1px dashed var(--border-strong); border-radius: 999px; }
+
+.phase-rail-wrap { background: var(--cream); border: 1px solid var(--border); border-radius: 0 0 14px 14px; padding: 14px 28px 16px; margin-bottom: 16px; }
+.rail-eyebrow-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+.rail-eyebrow { font-family: 'JetBrains Mono', monospace; font-size: 9.5px; letter-spacing: 1.5px; text-transform: uppercase; font-weight: 600; color: var(--gray); }
+.rail-eyebrow strong { color: var(--ink); }
+.rail-track { position: relative; display: grid; grid-template-columns: repeat(8, 1fr); gap: 0; align-items: start; }
+.rail-line { position: absolute; left: 5%; right: 5%; top: 13px; height: 2px; background: var(--border); z-index: 0; }
+.rail-line-done { position: absolute; left: 5%; top: 13px; height: 2px; background: var(--ink); z-index: 1; transition: width 320ms cubic-bezier(0.2,0.7,0.2,1); }
+.phase-node { position: relative; z-index: 2; display: flex; flex-direction: column; align-items: center; padding: 0 4px; background: transparent; border: none; transition: transform 150ms; gap: 7px; }
+.phase-node:hover { transform: translateY(-1px); }
+.phase-dot { width: 28px; height: 28px; border-radius: 50%; background: var(--cream); border: 1.5px solid var(--border); display: flex; align-items: center; justify-content: center; font-family: 'JetBrains Mono', monospace; font-size: 10px; font-weight: 700; color: var(--gray-dk); transition: all 180ms; }
+.phase-node.done .phase-dot { background: var(--ink); border-color: var(--ink); color: var(--cream-2); }
+.phase-node.current .phase-dot { background: var(--blue); border-color: var(--blue); color: white; box-shadow: 0 0 0 4px rgba(0,102,204,0.18); }
+.phase-node.future .phase-dot { background: transparent; border-color: var(--border); border-style: dashed; color: var(--gray); }
+.phase-node.selected:not(.current) .phase-dot { box-shadow: 0 0 0 3px rgba(0,0,0,0.10); border-width: 2px; border-color: var(--ink); border-style: solid; }
+.phase-node:hover .phase-dot { border-color: var(--ink); }
+.phase-name { font-family: 'JetBrains Mono', monospace; font-size: 9px; letter-spacing: 1.3px; text-transform: uppercase; font-weight: 700; color: var(--gray-dk); text-align: center; line-height: 1.3; height: 14px; }
+.phase-node.done .phase-name { color: var(--ink-2); opacity: 0.65; }
+.phase-node.current .phase-name { color: var(--blue-dk); opacity: 1; }
+.phase-node.future .phase-name { color: var(--gray); opacity: 0.85; }
+.phase-node.selected .phase-name { opacity: 1; color: var(--ink); }
+.phase-node:hover .phase-name { opacity: 1; }
+
+.ws-shell { display: grid; grid-template-columns: 460px 1fr; gap: 18px; min-height: 760px; }
+
+.phase-frame { background: var(--cream); border: 1px solid var(--border); border-radius: 14px; padding: 18px 24px; }
+.phase-frame.past { background: var(--cream-deep); }
+.phase-frame.future { background: var(--cream-2); border-style: dashed; border-color: var(--border-strong); }
+.phase-frame-row { display: flex; align-items: baseline; gap: 14px; margin-bottom: 6px; flex-wrap: wrap; }
+.phase-frame-eyebrow { font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; font-weight: 700; color: var(--gold); }
+.phase-frame.past .phase-frame-eyebrow { color: var(--gray-dk); }
+.phase-frame.future .phase-frame-eyebrow { color: var(--gray); }
+/* View-state banner — neutral ink, no semantic color */
+.view-state-banner { font-family: 'JetBrains Mono', monospace; font-size: 9.5px; letter-spacing: 1.4px; text-transform: uppercase; font-weight: 600; color: var(--ink-2); display: inline-flex; align-items: center; gap: 8px; margin-left: auto; }
+.view-state-banner .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--ink-2); }
+.view-state-banner .jump { color: var(--ink-2); background: transparent; border: none; padding: 0; font: inherit; text-transform: uppercase; letter-spacing: 1.4px; margin-left: 6px; text-decoration: underline; text-underline-offset: 3px; }
+.view-state-banner .jump:hover { color: var(--ink); }
+.phase-frame-title { font-family: 'Fraunces', serif; font-size: 30px; font-weight: 700; letter-spacing: -0.5px; line-height: 1.05; margin-bottom: 6px; }
+.phase-frame.future .phase-frame-title { color: var(--gray-dk); font-style: italic; font-weight: 500; }
+.phase-frame-intent { font-size: 14.5px; color: var(--gray-dk); line-height: 1.45; max-width: 70ch; }
+
+.canvas-pane { display: flex; flex-direction: column; gap: 14px; }
+
+.gate-panel { background: var(--cream-2); border: 1px solid var(--border); border-radius: 12px; padding: 18px 22px; }
+.gate-panel.past { background: var(--green-bg); border-color: rgba(29,158,117,0.30); }
+.gate-panel.future { background: var(--cream-2); border-style: dashed; }
+.panel-head { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 14px; gap: 12px; }
+.panel-eyebrow { font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; font-weight: 700; color: var(--gray-dk); }
+.gate-panel.past .panel-eyebrow { color: var(--green); }
+.panel-counter { font-family: 'JetBrains Mono', monospace; font-size: 10.5px; letter-spacing: 1.2px; font-weight: 700; }
+.panel-counter.green { color: var(--green); }
+.panel-counter.amber { color: var(--amber); }
+.panel-counter.muted { color: var(--gray); font-weight: 600; }
+.crit-list { list-style: none; }
+.crit-list li { display: flex; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 13.5px; line-height: 1.45; align-items: flex-start; }
+.crit-list li:last-child { border-bottom: none; }
+.crit-check { width: 20px; height: 20px; border-radius: 50%; background: var(--cream); border: 1.5px solid var(--border-strong); display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 11px; color: var(--gray); margin-top: 1px; }
+.crit-check.done { background: var(--green); border-color: var(--green); color: white; font-weight: 700; }
+.gate-panel.past .crit-check { background: var(--green); border-color: var(--green); color: white; }
+.gate-panel.future .crit-check { background: transparent; border-color: var(--border); border-style: dashed; }
+.crit-text { flex: 1; color: var(--ink-2); }
+.crit-list li.done .crit-text { color: var(--ink); }
+.gate-panel.future .crit-text { color: var(--gray); }
+.crit-meta { font-family: 'JetBrains Mono', monospace; font-size: 9px; letter-spacing: 1.2px; text-transform: uppercase; font-weight: 600; color: var(--gray-dk); margin-top: 3px; }
+.crit-meta.amber { color: var(--amber); }
+
+.promote-row { margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--border); display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+.btn-promote { background: var(--ink); color: var(--cream-2); border: none; padding: 11px 22px; border-radius: 8px; font-weight: 700; font-size: 13.5px; transition: all 150ms; display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+.btn-promote:hover:not(:disabled) { background: var(--ink-2); transform: translateY(-1px); }
+.btn-promote:disabled { background: rgba(10,10,11,0.10); color: var(--gray); cursor: not-allowed; }
+.btn-promote .arrow { transition: transform 150ms; }
+.btn-promote:hover:not(:disabled) .arrow { transform: translateX(3px); }
+.promote-helper { font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 1.3px; text-transform: uppercase; font-weight: 600; color: var(--gray-dk); }
+.promote-stamp { font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 1.3px; text-transform: uppercase; font-weight: 700; color: var(--green); display: flex; align-items: center; gap: 8px; }
+
+/* Artifact shelf — single status vocabulary aligned with gate counter */
+.shelf { background: var(--cream-2); border: 1px solid var(--border); border-radius: 12px; padding: 18px 22px; }
+.shelf.past { background: var(--cream-deep); }
+.shelf.future { background: var(--cream-2); border-style: dashed; }
+.shelf-section { margin-bottom: 16px; }
+.shelf-section:last-child { margin-bottom: 0; }
+.shelf-section-title { font-family: 'JetBrains Mono', monospace; font-size: 9.5px; letter-spacing: 1.5px; text-transform: uppercase; font-weight: 700; color: var(--gold); margin-bottom: 10px; display: flex; align-items: center; gap: 10px; }
+.shelf.future .shelf-section-title { color: var(--gray); }
+.shelf.past .shelf-section-title { color: var(--gray-dk); }
+.shelf-section-title .count { font-weight: 600; color: var(--gray-dk); }
+.artifact-list { display: flex; flex-direction: column; gap: 6px; }
+.artifact-row { display: grid; grid-template-columns: 1fr auto auto; gap: 14px; align-items: center; padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px; background: var(--cream); transition: all 150ms; }
+.shelf.past .artifact-row { background: var(--cream-2); }
+.shelf.future .artifact-row { background: transparent; border-style: dashed; opacity: 0.85; }
+.artifact-row:hover { border-color: var(--ink); transform: translateX(2px); }
+.shelf.future .artifact-row:hover { border-style: solid; opacity: 1; }
+.artifact-name-block { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.artifact-name { font-size: 13.5px; font-weight: 500; color: var(--ink); line-height: 1.25; }
+.shelf.future .artifact-name { color: var(--gray-dk); font-style: italic; }
+.artifact-code { font-family: 'JetBrains Mono', monospace; font-size: 9.5px; letter-spacing: 0.4px; color: var(--gray-dk); font-weight: 600; }
+.shelf.future .artifact-code { color: var(--gray); }
+/* Status uses SAME vocabulary as the gate counter */
+.artifact-status { font-family: 'JetBrains Mono', monospace; font-size: 9.5px; letter-spacing: 1.2px; text-transform: uppercase; font-weight: 700; white-space: nowrap; display: inline-flex; align-items: center; gap: 6px; }
+.artifact-status::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+.artifact-status.signed { color: var(--green); }
+.artifact-status.drafting { color: var(--amber); }
+.artifact-status.notstarted { color: var(--gray-dk); }
+.artifact-status.notstarted::before { background: transparent; border: 1.5px solid var(--gray-dk); width: 9px; height: 9px; }
+.artifact-status.scheduled { color: var(--gray); }
+.artifact-status.scheduled::before { background: transparent; border: 1.5px dashed var(--gray-dk); width: 9px; height: 9px; }
+.artifact-status.dash { color: var(--gray); }
+.artifact-status.dash::before { content: '—'; width: auto; height: auto; border-radius: 0; background: transparent; font-weight: 700; }
+.artifact-arrow { color: var(--gray); font-size: 14px; transition: all 150ms; }
+.artifact-row:hover .artifact-arrow { color: var(--ink); transform: translateX(2px); }
+
+.context-rail { background: var(--cream-2); border: 1px solid var(--border); border-radius: 12px; }
+.context-rail.past { background: var(--cream-deep); }
+.context-rail.future { background: var(--cream-2); border-style: dashed; }
+.context-tabs { display: flex; align-items: center; gap: 0; padding: 4px 8px; border-bottom: 1px solid var(--border); }
+.context-rail.future .context-tabs { border-bottom-style: dashed; }
+.context-tab { background: transparent; border: none; padding: 11px 14px; font-family: 'JetBrains Mono', monospace; font-size: 9.5px; letter-spacing: 1.4px; text-transform: uppercase; font-weight: 700; color: var(--gray-dk); position: relative; }
+.context-tab:hover { color: var(--ink); }
+.context-tab.active { color: var(--ink); }
+.context-tab.active::after { content: ''; position: absolute; left: 12px; right: 12px; bottom: -1px; height: 2px; background: var(--ink); }
+.context-tab .pill { display: inline-block; background: var(--cream); border: 1px solid var(--border); padding: 1px 6px; border-radius: 999px; margin-left: 6px; font-size: 9px; font-weight: 700; color: var(--gray-dk); }
+.context-tab.active .pill { background: var(--ink); color: var(--cream-2); border-color: var(--ink); }
+.context-body { padding: 18px 22px; }
+.context-panel { display: none; }
+.context-panel.active { display: block; }
+
+.kv-pair { display: flex; justify-content: space-between; align-items: baseline; padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 13px; gap: 14px; }
+.kv-pair:last-child { border-bottom: none; }
+.kv-pair .k { color: var(--gray-dk); flex-shrink: 0; }
+.kv-pair .v { font-weight: 600; color: var(--ink); text-align: right; }
+.kv-pair .v.muted { color: var(--gray); font-weight: 500; font-style: italic; }
+
+.value-block .big { font-family: 'Fraunces', serif; font-size: 28px; font-weight: 700; letter-spacing: -0.5px; color: var(--ink); margin-bottom: 4px; line-height: 1.05; }
+.value-block .range { font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 1.2px; color: var(--gray-dk); font-weight: 600; margin-bottom: 12px; }
+.value-block .qual { font-size: 13px; color: var(--gray-dk); line-height: 1.55; }
+.value-block .qual strong { color: var(--ink); font-weight: 600; }
+.context-rail.future .value-block .big { color: var(--gray-dk); }
+
+.timeline { display: flex; flex-direction: column; gap: 10px; }
+.tl-item { display: flex; gap: 10px; font-size: 12.5px; line-height: 1.45; align-items: flex-start; }
+.tl-time { font-family: 'JetBrains Mono', monospace; font-size: 9.5px; letter-spacing: 1px; color: var(--gray-dk); flex-shrink: 0; width: 78px; padding-top: 3px; font-weight: 600; }
+.tl-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--green); margin-top: 8px; flex-shrink: 0; }
+.tl-text { flex: 1; color: var(--ink-2); }
+.tl-text strong { font-weight: 600; color: var(--ink); }
+.activity-empty { padding: 22px 14px; text-align: center; font-size: 12.5px; color: var(--gray); font-style: italic; line-height: 1.6; border: 1px dashed var(--border); border-radius: 8px; }
+.activity-empty .label { font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 1.4px; text-transform: uppercase; font-weight: 700; color: var(--gray-dk); display: block; margin-bottom: 6px; font-style: normal; }
+
+.chat-pane { background: var(--panel); color: #EFF6FF; border-radius: 14px; display: flex; flex-direction: column; overflow: hidden; align-self: start; position: sticky; top: 18px; max-height: calc(100vh - 36px); min-height: 700px; }
+.chat-head { padding: 18px 22px; border-bottom: 1px solid rgba(255, 255, 255, 0.10); }
+.agent-row { display: flex; align-items: center; gap: 10px; }
+.agent-avatar { width: 32px; height: 32px; border-radius: 50%; background: rgba(0, 102, 204, 0.18); border: 1px solid var(--blue); display: flex; align-items: center; justify-content: center; font-family: 'Fraunces', serif; font-weight: 700; font-size: 14px; color: var(--cream-2); }
+.agent-name { font-weight: 700; font-size: 14px; }
+.agent-status { font-family: 'JetBrains Mono', monospace; font-size: 9px; letter-spacing: 1.5px; color: var(--blue); margin-top: 2px; }
+.agent-status .dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--green); margin-right: 5px; vertical-align: middle; }
+.chat-thread { flex: 1; overflow-y: auto; padding: 20px 22px; display: flex; flex-direction: column; gap: 12px; }
+.bubble { max-width: 92%; padding: 11px 15px; border-radius: 12px; font-size: 13px; line-height: 1.5; }
+.bubble.nexus { background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.10); }
+.bubble.nexus em { color: #6aa9ff; font-style: normal; font-weight: 600; }
+.bubble.nexus strong { color: white; font-weight: 600; }
+.chat-input { padding: 14px 18px 16px; border-top: 1px solid rgba(255, 255, 255, 0.10); }
+.suggested-label { font-family: 'JetBrains Mono', monospace; font-size: 9px; letter-spacing: 1.5px; color: var(--gray); margin-bottom: 8px; font-weight: 600; }
+.suggested-prompts { display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; }
+.prompt-chip { background: rgba(0, 102, 204, 0.12); border: 1px solid rgba(0, 102, 204, 0.35); color: #DCE7F5; padding: 9px 14px; border-radius: 10px; font-size: 12px; font-weight: 500; text-align: left; line-height: 1.4; transition: all 150ms; }
+.prompt-chip:hover { background: rgba(0, 102, 204, 0.22); color: white; border-color: var(--blue); }
+.input-row { display: flex; align-items: center; background: rgba(255,255,255,0.04); border: 1px solid rgba(255, 255, 255, 0.10); border-radius: 10px; padding: 9px 12px; gap: 10px; }
+.input-row input { flex: 1; background: transparent; border: none; outline: none; color: white; font-size: 13px; font-family: inherit; }
+.input-row input::placeholder { color: var(--gray); }
+.send-btn { background: var(--blue); color: white; border: none; width: 28px; height: 28px; border-radius: 50%; cursor: pointer; font-weight: 700; }
+
+/* Originate scaffold (P0 chat lane) */
+.scaffold-list { display: flex; flex-direction: column; gap: 8px; padding: 4px 0 14px; }
+.scaffold-item { display: flex; align-items: center; gap: 10px; padding: 9px 12px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.10); border-radius: 8px; font-size: 12.5px; cursor: pointer; transition: all 150ms; }
+.scaffold-item:hover { background: rgba(255,255,255,0.07); border-color: rgba(255,255,255,0.20); }
+.scaffold-item.done { background: rgba(29,158,117,0.12); border-color: rgba(29,158,117,0.32); }
+.scaffold-item.active { background: rgba(0,102,204,0.18); border-color: var(--blue); }
+.scaffold-step { width: 22px; height: 22px; border-radius: 50%; background: rgba(255,255,255,0.06); border: 1.5px solid rgba(255,255,255,0.20); display: flex; align-items: center; justify-content: center; font-family: 'JetBrains Mono', monospace; font-size: 10px; font-weight: 700; color: rgba(255,255,255,0.60); flex-shrink: 0; }
+.scaffold-item.done .scaffold-step { background: var(--green); border-color: var(--green); color: white; }
+.scaffold-item.active .scaffold-step { background: var(--blue); border-color: var(--blue); color: white; }
+.scaffold-name { flex: 1; color: rgba(255,255,255,0.90); font-weight: 500; }
+.scaffold-item.done .scaffold-name { color: white; }
+.scaffold-item.active .scaffold-name { color: white; font-weight: 600; }
+.scaffold-meta { font-family: 'JetBrains Mono', monospace; font-size: 9px; letter-spacing: 1.2px; color: rgba(255,255,255,0.55); text-transform: uppercase; font-weight: 600; }
+
+/* P0 brief sections (canvas) */
+.brief-section { background: var(--cream-2); border: 1px solid var(--border); border-radius: 12px; padding: 18px 22px; margin-bottom: 14px; }
+.brief-section.in-progress { border-color: var(--amber); border-style: dashed; }
+.brief-section-head { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 10px; gap: 12px; }
+.brief-section-title { font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; font-weight: 700; color: var(--gold); }
+.brief-section.in-progress .brief-section-title { color: var(--amber); }
+.brief-section-state { font-family: 'JetBrains Mono', monospace; font-size: 9.5px; letter-spacing: 1.2px; text-transform: uppercase; font-weight: 700; color: var(--green); display: inline-flex; align-items: center; gap: 6px; }
+.brief-section-state.amber { color: var(--amber); }
+.brief-section-state.empty { color: var(--gray); }
+.brief-section-state .dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+.brief-content { font-size: 14px; color: var(--ink-2); line-height: 1.55; }
+.brief-content .hypothesis { font-family: 'Fraunces', serif; font-size: 18px; font-weight: 600; letter-spacing: -0.3px; color: var(--ink); line-height: 1.3; margin-bottom: 8px; }
+.brief-empty { color: var(--gray); font-style: italic; padding: 8px 0; }
+.brief-tag-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+.brief-tag { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; background: var(--cream); border: 1px solid var(--border); border-radius: 999px; font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 0.5px; font-weight: 600; color: var(--ink-2); }
+.brief-tag .k { color: var(--gray-dk); font-weight: 600; }
+
+.foundation-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; margin-top: 4px; }
+.foundation-row { display: flex; align-items: center; gap: 10px; padding: 8px 12px; background: var(--cream); border: 1px solid var(--border); border-radius: 8px; font-size: 12.5px; }
+.foundation-code { font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 0.8px; font-weight: 700; color: var(--gray-dk); }
+.foundation-name { flex: 1; color: var(--ink-2); }
+.foundation-state { font-family: 'JetBrains Mono', monospace; font-size: 9.5px; letter-spacing: 1.2px; text-transform: uppercase; font-weight: 700; }
+.foundation-state.met { color: var(--green); }
+.foundation-state.partial { color: var(--amber); }
+.foundation-state.gap { color: var(--gray-dk); }
+
+.handoff-card { display: flex; align-items: center; gap: 14px; padding: 16px 18px; background: var(--cream); border: 1px solid var(--border); border-radius: 10px; margin-top: 6px; }
+.handoff-text { flex: 1; font-size: 13px; color: var(--gray-dk); line-height: 1.45; }
+.handoff-text strong { color: var(--ink); font-weight: 700; }
+.btn-handoff { background: var(--ink); color: var(--cream-2); border: none; padding: 11px 20px; border-radius: 8px; font-weight: 700; font-size: 13px; display: inline-flex; align-items: center; gap: 9px; transition: all 150ms; flex-shrink: 0; }
+.btn-handoff:hover:not(:disabled) { background: var(--ink-2); transform: translateY(-1px); }
+.btn-handoff:disabled { background: rgba(10,10,11,0.10); color: var(--gray); cursor: not-allowed; }
+
+.doc-footnote { margin-top: 56px; padding: 18px 28px; background: var(--cream); border: 1px dashed var(--border-strong); border-radius: 12px; font-family: 'JetBrains Mono', monospace; font-size: 10.5px; letter-spacing: 0.6px; color: var(--gray-dk); line-height: 1.7; }
+.doc-footnote strong { color: var(--ink); font-weight: 700; }
+.doc-footnote sup { color: var(--ink-2); font-weight: 700; margin-right: 4px; }
+.doc-footnote code { font-family: 'JetBrains Mono', monospace; }
+
+@media (max-width: 1180px) {
+  .ws-shell { grid-template-columns: 1fr; }
+  .chat-pane { position: static; min-height: 520px; }
+  .foundation-grid { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body data-screen-label="Move Workspace v0.2">
+
+<div class="nav-placeholder">
+  <span class="label">↳ Global AbarVa nav assumed above · <strong>not redrawn</strong></span>
+  <span class="meta">MERIDIAN HEALTH · ELENA RIVERA · LEAD</span>
+</div>
+
+<main class="workspace">
+
+<!-- ─────────────── VIEW A · CURRENT (P4 BUILD) ─────────────── -->
+<section id="view-a" class="view-section" data-screen-label="01 View A · Current phase (P4 Build)">
+  <div class="move-identity">
+    <div class="mi-left">
+      <div class="mi-breadcrumb">STRATEGIC MOVES › MERIDIAN HEALTH › MER-HDA-2026</div>
+      <div class="mi-title">Healthcare Data Analytics Modernization for Agentic Care</div>
+      <div class="mi-meta">PLATFORM MODERNIZATION · SPONSOR: K. OSHIMA, CIO · LEAD: E. RIVERA · STEWARD: M. CHEN</div>
+    </div>
+    <div class="mi-right">
+      <span class="mi-status-chip green"><span class="dot"></span>On track</span>
+      <button class="btn-continue">Continue P4 Build <span class="arrow">→</span></button>
+    </div>
+  </div>
+
+  <div class="phase-rail-wrap">
+    <div class="rail-eyebrow-row">
+      <div class="rail-eyebrow">Phase rail · <strong>P4 Build</strong> · current</div>
+      <div class="rail-eyebrow">Click any phase to navigate</div>
+    </div>
+    <div class="rail-track">
+      <div class="rail-line"></div>
+      <div class="rail-line-done" style="width: calc((100% - 10%) * (4/7));"></div>
+      <button class="phase-node done"><div class="phase-dot">P0</div><div class="phase-name">Originate</div></button>
+      <button class="phase-node done"><div class="phase-dot">P1</div><div class="phase-name">Charter</div></button>
+      <button class="phase-node done"><div class="phase-dot">P2</div><div class="phase-name">Diagnose</div></button>
+      <button class="phase-node done"><div class="phase-dot">P3</div><div class="phase-name">Design</div></button>
+      <button class="phase-node current selected"><div class="phase-dot">P4</div><div class="phase-name">Build</div></button>
+      <button class="phase-node future"><div class="phase-dot">P5</div><div class="phase-name">Execute</div></button>
+      <button class="phase-node future"><div class="phase-dot">P6</div><div class="phase-name">Verify</div></button>
+      <button class="phase-node future"><div class="phase-dot">P7</div><div class="phase-name">Handoff</div></button>
+    </div>
+  </div>
+
+  <div class="ws-shell">
+    <div class="chat-pane">
+      <div class="chat-head">
+        <div class="agent-row">
+          <div class="agent-avatar">✦</div>
+          <div>
+            <div class="agent-name">Nexus</div>
+            <div class="agent-status"><span class="dot"></span>SCOPED · MER-HDA-2026 · P4</div>
+          </div>
+        </div>
+      </div>
+      <div class="chat-thread">
+        <div class="bubble nexus">P4 Build is in flight. Build plan and vendor contract are signed. <strong>Three criteria remaining:</strong> pilot environment, change management package, and go-live readiness assessment. Pilot is the long pole — Marcus has provisioning blocked on identity federation with Epic.</div>
+        <div class="bubble nexus">Want me to draft the <em>change management package</em> from the delivery plan, or surface the Epic federation thread?</div>
+      </div>
+      <div class="chat-input">
+        <div class="suggested-label">↳ Suggested for P4</div>
+        <div class="suggested-prompts">
+          <button class="prompt-chip">What's blocking pilot environment provisioning?</button>
+          <button class="prompt-chip">Draft the change management package</button>
+          <button class="prompt-chip">Compare to Cleveland Clinic's analytics rebuild</button>
+        </div>
+        <div class="input-row">
+          <input type="text" placeholder="Ask Nexus about P4 Build…">
+          <button class="send-btn">↑</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="canvas-pane">
+      <div class="phase-frame current">
+        <div class="phase-frame-row">
+          <span class="phase-frame-eyebrow">P4 · Phase intent</span>
+          <span class="view-state-banner">
+            <span class="dot"></span>Current phase · entered 3 weeks ago · gate at 2 / 5
+          </span>
+        </div>
+        <div class="phase-frame-title">Build</div>
+        <div class="phase-frame-intent">Execute design to production-ready state. Vendor onboarded, pilot environment validated, change management package and go-live readiness assessment signed.</div>
+      </div>
+
+      <div class="gate-panel">
+        <div class="panel-head">
+          <div class="panel-eyebrow">Gate criteria · P4 → P5 Execute</div>
+          <div class="panel-counter amber">2 / 5 met</div>
+        </div>
+        <ul class="crit-list">
+          <li class="done"><div class="crit-check done">✓</div><div class="crit-text">Build plan signed off by sponsor with milestones<div class="crit-meta">Signed K. Oshima · 12 days ago</div></div></li>
+          <li class="done"><div class="crit-check done">✓</div><div class="crit-text">Vendor contract executed and onboarded<div class="crit-meta">Databricks · MSA + SOW countersigned · 9 days ago</div></div></li>
+          <li><div class="crit-check"></div><div class="crit-text">Pilot environment provisioned and validated<div class="crit-meta amber">Drafting · blocked on Epic identity federation</div></div></li>
+          <li><div class="crit-check"></div><div class="crit-text">Change management package approved<div class="crit-meta">Not started · owner: M. Chen</div></div></li>
+          <li><div class="crit-check"></div><div class="crit-text">Go-live readiness assessment passed<div class="crit-meta">Not started · prerequisite: pilot validated</div></div></li>
+        </ul>
+        <div class="promote-row">
+          <button class="btn-promote" disabled>Promote to P5 Execute <span class="arrow">→</span></button>
+          <span class="promote-helper">3 criteria remaining · gate not yet passed</span>
+        </div>
+      </div>
+
+      <div class="shelf">
+        <div class="shelf-section">
+          <div class="shelf-section-title">Required deliverables <span class="count">· 4 of 4 in motion</span></div>
+          <div class="artifact-list">
+            <div class="artifact-row">
+              <div class="artifact-name-block"><div class="artifact-name">Delivery Plan &amp; RACI</div><div class="artifact-code">d19_delivery_plan_raci</div></div>
+              <span class="artifact-status signed">Signed</span><span class="artifact-arrow">→</span>
+            </div>
+            <div class="artifact-row">
+              <div class="artifact-name-block"><div class="artifact-name">Model &amp; System Build Specs</div><div class="artifact-code">d21_model_system_build_specs</div></div>
+              <span class="artifact-status signed">Signed</span><span class="artifact-arrow">→</span>
+            </div>
+            <div class="artifact-row">
+              <div class="artifact-name-block"><div class="artifact-name">Change Management Package</div><div class="artifact-code">d22_change_management_package</div></div>
+              <span class="artifact-status drafting">Drafting</span><span class="artifact-arrow">→</span>
+            </div>
+            <div class="artifact-row">
+              <div class="artifact-name-block"><div class="artifact-name">Go-Live Readiness Assessment</div><div class="artifact-code">d23_go_live_readiness_assessment</div></div>
+              <span class="artifact-status notstarted">Not started</span><span class="artifact-arrow">→</span>
+            </div>
+          </div>
+        </div>
+        <div class="shelf-section">
+          <div class="shelf-section-title">Optional <span class="count">· 1 of 2 active</span></div>
+          <div class="artifact-list">
+            <div class="artifact-row">
+              <div class="artifact-name-block"><div class="artifact-name">Sprint &amp; Milestone Artifacts</div><div class="artifact-code">d20_sprint_milestone_artifacts</div></div>
+              <span class="artifact-status drafting">Drafting</span><span class="artifact-arrow">→</span>
+            </div>
+            <div class="artifact-row">
+              <div class="artifact-name-block"><div class="artifact-name">Outcome Measurement Plan</div><div class="artifact-code">d24_outcome_measurement_plan</div></div>
+              <span class="artifact-status dash">Not active</span><span class="artifact-arrow">→</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="context-rail" data-rail="a">
+        <div class="context-tabs">
+          <button class="context-tab active" data-target="a-team">Sponsor &amp; team</button>
+          <button class="context-tab" data-target="a-value">Value at stake</button>
+          <button class="context-tab" data-target="a-activity">Recent activity <span class="pill">5</span></button>
+        </div>
+        <div class="context-body">
+          <div class="context-panel active" data-panel="a-team">
+            <div class="kv-pair"><span class="k">Sponsor</span><span class="v">Katherine Oshima · CIO</span></div>
+            <div class="kv-pair"><span class="k">Lead</span><span class="v">Elena Rivera</span></div>
+            <div class="kv-pair"><span class="k">Steward</span><span class="v">Marcus Chen</span></div>
+            <div class="kv-pair"><span class="k">P4 working group</span><span class="v">7 contributors · 3 vendor</span></div>
+          </div>
+          <div class="context-panel" data-panel="a-value">
+            <div class="value-block">
+              <div class="big">$12.2M – $25.4M</div>
+              <div class="range">PROJECTED · 3-YR · COMMITTED AT P3 SIGN-OFF</div>
+              <div class="qual"><strong>$8.4M</strong> attributed to clinician minutes saved; <strong>$4.6M</strong> to claims accuracy uplift; balance to platform consolidation. Carried forward from P3.</div>
+            </div>
+          </div>
+          <div class="context-panel" data-panel="a-activity">
+            <div class="timeline">
+              <div class="tl-item"><span class="tl-time">2h ago</span><span class="tl-dot"></span><span class="tl-text"><strong>M. Chen</strong> opened Epic federation thread with Meridian IAM · blocking pilot validation</span></div>
+              <div class="tl-item"><span class="tl-time">Yesterday</span><span class="tl-dot"></span><span class="tl-text">Build Specs <strong>signed off</strong> by EA council · 5 of 5 voting</span></div>
+              <div class="tl-item"><span class="tl-time">3d ago</span><span class="tl-dot"></span><span class="tl-text">Databricks MSA + SOW countersigned · vendor onboarded</span></div>
+              <div class="tl-item"><span class="tl-time">5d ago</span><span class="tl-dot"></span><span class="tl-text"><strong>K. Oshima</strong> signed delivery plan · 4 milestones · go-live target Aug 12</span></div>
+              <div class="tl-item"><span class="tl-time">2w ago</span><span class="tl-dot"></span><span class="tl-text">Move entered P4 Build · P3 Design closed with full evidence trail</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ─────────────── VIEW B · PAST (P2 DIAGNOSE) ─────────────── -->
+<section id="view-b" class="view-section" data-screen-label="02 View B · Past phase (P2 Diagnose)">
+  <div class="move-identity">
+    <div class="mi-left">
+      <div class="mi-breadcrumb">STRATEGIC MOVES › MERIDIAN HEALTH › MER-HDA-2026</div>
+      <div class="mi-title">Healthcare Data Analytics Modernization for Agentic Care</div>
+      <div class="mi-meta">PLATFORM MODERNIZATION · SPONSOR: K. OSHIMA, CIO · LEAD: E. RIVERA · STEWARD: M. CHEN</div>
+    </div>
+    <div class="mi-right">
+      <span class="mi-status-chip green"><span class="dot"></span>On track</span>
+      <span class="closed-stamp">✓ Closed Feb 14, 2026</span>
+    </div>
+  </div>
+
+  <div class="phase-rail-wrap">
+    <div class="rail-eyebrow-row">
+      <div class="rail-eyebrow">Phase rail · <strong>P2 Diagnose</strong> selected · current is P4</div>
+      <div class="rail-eyebrow">Click any phase to navigate</div>
+    </div>
+    <div class="rail-track">
+      <div class="rail-line"></div>
+      <div class="rail-line-done" style="width: calc((100% - 10%) * (4/7));"></div>
+      <button class="phase-node done"><div class="phase-dot">P0</div><div class="phase-name">Originate</div></button>
+      <button class="phase-node done"><div class="phase-dot">P1</div><div class="phase-name">Charter</div></button>
+      <button class="phase-node done selected"><div class="phase-dot">P2</div><div class="phase-name">Diagnose</div></button>
+      <button class="phase-node done"><div class="phase-dot">P3</div><div class="phase-name">Design</div></button>
+      <button class="phase-node current"><div class="phase-dot">P4</div><div class="phase-name">Build</div></button>
+      <button class="phase-node future"><div class="phase-dot">P5</div><div class="phase-name">Execute</div></button>
+      <button class="phase-node future"><div class="phase-dot">P6</div><div class="phase-name">Verify</div></button>
+      <button class="phase-node future"><div class="phase-dot">P7</div><div class="phase-name">Handoff</div></button>
+    </div>
+  </div>
+
+  <div class="ws-shell">
+    <div class="chat-pane">
+      <div class="chat-head">
+        <div class="agent-row">
+          <div class="agent-avatar">✦</div>
+          <div>
+            <div class="agent-name">Nexus</div>
+            <div class="agent-status"><span class="dot"></span>SCOPED · MER-HDA-2026 · P4</div>
+          </div>
+        </div>
+      </div>
+      <div class="chat-thread">
+        <div class="bubble nexus">Looking back at <strong>P2 Diagnose</strong>. Diagnosis was locked on <strong>Feb 14, 2026</strong>. The baseline pinned three things: clinician minutes lost to chart-review (1.7M annually), claims rework rate (8.3%), and analytics platform fragmentation (11 disjoint sources).</div>
+        <div class="bubble nexus">All five gate criteria were met. <em>Current State Assessment</em> and <em>Financial Baseline</em> are signed and citable. What would you like to revisit?</div>
+      </div>
+      <div class="chat-input">
+        <div class="suggested-label">↳ Look back at P2</div>
+        <div class="suggested-prompts">
+          <button class="prompt-chip">Show me the P2 → P3 sign-off evidence</button>
+          <button class="prompt-chip">What baseline metrics were locked?</button>
+          <button class="prompt-chip">Who signed off on the diagnostic?</button>
+        </div>
+        <div class="input-row">
+          <input type="text" placeholder="Ask Nexus about MER-HDA-2026…">
+          <button class="send-btn">↑</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="canvas-pane">
+      <div class="phase-frame past">
+        <div class="phase-frame-row">
+          <span class="phase-frame-eyebrow">P2 · Phase intent · closed</span>
+          <span class="view-state-banner">
+            <span class="dot"></span>Viewing past · completed 8 weeks ago
+            <button class="jump">Jump to current ↗</button>
+          </span>
+        </div>
+        <div class="phase-frame-title">Diagnose</div>
+        <div class="phase-frame-intent">Lock current-state baseline with auditable evidence. Process map, financial baseline, root-cause analysis, and current-state assessment all signed and citable.</div>
+      </div>
+
+      <div class="gate-panel past">
+        <div class="panel-head">
+          <div class="panel-eyebrow">Gate criteria · P2 → P3 Design · closed</div>
+          <div class="panel-counter green">5 / 5 met</div>
+        </div>
+        <ul class="crit-list">
+          <li class="done"><div class="crit-check done">✓</div><div class="crit-text">Current-state baseline metrics locked with source citations<div class="crit-meta">11 sources · 100% sample coverage</div></div></li>
+          <li class="done"><div class="crit-check done">✓</div><div class="crit-text">Stakeholder interview synthesis (min 12 interviews) signed by sponsor<div class="crit-meta">14 interviews · 7 specialties</div></div></li>
+          <li class="done"><div class="crit-check done">✓</div><div class="crit-text">Contradiction log opened with 0 P0-severity items<div class="crit-meta">3 items logged · all P2 or below</div></div></li>
+          <li class="done"><div class="crit-check done">✓</div><div class="crit-text">Foundation Readiness gaps mapped to baseline<div class="crit-meta">F2 MDM partial · flagged for P3 risk</div></div></li>
+          <li class="done"><div class="crit-check done">✓</div><div class="crit-text">P3 entry brief approved by EA council<div class="crit-meta">5 of 5 voting · Feb 14, 2026</div></div></li>
+        </ul>
+        <div class="promote-row">
+          <span class="promote-stamp">✓ Closed Feb 14, 2026 · advanced to P3 Design</span>
+        </div>
+      </div>
+
+      <div class="shelf past">
+        <div class="shelf-section">
+          <div class="shelf-section-title">Required deliverables <span class="count">· 4 of 4 signed</span></div>
+          <div class="artifact-list">
+            <div class="artifact-row">
+              <div class="artifact-name-block"><div class="artifact-name">Current State Process Map</div><div class="artifact-code">d05_current_state_process_map</div></div>
+              <span class="artifact-status signed">Signed</span><span class="artifact-arrow">→</span>
+            </div>
+            <div class="artifact-row">
+              <div class="artifact-name-block"><div class="artifact-name">Current State Financial Baseline</div><div class="artifact-code">d07_current_state_financial_baseline</div></div>
+              <span class="artifact-status signed">Signed</span><span class="artifact-arrow">→</span>
+            </div>
+            <div class="artifact-row">
+              <div class="artifact-name-block"><div class="artifact-name">Root Cause Analysis</div><div class="artifact-code">d09_root_cause_analysis</div></div>
+              <span class="artifact-status signed">Signed</span><span class="artifact-arrow">→</span>
+            </div>
+            <div class="artifact-row">
+              <div class="artifact-name-block"><div class="artifact-name">Current State Assessment</div><div class="artifact-code">current_state_assessment</div></div>
+              <span class="artifact-status signed">Signed</span><span class="artifact-arrow">→</span>
+            </div>
+          </div>
+        </div>
+        <div class="shelf-section">
+          <div class="shelf-section-title">Optional <span class="count">· 2 of 3 produced</span></div>
+          <div class="artifact-list">
+            <div class="artifact-row">
+              <div class="artifact-name-block"><div class="artifact-name">Current State Data &amp; System Map</div><div class="artifact-code">d06_current_state_data_system_map</div></div>
+              <span class="artifact-status signed">Signed</span><span class="artifact-arrow">→</span>
+            </div>
+            <div class="artifact-row">
+              <div class="artifact-name-block"><div class="artifact-name">Pain Point Register</div><div class="artifact-code">d08_pain_point_register</div></div>
+              <span class="artifact-status signed">Signed</span><span class="artifact-arrow">→</span>
+            </div>
+            <div class="artifact-row">
+              <div class="artifact-name-block"><div class="artifact-name">Benchmark Comparison</div><div class="artifact-code">d10_benchmark_comparison</div></div>
+              <span class="artifact-status dash">Not produced</span><span class="artifact-arrow">→</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="context-rail past" data-rail="b">
+        <div class="context-tabs">
+          <button class="context-tab active" data-target="b-team">Sponsor &amp; team</button>
+          <button class="context-tab" data-target="b-value">Value at stake</button>
+          <button class="context-tab" data-target="b-activity">Activity during P2 <span class="pill">6</span></button>
+        </div>
+        <div class="context-body">
+          <div class="context-panel active" data-panel="b-team">
+            <div class="kv-pair"><span class="k">Sponsor</span><span class="v">Katherine Oshima · CIO</span></div>
+            <div class="kv-pair"><span class="k">Lead</span><span class="v">Elena Rivera</span></div>
+            <div class="kv-pair"><span class="k">Steward</span><span class="v">Marcus Chen</span></div>
+            <div class="kv-pair"><span class="k">P2 working group</span><span class="v">9 contributors</span></div>
+          </div>
+          <div class="context-panel" data-panel="b-value">
+            <div class="value-block">
+              <div class="big">$10.4M – $28.0M<sup style="color: var(--gray); font-weight: 600; font-size: 11px; margin-left: 6px;">¹</sup></div>
+              <div class="range">P2 ESTIMATE · TIGHTENED AT P3 TO $12.2M – $25.4M</div>
+              <div class="qual">Pre-design range, locked as part of the diagnostic baseline. Tightened after vendor capability scoring at P3 sign-off.</div>
+            </div>
+          </div>
+          <div class="context-panel" data-panel="b-activity">
+            <div class="timeline">
+              <div class="tl-item"><span class="tl-time">Feb 14</span><span class="tl-dot"></span><span class="tl-text"><strong>EA council</strong> approved P3 entry brief · 5 of 5 voting · move advanced to Design</span></div>
+              <div class="tl-item"><span class="tl-time">Feb 11</span><span class="tl-dot"></span><span class="tl-text">Current State Assessment signed by <strong>K. Oshima</strong> · 47 pages · 11 source systems audited</span></div>
+              <div class="tl-item"><span class="tl-time">Feb 6</span><span class="tl-dot"></span><span class="tl-text">Baseline metrics locked: 1.7M clinician minutes lost annually · claims rework 8.3%</span></div>
+              <div class="tl-item"><span class="tl-time">Jan 28</span><span class="tl-dot"></span><span class="tl-text">14 stakeholder interviews completed across 7 clinical specialties</span></div>
+              <div class="tl-item"><span class="tl-time">Jan 19</span><span class="tl-dot"></span><span class="tl-text">Foundation Readiness scan flagged <strong>F2 MDM partial maturity</strong> · escalated as P3 risk</span></div>
+              <div class="tl-item"><span class="tl-time">Jan 5</span><span class="tl-dot"></span><span class="tl-text">P2 Diagnose entered · scope memo signed</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ─────────────── VIEW C · FUTURE (P6 VERIFY) ─────────────── -->
+<section id="view-c" class="view-section" data-screen-label="03 View C · Future phase (P6 Verify)">
+  <div class="move-identity">
+    <div class="mi-left">
+      <div class="mi-breadcrumb">STRATEGIC MOVES › MERIDIAN HEALTH › MER-HDA-2026</div>
+      <div class="mi-title">Healthcare Data Analytics Modernization for Agentic Care</div>
+      <div class="mi-meta">PLATFORM MODERNIZATION · SPONSOR: K. OSHIMA, CIO · LEAD: E. RIVERA · STEWARD: M. CHEN</div>
+    </div>
+    <div class="mi-right">
+      <span class="mi-status-chip green"><span class="dot"></span>On track</span>
+      <span class="roadmap-helper">~14 wk out · earliest entry after P5</span>
+    </div>
+  </div>
+
+  <div class="phase-rail-wrap">
+    <div class="rail-eyebrow-row">
+      <div class="rail-eyebrow">Phase rail · <strong>P6 Verify</strong> selected · current is P4 · 2 phases ahead</div>
+      <div class="rail-eyebrow">Click any phase to navigate</div>
+    </div>
+    <div class="rail-track">
+      <div class="rail-line"></div>
+      <div class="rail-line-done" style="width: calc((100% - 10%) * (4/7));"></div>
+      <button class="phase-node done"><div class="phase-dot">P0</div><div class="phase-name">Originate</div></button>
+      <button class="phase-node done"><div class="phase-dot">P1</div><div class="phase-name">Charter</div></button>
+      <button class="phase-node done"><div class="phase-dot">P2</div><div class="phase-name">Diagnose</div></button>
+      <button class="phase-node done"><div class="phase-dot">P3</div><div class="phase-name">Design</div></button>
+      <button class="phase-node current"><div class="phase-dot">P4</div><div class="phase-name">Build</div></button>
+      <button class="phase-node future"><div class="phase-dot">P5</div><div class="phase-name">Execute</div></button>
+      <button class="phase-node future selected"><div class="phase-dot">P6</div><div class="phase-name">Verify</div></button>
+      <button class="phase-node future"><div class="phase-dot">P7</div><div class="phase-name">Handoff</div></button>
+    </div>
+  </div>
+
+  <div class="ws-shell">
+    <div class="chat-pane">
+      <div class="chat-head">
+        <div class="agent-row">
+          <div class="agent-avatar">✦</div>
+          <div>
+            <div class="agent-name">Nexus</div>
+            <div class="agent-status"><span class="dot"></span>SCOPED · MER-HDA-2026 · P4</div>
+          </div>
+        </div>
+      </div>
+      <div class="chat-thread">
+        <div class="bubble nexus">Previewing <strong>P6 Verify</strong>. When you reach this phase, you'll need to validate outcomes against committed value. The gate-defining artifact is <em>Dual-Ledger Reconciliation</em> — Finance-of-record numbers reconciled against the operational ledger.</div>
+        <div class="bubble nexus">P6 is two phases away. To unlock it, P4 Build must close all five gate criteria, then P5 Execute must complete adoption rollout. The earliest realistic entry is <strong>~14 weeks from now</strong>, based on the current go-live target of Aug 12.</div>
+      </div>
+      <div class="chat-input">
+        <div class="suggested-label">↳ Plan ahead for P6</div>
+        <div class="suggested-prompts">
+          <button class="prompt-chip">What evidence will Verify need?</button>
+          <button class="prompt-chip">Who typically owns dual-ledger reconciliation?</button>
+          <button class="prompt-chip">What pre-mortems should P5 surface for P6?</button>
+        </div>
+        <div class="input-row">
+          <input type="text" placeholder="Ask Nexus what to expect at P6…">
+          <button class="send-btn">↑</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="canvas-pane">
+      <div class="phase-frame future">
+        <div class="phase-frame-row">
+          <span class="phase-frame-eyebrow">P6 · Phase intent · not yet active</span>
+          <span class="view-state-banner">
+            <span class="dot"></span>Previewing future · current is P4 Build
+            <button class="jump">Jump to current ↗</button>
+          </span>
+        </div>
+        <div class="phase-frame-title">Verify</div>
+        <div class="phase-frame-intent">Verify outcomes against committed value and prepare for handoff. Dual-ledger reconciliation, financial impact validation, outcome attestation, and handoff plan.</div>
+      </div>
+
+      <div class="gate-panel future">
+        <div class="panel-head">
+          <div class="panel-eyebrow">Gate criteria · P6 → P7 Handoff · preview</div>
+          <div class="panel-counter muted">0 / 5 · scheduled</div>
+        </div>
+        <ul class="crit-list">
+          <li><div class="crit-check"></div><div class="crit-text">Dual-ledger reconciliation signed by Finance and CFO<div class="crit-meta">Gate-defining artifact</div></div></li>
+          <li><div class="crit-check"></div><div class="crit-text">Value-realized statement vs. P3 commitment<div class="crit-meta">±15% tolerance band</div></div></li>
+          <li><div class="crit-check"></div><div class="crit-text">Adoption metrics meet committed thresholds<div class="crit-meta">From P5 rollout · 80% active use</div></div></li>
+          <li><div class="crit-check"></div><div class="crit-text">Acceptance review passed with no P0/P1 contradictions open<div class="crit-meta">Routed via independent reviewer</div></div></li>
+          <li><div class="crit-check"></div><div class="crit-text">Pattern lessons captured for canon<div class="crit-meta">Cross-link to pattern library</div></div></li>
+        </ul>
+        <div class="promote-row">
+          <span class="promote-helper">Roadmap · ~14 weeks out · earliest entry after P5 Execute closes</span>
+        </div>
+      </div>
+
+      <div class="shelf future">
+        <div class="shelf-section">
+          <div class="shelf-section-title">Will be needed · required <span class="count">· 4 deliverables</span></div>
+          <div class="artifact-list">
+            <div class="artifact-row">
+              <div class="artifact-name-block"><div class="artifact-name">Outcome Attestation Report</div><div class="artifact-code">d25_outcome_attestation_report</div></div>
+              <span class="artifact-status scheduled">Scheduled</span><span class="artifact-arrow">→</span>
+            </div>
+            <div class="artifact-row">
+              <div class="artifact-name-block"><div class="artifact-name">Financial Impact Validation</div><div class="artifact-code">d26_financial_impact_validation</div></div>
+              <span class="artifact-status scheduled">Scheduled</span><span class="artifact-arrow">→</span>
+            </div>
+            <div class="artifact-row">
+              <div class="artifact-name-block"><div class="artifact-name">Dual-Ledger Reconciliation</div><div class="artifact-code">d27_dual_ledger_reconciliation</div></div>
+              <span class="artifact-status scheduled">Scheduled</span><span class="artifact-arrow">→</span>
+            </div>
+            <div class="artifact-row">
+              <div class="artifact-name-block"><div class="artifact-name">Handoff Plan<sup style="color: var(--gray); font-weight: 700; margin-left: 4px;">²</sup></div><div class="artifact-code">tower_handoff_plan</div></div>
+              <span class="artifact-status scheduled">Scheduled</span><span class="artifact-arrow">→</span>
+            </div>
+          </div>
+        </div>
+        <div class="shelf-section">
+          <div class="shelf-section-title">Will be needed · optional <span class="count">· 2 deliverables</span></div>
+          <div class="artifact-list">
+            <div class="artifact-row">
+              <div class="artifact-name-block"><div class="artifact-name">Outcome Report</div><div class="artifact-code">outcome_report</div></div>
+              <span class="artifact-status scheduled">Scheduled</span><span class="artifact-arrow">→</span>
+            </div>
+            <div class="artifact-row">
+              <div class="artifact-name-block"><div class="artifact-name">Outcome Variance Analysis</div><div class="artifact-code">d33_placeholder</div></div>
+              <span class="artifact-status scheduled">Scheduled</span><span class="artifact-arrow">→</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="context-rail future" data-rail="c">
+        <div class="context-tabs">
+          <button class="context-tab active" data-target="c-team">Sponsor &amp; team</button>
+          <button class="context-tab" data-target="c-value">Value at stake</button>
+          <button class="context-tab" data-target="c-activity">Activity</button>
+        </div>
+        <div class="context-body">
+          <div class="context-panel active" data-panel="c-team">
+            <div class="kv-pair"><span class="k">Sponsor</span><span class="v">Katherine Oshima · CIO</span></div>
+            <div class="kv-pair"><span class="k">Lead</span><span class="v">Elena Rivera</span></div>
+            <div class="kv-pair"><span class="k">Verify owner</span><span class="v muted">To be assigned at P5 → P6 promotion<sup style="color: var(--gray); font-weight: 700; margin-left: 2px;">¹</sup></span></div>
+          </div>
+          <div class="context-panel" data-panel="c-value">
+            <div class="value-block">
+              <div class="big">$12.2M – $25.4M</div>
+              <div class="range">COMMITTED AT P3 · TO BE VERIFIED AT P6</div>
+              <div class="qual">P6 verifies whether realized value lands inside this range. Out-of-band variance triggers a contradiction in the log and a financial-impact re-baselining.</div>
+            </div>
+          </div>
+          <div class="context-panel" data-panel="c-activity">
+            <div class="activity-empty">
+              <span class="label">Not yet active</span>
+              P6 Verify hasn't started — current phase is P4 Build. Activity here will appear once the move advances through P5 Execute and enters Verify. Estimated entry: <strong>~14 weeks from today</strong>.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ─────────────── VIEW D · ORIGINATE INSIDE WORKSPACE ─────────────── -->
+<section id="view-d" class="view-section" data-screen-label="04 View D · P0 Originate inside Workspace">
+  <div class="move-identity">
+    <div class="mi-left">
+      <div class="mi-breadcrumb">STRATEGIC MOVES › MERIDIAN HEALTH › DRAFT-2026-04-08</div>
+      <div class="mi-title">Healthcare Data Analytics Modernization for Agentic Care</div>
+      <div class="mi-meta">DRAFT MOVE · ARCHETYPE: PLATFORM MODERNIZATION · ORIGINATING LEAD: E. RIVERA · STARTED 14:32 TODAY</div>
+    </div>
+    <div class="mi-right">
+      <span class="mi-status-chip neutral"><span class="dot"></span>Originating</span>
+      <button class="btn-continue">Continue P0 Originate <span class="arrow">→</span></button>
+    </div>
+  </div>
+
+  <div class="phase-rail-wrap">
+    <div class="rail-eyebrow-row">
+      <div class="rail-eyebrow">Phase rail · <strong>P0 Originate</strong> · current</div>
+      <div class="rail-eyebrow">P1 – P7 unlock at sponsor commitment</div>
+    </div>
+    <div class="rail-track">
+      <div class="rail-line"></div>
+      <div class="rail-line-done" style="width: 0%;"></div>
+      <button class="phase-node current selected"><div class="phase-dot">P0</div><div class="phase-name">Originate</div></button>
+      <button class="phase-node future"><div class="phase-dot">P1</div><div class="phase-name">Charter</div></button>
+      <button class="phase-node future"><div class="phase-dot">P2</div><div class="phase-name">Diagnose</div></button>
+      <button class="phase-node future"><div class="phase-dot">P3</div><div class="phase-name">Design</div></button>
+      <button class="phase-node future"><div class="phase-dot">P4</div><div class="phase-name">Build</div></button>
+      <button class="phase-node future"><div class="phase-dot">P5</div><div class="phase-name">Execute</div></button>
+      <button class="phase-node future"><div class="phase-dot">P6</div><div class="phase-name">Verify</div></button>
+      <button class="phase-node future"><div class="phase-dot">P7</div><div class="phase-name">Handoff</div></button>
+    </div>
+  </div>
+
+  <div class="ws-shell">
+    <div class="chat-pane">
+      <div class="chat-head">
+        <div class="agent-row">
+          <div class="agent-avatar">✦</div>
+          <div>
+            <div class="agent-name">Nexus</div>
+            <div class="agent-status"><span class="dot"></span>ORIGINATE SCAFFOLD · DRAFT-2026-04-08</div>
+          </div>
+        </div>
+      </div>
+      <div class="chat-thread">
+        <div class="bubble nexus">Walking the originate scaffold. Hypothesis, archetype, tenant, and scope are captured. <strong>Sponsor commitment</strong> is the long pole — K. Oshima has indicated verbal interest but hasn't signed the brief.</div>
+        <div class="bubble nexus">Foundation Readiness flagged <em>F2 MDM partial maturity</em> as a meaningful gap. I've drafted language to address it. Want to review before the sponsor session?</div>
+        <div class="suggested-label" style="margin: 8px 0 6px; padding-left: 4px;">↳ Originate scaffold</div>
+        <div class="scaffold-list">
+          <div class="scaffold-item done"><div class="scaffold-step">✓</div><div class="scaffold-name">Bet Hypothesis</div><div class="scaffold-meta">Drafted</div></div>
+          <div class="scaffold-item done"><div class="scaffold-step">✓</div><div class="scaffold-name">Archetype</div><div class="scaffold-meta">Platform Mod.</div></div>
+          <div class="scaffold-item active"><div class="scaffold-step">3</div><div class="scaffold-name">Sponsor</div><div class="scaffold-meta">Verbal · pending</div></div>
+          <div class="scaffold-item done"><div class="scaffold-step">✓</div><div class="scaffold-name">Tenant + Scope</div><div class="scaffold-meta">Meridian</div></div>
+          <div class="scaffold-item done"><div class="scaffold-step">✓</div><div class="scaffold-name">Foundation Readiness</div><div class="scaffold-meta">1 gap flagged</div></div>
+          <div class="scaffold-item"><div class="scaffold-step">6</div><div class="scaffold-name">Classification</div><div class="scaffold-meta">Not started</div></div>
+          <div class="scaffold-item"><div class="scaffold-step">7</div><div class="scaffold-name">P1 Handoff</div><div class="scaffold-meta">Locked</div></div>
+        </div>
+      </div>
+      <div class="chat-input">
+        <div class="suggested-label">↳ Suggested for P0</div>
+        <div class="suggested-prompts">
+          <button class="prompt-chip">Draft sponsor commitment language for K. Oshima</button>
+          <button class="prompt-chip">Walk through the F2 MDM gap framing</button>
+          <button class="prompt-chip">Score classification before sponsor session</button>
+        </div>
+        <div class="input-row">
+          <input type="text" placeholder="Ask Nexus about the originate brief…">
+          <button class="send-btn">↑</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="canvas-pane">
+      <div class="phase-frame current">
+        <div class="phase-frame-row">
+          <span class="phase-frame-eyebrow">P0 · Phase intent</span>
+          <span class="view-state-banner">
+            <span class="dot"></span>Originating · brief 5 of 7 sections complete
+          </span>
+        </div>
+        <div class="phase-frame-title">Originate</div>
+        <div class="phase-frame-intent">Test the bet before chartering. Capture hypothesis, archetype fit, sponsor commitment, scope, and foundation readiness. Promote to P1 only when a sponsor commits.</div>
+      </div>
+
+      <div class="brief-section">
+        <div class="brief-section-head">
+          <div class="brief-section-title">1 · Bet Hypothesis</div>
+          <span class="brief-section-state"><span class="dot"></span>Drafted</span>
+        </div>
+        <div class="brief-content">
+          <div class="hypothesis">"Modernizing Meridian's analytics platform on a unified semantic layer will recover ≥1.2M clinician minutes annually and reduce claims rework below 5% within 18 months of go-live."</div>
+          <div style="font-size: 13px; color: var(--gray-dk); line-height: 1.55;">Falsifiable on both metrics. Originating evidence: 2025 chart-review audit (1.7M minutes lost) and Q4 claims rework benchmark (8.3%).</div>
+        </div>
+      </div>
+
+      <div class="brief-section">
+        <div class="brief-section-head">
+          <div class="brief-section-title">2 · Archetype · 4 · Tenant + Scope</div>
+          <span class="brief-section-state"><span class="dot"></span>Captured</span>
+        </div>
+        <div class="brief-content">
+          <div class="brief-tag-row">
+            <span class="brief-tag"><span class="k">ARCHETYPE</span>Platform Modernization</span>
+            <span class="brief-tag"><span class="k">TENANT</span>Meridian Health</span>
+            <span class="brief-tag"><span class="k">SCOPE</span>Inpatient · Ambulatory · Specialty</span>
+            <span class="brief-tag"><span class="k">EXCLUDES</span>Behavioral Health · Long-Term Care</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="brief-section in-progress">
+        <div class="brief-section-head">
+          <div class="brief-section-title">3 · Sponsor Commitment</div>
+          <span class="brief-section-state amber"><span class="dot"></span>Pending · long pole</span>
+        </div>
+        <div class="brief-content">
+          <div class="kv-pair"><span class="k">Proposed sponsor</span><span class="v">Katherine Oshima · CIO</span></div>
+          <div class="kv-pair"><span class="k">Posture</span><span class="v" style="color: var(--amber);">Verbal interest · written commitment pending</span></div>
+          <div class="kv-pair"><span class="k">Last touch</span><span class="v">3 days ago · 30-min discovery call</span></div>
+          <div class="kv-pair"><span class="k">Next session</span><span class="v">Apr 11 · brief walkthrough + sign</span></div>
+        </div>
+      </div>
+
+      <div class="brief-section">
+        <div class="brief-section-head">
+          <div class="brief-section-title">5 · Foundation Readiness</div>
+          <span class="brief-section-state amber"><span class="dot"></span>1 gap flagged</span>
+        </div>
+        <div class="brief-content">
+          <div class="foundation-grid">
+            <div class="foundation-row"><span class="foundation-code">F1</span><span class="foundation-name">Identity &amp; Access</span><span class="foundation-state met">Met</span></div>
+            <div class="foundation-row"><span class="foundation-code">F2</span><span class="foundation-name">Master Data Mgmt</span><span class="foundation-state partial">Partial</span></div>
+            <div class="foundation-row"><span class="foundation-code">F3</span><span class="foundation-name">Observability</span><span class="foundation-state met">Met</span></div>
+            <div class="foundation-row"><span class="foundation-code">F4</span><span class="foundation-name">Data Governance</span><span class="foundation-state met">Met</span></div>
+          </div>
+          <div style="margin-top: 10px; font-size: 13px; color: var(--gray-dk); line-height: 1.55;"><strong style="color: var(--ink); font-weight: 600;">F2 partial:</strong> patient ID resolution is fragmented across Epic, Soarian, and the legacy ambulatory system. Will need to be addressed in P3 Design or scoped as a precondition.</div>
+        </div>
+      </div>
+
+      <div class="brief-section">
+        <div class="brief-section-head">
+          <div class="brief-section-title">6 · Classification</div>
+          <span class="brief-section-state empty"><span class="dot"></span>Not started</span>
+        </div>
+        <div class="brief-content">
+          <div class="brief-empty">Move classification (Tier 1/2/3, capital category, regulatory exposure) is scored after sponsor commits. Nexus will pre-fill from archetype + scope and route for sponsor confirmation.</div>
+        </div>
+      </div>
+
+      <div class="brief-section">
+        <div class="brief-section-head">
+          <div class="brief-section-title">7 · P1 Handoff</div>
+          <span class="brief-section-state empty"><span class="dot"></span>Locked until sponsor signs</span>
+        </div>
+        <div class="brief-content">
+          <div class="handoff-card">
+            <div class="handoff-text">When the sponsor signs and classification is scored, this Move promotes from <strong>P0 Originate</strong> to <strong>P1 Charter</strong>. The phase rail unlocks, Nexus rescopes from drafting to phase-aware co-pilot, and P1 gate criteria seed.</div>
+            <button class="btn-handoff" disabled>Promote to P1 Charter <span class="arrow">→</span></button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="doc-footnote">
+  <strong>Notes for v0.2 → v0.3</strong> &nbsp;·&nbsp;
+  <sup>¹</sup>Confidence bands on value ranges and role templates (e.g., "Verify owner: Finance-of-record + observer") are <strong>aspirational v2 features pending substrate support</strong>. Shown here as design language only. &nbsp;·&nbsp;
+  <sup>²</sup>The "Handoff Plan" deliverable is bound to a catalog code (<code>tower_handoff_plan</code>) that will resolve once the Tower surface is designed; treated here as a generic handoff artifact. &nbsp;·&nbsp;
+  Catalog codes shown beneath each deliverable are the binding identifiers; the human-readable label is for the UI.
+</div>
+
+</main>
+
+<script>
+  document.querySelectorAll('.context-rail').forEach(rail => {
+    const tabs = rail.querySelectorAll('.context-tab');
+    const panels = rail.querySelectorAll('.context-panel');
+    tabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        const targetId = tab.dataset.target;
+        tabs.forEach(t => t.classList.toggle('active', t === tab));
+        panels.forEach(p => p.classList.toggle('active', p.dataset.panel === targetId));
+      });
+    });
+  });
+</script>
+
+</body>
+</html>
