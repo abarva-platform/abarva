@@ -67,11 +67,8 @@ export function StrategicMoveDetailView({ move }: Props) {
             </div>
           </div>
           <div className={styles.chatInput}>
-            <div className={styles.suggestedLabel}>&#8627; Suggested questions</div>
             <div className={styles.suggestedPrompts}>
               <button className={styles.promptChip} type="button">What&rsquo;s blocking the gate?</button>
-              <button className={styles.promptChip} type="button">Show me the evidence trail</button>
-              <button className={styles.promptChip} type="button">Who needs to weigh in next?</button>
             </div>
             <div className={styles.inputRow}>
               <input type="text" placeholder={`Ask Nexus about ${move.displayCode}\u2026`} />
