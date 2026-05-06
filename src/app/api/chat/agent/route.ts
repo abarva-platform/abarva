@@ -198,6 +198,10 @@ import "@/lib/agent/tools/program/createMilestones";
 import "@/lib/agent/tools/program/completeModule";
 import "@/lib/agent/tools/program/assignSponsor";
 import "@/lib/agent/tools/program/completeProgram";
+// Wave 4A · workspace artifact drafting. Registers draft_artifact for the
+// /strategic-moves/:id/phase/:phase surface so Nexus can generate and persist
+// deliverable drafts from the workspace chat.
+import "@/lib/agent/tools/program/draftArtifact";
 
 // ── Agent voice map ────────────────────────────────────────────────────────────
 
@@ -611,8 +615,12 @@ export async function POST(request: Request) {
     typeof surface === 'string' &&
     /^\/programs\/[^/]+$/.test(surface) &&
     surface !== '/programs/new';
+  // Wave 4A: workspace phase surfaces follow the pattern /strategic-moves/<id>/phase/<n>
+  const isWorkspacePhaceSurface =
+    typeof surface === 'string' &&
+    /^\/strategic-moves\/[^/]+\/phase\/[1-5]$/.test(surface);
   const artifactInstructions =
-    surfacesWithArtifactChannel.has(surface) || isProgramDetailSurface || isSourceSurface(surface)
+    surfacesWithArtifactChannel.has(surface) || isProgramDetailSurface || isSourceSurface(surface) || isWorkspacePhaceSurface
       ? ARTIFACT_CHANNEL_INSTRUCTIONS
       : '';
 

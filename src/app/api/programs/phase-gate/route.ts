@@ -6,6 +6,9 @@ import { checkTenantAccessByKey, tenantKeyForProgramCode } from '@/lib/auth/tena
 import { getLatestSponsorCommitment } from '@/lib/workflow/sponsorCommitmentLedger';
 import { getProgramTensionRecords, getStakeholderSuccessRecords } from '@/lib/workflow/stakeholderSuccessLedger';
 import { dataReadinessGateMet } from '@/lib/workflow/dataReadinessLedger';
+import { getServerSupabase } from '@/lib/supabase-server';
+import { getSeedPlan } from '@/lib/deliverables/seed-route-resolver';
+import { writeProgramAuditLogBestEffort } from '@/lib/programs/audit-log';
 
 // Priority 2 item 2 · phase-gate advancement that moves a program forward.
 //
@@ -172,6 +175,75 @@ export async function POST(request: NextRequest) {
   const ledger = readLedger();
   ledger.entries.push(entry);
   writeLedger(ledger);
+
+  // Supabase writes — additive to the filesystem ledger. Failures are logged
+  // but never surface as HTTP errors; the ledger remains the source of truth
+  // until the Supabase layer is fully promoted.
+  let engagementId: string | null = null;
+  try {
+    // Resolve the engagement UUID from the programCode via the seed plan's
+    // graph_node_id, which is the stable link between seed metadata and DB rows.
+    const plan = getSeedPlan();
+    const seedProgram = plan.programs.find(
+      (p) => p.code.trim().toLowerCase() === programCode.trim().toLowerCase(),
+    );
+    const graphNodeId = seedProgram?.graphNodeId ?? null;
+
+    if (graphNodeId) {
+      const sb = getServerSupabase();
+
+      // 1. Look up the engagement row.
+      const { data: engRow, error: fetchErr } = await sb
+        .from('engagements')
+        .select('id, current_phase, gates_passed')
+        .eq('graph_node_id', graphNodeId)
+        .maybeSingle();
+
+      if (fetchErr) {
+        console.error('[phase-gate] supabase fetch failed', { programCode, graphNodeId, message: fetchErr.message });
+      } else if (engRow) {
+        engagementId = engRow.id as string;
+
+        // 2. Build the deduplicated gates_passed array with the new phase appended.
+        const existingGates: number[] = Array.isArray(engRow.gates_passed) ? (engRow.gates_passed as number[]) : [];
+        const updatedGates = Array.from(new Set([...existingGates, toPhase])).sort((a, b) => a - b);
+
+        // 3. UPDATE engagements.current_phase and gates_passed.
+        const { error: updateErr } = await sb
+          .from('engagements')
+          .update({
+            current_phase: toPhase,
+            gates_passed: updatedGates,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', engagementId);
+
+        if (updateErr) {
+          console.error('[phase-gate] supabase update failed', { programCode, engagementId, message: updateErr.message });
+        }
+      } else {
+        console.warn('[phase-gate] no engagement row found for graph_node_id', { programCode, graphNodeId });
+      }
+    } else {
+      console.warn('[phase-gate] no graphNodeId resolved for programCode', { programCode });
+    }
+  } catch (err) {
+    console.error('[phase-gate] supabase write threw', { programCode, message: err instanceof Error ? err.message : String(err) });
+  }
+
+  // 4. Audit log — best-effort; never blocks the response.
+  await writeProgramAuditLogBestEffort(
+    { clientId: ownerKey, userId: session.userId, role: role ?? undefined },
+    {
+      tenantKey: ownerKey,
+      programId: programCode,
+      engagementId: engagementId ?? undefined,
+      action: 'PHASE_GATE_ADVANCED',
+      fromState: `P${fromPhase}`,
+      toState: `P${toPhase}`,
+      rationale: gateCriterion,
+    },
+  );
 
   return NextResponse.json({ ok: true, entry });
 }
