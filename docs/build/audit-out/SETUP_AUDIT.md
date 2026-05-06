@@ -80,10 +80,15 @@ Approvals queue, dataset upload, evidence quality export, deployment status, use
 ### F-SU-105 · `admin_blockers.owner_agent` parallel-all pattern echoes Source
 Same pattern as Source (F-M2-101): per-row agent ownership, no single-lead-per-stage. Under workflow-first, this becomes "which capability bucket the blocker belongs to" — useful tagging, not user-visible role assignment.
 
-### F-SU-106 · No per-user RLS yet; service-role-only
-Every admin/setup table uses `FOR ALL TO service_role USING (true)`. The spine doc §B.4 calls out RLS-on-every-segment-table as cross-cutting, but pilot posture is "service-role-only until per-user RLS lands."
-- **Severity:** P0 for pilot — must close before pilot goes to first real customer.
-- **Treatment:** Already on the roadmap per spine doc; flag for tracking.
+### F-SU-106 · No per-user RLS yet; service-role-only ✅ RESOLVED — Phase 5 shipped 2026-05-07
+~~Every admin/setup table uses `FOR ALL TO service_role USING (true)`.~~  
+**Resolution:** Phase 5 per-user RLS rollout shipped 2026-05-07:
+- Migration `20260507100000_rls_role_helpers.sql`: role helper functions + `clients.tenant_key`
+- Migration `20260507120000_admin_per_user_rls_read.sql`: per-user read policies for all 7 admin tables (tenant_admin-gated)
+- Migration `20260507140000_per_user_rls_write.sql`: write policies for admin tables (tenant_admin-gated; audit_log append-only)
+- 108-test negative test suite at `src/__tests__/integration/security/per-user-rls.test.ts`
+- Operations runbook at `docs/build/RLS_OPERATIONS_RUNBOOK.md`
+- **Severity:** ~~P0 for pilot~~ → **Closed**
 
 ### F-SU-107 · Spine doc's "Sentinel chat" pattern not implemented in admin code
 No SentinelChat component visible under `/admin/**`. The chat affordance described in spine §D.2 ("Ask about your [segment name]") exists conceptually but doesn't have a ready-made component.
