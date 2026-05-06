@@ -21,7 +21,7 @@ function primaryAction(move: StrategicMove): { label: string; href: string } {
   if (status.key === 'gate_blocked') return { label: 'Open gate review', href: `/strategic-moves/${id}?panel=gate` };
   if (status.key === 'awaiting_decision') return { label: 'Resolve decision', href: '/admin/programs/approvals' };
   if (status.key === 'validated') return { label: 'Review verification', href: `/tower?move=${id}` };
-  return { label: `Continue ${phaseLabel}`, href: `/strategic-moves/${id}?phase=${currentPhase}` };
+  return { label: `Continue ${phaseLabel}`, href: `/strategic-moves/${id}/phase/${currentPhase}` };
 }
 
 function secondaryAction(move: StrategicMove): { label: string; href: string } | null {
