@@ -291,6 +291,7 @@ export const P3_DESIGN_PACK: PhasePack = {
     {
       id: 'AP-P3-4',
       label: 'Deferred sourcing decision',
+      // dom-integrity-ignore-line — "TBD" here is the anti-pattern text Nexus detects, not a placeholder
       detection_hint: 'Sourcing approach is listed as "TBD" or "to be determined in P4"',
       what_to_flag: 'The sourcing approach must be decided at P3 — it affects P4 roadmap and business case significantly. Is this build, buy, configure, or partner?',
       mitigation: 'Force sourcing approach decision at P3. If vendor involvement is required, flag for source event at P4.',
@@ -318,6 +319,7 @@ export const P3_DESIGN_PACK: PhasePack = {
     },
     {
       criterion_id: 'GC-P3-4',
+      // dom-integrity-ignore-line — "TBD" is the anti-pattern text, not a placeholder
       condition: 'Sourcing approach is stated (not "TBD")',
       nexus_may_self_approve: true,
       approval_label: 'Nexus self-approved: sourcing strategy decided',
@@ -397,7 +399,9 @@ export const P3_DESIGN_PACK: PhasePack = {
       id: 'AH-P3-3',
       rule: 'Must not defer the sourcing decision to P4',
       trigger: 'Sourcing approach discussion in P3.4',
+      // dom-integrity-ignore-line — "TBD" is the pattern Nexus watches for, not a placeholder
       required_behavior: 'The sourcing approach must be decided at P3. If the answer is "TBD", ask: "What information is missing that prevents a sourcing decision now?"',
+      // dom-integrity-ignore-line — "TBD" is the pattern Nexus watches for, not a placeholder
       prohibited_behavior: 'Marking sourcing_approach as TBD or deferring to P4.',
     },
   ],
