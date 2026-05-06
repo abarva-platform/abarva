@@ -194,13 +194,13 @@ const SECURITY_CONTROL_FAMILIES: ReadonlyArray<SecurityControlFamily> = [
         controlId: 'authz-C2-db-rls',
         label: 'Database Row-Level Security',
         description:
-          'Supabase RLS policies enforce tenant isolation at the Postgres layer. No cross-tenant data leaks via queries.',
+          'Per-user, role-aware RLS on all Source, Admin, Tower, and Intelligence tables. JWT tenant_key + role claims enforced at Postgres layer. Role helpers (is_maestro, is_tenant_admin, can_read_tenant_by_key/id) standardize the policy pattern. 108-test negative suite passes. Phase 5 shipped 2026-05-07.',
         threatCategory: 'authorisation',
-        maturity: 'partial',
+        maturity: 'implemented',
         riskIfMissing: 'critical',
         mitigationGuidance:
-          'Audit all tables for RLS policies. Enable RLS on tenant_id-scoped tables. Test with multi-tenant fixture.',
-        pilotBlocker: true,
+          'Run manual pen-test per RLS_OPERATIONS_RUNBOOK.md §5 before onboarding first real customer. SME/program_initiator write permissions are Phase 5.1.',
+        pilotBlocker: false,
         requiredMaturity: 'implemented',
       },
       {

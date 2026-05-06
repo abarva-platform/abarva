@@ -7,6 +7,7 @@ import {
   type EnterpriseAgentName,
   type EnterpriseContextSurface,
 } from '@/lib/knowledge/agent-context-broker';
+import { assertTenantAlignmentWithJwt } from '@/lib/rls/tenant-alignment';
 
 // Sentinel-side adapter · Surface 2 PR-INT-A.
 //
@@ -21,6 +22,12 @@ import {
 // Per the broker boundary doc: app-tier code (agents, routes, components)
 // must NOT directly import EnterpriseDataRoom seeds, vector stores, or
 // graph stores. Every Intelligence-surface read goes through this seam.
+//
+// Phase 5 · Step 9 · Tenant alignment gate:
+// buildSentinelContextBundleVerified() asserts JWT tenant matches the
+// requested tenantKey before invoking the broker. Call this variant from
+// API routes. buildSentinelContextBundle() (no-assert variant) remains for
+// internal/service-role call sites where JWT is not present.
 
 export interface SentinelBrokerRequest {
   /** Tenant client key, e.g. 'apex-retail'. */
@@ -51,4 +58,20 @@ export function buildSentinelContextBundle(
     includeGraphNeighborhood: request.includeGraphNeighborhood ?? false,
     requestedDomains: request.requestedDomains,
   });
+}
+
+// Tenant-verified variant. Throws a structured error if the JWT claim
+// does not match the requested tenantKey. Use in API routes where the
+// authenticated user context is available.
+export async function buildSentinelContextBundleVerified(
+  request: SentinelBrokerRequest,
+): Promise<EnterpriseAgentContextBundle> {
+  const alignmentError = await assertTenantAlignmentWithJwt(request.tenantKey);
+  if (alignmentError) {
+    const err = new Error(alignmentError.message) as Error & { code: string; jwtTenantKey: string | null };
+    err.code = alignmentError.code;
+    err.jwtTenantKey = alignmentError.jwtTenantKey;
+    throw err;
+  }
+  return buildSentinelContextBundle(request);
 }

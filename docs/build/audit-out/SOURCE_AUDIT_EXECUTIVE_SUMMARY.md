@@ -231,7 +231,7 @@ One identity, two broker scopes. Intelligence has a dedicated `sentinel-broker-a
 | 2 · Substrate generalization | `atlas_threads`/`atlas_observations` → `agent_threads`/`agent_observations` with discriminator | ~1 day total |
 | 3 · Source refactor | Replace `SourceMultiAgentBriefing` with Sentinel-front + specialist routing; existing voice generators become specialists with no rewrite | 1–2 weeks |
 | 4 · Voice doctrine expansion | Mirror Sentinel's 17-banned-pattern model for Nexus, Atlas, Steward | ~1 week |
-| 5 · Per-user RLS | Pilot-blocking; substrate-wide | ~2 weeks |
+| 5 · Per-user RLS | ✅ Shipped 2026-05-07 — 6 migrations + 108 tests + ops runbook | ~2 weeks |
 | 6 · Polish | Tower 5D lens completion · Moves V1/V2 consolidation · Setup audit-trail · Intelligence INT-5 4-mode toggle | ~1 week each, parallelizable |
 
 ### What stays
