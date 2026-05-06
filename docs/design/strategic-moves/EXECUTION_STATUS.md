@@ -148,7 +148,7 @@ Tracks every step from `EXECUTION_PLAYBOOK.md` against its current state. Update
 
 | Step | Work Package | Owner | Status | PR | Notes |
 |---|---|---|---|---|---|
-| 8.1 | Originate implementation | Claude Code | ⏳ | — | Unblocked by O-IG ✅ |
+| 8.1 | Originate implementation | Claude Code | ✅ | [#1574](https://github.com/anandsundaram-hash/abarva/pull/1574) | Real Nexus agent wired; T-P0 pack + AH-ORIG-1–6 rules; 7-step scaffold; 2A/2B first-message variants |
 | 8.2 | Workspace implementation | Claude Code | 🔒 | — | Blocked on 7.12 (W-IG) |
 
 ---
@@ -186,8 +186,8 @@ Tracks every step from `EXECUTION_PLAYBOOK.md` against its current state. Update
 | Phase 5 | 16 | 16 | 0 | 0 |
 | Phase 6 | 10 | 9 | 0 | 1 (6.7 Anand) |
 | Phase 7 | 12 | 8 | 0 | 4 (7.1/7.11 ⏳ · 7.2/7.12 🔒) |
-| Phase 8 | 2 | 0 | 0 | 2 (8.1 ⏳ · 8.2 🔒) |
+| Phase 8 | 2 | 1 | 0 | 1 (8.2 🔒 W-IG) |
 | Phase 9 | 5 | 0 | 0 | 5 |
-| **Total** | **67** | **55** | **0** | **12** |
+| **Total** | **67** | **56** | **0** | **11** |
 
-_Last updated: 2026-05-06 · Phases 0–5 complete · Phase 6: 9/10 (6.7 awaiting Anand) · Phase 7: W-5.1–W-5.8 all merged (55/67); W-5.9 ready for Anand review_
+_Last updated: 2026-05-06 · Phase 8.1 Originate implementation ✅ · Phase 7 W-5.9 + Phase 6 6.7 awaiting Anand sign-off · 56/67 done_
