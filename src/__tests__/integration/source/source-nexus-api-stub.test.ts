@@ -40,7 +40,7 @@ describe('Source Nexus API stub contract', () => {
     expect(response.answerStatus).toBe('blocked');
   });
 
-  it('includes a complete deterministic multi-agent briefing', () => {
+  it('includes a complete Sentinel-orchestrated briefing with specialist trace', () => {
     const response = createSourceNexusApiStubResponse({
       eventId: SOURCE_GOLDEN_EVENT_IDS.dataAiModernization,
       prompt: 'Give me the Source command read.',
@@ -48,13 +48,25 @@ describe('Source Nexus API stub contract', () => {
       user,
     });
 
+    // Sentinel orchestrator is now the primary surface.
+    expect(response.sentinelBriefing).toBeTruthy();
+    expect(response.sentinelBriefing?.primaryVoice.agentName).toBe('sentinel');
+    expect(response.sentinelBriefing?.specialistContributions.length).toBeGreaterThan(0);
+    // Specialist contributions retain flavor attribution for trace drawer.
+    const flavors = response.sentinelBriefing?.specialistContributions.map((c) => c.specialistFlavor);
+    expect(flavors).toContain('nexus');
+    expect(flavors).toContain('atlas');
+    expect(flavors).toContain('steward');
+    // Back-compat adapter preserves per-agent shapes for downstream consumers still migrating.
     expect(response.multiAgentBriefing).toBeTruthy();
     expect(response.multiAgentBriefing?.nexus.agentName).toBe('nexus');
     expect(response.multiAgentBriefing?.sentinel.agentName).toBe('sentinel');
     expect(response.multiAgentBriefing?.atlas.agentName).toBe('atlas');
     expect(response.multiAgentBriefing?.steward.agentName).toBe('steward');
-    expect(response.nexusSummary?.primaryFinding).toContain('cannot move cleanly');
-    expect(response.summary).toContain('Briefing version source-multi-agent-briefing/v1');
+    // nexusSummary reads from primaryVoice (Sentinel-orchestrated).
+    expect(response.nexusSummary?.primaryFinding).toBeTruthy();
+    // summary is the combined sentinel briefing summary.
+    expect(response.summary).toBe(response.sentinelBriefing?.combinedSummary);
   });
 
   it('returns validation summaries and suggested actions', () => {
@@ -128,7 +140,9 @@ describe('Source Nexus API stub contract', () => {
     });
 
     expect(response.intakeGuidance).toBeUndefined();
-    expect(response.summary).toContain('Briefing version source-multi-agent-briefing/v1');
+    // Summary is now the Sentinel-orchestrated combinedSummary, not the old multi-agent version string.
+    expect(response.summary).toBeTruthy();
+    expect(response.summary).toBe(response.sentinelBriefing?.combinedSummary);
   });
 
   it('returns a deterministic failure for missing event id', () => {

@@ -94,3 +94,30 @@ export interface SourceMultiAgentBriefing {
   defers: string[];
   recommendedNextSlice: string;
 }
+
+// ── Sentinel-front orchestrator types (Phase 3) ──────────────────────────────
+//
+// SourceMultiAgentBriefing becomes an internal aggregation step. The
+// public surface is SentinelSourceBriefing: one Sentinel-voiced block
+// with specialist contributions hidden in a trace drawer.
+
+export interface SpecialistContribution {
+  specialistId: string;
+  specialistFlavor: SourceAgentName;
+  missionType: string;
+  contribution: SourceAgentBriefing;
+}
+
+export interface SentinelSourceBriefing {
+  eventId?: string;
+  contextScope: SourceAgentContextScope;
+  generatedAt: string;
+  primaryVoice: SourceAgentBriefing;
+  specialistContributions: SpecialistContribution[];
+  combinedSummary: string;
+  highestPriorityAction: string;
+  overallReadiness: SourceMultiAgentOverallReadiness;
+  blockers: string[];
+  defers: string[];
+  recommendedNextSlice: string;
+}

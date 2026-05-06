@@ -3,13 +3,16 @@ import type { CSSProperties } from 'react';
 import { SHELL } from '@/lib/shell/shell-tokens';
 import {
   buildSourceAgentContextBundle,
-  buildSourceMultiAgentBriefing,
   createSourceAgentMissionReport,
   getSourceContextValidationReadableReport,
   getSourceWorkflowValidationReadableReport,
   type SourceAgentMission,
   type SourceAgentMissionReport,
 } from '@/lib/source';
+import {
+  buildSentinelSourceBriefing,
+  adaptSentinelBriefingToMultiAgent,
+} from '@/lib/source/sentinel-source-orchestrator';
 import type { AbarvaSourceDashboardData } from '@/lib/source/types';
 import { formatUsd } from '@/lib/source/value-ledger';
 import { SourceAlertPanel, type SourceAlertEventContext } from './SourceAlertPanel';
@@ -461,7 +464,7 @@ function buildDashboardMissionReport(event: SourceDashboardEvent): SourceAgentMi
   const workflowValidationReport = getSourceWorkflowValidationReadableReport({
     generatedAt: DASHBOARD_MISSION_GENERATED_AT,
   });
-  const multiAgentBriefing = buildSourceMultiAgentBriefing({
+  const sentinelBriefing = buildSentinelSourceBriefing({
     contextBundle,
     contextValidationReport,
     workflowValidationReport,
@@ -474,7 +477,7 @@ function buildDashboardMissionReport(event: SourceDashboardEvent): SourceAgentMi
     contextBundle,
     contextValidationReport,
     workflowValidationReport,
-    multiAgentBriefing,
+    multiAgentBriefing: adaptSentinelBriefingToMultiAgent(sentinelBriefing),
     userRole: 'sourcingLead',
     mode: 'dashboard',
     generatedAt: DASHBOARD_MISSION_GENERATED_AT,
