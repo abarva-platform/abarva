@@ -1,6 +1,8 @@
 import {
   SOURCE_DEFAULT_SCORECARD_ARCHETYPE_IDS,
   SOURCE_GOLDEN_EVENT_IDS,
+  SOURCE_STAGE_LABELS,
+  normalizeSourceStageKey,
 } from './constants';
 import { getActiveStage } from './lifecycle';
 import {
@@ -495,9 +497,10 @@ function toEventSnapshot(event: SourcingEventDetail): SourceEventSnapshot {
 }
 
 function toStageSnapshot(stage: WorkflowStage): SourceStageSnapshot {
+  const canonicalKey = normalizeSourceStageKey(stage.key) ?? stage.key;
   return {
-    key: stage.key,
-    label: stage.label,
+    key: canonicalKey,
+    label: SOURCE_STAGE_LABELS[canonicalKey] ?? stage.label,
     status: stage.status,
     readinessScore: getGateStatusScore(stage.gate.status),
     owner: stage.gate.ownerRole,
