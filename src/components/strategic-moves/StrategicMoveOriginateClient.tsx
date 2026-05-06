@@ -106,6 +106,7 @@ export function StrategicMoveOriginateClient({ tenantName, initialTurns }: Props
   const [composer, setComposer] = useState('');
   const [streaming, setStreaming] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
+  const [scaffoldOpen, setScaffoldOpen] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
@@ -382,32 +383,49 @@ export function StrategicMoveOriginateClient({ tenantName, initialTurns }: Props
             ))}
           </div>
 
-          {/* orig-chat-scaffold — step ladder in left lane */}
+          {/* orig-chat-scaffold — collapsible step ladder */}
           <div id="orig-chat-scaffold" className={styles.startFromBlock}>
-            <div className={styles.startFromLabel}>
-              <span aria-hidden>&#8627;</span> Scaffold steps
-            </div>
-            <div className={styles.startFromChips}>
-              {SCAFFOLD_DEFS.map(({ id, label, step }) => {
-                const filled = brief.fields[id].trim().length > 0;
-                return (
-                  <button
-                    key={id}
-                    id={`orig-chat-scaffold-step-${step}`}
-                    className={`${styles.startChip} ${filled ? styles.startChipUsed : ''}`}
-                    onClick={() => void send(`Let's work on step ${step}: ${label}.`)}
-                    type="button"
-                    disabled={streaming}
-                    aria-label={`${label}${filled ? ' — captured' : ''}`}
-                  >
-                    <span>{label}</span>
-                    {filled ? (
-                      <span className={styles.startChipArrow} aria-hidden>&#10003;</span>
-                    ) : null}
-                  </button>
-                );
-              })}
-            </div>
+            <button
+              type="button"
+              className={styles.scaffoldToggleBtn}
+              onClick={() => setScaffoldOpen((v) => !v)}
+              aria-expanded={scaffoldOpen}
+              aria-controls="orig-chat-scaffold-grid"
+            >
+              <span aria-hidden>&#8627;</span>
+              Scaffold
+              <span className={styles.startChipCount}>
+                {SCAFFOLD_DEFS.filter(({ id }) => brief.fields[id].trim().length > 0).length}/7
+              </span>
+              <span className={styles.scaffoldToggleIcon} aria-hidden>
+                {scaffoldOpen ? '▴' : '▾'}
+              </span>
+            </button>
+            {scaffoldOpen && (
+              <div id="orig-chat-scaffold-grid" className={styles.startChipGrid}>
+                {SCAFFOLD_DEFS.map(({ id, label, step }) => {
+                  const filled = brief.fields[id].trim().length > 0;
+                  return (
+                    <button
+                      key={id}
+                      id={`orig-chat-scaffold-step-${step}`}
+                      className={`${styles.startChipCompact} ${filled ? styles.startChipUsed : ''}`}
+                      onClick={() => void send(`Let's work on step ${step}: ${label}.`)}
+                      type="button"
+                      disabled={streaming}
+                      aria-label={`${label}${filled ? ' — captured' : ''}`}
+                      title={label}
+                    >
+                      <span className={styles.chipStepNum} aria-hidden>{step}</span>
+                      <span className={styles.chipLabel}>{label}</span>
+                      {filled ? (
+                        <span className={styles.startChipArrow} aria-hidden>&#10003;</span>
+                      ) : null}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
           </div>
 
           {/* orig-chat-input-area */}
