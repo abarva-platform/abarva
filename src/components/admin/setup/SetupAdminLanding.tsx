@@ -165,9 +165,11 @@ function ProgramApprovalQueueCallout({ pendingCount }: { pendingCount: number })
       data-testid="program-approval-queue-callout"
       style={{
         background: hasPending ? SHELL.PAPER : COLORS.skyPale,
-        border: `1px solid ${hasPending ? COLORS.coralInk : COLORS.navy}33`,
-        borderRadius: RADIUS.lg,
-        padding: SPACING.lg,
+        borderLeft: `3px solid ${hasPending ? COLORS.coralInk : COLORS.navy}`,
+        paddingLeft: SPACING.lg,
+        paddingTop: SPACING.md,
+        paddingBottom: SPACING.md,
+        paddingRight: SPACING.lg,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',

@@ -884,10 +884,10 @@
 }
 
 .chatThread {
-  padding: 20px 22px;
+  padding: 16px 20px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
   flex: 1 1 auto;
   min-height: 0;
   overflow-y: auto;
@@ -896,13 +896,12 @@
 .bubbleNexus {
   align-self: flex-start;
   max-width: 92%;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.10);
+  background: rgba(255, 255, 255, 0.05);
   color: #eff6ff;
-  border-radius: 12px;
-  padding: 11px 15px;
-  font-size: 13px;
-  line-height: 1.5;
+  border-radius: 10px;
+  padding: 9px 14px;
+  font-size: 12px;
+  line-height: 1.55;
   overflow-wrap: anywhere;
   word-break: break-word;
   animation: bubbleFadeIn 280ms var(--ease-out);
@@ -919,11 +918,11 @@
   max-width: 92%;
   background: var(--abarva-signal-blue);
   color: #ffffff;
-  border-radius: 12px;
-  padding: 11px 15px;
-  font-size: 13px;
+  border-radius: 10px;
+  padding: 9px 14px;
+  font-size: 12px;
   font-weight: 500;
-  line-height: 1.5;
+  line-height: 1.55;
   overflow-wrap: anywhere;
   word-break: break-word;
   animation: bubbleFadeIn 280ms var(--ease-out);
@@ -945,36 +944,35 @@
   letter-spacing: 0.15em;
   text-transform: uppercase;
   color: var(--abarva-stone);
-  margin-bottom: 8px;
+  margin-bottom: 6px;
   font-weight: 600;
 }
 
 .suggestedPrompts {
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  margin-bottom: 12px;
+  gap: 4px;
+  margin-bottom: 10px;
 }
 
 .promptChip {
-  background: rgba(0, 102, 204, 0.12);
-  border: 1px solid rgba(0, 102, 204, 0.35);
-  color: #dce7f5;
-  padding: 9px 14px;
-  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.06);
+  border: none;
+  color: #b8cfe8;
+  padding: 6px 12px;
+  border-radius: 8px;
   font-family: var(--abarva-sans);
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 500;
   cursor: pointer;
   text-align: left;
   line-height: 1.4;
-  transition: background 150ms var(--ease-out), color 150ms var(--ease-out), border-color 150ms var(--ease-out);
+  transition: background 150ms var(--ease-out), color 150ms var(--ease-out);
 }
 
 .promptChip:hover {
-  background: rgba(0, 102, 204, 0.22);
+  background: rgba(255, 255, 255, 0.11);
   color: #ffffff;
-  border-color: var(--abarva-signal-blue);
 }
 
 .inputRow {

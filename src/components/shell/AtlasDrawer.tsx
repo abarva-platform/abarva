@@ -297,8 +297,7 @@ export function AtlasDrawer({
           background: SHELL.INK,
           display: 'flex',
           flexDirection: 'column',
-        borderRadius: 12,
-        overflow: 'hidden',
+          overflow: 'hidden',
       }
     : {
         position: 'fixed',
@@ -1051,7 +1050,7 @@ function DrawerChatBubble({
               : 'rgba(250,247,241,0.08)'
           }`,
           fontFamily: SHELL.SANS,
-          fontSize: 12.5,
+          fontSize: 11.5,
           color: isUser
             ? 'rgba(250,247,241,0.90)'
             : 'rgba(250,247,241,0.85)',
