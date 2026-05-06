@@ -266,14 +266,33 @@ End of addendum 2.
 
 | Finding | Description | Status |
 |---|---|---|
-| **F-M4-103** | Per-stage voice depth for Sentinel/Nexus/Atlas | Wave 3 in progress (pure TypeScript, no schema) |
-| **F-SU-104** | Specialist registry substrate | Wave 4 in progress (new tables) |
-| **F-M1-204** | Gate criteria per-criterion state | Wave 4 in progress |
-| **F-M1-205** | Value ledger per-line state | Wave 5 queued |
-| **F-SU-201** | Generalize agent_threads/observations | Wave 5 queued |
+| **F-M4-103** ✅ | Per-stage voice depth for Sentinel/Nexus/Atlas | Wave 3: `stage-voice-depth.ts` + 7 tests; `multi-agent-briefing.ts` updated |
+| **F-SU-104** ✅ | Specialist registry substrate | Wave 4: `specialist_registry` table seeded with 7 Source specialists |
+| **F-M1-204** ✅ | Gate criteria per-criterion state | Wave 4: `gate_criteria` + `gate_criterion_states` tables + TypeScript types |
+| **F-M1-205** ✅ | Value ledger per-line state | Wave 5: `source_value_lines` table (4-state lifecycle, RLS) + `value-line-types.ts` + 7 tests |
+| **F-SU-201** ✅ | Generalize agent_threads/observations | Wave 5: `agent-thread-types.ts` view-model; substrate in `20260506100000` (agent_name discriminator + views) |
 | **F-M1-102** | Artifact lifecycle multi-column vs unified enum | Decision deferred; multi-column is authoritative |
 | **F-M2-104** | Legacy stage_keys migration | Commented in `20260507160000`; backfill in Phase 6 |
 
-End of addendum 3.
+---
+
+## Addendum 4 · Wave 5 close-out (2026-05-07)
+
+All five Wave findings are now resolved. The substrate audit backlog (F-M1-101, F-M1-103, F-M1-203, F-M2-103, F-M2-104, F-M4-103, F-SU-104, F-M1-204, F-M1-205, F-SU-201) is fully closed except for the two intentionally-deferred items (F-M1-102 and F-M2-104 backfill).
+
+| PR | What shipped |
+|---|---|
+| #1605 | Wave 1+2: artifact families, evidence states, lead_agent, constant rename |
+| #1604 | Wave 4: specialist registry (7 seeds) + gate criteria substrate |
+| #1606 | Wave 3: per-stage voice depth for Sentinel/Nexus/Atlas |
+| Wave 5 | Value ledger per-line state (`source_value_lines`) + generalized agent thread types |
+
+**What remains before UI/UX polish wave:**
+- Run `npm run db:migrate` to apply new migrations to local + staging DB
+- UI/UX polish: apply full-message-readability + progressive scaffold disclosure across Source, Tower, Intelligence chat surfaces (per design principles memory)
+
+End of addendum 4.
+
+End of executive summary.
 
 End of executive summary.
