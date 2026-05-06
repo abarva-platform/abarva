@@ -64,7 +64,12 @@ import { canonicalizeFromBody } from "@/lib/agent/surface";
 // knowledge — outcome, right questions, anti-patterns, evidence,
 // posture per phase arc — that complements the per-pattern knowledge
 // already wired in via demo-context.
-import { getPhasePack, formatPhasePackForPrompt } from "@/lib/programs/phase-packs";
+import {
+  getPhasePack,
+  formatPhasePackForPrompt,
+  getPhasePackV2,
+  formatPhasePackV2ForPrompt,
+} from "@/lib/programs/phase-packs";
 import {
   getStagePack,
   formatStagePackForPrompt,
@@ -379,9 +384,18 @@ export async function POST(request: Request) {
           `Gate approvals: ${latestGate}`,
         );
 
-        const pack = getPhasePack(promptPhase);
-        if (pack) {
-          phasePackBlock = formatPhasePackForPrompt(pack);
+        // Phase pack — V2 when PHASE_PACK_V2=true, else V1 (T-D.2)
+        const useV2Pack = process.env.PHASE_PACK_V2 === 'true';
+        if (useV2Pack) {
+          const packV2 = getPhasePackV2(promptPhase);
+          if (packV2) {
+            phasePackBlock = formatPhasePackV2ForPrompt(packV2);
+          }
+        } else {
+          const pack = getPhasePack(promptPhase);
+          if (pack) {
+            phasePackBlock = formatPhasePackForPrompt(pack);
+          }
         }
       }
     } catch {
@@ -389,13 +403,30 @@ export async function POST(request: Request) {
     }
   }
 
-  // /strategic-moves/new — load T-P0 phase pack so Nexus has origination
-  // playbook context (scaffold steps, AH rules, gate criteria) without a
-  // programId. The pack is always phase 0 on the origination surface.
-  if (surface === '/strategic-moves/new' && !phasePackBlock) {
-    const p0Pack = getPhasePack(0);
-    if (p0Pack) {
-      phasePackBlock = formatPhasePackForPrompt(p0Pack);
+  // Strategic-moves surfaces — load phase pack by surface + phase context.
+  // /strategic-moves/new always loads P0 (origination).
+  // /strategic-moves/:id loads the pack for surfaceContext.phase (P1–P5).
+  // The useV2Pack flag applies here too (T-D.2 migration bridge).
+  const useV2Pack = process.env.PHASE_PACK_V2 === 'true';
+  if (!phasePackBlock) {
+    let smPhase: number | null = null;
+    if (surface === '/strategic-moves/new') {
+      smPhase = 0;
+    } else if (surface.startsWith('/strategic-moves/') && surface.length > '/strategic-moves/'.length) {
+      // Workspace surface — phase comes from surfaceContext.phase
+      const sp = surfaceContext.phase;
+      if (typeof sp === 'number' && sp >= 0 && sp <= 5) {
+        smPhase = sp;
+      }
+    }
+    if (smPhase !== null) {
+      if (useV2Pack) {
+        const packV2 = getPhasePackV2(smPhase);
+        if (packV2) phasePackBlock = formatPhasePackV2ForPrompt(packV2);
+      } else {
+        const p0Pack = getPhasePack(smPhase);
+        if (p0Pack) phasePackBlock = formatPhasePackForPrompt(p0Pack);
+      }
     }
   }
 

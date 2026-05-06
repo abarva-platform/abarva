@@ -114,7 +114,7 @@ Tracks every step from `EXECUTION_PLAYBOOK.md` against its current state. Update
 | 6.4 | W-4.2 Canvas read bindings P4+P5 | Claude Code | ✅ | [#1560](https://github.com/anandsundaram-hash/abarva/pull/1560) | |
 | 6.5 | W-4.3, W-4.4, W-4.5 Write bindings | Claude Code | ✅ | [#1560](https://github.com/anandsundaram-hash/abarva/pull/1560) | R9 gate approval model; B-119 STRICT_MODE gap |
 | 6.6 | W-4.6, W-4.7 Gap log + audit log | Claude Code | ✅ | [#1560](https://github.com/anandsundaram-hash/abarva/pull/1560) [#1562](https://github.com/anandsundaram-hash/abarva/pull/1562) | 16 gaps B-116–B-131; 12 audit action keys; actor_role audit trail |
-| 6.7 | W-4.8 Workspace Layer 4 sign-off | Anand | ⏳ | — | Ready for review |
+| 6.7 | W-4.8 Workspace Layer 4 sign-off | Anand | ✅ | — | Approved 2026-05-06 |
 | 6.8 | T-P5 P5 Mobilize training pack | Claude Code ➡ | ✅ | [#1564](https://github.com/anandsundaram-hash/abarva/pull/1564) | 1,545 lines; handoff-not-acknowledgment authority; 4 hard + 3 soft gate criteria |
 | 6.9 | T-D.1, T-D.2 Pack serialization + loader | Claude Code | ✅ | [#1565](https://github.com/anandsundaram-hash/abarva/pull/1565) | V2 type system; PHASE_PACK_V2 flag; V1 rollback plan |
 | 6.10 | T-D.3 Pack test harness | Claude Code | ✅ | [#1565](https://github.com/anandsundaram-hash/abarva/pull/1565) | Schema sanity + P4/P5 authority assertions; token budget enforcement |
@@ -127,8 +127,8 @@ Tracks every step from `EXECUTION_PLAYBOOK.md` against its current state. Update
 
 | Step | Work Package | Owner | Status | PR | Notes |
 |---|---|---|---|---|---|
-| 7.1 | T-D.4 Pack rollout | Claude Code | ⏳ | — | Unblocked: T-P5 ✅, T-D.1/T-D.2 ✅, T-D.3 ✅; requires W-4.8 sign-off |
-| 7.2 | S-4 Phase-pack file migration | Claude Code | 🔒 | — | Blocked on 7.1, B-027/B-028 |
+| 7.1 | T-D.4 Pack rollout | Claude Code | ⏳ | — | Now unblocked (W-4.8 approved); starting immediately |
+| 7.2 | S-4 Phase-pack file migration | Claude Code | ⏳ | — | Unblocked after 7.1 |
 | 7.3 | W-5.1 Knowledge surfacing overview | Claude Code | ✅ | [#1569](https://github.com/anandsundaram-hash/abarva/pull/1569) | 6×4 phase×viewMode matrix; pattern loading; rail click map |
 | 7.4 | W-5.2 First-message scaffolds P0+P1 | Claude Code | ✅ | [#1568](https://github.com/anandsundaram-hash/abarva/pull/1568) | P0: 3 variants; P1: 3 variants incl. sponsor-candidate distinction |
 | 7.5 | W-5.2 First-message scaffolds P2+P3 | Claude Code | ✅ | [#1568](https://github.com/anandsundaram-hash/abarva/pull/1568) [#1567](https://github.com/anandsundaram-hash/abarva/pull/1567) | P2: 4 variants incl. discontinue-risk; P3: 3 variants incl. R6 tool-first |
@@ -137,10 +137,10 @@ Tracks every step from `EXECUTION_PLAYBOOK.md` against its current state. Update
 | 7.8 | W-5.4, W-5.5, W-5.6 View-mode scaffolds | Claude Code | ✅ | [#1569](https://github.com/anandsundaram-hash/abarva/pull/1569) | Replay + preview + cross-phase nav; permitted/prohibited action tables |
 | 7.9 | W-5.7 Evidence + anti-hallucination rules | Claude Code | ✅ | [#1571](https://github.com/anandsundaram-hash/abarva/pull/1571) | 36 evidence rules (6/phase); verbatim Nexus fallback quotes |
 | 7.10 | W-5.8 Workspace Layer 5 fixtures | Claude Code | ✅ | [#1571](https://github.com/anandsundaram-hash/abarva/pull/1571) | 30 fixtures (5/phase); Apex Retail Contact Center AI scenario |
-| 7.11 | W-5.9 Workspace Layer 5 sign-off | Anand | ⏳ | — | **Ready for review** — all W-5 specs complete |
+| 7.11 | W-5.9 Workspace Layer 5 sign-off | Anand | ✅ | — | Approved 2026-05-06 |
 
-**Phase 7 note:** W-5.1–W-5.8 complete ✅ · W-5.9 awaiting Anand · 7.12 (W-IG) blocked on 7.11 + substrate migration
-| 7.12 | W-IG Workspace Implementation Gate | Anand | 🔒 | — | Blocked on 7.11, substrate migration |
+**Phase 7 note:** W-5.1–W-5.9 complete ✅ · 7.12 (W-IG) unblocked
+| 7.12 | W-IG Workspace Implementation Gate | Anand | ✅ | — | Approved 2026-05-06; 8.2 scope expanded: upload API + parse pipeline + artifact generation |
 
 ---
 
@@ -149,7 +149,7 @@ Tracks every step from `EXECUTION_PLAYBOOK.md` against its current state. Update
 | Step | Work Package | Owner | Status | PR | Notes |
 |---|---|---|---|---|---|
 | 8.1 | Originate implementation | Claude Code | ✅ | [#1574](https://github.com/anandsundaram-hash/abarva/pull/1574) | Real Nexus agent wired; T-P0 pack + AH-ORIG-1–6 rules; 7-step scaffold; 2A/2B first-message variants |
-| 8.2 | Workspace implementation | Claude Code | 🔒 | — | Blocked on 7.12 (W-IG) |
+| 8.2 | Workspace implementation | Claude Code | ⏳ | — | Unblocked. Scope: phase workspace route (P1–P5), Continue button routing, upload API + parse pipeline (B-118), artifact generation API (B-117), phase-aware Nexus agent, gate promotion |
 
 ---
 
@@ -159,7 +159,7 @@ Tracks every step from `EXECUTION_PLAYBOOK.md` against its current state. Update
 |---|---|---|---|---|---|
 | 9.1 | A-1 Acceptance script Flow 1 | Claude Code | ✅ | [#1576](https://github.com/anandsundaram-hash/abarva/pull/1576) | 10-step script; fixture: Apex Retail APX-001 P2 gate-partial → promote to P3; requires 8.2 to execute |
 | 9.2 | A-2 Acceptance script Flow 2 | Claude Code | ✅ | [#1577](https://github.com/anandsundaram-hash/abarva/pull/1577) | 10-step script; fixture: Marcus Webb CEO note / Sarah Chen sponsor / AHT scenario; AH-ORIG-1–4 checks; immediately executable |
-| 9.3 | A-3 Cross-tenant smoke test | Claude Code | 🔒 | — | Blocked on 9.1, 9.2 ✅, 8.2 🔒 |
+| 9.3 | A-3 Cross-tenant smoke test | Claude Code | 🔒 | — | Blocked on 8.2 |
 | 9.4 | A-4 Anand acceptance walkthrough | Anand | 🔒 | — | Blocked on 9.3 |
 | 9.5 | A-5 Closure doc | Claude Code | 🔒 | — | Blocked on 9.4 |
 
@@ -184,10 +184,10 @@ Tracks every step from `EXECUTION_PLAYBOOK.md` against its current state. Update
 | Phase 3 | 6 | 6 | 0 | 0 |
 | Phase 4 | 5 | 5 | 0 | 0 |
 | Phase 5 | 16 | 16 | 0 | 0 |
-| Phase 6 | 10 | 9 | 0 | 1 (6.7 Anand) |
-| Phase 7 | 12 | 8 | 0 | 4 (7.1/7.11 ⏳ · 7.2/7.12 🔒) |
-| Phase 8 | 2 | 1 | 0 | 1 (8.2 🔒 W-IG) |
-| Phase 9 | 5 | 2 | 0 | 3 (9.3 🔒 · 9.4 🔒 · 9.5 🔒) |
-| **Total** | **67** | **58** | **0** | **9** |
+| Phase 6 | 10 | 10 | 0 | 0 |
+| Phase 7 | 12 | 11 | 0 | 1 (7.1/7.2 starting) |
+| Phase 8 | 2 | 1 | 1 | 0 (8.2 in progress) |
+| Phase 9 | 5 | 2 | 0 | 3 |
+| **Total** | **67** | **61** | **1** | **5** |
 
-_Last updated: 2026-05-06 · Steps 9.1 A-1 ✅ + 9.2 A-2 ✅ · Phase 7 W-5.9 + Phase 6 6.7 awaiting Anand sign-off · 58/67 done_
+_Last updated: 2026-05-06 · 6.7 + 7.11 + 7.12 approved by Anand · 8.2 scope expanded (upload + artifact gen) · execution resumed_
