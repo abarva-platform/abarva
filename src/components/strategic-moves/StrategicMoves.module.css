@@ -1021,6 +1021,73 @@
   background: var(--abarva-signal-blue-dark);
 }
 
+.sendBtn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.uploadBtn {
+  background: transparent;
+  border: none;
+  color: var(--abarva-stone);
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  transition: color 120ms ease, background 120ms ease;
+  flex-shrink: 0;
+}
+
+.uploadBtn:hover {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.uploadBtn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.attachmentStrip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 0 2px 6px;
+}
+
+.attachmentChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 6px;
+  padding: 3px 8px;
+  font-size: 10px;
+  color: var(--abarva-stone);
+  font-family: var(--font-mono, monospace);
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.attachmentChipDone {
+  color: #6ee7b7;
+  border-color: rgba(110, 231, 183, 0.25);
+  background: rgba(110, 231, 183, 0.06);
+}
+
+.attachmentChipError {
+  color: #fca5a5;
+  border-color: rgba(252, 165, 165, 0.25);
+  background: rgba(252, 165, 165, 0.06);
+}
+
 .rightPane {
   background: var(--canon-bg-cream);
   border-radius: 14px;
