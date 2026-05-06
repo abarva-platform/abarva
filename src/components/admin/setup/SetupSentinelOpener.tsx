@@ -39,8 +39,8 @@ export function SetupSentinelOpener({
     <section
       data-testid="admin-setup-sentinel-opener"
       style={{
-        background: SHELL.CARD_WHITE,
-        border: `1px solid ${SHELL.CARD_LINE_SOFT}`,
+        background: COLORS.skyPale,
+        borderLeft: `4px solid ${COLORS.navy}`,
         borderRadius: RADIUS.lg,
         padding: SPACING.xl,
         display: 'flex',
@@ -56,19 +56,37 @@ export function SetupSentinelOpener({
           gap: SPACING.md,
         }}
       >
-        <p
-          style={{
-            margin: 0,
-            fontFamily: SHELL.SANS,
-            fontSize: 11,
-            letterSpacing: '0.12em',
-            textTransform: 'uppercase',
-            color: COLORS.navy,
-            fontWeight: 600,
-          }}
-        >
-          Sentinel · librarian read of {tenantDisplayName}
-        </p>
+        <div style={{ display: 'flex', alignItems: 'center', gap: SPACING.sm }}>
+          <span
+            style={{
+              display: 'inline-block',
+              background: COLORS.navy,
+              color: '#fff',
+              fontFamily: SHELL.MONO,
+              fontSize: 10,
+              fontWeight: 700,
+              letterSpacing: '0.12em',
+              textTransform: 'uppercase',
+              padding: `2px 8px`,
+              borderRadius: RADIUS.pill,
+            }}
+          >
+            Steward
+          </span>
+          <p
+            style={{
+              margin: 0,
+              fontFamily: SHELL.SANS,
+              fontSize: 11,
+              letterSpacing: '0.12em',
+              textTransform: 'uppercase',
+              color: COLORS.navy,
+              fontWeight: 600,
+            }}
+          >
+            Librarian read · {tenantDisplayName}
+          </p>
+        </div>
         {lastIngestedRelative ? (
           <p
             style={{

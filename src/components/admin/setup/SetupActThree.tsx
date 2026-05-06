@@ -115,7 +115,7 @@ function GainCard({ gain }: { gain: CapabilityGainEntry }) {
             whiteSpace: 'nowrap',
           }}
         >
-          Open segment {gain.targetSegmentId} →
+          Add {gain.targetSegmentName} →
         </Link>
       </div>
 
@@ -127,7 +127,7 @@ function GainCard({ gain }: { gain: CapabilityGainEntry }) {
           color: SHELL.INK_MUTED,
         }}
       >
-        Target: segment {gain.targetSegmentId} · {gain.targetSegmentName}
+        {gain.targetSegmentName}
         {gain.impactedPrograms.length > 0
           ? ` · Impacts ${gain.impactedPrograms.join(', ')}`
           : ' · Portfolio-wide'}

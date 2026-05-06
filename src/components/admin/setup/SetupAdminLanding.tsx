@@ -158,6 +158,80 @@ function OrientationBanner({
   );
 }
 
+function TensionStrip({
+  highSeverityCount,
+  totalSignalCount,
+}: {
+  highSeverityCount: number;
+  totalSignalCount: number;
+}) {
+  return (
+    <section
+      data-testid="admin-setup-tension-strip"
+      style={{
+        background: COLORS.coralSoft,
+        borderLeft: `4px solid ${COLORS.coralInk}`,
+        borderRadius: RADIUS.md,
+        padding: `${SPACING.md} ${SPACING.lg}`,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        gap: SPACING.lg,
+      }}
+    >
+      <div style={{ display: 'flex', flexDirection: 'column', gap: SPACING.xs }}>
+        <p
+          style={{
+            margin: 0,
+            fontFamily: SHELL.MONO,
+            fontSize: 10,
+            letterSpacing: '0.12em',
+            textTransform: 'uppercase',
+            color: COLORS.coralInk,
+            fontWeight: 700,
+          }}
+        >
+          Atlas · Open contradictions
+        </p>
+        <p
+          style={{
+            margin: 0,
+            fontFamily: SHELL.SERIF,
+            fontSize: 16,
+            color: SHELL.INK,
+            lineHeight: 1.35,
+          }}
+        >
+          {highSeverityCount} high-severity cross-program signal
+          {highSeverityCount === 1 ? '' : 's'} need attention.
+          {totalSignalCount > highSeverityCount
+            ? ` ${totalSignalCount} total open.`
+            : ''}
+        </p>
+      </div>
+      <Link
+        href="/admin/signals"
+        style={{
+          flex: '0 0 auto',
+          fontFamily: SHELL.MONO,
+          fontSize: 10,
+          letterSpacing: '0.10em',
+          textTransform: 'uppercase',
+          color: SHELL.INK,
+          textDecoration: 'none',
+          border: `1px solid ${COLORS.coralInk}`,
+          borderRadius: 999,
+          padding: '8px 12px',
+          background: SHELL.CARD_WHITE,
+          whiteSpace: 'nowrap',
+        }}
+      >
+        Review signals →
+      </Link>
+    </section>
+  );
+}
+
 function ProgramApprovalQueueCallout({ pendingCount }: { pendingCount: number }) {
   const hasPending = pendingCount > 0;
   return (
@@ -278,6 +352,12 @@ export function SetupAdminLanding({
           stewardFindingCount={stewardFindingCount}
           capabilitiesGrounded={capabilitiesGrounded}
         />
+        {atlasHighSeverityCount > 0 && (
+          <TensionStrip
+            highSeverityCount={atlasHighSeverityCount}
+            totalSignalCount={atlasSignalCount}
+          />
+        )}
         <SetupSentinelOpener
           tenantDisplayName={content.tenantDisplayName}
           opener={content.sentinelOpener}
