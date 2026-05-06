@@ -5,354 +5,195 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>AbarVa · Product Guidebook</title>
 <style>
-  /* ── Design system ─────────────────────────────────────── */
-  :root {
-    --bg:        #F8F7F4;
-    --surface:   #FFFFFF;
-    --border:    #E8E6E0;
-    --text:      #1A1A1A;
-    --muted:     #6B6860;
-    --accent:    #000000;
-    --amber:     #B45309;
-    --amber-bg:  #FFFBEB;
-    --teal:      #0D6E5C;
-    --teal-bg:   #F0FDF8;
-    --red:       #B91C1C;
-    --red-bg:    #FEF2F2;
-    --font-head: Georgia, 'Times New Roman', serif;
-    --font-body: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    --font-mono: 'SF Mono', 'Fira Code', 'Consolas', monospace;
-    --radius:    6px;
-    --shadow:    0 1px 3px rgba(0,0,0,.08);
-    --nav-w:     260px;
-  }
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-  html { scroll-behavior: smooth; }
-  body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: var(--font-body);
-    font-size: 15px;
-    line-height: 1.65;
-    display: flex;
-  }
+:root {
+  --bg:       #F8F7F4;
+  --surface:  #FFFFFF;
+  --border:   #E8E6E0;
+  --text:     #1A1A1A;
+  --muted:    #6B6860;
+  --accent:   #000000;
+  --amber:    #B45309;
+  --amber-bg: #FFFBEB;
+  --teal:     #0D6E5C;
+  --teal-bg:  #F0FDF8;
+  --red:      #B91C1C;
+  --red-bg:   #FEF2F2;
+  --blue:     #1D4ED8;
+  --blue-bg:  #EFF6FF;
+  --nav-w:    268px;
+  --font-h:   Georgia,'Times New Roman',serif;
+  --font-b:   'DM Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  --font-m:   'SF Mono','Fira Code',Consolas,monospace;
+  --r:        6px;
+  --sh:       0 1px 4px rgba(0,0,0,.08);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:var(--font-b);font-size:15px;line-height:1.7;display:flex}
 
-  /* ── Nav sidebar ───────────────────────────────────────── */
-  nav {
-    width: var(--nav-w);
-    min-height: 100vh;
-    background: var(--surface);
-    border-right: 1px solid var(--border);
-    position: fixed;
-    top: 0; left: 0;
-    overflow-y: auto;
-    padding: 32px 0 48px;
-    z-index: 10;
-  }
-  .nav-brand {
-    padding: 0 24px 24px;
-    border-bottom: 1px solid var(--border);
-    margin-bottom: 16px;
-  }
-  .nav-brand h1 {
-    font-family: var(--font-head);
-    font-size: 20px;
-    font-weight: normal;
-    letter-spacing: -0.3px;
-  }
-  .nav-brand p {
-    font-size: 11px;
-    color: var(--muted);
-    margin-top: 2px;
-    text-transform: uppercase;
-    letter-spacing: .08em;
-  }
-  nav ul { list-style: none; }
-  nav > ul > li > span {
-    display: block;
-    padding: 8px 24px 4px;
-    font-size: 10px;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: .1em;
-    color: var(--muted);
-    margin-top: 16px;
-  }
-  nav a {
-    display: block;
-    padding: 6px 24px;
-    color: var(--text);
-    text-decoration: none;
-    font-size: 13.5px;
-    border-left: 2px solid transparent;
-    transition: all .12s;
-  }
-  nav a:hover { background: var(--bg); border-left-color: var(--accent); color: var(--accent); }
-  nav a.active { background: var(--bg); border-left-color: var(--accent); font-weight: 600; }
+/* ── NAV ── */
+nav{width:var(--nav-w);min-height:100vh;background:var(--surface);border-right:1px solid var(--border);position:fixed;top:0;left:0;overflow-y:auto;padding:28px 0 60px;z-index:10}
+.nav-logo{padding:0 22px 22px;border-bottom:1px solid var(--border);margin-bottom:12px}
+.nav-logo h1{font-family:var(--font-h);font-size:19px;font-weight:normal;letter-spacing:-.3px}
+.nav-logo p{font-size:10.5px;color:var(--muted);margin-top:2px;text-transform:uppercase;letter-spacing:.08em}
+nav ul{list-style:none}
+nav>ul>li>span{display:block;padding:10px 22px 3px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-top:12px}
+nav a{display:block;padding:5px 22px;color:var(--text);text-decoration:none;font-size:13px;border-left:2px solid transparent;transition:all .1s}
+nav a:hover{background:var(--bg);border-left-color:var(--accent)}
+nav a.active{background:var(--bg);border-left-color:var(--accent);font-weight:600}
 
-  /* ── Main content ──────────────────────────────────────── */
-  main {
-    margin-left: var(--nav-w);
-    flex: 1;
-    padding: 56px 64px 120px;
-    max-width: 880px;
-  }
+/* ── MAIN ── */
+main{margin-left:var(--nav-w);flex:1;padding:0 64px 120px;max-width:900px}
 
-  /* ── Typography ────────────────────────────────────────── */
-  h1 { font-family: var(--font-head); font-size: 36px; font-weight: normal; letter-spacing: -.5px; margin-bottom: 12px; }
-  h2 { font-family: var(--font-head); font-size: 24px; font-weight: normal; letter-spacing: -.3px; margin: 56px 0 16px; padding-top: 8px; border-top: 1px solid var(--border); }
-  h3 { font-size: 16px; font-weight: 600; margin: 32px 0 10px; }
-  h4 { font-size: 14px; font-weight: 600; margin: 24px 0 8px; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; }
-  p  { margin-bottom: 14px; }
-  a  { color: var(--accent); }
-  strong { font-weight: 600; }
-  em { font-style: italic; color: var(--muted); }
-  ul, ol { padding-left: 20px; margin-bottom: 14px; }
-  li { margin-bottom: 4px; }
-  code { font-family: var(--font-mono); font-size: 13px; background: var(--border); padding: 1px 5px; border-radius: 3px; }
+/* ── TYPE ── */
+h1{font-family:var(--font-h);font-size:38px;font-weight:normal;letter-spacing:-.6px;line-height:1.2}
+h2{font-family:var(--font-h);font-size:26px;font-weight:normal;letter-spacing:-.3px;margin:60px 0 16px;padding-top:8px;border-top:1px solid var(--border)}
+h3{font-size:16px;font-weight:700;margin:32px 0 10px}
+h4{font-size:13px;font-weight:700;margin:24px 0 8px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+p{margin-bottom:14px}
+a{color:var(--accent)}
+strong{font-weight:700}
+ul,ol{padding-left:20px;margin-bottom:14px}
+li{margin-bottom:5px}
+code{font-family:var(--font-m);font-size:12.5px;background:var(--border);padding:1px 5px;border-radius:3px}
 
-  /* ── Section ───────────────────────────────────────────── */
-  section { margin-bottom: 0; }
-  .hero {
-    padding: 48px 0 40px;
-    border-bottom: 1px solid var(--border);
-    margin-bottom: 8px;
-  }
-  .hero .tagline {
-    font-size: 18px;
-    color: var(--muted);
-    margin: 8px 0 24px;
-    font-family: var(--font-head);
-    font-style: italic;
-  }
-  .hero .badge-row {
-    display: flex;
-    gap: 10px;
-    flex-wrap: wrap;
-    margin-top: 20px;
-  }
-  .badge {
-    display: inline-block;
-    padding: 4px 12px;
-    border: 1px solid var(--border);
-    border-radius: 100px;
-    font-size: 12px;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: .06em;
-    color: var(--muted);
-  }
+/* ── HERO / VISION ── */
+.vision-hero{padding:56px 0 48px;border-bottom:2px solid var(--accent);margin-bottom:0}
+.vision-hero .eyebrow{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);margin-bottom:16px}
+.vision-hero h1{margin-bottom:20px}
+.vision-hero .deck{font-family:var(--font-h);font-size:19px;line-height:1.55;color:var(--muted);font-style:italic;max-width:680px;margin-bottom:28px}
+.stat-row{display:flex;gap:28px;flex-wrap:wrap;margin-top:24px}
+.stat-box{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:16px 20px;min-width:140px;box-shadow:var(--sh)}
+.stat-box .num{font-family:var(--font-h);font-size:28px;font-weight:normal;letter-spacing:-.5px;display:block}
+.stat-box .lbl{font-size:11px;color:var(--muted);margin-top:2px;display:block}
 
-  /* ── Cards / callouts ──────────────────────────────────── */
-  .callout {
-    padding: 16px 20px;
-    border-radius: var(--radius);
-    margin: 20px 0;
-    border-left: 3px solid;
-  }
-  .callout.info  { background: var(--teal-bg);  border-color: var(--teal); }
-  .callout.warn  { background: var(--amber-bg); border-color: var(--amber); }
-  .callout.note  { background: var(--bg);       border-color: var(--border); }
-  .callout.block { background: var(--red-bg);   border-color: var(--red); }
-  .callout strong { display: block; margin-bottom: 4px; font-size: 12px; text-transform: uppercase; letter-spacing: .06em; }
+/* ── CALLOUT ── */
+.callout{padding:14px 18px;border-radius:var(--r);margin:18px 0;border-left:3px solid}
+.callout.info {background:var(--teal-bg); border-color:var(--teal)}
+.callout.warn {background:var(--amber-bg);border-color:var(--amber)}
+.callout.note {background:var(--bg);      border-color:var(--border)}
+.callout.block{background:var(--red-bg);  border-color:var(--red)}
+.callout.blue {background:var(--blue-bg); border-color:var(--blue)}
+.callout strong{display:block;margin-bottom:4px;font-size:11px;text-transform:uppercase;letter-spacing:.06em}
 
-  /* ── Phase rail ────────────────────────────────────────── */
-  .phase-rail {
-    display: flex;
-    align-items: center;
-    gap: 0;
-    margin: 28px 0;
-    overflow-x: auto;
-  }
-  .phase-node {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 6px;
-    min-width: 80px;
-  }
-  .phase-dot {
-    width: 36px; height: 36px;
-    border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
-    font-weight: 700;
-    font-size: 13px;
-    border: 2px solid;
-    flex-shrink: 0;
-  }
-  .phase-dot.done    { background: #000; color: #fff; border-color: #000; }
-  .phase-dot.active  { background: #fff; color: #000; border-color: #000; box-shadow: 0 0 0 3px rgba(0,0,0,.12); }
-  .phase-dot.future  { background: var(--bg); color: var(--muted); border-color: var(--border); }
-  .phase-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); text-align: center; }
-  .phase-connector {
-    flex: 1;
-    height: 2px;
-    background: var(--border);
-    min-width: 20px;
-    margin-bottom: 22px;
-  }
-  .phase-connector.done { background: #000; }
+/* ── TABLE ── */
+.tw{overflow-x:auto;margin:18px 0}
+table{width:100%;border-collapse:collapse;font-size:13.5px}
+th{text-align:left;padding:8px 12px;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);border-bottom:2px solid var(--border);background:var(--bg)}
+td{padding:10px 12px;border-bottom:1px solid var(--border);vertical-align:top}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:var(--bg)}
 
-  /* ── Table ─────────────────────────────────────────────── */
-  .table-wrap { overflow-x: auto; margin: 20px 0; }
-  table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
-  th { text-align: left; padding: 8px 12px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); border-bottom: 2px solid var(--border); background: var(--bg); }
-  td { padding: 10px 12px; border-bottom: 1px solid var(--border); vertical-align: top; }
-  tr:last-child td { border-bottom: none; }
-  tr:hover td { background: var(--bg); }
+/* ── PHASE RAIL ── */
+.rail{display:flex;align-items:center;gap:0;margin:26px 0;overflow-x:auto;padding-bottom:4px}
+.rnode{display:flex;flex-direction:column;align-items:center;gap:6px;min-width:74px}
+.rdot{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;border:2px solid;flex-shrink:0}
+.rdot.done  {background:#000;color:#fff;border-color:#000}
+.rdot.active{background:#fff;color:#000;border-color:#000;box-shadow:0 0 0 3px rgba(0,0,0,.1)}
+.rdot.future{background:var(--bg);color:var(--muted);border-color:var(--border)}
+.rlabel{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);text-align:center}
+.rline{flex:1;height:2px;background:var(--border);min-width:16px;margin-bottom:22px}
+.rline.done{background:#000}
 
-  /* ── Specialist card ───────────────────────────────────── */
-  .spec-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin: 20px 0; }
-  @media(max-width: 700px) { .spec-grid { grid-template-columns: 1fr; } }
-  .spec-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 16px;
-    box-shadow: var(--shadow);
-  }
-  .spec-card h5 { font-size: 13.5px; font-weight: 700; margin-bottom: 4px; }
-  .spec-card p  { font-size: 12.5px; color: var(--muted); margin: 0; }
-  .spec-card .tag {
-    display: inline-block;
-    margin-top: 8px;
-    font-size: 10px;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: .06em;
-    padding: 2px 8px;
-    border-radius: 100px;
-    border: 1px solid var(--border);
-    color: var(--muted);
-  }
-  .spec-card .tag.active { border-color: var(--teal); color: var(--teal); }
-  .spec-card .tag.planned { border-color: var(--muted); }
+/* ── FLOW ── */
+.flow{display:flex;flex-direction:column;margin:22px 0}
+.fstep{display:flex;align-items:flex-start;gap:16px;padding:0 0 22px;position:relative}
+.fstep::before{content:'';position:absolute;left:17px;top:38px;width:2px;bottom:0;background:var(--border)}
+.fstep:last-child::before{display:none}
+.fnum{width:36px;height:36px;border-radius:50%;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;flex-shrink:0}
+.fbody{flex:1;padding-top:6px}
+.fbody h4{margin:0 0 3px;font-size:14px;font-weight:700;color:var(--text);text-transform:none;letter-spacing:0}
+.fbody p{font-size:13.5px;color:var(--muted);margin:0}
 
-  /* ── Flow diagram ──────────────────────────────────────── */
-  .flow {
-    display: flex;
-    flex-direction: column;
-    gap: 0;
-    margin: 24px 0;
-    position: relative;
-  }
-  .flow-step {
-    display: flex;
-    align-items: flex-start;
-    gap: 16px;
-    padding: 0 0 24px 0;
-    position: relative;
-  }
-  .flow-step::before {
-    content: '';
-    position: absolute;
-    left: 17px; top: 36px;
-    width: 2px;
-    bottom: 0;
-    background: var(--border);
-  }
-  .flow-step:last-child::before { display: none; }
-  .flow-num {
-    width: 36px; height: 36px;
-    border-radius: 50%;
-    background: var(--accent);
-    color: #fff;
-    display: flex; align-items: center; justify-content: center;
-    font-weight: 700;
-    font-size: 14px;
-    flex-shrink: 0;
-  }
-  .flow-body { flex: 1; padding-top: 6px; }
-  .flow-body h4 { margin: 0 0 4px; font-size: 14px; font-weight: 600; color: var(--text); text-transform: none; letter-spacing: 0; }
-  .flow-body p  { font-size: 13.5px; color: var(--muted); margin: 0; }
+/* ── CARDS ── */
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:18px 0}
+@media(max-width:700px){.grid2{grid-template-columns:1fr}}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:16px;box-shadow:var(--sh)}
+.card h5{font-size:13.5px;font-weight:700;margin-bottom:4px}
+.card p{font-size:12.5px;color:var(--muted);margin:0}
+.card .tag{display:inline-block;margin-top:8px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;padding:2px 8px;border-radius:100px;border:1px solid var(--border);color:var(--muted)}
+.card .tag.active {border-color:var(--teal);color:var(--teal)}
+.card .tag.planned{border-color:var(--border);color:var(--muted)}
+.card .tag.future {border-color:var(--blue);color:var(--blue)}
 
-  /* ── Glossary ──────────────────────────────────────────── */
-  .glossary-term {
-    border-bottom: 1px solid var(--border);
-    padding: 14px 0;
-    display: grid;
-    grid-template-columns: 200px 1fr;
-    gap: 20px;
-  }
-  .glossary-term:last-child { border-bottom: none; }
-  .term-name { font-weight: 700; font-size: 13.5px; }
-  .term-def  { font-size: 13.5px; color: var(--muted); }
+/* ── AGENT HERO CARD ── */
+.agent-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:22px 24px;margin:18px 0;box-shadow:var(--sh);display:grid;grid-template-columns:56px 1fr;gap:20px;align-items:start}
+.agent-avatar{width:52px;height:52px;border-radius:50%;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-family:var(--font-h);font-size:22px}
+.agent-info h4{margin:0 0 2px;font-size:15px;font-weight:700;text-transform:none;letter-spacing:0;color:var(--text)}
+.agent-info .role{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;font-weight:700}
+.agent-info p{font-size:13.5px;color:var(--muted);margin:0}
 
-  /* ── How-to box ────────────────────────────────────────── */
-  .howto {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 20px 24px;
-    margin: 20px 0;
-    box-shadow: var(--shadow);
-  }
-  .howto h4 { margin: 0 0 12px; font-size: 13px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
-  .howto .prompt {
-    background: var(--bg);
-    border-radius: var(--radius);
-    padding: 10px 14px;
-    font-size: 13.5px;
-    margin: 8px 0;
-    border-left: 3px solid var(--accent);
-    font-style: italic;
-  }
-  .howto .response {
-    background: var(--teal-bg);
-    border-radius: var(--radius);
-    padding: 10px 14px;
-    font-size: 12.5px;
-    margin: 8px 0;
-    color: var(--teal);
-    border-left: 3px solid var(--teal);
-  }
+/* ── PATTERN CARD ── */
+.pattern-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:18px 20px;margin:12px 0;box-shadow:var(--sh)}
+.pattern-card .pid{font-family:var(--font-m);font-size:11px;color:var(--muted);margin-bottom:6px}
+.pattern-card h5{font-size:15px;font-weight:700;margin-bottom:8px}
+.pattern-card .row{display:flex;gap:20px;flex-wrap:wrap;margin-top:10px}
+.pattern-card .kv{min-width:120px}
+.pattern-card .kv .k{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+.pattern-card .kv .v{font-size:13px;margin-top:2px}
 
-  /* ── FM card ───────────────────────────────────────────── */
-  .fm-list { display: flex; flex-direction: column; gap: 2px; margin: 16px 0; }
-  .fm-item {
-    display: grid;
-    grid-template-columns: 40px 1fr;
-    gap: 12px;
-    align-items: start;
-    padding: 12px 0;
-    border-bottom: 1px solid var(--border);
-  }
-  .fm-item:last-child { border-bottom: none; }
-  .fm-num {
-    width: 32px; height: 32px;
-    border-radius: 50%;
-    background: var(--bg);
-    border: 1px solid var(--border);
-    display: flex; align-items: center; justify-content: center;
-    font-size: 12px;
-    font-weight: 700;
-    color: var(--muted);
-  }
-  .fm-body strong { font-size: 14px; display: block; margin-bottom: 2px; }
-  .fm-body span   { font-size: 12.5px; color: var(--muted); }
+/* ── FM LIST ── */
+.fmlist{display:flex;flex-direction:column;gap:0;margin:16px 0}
+.fmitem{display:grid;grid-template-columns:36px 1fr;gap:14px;align-items:start;padding:12px 0;border-bottom:1px solid var(--border)}
+.fmitem:last-child{border-bottom:none}
+.fmnum{width:32px;height:32px;border-radius:50%;background:var(--bg);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--muted)}
+.fmbody strong{font-size:14px;display:block;margin-bottom:2px}
+.fmbody span{font-size:12.5px;color:var(--muted)}
 
-  /* ── Print helpers ─────────────────────────────────────── */
-  @media print {
-    nav { display: none; }
-    main { margin-left: 0; padding: 24px; }
-  }
+/* ── GLOSSARY ── */
+.gterm{border-bottom:1px solid var(--border);padding:13px 0;display:grid;grid-template-columns:190px 1fr;gap:20px}
+.gterm:last-child{border-bottom:none}
+.tname{font-weight:700;font-size:13.5px}
+.tdef{font-size:13.5px;color:var(--muted)}
+
+/* ── HOW-TO ── */
+.howto{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:18px 22px;margin:18px 0;box-shadow:var(--sh)}
+.howto h4{margin:0 0 12px;font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+.prompt{background:var(--bg);border-radius:var(--r);padding:9px 14px;font-size:13.5px;margin:8px 0;border-left:3px solid var(--accent);font-style:italic}
+.response{background:var(--teal-bg);border-radius:var(--r);padding:9px 14px;font-size:12.5px;margin:8px 0;color:var(--teal);border-left:3px solid var(--teal)}
+
+/* ── ROADMAP ── */
+.roadmap{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin:20px 0}
+@media(max-width:650px){.roadmap{grid-template-columns:1fr}}
+.rwave{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:18px;box-shadow:var(--sh)}
+.rwave .wtag{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;padding:2px 8px;border-radius:100px;border:1px solid;display:inline-block;margin-bottom:10px}
+.rwave .wtag.w1{border-color:var(--teal);color:var(--teal)}
+.rwave .wtag.w2{border-color:var(--amber);color:var(--amber)}
+.rwave .wtag.w3{border-color:var(--blue);color:var(--blue)}
+.rwave h5{font-size:14px;font-weight:700;margin-bottom:6px}
+.rwave p{font-size:12.5px;color:var(--muted);margin:0}
+
+@media print{nav{display:none}main{margin-left:0;padding:24px}}
 </style>
 </head>
 <body>
 
-<!-- ────────────────── NAV ────────────────────────────── -->
+<!-- ══════════════ NAV ══════════════════════════════════ -->
 <nav>
-  <div class="nav-brand">
+  <div class="nav-logo">
     <h1>AbarVa</h1>
-    <p>Product Guidebook · v1.0</p>
+    <p>Product Guidebook · v2.0</p>
   </div>
   <ul>
-    <li><span>Introduction</span></li>
-    <li><a href="#what-is-abarva">What is AbarVa?</a></li>
-    <li><a href="#who-uses-it">Who uses it?</a></li>
-    <li><a href="#core-concepts">Core concepts</a></li>
+    <li><span>Vision</span></li>
+    <li><a href="#vision">The vision</a></li>
+    <li><a href="#knowledge-future">Knowledge layer roadmap</a></li>
 
-    <li><span>The Program Lifecycle</span></li>
+    <li><span>Platform</span></li>
+    <li><a href="#what-is">What is AbarVa?</a></li>
+    <li><a href="#who-uses">Who uses it?</a></li>
+    <li><a href="#core-concepts">Core concepts</a></li>
+    <li><a href="#surfaces">The four surfaces</a></li>
+
+    <li><span>Knowledge Layer</span></li>
+    <li><a href="#knowledge-layer">How knowledge works</a></li>
+    <li><a href="#patterns-retail">Retail patterns</a></li>
+    <li><a href="#patterns-fs">Financial services patterns</a></li>
+    <li><a href="#patterns-hc">Healthcare patterns</a></li>
+    <li><a href="#patterns-cross">Cross-industry patterns</a></li>
+    <li><a href="#research">Research anchors</a></li>
+
+    <li><span>Program Lifecycle</span></li>
     <li><a href="#phase-model">The 6-phase model</a></li>
     <li><a href="#p0">P0 · Originate</a></li>
     <li><a href="#p1">P1 · Charter</a></li>
@@ -361,745 +202,810 @@
     <li><a href="#p4">P4 · Deliver</a></li>
     <li><a href="#p5">P5 · Validate</a></li>
 
+    <li><span>The Agents</span></li>
+    <li><a href="#nexus">Nexus · Moves</a></li>
+    <li><a href="#sentinel">Sentinel · Source + Intelligence</a></li>
+    <li><a href="#atlas">Atlas · Tower</a></li>
+    <li><a href="#steward">Steward · Setup</a></li>
+    <li><a href="#specialist-catalog">Specialist catalog</a></li>
+
     <li><span>Using Nexus</span></li>
-    <li><a href="#nexus">What Nexus does</a></li>
-    <li><a href="#how-to-chat">How to chat with Nexus</a></li>
+    <li><a href="#how-to-chat">How to chat</a></li>
     <li><a href="#prompt-patterns">Prompt patterns</a></li>
 
     <li><span>Reference</span></li>
     <li><a href="#glossary">Glossary</a></li>
-    <li><a href="#failure-modes">The 10 failure modes</a></li>
+    <li><a href="#failure-modes">10 failure modes</a></li>
     <li><a href="#gates">Gate criteria</a></li>
-    <li><a href="#agent-catalog">Agent catalog</a></li>
     <li><a href="#value-lifecycle">Value lifecycle</a></li>
   </ul>
 </nav>
 
-<!-- ────────────────── MAIN ───────────────────────────── -->
+<!-- ══════════════ MAIN ════════════════════════════════ -->
 <main>
 
-  <!-- Hero -->
-  <div class="hero">
-    <h1>AbarVa Product Guidebook</h1>
-    <p class="tagline">A complete primer for running AI programs with discipline — from origination to verified value realization.</p>
-    <p>This guide is for program leads, executive sponsors, operations leaders, and anyone joining an active AbarVa engagement. Start at <a href="#what-is-abarva">What is AbarVa?</a> if you're new, or jump directly to the section you need.</p>
-    <div class="badge-row">
-      <span class="badge">v1.0</span>
-      <span class="badge">Moves module</span>
-      <span class="badge">2026</span>
+<!-- ───────────────────────────────────────────────────
+     VISION
+──────────────────────────────────────────────────── -->
+<div class="vision-hero" id="vision">
+  <div class="eyebrow">AbarVa · Product Vision</div>
+  <h1>The operating system for AI programs that actually deliver.</h1>
+  <p class="deck">Most AI programs fail for the same ten reasons — every time, at the same points in the program lifecycle. AbarVa exists to make that failure pattern visible before it is irreversible, and to give every team the industry-specific knowledge they need to avoid it.</p>
+
+  <p>We believe the future of enterprise AI is not more models — it is better programs. A model without a confirmed sponsor, a measured baseline, a governed rollout, and a verified outcome trail is just a pilot that will eventually be cancelled. AbarVa is the layer that turns pilots into programs, and programs into realized value.</p>
+
+  <p>The platform is built on three ideas:</p>
+
+  <div class="flow" style="margin-top:24px">
+    <div class="fstep">
+      <div class="fnum">1</div>
+      <div class="fbody">
+        <h4>Failure is predictable — and therefore preventable</h4>
+        <p>73% of AI pilots never reach production (McKinsey, 2023). The reasons are the same ten patterns, every time. AbarVa encodes prevention mechanisms for each one directly into the program lifecycle — not as advice, but as gate criteria that must be closed.</p>
+      </div>
+    </div>
+    <div class="fstep">
+      <div class="fnum">2</div>
+      <div class="fbody">
+        <h4>Industry depth changes outcomes</h4>
+        <p>A contact center AI program in retail is fundamentally different from one in healthcare or financial services. The benchmarks differ. The regulatory constraints differ. The baseline metrics differ. Generic AI program frameworks fail because they ignore this. AbarVa's knowledge layer brings vertical-specific patterns, benchmarks, and evidence requirements to every program.</p>
+      </div>
+    </div>
+    <div class="fstep">
+      <div class="fnum">3</div>
+      <div class="fbody">
+        <h4>Evidence integrity is the trust signal</h4>
+        <p>Every recommendation, every gate decision, every value claim in AbarVa is traceable to a cited source. Not a projection. Not a model output. A named piece of evidence with provenance. This is what makes the platform safe to bring to a board or an audit committee.</p>
+      </div>
     </div>
   </div>
 
-  <!-- ─── WHAT IS ABARVA ─────────────────────────────── -->
-  <section id="what-is-abarva">
-    <h2>What is AbarVa?</h2>
-    <p>AbarVa is an <strong>AI program operating system</strong>. It helps executive teams and operations leaders run AI initiatives with the same discipline they bring to capital programs — structured phases, gate reviews, evidence-backed decisions, and a verified value trail from hypothesis to realized outcome.</p>
-
-    <p>Most AI programs fail for predictable reasons: no confirmed sponsor, no measurable baseline, scope that keeps expanding, governance left until it's too late. AbarVa's job is to catch these failure modes early — before they become expensive — and give every stakeholder a shared view of where the program stands.</p>
-
-    <div class="callout info">
-      <strong>One sentence version</strong>
-      AbarVa is a calm intelligence layer that enforces evidence citation, governance gating, and provenance tracing on every program decision — so your AI investments actually deliver.
-    </div>
-
-    <h3>What AbarVa is not</h3>
-    <ul>
-      <li><strong>Not a chat app.</strong> The chat interface is a means to an end — it structures your program, not just your conversation.</li>
-      <li><strong>Not generic RAG.</strong> Every response is grounded in your tenant's data, program history, and cited evidence. Nothing is fabricated.</li>
-      <li><strong>Not a project management tool.</strong> AbarVa manages program intelligence — the decisions, gates, evidence, and value trail — not tasks and timelines.</li>
-    </ul>
-  </section>
-
-  <!-- ─── WHO USES IT ───────────────────────────────── -->
-  <section id="who-uses-it">
-    <h2>Who uses it?</h2>
-    <div class="table-wrap">
-      <table>
-        <thead><tr><th>Role</th><th>Why they use AbarVa</th><th>What they primarily do</th></tr></thead>
-        <tbody>
-          <tr><td><strong>Program lead</strong></td><td>Runs the day-to-day of an AI program</td><td>Chat with Nexus to advance phases, close gate criteria, track deliverables</td></tr>
-          <tr><td><strong>Executive sponsor</strong></td><td>Owns budget authority and outcome accountability</td><td>Reviews gate summaries, confirms milestones, signs off on value realization</td></tr>
-          <tr><td><strong>CIO / CAIO</strong></td><td>Portfolio oversight across multiple AI programs</td><td>Uses Tower view to see portfolio health, risk signals, value at stake</td></tr>
-          <tr><td><strong>Operations leader</strong></td><td>Owns the process or function being transformed</td><td>Validates baselines, confirms delivery readiness, owns adoption plan</td></tr>
-          <tr><td><strong>Procurement / Source lead</strong></td><td>Sourcing vendors and technology for the program</td><td>Uses Source module — RFP orchestration, vendor evaluation, decision brief</td></tr>
-          <tr><td><strong>Governance / Audit</strong></td><td>Compliance, security, HITL oversight</td><td>Reviews gate sign-offs, approval trail, governance validation records</td></tr>
-        </tbody>
-      </table>
-    </div>
-  </section>
-
-  <!-- ─── CORE CONCEPTS ─────────────────────────────── -->
-  <section id="core-concepts">
-    <h2>Core concepts</h2>
-    <p>These four ideas underpin everything in AbarVa. Read them once and the rest of the product will make sense.</p>
-
-    <h3>1 · Strategic Moves</h3>
-    <p>An AI initiative is called a <strong>Strategic Move</strong> in AbarVa. A Move begins as an idea (P0 Originate) and ends when value is measured and verified (P5 Validate). Every Move has an owner, a hypothesis, a sponsor, and a value stake. AbarVa tracks all of these across the full lifecycle.</p>
-
-    <h3>2 · Gate-driven phases</h3>
-    <p>Moves advance through six phases. Each phase has <strong>gate criteria</strong> — specific, verifiable conditions that must be met before advancing. You cannot promote a Move by clicking a button; the gate criteria must be closed. This is deliberate: it prevents "false starts" where programs are promoted before they're ready.</p>
-
-    <h3>3 · Evidence integrity</h3>
-    <p>AbarVa enforces evidence labeling on every dollar figure and benchmark. An unverified estimate is always marked <code>[UNVALIDATED_HYPOTHESIS]</code>. A confirmed measurement is marked <code>[MEASURED_RESULT]</code>. This prevents the most common failure in AI programs: confusing projected ROI with realized value.</p>
-
-    <h3>4 · The 10 failure modes</h3>
-    <p>AbarVa's intelligence is built around the <strong>10 failure modes</strong> that end AI programs — patterns derived from published research (Gartner, RAND, MIT/BCG, McKinsey). Nexus watches for signals of these failure modes in every conversation and surfaces them before they become crises. See <a href="#failure-modes">the full reference below</a>.</p>
-  </section>
-
-  <!-- ─── PHASE MODEL ───────────────────────────────── -->
-  <section id="phase-model">
-    <h2>The 6-phase model</h2>
-    <p>Every Strategic Move follows the same six phases. Phases are not just labels — each has a distinct purpose, a defined set of gate criteria, and a specific set of deliverables Nexus helps you produce.</p>
-
-    <div class="phase-rail">
-      <div class="phase-node">
-        <div class="phase-dot active">P0</div>
-        <div class="phase-label">Originate</div>
-      </div>
-      <div class="phase-connector"></div>
-      <div class="phase-node">
-        <div class="phase-dot future">P1</div>
-        <div class="phase-label">Charter</div>
-      </div>
-      <div class="phase-connector"></div>
-      <div class="phase-node">
-        <div class="phase-dot future">P2</div>
-        <div class="phase-label">Diagnose</div>
-      </div>
-      <div class="phase-connector"></div>
-      <div class="phase-node">
-        <div class="phase-dot future">P3</div>
-        <div class="phase-label">Design</div>
-      </div>
-      <div class="phase-connector"></div>
-      <div class="phase-node">
-        <div class="phase-dot future">P4</div>
-        <div class="phase-label">Deliver</div>
-      </div>
-      <div class="phase-connector"></div>
-      <div class="phase-node">
-        <div class="phase-dot future">P5</div>
-        <div class="phase-label">Validate</div>
-      </div>
-    </div>
-
-    <div class="table-wrap">
-      <table>
-        <thead><tr><th>Phase</th><th>Purpose</th><th>Key output</th><th>Gate blocker if missing</th></tr></thead>
-        <tbody>
-          <tr><td><strong>P0 · Originate</strong></td><td>Crystallize the idea into a structured brief with hypothesis, archetype, sponsor candidate, and value stake</td><td>Origination brief (7 sections)</td><td>Any of 7 brief sections incomplete</td></tr>
-          <tr><td><strong>P1 · Charter</strong></td><td>Confirm sponsor, define success metrics, lock scope, assess foundation readiness (data, platform, team)</td><td>Charter document + foundation assessment</td><td>Sponsor not confirmed; no measurable KPI; F1–F4 red</td></tr>
-          <tr><td><strong>P2 · Diagnose</strong></td><td>Gather diagnostic evidence, establish baseline measurement, close gate criteria through structured analysis</td><td>Diagnostic report + baseline confirmation</td><td>Baseline not measured; gate criteria with missing evidence</td></tr>
-          <tr><td><strong>P3 · Design</strong></td><td>Design the solution, write the delivery plan, confirm infrastructure and stakeholder alignment</td><td>Solution design + delivery plan</td><td>Delivery plan missing; vendor/infra not confirmed; critical stakeholders not engaged</td></tr>
-          <tr><td><strong>P4 · Deliver</strong></td><td>Build and deploy the solution; maintain governance; track pace against plan</td><td>Deployed solution + governance sign-off</td><td>Governance/HITL not completed; build not deployed</td></tr>
-          <tr><td><strong>P5 · Validate</strong></td><td>Measure outcomes against P0 hypothesis; attribute value to the AI intervention; close the program or continue to next cycle</td><td>Value realization report</td><td>No measured evidence; value not attributed; closure criteria unmet</td></tr>
-        </tbody>
-      </table>
-    </div>
-  </section>
-
-  <!-- ─── PHASE DETAIL SECTIONS ─────────────────────── -->
-  <section id="p0">
-    <h2>P0 · Originate</h2>
-    <p>Origination is where a Strategic Move is born. You start with nothing more than an idea — a CEO note, an email thread, a problem statement — and end with a structured brief that Nexus helps you build through conversation.</p>
-
-    <h3>What happens in P0</h3>
-    <div class="flow">
-      <div class="flow-step">
-        <div class="flow-num">1</div>
-        <div class="flow-body">
-          <h4>Describe the idea</h4>
-          <p>Paste anything into the chat — a CEO email, a board memo, a problem description. Nexus extracts the hypothesis automatically.</p>
-        </div>
-      </div>
-      <div class="flow-step">
-        <div class="flow-num">2</div>
-        <div class="flow-body">
-          <h4>Nexus checks for duplicates</h4>
-          <p>Before building a new brief, Nexus scans existing programs for overlapping scope. If a conflict exists, it surfaces it and asks how to proceed.</p>
-        </div>
-      </div>
-      <div class="flow-step">
-        <div class="flow-num">3</div>
-        <div class="flow-body">
-          <h4>7-section brief fills reactively</h4>
-          <p>As you confirm each element in conversation, the canvas pane on the right fills automatically. You can see exactly which sections are done and which are missing.</p>
-        </div>
-      </div>
-      <div class="flow-step">
-        <div class="flow-num">4</div>
-        <div class="flow-body">
-          <h4>Name the move and promote</h4>
-          <p>When all 7 sections are complete, the Promote button activates. Enter a program name and promote to P1 Charter.</p>
-        </div>
-      </div>
-    </div>
-
-    <h3>The 7 origination sections</h3>
-    <div class="table-wrap">
-      <table>
-        <thead><tr><th>#</th><th>Section</th><th>What Nexus captures</th></tr></thead>
-        <tbody>
-          <tr><td>1</td><td>What's the bet / hypothesis</td><td>Core business hypothesis: what AI intervention, what outcome, current vs. target state</td></tr>
-          <tr><td>2</td><td>Archetype classification</td><td>Program archetype with confidence band (e.g., workflow automation, AI product enablement)</td></tr>
-          <tr><td>3</td><td>Sponsor candidate</td><td>Name and role of executive sponsor candidate; source attribution; budget authority question</td></tr>
-          <tr><td>4</td><td>Scope / boundary</td><td>In-scope and out-of-scope boundaries; what this Move is NOT trying to solve</td></tr>
-          <tr><td>5</td><td>Evidence family selection</td><td>Which evidence types will be gathered in P2 Diagnose (operational metrics, vendor data, etc.)</td></tr>
-          <tr><td>6</td><td>Value hypothesis seed</td><td>Preliminary value estimate with <code>[UNVALIDATED_HYPOTHESIS]</code> label; range and unit</td></tr>
-          <tr><td>7</td><td>Foundation readiness</td><td>F1–F4 readiness assessment: data access, sponsor, platform, team capacity</td></tr>
-        </tbody>
-      </table>
-    </div>
-
-    <div class="callout warn">
-      <strong>Note on value figures</strong>
-      All dollar figures in P0 are <code>[UNVALIDATED_HYPOTHESIS]</code>. AbarVa will not promote a financial estimate without this label. The label is removed only when measured evidence exists in P5.
-    </div>
-  </section>
-
-  <section id="p1">
-    <h2>P1 · Charter</h2>
-    <p>The Charter phase converts the P0 brief into a formal program record with a confirmed sponsor, a measurable success metric, and a scoped delivery plan. Think of it as the "signing ceremony" — after Charter, the program is real.</p>
-
-    <h3>Key decisions in P1</h3>
-    <ul>
-      <li><strong>Confirm the sponsor.</strong> The sponsor candidate from P0 must be upgraded to a confirmed sponsor with explicit budget authority. Nexus flags FM-1 (no confirmed sponsor) until this is done.</li>
-      <li><strong>Define the success metric.</strong> A KPI must be defined with a plan to measure the baseline. "Model accuracy" is not a valid business metric. Nexus flags FM-4 and FM-9 if the metric is output-only.</li>
-      <li><strong>Lock the scope.</strong> What's in scope and out of scope must be formally recorded. Scope changes after this gate require a gate review.</li>
-      <li><strong>Assess foundation readiness (F1–F4).</strong> Four criteria must be assessed before advancing: data access confirmed, sponsor confirmed, platform available, team capacity confirmed. Any red criteria block the gate.</li>
-    </ul>
-  </section>
-
-  <section id="p2">
-    <h2>P2 · Diagnose</h2>
-    <p>Diagnose is the evidence-gathering phase. The hypothesis from P0 is tested against reality. Baseline measurements are established. Gate criteria are closed one by one through structured diagnostic work.</p>
-
-    <h3>What "gate partial" means</h3>
-    <p>If a Move shows amber status ("Gate partial"), it means some gate criteria have been met but at least one remains open. The gate panel in the workspace shows exactly which criteria are open and what evidence is needed to close them. Nexus helps you identify the fastest path to closing each outstanding criterion.</p>
-
-    <div class="callout warn">
-      <strong>Baseline integrity rule</strong>
-      A baseline measurement must be live — not projected, not estimated. AbarVa treats a projected baseline as a gate blocker (FM-9). The baseline exists to make the P5 value attribution defensible.
-    </div>
-  </section>
-
-  <section id="p3">
-    <h2>P3 · Design</h2>
-    <p>Design is where the solution is architected and the delivery plan is written. By the end of P3, you should know exactly what you're building, who's building it, with what tools, on what timeline.</p>
-
-    <h3>Scope lock</h3>
-    <p>Once the P3 gate is approved, scope is locked. Any addition to scope triggers a gate review. Nexus enforces this by flagging scope additions with FM-10 (scope sprawl) and asking whether a gate review is needed before accepting the change.</p>
-  </section>
-
-  <section id="p4">
-    <h2>P4 · Deliver</h2>
-    <p>Deliver is the build phase. The solution is being built, tested, and deployed. Nexus runs ongoing risk monitoring against all 10 failure modes, tracks pace against the P3 delivery plan, and helps close governance gates (security, HITL, privacy).</p>
-
-    <h3>Governance gates in P4</h3>
-    <p>Before P4 can close, governance sign-offs must be on record: security review, privacy impact assessment, HITL plan, and compliance review. These cannot be deferred to post-launch. Nexus flags FM-5 if any of these are still open at phase completion.</p>
-  </section>
-
-  <section id="p5">
-    <h2>P5 · Validate</h2>
-    <p>Validate is the moment of truth. The P0 hypothesis is compared to measured outcomes. Value is attributed to the AI intervention. The program either closes or cycles to the next opportunity.</p>
-
-    <h3>Value realization states</h3>
-    <div class="table-wrap">
-      <table>
-        <thead><tr><th>State</th><th>Meaning</th><th>Label used</th></tr></thead>
-        <tbody>
-          <tr><td>Projected</td><td>Estimated from the P0 hypothesis; not yet tested</td><td><code>[UNVALIDATED_HYPOTHESIS]</code></td></tr>
-          <tr><td>Committed</td><td>Sponsor has committed to delivering this value; still not measured</td><td><code>[PRELIMINARY_ESTIMATE]</code></td></tr>
-          <tr><td>Measuring</td><td>Measurement is live; results not yet complete</td><td><code>[MEASUREMENT_IN_PROGRESS]</code></td></tr>
-          <tr><td>Realized</td><td>Value is measured, attributed, and signed off by the sponsor</td><td><code>[MEASURED_RESULT]</code></td></tr>
-        </tbody>
-      </table>
-    </div>
-  </section>
-
-  <!-- ─── NEXUS ──────────────────────────────────────── -->
-  <section id="nexus">
-    <h2>Nexus — your AI program coach</h2>
-    <p>Nexus is the brain behind AbarVa's Moves module. It is the only AI voice you interact with directly. Behind Nexus, dozens of specialized agents analyze your program — checking gate criteria, scanning for failure mode signals, extracting structure from your input, tracking value — but you only ever see Nexus.</p>
-
-    <h3>What Nexus does</h3>
-    <ul>
-      <li>Holds the full longitudinal context of your program across all six phases</li>
-      <li>Extracts structure from unstructured input (CEO emails, meeting notes, problem descriptions)</li>
-      <li>Routes silently to specialists based on what you're working on and which phase you're in</li>
-      <li>Enforces evidence integrity on every dollar figure and benchmark before responding</li>
-      <li>Emits structured artifacts that update the canvas pane (brief sections, gate status, value state)</li>
-      <li>Surfaces failure mode signals before they become blockers</li>
-    </ul>
-
-    <h3>What Nexus will not do</h3>
-    <ul>
-      <li>Invent facts, sponsors, or metrics not grounded in your conversation or tenant data</li>
-      <li>Promote unvalidated dollar figures without the <code>[UNVALIDATED_HYPOTHESIS]</code> label</li>
-      <li>Assert a sponsor is confirmed before you've confirmed it</li>
-      <li>Close a gate criterion based on assertion alone — evidence is required</li>
-      <li>Allow scope to expand without flagging the gate review requirement</li>
-    </ul>
-
-    <div class="callout info">
-      <strong>Nexus is scoped to your program</strong>
-      Every Nexus session is scoped to a specific Move. The header shows which program Nexus is working in. Nexus will not apply knowledge from other programs to your session unless cross-program signals are explicitly relevant (e.g., shared sponsor conflicts or dependency overlaps).
-    </div>
-  </section>
-
-  <!-- ─── HOW TO CHAT ───────────────────────────────── -->
-  <section id="how-to-chat">
-    <h2>How to chat with Nexus</h2>
-    <p>Nexus is a conversational interface, but it responds to structured intent. The best conversations are specific, concrete, and grounded in what's actually happening with the program.</p>
-
-    <h3>Starting a new Move</h3>
-    <div class="howto">
-      <h4>What to do</h4>
-      <p>Navigate to <code>/strategic-moves/new</code> and paste any source material — a CEO note, an email, a board memo, a problem description. Nexus will extract the hypothesis automatically.</p>
-      <div class="prompt">"From: Marcus Webb, CEO... I want us to evaluate whether AI-assisted triage in the contact center can bring our average handle time under 6 minutes..."</div>
-      <div class="response">Nexus extracts: hypothesis (AHT 9min → 6min target), detects existing programs for overlap, classifies archetype, identifies sponsor candidate, begins filling the 7-section brief.</div>
-    </div>
-
-    <h3>Advancing a gate</h3>
-    <div class="howto">
-      <h4>What to do</h4>
-      <p>Ask Nexus directly which criteria are blocking the gate. Then work through each one in conversation.</p>
-      <div class="prompt">"What's blocking the P2 gate?"</div>
-      <div class="response">Nexus lists each gate criterion with its current state (met / unmet), what evidence is needed for each unmet criterion, and the fastest path to closing them.</div>
-    </div>
-    <div class="howto">
-      <h4>Closing a gate criterion</h4>
-      <div class="prompt">"We've confirmed baseline AHT with the contact center platform — 8.7 minutes average across the last 90 days, inbound voice only."</div>
-      <div class="response">Nexus records the baseline (marks measurement as live, not projected), updates the gate panel, and checks if this closes the outstanding criterion.</div>
-    </div>
-
-    <h3>Handling a failure mode signal</h3>
-    <div class="howto">
-      <h4>When Nexus flags a failure mode</h4>
-      <p>If Nexus detects a failure mode signal, it surfaces a warning card. Do not dismiss these — address them.</p>
-      <div class="prompt">Nexus flags: <em>"FM-1 · No confirmed sponsor — Marcus Webb named Sarah Chen for the business case, but budget authority hasn't been confirmed. Who holds decision rights over the contact center transformation budget?"</em></div>
-      <div class="response">Answer the question directly. Once budget authority is confirmed, the FM-1 flag is resolved and the sponsor is marked confirmed in the charter.</div>
-    </div>
-
-    <h3>Updating scope</h3>
-    <div class="howto">
-      <h4>After P3 scope lock</h4>
-      <div class="prompt">"We also want to include the chat channel in the AI triage rollout."</div>
-      <div class="response">Nexus flags FM-10 (scope sprawl): "The original scope was inbound voice only. Adding chat adds approximately 40% to the surface area. This requires a gate review before we can accept it — do you want me to initiate one?"</div>
-    </div>
-  </section>
-
-  <!-- ─── PROMPT PATTERNS ───────────────────────────── -->
-  <section id="prompt-patterns">
-    <h2>Prompt patterns</h2>
-    <p>These are the most useful conversation patterns. Copy and adapt them for your programs.</p>
-
-    <div class="table-wrap">
-      <table>
-        <thead><tr><th>Situation</th><th>What to say to Nexus</th></tr></thead>
-        <tbody>
-          <tr><td>Start a new Move</td><td>Paste the raw input (email, memo, note). No intro needed.</td></tr>
-          <tr><td>Check gate status</td><td>"What's blocking the [phase] gate?" or "How many criteria are met?"</td></tr>
-          <tr><td>Confirm a sponsor</td><td>"[Name] is the sponsor — they have budget authority over [function/budget]."</td></tr>
-          <tr><td>Define a metric</td><td>"Our success metric is [KPI]. Baseline is [value] measured [how/when]."</td></tr>
-          <tr><td>Lock scope</td><td>"Scope is inbound voice only. Exclude chat, email, and outbound."</td></tr>
-          <tr><td>Report baseline</td><td>"Baseline [metric] is [value] — measured from [system] over [period]."</td></tr>
-          <tr><td>Flag a risk</td><td>"We don't have data access confirmed yet." (Nexus will classify and flag FM-3)</td></tr>
-          <tr><td>Report a result</td><td>"AHT is now 6.2 minutes — measured over 30 days post-launch."</td></tr>
-          <tr><td>Ask for a summary</td><td>"Give me a summary of where this program stands for a steering committee."</td></tr>
-          <tr><td>Check cross-program</td><td>"Are there any other programs that depend on or conflict with this one?"</td></tr>
-          <tr><td>Upload evidence</td><td>Use the paperclip icon to attach a PDF, DOCX, or XLSX. Nexus will read it and extract relevant content.</td></tr>
-        </tbody>
-      </table>
-    </div>
-  </section>
-
-  <!-- ─── GLOSSARY ──────────────────────────────────── -->
-  <section id="glossary">
-    <h2>Glossary</h2>
-    <p>Key terms used throughout AbarVa. When in doubt, refer to these definitions — they have precise meanings in the context of the platform.</p>
-
-    <div class="glossary-term">
-      <div class="term-name">Strategic Move</div>
-      <div class="term-def">An AI initiative tracked through AbarVa's 6-phase lifecycle. Every program, whether $1M or $50M, is a Strategic Move. Abbreviated as "Move."</div>
-    </div>
-    <div class="glossary-term">
-      <div class="term-name">Archetype</div>
-      <div class="term-def">The category of AI program: workflow automation, AI product enablement, intelligent analytics, data modernization, etc. Nexus classifies the archetype in P0 with a confidence band. The archetype determines which patterns and benchmarks apply.</div>
-    </div>
-    <div class="glossary-term">
-      <div class="term-name">Sponsor</div>
-      <div class="term-def">The executive who holds budget authority and operating-model decision rights over the program outcome. Not the same as the "business case lead" or "project manager." Nexus distinguishes these and will not mark a sponsor as confirmed until budget authority is explicit.</div>
-    </div>
-    <div class="glossary-term">
-      <div class="term-name">Gate criterion</div>
-      <div class="term-def">A specific, verifiable condition that must be met before a phase can close. Gate criteria are defined per phase. Some are binary (sponsor confirmed: yes/no); others require evidence (baseline measurement on record).</div>
-    </div>
-    <div class="glossary-term">
-      <div class="term-name">Gate state</div>
-      <div class="term-def">The current status of a phase gate: <strong>ready</strong> (all criteria met), <strong>partial</strong> (some criteria met, some outstanding), or <strong>blocked</strong> (a hard blocker is preventing progress).</div>
-    </div>
-    <div class="glossary-term">
-      <div class="term-name">Brief-progress artifact</div>
-      <div class="term-def">A structured signal Nexus emits when a scaffold section is filled during origination. It updates the canvas pane and the gate summary in real time. You don't type into the canvas — Nexus fills it from conversation.</div>
-    </div>
-    <div class="glossary-term">
-      <div class="term-name">Failure mode</div>
-      <div class="term-def">One of the 10 categories of program failure patterns that AbarVa is designed to prevent. Nexus watches for signals of each failure mode and surfaces warnings before they become blockers. See <a href="#failure-modes">the full reference</a>.</div>
-    </div>
-    <div class="glossary-term">
-      <div class="term-name">Foundation readiness (F1–F4)</div>
-      <div class="term-def">Four criteria assessed in P1 Charter: F1 data access confirmed, F2 sponsor confirmed, F3 platform available, F4 team capacity confirmed. All four must be green (or have a plan to green) before the P1 gate can close.</div>
-    </div>
-    <div class="glossary-term">
-      <div class="term-name">Value hypothesis</div>
-      <div class="term-def">The preliminary estimate of value at stake, established in P0. Labeled <code>[UNVALIDATED_HYPOTHESIS]</code> until measured. AbarVa tracks the value from hypothesis through to realized outcome across the full lifecycle.</div>
-    </div>
-    <div class="glossary-term">
-      <div class="term-name">Baseline</div>
-      <div class="term-def">The measured pre-intervention state of the success metric. Must be live measurement, not an estimate. AbarVa blocks P2 gate closure if the baseline is projected rather than measured, because a projected baseline makes P5 value attribution indefensible.</div>
-    </div>
-    <div class="glossary-term">
-      <div class="term-name">Deliverable</div>
-      <div class="term-def">A named output produced during a phase — a charter document, diagnostic report, solution design, governance sign-off, etc. Nexus tracks deliverable completion state across the program lifecycle.</div>
-    </div>
-    <div class="glossary-term">
-      <div class="term-name">Evidence receipt</div>
-      <div class="term-def">AbarVa's record of every piece of evidence cited in the program — where it came from, when it was captured, what it supports. Every assertion Nexus makes is traceable to an evidence receipt.</div>
-    </div>
-    <div class="glossary-term">
-      <div class="term-name">Display code</div>
-      <div class="term-def">A short alphanumeric identifier for a Move, visible in the breadcrumb (e.g., APX-001). Useful for referencing programs in steering committee discussions, Slack, and email.</div>
-    </div>
-    <div class="glossary-term">
-      <div class="term-name">HITL</div>
-      <div class="term-def">Human-in-the-loop. A governance requirement for AI systems that affect consequential decisions — contact center triage, lending decisions, clinical recommendations. AbarVa tracks the HITL plan as a governance gate in P4.</div>
-    </div>
-    <div class="glossary-term">
-      <div class="term-name">Nexus</div>
-      <div class="term-def">AbarVa's AI program orchestrator for the Moves module. The only AI voice you interact with directly. Behind Nexus: dozens of named specialists that analyze different aspects of the program silently.</div>
-    </div>
-    <div class="glossary-term">
-      <div class="term-name">Specialist</div>
-      <div class="term-def">A narrow, function-specific AI agent that operates behind Nexus. Specialists are never user-facing. Examples: DuplicateDetector, GateChecker, CitationGuard. See <a href="#agent-catalog">the agent catalog</a>.</div>
-    </div>
-    <div class="glossary-term">
-      <div class="term-name">Tenant</div>
-      <div class="term-def">Your organization's AbarVa account. All programs, people, data, and evidence are scoped to the tenant. No data crosses tenant boundaries.</div>
-    </div>
-    <div class="glossary-term">
-      <div class="term-name">Broker bundle</div>
-      <div class="term-def">The package of tenant context that Nexus loads for every session: org structure, program inventory, executive bench, cross-program signals. It enables Nexus to check for duplicates, sponsor conflicts, and resource contention across the portfolio.</div>
-    </div>
-  </section>
-
-  <!-- ─── FAILURE MODES ─────────────────────────────── -->
-  <section id="failure-modes">
-    <h2>The 10 failure modes</h2>
-    <p>These are the patterns that end AI programs. AbarVa's intelligence layer exists to catch these early. Nexus monitors every conversation for signals of these failure modes and surfaces them before they become crises.</p>
-    <p><em>Source: Gartner (2023), RAND Corporation, MIT/BCG "Winning with AI" (2021), McKinsey Technology (2022), Forrester AI Adoption Report (2023).</em></p>
-
-    <div class="fm-list">
-      <div class="fm-item">
-        <div class="fm-num">1</div>
-        <div class="fm-body">
-          <strong>No executive sponsor</strong>
-          <span>Lack of confirmed budget authority and executive ownership of the outcome. Programs without a real sponsor have no mechanism for resource decisions, escalations, or accountability. <em>Signal: sponsor "assumed," budget "pending approval," no named owner.</em></span>
-        </div>
-      </div>
-      <div class="fm-item">
-        <div class="fm-num">2</div>
-        <div class="fm-body">
-          <strong>Unclear problem definition</strong>
-          <span>Vague objective without a testable hypothesis. "Improve operations" or "leverage AI" are not hypotheses. <em>Signal: no measurable bet stated, starting to build before the problem is validated, hypothesis never written down.</em></span>
-        </div>
-      </div>
-      <div class="fm-item">
-        <div class="fm-num">3</div>
-        <div class="fm-body">
-          <strong>No data ownership</strong>
-          <span>Unknown data custodian, no confirmed data access, quality undefined. The most common technical failure point — discovered mid-P2 or mid-P4. <em>Signal: "we think we have the data," no data lineage, quality checks not planned.</em></span>
-        </div>
-      </div>
-      <div class="fm-item">
-        <div class="fm-num">4</div>
-        <div class="fm-body">
-          <strong>Undefined outcome measurement</strong>
-          <span>Success defined as "the model runs" rather than a business outcome. No KPI. No A/B comparison after go-live. ROI projected but not tracked. <em>Signal: model accuracy reported as the success metric, no post-launch measurement plan.</em></span>
-        </div>
-      </div>
-      <div class="fm-item">
-        <div class="fm-num">5</div>
-        <div class="fm-body">
-          <strong>Governance and security deferred</strong>
-          <span>Security, privacy, and compliance reviews left until late or post-launch. HITL plan absent. <em>Signal: "we'll fix it in production," privacy impact not assessed, security not engaged until demo day.</em></span>
-        </div>
-      </div>
-      <div class="fm-item">
-        <div class="fm-num">6</div>
-        <div class="fm-body">
-          <strong>Infrastructure not confirmed</strong>
-          <span>Build started before vendor or infrastructure decision is settled. Architecture rework mid-program. <em>Signal: cloud vendor not selected, infra sizing not done, build started before architecture review.</em></span>
-        </div>
-      </div>
-      <div class="fm-item">
-        <div class="fm-num">7</div>
-        <div class="fm-body">
-          <strong>Stakeholder misalignment</strong>
-          <span>Critical teams not engaged in design. Adoption assumed, not planned. Change management skipped. <em>Signal: "they'll come around once they see it," training plan absent, operations team not in design reviews.</em></span>
-        </div>
-      </div>
-      <div class="fm-item">
-        <div class="fm-num">8</div>
-        <div class="fm-body">
-          <strong>No delivery plan</strong>
-          <span>No defined build milestones for P4. Timeline undefined. "Agile will figure it out." <em>Signal: no sprint cadence, no milestone dates, phases not sequenced, handoffs not defined.</em></span>
-        </div>
-      </div>
-      <div class="fm-item">
-        <div class="fm-num">9</div>
-        <div class="fm-body">
-          <strong>Baseline and KPI integrity failure</strong>
-          <span>No business KPI baseline. Outcome measurement deferred. Contaminated or unreliable measurement after go-live. <em>Signal: baseline "estimated," no way to attribute value to the AI intervention, measurement plan absent from charter.</em></span>
-        </div>
-      </div>
-      <div class="fm-item">
-        <div class="fm-num">10</div>
-        <div class="fm-body">
-          <strong>Scope sprawl</strong>
-          <span>Simultaneously running too many pilots. Scope keeps expanding. New features bolted on after design lock. <em>Signal: 10+ concurrent AI pilots, original use case diluted, "while we're at it" additions after P3 gate.</em></span>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- ─── GATES ──────────────────────────────────────── -->
-  <section id="gates">
-    <h2>Gate criteria reference</h2>
-    <p>These are the conditions each phase gate checks. All criteria in a phase must be met (or formally waived with documented reason) before Nexus will enable the Promote button.</p>
-
-    <h3>P0 → P1 gate</h3>
-    <div class="table-wrap">
-      <table>
-        <thead><tr><th>Criterion</th><th>What closes it</th></tr></thead>
-        <tbody>
-          <tr><td>Hypothesis stated</td><td>Brief section 1 filled with a testable bet and measurable target</td></tr>
-          <tr><td>Archetype classified</td><td>Brief section 2 filled with archetype + confidence band</td></tr>
-          <tr><td>Sponsor candidate named</td><td>Brief section 3 filled; source attributed</td></tr>
-          <tr><td>Scope defined</td><td>Brief section 4 filled with in/out-of-scope boundary</td></tr>
-          <tr><td>Evidence family selected</td><td>Brief section 5 filled</td></tr>
-          <tr><td>Value hypothesis seeded</td><td>Brief section 6 filled with <code>[UNVALIDATED_HYPOTHESIS]</code> label</td></tr>
-          <tr><td>Foundation assessed</td><td>Brief section 7 filled with F1–F4 assessment</td></tr>
-        </tbody>
-      </table>
-    </div>
-
-    <h3>P1 → P2 gate</h3>
-    <div class="table-wrap">
-      <table>
-        <thead><tr><th>Criterion</th><th>What closes it</th></tr></thead>
-        <tbody>
-          <tr><td>Sponsor confirmed</td><td>Budget authority named, RACI documented</td></tr>
-          <tr><td>Success metric defined</td><td>Business KPI stated with measurement plan</td></tr>
-          <tr><td>Scope locked</td><td>In/out-of-scope agreed and recorded in charter</td></tr>
-          <tr><td>F1 · Data access</td><td>Data custodian named, access confirmed</td></tr>
-          <tr><td>F2 · Sponsor confirmed</td><td>See above</td></tr>
-          <tr><td>F3 · Platform available</td><td>Platform/tooling confirmed available</td></tr>
-          <tr><td>F4 · Team capacity</td><td>Core team members identified and available</td></tr>
-        </tbody>
-      </table>
-    </div>
-
-    <div class="callout note">
-      <strong>Gate waiver</strong>
-      Any gate criterion can be formally waived with a documented reason and sponsor sign-off. Waivers are recorded in the audit trail and visible to governance reviewers. A waiver does not delete the criterion — it marks it as acknowledged and accepted.
-    </div>
-  </section>
-
-  <!-- ─── AGENT CATALOG ─────────────────────────────── -->
-  <section id="agent-catalog">
-    <h2>Agent catalog</h2>
-    <p>Nexus routes silently to specialists based on what you're working on. You never interact with specialists directly, but understanding what each one does helps you understand why Nexus responds the way it does.</p>
-
-    <h3>Nexus — the orchestrator</h3>
-    <div class="callout info">
-      <strong>Nexus</strong>
-      AbarVa's program orchestrator for Moves. Single voice, single interface. Routes to specialists based on phase + user intent + program state. Composes specialist outputs into one coherent response. Enforces all evidence integrity constraints before responding. Never speaks in specialist names; never exposes routing decisions.
-    </div>
-
-    <h3>P0 · Originate specialists</h3>
-    <div class="spec-grid">
-      <div class="spec-card">
-        <h5>DuplicateDetector</h5>
-        <p>Checks for existing programs with overlapping scope before origination proceeds. Surfaces deduplication alert and asks how to proceed.</p>
-        <span class="tag active">Active</span>
-      </div>
-      <div class="spec-card">
-        <h5>HypothesisExtractor</h5>
-        <p>Extracts structured hypothesis from unstructured input: bet, metric, current vs. target state, value stake label.</p>
-        <span class="tag active">Active</span>
-      </div>
-      <div class="spec-card">
-        <h5>ArchetypeClassifier</h5>
-        <p>Classifies program archetype with confidence band. Never asserts final archetype without user confirmation.</p>
-        <span class="tag active">Active</span>
-      </div>
-      <div class="spec-card">
-        <h5>SponsorIdentifier</h5>
-        <p>Identifies sponsor candidate from input. Distinguishes "business case lead" from "budget authority." Never confirms — only identifies.</p>
-        <span class="tag active">Active</span>
-      </div>
-      <div class="spec-card">
-        <h5>BriefProgressTracker</h5>
-        <p>Tracks 7-section brief fill state. Emits brief-progress artifacts that update the canvas pane and gate summary in real time.</p>
-        <span class="tag active">Active</span>
-      </div>
-    </div>
-
-    <h3>P1–P5 specialists</h3>
-    <div class="spec-grid">
-      <div class="spec-card">
-        <h5>SponsorConfirmationValidator</h5>
-        <p>Validates sponsor is fully confirmed: named, budget authority explicit, RACI set. Flags FM-1 until done.</p>
-        <span class="tag active">P1 · Active</span>
-      </div>
-      <div class="spec-card">
-        <h5>SuccessMetricDefiner</h5>
-        <p>Ensures KPI is a business outcome (not model accuracy) with a baseline measurement plan. Flags FM-4, FM-9.</p>
-        <span class="tag active">P1 · Active</span>
-      </div>
-      <div class="spec-card">
-        <h5>GateChecker</h5>
-        <p>Evaluates all gate criteria for the current phase. Emits pass / partial / blocked status and gate summary.</p>
-        <span class="tag active">P2 · Active</span>
-      </div>
-      <div class="spec-card">
-        <h5>EvidenceGapMapper</h5>
-        <p>For each unmet gate criterion: maps what evidence is needed, what sources exist, what is missing.</p>
-        <span class="tag active">P2 · Active</span>
-      </div>
-      <div class="spec-card">
-        <h5>BaselineDataValidator</h5>
-        <p>Confirms baseline is live-measured (not projected). Flags FM-9 if baseline is an estimate.</p>
-        <span class="tag planned">P2 · Planned</span>
-      </div>
-      <div class="spec-card">
-        <h5>ScopeBoundaryGuard</h5>
-        <p>Detects scope additions post-lock. Quantifies impact. Flags FM-10 and requires gate review.</p>
-        <span class="tag planned">P3 · Planned</span>
-      </div>
-      <div class="spec-card">
-        <h5>DeliveryPlanValidator</h5>
-        <p>Validates P4 milestones, handoffs, sprint cadence. Flags FM-8 if "agile will figure it out" gaps exist.</p>
-        <span class="tag planned">P3 · Planned</span>
-      </div>
-      <div class="spec-card">
-        <h5>RiskMonitor</h5>
-        <p>Scans program state against all 10 FM hooks on every turn. Emits failure-mode-flagged artifacts when signals detected.</p>
-        <span class="tag active">P4 · Active</span>
-      </div>
-      <div class="spec-card">
-        <h5>DeliverableStatusAggregator</h5>
-        <p>Summarizes deliverable completion: done / in-progress / blocked per artifact in the current phase.</p>
-        <span class="tag active">P4 · Active</span>
-      </div>
-      <div class="spec-card">
-        <h5>ValueRealizationVerifier</h5>
-        <p>Compares measured outcome to P0 hypothesis. Maintains value lifecycle state. Never removes [UNVALIDATED_HYPOTHESIS] without measured evidence.</p>
-        <span class="tag planned">P5 · Planned</span>
-      </div>
-    </div>
-
-    <h3>Cross-cutting specialists (every phase)</h3>
-    <div class="spec-grid">
-      <div class="spec-card">
-        <h5>CitationGuard</h5>
-        <p>Blocks any dollar figure or benchmark claim without an evidence label. Fires on every response draft before Nexus speaks.</p>
-        <span class="tag active">All phases · Active</span>
-      </div>
-      <div class="spec-card">
-        <h5>FailureModeDetector</h5>
-        <p>Scans message and program state against FM-1–FM-10 hooks. Emits failure-mode-flagged artifacts when signals are detected.</p>
-        <span class="tag active">All phases · Active</span>
-      </div>
-      <div class="spec-card">
-        <h5>CrossProgramDependencyAnalyzer</h5>
-        <p>Detects dependencies between programs. Flags shared sponsor conflicts and resource contention across the portfolio.</p>
-        <span class="tag active">All phases · Active</span>
-      </div>
-      <div class="spec-card">
-        <h5>DuplicateDetector</h5>
-        <p>Cross-references new origination input against existing programs. Raises deduplication alert before brief-filling proceeds.</p>
-        <span class="tag active">P0 · Active</span>
-      </div>
-    </div>
-  </section>
-
-  <!-- ─── VALUE LIFECYCLE ───────────────────────────── -->
-  <section id="value-lifecycle">
-    <h2>Value lifecycle</h2>
-    <p>AbarVa tracks the value of every Strategic Move from first estimate to verified outcome. The value state can only move forward — it cannot be reset to a lower state without a gate review.</p>
-
-    <div class="phase-rail" style="margin: 28px 0;">
-      <div class="phase-node">
-        <div class="phase-dot active" style="width:44px;height:44px;font-size:11px;">PRJ</div>
-        <div class="phase-label">Projected</div>
-      </div>
-      <div class="phase-connector"></div>
-      <div class="phase-node">
-        <div class="phase-dot future" style="width:44px;height:44px;font-size:11px;">CMT</div>
-        <div class="phase-label">Committed</div>
-      </div>
-      <div class="phase-connector"></div>
-      <div class="phase-node">
-        <div class="phase-dot future" style="width:44px;height:44px;font-size:11px;">MSR</div>
-        <div class="phase-label">Measuring</div>
-      </div>
-      <div class="phase-connector"></div>
-      <div class="phase-node">
-        <div class="phase-dot future" style="width:44px;height:44px;font-size:11px;">RLD</div>
-        <div class="phase-label">Realized</div>
-      </div>
-    </div>
-
-    <div class="table-wrap">
-      <table>
-        <thead><tr><th>State</th><th>When it's set</th><th>Label on all outputs</th><th>Who can advance it</th></tr></thead>
-        <tbody>
-          <tr><td><strong>Projected</strong></td><td>P0 origination — first estimate from hypothesis</td><td><code>[UNVALIDATED_HYPOTHESIS]</code></td><td>Nexus (automatic from brief)</td></tr>
-          <tr><td><strong>Committed</strong></td><td>P1 Charter — sponsor commits to the value target</td><td><code>[PRELIMINARY_ESTIMATE]</code></td><td>Sponsor sign-off in charter</td></tr>
-          <tr><td><strong>Measuring</strong></td><td>P5 — measurement plan is live, results not yet complete</td><td><code>[MEASUREMENT_IN_PROGRESS]</code></td><td>Program lead confirms measurement active</td></tr>
-          <tr><td><strong>Realized</strong></td><td>P5 — value measured, attributed, sponsor-signed-off</td><td><code>[MEASURED_RESULT]</code></td><td>Sponsor explicit sign-off required</td></tr>
-        </tbody>
-      </table>
-    </div>
-
-    <div class="callout block">
-      <strong>Critical rule</strong>
-      AbarVa will never display a dollar figure without an evidence label. If a figure appears without a label, report it — it means the CitationGuard specialist did not fire correctly.
-    </div>
-  </section>
-
-  <div style="margin-top: 80px; padding-top: 32px; border-top: 1px solid var(--border); color: var(--muted); font-size: 12px; text-align: center;">
-    AbarVa Product Guidebook · v1.0 · 2026 · For internal use
+  <div class="stat-row">
+    <div class="stat-box"><span class="num">73%</span><span class="lbl">of AI pilots never reach production</span></div>
+    <div class="stat-box"><span class="num">10</span><span class="lbl">failure modes, all preventable</span></div>
+    <div class="stat-box"><span class="num">6</span><span class="lbl">phases from idea to verified value</span></div>
+    <div class="stat-box"><span class="num">4</span><span class="lbl">AI agents, one per product surface</span></div>
   </div>
+</div>
+
+<!-- ── KNOWLEDGE LAYER FUTURE VISION ── -->
+<section id="knowledge-future">
+  <h2>The knowledge layer: where we are going</h2>
+  <p>The knowledge layer is the most strategically important part of AbarVa. Today it is a curated pattern fabric — a library of industry-specific playbooks, benchmarks, workshop structures, and evidence requirements that load into the agent context on every session. But that is only the beginning.</p>
+
+  <h3>Where the knowledge layer is going</h3>
+  <div class="roadmap">
+    <div class="rwave">
+      <div class="wtag w1">Today — Wave 1</div>
+      <h5>Curated pattern fabric</h5>
+      <p>Hand-authored archetypes with specific benchmarks, SME role catalogs, workshop agendas, and evidence requirements. Six patterns across retail, enterprise knowledge work, and customer service. Research-anchored against McKinsey, Gartner, MIT/BCG, RAND, Forrester.</p>
+    </div>
+    <div class="rwave">
+      <div class="wtag w2">Near-term — Wave 2</div>
+      <h5>Living catalog + feedback loop</h5>
+      <p>Pattern catalog grows with every completed program. Closed P5 programs feed back into the pattern library — real baselines, real outcomes, real attribution data. Healthcare, insurance, and manufacturing patterns added. Cross-industry contradiction signals harvested automatically.</p>
+    </div>
+    <div class="rwave">
+      <div class="wtag w3">Future — Wave 3</div>
+      <h5>Embedded vertical intelligence</h5>
+      <p>Specialist SLMs and LLMs fine-tuned on AbarVa's proprietary program corpus — one per industry vertical. A healthcare intelligence model that reasons about FDA approval pathways, HIPAA data handling, and CMS reimbursement mechanics. A financial services model that knows Basel III/IV capital requirements, model risk management, and SR 11-7. A retail model trained on demand elasticity, loyalty economics, and seasonal pattern recognition. These are not general-purpose LLMs doing vertical reasoning — they are narrow, domain-expert models that plug into the specialist layer as hyper-accurate domain validators, available to any agent, on any program, in that vertical.</p>
+    </div>
+  </div>
+
+  <div class="callout blue">
+    <strong>The embedded SLM/LLM vision</strong>
+    Each vertical SLM would do things a general LLM cannot: classify an archetype from a two-sentence description with 95%+ confidence, predict gate failure risk from P1 signals, validate that a baseline meets decision-grade standards for that industry, and surface the specific regulatory constraint that applies to this program's use case. The knowledge layer becomes a living, self-improving intelligence fabric rather than a static reference library. Over time, AbarVa's proprietary program corpus — thousands of real programs, real outcomes, real failure signals — becomes a competitive moat that no general-purpose platform can replicate.
+  </div>
+
+  <h3>Why this matters for the enterprise</h3>
+  <p>The enterprise AI market is converging on a commodity layer — every platform will have the same foundation models, the same embeddings, the same RAG pipelines. The differentiation will come from <strong>domain knowledge depth</strong> and <strong>program governance rigor</strong>. AbarVa is building both: the knowledge layer (vertical SLMs, pattern fabric, real-program corpus) and the governance layer (gate criteria, evidence integrity, failure mode prevention). Together they produce something no point solution can offer — a verifiable chain from a CEO's question to a board-ready outcome attribution.</p>
+</section>
+
+<!-- ───────────────────────────────────────────────────
+     WHAT IS ABARVA
+──────────────────────────────────────────────────── -->
+<section id="what-is">
+  <h2>What is AbarVa?</h2>
+  <p>AbarVa is an <strong>AI program operating system</strong> — a structured, evidence-driven platform that takes an AI idea from the first conversation to a verified, board-reportable outcome. It is not a project management tool, not a chatbot, and not a generic AI framework. It is purpose-built for the specific workflow of running AI programs in the enterprise: originating ideas, building business cases, gathering diagnostic evidence, designing solutions, delivering them, and proving they worked.</p>
+
+  <p>The platform has four surfaces — Moves, Source, Tower, and Intelligence — each with a dedicated AI agent (Nexus, Sentinel, Atlas, Steward). These agents are backed by a shared knowledge layer of industry-specific patterns and a shared governance layer of gate criteria and failure mode detection.</p>
+
+  <div class="callout info">
+    <strong>One sentence for the boardroom</strong>
+    AbarVa helps CIOs, CFOs, and Value Office leaders run AI programs with discipline — from origination to verified value realization — without losing the narrative chain from a steering question to the evidence behind every recommendation.
+  </div>
+</section>
+
+<!-- ── WHO USES IT ── -->
+<section id="who-uses">
+  <h2>Who uses AbarVa?</h2>
+  <div class="tw">
+    <table>
+      <thead><tr><th>Role</th><th>What they do in AbarVa</th><th>Primary surface</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Program lead</strong></td><td>Runs the day-to-day; chats with Nexus to advance phases, close gate criteria, track deliverables</td><td>Moves</td></tr>
+        <tr><td><strong>Executive sponsor</strong></td><td>Confirms milestones, signs off on value realization, reviews steering briefs</td><td>Moves · Tower</td></tr>
+        <tr><td><strong>CIO / CAIO / CFO</strong></td><td>Portfolio oversight — program health, value at stake, risk signals across all moves</td><td>Tower</td></tr>
+        <tr><td><strong>Operations leader</strong></td><td>Validates baselines, confirms delivery readiness, owns adoption plan</td><td>Moves · Intelligence</td></tr>
+        <tr><td><strong>Procurement / Source lead</strong></td><td>RFP orchestration, vendor evaluation, sourcing decision brief</td><td>Source</td></tr>
+        <tr><td><strong>Intelligence analyst</strong></td><td>Queries the knowledge base, surfaces evidence, answers stakeholder questions</td><td>Intelligence</td></tr>
+        <tr><td><strong>Governance / Audit</strong></td><td>Reviews gate sign-offs, approval trail, governance validation records</td><td>Setup · Moves</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ── CORE CONCEPTS ── -->
+<section id="core-concepts">
+  <h2>Core concepts</h2>
+  <h3>Strategic Moves</h3>
+  <p>An AI initiative is called a <strong>Strategic Move</strong> in AbarVa. Every Move has an owner, a hypothesis, a sponsor, a value stake, and a six-phase lifecycle. The platform tracks all of these from the first idea to the final verified outcome.</p>
+
+  <h3>Gate-driven phases</h3>
+  <p>Moves advance through six phases. Each phase has <strong>gate criteria</strong> — specific, verifiable conditions that must be met before the next phase unlocks. This is not ceremony; it prevents the most common failure pattern in AI programs: promoting a program before it is ready and discovering the gap in P4 when it is expensive to fix.</p>
+
+  <h3>Evidence integrity</h3>
+  <p>Every dollar figure and benchmark in AbarVa carries a label: <code>[UNVALIDATED_HYPOTHESIS]</code>, <code>[PRELIMINARY_ESTIMATE]</code>, or <code>[MEASURED_RESULT]</code>. The label cannot be removed without the evidence that justifies it. This is what makes AbarVa's value claims defensible in front of a CFO or audit committee.</p>
+
+  <h3>The knowledge layer</h3>
+  <p>AbarVa's knowledge layer is what makes it different from a generic program framework. For each program archetype — contact center AI, demand forecasting, CDP activation, loyalty optimization, AI coding productivity, M365 Copilot deployment — the platform holds industry-specific benchmarks, workshop structures, SME role catalogs, and evidence requirements. When you run a Contact Center AI program at Apex Retail, Nexus knows that AHT benchmarks differ from healthcare call centers, that containment % is the leading indicator, and that 50–100 audited call transcripts are the evidence bar for P2.</p>
+</section>
+
+<!-- ── THE FOUR SURFACES ── -->
+<section id="surfaces">
+  <h2>The four product surfaces</h2>
+  <div class="grid2">
+    <div class="card">
+      <h5>Moves</h5>
+      <p>The program lifecycle surface. Where Strategic Moves are originated, chartered, diagnosed, designed, delivered, and validated. Nexus is your guide throughout the six phases.</p>
+      <span class="tag active">Agent: Nexus</span>
+    </div>
+    <div class="card">
+      <h5>Source</h5>
+      <p>The sourcing intelligence surface. Where vendor evaluations, RFPs, and sourcing events are orchestrated through an 11-stage structured process. Sentinel is the lead agent.</p>
+      <span class="tag active">Agent: Sentinel</span>
+    </div>
+    <div class="card">
+      <h5>Tower</h5>
+      <p>The portfolio intelligence surface. Where the CIO/CFO/CAIO gets a cross-program view of health, value at stake, risk signals, and steering briefs.</p>
+      <span class="tag active">Agent: Atlas</span>
+    </div>
+    <div class="card">
+      <h5>Intelligence</h5>
+      <p>The knowledge query surface. Ask questions about your enterprise, your programs, or your market. Sentinel surfaces evidence, flags contradictions, and maps knowledge gaps.</p>
+      <span class="tag active">Agent: Sentinel</span>
+    </div>
+  </div>
+  <div class="card" style="margin-top:0">
+    <h5>Setup / Admin</h5>
+    <p>The readiness and configuration surface. Data source connections, permissions, integrations, audit trail, and governance configuration. Steward is the agent in the chat window; primary navigation is by workflow concern (not by agent).</p>
+    <span class="tag active">Agent: Steward</span>
+  </div>
+</section>
+
+<!-- ───────────────────────────────────────────────────
+     KNOWLEDGE LAYER
+──────────────────────────────────────────────────── -->
+<section id="knowledge-layer">
+  <h2>How the knowledge layer works</h2>
+  <p>The knowledge layer is the pattern fabric that powers every agent response. When Nexus helps you run a Contact Center AI program, it is not reasoning from general AI knowledge — it is loading a specific, curated playbook for that archetype: the right benchmarks, the right evidence bar, the right SME roles, the right workshop structure, the right failure signals.</p>
+
+  <h3>The context bundle</h3>
+  <p>Every agent session assembles a context bundle from eight canonical categories. The bundle is tenant-scoped — no data crosses tenant boundaries — and agent-scoped: each agent receives only the slice of context relevant to its role.</p>
+
+  <div class="tw">
+    <table>
+      <thead><tr><th>#</th><th>Category</th><th>What it contains</th></tr></thead>
+      <tbody>
+        <tr><td>1</td><td><strong>Identity</strong></td><td>Tenant, user, program ownership, sponsor authority</td></tr>
+        <tr><td>2</td><td><strong>Work object</strong></td><td>Program ID, pattern ID, phase, cohort definition</td></tr>
+        <tr><td>3</td><td><strong>Workflow state</strong></td><td>Current phase, next gate, blocking evidence, readiness score</td></tr>
+        <tr><td>4</td><td><strong>Business context</strong></td><td>Sponsor OKR, value mechanism, failure mode risk profile</td></tr>
+        <tr><td>5</td><td><strong>Artifacts</strong></td><td>Templates, baselines, reports, transcripts, audit findings</td></tr>
+        <tr><td>6</td><td><strong>Patterns</strong></td><td>SME role catalog, workshop guides, data-asset requirements, prep checklists</td></tr>
+        <tr><td>7</td><td><strong>Evidence</strong></td><td>Baseline measurements, lineage attestations, transcript samples, contradictions log</td></tr>
+        <tr><td>8</td><td><strong>Conversation</strong></td><td>Prior synthesis readouts, escalation notes, dissenter input</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>How agents slice the context</h3>
+  <div class="tw">
+    <table>
+      <thead><tr><th>Agent</th><th>Surface</th><th>What it prioritizes</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Nexus</strong></td><td>Moves</td><td>Sponsor + operating team (8 people), program progression (6 programs), P0 seed vs. P1 synthesis delta, failure mode risk profile, 5 key artifacts</td></tr>
+        <tr><td><strong>Sentinel</strong></td><td>Source</td><td>Technology landscape (8 systems), vendor posture (8 contracts), evidence completeness, sourcing-event history (4 events), 8 evidence records, 6 graph nodes</td></tr>
+        <tr><td><strong>Sentinel</strong></td><td>Intelligence</td><td>Query intent classification, evidence corpus, contradiction log, knowledge gap map</td></tr>
+        <tr><td><strong>Atlas</strong></td><td>Tower</td><td>Value mechanisms — 6 EBIT-driver metrics, 4 dependent systems, cross-program pressure signals, portfolio health scorecard</td></tr>
+        <tr><td><strong>Steward</strong></td><td>Setup</td><td>4 active vendor contracts, policy readiness state, consent lineage, data source connection health</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>Response gates — why Nexus never guesses</h3>
+  <p>Before any agent response leaves the platform, it passes through four gates:</p>
+  <ul>
+    <li><strong>Disclosure gate:</strong> If context has gaps, a disclosure banner is required before the response.</li>
+    <li><strong>Pattern label gate:</strong> If the response is grounded in a pattern, it must be labeled as such.</li>
+    <li><strong>Refusal gate:</strong> If context is insufficient for a decision-grade response, the agent refuses and explains what evidence is needed.</li>
+    <li><strong>Citation gate (CitationGuard):</strong> Any dollar figure or benchmark without an evidence label is blocked before the response is sent.</li>
+  </ul>
+</section>
+
+<!-- ── RETAIL PATTERNS ── -->
+<section id="patterns-retail">
+  <h2>Retail patterns</h2>
+  <p>Retail is the most pattern-dense vertical in AbarVa today. Three archetypes cover the highest-value AI use cases in consumer retail operations.</p>
+
+  <div class="pattern-card">
+    <div class="pid">PAT-PRG-CC-AI-001</div>
+    <h5>Contact Center AI</h5>
+    <p>Intent-classification and agent-assist tooling that reduces Average Handle Time (AHT) and improves containment. The highest-volume AI use case in retail customer service.</p>
+    <div class="row">
+      <div class="kv"><div class="k">Lead metric</div><div class="v">AHT (minutes); containment %</div></div>
+      <div class="kv"><div class="k">Benchmark</div><div class="v">Best-in-class retail: 5–6 min AHT; 70%+ first-cohort containment</div></div>
+      <div class="kv"><div class="k">P2 evidence bar</div><div class="v">50–100 audited, redacted call transcripts per top intent; WFM-sourced baseline</div></div>
+      <div class="kv"><div class="k">P1 first cohort</div><div class="v">Top 3–5 intents covering ~70% of inbound volume</div></div>
+      <div class="kv"><div class="k">Key FM risk</div><div class="v">FM-3 (no data access — transcript PII); FM-9 (AHT baseline from dashboard, not WFM source)</div></div>
+    </div>
+  </div>
+
+  <div class="pattern-card">
+    <div class="pid">PAT-PRG-DATA-FAB-001</div>
+    <h5>Demand Forecasting</h5>
+    <p>ML-driven demand signal at SKU-store-week or category-region-month granularity. Reduces stockout cost and working capital tied up in safety stock.</p>
+    <div class="row">
+      <div class="kv"><div class="k">Lead metric</div><div class="v">MAPE / WAPE; S&OP decision-adherence rate</div></div>
+      <div class="kv"><div class="k">Granularity options</div><div class="v">SKU-store-week (finest) → category-region-month → brand-quarter</div></div>
+      <div class="kv"><div class="k">P2 evidence bar</div><div class="v">12-month forecast-vs-actual with bias-distribution analysis (seasonal, promotional, lifecycle)</div></div>
+      <div class="kv"><div class="k">Key FM risk</div><div class="v">FM-9 (baseline accuracy not measured) and FM-7 (S&OP team not consuming forecast — "earn S&OP trust" reframe)</div></div>
+    </div>
+  </div>
+
+  <div class="pattern-card">
+    <div class="pid">PAT-PRG-LOYALTY-001</div>
+    <h5>Loyalty Program AI</h5>
+    <p>Personalized offer optimization at the RFM-segment or loyalty-tier level. Incrementality discipline is non-negotiable — without a holdout group the value case is undefendable.</p>
+    <div class="row">
+      <div class="kv"><div class="k">Lead metric</div><div class="v">Incremental revenue per offer; offer redemption lift vs. control</div></div>
+      <div class="kv"><div class="k">P1 first cohort</div><div class="v">One RFM cell or loyalty tier; one channel; one offer mechanic</div></div>
+      <div class="kv"><div class="k">P2 evidence bar</div><div class="v">Identity-resolution audit (pairwise overlap: POS, ecommerce, mobile, loyalty); holdout discipline confirmed</div></div>
+      <div class="kv"><div class="k">Key FM risk</div><div class="v">FM-4 (no incrementality framework — uplift claimed without holdout); FM-3 (consent posture for personalization not confirmed)</div></div>
+    </div>
+  </div>
+
+  <div class="pattern-card">
+    <div class="pid">PAT-PRG-CDP-001</div>
+    <h5>CDP Activation</h5>
+    <p>Customer identity unification across POS, ecommerce, mobile, partner, and loyalty platforms. The infrastructure layer that makes loyalty AI, demand forecasting, and contact center AI possible at scale.</p>
+    <div class="row">
+      <div class="kv"><div class="k">Lead metric</div><div class="v">Identity match rate; fragmentation index; activation latency</div></div>
+      <div class="kv"><div class="k">P2 evidence bar</div><div class="v">Pairwise overlap matrix across all identity sources; consent-posture map per source system</div></div>
+      <div class="kv"><div class="k">Key FM risk</div><div class="v">FM-5 (privacy counsel not named — blocks personalized-offer scoping); FM-3 (data custodian unclear across 5+ source systems)</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ── FINANCIAL SERVICES PATTERNS ── -->
+<section id="patterns-fs">
+  <h2>Financial services patterns</h2>
+  <p>Financial services AI programs operate under stricter regulatory constraints and model risk management requirements than most other verticals. AbarVa's financial services patterns embed SR 11-7 model validation discipline, explainability requirements, and adverse action compliance directly into the gate criteria.</p>
+
+  <div class="callout warn">
+    <strong>Financial services knowledge layer — Wave 2</strong>
+    Dedicated financial services archetypes (credit risk, fraud detection, AML/KYC, wealth management AI) are on the Wave 2 roadmap. The patterns below reflect cross-industry financial services constraints embedded in current archetypes. Full vertical patterns — including SR 11-7 model validation, fair lending explainability, and regulatory capital impact — are planned.
+  </div>
+
+  <h3>Key financial services constraints in current patterns</h3>
+  <div class="tw">
+    <table>
+      <thead><tr><th>Constraint</th><th>Where it surfaces</th><th>Gate impact</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Model risk management (SR 11-7)</strong></td><td>Any AI model used for customer decisions, pricing, or risk classification</td><td>Independent model validation required before P4 gate closes</td></tr>
+        <tr><td><strong>Explainability / adverse action</strong></td><td>Credit decisions, offer eligibility, fraud scoring</td><td>Explainability plan required in P3 Design gate; HITL plan mandatory</td></tr>
+        <tr><td><strong>Consent and data residency</strong></td><td>Customer data used for ML training</td><td>Consent posture map required in P2; privacy counsel must be named in P1</td></tr>
+        <tr><td><strong>Operational resilience</strong></td><td>Any model in a critical payment or trading flow</td><td>Fallback / degraded-mode plan required before P4 can close</td></tr>
+        <tr><td><strong>Audit trail completeness</strong></td><td>All regulatory-adjacent decisions</td><td>AbarVa's evidence receipt infrastructure satisfies most audit trail requirements out of the box</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="callout blue">
+    <strong>Wave 3 vision: embedded financial services SLM</strong>
+    A financial services specialist SLM trained on regulatory filings, SR letters, model validation frameworks, and AbarVa's proprietary corpus of FS program outcomes. It would validate that a P3 model design satisfies SR 11-7, classify the adverse action risk of a proposed model, and predict regulatory review timeline from program design signals — with confidence scores a general LLM cannot produce.
+  </div>
+</section>
+
+<!-- ── HEALTHCARE PATTERNS ── -->
+<section id="patterns-hc">
+  <h2>Healthcare patterns</h2>
+  <p>Healthcare AI programs face the highest-stakes combination of regulatory constraint (FDA SaMD pathways, HIPAA, 21st Century Cures), clinical workflow complexity, and evidence standards. A misclassified radiology model or a poorly validated clinical decision support tool can cause patient harm — AbarVa's healthcare patterns embed the evidence bar that clinical AI demands.</p>
+
+  <div class="callout warn">
+    <strong>Healthcare knowledge layer — Wave 2</strong>
+    Dedicated healthcare archetypes are on the Wave 2 roadmap: clinical decision support, revenue cycle AI, prior authorization automation, operational efficiency (scheduling, patient flow). The constraints below reflect current cross-industry healthcare embeddings in existing patterns.
+  </div>
+
+  <h3>Key healthcare constraints in current patterns</h3>
+  <div class="tw">
+    <table>
+      <thead><tr><th>Constraint</th><th>Where it surfaces</th><th>Gate impact</th></tr></thead>
+      <tbody>
+        <tr><td><strong>FDA SaMD classification</strong></td><td>Any AI that informs clinical decisions (diagnosis, treatment, triage)</td><td>Regulatory classification required in P1; FDA pathway defined before P3</td></tr>
+        <tr><td><strong>HIPAA data handling</strong></td><td>Any program using PHI for training or inference</td><td>Privacy counsel named in P1; BAA and de-identification protocol confirmed before P2</td></tr>
+        <tr><td><strong>Clinical validation bar</strong></td><td>Clinical decision support, diagnostic AI</td><td>Prospective clinical validation plan required; retrospective chart review is not sufficient for P2 gate</td></tr>
+        <tr><td><strong>Clinician workflow integration</strong></td><td>Any tool that touches the care delivery workflow</td><td>Clinician champion named in P1; workflow integration plan in P3; alert fatigue assessment required</td></tr>
+        <tr><td><strong>Equity and bias assessment</strong></td><td>Any model trained on clinical data</td><td>Subgroup performance analysis required in P2; equity review included in governance gate</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="callout blue">
+    <strong>Wave 3 vision: embedded healthcare SLM</strong>
+    A healthcare specialist SLM trained on FDA guidance documents, clinical trial registries, CMS reimbursement schedules, and AbarVa's corpus of healthcare program outcomes. It would classify a proposed model against the FDA SaMD risk framework, identify the correct reimbursement pathway for a clinical AI tool, and predict clinical validation timeline from program signals — giving every program team the clinical AI expertise of a specialized regulatory consultant, on demand.
+  </div>
+</section>
+
+<!-- ── CROSS-INDUSTRY PATTERNS ── -->
+<section id="patterns-cross">
+  <h2>Cross-industry patterns</h2>
+  <p>Two archetypes are active across all verticals today — enterprise knowledge work and AI coding productivity. These cross-industry patterns bring depth regardless of the sector, because the underlying programs (deploying M365 Copilot, enabling GitHub Copilot) are structurally similar whether the tenant is a hospital, a bank, or a retailer.</p>
+
+  <div class="pattern-card">
+    <div class="pid">PAT-PRG-COPILOT-001</div>
+    <h5>M365 Copilot Deployment</h5>
+    <p>Enterprise-wide or business-unit-scoped deployment of AI-assisted knowledge work tools. The highest-volume AI deployment program in most enterprises today.</p>
+    <div class="row">
+      <div class="kv"><div class="k">Lead metric</div><div class="v">Weekly Active Users (WAU); adoption penetration; self-reported time savings</div></div>
+      <div class="kv"><div class="k">Benchmark</div><div class="v">Corporate adoption: 44% penetration, 28% observed drop-off; frontline: 32% penetration, 68% drop-off</div></div>
+      <div class="kv"><div class="k">Key FM risk</div><div class="v">FM-7 (training and change management absent — frontline drop-off is 2.4× corporate); FM-5 (data residency for copilot prompts and responses not confirmed)</div></div>
+    </div>
+  </div>
+
+  <div class="pattern-card">
+    <div class="pid">PAT-PRG-AI-CODING-001</div>
+    <h5>AI Coding Productivity</h5>
+    <p>GitHub Copilot, Cursor, or equivalent AI coding assistant deployment for engineering teams.</p>
+    <div class="row">
+      <div class="kv"><div class="k">Lead metric</div><div class="v">PR cycle-time (days to merge); suggestion acceptance rate; code-review throughput</div></div>
+      <div class="kv"><div class="k">Benchmark</div><div class="v">26% PR cycle-time reduction observed at 79% WAU (Apex Retail anchor); suggestion acceptance rate 30–45%</div></div>
+      <div class="kv"><div class="k">Key FM risk</div><div class="v">FM-5 (IP/legal posture for AI-generated code not confirmed before rollout); FM-9 (baseline measured from Jira, not repo tooling — lineage issue)</div></div>
+    </div>
+  </div>
+
+  <h3>Planned cross-industry patterns</h3>
+  <div class="tw">
+    <table>
+      <thead><tr><th>Pattern (planned)</th><th>Vertical</th><th>Core use case</th></tr></thead>
+      <tbody>
+        <tr><td>Claims Processing AI</td><td>Insurance / Healthcare</td><td>Automated claims triage and adjudication assist</td></tr>
+        <tr><td>Document Intelligence</td><td>Legal / Financial Services / Healthcare</td><td>Contract analysis, regulatory filing review, clinical note summarization</td></tr>
+        <tr><td>Predictive Maintenance</td><td>Manufacturing / Energy / Retail (equipment)</td><td>Failure prediction and maintenance scheduling optimization</td></tr>
+        <tr><td>Credit Risk AI</td><td>Financial Services</td><td>Alternative data scoring, credit line optimization</td></tr>
+        <tr><td>Clinical Decision Support</td><td>Healthcare</td><td>Diagnostic assist, clinical pathway recommendation</td></tr>
+        <tr><td>Prior Authorization AI</td><td>Healthcare / Insurance</td><td>Automated PA review and exception routing</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ── RESEARCH ANCHORS ── -->
+<section id="research">
+  <h2>Research anchors</h2>
+  <p>Every benchmark and failure-mode prevention mechanism in AbarVa is cited against published research. This is what allows the platform to tell a CFO that "73% of AI pilots never reach production" — not as an opinion, but as a cited finding.</p>
+  <div class="tw">
+    <table>
+      <thead><tr><th>Source</th><th>Key findings used in AbarVa</th></tr></thead>
+      <tbody>
+        <tr><td><strong>McKinsey &amp; Company</strong><br><em>State of AI, 2023</em></td><td>73% of AI pilots never reach production; active executive ownership 3× more likely in high-performing AI programs; workflow redesign is the single biggest EBIT-driving practice</td></tr>
+        <tr><td><strong>MIT / BCG</strong><br><em>Winning with AI, 2021; GenAI Divide, 2023</em></td><td>Internally-built GenAI succeeds at ~⅓ the rate of purchased solutions; companies with AI at scale had 3–4 years of foundational investment before scale</td></tr>
+        <tr><td><strong>Gartner</strong><br><em>AI Adoption Report, 2023</em></td><td>43% cite data availability as the top obstacle; 35% cite AI skills gap; 57% of failures characterized by "expected too much too fast"; ~60% of AI abandonments through 2026 attributed to data or model operationalization failures</td></tr>
+        <tr><td><strong>RAND Corporation</strong></td><td>Misunderstanding the problem is the single most common AI failure pattern; data-foundation gaps are the most expensive failure mode to fix post-P3</td></tr>
+        <tr><td><strong>Forrester</strong><br><em>AI Program ROI, 2023</em></td><td>Only ~15% of enterprises can demonstrate EBITDA-level financial gain from AI; vendor evaluation discipline is the strongest predictor of build-phase success</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ───────────────────────────────────────────────────
+     PHASE MODEL
+──────────────────────────────────────────────────── -->
+<section id="phase-model">
+  <h2>The 6-phase program lifecycle</h2>
+  <p>Every Strategic Move follows the same six phases. Phases are not just labels — each has a purpose, gate criteria, deliverables, and a phase-specific knowledge pack that Nexus loads automatically.</p>
+
+  <div class="rail">
+    <div class="rnode"><div class="rdot active">P0</div><div class="rlabel">Originate</div></div>
+    <div class="rline"></div>
+    <div class="rnode"><div class="rdot future">P1</div><div class="rlabel">Charter</div></div>
+    <div class="rline"></div>
+    <div class="rnode"><div class="rdot future">P2</div><div class="rlabel">Diagnose</div></div>
+    <div class="rline"></div>
+    <div class="rnode"><div class="rdot future">P3</div><div class="rlabel">Design</div></div>
+    <div class="rline"></div>
+    <div class="rnode"><div class="rdot future">P4</div><div class="rlabel">Deliver</div></div>
+    <div class="rline"></div>
+    <div class="rnode"><div class="rdot future">P5</div><div class="rlabel">Validate</div></div>
+  </div>
+
+  <div class="tw">
+    <table>
+      <thead><tr><th>Phase</th><th>Purpose</th><th>Key output</th><th>Gate blocker if missing</th></tr></thead>
+      <tbody>
+        <tr><td><strong>P0</strong></td><td>Crystallize idea into a structured brief: hypothesis, archetype, sponsor, value stake</td><td>7-section origination brief</td><td>Any of 7 sections incomplete</td></tr>
+        <tr><td><strong>P1</strong></td><td>Confirm sponsor, define KPI, lock scope, assess F1–F4 foundation readiness</td><td>Charter + foundation assessment</td><td>Sponsor not confirmed; no measurable KPI; F1–F4 red</td></tr>
+        <tr><td><strong>P2</strong></td><td>Gather diagnostic evidence, establish baseline measurement, close gate criteria</td><td>Diagnostic report + verified baseline</td><td>Baseline projected not measured; gate criteria with missing evidence</td></tr>
+        <tr><td><strong>P3</strong></td><td>Design solution, write delivery plan, confirm infrastructure and stakeholder alignment</td><td>Solution design + delivery plan</td><td>Delivery plan missing; infra unconfirmed; critical stakeholders not engaged</td></tr>
+        <tr><td><strong>P4</strong></td><td>Build and deploy; maintain governance; track pace against plan</td><td>Deployed solution + governance sign-off</td><td>Governance/HITL not completed; build not deployed</td></tr>
+        <tr><td><strong>P5</strong></td><td>Measure outcomes vs. P0 hypothesis; attribute value; close or cycle</td><td>Value realization report</td><td>No measured evidence; value not attributed; closure criteria unmet</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section id="p0">
+  <h2>P0 · Originate</h2>
+  <p>The origination session is where a Move is born. You paste any source material — a CEO note, an email thread, a board memo — and Nexus extracts the structure. The 7-section brief on the right canvas fills reactively as you confirm each element in conversation.</p>
+  <h3>The 7 origination sections</h3>
+  <div class="tw"><table>
+    <thead><tr><th>#</th><th>Section</th><th>What Nexus captures</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td>What's the bet / hypothesis</td><td>Testable bet: AI intervention → outcome; current vs. target state</td></tr>
+      <tr><td>2</td><td>Archetype classification</td><td>Program archetype with confidence band (e.g., "Contact Center AI — tentative")</td></tr>
+      <tr><td>3</td><td>Sponsor candidate</td><td>Name + role; source attribution; budget authority question</td></tr>
+      <tr><td>4</td><td>Scope / boundary</td><td>In-scope and out-of-scope; what this Move is NOT solving</td></tr>
+      <tr><td>5</td><td>Evidence family</td><td>Which evidence types to gather in P2 (operational metrics, vendor data, etc.)</td></tr>
+      <tr><td>6</td><td>Value hypothesis seed</td><td>Preliminary value estimate with <code>[UNVALIDATED_HYPOTHESIS]</code> label</td></tr>
+      <tr><td>7</td><td>Foundation readiness</td><td>F1–F4 assessment: data access, sponsor, platform, team capacity</td></tr>
+    </tbody>
+  </table></div>
+  <div class="callout note"><strong>Duplicate detection</strong>Before filling any brief section, Nexus cross-references the new idea against your existing programs. If there is scope overlap, it surfaces a deduplication question before proceeding. This prevents duplicate investment in the same program under different names.</div>
+</section>
+
+<section id="p1">
+  <h2>P1 · Charter</h2>
+  <p>Charter converts the P0 brief into a formal program record. Three decisions must be locked before P1 can close: confirmed sponsor (not a candidate — budget authority confirmed), a measurable success metric with a baseline plan, and a scoped delivery boundary.</p>
+  <p>The three-day P1 workshop pattern applies to all archetypes:</p>
+  <div class="tw"><table>
+    <thead><tr><th>Day</th><th>Duration</th><th>Focus</th><th>Required participants</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Day 1</strong></td><td>3 hours</td><td>Decision locking — scope, cohort, first intervention defined; "everywhere charter" blocked</td><td>Sponsor (budget authority), Operating lead, Technical architect</td></tr>
+      <tr><td><strong>Day 2</strong></td><td>3–4 hours</td><td>Baseline establishment — decision-grade baseline with verified lineage; not hand-waved aggregate metrics</td><td>Data engineer, Domain SME, Privacy counsel</td></tr>
+      <tr><td><strong>Day 3</strong></td><td>2 hours</td><td>Synthesis prep — stakeholder map with named dissenter; P2 readiness recommendation (proceed / re-scope / stop)</td><td>Sponsor, Operating lead, Measurement lead</td></tr>
+    </tbody>
+  </table></div>
+  <div class="callout warn"><strong>FM-1 gate: no confirmed sponsor</strong>Nexus will not allow P1 to close until the sponsor is confirmed with explicit budget authority. "I think Sarah Chen is the sponsor" is not confirmation. "Sarah Chen confirmed — she controls the contact center transformation budget and has operating-model decision rights" is confirmation.</div>
+</section>
+
+<section id="p2">
+  <h2>P2 · Diagnose</h2>
+  <p>Diagnose is the evidence-gathering phase. The P0 hypothesis is tested against reality. Baseline measurements go live. Gate criteria are closed one by one through structured diagnostic work grounded in evidence that meets the pattern's evidence bar.</p>
+  <div class="callout warn"><strong>Baseline integrity rule (FM-9)</strong>A baseline must be live and measured — not projected, not estimated from a dashboard. AbarVa treats a projected baseline as a gate blocker. The baseline is the foundation of the P5 value attribution; if it is not credible, the entire value case collapses.</div>
+</section>
+
+<section id="p3"><h2>P3 · Design</h2><p>Design is where the solution is architected, the delivery plan is written, and scope is formally locked. Any scope addition after this gate requires a gate review. Nexus flags FM-10 (scope sprawl) on any addition and quantifies its impact on the P4 timeline before accepting it.</p></section>
+
+<section id="p4"><h2>P4 · Deliver</h2><p>Build is underway. Nexus runs ongoing failure mode monitoring against all 10 signals. Governance gates (security review, HITL plan, privacy impact assessment) must be closed before the P4 gate can open. Pace is tracked against the P3 delivery plan.</p></section>
+
+<section id="p5"><h2>P5 · Validate</h2><p>The moment of truth. The P0 hypothesis is compared to measured outcomes. Value must be attributed to the AI intervention specifically — not to market effects, seasonality, or concurrent programs. The <code>[UNVALIDATED_HYPOTHESIS]</code> label on the P0 value stake is only removed when measured evidence and attribution are on record.</p></section>
+
+<!-- ───────────────────────────────────────────────────
+     THE AGENTS
+──────────────────────────────────────────────────── -->
+<section id="nexus">
+  <h2>Nexus · Moves agent</h2>
+  <div class="agent-card">
+    <div class="agent-avatar">N</div>
+    <div class="agent-info">
+      <h4>Nexus</h4>
+      <div class="role">Program orchestrator · Moves surface</div>
+      <p>AbarVa's program guide. Nexus holds the longitudinal context of a Move across all six phases and routes silently to the right specialist based on what you're working on. The user always talks to Nexus — never to a specialist directly.</p>
+    </div>
+  </div>
+  <h3>What Nexus does</h3>
+  <ul>
+    <li>Extracts structure from unstructured input (CEO notes, emails, meeting summaries)</li>
+    <li>Routes to phase-specific specialists based on current phase and conversation intent</li>
+    <li>Enforces evidence integrity on every dollar figure before responding</li>
+    <li>Emits structured artifacts that update the canvas pane (brief sections, gate status, value state)</li>
+    <li>Surfaces failure mode signals from all 10 detection hooks in real time</li>
+    <li>Detects duplicate programs and cross-program dependencies from your tenant's program inventory</li>
+    <li>Maintains program narrative continuity across phase transitions</li>
+  </ul>
+  <h3>Nexus voice</h3>
+  <p><em>"You are Nexus, AbarVa's program orchestrator. You guide program phases, track gates, surface blockers, and drive deliverable quality."</em></p>
+  <p>Nexus is direct, evidence-grounded, and willing to say "I need more evidence before I can answer that." It never fabricates sponsors, baselines, or benchmarks. It never removes evidence labels from financial claims.</p>
+</section>
+
+<section id="sentinel">
+  <h2>Sentinel · Source and Intelligence agent</h2>
+  <div class="agent-card">
+    <div class="agent-avatar">S</div>
+    <div class="agent-info">
+      <h4>Sentinel</h4>
+      <div class="role">Evidence librarian · Source + Intelligence surfaces</div>
+      <p>Sentinel is AbarVa's evidence integrity agent. In Source, it orchestrates the 11-stage sourcing lifecycle — strategy, scope, RFP, vendor responses, evaluation, pricing, BAFO, executive decision, selection, transition, and value. In Intelligence, it answers questions about your enterprise with evidence-grounded, citation-linked responses.</p>
+    </div>
+  </div>
+  <h3>Sentinel in Source (11 stages)</h3>
+  <div class="tw"><table>
+    <thead><tr><th>Stage group</th><th>Stages</th><th>Sentinel's primary role</th></tr></thead>
+    <tbody>
+      <tr><td>Strategy &amp; scope</td><td>Strategy · Scope</td><td>Define sourcing strategy; identify must-have vs. nice-to-have; lock evaluation criteria</td></tr>
+      <tr><td>Market engagement</td><td>RFP · Responses · Evaluation</td><td>Structure RFP; assess response completeness; flag evidence gaps in vendor submissions</td></tr>
+      <tr><td>Commercial</td><td>Pricing · BAFO</td><td>Validate pricing against market benchmarks; flag anomalies; prepare BAFO guidance</td></tr>
+      <tr><td>Decision</td><td>Executive Decision · Selection</td><td>Compose decision brief; surface tradeoffs; flag unvalidated claims in vendor proposals</td></tr>
+      <tr><td>Value</td><td>Transition · Value</td><td>Track contract commitments vs. delivery; feed value realization data to Tower</td></tr>
+    </tbody>
+  </table></div>
+  <h3>Sentinel in Intelligence (J0–J5 query spine)</h3>
+  <div class="tw"><table>
+    <thead><tr><th>Query mode</th><th>What Sentinel does</th></tr></thead>
+    <tbody>
+      <tr><td><strong>J0 · Factual lookup</strong></td><td>Retrieves a specific fact from the knowledge base with source citation</td></tr>
+      <tr><td><strong>J1 · Synthesis</strong></td><td>Synthesizes across multiple sources; flags contradictions; labels confidence</td></tr>
+      <tr><td><strong>J2 · Gap analysis</strong></td><td>Identifies what evidence is missing to answer the question at decision grade</td></tr>
+      <tr><td><strong>J3 · Comparison</strong></td><td>Compares vendors, programs, or options across defined criteria</td></tr>
+      <tr><td><strong>J4 · Scenario</strong></td><td>Models a "what if" scenario against the evidence base</td></tr>
+      <tr><td><strong>J5 · Recommendation</strong></td><td>Provides a recommendation with evidence chain and dissent log</td></tr>
+    </tbody>
+  </table></div>
+  <div class="callout info"><strong>Sentinel's core discipline</strong>Sentinel never asserts a claim it cannot trace to evidence. If a question cannot be answered at decision grade from the available evidence, Sentinel refuses and maps exactly what evidence is needed. This is by design — a "confident but wrong" answer is worse than an honest gap disclosure.</div>
+</section>
+
+<section id="atlas">
+  <h2>Atlas · Tower agent</h2>
+  <div class="agent-card">
+    <div class="agent-avatar">A</div>
+    <div class="agent-info">
+      <h4>Atlas</h4>
+      <div class="role">Portfolio intelligence · Tower surface</div>
+      <p>Atlas is the executive-facing agent. It synthesizes across all active Strategic Moves to give the CIO/CFO/CAIO a portfolio view: aggregate value at stake, program health signals, cross-program risk, and steering-ready briefings.</p>
+    </div>
+  </div>
+  <h3>What Atlas surfaces in Tower</h3>
+  <ul>
+    <li><strong>Portfolio health scorecard:</strong> Phase velocity, gate adherence, and risk signal per program — in one view</li>
+    <li><strong>Value at stake aggregate:</strong> Sum of projected, committed, measuring, and realized value across all Moves — by phase, by vertical, by sponsor</li>
+    <li><strong>Cross-program risk signals:</strong> Shared sponsor overload, resource contention, overlapping scope, conflicting timelines</li>
+    <li><strong>Steering brief:</strong> Monthly / quarterly executive synthesis — what's on track, what needs a decision, what should be stopped</li>
+    <li><strong>Failure mode heat map:</strong> Which programs are showing the most FM signals, by failure mode type</li>
+  </ul>
+  <div class="callout note"><strong>Atlas vs. Nexus</strong>Nexus is program-scoped — it works inside one Move at a time. Atlas is portfolio-scoped — it works across all Moves. They share the same evidence integrity rules and the same citation discipline, but Atlas speaks to steering committees and boards while Nexus speaks to program leads and sponsors.</div>
+</section>
+
+<section id="steward">
+  <h2>Steward · Setup agent</h2>
+  <div class="agent-card">
+    <div class="agent-avatar">St</div>
+    <div class="agent-info">
+      <h4>Steward</h4>
+      <div class="role">Governance and readiness · Setup surface</div>
+      <p>Steward is the governance and configuration agent. It monitors data source health, permission gaps, integration status, and audit trail completeness. The Setup surface is workflow-anchored — primary navigation is by readiness concern (data sources, permissions, integrations, gates, audit) not by agent name. Steward voices the chat window.</p>
+    </div>
+  </div>
+  <h3>What Steward monitors</h3>
+  <ul>
+    <li><strong>Data source readiness:</strong> Connection status, staleness, access gaps across all tenant data sources</li>
+    <li><strong>Permission audit:</strong> RBAC gaps, missing role assignments, over-privileged accounts</li>
+    <li><strong>Integration health:</strong> Broker, vector, graph, and external API adapter status</li>
+    <li><strong>Audit trail:</strong> Completeness of approval records, gate sign-offs, and governance events across all programs</li>
+    <li><strong>Gate approval routing:</strong> Routes gate approval requests to the correct approver based on program type and phase</li>
+  </ul>
+  <div class="callout note"><strong>Setup is cross-cutting</strong>Setup serves all four product surfaces. Data source health affects every agent. Permission configuration affects who can see what across Moves, Source, Tower, and Intelligence. Steward has the broadest operational scope of the four agents.</div>
+</section>
+
+<!-- ── SPECIALIST CATALOG ── -->
+<section id="specialist-catalog">
+  <h2>Specialist catalog</h2>
+  <p>Every agent routes to named specialists based on phase and user intent. Users never interact with specialists directly. This section catalogs the most important ones.</p>
+
+  <h3>Nexus specialists — Moves</h3>
+  <div class="grid2">
+    <div class="card"><h5>DuplicateDetector</h5><p>Checks for existing programs with overlapping scope before origination proceeds. Always runs first in P0.</p><span class="tag active">P0 · Active</span></div>
+    <div class="card"><h5>HypothesisExtractor</h5><p>Extracts structured hypothesis from unstructured input: bet, metric, current vs. target state, value label.</p><span class="tag active">P0 · Active</span></div>
+    <div class="card"><h5>ArchetypeClassifier</h5><p>Classifies program archetype with confidence band. Never asserts final archetype without confirmation.</p><span class="tag active">P0 · Active</span></div>
+    <div class="card"><h5>SponsorIdentifier</h5><p>Identifies sponsor candidate from input. Distinguishes business-case lead from budget authority.</p><span class="tag active">P0 · Active</span></div>
+    <div class="card"><h5>BriefProgressTracker</h5><p>Tracks 7-section brief fill state. Emits <code>brief-progress</code> artifacts that update the canvas in real time.</p><span class="tag active">P0 · Active</span></div>
+    <div class="card"><h5>GateChecker</h5><p>Evaluates all gate criteria for the current phase. Emits pass / partial / blocked and gate summary.</p><span class="tag active">P2–P5 · Active</span></div>
+    <div class="card"><h5>FailureModeDetector</h5><p>Scans conversation and program state against all 10 FM detection hooks. Emits <code>failure-mode-flagged</code> when signals are detected.</p><span class="tag active">All phases · Active</span></div>
+    <div class="card"><h5>CitationGuard</h5><p>Blocks any dollar figure or benchmark without an evidence label. Fires on every response draft before Nexus speaks.</p><span class="tag active">All phases · Active</span></div>
+    <div class="card"><h5>CrossProgramDependencyAnalyzer</h5><p>Detects shared sponsor conflicts, resource contention, and scope overlap across your program portfolio.</p><span class="tag active">All phases · Active</span></div>
+    <div class="card"><h5>ValueRealizationVerifier</h5><p>Compares measured outcomes to P0 hypothesis. Maintains value state. Never removes evidence labels without measured proof.</p><span class="tag planned">P5 · Planned</span></div>
+  </div>
+
+  <h3>Sentinel specialists — Source</h3>
+  <div class="grid2">
+    <div class="card"><h5>NextActionAdvisor</h5><p>Recommends the operational next action at the current sourcing stage. Fires at every stage.</p><span class="tag active">All stages · Active</span></div>
+    <div class="card"><h5>DataReadinessInspector</h5><p>Reports which input data is missing, stale, or access-restricted for the current stage.</p><span class="tag active">All stages · Active</span></div>
+    <div class="card"><h5>EvidenceGapAnalyzer</h5><p>Identifies context validation defers — claims that lack supporting evidence in the sourcing brief.</p><span class="tag active">All stages · Active</span></div>
+    <div class="card"><h5>GateBlockerAnalyzer</h5><p>Identifies unmet gate criteria and what must happen to close them. Includes approval path.</p><span class="tag active">All stages · Active</span></div>
+  </div>
+
+  <h3>Atlas specialists — Tower</h3>
+  <div class="grid2">
+    <div class="card"><h5>PortfolioRiskSynthesizer</h5><p>Cross-program risk summary for executive steering. Aggregates FM signals across all active Moves.</p><span class="tag planned">Planned</span></div>
+    <div class="card"><h5>ValueRealizationTracker</h5><p>Projected → committed → measuring → realized value state per program. Powers the portfolio value dashboard.</p><span class="tag planned">Planned</span></div>
+    <div class="card"><h5>SteeringBriefComposer</h5><p>Executive-grade steering brief for monthly/quarterly review. Synthesizes across all active programs.</p><span class="tag planned">Planned</span></div>
+    <div class="card"><h5>ProgramHealthScorer</h5><p>Phase velocity + gate adherence score per program. Inputs to the portfolio health scorecard.</p><span class="tag planned">Planned</span></div>
+  </div>
+
+  <h3>Future: vertical SLM specialists</h3>
+  <div class="grid2">
+    <div class="card"><h5>HealthcareDomainSLM</h5><p>Specialist model trained on FDA guidance, clinical trial data, CMS schedules, and AbarVa's healthcare program corpus. Validates SaMD classification, reimbursement pathway, and clinical evidence standards.</p><span class="tag future">Wave 3 · Future</span></div>
+    <div class="card"><h5>FinancialServicesSLM</h5><p>Specialist model trained on SR letters, Basel frameworks, model risk management docs, and AbarVa's FS program corpus. Validates SR 11-7 compliance, adverse action risk, and regulatory review timeline.</p><span class="tag future">Wave 3 · Future</span></div>
+    <div class="card"><h5>RetailVerticalSLM</h5><p>Specialist model trained on retail program corpus. Deep archetype classification, demand elasticity benchmarks, loyalty incrementality patterns, and seasonal correction factors.</p><span class="tag future">Wave 3 · Future</span></div>
+    <div class="card"><h5>CrossIndustrySLM</h5><p>Specialist model trained on the full AbarVa program corpus across verticals. Detects cross-vertical analogies, failure mode early signals, and archetype migration patterns.</p><span class="tag future">Wave 3 · Future</span></div>
+  </div>
+</section>
+
+<!-- ───────────────────────────────────────────────────
+     HOW TO USE NEXUS
+──────────────────────────────────────────────────── -->
+<section id="how-to-chat">
+  <h2>How to chat with Nexus</h2>
+  <p>Nexus responds best to specific, concrete, grounded input. The best conversations are ones where you tell Nexus what you know — and let it tell you what you're missing.</p>
+
+  <h3>Starting a new Move</h3>
+  <div class="howto">
+    <h4>Paste any source material</h4>
+    <div class="prompt">"From: Marcus Webb, CEO... I want us to evaluate whether AI-assisted triage in the contact center can bring our average handle time under 6 minutes..."</div>
+    <div class="response">Nexus: detects Contact Center AI archetype (PAT-PRG-CC-AI-001 — tentative), checks for duplicate programs in the portfolio, extracts hypothesis (AHT 9min → 6min), identifies sponsor candidate (Sarah Chen from CEO note, not confirmed), begins filling the 7-section brief. Canvas updates in real time.</div>
+  </div>
+
+  <h3>Closing a gate criterion</h3>
+  <div class="howto">
+    <h4>Give Nexus the evidence — with lineage</h4>
+    <div class="prompt">"We confirmed baseline AHT: 8.7 minutes average across the last 90 days of inbound voice calls. Source: WFM platform, not the dashboard aggregate — verified by the contact center ops lead."</div>
+    <div class="response">Nexus: records baseline as live measurement (not projected), notes WFM lineage, updates gate criterion status, checks if this closes the P2 outstanding criterion. CitationGuard confirms the baseline is labeled as measured evidence.</div>
+  </div>
+
+  <h3>Responding to a failure mode flag</h3>
+  <div class="howto">
+    <h4>Address it directly — don't dismiss it</h4>
+    <div class="prompt">Nexus flags: FM-3 · "Data ownership is unclear — we haven't confirmed who is the data custodian for the WFM system or whether the AI team will have API access to call transcripts."</div>
+    <div class="response">You: "The WFM custodian is Rachel Torres, data engineering lead. API access to call transcripts is confirmed — BAA is in place and the contact center platform team has approved the integration."<br><br>Nexus: FM-3 flag resolved. Records data custodian and access confirmation. Updates foundation readiness F1 criterion.</div>
+  </div>
+</section>
+
+<section id="prompt-patterns">
+  <h2>Prompt patterns</h2>
+  <div class="tw"><table>
+    <thead><tr><th>Situation</th><th>What to say to Nexus</th></tr></thead>
+    <tbody>
+      <tr><td>Start a new Move</td><td>Paste raw input (email, memo, note). No intro needed.</td></tr>
+      <tr><td>Check gate status</td><td>"What's blocking the [phase] gate?" or "How many criteria are met?"</td></tr>
+      <tr><td>Confirm a sponsor</td><td>"[Name] is the sponsor — they have budget authority over [function/budget]."</td></tr>
+      <tr><td>Define a metric</td><td>"Our success metric is [KPI]. Baseline is [value] measured [source/method/period]."</td></tr>
+      <tr><td>Close a gate criterion</td><td>"[Evidence statement with lineage: what, how measured, source system, period]."</td></tr>
+      <tr><td>Flag a risk</td><td>"We don't have [data / sponsor / vendor] confirmed yet." (Nexus will classify and flag the relevant FM)</td></tr>
+      <tr><td>Report an outcome</td><td>"AHT is now [value] — measured over [period] post-launch, [source system], [comparison to baseline]."</td></tr>
+      <tr><td>Request a summary</td><td>"Give me a steering committee summary of where this program stands."</td></tr>
+      <tr><td>Check cross-program</td><td>"Are there programs that depend on or conflict with this one?"</td></tr>
+      <tr><td>Upload evidence</td><td>Use the paperclip icon to attach PDF, DOCX, or XLSX. Nexus reads it and extracts relevant evidence.</td></tr>
+      <tr><td>Scope change</td><td>"We want to add [scope item]." — Nexus will flag FM-10 and quantify the impact before accepting.</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<!-- ───────────────────────────────────────────────────
+     REFERENCE
+──────────────────────────────────────────────────── -->
+<section id="glossary">
+  <h2>Glossary</h2>
+  <div class="gterm"><div class="tname">Strategic Move</div><div class="tdef">An AI initiative tracked through AbarVa's 6-phase lifecycle. Every program is a Move.</div></div>
+  <div class="gterm"><div class="tname">Archetype</div><div class="tdef">The category of AI program: contact center AI, demand forecasting, CDP activation, loyalty optimization, M365 Copilot, AI coding. Nexus classifies the archetype in P0 with a confidence band. The archetype determines which knowledge pack, benchmarks, and evidence bar apply.</div></div>
+  <div class="gterm"><div class="tname">Sponsor</div><div class="tdef">The executive who holds budget authority and operating-model decision rights. Not the business case lead. Not the project manager. Nexus will not mark a sponsor as confirmed until budget authority is explicitly stated.</div></div>
+  <div class="gterm"><div class="tname">Gate criterion</div><div class="tdef">A specific, verifiable condition that must be met before a phase can close. Some are binary (sponsor confirmed: yes/no); others require evidence (baseline measurement on record with lineage).</div></div>
+  <div class="gterm"><div class="tname">Gate state</div><div class="tdef"><strong>Ready</strong> (all criteria met), <strong>Partial</strong> (some met, some outstanding), or <strong>Blocked</strong> (a hard blocker is preventing progress).</div></div>
+  <div class="gterm"><div class="tname">Failure mode</div><div class="tdef">One of the 10 research-grounded patterns that end AI programs. Nexus monitors for signals of each and surfaces them before they become crises. See the full reference below.</div></div>
+  <div class="gterm"><div class="tname">Foundation readiness (F1–F4)</div><div class="tdef">Four P1 gate criteria: F1 data access confirmed · F2 sponsor confirmed · F3 platform available · F4 team capacity confirmed. All must be green before P1 closes.</div></div>
+  <div class="gterm"><div class="tname">Knowledge pack / phase pack</div><div class="tdef">The archetype-specific and phase-specific coaching context Nexus loads for every session. Contains the relevant benchmarks, SME role catalog, workshop structure, and evidence requirements for this archetype at this phase.</div></div>
+  <div class="gterm"><div class="tname">Pattern fabric</div><div class="tdef">The full library of industry-specific patterns in AbarVa's knowledge layer. Six active patterns today; expanding with each Wave.</div></div>
+  <div class="gterm"><div class="tname">Evidence receipt</div><div class="tdef">AbarVa's record of every piece of evidence cited: source, timestamp, what it supports. Every assertion traces to an evidence receipt.</div></div>
+  <div class="gterm"><div class="tname">Baseline</div><div class="tdef">The measured pre-intervention state of the success metric. Must be live measurement, not an estimate. A projected baseline is a P2 gate blocker.</div></div>
+  <div class="gterm"><div class="tname">Value lifecycle</div><div class="tdef">The four states of value in AbarVa: Projected → Committed → Measuring → Realized. Value can only move forward. Each state has a specific evidence label.</div></div>
+  <div class="gterm"><div class="tname">Brief-progress artifact</div><div class="tdef">A structured signal Nexus emits when an origination scaffold section is filled. Updates the canvas pane in real time. You don't type into the canvas — Nexus fills it from conversation.</div></div>
+  <div class="gterm"><div class="tname">Specialist</div><div class="tdef">A narrow, function-specific AI agent operating behind a front agent. Never user-facing. Examples: DuplicateDetector, GateChecker, CitationGuard. Cataloged in architecture docs but not visible in the product UI.</div></div>
+  <div class="gterm"><div class="tname">SLM</div><div class="tdef">Small Language Model — a narrow, domain-fine-tuned model for a specific vertical (healthcare, financial services, retail). Planned for Wave 3 of the knowledge layer. Plugs into the specialist layer as a hyper-accurate domain validator.</div></div>
+  <div class="gterm"><div class="tname">Broker bundle</div><div class="tdef">The package of tenant context loaded for every agent session: org structure, program inventory, executive bench, cross-program signals. Enables duplicate detection, sponsor conflict detection, and dependency analysis.</div></div>
+  <div class="gterm"><div class="tname">Context receipt</div><div class="tdef">Record of what context was in scope for a given agent session. Part of the audit trail — allows reconstruction of why the agent responded the way it did.</div></div>
+  <div class="gterm"><div class="tname">HITL</div><div class="tdef">Human-in-the-loop. Required for AI systems that affect consequential decisions. AbarVa tracks the HITL plan as a governance gate in P4.</div></div>
+  <div class="gterm"><div class="tname">SR 11-7</div><div class="tdef">Federal Reserve / OCC supervisory guidance on model risk management. Applies to financial services AI programs. Requires independent model validation, ongoing monitoring, and documented model risk controls.</div></div>
+</section>
+
+<section id="failure-modes">
+  <h2>The 10 failure modes</h2>
+  <p>These are the patterns that end AI programs. AbarVa's prevention mechanisms for each are embedded in gate criteria — not advice. <em>Sources: McKinsey, MIT/BCG, Gartner, RAND, Forrester.</em></p>
+  <div class="fmlist">
+    <div class="fmitem"><div class="fmnum">1</div><div class="fmbody"><strong>No executive sponsor</strong><span>No confirmed budget authority; sponsor assumed not verified. Signal: "we got funding, now what?" · sponsor name appears in meeting notes but not in RACI · budget approved but no executive owns the outcome. <em>McKinsey: active AI ownership is 3× more likely in high-performing programs.</em></span></div></div>
+    <div class="fmitem"><div class="fmnum">2</div><div class="fmbody"><strong>Unclear problem definition</strong><span>Vague objective without a testable hypothesis. Signal: "improve operations" or "leverage AI" without a measurable bet · starting to build before the problem is validated. <em>RAND: misunderstanding the problem is the single most common AI failure pattern.</em></span></div></div>
+    <div class="fmitem"><div class="fmnum">3</div><div class="fmbody"><strong>No data ownership</strong><span>Unknown custodian, no confirmed access, quality undefined. Signal: "we think we have the data" · no data lineage · quality checks not planned. <em>Gartner: 43% cite data availability as the top obstacle; ~60% of AI abandonments through 2026 are data-related.</em></span></div></div>
+    <div class="fmitem"><div class="fmnum">4</div><div class="fmbody"><strong>Undefined outcome measurement</strong><span>Success defined as "the model runs." No business KPI. No A/B comparison after go-live. Signal: model accuracy cited as the success metric · ROI projected but not tracked · no measurement plan in charter. <em>Forrester: only ~15% of enterprises can demonstrate EBITDA-level financial gain from AI.</em></span></div></div>
+    <div class="fmitem"><div class="fmnum">5</div><div class="fmbody"><strong>Governance and security deferred</strong><span>Security, privacy, compliance, and HITL left until late or post-launch. Signal: "we'll fix it in production" · privacy impact not assessed · security not engaged until demo day. <em>Gartner: inadequate risk controls are a leading driver of post-launch incident costs.</em></span></div></div>
+    <div class="fmitem"><div class="fmnum">6</div><div class="fmbody"><strong>Infrastructure not confirmed</strong><span>Build started before vendor or infrastructure decision is settled. Signal: cloud vendor not selected · infra sizing not done · architecture rework mid-program. <em>MIT/BCG: internally built GenAI succeeds at ~⅓ the rate of purchased solutions.</em></span></div></div>
+    <div class="fmitem"><div class="fmnum">7</div><div class="fmbody"><strong>Stakeholder misalignment</strong><span>Critical teams not engaged in design. Adoption assumed, not planned. Signal: "they'll come around once they see it" · training plan absent · operations team not in design reviews. <em>McKinsey: workflow redesign is the single biggest EBIT-driving practice; skipping it is the single biggest failure accelerator.</em></span></div></div>
+    <div class="fmitem"><div class="fmnum">8</div><div class="fmbody"><strong>No delivery plan</strong><span>No milestones for P4. Timeline undefined. Signal: no sprint cadence · no milestone dates · "agile will figure it out." <em>McKinsey: 73% of AI pilots never reach production — delivery planning gaps are the most common structural cause.</em></span></div></div>
+    <div class="fmitem"><div class="fmnum">9</div><div class="fmbody"><strong>Baseline and KPI integrity failure</strong><span>No business KPI baseline. Contaminated or unreliable post-launch measurement. Signal: baseline "estimated" · measurement plan absent from charter · no way to attribute value to the AI intervention specifically. <em>Forrester: inability to attribute value is the most common reason AI programs lose executive support after launch.</em></span></div></div>
+    <div class="fmitem"><div class="fmnum">10</div><div class="fmbody"><strong>Scope sprawl</strong><span>Too many concurrent pilots. Scope keeps expanding after design lock. Signal: 10+ active AI pilots · "while we're at it" additions post-P3 · original use case diluted. <em>Gartner: 57% of AI failures are characterized by "expected too much too fast."</em></span></div></div>
+  </div>
+</section>
+
+<section id="gates">
+  <h2>Gate criteria reference</h2>
+  <h3>P0 → P1 gate</h3>
+  <div class="tw"><table>
+    <thead><tr><th>Criterion</th><th>What closes it</th></tr></thead>
+    <tbody>
+      <tr><td>Hypothesis stated</td><td>Brief section 1: testable bet with measurable target</td></tr>
+      <tr><td>Archetype classified</td><td>Brief section 2: archetype + confidence band</td></tr>
+      <tr><td>Sponsor candidate named</td><td>Brief section 3: candidate identified with source attribution</td></tr>
+      <tr><td>Scope defined</td><td>Brief section 4: in/out-of-scope boundary</td></tr>
+      <tr><td>Evidence family selected</td><td>Brief section 5: evidence types for P2 identified</td></tr>
+      <tr><td>Value hypothesis seeded</td><td>Brief section 6: estimate with <code>[UNVALIDATED_HYPOTHESIS]</code></td></tr>
+      <tr><td>Foundation assessed</td><td>Brief section 7: F1–F4 assessment</td></tr>
+    </tbody>
+  </table></div>
+  <h3>P1 → P2 gate</h3>
+  <div class="tw"><table>
+    <thead><tr><th>Criterion</th><th>What closes it</th></tr></thead>
+    <tbody>
+      <tr><td>Sponsor confirmed</td><td>Budget authority named; RACI documented</td></tr>
+      <tr><td>Success metric defined</td><td>Business KPI stated with baseline measurement plan</td></tr>
+      <tr><td>Scope locked</td><td>In/out-of-scope agreed and recorded in charter</td></tr>
+      <tr><td>F1 · Data access</td><td>Data custodian named; access confirmed; lineage plan exists</td></tr>
+      <tr><td>F2 · Sponsor confirmed</td><td>See above</td></tr>
+      <tr><td>F3 · Platform available</td><td>Platform/tooling confirmed available</td></tr>
+      <tr><td>F4 · Team capacity</td><td>Core team identified and available</td></tr>
+    </tbody>
+  </table></div>
+  <div class="callout note"><strong>Gate waiver</strong>Any gate criterion can be formally waived with a documented reason and sponsor sign-off. A waiver does not delete the criterion — it marks it as acknowledged and accepted. Waivers are visible to governance reviewers in the audit trail.</div>
+</section>
+
+<section id="value-lifecycle">
+  <h2>Value lifecycle</h2>
+  <p>Value in AbarVa can only move forward — from Projected to Realized. It cannot be reset without a gate review. The label on a value figure is always visible and always accurate.</p>
+  <div class="rail" style="margin:24px 0">
+    <div class="rnode"><div class="rdot active" style="width:44px;height:44px;font-size:11px">PRJ</div><div class="rlabel">Projected</div></div>
+    <div class="rline"></div>
+    <div class="rnode"><div class="rdot future" style="width:44px;height:44px;font-size:11px">CMT</div><div class="rlabel">Committed</div></div>
+    <div class="rline"></div>
+    <div class="rnode"><div class="rdot future" style="width:44px;height:44px;font-size:11px">MSR</div><div class="rlabel">Measuring</div></div>
+    <div class="rline"></div>
+    <div class="rnode"><div class="rdot future" style="width:44px;height:44px;font-size:11px">RLD</div><div class="rlabel">Realized</div></div>
+  </div>
+  <div class="tw"><table>
+    <thead><tr><th>State</th><th>When set</th><th>Label</th><th>Who advances it</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Projected</strong></td><td>P0 origination — first estimate from hypothesis</td><td><code>[UNVALIDATED_HYPOTHESIS]</code></td><td>Nexus (automatic from brief)</td></tr>
+      <tr><td><strong>Committed</strong></td><td>P1 — sponsor commits to the value target</td><td><code>[PRELIMINARY_ESTIMATE]</code></td><td>Sponsor sign-off in charter</td></tr>
+      <tr><td><strong>Measuring</strong></td><td>P5 — measurement plan is live</td><td><code>[MEASUREMENT_IN_PROGRESS]</code></td><td>Program lead confirms measurement active</td></tr>
+      <tr><td><strong>Realized</strong></td><td>P5 — value measured, attributed, signed off</td><td><code>[MEASURED_RESULT]</code></td><td>Sponsor explicit sign-off required</td></tr>
+    </tbody>
+  </table></div>
+  <div class="callout block"><strong>Critical rule</strong>AbarVa will never display a dollar figure without an evidence label. If a figure appears without a label, report it — it means CitationGuard did not fire correctly.</div>
+</section>
+
+<div style="margin-top:80px;padding-top:32px;border-top:1px solid var(--border);color:var(--muted);font-size:12px;text-align:center">
+  AbarVa Product Guidebook · v2.0 · 2026 · For internal use<br>
+  <span style="margin-top:6px;display:block">Knowledge layer is a living fabric — this document is updated as patterns expand.</span>
+</div>
 
 </main>
-
 <script>
-  // Active nav link on scroll
-  const sections = document.querySelectorAll('section[id], div[id]');
-  const links = document.querySelectorAll('nav a[href^="#"]');
-  const observer = new IntersectionObserver(entries => {
-    entries.forEach(entry => {
-      if (entry.isIntersecting) {
-        links.forEach(l => l.classList.remove('active'));
-        const link = document.querySelector(`nav a[href="#${entry.target.id}"]`);
-        if (link) link.classList.add('active');
-      }
-    });
-  }, { rootMargin: '-20% 0px -70% 0px' });
-  sections.forEach(s => observer.observe(s));
+const secs = document.querySelectorAll('section[id],div[id]');
+const links = document.querySelectorAll('nav a[href^="#"]');
+const obs = new IntersectionObserver(e=>{
+  e.forEach(en=>{
+    if(en.isIntersecting){
+      links.forEach(l=>l.classList.remove('active'));
+      const l=document.querySelector(`nav a[href="#${en.target.id}"]`);
+      if(l)l.classList.add('active');
+    }
+  });
+},{rootMargin:'-15% 0px -70% 0px'});
+secs.forEach(s=>obs.observe(s));
 </script>
 </body>
 </html>
