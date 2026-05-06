@@ -128,6 +128,9 @@ export function AtlasDrawer({
   const threadEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [pendingFiles, setPendingFiles] = useState<PendingDrawerFile[]>([]);
+  // True while the input is focused or has typed text — collapses the prompt deck
+  // to give the conversation area full height. Suggestions icon recalls prompts.
+  const [inputActive, setInputActive] = useState(false);
 
   // Shared AtlasPageState — same conversation as the RibbonSynthesis surface.
   const pageState = useAtlasPageState();
@@ -431,10 +434,15 @@ export function AtlasDrawer({
             overflowY: 'auto',
             caretColor: SHELL.PAPER,
           }}
+          onBlur={(e) => {
+            if (!e.currentTarget.value.trim()) setInputActive(false);
+          }}
           onInput={(e) => {
             const el = e.currentTarget;
             el.style.height = 'auto';
             el.style.height = `${el.scrollHeight}px`;
+            // Collapse prompt deck on first keystroke, not on programmatic focus.
+            setInputActive(true);
           }}
           onKeyDown={(e) => {
             if (e.key === 'Enter' && !e.shiftKey) {
@@ -443,6 +451,44 @@ export function AtlasDrawer({
             }
           }}
         />
+
+        {/* Suggestions recall — visible when prompts are collapsed and thread is empty */}
+        {emptyState && !hasThread && inputActive && (
+          <button
+            type="button"
+            onClick={() => {
+              setInputActive(false);
+              textareaRef.current?.blur();
+            }}
+            aria-label="Show prompt suggestions"
+            title="Show suggestions"
+            style={{
+              background: 'none',
+              border: '1px solid rgba(250,247,241,0.18)',
+              borderRadius: 6,
+              cursor: 'pointer',
+              color: 'rgba(250,247,241,0.45)',
+              fontSize: 11,
+              lineHeight: 1,
+              padding: '3px 6px',
+              flexShrink: 0,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              transition: 'color 0.15s, border-color 0.15s',
+            }}
+            onMouseEnter={e => {
+              (e.currentTarget as HTMLButtonElement).style.color = 'rgba(250,247,241,0.80)';
+              (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(250,247,241,0.40)';
+            }}
+            onMouseLeave={e => {
+              (e.currentTarget as HTMLButtonElement).style.color = 'rgba(250,247,241,0.45)';
+              (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(250,247,241,0.18)';
+            }}
+          >
+            ✦
+          </button>
+        )}
 
         {/* Paperclip button */}
         <button
@@ -710,17 +756,25 @@ export function AtlasDrawer({
             </div>
           )}
 
-          {/* Empty state */}
+          {/* Empty state — collapses when input is focused/active to give the
+              conversation area full height. The ✦ button in the input bar
+              restores it. Once a thread exists it stays hidden permanently. */}
           {!hasThread && (
             <div
               style={{
-                flex: 1,
+                flex: inputActive ? 0 : 1,
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'center',
                 justifyContent: emptyState ? 'flex-start' : 'center',
                 paddingBottom: emptyState ? 12 : 40,
                 paddingTop: emptyState ? 6 : 0,
+                // Collapse: fade + clip height to 0 when inputActive
+                maxHeight: inputActive ? 0 : '9999px',
+                overflow: 'hidden',
+                opacity: inputActive ? 0 : 1,
+                pointerEvents: inputActive ? 'none' : undefined,
+                transition: 'opacity 0.18s ease, max-height 0.22s ease',
               }}
             >
               {emptyState ?? (
