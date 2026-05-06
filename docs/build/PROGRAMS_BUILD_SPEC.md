@@ -16,7 +16,7 @@ Programs is **not** the portfolio view. Tower handles portfolio capital allocati
 
 Programs is not where complex implementation is executed. The actual execution happens in client delivery systems, vendor PMOs, SI project plans, Jira, ServiceNow, Smartsheet, Epic/Workday plans, spreadsheets, and steering routines. Programs defines what execution should look like and hands monitoring to Tower.
 
-**Lead agent:** Nexus. The Programs register is operational-maestro, not portfolio CFO and not validator. Nexus on Programs sounds like, "here is the next move, here is the blocker, here is what unlocks the phase." That is distinct from Nexus on Tower, which is portfolio-level and comparative.
+**Lead agent:** Nexus. The Programs register is operational-maestro, not portfolio CFO and not validator. Nexus on Programs sounds like, "here is the next move, here is the blocker, here is what unlocks the phase." That is distinct from Atlas on Tower, which is portfolio-level and comparative.
 
 **Flagship storyline:** `APX-CDP-2026` (Apex Retail CDP Activation), currently at **P3 Design**. This is not aspirational future state. It is the current demo anchor and must be treated as the default Programs smoke storyline.
 
