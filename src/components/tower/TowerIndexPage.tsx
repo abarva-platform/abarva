@@ -1,990 +1,1141 @@
 'use client';
 
-import Link from 'next/link';
-import { useCallback, useState } from 'react';
-import type { ReactNode } from 'react';
-import { useSearchParams, useRouter } from 'next/navigation';
+import { useState } from 'react';
 import { AppShell } from '@/components/shell/AppShell';
-// AgentColumn used to render here as the legacy left-rail chat. PR-T
-// replaces it with the embedded chat inside <AgentCanvas>; the import
-// is dropped along with the static A/B/C action buttons.
-import { AgentCanvas } from '@/components/programs/AgentCanvas';
-import type { Artifact } from '@/lib/agent/artifacts';
-import { FilterPillStrip } from '@/components/shell/FilterPillStrip';
-import { SHELL } from '@/lib/shell/shell-tokens';
-import { TOWER_INDEX_VIEW, type PressureItem } from '@/lib/tower/shell-tower-fixture';
-import { AtlasSynthesisQuote } from '@/components/tower/AtlasSynthesisQuote';
+import {
+  BROADSHEET_KPIS,
+  BROADSHEET_PRESSURES,
+  BROADSHEET_MATRIX,
+  BROADSHEET_TFOW,
+  BROADSHEET_ATLAS,
+  type BroadsheetKpi,
+  type BroadsheetPressureRow,
+  type ConfLevel,
+  type MatrixDot,
+  type TfowCard,
+  type AtlasObservation,
+} from '@/lib/tower/shell-tower-fixture';
 
 // ---------------------------------------------------------------------------
-// Severity helpers
+// Design tokens (canon cream palette, Tower Portfolio design)
 // ---------------------------------------------------------------------------
+const C = {
+  PAGE_BG: '#f5f1eb',
+  CREAM: '#efe9dd',
+  CREAM_2: '#faf6ec',
+  CREAM_DEEP: '#e8e1d2',
+  INK: '#000000',
+  INK_2: '#2c2c2a',
+  GRAY: '#888780',
+  GRAY_DK: '#5F5E5A',
+  BLUE: '#0066CC',
+  GOLD: '#9C7B3F',
+  GREEN: '#1d9e75',
+  AMBER: '#ba7517',
+  AMBER_BG: '#faeeda',
+  RED: '#a32d2d',
+  PURPLE: '#6b3fa0',
+  RULE: 'rgba(10,10,11,0.14)',
+  RULE_STRONG: 'rgba(10,10,11,0.32)',
+  // Pressure type colors
+  P_COST: '#8b3a3a',
+  P_ADOPT: '#2d5f8a',
+  P_DUPL: '#6b3fa0',
+  P_VEND: '#9C7B3F',
+  P_VALUE: '#1d6b4f',
+  SERIF: 'Fraunces, Georgia, "Times New Roman", serif',
+  SANS: 'Inter, -apple-system, system-ui, sans-serif',
+  MONO: '"JetBrains Mono", ui-monospace, Menlo, monospace',
+} as const;
 
-function severityBorderColor(severity: PressureItem['severity']): string {
-  if (severity === 'high') return SHELL.RUST_BG;
-  if (severity === 'medium') return SHELL.AMBER_DOT;
-  return SHELL.MINT_LINE;
+const LENS_TABS = ['Value', 'Risk', 'Contract', 'Adoption'] as const;
+type LensTab = (typeof LENS_TABS)[number];
+
+// ---------------------------------------------------------------------------
+// Confidence underline — the Tower differentiator
+// ---------------------------------------------------------------------------
+function confStyle(conf: ConfLevel): React.CSSProperties {
+  if (conf === 'high') return { borderBottom: `2px solid ${C.INK}`, paddingBottom: 3 };
+  if (conf === 'med') return { borderBottom: `2px dashed ${C.GRAY_DK}`, paddingBottom: 3 };
+  return { borderBottom: `1.5px dotted ${C.GRAY}`, paddingBottom: 3 };
 }
 
-function severityLabelColor(severity: PressureItem['severity']): string {
-  if (severity === 'high') return SHELL.RUST_TEXT;
-  if (severity === 'medium') return SHELL.PEACH_TEXT;
-  return SHELL.MINT_TEXT;
-}
-
-function deltaColor(item: PressureItem): string {
-  if (item.deltaDir === 'down') return SHELL.MINT_TEXT;
-  if (item.severity === 'high') return SHELL.RUST_TEXT;
-  return SHELL.PEACH_TEXT;
+function pressureTypeColor(type: BroadsheetPressureRow['type']): string {
+  if (type === 'cost') return C.P_COST;
+  if (type === 'adopt') return C.P_ADOPT;
+  if (type === 'dupl') return C.P_DUPL;
+  if (type === 'vend') return C.P_VEND;
+  return C.P_VALUE;
 }
 
 // ---------------------------------------------------------------------------
-// Status pill
+// KPI Band
 // ---------------------------------------------------------------------------
-
-function StatusPill({ status }: { status: PressureItem['status'] }) {
-  const bg =
-    status === 'active'
-      ? SHELL.RUST_BG
-      : status === 'watching'
-        ? SHELL.PEACH_BG
-        : SHELL.MINT_BG;
-  const color =
-    status === 'active'
-      ? SHELL.RUST_TEXT
-      : status === 'watching'
-        ? SHELL.PEACH_TEXT
-        : SHELL.MINT_TEXT;
-  const label =
-    status === 'active' ? 'Active' : status === 'watching' ? 'Watching' : 'Resolved';
-
+function KpiBand({ kpis }: { kpis: BroadsheetKpi[] }) {
   return (
-    <span
+    <div
       style={{
-        fontFamily: SHELL.MONO,
-        fontSize: 9,
-        letterSpacing: '0.14em',
-        textTransform: 'uppercase',
-        padding: '3px 8px',
-        borderRadius: 10,
-        background: bg,
-        color,
-        lineHeight: 1,
-        flexShrink: 0,
+        display: 'grid',
+        gridTemplateColumns: '1.4fr 1fr 1fr 1fr 1fr',
+        padding: '26px 32px',
+        borderBottom: `1px solid ${C.RULE_STRONG}`,
       }}
     >
-      {label}
-    </span>
+      {kpis.map((kpi, i) => (
+        <div
+          key={kpi.label}
+          style={{
+            padding: i === 0 ? '0 28px 0 0' : '0 28px',
+            borderLeft: i === 0 ? 'none' : `1px solid ${C.RULE}`,
+          }}
+        >
+          <div
+            style={{
+              fontFamily: C.MONO,
+              fontSize: 9.5,
+              letterSpacing: '0.16em',
+              textTransform: 'uppercase' as const,
+              fontWeight: 700,
+              color: C.GRAY_DK,
+              marginBottom: 10,
+            }}
+          >
+            {kpi.label}
+          </div>
+
+          {/* The number with confidence underline */}
+          <div
+            style={{
+              fontFamily: C.SERIF,
+              fontWeight: kpi.hero ? 800 : 700,
+              fontSize: kpi.hero ? 64 : 38,
+              letterSpacing: '-0.03em',
+              lineHeight: 0.95,
+              color: C.INK,
+            }}
+          >
+            <span style={confStyle(kpi.conf)}>
+              {kpi.value}
+              {kpi.unit && (
+                <span style={{ fontSize: '0.55em', fontWeight: 500, color: C.INK_2 }}>
+                  {kpi.unit}
+                </span>
+              )}
+              {kpi.confTag && (
+                <span
+                  style={{
+                    fontFamily: C.MONO,
+                    fontSize: 8,
+                    letterSpacing: '0.14em',
+                    fontWeight: 700,
+                    padding: '1px 5px',
+                    borderRadius: 3,
+                    verticalAlign: 'super',
+                    marginLeft: 4,
+                    textTransform: 'uppercase' as const,
+                    background: kpi.conf === 'low' ? 'rgba(136,135,128,0.16)' : 'rgba(186,117,23,0.14)',
+                    color: kpi.conf === 'low' ? C.GRAY_DK : C.AMBER,
+                  }}
+                >
+                  {kpi.confTag}
+                </span>
+              )}
+            </span>
+          </div>
+
+          {/* Delta */}
+          <div
+            style={{
+              fontFamily: C.MONO,
+              fontSize: 10,
+              letterSpacing: '0.12em',
+              fontWeight: 700,
+              marginTop: 8,
+              color:
+                kpi.deltaDir === 'up'
+                  ? C.GREEN
+                  : kpi.deltaDir === 'down'
+                    ? C.RED
+                    : C.GRAY,
+            }}
+          >
+            {kpi.deltaDir === 'up' && '▲ '}
+            {kpi.deltaDir === 'down' && '▼ '}
+            {kpi.deltaDir === 'flat' && '● '}
+            {kpi.delta}
+          </div>
+
+          {/* Footnote */}
+          <div
+            style={{
+              fontFamily: C.MONO,
+              fontSize: 8.5,
+              letterSpacing: '0.12em',
+              color: C.GRAY,
+              marginTop: 10,
+              fontWeight: 600,
+              lineHeight: 1.5,
+              maxWidth: '18ch',
+            }}
+          >
+            {kpi.footnote}
+            {kpi.missingChip && (
+              <span
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 6,
+                  padding: '3px 8px',
+                  border: `1px dashed ${C.RULE_STRONG}`,
+                  borderRadius: 999,
+                  cursor: 'pointer',
+                  marginTop: 6,
+                  color: C.GRAY_DK,
+                  transition: 'all 180ms',
+                }}
+              >
+                {kpi.missingChip.label}
+              </span>
+            )}
+          </div>
+        </div>
+      ))}
+    </div>
   );
 }
 
 // ---------------------------------------------------------------------------
-// Pressure card
+// Pressure rows
 // ---------------------------------------------------------------------------
-
-function PressureCard({ item }: { item: PressureItem }) {
-  const borderColor = severityBorderColor(item.severity);
-  const labelColor = severityLabelColor(item.severity);
-  const dColor = deltaColor(item);
+function PressureRow({ row }: { row: BroadsheetPressureRow }) {
+  const [hovered, setHovered] = useState(false);
+  const typeColor = pressureTypeColor(row.type);
 
   return (
     <div
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
       style={{
-        background: SHELL.CARD_WHITE,
-        border: `1px solid ${SHELL.CARD_LINE}`,
-        borderRadius: 12,
-        padding: 20,
-        borderLeft: `3px solid ${borderColor}`,
-        display: 'flex',
-        flexDirection: 'column',
-        gap: 0,
+        padding: hovered ? '22px 16px' : '22px 0',
+        borderTop: `1px solid ${hovered ? 'transparent' : C.RULE}`,
+        display: 'grid',
+        gridTemplateColumns: '110px 1fr 320px',
+        gap: 24,
+        alignItems: 'start',
+        cursor: 'pointer',
+        transition: 'all 200ms',
+        background: hovered ? C.CREAM : 'transparent',
+        margin: hovered ? '0 -16px' : '0',
+        borderRadius: hovered ? 10 : 0,
       }}
     >
-      {/* Top row: severity label + title + status pill */}
+      {/* Type tag */}
       <div
         style={{
-          display: 'flex',
-          flexDirection: 'row',
-          alignItems: 'center',
-          gap: 10,
-          marginBottom: 14,
+          fontFamily: C.MONO,
+          fontSize: 9.5,
+          letterSpacing: '0.15em',
+          fontWeight: 800,
+          textTransform: 'uppercase' as const,
+          lineHeight: 1.4,
         }}
       >
-        <span
-          style={{
-            fontFamily: SHELL.MONO,
-            fontSize: 9,
-            letterSpacing: '0.16em',
-            textTransform: 'uppercase',
-            color: labelColor,
-            flexShrink: 0,
-          }}
-        >
-          {item.severity}
-        </span>
-        <Link
-          href={`/tower/pressures/${item.id}`}
-          style={{
-            fontFamily: SHELL.SERIF,
-            fontSize: 16,
-            fontWeight: 700,
-            color: SHELL.INK,
-            flex: 1,
-            lineHeight: 1.2,
-            textDecoration: 'none',
-          }}
-        >
-          {item.title}
-        </Link>
-        <StatusPill status={item.status} />
+        <div style={{ color: C.GRAY_DK, marginBottom: 4, fontWeight: 600 }}>{row.id}</div>
+        <div style={{ color: typeColor, whiteSpace: 'pre-line' }}>{row.typeLabel}</div>
       </div>
 
-      {/* Hero number row */}
-      <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'baseline', gap: 8, marginBottom: 8 }}>
-        <span
+      {/* Body */}
+      <div>
+        <h3
           style={{
-            fontFamily: SHELL.SERIF,
-            fontSize: 32,
+            fontFamily: C.SERIF,
+            fontSize: 22,
             fontWeight: 700,
-            color: SHELL.INK,
+            letterSpacing: '-0.02em',
+            lineHeight: 1.2,
+            marginBottom: 6,
+            color: C.INK,
+          }}
+        >
+          {row.headline}
+        </h3>
+        <p
+          style={{
+            fontSize: 13,
+            color: C.INK_2,
+            lineHeight: 1.5,
+            maxWidth: '60ch',
+            marginBottom: 10,
+          }}
+        >
+          {row.lede}
+        </p>
+        <div
+          style={{
+            display: 'flex',
+            gap: 14,
+            fontFamily: C.MONO,
+            fontSize: 9.5,
+            letterSpacing: '0.12em',
+            color: C.GRAY_DK,
+            fontWeight: 600,
+            textTransform: 'uppercase' as const,
+            flexWrap: 'wrap' as const,
+          }}
+        >
+          {row.meta.map((m, i) => (
+            <span key={m.label}>
+              {i > 0 && <span style={{ color: C.GRAY, marginRight: 14 }}>·</span>}
+              <strong style={{ color: C.INK }}>{m.label}:</strong> {m.value}
+            </span>
+          ))}
+        </div>
+      </div>
+
+      {/* Magnitude + next action */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        <div
+          style={{
+            fontFamily: C.SERIF,
+            fontSize: 30,
+            fontWeight: 800,
+            letterSpacing: '-0.03em',
             lineHeight: 1,
           }}
         >
-          {item.heroStat}
-        </span>
-        <span
+          <span style={confStyle(row.magnitudeConf)}>
+            {row.magnitude}
+            <span
+              style={{
+                fontSize: 13,
+                fontWeight: 500,
+                fontStyle: 'italic',
+                color: C.GRAY_DK,
+                marginLeft: 2,
+                letterSpacing: 0,
+              }}
+            >
+              {row.magnitudeUnit}
+            </span>
+          </span>
+        </div>
+        <div
           style={{
-            fontFamily: SHELL.SANS,
-            fontSize: 12,
-            color: SHELL.INK_SOFT,
-            lineHeight: 1.3,
+            fontFamily: C.MONO,
+            fontSize: 9,
+            letterSpacing: '0.13em',
+            color: C.GRAY_DK,
+            fontWeight: 600,
+            textTransform: 'uppercase' as const,
           }}
         >
-          {item.heroLabel}
-        </span>
-        <span
-          style={{
-            fontFamily: SHELL.MONO,
-            fontSize: 12,
-            color: dColor,
-            marginLeft: 'auto',
-            flexShrink: 0,
-          }}
-        >
-          {item.delta}
-        </span>
-      </div>
-
-      {/* Top driver */}
-      <div
-        style={{
-          fontFamily: SHELL.SANS,
-          fontSize: 13,
-          color: SHELL.INK_SOFT,
-          marginTop: 8,
-          lineHeight: 1.5,
-        }}
-      >
-        {item.topDriver}
-      </div>
-
-      {/* Atlas sentence */}
-      <div
-        style={{
-          fontFamily: SHELL.SANS,
-          fontSize: 12,
-          fontStyle: 'italic',
-          color: SHELL.INK_MUTED,
-          marginTop: 4,
-          lineHeight: 1.55,
-        }}
-      >
-        {item.atlasSentence}
-      </div>
-
-      {/* Action link */}
-      <div style={{ marginTop: 14 }}>
-        <Link
-          href={`/tower/pressures/${item.id}`}
-          style={{
-            fontFamily: SHELL.MONO,
-            fontSize: 10,
-            letterSpacing: '0.12em',
-            textTransform: 'uppercase',
-            color: SHELL.INK_SOFT,
-            textDecoration: 'none',
-          }}
-        >
-          View detail →
-        </Link>
+          {row.magnitudeLabel}
+        </div>
+        <div style={{ fontSize: 12.5, color: C.INK_2, marginTop: 6, lineHeight: 1.45 }}>
+          {row.nextAction}
+        </div>
       </div>
     </div>
   );
 }
 
 // ---------------------------------------------------------------------------
-// Empty state
+// 2×2 Strategic Alignment Matrix
 // ---------------------------------------------------------------------------
-
-function EmptyState() {
+function MatrixQuadrant({
+  label,
+  head,
+  dots,
+  flagCount,
+}: {
+  label: string;
+  head: string;
+  dots: MatrixDot[];
+  flagCount?: number;
+}) {
   return (
     <div
       style={{
-        background: SHELL.GRAY_BG,
-        borderRadius: 10,
-        padding: '32px 24px',
-        textAlign: 'center',
+        border: `1px solid ${C.RULE}`,
+        padding: '14px 16px',
+        position: 'relative' as const,
+        background: C.CREAM_2,
+        minHeight: 220,
       }}
     >
       <div
         style={{
-          fontFamily: SHELL.SERIF,
-          fontSize: 15,
-          color: SHELL.INK_MUTED,
+          fontFamily: C.MONO,
+          fontSize: 9,
+          letterSpacing: '0.14em',
+          fontWeight: 700,
+          color: C.GRAY_DK,
+          textTransform: 'uppercase' as const,
           marginBottom: 6,
         }}
       >
-        No pressures in this filter
+        {label}
       </div>
       <div
         style={{
-          fontFamily: SHELL.SANS,
-          fontSize: 12,
-          color: SHELL.INK_MUTED,
+          fontFamily: C.SERIF,
+          fontSize: 14,
+          fontWeight: 700,
+          letterSpacing: '-0.01em',
+          marginBottom: 12,
+          lineHeight: 1.25,
+          maxWidth: '30ch',
         }}
       >
-        Try a different filter to see pressure items
+        {head}
+        {flagCount !== undefined && (
+          <span
+            style={{
+              fontFamily: C.MONO,
+              fontSize: 11,
+              fontWeight: 700,
+              color: C.RED,
+              marginLeft: 6,
+            }}
+          >
+            {flagCount} flagged
+          </span>
+        )}
       </div>
+
+      {/* Program dots */}
+      {dots.map((dot) => (
+        <div
+          key={dot.id}
+          style={{
+            position: 'absolute' as const,
+            left: dot.left,
+            top: dot.top,
+            padding: '6px 10px',
+            background: C.INK,
+            color: C.CREAM_2,
+            fontFamily: C.MONO,
+            fontSize: 9.5,
+            letterSpacing: '0.1em',
+            fontWeight: 700,
+            borderRadius: 5,
+            cursor: 'pointer',
+            lineHeight: 1.2,
+            transition: 'transform 180ms',
+          }}
+        >
+          {dot.name}
+          <span
+            style={{
+              display: 'block',
+              fontFamily: C.SERIF,
+              fontSize: 11,
+              fontWeight: 700,
+              marginTop: 1,
+              letterSpacing: 0,
+              opacity: 0.85,
+            }}
+          >
+            {dot.value}
+          </span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function StrategicMatrix() {
+  const { quadrants, dots } = BROADSHEET_MATRIX;
+  const byQ = (key: MatrixDot['quadrant']) => dots.filter((d) => d.quadrant === key);
+
+  return (
+    <section style={{ padding: '30px 32px', borderTop: `1px solid ${C.RULE_STRONG}` }}>
+      <div style={{ paddingBottom: 12 }}>
+        <div
+          style={{
+            fontFamily: C.MONO,
+            fontSize: 10,
+            letterSpacing: '0.2em',
+            fontWeight: 700,
+            color: C.GOLD,
+            textTransform: 'uppercase' as const,
+            marginBottom: 8,
+          }}
+        >
+          Strategic alignment · 23 programs plotted · current Value lens
+        </div>
+        <h2
+          style={{
+            fontFamily: C.SERIF,
+            fontSize: 30,
+            fontWeight: 800,
+            letterSpacing: '-0.03em',
+            lineHeight: 1.1,
+            maxWidth: '32ch',
+          }}
+        >
+          Where the portfolio is, against where the strategy says it should be.
+        </h2>
+        <p style={{ fontSize: 13.5, color: C.GRAY_DK, marginTop: 8, maxWidth: '64ch', lineHeight: 1.55 }}>
+          Confidence shows up as outline weight: <strong>solid = HIGH</strong>,{' '}
+          <strong>dashed = MEDIUM/LOW</strong>. Strategic bets (T-FOW) are pulled into a separate row
+          below — they don&apos;t have measured ROI yet, and mixing them on the matrix would be dishonest.
+        </p>
+      </div>
+
+      {/* 2×2 grid */}
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: '80px 1fr 1fr',
+          gridTemplateRows: '1fr 1fr 72px',
+          height: 520,
+          marginTop: 18,
+        }}
+      >
+        {/* Y-axis label */}
+        <div
+          style={{
+            gridColumn: 1,
+            gridRow: '1 / 3',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <span
+            style={{
+              writingMode: 'vertical-rl' as const,
+              transform: 'rotate(180deg)',
+              fontFamily: C.MONO,
+              fontSize: 9.5,
+              letterSpacing: '0.16em',
+              fontWeight: 700,
+              color: C.GRAY_DK,
+              textTransform: 'uppercase' as const,
+            }}
+          >
+            Strategic alignment →
+          </span>
+        </div>
+
+        {/* TL: High value, Low alignment */}
+        <div style={{ gridColumn: 2, gridRow: 1, borderRight: 'none' }}>
+          <MatrixQuadrant
+            label={quadrants[0].label}
+            head={quadrants[0].head}
+            dots={byQ('tl')}
+          />
+        </div>
+
+        {/* TR: High value, High alignment */}
+        <div style={{ gridColumn: 3, gridRow: 1 }}>
+          <MatrixQuadrant
+            label={quadrants[1].label}
+            head={quadrants[1].head}
+            dots={byQ('tr')}
+          />
+        </div>
+
+        {/* BL: Low value, Low alignment */}
+        <div style={{ gridColumn: 2, gridRow: 2 }}>
+          <MatrixQuadrant
+            label={quadrants[2].label}
+            head={quadrants[2].head}
+            dots={byQ('bl')}
+            flagCount={3}
+          />
+        </div>
+
+        {/* BR: Low value, High alignment */}
+        <div style={{ gridColumn: 3, gridRow: 2 }}>
+          <MatrixQuadrant
+            label={quadrants[3].label}
+            head={quadrants[3].head}
+            dots={byQ('br')}
+          />
+        </div>
+
+        {/* X-axis label */}
+        <div
+          style={{
+            gridColumn: '2 / 4',
+            gridRow: 3,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            paddingTop: 8,
+          }}
+        >
+          <span
+            style={{
+              fontFamily: C.MONO,
+              fontSize: 9.5,
+              letterSpacing: '0.16em',
+              fontWeight: 700,
+              color: C.GRAY_DK,
+              textTransform: 'uppercase' as const,
+            }}
+          >
+            Realized portfolio value →
+          </span>
+        </div>
+      </div>
+
+      {/* T-FOW separation row */}
+      <div
+        style={{
+          padding: '18px 32px 28px',
+          borderTop: `1px dashed ${C.RULE_STRONG}`,
+          background: C.CREAM_2,
+          margin: '0 -32px',
+        }}
+      >
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'baseline',
+            marginBottom: 12,
+          }}
+        >
+          <span
+            style={{
+              fontFamily: C.MONO,
+              fontSize: 10,
+              letterSpacing: '0.16em',
+              color: C.GOLD,
+              fontWeight: 700,
+              textTransform: 'uppercase' as const,
+            }}
+          >
+            Strategic bets · 3 programs · T-FOW lens
+          </span>
+          <span
+            style={{
+              fontFamily: C.MONO,
+              fontSize: 9,
+              letterSpacing: '0.12em',
+              color: C.GRAY_DK,
+              fontStyle: 'italic',
+            }}
+          >
+            Plotted separately — attribution is too loose for the 2×2 today.
+          </span>
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 14 }}>
+          {BROADSHEET_TFOW.map((card) => (
+            <TfowCardItem key={card.name} card={card} />
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function TfowCardItem({ card }: { card: TfowCard }) {
+  return (
+    <div
+      style={{
+        padding: '14px 16px',
+        border: `1px dashed ${C.RULE_STRONG}`,
+        borderRadius: 8,
+        background: 'transparent',
+      }}
+    >
+      <div
+        style={{
+          fontFamily: C.SERIF,
+          fontSize: 16,
+          fontWeight: 700,
+          letterSpacing: '-0.01em',
+          marginBottom: 4,
+        }}
+      >
+        {card.name}
+      </div>
+      <div
+        style={{
+          fontFamily: C.MONO,
+          fontSize: 9,
+          letterSpacing: '0.12em',
+          color: C.GRAY_DK,
+          fontWeight: 600,
+          textTransform: 'uppercase' as const,
+        }}
+      >
+        {card.meta}
+      </div>
+      <p style={{ fontSize: 12.5, color: C.INK_2, lineHeight: 1.5, margin: '8px 0' }}>
+        {card.desc}
+      </p>
+      {card.chip && (
+        <span
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 6,
+            padding: '3px 9px',
+            border: `1px dashed ${C.RULE_STRONG}`,
+            borderRadius: 999,
+            fontFamily: C.MONO,
+            fontSize: 9,
+            letterSpacing: '0.12em',
+            fontWeight: 700,
+            textTransform: 'uppercase' as const,
+            color: card.chip.warn ? C.AMBER : C.GRAY_DK,
+            cursor: 'pointer',
+          }}
+        >
+          {card.chip.label}
+        </span>
+      )}
     </div>
   );
 }
 
 // ---------------------------------------------------------------------------
-// Cross-program activity row
+// Atlas right column
 // ---------------------------------------------------------------------------
+function AtlasColumn() {
+  const [input, setInput] = useState('');
+  const atlas = BROADSHEET_ATLAS;
 
-interface ActivityRow {
-  ref: string;
-  phase: string;
-  note: string;
-  when: string;
-  href?: string;
-}
-
-const ACTIVITY_ROWS: ActivityRow[] = [
-  { ref: 'APX-CDP-2026', phase: 'Design phase', note: 'Architecture sprint active', when: '2h ago', href: '/tower/programs/apx-cdp-2026' },
-  { ref: 'APX-CC-2026', phase: 'Execution Roadmap phase', note: 'Approval / Mobilization gate approaching', when: '4h ago' },
-  { ref: 'APX-DFV2-2025', phase: 'Tower Handoff', note: 'steady state · Atlas monitoring', when: 'Mar 28' },
-];
-
-function ActivityStrip() {
   return (
-    <div
+    <aside
       style={{
-        marginTop: 32,
-        background: SHELL.CARD_WHITE,
-        border: `1px solid ${SHELL.CARD_LINE}`,
-        borderRadius: 12,
+        borderLeft: `1px solid ${C.RULE}`,
+        background: C.CREAM_2,
+        display: 'flex',
+        flexDirection: 'column',
+        position: 'sticky' as const,
+        top: 0,
+        height: '100vh',
         overflow: 'hidden',
       }}
     >
-      {/* Header */}
+      {/* Head */}
       <div
         style={{
-          padding: '12px 20px',
-          borderBottom: `1px solid ${SHELL.CARD_LINE_SOFT}`,
-          display: 'flex',
-          alignItems: 'center',
-          gap: 10,
+          padding: '22px 22px 14px',
+          borderBottom: `1px solid ${C.RULE}`,
         }}
       >
-        <Link
-          href="/tower/activity"
-          style={{
-            fontFamily: SHELL.MONO,
-            fontSize: 9,
-            color: SHELL.INK_MUTED,
-            textDecoration: 'none',
-            letterSpacing: '0.14em',
-            textTransform: 'uppercase',
-          }}
-        >
-          Cross-program activity →
-        </Link>
-      </div>
-
-      {/* Rows */}
-      {ACTIVITY_ROWS.map((row, i) => {
-        const rowContent = (
-          <>
-            <span
-              style={{
-                fontFamily: SHELL.MONO,
-                fontSize: 10,
-                letterSpacing: '0.08em',
-                color: SHELL.INK_SOFT,
-                flexShrink: 0,
-                minWidth: 120,
-              }}
-            >
-              [{row.ref}]
-            </span>
-            <span
-              style={{
-                fontFamily: SHELL.SANS,
-                fontSize: 13,
-                color: SHELL.INK,
-                flex: 1,
-              }}
-            >
-              {row.phase}
-              <span
-                style={{
-                  fontFamily: SHELL.SANS,
-                  fontSize: 12,
-                  color: SHELL.INK_SOFT,
-                  marginLeft: 8,
-                }}
-              >
-                · {row.note}
-              </span>
-            </span>
-            <span
-              style={{
-                fontFamily: SHELL.MONO,
-                fontSize: 10,
-                color: SHELL.INK_MUTED,
-                flexShrink: 0,
-              }}
-            >
-              {row.when}
-            </span>
-          </>
-        );
-
-        const sharedStyle = {
-          display: 'flex',
-          flexDirection: 'row' as const,
-          alignItems: 'baseline' as const,
-          gap: 16,
-          padding: '11px 20px',
-          borderBottom:
-            i < ACTIVITY_ROWS.length - 1 ? `1px solid ${SHELL.CARD_LINE_SOFT}` : undefined,
-        };
-
-        return row.href ? (
-          <Link
-            key={row.ref}
-            href={row.href}
-            style={{ ...sharedStyle, textDecoration: 'none' }}
-          >
-            {rowContent}
-          </Link>
-        ) : (
-          <div key={row.ref} style={sharedStyle}>
-            {rowContent}
-          </div>
-        );
-      })}
-    </div>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// New pressure modal
-// ---------------------------------------------------------------------------
-
-type NewSeverity = 'High' | 'Medium' | 'Low watch' | null;
-
-interface NewPressureModalProps {
-  onClose: () => void;
-}
-
-function NewPressureModal({ onClose }: NewPressureModalProps) {
-  const [title, setTitle] = useState('');
-  const [severity, setSeverity] = useState<NewSeverity>(null);
-  const [driver, setDriver] = useState('');
-  const [heroValue, setHeroValue] = useState('');
-  const [heroLabel, setHeroLabel] = useState('');
-  const [relatedProgram, setRelatedProgram] = useState('');
-  const [submitted, setSubmitted] = useState(false);
-
-  const isValid = title.trim().length > 0 && severity !== null && driver.trim().length > 0;
-
-  function handleAdd() {
-    if (!isValid) return;
-    setSubmitted(true);
-    setTimeout(() => {
-      onClose();
-    }, 1200);
-  }
-
-  const severityOptions: { label: NonNullable<NewSeverity>; activeBg: string; activeColor: string }[] = [
-    { label: 'High', activeBg: SHELL.RUST_BG, activeColor: SHELL.RUST_TEXT },
-    { label: 'Medium', activeBg: SHELL.PEACH_BG, activeColor: SHELL.PEACH_TEXT },
-    { label: 'Low watch', activeBg: SHELL.MINT_BG, activeColor: SHELL.MINT_TEXT },
-  ];
-
-  const inputStyle: React.CSSProperties = {
-    fontFamily: SHELL.SANS,
-    fontSize: 13,
-    color: SHELL.INK,
-    background: SHELL.CARD_WHITE,
-    border: `1px solid ${SHELL.CARD_LINE}`,
-    borderRadius: 6,
-    padding: '8px 12px',
-    width: '100%',
-    outline: 'none',
-    boxSizing: 'border-box',
-  };
-
-  const labelStyle: React.CSSProperties = {
-    fontFamily: SHELL.MONO,
-    fontSize: 9,
-    letterSpacing: '0.16em',
-    textTransform: 'uppercase',
-    color: SHELL.INK_MUTED,
-    marginBottom: 6,
-    display: 'block',
-  };
-
-  return (
-    <div
-      style={{
-        position: 'fixed',
-        inset: 0,
-        background: 'rgba(0,0,0,0.35)',
-        zIndex: 1000,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-      }}
-      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
-    >
-      <div
-        style={{
-          background: SHELL.PAPER,
-          borderRadius: 12,
-          padding: '28px 32px',
-          maxWidth: 520,
-          width: '90%',
-          boxShadow: '0 8px 32px rgba(0,0,0,0.18)',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 18,
-        }}
-      >
-        {/* Modal header */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <span style={{ fontFamily: SHELL.SERIF, fontSize: 18, fontWeight: 700, color: SHELL.INK }}>
-            Set new pressure
-          </span>
-          <button
-            onClick={onClose}
-            style={{
-              background: 'none',
-              border: 'none',
-              cursor: 'pointer',
-              fontFamily: SHELL.MONO,
-              fontSize: 14,
-              color: SHELL.INK_MUTED,
-              padding: '2px 6px',
-            }}
-          >
-            ×
-          </button>
-        </div>
-
-        {/* Field: Title */}
-        <div>
-          <label style={labelStyle}>Pressure Title</label>
-          <input
-            type="text"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            placeholder="e.g. Margin Compression"
-            style={inputStyle}
-          />
-        </div>
-
-        {/* Field: Severity */}
-        <div>
-          <label style={labelStyle}>Severity</label>
-          <div style={{ display: 'flex', gap: 8 }}>
-            {severityOptions.map((opt) => {
-              const isSelected = severity === opt.label;
-              return (
-                <button
-                  key={opt.label}
-                  onClick={() => setSeverity(opt.label)}
-                  style={{
-                    fontFamily: SHELL.MONO,
-                    fontSize: 11,
-                    letterSpacing: '0.08em',
-                    padding: '6px 14px',
-                    borderRadius: 20,
-                    border: `1px solid ${isSelected ? 'transparent' : SHELL.CARD_LINE}`,
-                    background: isSelected ? opt.activeBg : SHELL.CARD_WHITE,
-                    color: isSelected ? opt.activeColor : SHELL.INK_SOFT,
-                    cursor: 'pointer',
-                    transition: 'background 0.15s',
-                  }}
-                >
-                  {opt.label}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Field: Driver */}
-        <div>
-          <label style={labelStyle}>Top Driver</label>
-          <input
-            type="text"
-            value={driver}
-            onChange={(e) => setDriver(e.target.value)}
-            placeholder="One sentence describing the root cause"
-            style={inputStyle}
-          />
-        </div>
-
-        {/* Field: Hero stat (optional) */}
-        <div>
-          <label style={labelStyle}>Headline Metric (optional)</label>
-          <div style={{ display: 'flex', gap: 10 }}>
-            <input
-              type="text"
-              value={heroValue}
-              onChange={(e) => setHeroValue(e.target.value)}
-              placeholder="$2.4M"
-              style={{ ...inputStyle, width: '40%', flex: '0 0 auto' }}
-            />
-            <input
-              type="text"
-              value={heroLabel}
-              onChange={(e) => setHeroLabel(e.target.value)}
-              placeholder="vs $1.8M budget"
-              style={{ ...inputStyle, flex: 1 }}
-            />
-          </div>
-        </div>
-
-        {/* Field: Related program (optional) */}
-        <div>
-          <label style={labelStyle}>Related Program (optional)</label>
-          <select
-            value={relatedProgram}
-            onChange={(e) => setRelatedProgram(e.target.value)}
-            style={{ ...inputStyle, appearance: 'none', WebkitAppearance: 'none' }}
-          >
-            <option value="">(none)</option>
-            <option value="APX-CDP-2026">APX-CDP-2026</option>
-            <option value="APX-CC-2026">APX-CC-2026</option>
-            <option value="APX-SAP-2026">APX-SAP-2026</option>
-            <option value="APX-LPM-2026">APX-LPM-2026</option>
-            <option value="APX-DFV2-2025">APX-DFV2-2025</option>
-          </select>
-        </div>
-
-        {/* Atlas note */}
         <div
           style={{
-            background: SHELL.PAPER_SOFT,
-            borderRadius: 6,
-            padding: '10px 14px',
-            marginTop: -4,
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 3,
+            fontFamily: C.MONO,
+            fontSize: 10,
+            letterSpacing: '0.16em',
+            fontWeight: 700,
+            color: C.PURPLE,
+            textTransform: 'uppercase' as const,
+            marginBottom: 6,
           }}
         >
-          <span style={{ fontFamily: SHELL.MONO, fontSize: 8, letterSpacing: '0.18em', textTransform: 'uppercase', color: SHELL.INK_MUTED }}>
-            Atlas
-          </span>
-          <span style={{ fontFamily: SHELL.SANS, fontSize: 11, color: SHELL.INK_MUTED, lineHeight: 1.5 }}>
-            Atlas will begin monitoring this pressure and surface it in the Tower activity stream.
-          </span>
+          ✦ Atlas · Synthesis
         </div>
-
-        {/* Buttons */}
-        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginTop: 4 }}>
-          {submitted ? (
-            <span
-              style={{
-                fontFamily: SHELL.MONO,
-                fontSize: 11,
-                color: SHELL.MINT_TEXT,
-                letterSpacing: '0.08em',
-                alignSelf: 'center',
-              }}
-            >
-              ✓ Pressure added to Tower
-            </span>
-          ) : (
-            <>
-              <button
-                onClick={onClose}
-                style={{
-                  fontFamily: SHELL.MONO,
-                  fontSize: 11,
-                  letterSpacing: '0.08em',
-                  color: SHELL.INK,
-                  background: 'none',
-                  border: `1px solid ${SHELL.CARD_LINE}`,
-                  borderRadius: 6,
-                  padding: '8px 16px',
-                  cursor: 'pointer',
-                }}
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleAdd}
-                disabled={!isValid}
-                style={{
-                  fontFamily: SHELL.MONO,
-                  fontSize: 11,
-                  letterSpacing: '0.08em',
-                  color: SHELL.PAPER,
-                  background: isValid ? SHELL.INK : SHELL.INK_MUTED,
-                  border: 'none',
-                  borderRadius: 6,
-                  padding: '8px 16px',
-                  cursor: isValid ? 'pointer' : 'not-allowed',
-                  transition: 'background 0.15s',
-                }}
-              >
-                Add to Tower
-              </button>
-            </>
-          )}
+        <h3
+          style={{
+            fontFamily: C.SERIF,
+            fontSize: 18,
+            fontWeight: 700,
+            letterSpacing: '-0.015em',
+            lineHeight: 1.25,
+            marginBottom: 8,
+          }}
+        >
+          {atlas.headline}
+        </h3>
+        <div
+          style={{
+            fontFamily: C.MONO,
+            fontSize: 9,
+            letterSpacing: '0.12em',
+            color: C.GRAY_DK,
+            fontWeight: 600,
+          }}
+        >
+          {atlas.meta}
         </div>
       </div>
+
+      {/* Observations */}
+      <div
+        style={{
+          padding: '16px 22px',
+          borderBottom: `1px solid ${C.RULE}`,
+          flex: 1,
+          overflowY: 'auto' as const,
+        }}
+      >
+        {atlas.observations.map((obs) => (
+          <ObservationBlock key={obs.label} obs={obs} />
+        ))}
+      </div>
+
+      {/* Prompts + Input */}
+      <div style={{ padding: '14px 18px', borderTop: `1px solid ${C.RULE}` }}>
+        <div
+          style={{
+            fontFamily: C.MONO,
+            fontSize: 9,
+            letterSpacing: '0.14em',
+            color: C.GRAY_DK,
+            fontWeight: 600,
+            marginBottom: 8,
+          }}
+        >
+          ↳ Suggested prompts
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 4, marginBottom: 12 }}>
+          {atlas.prompts.map((prompt) => (
+            <button
+              key={prompt}
+              onClick={() => setInput(prompt)}
+              style={{
+                fontSize: 12,
+                padding: '8px 11px',
+                border: `1px solid ${C.RULE}`,
+                borderRadius: 7,
+                cursor: 'pointer',
+                background: C.CREAM,
+                transition: 'all 150ms',
+                textAlign: 'left' as const,
+                lineHeight: 1.4,
+                color: C.INK_2,
+                fontFamily: C.SANS,
+              }}
+            >
+              <span style={{ color: C.PURPLE, fontWeight: 700, marginRight: 5 }}>→</span>
+              {prompt}
+            </button>
+          ))}
+        </div>
+
+        <div
+          style={{
+            display: 'flex',
+            gap: 6,
+            alignItems: 'center',
+            padding: '8px 10px',
+            border: `1px solid ${C.RULE_STRONG}`,
+            borderRadius: 7,
+            background: C.CREAM,
+          }}
+        >
+          <input
+            type="text"
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            placeholder="Ask Atlas about the portfolio…"
+            style={{
+              flex: 1,
+              border: 'none',
+              background: 'transparent',
+              outline: 'none',
+              fontSize: 12,
+              fontFamily: C.SANS,
+              color: C.INK,
+            }}
+          />
+          <button
+            style={{
+              background: C.PURPLE,
+              color: 'white',
+              border: 'none',
+              width: 24,
+              height: 24,
+              borderRadius: '50%',
+              cursor: 'pointer',
+              fontWeight: 700,
+              fontSize: 12,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            ↑
+          </button>
+        </div>
+      </div>
+    </aside>
+  );
+}
+
+function ObservationBlock({ obs }: { obs: AtlasObservation }) {
+  return (
+    <div style={{ marginBottom: 18 }}>
+      <div
+        style={{
+          fontFamily: C.MONO,
+          fontSize: 9,
+          letterSpacing: '0.15em',
+          fontWeight: 700,
+          color: obs.special ? C.INK : C.GOLD,
+          textTransform: 'uppercase' as const,
+          marginBottom: 6,
+        }}
+      >
+        {obs.label}
+      </div>
+      <div
+        style={{ fontSize: 13, lineHeight: 1.55, color: C.INK_2 }}
+        dangerouslySetInnerHTML={{ __html: obs.body }}
+      />
+      {obs.action && (
+        <div
+          style={{
+            fontFamily: C.MONO,
+            fontSize: 9,
+            letterSpacing: '0.12em',
+            fontWeight: 700,
+            color: C.PURPLE,
+            marginTop: 6,
+            cursor: 'pointer',
+          }}
+        >
+          {obs.action}
+        </div>
+      )}
     </div>
   );
 }
 
 // ---------------------------------------------------------------------------
-// Main page
+// Main TowerIndexPage
 // ---------------------------------------------------------------------------
-
-interface TowerIndexPageProps {
-  /** Active tenant display name resolved server-side; Tower must not hardcode Apex across clients. */
+export interface TowerIndexPageProps {
   tenantName?: string;
-  /** Surface context label for the top bar. */
-  context?: string;
-  /**
-   * REASON-29 — Provenance ribbon rendered below the streamed Atlas synthesis
-   * quote inside AgentColumn's `provenanceSlot`. Built server-side from
-   * `buildTowerSynthesisContext(programs, sources)` and passed in as a
-   * pre-rendered ReactNode so the client component stays unaware of fixture
-   * data.
-   */
-  provenanceSlot?: ReactNode;
-  /**
-   * Portfolio-level instance summary strip rendered above the active
-   * pressures grid. Pre-rendered server-side (each tile resolves an
-   * instance, builds its synthesis context, and derives missions) and
-   * passed in as a ReactNode so the client component remains decoupled
-   * from fixture data.
-   */
-  portfolioSummarySlot?: ReactNode;
-  /**
-   * REASON-32 — Optional portfolio-level cascade graph (SVG visualization
-   * of cross-instance impact relationships). Rendered below the portfolio
-   * summary tiles for executive triage.
-   */
-  cascadeGraphSlot?: ReactNode;
-  /** Live P6 programs that have completed Nexus strategy-to-funding and are now in Tower monitoring setup. */
-  towerHandoffSlot?: ReactNode;
-  /** Authenticated Tower workspace submenu shown directly below the product nav. */
-  towerSubmenuSlot?: ReactNode;
-  /** Native lens canvas for the selected Tower submenu. */
-  towerLensSlot?: ReactNode;
 }
 
-// PR-T · `provenanceSlot` was AgentColumn's audit-trail UI. AgentCanvas
-// doesn't have a slot for it yet; threading provenance into the
-// embedded chat header is a follow-up. The prop is preserved on the
-// type for caller compatibility but unused in this render.
-export function TowerIndexPage({
-  tenantName = 'AbarVa Client',
-  context = 'Control Tower',
-  provenanceSlot: _provenanceSlot,
-  portfolioSummarySlot,
-  cascadeGraphSlot,
-  towerHandoffSlot,
-  towerSubmenuSlot,
-  towerLensSlot,
-}: TowerIndexPageProps = {}) {
-  void _provenanceSlot;
-  const [showNewPressure, setShowNewPressure] = useState(false);
-  const [synthesisQuote, setSynthesisQuote] = useState(TOWER_INDEX_VIEW.agentQuote);
-  const searchParams = useSearchParams();
-  const router = useRouter();
+export function TowerIndexPage({ tenantName = 'Meridian Enterprises' }: TowerIndexPageProps) {
+  const [activeLens, setActiveLens] = useState<LensTab>('Value');
 
-  // PR-T · Atlas reactive artifacts dispatched by the embedded chat.
-  // Same pattern as ProgramDetailPage / HomeIndexPage. Atlas reasons
-  // at the cross-program control-tower scope; the reactive panel
-  // materializes pressure cards, gate evaluations, cross-program
-  // dependencies as Atlas surfaces them.
-  const [atlasArtifacts, setAtlasArtifacts] = useState<Artifact[]>([]);
-  const handleAtlasArtifact = useCallback((artifact: Artifact) => {
-    setAtlasArtifacts((prev) => {
-      const key = JSON.stringify(artifact);
-      if (prev.some((a) => JSON.stringify(a) === key)) return prev;
-      return [...prev, artifact];
-    });
-  }, []);
-  const activeFilter = searchParams?.get('filter') ?? 'all';
-
-  const filtered = TOWER_INDEX_VIEW.pressures.filter(p => {
-    if (activeFilter === 'all') return true;
-    if (activeFilter === 'high') return p.severity === 'high';
-    if (activeFilter === 'medium') return p.severity === 'medium';
-    if (activeFilter === 'low') return p.severity === 'low';
-    if (activeFilter === 'resolved') return p.status === 'resolved';
-    return true;
+  const today = new Date().toLocaleDateString('en-US', {
+    weekday: 'long',
+    month: 'long',
+    day: 'numeric',
   });
 
-  const filterPills = [
-    { key: 'all', label: 'All', active: activeFilter === 'all', count: TOWER_INDEX_VIEW.pressures.length, onClick: () => router.push('/tower') },
-    { key: 'high', label: 'High', active: activeFilter === 'high', count: TOWER_INDEX_VIEW.pressures.filter(p => p.severity === 'high').length, onClick: () => router.push('/tower?filter=high') },
-    { key: 'medium', label: 'Medium', active: activeFilter === 'medium', count: TOWER_INDEX_VIEW.pressures.filter(p => p.severity === 'medium').length, onClick: () => router.push('/tower?filter=medium') },
-    { key: 'low', label: 'Low watch', active: activeFilter === 'low', count: TOWER_INDEX_VIEW.pressures.filter(p => p.severity === 'low').length, onClick: () => router.push('/tower?filter=low') },
-    { key: 'resolved', label: 'Resolved', active: activeFilter === 'resolved', count: 0, onClick: () => router.push('/tower?filter=resolved') },
-  ];
+  const timeStr = new Date().toLocaleTimeString('en-US', {
+    hour: '2-digit',
+    minute: '2-digit',
+    timeZoneName: 'short',
+  });
 
   return (
-    <AppShell
-      surface="tower"
-      topBarProps={{
-        tenantName,
-        showLocked: true,
-        context,
-      }}
-      middleStrip={towerSubmenuSlot ?? <FilterPillStrip pills={filterPills} />}
-      onArtifact={handleAtlasArtifact}
-    >
-      {/* PR-T · agent-centric primary canvas. Atlas + reactive panel
-          dominate the viewport; the legacy pressure-grid + portfolio
-          summary collapses into a details accordion below. AgentColumn
-          (the legacy left-rail chat widget) is deprecated for this
-          surface — chat lives inside AgentCanvas now. */}
+    <AppShell surface="tower" topBarProps={{ tenantName, context: 'Tower · Portfolio Index' }}>
+      {/* Broadsheet 70/30 shell — full width below global nav */}
       <div
+        data-testid="tower-main-lens-canvas"
         style={{
-          flex: 1,
-          display: 'flex',
-          flexDirection: 'column',
-          minWidth: 0,
-          minHeight: 0,
-          overflow: 'hidden',
+          display: 'grid',
+          gridTemplateColumns: '1fr 320px',
+          minHeight: 'calc(100vh - 64px)',
+          background: C.PAGE_BG,
         }}
       >
-        <div style={{ padding: '20px 28px 0' }}>
-          <AgentCanvas
-            surface="/tower"
-            agent={{
-              initials: 'At',
-              name: 'Atlas',
-              role: 'Cross-Program Synthesizer',
-            }}
-            quote={synthesisQuote}
-            artifacts={atlasArtifacts}
-            onArtifact={handleAtlasArtifact}
-          />
-        </div>
+        {/* ── MAIN COLUMN ── */}
+        <div style={{ minWidth: 0 }}>
 
-        {/* REASON-17 — hidden synthesis node; streams live Atlas quote
-            into AgentCanvas. Stays in place after the reshape. */}
-        <div style={{ display: 'none' }} aria-hidden>
-          <AtlasSynthesisQuote
-            fallback={TOWER_INDEX_VIEW.agentQuote}
-            onLoaded={setSynthesisQuote}
-          />
-        </div>
-
-        {towerHandoffSlot}
-
-        {towerLensSlot}
-
-        <details
-          data-testid="tower-legacy-grid"
-          style={{
-            margin: '0 28px 28px',
-            border: `1px solid ${SHELL.CARD_LINE}`,
-            borderRadius: 10,
-            background: SHELL.PAPER,
-          }}
-        >
-          <summary
-            style={{
-              cursor: 'pointer',
-              padding: '12px 16px',
-              fontFamily: SHELL.MONO,
-              fontSize: 11,
-              letterSpacing: '0.10em',
-              textTransform: 'uppercase',
-              color: SHELL.GRAY_TEXT,
-              fontWeight: 700,
-              userSelect: 'none',
-            }}
-          >
-            Control tower · pressures · portfolio summary · cascade graph
-          </summary>
-
-      <div
-        style={{
-          overflowY: 'auto',
-          background: SHELL.PAPER,
-          padding: '24px 32px 32px',
-        }}
-      >
-        {/* Portfolio summary — instance tiles for at-a-glance triage */}
-        {portfolioSummarySlot}
-
-        {/* Portfolio cascade graph — REASON-32 */}
-        {cascadeGraphSlot}
-
-        {/* Header row */}
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            marginBottom: 20,
-          }}
-        >
-          <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'baseline', gap: 12 }}>
-            <span
-              style={{
-                fontFamily: SHELL.MONO,
-                fontSize: 10,
-                letterSpacing: '0.18em',
-                textTransform: 'uppercase',
-                color: SHELL.INK_MUTED,
-              }}
-            >
-              Active pressures
-            </span>
-            <span
-              style={{
-                fontFamily: SHELL.MONO,
-                fontSize: 11,
-                fontWeight: 600,
-                color: SHELL.PAPER,
-                background: SHELL.RUST_TEXT,
-                padding: '2px 9px',
-                borderRadius: 10,
-                lineHeight: 1.4,
-              }}
-            >
-              {TOWER_INDEX_VIEW.highCount} high
-            </span>
-            <span
-              style={{
-                fontFamily: SHELL.MONO,
-                fontSize: 11,
-                fontWeight: 600,
-                color: SHELL.INK,
-                background: SHELL.PEACH_BG,
-                padding: '2px 9px',
-                borderRadius: 10,
-                lineHeight: 1.4,
-              }}
-            >
-              {TOWER_INDEX_VIEW.activeCount} total
-            </span>
-          </div>
-          <button
-            onClick={() => setShowNewPressure(true)}
-            style={{
-              fontFamily: SHELL.MONO,
-              fontSize: 10,
-              letterSpacing: '0.08em',
-              color: SHELL.INK_SOFT,
-              background: 'none',
-              border: `1px solid ${SHELL.CARD_LINE}`,
-              borderRadius: 5,
-              padding: '4px 10px',
-              cursor: 'pointer',
-            }}
-          >
-            + Set new pressure
-          </button>
-        </div>
-
-        {/* Pressure cards grid */}
-        {filtered.length === 0 ? (
-          <EmptyState />
-        ) : (
+          {/* Masthead */}
           <div
             style={{
+              padding: '22px 32px 18px',
+              borderBottom: `1px solid ${C.RULE_STRONG}`,
               display: 'grid',
-              gridTemplateColumns: 'repeat(3, 1fr)',
-              gap: 16,
+              gridTemplateColumns: '1fr auto',
+              gap: 18,
+              alignItems: 'end',
             }}
           >
-            {filtered.map((item) => (
-              <PressureCard key={item.id} item={item} />
+            <div>
+              <div
+                style={{
+                  fontFamily: C.MONO,
+                  fontSize: 10,
+                  letterSpacing: '0.2em',
+                  fontWeight: 700,
+                  color: C.GOLD,
+                  textTransform: 'uppercase' as const,
+                  marginBottom: 8,
+                }}
+              >
+                Tower · Portfolio Index · TWR-IDX-PORTFOLIO
+              </div>
+              <h1
+                style={{
+                  fontFamily: C.SERIF,
+                  fontSize: 44,
+                  fontWeight: 900,
+                  letterSpacing: '-0.025em',
+                  lineHeight: 1,
+                  marginBottom: 6,
+                }}
+              >
+                The IT Portfolio{' '}
+                <span
+                  style={{
+                    fontSize: 22,
+                    fontWeight: 500,
+                    fontStyle: 'italic',
+                    color: C.GRAY_DK,
+                    letterSpacing: '-0.02em',
+                  }}
+                >
+                  — {today}
+                </span>
+              </h1>
+              <div
+                style={{
+                  fontFamily: C.MONO,
+                  fontSize: 10,
+                  letterSpacing: '0.14em',
+                  color: C.GRAY_DK,
+                  fontWeight: 600,
+                  textTransform: 'uppercase' as const,
+                }}
+              >
+                {tenantName} · CFO view · {timeStr}
+              </div>
+            </div>
+
+            {/* Lens tabs */}
+            <nav
+              aria-label="Tower lens"
+              data-testid="tower-main-submenu"
+              style={{ display: 'flex', gap: 4, alignItems: 'center' }}
+            >
+              {LENS_TABS.map((lens) => (
+                <button
+                  key={lens}
+                  onClick={() => setActiveLens(lens)}
+                  style={{
+                    fontFamily: C.MONO,
+                    fontSize: 9.5,
+                    letterSpacing: '0.14em',
+                    textTransform: 'uppercase' as const,
+                    fontWeight: 700,
+                    padding: '8px 14px',
+                    border: `1px solid ${activeLens === lens ? C.INK : C.RULE_STRONG}`,
+                    borderRadius: 999,
+                    cursor: 'pointer',
+                    background: activeLens === lens ? C.INK : 'transparent',
+                    color: activeLens === lens ? C.CREAM_2 : C.INK_2,
+                    transition: 'all 200ms',
+                  }}
+                >
+                  {lens}
+                </button>
+              ))}
+            </nav>
+          </div>
+
+          {/* KPI band */}
+          <KpiBand kpis={BROADSHEET_KPIS} />
+
+          {/* Pressures section */}
+          <div style={{ padding: '26px 32px 14px' }}>
+            <div
+              style={{
+                fontFamily: C.MONO,
+                fontSize: 10,
+                letterSpacing: '0.2em',
+                fontWeight: 700,
+                color: C.GOLD,
+                textTransform: 'uppercase' as const,
+                marginBottom: 8,
+              }}
+            >
+              Today&apos;s pressures · 7 active · 3 demanding decisions
+            </div>
+            <h2
+              style={{
+                fontFamily: C.SERIF,
+                fontSize: 30,
+                fontWeight: 800,
+                letterSpacing: '-0.03em',
+                lineHeight: 1.1,
+                maxWidth: '32ch',
+              }}
+            >
+              Three pressures need a CFO posture before the EA renewal closes.
+            </h2>
+            <p
+              style={{
+                fontSize: 13.5,
+                color: C.GRAY_DK,
+                marginTop: 8,
+                maxWidth: '64ch',
+                lineHeight: 1.55,
+              }}
+            >
+              In order of decision-pressure, not magnitude. Atlas has prepared one-page synthesis for
+              each — open any to see the underlying programs, evidence, and recommended Move.
+            </p>
+          </div>
+
+          <div style={{ padding: '0 32px 28px' }}>
+            {BROADSHEET_PRESSURES.map((row) => (
+              <PressureRow key={row.id} row={row} />
             ))}
           </div>
-        )}
 
-        {/* Cross-program activity strip */}
-        <ActivityStrip />
+          {/* Strategic alignment matrix */}
+          <StrategicMatrix />
 
-        {/* Lens links */}
-        <div style={{ marginTop: 24, paddingTop: 16, borderTop: `1px solid ${SHELL.CARD_LINE}`, display: 'flex', flexDirection: 'column', gap: 8 }}>
-          <a href="/tower/outcomes" style={{
-            display: 'inline-flex', alignItems: 'center', gap: 8,
-            fontFamily: SHELL.MONO, fontSize: 11, color: SHELL.INK_SOFT,
-            textDecoration: 'none',
-          }}>
-            <span>→</span>
-            <span>Value lens · outcome realization</span>
-          </a>
-          <a href="/tower/lens/adoption" style={{
-            display: 'inline-flex', alignItems: 'center', gap: 8,
-            fontFamily: SHELL.MONO, fontSize: 11, color: SHELL.INK_SOFT,
-            textDecoration: 'none',
-          }}>
-            <span>→</span>
-            <span>Adoption lens · usage tracking</span>
-          </a>
-          <a href="/tower/lens/risk" style={{
-            display: 'inline-flex', alignItems: 'center', gap: 8,
-            fontFamily: SHELL.MONO, fontSize: 11, color: SHELL.INK_SOFT,
-            textDecoration: 'none',
-          }}>
-            <span>→</span>
-            <span>Risk lens · open risk items</span>
-          </a>
-          <a href="/tower/lens/inventory" style={{
-            display: 'inline-flex', alignItems: 'center', gap: 8,
-            fontFamily: SHELL.MONO, fontSize: 11, color: SHELL.INK_SOFT,
-            textDecoration: 'none',
-          }}>
-            <span>→</span>
-            <span>Inventory lens · use cases &amp; vendor stack</span>
-          </a>
-          <a href="/tower/lens/cost" style={{
-            display: 'inline-flex', alignItems: 'center', gap: 8,
-            fontFamily: SHELL.MONO, fontSize: 11, color: SHELL.INK_SOFT,
-            textDecoration: 'none',
-          }}>
-            <span>→</span>
-            <span>Cost lens · AI cloud spend &amp; budget variance</span>
-          </a>
+          {/* Footer */}
+          <div
+            style={{
+              padding: '22px 32px 32px',
+              borderTop: `1px dashed ${C.RULE}`,
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'baseline',
+              gap: 24,
+            }}
+          >
+            <div
+              style={{
+                fontFamily: C.MONO,
+                fontSize: 9.5,
+                letterSpacing: '0.14em',
+                color: C.GRAY_DK,
+                fontWeight: 600,
+                lineHeight: 1.7,
+                maxWidth: '60ch',
+              }}
+            >
+              <strong style={{ color: C.INK }}>Tower is a decision instrument, not a dashboard.</strong>{' '}
+              Every number on this page has a confidence level and an underlying calculation that&apos;s
+              queryable. Underlines: solid HIGH · dashed MED · dotted LOW. Missing inputs read as
+              invitations, not errors.
+              <br />
+              Next governance review:{' '}
+              <strong style={{ color: C.INK }}>May 19 · 90-min board prep</strong>.
+            </div>
+            <div
+              style={{
+                fontFamily: C.MONO,
+                fontSize: 9,
+                letterSpacing: '0.13em',
+                color: C.GRAY,
+                fontStyle: 'italic',
+                textAlign: 'right' as const,
+                whiteSpace: 'nowrap' as const,
+              }}
+            >
+              Refreshes every 6h
+              <br />
+              v2 confidence bands · substrate v0.9
+            </div>
+          </div>
         </div>
-      </div>
 
-        </details>
+        {/* ── ATLAS COLUMN ── */}
+        <AtlasColumn />
       </div>
-
-      {showNewPressure && (
-        <NewPressureModal onClose={() => setShowNewPressure(false)} />
-      )}
     </AppShell>
   );
 }
