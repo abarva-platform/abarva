@@ -164,7 +164,7 @@ export const SOURCE_FOUNDATIONS: SourcePlatformFoundation[] = [
   {
     key: 'agent_fabric',
     label: 'Agent Fabric',
-    summary: 'Nexus-led workflow orchestration with specialist rails and cited, fail-honest responses.',
+    summary: 'Sentinel-led workflow orchestration with specialist rails and cited, fail-honest responses.',
   },
   {
     key: 'artifact_studio',

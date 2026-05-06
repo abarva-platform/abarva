@@ -35,20 +35,23 @@ const STATE_RANK: Record<SourceAgentMissionState, number> = {
 
 export function buildSourceAgentMissions(input: SourceAgentMissionInput): SourceAgentMission[] {
   return prioritizeSourceAgentMissions([
-    ...buildNexusSourceMissions(input),
+    ...buildSentinelWorkflowMissions(input),
     ...buildSentinelSourceMissions(input),
     ...buildAtlasSourceMissions(input),
     ...buildStewardSourceMissions(input),
   ]);
 }
 
-export function buildNexusSourceMissions(input: SourceAgentMissionInput): SourceAgentMission[] {
+// Workflow-stage-specific Sentinel missions: next action, data readiness, pattern signal.
+// These correspond to the NextActionAdvisor, DataReadinessInspector, and
+// PatternSignalExtractor specialists in the Source specialist catalog.
+export function buildSentinelWorkflowMissions(input: SourceAgentMissionInput): SourceAgentMission[] {
   const bundle = input.contextBundle;
   const eventName = getEventName(input);
   const stageLabel = bundle.workflowStage?.label ?? 'portfolio';
   const missions: SourceAgentMission[] = [
     createMission(input, {
-      agentName: 'nexus',
+      agentName: 'sentinel',
       missionType: 'next_action',
       title: `${stageLabel} next action`,
       summary: `${eventName} needs a clear operational next action from the current Source context.`,
@@ -65,7 +68,7 @@ export function buildNexusSourceMissions(input: SourceAgentMissionInput): Source
 
   if (bundle.missingInputs.length > 0) {
     missions.push(createMission(input, {
-      agentName: 'nexus',
+      agentName: 'sentinel',
       missionType: 'data_readiness',
       title: 'Minimum data request needed',
       summary: `${bundle.missingInputs.length} required input${plural(bundle.missingInputs.length)} are missing for ${eventName}.`,
@@ -82,7 +85,7 @@ export function buildNexusSourceMissions(input: SourceAgentMissionInput): Source
 
   if (bundle.selectedPatternPack) {
     missions.push(createMission(input, {
-      agentName: 'nexus',
+      agentName: 'sentinel',
       missionType: 'pattern_signal',
       title: `${bundle.selectedPatternPack.name} pattern signal`,
       summary: `Use ${bundle.selectedPatternPack.name} to keep sourcing guidance specific to ${bundle.sourcingArchetype ?? 'this event'}.`,

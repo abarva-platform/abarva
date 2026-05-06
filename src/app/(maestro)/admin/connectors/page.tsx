@@ -16,7 +16,7 @@ import {
 import { COLORS, RADIUS, SPACING, TYPOGRAPHY } from '@/lib/design/design-tokens';
 
 export const metadata = {
-  title: 'Connectors | Nexus Admin',
+  title: 'Connectors | AbarVa Setup',
 };
 
 interface ConnectorsSearchParams {

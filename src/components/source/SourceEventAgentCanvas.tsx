@@ -25,9 +25,9 @@ interface SourceEventAgentCanvasProps {
   canViewFinancialValues?: boolean;
 }
 
-const NEXUS_EVENT_AGENT = {
-  initials: 'Nx',
-  name: 'Nexus',
+const SENTINEL_EVENT_AGENT = {
+  initials: 'Se',
+  name: 'Sentinel',
   role: 'Source Orchestrator',
 } as const;
 
@@ -89,7 +89,7 @@ export function SourceEventAgentCanvas({
     >
       <main
         data-testid="source-event-agent-canvas"
-        aria-label="Nexus source event canvas"
+        aria-label="Sentinel source event canvas"
         style={{
           flex: 1,
           minWidth: 0,
@@ -127,7 +127,7 @@ export function SourceEventAgentCanvas({
                       onClose={() => {
                         // Embedded Source event workspace stays visible; it is not a drawer overlay.
                       }}
-                      agent={NEXUS_EVENT_AGENT}
+                      agent={SENTINEL_EVENT_AGENT}
                       quote={safeQuote}
                       surface="/source"
                       onArtifact={handleArtifact}
@@ -186,7 +186,7 @@ function EventAgentLead({
       <div style={EVENT_LEAD_HEADER}>
         <div>
           <div style={META_LABEL}>Agent-led stage brief</div>
-          <h2 style={EVENT_LEAD_TITLE}>Nexus is running {stageLabel}</h2>
+          <h2 style={EVENT_LEAD_TITLE}>Sentinel is running {stageLabel}</h2>
         </div>
         <div style={EVENT_LEAD_VALUE}>
           <div style={META_LABEL}>Value at stake</div>
@@ -202,7 +202,7 @@ function EventAgentLead({
 
       <div style={EVENT_AGENT_GRID} aria-label="Source agent responsibilities for this stage">
         <EventAgentCard
-          agent="Nexus"
+          agent="Sentinel"
           role="Workflow conductor"
           detail={`${nextAction} Then prepare the team for the next gate with inputs, session plan, and output packet.`}
         />
@@ -298,10 +298,10 @@ function StageAction({
       }}
       disabled={disabled}
       onClick={() => pageState?.ask(prompt)}
-      aria-label={`Ask Nexus: ${label}`}
+      aria-label={`Ask Sentinel: ${label}`}
       data-testid={`source-stage-action-${label.toLowerCase().replaceAll(' ', '-')}`}
     >
-      <div style={EVENT_ACTION_PROMPT}>Ask Nexus</div>
+      <div style={EVENT_ACTION_PROMPT}>Ask Sentinel</div>
       <div style={EVENT_ACTION_LABEL}>{label}</div>
       <div style={EVENT_ACTION_DETAIL}>{detail}</div>
     </button>
@@ -398,7 +398,7 @@ function SourceEventPromptDeck({ event }: { event: SourcingEventDetail }) {
               cursor: disabled ? 'not-allowed' : 'pointer',
               opacity: disabled ? 0.62 : 1,
             }}
-            aria-label={`Ask Nexus: ${item.label}`}
+            aria-label={`Ask Sentinel: ${item.label}`}
           >
             <div
               style={{

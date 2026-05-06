@@ -18,7 +18,7 @@ import {
 import { COLORS, RADIUS, SPACING, TYPOGRAPHY } from '@/lib/design/design-tokens';
 
 export const metadata = {
-  title: 'Architecture Overview | Nexus Admin',
+  title: 'Architecture Overview | AbarVa Setup',
 };
 
 interface ArchitecturePageSearchParams {

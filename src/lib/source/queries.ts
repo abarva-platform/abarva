@@ -407,7 +407,7 @@ export function sourceEventRowToDetail(row: SourceEventRow, accountName: string)
         {
           id: `${row.id}:business-trigger`,
           label: 'Business trigger documented',
-          ownerRole: 'Nexus',
+          ownerRole: 'Sentinel',
           required: true,
           status: row.trigger_description ? 'ready' : 'draft',
           note: trigger,

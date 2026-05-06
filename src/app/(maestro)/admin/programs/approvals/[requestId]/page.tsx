@@ -19,7 +19,7 @@ import { formatRelativeTime } from '@/components/admin/programs/ApprovalQueueTab
 import { loadApprovalPersonDisplayMap } from '@/lib/programs/approval-person-resolver';
 import { safeApprovalActorLabel } from '@/lib/programs/approval-display';
 
-export const metadata = { title: 'Review Approval · Nexus Admin' };
+export const metadata = { title: 'Review Approval · AbarVa Setup' };
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 

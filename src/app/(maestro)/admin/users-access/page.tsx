@@ -22,7 +22,7 @@ import { getProgramPortfolio } from '@/lib/programs/queries';
 import { canonicalClientDisplayName, type ClientKey } from '@/lib/client-config';
 
 export const metadata = {
-  title: 'Users & Access | Nexus Admin',
+  title: 'Users & Access | AbarVa Setup',
 };
 
 const BASE_URL = '/admin/users-access';

@@ -15,7 +15,7 @@ import {
 import { COLORS, RADIUS, SPACING, TYPOGRAPHY } from '@/lib/design/design-tokens';
 
 export const metadata = {
-  title: 'Build Progress | Nexus Admin',
+  title: 'Build Progress | AbarVa Setup',
 };
 
 interface BuildProgressSearchParams {

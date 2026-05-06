@@ -25,7 +25,7 @@ import {
 } from '@/lib/admin/production-readiness-page-view';
 
 export const metadata = {
-  title: 'Production Readiness | Nexus Admin',
+  title: 'Production Readiness | AbarVa Setup',
 };
 
 export const dynamic = 'force-dynamic';

@@ -18,7 +18,7 @@ import {
 } from '@/lib/admin/data-trust-page-view';
 
 export const metadata = {
-  title: 'Data Trust | Nexus Admin',
+  title: 'Data Trust | AbarVa Setup',
 };
 
 const BASE_URL = '/admin/data-trust';

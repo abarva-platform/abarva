@@ -55,7 +55,7 @@ The Tower makes all of this visible, attributable, and decidable.
 
 ## §2 · Outcomes the Tower must produce
 
-The Tower exists to drive five concrete outcomes. Every page, every metric, every Nexus voice line traces back to one of these:
+The Tower exists to drive five concrete outcomes. Every page, every metric, every Atlas voice line traces back to one of these:
 
 | Outcome | Test |
 |---|---|
@@ -195,7 +195,7 @@ That is the entire Tower. Every page connects to at least three others; the grap
 
 6. **Recent decisions** — last 10 decisions with one-line context. Click any → TWR-DTL-DECISION.
 
-**Nexus voice on this page (Nexus is lead on Tower):**
+**Atlas voice on this page (Atlas is lead on Tower):**
 
 > *"Portfolio at $14.2M annualized · value captured $9.8M trailing 12-mo · ROI 0.69x. Three pressures > $1M: M365 Copilot adoption gap (24%), LLM inference overrun ($2.4M), Now Assist + Copilot duplication ($1.2M). Renewal window opens for Microsoft in 47 days — leverage analysis attached."*
 
@@ -291,7 +291,7 @@ Decision types: `kill`, `scale`, `consolidate`, `renegotiate`, `pivot`, `defer`,
    - "Schedule program review"
    - "Export to board materials"
 
-**Nexus voice on this page (program-specific):**
+**Atlas voice on this page (program-specific):**
 
 > *"M365 Copilot: $5.0M annualized, 12,400 eligible users, 2,950 active (24% adoption — below the 60% threshold for ROI breakeven). Finance and Legal are the lowest-adoption depts; Engineering is high-adoption but mostly using GitHub Copilot for the same use cases. Recommendation: scope a 90-day Finance acceleration sprint or accept lower-bound projections."*
 
@@ -331,7 +331,7 @@ Decision types: `kill`, `scale`, `consolidate`, `renegotiate`, `pivot`, `defer`,
 7. **Decision capture form**
    - Inline form: choose recommended action, add rationale, submit → creates TWR-DTL-DECISION entry
 
-**Nexus voice:**
+**Atlas voice:**
 
 > *"LLM inference is at $4.8M annualized, $2.4M over plan. 73% of overrun is volume-driven (programs are scaling faster than budgeted) — the rest is rate-card mismatch. The AMS vendor architecture decision pending in Source will lock in your inference vendor for 36 months. Three options on the table; recommend (a) for 60-day cost relief and (b) for structural protection."*
 
@@ -833,7 +833,7 @@ How each of the founder's specific examples works through the Tower.
 - Pressure surfaced: `P-ADOPT` (severity high, $1.6M shelfware)
 - Pressure surfaced: `P-DUPL` (overlaps with Now Assist on summarization use cases, $0.8M)
 
-**Recommended action (Nexus voice):**
+**Recommended action (Atlas voice):**
 > *"Two paths. Path A: 90-day Finance acceleration sprint to lift Finance adoption from 14% to 50% — projected to add $1.1M value, ROI moves to 0.94x. Path B: Consolidate Now Assist + Copilot for summarization (shift Now Assist seats to high-value use cases only) — saves $0.6M, ROI moves to 0.84x. Path A and B are not mutually exclusive."*
 
 ### Walkthrough 2 · Claude Code rollout for engineering
@@ -855,7 +855,7 @@ How each of the founder's specific examples works through the Tower.
 
 **Tower behavior:**
 - This program is the green bubble in TWR-IDX-PORTFOLIO's bubble chart
-- Nexus voice on this program: *"Claude Code is your highest-ROI AI program at 9.6x. Engineering wants to expand from 200 to 350 seats; cost goes to $700K/yr; projected value at $6.7M assuming linear scale. Constraint: Anthropic enterprise commitment in current Source event covers 280 seats — expansion above that requires renegotiation."*
+- Atlas voice on this program: *"Claude Code is your highest-ROI AI program at 9.6x. Engineering wants to expand from 200 to 350 seats; cost goes to $700K/yr; projected value at $6.7M assuming linear scale. Constraint: Anthropic enterprise commitment in current Source event covers 280 seats — expansion above that requires renegotiation."*
 
 **Cross-surface flow:**
 - Tower pressure: `P-CAPACITY` on Claude Code
@@ -923,7 +923,7 @@ How each of the founder's specific examples works through the Tower.
 
 **Tower behavior:**
 - T-FOW programs are shown on TWR-IDX-PORTFOLIO with a **dashed bubble outline** indicating low-confidence value attribution
-- Nexus voice: *"Future-of-work program is showing leading indicators (skills coverage trending up). Lagging indicators (productivity, retention) won't be readable for 6-9 months. Recommend continuing investment with quarterly review; do not over-rotate based on early data."*
+- Atlas voice: *"Future-of-work program is showing leading indicators (skills coverage trending up). Lagging indicators (productivity, retention) won't be readable for 6-9 months. Recommend continuing investment with quarterly review; do not over-rotate based on early data."*
 - Pressure: `P-TLNT` if skills coverage trajectory falls below trajectory needed to hit target
 
 **This is the key honest move:** the Tower doesn't pretend T-FOW programs have the same kind of value defensibility as T-CODE programs. It surfaces them as strategic bets with leading indicators, not as ROI plays. Leadership makes those decisions with appropriate epistemic humility.
