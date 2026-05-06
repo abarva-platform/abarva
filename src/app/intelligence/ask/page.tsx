@@ -15,6 +15,7 @@ import Link from 'next/link';
 import { AppShell } from '@/components/shell/AppShell';
 import { SHELL } from '@/lib/shell/shell-tokens';
 import { IntelligenceAgentCanvas } from '@/components/intelligence/IntelligenceAgentCanvas';
+import { IntelligenceReasoningModeStrip } from '@/components/intelligence/IntelligenceReasoningModeStrip';
 
 const SENTINEL_QUOTE =
   'I am Sentinel — AbarVa\'s knowledge librarian. Ask me about the corpus, ' +
@@ -28,7 +29,12 @@ export const metadata = {
     'evidence, or vet a synthesis.',
 };
 
-export default function IntelligenceAskPage() {
+export default async function IntelligenceAskPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ mode?: string }>;
+}) {
+  const params = await searchParams;
   return (
     <AppShell
       surface="intelligence"
@@ -114,6 +120,9 @@ export default function IntelligenceAskPage() {
               Ask the corpus
             </h1>
           </div>
+
+          {/* INT-5 · Reasoning mode strip — frames Sentinel's answer scope */}
+          <IntelligenceReasoningModeStrip searchParams={params} />
 
           {/* The agent canvas — chat dominant + reactive knowledge pane */}
           <IntelligenceAgentCanvas quote={SENTINEL_QUOTE} />

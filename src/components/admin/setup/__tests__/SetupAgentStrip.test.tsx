@@ -104,7 +104,7 @@ describe('SetupAgentStrip', () => {
     );
     expect(screen.getByTestId('admin-agent-card-atlas-cta')).toHaveAttribute(
       'href',
-      '/admin/agents/atlas',
+      '/admin/cross-program-signals',
     );
     expect(screen.getByTestId('admin-agent-card-nexus-cta')).toHaveAttribute(
       'href',

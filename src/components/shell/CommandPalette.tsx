@@ -16,6 +16,8 @@ const ROUTES = [
   { label: 'Tower · Outcomes', path: '/tower/outcomes', surface: 'Tower', key: 'twr' },
   { label: 'Tower · Adoption Lens', path: '/tower/lens/adoption', surface: 'Tower', key: 'twr' },
   { label: 'Tower · Risk Lens', path: '/tower/lens/risk', surface: 'Tower', key: 'twr' },
+  { label: 'Tower · Inventory Lens', path: '/tower/lens/inventory', surface: 'Tower', key: 'twr' },
+  { label: 'Tower · Cost Lens', path: '/tower/lens/cost', surface: 'Tower', key: 'twr' },
   { label: 'Tower · Activity', path: '/tower/activity', surface: 'Tower', key: 'twr' },
   { label: 'Setup · Connectors', path: '/admin', surface: 'Setup', key: 'set' },
   { label: 'Setup · Users', path: '/admin/users', surface: 'Setup', key: 'set' },

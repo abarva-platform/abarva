@@ -241,7 +241,7 @@ export interface SourcingEventSummary {
   code: string;
   name: string;
   accountName: string;
-  leadAgent: 'Nexus';
+  leadAgent: 'Sentinel';
   archetype: string;
   rigor: SourceRigorLevel;
   status: SourceLifecycleStatus;

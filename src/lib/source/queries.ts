@@ -205,7 +205,7 @@ export function sourceEventRowToSummary(row: SourceEventRow, accountName: string
     code: row.event_code,
     name: row.event_name,
     accountName,
-    leadAgent: 'Nexus',
+    leadAgent: 'Sentinel',
     archetype: formatSourceEventType(row.event_type),
     rigor: row.event_type === 'managed_service' || row.event_type === 'consulting' ? 'strategic' : 'standard',
     status,
