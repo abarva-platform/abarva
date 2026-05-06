@@ -133,11 +133,13 @@ Tracks every step from `EXECUTION_PLAYBOOK.md` against its current state. Update
 | 7.4 | W-5.2 First-message scaffolds P0+P1 | Claude Code | ✅ | [#1568](https://github.com/anandsundaram-hash/abarva/pull/1568) | P0: 3 variants; P1: 3 variants incl. sponsor-candidate distinction |
 | 7.5 | W-5.2 First-message scaffolds P2+P3 | Claude Code | ✅ | [#1568](https://github.com/anandsundaram-hash/abarva/pull/1568) [#1567](https://github.com/anandsundaram-hash/abarva/pull/1567) | P2: 4 variants incl. discontinue-risk; P3: 3 variants incl. R6 tool-first |
 | 7.6 | W-5.2 First-message scaffolds P4+P5 | Claude Code | ✅ | [#1567](https://github.com/anandsundaram-hash/abarva/pull/1567) | P4: 4 variants + Tower metric plan authority; P5: 4 variants + R7 handoff |
-| 7.7 | W-5.3 Per-phase chip ladders | Claude Code | 🔄 | — | In progress |
+| 7.7 | W-5.3 Per-phase chip ladders | Claude Code | ✅ | [#1571](https://github.com/anandsundaram-hash/abarva/pull/1571) | 36 chips total (6/phase); Tower metric chip (P4) + acceptance chip (P5) |
 | 7.8 | W-5.4, W-5.5, W-5.6 View-mode scaffolds | Claude Code | ✅ | [#1569](https://github.com/anandsundaram-hash/abarva/pull/1569) | Replay + preview + cross-phase nav; permitted/prohibited action tables |
-| 7.9 | W-5.7 Evidence + anti-hallucination rules | Claude Code | 🔄 | — | In progress |
-| 7.10 | W-5.8 Workspace Layer 5 fixtures | Claude Code | 🔄 | — | In progress |
-| 7.11 | W-5.9 Workspace Layer 5 sign-off | Anand | ⏳ | — | Ready after 7.7/7.9/7.10 complete |
+| 7.9 | W-5.7 Evidence + anti-hallucination rules | Claude Code | ✅ | [#1571](https://github.com/anandsundaram-hash/abarva/pull/1571) | 36 evidence rules (6/phase); verbatim Nexus fallback quotes |
+| 7.10 | W-5.8 Workspace Layer 5 fixtures | Claude Code | ✅ | [#1571](https://github.com/anandsundaram-hash/abarva/pull/1571) | 30 fixtures (5/phase); Apex Retail Contact Center AI scenario |
+| 7.11 | W-5.9 Workspace Layer 5 sign-off | Anand | ⏳ | — | **Ready for review** — all W-5 specs complete |
+
+**Phase 7 note:** W-5.1–W-5.8 complete ✅ · W-5.9 awaiting Anand · 7.12 (W-IG) blocked on 7.11 + substrate migration
 | 7.12 | W-IG Workspace Implementation Gate | Anand | 🔒 | — | Blocked on 7.11, substrate migration |
 
 ---
