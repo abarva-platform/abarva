@@ -157,9 +157,9 @@ Tracks every step from `EXECUTION_PLAYBOOK.md` against its current state. Update
 
 | Step | Work Package | Owner | Status | PR | Notes |
 |---|---|---|---|---|---|
-| 9.1 | A-1 Acceptance script Flow 1 | Claude Code | 🔒 | — | Blocked on 8.1 |
-| 9.2 | A-2 Acceptance script Flow 2 | Claude Code | 🔒 | — | Blocked on 8.1 |
-| 9.3 | A-3 Cross-tenant smoke test | Claude Code | 🔒 | — | Blocked on 9.1, 9.2, 8.2 |
+| 9.1 | A-1 Acceptance script Flow 1 | Claude Code | ✅ | [#1576](https://github.com/anandsundaram-hash/abarva/pull/1576) | 10-step script; fixture: Apex Retail APX-001 P2 gate-partial → promote to P3; requires 8.2 to execute |
+| 9.2 | A-2 Acceptance script Flow 2 | Claude Code | ✅ | [#1577](https://github.com/anandsundaram-hash/abarva/pull/1577) | 10-step script; fixture: Marcus Webb CEO note / Sarah Chen sponsor / AHT scenario; AH-ORIG-1–4 checks; immediately executable |
+| 9.3 | A-3 Cross-tenant smoke test | Claude Code | 🔒 | — | Blocked on 9.1, 9.2 ✅, 8.2 🔒 |
 | 9.4 | A-4 Anand acceptance walkthrough | Anand | 🔒 | — | Blocked on 9.3 |
 | 9.5 | A-5 Closure doc | Claude Code | 🔒 | — | Blocked on 9.4 |
 
@@ -187,7 +187,7 @@ Tracks every step from `EXECUTION_PLAYBOOK.md` against its current state. Update
 | Phase 6 | 10 | 9 | 0 | 1 (6.7 Anand) |
 | Phase 7 | 12 | 8 | 0 | 4 (7.1/7.11 ⏳ · 7.2/7.12 🔒) |
 | Phase 8 | 2 | 1 | 0 | 1 (8.2 🔒 W-IG) |
-| Phase 9 | 5 | 0 | 0 | 5 |
-| **Total** | **67** | **56** | **0** | **11** |
+| Phase 9 | 5 | 2 | 0 | 3 (9.3 🔒 · 9.4 🔒 · 9.5 🔒) |
+| **Total** | **67** | **58** | **0** | **9** |
 
-_Last updated: 2026-05-06 · Phase 8.1 Originate implementation ✅ · Phase 7 W-5.9 + Phase 6 6.7 awaiting Anand sign-off · 56/67 done_
+_Last updated: 2026-05-06 · Steps 9.1 A-1 ✅ + 9.2 A-2 ✅ · Phase 7 W-5.9 + Phase 6 6.7 awaiting Anand sign-off · 58/67 done_
