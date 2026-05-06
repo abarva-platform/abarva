@@ -433,7 +433,7 @@ export function StrategicMoveOriginateClient({ tenantName, initialTurns }: Props
             <div className={styles.inputRow}>
               <textarea
                 id="orig-chat-input-field"
-                rows={2}
+                rows={1}
                 value={composer}
                 onChange={(e) => setComposer(e.target.value)}
                 onKeyDown={(e) => {
@@ -442,7 +442,7 @@ export function StrategicMoveOriginateClient({ tenantName, initialTurns }: Props
                     void send();
                   }
                 }}
-                placeholder="Describe the outcome, paste a note, or pick a step above…"
+                placeholder="Describe the outcome or pick a step above…"
                 disabled={streaming}
                 spellCheck
               />
