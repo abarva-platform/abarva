@@ -142,7 +142,7 @@ export interface SourceChatThread {
   updatedAt: string;
 }
 
-export interface NexusSourceGuidance {
+export interface SentinelSourceGuidance {
   eventId: string;
   stageKey?: SourceStageKey;
   summary: string;

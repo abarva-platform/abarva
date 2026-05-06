@@ -266,7 +266,7 @@ function toReadableFixtureRow(
     actualOutcome: row.actualOutcome,
     status: row.status,
     meaning: getFixtureOutcomeMeaning(row),
-    primaryExplanation: row.blockerExplanations[0] ?? row.nexusExplanation,
+    primaryExplanation: row.blockerExplanations[0] ?? row.sentinelExplanation,
     stewardEnforcement: row.stewardEnforcement,
     evidenceSummary: formatEvidenceSummary(row),
     remediation: row.requiredRemediation,

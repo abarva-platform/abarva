@@ -45,7 +45,7 @@ export interface SourceWorkflowValidationFixtureReportRow {
   actualOutcome: SourceWorkflowValidationOutcome;
   status: SourceWorkflowValidationFixtureMatchStatus;
   blockerExplanations: string[];
-  nexusExplanation: string;
+  sentinelExplanation: string;
   stewardEnforcement: string;
   evidenceRequirements: Array<{
     id: string;
@@ -233,7 +233,7 @@ function toWorkflowValidationFixtureRow(
     actualOutcome: result.actualOutcome,
     status: result.passesExpectation ? 'matches_expected' : 'unexpected',
     blockerExplanations: result.findings.map((finding) => finding.message),
-    nexusExplanation: result.nexusExplanation,
+    sentinelExplanation: result.sentinelExplanation,
     stewardEnforcement: result.stewardEnforcement,
     evidenceRequirements: result.evidenceNeeded.map((evidence) => ({
       id: evidence.id,
@@ -261,7 +261,7 @@ function toWorkflowValidationExplanation(
     fixtureId: row.fixtureId,
     ruleId: row.ruleId,
     outcome: row.actualOutcome,
-    explanation: row.blockerExplanations[0] ?? row.nexusExplanation,
+    explanation: row.blockerExplanations[0] ?? row.sentinelExplanation,
     remediation: row.requiredRemediation,
   };
 }

@@ -63,7 +63,7 @@ export const SOURCE_WORKFLOW_VALIDATION_FIXTURES: SourceWorkflowValidationFixtur
       artifactId: 'artifact-rfp-package-v0-4',
     },
     expectedOutcome: 'BLOCK',
-    expectedNexusExplanation: 'RFP package is not approved and locked, so vendor release is not defensible.',
+    expectedSentinelExplanation: 'RFP package is not approved and locked, so vendor release is not defensible.',
     expectedStewardEnforcement: 'Steward blocks stage advancement until the RFP package is approved and locked.',
     evidenceNeeded: [
       evidence('artifact-status', 'RFP package artifact status', true),
@@ -104,7 +104,7 @@ export const SOURCE_WORKFLOW_VALIDATION_FIXTURES: SourceWorkflowValidationFixtur
       targetStage: 'evaluation',
     },
     expectedOutcome: 'BLOCK',
-    expectedNexusExplanation: 'Evaluation cannot begin until scorecard weights and criteria are locked.',
+    expectedSentinelExplanation: 'Evaluation cannot begin until scorecard weights and criteria are locked.',
     expectedStewardEnforcement: 'Steward blocks Evaluation activation while the scorecard is editable.',
     evidenceNeeded: [
       evidence('scorecard-lock-state', 'Scorecard lock state', true),
@@ -141,7 +141,7 @@ export const SOURCE_WORKFLOW_VALIDATION_FIXTURES: SourceWorkflowValidationFixtur
       requestedArtifactTier: 'rich',
     },
     expectedOutcome: 'BLOCK',
-    expectedNexusExplanation: 'Only Stub or Outline sections are safe until required inputs arrive.',
+    expectedSentinelExplanation: 'Only Stub or Outline sections are safe until required inputs arrive.',
     expectedStewardEnforcement: 'Steward prevents Rich-tier artifact status while required inputs are missing.',
     evidenceNeeded: [
       evidence('input-application-inventory', 'Application inventory', false),
@@ -180,7 +180,7 @@ export const SOURCE_WORKFLOW_VALIDATION_FIXTURES: SourceWorkflowValidationFixtur
       approvalRouteId: 'approval-route-strategic-release',
     },
     expectedOutcome: 'BLOCK',
-    expectedNexusExplanation: 'Strategic sourcing requires legal and procurement review before release.',
+    expectedSentinelExplanation: 'Strategic sourcing requires legal and procurement review before release.',
     expectedStewardEnforcement: 'Steward blocks release readiness until legal and procurement routes are configured.',
     evidenceNeeded: [
       evidence('approval-route', 'Strategic approval route', true),
@@ -231,7 +231,7 @@ export const SOURCE_WORKFLOW_VALIDATION_FIXTURES: SourceWorkflowValidationFixtur
       artifactId: 'artifact-rfp-package-v0-5',
     },
     expectedOutcome: 'BLOCK',
-    expectedNexusExplanation: 'Unresolved required comments must be resolved or waived before lock.',
+    expectedSentinelExplanation: 'Unresolved required comments must be resolved or waived before lock.',
     expectedStewardEnforcement: 'Steward prevents artifact lock while required reviewer comments are unresolved.',
     evidenceNeeded: [
       evidence('comment-security-required-001', 'Required security reviewer comment', false),
@@ -268,7 +268,7 @@ export const SOURCE_WORKFLOW_VALIDATION_FIXTURES: SourceWorkflowValidationFixtur
       approvalRouteId: 'approval-route-rfp-release',
     },
     expectedOutcome: 'BLOCK',
-    expectedNexusExplanation: 'Approval cannot be recorded without an assigned approval owner.',
+    expectedSentinelExplanation: 'Approval cannot be recorded without an assigned approval owner.',
     expectedStewardEnforcement: 'Steward blocks approval completion until an owner is assigned.',
     evidenceNeeded: [
       evidence('approval-owner', 'Approval owner assignment', false),
@@ -313,7 +313,7 @@ export const SOURCE_WORKFLOW_VALIDATION_FIXTURES: SourceWorkflowValidationFixtur
       artifactId: 'artifact-scope-document-v0-2',
     },
     expectedOutcome: 'BLOCK',
-    expectedNexusExplanation: 'Required artifact still needs inputs and blocks stage advancement unless waived with rationale.',
+    expectedSentinelExplanation: 'Required artifact still needs inputs and blocks stage advancement unless waived with rationale.',
     expectedStewardEnforcement: 'Steward blocks stage advancement until the artifact is completed or explicitly waived.',
     evidenceNeeded: [
       evidence('artifact-scope-document-v0-2', 'Scope document status', false),
@@ -370,7 +370,7 @@ export const SOURCE_WORKFLOW_VALIDATION_FIXTURES: SourceWorkflowValidationFixtur
       artifactId: 'artifact-rfp-package',
     },
     expectedOutcome: 'BLOCK',
-    expectedNexusExplanation: 'Re-uploaded external edits must create a new artifact version.',
+    expectedSentinelExplanation: 'Re-uploaded external edits must create a new artifact version.',
     expectedStewardEnforcement: 'Steward rejects same-version overwrite and requires a new version record.',
     evidenceNeeded: [
       evidence('export-rfp-v0-4', 'Original DOCX export record', true),
@@ -409,7 +409,7 @@ export const SOURCE_WORKFLOW_VALIDATION_FIXTURES: SourceWorkflowValidationFixtur
       uploadId: 'upload-security-appendix',
     },
     expectedOutcome: 'DEFER',
-    expectedNexusExplanation: 'Uploaded document cannot be cited until parsed and validated.',
+    expectedSentinelExplanation: 'Uploaded document cannot be cited until parsed and validated.',
     expectedStewardEnforcement: 'Steward prevents the uploaded document from being used as evidence until parsing and validation complete.',
     evidenceNeeded: [
       evidence('upload-security-appendix', 'Uploaded document parse status', false),
@@ -447,7 +447,7 @@ export const SOURCE_WORKFLOW_VALIDATION_FIXTURES: SourceWorkflowValidationFixtur
       vendorResponseId: 'vendor-response-contoso',
     },
     expectedOutcome: 'BLOCK',
-    expectedNexusExplanation: 'Vendor response is not comparable without pricing template or approved exception.',
+    expectedSentinelExplanation: 'Vendor response is not comparable without pricing template or approved exception.',
     expectedStewardEnforcement: 'Steward blocks complete status until pricing template is received or exception is approved.',
     evidenceNeeded: [
       evidence('vendor-response-contoso', 'Vendor response checklist', true),
@@ -485,7 +485,7 @@ export const SOURCE_WORKFLOW_VALIDATION_FIXTURES: SourceWorkflowValidationFixtur
       label: 'Mark value realized',
     },
     expectedOutcome: 'BLOCK',
-    expectedNexusExplanation: 'Realized value cannot be asserted from projection alone.',
+    expectedSentinelExplanation: 'Realized value cannot be asserted from projection alone.',
     expectedStewardEnforcement: 'Steward blocks realized value status until measurement owner and evidence exist.',
     evidenceNeeded: [
       evidence('measurement-owner', 'Measurement owner', false),
@@ -528,7 +528,7 @@ export const SOURCE_WORKFLOW_VALIDATION_FIXTURES: SourceWorkflowValidationFixtur
       approvalRouteId: 'approval-route-security-review',
     },
     expectedOutcome: 'BLOCK',
-    expectedNexusExplanation: 'Approval can be waived only by authorized role with rationale.',
+    expectedSentinelExplanation: 'Approval can be waived only by authorized role with rationale.',
     expectedStewardEnforcement: 'Steward blocks approval skip until waiver rationale is recorded.',
     evidenceNeeded: [
       evidence('waiver-security-review', 'Waiver rationale', false),
