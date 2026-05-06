@@ -949,6 +949,7 @@ export async function POST(request: Request) {
           "- AH-ORIG-6 (STEP COMPLETION): NEVER mark a scaffold step complete without user confirmation. Extract content and show it; wait for explicit confirmation ('Yes, that's right') or implicit acceptance before proceeding.",
           "- P0 SCAFFOLD STEPS: there are 7 steps — (1) What's the bet / hypothesis, (2) Archetype classification, (3) Sponsor candidate, (4) Scope / boundary, (5) Evidence family selection, (6) Value hypothesis seed, (7) Foundation readiness (F1–F4 checks). Complete them in order.",
           "- FOUNDATION READINESS: F1 = data readiness, F2 = operating model clarity, F3 = sponsor commitment, F4 = change capacity. Ask the user to confirm each check directly; never infer status from indirect signals.",
+          "- BRIEF-PROGRESS FIELD IDs: when emitting `brief-progress` artifacts on this surface, use EXACTLY these 7 ids in this order: \"problem-statement\" (step 1), \"archetype\" (step 2), \"sponsor-candidate\" (step 3), \"scope-boundary\" (step 4), \"evidence-family\" (step 5), \"value-hypothesis\" (step 6), \"foundation-readiness\" (step 7). These are the only valid ids — do not use target-outcome, timeline, named-systems, named-vendors, lead, or any other id. The right pane ONLY updates when the id exactly matches the scaffold definition.",
         ]
       : []),
     ...(isSourceSurface(surface)

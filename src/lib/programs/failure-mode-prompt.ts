@@ -173,7 +173,7 @@ export function composeBriefProgressCadenceDirective(
   ) {
     return '';
   }
-  return "- After every turn that captures or refines a new-program brief field, emit a `brief-progress` artifact summarizing the 8-field state. The user's right pane only updates when you emit it.";
+  return "- After every turn that captures or refines a new-program brief field, emit a `brief-progress` artifact summarizing all 7 field states. The user's right pane only updates when you emit it.";
 }
 
 /**

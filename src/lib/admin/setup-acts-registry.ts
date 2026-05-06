@@ -106,6 +106,44 @@ export interface SetupActivityEvent {
 
 export type TenantDataRichness = 'rich' | 'partial' | 'sparse';
 
+// ── Capability matrix (SETUP-1.4 redesign) ───────────────────────────────────
+// Replaces the 4-node 2×2 capability map with a 14-segment × 6-capability
+// matrix. Verbs are workflow-anchored ("Cite evidence") not agent-domain
+// framings, per the workflow-first / front-agent-per-product rule.
+//
+// Depth vocabulary: 4 levels (deep/partial/thin/empty), NOT the 3-level
+// (grounded/partial/missing) used by the older CapabilityNode type. Empty
+// is the "this could be here" invitation state from the Constellation Memo.
+
+export type CapabilityVerb =
+  | 'cite-evidence'
+  | 'model-run-rate'
+  | 'detect-risk'
+  | 'synthesize-cross-program'
+  | 'advance-lifecycle'
+  | 'audit-govern';
+
+export type CapabilityDepth = 'deep' | 'partial' | 'thin' | 'empty';
+
+export interface CapabilityMatrixRow {
+  /** Segment id (01..14). */
+  segmentId: string;
+  /** Segment display name. */
+  segmentName: string;
+  /** Per-verb depth state. */
+  depths: Record<CapabilityVerb, CapabilityDepth>;
+}
+
+export type CapabilityNarrativeKind = 'deep' | 'partial' | 'thin' | 'blocked';
+
+export interface CapabilityNarrativeCard {
+  kind: CapabilityNarrativeKind;
+  heading: string;
+  body: string;
+  /** "Basis: 28 + 94 + 22 ledger items, conf ≥ 0.89." */
+  basis: string;
+}
+
 export interface SetupActsContent {
   tenantKey: ClientKey | 'unknown';
   tenantDisplayName: string;
@@ -114,6 +152,10 @@ export interface SetupActsContent {
   sentinelOpener: string;
   actOneFacts: ActOneFact[];
   actTwoCapabilityNodes: CapabilityNode[];
+  /** SETUP-1.4: 14-segment × 6-capability depth matrix. */
+  capabilityMatrix: CapabilityMatrixRow[];
+  /** SETUP-1.4: 4 narrative cards summarizing the matrix verbally. */
+  capabilityNarrativeCards: CapabilityNarrativeCard[];
   actThreeGainEntries: CapabilityGainEntry[];
   recentActivity: SetupActivityEvent[];
 }
@@ -293,6 +335,66 @@ const APEX_ACT_TWO_CAPABILITIES: CapabilityNode[] = [
   },
 ];
 
+// SETUP-1.4 capability matrix · Apex Retail
+// 14 segments × 6 verbs · derived from current ledger depth + segment population.
+const APEX_CAPABILITY_MATRIX: CapabilityMatrixRow[] = [
+  { segmentId: '01', segmentName: 'Enterprise profile',
+    depths: { 'cite-evidence': 'deep', 'model-run-rate': 'partial', 'detect-risk': 'deep', 'synthesize-cross-program': 'deep', 'advance-lifecycle': 'deep', 'audit-govern': 'deep' } },
+  { segmentId: '02', segmentName: 'Org structure',
+    depths: { 'cite-evidence': 'partial', 'model-run-rate': 'thin', 'detect-risk': 'partial', 'synthesize-cross-program': 'partial', 'advance-lifecycle': 'deep', 'audit-govern': 'deep' } },
+  { segmentId: '03', segmentName: 'Vendor lock-in',
+    depths: { 'cite-evidence': 'deep', 'model-run-rate': 'deep', 'detect-risk': 'deep', 'synthesize-cross-program': 'deep', 'advance-lifecycle': 'partial', 'audit-govern': 'deep' } },
+  { segmentId: '04', segmentName: 'IT financials',
+    depths: { 'cite-evidence': 'empty', 'model-run-rate': 'empty', 'detect-risk': 'empty', 'synthesize-cross-program': 'empty', 'advance-lifecycle': 'empty', 'audit-govern': 'thin' } },
+  { segmentId: '05', segmentName: 'KPI dictionary',
+    depths: { 'cite-evidence': 'empty', 'model-run-rate': 'empty', 'detect-risk': 'empty', 'synthesize-cross-program': 'empty', 'advance-lifecycle': 'thin', 'audit-govern': 'empty' } },
+  { segmentId: '06', segmentName: 'Active portfolio',
+    depths: { 'cite-evidence': 'deep', 'model-run-rate': 'partial', 'detect-risk': 'deep', 'synthesize-cross-program': 'partial', 'advance-lifecycle': 'deep', 'audit-govern': 'deep' } },
+  { segmentId: '07', segmentName: 'Workflow change',
+    depths: { 'cite-evidence': 'thin', 'model-run-rate': 'thin', 'detect-risk': 'partial', 'synthesize-cross-program': 'thin', 'advance-lifecycle': 'thin', 'audit-govern': 'partial' } },
+  { segmentId: '08', segmentName: 'Customer signals',
+    depths: { 'cite-evidence': 'deep', 'model-run-rate': 'partial', 'detect-risk': 'deep', 'synthesize-cross-program': 'deep', 'advance-lifecycle': 'partial', 'audit-govern': 'deep' } },
+  { segmentId: '09', segmentName: 'Evidence depth meta',
+    depths: { 'cite-evidence': 'deep', 'model-run-rate': 'empty', 'detect-risk': 'deep', 'synthesize-cross-program': 'deep', 'advance-lifecycle': 'deep', 'audit-govern': 'deep' } },
+  { segmentId: '10', segmentName: 'Industry corpus',
+    depths: { 'cite-evidence': 'deep', 'model-run-rate': 'partial', 'detect-risk': 'deep', 'synthesize-cross-program': 'deep', 'advance-lifecycle': 'partial', 'audit-govern': 'partial' } },
+  { segmentId: '11', segmentName: 'Vendor catalog',
+    depths: { 'cite-evidence': 'deep', 'model-run-rate': 'partial', 'detect-risk': 'deep', 'synthesize-cross-program': 'deep', 'advance-lifecycle': 'partial', 'audit-govern': 'deep' } },
+  { segmentId: '12', segmentName: 'Pricing & commitments',
+    depths: { 'cite-evidence': 'partial', 'model-run-rate': 'partial', 'detect-risk': 'partial', 'synthesize-cross-program': 'thin', 'advance-lifecycle': 'thin', 'audit-govern': 'partial' } },
+  { segmentId: '13', segmentName: 'Risk register',
+    depths: { 'cite-evidence': 'partial', 'model-run-rate': 'empty', 'detect-risk': 'deep', 'synthesize-cross-program': 'partial', 'advance-lifecycle': 'partial', 'audit-govern': 'deep' } },
+  { segmentId: '14', segmentName: 'Outcomes & baselines',
+    depths: { 'cite-evidence': 'empty', 'model-run-rate': 'empty', 'detect-risk': 'empty', 'synthesize-cross-program': 'empty', 'advance-lifecycle': 'empty', 'audit-govern': 'empty' } },
+];
+
+const APEX_CAPABILITY_NARRATIVE: CapabilityNarrativeCard[] = [
+  {
+    kind: 'deep',
+    heading: 'Detect vendor lock-in & customer-signal risk.',
+    body: 'Three segments (vendor catalog, customer signals, vendor lock-in) are richly cited and fresh. Programs that lean on these get high-confidence claims out the door.',
+    basis: 'Basis: 28 + 94 + 22 ledger items, conf ≥ 0.89.',
+  },
+  {
+    kind: 'partial',
+    heading: 'Synthesize cross-program patterns.',
+    body: 'Apex has 4 active programs; cross-program synthesis is load-bearing at 6+. Findings are usable but flagged with thin-population caveats.',
+    basis: 'Basis: 4/6 active programs · 1 archetype underrepresented.',
+  },
+  {
+    kind: 'thin',
+    heading: 'Reason about workflow change.',
+    body: 'Segment 07 has 4 items at conf 0.62. Programs depending on workflow-change ship with low-confidence claims; recommend a curated upload.',
+    basis: 'Basis: seg 07 · 4 items · stale.',
+  },
+  {
+    kind: 'blocked',
+    heading: 'Model run-rate & cite outcomes.',
+    body: 'Segments 04 (IT financials) and 05 (KPI dictionary) are empty. apex-cdp can\'t advance past demo until baselines exist.',
+    basis: 'Basis: seg 04, 05, 14 · empty.',
+  },
+];
+
 const APEX_ACT_THREE_GAINS: CapabilityGainEntry[] = [
   {
     id: 'gain.org-structure',
@@ -396,6 +498,8 @@ const APEX_CONTENT: SetupActsContent = {
   sentinelOpener: APEX_OPENER,
   actOneFacts: APEX_ACT_ONE_FACTS,
   actTwoCapabilityNodes: APEX_ACT_TWO_CAPABILITIES,
+  capabilityMatrix: APEX_CAPABILITY_MATRIX,
+  capabilityNarrativeCards: APEX_CAPABILITY_NARRATIVE,
   actThreeGainEntries: APEX_ACT_THREE_GAINS,
   recentActivity: APEX_ACTIVITY,
 };
@@ -629,6 +733,65 @@ const MERIDIAN_ACTIVITY: SetupActivityEvent[] = [
   },
 ];
 
+// Meridian matrix · healthcare/compliance-heavy, Epic-concentrated.
+const MERIDIAN_CAPABILITY_MATRIX: CapabilityMatrixRow[] = [
+  { segmentId: '01', segmentName: 'Enterprise profile',
+    depths: { 'cite-evidence': 'deep', 'model-run-rate': 'partial', 'detect-risk': 'deep', 'synthesize-cross-program': 'deep', 'advance-lifecycle': 'deep', 'audit-govern': 'deep' } },
+  { segmentId: '02', segmentName: 'Org structure',
+    depths: { 'cite-evidence': 'deep', 'model-run-rate': 'partial', 'detect-risk': 'deep', 'synthesize-cross-program': 'deep', 'advance-lifecycle': 'deep', 'audit-govern': 'deep' } },
+  { segmentId: '03', segmentName: 'IT system landscape',
+    depths: { 'cite-evidence': 'partial', 'model-run-rate': 'partial', 'detect-risk': 'deep', 'synthesize-cross-program': 'deep', 'advance-lifecycle': 'partial', 'audit-govern': 'deep' } },
+  { segmentId: '04', segmentName: 'IT financials',
+    depths: { 'cite-evidence': 'partial', 'model-run-rate': 'deep', 'detect-risk': 'partial', 'synthesize-cross-program': 'partial', 'advance-lifecycle': 'partial', 'audit-govern': 'deep' } },
+  { segmentId: '05', segmentName: 'KPI dictionary',
+    depths: { 'cite-evidence': 'partial', 'model-run-rate': 'thin', 'detect-risk': 'partial', 'synthesize-cross-program': 'thin', 'advance-lifecycle': 'partial', 'audit-govern': 'partial' } },
+  { segmentId: '06', segmentName: 'Active portfolio',
+    depths: { 'cite-evidence': 'deep', 'model-run-rate': 'partial', 'detect-risk': 'deep', 'synthesize-cross-program': 'partial', 'advance-lifecycle': 'deep', 'audit-govern': 'deep' } },
+  { segmentId: '07', segmentName: 'Sourcing artifacts',
+    depths: { 'cite-evidence': 'partial', 'model-run-rate': 'thin', 'detect-risk': 'partial', 'synthesize-cross-program': 'thin', 'advance-lifecycle': 'partial', 'audit-govern': 'partial' } },
+  { segmentId: '08', segmentName: 'Program deliverables',
+    depths: { 'cite-evidence': 'partial', 'model-run-rate': 'thin', 'detect-risk': 'partial', 'synthesize-cross-program': 'partial', 'advance-lifecycle': 'deep', 'audit-govern': 'deep' } },
+  { segmentId: '09', segmentName: 'Evidence ledger',
+    depths: { 'cite-evidence': 'deep', 'model-run-rate': 'thin', 'detect-risk': 'deep', 'synthesize-cross-program': 'deep', 'advance-lifecycle': 'partial', 'audit-govern': 'deep' } },
+  { segmentId: '10', segmentName: 'Operating telemetry',
+    depths: { 'cite-evidence': 'thin', 'model-run-rate': 'thin', 'detect-risk': 'partial', 'synthesize-cross-program': 'thin', 'advance-lifecycle': 'thin', 'audit-govern': 'partial' } },
+  { segmentId: '11', segmentName: 'Vendor & contract',
+    depths: { 'cite-evidence': 'deep', 'model-run-rate': 'partial', 'detect-risk': 'deep', 'synthesize-cross-program': 'deep', 'advance-lifecycle': 'partial', 'audit-govern': 'deep' } },
+  { segmentId: '12', segmentName: 'Compliance posture',
+    depths: { 'cite-evidence': 'deep', 'model-run-rate': 'partial', 'detect-risk': 'deep', 'synthesize-cross-program': 'deep', 'advance-lifecycle': 'deep', 'audit-govern': 'deep' } },
+  { segmentId: '13', segmentName: 'Industry context',
+    depths: { 'cite-evidence': 'deep', 'model-run-rate': 'partial', 'detect-risk': 'deep', 'synthesize-cross-program': 'deep', 'advance-lifecycle': 'partial', 'audit-govern': 'partial' } },
+  { segmentId: '14', segmentName: 'Cross-program signals',
+    depths: { 'cite-evidence': 'deep', 'model-run-rate': 'thin', 'detect-risk': 'deep', 'synthesize-cross-program': 'deep', 'advance-lifecycle': 'partial', 'audit-govern': 'deep' } },
+];
+
+const MERIDIAN_CAPABILITY_NARRATIVE: CapabilityNarrativeCard[] = [
+  {
+    kind: 'deep',
+    heading: 'Govern compliance & detect Epic concentration risk.',
+    body: 'Compliance posture, vendor catalog, and cross-program signals are richly cited. Epic integration concentration is named as a Critical signal across all four programs.',
+    basis: 'Basis: 12 + 38 + 18 ledger items, conf ≥ 0.91.',
+  },
+  {
+    kind: 'partial',
+    heading: 'Model run-rate against the DENIALS-2024 sunk cost.',
+    body: 'IT financials are loaded with the $8M DENIALS sunk-cost reference; sequencing trade-offs against Ambient Clinical, Prior Auth, and RCM Modernization are reasonable but partial.',
+    basis: 'Basis: seg 04 · 53 line items · CFO-validated.',
+  },
+  {
+    kind: 'thin',
+    heading: 'Reason about clinical operating telemetry.',
+    body: 'Segment 10 is thin — clinical workflow signals are present but not yet at the depth needed to ground Ambient Clinical adoption claims.',
+    basis: 'Basis: seg 10 · 22 items · partial confidence.',
+  },
+  {
+    kind: 'blocked',
+    heading: 'Cite outcome attribution before Pilot.',
+    body: 'KPI dictionary covers system-of-record metrics; tying ambient-clinical productivity gains to denial rates needs the Q2 outcome calibration (in flight).',
+    basis: 'Basis: seg 05 · partial · Q2 calibration pending.',
+  },
+];
+
 const MERIDIAN_CONTENT: SetupActsContent = {
   tenantKey: 'meridian',
   tenantDisplayName: 'Meridian Health System',
@@ -636,6 +799,8 @@ const MERIDIAN_CONTENT: SetupActsContent = {
   sentinelOpener: MERIDIAN_OPENER,
   actOneFacts: MERIDIAN_ACT_ONE_FACTS,
   actTwoCapabilityNodes: MERIDIAN_ACT_TWO_CAPABILITIES,
+  capabilityMatrix: MERIDIAN_CAPABILITY_MATRIX,
+  capabilityNarrativeCards: MERIDIAN_CAPABILITY_NARRATIVE,
   actThreeGainEntries: MERIDIAN_ACT_THREE_GAINS,
   recentActivity: MERIDIAN_ACTIVITY,
 };
@@ -866,6 +1031,66 @@ const ARCTURUS_ACTIVITY: SetupActivityEvent[] = [
   },
 ];
 
+// Arcturus matrix · partial state, financial-services framing.
+// Most segments are thin or partial — capability surfaces but with caveats.
+const ARCTURUS_CAPABILITY_MATRIX: CapabilityMatrixRow[] = [
+  { segmentId: '01', segmentName: 'Enterprise profile',
+    depths: { 'cite-evidence': 'partial', 'model-run-rate': 'thin', 'detect-risk': 'partial', 'synthesize-cross-program': 'partial', 'advance-lifecycle': 'partial', 'audit-govern': 'partial' } },
+  { segmentId: '02', segmentName: 'Org structure',
+    depths: { 'cite-evidence': 'partial', 'model-run-rate': 'empty', 'detect-risk': 'partial', 'synthesize-cross-program': 'thin', 'advance-lifecycle': 'partial', 'audit-govern': 'partial' } },
+  { segmentId: '03', segmentName: 'IT system landscape',
+    depths: { 'cite-evidence': 'thin', 'model-run-rate': 'empty', 'detect-risk': 'thin', 'synthesize-cross-program': 'empty', 'advance-lifecycle': 'thin', 'audit-govern': 'thin' } },
+  { segmentId: '04', segmentName: 'IT financials',
+    depths: { 'cite-evidence': 'empty', 'model-run-rate': 'empty', 'detect-risk': 'empty', 'synthesize-cross-program': 'empty', 'advance-lifecycle': 'empty', 'audit-govern': 'empty' } },
+  { segmentId: '05', segmentName: 'KPI dictionary',
+    depths: { 'cite-evidence': 'empty', 'model-run-rate': 'empty', 'detect-risk': 'empty', 'synthesize-cross-program': 'empty', 'advance-lifecycle': 'empty', 'audit-govern': 'empty' } },
+  { segmentId: '06', segmentName: 'Active portfolio',
+    depths: { 'cite-evidence': 'thin', 'model-run-rate': 'empty', 'detect-risk': 'thin', 'synthesize-cross-program': 'empty', 'advance-lifecycle': 'thin', 'audit-govern': 'thin' } },
+  { segmentId: '07', segmentName: 'Sourcing artifacts',
+    depths: { 'cite-evidence': 'partial', 'model-run-rate': 'empty', 'detect-risk': 'partial', 'synthesize-cross-program': 'thin', 'advance-lifecycle': 'partial', 'audit-govern': 'partial' } },
+  { segmentId: '08', segmentName: 'Program deliverables',
+    depths: { 'cite-evidence': 'thin', 'model-run-rate': 'empty', 'detect-risk': 'thin', 'synthesize-cross-program': 'empty', 'advance-lifecycle': 'thin', 'audit-govern': 'thin' } },
+  { segmentId: '09', segmentName: 'Evidence ledger',
+    depths: { 'cite-evidence': 'partial', 'model-run-rate': 'empty', 'detect-risk': 'partial', 'synthesize-cross-program': 'thin', 'advance-lifecycle': 'thin', 'audit-govern': 'partial' } },
+  { segmentId: '10', segmentName: 'Operating telemetry',
+    depths: { 'cite-evidence': 'empty', 'model-run-rate': 'empty', 'detect-risk': 'empty', 'synthesize-cross-program': 'empty', 'advance-lifecycle': 'empty', 'audit-govern': 'empty' } },
+  { segmentId: '11', segmentName: 'Vendor & contract',
+    depths: { 'cite-evidence': 'partial', 'model-run-rate': 'thin', 'detect-risk': 'partial', 'synthesize-cross-program': 'thin', 'advance-lifecycle': 'thin', 'audit-govern': 'partial' } },
+  { segmentId: '12', segmentName: 'Compliance posture',
+    depths: { 'cite-evidence': 'partial', 'model-run-rate': 'empty', 'detect-risk': 'partial', 'synthesize-cross-program': 'partial', 'advance-lifecycle': 'partial', 'audit-govern': 'partial' } },
+  { segmentId: '13', segmentName: 'Industry context',
+    depths: { 'cite-evidence': 'partial', 'model-run-rate': 'thin', 'detect-risk': 'partial', 'synthesize-cross-program': 'partial', 'advance-lifecycle': 'thin', 'audit-govern': 'thin' } },
+  { segmentId: '14', segmentName: 'Cross-program signals',
+    depths: { 'cite-evidence': 'empty', 'model-run-rate': 'empty', 'detect-risk': 'empty', 'synthesize-cross-program': 'empty', 'advance-lifecycle': 'empty', 'audit-govern': 'empty' } },
+];
+
+const ARCTURUS_CAPABILITY_NARRATIVE: CapabilityNarrativeCard[] = [
+  {
+    kind: 'partial',
+    heading: 'Cite financial-services patterns at intake-floor depth.',
+    body: 'Industry context, vendor framing, and compliance posture are partial — usable for early sourcing scoping but not yet at the depth that supports BAFO-grade decisions.',
+    basis: 'Basis: 4 financial-services patterns · partial confidence.',
+  },
+  {
+    kind: 'thin',
+    heading: 'Reason about active programs.',
+    body: 'Program inventory is thin — Atlas can scaffold a portfolio but cross-program synthesis is unavailable until programs land in flight.',
+    basis: 'Basis: seg 06 · 0 active · thin scaffold.',
+  },
+  {
+    kind: 'blocked',
+    heading: 'Model run-rate or cite outcomes.',
+    body: 'IT financials, KPI dictionary, and cross-program signals are empty. Run-rate modeling and outcome attribution are blocked until those segments are uploaded.',
+    basis: 'Basis: seg 04, 05, 14 · empty.',
+  },
+  {
+    kind: 'blocked',
+    heading: 'Detect operating telemetry signals.',
+    body: 'Operating telemetry and program deliverables are empty. Workflow-change reasoning, milestone telemetry, and gate-readiness reads are unavailable.',
+    basis: 'Basis: seg 08, 10 · empty.',
+  },
+];
+
 const ARCTURUS_CONTENT: SetupActsContent = {
   tenantKey: 'arcturus',
   tenantDisplayName: 'First Capital Financial',
@@ -873,6 +1098,8 @@ const ARCTURUS_CONTENT: SetupActsContent = {
   sentinelOpener: ARCTURUS_OPENER,
   actOneFacts: ARCTURUS_ACT_ONE_FACTS,
   actTwoCapabilityNodes: ARCTURUS_ACT_TWO_CAPABILITIES,
+  capabilityMatrix: ARCTURUS_CAPABILITY_MATRIX,
+  capabilityNarrativeCards: ARCTURUS_CAPABILITY_NARRATIVE,
   actThreeGainEntries: ARCTURUS_ACT_THREE_GAINS,
   recentActivity: ARCTURUS_ACTIVITY,
 };
@@ -934,6 +1161,8 @@ function buildSparseContent(
     sentinelOpener: SPARSE_OPENER,
     actOneFacts: [],
     actTwoCapabilityNodes: [],
+    capabilityMatrix: [],
+    capabilityNarrativeCards: [],
     actThreeGainEntries: SPARSE_GAIN_ENTRIES,
     recentActivity: [],
   };
