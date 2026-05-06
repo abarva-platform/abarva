@@ -115,9 +115,11 @@ Tracks every step from `EXECUTION_PLAYBOOK.md` against its current state. Update
 | 6.5 | W-4.3, W-4.4, W-4.5 Write bindings | Claude Code | ✅ | [#1560](https://github.com/anandsundaram-hash/abarva/pull/1560) | R9 gate approval model; B-119 STRICT_MODE gap |
 | 6.6 | W-4.6, W-4.7 Gap log + audit log | Claude Code | ✅ | [#1560](https://github.com/anandsundaram-hash/abarva/pull/1560) [#1562](https://github.com/anandsundaram-hash/abarva/pull/1562) | 16 gaps B-116–B-131; 12 audit action keys; actor_role audit trail |
 | 6.7 | W-4.8 Workspace Layer 4 sign-off | Anand | ⏳ | — | Ready for review |
-| 6.8 | T-P5 P5 Mobilize training pack | Claude Code ➡ | 🔄 | — | In progress |
-| 6.9 | T-D.1, T-D.2 Pack serialization + loader | Claude Code | ⏳ | — | Unblocked; can start after T-P5 |
-| 6.10 | T-D.3 Pack test harness | Claude Code | ⏳ | — | Unblocked after T-D.1/T-D.2 |
+| 6.8 | T-P5 P5 Mobilize training pack | Claude Code ➡ | ✅ | [#1564](https://github.com/anandsundaram-hash/abarva/pull/1564) | 1,545 lines; handoff-not-acknowledgment authority; 4 hard + 3 soft gate criteria |
+| 6.9 | T-D.1, T-D.2 Pack serialization + loader | Claude Code | ✅ | [#1565](https://github.com/anandsundaram-hash/abarva/pull/1565) | V2 type system; PHASE_PACK_V2 flag; V1 rollback plan |
+| 6.10 | T-D.3 Pack test harness | Claude Code | ✅ | [#1565](https://github.com/anandsundaram-hash/abarva/pull/1565) | Schema sanity + P4/P5 authority assertions; token budget enforcement |
+
+**Phase 6 gate:** 6.1–6.6 ✅ · 6.7 ⏳ (Anand) · 6.8–6.10 ✅ — **T-D infra complete; W-4.8 awaiting Anand sign-off**
 
 ---
 
@@ -125,7 +127,7 @@ Tracks every step from `EXECUTION_PLAYBOOK.md` against its current state. Update
 
 | Step | Work Package | Owner | Status | PR | Notes |
 |---|---|---|---|---|---|
-| 7.1 | T-D.4 Pack rollout | Claude Code | 🔒 | — | Blocked on 6.8 (T-P5), 6.9, 6.10 |
+| 7.1 | T-D.4 Pack rollout | Claude Code | ⏳ | — | Unblocked: T-P5 ✅, T-D.1/T-D.2 ✅, T-D.3 ✅; requires W-4.8 sign-off |
 | 7.2 | S-4 Phase-pack file migration | Claude Code | 🔒 | — | Blocked on 7.1, B-027/B-028 |
 | 7.3 | W-5.1 Knowledge surfacing overview | Claude Code | 🔒 | — | Blocked on 6.7, all T-P* |
 | 7.4 | W-5.2 First-message scaffolds P0+P1 | Claude Code | 🔒 | — | Blocked on 7.3 |
@@ -180,10 +182,10 @@ Tracks every step from `EXECUTION_PLAYBOOK.md` against its current state. Update
 | Phase 3 | 6 | 6 | 0 | 0 |
 | Phase 4 | 5 | 5 | 0 | 0 |
 | Phase 5 | 16 | 16 | 0 | 0 |
-| Phase 6 | 10 | 7 | 1 | 2 |
-| Phase 7 | 12 | 0 | 0 | 12 |
+| Phase 6 | 10 | 9 | 0 | 1 (6.7 Anand) |
+| Phase 7 | 12 | 0 | 0 | 11 (7.1 unblocked) |
 | Phase 8 | 2 | 0 | 0 | 1 (8.1 unblocked) |
 | Phase 9 | 5 | 0 | 0 | 5 |
-| **Total** | **67** | **45** | **1** | **21** |
+| **Total** | **67** | **48** | **0** | **19** |
 
-_Last updated: 2026-05-05 · Phases 0–5 complete · Phase 6 underway (T-P5 in progress, W-4 done, W-4.8 awaiting review)_
+_Last updated: 2026-05-05 · Phases 0–5 complete · Phase 6: 9/10 done (W-4.8 awaiting Anand) · T-D.1/T-D.2/T-D.3 complete · Phase 7 unblocked after W-4.8_
