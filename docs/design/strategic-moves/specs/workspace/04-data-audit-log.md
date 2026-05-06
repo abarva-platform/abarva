@@ -1,4 +1,4 @@
-# Workspace Audit Log Spec — audit_log entry shapes for all mutations
+# Workspace Audit Log Spec — W-4.7
 
 | | |
 |---|---|
@@ -7,208 +7,494 @@
 | **Version** | 1.0 |
 | **Date** | 2026-05-05 |
 | **Status** | Draft |
-| **Preceding layers** | `01-anatomy-*.md` (frozen), `02-state.md` (frozen), `03-interactions-*.md` (frozen) |
-| **Companion** | `04-data-writes-promote.md` (W-4.3), `04-data-writes-gate.md` (W-4.4), `04-data-gaps.md` (W-4.6) |
+| **Preceding layers** | `01-anatomy-*.md` (frozen) · `02-state.md` (frozen) · `03-interactions-*.md` (frozen) |
+| **Companion** | `04-data-writes-promote.md` (W-4.3) · `04-data-writes-gate.md` (W-4.4) · `04-data-writes-artifacts.md` (W-4.5) · `04-data-gaps.md` (W-4.6) |
 | **Author** | Claude Code |
 
 ---
 
 ## Overview
 
-This document specifies the full `program_audit_log` entry shape for every Workspace mutation. Audit entries are write-only (no UPDATE/DELETE, enforced by RLS + DB trigger). All entries follow the shared schema established in Originate Layer 4 §4.
+This document specifies the `program_audit_log` entry shapes for all Workspace mutations. The audit log is the compliance and traceability spine for the Strategic Moves lifecycle.
 
-**Gate approval model note:** The `actor_role` field on promote entries is specifically designed to support the pilot vs. production approval distinction. In pilot, `actor_role` will be the user's tenant membership role (e.g. `'viewer'`, `'contributor'`) even for self-approved promotions. In production (when `GATE_APPROVAL_STRICT_MODE` is enabled), only `'admin'` and `'maestro'` role entries will appear — providing a clear audit trail differentiating self-approved pilot promotions from admin-gated production approvals.
+**Substrate:** `src/lib/programs/audit-log.ts` — `writeProgramAuditLog(ctx, input: ProgramAuditLogInput)`.
+
+**DB insert columns:**
+```
+tenant_key        TEXT
+program_id        UUID
+engagement_id     UUID
+actor_id          UUID        -- from Clerk auth, resolved to persons.id
+actor_role        TEXT        -- caller's role at time of action
+action            TEXT        -- stable action key (see §2)
+from_state        JSONB       -- snapshot of relevant state before mutation
+to_state          JSONB       -- snapshot of relevant state after mutation
+rationale         TEXT        -- optional; always populated for waivers and overrides
+evidence_refs     TEXT[]      -- optional; artifact IDs or criterion IDs referenced
+```
+
+**Action key naming convention:** `{entity}_{verb}_{qualifier}` — all lowercase snake_case. Phase-parametric actions use `{n}` as a placeholder for the phase number.
 
 ---
 
-## §1 · Shared audit log schema (reference)
+## §1 · Action Key Registry
 
-From Originate Layer 4 §4 — reproduced here for self-contained reference:
+All `program_audit_log.action` values written by Workspace mutations:
 
-```
-program_audit_log:
-  id             UUID (PK, auto-generated)
-  tenant_key     TEXT (from active client)
-  program_id     TEXT (display ID e.g. APX-CDP-2026 — or engagement UUID as text before display ID assigned)
-  engagement_id  UUID (FK to engagements, nullable)
-  actor_id       UUID (FK to persons, nullable — the user performing the action)
-  actor_role     TEXT (role of the actor at time of action — resolved from tenant membership; see gap-ws-4-005 / B-121)
-  action         TEXT (discriminator — see §2 entries below)
-  from_state     TEXT (previous state descriptor)
-  to_state       TEXT (new state descriptor)
-  rationale      TEXT (optional human-readable context)
-  evidence_refs  TEXT[] (array of evidence IDs, approval request IDs, or snapshot IDs)
-  created_at     TIMESTAMPTZ (auto-set to now())
-```
+| action | trigger | section |
+|---|---|---|
+| `move_promoted_{n}_to_{m}` | Phase promotion P0→P1 through P4→P5 | §2.1 |
+| `move_handed_off_to_tower` | P5→Tower handoff | §2.2 |
+| `move_gate_criterion_updated` | Gate criterion toggled (met / not-met) | §2.3 (via W-4.4) |
+| `move_gate_criterion_waived` | Gate criterion waived | §2.4 (via W-4.4) |
+| `move_gate_criterion_comment_updated` | Comment added/edited on criterion | §2.5 (via W-4.4) |
+| `move_gate_criteria_reset` | All criteria for phase reset to not-met | §2.6 (via W-4.4) |
+| `move_artifact_opened` | Artifact detail panel opened (read tracking) | §2.7 |
+| `move_artifact_uploaded` | New artifact uploaded to phase shelf | §2.8 |
+| `move_artifact_signed_off` | Artifact / deliverable signed off | §2.9 |
+| `sponsor_review_requested` | Sponsor signoff request submitted | §2.10 |
+| `move_view_mode_changed` | View mode switched (current / historical) | §2.11 |
+| `move_phase_gate_overridden` | Promote executed with soft failures present | §2.12 |
 
 ---
 
-## §2 · Audit entries produced by Workspace mutations
+## §2 · Entry Shapes
 
-### 2.1 `move_promoted_{fromPhase}_to_{toPhase}` — phase gate promotion
+### §2.1 `move_promoted_{n}_to_{m}`
 
-Fired when `POST /api/programs/phase-gate` succeeds and `engagements.current_phase` is updated.
+Written when a phase promotion mutation completes successfully (e.g., P1→P2 = `move_promoted_1_to_2`).
 
-> **Actor role on this entry is critical for the pilot vs. production audit trail.** The `actor_role` field shows whether approval was self-approved (any role in pilot) or admin-gated (admin/maestro only in production). This field MUST be resolved and written — see `gap-ws-4-005` (B-121).
-
-```json
+```jsonc
 {
-  "action": "move_promoted_p1_to_p2",
-  "tenant_key": "<activeClient.key>",
-  "program_id": "<engagements.display_id OR engagements.id cast to TEXT>",
-  "engagement_id": "<engagements.id>",
-  "actor_id": "<resolvedPersonId from Clerk userId>",
-  "actor_role": "<tenant membership role at time of action — e.g. 'viewer', 'contributor', 'maestro', 'admin'>",
-  "from_state": "P1 Charter — active",
-  "to_state": "P2 Discover & Diagnose — active",
-  "rationale": "<optional: user-supplied rationale from confirmation dialog, or null>",
-  "evidence_refs": ["<phase_gate_snapshots.id of the promotion snapshot>"]
+  "tenant_key": "<tenant>",
+  "program_id": "<uuid>",
+  "engagement_id": "<uuid>",
+  "actor_id": "<user uuid>",
+  "actor_role": "admin | lead | governance",
+  "action": "move_promoted_1_to_2",   // parametric: n=fromPhase, m=toPhase
+  "from_state": {
+    "phase": 1,
+    "gateState": "ready | partial",   // state immediately before promote
+    "hardCriteriaMet": 2,
+    "hardCriteriaTotal": 2,
+    "softCriteriaMet": 0,
+    "softCriteriaTotal": 1
+  },
+  "to_state": {
+    "phase": 2,
+    "promotedAt": "<ISO8601>"
+  },
+  "rationale": null,                  // populated only when override (see §2.12)
+  "evidence_refs": []                 // populated when promote references specific artifact IDs
 }
 ```
 
-**Parametric pattern:** The action discriminator follows `move_promoted_{fromPhase}_to_{toPhase}` where `fromPhase` and `toPhase` use the short phase key:
-
-| `fromPhase` key | `toPhase` key |
-|---|---|
-| `p0` | `p1` |
-| `p1` | `p2` |
-| `p2` | `p3` |
-| `p3` | `p4` |
-| `p4` | `p5` |
-
-Example entries: `move_promoted_p1_to_p2`, `move_promoted_p2_to_p3`, `move_promoted_p3_to_p4`, `move_promoted_p4_to_p5`.
-
-**Self-approval vs. admin-approval audit trail:**
-
-To query pilot self-approvals vs. production admin approvals in the audit log:
-
-```sql
--- All pilot self-approvals (non-admin/maestro approvers)
-SELECT * FROM program_audit_log
-WHERE action LIKE 'move_promoted_%'
-  AND actor_role NOT IN ('admin', 'maestro');
-
--- All production-gated approvals
-SELECT * FROM program_audit_log
-WHERE action LIKE 'move_promoted_%'
-  AND actor_role IN ('admin', 'maestro');
-```
+**Notes:**
+- `action` must be computed as `` `move_promoted_${fromPhase}_to_${toPhase}` `` — e.g., `move_promoted_0_to_1`, `move_promoted_4_to_5`.
+- `from_state.gateState` captures whether the user promoted with all soft checks passing (`ready`) or with soft gaps (`partial`). A `partial` promote must also write a `move_phase_gate_overridden` entry (§2.12).
+- Written by: `POST /api/programs/phase-gate` handler (currently gap-ws-4-015 / B-130 — route does not yet write to audit log).
 
 ---
 
-### 2.2 `gate_criterion_updated` — single criterion toggled met/not-met
+### §2.2 `move_handed_off_to_tower`
 
-Fired when `POST /api/programs/gate-criterion` succeeds with `status: 'met'` or `status: 'not-met'`.
+Written when the P5→Tower handoff mutation completes (sets `engagements.status = 'handed_off'`).
 
-```json
+```jsonc
 {
-  "action": "gate_criterion_updated",
-  "tenant_key": "<activeClient.key>",
-  "program_id": "<engagements.display_id OR id as TEXT>",
-  "engagement_id": "<engagements.id>",
-  "actor_id": "<resolvedPersonId>",
-  "actor_role": "<tenant membership role>",
-  "from_state": "criterion:<criterionId>:not-met",
-  "to_state": "criterion:<criterionId>:met",
-  "rationale": "<comment if provided, else null>",
-  "evidence_refs": ["<gate_criterion_snapshots.id of the updated row>"]
-}
-```
-
-The `from_state` and `to_state` encode: `criterion:{criterionId}:{previousStatus}` → `criterion:{criterionId}:{newStatus}`.
-
-> **Note:** In pilot, `actor_role` may be `'viewer'` or `'contributor'` for self-approved criterion toggles. In production (strict mode), hard criteria will only show `'admin'` or `'maestro'` as the actor role — providing clear audit evidence that the production gate enforcement is operating.
-
----
-
-### 2.3 `gate_criterion_waived` — criterion explicitly waived
-
-Fired when `POST /api/programs/gate-criterion` succeeds with `status: 'waived'`.
-
-```json
-{
-  "action": "gate_criterion_waived",
-  "tenant_key": "<activeClient.key>",
-  "program_id": "<engagements.display_id OR id as TEXT>",
-  "engagement_id": "<engagements.id>",
-  "actor_id": "<resolvedPersonId>",
-  "actor_role": "<tenant membership role>",
-  "from_state": "criterion:<criterionId>:not-met",
-  "to_state": "criterion:<criterionId>:waived",
-  "rationale": "<waiver reason — required for waiver actions>",
-  "evidence_refs": ["<gate_criterion_snapshots.id>"]
-}
-```
-
-Waivers without a `rationale` should be rejected at the API layer (validation error). The audit entry for a waiver must always have a non-empty `rationale`.
-
----
-
-### 2.4 `gate_criterion_comment_updated` — comment added or edited on a criterion
-
-Fired when `POST /api/programs/gate-criterion` is called with a changed comment (and `status` unchanged). Only written when comment transitions from one non-empty value to a different non-empty value, OR from `null`/empty to non-empty.
-
-```json
-{
-  "action": "gate_criterion_comment_updated",
-  "tenant_key": "<activeClient.key>",
-  "program_id": "<engagements.display_id OR id as TEXT>",
-  "engagement_id": "<engagements.id>",
-  "actor_id": "<resolvedPersonId>",
-  "actor_role": "<tenant membership role>",
-  "from_state": "criterion:<criterionId>:comment:<previousCommentPreview or null>",
-  "to_state": "criterion:<criterionId>:comment:<newCommentPreview>",
+  "tenant_key": "<tenant>",
+  "program_id": "<uuid>",
+  "engagement_id": "<uuid>",
+  "actor_id": "<user uuid>",
+  "actor_role": "admin | lead | governance",
+  "action": "move_handed_off_to_tower",
+  "from_state": {
+    "phase": 5,
+    "status": "active",
+    "towerAcceptanceStatus": "accepted"
+  },
+  "to_state": {
+    "phase": 5,
+    "status": "handed_off",
+    "handoffAt": "<ISO8601>"
+  },
   "rationale": null,
   "evidence_refs": []
 }
 ```
 
-`<commentPreview>` = first 80 characters of the comment followed by `...` if truncated. The full comment is stored in `gate_criterion_snapshots.comment`, not in the audit log.
+**Notes:**
+- `engagements.current_phase` stays at `5`; only `status` changes.
+- Written by: `POST /api/programs/phase-gate` (sentinel `toPhase=6`) handler — gap-ws-p5-001 / B-120 (route sentinel not yet implemented).
 
 ---
 
-### 2.5 `gate_criteria_reset` — all criteria reset to not-met
+### §2.3 `move_gate_criterion_updated`
 
-Fired when `POST /api/programs/gate-criterion-reset` succeeds.
+Written when a gate criterion is toggled met ↔ not-met via `POST /api/programs/gate-criterion`.
 
-```json
+```jsonc
 {
-  "action": "gate_criteria_reset",
-  "tenant_key": "<activeClient.key>",
-  "program_id": "<engagements.display_id OR id as TEXT>",
-  "engagement_id": "<engagements.id>",
-  "actor_id": "<resolvedPersonId>",
-  "actor_role": "<tenant membership role>",
-  "from_state": "phase:<phaseKey>:gate-snapshot-before-reset",
-  "to_state": "phase:<phaseKey>:all-criteria-not-met",
-  "rationale": "<optional reason from confirmation dialog>",
+  "tenant_key": "<tenant>",
+  "program_id": "<uuid>",
+  "engagement_id": "<uuid>",
+  "actor_id": "<user uuid>",
+  "actor_role": "admin | lead | governance | sponsor",
+  "action": "move_gate_criterion_updated",
+  "from_state": {
+    "criterionId": "charter_signed_off",
+    "phase": 1,
+    "previousStatus": "not-met"
+  },
+  "to_state": {
+    "criterionId": "charter_signed_off",
+    "phase": 1,
+    "newStatus": "met",
+    "updatedAt": "<ISO8601>"
+  },
+  "rationale": null,
+  "evidence_refs": ["<artifact_id>"]   // artifact that caused the criterion to pass, if known
+}
+```
+
+**Notes:**
+- Written only when `status` actually changes (not on no-op toggles).
+- See W-4.4 §2.1 for the full gate criterion toggle binding.
+
+---
+
+### §2.4 `move_gate_criterion_waived`
+
+Written when a gate criterion is waived via `POST /api/programs/gate-criterion` with `status: 'waived'`.
+
+```jsonc
+{
+  "tenant_key": "<tenant>",
+  "program_id": "<uuid>",
+  "engagement_id": "<uuid>",
+  "actor_id": "<user uuid>",
+  "actor_role": "admin | maestro",    // waiver requires elevated role in production
+  "action": "move_gate_criterion_waived",
+  "from_state": {
+    "criterionId": "discovery_funding_envelope",
+    "phase": 0,
+    "previousStatus": "not-met"
+  },
+  "to_state": {
+    "criterionId": "discovery_funding_envelope",
+    "phase": 0,
+    "newStatus": "waived",
+    "waivedAt": "<ISO8601>"
+  },
+  "rationale": "<required — waiver reason text>",
   "evidence_refs": []
 }
 ```
 
-> In production strict mode, a `gate_criteria_reset` with `actor_role` of `'viewer'` or `'contributor'` should not be possible (blocked by API). If such an entry appears in the audit log while strict mode is enabled, it indicates a permission enforcement bug.
+**Notes:**
+- `rationale` is **always non-null** for waived entries. The route must reject `status: 'waived'` without a comment.
+- See W-4.4 §2.2.
 
 ---
 
-## §3 · Audit entries NOT produced by Workspace (for clarity)
+### §2.5 `move_gate_criterion_comment_updated`
 
-- Canvas content auto-saves: NOT audited in `program_audit_log`. Canvas auto-saves write to `engagement_canvas_state` table (or equivalent) with `updated_at` auto-touch.
-- View mode switches (Compact / Canvas / Preview / Replay): NOT audited. These are ephemeral UI state changes stored in URL params / session.
-- Chat messages in the workspace agent panel: NOT audited in `program_audit_log`. Agent conversation turns are stored in the agent session table.
-- Gate criterion snapshot reads: NOT audited.
-- Phase rail hover / navigation events: NOT audited.
+Written when the comment on a gate criterion changes from one non-empty value to a different non-empty value.
+
+```jsonc
+{
+  "tenant_key": "<tenant>",
+  "program_id": "<uuid>",
+  "engagement_id": "<uuid>",
+  "actor_id": "<user uuid>",
+  "actor_role": "any",
+  "action": "move_gate_criterion_comment_updated",
+  "from_state": {
+    "criterionId": "baseline_captured",
+    "phase": 1,
+    "previousComment": "<prior text | null>"
+  },
+  "to_state": {
+    "criterionId": "baseline_captured",
+    "phase": 1,
+    "newComment": "<new text>",
+    "updatedAt": "<ISO8601>"
+  },
+  "rationale": null,
+  "evidence_refs": []
+}
+```
+
+**Notes:**
+- NOT written when comment transitions empty→empty.
+- See W-4.4 §2.3.
 
 ---
 
-## §4 · Actor role resolution — implementation note
+### §2.6 `move_gate_criteria_reset`
 
-The `actor_role` field in every audit entry requires resolving the Clerk `userId` to a tenant membership role at request time. This resolution does not happen automatically — the API handler must:
+Written when all criteria for a phase are reset via `POST /api/programs/gate-criterion-reset`.
 
-1. Call `getAuth()` from Clerk to get `userId`.
-2. Look up the tenant membership record for `{ tenantKey, userId }` to get `role`.
-3. Pass `role` as `actor_role` to the audit log INSERT.
+```jsonc
+{
+  "tenant_key": "<tenant>",
+  "program_id": "<uuid>",
+  "engagement_id": "<uuid>",
+  "actor_id": "<user uuid>",
+  "actor_role": "admin | maestro",
+  "action": "move_gate_criteria_reset",
+  "from_state": {
+    "phase": 2,
+    "criteriaMetCount": 4,
+    "criteriaTotalCount": 5
+  },
+  "to_state": {
+    "phase": 2,
+    "criteriaMetCount": 0,
+    "resetAt": "<ISO8601>"
+  },
+  "rationale": null,
+  "evidence_refs": []
+}
+```
 
-This is gap `gap-ws-4-005` (B-121). Until B-121 is resolved, audit entries will have `actor_role = null`.
+**Notes:**
+- See W-4.4 §2.4.
+
+---
+
+### §2.7 `move_artifact_opened`
+
+Written on artifact detail panel open. This is a **read-access tracking** entry — no data is mutated.
+
+```jsonc
+{
+  "tenant_key": "<tenant>",
+  "program_id": "<uuid>",
+  "engagement_id": "<uuid>",
+  "actor_id": "<user uuid>",
+  "actor_role": "any",
+  "action": "move_artifact_opened",
+  "from_state": null,
+  "to_state": {
+    "artifactId": "<artifact_id>",
+    "artifactType": "deliverable | legacy_deliverable | evidence | attachment",
+    "phase": 2,
+    "openedAt": "<ISO8601>"
+  },
+  "rationale": null,
+  "evidence_refs": ["<artifact_id>"]
+}
+```
+
+**Notes:**
+- Lightweight pilot compliance audit trail. Gives evidence of who viewed what deliverable and when.
+- See W-4.5 §2.
+- Write must not block the UI — fire-and-forget async.
+
+---
+
+### §2.8 `move_artifact_uploaded`
+
+Written when a new artifact is successfully uploaded.
+
+```jsonc
+{
+  "tenant_key": "<tenant>",
+  "program_id": "<uuid>",
+  "engagement_id": "<uuid>",
+  "actor_id": "<user uuid>",
+  "actor_role": "admin | lead | governance",
+  "action": "move_artifact_uploaded",
+  "from_state": null,
+  "to_state": {
+    "artifactId": "<new artifact_id>",
+    "artifactType": "attachment | deliverable",
+    "artifactKind": "<mime_type or deliverable_type_key>",
+    "phase": 3,
+    "uploadedAt": "<ISO8601>"
+  },
+  "rationale": null,
+  "evidence_refs": ["<new artifact_id>"]
+}
+```
+
+**Notes:**
+- Only written on upload success — not on failed/rolled-back uploads.
+- See W-4.5 §3.
+
+---
+
+### §2.9 `move_artifact_signed_off`
+
+Written when a deliverable's status is set to `'signed_off'`. Used for charter signoff, design approval, baseline attestation, and general deliverable signoff.
+
+```jsonc
+{
+  "tenant_key": "<tenant>",
+  "program_id": "<uuid>",
+  "engagement_id": "<uuid>",
+  "actor_id": "<user uuid>",
+  "actor_role": "admin | lead | governance | sponsor",
+  "action": "move_artifact_signed_off",
+  "from_state": {
+    "artifactId": "<artifact_id>",
+    "previousStatus": "draft | in_review"
+  },
+  "to_state": {
+    "artifactId": "<artifact_id>",
+    "artifactType": "deliverable",
+    "deliverableTypeKey": "charter | design_solution | discovery_report | business_case",
+    "newStatus": "signed_off",
+    "signedAt": "<ISO8601>",
+    "context": {
+      "criterion": "charter_signed_off | design_approved | discovery_baseline_attested",
+      "phase": 1
+    }
+  },
+  "rationale": "<optional — provided when signoff includes a formal note>",
+  "evidence_refs": ["<artifact_id>"]
+}
+```
+
+**Notes:**
+- The `to_state.context.criterion` field links the signoff to the gate criterion it satisfies (where applicable).
+- For the P2 baseline attestation: `to_state.context.criterion = 'discovery_baseline_attested'`, `rationale = 'Baseline attested by owner'`.
+- For the P3 design signoff: `to_state.context.criterion = 'design_approved'`, `to_state.context.phase = 3`.
+- See W-4.5 §4 (general signoff), §5 (P2 baseline), §6 (P3 design).
+
+---
+
+### §2.10 `sponsor_review_requested`
+
+Written when a sponsor signoff request is submitted (`ws-canvas-p1-sponsor-signoff-action-btn`).
+
+```jsonc
+{
+  "tenant_key": "<tenant>",
+  "program_id": "<uuid>",
+  "engagement_id": "<uuid>",
+  "actor_id": "<user uuid>",
+  "actor_role": "admin | lead | governance",
+  "action": "sponsor_review_requested",
+  "from_state": {
+    "sponsorSignoffStatus": "not-requested"
+  },
+  "to_state": {
+    "sponsorSignoffStatus": "requested",
+    "sponsorPersonId": "<person uuid>",
+    "requestType": "phase_signoff",
+    "requestedAt": "<ISO8601>"
+  },
+  "rationale": null,
+  "evidence_refs": []
+}
+```
+
+**Notes:**
+- Written when the `founder_approval_requests` INSERT succeeds (gap-ws-4-002 / B-118 — route not yet implemented).
+- See W-4.5 §4.1.
+
+---
+
+### §2.11 `move_view_mode_changed`
+
+Written when a user switches between `current` and `historical` view modes on the workspace.
+
+```jsonc
+{
+  "tenant_key": "<tenant>",
+  "program_id": "<uuid>",
+  "engagement_id": "<uuid>",
+  "actor_id": "<user uuid>",
+  "actor_role": "any",
+  "action": "move_view_mode_changed",
+  "from_state": {
+    "viewMode": "current",
+    "activePhase": 2
+  },
+  "to_state": {
+    "viewMode": "historical",
+    "activePhase": 2,
+    "changedAt": "<ISO8601>"
+  },
+  "rationale": null,
+  "evidence_refs": []
+}
+```
+
+**Notes:**
+- View mode changes are tracked for pilot compliance (understanding how frequently historical views are accessed).
+- Fire-and-forget async — must not block view mode transition.
+
+---
+
+### §2.12 `move_phase_gate_overridden`
+
+Written in addition to `move_promoted_{n}_to_{m}` when a promotion occurs with soft gate failures present (`gateState = 'partial'`).
+
+```jsonc
+{
+  "tenant_key": "<tenant>",
+  "program_id": "<uuid>",
+  "engagement_id": "<uuid>",
+  "actor_id": "<user uuid>",
+  "actor_role": "admin | lead | governance",
+  "action": "move_phase_gate_overridden",
+  "from_state": {
+    "phase": 3,
+    "gateState": "partial",
+    "failingSoftCriteria": [
+      "phase_3_findings_written",
+      "cxo_interview_complete"
+    ]
+  },
+  "to_state": {
+    "phase": 4,
+    "overrideConfirmedAt": "<ISO8601>"
+  },
+  "rationale": "<text from 'Promote with soft gaps?' confirmation — if provided>",
+  "evidence_refs": []
+}
+```
+
+**Notes:**
+- Always written alongside `move_promoted_{n}_to_{m}` when `gateState = 'partial'`. Two log entries are written for an override promote.
+- `rationale` should capture the soft failures as a structured list in the from_state, and any free-text rationale the user provided in the confirmation modal.
+- Hard gate failures never reach this code path — the promote button is disabled when hard criteria are failing.
+
+---
+
+## §3 · Audit Log Write Timing
+
+| action | write timing | sync/async |
+|---|---|---|
+| `move_promoted_{n}_to_{m}` | After Supabase `engagements.current_phase` UPDATE succeeds | Sync — must succeed or rollback |
+| `move_handed_off_to_tower` | After `engagements.status = 'handed_off'` UPDATE succeeds | Sync |
+| `move_gate_criterion_updated` | After `gate_criterion_snapshots` UPSERT succeeds | Sync |
+| `move_gate_criterion_waived` | After `gate_criterion_snapshots` UPSERT succeeds | Sync |
+| `move_gate_criterion_comment_updated` | After `gate_criterion_snapshots` UPSERT succeeds | Sync |
+| `move_gate_criteria_reset` | After bulk UPDATE succeeds | Sync |
+| `move_artifact_opened` | After panel renders — read tracking | Async / fire-and-forget |
+| `move_artifact_uploaded` | After `program_attachments` INSERT succeeds | Sync |
+| `move_artifact_signed_off` | After `deliverables_v2.status` UPDATE succeeds | Sync |
+| `sponsor_review_requested` | After `founder_approval_requests` INSERT succeeds | Sync |
+| `move_view_mode_changed` | After view mode state update in client | Async / fire-and-forget |
+| `move_phase_gate_overridden` | Written together with `move_promoted_{n}_to_{m}` in same transaction | Sync |
+
+---
+
+## §4 · Audit Log Query Patterns
+
+The `program_audit_log` table supports these common query patterns for the Workspace:
+
+| use case | query shape |
+|---|---|
+| Phase history timeline | `SELECT * FROM program_audit_log WHERE engagement_id = $id AND action LIKE 'move_promoted_%' ORDER BY created_at ASC` |
+| All actions on a move | `SELECT * FROM program_audit_log WHERE engagement_id = $id ORDER BY created_at DESC` |
+| All signoffs for pilot compliance | `SELECT * FROM program_audit_log WHERE engagement_id = $id AND action = 'move_artifact_signed_off' ORDER BY created_at DESC` |
+| Gate overrides audit | `SELECT * FROM program_audit_log WHERE engagement_id = $id AND action = 'move_phase_gate_overridden'` |
+| Actor activity for a user | `SELECT * FROM program_audit_log WHERE actor_id = $userId AND program_id = $programId ORDER BY created_at DESC` |
 
 ---
 
@@ -216,14 +502,15 @@ This is gap `gap-ws-4-005` (B-121). Until B-121 is resolved, audit entries will 
 
 | Check | Status |
 |---|---|
-| Every write mutation from W-4.3 and W-4.4 has an audit entry shape | PASS |
-| `actor_role` field documented on all entries with pilot/production distinction | PASS |
-| Promote entry has `actor_role` note explaining self-approved vs. admin-approved audit trail | PASS |
-| SQL query examples provided for distinguishing pilot vs. production approvals | PASS |
-| `evidence_refs` populated with snapshot IDs where applicable | PASS |
-| Entries NOT produced by workspace listed for clarity | PASS |
-| Actor role resolution implementation note cross-references B-121 | PASS |
-| No "TBD" | PASS |
+| All mutation interactions from W-4.3, W-4.4, W-4.5 have a corresponding audit log entry shape | PASS |
+| Action key naming convention (snake_case, entity_verb_qualifier) followed consistently | PASS |
+| `from_state` and `to_state` shapes documented for all entries | PASS |
+| Rationale field noted as required for waiver entries (§2.4) | PASS |
+| Read-tracking entries (opened, view mode) marked as async fire-and-forget | PASS |
+| Phase-gate override entry documented as written in addition to promote entry | PASS |
+| Timing table (§3) covers all 12 action keys | PASS |
+| Gap references included for routes not yet implemented | PASS |
+| No "TBD" values | PASS |
 
 ---
 
@@ -231,4 +518,4 @@ This is gap `gap-ws-4-005` (B-121). Until B-121 is resolved, audit entries will 
 
 | Version | Date | Change | Author |
 |---|---|---|---|
-| 1.0 | 2026-05-05 | Initial draft — gate self-approval model incorporated; actor_role on promote entries designed to distinguish pilot vs. production approvals | Claude Code |
+| 1.0 | 2026-05-05 | Initial draft — 12 action keys covering all Workspace mutations | Claude Code |
