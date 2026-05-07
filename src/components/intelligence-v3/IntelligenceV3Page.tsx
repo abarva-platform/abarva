@@ -25,10 +25,21 @@ import { IntelligenceV3TopNav } from './IntelligenceV3TopNav';
 import { IntelligenceV3StageTabs } from './IntelligenceV3StageTabs';
 import { TodayCanvas } from './TodayCanvas';
 import { VendorsCanvas } from './VendorsCanvas';
+import { ByFunctionCanvas } from './ByFunctionCanvas';
+import { PatternsCanvas } from './PatternsCanvas';
+import { PeerActivityCanvas } from './PeerActivityCanvas';
+import { MyStrategyCanvas } from './MyStrategyCanvas';
+import { SessionsCanvas } from './SessionsCanvas';
 import { SentinelChat } from './SentinelChat';
 import { FIRST_CAPITAL_DEMO } from './demo-data';
 import type { IntelligenceV3PageData, StageKey } from './types';
-import type { VendorsData } from '@/lib/intelligence-v3/vendors-data';
+import type { VendorsData } from '@/lib/intelligence-v3/vendors-display';
+import type {
+  ByFunctionData,
+  PeerActivityData,
+  MyStrategyData,
+} from '@/lib/intelligence-v3/stages-display';
+import type { AIInitiative } from '@/lib/admin/ai-initiatives/queries';
 
 interface Props {
   /** Server-side composed page data. Defaults to the demo fixture. */
@@ -37,12 +48,21 @@ interface Props {
   isLiveBound?: boolean;
   /** Vendors stage data — null when not loaded. */
   vendorsData?: VendorsData | null;
+  byFunctionData?: ByFunctionData | null;
+  peerActivityData?: PeerActivityData | null;
+  myStrategyData?: MyStrategyData | null;
+  /** Initiatives passed through for the Patterns stage exposure overlay. */
+  initiatives?: ReadonlyArray<AIInitiative> | null;
 }
 
 export function IntelligenceV3Page({
   data: dataProp,
   isLiveBound = false,
   vendorsData = null,
+  byFunctionData = null,
+  peerActivityData = null,
+  myStrategyData = null,
+  initiatives = null,
 }: Props = {}) {
   const data = dataProp ?? FIRST_CAPITAL_DEMO;
   const [stage, setStage] = useState<StageKey>('today');
@@ -98,9 +118,28 @@ export function IntelligenceV3Page({
           <IntelligenceV3StageTabs active={stage} onChange={setStage} />
 
           {stage === 'today' && <TodayCanvas data={data} />}
-          {stage === 'vendors' && vendorsData && <VendorsCanvas data={vendorsData} />}
-          {stage === 'vendors' && !vendorsData && <StageStub stage={stage} />}
-          {stage !== 'today' && stage !== 'vendors' && <StageStub stage={stage} />}
+          {stage === 'vendors' &&
+            (vendorsData ? <VendorsCanvas data={vendorsData} /> : <StageStub stage={stage} />)}
+          {stage === 'by-function' &&
+            (byFunctionData ? (
+              <ByFunctionCanvas data={byFunctionData} />
+            ) : (
+              <StageStub stage={stage} />
+            ))}
+          {stage === 'patterns' && <PatternsCanvas initiatives={initiatives ?? []} />}
+          {stage === 'peer-activity' &&
+            (peerActivityData ? (
+              <PeerActivityCanvas data={peerActivityData} />
+            ) : (
+              <StageStub stage={stage} />
+            ))}
+          {stage === 'my-strategy' &&
+            (myStrategyData ? (
+              <MyStrategyCanvas data={myStrategyData} />
+            ) : (
+              <StageStub stage={stage} />
+            ))}
+          {stage === 'sessions' && <SessionsCanvas data={data} />}
         </main>
 
         <SentinelChat
