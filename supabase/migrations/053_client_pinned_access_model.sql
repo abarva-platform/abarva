@@ -12,10 +12,16 @@ WHERE access_level = 'abarva_super_admin';
 
 DO $$
 BEGIN
+  -- Skip the narrower constraint if 20260501170000_source_access_control already
+  -- applied the broader person_client_memberships_access_level_check (which adds
+  -- source_member / source_viewer). Adding the narrower constraint after that
+  -- migration has seeded source roles would fail the check.
   IF NOT EXISTS (
-    SELECT 1
-    FROM pg_constraint
+    SELECT 1 FROM pg_constraint
     WHERE conname = 'person_client_memberships_client_pinned_access_level'
+  ) AND NOT EXISTS (
+    SELECT 1 FROM pg_constraint
+    WHERE conname = 'person_client_memberships_access_level_check'
   ) THEN
     ALTER TABLE person_client_memberships
       ADD CONSTRAINT person_client_memberships_client_pinned_access_level
