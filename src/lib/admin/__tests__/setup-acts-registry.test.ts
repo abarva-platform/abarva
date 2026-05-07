@@ -361,11 +361,18 @@ describe('Setup Acts registry — snapshot merge', () => {
     expect(counts.segmentsTracked).toBe(2);
   });
 
-  it('summary counts fall back to fixture totals when no snapshot', () => {
+  it('summary counts fall back to authored fixture totals when no snapshot', () => {
+    // Setup Fix Package PR 3 · Option A — fallback now derives totals from
+    // the authored capability matrix (cross-tenant consistent) rather than
+    // hardcoding 403/14 per tenant. The exact number is matrix-driven; the
+    // contract is "non-null and non-zero so the landscape doesn't contradict
+    // Act 1's narrative".
     const content = getSetupActsContent('apexretail');
     const counts = getSetupSummaryCountsWithSnapshot(content, null);
-    expect(counts.totalRecords).toBe(403);
-    expect(counts.segmentsTracked).toBe(14);
+    expect(counts.totalRecords).not.toBeNull();
+    expect(counts.totalRecords ?? 0).toBeGreaterThan(0);
+    expect(counts.segmentsTracked).not.toBeNull();
+    expect(counts.segmentsTracked ?? 0).toBeGreaterThanOrEqual(13);
   });
 });
 

@@ -17,6 +17,7 @@
 import { getActiveClientRow } from '@/lib/active-client';
 import { clientKeyToInventorySubstrateKey } from '@/lib/agent/tools/intelligence/_shared';
 import {
+  buildAuthoredInventoryFallback,
   formatRelativeTimestamp,
   getSetupActsContent,
   getSetupSummaryCountsWithSnapshot,
@@ -64,6 +65,31 @@ export default async function AdminOverviewPage() {
     : undefined;
   const atlasHighSeverityCount = signals.filter((s) => s.severityBucket === 'high').length;
 
+  // Setup Fix Package PR 3 · Option A — Client Data Landscape uses
+  // the same source as Act 1: prefer live snapshot, fall back to
+  // authored fixture for tenants whose substrate hasn't been
+  // ingested yet (e.g. Arcturus). Empty tenants still show 0/14
+  // honestly because buildAuthoredInventoryFallback returns no
+  // rollups when the capability matrix is empty.
+  const landscape = snapshot
+    ? {
+        segments: snapshot.segments,
+        totalRecords: counts.totalRecords ?? 0,
+        totalChunks: snapshot.totalChunks,
+        totalNodes: snapshot.totalNodes,
+        totalEdges: snapshot.totalEdges,
+      }
+    : (() => {
+        const fallback = buildAuthoredInventoryFallback(content);
+        return {
+          segments: fallback.segments,
+          totalRecords: fallback.totalRecords ?? 0,
+          totalChunks: fallback.totalChunks,
+          totalNodes: fallback.totalNodes,
+          totalEdges: fallback.totalEdges,
+        };
+      })();
+
   return (
     <AdminCanonShellV2 agentRail={<SetupChatRail />} tenantName={activeClientDisplayName}>
       <SetupAdminLanding
@@ -78,12 +104,12 @@ export default async function AdminOverviewPage() {
         programApprovalPendingCount={programApprovalQueue.length}
       />
       <DataLandscapeTable
-        segments={snapshot?.segments ?? []}
+        segments={landscape.segments}
         chunkStats={chunkStats}
-        totalRecords={counts.totalRecords ?? 0}
-        totalChunks={snapshot?.totalChunks ?? 0}
-        totalNodes={snapshot?.totalNodes ?? 0}
-        totalEdges={snapshot?.totalEdges ?? 0}
+        totalRecords={landscape.totalRecords}
+        totalChunks={landscape.totalChunks}
+        totalNodes={landscape.totalNodes}
+        totalEdges={landscape.totalEdges}
         lastIngestedRelative={lastIngestedRelative}
       />
       <SetupLandingTelemetryBridge
