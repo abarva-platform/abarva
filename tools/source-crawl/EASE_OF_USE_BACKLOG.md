@@ -16,7 +16,7 @@ fixed.
 
 | # | Friction | Why it kills adoption | Fix sketch |
 |---|---|---|---|
-| A1 | Saved Clerk session expires silently — first scenario run after a few hours just lands on `/sign-in` and fails. | The error message points at "session expired" but the recovery (`npm run save-session`) is a separate step. Users blame the tool. | Detect `/sign-in` redirect inside the page wait, automatically re-launch headed browser with the sign-in URL, resume the scenario after login. One command, not two. |
+| ~~A1~~ | ~~Saved Clerk session expires silently~~ **CLOSED** (partial) — every scenario run now probes `TENANT_URL` up front. If we land on `/sign-in` (or off-tenant), the run aborts with a clear log line and exit code 2: *"saved session is expired or invalid (landed on …). Recover: run `npm run save-session`, then re-run this scenario."* Auto-recovery (re-launch headed, save new state, resume) deferred to a future iteration — the explicit failure already removes the cryptic-mid-run-error problem. | n/a | n/a |
 | ~~A2~~ | ~~`walk-canvas` and `promote-stage` need an event URL pasted~~ **CLOSED** — both default to the most recent `create-event` `eventUrl` resolved from `runs/`. Pass `--event` to override. | n/a | n/a |
 | ~~A3~~ | ~~No way to chain scenarios.~~ **CLOSED** — `npm run scenario:e2e` runs `create-event → walk-canvas → promote-stage` in one shot, single run dir, single audit log. | n/a | n/a |
 | ~~A4~~ | ~~Output is technical (JSONL / CSV / per-run audit log).~~ **CLOSED** — every run now writes `summary.md` with status, per-step result JSON, and embedded screenshot links. Open this file first when reviewing a run. | n/a | n/a |
