@@ -3,38 +3,32 @@
  *
  * Ranked list of pending decisions with severity dots and links to
  * the resolving panel. Hidden when empty per
- * `DATA_BINDING_CATALOG.md` §1 Block 1.3.
+ * `DATA_BINDING_CATALOG.md` §1 Block 1.3 + Setup canon refit.
  */
 
 import Link from 'next/link';
-import { COLORS, RADIUS, SPACING, TYPOGRAPHY } from '@/lib/design/design-tokens';
-import { SHELL } from '@/lib/shell/shell-tokens';
+import { SETUP, SETUP_RADIUS, SETUP_TYPE } from '@/lib/admin/setup-tokens';
 
 export type ActionSeverity = 'high' | 'medium' | 'low';
 
 export interface ActionQueueItem {
   id: string;
   severity: ActionSeverity;
-  /** Short description, e.g. "Load Compliance posture". */
   label: string;
-  /** Plain-language consequence, e.g. "unlocks Steward gating on AI / sourcing / programs". */
   consequence: string;
-  /** Resolving panel destination. */
   href: string;
-  /** Panel label shown in the link, e.g. "Data Trust". */
   panelLabel: string;
 }
 
 export interface ActionQueueProps {
   items: ActionQueueItem[];
-  /** Used to render "View all (N) →" if more pending than rendered. */
   totalPending?: number;
 }
 
 const SEVERITY_DOT: Record<ActionSeverity, string> = {
-  high: COLORS.coralInk,
-  medium: COLORS.amberInk,
-  low: COLORS.mintInk,
+  high: SETUP.coral,
+  medium: SETUP.amber,
+  low: SETUP.mint,
 };
 
 export function ActionQueue({ items, totalPending }: ActionQueueProps) {
@@ -46,47 +40,23 @@ export function ActionQueue({ items, totalPending }: ActionQueueProps) {
       data-overview-block="action-queue"
       data-testid="overview-action-queue"
       style={{
-        background: SHELL.CARD_WHITE,
-        border: `1px solid ${SHELL.CARD_LINE_SOFT}`,
-        borderRadius: RADIUS.lg,
-        padding: SPACING.lg,
+        background: SETUP.cardWhite,
+        border: `1px solid ${SETUP.cardLine}`,
+        borderRadius: SETUP_RADIUS.lg,
+        padding: '18px 20px',
         display: 'flex',
         flexDirection: 'column',
-        gap: SPACING.sm,
+        gap: 12,
       }}
     >
-      <header style={{ display: 'flex', alignItems: 'baseline', gap: SPACING.sm }}>
-        <h2
-          style={{
-            margin: 0,
-            fontFamily: TYPOGRAPHY.serif,
-            fontSize: 18,
-            color: SHELL.INK,
-            fontWeight: 600,
-          }}
-        >
-          Pending your decision
-        </h2>
-        <span
-          style={{
-            fontFamily: TYPOGRAPHY.mono,
-            fontSize: 11,
-            color: SHELL.INK_MUTED,
-          }}
-        >
-          ({totalPending ?? items.length})
-        </span>
+      <header style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
+        <h2 style={SETUP_TYPE.cardH2}>Pending your decision</h2>
+        <span style={SETUP_TYPE.cardMeta}>({totalPending ?? items.length})</span>
       </header>
       <ul
         role="list"
         data-testid="overview-action-queue-list"
-        style={{
-          listStyle: 'none',
-          margin: 0,
-          padding: 0,
-          display: 'flex',
-          flexDirection: 'column',
-        }}
+        style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column' }}
       >
         {cap.map((item) => (
           <li
@@ -94,12 +64,12 @@ export function ActionQueue({ items, totalPending }: ActionQueueProps) {
             data-action-id={item.id}
             data-action-severity={item.severity}
             style={{
-              display: 'flex',
+              display: 'grid',
+              gridTemplateColumns: '14px 1fr auto',
               alignItems: 'center',
-              gap: SPACING.sm,
-              padding: `${SPACING.sm} 0`,
-              borderTop: `1px solid ${SHELL.CARD_LINE_SOFT}`,
-              flexWrap: 'wrap',
+              gap: 12,
+              padding: '12px 0',
+              borderTop: `1px solid ${SETUP.cardLine}`,
             }}
           >
             <span
@@ -110,26 +80,26 @@ export function ActionQueue({ items, totalPending }: ActionQueueProps) {
                 borderRadius: '50%',
                 background: SEVERITY_DOT[item.severity],
                 flexShrink: 0,
+                justifySelf: 'start',
               }}
             />
-            <span style={{ fontFamily: TYPOGRAPHY.sans, fontSize: 14, fontWeight: 600, color: SHELL.INK }}>
-              {item.label}
-            </span>
-            <span style={{ fontFamily: TYPOGRAPHY.sans, fontSize: 13, color: SHELL.INK_SOFT, flex: 1 }}>
-              · {item.consequence}
+            <span style={{ ...SETUP_TYPE.bodySans, color: SETUP.ink }}>
+              <strong style={{ fontWeight: 600 }}>{item.label}</strong>
+              <span style={{ color: SETUP.inkMuted }}> · {item.consequence}</span>
             </span>
             <Link
               href={item.href}
               data-testid={`overview-action-${item.id}-link`}
               style={{
-                fontFamily: TYPOGRAPHY.sans,
-                fontSize: 12,
+                fontFamily: SETUP.sans,
+                fontSize: 11,
                 fontWeight: 600,
-                color: COLORS.navy,
+                color: SETUP.ink,
+                background: SETUP.cardWhite,
                 textDecoration: 'none',
-                border: `1px solid ${COLORS.navy}55`,
-                borderRadius: RADIUS.pill,
-                padding: `2px ${SPACING.sm}`,
+                border: `1px solid ${SETUP.ink}`,
+                borderRadius: SETUP_RADIUS.pill,
+                padding: '4px 12px',
                 whiteSpace: 'nowrap',
               }}
             >
@@ -144,10 +114,10 @@ export function ActionQueue({ items, totalPending }: ActionQueueProps) {
           data-testid="overview-action-queue-view-all"
           style={{
             alignSelf: 'flex-start',
-            fontFamily: TYPOGRAPHY.sans,
+            fontFamily: SETUP.sans,
             fontSize: 12,
             fontWeight: 600,
-            color: COLORS.navy,
+            color: SETUP.signal,
             textDecoration: 'none',
           }}
         >

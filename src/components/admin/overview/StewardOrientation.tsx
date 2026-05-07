@@ -2,24 +2,19 @@
  * StewardOrientation · Overview Block 1.2 (Setup Redesign Package PR A).
  *
  * 3-sentence Steward narrative + 2 CTAs. Deterministic copy
- * generation per `DATA_BINDING_CATALOG.md` §1 Block 1.2.
+ * generation per `DATA_BINDING_CATALOG.md` §1 Block 1.2 +
+ * Setup canon refit.
  */
 
 import Link from 'next/link';
-import { COLORS, RADIUS, SPACING, TYPOGRAPHY } from '@/lib/design/design-tokens';
-import { SHELL } from '@/lib/shell/shell-tokens';
+import { SETUP, SETUP_RADIUS, SETUP_TYPE } from '@/lib/admin/setup-tokens';
 
 export interface StewardOrientationProps {
   tenantName: string;
-  /** Plain-language industry phrase, e.g. "a regulated financial-services bank". Null if unknown. */
   industryPhrase: string | null;
-  /** Plain-language summary of loaded categories, e.g. "Who you are and What rules apply are partially loaded". */
   loadedSummary: string;
-  /** Plain-language summary of missing categories, e.g. "How you measure performance and What you have in flight are empty". */
   missingSummary: string;
-  /** Highest-impact next load, e.g. "Compliance posture". */
   nextLoadName: string | null;
-  /** Consequence copy for the next load, e.g. "Steward can gate AI / sourcing / programs against control requirements". */
   nextLoadConsequence: string | null;
 }
 
@@ -44,54 +39,52 @@ export function StewardOrientation({
       data-overview-block="steward-orientation"
       data-testid="overview-steward-orientation"
       style={{
-        background: COLORS.skyPale,
-        borderLeft: `4px solid ${COLORS.navy}`,
-        borderRadius: RADIUS.lg,
-        padding: SPACING.lg,
+        background: SETUP.cardWhite,
+        border: `1px solid ${SETUP.cardLine}`,
+        borderRadius: SETUP_RADIUS.lg,
+        padding: '16px 20px',
         display: 'flex',
         flexDirection: 'column',
-        gap: SPACING.sm,
+        gap: 6,
       }}
     >
       <p
         style={{
           margin: 0,
-          fontFamily: TYPOGRAPHY.mono,
+          fontFamily: SETUP.mono,
           fontSize: 10,
           letterSpacing: '0.12em',
           textTransform: 'uppercase',
-          color: COLORS.navy,
+          color: SETUP.navy,
           fontWeight: 700,
+          display: 'flex',
+          alignItems: 'center',
+          gap: 8,
         }}
       >
+        <span
+          aria-hidden="true"
+          style={{ width: 8, height: 8, borderRadius: '50%', background: SETUP.mint }}
+        />
         Steward · Setup orientation
       </p>
-      <p
-        style={{
-          margin: 0,
-          fontFamily: TYPOGRAPHY.serif,
-          fontSize: 17,
-          color: SHELL.INK,
-          lineHeight: 1.45,
-          fontWeight: 400,
-        }}
-      >
+      <p style={{ ...SETUP_TYPE.bodySerif, margin: 0 }}>
         {sentence1} {sentence2} {sentence3}
       </p>
-      <div style={{ display: 'flex', gap: SPACING.sm, marginTop: SPACING.xs, flexWrap: 'wrap' }}>
+      <div style={{ display: 'flex', gap: 10, marginTop: 6, flexWrap: 'wrap' }}>
         <Link
           href="/admin/data-trust"
           data-testid="overview-cta-data-trust"
           style={{
-            fontFamily: TYPOGRAPHY.sans,
-            fontSize: 12,
+            fontFamily: SETUP.sans,
+            fontSize: 11,
             fontWeight: 600,
-            color: COLORS.navy,
+            color: SETUP.ink,
+            background: SETUP.cardWhite,
             textDecoration: 'none',
-            border: `1px solid ${COLORS.navy}`,
-            borderRadius: RADIUS.pill,
-            padding: `4px ${SPACING.md}`,
-            background: SHELL.CARD_WHITE,
+            border: `1px solid ${SETUP.ink}`,
+            borderRadius: SETUP_RADIUS.pill,
+            padding: '4px 12px',
           }}
         >
           Go to Data Trust →
@@ -100,14 +93,15 @@ export function StewardOrientation({
           href="/admin/agent-readiness"
           data-testid="overview-cta-agent-readiness"
           style={{
-            fontFamily: TYPOGRAPHY.sans,
-            fontSize: 12,
+            fontFamily: SETUP.sans,
+            fontSize: 11,
             fontWeight: 600,
-            color: COLORS.navy,
+            color: SETUP.inkSoft,
+            background: 'transparent',
             textDecoration: 'none',
-            border: `1px solid ${COLORS.navy}55`,
-            borderRadius: RADIUS.pill,
-            padding: `4px ${SPACING.md}`,
+            border: `1px solid ${SETUP.cardLineStrong}`,
+            borderRadius: SETUP_RADIUS.pill,
+            padding: '4px 12px',
           }}
         >
           Go to Agent Readiness →

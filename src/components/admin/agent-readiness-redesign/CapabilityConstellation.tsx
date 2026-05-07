@@ -2,15 +2,10 @@
  * CapabilityConstellation · Block 5.2 (Setup Redesign Package PR C).
  *
  * 14×6 segment-by-capability matrix. Page hero per
- * `DATA_BINDING_CATALOG.md` §5.2. Cells colored by depth state;
- * non-applicable cells rendered distinct from empty.
- *
- * Cell click → guidance is delivered via `title` attribute (native
- * tooltip). A richer popover would be a follow-up enhancement.
+ * `DATA_BINDING_CATALOG.md` §5.2 + Setup canon refit.
  */
 
-import { COLORS, RADIUS, SPACING, TYPOGRAPHY } from '@/lib/design/design-tokens';
-import { SHELL } from '@/lib/shell/shell-tokens';
+import { SETUP, SETUP_RADIUS, SETUP_TYPE } from '@/lib/admin/setup-tokens';
 import {
   CAPABILITY_VERBS_ORDERED,
   capabilityVerbLabel,
@@ -21,11 +16,11 @@ const CELL_STATE_STYLE: Record<
   string,
   { bg: string; mark: string; symbol: string; ink: string }
 > = {
-  deep: { bg: COLORS.mintSoft, mark: COLORS.mintInk, symbol: '●', ink: COLORS.mintInk },
-  partial: { bg: COLORS.amberSoft, mark: COLORS.amberInk, symbol: '●', ink: COLORS.amberInk },
-  thin: { bg: COLORS.coralSoft, mark: COLORS.coralInk, symbol: '●', ink: COLORS.coralInk },
-  empty: { bg: SHELL.PAPER, mark: SHELL.INK_MUTED, symbol: '○', ink: SHELL.INK_MUTED },
-  'not-applicable': { bg: SHELL.PAPER_SOFT, mark: SHELL.INK_MUTED, symbol: '—', ink: SHELL.INK_MUTED },
+  deep: { bg: SETUP.mintSoft, mark: SETUP.mint, symbol: '●', ink: SETUP.mint },
+  partial: { bg: SETUP.amberSoft, mark: SETUP.amber, symbol: '●', ink: SETUP.amber },
+  thin: { bg: SETUP.coralSoft, mark: SETUP.coral, symbol: '●', ink: SETUP.coral },
+  empty: { bg: SETUP.paperSoft, mark: SETUP.inkFaint, symbol: '○', ink: SETUP.inkFaint },
+  'not-applicable': { bg: SETUP.grayBg, mark: SETUP.inkFaint, symbol: '—', ink: SETUP.inkFaint },
 };
 
 export function CapabilityConstellation({ matrix }: { matrix: MatrixRow[] }) {
@@ -35,58 +30,52 @@ export function CapabilityConstellation({ matrix }: { matrix: MatrixRow[] }) {
       data-agent-readiness-block="matrix"
       data-testid="agent-readiness-matrix"
       style={{
-        background: SHELL.CARD_WHITE,
-        border: `1px solid ${SHELL.CARD_LINE_SOFT}`,
-        borderRadius: RADIUS.lg,
-        padding: SPACING.lg,
+        background: SETUP.cardWhite,
+        border: `1px solid ${SETUP.cardLine}`,
+        borderRadius: SETUP_RADIUS.lg,
+        padding: '20px 22px 16px',
         display: 'flex',
         flexDirection: 'column',
-        gap: SPACING.sm,
+        gap: 10,
       }}
     >
-      <header style={{ display: 'flex', alignItems: 'baseline', gap: SPACING.sm, flexWrap: 'wrap' }}>
+      <header style={{ display: 'flex', alignItems: 'baseline', gap: 8, flexWrap: 'wrap' }}>
         <h2
           style={{
-            margin: 0,
-            fontFamily: TYPOGRAPHY.serif,
+            ...SETUP_TYPE.cardH2,
             fontSize: 22,
-            color: SHELL.INK,
-            fontWeight: 700,
-            letterSpacing: '-0.01em',
+            fontWeight: 500,
+            letterSpacing: '-0.018em',
           }}
         >
           Capability constellation
         </h2>
-        <span style={{ fontFamily: TYPOGRAPHY.mono, fontSize: 11, color: SHELL.INK_MUTED }}>
+        <span style={SETUP_TYPE.cardMeta}>
           14 segments × 6 capabilities · click any cell for guidance
         </span>
       </header>
 
-      <div
-        role="table"
-        aria-label="Segment-by-capability matrix"
-        style={{ overflowX: 'auto' }}
-      >
+      <div role="table" aria-label="Segment-by-capability matrix" style={{ overflowX: 'auto' }}>
         <div
           role="row"
           style={{
             display: 'grid',
             gridTemplateColumns,
             gap: 4,
-            paddingBottom: SPACING.xs,
-            borderBottom: `1px solid ${SHELL.CARD_LINE_SOFT}`,
+            paddingBottom: 6,
+            borderBottom: `1px solid ${SETUP.cardLine}`,
           }}
         >
           <div
             role="columnheader"
             style={{
-              fontFamily: TYPOGRAPHY.mono,
+              fontFamily: SETUP.mono,
               fontSize: 10,
-              letterSpacing: '0.08em',
+              letterSpacing: '0.1em',
               textTransform: 'uppercase',
-              color: SHELL.INK_MUTED,
+              color: SETUP.inkMuted,
               fontWeight: 700,
-              padding: `0 ${SPACING.sm}`,
+              padding: '0 8px',
             }}
           >
             Segment
@@ -96,11 +85,11 @@ export function CapabilityConstellation({ matrix }: { matrix: MatrixRow[] }) {
               key={v}
               role="columnheader"
               style={{
-                fontFamily: TYPOGRAPHY.mono,
+                fontFamily: SETUP.mono,
                 fontSize: 9,
                 letterSpacing: '0.06em',
                 textTransform: 'uppercase',
-                color: SHELL.INK_MUTED,
+                color: SETUP.inkMuted,
                 fontWeight: 700,
                 textAlign: 'center',
               }}
@@ -119,25 +108,25 @@ export function CapabilityConstellation({ matrix }: { matrix: MatrixRow[] }) {
               display: 'grid',
               gridTemplateColumns,
               gap: 4,
-              padding: `${SPACING.xs} 0`,
-              borderBottom: `1px solid ${SHELL.CARD_LINE_SOFT}`,
+              padding: '7px 0',
+              borderBottom: `1px solid ${SETUP.cardLine}`,
               alignItems: 'center',
             }}
           >
             <div
               role="rowheader"
               style={{
-                fontFamily: TYPOGRAPHY.sans,
-                fontSize: 13,
-                color: SHELL.INK,
+                fontFamily: SETUP.sans,
+                fontSize: 12,
+                color: SETUP.ink,
                 fontWeight: 600,
-                padding: `0 ${SPACING.sm}`,
+                padding: '0 8px',
                 display: 'flex',
                 alignItems: 'baseline',
-                gap: 6,
+                gap: 8,
               }}
             >
-              <span style={{ fontFamily: TYPOGRAPHY.mono, fontSize: 11, color: SHELL.INK_MUTED }}>
+              <span style={{ fontFamily: SETUP.mono, fontSize: 9.5, color: SETUP.inkFaint }}>
                 {String(row.familyNumber).padStart(2, '0')}
               </span>
               {row.segmentName}
@@ -156,13 +145,13 @@ export function CapabilityConstellation({ matrix }: { matrix: MatrixRow[] }) {
                   title={cell.guidance}
                   aria-label={`${row.segmentName} · ${capabilityVerbLabel(verb)} · ${cell.state}`}
                   style={{
-                    height: 32,
+                    height: 28,
                     background: style.bg,
                     color: style.ink,
                     border: `1px solid ${style.mark}33`,
-                    borderRadius: RADIUS.sm,
-                    fontFamily: TYPOGRAPHY.mono,
-                    fontSize: 14,
+                    borderRadius: 6,
+                    fontFamily: SETUP.mono,
+                    fontSize: 13,
                     fontWeight: 700,
                     cursor: 'help',
                     textAlign: 'center',
@@ -179,12 +168,13 @@ export function CapabilityConstellation({ matrix }: { matrix: MatrixRow[] }) {
       <footer
         style={{
           display: 'flex',
-          gap: SPACING.md,
-          fontFamily: TYPOGRAPHY.mono,
+          gap: 18,
+          fontFamily: SETUP.mono,
           fontSize: 10,
-          color: SHELL.INK_MUTED,
+          color: SETUP.inkMuted,
           flexWrap: 'wrap',
-          paddingTop: SPACING.xs,
+          paddingTop: 12,
+          borderTop: `1px solid ${SETUP.cardLine}`,
         }}
       >
         <span>● deep</span>

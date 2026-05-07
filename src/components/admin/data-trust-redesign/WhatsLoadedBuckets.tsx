@@ -1,20 +1,17 @@
 /**
  * WhatsLoadedBuckets · Block 2.2 (Setup Redesign Package PR B).
  *
- * 5 plain-language buckets per `DATA_BINDING_CATALOG.md` §2.2 (post
- * spec-drift entry: 5 not 7, matching wireframe). Each bucket shows
- * a green/amber/red dot, its name, segments backing it, and brief
- * status copy.
+ * 5 plain-language buckets. Per `DATA_BINDING_CATALOG.md` §2.2 +
+ * Setup canon refit.
  */
 
-import { COLORS, RADIUS, SPACING, TYPOGRAPHY } from '@/lib/design/design-tokens';
-import { SHELL } from '@/lib/shell/shell-tokens';
+import { SETUP, SETUP_RADIUS, SETUP_TYPE } from '@/lib/admin/setup-tokens';
 import type { BucketRow } from '@/lib/admin/setup-vocab';
 
 const DOT: Record<BucketRow['health'], string> = {
-  green: COLORS.mintInk,
-  amber: COLORS.amberInk,
-  red: COLORS.coralInk,
+  green: SETUP.mint,
+  amber: SETUP.amber,
+  red: SETUP.coral,
 };
 
 const STATUS_LABEL: Record<BucketRow['health'], string> = {
@@ -29,30 +26,18 @@ export function WhatsLoadedBuckets({ buckets }: { buckets: BucketRow[] }) {
       data-data-trust-block="whats-loaded"
       data-testid="data-trust-whats-loaded"
       style={{
-        background: SHELL.CARD_WHITE,
-        border: `1px solid ${SHELL.CARD_LINE_SOFT}`,
-        borderRadius: RADIUS.lg,
-        padding: SPACING.lg,
+        background: SETUP.cardWhite,
+        border: `1px solid ${SETUP.cardLine}`,
+        borderRadius: SETUP_RADIUS.lg,
+        padding: '18px 20px',
         display: 'flex',
         flexDirection: 'column',
-        gap: SPACING.sm,
+        gap: 10,
       }}
     >
-      <header style={{ display: 'flex', alignItems: 'baseline', gap: SPACING.sm }}>
-        <h2
-          style={{
-            margin: 0,
-            fontFamily: TYPOGRAPHY.serif,
-            fontSize: 18,
-            color: SHELL.INK,
-            fontWeight: 600,
-          }}
-        >
-          What&apos;s loaded
-        </h2>
-        <span style={{ fontFamily: TYPOGRAPHY.mono, fontSize: 11, color: SHELL.INK_MUTED }}>
-          plain-language buckets
-        </span>
+      <header style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
+        <h2 style={SETUP_TYPE.cardH2}>What&apos;s loaded</h2>
+        <span style={SETUP_TYPE.cardMeta}>plain-language buckets</span>
       </header>
       <ul role="list" style={{ listStyle: 'none', margin: 0, padding: 0 }}>
         {buckets.map((b) => (
@@ -61,12 +46,12 @@ export function WhatsLoadedBuckets({ buckets }: { buckets: BucketRow[] }) {
             data-bucket-id={b.id}
             data-bucket-health={b.health}
             style={{
-              display: 'flex',
+              display: 'grid',
+              gridTemplateColumns: '14px auto 1fr auto',
               alignItems: 'baseline',
-              gap: SPACING.sm,
-              padding: `${SPACING.sm} 0`,
-              borderTop: `1px solid ${SHELL.CARD_LINE_SOFT}`,
-              flexWrap: 'wrap',
+              gap: 10,
+              padding: '10px 0',
+              borderTop: `1px solid ${SETUP.cardLine}`,
             }}
           >
             <span
@@ -76,19 +61,36 @@ export function WhatsLoadedBuckets({ buckets }: { buckets: BucketRow[] }) {
                 height: 10,
                 borderRadius: '50%',
                 background: DOT[b.health],
-                flexShrink: 0,
                 position: 'relative',
                 top: 1,
+                justifySelf: 'start',
               }}
             />
-            <span style={{ fontFamily: TYPOGRAPHY.sans, fontSize: 14, fontWeight: 700, color: SHELL.INK }}>
+            <span
+              style={{
+                fontFamily: SETUP.sans,
+                fontSize: 13.5,
+                fontWeight: 700,
+                color: SETUP.ink,
+              }}
+            >
               {b.label}
             </span>
-            <span style={{ fontFamily: TYPOGRAPHY.sans, fontSize: 13, color: SHELL.INK_SOFT, flex: 1 }}>
-              — {b.description}{' '}
-              <span style={{ color: SHELL.INK_MUTED, fontSize: 12 }}>
-                ({STATUS_LABEL[b.health]})
-              </span>
+            <span style={{ ...SETUP_TYPE.bodySans, color: SETUP.inkMuted }}>
+              — {b.description}
+            </span>
+            <span
+              style={{
+                fontFamily: SETUP.mono,
+                fontSize: 10,
+                fontWeight: 700,
+                letterSpacing: '0.08em',
+                textTransform: 'uppercase',
+                color: DOT[b.health],
+                whiteSpace: 'nowrap',
+              }}
+            >
+              {STATUS_LABEL[b.health]}
             </span>
           </li>
         ))}

@@ -2,27 +2,21 @@
  * TrustLadderTable · Block 2.4 (Setup Redesign Package PR B).
  *
  * Collapsible 14-row segment inventory: Segment · Records ·
- * Trust rung · Unlocks · Next action. Default collapsed below 7
- * rows; expand reveals all 14. Per `DATA_BINDING_CATALOG.md` §2
- * Block 2.4.
- *
- * Note: the `?expand=ladder` query param controls the expanded
- * state — the toggle is server-rendered as a Link rather than a
- * client component.
+ * Trust rung · Unlocks · Next action. Per `DATA_BINDING_CATALOG.md`
+ * §2 Block 2.4 + Setup canon refit.
  */
 
 import Link from 'next/link';
-import { COLORS, RADIUS, SPACING, TYPOGRAPHY } from '@/lib/design/design-tokens';
-import { SHELL } from '@/lib/shell/shell-tokens';
+import { SETUP, SETUP_RADIUS, SETUP_TYPE } from '@/lib/admin/setup-tokens';
 import type { TrustLadderRow } from '@/lib/admin/data-trust-composer';
 
 const RUNG_COLOR: Record<string, string> = {
-  'Decision-grade': COLORS.mintInk,
-  'Agent-usable': COLORS.mintInk,
-  'Usable evidence': COLORS.amberInk,
-  Available: COLORS.amberInk,
-  Loaded: COLORS.amberInk,
-  Empty: COLORS.coralInk,
+  'Decision-grade': SETUP.mint,
+  'Agent-usable': SETUP.mint,
+  'Usable evidence': SETUP.amber,
+  Available: SETUP.amber,
+  Loaded: SETUP.amber,
+  Empty: SETUP.coral,
 };
 
 const NEXT_LABEL: Record<TrustLadderRow['nextAction'], string> = {
@@ -49,30 +43,18 @@ export function TrustLadderTable({
       data-testid="data-trust-trust-ladder"
       data-expanded={expanded ? 'true' : 'false'}
       style={{
-        background: SHELL.CARD_WHITE,
-        border: `1px solid ${SHELL.CARD_LINE_SOFT}`,
-        borderRadius: RADIUS.lg,
-        padding: SPACING.lg,
+        background: SETUP.cardWhite,
+        border: `1px solid ${SETUP.cardLine}`,
+        borderRadius: SETUP_RADIUS.lg,
+        padding: '18px 20px',
         display: 'flex',
         flexDirection: 'column',
-        gap: SPACING.sm,
+        gap: 10,
       }}
     >
-      <header style={{ display: 'flex', alignItems: 'baseline', gap: SPACING.sm, flexWrap: 'wrap' }}>
-        <h2
-          style={{
-            margin: 0,
-            fontFamily: TYPOGRAPHY.serif,
-            fontSize: 18,
-            color: SHELL.INK,
-            fontWeight: 600,
-          }}
-        >
-          Trust ladder
-        </h2>
-        <span style={{ fontFamily: TYPOGRAPHY.mono, fontSize: 11, color: SHELL.INK_MUTED }}>
-          per segment · all {rows.length}
-        </span>
+      <header style={{ display: 'flex', alignItems: 'baseline', gap: 8, flexWrap: 'wrap' }}>
+        <h2 style={SETUP_TYPE.cardH2}>Trust ladder</h2>
+        <span style={SETUP_TYPE.cardMeta}>per segment · all {rows.length}</span>
       </header>
       <div role="table" aria-label="Trust ladder">
         <div
@@ -80,14 +62,14 @@ export function TrustLadderTable({
           style={{
             display: 'grid',
             gridTemplateColumns: '1.6fr 0.5fr 1fr 2fr 0.7fr',
-            gap: SPACING.sm,
-            padding: `${SPACING.xs} 0`,
-            borderBottom: `1px solid ${SHELL.CARD_LINE_SOFT}`,
-            fontFamily: TYPOGRAPHY.mono,
+            gap: 10,
+            padding: '6px 0',
+            borderBottom: `1px solid ${SETUP.cardLine}`,
+            fontFamily: SETUP.mono,
             fontSize: 9,
             letterSpacing: '0.1em',
             textTransform: 'uppercase',
-            color: SHELL.INK_MUTED,
+            color: SETUP.inkMuted,
             fontWeight: 700,
           }}
         >
@@ -107,53 +89,54 @@ export function TrustLadderTable({
             style={{
               display: 'grid',
               gridTemplateColumns: '1.6fr 0.5fr 1fr 2fr 0.7fr',
-              gap: SPACING.sm,
-              padding: `${SPACING.sm} 0`,
-              borderBottom: `1px solid ${SHELL.CARD_LINE_SOFT}`,
-              fontFamily: TYPOGRAPHY.sans,
+              gap: 10,
+              padding: '12px 0',
+              borderBottom: `1px solid ${SETUP.cardLine}`,
+              fontFamily: SETUP.sans,
               fontSize: 13,
-              color: SHELL.INK,
+              color: SETUP.ink,
               textDecoration: 'none',
               alignItems: 'center',
             }}
           >
             <div role="cell" style={{ fontWeight: 600 }}>
-              <span style={{ fontFamily: TYPOGRAPHY.mono, fontSize: 11, color: SHELL.INK_MUTED, marginRight: 6 }}>
+              <span style={{ fontFamily: SETUP.mono, fontSize: 10, color: SETUP.inkFaint, marginRight: 8 }}>
                 {String(row.familyNumber).padStart(2, '0')}
               </span>
               {row.segmentName}
             </div>
-            <div role="cell" style={{ fontFamily: TYPOGRAPHY.mono, fontSize: 12, color: SHELL.INK_SOFT }}>
+            <div role="cell" style={{ fontFamily: SETUP.mono, fontSize: 11, color: SETUP.inkMuted }}>
               {row.records.toLocaleString()}
             </div>
             <div role="cell">
               <span
                 style={{
-                  fontFamily: TYPOGRAPHY.sans,
-                  fontSize: 11,
+                  fontFamily: SETUP.mono,
+                  fontSize: 10,
                   fontWeight: 700,
-                  color: RUNG_COLOR[row.trustRung] ?? SHELL.INK_MUTED,
-                  letterSpacing: '0.04em',
+                  color: RUNG_COLOR[row.trustRung] ?? SETUP.inkMuted,
+                  letterSpacing: '0.06em',
+                  textTransform: 'uppercase',
                 }}
               >
                 {row.trustRung}
               </span>
             </div>
-            <div role="cell" style={{ color: SHELL.INK_SOFT, fontSize: 12, lineHeight: 1.4 }}>
+            <div role="cell" style={{ color: SETUP.inkSoft, fontSize: 12, lineHeight: 1.4 }}>
               {row.unlocks}
             </div>
             <div role="cell">
               <span
                 style={{
-                  fontFamily: TYPOGRAPHY.sans,
+                  fontFamily: SETUP.sans,
                   fontSize: 12,
                   fontWeight: 600,
                   color:
                     row.nextAction === '—'
-                      ? SHELL.INK_MUTED
+                      ? SETUP.inkMuted
                       : row.nextAction === 'Load'
-                        ? COLORS.coralInk
-                        : COLORS.navy,
+                        ? SETUP.coral
+                        : SETUP.signal,
                 }}
               >
                 {NEXT_LABEL[row.nextAction]}
@@ -168,10 +151,10 @@ export function TrustLadderTable({
           data-testid="data-trust-trust-ladder-toggle"
           style={{
             alignSelf: 'flex-start',
-            fontFamily: TYPOGRAPHY.sans,
+            fontFamily: SETUP.sans,
             fontSize: 12,
             fontWeight: 600,
-            color: COLORS.navy,
+            color: SETUP.signal,
             textDecoration: 'none',
           }}
         >
