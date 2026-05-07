@@ -130,7 +130,7 @@ export async function POST(request: Request) {
       approvalAuthority:
         'Tenant admin reviews the intake record; S0 exit is co-signed by the decision owner and sourcing lead.',
       approvalUrl: '/source/events',
-      eventUrl: `/source/events/${event.id}`,
+      eventUrl: `/source/events/${event.id}?stage=Strategy`,
     });
   } catch (error) {
     return Response.json({
