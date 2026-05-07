@@ -27,9 +27,13 @@ describe('Tower P6 handoff panel', () => {
     expect(pageSource).toContain('data-testid=\"tower-main-lens-canvas\"');
     expect(pageSource).toContain('resolveTowerTab');
     expect(pageSource).toContain('showTabBar={false}');
-    expect(pageSource).toContain('Source commercial');
-    expect(pageSource).toContain('Value at risk');
+    // T-2 (Tower Fix Package): submenu reduced to 5 tabs.
+    // Dropped: Source commercial, Value at risk (and 3 others).
+    expect(pageSource).toContain('Portfolio');
+    expect(pageSource).toContain('Scorecards');
+    expect(pageSource).toContain('Gates');
     expect(pageSource).toContain('Dependencies');
+    expect(pageSource).toContain('Executive brief');
     expect(componentSource).toContain('towerHandoffSlot');
     expect(componentSource).toContain('towerSubmenuSlot');
     expect(componentSource).toContain('towerLensSlot');
