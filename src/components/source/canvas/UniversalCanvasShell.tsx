@@ -4,6 +4,7 @@ import { useMemo, useState, type CSSProperties } from 'react';
 import { AppShell } from '@/components/shell/AppShell';
 import type {
   SourceEventArtifactState,
+  SourceEventArtifactStatus,
   SourceEventEvidence,
   SourceEventGateCriterion,
 } from '@/lib/source/canvas-substrate';
@@ -60,10 +61,27 @@ export function UniversalCanvasShell({
   const [isStreaming, setIsStreaming] = useState(false);
   const [selectedDocCode, setSelectedDocCode] = useState<string | undefined>(undefined);
 
+  // Per-event artifact state lives in client state so "Mark complete"
+  // can update optimistically. Server-loaded props are the source of
+  // truth on first render; the PATCH endpoint returns the canonical
+  // post-update row to reconcile.
+  const [artifactStateMap, setArtifactStateMap] = useState<
+    Record<string, SourceEventArtifactState>
+  >(() => indexByCode(artifactStates));
+  const [pendingStatusByCode, setPendingStatusByCode] = useState<
+    Record<string, boolean>
+  >({});
+
+  const liveArtifactStates = useMemo(
+    () =>
+      artifactStates.map((a) => artifactStateMap[a.artifactCode] ?? a),
+    [artifactStates, artifactStateMap],
+  );
+
   // Filter substrate to the stage being viewed.
   const stageArtifacts = useMemo(
-    () => artifactStates.filter((a) => a.stage === viewStage),
-    [artifactStates, viewStage],
+    () => liveArtifactStates.filter((a) => a.stage === viewStage),
+    [liveArtifactStates, viewStage],
   );
   const stageCriteria = useMemo(
     () => gateCriterionStates.filter((c) => c.fromStage === viewStage),
@@ -94,6 +112,49 @@ export function UniversalCanvasShell({
       totalCriteria: stageCriteria.length,
     };
   }, [stageArtifacts, stageCriteria, stageEvidence]);
+
+  const handleArtifactStatusChange = async (
+    code: string,
+    next: SourceEventArtifactStatus,
+  ): Promise<void> => {
+    const previous = artifactStateMap[code];
+    if (!previous) return;
+
+    // Optimistic update.
+    setArtifactStateMap((prev) => ({
+      ...prev,
+      [code]: { ...previous, status: next, updatedAt: new Date().toISOString() },
+    }));
+    setPendingStatusByCode((prev) => ({ ...prev, [code]: true }));
+
+    try {
+      const res = await fetch(
+        `/api/v1/source/${event.id}/artifacts/${encodeURIComponent(code)}/status`,
+        {
+          method: 'PATCH',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ status: next }),
+        },
+      );
+      if (!res.ok) {
+        // Revert.
+        setArtifactStateMap((prev) => ({ ...prev, [code]: previous }));
+        return;
+      }
+      const payload = (await res.json()) as { artifact?: SourceEventArtifactState };
+      if (payload.artifact) {
+        setArtifactStateMap((prev) => ({ ...prev, [code]: payload.artifact! }));
+      }
+    } catch {
+      setArtifactStateMap((prev) => ({ ...prev, [code]: previous }));
+    } finally {
+      setPendingStatusByCode((prev) => {
+        const next = { ...prev };
+        delete next[code];
+        return next;
+      });
+    }
+  };
 
   const handleSubmit = (text: string) => {
     // Wave 1 stub: append the user turn + a placeholder agent ack.
@@ -135,6 +196,8 @@ export function UniversalCanvasShell({
           templateByCode={templateByCode}
           selectedCode={selectedDocCode}
           onSelectCode={setSelectedDocCode}
+          onChangeStatus={handleArtifactStatusChange}
+          pendingByCode={pendingStatusByCode}
         />
       ),
     },
@@ -200,6 +263,14 @@ export function UniversalCanvasShell({
       </main>
     </AppShell>
   );
+}
+
+function indexByCode(
+  rows: SourceEventArtifactState[],
+): Record<string, SourceEventArtifactState> {
+  const out: Record<string, SourceEventArtifactState> = {};
+  for (const row of rows) out[row.artifactCode] = row;
+  return out;
 }
 
 const MAIN_STYLE: CSSProperties = {

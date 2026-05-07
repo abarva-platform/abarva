@@ -1,6 +1,9 @@
 import type { CSSProperties } from 'react';
 import { specByCode, type SourceArtifactSpec } from '@/lib/source/canonical-specs';
-import type { SourceEventArtifactState } from '@/lib/source/canvas-substrate';
+import type {
+  SourceEventArtifactState,
+  SourceEventArtifactStatus,
+} from '@/lib/source/canvas-substrate';
 import type { SourceStageKey } from '@/lib/source/types';
 import { SOURCE_STAGE_LABELS } from '@/lib/source/constants';
 import { CANVAS } from '../canvas-tokens';
@@ -13,7 +16,24 @@ interface DocumentTabProps {
   /** Currently focused artifact code; UI lets user switch. */
   selectedCode?: string;
   onSelectCode?: (code: string) => void;
+  /**
+   * Status mutator. When omitted (e.g. SSR / read-only previews) the
+   * Mark-complete button is hidden — the tab renders identically to
+   * the read-only display it had before B1.
+   */
+  onChangeStatus?: (code: string, next: SourceEventArtifactStatus) => Promise<void>;
+  /** Per-artifact pending flag — disables the button while the PATCH is in flight. */
+  pendingByCode?: Record<string, boolean>;
 }
+
+const STATUS_LABEL: Record<SourceEventArtifactStatus, string> = {
+  not_started: 'Not started',
+  drafting: 'Drafting',
+  needs_review: 'Needs review',
+  approved: 'Approved',
+  locked: 'Locked',
+  superseded: 'Superseded',
+};
 
 /**
  * The Document tab is the workspace's main surface — shows what's being
@@ -27,6 +47,8 @@ export function DocumentTab({
   templateByCode,
   selectedCode,
   onSelectCode,
+  onChangeStatus,
+  pendingByCode,
 }: DocumentTabProps) {
   if (artifacts.length === 0) {
     return (
@@ -97,12 +119,17 @@ export function DocumentTab({
                 <span style={BODY_CODE_STYLE}>{active.artifactCode}</span>
                 <span style={DOT_STYLE}>·</span>
                 <span>Tier: {active.tier}</span>
-                <span style={DOT_STYLE}>·</span>
-                <span>Status: {active.status.replace(/_/g, ' ')}</span>
               </div>
-              <h2 id="active-artifact-title" style={BODY_TITLE_STYLE}>
-                {activeSpec.name}
-              </h2>
+              <div style={BODY_TITLE_ROW_STYLE}>
+                <h2 id="active-artifact-title" style={BODY_TITLE_STYLE}>
+                  {activeSpec.name}
+                </h2>
+                <ArtifactStatusControls
+                  artifact={active}
+                  onChangeStatus={onChangeStatus}
+                  pending={pendingByCode?.[active.artifactCode] ?? false}
+                />
+              </div>
               <p style={BODY_DESC_STYLE}>{activeSpec.description}</p>
             </header>
             {body ? (
@@ -151,11 +178,97 @@ function ArtifactRow({ artifact, spec, isActive, onClick }: ArtifactRowProps) {
           <span style={ROW_CODE_STYLE}>{artifact.artifactCode}</span>
           <span style={DOT_STYLE}>·</span>
           <span style={tierStyle(artifact.tier)}>{artifact.tier}</span>
+          <StatusPill status={artifact.status} />
           {artifact.gateDefining ? <span style={GATE_TAG_STYLE}>gate</span> : null}
         </span>
       </button>
     </li>
   );
+}
+
+function StatusPill({ status }: { status: SourceEventArtifactStatus }) {
+  const tone = statusTone(status);
+  return (
+    <span
+      data-testid={`source-canvas-artifact-status-${status}`}
+      style={{
+        ...PILL_STYLE,
+        background: tone.bg,
+        color: tone.fg,
+        borderColor: tone.border,
+      }}
+    >
+      {STATUS_LABEL[status]}
+    </span>
+  );
+}
+
+interface ArtifactStatusControlsProps {
+  artifact: SourceEventArtifactState;
+  onChangeStatus?: (
+    code: string,
+    next: SourceEventArtifactStatus,
+  ) => Promise<void>;
+  pending: boolean;
+}
+
+function ArtifactStatusControls({
+  artifact,
+  onChangeStatus,
+  pending,
+}: ArtifactStatusControlsProps) {
+  const isTerminal = artifact.status === 'locked' || artifact.status === 'superseded';
+  const isApproved = artifact.status === 'approved';
+  return (
+    <div style={STATUS_CONTROLS_STYLE}>
+      <StatusPill status={artifact.status} />
+      {onChangeStatus && !isTerminal ? (
+        isApproved ? (
+          <button
+            type="button"
+            disabled={pending}
+            onClick={() => onChangeStatus(artifact.artifactCode, 'drafting')}
+            data-testid={`source-canvas-artifact-reopen-${artifact.artifactCode}`}
+            style={{ ...GHOST_BUTTON_STYLE, opacity: pending ? 0.55 : 1 }}
+          >
+            {pending ? 'Reopening…' : 'Reopen'}
+          </button>
+        ) : (
+          <button
+            type="button"
+            disabled={pending}
+            onClick={() => onChangeStatus(artifact.artifactCode, 'approved')}
+            data-testid={`source-canvas-artifact-mark-complete-${artifact.artifactCode}`}
+            style={{ ...PRIMARY_BUTTON_STYLE, opacity: pending ? 0.55 : 1 }}
+          >
+            {pending ? 'Saving…' : 'Mark complete'}
+          </button>
+        )
+      ) : null}
+    </div>
+  );
+}
+
+function statusTone(status: SourceEventArtifactStatus): {
+  bg: string;
+  fg: string;
+  border: string;
+} {
+  switch (status) {
+    case 'approved':
+      return { bg: 'rgba(46,125,50,0.10)', fg: '#2E7D32', border: 'rgba(46,125,50,0.32)' };
+    case 'drafting':
+      return { bg: 'rgba(186,117,23,0.10)', fg: '#A66400', border: 'rgba(186,117,23,0.30)' };
+    case 'needs_review':
+      return { bg: 'rgba(211,84,0,0.10)', fg: '#B85B00', border: 'rgba(211,84,0,0.30)' };
+    case 'locked':
+      return { bg: 'rgba(10,10,11,0.06)', fg: CANVAS.INK, border: 'rgba(10,10,11,0.22)' };
+    case 'superseded':
+      return { bg: 'rgba(10,10,11,0.04)', fg: CANVAS.INK_SOFT, border: 'rgba(10,10,11,0.14)' };
+    case 'not_started':
+    default:
+      return { bg: 'rgba(10,10,11,0.04)', fg: CANVAS.INK_SOFT, border: 'rgba(10,10,11,0.14)' };
+  }
 }
 
 function tierStyle(tier: SourceEventArtifactState['tier']): CSSProperties {
@@ -272,6 +385,14 @@ const DOT_STYLE: CSSProperties = {
   color: CANVAS.GRAY,
 };
 
+const BODY_TITLE_ROW_STYLE: CSSProperties = {
+  display: 'flex',
+  alignItems: 'flex-start',
+  justifyContent: 'space-between',
+  gap: 16,
+  flexWrap: 'wrap',
+};
+
 const BODY_TITLE_STYLE: CSSProperties = {
   fontFamily: CANVAS.SERIF,
   fontSize: 26,
@@ -280,6 +401,63 @@ const BODY_TITLE_STYLE: CSSProperties = {
   color: CANVAS.INK,
   margin: 0,
   lineHeight: 1.15,
+  flex: '1 1 auto',
+  minWidth: 0,
+};
+
+const STATUS_CONTROLS_STYLE: CSSProperties = {
+  display: 'inline-flex',
+  alignItems: 'center',
+  gap: 10,
+  flex: '0 0 auto',
+};
+
+const PILL_STYLE: CSSProperties = {
+  display: 'inline-flex',
+  alignItems: 'center',
+  fontFamily: CANVAS.MONO,
+  fontSize: 9,
+  fontWeight: 700,
+  letterSpacing: '0.10em',
+  textTransform: 'uppercase',
+  padding: '3px 8px',
+  borderRadius: 999,
+  border: '1px solid transparent',
+  whiteSpace: 'nowrap',
+};
+
+const PRIMARY_BUTTON_STYLE: CSSProperties = {
+  display: 'inline-flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  padding: '7px 12px',
+  borderRadius: 6,
+  border: 'none',
+  background: CANVAS.INK,
+  color: '#ffffff',
+  fontFamily: CANVAS.MONO,
+  fontSize: 10,
+  fontWeight: 700,
+  letterSpacing: '0.08em',
+  textTransform: 'uppercase',
+  cursor: 'pointer',
+};
+
+const GHOST_BUTTON_STYLE: CSSProperties = {
+  display: 'inline-flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  padding: '6px 11px',
+  borderRadius: 6,
+  border: `1px solid ${CANVAS.RULE}`,
+  background: 'transparent',
+  color: CANVAS.INK,
+  fontFamily: CANVAS.MONO,
+  fontSize: 10,
+  fontWeight: 600,
+  letterSpacing: '0.08em',
+  textTransform: 'uppercase',
+  cursor: 'pointer',
 };
 
 const BODY_DESC_STYLE: CSSProperties = {
