@@ -88,6 +88,7 @@ import {
 } from "@/lib/source/stage-packs";
 import { buildSourceLifecycleContract } from "@/lib/lifecycle-operating-system";
 import type { SourceStageKey } from "@/lib/source/types";
+import { getStageVoiceDepth } from "@/lib/source/stage-voice-depth";
 import {
   AMS_OUTSOURCING_2026_EVENT_ID,
   buildAmsVendorStoryline,
@@ -537,6 +538,11 @@ export async function POST(request: Request) {
     sourceStageKey: typeof sc.currentStageKey === 'string' ? sc.currentStageKey : undefined,
     eventName: typeof sc.eventName === 'string' ? sc.eventName : undefined,
   });
+  const sourceStageVoiceDepthBlock = buildSourceStageVoiceDepthBlock({
+    surface,
+    agentName: agentName ?? undefined,
+    sourceStageKey: typeof sc.currentStageKey === 'string' ? sc.currentStageKey : undefined,
+  });
   const sourceOperatingDoctrineBlock = buildSourceOperatingDoctrineBlock({
     surface,
     hasEvent: Boolean(sc.eventName),
@@ -877,6 +883,8 @@ export async function POST(request: Request) {
     sourceOperatingDoctrineBlock,
     "",
     sourceStagePackBlock,
+    "",
+    sourceStageVoiceDepthBlock,
     "",
     "Page context:",
     ...contextLines,
@@ -1717,6 +1725,36 @@ function buildSourceStagePackBlock(input: {
     formatStagePackForPrompt(pack),
     '',
     lifecycleSummary,
+  ].join('\n');
+}
+
+function buildSourceStageVoiceDepthBlock(input: {
+  surface: string;
+  agentName?: string;
+  sourceStageKey?: string;
+}): string {
+  if (!isSourceSurface(input.surface) || !input.sourceStageKey) return '';
+  const entry = getStageVoiceDepth(input.sourceStageKey as SourceStageKey);
+  if (!entry) return '';
+
+  const agentFocus = (() => {
+    const name = (input.agentName ?? '').toLowerCase();
+    if (name.includes('sentinel')) return entry.sentinelFocus;
+    if (name.includes('nexus')) return entry.nexusFocus;
+    if (name.includes('atlas')) return entry.atlasFocus;
+    if (name.includes('steward')) return entry.stewardFocus;
+    return entry.sentinelFocus;
+  })();
+
+  return [
+    '### Stage voice depth',
+    `Your focus for this stage: ${agentFocus}`,
+    '',
+    'Key questions this stage must answer:',
+    ...entry.keyQuestions.map((q) => `- ${q}`),
+    '',
+    'Risk signals to watch for:',
+    ...entry.riskSignals.map((r) => `- ${r}`),
   ].join('\n');
 }
 
