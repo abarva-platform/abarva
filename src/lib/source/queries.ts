@@ -312,19 +312,46 @@ export function sourceEventRowToSummary(row: SourceEventRow, accountName: string
   };
 }
 
-async function getPersistedSourceEventRow(eventId: string, clientKey: string): Promise<SourceEventRow | null> {
-  const { data, error } = await getServerSupabase()
-    .from('source_events')
-    .select('*')
-    .eq('id', eventId)
-    .eq('client_key', clientKey)
-    .maybeSingle();
+// B7 — accept either a UUID or an event_code (e.g. SRC-APX-101) as
+// the URL slug. UUID hits the existing primary-key path; anything
+// else falls through to event_code lookup. Tenant scope on
+// client_key is preserved.
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-  if (error) {
-    console.error('[getPersistedSourceEventRow]', error.message);
-    return null;
+function isUuid(value: string): boolean {
+  return UUID_REGEX.test(value);
+}
+
+async function getPersistedSourceEventRow(eventId: string, clientKey: string): Promise<SourceEventRow | null> {
+  const supabase = getServerSupabase();
+  // Try by primary key first when the slug looks like a UUID — fast
+  // path for existing links + most internal navigation.
+  if (isUuid(eventId)) {
+    const { data, error } = await supabase
+      .from('source_events')
+      .select('*')
+      .eq('id', eventId)
+      .eq('client_key', clientKey)
+      .maybeSingle();
+    if (error) {
+      console.error('[getPersistedSourceEventRow:id]', error.message);
+      return null;
+    }
+    if (data) return data as SourceEventRow;
+    // Fall through — UUID didn't match; try event_code in case it's a
+    // UUID-shaped code (very rare but cheap to attempt).
   }
 
+  const { data, error } = await supabase
+    .from('source_events')
+    .select('*')
+    .eq('event_code', eventId)
+    .eq('client_key', clientKey)
+    .maybeSingle();
+  if (error) {
+    console.error('[getPersistedSourceEventRow:code]', error.message);
+    return null;
+  }
   return (data as SourceEventRow | null) ?? null;
 }
 
@@ -366,13 +393,20 @@ export async function getSourcingEvent(eventId: string): Promise<SourcingEventDe
     getActiveClientRow().catch(() => null),
     requireTenancy().catch(() => null),
   ]);
-  if (activeClient && tenancy && !(await canReadSourceEvent(tenancy, activeClient.key, eventId).catch(() => false))) {
-    return null;
-  }
 
+  // B7 — slug may be a UUID (legacy) or an event_code (e.g. SRC-APX-101).
+  // Resolve the row first; the access policy then checks the UUID.
   if (activeClient) {
     const persistedEvent = await getPersistedSourceEventRow(eventId, activeClient.key);
     if (persistedEvent) {
+      if (
+        tenancy &&
+        !(await canReadSourceEvent(tenancy, activeClient.key, persistedEvent.id).catch(
+          () => false,
+        ))
+      ) {
+        return null;
+      }
       return sourceEventRowToDetail(persistedEvent, activeClient.name);
     }
   } else {
@@ -388,8 +422,16 @@ export async function getSourcingEvent(eventId: string): Promise<SourcingEventDe
     }
   }
 
+  // Seed events use UUIDs only — code lookup is a no-op there.
   const event = getSourceEventSeed(eventId);
   if (!event) return null;
+  if (
+    activeClient &&
+    tenancy &&
+    !(await canReadSourceEvent(tenancy, activeClient.key, event.id).catch(() => false))
+  ) {
+    return null;
+  }
   const override = getStageOverride(eventId);
   if (override) {
     const normalizedOverride = normalizeSourceStageKey(override) ?? override;
