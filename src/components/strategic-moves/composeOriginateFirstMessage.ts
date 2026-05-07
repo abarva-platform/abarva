@@ -19,6 +19,18 @@ export interface OriginateFirstMessage {
   id: string;
 }
 
+/** Context passed when the user arrives at /strategic-moves/new via the
+ *  "Shape into a Move →" CTA on an AI Initiative detail page.
+ *  Triggers variant 2D which pre-loads the initiative as the Move seed. */
+export interface FromInitiativeCtx {
+  displayId: string;   // e.g. "MH-06"
+  name: string;        // e.g. "Joule (SAP) Pilot for Finance"
+  statusFlag: string;  // e.g. "VALUE_LAG"
+  gapUsd: number | null; // abs(committed - measured), in USD
+  ownerName: string;   // sponsor candidate name
+  goalName: string;    // primary business goal name
+}
+
 // Step label and one-line description per Layer 5 §2B table.
 const SCAFFOLD_STEP_DESCRIPTIONS: Record<
   number,
@@ -58,9 +70,56 @@ function detectLastCompletedStep(brief: {
   return lastComplete;
 }
 
+// ---------------------------------------------------------------------
+// Variant 2D — arrive from "Shape into a Move →" CTA on an AI Initiative
+// ---------------------------------------------------------------------
+
+function composeFromInitiativeMessage(from: FromInitiativeCtx): OriginateFirstMessage {
+  const gapLine =
+    from.gapUsd !== null && from.gapUsd > 0
+      ? ` with a **$${(from.gapUsd / 1_000_000).toFixed(1)}M gap** between committed and measured value`
+      : '';
+
+  const statusNote =
+    from.statusFlag === 'VALUE_LAG'
+      ? `This is a **Value Lag** pattern${gapLine}. That's a strong candidate for a value-recovery Move.`
+      : from.statusFlag === 'HEALTHY'
+        ? `This initiative is tracking healthy${gapLine} — a good candidate for an expansion or scale-up Move.`
+        : from.statusFlag === 'AT_RISK'
+          ? `This initiative is flagged **At Risk**${gapLine}. A corrective Move can address the root cause.`
+          : `This initiative has status **${from.statusFlag}**${gapLine}.`;
+
+  const sponsorLine = from.ownerName
+    ? `**${from.ownerName}** is listed as initiative owner — are they the right sponsor for this Move, or is someone else leading the recovery?`
+    : 'Who should sponsor this Move?';
+
+  return {
+    role: 'assistant',
+    agentName: 'Nexus',
+    text: `You're launching this Move from **${from.displayId} — ${from.name}** (goal: ${from.goalName}).
+
+${statusNote}
+
+To build the brief, I need four things: your read on **what's causing this**, **who should sponsor** the recovery, **what scope** makes this tractable in one Move, and a **value hypothesis** for what's recoverable.
+
+${sponsorLine}`,
+    id: `originate-open-2d-${from.displayId.toLowerCase().replace(/[^a-z0-9]/g, '-')}`,
+  };
+}
+
+// ---------------------------------------------------------------------
+// Main export
+// ---------------------------------------------------------------------
+
 export async function composeOriginateFirstMessage(
   ctx: TenancyCtx,
+  fromInitiative?: FromInitiativeCtx | null,
 ): Promise<OriginateFirstMessage> {
+  // 2D — arriving from "Shape into a Move →" on an AI Initiative page
+  if (fromInitiative?.displayId) {
+    return composeFromInitiativeMessage(fromInitiative);
+  }
+
   let draft = null;
   try {
     draft = await getOpenDraft(ctx, '/strategic-moves/new');

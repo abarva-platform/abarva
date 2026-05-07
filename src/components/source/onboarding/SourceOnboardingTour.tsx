@@ -9,7 +9,7 @@
 // card with Skip / Next / Done is enough to unblock first-time
 // adoption without dictating where the user clicks.
 
-import { useEffect, useState, type CSSProperties, type ReactNode } from 'react';
+import { useState, type CSSProperties, type ReactNode } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
@@ -41,21 +41,17 @@ interface Props {
 
 export function SourceOnboardingTour({ active, config }: Props) {
   const router = useRouter();
-  const [dismissed, setDismissed] = useState(false);
-
-  useEffect(() => {
-    if (!active) return;
-    // If the tour is being re-shown but the user already finished it
-    // on a previous visit, respect that — only show on explicit
-    // re-entry from the "Take the tour" link, which clears the flag.
+  // Read localStorage at mount time (lazy initialiser — no effect needed).
+  // If the user already completed the tour on a previous visit,
+  // treat this instance as pre-dismissed. The `dismissed` state flag
+  // handles the skip/done action within the current session.
+  const [dismissed, setDismissed] = useState<boolean>(() => {
     try {
-      if (window.localStorage.getItem(STORAGE_KEY) === '1') {
-        setDismissed(true);
-      }
+      return window.localStorage.getItem(STORAGE_KEY) === '1';
     } catch {
-      /* swallow */
+      return false;
     }
-  }, [active]);
+  });
 
   if (!active || dismissed) return null;
 
@@ -102,7 +98,7 @@ export function SourceOnboardingTour({ active, config }: Props) {
           Skip tour
         </button>
         {config.awaitingUserAction ? (
-          <span style={AWAIT_HINT_STYLE}>Continue when you're ready.</span>
+          <span style={AWAIT_HINT_STYLE}>Continue when you&apos;re ready.</span>
         ) : isFinal ? (
           <button
             type="button"
