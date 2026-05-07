@@ -27,6 +27,12 @@ export const PUBLIC_ROUTE_PATTERNS = [
   // Demo code sign-in starts unauthenticated from /sign-in, so the ticket
   // handoff route must stay publicly reachable and perform its own checks.
   '/api/auth/demo-code-sign-in(.*)',
+  // INT-V3 (2026-05-07) · /intelligence is the public Explore Layer
+  // surface — corpus doctrine, no tenant data leakage. Auth-required
+  // sub-paths (author / quality / synthesize / ask / validate) are
+  // still gated by AUTH_REQUIRED_ROUTE_PATTERNS, which is checked
+  // before the public-route fall-through.
+  '/intelligence(.*)',
 ] as const
 
 const isPublicRoute = createRouteMatcher([...PUBLIC_ROUTE_PATTERNS])
