@@ -179,8 +179,11 @@ export function UniversalCanvasShell({
     }, 250);
   };
 
-  const handleChoice = (choice: string) => {
-    handleSubmit(choice);
+  // B4 — clicking a suggested choice now POPULATES the composer (handled
+  // inside EventChatLane). The parent observes the pick for analytics; we
+  // intentionally do NOT auto-submit so the user can edit before sending.
+  const handleChoice = (_choice: string) => {
+    /* analytics hook — kept for parity, no auto-submit */
   };
 
   const initialTab: WorkspaceTabKey = 'document';

@@ -135,6 +135,11 @@ export function EventChatLane({
         {thread.length === 0 ? (
           <div style={EMPTY_STATE_STYLE}>
             <p style={EMPTY_TITLE_STYLE}>Ask {agent} anything about this step.</p>
+            <p style={EMPTY_SUBTITLE_STYLE}>
+              {agent} can draft any artifact, run the gate check, and propose your
+              next move. Try one of the three choices below — clicking fills the
+              composer so you can edit before sending.
+            </p>
           </div>
         ) : (
           thread.map((turn) => (
@@ -153,15 +158,20 @@ export function EventChatLane({
         <div ref={threadEndRef} />
       </div>
 
-      {/* Three suggested choices */}
+      {/* Three suggested choices · B4 — clicking populates the composer
+          rather than auto-submitting, so the user can edit before sending. */}
       {choices.length > 0 ? (
         <div style={CHOICES_STYLE} aria-label={`Three suggested next moves for ${stageLabel}`}>
-          <div style={CHOICES_LABEL_STYLE}>↳ Three choices for {stageLabel}</div>
+          <div style={CHOICES_LABEL_STYLE}>↳ Try one for {stageLabel}</div>
           {choices.map((choice, i) => (
             <button
               key={i}
               type="button"
-              onClick={() => onChoice?.(choice)}
+              onClick={() => {
+                onChange(choice);
+                onChoice?.(choice);
+                inputRef.current?.focus();
+              }}
               disabled={isStreaming}
               data-testid={`source-canvas-choice-${i}`}
               style={CHOICE_BUTTON_STYLE}
@@ -316,6 +326,15 @@ const EMPTY_TITLE_STYLE: CSSProperties = {
   fontWeight: 400,
   color: CANVAS.INK,
   margin: 0,
+};
+
+const EMPTY_SUBTITLE_STYLE: CSSProperties = {
+  fontFamily: CANVAS.SANS,
+  fontSize: 12.5,
+  lineHeight: 1.5,
+  color: CANVAS.INK_SOFT,
+  margin: 0,
+  maxWidth: 520,
 };
 
 
