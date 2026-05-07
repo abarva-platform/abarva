@@ -1,0 +1,8 @@
+{
+  "trigger": "Two data platform tools (Snowflake + Databricks) overlap heavily; finance wants consolidation; CDO wants AI workloads to run on a single platform.",
+  "decisionOwner": "CDO + VP Data Engineering",
+  "scopeBoundary": "Lakehouse + warehouse + ML platform consolidation. ETL pipelines stay separate. BI tools (Tableau, Looker) out of scope this round.",
+  "valueTarget": "$4M-$6M license + ops; consolidation gain ~25% TCO reduction over 3 years.",
+  "baselineOwner": "Data Engineering Lead — owns the workload inventory + current spend across both platforms.",
+  "category": "data_ai"
+}

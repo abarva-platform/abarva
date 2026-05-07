@@ -20,9 +20,9 @@ fixed.
 | ~~A2~~ | ~~`walk-canvas` and `promote-stage` need an event URL pasted~~ **CLOSED** — both default to the most recent `create-event` `eventUrl` resolved from `runs/`. Pass `--event` to override. | n/a | n/a |
 | ~~A3~~ | ~~No way to chain scenarios.~~ **CLOSED** — `npm run scenario:e2e` runs `create-event → walk-canvas → promote-stage` in one shot, single run dir, single audit log. | n/a | n/a |
 | ~~A4~~ | ~~Output is technical (JSONL / CSV / per-run audit log).~~ **CLOSED** — every run now writes `summary.md` with status, per-step result JSON, and embedded screenshot links. Open this file first when reviewing a run. | n/a | n/a |
-| A5 | All defaults for `create-event` are hardcoded in `scenarios.ts`. | Iterating on different event archetypes means editing TS each time. | `--fixture path/to/event.json` flag; ship a few fixtures (AMS-renewal, cloud-migration, data-platform) under `fixtures/`. |
-| A6 | Headed browser is the only mode. | A 2-min run that needs a visible browser is still 2 minutes a human stares at. | `--quick` flag → headless, 0.3s jitter, tighter timeouts. |
-| A7 | No way to point the tool at `localhost:3000` while iterating on the surface. | Every code change → push → wait for Vercel → run scenario. | Just doc-fix: README should call out that `TENANT_URL=http://localhost:3000/source` works as long as Clerk session is captured against localhost. |
+| ~~A5~~ | ~~All defaults for `create-event` are hardcoded in `scenarios.ts`.~~ **CLOSED** — pass `--fixture path/to/event.json` to drive create-event with a different archetype. Three fixtures ship: `ams-renewal.json` (default-equivalent), `cloud-migration.json`, `data-platform.json`. | n/a | n/a |
+| ~~A6~~ | ~~Headed browser is the only mode.~~ **CLOSED** — pass `--quick` to any scenario for headless mode. Default behavior (headed) preserved so a human can still watch. | n/a | n/a |
+| ~~A7~~ | ~~No way to point the tool at `localhost:3000` while iterating on the surface.~~ **CLOSED** — README now has a "Pointing at localhost" section with the three env vars to override (`TENANT_URL`, `TENANT_HOSTNAME`, `SIGNIN_URL`) and a note about re-saving the session per environment. | n/a | n/a |
 
 ## B. AbarVa surface gaps the tool is working around
 
@@ -35,7 +35,7 @@ fixed.
 | B5 | No onboarding flow for first-time users. | A founder demoing AbarVa to a CFO has to narrate every click. | `?onboard=1` query param triggers a 4-step tooltip tour: Portfolio → New event → Canvas → Promote. |
 | ~~B6~~ | ~~`/source/new` intake doesn't autosave.~~ **CLOSED** — intake + selected category persist to `localStorage` per tenant on every change; restored on mount with a "Draft restored from autosave · Discard draft" hint. Cleared on successful submission. SSR-safe via `typeof window` guards. | n/a | n/a |
 | B7 | `/source/events/<UUID>` URLs are cryptic. | Hard to bookmark, hard to share, hard to remember. | Use `code` (e.g. `SRC-APX-101`) as the URL slug; UUID stays the substrate primary key. |
-| B8 | "What does Sentinel actually do?" is invisible. | Users who don't know agent-product idiom assume it's a search box. | Brief eyebrow above the chat input: *"Sentinel can draft any artifact, run the gate check, and propose your next move. Try: 'draft scope memo'."* |
+| ~~B8~~ | ~~"What does Sentinel actually do?" is invisible.~~ **CLOSED** — agent eyebrow under the chat-lane name now uses action verbs ("Drafts the scope memo, runs the gate check, proposes your next move") instead of abstract role descriptions. Pairs with the B4 empty-state subtitle. | n/a | n/a |
 
 ## C. Meta principles for "easy to use in the world of AI"
 

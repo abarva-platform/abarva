@@ -40,11 +40,14 @@ interface EventChatLaneProps {
   onChoice?: (text: string) => void;
 }
 
+// B8 — eyebrow under the agent name. Action verbs the user can ask
+// for, not abstract role descriptions. Pairs with the empty-state
+// subtitle below the thread so first-time users know what to try.
 const AGENT_DESCRIPTION: Record<SourceLeadAgent, string> = {
-  Nexus: 'Workflow lead. Keeps scope and gate cadence honest.',
-  Sentinel: 'Information integrity. Pulls evidence and flags gaps.',
-  Steward: 'Scorecard and weight governance.',
-  Atlas: 'Executive framing, decision brief, value posture.',
+  Nexus: 'Drafts the scope memo, runs the gate check, proposes your next move.',
+  Sentinel: 'Drafts artifacts, surfaces evidence, flags gaps before they cost you.',
+  Steward: 'Reviews scorecards, governs weights, runs gate decisions.',
+  Atlas: 'Frames the executive brief, ranks finalists, locks the decision.',
 };
 
 export function EventChatLane({

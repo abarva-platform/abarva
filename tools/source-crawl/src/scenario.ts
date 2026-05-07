@@ -8,7 +8,7 @@
 // you own (AbarVa demo tenants). Do not point at a production
 // sourcing platform you do not control.
 
-import { chromium, type BrowserContext, type Page } from 'playwright';
+import { chromium } from 'playwright';
 import {
   existsSync,
   readFileSync,
@@ -16,7 +16,7 @@ import {
   statSync,
   writeFileSync,
 } from 'node:fs';
-import { dirname, join, relative } from 'node:path';
+import { dirname, join, relative, resolve } from 'node:path';
 import { loadConfig, type CrawlConfig } from './config.js';
 import {
   createEvent,
@@ -24,6 +24,7 @@ import {
   makeRunDir,
   promoteStage,
   walkCanvas,
+  type CreateEventOptions,
   type ScenarioContext,
   type ScenarioName,
 } from './scenarios.js';
@@ -32,6 +33,8 @@ interface ParsedArgs {
   name: ScenarioName | 'e2e';
   eventUrl: string | null;
   useLastEvent: boolean;
+  fixturePath: string | null;
+  quick: boolean;
 }
 
 function parseArgs(): ParsedArgs {
@@ -39,18 +42,23 @@ function parseArgs(): ParsedArgs {
   const name = argv[0] as ParsedArgs['name'];
   if (!name) {
     console.error(
-      'Usage: tsx src/scenario.ts <create-event|walk-canvas|promote-stage|e2e> [--event <url>]',
+      'Usage: tsx src/scenario.ts <create-event|walk-canvas|promote-stage|e2e> [--event <url>] [--fixture path/to/event.json] [--quick]',
     );
     process.exit(1);
   }
   const eventFlag = argv.indexOf('--event');
   const eventArg =
     eventFlag >= 0 && argv[eventFlag + 1] ? (argv[eventFlag + 1] ?? null) : null;
+  const fixtureFlag = argv.indexOf('--fixture');
+  const fixtureArg =
+    fixtureFlag >= 0 && argv[fixtureFlag + 1] ? (argv[fixtureFlag + 1] ?? null) : null;
 
   return {
     name,
     eventUrl: eventArg,
     useLastEvent: !eventArg, // default behavior — auto-resolve from runs/
+    fixturePath: fixtureArg,
+    quick: argv.includes('--quick'),
   };
 }
 
@@ -73,7 +81,11 @@ async function main(): Promise<void> {
   log(`tenant:   ${cfg.tenantUrl}`);
   log(`run dir:  ${runDir}`);
 
-  const browser = await chromium.launch({ headless: !cfg.headed });
+  // A6 — `--quick` overrides .env CRAWL_HEADED; useful for unattended
+  // smoke runs. Default behavior (headed) preserved.
+  const headless = args.quick ? true : !cfg.headed;
+  if (args.quick) log(`quick mode: headless`);
+  const browser = await chromium.launch({ headless });
   const context = await browser.newContext({
     storageState: cfg.storageStatePath,
     viewport: { width: 1440, height: 900 },
@@ -92,8 +104,9 @@ async function main(): Promise<void> {
   };
 
   try {
+    const fixture = loadFixture(args.fixturePath, log);
     if (args.name === 'create-event') {
-      summary.steps.push(await runCreateEvent(ctx, summary));
+      summary.steps.push(await runCreateEvent(ctx, summary, fixture));
     } else if (args.name === 'walk-canvas') {
       const eventUrl = await resolveEventUrl(args, cfg, log);
       summary.steps.push(await runWalkCanvas(ctx, summary, eventUrl));
@@ -102,7 +115,7 @@ async function main(): Promise<void> {
       summary.steps.push(await runPromoteStage(ctx, summary, eventUrl));
     } else if (args.name === 'e2e') {
       // create-event → walk-canvas → promote-stage in one shot.
-      const created = await runCreateEvent(ctx, summary);
+      const created = await runCreateEvent(ctx, summary, fixture);
       summary.steps.push(created);
       const eventUrl = (created.result as { eventUrl?: string })?.eventUrl;
       if (!eventUrl) throw new Error('e2e: create-event did not return an eventUrl.');
@@ -140,9 +153,10 @@ interface StepRecord {
 async function runCreateEvent(
   ctx: ScenarioContext,
   _summary: ScenarioSummary,
+  fixture?: CreateEventOptions,
 ): Promise<StepRecord> {
   try {
-    const result = await createEvent(ctx);
+    const result = await createEvent(ctx, fixture);
     writeFileSync(
       join(ctx.runDir, 'result.create-event.json'),
       JSON.stringify(result, null, 2),
@@ -150,6 +164,27 @@ async function runCreateEvent(
     return { step: 'create-event', ok: true, result };
   } catch (err) {
     return { step: 'create-event', ok: false, result: null, error: (err as Error).message };
+  }
+}
+
+function loadFixture(
+  fixturePath: string | null,
+  log: (line: string) => void,
+): CreateEventOptions | undefined {
+  if (!fixturePath) return undefined;
+  const resolved = resolve(process.cwd(), fixturePath);
+  if (!existsSync(resolved)) {
+    throw new Error(`fixture not found: ${resolved}`);
+  }
+  try {
+    const parsed = JSON.parse(readFileSync(resolved, 'utf8')) as Partial<CreateEventOptions>;
+    if (!parsed.trigger || typeof parsed.trigger !== 'string') {
+      throw new Error('fixture must have a non-empty `trigger` field');
+    }
+    log(`fixture: ${relative(process.cwd(), resolved)}`);
+    return parsed as CreateEventOptions;
+  } catch (err) {
+    throw new Error(`failed to load fixture ${resolved}: ${(err as Error).message}`);
   }
 }
 
