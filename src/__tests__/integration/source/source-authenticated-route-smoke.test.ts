@@ -60,16 +60,22 @@ describe('Source authenticated route smoke', () => {
     expect(componentSource).not.toMatch(/fetch\(|openai|claude|anthropic/i);
   });
 
-  it('renders the authenticated Source event route with deterministic shell content', async () => {
+  it('renders the authenticated Source event route through the universal canvas', async () => {
     const page = await SourceEventDetailPage({
       params: Promise.resolve({ eventId: SOURCE_GOLDEN_EVENT_IDS.dataAiModernization }),
     });
     const html = renderToStaticMarkup(page);
 
+    // Universal canvas surface markers — id strip, step rail, splitter, tabs.
     expect(html).toContain('Data &amp; AI Modernization SI Selection');
-    expect(html).toContain('Journey map');
-    expect(html).toContain('Scope stage workspace');
-    expect(html).toContain('Data readiness');
+    expect(html).toContain('source-canvas-id-strip');
+    expect(html).toContain('source-canvas-step-rail');
+    expect(html).toContain('source-canvas-splitter');
+    expect(html).toContain('source-canvas-workspace');
+    expect(html).toContain('source-canvas-tab-document');
+    expect(html).toContain('source-canvas-tab-gate');
+    expect(html).toContain('source-canvas-tab-evidence');
+    expect(html).toContain('source-canvas-tab-log');
   });
 
   it('documents the current auth test boundary without weakening auth', () => {

@@ -26,7 +26,14 @@ import {
 export async function listArtifactStatesForEvent(
   sourceEventId: string,
 ): Promise<SourceEventArtifactState[]> {
-  const supabase = getServerSupabase();
+  let supabase: ReturnType<typeof getServerSupabase>;
+  try {
+    supabase = getServerSupabase();
+  } catch {
+    // Env not configured (tests, local dev without DB) — return empty so
+    // the canvas renders graceful empty state instead of crashing.
+    return [];
+  }
   const { data, error } = await supabase
     .from('source_event_artifact_states')
     .select('*')
@@ -43,7 +50,14 @@ export async function listArtifactStatesForEvent(
 export async function listGateCriterionStatesForEvent(
   sourceEventId: string,
 ): Promise<SourceEventGateCriterion[]> {
-  const supabase = getServerSupabase();
+  let supabase: ReturnType<typeof getServerSupabase>;
+  try {
+    supabase = getServerSupabase();
+  } catch {
+    // Env not configured (tests, local dev without DB) — return empty so
+    // the canvas renders graceful empty state instead of crashing.
+    return [];
+  }
   const { data, error } = await supabase
     .from('source_event_gate_criterion_states')
     .select('*')
@@ -62,7 +76,14 @@ export async function listGateCriterionStatesForEvent(
 export async function listEvidenceStatesForEvent(
   sourceEventId: string,
 ): Promise<SourceEventEvidence[]> {
-  const supabase = getServerSupabase();
+  let supabase: ReturnType<typeof getServerSupabase>;
+  try {
+    supabase = getServerSupabase();
+  } catch {
+    // Env not configured (tests, local dev without DB) — return empty so
+    // the canvas renders graceful empty state instead of crashing.
+    return [];
+  }
   const { data, error } = await supabase
     .from('source_event_evidence_states')
     .select('*')
