@@ -52,6 +52,7 @@
     "db:seed:meridian-intelligence": "npx tsx src/scripts/seed/seed-meridian-intelligence-layer.ts",
     "db:verify:meridian-intelligence": "npx tsx src/scripts/seed/verify-meridian-intelligence-layer.ts",
     "db:smoke:meridian-intelligence": "npx tsx src/scripts/seed/smoke-meridian-intelligence-layer.ts",
+    "db:seed:first-capital-setup-data": "npx tsx src/scripts/setup-data/load-first-capital-setup-data.ts",
     "db:seed:first-capital-intelligence": "npx tsx src/scripts/seed/seed-first-capital-intelligence-layer.ts",
     "db:verify:first-capital-intelligence": "npx tsx src/scripts/seed/verify-first-capital-intelligence-layer.ts",
     "db:smoke:first-capital-intelligence": "npx tsx src/scripts/seed/smoke-first-capital-intelligence-layer.ts",

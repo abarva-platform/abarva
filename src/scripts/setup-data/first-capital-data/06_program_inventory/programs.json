@@ -1,0 +1,156 @@
+{
+  "tenant_key": "first-capital",
+  "segment": "program_inventory",
+  "as_of": "2026-04-28",
+  "programs": [
+    {
+      "program_id": "prog:fcfi:fcfi-digital-2026",
+      "name": "Digital Banking Transformation",
+      "short_name": "Digital Banking Tx",
+      "status": "In Flight",
+      "phase": "P3 — Design",
+      "sponsor": "person:fcfi:james-forsythe",
+      "program_lead": "person:fcfi:vincent-morales",
+      "business_function": "Retail Banking",
+      "strategic_priority": "Digital Banking Transformation",
+      "start_date": "2025-09-01",
+      "target_completion": "2027-06-30",
+      "total_budget_usd": 18500000,
+      "spend_to_date_usd": 2800000,
+      "vendor_partners": ["Temenos Infinity", "Jack Henry Digital", "Q2 Holdings"],
+      "key_outcomes": [
+        "Consumer digital adoption 68% → 78% by Q4 2026",
+        "Digital account open rate 31% → 55%",
+        "Mobile app rating 3.8 → 4.4",
+        "Online banking MAU 52% → 62%",
+        "Banker digital productivity tools deployed to all 68 RMs"
+      ],
+      "current_risks": [
+        "Core banking modernization timeline dependency — digital transformation limited by legacy FiServ constraints",
+        "CDO and CIO tension on architecture decisions slowing vendor selection",
+        "Budget constraint: $18.5M approved; CIO estimates $24M needed for full scope"
+      ],
+      "gate_status": "P3 gate passed 2026-03-15; P4 Build gate target Q3 2026"
+    },
+    {
+      "program_id": "prog:fcfi:fcfi-core-2026",
+      "name": "Core Banking Modernization",
+      "short_name": "Core Banking Mod",
+      "status": "In Flight",
+      "phase": "P2 — Architecture",
+      "sponsor": "person:fcfi:james-forsythe",
+      "program_lead": "person:fcfi:karen-nakamura",
+      "business_function": "IT",
+      "strategic_priority": "Core Banking Modernization",
+      "start_date": "2025-06-01",
+      "target_completion": "2029-12-31",
+      "total_budget_usd": 54000000,
+      "spend_to_date_usd": 3600000,
+      "vendor_partners": ["FiServ (incumbent)", "Temenos (finalist)", "Finxact (finalist)"],
+      "key_outcomes": [
+        "Replace FiServ Cleartouch (1998 vintage) with API-first modern core",
+        "Real-time payments capability (FedNow + RTP)",
+        "Core banking uptime 99.82% → 99.95%",
+        "Change failure rate 8.4% → <5%",
+        "Critical patch compliance 91% → 98%",
+        "Enable open banking / FDX standard compliance"
+      ],
+      "current_risks": [
+        "Total cost estimate range $42M–$65M; Board approved $54M with $12M contingency gate",
+        "Vendor selection decision gate Q3 2026; Temenos and Finxact in final evaluation",
+        "Estimated 3.5-4 year implementation; real-time business benefits deferred",
+        "Digital transformation program blocked on core decisions"
+      ],
+      "gate_status": "P2 gate in progress; RFP responses evaluated; vendor down-select Q3 2026"
+    },
+    {
+      "program_id": "prog:fcfi:fcfi-aml-2026",
+      "name": "AML/KYC Enhancement — OCC MRA Remediation",
+      "short_name": "AML/KYC Enhancement",
+      "status": "In Flight",
+      "phase": "P1 — Discovery",
+      "sponsor": "person:fcfi:marcus-osei",
+      "program_lead": "person:fcfi:patricia-holbrook",
+      "business_function": "Compliance",
+      "strategic_priority": "AML/KYC Enhancement — Regulatory Priority",
+      "start_date": "2026-01-15",
+      "target_completion": "2026-12-31",
+      "total_budget_usd": 8200000,
+      "spend_to_date_usd": 1400000,
+      "vendor_partners": ["Actimize NICE (existing)", "Exiger (CDD consulting)", "EY (external validation)"],
+      "key_outcomes": [
+        "CDD program completeness 74% → 95% (OCC MRA remediation)",
+        "SAR false-positive rate 31% → ≤20%",
+        "Transaction monitoring alert volume rationalized by 25%",
+        "Enhanced due diligence procedures for high-risk customers documented and deployed",
+        "MRA with Commitment (BSA) closed by Q4 2026"
+      ],
+      "current_risks": [
+        "OCC examiners return Q4 2026; insufficient progress risks formal enforcement action",
+        "CDD refresh requires manual outreach to 14,000 commercial customers — operational capacity constraint",
+        "Transaction monitoring tuning requires model validation (currently overdue per MRM policy)",
+        "Patricia Holbrook is both program lead and sponsor — single point of failure"
+      ],
+      "gate_status": "P1 completed; P2 Design gate approved 2026-03-28; OCC progress report due Q2 2026"
+    },
+    {
+      "program_id": "prog:fcfi:fcfi-wealth-2026",
+      "name": "Wealth Platform Consolidation",
+      "short_name": "Wealth Platform Consolidation",
+      "status": "In Flight",
+      "phase": "P1 — Discovery",
+      "sponsor": "person:fcfi:diana-stern",
+      "program_lead": "person:fcfi:diana-stern",
+      "business_function": "Wealth Management",
+      "strategic_priority": "Wealth Platform Consolidation",
+      "start_date": "2025-11-01",
+      "target_completion": "2028-03-31",
+      "total_budget_usd": 7800000,
+      "spend_to_date_usd": 680000,
+      "vendor_partners": ["Advent Geneva (incumbent)", "Salesforce FSC (incumbent)", "Orion (incumbent)", "Envestnet (finalist)", "SS&C Advent (finalist)"],
+      "key_outcomes": [
+        "Consolidate 3 platforms to 1 (Envestnet or SS&C Advent)",
+        "Wealth portal adoption 42% → 65%",
+        "NNM $142M → $200M+ (platform friction reduced)",
+        "Wealth client retention 91.2% → 93.5%",
+        "Financial plan completion rate 44% → 70%"
+      ],
+      "current_risks": [
+        "Vendor selection not started; Diana Stern is both sponsor and lead — bandwidth constraint",
+        "Data migration complexity: 4,200 clients across 3 systems with 10+ years history",
+        "Advisor productivity disruption during transition (2 advisors left in 2025 partly due to platform frustration)",
+        "Cost estimate preliminary at $7.8M; prior similar implementations ran $12–15M"
+      ],
+      "gate_status": "P1 in progress; business case for P2 target Q2 2026"
+    },
+    {
+      "program_id": "prog:fcfi:fcfi-data-gov-2026",
+      "name": "Data Governance & Analytics Platform",
+      "short_name": "Data Governance",
+      "status": "In Flight",
+      "phase": "P2 — Architecture",
+      "sponsor": "person:fcfi:charlotte-reid",
+      "program_lead": "person:fcfi:karen-nakamura",
+      "business_function": "Finance",
+      "strategic_priority": "Data Governance & Analytics",
+      "start_date": "2025-08-01",
+      "target_completion": "2028-06-30",
+      "total_budget_usd": 11200000,
+      "spend_to_date_usd": 1900000,
+      "vendor_partners": ["Informatica (MDM / data catalog)", "Databricks (analytics platform)", "dbt Labs (transformation)"],
+      "key_outcomes": [
+        "Enterprise data dictionary deployed (currently: none)",
+        "6 unconnected data warehouses consolidated to single governed platform",
+        "Manual regulatory reports (4 of 8) automated",
+        "Credit decision quality improvement: CECL model RMSE −15%",
+        "AML detection accuracy improvement feeding fcfi-aml-2026"
+      ],
+      "current_risks": [
+        "Core banking modernization is upstream dependency — data governance architecture tied to new core",
+        "Data governance requires policy and process change (organizational resistance noted from line-of-business heads)",
+        "Two programs (AML, Capital) both require data platform to deliver; sequencing conflict"
+      ],
+      "gate_status": "P2 architecture in progress; data architecture decision pending core banking vendor selection"
+    }
+  ]
+}

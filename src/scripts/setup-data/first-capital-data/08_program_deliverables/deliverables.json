@@ -1,0 +1,98 @@
+{
+  "tenant_key": "first-capital",
+  "segment": "program_deliverables",
+  "as_of": "2026-04-28",
+  "deliverables": [
+    {
+      "deliverable_id": "del:fcfi:001",
+      "program_id": "prog:fcfi:fcfi-digital-2026",
+      "name": "Digital Banking Experience Redesign — Discovery Report",
+      "type": "Design Document",
+      "status": "Completed",
+      "completion_date": "2026-02-28",
+      "owner": "person:fcfi:vincent-morales",
+      "key_outputs": [
+        "Consumer journey maps for account opening, mobile app, and digital banking",
+        "Competitive benchmarking: FCF vs. Ally, SoFi, and peer regional banks",
+        "32 UX failure points identified in current digital experience",
+        "Mobile app redesign wireframes (high fidelity)",
+        "Digital account open redesign: 11-step to 5-step with ID verification integration",
+        "Recommended vendor shortlist: Q2 Holdings (digital banking), Temenos Infinity, Jack Henry Banno"
+      ],
+      "acceptance_criteria_met": true
+    },
+    {
+      "deliverable_id": "del:fcfi:002",
+      "program_id": "prog:fcfi:fcfi-core-2026",
+      "name": "Core Banking RFP and Vendor Evaluation Framework",
+      "type": "RFP Document",
+      "status": "In Progress",
+      "target_date": "2026-06-30",
+      "owner": "person:fcfi:karen-nakamura",
+      "key_outputs": [
+        "RFP issued to Temenos, Finxact, and FiServ (incumbent) — completed",
+        "Technical evaluation rubric: 48 criteria across 8 domains",
+        "Vendor responses received and scored — completed",
+        "Reference bank interviews: 6 scheduled, 4 completed",
+        "Board Technology Committee briefing materials — due Q2 2026",
+        "Vendor down-select recommendation — target Q3 2026"
+      ],
+      "acceptance_criteria_met": false,
+      "notes": "Delayed 6 weeks due to CDO-CIO architecture conflict"
+    },
+    {
+      "deliverable_id": "del:fcfi:003",
+      "program_id": "prog:fcfi:fcfi-aml-2026",
+      "name": "CDD Program Enhancement — Phase 1 Remediation Plan",
+      "type": "Regulatory Document",
+      "status": "Completed",
+      "completion_date": "2026-01-31",
+      "owner": "person:fcfi:patricia-holbrook",
+      "key_outputs": [
+        "CDD gap analysis across all commercial account types (26% gap identified)",
+        "Customer outreach strategy for 14,000 commercial account holders",
+        "Enhanced CDD procedures manual (approved by OCC January 2026)",
+        "CDD completeness tracking dashboard in Actimize deployed",
+        "Milestone schedule for OCC reporting (quarterly progress updates)"
+      ],
+      "acceptance_criteria_met": true,
+      "notes": "Accepted by OCC as basis for MRAC remediation plan"
+    },
+    {
+      "deliverable_id": "del:fcfi:004",
+      "program_id": "prog:fcfi:fcfi-aml-2026",
+      "name": "Transaction Monitoring Model Validation",
+      "type": "Technical Validation",
+      "status": "In Progress",
+      "target_date": "2026-07-31",
+      "owner": "person:fcfi:marcus-osei",
+      "key_outputs": [
+        "Independent model validation by EY per SR 11-7",
+        "Model documentation (conceptual soundness, data quality, performance testing)",
+        "Validation report with findings and recommendations",
+        "Actimize tuning recommendations incorporated",
+        "Estimated false-positive rate post-tuning: ≤20%"
+      ],
+      "acceptance_criteria_met": false,
+      "notes": "EY engaged February 2026; OCC MRA open until validation complete and findings remediated"
+    },
+    {
+      "deliverable_id": "del:fcfi:005",
+      "program_id": "prog:fcfi:fcfi-data-gov-2026",
+      "name": "Enterprise Data Architecture Blueprint",
+      "type": "Architecture Document",
+      "status": "Blocked",
+      "target_date": "2026-10-31",
+      "owner": "person:fcfi:karen-nakamura",
+      "key_outputs": [
+        "Enterprise data architecture target state (cloud data platform design)",
+        "Current state inventory: 6 warehouses, 1,840 tables, 23,400 columns",
+        "Master data management design (Informatica MDM)",
+        "Data dictionary standard and stewardship model",
+        "Regulatory reporting automation roadmap (4 manual → automated)"
+      ],
+      "acceptance_criteria_met": false,
+      "notes": "Blocked pending core banking vendor selection (Temenos vs Finxact data models differ significantly)"
+    }
+  ]
+}

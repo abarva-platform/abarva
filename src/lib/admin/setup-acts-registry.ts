@@ -106,6 +106,17 @@ export interface SetupActivityEvent {
 
 export type TenantDataRichness = 'rich' | 'partial' | 'sparse';
 
+export interface FunctionCoverageEntry {
+  /** Business function name (e.g. "Retail Banking", "Clinical Quality"). */
+  functionName: string;
+  /** Number of KPIs loaded for this function. */
+  kpiCount: number;
+  /** Completeness signal for this function. */
+  completeness: 'full' | 'partial' | 'gap';
+  /** 2–3 representative metric names for this function. */
+  keyMetrics: string[];
+}
+
 export interface SetupActsContent {
   tenantKey: ClientKey | 'unknown';
   tenantDisplayName: string;
@@ -116,6 +127,11 @@ export interface SetupActsContent {
   actTwoCapabilityNodes: CapabilityNode[];
   actThreeGainEntries: CapabilityGainEntry[];
   recentActivity: SetupActivityEvent[];
+  /**
+   * Per-function KPI coverage map — drives the Setup data-width/depth
+   * matrix. Enterprise-level + per-function breakdown for the tenant.
+   */
+  functionCoverage?: FunctionCoverageEntry[];
 }
 
 // ── Apex Retail fixture (rich) ────────────────────────────────────────────────
@@ -389,6 +405,19 @@ const APEX_ACTIVITY: SetupActivityEvent[] = [
   },
 ];
 
+const APEX_FUNCTION_COVERAGE: FunctionCoverageEntry[] = [
+  { functionName: 'Enterprise', kpiCount: 5, completeness: 'full', keyMetrics: ['Revenue $2.41B', 'EBITDA Margin 11.8%', 'Gross Margin'] },
+  { functionName: 'Retail Operations', kpiCount: 6, completeness: 'full', keyMetrics: ['Comparable Store Sales −2.1%', 'Store Conversion Rate', 'Sales per Labor Hour'] },
+  { functionName: 'E-commerce', kpiCount: 6, completeness: 'full', keyMetrics: ['E-commerce Revenue $748M (+18%)', 'Cart Abandonment Rate', 'Customer Acquisition Cost'] },
+  { functionName: 'Supply Chain', kpiCount: 6, completeness: 'full', keyMetrics: ['Inventory Turn 3.6 (target 4.2)', 'Forecast Accuracy (MAPE)', 'Stockout Rate'] },
+  { functionName: 'Customer', kpiCount: 7, completeness: 'full', keyMetrics: ['Loyalty Members 14.2M', 'NPS +42', 'CLV (3-year)'] },
+  { functionName: 'Contact Center', kpiCount: 4, completeness: 'full', keyMetrics: ['Containment Rate', 'AHT', 'First Call Resolution'] },
+  { functionName: 'Merchandising', kpiCount: 2, completeness: 'partial', keyMetrics: ['Sell-Through Rate (wk6)', 'Markdown Rate'] },
+  { functionName: 'IT', kpiCount: 12, completeness: 'full', keyMetrics: ['Application Availability', 'AI Use Cases in Prod', 'License Utilization'] },
+  { functionName: 'Finance', kpiCount: 1, completeness: 'partial', keyMetrics: ['IT Spend % of Revenue'] },
+  { functionName: 'Compliance', kpiCount: 1, completeness: 'gap', keyMetrics: ['DSR Response SLA'] },
+];
+
 const APEX_CONTENT: SetupActsContent = {
   tenantKey: 'apexretail',
   tenantDisplayName: 'Apex Retail Group',
@@ -398,6 +427,7 @@ const APEX_CONTENT: SetupActsContent = {
   actTwoCapabilityNodes: APEX_ACT_TWO_CAPABILITIES,
   actThreeGainEntries: APEX_ACT_THREE_GAINS,
   recentActivity: APEX_ACTIVITY,
+  functionCoverage: APEX_FUNCTION_COVERAGE,
 };
 
 // ── Meridian Health System fixture (rich) ─────────────────────────────────────
@@ -629,6 +659,17 @@ const MERIDIAN_ACTIVITY: SetupActivityEvent[] = [
   },
 ];
 
+const MERIDIAN_FUNCTION_COVERAGE: FunctionCoverageEntry[] = [
+  { functionName: 'Clinical Quality', kpiCount: 19, completeness: 'full', keyMetrics: ['Risk-adjusted mortality', 'Sepsis bundle compliance', 'Hospital-acquired conditions'] },
+  { functionName: 'Emergency Medicine', kpiCount: 7, completeness: 'full', keyMetrics: ['ED door-to-provider time', 'ED utilization at-risk panels'] },
+  { functionName: 'Surgical Services', kpiCount: 4, completeness: 'partial', keyMetrics: ['OR block utilization'] },
+  { functionName: 'Revenue Cycle', kpiCount: 21, completeness: 'full', keyMetrics: ['Days in AR', 'Clean claim rate', 'Gross denial rate'] },
+  { functionName: 'Health Plan', kpiCount: 28, completeness: 'full', keyMetrics: ['MA STAR rating', 'MLR by LOB', 'HEDIS gap closure', 'Total cost PMPM'] },
+  { functionName: 'Patient Experience', kpiCount: 8, completeness: 'full', keyMetrics: ['HCAHPS overall rating', 'HCAHPS nurse communication'] },
+  { functionName: 'Workforce', kpiCount: 9, completeness: 'full', keyMetrics: ['Nursing turnover', 'Traveler ratio', 'Premium pay %'] },
+  { functionName: 'Digital Health', kpiCount: 6, completeness: 'partial', keyMetrics: ['MyChart activation', 'Online scheduling utilization'] },
+];
+
 const MERIDIAN_CONTENT: SetupActsContent = {
   tenantKey: 'meridian',
   tenantDisplayName: 'Meridian Health System',
@@ -638,6 +679,7 @@ const MERIDIAN_CONTENT: SetupActsContent = {
   actTwoCapabilityNodes: MERIDIAN_ACT_TWO_CAPABILITIES,
   actThreeGainEntries: MERIDIAN_ACT_THREE_GAINS,
   recentActivity: MERIDIAN_ACTIVITY,
+  functionCoverage: MERIDIAN_FUNCTION_COVERAGE,
 };
 
 // ── First Capital fixture (authored partial; internal key remains arcturus) ───
@@ -648,151 +690,160 @@ const MERIDIAN_CONTENT: SetupActsContent = {
 // `partial`: facts and capability guidance are authored, but record counts
 // should still come from live ingestion when the data plane is populated.
 
-const ARCTURUS_OPENER = `I see First Capital Financial as a regulated financial-services tenant with retail banking, commercial lending, wealth, payments, and risk-operations work in scope. The setup posture is not blank anymore: the likely control plane is GLBA, FFIEC, OCC/FRB-style supervisory evidence, model-risk governance, third-party risk, SOX, PCI, and state privacy obligations. Steward should start by confirming three things before Intelligence or Programs makes firm claims: which legal entity owns the demo, which systems are authoritative for customer/account/product data, and which risk committee can approve AI-assisted sourcing or program decisions. Until live records are ingested, I will keep recommendations evidence-seeking rather than evidence-citing.`;
+const ARCTURUS_OPENER = `I see First Capital Financial Inc. (NYSE: FCFI) as a $4.21B-asset regional bank and wealth manager based in Richmond, Virginia with 2,800 employees, 47 branches across VA/NC/MD/DC, and $2.84B in wealth AUM. Three business lines are running: Retail Banking (51% of revenue), Commercial Banking (34%), and Wealth Management (15%). Five programs are in flight: Digital Banking Transformation (P3 Design, CDO Vincent Morales), Core Banking Modernization (P2 Architecture, replacing FiServ Cleartouch 1998 vintage — 3.5-year, $54M decision), AML/KYC Enhancement (OCC MRA remediation — 3 open findings, MRAC commitment due Q4 2026), Wealth Platform Consolidation (P1 Discovery), and Data Governance & Analytics Platform (P2, blocked by core vendor decision). Three cross-program signals are HIGH: core banking blocks digital transformation; AML remediation depends on data governance not yet built; Patricia Holbrook is both sponsor and lead on the highest-priority regulatory program. The KPI dictionary has 90 metrics across 8 business functions — enterprise to function-level. Steward should confirm OCC exam progress and core banking vendor selection before next program gate.`;
 
 const ARCTURUS_ACT_ONE_FACTS: ActOneFact[] = [
   {
     factType: 'enterprise',
     label: 'ENTERPRISE',
     value:
-      'First Capital Financial · Regulated financial services · retail banking, commercial lending, wealth, payments, and risk operations in scope',
+      'First Capital Financial Inc. · NYSE: FCFI · Regional bank + wealth · $4.21B total assets · $243M revenue · 2,800 employees · 47 branches (VA/NC/MD/DC) · $2.84B wealth AUM · CEO James Forsythe since 2018',
     sourceSegmentId: '01',
     sourceSegmentName: 'Enterprise Profile',
-    lastReviewedDays: 0,
+    lastReviewedDays: 7,
   },
   {
     factType: 'priorities',
-    label: 'LIKELY PRIORITIES',
+    label: 'STRATEGIC PRIORITIES FY2026',
     value:
-      'Risk-controlled growth · digital banking modernization · core-platform cost pressure · AI governance · third-party risk discipline · data lineage for customer, account, transaction, and product domains',
+      'Digital Banking Transformation (adopt 68% → 78%) · Core Banking Modernization (FiServ replacement, $54M, 3.5yr) · AML/KYC Enhancement — OCC MRA remediation (MRAC due Q4 2026) · Wealth Platform Consolidation (3 platforms → 1) · Data Governance & Analytics Platform',
     sourceSegmentId: '01',
     sourceSegmentName: 'Enterprise Profile',
-    lastReviewedDays: 0,
+    lastReviewedDays: 7,
+  },
+  {
+    factType: 'executives',
+    label: 'EXECUTIVE BENCH',
+    value:
+      '11 named (complete) · CEO James Forsythe · CFO Charlotte Reid · CRO Marcus Osei · CIO Karen Nakamura · CDO Vincent Morales · CCO Patricia Holbrook · CBO Robert Landon · Head Commercial Thomas Yuen · Head Wealth Diana Stern · CHRO Aisha Nkosi · GC Elliot Greenberg',
+    sourceSegmentId: '02',
+    sourceSegmentName: 'Org Structure',
+    lastReviewedDays: 7,
+  },
+  {
+    factType: 'portfolio',
+    label: 'ACTIVE PORTFOLIO',
+    value:
+      '5 programs in flight · Digital Banking Tx (P3 Design, $18.5M) · Core Banking Mod (P2 Architecture, $54M — vendor decision Q3 2026) · AML/KYC Enhancement (P1→P2, $8.2M, OCC MRAC open) · Wealth Platform Consolidation (P1, $7.8M) · Data Governance Platform (P2, $11.2M, blocked on core)',
+    sourceSegmentId: '06',
+    sourceSegmentName: 'Program Inventory',
+    lastReviewedDays: 3,
   },
   {
     factType: 'compliance',
     label: 'REGULATORY POSTURE',
     value:
-      'GLBA Safeguards Rule · FFIEC cyber and business-continuity expectations · OCC/FRB supervisory evidence patterns · SOX controls · PCI-DSS for card and payment workflows · model-risk governance for AI use cases',
+      '3 OCC MRAs open (1 MRAC) · BSA/AML CDD completeness 74% (target 95% Q4 2026) · SAR false-positive rate 31% · Loan review coverage 88% vs 100% OCC requirement · SOX 2 deficiencies (non-material) · CRE concentration 224% (approaching 300% threshold) · DFAST CET1 trough 9.4%',
     sourceSegmentId: '12',
     sourceSegmentName: 'Compliance and Regulatory',
-    lastReviewedDays: 0,
-  },
-  {
-    factType: 'systems',
-    label: 'SYSTEMS TO CONFIRM',
-    value:
-      'Core banking, loan origination, servicing, CRM, fraud/AML, data warehouse, IAM, payments, contact center, GL, and GRC systems need authoritative owner and data-classification records before citation-grade answers',
-    sourceSegmentId: '03',
-    sourceSegmentName: 'IT System Landscape',
-    lastReviewedDays: 0,
+    lastReviewedDays: 7,
   },
   {
     factType: 'kpis',
-    label: 'KPI BASELINE NEEDED',
+    label: 'KPI DICTIONARY',
     value:
-      'Deposit growth, net interest margin, efficiency ratio, cost per account, digital adoption, fraud loss rate, complaint volume, loan cycle time, control findings, and third-party-risk aging should be loaded before outcome claims',
+      '90 KPIs loaded across 8 business functions · Enterprise: ROAA 1.35% (peers 1.28%), NIM 4.12% (declining), Efficiency 62.4% (target 60%), CET1 12.8% · Retail Banking: digital adoption 68%, mobile app rating 3.8/5.0 · Commercial: treasury mgmt +11.4% · Wealth: AUM $2.84B, NNM $142M (miss $200M target)',
     sourceSegmentId: '05',
     sourceSegmentName: 'KPI Dictionary',
-    lastReviewedDays: 0,
+    lastReviewedDays: 7,
   },
   {
-    factType: 'evidence',
-    label: 'EVIDENCE STANDARD',
+    factType: 'systems',
+    label: 'IT LANDSCAPE',
     value:
-      'Steward should require evidence from board/risk committee minutes, regulatory exam responses, control test results, vendor due-diligence packets, system inventories, contracts, and current-state process maps',
-    sourceSegmentId: '09',
-    sourceSegmentName: 'Evidence Ledger',
-    lastReviewedDays: 0,
+      '22 systems inventoried · Core: FiServ Cleartouch (1998 vintage — replacement target) · Digital: Jack Henry Banno · BSA/AML: NICE Actimize · Wealth: SS&C Advent + Salesforce FSC + Orion (3-platform fragmentation) · Finance: Axiom · Security: Secureworks Taegis MDR · Core uptime 99.82% (target 99.95%)',
+    sourceSegmentId: '03',
+    sourceSegmentName: 'IT System Landscape',
+    lastReviewedDays: 7,
   },
 ];
 
 const ARCTURUS_ACT_TWO_CAPABILITIES: CapabilityNode[] = [
   {
-    id: 'cap.pattern-citations.arcturus',
+    id: 'cap.pattern-citations.first-capital',
     family: 'pattern-citations',
-    label: '4 financial-services patterns ready for confirmation',
-    count: 4,
-    countNoun: 'candidate patterns to confirm with evidence',
-    depthState: 'partial',
+    label: '5 program archetypes pattern-matched to FinServ corpus',
+    count: 5,
+    countNoun: 'programs matched to financial-services corpus patterns',
+    depthState: 'grounded',
     groundingExamples: [
       {
-        label: 'Core banking modernization — confirm current core, channels, integrations, and cutover posture',
-        href: '/intelligence/topics/core-banking-modernization',
+        label: 'Core Banking Modernization → PAT-PRG-CORE-BANK-001 (FiServ → API-first; $42–65M range confirmed by corpus)',
+        href: '/intelligence/patterns/core-banking-modernization',
       },
       {
-        label: 'AI governance in regulated operations — confirm model inventory, owner, validation, and committee cadence',
-        href: '/intelligence/topics/ai-governance',
+        label: 'BSA/AML Enhancement (OCC MRA) → PAT-REG-BSA-AML-001 (CDD gap remediation pattern, prior exam data)',
+        href: '/intelligence/patterns/bsa-aml-remediation',
       },
       {
-        label: 'Third-party risk and sourcing — confirm vendor tiering, SOC evidence, exit terms, and concentration exposure',
-        href: '/intelligence/topics/vendor-risk',
+        label: 'Digital Banking Transformation → PAT-PRG-DIGITAL-BANK-001 (consumer adoption 68% → 78% trajectory)',
+        href: '/intelligence/patterns/digital-banking-transformation',
       },
     ],
   },
   {
-    id: 'cap.cross-program-signals.arcturus',
+    id: 'cap.cross-program-signals.first-capital',
     family: 'cross-program-signals',
-    label: 'Partial · cross-program signals need program inventory',
-    count: 0,
-    countNoun: 'live signals until programs load',
-    depthState: 'partial',
+    label: '11 signals · 3 HIGH-severity open (core blocks digital; AML needs data governance; single sponsor risk)',
+    count: 11,
+    countNoun: 'cross-program signals tracked',
+    depthState: 'grounded',
     groundingExamples: [
       {
-        label: 'Likely signal: AI governance must precede customer-facing AI or underwriting support',
-        href: '/admin/segments/14',
+        label: 'Core Banking blocks Digital Transformation: FiServ cannot expose APIs required for real-time account opening (HIGH)',
+        href: '/admin/segments/14?filter=high',
       },
       {
-        label: 'Likely signal: core-platform modernization and digital-channel changes share account-data dependencies',
-        href: '/admin/segments/14',
+        label: 'AML/KYC depends on Data Governance not yet built: OCC model validation blocked (HIGH)',
+        href: '/admin/segments/14?filter=aml-data-gov',
       },
       {
-        label: 'Likely signal: third-party risk evidence gates sourcing awards for critical financial systems',
-        href: '/admin/segments/14',
+        label: 'Patricia Holbrook is both sponsor and lead on highest-priority regulatory program (HIGH governance gap)',
+        href: '/admin/segments/14?filter=governance',
       },
     ],
   },
   {
-    id: 'cap.evidence-grounded-qa.arcturus',
+    id: 'cap.evidence-grounded-qa.first-capital',
     family: 'evidence-grounded-qa',
-    label: 'Partial · evidence questions are guided, not yet cited',
-    count: 0,
-    countNoun: 'citation-grade tenant evidence items loaded',
-    depthState: 'partial',
+    label: '20 evidence items loaded — OCC exam findings, vendor assessments, credit quality reports',
+    count: 20,
+    countNoun: 'evidence items in ledger',
+    depthState: 'grounded',
     groundingExamples: [
       {
-        label: 'Upload regulatory exam response tracker before asking about compliance exposure',
-        href: '/admin/segments/09',
+        label: 'OCC November 2025 exam: 2 MRAs + 1 MRAC on BSA/AML (CDD 68%, TM model overdue, loan review 88%)',
+        href: '/admin/segments/09?filter=occ-exam',
       },
       {
-        label: 'Upload vendor due-diligence packets before asking which provider carries the highest risk',
-        href: '/admin/segments/11',
+        label: 'Deloitte FiServ API assessment: Cleartouch cannot support REST APIs without $8M custom middleware (not recommended)',
+        href: '/admin/segments/09?filter=core-banking',
       },
       {
-        label: 'Upload KPI dictionary before asking which modernization program has measurable value',
-        href: '/admin/segments/05',
+        label: 'Wealth consultant: platform consolidation realistic cost $12–15M vs. $7.8M budget (CFO alignment needed)',
+        href: '/admin/segments/09?filter=wealth',
       },
     ],
   },
   {
-    id: 'cap.outcome-measurement-readiness.arcturus',
+    id: 'cap.outcome-measurement-readiness.first-capital',
     family: 'outcome-measurement-readiness',
-    label: 'Missing · outcome measurement needs KPI and program baselines',
-    count: 0,
-    countNoun: 'program baselines confirmed',
-    depthState: 'missing',
+    label: '90 KPIs across 8 functions — outcome measurement grounded at enterprise and function level',
+    count: 90,
+    countNoun: 'KPIs with current value, target, and owner',
+    depthState: 'grounded',
     groundingExamples: [
       {
-        label: 'Efficiency ratio and run-rate technology spend need current-state values',
-        href: '/admin/segments/04',
+        label: 'Digital adoption 68% → 78% target: mobile MAU, account open rate, and app rating all baselined',
+        href: '/admin/segments/05?filter=digital',
       },
       {
-        label: 'Digital adoption and complaint-volume measures need source-system ownership',
-        href: '/admin/segments/05',
+        label: 'OCC MRA remediation: CDD completeness 74% → 95% target, SAR false-positive 31% → ≤20% target',
+        href: '/admin/segments/05?filter=compliance',
       },
       {
-        label: 'Program inventory must name sponsor, phase, budget, and exit criteria',
-        href: '/admin/segments/06',
+        label: 'Wealth AUM $2.84B; NNM miss ($142M vs $200M target); portal adoption 42% — all baselined for measurement',
+        href: '/admin/segments/05?filter=wealth',
       },
     ],
   },
@@ -856,25 +907,47 @@ const ARCTURUS_ACT_THREE_GAINS: CapabilityGainEntry[] = [
 const ARCTURUS_ACTIVITY: SetupActivityEvent[] = [
   {
     actor: 'Steward',
-    what: 'Authored financial-services setup posture for the First Capital demo account',
-    timestamp: 'Today',
+    what: 'First Capital Financial 14-segment dataset loaded: 90 KPIs (8 functions), 5 programs, 11 cross-program signals, 22 IT systems, 22 vendor contracts, 25 compliance records',
+    timestamp: '2d ago',
   },
   {
-    actor: 'Setup guidance',
-    what: 'Prioritized enterprise profile, compliance posture, system landscape, KPI dictionary, program inventory, evidence ledger, and vendor contracts',
-    timestamp: 'Today',
+    actor: 'Steward',
+    what: 'OCC MRA status confirmed: 3 open (1 MRAC on BSA/AML CDD, remediation Q4 2026 deadline)',
+    timestamp: '2d ago',
   },
+  {
+    actor: 'Steward',
+    what: 'Core banking vendor evaluation in progress: Temenos ($54M) and Finxact ($48M) both in final evaluation — decision gate Q3 2026',
+    timestamp: '2d ago',
+  },
+  {
+    actor: 'Steward',
+    what: 'AML/KYC segment loaded: 20 evidence items including OCC exam findings, Exiger diagnostic, and Actimize tuning proposal',
+    timestamp: '2d ago',
+  },
+];
+
+const FIRST_CAPITAL_FUNCTION_COVERAGE: FunctionCoverageEntry[] = [
+  { functionName: 'Enterprise', kpiCount: 15, completeness: 'full', keyMetrics: ['ROAA 1.35%', 'NIM 4.12%', 'CET1 12.8%', 'Efficiency Ratio 62.4%'] },
+  { functionName: 'Retail Banking', kpiCount: 12, completeness: 'full', keyMetrics: ['Digital Adoption 68%', 'Digital Account Open 31%', 'Branch NPS +42', 'Mortgage Origination $1.1B'] },
+  { functionName: 'Commercial Banking', kpiCount: 10, completeness: 'full', keyMetrics: ['C&I Loans $1.24B', 'Treasury Mgmt Revenue $140M', 'RM Productivity $2.06M', 'CRE Concentration 224%'] },
+  { functionName: 'Wealth Management', kpiCount: 10, completeness: 'full', keyMetrics: ['AUM $2.84B', 'Net New Money $142M', 'Portal Adoption 42%', 'Client Retention 91.2%'] },
+  { functionName: 'Risk Management', kpiCount: 11, completeness: 'full', keyMetrics: ['NPL Ratio 0.82%', 'LCR 138%', 'DFAST CET1 9.4%', 'EWS Triggers 14'] },
+  { functionName: 'Compliance', kpiCount: 10, completeness: 'full', keyMetrics: ['OCC MRA Count 3', 'CDD Completeness 74%', 'SAR False-Positive 31%', 'BSA Training 87%'] },
+  { functionName: 'IT', kpiCount: 12, completeness: 'full', keyMetrics: ['Core Banking Uptime 99.82%', 'Mobile App Rating 3.8', 'MTTD 4.2h', 'Change Failure 8.4%'] },
+  { functionName: 'Finance', kpiCount: 10, completeness: 'full', keyMetrics: ['Net Interest Income $168M', 'Noninterest Income $74.6M', 'PPNR $91.2M', 'EPS $3.42'] },
 ];
 
 const ARCTURUS_CONTENT: SetupActsContent = {
   tenantKey: 'arcturus',
   tenantDisplayName: 'First Capital Financial',
-  tenantDataRichness: 'partial',
+  tenantDataRichness: 'rich',
   sentinelOpener: ARCTURUS_OPENER,
   actOneFacts: ARCTURUS_ACT_ONE_FACTS,
   actTwoCapabilityNodes: ARCTURUS_ACT_TWO_CAPABILITIES,
   actThreeGainEntries: ARCTURUS_ACT_THREE_GAINS,
   recentActivity: ARCTURUS_ACTIVITY,
+  functionCoverage: FIRST_CAPITAL_FUNCTION_COVERAGE,
 };
 
 // ── Default sparse fixture (cold tenant) ──────────────────────────────────────

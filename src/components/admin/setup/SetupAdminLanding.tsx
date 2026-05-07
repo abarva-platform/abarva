@@ -17,6 +17,7 @@ import { SHELL } from '@/lib/shell/shell-tokens';
 import { EditorialCanvas } from '@/components/admin/EditorialCanvas';
 import Link from 'next/link';
 
+import { DataCoverageMatrix } from './DataCoverageMatrix';
 import { SetupActOne } from './SetupActOne';
 import { SetupActThree } from './SetupActThree';
 import { SetupActTwo } from './SetupActTwo';
@@ -287,6 +288,12 @@ export function SetupAdminLanding({
           lastIngestedRelative={lastIngestedRelative}
         />
         <SetupActOne facts={content.actOneFacts} segmentRollups={segmentRollups} />
+        {content.functionCoverage && content.functionCoverage.length > 0 && (
+          <DataCoverageMatrix
+            functionCoverage={content.functionCoverage}
+            tenantDisplayName={content.tenantDisplayName}
+          />
+        )}
         <SetupActTwo capabilities={content.actTwoCapabilityNodes} />
         <SetupActThree gains={content.actThreeGainEntries} />
         <SetupRecentActivity events={content.recentActivity} />

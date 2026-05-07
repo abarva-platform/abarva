@@ -1,0 +1,148 @@
+{
+  "tenant_key": "first-capital",
+  "segment": "org_structure",
+  "as_of": "2026-04-28",
+  "executives": [
+    {
+      "person_id": "person:fcfi:james-forsythe",
+      "name": "James Forsythe",
+      "title": "President & CEO",
+      "function": "Executive",
+      "reports_to": "Board of Directors",
+      "tenure_start": "2018-03-01",
+      "prior_role": "EVP Regional Banking, SunTrust Banks",
+      "education": "MBA Finance Duke Fuqua; BA Economics University of Virginia",
+      "board_roles": ["First Capital Financial Board", "Virginia Bankers Association"],
+      "ai_program_sponsorship": ["fcfi-digital-2026", "fcfi-core-2026"],
+      "notes": "Led 2018 strategic pivot to mid-market commercial; architect of wealth management build-out; driving digital agenda since 2023"
+    },
+    {
+      "person_id": "person:fcfi:charlotte-reid",
+      "name": "Charlotte Reid",
+      "title": "Chief Financial Officer",
+      "function": "Finance",
+      "reports_to": "person:fcfi:james-forsythe",
+      "tenure_start": "2021-06-01",
+      "prior_role": "CFO, Cardinal Bankshares; VP Finance, BB&T",
+      "education": "MBA Finance UNC Kenan-Flagler; CPA",
+      "ai_program_sponsorship": [],
+      "notes": "Focus on capital efficiency and PPNR growth; concern about FY2026 investment spend vs. return timeline"
+    },
+    {
+      "person_id": "person:fcfi:marcus-osei",
+      "name": "Marcus Osei",
+      "title": "Chief Risk Officer",
+      "function": "Risk Management",
+      "reports_to": "person:fcfi:james-forsythe",
+      "tenure_start": "2022-01-15",
+      "prior_role": "CRO, Atlantic Capital Bancshares; Director Credit Risk, Wells Fargo",
+      "education": "MS Finance Georgia Tech; FRM",
+      "ai_program_sponsorship": ["fcfi-aml-2026"],
+      "notes": "Joined to strengthen risk infrastructure post-OCC exam cycle; MRA remediation is primary priority; strong CECL expertise"
+    },
+    {
+      "person_id": "person:fcfi:karen-nakamura",
+      "name": "Karen Nakamura",
+      "title": "Chief Information Officer",
+      "function": "IT",
+      "reports_to": "person:fcfi:james-forsythe",
+      "tenure_start": "2023-04-01",
+      "prior_role": "VP Technology, Glacier Bancorp; Director Infrastructure, Banner Bank",
+      "education": "MS Computer Science NC State; MBA Virginia Tech",
+      "ai_program_sponsorship": ["fcfi-core-2026"],
+      "notes": "Inherited legacy infrastructure debt; core banking modernization is her primary mandate; cautious on AI without governance framework"
+    },
+    {
+      "person_id": "person:fcfi:vincent-morales",
+      "name": "Vincent Morales",
+      "title": "Chief Digital Officer",
+      "function": "Digital",
+      "reports_to": "person:fcfi:james-forsythe",
+      "tenure_start": "2024-02-01",
+      "prior_role": "Head of Digital Banking, Umpqua Bank; Director Digital Products, Chime",
+      "education": "BS Computer Science Purdue; MBA Stanford GSB",
+      "ai_program_sponsorship": ["fcfi-digital-2026"],
+      "notes": "First CDO role at First Capital; driving consumer digital transformation; tension with CIO on architectural decisions; strong product instincts"
+    },
+    {
+      "person_id": "person:fcfi:patricia-holbrook",
+      "name": "Patricia Holbrook",
+      "title": "Chief Compliance Officer / BSA Officer",
+      "function": "Compliance",
+      "reports_to": "person:fcfi:james-forsythe",
+      "tenure_start": "2023-09-01",
+      "prior_role": "BSA Officer, Renasant Bank; Director BSA/AML, Fifth Third Bank",
+      "education": "JD University of Richmond; CAMS certification",
+      "ai_program_sponsorship": ["fcfi-aml-2026"],
+      "notes": "Hired directly in response to OCC exam concerns; MRA remediation and CDD program overhaul her primary mandate; OCC relationship improving"
+    },
+    {
+      "person_id": "person:fcfi:robert-landon",
+      "name": "Robert Landon",
+      "title": "Chief Banking Officer — Consumer & Retail",
+      "function": "Retail Banking",
+      "reports_to": "person:fcfi:james-forsythe",
+      "tenure_start": "2019-01-15",
+      "prior_role": "EVP Retail Banking, Carter Bankshares",
+      "education": "MBA William & Mary; BA Business Administration VCU",
+      "ai_program_sponsorship": ["fcfi-digital-2026"],
+      "notes": "Long tenure; driving branch optimization program (6 branch closures planned FY2026); supportive of digital but concerned about pace"
+    },
+    {
+      "person_id": "person:fcfi:thomas-yuen",
+      "name": "Thomas Yuen",
+      "title": "Head of Commercial Banking",
+      "function": "Commercial Banking",
+      "reports_to": "person:fcfi:james-forsythe",
+      "tenure_start": "2017-07-01",
+      "prior_role": "Regional Commercial Manager, SunTrust Banks; SVP C&I, United Bank",
+      "education": "MBA Columbia GSB; BA Economics University of Michigan",
+      "ai_program_sponsorship": [],
+      "notes": "Longest-tenured C-suite; built commercial book from $800M to $2.06B; CRE concentration a current concern; treasury management growth his flagship achievement"
+    },
+    {
+      "person_id": "person:fcfi:diana-stern",
+      "name": "Diana Stern",
+      "title": "Head of Wealth Management",
+      "function": "Wealth Management",
+      "reports_to": "person:fcfi:james-forsythe",
+      "tenure_start": "2020-05-01",
+      "prior_role": "Regional Director, UBS Private Wealth; VP Merrill Lynch",
+      "education": "MBA Georgetown; CFP; CPWA",
+      "ai_program_sponsorship": ["fcfi-wealth-2026"],
+      "notes": "Recruited to professionalize wealth business; frustrated by technology fragmentation; platform consolidation is her top priority for 2026"
+    },
+    {
+      "person_id": "person:fcfi:aisha-nkosi",
+      "name": "Aisha Nkosi",
+      "title": "Chief Human Resources Officer",
+      "function": "HR",
+      "reports_to": "person:fcfi:james-forsythe",
+      "tenure_start": "2022-09-01",
+      "prior_role": "CHRO, Virginia Credit Union; VP HR, Dominion Energy",
+      "education": "MBA VCU; SHRM-SCP",
+      "ai_program_sponsorship": [],
+      "notes": "Drove workforce planning for compliance and technology hiring surge; digital skills program underway for branch staff"
+    },
+    {
+      "person_id": "person:fcfi:elliot-greenberg",
+      "name": "Elliot Greenberg",
+      "title": "General Counsel & Corporate Secretary",
+      "function": "Legal",
+      "reports_to": "person:fcfi:james-forsythe",
+      "tenure_start": "2015-03-15",
+      "prior_role": "Partner, Williams Mullen (banking & finance practice)",
+      "education": "JD University of Richmond; BA History College of William & Mary",
+      "ai_program_sponsorship": [],
+      "notes": "Longest serving member of management team; key interface to Board; oversees regulatory counsel relationships"
+    }
+  ],
+  "board_of_directors": [
+    { "person_id": "person:fcfi:sandra-whitfield", "name": "Sandra Whitfield", "role": "Board Chair", "committee": "Governance; Executive", "independent": true, "since": "2019" },
+    { "person_id": "person:fcfi:david-parkman", "name": "David Parkman", "role": "Lead Independent Director", "committee": "Audit (Chair); Risk", "independent": true, "since": "2015" },
+    { "person_id": "person:fcfi:grace-kim", "name": "Grace Kim", "role": "Director", "committee": "Risk (Chair); Compensation", "independent": true, "since": "2021" },
+    { "person_id": "person:fcfi:michael-oduya", "name": "Michael Oduya", "role": "Director", "committee": "Compensation (Chair); Governance", "independent": true, "since": "2018" },
+    { "person_id": "person:fcfi:laura-jensen", "name": "Laura Jensen", "role": "Director", "committee": "Technology (Chair); Audit", "independent": true, "since": "2022", "notes": "Former CTO Silicon Valley Bank; appointed specifically for technology oversight" },
+    { "person_id": "person:fcfi:james-forsythe", "name": "James Forsythe", "role": "President & CEO (non-independent)", "committee": "Executive", "independent": false, "since": "2018" }
+  ]
+}
