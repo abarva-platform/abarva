@@ -174,7 +174,7 @@ function EvidenceCell({ criterion }: { criterion: string }) {
   return (
     <td style={TD}>
       <span style={{ fontFamily: SHELL.MONO, fontSize: 9.5, color: SHELL.INK_MUTED }}>
-        {criterion.slice(0, 3).toUpperCase()}-{Math.floor(Math.random() * 9) + 1} evidence items
+        {criterion.slice(0, 3).toUpperCase()}-{(criterion.length % 9) + 1} evidence items
       </span>
     </td>
   );

@@ -1104,7 +1104,7 @@ export function TowerIndexPage({
                 marginBottom: 8,
               }}
             >
-              Today's pressures · 7 active · 3 demanding decisions
+              Today&apos;s pressures · 7 active · 3 demanding decisions
             </div>
             <h2
               style={{
@@ -1212,7 +1212,7 @@ export function TowerIndexPage({
               headline="M365 Copilot adoption is at 24% of seats licensed. Plan was 60% by month 6."
               lede={
                 <>
-                  Six months in. Two functions over 50% (Finance, Legal); IT and Sales under 15%. Steward is preparing a re-baseline proposal. <em>This is not a decision today — it's a watch item until the EA brief lands.</em>
+                  Six months in. Two functions over 50% (Finance, Legal); IT and Sales under 15%. Steward is preparing a re-baseline proposal. <em>This is not a decision today — it&apos;s a watch item until the EA brief lands.</em>
                 </>
               }
               meta={[
@@ -1288,7 +1288,7 @@ export function TowerIndexPage({
                   lineHeight: 1.55,
                 }}
               >
-                Confidence shows up as outline weight: <strong>solid = HIGH</strong>, <strong>dashed = MEDIUM/LOW</strong>. Strategic bets (T-FOW) are pulled into a separate row below — they don't have measured ROI yet, and mixing them on the matrix would be dishonest.
+                Confidence shows up as outline weight: <strong>solid = HIGH</strong>, <strong>dashed = MEDIUM/LOW</strong>. Strategic bets (T-FOW) are pulled into a separate row below — they don&apos;t have measured ROI yet, and mixing them on the matrix would be dishonest.
               </p>
             </div>
 
@@ -1541,7 +1541,7 @@ export function TowerIndexPage({
                 maxWidth: '60ch',
               }}
             >
-              <strong style={{ color: T.INK }}>Tower is a decision instrument, not a dashboard.</strong> Every number on this page has a confidence level and an underlying calculation that's queryable. Underlines: solid HIGH · dashed MED · dotted LOW. Missing inputs read as invitations, not errors.<br />
+              <strong style={{ color: T.INK }}>Tower is a decision instrument, not a dashboard.</strong> Every number on this page has a confidence level and an underlying calculation that&apos;s queryable. Underlines: solid HIGH · dashed MED · dotted LOW. Missing inputs read as invitations, not errors.<br />
               Next governance review: <strong style={{ color: T.INK }}>May 19 · 90-min board prep</strong>.
             </div>
             <div
@@ -1569,9 +1569,9 @@ export function TowerIndexPage({
               h: 'Observation · 01',
               body: (
                 <>
-                  The <strong style={{ color: T.INK }}>EA renewal</strong> isn't separate from the{' '}
+                  The <strong style={{ color: T.INK }}>EA renewal</strong> isn&apos;t separate from the{' '}
                   <strong style={{ color: T.INK }}>cost overrun</strong> and{' '}
-                  <strong style={{ color: T.INK }}>capability duplication</strong> — they share root nodes. If you take a posture on the EA without resolving the overlap, you'll renew at the wrong volumes.
+                  <strong style={{ color: T.INK }}>capability duplication</strong> — they share root nodes. If you take a posture on the EA without resolving the overlap, you&apos;ll renew at the wrong volumes.
                 </>
               ),
               actions: [
@@ -1607,7 +1607,7 @@ export function TowerIndexPage({
               h: 'Observation · 03',
               body: (
                 <>
-                  Adoption confidence is <strong style={{ color: T.INK }}>LOW</strong> because Okta and EntraID aren't connected. Until those land, the 24% Copilot number is directional, not auditable.
+                  Adoption confidence is <strong style={{ color: T.INK }}>LOW</strong> because Okta and EntraID aren&apos;t connected. Until those land, the 24% Copilot number is directional, not auditable.
                 </>
               ),
               actions: [
@@ -1627,7 +1627,7 @@ export function TowerIndexPage({
               h: 'If you only do one thing today',
               body: (
                 <>
-                  <em>Open the EA brief and read Atlas's negotiation thesis.</em> The other pressures route through it. Steward and Sentinel are both aligned on what the brief should ask for.
+                  <em>Open the EA brief and read Atlas&apos;s negotiation thesis.</em> The other pressures route through it. Steward and Sentinel are both aligned on what the brief should ask for.
                 </>
               ),
             },
