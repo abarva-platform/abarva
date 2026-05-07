@@ -36,6 +36,12 @@ export function SourceStageCanvasPanel({
   const nextStageKey = SOURCE_STAGE_ORDER[canonicalIndex + 1];
   const nextStageLabel = nextStageKey ? SOURCE_STAGE_LABELS[nextStageKey] : null;
 
+  // Entry criteria — what was required to arrive here (previous stage's exit criteria)
+  const prevStageKey = SOURCE_STAGE_ORDER[canonicalIndex - 1];
+  const prevConfig = prevStageKey ? getStageCanvasConfig(prevStageKey) : null;
+  const prevStageLabel = prevStageKey ? SOURCE_STAGE_LABELS[prevStageKey] : null;
+  const entryCriteria = prevConfig?.exitCriteria ?? [];
+
   // Gate criteria: live evaluations when on current stage; config exit criteria otherwise
   const gateCriteria = isCurrentStage && nextGateEvaluations.length > 0
     ? nextGateEvaluations.slice(0, 5).map((ev) => ({
@@ -128,6 +134,23 @@ export function SourceStageCanvasPanel({
         </div>
         <p style={STAGE_INTENT}>{config.intent}</p>
       </div>
+
+      {/* Entry criteria — previous stage's exit requirements */}
+      {entryCriteria.length > 0 && (
+        <details style={ENTRY_CRITERIA_SECTION}>
+          <summary style={ENTRY_CRITERIA_SUMMARY}>
+            Entry criteria — from {prevStageLabel ?? 'previous stage'} ({entryCriteria.length})
+          </summary>
+          <div style={{ display: 'grid', gap: 4, marginTop: 6 }}>
+            {entryCriteria.map((criterion, index) => (
+              <div key={index} style={ENTRY_CRITERION_ROW}>
+                <span style={ENTRY_CRITERION_DOT} aria-hidden="true" />
+                <span style={ENTRY_CRITERION_TEXT}>{criterion}</span>
+              </div>
+            ))}
+          </div>
+        </details>
+      )}
 
       {/* Gate criteria */}
       <div style={GATE_SECTION}>
@@ -719,4 +742,45 @@ const GATE_BLOCKED_TEXT: CSSProperties = {
   fontSize: 11.5,
   color: '#7a4a00',
   fontWeight: 600,
+};
+
+const ENTRY_CRITERIA_SECTION: CSSProperties = {
+  border: `1px solid ${SHELL.CARD_LINE}`,
+  borderRadius: 8,
+  padding: '6px 10px',
+  background: SHELL.PAPER_SOFT,
+};
+
+const ENTRY_CRITERIA_SUMMARY: CSSProperties = {
+  fontFamily: SHELL.MONO,
+  fontSize: 9,
+  letterSpacing: '0.1em',
+  textTransform: 'uppercase',
+  color: SHELL.INK_MUTED,
+  fontWeight: 700,
+  cursor: 'pointer',
+  listStyle: 'none',
+};
+
+const ENTRY_CRITERION_ROW: CSSProperties = {
+  display: 'flex',
+  alignItems: 'flex-start',
+  gap: 6,
+};
+
+const ENTRY_CRITERION_DOT: CSSProperties = {
+  width: 5,
+  height: 5,
+  borderRadius: '50%',
+  background: SHELL.INK_MUTED,
+  flexShrink: 0,
+  marginTop: 4,
+  display: 'inline-block',
+};
+
+const ENTRY_CRITERION_TEXT: CSSProperties = {
+  fontFamily: SHELL.SANS,
+  fontSize: 11,
+  color: SHELL.INK_MUTED,
+  lineHeight: 1.4,
 };
