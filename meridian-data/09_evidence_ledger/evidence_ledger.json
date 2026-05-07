@@ -2,684 +2,563 @@
   "tenant_key": "meridian-health",
   "last_updated": "2026-04-25",
   "data_classification": "Confidential",
-  "schema_version": "1.0",
+  "schema_version": "2.0",
   "evidence_items": [
     {
       "id": "ev:meridian:001",
-      "claim": "Clinician documentation time baseline is 45 minutes/day",
-      "source_type": "public_filing",
-      "source_doc": "q4-financial-close.pdf",
-      "source_section": "Relevant tab / workpaper section",
+      "claim": "Clinician documentation time baseline is 45 minutes/day beyond direct patient care hours",
+      "source_type": "tenant_data_room",
+      "source_document": "Epic Clarity Time-Motion Study: Ambulatory Physician Documentation FY2025",
+      "source_section": "Section 4.2 — After-Hours Documentation Burden by Specialty",
       "data_classification": "Internal",
-      "confidence": 0.88,
-      "last_updated": "2026-04-15",
-      "owner_person_id": "person:meridian:harold-kim",
-      "supports_claims_in": [
-        "meridian-prior-auth-2026",
-        "kpi:meridian:002"
-      ],
-      "caveats": "Source is sufficient for synthetic tenant reasoning; not public customer data."
+      "confidence": 0.84,
+      "updated_date": "2025-09-12",
+      "owner_person_id": "person:meridian:jennifer-wexler",
+      "program_linkage": ["meridian-ambient-2026"],
+      "caveats": "45-minute figure is median across 312 physicians surveyed via Epic time-motion analysis Q3 FY2025; primary care median is 52 min, surgical subspecialties average 28 min. Study excluded APPs, who are tracked separately. The 45-min figure appears on physician recruiting materials and may be motivationally inflated; chart review of 40 sampled clinicians showed 38-min median, which is directionally consistent but not identical."
     },
     {
       "id": "ev:meridian:002",
-      "claim": "Prior-auth auto-approval rate is 8%",
-      "source_type": "industry_research",
-      "source_doc": "ai-governance-workpapers.docx",
-      "source_section": "Relevant tab / workpaper section",
+      "claim": "Prior-auth auto-approval rate is 8% across all Cohere Health payer transactions",
+      "source_type": "tenant_data_room",
+      "source_document": "Cohere Health Portal Analytics Export — Meridian Health Q1 FY2026",
+      "source_section": "Tab: Decisioning Summary by Auth Category",
       "data_classification": "Internal",
-      "confidence": 0.88,
-      "last_updated": "2026-04-15",
-      "owner_person_id": "person:meridian:anita-krishnamurthy",
-      "supports_claims_in": [
-        "meridian-ai-governance-2026",
-        "kpi:meridian:003"
-      ],
-      "caveats": "Source is sufficient for synthetic tenant reasoning; not public customer data."
+      "confidence": 0.93,
+      "updated_date": "2026-02-14",
+      "owner_person_id": "person:meridian:patricia-okafor",
+      "program_linkage": ["meridian-prior-auth-2026", "meridian-ai-governance-2026"],
+      "caveats": "8% auto-approval rate measured directly from Cohere portal for Q4 FY2025 through Q1 FY2026; denominator is 14,842 auth requests submitted through Cohere integration. Excludes approximately 3,200 requests per month that bypass Cohere and go directly to payer portals (primarily Anthem and BCBS Virginia manual workflows). If included, the blended auto-approval rate would be approximately 5.8%. Industry benchmark for comparable health systems on Cohere is 38-52% auto-approval; Meridian's 8% reflects pre-DENIALS-2024 configuration that was never fully re-optimized."
     },
     {
       "id": "ev:meridian:003",
-      "claim": "DENIALS-2024 sunk cost reached $8M",
-      "source_type": "expert_interview",
-      "source_doc": "vendor-scorecard.xlsx",
-      "source_section": "Relevant tab / workpaper section",
+      "claim": "DENIALS-2024 program sunk cost reached $8M with no measurable denial rate improvement",
+      "source_type": "tenant_data_room",
+      "source_document": "DENIALS-2024 Post-Implementation Review — CFO Sign-Off Version 2025-Q2",
+      "source_section": "Appendix B: Total Program Expenditure Summary",
       "data_classification": "Confidential",
-      "confidence": 0.88,
-      "last_updated": "2026-04-15",
+      "confidence": 0.97,
+      "updated_date": "2025-08-22",
       "owner_person_id": "person:meridian:david-park",
-      "supports_claims_in": [
-        "meridian-rcm-modernization-2026",
-        "kpi:meridian:004"
-      ],
-      "caveats": "Source is sufficient for synthetic tenant reasoning; not public customer data."
+      "program_linkage": ["meridian-rcm-modernization-2026", "meridian-prior-auth-2026"],
+      "caveats": "$8.0M figure is audited by the CFO office and reflects direct program spend through program close in Q1 FY2025; includes $4.1M in vendor fees (Cohere, Olive), $2.2M in FTE allocation, and $1.7M in Epic build labor. Does not include opportunity cost of physician time diverted to workaround workflows during the 14-month program, estimated separately at $1.1M equivalent. The post-mortem finding — no statistically significant change in net denial rate — is contested by the prior vendor; program team's analysis is considered authoritative for Meridian internal purposes."
     },
     {
       "id": "ev:meridian:004",
-      "claim": "Q4 FY2025 gross denial rate increased 180bps",
-      "source_type": "regulatory_doc",
-      "source_doc": "epic-audit-log-analysis-q1-2026.xlsx",
-      "source_section": "Relevant tab / workpaper section",
+      "claim": "Q4 FY2025 gross denial rate increased 180 basis points quarter-over-quarter to 18.4%",
+      "source_type": "tenant_data_room",
+      "source_document": "Waystar AR Dashboard Export Q4 FY2025 — Monthly Denial Trending",
+      "source_section": "Sheet: Gross Denial Rate by Payer, Monthly",
       "data_classification": "Internal",
-      "confidence": 0.88,
-      "last_updated": "2026-04-15",
-      "owner_person_id": "person:meridian:marcus-reid",
-      "supports_claims_in": [
-        "meridian-ambient-2026",
-        "kpi:meridian:005"
-      ],
-      "caveats": "Source is sufficient for synthetic tenant reasoning; not public customer data."
+      "confidence": 0.95,
+      "updated_date": "2026-01-09",
+      "owner_person_id": "person:meridian:patricia-okafor",
+      "program_linkage": ["meridian-rcm-modernization-2026", "meridian-prior-auth-2026"],
+      "caveats": "Denial rate 18.4% measured by RCM team from Waystar AR dashboard; excludes pharmacy claims which are tracked separately in a different system; pharmacy denial rate estimated at 22% separately. The 180bps quarter-over-quarter increase was driven primarily by two payer policy changes: Anthem tightened inpatient admission criteria for certain DRG categories effective October 1, 2025, and UnitedHealthcare expanded prior-auth requirements for imaging to include outpatient CT. These payer-side policy factors are partially outside Meridian's control; the denial rate trend corrected for payer-policy changes shows approximately 60bps underlying drift."
     },
     {
       "id": "ev:meridian:005",
-      "claim": "HCAHPS Q1 FY2026 overall rating declined",
-      "source_type": "peer_anonymized",
-      "source_doc": "q4-financial-close.pdf",
-      "source_section": "Relevant tab / workpaper section",
+      "claim": "HCAHPS overall rating declined to 4.2/5 in Q1 FY2026, reversing a two-quarter improvement trend",
+      "source_type": "tenant_data_room",
+      "source_document": "Epic Clarity Report: HCAHPS Rolling 12mo — Meridian Medical Center + Satellite Sites",
+      "source_section": "Section 2: Overall Rating Trend by Facility",
       "data_classification": "Internal",
-      "confidence": 0.88,
-      "last_updated": "2026-04-15",
-      "owner_person_id": "person:meridian:jennifer-wexler",
-      "supports_claims_in": [
-        "meridian-prior-auth-2026",
-        "kpi:meridian:006"
-      ],
-      "caveats": "Source is sufficient for synthetic tenant reasoning; not public customer data."
+      "confidence": 0.87,
+      "updated_date": "2026-03-18",
+      "owner_person_id": "person:meridian:james-okonjo",
+      "program_linkage": ["meridian-ambient-2026"],
+      "caveats": "HCAHPS 4.2/5 rating reflects H1 FY2026 composite across four inpatient facilities; prior two quarters were 3.9/5 and 4.0/5. Improvement attributed to discharge rounding pilot at Meridian Medical Center main campus; three satellite sites have not implemented rounding yet and remain at 3.8-4.0 range. HCAHPS response rate for Q1 was 31%, below CMS recommended 30% threshold; low response rate introduces selection bias toward patients with strong positive or negative experiences. Facility-level breakdown not included in this evidence item due to competitive sensitivity."
     },
     {
       "id": "ev:meridian:006",
-      "claim": "MA STAR overall rating is 4.0",
-      "source_type": "tenant_data_room",
-      "source_doc": "ai-governance-workpapers.docx",
-      "source_section": "Relevant tab / workpaper section",
+      "claim": "Medicare Advantage STAR overall rating is 4.0, positioning Meridian Health Plans for quality bonus payments",
+      "source_type": "regulatory_doc",
+      "source_document": "CMS 2026 STAR Ratings Release — Meridian Health Plans Contract H3841",
+      "source_section": "Contract Summary: Overall Star Rating and Domain Scores",
       "data_classification": "Confidential",
-      "confidence": 0.88,
-      "last_updated": "2026-04-15",
-      "owner_person_id": "person:meridian:sarah-obrien",
-      "supports_claims_in": [
-        "meridian-ai-governance-2026",
-        "kpi:meridian:007"
-      ],
-      "caveats": "Source is sufficient for synthetic tenant reasoning; not public customer data."
+      "confidence": 0.98,
+      "updated_date": "2025-10-18",
+      "owner_person_id": "person:meridian:christopher-vega",
+      "program_linkage": ["meridian-ai-governance-2026"],
+      "caveats": "4.0 STAR rating is the official CMS 2026 determination published October 2025 for contract H3841 (Virginia Medicare Advantage). This is a hard regulatory fact from CMS public data; confidence is near-certain for the published value. Forward-looking implication — quality bonus payment eligibility — is based on 4.0 STAR qualifying for a 5% benchmark enhancement; actual bonus dollar amount depends on final 2026 bid reconciliation not yet complete. Maryland contract H4219 carries a separate 3.5 rating not reflected in this item."
     },
     {
       "id": "ev:meridian:007",
-      "claim": "Ambient documentation peer savings benchmark supports 20-35 minutes/day",
-      "source_type": "public_filing",
-      "source_doc": "vendor-scorecard.xlsx",
-      "source_section": "Relevant tab / workpaper section",
+      "claim": "Ambient documentation peer benchmarks show 20-35 minutes/day physician time savings across comparable deployments",
+      "source_type": "industry_research",
+      "source_document": "Nuance DAX Copilot Customer Outcomes Report Q4 2025 — Shared with Meridian under NDA",
+      "source_section": "Section 3: Time Savings by Specialty and Deployment Maturity",
       "data_classification": "Internal",
-      "confidence": 0.88,
-      "last_updated": "2026-04-15",
-      "owner_person_id": "person:meridian:rebecca-hollings",
-      "supports_claims_in": [
-        "meridian-rcm-modernization-2026",
-        "kpi:meridian:008"
-      ],
-      "caveats": "Source is sufficient for synthetic tenant reasoning; not public customer data."
+      "confidence": 0.74,
+      "updated_date": "2025-11-30",
+      "owner_person_id": "person:meridian:kavita-patel",
+      "program_linkage": ["meridian-ambient-2026"],
+      "caveats": "20-35 minute range is vendor-reported from Nuance/Microsoft's DAX customer base and is directionally consistent with independent research but carries vendor selection bias; customers willing to participate in outcome reports likely represent higher-adoption cohorts. Abridge and Suki have published similar ranges (18-32 min and 15-28 min respectively) but using different measurement methodologies. Meridian's own Q3 FY2025 pilot with 22 physicians at one clinic showed 14-minute median reduction — lower than vendor claims — which program team attributes to shorter pilot duration rather than ceiling effect. Vendor claims should not be used as performance commitments in board materials without Meridian's own measurement attached."
     },
     {
       "id": "ev:meridian:008",
-      "claim": "FDA guidance tracking requires clinical AI review",
-      "source_type": "industry_research",
-      "source_doc": "epic-audit-log-analysis-q1-2026.xlsx",
-      "source_section": "Relevant tab / workpaper section",
+      "claim": "FDA Q1 2026 draft guidance on AI/ML Software as a Medical Device may reclassify certain Meridian clinical AI tools as SaMD",
+      "source_type": "regulatory_doc",
+      "source_document": "FDA Draft Guidance: AI-Enabled Device Software Functions March 2026 — Regulatory Counsel Analysis Memo",
+      "source_section": "Counsel Memo Section 2: Applicability to Meridian AI Portfolio",
       "data_classification": "Internal",
-      "confidence": 0.62,
-      "last_updated": "2026-04-15",
-      "owner_person_id": "person:meridian:james-okonjo",
-      "supports_claims_in": [
-        "meridian-ambient-2026",
-        "kpi:meridian:009"
-      ],
-      "caveats": "Low-confidence or stale; value describes the claim without exposing restricted row-level data."
+      "confidence": 0.72,
+      "updated_date": "2026-04-02",
+      "owner_person_id": "person:meridian:karen-mercer",
+      "program_linkage": ["meridian-ai-governance-2026"],
+      "caveats": "FDA guidance is in draft form as of Q1 2026; final rule not expected until Q3 2026 at earliest. Regulatory counsel memo concludes that Meridian's prior-auth AI and ambient documentation tools are 'probably not' SaMD under current draft criteria, but that a final determination requires FDA interaction or published guidance. The 0.72 confidence reflects the genuine uncertainty of draft regulatory interpretation; this item should be updated immediately upon final FDA guidance publication. Meridian has not yet filed an informal FDA inquiry. This is an active watch item for the AI Governance program."
     },
     {
       "id": "ev:meridian:009",
-      "claim": "Innovaccer renewal is strategically loaded",
+      "claim": "Innovaccer population health platform contract renewal decision is strategically loaded: renewal scope will determine analytics availability for three programs in H2 2026",
       "source_type": "expert_interview",
-      "source_doc": "q4-financial-close.pdf",
-      "source_section": "Relevant tab / workpaper section",
+      "source_document": "Procurement Negotiation Strategy Memo — Innovaccer Renewal FY2026 (Angela Brooks, CPO)",
+      "source_section": "Section 1: Strategic Context and Leverage Assessment",
       "data_classification": "Restricted",
-      "confidence": 0.88,
-      "last_updated": "2026-04-15",
-      "owner_person_id": "person:meridian:patricia-okafor",
-      "supports_claims_in": [
-        "meridian-prior-auth-2026",
-        "kpi:meridian:010"
-      ],
-      "caveats": "Source is sufficient for synthetic tenant reasoning; not public customer data."
+      "confidence": 0.82,
+      "updated_date": "2026-03-01",
+      "owner_person_id": "person:meridian:angela-brooks",
+      "program_linkage": ["meridian-prior-auth-2026", "meridian-rcm-modernization-2026"],
+      "caveats": "Evidence reflects CPO assessment as of March 2026; Innovaccer negotiations were in early stages. 'Strategically loaded' characterization reflects three programs' dependency on Innovaccer data feeds (population risk scores, attribution data, ED utilization analytics) for their H2 milestones. Contract expires August 31, 2026. Innovaccer has proposed a 22% price increase tied to expanded AI features; Meridian's counter-position and final terms are not yet known. This item will require update by June 2026 based on negotiation outcome."
     },
     {
       "id": "ev:meridian:010",
-      "claim": "Cohere pilot 80% vs production 22% created scar tissue",
-      "source_type": "regulatory_doc",
-      "source_doc": "ai-governance-workpapers.docx",
-      "source_section": "Relevant tab / workpaper section",
+      "claim": "Cohere Health pilot achieved 80% auto-approval rate; production deployment settled at 22% — gap created organizational scar tissue",
+      "source_type": "tenant_data_room",
+      "source_document": "DENIALS-2024 Post-Implementation Review — CFO Sign-Off Version 2025-Q2",
+      "source_section": "Section 3: Pilot vs. Production Performance Analysis",
       "data_classification": "Internal",
-      "confidence": 0.88,
-      "last_updated": "2026-04-15",
-      "owner_person_id": "person:meridian:margaret-liu",
-      "supports_claims_in": [
-        "meridian-ai-governance-2026",
-        "kpi:meridian:011"
-      ],
-      "caveats": "Source is sufficient for synthetic tenant reasoning; not public customer data."
+      "confidence": 0.94,
+      "updated_date": "2025-08-22",
+      "owner_person_id": "person:meridian:patricia-okafor",
+      "program_linkage": ["meridian-prior-auth-2026", "meridian-ai-governance-2026"],
+      "caveats": "Both figures — 80% pilot and 22% production — are directly extracted from Cohere portal analytics cited in the DENIALS-2024 post-mortem. The pilot was conducted on 180 high-volume, low-complexity auth categories (physical therapy, routine imaging); production deployed across all 847 auth categories including high-complexity surgical and oncology cases where auto-approval is structurally lower. The performance gap is attributable to scope expansion rather than model degradation, but the organizational impact (physician frustration, CBO skepticism) is real and documented in the AI Governance program's stakeholder assessment. 'Scar tissue' language comes verbatim from Dr. Wexler's steering committee remarks January 2026."
     },
     {
       "id": "ev:meridian:011",
-      "claim": "Hawaii Cerner remnant adds integration cost",
-      "source_type": "peer_anonymized",
-      "source_doc": "vendor-scorecard.xlsx",
-      "source_section": "Relevant tab / workpaper section",
+      "claim": "Legacy Cerner PowerChart instance at Meridian Hawaii adds $1.2-1.8M in annual integration maintenance cost and creates patient identity reconciliation gaps",
+      "source_type": "tenant_data_room",
+      "source_document": "IT Landscape Assessment: Hawaii Market Integration Feasibility — FY2026 Capital Planning",
+      "source_section": "Section 4: Cerner Remnant Cost and Risk Quantification",
       "data_classification": "Internal",
-      "confidence": 0.72,
-      "last_updated": "2026-04-15",
-      "owner_person_id": "person:meridian:karen-mercer",
-      "supports_claims_in": [
-        "meridian-rcm-modernization-2026",
-        "kpi:meridian:012"
-      ],
-      "caveats": "Source is sufficient for synthetic tenant reasoning; not public customer data."
+      "confidence": 0.78,
+      "updated_date": "2025-12-15",
+      "owner_person_id": "person:meridian:anita-krishnamurthy",
+      "program_linkage": ["meridian-rcm-modernization-2026"],
+      "caveats": "Cost range of $1.2-1.8M is from a December 2025 IT feasibility study commissioned for capital planning; the range reflects uncertainty in scope of ongoing Cerner maintenance contracts, some of which are under negotiation. The patient identity reconciliation gap — estimated at 3-7% of Hawaii patient records having at least one identifier mismatch with Epic — was quantified through sampling of 500 records, not a full audit. Full reconciliation scope is unknown. This item directly affects the RCM Modernization program's Hawaii workstream, which has been quietly deferred."
     },
     {
       "id": "ev:meridian:012",
-      "claim": "CBO readiness assessment is below target",
-      "source_type": "tenant_data_room",
-      "source_doc": "epic-audit-log-analysis-q1-2026.xlsx",
-      "source_section": "Relevant tab / workpaper section",
+      "claim": "Central Business Office (CBO) readiness assessment scored 42/100 on technology and change-management dimensions, below the 60/100 threshold for RCM transformation launch",
+      "source_type": "expert_interview",
+      "source_document": "RCM Readiness Assessment — Meridian CBO Operations Review Q1 FY2026 (External Consultant Report)",
+      "source_section": "Scorecard Summary: Technology Readiness and Change Management Capacity",
       "data_classification": "Confidential",
-      "confidence": 0.88,
-      "last_updated": "2026-04-15",
-      "owner_person_id": "person:meridian:robert-chen",
-      "supports_claims_in": [
-        "meridian-ambient-2026",
-        "kpi:meridian:013"
-      ],
-      "caveats": "Source is sufficient for synthetic tenant reasoning; not public customer data."
+      "confidence": 0.83,
+      "updated_date": "2026-02-28",
+      "owner_person_id": "person:meridian:patricia-okafor",
+      "program_linkage": ["meridian-rcm-modernization-2026"],
+      "caveats": "Readiness score of 42/100 was produced by an external consultant (Huron Healthcare) using their proprietary RCM readiness framework; the 60/100 threshold is Huron's recommended minimum for program launch, not Meridian's internal policy. CBO leadership disputes the score on the change-management dimension (scored 35/50), arguing that the assessment underweighted their team's recent prior-auth workflow redesign experience. Program sponsor (David Park) accepted the score as directionally valid. This score is from February 2026; a follow-up assessment is planned for May 2026."
     },
     {
       "id": "ev:meridian:013",
-      "claim": "Clinician documentation time baseline is 45 minutes/day \u2014 supporting item 13",
-      "source_type": "public_filing",
-      "source_doc": "q4-financial-close.pdf",
-      "source_section": "Relevant tab / workpaper section",
+      "claim": "Clinician documentation burden — Epic after-hours chart time — averages 1.8 additional hours per physician per day beyond scheduled shifts",
+      "source_type": "tenant_data_room",
+      "source_document": "Epic Physician Time Analytics Report — Pajama Time Dashboard Export FY2025 Annual",
+      "source_section": "Tab: After-Hours Activity by Provider Type and Service Line",
       "data_classification": "Internal",
-      "confidence": 0.88,
-      "last_updated": "2025-10-15",
-      "owner_person_id": "person:meridian:thomas-hartwell",
-      "supports_claims_in": [
-        "meridian-prior-auth-2026",
-        "kpi:meridian:014"
-      ],
-      "caveats": "Low-confidence or stale; value describes the claim without exposing restricted row-level data."
+      "confidence": 0.91,
+      "updated_date": "2025-07-30",
+      "owner_person_id": "person:meridian:jennifer-wexler",
+      "program_linkage": ["meridian-ambient-2026"],
+      "caveats": "1.8 hours is median 'pajama time' (Epic after-hours access) across 289 attending physicians FY2025 annual; this is a harder measurement than survey-based documentation burden because it draws directly from Epic access logs. However, after-hours Epic access is a proxy for documentation work — some access reflects order review, patient messaging response, or result review rather than pure note-writing. A time-motion sub-study found that approximately 65% of after-hours Epic access represents documentation tasks, suggesting true documentation burden is closer to 1.2 hours. The 1.8-hour figure should be cited with this nuance in program materials."
     },
     {
       "id": "ev:meridian:014",
-      "claim": "Prior-auth auto-approval rate is 8% \u2014 supporting item 14",
-      "source_type": "industry_research",
-      "source_doc": "ai-governance-workpapers.docx",
-      "source_section": "Relevant tab / workpaper section",
+      "claim": "Prior-auth cycle time averages 6.2 days from authorization request receipt to payer decision across all payers",
+      "source_type": "tenant_data_room",
+      "source_document": "Cohere Health Portal Analytics Export — Meridian Health Q1 FY2026",
+      "source_section": "Tab: Auth Cycle Time Distribution by Payer",
       "data_classification": "Internal",
-      "confidence": 0.88,
-      "last_updated": "2026-04-15",
-      "owner_person_id": "person:meridian:lakshmi-venkatesan",
-      "supports_claims_in": [
-        "meridian-ai-governance-2026",
-        "kpi:meridian:015"
-      ],
-      "caveats": "Source is sufficient for synthetic tenant reasoning; not public customer data."
+      "confidence": 0.89,
+      "updated_date": "2026-02-14",
+      "owner_person_id": "person:meridian:patricia-okafor",
+      "program_linkage": ["meridian-prior-auth-2026"],
+      "caveats": "Prior auth mean cycle time 6.2 days measured from authorization request receipt to decision in Cohere Health portal; does not include time prior to request submission (physician office prep time, clinical documentation gathering). Actual patient-experienced cycle time estimated at 8-10 days from physician order to auth decision. Anthem is the slowest payer at 9.1 days mean; BCBS Virginia is fastest at 3.8 days mean. Urgent/expedited auth requests average 1.2 days and are excluded from the 6.2-day figure. Payer-level breakdown is available in source document but not reproduced here."
     },
     {
       "id": "ev:meridian:015",
-      "claim": "DENIALS-2024 sunk cost reached $8M \u2014 supporting item 15",
-      "source_type": "expert_interview",
-      "source_doc": "vendor-scorecard.xlsx",
-      "source_section": "Relevant tab / workpaper section",
+      "claim": "Total DENIALS-2024 direct program expenditure reached $8M across vendor fees, FTE allocation, and Epic build labor through program close Q1 FY2025",
+      "source_type": "tenant_data_room",
+      "source_document": "DENIALS-2024 Program Financial Close — CFO Attestation Letter March 2025",
+      "source_section": "Attachment 1: Final Expenditure by Category",
       "data_classification": "Confidential",
-      "confidence": 0.88,
-      "last_updated": "2026-04-15",
-      "owner_person_id": "person:meridian:andrew-fitzgerald",
-      "supports_claims_in": [
-        "meridian-rcm-modernization-2026",
-        "kpi:meridian:016"
-      ],
-      "caveats": "Source is sufficient for synthetic tenant reasoning; not public customer data."
+      "confidence": 0.97,
+      "updated_date": "2025-03-31",
+      "owner_person_id": "person:meridian:david-park",
+      "program_linkage": ["meridian-rcm-modernization-2026"],
+      "caveats": "This evidence item corroborates ev:meridian:003 with a different source document — the CFO attestation letter rather than the post-implementation review. The $8.0M figure is audited and signed by CFO David Park. The breakdown: $4.1M vendor fees (Cohere Health and Olive AI, per contracts), $2.2M FTE allocation (9.2 FTE-equivalents over 14 months at blended loaded rate), $1.7M Epic build labor (Epic Professional Services and internal IT). This is the authoritative financial figure for the program; the post-mortem document (ev:meridian:003) cites the same total derived from a different accounting treatment but reaches the same conclusion."
     },
     {
       "id": "ev:meridian:016",
-      "claim": "Q4 FY2025 gross denial rate increased 180bps \u2014 supporting item 16",
-      "source_type": "regulatory_doc",
-      "source_doc": "epic-audit-log-analysis-q1-2026.xlsx",
-      "source_section": "Relevant tab / workpaper section",
+      "claim": "Q4 FY2025 gross denial rate at 18.4% represents a multi-year high; prior year Q4 was 14.8%",
+      "source_type": "tenant_data_room",
+      "source_document": "Waystar AR Dashboard — Year-Over-Year Denial Trending FY2023-2025",
+      "source_section": "Exhibit 3: Gross Denial Rate Q4 Comparison FY2023-2025",
       "data_classification": "Internal",
-      "confidence": 0.62,
-      "last_updated": "2026-04-15",
-      "owner_person_id": "person:meridian:priya-sharma",
-      "supports_claims_in": [
-        "meridian-ambient-2026",
-        "kpi:meridian:017"
-      ],
-      "caveats": "Low-confidence or stale; value describes the claim without exposing restricted row-level data."
+      "confidence": 0.92,
+      "updated_date": "2026-01-09",
+      "owner_person_id": "person:meridian:patricia-okafor",
+      "program_linkage": ["meridian-rcm-modernization-2026"],
+      "caveats": "Year-over-year comparison shows: Q4 FY2023 = 14.1%, Q4 FY2024 = 14.8%, Q4 FY2025 = 18.4%. The 360bps two-year increase is partly attributable to Anthem and UnitedHealthcare policy tightening (see ev:meridian:004), partly to Meridian's CBO staffing vacancy (3 of 8 denial management positions open through Q3 FY2025), and partly to incomplete DENIALS-2024 implementation (Olive AI modules were decommissioned before denial workflows were fully rebuilt). Denial categories driving the increase are surgical inpatient (up 520bps), high-cost imaging (up 410bps), and home health (up 290bps). Routine ambulatory denials are stable."
     },
     {
       "id": "ev:meridian:017",
-      "claim": "HCAHPS Q1 FY2026 overall rating declined \u2014 supporting item 17",
-      "source_type": "peer_anonymized",
-      "source_doc": "q4-financial-close.pdf",
-      "source_section": "Relevant tab / workpaper section",
+      "claim": "HCAHPS Q1 FY2026 overall rating declined at two of four inpatient sites, bucking the system-wide positive trend",
+      "source_type": "tenant_data_room",
+      "source_document": "Epic Clarity Report: HCAHPS Rolling 12mo — Facility-Level Detail Q1 FY2026",
+      "source_section": "Section 3: Site-Level Trend Analysis",
       "data_classification": "Internal",
-      "confidence": 0.88,
-      "last_updated": "2026-04-15",
-      "owner_person_id": "person:meridian:christopher-vega",
-      "supports_claims_in": [
-        "meridian-prior-auth-2026",
-        "kpi:meridian:018"
-      ],
-      "caveats": "Source is sufficient for synthetic tenant reasoning; not public customer data."
+      "confidence": 0.85,
+      "updated_date": "2026-03-18",
+      "owner_person_id": "person:meridian:james-okonjo",
+      "program_linkage": ["meridian-ambient-2026"],
+      "caveats": "Q1 FY2026 site-level data shows Meridian Medical Center (main campus) improved to 4.3/5 from 4.0/5; Meridian Regional (Fairfax) was flat at 3.9/5; Meridian Community Hospital (Arlington) declined to 3.7/5 from 3.9/5; Meridian Specialty Center (Reston) declined to 3.8/5 from 4.1/5. The two declining sites share a common factor: both had significant nursing turnover in Q4 FY2025 (14% and 19% respectively). Attribution of decline to nursing turnover vs. other factors is qualitative, not regression-based. HCAHPS response rates at the two declining sites were 27% and 29%, adding measurement uncertainty."
     },
     {
       "id": "ev:meridian:018",
-      "claim": "MA STAR overall rating is 4.0 \u2014 supporting item 18",
-      "source_type": "tenant_data_room",
-      "source_doc": "ai-governance-workpapers.docx",
-      "source_section": "Relevant tab / workpaper section",
-      "data_classification": "Restricted",
-      "confidence": 0.88,
-      "last_updated": "2026-04-15",
-      "owner_person_id": "person:meridian:kavita-patel",
-      "supports_claims_in": [
-        "meridian-ai-governance-2026",
-        "kpi:meridian:019"
-      ],
-      "caveats": "Source is sufficient for synthetic tenant reasoning; not public customer data."
+      "claim": "MA STAR overall rating of 4.0 for contract H3841 (Virginia) reflects performance on 40 individual STAR measures across quality, access, and member experience domains",
+      "source_type": "regulatory_doc",
+      "source_document": "CMS 2026 STAR Ratings — Contract H3841 Detailed Measure Performance Report",
+      "source_section": "All Measures Table with Domain Weights",
+      "data_classification": "Confidential",
+      "confidence": 0.98,
+      "updated_date": "2025-10-18",
+      "owner_person_id": "person:meridian:christopher-vega",
+      "program_linkage": ["meridian-ai-governance-2026"],
+      "caveats": "CMS-published measure-level scores for H3841: strongest measures are Diabetes Care — Blood Sugar Controlled (4.5), Breast Cancer Screening (4.5), and Medication Adherence (4.0); weakest are Care Coordination — Patient Follow-up After Inpatient Admission (3.0) and Reducing the Risk of Falling (3.0). The weakest measures are directly actionable through Meridian's care management programs. The 4.0 composite is a hard regulatory figure; measure-level performance is the basis for gap closure targeting in care management. Triple-weighted measures (management of chronic conditions) carry disproportionate influence on composite."
     },
     {
       "id": "ev:meridian:019",
-      "claim": "Ambient documentation peer savings benchmark supports 20-35 minutes/day \u2014 supporting item 19",
-      "source_type": "public_filing",
-      "source_doc": "vendor-scorecard.xlsx",
-      "source_section": "Relevant tab / workpaper section",
+      "claim": "Industry benchmark for ambient scribe time savings clusters at 20-35 minutes/day; Meridian's own pilot measured 14 minutes — gap suggests pilot conditions underestimate steady-state benefit",
+      "source_type": "peer_anonymized",
+      "source_document": "KLAS Research Report: Ambient Clinical Intelligence 2025 — Customer Outcomes Summary",
+      "source_section": "Section 5: Physician Time Recovery by Deployment Maturity Stage",
       "data_classification": "Internal",
-      "confidence": 0.88,
-      "last_updated": "2026-04-15",
-      "owner_person_id": "person:meridian:marcus-chen",
-      "supports_claims_in": [
-        "meridian-rcm-modernization-2026",
-        "kpi:meridian:020"
-      ],
-      "caveats": "Source is sufficient for synthetic tenant reasoning; not public customer data."
+      "confidence": 0.76,
+      "updated_date": "2025-10-05",
+      "owner_person_id": "person:meridian:kavita-patel",
+      "program_linkage": ["meridian-ambient-2026"],
+      "caveats": "KLAS report cites median time savings of 22 minutes/day at deployment maturity Stage 3 (>6 months deployment) across 47 health system respondents. Meridian's 14-minute pilot result was measured at Stage 1 (first 8 weeks); KLAS data shows Stage 1 median is 11 minutes, which means Meridian is actually performing at or above peer Stage 1 benchmark. The 20-35 minute industry range represents a 6-18 month deployment horizon, not immediate productivity. This nuance is critical for setting board and physician expectations: the program should be marketed on the Stage 3 trajectory, not the immediate gain."
     },
     {
       "id": "ev:meridian:020",
-      "claim": "FDA guidance tracking requires clinical AI review \u2014 supporting item 20",
-      "source_type": "industry_research",
-      "source_doc": "epic-audit-log-analysis-q1-2026.xlsx",
-      "source_section": "Relevant tab / workpaper section",
+      "claim": "FDA Clinical Decision Support Software guidance and draft SaMD rules create a regulatory review requirement for any AI model that interprets clinical data and influences treatment decisions",
+      "source_type": "regulatory_doc",
+      "source_document": "FDA Draft Guidance: AI-Enabled Device Software Functions March 2026",
+      "source_section": "Section IV: CDS Software Exemption Criteria and SaMD Classification Thresholds",
       "data_classification": "Internal",
-      "confidence": 0.88,
-      "last_updated": "2026-04-15",
-      "owner_person_id": "person:meridian:linda-howard",
-      "supports_claims_in": [
-        "meridian-ambient-2026",
-        "kpi:meridian:021"
-      ],
-      "caveats": "Source is sufficient for synthetic tenant reasoning; not public customer data."
+      "confidence": 0.79,
+      "updated_date": "2026-04-02",
+      "owner_person_id": "person:meridian:karen-mercer",
+      "program_linkage": ["meridian-ai-governance-2026"],
+      "caveats": "Draft guidance is not final law; FDA explicitly states the comment period closes June 30, 2026. However, FDA has historically finalized guidance consistent with draft positions when major stakeholder comments are limited. The classification threshold for SaMD vs. exempt CDS software turns on whether the software 'provides specific disease or condition treatment or prevention recommendations to a healthcare professional' — language that Meridian's regulatory counsel believes currently covers the prior-auth denial prediction model but not the ambient scribe. This interpretation is not independently confirmed. Risk classification should be re-evaluated with final guidance."
     },
     {
       "id": "ev:meridian:021",
-      "claim": "Innovaccer renewal is strategically loaded \u2014 supporting item 21",
-      "source_type": "expert_interview",
-      "source_doc": "q4-financial-close.pdf",
-      "source_section": "Relevant tab / workpaper section",
-      "data_classification": "Confidential",
-      "confidence": 0.88,
-      "last_updated": "2026-04-15",
-      "owner_person_id": "person:meridian:wei-zhang",
-      "supports_claims_in": [
-        "meridian-prior-auth-2026",
-        "kpi:meridian:022"
-      ],
-      "caveats": "Source is sufficient for synthetic tenant reasoning; not public customer data."
+      "claim": "Innovaccer population health platform underpins risk stratification, ED utilization analytics, and member attribution data for multiple active programs; contract expires August 31, 2026",
+      "source_type": "tenant_data_room",
+      "source_document": "Innovaccer Master Services Agreement — Meridian Health Systems Executed Contract FY2023-2026",
+      "source_section": "Exhibit A: Service Scope and Term",
+      "data_classification": "Restricted",
+      "confidence": 0.96,
+      "updated_date": "2025-06-15",
+      "owner_person_id": "person:meridian:angela-brooks",
+      "program_linkage": ["meridian-prior-auth-2026", "meridian-ai-governance-2026"],
+      "caveats": "Contract expiration date of August 31, 2026 is a hard contractual fact from the executed MSA. Innovaccer's renewal terms proposal arrived March 2026; final negotiations are in progress. Three active programs have data dependencies on Innovaccer that are not clearly documented in their risk registers: RCM Modernization uses Innovaccer for population risk stratification baseline; Prior Auth AI uses Innovaccer attribution data to match authorization requests to attributed providers; AI Governance uses Innovaccer's model monitoring hooks for third-party AI model performance tracking. If the contract lapses, all three programs lose access simultaneously on September 1, 2026."
     },
     {
       "id": "ev:meridian:022",
-      "claim": "Cohere pilot 80% vs production 22% created scar tissue \u2014 supporting item 22",
-      "source_type": "regulatory_doc",
-      "source_doc": "ai-governance-workpapers.docx",
-      "source_section": "Relevant tab / workpaper section",
+      "claim": "Cohere Health pilot-to-production performance gap (80% vs 22%) is documented and attributable to scope expansion, not model degradation — but organizational trust damage is real",
+      "source_type": "tenant_data_room",
+      "source_document": "DENIALS-2024 Post-Implementation Review — Cohere Performance Analysis Appendix",
+      "source_section": "Appendix C: Pilot vs. Production Auth Category Composition Analysis",
       "data_classification": "Internal",
-      "confidence": 0.72,
-      "last_updated": "2026-04-15",
-      "owner_person_id": "person:meridian:daniel-reyes",
-      "supports_claims_in": [
-        "meridian-ai-governance-2026",
-        "kpi:meridian:023"
-      ],
-      "caveats": "Source is sufficient for synthetic tenant reasoning; not public customer data."
+      "confidence": 0.91,
+      "updated_date": "2025-08-22",
+      "owner_person_id": "person:meridian:patricia-okafor",
+      "program_linkage": ["meridian-prior-auth-2026"],
+      "caveats": "Technical root cause of the performance gap — scope expansion from 180 low-complexity to 847 mixed-complexity auth categories — is documented by Cohere in their own post-mortem and confirmed by Meridian's RCM team. However, the DENIALS-2024 program governance process did not adequately communicate this scope change to clinical leadership before production deployment; Dr. Wexler and Dr. Reid learned of the scope expansion from the post-mortem, not during the program. The organizational trust damage is well-documented in January 2026 AI Governance stakeholder interviews (6 of 8 physician informants mentioned Cohere skepticism unprompted). This scar tissue is a current program risk for meridian-prior-auth-2026, not a resolved historical issue."
     },
     {
       "id": "ev:meridian:023",
-      "claim": "Hawaii Cerner remnant adds integration cost \u2014 supporting item 23",
-      "source_type": "peer_anonymized",
-      "source_doc": "vendor-scorecard.xlsx",
-      "source_section": "Relevant tab / workpaper section",
+      "claim": "Hawaii Cerner remnant creates ongoing patient identity mismatches affecting approximately 3-7% of Hawaii patient records when reconciled against Epic master person index",
+      "source_type": "tenant_data_room",
+      "source_document": "IT Landscape Assessment: Hawaii Market Integration Feasibility — FY2026 Capital Planning",
+      "source_section": "Section 5: Patient Identity Reconciliation Gap Analysis (Sample-Based)",
       "data_classification": "Internal",
-      "confidence": 0.88,
-      "last_updated": "2026-04-15",
-      "owner_person_id": "person:meridian:jordan-mckenzie",
-      "supports_claims_in": [
-        "meridian-rcm-modernization-2026",
-        "kpi:meridian:024"
-      ],
-      "caveats": "Source is sufficient for synthetic tenant reasoning; not public customer data."
+      "confidence": 0.75,
+      "updated_date": "2025-12-15",
+      "owner_person_id": "person:meridian:anita-krishnamurthy",
+      "program_linkage": ["meridian-rcm-modernization-2026"],
+      "caveats": "The 3-7% identity mismatch estimate is from a 500-record sample, not a full audit; statistical confidence interval at this sample size is approximately ±2.4 percentage points, making the true range 0.6% to 9.4%. Root causes of mismatches include: hyphenated last names treated differently by Cerner vs. Epic, middle name inclusion/exclusion, and date-of-birth entry conventions. A full reconciliation audit is estimated to require 400 hours of data engineering time and has not been budgeted. This gap directly affects the accuracy of any AI model trained on Meridian data that includes Hawaii patients — a risk that neither the ambient scribe nor prior-auth programs have documented."
     },
     {
       "id": "ev:meridian:024",
-      "claim": "CBO readiness assessment is below target \u2014 supporting item 24",
-      "source_type": "tenant_data_room",
-      "source_doc": "epic-audit-log-analysis-q1-2026.xlsx",
-      "source_section": "Relevant tab / workpaper section",
+      "claim": "CBO readiness assessment flagged inadequate change management capacity and below-threshold technology integration maturity as the two primary blockers for RCM transformation",
+      "source_type": "expert_interview",
+      "source_document": "Huron Healthcare RCM Readiness Assessment — Final Report February 2026",
+      "source_section": "Section 5: Barrier Analysis and Recommended Remediation Steps",
       "data_classification": "Confidential",
-      "confidence": 0.62,
-      "last_updated": "2026-04-15",
-      "owner_person_id": "person:meridian:vacant-vp-applications",
-      "supports_claims_in": [
-        "meridian-ambient-2026",
-        "kpi:meridian:025"
-      ],
-      "caveats": "Low-confidence or stale; value describes the claim without exposing restricted row-level data."
+      "confidence": 0.81,
+      "updated_date": "2026-02-28",
+      "owner_person_id": "person:meridian:patricia-okafor",
+      "program_linkage": ["meridian-rcm-modernization-2026"],
+      "caveats": "Huron report identifies change management capacity as the primary blocker based on interviews with 18 CBO staff and observation of 4 weeks of operations. The technology integration maturity finding is based on a review of current Waystar, Cohere, and Epic integration touchpoints. CBO leadership disputes the change management finding, arguing their team handled a major Waystar upgrade in FY2024 without external support. The CFO accepted the Huron findings as the basis for the RCM Modernization program's Phase 1 remediation plan. Huron was subsequently retained as the implementation support vendor, creating a potential conflict of interest in the assessment findings that program governance should acknowledge."
     },
     {
       "id": "ev:meridian:025",
-      "claim": "Clinician documentation time baseline is 45 minutes/day \u2014 supporting item 25",
-      "source_type": "public_filing",
-      "source_doc": "q4-financial-close.pdf",
-      "source_section": "Relevant tab / workpaper section",
+      "claim": "Physician after-hours Epic access (pajama time) correlates with burnout scores at r=0.62 across Meridian's physician workforce survey data",
+      "source_type": "tenant_data_room",
+      "source_document": "Meridian Physician Wellbeing Survey FY2025 — CMIO Analytics Supplement",
+      "source_section": "Section 4: Documentation Burden and Burnout Correlation Analysis",
       "data_classification": "Internal",
-      "confidence": 0.88,
-      "last_updated": "2026-04-15",
-      "owner_person_id": "person:meridian:jessica-toth",
-      "supports_claims_in": [
-        "meridian-prior-auth-2026",
-        "kpi:meridian:026"
-      ],
-      "caveats": "Source is sufficient for synthetic tenant reasoning; not public customer data."
+      "confidence": 0.82,
+      "updated_date": "2025-09-12",
+      "owner_person_id": "person:meridian:jennifer-wexler",
+      "program_linkage": ["meridian-ambient-2026"],
+      "caveats": "r=0.62 correlation between after-hours Epic access and Maslach Burnout Inventory-Healthcare Workers (MBI-HCW) scores is from FY2025 annual physician wellbeing survey with 67% response rate (212 of 317 physicians). Correlation is statistically significant (p<0.001) but confounded by specialty — surgeons and intensivists have both higher documentation burden and higher burnout for structural reasons unrelated to documentation. The correlation in primary care only is r=0.71. This evidence directly supports the ambient scribe business case but should be presented with specialty stratification to avoid overstating the modifiable documentation-burnout pathway."
     },
     {
       "id": "ev:meridian:026",
-      "claim": "Prior-auth auto-approval rate is 8% \u2014 supporting item 26",
-      "source_type": "industry_research",
-      "source_doc": "ai-governance-workpapers.docx",
-      "source_section": "Relevant tab / workpaper section",
+      "claim": "Prior-auth auto-approval rate baseline of 8% is among the lowest quartile for academic-adjacent health systems on Cohere Health platform",
+      "source_type": "peer_anonymized",
+      "source_document": "Cohere Health Customer Benchmarking Report Q4 2025 — Meridian Health Cohort Analysis",
+      "source_section": "Exhibit 4: Auto-Approval Rate Percentile Distribution by Customer Segment",
       "data_classification": "Internal",
-      "confidence": 0.88,
-      "last_updated": "2025-10-15",
-      "owner_person_id": "person:meridian:brian-sullivan",
-      "supports_claims_in": [
-        "meridian-ai-governance-2026",
-        "kpi:meridian:027"
-      ],
-      "caveats": "Low-confidence or stale; value describes the claim without exposing restricted row-level data."
+      "confidence": 0.77,
+      "updated_date": "2025-12-10",
+      "owner_person_id": "person:meridian:patricia-okafor",
+      "program_linkage": ["meridian-prior-auth-2026"],
+      "caveats": "Cohere benchmarking report places Meridian at 9th percentile for auto-approval rate among 41 comparable health systems (300-600 beds, academic-affiliated, northeast/mid-Atlantic geography). Median for peer cohort is 38%; top quartile threshold is 52%. The low percentile is primarily attributable to Meridian's post-DENIALS-2024 configuration where conservative approval thresholds were installed as a risk mitigation measure and never recalibrated. Cohere estimates that recalibrating to median peer configuration would raise auto-approval rate to approximately 31-35% with minimal change in denial appeal frequency. This claim is based on peer data with limited Meridian-specific validation."
     },
     {
       "id": "ev:meridian:027",
-      "claim": "DENIALS-2024 sunk cost reached $8M \u2014 supporting item 27",
+      "claim": "DENIALS-2024 failure was primarily attributed to scope miscommunication, absent change management, and premature go-live — not vendor capability deficiency",
       "source_type": "expert_interview",
-      "source_doc": "vendor-scorecard.xlsx",
-      "source_section": "Relevant tab / workpaper section",
+      "source_document": "DENIALS-2024 Post-Implementation Review — Executive Summary Version (Board Distribution)",
+      "source_section": "Section 2: Root Cause Analysis — Five Whys Framework",
       "data_classification": "Restricted",
       "confidence": 0.88,
-      "last_updated": "2026-04-15",
-      "owner_person_id": "person:meridian:david-henderson",
-      "supports_claims_in": [
-        "meridian-rcm-modernization-2026",
-        "kpi:meridian:028"
-      ],
-      "caveats": "Source is sufficient for synthetic tenant reasoning; not public customer data."
+      "updated_date": "2025-08-22",
+      "owner_person_id": "person:meridian:david-park",
+      "program_linkage": ["meridian-rcm-modernization-2026", "meridian-prior-auth-2026"],
+      "caveats": "Root cause analysis was facilitated by an external party (requested by CFO) to ensure independence; three senior Meridian staff disagreed with specific sub-findings in the root cause analysis but accepted the overall conclusion. The 'vendor capability' exoneration is important context for the current prior-auth program: Cohere was not found to be technically deficient, meaning re-engaging Cohere carries lower technology risk than organizational perception suggests. However, the governance and change management failures identified in DENIALS-2024 are structural and unaddressed at the time of this evidence item; meridian-prior-auth-2026 has not formally documented how these root causes will be mitigated in its current program plan."
     },
     {
       "id": "ev:meridian:028",
-      "claim": "Q4 FY2025 gross denial rate increased 180bps \u2014 supporting item 28",
-      "source_type": "regulatory_doc",
-      "source_doc": "epic-audit-log-analysis-q1-2026.xlsx",
-      "source_section": "Relevant tab / workpaper section",
+      "claim": "Q4 FY2025 gross denial rate of 18.4% translates to approximately $14.2M in denied claims outstanding, of which 68% are estimated as recoverable through appeal",
+      "source_type": "tenant_data_room",
+      "source_document": "Waystar AR Dashboard Export Q4 FY2025 — Denial Dollar Recovery Analysis",
+      "source_section": "Sheet: Denial Inventory by Dollar Amount and Recovery Probability",
       "data_classification": "Internal",
-      "confidence": 0.88,
-      "last_updated": "2026-04-15",
-      "owner_person_id": "person:meridian:maya-ramos",
-      "supports_claims_in": [
-        "meridian-ambient-2026",
-        "kpi:meridian:029"
-      ],
-      "caveats": "Source is sufficient for synthetic tenant reasoning; not public customer data."
+      "confidence": 0.86,
+      "updated_date": "2026-01-09",
+      "owner_person_id": "person:meridian:patricia-okafor",
+      "program_linkage": ["meridian-rcm-modernization-2026"],
+      "caveats": "$14.2M in denied claims is a point-in-time balance as of December 31, 2025; this is the outstanding denied AR balance, not an annualized figure. The 68% recovery estimate is Waystar's model-based prediction calibrated to Meridian's historical appeal success rates by denial category; the model has historically been accurate within ±8 percentage points. Actual Q4 FY2024 denial recovery was 64%, suggesting slight optimism in the current model. The recoverable balance ($9.7M) represents the maximum financial benefit addressable by the RCM Modernization program's AR recovery workstream — this is the business case anchor for that program's first-year ROI."
     },
     {
       "id": "ev:meridian:029",
-      "claim": "HCAHPS Q1 FY2026 overall rating declined \u2014 supporting item 29",
-      "source_type": "peer_anonymized",
-      "source_doc": "q4-financial-close.pdf",
-      "source_section": "Relevant tab / workpaper section",
+      "claim": "HCAHPS communication with nurses subdomain has been consistently below national median for three consecutive reporting periods at Meridian Regional (Fairfax)",
+      "source_type": "tenant_data_room",
+      "source_document": "Epic Clarity Report: HCAHPS Rolling 12mo — Subdomain Analysis Q1 FY2026",
+      "source_section": "Section 5: Communication with Nurses — Site and Trend Detail",
       "data_classification": "Internal",
-      "confidence": 0.88,
-      "last_updated": "2026-04-15",
-      "owner_person_id": "person:meridian:owen-li",
-      "supports_claims_in": [
-        "meridian-prior-auth-2026",
-        "kpi:meridian:030"
-      ],
-      "caveats": "Source is sufficient for synthetic tenant reasoning; not public customer data."
+      "confidence": 0.89,
+      "updated_date": "2026-03-18",
+      "owner_person_id": "person:meridian:robert-chen",
+      "program_linkage": ["meridian-ambient-2026"],
+      "caveats": "Meridian Regional nurse communication scores: Q1 FY2026 = 3.6/5, Q4 FY2025 = 3.5/5, Q3 FY2025 = 3.7/5. CMS national median for this measure is 3.9/5. Three consecutive quarters below national median triggers CMS quality reporting flag. CNO Dr. Robert Chen has initiated a nurse communication improvement initiative at Meridian Regional; results will not appear in HCAHPS scores for at least two additional quarters given survey lag. HCAHPS response rate at Meridian Regional is 28% (below the system average of 31%), amplifying measurement noise at this site."
     },
     {
       "id": "ev:meridian:030",
-      "claim": "MA STAR overall rating is 4.0 \u2014 supporting item 30",
+      "claim": "MA STAR 4.0 rating for contract H3841 is at risk of slipping to 3.5 for contract year 2027 if three key HEDIS measures do not improve by Q3 FY2026",
       "source_type": "tenant_data_room",
-      "source_doc": "ai-governance-workpapers.docx",
-      "source_section": "Relevant tab / workpaper section",
+      "source_document": "Meridian Health Plans STAR Risk Assessment — VP Risk Adjustment Quarterly Brief Q1 FY2026",
+      "source_section": "Section 3: Measures at Risk and Required Improvement Trajectory",
       "data_classification": "Confidential",
-      "confidence": 0.88,
-      "last_updated": "2026-04-15",
-      "owner_person_id": "person:meridian:natalie-greer",
-      "supports_claims_in": [
-        "meridian-ai-governance-2026",
-        "kpi:meridian:031"
-      ],
-      "caveats": "Source is sufficient for synthetic tenant reasoning; not public customer data."
+      "confidence": 0.83,
+      "updated_date": "2026-03-05",
+      "owner_person_id": "person:meridian:christopher-vega",
+      "program_linkage": ["meridian-ai-governance-2026"],
+      "caveats": "Risk of dropping to 3.5 STAR is based on CMS preliminary performance data and an extrapolation of current trends by Christopher Vega's team. The three at-risk measures are: Care Coordination Patient Follow-up After IP Admission (currently 3.0, needs 3.5), Annual Flu Vaccine (currently 3.5, needs 4.0), and Controlling High Blood Pressure (currently 3.5, needs 4.0). A slip to 3.5 STAR would eliminate the quality bonus payment and reduce benchmark by 5%, estimated at $8-12M in annual revenue impact. This projection is internal and has not been shared with the board; VP Vega considers it the highest-impact unaddressed risk in the plan portfolio."
     },
     {
       "id": "ev:meridian:031",
-      "claim": "Ambient documentation peer savings benchmark supports 20-35 minutes/day \u2014 supporting item 31",
-      "source_type": "public_filing",
-      "source_doc": "vendor-scorecard.xlsx",
-      "source_section": "Relevant tab / workpaper section",
+      "claim": "Ambient scribe peer benchmark data supports 20-35 minutes/day time savings at deployment maturity; Meridian's own pilot at 14 minutes is below benchmark but consistent with early-stage deployment data",
+      "source_type": "peer_anonymized",
+      "source_document": "KLAS Research Report: Ambient Clinical Intelligence 2025 — Physician Experience Deep Dive",
+      "source_section": "Section 6: Time-to-Value Curve by Implementation Stage",
       "data_classification": "Internal",
-      "confidence": 0.88,
-      "last_updated": "2026-04-15",
-      "owner_person_id": "person:meridian:samuel-ito",
-      "supports_claims_in": [
-        "meridian-rcm-modernization-2026",
-        "kpi:meridian:032"
-      ],
-      "caveats": "Source is sufficient for synthetic tenant reasoning; not public customer data."
+      "confidence": 0.75,
+      "updated_date": "2025-10-05",
+      "owner_person_id": "person:meridian:kavita-patel",
+      "program_linkage": ["meridian-ambient-2026"],
+      "caveats": "This item provides additional texture on the same KLAS benchmark referenced in ev:meridian:019. The time-to-value curve shows: Stage 1 (0-3 months): 8-15 min median; Stage 2 (3-6 months): 14-22 min median; Stage 3 (6-12 months): 22-32 min median; Stage 4 (12+ months): 28-38 min median. Meridian's 14-minute pilot result maps to Stage 1 upper range — which is a favorable starting position. KLAS cautions that health systems with prior failed AI implementations (like Meridian's DENIALS-2024) tend to show lower Stage 1 savings due to physician skepticism-related under-adoption. This factor should be explicitly addressed in the ambient scribe adoption strategy."
     },
     {
       "id": "ev:meridian:032",
-      "claim": "FDA guidance tracking requires clinical AI review \u2014 supporting item 32",
-      "source_type": "industry_research",
-      "source_doc": "epic-audit-log-analysis-q1-2026.xlsx",
-      "source_section": "Relevant tab / workpaper section",
+      "claim": "FDA Software as a Medical Device classification guidance requires Meridian to evaluate its prior-auth AI model and ambient documentation tool for potential 510(k) or De Novo submission requirements",
+      "source_type": "regulatory_doc",
+      "source_document": "FDA Draft Guidance: AI-Enabled Device Software Functions March 2026 — Regulatory Counsel Analysis Memo",
+      "source_section": "Appendix A: Meridian AI Portfolio Classification Matrix",
       "data_classification": "Internal",
-      "confidence": 0.62,
-      "last_updated": "2026-04-15",
-      "owner_person_id": "person:meridian:leah-benitez",
-      "supports_claims_in": [
-        "meridian-ambient-2026",
-        "kpi:meridian:033"
-      ],
-      "caveats": "Low-confidence or stale; value describes the claim without exposing restricted row-level data."
+      "confidence": 0.73,
+      "updated_date": "2026-04-02",
+      "owner_person_id": "person:meridian:karen-mercer",
+      "program_linkage": ["meridian-ai-governance-2026"],
+      "caveats": "Regulatory counsel's classification matrix assigns 'Probably Exempt CDS' to ambient scribe (because output is informational documentation, not treatment recommendation), 'Potential SaMD' to prior-auth denial prediction (because model output may influence whether care is authorized), and 'Confirm with FDA' to any future risk stratification tools. These classifications are preliminary opinions of outside counsel, not FDA determinations. Confidence of 0.73 reflects draft guidance ambiguity and the preliminary nature of the counsel opinion. Until FDA finalizes the guidance or Meridian files a voluntary inquiry, this classification matrix is the best available guidance for program governance decisions."
     },
     {
       "id": "ev:meridian:033",
-      "claim": "Innovaccer renewal is strategically loaded \u2014 supporting item 33",
+      "claim": "Innovaccer renewal negotiation is at risk of delay due to Innovaccer's September 2025 reorganization, which reassigned Meridian's account team and created a 6-week knowledge handoff gap",
       "source_type": "expert_interview",
-      "source_doc": "q4-financial-close.pdf",
-      "source_section": "Relevant tab / workpaper section",
+      "source_document": "Procurement Negotiation Strategy Memo — Innovaccer Renewal FY2026 (Angela Brooks, CPO)",
+      "source_section": "Section 2: Vendor Relationship Status and Risk Factors",
       "data_classification": "Confidential",
-      "confidence": 0.72,
-      "last_updated": "2026-04-15",
-      "owner_person_id": "person:meridian:aiden-walsh",
-      "supports_claims_in": [
-        "meridian-prior-auth-2026",
-        "kpi:meridian:034"
-      ],
-      "caveats": "Source is sufficient for synthetic tenant reasoning; not public customer data."
+      "confidence": 0.79,
+      "updated_date": "2026-03-01",
+      "owner_person_id": "person:meridian:angela-brooks",
+      "program_linkage": ["meridian-prior-auth-2026", "meridian-ai-governance-2026"],
+      "caveats": "The account team reorganization is confirmed through Meridian's account manager at Innovaccer; the 6-week knowledge handoff gap is an estimate from the CPO's procurement team based on direct communication with the new account team. This creates a practical negotiation risk: the new team is less familiar with Meridian's specific integration points and usage patterns, which could result in overbroad scope in renewal terms or missed service-level commitments. The CPO has requested an in-person executive business review with Innovaccer's VP of Customer Success before formal renewal negotiations begin."
     },
     {
       "id": "ev:meridian:034",
-      "claim": "Cohere pilot 80% vs production 22% created scar tissue \u2014 supporting item 34",
-      "source_type": "regulatory_doc",
-      "source_doc": "ai-governance-workpapers.docx",
-      "source_section": "Relevant tab / workpaper section",
+      "claim": "Cohere Health pilot-to-production gap root cause includes failure to recalibrate auto-approval thresholds after DENIALS-2024 program closure, leaving system in conservative post-incident configuration",
+      "source_type": "tenant_data_room",
+      "source_document": "Cohere Health Technical Configuration Audit — Requested by Prior Auth Program Team January 2026",
+      "source_section": "Section 2: Authorization Category Configuration and Approval Threshold Settings",
       "data_classification": "Internal",
-      "confidence": 0.88,
-      "last_updated": "2026-04-15",
-      "owner_person_id": "person:meridian:elaine-morales",
-      "supports_claims_in": [
-        "meridian-ai-governance-2026",
-        "kpi:meridian:035"
-      ],
-      "caveats": "Source is sufficient for synthetic tenant reasoning; not public customer data."
+      "confidence": 0.90,
+      "updated_date": "2026-01-30",
+      "owner_person_id": "person:meridian:patricia-okafor",
+      "program_linkage": ["meridian-prior-auth-2026"],
+      "caveats": "Configuration audit was requested by Patricia Okafor's team in January 2026 to diagnose the ongoing 8% auto-approval rate. Cohere's audit found 312 of 847 auth categories configured with 'Manual Review Required' as a default setting — residual from a risk-mitigation configuration installed during the DENIALS-2024 incident response. These categories were never reconfigured to leverage Cohere's auto-approval logic. Fixing the configuration (estimated 80 hours of Cohere professional services work) is expected to raise auto-approval rate to approximately 28-32% without any AI model changes. This is potentially a quick win for the prior-auth program and should be sequenced before the broader AI deployment."
     },
     {
       "id": "ev:meridian:035",
-      "claim": "Hawaii Cerner remnant adds integration cost \u2014 supporting item 35",
-      "source_type": "peer_anonymized",
-      "source_doc": "vendor-scorecard.xlsx",
-      "source_section": "Relevant tab / workpaper section",
+      "claim": "Hawaii Cerner remnant integration will require $4-7M capital investment to fully retire and migrate to Epic; deferred integration creates ongoing $1.2-1.8M annual maintenance drag",
+      "source_type": "tenant_data_room",
+      "source_document": "IT Landscape Assessment: Hawaii Market Integration Feasibility — FY2026 Capital Planning",
+      "source_section": "Section 6: Migration Options and Capital Cost Scenarios",
       "data_classification": "Internal",
-      "confidence": 0.88,
-      "last_updated": "2026-04-15",
-      "owner_person_id": "person:meridian:harold-kim",
-      "supports_claims_in": [
-        "meridian-rcm-modernization-2026",
-        "kpi:meridian:036"
-      ],
-      "caveats": "Source is sufficient for synthetic tenant reasoning; not public customer data."
+      "confidence": 0.76,
+      "updated_date": "2025-12-15",
+      "owner_person_id": "person:meridian:anita-krishnamurthy",
+      "program_linkage": ["meridian-rcm-modernization-2026"],
+      "caveats": "$4-7M capital range for full Cerner retirement reflects a scenario analysis: $4M assumes no data conversion (historical Cerner data archived, not migrated to Epic); $7M includes 7 years of historical data migration, interface build, and training. The annual $1.2-1.8M maintenance drag includes Cerner license fees ($620K/year), Epic interface maintenance ($280-340K/year), and integration support FTE (approximately 2.5 FTE at blended loaded rate). The capital feasibility study was prepared for a decision that was deferred due to capital constraints; the annual cost figures should be used in the RCM Modernization business case to argue for acceleration of Hawaii integration."
     },
     {
       "id": "ev:meridian:036",
-      "claim": "CBO readiness assessment is below target \u2014 supporting item 36",
-      "source_type": "tenant_data_room",
-      "source_doc": "epic-audit-log-analysis-q1-2026.xlsx",
-      "source_section": "Relevant tab / workpaper section",
+      "claim": "CBO change management capacity is a binding constraint for both RCM Modernization and Ambient Scribe programs, with both programs planning major front-line training mobilization in Q3 FY2026",
+      "source_type": "expert_interview",
+      "source_document": "RCM Readiness Assessment — Meridian CBO Operations Review Q1 FY2026 (External Consultant Report)",
+      "source_section": "Section 6: Change Management Capacity and Portfolio Conflict Analysis",
       "data_classification": "Restricted",
-      "confidence": 0.88,
-      "last_updated": "2026-04-15",
-      "owner_person_id": "person:meridian:anita-krishnamurthy",
-      "supports_claims_in": [
-        "meridian-ambient-2026",
-        "kpi:meridian:037"
-      ],
-      "caveats": "Source is sufficient for synthetic tenant reasoning; not public customer data."
+      "confidence": 0.86,
+      "updated_date": "2026-02-28",
+      "owner_person_id": "person:meridian:sarah-obrien",
+      "program_linkage": ["meridian-rcm-modernization-2026", "meridian-ambient-2026"],
+      "caveats": "The Q3 FY2026 capacity collision is identified in the Huron readiness assessment as a secondary finding; neither program's project plan at the time of this evidence item reflects the conflict. RCM Modernization has budgeted 3 FTE change management consultants for Q3; Ambient Scribe has budgeted 2 FTE. The CBO has a standing change management team of 4 FTE, meaning combined demand could be 5 FTE above internal supply if both programs mobilize simultaneously. COO Sarah O'Brien has been verbally briefed on this risk but has not issued a sequencing decision. The COO's office is the appropriate escalation point per Huron's recommendation."
     },
     {
       "id": "ev:meridian:037",
-      "claim": "Clinician documentation time baseline is 45 minutes/day \u2014 supporting item 37",
-      "source_type": "public_filing",
-      "source_doc": "q4-financial-close.pdf",
-      "source_section": "Relevant tab / workpaper section",
+      "claim": "Physician documentation burden — specifically after-hours chart completion — is cited as primary driver of physician voluntary turnover at Meridian in FY2025 exit interview data",
+      "source_type": "tenant_data_room",
+      "source_document": "Meridian Physician Exit Interview Analysis FY2025 — CHRO Summary Report",
+      "source_section": "Section 3: Ranked Voluntary Turnover Drivers — Departing Physicians",
       "data_classification": "Internal",
-      "confidence": 0.88,
-      "last_updated": "2026-04-15",
-      "owner_person_id": "person:meridian:david-park",
-      "supports_claims_in": [
-        "meridian-prior-auth-2026",
-        "kpi:meridian:038"
-      ],
-      "caveats": "Source is sufficient for synthetic tenant reasoning; not public customer data."
+      "confidence": 0.83,
+      "updated_date": "2025-09-30",
+      "owner_person_id": "person:meridian:margaret-liu",
+      "program_linkage": ["meridian-ambient-2026"],
+      "caveats": "Exit interview analysis is based on 31 voluntary physician departures in FY2025 with 26 completing structured exit interviews (84% completion rate). Documentation burden was ranked #1 or #2 contributor to departure decision by 18 of 26 departing physicians (69%). Sample size is too small for statistical significance testing; results should be interpreted directionally. Average physician replacement cost at Meridian is estimated at $200-300K (recruitment, onboarding, productivity ramp) — providing an alternative ROI framing for the ambient scribe program. CHRO Margaret Liu has used this data in the ambient scribe business case review."
     },
     {
       "id": "ev:meridian:038",
-      "claim": "Prior-auth auto-approval rate is 8% \u2014 supporting item 38",
-      "source_type": "industry_research",
-      "source_doc": "ai-governance-workpapers.docx",
-      "source_section": "Relevant tab / workpaper section",
+      "claim": "Prior-auth AI auto-approval benchmarks at peer health systems using Cohere Health show 38-52% auto-approval rates, compared to Meridian's current 8%",
+      "source_type": "peer_anonymized",
+      "source_document": "Cohere Health Customer Benchmarking Report Q4 2025 — Meridian Health Cohort Analysis",
+      "source_section": "Exhibit 5: Auto-Approval Rate Comparison — Meridian vs. Peer Cohort Median and Quartiles",
       "data_classification": "Internal",
-      "confidence": 0.88,
-      "last_updated": "2026-04-15",
-      "owner_person_id": "person:meridian:marcus-reid",
-      "supports_claims_in": [
-        "meridian-ai-governance-2026",
-        "kpi:meridian:039"
-      ],
-      "caveats": "Source is sufficient for synthetic tenant reasoning; not public customer data."
+      "confidence": 0.78,
+      "updated_date": "2025-12-10",
+      "owner_person_id": "person:meridian:patricia-okafor",
+      "program_linkage": ["meridian-prior-auth-2026"],
+      "caveats": "Peer cohort median of 38% is based on 41 comparable health systems anonymized in the Cohere benchmark report; Cohere does not disclose which specific health systems are in the cohort. The 38-52% range reflects median to 75th percentile. The comparison is directionally informative but not perfectly apples-to-apples: case mix, payer mix, and the proportion of high-complexity authorizations vary across systems. Meridian has a disproportionately high oncology and surgical volume relative to most benchmark peers, which structurally depresses auto-approval rate. Adjusting for case mix, Cohere estimates Meridian's attainable benchmark is approximately 28-35%, not the full 38-52% range."
     },
     {
       "id": "ev:meridian:039",
-      "claim": "DENIALS-2024 sunk cost reached $8M \u2014 supporting item 39",
-      "source_type": "expert_interview",
-      "source_doc": "vendor-scorecard.xlsx",
-      "source_section": "Relevant tab / workpaper section",
+      "claim": "DENIALS-2024 $8M sunk cost represents the single largest program write-off in Meridian's IT capital plan for FY2023-FY2025",
+      "source_type": "tenant_data_room",
+      "source_document": "CFO IT Capital Plan Review FY2023-2025 — Program Outcome Tracking",
+      "source_section": "Exhibit 1: Capital Programs by ROI Outcome and Write-Off Status",
       "data_classification": "Confidential",
-      "confidence": 0.88,
-      "last_updated": "2025-10-15",
-      "owner_person_id": "person:meridian:jennifer-wexler",
-      "supports_claims_in": [
-        "meridian-rcm-modernization-2026",
-        "kpi:meridian:040"
-      ],
-      "caveats": "Low-confidence or stale; value describes the claim without exposing restricted row-level data."
+      "confidence": 0.93,
+      "updated_date": "2025-10-15",
+      "owner_person_id": "person:meridian:david-park",
+      "program_linkage": ["meridian-rcm-modernization-2026"],
+      "caveats": "The CFO's three-year capital program review formally categorized DENIALS-2024 as a 'write-off' with $0 measurable ROI against the $8M investment. This classification was contested by the prior-auth program manager but accepted by CFO Park. The write-off classification has material implications: it was a contributing factor in the CFO's decision to sponsor the RCM Modernization program with an unusually high degree of program governance oversight. The $22M RCM Modernization budget was approved with mandatory phase-gate reviews and a provision for program termination if Phase 1 discovery findings are unfavorable. The CFO's governance posture on RCM Modernization is directly explained by the DENIALS-2024 write-off history."
     },
     {
       "id": "ev:meridian:040",
-      "claim": "Q4 FY2025 gross denial rate increased 180bps \u2014 supporting item 40",
-      "source_type": "regulatory_doc",
-      "source_doc": "epic-audit-log-analysis-q1-2026.xlsx",
-      "source_section": "Relevant tab / workpaper section",
+      "claim": "Gross denial rate increase from 14.8% to 18.4% between Q4 FY2024 and Q4 FY2025 represents approximately $7-9M in additional denied claims requiring active management",
+      "source_type": "tenant_data_room",
+      "source_document": "Waystar AR Dashboard — Year-Over-Year Denial Trending FY2023-2025",
+      "source_section": "Exhibit 4: Dollar Impact of Denial Rate Increase on Outstanding AR",
       "data_classification": "Internal",
-      "confidence": 0.62,
-      "last_updated": "2026-04-15",
-      "owner_person_id": "person:meridian:sarah-obrien",
-      "supports_claims_in": [
-        "meridian-ambient-2026",
-        "kpi:meridian:041"
-      ],
-      "caveats": "Low-confidence or stale; value describes the claim without exposing restricted row-level data."
+      "confidence": 0.84,
+      "updated_date": "2026-01-09",
+      "owner_person_id": "person:meridian:patricia-okafor",
+      "program_linkage": ["meridian-rcm-modernization-2026", "meridian-prior-auth-2026"],
+      "caveats": "$7-9M additional denied claims is a Waystar model-based estimate derived from applying the denial rate increase to Q4 FY2025 gross revenue; actual dollar impact depends on final charge reconciliation and payer-specific write-off rates. The range reflects uncertainty in the proportion of new denials that are ultimately unrecoverable vs. recoverable through appeal. RCM team estimates that 45-60% of the additional $7-9M is recoverable with an active denial management program, suggesting the incremental recoverable opportunity is approximately $3.5-5.4M — the basis for RCM Modernization's one-year financial target."
     },
     {
       "id": "ev:meridian:041",
-      "claim": "HCAHPS Q1 FY2026 overall rating declined \u2014 supporting item 41",
-      "source_type": "peer_anonymized",
-      "source_doc": "q4-financial-close.pdf",
-      "source_section": "Relevant tab / workpaper section",
+      "claim": "HCAHPS Q1 FY2026 overall rating of 4.2/5 system-wide is below Meridian's FY2026 target of 4.5/5, creating potential impact on value-based care contract performance bonuses",
+      "source_type": "tenant_data_room",
+      "source_document": "Epic Clarity Report: HCAHPS Rolling 12mo — Value-Based Contract Performance Overlay Q1 FY2026",
+      "source_section": "Section 7: HCAHPS Performance vs. Value-Based Contract Thresholds",
       "data_classification": "Internal",
       "confidence": 0.88,
-      "last_updated": "2026-04-15",
-      "owner_person_id": "person:meridian:rebecca-hollings",
-      "supports_claims_in": [
-        "meridian-prior-auth-2026",
-        "kpi:meridian:042"
-      ],
-      "caveats": "Source is sufficient for synthetic tenant reasoning; not public customer data."
+      "updated_date": "2026-03-18",
+      "owner_person_id": "person:meridian:james-okonjo",
+      "program_linkage": ["meridian-ambient-2026"],
+      "caveats": "HCAHPS 4.2/5 vs. 4.5/5 target gap is measured against the FY2026 internal performance target set by the Quality Committee in August 2025. The value-based care contract implication is specific to two contracts: CareFirst BCBS Accountable Care arrangement (HCAHPS threshold 4.3/5, $1.4M performance bonus at risk) and Anthem Quality Performance Program (HCAHPS threshold 4.0/5, $820K bonus). Meridian is above the Anthem threshold; the CareFirst bonus is at risk if Q2 FY2026 scores do not improve. Attribution of HCAHPS performance to the ambient scribe program is indirect — the hypothesis is that reduced documentation burden improves physician-patient interaction quality, but this is not yet measured."
     },
     {
       "id": "ev:meridian:042",
-      "claim": "MA STAR overall rating is 4.0 \u2014 supporting item 42",
-      "source_type": "tenant_data_room",
-      "source_doc": "ai-governance-workpapers.docx",
-      "source_section": "Relevant tab / workpaper section",
+      "claim": "MA STAR 4.0 rating for H3841 relies heavily on triple-weighted chronic disease management measures where Meridian has strong performance, masking weaker member experience and care coordination scores",
+      "source_type": "regulatory_doc",
+      "source_document": "CMS 2026 STAR Ratings — Contract H3841 Detailed Measure Performance Report",
+      "source_section": "Weighted Score Calculation and Domain Contribution Analysis",
       "data_classification": "Confidential",
-      "confidence": 0.88,
-      "last_updated": "2026-04-15",
-      "owner_person_id": "person:meridian:james-okonjo",
-      "supports_claims_in": [
-        "meridian-ai-governance-2026",
-        "kpi:meridian:043"
-      ],
-      "caveats": "Source is sufficient for synthetic tenant reasoning; not public customer data."
+      "confidence": 0.96,
+      "updated_date": "2025-10-18",
+      "owner_person_id": "person:meridian:christopher-vega",
+      "program_linkage": ["meridian-ai-governance-2026"],
+      "caveats": "CMS published measure-level data for H3841 shows that without the triple-weighting advantage on chronic disease measures (where Meridian scores 4.0-4.5), the composite rating would be approximately 3.7. This structural dependency creates vulnerability: any policy change by CMS reducing triple-weighting for chronic condition management — which CMS has historically revised periodically — could drop the composite to 3.5 in a single year. VP Vega has flagged this structural risk in his Q1 FY2026 STAR risk brief; it has not been escalated to the board. This item is relevant to AI Governance because any AI model deployed to assist care management must demonstrate it does not inadvertently degrade performance on the triple-weighted measures."
     }
   ],
   "evidence_freshness_summary": {
     "total_items": 42,
-    "low_confidence_under_0_75": 8,
-    "stale_over_120_days": 3
+    "low_confidence_under_0_75": 7,
+    "stale_over_120_days": 6,
+    "confidence_distribution": {
+      "0.90_to_0.98": 14,
+      "0.80_to_0.89": 15,
+      "0.72_to_0.79": 13
+    }
   }
 }
