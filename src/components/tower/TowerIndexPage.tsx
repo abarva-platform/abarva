@@ -468,10 +468,29 @@ function Quadrant({
 }
 
 // ─── Atlas synthesis (right column) ───────────────────────────────────────────
+//
+// T-3 (Tower Fix Package, 2026-05-07): observations gain inline action chips.
+// The CTAs T-1 displaced from the dashboard band now land here, where the
+// observation gives the action context.
+//
+// AtlasAction: a chip with a verb-leading label and a destination.
+//   - primary chips render with `→` arrow flush-left.
+//   - secondary chips render with `↳` indent prefix (for absorbed band CTAs).
+//   - timeHint adds a "(5 min)" parenthetical.
+//   - pending=true marks chips whose destination is a placeholder; useful
+//     for the follow-up wave that wires real flows.
+interface AtlasAction {
+  label: string;
+  timeHint?: string;
+  href: string;
+  pending?: boolean;
+  secondary?: boolean;
+}
+
 interface SynthBlock {
   h: string;
   body: ReactNode;
-  obs?: string;
+  actions?: AtlasAction[];
 }
 
 function AtlasColumn({
@@ -575,21 +594,9 @@ function AtlasColumn({
             >
               {block.body}
             </div>
-            {block.obs && (
-              <div
-                style={{
-                  fontFamily: T.MONO,
-                  fontSize: 9,
-                  letterSpacing: '1.2px',
-                  fontWeight: 700,
-                  color: T.PURPLE,
-                  marginTop: 6,
-                  cursor: 'pointer',
-                }}
-              >
-                {block.obs}
-              </div>
-            )}
+            {block.actions?.map((action, j) => (
+              <AtlasActionChip key={`${i}-${j}`} action={action} />
+            ))}
           </div>
         ))}
       </div>
@@ -675,6 +682,60 @@ function AtlasColumn({
         </div>
       </div>
     </aside>
+  );
+}
+
+// ─── Atlas action chip (T-3) ──────────────────────────────────────────────────
+//
+// Action-direction (verb-leading) chip that lives below an observation's body.
+// Primary chips ("→ Open EA brief in Source") sit flush-left; secondary chips
+// ("↳ Set attribution baseline (5 min)") indent under the primary to show the
+// CTA was absorbed from a tile T-1 removed.
+function AtlasActionChip({ action }: { action: AtlasAction }) {
+  const arrow = action.secondary ? '↳' : '→';
+  const indent = action.secondary ? 12 : 0;
+  return (
+    <Link
+      href={action.href}
+      data-testid={`atlas-action-chip-${action.label.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')}`}
+      data-attr-chip-pending={action.pending ? 'true' : undefined}
+      style={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: 6,
+        marginTop: 6,
+        marginLeft: indent,
+        padding: '5px 10px',
+        fontFamily: T.MONO,
+        fontSize: 10,
+        letterSpacing: '0.06em',
+        fontWeight: 700,
+        color: T.PURPLE,
+        background: 'transparent',
+        border: `1px solid ${T.RULE}`,
+        borderRadius: 6,
+        textDecoration: 'none',
+        cursor: 'pointer',
+        transition: 'background 120ms ease',
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.background = T.CREAM;
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.background = 'transparent';
+      }}
+    >
+      <span aria-hidden style={{ fontWeight: 700 }}>{arrow}</span>
+      <span>
+        {action.label}
+        {action.timeHint && (
+          <span style={{ color: T.GRAY_DK, fontWeight: 600, marginLeft: 4 }}>
+            ({action.timeHint})
+          </span>
+        )}
+      </span>
+      <span aria-hidden style={{ marginLeft: 2 }}>→</span>
+    </Link>
   );
 }
 
@@ -1385,7 +1446,13 @@ export function TowerIndexPage({
                   <strong style={{ color: T.INK }}>capability duplication</strong> — they share root nodes. If you take a posture on the EA without resolving the overlap, you'll renew at the wrong volumes.
                 </>
               ),
-              obs: '→ Open EA brief in Source',
+              actions: [
+                {
+                  label: 'Open EA brief in Source',
+                  href: '/source',
+                  pending: true,
+                },
+              ],
             },
             {
               h: 'Observation · 02',
@@ -1394,7 +1461,19 @@ export function TowerIndexPage({
                   Your <strong style={{ color: T.INK }}>portfolio ROI is at 2.8×, target 3.5×</strong>. The shortfall is concentrated in three programs (Joule, Copilot E5, Now Assist) where measured value is lagging committed by <em>more than 40%</em>. Two of those three are in the 47-day EA window.
                 </>
               ),
-              obs: '→ See programs lagging on value',
+              actions: [
+                {
+                  label: 'See programs lagging on value',
+                  href: '/programs?lens=value',
+                },
+                {
+                  label: 'Set attribution baseline',
+                  timeHint: '5 min',
+                  href: '/tower/settings/attribution',
+                  pending: true,
+                  secondary: true,
+                },
+              ],
             },
             {
               h: 'Observation · 03',
@@ -1403,7 +1482,18 @@ export function TowerIndexPage({
                   Adoption confidence is <strong style={{ color: T.INK }}>LOW</strong> because Okta and EntraID aren't connected. Until those land, the 24% Copilot number is directional, not auditable.
                 </>
               ),
-              obs: '→ Connect identity sources (5 min)',
+              actions: [
+                {
+                  label: 'Connect identity sources',
+                  timeHint: '5 min',
+                  href: '/admin/connectors',
+                },
+                {
+                  label: 'Connect Okta + EntraID',
+                  href: '/admin/connectors',
+                  secondary: true,
+                },
+              ],
             },
             {
               h: 'If you only do one thing today',
