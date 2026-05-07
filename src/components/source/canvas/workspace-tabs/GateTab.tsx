@@ -23,6 +23,14 @@ interface GateTabProps {
   fromStage: SourceStageKey;
   /** Per-event criterion states for this from-stage. */
   states: SourceEventGateCriterion[];
+  /** Mutator — when omitted (SSR / read-only previews) the per-row
+   * Mark met / Reopen buttons hide. */
+  onChangeCriterionState?: (
+    criterionId: string,
+    next: SourceEventGateCriterionState,
+  ) => Promise<void>;
+  /** Per-criterion pending flag — disables the button while in flight. */
+  pendingByCriterionId?: Record<string, boolean>;
 }
 
 /**
@@ -31,7 +39,12 @@ interface GateTabProps {
  * owner, linked artifacts) and overlays per-event state from
  * source_event_gate_criterion_states.
  */
-export function GateTab({ fromStage, states }: GateTabProps) {
+export function GateTab({
+  fromStage,
+  states,
+  onChangeCriterionState,
+  pendingByCriterionId,
+}: GateTabProps) {
   const ordered = [...states].sort((a, b) => a.criterionId.localeCompare(b.criterionId));
   const total = ordered.length;
   const met = ordered.filter((s) => s.state === 'met' || s.state === 'waived').length;
@@ -139,7 +152,15 @@ export function GateTab({ fromStage, states }: GateTabProps) {
         <ul style={LIST_STYLE}>
           {ordered.map((s) => {
             const def = criterionById(s.criterionId);
-            return <CriterionRow key={s.criterionId} state={s} def={def} />;
+            return (
+              <CriterionRow
+                key={s.criterionId}
+                state={s}
+                def={def}
+                onChangeState={onChangeCriterionState}
+                pending={pendingByCriterionId?.[s.criterionId] ?? false}
+              />
+            );
           })}
         </ul>
       )}
@@ -150,9 +171,14 @@ export function GateTab({ fromStage, states }: GateTabProps) {
 interface CriterionRowProps {
   state: SourceEventGateCriterion;
   def: SourceGateCriterion | undefined;
+  onChangeState?: (
+    criterionId: string,
+    next: SourceEventGateCriterionState,
+  ) => Promise<void>;
+  pending: boolean;
 }
 
-function CriterionRow({ state, def }: CriterionRowProps) {
+function CriterionRow({ state, def, onChangeState, pending }: CriterionRowProps) {
   const isMet = state.state === 'met' || state.state === 'waived';
   const indicatorColor = isMet
     ? CANVAS.ACTIVE
@@ -162,6 +188,7 @@ function CriterionRow({ state, def }: CriterionRowProps) {
         ? CANVAS.WAITING
         : CANVAS.GRAY;
 
+  const isMetOrWaived = state.state === 'met' || state.state === 'waived';
   return (
     <li style={ROW_STYLE} data-testid={`source-canvas-gate-criterion-${state.criterionId}`}>
       <span aria-hidden style={{ ...DOT_STYLE, background: indicatorColor }} />
@@ -170,6 +197,29 @@ function CriterionRow({ state, def }: CriterionRowProps) {
           <span style={ROW_TITLE_TEXT}>{def?.title ?? state.criterionId}</span>
           <StatePill state={state.state} />
           {def?.severity === 'hard' ? <span style={HARD_TAG_STYLE}>hard</span> : null}
+          {onChangeState && state.state !== 'waived' ? (
+            isMetOrWaived ? (
+              <button
+                type="button"
+                disabled={pending}
+                onClick={() => onChangeState(state.criterionId, 'pending')}
+                data-testid={`source-canvas-gate-criterion-reopen-${state.criterionId}`}
+                style={{ ...ROW_GHOST_BUTTON_STYLE, opacity: pending ? 0.55 : 1 }}
+              >
+                {pending ? 'Reopening…' : 'Reopen'}
+              </button>
+            ) : (
+              <button
+                type="button"
+                disabled={pending}
+                onClick={() => onChangeState(state.criterionId, 'met')}
+                data-testid={`source-canvas-gate-criterion-mark-met-${state.criterionId}`}
+                style={{ ...ROW_PRIMARY_BUTTON_STYLE, opacity: pending ? 0.55 : 1 }}
+              >
+                {pending ? 'Saving…' : 'Mark met'}
+              </button>
+            )
+          ) : null}
         </div>
         {def?.description ? <div style={ROW_DESC_STYLE}>{def.description}</div> : null}
         <div style={ROW_META_STYLE}>
@@ -428,6 +478,42 @@ const INLINE_HARD_TAG_STYLE: CSSProperties = {
   letterSpacing: '0.10em',
   textTransform: 'uppercase',
   color: CANVAS.BLOCKED,
+};
+
+const ROW_PRIMARY_BUTTON_STYLE: CSSProperties = {
+  marginLeft: 6,
+  display: 'inline-flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  padding: '4px 10px',
+  borderRadius: 5,
+  border: 'none',
+  background: CANVAS.INK,
+  color: '#ffffff',
+  fontFamily: CANVAS.MONO,
+  fontSize: 9,
+  fontWeight: 700,
+  letterSpacing: '0.08em',
+  textTransform: 'uppercase',
+  cursor: 'pointer',
+};
+
+const ROW_GHOST_BUTTON_STYLE: CSSProperties = {
+  marginLeft: 6,
+  display: 'inline-flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  padding: '3px 9px',
+  borderRadius: 5,
+  border: `1px solid ${CANVAS.RULE}`,
+  background: 'transparent',
+  color: CANVAS.INK,
+  fontFamily: CANVAS.MONO,
+  fontSize: 9,
+  fontWeight: 600,
+  letterSpacing: '0.08em',
+  textTransform: 'uppercase',
+  cursor: 'pointer',
 };
 
 const STATE_PILL_STYLE: CSSProperties = {

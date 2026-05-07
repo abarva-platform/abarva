@@ -9,6 +9,7 @@ import type {
   SourceEventArtifactStatus,
   SourceEventEvidence,
   SourceEventGateCriterion,
+  SourceEventGateCriterionState,
 } from '@/lib/source/canvas-substrate';
 import type { SourceStageKey, SourcingEventSummary } from '@/lib/source/types';
 import { EventChatLane, type ChatTurn } from './EventChatLane';
@@ -73,11 +74,24 @@ export function UniversalCanvasShell({
   const [pendingStatusByCode, setPendingStatusByCode] = useState<
     Record<string, boolean>
   >({});
+  // Same pattern for gate criteria — Mark met / Reopen flips
+  // criterion state without round-tripping through the server props.
+  const [criterionStateMap, setCriterionStateMap] = useState<
+    Record<string, SourceEventGateCriterion>
+  >(() => indexByCriterionId(gateCriterionStates));
+  const [pendingCriterionByCriterionId, setPendingCriterionByCriterionId] = useState<
+    Record<string, boolean>
+  >({});
 
   const liveArtifactStates = useMemo(
     () =>
       artifactStates.map((a) => artifactStateMap[a.artifactCode] ?? a),
     [artifactStates, artifactStateMap],
+  );
+  const liveGateCriterionStates = useMemo(
+    () =>
+      gateCriterionStates.map((c) => criterionStateMap[c.criterionId] ?? c),
+    [gateCriterionStates, criterionStateMap],
   );
 
   // Filter substrate to the stage being viewed.
@@ -86,8 +100,8 @@ export function UniversalCanvasShell({
     [liveArtifactStates, viewStage],
   );
   const stageCriteria = useMemo(
-    () => gateCriterionStates.filter((c) => c.fromStage === viewStage),
-    [gateCriterionStates, viewStage],
+    () => liveGateCriterionStates.filter((c) => c.fromStage === viewStage),
+    [liveGateCriterionStates, viewStage],
   );
   const stageEvidence = useMemo(
     () => evidenceStates.filter((e) => e.stage === viewStage),
@@ -114,6 +128,47 @@ export function UniversalCanvasShell({
       totalCriteria: stageCriteria.length,
     };
   }, [stageArtifacts, stageCriteria, stageEvidence]);
+
+  const handleCriterionStateChange = async (
+    criterionId: string,
+    next: SourceEventGateCriterionState,
+  ): Promise<void> => {
+    const previous = criterionStateMap[criterionId];
+    if (!previous) return;
+
+    setCriterionStateMap((prev) => ({
+      ...prev,
+      [criterionId]: { ...previous, state: next, updatedAt: new Date().toISOString() },
+    }));
+    setPendingCriterionByCriterionId((prev) => ({ ...prev, [criterionId]: true }));
+
+    try {
+      const res = await fetch(
+        `/api/v1/source/${event.id}/gate-criteria/${encodeURIComponent(criterionId)}/state`,
+        {
+          method: 'PATCH',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ state: next }),
+        },
+      );
+      if (!res.ok) {
+        setCriterionStateMap((prev) => ({ ...prev, [criterionId]: previous }));
+        return;
+      }
+      const payload = (await res.json()) as { criterion?: SourceEventGateCriterion };
+      if (payload.criterion) {
+        setCriterionStateMap((prev) => ({ ...prev, [criterionId]: payload.criterion! }));
+      }
+    } catch {
+      setCriterionStateMap((prev) => ({ ...prev, [criterionId]: previous }));
+    } finally {
+      setPendingCriterionByCriterionId((prev) => {
+        const next = { ...prev };
+        delete next[criterionId];
+        return next;
+      });
+    }
+  };
 
   const handleArtifactStatusChange = async (
     code: string,
@@ -210,7 +265,14 @@ export function UniversalCanvasShell({
       key: 'gate' as WorkspaceTabKey,
       label: 'Gate',
       badge: `${contextBundle.metCriteria}/${contextBundle.totalCriteria}`,
-      content: <GateTab fromStage={viewStage} states={stageCriteria} />,
+      content: (
+        <GateTab
+          fromStage={viewStage}
+          states={stageCriteria}
+          onChangeCriterionState={handleCriterionStateChange}
+          pendingByCriterionId={pendingCriterionByCriterionId}
+        />
+      ),
     },
     {
       key: 'evidence' as WorkspaceTabKey,
@@ -301,6 +363,14 @@ function indexByCode(
 ): Record<string, SourceEventArtifactState> {
   const out: Record<string, SourceEventArtifactState> = {};
   for (const row of rows) out[row.artifactCode] = row;
+  return out;
+}
+
+function indexByCriterionId(
+  rows: SourceEventGateCriterion[],
+): Record<string, SourceEventGateCriterion> {
+  const out: Record<string, SourceEventGateCriterion> = {};
+  for (const row of rows) out[row.criterionId] = row;
   return out;
 }
 

@@ -74,6 +74,36 @@ describe('GateTab · B3 blocker diagnostics', () => {
     expect(html).not.toContain('aria-describedby="source-canvas-gate-promote-help"');
   });
 
+  it('renders Mark met button on pending criteria when onChangeCriterionState is wired', () => {
+    const onChange = jest.fn();
+    const html = renderToStaticMarkup(
+      createElement(GateTab, {
+        fromStage: 'scope',
+        states: [
+          makeCriterion({ criterionId: 'GATE-1', state: 'pending' }),
+          makeCriterion({ criterionId: 'GATE-2', state: 'met' }),
+          makeCriterion({ criterionId: 'GATE-3', state: 'waived' }),
+        ],
+        onChangeCriterionState: onChange,
+      }),
+    );
+    expect(html).toContain('source-canvas-gate-criterion-mark-met-GATE-1');
+    expect(html).toContain('source-canvas-gate-criterion-reopen-GATE-2');
+    // Waived rows hide both buttons (waiver path has its own flow).
+    expect(html).not.toContain('source-canvas-gate-criterion-mark-met-GATE-3');
+    expect(html).not.toContain('source-canvas-gate-criterion-reopen-GATE-3');
+  });
+
+  it('hides Mark met / Reopen entirely when onChangeCriterionState is omitted (SSR)', () => {
+    const html = renderToStaticMarkup(
+      createElement(GateTab, {
+        fromStage: 'scope',
+        states: [makeCriterion({ criterionId: 'GATE-1', state: 'pending' })],
+      }),
+    );
+    expect(html).not.toContain('source-canvas-gate-criterion-mark-met-GATE-1');
+  });
+
   it('shows empty body copy when no criteria exist for the transition', () => {
     const html = renderToStaticMarkup(
       createElement(GateTab, { fromStage: 'scope', states: [] }),
