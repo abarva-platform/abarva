@@ -1,8 +1,10 @@
 // ADMIN11 — Action strip for the Users & Access surface.
 //
-// Renders an Invite user / Configure SSO / Export users row. Hard-gated
-// actions render disabled with an inline reason chip; safe actions render
-// as anchor links. No client state.
+// Renders an Invite user / Configure SSO / Export users row. Safe
+// actions render as anchor links. Hard-gated actions render as a
+// non-button explanation chip (no fake disabled button) so admins
+// understand the dependency rather than clicking a dead control —
+// per Setup Fix Package PR 5 §2.3.
 
 import Link from 'next/link';
 import { COLORS, RADIUS, SPACING, TYPOGRAPHY } from '@/lib/design/design-tokens';
@@ -71,38 +73,36 @@ export function UsersAccessActionStrip({ actions }: UsersAccessActionStripProps)
             key={action.id}
             data-action-id={action.id}
             data-action-status="hard_gated"
-            style={{ display: 'inline-flex', alignItems: 'center', gap: SPACING.xs }}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: SPACING.xs,
+              padding: `${SPACING.xs} ${SPACING.md}`,
+              borderRadius: RADIUS.sm,
+              background: COLORS.amberSoft,
+              border: `1px solid ${COLORS.amberInk}30`,
+              maxWidth: 480,
+            }}
           >
-            <button
-              type="button"
-              disabled
-              aria-disabled="true"
-              data-action-button={action.id}
-              title={action.reason ?? 'Available in pilot environment (Wave 27)'}
+            <span
               style={{
-                padding: `${SPACING.xs} ${SPACING.md}`,
-                borderRadius: RADIUS.sm,
-                border: `1px solid ${COLORS.ink}20`,
-                background: COLORS.white,
-                color: `${COLORS.ink}80`,
                 fontFamily: TYPOGRAPHY.sans,
-                fontSize: 13,
-                fontWeight: 600,
-                cursor: 'not-allowed',
+                fontSize: 11,
+                fontWeight: 700,
+                textTransform: 'uppercase',
+                letterSpacing: '0.06em',
+                color: COLORS.amberInk,
               }}
             >
-              {action.label}
-            </button>
+              {action.label} · Wave 27
+            </span>
             <span
               data-action-reason={action.id}
               style={{
-                padding: '2px 10px',
-                borderRadius: RADIUS.pill,
-                background: COLORS.amberSoft,
-                color: COLORS.amberInk,
                 fontFamily: TYPOGRAPHY.sans,
-                fontSize: 11,
-                fontWeight: 600,
+                fontSize: 12,
+                color: `${COLORS.ink}cc`,
+                lineHeight: 1.4,
               }}
             >
               {action.reason ?? 'Available in pilot environment (Wave 27)'}
