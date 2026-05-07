@@ -169,7 +169,7 @@ async function main() {
   const sb = createSeedClient();
 
   const clientsByTenant = new Map<TenantKey, ClientRow>();
-  for (const tenantKey of ['keystone', 'apex', 'meridian', 'first_capital'] as const) {
+  for (const tenantKey of ['apex', 'meridian', 'first_capital'] as const) {
     clientsByTenant.set(tenantKey, await resolveClient(sb, tenantKey));
   }
 

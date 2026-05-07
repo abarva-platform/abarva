@@ -1,7 +1,6 @@
 import matrixArtifact from '../../../intelligence/seeds/archetype-phase-deliverable-matrix.json';
 import apexPortfolio from '../../../intelligence/seeds/tenant-portfolios/apexretail.json';
 import arcturusPortfolio from '../../../intelligence/seeds/tenant-portfolios/arcturus.json';
-import keystonePortfolio from '../../../intelligence/seeds/tenant-portfolios/keystone.json';
 import meridianPortfolio from '../../../intelligence/seeds/tenant-portfolios/meridian.json';
 
 export type SpecArchetypeCode = 'ST' | 'WA' | 'PM' | 'AP' | 'OO';
@@ -111,7 +110,6 @@ export const TENANT_PORTFOLIOS: TenantPortfolioSeed[] = [
   apexPortfolio as TenantPortfolioSeed,
   meridianPortfolio as TenantPortfolioSeed,
   arcturusPortfolio as TenantPortfolioSeed,
-  keystonePortfolio as TenantPortfolioSeed,
 ];
 
 export const SPEC_PHASE_TO_APP_PHASE: Record<SpecPhaseNumber, number> = {

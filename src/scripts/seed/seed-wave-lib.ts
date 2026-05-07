@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 
-export type TenantKey = 'apex' | 'meridian' | 'first_capital' | 'keystone';
+export type TenantKey = 'apex' | 'meridian' | 'first_capital';
 
 export interface TenantConfig {
   key: TenantKey;
@@ -181,33 +181,6 @@ export const TENANTS: Record<TenantKey, TenantConfig> = {
       dataRoom: 'Part 10',
     },
   },
-  keystone: {
-    key: 'keystone',
-    shortName: 'Keystone Energy Holdings',
-    canonicalName: 'Keystone Energy Holdings',
-    legalName: 'Keystone Energy Holdings, Inc.',
-    industryCode: 'UTILITIES',
-    industryTag: 'UTILITIES',
-    vertical: 'utilities',
-    domain: 'keystone-energy.example',
-    specPath: 'docs/specs/_meta/seed-data/keystone-energy-holdings-comprehensive-seed.md',
-    companyScale: {
-      revenue_usd: 22_600_000_000,
-      assets_usd: 78_400_000_000,
-      market_cap_usd: 41_000_000_000,
-      customers: 10_400_000,
-      employees: 19_800,
-      headquarters: 'Cleveland, OH',
-    },
-    parts: {
-      initiatives: 'Part 6',
-      patterns: 'Part 7',
-      vendors: 'Part 8',
-      priorPrograms: 'Part 9',
-      benchmarks: 'Part 10',
-      dataRoom: 'Part 11',
-    },
-  },
 };
 
 export function loadSeedEnv(cwd = process.cwd()): void {
@@ -251,7 +224,6 @@ export function parseTenantSeed(config: TenantConfig, cwd = process.cwd()): Pars
 
   const people = dedupePeople([
     ...parseRoster(config, sections['Part 2'] ?? ''),
-    ...parseOperatingLeadership(config, sections['Part 2'] ?? ''),
     ...parseExtendedPeople(config, sections['Part 4'] ?? '', sections['Part 5'] ?? ''),
   ]);
   const vips = parseVipSections(sections['Part 4'] ?? '');
@@ -310,23 +282,6 @@ function parseRoster(config: TenantConfig, partTwo: string): PersonSeed[] {
       role,
       reportsToName: isChiefExecutiveRole(role) ? null : extractChiefExecutiveName(config, partTwo),
       functionGroup: role,
-    });
-  }
-  return out;
-}
-
-function parseOperatingLeadership(config: TenantConfig, partTwo: string): PersonSeed[] {
-  if (config.key !== 'keystone') return [];
-  const out: PersonSeed[] = [];
-  const section = blockBetween(partTwo, '### 2.2', '### 2.3');
-  for (const line of section.split('\n')) {
-    const match = line.match(/^- (.+?) — (.+)$/);
-    if (!match) continue;
-    out.push({
-      name: match[1].trim(),
-      role: match[2].trim(),
-      reportsToName: 'Nicole Hargrave-Park',
-      functionGroup: 'Operating subsidiary leadership',
     });
   }
   return out;
@@ -702,7 +657,6 @@ function extractChiefExecutiveName(config: TenantConfig, content: string): strin
   if (explicit) return explicit.trim();
   if (config.key === 'apex') return 'Vincent Okafor';
   if (config.key === 'meridian') return 'Dr. Elena Vasquez';
-  if (config.key === 'keystone') return 'Marcus W. Kittrell';
   return 'Robert "Bo" Hargrove III';
 }
 

@@ -17,7 +17,7 @@ interface CheckResult {
   passed: boolean;
 }
 
-function contradictionRowsForTenant(tenant: 'apex' | 'meridian' | 'first_capital' | 'keystone'): ContradictionRecord[] {
+function contradictionRowsForTenant(tenant: 'apex' | 'meridian' | 'first_capital'): ContradictionRecord[] {
   return getSeededExamplesForTenant(tenant).map((row) => ({
     id: deterministicUuid(`contradiction:${tenant}:${row.detectionRuleId}:${row.shortTitle}`),
     clientId: tenant,
@@ -160,7 +160,6 @@ async function main() {
 
     const ruleAR1 = getSeededExamplesForRule('A-R1').find((row) => row.tenant === 'apex');
     const ruleCR1 = getSeededExamplesForRule('C-R1').find((row) => row.tenant === 'first_capital');
-    const ruleER1 = getSeededExamplesForRule('E-R1').find((row) => row.tenant === 'keystone');
 
     const whatAmIMissing = selectWhatAmIMissing(apexRows);
     const danielBrief = buildStakeholderBrief(apexRows, 'Daniel Kovač');
@@ -211,11 +210,6 @@ async function main() {
         question: 'Run C-R1 on First Capital',
         answer: ruleCR1 ? ruleCR1.shortTitle : 'No contradiction returned',
         passed: Boolean(ruleCR1 && /attendance/i.test(ruleCR1.shortTitle)),
-      },
-      {
-        question: 'Run E-R1 on Keystone',
-        answer: ruleER1 ? ruleER1.shortTitle : 'No contradiction returned',
-        passed: Boolean(ruleER1 && /AI-first/i.test(ruleER1.shortTitle)),
       },
       {
         question: 'Query "what am I missing?" at Apex tenant',
