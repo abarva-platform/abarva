@@ -931,16 +931,6 @@ export function TowerIndexPage({
           minHeight: 0,
         }}
       >
-        {/* Portfolio summary tiles */}
-        {portfolioSummarySlot && (
-          <div>{portfolioSummarySlot}</div>
-        )}
-
-        {/* Portfolio cascade graph */}
-        {cascadeGraphSlot && (
-          <div>{cascadeGraphSlot}</div>
-        )}
-
         {/* Primary 2-column layout: pressure grid + Atlas sidebar */}
         <div
           style={{
@@ -1066,6 +1056,21 @@ export function TowerIndexPage({
         {/* Tower lens tab content */}
         {towerLensSlot && (
           <div>{towerLensSlot}</div>
+        )}
+
+        {/* Portfolio summary — below the fold; supporting detail */}
+        {portfolioSummarySlot && (
+          <div>
+            <div style={{ fontFamily: SHELL.MONO, fontSize: 9, letterSpacing: '0.18em', textTransform: 'uppercase', color: SHELL.INK_MUTED, marginBottom: 8 }}>
+              Portfolio summary
+            </div>
+            {portfolioSummarySlot}
+          </div>
+        )}
+
+        {/* Portfolio cascade graph */}
+        {cascadeGraphSlot && (
+          <div>{cascadeGraphSlot}</div>
         )}
 
         {/* Tower handoff panels */}
