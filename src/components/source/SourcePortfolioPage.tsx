@@ -147,16 +147,27 @@ function PopulatedView({
     return rows;
   }, [filteredEvents, isMature]);
 
+  const oldestAgingDays = useMemo(
+    () => events.reduce((acc, e) => Math.max(acc, e.agingDays | 0), 0),
+    [events],
+  );
+
   return (
     <>
       <CompactHeader
         eventCount={events.length}
         tenantCount={tenantCount}
         attentionCount={kpis.attentionCount}
-        activeCount={kpis.active}
-        completedCount={kpis.completed}
-        waitingCount={kpis.waiting}
         variant={portfolioState}
+      />
+      <DashboardStrip
+        attention={kpis.attentionCount}
+        waiting={kpis.waiting}
+        active={kpis.active}
+        completed={kpis.completed}
+        valueAtStakeUsd={kpis.valueAtStakeUsd}
+        oldestAgingDays={oldestAgingDays}
+        canViewFinancialValues={canViewFinancialValues}
       />
       <SubHeader
         eventCount={events.length}
@@ -182,17 +193,14 @@ function PopulatedView({
   );
 }
 
-// ── Compact header — title row + status legend + subline ─────────────────────
-// Strategic Moves' Portfolio map pattern: title left, legend right, subline below.
-// No KPI cards, no attention banners — counts are in the subline + table rows.
+// ── Compact header — title + subline + CTA ──────────────────────────────────
+// Title row stays focused on identity. Status counts live in the dedicated
+// DashboardStrip directly below, where they have room to breathe.
 
 interface CompactHeaderProps {
   eventCount: number;
   tenantCount?: number;
   attentionCount: number;
-  activeCount?: number;
-  completedCount?: number;
-  waitingCount?: number;
   variant: 'empty' | 'partial' | 'mature';
 }
 
@@ -200,9 +208,6 @@ function CompactHeader({
   eventCount,
   tenantCount = 0,
   attentionCount,
-  activeCount = 0,
-  completedCount = 0,
-  waitingCount = 0,
   variant,
 }: CompactHeaderProps) {
   const showCta = variant !== 'empty';
@@ -215,25 +220,104 @@ function CompactHeader({
           <div style={EYEBROW_STYLE}>Source · Sourcing portfolio</div>
           <h1 style={H1_STYLE}>Sourcing events</h1>
         </div>
-        <div style={HEADER_RIGHT_STYLE}>
-          {variant !== 'empty' ? (
-            <StatusLegend
-              attention={attentionCount}
-              active={activeCount}
-              waiting={waitingCount}
-              completed={completedCount}
-            />
-          ) : null}
-          {showCta ? (
-            <Link href="/source/new" data-testid="source-create-event-cta" style={CTA_STYLE}>
-              New sourcing event
-            </Link>
-          ) : null}
-        </div>
+        {showCta ? (
+          <Link href="/source/new" data-testid="source-create-event-cta" style={CTA_STYLE}>
+            New sourcing event
+          </Link>
+        ) : null}
       </div>
       {subline ? <p style={SUBLINE_STYLE}>{subline}</p> : null}
     </header>
   );
+}
+
+// ── Thin dashboard strip — sits above the search bar / table ─────────────────
+// One horizontal row. Status pills on the left (At risk · Waiting · Active ·
+// Completed) + portfolio aggregates on the right (Value at stake · Oldest aging).
+// Replaces the inline legend that previously crowded the title row.
+
+interface DashboardStripProps {
+  attention: number;
+  waiting: number;
+  active: number;
+  completed: number;
+  valueAtStakeUsd: number;
+  oldestAgingDays: number;
+  canViewFinancialValues: boolean;
+}
+
+function DashboardStrip({
+  attention,
+  waiting,
+  active,
+  completed,
+  valueAtStakeUsd,
+  oldestAgingDays,
+  canViewFinancialValues,
+}: DashboardStripProps) {
+  return (
+    <div data-testid="source-portfolio-dashboard-strip" style={STRIP_STYLE}>
+      <div style={STRIP_LEFT_STYLE}>
+        <StripStat color={PORTFOLIO.BLOCKED} label="At risk" count={attention} />
+        <StripStat color={PORTFOLIO.WAITING} label="Waiting" count={waiting} />
+        <StripStat color={PORTFOLIO.ACTIVE} label="Active" count={active} />
+        <StripStat color={PORTFOLIO.COMPLETED} label="Completed" count={completed} />
+      </div>
+      <div style={STRIP_RIGHT_STYLE}>
+        <StripMetric
+          label="Value at stake"
+          value={canViewFinancialValues ? formatCompactUsd(valueAtStakeUsd) : '—'}
+        />
+        <StripMetric
+          label="Oldest aging"
+          value={oldestAgingDays === 0 ? '—' : `${oldestAgingDays}d`}
+          accent={oldestAgingDays >= 5 ? PORTFOLIO.BLOCKED : oldestAgingDays >= 3 ? PORTFOLIO.WAITING : undefined}
+        />
+      </div>
+    </div>
+  );
+}
+
+function StripStat({ color, label, count }: { color: string; label: string; count: number }) {
+  return (
+    <span style={STRIP_STAT_STYLE}>
+      <span aria-hidden style={{ ...STRIP_DOT_STYLE, background: color }} />
+      <span style={STRIP_LABEL_STYLE}>{label}</span>
+      <span style={STRIP_COUNT_STYLE}>{count}</span>
+    </span>
+  );
+}
+
+function StripMetric({
+  label,
+  value,
+  accent,
+}: {
+  label: string;
+  value: string;
+  accent?: string;
+}) {
+  return (
+    <span style={STRIP_STAT_STYLE}>
+      <span style={STRIP_LABEL_STYLE}>{label}</span>
+      <span
+        style={{
+          ...STRIP_VALUE_STYLE,
+          color: accent ?? PORTFOLIO.INK,
+        }}
+      >
+        {value}
+      </span>
+    </span>
+  );
+}
+
+function formatCompactUsd(usd: number): string {
+  if (!Number.isFinite(usd) || usd <= 0) return '—';
+  if (usd >= 1_000_000_000) return `$${(usd / 1_000_000_000).toFixed(1)}B`;
+  if (usd >= 1_000_000) return `$${(usd / 1_000_000).toFixed(1)}M`;
+  if (usd >= 1_000) return `$${Math.round(usd / 1_000)}k`;
+  return `$${usd}`;
 }
 
 function buildSubline(
@@ -248,37 +332,6 @@ function buildSubline(
   if (attentionCount === 0) return `${lead} Nothing needs your attention today.`;
   if (attentionCount === 1) return `${lead} 1 needs your decision today.`;
   return `${lead} ${attentionCount} need your attention today.`;
-}
-
-function StatusLegend({
-  attention,
-  active,
-  waiting,
-  completed,
-}: {
-  attention: number;
-  active: number;
-  waiting: number;
-  completed: number;
-}) {
-  return (
-    <div style={LEGEND_STYLE} aria-label="Status legend">
-      <LegendItem color={PORTFOLIO.BLOCKED} label="At risk" count={attention} />
-      <LegendItem color={PORTFOLIO.WAITING} label="Waiting" count={waiting} />
-      <LegendItem color={PORTFOLIO.ACTIVE} label="Active" count={active} />
-      <LegendItem color={PORTFOLIO.COMPLETED} label="Completed" count={completed} />
-    </div>
-  );
-}
-
-function LegendItem({ color, label, count }: { color: string; label: string; count: number }) {
-  return (
-    <span style={LEGEND_ITEM_STYLE}>
-      <span aria-hidden style={{ ...LEGEND_DOT_STYLE, background: color }} />
-      <span style={LEGEND_LABEL_STYLE}>{label}</span>
-      <span style={LEGEND_COUNT_STYLE}>{count}</span>
-    </span>
-  );
 }
 
 // ── Sub-header strip — search + result count ─────────────────────────────────
@@ -369,12 +422,6 @@ const HEADER_TOP_STYLE: CSSProperties = {
   gap: 16,
 };
 
-const HEADER_RIGHT_STYLE: CSSProperties = {
-  display: 'flex',
-  alignItems: 'center',
-  gap: 24,
-};
-
 const EYEBROW_STYLE: CSSProperties = {
   fontFamily: PORTFOLIO.MONO,
   fontSize: PORTFOLIO.T_MICRO,
@@ -402,27 +449,47 @@ const SUBLINE_STYLE: CSSProperties = {
   maxWidth: 720,
 };
 
-const LEGEND_STYLE: CSSProperties = {
-  display: 'inline-flex',
+const STRIP_STYLE: CSSProperties = {
+  display: 'flex',
   alignItems: 'center',
-  gap: 16,
+  justifyContent: 'space-between',
+  gap: 24,
+  padding: '10px 16px',
+  marginTop: 16,
+  borderRadius: PORTFOLIO.RADIUS_TIGHT,
+  border: `1px solid ${PORTFOLIO.HAIRLINE}`,
+  background: PORTFOLIO.CARD,
   flexWrap: 'wrap',
 };
 
-const LEGEND_ITEM_STYLE: CSSProperties = {
+const STRIP_LEFT_STYLE: CSSProperties = {
   display: 'inline-flex',
   alignItems: 'center',
-  gap: 6,
+  gap: 24,
+  flexWrap: 'wrap',
 };
 
-const LEGEND_DOT_STYLE: CSSProperties = {
+const STRIP_RIGHT_STYLE: CSSProperties = {
+  display: 'inline-flex',
+  alignItems: 'center',
+  gap: 24,
+  flexWrap: 'wrap',
+};
+
+const STRIP_STAT_STYLE: CSSProperties = {
+  display: 'inline-flex',
+  alignItems: 'center',
+  gap: 8,
+};
+
+const STRIP_DOT_STYLE: CSSProperties = {
   width: 7,
   height: 7,
   borderRadius: 999,
   display: 'inline-block',
 };
 
-const LEGEND_LABEL_STYLE: CSSProperties = {
+const STRIP_LABEL_STYLE: CSSProperties = {
   fontFamily: PORTFOLIO.MONO,
   fontSize: PORTFOLIO.T_MICRO_SMALL,
   letterSpacing: '0.10em',
@@ -431,11 +498,18 @@ const LEGEND_LABEL_STYLE: CSSProperties = {
   fontWeight: 600,
 };
 
-const LEGEND_COUNT_STYLE: CSSProperties = {
+const STRIP_COUNT_STYLE: CSSProperties = {
   fontFamily: PORTFOLIO.MONO,
-  fontSize: PORTFOLIO.T_MICRO_SMALL,
+  fontSize: PORTFOLIO.T_MICRO,
   fontWeight: 700,
   color: PORTFOLIO.INK,
+  fontVariantNumeric: 'tabular-nums',
+};
+
+const STRIP_VALUE_STYLE: CSSProperties = {
+  fontFamily: PORTFOLIO.MONO,
+  fontSize: PORTFOLIO.T_BODY_SMALL,
+  fontWeight: 700,
   fontVariantNumeric: 'tabular-nums',
 };
 

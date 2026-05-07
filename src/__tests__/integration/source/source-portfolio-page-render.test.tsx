@@ -266,7 +266,7 @@ describe('SourcePortfolioPage redesigned render', () => {
     expect(html).not.toMatch(/animation:\s*[a-z-]*pulse/);
   });
 
-  it('exposes the filter sidebar with the four essential filter groups', () => {
+  it('exposes the filter sidebar with the three essential filter groups', () => {
     const events = [
       makeEvent({
         id: 'a',
@@ -284,18 +284,17 @@ describe('SourcePortfolioPage redesigned render', () => {
     ];
     const html = render(events);
     expect(html).toContain('source-portfolio-filter-sidebar');
-    // Four essential groups — Aging / Value band / Rigor / Flags removed
-    // intentionally to reduce filter-bar bloat (per founder feedback).
+    // Three essential groups — Lead agent dropped (workflow-anchored UI keeps
+    // agents hidden behind primary surfaces). Aging / Value band / Rigor /
+    // Flags also removed to reduce filter-bar bloat.
     expect(html).toContain('Status');
     expect(html).toContain('Stage band');
-    expect(html).toContain('Lead agent');
     expect(html).toContain('Tenant');
     // Tenant group only renders when 2+ tenants are in view.
     expect(html).toContain('Apex Retail Group');
     expect(html).toContain('Meridian Health System');
     // Removed filter groups should NOT appear as group headers in the sidebar.
-    // ("Aging" is still a TABLE COLUMN heading; "Value" is in column too — so
-    // we check for the disambiguating multi-word group labels only.)
+    expect(html).not.toContain('Lead agent');
     expect(html).not.toContain('Value band');
     expect(html).not.toContain('Rigor');
     expect(html).not.toContain('Flags');

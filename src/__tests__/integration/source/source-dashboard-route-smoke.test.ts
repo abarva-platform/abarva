@@ -81,10 +81,11 @@ describe('Source dashboard route smoke', () => {
     expect(eventsRouteSource).toContain('IT sourcing operating queue');
     expect(eventsRouteSource).toContain('Start IT sourcing event');
     expect(eventsRouteSource).toContain('The table is supporting evidence');
-    // Compact-header portfolio surface — KPI strip + attention banners
-    // intentionally removed in favor of an inline status legend + table-row signals.
+    // Compact-header portfolio surface — KPI strip + attention banners removed.
+    // Status counts live in a thin DashboardStrip above the table; table rows
+    // carry their own per-event signals.
     expect(componentSource).toContain('CompactHeader');
-    expect(componentSource).toContain('StatusLegend');
+    expect(componentSource).toContain('DashboardStrip');
     expect(componentSource).toContain('PortfolioFilterSidebar');
     expect(componentSource).toContain('PortfolioEventsTable');
     expect(componentSource).toContain('PortfolioEmptyState');
