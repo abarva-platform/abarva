@@ -53,10 +53,12 @@ const CONTEXT_TILE: CSSProperties = {
 
 const BODY_GRID: CSSProperties = {
   display: 'grid',
-  gridTemplateColumns: 'minmax(0, 1.55fr) minmax(280px, 0.72fr)',
-  gap: 16,
-  alignItems: 'start',
+  // T03 design: chat lane fixed-left, canvas content flex-right
+  gridTemplateColumns: '380px 1fr',
+  gap: 0,
+  alignItems: 'stretch',
   minWidth: 0,
+  minHeight: 560,
 };
 
 // Pre-build pattern-level data once at module scope (pure, deterministic).
@@ -83,15 +85,22 @@ export function NexusEngagementCanvas({ event }: { event: SourcingEventDetail })
 
   return (
     <section style={CANVAS}>
+      {/* ── Context strip + journey rail above both columns (T03 design) ── */}
       <EventContextStrip event={event} missionReport={missionReport} />
+      <SourceJourneyTrackerClient
+        stages={event.stages}
+        instanceId={instanceId}
+        patternStageMap={AMS_PATTERN_STAGE_MAP}
+        handoffNarratives={AMS_HANDOFF_NARRATIVES}
+      />
+
+      {/* ── Two-column canvas shell: chat lane LEFT, canvas RIGHT ── */}
       <div style={BODY_GRID}>
-        <div style={{ display: 'grid', gap: 16, minWidth: 0 }}>
-          <SourceJourneyTrackerClient
-            stages={event.stages}
-            instanceId={instanceId}
-            patternStageMap={AMS_PATTERN_STAGE_MAP}
-            handoffNarratives={AMS_HANDOFF_NARRATIVES}
-          />
+        {/* Chat lane — 380px fixed (T03) */}
+        <PersistentNexusPanel event={event} missionReport={missionReport} />
+
+        {/* Canvas — flex-1, all stage-specific content */}
+        <div style={{ display: 'grid', gap: 16, minWidth: 0, padding: '16px 20px 24px 20px', alignContent: 'start' }}>
           <div id="source-route-gate-blockers">
             <SourceStageGatePanel readiness={stageGateReadiness} />
           </div>
@@ -113,7 +122,6 @@ export function NexusEngagementCanvas({ event }: { event: SourcingEventDetail })
           </div>
           <SourceStagePanel event={event} />
         </div>
-        <PersistentNexusPanel event={event} missionReport={missionReport} />
       </div>
     </section>
   );
