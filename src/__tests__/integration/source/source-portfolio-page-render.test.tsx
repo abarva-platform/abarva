@@ -97,17 +97,39 @@ describe('SourcePortfolioPage redesigned render', () => {
   });
 
   it('strips E2E-CRAWL test artifacts before rendering', () => {
+    // Each event needs a unique code or dedupeByEventCode collapses them.
     const events = [
-      makeEvent({ id: 'real-1', name: 'Real Event A' }),
-      makeEvent({ id: 'crawl-1', name: 'E2E-CRAWL-test-2026-05-02-firstcapital' }),
-      makeEvent({ id: 'real-2', name: 'Real Event B' }),
-      makeEvent({ id: 'crawl-2', name: 'event-20260502T175236Z' }),
+      makeEvent({ id: 'real-1', code: 'SRC-APX-A1', name: 'Real Event A' }),
+      makeEvent({
+        id: 'crawl-1',
+        code: 'E2E-APX-1',
+        name: 'E2E-CRAWL-test-2026-05-02-firstcapital',
+      }),
+      makeEvent({ id: 'real-2', code: 'SRC-APX-A2', name: 'Real Event B' }),
+      makeEvent({ id: 'crawl-2', code: 'SRC-APX-Z1', name: 'event-20260502T175236Z' }),
     ];
     const html = render(events);
     expect(html).not.toContain('E2E-CRAWL');
     expect(html).not.toContain('20260502T175236Z');
     expect(html).toContain('Real Event A');
     expect(html).toContain('Real Event B');
+  });
+
+  it('dedupes events that share the same event_code (seed-loader artifact)', () => {
+    const events = [
+      makeEvent({ id: 'a', code: 'SRC-DUP-001', currentStageKey: 'scope' }),
+      makeEvent({ id: 'b', code: 'SRC-DUP-001', currentStageKey: 'rfp' }),
+      makeEvent({ id: 'c', code: 'SRC-DUP-001', currentStageKey: 'pricing' }),
+      makeEvent({ id: 'd', code: 'SRC-OTHER-001', name: 'Other Event' }),
+    ];
+    const html = render(events);
+    // Count <tr> rows. The link inside uses `source-portfolio-row-link-{id}`,
+    // so we exclude any testid that contains `-link-`.
+    const allMatches = html.match(/data-testid="source-portfolio-row-[a-z0-9-]+"/g) ?? [];
+    const trRows = allMatches.filter((m) => !m.includes('-link-'));
+    expect(trRows.length).toBe(2);
+    // The most-advanced stage wins for the duplicate (pricing → 06 of 11).
+    expect(html).toContain('06 / 11');
   });
 
   it('renders empty state when only test artifacts exist', () => {
@@ -118,7 +140,7 @@ describe('SourcePortfolioPage redesigned render', () => {
     expect(html).toContain('data-portfolio-state="empty"');
   });
 
-  it('renders partial state with KPIs, filter sidebar, and ungrouped table when 1-9 events', () => {
+  it('renders partial state with compact header, filter sidebar, and ungrouped table when 1-9 events', () => {
     const events = Array.from({ length: 5 }, (_, i) =>
       makeEvent({ id: `evt-${i}`, code: `SRC-APX-${100 + i}`, name: `Event ${i}` }),
     );
@@ -126,13 +148,15 @@ describe('SourcePortfolioPage redesigned render', () => {
 
     expect(html).toContain('data-portfolio-state="partial"');
     expect(html).toContain('source-portfolio-header');
-    expect(html).toContain('source-portfolio-kpi-strip');
     expect(html).toContain('source-portfolio-filter-sidebar');
     expect(html).toContain('source-portfolio-events-table');
     expect(html).toContain('source-portfolio-search');
     // No stage-band groups in partial state.
     expect(html).toContain('data-group-by="none"');
     expect(html).not.toContain('source-portfolio-group-discovery');
+    // Compact pattern: KPI cards + attention banners are intentionally gone.
+    expect(html).not.toContain('source-portfolio-kpi-strip');
+    expect(html).not.toContain('source-portfolio-attention-stack');
   });
 
   it('renders mature state with stage-band groups and filter sidebar at 10+ events', () => {
@@ -179,21 +203,31 @@ describe('SourcePortfolioPage redesigned render', () => {
     expect(html).toContain('source-portfolio-filter-sidebar');
   });
 
-  it('renders attention banners for at-risk and blocked events', () => {
+  it('shows attention count via the legend + subline (no separate banner stack)', () => {
     const events = [
-      makeEvent({ id: 'r1', isAtRisk: true, agingDays: 6, name: 'Stuck on Vendor' }),
+      makeEvent({
+        id: 'r1',
+        code: 'SRC-A',
+        isAtRisk: true,
+        agingDays: 6,
+        name: 'Stuck on Vendor',
+      }),
       makeEvent({
         id: 'r2',
+        code: 'SRC-B',
         status: 'waiting_on_executive_decision',
         statusLabel: 'Waiting on Executive Decision',
         agingDays: 5,
         name: 'Approval Pending',
       }),
-      makeEvent({ id: 'r3', name: 'Healthy event' }),
+      makeEvent({ id: 'r3', code: 'SRC-C', name: 'Healthy event' }),
     ];
     const html = render(events);
-    expect(html).toContain('source-portfolio-attention-stack');
-    expect(html).toContain('source-attention-banner-critical');
+    // Banners removed — counts surface in the table rows themselves
+    // (red aging, agent-tagged blocker) and the header subline.
+    expect(html).not.toContain('source-portfolio-attention-stack');
+    expect(html).toMatch(/need your attention today/);
+    // Both at-risk events still appear in the table.
     expect(html).toContain('Stuck on Vendor');
     expect(html).toContain('Approval Pending');
   });
@@ -232,11 +266,17 @@ describe('SourcePortfolioPage redesigned render', () => {
     expect(html).not.toMatch(/animation:\s*[a-z-]*pulse/);
   });
 
-  it('exposes the filter sidebar with the seven filter groups', () => {
+  it('exposes the filter sidebar with the four essential filter groups', () => {
     const events = [
-      makeEvent({ id: 'a', currentStageKey: 'scope', accountName: 'Apex Retail Group' }),
+      makeEvent({
+        id: 'a',
+        code: 'SRC-APX-1',
+        currentStageKey: 'scope',
+        accountName: 'Apex Retail Group',
+      }),
       makeEvent({
         id: 'b',
+        code: 'SRC-MER-1',
         currentStageKey: 'evaluation',
         accountName: 'Meridian Health System',
         rigor: 'strategic',
@@ -244,29 +284,35 @@ describe('SourcePortfolioPage redesigned render', () => {
     ];
     const html = render(events);
     expect(html).toContain('source-portfolio-filter-sidebar');
+    // Four essential groups — Aging / Value band / Rigor / Flags removed
+    // intentionally to reduce filter-bar bloat (per founder feedback).
     expect(html).toContain('Status');
     expect(html).toContain('Stage band');
     expect(html).toContain('Lead agent');
-    expect(html).toContain('Aging');
-    expect(html).toContain('Value band');
-    expect(html).toContain('Rigor');
-    expect(html).toContain('Flags');
-    // Tenant group only shows when more than one tenant in view.
     expect(html).toContain('Tenant');
+    // Tenant group only renders when 2+ tenants are in view.
     expect(html).toContain('Apex Retail Group');
     expect(html).toContain('Meridian Health System');
+    // Removed filter groups should NOT appear as group headers in the sidebar.
+    // ("Aging" is still a TABLE COLUMN heading; "Value" is in column too — so
+    // we check for the disambiguating multi-word group labels only.)
+    expect(html).not.toContain('Value band');
+    expect(html).not.toContain('Rigor');
+    expect(html).not.toContain('Flags');
   });
 
   it('agent-tags use stage-specific lead — Steward for evaluation, Atlas for decision', () => {
     const events = [
       makeEvent({
         id: 'eval-1',
+        code: 'SRC-EVAL-1',
         currentStageKey: 'evaluation',
         currentStageLabel: 'Evaluation',
         blocker: 'EA security weight disputed',
       }),
       makeEvent({
         id: 'dec-1',
+        code: 'SRC-DEC-1',
         currentStageKey: 'executive_decision',
         currentStageLabel: 'Executive Decision',
         blocker: 'Awaiting CFO sign-off',
@@ -298,9 +344,15 @@ describe('SourcePortfolioPage redesigned render', () => {
 
   it('builds the dynamic header subline with event/tenant/attention counts', () => {
     const events = [
-      makeEvent({ id: 'a', accountName: 'Apex Retail Group', isAtRisk: true, agingDays: 6 }),
-      makeEvent({ id: 'b', accountName: 'Apex Retail Group' }),
-      makeEvent({ id: 'c', accountName: 'Meridian Health System' }),
+      makeEvent({
+        id: 'a',
+        code: 'SRC-A',
+        accountName: 'Apex Retail Group',
+        isAtRisk: true,
+        agingDays: 6,
+      }),
+      makeEvent({ id: 'b', code: 'SRC-B', accountName: 'Apex Retail Group' }),
+      makeEvent({ id: 'c', code: 'SRC-C', accountName: 'Meridian Health System' }),
     ];
     const html = render(events);
     expect(html).toMatch(/3 events across 2 tenants/);

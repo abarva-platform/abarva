@@ -1,10 +1,8 @@
 'use client';
 
 import { useMemo, useState, type CSSProperties } from 'react';
+import Link from 'next/link';
 import { AppShell } from '@/components/shell/AppShell';
-import { PortfolioHeader } from '@/components/source/portfolio/PortfolioHeader';
-import { KpiStrip } from '@/components/source/portfolio/KpiStrip';
-import { AttentionStack } from '@/components/source/portfolio/AttentionStack';
 import {
   PortfolioFilterSidebar,
   EMPTY_FILTER_STATE,
@@ -20,8 +18,8 @@ import { PortfolioEmptyState } from '@/components/source/portfolio/PortfolioEmpt
 import { PORTFOLIO } from '@/components/source/portfolio/portfolio-tokens';
 import { SOURCE_STAGE_ORDER } from '@/lib/source/constants';
 import {
-  attentionEvents,
   computePortfolioKpis,
+  dedupeByEventCode,
   determinePortfolioState,
   filterOutTestArtifacts,
   groupEventsByStageBand,
@@ -46,7 +44,12 @@ export function SourcePortfolioPage({
   searchParams,
   canViewFinancialValues = true,
 }: SourcePortfolioPageProps) {
-  const visibleEvents = useMemo(() => filterOutTestArtifacts(events), [events]);
+  // Strip test artifacts AND dedupe by event_code so the seed-loader's
+  // duplicate inserts don't pollute the list.
+  const visibleEvents = useMemo(
+    () => dedupeByEventCode(filterOutTestArtifacts(events)),
+    [events],
+  );
   const portfolioState = determinePortfolioState(visibleEvents.length);
   const isDemoEmpty = searchParams.demo === 'empty';
   const renderEmpty = portfolioState === 'empty' || isDemoEmpty;
@@ -92,7 +95,7 @@ export function SourcePortfolioPage({
 function EmptyView() {
   return (
     <>
-      <PortfolioHeader eventCount={0} tenantCount={0} attentionCount={0} variant="empty" />
+      <CompactHeader eventCount={0} attentionCount={0} variant="empty" />
       <PortfolioEmptyState />
     </>
   );
@@ -119,9 +122,7 @@ function PopulatedView({
     [events],
   );
   const kpis = useMemo(() => computePortfolioKpis(events), [events]);
-  const banners = useMemo(() => attentionEvents(events).slice(0, 4), [events]);
 
-  // Apply sidebar filters + search to produce the table set.
   const filteredEvents = useMemo(() => {
     return events
       .filter((event) => eventMatchesFilters(event, filters))
@@ -148,14 +149,22 @@ function PopulatedView({
 
   return (
     <>
-      <PortfolioHeader
+      <CompactHeader
         eventCount={events.length}
         tenantCount={tenantCount}
         attentionCount={kpis.attentionCount}
+        activeCount={kpis.active}
+        completedCount={kpis.completed}
+        waitingCount={kpis.waiting}
         variant={portfolioState}
       />
-      <KpiStrip kpis={kpis} canViewFinancialValues={canViewFinancialValues} />
-      <AttentionStack banners={banners} />
+      <SubHeader
+        eventCount={events.length}
+        visibleCount={filteredEvents.length}
+        searchQuery={searchQuery}
+        onSearchChange={setSearchQuery}
+        activeFilterCount={totalFilterCount(filters)}
+      />
 
       <section
         aria-label="Sourcing events with filters"
@@ -163,54 +172,149 @@ function PopulatedView({
         style={DETAIL_SHELL_STYLE}
       >
         <PortfolioFilterSidebar events={events} state={filters} onChange={setFilters} />
-        <div style={TABLE_COLUMN_STYLE}>
-          <SearchBar
-            query={searchQuery}
-            onChange={setSearchQuery}
-            visibleCount={filteredEvents.length}
-            totalCount={events.length}
-            activeFilterCount={totalFilterCount(filters)}
-          />
-          <PortfolioEventsTable
-            rows={tableRows}
-            groupBy={isMature ? 'stage-band' : 'none'}
-            canViewFinancialValues={canViewFinancialValues}
-          />
-        </div>
+        <PortfolioEventsTable
+          rows={tableRows}
+          groupBy={isMature ? 'stage-band' : 'none'}
+          canViewFinancialValues={canViewFinancialValues}
+        />
       </section>
     </>
   );
 }
 
-function SearchBar({
-  query,
-  onChange,
-  visibleCount,
-  totalCount,
-  activeFilterCount,
+// ── Compact header — title row + status legend + subline ─────────────────────
+// Strategic Moves' Portfolio map pattern: title left, legend right, subline below.
+// No KPI cards, no attention banners — counts are in the subline + table rows.
+
+interface CompactHeaderProps {
+  eventCount: number;
+  tenantCount?: number;
+  attentionCount: number;
+  activeCount?: number;
+  completedCount?: number;
+  waitingCount?: number;
+  variant: 'empty' | 'partial' | 'mature';
+}
+
+function CompactHeader({
+  eventCount,
+  tenantCount = 0,
+  attentionCount,
+  activeCount = 0,
+  completedCount = 0,
+  waitingCount = 0,
+  variant,
+}: CompactHeaderProps) {
+  const showCta = variant !== 'empty';
+  const subline = buildSubline(eventCount, tenantCount, attentionCount);
+
+  return (
+    <header data-testid="source-portfolio-header" style={HEADER_STYLE}>
+      <div style={HEADER_TOP_STYLE}>
+        <div style={{ minWidth: 0, display: 'grid', gap: 4 }}>
+          <div style={EYEBROW_STYLE}>Source · Sourcing portfolio</div>
+          <h1 style={H1_STYLE}>Sourcing events</h1>
+        </div>
+        <div style={HEADER_RIGHT_STYLE}>
+          {variant !== 'empty' ? (
+            <StatusLegend
+              attention={attentionCount}
+              active={activeCount}
+              waiting={waitingCount}
+              completed={completedCount}
+            />
+          ) : null}
+          {showCta ? (
+            <Link href="/source/new" data-testid="source-create-event-cta" style={CTA_STYLE}>
+              New sourcing event
+            </Link>
+          ) : null}
+        </div>
+      </div>
+      {subline ? <p style={SUBLINE_STYLE}>{subline}</p> : null}
+    </header>
+  );
+}
+
+function buildSubline(
+  eventCount: number,
+  tenantCount: number,
+  attentionCount: number,
+): string | null {
+  if (eventCount === 0) return null;
+  const tenantText = tenantCount === 1 ? '1 tenant' : `${tenantCount} tenants`;
+  const eventText = eventCount === 1 ? '1 event' : `${eventCount} events`;
+  const lead = `${eventText} across ${tenantText}.`;
+  if (attentionCount === 0) return `${lead} Nothing needs your attention today.`;
+  if (attentionCount === 1) return `${lead} 1 needs your decision today.`;
+  return `${lead} ${attentionCount} need your attention today.`;
+}
+
+function StatusLegend({
+  attention,
+  active,
+  waiting,
+  completed,
 }: {
-  query: string;
-  onChange: (q: string) => void;
-  visibleCount: number;
-  totalCount: number;
-  activeFilterCount: number;
+  attention: number;
+  active: number;
+  waiting: number;
+  completed: number;
 }) {
   return (
-    <div style={SEARCH_ROW_STYLE}>
+    <div style={LEGEND_STYLE} aria-label="Status legend">
+      <LegendItem color={PORTFOLIO.BLOCKED} label="At risk" count={attention} />
+      <LegendItem color={PORTFOLIO.WAITING} label="Waiting" count={waiting} />
+      <LegendItem color={PORTFOLIO.ACTIVE} label="Active" count={active} />
+      <LegendItem color={PORTFOLIO.COMPLETED} label="Completed" count={completed} />
+    </div>
+  );
+}
+
+function LegendItem({ color, label, count }: { color: string; label: string; count: number }) {
+  return (
+    <span style={LEGEND_ITEM_STYLE}>
+      <span aria-hidden style={{ ...LEGEND_DOT_STYLE, background: color }} />
+      <span style={LEGEND_LABEL_STYLE}>{label}</span>
+      <span style={LEGEND_COUNT_STYLE}>{count}</span>
+    </span>
+  );
+}
+
+// ── Sub-header strip — search + result count ─────────────────────────────────
+// Strategic Moves equivalent of "14 MOVES · ALL TENANTS · SORT: PHASE ▾". For
+// Source we keep it minimal: search + count. Sort/view-toggle are deferred.
+
+function SubHeader({
+  eventCount,
+  visibleCount,
+  searchQuery,
+  onSearchChange,
+  activeFilterCount,
+}: {
+  eventCount: number;
+  visibleCount: number;
+  searchQuery: string;
+  onSearchChange: (q: string) => void;
+  activeFilterCount: number;
+}) {
+  const showFiltered = visibleCount !== eventCount || activeFilterCount > 0;
+  return (
+    <div style={SUB_HEADER_STYLE}>
+      <span style={SUB_LABEL_STYLE}>
+        {showFiltered
+          ? `${visibleCount} of ${eventCount} ${eventCount === 1 ? 'event' : 'events'}`
+          : `${eventCount} ${eventCount === 1 ? 'event' : 'events'}`}
+      </span>
       <input
         type="search"
         placeholder="Search events, codes, owners…"
-        value={query}
-        onChange={(e) => onChange(e.target.value)}
+        value={searchQuery}
+        onChange={(e) => onSearchChange(e.target.value)}
         data-testid="source-portfolio-search"
         aria-label="Search events"
         style={SEARCH_INPUT_STYLE}
       />
-      <span style={RESULT_COUNT_STYLE}>
-        {visibleCount === totalCount && activeFilterCount === 0
-          ? `${totalCount} ${totalCount === 1 ? 'event' : 'events'}`
-          : `${visibleCount} of ${totalCount}`}
-      </span>
     </div>
   );
 }
@@ -234,6 +338,8 @@ function byAgingDesc(a: SourcingEventSummary, b: SourcingEventSummary): number {
   );
 }
 
+// ── Styles ───────────────────────────────────────────────────────────────────
+
 const MAIN_STYLE: CSSProperties = {
   flex: 1,
   minWidth: 0,
@@ -243,36 +349,132 @@ const MAIN_STYLE: CSSProperties = {
 };
 
 const CONTAINER_STYLE: CSSProperties = {
-  // Fluid full-width — productivity-app pattern (Linear / Notion / Datadog).
-  // The filter sidebar + events table take whatever room the viewport offers.
-  padding: `0 ${PORTFOLIO.S_PAGE}px 64px`,
+  padding: `0 ${PORTFOLIO.S_PAGE}px 48px`,
 };
 
-const DETAIL_SHELL_STYLE: CSSProperties = {
+const HEADER_STYLE: CSSProperties = {
   display: 'grid',
-  gridTemplateColumns: '232px minmax(0, 1fr)',
-  gap: 32,
-  alignItems: 'start',
+  gap: 8,
+  padding: '20px 0 16px',
+  borderBottom: `1px solid ${PORTFOLIO.HAIRLINE}`,
 };
 
-const TABLE_COLUMN_STYLE: CSSProperties = {
+const HEADER_TOP_STYLE: CSSProperties = {
   display: 'grid',
-  gap: 12,
-  minWidth: 0,
+  gridTemplateColumns: 'minmax(0, 1fr) auto',
+  alignItems: 'end',
+  gap: 16,
 };
 
-const SEARCH_ROW_STYLE: CSSProperties = {
+const HEADER_RIGHT_STYLE: CSSProperties = {
   display: 'flex',
   alignItems: 'center',
-  gap: 12,
-  padding: '4px 0 0',
+  gap: 24,
+};
+
+const EYEBROW_STYLE: CSSProperties = {
+  fontFamily: PORTFOLIO.MONO,
+  fontSize: PORTFOLIO.T_MICRO,
+  letterSpacing: '0.16em',
+  textTransform: 'uppercase',
+  color: PORTFOLIO.GRAY_DK,
+};
+
+const H1_STYLE: CSSProperties = {
+  fontFamily: PORTFOLIO.SERIF,
+  fontSize: 30,
+  fontWeight: 400,
+  lineHeight: 1.1,
+  letterSpacing: '-0.02em',
+  color: PORTFOLIO.INK,
+  margin: 0,
+};
+
+const SUBLINE_STYLE: CSSProperties = {
+  margin: 0,
+  fontFamily: PORTFOLIO.SANS,
+  fontSize: PORTFOLIO.T_META,
+  lineHeight: 1.45,
+  color: PORTFOLIO.INK_SOFT,
+  maxWidth: 720,
+};
+
+const LEGEND_STYLE: CSSProperties = {
+  display: 'inline-flex',
+  alignItems: 'center',
+  gap: 16,
+  flexWrap: 'wrap',
+};
+
+const LEGEND_ITEM_STYLE: CSSProperties = {
+  display: 'inline-flex',
+  alignItems: 'center',
+  gap: 6,
+};
+
+const LEGEND_DOT_STYLE: CSSProperties = {
+  width: 7,
+  height: 7,
+  borderRadius: 999,
+  display: 'inline-block',
+};
+
+const LEGEND_LABEL_STYLE: CSSProperties = {
+  fontFamily: PORTFOLIO.MONO,
+  fontSize: PORTFOLIO.T_MICRO_SMALL,
+  letterSpacing: '0.10em',
+  textTransform: 'uppercase',
+  color: PORTFOLIO.INK_SOFT,
+  fontWeight: 600,
+};
+
+const LEGEND_COUNT_STYLE: CSSProperties = {
+  fontFamily: PORTFOLIO.MONO,
+  fontSize: PORTFOLIO.T_MICRO_SMALL,
+  fontWeight: 700,
+  color: PORTFOLIO.INK,
+  fontVariantNumeric: 'tabular-nums',
+};
+
+const CTA_STYLE: CSSProperties = {
+  display: 'inline-flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  padding: '8px 14px',
+  borderRadius: PORTFOLIO.RADIUS_TIGHT,
+  background: PORTFOLIO.INK,
+  color: '#ffffff',
+  fontFamily: PORTFOLIO.SANS,
+  fontSize: PORTFOLIO.T_BODY_SMALL,
+  fontWeight: 500,
+  letterSpacing: '-0.01em',
+  textDecoration: 'none',
+  whiteSpace: 'nowrap',
+};
+
+const SUB_HEADER_STYLE: CSSProperties = {
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'space-between',
+  gap: 16,
+  padding: '12px 0',
+  marginBottom: 16,
+};
+
+const SUB_LABEL_STYLE: CSSProperties = {
+  fontFamily: PORTFOLIO.MONO,
+  fontSize: PORTFOLIO.T_MICRO,
+  letterSpacing: '0.12em',
+  textTransform: 'uppercase',
+  color: PORTFOLIO.INK_SOFT,
+  fontWeight: 600,
 };
 
 const SEARCH_INPUT_STYLE: CSSProperties = {
-  flex: 1,
+  width: 280,
   fontFamily: PORTFOLIO.SANS,
   fontSize: PORTFOLIO.T_BODY_SMALL,
-  padding: '8px 14px',
+  padding: '6px 12px',
   borderRadius: PORTFOLIO.RADIUS_TIGHT,
   border: `1px solid ${PORTFOLIO.RULE}`,
   background: PORTFOLIO.CARD,
@@ -280,11 +482,9 @@ const SEARCH_INPUT_STYLE: CSSProperties = {
   outline: 'none',
 };
 
-const RESULT_COUNT_STYLE: CSSProperties = {
-  fontFamily: PORTFOLIO.MONO,
-  fontSize: PORTFOLIO.T_MICRO,
-  letterSpacing: '0.10em',
-  textTransform: 'uppercase',
-  color: PORTFOLIO.INK_MUTED,
-  whiteSpace: 'nowrap',
+const DETAIL_SHELL_STYLE: CSSProperties = {
+  display: 'grid',
+  gridTemplateColumns: '220px minmax(0, 1fr)',
+  gap: 28,
+  alignItems: 'start',
 };
