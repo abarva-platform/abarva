@@ -100,26 +100,48 @@ function MissingChip({ children, onClick }: { children: ReactNode; onClick?: () 
   );
 }
 
-// ─── KPI cell ─────────────────────────────────────────────────────────────────
+// ─── KPI cell · T-1 compression (Tower Fix Package) ───────────────────────────
+//
+// Compressed from 4-line (label / stat / delta / 3-line footnote / inline CTA)
+// to 2-line (label / stat + one-line subtext) layout per
+// `tower-fix-package/pr-t-1-dashboard-band-compression.md`.
+//
+// The displaced 3-line description goes into the native browser tooltip
+// via `tooltip` prop (option 1 from spec §"Notes for implementer"). The two
+// inline CTA bubbles ("+24% pending baseline →" and "Connect Okta + EntraID
+// →") have been removed entirely; T-3 absorbs them as inline action chips on
+// Atlas observations.
+//
+// Doctrine constraints preserved:
+//   - confidence indicators (HIGH/MED/LOW tags) stay on the stat
+//   - underline weight (solid HIGH · dashed MED · dotted LOW) preserved via
+//     cvalStyle on the stat children
+//   - delta arrows (▲ ▼ ●) preserved inline in the subtext
+//   - "missing inputs as invitations" preserved ("2 sources missing" still
+//     reads on the Adoption tile)
 interface KpiProps {
   label: string;
   hero?: boolean;
   isFirst?: boolean;
   children: ReactNode;
-  delta?: { dir: 'up' | 'down' | 'flat'; text: string };
-  footnote?: ReactNode;
+  /** One-line subtext (~30 chars) shown directly below the stat. */
+  subtext?: ReactNode;
+  /** Full displaced description shown as native browser tooltip on hover. */
+  tooltip?: string;
 }
 
-function Kpi({ label, hero, isFirst, children, delta, footnote }: KpiProps) {
-  const deltaColor =
-    delta?.dir === 'up' ? T.GREEN : delta?.dir === 'down' ? T.RED : T.GRAY;
-  const deltaArrow = delta?.dir === 'up' ? '▲' : delta?.dir === 'down' ? '▼' : '●';
+function Kpi({ label, hero, isFirst, children, subtext, tooltip }: KpiProps) {
   return (
     <div
+      title={tooltip}
       style={{
-        padding: isFirst ? '0 28px 0 0' : '0 28px',
+        padding: isFirst ? '0 22px 0 0' : '0 22px',
         borderLeft: isFirst ? 'none' : `1px solid ${T.RULE}`,
         position: 'relative',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 6,
+        cursor: tooltip ? 'help' : 'default',
       }}
     >
       <div
@@ -130,54 +152,45 @@ function Kpi({ label, hero, isFirst, children, delta, footnote }: KpiProps) {
           textTransform: 'uppercase',
           fontWeight: 700,
           color: T.GRAY_DK,
-          marginBottom: 10,
         }}
       >
         {label}
       </div>
       <div
         style={{
-          fontFamily: T.SERIF,
-          fontWeight: hero ? 800 : 700,
-          letterSpacing: '-1.2px',
-          lineHeight: 0.95,
-          color: T.INK,
-          fontSize: hero ? 64 : 38,
+          display: 'flex',
+          alignItems: 'baseline',
+          gap: 8,
+          flexWrap: 'wrap',
         }}
       >
-        {children}
+        <div
+          style={{
+            fontFamily: T.SERIF,
+            fontWeight: hero ? 800 : 700,
+            letterSpacing: '-0.8px',
+            lineHeight: 1,
+            color: T.INK,
+            fontSize: hero ? 38 : 32,
+          }}
+        >
+          {children}
+        </div>
+        {subtext && (
+          <div
+            style={{
+              fontFamily: T.MONO,
+              fontSize: 10,
+              letterSpacing: '1.0px',
+              color: T.GRAY_DK,
+              fontWeight: 600,
+              lineHeight: 1.3,
+            }}
+          >
+            {subtext}
+          </div>
+        )}
       </div>
-      {delta && (
-        <div
-          style={{
-            fontFamily: T.MONO,
-            fontSize: 10,
-            letterSpacing: '1.2px',
-            fontWeight: 700,
-            marginTop: 8,
-            color: deltaColor,
-          }}
-        >
-          <span style={{ display: 'inline-block', marginRight: 4, fontWeight: 800 }}>{deltaArrow}</span>
-          {delta.text}
-        </div>
-      )}
-      {footnote && (
-        <div
-          style={{
-            fontFamily: T.MONO,
-            fontSize: 8.5,
-            letterSpacing: '1.2px',
-            color: T.GRAY,
-            marginTop: 10,
-            fontWeight: 600,
-            lineHeight: 1.5,
-            maxWidth: '18ch',
-          }}
-        >
-          {footnote}
-        </div>
-      )}
     </div>
   );
 }
@@ -830,27 +843,27 @@ export function TowerIndexPage({
             </div>
           </div>
 
-          {/* KPI band */}
+          {/* KPI band — T-1 compression: ~80px tall, 2-line tiles, no inline CTAs.
+              Displaced detail (3-line descriptions) lives in hover tooltip;
+              displaced CTAs ("+24% pending baseline →" and "Connect Okta +
+              EntraID →") absorbed by Atlas observations in T-3. */}
           <section
+            data-testid="tower-kpi-band"
             style={{
               display: 'grid',
               gridTemplateColumns: '1.4fr 1fr 1fr 1fr 1fr',
-              padding: '26px 32px',
+              padding: '14px 32px',
               borderBottom: `1px solid ${T.RULE_STRONG}`,
               gap: 0,
+              alignItems: 'center',
             }}
           >
             <Kpi
               label="Portfolio ROI · 12-month rolling"
               hero
               isFirst
-              delta={{ dir: 'down', text: '0.4× vs Q1 · target 3.5×' }}
-              footnote={
-                <>
-                  35% of programs measured. 41% modeled.{' '}
-                  <MissingChip>+24% pending baseline →</MissingChip>
-                </>
-              }
+              subtext={<>target 3.5× · <span style={{ color: T.RED, fontWeight: 700 }}>▼0.4×</span> vs Q1</>}
+              tooltip="35% of programs measured. 41% modeled. +24% pending baseline."
             >
               <span style={cvalStyle('high')}>
                 2.8<span style={{ fontSize: '0.55em' }}>×</span>
@@ -859,16 +872,16 @@ export function TowerIndexPage({
 
             <Kpi
               label="Active pressures"
-              delta={{ dir: 'up', text: '2 new this week' }}
-              footnote={<>3 high-magnitude · 4 watch</>}
+              subtext={<>3 high · 4 watch · <span style={{ color: T.GREEN, fontWeight: 700 }}>▲2</span></>}
+              tooltip="3 high-magnitude pressures and 4 on watch. ▲2 new this week."
             >
               <span style={cvalStyle('high')}>7</span>
             </Kpi>
 
             <Kpi
               label="Spend at risk"
-              delta={{ dir: 'up', text: '$1.2M MoM' }}
-              footnote={<>Cost overrun + duplication exposure</>}
+              subtext={<><span style={{ color: T.RED, fontWeight: 700 }}>▲$1.2M</span> MoM</>}
+              tooltip="Cost overrun and capability duplication exposure across the AI portfolio."
             >
               <span style={cvalStyle('med')}>
                 $8.4<span style={{ fontSize: '0.55em' }}>M</span>
@@ -878,16 +891,16 @@ export function TowerIndexPage({
 
             <Kpi
               label="Renewals · 90d"
-              delta={{ dir: 'flat', text: '$48.2M aggregate' }}
-              footnote={<>EA · 47d · brief due</>}
+              subtext={<>EA 47d · $48.2M</>}
+              tooltip="4 vendor renewals in the next 90 days totaling $48.2M aggregate. EA renewal due in 47 days; brief is open in Source."
             >
               <span style={cvalStyle('high')}>4</span>
             </Kpi>
 
             <Kpi
               label="Adoption"
-              delta={{ dir: 'flat', text: '2 sources missing' }}
-              footnote={<MissingChip>Connect Okta + EntraID →</MissingChip>}
+              subtext={<>2 sources missing</>}
+              tooltip="2 identity sources (Okta, EntraID) not yet connected; until they land, adoption confidence is LOW. Connect identity sources from Atlas observations."
             >
               <span style={cvalStyle('low')}>
                 53<span style={{ fontSize: '0.55em' }}>%</span>
