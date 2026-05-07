@@ -301,8 +301,17 @@ function OverviewTab({ initiative }: { initiative: AIInitiative }) {
 function KpisTab({ kpis }: { kpis: ReadonlyArray<AIInitiativeKpi> }) {
   if (kpis.length === 0) return <EmptyTab>No KPIs loaded for this initiative.</EmptyTab>;
 
-  // Pivot: rows = KPI name, columns = quarters (sorted ascending)
-  const quarters = Array.from(new Set(kpis.map((k) => k.quarter))).sort();
+  // Pivot: rows = KPI name, columns = quarters (sorted chronologically).
+  // Quarters are stored as strings like "Q1-2025"; alphabetical sort puts
+  // Q1-2026 before Q3-2025 which is wrong. Parse and sort by year then
+  // quarter number.
+  const quarters = Array.from(new Set(kpis.map((k) => k.quarter))).sort(
+    (a, b) => {
+      const pa = parseQuarter(a);
+      const pb = parseQuarter(b);
+      return pa.year - pb.year || pa.q - pb.q;
+    },
+  );
   const byKpi = new Map<string, Map<string, AIInitiativeKpi>>();
   for (const k of kpis) {
     const inner = byKpi.get(k.kpiName) ?? new Map<string, AIInitiativeKpi>();
@@ -423,6 +432,16 @@ function KpisTab({ kpis }: { kpis: ReadonlyArray<AIInitiativeKpi> }) {
       </table>
     </div>
   );
+}
+
+function parseQuarter(q: string): { year: number; q: number } {
+  // Accept "Q1-2025" / "Q4-2026" / "2025-Q1" forms; fall back to alpha
+  // ordering for anything we don't recognize.
+  const m1 = q.match(/^Q([1-4])-(\d{4})$/);
+  if (m1) return { year: Number(m1[2]), q: Number(m1[1]) };
+  const m2 = q.match(/^(\d{4})-Q([1-4])$/);
+  if (m2) return { year: Number(m2[1]), q: Number(m2[2]) };
+  return { year: 0, q: 0 };
 }
 
 function confidenceColor(level: 'HIGH' | 'MED' | 'LOW'): string {
