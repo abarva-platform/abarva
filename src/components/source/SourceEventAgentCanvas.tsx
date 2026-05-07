@@ -8,7 +8,7 @@ import { useAtlasPageState } from '@/components/shell/AtlasPageStateProvider';
 import { SourceWorkingPane } from '@/components/source/SourceWorkingPane';
 import { SourcingReactivePanel } from '@/components/source/SourcingReactivePanel';
 import { SourceLinkedProgramChip } from '@/components/source/LinkedProgramChip';
-import { SourceStageCanvasPanel } from '@/components/source/SourceStageCanvasPanel';
+import { StageCanvasRouter } from '@/components/source/stage-canvases/StageCanvasRouter';
 import type { Artifact } from '@/lib/agent/artifacts';
 import { SHELL } from '@/lib/shell/shell-tokens';
 import type { SourceStageKey, SourcingEventDetail } from '@/lib/source/types';
@@ -163,7 +163,7 @@ export function SourceEventAgentCanvas({
                   </div>
                   <aside aria-label="Live Source event reasoning pane" style={EVENT_REASONING_COLUMN}>
                     {viewStage ? (
-                      <SourceStageCanvasPanel
+                      <StageCanvasRouter
                         stageKey={viewStage}
                         event={event}
                         nextGateEvaluations={nextGateEvaluations}
