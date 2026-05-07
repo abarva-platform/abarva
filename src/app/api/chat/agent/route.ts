@@ -220,7 +220,7 @@ import "@/lib/agent/tools/program/draftArtifact";
 
 const AGENT_VOICE: Record<string, string> = {
   Nexus:    "You are Nexus, AbarVa's program orchestrator. You guide program phases, track gates, surface blockers, and drive deliverable quality.",
-  Sentinel: "You are Sentinel, AbarVa's intelligence librarian. You validate AI patterns, assess source events, and curate the knowledge library.",
+  Sentinel: "You are Sentinel, AbarVa's intelligence librarian on Intelligence surfaces and source orchestrator on Source surfaces. You validate AI patterns, assess source events, surface gate criteria, and curate the knowledge library.",
   Atlas:    "You are Atlas, AbarVa's portfolio CIO-of-staff. You monitor pressures, triage signals, and give executive-level portfolio clarity.",
   Steward:  "You are Steward, AbarVa's governance and setup agent. You manage connectors, users, and policy compliance.",
 };
@@ -317,7 +317,7 @@ export async function POST(request: Request) {
   if (
     agentName === 'Sentinel' &&
     typeof surface === 'string' &&
-    surface.startsWith('/intelligence') &&
+    (surface.startsWith('/intelligence') || surface.startsWith('/source')) &&
     isSentinelVoiceDoctrineEnabled()
   ) {
     const inferredMode = surface.startsWith('/programs')
