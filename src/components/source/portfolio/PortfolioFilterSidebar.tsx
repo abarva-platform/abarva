@@ -213,18 +213,8 @@ export function PortfolioFilterSidebar({
           ))}
       </FilterGroup>
 
-      <FilterGroup label="Lead agent">
-        {(['Nexus', 'Sentinel', 'Steward', 'Atlas'] as SourceLeadAgent[]).map((agent) => (
-          <FilterRow
-            key={agent}
-            label={agent}
-            count={counts.agent[agent] ?? 0}
-            checked={state.agent.has(agent)}
-            onChange={() => toggle('agent', agent)}
-          />
-        ))}
-      </FilterGroup>
-
+      {/* Lead-agent filter intentionally omitted — agents stay hidden behind
+          workflow surfaces; primary nav + filters are workflow-anchored. */}
       {tenantOptions.length > 1 ? (
         <FilterGroup label="Tenant">
           {tenantOptions.map((tenant) => (
