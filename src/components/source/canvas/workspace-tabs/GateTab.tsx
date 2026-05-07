@@ -3,10 +3,21 @@ import {
   criterionById,
   type SourceGateCriterion,
 } from '@/lib/source/canonical-specs';
-import type { SourceEventGateCriterion } from '@/lib/source/canvas-substrate';
+import type {
+  SourceEventGateCriterion,
+  SourceEventGateCriterionState,
+} from '@/lib/source/canvas-substrate';
 import { SOURCE_STAGE_LABELS } from '@/lib/source/constants';
 import type { SourceStageKey } from '@/lib/source/types';
 import { CANVAS } from '../canvas-tokens';
+
+const STATE_LABEL: Record<SourceEventGateCriterionState, string> = {
+  pending: 'Pending',
+  met: 'Met',
+  not_met: 'Not met',
+  waived: 'Waived',
+  deferred: 'Deferred',
+};
 
 interface GateTabProps {
   fromStage: SourceStageKey;
@@ -31,6 +42,15 @@ export function GateTab({ fromStage, states }: GateTabProps) {
       ? SOURCE_STAGE_LABELS[targetStage as SourceStageKey]
       : 'Closed';
 
+  // B3 — explicit blocker summary. List the criteria that are
+  // actually preventing promotion (pending / not_met) with their
+  // titles, so the user has a diagnosis instead of a disabled button.
+  const blockers = ordered
+    .filter((s) => s.state !== 'met' && s.state !== 'waived')
+    .map((s) => ({ state: s, def: criterionById(s.criterionId) }));
+  const hardBlockers = blockers.filter((b) => b.def?.severity === 'hard');
+  const promoteHelpId = 'source-canvas-gate-promote-help';
+
   return (
     <div data-testid="source-canvas-gate-tab" style={CONTAINER_STYLE}>
       <header style={HEADER_STYLE}>
@@ -54,6 +74,7 @@ export function GateTab({ fromStage, states }: GateTabProps) {
         <button
           type="button"
           disabled={!allMet}
+          aria-describedby={!allMet && total > 0 ? promoteHelpId : undefined}
           style={{
             ...PROMOTE_BUTTON_STYLE,
             background: allMet ? CANVAS.INK : 'rgba(10,10,11,0.08)',
@@ -65,6 +86,52 @@ export function GateTab({ fromStage, states }: GateTabProps) {
           Promote to {targetLabel}
         </button>
       </header>
+
+      {/* B3 — blocker summary surfaces the specific reasons promotion
+          is disabled. Hard blockers come first, then the rest. */}
+      {!allMet && blockers.length > 0 ? (
+        <div
+          id={promoteHelpId}
+          data-testid="source-canvas-gate-blockers"
+          style={BLOCKERS_STYLE}
+          role="status"
+        >
+          <div style={BLOCKERS_TITLE_STYLE}>
+            {hardBlockers.length > 0
+              ? `${hardBlockers.length} hard ${hardBlockers.length === 1 ? 'blocker' : 'blockers'}`
+              : `${blockers.length} ${blockers.length === 1 ? 'criterion pending' : 'criteria pending'}`}
+            {' '}before you can promote
+          </div>
+          <ul style={BLOCKERS_LIST_STYLE}>
+            {[...hardBlockers, ...blockers.filter((b) => b.def?.severity !== 'hard')].map(
+              ({ state, def }) => (
+                <li
+                  key={state.criterionId}
+                  style={BLOCKERS_LIST_ITEM_STYLE}
+                  data-testid={`source-canvas-gate-blocker-${state.criterionId}`}
+                >
+                  <span style={BLOCKERS_BULLET_STYLE}>·</span>
+                  <span>
+                    <span style={BLOCKERS_ITEM_TITLE_STYLE}>
+                      {def?.title ?? state.criterionId}
+                    </span>
+                    {def?.severity === 'hard' ? (
+                      <span style={INLINE_HARD_TAG_STYLE}>hard</span>
+                    ) : null}
+                    <span style={BLOCKERS_STATE_STYLE}>
+                      {' — '}
+                      {STATE_LABEL[state.state]}
+                      {def?.linkedArtifactCodes && def.linkedArtifactCodes.length > 0
+                        ? ` · evidence ${def.linkedArtifactCodes.join(', ')}`
+                        : ''}
+                    </span>
+                  </span>
+                </li>
+              ),
+            )}
+          </ul>
+        </div>
+      ) : null}
 
       {total === 0 ? (
         <p style={EMPTY_BODY_STYLE}>No gate criteria defined for this stage transition.</p>
@@ -101,8 +168,8 @@ function CriterionRow({ state, def }: CriterionRowProps) {
       <div style={ROW_BODY_STYLE}>
         <div style={ROW_TITLE_STYLE}>
           <span style={ROW_TITLE_TEXT}>{def?.title ?? state.criterionId}</span>
+          <StatePill state={state.state} />
           {def?.severity === 'hard' ? <span style={HARD_TAG_STYLE}>hard</span> : null}
-          {state.state === 'waived' ? <span style={WAIVED_TAG_STYLE}>waived</span> : null}
         </div>
         {def?.description ? <div style={ROW_DESC_STYLE}>{def.description}</div> : null}
         <div style={ROW_META_STYLE}>
@@ -123,6 +190,38 @@ function CriterionRow({ state, def }: CriterionRowProps) {
       </div>
     </li>
   );
+}
+
+function StatePill({ state }: { state: SourceEventGateCriterionState }) {
+  const tone = stateTone(state);
+  return (
+    <span
+      data-testid={`source-canvas-gate-criterion-state-${state}`}
+      style={{ ...STATE_PILL_STYLE, background: tone.bg, color: tone.fg, borderColor: tone.border }}
+    >
+      {STATE_LABEL[state]}
+    </span>
+  );
+}
+
+function stateTone(state: SourceEventGateCriterionState): {
+  bg: string;
+  fg: string;
+  border: string;
+} {
+  switch (state) {
+    case 'met':
+      return { bg: 'rgba(46,125,50,0.10)', fg: '#2E7D32', border: 'rgba(46,125,50,0.32)' };
+    case 'not_met':
+      return { bg: 'rgba(211,84,0,0.10)', fg: '#B85B00', border: 'rgba(211,84,0,0.30)' };
+    case 'deferred':
+      return { bg: 'rgba(186,117,23,0.10)', fg: '#A66400', border: 'rgba(186,117,23,0.30)' };
+    case 'waived':
+      return { bg: 'rgba(10,10,11,0.06)', fg: CANVAS.INK, border: 'rgba(10,10,11,0.22)' };
+    case 'pending':
+    default:
+      return { bg: 'rgba(10,10,11,0.04)', fg: CANVAS.INK_SOFT, border: 'rgba(10,10,11,0.14)' };
+  }
 }
 
 const CONTAINER_STYLE: CSSProperties = {
@@ -271,4 +370,76 @@ const EMPTY_BODY_STYLE: CSSProperties = {
   fontFamily: CANVAS.SANS,
   fontSize: 13,
   color: CANVAS.INK_SOFT,
+};
+
+const BLOCKERS_STYLE: CSSProperties = {
+  display: 'grid',
+  gap: 8,
+  padding: '12px 14px',
+  borderRadius: CANVAS.RADIUS_TIGHT,
+  border: `1px solid rgba(211,84,0,0.20)`,
+  background: 'rgba(211,84,0,0.04)',
+};
+
+const BLOCKERS_TITLE_STYLE: CSSProperties = {
+  fontFamily: CANVAS.MONO,
+  fontSize: 10,
+  letterSpacing: '0.10em',
+  textTransform: 'uppercase',
+  color: '#B85B00',
+  fontWeight: 700,
+};
+
+const BLOCKERS_LIST_STYLE: CSSProperties = {
+  listStyle: 'none',
+  padding: 0,
+  margin: 0,
+  display: 'grid',
+  gap: 4,
+};
+
+const BLOCKERS_LIST_ITEM_STYLE: CSSProperties = {
+  display: 'grid',
+  gridTemplateColumns: 'auto 1fr',
+  gap: 8,
+  fontFamily: CANVAS.SANS,
+  fontSize: 13,
+  color: CANVAS.INK,
+};
+
+const BLOCKERS_BULLET_STYLE: CSSProperties = {
+  color: CANVAS.GRAY,
+};
+
+const BLOCKERS_ITEM_TITLE_STYLE: CSSProperties = {
+  fontWeight: 600,
+};
+
+const BLOCKERS_STATE_STYLE: CSSProperties = {
+  color: CANVAS.INK_SOFT,
+  fontSize: 12.5,
+};
+
+const INLINE_HARD_TAG_STYLE: CSSProperties = {
+  marginLeft: 6,
+  fontFamily: CANVAS.MONO,
+  fontSize: 9,
+  fontWeight: 700,
+  letterSpacing: '0.10em',
+  textTransform: 'uppercase',
+  color: CANVAS.BLOCKED,
+};
+
+const STATE_PILL_STYLE: CSSProperties = {
+  display: 'inline-flex',
+  alignItems: 'center',
+  fontFamily: CANVAS.MONO,
+  fontSize: 9,
+  fontWeight: 700,
+  letterSpacing: '0.10em',
+  textTransform: 'uppercase',
+  padding: '2px 7px',
+  borderRadius: 999,
+  border: '1px solid transparent',
+  whiteSpace: 'nowrap',
 };
