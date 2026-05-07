@@ -48,7 +48,7 @@ export function WhatsLoadedBuckets({ buckets }: { buckets: BucketRow[] }) {
             fontWeight: 600,
           }}
         >
-          What's loaded
+          What&apos;s loaded
         </h2>
         <span style={{ fontFamily: TYPOGRAPHY.mono, fontSize: 11, color: SHELL.INK_MUTED }}>
           plain-language buckets

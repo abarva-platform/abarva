@@ -114,8 +114,9 @@ describe('composeAgentReadinessBlocks · Engineering tracked', () => {
   it('engineering-tracked items have NO severity field (admin can\'t act on them)', () => {
     const blocks = composeAgentReadinessBlocks(FCF.segments);
     blocks.engineeringTracked.forEach((item) => {
-      expect((item as Record<string, unknown>).severity).toBeUndefined();
-      expect((item as Record<string, unknown>).href).toBeUndefined();
+      const asRecord = item as unknown as Record<string, unknown>;
+      expect(asRecord.severity).toBeUndefined();
+      expect(asRecord.href).toBeUndefined();
     });
   });
 });
