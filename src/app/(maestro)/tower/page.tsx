@@ -36,17 +36,15 @@ import {
 
 export const metadata = { title: 'Control Tower · AbarVa' };
 
+// T-2 (Tower Fix Package): reduced from 10 to 5 tabs. Dropped:
+// pressure, source_commercial, decisions, value_at_risk,
+// reasoning_activity (duplicates Portfolio / lives elsewhere).
 const TOWER_SUBMENU_LABELS: Record<TowerTabKey, string> = {
   portfolio: 'Portfolio',
   scorecards: 'Scorecards',
-  pressure: 'Pressure',
-  source_commercial: 'Source commercial',
-  decisions: 'Decisions',
-  value_at_risk: 'Value at risk',
-  executive_brief: 'Executive brief',
   programme_gates: 'Gates',
-  reasoning_activity: 'Reasoning',
   dependencies: 'Dependencies',
+  executive_brief: 'Executive brief',
 };
 
 function TowerMainSubmenuStrip({ activeTab }: { activeTab: TowerTabKey }) {

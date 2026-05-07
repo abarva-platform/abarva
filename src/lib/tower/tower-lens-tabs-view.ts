@@ -1,7 +1,17 @@
 // TOWER4 + TOWER1 + TOWER2 + TOWER3 + TOWER8 + TOWER9 · Tower Lens Tabs view-model.
 //
-// Pure deterministic helper that returns metadata for the nine lens tabs
-// on the Control Tower surface: Portfolio, Scorecards, Pressure, Source Commercial, Decisions, Value at Risk, Executive Brief, Programme Gates, Reasoning Activity.
+// T-2 (Tower Fix Package, 2026-05-07): reduced from 10 tabs to 5 working tabs.
+// The dropped 5 (pressure, source_commercial, decisions, value_at_risk,
+// reasoning_activity) either duplicated Portfolio content or lived on other
+// surfaces. Per pr-t-2-sub-nav-reduction.md tab-by-tab disposition:
+//   - pressure → already on Portfolio as "Today's pressures"
+//   - source_commercial → /source surface
+//   - decisions → on Portfolio via Atlas observations
+//   - value_at_risk → that's the dimension toggle (Value/Risk/Contract/Adoption)
+//   - reasoning_activity → in Atlas chat
+//
+// Pure deterministic helper that returns metadata for the five remaining tabs:
+// Portfolio, Scorecards, Gates, Dependencies, Executive Brief.
 //
 // No model calls, no fetch, no Date.now / Math.random / new Date,
 // no live data. Same input → identical output.
@@ -21,14 +31,9 @@
 export type TowerTabKey =
   | 'portfolio'
   | 'scorecards'
-  | 'pressure'
-  | 'source_commercial'
-  | 'decisions'
-  | 'value_at_risk'
-  | 'executive_brief'
   | 'programme_gates'
-  | 'reasoning_activity'
-  | 'dependencies';
+  | 'dependencies'
+  | 'executive_brief';
 
 export interface TowerTabMeta {
   key: TowerTabKey;
@@ -55,61 +60,31 @@ export const TOWER_TABS: ReadonlyArray<TowerTabMeta> = [
   {
     key: 'portfolio',
     label: 'Portfolio',
-    description: 'Programme portfolio — pressure cards and vendor programme overview',
+    description: "What's the state right now — today's dashboard, pressures, and Atlas observations.",
     hasApexRetailContent: true,
   },
   {
     key: 'scorecards',
     label: 'Scorecards',
-    description: 'Active lens scorecards — programme health by domain',
-    hasApexRetailContent: true,
-  },
-  {
-    key: 'pressure',
-    label: 'Pressure',
-    description: 'Proactive pressure signals — blockers and at-risk indicators',
-    hasApexRetailContent: true,
-  },
-  {
-    key: 'source_commercial',
-    label: 'Source Commercial',
-    description: 'Source pricing, BAFO, and selection readiness signals — AMS Vendor Consolidation 2026',
-    hasApexRetailContent: true,
-  },
-  {
-    key: 'decisions',
-    label: 'Decisions',
-    description: 'Executive decision queue — decisions requiring leadership attention across Source and Programs',
-    hasApexRetailContent: true,
-  },
-  {
-    key: 'value_at_risk',
-    label: 'Value at Risk',
-    description: 'Value at risk portfolio lens — value at stake, evidence confidence, blockers, and decision needs',
-    hasApexRetailContent: true,
-  },
-  {
-    key: 'executive_brief',
-    label: 'Executive Brief',
-    description: 'Atlas executive summary — value, risk, and adoption signals',
+    description: 'Per-program performance — programme health by domain.',
     hasApexRetailContent: true,
   },
   {
     key: 'programme_gates',
-    label: 'Programme Gates',
-    description: 'Gate status across all 4 Apex AI programmes — pending, blocked, at-risk indicators and cross-programme dependencies',
-    hasApexRetailContent: true,
-  },
-  {
-    key: 'reasoning_activity',
-    label: 'Reasoning Activity',
-    description: 'AI reasoning activity brief — active contradictions, cross-stage handoff readiness, and pattern synthesis signals across the Apex Retail engagement',
+    label: 'Gates',
+    description: 'Cross-portfolio P0→P5 lifecycle status across all programmes.',
     hasApexRetailContent: true,
   },
   {
     key: 'dependencies',
     label: 'Dependencies',
-    description: 'Source-to-program dependency matrix — all source event → program links in a cross-instance grid with link type, description, and navigation',
+    description: 'Cross-program dependency map — source events, programs, and what blocks what.',
+    hasApexRetailContent: true,
+  },
+  {
+    key: 'executive_brief',
+    label: 'Executive brief',
+    description: 'Generated artifact for sponsor consumption — value, risk, adoption signals.',
     hasApexRetailContent: true,
   },
 ];
@@ -123,6 +98,10 @@ const VALID_TOWER_TAB_KEYS = new Set<string>(TOWER_TABS.map((t) => t.key));
 /**
  * Resolve the active Tower lens tab from a raw searchParam value.
  * Falls back to 'portfolio' for any unknown or missing value.
+ *
+ * Direct-URL access to dropped tabs (?tab=pressure, ?tab=decisions, etc.)
+ * lands on Portfolio — silently, since the jobs those tabs did are now
+ * fulfilled inside Portfolio.
  */
 export function resolveTowerTab(
   raw: string | undefined | null,

@@ -1,0 +1,917 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Intelligence wireframe v3 · three chat states · Option C hybrid</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, sans-serif;
+    background: #f0f0f0;
+    color: #333;
+    padding: 20px;
+    font-size: 12px;
+    line-height: 1.4;
+  }
+  .doc-header {
+    max-width: 1320px;
+    margin: 0 auto 16px;
+    padding: 12px 16px;
+    background: white;
+    border: 1px solid #ccc;
+  }
+  .doc-header h1 { font-size: 14px; margin-bottom: 4px; }
+  .doc-header p { color: #666; font-size: 11px; margin-bottom: 4px; }
+
+  h2.view-title {
+    max-width: 1320px;
+    margin: 24px auto 8px;
+    font-size: 14px;
+    color: #222;
+    padding-left: 4px;
+  }
+  h2.view-title .state-tag {
+    display: inline-block;
+    background: #2a4263;
+    color: white;
+    padding: 2px 8px;
+    font-size: 10px;
+    margin-right: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .panel {
+    max-width: 1320px;
+    margin: 0 auto 8px;
+    background: white;
+    border: 1px solid #999;
+    position: relative;
+  }
+  .top-nav {
+    background: #fafafa;
+    border-bottom: 1px solid #ddd;
+    padding: 6px 16px;
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    font-size: 11px;
+  }
+  .nav-brand { font-weight: 700; color: #000; }
+  .nav-item { color: #555; padding: 2px 6px; }
+  .nav-item.active { color: #000; font-weight: 600; border-bottom: 2px solid #444; }
+  .nav-spacer { flex-grow: 1; }
+  .nav-meta { font-size: 11px; color: #555; margin-right: 8px; }
+  .nav-cta { background: #2a4263; color: white; padding: 2px 10px; }
+
+  /* ============ MAIN AREA ============ */
+  .stage {
+    position: relative;
+    min-height: 660px;
+  }
+  .stage.with-rail {
+    display: grid;
+    grid-template-columns: 1fr 440px;
+  }
+  .stage.with-bottom-dock .main {
+    padding-bottom: 360px;
+  }
+  .stage.with-bottom-dock-collapsed .main {
+    padding-bottom: 56px;
+  }
+
+  .main {
+    padding: 12px 18px;
+    background: white;
+    overflow-y: auto;
+    max-height: 700px;
+  }
+
+  /* HERO */
+  .hero {
+    background: #faf7f1;
+    padding: 10px 14px;
+    border: 1px dashed #888;
+    margin-bottom: 10px;
+  }
+  .hero .eyebrow {
+    text-transform: uppercase;
+    font-size: 9px;
+    letter-spacing: 0.08em;
+    color: #888;
+    margin-bottom: 2px;
+  }
+  .hero h1 { font-size: 16px; color: #1a2740; margin-bottom: 2px; }
+  .hero .stats { color: #555; font-size: 10px; }
+
+  /* Stage tabs */
+  .stage-tabs {
+    display: flex;
+    gap: 4px;
+    padding: 0 0 10px;
+    border-bottom: 1px solid #eee;
+    margin-bottom: 10px;
+    flex-wrap: wrap;
+  }
+  .stage-tab {
+    border: 1px solid #ccc;
+    padding: 3px 8px;
+    background: #fafafa;
+    font-size: 9px;
+    color: #555;
+    border-radius: 10px;
+  }
+  .stage-tab.active {
+    background: #2a4263;
+    color: white;
+    border-color: #2a4263;
+    font-weight: 600;
+  }
+
+  .section-header {
+    background: #1a2740;
+    color: white;
+    padding: 6px 10px;
+    margin: 0 0 8px;
+    border-left: 3px solid #d8a850;
+    font-size: 11px;
+  }
+  .section-header.action { border-left-color: #6a8; }
+  .section-header h2 { font-size: 12px; color: white; margin: 0; }
+
+  .block {
+    border: 1px dashed #888;
+    background: #fdfdfd;
+    padding: 8px 10px;
+    margin-bottom: 8px;
+    font-size: 10px;
+    color: #444;
+    position: relative;
+  }
+  .block .label {
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #888;
+    margin-bottom: 4px;
+    font-weight: 600;
+  }
+  .block.dynamic {
+    border-color: #d8a850;
+    background: #fffbf3;
+  }
+  .block.dynamic .label { color: #745522; }
+
+  .three-substrate {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 6px;
+  }
+  .substrate-card {
+    border: 1px dashed #aaa;
+    padding: 6px 8px;
+    background: #fafafa;
+    font-size: 9px;
+  }
+  .substrate-card .lbl {
+    text-transform: uppercase;
+    font-size: 8px;
+    letter-spacing: 0.05em;
+    color: #888;
+  }
+  .substrate-card h4 { font-size: 10px; color: #2a4263; margin: 2px 0; }
+  .substrate-card .stat { font-size: 12px; color: #1a2740; font-weight: 700; }
+
+  .layer-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 6px;
+  }
+  .layer-column {
+    border: 1px dashed #6a8;
+    background: #f8fbf8;
+    display: flex;
+    flex-direction: column;
+  }
+  .layer-header {
+    background: #285828;
+    color: white;
+    padding: 6px 8px;
+  }
+  .layer-header .layer-name { font-size: 10px; font-weight: 700; }
+  .layer-header .layer-paren { font-size: 8px; opacity: 0.85; text-transform: uppercase; }
+  .layer-body { padding: 6px 8px; flex: 1; font-size: 9px; }
+  .layer-body .gating {
+    font-size: 8px;
+    color: #555;
+    font-style: italic;
+    padding-bottom: 4px;
+    border-bottom: 1px dotted #ccc;
+    margin-bottom: 4px;
+  }
+  .move-card {
+    background: white;
+    border: 1px dashed #aaa;
+    padding: 4px 6px;
+    margin-bottom: 4px;
+    font-size: 9px;
+  }
+  .move-card .nm { font-weight: 600; color: #1a2740; }
+  .move-card .rt { font-size: 8px; color: #555; }
+  .move-card.dynamic { border-color: #d8a850; background: #fffbf3; }
+
+  /* ============ CHAT - SIDE RAIL STATE ============ */
+  .chat-rail {
+    background: #1a2740;
+    color: #cdd5e0;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    max-height: 700px;
+  }
+  .chat-rail .resize-h {
+    position: absolute;
+    left: -3px; top: 0; bottom: 0;
+    width: 6px;
+    background: rgba(216,168,80,0.3);
+    cursor: ew-resize;
+  }
+  .chat-rail-header {
+    padding: 10px 12px;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .chat-rail-header .agent {
+    font-size: 12px;
+    color: white;
+    font-weight: 600;
+  }
+  .chat-rail-header .agent .pill {
+    background: #6a8;
+    color: white;
+    padding: 1px 5px;
+    border-radius: 8px;
+    font-size: 8px;
+    margin-left: 4px;
+  }
+  .chat-rail-header .role {
+    font-size: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    opacity: 0.7;
+    margin-top: 1px;
+  }
+  .chat-rail-header .controls {
+    display: flex;
+    gap: 4px;
+  }
+  .chat-rail-header .ctl {
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.2);
+    padding: 2px 6px;
+    font-size: 9px;
+    color: white;
+    border-radius: 2px;
+  }
+  .chat-rail-header .ctl.expand { background: #d8a850; color: #1a2740; border-color: #d8a850; font-weight: 700; }
+
+  .chat-body {
+    flex: 1;
+    padding: 10px 12px;
+    overflow-y: auto;
+  }
+
+  .opener {
+    background: rgba(255,255,255,0.08);
+    padding: 8px 10px;
+    border-radius: 4px;
+    margin-bottom: 8px;
+    font-size: 10px;
+    line-height: 1.5;
+  }
+  .msg { margin-bottom: 10px; }
+  .msg.user { text-align: right; }
+  .msg.user .bubble {
+    background: #d8a850;
+    color: #1a2740;
+    display: inline-block;
+    padding: 5px 8px;
+    border-radius: 8px 8px 2px 8px;
+    max-width: 85%;
+    text-align: left;
+    font-size: 10px;
+  }
+  .msg.agent .bubble {
+    background: rgba(255,255,255,0.08);
+    padding: 6px 9px;
+    border-radius: 8px 8px 8px 2px;
+    max-width: 92%;
+    font-size: 10px;
+    line-height: 1.5;
+  }
+  .msg.agent .refs {
+    font-size: 8px;
+    opacity: 0.6;
+    margin-top: 3px;
+    padding-left: 4px;
+  }
+  .msg.agent .expand-link {
+    margin-top: 4px;
+    font-size: 9px;
+    color: #d8a850;
+    text-decoration: underline;
+    padding-left: 4px;
+  }
+
+  .chat-input-pinned {
+    border-top: 1px solid rgba(255,255,255,0.1);
+    padding: 8px 12px;
+    background: rgba(0,0,0,0.2);
+    flex-shrink: 0;
+  }
+  .chat-input-pinned .scope-tag {
+    font-size: 8px;
+    opacity: 0.6;
+    margin-bottom: 3px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .chat-input-pinned .field {
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.2);
+    padding: 6px 8px;
+    border-radius: 4px;
+    font-size: 10px;
+    color: rgba(255,255,255,0.5);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .chat-input-pinned .send {
+    background: #d8a850;
+    color: #1a2740;
+    width: 18px; height: 18px;
+    border-radius: 50%;
+    text-align: center;
+    line-height: 18px;
+    font-weight: 700;
+    font-size: 10px;
+  }
+
+  /* ============ CHAT - BOTTOM DOCK EXPANDED ============ */
+  .chat-dock-expanded {
+    position: absolute;
+    left: 0; right: 0; bottom: 0;
+    background: #1a2740;
+    color: #cdd5e0;
+    border-top: 3px solid #d8a850;
+    height: 360px;
+    display: flex;
+    flex-direction: column;
+  }
+  .chat-dock-header {
+    padding: 8px 16px;
+    background: rgba(0,0,0,0.2);
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .chat-dock-header .left { display: flex; gap: 12px; align-items: center; }
+  .chat-dock-header .agent {
+    font-size: 12px;
+    color: white;
+    font-weight: 600;
+  }
+  .chat-dock-header .role {
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    opacity: 0.7;
+  }
+  .chat-dock-header .controls { display: flex; gap: 4px; }
+  .chat-dock-header .ctl {
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.2);
+    padding: 2px 8px;
+    font-size: 10px;
+    color: white;
+  }
+  .chat-dock-header .ctl.collapse {
+    background: #d8a850;
+    color: #1a2740;
+    border-color: #d8a850;
+    font-weight: 700;
+  }
+  .chat-dock-body {
+    flex: 1;
+    padding: 14px 24px;
+    overflow-y: auto;
+    max-width: 1100px;
+    margin: 0 auto;
+    width: 100%;
+  }
+  .chat-dock-body .msg.agent .bubble {
+    max-width: 80%;
+    font-size: 12px;
+    line-height: 1.6;
+  }
+  .chat-dock-body .msg.user .bubble {
+    font-size: 12px;
+  }
+  .chat-dock-body .opener { font-size: 12px; padding: 10px 14px; }
+  .chat-dock-input {
+    border-top: 1px solid rgba(255,255,255,0.1);
+    padding: 12px 24px;
+    background: rgba(0,0,0,0.2);
+    max-width: 1100px;
+    margin: 0 auto;
+    width: 100%;
+  }
+  .chat-dock-input .field {
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.2);
+    padding: 10px 14px;
+    border-radius: 4px;
+    font-size: 12px;
+    color: rgba(255,255,255,0.5);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  /* ============ CHAT - BOTTOM DOCK COLLAPSED ============ */
+  .chat-dock-collapsed {
+    position: absolute;
+    left: 0; right: 0; bottom: 0;
+    background: #1a2740;
+    color: #cdd5e0;
+    border-top: 2px solid rgba(216,168,80,0.5);
+    height: 56px;
+    display: flex;
+    align-items: center;
+    padding: 0 16px;
+    gap: 12px;
+  }
+  .chat-dock-collapsed .agent {
+    font-size: 11px;
+    color: white;
+    font-weight: 600;
+    flex-shrink: 0;
+  }
+  .chat-dock-collapsed .agent .pill {
+    background: #6a8;
+    color: white;
+    padding: 1px 5px;
+    border-radius: 8px;
+    font-size: 8px;
+    margin-left: 4px;
+  }
+  .chat-dock-collapsed .last-msg {
+    flex: 1;
+    font-size: 10px;
+    opacity: 0.7;
+    font-style: italic;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .chat-dock-collapsed .field {
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.2);
+    padding: 6px 10px;
+    border-radius: 4px;
+    font-size: 10px;
+    color: rgba(255,255,255,0.5);
+    width: 320px;
+    display: flex;
+    justify-content: space-between;
+  }
+  .chat-dock-collapsed .ctl {
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.2);
+    padding: 4px 10px;
+    font-size: 10px;
+    color: white;
+  }
+  .chat-dock-collapsed .ctl.expand {
+    background: #d8a850;
+    color: #1a2740;
+    border-color: #d8a850;
+    font-weight: 700;
+  }
+
+  .annotation {
+    background: #fffde0;
+    border: 1px dashed #c8b840;
+    padding: 8px 12px;
+    font-size: 10px;
+    color: #6d5a00;
+    font-style: italic;
+    max-width: 1320px;
+    margin: 0 auto 24px;
+  }
+  .toggle-row {
+    max-width: 1320px;
+    margin: 0 auto 8px;
+    background: white;
+    border: 1px solid #ccc;
+    padding: 8px 14px;
+    font-size: 11px;
+    display: flex;
+    gap: 12px;
+    align-items: center;
+  }
+  .toggle-row .toggle {
+    border: 1px solid #888;
+    background: #f5f5f5;
+    padding: 3px 10px;
+    font-size: 10px;
+    color: #444;
+  }
+  .toggle-row .toggle.active {
+    background: #2a4263;
+    color: white;
+    border-color: #2a4263;
+    font-weight: 600;
+  }
+</style>
+</head>
+<body>
+
+<div class="doc-header">
+  <h1>Intelligence wireframe v3 · three chat states · Option C hybrid</h1>
+  <p>Same page · same content · three chat layouts. Toggle between them with one button on the chat header. Input always reachable in every state.</p>
+</div>
+
+<div class="annotation">
+  <strong>Three states:</strong>
+  (1) Side rail — default; chat persistent on right; input pinned to bottom of rail (never scrolls away).
+  (2) Bottom dock expanded — full page width; chat takes 360px height; reading-optimized; cards above push up.
+  (3) Bottom dock collapsed — 56px strip; just input + last-message preview + agent name; cards above get full vertical space.
+  Mock toggle bar on each panel shows which state is active.
+</div>
+
+<!-- ===================== STATE 1: SIDE RAIL ===================== -->
+<h2 class="view-title"><span class="state-tag">State 1</span>Side rail · default · for browsing-mode</h2>
+
+<div class="panel">
+  <div class="top-nav">
+    <span class="nav-brand">AbarVa</span>
+    <span class="nav-item">Home</span>
+    <span class="nav-item">Setup</span>
+    <span class="nav-item">Strategic Moves</span>
+    <span class="nav-item">Source</span>
+    <span class="nav-item active">Intelligence</span>
+    <span class="nav-item">Learn</span>
+    <span class="nav-item">Product</span>
+    <span class="nav-spacer"></span>
+    <span class="nav-meta">First Capital Financial</span>
+    <span class="nav-cta">EB</span>
+  </div>
+
+  <div class="stage with-rail">
+
+    <div class="main">
+
+      <div class="hero">
+        <div class="eyebrow">Intelligence · First Capital Financial</div>
+        <h1>What we're seeing across First Capital.</h1>
+        <div class="stats">5 patterns · 2 contradictions · 1 synthesis ready · 14m ago</div>
+      </div>
+
+      <div class="stage-tabs">
+        <span class="stage-tab active">Today</span>
+        <span class="stage-tab">By function</span>
+        <span class="stage-tab">Patterns</span>
+        <span class="stage-tab">Vendors</span>
+        <span class="stage-tab">Peer activity</span>
+        <span class="stage-tab">My strategy</span>
+        <span class="stage-tab">Sessions</span>
+      </div>
+
+      <div class="section-header"><h2>Knowledge & Context</h2></div>
+
+      <div class="block">
+        <div class="label">Three substrates</div>
+        <div class="three-substrate">
+          <div class="substrate-card"><div class="lbl">Tenant</div><h4>What we know about you</h4><div class="stat">12 / 23</div></div>
+          <div class="substrate-card"><div class="lbl">Corpus</div><h4>What patterns exist</h4><div class="stat">10 / 17 / 30</div></div>
+          <div class="substrate-card"><div class="lbl">Industry</div><h4>What is possible</h4><div class="stat">Banking</div></div>
+        </div>
+      </div>
+
+      <div class="block">
+        <div class="label">AI trajectory · regional banking</div>
+        80% of programs are front-office. Middle office underweight. SR 11-7 tightening.
+      </div>
+
+      <div class="block">
+        <div class="label">Today · pressure cards</div>
+        <div style="padding:3px 0;"><strong>HIGH</strong> · NIM compression · 14bp/qtr × 3</div>
+        <div style="padding:3px 0;"><strong>MED</strong> · CDO–CIO conflict · unresolved 3 qtrs</div>
+        <div style="padding:3px 0;"><strong>WATCH</strong> · Innovaccer renewal · 8 months</div>
+      </div>
+
+      <div class="block dynamic">
+        <div class="label">Conversation context</div>
+        Active thread: NIM trend → Move shapes · Layer focused: Decision Layer
+      </div>
+
+      <div class="section-header action" style="margin-top:10px;"><h2>Art of the Possible</h2></div>
+
+      <div class="layer-grid">
+        <div class="layer-column">
+          <div class="layer-header"><div class="layer-name">Experience Layer</div><div class="layer-paren">(Front Office)</div></div>
+          <div class="layer-body">
+            <div class="gating">Customer experience reshaped</div>
+            <div class="move-card"><div class="nm">Conversational banking pilot</div><div class="rt">CRO priority alignment</div></div>
+            <div class="move-card"><div class="nm">Branch advisor support</div><div class="rt">Productivity below peer median</div></div>
+          </div>
+        </div>
+        <div class="layer-column" style="border-color:#d8a850; border-width:2px;">
+          <div class="layer-header" style="background:#745522;"><div class="layer-name">Decision Layer ✦</div><div class="layer-paren">(Middle Office) · focus</div></div>
+          <div class="layer-body">
+            <div class="gating">Decisions get faster, evidence-grounded</div>
+            <div class="move-card dynamic"><div class="nm">⭐ Credit decisioning modernization</div><div class="rt">Surfaced in this thread</div></div>
+            <div class="move-card dynamic"><div class="nm">Deposit pricing optimization</div><div class="rt">Newly surfaced</div></div>
+            <div class="move-card"><div class="nm">Model risk governance</div><div class="rt">CDO-CIO conflict</div></div>
+          </div>
+        </div>
+        <div class="layer-column">
+          <div class="layer-header"><div class="layer-name">Operations Layer</div><div class="layer-paren">(Back Office)</div></div>
+          <div class="layer-body">
+            <div class="gating">Operations approach lower marginal cost</div>
+            <div class="move-card"><div class="nm">Continuous control monitoring</div><div class="rt">SR 11-7 expects</div></div>
+            <div class="move-card"><div class="nm">Vendor risk monitoring</div><div class="rt">Innovaccer pattern</div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="block" style="margin-top:8px; background:#f8f8f8;">
+        <div class="label">What we can't yet see</div>
+        EBITDA attribution · Peer NIM benchmark depth
+      </div>
+
+    </div>
+
+    <!-- CHAT SIDE RAIL -->
+    <div class="chat-rail">
+      <div class="resize-h"></div>
+      <div class="chat-rail-header">
+        <div>
+          <div class="agent">Sentinel <span class="pill">Active</span></div>
+          <div class="role">Exploration · this page</div>
+        </div>
+        <div class="controls">
+          <span class="ctl">⊟</span>
+          <span class="ctl expand">⇲ Expand</span>
+        </div>
+      </div>
+
+      <div class="chat-body">
+        <div class="opener">
+          Three things matter for First Capital today: NIM compression accelerating, CDO–CIO conflict unresolved, Innovaccer renewal in 8 months. Ask me anything you see on this page.
+        </div>
+        <div class="msg user"><div class="bubble">Tell me more about the NIM trend</div></div>
+        <div class="msg agent">
+          <div class="bubble">14bp/quarter for 3 consecutive quarters. Started Q3 2024 — coincides with Fed pause and your deposit-mix shift toward higher-cost CDs. Two of your 8 named peers show similar acceleration; the other 6 do not.</div>
+          <div class="refs">refs: KPI History · Peer Benchmarks</div>
+        </div>
+        <div class="msg user"><div class="bubble">What can we do about it?</div></div>
+        <div class="msg agent">
+          <div class="bubble">Three Move shapes are plausible. Decisioning modernization has the strongest evidence basis given portfolio composition and AI trajectory.</div>
+          <div class="refs">refs: AI Trajectory · Decision Traces</div>
+          <div class="expand-link">⇲ Expand to read full response →</div>
+        </div>
+      </div>
+
+      <div class="chat-input-pinned">
+        <div class="scope-tag">Scope: First Capital · this page</div>
+        <div class="field"><span>Ask Sentinel...</span><span class="send">↑</span></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="annotation">
+  <strong>State 1 · Side rail:</strong> default landing state. Both content and chat visible. Chat input pinned to bottom of rail — never scrolls away regardless of how long the conversation gets. "Expand to read →" link on long Sentinel responses opens that response in bottom dock. User-initiated, not automatic. Header has two controls: ⊟ (collapse to bottom strip) · ⇲ Expand (switch to bottom dock).
+</div>
+
+<!-- ===================== STATE 2: BOTTOM DOCK EXPANDED ===================== -->
+<h2 class="view-title"><span class="state-tag">State 2</span>Bottom dock expanded · for conversation-mode</h2>
+
+<div class="panel">
+  <div class="top-nav">
+    <span class="nav-brand">AbarVa</span>
+    <span class="nav-item">Home</span>
+    <span class="nav-item">Setup</span>
+    <span class="nav-item">Strategic Moves</span>
+    <span class="nav-item">Source</span>
+    <span class="nav-item active">Intelligence</span>
+    <span class="nav-item">Learn</span>
+    <span class="nav-item">Product</span>
+    <span class="nav-spacer"></span>
+    <span class="nav-meta">First Capital Financial</span>
+    <span class="nav-cta">EB</span>
+  </div>
+
+  <div class="stage with-bottom-dock">
+
+    <div class="main" style="max-height:320px;">
+      <div class="hero">
+        <div class="eyebrow">Intelligence · First Capital Financial</div>
+        <h1>What we're seeing across First Capital.</h1>
+        <div class="stats">5 patterns · 2 contradictions · 1 synthesis ready · 14m ago</div>
+      </div>
+
+      <div class="stage-tabs">
+        <span class="stage-tab active">Today</span>
+        <span class="stage-tab">By function</span>
+        <span class="stage-tab">Patterns</span>
+        <span class="stage-tab">Vendors</span>
+        <span class="stage-tab">Peer activity</span>
+        <span class="stage-tab">My strategy</span>
+        <span class="stage-tab">Sessions</span>
+      </div>
+
+      <div class="section-header"><h2>Knowledge & Context</h2></div>
+
+      <div class="block">
+        <div class="label">Three substrates</div>
+        <div class="three-substrate">
+          <div class="substrate-card"><div class="lbl">Tenant</div><h4>What we know about you</h4><div class="stat">12 / 23</div></div>
+          <div class="substrate-card"><div class="lbl">Corpus</div><h4>What patterns exist</h4><div class="stat">10 / 17 / 30</div></div>
+          <div class="substrate-card"><div class="lbl">Industry</div><h4>What is possible</h4><div class="stat">Banking</div></div>
+        </div>
+      </div>
+
+      <div class="block dynamic">
+        <div class="label">Conversation context</div>
+        Active thread: NIM trend → Move shapes · Layer: Decision Layer · 4 substrate touches
+      </div>
+    </div>
+
+    <!-- CHAT BOTTOM DOCK EXPANDED -->
+    <div class="chat-dock-expanded">
+      <div class="chat-dock-header">
+        <div class="left">
+          <div>
+            <div class="agent">Sentinel <span style="background:#6a8; color:white; padding:1px 5px; border-radius:8px; font-size:8px; margin-left:4px;">Active</span></div>
+            <div class="role">Exploration · scoped to First Capital · this page</div>
+          </div>
+        </div>
+        <div class="controls">
+          <span class="ctl">⊟ Minimize</span>
+          <span class="ctl">⇱ Side rail</span>
+          <span class="ctl collapse">▾ Collapse</span>
+        </div>
+      </div>
+
+      <div class="chat-dock-body">
+        <div class="msg user"><div class="bubble">What can we do about it?</div></div>
+        <div class="msg agent">
+          <div class="bubble">
+            Three Move shapes are plausible given the NIM trend, your portfolio composition, and the AI trajectory for regional banks:<br><br>
+            <strong>1. Credit decisioning modernization</strong> (Decision Layer) — strongest evidence basis. Your portfolio is 80% front-office; middle-office is underweight. Decisioning modernization addresses NIM compression at its source (better risk-adjusted pricing) and aligns with the trajectory toward middle-office automation.<br><br>
+            <strong>2. Deposit pricing optimization</strong> (Decision Layer) — addresses NIM directly via deposit-side rather than asset-side. Lower complexity but smaller upside.<br><br>
+            <strong>3. Fee-income diversification</strong> (Experience Layer) — sidesteps NIM compression by reducing dependency on net interest income. Longer time-to-value; bigger strategic shift.
+          </div>
+          <div class="refs">refs: AI Trajectory seg 23 · Decision Traces seg 19 · KPI History seg 15 · Peer Benchmarks seg 17</div>
+        </div>
+      </div>
+
+      <div class="chat-dock-input">
+        <div style="font-size:9px; opacity:0.6; margin-bottom:4px; text-transform:uppercase; letter-spacing:0.05em;">Scope: First Capital · this page</div>
+        <div class="field"><span>Ask Sentinel...</span><span class="send" style="background:#d8a850; color:#1a2740; width:22px; height:22px; border-radius:50%; text-align:center; line-height:22px; font-weight:700;">↑</span></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="annotation">
+  <strong>State 2 · Bottom dock expanded:</strong> 360px tall. Sentinel response uses up to ~80% of page width (1100px max-width centered). Reading ergonomics like Claude. Cards above are visible (top portion of page) but no longer the focus. Three header controls: ⊟ Minimize (to State 3) · ⇱ Side rail (back to State 1) · ▾ Collapse (to State 3). Drag the top of the dock to resize between 280-600px.
+</div>
+
+<!-- ===================== STATE 3: BOTTOM DOCK COLLAPSED ===================== -->
+<h2 class="view-title"><span class="state-tag">State 3</span>Bottom dock collapsed · maximum cards visibility</h2>
+
+<div class="panel">
+  <div class="top-nav">
+    <span class="nav-brand">AbarVa</span>
+    <span class="nav-item">Home</span>
+    <span class="nav-item">Setup</span>
+    <span class="nav-item">Strategic Moves</span>
+    <span class="nav-item">Source</span>
+    <span class="nav-item active">Intelligence</span>
+    <span class="nav-item">Learn</span>
+    <span class="nav-item">Product</span>
+    <span class="nav-spacer"></span>
+    <span class="nav-meta">First Capital Financial</span>
+    <span class="nav-cta">EB</span>
+  </div>
+
+  <div class="stage with-bottom-dock-collapsed">
+
+    <div class="main">
+      <div class="hero">
+        <div class="eyebrow">Intelligence · First Capital Financial</div>
+        <h1>What we're seeing across First Capital.</h1>
+        <div class="stats">5 patterns · 2 contradictions · 1 synthesis ready · 14m ago</div>
+      </div>
+
+      <div class="stage-tabs">
+        <span class="stage-tab active">Today</span>
+        <span class="stage-tab">By function</span>
+        <span class="stage-tab">Patterns</span>
+        <span class="stage-tab">Vendors</span>
+        <span class="stage-tab">Peer activity</span>
+        <span class="stage-tab">My strategy</span>
+        <span class="stage-tab">Sessions</span>
+      </div>
+
+      <div class="section-header"><h2>Knowledge & Context</h2></div>
+
+      <div class="block">
+        <div class="label">Three substrates</div>
+        <div class="three-substrate">
+          <div class="substrate-card"><div class="lbl">Tenant</div><h4>What we know about you</h4><div class="stat">12 / 23</div></div>
+          <div class="substrate-card"><div class="lbl">Corpus</div><h4>What patterns exist</h4><div class="stat">10 / 17 / 30</div></div>
+          <div class="substrate-card"><div class="lbl">Industry</div><h4>What is possible</h4><div class="stat">Banking</div></div>
+        </div>
+      </div>
+
+      <div class="block">
+        <div class="label">AI trajectory · regional banking</div>
+        80% of programs are front-office. Middle office underweight. SR 11-7 tightening.
+      </div>
+
+      <div class="block">
+        <div class="label">Today · pressure cards</div>
+        <div style="padding:3px 0;"><strong>HIGH</strong> · NIM compression · 14bp/qtr × 3</div>
+        <div style="padding:3px 0;"><strong>MED</strong> · CDO–CIO conflict · unresolved 3 qtrs</div>
+        <div style="padding:3px 0;"><strong>WATCH</strong> · Innovaccer renewal · 8 months</div>
+      </div>
+
+      <div class="section-header action" style="margin-top:10px;"><h2>Art of the Possible</h2></div>
+
+      <div class="layer-grid">
+        <div class="layer-column">
+          <div class="layer-header"><div class="layer-name">Experience Layer</div><div class="layer-paren">(Front Office)</div></div>
+          <div class="layer-body">
+            <div class="gating">Customer experience reshaped</div>
+            <div class="move-card"><div class="nm">Conversational banking pilot</div><div class="rt">CRO priority</div></div>
+            <div class="move-card"><div class="nm">Branch advisor support</div><div class="rt">Productivity gap</div></div>
+          </div>
+        </div>
+        <div class="layer-column">
+          <div class="layer-header"><div class="layer-name">Decision Layer</div><div class="layer-paren">(Middle Office)</div></div>
+          <div class="layer-body">
+            <div class="gating">Decisions faster, evidence-grounded</div>
+            <div class="move-card"><div class="nm">Credit decisioning modernization</div><div class="rt">Strongest evidence basis</div></div>
+            <div class="move-card"><div class="nm">Model risk governance</div><div class="rt">CDO-CIO conflict</div></div>
+          </div>
+        </div>
+        <div class="layer-column">
+          <div class="layer-header"><div class="layer-name">Operations Layer</div><div class="layer-paren">(Back Office)</div></div>
+          <div class="layer-body">
+            <div class="gating">Operations approach lower marginal cost</div>
+            <div class="move-card"><div class="nm">Continuous control monitoring</div><div class="rt">SR 11-7 expects</div></div>
+            <div class="move-card"><div class="nm">Vendor risk monitoring</div><div class="rt">Innovaccer pattern</div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="block" style="margin-top:8px; background:#f8f8f8;">
+        <div class="label">What we can't yet see</div>
+        EBITDA attribution · Peer NIM benchmark depth
+      </div>
+
+    </div>
+
+    <!-- CHAT BOTTOM DOCK COLLAPSED -->
+    <div class="chat-dock-collapsed">
+      <div class="agent">Sentinel <span class="pill">Active</span></div>
+      <div class="last-msg">"Three Move shapes are plausible. Decisioning modernization has the strongest evidence basis..."</div>
+      <div class="field"><span>Ask Sentinel...</span><span style="background:#d8a850; color:#1a2740; width:18px; height:18px; border-radius:50%; text-align:center; line-height:18px; font-weight:700; font-size:10px;">↑</span></div>
+      <span class="ctl">⇱ Side rail</span>
+      <span class="ctl expand">⇲ Expand</span>
+    </div>
+
+  </div>
+</div>
+
+<div class="annotation">
+  <strong>State 3 · Bottom dock collapsed:</strong> 56px strip. Just agent name + last-message preview + input field + state controls. Cards above get full vertical space — most page content visible. User can still type a question without expanding; clicking input or hitting return opens State 2 automatically. Two controls: ⇱ Side rail (back to State 1) · ⇲ Expand (to State 2).
+</div>
+
+<div class="annotation" style="background:#d8e8d8; border-color:#6a8; color:#285828;">
+  <strong>The three controls cycle:</strong> Side rail ↔ Bottom expanded ↔ Bottom collapsed. User is always one click from any state. Input is reachable in all three. Conversation history persists across state switches. State preference per-session (or per-user via setting). Default for first-time visitor: Side rail. After first conversation expands: remembers user's last state.
+</div>
+
+</body>
+</html>
