@@ -37,8 +37,8 @@ describe('TOWER8 · tower-lens-tabs-view · programme_gates tab', () => {
     expect(keys).toContain('programme_gates');
   });
 
-  it('TOWER_TABS has exactly eight tabs', () => {
-    expect(TOWER_TABS).toHaveLength(8);
+  it('TOWER_TABS has exactly five tabs (T-2 Tower Fix Package reduction)', () => {
+    expect(TOWER_TABS).toHaveLength(5);
   });
 
   it("resolveTowerTab accepts 'programme_gates'", () => {
