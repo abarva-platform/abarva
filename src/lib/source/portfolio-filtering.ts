@@ -66,6 +66,31 @@ export function filterOutTestArtifacts(events: SourcingEventSummary[]): Sourcing
   return events.filter((event) => !isTestArtifactEvent(event));
 }
 
+// ── Dedupe by event_code ─────────────────────────────────────────────────────
+// The substrate occasionally has multiple persisted rows with the same
+// event_code (e.g. when the seed loader re-ran). The portfolio surface should
+// show one row per code — the most recent / most progressed one.
+
+export function dedupeByEventCode(events: SourcingEventSummary[]): SourcingEventSummary[] {
+  const byCode = new Map<string, SourcingEventSummary>();
+  for (const event of events) {
+    const existing = byCode.get(event.code);
+    if (!existing) {
+      byCode.set(event.code, event);
+      continue;
+    }
+    // Prefer the more advanced stage; tie-break with higher aging (older row).
+    const existingIdx = SOURCE_STAGE_ORDER.indexOf(existing.currentStageKey);
+    const candidateIdx = SOURCE_STAGE_ORDER.indexOf(event.currentStageKey);
+    if (candidateIdx > existingIdx) {
+      byCode.set(event.code, event);
+    } else if (candidateIdx === existingIdx && event.agingDays > existing.agingDays) {
+      byCode.set(event.code, event);
+    }
+  }
+  return Array.from(byCode.values());
+}
+
 // ── Tenant abbreviation ──────────────────────────────────────────────────────
 // Three-letter mono-cased badge per the design vocabulary. Reads from the
 // event's accountName (display string) since the SourcingEventSummary doesn't

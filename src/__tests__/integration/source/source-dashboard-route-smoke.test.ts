@@ -81,14 +81,18 @@ describe('Source dashboard route smoke', () => {
     expect(eventsRouteSource).toContain('IT sourcing operating queue');
     expect(eventsRouteSource).toContain('Start IT sourcing event');
     expect(eventsRouteSource).toContain('The table is supporting evidence');
-    // Redesigned portfolio header + components — see SOURCE_PORTFOLIO_IMPL_PROMPT.
-    expect(componentSource).toContain('PortfolioHeader');
-    expect(componentSource).toContain('KpiStrip');
-    expect(componentSource).toContain('AttentionStack');
+    // Compact-header portfolio surface — KPI strip + attention banners
+    // intentionally removed in favor of an inline status legend + table-row signals.
+    expect(componentSource).toContain('CompactHeader');
+    expect(componentSource).toContain('StatusLegend');
     expect(componentSource).toContain('PortfolioFilterSidebar');
     expect(componentSource).toContain('PortfolioEventsTable');
     expect(componentSource).toContain('PortfolioEmptyState');
     expect(componentSource).toContain('filterOutTestArtifacts');
+    expect(componentSource).toContain('dedupeByEventCode');
+    // Removed surfaces — no separate KPI strip, no attention-banner stack.
+    expect(componentSource).not.toContain('KpiStrip');
+    expect(componentSource).not.toContain('AttentionStack');
     // Legacy event-formation panels are gone — no agent canvas, work dock, or
     // mission preview on the portfolio surface.
     expect(componentSource).not.toContain('SourcePortfolioAgentCanvas');

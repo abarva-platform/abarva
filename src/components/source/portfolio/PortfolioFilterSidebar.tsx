@@ -8,7 +8,6 @@ import {
   portfolioStatusOf,
   stageBandFor,
   valueBandFor,
-  VALUE_BANDS,
   STAGE_BANDS,
   type StageBandKey,
   type ValueBandKey,
@@ -239,82 +238,8 @@ export function PortfolioFilterSidebar({
           ))}
         </FilterGroup>
       ) : null}
-
-      <FilterGroup label="Aging">
-        <FilterRow
-          label="Fresh · <3d"
-          count={counts.aging.fresh}
-          checked={state.aging.has('fresh')}
-          onChange={() => toggle('aging', 'fresh')}
-        />
-        <FilterRow
-          label="Stale · 3–5d"
-          count={counts.aging.stale}
-          checked={state.aging.has('stale')}
-          onChange={() => toggle('aging', 'stale')}
-          accent={PORTFOLIO.WAITING}
-        />
-        <FilterRow
-          label="Bad · ≥5d"
-          count={counts.aging.bad}
-          checked={state.aging.has('bad')}
-          onChange={() => toggle('aging', 'bad')}
-          accent={PORTFOLIO.BLOCKED}
-        />
-      </FilterGroup>
-
-      <FilterGroup label="Value band">
-        {VALUE_BANDS.map((band) => (
-          <FilterRow
-            key={band.key}
-            label={band.label}
-            count={counts.value[band.key] ?? 0}
-            checked={state.value.has(band.key)}
-            onChange={() => toggle('value', band.key)}
-          />
-        ))}
-      </FilterGroup>
-
-      <FilterGroup label="Rigor">
-        {(['standard', 'enhanced', 'strategic'] as SourceRigorLevel[]).map((rigor) => (
-          <FilterRow
-            key={rigor}
-            label={rigorLabel(rigor)}
-            count={counts.rigor[rigor] ?? 0}
-            checked={state.rigor.has(rigor)}
-            onChange={() => toggle('rigor', rigor)}
-          />
-        ))}
-      </FilterGroup>
-
-      <FilterGroup label="Flags">
-        <FilterRow
-          label="Has blocker"
-          count={counts.flags.has_blocker}
-          checked={state.flags.has('has_blocker')}
-          onChange={() => toggle('flags', 'has_blocker')}
-        />
-        <FilterRow
-          label="Needs attention"
-          count={counts.flags.needs_attention}
-          checked={state.flags.has('needs_attention')}
-          onChange={() => toggle('flags', 'needs_attention')}
-        />
-        <FilterRow
-          label="At risk"
-          count={counts.flags.at_risk}
-          checked={state.flags.has('at_risk')}
-          onChange={() => toggle('flags', 'at_risk')}
-        />
-      </FilterGroup>
     </aside>
   );
-}
-
-function rigorLabel(rigor: SourceRigorLevel): string {
-  if (rigor === 'enhanced') return 'Enhanced';
-  if (rigor === 'strategic') return 'Strategic';
-  return 'Standard';
 }
 
 function emptyState(): PortfolioFilterState {
