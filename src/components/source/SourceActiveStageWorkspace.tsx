@@ -22,6 +22,7 @@ import { VendorScorecardMatrix } from './VendorScorecardMatrix';
 import { PricingNormalizationMatrix, buildAmsPricingRows } from './PricingNormalizationMatrix';
 import { PricingTrapLog, AMS_PRICING_TRAPS } from './PricingTrapLog';
 import { getVendorsForEvent } from '@/lib/source/vendor-detail';
+import { SourceDecisionCanvasClient } from './SourceDecisionCanvasClient';
 
 const sourceCard = {
   background: SHELL.CARD_WHITE,
@@ -174,27 +175,12 @@ export function SourceActiveStageWorkspace({
   }
 
   if (activeStage.key === 'executive_decision' || activeStage.key === 'selection') {
-    const selectionReadiness = buildSourceVendorSelectionReadiness({
-      event: {
-        ...event,
-        currentStageKey: activeStage.key,
-      },
-    });
-
+    // T06 — Atlas brief + posture grid + KV table + drawer triggers (T12/T13/T14)
     return (
-      <section style={{ ...sourceCard, background: SHELL.CARD_WHITE, border: '1px solid ' + SHELL.CARD_LINE }}>
-        <div style={{ marginBottom: 10 }}>
-          <div style={{ ...sourceSectionLabel, color: SHELL.INK_SOFT }}>Current-stage workspace</div>
-          <h4 style={{ margin: '4px 0 0', color: SHELL.INK }}>{event.currentStageLabel}</h4>
-          <div style={{ ...sourceMuted, color: SHELL.INK_MUTED }}>
-            {activeStage.summary}
-          </div>
-          <div style={{ fontFamily: SHELL.SANS, fontSize: 12, lineHeight: 1.4, marginTop: 6, color: SHELL.PEACH_TEXT }}>
-            Gate status: {getStageStateLabel(activeStage.status)}
-          </div>
-        </div>
-        <SourceVendorSelectionReadinessPanel readiness={selectionReadiness} />
-      </section>
+      <SourceDecisionCanvasClient
+        dataReadinessItems={dataReadinessItems}
+        dataReadinessSummary={dataReadinessSummary}
+      />
     );
   }
 
