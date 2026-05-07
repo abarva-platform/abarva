@@ -1,0 +1,40 @@
+# Auth and secrets — never commit
+.env
+.env.local
+auth/storageState.json
+
+# Raw HTML, full-page screenshots, anything verbatim from the tenant
+# (PII may be present; restricted)
+vault/
+
+# Local analysis warehouse
+audit.db
+audit.db-journal
+audit.db-wal
+audit.db-shm
+
+# Crawl outputs that may contain redacted-but-still-sensitive data —
+# review before sharing externally
+crawl/output/screenshots/
+runs/
+
+# Node / TypeScript
+node_modules/
+dist/
+build/
+*.log
+*.tsbuildinfo
+
+# Playwright
+playwright-report/
+test-results/
+.playwright/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editors
+.vscode/
+.idea/
+*.swp
