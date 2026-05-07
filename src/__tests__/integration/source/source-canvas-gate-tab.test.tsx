@@ -94,6 +94,25 @@ describe('GateTab · B3 blocker diagnostics', () => {
     expect(html).not.toContain('source-canvas-gate-criterion-reopen-GATE-3');
   });
 
+  it('Promote button stays disabled when onPromoteStage is omitted (SSR / no handler)', () => {
+    const html = renderToStaticMarkup(
+      createElement(GateTab, {
+        fromStage: 'scope',
+        states: [
+          makeCriterion({ criterionId: 'GATE-1', state: 'met' }),
+          makeCriterion({ criterionId: 'GATE-2', state: 'met' }),
+        ],
+      }),
+    );
+    // Even with all criteria met, the button is disabled when no
+    // handler is wired — prevents the prod regression where the
+    // visually-enabled button did nothing on click.
+    expect(html).toMatch(
+      /<button[^>]*disabled[^>]*data-testid="source-canvas-gate-promote"|<button[^>]*data-testid="source-canvas-gate-promote"[^>]*disabled/,
+    );
+    expect(html).toContain('cursor:not-allowed');
+  });
+
   it('hides Mark met / Reopen entirely when onChangeCriterionState is omitted (SSR)', () => {
     const html = renderToStaticMarkup(
       createElement(GateTab, {

@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useState, type CSSProperties } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { AppShell } from '@/components/shell/AppShell';
 import { SourceOnboardingTour } from '@/components/source/onboarding/SourceOnboardingTour';
 import type {
@@ -11,6 +11,7 @@ import type {
   SourceEventGateCriterion,
   SourceEventGateCriterionState,
 } from '@/lib/source/canvas-substrate';
+import { SOURCE_STAGE_LABELS } from '@/lib/source/constants';
 import type { SourceStageKey, SourcingEventSummary } from '@/lib/source/types';
 import { EventChatLane, type ChatTurn } from './EventChatLane';
 import { EventIdStrip } from './EventIdStrip';
@@ -60,9 +61,11 @@ export function UniversalCanvasShell({
   activityEntries,
   tenantName,
 }: UniversalCanvasShellProps) {
+  const router = useRouter();
   const [thread, setThread] = useState<ChatTurn[]>([]);
   const [isStreaming, setIsStreaming] = useState(false);
   const [selectedDocCode, setSelectedDocCode] = useState<string | undefined>(undefined);
+  const [promotePending, setPromotePending] = useState(false);
 
   // Per-event artifact state lives in client state so "Mark complete"
   // can update optimistically. Server-loaded props are the source of
@@ -128,6 +131,26 @@ export function UniversalCanvasShell({
       totalCriteria: stageCriteria.length,
     };
   }, [stageArtifacts, stageCriteria, stageEvidence]);
+
+  const handlePromoteStage = async (toStage: SourceStageKey): Promise<void> => {
+    if (promotePending) return;
+    setPromotePending(true);
+    try {
+      const res = await fetch(`/api/v1/source/${event.id}/stage`, {
+        method: 'PATCH',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ stageKey: toStage }),
+      });
+      if (!res.ok) return;
+      // Re-fetch the SSR data with the new stage in view, so artifacts +
+      // criteria + evidence + chat-lane all switch to the new stage.
+      const stageLabel = SOURCE_STAGE_LABELS[toStage];
+      router.push(`/source/events/${event.id}?stage=${stageLabel}`);
+      router.refresh();
+    } finally {
+      setPromotePending(false);
+    }
+  };
 
   const handleCriterionStateChange = async (
     criterionId: string,
@@ -271,6 +294,8 @@ export function UniversalCanvasShell({
           states={stageCriteria}
           onChangeCriterionState={handleCriterionStateChange}
           pendingByCriterionId={pendingCriterionByCriterionId}
+          onPromoteStage={handlePromoteStage}
+          promotePending={promotePending}
         />
       ),
     },
