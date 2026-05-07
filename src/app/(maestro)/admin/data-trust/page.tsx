@@ -16,6 +16,7 @@ import {
   resolveDataTrustTab,
   findDataTrustDataset,
 } from '@/lib/admin/data-trust-page-view';
+import { resolveAdminTenant } from '@/lib/admin/admin-tenant';
 
 export const metadata = {
   title: 'Data Trust | AbarVa Setup',
@@ -33,13 +34,15 @@ function formatDate(iso: string): string {
 }
 
 export default async function DataTrustPage({ searchParams }: DataTrustPageProps) {
-  const view = await buildDataTrustPageView();
+  const tenant = await resolveAdminTenant();
+  const view = await buildDataTrustPageView(tenant.tenantSlug);
   const params = (await searchParams) ?? {};
   const activeTab = resolveDataTrustTab(params.tab);
   const activeDataset = findDataTrustDataset(view, params.dataset);
 
   return (
     <AdminCanonShellV2
+      tenantName={tenant.tenantName}
       agentRail={
         <AgentRail
           primaryAgentLabel={view.primaryAgentLabel}

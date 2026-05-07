@@ -16,23 +16,16 @@ import {
   findUsersAccessUser,
   resolveUsersAccessTab,
 } from '@/lib/admin/users-access-page-view';
+import { resolveAdminTenant } from '@/lib/admin/admin-tenant';
 import { getActiveClientRow } from '@/lib/active-client';
 import { getCurrentUser } from '@/lib/auth/current-user';
 import { getProgramPortfolio } from '@/lib/programs/queries';
-import { canonicalClientDisplayName, type ClientKey } from '@/lib/client-config';
 
 export const metadata = {
   title: 'Users & Access | AbarVa Setup',
 };
 
 const BASE_URL = '/admin/users-access';
-
-const ADMIN_TENANT_SLUG_BY_CLIENT_KEY: Partial<Record<ClientKey, string>> = {
-  apexretail: 'apex-retail',
-  meridian: 'meridian',
-  arcturus: 'first-capital',
-  keystone: 'keystone',
-};
 
 const PHASE_LABELS: Record<number, string> = {
   0: 'P0 Origination',
@@ -44,19 +37,9 @@ const PHASE_LABELS: Record<number, string> = {
   6: 'P6 Tower Handoff',
 };
 
-async function loadProvisionProgramOptions(): Promise<{
-  tenantName: string;
-  tenantSlug: string;
-  programs: ProgramProvisionOption[];
-}> {
-  const activeClient = await getActiveClientRow();
-  const tenantSlug = activeClient ? ADMIN_TENANT_SLUG_BY_CLIENT_KEY[activeClient.key] ?? 'apex-retail' : 'apex-retail';
-  const tenantName =
-    canonicalClientDisplayName({ key: activeClient?.key, name: activeClient?.name }) ??
-    'Active client';
-  if (!activeClient) {
-    return { tenantName, tenantSlug, programs: [] };
-  }
+async function loadProvisionPrograms(): Promise<ProgramProvisionOption[]> {
+  const activeClient = await getActiveClientRow().catch(() => null);
+  if (!activeClient) return [];
 
   try {
     const user = await getCurrentUser();
@@ -65,17 +48,13 @@ async function loadProvisionProgramOptions(): Promise<{
       userId: user?.personId ?? (user?.clerkUserId ? `clerk:${user.clerkUserId}` : 'admin-users-access'),
       role: user?.primaryRole,
     });
-    return {
-      tenantName,
-      tenantSlug,
-      programs: programs.map((program) => ({
-        id: program.id,
-        name: program.name,
-        phaseLabel: PHASE_LABELS[program.currentPhase ?? 0] ?? `P${program.currentPhase ?? 0}`,
-      })),
-    };
+    return programs.map((program) => ({
+      id: program.id,
+      name: program.name,
+      phaseLabel: PHASE_LABELS[program.currentPhase ?? 0] ?? `P${program.currentPhase ?? 0}`,
+    }));
   } catch {
-    return { tenantName, tenantSlug, programs: [] };
+    return [];
   }
 }
 
@@ -84,14 +63,16 @@ export default async function UsersAccessPage({
 }: {
   searchParams?: Promise<{ tab?: string; user?: string }>;
 }) {
-  const provision = await loadProvisionProgramOptions();
-  const view = await buildUsersAccessPageView(provision.tenantSlug);
+  const tenant = await resolveAdminTenant();
+  const programs = await loadProvisionPrograms();
+  const view = await buildUsersAccessPageView(tenant.tenantSlug);
   const resolved = searchParams ? await searchParams : undefined;
   const activeTab = resolveUsersAccessTab(resolved?.tab);
   const activeUser = findUsersAccessUser(view, resolved?.user);
 
   return (
     <AdminCanonShellV2
+      tenantName={tenant.tenantName}
       agentRail={
         <AgentRail
           primaryAgentLabel={view.primaryAgentLabel}
@@ -306,8 +287,8 @@ export default async function UsersAccessPage({
           {activeTab === 'invites' && (
             <>
               <ProgramUserProvisionForm
-                tenantName={provision.tenantName}
-                programs={provision.programs}
+                tenantName={tenant.tenantName}
+                programs={programs}
               />
               <InviteList invites={view.inviteList} />
             </>
