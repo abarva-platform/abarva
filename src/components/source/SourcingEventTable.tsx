@@ -1,7 +1,11 @@
 import Link from 'next/link';
 import type { CSSProperties } from 'react';
 import { SHELL } from '@/lib/shell/shell-tokens';
-import type { SourceRigorLevel, SourcingEventSummary } from '@/lib/source/types';
+import type { SourceRigorLevel, SourceStageKey, SourcingEventSummary } from '@/lib/source/types';
+import {
+  SOURCE_STAGE_ORDER,
+  SOURCE_LEGACY_STAGE_ALIASES,
+} from '@/lib/source/constants';
 import {
   formatSourceFinancialValue,
   redactSourceFinancialText,
@@ -88,6 +92,65 @@ function ContradictionChip({ count }: { count: number }) {
     >
       {count} contradiction{count === 1 ? '' : 's'}
     </span>
+  );
+}
+
+// ─── Stage mini rail (T01) ────────────────────────────────────────────────────
+
+/** Resolve aliased stage keys (e.g. 'intake' → 'strategy') to canonical position */
+function resolveStageIndex(key: SourceStageKey): number {
+  const canonical = (SOURCE_LEGACY_STAGE_ALIASES[key] ?? key) as SourceStageKey;
+  return SOURCE_STAGE_ORDER.indexOf(canonical);
+}
+
+/**
+ * Compact 11-segment progress rail shown inline in each event table row.
+ * Completed stages: filled navy · Current stage: wider navy · Future: light.
+ */
+function StageMiniRail({ currentStageKey }: { currentStageKey: SourceStageKey }) {
+  const currentIndex = resolveStageIndex(currentStageKey);
+
+  return (
+    <div
+      style={{ display: 'flex', gap: 2, alignItems: 'center' }}
+      role="img"
+      aria-label={`Stage ${currentIndex + 1} of ${SOURCE_STAGE_ORDER.length}`}
+    >
+      {SOURCE_STAGE_ORDER.map((stage, i) => {
+        const isComplete = i < currentIndex;
+        const isCurrent = i === currentIndex;
+
+        return (
+          <div
+            key={stage}
+            title={`${i + 1}. ${stage.replace(/_/g, ' ')}`}
+            style={{
+              height: 5,
+              width: isCurrent ? 18 : 7,
+              borderRadius: 3,
+              background: isComplete
+                ? SHELL.INK_MID
+                : isCurrent
+                  ? SHELL.INK
+                  : SHELL.CARD_LINE,
+              flexShrink: 0,
+            }}
+          />
+        );
+      })}
+      <span
+        style={{
+          fontFamily: SHELL.MONO,
+          fontSize: 9,
+          color: SHELL.INK_MUTED,
+          letterSpacing: '0.06em',
+          marginLeft: 4,
+          whiteSpace: 'nowrap',
+        }}
+      >
+        {currentIndex + 1}/{SOURCE_STAGE_ORDER.length}
+      </span>
+    </div>
   );
 }
 
@@ -341,8 +404,9 @@ export function SourcingEventTable({
                 </td>
 
                 <td style={tableCell}>
-                  <div style={{ display: 'grid', gap: 8 }}>
+                  <div style={{ display: 'grid', gap: 6 }}>
                     <div style={{ color: textPrimary, fontWeight: 600 }}>{event.currentStageLabel}</div>
+                    <StageMiniRail currentStageKey={event.currentStageKey} />
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
                       <EventLifecycleStatusBadge status={event.status} label={event.statusLabel} variant={variant} />
                       {event.isAtRisk ? <span style={RISK_PILL_HIGH}>At Risk</span> : null}
