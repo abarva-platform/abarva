@@ -369,13 +369,15 @@ const ACTION_STRIP: ReadonlyArray<UsersAccessActionRow> = [
     id: 'invite_user',
     label: 'Invite user',
     status: 'hard_gated',
-    reason: 'Available in pilot environment (Wave 27)',
+    // Reason rendered as inline explanation, not as a tooltip on a disabled
+    // button — see UsersAccessActionStrip per Setup Fix Package PR 5 §2.3.
+    reason: 'Live invite pipeline lights up after SSO is configured and the audit event store ships in Wave 27.',
   },
   {
     id: 'configure_sso',
     label: 'Configure SSO',
-    status: 'hard_gated',
-    reason: 'Available in pilot environment (Wave 27)',
+    status: 'safe',
+    href: '/admin/users-access/sso-configuration',
   },
   {
     id: 'export_users',
@@ -451,7 +453,7 @@ export async function buildUsersAccessPageView(
     ssoConfigured: false,
     primaryAgentLabel: 'Steward',
     primaryActionLabel: 'Configure SSO',
-    primaryActionHref: '/admin/users-access#sso',
+    primaryActionHref: '/admin/users-access/sso-configuration',
     deterministicSeed: true,
     agentChoices: choices,
     agentPostures: postures,

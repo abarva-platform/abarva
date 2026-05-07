@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { COLORS, RADIUS, SPACING, TYPOGRAPHY } from '@/lib/design/design-tokens';
 import type { RoleAccessRow } from '@/lib/admin/users-access-page-view';
 
@@ -15,6 +16,9 @@ export function RoleAccessMatrix({ roles, pendingInvitesCount, ssoConfigured }: 
         borderRadius: RADIUS.lg,
         border: `1px solid ${COLORS.ink}10`,
         padding: SPACING.xl,
+        display: 'flex',
+        flexDirection: 'column',
+        gap: SPACING.lg,
       }}
       data-role-access-matrix="true"
     >
@@ -58,6 +62,7 @@ export function RoleAccessMatrix({ roles, pendingInvitesCount, ssoConfigured }: 
           </span>
         </div>
       </header>
+      {!ssoConfigured ? <SsoUnlocksPanel /> : null}
       <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column' }}>
         {roles.map((role, idx) => (
           <li
@@ -102,5 +107,89 @@ export function RoleAccessMatrix({ roles, pendingInvitesCount, ssoConfigured }: 
         ))}
       </ul>
     </section>
+  );
+}
+
+function SsoUnlocksPanel() {
+  return (
+    <aside
+      data-sso-unlocks-panel="true"
+      aria-label="What SSO unlocks"
+      style={{
+        background: COLORS.skyPale,
+        borderLeft: `4px solid ${COLORS.navy}`,
+        borderRadius: RADIUS.md,
+        padding: SPACING.lg,
+        display: 'flex',
+        flexDirection: 'column',
+        gap: SPACING.sm,
+      }}
+    >
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: SPACING.md, flexWrap: 'wrap' }}>
+        <p
+          style={{
+            margin: 0,
+            fontFamily: TYPOGRAPHY.mono,
+            fontSize: 10,
+            letterSpacing: '0.12em',
+            textTransform: 'uppercase',
+            color: COLORS.navy,
+            fontWeight: 700,
+          }}
+        >
+          Configuring SSO unlocks
+        </p>
+        <Link
+          href="/admin/users-access/sso-configuration"
+          data-sso-configure-link="true"
+          style={{
+            fontFamily: TYPOGRAPHY.sans,
+            fontSize: 12,
+            fontWeight: 600,
+            color: COLORS.navy,
+            textDecoration: 'none',
+            border: `1px solid ${COLORS.navy}`,
+            borderRadius: RADIUS.pill,
+            padding: '4px 12px',
+          }}
+        >
+          Configure SSO →
+        </Link>
+      </div>
+      <ul
+        style={{
+          fontFamily: TYPOGRAPHY.sans,
+          fontSize: 13,
+          color: COLORS.ink,
+          margin: 0,
+          paddingLeft: SPACING.lg,
+          lineHeight: 1.7,
+        }}
+      >
+        <li>
+          <strong>Invite pipeline.</strong> Tenant admins can invite users by email; invitees sign in via SSO.
+        </li>
+        <li>
+          <strong>Maestro access to Programs.</strong> Engagement owners can be invited to drive Programs work.
+        </li>
+        <li>
+          <strong>Sponsor access to Tower briefs.</strong> Executive sponsors can read scorecards and pressure cards.
+        </li>
+        <li>
+          <strong>Cross-tenant role assignment.</strong> Platform admins can manage role assignments across tenants.
+        </li>
+      </ul>
+      <p
+        style={{
+          margin: 0,
+          fontFamily: TYPOGRAPHY.sans,
+          fontSize: 12,
+          color: `${COLORS.ink}99`,
+          lineHeight: 1.6,
+        }}
+      >
+        Until SSO is configured, the user roster shown below is read-only and reflects deterministic seed data.
+      </p>
+    </aside>
   );
 }
