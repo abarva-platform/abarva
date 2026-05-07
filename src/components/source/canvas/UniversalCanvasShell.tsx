@@ -207,15 +207,23 @@ const MAIN_STYLE: CSSProperties = {
   display: 'flex',
   flexDirection: 'column',
   minHeight: 0,
+  // Belt-and-suspenders height pin: AppShell sets minHeight: 100vh + overflow
+  // hidden upstream, but explicit height here guarantees the splitter pane
+  // (and the chat lane inside it) cannot grow beyond the viewport, so the
+  // chat input stays sticky at the bottom without scrolling.
+  height: 'calc(100vh - 64px)',
+  overflow: 'hidden',
   background: CANVAS.PAGE_BG,
 };
 
 const CONTAINER_STYLE: CSSProperties = {
   padding: `0 ${CANVAS.S_PAGE}px`,
+  flexShrink: 0,
 };
 
 const SPLITTER_WRAPPER_STYLE: CSSProperties = {
   flex: 1,
   display: 'flex',
   minHeight: 0,
+  overflow: 'hidden',
 };
