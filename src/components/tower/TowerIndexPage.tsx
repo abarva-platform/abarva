@@ -83,33 +83,6 @@ function ConfTag({ conf }: { conf: Confidence }) {
   );
 }
 
-function MissingChip({ children, onClick }: { children: ReactNode; onClick?: () => void }) {
-  return (
-    <button
-      onClick={onClick}
-      style={{
-        display: 'inline-flex',
-        alignItems: 'center',
-        gap: 6,
-        padding: '4px 10px',
-        border: `1px dashed ${T.BORDER_STRONG}`,
-        borderRadius: 999,
-        fontFamily: T.MONO,
-        fontSize: 9.5,
-        letterSpacing: '1.2px',
-        textTransform: 'uppercase',
-        fontWeight: 700,
-        color: T.GRAY_DK,
-        cursor: 'pointer',
-        background: 'transparent',
-      }}
-    >
-      <span style={{ color: T.GOLD, fontWeight: 800 }}>↳</span>
-      {children}
-    </button>
-  );
-}
-
 // ─── KPI cell · T-1 compression (Tower Fix Package) ───────────────────────────
 //
 // Compressed from 4-line (label / stat / delta / 3-line footnote / inline CTA)
@@ -376,7 +349,42 @@ interface MatrixDot {
   confidenceLevel?: 'HIGH' | 'MED' | 'LOW';
 }
 
-// T-4: legacy hardcoded fallback used when no `initiatives` prop is passed.
+// T-4b: legacy Strategic Bets fallback used when no substrate is loaded.
+// Keeps the pre-substrate Tower visually intact for tests + screenshots.
+interface StrategicBetCard {
+  key: string;
+  displayId?: string;
+  name: string;
+  meta: string;
+  desc: ReactNode;
+  cta: ReactNode;
+}
+
+const LEGACY_STRATEGIC_BETS: StrategicBetCard[] = [
+  {
+    key: 'agent-platform-foundation',
+    name: 'Agent platform foundation',
+    meta: 'Year 1 of 3 · $4.2M committed · attribution LOW',
+    desc: "Building the Sentinel/Steward/Atlas substrate that the rest of the AbarVa stack runs on. Won't show measured value until programs migrate.",
+    cta: null,
+  },
+  {
+    key: 'data-sovereignty',
+    name: 'Data sovereignty re-architecture',
+    meta: 'Year 1 of 2 · $1.8M committed · attribution MED',
+    desc: "Tied to EU operations. Compliance value is binary — either it lands by Q4 2026 or we're out of compliance, regardless of TCO.",
+    cta: null,
+  },
+  {
+    key: 'vendor-consolidation',
+    name: 'Vendor consolidation thesis',
+    meta: 'Year 0 · $0.9M committed · attribution LOW',
+    desc: 'Hypothesis: 23 strategic suppliers can become 12 by 2027. Atlas is modeling. No measured value until first wave of consolidations.',
+    cta: null,
+  },
+];
+
+// T-4: legacy hardcoded 2×2 fallback used when no `initiatives` prop is passed.
 // Keeps the pre-substrate Tower visually intact for tests + screenshots.
 const LEGACY_2X2_DOTS: Record<AlignmentQuadrant, MatrixDot[]> = {
   tl: [
@@ -1401,7 +1409,7 @@ export function TowerIndexPage({
                     textTransform: 'uppercase',
                   }}
                 >
-                  Strategic bets · 3 programs · T-FOW lens
+                  Strategic bets · {alignment2x2View.strategicBets.length > 0 ? alignment2x2View.strategicBets.length : 3} programs · T-FOW lens
                 </span>
                 <span
                   style={{
@@ -1415,33 +1423,31 @@ export function TowerIndexPage({
                   Plotted separately — attribution is too loose for the 2×2 today.
                 </span>
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 14 }}>
-                {[
-                  {
-                    name: 'Agent platform foundation',
-                    meta: 'Year 1 of 3 · $4.2M committed · attribution LOW',
-                    desc: 'Building the Sentinel/Steward/Atlas substrate that the rest of the AbarVa stack runs on. Won\'t show measured value until programs migrate.',
-                    cta: <MissingChip>Set attribution model →</MissingChip>,
-                  },
-                  {
-                    name: 'Data sovereignty re-architecture',
-                    meta: 'Year 1 of 2 · $1.8M committed · attribution MED',
-                    desc: 'Tied to EU operations. Compliance value is binary — either it lands by Q4 2026 or we\'re out of compliance, regardless of TCO.',
-                    cta: (
-                      <span style={{ color: T.AMBER, fontSize: 11, fontFamily: T.MONO }}>
-                        Reg deadline · Dec 2026
-                      </span>
-                    ),
-                  },
-                  {
-                    name: 'Vendor consolidation thesis',
-                    meta: 'Year 0 · $0.9M committed · attribution LOW',
-                    desc: 'Hypothesis: 23 strategic suppliers can become 12 by 2027. Atlas is modeling. No measured value until first wave of consolidations.',
-                    cta: <MissingChip>Connect Source EA brief →</MissingChip>,
-                  },
-                ].map((card) => (
+              <div
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: `repeat(${Math.max(alignment2x2View.strategicBets.length, 3)}, 1fr)`,
+                  gap: 14,
+                }}
+              >
+                {(alignment2x2View.strategicBets.length > 0
+                  ? alignment2x2View.strategicBets.map((bet) => ({
+                      key: bet.displayId,
+                      displayId: bet.displayId,
+                      name: bet.name,
+                      meta: `${bet.stageDetail} · ${bet.amount} committed · attribution ${bet.confidenceLevel}`,
+                      desc: null as ReactNode,
+                      cta: null as ReactNode,
+                    }))
+                  : LEGACY_STRATEGIC_BETS
+                ).map((card) => (
                   <div
-                    key={card.name}
+                    key={card.key}
+                    data-testid={
+                      card.displayId
+                        ? `tower-strategic-bet-${card.displayId}`
+                        : undefined
+                    }
                     style={{
                       padding: '14px 16px',
                       border: `1px dashed ${T.RULE_STRONG}`,
@@ -1449,6 +1455,20 @@ export function TowerIndexPage({
                       background: 'transparent',
                     }}
                   >
+                    {card.displayId && (
+                      <div
+                        style={{
+                          fontFamily: T.MONO,
+                          fontSize: 9,
+                          letterSpacing: '1.6px',
+                          color: T.GRAY_DK,
+                          fontWeight: 700,
+                          marginBottom: 2,
+                        }}
+                      >
+                        {card.displayId}
+                      </div>
+                    )}
                     <div
                       style={{
                         fontFamily: T.SERIF,
@@ -1472,17 +1492,19 @@ export function TowerIndexPage({
                     >
                       {card.meta}
                     </div>
-                    <div
-                      style={{
-                        fontSize: 12.5,
-                        color: T.INK_2,
-                        lineHeight: 1.5,
-                        margin: '8px 0',
-                      }}
-                    >
-                      {card.desc}
-                    </div>
-                    <div>{card.cta}</div>
+                    {card.desc && (
+                      <div
+                        style={{
+                          fontSize: 12.5,
+                          color: T.INK_2,
+                          lineHeight: 1.5,
+                          margin: '8px 0',
+                        }}
+                      >
+                        {card.desc}
+                      </div>
+                    )}
+                    {card.cta && <div>{card.cta}</div>}
                   </div>
                 ))}
               </div>

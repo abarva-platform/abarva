@@ -227,6 +227,24 @@ describe('buildStrategicAlignment2x2View', () => {
     }
   });
 
+  it('T-4b: tiles dots in 2-column grid so they never overlap, even with 3+ dots in a quadrant', () => {
+    const view = buildStrategicAlignment2x2View(MERIDIAN_FIXTURE);
+    const grouped = dotsByQuadrant(view);
+    // TR has three dots (MH-01, MH-04, MH-05) — all must have distinct (left, top) pairs.
+    const tr = grouped.tr;
+    expect(tr.length).toBeGreaterThanOrEqual(3);
+    const positions = tr.map((d) => `${d.positionLeft}|${d.positionTop}`);
+    const uniquePositions = new Set(positions);
+    expect(uniquePositions.size).toBe(positions.length);
+  });
+
+  it('T-4b: position columns are at 18% and 56% (deterministic tile)', () => {
+    const view = buildStrategicAlignment2x2View(MERIDIAN_FIXTURE);
+    for (const dot of view.dots) {
+      expect(['18%', '56%']).toContain(dot.positionLeft);
+    }
+  });
+
   it('includes MH-07 stageDetail (when null defaults to "Multi-year strategic bet")', () => {
     const view = buildStrategicAlignment2x2View(MERIDIAN_FIXTURE);
     const mh07 = view.strategicBets.find((b) => b.displayId === 'MH-07');
