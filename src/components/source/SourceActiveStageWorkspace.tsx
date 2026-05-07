@@ -19,6 +19,8 @@ import { SourceVendorSelectionReadinessPanel } from './SourceVendorSelectionRead
 import { SourceVendorResponseCompletenessPanel } from './SourceVendorResponseCompletenessPanel';
 import { SourcePricingComparisonPanel } from './SourcePricingComparisonPanel';
 import { VendorScorecardMatrix } from './VendorScorecardMatrix';
+import { PricingNormalizationMatrix, buildAmsPricingRows } from './PricingNormalizationMatrix';
+import { PricingTrapLog, AMS_PRICING_TRAPS } from './PricingTrapLog';
 import { getVendorsForEvent } from '@/lib/source/vendor-detail';
 
 const sourceCard = {
@@ -111,28 +113,38 @@ export function SourceActiveStageWorkspace({
   }
 
   if (activeStage.key === 'pricing') {
-    const pricingView = buildPricingComparisonViewModel({
-      eventId: event.id,
-      eventName: event.name,
-      vendors: [
-        { vendorId: 'vendor-a', vendorName: 'Northbridge Services', totalQuotedCost: 1_000_000, currency: 'USD' },
-        { vendorId: 'vendor-b', vendorName: 'Ardent Managed Solutions', totalQuotedCost: 925_000, currency: 'USD' },
-        { vendorId: 'vendor-c', vendorName: 'Kestrel Technology Partners', totalQuotedCost: 1_080_000, currency: 'USD' },
-      ],
-    });
+    const pricingVendors = getVendorsForEvent(event.id);
+    const pricingRows = buildAmsPricingRows(pricingVendors);
+    // Fall back to old panel when no vendor fixture data exists for this event
+    if (pricingRows.length === 0) {
+      const pricingView = buildPricingComparisonViewModel({
+        eventId: event.id,
+        eventName: event.name,
+        vendors: [
+          { vendorId: 'vendor-a', vendorName: 'Northbridge Services', totalQuotedCost: 1_000_000, currency: 'USD' },
+          { vendorId: 'vendor-b', vendorName: 'Ardent Managed Solutions', totalQuotedCost: 925_000, currency: 'USD' },
+          { vendorId: 'vendor-c', vendorName: 'Kestrel Technology Partners', totalQuotedCost: 1_080_000, currency: 'USD' },
+        ],
+      });
+      return (
+        <section style={{ ...sourceCard, background: SHELL.CARD_WHITE, border: '1px solid ' + SHELL.CARD_LINE }}>
+          <div style={{ ...sourceSectionLabel, color: SHELL.INK_SOFT }}>Pricing normalization · {event.currentStageLabel}</div>
+          <SourcePricingComparisonPanel viewModel={pricingView} />
+        </section>
+      );
+    }
 
+    // T05 — normalized TCO matrix + trap log
+    const traps = event.id.includes('ams') ? AMS_PRICING_TRAPS : [];
     return (
-      <section style={{ ...sourceCard, background: SHELL.CARD_WHITE, border: '1px solid ' + SHELL.CARD_LINE }}>
-        <div style={{ marginBottom: 10 }}>
-          <div style={{ ...sourceSectionLabel, color: SHELL.INK_SOFT }}>Current-stage workspace</div>
-          <h4 style={{ margin: '4px 0 0', color: SHELL.INK }}>{event.currentStageLabel}</h4>
-          <div style={{ ...sourceMuted, color: SHELL.INK_MUTED }}>{activeStage.summary}</div>
-          <div style={{ fontFamily: SHELL.SANS, fontSize: 12, lineHeight: 1.4, marginTop: 6, color: SHELL.PEACH_TEXT }}>
-            Gate status: {getStageStateLabel(activeStage.status)}
-          </div>
-        </div>
-        <SourcePricingComparisonPanel viewModel={pricingView} />
-      </section>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+        <PricingNormalizationMatrix
+          rows={pricingRows}
+          horizonLabel="5-year horizon"
+          assumptionVersion="normalized assumption set v2"
+        />
+        {traps.length > 0 && <PricingTrapLog traps={traps} />}
+      </div>
     );
   }
 
