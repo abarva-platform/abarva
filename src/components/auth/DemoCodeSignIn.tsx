@@ -7,9 +7,18 @@ interface Props {
   redirectUrl: string
 }
 
+interface ClerkErrorLike {
+  errors?: Array<{ code?: string; message?: string; longMessage?: string }>
+  message?: string
+  status?: number
+}
+
 interface ClerkWindow extends Window {
   Clerk?: {
     loaded?: boolean
+    user?: { id?: string } | null
+    session?: { id?: string } | null
+    signOut?: () => Promise<void>
     client: {
       signIn: {
         create: (params: { strategy: 'ticket'; ticket: string }) => Promise<{
@@ -20,6 +29,55 @@ interface ClerkWindow extends Window {
     }
     setActive: (params: { session?: string | null }) => Promise<void>
   }
+}
+
+/**
+ * Map a thrown error or backend payload to a user-facing message.
+ * Per spec drift on production 2026-05-07: the prior implementation
+ * swallowed every failure into the same generic copy, which made the
+ * Clerk dev-instance rate-limit indistinguishable from a stale
+ * session indistinguishable from a malformed account. Now each path
+ * gets a distinct line + the underlying error is logged to console
+ * for browser DevTools introspection.
+ */
+function describeFailure(err: unknown, alreadySignedIn: boolean): string {
+  if (alreadySignedIn) {
+    return 'You appear to be signed in already. Click "Sign out" in the top bar, then retry.'
+  }
+  const message = err instanceof Error ? err.message : String(err ?? 'demo_sign_in_failed')
+  // Backend-payload error codes (from /api/auth/demo-code-sign-in).
+  if (message === 'unsupported_demo_account') {
+    return 'That email is not on the approved client test list. Pick one of the emails below.'
+  }
+  if (message === 'invalid_demo_code') {
+    return `That code was not accepted. Use ${DEMO_CODE_VALUE} for an approved demo account.`
+  }
+  if (message === 'demo_user_not_found') {
+    return 'The demo user record is missing in Clerk. Ask Anand to re-run /api/admin/seed-clerk-metadata.'
+  }
+  if (message === 'clerk_not_configured') {
+    return 'Server is missing CLERK_SECRET_KEY. Ask Anand to check Vercel env vars.'
+  }
+  if (message === 'clerk_not_ready') {
+    return 'Clerk JS did not finish loading. Refresh the page and retry.'
+  }
+  if (message.startsWith('ticket_sign_in_')) {
+    const status = message.slice('ticket_sign_in_'.length)
+    return `Clerk did not finalize the session (status: ${status}). Refresh and retry; if it persists, share a screenshot.`
+  }
+  // Surface the inner Clerk error if one is attached.
+  const clerkError = (err as ClerkErrorLike)?.errors?.[0]
+  if (clerkError?.message || clerkError?.longMessage) {
+    const detail = clerkError.longMessage ?? clerkError.message
+    if (clerkError.code === 'rate_limit_exceeded' || /rate limit/i.test(detail ?? '')) {
+      return 'Clerk dev-instance rate limit hit. Wait ~30 seconds and retry.'
+    }
+    return `Clerk error: ${detail ?? clerkError.code ?? 'unknown'}.`
+  }
+  if (/network|fetch|failed/i.test(message)) {
+    return `Network error during sign-in. Check connectivity and retry. (raw: ${message})`
+  }
+  return `Sign-in failed (raw: ${message}). Open DevTools console for details.`
 }
 
 const PANEL = {
@@ -88,7 +146,17 @@ export function DemoCodeSignIn({ redirectUrl }: Props) {
     setPending(true)
     setError(null)
 
+    const clerk = (window as ClerkWindow).Clerk
+    // If the user is already signed in (stale session from a prior
+    // tab) Clerk's signIn.create rejects ticket strategy. Detect
+    // and surface explicitly so the user knows to sign out first.
+    const alreadySignedIn = Boolean(clerk?.user?.id || clerk?.session?.id)
+
     try {
+      if (alreadySignedIn) {
+        throw new Error('already_signed_in')
+      }
+
       const response = await fetch('/api/auth/demo-code-sign-in', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -100,7 +168,6 @@ export function DemoCodeSignIn({ redirectUrl }: Props) {
         throw new Error(payload?.error || 'demo_sign_in_failed')
       }
 
-      const clerk = (window as ClerkWindow).Clerk
       if (!clerk?.loaded) {
         throw new Error('clerk_not_ready')
       }
@@ -117,12 +184,12 @@ export function DemoCodeSignIn({ redirectUrl }: Props) {
       await clerk.setActive({ session: result.createdSessionId })
       window.location.assign(redirectUrl)
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'demo_sign_in_failed'
-      if (message === 'invalid_demo_code') {
-        setError('That code was not accepted. Use 424242 for an approved demo account.')
-      } else {
-        setError('Client test sign-in did not complete. Retry with one of the approved client test accounts below.')
-      }
+      // Always log the raw error so DevTools can show the underlying
+      // Clerk payload (rate limit details, structural issues, etc.).
+      console.error('[DemoCodeSignIn] failure', err)
+      const isAlreadySignedIn =
+        err instanceof Error && err.message === 'already_signed_in'
+      setError(describeFailure(err, isAlreadySignedIn))
     } finally {
       setPending(false)
     }
