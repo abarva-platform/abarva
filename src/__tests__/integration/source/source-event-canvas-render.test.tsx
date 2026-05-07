@@ -246,6 +246,20 @@ describe('UniversalCanvasShell · SSR render', () => {
     expect(html).toContain('Artifacts 0 / 2');
   });
 
+  // ── B4: suggested chat prompts populate the composer ──────────────────────
+  it('renders the empty-thread hint that explains what the agent can do', () => {
+    const html = render();
+    // Agent depends on the stage — scope → Nexus per leadAgentForStage.
+    expect(html).toMatch(/Ask (Nexus|Sentinel|Atlas|Steward) anything about this step/);
+    // The new subtitle covers the "what does the agent do?" gap.
+    expect(html).toMatch(
+      /can draft any artifact, run the gate check, and propose your[\s]+next move/,
+    );
+    // Choice strip label reflects the populate-not-submit semantics.
+    expect(html).toContain('Try one for');
+    expect(html).not.toContain('Three choices for');
+  });
+
   // ── B1: artifact mark-complete ─────────────────────────────────────────────
   it('renders Mark complete button + status pill for non-terminal artifacts', () => {
     const html = render({
