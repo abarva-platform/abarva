@@ -1,0 +1,234 @@
+{
+  "tenant_slug": "meridian-health",
+  "template_version": "v1.0.0",
+  "loaded_at": "2026-05-07T00:00:00Z",
+
+  "business_goals": [
+    {
+      "goal_id": "MH-GOAL-01",
+      "name": "Address physician burnout · improve retention",
+      "strategic_context": "Physician shortage acute. Burnout-driven attrition costing $400K-$1.2M per departing physician. Documentation burden cited as #1 driver.",
+      "display_order": 1
+    },
+    {
+      "goal_id": "MH-GOAL-02",
+      "name": "Restore margin · accelerate financial recovery",
+      "strategic_context": "Post-COVID financial recovery slow. Operating margin still below pre-2020. Revenue cycle leakage a major lever.",
+      "display_order": 2
+    },
+    {
+      "goal_id": "MH-GOAL-03",
+      "name": "Improve clinical outcomes · reduce avoidable readmissions",
+      "strategic_context": "Value-based care contracts make readmissions a direct financial liability. Quality metrics also tied to reimbursement.",
+      "display_order": 3
+    },
+    {
+      "goal_id": "MH-GOAL-04",
+      "name": "Build safe AI capability foundation",
+      "strategic_context": "HIPAA + emerging AI regulation + clinical safety bar means AI rollouts can't move fast without governance. Foundation prevents future debt.",
+      "display_order": 4
+    }
+  ],
+
+  "initiatives": [
+    {
+      "initiative_id": "meridian-llm-clinical-doc-2025",
+      "display_id": "MH-01",
+      "name": "Clinical Documentation Copilot",
+      "description": "Ambient AI scribe (Nuance DAX or equivalent) deployed to physicians. Strongest qualitative impact in the portfolio — physician satisfaction is the #1 board-level metric. Expansion to remaining 5 hospitals planned for FY26.",
+      "primary_category_id": "CAT-01",
+      "primary_goal_id": "MH-GOAL-01",
+      "stage": "scaled",
+      "stage_detail": "3 hospitals · 1,800 physicians",
+      "owner_name": "Dr. A. Hassan",
+      "owner_title": "CMIO",
+      "owner_function": "Clinical",
+      "committed_annual_usd": 4100000,
+      "committed_total_usd": null,
+      "measured_value_usd": 5800000,
+      "status_flag": "healthy",
+      "status_summary": "Physician satisfaction +21 points · documentation time -34%",
+      "confidence_level": "HIGH",
+      "aligned_callout": true,
+      "aligned_rationale": "Flagship initiative. #1 board-level metric (physician satisfaction). Single largest qualitative impact in the portfolio. Anchor of physician retention thesis."
+    },
+    {
+      "initiative_id": "meridian-sdlc-cursor-2026",
+      "display_id": "MH-02",
+      "name": "Vibe Coding Rollout for IT",
+      "description": "Cursor (vibe coding) deployed to platform engineering team. Pilot scoped to non-PHI codebases initially. Expansion to clinical-adjacent codebases gated on CISO review of code-leak risk.",
+      "primary_category_id": "CAT-02",
+      "primary_goal_id": "MH-GOAL-04",
+      "stage": "pilot",
+      "stage_detail": "24 of 180 IT engineers · non-PHI codebases only",
+      "owner_name": "P. Iyer",
+      "owner_title": "CTO",
+      "owner_function": "IT",
+      "committed_annual_usd": 400000,
+      "committed_total_usd": null,
+      "measured_value_usd": 180000,
+      "status_flag": "foundation_phase",
+      "status_summary": "Pilot · early signals positive · CISO review pending for clinical-adjacent expansion",
+      "confidence_level": "MED",
+      "aligned_callout": false,
+      "aligned_rationale": null
+    },
+    {
+      "initiative_id": "meridian-agentic-now-assist-2026",
+      "display_id": "MH-03",
+      "name": "Autonomous Helpdesk via ServiceNow",
+      "description": "ServiceNow Now Assist for IT helpdesk. Auto-resolution of password resets, access requests, basic config issues. Currently in P-DUPL-2026-02 pressure due to overlap with M365 Copilot. ServiceNow renewal Q4 2026.",
+      "primary_category_id": "CAT-03",
+      "primary_goal_id": "MH-GOAL-04",
+      "stage": "pilot",
+      "stage_detail": "IT support only · expanding to clinical IT requests",
+      "owner_name": "J. Park",
+      "owner_title": "Steward · IT Operations",
+      "owner_function": "IT",
+      "committed_annual_usd": 900000,
+      "committed_total_usd": null,
+      "measured_value_usd": 380000,
+      "status_flag": "duplication_risk",
+      "status_summary": "Duplication conflict with M365 Copilot · attribution loose · ServiceNow renewal Q4",
+      "confidence_level": "MED",
+      "aligned_callout": false,
+      "aligned_rationale": null
+    },
+    {
+      "initiative_id": "meridian-erp-epic-revcycle-2025",
+      "display_id": "MH-04",
+      "name": "Epic AI for Revenue Cycle",
+      "description": "Epic AI features for revenue cycle: prior auth automation, denial prediction, claim scrubbing. Tied directly to margin recovery thesis (post-COVID financial recovery). Performance currently below target but trajectory positive.",
+      "primary_category_id": "CAT-04",
+      "primary_goal_id": "MH-GOAL-02",
+      "stage": "multi_year_strategic_bet",
+      "stage_detail": "Year 1 of 2",
+      "owner_name": "S. Williams",
+      "owner_title": "CFO Revenue Cycle",
+      "owner_function": "Revenue Cycle",
+      "committed_annual_usd": 1300000,
+      "committed_total_usd": 2600000,
+      "measured_value_usd": 1400000,
+      "status_flag": "value_lag",
+      "status_summary": "Mid-deployment · denials reduction tracking 8% (target 15%)",
+      "confidence_level": "MED",
+      "aligned_callout": true,
+      "aligned_rationale": "Direct margin recovery lever. Single largest non-platform AI investment. Tied to board-level financial recovery thesis."
+    },
+    {
+      "initiative_id": "meridian-ml-clinical-risk-2024",
+      "display_id": "MH-05",
+      "name": "Clinical Risk Stratification ML",
+      "description": "Risk stratification models for inpatient population. Live system-wide. Mature program; mostly maintenance + incremental model updates. Strong outcomes attribution.",
+      "primary_category_id": "CAT-05",
+      "primary_goal_id": "MH-GOAL-03",
+      "stage": "scaled",
+      "stage_detail": "System-wide · all 8 hospitals",
+      "owner_name": "Dr. R. Kim",
+      "owner_title": "Chief Quality Officer",
+      "owner_function": "Quality",
+      "committed_annual_usd": 600000,
+      "committed_total_usd": null,
+      "measured_value_usd": 3800000,
+      "status_flag": "healthy",
+      "status_summary": "Readmission rate -7% · sepsis early-detection +12%",
+      "confidence_level": "HIGH",
+      "aligned_callout": false,
+      "aligned_rationale": null
+    },
+    {
+      "initiative_id": "meridian-llm-sap-joule-2025",
+      "display_id": "MH-06",
+      "name": "Joule (SAP) Pilot for Finance",
+      "description": "SAP Joule for finance team workflows. The 'Joule rollout' referenced in current Tower pressure cards (P-VALUE-2026-05). Value lag attributed to slower-than-planned RPA pipeline migration. Re-baseline expected at next governance review.",
+      "primary_category_id": "CAT-04",
+      "secondary_category_id": "CAT-01",
+      "primary_goal_id": "MH-GOAL-02",
+      "stage": "pilot",
+      "stage_detail": "Finance team only · 9 months in",
+      "owner_name": "SAP COE",
+      "owner_title": "Center of Excellence",
+      "owner_function": "Finance",
+      "committed_annual_usd": 3200000,
+      "committed_total_usd": null,
+      "measured_value_usd": 1400000,
+      "status_flag": "value_lag",
+      "status_summary": "Committed $3.2M annual; measured $1.4M after 9 months · re-baseline pending",
+      "confidence_level": "MED",
+      "aligned_callout": false,
+      "aligned_rationale": null
+    },
+    {
+      "initiative_id": "meridian-infra-governance-finops-2026",
+      "display_id": "MH-07",
+      "name": "Model Governance & FinOps Platform",
+      "description": "Platform investment for AI cost attribution + model governance. The 'Agent platform foundation' referenced in current Tower strategic bets. Won't show measured value until programs migrate onto platform.",
+      "primary_category_id": "CAT-06",
+      "secondary_category_id": "CAT-08",
+      "primary_goal_id": "MH-GOAL-04",
+      "stage": "multi_year_strategic_bet",
+      "stage_detail": "Year 1 of 3 · foundation phase",
+      "owner_name": "P. Iyer / M. Castillo",
+      "owner_title": "CTO / CFO",
+      "owner_function": "IT / Finance",
+      "committed_annual_usd": 1400000,
+      "committed_total_usd": 4200000,
+      "measured_value_usd": 0,
+      "status_flag": "foundation_phase",
+      "status_summary": "Foundation phase · attribution coverage low · platform under construction",
+      "confidence_level": "LOW",
+      "aligned_callout": false,
+      "aligned_rationale": null
+    }
+  ],
+
+  "kpi_history": [
+    {"initiative_id": "meridian-llm-clinical-doc-2025", "kpi_name": "Physician satisfaction NPS", "kpi_unit": "NPS pts", "quarter": "Q1-2025", "kpi_value": 12, "target_value": 25, "confidence_level": "HIGH"},
+    {"initiative_id": "meridian-llm-clinical-doc-2025", "kpi_name": "Physician satisfaction NPS", "kpi_unit": "NPS pts", "quarter": "Q3-2025", "kpi_value": 28, "target_value": 35, "confidence_level": "HIGH"},
+    {"initiative_id": "meridian-llm-clinical-doc-2025", "kpi_name": "Physician satisfaction NPS", "kpi_unit": "NPS pts", "quarter": "Q1-2026", "kpi_value": 33, "target_value": 40, "confidence_level": "HIGH"},
+    {"initiative_id": "meridian-llm-clinical-doc-2025", "kpi_name": "Documentation time per encounter", "kpi_unit": "min", "quarter": "Q1-2025", "kpi_value": 17, "target_value": 12, "confidence_level": "HIGH"},
+    {"initiative_id": "meridian-llm-clinical-doc-2025", "kpi_name": "Documentation time per encounter", "kpi_unit": "min", "quarter": "Q1-2026", "kpi_value": 11, "target_value": 10, "confidence_level": "HIGH"},
+    {"initiative_id": "meridian-erp-epic-revcycle-2025", "kpi_name": "Denials reduction %", "kpi_unit": "%", "quarter": "Q4-2025", "kpi_value": 3, "target_value": 8, "confidence_level": "MED"},
+    {"initiative_id": "meridian-erp-epic-revcycle-2025", "kpi_name": "Denials reduction %", "kpi_unit": "%", "quarter": "Q1-2026", "kpi_value": 6, "target_value": 12, "confidence_level": "MED"},
+    {"initiative_id": "meridian-erp-epic-revcycle-2025", "kpi_name": "Denials reduction %", "kpi_unit": "%", "quarter": "Q2-2026", "kpi_value": 8, "target_value": 15, "confidence_level": "MED"},
+    {"initiative_id": "meridian-ml-clinical-risk-2024", "kpi_name": "Readmission rate (30d)", "kpi_unit": "%", "quarter": "Q1-2024", "kpi_value": 14.2, "target_value": 12.0, "confidence_level": "HIGH"},
+    {"initiative_id": "meridian-ml-clinical-risk-2024", "kpi_name": "Readmission rate (30d)", "kpi_unit": "%", "quarter": "Q1-2025", "kpi_value": 13.5, "target_value": 12.0, "confidence_level": "HIGH"},
+    {"initiative_id": "meridian-ml-clinical-risk-2024", "kpi_name": "Readmission rate (30d)", "kpi_unit": "%", "quarter": "Q1-2026", "kpi_value": 13.2, "target_value": 12.0, "confidence_level": "HIGH"},
+    {"initiative_id": "meridian-llm-sap-joule-2025", "kpi_name": "Realized value", "kpi_unit": "$M", "quarter": "Q3-2025", "kpi_value": 0.4, "target_value": 1.0, "confidence_level": "MED"},
+    {"initiative_id": "meridian-llm-sap-joule-2025", "kpi_name": "Realized value", "kpi_unit": "$M", "quarter": "Q4-2025", "kpi_value": 0.8, "target_value": 1.6, "confidence_level": "MED"},
+    {"initiative_id": "meridian-llm-sap-joule-2025", "kpi_name": "Realized value", "kpi_unit": "$M", "quarter": "Q2-2026", "kpi_value": 1.4, "target_value": 3.2, "confidence_level": "MED"},
+    {"initiative_id": "meridian-agentic-now-assist-2026", "kpi_name": "Auto-resolution rate", "kpi_unit": "%", "quarter": "Q1-2026", "kpi_value": 24, "target_value": 50, "confidence_level": "LOW"},
+    {"initiative_id": "meridian-agentic-now-assist-2026", "kpi_name": "Auto-resolution rate", "kpi_unit": "%", "quarter": "Q2-2026", "kpi_value": 31, "target_value": 50, "confidence_level": "LOW"}
+  ],
+
+  "stakeholder_notes": [
+    {"initiative_id": "meridian-llm-clinical-doc-2025", "stakeholder_name": "Dr. A. Hassan", "stakeholder_title": "CMIO", "interview_date": "2026-04-12", "quote": "This is the AI program that physicians actually thank us for. That's never happened before in my career.", "themes": ["adoption", "value", "physician satisfaction"], "attribution_consent": true},
+    {"initiative_id": "meridian-erp-epic-revcycle-2025", "stakeholder_name": "S. Williams", "stakeholder_title": "CFO Revenue Cycle", "interview_date": "2026-04-18", "quote": "If Epic AI hits the 15% denials reduction target, it pays for itself in 14 months. We're tracking 8%. The math still works but the runway is tightening.", "themes": ["financial", "trajectory"], "attribution_consent": true},
+    {"initiative_id": "meridian-llm-sap-joule-2025", "stakeholder_name": "M. Castillo", "stakeholder_title": "CFO", "interview_date": "2026-04-25", "quote": "Joule is the program I'm most worried about. We committed $3.2M based on a vendor demo. Nine months in we have $1.4M of measured value. That's not the trajectory we sold the board.", "themes": ["value lag", "vendor", "board narrative"], "attribution_consent": true},
+    {"initiative_id": "meridian-agentic-now-assist-2026", "stakeholder_name": "J. Park", "stakeholder_title": "Steward · IT Operations", "interview_date": "2026-04-08", "quote": "Now Assist is good at the easy stuff. The problem is M365 Copilot is also pitched at the easy stuff. We have two tools competing for the same use cases.", "themes": ["duplication", "vendor strategy"], "attribution_consent": true}
+  ],
+
+  "decisions": [
+    {"initiative_id": "meridian-llm-clinical-doc-2025", "decision_name": "Expansion to remaining 5 hospitals", "decision_date": "2026-02-08", "sponsor_name": "Dr. A. Hassan + Castillo", "decision_status": "decided", "dissent_recorded": false, "outcome_status": "Approved · FY26 budget allocated"},
+    {"initiative_id": "meridian-erp-epic-revcycle-2025", "decision_name": "Y2 budget release", "decision_date": null, "sponsor_name": "S. Williams + Castillo", "decision_status": "pending", "dissent_recorded": true, "dissent_summary": "Castillo wants Y2 release tied to denials trajectory hitting 12% by Q3", "outcome_status": "Q3 2026 review gate"},
+    {"initiative_id": "meridian-llm-sap-joule-2025", "decision_name": "Joule re-baseline or sunset", "decision_date": null, "sponsor_name": "Castillo", "decision_status": "pending", "dissent_recorded": true, "dissent_summary": "SAP COE wants re-baseline; Castillo open to sunset if Y3 doesn't show clear path to $3M+ realized", "outcome_status": "Next governance review · May 19"},
+    {"initiative_id": "meridian-agentic-now-assist-2026", "decision_name": "Now Assist vs M365 Copilot consolidation", "decision_date": null, "sponsor_name": "J. Park", "decision_status": "pending", "dissent_recorded": false, "outcome_status": "Atlas-recommended attribution study underway · 6-week timeline"},
+    {"initiative_id": "meridian-sdlc-cursor-2026", "decision_name": "Expansion to clinical-adjacent codebases", "decision_date": null, "sponsor_name": "P. Iyer", "decision_status": "pending", "dissent_recorded": false, "outcome_status": "CISO review pending"}
+  ],
+
+  "vendors": [
+    {"initiative_id": "meridian-llm-clinical-doc-2025", "vendor_name": "Nuance / Microsoft (DAX Express)", "contract_value_usd": 4100000, "renewal_date": "2027-06-30", "financial_health": "strong", "notes": "Bundled with M365 health"},
+    {"initiative_id": "meridian-sdlc-cursor-2026", "vendor_name": "Cursor (Anysphere)", "contract_value_usd": 400000, "renewal_date": "2027-04-30", "financial_health": "moderate", "notes": "Younger vendor"},
+    {"initiative_id": "meridian-agentic-now-assist-2026", "vendor_name": "ServiceNow", "contract_value_usd": 4100000, "renewal_date": "2026-12-31", "financial_health": "strong", "notes": "Renewal in 8 months · scope refresh in progress"},
+    {"initiative_id": "meridian-erp-epic-revcycle-2025", "vendor_name": "Epic Systems", "contract_value_usd": 2600000, "renewal_date": "2028-06-30", "financial_health": "strong", "notes": "Strategic vendor · multi-year"},
+    {"initiative_id": "meridian-llm-sap-joule-2025", "vendor_name": "SAP", "contract_value_usd": 3200000, "renewal_date": "2027-12-31", "financial_health": "strong", "notes": "Bundled with broader SAP modernization"},
+    {"initiative_id": "meridian-llm-sap-joule-2025", "vendor_name": "Innovaccer", "contract_value_usd": 1800000, "renewal_date": "2027-01-31", "financial_health": "watch", "notes": "Vendor-first signals detected · 2 peer health systems delayed renewals citing implementation risk"}
+  ],
+
+  "scenarios": [
+    {"initiative_id": "meridian-llm-sap-joule-2025", "scenario_name": "Joule sunset at next governance review", "trigger_event": "May 19 governance review · realized value still tracking below 50% of committed", "time_horizon_months": 1, "probability_pct": 30, "impact_summary": "$3.2M annual reallocated · finance team productivity work pivoted · vendor relationship damaged"},
+    {"initiative_id": "meridian-erp-epic-revcycle-2025", "scenario_name": "Denials reduction stalls at 10%", "trigger_event": "Q3 2026 review", "time_horizon_months": 4, "probability_pct": 35, "impact_summary": "Y2 budget release contested · CFO posture shifts · re-scope expected"},
+    {"initiative_id": "meridian-agentic-now-assist-2026", "scenario_name": "ServiceNow renewal scope reduction", "trigger_event": "Q4 2026 renewal · Now Assist + M365 Copilot duplication unresolved", "time_horizon_months": 8, "probability_pct": 50, "impact_summary": "Now Assist scope reduced or removed from renewal · $0.9M reallocated"},
+    {"initiative_id": "meridian-llm-clinical-doc-2025", "scenario_name": "Expansion to 5 hospitals lands ahead of schedule", "trigger_event": "Q3 2026 cohort completes", "time_horizon_months": 5, "probability_pct": 65, "impact_summary": "Physician satisfaction lifts further · physician retention metric improves · serves as proof-point for board"}
+  ]
+}

@@ -1,0 +1,223 @@
+{
+  "tenant_slug": "first-capital-financial",
+  "template_version": "v1.0.0",
+  "loaded_at": "2026-05-07T00:00:00Z",
+
+  "business_goals": [
+    {
+      "goal_id": "FCF-GOAL-01",
+      "name": "Defend NIM through better risk-adjusted pricing",
+      "strategic_context": "NIM compression accelerating (14bp/quarter, 3 consecutive quarters). Need to price better, not chase volume.",
+      "display_order": 1
+    },
+    {
+      "goal_id": "FCF-GOAL-02",
+      "name": "Achieve regulatory posture for AI",
+      "strategic_context": "SR 11-7 + FFIEC AI guidance + OCC bulletins tightening. Must demonstrate model risk maturity to examiners.",
+      "display_order": 2
+    },
+    {
+      "goal_id": "FCF-GOAL-03",
+      "name": "Reduce loss + protect customer experience",
+      "strategic_context": "Fraud rising in digital channels. False positives damaging customer experience.",
+      "display_order": 3
+    },
+    {
+      "goal_id": "FCF-GOAL-04",
+      "name": "Productivity uplift in middle/back office",
+      "strategic_context": "Cost-to-income ratio above peer median. Need productivity gains.",
+      "display_order": 4
+    }
+  ],
+
+  "initiatives": [
+    {
+      "initiative_id": "fcf-llm-m365-copilot-2025",
+      "display_id": "FCF-01",
+      "name": "M365 Copilot for Knowledge Workers",
+      "description": "M365 Copilot deployed selectively. Finance and Legal driving adoption; IT and Operations underwhelming. Q3 2026 expansion decision gated on per-function ROI study.",
+      "primary_category_id": "CAT-01",
+      "primary_goal_id": "FCF-GOAL-04",
+      "stage": "pilot",
+      "stage_detail": "1,200 of 4,800 knowledge worker seats",
+      "owner_name": "S. Lin",
+      "owner_title": "CHRO",
+      "owner_function": "HR",
+      "committed_annual_usd": 1400000,
+      "committed_total_usd": null,
+      "measured_value_usd": 380000,
+      "status_flag": "adoption_gap",
+      "status_summary": "Finance 67% · Legal 58% · IT 22% · Operations 18%",
+      "confidence_level": "MED",
+      "aligned_callout": false,
+      "aligned_rationale": null
+    },
+    {
+      "initiative_id": "fcf-sdlc-code-review-2026",
+      "display_id": "FCF-02",
+      "name": "AI-Assisted Code Review for Risk Engineering",
+      "description": "Cursor + custom rules for risk engineering team. Initially scoped narrowly because of model risk governance concerns. Expansion to broader engineering pending CISO sign-off.",
+      "primary_category_id": "CAT-02",
+      "primary_goal_id": "FCF-GOAL-02",
+      "stage": "pilot",
+      "stage_detail": "Risk engineering team only · 38 engineers",
+      "owner_name": "M. Chen",
+      "owner_title": "CDO",
+      "owner_function": "Data",
+      "committed_annual_usd": 300000,
+      "committed_total_usd": null,
+      "measured_value_usd": 220000,
+      "status_flag": "healthy",
+      "status_summary": "Cycle time -28% · review depth maintained",
+      "confidence_level": "HIGH",
+      "aligned_callout": false,
+      "aligned_rationale": null
+    },
+    {
+      "initiative_id": "fcf-agentic-advisor-2025",
+      "display_id": "FCF-03",
+      "name": "Advisor Decision-Support AI",
+      "description": "AI overlay for branch advisors. Pulls relevant client context, suggests products, drafts follow-up communications. Productivity gains real but expansion paused waiting on the model governance operating model decision.",
+      "primary_category_id": "CAT-03",
+      "primary_goal_id": "FCF-GOAL-04",
+      "stage": "pilot",
+      "stage_detail": "28 branches in 3 metros",
+      "owner_name": "R. Khan",
+      "owner_title": "EVP Wealth & Branch",
+      "owner_function": "Wealth & Branch",
+      "committed_annual_usd": 1100000,
+      "committed_total_usd": null,
+      "measured_value_usd": 480000,
+      "status_flag": "stalled",
+      "status_summary": "Productivity +14% in pilot · expansion paused pending governance",
+      "confidence_level": "MED",
+      "aligned_callout": false,
+      "aligned_rationale": null
+    },
+    {
+      "initiative_id": "fcf-ml-credit-decisioning-2026",
+      "display_id": "FCF-04",
+      "name": "Credit Decisioning Modernization",
+      "description": "Modernization of consumer credit decisioning models from legacy logistic regression to gradient-boosted + alternative-data ensemble. Single biggest AI investment in the portfolio. Tied directly to NIM compression mitigation thesis.",
+      "primary_category_id": "CAT-05",
+      "primary_goal_id": "FCF-GOAL-01",
+      "stage": "multi_year_strategic_bet",
+      "stage_detail": "Year 1 of 2 · foundation phase",
+      "owner_name": "K. Nakamura",
+      "owner_title": "CRO",
+      "owner_function": "Risk",
+      "committed_annual_usd": 2300000,
+      "committed_total_usd": 4600000,
+      "measured_value_usd": 0,
+      "status_flag": "foundation_phase",
+      "status_summary": "Foundation phase · model build underway · Y2 deployment target",
+      "confidence_level": "MED",
+      "aligned_callout": true,
+      "aligned_rationale": "Single largest AI investment in the portfolio. Directly tied to NIM compression mitigation. The most-cited Move candidate in Sentinel's exploration threads."
+    },
+    {
+      "initiative_id": "fcf-ml-fraud-2025",
+      "display_id": "FCF-05",
+      "name": "Fraud Detection AI Refresh",
+      "description": "Fraud detection model refresh with newer architecture. Currently in P1 Charter as a Strategic Move (M-FCF-009). Platform-grade investment with defined business case.",
+      "primary_category_id": "CAT-05",
+      "primary_goal_id": "FCF-GOAL-03",
+      "stage": "in_strategic_move",
+      "stage_detail": "P1 Charter · M-FCF-009",
+      "owner_name": "K. Nakamura",
+      "owner_title": "CRO",
+      "owner_function": "Risk",
+      "committed_annual_usd": 2200000,
+      "committed_total_usd": null,
+      "measured_value_usd": 1800000,
+      "status_flag": "in_move",
+      "status_summary": "In flight as Strategic Move · pre-mortem candidate",
+      "confidence_level": "HIGH",
+      "aligned_callout": false,
+      "aligned_rationale": null
+    },
+    {
+      "initiative_id": "fcf-customer-conv-banking-2026",
+      "display_id": "FCF-06",
+      "name": "Conversational Banking Assistant",
+      "description": "AI conversational interface in digital banking app. Account inquiries, transaction lookups, basic servicing. Pilot scaling slowly; containment below target attributed to limited use-case coverage.",
+      "primary_category_id": "CAT-07",
+      "primary_goal_id": "FCF-GOAL-04",
+      "stage": "pilot",
+      "stage_detail": "10% of digital banking traffic",
+      "owner_name": "L. Pereira",
+      "owner_title": "Chief Digital Officer",
+      "owner_function": "Digital",
+      "committed_annual_usd": 1700000,
+      "committed_total_usd": null,
+      "measured_value_usd": 290000,
+      "status_flag": "value_lag",
+      "status_summary": "Containment 34% (target 60%) · use-case coverage limited",
+      "confidence_level": "MED",
+      "aligned_callout": false,
+      "aligned_rationale": null
+    },
+    {
+      "initiative_id": "fcf-governance-mrm-2026",
+      "display_id": "FCF-07",
+      "name": "Model Risk Governance Operating Model",
+      "description": "Operating model for who owns model risk across the bank. Currently contested between CDO and CIO. Until resolved, model deployment cadence is blocked. Regulatory bar from SR 11-7 makes this urgent rather than optional.",
+      "primary_category_id": "CAT-08",
+      "primary_goal_id": "FCF-GOAL-02",
+      "stage": "multi_year_strategic_bet",
+      "stage_detail": "Q1 2026 → Q4 2026",
+      "owner_name": "M. Chen / J. Park (contested)",
+      "owner_title": "CDO / CIO",
+      "owner_function": "Data / IT",
+      "committed_annual_usd": 800000,
+      "committed_total_usd": null,
+      "measured_value_usd": 0,
+      "status_flag": "stalled",
+      "status_summary": "CDO–CIO conflict unresolved 3 quarters · CEO declined arbitration twice",
+      "confidence_level": "HIGH",
+      "aligned_callout": true,
+      "aligned_rationale": "Blocker for 4 other AI initiatives. SR 11-7 regulatory urgency rising. The single most-impactful unblock available — resolving this unblocks Credit Decisioning, Fraud Refresh, Advisor AI expansion, and Conversational Banking."
+    }
+  ],
+
+  "kpi_history": [
+    {"initiative_id": "fcf-llm-m365-copilot-2025", "kpi_name": "Active seats %", "kpi_unit": "%", "quarter": "Q4-2025", "kpi_value": 28, "target_value": 50, "confidence_level": "HIGH"},
+    {"initiative_id": "fcf-llm-m365-copilot-2025", "kpi_name": "Active seats %", "kpi_unit": "%", "quarter": "Q1-2026", "kpi_value": 35, "target_value": 60, "confidence_level": "HIGH"},
+    {"initiative_id": "fcf-llm-m365-copilot-2025", "kpi_name": "Active seats %", "kpi_unit": "%", "quarter": "Q2-2026", "kpi_value": 41, "target_value": 70, "confidence_level": "HIGH"},
+    {"initiative_id": "fcf-ml-credit-decisioning-2026", "kpi_name": "Model build progress", "kpi_unit": "%", "quarter": "Q1-2026", "kpi_value": 18, "target_value": 25, "confidence_level": "MED"},
+    {"initiative_id": "fcf-ml-credit-decisioning-2026", "kpi_name": "Model build progress", "kpi_unit": "%", "quarter": "Q2-2026", "kpi_value": 32, "target_value": 50, "confidence_level": "MED"},
+    {"initiative_id": "fcf-ml-fraud-2025", "kpi_name": "Fraud loss avoided", "kpi_unit": "$M", "quarter": "Q1-2024", "kpi_value": 1.2, "target_value": 1.5, "confidence_level": "HIGH"},
+    {"initiative_id": "fcf-ml-fraud-2025", "kpi_name": "Fraud loss avoided", "kpi_unit": "$M", "quarter": "Q1-2025", "kpi_value": 1.4, "target_value": 1.7, "confidence_level": "HIGH"},
+    {"initiative_id": "fcf-ml-fraud-2025", "kpi_name": "Fraud loss avoided", "kpi_unit": "$M", "quarter": "Q1-2026", "kpi_value": 1.8, "target_value": 2.0, "confidence_level": "HIGH"},
+    {"initiative_id": "fcf-customer-conv-banking-2026", "kpi_name": "Containment rate", "kpi_unit": "%", "quarter": "Q1-2026", "kpi_value": 22, "target_value": 50, "confidence_level": "MED"},
+    {"initiative_id": "fcf-customer-conv-banking-2026", "kpi_name": "Containment rate", "kpi_unit": "%", "quarter": "Q2-2026", "kpi_value": 34, "target_value": 60, "confidence_level": "MED"},
+    {"initiative_id": "fcf-governance-mrm-2026", "kpi_name": "Models with full governance review", "kpi_unit": "%", "quarter": "Q1-2026", "kpi_value": 23, "target_value": 80, "confidence_level": "HIGH"},
+    {"initiative_id": "fcf-governance-mrm-2026", "kpi_name": "Models with full governance review", "kpi_unit": "%", "quarter": "Q2-2026", "kpi_value": 24, "target_value": 80, "confidence_level": "HIGH"}
+  ],
+
+  "stakeholder_notes": [
+    {"initiative_id": "fcf-ml-credit-decisioning-2026", "stakeholder_name": "K. Nakamura", "stakeholder_title": "CRO", "interview_date": "2026-04-22", "quote": "I'm concerned about being named on three concurrent programs simultaneously with no capacity relief.", "themes": ["capacity", "ownership"], "attribution_consent": true},
+    {"initiative_id": "fcf-governance-mrm-2026", "stakeholder_name": "M. Chen", "stakeholder_title": "CDO", "interview_date": "2026-04-15", "quote": "Until model risk has a single owner, we're going to keep relitigating the same fights.", "themes": ["governance", "conflict"], "attribution_consent": true},
+    {"initiative_id": "fcf-governance-mrm-2026", "stakeholder_name": "J. Park", "stakeholder_title": "CIO", "interview_date": "2026-04-16", "quote": "Model risk should sit with whoever runs the model in production. That's IT.", "themes": ["governance", "conflict"], "attribution_consent": true},
+    {"initiative_id": "fcf-agentic-advisor-2025", "stakeholder_name": "R. Khan", "stakeholder_title": "EVP Wealth & Branch", "interview_date": "2026-04-08", "quote": "We're sitting on a working pilot with measurable productivity gains and we can't expand because of governance. That's a bad signal to the org.", "themes": ["expansion", "governance"], "attribution_consent": true}
+  ],
+
+  "decisions": [
+    {"initiative_id": "fcf-governance-mrm-2026", "decision_name": "Model risk single-owner assignment", "decision_date": null, "sponsor_name": "CEO declined twice", "decision_status": "stalled", "dissent_recorded": true, "dissent_summary": "CDO and CIO both want ownership · CEO has declined to arbitrate", "outcome_status": "Stalled 3 quarters"},
+    {"initiative_id": "fcf-ml-credit-decisioning-2026", "decision_name": "Alternative data source vendor selection", "decision_date": "2026-03-22", "sponsor_name": "K. Nakamura", "decision_status": "decided", "dissent_recorded": false, "outcome_status": "Three vendors selected for evaluation"},
+    {"initiative_id": "fcf-llm-m365-copilot-2025", "decision_name": "Per-function expansion", "decision_date": null, "sponsor_name": "S. Lin", "decision_status": "pending", "dissent_recorded": false, "outcome_status": "Q3 2026 ROI study driving"},
+    {"initiative_id": "fcf-agentic-advisor-2025", "decision_name": "Branch expansion (paused)", "decision_date": null, "sponsor_name": "R. Khan", "decision_status": "stalled", "dissent_recorded": false, "outcome_status": "Awaiting MRM decision"}
+  ],
+
+  "vendors": [
+    {"initiative_id": "fcf-llm-m365-copilot-2025", "vendor_name": "Microsoft", "contract_value_usd": 1400000, "renewal_date": "2027-12-31", "financial_health": "strong", "notes": "Bundled with broader EA"},
+    {"initiative_id": "fcf-sdlc-code-review-2026", "vendor_name": "Cursor (Anysphere)", "contract_value_usd": 300000, "renewal_date": "2027-04-30", "financial_health": "moderate", "notes": "Younger vendor; financial health bears watching"},
+    {"initiative_id": "fcf-ml-fraud-2025", "vendor_name": "NICE Actimize", "contract_value_usd": 2200000, "renewal_date": "2026-11-30", "financial_health": "strong", "notes": "Renewal underway · scope refresh in progress"}
+  ],
+
+  "scenarios": [
+    {"initiative_id": "fcf-governance-mrm-2026", "scenario_name": "Examiner finding on AI model governance", "trigger_event": "Q4 2026 examination cycle", "time_horizon_months": 6, "probability_pct": 60, "impact_summary": "MRA likely · forces accelerated governance build · disrupts existing model deployments"},
+    {"initiative_id": "fcf-ml-credit-decisioning-2026", "scenario_name": "Y1 deliverables slip 6 months", "trigger_event": "Q3 2026 review", "time_horizon_months": 4, "probability_pct": 40, "impact_summary": "Y2 deployment pushed to Q3 2027 · NIM compression mitigation thesis weakens"},
+    {"initiative_id": "fcf-agentic-advisor-2025", "scenario_name": "Pilot wound down due to governance stall", "trigger_event": "MRM decision exceeds 5 quarters stalled", "time_horizon_months": 6, "probability_pct": 30, "impact_summary": "$1.1M reallocated · advisor productivity work paused · org signal that AI expansion is hard at FCF"}
+  ]
+}

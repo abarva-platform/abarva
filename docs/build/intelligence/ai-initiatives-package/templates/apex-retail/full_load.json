@@ -1,0 +1,228 @@
+{
+  "tenant_slug": "apex-retail",
+  "template_version": "v1.0.0",
+  "loaded_at": "2026-05-07T00:00:00Z",
+
+  "business_goals": [
+    {
+      "goal_id": "AR-GOAL-01",
+      "name": "Defend margin amid value-player pressure",
+      "strategic_context": "Discount and value retailers eating share. Apex's traditional mid-market position squeezed.",
+      "display_order": 1
+    },
+    {
+      "goal_id": "AR-GOAL-02",
+      "name": "Improve cost-to-serve while protecting CX",
+      "strategic_context": "Contact center costs growing faster than revenue. Customer expectations rising on response time.",
+      "display_order": 2
+    },
+    {
+      "goal_id": "AR-GOAL-03",
+      "name": "Accelerate digital growth (revenue per session)",
+      "strategic_context": "Digital channel growing 18% YoY but revenue per session below industry leaders. Personalization gap.",
+      "display_order": 3
+    },
+    {
+      "goal_id": "AR-GOAL-04",
+      "name": "Build AI capability foundation",
+      "strategic_context": "Ad-hoc AI adoption creating cost and governance risk. Need a platform layer.",
+      "display_order": 4
+    }
+  ],
+
+  "initiatives": [
+    {
+      "initiative_id": "apex-llm-copilot-2025",
+      "display_id": "AR-01",
+      "name": "Store Associate Copilot",
+      "description": "Microsoft 365 Copilot deployed to 1,400 associates in 8 pilot stores. Use cases: shift handoff notes, customer return policy lookup, training Q&A. Pilot started Q4 2025; expansion gated on adoption metrics.",
+      "primary_category_id": "CAT-01",
+      "primary_goal_id": "AR-GOAL-02",
+      "stage": "pilot",
+      "stage_detail": "8 stores · 1,400 associates",
+      "owner_name": "L. Tanaka",
+      "owner_title": "VP Store Operations",
+      "owner_function": "Operations",
+      "committed_annual_usd": 1600000,
+      "committed_total_usd": null,
+      "measured_value_usd": 320000,
+      "status_flag": "adoption_gap",
+      "status_summary": "32% active vs 70% target",
+      "confidence_level": "MED",
+      "aligned_callout": false,
+      "aligned_rationale": null
+    },
+    {
+      "initiative_id": "apex-sdlc-github-copilot-2025",
+      "display_id": "AR-02",
+      "name": "GitHub Copilot for Engineering",
+      "description": "GitHub Copilot for the engineering org. Strongest measured value in the portfolio — clear PR cycle time reduction, developer satisfaction +18 NPS. Renewal Q3 2026 expected straightforward.",
+      "primary_category_id": "CAT-02",
+      "primary_goal_id": "AR-GOAL-03",
+      "stage": "scaled",
+      "stage_detail": "340 engineers",
+      "owner_name": "R. Chen",
+      "owner_title": "CTO",
+      "owner_function": "IT",
+      "committed_annual_usd": 900000,
+      "committed_total_usd": null,
+      "measured_value_usd": 1400000,
+      "status_flag": "healthy",
+      "status_summary": "PR cycle time -22% · dev NPS +18",
+      "confidence_level": "HIGH",
+      "aligned_callout": false,
+      "aligned_rationale": null
+    },
+    {
+      "initiative_id": "apex-agentic-cx-2026",
+      "display_id": "AR-03",
+      "name": "Autonomous Customer Service Agent",
+      "description": "Sierra-based autonomous agent for chat. Handling returns, order status, basic policy questions. Escalation to human at confidence threshold. Q2 2026 governance review will determine voice expansion.",
+      "primary_category_id": "CAT-03",
+      "primary_goal_id": "AR-GOAL-02",
+      "stage": "pilot",
+      "stage_detail": "40% of inbound chat",
+      "owner_name": "M. Reyes",
+      "owner_title": "VP Customer Care",
+      "owner_function": "Customer Service",
+      "committed_annual_usd": 2100000,
+      "committed_total_usd": null,
+      "measured_value_usd": 480000,
+      "status_flag": "value_lag",
+      "status_summary": "Containment 47% (target 65%); escalation quality concerns",
+      "confidence_level": "MED",
+      "aligned_callout": true,
+      "aligned_rationale": "Largest single initiative tied to cost-to-serve goal. Material outcome either way — proves the agentic CX thesis or kills it."
+    },
+    {
+      "initiative_id": "apex-erp-joule-merch-2025",
+      "display_id": "AR-04",
+      "name": "SAP Joule for Merchandise Planning",
+      "description": "SAP Joule embedded in merch planning workflows. Demand sensing, allocation suggestions, markdown timing. Value lag attributed to slower-than-planned data integration with POS.",
+      "primary_category_id": "CAT-04",
+      "primary_goal_id": "AR-GOAL-01",
+      "stage": "multi_year_strategic_bet",
+      "stage_detail": "Year 1 of 2",
+      "owner_name": "K. Singh",
+      "owner_title": "Chief Merchandising Officer",
+      "owner_function": "Merchandising",
+      "committed_annual_usd": 1700000,
+      "committed_total_usd": 3400000,
+      "measured_value_usd": 800000,
+      "status_flag": "value_lag",
+      "status_summary": "Measured $0.8M against $1.4M target after 9 months",
+      "confidence_level": "MED",
+      "aligned_callout": false,
+      "aligned_rationale": null
+    },
+    {
+      "initiative_id": "apex-ml-demand-forecast-2024",
+      "display_id": "AR-05",
+      "name": "Demand Forecasting Modernization",
+      "description": "ML demand forecasting modernized from legacy ARIMA to gradient-boosted + transformer hybrid. Live across all 23 categories. Forecast accuracy improvement is the most-cited ROI in the AI portfolio.",
+      "primary_category_id": "CAT-05",
+      "primary_goal_id": "AR-GOAL-01",
+      "stage": "scaled",
+      "stage_detail": "All 23 categories",
+      "owner_name": "P. Anand",
+      "owner_title": "VP Supply Chain",
+      "owner_function": "Supply Chain",
+      "committed_annual_usd": 700000,
+      "committed_total_usd": null,
+      "measured_value_usd": 4200000,
+      "status_flag": "healthy",
+      "status_summary": "Forecast accuracy +12% YoY · in-stock +3pts",
+      "confidence_level": "HIGH",
+      "aligned_callout": true,
+      "aligned_rationale": "Strongest measured ROI in the AI portfolio. Proof-point for the broader AI investment thesis. Anchor of the supply chain transformation narrative."
+    },
+    {
+      "initiative_id": "apex-infra-finops-ai-2026",
+      "display_id": "AR-06",
+      "name": "AI Cost Attribution Platform",
+      "description": "LiteLLM + Helicone stack for token-level attribution across all LLM-using initiatives. Will eventually attribute every dollar of AI spend to a business outcome. Pilot covers 4 of 7 AI initiatives.",
+      "primary_category_id": "CAT-06",
+      "primary_goal_id": "AR-GOAL-04",
+      "stage": "pilot",
+      "stage_detail": "Attribution coverage 38%",
+      "owner_name": "D. Park",
+      "owner_title": "CFO",
+      "owner_function": "Finance",
+      "committed_annual_usd": 400000,
+      "committed_total_usd": null,
+      "measured_value_usd": 0,
+      "status_flag": "foundation_phase",
+      "status_summary": "Pilot · attribution coverage 38% of AI spend",
+      "confidence_level": "MED",
+      "aligned_callout": false,
+      "aligned_rationale": null
+    },
+    {
+      "initiative_id": "apex-customer-personalization-2024",
+      "display_id": "AR-07",
+      "name": "Personalization Engine v3",
+      "description": "Personalization engine modernized to LLM-augmented recommendations. Drives product surfacing, email content, push notifications. Strong measured value; renewal of underlying ML platform contract due Q1 2027.",
+      "primary_category_id": "CAT-07",
+      "primary_goal_id": "AR-GOAL-03",
+      "stage": "scaled",
+      "stage_detail": "Web · app · email",
+      "owner_name": "J. Wright",
+      "owner_title": "Chief Digital Officer",
+      "owner_function": "Digital",
+      "committed_annual_usd": 2800000,
+      "committed_total_usd": null,
+      "measured_value_usd": 6400000,
+      "status_flag": "healthy",
+      "status_summary": "Digital revenue per session +9% YoY",
+      "confidence_level": "HIGH",
+      "aligned_callout": false,
+      "aligned_rationale": null
+    }
+  ],
+
+  "kpi_history": [
+    {"initiative_id": "apex-llm-copilot-2025", "kpi_name": "Active seats %", "kpi_unit": "%", "quarter": "Q4-2025", "kpi_value": 18, "target_value": 50, "confidence_level": "HIGH"},
+    {"initiative_id": "apex-llm-copilot-2025", "kpi_name": "Active seats %", "kpi_unit": "%", "quarter": "Q1-2026", "kpi_value": 26, "target_value": 60, "confidence_level": "HIGH"},
+    {"initiative_id": "apex-llm-copilot-2025", "kpi_name": "Active seats %", "kpi_unit": "%", "quarter": "Q2-2026", "kpi_value": 32, "target_value": 70, "confidence_level": "HIGH"},
+    {"initiative_id": "apex-sdlc-github-copilot-2025", "kpi_name": "PR cycle time", "kpi_unit": "days", "quarter": "Q3-2025", "kpi_value": 5.4, "target_value": 4.0, "confidence_level": "HIGH"},
+    {"initiative_id": "apex-sdlc-github-copilot-2025", "kpi_name": "PR cycle time", "kpi_unit": "days", "quarter": "Q4-2025", "kpi_value": 4.6, "target_value": 4.0, "confidence_level": "HIGH"},
+    {"initiative_id": "apex-sdlc-github-copilot-2025", "kpi_name": "PR cycle time", "kpi_unit": "days", "quarter": "Q1-2026", "kpi_value": 4.2, "target_value": 4.0, "confidence_level": "HIGH"},
+    {"initiative_id": "apex-agentic-cx-2026", "kpi_name": "Containment rate", "kpi_unit": "%", "quarter": "Q1-2026", "kpi_value": 38, "target_value": 65, "confidence_level": "MED"},
+    {"initiative_id": "apex-agentic-cx-2026", "kpi_name": "Containment rate", "kpi_unit": "%", "quarter": "Q2-2026", "kpi_value": 47, "target_value": 65, "confidence_level": "MED"},
+    {"initiative_id": "apex-erp-joule-merch-2025", "kpi_name": "Realized value", "kpi_unit": "$M", "quarter": "Q4-2025", "kpi_value": 0.3, "target_value": 0.7, "confidence_level": "MED"},
+    {"initiative_id": "apex-erp-joule-merch-2025", "kpi_name": "Realized value", "kpi_unit": "$M", "quarter": "Q1-2026", "kpi_value": 0.5, "target_value": 1.0, "confidence_level": "MED"},
+    {"initiative_id": "apex-erp-joule-merch-2025", "kpi_name": "Realized value", "kpi_unit": "$M", "quarter": "Q2-2026", "kpi_value": 0.8, "target_value": 1.4, "confidence_level": "MED"},
+    {"initiative_id": "apex-ml-demand-forecast-2024", "kpi_name": "Forecast accuracy MAPE", "kpi_unit": "%", "quarter": "Q1-2024", "kpi_value": 18.4, "target_value": 12.0, "confidence_level": "HIGH"},
+    {"initiative_id": "apex-ml-demand-forecast-2024", "kpi_name": "Forecast accuracy MAPE", "kpi_unit": "%", "quarter": "Q1-2025", "kpi_value": 14.2, "target_value": 12.0, "confidence_level": "HIGH"},
+    {"initiative_id": "apex-ml-demand-forecast-2024", "kpi_name": "Forecast accuracy MAPE", "kpi_unit": "%", "quarter": "Q1-2026", "kpi_value": 12.5, "target_value": 12.0, "confidence_level": "HIGH"},
+    {"initiative_id": "apex-customer-personalization-2024", "kpi_name": "Revenue per session", "kpi_unit": "$", "quarter": "Q1-2024", "kpi_value": 4.20, "target_value": 5.50, "confidence_level": "HIGH"},
+    {"initiative_id": "apex-customer-personalization-2024", "kpi_name": "Revenue per session", "kpi_unit": "$", "quarter": "Q1-2025", "kpi_value": 4.80, "target_value": 5.50, "confidence_level": "HIGH"},
+    {"initiative_id": "apex-customer-personalization-2024", "kpi_name": "Revenue per session", "kpi_unit": "$", "quarter": "Q1-2026", "kpi_value": 5.24, "target_value": 5.80, "confidence_level": "HIGH"}
+  ],
+
+  "stakeholder_notes": [
+    {"initiative_id": "apex-llm-copilot-2025", "stakeholder_name": "L. Tanaka", "stakeholder_title": "VP Store Operations", "interview_date": "2026-04-18", "quote": "Associates who use Copilot daily love it. The problem is getting them past day 3. We need to fix onboarding before we expand.", "themes": ["adoption", "onboarding"], "attribution_consent": true},
+    {"initiative_id": "apex-agentic-cx-2026", "stakeholder_name": "M. Reyes", "stakeholder_title": "VP Customer Care", "interview_date": "2026-04-22", "quote": "The escalations the agent sends us are worse than the ones humans escalate. Quality of handoff matters more than containment rate.", "themes": ["escalation", "quality"], "attribution_consent": true},
+    {"initiative_id": "apex-ml-demand-forecast-2024", "stakeholder_name": "P. Anand", "stakeholder_title": "VP Supply Chain", "interview_date": "2026-03-12", "quote": "This is the program that bought us credibility for everything else we're doing in AI. Don't break it.", "themes": ["foundation", "credibility"], "attribution_consent": true}
+  ],
+
+  "decisions": [
+    {"initiative_id": "apex-llm-copilot-2025", "decision_name": "Pilot expansion to 20 stores", "decision_date": null, "sponsor_name": "L. Tanaka", "decision_status": "pending", "dissent_recorded": false, "outcome_status": "Awaiting Q3 governance review"},
+    {"initiative_id": "apex-agentic-cx-2026", "decision_name": "Voice channel expansion", "decision_date": null, "sponsor_name": "M. Reyes", "decision_status": "pending", "dissent_recorded": true, "dissent_summary": "VP Brand concerned about voice agent representing company in customer's ear without sufficient quality bar", "outcome_status": "Q2 2026 governance review"},
+    {"initiative_id": "apex-erp-joule-merch-2025", "decision_name": "POS data integration acceleration", "decision_date": "2026-02-15", "sponsor_name": "K. Singh", "decision_status": "decided", "dissent_recorded": false, "outcome_status": "Approved · resourced for Q2 delivery"},
+    {"initiative_id": "apex-customer-personalization-2024", "decision_name": "ML platform contract renewal", "decision_date": null, "sponsor_name": "J. Wright", "decision_status": "pending", "dissent_recorded": false, "outcome_status": "Q1 2027 renewal · negotiation underway"}
+  ],
+
+  "vendors": [
+    {"initiative_id": "apex-llm-copilot-2025", "vendor_name": "Microsoft", "contract_value_usd": 1600000, "renewal_date": "2027-12-31", "financial_health": "strong", "notes": "Part of broader M365 contract"},
+    {"initiative_id": "apex-sdlc-github-copilot-2025", "vendor_name": "GitHub (Microsoft)", "contract_value_usd": 900000, "renewal_date": "2026-09-30", "financial_health": "strong", "notes": "Per-seat licensing"},
+    {"initiative_id": "apex-agentic-cx-2026", "vendor_name": "Sierra", "contract_value_usd": 2100000, "renewal_date": "2027-03-31", "financial_health": "moderate", "notes": "Newer vendor; financial health bears watching"},
+    {"initiative_id": "apex-erp-joule-merch-2025", "vendor_name": "SAP", "contract_value_usd": 3400000, "renewal_date": "2027-12-31", "financial_health": "strong", "notes": "Bundled with ECC modernization contract"}
+  ],
+
+  "scenarios": [
+    {"initiative_id": "apex-agentic-cx-2026", "scenario_name": "Containment misses target by Q4 2026", "trigger_event": "Q3 2026 review", "time_horizon_months": 6, "probability_pct": 45, "impact_summary": "Voice expansion paused; CX agent contained to chat only; renewal at risk"},
+    {"initiative_id": "apex-erp-joule-merch-2025", "scenario_name": "POS integration slips Q3 2026", "trigger_event": "POS modernization delays", "time_horizon_months": 4, "probability_pct": 35, "impact_summary": "Joule value lag persists; Y2 budget pressured"},
+    {"initiative_id": "apex-llm-copilot-2025", "scenario_name": "Adoption stays below 40% through Q3", "trigger_event": "Q3 2026 review", "time_horizon_months": 4, "probability_pct": 55, "impact_summary": "Expansion canceled; pilot wound down; $1.6M reallocated"}
+  ]
+}
