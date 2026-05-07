@@ -135,10 +135,6 @@ export function EventChatLane({
         {thread.length === 0 ? (
           <div style={EMPTY_STATE_STYLE}>
             <p style={EMPTY_TITLE_STYLE}>Ask {agent} anything about this step.</p>
-            <p style={EMPTY_BODY_STYLE}>
-              {agent} reads the event substrate and your context bundle. Pick a
-              suggested choice below or type your own question.
-            </p>
           </div>
         ) : (
           thread.map((turn) => (
@@ -224,6 +220,7 @@ const HEADER_STYLE: CSSProperties = {
   gap: 12,
   padding: '14px 18px 12px',
   borderBottom: `1px solid ${CANVAS.HAIRLINE}`,
+  flexShrink: 0,
 };
 
 const AGENT_ROW_STYLE: CSSProperties = {
@@ -282,6 +279,7 @@ const CONTEXT_STRIP_STYLE: CSSProperties = {
   color: CANVAS.INK_SOFT,
   background: 'rgba(10,10,11,0.025)',
   borderBottom: `1px solid ${CANVAS.HAIRLINE}`,
+  flexShrink: 0,
 };
 
 const CONTEXT_LABEL_STYLE: CSSProperties = {
@@ -320,14 +318,6 @@ const EMPTY_TITLE_STYLE: CSSProperties = {
   margin: 0,
 };
 
-const EMPTY_BODY_STYLE: CSSProperties = {
-  fontFamily: CANVAS.SANS,
-  fontSize: 13,
-  lineHeight: 1.55,
-  color: CANVAS.INK_SOFT,
-  margin: 0,
-  maxWidth: 460,
-};
 
 const AGENT_TURN_STYLE: CSSProperties = {
   display: 'grid',
@@ -365,6 +355,7 @@ const CHOICES_STYLE: CSSProperties = {
   gap: 6,
   padding: '12px 18px',
   borderTop: `1px solid ${CANVAS.HAIRLINE}`,
+  flexShrink: 0,
 };
 
 const CHOICES_LABEL_STYLE: CSSProperties = {
@@ -398,6 +389,11 @@ const INPUT_FORM_STYLE: CSSProperties = {
   gap: 8,
   padding: '12px 18px 16px',
   borderTop: `1px solid ${CANVAS.HAIRLINE}`,
+  background: CANVAS.CHAT_BG,
+  // Pin to bottom regardless of content. The thread above scrolls; this stays.
+  flexShrink: 0,
+  position: 'sticky',
+  bottom: 0,
 };
 
 const INPUT_STYLE: CSSProperties = {
