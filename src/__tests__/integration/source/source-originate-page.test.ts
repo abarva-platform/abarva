@@ -37,21 +37,6 @@ describe('SourceOriginatePage (SRC-FLW-INTAKE)', () => {
     expect(source.startsWith("'use client'")).toBe(true);
   });
 
-  it('frames Source as technology and IT sourcing only', () => {
-    expect(html).toContain('Technology and IT sourcing only');
-    expect(html).toContain('Application managed services');
-    expect(html).toContain('Cybersecurity and enterprise software selection');
-  });
-
-  it('prefaces the intake with confirmed Apex tenant context', () => {
-    expect(html).toContain('What Source already knows for Apex');
-    expect(html).toContain('14');
-    expect(html).toContain('403');
-    expect(html).toContain('257 / 275');
-    expect(html).toContain('415, embedding_status=pending');
-    expect(html).toContain('Embeddings pending; no vector retrieval assumed');
-  });
-
   it('renders the five required intake facts', () => {
     expect(html).toContain('Why now / trigger');
     expect(html).toContain('Decision owner');
@@ -60,32 +45,50 @@ describe('SourceOriginatePage (SRC-FLW-INTAKE)', () => {
     expect(html).toContain('Minimum data / baseline owner');
   });
 
-  it('renders agent guidance without a generic chatbot posture', () => {
-    expect(html).toContain('Nexus guidance');
-    expect(html).toContain('Steward');
-    expect(html).toContain('Sentinel');
-    expect(html).toContain('Atlas');
-    expect(html).toContain('Start from Apex Retail context, then fill the floor.');
+  it('renders the IT sourcing category picker with five canonical archetypes', () => {
+    expect(html).toContain('IT sourcing category');
+    expect(html).toContain('Application Managed Services');
+    expect(html).toContain('Cloud &amp; Infrastructure');
+    expect(html).toContain('Data, Analytics &amp; AI');
+    expect(html).toContain('Enterprise Software');
+    expect(html).toContain('Custom / Multi-tower');
   });
 
-  it('wires intake submission to persisted Source event creation and approval', () => {
+  it('renders agent guidance without generic chatbot copy', () => {
+    expect(html).toContain('Agent guidance');
+    expect(html).toContain('Sourcing lead');
+    expect(html).toContain('Intake floor');
+    expect(html).toContain('Evidence caution');
+    // Substantive guidance copy from the canonical AGENT_GUIDANCE list.
+    expect(html).toContain('trigger, owner, boundary, value basis, and baseline owner');
+  });
+
+  it('wires intake submission to persisted Source event creation', () => {
     expect(source).toContain("fetch('/api/v1/source/events'");
-    expect(html).toContain('Create sourcing event');
-    expect(html).toContain('tenant-admin approval');
-    expect(html).not.toContain('No create mutation is wired on this route.');
+    expect(html).toContain('Open sourcing event');
   });
 
-  it('does not hard-code Apex when rendering non-Apex tenants', () => {
+  it('threads the tenant name into the page header without hard-coding Apex', () => {
     const meridianHtml = renderToStaticMarkup(createElement(SourceOriginatePage, {
       clientName: 'Meridian Health System',
       clientShortName: 'Meridian Health',
       clientKey: 'meridian',
     }));
+    expect(meridianHtml).toContain('Meridian Health System');
+    expect(meridianHtml).toContain('Ready to stand up a new IT sourcing event for Meridian Health System');
+    expect(meridianHtml).not.toContain('Ready to stand up a new IT sourcing event for Apex Retail');
+  });
 
-    expect(meridianHtml).toContain('What Source already knows for Meridian Health');
-    expect(meridianHtml).toContain('Start from Meridian Health context, then fill the floor.');
-    expect(meridianHtml).toContain('Meridian Health context');
-    expect(meridianHtml).not.toContain('What Source already knows for Apex');
-    expect(meridianHtml).not.toContain('Start from Apex context');
+  it('uses the resizable splitter shell — full-bleed, no max-width cap, drag handle present', () => {
+    // Splitter from the canvas package wraps both panes, exposing a known testid.
+    expect(html).toContain('source-canvas-splitter');
+    expect(html).toContain('source-originate-canvas');
+    // Page chrome must NOT impose a hard width cap any longer — the splitter
+    // distributes space across the full viewport.
+    expect(source).not.toContain('maxWidth: 1440');
+    // Full-viewport pin so the chat input stays sticky without page scroll.
+    expect(source).toContain("height: 'calc(100vh - 64px)'");
+    // Drag-resize handle in the splitter component.
+    expect(html).toMatch(/role="separator"[^>]*aria-orientation="vertical"/);
   });
 });

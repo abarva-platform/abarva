@@ -5,6 +5,7 @@ import type { CSSProperties } from 'react';
 import { useRouter } from 'next/navigation';
 import { AppShell } from '@/components/shell/AppShell';
 import { AtlasDrawer } from '@/components/shell/AtlasDrawer';
+import { ResizableSplitter } from '@/components/source/canvas/ResizableSplitter';
 import { SHELL } from '@/lib/shell/shell-tokens';
 
 type IntakeFieldId = 'trigger' | 'decisionOwner' | 'scopeBoundary' | 'valueTarget' | 'baselineOwner';
@@ -294,29 +295,30 @@ export function SourceOriginatePage({
       topBarProps={{ tenantName: clientName, showLocked: true, context: 'Source · New sourcing event' }}
       onArtifact={() => undefined}
     >
-      <main
-        data-testid="source-originate-canvas"
-        style={{ flex: 1, minWidth: 0, minHeight: 0, overflowY: 'auto', background: SHELL.PAPER, padding: '12px 16px 18px' }}
-      >
-        <section style={CANVAS_SECTION}>
-          {/* Left: Sentinel chat */}
-          <div style={CHAT_COLUMN}>
-            <AtlasDrawer
-              embedded
-              isOpen={true}
-              onClose={() => undefined}
-              agent={SENTINEL_INTAKE_AGENT}
-              quote={`Ready to stand up a new IT sourcing event for ${clientName}. Tell me the trigger and I'll help you scope and open the event on the canvas.`}
-              surface="/source"
-              onArtifact={() => undefined}
-              composerPlacement="afterHeader"
-            />
-          </div>
-
-          {/* Right: Intake canvas */}
-          <aside style={INTAKE_COLUMN}>
-            <section aria-label="New sourcing event intake" style={INTAKE_PANEL}>
-              {/* Context strip */}
+      <main data-testid="source-originate-canvas" style={MAIN_STYLE}>
+        <ResizableSplitter
+          defaultLeftPercent={45}
+          minLeftPx={340}
+          minRightPx={480}
+          storageKey="abarva.source.originate.splitter"
+          left={
+            <div style={CHAT_PANE_STYLE}>
+              <AtlasDrawer
+                embedded
+                isOpen={true}
+                onClose={() => undefined}
+                agent={SENTINEL_INTAKE_AGENT}
+                quote={`Ready to stand up a new IT sourcing event for ${clientName}. Tell me the trigger and I'll help you scope and open the event on the canvas.`}
+                surface="/source"
+                onArtifact={() => undefined}
+                composerPlacement="afterHeader"
+              />
+            </div>
+          }
+          right={
+            <aside style={INTAKE_PANE_STYLE}>
+              <section aria-label="New sourcing event intake" style={INTAKE_PANEL}>
+                {/* Context strip */}
               <div style={CONTEXT_STRIP}>
                 <span style={STRIP_TOKEN}>{clientName.length > 26 ? clientName.slice(0, 24) + '…' : clientName}</span>
                 <span style={STRIP_DOT}>·</span>
@@ -449,32 +451,53 @@ export function SourceOriginatePage({
               </div>
             </section>
 
-            {/* Guidance cards */}
-            <section style={{ display: 'grid', gap: 6 }}>
-              <div style={SECTION_LABEL}>Agent guidance</div>
-              {AGENT_GUIDANCE.map((item) => (
-                <GuidanceCard key={item.label} {...item} />
-              ))}
-            </section>
-          </aside>
-        </section>
+              {/* Guidance cards */}
+              <section style={{ display: 'grid', gap: 6 }}>
+                <div style={SECTION_LABEL}>Agent guidance</div>
+                {AGENT_GUIDANCE.map((item) => (
+                  <GuidanceCard key={item.label} {...item} />
+                ))}
+              </section>
+            </aside>
+          }
+        />
       </main>
     </AppShell>
   );
 }
 
-const CANVAS_SECTION: CSSProperties = {
-  display: 'grid',
-  gridTemplateColumns: 'minmax(0, 1.7fr) minmax(min(100%, 360px), 1fr)',
-  gap: 14, alignItems: 'stretch', minHeight: 452, maxWidth: 1440, margin: '0 auto',
+// Full-bleed flex shell — no max-width cap; chat lane and intake pane share
+// the viewport horizontally and the user can drag the splitter to redistribute.
+const MAIN_STYLE: CSSProperties = {
+  flex: 1,
+  display: 'flex',
+  flexDirection: 'column',
+  minWidth: 0,
+  minHeight: 0,
+  height: 'calc(100vh - 64px)',
+  overflow: 'hidden',
+  background: SHELL.PAPER,
 };
 
-const CHAT_COLUMN: CSSProperties = {
-  minWidth: 0, minHeight: 452, display: 'grid',
+const CHAT_PANE_STYLE: CSSProperties = {
+  display: 'flex',
+  flexDirection: 'column',
+  width: '100%',
+  height: '100%',
+  minWidth: 0,
+  minHeight: 0,
 };
 
-const INTAKE_COLUMN: CSSProperties = {
-  minWidth: 0, minHeight: 0, display: 'grid', alignContent: 'start', gap: 10,
+const INTAKE_PANE_STYLE: CSSProperties = {
+  display: 'flex',
+  flexDirection: 'column',
+  gap: 10,
+  width: '100%',
+  height: '100%',
+  minWidth: 0,
+  minHeight: 0,
+  overflowY: 'auto',
+  padding: '12px 16px 24px',
 };
 
 const INTAKE_PANEL: CSSProperties = {
