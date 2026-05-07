@@ -26,10 +26,17 @@ import { IntelligenceV3StageTabs } from './IntelligenceV3StageTabs';
 import { TodayCanvas } from './TodayCanvas';
 import { SentinelChat } from './SentinelChat';
 import { FIRST_CAPITAL_DEMO } from './demo-data';
-import type { StageKey } from './types';
+import type { IntelligenceV3PageData, StageKey } from './types';
 
-export function IntelligenceV3Page() {
-  const data = FIRST_CAPITAL_DEMO;
+interface Props {
+  /** Server-side composed page data. Defaults to the demo fixture. */
+  data?: IntelligenceV3PageData;
+  /** True when `data` reflects real DB substrate; false for fallback. */
+  isLiveBound?: boolean;
+}
+
+export function IntelligenceV3Page({ data: dataProp, isLiveBound = false }: Props = {}) {
+  const data = dataProp ?? FIRST_CAPITAL_DEMO;
   const [stage, setStage] = useState<StageKey>('today');
 
   return (
@@ -43,6 +50,23 @@ export function IntelligenceV3Page() {
       }}
     >
       <IntelligenceV3TopNav tenantName={data.tenantName} />
+
+      {!isLiveBound && (
+        <div
+          role="status"
+          style={{
+            background: COLORS.surface2,
+            borderBottom: `1px solid ${COLORS.border}`,
+            padding: `${SPACING.xs}px ${SPACING.lg}px`,
+            fontFamily: FONT.body,
+            fontSize: 11,
+            color: COLORS.muted,
+            textAlign: 'center',
+          }}
+        >
+          Demo content shown · {data.tenantName} substrate not yet bound
+        </div>
+      )}
 
       <div
         style={{
