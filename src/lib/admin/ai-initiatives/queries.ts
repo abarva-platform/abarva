@@ -7,18 +7,21 @@ import 'server-only';
 // page and (in AIR-4) the per-initiative detail page.
 
 import { getServerSupabase } from '@/lib/supabase-server';
+import {
+  STAGE_LABELS as _STAGE_LABELS,
+  STATUS_LABELS as _STATUS_LABELS,
+  formatUsd as _formatUsd,
+  type Stage,
+  type StatusFlag,
+  type ConfidenceLevel,
+} from './labels';
 
-export type Stage = 'pilot' | 'scaled' | 'sunset' | 'multi_year_strategic_bet' | 'in_strategic_move';
-export type StatusFlag =
-  | 'healthy'
-  | 'adoption_gap'
-  | 'value_lag'
-  | 'cost_overrun'
-  | 'duplication_risk'
-  | 'stalled'
-  | 'foundation_phase'
-  | 'in_move';
-export type ConfidenceLevel = 'HIGH' | 'MED' | 'LOW';
+export type { Stage, StatusFlag, ConfidenceLevel };
+
+// Re-export so existing server-side callers keep working unchanged.
+export const STAGE_LABELS = _STAGE_LABELS;
+export const STATUS_LABELS = _STATUS_LABELS;
+export const formatUsd = _formatUsd;
 
 export interface AICategory {
   categoryId: string;
@@ -203,39 +206,9 @@ export async function getAIInitiativesPageData(clientId: string): Promise<AIInit
   return { categories, goals, initiatives };
 }
 
-// ---------------------------------------------------------------------
-// View-model helpers
-// ---------------------------------------------------------------------
-
-export const STAGE_LABELS: Record<Stage, string> = {
-  pilot: 'Pilot',
-  scaled: 'Scaled',
-  sunset: 'Sunset',
-  multi_year_strategic_bet: 'Multi-year strategic bet',
-  in_strategic_move: 'In Strategic Move',
-};
-
-export const STATUS_LABELS: Record<StatusFlag, string> = {
-  healthy: 'Healthy',
-  adoption_gap: 'Adoption gap',
-  value_lag: 'Value lag',
-  cost_overrun: 'Cost overrun',
-  duplication_risk: 'Duplication risk',
-  stalled: 'Stalled',
-  foundation_phase: 'Foundation phase',
-  in_move: 'In Move',
-};
-
-export function formatUsd(value: number | null): string {
-  if (value === null) return '—';
-  if (value >= 1_000_000) {
-    return `$${(value / 1_000_000).toFixed(1)}M`;
-  }
-  if (value >= 1_000) {
-    return `$${(value / 1_000).toFixed(0)}K`;
-  }
-  return `$${value.toFixed(0)}`;
-}
+// View-model helpers (STAGE_LABELS / STATUS_LABELS / formatUsd) live
+// in ./labels.ts and are re-exported at the top of this file so the
+// public surface of queries.ts is unchanged for server-side callers.
 
 /** Group initiatives by primary business goal. Goals with no initiatives are omitted. */
 export function groupInitiativesByGoal(

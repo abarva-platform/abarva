@@ -15,8 +15,8 @@ import {
   vendorHealthLabel,
   type VendorRollup,
   type VendorsData,
-} from '@/lib/intelligence-v3/vendors-data';
-import { STATUS_LABELS, formatUsd } from '@/lib/admin/ai-initiatives/queries';
+} from '@/lib/intelligence-v3/vendors-display';
+import { STATUS_LABELS, formatUsd } from '@/lib/admin/ai-initiatives/labels';
 
 export type VendorLens = 'risk' | 'contract' | 'adoption' | 'value';
 
