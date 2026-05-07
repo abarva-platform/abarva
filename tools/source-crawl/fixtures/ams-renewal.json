@@ -1,0 +1,8 @@
+{
+  "trigger": "AMS contract auto-renews in 60 days; CFO wants 12-15% TCO reduction with no service degradation.",
+  "decisionOwner": "CIO + VP Apps",
+  "scopeBoundary": "L2/L3 incident management for SAP S/4HANA + custom Java apps; excludes data engineering.",
+  "valueTarget": "$10M-$12M run-rate; 12-15% TCO down vs incumbent baseline.",
+  "baselineOwner": "IT Procurement Lead — has 3-year incumbent invoices.",
+  "category": "managed_services"
+}

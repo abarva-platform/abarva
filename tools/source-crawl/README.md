@@ -54,6 +54,21 @@ npx playwright install chromium
 npm run save-session
 ```
 
+### Pointing at localhost while iterating
+
+While iterating on the surface itself, point both modes at your local
+dev server instead of waiting for a Vercel deploy. In `.env`:
+
+```
+TENANT_URL=http://localhost:3000/source
+TENANT_HOSTNAME=localhost
+SIGNIN_URL=http://localhost:3000/sign-in
+```
+
+You'll need to run `npm run save-session` once against localhost so
+`storageState.json` carries the right cookies — production cookies
+won't authenticate localhost and vice versa.
+
 ### Read-only inventory
 
 ```bash
@@ -86,6 +101,16 @@ npm run scenario:promote-stage
 # 4. Chain end-to-end: create-event → walk-canvas → promote-stage in
 #    one shot, single run dir, single audit log.
 npm run scenario:e2e
+
+# 5. Use a fixture to drive create-event with a different archetype.
+#    Three fixtures ship: ams-renewal (default), cloud-migration,
+#    data-platform. Pass --fixture <path> to point at any JSON file.
+npm run scenario:create-event -- --fixture fixtures/cloud-migration.json
+npm run scenario:e2e -- --fixture fixtures/data-platform.json
+
+# 6. Quick mode — run headless with no visible browser. Useful for
+#    unattended smoke runs or CI. Default is headed so you can watch.
+npm run scenario:e2e -- --quick
 ```
 
 Per-run output lands in `tools/source-crawl/runs/<ts>-<scenario>/`:

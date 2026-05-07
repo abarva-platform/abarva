@@ -1,0 +1,8 @@
+{
+  "trigger": "On-prem datacenter lease expires Q3 2027; rate card just escalated 18% YoY. Forced cloud migration decision.",
+  "decisionOwner": "CTO + VP Infrastructure",
+  "scopeBoundary": "Compute + storage migration for 280 production workloads; networking and identity stay in scope. M365 + SaaS apps are out of scope.",
+  "valueTarget": "$8M-$15M total program; target 30% steady-state cost reduction by year 3.",
+  "baselineOwner": "Infrastructure Architecture Lead — owns the 280-workload inventory + current hosting cost.",
+  "category": "cloud_infrastructure"
+}
