@@ -1,7 +1,7 @@
 'use client';
 
 import type { CSSProperties, ReactNode } from 'react';
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { AppShell } from '@/components/shell/AppShell';
 import { AtlasDrawer } from '@/components/shell/AtlasDrawer';
 import { useAtlasPageState } from '@/components/shell/AtlasPageStateProvider';
@@ -14,6 +14,7 @@ import { SHELL } from '@/lib/shell/shell-tokens';
 import type { SourceStageKey, SourcingEventDetail } from '@/lib/source/types';
 import type { GateEvaluation } from '@/lib/reasoning/types';
 import { getStageCanvasConfig } from '@/lib/source/stage-canvas-config';
+import { SOURCE_STAGE_LABELS } from '@/lib/source/constants';
 import {
   RESTRICTED_SOURCE_FINANCIAL_DETAIL,
   formatSourceFinancialValue,
@@ -130,6 +131,12 @@ export function SourceEventAgentCanvas({
               <div style={{ display: 'grid', gap: 12, paddingRight: 2 }}>
                 <section aria-label="Agent-led Source event workspace" style={EVENT_AGENT_CANVAS}>
                   <div style={EVENT_CHAT_COLUMN}>
+                    {viewStage && (
+                      <StageInitPrompter
+                        stageKey={viewStage}
+                        eventName={event.name}
+                      />
+                    )}
                     <AtlasDrawer
                       embedded
                       isOpen={true}
@@ -876,3 +883,41 @@ const META_VALUE = {
   color: SHELL.INK,
   fontWeight: 800,
 };
+
+/**
+ * Auto-fires a Sentinel stage brief on the first visit to a stage
+ * (conversation empty + not streaming). Fires once per stageKey.
+ * Renders nothing — pure side-effect component.
+ */
+function StageInitPrompter({
+  stageKey,
+  eventName,
+}: {
+  stageKey: SourceStageKey;
+  eventName: string;
+}) {
+  const pageState = useAtlasPageState();
+  const firedRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (!pageState) return;
+    if (pageState.isStreaming) return;
+    if (pageState.conversation.length > 0) return;
+    if (firedRef.current === stageKey) return;
+
+    firedRef.current = stageKey;
+    const stageLabel = SOURCE_STAGE_LABELS[stageKey] ?? stageKey;
+    const config = getStageCanvasConfig(stageKey);
+    const intent = config?.intent ?? '';
+
+    pageState.ask(
+      `We just opened the ${stageLabel} stage for ${eventName}. Give the team a concise brief: ` +
+      (intent ? `(1) the objective — ${intent} — ` : '(1) the objective, ') +
+      `(2) the most critical gate to close this week, and (3) Sentinel's recommended first move.`,
+    );
+  // Only re-fire if the stageKey changes
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [stageKey]);
+
+  return null;
+}
