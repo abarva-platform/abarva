@@ -1,0 +1,270 @@
+import 'server-only';
+
+// AIR-3 · Server-side queries for the AI Initiatives Registry.
+//
+// Reads from the ai_* tables created by AIR-1. All queries are
+// tenant-scoped via client_id. Used by the /admin/ai-initiatives
+// page and (in AIR-4) the per-initiative detail page.
+
+import { getServerSupabase } from '@/lib/supabase-server';
+
+export type Stage = 'pilot' | 'scaled' | 'sunset' | 'multi_year_strategic_bet' | 'in_strategic_move';
+export type StatusFlag =
+  | 'healthy'
+  | 'adoption_gap'
+  | 'value_lag'
+  | 'cost_overrun'
+  | 'duplication_risk'
+  | 'stalled'
+  | 'foundation_phase'
+  | 'in_move';
+export type ConfidenceLevel = 'HIGH' | 'MED' | 'LOW';
+
+export interface AICategory {
+  categoryId: string;
+  name: string;
+  definition: string;
+  displayOrder: number;
+}
+
+export interface AIBusinessGoal {
+  goalId: string;
+  name: string;
+  strategicContext: string;
+  displayOrder: number;
+}
+
+export interface AIInitiative {
+  initiativeId: string;
+  displayId: string;
+  name: string;
+  description: string;
+  primaryCategoryId: string;
+  primaryCategoryName: string;
+  secondaryCategoryId: string | null;
+  secondaryCategoryName: string | null;
+  primaryGoalId: string;
+  primaryGoalName: string;
+  stage: Stage;
+  stageDetail: string | null;
+  ownerName: string;
+  ownerTitle: string;
+  ownerFunction: string | null;
+  committedAnnualUsd: number | null;
+  committedTotalUsd: number | null;
+  measuredValueUsd: number | null;
+  statusFlag: StatusFlag;
+  statusSummary: string;
+  confidenceLevel: ConfidenceLevel;
+  alignedCallout: boolean;
+  alignedRationale: string | null;
+  loadedViaTemplate: string;
+}
+
+interface InitiativeRow {
+  initiative_id: string;
+  display_id: string;
+  name: string;
+  description: string;
+  primary_category_id: string;
+  secondary_category_id: string | null;
+  primary_goal_id: string;
+  stage: Stage;
+  stage_detail: string | null;
+  owner_name: string;
+  owner_title: string;
+  owner_function: string | null;
+  committed_annual_usd: number | string | null;
+  committed_total_usd: number | string | null;
+  measured_value_usd: number | string | null;
+  status_flag: StatusFlag;
+  status_summary: string;
+  confidence_level: ConfidenceLevel;
+  aligned_callout: boolean;
+  aligned_rationale: string | null;
+  loaded_via_template: string;
+}
+
+interface CategoryRow {
+  category_id: string;
+  name: string;
+  definition: string;
+  display_order: number;
+}
+
+interface GoalRow {
+  goal_id: string;
+  name: string;
+  strategic_context: string;
+  display_order: number;
+}
+
+function toNumber(v: number | string | null | undefined): number | null {
+  if (v === null || v === undefined) return null;
+  const n = typeof v === 'string' ? Number.parseFloat(v) : v;
+  return Number.isFinite(n) ? n : null;
+}
+
+export async function listCategories(): Promise<ReadonlyArray<AICategory>> {
+  const sb = getServerSupabase();
+  const { data, error } = await sb
+    .from('ai_categories')
+    .select('category_id, name, definition, display_order')
+    .order('display_order', { ascending: true });
+  if (error) throw new Error(`listCategories: ${error.message}`);
+  const rows = (data ?? []) as ReadonlyArray<CategoryRow>;
+  return rows.map((r) => ({
+    categoryId: r.category_id,
+    name: r.name,
+    definition: r.definition,
+    displayOrder: r.display_order,
+  }));
+}
+
+export async function listBusinessGoalsForClient(clientId: string): Promise<ReadonlyArray<AIBusinessGoal>> {
+  const sb = getServerSupabase();
+  const { data, error } = await sb
+    .from('ai_business_goals')
+    .select('goal_id, name, strategic_context, display_order')
+    .eq('client_id', clientId)
+    .order('display_order', { ascending: true });
+  if (error) throw new Error(`listBusinessGoalsForClient: ${error.message}`);
+  const rows = (data ?? []) as ReadonlyArray<GoalRow>;
+  return rows.map((r) => ({
+    goalId: r.goal_id,
+    name: r.name,
+    strategicContext: r.strategic_context,
+    displayOrder: r.display_order,
+  }));
+}
+
+export async function listInitiativesForClient(clientId: string): Promise<ReadonlyArray<AIInitiative>> {
+  const sb = getServerSupabase();
+  const { data, error } = await sb
+    .from('ai_initiatives')
+    .select(
+      'initiative_id, display_id, name, description, primary_category_id, secondary_category_id, primary_goal_id, stage, stage_detail, owner_name, owner_title, owner_function, committed_annual_usd, committed_total_usd, measured_value_usd, status_flag, status_summary, confidence_level, aligned_callout, aligned_rationale, loaded_via_template',
+    )
+    .eq('client_id', clientId)
+    .order('display_id', { ascending: true });
+  if (error) throw new Error(`listInitiativesForClient: ${error.message}`);
+  const rows = (data ?? []) as ReadonlyArray<InitiativeRow>;
+
+  // Resolve category + goal names with two cheap parallel queries (small fixed sets).
+  const [categories, goals] = await Promise.all([
+    listCategories(),
+    listBusinessGoalsForClient(clientId),
+  ]);
+  const categoryById = new Map(categories.map((c) => [c.categoryId, c]));
+  const goalById = new Map(goals.map((g) => [g.goalId, g]));
+
+  return rows.map((r) => ({
+    initiativeId: r.initiative_id,
+    displayId: r.display_id,
+    name: r.name,
+    description: r.description,
+    primaryCategoryId: r.primary_category_id,
+    primaryCategoryName: categoryById.get(r.primary_category_id)?.name ?? r.primary_category_id,
+    secondaryCategoryId: r.secondary_category_id,
+    secondaryCategoryName: r.secondary_category_id
+      ? (categoryById.get(r.secondary_category_id)?.name ?? r.secondary_category_id)
+      : null,
+    primaryGoalId: r.primary_goal_id,
+    primaryGoalName: goalById.get(r.primary_goal_id)?.name ?? r.primary_goal_id,
+    stage: r.stage,
+    stageDetail: r.stage_detail,
+    ownerName: r.owner_name,
+    ownerTitle: r.owner_title,
+    ownerFunction: r.owner_function,
+    committedAnnualUsd: toNumber(r.committed_annual_usd),
+    committedTotalUsd: toNumber(r.committed_total_usd),
+    measuredValueUsd: toNumber(r.measured_value_usd),
+    statusFlag: r.status_flag,
+    statusSummary: r.status_summary,
+    confidenceLevel: r.confidence_level,
+    alignedCallout: r.aligned_callout,
+    alignedRationale: r.aligned_rationale,
+    loadedViaTemplate: r.loaded_via_template,
+  }));
+}
+
+export interface AIInitiativesPageData {
+  categories: ReadonlyArray<AICategory>;
+  goals: ReadonlyArray<AIBusinessGoal>;
+  initiatives: ReadonlyArray<AIInitiative>;
+}
+
+export async function getAIInitiativesPageData(clientId: string): Promise<AIInitiativesPageData> {
+  const [categories, goals, initiatives] = await Promise.all([
+    listCategories(),
+    listBusinessGoalsForClient(clientId),
+    listInitiativesForClient(clientId),
+  ]);
+  return { categories, goals, initiatives };
+}
+
+// ---------------------------------------------------------------------
+// View-model helpers
+// ---------------------------------------------------------------------
+
+export const STAGE_LABELS: Record<Stage, string> = {
+  pilot: 'Pilot',
+  scaled: 'Scaled',
+  sunset: 'Sunset',
+  multi_year_strategic_bet: 'Multi-year strategic bet',
+  in_strategic_move: 'In Strategic Move',
+};
+
+export const STATUS_LABELS: Record<StatusFlag, string> = {
+  healthy: 'Healthy',
+  adoption_gap: 'Adoption gap',
+  value_lag: 'Value lag',
+  cost_overrun: 'Cost overrun',
+  duplication_risk: 'Duplication risk',
+  stalled: 'Stalled',
+  foundation_phase: 'Foundation phase',
+  in_move: 'In Move',
+};
+
+export function formatUsd(value: number | null): string {
+  if (value === null) return '—';
+  if (value >= 1_000_000) {
+    return `$${(value / 1_000_000).toFixed(1)}M`;
+  }
+  if (value >= 1_000) {
+    return `$${(value / 1_000).toFixed(0)}K`;
+  }
+  return `$${value.toFixed(0)}`;
+}
+
+/** Group initiatives by primary business goal. Goals with no initiatives are omitted. */
+export function groupInitiativesByGoal(
+  initiatives: ReadonlyArray<AIInitiative>,
+  goals: ReadonlyArray<AIBusinessGoal>,
+): Array<{ goal: AIBusinessGoal; initiatives: ReadonlyArray<AIInitiative> }> {
+  const byGoal = new Map<string, AIInitiative[]>();
+  for (const initiative of initiatives) {
+    const list = byGoal.get(initiative.primaryGoalId) ?? [];
+    list.push(initiative);
+    byGoal.set(initiative.primaryGoalId, list);
+  }
+  return goals
+    .map((goal) => ({ goal, initiatives: byGoal.get(goal.goalId) ?? [] }))
+    .filter((group) => group.initiatives.length > 0);
+}
+
+/** Group initiatives by primary category. Categories with no initiatives are omitted. */
+export function groupInitiativesByCategory(
+  initiatives: ReadonlyArray<AIInitiative>,
+  categories: ReadonlyArray<AICategory>,
+): Array<{ category: AICategory; initiatives: ReadonlyArray<AIInitiative> }> {
+  const byCategory = new Map<string, AIInitiative[]>();
+  for (const initiative of initiatives) {
+    const list = byCategory.get(initiative.primaryCategoryId) ?? [];
+    list.push(initiative);
+    byCategory.set(initiative.primaryCategoryId, list);
+  }
+  return categories
+    .map((category) => ({ category, initiatives: byCategory.get(category.categoryId) ?? [] }))
+    .filter((group) => group.initiatives.length > 0);
+}

@@ -5,6 +5,16 @@ import { useState } from 'react';
 import type { CSSProperties, ReactNode } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { AppShell } from '@/components/shell/AppShell';
+import { MetricProvenance } from '@/components/tower/MetricProvenance';
+import { DeferredMetricsBlock } from '@/components/tower/DeferredMetricsBlock';
+import {
+  buildStrategicAlignment2x2View,
+  dotsByQuadrant,
+  type AlignmentDot,
+  type AlignmentQuadrant,
+  type StrategicAlignment2x2View,
+} from '@/lib/tower/strategic-alignment-2x2-view';
+import type { AIInitiative } from '@/lib/admin/ai-initiatives/queries';
 
 // ─── Tower-specific tokens (broadsheet feel) ───────────────────────────────────
 const T = {
@@ -70,33 +80,6 @@ function ConfTag({ conf }: { conf: Confidence }) {
     >
       {conf}
     </span>
-  );
-}
-
-function MissingChip({ children, onClick }: { children: ReactNode; onClick?: () => void }) {
-  return (
-    <button
-      onClick={onClick}
-      style={{
-        display: 'inline-flex',
-        alignItems: 'center',
-        gap: 6,
-        padding: '4px 10px',
-        border: `1px dashed ${T.BORDER_STRONG}`,
-        borderRadius: 999,
-        fontFamily: T.MONO,
-        fontSize: 9.5,
-        letterSpacing: '1.2px',
-        textTransform: 'uppercase',
-        fontWeight: 700,
-        color: T.GRAY_DK,
-        cursor: 'pointer',
-        background: 'transparent',
-      }}
-    >
-      <span style={{ color: T.GOLD, fontWeight: 800 }}>↳</span>
-      {children}
-    </button>
   );
 }
 
@@ -360,6 +343,97 @@ interface MatrixDot {
   amount: string;
   left: string;
   top: string;
+  /** T-4: substrate-derived dots carry extra context for outline weight + ⭐ marker. */
+  displayId?: string;
+  alignedCallout?: boolean;
+  confidenceLevel?: 'HIGH' | 'MED' | 'LOW';
+}
+
+// T-4b: legacy Strategic Bets fallback used when no substrate is loaded.
+// Keeps the pre-substrate Tower visually intact for tests + screenshots.
+interface StrategicBetCard {
+  key: string;
+  displayId?: string;
+  name: string;
+  meta: string;
+  desc: ReactNode;
+  cta: ReactNode;
+}
+
+const LEGACY_STRATEGIC_BETS: StrategicBetCard[] = [
+  {
+    key: 'agent-platform-foundation',
+    name: 'Agent platform foundation',
+    meta: 'Year 1 of 3 · $4.2M committed · attribution LOW',
+    desc: "Building the Sentinel/Steward/Atlas substrate that the rest of the AbarVa stack runs on. Won't show measured value until programs migrate.",
+    cta: null,
+  },
+  {
+    key: 'data-sovereignty',
+    name: 'Data sovereignty re-architecture',
+    meta: 'Year 1 of 2 · $1.8M committed · attribution MED',
+    desc: "Tied to EU operations. Compliance value is binary — either it lands by Q4 2026 or we're out of compliance, regardless of TCO.",
+    cta: null,
+  },
+  {
+    key: 'vendor-consolidation',
+    name: 'Vendor consolidation thesis',
+    meta: 'Year 0 · $0.9M committed · attribution LOW',
+    desc: 'Hypothesis: 23 strategic suppliers can become 12 by 2027. Atlas is modeling. No measured value until first wave of consolidations.',
+    cta: null,
+  },
+];
+
+// T-4: legacy hardcoded 2×2 fallback used when no `initiatives` prop is passed.
+// Keeps the pre-substrate Tower visually intact for tests + screenshots.
+const LEGACY_2X2_DOTS: Record<AlignmentQuadrant, MatrixDot[]> = {
+  tl: [
+    { name: 'JOULE', amount: '$3.2M', left: '18%', top: '32%' },
+    { name: 'DATABRICKS', amount: '$2.1M', left: '56%', top: '14%' },
+    { name: 'FINOPS-CLI', amount: '$0.6M', left: '30%', top: '60%' },
+  ],
+  tr: [
+    { name: 'M365-CORE', amount: '$8.4M', left: '22%', top: '22%' },
+    { name: 'AZURE-PROD', amount: '$11.2M', left: '58%', top: '38%' },
+    { name: 'SNOW-CMDB', amount: '$1.4M', left: '36%', top: '62%' },
+  ],
+  bl: [
+    { name: 'LEGACY-VPN', amount: '$0.4M', left: '20%', top: '28%' },
+    { name: 'ON-PREM-CRM', amount: '$1.1M', left: '56%', top: '56%' },
+  ],
+  br: [
+    { name: 'COPILOT-E5', amount: '$2.8M', left: '28%', top: '18%' },
+    { name: 'NOW-ASSIST', amount: '$0.9M', left: '60%', top: '42%' },
+  ],
+};
+
+/** T-4: shorten an initiative name for the 2×2 dot label (~22 chars). */
+function truncateName(name: string): string {
+  if (name.length <= 22) return name;
+  return `${name.slice(0, 21)}…`;
+}
+
+/**
+ * T-4: resolve quadrant dots from substrate when present, fall back to the
+ * legacy hardcoded list when the registry hasn't been loaded for this tenant.
+ */
+function resolveQuadrantDots(
+  view: StrategicAlignment2x2View,
+  quadrant: AlignmentQuadrant,
+  fallback: MatrixDot[],
+): MatrixDot[] {
+  if (view.dots.length === 0) return fallback;
+  const grouped = dotsByQuadrant(view);
+  const live = grouped[quadrant] ?? [];
+  return live.map((d: AlignmentDot) => ({
+    name: d.name,
+    amount: d.amount,
+    left: d.positionLeft,
+    top: d.positionTop,
+    displayId: d.displayId,
+    alignedCallout: d.alignedCallout,
+    confidenceLevel: d.confidenceLevel,
+  }));
 }
 
 function Quadrant({
@@ -427,41 +501,70 @@ function Quadrant({
         {qhead}
       </div>
       <div style={{ position: 'relative', height: 130 }}>
-        {dots.map((dot) => (
-          <div
-            key={dot.name}
-            style={{
-              position: 'absolute',
-              left: dot.left,
-              top: dot.top,
-              padding: '6px 10px',
-              background: T.INK,
-              color: T.CREAM,
-              fontFamily: T.MONO,
-              fontSize: 9.5,
-              letterSpacing: '1px',
-              fontWeight: 700,
-              borderRadius: 5,
-              cursor: 'pointer',
-              lineHeight: 1.2,
-            }}
-          >
-            {dot.name}
-            <span
+        {dots.map((dot) => {
+          // T-4: substrate-derived dots show displayId + ⭐ + confidence outline.
+          // Legacy dots (no displayId) keep the original rendering.
+          const isSubstrate = Boolean(dot.displayId);
+          const conf = dot.confidenceLevel ?? 'HIGH';
+          const borderStyle = conf === 'HIGH' ? 'solid' : conf === 'MED' ? 'dashed' : 'dotted';
+          return (
+            <div
+              key={dot.displayId ?? dot.name}
+              data-testid={isSubstrate ? `tower-2x2-dot-${dot.displayId}` : undefined}
+              data-aligned-callout={dot.alignedCallout ? 'true' : undefined}
               style={{
-                display: 'block',
-                fontFamily: T.SERIF,
-                fontSize: 11,
+                position: 'absolute',
+                left: dot.left,
+                top: dot.top,
+                padding: '6px 10px',
+                background: T.INK,
+                color: T.CREAM,
+                fontFamily: T.MONO,
+                fontSize: 9.5,
+                letterSpacing: '1px',
                 fontWeight: 700,
-                marginTop: 1,
-                letterSpacing: 0,
-                opacity: 0.85,
+                borderRadius: 5,
+                cursor: 'pointer',
+                lineHeight: 1.2,
+                border: isSubstrate ? `1.5px ${borderStyle} ${T.CREAM}` : undefined,
+                maxWidth: 180,
               }}
             >
-              {dot.amount}
-            </span>
-          </div>
-        ))}
+              {isSubstrate && (
+                <span
+                  style={{
+                    display: 'block',
+                    fontSize: 8.5,
+                    letterSpacing: '0.16em',
+                    opacity: 0.7,
+                    marginBottom: 1,
+                  }}
+                >
+                  {dot.displayId}
+                </span>
+              )}
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                {isSubstrate ? truncateName(dot.name) : dot.name}
+                {dot.alignedCallout && (
+                  <span aria-label="aligned callout" style={{ fontSize: 10 }}>⭐</span>
+                )}
+              </span>
+              <span
+                style={{
+                  display: 'block',
+                  fontFamily: T.SERIF,
+                  fontSize: 11,
+                  fontWeight: 700,
+                  marginTop: 1,
+                  letterSpacing: 0,
+                  opacity: 0.85,
+                }}
+              >
+                {dot.amount}
+              </span>
+            </div>
+          );
+        })}
       </div>
     </div>
   );
@@ -743,6 +846,12 @@ function AtlasActionChip({ action }: { action: AtlasAction }) {
 interface TowerIndexPageProps {
   tenantName?: string;
   context?: string;
+  /**
+   * T-4 (AI Initiatives Substrate v1.1.0): real registry initiatives to plot
+   * in the Strategic Alignment 2×2. When omitted or empty, the 2×2 falls back
+   * to the legacy hardcoded display so the page still renders pre-substrate.
+   */
+  initiatives?: ReadonlyArray<AIInitiative>;
   /** Slots are accepted for backward compatibility but not rendered in the broadsheet design. */
   provenanceSlot?: ReactNode;
   portfolioSummarySlot?: ReactNode;
@@ -755,6 +864,7 @@ interface TowerIndexPageProps {
 export function TowerIndexPage({
   tenantName = 'Meridian Enterprises',
   context = 'Control Tower · Portfolio Index',
+  initiatives,
   provenanceSlot: _p1,
   portfolioSummarySlot: _p2,
   cascadeGraphSlot: _p3,
@@ -763,6 +873,7 @@ export function TowerIndexPage({
   towerLensSlot: _p6,
 }: TowerIndexPageProps = {}) {
   void _p1; void _p2; void _p3; void _p4; void _p6;
+  const alignment2x2View = buildStrategicAlignment2x2View(initiatives ?? []);
   const searchParams = useSearchParams();
   const router = useRouter();
   const activeLens = (searchParams?.get('lens') ?? 'value') as 'value' | 'risk' | 'contract' | 'adopt';
@@ -926,9 +1037,11 @@ export function TowerIndexPage({
               subtext={<>target 3.5× · <span style={{ color: T.RED, fontWeight: 700 }}>▼0.4×</span> vs Q1</>}
               tooltip="35% of programs measured. 41% modeled. +24% pending baseline."
             >
-              <span style={cvalStyle('high')}>
-                2.8<span style={{ fontSize: '0.55em' }}>×</span>
-              </span>
+              <MetricProvenance metricKey="portfolio_roi">
+                <span style={cvalStyle('high')}>
+                  2.8<span style={{ fontSize: '0.55em' }}>×</span>
+                </span>
+              </MetricProvenance>
             </Kpi>
 
             <Kpi
@@ -936,7 +1049,9 @@ export function TowerIndexPage({
               subtext={<>3 high · 4 watch · <span style={{ color: T.GREEN, fontWeight: 700 }}>▲2</span></>}
               tooltip="3 high-magnitude pressures and 4 on watch. ▲2 new this week."
             >
-              <span style={cvalStyle('high')}>7</span>
+              <MetricProvenance metricKey="active_pressures">
+                <span style={cvalStyle('high')}>7</span>
+              </MetricProvenance>
             </Kpi>
 
             <Kpi
@@ -944,10 +1059,12 @@ export function TowerIndexPage({
               subtext={<><span style={{ color: T.RED, fontWeight: 700 }}>▲$1.2M</span> MoM</>}
               tooltip="Cost overrun and capability duplication exposure across the AI portfolio."
             >
-              <span style={cvalStyle('med')}>
-                $8.4<span style={{ fontSize: '0.55em' }}>M</span>
-                <ConfTag conf="med" />
-              </span>
+              <MetricProvenance metricKey="spend_at_risk">
+                <span style={cvalStyle('med')}>
+                  $8.4<span style={{ fontSize: '0.55em' }}>M</span>
+                  <ConfTag conf="med" />
+                </span>
+              </MetricProvenance>
             </Kpi>
 
             <Kpi
@@ -955,7 +1072,9 @@ export function TowerIndexPage({
               subtext={<>EA 47d · $48.2M</>}
               tooltip="4 vendor renewals in the next 90 days totaling $48.2M aggregate. EA renewal due in 47 days; brief is open in Source."
             >
-              <span style={cvalStyle('high')}>4</span>
+              <MetricProvenance metricKey="renewals_90d">
+                <span style={cvalStyle('high')}>4</span>
+              </MetricProvenance>
             </Kpi>
 
             <Kpi
@@ -963,10 +1082,12 @@ export function TowerIndexPage({
               subtext={<>2 sources missing</>}
               tooltip="2 identity sources (Okta, EntraID) not yet connected; until they land, adoption confidence is LOW. Connect identity sources from Atlas observations."
             >
-              <span style={cvalStyle('low')}>
-                53<span style={{ fontSize: '0.55em' }}>%</span>
-                <ConfTag conf="low" />
-              </span>
+              <MetricProvenance metricKey="adoption_rate">
+                <span style={cvalStyle('low')}>
+                  53<span style={{ fontSize: '0.55em' }}>%</span>
+                  <ConfTag conf="low" />
+                </span>
+              </MetricProvenance>
             </Kpi>
           </section>
 
@@ -1143,7 +1264,7 @@ export function TowerIndexPage({
                   marginBottom: 8,
                 }}
               >
-                Strategic alignment · 23 programs plotted · current Value lens
+                Strategic alignment · {alignment2x2View.dots.length > 0 ? alignment2x2View.totalPlotted : 23} programs plotted · current Value lens
               </div>
               <h2
                 style={{
@@ -1210,21 +1331,13 @@ export function TowerIndexPage({
                 position="tl"
                 qlabel="High value · Low alignment"
                 qhead="Useful but off-strategy. Sustain or rationalize."
-                dots={[
-                  { name: 'JOULE', amount: '$3.2M', left: '18%', top: '32%' },
-                  { name: 'DATABRICKS', amount: '$2.1M', left: '56%', top: '14%' },
-                  { name: 'FINOPS-CLI', amount: '$0.6M', left: '30%', top: '60%' },
-                ]}
+                dots={resolveQuadrantDots(alignment2x2View, 'tl', LEGACY_2X2_DOTS.tl)}
               />
               <Quadrant
                 position="tr"
                 qlabel="High value · High alignment · the prize"
                 qhead="Defend, scale, lock baselines."
-                dots={[
-                  { name: 'M365-CORE', amount: '$8.4M', left: '22%', top: '22%' },
-                  { name: 'AZURE-PROD', amount: '$11.2M', left: '58%', top: '38%' },
-                  { name: 'SNOW-CMDB', amount: '$1.4M', left: '36%', top: '62%' },
-                ]}
+                dots={resolveQuadrantDots(alignment2x2View, 'tr', LEGACY_2X2_DOTS.tr)}
               />
               <Quadrant
                 position="bl"
@@ -1235,19 +1348,13 @@ export function TowerIndexPage({
                     <span style={{ color: T.RED, fontFamily: T.MONO, fontSize: 11 }}>3 flagged</span>
                   </>
                 }
-                dots={[
-                  { name: 'LEGACY-VPN', amount: '$0.4M', left: '20%', top: '28%' },
-                  { name: 'ON-PREM-CRM', amount: '$1.1M', left: '56%', top: '56%' },
-                ]}
+                dots={resolveQuadrantDots(alignment2x2View, 'bl', LEGACY_2X2_DOTS.bl)}
               />
               <Quadrant
                 position="br"
                 qlabel="Low value · High alignment"
                 qhead="Strategic but not yet earning. Watch closely."
-                dots={[
-                  { name: 'COPILOT-E5', amount: '$2.8M', left: '28%', top: '18%' },
-                  { name: 'NOW-ASSIST', amount: '$0.9M', left: '60%', top: '42%' },
-                ]}
+                dots={resolveQuadrantDots(alignment2x2View, 'br', LEGACY_2X2_DOTS.br)}
               />
 
               {/* X axis */}
@@ -1302,7 +1409,7 @@ export function TowerIndexPage({
                     textTransform: 'uppercase',
                   }}
                 >
-                  Strategic bets · 3 programs · T-FOW lens
+                  Strategic bets · {alignment2x2View.strategicBets.length > 0 ? alignment2x2View.strategicBets.length : 3} programs · T-FOW lens
                 </span>
                 <span
                   style={{
@@ -1316,33 +1423,31 @@ export function TowerIndexPage({
                   Plotted separately — attribution is too loose for the 2×2 today.
                 </span>
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 14 }}>
-                {[
-                  {
-                    name: 'Agent platform foundation',
-                    meta: 'Year 1 of 3 · $4.2M committed · attribution LOW',
-                    desc: 'Building the Sentinel/Steward/Atlas substrate that the rest of the AbarVa stack runs on. Won\'t show measured value until programs migrate.',
-                    cta: <MissingChip>Set attribution model →</MissingChip>,
-                  },
-                  {
-                    name: 'Data sovereignty re-architecture',
-                    meta: 'Year 1 of 2 · $1.8M committed · attribution MED',
-                    desc: 'Tied to EU operations. Compliance value is binary — either it lands by Q4 2026 or we\'re out of compliance, regardless of TCO.',
-                    cta: (
-                      <span style={{ color: T.AMBER, fontSize: 11, fontFamily: T.MONO }}>
-                        Reg deadline · Dec 2026
-                      </span>
-                    ),
-                  },
-                  {
-                    name: 'Vendor consolidation thesis',
-                    meta: 'Year 0 · $0.9M committed · attribution LOW',
-                    desc: 'Hypothesis: 23 strategic suppliers can become 12 by 2027. Atlas is modeling. No measured value until first wave of consolidations.',
-                    cta: <MissingChip>Connect Source EA brief →</MissingChip>,
-                  },
-                ].map((card) => (
+              <div
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: `repeat(${Math.max(alignment2x2View.strategicBets.length, 3)}, 1fr)`,
+                  gap: 14,
+                }}
+              >
+                {(alignment2x2View.strategicBets.length > 0
+                  ? alignment2x2View.strategicBets.map((bet) => ({
+                      key: bet.displayId,
+                      displayId: bet.displayId,
+                      name: bet.name,
+                      meta: `${bet.stageDetail} · ${bet.amount} committed · attribution ${bet.confidenceLevel}`,
+                      desc: null as ReactNode,
+                      cta: null as ReactNode,
+                    }))
+                  : LEGACY_STRATEGIC_BETS
+                ).map((card) => (
                   <div
-                    key={card.name}
+                    key={card.key}
+                    data-testid={
+                      card.displayId
+                        ? `tower-strategic-bet-${card.displayId}`
+                        : undefined
+                    }
                     style={{
                       padding: '14px 16px',
                       border: `1px dashed ${T.RULE_STRONG}`,
@@ -1350,6 +1455,20 @@ export function TowerIndexPage({
                       background: 'transparent',
                     }}
                   >
+                    {card.displayId && (
+                      <div
+                        style={{
+                          fontFamily: T.MONO,
+                          fontSize: 9,
+                          letterSpacing: '1.6px',
+                          color: T.GRAY_DK,
+                          fontWeight: 700,
+                          marginBottom: 2,
+                        }}
+                      >
+                        {card.displayId}
+                      </div>
+                    )}
                     <div
                       style={{
                         fontFamily: T.SERIF,
@@ -1373,22 +1492,31 @@ export function TowerIndexPage({
                     >
                       {card.meta}
                     </div>
-                    <div
-                      style={{
-                        fontSize: 12.5,
-                        color: T.INK_2,
-                        lineHeight: 1.5,
-                        margin: '8px 0',
-                      }}
-                    >
-                      {card.desc}
-                    </div>
-                    <div>{card.cta}</div>
+                    {card.desc && (
+                      <div
+                        style={{
+                          fontSize: 12.5,
+                          color: T.INK_2,
+                          lineHeight: 1.5,
+                          margin: '8px 0',
+                        }}
+                      >
+                        {card.desc}
+                      </div>
+                    )}
+                    {card.cta && <div>{card.cta}</div>}
                   </div>
                 ))}
               </div>
             </div>
           </section>
+
+          {/* T-4: "Coming next" block — deferred metrics roadmap signal,
+              rendered above the doctrine line. Conditionally hides itself
+              when the view has no deferred metrics. */}
+          <div style={{ padding: '12px 0 0' }}>
+            <DeferredMetricsBlock view="tower-cfo" />
+          </div>
 
           {/* Footer signature */}
           <div

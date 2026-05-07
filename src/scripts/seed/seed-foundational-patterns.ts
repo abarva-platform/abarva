@@ -37,7 +37,7 @@ async function main() {
   loadSeedEnv();
   const sb = createSeedClient();
   const clients = new Map<TenantKey, ClientRow>();
-  for (const tenantKey of ['apex', 'meridian', 'first_capital', 'keystone'] as const) {
+  for (const tenantKey of ['apex', 'meridian', 'first_capital'] as const) {
     clients.set(tenantKey, await resolveClient(sb, tenantKey));
   }
 
@@ -203,19 +203,6 @@ async function main() {
       linked_kpi_ids: ['firstcap_ai_governance_maturity', 'firstcap_model_risk_management_maturity', 'firstcap_cybersecurity_maturity'],
       sensitivities: ['fair lending', 'SR 11-7', 'GLBA data handling'],
       metadata: { source_spec: 'pattern-pack-01-shadow-ai-governance.md', variant_section: '11.3' },
-    },
-    {
-      id: 'pattern_shadow_ai_governance_keystone',
-      foundational_pattern_id: 'pattern_shadow_ai_governance',
-      client_id: clients.get('keystone')?.id,
-      variant_pattern_pack_id: 'keystone_pattern_shadow_ai_in_customer_operations_and_grid_analytics',
-      tenant_key: 'keystone',
-      variant_name: 'Shadow AI in Customer Operations and Grid Analytics',
-      sector: 'utilities',
-      evidence_summary: '11 tools across 17 teams, 7 set to auto-renew, 4 with unreviewed data-sharing posture and NERC CIP implications.',
-      linked_kpi_ids: ['keystone_ai_governance_maturity', 'keystone_cybersecurity_maturity', 'keystone_first_call_resolution'],
-      sensitivities: ['NERC CIP', 'critical infrastructure', 'grid-operations implications'],
-      metadata: { source_spec: 'pattern-pack-01-shadow-ai-governance.md', variant_section: '11.4' },
     },
   ];
 

@@ -24,12 +24,27 @@ import { COLORS, FONT, SPACING } from '@/lib/design/abarva-theme';
 import { IntelligenceV3TopNav } from './IntelligenceV3TopNav';
 import { IntelligenceV3StageTabs } from './IntelligenceV3StageTabs';
 import { TodayCanvas } from './TodayCanvas';
+import { VendorsCanvas } from './VendorsCanvas';
 import { SentinelChat } from './SentinelChat';
 import { FIRST_CAPITAL_DEMO } from './demo-data';
-import type { StageKey } from './types';
+import type { IntelligenceV3PageData, StageKey } from './types';
+import type { VendorsData } from '@/lib/intelligence-v3/vendors-data';
 
-export function IntelligenceV3Page() {
-  const data = FIRST_CAPITAL_DEMO;
+interface Props {
+  /** Server-side composed page data. Defaults to the demo fixture. */
+  data?: IntelligenceV3PageData;
+  /** True when `data` reflects real DB substrate; false for fallback. */
+  isLiveBound?: boolean;
+  /** Vendors stage data — null when not loaded. */
+  vendorsData?: VendorsData | null;
+}
+
+export function IntelligenceV3Page({
+  data: dataProp,
+  isLiveBound = false,
+  vendorsData = null,
+}: Props = {}) {
+  const data = dataProp ?? FIRST_CAPITAL_DEMO;
   const [stage, setStage] = useState<StageKey>('today');
 
   return (
@@ -43,6 +58,23 @@ export function IntelligenceV3Page() {
       }}
     >
       <IntelligenceV3TopNav tenantName={data.tenantName} />
+
+      {!isLiveBound && (
+        <div
+          role="status"
+          style={{
+            background: COLORS.surface2,
+            borderBottom: `1px solid ${COLORS.border}`,
+            padding: `${SPACING.xs}px ${SPACING.lg}px`,
+            fontFamily: FONT.body,
+            fontSize: 11,
+            color: COLORS.muted,
+            textAlign: 'center',
+          }}
+        >
+          Demo content shown · {data.tenantName} substrate not yet bound
+        </div>
+      )}
 
       <div
         style={{
@@ -66,7 +98,9 @@ export function IntelligenceV3Page() {
           <IntelligenceV3StageTabs active={stage} onChange={setStage} />
 
           {stage === 'today' && <TodayCanvas data={data} />}
-          {stage !== 'today' && <StageStub stage={stage} />}
+          {stage === 'vendors' && vendorsData && <VendorsCanvas data={vendorsData} />}
+          {stage === 'vendors' && !vendorsData && <StageStub stage={stage} />}
+          {stage !== 'today' && stage !== 'vendors' && <StageStub stage={stage} />}
         </main>
 
         <SentinelChat

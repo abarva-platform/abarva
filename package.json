@@ -45,6 +45,7 @@
     "db:seed:apex-intelligence": "npx tsx src/scripts/seed/seed-apex-intelligence-layer.ts",
     "db:verify:apex-intelligence": "npx tsx src/scripts/seed/verify-apex-intelligence-layer.ts",
     "db:smoke:apex-intelligence": "npx tsx src/scripts/seed/smoke-apex-intelligence-layer.ts",
+    "db:load:ai-initiatives": "npx tsx src/scripts/seed/load-ai-initiatives.ts --all",
     "db:backfill:source-canvas": "npx tsx src/scripts/source/backfill-canvas-substrate.ts",
     "db:backfill:source-canvas:dry": "npx tsx src/scripts/source/backfill-canvas-substrate.ts --dry",
     "db:seed:apex-setup-data": "npx tsx src/scripts/setup-data/load-apex-setup-data.ts",

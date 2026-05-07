@@ -33,8 +33,29 @@ import {
   summarizeSetupAiInitiatives,
   type SetupAiInitiativeRecord,
 } from '@/lib/setup';
+import {
+  listInitiativesForClient,
+  type AIInitiative,
+} from '@/lib/admin/ai-initiatives/queries';
 
 export const metadata = { title: 'Control Tower · AbarVa' };
+
+/**
+ * T-4 (AI Initiatives Substrate v1.1.0): query the canonical AI Initiatives
+ * Registry for the active tenant so Tower CFO View can plot real names in
+ * the Strategic Alignment 2×2 instead of invented placeholders.
+ *
+ * Fail-soft: any error (auth, DB, RLS) returns an empty array so the legacy
+ * hardcoded 2×2 fallback continues to render — never blocks the page.
+ */
+async function buildTowerInitiatives(): Promise<ReadonlyArray<AIInitiative>> {
+  try {
+    const tenancy = await requireTenancy();
+    return await listInitiativesForClient(tenancy.clientId);
+  } catch {
+    return [];
+  }
+}
 
 // T-2 (Tower Fix Package): reduced from 10 to 5 tabs. Dropped:
 // pressure, source_commercial, decisions, value_at_risk,
@@ -440,6 +461,7 @@ export default async function TowerPage({
   const towerHandoffPrograms = await buildTowerHandoffPrograms();
   const towerHandoffSourceEvents = await buildTowerHandoffSourceEvents();
   const towerSetupInitiativesFeed = await buildTowerSetupInitiativesFeed();
+  const towerInitiatives = await buildTowerInitiatives();
   const resolvedSearchParams = searchParams ? await searchParams : {};
   const activeTab = resolveTowerTab(resolvedSearchParams.tab);
   const seedTenant =
@@ -450,6 +472,7 @@ export default async function TowerPage({
     <TowerIndexPage
       tenantName={towerSetupInitiativesFeed.tenantName}
       context={`Control Tower · ${TOWER_SUBMENU_LABELS[activeTab]} · ${towerSetupInitiativesFeed.summary.total} initiatives observed`}
+      initiatives={towerInitiatives}
       towerSubmenuSlot={<TowerMainSubmenuStrip activeTab={activeTab} />}
       provenanceSlot={
         <>

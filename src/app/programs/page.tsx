@@ -25,7 +25,6 @@ const PROGRAM_TENANT_BY_CLIENT_KEY: Record<ClientKey, ProgramsIndexTenant> = {
   apexretail: 'apex-retail',
   meridian: 'meridian-health',
   arcturus: 'first-capital',
-  keystone: 'keystone-energy',
 };
 
 export default async function ProgramsPage() {
