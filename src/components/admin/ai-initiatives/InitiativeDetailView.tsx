@@ -115,6 +115,21 @@ function Breadcrumb({ initiative }: { initiative: AIInitiative }) {
 }
 
 function DetailHeader({ initiative }: { initiative: AIInitiative }) {
+  // Build URL params for the Shape-into-Move CTA so Nexus receives initiative context.
+  const gapUsd =
+    initiative.committedAnnualUsd !== null && initiative.measuredValueUsd !== null
+      ? Math.round(Math.abs(initiative.committedAnnualUsd - initiative.measuredValueUsd))
+      : null;
+  const ctaParams = new URLSearchParams({
+    fromInitiative: '1',
+    fromId: initiative.displayId,
+    fromName: initiative.name,
+    fromStatus: initiative.statusFlag,
+    fromOwner: initiative.ownerName,
+    fromGoal: initiative.primaryGoalName,
+    ...(gapUsd !== null ? { fromGapUsd: String(gapUsd) } : {}),
+  });
+
   return (
     <header style={{ marginBottom: SPACING.lg }}>
       <div
@@ -143,19 +158,56 @@ function DetailHeader({ initiative }: { initiative: AIInitiative }) {
           {initiative.displayId}
         </span>
       </div>
-      <h1
+
+      {/* Title row: name + Shape-into-Move CTA */}
+      <div
         style={{
-          fontFamily: FONT.body,
-          fontSize: 24,
-          fontWeight: 700,
-          color: COLORS.ink,
-          letterSpacing: '-0.01em',
-          margin: 0,
+          display: 'flex',
+          alignItems: 'flex-start',
+          justifyContent: 'space-between',
+          gap: SPACING.lg,
+          flexWrap: 'wrap',
           marginBottom: SPACING.xs,
         }}
       >
-        {initiative.name}
-      </h1>
+        <h1
+          style={{
+            fontFamily: FONT.body,
+            fontSize: 24,
+            fontWeight: 700,
+            color: COLORS.ink,
+            letterSpacing: '-0.01em',
+            margin: 0,
+            flex: '1 1 auto',
+          }}
+        >
+          {initiative.name}
+        </h1>
+
+        {/* Tier 0 CTA — journey-kit-tier-0 / PROBE 8-3 */}
+        <Link
+          href={`/strategic-moves/new?${ctaParams.toString()}`}
+          data-testid="shape-into-move-cta"
+          style={{
+            fontFamily: FONT.body,
+            fontSize: 13,
+            fontWeight: 600,
+            padding: `${SPACING.sm}px ${SPACING.md}px`,
+            background: COLORS.navy,
+            color: COLORS.surface,
+            borderRadius: RADIUS.pill,
+            textDecoration: 'none',
+            whiteSpace: 'nowrap',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 6,
+            flexShrink: 0,
+          }}
+        >
+          Shape into a Move &rarr;
+        </Link>
+      </div>
+
       <div
         style={{
           fontFamily: FONT.body,
