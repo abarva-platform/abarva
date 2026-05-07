@@ -31,6 +31,11 @@ interface GateTabProps {
   ) => Promise<void>;
   /** Per-criterion pending flag — disables the button while in flight. */
   pendingByCriterionId?: Record<string, boolean>;
+  /** Promote handler. Called when "Promote to {next}" is clicked
+   * with all criteria met. Receives the target stage key. */
+  onPromoteStage?: (toStage: SourceStageKey) => Promise<void>;
+  /** Disable the promote button while a promote is in flight. */
+  promotePending?: boolean;
 }
 
 /**
@@ -44,6 +49,8 @@ export function GateTab({
   states,
   onChangeCriterionState,
   pendingByCriterionId,
+  onPromoteStage,
+  promotePending,
 }: GateTabProps) {
   const ordered = [...states].sort((a, b) => a.criterionId.localeCompare(b.criterionId));
   const total = ordered.length;
@@ -86,17 +93,28 @@ export function GateTab({
         </div>
         <button
           type="button"
-          disabled={!allMet}
+          disabled={!allMet || promotePending || !onPromoteStage}
           aria-describedby={!allMet && total > 0 ? promoteHelpId : undefined}
+          onClick={() => {
+            if (
+              allMet &&
+              onPromoteStage &&
+              targetStage &&
+              targetStage !== 'closed'
+            ) {
+              void onPromoteStage(targetStage as SourceStageKey);
+            }
+          }}
           style={{
             ...PROMOTE_BUTTON_STYLE,
-            background: allMet ? CANVAS.INK : 'rgba(10,10,11,0.08)',
-            color: allMet ? '#fff' : CANVAS.INK_MUTED,
-            cursor: allMet ? 'pointer' : 'not-allowed',
+            background: allMet && onPromoteStage ? CANVAS.INK : 'rgba(10,10,11,0.08)',
+            color: allMet && onPromoteStage ? '#fff' : CANVAS.INK_MUTED,
+            cursor: allMet && onPromoteStage && !promotePending ? 'pointer' : 'not-allowed',
+            opacity: promotePending ? 0.7 : 1,
           }}
           data-testid="source-canvas-gate-promote"
         >
-          Promote to {targetLabel}
+          {promotePending ? 'Promoting…' : `Promote to ${targetLabel}`}
         </button>
       </header>
 
