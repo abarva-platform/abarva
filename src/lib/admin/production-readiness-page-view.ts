@@ -35,6 +35,22 @@ import type { AdminReadinessHistoryEntry } from './data/admin-production-readine
 
 export type ReadinessTileStatus = 'ready' | 'partial' | 'blocked';
 
+/**
+ * Setup Fix Package PR 9 §2.1 — Pilot card "Needs:" list with each
+ * blocker linked to the panel that resolves it. Optional because
+ * Demo and Production tiles don't surface a generic blocker list
+ * here (Demo has none; Production is governed by the Gate Criteria
+ * matrix in the depth view).
+ */
+export interface ReadinessTileBlockerLink {
+  /** Short blocker label (e.g. "Access"). */
+  label: string;
+  /** Action copy shown next to the label (e.g. "Configure SSO →"). */
+  cta: string;
+  /** Destination href for the action. */
+  href: string;
+}
+
 export interface ReadinessTile {
   id: 'demo' | 'pilot' | 'production';
   label: string;
@@ -42,6 +58,8 @@ export interface ReadinessTile {
   status: ReadinessTileStatus;
   body: string;
   blockerCount: number;
+  /** Linked blockers replacing the generic body sentence. PR 9 §2.1. */
+  blockerLinks?: ReadonlyArray<ReadinessTileBlockerLink>;
 }
 
 // ---------------------------------------------------------------------------
@@ -173,6 +191,7 @@ const TABS: ReadonlyArray<ProductionReadinessTabMeta> = [
 
 function buildGateCriteria(
   allBlockers: ReadonlyArray<BlockerDetail>,
+  tenantName: string,
 ): ReadonlyArray<GateCriteriaGroup> {
   const pilotBlocked = allBlockers.some((b) => b.pilotImpact);
   const prodBlocked = allBlockers.some((b) => b.productionImpact);
@@ -188,7 +207,7 @@ function buildGateCriteria(
           label: 'Deterministic seed available',
           status: 'pass',
           evidenceBasis:
-            'Apex Retail rich seed manifest present (Wave 2 deterministic).',
+            `${tenantName} rich seed manifest present (Wave 2 deterministic).`,
         },
         {
           id: 'demo-route-shell',
@@ -328,8 +347,14 @@ function mapHistoryEntry(
 // View-model builder — async; consumes admin-data adapters.
 // ---------------------------------------------------------------------------
 
+/**
+ * PR 9 §2.2 — tenant-substituted copy for the Demo tile body and
+ * for the demo-seed gate-criteria evidence basis. Falls back to
+ * "Apex Retail Group" only when the caller doesn't pass a name.
+ */
 export async function buildProductionReadinessPageView(
   tenantSlug: string = 'apex-retail',
+  tenantName: string = 'Apex Retail Group',
 ): Promise<ProductionReadinessPageView> {
   const ctx = await buildAgentContextAsync(tenantSlug, 'admin', 'production-readiness');
   const editorial = generateStewardEditorial(ctx);
@@ -370,7 +395,7 @@ export async function buildProductionReadinessPageView(
       label: 'Demo',
       statusLabel: 'Ready',
       status: 'ready',
-      body: 'Guided demo can proceed with caveats. Apex Retail rich seed available.',
+      body: `Guided demo can proceed with caveats. ${tenantName} rich seed available.`,
       blockerCount: 0,
     },
     {
@@ -378,8 +403,33 @@ export async function buildProductionReadinessPageView(
       label: 'Pilot',
       statusLabel: 'Partial',
       status: 'partial',
-      body: 'Needs access, security, connectors, approvals.',
+      body: 'Needs:',
       blockerCount: pilotImpactCount,
+      // PR 9 §2.1 — each blocker links directly to the panel that
+      // resolves it. Anchors / query params are stable destinations
+      // already wired by earlier PRs in this package.
+      blockerLinks: [
+        {
+          label: 'Access',
+          cta: 'Configure SSO →',
+          href: '/admin/users-access/sso-configuration',
+        },
+        {
+          label: 'Security',
+          cta: 'Connector readiness review →',
+          href: '/admin/connectors?tab=health',
+        },
+        {
+          label: 'Connectors',
+          cta: 'Pilot-required connectors →',
+          href: '/admin/connectors?tab=requirements',
+        },
+        {
+          label: 'Approvals',
+          cta: 'Steward review queue →',
+          href: '/admin',
+        },
+      ],
     },
     {
       id: 'production',
@@ -391,7 +441,7 @@ export async function buildProductionReadinessPageView(
     },
   ];
 
-  const gateCriteria = buildGateCriteria(allBlockers);
+  const gateCriteria = buildGateCriteria(allBlockers, tenantName);
   const criteriaByGate = new Map<string, ReadonlyArray<GateCriterion>>();
   for (const g of gateCriteria) criteriaByGate.set(g.gateId, g.criteria);
 

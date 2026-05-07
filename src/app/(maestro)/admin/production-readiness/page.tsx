@@ -44,7 +44,7 @@ export default async function AdminProductionReadinessPage({
   // is asserted on the page itself.
   await connection();
   const tenant = await resolveAdminTenant();
-  const view = await buildProductionReadinessPageView(tenant.tenantSlug);
+  const view = await buildProductionReadinessPageView(tenant.tenantSlug, tenant.tenantName);
   const resolved = searchParams ? await searchParams : undefined;
   const activeTab = resolveProductionReadinessTab(resolved?.tab);
   const expandedTile = resolveExpandedTile(resolved?.expand);
