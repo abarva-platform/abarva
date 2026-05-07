@@ -2,10 +2,11 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import type { CSSProperties } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { AppShell } from '@/components/shell/AppShell';
 import { AtlasDrawer } from '@/components/shell/AtlasDrawer';
 import { ResizableSplitter } from '@/components/source/canvas/ResizableSplitter';
+import { SourceOnboardingTour } from '@/components/source/onboarding/SourceOnboardingTour';
 import { SHELL } from '@/lib/shell/shell-tokens';
 
 type IntakeFieldId = 'trigger' | 'decisionOwner' | 'scopeBoundary' | 'valueTarget' | 'baselineOwner';
@@ -297,6 +298,8 @@ export function SourceOriginatePage({
   clientKey = 'apexretail',
 }: SourceOriginatePageProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const tourActive = searchParams?.get('tour') === '1';
   // Hydrate intake + category from localStorage if a draft exists for
   // this tenant. Lazy initializer keeps SSR safe — typeof window check
   // inside the helper.
@@ -388,7 +391,13 @@ export function SourceOriginatePage({
     // visit starts clean, and drop the "restored from" hint.
     clearAutosavedDraft(clientKey);
     setRestoredAt(null);
-    router.push(payload.eventUrl ?? `/source/events/${payload.event.id}?stage=Strategy`);
+    const eventUrl = payload.eventUrl ?? `/source/events/${payload.event.id}?stage=Strategy`;
+    // Forward the tour into the canvas as step 3 if it's active.
+    const finalUrl =
+      tourActive
+        ? eventUrl + (eventUrl.includes('?') ? '&tour=1' : '?tour=1')
+        : eventUrl;
+    router.push(finalUrl);
   }
 
   return (
@@ -585,6 +594,22 @@ export function SourceOriginatePage({
               </section>
             </aside>
           }
+        />
+        <SourceOnboardingTour
+          active={tourActive}
+          config={{
+            step: 2,
+            title: 'Sentinel just needs the trigger.',
+            body: (
+              <>
+                Fill the <strong>Why now / trigger</strong> field — that&rsquo;s
+                the only required intake fact. Everything else can be refined
+                later through the chat. When you click <strong>Open sourcing
+                event</strong> the tour follows you to the canvas.
+              </>
+            ),
+            awaitingUserAction: true,
+          }}
         />
       </main>
     </AppShell>

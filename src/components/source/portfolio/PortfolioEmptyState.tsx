@@ -44,7 +44,15 @@ export function PortfolioEmptyState() {
           + Create your first sourcing event
         </Link>
         <p style={FOOTNOTE_STYLE}>
-          After your first event, this page becomes your operating queue.
+          After your first event, this page becomes your operating queue.{' '}
+          <Link
+            href="/source?tour=1"
+            data-testid="source-onboarding-tour-entry"
+            style={TOUR_LINK_STYLE}
+          >
+            Take the tour
+          </Link>
+          {' '}for a 3-step walkthrough.
         </p>
       </div>
 
@@ -142,6 +150,13 @@ const FOOTNOTE_STYLE: CSSProperties = {
   letterSpacing: '0.10em',
   textTransform: 'uppercase',
   color: PORTFOLIO.GRAY_DK,
+};
+
+const TOUR_LINK_STYLE: CSSProperties = {
+  color: PORTFOLIO.INK,
+  textDecoration: 'underline',
+  textUnderlineOffset: 3,
+  fontWeight: 700,
 };
 
 const PREVIEW_CARD_STYLE: CSSProperties = {
