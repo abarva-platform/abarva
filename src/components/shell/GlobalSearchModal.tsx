@@ -1,8 +1,8 @@
 'use client';
 
 // GlobalSearchModal — Cmd+K / Ctrl+K search overlay.
-// Searches across patterns, instances, and admin reasoning pages.
-// Rendered inside AppShell (server component) via GlobalSearchModalLoader.
+// Searches across patterns and instances. Rendered inside AppShell
+// (server component) via GlobalSearchModalLoader.
 
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
@@ -27,23 +27,6 @@ const ALL_PATTERNS = [
   ...META_PATTERNS,
 ];
 
-// ── Admin reasoning sub-routes ─────────────────────────────────────────────────
-
-interface AdminPage {
-  label: string;
-  path: string;
-  description: string;
-}
-
-const ADMIN_PAGES: AdminPage[] = [
-  { label: 'Reasoning Health', path: '/admin/reasoning/health', description: 'Health checks across all reasoning components' },
-  { label: 'Reasoning Audit', path: '/admin/reasoning/audit', description: 'Audit log of reasoning decisions and gate evaluations' },
-  { label: 'Pattern Coverage', path: '/admin/reasoning/coverage', description: 'Coverage audit of patterns vs. instances' },
-  { label: 'Weekly Digest', path: '/admin/reasoning/digest', description: 'Auto-generated weekly synthesis digest' },
-  { label: 'Patterns Admin', path: '/admin/reasoning/patterns', description: 'Manage and review pattern library' },
-  { label: 'Fixture Lint', path: '/admin/reasoning/fixture-lint', description: 'Quality lint checks on instance fixtures' },
-];
-
 // ── Result types ───────────────────────────────────────────────────────────────
 
 interface PatternResult {
@@ -63,14 +46,7 @@ interface InstanceResult {
   path: string;
 }
 
-interface AdminResult {
-  kind: 'admin';
-  label: string;
-  description: string;
-  path: string;
-}
-
-type SearchResult = PatternResult | InstanceResult | AdminResult;
+type SearchResult = PatternResult | InstanceResult;
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
 
@@ -78,19 +54,17 @@ const MAX_PER_GROUP = 5;
 
 function resultKey(r: SearchResult): string {
   if (r.kind === 'pattern') return `pat:${r.id}`;
-  if (r.kind === 'instance') return `inst:${r.id}`;
-  return `admin:${r.path}`;
+  return `inst:${r.id}`;
 }
 
 function buildResults(query: string): {
   patterns: PatternResult[];
   instances: InstanceResult[];
-  admins: AdminResult[];
 } {
   const q = query.toLowerCase().trim();
 
   if (q.length === 0) {
-    return { patterns: [], instances: [], admins: [] };
+    return { patterns: [], instances: [] };
   }
 
   const patterns: PatternResult[] = ALL_PATTERNS
@@ -104,7 +78,7 @@ function buildResults(query: string): {
       id: p.id,
       title: p.title,
       body: p.body.slice(0, 100),
-      path: '/admin/reasoning/patterns',
+      path: '/intelligence/ask',
     }));
 
   const sourceInstances: InstanceResult[] = SOURCE_EVENT_INSTANCES
@@ -150,21 +124,7 @@ function buildResults(query: string): {
 
   const allInstances = [...sourceInstances, ...programInstances].slice(0, MAX_PER_GROUP);
 
-  const admins: AdminResult[] = ADMIN_PAGES
-    .filter((p) =>
-      p.label.toLowerCase().includes(q) ||
-      p.description.toLowerCase().includes(q) ||
-      p.path.toLowerCase().includes(q),
-    )
-    .slice(0, MAX_PER_GROUP)
-    .map((p) => ({
-      kind: 'admin' as const,
-      label: p.label,
-      description: p.description,
-      path: p.path,
-    }));
-
-  return { patterns, instances: allInstances, admins };
+  return { patterns, instances: allInstances };
 }
 
 // ── Component ──────────────────────────────────────────────────────────────────
@@ -186,12 +146,11 @@ export function GlobalSearchModal() {
     return () => clearTimeout(timer);
   }, [query]);
 
-  const { patterns, instances, admins } = buildResults(debouncedQuery);
+  const { patterns, instances } = buildResults(debouncedQuery);
 
   const allResults: SearchResult[] = [
     ...patterns,
     ...instances,
-    ...admins,
   ];
 
   const totalResults = allResults.length;
@@ -332,7 +291,7 @@ export function GlobalSearchModal() {
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search patterns, instances, admin pages…"
+            placeholder="Search patterns and instances…"
             autoComplete="off"
             spellCheck={true}
             style={{
@@ -392,7 +351,7 @@ export function GlobalSearchModal() {
                 textAlign: 'center',
               }}
             >
-              Type to search patterns, instances and admin pages
+              Type to search patterns and instances
             </div>
           )}
 
@@ -493,52 +452,6 @@ export function GlobalSearchModal() {
             );
           })()}
 
-          {/* Admin pages group */}
-          {admins.length > 0 && (() => {
-            const groupStart = globalIdx;
-            globalIdx += admins.length;
-            return (
-              <div>
-                <GroupHeading label="Admin Pages" />
-                {admins.map((r, i) => {
-                  const idx = groupStart + i;
-                  return (
-                    <ResultRow
-                      key={resultKey(r)}
-                      isSelected={selectedIndex === idx}
-                      onClick={() => navigate(r.path)}
-                      onMouseEnter={() => setSelectedIndex(idx)}
-                    >
-                      <div>
-                        <div
-                          style={{
-                            fontFamily: SHELL.SANS,
-                            fontSize: 13,
-                            fontWeight: 600,
-                            color: SHELL.INK,
-                            lineHeight: 1.3,
-                          }}
-                        >
-                          {r.label}
-                        </div>
-                        <div
-                          style={{
-                            fontFamily: SHELL.SANS,
-                            fontSize: 11,
-                            color: SHELL.INK_SOFT,
-                            marginTop: 2,
-                          }}
-                        >
-                          {r.description}
-                        </div>
-                      </div>
-                      <Badge label="Admin" />
-                    </ResultRow>
-                  );
-                })}
-              </div>
-            );
-          })()}
         </div>
       </div>
     </>

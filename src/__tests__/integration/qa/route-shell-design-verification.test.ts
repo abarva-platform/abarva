@@ -3,12 +3,11 @@ import { buildRouteShellDesignVerificationReport } from '@/lib/qa/route-shell-de
 describe('QA26 route-shell-design-verification', () => {
   it('covers all target routes', () => {
     const report = buildRouteShellDesignVerificationReport();
-    expect(report.targetRoutes).toHaveLength(9);
+    expect(report.targetRoutes).toHaveLength(8);
     const patterns = report.targetRoutes.map((route) => route.routePattern);
     expect(patterns).toEqual(
       expect.arrayContaining([
         '/platform/admin',
-        '/platform/admin/architecture',
         '/platform/admin/production-readiness',
         '/platform/admin/build-progress',
         '/source',
@@ -44,9 +43,6 @@ describe('QA26 route-shell-design-verification', () => {
     const eventRoute = report.targetRoutes.find(
       (route) => route.routePattern === '/source/events/[eventId]',
     );
-    const architectureRoute = report.targetRoutes.find(
-      (route) => route.routePattern === '/platform/admin/architecture',
-    );
     const productionRoute = report.targetRoutes.find(
       (route) => route.routePattern === '/platform/admin/production-readiness',
     );
@@ -54,7 +50,6 @@ describe('QA26 route-shell-design-verification', () => {
     expect(eventRoute).toBeDefined();
     expect(eventRoute?.routeExists).toBe(true);
     expect(typeof eventRoute?.mountedCommercialSurface).toBe('boolean');
-    expect(architectureRoute?.routeExists).toBe(true);
     expect(productionRoute?.routeExists).toBe(true);
   });
 

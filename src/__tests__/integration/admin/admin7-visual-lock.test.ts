@@ -161,8 +161,6 @@ const ADMIN_PAGE_PATHS = [
   'src/app/(maestro)/admin/users-access/page.tsx',
   'src/app/(maestro)/admin/agent-readiness/page.tsx',
   'src/app/(maestro)/admin/production-readiness/page.tsx',
-  'src/app/(maestro)/admin/build-progress/page.tsx',
-  'src/app/(maestro)/admin/architecture/page.tsx',
 ];
 
 // ADMIN19 — Depth components added across batch 1+2 of wave-admin-completion.
@@ -179,11 +177,6 @@ const ADMIN19_DEPTH_COMPONENTS: string[] = [
   // Connectors (batch 1)
   'src/components/admin/connectors/ConnectorDetailDrawer.tsx',
   'src/components/admin/connectors/ConnectorCategoryGroup.tsx',
-  // Architecture (batch 1) — closes WIRE2 component drawer deviation
-  'src/components/admin/ArchitecturePlaneDrilldown.tsx',
-  'src/components/admin/ComponentDetailDrawer.tsx',
-  'src/components/admin/AzureArchitectureCanvas.tsx',
-  'src/components/admin/ArchitectureActionStrip.tsx',
   // Agent Readiness (batch 2)
   'src/components/admin/AgentExpandableCard.tsx',
   'src/components/admin/ContextCoverageMatrix.tsx',
@@ -196,12 +189,6 @@ const ADMIN19_DEPTH_COMPONENTS: string[] = [
   'src/components/admin/DataGovernancePanel.tsx',
   'src/components/admin/DataQualityPanel.tsx',
   'src/components/admin/DataTrustActionStrip.tsx',
-  // Build Progress (batch 2)
-  'src/components/admin/build-progress/WaveTimeline.tsx',
-  'src/components/admin/build-progress/SliceTable.tsx',
-  'src/components/admin/build-progress/SliceDetailDrawer.tsx',
-  'src/components/admin/build-progress/CIMiniStrip.tsx',
-  'src/components/admin/build-progress/BacklogPreview.tsx',
   // Production Readiness (batch 2)
   'src/components/admin/production-readiness/ProductionReadinessTabs.tsx',
   'src/components/admin/production-readiness/ProductionReadinessActionStrip.tsx',
@@ -220,8 +207,6 @@ const ADMIN_PAGES_WITH_SEARCH_PARAMS: string[] = [
   'src/app/(maestro)/admin/users-access/page.tsx',
   'src/app/(maestro)/admin/agent-readiness/page.tsx',
   'src/app/(maestro)/admin/production-readiness/page.tsx',
-  'src/app/(maestro)/admin/build-progress/page.tsx',
-  'src/app/(maestro)/admin/architecture/page.tsx',
 ];
 
 // ADMIN8 + ADMIN10 — legacy /platform/admin/* pages are now thin redirects.
@@ -233,7 +218,6 @@ const ADMIN_PAGES_WITH_SEARCH_PARAMS: string[] = [
 // ADMIN10 retired: intelligence (→ /intelligence), users (→ /admin/users-access).
 const LEGACY_REDIRECT_PAGES: Array<{ path: string; expectedTarget: string }> = [
   { path: 'src/app/(maestro)/platform/admin/page.tsx', expectedTarget: '/admin' },
-  { path: 'src/app/(maestro)/platform/admin/architecture/page.tsx', expectedTarget: '/admin/architecture' },
   { path: 'src/app/(maestro)/platform/admin/production-readiness/page.tsx', expectedTarget: '/admin/production-readiness' },
   { path: 'src/app/(maestro)/platform/admin/intelligence/page.tsx', expectedTarget: '/intelligence' },
   { path: 'src/app/(maestro)/platform/admin/users/page.tsx', expectedTarget: '/admin/users-access' },

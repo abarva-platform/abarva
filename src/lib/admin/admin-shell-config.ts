@@ -5,12 +5,8 @@ export type AdminSubSectionId =
   | "data-trust"
   | "connectors"
   | "users-access"
-  | "ai-initiatives"
   | "agent-readiness"
-  | "production-readiness"
-  | "build-progress"
-  | "architecture"
-  | "reasoning";
+  | "production-readiness";
 
 export interface AdminSubSection {
   id: AdminSubSectionId;
@@ -45,12 +41,6 @@ export const ADMIN_SUB_SECTIONS: ReadonlyArray<AdminSubSection> = [
     href: "/admin/users-access",
   },
   {
-    id: "ai-initiatives",
-    label: "AI Initiatives",
-    subtitle: "Portfolio registry",
-    href: "/admin/ai-initiatives",
-  },
-  {
     id: "agent-readiness",
     label: "Agent Readiness",
     subtitle: "Nexus/Sentinel/Atlas/Steward",
@@ -61,24 +51,6 @@ export const ADMIN_SUB_SECTIONS: ReadonlyArray<AdminSubSection> = [
     label: "Production Readiness",
     subtitle: "Demo / pilot / production",
     href: "/admin/production-readiness",
-  },
-  {
-    id: "build-progress",
-    label: "Build Progress",
-    subtitle: "Waves and blockers",
-    href: "/admin/build-progress",
-  },
-  {
-    id: "architecture",
-    label: "Architecture",
-    subtitle: "Planes + private data plane",
-    href: "/admin/architecture",
-  },
-  {
-    id: "reasoning",
-    label: "Reasoning",
-    subtitle: "Telemetry, health & patterns",
-    href: "/admin/reasoning",
   },
 ];
 
