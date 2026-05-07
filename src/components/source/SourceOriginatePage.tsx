@@ -66,6 +66,130 @@ const INTAKE_FIELDS: IntakeFieldDefinition[] = [
   },
 ];
 
+// ─── T02 — Category definitions ───────────────────────────────────────────────
+
+type CategoryEventType = 'managed_service' | 'infrastructure' | 'software' | 'consulting' | 'staffing' | 'other';
+
+interface SourceCategory {
+  id: string;
+  label: string;
+  description: string;
+  artifactPack: string[];
+  inferredEventType: CategoryEventType;
+}
+
+const SOURCE_CATEGORIES: SourceCategory[] = [
+  {
+    id: 'ams',
+    label: 'Application Managed Services',
+    description: 'End-to-end AMS for enterprise applications — SAP, eCommerce, ERP, custom platforms.',
+    artifactPack: ['RFP package', 'Scorecard matrix', 'TCO model', 'Transition plan', 'BAFO brief'],
+    inferredEventType: 'managed_service',
+  },
+  {
+    id: 'cloud_infra',
+    label: 'Cloud & Infrastructure',
+    description: 'Cloud operations, hosting, network, platform, and infrastructure management services.',
+    artifactPack: ['Cloud assessment', 'Cost comparison', 'Migration plan', 'Vendor brief'],
+    inferredEventType: 'infrastructure',
+  },
+  {
+    id: 'data_analytics',
+    label: 'Data, Analytics & AI',
+    description: 'Data platforms, analytics pipelines, AI/ML services, and BI tooling.',
+    artifactPack: ['Platform evaluation', 'Vendor maturity', 'TCO model', 'Architecture review'],
+    inferredEventType: 'other',
+  },
+  {
+    id: 'enterprise_software',
+    label: 'Enterprise Software',
+    description: 'SaaS, license optimization, enterprise application selection and renegotiation.',
+    artifactPack: ['License audit', 'Vendor comparison', 'Negotiation brief'],
+    inferredEventType: 'software',
+  },
+  {
+    id: 'custom',
+    label: 'Custom / Multi-tower',
+    description: 'Bespoke or cross-category events. Artifact pack built during strategy phase.',
+    artifactPack: ['Scope specification', 'Custom artifact pack (strategy-derived)'],
+    inferredEventType: 'other',
+  },
+];
+
+// ─── Category picker card ─────────────────────────────────────────────────────
+
+function CategoryCard({
+  category,
+  selected,
+  onSelect,
+}: {
+  category: SourceCategory;
+  selected: boolean;
+  onSelect: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onSelect}
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 8,
+        padding: '14px 14px 12px',
+        background: selected ? SHELL.INK : SHELL.CARD_WHITE,
+        border: `1.5px solid ${selected ? SHELL.INK : SHELL.CARD_LINE}`,
+        borderRadius: 12,
+        cursor: 'pointer',
+        textAlign: 'left',
+        transition: 'background 0.12s, border-color 0.12s',
+      }}
+      aria-pressed={selected}
+    >
+      <div
+        style={{
+          fontFamily: SHELL.SANS,
+          fontSize: 13,
+          fontWeight: 700,
+          color: selected ? SHELL.CARD_WHITE : SHELL.INK,
+          lineHeight: 1.3,
+        }}
+      >
+        {category.label}
+      </div>
+      <div
+        style={{
+          fontFamily: SHELL.SANS,
+          fontSize: 11.5,
+          lineHeight: 1.5,
+          color: selected ? 'rgba(255,255,255,0.65)' : SHELL.INK_MUTED,
+        }}
+      >
+        {category.description}
+      </div>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, marginTop: 4 }}>
+        {category.artifactPack.map((artifact) => (
+          <span
+            key={artifact}
+            style={{
+              fontFamily: SHELL.MONO,
+              fontSize: 8.5,
+              letterSpacing: '0.06em',
+              borderRadius: 4,
+              padding: '2px 5px',
+              background: selected ? 'rgba(255,255,255,0.14)' : SHELL.PAPER_SOFT,
+              border: `1px solid ${selected ? 'rgba(255,255,255,0.22)' : SHELL.CARD_LINE}`,
+              color: selected ? 'rgba(255,255,255,0.8)' : SHELL.INK_MUTED,
+              whiteSpace: 'nowrap',
+            }}
+          >
+            {artifact}
+          </span>
+        ))}
+      </div>
+    </button>
+  );
+}
+
 const IN_SCOPE_EXAMPLES = [
   'Application managed services',
   'Infrastructure or cloud operations',
@@ -326,14 +450,17 @@ export function SourceOriginatePage({
   clientShortName = 'Apex Retail',
   clientKey = 'apexretail',
 }: SourceOriginatePageProps) {
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
   const [intake, setIntake] = useState<IntakeState>(initialIntakeState);
   const [submitState, setSubmitState] = useState<SubmitState>({ status: 'idle' });
+
+  const selectedCategory = SOURCE_CATEGORIES.find((c) => c.id === selectedCategoryId) ?? null;
 
   const completedCount = useMemo(
     () => INTAKE_FIELDS.filter((field) => intake[field.id].trim().length > 0).length,
     [intake]
   );
-  const intakeReady = completedCount === INTAKE_FIELDS.length;
+  const intakeReady = completedCount === INTAKE_FIELDS.length && selectedCategoryId !== null;
   const clientFacts = CLIENT_CONTEXT_FACTS[clientKey] ?? [
     ['Known context', 'Client-scoped Source context available when loaded'],
     ['Evidence posture', 'Do not assume retrieval until the event cites records'],
@@ -354,10 +481,13 @@ export function SourceOriginatePage({
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         eventName,
-        eventType: inferEventType(intake.scopeBoundary),
+        eventType: selectedCategory?.inferredEventType ?? inferEventType(intake.scopeBoundary),
+        category: selectedCategoryId,
+        artifactPack: selectedCategory?.artifactPack ?? [],
         triggerDescription: intake.trigger,
         decisionOwner: intake.decisionOwner,
         scopeDescription: [
+          `Category: ${selectedCategory?.label ?? 'not selected'}`,
           `Scope boundary: ${intake.scopeBoundary}`,
           `Value basis: ${intake.valueTarget}`,
           `Baseline owner: ${intake.baselineOwner}`,
@@ -473,7 +603,11 @@ export function SourceOriginatePage({
                     {completedCount}/{INTAKE_FIELDS.length}
                   </div>
                   <div style={{ fontFamily: SHELL.SANS, fontSize: 12, color: SHELL.INK_SOFT }}>
-                    {intakeReady ? 'Ready for workflow handoff' : 'Draft facts missing'}
+                    {intakeReady
+                      ? 'Ready for workflow handoff'
+                      : !selectedCategoryId
+                        ? 'Select a category first'
+                        : 'Draft facts missing'}
                   </div>
                 </div>
               </div>
@@ -524,6 +658,85 @@ export function SourceOriginatePage({
                     <span>{value}</span>
                   </div>
                 ))}
+              </div>
+            </section>
+
+            {/* T02 — Category picker */}
+            <section style={{ ...sectionCard, padding: 22 }} aria-label="Select event category">
+              <div style={{ display: 'flex', justifyContent: 'space-between', gap: 16, alignItems: 'flex-start', marginBottom: 14 }}>
+                <div>
+                  <Eyebrow>Step 1 — Select IT sourcing category</Eyebrow>
+                  <div style={{ fontFamily: SHELL.SERIF, fontSize: 22, color: SHELL.INK, marginTop: 8 }}>
+                    Choose the category that fits this event.
+                  </div>
+                </div>
+                {selectedCategory ? (
+                  <span
+                    style={{
+                      flex: '0 0 auto',
+                      fontFamily: SHELL.MONO,
+                      fontSize: 9,
+                      letterSpacing: '0.10em',
+                      textTransform: 'uppercase',
+                      borderRadius: 999,
+                      padding: '5px 10px',
+                      background: SHELL.MINT_BG,
+                      color: SHELL.MINT_TEXT,
+                      border: `1px solid ${SHELL.MINT_LINE}`,
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    ✓ {selectedCategory.label}
+                  </span>
+                ) : (
+                  <span
+                    style={{
+                      flex: '0 0 auto',
+                      fontFamily: SHELL.MONO,
+                      fontSize: 9,
+                      letterSpacing: '0.10em',
+                      textTransform: 'uppercase',
+                      borderRadius: 999,
+                      padding: '5px 10px',
+                      background: SHELL.PEACH_BG,
+                      color: SHELL.PEACH_TEXT,
+                      border: `1px solid ${SHELL.PEACH_LINE}`,
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    Required
+                  </span>
+                )}
+              </div>
+              <div
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 200px), 1fr))',
+                  gap: 10,
+                }}
+              >
+                {SOURCE_CATEGORIES.map((category) => (
+                  <CategoryCard
+                    key={category.id}
+                    category={category}
+                    selected={selectedCategoryId === category.id}
+                    onSelect={() => {
+                      setSelectedCategoryId((prev) => prev === category.id ? null : category.id);
+                      setSubmitState({ status: 'idle' });
+                    }}
+                  />
+                ))}
+              </div>
+              <div
+                style={{
+                  fontFamily: SHELL.MONO,
+                  fontSize: 9,
+                  color: SHELL.INK_MUTED,
+                  letterSpacing: '0.08em',
+                  marginTop: 6,
+                }}
+              >
+                Category determines the default artifact pack · toggle to deselect
               </div>
             </section>
 
