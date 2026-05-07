@@ -18,6 +18,8 @@ import { SourceBafoNegotiationPanel } from './SourceBafoNegotiationPanel';
 import { SourceVendorSelectionReadinessPanel } from './SourceVendorSelectionReadinessPanel';
 import { SourceVendorResponseCompletenessPanel } from './SourceVendorResponseCompletenessPanel';
 import { SourcePricingComparisonPanel } from './SourcePricingComparisonPanel';
+import { VendorScorecardMatrix } from './VendorScorecardMatrix';
+import { getVendorsForEvent } from '@/lib/source/vendor-detail';
 
 const sourceCard = {
   background: SHELL.CARD_WHITE,
@@ -73,6 +75,17 @@ export function SourceActiveStageWorkspace({
         event={event}
         missionReport={missionReport}
         missionPreviewMissions={missionPreviewMissions}
+      />
+    );
+  }
+
+  if (activeStage.key === 'evaluation') {
+    const evalVendors = getVendorsForEvent(event.id);
+    return (
+      <VendorScorecardMatrix
+        eventId={event.id}
+        vendors={evalVendors}
+        sensitivityNote="Decision may be sensitive to weight settings. Re-run sensitivity before promoting to Pricing."
       />
     );
   }
