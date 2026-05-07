@@ -29,7 +29,7 @@ export function TodayCanvas({ data }: Props) {
 
       <ThreeSubstratesPanel data={data} />
 
-      <Block label="AI trajectory · regional banking">
+      <Block label={data.aiTrajectory.headline}>
         {data.aiTrajectory.body}
       </Block>
 
