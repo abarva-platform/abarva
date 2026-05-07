@@ -1,845 +1,675 @@
 'use client';
 
 import Link from 'next/link';
-import { useCallback, useState } from 'react';
-import type { ReactNode } from 'react';
+import { useState } from 'react';
+import type { CSSProperties, ReactNode } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { AppShell } from '@/components/shell/AppShell';
-import type { Artifact } from '@/lib/agent/artifacts';
-import { FilterPillStrip } from '@/components/shell/FilterPillStrip';
-import { SHELL } from '@/lib/shell/shell-tokens';
-import { TOWER_INDEX_VIEW, type PressureItem } from '@/lib/tower/shell-tower-fixture';
-import { AtlasSynthesisQuote } from '@/components/tower/AtlasSynthesisQuote';
 
-// ---------------------------------------------------------------------------
-// Severity helpers
-// ---------------------------------------------------------------------------
+// ─── Tower-specific tokens (broadsheet feel) ───────────────────────────────────
+const T = {
+  PAGE_BG: '#f5f1eb',
+  CREAM: '#efe9dd',
+  CREAM_2: '#faf6ec',
+  CREAM_DEEP: '#e8e1d2',
+  RULE: 'rgba(10,10,11,0.14)',
+  RULE_STRONG: 'rgba(10,10,11,0.32)',
+  BORDER: 'rgba(10,10,11,0.10)',
+  BORDER_STRONG: 'rgba(10,10,11,0.24)',
+  INK: '#000000',
+  INK_2: '#2c2c2a',
+  GRAY: '#888780',
+  GRAY_DK: '#5F5E5A',
+  GOLD: '#9C7B3F',
+  PURPLE: '#6b3fa0',
+  PURPLE_BG: '#efe6f7',
+  GREEN: '#1d9e75',
+  GREEN_BG: '#e1f5ee',
+  AMBER: '#ba7517',
+  AMBER_BG: '#faeeda',
+  RED: '#a32d2d',
+  RED_BG: '#fceded',
+  // Pressure-specific colors (each pressure type has its own ink)
+  P_COST: '#8b3a3a',
+  P_ADOPT: '#2d5f8a',
+  P_DUPL: '#6b3fa0',
+  P_VEND: '#9C7B3F',
+  P_VALUE: '#1d6b4f',
+  // Fonts
+  SERIF: 'var(--font-fraunces), "Fraunces", Georgia, serif',
+  SANS: 'var(--font-inter), "Inter", system-ui, sans-serif',
+  MONO: '"JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace',
+} as const;
 
-function severityBorderColor(severity: PressureItem['severity']): string {
-  if (severity === 'high') return SHELL.RUST_TEXT;
-  if (severity === 'medium') return SHELL.PEACH_TEXT;
-  return SHELL.MINT_TEXT;
+// ─── Confidence value (cval) — solid/dashed/dotted underline by confidence ────
+type Confidence = 'high' | 'med' | 'low';
+function cvalStyle(conf: Confidence): CSSProperties {
+  if (conf === 'high') return { borderBottom: `2px solid ${T.INK}`, paddingBottom: 5 };
+  if (conf === 'med') return { borderBottom: `2px dashed ${T.GRAY_DK}`, paddingBottom: 5 };
+  return { borderBottom: `1.5px dotted ${T.GRAY}`, paddingBottom: 5 };
 }
 
-function severityLabelColor(severity: PressureItem['severity']): string {
-  if (severity === 'high') return SHELL.RUST_TEXT;
-  if (severity === 'medium') return SHELL.PEACH_TEXT;
-  return SHELL.MINT_TEXT;
-}
-
-function severityBgColor(severity: PressureItem['severity']): string {
-  if (severity === 'high') return SHELL.RUST_BG;
-  if (severity === 'medium') return SHELL.PEACH_BG;
-  return SHELL.MINT_BG;
-}
-
-function deltaColor(item: PressureItem): string {
-  if (item.deltaDir === 'down') return SHELL.MINT_TEXT;
-  if (item.severity === 'high') return SHELL.RUST_TEXT;
-  return SHELL.PEACH_TEXT;
-}
-
-// ---------------------------------------------------------------------------
-// Status pill
-// ---------------------------------------------------------------------------
-
-function StatusPill({ status }: { status: PressureItem['status'] }) {
-  const bg =
-    status === 'active'
-      ? SHELL.RUST_BG
-      : status === 'watching'
-        ? SHELL.PEACH_BG
-        : SHELL.MINT_BG;
-  const color =
-    status === 'active'
-      ? SHELL.RUST_TEXT
-      : status === 'watching'
-        ? SHELL.PEACH_TEXT
-        : SHELL.MINT_TEXT;
-  const label =
-    status === 'active' ? 'Active' : status === 'watching' ? 'Watching' : 'Resolved';
-
+function ConfTag({ conf }: { conf: Confidence }) {
+  const bg = conf === 'high' ? 'rgba(10,10,11,0.08)' : conf === 'med' ? 'rgba(186,117,23,0.14)' : 'rgba(136,135,128,0.16)';
+  const color = conf === 'high' ? T.INK : conf === 'med' ? T.AMBER : T.GRAY_DK;
   return (
     <span
       style={{
-        fontFamily: SHELL.MONO,
-        fontSize: 9,
-        letterSpacing: '0.14em',
+        fontFamily: T.MONO,
+        fontSize: 8,
+        letterSpacing: '1.4px',
+        fontWeight: 700,
+        padding: '1px 5px',
+        borderRadius: 3,
+        verticalAlign: 'super',
+        marginLeft: 4,
         textTransform: 'uppercase',
-        padding: '2px 7px',
-        borderRadius: 8,
         background: bg,
         color,
-        lineHeight: 1,
-        flexShrink: 0,
       }}
     >
-      {label}
+      {conf}
     </span>
   );
 }
 
-// ---------------------------------------------------------------------------
-// Pressure card — compact list style
-// ---------------------------------------------------------------------------
-
-function PressureCard({ item }: { item: PressureItem }) {
-  const borderColor = severityBorderColor(item.severity);
-  const labelColor = severityLabelColor(item.severity);
-  const severityBg = severityBgColor(item.severity);
-  const dColor = deltaColor(item);
-
+function MissingChip({ children, onClick }: { children: ReactNode; onClick?: () => void }) {
   return (
-    <div
+    <button
+      onClick={onClick}
       style={{
-        background: SHELL.CARD_WHITE,
-        border: `1px solid ${SHELL.CARD_LINE}`,
-        borderRadius: 10,
-        borderLeft: `3px solid ${borderColor}`,
-        padding: '14px 16px',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: 8,
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: 6,
+        padding: '4px 10px',
+        border: `1px dashed ${T.BORDER_STRONG}`,
+        borderRadius: 999,
+        fontFamily: T.MONO,
+        fontSize: 9.5,
+        letterSpacing: '1.2px',
+        textTransform: 'uppercase',
+        fontWeight: 700,
+        color: T.GRAY_DK,
+        cursor: 'pointer',
+        background: 'transparent',
       }}
     >
-      {/* Top row: severity badge + title + status */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-        <span
-          style={{
-            fontFamily: SHELL.MONO,
-            fontSize: 8,
-            letterSpacing: '0.16em',
-            textTransform: 'uppercase',
-            color: labelColor,
-            background: severityBg,
-            padding: '2px 6px',
-            borderRadius: 4,
-            flexShrink: 0,
-          }}
-        >
-          {item.severity}
-        </span>
-        <Link
-          href={`/tower/pressures/${item.id}`}
-          style={{
-            fontFamily: SHELL.SERIF,
-            fontSize: 15,
-            fontWeight: 700,
-            color: SHELL.INK,
-            flex: 1,
-            lineHeight: 1.2,
-            textDecoration: 'none',
-          }}
-        >
-          {item.title}
-        </Link>
-        <StatusPill status={item.status} />
-      </div>
-
-      {/* Hero stat row */}
-      <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
-        <span
-          style={{
-            fontFamily: SHELL.SERIF,
-            fontSize: 26,
-            fontWeight: 700,
-            color: SHELL.INK,
-            lineHeight: 1,
-          }}
-        >
-          {item.heroStat}
-        </span>
-        <span
-          style={{
-            fontFamily: SHELL.SANS,
-            fontSize: 11,
-            color: SHELL.INK_SOFT,
-            lineHeight: 1.3,
-          }}
-        >
-          {item.heroLabel}
-        </span>
-        <span
-          style={{
-            fontFamily: SHELL.MONO,
-            fontSize: 10,
-            color: dColor,
-            marginLeft: 'auto',
-            flexShrink: 0,
-          }}
-        >
-          {item.delta}
-        </span>
-      </div>
-
-      {/* Driver + Atlas sentence */}
-      <div
-        style={{
-          fontFamily: SHELL.SANS,
-          fontSize: 12,
-          color: SHELL.INK_SOFT,
-          lineHeight: 1.5,
-        }}
-      >
-        {item.topDriver}
-      </div>
-      <div
-        style={{
-          fontFamily: SHELL.SANS,
-          fontSize: 11,
-          fontStyle: 'italic',
-          color: SHELL.INK_MUTED,
-          lineHeight: 1.5,
-          borderTop: `1px solid ${SHELL.CARD_LINE}`,
-          paddingTop: 6,
-        }}
-      >
-        {item.atlasSentence}
-      </div>
-
-      {/* Action link */}
-      <div>
-        <Link
-          href={`/tower/pressures/${item.id}`}
-          style={{
-            fontFamily: SHELL.MONO,
-            fontSize: 9,
-            letterSpacing: '0.12em',
-            textTransform: 'uppercase',
-            color: SHELL.INK_SOFT,
-            textDecoration: 'none',
-          }}
-        >
-          View detail →
-        </Link>
-      </div>
-    </div>
+      <span style={{ color: T.GOLD, fontWeight: 800 }}>↳</span>
+      {children}
+    </button>
   );
 }
 
-// ---------------------------------------------------------------------------
-// Empty state
-// ---------------------------------------------------------------------------
+// ─── KPI cell ─────────────────────────────────────────────────────────────────
+interface KpiProps {
+  label: string;
+  hero?: boolean;
+  isFirst?: boolean;
+  children: ReactNode;
+  delta?: { dir: 'up' | 'down' | 'flat'; text: string };
+  footnote?: ReactNode;
+}
 
-function EmptyState() {
+function Kpi({ label, hero, isFirst, children, delta, footnote }: KpiProps) {
+  const deltaColor =
+    delta?.dir === 'up' ? T.GREEN : delta?.dir === 'down' ? T.RED : T.GRAY;
+  const deltaArrow = delta?.dir === 'up' ? '▲' : delta?.dir === 'down' ? '▼' : '●';
   return (
     <div
       style={{
-        background: SHELL.PAPER_SOFT,
-        borderRadius: 8,
-        padding: '24px',
-        textAlign: 'center',
+        padding: isFirst ? '0 28px 0 0' : '0 28px',
+        borderLeft: isFirst ? 'none' : `1px solid ${T.RULE}`,
+        position: 'relative',
       }}
     >
       <div
         style={{
-          fontFamily: SHELL.SERIF,
-          fontSize: 14,
-          color: SHELL.INK_MUTED,
-          marginBottom: 4,
+          fontFamily: T.MONO,
+          fontSize: 9.5,
+          letterSpacing: '1.6px',
+          textTransform: 'uppercase',
+          fontWeight: 700,
+          color: T.GRAY_DK,
+          marginBottom: 10,
         }}
       >
-        No pressures in this filter
+        {label}
       </div>
       <div
         style={{
-          fontFamily: SHELL.SANS,
-          fontSize: 12,
-          color: SHELL.INK_MUTED,
+          fontFamily: T.SERIF,
+          fontWeight: hero ? 800 : 700,
+          letterSpacing: '-1.2px',
+          lineHeight: 0.95,
+          color: T.INK,
+          fontSize: hero ? 64 : 38,
         }}
       >
-        Try a different filter to see pressure items
+        {children}
       </div>
-    </div>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Cross-program activity strip
-// ---------------------------------------------------------------------------
-
-interface ActivityRow {
-  ref: string;
-  phase: string;
-  note: string;
-  when: string;
-  href?: string;
-}
-
-const ACTIVITY_ROWS: ActivityRow[] = [
-  { ref: 'APX-CDP-2026', phase: 'Design phase', note: 'Architecture sprint active', when: '2h ago', href: '/tower/programs/apx-cdp-2026' },
-  { ref: 'APX-CC-2026', phase: 'Execution Roadmap phase', note: 'Gate approaching', when: '4h ago' },
-  { ref: 'APX-DFV2-2025', phase: 'Tower Handoff', note: 'Steady state · Atlas monitoring', when: 'Mar 28' },
-];
-
-function ActivityStrip() {
-  return (
-    <div
-      style={{
-        background: SHELL.CARD_WHITE,
-        border: `1px solid ${SHELL.CARD_LINE}`,
-        borderRadius: 10,
-        overflow: 'hidden',
-      }}
-    >
-      <div
-        style={{
-          padding: '9px 14px',
-          borderBottom: `1px solid ${SHELL.CARD_LINE}`,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-        }}
-      >
-        <span
-          style={{
-            fontFamily: SHELL.MONO,
-            fontSize: 9,
-            color: SHELL.INK_MUTED,
-            letterSpacing: '0.14em',
-            textTransform: 'uppercase',
-          }}
-        >
-          Cross-program activity
-        </span>
-        <Link
-          href="/tower/activity"
-          style={{
-            fontFamily: SHELL.MONO,
-            fontSize: 9,
-            color: SHELL.INK_SOFT,
-            textDecoration: 'none',
-            letterSpacing: '0.10em',
-          }}
-        >
-          All →
-        </Link>
-      </div>
-      {ACTIVITY_ROWS.map((row, i) => {
-        const rowContent = (
-          <>
-            <span
-              style={{
-                fontFamily: SHELL.MONO,
-                fontSize: 9,
-                letterSpacing: '0.08em',
-                color: SHELL.INK_MUTED,
-                flexShrink: 0,
-              }}
-            >
-              {row.ref}
-            </span>
-            <span style={{ fontFamily: SHELL.SANS, fontSize: 12, color: SHELL.INK, flex: 1 }}>
-              {row.phase}
-              <span style={{ color: SHELL.INK_SOFT, marginLeft: 6 }}>· {row.note}</span>
-            </span>
-            <span style={{ fontFamily: SHELL.MONO, fontSize: 9, color: SHELL.INK_MUTED, flexShrink: 0 }}>
-              {row.when}
-            </span>
-          </>
-        );
-        const sharedStyle = {
-          display: 'flex',
-          alignItems: 'baseline' as const,
-          gap: 10,
-          padding: '8px 14px',
-          borderBottom: i < ACTIVITY_ROWS.length - 1 ? `1px solid ${SHELL.CARD_LINE}` : undefined,
-        };
-        return row.href ? (
-          <Link key={row.ref} href={row.href} style={{ ...sharedStyle, textDecoration: 'none' }}>
-            {rowContent}
-          </Link>
-        ) : (
-          <div key={row.ref} style={sharedStyle}>
-            {rowContent}
-          </div>
-        );
-      })}
-    </div>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Atlas brief sidebar
-// ---------------------------------------------------------------------------
-
-function AtlasBriefSidebar({
-  quote,
-  actions,
-}: {
-  quote: string;
-  actions: typeof TOWER_INDEX_VIEW.actions;
-}) {
-  return (
-    <div
-      style={{
-        display: 'flex',
-        flexDirection: 'column',
-        gap: 12,
-      }}
-    >
-      {/* Atlas brief card */}
-      <div
-        style={{
-          background: SHELL.CARD_WHITE,
-          border: `1px solid ${SHELL.CARD_LINE}`,
-          borderRadius: 10,
-          padding: '14px 16px',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 10,
-        }}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <span
-            style={{
-              fontFamily: SHELL.MONO,
-              fontSize: 9,
-              letterSpacing: '0.16em',
-              textTransform: 'uppercase',
-              color: SHELL.INK_MUTED,
-            }}
-          >
-            Atlas
-          </span>
-          <span
-            style={{
-              fontFamily: SHELL.MONO,
-              fontSize: 9,
-              letterSpacing: '0.12em',
-              color: SHELL.INK_MUTED,
-            }}
-          >
-            · Cross-program synthesis
-          </span>
-        </div>
-        <p
-          style={{
-            fontFamily: SHELL.SANS,
-            fontSize: 13,
-            color: SHELL.INK,
-            lineHeight: 1.6,
-            margin: 0,
-          }}
-        >
-          {quote}
-        </p>
-
-        {/* Action list */}
+      {delta && (
         <div
           style={{
-            borderTop: `1px solid ${SHELL.CARD_LINE}`,
-            paddingTop: 10,
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 8,
+            fontFamily: T.MONO,
+            fontSize: 10,
+            letterSpacing: '1.2px',
+            fontWeight: 700,
+            marginTop: 8,
+            color: deltaColor,
           }}
         >
-          {actions.map((action) => (
-            <div
-              key={action.letter}
-              style={{
-                display: 'flex',
-                gap: 10,
-                alignItems: 'flex-start',
-              }}
-            >
-              <span
-                style={{
-                  fontFamily: SHELL.MONO,
-                  fontSize: 9,
-                  fontWeight: 700,
-                  color: SHELL.PAPER,
-                  background: SHELL.INK,
-                  borderRadius: '50%',
-                  width: 16,
-                  height: 16,
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  flexShrink: 0,
-                  marginTop: 1,
-                }}
-              >
-                {action.letter}
+          <span style={{ display: 'inline-block', marginRight: 4, fontWeight: 800 }}>{deltaArrow}</span>
+          {delta.text}
+        </div>
+      )}
+      {footnote && (
+        <div
+          style={{
+            fontFamily: T.MONO,
+            fontSize: 8.5,
+            letterSpacing: '1.2px',
+            color: T.GRAY,
+            marginTop: 10,
+            fontWeight: 600,
+            lineHeight: 1.5,
+            maxWidth: '18ch',
+          }}
+        >
+          {footnote}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── Pressure card ────────────────────────────────────────────────────────────
+type PressureType = 'cost' | 'dupl' | 'vend' | 'adopt' | 'value';
+
+interface PressureProps {
+  type: PressureType;
+  id: string;
+  label: string; // e.g. "Cost\nOverrun"
+  headline: string;
+  lede: ReactNode;
+  meta: { k: string; v: string }[];
+  magnitude: ReactNode;
+  magnitudeLabel: string;
+  nextAction: ReactNode;
+}
+
+function pressureColor(type: PressureType): string {
+  if (type === 'cost') return T.P_COST;
+  if (type === 'dupl') return T.P_DUPL;
+  if (type === 'vend') return T.P_VEND;
+  if (type === 'adopt') return T.P_ADOPT;
+  return T.P_VALUE;
+}
+
+function Pressure(props: PressureProps) {
+  const labelColor = pressureColor(props.type);
+  const labelLines = props.label.split('\n');
+  return (
+    <div
+      style={{
+        padding: '22px 0',
+        borderTop: `1px solid ${T.RULE}`,
+        display: 'grid',
+        gridTemplateColumns: '110px 1fr 320px',
+        gap: 24,
+        alignItems: 'start',
+        cursor: 'pointer',
+      }}
+    >
+      {/* ptag */}
+      <div
+        style={{
+          fontFamily: T.MONO,
+          fontSize: 9.5,
+          letterSpacing: '1.5px',
+          fontWeight: 800,
+          textTransform: 'uppercase',
+          lineHeight: 1.4,
+        }}
+      >
+        <span
+          style={{
+            display: 'block',
+            color: T.GRAY_DK,
+            marginBottom: 4,
+            fontWeight: 600,
+          }}
+        >
+          {props.id}
+        </span>
+        <span style={{ color: labelColor }}>
+          {labelLines.map((line, i) => (
+            <span key={i} style={{ display: 'block' }}>
+              {line}
+            </span>
+          ))}
+        </span>
+      </div>
+
+      {/* body */}
+      <div>
+        <h3
+          style={{
+            fontFamily: T.SERIF,
+            fontSize: 22,
+            fontWeight: 700,
+            letterSpacing: '-0.4px',
+            lineHeight: 1.2,
+            marginBottom: 6,
+            margin: 0,
+            color: T.INK,
+          }}
+        >
+          {props.headline}
+        </h3>
+        <p
+          style={{
+            fontSize: 13,
+            color: T.INK_2,
+            lineHeight: 1.5,
+            maxWidth: '60ch',
+            margin: '6px 0 10px',
+          }}
+        >
+          {props.lede}
+        </p>
+        <div
+          style={{
+            display: 'flex',
+            gap: 14,
+            flexWrap: 'wrap',
+            fontFamily: T.MONO,
+            fontSize: 9.5,
+            letterSpacing: '1.2px',
+            color: T.GRAY_DK,
+            fontWeight: 600,
+            textTransform: 'uppercase',
+          }}
+        >
+          {props.meta.map((m, i) => (
+            <span key={m.k} style={{ display: 'inline-flex', gap: 4 }}>
+              {i > 0 && <span style={{ color: T.GRAY, marginRight: 10 }}>·</span>}
+              <span>
+                <strong style={{ color: T.INK, fontWeight: 700 }}>{m.k}:</strong> {m.v}
               </span>
-              <div>
-                <div
-                  style={{
-                    fontFamily: SHELL.SANS,
-                    fontSize: 12,
-                    fontWeight: 700,
-                    color: SHELL.INK,
-                    lineHeight: 1.3,
-                  }}
-                >
-                  {action.text}
-                </div>
-                {action.detail && (
-                  <div
-                    style={{
-                      fontFamily: SHELL.SANS,
-                      fontSize: 11,
-                      color: SHELL.INK_MUTED,
-                      lineHeight: 1.4,
-                      marginTop: 1,
-                    }}
-                  >
-                    {action.detail}
-                  </div>
-                )}
-              </div>
-            </div>
+            </span>
           ))}
         </div>
       </div>
 
-      {/* Activity strip */}
-      <ActivityStrip />
-
-      {/* Lens quick links */}
-      <div
-        style={{
-          background: SHELL.CARD_WHITE,
-          border: `1px solid ${SHELL.CARD_LINE}`,
-          borderRadius: 10,
-          padding: '12px 14px',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 6,
-        }}
-      >
+      {/* panel-right */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
         <div
           style={{
-            fontFamily: SHELL.MONO,
-            fontSize: 9,
-            letterSpacing: '0.14em',
-            textTransform: 'uppercase',
-            color: SHELL.INK_MUTED,
-            marginBottom: 2,
+            fontFamily: T.SERIF,
+            fontSize: 30,
+            fontWeight: 800,
+            letterSpacing: '-0.7px',
+            lineHeight: 1,
           }}
         >
-          Tower lenses
+          {props.magnitude}
         </div>
-        {[
-          { href: '/tower/outcomes', label: 'Value · outcome realization' },
-          { href: '/tower/lens/adoption', label: 'Adoption · usage tracking' },
-          { href: '/tower/lens/risk', label: 'Risk · open risk items' },
-          { href: '/tower/lens/inventory', label: 'Inventory · use cases & vendor stack' },
-          { href: '/tower/lens/cost', label: 'Cost · AI cloud spend & budget variance' },
-        ].map(({ href, label }) => (
-          <a
-            key={href}
-            href={href}
+        <div
+          style={{
+            fontFamily: T.MONO,
+            fontSize: 9,
+            letterSpacing: '1.3px',
+            color: T.GRAY_DK,
+            fontWeight: 600,
+            textTransform: 'uppercase',
+          }}
+        >
+          {props.magnitudeLabel}
+        </div>
+        <div
+          style={{
+            fontSize: 12.5,
+            color: T.INK_2,
+            marginTop: 6,
+            lineHeight: 1.45,
+          }}
+        >
+          {props.nextAction}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Strategic alignment matrix ───────────────────────────────────────────────
+interface MatrixDot {
+  name: string;
+  amount: string;
+  left: string;
+  top: string;
+}
+
+function Quadrant({
+  position,
+  qlabel,
+  qhead,
+  dots,
+}: {
+  position: 'tl' | 'tr' | 'bl' | 'br';
+  qlabel: string;
+  qhead: ReactNode;
+  dots: MatrixDot[];
+}) {
+  const styles: CSSProperties = {
+    padding: '14px 16px',
+    position: 'relative',
+    background: T.CREAM_2,
+    border: `1px solid ${T.RULE}`,
+    minHeight: 220,
+  };
+  if (position === 'tl') {
+    styles.gridColumn = 2;
+    styles.gridRow = 1;
+    styles.borderRight = 'none';
+  } else if (position === 'tr') {
+    styles.gridColumn = 3;
+    styles.gridRow = 1;
+  } else if (position === 'bl') {
+    styles.gridColumn = 2;
+    styles.gridRow = 2;
+    styles.borderRight = 'none';
+    styles.borderTop = 'none';
+  } else {
+    styles.gridColumn = 3;
+    styles.gridRow = 2;
+    styles.borderTop = 'none';
+  }
+
+  return (
+    <div style={styles}>
+      <div
+        style={{
+          fontFamily: T.MONO,
+          fontSize: 9,
+          letterSpacing: '1.4px',
+          fontWeight: 700,
+          color: T.GRAY_DK,
+          textTransform: 'uppercase',
+          marginBottom: 6,
+        }}
+      >
+        {qlabel}
+      </div>
+      <div
+        style={{
+          fontFamily: T.SERIF,
+          fontSize: 14,
+          fontWeight: 700,
+          letterSpacing: '-0.2px',
+          marginBottom: 12,
+          lineHeight: 1.25,
+          maxWidth: '30ch',
+        }}
+      >
+        {qhead}
+      </div>
+      <div style={{ position: 'relative', height: 130 }}>
+        {dots.map((dot) => (
+          <div
+            key={dot.name}
             style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 6,
-              fontFamily: SHELL.MONO,
-              fontSize: 10,
-              color: SHELL.INK_SOFT,
-              textDecoration: 'none',
+              position: 'absolute',
+              left: dot.left,
+              top: dot.top,
+              padding: '6px 10px',
+              background: T.INK,
+              color: T.CREAM,
+              fontFamily: T.MONO,
+              fontSize: 9.5,
+              letterSpacing: '1px',
+              fontWeight: 700,
+              borderRadius: 5,
+              cursor: 'pointer',
+              lineHeight: 1.2,
             }}
           >
-            <span style={{ color: SHELL.INK_MUTED }}>→</span>
-            <span>{label}</span>
-          </a>
+            {dot.name}
+            <span
+              style={{
+                display: 'block',
+                fontFamily: T.SERIF,
+                fontSize: 11,
+                fontWeight: 700,
+                marginTop: 1,
+                letterSpacing: 0,
+                opacity: 0.85,
+              }}
+            >
+              {dot.amount}
+            </span>
+          </div>
         ))}
       </div>
     </div>
   );
 }
 
-// ---------------------------------------------------------------------------
-// Stat strip
-// ---------------------------------------------------------------------------
-
-interface StatItem {
-  label: string;
-  value: string | number;
-  tone?: 'risk' | 'warn' | 'ok' | 'neutral';
+// ─── Atlas synthesis (right column) ───────────────────────────────────────────
+interface SynthBlock {
+  h: string;
+  body: ReactNode;
+  obs?: string;
 }
 
-function StatStrip({ stats }: { stats: StatItem[] }) {
-  function valueColor(tone: StatItem['tone']): string {
-    if (tone === 'risk') return SHELL.RUST_TEXT;
-    if (tone === 'warn') return SHELL.PEACH_TEXT;
-    if (tone === 'ok') return SHELL.MINT_TEXT;
-    return SHELL.INK;
-  }
-
+function AtlasColumn({
+  headline,
+  meta,
+  synth,
+  prompts,
+}: {
+  headline: string;
+  meta: string;
+  synth: SynthBlock[];
+  prompts: string[];
+}) {
+  const [input, setInput] = useState('');
   return (
-    <div
+    <aside
       style={{
+        borderLeft: `1px solid ${T.RULE}`,
+        background: T.CREAM_2,
         display: 'flex',
-        alignItems: 'stretch',
-        borderBottom: `1px solid ${SHELL.CARD_LINE}`,
-        background: SHELL.CARD_WHITE,
+        flexDirection: 'column',
+        position: 'sticky',
+        top: 0,
+        height: '100vh',
+        minWidth: 0,
       }}
     >
-      {stats.map((stat, i) => (
-        <div
-          key={stat.label}
-          style={{
-            flex: 1,
-            padding: '10px 20px',
-            borderRight: i < stats.length - 1 ? `1px solid ${SHELL.CARD_LINE}` : undefined,
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 2,
-          }}
-        >
-          <span
-            style={{
-              fontFamily: SHELL.MONO,
-              fontSize: 8,
-              letterSpacing: '0.16em',
-              textTransform: 'uppercase',
-              color: SHELL.INK_MUTED,
-            }}
-          >
-            {stat.label}
-          </span>
-          <span
-            style={{
-              fontFamily: SHELL.SERIF,
-              fontSize: 22,
-              fontWeight: 700,
-              color: valueColor(stat.tone),
-              lineHeight: 1,
-            }}
-          >
-            {stat.value}
-          </span>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// New pressure modal
-// ---------------------------------------------------------------------------
-
-type NewSeverity = 'High' | 'Medium' | 'Low watch' | null;
-
-interface NewPressureModalProps {
-  onClose: () => void;
-}
-
-function NewPressureModal({ onClose }: NewPressureModalProps) {
-  const [title, setTitle] = useState('');
-  const [severity, setSeverity] = useState<NewSeverity>(null);
-  const [driver, setDriver] = useState('');
-  const [heroValue, setHeroValue] = useState('');
-  const [heroLabel, setHeroLabel] = useState('');
-  const [relatedProgram, setRelatedProgram] = useState('');
-  const [submitted, setSubmitted] = useState(false);
-
-  const isValid = title.trim().length > 0 && severity !== null && driver.trim().length > 0;
-
-  function handleAdd() {
-    if (!isValid) return;
-    setSubmitted(true);
-    setTimeout(() => {
-      onClose();
-    }, 1200);
-  }
-
-  const severityOptions: { label: NonNullable<NewSeverity>; activeBg: string; activeColor: string }[] = [
-    { label: 'High', activeBg: SHELL.RUST_BG, activeColor: SHELL.RUST_TEXT },
-    { label: 'Medium', activeBg: SHELL.PEACH_BG, activeColor: SHELL.PEACH_TEXT },
-    { label: 'Low watch', activeBg: SHELL.MINT_BG, activeColor: SHELL.MINT_TEXT },
-  ];
-
-  const inputStyle: React.CSSProperties = {
-    fontFamily: SHELL.SANS,
-    fontSize: 13,
-    color: SHELL.INK,
-    background: SHELL.CARD_WHITE,
-    border: `1px solid ${SHELL.CARD_LINE}`,
-    borderRadius: 6,
-    padding: '8px 12px',
-    width: '100%',
-    outline: 'none',
-    boxSizing: 'border-box',
-  };
-
-  const labelStyle: React.CSSProperties = {
-    fontFamily: SHELL.MONO,
-    fontSize: 9,
-    letterSpacing: '0.16em',
-    textTransform: 'uppercase',
-    color: SHELL.INK_MUTED,
-    marginBottom: 6,
-    display: 'block',
-  };
-
-  return (
-    <div
-      style={{
-        position: 'fixed',
-        inset: 0,
-        background: 'rgba(0,0,0,0.35)',
-        zIndex: 1000,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-      }}
-      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
-    >
-      <div
-        style={{
-          background: SHELL.PAPER,
-          borderRadius: 12,
-          padding: '28px 32px',
-          maxWidth: 520,
-          width: '90%',
-          boxShadow: '0 8px 32px rgba(0,0,0,0.18)',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 18,
-        }}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <span style={{ fontFamily: SHELL.SERIF, fontSize: 18, fontWeight: 700, color: SHELL.INK }}>
-            Set new pressure
-          </span>
-          <button
-            onClick={onClose}
-            style={{
-              background: 'none',
-              border: 'none',
-              cursor: 'pointer',
-              fontFamily: SHELL.MONO,
-              fontSize: 14,
-              color: SHELL.INK_MUTED,
-              padding: '2px 6px',
-            }}
-          >
-            ×
-          </button>
-        </div>
-
-        <div>
-          <label style={labelStyle}>Pressure title</label>
-          <input type="text" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g. Margin Compression" style={inputStyle} />
-        </div>
-
-        <div>
-          <label style={labelStyle}>Severity</label>
-          <div style={{ display: 'flex', gap: 8 }}>
-            {severityOptions.map((opt) => {
-              const isSelected = severity === opt.label;
-              return (
-                <button
-                  key={opt.label}
-                  onClick={() => setSeverity(opt.label)}
-                  style={{
-                    fontFamily: SHELL.MONO,
-                    fontSize: 11,
-                    letterSpacing: '0.08em',
-                    padding: '6px 14px',
-                    borderRadius: 20,
-                    border: `1px solid ${isSelected ? 'transparent' : SHELL.CARD_LINE}`,
-                    background: isSelected ? opt.activeBg : SHELL.CARD_WHITE,
-                    color: isSelected ? opt.activeColor : SHELL.INK_SOFT,
-                    cursor: 'pointer',
-                  }}
-                >
-                  {opt.label}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
-        <div>
-          <label style={labelStyle}>Top driver</label>
-          <input type="text" value={driver} onChange={(e) => setDriver(e.target.value)} placeholder="One sentence describing the root cause" style={inputStyle} />
-        </div>
-
-        <div>
-          <label style={labelStyle}>Headline metric (optional)</label>
-          <div style={{ display: 'flex', gap: 10 }}>
-            <input type="text" value={heroValue} onChange={(e) => setHeroValue(e.target.value)} placeholder="$2.4M" style={{ ...inputStyle, width: '40%', flex: '0 0 auto' }} />
-            <input type="text" value={heroLabel} onChange={(e) => setHeroLabel(e.target.value)} placeholder="vs $1.8M budget" style={{ ...inputStyle, flex: 1 }} />
-          </div>
-        </div>
-
-        <div>
-          <label style={labelStyle}>Related program (optional)</label>
-          <select value={relatedProgram} onChange={(e) => setRelatedProgram(e.target.value)} style={{ ...inputStyle, appearance: 'none', WebkitAppearance: 'none' }}>
-            <option value="">(none)</option>
-            <option value="APX-CDP-2026">APX-CDP-2026</option>
-            <option value="APX-CC-2026">APX-CC-2026</option>
-            <option value="APX-SAP-2026">APX-SAP-2026</option>
-            <option value="APX-LPM-2026">APX-LPM-2026</option>
-            <option value="APX-DFV2-2025">APX-DFV2-2025</option>
-          </select>
-        </div>
-
+      {/* atlas-head */}
+      <div style={{ padding: '22px 22px 14px', borderBottom: `1px solid ${T.RULE}` }}>
         <div
           style={{
-            background: SHELL.PAPER_SOFT,
-            borderRadius: 6,
-            padding: '10px 14px',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 3,
+            fontFamily: T.MONO,
+            fontSize: 10,
+            letterSpacing: '1.6px',
+            fontWeight: 700,
+            color: T.PURPLE,
+            textTransform: 'uppercase',
+            marginBottom: 6,
           }}
         >
-          <span style={{ fontFamily: SHELL.MONO, fontSize: 8, letterSpacing: '0.18em', textTransform: 'uppercase', color: SHELL.INK_MUTED }}>Atlas</span>
-          <span style={{ fontFamily: SHELL.SANS, fontSize: 11, color: SHELL.INK_MUTED, lineHeight: 1.5 }}>
-            Atlas will begin monitoring this pressure and surface it in the Tower activity stream.
-          </span>
+          ✦ Atlas · Synthesis
         </div>
-
-        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10 }}>
-          {submitted ? (
-            <span style={{ fontFamily: SHELL.MONO, fontSize: 11, color: SHELL.MINT_TEXT, letterSpacing: '0.08em', alignSelf: 'center' }}>
-              ✓ Pressure added to Tower
-            </span>
-          ) : (
-            <>
-              <button
-                onClick={onClose}
-                style={{
-                  fontFamily: SHELL.MONO, fontSize: 11, letterSpacing: '0.08em',
-                  color: SHELL.INK, background: 'none',
-                  border: `1px solid ${SHELL.CARD_LINE}`, borderRadius: 6,
-                  padding: '8px 16px', cursor: 'pointer',
-                }}
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleAdd}
-                disabled={!isValid}
-                style={{
-                  fontFamily: SHELL.MONO, fontSize: 11, letterSpacing: '0.08em',
-                  color: SHELL.PAPER, background: isValid ? SHELL.INK : SHELL.INK_MUTED,
-                  border: 'none', borderRadius: 6,
-                  padding: '8px 16px', cursor: isValid ? 'pointer' : 'not-allowed',
-                }}
-              >
-                Add to Tower
-              </button>
-            </>
-          )}
+        <h3
+          style={{
+            fontFamily: T.SERIF,
+            fontSize: 18,
+            fontWeight: 700,
+            letterSpacing: '-0.3px',
+            lineHeight: 1.25,
+            marginBottom: 8,
+            margin: 0,
+            color: T.INK,
+          }}
+        >
+          {headline}
+        </h3>
+        <div
+          style={{
+            fontFamily: T.MONO,
+            fontSize: 9,
+            letterSpacing: '1.2px',
+            color: T.GRAY_DK,
+            fontWeight: 600,
+            marginTop: 6,
+          }}
+        >
+          {meta}
         </div>
       </div>
-    </div>
+
+      {/* atlas-synth */}
+      <div
+        style={{
+          padding: '16px 22px',
+          borderBottom: `1px solid ${T.RULE}`,
+          flex: 1,
+          overflowY: 'auto',
+        }}
+      >
+        {synth.map((block, i) => (
+          <div key={i} style={{ marginBottom: i === synth.length - 1 ? 0 : 18 }}>
+            <div
+              style={{
+                fontFamily: T.MONO,
+                fontSize: 9,
+                letterSpacing: '1.5px',
+                fontWeight: 700,
+                color: T.GOLD,
+                textTransform: 'uppercase',
+                marginBottom: 6,
+              }}
+            >
+              {block.h}
+            </div>
+            <div
+              style={{
+                fontSize: 13,
+                lineHeight: 1.55,
+                color: T.INK_2,
+              }}
+            >
+              {block.body}
+            </div>
+            {block.obs && (
+              <div
+                style={{
+                  fontFamily: T.MONO,
+                  fontSize: 9,
+                  letterSpacing: '1.2px',
+                  fontWeight: 700,
+                  color: T.PURPLE,
+                  marginTop: 6,
+                  cursor: 'pointer',
+                }}
+              >
+                {block.obs}
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+
+      {/* atlas-prompt */}
+      <div style={{ padding: '14px 18px', borderTop: `1px solid ${T.RULE}` }}>
+        <div
+          style={{
+            fontFamily: T.MONO,
+            fontSize: 9,
+            letterSpacing: '1.4px',
+            color: T.GRAY_DK,
+            fontWeight: 600,
+            marginBottom: 8,
+          }}
+        >
+          ↳ Suggested prompts
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 4, marginBottom: 12 }}>
+          {prompts.map((p) => (
+            <button
+              key={p}
+              onClick={() => setInput(p)}
+              style={{
+                fontSize: 12,
+                padding: '8px 11px',
+                border: `1px solid ${T.BORDER}`,
+                borderRadius: 7,
+                cursor: 'pointer',
+                background: T.CREAM,
+                lineHeight: 1.4,
+                color: T.INK_2,
+                textAlign: 'left',
+                fontFamily: 'inherit',
+              }}
+            >
+              <span style={{ color: T.PURPLE, fontWeight: 700, marginRight: 5 }}>→</span>
+              {p}
+            </button>
+          ))}
+        </div>
+        <div
+          style={{
+            display: 'flex',
+            gap: 6,
+            alignItems: 'center',
+            padding: '8px 10px',
+            border: `1px solid ${T.BORDER_STRONG}`,
+            borderRadius: 7,
+            background: T.CREAM,
+          }}
+        >
+          <input
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            type="text"
+            placeholder="Ask Atlas about the portfolio…"
+            style={{
+              flex: 1,
+              border: 'none',
+              background: 'transparent',
+              outline: 'none',
+              fontSize: 12,
+              fontFamily: 'inherit',
+              color: T.INK,
+            }}
+          />
+          <button
+            style={{
+              background: T.PURPLE,
+              color: 'white',
+              border: 'none',
+              width: 24,
+              height: 24,
+              borderRadius: '50%',
+              cursor: 'pointer',
+              fontWeight: 700,
+              fontSize: 12,
+            }}
+          >
+            ↑
+          </button>
+        </div>
+      </div>
+    </aside>
   );
 }
 
-// ---------------------------------------------------------------------------
-// Main page
-// ---------------------------------------------------------------------------
-
+// ─── Main page ────────────────────────────────────────────────────────────────
 interface TowerIndexPageProps {
   tenantName?: string;
   context?: string;
+  /** Slots are accepted for backward compatibility but not rendered in the broadsheet design. */
   provenanceSlot?: ReactNode;
   portfolioSummarySlot?: ReactNode;
   cascadeGraphSlot?: ReactNode;
@@ -849,252 +679,736 @@ interface TowerIndexPageProps {
 }
 
 export function TowerIndexPage({
-  tenantName = 'AbarVa Client',
-  context = 'Control Tower',
-  provenanceSlot: _provenanceSlot,
-  portfolioSummarySlot,
-  cascadeGraphSlot,
-  towerHandoffSlot,
+  tenantName = 'Meridian Enterprises',
+  context = 'Control Tower · Portfolio Index',
+  provenanceSlot: _p1,
+  portfolioSummarySlot: _p2,
+  cascadeGraphSlot: _p3,
+  towerHandoffSlot: _p4,
   towerSubmenuSlot,
-  towerLensSlot,
+  towerLensSlot: _p6,
 }: TowerIndexPageProps = {}) {
-  void _provenanceSlot;
-  const [showNewPressure, setShowNewPressure] = useState(false);
-  const [synthesisQuote, setSynthesisQuote] = useState(TOWER_INDEX_VIEW.agentQuote);
+  void _p1; void _p2; void _p3; void _p4; void _p6;
   const searchParams = useSearchParams();
   const router = useRouter();
+  const activeLens = (searchParams?.get('lens') ?? 'value') as 'value' | 'risk' | 'contract' | 'adopt';
 
-  // Artifact handler kept for AppShell compatibility
-  const [, setAtlasArtifacts] = useState<Artifact[]>([]);
-  const handleAtlasArtifact = useCallback((artifact: Artifact) => {
-    setAtlasArtifacts((prev) => {
-      const key = JSON.stringify(artifact);
-      if (prev.some((a) => JSON.stringify(a) === key)) return prev;
-      return [...prev, artifact];
-    });
-  }, []);
-
-  const activeFilter = searchParams?.get('filter') ?? 'all';
-
-  const filtered = TOWER_INDEX_VIEW.pressures.filter(p => {
-    if (activeFilter === 'all') return true;
-    if (activeFilter === 'high') return p.severity === 'high';
-    if (activeFilter === 'medium') return p.severity === 'medium';
-    if (activeFilter === 'low') return p.severity === 'low';
-    if (activeFilter === 'resolved') return p.status === 'resolved';
-    return true;
-  });
-
-  const filterPills = [
-    { key: 'all', label: 'All', active: activeFilter === 'all', count: TOWER_INDEX_VIEW.pressures.length, onClick: () => router.push('/tower') },
-    { key: 'high', label: 'High', active: activeFilter === 'high', count: TOWER_INDEX_VIEW.pressures.filter(p => p.severity === 'high').length, onClick: () => router.push('/tower?filter=high') },
-    { key: 'medium', label: 'Medium', active: activeFilter === 'medium', count: TOWER_INDEX_VIEW.pressures.filter(p => p.severity === 'medium').length, onClick: () => router.push('/tower?filter=medium') },
-    { key: 'low', label: 'Low watch', active: activeFilter === 'low', count: TOWER_INDEX_VIEW.pressures.filter(p => p.severity === 'low').length, onClick: () => router.push('/tower?filter=low') },
-    { key: 'resolved', label: 'Resolved', active: activeFilter === 'resolved', count: 0, onClick: () => router.push('/tower?filter=resolved') },
+  const lensTabs: { key: typeof activeLens; label: string }[] = [
+    { key: 'value', label: 'Value' },
+    { key: 'risk', label: 'Risk' },
+    { key: 'contract', label: 'Contract' },
+    { key: 'adopt', label: 'Adoption' },
   ];
 
-  const stats: StatItem[] = [
-    { label: 'Active pressures', value: TOWER_INDEX_VIEW.activeCount, tone: 'warn' },
-    { label: 'High severity', value: TOWER_INDEX_VIEW.highCount, tone: 'risk' },
-    { label: 'Programs in Tower', value: 4, tone: 'neutral' },
-    { label: 'Initiatives observed', value: 6, tone: 'neutral' },
-    { label: 'Gate items due', value: 2, tone: 'warn' },
-  ];
+  // Date — use today's date (2026-05-06 per memory) but format for the masthead
+  const today = new Date();
+  const dayName = today.toLocaleDateString('en-US', { weekday: 'long' });
+  const monthDay = today.toLocaleDateString('en-US', { month: 'long', day: 'numeric' });
+  const timestamp = today.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
 
   return (
     <AppShell
       surface="tower"
       topBarProps={{ tenantName, showLocked: true, context }}
-      middleStrip={towerSubmenuSlot ?? <FilterPillStrip pills={filterPills} />}
-      onArtifact={handleAtlasArtifact}
+      middleStrip={towerSubmenuSlot}
     >
-      {/* Hidden synthesis streamer */}
-      <div style={{ display: 'none' }} aria-hidden>
-        <AtlasSynthesisQuote
-          fallback={TOWER_INDEX_VIEW.agentQuote}
-          onLoaded={setSynthesisQuote}
-        />
-      </div>
-
-      {/* Stat strip — anchored below submenu */}
-      <StatStrip stats={stats} />
-
-      {/* Main content area */}
       <div
         style={{
-          flex: 1,
-          overflowY: 'auto',
-          padding: '20px 28px 32px',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 20,
-          minHeight: 0,
+          display: 'grid',
+          gridTemplateColumns: 'minmax(0, 1fr) 320px',
+          gap: 0,
+          minHeight: '100%',
+          background: T.PAGE_BG,
+          color: T.INK,
+          fontFamily: T.SANS,
+          overflow: 'auto',
         }}
       >
-        {/* Primary 2-column layout: pressure grid + Atlas sidebar */}
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'minmax(0, 1fr) 300px',
-            gap: 20,
-            alignItems: 'start',
-          }}
-        >
-          {/* Left: pressure grid */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            {/* Section header */}
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <span
-                  style={{
-                    fontFamily: SHELL.MONO,
-                    fontSize: 9,
-                    letterSpacing: '0.18em',
-                    textTransform: 'uppercase',
-                    color: SHELL.INK_MUTED,
-                  }}
-                >
-                  Active pressures
-                </span>
-                <span
-                  style={{
-                    fontFamily: SHELL.MONO,
-                    fontSize: 10,
-                    fontWeight: 700,
-                    color: SHELL.PAPER,
-                    background: SHELL.RUST_TEXT,
-                    padding: '1px 7px',
-                    borderRadius: 8,
-                    lineHeight: 1.5,
-                  }}
-                >
-                  {TOWER_INDEX_VIEW.highCount} high
-                </span>
-                <span
-                  style={{
-                    fontFamily: SHELL.MONO,
-                    fontSize: 10,
-                    fontWeight: 700,
-                    color: SHELL.INK,
-                    background: SHELL.PEACH_BG,
-                    padding: '1px 7px',
-                    borderRadius: 8,
-                    lineHeight: 1.5,
-                  }}
-                >
-                  {TOWER_INDEX_VIEW.activeCount} total
-                </span>
-              </div>
-              <button
-                onClick={() => setShowNewPressure(true)}
+        {/* ─── MAIN COLUMN ─── */}
+        <div style={{ minWidth: 0, padding: 0 }}>
+          {/* Masthead */}
+          <div
+            style={{
+              padding: '22px 32px 18px',
+              borderBottom: `1px solid ${T.RULE_STRONG}`,
+              display: 'grid',
+              gridTemplateColumns: '1fr auto',
+              gap: 18,
+              alignItems: 'end',
+            }}
+          >
+            <div>
+              <div
                 style={{
-                  fontFamily: SHELL.MONO,
-                  fontSize: 9,
-                  letterSpacing: '0.08em',
-                  color: SHELL.INK_SOFT,
-                  background: 'none',
-                  border: `1px solid ${SHELL.CARD_LINE}`,
-                  borderRadius: 5,
-                  padding: '4px 10px',
-                  cursor: 'pointer',
+                  fontFamily: T.MONO,
+                  fontSize: 10,
+                  letterSpacing: '2px',
+                  fontWeight: 700,
+                  color: T.GOLD,
+                  textTransform: 'uppercase',
+                  marginBottom: 8,
                 }}
               >
-                + Set pressure
-              </button>
+                Tower · Portfolio Index · TWR-IDX-PORTFOLIO
+              </div>
+              <h1
+                style={{
+                  fontFamily: T.SERIF,
+                  fontSize: 44,
+                  fontWeight: 900,
+                  letterSpacing: '-1.2px',
+                  lineHeight: 1,
+                  marginBottom: 6,
+                  margin: 0,
+                  color: T.INK,
+                }}
+              >
+                The IT Portfolio{' '}
+                <span
+                  style={{
+                    fontSize: 22,
+                    fontWeight: 500,
+                    fontStyle: 'italic',
+                    color: T.GRAY_DK,
+                    letterSpacing: '-0.5px',
+                  }}
+                >
+                  — {dayName}, {monthDay}
+                </span>
+              </h1>
+              <div
+                style={{
+                  fontFamily: T.MONO,
+                  fontSize: 10,
+                  letterSpacing: '1.4px',
+                  color: T.GRAY_DK,
+                  fontWeight: 600,
+                  textTransform: 'uppercase',
+                  marginTop: 6,
+                }}
+              >
+                M. Castillo · CFO · {tenantName} · {timestamp} PT
+              </div>
             </div>
-
-            {/* Filter pills when no submenu slot */}
-            {!towerSubmenuSlot && (
-              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                {filterPills.map((pill) => (
+            <div style={{ display: 'flex', gap: 4, alignItems: 'center' }} role="tablist">
+              {lensTabs.map((tab) => {
+                const isCurrent = tab.key === activeLens;
+                return (
                   <button
-                    key={pill.key}
-                    onClick={pill.onClick}
+                    key={tab.key}
+                    onClick={() => router.push(tab.key === 'value' ? '/tower' : `/tower?lens=${tab.key}`)}
                     style={{
-                      fontFamily: SHELL.MONO,
-                      fontSize: 10,
-                      letterSpacing: '0.08em',
-                      padding: '4px 10px',
-                      borderRadius: 6,
-                      border: `1px solid ${pill.active ? SHELL.INK : SHELL.CARD_LINE}`,
-                      background: pill.active ? SHELL.INK : SHELL.CARD_WHITE,
-                      color: pill.active ? SHELL.PAPER : SHELL.INK_SOFT,
+                      fontFamily: T.MONO,
+                      fontSize: 9.5,
+                      letterSpacing: '1.4px',
+                      textTransform: 'uppercase',
+                      fontWeight: 700,
+                      padding: '8px 14px',
+                      border: `1px solid ${isCurrent ? T.INK : T.BORDER}`,
+                      borderRadius: 999,
                       cursor: 'pointer',
+                      background: isCurrent ? T.INK : 'transparent',
+                      color: isCurrent ? T.CREAM : T.INK_2,
                     }}
                   >
-                    {pill.label} {pill.count > 0 ? `(${pill.count})` : ''}
+                    <span
+                      style={{
+                        display: 'inline-block',
+                        width: 8,
+                        height: 8,
+                        borderRadius: 1,
+                        background: 'currentColor',
+                        marginRight: 6,
+                        verticalAlign: 'middle',
+                        opacity: 0.7,
+                      }}
+                    />
+                    {tab.label}
                   </button>
-                ))}
-              </div>
-            )}
-
-            {/* Pressure cards */}
-            {filtered.length === 0 ? (
-              <EmptyState />
-            ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                {filtered.map((item) => (
-                  <PressureCard key={item.id} item={item} />
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Right: Atlas brief + activity + lens links */}
-          <AtlasBriefSidebar
-            quote={synthesisQuote}
-            actions={TOWER_INDEX_VIEW.actions}
-          />
-        </div>
-
-        {/* Tower lens tab content */}
-        {towerLensSlot && (
-          <div>{towerLensSlot}</div>
-        )}
-
-        {/* Portfolio summary — below the fold; supporting detail */}
-        {portfolioSummarySlot && (
-          <div>
-            <div style={{ fontFamily: SHELL.MONO, fontSize: 9, letterSpacing: '0.18em', textTransform: 'uppercase', color: SHELL.INK_MUTED, marginBottom: 8 }}>
-              Portfolio summary
+                );
+              })}
             </div>
-            {portfolioSummarySlot}
           </div>
-        )}
 
-        {/* Portfolio cascade graph */}
-        {cascadeGraphSlot && (
-          <div>{cascadeGraphSlot}</div>
-        )}
+          {/* KPI band */}
+          <section
+            style={{
+              display: 'grid',
+              gridTemplateColumns: '1.4fr 1fr 1fr 1fr 1fr',
+              padding: '26px 32px',
+              borderBottom: `1px solid ${T.RULE_STRONG}`,
+              gap: 0,
+            }}
+          >
+            <Kpi
+              label="Portfolio ROI · 12-month rolling"
+              hero
+              isFirst
+              delta={{ dir: 'down', text: '0.4× vs Q1 · target 3.5×' }}
+              footnote={
+                <>
+                  35% of programs measured. 41% modeled.{' '}
+                  <MissingChip>+24% pending baseline →</MissingChip>
+                </>
+              }
+            >
+              <span style={cvalStyle('high')}>
+                2.8<span style={{ fontSize: '0.55em' }}>×</span>
+              </span>
+            </Kpi>
 
-        {/* Tower handoff panels */}
-        {towerHandoffSlot && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <Kpi
+              label="Active pressures"
+              delta={{ dir: 'up', text: '2 new this week' }}
+              footnote={<>3 high-magnitude · 4 watch</>}
+            >
+              <span style={cvalStyle('high')}>7</span>
+            </Kpi>
+
+            <Kpi
+              label="Spend at risk"
+              delta={{ dir: 'up', text: '$1.2M MoM' }}
+              footnote={<>Cost overrun + duplication exposure</>}
+            >
+              <span style={cvalStyle('med')}>
+                $8.4<span style={{ fontSize: '0.55em' }}>M</span>
+                <ConfTag conf="med" />
+              </span>
+            </Kpi>
+
+            <Kpi
+              label="Renewals · 90d"
+              delta={{ dir: 'flat', text: '$48.2M aggregate' }}
+              footnote={<>EA · 47d · brief due</>}
+            >
+              <span style={cvalStyle('high')}>4</span>
+            </Kpi>
+
+            <Kpi
+              label="Adoption"
+              delta={{ dir: 'flat', text: '2 sources missing' }}
+              footnote={<MissingChip>Connect Okta + EntraID →</MissingChip>}
+            >
+              <span style={cvalStyle('low')}>
+                53<span style={{ fontSize: '0.55em' }}>%</span>
+                <ConfTag conf="low" />
+              </span>
+            </Kpi>
+          </section>
+
+          {/* Section headline */}
+          <div style={{ padding: '26px 32px 14px' }}>
             <div
               style={{
-                fontFamily: SHELL.MONO,
-                fontSize: 9,
-                letterSpacing: '0.18em',
+                fontFamily: T.MONO,
+                fontSize: 10,
+                letterSpacing: '2px',
+                fontWeight: 700,
+                color: T.GOLD,
                 textTransform: 'uppercase',
-                color: SHELL.INK_MUTED,
+                marginBottom: 8,
               }}
             >
-              Handoffs
+              Today's pressures · 7 active · 3 demanding decisions
             </div>
-            {towerHandoffSlot}
+            <h2
+              style={{
+                fontFamily: T.SERIF,
+                fontSize: 30,
+                fontWeight: 800,
+                letterSpacing: '-0.7px',
+                lineHeight: 1.1,
+                maxWidth: '32ch',
+                margin: 0,
+                color: T.INK,
+              }}
+            >
+              Three pressures need a CFO posture before the EA renewal closes.
+            </h2>
+            <p
+              style={{
+                fontSize: 13.5,
+                color: T.GRAY_DK,
+                marginTop: 8,
+                maxWidth: '64ch',
+                lineHeight: 1.55,
+              }}
+            >
+              In order of decision-pressure, not magnitude. Atlas has prepared one-page synthesis for each — open any to see the underlying programs, evidence, and recommended Move.
+            </p>
           </div>
-        )}
-      </div>
 
-      {showNewPressure && (
-        <NewPressureModal onClose={() => setShowNewPressure(false)} />
-      )}
+          {/* Pressures list */}
+          <div style={{ padding: '0 32px 28px', display: 'flex', flexDirection: 'column' }}>
+            <Pressure
+              type="cost"
+              id="P-COST-2026-04"
+              label={'Cost\nOverrun'}
+              headline="LLM inference burn is on pace to overrun the AI envelope by $2.4M before Q3."
+              lede="Five programs share the budget pool. Joule and the internal Copilot pilot are 71% of token volume but 38% of measured value. Sentinel raised the flag 12 days ago; it's been trending faster since the Q1 model swap."
+              meta={[
+                { k: 'Programs affected', v: '5' },
+                { k: 'First seen', v: '12 days ago' },
+                { k: 'Owner', v: 'P. Iyer · CTO office' },
+              ]}
+              magnitude={
+                <span style={cvalStyle('high')}>
+                  $2.4<span style={{ fontSize: 13, fontWeight: 500, fontStyle: 'italic', color: T.GRAY_DK, marginLeft: 2, letterSpacing: 0 }}>M</span>
+                </span>
+              }
+              magnitudeLabel="Q3 projected overrun · HIGH conf"
+              nextAction={
+                <>
+                  Atlas suggests <strong style={{ color: T.INK }}>opening a Move on token-routing policy</strong> — would deflect ~$1.6M without touching the rate cards.
+                </>
+              }
+            />
+            <Pressure
+              type="dupl"
+              id="P-DUPL-2026-02"
+              label={'Capability\nDuplication'}
+              headline="Now Assist and M365 Copilot are converging on the same internal helpdesk use case."
+              lede="Both tools are being adopted by IT support, with overlapping deflection metrics and conflicting analytics. ServiceNow renewal is Q4 ($4.1M ARR); the duplication is real but attribution to either tool is currently low-confidence."
+              meta={[
+                { k: 'Programs affected', v: '2' },
+                { k: 'First seen', v: '28 days ago' },
+                { k: 'Owner', v: 'J. Park · Steward' },
+              ]}
+              magnitude={
+                <span style={cvalStyle('med')}>
+                  $1.2<span style={{ fontSize: 13, fontWeight: 500, fontStyle: 'italic', color: T.GRAY_DK, marginLeft: 2, letterSpacing: 0 }}>M</span>
+                  <ConfTag conf="med" />
+                </span>
+              }
+              magnitudeLabel="Annual exposure · attribution loose"
+              nextAction={
+                <>
+                  Atlas wants to <strong style={{ color: T.INK }}>run a 6-week clean attribution study</strong> before recommending consolidation.
+                </>
+              }
+            />
+            <Pressure
+              type="vend"
+              id="P-VEND-2026-01"
+              label={'Vendor\nClock'}
+              headline="Microsoft EA renewal closes in 47 days. Brief is open in Source. Decision posture undefined."
+              lede="$31.4M aggregate spend. Three product lines in scope (M365, Azure consumption, Copilot E5). Atlas's pre-brief surfaced two negotiation levers tied to current pressures: tie EA volume to inference deflection (P-COST), and use the Now Assist overlap (P-DUPL) as a swap argument on Copilot quantity."
+              meta={[
+                { k: 'Programs touched', v: '11' },
+                { k: 'Lead', v: 'M. Desai · Source' },
+                { k: 'Brief', v: 'draft v2 in Source' },
+              ]}
+              magnitude={
+                <span style={cvalStyle('high')}>
+                  47<span style={{ fontSize: 13, fontWeight: 500, fontStyle: 'italic', color: T.GRAY_DK, marginLeft: 2, letterSpacing: 0 }}>d</span>
+                </span>
+              }
+              magnitudeLabel="Until close · HIGH conf · CFO posture due"
+              nextAction={
+                <>
+                  Atlas drafted a <strong style={{ color: T.INK }}>negotiation thesis</strong> tying the EA to two open pressures. Read in Source brief.
+                </>
+              }
+            />
+            <Pressure
+              type="adopt"
+              id="P-ADOPT-2026-03"
+              label={'Adoption\nGap'}
+              headline="M365 Copilot adoption is at 24% of seats licensed. Plan was 60% by month 6."
+              lede={
+                <>
+                  Six months in. Two functions over 50% (Finance, Legal); IT and Sales under 15%. Steward is preparing a re-baseline proposal. <em>This is not a decision today — it's a watch item until the EA brief lands.</em>
+                </>
+              }
+              meta={[
+                { k: 'Seats licensed', v: '8,400' },
+                { k: 'Active seats', v: '2,016' },
+                { k: 'Watch since', v: '2 weeks' },
+              ]}
+              magnitude={
+                <span style={cvalStyle('med')}>
+                  24<span style={{ fontSize: 13, fontWeight: 500, fontStyle: 'italic', color: T.GRAY_DK, marginLeft: 2, letterSpacing: 0 }}>%</span>
+                  <ConfTag conf="med" />
+                </span>
+              }
+              magnitudeLabel="Active rate · vs 60% target"
+              nextAction="Watch · re-baseline pending. Tied to EA brief."
+            />
+            <Pressure
+              type="value"
+              id="P-VALUE-2026-05"
+              label={'Value\nLag'}
+              headline="Joule rollout is under-realizing on the projected efficiency line."
+              lede="Committed $3.2M annual; measured $1.4M after 9 months. Steward attributes 60% of the gap to slower-than-planned RPA pipeline migration. Re-baseline expected at next governance review."
+              meta={[
+                { k: 'Tied program', v: 'SAP Joule rollout' },
+                { k: 'Owner', v: 'SAP COE' },
+              ]}
+              magnitude={
+                <span style={cvalStyle('med')}>
+                  $1.8<span style={{ fontSize: 13, fontWeight: 500, fontStyle: 'italic', color: T.GRAY_DK, marginLeft: 2, letterSpacing: 0 }}>M</span>
+                  <ConfTag conf="med" />
+                </span>
+              }
+              magnitudeLabel="Realization gap · 9 months in"
+              nextAction="Re-baseline at next governance review."
+            />
+          </div>
+
+          {/* Strategic alignment matrix */}
+          <section style={{ padding: '30px 32px', borderTop: `1px solid ${T.RULE_STRONG}` }}>
+            <div style={{ paddingBottom: 12 }}>
+              <div
+                style={{
+                  fontFamily: T.MONO,
+                  fontSize: 10,
+                  letterSpacing: '2px',
+                  fontWeight: 700,
+                  color: T.GOLD,
+                  textTransform: 'uppercase',
+                  marginBottom: 8,
+                }}
+              >
+                Strategic alignment · 23 programs plotted · current Value lens
+              </div>
+              <h2
+                style={{
+                  fontFamily: T.SERIF,
+                  fontSize: 30,
+                  fontWeight: 800,
+                  letterSpacing: '-0.7px',
+                  lineHeight: 1.1,
+                  maxWidth: '32ch',
+                  margin: 0,
+                }}
+              >
+                Where the portfolio is, against where the strategy says it should be.
+              </h2>
+              <p
+                style={{
+                  fontSize: 13.5,
+                  color: T.GRAY_DK,
+                  marginTop: 8,
+                  maxWidth: '64ch',
+                  lineHeight: 1.55,
+                }}
+              >
+                Confidence shows up as outline weight: <strong>solid = HIGH</strong>, <strong>dashed = MEDIUM/LOW</strong>. Strategic bets (T-FOW) are pulled into a separate row below — they don't have measured ROI yet, and mixing them on the matrix would be dishonest.
+              </p>
+            </div>
+
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: '80px 1fr 1fr',
+                gridTemplateRows: '1fr 1fr 60px',
+                gap: 0,
+                marginTop: 18,
+              }}
+            >
+              {/* Y axis */}
+              <div
+                style={{
+                  gridColumn: 1,
+                  gridRow: '1 / 3',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <span
+                  style={{
+                    writingMode: 'vertical-rl',
+                    transform: 'rotate(180deg)',
+                    fontFamily: T.MONO,
+                    fontSize: 9.5,
+                    letterSpacing: '1.6px',
+                    fontWeight: 700,
+                    color: T.GRAY_DK,
+                    textTransform: 'uppercase',
+                  }}
+                >
+                  Strategic alignment →
+                </span>
+              </div>
+
+              <Quadrant
+                position="tl"
+                qlabel="High value · Low alignment"
+                qhead="Useful but off-strategy. Sustain or rationalize."
+                dots={[
+                  { name: 'JOULE', amount: '$3.2M', left: '18%', top: '32%' },
+                  { name: 'DATABRICKS', amount: '$2.1M', left: '56%', top: '14%' },
+                  { name: 'FINOPS-CLI', amount: '$0.6M', left: '30%', top: '60%' },
+                ]}
+              />
+              <Quadrant
+                position="tr"
+                qlabel="High value · High alignment · the prize"
+                qhead="Defend, scale, lock baselines."
+                dots={[
+                  { name: 'M365-CORE', amount: '$8.4M', left: '22%', top: '22%' },
+                  { name: 'AZURE-PROD', amount: '$11.2M', left: '58%', top: '38%' },
+                  { name: 'SNOW-CMDB', amount: '$1.4M', left: '36%', top: '62%' },
+                ]}
+              />
+              <Quadrant
+                position="bl"
+                qlabel="Low value · Low alignment"
+                qhead={
+                  <>
+                    Sunset candidates.{' '}
+                    <span style={{ color: T.RED, fontFamily: T.MONO, fontSize: 11 }}>3 flagged</span>
+                  </>
+                }
+                dots={[
+                  { name: 'LEGACY-VPN', amount: '$0.4M', left: '20%', top: '28%' },
+                  { name: 'ON-PREM-CRM', amount: '$1.1M', left: '56%', top: '56%' },
+                ]}
+              />
+              <Quadrant
+                position="br"
+                qlabel="Low value · High alignment"
+                qhead="Strategic but not yet earning. Watch closely."
+                dots={[
+                  { name: 'COPILOT-E5', amount: '$2.8M', left: '28%', top: '18%' },
+                  { name: 'NOW-ASSIST', amount: '$0.9M', left: '60%', top: '42%' },
+                ]}
+              />
+
+              {/* X axis */}
+              <div
+                style={{
+                  gridColumn: '2 / 4',
+                  gridRow: 3,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  paddingTop: 8,
+                }}
+              >
+                <span
+                  style={{
+                    fontFamily: T.MONO,
+                    fontSize: 9.5,
+                    letterSpacing: '1.6px',
+                    fontWeight: 700,
+                    color: T.GRAY_DK,
+                    textTransform: 'uppercase',
+                  }}
+                >
+                  Realized portfolio value →
+                </span>
+              </div>
+            </div>
+
+            {/* T-FOW row */}
+            <div
+              style={{
+                padding: '18px 0 28px',
+                borderTop: `1px dashed ${T.RULE_STRONG}`,
+                marginTop: 18,
+              }}
+            >
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'baseline',
+                  marginBottom: 12,
+                }}
+              >
+                <span
+                  style={{
+                    fontFamily: T.MONO,
+                    fontSize: 10,
+                    letterSpacing: '1.6px',
+                    color: T.GOLD,
+                    fontWeight: 700,
+                    textTransform: 'uppercase',
+                  }}
+                >
+                  Strategic bets · 3 programs · T-FOW lens
+                </span>
+                <span
+                  style={{
+                    fontFamily: T.MONO,
+                    fontSize: 9,
+                    letterSpacing: '1.2px',
+                    color: T.GRAY_DK,
+                    fontStyle: 'italic',
+                  }}
+                >
+                  Plotted separately — attribution is too loose for the 2×2 today.
+                </span>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 14 }}>
+                {[
+                  {
+                    name: 'Agent platform foundation',
+                    meta: 'Year 1 of 3 · $4.2M committed · attribution LOW',
+                    desc: 'Building the Sentinel/Steward/Atlas substrate that the rest of the AbarVa stack runs on. Won\'t show measured value until programs migrate.',
+                    cta: <MissingChip>Set attribution model →</MissingChip>,
+                  },
+                  {
+                    name: 'Data sovereignty re-architecture',
+                    meta: 'Year 1 of 2 · $1.8M committed · attribution MED',
+                    desc: 'Tied to EU operations. Compliance value is binary — either it lands by Q4 2026 or we\'re out of compliance, regardless of TCO.',
+                    cta: (
+                      <span style={{ color: T.AMBER, fontSize: 11, fontFamily: T.MONO }}>
+                        Reg deadline · Dec 2026
+                      </span>
+                    ),
+                  },
+                  {
+                    name: 'Vendor consolidation thesis',
+                    meta: 'Year 0 · $0.9M committed · attribution LOW',
+                    desc: 'Hypothesis: 23 strategic suppliers can become 12 by 2027. Atlas is modeling. No measured value until first wave of consolidations.',
+                    cta: <MissingChip>Connect Source EA brief →</MissingChip>,
+                  },
+                ].map((card) => (
+                  <div
+                    key={card.name}
+                    style={{
+                      padding: '14px 16px',
+                      border: `1px dashed ${T.RULE_STRONG}`,
+                      borderRadius: 8,
+                      background: 'transparent',
+                    }}
+                  >
+                    <div
+                      style={{
+                        fontFamily: T.SERIF,
+                        fontSize: 16,
+                        fontWeight: 700,
+                        letterSpacing: '-0.2px',
+                        marginBottom: 4,
+                      }}
+                    >
+                      {card.name}
+                    </div>
+                    <div
+                      style={{
+                        fontFamily: T.MONO,
+                        fontSize: 9,
+                        letterSpacing: '1.2px',
+                        color: T.GRAY_DK,
+                        fontWeight: 600,
+                        textTransform: 'uppercase',
+                      }}
+                    >
+                      {card.meta}
+                    </div>
+                    <div
+                      style={{
+                        fontSize: 12.5,
+                        color: T.INK_2,
+                        lineHeight: 1.5,
+                        margin: '8px 0',
+                      }}
+                    >
+                      {card.desc}
+                    </div>
+                    <div>{card.cta}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </section>
+
+          {/* Footer signature */}
+          <div
+            style={{
+              padding: '22px 32px 32px',
+              borderTop: `1px dashed ${T.RULE}`,
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'baseline',
+              gap: 24,
+              flexWrap: 'wrap',
+            }}
+          >
+            <div
+              style={{
+                fontFamily: T.MONO,
+                fontSize: 9.5,
+                letterSpacing: '1.4px',
+                color: T.GRAY_DK,
+                fontWeight: 600,
+                lineHeight: 1.7,
+                maxWidth: '60ch',
+              }}
+            >
+              <strong style={{ color: T.INK }}>Tower is a decision instrument, not a dashboard.</strong> Every number on this page has a confidence level and an underlying calculation that's queryable. Underlines: solid HIGH · dashed MED · dotted LOW. Missing inputs read as invitations, not errors.<br />
+              Next governance review: <strong style={{ color: T.INK }}>May 19 · 90-min board prep</strong>.
+            </div>
+            <div
+              style={{
+                fontFamily: T.MONO,
+                fontSize: 9,
+                letterSpacing: '1.3px',
+                color: T.GRAY,
+                fontStyle: 'italic',
+                textAlign: 'right',
+              }}
+            >
+              Generated {timestamp} PT · refreshes every 6h<br />
+              v2 confidence bands · substrate v0.9
+            </div>
+          </div>
+        </div>
+
+        {/* ─── ATLAS COLUMN ─── */}
+        <AtlasColumn
+          headline="Three threads run through this morning's pressures."
+          meta={`${timestamp} · Read time 90 sec · 3 observations · 4 prompts`}
+          synth={[
+            {
+              h: 'Observation · 01',
+              body: (
+                <>
+                  The <strong style={{ color: T.INK }}>EA renewal</strong> isn't separate from the{' '}
+                  <strong style={{ color: T.INK }}>cost overrun</strong> and{' '}
+                  <strong style={{ color: T.INK }}>capability duplication</strong> — they share root nodes. If you take a posture on the EA without resolving the overlap, you'll renew at the wrong volumes.
+                </>
+              ),
+              obs: '→ Open EA brief in Source',
+            },
+            {
+              h: 'Observation · 02',
+              body: (
+                <>
+                  Your <strong style={{ color: T.INK }}>portfolio ROI is at 2.8×, target 3.5×</strong>. The shortfall is concentrated in three programs (Joule, Copilot E5, Now Assist) where measured value is lagging committed by <em>more than 40%</em>. Two of those three are in the 47-day EA window.
+                </>
+              ),
+              obs: '→ See programs lagging on value',
+            },
+            {
+              h: 'Observation · 03',
+              body: (
+                <>
+                  Adoption confidence is <strong style={{ color: T.INK }}>LOW</strong> because Okta and EntraID aren't connected. Until those land, the 24% Copilot number is directional, not auditable.
+                </>
+              ),
+              obs: '→ Connect identity sources (5 min)',
+            },
+            {
+              h: 'If you only do one thing today',
+              body: (
+                <>
+                  <em>Open the EA brief and read Atlas's negotiation thesis.</em> The other pressures route through it. Steward and Sentinel are both aligned on what the brief should ask for.
+                </>
+              ),
+            },
+          ]}
+          prompts={[
+            'Show me the 3 lagging programs',
+            'What if I cut LLM tokens by 30%?',
+            'Re-rank pressures by attribution confidence',
+            'Brief me for the 9 AM staff meeting',
+          ]}
+        />
+      </div>
     </AppShell>
   );
 }
