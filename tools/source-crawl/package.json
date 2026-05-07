@@ -7,6 +7,10 @@
     "save-session": "tsx src/auth.ts",
     "crawl:dry": "tsx src/crawl.ts --dry",
     "crawl:full": "tsx src/crawl.ts --full",
+    "scenario": "tsx src/scenario.ts",
+    "scenario:create-event": "tsx src/scenario.ts create-event",
+    "scenario:walk-canvas": "tsx src/scenario.ts walk-canvas",
+    "scenario:promote-stage": "tsx src/scenario.ts promote-stage",
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {

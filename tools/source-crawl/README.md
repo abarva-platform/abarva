@@ -1,14 +1,20 @@
-# Source crawl — slice 1
+# Source crawl + scenarios
 
-Read-only Playwright crawler that takes a faithful snapshot of one
-tenant's `/source` surface. Default target is AbarVa's own production
-app — point it at any sourcing platform by editing `.env`.
+Two-mode Playwright tool for the `/source` surface:
 
-This is **slice 1 of N** in the sourcing-platform audit pipeline. We
-are not auditing anything yet — we are building the ground truth that
-later slices measure the agent against. Spec lives in `1_crawl.md`.
+- **Read-only crawler** (`crawl:dry` / `crawl:full`) — slice 1 of the
+  sourcing-platform audit pipeline. BFS-walks every link under
+  `/source/*` and writes a structured snapshot. Safe against any
+  platform — enforces read-only at both label and request layers.
+- **Write-mode scenarios** (`scenario:*`) — drive real mutations on
+  AbarVa: create events, walk artifacts on the canvas, promote
+  stages. Use against AbarVa demo tenants only, never a foreign
+  platform.
 
-## What it does, in one paragraph
+Default target is AbarVa's own production app; point both modes at
+any tenant by editing `.env`. Spec for slice 1 lives in `1_crawl.md`.
+
+## Read-only mode — what it does
 
 Loads a saved Clerk/Playwright session, BFS-walks every link under
 `/source/*`, and writes one JSON object per page to `snapshot.jsonl`,
@@ -18,6 +24,22 @@ reason + per-entity counts. Read-only is enforced two ways: any
 control whose label looks like a write verb is skipped, and any
 non-GET request observed during a navigation aborts that path.
 
+## Write mode — what it does
+
+Runs one scenario at a time against a tenant you own. Each scenario
+captures an `audit.log` (every action timestamped), screenshots, and
+a `result.json` under `runs/<ts>-<scenario>/`. Today's scenarios:
+
+| Scenario | What it drives |
+| --- | --- |
+| `create-event` | `/source/new` → fills intake (trigger required, others optional), submits, captures the resulting `eventId`. |
+| `walk-canvas` | `/source/events/{id}` → clicks every artifact card on the canvas in turn, screenshots each. |
+| `promote-stage` | `/source/events/{id}` → switches to the Gate tab, clicks `Promote stage` if the gate is unblocked, captures before/after URLs and screenshots. |
+
+Add new scenarios as new mutation buttons appear on the canvas (e.g.
+`Mark complete`, `Submit deliverable`). The runner is a thin shell —
+each scenario is a function in `src/scenarios.ts`.
+
 ## Quickstart
 
 ```bash
@@ -26,20 +48,41 @@ cp .env.example .env          # default points at app.abarva.ai/source
 npm install
 npx playwright install chromium
 
-# 1. Save a logged-in session — opens a real browser, you log in
-#    manually (Clerk OTP). The script saves storageState.json once
-#    the URL leaves /sign-in.
+# Save a logged-in session — opens a real browser, you log in
+# manually (Clerk OTP). The script saves storageState.json once the
+# URL leaves /sign-in. Re-run any time the session expires.
 npm run save-session
+```
 
-# 2. Dry pass — first 50 pages, then stop. Review the output.
-npm run crawl:dry
+### Read-only inventory
 
-# 3. After review, full pass.
-npm run crawl:full
+```bash
+npm run crawl:dry             # 50-page cap, then stop. Review output.
+npm run crawl:full            # after review, full pass.
 ```
 
 Output lands in `crawl/output/` (snapshots, CSV, JSON) and `vault/`
 (raw HTML, full-page screenshots; mode 0700, gitignored).
+
+### Write-mode scenarios
+
+```bash
+# 1. Create a sourcing event end-to-end (uses sensible defaults for
+#    trigger / decisionOwner / scope / value / baseline). Resulting
+#    eventUrl is printed and saved to runs/<ts>-create-event/result.json.
+npm run scenario:create-event
+
+# 2. Walk every artifact card on the canvas, screenshot each.
+npm run scenario:walk-canvas -- --event https://app.abarva.ai/source/events/<id>
+
+# 3. Promote the current stage if the gate is unblocked. Captures
+#    before/after URLs + screenshots.
+npm run scenario:promote-stage -- --event https://app.abarva.ai/source/events/<id>
+```
+
+Per-run output lands in `tools/source-crawl/runs/<ts>-<scenario>/`
+with an `audit.log` (every action timestamped), `result.json`, and
+screenshots.
 
 ## Pre-flight checklist (from the spec)
 
