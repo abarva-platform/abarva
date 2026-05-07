@@ -266,7 +266,7 @@ async function loadOneTenant(
     'initiative_id,kpi_name,quarter',
   );
 
-  // 4. Stakeholder notes
+  // 4. Stakeholder notes — natural key per AIR-1c migration.
   await upsert(
     sb,
     'ai_initiative_stakeholder_notes',
@@ -280,10 +280,10 @@ async function loadOneTenant(
       attribution_consent: n.attribution_consent ?? false,
       loaded_via_template: tag,
     })),
-    'note_id',
+    'initiative_id,stakeholder_name,interview_date',
   );
 
-  // 5. Decisions
+  // 5. Decisions — natural key (initiative_id, decision_name).
   await upsert(
     sb,
     'ai_initiative_decisions',
@@ -298,10 +298,10 @@ async function loadOneTenant(
       outcome_status: d.outcome_status ?? null,
       loaded_via_template: tag,
     })),
-    'decision_id',
+    'initiative_id,decision_name',
   );
 
-  // 6. Vendors
+  // 6. Vendors — natural key (initiative_id, vendor_name).
   await upsert(
     sb,
     'ai_initiative_vendors',
@@ -314,10 +314,10 @@ async function loadOneTenant(
       notes: v.notes ?? null,
       loaded_via_template: tag,
     })),
-    'vendor_id',
+    'initiative_id,vendor_name',
   );
 
-  // 7. Scenarios
+  // 7. Scenarios — natural key (initiative_id, scenario_name).
   await upsert(
     sb,
     'ai_initiative_scenarios',
@@ -330,7 +330,7 @@ async function loadOneTenant(
       impact_summary: s.impact_summary,
       loaded_via_template: tag,
     })),
-    'scenario_id',
+    'initiative_id,scenario_name',
   );
 
   return {
