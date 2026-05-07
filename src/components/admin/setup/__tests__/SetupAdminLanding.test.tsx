@@ -29,8 +29,6 @@ describe('SetupAdminLanding', () => {
         lastIngestedRelative="5m ago"
         atlasSignalCount={12}
         atlasHighSeverityCount={2}
-        nexusProgramCount={4}
-        stewardFindingCount={11}
       />,
     );
 
@@ -53,8 +51,6 @@ describe('SetupAdminLanding', () => {
         capabilitiesGrounded={2}
         atlasSignalCount={12}
         atlasHighSeverityCount={2}
-        nexusProgramCount={4}
-        stewardFindingCount={11}
       />,
     );
     const records = screen.getByTestId('admin-setup-summary-records');
@@ -87,8 +83,6 @@ describe('SetupAdminLanding', () => {
         capabilitiesGrounded={0}
         atlasSignalCount={0}
         atlasHighSeverityCount={0}
-        nexusProgramCount={0}
-        stewardFindingCount={0}
       />,
     );
     expect(screen.getByTestId('admin-setup-act-one-rollups')).toBeInTheDocument();
@@ -108,8 +102,6 @@ describe('SetupAdminLanding', () => {
         capabilitiesGrounded={0}
         atlasSignalCount={0}
         atlasHighSeverityCount={0}
-        nexusProgramCount={0}
-        stewardFindingCount={0}
       />,
     );
     expect(screen.getByTestId('admin-setup-landing')).toHaveAttribute(
@@ -132,8 +124,6 @@ describe('SetupAdminLanding', () => {
         capabilitiesGrounded={0}
         atlasSignalCount={0}
         atlasHighSeverityCount={0}
-        nexusProgramCount={0}
-        stewardFindingCount={0}
       />,
     );
 
@@ -158,8 +148,6 @@ describe('SetupAdminLanding', () => {
         capabilitiesGrounded={2}
         atlasSignalCount={12}
         atlasHighSeverityCount={2}
-        nexusProgramCount={4}
-        stewardFindingCount={11}
       />,
     );
     const list = screen.getByTestId('admin-setup-gain-list');
@@ -184,8 +172,6 @@ describe('SetupAdminLanding', () => {
         capabilitiesGrounded={2}
         atlasSignalCount={12}
         atlasHighSeverityCount={2}
-        nexusProgramCount={4}
-        stewardFindingCount={11}
       />,
     );
     expect(screen.getByTestId('admin-setup-capability-matrix')).toBeInTheDocument();
