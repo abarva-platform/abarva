@@ -8,50 +8,22 @@ import 'server-only';
 // aggregated risk / contract / adoption / value dimensions.
 
 import { getServerSupabase } from '@/lib/supabase-server';
+import type { Stage, StatusFlag } from '@/lib/admin/ai-initiatives/labels';
 import type {
-  Stage,
-  StatusFlag,
-} from '@/lib/admin/ai-initiatives/queries';
+  VendorFinancialHealth,
+  VendorInitiativeLink,
+  VendorRollup,
+  VendorsData,
+} from './vendors-display';
 
-export type VendorFinancialHealth = 'strong' | 'moderate' | 'watch' | 'at_risk';
-
-export interface VendorInitiativeLink {
-  initiativeId: string;
-  initiativeDisplayId: string;
-  initiativeName: string;
-  initiativeStatusFlag: StatusFlag;
-  initiativeStage: Stage;
-  contractValueUsd: number | null;
-  renewalDate: string | null;
-  financialHealth: VendorFinancialHealth | null;
-  notes: string | null;
-}
-
-export interface VendorRollup {
-  vendorName: string;
-  initiatives: ReadonlyArray<VendorInitiativeLink>;
-  /** Sum of contract_value_usd across linked initiatives. */
-  totalContractValueUsd: number | null;
-  /** Earliest renewal_date across linked initiatives ("nearest renewal"). */
-  earliestRenewal: string | null;
-  /** Worst-case financial_health across linked initiatives. */
-  worstFinancialHealth: VendorFinancialHealth | null;
-  /** Count of linked initiatives in concerning status. */
-  initiativesAtRisk: number;
-  /** All linked initiatives count. */
-  totalInitiatives: number;
-}
-
-export interface VendorsData {
-  vendors: ReadonlyArray<VendorRollup>;
-  /** Computed aggregates for the stage header. */
-  totals: {
-    vendorCount: number;
-    contractValueUsd: number;
-    upcomingRenewals: number;
-    atRiskVendors: number;
-  };
-}
+// Re-export so server-side callers can keep importing types from
+// vendors-data without separately importing vendors-display.
+export type {
+  VendorFinancialHealth,
+  VendorInitiativeLink,
+  VendorRollup,
+  VendorsData,
+} from './vendors-display';
 
 const CONCERNING_STATUSES: ReadonlyArray<StatusFlag> = [
   'stalled',
@@ -207,27 +179,7 @@ export async function getVendorsForClient(clientId: string): Promise<VendorsData
   };
 }
 
-// ---------------------------------------------------------------------
-// Display helpers (used by the canvas component)
-// ---------------------------------------------------------------------
-
-export function vendorHealthLabel(h: VendorFinancialHealth | null): string {
-  if (h === null) return 'Unrated';
-  switch (h) {
-    case 'strong':
-      return 'Strong';
-    case 'moderate':
-      return 'Moderate';
-    case 'watch':
-      return 'Watch';
-    case 'at_risk':
-      return 'At risk';
-  }
-}
-
-export function daysUntil(date: string | null): number | null {
-  if (!date) return null;
-  const t = new Date(date).getTime();
-  if (Number.isNaN(t)) return null;
-  return Math.round((t - Date.now()) / (1000 * 60 * 60 * 24));
-}
+// Display helpers (vendorHealthLabel, daysUntil) live in
+// ./vendors-display.ts. Re-exported below for back-compat with any
+// server-side callers that imported them from here.
+export { vendorHealthLabel, daysUntil } from './vendors-display';
