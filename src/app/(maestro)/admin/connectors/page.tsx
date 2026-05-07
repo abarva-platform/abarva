@@ -13,6 +13,7 @@ import {
   buildConnectorsPageView,
   type ConnectorTab,
 } from '@/lib/admin/connectors-page-view';
+import { resolveAdminTenant } from '@/lib/admin/admin-tenant';
 import { COLORS, RADIUS, SPACING, TYPOGRAPHY } from '@/lib/design/design-tokens';
 
 export const metadata = {
@@ -63,7 +64,8 @@ export default async function ConnectorsPage({
 }: {
   searchParams: Promise<ConnectorsSearchParams>;
 }) {
-  const view = await buildConnectorsPageView();
+  const tenant = await resolveAdminTenant();
+  const view = await buildConnectorsPageView(tenant.tenantSlug);
   const params = await searchParams;
   const activeTab = parseTab(params.tab, view.defaultTab);
   const selectedId = params.connector;
@@ -83,6 +85,7 @@ export default async function ConnectorsPage({
 
   return (
     <AdminCanonShellV2
+      tenantName={tenant.tenantName}
       agentRail={
         <AgentRail
           primaryAgentLabel={view.primaryAgentLabel}

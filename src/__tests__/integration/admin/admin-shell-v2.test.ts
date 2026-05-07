@@ -1,8 +1,10 @@
 /**
  * ADMIN2 — Admin Shell 3-Zone canonical layout
  *
- * Source-content tests guard the canonical structure: 3-zone grid, 8 sub-sections,
- * 4 agent cards, no banned tokens, no inline hex literals outside design-tokens.
+ * Source-content tests guard the canonical structure: 3-zone grid, 6 sub-sections
+ * (after Setup Fix Package PR 1 removed AI Initiatives, Build Progress, Architecture,
+ * Reasoning), 4 agent cards, no banned tokens, no inline hex literals outside
+ * design-tokens.
  */
 
 import { readFileSync, existsSync } from 'node:fs';
@@ -91,8 +93,8 @@ describe('ADMIN2 — Admin Shell 3-Zone canonical layout', () => {
   });
 
   describe('admin-shell-config.ts read-model', () => {
-    it('ADMIN_SUB_SECTIONS has exactly 8 entries', () => {
-      expect(ADMIN_SUB_SECTIONS).toHaveLength(8);
+    it('ADMIN_SUB_SECTIONS has exactly 6 entries', () => {
+      expect(ADMIN_SUB_SECTIONS).toHaveLength(6);
     });
 
     it('ADMIN_SUB_SECTIONS lists canonical ids in order', () => {
@@ -103,8 +105,6 @@ describe('ADMIN2 — Admin Shell 3-Zone canonical layout', () => {
         'users-access',
         'agent-readiness',
         'production-readiness',
-        'build-progress',
-        'architecture',
       ]);
     });
 
@@ -186,7 +186,7 @@ describe('ADMIN2 — Admin Shell 3-Zone canonical layout', () => {
     });
   });
 
-  describe('AdminSidebar — 8 items + caveat', () => {
+  describe('AdminSidebar — 6 items + caveat', () => {
     const src = read(FILES.sidebar);
 
     it("declares 'use client' for usePathname", () => {

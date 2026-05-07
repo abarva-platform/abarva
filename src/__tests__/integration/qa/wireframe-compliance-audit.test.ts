@@ -55,9 +55,9 @@ const VALID_SEVERITIES: ComplianceSeverity[] = ['high', 'medium', 'low'];
 
 describe('wireframe-compliance-audit', () => {
   describe('getPageComplianceResults', () => {
-    it('returns results for all 8 target pages', () => {
+    it('returns results for all 7 target pages', () => {
       const results = getPageComplianceResults();
-      expect(results).toHaveLength(8);
+      expect(results).toHaveLength(7);
     });
 
     it('every result has a score between 0 and 100', () => {
@@ -189,13 +189,12 @@ describe('wireframe-compliance-audit', () => {
       });
     });
 
-    it('the 8 expected routes are all present', () => {
+    it('the 7 expected routes are all present', () => {
       const results = getPageComplianceResults();
       const routes = results.map((r) => r.route);
       // ADMIN8 — admin tree consolidated under /admin/* (legacy /platform/admin/* now redirects).
       expect(routes).toContain('/admin');
       expect(routes).toContain('/admin/production-readiness');
-      expect(routes).toContain('/admin/architecture');
       expect(routes).toContain('/tenant/[tenantSlug]/programs');
       expect(routes).toContain('/tenant/[tenantSlug]/programs/[programSlug]');
       expect(routes).toContain('/source/events/[eventId]');
@@ -207,13 +206,6 @@ describe('wireframe-compliance-audit', () => {
       const a = getPageComplianceResults();
       const b = getPageComplianceResults();
       expect(a).not.toBe(b);
-    });
-
-    it('Architecture page is at 94 after ADMIN19 (was 58 → 90 → 94)', () => {
-      const results = getPageComplianceResults();
-      const arch = results.find((r) => r.route === '/admin/architecture');
-      expect(arch).toBeDefined();
-      expect(arch!.overallScore).toBe(94);
     });
 
     it('Intelligence page held at 84 after Wave 32', () => {
@@ -241,11 +233,6 @@ describe('wireframe-compliance-audit', () => {
     it('ADMIN19: Admin Overview unchanged at 92 (ADMIN18 deferred)', () => {
       const result = getPageComplianceResult('/admin');
       expect(result!.overallScore).toBe(92);
-    });
-
-    it('ADMIN19: Architecture 90 → 94 (Azure sub-tab + component drawer)', () => {
-      const result = getPageComplianceResult('/admin/architecture');
-      expect(result!.overallScore).toBe(94);
     });
   });
 
@@ -284,9 +271,9 @@ describe('wireframe-compliance-audit', () => {
   // -------------------------------------------------------------------------
 
   describe('getWireframeComplianceSummary', () => {
-    it('totalPages is 8', () => {
+    it('totalPages is 7', () => {
       const summary = getWireframeComplianceSummary();
-      expect(summary.totalPages).toBe(8);
+      expect(summary.totalPages).toBe(7);
     });
 
     it('passing + partial + failing equals totalPages', () => {
@@ -305,9 +292,9 @@ describe('wireframe-compliance-audit', () => {
       expect(summary.highSeverityDeviations).toBeGreaterThanOrEqual(0);
     });
 
-    it('safeFixesApplied equals 16 after ADMIN19 (was 15 after wave-admin-redesign)', () => {
+    it('safeFixesApplied equals 13 after Architecture removal (was 16 after ADMIN19)', () => {
       const summary = getWireframeComplianceSummary();
-      expect(summary.safeFixesApplied).toBe(16);
+      expect(summary.safeFixesApplied).toBe(13);
     });
 
     it('createdFrom is wire2b_wireframe_compliance_ts', () => {
@@ -315,9 +302,9 @@ describe('wireframe-compliance-audit', () => {
       expect(summary.createdFrom).toBe('wire2b_wireframe_compliance_ts');
     });
 
-    it('three admin pages are in the passing bucket after wave-admin-redesign', () => {
+    it('two admin pages are in the passing bucket (Architecture page removed)', () => {
       const summary = getWireframeComplianceSummary();
-      expect(summary.passing).toBe(3);
+      expect(summary.passing).toBe(2);
     });
 
     it('no page is in the failing bucket after wave-admin-redesign (Architecture was 58 → 90)', () => {

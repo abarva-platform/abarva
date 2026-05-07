@@ -1,0 +1,4 @@
+system_name,domain,authoritative_for,owner,vendor,environment,data_classification,integrations
+Core Banking - Temenos T24,Core Banking,Customer/Account/Transaction,VP Core Platforms,Temenos,Production,Restricted,"CRM,DataWarehouse,Payments"
+Salesforce Financial Services Cloud,CRM,Customer Relationship,Director CRM,Salesforce,Production,Confidential,"CoreBanking,MarketingCloud"
+Snowflake Enterprise,Data Warehouse,Aggregated Analytics,VP Data Platforms,Snowflake,Production,Restricted,"CoreBanking,Salesforce,Tableau"

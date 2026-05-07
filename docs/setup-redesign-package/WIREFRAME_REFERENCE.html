@@ -1,0 +1,790 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Setup wireframe · v0 · structural only</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+    background: #f0f0f0;
+    color: #333;
+    padding: 24px;
+    font-size: 13px;
+    line-height: 1.4;
+  }
+  .doc-header {
+    max-width: 1280px;
+    margin: 0 auto 24px;
+    padding: 16px 20px;
+    background: white;
+    border: 1px solid #ccc;
+  }
+  .doc-header h1 {
+    font-size: 16px;
+    margin-bottom: 4px;
+  }
+  .doc-header p {
+    color: #666;
+    font-size: 12px;
+  }
+  .panel {
+    max-width: 1280px;
+    margin: 0 auto 24px;
+    background: white;
+    border: 1px solid #999;
+  }
+  .panel-tab {
+    background: #333;
+    color: white;
+    padding: 6px 14px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    display: inline-block;
+  }
+  .panel-meta {
+    background: #f8f8f8;
+    padding: 10px 16px;
+    border-bottom: 1px solid #ccc;
+    font-size: 12px;
+  }
+  .panel-meta strong {
+    color: #000;
+  }
+  .panel-meta .job {
+    color: #555;
+  }
+  .panel-body {
+    display: grid;
+    grid-template-columns: 220px 1fr 280px;
+    min-height: 480px;
+  }
+  .left-nav {
+    background: #fafafa;
+    border-right: 1px solid #ddd;
+    padding: 12px;
+  }
+  .left-nav-item {
+    padding: 8px 10px;
+    margin-bottom: 2px;
+    font-size: 12px;
+    color: #666;
+    border: 1px dashed transparent;
+  }
+  .left-nav-item.active {
+    background: white;
+    color: #000;
+    font-weight: 600;
+    border: 1px solid #999;
+  }
+  .left-nav-label {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #999;
+    padding: 6px 10px 4px;
+  }
+  .main {
+    padding: 16px;
+    background: white;
+  }
+  .right-rail {
+    background: #f5f5f5;
+    border-left: 1px solid #ddd;
+    padding: 12px;
+  }
+  .block {
+    border: 1px dashed #888;
+    background: #fdfdfd;
+    padding: 10px 12px;
+    margin-bottom: 10px;
+    border-radius: 2px;
+  }
+  .block-label {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #888;
+    margin-bottom: 6px;
+    font-weight: 600;
+  }
+  .block-content {
+    color: #444;
+    font-size: 12px;
+  }
+  .block-content .ph {
+    color: #aaa;
+    font-style: italic;
+  }
+  .block-row {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 6px;
+  }
+  .block-row > div {
+    flex: 1;
+    border: 1px dashed #aaa;
+    padding: 6px 8px;
+    background: #fafafa;
+    font-size: 11px;
+    color: #555;
+  }
+  .block-row > div.metric {
+    text-align: center;
+  }
+  .block-row > div.metric strong {
+    display: block;
+    font-size: 14px;
+    color: #000;
+  }
+  .table-stub {
+    border: 1px dashed #aaa;
+    padding: 8px;
+    background: #fafafa;
+    font-size: 11px;
+    color: #777;
+  }
+  .table-stub-row {
+    display: flex;
+    gap: 8px;
+    padding: 4px 0;
+    border-bottom: 1px solid #eee;
+  }
+  .table-stub-row.header {
+    font-weight: 600;
+    color: #444;
+    border-bottom: 1px solid #ccc;
+  }
+  .table-stub-row > div {
+    flex: 1;
+  }
+  .matrix-stub {
+    display: grid;
+    grid-template-columns: 80px repeat(6, 1fr);
+    gap: 1px;
+    background: #ccc;
+    border: 1px solid #999;
+    font-size: 9px;
+  }
+  .matrix-stub > div {
+    background: #fafafa;
+    padding: 4px 5px;
+    text-align: center;
+    color: #666;
+  }
+  .matrix-stub .h {
+    background: #eee;
+    font-weight: 600;
+    color: #444;
+    font-size: 8px;
+  }
+  .matrix-stub .deep { background: #d0e8d0; color: #285828; }
+  .matrix-stub .partial { background: #f5e8c8; color: #745522; }
+  .matrix-stub .thin { background: #f5d8d0; color: #784028; }
+  .matrix-stub .empty { background: #eee; color: #aaa; }
+  .annotation {
+    background: #fffde0;
+    border: 1px dashed #c8b840;
+    padding: 8px 12px;
+    font-size: 11px;
+    color: #6d5a00;
+    margin-top: 8px;
+    font-style: italic;
+  }
+  .legend {
+    max-width: 1280px;
+    margin: 0 auto 24px;
+    padding: 12px 16px;
+    background: white;
+    border: 1px solid #ccc;
+    font-size: 11px;
+    display: flex;
+    gap: 24px;
+    color: #666;
+  }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .legend-swatch {
+    width: 12px;
+    height: 12px;
+    display: inline-block;
+    border: 1px solid #888;
+  }
+  h2 { font-size: 14px; margin-bottom: 8px; color: #222; }
+  .panel-note {
+    background: #f8f8f8;
+    padding: 10px 16px;
+    font-size: 11px;
+    color: #555;
+    border-top: 1px solid #eee;
+  }
+  .small-row {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    padding: 4px 0;
+    font-size: 11px;
+    color: #555;
+    border-bottom: 1px dashed #eee;
+  }
+  .small-row .dot { width: 8px; height: 8px; border-radius: 50%; background: #888; flex-shrink: 0; }
+  .small-row .dot.green { background: #6a8; }
+  .small-row .dot.amber { background: #d8a850; }
+  .small-row .dot.red { background: #c66; }
+  .cta-stub {
+    display: inline-block;
+    border: 1px solid #666;
+    padding: 4px 10px;
+    font-size: 11px;
+    color: #444;
+    background: #f5f5f5;
+    margin-right: 6px;
+  }
+  .cta-stub.primary {
+    background: #333;
+    color: white;
+    border-color: #333;
+  }
+</style>
+</head>
+<body>
+
+<div class="doc-header">
+  <h1>Setup section · structural wireframe v0</h1>
+  <p>Six panels, low fidelity, layout-only. Boxes show <em>where</em> content blocks live; labels say <em>what</em> they are. No real visual design — for layout alignment only. Each panel shown as a snapshot of the active sub-nav state.</p>
+</div>
+
+<div class="legend">
+  <div class="legend-item"><span class="legend-swatch" style="background:#fdfdfd; border-style:dashed;"></span> Content block (named, not designed)</div>
+  <div class="legend-item"><span class="legend-swatch" style="background:#d0e8d0;"></span> Deep / loaded</div>
+  <div class="legend-item"><span class="legend-swatch" style="background:#f5e8c8;"></span> Partial</div>
+  <div class="legend-item"><span class="legend-swatch" style="background:#f5d8d0;"></span> Thin</div>
+  <div class="legend-item"><span class="legend-swatch" style="background:#eee;"></span> Empty / not loaded</div>
+</div>
+
+<!-- ============ PANEL 1: OVERVIEW ============ -->
+<div class="panel">
+  <div class="panel-tab">PANEL 1 / 6 · Overview</div>
+  <div class="panel-meta">
+    <strong>Job:</strong> Orient the admin in 30 seconds and route them to the panel that does the work.
+    <span class="job"> · CXO question: "Where do I stand and what do I do next?"</span>
+  </div>
+  <div class="panel-body">
+
+    <!-- LEFT NAV -->
+    <div class="left-nav">
+      <div class="left-nav-label">Setup</div>
+      <div class="left-nav-item active">Overview</div>
+      <div class="left-nav-item">Data Trust</div>
+      <div class="left-nav-item">Connectors</div>
+      <div class="left-nav-item">Users &amp; Access</div>
+      <div class="left-nav-item">Agent Readiness</div>
+      <div class="left-nav-item">Production Readiness</div>
+    </div>
+
+    <!-- MAIN -->
+    <div class="main">
+      <div class="block">
+        <div class="block-label">Status header — single line</div>
+        <div class="block-content">
+          [Tenant name] · Setup readiness: [%] · Agents at [partial/decision-grade] · [N] of 6 capability tracks blocked
+        </div>
+      </div>
+
+      <div class="block">
+        <div class="block-label">Steward orientation block — 3 sentences max</div>
+        <div class="block-content">
+          <span class="ph">[3-sentence Steward narrative anchored to current loaded data — what tenant is, what's loaded, what's missing, what to do next]</span>
+          <div style="margin-top:8px;">
+            <span class="cta-stub">Go to Data Trust →</span>
+            <span class="cta-stub">Go to Agent Readiness →</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="block">
+        <div class="block-label">Action queue — only shown if non-empty</div>
+        <div class="block-content">
+          <div class="small-row"><span class="dot red"></span> Load Compliance posture · high impact · [ Data Trust → ]</div>
+          <div class="small-row"><span class="dot amber"></span> Configure SSO to invite users · high impact · [ Users &amp; Access → ]</div>
+          <div class="small-row"><span class="dot amber"></span> Approve Innovaccer renewal connector · medium · [ Connectors → ]</div>
+        </div>
+      </div>
+
+      <div class="block">
+        <div class="block-label">Recent activity — only real changes, last 7 days, max 5 items</div>
+        <div class="block-content">
+          <div class="small-row"><span class="dot"></span> Compliance posture marked "ready to load" · 2d ago</div>
+          <div class="small-row"><span class="dot"></span> 4 admin panels removed from Setup nav · 5d ago</div>
+          <div class="small-row"><span class="dot"></span> Tenant binding defect resolved · 5d ago</div>
+        </div>
+      </div>
+
+      <div class="annotation">
+        Overview does NOT show: substrate detail, Capability Constellation matrix, full segment landscape table, fact cards, upload templates. Those live on the panels below.
+      </div>
+    </div>
+
+    <!-- RIGHT RAIL -->
+    <div class="right-rail">
+      <div class="block-label">Steward chat · scoped to Setup orientation</div>
+      <div class="block">
+        <div class="block-content"><span class="ph">[Chat input + suggested asks: "What's blocking me?" / "What should I load next?" / "Show me readiness"]</span></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ============ PANEL 2: DATA TRUST ============ -->
+<div class="panel">
+  <div class="panel-tab">PANEL 2 / 6 · Data Trust</div>
+  <div class="panel-meta">
+    <strong>Job:</strong> Show what enterprise data is loaded, what's missing, and what each segment unlocks.
+    <span class="job"> · CXO question: "What does AbarVa know about us, and what would change if we loaded more?"</span>
+  </div>
+  <div class="panel-body">
+
+    <div class="left-nav">
+      <div class="left-nav-label">Setup</div>
+      <div class="left-nav-item">Overview</div>
+      <div class="left-nav-item active">Data Trust</div>
+      <div class="left-nav-item">Connectors</div>
+      <div class="left-nav-item">Users &amp; Access</div>
+      <div class="left-nav-item">Agent Readiness</div>
+      <div class="left-nav-item">Production Readiness</div>
+    </div>
+
+    <div class="main">
+
+      <div class="block">
+        <div class="block-label">State header — top-line counts</div>
+        <div class="block-row">
+          <div class="metric"><strong>10/14</strong>Segments loaded</div>
+          <div class="metric"><strong>128</strong>Records</div>
+          <div class="metric"><strong>3</strong>Decision-grade</div>
+          <div class="metric"><strong>4</strong>Empty / blocking</div>
+        </div>
+      </div>
+
+      <div class="block">
+        <div class="block-label">What's loaded — plain-language category buckets (3-4 buckets)</div>
+        <div class="block-content">
+          <div class="small-row"><span class="dot green"></span> <strong>Who you are</strong> — legal entity, business lines, regulators (Enterprise + Org + Industry context)</div>
+          <div class="small-row"><span class="dot amber"></span> <strong>What you run on</strong> — system inventory, vendors, contracts (partial)</div>
+          <div class="small-row"><span class="dot amber"></span> <strong>What rules apply</strong> — compliance posture (partial)</div>
+          <div class="small-row"><span class="dot red"></span> <strong>How you measure performance</strong> — KPIs, financials (empty)</div>
+          <div class="small-row"><span class="dot red"></span> <strong>What you have in flight</strong> — programs, deliverables (empty)</div>
+        </div>
+      </div>
+
+      <div class="block">
+        <div class="block-label">Action queue — "Next loads, ranked by impact"</div>
+        <div class="block-content">
+          <div class="small-row">
+            <span class="dot red"></span>
+            <strong>Load Compliance posture</strong> · unlocks Steward gating on AI / sourcing / programs
+            <span class="cta-stub primary" style="margin-left:auto;">Template ↓</span>
+            <span class="cta-stub">Upload →</span>
+          </div>
+          <div class="small-row">
+            <span class="dot amber"></span>
+            <strong>Load KPI Dictionary</strong> · unlocks outcome attribution and run-rate modeling
+            <span class="cta-stub primary" style="margin-left:auto;">Template ↓</span>
+            <span class="cta-stub">Upload →</span>
+          </div>
+          <div class="small-row">
+            <span class="dot amber"></span>
+            <strong>Load Active Portfolio</strong> · unlocks Nexus phase-gate reasoning
+            <span class="cta-stub primary" style="margin-left:auto;">Template ↓</span>
+            <span class="cta-stub">Upload →</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="block">
+        <div class="block-label">Trust ladder per segment — collapsible technical inventory</div>
+        <div class="table-stub">
+          <div class="table-stub-row header">
+            <div>Segment</div>
+            <div>Records</div>
+            <div>Trust rung</div>
+            <div>Unlocks</div>
+            <div>Next action</div>
+          </div>
+          <div class="table-stub-row"><div>Enterprise profile</div><div>20</div><div>Decision-grade</div><div>Tenant anchor</div><div>—</div></div>
+          <div class="table-stub-row"><div>IT Systems</div><div>8</div><div>Usable evidence</div><div>System reasoning</div><div>Promote</div></div>
+          <div class="table-stub-row"><div>KPI Dictionary</div><div>0</div><div>Empty</div><div>Outcome attribution</div><div>Load</div></div>
+          <div class="table-stub-row" style="color:#999;"><div colspan="5">[+ 11 more rows expandable]</div></div>
+        </div>
+      </div>
+
+      <div class="annotation">
+        Data Trust does NOT show: agent capability matrix (Agent Readiness), connector list (Connectors), production gates (Production Readiness). It is the substrate panel — what's loaded and what to load next.
+      </div>
+    </div>
+
+    <div class="right-rail">
+      <div class="block-label">Steward chat · scoped to data questions</div>
+      <div class="block">
+        <div class="block-content"><span class="ph">[Suggested asks: "What does loading X unlock?" / "Why is Y empty?" / "Show me decision-grade segments"]</span></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ============ PANEL 3: CONNECTORS ============ -->
+<div class="panel">
+  <div class="panel-tab">PANEL 3 / 6 · Connectors</div>
+  <div class="panel-meta">
+    <strong>Job:</strong> Show what external systems are or could be connected, configuration state, and what each unlocks.
+    <span class="job"> · CXO question: "What systems are connected and what would I gain by adding more?"</span>
+  </div>
+  <div class="panel-body">
+
+    <div class="left-nav">
+      <div class="left-nav-label">Setup</div>
+      <div class="left-nav-item">Overview</div>
+      <div class="left-nav-item">Data Trust</div>
+      <div class="left-nav-item active">Connectors</div>
+      <div class="left-nav-item">Users &amp; Access</div>
+      <div class="left-nav-item">Agent Readiness</div>
+      <div class="left-nav-item">Production Readiness</div>
+    </div>
+
+    <div class="main">
+
+      <div class="block">
+        <div class="block-label">State header</div>
+        <div class="block-row">
+          <div class="metric"><strong>0/12</strong>Live connectors</div>
+          <div class="metric"><strong>4</strong>Configured · stub</div>
+          <div class="metric"><strong>8</strong>Available · not configured</div>
+          <div class="metric"><strong>3</strong>Pilot-required</div>
+        </div>
+      </div>
+
+      <div class="block">
+        <div class="block-label">Action queue — "Connectors needing your decision"</div>
+        <div class="block-content">
+          <div class="small-row">
+            <span class="dot red"></span>
+            <strong>Core Banking — Temenos T24</strong> · pilot-required · unlocks Atlas authoritative customer/account/transaction reasoning
+            <span class="cta-stub" style="margin-left:auto;">Configure →</span>
+          </div>
+          <div class="small-row">
+            <span class="dot amber"></span>
+            <strong>Salesforce CRM</strong> · pilot-required · unlocks Sentinel cross-channel customer pattern detection
+            <span class="cta-stub" style="margin-left:auto;">Configure →</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="block">
+        <div class="block-label">Connector inventory — derived from IT System Landscape (tenant-specific)</div>
+        <div class="table-stub">
+          <div class="table-stub-row header">
+            <div>Category</div>
+            <div>System</div>
+            <div>State</div>
+            <div>Required</div>
+            <div>Action</div>
+          </div>
+          <div class="table-stub-row"><div>Core Banking</div><div>Temenos T24</div><div>Not configured</div><div>Pilot</div><div>Configure</div></div>
+          <div class="table-stub-row"><div>CRM</div><div>Salesforce FSC</div><div>Stub</div><div>Pilot</div><div>Promote</div></div>
+          <div class="table-stub-row"><div>Fraud / AML</div><div>Actimize</div><div>Not configured</div><div>Production</div><div>—</div></div>
+          <div class="table-stub-row" style="color:#999;"><div>[+ 9 more rows]</div></div>
+        </div>
+      </div>
+
+      <div class="annotation">
+        Connectors does NOT show: data inventory (Data Trust), agent capability ratings (Agent Readiness). It is the systems panel — what's connectable and what each unlocks.
+      </div>
+    </div>
+
+    <div class="right-rail">
+      <div class="block-label">Steward chat · scoped to connector questions</div>
+      <div class="block">
+        <div class="block-content"><span class="ph">[Suggested asks: "Which connectors do I need for pilot?" / "What does Temenos unlock?"]</span></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ============ PANEL 4: USERS & ACCESS ============ -->
+<div class="panel">
+  <div class="panel-tab">PANEL 4 / 6 · Users &amp; Access</div>
+  <div class="panel-meta">
+    <strong>Job:</strong> Manage who in the tenant has access to AbarVa, at what role, with what scope.
+    <span class="job"> · CXO question: "Who can see and do what in our AbarVa tenant?"</span>
+  </div>
+  <div class="panel-body">
+
+    <div class="left-nav">
+      <div class="left-nav-label">Setup</div>
+      <div class="left-nav-item">Overview</div>
+      <div class="left-nav-item">Data Trust</div>
+      <div class="left-nav-item">Connectors</div>
+      <div class="left-nav-item active">Users &amp; Access</div>
+      <div class="left-nav-item">Agent Readiness</div>
+      <div class="left-nav-item">Production Readiness</div>
+    </div>
+
+    <div class="main">
+
+      <div class="block">
+        <div class="block-label">State header</div>
+        <div class="block-row">
+          <div class="metric"><strong>0/N</strong>Users invited</div>
+          <div class="metric"><strong>0</strong>Active sessions</div>
+          <div class="metric"><strong>SSO</strong>Not configured</div>
+          <div class="metric"><strong>3</strong>Roles defined</div>
+        </div>
+      </div>
+
+      <div class="block">
+        <div class="block-label">SSO configuration (blocker for invites)</div>
+        <div class="block-content">
+          <strong>SSO not configured.</strong> Invites are blocked until SSO is set up.
+          <div style="margin-top:8px;">
+            <span class="cta-stub primary">Configure SSO →</span>
+            <span class="cta-stub">View SSO docs →</span>
+          </div>
+          <div style="margin-top:10px; padding:8px; background:#f5f5f5; font-size:11px; color:#555;">
+            <strong>What SSO unlocks:</strong> invite pipeline · Maestro access · sponsor access to Tower briefs · cross-tenant role assignment.
+          </div>
+        </div>
+      </div>
+
+      <div class="block">
+        <div class="block-label">Role matrix — 3 default roles + scope per role</div>
+        <div class="table-stub">
+          <div class="table-stub-row header">
+            <div>Role</div>
+            <div>Setup access</div>
+            <div>Moves access</div>
+            <div>Source access</div>
+            <div>Tower</div>
+          </div>
+          <div class="table-stub-row"><div>Tenant admin</div><div>Full</div><div>Full</div><div>Full</div><div>Full</div></div>
+          <div class="table-stub-row"><div>Maestro</div><div>Read</div><div>Full</div><div>Read</div><div>—</div></div>
+          <div class="table-stub-row"><div>Sponsor</div><div>—</div><div>Read</div><div>—</div><div>Read</div></div>
+        </div>
+      </div>
+
+      <div class="block">
+        <div class="block-label">Wave-gated callout — non-button explanation</div>
+        <div class="block-content">
+          <div style="font-size:11px; color:#888; padding:6px 0;">
+            [Wave 27] Live invite and revoke pipelines come online when SSO is configured AND the audit event store ships.
+          </div>
+        </div>
+      </div>
+
+      <div class="annotation">
+        Users &amp; Access does NOT show: data state, agent capability, connector state. It is the identity panel — who, what role, what scope.
+      </div>
+    </div>
+
+    <div class="right-rail">
+      <div class="block-label">Steward chat · scoped to access questions</div>
+      <div class="block">
+        <div class="block-content"><span class="ph">[Suggested asks: "How do I invite a sponsor?" / "What does Maestro role include?"]</span></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ============ PANEL 5: AGENT READINESS ============ -->
+<div class="panel">
+  <div class="panel-tab">PANEL 5 / 6 · Agent Readiness</div>
+  <div class="panel-meta">
+    <strong>Job:</strong> Show, per agent, what each can confidently do, what gaps prevent more, and what closes each gap.
+    <span class="job"> · CXO question: "What can your agents actually do for me right now?"</span>
+  </div>
+  <div class="panel-body">
+
+    <div class="left-nav">
+      <div class="left-nav-label">Setup</div>
+      <div class="left-nav-item">Overview</div>
+      <div class="left-nav-item">Data Trust</div>
+      <div class="left-nav-item">Connectors</div>
+      <div class="left-nav-item">Users &amp; Access</div>
+      <div class="left-nav-item active">Agent Readiness</div>
+      <div class="left-nav-item">Production Readiness</div>
+    </div>
+
+    <div class="main">
+
+      <div class="block">
+        <div class="block-label">State header — per-agent quick reads</div>
+        <div class="block-row">
+          <div class="metric"><strong>Nexus</strong>Thin</div>
+          <div class="metric"><strong>Sentinel</strong>Partial</div>
+          <div class="metric"><strong>Steward</strong>Partial</div>
+          <div class="metric"><strong>Atlas</strong>Thin</div>
+        </div>
+      </div>
+
+      <div class="block">
+        <div class="block-label">Capability constellation — 14 segments × 6 capabilities (matrix is the page hero)</div>
+        <div class="matrix-stub">
+          <div class="h">Segment</div><div class="h">Cite</div><div class="h">Run-rate</div><div class="h">Risk</div><div class="h">Synth</div><div class="h">Lifecycle</div><div class="h">Audit</div>
+          <div class="h">01 Enterprise</div><div class="deep">●</div><div class="partial">●</div><div class="deep">●</div><div class="partial">●</div><div class="empty">○</div><div class="deep">●</div>
+          <div class="h">02 Org</div><div class="partial">●</div><div class="empty">○</div><div class="partial">●</div><div class="empty">○</div><div class="empty">○</div><div class="partial">●</div>
+          <div class="h">03 Systems</div><div class="thin">●</div><div class="empty">○</div><div class="thin">●</div><div class="empty">○</div><div class="empty">○</div><div class="thin">●</div>
+          <div class="h">04 Financials</div><div class="empty">○</div><div class="empty">○</div><div class="empty">○</div><div class="empty">○</div><div class="empty">○</div><div class="empty">○</div>
+          <div class="h">05 KPIs</div><div class="empty">○</div><div class="empty">○</div><div class="empty">○</div><div class="empty">○</div><div class="empty">○</div><div class="empty">○</div>
+          <div class="h">06 Portfolio</div><div class="thin">●</div><div class="empty">○</div><div class="empty">○</div><div class="empty">○</div><div class="empty">○</div><div class="empty">○</div>
+          <div class="h">[+8 more]</div><div class="empty">⋯</div><div class="empty">⋯</div><div class="empty">⋯</div><div class="empty">⋯</div><div class="empty">⋯</div><div class="empty">⋯</div>
+        </div>
+      </div>
+
+      <div class="block">
+        <div class="block-label">Per-agent next-action — what closes each gap (admin-actionable vs engineering-tracked)</div>
+        <div class="block-content">
+          <div class="small-row">
+            <span class="dot red"></span>
+            <strong>Nexus → can't do gate-readiness assessment</strong> · needs Active Portfolio loaded ·
+            <span class="cta-stub" style="margin-left:auto;">Data Trust →</span>
+          </div>
+          <div class="small-row">
+            <span class="dot amber"></span>
+            <strong>Sentinel → can scope sourcing but not BAFO-grade decisions</strong> · needs Vendor Intelligence + KPIs ·
+            <span class="cta-stub" style="margin-left:auto;">Data Trust →</span>
+          </div>
+          <div class="small-row" style="color:#888;">
+            <span class="dot"></span>
+            <em>Tracked by AbarVa engineering: live access mutation pipeline (Wave 27), confidence scoring on live evidence, pressure cards on live data</em>
+          </div>
+        </div>
+      </div>
+
+      <div class="annotation">
+        Agent Readiness does NOT show: substrate detail (Data Trust), connector list (Connectors). It is the agent-capability panel — what each agent can do and what closes the gap. Engineering vs admin gaps visually separated.
+      </div>
+    </div>
+
+    <div class="right-rail">
+      <div class="block-label">Steward chat · scoped to capability questions</div>
+      <div class="block">
+        <div class="block-content"><span class="ph">[Suggested asks: "What can Sentinel do today?" / "What unlocks decision-grade?"]</span></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ============ PANEL 6: PRODUCTION READINESS ============ -->
+<div class="panel">
+  <div class="panel-tab">PANEL 6 / 6 · Production Readiness</div>
+  <div class="panel-meta">
+    <strong>Job:</strong> Show the demo → pilot → production path, what's blocking each transition, what gates pass.
+    <span class="job"> · CXO question: "When can we move from demo to production, and what's in the way?"</span>
+  </div>
+  <div class="panel-body">
+
+    <div class="left-nav">
+      <div class="left-nav-label">Setup</div>
+      <div class="left-nav-item">Overview</div>
+      <div class="left-nav-item">Data Trust</div>
+      <div class="left-nav-item">Connectors</div>
+      <div class="left-nav-item">Users &amp; Access</div>
+      <div class="left-nav-item">Agent Readiness</div>
+      <div class="left-nav-item active">Production Readiness</div>
+    </div>
+
+    <div class="main">
+
+      <div class="block">
+        <div class="block-label">Lifecycle stage — 3 cards (Demo / Pilot / Production)</div>
+        <div class="block-row">
+          <div style="background:#d0e8d0; color:#285828;">
+            <strong>DEMO ✓</strong>
+            <div style="margin-top:4px;">Strong</div>
+          </div>
+          <div style="background:#f5e8c8; color:#745522;">
+            <strong>PILOT — Partial</strong>
+            <div style="margin-top:4px;">4 blockers</div>
+          </div>
+          <div style="background:#f5d8d0; color:#784028;">
+            <strong>PRODUCTION — Blocked</strong>
+            <div style="margin-top:4px;">5 blockers</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="block">
+        <div class="block-label">Pilot blockers — linked to resolving panels</div>
+        <div class="block-content">
+          <div class="small-row"><span class="dot amber"></span> <strong>Access</strong> · SSO not configured · [ Users &amp; Access → ]</div>
+          <div class="small-row"><span class="dot amber"></span> <strong>Security</strong> · connector security review pending · [ Connectors → ]</div>
+          <div class="small-row"><span class="dot amber"></span> <strong>Connectors</strong> · 3 pilot-required not configured · [ Connectors → ]</div>
+          <div class="small-row"><span class="dot amber"></span> <strong>Approvals</strong> · Steward review queue empty · [ Overview → ]</div>
+        </div>
+      </div>
+
+      <div class="block">
+        <div class="block-label">Tab strip — Decision / Blockers / Gates / History (active = Blockers)</div>
+        <div class="block-content">
+          <span class="cta-stub">Decision</span>
+          <span class="cta-stub primary">Blockers</span>
+          <span class="cta-stub">Gates</span>
+          <span class="cta-stub">History</span>
+        </div>
+      </div>
+
+      <div class="block">
+        <div class="block-label">Production blockers — same shape as pilot blockers (5 items)</div>
+        <div class="block-content">
+          <span class="ph">[5 production blockers, each with linked resolving panel + Wave reference]</span>
+        </div>
+      </div>
+
+      <div class="annotation">
+        Production Readiness does NOT show: substrate detail, agent capability matrix, connector inventory. It is the lifecycle panel — where you are in the demo-to-production journey and what's blocking advancement.
+      </div>
+    </div>
+
+    <div class="right-rail">
+      <div class="block-label">Steward chat · scoped to lifecycle questions</div>
+      <div class="block">
+        <div class="block-content"><span class="ph">[Suggested asks: "What blocks pilot?" / "When can we go to production?"]</span></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ============ SUMMARY ============ -->
+<div class="doc-header">
+  <h1>Decluttering math</h1>
+  <p>
+    <strong>Current Overview:</strong> 7 substantial sections · ~1,200 words · 14×6 matrix + 14-row table + 6 fact cards + 4 prose cards + chat<br>
+    <strong>New Overview:</strong> 4 small sections · ~150 words · status / orientation / action queue / activity · chat<br>
+    <strong>Decluttering ratio:</strong> ~6× reduction in cognitive load on Overview · content didn't disappear, it moved to the panel that's actually about it
+  </p>
+  <p style="margin-top:8px;">
+    <strong>Where the current Overview's content went:</strong><br>
+    Act 1 fact cards → Data Trust (block 2: "What's loaded")<br>
+    Act 3 upload templates → Data Trust (block 3: "Action queue")<br>
+    Capability Constellation matrix → Agent Readiness (block 2: matrix as page hero)<br>
+    Four "what this tenant can reason about" cards → Agent Readiness (block 3: per-agent next-action)<br>
+    Client Data Landscape full table → Data Trust (block 4: collapsed inventory)<br>
+    Recent activity (compressed) → Overview (block 4: only real changes, max 5 items)<br>
+    Steward editorial (3 sentences) → Overview (block 2: orientation)<br>
+    Live caveat → footer, all panels<br>
+    Nexus program approvals empty queue → hidden when empty
+  </p>
+</div>
+
+</body>
+</html>

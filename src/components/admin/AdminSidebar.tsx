@@ -8,11 +8,7 @@ import {
 import { COLORS, RADIUS, SPACING } from "@/lib/design/design-tokens";
 import { SHELL } from "@/lib/shell/shell-tokens";
 
-export interface AdminSidebarProps {
-  reasoningAlertCount?: number;
-}
-
-export function AdminSidebar({ reasoningAlertCount = 0 }: AdminSidebarProps) {
+export function AdminSidebar() {
   const pathname = usePathname();
 
   return (
@@ -56,15 +52,7 @@ export function AdminSidebar({ reasoningAlertCount = 0 }: AdminSidebarProps) {
 
       <nav style={{ display: "flex", flexDirection: "column", gap: 4 }}>
         {ADMIN_SUB_SECTIONS.map((section) => {
-          const isActive =
-            section.id === "reasoning" || section.id === "ai-initiatives"
-              ? pathname === section.href ||
-                pathname.startsWith(section.href + "/")
-              : pathname === section.href;
-          const showBadge =
-            section.id === "reasoning" && reasoningAlertCount > 0;
-          const badgeLabel =
-            reasoningAlertCount > 9 ? "9+" : String(reasoningAlertCount);
+          const isActive = pathname === section.href;
 
           return (
             <Link
@@ -88,29 +76,6 @@ export function AdminSidebar({ reasoningAlertCount = 0 }: AdminSidebarProps) {
                 >
                   {section.label}
                 </span>
-                {showBadge && (
-                  <span
-                    aria-label={`${reasoningAlertCount} critical alert${reasoningAlertCount === 1 ? "" : "s"}`}
-                    style={{
-                      display: "inline-flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      minWidth: 18,
-                      height: 18,
-                      borderRadius: "999px",
-                      background: COLORS.coralInk,
-                      color: "#fff",
-                      fontFamily: SHELL.SANS,
-                      fontSize: 10,
-                      fontWeight: 700,
-                      lineHeight: 1,
-                      padding: "0 5px",
-                      flexShrink: 0,
-                    }}
-                  >
-                    {badgeLabel}
-                  </span>
-                )}
               </div>
               <div
                 style={{ fontSize: 11, color: SHELL.INK_MUTED, marginTop: 2 }}

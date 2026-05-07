@@ -1,0 +1,10 @@
+# Substrate Gap Register
+## Setup Fix Package · 9-PR run
+
+Per `SETUP_FIX_PACKAGE_2026-05-07.md` §1.5. One entry per gap: every field, table, or query the design needed but the substrate doesn't support.
+
+| Entry | PR | What was needed | Current substrate state | Handling | Follow-up recommendation |
+|---|---|---|---|---|---|
+| 1 | PR 1 | Cleanly retire `src/lib/reasoning/**`, `src/lib/architecture/**`, `src/lib/build-progress/**` if they were Setup-only. | Heavily shared with Tower (`src/components/programs/ProgramDetailPage.tsx`), Source events, Programs surfaces, and `src/app/api/reasoning/**`. | Preserved entire lib trees. Deleted only the 4 Setup page routes + admin-only page components (Architecture\*, ComponentDetailDrawer, WaveProgressList orphan, admin/reasoning/\*\*) + admin-only Setup component (`SetupAiInitiativesPage`). | Follow-up audit to determine which `src/lib/{reasoning,architecture,build-progress}/**` files are now dead vs. consumed only by their respective API routes (which are also preserved per §12.2). |
+| 2 | PR 1 | `src/components/admin/build-progress/**` to be deletable as Setup-only. | Consumed by `src/app/(maestro)/platform/admin/build-progress/page.tsx` (out-of-scope surface). | Preserved entire `src/components/admin/build-progress/` directory. | Audit `/platform/admin/build-progress` to determine if it's still wanted; if retired, the components dir becomes deletable. |
+| 3 | PR 1 | `src/__tests__/integration/admin/architecture-page-view.test.ts`, `admin17-architecture-depth.test.ts`, `admin-data9-architecture-wired.test.ts`, `admin15-build-progress-depth.test.ts`, `admin-data7-build-progress-wired.test.ts`, `admin6-remaining-pages.test.ts`, `agent1b-wiring.test.ts` test the lib code we preserved. | Tests still reference preserved libs and pass. | Left tests in place. They test functionally orphaned lib code (functional consumers were the deleted page routes). | If lib code is retired in a follow-up audit, delete these tests at that time. |

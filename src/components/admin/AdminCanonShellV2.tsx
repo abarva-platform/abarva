@@ -2,7 +2,6 @@ import type { ReactNode } from 'react';
 import { SHELL } from '@/lib/shell/shell-tokens';
 import { AdminSidebar } from './AdminSidebar';
 import { AppShell } from '@/components/shell/AppShell';
-import { buildPortfolioAlerts } from '@/lib/reasoning/portfolio-alerts';
 
 export interface AdminCanonShellV2Props {
   children: ReactNode;
@@ -13,9 +12,6 @@ export interface AdminCanonShellV2Props {
 }
 
 export function AdminCanonShellV2({ children, agentRail, tenantName = 'Apex Retail Group' }: AdminCanonShellV2Props) {
-  const alerts = buildPortfolioAlerts();
-  const reasoningAlertCount = alerts.filter((a) => a.severity === 'high').length;
-
   return (
     <AppShell
       surface="setup"
@@ -55,7 +51,7 @@ export function AdminCanonShellV2({ children, agentRail, tenantName = 'Apex Reta
         }}
         data-admin-shell="canon-v2"
       >
-        <AdminSidebar reasoningAlertCount={reasoningAlertCount} />
+        <AdminSidebar />
         <div
           data-admin-main-scroll
           style={{ overflowY: 'auto', minWidth: 0, display: 'flex', flexDirection: 'column' }}

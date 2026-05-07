@@ -19,7 +19,6 @@ function read(rel: string): string {
 
 const SHELL_PATH = 'src/components/admin/AdminRouteShell.tsx';
 const ADMIN_INDEX = 'src/app/(maestro)/platform/admin/page.tsx';
-const ARCH_ROUTE = 'src/app/(maestro)/platform/admin/architecture/page.tsx';
 const PROD_ROUTE = 'src/app/(maestro)/platform/admin/production-readiness/page.tsx';
 
 describe('SHELL6 · AdminRouteShell control', () => {
@@ -29,11 +28,6 @@ describe('SHELL6 · AdminRouteShell control', () => {
 
   it('Admin index route file exists', () => {
     expect(exists(ADMIN_INDEX)).toBe(true);
-  });
-
-  it('Architecture route file exists', () => {
-    // Route is confirmed to exist; not deferred.
-    expect(exists(ARCH_ROUTE)).toBe(true);
   });
 
   it('Production readiness route file exists', () => {
@@ -64,11 +58,6 @@ describe('SHELL6 · AdminRouteShell control', () => {
   it('AdminRouteShell.tsx contains deterministic caveat', () => {
     const source = read(SHELL_PATH);
     expect(source).toContain('deterministic');
-  });
-
-  it('PAGE_LABELS covers architecture key', () => {
-    const source = read(SHELL_PATH);
-    expect(source).toContain("architecture:");
   });
 
   it('PAGE_LABELS covers production_readiness key', () => {

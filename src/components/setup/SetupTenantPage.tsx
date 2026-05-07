@@ -12,7 +12,6 @@ const SUB_NAV_ITEMS = [
   { key: 'audit', label: 'Audit log', href: '/admin/audit' },
   { key: 'policies', label: 'Policies', href: '/admin/policies' },
   { key: 'tenant', label: 'Tenant', active: true, href: '/admin/tenant' },
-  { key: 'architecture', label: 'Architecture', href: '/admin/architecture' },
 ];
 
 interface FieldRowProps {

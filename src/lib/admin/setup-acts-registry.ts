@@ -1363,6 +1363,13 @@ export function mergeInventorySnapshot(
 /**
  * Total counts for the page header summary. When a live snapshot
  * is provided, prefers live numbers over authored fixture totals.
+ *
+ * For tenants with authored fixtures but no substrate ingestion
+ * yet (e.g. Arcturus on initial pilot), falls back to authored
+ * totals derived from the capability matrix so the Steward chat
+ * block + Sentinel opener stay consistent with what Act 1 reads.
+ * Per Setup Fix Package PR 3 §3.3 ("standardize on one data
+ * source").
  */
 export function getSetupSummaryCountsWithSnapshot(
   content: SetupActsContent,
@@ -1382,15 +1389,136 @@ export function getSetupSummaryCountsWithSnapshot(
       capabilitiesGrounded: groundedCount,
     };
   }
+  const authored = buildAuthoredInventoryFallback(content);
   return {
-    totalRecords:
-      content.tenantKey === 'apexretail'
-        ? 403
-        : content.tenantKey === 'meridian'
-          ? 714
-          : null,
-    segmentsTracked: content.tenantDataRichness === 'rich' ? 14 : null,
+    totalRecords: authored.totalRecords,
+    segmentsTracked: authored.segmentsTracked,
     capabilitiesGrounded: groundedCount,
+  };
+}
+
+// ── Authored inventory fallback ──────────────────────────────────────────────
+//
+// Derives an inventory-shaped fallback from the authored capability
+// matrix + Act 1 facts. This keeps the Client Data Landscape table
+// consistent with Act 1's narrative for tenants that have authored
+// fixtures (Apex / Meridian / Arcturus) but no live substrate
+// snapshot — Setup Fix Package PR 3 (Option A).
+//
+// When a snapshot IS available, callers should prefer the snapshot.
+// This function only fires when the broker returns null (substrate
+// not loaded for this tenant yet).
+//
+// Empty-state honesty: if the tenant has zero authored matrix rows
+// or all-empty depths, the fallback returns an empty rollup list and
+// totalRecords=null/0 — the landscape correctly shows "0 / 14".
+
+const DEPTH_RECORD_COUNTS: Record<CapabilityDepth, number> = {
+  deep: 32,
+  partial: 14,
+  thin: 5,
+  empty: 0,
+};
+
+const DEPTH_COVERAGE_SCORES: Record<CapabilityDepth, number> = {
+  deep: 88,
+  partial: 58,
+  thin: 24,
+  empty: 0,
+};
+
+const DEPTH_HEALTH_STATES: Record<CapabilityDepth, string> = {
+  deep: 'complete',
+  partial: 'partial',
+  thin: 'sparse',
+  empty: 'not_started',
+};
+
+const DEPTH_PRIORITY: Record<CapabilityDepth, number> = {
+  deep: 4,
+  partial: 3,
+  thin: 2,
+  empty: 1,
+};
+
+function bestDepth(depths: Record<CapabilityVerb, CapabilityDepth>): CapabilityDepth {
+  let best: CapabilityDepth = 'empty';
+  for (const verb of Object.keys(depths) as CapabilityVerb[]) {
+    if (DEPTH_PRIORITY[depths[verb]] > DEPTH_PRIORITY[best]) {
+      best = depths[verb];
+    }
+  }
+  return best;
+}
+
+const NUMERIC_TO_SEGMENT_KEY: Record<string, string> = SEGMENT_REFERENCES.reduce(
+  (acc, ref) => {
+    acc[ref.numericId] = ref.segmentKey;
+    return acc;
+  },
+  {} as Record<string, string>,
+);
+
+export interface AuthoredInventoryFallback {
+  segments: InventorySegmentRollup[];
+  totalRecords: number | null;
+  totalChunks: number;
+  totalNodes: number;
+  totalEdges: number;
+  segmentsTracked: number | null;
+}
+
+export function buildAuthoredInventoryFallback(
+  content: SetupActsContent,
+): AuthoredInventoryFallback {
+  const factCountsBySegment = content.actOneFacts.reduce<Record<string, number>>(
+    (acc, fact) => {
+      acc[fact.sourceSegmentId] = (acc[fact.sourceSegmentId] ?? 0) + 1;
+      return acc;
+    },
+    {},
+  );
+
+  const segments: InventorySegmentRollup[] = content.capabilityMatrix
+    .map((row): InventorySegmentRollup | null => {
+      const depth = bestDepth(row.depths);
+      if (depth === 'empty') return null;
+      const segmentKey = NUMERIC_TO_SEGMENT_KEY[row.segmentId] ?? row.segmentId;
+      const factBoost = (factCountsBySegment[row.segmentId] ?? 0) * 3;
+      return {
+        segmentId: segmentKey,
+        segmentName: row.segmentName,
+        familyNumber: Number.parseInt(row.segmentId, 10) || 0,
+        recordCount: DEPTH_RECORD_COUNTS[depth] + factBoost,
+        coverageScore: DEPTH_COVERAGE_SCORES[depth],
+        staleCount: 0,
+        missingCount: 0,
+        healthState: DEPTH_HEALTH_STATES[depth],
+        lastReviewedAt: null,
+        lastIngestedAt: null,
+      };
+    })
+    .filter((s): s is InventorySegmentRollup => s !== null);
+
+  const segmentsTracked = segments.length > 0 ? segments.length : null;
+  const totalRecords =
+    segments.length === 0
+      ? null
+      : segments.reduce((n, s) => n + s.recordCount, 0);
+
+  // Plausible authored chunk/graph proportions: ~3 chunks per record,
+  // ~0.6 graph nodes per record, ~0.7 edges per record. These match
+  // the order-of-magnitude relationships observed in the Apex
+  // production substrate (403 records / ~415 chunks / 257 nodes /
+  // 275 edges) so authored fallback isn't visibly off-scale.
+  const recordsForDerived = totalRecords ?? 0;
+  return {
+    segments,
+    totalRecords,
+    totalChunks: Math.round(recordsForDerived * 1.0),
+    totalNodes: Math.round(recordsForDerived * 0.6),
+    totalEdges: Math.round(recordsForDerived * 0.7),
+    segmentsTracked,
   };
 }
 

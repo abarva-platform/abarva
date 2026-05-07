@@ -23,6 +23,7 @@ import {
   resolveExpandedTile,
   findBlockerDetail,
 } from '@/lib/admin/production-readiness-page-view';
+import { resolveAdminTenant } from '@/lib/admin/admin-tenant';
 
 export const metadata = {
   title: 'Production Readiness | AbarVa Setup',
@@ -42,7 +43,8 @@ export default async function AdminProductionReadinessPage({
   // calls connection() but we keep the call here so PROD3 freshness contract
   // is asserted on the page itself.
   await connection();
-  const view = await buildProductionReadinessPageView();
+  const tenant = await resolveAdminTenant();
+  const view = await buildProductionReadinessPageView(tenant.tenantSlug, tenant.tenantName);
   const resolved = searchParams ? await searchParams : undefined;
   const activeTab = resolveProductionReadinessTab(resolved?.tab);
   const expandedTile = resolveExpandedTile(resolved?.expand);
@@ -51,6 +53,7 @@ export default async function AdminProductionReadinessPage({
 
   return (
     <AdminCanonShellV2
+      tenantName={tenant.tenantName}
       agentRail={
         <AgentRail
           primaryAgentLabel={view.primaryAgentLabel}
