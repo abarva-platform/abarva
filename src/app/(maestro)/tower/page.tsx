@@ -246,7 +246,7 @@ async function buildTowerSetupInitiativesFeed() {
 function TowerHandoffProgramsPanel({ programs }: { programs: Awaited<ReturnType<typeof buildTowerHandoffPrograms>> }) {
   if (programs.length === 0) {
     return (
-      <div style={{ margin: '0 28px 16px', border: '1px solid #e5dfd2', borderRadius: 10, background: '#fffaf0', padding: '14px 16px' }}>
+      <div style={{ border: '1px solid #e5dfd2', borderRadius: 10, background: '#fffaf0', padding: '14px 16px' }}>
         <div style={{ fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace', fontSize: 10, letterSpacing: '0.16em', textTransform: 'uppercase', color: '#8a735c', fontWeight: 700 }}>Tower handoffs</div>
         <div style={{ marginTop: 6, fontSize: 13, color: '#5b5148' }}>No P6 Tower handoff programs are visible for your current assignment.</div>
       </div>
@@ -254,7 +254,7 @@ function TowerHandoffProgramsPanel({ programs }: { programs: Awaited<ReturnType<
   }
 
   return (
-    <div style={{ margin: '0 28px 16px', border: '1px solid #d8e2d1', borderRadius: 10, background: '#f8fbf4', padding: '14px 16px' }}>
+    <div style={{ border: '1px solid #d8e2d1', borderRadius: 10, background: '#f8fbf4', padding: '14px 16px' }}>
       <div style={{ fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace', fontSize: 10, letterSpacing: '0.16em', textTransform: 'uppercase', color: '#49613d', fontWeight: 700 }}>Tower handoffs · P6 active</div>
       <div style={{ display: 'grid', gap: 8, marginTop: 10 }}>
         {programs.map((program) => (
@@ -281,7 +281,7 @@ function formatSourceTowerStage(stageKey: string): string {
 function TowerHandoffSourceEventsPanel({ events }: { events: Awaited<ReturnType<typeof buildTowerHandoffSourceEvents>> }) {
   if (events.length === 0) {
     return (
-      <div style={{ margin: '0 28px 16px', border: '1px solid #e5dfd2', borderRadius: 10, background: '#fffaf0', padding: '14px 16px' }}>
+      <div style={{ border: '1px solid #e5dfd2', borderRadius: 10, background: '#fffaf0', padding: '14px 16px' }}>
         <div style={{ fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace', fontSize: 10, letterSpacing: '0.16em', textTransform: 'uppercase', color: '#8a735c', fontWeight: 700 }}>Source handoffs</div>
         <div style={{ marginTop: 6, fontSize: 13, color: '#5b5148' }}>No transitioned Source events are visible for your current assignment.</div>
       </div>
@@ -289,7 +289,7 @@ function TowerHandoffSourceEventsPanel({ events }: { events: Awaited<ReturnType<
   }
 
   return (
-    <div style={{ margin: '0 28px 16px', border: '1px solid #d6e1ea', borderRadius: 10, background: '#f5f9fc', padding: '14px 16px' }} data-testid="tower-source-handoff-panel">
+    <div style={{ border: '1px solid #d6e1ea', borderRadius: 10, background: '#f5f9fc', padding: '14px 16px' }} data-testid="tower-source-handoff-panel">
       <div style={{ fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace', fontSize: 10, letterSpacing: '0.16em', textTransform: 'uppercase', color: '#38556d', fontWeight: 700 }}>Source handoffs · Tower observation</div>
       <div style={{ marginTop: 6, fontSize: 13, color: '#516272' }}>
         Source events in Transition or Value now surface here so Atlas can observe KPI cadence, vendor onboarding, and realized-value drift.
@@ -324,7 +324,7 @@ function TowerSetupInitiativesPanel({
     return (
       <div
         data-testid="tower-setup-initiatives-panel"
-        style={{ margin: '0 28px 16px', border: '1px solid #e5dfd2', borderRadius: 10, background: '#fffaf0', padding: '14px 16px' }}
+        style={{ border: '1px solid #e5dfd2', borderRadius: 10, background: '#fffaf0', padding: '14px 16px' }}
       >
         <div style={{ fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace', fontSize: 10, letterSpacing: '0.16em', textTransform: 'uppercase', color: '#8a735c', fontWeight: 700 }}>Setup initiatives</div>
         <div style={{ marginTop: 6, fontSize: 13, color: '#5b5148' }}>
@@ -357,7 +357,7 @@ function TowerSetupInitiativesPanel({
     <section
       data-testid="tower-setup-initiatives-panel"
       aria-label="Setup AI Initiatives Tower feed"
-      style={{ margin: '0 28px 16px', border: '1px solid #d8e2d1', borderRadius: 10, background: '#f8fbf4', padding: '14px 16px' }}
+      style={{ border: '1px solid #d8e2d1', borderRadius: 10, background: '#f8fbf4', padding: '14px 16px' }}
     >
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
         <div>
@@ -483,7 +483,6 @@ export default async function TowerPage({
             aria-label={`${TOWER_SUBMENU_LABELS[activeTab]} Tower lens`}
             data-testid="tower-main-lens-canvas"
             style={{
-              margin: '0 28px 16px',
               border: '1px solid #e5dfd2',
               borderRadius: 12,
               background: '#ffffff',
