@@ -1,7 +1,9 @@
 'use client';
 
 import { useMemo, useState, type CSSProperties } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { AppShell } from '@/components/shell/AppShell';
+import { SourceOnboardingTour } from '@/components/source/onboarding/SourceOnboardingTour';
 import type {
   SourceEventArtifactState,
   SourceEventArtifactStatus,
@@ -263,8 +265,34 @@ export function UniversalCanvasShell({
             right={<EventWorkspace tabs={tabs} defaultTab={initialTab} />}
           />
         </div>
+        <CanvasTour />
       </main>
     </AppShell>
+  );
+}
+
+function CanvasTour() {
+  const searchParams = useSearchParams();
+  const tourActive = searchParams?.get('tour') === '1';
+  if (!tourActive) return null;
+  return (
+    <SourceOnboardingTour
+      active={tourActive}
+      config={{
+        step: 3,
+        title: 'This is the universal canvas.',
+        body: (
+          <>
+            Each artifact has a <strong>Mark complete</strong> button — flip them
+            as the work lands. Switch to the <strong>Gate</strong> tab to see
+            what&rsquo;s blocking promotion; once everything&rsquo;s green,{' '}
+            <strong>Promote stage</strong> moves the event forward. The chat on
+            the left can draft any artifact for you.
+          </>
+        ),
+        nextLabel: 'Got it',
+      }}
+    />
   );
 }
 

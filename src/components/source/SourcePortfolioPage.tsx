@@ -16,6 +16,10 @@ import {
 } from '@/components/source/portfolio/PortfolioEventsTable';
 import { PortfolioEmptyState } from '@/components/source/portfolio/PortfolioEmptyState';
 import { PORTFOLIO } from '@/components/source/portfolio/portfolio-tokens';
+import {
+  SourceOnboardingTour,
+  SourceTourEntryLink,
+} from '@/components/source/onboarding/SourceOnboardingTour';
 import { SOURCE_STAGE_ORDER } from '@/lib/source/constants';
 import {
   computePortfolioKpis,
@@ -34,6 +38,7 @@ interface SourcePortfolioPageProps {
     stage?: string;
     status?: string;
     demo?: string;
+    tour?: string;
   };
   canViewFinancialValues?: boolean;
 }
@@ -87,10 +92,30 @@ export function SourcePortfolioPage({
             />
           )}
         </div>
+        <SourceOnboardingTour
+          active={searchParams.tour === '1'}
+          config={{
+            step: 1,
+            title: 'Welcome to Source.',
+            body: (
+              <>
+                This is your sourcing portfolio. Each row is a live event —
+                stage, aging, value at stake. Click <strong>New sourcing
+                event</strong> when you&rsquo;re ready to start the next one.
+              </>
+            ),
+            nextHref: '/source/new?tour=1',
+            nextLabel: 'Show me the intake',
+          }}
+        />
       </main>
     </AppShell>
   );
 }
+
+/** Renders the "Take the tour" entry link — exposed so callers (e.g.
+ *  the empty state) can place it inline next to other CTAs. */
+export { SourceTourEntryLink };
 
 function EmptyView() {
   return (

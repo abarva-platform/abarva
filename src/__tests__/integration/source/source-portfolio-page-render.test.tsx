@@ -78,6 +78,50 @@ function render(events: SourcingEventSummary[], demo?: string) {
 }
 
 describe('SourcePortfolioPage redesigned render', () => {
+  // ── B5: onboarding tour ───────────────────────────────────────────────────
+  it('renders the tour step-1 card when ?tour=1 is in searchParams', () => {
+    const html = renderToStaticMarkup(
+      createElement(SourcePortfolioPage, {
+        events: [makeEvent()],
+        tenantName: 'Apex Retail Group',
+        searchParams: { tour: '1' },
+        canViewFinancialValues: true,
+      }),
+    );
+    expect(html).toContain('source-onboarding-tour-step-1');
+    expect(html).toContain('Welcome to Source');
+    expect(html).toContain('source-onboarding-tour-skip');
+    expect(html).toContain('source-onboarding-tour-next');
+    // Step 2 link target.
+    expect(html).toContain('/source/new?tour=1');
+  });
+
+  it('does not render the tour overlay when ?tour is absent', () => {
+    const html = renderToStaticMarkup(
+      createElement(SourcePortfolioPage, {
+        events: [makeEvent()],
+        tenantName: 'Apex Retail Group',
+        searchParams: {},
+        canViewFinancialValues: true,
+      }),
+    );
+    expect(html).not.toContain('source-onboarding-tour-step-1');
+  });
+
+  it('exposes the "Take the tour" link from the empty state', () => {
+    const html = renderToStaticMarkup(
+      createElement(SourcePortfolioPage, {
+        events: [],
+        tenantName: 'Apex Retail Group',
+        searchParams: {},
+        canViewFinancialValues: true,
+      }),
+    );
+    expect(html).toContain('source-onboarding-tour-entry');
+    expect(html).toContain('Take the tour');
+    expect(html).toContain('href="/source?tour=1"');
+  });
+
   it('renders empty state when no real events exist', () => {
     const html = render([]);
 
