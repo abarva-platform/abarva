@@ -33,13 +33,20 @@ import { FIRST_CAPITAL_DEMO } from '@/components/intelligence-v3/demo-data';
 // human-readable label that the "INDUSTRY" substrate card displays.
 // Unmapped codes fall through to a generic "Cross-industry" label.
 
+// Real industry_code values in clients (uppercase): RETAIL, FINSERV,
+// HEALTHCARE_IDN, ENERGY. Plus tolerant aliases for older/lowercase
+// rows. Map all to a clean human-readable label.
+
 const INDUSTRY_LABELS: Record<string, string> = {
-  banking: 'Banking',
-  financial_services: 'Banking',
   retail: 'Retail',
   retail_omnichannel: 'Retail',
+  finserv: 'Banking',
+  banking: 'Banking',
+  financial_services: 'Banking',
   healthcare: 'Healthcare',
+  healthcare_idn: 'Healthcare',
   health_system: 'Healthcare',
+  energy: 'Energy',
 };
 
 function industryLabel(code: string | null): string {
@@ -67,6 +74,10 @@ const AI_TRAJECTORY_BY_INDUSTRY: Record<
   Healthcare: {
     headline: 'AI trajectory · health systems',
     body: 'Clinical documentation + risk stratification scaled. Revenue-cycle AI mid-deployment. HIPAA + CMS bar tightening on ambient + agentic AI.',
+  },
+  Energy: {
+    headline: 'AI trajectory · integrated energy',
+    body: 'Predictive maintenance + grid optimization scaled. Trading-floor agentic AI early. Regulatory bar rising on safety-critical models.',
   },
 };
 
