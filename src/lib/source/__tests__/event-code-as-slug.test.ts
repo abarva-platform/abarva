@@ -23,6 +23,15 @@ describe('B7 — event code as URL slug', () => {
     expect(source).toMatch(/\.eq\('event_code', eventId\)/);
   });
 
+  it('event_code path tolerates duplicate codes via order+limit (regression: prod 404)', () => {
+    // Substrate has known duplicate event_codes. .maybeSingle() errors
+    // when more than one row matches, which produced silent 404s on
+    // /source/events/<code> in prod. The fix orders by updated_at and
+    // takes the most-recent row.
+    expect(source).toMatch(/\.order\('updated_at', \{ ascending: false \}\)/);
+    expect(source).toMatch(/\.limit\(1\)/);
+  });
+
   it('access check uses the resolved row.id (UUID), never the raw slug', () => {
     // After B7 the access policy is checked against persistedEvent.id,
     // not the URL slug — otherwise an event_code slug would always 403.

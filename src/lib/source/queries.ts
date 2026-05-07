@@ -342,17 +342,24 @@ async function getPersistedSourceEventRow(eventId: string, clientKey: string): P
     // UUID-shaped code (very rare but cheap to attempt).
   }
 
+  // The substrate has known duplicate event_codes (the portfolio
+  // renderer ships a defensive `dedupeByEventCode`). `.maybeSingle()`
+  // errors when more than one row matches, so we order + limit + take
+  // the most-recently-updated row. This makes the by-code path
+  // resilient regardless of whether the duplicates ever get cleaned.
   const { data, error } = await supabase
     .from('source_events')
     .select('*')
     .eq('event_code', eventId)
     .eq('client_key', clientKey)
-    .maybeSingle();
+    .order('updated_at', { ascending: false })
+    .limit(1);
   if (error) {
     console.error('[getPersistedSourceEventRow:code]', error.message);
     return null;
   }
-  return (data as SourceEventRow | null) ?? null;
+  const rows = (data as SourceEventRow[] | null) ?? [];
+  return rows[0] ?? null;
 }
 
 async function getCanonicalAdminClientFallback(): Promise<{ key: ClientKey; name: string } | null> {
