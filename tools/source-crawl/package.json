@@ -11,6 +11,7 @@
     "scenario:create-event": "tsx src/scenario.ts create-event",
     "scenario:walk-canvas": "tsx src/scenario.ts walk-canvas",
     "scenario:promote-stage": "tsx src/scenario.ts promote-stage",
+    "scenario:e2e": "tsx src/scenario.ts e2e",
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
