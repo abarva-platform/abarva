@@ -246,6 +246,46 @@ describe('UniversalCanvasShell · SSR render', () => {
     expect(html).toContain('Artifacts 0 / 2');
   });
 
+  // ── B1: artifact mark-complete ─────────────────────────────────────────────
+  it('renders Mark complete button + status pill for non-terminal artifacts', () => {
+    const html = render({
+      artifactStates: [
+        makeArtifactState({ artifactCode: 'd05_scope_memo', status: 'drafting' }),
+      ],
+    });
+    // Pill in the row + the body header.
+    expect(html).toContain('source-canvas-artifact-status-drafting');
+    expect(html).toContain('Drafting');
+    // Mark complete button is present and testable.
+    expect(html).toContain('source-canvas-artifact-mark-complete-d05_scope_memo');
+    expect(html).toContain('Mark complete');
+    // No reopen button when not approved.
+    expect(html).not.toContain('source-canvas-artifact-reopen-d05_scope_memo');
+  });
+
+  it('renders Reopen instead of Mark complete when artifact is approved', () => {
+    const html = render({
+      artifactStates: [
+        makeArtifactState({ artifactCode: 'd05_scope_memo', status: 'approved' }),
+      ],
+    });
+    expect(html).toContain('source-canvas-artifact-status-approved');
+    expect(html).toContain('Approved');
+    expect(html).toContain('source-canvas-artifact-reopen-d05_scope_memo');
+    expect(html).not.toContain('source-canvas-artifact-mark-complete-d05_scope_memo');
+  });
+
+  it('hides both buttons for locked / superseded artifacts', () => {
+    const html = render({
+      artifactStates: [
+        makeArtifactState({ artifactCode: 'd05_scope_memo', status: 'locked' }),
+      ],
+    });
+    expect(html).toContain('source-canvas-artifact-status-locked');
+    expect(html).not.toContain('source-canvas-artifact-mark-complete-d05_scope_memo');
+    expect(html).not.toContain('source-canvas-artifact-reopen-d05_scope_memo');
+  });
+
   it('renders empty state for unknown viewStage gracefully', () => {
     const html = renderToStaticMarkup(
       createElement(UniversalCanvasShell, {
