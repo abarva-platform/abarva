@@ -14,6 +14,7 @@ import {
   findAgentDetail,
   resolveAgentReadinessTab,
 } from '@/lib/admin/agent-readiness-page-view';
+import { resolveAdminTenant } from '@/lib/admin/admin-tenant';
 
 export const metadata = {
   title: 'Agent Readiness | AbarVa Setup',
@@ -26,7 +27,8 @@ export default async function AgentReadinessPage({
 }: {
   searchParams?: Promise<{ agent?: string }>;
 }) {
-  const view = await buildAgentReadinessPageView();
+  const tenant = await resolveAdminTenant();
+  const view = await buildAgentReadinessPageView(tenant.tenantSlug);
   const resolved = searchParams ? await searchParams : undefined;
   const activeTab = resolveAgentReadinessTab(resolved?.agent);
   const activeDetail =
@@ -34,6 +36,7 @@ export default async function AgentReadinessPage({
 
   return (
     <AdminCanonShellV2
+      tenantName={tenant.tenantName}
       agentRail={
         <AgentRail
           primaryAgentLabel={view.primaryAgentLabel}
