@@ -29,6 +29,8 @@ import {
   isSynchronouslyParseableSourceFormat,
   parseSourceTextArtifact,
 } from '@/lib/source/artifact-registry/text-parser';
+import { getCriterionIdsForArtifactFamily } from '@/lib/source/artifact-gate-map';
+import { addEvidence } from '@/lib/reasoning/evidence-ingestion-store';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -227,6 +229,19 @@ export async function POST(request: Request, { params }: SourceUploadRouteContex
       dataClassification,
       createdBy: tenancy.userId,
     });
+
+    // Flip gate criteria that are satisfied by this artifact type.
+    // Uses the in-memory evidence ingestion store so the next page render
+    // sees updated gate states without a DB round-trip.
+    const criterionIds = getCriterionIdsForArtifactFamily(artifact.artifactFamily);
+    for (const criterionId of criterionIds) {
+      addEvidence(scope.eventId, {
+        field: criterionId,
+        value: 'met',
+        source: `artifact-upload:${artifact.id}`,
+        recordedAt: new Date().toISOString(),
+      });
+    }
 
     const parseWarnings: string[] = [];
     if (isSynchronouslyParseableSourceFormat(artifact.sourceFormat)) {
