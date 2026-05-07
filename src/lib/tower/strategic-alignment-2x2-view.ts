@@ -130,18 +130,20 @@ function deriveQuadrant(initiative: AIInitiative): AlignmentQuadrant {
 }
 
 /**
- * Deterministic position within a quadrant (0-100%) based on a string hash
- * of the displayId. Keeps dots from stacking on top of one another while
- * remaining stable across renders.
+ * Deterministic position within a quadrant computed from the dot's index
+ * within its quadrant. Tiles dots in a 2×N grid so they never overlap,
+ * regardless of how many initiatives land in a quadrant.
+ *
+ * T-4b fix: the prior hash-based positioning collided when 3+ dots shared
+ * a quadrant (MH-01 / MH-04 / MH-05 all in TR for Meridian). Index-based
+ * tiling guarantees zero overlap and remains deterministic across renders.
  */
-function derivePositionWithinQuadrant(displayId: string): { left: string; top: string } {
-  let hash = 0;
-  for (let i = 0; i < displayId.length; i += 1) {
-    hash = (hash * 31 + displayId.charCodeAt(i)) | 0;
-  }
-  // Spread across 18-62% to avoid quadrant edges, deterministic per displayId.
-  const left = 18 + Math.abs(hash % 45);
-  const top = 14 + Math.abs((hash >> 5) % 50);
+function derivePositionByIndex(indexInQuadrant: number): { left: string; top: string } {
+  // Two columns at 18% / 56%, stepping down by 28% per row.
+  const col = indexInQuadrant % 2;
+  const row = Math.floor(indexInQuadrant / 2);
+  const left = col === 0 ? 18 : 56;
+  const top = 14 + row * 28;
   return { left: `${left}%`, top: `${top}%` };
 }
 
@@ -170,6 +172,9 @@ export function buildStrategicAlignment2x2View(
   const bets: StrategicBet[] = [];
   const dots: AlignmentDot[] = [];
 
+  // T-4b: track per-quadrant index so dots tile cleanly without overlap.
+  const quadrantCount: Record<AlignmentQuadrant, number> = { tl: 0, tr: 0, bl: 0, br: 0 };
+
   for (const initiative of initiatives) {
     if (isStrategicBet(initiative)) {
       bets.push({
@@ -183,7 +188,9 @@ export function buildStrategicAlignment2x2View(
     }
 
     const quadrant = deriveQuadrant(initiative);
-    const position = derivePositionWithinQuadrant(initiative.displayId);
+    const indexInQuadrant = quadrantCount[quadrant];
+    quadrantCount[quadrant] += 1;
+    const position = derivePositionByIndex(indexInQuadrant);
     const displayDollars = formatUsdShort(
       initiative.committedTotalUsd ?? initiative.committedAnnualUsd,
     );
