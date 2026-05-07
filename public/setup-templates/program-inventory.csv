@@ -1,0 +1,4 @@
+program_name,phase,sponsor,owner,start_date,target_completion,budget_committed,strategic_objective
+Digital Banking Risk Controls Modernization,P2 Discover,CRO,VP Risk Operations,2026-01-15,2026-12-31,3500000,Reduce manual control burden 40%
+Customer Data Platform Implementation,P3 Design,CMO,VP Marketing Tech,2026-02-01,2026-09-30,2200000,Identity match rate 71% to 87%
+Fraud Detection AI Modernization,P1 Charter,CRO,Director Financial Crimes,2026-03-01,2027-03-01,4800000,Detect emerging fraud patterns

@@ -1,0 +1,30 @@
+# Enterprise Profile · starter template
+# Replace example values with your data. Field definitions live in the
+# AbarVa Setup spec (segment 01). Save as YAML and upload via the
+# Add Enterprise Profile flow.
+
+legal_entity: "First Capital Financial Holdings Inc."
+
+revenue_mix:
+  - segment: Retail Banking
+    pct: 45
+  - segment: Commercial Lending
+    pct: 30
+  - segment: Wealth Management
+    pct: 15
+  - segment: Payments
+    pct: 10
+
+regulators:
+  primary: OCC
+  secondary: [Federal Reserve, FDIC, State of Virginia]
+
+strategic_priorities:
+  - Risk-controlled growth
+  - Digital banking modernization
+  - AI governance
+
+risk_committee:
+  name: "Board Risk Committee"
+  cadence: monthly
+  ai_decision_authority: true
