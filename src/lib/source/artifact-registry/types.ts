@@ -7,6 +7,9 @@
 
 import type { SourceStageKey } from '../types';
 
+// Mirrors the artifact_family CHECK constraint in
+// supabase/migrations/20260507160000_source_substrate_wave1_2.sql.
+// Keep this list in sync with that migration when families are added.
 export type SourceArtifactFamily =
   | 'rfi'
   | 'rfp'
@@ -21,6 +24,10 @@ export type SourceArtifactFamily =
   | 'value_ledger'
   | 'sourcing_strategy'
   | 'scope_document'
+  | 'minimum_data_request'
+  | 'vendor_qa'
+  | 'response_checklist'
+  | 'selection_memo'
   | 'other';
 
 export type SourceArtifactOrigin =

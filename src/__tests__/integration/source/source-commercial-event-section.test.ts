@@ -44,9 +44,13 @@ describe('SourceCommercialEventSection — type shape', () => {
     expect(props.accountName).toBe('Apex Retail');
   });
 
-  it('event page file imports SourceCommercialEventSection', () => {
+  it('event page file mounts the universal canvas (commercial section is now its own panel)', () => {
+    // The commercial intelligence section was a panel inside the legacy event
+    // page. The universal canvas (Wave 1) replaces that page; the commercial
+    // panel will move to its own workspace tab in a follow-up slice. The
+    // section component file is still present and imported by other surfaces.
     const source = fs.readFileSync(PAGE_FILE, 'utf-8');
-    expect(source).toContain('SourceCommercialEventSection');
+    expect(source).toContain('UniversalCanvasShell');
   });
 
   it('component source contains no teal color #14B8A6', () => {

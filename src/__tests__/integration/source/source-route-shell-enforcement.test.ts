@@ -16,23 +16,28 @@ describe('DESROUTE4 source route shell enforcement (Wave S1 — AppShell)', () =
     const events = read(sourceEventsRoute);
     expect(events).toContain('AppShell');
 
+    // Detail route now mounts the universal sourcing canvas (Wave 1 build).
+    // The old SourceEventAgentCanvas surface is replaced by UniversalCanvasShell
+    // which wraps AppShell internally.
     const detail = read(sourceEventDetailRoute);
-    expect(detail).toContain('SourceEventAgentCanvas');
+    expect(detail).toContain('UniversalCanvasShell');
 
-    // Dashboard uses SourceIndexPage which itself wraps AppShell
+    // Dashboard uses SourcePortfolioPage which itself wraps AppShell.
     const dashboard = read(sourceDashboardRoute);
-    expect(dashboard).toContain('SourceIndexPage');
+    expect(dashboard).toContain('SourcePortfolioPage');
   });
 
-  it('event detail route mounts commercial intelligence section', () => {
+  it('event detail route reads canvas substrate (artifacts, gates, evidence)', () => {
     const source = read(sourceEventDetailRoute);
-    expect(source).toContain('SourceCommercialEventSection');
+    expect(source).toContain('listArtifactStatesForEvent');
+    expect(source).toContain('listGateCriterionStatesForEvent');
+    expect(source).toContain('listEvidenceStatesForEvent');
   });
 
-  it('Source event routes use the embedded agent canvas instead of the old rail wrapper', () => {
+  it('Source event routes use the universal canvas, not the legacy rail wrapper', () => {
     const source = read(sourceEventDetailRoute);
     expect(source).not.toContain('SentinelAgentColumn');
-    expect(source).toContain('SourceEventAgentCanvas');
+    expect(source).toContain('UniversalCanvasShell');
   });
 
   it('Source agent prompt uses consulting-partner pacing and tenant context for every Source agent', () => {

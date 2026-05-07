@@ -37,6 +37,7 @@ import {
   type SourceArtifactApprovalState,
   type SourceArtifactRegistryRecord,
 } from './artifact-registry';
+import { buildEventScaffold } from './canvas-substrate';
 
 // ── DB row type for source_events ─────────────────────────────────────────────
 
@@ -101,6 +102,7 @@ export async function getPendingSourceEvents(clientKey: string): Promise<SourceE
 export async function createSourcingEvent(input: CreateSourcingEventInput): Promise<SourceEventRow> {
   const supabase = getServerSupabase();
   const eventCode = generateEventCode(input.clientKey, input.eventName);
+  const nowIso = new Date().toISOString();
 
   const { data, error } = await supabase
     .from('source_events')
@@ -116,13 +118,75 @@ export async function createSourcingEvent(input: CreateSourcingEventInput): Prom
       estimated_value_usd: input.estimatedValueUsd ?? null,
       created_by_user_id: input.createdByUserId || null,
       current_stage_key: 'strategy',
+      current_stage_entered_at: nowIso,
       lifecycle_state: 'waiting_on_client',
     })
     .select()
     .single();
 
   if (error) throw new Error(error.message);
-  return data as SourceEventRow;
+  const row = data as SourceEventRow;
+
+  // Auto-scaffold the per-event canvas substrate so the universal canvas can
+  // render real data from the moment the event is created. Uses canonical
+  // specs from src/lib/source/canonical-specs/. Best-effort: a scaffold
+  // failure is logged but does not abort event creation — the backfill
+  // script can recover any partial state.
+  try {
+    await scaffoldNewEventSubstrate(row.id, row.client_key);
+  } catch (scaffoldError) {
+    console.error(
+      '[createSourcingEvent] scaffold failed for event',
+      row.id,
+      scaffoldError instanceof Error ? scaffoldError.message : scaffoldError,
+    );
+  }
+
+  return row;
+}
+
+/**
+ * Insert canvas-substrate scaffold rows for a single source event. Idempotent
+ * via the unique constraints on (source_event_id, artifact_code/criterion_id/
+ * requirement_id) — repeat calls produce no duplicates because conflicts are
+ * silently skipped via .upsert(..., { onConflict: ..., ignoreDuplicates: true }).
+ */
+export async function scaffoldNewEventSubstrate(
+  sourceEventId: string,
+  tenantKey: string,
+): Promise<void> {
+  const supabase = getServerSupabase();
+  const { artifactStates, gateCriterionStates, evidenceStates } = buildEventScaffold({
+    sourceEventId,
+    tenantKey,
+  });
+
+  const inserts = await Promise.all([
+    supabase
+      .from('source_event_artifact_states')
+      .upsert(artifactStates, {
+        onConflict: 'source_event_id,artifact_code',
+        ignoreDuplicates: true,
+      }),
+    supabase
+      .from('source_event_gate_criterion_states')
+      .upsert(gateCriterionStates, {
+        onConflict: 'source_event_id,criterion_id',
+        ignoreDuplicates: true,
+      }),
+    supabase
+      .from('source_event_evidence_states')
+      .upsert(evidenceStates, {
+        onConflict: 'source_event_id,requirement_id',
+        ignoreDuplicates: true,
+      }),
+  ]);
+
+  for (const result of inserts) {
+    if (result.error) {
+      throw new Error(result.error.message);
+    }
+  }
 }
 
 // Canonical Source query boundary. Keep all temporary seed reads here so the
@@ -192,6 +256,26 @@ function seedEventMatchesClient(event: SourcingEventSummary, clientKey: string):
   return false;
 }
 
+// ── Substrate gaps surfaced by the redesigned /source row ────────────────────
+// The redesigned portfolio row needs five things this DB row doesn't carry as
+// first-class columns. They're derived at the render layer until substrate
+// catches up:
+//
+//   1. Per-stage lead agent — derived via `leadAgentForStage(stageKey)` in
+//      `portfolio-derivations.ts`. The `leadAgent` field below stays pinned to
+//      'Sentinel' because the Source surface contract treats Sentinel as the
+//      orchestrator (per memory: Sentinel-front orchestrator).
+//   2. Value range (low/high band with confidence) — derived ±20% from
+//      `estimated_value_usd` and stamped `v2 pending`. Replace when the v2
+//      Sentinel+Atlas substrate adds `value_at_stake_low_usd` /
+//      `value_at_stake_high_usd`.
+//   3. Per-stage entry timestamp — `agingDays` currently measures `daysSince
+//      (created_at)`. Stage-band aging needs a `current_stage_entered_at`
+//      column on `source_events`.
+//   4. `isAtRisk` / risk classification — always false for persisted rows
+//      because no risk substrate is wired to this row mapper.
+//   5. `openAlerts` count — only synthesized for the `waiting_on_client`
+//      approval case. Real alert join is pending.
 export function sourceEventRowToSummary(row: SourceEventRow, accountName: string): SourcingEventSummary {
   const stageKey = normalizeSourceStageKey(row.current_stage_key) ?? 'strategy';
   const status = isSourceLifecycleStatus(row.lifecycle_state) ? row.lifecycle_state : 'waiting_on_client';
