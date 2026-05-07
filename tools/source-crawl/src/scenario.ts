@@ -92,6 +92,17 @@ async function main(): Promise<void> {
   });
   const page = await context.newPage();
 
+  // A1 — probe the tenant URL up front. If Clerk redirects us to
+  // /sign-in the saved session is expired; fail loudly with a
+  // recovery instruction instead of a cryptic mid-run error.
+  const probeUrl = await probeSession(page, cfg, log);
+  if (probeUrl.expired) {
+    log(`✗ saved session is expired or invalid (landed on ${probeUrl.url}).`);
+    log('  recover: run `npm run save-session`, then re-run this scenario.');
+    await browser.close();
+    process.exit(2);
+  }
+
   const ctx: ScenarioContext = { page, context, cfg, runDir, log };
   const summary: ScenarioSummary = {
     scenario: args.name,
@@ -220,6 +231,34 @@ async function runPromoteStage(
   } catch (err) {
     return { step: 'promote-stage', ok: false, result: null, error: (err as Error).message };
   }
+}
+
+// ── Session probe (A1) ──────────────────────────────────────────────────────
+// Navigate to the tenant URL once at the start of the run. If Clerk
+// redirects us to /sign-in (or any non-tenant location), the saved
+// storage state is expired; surface that clearly so the user can re-run
+// `npm run save-session` instead of debugging cryptic mid-scenario errors.
+
+async function probeSession(
+  page: import('playwright').Page,
+  cfg: CrawlConfig,
+  log: (line: string) => void,
+): Promise<{ expired: boolean; url: string }> {
+  log(`probe: ${cfg.tenantUrl}`);
+  await page.goto(cfg.tenantUrl, { waitUntil: 'domcontentloaded', timeout: 30_000 });
+  // Give Clerk a brief moment to settle if it's redirecting.
+  await page.waitForTimeout(500);
+  const url = page.url();
+  const onSignIn = /\/sign-in\b/.test(url) || /clerk\.[^/]+\//.test(url);
+  // If the URL hostname doesn't match our tenant either, treat it as
+  // expired-session (most likely Clerk redirected us to its own domain).
+  let outOfTenant = false;
+  try {
+    outOfTenant = new URL(url).hostname !== cfg.tenantHostname;
+  } catch {
+    outOfTenant = true;
+  }
+  return { expired: onSignIn || outOfTenant, url };
 }
 
 // ── Auto-resolve eventUrl from prior runs ───────────────────────────────────
