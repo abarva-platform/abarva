@@ -1,0 +1,4 @@
+control_framework,control_id,owner,status,evidence_url,last_tested,next_test
+GLBA Safeguards Rule,GLBA-001,Director Information Security,In Place,/evidence/glba-001-2026q1.pdf,2026-03-15,2026-09-15
+SOX 404,SOX-IT-001,VP Internal Audit,Open,,2025-11-30,2026-05-30
+PCI-DSS v4.0,PCI-AUTH-002,Manager Card Operations,Remediation,/evidence/pci-002-rem-plan.pdf,2026-02-10,2026-05-10
