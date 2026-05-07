@@ -8,9 +8,12 @@ import { useAtlasPageState } from '@/components/shell/AtlasPageStateProvider';
 import { SourceWorkingPane } from '@/components/source/SourceWorkingPane';
 import { SourcingReactivePanel } from '@/components/source/SourcingReactivePanel';
 import { SourceLinkedProgramChip } from '@/components/source/LinkedProgramChip';
+import { SourceStageCanvasPanel } from '@/components/source/SourceStageCanvasPanel';
 import type { Artifact } from '@/lib/agent/artifacts';
 import { SHELL } from '@/lib/shell/shell-tokens';
-import type { SourcingEventDetail } from '@/lib/source/types';
+import type { SourceStageKey, SourcingEventDetail } from '@/lib/source/types';
+import type { GateEvaluation } from '@/lib/reasoning/types';
+import { getStageCanvasConfig } from '@/lib/source/stage-canvas-config';
 import {
   RESTRICTED_SOURCE_FINANCIAL_DETAIL,
   formatSourceFinancialValue,
@@ -23,6 +26,10 @@ interface SourceEventAgentCanvasProps {
   quote: string;
   children?: ReactNode;
   canViewFinancialValues?: boolean;
+  /** The stage selected in the URL (?stage=X). When set, right panel renders the Universal Canvas for that stage. */
+  viewStage?: SourceStageKey | null;
+  /** Live gate evaluations for current→next gate (passed from server). Used by SourceStageCanvasPanel. */
+  nextGateEvaluations?: GateEvaluation[];
 }
 
 const SENTINEL_EVENT_AGENT = {
@@ -37,6 +44,8 @@ export function SourceEventAgentCanvas({
   quote,
   children,
   canViewFinancialValues = true,
+  viewStage = null,
+  nextGateEvaluations = [],
 }: SourceEventAgentCanvasProps) {
   const [artifacts, setArtifacts] = useState<Artifact[]>([]);
   const safeQuote = redactSourceFinancialText(quote, canViewFinancialValues);
@@ -134,18 +143,31 @@ export function SourceEventAgentCanvas({
                       composerPlacement="afterHeader"
                       sourceUploadContext={{
                         eventId: event.id,
-                        stageKey: event.currentStageKey,
+                        stageKey: viewStage ?? event.currentStageKey,
                         stageLabel: event.currentStageLabel,
                       }}
-                      emptyState={<SourceEventPromptDeck event={event} />}
+                      emptyState={
+                        <SourceEventPromptDeck
+                          event={event}
+                          viewStage={viewStage}
+                        />
+                      }
                     />
                   </div>
                   <aside aria-label="Live Source event reasoning pane" style={EVENT_REASONING_COLUMN}>
-                    <EventAgentLead
-                      event={event}
-                      quote={safeQuote}
-                      canViewFinancialValues={canViewFinancialValues}
-                    />
+                    {viewStage ? (
+                      <SourceStageCanvasPanel
+                        stageKey={viewStage}
+                        event={event}
+                        nextGateEvaluations={nextGateEvaluations}
+                      />
+                    ) : (
+                      <EventAgentLead
+                        event={event}
+                        quote={safeQuote}
+                        canViewFinancialValues={canViewFinancialValues}
+                      />
+                    )}
                     <SourcingReactivePanel artifacts={artifacts} />
                   </aside>
                 </section>
@@ -308,44 +330,51 @@ function StageAction({
   );
 }
 
-function SourceEventPromptDeck({ event }: { event: SourcingEventDetail }) {
+function SourceEventPromptDeck({
+  event,
+  viewStage,
+}: {
+  event: SourcingEventDetail;
+  viewStage?: SourceStageKey | null;
+}) {
   const pageState = useAtlasPageState();
   const disabled = !pageState || pageState.isStreaming;
-  const prompts = [
-    {
-      label: 'What good looks like',
-      prompt: `Define done for ${event.currentStageLabel}: evidence, owner, approvals, and what blocks advance.`,
-    },
-    {
-      label: 'Capture plan',
-      prompt: 'Tell me which meetings, uploads, and templates are needed before this stage can clear.',
-    },
-    {
-      label: 'Approval path',
-      prompt: 'Who approves this gate, what packet do they review, and what waiver is allowed?',
-    },
-    {
-      label: 'Attach evidence',
-      prompt: 'Upload the file or paste notes; I will separate cited evidence from unvalidated attachment context.',
-    },
-    {
-      label: 'Generate packet',
-      prompt: 'Tell me the audience and format: HTML brief, Word memo, Excel pricing workbook, or meeting packet.',
-    },
-    {
-      label: 'Workshop mode',
-      prompt: 'Prepare the agenda, roles, capture template, decisions needed, and post-workshop sync checklist.',
-    },
-  ];
+
+  // Resolve the stage config for contextual 3-choices; fall back to current event stage
+  const activeStageKey = viewStage ?? event.currentStageKey;
+  const stageConfig = getStageCanvasConfig(activeStageKey);
+  const stageLabel = event.currentStageLabel;
+
+  // When we have a stage config, show exactly 3 contextual choices (design spec).
+  // Otherwise fall back to the 6 generic prompts.
+  const prompts = stageConfig
+    ? stageConfig.choices.map((choice) => ({
+        label: choice.label,
+        description: choice.description,
+        prompt: choice.prompt,
+      }))
+    : [
+        {
+          label: 'What good looks like',
+          description: 'Define done criteria for this stage.',
+          prompt: `Define done for ${stageLabel}: evidence, owner, approvals, and what blocks advance.`,
+        },
+        {
+          label: 'Capture plan',
+          description: 'List meetings, uploads, and templates needed.',
+          prompt: 'Tell me which meetings, uploads, and templates are needed before this stage can clear.',
+        },
+        {
+          label: 'Approval path',
+          description: 'Who approves and what can be waived.',
+          prompt: 'Who approves this gate, what packet do they review, and what waiver is allowed?',
+        },
+      ];
+
+  const agentName = stageConfig?.leadAgent ?? 'Sentinel';
 
   return (
-    <div
-      style={{
-        width: '100%',
-        display: 'grid',
-        gap: 8,
-      }}
-    >
+    <div style={{ width: '100%', display: 'grid', gap: 8 }}>
       <div
         style={{
           border: `1px solid ${SHELL.CARD_LINE}`,
@@ -364,7 +393,7 @@ function SourceEventPromptDeck({ event }: { event: SourcingEventDetail }) {
             fontWeight: 700,
           }}
         >
-          Contextual prompts
+          {stageConfig ? `${agentName} · ${stageLabel}` : 'Contextual prompts'}
         </div>
         <p
           style={{
@@ -375,8 +404,9 @@ function SourceEventPromptDeck({ event }: { event: SourcingEventDetail }) {
             color: SHELL.INK,
           }}
         >
-          Keep guidance short: stage, blocker, next action, exact evidence, approval path, artifact packet, and next
-          meeting/workshop prep.
+          {stageConfig
+            ? stageConfig.intent
+            : 'Stage, blocker, next action, evidence, approval path, artifact packet.'}
         </p>
       </div>
 
@@ -391,14 +421,14 @@ function SourceEventPromptDeck({ event }: { event: SourcingEventDetail }) {
               appearance: 'none',
               border: `1px solid ${SHELL.CARD_LINE}`,
               borderRadius: 10,
-              padding: '7px 10px',
+              padding: '8px 10px',
               background: SHELL.PAPER_SOFT,
               font: 'inherit',
               textAlign: 'left',
               cursor: disabled ? 'not-allowed' : 'pointer',
               opacity: disabled ? 0.62 : 1,
             }}
-            aria-label={`Ask Sentinel: ${item.label}`}
+            aria-label={`Ask ${agentName}: ${item.label}`}
           >
             <div
               style={{
@@ -412,17 +442,19 @@ function SourceEventPromptDeck({ event }: { event: SourcingEventDetail }) {
             >
               {item.label}
             </div>
-            <div
-              style={{
-                marginTop: 2,
-                fontFamily: SHELL.SANS,
-                fontSize: 11.8,
-                lineHeight: 1.32,
-                color: SHELL.INK_SOFT,
-              }}
-            >
-              {item.prompt}
-            </div>
+            {'description' in item && (
+              <div
+                style={{
+                  marginTop: 2,
+                  fontFamily: SHELL.SANS,
+                  fontSize: 11,
+                  lineHeight: 1.28,
+                  color: SHELL.INK_MUTED,
+                }}
+              >
+                {item.description}
+              </div>
+            )}
           </button>
         ))}
       </div>

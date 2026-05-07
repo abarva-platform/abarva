@@ -42,6 +42,7 @@ import { getAllInstanceIds } from '@/lib/reasoning/instance-resolver';
 import { summarizeFailureModes } from '@/lib/reasoning/provenance-ribbon-helpers';
 import { summarizeEvidenceQuality, summaryGrade } from '@/lib/reasoning/evidence-quality';
 import type { GateEvaluation } from '@/lib/reasoning/types';
+import { stageLabelToKey } from '@/lib/source/stage-canvas-config';
 
 export const dynamic = 'force-dynamic';
 
@@ -71,6 +72,11 @@ export default async function SourceEventDetailPage({
 
   // Decode URL-driven timeline filters (`?tlKind=…&tlSince=…&tlSearch=…`).
   const timelineFilters = parseTimelineFiltersFromSearchParams(sp);
+
+  // Universal Canvas: ?stage=Strategy → right panel renders T03 stage canvas.
+  const spRecord = sp as Record<string, string | string[] | undefined>;
+  const rawStageParam = typeof spRecord.stage === 'string' ? spRecord.stage : null;
+  const viewStage = rawStageParam ? stageLabelToKey(rawStageParam) : null;
 
   // Resolve typed instance for live synthesis. Fallback to AMS instance when
   // other events don't have a typed SourceEventInstance yet.
@@ -177,6 +183,8 @@ export default async function SourceEventDetailPage({
       event={displayEvent}
       quote={sentinelQuote}
       canViewFinancialValues={canViewFinancialValues}
+      viewStage={viewStage}
+      nextGateEvaluations={nextGateEvaluations}
       middleStrip={
         <StageTrackerStrip
           stages={journeyStages}
