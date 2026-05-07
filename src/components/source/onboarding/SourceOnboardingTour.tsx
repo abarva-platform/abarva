@@ -43,8 +43,9 @@ export function SourceOnboardingTour({ active, config }: Props) {
   const router = useRouter();
   // Read localStorage at mount time (lazy initialiser — no effect needed).
   // If the user already completed the tour on a previous visit,
-  // treat this instance as pre-dismissed.
-  const [hasCompleted] = useState<boolean>(() => {
+  // treat this instance as pre-dismissed. The `dismissed` state flag
+  // handles the skip/done action within the current session.
+  const [dismissed, setDismissed] = useState<boolean>(() => {
     try {
       return window.localStorage.getItem(STORAGE_KEY) === '1';
     } catch {
@@ -52,7 +53,7 @@ export function SourceOnboardingTour({ active, config }: Props) {
     }
   });
 
-  if (!active || hasCompleted) return null;
+  if (!active || dismissed) return null;
 
   const isFinal = !config.nextHref;
   const stepLabel = `${config.step} of 3`;
