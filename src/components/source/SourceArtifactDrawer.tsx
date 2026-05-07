@@ -1,7 +1,9 @@
 // SRC-S4 · SRC-DTL-ARTIFACT — Artifact drawer with tier indicator (rich/outline/stub).
+// T09: Added section-tier border-left, seeded version history, sign-offs panel.
 // No upload, parsing, workflow automation, or approval runtime.
+import type { CSSProperties } from 'react';
 import { SHELL } from '@/lib/shell/shell-tokens';
-import type { SourceArtifactDetail } from '@/lib/source/types';
+import type { SourceArtifactDetail, SourceArtifactTier } from '@/lib/source/types';
 
 interface ArtifactProvenance {
   createdFrom: string;
@@ -10,11 +12,203 @@ interface ArtifactProvenance {
   evidenceLedgerEntryId?: string;
 }
 
-const TIER_CONFIG: Record<string, { label: string; color: string; bg: string }> = {
-  rich: { label: 'Rich', color: SHELL.MINT_TEXT, bg: SHELL.MINT_BG },
-  outline: { label: 'Outline', color: SHELL.INK_MID, bg: SHELL.PAPER_SOFT },
-  stub: { label: 'Stub', color: SHELL.PEACH_TEXT, bg: SHELL.PEACH_BG },
+const TIER_CONFIG: Record<string, { label: string; color: string; bg: string; borderLeft: string }> = {
+  rich:    { label: 'Rich',    color: SHELL.MINT_TEXT,  bg: SHELL.MINT_BG,   borderLeft: SHELL.MINT_TEXT  },
+  outline: { label: 'Outline', color: SHELL.INK_MID,   bg: SHELL.PAPER_SOFT, borderLeft: SHELL.INK_SOFT  },
+  stub:    { label: 'Stub',    color: SHELL.PEACH_TEXT, bg: SHELL.PEACH_BG,   borderLeft: SHELL.PEACH_TEXT },
 };
+
+function tierBorderColor(tier: SourceArtifactTier | undefined): string {
+  const cfg = TIER_CONFIG[tier ?? 'stub'];
+  return cfg?.borderLeft ?? SHELL.CARD_LINE;
+}
+
+// ─── Seeded sign-off data ─────────────────────────────────────────────────────
+
+type SignOffStatus = 'complete' | 'pending' | 'not_required';
+
+interface SignOff {
+  role: string;
+  status: SignOffStatus;
+  note?: string;
+}
+
+const SEEDED_SIGN_OFFS: SignOff[] = [
+  { role: 'Steward', status: 'pending', note: 'Governance review not yet initiated' },
+  { role: 'Atlas', status: 'complete', note: 'Executive content verified' },
+  { role: 'Procurement Lead', status: 'pending', note: 'Awaiting BAFO close' },
+  { role: 'Sentinel', status: 'complete', note: 'Evidence chain attested' },
+];
+
+const SIGN_OFF_COLORS: Record<SignOffStatus, { dot: string; text: string }> = {
+  complete:     { dot: SHELL.MINT_TEXT,  text: SHELL.MINT_TEXT  },
+  pending:      { dot: SHELL.PEACH_TEXT, text: SHELL.PEACH_TEXT },
+  not_required: { dot: SHELL.INK_MUTED,  text: SHELL.INK_MUTED  },
+};
+
+function SignOffPanel() {
+  return (
+    <div
+      style={{
+        background: SHELL.PAPER_SOFT,
+        border: '1px solid ' + SHELL.CARD_LINE,
+        borderRadius: 8,
+        padding: '12px 14px',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 8,
+      }}
+    >
+      <div style={{ fontWeight: 700, color: SHELL.INK, marginBottom: 2 }}>Sign-offs needed</div>
+      {SEEDED_SIGN_OFFS.map((s) => {
+        const c = SIGN_OFF_COLORS[s.status];
+        return (
+          <div
+            key={s.role}
+            style={{
+              display: 'flex',
+              alignItems: 'baseline',
+              gap: 8,
+              fontFamily: SHELL.SANS,
+              fontSize: 12.5,
+            }}
+          >
+            <span
+              style={{
+                display: 'inline-block',
+                width: 7,
+                height: 7,
+                borderRadius: '50%',
+                background: c.dot,
+                flexShrink: 0,
+                marginTop: 3,
+              }}
+            />
+            <span style={{ fontWeight: 700, color: SHELL.INK, minWidth: 120 }}>{s.role}</span>
+            <span style={{ color: c.text, fontWeight: 600 }}>
+              {s.status === 'complete' ? 'Complete' : s.status === 'not_required' ? 'Not required' : 'Pending'}
+            </span>
+            {s.note && (
+              <span style={{ color: SHELL.INK_MUTED, fontSize: 11.5 }}>· {s.note}</span>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+// ─── Seeded version history ───────────────────────────────────────────────────
+
+interface VersionEntry {
+  version: string;
+  tier: SourceArtifactTier;
+  label: string;
+  date: string;
+}
+
+const SEEDED_VERSION_HISTORY: VersionEntry[] = [
+  { version: 'v0.1', tier: 'stub',    label: 'Initial draft — scope placeholder', date: '2026-02-14' },
+  { version: 'v0.2', tier: 'stub',    label: 'Scope refinement — stakeholders added', date: '2026-02-28' },
+  { version: 'v0.3', tier: 'outline', label: 'Strategy review — sections structured', date: '2026-03-15' },
+  { version: 'v0.4', tier: 'rich',    label: 'BAFO-ready — evidence chain complete', date: '2026-04-10' },
+];
+
+function VersionHistoryPanel() {
+  return (
+    <div
+      id="artifact-version-history"
+      style={{
+        background: SHELL.PAPER_SOFT,
+        border: '1px solid ' + SHELL.CARD_LINE,
+        borderRadius: 8,
+        overflow: 'hidden',
+      }}
+    >
+      <div
+        style={{
+          padding: '9px 14px',
+          fontWeight: 700,
+          color: SHELL.INK,
+          borderBottom: '1px solid ' + SHELL.CARD_LINE,
+          fontFamily: SHELL.SANS,
+          fontSize: 13,
+        }}
+      >
+        Version history
+      </div>
+      <div style={{ display: 'grid' }}>
+        {SEEDED_VERSION_HISTORY.map((entry, i) => {
+          const cfg = TIER_CONFIG[entry.tier];
+          const isLatest = i === SEEDED_VERSION_HISTORY.length - 1;
+          return (
+            <div
+              key={entry.version}
+              style={{
+                display: 'grid',
+                gridTemplateColumns: '40px 56px 1fr 90px',
+                gap: 10,
+                padding: '8px 14px',
+                borderBottom: isLatest ? 'none' : '1px solid ' + SHELL.CARD_LINE,
+                alignItems: 'center',
+                background: isLatest ? SHELL.CARD_WHITE : 'transparent',
+              }}
+            >
+              <span
+                style={{
+                  fontFamily: SHELL.MONO,
+                  fontSize: 10,
+                  fontWeight: 700,
+                  color: SHELL.INK_MID,
+                }}
+              >
+                {entry.version}
+              </span>
+              <span
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  background: cfg.bg,
+                  border: `1px solid ${cfg.color}`,
+                  borderRadius: 4,
+                  padding: '1px 6px',
+                  fontFamily: SHELL.MONO,
+                  fontSize: 9,
+                  color: cfg.color,
+                  fontWeight: 700,
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.06em',
+                }}
+              >
+                {cfg.label}
+              </span>
+              <span
+                style={{
+                  fontFamily: SHELL.SANS,
+                  fontSize: 12,
+                  color: isLatest ? SHELL.INK : SHELL.INK_SOFT,
+                  fontWeight: isLatest ? 600 : 400,
+                }}
+              >
+                {entry.label}
+              </span>
+              <span
+                style={{
+                  fontFamily: SHELL.MONO,
+                  fontSize: 9,
+                  color: SHELL.INK_MUTED,
+                  textAlign: 'right',
+                }}
+              >
+                {entry.date}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
 
 const sourceCard = {
   background: SHELL.CARD_WHITE,
@@ -160,7 +354,14 @@ export function SourceArtifactDrawer({
       ) : null}
       <div id="artifact-evidence">
         {artifact.sections.map((section) => (
-          <div key={section.label} style={{ ...sourceInsetCard, marginBottom: 8 }}>
+          <div
+            key={section.label}
+            style={{
+              ...sourceInsetCard,
+              marginBottom: 8,
+              borderLeft: `3px solid ${tierBorderColor(artifact.tier)}`,
+            }}
+          >
             <div style={{ fontWeight: 700, color: SHELL.INK }}>{section.label}</div>
             <div style={{ fontFamily: SHELL.SANS, fontSize: 14, lineHeight: 1.55, color: SHELL.INK }}>
               {section.body}
@@ -168,6 +369,13 @@ export function SourceArtifactDrawer({
           </div>
         ))}
       </div>
+
+      {/* T09 — Version history panel */}
+      <VersionHistoryPanel />
+
+      {/* T09 — Sign-offs needed */}
+      <SignOffPanel />
+
       <div id="artifact-missing-inputs" style={sourceInsetCard}>
         <div style={{ fontWeight: 700, color: SHELL.INK }}>Governance notes</div>
         <ul style={{ margin: 0, paddingLeft: 18, fontFamily: SHELL.SANS, fontSize: 13, lineHeight: 1.55, color: SHELL.INK }}>
@@ -207,7 +415,7 @@ export function SourceArtifactDrawer({
                 id="artifact-custom-input"
                 type="text"
                 readOnly
-                placeholder="Ask Sentinel about this artifact, evidence chain, or source version..."
+                placeholder="Ask Nexus about this artifact, evidence chain, or source version..."
                 style={{
                   border: '1px solid ' + SHELL.BLUE_LINE,
                   borderRadius: 8,
