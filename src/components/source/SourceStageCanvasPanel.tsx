@@ -3,6 +3,7 @@
 import type { CSSProperties } from 'react';
 import { useState } from 'react';
 import { useAtlasPageState } from '@/components/shell/AtlasPageStateProvider';
+import { StageAdvanceButton } from '@/components/source/StageAdvanceButton';
 import { SHELL } from '@/lib/shell/shell-tokens';
 import { getStageCanvasConfig } from '@/lib/source/stage-canvas-config';
 import { SOURCE_STAGE_ORDER, SOURCE_STAGE_LABELS } from '@/lib/source/constants';
@@ -44,6 +45,14 @@ export function SourceStageCanvasPanel({
         status: ev.status,
       }))
     : config.exitCriteria.map((c) => ({ label: c, status: 'unmet' as const }));
+
+  // Blocking gate count — hard gates not met/waived (for advance button)
+  const blockingHardGates = isCurrentStage
+    ? nextGateEvaluations.filter(
+        (ev) => ev.gateType === 'hard' && ev.status !== 'met' && ev.status !== 'waived',
+      ).length
+    : 0;
+  const allHardGatesClear = isCurrentStage && blockingHardGates === 0 && nextGateEvaluations.length > 0;
 
   // Artifact shelf — match live artifacts or fall back to config stubs
   const artifactShelf = config.artifactIds.map((id) => {
@@ -255,7 +264,32 @@ export function SourceStageCanvasPanel({
         </div>
       )}
 
-      {/* Primary action */}
+      {/* Gate status + stage advance — only on current stage */}
+      {isCurrentStage && (
+        <div style={GATE_ADVANCE_SECTION}>
+          {allHardGatesClear ? (
+            <div style={GATE_CLEAR_BANNER} role="status" aria-label="All gate criteria met">
+              <span style={GATE_CLEAR_DOT} aria-hidden="true" />
+              <span style={GATE_CLEAR_TEXT}>All hard gates met — ready to advance</span>
+            </div>
+          ) : blockingHardGates > 0 ? (
+            <div style={GATE_BLOCKED_BANNER} role="status" aria-label={`${blockingHardGates} blocking gates`}>
+              <span style={GATE_BLOCKED_DOT} aria-hidden="true" />
+              <span style={GATE_BLOCKED_TEXT}>
+                {blockingHardGates} blocking gate{blockingHardGates > 1 ? 's' : ''} — self-approve to override
+              </span>
+            </div>
+          ) : null}
+          <StageAdvanceButton
+            eventId={event.id}
+            currentStageKey={event.currentStageKey}
+            blockingGateCount={blockingHardGates}
+            blockingGateLabel={nextStageLabel ?? undefined}
+          />
+        </div>
+      )}
+
+      {/* Secondary action — ask lead agent */}
       <button
         type="button"
         disabled={disabled}
@@ -627,5 +661,62 @@ const GAP_REVIEW_LABEL: CSSProperties = {
   fontFamily: SHELL.SANS,
   fontSize: 11.5,
   color: SHELL.INK_SOFT,
+  fontWeight: 600,
+};
+
+const GATE_ADVANCE_SECTION: CSSProperties = {
+  display: 'grid',
+  gap: 8,
+};
+
+const GATE_CLEAR_BANNER: CSSProperties = {
+  display: 'flex',
+  alignItems: 'center',
+  gap: 7,
+  background: 'rgba(52,199,89,0.08)',
+  border: '1px solid rgba(52,199,89,0.28)',
+  borderRadius: 8,
+  padding: '7px 11px',
+};
+
+const GATE_CLEAR_DOT: CSSProperties = {
+  width: 8,
+  height: 8,
+  borderRadius: '50%',
+  background: '#34C759',
+  flexShrink: 0,
+  display: 'inline-block',
+};
+
+const GATE_CLEAR_TEXT: CSSProperties = {
+  fontFamily: SHELL.SANS,
+  fontSize: 11.5,
+  color: '#1a7a38',
+  fontWeight: 600,
+};
+
+const GATE_BLOCKED_BANNER: CSSProperties = {
+  display: 'flex',
+  alignItems: 'center',
+  gap: 7,
+  background: 'rgba(255,149,0,0.07)',
+  border: '1px solid rgba(255,149,0,0.28)',
+  borderRadius: 8,
+  padding: '7px 11px',
+};
+
+const GATE_BLOCKED_DOT: CSSProperties = {
+  width: 8,
+  height: 8,
+  borderRadius: '50%',
+  background: '#FF9500',
+  flexShrink: 0,
+  display: 'inline-block',
+};
+
+const GATE_BLOCKED_TEXT: CSSProperties = {
+  fontFamily: SHELL.SANS,
+  fontSize: 11.5,
+  color: '#7a4a00',
   fontWeight: 600,
 };
