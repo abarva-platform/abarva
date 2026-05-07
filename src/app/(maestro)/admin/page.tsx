@@ -1,40 +1,42 @@
 /**
- * /admin · Setup landing page · SETUP-1.2
+ * /admin · Setup Overview · Setup Redesign Package PR A.
  *
- * Story-led entry point for tenant admins. Replaces the previous
- * redirect to /admin/connectors. Per
- * docs/build/intelligence/SETUP-1_DETAILED_DESIGN.md the page is
- * organized as three Acts (what we know / what we can reason /
- * what changes on upload) plus an activity feed.
+ * Compressed from 7 sections to 4 small blocks per
+ * `WIREFRAME_REFERENCE.html` Panel 1:
+ *   - Block 1.1 StatusHeader
+ *   - Block 1.2 StewardOrientation
+ *   - Block 1.3 ActionQueue (hidden when empty)
+ *   - Block 1.4 RecentActivity (hidden when empty)
  *
- * Server component. Resolves the active client, maps the
- * ClientKey to its broker tenant key, reads a live snapshot of
- * the inventory substrate, and merges it onto the authored
- * content. Falls back to authored fixture when the live read is
- * unavailable.
+ * Substrate-related content (Act 1 fact cards, Capability
+ * Constellation matrix, Client Data Landscape table, Act 3 upload
+ * templates) migrated out — absorbed by Data Trust (PR B) and Agent
+ * Readiness (PR C). Components remain in the codebase pending those
+ * PRs.
  */
 
 import { getActiveClientRow } from '@/lib/active-client';
 import { clientKeyToInventorySubstrateKey } from '@/lib/agent/tools/intelligence/_shared';
 import {
   buildAuthoredInventoryFallback,
-  formatRelativeTimestamp,
   getSetupActsContent,
-  getSetupSummaryCountsWithSnapshot,
   mergeInventorySnapshot,
 } from '@/lib/admin/setup-acts-registry';
 import {
   getCrossProgramSignals,
-  getContextChunkStats,
   getSetupInventorySnapshot,
 } from '@/lib/admin/setup-data-broker';
 import { AdminCanonShellV2 } from '@/components/admin/AdminCanonShellV2';
 import { SetupChatRail } from '@/components/admin/SetupChatRail';
-import { SetupAdminLanding } from '@/components/admin/setup/SetupAdminLanding';
 import { SetupLandingTelemetryBridge } from '@/components/admin/setup/SetupLandingTelemetryBridge';
-import { DataLandscapeTable } from '@/components/admin/setup/DataLandscapeTable';
+import { StatusHeader } from '@/components/admin/overview/StatusHeader';
+import { StewardOrientation } from '@/components/admin/overview/StewardOrientation';
+import { ActionQueue } from '@/components/admin/overview/ActionQueue';
+import { RecentActivity } from '@/components/admin/overview/RecentActivity';
+import { composeOverviewBlocks } from '@/lib/admin/overview-composer';
 import { getApprovalQueueForTenant } from '@/lib/programs/approval';
 import { canonicalClientDisplayName } from '@/lib/client-config';
+import { SPACING } from '@/lib/design/design-tokens';
 
 export const metadata = { title: 'Setup · AbarVa' };
 export const dynamic = 'force-dynamic';
@@ -45,79 +47,84 @@ export default async function AdminOverviewPage() {
   const activeClientDisplayName =
     canonicalClientDisplayName({ key: activeClient?.key, name: activeClient?.name }) ??
     'Apex Retail Group';
-  // Fall back to apexretail so authored content always matches the top bar
-  // (which also hard-codes Apex Retail Group when no row is found).
   const clientKey = activeClient?.key ?? 'apexretail';
   const brokerTenantKey = clientKeyToInventorySubstrateKey(clientKey);
   const baseContent = getSetupActsContent(clientKey);
-  const [snapshot, signals, chunkStats, programApprovalQueue] = brokerTenantKey
+  const [snapshot, signals, programApprovalQueue] = brokerTenantKey
     ? await Promise.all([
         getSetupInventorySnapshot(brokerTenantKey).catch(() => null),
         getCrossProgramSignals(brokerTenantKey).catch(() => []),
-        getContextChunkStats(brokerTenantKey).catch(() => []),
         getApprovalQueueForTenant(clientKey).catch(() => []),
       ])
-    : [null, [], [], []];
+    : [null, [], []];
   const content = mergeInventorySnapshot(baseContent, snapshot);
-  const counts = getSetupSummaryCountsWithSnapshot(content, snapshot);
-  const lastIngestedRelative = snapshot?.lastIngestedAt
-    ? formatRelativeTimestamp(snapshot.lastIngestedAt)
-    : undefined;
   const atlasHighSeverityCount = signals.filter((s) => s.severityBucket === 'high').length;
 
-  // Setup Fix Package PR 3 · Option A — Client Data Landscape uses
-  // the same source as Act 1: prefer live snapshot, fall back to
-  // authored fixture for tenants whose substrate hasn't been
-  // ingested yet (e.g. Arcturus). Empty tenants still show 0/14
-  // honestly because buildAuthoredInventoryFallback returns no
-  // rollups when the capability matrix is empty.
-  const landscape = snapshot
-    ? {
-        segments: snapshot.segments,
-        totalRecords: counts.totalRecords ?? 0,
-        totalChunks: snapshot.totalChunks,
-        totalNodes: snapshot.totalNodes,
-        totalEdges: snapshot.totalEdges,
-      }
-    : (() => {
-        const fallback = buildAuthoredInventoryFallback(content);
-        return {
-          segments: fallback.segments,
-          totalRecords: fallback.totalRecords ?? 0,
-          totalChunks: fallback.totalChunks,
-          totalNodes: fallback.totalNodes,
-          totalEdges: fallback.totalEdges,
-        };
-      })();
+  // Substrate or authored fallback (Setup Fix Package PR 3 logic
+  // preserved — segments still drive the Overview composer).
+  const segments = snapshot
+    ? snapshot.segments
+    : buildAuthoredInventoryFallback(content).segments;
+
+  const recentSnapshotActivity =
+    snapshot?.recentActivity?.map((e) => ({
+      actor: e.actor,
+      what: e.what,
+      timestamp: e.timestampIso,
+    })) ?? [];
+
+  const blocks = composeOverviewBlocks({
+    tenantName: activeClientDisplayName,
+    industryCode: activeClient?.industry_code,
+    clientKey,
+    segments,
+    content,
+    programApprovalPendingCount: programApprovalQueue.length,
+    atlasSignalCount: signals.length,
+    atlasHighSeverityCount,
+    ssoConfigured: false,
+    recentSnapshotActivity,
+  });
 
   return (
     <AdminCanonShellV2 agentRail={<SetupChatRail />} tenantName={activeClientDisplayName}>
-      <SetupAdminLanding
-        content={content}
-        segmentRollups={snapshot?.segments ?? []}
-        totalRecords={counts.totalRecords}
-        segmentsTracked={counts.segmentsTracked}
-        capabilitiesGrounded={counts.capabilitiesGrounded}
-        lastIngestedRelative={lastIngestedRelative}
-        atlasSignalCount={signals.length}
-        atlasHighSeverityCount={atlasHighSeverityCount}
-        programApprovalPendingCount={programApprovalQueue.length}
-      />
-      <DataLandscapeTable
-        segments={landscape.segments}
-        chunkStats={chunkStats}
-        totalRecords={landscape.totalRecords}
-        totalChunks={landscape.totalChunks}
-        totalNodes={landscape.totalNodes}
-        totalEdges={landscape.totalEdges}
-        lastIngestedRelative={lastIngestedRelative}
-      />
+      <div
+        data-testid="overview-page"
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          gap: SPACING.lg,
+          padding: SPACING.xl,
+        }}
+      >
+        <StatusHeader
+          tenantName={blocks.status.tenantName}
+          readinessPercent={blocks.status.readinessPercent}
+          agentLevel={blocks.status.agentLevel}
+          blockedCapabilityTracks={blocks.status.blockedCapabilityTracks}
+        />
+        <StewardOrientation
+          tenantName={blocks.orientation.tenantName}
+          industryPhrase={blocks.orientation.industryPhrase}
+          loadedSummary={blocks.orientation.loadedSummary}
+          missingSummary={blocks.orientation.missingSummary}
+          nextLoadName={blocks.orientation.nextLoadName}
+          nextLoadConsequence={blocks.orientation.nextLoadConsequence}
+        />
+        <ActionQueue
+          items={blocks.actionQueue.items}
+          totalPending={blocks.actionQueue.totalPending}
+        />
+        <RecentActivity items={blocks.recentActivity.items} />
+      </div>
       <SetupLandingTelemetryBridge
         tenantKey={brokerTenantKey}
         tenantDataRichness={content.tenantDataRichness}
-        totalRecords={counts.totalRecords}
-        segmentsTracked={counts.segmentsTracked}
-        capabilitiesGrounded={counts.capabilitiesGrounded}
+        totalRecords={segments.reduce((n, s) => n + s.recordCount, 0)}
+        segmentsTracked={segments.length}
+        capabilitiesGrounded={
+          content.actTwoCapabilityNodes.filter((n) => n.depthState === 'grounded').length
+        }
         liveSnapshotPresent={snapshot !== null}
       />
     </AdminCanonShellV2>
