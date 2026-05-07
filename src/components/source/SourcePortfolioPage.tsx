@@ -349,6 +349,9 @@ const MAIN_STYLE: CSSProperties = {
 };
 
 const CONTAINER_STYLE: CSSProperties = {
+  // Fluid full-width — productivity-app pattern (Linear / Notion / Datadog).
+  // Compact bottom padding (48px); the filter sidebar + events table fill
+  // the remaining viewport.
   padding: `0 ${PORTFOLIO.S_PAGE}px 48px`,
 };
 
