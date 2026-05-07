@@ -63,8 +63,6 @@ export default async function AdminOverviewPage() {
     ? formatRelativeTimestamp(snapshot.lastIngestedAt)
     : undefined;
   const atlasHighSeverityCount = signals.filter((s) => s.severityBucket === 'high').length;
-  const programSegment = snapshot?.segments.find((s) => s.segmentId === 'program_inventory');
-  const complianceSegment = snapshot?.segments.find((s) => s.segmentId === 'compliance');
 
   return (
     <AdminCanonShellV2 agentRail={<SetupChatRail />} tenantName={activeClientDisplayName}>
@@ -77,8 +75,6 @@ export default async function AdminOverviewPage() {
         lastIngestedRelative={lastIngestedRelative}
         atlasSignalCount={signals.length}
         atlasHighSeverityCount={atlasHighSeverityCount}
-        nexusProgramCount={programSegment?.recordCount ?? 0}
-        stewardFindingCount={complianceSegment?.recordCount ?? 0}
         programApprovalPendingCount={programApprovalQueue.length}
       />
       <DataLandscapeTable

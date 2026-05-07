@@ -20,7 +20,6 @@ import Link from 'next/link';
 import { SetupActOne } from './SetupActOne';
 import { SetupActThree } from './SetupActThree';
 import { SetupCapabilityMatrix } from './SetupCapabilityMatrix';
-import { SetupAgentStrip } from './SetupAgentStrip';
 import { SetupRecentActivity } from './SetupRecentActivity';
 import { SetupSentinelOpener } from './SetupSentinelOpener';
 
@@ -35,10 +34,6 @@ export interface SetupAdminLandingProps {
   atlasSignalCount: number;
   /** Atlas agent: HIGH-severity signals open. */
   atlasHighSeverityCount: number;
-  /** Nexus agent: active program count. */
-  nexusProgramCount: number;
-  /** Steward agent: compliance findings count. */
-  stewardFindingCount: number;
   /** Tenant-admin queue: submitted program briefs waiting for approval. */
   programApprovalPendingCount?: number;
 }
@@ -320,8 +315,6 @@ export function SetupAdminLanding({
   lastIngestedRelative,
   atlasSignalCount,
   atlasHighSeverityCount,
-  nexusProgramCount,
-  stewardFindingCount,
   programApprovalPendingCount = 0,
 }: SetupAdminLandingProps) {
   const isFirstTime =
@@ -343,15 +336,6 @@ export function SetupAdminLanding({
       >
         {isFirstTime && <OrientationBanner content={content} totalRecords={totalRecords} />}
         <ProgramApprovalQueueCallout pendingCount={programApprovalPendingCount} />
-        <SetupAgentStrip
-          tenantDisplayName={content.tenantDisplayName}
-          tenantRecords={totalRecords}
-          atlasSignalCount={atlasSignalCount}
-          atlasHighSeverityCount={atlasHighSeverityCount}
-          nexusProgramCount={nexusProgramCount}
-          stewardFindingCount={stewardFindingCount}
-          capabilitiesGrounded={capabilitiesGrounded}
-        />
         {atlasHighSeverityCount > 0 && (
           <TensionStrip
             highSeverityCount={atlasHighSeverityCount}
