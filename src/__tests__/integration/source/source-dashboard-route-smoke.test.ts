@@ -75,29 +75,31 @@ describe('Source dashboard route smoke', () => {
     const componentSource = readFileSync(join(process.cwd(), 'src/components/source/SourcePortfolioPage.tsx'), 'utf8');
     const tableSource = readFileSync(join(process.cwd(), 'src/components/source/SourcingEventTable.tsx'), 'utf8');
 
+    // Route still mounts the SourcePortfolioPage — surface contract is unchanged
+    // even though the page body was redesigned.
     expect(routeSource).toContain('SourcePortfolioPage');
     expect(eventsRouteSource).toContain('IT sourcing operating queue');
     expect(eventsRouteSource).toContain('Start IT sourcing event');
     expect(eventsRouteSource).toContain('The table is supporting evidence');
-    expect(componentSource).toContain('Create, run, and govern IT sourcing events');
-    expect(componentSource).toContain('Nexus mission preview');
-    expect(componentSource).toContain('Source is the operating room for technology and IT sourcing');
-    expect(componentSource).toContain('Ask Nexus');
-    expect(componentSource).toContain('Help me prepare a Source approval request');
+    // Redesigned portfolio header + components — see SOURCE_PORTFOLIO_IMPL_PROMPT.
+    expect(componentSource).toContain('PortfolioHeader');
+    expect(componentSource).toContain('KpiStrip');
+    expect(componentSource).toContain('AttentionStack');
+    expect(componentSource).toContain('PortfolioFilterSidebar');
+    expect(componentSource).toContain('PortfolioEventsTable');
+    expect(componentSource).toContain('PortfolioEmptyState');
+    expect(componentSource).toContain('filterOutTestArtifacts');
+    // Legacy event-formation panels are gone — no agent canvas, work dock, or
+    // mission preview on the portfolio surface.
+    expect(componentSource).not.toContain('SourcePortfolioAgentCanvas');
+    expect(componentSource).not.toContain('SourceWorkDock');
+    expect(componentSource).not.toContain('SourceMissionPreview');
+    expect(componentSource).not.toContain('Ask Sentinel');
+    expect(componentSource).not.toContain('FilterPillStrip');
+    // Existing event canvas table is untouched.
     expect(tableSource).toContain('Program / Evidence');
     expect(tableSource).toContain('Evidence posture: seeded summary; open event for readiness rows.');
     expect(componentSource).not.toMatch(/fetch\(|openai|claude|anthropic/i);
-  });
-
-  it('keeps the Source Atrium rail honest about artifact processing state', () => {
-    const agentCanvasSource = readFileSync(
-      join(process.cwd(), 'src/components/source/SourcePortfolioAgentCanvas.tsx'),
-      'utf8',
-    );
-
-    expect(agentCanvasSource).toContain('Artifact and evidence state');
-    expect(agentCanvasSource).toContain('draft, parsed, citeable');
-    expect(agentCanvasSource).toContain('until parsing, citation, and approval state are explicit');
   });
 
   it('builds mission preview data deterministically from the seeded Source event', () => {
@@ -125,7 +127,15 @@ describe('Source dashboard route smoke', () => {
       'src/components/source/AbarVaSourceDashboard.tsx',
       'src/components/source/SourcePortfolioPage.tsx',
       'src/components/source/SourcingEventTable.tsx',
+      'src/components/source/portfolio/PortfolioHeader.tsx',
+      'src/components/source/portfolio/KpiStrip.tsx',
+      'src/components/source/portfolio/AttentionStack.tsx',
+      'src/components/source/portfolio/PortfolioFilterSidebar.tsx',
+      'src/components/source/portfolio/PortfolioEventsTable.tsx',
+      'src/components/source/portfolio/MiniRail.tsx',
+      'src/components/source/portfolio/PortfolioEmptyState.tsx',
       'src/lib/source/agent-mission-report.ts',
+      'src/lib/source/portfolio-filtering.ts',
     ].map((filePath) => readFileSync(join(process.cwd(), filePath), 'utf8')).join('\n');
 
     expect(sources).not.toMatch(/from ['"][^'"]*(openai|anthropic|@anthropic-ai\/sdk|ai\/react|ai)['"]/i);

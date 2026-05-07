@@ -192,6 +192,26 @@ function seedEventMatchesClient(event: SourcingEventSummary, clientKey: string):
   return false;
 }
 
+// ── Substrate gaps surfaced by the redesigned /source row ────────────────────
+// The redesigned portfolio row needs five things this DB row doesn't carry as
+// first-class columns. They're derived at the render layer until substrate
+// catches up:
+//
+//   1. Per-stage lead agent — derived via `leadAgentForStage(stageKey)` in
+//      `portfolio-derivations.ts`. The `leadAgent` field below stays pinned to
+//      'Sentinel' because the Source surface contract treats Sentinel as the
+//      orchestrator (per memory: Sentinel-front orchestrator).
+//   2. Value range (low/high band with confidence) — derived ±20% from
+//      `estimated_value_usd` and stamped `v2 pending`. Replace when the v2
+//      Sentinel+Atlas substrate adds `value_at_stake_low_usd` /
+//      `value_at_stake_high_usd`.
+//   3. Per-stage entry timestamp — `agingDays` currently measures `daysSince
+//      (created_at)`. Stage-band aging needs a `current_stage_entered_at`
+//      column on `source_events`.
+//   4. `isAtRisk` / risk classification — always false for persisted rows
+//      because no risk substrate is wired to this row mapper.
+//   5. `openAlerts` count — only synthesized for the `waiting_on_client`
+//      approval case. Real alert join is pending.
 export function sourceEventRowToSummary(row: SourceEventRow, accountName: string): SourcingEventSummary {
   const stageKey = normalizeSourceStageKey(row.current_stage_key) ?? 'strategy';
   const status = isSourceLifecycleStatus(row.lifecycle_state) ? row.lifecycle_state : 'waiting_on_client';
