@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { COLORS, RADIUS, SPACING, TYPOGRAPHY } from '@/lib/design/design-tokens';
 import type { ReadinessTile } from '@/lib/admin/production-readiness-page-view';
 
@@ -72,6 +73,56 @@ export function DemoPilotProductionTiles({ tiles }: DemoPilotProductionTilesProp
             >
               {tile.body}
             </p>
+            {tile.blockerLinks && tile.blockerLinks.length > 0 ? (
+              <ul
+                data-tile-blocker-links={tile.id}
+                style={{
+                  margin: 0,
+                  padding: 0,
+                  listStyle: 'none',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: SPACING.xs,
+                }}
+              >
+                {tile.blockerLinks.map((link) => (
+                  <li
+                    key={link.label}
+                    style={{ display: 'flex', alignItems: 'baseline', gap: SPACING.xs, flexWrap: 'wrap' }}
+                  >
+                    <span
+                      style={{
+                        fontFamily: TYPOGRAPHY.sans,
+                        fontSize: 12,
+                        fontWeight: 700,
+                        color: COLORS.ink,
+                      }}
+                    >
+                      {link.label}
+                    </span>
+                    <span
+                      aria-hidden="true"
+                      style={{ fontFamily: TYPOGRAPHY.sans, fontSize: 12, color: `${COLORS.ink}66` }}
+                    >
+                      —
+                    </span>
+                    <Link
+                      href={link.href}
+                      data-tile-blocker-link={link.label.toLowerCase()}
+                      style={{
+                        fontFamily: TYPOGRAPHY.sans,
+                        fontSize: 12,
+                        color: COLORS.navy,
+                        textDecoration: 'none',
+                        fontWeight: 600,
+                      }}
+                    >
+                      {link.cta}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            ) : null}
             <span
               style={{
                 marginTop: SPACING.sm,
