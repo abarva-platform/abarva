@@ -1,20 +1,17 @@
 /**
  * DataTrustActionQueue · Block 2.3 (Setup Redesign Package PR B).
  *
- * Ranked next-loads. Each item: severity dot · segment name ·
- * consequence · Template ↓ · Upload →. Per
- * `DATA_BINDING_CATALOG.md` §2 Block 2.3.
+ * Per `DATA_BINDING_CATALOG.md` §2 Block 2.3 + Setup canon refit.
  */
 
 import Link from 'next/link';
-import { COLORS, RADIUS, SPACING, TYPOGRAPHY } from '@/lib/design/design-tokens';
-import { SHELL } from '@/lib/shell/shell-tokens';
+import { SETUP, SETUP_RADIUS, SETUP_TYPE } from '@/lib/admin/setup-tokens';
 import type { DataTrustActionQueueItem } from '@/lib/admin/data-trust-composer';
 
 const SEVERITY_DOT = {
-  high: COLORS.coralInk,
-  medium: COLORS.amberInk,
-  low: COLORS.mintInk,
+  high: SETUP.coral,
+  medium: SETUP.amber,
+  low: SETUP.mint,
 };
 
 export function DataTrustActionQueue({ items }: { items: DataTrustActionQueueItem[] }) {
@@ -25,13 +22,13 @@ export function DataTrustActionQueue({ items }: { items: DataTrustActionQueueIte
         data-testid="data-trust-action-queue"
         data-empty="true"
         style={{
-          background: COLORS.mintSoft,
-          borderLeft: `4px solid ${COLORS.mintInk}`,
-          borderRadius: RADIUS.lg,
-          padding: SPACING.lg,
+          background: SETUP.mintSoft,
+          borderLeft: `4px solid ${SETUP.mint}`,
+          borderRadius: SETUP_RADIUS.lg,
+          padding: '16px 20px',
         }}
       >
-        <p style={{ margin: 0, fontFamily: TYPOGRAPHY.sans, fontSize: 13, color: SHELL.INK }}>
+        <p style={{ ...SETUP_TYPE.bodySans, color: SETUP.ink, margin: 0 }}>
           Nothing pending — every segment is loaded or partially loaded.
         </p>
       </section>
@@ -42,30 +39,18 @@ export function DataTrustActionQueue({ items }: { items: DataTrustActionQueueIte
       data-data-trust-block="action-queue"
       data-testid="data-trust-action-queue"
       style={{
-        background: SHELL.CARD_WHITE,
-        border: `1px solid ${SHELL.CARD_LINE_SOFT}`,
-        borderRadius: RADIUS.lg,
-        padding: SPACING.lg,
+        background: SETUP.cardWhite,
+        border: `1px solid ${SETUP.cardLine}`,
+        borderRadius: SETUP_RADIUS.lg,
+        padding: '18px 20px',
         display: 'flex',
         flexDirection: 'column',
-        gap: SPACING.sm,
+        gap: 10,
       }}
     >
-      <header style={{ display: 'flex', alignItems: 'baseline', gap: SPACING.sm }}>
-        <h2
-          style={{
-            margin: 0,
-            fontFamily: TYPOGRAPHY.serif,
-            fontSize: 18,
-            color: SHELL.INK,
-            fontWeight: 600,
-          }}
-        >
-          Next loads, ranked by impact
-        </h2>
-        <span style={{ fontFamily: TYPOGRAPHY.mono, fontSize: 11, color: SHELL.INK_MUTED }}>
-          ({items.length})
-        </span>
+      <header style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
+        <h2 style={SETUP_TYPE.cardH2}>Next loads, ranked by impact</h2>
+        <span style={SETUP_TYPE.cardMeta}>({items.length})</span>
       </header>
       <ul role="list" style={{ listStyle: 'none', margin: 0, padding: 0 }}>
         {items.map((item) => (
@@ -74,12 +59,12 @@ export function DataTrustActionQueue({ items }: { items: DataTrustActionQueueIte
             data-action-id={item.id}
             data-action-severity={item.severity}
             style={{
-              display: 'flex',
+              display: 'grid',
+              gridTemplateColumns: '14px auto 1fr auto auto',
               alignItems: 'center',
-              gap: SPACING.sm,
-              padding: `${SPACING.sm} 0`,
-              borderTop: `1px solid ${SHELL.CARD_LINE_SOFT}`,
-              flexWrap: 'wrap',
+              gap: 10,
+              padding: '12px 0',
+              borderTop: `1px solid ${SETUP.cardLine}`,
             }}
           >
             <span
@@ -89,13 +74,15 @@ export function DataTrustActionQueue({ items }: { items: DataTrustActionQueueIte
                 height: 10,
                 borderRadius: '50%',
                 background: SEVERITY_DOT[item.severity],
-                flexShrink: 0,
+                justifySelf: 'start',
               }}
             />
-            <span style={{ fontFamily: TYPOGRAPHY.sans, fontSize: 14, fontWeight: 600, color: SHELL.INK }}>
+            <span
+              style={{ fontFamily: SETUP.sans, fontSize: 13.5, fontWeight: 600, color: SETUP.ink }}
+            >
               {item.segmentName}
             </span>
-            <span style={{ fontFamily: TYPOGRAPHY.sans, fontSize: 13, color: SHELL.INK_SOFT, flex: 1 }}>
+            <span style={{ ...SETUP_TYPE.bodySans, color: SETUP.inkMuted }}>
               · {item.consequence}
             </span>
             {item.templateHref ? (
@@ -104,33 +91,36 @@ export function DataTrustActionQueue({ items }: { items: DataTrustActionQueueIte
                 download
                 data-testid={`data-trust-template-${item.id}`}
                 style={{
-                  fontFamily: TYPOGRAPHY.sans,
-                  fontSize: 12,
+                  fontFamily: SETUP.sans,
+                  fontSize: 11,
                   fontWeight: 600,
-                  color: SHELL.INK,
+                  color: SETUP.ink,
                   textDecoration: 'none',
-                  border: `1px solid ${SHELL.INK}30`,
-                  borderRadius: RADIUS.pill,
-                  padding: `2px ${SPACING.sm}`,
-                  background: SHELL.PAPER,
+                  border: `1px solid ${SETUP.cardLineStrong}`,
+                  borderRadius: SETUP_RADIUS.pill,
+                  padding: '4px 12px',
+                  background: SETUP.paperSoft,
                   whiteSpace: 'nowrap',
                 }}
               >
                 Template ↓
               </a>
-            ) : null}
+            ) : (
+              <span aria-hidden="true" />
+            )}
             <Link
               href={item.uploadHref}
               data-testid={`data-trust-upload-${item.id}`}
               style={{
-                fontFamily: TYPOGRAPHY.sans,
-                fontSize: 12,
+                fontFamily: SETUP.sans,
+                fontSize: 11,
                 fontWeight: 600,
-                color: COLORS.navy,
+                color: SETUP.ink,
+                background: SETUP.cardWhite,
                 textDecoration: 'none',
-                border: `1px solid ${COLORS.navy}55`,
-                borderRadius: RADIUS.pill,
-                padding: `2px ${SPACING.sm}`,
+                border: `1px solid ${SETUP.ink}`,
+                borderRadius: SETUP_RADIUS.pill,
+                padding: '4px 12px',
                 whiteSpace: 'nowrap',
               }}
             >

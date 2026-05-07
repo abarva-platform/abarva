@@ -14,9 +14,11 @@
 
 import { AdminCanonShellV2 } from '@/components/admin/AdminCanonShellV2';
 import { SetupChatRail } from '@/components/admin/SetupChatRail';
+import { PageHead } from '@/components/admin/overview/PageHead';
 import { AgentReadinessStateHeader } from '@/components/admin/agent-readiness-redesign/AgentReadinessStateHeader';
 import { CapabilityConstellation } from '@/components/admin/agent-readiness-redesign/CapabilityConstellation';
 import { PerAgentActions } from '@/components/admin/agent-readiness-redesign/PerAgentActions';
+import { SETUP } from '@/lib/admin/setup-tokens';
 import { resolveAdminTenant } from '@/lib/admin/admin-tenant';
 import { clientKeyToInventorySubstrateKey } from '@/lib/agent/tools/intelligence/_shared';
 import {
@@ -59,8 +61,14 @@ export default async function AgentReadinessPage() {
           flexDirection: 'column',
           gap: SPACING.lg,
           padding: SPACING.xl,
+          background: SETUP.paper,
         }}
       >
+        <PageHead
+          eyebrow={`Setup · Agent Readiness · ${tenant.tenantName}`}
+          title="What your agents can confidently do today"
+          lede="Per-agent state, segment-by-capability map, and what closes each gap."
+        />
         <AgentReadinessStateHeader agents={blocks.state} />
         <CapabilityConstellation matrix={blocks.matrix} />
         <PerAgentActions

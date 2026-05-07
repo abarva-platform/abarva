@@ -14,10 +14,12 @@
 
 import { AdminCanonShellV2 } from '@/components/admin/AdminCanonShellV2';
 import { SetupChatRail } from '@/components/admin/SetupChatRail';
+import { PageHead } from '@/components/admin/overview/PageHead';
 import { DataTrustStateHeader } from '@/components/admin/data-trust-redesign/DataTrustStateHeader';
 import { WhatsLoadedBuckets } from '@/components/admin/data-trust-redesign/WhatsLoadedBuckets';
 import { DataTrustActionQueue } from '@/components/admin/data-trust-redesign/DataTrustActionQueue';
 import { TrustLadderTable } from '@/components/admin/data-trust-redesign/TrustLadderTable';
+import { SETUP } from '@/lib/admin/setup-tokens';
 import { resolveAdminTenant } from '@/lib/admin/admin-tenant';
 import { clientKeyToInventorySubstrateKey } from '@/lib/agent/tools/intelligence/_shared';
 import {
@@ -68,8 +70,14 @@ export default async function DataTrustPage({ searchParams }: DataTrustPageProps
           flexDirection: 'column',
           gap: SPACING.lg,
           padding: SPACING.xl,
+          background: SETUP.paper,
         }}
       >
+        <PageHead
+          eyebrow={`Setup · Data Trust · ${tenant.tenantName}`}
+          title="What we know about you, and what's missing"
+          lede="The substrate panel — what's loaded, what to load next, and what each segment unlocks."
+        />
         <DataTrustStateHeader metrics={blocks.state} />
         <WhatsLoadedBuckets buckets={blocks.buckets} />
         <DataTrustActionQueue items={blocks.actionQueue} />

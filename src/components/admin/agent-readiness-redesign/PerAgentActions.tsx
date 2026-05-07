@@ -1,30 +1,24 @@
 /**
  * PerAgentActions · Block 5.3 (Setup Redesign Package PR C).
  *
- * Two visually distinct sections:
- *  - Admin-actionable: red/amber severity dots, prominent, link
- *    to Data Trust per item.
- *  - Engineering-tracked: muted, italic, Wave reference, no
- *    severity dot, no action affordance.
+ * Two visually distinct sections — admin-actionable (prominent,
+ * severity dots, Data Trust links) and engineering-tracked
+ * (muted, italic, Wave reference, no severity, no action).
  *
- * Per `DATA_BINDING_CATALOG.md` §5.3 and PR_C §4. The visual
- * separation is "the most important visual decision" of the
- * redesign — admin can scan in 3 seconds and know what they act
- * on vs. what's tracked separately.
+ * Per `DATA_BINDING_CATALOG.md` §5.3 / PR_C §4 + Setup canon refit.
  */
 
 import Link from 'next/link';
-import { COLORS, RADIUS, SPACING, TYPOGRAPHY } from '@/lib/design/design-tokens';
-import { SHELL } from '@/lib/shell/shell-tokens';
+import { SETUP, SETUP_RADIUS, SETUP_TYPE } from '@/lib/admin/setup-tokens';
 import type {
   AdminActionableItem,
   EngineeringTrackedItem,
 } from '@/lib/admin/agent-readiness-composer';
 
 const SEVERITY_DOT = {
-  high: COLORS.coralInk,
-  medium: COLORS.amberInk,
-  low: COLORS.mintInk,
+  high: SETUP.coral,
+  medium: SETUP.amber,
+  low: SETUP.mint,
 };
 
 export function PerAgentActions({
@@ -39,34 +33,23 @@ export function PerAgentActions({
       data-agent-readiness-block="per-agent-actions"
       data-testid="agent-readiness-per-agent-actions"
       style={{
-        background: SHELL.CARD_WHITE,
-        border: `1px solid ${SHELL.CARD_LINE_SOFT}`,
-        borderRadius: RADIUS.lg,
-        padding: SPACING.lg,
+        background: SETUP.cardWhite,
+        border: `1px solid ${SETUP.cardLine}`,
+        borderRadius: SETUP_RADIUS.lg,
+        padding: '20px 22px',
         display: 'flex',
         flexDirection: 'column',
-        gap: SPACING.lg,
+        gap: 18,
       }}
     >
       <header>
-        <h2
-          style={{
-            margin: 0,
-            fontFamily: TYPOGRAPHY.serif,
-            fontSize: 18,
-            color: SHELL.INK,
-            fontWeight: 600,
-          }}
-        >
-          Per-agent next-action
-        </h2>
+        <h2 style={SETUP_TYPE.cardH2}>Per-agent next-action</h2>
         <p
           style={{
-            margin: `${SPACING.xs} 0 0`,
-            fontFamily: TYPOGRAPHY.sans,
+            margin: '4px 0 0',
+            ...SETUP_TYPE.bodySans,
+            color: SETUP.inkMuted,
             fontSize: 12,
-            color: SHELL.INK_MUTED,
-            lineHeight: 1.5,
           }}
         >
           What admin can resolve directly, separated from what AbarVa engineering tracks.
@@ -78,11 +61,11 @@ export function PerAgentActions({
         <h3
           style={{
             margin: 0,
-            fontFamily: TYPOGRAPHY.mono,
+            fontFamily: SETUP.mono,
             fontSize: 10,
             letterSpacing: '0.12em',
             textTransform: 'uppercase',
-            color: SHELL.INK,
+            color: SETUP.ink,
             fontWeight: 700,
           }}
         >
@@ -91,16 +74,15 @@ export function PerAgentActions({
         {adminActionable.length === 0 ? (
           <p
             style={{
-              marginTop: SPACING.xs,
-              fontFamily: TYPOGRAPHY.sans,
-              fontSize: 13,
-              color: SHELL.INK_SOFT,
+              marginTop: 8,
+              ...SETUP_TYPE.bodySans,
+              color: SETUP.inkSoft,
             }}
           >
             All four agents have the data they need from the loaded segments.
           </p>
         ) : (
-          <ul role="list" style={{ listStyle: 'none', margin: 0, padding: 0, marginTop: SPACING.xs }}>
+          <ul role="list" style={{ listStyle: 'none', margin: 0, padding: 0, marginTop: 6 }}>
             {adminActionable.map((item) => (
               <li
                 key={item.id}
@@ -108,12 +90,12 @@ export function PerAgentActions({
                 data-agent-id={item.agentId}
                 data-action-severity={item.severity}
                 style={{
-                  display: 'flex',
+                  display: 'grid',
+                  gridTemplateColumns: '14px auto 1fr auto',
                   alignItems: 'center',
-                  gap: SPACING.sm,
-                  padding: `${SPACING.sm} 0`,
-                  borderTop: `1px solid ${SHELL.CARD_LINE_SOFT}`,
-                  flexWrap: 'wrap',
+                  gap: 12,
+                  padding: '12px 0',
+                  borderTop: `1px solid ${SETUP.cardLine}`,
                 }}
               >
                 <span
@@ -123,27 +105,30 @@ export function PerAgentActions({
                     height: 10,
                     borderRadius: '50%',
                     background: SEVERITY_DOT[item.severity],
-                    flexShrink: 0,
+                    justifySelf: 'start',
                   }}
                 />
-                <span style={{ fontFamily: TYPOGRAPHY.sans, fontSize: 14, fontWeight: 700, color: SHELL.INK }}>
+                <span
+                  style={{ fontFamily: SETUP.sans, fontSize: 13.5, fontWeight: 700, color: SETUP.ink }}
+                >
                   {item.agentLabel}
                 </span>
-                <span style={{ fontFamily: TYPOGRAPHY.sans, fontSize: 13, color: SHELL.INK, flex: 1 }}>
+                <span style={{ ...SETUP_TYPE.bodySans, color: SETUP.ink }}>
                   → can&apos;t do {item.capabilityGap} · needs {item.needs}
                 </span>
                 <Link
                   href={item.href}
                   data-testid={`per-agent-action-${item.id}-link`}
                   style={{
-                    fontFamily: TYPOGRAPHY.sans,
-                    fontSize: 12,
+                    fontFamily: SETUP.sans,
+                    fontSize: 11,
                     fontWeight: 600,
-                    color: COLORS.navy,
+                    color: SETUP.ink,
+                    background: SETUP.cardWhite,
                     textDecoration: 'none',
-                    border: `1px solid ${COLORS.navy}55`,
-                    borderRadius: RADIUS.pill,
-                    padding: `2px ${SPACING.sm}`,
+                    border: `1px solid ${SETUP.ink}`,
+                    borderRadius: SETUP_RADIUS.pill,
+                    padding: '4px 12px',
                     whiteSpace: 'nowrap',
                   }}
                 >
@@ -160,47 +145,41 @@ export function PerAgentActions({
         data-section="engineering-tracked"
         data-testid="per-agent-engineering-tracked"
         style={{
-          borderTop: `1px dashed ${SHELL.CARD_LINE_SOFT}`,
-          paddingTop: SPACING.md,
+          borderTop: `1px dashed ${SETUP.cardLine}`,
+          paddingTop: 14,
         }}
       >
         <h3
           style={{
             margin: 0,
-            fontFamily: TYPOGRAPHY.mono,
+            fontFamily: SETUP.mono,
             fontSize: 10,
             letterSpacing: '0.12em',
             textTransform: 'uppercase',
-            color: SHELL.INK_MUTED,
+            color: SETUP.inkMuted,
             fontWeight: 700,
           }}
         >
-          Tracked by AbarVa engineering · {engineeringTracked.length} item{engineeringTracked.length === 1 ? '' : 's'}
+          Tracked by AbarVa engineering · {engineeringTracked.length} item
+          {engineeringTracked.length === 1 ? '' : 's'}
         </h3>
-        <ul
-          role="list"
-          style={{
-            listStyle: 'none',
-            margin: 0,
-            padding: 0,
-            marginTop: SPACING.xs,
-          }}
-        >
+        <ul role="list" style={{ listStyle: 'none', margin: 0, padding: 0, marginTop: 6 }}>
           {engineeringTracked.map((item) => (
             <li
               key={item.id}
               data-engineering-id={item.id}
               style={{
-                padding: `${SPACING.xs} 0`,
-                fontFamily: TYPOGRAPHY.sans,
+                padding: '6px 0',
+                fontFamily: SETUP.sans,
                 fontSize: 12,
                 fontStyle: 'italic',
-                color: SHELL.INK_MUTED,
+                color: SETUP.inkMuted,
                 lineHeight: 1.5,
                 opacity: 0.85,
               }}
             >
-              <span style={{ fontWeight: 600 }}>{item.wave}:</span> {item.capability}
+              <span style={{ fontWeight: 600, color: SETUP.inkSoft }}>{item.wave}:</span>{' '}
+              {item.capability}
             </li>
           ))}
         </ul>
