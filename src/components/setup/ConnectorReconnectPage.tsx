@@ -13,7 +13,6 @@ const SUB_NAV_ITEMS = [
   { key: 'users', label: 'Users', href: '/admin/users' },
   { key: 'audit', label: 'Audit log', href: '/admin/audit' },
   { key: 'policies', label: 'Policies', href: '/admin/policies' },
-  { key: 'architecture', label: 'Architecture', href: '/admin/architecture' },
 ];
 
 interface ConnectorReconnectPageProps {

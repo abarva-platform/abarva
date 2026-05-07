@@ -19,7 +19,6 @@ export interface ActiveRouteOwnershipEntry {
 
 export const TARGET_ROUTE_PATTERNS = [
   '/platform/admin',
-  '/platform/admin/architecture',
   '/platform/admin/production-readiness',
   '/platform/admin/build-progress',
   '/source',
@@ -43,20 +42,6 @@ export const ACTIVE_ROUTE_OWNERSHIP_MAP: ActiveRouteOwnershipEntry[] = [
     ownerSurface: 'admin',
     primaryAgent: 'Steward',
     riskLevel: 'high',
-  },
-  {
-    routePattern: '/platform/admin/architecture',
-    activeRouteFile: 'src/app/(maestro)/platform/admin/architecture/page.tsx',
-    activePageComponent: 'ArchitecturePage',
-    importedShellOrNav: ['ArchitectureCanvas', 'ArchitectureOverviewPage'],
-    currentPrimaryVisibleComponent: 'ArchitectureCanvas + ArchitectureOverviewPage',
-    expectedCanonicalShell: 'AdminCanonShell',
-    expectedCanonicalWordmark: 'AbarvaWordmark',
-    compliance: 'partial',
-    requiredRemediation: 'Wrap route in AdminCanonShell and add workflow orientation without changing architecture content.',
-    ownerSurface: 'admin',
-    primaryAgent: 'Steward',
-    riskLevel: 'medium',
   },
   {
     routePattern: '/platform/admin/production-readiness',

@@ -59,15 +59,6 @@ const ROUTE_RULES: RouteRule[] = [
     remediation: 'Mount the admin route in AdminCanonShell and remove StewardAdminRail from active route ownership.',
   },
   {
-    routePattern: '/platform/admin/architecture',
-    routeFile: 'src/app/(maestro)/platform/admin/architecture/page.tsx',
-    ownerSurface: 'admin',
-    requiredCanonicalShellMarkers: ['AdminCanonShell', 'ArchitectureCanvas'],
-    requiredWorkflowMarkers: ['primaryAgent', 'pageQuestion'],
-    disallowedLegacyImports: ['StewardAdminRail'],
-    remediation: 'Wrap architecture route with AdminCanonShell while preserving ArchitectureCanvas + overview content.',
-  },
-  {
     routePattern: '/platform/admin/production-readiness',
     routeFile: 'src/app/(maestro)/platform/admin/production-readiness/page.tsx',
     ownerSurface: 'admin',
@@ -134,7 +125,6 @@ const ROUTE_RULES: RouteRule[] = [
 
 const DEFERRED_ROUTE_PATTERNS = new Map<string, string>([
   ['/platform/admin', 'Route still bound to legacy rail shell before Wave 17A integration branch reconciliation.'],
-  ['/platform/admin/architecture', 'Canonical wrapper not yet mounted in this branch snapshot.'],
   ['/platform/admin/production-readiness', 'Canonical wrapper not yet mounted in this branch snapshot.'],
   ['/platform/admin/build-progress', 'Canonical wrapper not yet mounted in this branch snapshot.'],
   ['/source', 'Source route shell enforcement lands in DESROUTE4 branch and integration cherry-pick.'],

@@ -23,7 +23,6 @@ const ROUTES = [
   { label: 'Setup · Users', path: '/admin/users', surface: 'Setup', key: 'set' },
   { label: 'Setup · Policies', path: '/admin/policies', surface: 'Setup', key: 'set' },
   { label: 'Setup · Tenant', path: '/admin/tenant', surface: 'Setup', key: 'set' },
-  { label: 'Setup · Architecture', path: '/admin/architecture', surface: 'Setup', key: 'set' },
 ] as const;
 
 type Route = (typeof ROUTES)[number];

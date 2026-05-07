@@ -135,14 +135,6 @@ const PAGE_RESULTS: PageComplianceResult[] = [
           'W32D + ADMIN6: ConnectorsReadinessView wired into /admin/connectors page on AdminCanonShellV2',
       },
       {
-        dimension: 'route_ownership',
-        description: 'Architecture sub-nav link absent from admin portal sidebar',
-        severity: 'medium',
-        safeFixApplied: true,
-        safeFixDescription:
-          'ADMIN2: AdminSidebar (src/components/admin/AdminSidebar.tsx) renders all 8 sub-section links from ADMIN_SUB_SECTIONS including Architecture',
-      },
-      {
         dimension: 'interaction_map',
         description:
           '"Approve" / "Reject" buttons have no onClick handlers (dead buttons in MaestrosView)',
@@ -206,15 +198,6 @@ const PAGE_RESULTS: PageComplianceResult[] = [
           'W32F + ADMIN5: BlockerDetailDrawerView wired into production readiness page on AdminCanonShellV2; ADMIN19 batch 2 added rendered BlockerDetailDrawer + GateCriteriaMatrix + ReadinessTileExpanded with searchParams-driven state',
       },
       {
-        dimension: 'route_ownership',
-        description:
-          'No drilldown link to Architecture page from deployment plane section',
-        severity: 'low',
-        safeFixApplied: true,
-        safeFixDescription:
-          'ADMIN2: AdminSidebar renders Architecture sub-nav link from ADMIN_SUB_SECTIONS — accessible from any admin page including Production Readiness',
-      },
-      {
         dimension: 'agent_centric',
         description:
           'Steward identity not surfaced as a named visual panel — only present as workflow strip metadata',
@@ -229,61 +212,7 @@ const PAGE_RESULTS: PageComplianceResult[] = [
   },
 
   // -------------------------------------------------------------------------
-  // Page 3: Architecture (/admin/architecture) — ADMIN8
-  // (was /platform/admin/architecture pre-ADMIN8; legacy URL redirects here.)
-  // Overall score: 58 → 90 (ADMIN4) → 94 (ADMIN19 batch 1)
-  //
-  // ADMIN19 honest deltas:
-  //   - interaction_map 80 → 90: ComponentDetailDrawer + AzureArchitectureCanvas
-  //     sub-tab + ArchitecturePlaneDrilldown shipped (closes the open WIRE2
-  //     component-drawer deviation).
-  //   - zone_composition 92 → 94: ArchitectureActionStrip rendered above-fold.
-  //   - workflow_canon 90 → 94: Azure sub-tab + plane drilldown surface the
-  //     atlas → steward escalation flow per blueprint.
-  // -------------------------------------------------------------------------
-  {
-    page: 'Architecture',
-    route: '/admin/architecture',
-    routeFile: 'src/app/(maestro)/admin/architecture/page.tsx',
-    wireframePath: 'not_found',
-    blueprintPath: 'docs/platform-design/page-blueprints/ARCHITECTURE_BLUEPRINT.md',
-    overallScore: 94,
-    status: 'partial',
-    dimensionScores: {
-      route_ownership: 92,
-      five_question_test: 90,
-      zone_composition: 94,
-      agent_centric: 92,
-      workflow_canon: 94,
-      data_contract: 90,
-      interaction_map: 90,
-      design_canon: 95,
-    },
-    deviations: [
-      {
-        dimension: 'agent_centric',
-        description:
-          'CRITICAL: primaryAgent was \'steward\' in page.tsx but blueprint mandates \'atlas\' — orientation strip showed "Anchor: Steward" instead of "ATLAS · ARCHITECTURE BRIEF"',
-        severity: 'high',
-        safeFixApplied: true,
-        safeFixDescription:
-          'Changed primaryAgent from \'steward\' to \'atlas\' in the workflow prop; updated page question + known/missing/next to Atlas-framing; orientation strip now shows Atlas identity',
-      },
-      {
-        dimension: 'interaction_map',
-        description: 'Component detail drawer not implemented (blueprint requires it)',
-        severity: 'low',
-        safeFixApplied: true,
-        safeFixDescription:
-          'ADMIN19 batch 1: ComponentDetailDrawer.tsx + ArchitecturePlaneDrilldown.tsx + AzureArchitectureCanvas.tsx + ArchitectureActionStrip.tsx wired into architecture page; drawer state read from searchParams',
-      },
-    ],
-    deterministicSeed: true,
-    auditedAt: AUDIT_DATE,
-  },
-
-  // -------------------------------------------------------------------------
-  // Page 4: Programs Index (/tenant/[slug]/programs)
+  // Page 3: Programs Index (/tenant/[slug]/programs)
   // Overall score: 68/100 → 76/100 (Wave 32: +8 phase filter view model)
   // -------------------------------------------------------------------------
   {

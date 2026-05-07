@@ -13,7 +13,6 @@ const SUB_NAV_ITEMS = [
   { key: 'audit', label: 'Audit log', href: '/admin/audit' },
   { key: 'policies', label: 'Policies', active: true, href: '/admin/policies' },
   { key: 'tenant', label: 'Tenant', href: '/admin/tenant' },
-  { key: 'architecture', label: 'Architecture', href: '/admin/architecture' },
 ];
 
 function statusPillStyle(status: PolicyItem['status']): { bg: string; text: string; label: string } {
