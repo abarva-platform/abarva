@@ -69,20 +69,34 @@ Output lands in `crawl/output/` (snapshots, CSV, JSON) and `vault/`
 ```bash
 # 1. Create a sourcing event end-to-end (uses sensible defaults for
 #    trigger / decisionOwner / scope / value / baseline). Resulting
-#    eventUrl is printed and saved to runs/<ts>-create-event/result.json.
+#    eventUrl prints to the audit log and lands in
+#    runs/<ts>-create-event/result.create-event.json.
 npm run scenario:create-event
 
 # 2. Walk every artifact card on the canvas, screenshot each.
+#    --event optional — defaults to the eventUrl from the most recent
+#    create-event run. Pass --event explicitly to target a different one.
+npm run scenario:walk-canvas
 npm run scenario:walk-canvas -- --event https://app.abarva.ai/source/events/<id>
 
 # 3. Promote the current stage if the gate is unblocked. Captures
-#    before/after URLs + screenshots.
-npm run scenario:promote-stage -- --event https://app.abarva.ai/source/events/<id>
+#    before/after URLs + screenshots. Same --event auto-resolution.
+npm run scenario:promote-stage
+
+# 4. Chain end-to-end: create-event → walk-canvas → promote-stage in
+#    one shot, single run dir, single audit log.
+npm run scenario:e2e
 ```
 
-Per-run output lands in `tools/source-crawl/runs/<ts>-<scenario>/`
-with an `audit.log` (every action timestamped), `result.json`, and
-screenshots.
+Per-run output lands in `tools/source-crawl/runs/<ts>-<scenario>/`:
+
+- `audit.log` — every action timestamped
+- `result.<step>.json` — typed result per step (`create-event` /
+  `walk-canvas` / `promote-stage`)
+- `summary.md` — human-readable run summary with embedded
+  screenshots; the file to open first when reviewing a run
+- `*.png` — viewport screenshots (artifact-* per card walked,
+  gate-before/gate-after for promotions, failure.png on error)
 
 ## Pre-flight checklist (from the spec)
 
