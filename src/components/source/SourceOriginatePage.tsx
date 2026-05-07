@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import type { CSSProperties } from 'react';
 import { useRouter } from 'next/navigation';
 import { AppShell } from '@/components/shell/AppShell';
@@ -191,6 +191,69 @@ const AGENT_GUIDANCE = [
 
 const initialIntakeState: IntakeState = { trigger: '', decisionOwner: '', scopeBoundary: '', valueTarget: '', baselineOwner: '' };
 
+// B6 — autosave intake to localStorage so closing the tab doesn't lose
+// work. Per-tenant key so two clients drafting events on the same
+// browser don't collide.
+const AUTOSAVE_KEY_PREFIX = 'abarva.source.originate.intake';
+function autosaveKey(clientKey: string): string {
+  return `${AUTOSAVE_KEY_PREFIX}.${clientKey}`;
+}
+
+interface AutosavedDraft {
+  intake: IntakeState;
+  categoryId: string | null;
+  savedAt: string;
+}
+
+function readAutosavedDraft(clientKey: string): AutosavedDraft | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    const raw = window.localStorage.getItem(autosaveKey(clientKey));
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as Partial<AutosavedDraft>;
+    if (!parsed.intake) return null;
+    // Validate shape — every key must be a string.
+    const safe: IntakeState = { ...initialIntakeState };
+    for (const key of Object.keys(initialIntakeState) as IntakeFieldId[]) {
+      const value = parsed.intake[key];
+      if (typeof value === 'string') safe[key] = value;
+    }
+    return {
+      intake: safe,
+      categoryId: typeof parsed.categoryId === 'string' ? parsed.categoryId : null,
+      savedAt: typeof parsed.savedAt === 'string' ? parsed.savedAt : '',
+    };
+  } catch {
+    return null;
+  }
+}
+
+function clearAutosavedDraft(clientKey: string): void {
+  if (typeof window === 'undefined') return;
+  try {
+    window.localStorage.removeItem(autosaveKey(clientKey));
+  } catch {
+    /* swallow — incognito + no quota */
+  }
+}
+
+function isIntakeDirty(state: IntakeState): boolean {
+  return Object.values(state).some((v) => v.trim().length > 0);
+}
+
+function formatRelativeTime(iso: string): string {
+  const then = Date.parse(iso);
+  if (!Number.isFinite(then)) return 'just now';
+  const seconds = Math.max(0, Math.round((Date.now() - then) / 1000));
+  if (seconds < 60) return 'just now';
+  const minutes = Math.round(seconds / 60);
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.round(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.round(hours / 24);
+  return `${days}d ago`;
+}
+
 function inferEventType(scopeBoundary: string, selectedCategory?: SourceCategory | null): CategoryEventType {
   if (selectedCategory) return selectedCategory.inferredEventType;
   const normalized = scopeBoundary.toLowerCase();
@@ -234,9 +297,45 @@ export function SourceOriginatePage({
   clientKey = 'apexretail',
 }: SourceOriginatePageProps) {
   const router = useRouter();
-  const [intake, setIntake] = useState<IntakeState>(initialIntakeState);
-  const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
+  // Hydrate intake + category from localStorage if a draft exists for
+  // this tenant. Lazy initializer keeps SSR safe — typeof window check
+  // inside the helper.
+  const [intake, setIntake] = useState<IntakeState>(() => {
+    const draft = readAutosavedDraft(clientKey);
+    return draft?.intake ?? initialIntakeState;
+  });
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(() => {
+    const draft = readAutosavedDraft(clientKey);
+    return draft?.categoryId ?? null;
+  });
   const [submitState, setSubmitState] = useState<SubmitState>({ status: 'idle' });
+  const [restoredAt, setRestoredAt] = useState<string | null>(() => {
+    const draft = readAutosavedDraft(clientKey);
+    return draft && isIntakeDirty(draft.intake) ? draft.savedAt || 'unknown' : null;
+  });
+
+  // Persist intake + category on every change so a tab close doesn't
+  // lose progress. Only writes when there's actually content to save —
+  // we don't want to overwrite a real draft with an empty default.
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if (!isIntakeDirty(intake) && !selectedCategoryId) {
+      // Nothing to save — clear any stale draft so an empty form
+      // doesn't pretend to have one on next mount.
+      clearAutosavedDraft(clientKey);
+      return;
+    }
+    try {
+      const payload: AutosavedDraft = {
+        intake,
+        categoryId: selectedCategoryId,
+        savedAt: new Date().toISOString(),
+      };
+      window.localStorage.setItem(autosaveKey(clientKey), JSON.stringify(payload));
+    } catch {
+      /* swallow */
+    }
+  }, [clientKey, intake, selectedCategoryId]);
 
   const selectedCategory = SOURCE_CATEGORIES.find((c) => c.id === selectedCategoryId) ?? null;
   const completedCount = useMemo(
@@ -285,6 +384,10 @@ export function SourceOriginatePage({
       return;
     }
 
+    // Submission succeeded — clear the autosaved draft so the next
+    // visit starts clean, and drop the "restored from" hint.
+    clearAutosavedDraft(clientKey);
+    setRestoredAt(null);
     router.push(payload.eventUrl ?? `/source/events/${payload.event.id}?stage=Strategy`);
   }
 
@@ -332,6 +435,28 @@ export function SourceOriginatePage({
                 <div style={EYEBROW}>Step 0 · Sentinel</div>
                 <h2 style={HEADING}>Sourcing event intake</h2>
                 <p style={SUBHEAD}>Trigger is required. Category and remaining fields can be refined via Sentinel after the event opens.</p>
+                {restoredAt ? (
+                  <div data-testid="source-originate-draft-restored" style={DRAFT_RESTORED_STYLE}>
+                    <span>
+                      Draft restored from autosave
+                      {restoredAt !== 'unknown' ? ` · ${formatRelativeTime(restoredAt)}` : ''}.
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        clearAutosavedDraft(clientKey);
+                        setIntake(initialIntakeState);
+                        setSelectedCategoryId(null);
+                        setRestoredAt(null);
+                        setSubmitState({ status: 'idle' });
+                      }}
+                      data-testid="source-originate-draft-discard"
+                      style={DRAFT_DISCARD_STYLE}
+                    >
+                      Discard draft
+                    </button>
+                  </div>
+                ) : null}
               </div>
 
               {/* T02 — Category picker */}
@@ -533,6 +658,23 @@ const HEADING: CSSProperties = {
 
 const SUBHEAD: CSSProperties = {
   margin: '5px 0 0', fontFamily: SHELL.SANS, fontSize: 12, lineHeight: 1.42, color: SHELL.INK_SOFT,
+};
+
+const DRAFT_RESTORED_STYLE: CSSProperties = {
+  display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12,
+  marginTop: 9,
+  padding: '6px 9px',
+  borderRadius: 6,
+  border: `1px solid ${SHELL.MINT_LINE}`,
+  background: SHELL.MINT_BG,
+  color: SHELL.MINT_TEXT,
+  fontFamily: SHELL.SANS, fontSize: 11.5, lineHeight: 1.35,
+};
+
+const DRAFT_DISCARD_STYLE: CSSProperties = {
+  border: 'none', background: 'transparent', color: SHELL.MINT_TEXT,
+  fontFamily: SHELL.MONO, fontSize: 9, fontWeight: 700, letterSpacing: '0.10em',
+  textTransform: 'uppercase', cursor: 'pointer', padding: 0,
 };
 
 const SECTION_LABEL: CSSProperties = {

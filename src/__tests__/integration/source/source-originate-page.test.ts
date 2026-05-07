@@ -79,6 +79,24 @@ describe('SourceOriginatePage (SRC-FLW-INTAKE)', () => {
     expect(meridianHtml).not.toContain('Ready to stand up a new IT sourcing event for Apex Retail');
   });
 
+  it('B6 — autosaves intake to localStorage with a per-tenant key', () => {
+    // Per-tenant key prefix prevents two clients drafting on the same browser
+    // from overwriting each other.
+    expect(source).toContain("AUTOSAVE_KEY_PREFIX = 'abarva.source.originate.intake'");
+    expect(source).toMatch(/autosaveKey\(clientKey\)/);
+    // Read on mount + write on every change + clear on submit.
+    expect(source).toContain('readAutosavedDraft(clientKey)');
+    expect(source).toContain('window.localStorage.setItem');
+    expect(source).toContain('clearAutosavedDraft(clientKey)');
+    // SSR-safe — typeof window guards.
+    expect(source).toContain("typeof window === 'undefined'");
+    // Visible "Draft restored" hint with discard button.
+    expect(source).toContain('source-originate-draft-restored');
+    expect(source).toContain('source-originate-draft-discard');
+    // Submission clears the draft so the next visit starts clean.
+    expect(source).toMatch(/clearAutosavedDraft\(clientKey\);[\s\S]+router\.push/);
+  });
+
   it('uses the resizable splitter shell — full-bleed, no max-width cap, drag handle present', () => {
     // Splitter from the canvas package wraps both panes, exposing a known testid.
     expect(html).toContain('source-canvas-splitter');
