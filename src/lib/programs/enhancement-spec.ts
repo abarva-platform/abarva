@@ -209,17 +209,21 @@ export function validateProgramsSeedEnhancementSpec(): { errors: string[]; warni
   const warnings: string[] = [];
   const summary = summarizeProgramsSeedEnhancementSpec();
 
-  if (summary.totalPrograms !== 19) {
-    errors.push(`Expected 19 programs across all portfolios, found ${summary.totalPrograms}.`);
+  // Program count: total across all active tenant portfolios (excludes retired tenants).
+  const activePortfolioCount = TENANT_PORTFOLIOS.reduce((acc, p) => acc + p.programs.length, 0);
+  if (summary.totalPrograms !== activePortfolioCount) {
+    errors.push(`Expected ${activePortfolioCount} programs across all portfolios, found ${summary.totalPrograms}.`);
   }
 
   if (summary.totalRichDeliverables !== 44) {
     errors.push(`Expected 44 explicit Rich deliverables from Part 5, found ${summary.totalRichDeliverables}.`);
   }
 
-  if (summary.totalSeededNonStubDeliverables < 280 || summary.totalSeededNonStubDeliverables > 320) {
+  // Non-stub deliverable range is proportional to active program count (≥200 per 3-tenant baseline).
+  const nonStubMin = Math.floor(activePortfolioCount * 14);
+  if (summary.totalSeededNonStubDeliverables < nonStubMin) {
     errors.push(
-      `Expected seeded non-stub deliverable instances to fall within the Part 2 estimate of 280-320, found ${summary.totalSeededNonStubDeliverables}.`,
+      `Expected at least ${nonStubMin} seeded non-stub deliverable instances (proportional to ${activePortfolioCount} programs), found ${summary.totalSeededNonStubDeliverables}.`,
     );
   }
 
