@@ -101,7 +101,11 @@ const ENGAGEMENT_FILTERS: ReadonlyArray<{ key: EngagementFilter; label: string }
 
 export function IntelligenceMap({ data }: Props) {
   const [selectedId, setSelectedId] = useState<string>(data.defaultSelectedId);
-  const [view, setView] = useState<MapView>('landscape');
+  // Kanban is the default · the scatter chart has structural label
+  // overlap when many bubbles cluster in the same value/lifecycle
+  // region. Landscape stays available via the view toggle for the
+  // visual-scan use case.
+  const [view, setView] = useState<MapView>('kanban');
   const [engagement, setEngagement] = useState<EngagementFilter>('all');
 
   const visibleNodes = useMemo(() => {
@@ -462,25 +466,54 @@ export function IntelligenceMap({ data }: Props) {
                       strokeWidth={fill.stroke ? 2.5 : 0}
                       opacity={fill.opacity}
                     />
-                    {node.r >= 14 && (
+                    {/* Native browser tooltip on hover · always-on. */}
+                    <title>
+                      {node.useCase.name} · {node.useCase.id}
+                      {node.initiativeDisplayId ? ` · ${node.initiativeDisplayId}` : ''}
+                    </title>
+                    {/* Only the SELECTED bubble shows a full name label.
+                        Big bubbles (r >= 16) get a small ID below; smaller
+                        ones rely on the tooltip + the inline detail card. */}
+                    {selected?.useCase.id === node.useCase.id ? (
+                      <>
+                        <text
+                          x={cx}
+                          y={cy + node.r + 16}
+                          fontFamily={F_BODY}
+                          fontSize={11}
+                          fill={C.ink}
+                          textAnchor="middle"
+                          fontWeight={600}
+                        >
+                          {truncate(node.useCase.name, 28)}
+                        </text>
+                        <text
+                          x={cx}
+                          y={cy + node.r + 28}
+                          fontFamily={F_MONO}
+                          fontSize={9}
+                          fill={C.faint}
+                          textAnchor="middle"
+                          letterSpacing="0.04em"
+                        >
+                          {node.useCase.id}
+                          {node.initiativeDisplayId && ` · ${node.initiativeDisplayId}`}
+                        </text>
+                      </>
+                    ) : node.r >= 16 ? (
                       <text
                         x={cx}
-                        y={cy + node.r + 14}
-                        fontFamily={F_BODY}
-                        fontSize={9.5}
-                        fill={node.engagementState === 'failed' ? C.faint : C.ink}
+                        y={cy + node.r + 13}
+                        fontFamily={F_MONO}
+                        fontSize={8}
+                        fill={C.faint}
                         textAnchor="middle"
-                        fontWeight={node.engagementState === 'in_flight' || node.engagementState === 'at_risk' ? 600 : 500}
+                        letterSpacing="0.04em"
                       >
-                        {truncate(node.useCase.name, 22)}
-                      </text>
-                    )}
-                    {node.r >= 14 && (
-                      <text x={cx} y={cy + node.r + 24} fontFamily={F_MONO} fontSize={8} fill={C.faint} textAnchor="middle">
-                        {node.useCase.id}
+                        {node.useCase.id.replace(/^UC-HC-/, '')}
                         {node.initiativeDisplayId && ` · ${node.initiativeDisplayId}`}
                       </text>
-                    )}
+                    ) : null}
                   </g>
                 );
               })}
