@@ -22,6 +22,12 @@ import type { AIInitiative, AIInitiativeVendorRow } from '@/lib/admin/ai-initiat
 // Public types
 // ─────────────────────────────────────────────────────────────────────────────
 
+/**
+ * T-8 (Bind 4): the four CFO lenses. Driven by `?lens=<key>` URL param.
+ * Default = 'value'.
+ */
+export type TowerLens = 'value' | 'risk' | 'contract' | 'adopt';
+
 export type BandMetricKey =
   | 'portfolio_roi'
   | 'active_pressures'
@@ -104,18 +110,34 @@ function deriveConfidenceFromCoverage(
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
+ * T-8: which band tile leads (renders in `hero` font) per lens. The other
+ * four tiles render in normal weight. Lens changes which decision posture
+ * the CFO is reading first; tile content is the same across lenses.
+ */
+const HERO_BY_LENS: Record<TowerLens, BandMetricKey> = {
+  value: 'portfolio_roi',
+  risk: 'spend_at_risk',
+  contract: 'renewals_90d',
+  adopt: 'adoption_rate',
+};
+
+/**
  * Build the Tower CFO band metrics view from substrate inputs.
  * Returns deterministic placeholders ("—") when no substrate is available.
+ *
+ * `lens` controls which tile renders as the hero (lead) tile. Defaults to
+ * 'value' which makes Portfolio ROI the hero (matches pre-T-8 behaviour).
  */
 export function buildTowerBandMetrics(
   initiatives: ReadonlyArray<AIInitiative>,
   vendors: ReadonlyArray<AIInitiativeVendorRow>,
   todayIso: string,
+  lens: TowerLens = 'value',
 ): TowerBandMetricsView {
   const isEmpty = initiatives.length === 0;
   if (isEmpty) {
     return {
-      metrics: emptyPlaceholders(),
+      metrics: applyHero(emptyPlaceholders(), HERO_BY_LENS[lens]),
       isEmpty: true,
       deterministicSeed: true,
     };
@@ -127,17 +149,33 @@ export function buildTowerBandMetrics(
   const renewals = computeRenewals(vendors, todayIso);
   const adoption = computeAdoption(initiatives);
 
+  const all: BandMetric[] = [
+    portfolioRoi,
+    activePressures,
+    spendAtRisk,
+    renewals,
+    adoption,
+  ];
+
   return {
-    metrics: [
-      portfolioRoi,
-      activePressures,
-      spendAtRisk,
-      renewals,
-      adoption,
-    ],
+    metrics: applyHero(all, HERO_BY_LENS[lens]),
     isEmpty: false,
     deterministicSeed: true,
   };
+}
+
+/**
+ * Apply the lens-driven hero swap: set `hero=true` on the lens-leading tile,
+ * `hero=false` on the rest. Reorders so the hero tile is first.
+ */
+function applyHero(
+  metrics: ReadonlyArray<BandMetric>,
+  heroKey: BandMetricKey,
+): ReadonlyArray<BandMetric> {
+  const updated = metrics.map((m) => ({ ...m, hero: m.key === heroKey }));
+  const heroIndex = updated.findIndex((m) => m.key === heroKey);
+  if (heroIndex <= 0) return updated;
+  return [updated[heroIndex]!, ...updated.slice(0, heroIndex), ...updated.slice(heroIndex + 1)];
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

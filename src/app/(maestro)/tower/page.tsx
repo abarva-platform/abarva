@@ -42,6 +42,7 @@ import {
 import {
   buildTowerBandMetrics,
   type TowerBandMetricsView,
+  type TowerLens,
 } from '@/lib/tower/band-metrics-view';
 import {
   buildTowerPressuresView,
@@ -94,6 +95,17 @@ async function buildTowerVendors(): Promise<ReadonlyArray<AIInitiativeVendorRow>
  */
 function buildTowerToday(): string {
   return '2026-05-07';
+}
+
+/**
+ * T-8 (Bind 4): resolve `?lens=<key>` to a valid TowerLens, defaulting to
+ * 'value' for unknown / missing values. Mirrors resolveTowerTab pattern.
+ */
+function resolveTowerLens(raw: string | undefined): TowerLens {
+  if (raw === 'value' || raw === 'risk' || raw === 'contract' || raw === 'adopt') {
+    return raw;
+  }
+  return 'value';
 }
 
 // T-2 (Tower Fix Package): reduced from 10 to 5 tabs. Dropped:
@@ -476,7 +488,7 @@ function TowerSetupInitiativesPanel({
 export default async function TowerPage({
   searchParams,
 }: {
-  searchParams?: Promise<{ tab?: string }>;
+  searchParams?: Promise<{ tab?: string; lens?: string }>;
 }) {
   // REASON-29 — Build the portfolio-level Atlas SynthesisContext server-side so
   // the provenance ribbon can surface the inputs that grounded the streamed
@@ -502,15 +514,22 @@ export default async function TowerPage({
   const towerSetupInitiativesFeed = await buildTowerSetupInitiativesFeed();
   const towerInitiatives = await buildTowerInitiatives();
   const towerVendors = await buildTowerVendors();
+  const resolvedSearchParams = searchParams ? await searchParams : {};
+  const activeTab = resolveTowerTab(resolvedSearchParams.tab);
+  // T-8 (Bind 4): resolve the active lens server-side so the band/pressures
+  // view-models can re-rank per lens. Falls back to 'value' for unknown.
+  const activeLens: TowerLens = resolveTowerLens(resolvedSearchParams.lens);
   const towerBandMetrics: TowerBandMetricsView = buildTowerBandMetrics(
     towerInitiatives,
     towerVendors,
     buildTowerToday(),
+    activeLens,
   );
   const towerPressures: TowerPressuresView = buildTowerPressuresView(
     towerInitiatives,
     towerVendors,
     buildTowerToday(),
+    activeLens,
   );
   const towerAtlasObservations: AtlasObservationsView = buildTowerAtlasObservationsView(
     towerInitiatives,
@@ -518,8 +537,6 @@ export default async function TowerPage({
     towerPressures,
     buildTowerToday(),
   );
-  const resolvedSearchParams = searchParams ? await searchParams : {};
-  const activeTab = resolveTowerTab(resolvedSearchParams.tab);
   const seedTenant =
     findTenantByRouteSlug(towerSetupInitiativesFeed.tenantKey) ??
     findTenantByRouteSlug('apexretail');
