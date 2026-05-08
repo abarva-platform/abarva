@@ -5,6 +5,14 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { AppShell } from '@/components/shell/AppShell';
 import { SourceOnboardingTour } from '@/components/source/onboarding/SourceOnboardingTour';
 import { listSupportedGenerationCodes } from '@/lib/source/agent-generation';
+
+// xlsx-generatable codes — surfaced to the canvas so the artifact card
+// shows a "Download xlsx template" anchor on the right rows. Hardcoded
+// here to keep the canvas client-bundle free of `'server-only'` imports
+// — the Source-side xlsx renderer set is small and slow-changing.
+const XLSX_GENERATABLE_CODES_CLIENT: ReadonlySet<string> = new Set([
+  'd19_pricing_workbook',
+]);
 import type {
   SourceEventArtifactState,
   SourceEventArtifactStatus,
@@ -391,6 +399,10 @@ export function UniversalCanvasShell({
           onGenerateFromClaude={handleArtifactGenerate}
           generatableCodes={generatableCodes}
           generationPendingByCode={pendingGenerationByCode}
+          xlsxGeneratableCodes={XLSX_GENERATABLE_CODES_CLIENT}
+          xlsxDownloadHref={(code) =>
+            `/api/v1/source/${event.id}/artifacts/${encodeURIComponent(code)}/render-xlsx`
+          }
         />
       ),
     },
