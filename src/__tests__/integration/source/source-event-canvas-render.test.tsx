@@ -140,12 +140,13 @@ function render(
     gateCriterionStates?: SourceEventGateCriterion[];
     evidenceStates?: SourceEventEvidence[];
     templateByCode?: Record<string, string | null>;
+    viewStage?: SourceEventArtifactState['stage'];
   } = {},
 ): string {
   return renderToStaticMarkup(
     createElement(UniversalCanvasShell, {
       event: makeEvent(),
-      viewStage: 'scope',
+      viewStage: options.viewStage ?? 'scope',
       artifactStates: options.artifactStates ?? [makeArtifactState()],
       gateCriterionStates: options.gateCriterionStates ?? [makeCriterion()],
       evidenceStates: options.evidenceStates ?? [makeEvidence()],
@@ -263,6 +264,36 @@ describe('UniversalCanvasShell · SSR render', () => {
     // Choice strip label reflects the populate-not-submit semantics.
     expect(html).toContain('Try one for');
     expect(html).not.toContain('Three choices for');
+  });
+
+  // ── Slice 2 · xlsx download anchor ────────────────────────────────────────
+  it('renders Download xlsx template anchor on d19 pricing workbook', () => {
+    const html = render({
+      viewStage: 'pricing',
+      artifactStates: [
+        makeArtifactState({
+          artifactCode: 'd19_pricing_workbook',
+          stage: 'pricing',
+        }),
+      ],
+    });
+    expect(html).toContain(
+      'source-canvas-document-body-download-xlsx-d19_pricing_workbook',
+    );
+    expect(html).toContain('Download xlsx template');
+    // Anchor links to the GET endpoint with the event UUID + code.
+    expect(html).toMatch(
+      /href="[^"]*\/api\/v1\/source\/[^/]+\/artifacts\/d19_pricing_workbook\/render-xlsx"/,
+    );
+  });
+
+  it('does NOT render Download xlsx anchor on artifacts without an xlsx renderer', () => {
+    const html = render({
+      artifactStates: [
+        makeArtifactState({ artifactCode: 'd05_scope_memo', stage: 'scope' }),
+      ],
+    });
+    expect(html).not.toContain('source-canvas-document-body-download-xlsx-');
   });
 
   // ── Slice 1 · Generate with Sentinel ──────────────────────────────────────

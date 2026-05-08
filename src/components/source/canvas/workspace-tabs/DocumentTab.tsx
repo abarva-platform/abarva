@@ -43,6 +43,17 @@ interface DocumentTabProps {
   generatableCodes?: ReadonlySet<string>;
   /** Per-artifact generation-pending flag. */
   generationPendingByCode?: Record<string, boolean>;
+  /**
+   * Set of codes that have an xlsx renderer wired. The card shows a
+   * "Download xlsx template" button when its code is in this set.
+   */
+  xlsxGeneratableCodes?: ReadonlySet<string>;
+  /**
+   * Build the xlsx download URL for a given artifact code. Page passes
+   * this so the button can deep-link directly to the GET endpoint —
+   * no fetch + Blob plumbing on the client.
+   */
+  xlsxDownloadHref?: (code: string) => string;
 }
 
 const STATUS_LABEL: Record<SourceEventArtifactStatus, string> = {
@@ -73,6 +84,8 @@ export function DocumentTab({
   onGenerateFromClaude,
   generatableCodes,
   generationPendingByCode,
+  xlsxGeneratableCodes,
+  xlsxDownloadHref,
 }: DocumentTabProps) {
   if (artifacts.length === 0) {
     return (
@@ -176,6 +189,11 @@ export function DocumentTab({
               generationPending={
                 generationPendingByCode?.[active.artifactCode] ?? false
               }
+              xlsxDownloadHref={
+                xlsxGeneratableCodes?.has(active.artifactCode) && xlsxDownloadHref
+                  ? xlsxDownloadHref(active.artifactCode)
+                  : null
+              }
             />
             {body ? null : (
               <p style={MISSING_TEMPLATE_STYLE}>
@@ -207,6 +225,8 @@ interface ArtifactBodyEditorProps {
   >;
   isGeneratable: boolean;
   generationPending: boolean;
+  /** When non-null the card shows a "Download xlsx template" anchor. */
+  xlsxDownloadHref: string | null;
 }
 
 function ArtifactBodyEditor({
@@ -219,6 +239,7 @@ function ArtifactBodyEditor({
   onGenerateFromClaude,
   isGeneratable,
   generationPending,
+  xlsxDownloadHref,
 }: ArtifactBodyEditorProps) {
   const [editing, setEditing] = useState(false);
   const [generationError, setGenerationError] = useState<string | null>(null);
@@ -335,6 +356,16 @@ function ArtifactBodyEditor({
             >
               {bodyIsAuthored ? 'Edit body' : 'Author content'}
             </button>
+          ) : null}
+          {xlsxDownloadHref ? (
+            <a
+              href={xlsxDownloadHref}
+              data-testid={`source-canvas-document-body-download-xlsx-${artifact.artifactCode}`}
+              style={{ ...GHOST_BUTTON_STYLE, textDecoration: 'none' }}
+              download
+            >
+              Download xlsx template
+            </a>
           ) : null}
         </div>
       </div>
