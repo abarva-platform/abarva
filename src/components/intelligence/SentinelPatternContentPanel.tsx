@@ -51,7 +51,7 @@ export function SentinelPatternContentPanel({
         display: 'flex',
         flexDirection: 'column',
         gap: 14,
-        fontFamily: 'DM Sans, -apple-system, sans-serif',
+        fontFamily: 'Inter, -apple-system, sans-serif',
         color: COLORS.ink,
       }}
     >

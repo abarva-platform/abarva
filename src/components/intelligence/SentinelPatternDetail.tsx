@@ -57,7 +57,7 @@ export function SentinelPatternDetail({ view }: SentinelPatternDetailProps) {
         border: `1px solid ${COLORS.border}`,
         borderTop: `3px solid ${accent}`,
         borderRadius: 12,
-        fontFamily: 'DM Sans, -apple-system, sans-serif',
+        fontFamily: 'Inter, -apple-system, sans-serif',
         color: COLORS.ink,
         display: 'flex',
         flexDirection: 'column',

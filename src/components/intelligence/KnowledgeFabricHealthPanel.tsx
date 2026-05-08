@@ -8,7 +8,7 @@ const C = {
   ink: '#0A0C12',
   muted: '#525866',
   mutedSoft: '#9AA3B2',
-  border: '#E8E6E1',
+  border: '#e5e5e5',
   navy: '#1B2B5C',
   navySoft: 'rgba(27,43,92,0.08)',
   amber: '#F59E0B',
