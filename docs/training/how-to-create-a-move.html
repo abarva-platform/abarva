@@ -3,14 +3,15 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>How to Create a Strategic Move — AbarVa Training Guide</title>
+  <title>AbarVa — User Guide</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;0,9..144,700;1,9..144,300;1,9..144,400&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,600;1,9..144,300;1,9..144,400&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet" />
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
+      --nav-w:      240px;
       --ink:        #0A0C12;
       --ink2:       #1C1F2E;
       --body:       #1F2433;
@@ -19,264 +20,368 @@
       --navy:       #1B2B5C;
       --navy-mid:   #253872;
       --navy-soft:  rgba(27,43,92,0.08);
-      --navy-line:  rgba(27,43,92,0.15);
+      --navy-line:  rgba(27,43,92,0.18);
       --teal:       #0E8A65;
       --teal-soft:  rgba(14,138,101,0.09);
       --teal-line:  rgba(14,138,101,0.25);
       --amber:      #92400E;
       --amber-soft: rgba(146,64,14,0.08);
-      --amber-line: rgba(146,64,14,0.25);
+      --amber-line: rgba(146,64,14,0.22);
+      --purple:     #5B21B6;
+      --purple-soft:rgba(91,33,182,0.07);
+      --purple-line:rgba(91,33,182,0.2);
       --red:        #991B1B;
       --red-soft:   rgba(153,27,27,0.07);
-      --red-line:   rgba(153,27,27,0.25);
-      --slate:      #374151;
+      --red-line:   rgba(153,27,27,0.22);
       --border:     #D1D5DB;
-      --border-light: #E5E7EB;
+      --border-lt:  #E5E7EB;
       --surface:    #ffffff;
       --surface2:   #F9FAFB;
       --surface3:   #F3F4F6;
-      --sidebar-w:  260px;
-      --f-display:  'Fraunces', Georgia, serif;
+      --f-disp:     'Fraunces', Georgia, serif;
       --f-body:     'Inter', -apple-system, sans-serif;
       --f-mono:     'JetBrains Mono', ui-monospace, monospace;
     }
 
     html { font-size: 15px; scroll-behavior: smooth; }
-
     body {
       font-family: var(--f-body);
       background: var(--surface);
       color: var(--body);
       line-height: 1.65;
       -webkit-font-smoothing: antialiased;
-    }
-
-    /* ═══════════════════════════════════
-       HERO BAND — full bleed
-    ═══════════════════════════════════ */
-    .hero {
-      background: var(--navy);
-      color: #ffffff;
-      padding: 64px 64px 56px;
-      position: relative;
-      overflow: hidden;
-    }
-    .hero::before {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background:
-        radial-gradient(ellipse 80% 60% at 90% 50%, rgba(255,255,255,0.04) 0%, transparent 70%),
-        radial-gradient(ellipse 40% 80% at 5% 100%, rgba(255,255,255,0.03) 0%, transparent 60%);
-      pointer-events: none;
-    }
-    .hero-eyebrow {
-      font-family: var(--f-mono);
-      font-size: 10px;
-      font-weight: 700;
-      letter-spacing: 0.2em;
-      text-transform: uppercase;
-      color: rgba(255,255,255,0.5);
-      margin-bottom: 18px;
-    }
-    .hero-eyebrow span { color: rgba(255,255,255,0.9); }
-    .hero-title {
-      font-family: var(--f-display);
-      font-size: clamp(36px, 5vw, 58px);
-      font-weight: 400;
-      color: #ffffff;
-      line-height: 1.05;
-      letter-spacing: -0.02em;
-      margin-bottom: 18px;
-      max-width: 640px;
-    }
-    .hero-sub {
-      font-size: 16px;
-      color: rgba(255,255,255,0.72);
-      max-width: 560px;
-      line-height: 1.6;
-      margin-bottom: 40px;
-    }
-    .hero-meta {
       display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
+      flex-direction: column;
+      min-height: 100vh;
     }
-    .hero-tag {
-      font-family: var(--f-mono);
-      font-size: 10px;
-      font-weight: 600;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      padding: 5px 12px;
-      border-radius: 4px;
-      background: rgba(255,255,255,0.1);
-      color: rgba(255,255,255,0.85);
-      border: 1px solid rgba(255,255,255,0.12);
-    }
-    .hero-tag.accent { background: rgba(255,255,255,0.18); color: #fff; }
 
     /* ═══════════════════════════════════
-       BODY LAYOUT — sidebar + content
+       TOP BAR
     ═══════════════════════════════════ */
-    .body-wrap {
-      display: grid;
-      grid-template-columns: var(--sidebar-w) 1fr;
-      min-height: calc(100vh - 200px);
-      align-items: start;
+    .topbar {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      height: 52px;
+      background: var(--navy);
+      display: flex;
+      align-items: center;
+      padding: 0 24px;
+      gap: 16px;
+      z-index: 200;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
     }
-
-    /* ── Sticky sidebar ── */
-    .sidebar {
-      position: sticky;
-      top: 0;
-      height: 100vh;
-      overflow-y: auto;
-      border-right: 1px solid var(--border-light);
-      background: var(--surface2);
-      padding: 32px 0 48px;
+    .topbar-brand {
+      font-family: var(--f-disp);
+      font-size: 20px;
+      font-weight: 400;
+      color: #fff;
+      letter-spacing: -0.01em;
+      text-decoration: none;
     }
-    .sidebar::-webkit-scrollbar { width: 0; }
-    .sidebar-label {
+    .topbar-sep { color: rgba(255,255,255,0.25); font-size: 18px; }
+    .topbar-title {
       font-family: var(--f-mono);
-      font-size: 9px;
+      font-size: 10px;
       font-weight: 700;
       letter-spacing: 0.18em;
       text-transform: uppercase;
-      color: var(--faint);
-      padding: 0 24px;
-      margin-bottom: 14px;
+      color: rgba(255,255,255,0.6);
     }
-    .toc-list { list-style: none; }
-    .toc-item a {
+    .topbar-search {
+      margin-left: auto;
       display: flex;
-      align-items: baseline;
-      gap: 10px;
-      padding: 9px 24px;
+      align-items: center;
+      gap: 8px;
+      background: rgba(255,255,255,0.1);
+      border: 1px solid rgba(255,255,255,0.14);
+      border-radius: 6px;
+      padding: 5px 12px;
+      color: rgba(255,255,255,0.55);
+      font-family: var(--f-body);
+      font-size: 12px;
+      cursor: default;
+    }
+
+    /* ═══════════════════════════════════
+       LAYOUT
+    ═══════════════════════════════════ */
+    .layout {
+      display: flex;
+      padding-top: 52px;
+      min-height: 100vh;
+    }
+
+    /* ═══════════════════════════════════
+       LEFT NAV — Apple docs style
+    ═══════════════════════════════════ */
+    .leftnav {
+      width: var(--nav-w);
+      flex-shrink: 0;
+      position: fixed;
+      top: 52px;
+      bottom: 0;
+      left: 0;
+      overflow-y: auto;
+      background: var(--surface2);
+      border-right: 1px solid var(--border-lt);
+      padding: 20px 0 48px;
+      z-index: 100;
+    }
+    .leftnav::-webkit-scrollbar { width: 0; }
+
+    .nav-group { margin-bottom: 6px; }
+
+    .nav-group-label {
+      font-family: var(--f-mono);
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--faint);
+      padding: 12px 18px 6px;
+      display: block;
+    }
+
+    .nav-item {
+      display: block;
+      padding: 7px 18px 7px 20px;
       font-size: 13px;
       font-weight: 500;
       color: var(--muted);
       text-decoration: none;
       border-left: 2px solid transparent;
-      transition: all 120ms ease;
+      transition: all 100ms ease;
+      line-height: 1.3;
     }
-    .toc-item a:hover { color: var(--ink); background: var(--surface3); }
-    .toc-item a.active { color: var(--navy); border-left-color: var(--navy); background: var(--navy-soft); font-weight: 600; }
-    .toc-num {
-      font-family: var(--f-mono);
-      font-size: 9px;
+    .nav-item:hover { color: var(--ink); background: rgba(0,0,0,0.03); }
+    .nav-item.active {
+      color: var(--navy);
       font-weight: 700;
-      color: var(--faint);
+      border-left-color: var(--navy);
+      background: var(--navy-soft);
+    }
+    .nav-item.phase {
+      padding-left: 28px;
+      font-size: 12.5px;
+    }
+    .nav-item.phase.active { border-left-color: var(--navy); }
+    .nav-phase-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 20px;
+      height: 16px;
+      border-radius: 3px;
+      font-family: var(--f-mono);
+      font-size: 8px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      background: var(--navy);
+      color: #fff;
+      margin-right: 6px;
+      vertical-align: middle;
       flex-shrink: 0;
     }
-    .toc-item a.active .toc-num { color: var(--navy); }
+    .nav-phase-badge.teal { background: var(--teal); }
 
-    /* ── Content area ── */
+    /* ═══════════════════════════════════
+       CONTENT
+    ═══════════════════════════════════ */
     .content {
-      padding: 0;
+      margin-left: var(--nav-w);
+      flex: 1;
+      min-width: 0;
     }
 
-    /* ── Sections ── */
+    /* ═══════════════════════════════════
+       SECTIONS
+    ═══════════════════════════════════ */
     .section {
-      padding: 64px 72px 0;
-      border-bottom: 1px solid var(--border-light);
-      padding-bottom: 64px;
+      padding: 64px 72px 72px;
+      border-bottom: 1px solid var(--border-lt);
+      max-width: 1100px;
     }
     .section:last-child { border-bottom: none; }
 
-    .section-eyebrow {
+    .section-band {
+      padding: 64px 72px 72px;
+      border-bottom: 1px solid var(--border-lt);
+    }
+    .section-band.navy-bg {
+      background: var(--navy);
+      color: #fff;
+    }
+    .section-band.purple-bg {
+      background: linear-gradient(135deg, #1e1b4b 0%, #312e81 100%);
+      color: #fff;
+    }
+    .section-band.teal-bg {
+      background: linear-gradient(135deg, #064e3b 0%, #065f46 100%);
+      color: #fff;
+    }
+
+    /* Eyebrow + title + lead */
+    .eyebrow {
       font-family: var(--f-mono);
       font-size: 9px;
       font-weight: 700;
-      letter-spacing: 0.2em;
+      letter-spacing: 0.22em;
       text-transform: uppercase;
       color: var(--faint);
       margin-bottom: 10px;
     }
+    .eyebrow.light { color: rgba(255,255,255,0.5); }
+    .eyebrow.teal-color { color: var(--teal); }
+    .eyebrow.purple-color { color: #a78bfa; }
+
     .section-title {
-      font-family: var(--f-display);
-      font-size: clamp(26px, 3vw, 34px);
+      font-family: var(--f-disp);
+      font-size: clamp(28px, 3.5vw, 40px);
       font-weight: 400;
       color: var(--ink);
-      line-height: 1.1;
+      line-height: 1.08;
       letter-spacing: -0.02em;
-      margin-bottom: 20px;
+      margin-bottom: 18px;
     }
+    .section-title.light { color: #fff; }
+
     .section-lead {
       font-size: 16px;
-      font-weight: 400;
       color: var(--muted);
       line-height: 1.65;
       max-width: 72ch;
       margin-bottom: 40px;
     }
+    .section-lead.light { color: rgba(255,255,255,0.75); }
 
-    /* ── Running body text ── */
-    .body-text {
+    /* Body text */
+    .body-p {
       font-size: 15px;
       color: var(--body);
-      line-height: 1.7;
+      line-height: 1.72;
       max-width: 74ch;
+      margin-bottom: 18px;
     }
-    .body-text + .body-text { margin-top: 16px; }
+    .body-p strong { color: var(--ink); font-weight: 700; }
 
-    h3.sub-heading {
-      font-family: var(--f-display);
-      font-size: 20px;
-      font-weight: 500;
+    h3.h3 {
+      font-family: var(--f-disp);
+      font-size: 22px;
+      font-weight: 400;
       color: var(--ink);
       letter-spacing: -0.01em;
-      margin: 40px 0 12px;
+      margin: 44px 0 14px;
     }
-    h4.sub-heading-sm {
+    h4.h4 {
       font-family: var(--f-body);
-      font-size: 13px;
+      font-size: 11px;
       font-weight: 700;
-      letter-spacing: 0.04em;
+      letter-spacing: 0.12em;
       text-transform: uppercase;
-      color: var(--slate);
+      color: var(--faint);
       margin: 32px 0 12px;
     }
 
     /* ═══════════════════════════════════
-       FLOW DIAGRAM — horizontal arrow chain
+       CALLOUTS
+    ═══════════════════════════════════ */
+    .callout {
+      border-radius: 8px;
+      padding: 16px 20px;
+      margin: 22px 0;
+      display: flex;
+      gap: 14px;
+      align-items: flex-start;
+      max-width: 80ch;
+    }
+    .callout-icon { font-size: 18px; flex-shrink: 0; line-height: 1.3; }
+    .callout-inner { flex: 1; min-width: 0; }
+    .callout-label {
+      font-family: var(--f-mono);
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      margin-bottom: 5px;
+    }
+    .callout-body { font-size: 14px; line-height: 1.6; }
+    .callout.info    { background: var(--navy-soft); border: 1px solid var(--navy-line); }
+    .callout.info .callout-label { color: var(--navy); }
+    .callout.info .callout-body  { color: var(--navy-mid); }
+    .callout.success { background: var(--teal-soft); border: 1px solid var(--teal-line); }
+    .callout.success .callout-label { color: var(--teal); }
+    .callout.success .callout-body  { color: #064e3b; }
+    .callout.warn    { background: var(--amber-soft); border: 1px solid var(--amber-line); }
+    .callout.warn .callout-label { color: var(--amber); }
+    .callout.warn .callout-body  { color: var(--amber); }
+    .callout.purple  { background: var(--purple-soft); border: 1px solid var(--purple-line); }
+    .callout.purple .callout-label { color: var(--purple); }
+    .callout.purple .callout-body  { color: #3730a3; }
+
+    /* ═══════════════════════════════════
+       TERM BOXES
+    ═══════════════════════════════════ */
+    .terms {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+      margin: 28px 0;
+      max-width: 80ch;
+    }
+    .term {
+      display: grid;
+      grid-template-columns: 160px 1fr;
+      border-bottom: 1px solid var(--border-lt);
+    }
+    .term:last-child { border-bottom: none; }
+    .term-name {
+      padding: 14px 16px;
+      background: var(--surface2);
+      border-right: 1px solid var(--border-lt);
+      font-family: var(--f-mono);
+      font-size: 11.5px;
+      font-weight: 700;
+      color: var(--navy);
+    }
+    .term-def {
+      padding: 14px 16px;
+      font-size: 13.5px;
+      color: var(--body);
+      line-height: 1.55;
+    }
+    .term-def em { color: var(--navy); font-style: italic; }
+
+    /* ═══════════════════════════════════
+       FLOW — horizontal P0→P5
     ═══════════════════════════════════ */
     .flow {
       display: flex;
       align-items: stretch;
-      gap: 0;
-      margin: 40px 0;
-      overflow-x: auto;
       border: 1px solid var(--border);
       border-radius: 10px;
       background: var(--surface2);
+      overflow: hidden;
+      margin: 32px 0;
     }
     .flow-step {
       flex: 1;
-      min-width: 110px;
-      padding: 20px 18px;
+      min-width: 100px;
+      padding: 18px 14px;
       display: flex;
       flex-direction: column;
       align-items: center;
       text-align: center;
-      gap: 8px;
+      gap: 7px;
+      border-right: 1px solid var(--border-lt);
       position: relative;
-      border-right: 1px solid var(--border);
+      cursor: default;
+      transition: background 120ms;
     }
     .flow-step:last-child { border-right: none; }
-    .flow-step::after {
-      content: '→';
-      position: absolute;
-      right: -12px;
-      top: 50%;
-      transform: translateY(-50%);
-      font-size: 16px;
-      color: var(--faint);
-      z-index: 2;
-      background: var(--surface2);
-      padding: 0 2px;
-    }
-    .flow-step:last-child::after { display: none; }
+    .flow-step:hover { background: var(--surface); }
     .flow-badge {
       font-family: var(--f-mono);
       font-size: 9px;
@@ -289,106 +394,52 @@
       color: #fff;
     }
     .flow-badge.teal { background: var(--teal); }
-    .flow-badge.slate { background: var(--slate); }
-    .flow-badge.amber { background: var(--amber); }
-    .flow-badge.red { background: var(--red); }
-    .flow-icon {
-      font-size: 22px;
-      line-height: 1;
-    }
-    .flow-label {
-      font-size: 12px;
-      font-weight: 700;
-      color: var(--ink);
-      line-height: 1.3;
-    }
-    .flow-desc {
-      font-size: 11px;
-      color: var(--faint);
-      line-height: 1.4;
-    }
-
-    /* ═══════════════════════════════════
-       ANATOMY DIAGRAM
-    ═══════════════════════════════════ */
-    .anatomy {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 0;
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      overflow: hidden;
-      margin: 36px 0;
-    }
-    .anatomy-pane {
-      padding: 24px 28px;
-    }
-    .anatomy-pane:first-child { border-right: 1px solid var(--border); }
-    .anatomy-label {
-      font-family: var(--f-mono);
-      font-size: 9px;
-      font-weight: 700;
-      letter-spacing: 0.16em;
-      text-transform: uppercase;
-      color: var(--faint);
-      margin-bottom: 16px;
-      padding-bottom: 10px;
-      border-bottom: 1px solid var(--border-light);
-    }
-    .anatomy-item {
-      display: flex;
-      gap: 10px;
-      align-items: flex-start;
-      margin-bottom: 11px;
-      font-size: 13px;
-      color: var(--body);
-      line-height: 1.4;
-    }
-    .anatomy-item::before {
-      content: '→';
-      color: var(--navy);
-      font-weight: 700;
-      flex-shrink: 0;
-      margin-top: 1px;
-    }
-
-    /* ═══════════════════════════════════
-       PHASE CARDS
-    ═══════════════════════════════════ */
-    .phases {
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-      margin: 36px 0;
-    }
-    .phase-card {
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      overflow: hidden;
-    }
-    .phase-header {
+    .flow-badge.slate { background: #374151; }
+    .flow-icon { font-size: 20px; line-height: 1; }
+    .flow-label { font-size: 12px; font-weight: 700; color: var(--ink); line-height: 1.3; }
+    .flow-desc  { font-size: 10.5px; color: var(--faint); line-height: 1.4; }
+    .flow-arrow {
       display: flex;
       align-items: center;
-      gap: 16px;
+      padding: 0 2px;
+      color: var(--faint);
+      font-size: 14px;
+      background: var(--surface2);
+    }
+
+    /* ═══════════════════════════════════
+       PHASE CARD (detailed)
+    ═══════════════════════════════════ */
+    .phase-card {
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+      margin: 28px 0;
+    }
+    .phase-hdr {
+      display: flex;
+      align-items: center;
+      gap: 14px;
       padding: 18px 24px;
       background: var(--surface2);
-      border-bottom: 1px solid var(--border-light);
+      border-bottom: 1px solid var(--border-lt);
     }
     .phase-num {
       font-family: var(--f-mono);
       font-size: 10px;
       font-weight: 700;
-      letter-spacing: 0.1em;
+      letter-spacing: 0.08em;
       color: #fff;
       background: var(--navy);
       padding: 4px 9px;
       border-radius: 5px;
       flex-shrink: 0;
     }
+    .phase-num.teal { background: var(--teal); }
     .phase-name {
-      font-family: var(--f-display);
-      font-size: 19px;
-      font-weight: 500;
+      font-family: var(--f-disp);
+      font-size: 20px;
+      font-weight: 400;
       color: var(--ink);
       letter-spacing: -0.01em;
     }
@@ -406,36 +457,38 @@
       border: 1px solid var(--teal-line);
       flex-shrink: 0;
     }
-    .phase-body {
-      padding: 20px 24px 22px;
-    }
+    .phase-body { padding: 22px 24px; }
     .phase-goal {
-      font-size: 14px;
+      font-size: 15px;
       color: var(--body);
-      line-height: 1.6;
-      margin-bottom: 16px;
-      max-width: 80ch;
+      line-height: 1.65;
+      max-width: 82ch;
+      margin-bottom: 20px;
     }
-    .phase-cols {
+
+    /* Phase two-col grid */
+    .phase-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 24px;
-      margin-top: 16px;
+      margin-top: 20px;
     }
     .phase-col-label {
       font-family: var(--f-mono);
       font-size: 9px;
       font-weight: 700;
-      letter-spacing: 0.14em;
+      letter-spacing: 0.16em;
       text-transform: uppercase;
       color: var(--faint);
-      margin-bottom: 10px;
+      margin-bottom: 12px;
     }
-    .doc-chip {
+
+    /* Deliverable chips */
+    .chip {
       display: inline-flex;
       align-items: center;
       gap: 5px;
-      font-size: 11px;
+      font-size: 11.5px;
       font-weight: 600;
       color: var(--ink2);
       background: var(--surface3);
@@ -444,7 +497,6 @@
       padding: 4px 9px;
       margin: 3px 3px 3px 0;
     }
-    .doc-chip .chip-icon { font-size: 12px; }
     .chip-tag {
       font-family: var(--f-mono);
       font-size: 8px;
@@ -453,463 +505,225 @@
       padding: 2px 5px;
       border-radius: 3px;
       background: #E5E7EB;
-      color: var(--slate);
+      color: #374151;
     }
     .chip-tag.gate { background: rgba(14,138,101,0.12); color: var(--teal); }
-    .gate-item {
-      font-size: 13px;
-      color: var(--body);
-      line-height: 1.5;
-      padding: 6px 0;
-      border-bottom: 1px solid var(--border-light);
+
+    /* Gate criteria */
+    .gate-row {
       display: flex;
       gap: 10px;
       align-items: flex-start;
+      padding: 8px 0;
+      border-bottom: 1px solid var(--border-lt);
+      font-size: 13.5px;
+      color: var(--body);
+      line-height: 1.45;
     }
-    .gate-item:last-child { border-bottom: none; }
+    .gate-row:last-child { border-bottom: none; }
     .gate-dot {
-      width: 7px;
-      height: 7px;
+      width: 7px; height: 7px;
       border-radius: 50%;
       background: var(--navy);
       flex-shrink: 0;
       margin-top: 5px;
     }
     .gate-dot.soft { background: var(--faint); }
-    .gate-hard-label {
-      font-size: 9px;
-      font-weight: 700;
+    .hard-tag {
       font-family: var(--f-mono);
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      padding: 1px 5px;
-      border-radius: 3px;
-      background: rgba(27,43,92,0.1);
-      color: var(--navy);
+      font-size: 8px; font-weight: 700;
+      letter-spacing: 0.1em; text-transform: uppercase;
+      padding: 1px 5px; border-radius: 3px;
+      background: var(--navy-soft); color: var(--navy);
       flex-shrink: 0;
     }
-    .gate-soft-label {
-      font-size: 9px;
-      font-weight: 700;
+    .soft-tag {
       font-family: var(--f-mono);
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      padding: 1px 5px;
-      border-radius: 3px;
-      background: var(--surface3);
-      color: var(--faint);
+      font-size: 8px; font-weight: 700;
+      letter-spacing: 0.1em; text-transform: uppercase;
+      padding: 1px 5px; border-radius: 3px;
+      background: var(--surface3); color: var(--faint);
       flex-shrink: 0;
     }
 
-    /* Example callout inside phase */
-    .phase-example {
-      margin-top: 14px;
+    /* Phase example */
+    .phase-ex {
       background: var(--navy-soft);
       border: 1px solid var(--navy-line);
-      border-radius: 7px;
+      border-radius: 8px;
       padding: 14px 18px;
+      margin: 16px 0 0;
     }
-    .phase-example-label {
+    .phase-ex-label {
       font-family: var(--f-mono);
-      font-size: 9px;
-      font-weight: 700;
-      letter-spacing: 0.16em;
-      text-transform: uppercase;
-      color: var(--navy);
-      margin-bottom: 6px;
+      font-size: 9px; font-weight: 700;
+      letter-spacing: 0.18em; text-transform: uppercase;
+      color: var(--navy); margin-bottom: 6px;
     }
-    .phase-example-text {
-      font-size: 13px;
-      color: var(--navy);
-      font-style: italic;
-      line-height: 1.5;
-    }
-
-    /* ═══════════════════════════════════
-       SCAFFOLD TABLE
-    ═══════════════════════════════════ */
-    .scaffold-table {
-      width: 100%;
-      border-collapse: collapse;
-      margin: 32px 0;
-      font-size: 14px;
-    }
-    .scaffold-table thead th {
-      font-family: var(--f-mono);
-      font-size: 9px;
-      font-weight: 700;
-      letter-spacing: 0.14em;
-      text-transform: uppercase;
-      color: var(--faint);
-      padding: 10px 16px;
-      text-align: left;
-      border-bottom: 2px solid var(--border);
-      background: var(--surface2);
-    }
-    .scaffold-table thead th:first-child { border-radius: 8px 0 0 0; }
-    .scaffold-table thead th:last-child  { border-radius: 0 8px 0 0; }
-    .scaffold-table tbody tr { border-bottom: 1px solid var(--border-light); transition: background 100ms; }
-    .scaffold-table tbody tr:hover { background: var(--surface2); }
-    .scaffold-table tbody td { padding: 14px 16px; color: var(--body); vertical-align: top; }
-    .field-name {
-      font-weight: 700;
-      color: var(--ink);
+    .phase-ex-text {
       font-size: 13.5px;
-    }
-    .field-desc {
-      font-size: 12.5px;
-      color: var(--muted);
-      margin-top: 3px;
-      line-height: 1.5;
-    }
-    .field-example {
-      font-size: 12px;
-      color: var(--navy);
+      color: var(--navy-mid);
       font-style: italic;
-      margin-top: 5px;
-      padding: 5px 10px;
-      background: var(--navy-soft);
-      border-radius: 4px;
-      border-left: 2px solid var(--navy-line);
-    }
-    .badge-req {
-      font-family: var(--f-mono);
-      font-size: 9px;
-      font-weight: 700;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      padding: 3px 8px;
-      border-radius: 4px;
-      background: rgba(27,43,92,0.1);
-      color: var(--navy);
-      white-space: nowrap;
-    }
-    .badge-opt {
-      font-family: var(--f-mono);
-      font-size: 9px;
-      font-weight: 700;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      padding: 3px 8px;
-      border-radius: 4px;
-      background: var(--surface3);
-      color: var(--faint);
-      white-space: nowrap;
+      line-height: 1.6;
     }
 
     /* ═══════════════════════════════════
-       NUMBERED STEPS
+       STEPS
     ═══════════════════════════════════ */
     .steps {
       counter-reset: step;
-      display: flex;
-      flex-direction: column;
-      gap: 0;
-      margin: 32px 0;
       border: 1px solid var(--border);
       border-radius: 10px;
       overflow: hidden;
+      margin: 24px 0;
+      max-width: 80ch;
     }
     .step {
       display: grid;
-      grid-template-columns: 52px 1fr;
-      border-bottom: 1px solid var(--border-light);
+      grid-template-columns: 50px 1fr;
+      border-bottom: 1px solid var(--border-lt);
     }
     .step:last-child { border-bottom: none; }
-    .step-num {
+    .step-num-col {
       background: var(--surface2);
-      border-right: 1px solid var(--border-light);
+      border-right: 1px solid var(--border-lt);
       display: flex;
       align-items: flex-start;
       justify-content: center;
-      padding-top: 20px;
+      padding-top: 19px;
     }
-    .step-num::before {
+    .step-num-col::before {
       counter-increment: step;
       content: counter(step);
       font-family: var(--f-mono);
-      font-size: 12px;
-      font-weight: 700;
+      font-size: 11px; font-weight: 700;
       color: var(--navy);
-      width: 26px;
-      height: 26px;
+      width: 24px; height: 24px;
       border-radius: 50%;
       background: var(--navy-soft);
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      display: flex; align-items: center; justify-content: center;
     }
-    .step-body {
-      padding: 18px 22px;
-    }
-    .step-title {
-      font-size: 14px;
-      font-weight: 700;
-      color: var(--ink);
-      margin-bottom: 5px;
-    }
-    .step-desc {
-      font-size: 13.5px;
-      color: var(--muted);
-      line-height: 1.6;
-    }
+    .step-body { padding: 16px 20px; }
+    .step-title { font-size: 14px; font-weight: 700; color: var(--ink); margin-bottom: 4px; }
+    .step-desc { font-size: 13.5px; color: var(--muted); line-height: 1.6; }
     .step-desc strong { color: var(--body); font-weight: 600; }
-    .step-note {
-      margin-top: 10px;
-      font-size: 12px;
-      color: var(--navy);
-      background: var(--navy-soft);
-      border-radius: 5px;
-      padding: 8px 12px;
-      border-left: 2px solid var(--navy-line);
-    }
     .step-path {
-      margin-top: 8px;
+      margin-top: 7px;
       font-family: var(--f-mono);
-      font-size: 11px;
-      font-weight: 600;
-      color: var(--slate);
+      font-size: 11px; font-weight: 600;
+      color: #374151;
       background: var(--surface3);
       border: 1px solid var(--border);
-      border-radius: 5px;
-      padding: 6px 10px;
+      border-radius: 4px;
+      padding: 5px 9px;
       display: inline-block;
     }
+    .step-note {
+      margin-top: 8px;
+      font-size: 12.5px;
+      color: var(--navy-mid);
+      background: var(--navy-soft);
+      border-radius: 5px;
+      padding: 7px 11px;
+      border-left: 2px solid var(--navy-line);
+    }
 
     /* ═══════════════════════════════════
-       CALLOUT BOXES
+       INTELLIGENCE CARDS
     ═══════════════════════════════════ */
-    .callout {
-      border-radius: 8px;
-      padding: 16px 20px;
-      margin: 24px 0;
-      display: flex;
-      gap: 14px;
-      align-items: flex-start;
-    }
-    .callout-icon { font-size: 18px; flex-shrink: 0; line-height: 1.2; }
-    .callout-body { flex: 1; min-width: 0; }
-    .callout-label {
-      font-family: var(--f-mono);
-      font-size: 9px;
-      font-weight: 700;
-      letter-spacing: 0.16em;
-      text-transform: uppercase;
-      margin-bottom: 5px;
-    }
-    .callout-text {
-      font-size: 14px;
-      line-height: 1.6;
-    }
-    .callout.info    { background: var(--navy-soft); border: 1px solid var(--navy-line); }
-    .callout.info .callout-label  { color: var(--navy); }
-    .callout.info .callout-text   { color: var(--navy-mid); }
-    .callout.success { background: var(--teal-soft); border: 1px solid var(--teal-line); }
-    .callout.success .callout-label { color: var(--teal); }
-    .callout.success .callout-text  { color: #065F46; }
-    .callout.warn    { background: var(--amber-soft); border: 1px solid var(--amber-line); }
-    .callout.warn .callout-label { color: var(--amber); }
-    .callout.warn .callout-text  { color: var(--amber); }
-    .callout.danger  { background: var(--red-soft); border: 1px solid var(--red-line); }
-    .callout.danger .callout-label { color: var(--red); }
-    .callout.danger .callout-text  { color: var(--red); }
-
-    /* ═══════════════════════════════════
-       GATE STATUS DIAGRAM
-    ═══════════════════════════════════ */
-    .gate-states {
+    .intel-grid {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
       gap: 14px;
       margin: 28px 0;
     }
-    .gate-state {
+    .intel-card {
       border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 18px 20px;
-      text-align: center;
+      border-radius: 10px;
+      padding: 20px;
+      background: var(--surface);
     }
-    .gate-state-icon { font-size: 28px; margin-bottom: 8px; }
-    .gate-state-name {
-      font-family: var(--f-mono);
-      font-size: 10px;
+    .intel-card-icon { font-size: 26px; margin-bottom: 10px; }
+    .intel-card-name {
       font-weight: 700;
-      letter-spacing: 0.14em;
-      text-transform: uppercase;
+      font-size: 14px;
+      color: var(--ink);
       margin-bottom: 6px;
     }
-    .gate-state-desc {
-      font-size: 12.5px;
-      color: var(--muted);
-      line-height: 1.5;
-    }
-    .gate-state.pending { border-color: var(--border); }
-    .gate-state.pending .gate-state-name { color: var(--faint); }
-    .gate-state.open    { border-color: var(--amber-line); background: var(--amber-soft); }
-    .gate-state.open .gate-state-name { color: var(--amber); }
-    .gate-state.cleared { border-color: var(--teal-line); background: var(--teal-soft); }
-    .gate-state.cleared .gate-state-name { color: var(--teal); }
-
-    .gate-criteria-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 16px;
-      margin: 24px 0;
-    }
-    .gate-criteria-box {
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      overflow: hidden;
-    }
-    .gate-criteria-header {
-      padding: 12px 16px;
-      border-bottom: 1px solid var(--border-light);
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-    .gate-criteria-header.hard { background: rgba(27,43,92,0.05); }
-    .gate-criteria-header.soft { background: var(--surface2); }
-    .gc-label {
-      font-family: var(--f-mono);
-      font-size: 9px;
-      font-weight: 700;
-      letter-spacing: 0.14em;
-      text-transform: uppercase;
-    }
-    .gc-label.hard { color: var(--navy); }
-    .gc-label.soft { color: var(--faint); }
-    .gc-tag {
-      font-size: 10px;
-      color: var(--muted);
-      font-style: italic;
-    }
-    .gate-criteria-list { padding: 10px 0; }
-    .gc-item {
-      padding: 8px 16px;
+    .intel-card-desc {
       font-size: 13px;
-      color: var(--body);
-      border-bottom: 1px solid var(--border-light);
-      display: flex;
-      gap: 8px;
+      color: var(--muted);
+      line-height: 1.55;
     }
-    .gc-item:last-child { border-bottom: none; }
-    .gc-icon { font-size: 12px; flex-shrink: 0; margin-top: 1px; }
+    .intel-card.highlight {
+      border-color: var(--purple-line);
+      background: var(--purple-soft);
+    }
+    .intel-card.highlight .intel-card-name { color: var(--purple); }
 
-    /* ═══════════════════════════════════
-       SCREEN LAYOUT DIAGRAM
-    ═══════════════════════════════════ */
-    .screen-mockup {
+    /* Pressure card mock */
+    .pressure-mock {
       border: 1px solid var(--border);
       border-radius: 10px;
       overflow: hidden;
-      margin: 28px 0;
-      box-shadow: 0 4px 24px rgba(0,0,0,0.06);
+      margin: 24px 0;
+      max-width: 680px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.06);
     }
-    .screen-titlebar {
-      background: var(--navy);
-      padding: 10px 16px;
+    .pressure-mock-hdr {
+      background: var(--surface2);
+      padding: 14px 18px;
+      border-bottom: 1px solid var(--border-lt);
       display: flex;
       align-items: center;
       gap: 10px;
     }
-    .screen-dots {
-      display: flex;
-      gap: 5px;
-    }
-    .screen-dot {
-      width: 9px;
-      height: 9px;
+    .pressure-mock-severity {
+      width: 10px; height: 10px;
       border-radius: 50%;
-      background: rgba(255,255,255,0.25);
     }
-    .screen-url {
+    .pressure-mock-severity.high { background: #DC2626; }
+    .pressure-mock-severity.med  { background: #D97706; }
+    .pressure-mock-type {
       font-family: var(--f-mono);
-      font-size: 11px;
-      color: rgba(255,255,255,0.6);
-      background: rgba(255,255,255,0.1);
-      padding: 4px 12px;
-      border-radius: 4px;
-      flex: 1;
-    }
-    .screen-body {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      min-height: 260px;
-    }
-    .screen-pane {
-      padding: 20px 22px;
-    }
-    .screen-pane:first-child { border-right: 1px solid var(--border); }
-    .screen-pane-label {
-      font-family: var(--f-mono);
-      font-size: 9px;
-      font-weight: 700;
-      letter-spacing: 0.16em;
-      text-transform: uppercase;
+      font-size: 9px; font-weight: 700;
+      letter-spacing: 0.14em; text-transform: uppercase;
       color: var(--faint);
-      margin-bottom: 14px;
-      padding-bottom: 10px;
-      border-bottom: 1px solid var(--border-light);
     }
-    .mock-chat {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
+    .pressure-mock-title {
+      font-size: 14px; font-weight: 700;
+      color: var(--ink);
+      margin-left: auto;
     }
-    .mock-msg {
-      border-radius: 8px;
-      padding: 10px 13px;
-      font-size: 12.5px;
-      line-height: 1.5;
-    }
-    .mock-msg.nexus {
-      background: var(--navy-soft);
-      border: 1px solid var(--navy-line);
-      color: var(--navy-mid);
-      align-self: flex-start;
-      max-width: 90%;
-    }
-    .mock-msg.user {
-      background: var(--surface3);
-      border: 1px solid var(--border);
+    .pressure-mock-body { padding: 16px 18px; }
+    .pressure-mock-signal {
+      font-size: 13.5px;
       color: var(--body);
-      align-self: flex-end;
-      max-width: 85%;
+      line-height: 1.6;
+      margin-bottom: 12px;
     }
-    .mock-sender {
+    .pressure-mock-footer {
+      display: flex;
+      gap: 10px;
+      padding-top: 12px;
+      border-top: 1px solid var(--border-lt);
+    }
+    .pressure-mock-cta {
       font-family: var(--f-mono);
-      font-size: 9px;
-      font-weight: 700;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      margin-bottom: 4px;
+      font-size: 9px; font-weight: 700;
+      letter-spacing: 0.12em; text-transform: uppercase;
+      padding: 5px 12px; border-radius: 4px;
+      border: 1px solid;
+      cursor: default;
     }
-    .mock-sender.nexus { color: var(--navy); }
-    .mock-sender.user  { color: var(--faint); text-align: right; }
-    .mock-field {
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      padding: 10px 12px;
-      margin-bottom: 8px;
+    .pressure-mock-cta.primary {
+      background: var(--navy); color: #fff;
+      border-color: var(--navy);
     }
-    .mock-field.filled { border-color: var(--navy-line); background: var(--navy-soft); }
-    .mock-field-label {
-      font-size: 10px;
-      font-weight: 700;
-      color: var(--faint);
-      font-family: var(--f-mono);
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      margin-bottom: 3px;
+    .pressure-mock-cta.ghost {
+      background: transparent; color: var(--muted);
+      border-color: var(--border);
     }
-    .mock-field.filled .mock-field-label { color: var(--navy); }
-    .mock-field-value {
-      font-size: 12.5px;
-      color: var(--muted);
-      line-height: 1.4;
-    }
-    .mock-field.filled .mock-field-value { color: var(--body); font-weight: 500; }
 
     /* ═══════════════════════════════════
        TIPS GRID
@@ -918,102 +732,127 @@
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 14px;
-      margin: 28px 0;
+      margin: 24px 0;
+      max-width: 80ch;
     }
-    .tip-card {
-      border: 1px solid var(--border);
-      border-radius: 9px;
-      padding: 18px 20px;
-    }
-    .tip-card.do   { border-left: 3px solid var(--teal); }
-    .tip-card.dont { border-left: 3px solid var(--red); }
-    .tip-badge {
-      font-family: var(--f-mono);
-      font-size: 9px;
-      font-weight: 700;
-      letter-spacing: 0.14em;
-      text-transform: uppercase;
-      margin-bottom: 8px;
-    }
-    .tip-card.do .tip-badge   { color: var(--teal); }
-    .tip-card.dont .tip-badge { color: var(--red); }
-    .tip-text {
-      font-size: 13.5px;
-      color: var(--body);
-      line-height: 1.6;
-    }
-    .tip-example {
-      margin-top: 8px;
-      font-size: 12.5px;
-      font-style: italic;
-      color: var(--muted);
-    }
+    .tip { border: 1px solid var(--border); border-radius: 8px; padding: 16px 18px; }
+    .tip.do   { border-left: 3px solid var(--teal); }
+    .tip.dont { border-left: 3px solid var(--red); }
+    .tip-badge { font-family: var(--f-mono); font-size: 9px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; margin-bottom: 7px; }
+    .tip.do .tip-badge   { color: var(--teal); }
+    .tip.dont .tip-badge { color: var(--red); }
+    .tip-text { font-size: 13.5px; color: var(--body); line-height: 1.6; }
+    .tip-ex { font-size: 12.5px; color: var(--muted); font-style: italic; margin-top: 7px; }
 
     /* ═══════════════════════════════════
-       DELIVERABLE FLOW DIAGRAM
+       SETUP TILES
     ═══════════════════════════════════ */
-    .gen-flow {
-      display: flex;
-      flex-direction: column;
-      gap: 0;
+    .setup-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      margin: 28px 0;
+    }
+    .setup-tile {
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 20px 22px;
+    }
+    .setup-tile-icon { font-size: 24px; margin-bottom: 10px; }
+    .setup-tile-name { font-weight: 700; font-size: 14px; color: var(--ink); margin-bottom: 5px; }
+    .setup-tile-desc { font-size: 13px; color: var(--muted); line-height: 1.55; }
+    .setup-tile-path { margin-top: 10px; font-family: var(--f-mono); font-size: 11px; color: #374151; background: var(--surface3); border: 1px solid var(--border); border-radius: 4px; padding: 4px 9px; display: inline-block; }
+
+    /* ═══════════════════════════════════
+       GATE STATUS DIAGRAM
+    ═══════════════════════════════════ */
+    .gate-states {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin: 22px 0;
+      max-width: 70ch;
+    }
+    .gate-state {
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 16px 18px;
+      text-align: center;
+    }
+    .gate-state-icon { font-size: 26px; margin-bottom: 7px; }
+    .gate-state-name { font-family: var(--f-mono); font-size: 10px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; margin-bottom: 5px; }
+    .gate-state-desc { font-size: 12.5px; color: var(--muted); line-height: 1.45; }
+    .gate-state.cleared { border-color: var(--teal-line); background: var(--teal-soft); }
+    .gate-state.cleared .gate-state-name { color: var(--teal); }
+    .gate-state.open    { border-color: var(--amber-line); background: var(--amber-soft); }
+    .gate-state.open .gate-state-name { color: var(--amber); }
+
+    /* ═══════════════════════════════════
+       SCREEN MOCKUP
+    ═══════════════════════════════════ */
+    .screen {
       border: 1px solid var(--border);
       border-radius: 10px;
       overflow: hidden;
-      margin: 28px 0;
+      margin: 24px 0;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+      max-width: 820px;
     }
-    .gen-step {
-      display: flex;
-      align-items: flex-start;
-      gap: 18px;
-      padding: 18px 24px;
-      border-bottom: 1px solid var(--border-light);
-      background: var(--surface);
-    }
-    .gen-step:last-child { border-bottom: none; }
-    .gen-step-num {
-      width: 28px;
-      height: 28px;
-      border-radius: 50%;
+    .screen-bar {
       background: var(--navy);
-      color: #fff;
-      font-family: var(--f-mono);
-      font-size: 11px;
-      font-weight: 700;
+      padding: 9px 14px;
       display: flex;
       align-items: center;
-      justify-content: center;
-      flex-shrink: 0;
-      margin-top: 2px;
+      gap: 8px;
     }
-    .gen-step-content { flex: 1; }
-    .gen-step-title {
-      font-size: 14px;
-      font-weight: 700;
-      color: var(--ink);
-      margin-bottom: 4px;
-    }
-    .gen-step-desc {
-      font-size: 13px;
-      color: var(--muted);
-      line-height: 1.55;
-    }
-    .gen-step-path {
-      margin-top: 6px;
+    .screen-dots { display: flex; gap: 4px; }
+    .screen-dot { width: 8px; height: 8px; border-radius: 50%; background: rgba(255,255,255,0.2); }
+    .screen-url {
       font-family: var(--f-mono);
       font-size: 11px;
-      color: var(--slate);
-      background: var(--surface3);
-      border: 1px solid var(--border);
+      color: rgba(255,255,255,0.55);
+      background: rgba(255,255,255,0.09);
+      padding: 3px 10px;
       border-radius: 4px;
-      padding: 4px 9px;
-      display: inline-block;
+      flex: 1;
     }
-    .gen-step-arrow {
-      font-size: 18px;
-      color: var(--faint);
-      margin-top: 5px;
-      flex-shrink: 0;
+    .screen-panes {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      min-height: 240px;
     }
+    .screen-pane { padding: 18px 20px; }
+    .screen-pane:first-child { border-right: 1px solid var(--border-lt); }
+    .screen-pane-label { font-family: var(--f-mono); font-size: 9px; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; color: var(--faint); margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid var(--border-lt); }
+
+    .chat-msg { border-radius: 7px; padding: 9px 12px; font-size: 12.5px; line-height: 1.5; margin-bottom: 8px; }
+    .chat-sender { font-family: var(--f-mono); font-size: 8.5px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 3px; }
+    .chat-msg.nexus { background: var(--navy-soft); border: 1px solid var(--navy-line); color: var(--navy-mid); }
+    .chat-msg.nexus .chat-sender { color: var(--navy); }
+    .chat-msg.user  { background: var(--surface3); border: 1px solid var(--border-lt); color: var(--body); text-align: right; }
+    .chat-msg.user .chat-sender  { color: var(--faint); text-align: right; }
+
+    .scaffold-field { border: 1px solid var(--border); border-radius: 6px; padding: 9px 12px; margin-bottom: 7px; }
+    .scaffold-field.filled { border-color: var(--navy-line); background: var(--navy-soft); }
+    .scaffold-field-label { font-family: var(--f-mono); font-size: 9px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--faint); margin-bottom: 2px; }
+    .scaffold-field.filled .scaffold-field-label { color: var(--navy); }
+    .scaffold-field-val { font-size: 12px; color: var(--muted); }
+    .scaffold-field.filled .scaffold-field-val { color: var(--body); font-weight: 500; }
+
+    /* ═══════════════════════════════════
+       FOOTER
+    ═══════════════════════════════════ */
+    .doc-footer {
+      margin-left: var(--nav-w);
+      padding: 28px 72px;
+      border-top: 1px solid var(--border-lt);
+      background: var(--surface2);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .doc-footer-brand { font-family: var(--f-disp); font-size: 16px; color: var(--navy); }
+    .doc-footer-meta  { font-family: var(--f-mono); font-size: 10px; color: var(--faint); }
 
     /* ═══════════════════════════════════
        INLINE CODE
@@ -1026,955 +865,927 @@
       border: 1px solid var(--border);
       border-radius: 4px;
       padding: 1px 5px;
-      color: var(--slate);
+      color: #374151;
     }
-
-    /* ═══════════════════════════════════
-       CHECKLIST
-    ═══════════════════════════════════ */
-    .checklist {
-      list-style: none;
-      margin: 20px 0;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
-    .checklist li {
-      display: flex;
-      align-items: flex-start;
-      gap: 12px;
-      font-size: 14px;
-      color: var(--body);
-      line-height: 1.55;
-      padding: 12px 16px;
-      background: var(--surface2);
-      border: 1px solid var(--border-light);
-      border-radius: 7px;
-    }
-    .check-box {
-      width: 18px;
-      height: 18px;
-      border: 1.5px solid var(--border);
-      border-radius: 4px;
-      background: #fff;
-      flex-shrink: 0;
-      margin-top: 1px;
-    }
-    .checklist li strong { color: var(--ink); font-weight: 700; }
-    .checklist li span { color: var(--muted); font-size: 13px; display: block; margin-top: 2px; }
 
     /* ═══════════════════════════════════
        DIVIDER
     ═══════════════════════════════════ */
-    .divider {
-      border: none;
-      border-top: 1px solid var(--border-light);
-      margin: 40px 0;
-    }
-
-    /* ═══════════════════════════════════
-       FOOTER
-    ═══════════════════════════════════ */
-    .doc-footer {
-      padding: 32px 72px;
-      border-top: 1px solid var(--border-light);
-      background: var(--surface2);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 20px;
-    }
-    .doc-footer-brand {
-      font-family: var(--f-display);
-      font-size: 16px;
-      font-weight: 400;
-      color: var(--navy);
-    }
-    .doc-footer-meta {
-      font-family: var(--f-mono);
-      font-size: 10px;
-      color: var(--faint);
-      letter-spacing: 0.08em;
-    }
+    hr.divider { border: none; border-top: 1px solid var(--border-lt); margin: 36px 0; }
 
     /* ═══════════════════════════════════
        RESPONSIVE
     ═══════════════════════════════════ */
     @media (max-width: 900px) {
-      .body-wrap { grid-template-columns: 1fr; }
-      .sidebar { display: none; }
-      .section { padding: 48px 32px; }
-      .phase-cols { grid-template-columns: 1fr; }
-      .tips-grid { grid-template-columns: 1fr; }
-      .gate-criteria-grid { grid-template-columns: 1fr; }
-      .gate-states { grid-template-columns: 1fr; }
-      .anatomy { grid-template-columns: 1fr; }
-      .screen-body { grid-template-columns: 1fr; }
+      :root { --nav-w: 0px; }
+      .leftnav { display: none; }
+      .content { margin-left: 0; }
+      .section, .section-band { padding: 48px 28px; }
+      .phase-grid { grid-template-columns: 1fr; }
+      .intel-grid { grid-template-columns: 1fr; }
+      .setup-grid { grid-template-columns: 1fr; }
+      .tips-grid  { grid-template-columns: 1fr; }
+      .gate-states{ grid-template-columns: 1fr; }
+      .screen-panes { grid-template-columns: 1fr; }
+      .doc-footer { margin-left: 0; padding: 24px 28px; }
     }
   </style>
 </head>
 <body>
 
-<!-- ════════════════ HERO ════════════════ -->
-<div class="hero">
-  <div class="hero-eyebrow">AbarVa · <span>Training Guide</span> · Strategic Moves</div>
-  <h1 class="hero-title">How to Create a Strategic Move</h1>
-  <p class="hero-sub">Everything a new user needs to take an initiative from a one-line idea to a fully gated, deliverable-backed transformation program — end to end.</p>
-  <div class="hero-meta">
-    <span class="hero-tag accent">Surface: Strategic Moves</span>
-    <span class="hero-tag">Agent: Nexus</span>
-    <span class="hero-tag">P0 Originate → P1–P5 → Tower</span>
-    <span class="hero-tag">Audience: New Users</span>
+<!-- ════ TOP BAR ════ -->
+<header class="topbar">
+  <span class="topbar-brand">AbarVa</span>
+  <span class="topbar-sep">·</span>
+  <span class="topbar-title">User Guide</span>
+  <div class="topbar-search">🔍&nbsp; Search this guide…</div>
+</header>
+
+<div class="layout">
+
+<!-- ════ LEFT NAV ════ -->
+<nav class="leftnav" aria-label="Guide navigation">
+
+  <span class="nav-group-label">Getting Started</span>
+  <div class="nav-group">
+    <a class="nav-item active" href="#welcome">Welcome to AbarVa</a>
+    <a class="nav-item" href="#how-it-works">How the platform works</a>
+    <a class="nav-item" href="#first-30">Your first 30 minutes</a>
   </div>
-</div>
 
-<!-- ════════════════ BODY ════════════════ -->
-<div class="body-wrap">
+  <span class="nav-group-label">Setup</span>
+  <div class="nav-group">
+    <a class="nav-item" href="#setup-overview">What Setup does</a>
+    <a class="nav-item" href="#setup-connectors">Connectors &amp; data</a>
+    <a class="nav-item" href="#setup-tenant">Tenant profile</a>
+    <a class="nav-item" href="#setup-terms">Key terms</a>
+  </div>
 
-  <!-- Sidebar TOC -->
-  <aside class="sidebar">
-    <div class="sidebar-label">In this guide</div>
-    <ul class="toc-list">
-      <li class="toc-item"><a href="#s01"><span class="toc-num">01</span> What is a Strategic Move?</a></li>
-      <li class="toc-item"><a href="#s02"><span class="toc-num">02</span> The end-to-end workflow</a></li>
-      <li class="toc-item"><a href="#s03"><span class="toc-num">03</span> Before you start</a></li>
-      <li class="toc-item"><a href="#s04"><span class="toc-num">04</span> Originate a new move (P0)</a></li>
-      <li class="toc-item"><a href="#s05"><span class="toc-num">05</span> The seven scaffold fields</a></li>
-      <li class="toc-item"><a href="#s06"><span class="toc-num">06</span> Working through the five phases</a></li>
-      <li class="toc-item"><a href="#s07"><span class="toc-num">07</span> Understanding gates</a></li>
-      <li class="toc-item"><a href="#s08"><span class="toc-num">08</span> Generating deliverables</a></li>
-      <li class="toc-item"><a href="#s09"><span class="toc-num">09</span> The Evidence Hub</a></li>
-      <li class="toc-item"><a href="#s10"><span class="toc-num">10</span> Do's and don'ts</a></li>
-    </ul>
-  </aside>
+  <span class="nav-group-label">Intelligence</span>
+  <div class="nav-group">
+    <a class="nav-item" href="#intel-overview">Art of the possible</a>
+    <a class="nav-item" href="#intel-signals">Reading signals</a>
+    <a class="nav-item" href="#intel-pattern-move">Pattern → Move</a>
+    <a class="nav-item" href="#intel-terms">Key terms</a>
+  </div>
 
-  <!-- Main content -->
-  <main class="content">
+  <span class="nav-group-label">Strategic Moves</span>
+  <div class="nav-group">
+    <a class="nav-item" href="#moves-overview">What is a Move?</a>
+    <a class="nav-item phase" href="#p0"><span class="nav-phase-badge">P0</span>Originate</a>
+    <a class="nav-item phase" href="#p1"><span class="nav-phase-badge">P1</span>Charter</a>
+    <a class="nav-item phase" href="#p2"><span class="nav-phase-badge">P2</span>Discover &amp; Diagnose</a>
+    <a class="nav-item phase" href="#p3"><span class="nav-phase-badge">P3</span>Design Future State</a>
+    <a class="nav-item phase" href="#p4"><span class="nav-phase-badge">P4</span>Roadmap &amp; Biz Case</a>
+    <a class="nav-item phase" href="#p5"><span class="nav-phase-badge teal">P5</span>Mobilize &amp; Handoff</a>
+  </div>
 
-    <!-- ─── 01. What is a Move ─── -->
-    <section class="section" id="s01">
-      <div class="section-eyebrow">01</div>
-      <h2 class="section-title">What is a Strategic Move?</h2>
-      <p class="section-lead">A Strategic Move is a phase-gated transformation program — a structured way to take any AI or operational initiative from a one-line hypothesis all the way through to a handed-off delivery.</p>
+  <span class="nav-group-label">Gates &amp; Evidence</span>
+  <div class="nav-group">
+    <a class="nav-item" href="#gates">Understanding gates</a>
+    <a class="nav-item" href="#deliverables">Generating deliverables</a>
+    <a class="nav-item" href="#evidence-hub">Evidence Hub</a>
+  </div>
 
-      <p class="body-text">Every Move has exactly the same anatomy: five phases (P1–P5), a quality gate at the end of each phase that must be cleared before you can advance, and a set of consulting-grade deliverables generated at each phase. The whole journey runs inside the Strategic Moves surface. When a Move completes P5, it transitions automatically into <strong>Control Tower</strong> for ongoing execution tracking.</p>
+  <span class="nav-group-label">Control Tower</span>
+  <div class="nav-group">
+    <a class="nav-item" href="#tower-after">After a Move completes</a>
+    <a class="nav-item" href="#tower-portfolio">Reading the portfolio</a>
+  </div>
 
-      <div class="callout info">
-        <div class="callout-icon">💬</div>
-        <div class="callout-body">
-          <div class="callout-label">One voice: Nexus</div>
-          <div class="callout-text">All chat on the Strategic Moves surface goes to <strong>Nexus</strong>, your front agent. Behind it are 12 specialist agents handling gate enforcement, evidence indexing, document versioning, and more — you never interact with them directly. Nexus sounds like one coherent system; the specialisation is invisible.</div>
+  <span class="nav-group-label">Reference</span>
+  <div class="nav-group">
+    <a class="nav-item" href="#tips">Tips &amp; common mistakes</a>
+    <a class="nav-item" href="#glossary">Glossary</a>
+  </div>
+
+</nav>
+
+<!-- ════ CONTENT ════ -->
+<main class="content">
+
+  <!-- ──────── WELCOME ──────── -->
+  <div class="section-band navy-bg" id="welcome">
+    <div class="eyebrow light">AbarVa · User Guide</div>
+    <h1 class="section-title light" style="font-size:clamp(36px,5vw,56px);margin-bottom:20px;">
+      Welcome to AbarVa.
+    </h1>
+    <p class="section-lead light" style="margin-bottom:32px;">
+      AbarVa is the operating system for enterprise AI programs — it helps strategy leads originate, validate, and govern AI initiatives with evidence grounded in your own data.
+    </p>
+    <div style="display:flex;flex-wrap:wrap;gap:10px;">
+      <span style="font-family:var(--f-mono);font-size:10px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;padding:5px 12px;border-radius:4px;background:rgba(255,255,255,0.14);color:rgba(255,255,255,0.9);border:1px solid rgba(255,255,255,0.14);">Surface: All modules</span>
+      <span style="font-family:var(--f-mono);font-size:10px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;padding:5px 12px;border-radius:4px;background:rgba(255,255,255,0.14);color:rgba(255,255,255,0.9);border:1px solid rgba(255,255,255,0.14);">Audience: New users</span>
+      <span style="font-family:var(--f-mono);font-size:10px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;padding:5px 12px;border-radius:4px;background:rgba(255,255,255,0.14);color:rgba(255,255,255,0.9);border:1px solid rgba(255,255,255,0.14);">Time: ~45 min full read</span>
+    </div>
+  </div>
+
+  <!-- ──────── HOW IT WORKS ──────── -->
+  <div class="section" id="how-it-works">
+    <div class="eyebrow">Getting Started · 01</div>
+    <h2 class="section-title">How the platform works</h2>
+    <p class="section-lead">AbarVa has four interconnected surfaces. Each has a primary AI agent. Start with Setup, explore Intelligence, then run Moves — they all feed each other.</p>
+
+    <div class="flow">
+      <div class="flow-step">
+        <span class="flow-badge slate">Setup</span>
+        <span class="flow-icon">⚙️</span>
+        <span class="flow-label">Configure</span>
+        <span class="flow-desc">Connect data, define your org context</span>
+      </div>
+      <div class="flow-step">
+        <span class="flow-badge" style="background:#5B21B6;">Intel</span>
+        <span class="flow-icon">🔭</span>
+        <span class="flow-label">Discover</span>
+        <span class="flow-desc">AI patterns, signals, pressure cards</span>
+      </div>
+      <div class="flow-step">
+        <span class="flow-badge">Moves</span>
+        <span class="flow-icon">🎯</span>
+        <span class="flow-label">Execute</span>
+        <span class="flow-desc">Phase-gated transformation programs</span>
+      </div>
+      <div class="flow-step">
+        <span class="flow-badge teal">Tower</span>
+        <span class="flow-icon">📡</span>
+        <span class="flow-label">Monitor</span>
+        <span class="flow-desc">Portfolio tracking, live signals</span>
+      </div>
+    </div>
+
+    <div class="callout info">
+      <div class="callout-icon">💬</div>
+      <div class="callout-inner">
+        <div class="callout-label">One agent per surface</div>
+        <div class="callout-body"><strong>Steward</strong> runs Setup. <strong>Sentinel</strong> runs Intelligence &amp; Source. <strong>Nexus</strong> runs Strategic Moves. <strong>Atlas</strong> runs Control Tower. Each agent has a front-of-house voice — behind each are specialist functions you never interact with directly.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ──────── FIRST 30 MIN ──────── -->
+  <div class="section" id="first-30">
+    <div class="eyebrow">Getting Started · 02</div>
+    <h2 class="section-title">Your first 30 minutes</h2>
+    <p class="section-lead">The recommended path for any new user. Takes about 30 minutes. Sets you up to run your first Move with real data behind it.</p>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num-col"></div>
+        <div class="step-body">
+          <div class="step-title">Go to Setup — check connectors and tenant profile</div>
+          <div class="step-desc">Before anything else, see what data is already connected and who the named executives are. This is the foundation everything else builds on.</div>
+          <span class="step-path">/admin → Connectors &amp; Tenant Profile</span>
         </div>
       </div>
-
-      <h3 class="sub-heading">The Move anatomy at a glance</h3>
-      <div class="flow">
-        <div class="flow-step">
-          <span class="flow-badge slate">P0</span>
-          <span class="flow-icon">✏️</span>
-          <span class="flow-label">Originate</span>
-          <span class="flow-desc">7-field scaffold, Nexus-guided chat</span>
-        </div>
-        <div class="flow-step">
-          <span class="flow-badge">P1</span>
-          <span class="flow-icon">📋</span>
-          <span class="flow-label">Charter</span>
-          <span class="flow-desc">Program charter + stakeholder map</span>
-        </div>
-        <div class="flow-step">
-          <span class="flow-badge">P2</span>
-          <span class="flow-icon">🔍</span>
-          <span class="flow-label">Discover</span>
-          <span class="flow-desc">As-is assessment, root cause</span>
-        </div>
-        <div class="flow-step">
-          <span class="flow-badge">P3</span>
-          <span class="flow-icon">🎯</span>
-          <span class="flow-label">Design</span>
-          <span class="flow-desc">Target state + solution architecture</span>
-        </div>
-        <div class="flow-step">
-          <span class="flow-badge">P4</span>
-          <span class="flow-icon">📊</span>
-          <span class="flow-label">Roadmap</span>
-          <span class="flow-desc">Execution plan + business case</span>
-        </div>
-        <div class="flow-step">
-          <span class="flow-badge teal">P5</span>
-          <span class="flow-icon">🚀</span>
-          <span class="flow-label">Mobilize</span>
-          <span class="flow-desc">Handoff package → Tower</span>
+      <div class="step">
+        <div class="step-num-col"></div>
+        <div class="step-body">
+          <div class="step-title">Open Intelligence — read 3 pressure cards</div>
+          <div class="step-desc">Intelligence surfaces AI-detected patterns in your data. Reading pressure cards tells you what the system already knows about your operational state — before you've done any work.</div>
+          <span class="step-path">/intelligence → Pressure Cards</span>
         </div>
       </div>
-    </section>
+      <div class="step">
+        <div class="step-num-col"></div>
+        <div class="step-body">
+          <div class="step-title">Notice which patterns could become Moves</div>
+          <div class="step-desc">Look for the "→ Originate Move" prompt on any pressure card. This is the fastest path from signal to action — Intelligence shows you the problem, Moves is how you fix it.</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num-col"></div>
+        <div class="step-body">
+          <div class="step-title">Open Strategic Moves — try originating a new Move</div>
+          <div class="step-desc">Click <strong>"New Move"</strong> and describe the initiative in chat. Nexus handles the rest. You don't need perfect information — a one-sentence hypothesis is enough to start.</div>
+          <span class="step-path">/strategic-moves → + New Move</span>
+        </div>
+      </div>
+    </div>
+  </div>
 
-    <!-- ─── 02. End-to-end workflow ─── -->
-    <section class="section" id="s02">
-      <div class="section-eyebrow">02</div>
-      <h2 class="section-title">The end-to-end workflow</h2>
-      <p class="section-lead">Here is the complete journey from idea to handoff. Use this as your orientation map before diving into any individual step.</p>
+  <!-- ══════════════════════════════
+       SETUP
+  ══════════════════════════════ -->
 
-      <div class="gen-flow">
-        <div class="gen-step">
-          <span class="gen-step-num">1</span>
-          <div class="gen-step-content">
-            <div class="gen-step-title">Navigate to Strategic Moves and click "New Move"</div>
-            <div class="gen-step-desc">The origination screen opens with Nexus chat on the left and the scaffold panel on the right.</div>
-            <span class="gen-step-path">/strategic-moves → New Move</span>
+  <div class="section-band" style="background:var(--surface3);" id="setup-overview">
+    <div class="eyebrow" style="color:var(--faint);">Setup</div>
+    <h2 class="section-title" style="color:var(--ink);">Setup — before you begin</h2>
+    <p class="section-lead">Setup is where you wire AbarVa into your organization's data and context. Without Setup, Intelligence has nothing to analyze and Nexus produces generic documents. Good Setup = high-quality everything else.</p>
+  </div>
+
+  <div class="section" id="setup-connectors">
+    <div class="eyebrow">Setup · Connectors</div>
+    <h2 class="section-title">Connectors &amp; data sources</h2>
+    <p class="section-lead">Connectors are the pipes from your organization's systems into AbarVa's intelligence substrate. They're what makes signals specific to your business rather than generic industry patterns.</p>
+
+    <div class="setup-grid">
+      <div class="setup-tile">
+        <div class="setup-tile-icon">🗄️</div>
+        <div class="setup-tile-name">Data warehouses</div>
+        <div class="setup-tile-desc">Snowflake, BigQuery, Redshift, Databricks. These feed operational metrics that Intelligence uses to detect cost, efficiency, and risk patterns.</div>
+        <span class="setup-tile-path">/admin → Connectors → Data</span>
+      </div>
+      <div class="setup-tile">
+        <div class="setup-tile-icon">☁️</div>
+        <div class="setup-tile-name">CRM &amp; ops systems</div>
+        <div class="setup-tile-desc">Salesforce, ServiceNow, SAP. Transaction data and process logs that give Intelligence context about where friction and opportunity actually live.</div>
+        <span class="setup-tile-path">/admin → Connectors → Systems</span>
+      </div>
+      <div class="setup-tile">
+        <div class="setup-tile-icon">📁</div>
+        <div class="setup-tile-name">Document stores</div>
+        <div class="setup-tile-desc">SharePoint, Google Drive, Confluence. Strategy documents, past project files, and reference materials that Nexus can draw on when generating deliverables.</div>
+        <span class="setup-tile-path">/admin → Connectors → Documents</span>
+      </div>
+      <div class="setup-tile">
+        <div class="setup-tile-icon">📊</div>
+        <div class="setup-tile-name">BI &amp; reporting</div>
+        <div class="setup-tile-desc">Power BI, Tableau, Looker. Pre-built dashboards and KPI definitions help Intelligence interpret metrics in business context rather than raw numbers.</div>
+        <span class="setup-tile-path">/admin → Connectors → BI</span>
+      </div>
+    </div>
+
+    <div class="callout warn">
+      <div class="callout-icon">⚠️</div>
+      <div class="callout-inner">
+        <div class="callout-label">Foundation readiness matters</div>
+        <div class="callout-body">The "Foundation readiness" field you fill during Move origination (P0) is partly a reflection of Setup completeness. If connectors are sparse, Nexus will flag a readiness gap that will slow P3 design and P4 business case quality. The more connected Setup is, the better every Move document becomes.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section" id="setup-tenant">
+    <div class="eyebrow">Setup · Tenant Profile</div>
+    <h2 class="section-title">Tenant profile &amp; org context</h2>
+    <p class="section-lead">The tenant profile is your organization's context layer — who the key executives are, what the strategic priorities are, and how the business is structured. This is how AbarVa learns to talk about your company correctly.</p>
+
+    <div class="steps">
+      <div class="step">
+        <div class="step-num-col"></div>
+        <div class="step-body">
+          <div class="step-title">Add your executive team</div>
+          <div class="step-desc">Name and title for each C-suite and VP-level stakeholder. When you name a sponsor in a Move, Nexus can look up their role and ensure the charter addresses their reporting context.</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num-col"></div>
+        <div class="step-body">
+          <div class="step-title">Set your strategic priorities</div>
+          <div class="step-desc">2–5 top-level priorities your organization is working on (e.g. "Cost efficiency", "Customer experience transformation"). Intelligence uses these to weight which patterns are most relevant to surface.</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num-col"></div>
+        <div class="step-body">
+          <div class="step-title">Define your business units</div>
+          <div class="step-desc">A flat list of major divisions or functions. Used to scope Moves correctly and filter Intelligence signals by area of impact.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section" id="setup-terms">
+    <div class="eyebrow">Setup · Key Terms</div>
+    <h2 class="section-title">Key terms in Setup</h2>
+    <div class="terms">
+      <div class="term"><div class="term-name">Connector</div><div class="term-def">An integration between AbarVa and an external data system. Connectors pull data into the intelligence substrate. <em>Without connectors, Intelligence has no evidence and Moves produce generic content.</em></div></div>
+      <div class="term"><div class="term-name">Substrate</div><div class="term-def">The combined data layer that all agents query. It includes connector data, document embeddings, and tenant context. <em>Think of it as the shared memory of the platform.</em></div></div>
+      <div class="term"><div class="term-name">Foundation readiness</div><div class="term-def">An assessment of how complete and current your substrate is for a given initiative. <em>Low foundation readiness = higher risk of thin documents and missed risks.</em></div></div>
+      <div class="term"><div class="term-name">Tenant</div><div class="term-def">Your organization's isolated instance of AbarVa. All data, agents, and Moves are scoped to your tenant — no data is shared across tenants.</div></div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════
+       INTELLIGENCE
+  ══════════════════════════════ -->
+
+  <div class="section-band purple-bg" id="intel-overview">
+    <div class="eyebrow purple-color">Intelligence</div>
+    <h2 class="section-title light">The art of the possible.</h2>
+    <p class="section-lead light">Intelligence is the most powerful surface for strategic discovery. It continuously analyzes your connected data to surface patterns, risks, and opportunities you might not have seen — and turns them into Move hypotheses with one click.</p>
+  </div>
+
+  <div class="section" id="intel-signals">
+    <div class="eyebrow">Intelligence · Signals</div>
+    <h2 class="section-title">Reading signals &amp; pressure cards</h2>
+    <p class="section-lead">Signals are AI-detected patterns in your operational data. They appear as <strong>pressure cards</strong> — structured observations with severity, evidence, and a recommended action.</p>
+
+    <div class="intel-grid">
+      <div class="intel-card highlight">
+        <div class="intel-card-icon">📉</div>
+        <div class="intel-card-name">Cost pressure signal</div>
+        <div class="intel-card-desc">A sustained cost trend that deviates from plan — e.g. per-transaction costs rising 12% quarter-over-quarter with no corresponding revenue lift.</div>
+      </div>
+      <div class="intel-card highlight">
+        <div class="intel-card-icon">⚠️</div>
+        <div class="intel-card-name">Risk concentration signal</div>
+        <div class="intel-card-desc">Over-reliance on a single vendor, technology, or process — e.g. 73% of a workflow depending on a contract ending in Q3.</div>
+      </div>
+      <div class="intel-card highlight">
+        <div class="intel-card-icon">🚀</div>
+        <div class="intel-card-name">Opportunity signal</div>
+        <div class="intel-card-desc">A gap where AI capability could create significant value — e.g. a manual classification task consuming 2,400 hours/month that ML could automate at 96% accuracy.</div>
+      </div>
+    </div>
+
+    <p class="body-p">Each pressure card shows you: what the signal is, the data evidence behind it, which business unit it affects, the magnitude of impact, and a recommended action — usually "Originate a Move."</p>
+
+    <div class="pressure-mock">
+      <div class="pressure-mock-hdr">
+        <div class="pressure-mock-severity high"></div>
+        <span class="pressure-mock-type">Cost pressure · High severity</span>
+        <span class="pressure-mock-title">Routing inefficiency — Contact Center</span>
+      </div>
+      <div class="pressure-mock-body">
+        <div class="pressure-mock-signal">
+          <strong>What the signal says:</strong> Average handle time in the inbound routing layer has increased 18% over the past two quarters. The top 3 call categories (authentication failures, billing disputes, routing timeouts) account for 61% of excess time. ML-assisted routing could recover $2.8–4.1M annually based on volume and cost-per-minute data.
+        </div>
+        <div style="font-family:var(--f-mono);font-size:9px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--faint);margin-bottom:6px;">Evidence sources</div>
+        <div style="display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap;">
+          <span style="font-size:11px;background:var(--surface3);border:1px solid var(--border);border-radius:4px;padding:3px 8px;color:var(--muted);">Call center ops data · 6mo</span>
+          <span style="font-size:11px;background:var(--surface3);border:1px solid var(--border);border-radius:4px;padding:3px 8px;color:var(--muted);">IVR routing logs · Q3–Q4</span>
+          <span style="font-size:11px;background:var(--surface3);border:1px solid var(--border);border-radius:4px;padding:3px 8px;color:var(--muted);">Industry benchmark · AHT peers</span>
+        </div>
+        <div class="pressure-mock-footer">
+          <span class="pressure-mock-cta primary">→ Originate a Move</span>
+          <span class="pressure-mock-cta ghost">Deep dive</span>
+          <span class="pressure-mock-cta ghost">Dismiss</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="callout success">
+      <div class="callout-icon">✓</div>
+      <div class="callout-inner">
+        <div class="callout-label">Pressure cards pre-fill Moves</div>
+        <div class="callout-body">When you click "Originate a Move" from a pressure card, Nexus pre-populates the bet/outcome, value hypothesis, and evidence family fields from the card's data. You start P0 already 60% complete instead of from scratch.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section" id="intel-pattern-move">
+    <div class="eyebrow">Intelligence · Pattern → Move</div>
+    <h2 class="section-title">From pattern to Move</h2>
+    <p class="section-lead">The most powerful workflow in AbarVa. Intelligence detects a pattern → you validate it → one click sends it to Strategic Moves as a pre-loaded origination.</p>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num-col"></div>
+        <div class="step-body">
+          <div class="step-title">Browse Intelligence signals for your business units</div>
+          <div class="step-desc">Filter by business unit, archetype, or severity. High-severity patterns with strong evidence backing are the best candidates for immediate Moves.</div>
+          <span class="step-path">/intelligence → Pressure Cards → filter by severity</span>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num-col"></div>
+        <div class="step-body">
+          <div class="step-title">Open a pressure card and read the evidence</div>
+          <div class="step-desc">Check the evidence sources. Are they recent? Is the data from connected systems you trust? The stronger the evidence, the more defensible the business case in P4 will be.</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num-col"></div>
+        <div class="step-body">
+          <div class="step-title">Ask Sentinel to go deeper</div>
+          <div class="step-desc">Use the chat to ask <strong>"What's driving the 18% AHT increase?"</strong> or <strong>"Which teams are most affected?"</strong> Sentinel can drill further into the substrate before you decide to act.</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num-col"></div>
+        <div class="step-body">
+          <div class="step-title">Click "→ Originate a Move" to promote the signal</div>
+          <div class="step-desc">This opens the P0 origination screen with the pressure card data pre-loaded into the scaffold. You confirm the fields, name the Move, and promote it to P1.</div>
+          <span class="step-path">Pressure card → Originate a Move → /strategic-moves/new</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section" id="intel-terms">
+    <div class="eyebrow">Intelligence · Key Terms</div>
+    <h2 class="section-title">Key terms in Intelligence</h2>
+    <div class="terms">
+      <div class="term"><div class="term-name">Signal</div><div class="term-def">An AI-detected pattern in operational or financial data. Signals are surfaced automatically from connected data sources. <em>You don't need to ask for them — they appear when the substrate finds something worth noting.</em></div></div>
+      <div class="term"><div class="term-name">Pressure card</div><div class="term-def">The structured presentation of a signal. Includes type, severity, evidence, impact estimate, and recommended action. <em>Think of it as an AI-authored executive brief on a specific problem.</em></div></div>
+      <div class="term"><div class="term-name">Archetype</div><div class="term-def">The category of a signal or Move — Cost Reduction, Revenue Growth, Risk Mitigation, or Operational Excellence. <em>Nexus uses archetype to choose which deliverable templates and gate criteria to apply.</em></div></div>
+      <div class="term"><div class="term-name">Sentinel</div><div class="term-def">The front agent for Intelligence and Source. Answers questions about signals, drills into evidence, and coordinates specialist functions for deep analysis. <em>You talk to Sentinel — it orchestrates everything behind the scenes.</em></div></div>
+      <div class="term"><div class="term-name">Provenance</div><div class="term-def">The data lineage behind a signal — which connector, which dataset, which time period. <em>High-provenance signals have strong, recent, specific evidence. Low-provenance signals are more uncertain.</em></div></div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════
+       STRATEGIC MOVES
+  ══════════════════════════════ -->
+
+  <div class="section-band teal-bg" id="moves-overview">
+    <div class="eyebrow teal-color">Strategic Moves</div>
+    <h2 class="section-title light">What is a Strategic Move?</h2>
+    <p class="section-lead light">A Strategic Move is a phase-gated transformation program — a structured, evidence-backed way to take any AI or operational initiative from a one-line hypothesis to a handed-off delivery with full documentation and governance.</p>
+
+    <div class="flow" style="background:rgba(255,255,255,0.1);border-color:rgba(255,255,255,0.15);">
+      <div class="flow-step" style="border-right-color:rgba(255,255,255,0.1);">
+        <span class="flow-badge" style="background:rgba(255,255,255,0.15);color:#fff;">P0</span>
+        <span class="flow-icon">✏️</span>
+        <span class="flow-label" style="color:#fff;">Originate</span>
+        <span class="flow-desc" style="color:rgba(255,255,255,0.6);">7-field scaffold</span>
+      </div>
+      <div class="flow-step" style="border-right-color:rgba(255,255,255,0.1);">
+        <span class="flow-badge" style="background:rgba(255,255,255,0.15);color:#fff;">P1</span>
+        <span class="flow-icon">📋</span>
+        <span class="flow-label" style="color:#fff;">Charter</span>
+        <span class="flow-desc" style="color:rgba(255,255,255,0.6);">Formalize scope &amp; governance</span>
+      </div>
+      <div class="flow-step" style="border-right-color:rgba(255,255,255,0.1);">
+        <span class="flow-badge" style="background:rgba(255,255,255,0.15);color:#fff;">P2</span>
+        <span class="flow-icon">🔍</span>
+        <span class="flow-label" style="color:#fff;">Discover</span>
+        <span class="flow-desc" style="color:rgba(255,255,255,0.6);">As-is, root cause, diagnosis</span>
+      </div>
+      <div class="flow-step" style="border-right-color:rgba(255,255,255,0.1);">
+        <span class="flow-badge" style="background:rgba(255,255,255,0.15);color:#fff;">P3</span>
+        <span class="flow-icon">🎯</span>
+        <span class="flow-label" style="color:#fff;">Design</span>
+        <span class="flow-desc" style="color:rgba(255,255,255,0.6);">Target state + solution</span>
+      </div>
+      <div class="flow-step" style="border-right-color:rgba(255,255,255,0.1);">
+        <span class="flow-badge" style="background:rgba(255,255,255,0.15);color:#fff;">P4</span>
+        <span class="flow-icon">📊</span>
+        <span class="flow-label" style="color:#fff;">Roadmap</span>
+        <span class="flow-desc" style="color:rgba(255,255,255,0.6);">Execution plan + biz case</span>
+      </div>
+      <div class="flow-step" style="border-right-color:none;">
+        <span class="flow-badge" style="background:rgba(255,255,255,0.25);color:#fff;">P5</span>
+        <span class="flow-icon">🚀</span>
+        <span class="flow-label" style="color:#fff;">Mobilize</span>
+        <span class="flow-desc" style="color:rgba(255,255,255,0.6);">Handoff → Tower</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- P0 -->
+  <div class="section" id="p0">
+    <div class="eyebrow teal-color">Strategic Moves · P0</div>
+    <h2 class="section-title">P0 — Originate</h2>
+    <p class="section-lead">Where a Move is born. You describe the initiative in natural language chat with Nexus. It extracts seven structured fields into a scaffold panel on the right. Once four required fields are filled, you name and promote the Move to P1.</p>
+
+    <div class="screen">
+      <div class="screen-bar">
+        <div class="screen-dots"><div class="screen-dot"></div><div class="screen-dot"></div><div class="screen-dot"></div></div>
+        <div class="screen-url">/strategic-moves/new</div>
+      </div>
+      <div class="screen-panes">
+        <div class="screen-pane">
+          <div class="screen-pane-label">Left pane · Nexus chat</div>
+          <div class="chat-msg nexus">
+            <div class="chat-sender">Nexus</div>
+            Let's build your Move. Tell me what outcome you're aiming for — one sentence is ideal. What changes if this program succeeds?
+          </div>
+          <div class="chat-msg user">
+            <div class="chat-sender">You</div>
+            We want to cut contact center handle time by 30% using AI-assisted routing. COO is sponsoring it. Scope is just the inbound routing layer.
+          </div>
+          <div class="chat-msg nexus">
+            <div class="chat-sender">Nexus</div>
+            Got it — filled bet/outcome, sponsor, and scope. This looks like <strong>Cost Reduction</strong>. Confirm? And do you have a rough value estimate?
           </div>
         </div>
-        <div class="gen-step">
-          <span class="gen-step-num">2</span>
-          <div class="gen-step-content">
-            <div class="gen-step-title">Fill the 7-field scaffold through chat (P0 Originate)</div>
-            <div class="gen-step-desc">Talk to Nexus in natural language. It extracts the required fields — bet/outcome, archetype, sponsor, scope, value hypothesis, evidence family, and foundation readiness — as you describe the initiative. Fields 1–4 are required before you can promote.</div>
+        <div class="screen-pane">
+          <div class="screen-pane-label">Right pane · Scaffold</div>
+          <div class="scaffold-field filled">
+            <div class="scaffold-field-label">01 · Bet / outcome</div>
+            <div class="scaffold-field-val">Reduce contact center handle time by 30% using AI routing.</div>
           </div>
-        </div>
-        <div class="gen-step">
-          <span class="gen-step-num">3</span>
-          <div class="gen-step-content">
-            <div class="gen-step-title">Name the move and click "Promote to P1 Charter"</div>
-            <div class="gen-step-desc">Enter a program name (this becomes the Move's permanent identifier). The large black button at the bottom of the scaffold commits the draft and opens the P1 workspace.</div>
+          <div class="scaffold-field filled">
+            <div class="scaffold-field-label">02 · Archetype</div>
+            <div class="scaffold-field-val">Cost Reduction</div>
           </div>
-        </div>
-        <div class="gen-step">
-          <span class="gen-step-num">4</span>
-          <div class="gen-step-content">
-            <div class="gen-step-title">Work each phase: chat with Nexus, generate deliverables, clear the gate</div>
-            <div class="gen-step-desc">Each phase has a left Nexus chat pane and a right canvas. The canvas shows: phase-specific content sections, a gate criteria checklist (hard + soft criteria), a Generate Deliverables tab, and a link to the Evidence Hub.</div>
+          <div class="scaffold-field filled">
+            <div class="scaffold-field-label">03 · Executive sponsor</div>
+            <div class="scaffold-field-val">COO (confirm full name)</div>
           </div>
-        </div>
-        <div class="gen-step">
-          <span class="gen-step-num">5</span>
-          <div class="gen-step-content">
-            <div class="gen-step-title">Clear the gate to advance to the next phase</div>
-            <div class="gen-step-desc">All hard criteria must be met (blocking). Soft criteria are advisory but visible to reviewers. When the gate clears, the Advance button becomes active.</div>
+          <div class="scaffold-field filled">
+            <div class="scaffold-field-label">04 · Scope boundary</div>
+            <div class="scaffold-field-val">In: inbound routing. Out: agent training, CRM.</div>
           </div>
-        </div>
-        <div class="gen-step">
-          <span class="gen-step-num">6</span>
-          <div class="gen-step-content">
-            <div class="gen-step-title">After P5: the Move transitions to Control Tower</div>
-            <div class="gen-step-desc">Gating out of P5 automatically hands the Move to Atlas in Control Tower for ongoing execution tracking. You'll see a "→ Tower" indicator on the phase rail.</div>
-            <span class="gen-step-path">/tower → your program appears in the portfolio</span>
+          <div class="scaffold-field">
+            <div class="scaffold-field-label">05 · Value hypothesis</div>
+            <div class="scaffold-field-val" style="color:var(--faint);font-style:italic;">Awaiting…</div>
           </div>
         </div>
       </div>
-    </section>
+    </div>
 
-    <!-- ─── 03. Before you start ─── -->
-    <section class="section" id="s03">
-      <div class="section-eyebrow">03</div>
-      <h2 class="section-title">Before you start</h2>
-      <p class="section-lead">Have these four things ready before opening the origination screen. They're the minimum required to create a Move — Nexus will ask about all of them.</p>
+    <h3 class="h3">The seven scaffold fields</h3>
+    <div class="terms">
+      <div class="term"><div class="term-name">1. Bet / outcome <span style="color:var(--teal);font-size:10px;font-weight:700;margin-left:4px;">REQUIRED</span></div><div class="term-def">The result you're targeting — one sentence, outcome-level, with direction and magnitude. <em>Not a project name. "Reduce contact center AHT by 30%" not "CC AI Project."</em></div></div>
+      <div class="term"><div class="term-name">2. Archetype <span style="color:var(--teal);font-size:10px;font-weight:700;margin-left:4px;">REQUIRED</span></div><div class="term-def">Cost Reduction, Revenue Growth, Risk Mitigation, or Operational Excellence. <em>Nexus suggests based on your description — confirm or correct it.</em></div></div>
+      <div class="term"><div class="term-name">3. Executive sponsor <span style="color:var(--teal);font-size:10px;font-weight:700;margin-left:4px;">REQUIRED</span></div><div class="term-def">Name and title of the accountable executive. <em>Without a named sponsor, the P1 Charter gate cannot clear — it's a hard criterion.</em></div></div>
+      <div class="term"><div class="term-name">4. Scope boundary <span style="color:var(--teal);font-size:10px;font-weight:700;margin-left:4px;">REQUIRED</span></div><div class="term-def">Explicit in-scope and out-of-scope. <em>"In: inbound routing. Out: agent training, CRM." Vague scope is the #1 cause of program failure.</em></div></div>
+      <div class="term"><div class="term-name">5. Value hypothesis</div><div class="term-def">Order-of-magnitude range. Not a full business case yet — that's P4. <em>"$2–4M annual cost avoidance if 30% handle time reduction achieved."</em></div></div>
+      <div class="term"><div class="term-name">6. Evidence family</div><div class="term-def">The type of data that will validate this Move. <em>Helps Nexus index uploads to the right evidence specialist.</em></div></div>
+      <div class="term"><div class="term-name">7. Foundation readiness</div><div class="term-def">Honest assessment of current-state data/infra. <em>"Routing system on legacy platform (EOL 2027). No ML infra in-house."</em></div></div>
+    </div>
+  </div>
 
-      <ul class="checklist">
-        <li>
-          <div class="check-box"></div>
+  <!-- P1 -->
+  <div class="section" id="p1">
+    <div class="eyebrow">Strategic Moves · P1</div>
+    <div class="phase-card">
+      <div class="phase-hdr">
+        <span class="phase-num">P1</span>
+        <span class="phase-name">Charter</span>
+        <span class="phase-gate-badge">Gate: Charter Approval</span>
+      </div>
+      <div class="phase-body">
+        <div class="phase-goal">Formalize the program scope, objectives, and governance. Define who owns what and establish the baseline timeline. The Charter Gate requires a named sponsor, a defined scope, and a signed-off charter document before you can advance to discovery.</div>
+        <div class="phase-ex">
+          <div class="phase-ex-label">Example chat with Nexus</div>
+          <div class="phase-ex-text">"Nexus, help me draft the stakeholder map. The COO is sponsor, the VP of CX is program lead, and we'll need IT and Finance as working stakeholders." → Nexus populates the stakeholder section, assigns RACI roles for each name, and flags two decision-rights gaps that need resolving before the gate can clear.</div>
+        </div>
+        <div class="phase-grid">
           <div>
-            <strong>The bet / outcome</strong>
-            <span>What are you trying to achieve? One clear sentence. Not a project name; an outcome with direction and magnitude.</span>
-            <span style="color:var(--navy);font-style:italic;margin-top:6px;display:block;">e.g. "Reduce contact center handle time by 30% using AI-assisted routing."</span>
+            <div class="phase-col-label">Deliverables generated</div>
+            <span class="chip">📄 Program Charter <span class="chip-tag gate">GATE</span></span>
+            <span class="chip">👥 Stakeholder Map</span>
+            <span class="chip">📅 Baseline Timeline</span>
+            <span class="chip">🗂️ RACI Matrix</span>
           </div>
-        </li>
-        <li>
-          <div class="check-box"></div>
           <div>
-            <strong>An executive sponsor</strong>
-            <span>Name and title. Without a sponsor, the Move can't advance past P1 (the charter gate requires sponsor sign-off as a hard criterion).</span>
-            <span style="color:var(--navy);font-style:italic;margin-top:6px;display:block;">e.g. "Sarah Chen, Chief Operations Officer"</span>
+            <div class="phase-col-label">Gate criteria</div>
+            <div class="gate-row"><div class="gate-dot"></div><div>Named executive sponsor confirmed <span class="hard-tag">Hard</span></div></div>
+            <div class="gate-row"><div class="gate-dot"></div><div>Scope boundary documented &amp; approved <span class="hard-tag">Hard</span></div></div>
+            <div class="gate-row"><div class="gate-dot"></div><div>Charter document generated &amp; signed off <span class="hard-tag">Hard</span></div></div>
+            <div class="gate-row"><div class="gate-dot soft"></div><div>Stakeholder RACI reviewed by sponsor <span class="soft-tag">Soft</span></div></div>
           </div>
-        </li>
-        <li>
-          <div class="check-box"></div>
+        </div>
+      </div>
+    </div>
+    <div class="callout info">
+      <div class="callout-icon">💡</div>
+      <div class="callout-inner">
+        <div class="callout-label">Terminology: Charter</div>
+        <div class="callout-body">The Program Charter is the formal contract for the Move. It locks scope, confirms the sponsor, and establishes decision rights. Once signed off, changing scope requires a formal charter amendment — Nexus will enforce this.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- P2 -->
+  <div class="section" id="p2">
+    <div class="eyebrow">Strategic Moves · P2</div>
+    <div class="phase-card">
+      <div class="phase-hdr">
+        <span class="phase-num">P2</span>
+        <span class="phase-name">Discover &amp; Diagnose</span>
+        <span class="phase-gate-badge">Gate: Diagnosis Sign-Off</span>
+      </div>
+      <div class="phase-body">
+        <div class="phase-goal">Map the current state, identify root causes, and build a structured problem statement. This phase includes a critical <strong>Continue / Discontinue decision</strong> — if diagnosis reveals a fundamental blocker (wrong scope, wrong sponsor, non-viable economics), you record it here and can formally discontinue the Move rather than letting it stall.</div>
+        <div class="phase-ex">
+          <div class="phase-ex-label">Example chat with Nexus</div>
+          <div class="phase-ex-text">"Nexus, I'm uploading last quarter's AHT data. Can you identify the top 3 call categories driving high handle time?" → Nexus parses the file, surfaces that authentication failures, billing disputes, and routing timeouts account for 61% of excess handle time, and pre-fills the Root Cause Analysis with supporting data points.</div>
+        </div>
+        <div class="phase-grid">
           <div>
-            <strong>A scope boundary</strong>
-            <span>What's explicitly in and what's out? Scope creep is a primary failure mode. Nexus will push you to be specific. "All of customer service" is not a scope.</span>
-            <span style="color:var(--navy);font-style:italic;margin-top:6px;display:block;">e.g. "In scope: inbound routing layer. Out of scope: agent training, CRM changes."</span>
+            <div class="phase-col-label">Deliverables generated</div>
+            <span class="chip">📊 Current State Assessment <span class="chip-tag gate">GATE</span></span>
+            <span class="chip">🔍 Root Cause Analysis</span>
+            <span class="chip">📌 Problem Statement</span>
+            <span class="chip">⚠️ Risk Register</span>
           </div>
-        </li>
-        <li>
-          <div class="check-box"></div>
           <div>
-            <strong>A rough value hypothesis</strong>
-            <span>What's the magnitude of impact? Doesn't need to be a full business case yet — a directional range is enough.</span>
-            <span style="color:var(--navy);font-style:italic;margin-top:6px;display:block;">e.g. "$2–4M annual cost avoidance if handle time targets are met."</span>
-          </div>
-        </li>
-      </ul>
-
-      <div class="callout success">
-        <div class="callout-icon">✓</div>
-        <div class="callout-body">
-          <div class="callout-label">You don't need everything upfront</div>
-          <div class="callout-text">The three optional enrichment fields — evidence family, value hypothesis seed, and foundation readiness — are filled through conversation with Nexus. You don't need to prepare them in advance. Nexus will ask targeted follow-up questions during origination.</div>
-        </div>
-      </div>
-    </section>
-
-    <!-- ─── 04. Originate ─── -->
-    <section class="section" id="s04">
-      <div class="section-eyebrow">04</div>
-      <h2 class="section-title">Originate a new move (P0)</h2>
-      <p class="section-lead">The origination screen is where a Move is born. It has two panes: Nexus chat on the left, and a live scaffold panel on the right that fills as you talk.</p>
-
-      <div class="screen-mockup">
-        <div class="screen-titlebar">
-          <div class="screen-dots"><div class="screen-dot"></div><div class="screen-dot"></div><div class="screen-dot"></div></div>
-          <div class="screen-url">/strategic-moves/new</div>
-        </div>
-        <div class="screen-body">
-          <div class="screen-pane">
-            <div class="screen-pane-label">Left pane · Nexus chat</div>
-            <div class="mock-chat">
-              <div>
-                <div class="mock-sender nexus">Nexus</div>
-                <div class="mock-msg nexus">Let's build your Move. Start by telling me what outcome you're aiming for. One sentence is ideal — what changes if this program succeeds?</div>
-              </div>
-              <div>
-                <div class="mock-sender user">You</div>
-                <div class="mock-msg user">We want to cut contact center handle time by 30% using AI-assisted routing. CFO is sponsoring it. Scope is just the inbound routing layer.</div>
-              </div>
-              <div>
-                <div class="mock-sender nexus">Nexus</div>
-                <div class="mock-msg nexus">Got it — I've filled the bet/outcome, sponsor, and scope fields. This looks like a <strong>Cost Reduction</strong> archetype. Confirm? And do you have a rough value hypothesis — even a range?</div>
-              </div>
-            </div>
-          </div>
-          <div class="screen-pane">
-            <div class="screen-pane-label">Right pane · Scaffold</div>
-            <div class="mock-field filled">
-              <div class="mock-field-label">01 · Bet / outcome</div>
-              <div class="mock-field-value">Reduce contact center handle time by 30% using AI-assisted routing.</div>
-            </div>
-            <div class="mock-field filled">
-              <div class="mock-field-label">02 · Archetype</div>
-              <div class="mock-field-value">Cost Reduction</div>
-            </div>
-            <div class="mock-field filled">
-              <div class="mock-field-label">03 · Executive sponsor</div>
-              <div class="mock-field-value">CFO (confirm name)</div>
-            </div>
-            <div class="mock-field filled">
-              <div class="mock-field-label">04 · Scope boundary</div>
-              <div class="mock-field-value">In: inbound routing layer. Out: agent training, CRM.</div>
-            </div>
-            <div class="mock-field">
-              <div class="mock-field-label">05 · Value hypothesis</div>
-              <div class="mock-field-value" style="color:var(--faint);font-style:italic;">Awaiting your response…</div>
-            </div>
+            <div class="phase-col-label">Gate criteria</div>
+            <div class="gate-row"><div class="gate-dot"></div><div>As-is process documented with data evidence <span class="hard-tag">Hard</span></div></div>
+            <div class="gate-row"><div class="gate-dot"></div><div>Root causes validated, not just symptoms <span class="hard-tag">Hard</span></div></div>
+            <div class="gate-row"><div class="gate-dot soft"></div><div>Continue/Discontinue decision recorded <span class="soft-tag">Soft</span></div></div>
+            <div class="gate-row"><div class="gate-dot soft"></div><div>Risk register populated <span class="soft-tag">Soft</span></div></div>
           </div>
         </div>
       </div>
+    </div>
+    <div class="callout warn">
+      <div class="callout-icon">⚠️</div>
+      <div class="callout-inner">
+        <div class="callout-label">The Continue/Discontinue decision</div>
+        <div class="callout-body">P2 is the last low-cost exit point. If discovery reveals the economics don't work, the scope was wrong, or there's no sponsor alignment — record a Discontinue decision with rationale. A formally discontinued Move is better than a stalled one. Say: <em>"Nexus, record a Discontinue decision for this Move. Rationale: [reason]."</em></div>
+      </div>
+    </div>
+  </div>
 
-      <h4 class="sub-heading-sm">Step-by-step: Originating a Move</h4>
-      <div class="steps">
-        <div class="step">
-          <div class="step-num"></div>
-          <div class="step-body">
-            <div class="step-title">Go to Strategic Moves and click "New Move"</div>
-            <div class="step-desc">The origination screen opens. Nexus greets you with an opening question about your outcome.</div>
-            <span class="step-path">/strategic-moves → + New Move</span>
-          </div>
+  <!-- P3 -->
+  <div class="section" id="p3">
+    <div class="eyebrow">Strategic Moves · P3</div>
+    <div class="phase-card">
+      <div class="phase-hdr">
+        <span class="phase-num">P3</span>
+        <span class="phase-name">Design Future State</span>
+        <span class="phase-gate-badge">Gate: Design Approval</span>
+      </div>
+      <div class="phase-body">
+        <div class="phase-goal">Define the target state architecture and operating model. Address each root cause from P2 with a specific design decision. Define the sourcing strategy — <strong>build, buy, or partner</strong> — and complete solution design for all in-scope components. Every design decision should trace back to a P2 root cause.</div>
+        <div class="phase-ex">
+          <div class="phase-ex-label">Example chat with Nexus</div>
+          <div class="phase-ex-text">"The routing engine needs ML-based intent classification. We'll buy a vendor solution — the foundation isn't there to build in-house. Nexus, add that to the Sourcing Strategy with the rationale." → Nexus documents the build-vs-buy decision, links it to the Foundation Readiness gap from origination, and adds a vendor evaluation criterion to the P4 roadmap.</div>
         </div>
-        <div class="step">
-          <div class="step-num"></div>
-          <div class="step-body">
-            <div class="step-title">Describe the initiative in your own words</div>
-            <div class="step-desc">Don't try to fill fields manually. Just talk. <strong>"We're trying to cut call handle time by 30%, CFO is sponsoring it, scope is just the routing layer"</strong> fills three fields in one message.</div>
+        <div class="phase-grid">
+          <div>
+            <div class="phase-col-label">Deliverables generated</div>
+            <span class="chip">🏗️ Target State Architecture <span class="chip-tag gate">GATE</span></span>
+            <span class="chip">🎨 Solution Design</span>
+            <span class="chip">⚙️ Operating Model Design</span>
+            <span class="chip">🤝 Sourcing Strategy</span>
           </div>
-        </div>
-        <div class="step">
-          <div class="step-num"></div>
-          <div class="step-body">
-            <div class="step-title">Answer Nexus follow-up questions</div>
-            <div class="step-desc">Nexus will ask clarifying questions to extract each field. It will suggest values (like archetype) based on your description — confirm or correct them.</div>
-          </div>
-        </div>
-        <div class="step">
-          <div class="step-num"></div>
-          <div class="step-body">
-            <div class="step-title">Watch fields fill on the right panel</div>
-            <div class="step-desc">Fields 1–4 have solid borders when filled. Fields 5–7 are optional enrichments. Once all four required fields show content, the Promote button activates.</div>
-            <div class="step-note">The scaffold auto-saves as you chat. If you close the tab, your draft is preserved.</div>
-          </div>
-        </div>
-        <div class="step">
-          <div class="step-num"></div>
-          <div class="step-body">
-            <div class="step-title">Optionally add enrichment (fields 5–7)</div>
-            <div class="step-desc">Keep chatting to fill Evidence Family, Value Hypothesis Seed, and Foundation Readiness. These improve document quality but aren't required to promote.</div>
-          </div>
-        </div>
-        <div class="step">
-          <div class="step-num"></div>
-          <div class="step-body">
-            <div class="step-title">Give the Move a program name</div>
-            <div class="step-desc">Enter a program name in the name field at the bottom of the scaffold. This becomes the Move's permanent identifier across all surfaces.</div>
-            <div class="step-note">Keep it clear and specific. "AI Contact Center Routing — Phase 1" is better than "CC AI Project."</div>
-          </div>
-        </div>
-        <div class="step">
-          <div class="step-num"></div>
-          <div class="step-body">
-            <div class="step-title">Click "Promote to P1 Charter"</div>
-            <div class="step-desc">The large black button at the bottom of the scaffold commits the draft into an active Move and opens the P1 Charter workspace. The origination draft is saved in full.</div>
+          <div>
+            <div class="phase-col-label">Gate criteria</div>
+            <div class="gate-row"><div class="gate-dot"></div><div>Each P2 root cause addressed in design <span class="hard-tag">Hard</span></div></div>
+            <div class="gate-row"><div class="gate-dot"></div><div>Sourcing decision documented with rationale <span class="hard-tag">Hard</span></div></div>
+            <div class="gate-row"><div class="gate-dot soft"></div><div>Architecture reviewed with technical stakeholders <span class="soft-tag">Soft</span></div></div>
+            <div class="gate-row"><div class="gate-dot soft"></div><div>Operating model changes identified <span class="soft-tag">Soft</span></div></div>
           </div>
         </div>
       </div>
-    </section>
-
-    <!-- ─── 05. Seven scaffold fields ─── -->
-    <section class="section" id="s05">
-      <div class="section-eyebrow">05</div>
-      <h2 class="section-title">The seven scaffold fields</h2>
-      <p class="section-lead">These are the exact fields Nexus populates during origination. Fields 1–4 are required to promote. Fields 5–7 are optional enrichments that improve the quality of all generated documents.</p>
-
-      <table class="scaffold-table">
-        <thead>
-          <tr>
-            <th>#</th>
-            <th>Field</th>
-            <th>What to provide &amp; example</th>
-            <th>Status</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td style="font-family:var(--f-mono);font-size:11px;color:var(--faint);font-weight:700;">01</td>
-            <td>
-              <div class="field-name">Bet / outcome</div>
-              <div class="field-desc">The result you're targeting. One sentence, outcome-level, not a project name.</div>
-            </td>
-            <td>
-              <div class="field-desc">Outcome with direction and magnitude.</div>
-              <div class="field-example">"Reduce contact center handle time by 30% using AI-assisted routing."</div>
-            </td>
-            <td><span class="badge-req">Required</span></td>
-          </tr>
-          <tr>
-            <td style="font-family:var(--f-mono);font-size:11px;color:var(--faint);font-weight:700;">02</td>
-            <td>
-              <div class="field-name">Archetype classification</div>
-              <div class="field-desc">The type of Move. Nexus will suggest based on your description.</div>
-            </td>
-            <td>
-              <div class="field-desc">One of: Cost Reduction, Revenue Growth, Risk Mitigation, Operational Excellence. Nexus suggests, you confirm.</div>
-              <div class="field-example">"Cost Reduction" — confirmed by user after Nexus suggestion.</div>
-            </td>
-            <td><span class="badge-req">Required</span></td>
-          </tr>
-          <tr>
-            <td style="font-family:var(--f-mono);font-size:11px;color:var(--faint);font-weight:700;">03</td>
-            <td>
-              <div class="field-name">Executive sponsor</div>
-              <div class="field-desc">Name and title of the accountable executive. Required for P1 gate.</div>
-            </td>
-            <td>
-              <div class="field-desc">Full name + title. Without a named sponsor, the charter gate (P1) cannot clear.</div>
-              <div class="field-example">"Sarah Chen, Chief Operations Officer"</div>
-            </td>
-            <td><span class="badge-req">Required</span></td>
-          </tr>
-          <tr>
-            <td style="font-family:var(--f-mono);font-size:11px;color:var(--faint);font-weight:700;">04</td>
-            <td>
-              <div class="field-name">Scope boundary</div>
-              <div class="field-desc">Explicit in-scope and out-of-scope. Nexus will push back on vague scope.</div>
-            </td>
-            <td>
-              <div class="field-desc">Two-part: what's in, what's out. Be explicit. Vague scope is a gate failure mode.</div>
-              <div class="field-example">"In: inbound routing and IVR layer. Out: agent training, CRM system, workforce management."</div>
-            </td>
-            <td><span class="badge-req">Required</span></td>
-          </tr>
-          <tr>
-            <td style="font-family:var(--f-mono);font-size:11px;color:var(--faint);font-weight:700;">05</td>
-            <td>
-              <div class="field-name">Value hypothesis seed</div>
-              <div class="field-desc">Directional estimate of impact. Used to seed the financial model in P4.</div>
-            </td>
-            <td>
-              <div class="field-desc">Order-of-magnitude range. Not a full business case — that's built in P4. A rough range is enough.</div>
-              <div class="field-example">"$2–4M annual cost avoidance if 30% handle time reduction is achieved."</div>
-            </td>
-            <td><span class="badge-opt">Optional</span></td>
-          </tr>
-          <tr>
-            <td style="font-family:var(--f-mono);font-size:11px;color:var(--faint);font-weight:700;">06</td>
-            <td>
-              <div class="field-name">Evidence family</div>
-              <div class="field-desc">The type of data or evidence that will validate this Move.</div>
-            </td>
-            <td>
-              <div class="field-desc">Helps Nexus route evidence-gathering tasks to the right specialists and index uploads correctly.</div>
-              <div class="field-example">"Call center ops data, routing system logs, agent utilisation reports."</div>
-            </td>
-            <td><span class="badge-opt">Optional</span></td>
-          </tr>
-          <tr>
-            <td style="font-family:var(--f-mono);font-size:11px;color:var(--faint);font-weight:700;">07</td>
-            <td>
-              <div class="field-name">Foundation readiness</div>
-              <div class="field-desc">Current state of data, infrastructure, or change capacity relevant to this Move.</div>
-            </td>
-            <td>
-              <div class="field-desc">Honest assessment of what's already in place vs. what needs to be built. Feeds the risk register in P3.</div>
-              <div class="field-example">"Routing system is on legacy platform (end-of-life 2027). No ML infrastructure in-house yet."</div>
-            </td>
-            <td><span class="badge-opt">Optional</span></td>
-          </tr>
-        </tbody>
-      </table>
-    </section>
-
-    <!-- ─── 06. Five phases ─── -->
-    <section class="section" id="s06">
-      <div class="section-eyebrow">06</div>
-      <h2 class="section-title">Working through the five phases</h2>
-      <p class="section-lead">Each phase has the same two-pane layout: Nexus chat on the left, a phase canvas on the right. The canvas has 3–5 content sections, a gate criteria checklist, a Generate Deliverables tab, and an Evidence Hub link.</p>
-
-      <div class="anatomy">
-        <div class="anatomy-pane">
-          <div class="anatomy-label">Left pane · Nexus chat</div>
-          <div class="anatomy-item">Phase-specific opening message from Nexus</div>
-          <div class="anatomy-item">Ask Nexus anything about the phase</div>
-          <div class="anatomy-item">Request specific deliverable inputs via chat</div>
-          <div class="anatomy-item">Attach files (.pdf, .docx, .xlsx, .csv) via paperclip</div>
-          <div class="anatomy-item">Phase progress chips at bottom of chat</div>
-          <div class="anatomy-item">Gate advancement button (when ready)</div>
-        </div>
-        <div class="anatomy-pane">
-          <div class="anatomy-label">Right pane · Phase canvas</div>
-          <div class="anatomy-item">3–5 phase-specific content sections</div>
-          <div class="anatomy-item">Gate criteria checklist (hard + soft)</div>
-          <div class="anatomy-item">Generate Deliverables tab</div>
-          <div class="anatomy-item">Evidence Hub link</div>
-          <div class="anatomy-item">Document status indicators (Draft / In Review / Signed Off)</div>
-        </div>
+    </div>
+    <div class="callout info">
+      <div class="callout-icon">💡</div>
+      <div class="callout-inner">
+        <div class="callout-label">Terminology: Build / Buy / Partner</div>
+        <div class="callout-body">The sourcing decision in P3 determines P4 economics. <strong>Build</strong> = internal development (high cost, high control). <strong>Buy</strong> = vendor solution (faster, less custom). <strong>Partner</strong> = joint delivery with a SI or specialist firm. Nexus will ask you to justify the choice against the Foundation Readiness assessment from P0.</div>
       </div>
+    </div>
+  </div>
 
-      <div class="phases">
-
-        <!-- P1 -->
-        <div class="phase-card">
-          <div class="phase-header">
-            <span class="phase-num">P1</span>
-            <span class="phase-name">Charter</span>
-            <span class="phase-gate-badge">Gate: Charter Approval</span>
-          </div>
-          <div class="phase-body">
-            <div class="phase-goal">Formalize the program scope, objectives, and governance. Define who owns what and establish the baseline timeline. The Charter Gate requires a named sponsor, defined scope, and approved charter document.</div>
-            <div class="phase-example">
-              <div class="phase-example-label">Example chat with Nexus</div>
-              <div class="phase-example-text">"Nexus, help me draft the stakeholder map. The COO is sponsor, the VP of CX is the program lead, and we'll need IT and Finance as working stakeholders." → Nexus populates the stakeholder section, assigns RACI roles for each name, and flags two decision-rights gaps that need to be resolved before the Charter gate can clear.</div>
-            </div>
-            <div class="phase-cols">
-              <div>
-                <div class="phase-col-label">Deliverables generated</div>
-                <div>
-                  <span class="doc-chip"><span class="chip-icon">📄</span> Program Charter <span class="chip-tag gate">GATE</span></span>
-                  <span class="doc-chip"><span class="chip-icon">👥</span> Stakeholder Map</span>
-                  <span class="doc-chip"><span class="chip-icon">📅</span> Baseline Timeline</span>
-                  <span class="doc-chip"><span class="chip-icon">🗂️</span> RACI Matrix</span>
-                </div>
-              </div>
-              <div>
-                <div class="phase-col-label">Gate criteria</div>
-                <div class="gate-item"><div class="gate-dot"></div><div>Named executive sponsor confirmed <span class="gate-hard-label">Hard</span></div></div>
-                <div class="gate-item"><div class="gate-dot"></div><div>Scope boundary documented and approved <span class="gate-hard-label">Hard</span></div></div>
-                <div class="gate-item"><div class="gate-dot"></div><div>Charter document generated and signed off <span class="gate-hard-label">Hard</span></div></div>
-                <div class="gate-item"><div class="gate-dot soft"></div><div>Stakeholder RACI reviewed by sponsor <span class="gate-soft-label">Soft</span></div></div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- P2 -->
-        <div class="phase-card">
-          <div class="phase-header">
-            <span class="phase-num">P2</span>
-            <span class="phase-name">Discover &amp; Diagnose</span>
-            <span class="phase-gate-badge">Gate: Diagnosis Sign-Off</span>
-          </div>
-          <div class="phase-body">
-            <div class="phase-goal">Map the current state, identify root causes, and build a structured problem statement. This phase includes a critical Continue/Discontinue decision — if the diagnosis surfaces a fundamental blocker, you record it here and can formally discontinue the Move.</div>
-            <div class="phase-example">
-              <div class="phase-example-label">Example chat with Nexus</div>
-              <div class="phase-example-text">"Nexus, I'm uploading last quarter's AHT data. Can you help me identify the top 3 call categories driving high handle time?" → Nexus parses the file, surfaces that authentication failures, billing disputes, and routing timeouts account for 61% of excess handle time, and pre-fills the Root Cause Analysis section with supporting data points.</div>
-            </div>
-            <div class="phase-cols">
-              <div>
-                <div class="phase-col-label">Deliverables generated</div>
-                <div>
-                  <span class="doc-chip"><span class="chip-icon">📊</span> Current State Assessment <span class="chip-tag gate">GATE</span></span>
-                  <span class="doc-chip"><span class="chip-icon">🔍</span> Root Cause Analysis</span>
-                  <span class="doc-chip"><span class="chip-icon">📌</span> Problem Statement</span>
-                  <span class="doc-chip"><span class="chip-icon">⚠️</span> Risk Register</span>
-                </div>
-              </div>
-              <div>
-                <div class="phase-col-label">Gate criteria</div>
-                <div class="gate-item"><div class="gate-dot"></div><div>As-is process documented with data evidence <span class="gate-hard-label">Hard</span></div></div>
-                <div class="gate-item"><div class="gate-dot"></div><div>Root causes validated, not just symptoms <span class="gate-hard-label">Hard</span></div></div>
-                <div class="gate-item"><div class="gate-dot soft"></div><div>Continue/Discontinue decision recorded <span class="gate-soft-label">Soft</span></div></div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- P3 -->
-        <div class="phase-card">
-          <div class="phase-header">
-            <span class="phase-num">P3</span>
-            <span class="phase-name">Design Future State</span>
-            <span class="phase-gate-badge">Gate: Design Approval</span>
-          </div>
-          <div class="phase-body">
-            <div class="phase-goal">Define target state architecture and operating model. Address each root cause from P2 with a specific design decision. Define sourcing strategy — build, buy, or partner — and complete solution design for all in-scope components.</div>
-            <div class="phase-example">
-              <div class="phase-example-label">Example chat with Nexus</div>
-              <div class="phase-example-text">"The routing engine needs ML-based intent classification. We'll buy a vendor solution, not build in-house — the foundation isn't there. Nexus, add that to the Sourcing Strategy with the rationale." → Nexus documents the build-vs-buy decision, links it to the Foundation Readiness gap flagged in origination, and adds a vendor evaluation criterion to the P4 roadmap.</div>
-            </div>
-            <div class="phase-cols">
-              <div>
-                <div class="phase-col-label">Deliverables generated</div>
-                <div>
-                  <span class="doc-chip"><span class="chip-icon">🏗️</span> Target State Architecture <span class="chip-tag gate">GATE</span></span>
-                  <span class="doc-chip"><span class="chip-icon">🎨</span> Solution Design</span>
-                  <span class="doc-chip"><span class="chip-icon">⚙️</span> Operating Model Design</span>
-                  <span class="doc-chip"><span class="chip-icon">🤝</span> Sourcing Strategy</span>
-                </div>
-              </div>
-              <div>
-                <div class="phase-col-label">Gate criteria</div>
-                <div class="gate-item"><div class="gate-dot"></div><div>Each root cause from P2 addressed in design <span class="gate-hard-label">Hard</span></div></div>
-                <div class="gate-item"><div class="gate-dot"></div><div>Sourcing decision documented with rationale <span class="gate-hard-label">Hard</span></div></div>
-                <div class="gate-item"><div class="gate-dot soft"></div><div>Architecture reviewed with technical stakeholders <span class="gate-soft-label">Soft</span></div></div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- P4 -->
-        <div class="phase-card">
-          <div class="phase-header">
-            <span class="phase-num">P4</span>
-            <span class="phase-name">Roadmap &amp; Business Case</span>
-            <span class="phase-gate-badge">Gate: Investment Approval</span>
-          </div>
-          <div class="phase-body">
-            <div class="phase-goal">Translate the P3 design into an execution roadmap and build the business case economics. Define Control Tower metrics. The P4 gate is the investment approval gate — it requires both a signed-off business case and an execution roadmap before any implementation begins.</div>
-            <div class="phase-example">
-              <div class="phase-example-label">Example chat with Nexus</div>
-              <div class="phase-example-text">"Nexus, the Financial Model needs updating — vendor cost came in at $420K not $380K. Recalculate the payback period." → Nexus updates the Financial Model, recalculates break-even (now 14 months not 12), flags that the Business Case needs re-review before the P4 gate, and adds a note to the executive summary explaining the revision.</div>
-            </div>
-            <div class="phase-cols">
-              <div>
-                <div class="phase-col-label">Deliverables generated</div>
-                <div>
-                  <span class="doc-chip"><span class="chip-icon">🗺️</span> Execution Roadmap <span class="chip-tag gate">GATE</span></span>
-                  <span class="doc-chip"><span class="chip-icon">💼</span> Business Case <span class="chip-tag gate">GATE</span></span>
-                  <span class="doc-chip"><span class="chip-icon">📈</span> Financial Model <span class="chip-tag">EXCEL</span></span>
-                  <span class="doc-chip"><span class="chip-icon">📡</span> Tower Metrics Plan</span>
-                </div>
-              </div>
-              <div>
-                <div class="phase-col-label">Gate criteria</div>
-                <div class="gate-item"><div class="gate-dot"></div><div>Financial model with 3-year projection <span class="gate-hard-label">Hard</span></div></div>
-                <div class="gate-item"><div class="gate-dot"></div><div>Roadmap with milestones and owners <span class="gate-hard-label">Hard</span></div></div>
-                <div class="gate-item"><div class="gate-dot"></div><div>Executive sponsor sign-off on business case <span class="gate-hard-label">Hard</span></div></div>
-                <div class="gate-item"><div class="gate-dot soft"></div><div>Tower metrics defined and agreed <span class="gate-soft-label">Soft</span></div></div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- P5 -->
-        <div class="phase-card">
-          <div class="phase-header">
-            <span class="phase-num" style="background:var(--teal);">P5</span>
-            <span class="phase-name">Mobilize &amp; Handoff</span>
-            <span class="phase-gate-badge" style="color:var(--navy);border-color:var(--navy-line);background:var(--navy-soft);">Gate: Tower Acceptance</span>
-          </div>
-          <div class="phase-body">
-            <div class="phase-goal">Assemble the delivery team and RACI. Build the handoff package. Verify execution readiness. Secure Tower acceptance. Gating out of P5 closes the Move and transitions it to Control Tower for ongoing execution tracking.</div>
-            <div class="phase-example">
-              <div class="phase-example-label">Example chat with Nexus</div>
-              <div class="phase-example-text">"Nexus, generate the Handoff Package. Include the charter, roadmap, business case, and the risk register from P2. The delivery team is confirmed: PM is Priya, tech lead is Marcus." → Nexus assembles the package, pre-fills the RACI with Priya and Marcus's roles, and flags two open risks from the P2 register that need owner assignment before Tower acceptance can be confirmed.</div>
-            </div>
-            <div class="phase-cols">
-              <div>
-                <div class="phase-col-label">Deliverables generated</div>
-                <div>
-                  <span class="doc-chip"><span class="chip-icon">🚀</span> Handoff Package <span class="chip-tag gate">GATE</span></span>
-                  <span class="doc-chip"><span class="chip-icon">✅</span> Readiness Assessment</span>
-                </div>
-              </div>
-              <div>
-                <div class="phase-col-label">Gate criteria</div>
-                <div class="gate-item"><div class="gate-dot"></div><div>Delivery team assembled with named PM <span class="gate-hard-label">Hard</span></div></div>
-                <div class="gate-item"><div class="gate-dot"></div><div>Handoff package generated and complete <span class="gate-hard-label">Hard</span></div></div>
-                <div class="gate-item"><div class="gate-dot"></div><div>Tower acceptance confirmed <span class="gate-hard-label">Hard</span></div></div>
-                <div class="gate-item"><div class="gate-dot soft"></div><div>All previous deliverables reviewed by sponsor <span class="gate-soft-label">Soft</span></div></div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-      </div><!-- /phases -->
-
-      <div class="callout info">
-        <div class="callout-icon">→</div>
-        <div class="callout-body">
-          <div class="callout-label">After P5: Control Tower</div>
-          <div class="callout-text">When a Move gates out of P5, it appears automatically in <strong>Control Tower</strong> under Atlas. The program shows on the portfolio heatmap and receives ongoing signal tracking. You'll see a "→ Tower" indicator on the P5 phase rail once this transition completes.</div>
-        </div>
+  <!-- P4 -->
+  <div class="section" id="p4">
+    <div class="eyebrow">Strategic Moves · P4</div>
+    <div class="phase-card">
+      <div class="phase-hdr">
+        <span class="phase-num">P4</span>
+        <span class="phase-name">Roadmap &amp; Business Case</span>
+        <span class="phase-gate-badge">Gate: Investment Approval</span>
       </div>
-    </section>
-
-    <!-- ─── 07. Gates ─── -->
-    <section class="section" id="s07">
-      <div class="section-eyebrow">07</div>
-      <h2 class="section-title">Understanding gates</h2>
-      <p class="section-lead">Every phase ends with a quality gate. Gates are not bureaucratic checkboxes — they're the mechanism that ensures each phase has genuine outputs before implementation begins.</p>
-
-      <h3 class="sub-heading">Gate status: three states</h3>
-      <div class="gate-states">
-        <div class="gate-state pending">
-          <div class="gate-state-icon">🔒</div>
-          <div class="gate-state-name">Pending</div>
-          <div class="gate-state-desc">Phase hasn't started or not all hard criteria have been addressed yet. Advance button is locked.</div>
+      <div class="phase-body">
+        <div class="phase-goal">Translate the P3 design into an execution roadmap and build the business case economics. The P4 gate is the <strong>investment approval gate</strong> — the highest-stakes gate. It requires a sponsor-signed business case, a milestoned roadmap with named owners, and a financial model before any implementation begins.</div>
+        <div class="phase-ex">
+          <div class="phase-ex-label">Example chat with Nexus</div>
+          <div class="phase-ex-text">"Nexus, the Financial Model needs updating — vendor cost came in at $420K not $380K. Recalculate the payback period." → Nexus updates the model, recalculates break-even (now 14 months not 12), flags the Business Case needs re-review, and adds a note to the executive summary explaining the revision.</div>
         </div>
-        <div class="gate-state open">
-          <div class="gate-state-icon">⚠️</div>
-          <div class="gate-state-name">Open</div>
-          <div class="gate-state-desc">Phase is in progress. Some criteria met, some still outstanding. Advance button shows which criteria are blocking.</div>
-        </div>
-        <div class="gate-state cleared">
-          <div class="gate-state-icon">✅</div>
-          <div class="gate-state-name">Cleared</div>
-          <div class="gate-state-desc">All hard criteria met. Advance button is active. Soft criteria may still be advisory warnings.</div>
-        </div>
-      </div>
-
-      <h3 class="sub-heading">Hard vs. soft criteria</h3>
-      <div class="gate-criteria-grid">
-        <div class="gate-criteria-box">
-          <div class="gate-criteria-header hard">
-            <span class="gc-label hard">Hard criteria</span>
-            <span class="gc-tag">— blocking, must be met</span>
+        <div class="phase-grid">
+          <div>
+            <div class="phase-col-label">Deliverables generated</div>
+            <span class="chip">🗺️ Execution Roadmap <span class="chip-tag gate">GATE</span></span>
+            <span class="chip">💼 Business Case <span class="chip-tag gate">GATE</span></span>
+            <span class="chip">📈 Financial Model <span class="chip-tag">EXCEL</span></span>
+            <span class="chip">📡 Tower Metrics Plan</span>
           </div>
-          <div class="gate-criteria-list">
-            <div class="gc-item"><span class="gc-icon">🚫</span>Gate cannot clear until these are satisfied</div>
-            <div class="gc-item"><span class="gc-icon">🚫</span>Advance button is locked if any hard criterion is open</div>
-            <div class="gc-item"><span class="gc-icon">📋</span>Examples: named sponsor, scope boundary, gate document generated</div>
-            <div class="gc-item"><span class="gc-icon">📋</span>Nexus tracks these automatically from your inputs</div>
-          </div>
-        </div>
-        <div class="gate-criteria-box">
-          <div class="gate-criteria-header soft">
-            <span class="gc-label soft">Soft criteria</span>
-            <span class="gc-tag">— advisory, visible to reviewers</span>
-          </div>
-          <div class="gate-criteria-list">
-            <div class="gc-item"><span class="gc-icon">⚠️</span>Gate can clear even with open soft criteria</div>
-            <div class="gc-item"><span class="gc-icon">⚠️</span>Shown as advisory warnings in the gate view</div>
-            <div class="gc-item"><span class="gc-icon">📋</span>Examples: stakeholder review done, technical sign-off obtained</div>
-            <div class="gc-item"><span class="gc-icon">📋</span>Appear in the evidence trail viewed by Tower</div>
+          <div>
+            <div class="phase-col-label">Gate criteria</div>
+            <div class="gate-row"><div class="gate-dot"></div><div>Financial model with 3-year projection <span class="hard-tag">Hard</span></div></div>
+            <div class="gate-row"><div class="gate-dot"></div><div>Roadmap with milestones &amp; owners <span class="hard-tag">Hard</span></div></div>
+            <div class="gate-row"><div class="gate-dot"></div><div>Executive sponsor sign-off on business case <span class="hard-tag">Hard</span></div></div>
+            <div class="gate-row"><div class="gate-dot soft"></div><div>Tower metrics defined &amp; agreed <span class="soft-tag">Soft</span></div></div>
           </div>
         </div>
       </div>
-
-      <div class="callout warn">
-        <div class="callout-icon">⚠️</div>
-        <div class="callout-body">
-          <div class="callout-label">Gates cannot self-approve</div>
-          <div class="callout-text">In the current pilot configuration, any user can approve their own gate. In production, only admin or Maestro-role users will be able to approve. Gate sign-off is recorded in the audit trail — Nexus (the AI) cannot approve a gate on your behalf.</div>
-        </div>
+    </div>
+    <div class="callout info">
+      <div class="callout-icon">💡</div>
+      <div class="callout-inner">
+        <div class="callout-label">Terminology: Financial Model (Excel)</div>
+        <div class="callout-body">The P4 Financial Model is a 5-sheet Excel workbook: <strong>Assumptions</strong>, <strong>3-year P&amp;L projection</strong>, <strong>NPV/IRR</strong>, <strong>Sensitivity analysis</strong>, and <strong>Payback curve</strong>. The value hypothesis seed you entered at P0 pre-fills the assumptions — update it with actuals from vendor quotes and internal cost data before gating out.</div>
       </div>
-    </section>
+    </div>
+  </div>
 
-    <!-- ─── 08. Generating deliverables ─── -->
-    <section class="section" id="s08">
-      <div class="section-eyebrow">08</div>
-      <h2 class="section-title">Generating deliverables</h2>
-      <p class="section-lead">Every phase generates consulting-grade documents — charters, assessments, roadmaps, financial models, and more. All documents are generated on demand from the Generate Deliverables tab in the phase canvas.</p>
-
-      <div class="callout warn">
-        <div class="callout-icon">⚠️</div>
-        <div class="callout-body">
-          <div class="callout-label">Generate before you download</div>
-          <div class="callout-text">Download links in the Evidence Hub only appear after a document has been generated. If a document shows "not generated," go back to the phase workspace, open the Generate tab, and generate it first.</div>
-        </div>
+  <!-- P5 -->
+  <div class="section" id="p5">
+    <div class="eyebrow">Strategic Moves · P5</div>
+    <div class="phase-card">
+      <div class="phase-hdr">
+        <span class="phase-num teal">P5</span>
+        <span class="phase-name">Mobilize &amp; Handoff</span>
+        <span class="phase-gate-badge" style="color:var(--navy);border-color:var(--navy-line);background:var(--navy-soft);">Gate: Tower Acceptance</span>
       </div>
-
-      <h4 class="sub-heading-sm">How to generate a deliverable</h4>
-      <div class="gen-flow">
-        <div class="gen-step">
-          <span class="gen-step-num">1</span>
-          <div class="gen-step-content">
-            <div class="gen-step-title">Navigate to the phase workspace</div>
-            <div class="gen-step-desc">Open the Move and click the phase (e.g. P2) in the phase rail at the top.</div>
-            <span class="gen-step-path">/strategic-moves/{id}/phase/2</span>
-          </div>
+      <div class="phase-body">
+        <div class="phase-goal">Assemble the delivery team and RACI. Build the handoff package. Verify execution readiness. Secure Tower acceptance. <strong>Gating out of P5 closes the Move and transitions it to Control Tower</strong> — where Atlas tracks execution progress, KPIs, and ongoing signal health.</div>
+        <div class="phase-ex">
+          <div class="phase-ex-label">Example chat with Nexus</div>
+          <div class="phase-ex-text">"Nexus, generate the Handoff Package. Include the charter, roadmap, business case, and the risk register from P2. Delivery team: PM is Priya, tech lead is Marcus." → Nexus assembles the package, pre-fills the RACI with their roles, and flags two open risks from P2 that need owner assignment before Tower acceptance can confirm.</div>
         </div>
-        <div class="gen-step">
-          <span class="gen-step-num">2</span>
-          <div class="gen-step-content">
-            <div class="gen-step-title">Click the "Generate Deliverables" tab in the canvas</div>
-            <div class="gen-step-desc">The tab is in the right-hand phase canvas. It shows all documents available for this phase with their current status.</div>
+        <div class="phase-grid">
+          <div>
+            <div class="phase-col-label">Deliverables generated</div>
+            <span class="chip">🚀 Handoff Package <span class="chip-tag gate">GATE</span></span>
+            <span class="chip">✅ Readiness Assessment</span>
           </div>
-        </div>
-        <div class="gen-step">
-          <span class="gen-step-num">3</span>
-          <div class="gen-step-content">
-            <div class="gen-step-title">Select the document you want and click Generate</div>
-            <div class="gen-step-desc">Each document shows its format (HTML preview + Word download, or Excel for financial models). Gate artifacts are marked with a green GATE chip.</div>
-          </div>
-        </div>
-        <div class="gen-step">
-          <span class="gen-step-num">4</span>
-          <div class="gen-step-content">
-            <div class="gen-step-title">Wait for generation (typically 10–30 seconds)</div>
-            <div class="gen-step-desc">Nexus assembles the document from your scaffold data, phase inputs, and chat history. Complex documents like the Business Case or Financial Model may take longer.</div>
-          </div>
-        </div>
-        <div class="gen-step">
-          <span class="gen-step-num">5</span>
-          <div class="gen-step-content">
-            <div class="gen-step-title">Preview the HTML version or download Word / Excel</div>
-            <div class="gen-step-desc">HTML is for review in-browser. Word is for editing and sharing externally. Excel is for the Financial Model (5 sheets). All versions are linked from the Evidence Hub.</div>
+          <div>
+            <div class="phase-col-label">Gate criteria</div>
+            <div class="gate-row"><div class="gate-dot"></div><div>Delivery team assembled with named PM <span class="hard-tag">Hard</span></div></div>
+            <div class="gate-row"><div class="gate-dot"></div><div>Handoff package generated &amp; complete <span class="hard-tag">Hard</span></div></div>
+            <div class="gate-row"><div class="gate-dot"></div><div>Tower acceptance confirmed <span class="hard-tag">Hard</span></div></div>
+            <div class="gate-row"><div class="gate-dot soft"></div><div>All deliverables reviewed by sponsor <span class="soft-tag">Soft</span></div></div>
           </div>
         </div>
       </div>
+    </div>
+    <div class="callout success">
+      <div class="callout-icon">→</div>
+      <div class="callout-inner">
+        <div class="callout-label">After P5: Control Tower</div>
+        <div class="callout-body">The Move transitions to Control Tower automatically. Atlas picks it up, the program appears in the portfolio heatmap, and ongoing signal tracking begins. You'll see a "→ Tower" indicator on the phase rail once the transition completes.</div>
+      </div>
+    </div>
+  </div>
 
-      <h4 class="sub-heading-sm">What each format means</h4>
-      <div style="display:flex;gap:14px;flex-wrap:wrap;margin:16px 0 24px;">
-        <div style="border:1px solid var(--border);border-radius:8px;padding:16px 20px;flex:1;min-width:180px;">
-          <div style="font-family:var(--f-mono);font-size:9px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:var(--slate);margin-bottom:6px;">HTML</div>
-          <div style="font-size:13.5px;color:var(--body);line-height:1.5;">Read-only in-browser preview. Use for reviewing, sharing links internally, or presenting in a meeting.</div>
-        </div>
-        <div style="border:1px solid var(--border);border-radius:8px;padding:16px 20px;flex:1;min-width:180px;">
-          <div style="font-family:var(--f-mono);font-size:9px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:var(--slate);margin-bottom:6px;">Word (.docx)</div>
-          <div style="font-size:13.5px;color:var(--body);line-height:1.5;">Editable document for external sharing, client delivery, or stakeholder sign-off. All narrative documents.</div>
-        </div>
-        <div style="border:1px solid var(--border);border-radius:8px;padding:16px 20px;flex:1;min-width:180px;">
-          <div style="font-family:var(--f-mono);font-size:9px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:var(--slate);margin-bottom:6px;">Excel (.xlsx)</div>
-          <div style="font-size:13.5px;color:var(--body);line-height:1.5;">The P4 Financial Model only. 5 sheets: assumptions, 3-year P&L projection, NPV/IRR, sensitivity analysis, and payback curve.</div>
+  <!-- ══════════════════════════════
+       GATES & EVIDENCE
+  ══════════════════════════════ -->
+
+  <div class="section" id="gates">
+    <div class="eyebrow">Gates &amp; Evidence</div>
+    <h2 class="section-title">Understanding gates</h2>
+    <p class="section-lead">Gates are the quality checkpoints at the end of each phase. They're not bureaucratic formalities — they're the mechanism that ensures each phase has genuine outputs before you commit to the next investment level.</p>
+
+    <div class="gate-states">
+      <div class="gate-state">
+        <div class="gate-state-icon">🔒</div>
+        <div class="gate-state-name">Pending</div>
+        <div class="gate-state-desc">Phase not started or hard criteria not yet addressed. Advance button is locked.</div>
+      </div>
+      <div class="gate-state open">
+        <div class="gate-state-icon">⚠️</div>
+        <div class="gate-state-name">Open</div>
+        <div class="gate-state-desc">In progress. Some criteria met, some still outstanding. Advance button shows what's blocking.</div>
+      </div>
+      <div class="gate-state cleared">
+        <div class="gate-state-icon">✅</div>
+        <div class="gate-state-name">Cleared</div>
+        <div class="gate-state-desc">All hard criteria met. Advance is active. Soft criteria show as advisory warnings.</div>
+      </div>
+    </div>
+
+    <div class="terms">
+      <div class="term"><div class="term-name">Hard criterion</div><div class="term-def">A blocking gate requirement. The gate cannot clear and the Advance button stays locked until this is satisfied. <em>Examples: named sponsor, scope boundary, gate document signed off.</em></div></div>
+      <div class="term"><div class="term-name">Soft criterion</div><div class="term-def">An advisory gate requirement. The gate can clear even if this is open — but it appears as a warning in the gate view and in the audit trail seen by Control Tower. <em>Examples: stakeholder review completed, technical sign-off obtained.</em></div></div>
+      <div class="term"><div class="term-name">Gate approval</div><div class="term-def">The human action that clears a gate. In the current pilot, any user can self-approve. In production, only admin or Maestro-role users can approve. <em>Nexus (the AI) cannot approve a gate on your behalf — gate approval is always a human action.</em></div></div>
+    </div>
+  </div>
+
+  <div class="section" id="deliverables">
+    <div class="eyebrow">Gates &amp; Evidence</div>
+    <h2 class="section-title">Generating deliverables</h2>
+    <p class="section-lead">Every phase generates consulting-grade documents. All are generated on demand from the <strong>Generate Deliverables tab</strong> in the phase canvas. Download links only appear after generation.</p>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num-col"></div>
+        <div class="step-body">
+          <div class="step-title">Open the phase workspace and click "Generate Deliverables"</div>
+          <div class="step-desc">The tab is in the right-hand phase canvas. It shows all documents for this phase with their current status (not generated / Draft / In Review / Signed Off).</div>
+          <span class="step-path">/strategic-moves/{id}/phase/{1–5} → Generate tab</span>
         </div>
       </div>
-    </section>
-
-    <!-- ─── 09. Evidence Hub ─── -->
-    <section class="section" id="s09">
-      <div class="section-eyebrow">09</div>
-      <h2 class="section-title">The Evidence Hub</h2>
-      <p class="section-lead">The Evidence Hub is the single document store for a Move — all generated deliverables and manually uploaded attachments, organized by phase, with current status and download links.</p>
-
-      <div style="font-family:var(--f-mono);font-size:12px;font-weight:600;color:var(--slate);background:var(--surface3);border:1px solid var(--border);border-radius:6px;padding:10px 14px;display:inline-block;margin:0 0 28px;">/strategic-moves/{id}/evidence</div>
-
-      <div class="anatomy">
-        <div class="anatomy-pane">
-          <div class="anatomy-label">Gate artifacts — blue left border</div>
-          <div class="anatomy-item">Required for the phase gate to clear</div>
-          <div class="anatomy-item">Show a <code>GATE</code> label in the document list</div>
-          <div class="anatomy-item">Status must be Draft → In Review → Signed Off before gate clears</div>
-          <div class="anatomy-item">Examples: Program Charter, Current State Assessment, Execution Roadmap</div>
-        </div>
-        <div class="anatomy-pane">
-          <div class="anatomy-label">Working documents — grey left border</div>
-          <div class="anatomy-item">Supporting analysis and design artifacts</div>
-          <div class="anatomy-item">Not required for gate clearance</div>
-          <div class="anatomy-item">Still tracked and versioned</div>
-          <div class="anatomy-item">Examples: Stakeholder Map, Root Cause Analysis, Risk Register</div>
+      <div class="step">
+        <div class="step-num-col"></div>
+        <div class="step-body">
+          <div class="step-title">Select the document and click Generate</div>
+          <div class="step-desc">Gate artifacts are marked with a green GATE chip. Generate these first — they're what the gate checks for. Format is HTML preview + Word download for narrative docs; Excel for the Financial Model.</div>
         </div>
       </div>
-
-      <h3 class="sub-heading">Uploading supporting evidence</h3>
-      <p class="body-text">You can upload supporting files directly to the Evidence Hub — or attach them in the Nexus chat with the paperclip icon. Uploaded files are indexed by the evidence specialist and attached to the relevant phase. Supported formats: PDF, Word, Excel, CSV, PowerPoint.</p>
-    </section>
-
-    <!-- ─── 10. Do's and don'ts ─── -->
-    <section class="section" id="s10">
-      <div class="section-eyebrow">10</div>
-      <h2 class="section-title">Do's and don'ts</h2>
-      <p class="section-lead">The most common mistakes new users make — and how to avoid them.</p>
-
-      <div class="tips-grid">
-        <div class="tip-card do">
-          <div class="tip-badge">✓ Do</div>
-          <div class="tip-text">Talk to Nexus like a colleague describing a situation.</div>
-          <div class="tip-example">"We're trying to cut call handle time by 30%, CFO is sponsor, scope is just the routing layer" — fills three fields in one message.</div>
-        </div>
-        <div class="tip-card dont">
-          <div class="tip-badge">✗ Don't</div>
-          <div class="tip-text">Try to fill scaffold fields manually, one at a time.</div>
-          <div class="tip-example">The scaffold panel is read-only — it updates from what Nexus extracts. Describe the program in chat.</div>
-        </div>
-        <div class="tip-card do">
-          <div class="tip-badge">✓ Do</div>
-          <div class="tip-text">Use the P2 Continue/Discontinue decision explicitly.</div>
-          <div class="tip-example">If diagnosis reveals a fundamental blocker, say "Nexus, record a Discontinue decision for this Move with rationale: [reason]."</div>
-        </div>
-        <div class="tip-card dont">
-          <div class="tip-badge">✗ Don't</div>
-          <div class="tip-text">Leave a Move open indefinitely with no progress.</div>
-          <div class="tip-example">Stale Moves in P1 or P2 with no gate advancement in 30+ days surface in Control Tower as portfolio risk signals.</div>
-        </div>
-        <div class="tip-card do">
-          <div class="tip-badge">✓ Do</div>
-          <div class="tip-text">Generate deliverables before presenting or distributing.</div>
-          <div class="tip-example">Regenerate after major chat updates — document content is assembled at generation time from your latest inputs.</div>
-        </div>
-        <div class="tip-card dont">
-          <div class="tip-badge">✗ Don't</div>
-          <div class="tip-text">Skip the scope boundary because "everyone knows what's in scope."</div>
-          <div class="tip-example">Scope disputes are the #1 cause of program failure. Document it explicitly even if it feels obvious.</div>
-        </div>
-        <div class="tip-card do">
-          <div class="tip-badge">✓ Do</div>
-          <div class="tip-text">Upload supporting data files during P2 via the paperclip.</div>
-          <div class="tip-example">Nexus can parse call logs, ops reports, and financial data to build the Current State Assessment from real evidence, not assumptions.</div>
-        </div>
-        <div class="tip-card dont">
-          <div class="tip-badge">✗ Don't</div>
-          <div class="tip-text">Wait until P4 to check the Financial Model assumptions.</div>
-          <div class="tip-example">The value hypothesis seed from origination seeds the model. Enter a realistic range upfront so P4 refinement is a calibration, not a rebuild.</div>
+      <div class="step">
+        <div class="step-num-col"></div>
+        <div class="step-body">
+          <div class="step-title">Wait ~10–30s, then preview or download</div>
+          <div class="step-desc">Nexus assembles the document from your scaffold data, phase inputs, and chat history. Complex documents (Business Case, Financial Model) may take longer. Regenerate any time after major chat updates.</div>
+          <div class="step-note">💡 Give Nexus rich context when generating: "generate the charter — sponsor is Sarah Chen (COO), scope is inbound routing only, deadline is Q3." More context = better document.</div>
         </div>
       </div>
+    </div>
+  </div>
 
-      <div class="callout success">
-        <div class="callout-icon">💡</div>
-        <div class="callout-body">
-          <div class="callout-label">Getting the most from Nexus</div>
-          <div class="callout-text">Nexus works best when you give it context, not just commands. Instead of "generate the charter," try "generate the charter — the sponsor is Sarah Chen (COO), scope is inbound routing only, and the program needs to be completed before our legacy routing contract expires in Q3." Richer context produces better documents.</div>
-        </div>
+  <div class="section" id="evidence-hub">
+    <div class="eyebrow">Gates &amp; Evidence</div>
+    <h2 class="section-title">Evidence Hub</h2>
+    <p class="section-lead">The single document store for a Move — all generated deliverables, uploaded supporting files, and status history, organized by phase.</p>
+    <p class="body-p"><code>/strategic-moves/{id}/evidence</code></p>
+    <div class="terms">
+      <div class="term"><div class="term-name">Gate artifact</div><div class="term-def">Documents with a <strong>blue left border</strong>. Required for the phase gate to clear. Must reach "Signed Off" status before the gate can clear. <em>Examples: Program Charter, Current State Assessment, Execution Roadmap.</em></div></div>
+      <div class="term"><div class="term-name">Working document</div><div class="term-def">Documents with a <strong>grey left border</strong>. Supporting analysis and design artifacts — tracked and versioned but not blocking the gate. <em>Examples: Stakeholder Map, Risk Register, Root Cause Analysis.</em></div></div>
+      <div class="term"><div class="term-name">Document status</div><div class="term-def"><strong>Draft</strong> → <strong>In Review</strong> → <strong>Signed Off</strong>. Gate artifacts must reach Signed Off. Working documents can stay at Draft.</div></div>
+    </div>
+    <div class="callout info">
+      <div class="callout-icon">📎</div>
+      <div class="callout-inner">
+        <div class="callout-label">Uploading supporting evidence</div>
+        <div class="callout-body">Upload files via the Evidence Hub directly, or attach them in the Nexus chat with the paperclip icon. Supported: PDF, Word, Excel, CSV, PowerPoint. Uploaded files are indexed by the evidence specialist and attached to the relevant phase automatically.</div>
       </div>
-    </section>
+    </div>
+  </div>
 
-  </main>
-</div><!-- /body-wrap -->
+  <!-- ══════════════════════════════
+       CONTROL TOWER
+  ══════════════════════════════ -->
 
-<!-- ════════════════ FOOTER ════════════════ -->
+  <div class="section" id="tower-after">
+    <div class="eyebrow teal-color">Control Tower</div>
+    <h2 class="section-title">After a Move completes</h2>
+    <p class="section-lead">When a Move gates out of P5, it transitions automatically to Control Tower. Atlas — the Tower agent — takes over and starts tracking execution health using the metrics you defined in P4.</p>
+    <div class="callout success">
+      <div class="callout-icon">📡</div>
+      <div class="callout-inner">
+        <div class="callout-label">What Tower does with your Move</div>
+        <div class="callout-body">Atlas reads the P4 Tower Metrics Plan and begins monitoring the KPIs you defined. If a metric starts deviating from the plan, it surfaces a new pressure card in Intelligence — the cycle closes. A successful Move generates execution evidence that feeds future Moves.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section" id="tower-portfolio">
+    <div class="eyebrow">Control Tower</div>
+    <h2 class="section-title">Reading the portfolio</h2>
+    <p class="section-lead">Control Tower shows all active Moves as a portfolio — phase health, gate status, signal pressure, and vendor/system dependencies in a single view.</p>
+    <div class="terms">
+      <div class="term"><div class="term-name">Portfolio heatmap</div><div class="term-def">A grid of all active Moves showing phase, gate status, and pressure level. <em>Red = blocked or high-pressure. Amber = advisory issues. Green = on track.</em></div></div>
+      <div class="term"><div class="term-name">Pressure card (Tower)</div><div class="term-def">A signal generated during execution — e.g. a KPI that missed target, a vendor dependency flagged, or a timeline slip. <em>These are fed back into Intelligence and may spawn new Moves.</em></div></div>
+      <div class="term"><div class="term-name">Atlas</div><div class="term-def">The Tower agent. Answers questions about portfolio status, execution risk, and signal health. <em>"Atlas, which Move is at highest risk of missing P4 this quarter?"</em></div></div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════
+       TIPS
+  ══════════════════════════════ -->
+
+  <div class="section" id="tips">
+    <div class="eyebrow">Reference</div>
+    <h2 class="section-title">Tips &amp; common mistakes</h2>
+    <p class="section-lead">The most common mistakes new users make across all surfaces.</p>
+
+    <h4 class="h4">Setup</h4>
+    <div class="tips-grid">
+      <div class="tip do"><div class="tip-badge">✓ Do</div><div class="tip-text">Connect at least one operational data source before exploring Intelligence.</div><div class="tip-ex">Without a connector, Intelligence produces generic industry patterns, not signals specific to your operations.</div></div>
+      <div class="tip dont"><div class="tip-badge">✗ Don't</div><div class="tip-text">Skip the tenant profile because "it's just metadata."</div><div class="tip-ex">Named executives in the tenant profile flow directly into Move stakeholder maps and charter documents — skipping it produces thin output.</div></div>
+    </div>
+
+    <h4 class="h4">Intelligence</h4>
+    <div class="tips-grid">
+      <div class="tip do"><div class="tip-badge">✓ Do</div><div class="tip-text">Ask Sentinel to go deeper before originating a Move from a pressure card.</div><div class="tip-ex">"Sentinel, what's driving the 18% AHT increase?" before clicking "Originate" gives you better scaffold content.</div></div>
+      <div class="tip dont"><div class="tip-badge">✗ Don't</div><div class="tip-text">Dismiss low-severity signals without reading them.</div><div class="tip-ex">Low-severity doesn't mean low-impact — it may just mean the evidence is early. Some of the highest-value Moves start as amber signals.</div></div>
+    </div>
+
+    <h4 class="h4">Strategic Moves</h4>
+    <div class="tips-grid">
+      <div class="tip do"><div class="tip-badge">✓ Do</div><div class="tip-text">Talk to Nexus like a colleague, not a form.</div><div class="tip-ex">"We're cutting AHT by 30%, COO sponsors it, scope is just the routing layer" — fills three fields in one message.</div></div>
+      <div class="tip dont"><div class="tip-badge">✗ Don't</div><div class="tip-text">Leave a Move in P1 or P2 for 30+ days with no gate activity.</div><div class="tip-ex">Stale Moves surface in Control Tower as portfolio risk signals. Use the P2 Continue/Discontinue decision if the Move needs to be paused.</div></div>
+      <div class="tip do"><div class="tip-badge">✓ Do</div><div class="tip-text">Regenerate deliverables after significant chat updates.</div><div class="tip-ex">Document content is assembled at generation time. If you've had three sessions of Nexus inputs since last generating, regenerate before sharing.</div></div>
+      <div class="tip dont"><div class="tip-badge">✗ Don't</div><div class="tip-text">Assume a vague scope is understood by everyone.</div><div class="tip-ex">Scope disputes are the #1 cause of program failure. Document it explicitly — even if it feels obvious — in field 4 during origination.</div></div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════
+       GLOSSARY
+  ══════════════════════════════ -->
+
+  <div class="section" id="glossary">
+    <div class="eyebrow">Reference</div>
+    <h2 class="section-title">Glossary</h2>
+    <p class="section-lead">Key terms used across AbarVa, in alphabetical order.</p>
+    <div class="terms">
+      <div class="term"><div class="term-name">Archetype</div><div class="term-def">The category of a Move: Cost Reduction, Revenue Growth, Risk Mitigation, or Operational Excellence. Drives template selection and gate criteria.</div></div>
+      <div class="term"><div class="term-name">Atlas</div><div class="term-def">The Control Tower agent. Monitors portfolio health, execution KPIs, and surfaces execution-phase pressure cards.</div></div>
+      <div class="term"><div class="term-name">Connector</div><div class="term-def">An integration between AbarVa and an external data system that populates the intelligence substrate.</div></div>
+      <div class="term"><div class="term-name">Evidence Hub</div><div class="term-def">The per-Move document store. Contains all generated deliverables, uploaded files, and version history organized by phase.</div></div>
+      <div class="term"><div class="term-name">Gate artifact</div><div class="term-def">A deliverable required for a phase gate to clear. Blue left border in the Evidence Hub. Must be signed off.</div></div>
+      <div class="term"><div class="term-name">Hard criterion</div><div class="term-def">A blocking gate requirement. Gate stays locked until satisfied.</div></div>
+      <div class="term"><div class="term-name">Nexus</div><div class="term-def">The Strategic Moves front agent. Guides origination, populates scaffold fields, assists in each phase, and orchestrates specialist agents invisibly.</div></div>
+      <div class="term"><div class="term-name">P0 / Originate</div><div class="term-def">The pre-phase where a Move is created. Seven scaffold fields filled through Nexus chat.</div></div>
+      <div class="term"><div class="term-name">Pressure card</div><div class="term-def">The structured presentation of an Intelligence signal — type, severity, evidence, impact estimate, and recommended action.</div></div>
+      <div class="term"><div class="term-name">Provenance</div><div class="term-def">The data lineage behind a signal — which connector, dataset, and time period the evidence comes from.</div></div>
+      <div class="term"><div class="term-name">Scaffold</div><div class="term-def">The seven-field structure Nexus fills during P0 origination. The scaffold seeds all downstream documents and gate criteria.</div></div>
+      <div class="term"><div class="term-name">Sentinel</div><div class="term-def">The Intelligence and Source front agent. Analyzes patterns, drills into evidence, and coordinates specialist analysis.</div></div>
+      <div class="term"><div class="term-name">Signal</div><div class="term-def">An AI-detected operational or financial pattern surfaced automatically from connected data.</div></div>
+      <div class="term"><div class="term-name">Soft criterion</div><div class="term-def">An advisory gate requirement. Gate can clear with open soft criteria, but they appear as warnings in the audit trail.</div></div>
+      <div class="term"><div class="term-name">Steward</div><div class="term-def">The Setup and Home agent. Guides connector setup, tenant configuration, and substrate health.</div></div>
+      <div class="term"><div class="term-name">Substrate</div><div class="term-def">The combined data layer all agents query — connector data, document embeddings, and tenant context.</div></div>
+      <div class="term"><div class="term-name">Strategic Move</div><div class="term-def">A phase-gated transformation program (P0–P5) with structured deliverables, quality gates, and Tower handoff.</div></div>
+    </div>
+  </div>
+
+</main>
+</div><!-- /layout -->
+
 <footer class="doc-footer">
   <span class="doc-footer-brand">AbarVa</span>
-  <span class="doc-footer-meta">Training Guide · Strategic Moves · v1.0 · 2026-05-07</span>
+  <span class="doc-footer-meta">User Guide · v2.0 · 2026-05-08</span>
 </footer>
 
 <script>
-  // Active TOC link on scroll
-  const sections = document.querySelectorAll('section[id]');
-  const links = document.querySelectorAll('.toc-item a');
+  // Active nav highlight on scroll
+  const sections = document.querySelectorAll('[id]');
+  const links = document.querySelectorAll('.nav-item');
   const io = new IntersectionObserver(entries => {
     entries.forEach(e => {
       if (e.isIntersecting) {
         links.forEach(l => l.classList.remove('active'));
-        const a = document.querySelector(`.toc-item a[href="#${e.target.id}"]`);
+        const a = document.querySelector(`.nav-item[href="#${e.target.id}"]`);
         if (a) a.classList.add('active');
       }
     });
-  }, { rootMargin: '-15% 0px -70% 0px' });
+  }, { rootMargin: '-10% 0px -80% 0px' });
   sections.forEach(s => io.observe(s));
 </script>
 
