@@ -15,7 +15,13 @@ import type {
 } from './types';
 
 const DEFAULT_MODEL = 'claude-sonnet-4-6';
-const DEFAULT_MAX_TOKENS = 6000;
+// Practical ceiling — Sonnet at 4000 output tokens produces ~10–12 pages
+// of polished markdown in ~30–45s wall-clock. Above 4000 the marginal
+// quality is small and the wall-clock blows past Vercel function
+// budgets. Override per template only when the artifact genuinely needs
+// more (BAFO question pack with finalist-specific sections, decision
+// brief with multiple appendices).
+const DEFAULT_MAX_TOKENS = 4000;
 
 const SENTINEL_VOICE = `You are Sentinel, AbarVa's information-integrity validator on the Source surface.
 
@@ -125,9 +131,9 @@ Tone: precise, list-heavy. The "in scope" section names systems, services, hours
 
   d09_rfp_pack: {
     artifactCode: 'd09_rfp_pack',
-    version: 1,
+    version: 2,
     model: DEFAULT_MODEL,
-    maxTokens: 8000,
+    maxTokens: 5000,
     upstreamRequired: ['d01_strategy_memo', 'd05_scope_memo'],
     upstreamOptional: ['d02_value_target', 'd04_app_inv', 'd07_ticket_synth'],
     systemPrompt: `${SENTINEL_VOICE}

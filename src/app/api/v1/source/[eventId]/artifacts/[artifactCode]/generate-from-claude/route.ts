@@ -37,7 +37,10 @@ import {
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
-export const maxDuration = 90;
+// Long ceiling — large RFP-class generations stream tokens for 60–120s.
+// Vercel Pro caps Node functions at 300s; matching that gives room for
+// retries inside the route without surfacing a timeout to the user.
+export const maxDuration = 300;
 
 type RouteCtx = { params: Promise<{ eventId: string; artifactCode: string }> };
 
@@ -180,25 +183,35 @@ export async function POST(_req: NextRequest, { params }: RouteCtx) {
   ]);
   const userMessage = template.buildUserMessage(ctx, upstreamBound);
 
-  // Call Claude.
+  // Call Claude. Use the streaming API so the function doesn't block
+  // waiting for the entire completion before responding — first byte
+  // arrives in 1–3s, full body in 30–60s, and we can detect mid-stream
+  // failures cleanly.
   const startedAt = Date.now();
   const client = new Anthropic({ apiKey });
-  let body: string;
+  let body = '';
   let stopReason: string | null = null;
   let tokensIn: number | null = null;
   let tokensOut: number | null = null;
   try {
-    const completion = await client.messages.create({
+    const stream = client.messages.stream({
       model: template.model,
       max_tokens: template.maxTokens,
       system: template.systemPrompt,
       messages: [{ role: 'user', content: userMessage }],
     });
-    stopReason = completion.stop_reason ?? null;
-    tokensIn = completion.usage?.input_tokens ?? null;
-    tokensOut = completion.usage?.output_tokens ?? null;
-    const textBlock = completion.content.find((b) => b.type === 'text');
-    body = textBlock && textBlock.type === 'text' ? textBlock.text : '';
+    for await (const chunk of stream) {
+      if (
+        chunk.type === 'content_block_delta' &&
+        chunk.delta.type === 'text_delta'
+      ) {
+        body += chunk.delta.text;
+      }
+    }
+    const final = await stream.finalMessage();
+    stopReason = final.stop_reason ?? null;
+    tokensIn = final.usage?.input_tokens ?? null;
+    tokensOut = final.usage?.output_tokens ?? null;
   } catch (err) {
     console.error(
       '[POST /api/v1/source/:eventId/artifacts/:artifactCode/generate-from-claude] Anthropic error',
