@@ -241,7 +241,7 @@ function buildTcoSummarySheet(
   const detailSheetRef = `'Pricing Detail'!PricingDetail_AnnualTotal`;
   const escalator = payload.escalator;
 
-  let cumulativeFormulaCells: string[] = [];
+  const cumulativeFormulaCells: string[] = [];
   for (let y = 1; y <= payload.tcoYears; y++) {
     const power = y - 1;
     const annualFormula =

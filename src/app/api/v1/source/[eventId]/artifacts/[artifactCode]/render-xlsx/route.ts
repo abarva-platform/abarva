@@ -27,6 +27,9 @@ import {
   renderArtifactXlsx,
 } from '@/lib/source/exports';
 import { buildPricingTemplatePayloadFromContext } from '@/lib/source/exports/payloads/pricing-template-payload';
+import { buildAppInventoryPayloadFromContext } from '@/lib/source/exports/payloads/app-inventory-payload';
+import { buildResponseChecklistPayloadFromContext } from '@/lib/source/exports/payloads/response-checklist-payload';
+import { buildScorecardPayloadFromContext } from '@/lib/source/exports/payloads/scorecard-payload';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -103,16 +106,28 @@ export async function GET(_req: NextRequest, { params }: RouteCtx) {
   const generatedAt = new Date().toISOString();
   let workbook;
   try {
-    if (artifactCode === 'd19_pricing_workbook') {
-      const payload = buildPricingTemplatePayloadFromContext(ctx, generatedAt);
-      workbook = await renderArtifactXlsx({ artifactCode, payload });
-    } else {
-      // Defensive — isXlsxGeneratable should have caught this above.
-      return Response.json(
-        { error: 'unsupported_artifact', detail: artifactCode },
-        { status: 404 },
-      );
+    let payload: unknown;
+    switch (artifactCode) {
+      case 'd19_pricing_workbook':
+        payload = buildPricingTemplatePayloadFromContext(ctx, generatedAt);
+        break;
+      case 'd04_app_inv':
+        payload = buildAppInventoryPayloadFromContext(ctx, generatedAt);
+        break;
+      case 'd11_response_checklist':
+        payload = buildResponseChecklistPayloadFromContext(ctx, generatedAt);
+        break;
+      case 'd16_scorecard':
+        payload = buildScorecardPayloadFromContext(ctx, generatedAt);
+        break;
+      default:
+        // Defensive — isXlsxGeneratable should have caught this above.
+        return Response.json(
+          { error: 'unsupported_artifact', detail: artifactCode },
+          { status: 404 },
+        );
     }
+    workbook = await renderArtifactXlsx({ artifactCode, payload });
   } catch (err) {
     console.error(
       '[GET /api/v1/source/:eventId/artifacts/:artifactCode/render-xlsx] renderer error',

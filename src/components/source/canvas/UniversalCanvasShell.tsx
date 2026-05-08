@@ -11,6 +11,9 @@ import { listSupportedGenerationCodes } from '@/lib/source/agent-generation';
 // here to keep the canvas client-bundle free of `'server-only'` imports
 // — the Source-side xlsx renderer set is small and slow-changing.
 const XLSX_GENERATABLE_CODES_CLIENT: ReadonlySet<string> = new Set([
+  'd04_app_inv',
+  'd11_response_checklist',
+  'd16_scorecard',
   'd19_pricing_workbook',
 ]);
 import type {
