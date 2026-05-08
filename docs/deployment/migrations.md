@@ -19,22 +19,23 @@ This document covers:
 
 ## How it works
 
-Two pieces:
+Three pieces:
 
-1. **`vercel.ts`** at the repo root sets the `buildCommand` programmatically.
-   When `process.env.VERCEL_ENV === 'production'`, the command becomes:
+1. **`vercel.ts`** at the repo root sets the Vercel `buildCommand` to
+   `bash scripts/vercel-build.sh`. The indirection is required because
+   Vercel's `buildCommand` (a) must be a literal string in the exported
+   config and (b) is capped at 256 characters — too short for an inlined
+   `case` statement.
 
-   ```
-   npm run db:migrate -- --ci && npm run build
-   ```
+2. **`scripts/vercel-build.sh`** runs at deploy time on Vercel
+   infrastructure. It branches on `$VERCEL_ENV`:
 
-   For preview / development / local deploys, the command is:
+   - `production` → `npm run db:migrate -- --ci`, then `npm run build`.
+     A migration failure (`set -e`) propagates non-zero and aborts the
+     deploy.
+   - any other value → log a skip line, then `npm run build`.
 
-   ```
-   <log "Skipping migrations" line> && npm run build
-   ```
-
-2. **`src/scripts/run-migrations.ts`** is the existing one-command runner.
+3. **`src/scripts/run-migrations.ts`** is the existing one-command runner.
    It:
    - Reads every `.sql` file in `supabase/migrations/`
    - Skips files already recorded in the `schema_migrations` tracking table
@@ -279,8 +280,10 @@ statement failed in a multi-statement file with explicit `COMMIT`s):
   rules every migration must follow (idempotency, `IF NOT EXISTS`, etc).
   Auto-apply assumes those rules are obeyed; a non-idempotent migration
   may fail on the second deploy after a transient error.
-- `vercel.ts` (repo root) — the build-time config that wires `db:migrate`
-  into the production deploy.
+- `vercel.ts` (repo root) — Vercel programmatic config; sets
+  `buildCommand` to `bash scripts/vercel-build.sh`.
+- `scripts/vercel-build.sh` — the deploy-time orchestrator that runs
+  migrations conditional on `$VERCEL_ENV`, then `next build`.
 - `src/scripts/run-migrations.ts` — the migration runner with the CI mode
   and destructive guard.
 - `src/scripts/__tests__/run-migrations.test.ts` — tests covering the
