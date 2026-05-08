@@ -81,7 +81,7 @@ export interface TestUserSpec {
   };
 }
 
-export const TEST_USER_PASSWORD = 'AbarVaTest2026!';
+export const TEST_USER_PASSWORD = 'Demo2026!';
 
 interface CanonicalClientFixture {
   key: Exclude<ProvisioningClientKey, 'keystone'>;
