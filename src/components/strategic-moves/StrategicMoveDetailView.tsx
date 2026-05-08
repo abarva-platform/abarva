@@ -1,12 +1,17 @@
 import Link from 'next/link';
+import { Suspense } from 'react';
 import styles from './StrategicMoves.module.css';
 import { PhaseRail } from './PhaseRail';
 import { MoveArtifactUpload } from './MoveArtifactUpload';
 import { MoveDetailSplitter } from './MoveDetailSplitter';
+import { PhaseDocumentsPanel } from './PhaseDocumentsPanel';
 import type { StrategicMove } from '@/lib/programs/types.ui';
+
+type Tab = 'overview' | 'documents' | 'activity';
 
 interface Props {
   move: StrategicMove;
+  activeTab?: Tab;
 }
 
 function formatRole(role: string): string {
@@ -14,8 +19,8 @@ function formatRole(role: string): string {
 }
 
 function verifiedFallback(phase: number): string {
-  if (phase >= 5) return '\u2014 tracked (pending)';
-  return '\u2014 pending verification';
+  if (phase >= 5) return '— tracked (pending)';
+  return '— pending verification';
 }
 
 function primaryAction(move: StrategicMove): { label: string; href: string } {
@@ -33,15 +38,223 @@ function secondaryAction(move: StrategicMove): { label: string; href: string } |
   return null;
 }
 
-export function StrategicMoveDetailView({ move }: Props) {
+// ── Tab bar ────────────────────────────────────────────────────────────────────
+
+function TabBar({ moveId, active }: { moveId: string; active: Tab }) {
+  const tabs: { key: Tab; label: string; href: string }[] = [
+    { key: 'overview',   label: 'Overview',   href: `/strategic-moves/${moveId}` },
+    { key: 'documents',  label: 'Documents',  href: `/strategic-moves/${moveId}?tab=documents` },
+    { key: 'activity',   label: 'Activity',   href: `/strategic-moves/${moveId}?tab=activity` },
+  ];
+
+  return (
+    <div style={{
+      display: 'flex',
+      gap: 0,
+      borderBottom: '1px solid #E2DFD8',
+      marginBottom: 20,
+      marginTop: 2,
+    }}>
+      {tabs.map((tab) => {
+        const isActive = tab.key === active;
+        return (
+          <Link
+            key={tab.key}
+            href={tab.href}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              padding: '7px 16px',
+              fontSize: 12,
+              fontWeight: isActive ? 700 : 500,
+              color: isActive ? '#1A1A18' : '#9AA3B2',
+              textDecoration: 'none',
+              borderBottom: isActive ? '2px solid #1B2B5C' : '2px solid transparent',
+              marginBottom: -1,
+              transition: 'color 0.1s',
+              letterSpacing: isActive ? '0.01em' : undefined,
+            }}
+          >
+            {tab.label}
+          </Link>
+        );
+      })}
+    </div>
+  );
+}
+
+// ── Overview tab content ───────────────────────────────────────────────────────
+
+function OverviewContent({ move }: { move: StrategicMove }) {
+  return (
+    <div className={styles.detailBody}>
+      <div
+        className={`${styles.statusBanner} ${
+          move.statusColor === 'red' ? styles.statusBannerRed :
+          move.statusColor === 'amber' ? styles.statusBannerAmber :
+          move.statusColor === 'teal' ? styles.statusBannerTeal :
+          styles.statusBannerGreen
+        }`}
+      >
+        <span className={styles.statusBannerPulse} aria-hidden />
+        <div className={styles.statusBannerText}>
+          <div className={styles.statusBannerStatus}>{move.status.text}</div>
+          <div className={styles.statusBannerDesc}>{move.status.description}</div>
+        </div>
+      </div>
+
+      <section className={styles.detailSection}>
+        <div className={styles.detailSectionTitle}>
+          {move.phaseLabel.toUpperCase()} &middot; Gate criteria
+        </div>
+        <ul className={styles.critList}>
+          {move.gateCriteria.map((criterion) => (
+            <li key={criterion.id}>
+              <span
+                className={`${styles.critCheck} ${criterion.completed ? styles.critCheckDone : ''}`}
+                aria-hidden
+              >
+                {criterion.completed ? '✓' : ''}
+              </span>
+              <span>{criterion.label}</span>
+            </li>
+          ))}
+        </ul>
+      </section>
+
+      <div className={styles.sectionGrid}>
+        <section className={styles.detailSection}>
+          <div className={styles.detailSectionTitle}>Sponsor &amp; team</div>
+          <div className={styles.kvPair}>
+            <span className={styles.kvK}>Sponsor</span>
+            <span className={styles.kvV}>
+              {move.sponsor ? `${move.sponsor.name} · ${formatRole(move.sponsor.role)}` : 'Unassigned'}
+            </span>
+          </div>
+          <div className={styles.kvPair}>
+            <span className={styles.kvK}>Tenant</span>
+            <span className={styles.kvV}>{move.tenant.name}</span>
+          </div>
+          <div className={styles.kvPair}>
+            <span className={styles.kvK}>Archetype</span>
+            <span className={`${styles.kvV} ${styles.kvVMono}`}>{move.archetype}</span>
+          </div>
+          {move.participants.slice(0, 3).map((participant) => (
+            <div className={styles.kvPair} key={participant.personId}>
+              <span className={styles.kvK}>{formatRole(participant.role)}</span>
+              <span className={styles.kvV}>{participant.name}</span>
+            </div>
+          ))}
+        </section>
+
+        <section className={styles.detailSection}>
+          <div className={styles.detailSectionTitle}>Value at stake</div>
+          <div className={styles.kvPair}>
+            <span className={styles.kvK}>Projected</span>
+            <span className={styles.kvV}>
+              {move.valueAtStake.projected
+                ? `${move.valueAtStake.projected.currency} ${move.valueAtStake.projected.low.toLocaleString()}–${move.valueAtStake.projected.high.toLocaleString()}`
+                : 'Not set'}
+            </span>
+          </div>
+          <div className={styles.kvPair}>
+            <span className={styles.kvK}>Range</span>
+            <span className={styles.kvV}>
+              {move.valueAtStake.projected ? 'projected' : 'pending capture'}
+            </span>
+          </div>
+          <div className={styles.kvPair}>
+            <span className={styles.kvK}>Verified</span>
+            <span className={`${styles.kvV} ${move.valueAtStake.verified ? styles.kvVGreen : ''}`}>
+              {move.valueAtStake.verified
+                ? `${move.valueAtStake.verified.amount.toLocaleString()} (${move.valueAtStake.verified.status})`
+                : verifiedFallback(move.currentPhase)}
+            </span>
+          </div>
+        </section>
+      </div>
+    </div>
+  );
+}
+
+// ── Activity tab content ──────────────────────────────────────────────────────
+
+function ActivityContent({ move }: { move: StrategicMove }) {
+  return (
+    <div className={styles.detailBody}>
+      <section className={styles.detailSection}>
+        <div className={styles.detailSectionTitle}>Recent activity</div>
+        <div className={styles.timeline}>
+          {move.recentActivity.map((activity) => (
+            <div className={styles.tlItem} key={`${activity.at}-${activity.action}`}>
+              <span className={styles.tlTime}>{formatActivityTime(activity.at)}</span>
+              <span className={styles.tlDot} aria-hidden />
+              <span className={styles.tlText}>
+                <strong>{activity.action}</strong> &middot; {activity.summary}
+              </span>
+            </div>
+          ))}
+        </div>
+        {move.recentActivity.length >= 3 && (
+          <a className={styles.tlMore} href={`/strategic-moves/${move.id}?panel=activity`}>
+            View all activity &rarr;
+          </a>
+        )}
+      </section>
+
+      <section className={styles.detailSection}>
+        <div className={styles.detailSectionTitle}>Evidence from intelligence</div>
+        <div className={styles.evidenceList}>
+          {move.linkedEvidence.length === 0 ? (
+            <div className={styles.evEmpty}>No linked evidence yet.</div>
+          ) : (
+            move.linkedEvidence.map((evidence) => (
+              <a className={styles.evItem} href={evidence.url} key={evidence.id}>
+                <span className={styles.evNum}>{evidence.anchor}</span>
+                <span className={styles.evText}>{evidence.summary}</span>
+                <span className={styles.evLink} aria-hidden>&#8599;</span>
+              </a>
+            ))
+          )}
+        </div>
+      </section>
+
+      <section className={styles.detailSection} data-testid="move-artifact-upload-section">
+        <div className={styles.detailSectionTitle}>Attachments</div>
+        <MoveArtifactUpload programId={move.id} phase={move.currentPhase ?? 0} />
+      </section>
+    </div>
+  );
+}
+
+// ── Documents tab content ─────────────────────────────────────────────────────
+
+function DocumentsContent({ move }: { move: StrategicMove }) {
+  return (
+    <div style={{ padding: '0 4px' }}>
+      <Suspense fallback={
+        <div style={{ padding: '32px 0', textAlign: 'center', fontSize: 12, color: '#9AA3B2' }}>
+          Loading documents…
+        </div>
+      }>
+        <PhaseDocumentsPanel
+          moveId={move.id}
+          currentPhase={move.currentPhase ?? 1}
+          compact
+        />
+      </Suspense>
+    </div>
+  );
+}
+
+// ── Main view ─────────────────────────────────────────────────────────────────
+
+export function StrategicMoveDetailView({ move, activeTab = 'overview' }: Props) {
   const primary = primaryAction(move);
   const secondary = secondaryAction(move);
+
   return (
     <div className={styles.page}>
-      {/* ResizableSplitter replaces the fixed-grid detailShell.
-          MoveDetailSplitter is a thin Client Component wrapper;
-          the chat and right-pane JSX are Server-rendered ReactNodes
-          passed through as props. */}
       <div
         data-testid="move-detail-splitter-shell"
         style={{
@@ -51,221 +264,94 @@ export function StrategicMoveDetailView({ move }: Props) {
           gap: 0,
         }}
       >
-      <MoveDetailSplitter
-        chatPane={<aside className={styles.chatPane}>
-          <div className={styles.chatHead}>
-            <div className={styles.agentRow}>
-              <div className={styles.agentAvatar} aria-hidden>✦</div>
-              <div>
-                <div className={styles.agentName}>Nexus</div>
-                <div className={styles.agentStatus}>
-                  <span className={styles.agentStatusDot} aria-hidden />
-                  SCOPED TO {move.displayCode}
-                </div>
-              </div>
-            </div>
-            <div className={styles.chatSubhead}>
-              Ask anything about this move. I&rsquo;ll work in the right pane.
-            </div>
-          </div>
-          <div className={styles.chatThread}>
-            <div className={styles.bubbleNexus}>
-              I&rsquo;m scoped to <em>{move.displayCode}</em> &mdash; {move.name}. Currently in{' '}
-              <em>{move.phaseLabel}</em>. Status: <em>{move.status.text.toLowerCase()}</em>.
-            </div>
-            <div className={styles.bubbleNexus}>
-              {move.status.description}. Want me to walk through what&rsquo;s needed to advance?
-            </div>
-            <div className={styles.bubbleUser}>Show me what is still missing for this gate.</div>
-            <div className={styles.bubbleNexus}>
-              I mapped the criteria on the right rail and linked the latest evidence so you can review quickly.
-            </div>
-          </div>
-          <div className={styles.chatInput}>
-            <div className={styles.suggestedPrompts}>
-              <button className={styles.promptChip} type="button">What&rsquo;s blocking the gate?</button>
-            </div>
-            <div className={styles.inputRow}>
-              <input type="text" placeholder={`Ask Nexus about ${move.displayCode}\u2026`} />
-              <button className={styles.sendBtn} type="button" aria-label="Send">&#8593;</button>
-            </div>
-          </div>
-        </aside>}
-        rightPane={<article className={styles.rightPane}>
-          <div className={styles.detailHead}>
-            <div className={styles.detailHeadTop}>
-              <div className={styles.detailHeadLeft}>
-                <div className={styles.detailBreadcrumb}>
-                  <Link className={styles.detailCrumb} href="/strategic-moves">
-                    Strategic Moves
-                  </Link>
-                  <span aria-hidden>&rsaquo;</span>
-                  <span>{move.tenant.name}</span>
-                  <span aria-hidden>&rsaquo;</span>
-                  <span>{move.displayCode}</span>
-                </div>
-                <h1 className={styles.detailTitle}>{move.name}</h1>
-                <div className={styles.detailId}>
-                  {move.archetype} &middot; Sponsor: {(move.sponsor?.name ?? 'Unassigned').toUpperCase()}
-                </div>
-              </div>
-              <div className={styles.detailHeadActions}>
-                {secondary ? (
-                  <Link className={styles.btnGhost} href={secondary.href}>
-                    {secondary.label}
-                  </Link>
-                ) : null}
-                <Link
-                  className={styles.btnGhost}
-                  href={`/strategic-moves/${move.id}/evidence`}
-                  data-testid="move-evidence-hub-link"
-                >
-                  Phase evidence
-                </Link>
-                <Link className={styles.btnPhase} href={primary.href}>
-                  {primary.label} <span className={styles.btnArrow} aria-hidden>&rarr;</span>
-                </Link>
-              </div>
-            </div>
-            <PhaseRail current={move.currentPhase} status={move.statusColor} />
-          </div>
-
-          <div className={styles.detailBody}>
-            <div
-              className={`${styles.statusBanner} ${
-                move.statusColor === 'red' ? styles.statusBannerRed :
-                move.statusColor === 'amber' ? styles.statusBannerAmber :
-                move.statusColor === 'teal' ? styles.statusBannerTeal :
-                styles.statusBannerGreen
-              }`}
-            >
-              <span className={styles.statusBannerPulse} aria-hidden />
-              <div className={styles.statusBannerText}>
-                <div className={styles.statusBannerStatus}>{move.status.text}</div>
-                <div className={styles.statusBannerDesc}>{move.status.description}</div>
-              </div>
-            </div>
-
-            <section className={styles.detailSection}>
-              <div className={styles.detailSectionTitle}>
-                {move.phaseLabel.toUpperCase()} &middot; Gate criteria
-              </div>
-              <ul className={styles.critList}>
-                {move.gateCriteria.map((criterion) => (
-                  <li key={criterion.id}>
-                    <span
-                      className={`${styles.critCheck} ${criterion.completed ? styles.critCheckDone : ''}`}
-                      aria-hidden
-                    >
-                      {criterion.completed ? '\u2713' : ''}
-                    </span>
-                    <span>{criterion.label}</span>
-                  </li>
-                ))}
-              </ul>
-            </section>
-
-            <div className={styles.sectionGrid}>
-              <section className={styles.detailSection}>
-                <div className={styles.detailSectionTitle}>Sponsor &amp; team</div>
-                <div className={styles.kvPair}>
-                  <span className={styles.kvK}>Sponsor</span>
-                  <span className={styles.kvV}>
-                    {move.sponsor ? `${move.sponsor.name} · ${formatRole(move.sponsor.role)}` : 'Unassigned'}
-                  </span>
-                </div>
-                <div className={styles.kvPair}>
-                  <span className={styles.kvK}>Tenant</span>
-                  <span className={styles.kvV}>{move.tenant.name}</span>
-                </div>
-                <div className={styles.kvPair}>
-                  <span className={styles.kvK}>Archetype</span>
-                  <span className={`${styles.kvV} ${styles.kvVMono}`}>{move.archetype}</span>
-                </div>
-                {move.participants.slice(0, 3).map((participant) => (
-                  <div className={styles.kvPair} key={participant.personId}>
-                    <span className={styles.kvK}>{formatRole(participant.role)}</span>
-                    <span className={styles.kvV}>{participant.name}</span>
+        <MoveDetailSplitter
+          chatPane={
+            <aside className={styles.chatPane}>
+              <div className={styles.chatHead}>
+                <div className={styles.agentRow}>
+                  <div className={styles.agentAvatar} aria-hidden>✦</div>
+                  <div>
+                    <div className={styles.agentName}>Nexus</div>
+                    <div className={styles.agentStatus}>
+                      <span className={styles.agentStatusDot} aria-hidden />
+                      SCOPED TO {move.displayCode}
+                    </div>
                   </div>
-                ))}
-              </section>
-              <section className={styles.detailSection}>
-                <div className={styles.detailSectionTitle}>Value at stake</div>
-                <div className={styles.kvPair}>
-                  <span className={styles.kvK}>Projected</span>
-                  <span className={styles.kvV}>
-                    {move.valueAtStake.projected
-                      ? `${move.valueAtStake.projected.currency} ${move.valueAtStake.projected.low.toLocaleString()}\u2013${move.valueAtStake.projected.high.toLocaleString()}`
-                      : 'Not set'}
-                  </span>
                 </div>
-                <div className={styles.kvPair}>
-                  <span className={styles.kvK}>Range</span>
-                  <span className={styles.kvV}>
-                    {move.valueAtStake.projected ? 'projected' : 'pending capture'}
-                  </span>
+                <div className={styles.chatSubhead}>
+                  Ask anything about this move. I&rsquo;ll work in the right pane.
                 </div>
-                <div className={styles.kvPair}>
-                  <span className={styles.kvK}>Verified</span>
-                  <span className={`${styles.kvV} ${move.valueAtStake.verified ? styles.kvVGreen : ''}`}>
-                    {move.valueAtStake.verified
-                      ? `${move.valueAtStake.verified.amount.toLocaleString()} (${move.valueAtStake.verified.status})`
-                      : verifiedFallback(move.currentPhase)}
-                  </span>
+              </div>
+              <div className={styles.chatThread}>
+                <div className={styles.bubbleNexus}>
+                  I&rsquo;m scoped to <em>{move.displayCode}</em> &mdash; {move.name}. Currently in{' '}
+                  <em>{move.phaseLabel}</em>. Status: <em>{move.status.text.toLowerCase()}</em>.
                 </div>
-              </section>
-            </div>
-
-            <section className={styles.detailSection}>
-              <div className={styles.detailSectionTitle}>Recent activity</div>
-              <div className={styles.timeline}>
-                {move.recentActivity.slice(0, 8).map((activity) => (
-                  <div className={styles.tlItem} key={`${activity.at}-${activity.action}`}>
-                    <span className={styles.tlTime}>{formatActivityTime(activity.at)}</span>
-                    <span className={styles.tlDot} aria-hidden />
-                    <span className={styles.tlText}>
-                      <strong>{activity.action}</strong> &middot; {activity.summary}
-                    </span>
+                <div className={styles.bubbleNexus}>
+                  {move.status.description}. Want me to walk through what&rsquo;s needed to advance?
+                </div>
+                <div className={styles.bubbleUser}>Show me what is still missing for this gate.</div>
+                <div className={styles.bubbleNexus}>
+                  I mapped the criteria on the right rail and linked the latest evidence so you can review quickly.
+                </div>
+              </div>
+              <div className={styles.chatInput}>
+                <div className={styles.suggestedPrompts}>
+                  <button className={styles.promptChip} type="button">What&rsquo;s blocking the gate?</button>
+                </div>
+                <div className={styles.inputRow}>
+                  <input type="text" placeholder={`Ask Nexus about ${move.displayCode}…`} />
+                  <button className={styles.sendBtn} type="button" aria-label="Send">&#8593;</button>
+                </div>
+              </div>
+            </aside>
+          }
+          rightPane={
+            <article className={styles.rightPane}>
+              {/* ── Fixed header (stays across all tabs) ── */}
+              <div className={styles.detailHead}>
+                <div className={styles.detailHeadTop}>
+                  <div className={styles.detailHeadLeft}>
+                    <div className={styles.detailBreadcrumb}>
+                      <Link className={styles.detailCrumb} href="/strategic-moves">
+                        Strategic Moves
+                      </Link>
+                      <span aria-hidden>&rsaquo;</span>
+                      <span>{move.tenant.name}</span>
+                      <span aria-hidden>&rsaquo;</span>
+                      <span>{move.displayCode}</span>
+                    </div>
+                    <h1 className={styles.detailTitle}>{move.name}</h1>
+                    <div className={styles.detailId}>
+                      {move.archetype} &middot; Sponsor: {(move.sponsor?.name ?? 'Unassigned').toUpperCase()}
+                    </div>
                   </div>
-                ))}
+                  <div className={styles.detailHeadActions}>
+                    {secondary && (
+                      <Link className={styles.btnGhost} href={secondary.href}>
+                        {secondary.label}
+                      </Link>
+                    )}
+                    <Link className={styles.btnPhase} href={primary.href}>
+                      {primary.label} <span className={styles.btnArrow} aria-hidden>&rarr;</span>
+                    </Link>
+                  </div>
+                </div>
+                <PhaseRail current={move.currentPhase} status={move.statusColor} />
               </div>
-              {move.recentActivity.length >= 3 ? (
-                <a className={styles.tlMore} href={`/strategic-moves/${move.id}?panel=activity`}>
-                  View all activity &rarr;
-                </a>
-              ) : null}
-            </section>
 
-            <section className={styles.detailSection}>
-              <div className={styles.detailSectionTitle}>Evidence from intelligence</div>
-              <div className={styles.evidenceList}>
-                {move.linkedEvidence.length === 0 ? (
-                  <div className={styles.evEmpty}>No linked evidence yet.</div>
-                ) : (
-                  move.linkedEvidence.map((evidence) => (
-                    <a className={styles.evItem} href={evidence.url} key={evidence.id}>
-                      <span className={styles.evNum}>{evidence.anchor}</span>
-                      <span className={styles.evText}>{evidence.summary}</span>
-                      <span className={styles.evLink} aria-hidden>&#8599;</span>
-                    </a>
-                  ))
-                )}
+              {/* ── Tab bar ── */}
+              <div style={{ paddingLeft: 0, paddingRight: 0 }}>
+                <TabBar moveId={move.id} active={activeTab} />
               </div>
-            </section>
 
-            <section
-              className={styles.detailSection}
-              data-testid="move-artifact-upload-section"
-            >
-              <div className={styles.detailSectionTitle}>Attachments</div>
-              <MoveArtifactUpload
-                programId={move.id}
-                phase={move.currentPhase ?? 0}
-              />
-            </section>
-          </div>
-        </article>}
-      />
+              {/* ── Tab content ── */}
+              {activeTab === 'overview'  && <OverviewContent move={move} />}
+              {activeTab === 'documents' && <DocumentsContent move={move} />}
+              {activeTab === 'activity'  && <ActivityContent move={move} />}
+            </article>
+          }
+        />
       </div>
     </div>
   );
