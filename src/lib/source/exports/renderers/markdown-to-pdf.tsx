@@ -187,37 +187,55 @@ function renderCodeBlock(node: Code): ReactNode {
 }
 
 // ── Tables ─────────────────────────────────────────────────────────────────
+//
+// @react-pdf's flexbox layout has a known overflow bug for tables with
+// many rows or wide content — the "unsupported number: -8.5e+21" error
+// in d09 RFP (11 tables) traced to this. We render tables as a stack
+// of monospaced rows separated by ASCII pipes — loses some visual
+// styling but is robust against any input shape. Buyers reading the
+// PDF still see the table contents clearly; if pristine visual tables
+// are needed the docx + html exports are the better surface for that.
 
 function renderTable(node: MdTable): ReactNode {
   const rows = node.children as MdTableRow[];
   if (rows.length === 0) return null;
+  // Compute the plain-text content of each cell so we can size widths.
+  const textRows: string[][] = rows.map((row) =>
+    (row.children as MdTableCell[]).map((cell) =>
+      (cell.children as PhrasingContent[])
+        .map((c) => extractPlain(c as Content))
+        .join(''),
+    ),
+  );
+  // Render as a View with one Text per row. Header row uses bold +
+  // ink color; body rows use the muted style for separators.
   return (
-    <View style={PDF_STYLES.table}>
-      {rows.map((row, rIdx) => (
-        <View
-          key={rIdx}
-          style={rIdx === 0 ? PDF_STYLES.tableHeaderRow : PDF_STYLES.tableRow}
-        >
-          {(row.children as MdTableCell[]).map((cell, cIdx) => (
-            <View
-              key={cIdx}
-              style={
-                rIdx === 0 ? PDF_STYLES.tableHeaderCell : PDF_STYLES.tableCell
-              }
-            >
-              <Text
-                style={
-                  rIdx === 0
-                    ? PDF_STYLES.tableHeaderText
-                    : PDF_STYLES.tableCellText
-                }
-              >
-                {renderInline(cell.children as PhrasingContent[])}
-              </Text>
-            </View>
-          ))}
-        </View>
-      ))}
+    <View
+      style={{
+        marginVertical: 8,
+        borderColor: PDF_COLORS.RULE,
+        borderWidth: 1,
+        borderRadius: 2,
+        backgroundColor: PDF_COLORS.SOFT,
+        padding: 6,
+      }}
+    >
+      {textRows.map((row, idx) => {
+        const isHeader = idx === 0;
+        return (
+          <Text
+            key={idx}
+            style={{
+              fontFamily: PDF_FONTS.MONO,
+              fontSize: 8,
+              color: isHeader ? PDF_COLORS.HEADER : PDF_COLORS.MUTED,
+              marginBottom: 2,
+            }}
+          >
+            {row.join(' │ ')}
+          </Text>
+        );
+      })}
     </View>
   );
 }
