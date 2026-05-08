@@ -823,6 +823,8 @@ export function getMeridianBriefData(): BriefData {
     tenantBrandColor: TENANT_BRAND_TEAL,
     industry: 'healthcare',
     composedAt: '2026-05-08T16:14:00Z',
+    synthesis:
+      "Sentinel's read for this quarter: Population Health AI is your highest-confidence call (87/100) — $8M–$24M of MSSP shared savings sits on the table within 14 months. Ambient AI Clinical Documentation is over-delivering at 141% of committed value (MH-01) and is ready for phase-2 expansion. Sepsis Early Warning is the dark horse · direct CMS quality impact, but every clinical-band move is gated on MH-07 foundation work landing first.",
     bets: [
       {
         rank: 1,
@@ -839,6 +841,11 @@ export function getMeridianBriefData(): BriefData {
           { name: 'Substrate maturity for grounding', delta: 19 },
         ],
         engagementState: 'not_started',
+        decision: {
+          kind: 'originate',
+          label: 'Originate now',
+          reason: 'Highest score · clean cascade · CFO pitch ready',
+        },
         bindingPatterns: [
           { pattern: FIXTURE_PATTERNS['P-HC-014']!, quantifiedRow: { withLabel: '+ ACO sponsor', withoutLabel: '−', description: '73% of MSSP-positive deployments had CMO+CFO co-sponsorship', source: 'CMS public report 2024 · n=18 IDN' } },
           { pattern: FIXTURE_PATTERNS['P-HC-018']!, quantifiedRow: { withLabel: '+ Risk tier', withoutLabel: '−', description: 'Stratify panels by 5-tier risk · skipping tiers fails year 1', source: 'Innovaccer + KLAS 2025-Q3' } },
@@ -876,6 +883,11 @@ export function getMeridianBriefData(): BriefData {
         engagementState: 'in_flight',
         initiativeDisplayId: 'MH-01',
         measuredVsCommitted: { measured: 5_800_000, committed: 4_100_000 },
+        decision: {
+          kind: 'approve_scale',
+          label: 'Approve scale-up',
+          reason: '141% of committed · ready for phase-2 expansion',
+        },
         bindingPatterns: [
           { pattern: FIXTURE_PATTERNS['P-HC-005']!, quantifiedRow: { withLabel: '+ CMIO', withoutLabel: '− CIO-only', description: 'CMIO sponsorship: 65–75% adoption · CIO-only: 25–40%', source: 'KLAS 2025-Q4 · n=12' } },
           { pattern: FIXTURE_PATTERNS['P-HC-007']!, quantifiedRow: { withLabel: '+ Primary care', withoutLabel: '−', description: 'Pilot in primary care first; specialty-led pilots show inflated metrics', source: 'JAMIA 2025' } },
@@ -906,6 +918,11 @@ export function getMeridianBriefData(): BriefData {
           { name: 'Substrate maturity for grounding', delta: 45 },
         ],
         engagementState: 'not_started',
+        decision: {
+          kind: 'wait',
+          label: 'Wait · MH-07',
+          reason: 'Foundation gates clinical AI · sequencing risk',
+        },
         bindingPatterns: [
           { pattern: FIXTURE_PATTERNS['P-HC-024']!, quantifiedRow: { withLabel: '+ Bedside', withoutLabel: '−', description: 'Nursing-driven workflow integration (not centralized command center)', source: 'NEJM Catalyst 2023 · Sutter Health' } },
           { pattern: FIXTURE_PATTERNS['P-HC-026']!, quantifiedRow: { withLabel: '+ EHR-native', withoutLabel: '−', description: 'EHR-native alerting · standalone dashboards underperform', source: 'KLAS 2025-Q3' } },

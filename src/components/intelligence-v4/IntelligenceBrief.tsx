@@ -18,7 +18,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import type { BelowTheLineBet, BriefData, BriefBet } from '@/lib/knowledge-corpus/types';
+import type { BelowTheLineBet, BetDecisionKind, BriefData, BriefBet } from '@/lib/knowledge-corpus/types';
 import { SentinelChat } from '@/components/intelligence-v3/SentinelChat';
 import type { ChatMessage } from '@/components/intelligence-v3/types';
 
@@ -178,20 +178,113 @@ export function IntelligenceBrief({ data }: Props) {
             </div>
           ))}
 
-          {/* Above the line · top 3 picks as full cards */}
+          {/* A1 · 1-paragraph CXO synthesis read · the morning-coffee
+              version of the brief before the cards */}
+          {data.synthesis && (
+            <div
+              style={{
+                background: C.surface2,
+                borderLeft: `3px solid ${C.navy}`,
+                borderRadius: '0 8px 8px 0',
+                padding: '14px 18px',
+                marginBottom: 22,
+              }}
+            >
+              <SectionEyebrow>Sentinel's read · this quarter</SectionEyebrow>
+              <p
+                style={{
+                  fontFamily: F_BODY,
+                  fontSize: 14,
+                  lineHeight: 1.6,
+                  color: C.ink,
+                  margin: '6px 0 0',
+                  maxWidth: '74ch',
+                }}
+              >
+                {data.synthesis}
+              </p>
+            </div>
+          )}
+
+          {/* Above the line · top 3 picks · 3-up side-by-side comparison row.
+              Cards expand inline (full width below) when toggled. */}
           <div style={{ marginBottom: 8 }}>
             <SectionEyebrow>Above the line · top {data.bets.length} this quarter</SectionEyebrow>
           </div>
-          <div style={{ display: 'grid', gap: 14 }}>
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: `repeat(${data.bets.length}, minmax(0, 1fr))`,
+              gap: 12,
+              alignItems: 'stretch',
+            }}
+          >
             {data.bets.map((bet) => (
               <BetSummary
                 key={bet.useCase.id}
                 bet={bet}
                 isExpanded={expanded.has(bet.rank)}
                 onToggle={() => toggle(bet.rank)}
+                compact
               />
             ))}
           </div>
+
+          {/* When any card is expanded, render the full McKinsey detail
+              full-width below the 3-up grid. Multiple cards can be
+              expanded; each renders below in rank order. */}
+          {data.bets
+            .filter((bet) => expanded.has(bet.rank))
+            .map((bet) => (
+              <article
+                key={`exp-${bet.useCase.id}`}
+                style={{
+                  marginTop: 18,
+                  background: C.surface2,
+                  border: `1px solid ${C.navyLine}`,
+                  borderRadius: 10,
+                  padding: '20px 28px 24px',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: 12, marginBottom: 4 }}>
+                  <span
+                    style={{
+                      fontFamily: F_DISPLAY,
+                      fontSize: 22,
+                      fontWeight: 300,
+                      color: C.navy,
+                      letterSpacing: '-0.012em',
+                      lineHeight: 1,
+                    }}
+                  >
+                    {String(bet.rank).padStart(2, '0')}
+                  </span>
+                  <span
+                    style={{
+                      fontFamily: F_DISPLAY,
+                      fontSize: 20,
+                      fontWeight: 500,
+                      color: C.ink,
+                      letterSpacing: '-0.012em',
+                    }}
+                  >
+                    {bet.useCase.name}
+                  </span>
+                </div>
+                <p
+                  style={{
+                    fontSize: 13.5,
+                    color: C.muted,
+                    lineHeight: 1.5,
+                    margin: '0 0 12px',
+                    maxWidth: '74ch',
+                  }}
+                >
+                  {bet.useCase.artOfPossibleFraming}
+                </p>
+                <BetExpandedDetail bet={bet} />
+              </article>
+            ))}
 
           {/* Below the line · scannable list */}
           {data.belowTheLine && data.belowTheLine.length > 0 && (
@@ -290,7 +383,7 @@ export function IntelligenceBrief({ data }: Props) {
   );
 }
 
-// ── Bet summary card (summary-first, expandable) ──────────────────
+// ── Bet summary card (3-up grid · scoreboard tile · A2 + A3) ──────
 
 function BetSummary({
   bet,
@@ -300,155 +393,254 @@ function BetSummary({
   bet: BriefBet;
   isExpanded: boolean;
   onToggle: () => void;
+  /** Reserved · the canvas always renders cards in 3-up compact mode now. */
+  compact?: boolean;
 }) {
   const valueRange =
     bet.useCase.businessValueRanges.perCompanySize.mid ??
     bet.useCase.businessValueRanges.perCompanySize.large ??
     '—';
-  const primaryPattern = bet.bindingPatterns[0];
   const stateLabel =
     bet.engagementState === 'in_flight'
       ? `IN PORTFOLIO${bet.initiativeDisplayId ? ` · ${bet.initiativeDisplayId}` : ''}`
-      : 'CANDIDATE BET';
+      : 'CANDIDATE';
   const scoreColor = bet.score >= 80 ? C.teal : bet.score >= 70 ? C.amber : C.red;
+  const decisionStyle = bet.decision ? decisionToneStyle(bet.decision.kind) : null;
 
   return (
     <article
       style={{
         background: C.surface,
-        border: `1px solid ${C.borderLight}`,
+        border: `1px solid ${isExpanded ? C.navy : C.borderLight}`,
         borderRadius: 10,
         overflow: 'hidden',
         transition: 'box-shadow 0.12s, border-color 0.12s',
         boxShadow: isExpanded ? '0 4px 16px rgba(10,12,18,0.06)' : 'none',
-        borderColor: isExpanded ? C.navyLine : C.borderLight,
+        display: 'flex',
+        flexDirection: 'column',
+        height: '100%',
       }}
     >
-      {/* Always-visible summary row */}
       <button
         type="button"
         onClick={onToggle}
         aria-expanded={isExpanded}
         style={{
           width: '100%',
+          flex: 1,
           background: 'transparent',
           border: 'none',
-          padding: '20px 24px',
+          padding: '14px 16px 12px',
           textAlign: 'left',
           cursor: 'pointer',
           fontFamily: 'inherit',
           color: 'inherit',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 10,
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 18 }}>
-          <div
-            style={{
-              fontFamily: F_DISPLAY,
-              fontSize: 36,
-              fontWeight: 300,
-              color: C.navy,
-              lineHeight: 1,
-              letterSpacing: '-0.02em',
-              flexShrink: 0,
-              minWidth: 50,
-            }}
-          >
-            {String(bet.rank).padStart(2, '0')}
-          </div>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ display: 'flex', alignItems: 'baseline', gap: 12, flexWrap: 'wrap', marginBottom: 4 }}>
-              <span style={{ fontFamily: F_MONO, fontSize: 10, fontWeight: 700, letterSpacing: '0.16em', color: C.navy, textTransform: 'uppercase' }}>
-                {bet.useCase.id}
-              </span>
-              <span style={{ fontFamily: F_MONO, fontSize: 9.5, fontWeight: 600, letterSpacing: '0.12em', color: bet.engagementState === 'in_flight' ? C.teal : C.faint, textTransform: 'uppercase' }}>
-                · {stateLabel}
-              </span>
-            </div>
-            <h2
+        {/* Top row · rank + state on left, score on right */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 8 }}>
+          <span style={{ display: 'inline-flex', gap: 8, alignItems: 'baseline', minWidth: 0 }}>
+            <span
               style={{
                 fontFamily: F_DISPLAY,
                 fontSize: 22,
-                fontWeight: 500,
-                color: C.ink,
-                letterSpacing: '-0.012em',
-                lineHeight: 1.2,
-                margin: '0 0 6px 0',
-              }}
-            >
-              {bet.useCase.name}
-              {bet.engagementState === 'in_flight' && ' — expansion'}
-            </h2>
-            <p style={{ fontSize: 13.5, color: C.muted, lineHeight: 1.5, marginBottom: 10, maxWidth: '60ch' }}>
-              {bet.useCase.artOfPossibleFraming}
-            </p>
-
-            {/* 3-stat row · CXO scan-line */}
-            <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap', alignItems: 'baseline', marginTop: 12 }}>
-              <Stat label="Value · annual" value={valueRange} valueFont={F_DISPLAY} />
-              <Stat label="Time to value" value={`${bet.useCase.businessValueRanges.timeToValueMonths} mo`} valueFont={F_DISPLAY} />
-              {primaryPattern && (
-                <Stat
-                  label="Binding pattern"
-                  value={primaryPattern.pattern.id}
-                  valueFont={F_MONO}
-                  small
-                />
-              )}
-              {bet.measuredVsCommitted && (
-                <Stat
-                  label="Measured vs committed"
-                  value={`${Math.round((bet.measuredVsCommitted.measured / bet.measuredVsCommitted.committed) * 100)}%`}
-                  valueFont={F_DISPLAY}
-                />
-              )}
-            </div>
-          </div>
-
-          {/* Score + expand chevron · right edge */}
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 8, flexShrink: 0 }}>
-            <span
-              style={{
-                fontFamily: F_MONO,
-                fontSize: 10,
-                fontWeight: 700,
-                letterSpacing: '0.16em',
-                color: scoreColor,
-                textTransform: 'uppercase',
-              }}
-            >
-              SCORE {bet.score} / 100
-            </span>
-            <span
-              style={{
-                fontFamily: F_MONO,
-                fontSize: 10,
-                fontWeight: 600,
-                letterSpacing: '0.06em',
+                fontWeight: 300,
                 color: C.faint,
-                textTransform: 'uppercase',
-                whiteSpace: 'nowrap',
+                lineHeight: 1,
+                letterSpacing: '-0.012em',
               }}
             >
-              {isExpanded ? 'Hide detail ↑' : 'Show full analysis ↓'}
+              {String(bet.rank).padStart(2, '0')}
             </span>
-          </div>
+            <span
+              style={{
+                fontFamily: F_MONO,
+                fontSize: 9,
+                fontWeight: 700,
+                letterSpacing: '0.14em',
+                color: bet.engagementState === 'in_flight' ? C.teal : C.faint,
+                textTransform: 'uppercase',
+              }}
+            >
+              {stateLabel}
+            </span>
+          </span>
+          <span
+            style={{
+              fontFamily: F_MONO,
+              fontSize: 10,
+              fontWeight: 700,
+              letterSpacing: '0.14em',
+              color: scoreColor,
+              textTransform: 'uppercase',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            {bet.score} / 100
+          </span>
         </div>
-      </button>
 
-      {/* Expanded detail · the McKinsey synthesis */}
-      {isExpanded && (
-        <div
+        {/* ID line */}
+        <span
           style={{
-            padding: '0 24px 24px 24px',
-            borderTop: `1px solid ${C.borderLight}`,
-            background: C.surface2,
+            fontFamily: F_MONO,
+            fontSize: 9.5,
+            fontWeight: 700,
+            letterSpacing: '0.14em',
+            color: C.navy,
+            textTransform: 'uppercase',
           }}
         >
-          <BetExpandedDetail bet={bet} />
+          {bet.useCase.id}
+        </span>
+
+        {/* Title · Fraunces · 2-line clamp at narrow widths */}
+        <h2
+          style={{
+            fontFamily: F_DISPLAY,
+            fontSize: 18,
+            fontWeight: 500,
+            color: C.ink,
+            letterSpacing: '-0.01em',
+            lineHeight: 1.2,
+            margin: 0,
+          }}
+        >
+          {bet.useCase.name}
+          {bet.engagementState === 'in_flight' && ' — expansion'}
+        </h2>
+
+        {/* Two-stat row · scoreboard for at-a-glance comparison */}
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: '1fr 1fr',
+            gap: 10,
+            paddingTop: 8,
+            borderTop: `1px solid ${C.borderLight}`,
+          }}
+        >
+          <Stat label="Value · annual" value={valueRange} valueFont={F_DISPLAY} small />
+          <Stat
+            label="Time to value"
+            value={`${bet.useCase.businessValueRanges.timeToValueMonths} mo`}
+            valueFont={F_DISPLAY}
+            small
+          />
+          {bet.measuredVsCommitted && (
+            <Stat
+              label="Measured / commit"
+              value={`${Math.round((bet.measuredVsCommitted.measured / bet.measuredVsCommitted.committed) * 100)}%`}
+              valueFont={F_DISPLAY}
+              small
+            />
+          )}
+          {bet.bindingPatterns[0] && (
+            <Stat
+              label="Binding pattern"
+              value={bet.bindingPatterns[0].pattern.id}
+              valueFont={F_MONO}
+              small
+            />
+          )}
         </div>
-      )}
+
+        {/* A2 · explicit CXO decision pill */}
+        {bet.decision && decisionStyle && (
+          <div
+            style={{
+              marginTop: 'auto',
+              paddingTop: 8,
+              borderTop: `1px dashed ${C.borderLight}`,
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 4,
+            }}
+          >
+            <span
+              style={{
+                fontFamily: F_MONO,
+                fontSize: 9,
+                fontWeight: 700,
+                letterSpacing: '0.16em',
+                color: C.faint,
+                textTransform: 'uppercase',
+                marginBottom: 2,
+              }}
+            >
+              Decision
+            </span>
+            <span
+              style={{
+                fontFamily: F_BODY,
+                fontSize: 12.5,
+                fontWeight: 700,
+                color: decisionStyle.fg,
+                background: decisionStyle.bg,
+                border: `1px solid ${decisionStyle.border}`,
+                padding: '5px 10px',
+                borderRadius: 4,
+                alignSelf: 'flex-start',
+                letterSpacing: '-0.005em',
+              }}
+            >
+              {decisionStyle.icon} {bet.decision.label}
+            </span>
+            {bet.decision.reason && (
+              <span
+                style={{
+                  fontSize: 11.5,
+                  color: C.muted,
+                  lineHeight: 1.45,
+                }}
+              >
+                {bet.decision.reason}
+              </span>
+            )}
+          </div>
+        )}
+
+        {/* Toggle hint at bottom */}
+        <span
+          style={{
+            fontFamily: F_MONO,
+            fontSize: 9.5,
+            fontWeight: 600,
+            letterSpacing: '0.08em',
+            color: isExpanded ? C.navy : C.faint,
+            textTransform: 'uppercase',
+            marginTop: 6,
+          }}
+        >
+          {isExpanded ? 'Hide detail ↑' : 'Show full analysis ↓'}
+        </span>
+      </button>
     </article>
   );
+}
+
+function decisionToneStyle(kind: BetDecisionKind): {
+  fg: string;
+  bg: string;
+  border: string;
+  icon: string;
+} {
+  switch (kind) {
+    case 'originate':
+      return { fg: '#1F3A6E', bg: 'rgba(31,58,110,0.08)', border: 'rgba(31,58,110,0.25)', icon: '🆕' };
+    case 'approve_scale':
+      return { fg: C.teal, bg: C.tealSoft, border: C.tealLine, icon: '✓' };
+    case 'wait':
+      return { fg: C.amber, bg: C.amberSoft, border: C.amberLine, icon: '⏸' };
+    case 'evaluate':
+      return { fg: C.faint, bg: C.surface3, border: C.borderLight, icon: '◯' };
+    case 'retire':
+    default:
+      return { fg: C.faint, bg: C.surface3, border: C.borderLight, icon: '✕' };
+  }
 }
 
 function Stat({ label, value, valueFont, small }: { label: string; value: string; valueFont: string; small?: boolean }) {

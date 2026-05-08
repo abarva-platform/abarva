@@ -384,6 +384,17 @@ export interface MapData {
 
 // ── The Brief view-model (consumed by IntelligenceBrief.tsx) ──
 
+/** PR-K2.6: explicit CXO decision pill on a top brief card. */
+export type BetDecisionKind = 'originate' | 'approve_scale' | 'wait' | 'evaluate' | 'retire';
+
+export interface BetDecision {
+  kind: BetDecisionKind;
+  /** Action label, e.g. "Originate now", "Wait · MH-07", "Approve scale-up". */
+  label: string;
+  /** One-line CXO reason shown beneath the pill. */
+  reason?: string;
+}
+
 export interface BriefBet {
   rank: number;
   useCase: UseCase;
@@ -392,6 +403,8 @@ export interface BriefBet {
   engagementState: EngagementState;
   initiativeDisplayId?: string;
   measuredVsCommitted?: { measured: number; committed: number };
+  /** PR-K2.6: explicit CXO decision call surfaced on the top card. */
+  decision?: BetDecision;
   bindingPatterns: Array<{
     pattern: Pattern;
     quantifiedRow: { withLabel: string; withoutLabel: string; description: string; source: string };
@@ -426,6 +439,8 @@ export interface BriefData {
   tenantBrandColor: string;
   industry: Industry;
   composedAt: string;             // ISO
+  /** PR-K2.6: 1-paragraph CXO synthesis read at the top of the brief. */
+  synthesis?: string;
   bets: BriefBet[];
   /** Bets below the line · scannable list under the 3 hero cards. */
   belowTheLine?: BelowTheLineBet[];
