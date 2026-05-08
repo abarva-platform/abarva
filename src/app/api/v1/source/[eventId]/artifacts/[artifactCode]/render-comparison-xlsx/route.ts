@@ -101,7 +101,7 @@ export async function GET(_req: NextRequest, { params }: RouteCtx) {
   let workbook;
   try {
     if (artifactCode === 'd19_pricing_workbook') {
-      const payload = buildPricingComparisonPayloadFromContext(ctx, generatedAt);
+      const payload = await buildPricingComparisonPayloadFromContext(ctx, generatedAt);
       workbook = await renderArtifactXlsx({
         artifactCode,
         payload,
