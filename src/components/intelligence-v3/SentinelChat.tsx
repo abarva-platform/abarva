@@ -345,7 +345,7 @@ function DockCollapsed({
         {preview}
       </span>
 
-      <InputField scopeLabel="" inline />
+      <ComposerBox scopeLabel="" inline />
       <Ctl onClick={() => onMode('side-rail')} aria-label="Switch to side rail">
         ⇱ Side rail
       </Ctl>
@@ -570,92 +570,142 @@ function ChatInput({
   scopeLabel: string;
   dockExpanded?: boolean;
 }) {
+  // Two-row Claude-style composer · text input on top, tools row below.
+  // Lifted off the bottom edge with extra bottom padding so the agent's last
+  // message stays visible above it without scrolling.
   return (
     <div
       style={{
-        borderTop: `1px solid ${CHAT_BORDER_LIGHT}`,
+        borderTop: `1px solid rgba(255,255,255,0.06)`,
         padding: dockExpanded
-          ? `${SPACING.md}px ${SPACING.xxl}px`
-          : `${SPACING.sm}px ${SPACING.md}px`,
-        background: CHAT_BG_INPUT,
+          ? `${SPACING.sm}px ${SPACING.xxl}px ${SPACING.lg}px`
+          : `${SPACING.sm}px ${SPACING.md}px ${SPACING.lg}px`,
+        background: 'linear-gradient(to top, rgba(0,0,0,0.18), transparent)',
         flexShrink: 0,
       }}
     >
-      <div
-        style={{
-          fontFamily: FONT.mono,
-          fontSize: 9,
-          letterSpacing: '0.08em',
-          textTransform: 'uppercase',
-          color: CHAT_TEXT_DIM,
-          marginBottom: SPACING.xs,
-        }}
-      >
-        Scope: {scopeLabel}
-      </div>
-      <InputField scopeLabel={scopeLabel} />
+      <ComposerBox scopeLabel={scopeLabel} />
     </div>
   );
 }
 
-function InputField({
-  inline = false,
-}: {
-  scopeLabel: string;
-  inline?: boolean;
-}) {
-  // Submitting the input is a no-op until model wiring lands.
+function ComposerBox({ scopeLabel, inline = false }: { scopeLabel: string; inline?: boolean }) {
+  // Submitting is a no-op until model wiring lands.
   return (
     <form
       onSubmit={(e) => {
         e.preventDefault();
       }}
       style={{
-        display: 'flex',
-        gap: SPACING.xs,
-        background: 'rgba(255,255,255,0.08)',
+        background: 'rgba(0,0,0,0.28)',
         border: `1px solid ${CHAT_BORDER_FAINT}`,
-        borderRadius: RADIUS.sm,
-        padding: `${SPACING.xs}px ${SPACING.sm}px`,
-        width: inline ? 320 : '100%',
-        alignItems: 'center',
+        borderRadius: 12,
+        padding: `${SPACING.sm}px ${SPACING.sm}px ${SPACING.xs}px`,
+        width: inline ? 360 : '100%',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: SPACING.xs,
       }}
     >
       <input
         type="text"
-        placeholder="Ask Sentinel..."
+        placeholder="Ask Sentinel…"
         aria-label="Ask Sentinel"
         style={{
-          flex: 1,
           background: 'transparent',
           border: 'none',
           outline: 'none',
           color: CHAT_TEXT_BRIGHT,
           fontFamily: FONT.body,
-          fontSize: 12,
+          fontSize: 13,
+          lineHeight: 1.5,
+          padding: '4px 6px 6px',
         }}
       />
-      <button
-        type="submit"
-        aria-label="Send"
+      <div
         style={{
-          background: ACCENT,
-          color: ACCENT_INK,
-          width: 22,
-          height: 22,
-          borderRadius: '50%',
-          border: 'none',
-          fontFamily: FONT.body,
-          fontWeight: 700,
-          fontSize: 12,
-          lineHeight: 1,
-          cursor: 'pointer',
-          flexShrink: 0,
+          display: 'flex',
+          alignItems: 'center',
+          gap: SPACING.xs,
+          paddingTop: SPACING.xs,
+          borderTop: '1px solid rgba(255,255,255,0.06)',
         }}
       >
-        ↑
-      </button>
+        <ComposerTool title="Attach document" ariaLabel="Attach document">📎</ComposerTool>
+        <ComposerTool title="New thread" ariaLabel="Start a new thread">+</ComposerTool>
+        {scopeLabel && (
+          <span
+            style={{
+              fontFamily: FONT.mono,
+              fontSize: 10,
+              letterSpacing: '0.06em',
+              color: 'rgba(205,213,224,0.5)',
+              padding: '0 6px',
+            }}
+          >
+            Sentinel · {scopeLabel}
+          </span>
+        )}
+        <span style={{ flex: 1 }} />
+        <button
+          type="submit"
+          aria-label="Send"
+          style={{
+            background: 'rgba(244,184,0,0.18)',
+            color: ACCENT,
+            width: 28,
+            height: 28,
+            borderRadius: 7,
+            border: 'none',
+            fontFamily: FONT.body,
+            fontWeight: 700,
+            fontSize: 13,
+            lineHeight: 1,
+            cursor: 'pointer',
+            flexShrink: 0,
+            display: 'inline-flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          ↑
+        </button>
+      </div>
     </form>
+  );
+}
+
+function ComposerTool({
+  children,
+  title,
+  ariaLabel,
+}: {
+  children: React.ReactNode;
+  title: string;
+  ariaLabel: string;
+}) {
+  return (
+    <button
+      type="button"
+      title={title}
+      aria-label={ariaLabel}
+      style={{
+        width: 26,
+        height: 26,
+        borderRadius: 6,
+        background: 'transparent',
+        border: '1px solid transparent',
+        color: 'rgba(205,213,224,0.65)',
+        fontSize: 14,
+        lineHeight: 1,
+        cursor: 'pointer',
+        display: 'inline-flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}
+    >
+      {children}
+    </button>
   );
 }
 

@@ -6,7 +6,59 @@
 // per tenant context. For now: a fixture that matches the wireframe,
 // so the surface can be reviewed against the spec.
 
-import type { IntelligenceV3PageData } from './types';
+import type { ArtOfPossibleData, IntelligenceV3PageData } from './types';
+
+// Meridian Health · Art of Possible · honest-asymmetry band fixture
+// (PR-K2.3). Reads as the portfolio actually is, not artificially
+// balanced: workforce heavy, margin thin, clinical empty (whitespace),
+// foundation blocking via MH-07. Replaces the prior 4-column kanban
+// that misled CXOs into thinking every category was filled.
+export const MERIDIAN_AOP_DEMO: ArtOfPossibleData = {
+  totalPossibleLabel: '$60–150M possible',
+  totalCapturingLabel: '~$13M (~12%)',
+  cxoFrame:
+    "You're capturing ~12% of what's possible. Workforce is heavy · clinical is whitespace · MH-07 is the unlock for everything downstream.",
+  bands: [
+    {
+      key: 'workforce',
+      label: 'Workforce productivity',
+      tone: 'heavy',
+      possibleUsd: '$18–28M',
+      capturingUsd: '$8.4M',
+      segments: { inFlight: 56, candidate: 18, risk: 6, empty: 20 },
+      verdict: 'Over-indexed · 3 active',
+    },
+    {
+      key: 'margin',
+      label: 'Margin · revenue cycle',
+      tone: 'thin',
+      possibleUsd: '$14–32M',
+      capturingUsd: '$3.1M',
+      segments: { inFlight: 18, candidate: 24, risk: 8, empty: 50 },
+      verdict: 'Single-point dependency',
+    },
+    {
+      key: 'clinical',
+      label: 'Clinical care · ambient AI',
+      tone: 'gap',
+      possibleUsd: '$20–62M',
+      capturingUsd: '$0',
+      segments: { inFlight: 0, candidate: 22, risk: 0, empty: 78 },
+      verdict: 'Largest gap · zero in flight',
+      blocker: 'MH-07 (foundation) blocks clinical AI',
+    },
+    {
+      key: 'foundation',
+      label: 'Foundation · data + identity',
+      tone: 'foundation',
+      possibleUsd: '$8–28M',
+      capturingUsd: '$1.5M',
+      segments: { inFlight: 32, candidate: 12, risk: 26, empty: 30 },
+      verdict: '2 active · MH-07 at risk',
+      blocker: 'MH-07 slip cascades into clinical',
+    },
+  ],
+};
 
 export const FIRST_CAPITAL_DEMO: IntelligenceV3PageData = {
   tenantName: 'First Capital Financial',

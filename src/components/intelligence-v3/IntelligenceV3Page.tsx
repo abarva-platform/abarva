@@ -31,10 +31,11 @@ import { PeerActivityCanvas } from './PeerActivityCanvas';
 import { MyStrategyCanvas } from './MyStrategyCanvas';
 import { SessionsCanvas } from './SessionsCanvas';
 import { SentinelChat } from './SentinelChat';
+import { ArtOfPossibleBandsCanvas } from './ArtOfPossibleBandsCanvas';
 import { IntelligenceMap } from '@/components/intelligence-v4/IntelligenceMap';
 import { IntelligenceBrief } from '@/components/intelligence-v4/IntelligenceBrief';
 import { getMeridianMapData, getMeridianBriefData } from '@/lib/knowledge-corpus/fixtures/meridian-healthcare';
-import { FIRST_CAPITAL_DEMO } from './demo-data';
+import { FIRST_CAPITAL_DEMO, MERIDIAN_AOP_DEMO } from './demo-data';
 import type { IntelligenceV3PageData, StageKey } from './types';
 import type { VendorsData } from '@/lib/intelligence-v3/vendors-display';
 import type {
@@ -79,7 +80,8 @@ export function IntelligenceV3Page({
     const sync = () => {
       const h = window.location.hash.replace('#', '');
       if (
-        h === 'map' || h === 'brief' || h === 'today' || h === 'by-function' ||
+        h === 'map' || h === 'brief' || h === 'art-of-possible' ||
+        h === 'today' || h === 'by-function' ||
         h === 'patterns' || h === 'vendors' || h === 'peer-activity' ||
         h === 'my-strategy' || h === 'sessions'
       ) {
@@ -99,6 +101,8 @@ export function IntelligenceV3Page({
     }
   };
   const isCorpusStage = stage === 'brief' || stage === 'map';
+  const isAopStage = stage === 'art-of-possible';
+  const aopBands = data.aopBands ?? MERIDIAN_AOP_DEMO;
 
   return (
     <div
@@ -166,6 +170,7 @@ export function IntelligenceV3Page({
           >
             <Hero data={data} />
 
+            {isAopStage && <ArtOfPossibleBandsCanvas data={aopBands} />}
             {stage === 'today' && <TodayCanvas data={data} />}
             {stage === 'vendors' &&
               (vendorsData ? <VendorsCanvas data={vendorsData} /> : <StageStub stage={stage} />)}
