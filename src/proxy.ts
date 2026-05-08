@@ -48,6 +48,11 @@ const maestroRoutes = createRouteMatcher([
 export const AUTH_REQUIRED_ROUTE_PATTERNS = [
   '/admin(.*)',
   '/maestro(.*)',
+  // /home(.*) covers the canonical Home tree (PR-H2 route migration);
+  // /admin(.*) stays in the list because it 301-redirects to /home
+  // (the redirect happens early in the middleware so the auth check
+  // never fires on /admin/* in practice, but we keep the guard for
+  // belt-and-suspenders).
   '/home(.*)',
   '/dashboard(.*)',
   '/engagements(.*)',
@@ -104,11 +109,43 @@ export default clerkMiddleware(async (auth, request: NextRequest) => {
   const role = resolveSessionRole(metadataRole, email)
   const requestedClientId = request.nextUrl.searchParams.get('client')
 
-  // /setup is a compatibility bridge for people who still use the old Setup
-  // URL. Redirect it before Clerk's catch-all protect path can rewrite it to a
-  // signed-out 404; /admin then owns the normal auth redirect if needed.
-  if (request.nextUrl.pathname === '/setup' || request.nextUrl.pathname.startsWith('/setup/')) {
-    return withProductionReadinessNoStoreHeaders(request, NextResponse.redirect(new URL('/admin', request.url)))
+  // H2 (2026-05-07) · Route consolidation per Home Refinement Package
+  // ROUTE_MIGRATION.md. Old /setup and /admin URLs 301-redirect to
+  // /home equivalents. Specific panel mappings handled before the
+  // catch-alls.
+  const adminToHomeMap: Record<string, string> = {
+    '/admin': '/home',
+    '/admin/data-trust': '/home/data-trust',
+    '/admin/ai-initiatives': '/home/ai-initiatives',
+    '/admin/agent-readiness': '/home/agent-readiness',
+    '/admin/connectors': '/home/connectors',
+    '/admin/tenant': '/home/tenant-profile',
+  }
+  const exactAdminMatch = adminToHomeMap[request.nextUrl.pathname]
+  if (exactAdminMatch) {
+    const url = new URL(exactAdminMatch + request.nextUrl.search, request.url)
+    return withProductionReadinessNoStoreHeaders(request, NextResponse.redirect(url, 301))
+  }
+  // /admin/ai-initiatives/<id> → /home/ai-initiatives/<id>
+  if (request.nextUrl.pathname.startsWith('/admin/ai-initiatives/')) {
+    const sub = request.nextUrl.pathname.slice('/admin/ai-initiatives/'.length)
+    const url = new URL('/home/ai-initiatives/' + sub + request.nextUrl.search, request.url)
+    return withProductionReadinessNoStoreHeaders(request, NextResponse.redirect(url, 301))
+  }
+  // /setup catch-all → /home (preserves the previous /setup compatibility
+  // bridge but skipping the /admin hop). Sub-paths follow the panel map
+  // implicitly because they're handled by the /admin → /home redirects
+  // when /setup → /admin redirects below.
+  if (request.nextUrl.pathname === '/setup') {
+    return withProductionReadinessNoStoreHeaders(request, NextResponse.redirect(new URL('/home', request.url), 301))
+  }
+  if (request.nextUrl.pathname.startsWith('/setup/')) {
+    const sub = request.nextUrl.pathname.slice('/setup/'.length)
+    // Map setup panels through the same admin-to-home name table when
+    // possible; fall back to /home/<sub> directly.
+    const candidate = '/admin/' + sub
+    const target = adminToHomeMap[candidate] ?? '/home/' + sub
+    return withProductionReadinessNoStoreHeaders(request, NextResponse.redirect(new URL(target + request.nextUrl.search, request.url), 301))
   }
 
   if (
