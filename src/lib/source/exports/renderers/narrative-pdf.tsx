@@ -45,12 +45,22 @@ export {
   SELECTION_MEMO_DOCX_CONFIG as SELECTION_MEMO_PDF_CONFIG,
 };
 
-/** Build the React element representing the PDF. */
+/**
+ * Build the React element representing the PDF.
+ *
+ * `degraded`: when true, skip the markdown body and render only the
+ * cover page + a "body too complex for PDF" notice. The route uses
+ * this as a fallback when @react-pdf's layout engine throws on the
+ * full body — so the buyer still gets a usable cover-only PDF rather
+ * than a 500.
+ */
 export function buildNarrativePdf(
   payload: NarrativePdfPayload,
   config: NarrativePdfConfig,
+  options: { degraded?: boolean } = {},
 ): ReactElement<DocumentProps> {
-  const bodyNodes = markdownToPdfNodes(payload.body || '');
+  const degraded = options.degraded ?? false;
+  const bodyNodes = degraded ? [] : markdownToPdfNodes(payload.body || '');
   const headerLine = `${payload.tenantName}   ·   ${payload.eventCode}   ·   ${config.headerLabel}`;
   return (
     <Document
@@ -60,9 +70,12 @@ export function buildNarrativePdf(
       creator="AbarVa · Sentinel"
       producer="AbarVa · Sentinel"
     >
-      {/* Cover page */}
+      {/* Cover page — kept simple. Earlier slices used `fixed`
+          headers + footers with a `render` page-counter, but that
+          accumulator math is what triggers pdfkit's float overflow
+          on long bodies. We use plain inline elements here. */}
       <Page size="LETTER" style={PDF_STYLES.page}>
-        <Text style={PDF_STYLES.eyebrow} fixed>
+        <Text style={PDF_STYLES.eyebrow}>
           {config.eyebrowFor(payload.tenantName)}
         </Text>
         <Text style={PDF_STYLES.title}>{payload.eventName}</Text>
@@ -82,37 +95,58 @@ export function buildNarrativePdf(
           </View>
         ) : null}
         <View style={PDF_STYLES.divider} />
-        {/* Footer */}
-        <View style={PDF_STYLES.pageFooter} fixed>
-          <Text>{config.confidentialityNote}</Text>
-          <Text
-            render={({ pageNumber, totalPages }) =>
-              `Page ${pageNumber} / ${totalPages}`
-            }
-          />
-        </View>
+        <Text
+          style={{
+            fontSize: 9,
+            color: PDF_COLORS.MUTED,
+            fontStyle: 'italic',
+            marginTop: 8,
+          }}
+        >
+          {config.confidentialityNote}
+        </Text>
       </Page>
-      {/* Body page(s) — auto-paginates */}
-      <Page size="LETTER" style={PDF_STYLES.page}>
-        {/* Page header (top of every body page) */}
-        <View style={PDF_STYLES.pageHeader} fixed>
-          <Text>{headerLine}</Text>
-          <Text>Generated {payload.generatedAt.slice(0, 10)}</Text>
-        </View>
-        {/* Body content — content area sits below the page header */}
-        <View style={{ marginTop: 12 }}>{bodyNodes}</View>
-        {/* Footer (bottom of every body page) */}
-        <View style={PDF_STYLES.pageFooter} fixed>
-          <Text style={{ color: PDF_COLORS.MUTED }}>
-            {config.confidentialityNote}
+      {/* Body page — degraded mode skips this entirely. Otherwise it
+          auto-paginates via @react-pdf's default wrap behavior.
+          Note: we removed the `fixed` page header / footer that earlier
+          slices used. They were prone to triggering pdfkit's float
+          overflow on long bodies (the `render` prop in the footer's
+          page counter recurses on cumulative position). The cover
+          page footer is enough — the body just has a header bar
+          (non-fixed) at the top of the first body page. */}
+      {degraded ? (
+        <Page size="LETTER" style={PDF_STYLES.page}>
+          <Text style={PDF_STYLES.eyebrow}>Body content notice</Text>
+          <Text style={PDF_STYLES.body}>
+            The full {config.headerLabel} body could not be rendered in
+            PDF format. This is a known limitation when the body is
+            structurally complex (deeply nested lists, many tables, or
+            cross-referenced sections).
           </Text>
-          <Text
-            render={({ pageNumber, totalPages }) =>
-              `Page ${pageNumber} / ${totalPages}`
-            }
-          />
-        </View>
-      </Page>
+          <Text style={PDF_STYLES.body}>
+            For the complete content, please use the docx or HTML
+            export — both render the full body faithfully. The HTML
+            version is also print-friendly via your browser&apos;s
+            Print → Save as PDF.
+          </Text>
+        </Page>
+      ) : (
+        <Page size="LETTER" style={PDF_STYLES.page}>
+          <View
+            style={{
+              marginBottom: 12,
+              paddingBottom: 4,
+              borderBottomColor: PDF_COLORS.RULE,
+              borderBottomWidth: 0.5,
+            }}
+          >
+            <Text style={{ fontSize: 8, color: PDF_COLORS.MUTED }}>
+              {headerLine}
+            </Text>
+          </View>
+          {bodyNodes}
+        </Page>
+      )}
     </Document>
   );
 }
