@@ -22,6 +22,9 @@ import {
   buildNarrativeDocx,
   type NarrativeDocxPayload,
 } from './renderers/narrative-docx';
+import { buildAppInventoryDocx } from './renderers/app-inventory-docx';
+import { buildResponseChecklistDocx } from './renderers/response-checklist-docx';
+import { buildScorecardDocx } from './renderers/scorecard-docx';
 // Re-export the scope-memo type alias for backwards compat — the
 // payload shape is identical to NarrativeDocxPayload.
 import type { ScopeMemoDocxPayload } from './renderers/scope-memo-docx';
@@ -86,12 +89,17 @@ export const XLSX_COMPARISON_CODES = new Set(['d19_pricing_workbook']);
 
 /**
  * Codes for which Source has a docx renderer. Surfaces a "Download
- * docx" anchor on the artifact card. Slice 3.1 shipped d05; Slice 3.2
- * adds the rest of the narrative artifacts.
+ * docx" anchor on the artifact card. Slice 3.x shipped narrative
+ * artifacts (d05/d09/d24/d27); Slice 5 adds the structured-data
+ * artifacts (d04/d11/d16) — same payload binders as their xlsx
+ * counterparts; renderers translate to docx tables + sections.
  */
 export const DOCX_GENERATABLE_CODES = new Set([
+  'd04_app_inv',
   'd05_scope_memo',
   'd09_rfp_pack',
+  'd11_response_checklist',
+  'd16_scorecard',
   'd24_decision_brief',
   'd27_selection_memo',
 ]);
@@ -202,16 +210,24 @@ export interface RenderDocxArgs {
 export async function renderArtifactDocx(
   args: RenderDocxArgs,
 ): Promise<DocxDocument> {
-  const payload = args.payload as NarrativeDocxPayload;
   switch (args.artifactCode) {
+    // Narrative artifacts — markdown body → docx via the walker.
     case 'd05_scope_memo':
-      return buildNarrativeDocx(payload, SCOPE_MEMO_DOCX_CONFIG);
+      return buildNarrativeDocx(args.payload as NarrativeDocxPayload, SCOPE_MEMO_DOCX_CONFIG);
     case 'd09_rfp_pack':
-      return buildNarrativeDocx(payload, RFP_PACK_DOCX_CONFIG);
+      return buildNarrativeDocx(args.payload as NarrativeDocxPayload, RFP_PACK_DOCX_CONFIG);
     case 'd24_decision_brief':
-      return buildNarrativeDocx(payload, DECISION_BRIEF_DOCX_CONFIG);
+      return buildNarrativeDocx(args.payload as NarrativeDocxPayload, DECISION_BRIEF_DOCX_CONFIG);
     case 'd27_selection_memo':
-      return buildNarrativeDocx(payload, SELECTION_MEMO_DOCX_CONFIG);
+      return buildNarrativeDocx(args.payload as NarrativeDocxPayload, SELECTION_MEMO_DOCX_CONFIG);
+    // Structured-data artifacts — typed payload (same as xlsx) →
+    // docx via per-artifact section/table renderers.
+    case 'd04_app_inv':
+      return buildAppInventoryDocx(args.payload as AppInventoryPayload);
+    case 'd11_response_checklist':
+      return buildResponseChecklistDocx(args.payload as ResponseChecklistPayload);
+    case 'd16_scorecard':
+      return buildScorecardDocx(args.payload as ScorecardPayload);
     default:
       throw new Error(
         `No docx generator wired for ${args.artifactCode}. ` +
