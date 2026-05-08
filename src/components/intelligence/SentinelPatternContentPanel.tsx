@@ -81,7 +81,7 @@ export function SentinelPatternContentPanel({
           <h2
             style={{
               margin: 0,
-              fontFamily: 'Georgia, "Times New Roman", serif',
+              fontFamily: 'Fraunces, Georgia, serif',
               fontSize: 18,
               fontWeight: 600,
               lineHeight: 1.3,

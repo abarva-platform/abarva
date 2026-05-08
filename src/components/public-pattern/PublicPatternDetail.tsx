@@ -11,7 +11,7 @@ const ACCENT = '#9B4F21';
 const GREEN = '#496B44';
 const MONO = 'var(--font-inter), "IBM Plex Mono", monospace';
 const SERIF = 'var(--font-fraunces), Georgia, serif';
-const SANS = 'var(--font-inter), "DM Sans", sans-serif';
+const SANS = 'var(--font-inter), "Inter", sans-serif';
 
 const shellStyle: CSSProperties = {
   minHeight: '100vh',

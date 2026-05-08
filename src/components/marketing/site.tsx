@@ -15,7 +15,7 @@ export const DARK_BODY = '#9CA3AF'
 export const RED = '#EF4444'
 export const AMBER = '#F59E0B'
 export const GREEN = '#34D399'
-export const SERIF = 'Georgia, serif'
+export const SERIF = 'Fraunces, Georgia, serif'
 export const SANS = 'DM Sans, sans-serif'
 export const MONO = 'JetBrains Mono, monospace'
 

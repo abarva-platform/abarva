@@ -24,7 +24,7 @@ export interface SourceCommercialHubProps {
 const containerStyle: React.CSSProperties = {
   backgroundColor: '#FAFAF9',
   minHeight: '100%',
-  fontFamily: "'DM Sans', sans-serif",
+  fontFamily: "'Inter', sans-serif",
 };
 
 const headerStyle: React.CSSProperties = {

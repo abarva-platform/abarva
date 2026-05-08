@@ -10,7 +10,7 @@ const rootStyle: CSSProperties = {
   background: '#FBFAF7',
   minHeight: '100vh',
   padding: '20px 24px 48px',
-  fontFamily: "'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+  fontFamily: "'Inter', -apple-system, system-ui, sans-serif",
   color: '#0A0C12',
 };
 
@@ -25,7 +25,7 @@ const maxStyle: CSSProperties = {
 // so the journey hero in the workbench is the first visible spine.
 const titleStyle: CSSProperties = {
   margin: '0',
-  fontFamily: 'Georgia, "Times New Roman", "Iowan Old Style", serif',
+  fontFamily: 'Fraunces, Georgia, serif',
   fontSize: 30,
   lineHeight: 1.18,
   fontWeight: 600,
@@ -44,7 +44,7 @@ const footerCaveatStyle: CSSProperties = {
   marginTop: 28,
   fontSize: 11,
   color: '#7A7468',
-  fontFamily: '"DM Sans", sans-serif',
+  fontFamily: '"Inter", sans-serif',
   letterSpacing: '0.02em',
 };
 

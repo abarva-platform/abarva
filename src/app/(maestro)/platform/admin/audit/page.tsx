@@ -142,7 +142,7 @@ export default async function AdminAuditPage() {
   if (callingRole !== 'admin') {
     return (
       <main style={{ padding: 40, fontFamily: 'DM Sans, sans-serif' }}>
-        <h1 style={{ fontFamily: 'Georgia, serif' }}>Admin access only</h1>
+        <h1 style={{ fontFamily: 'Fraunces, Georgia, serif' }}>Admin access only</h1>
         <p>The audit log is restricted to admin-role users.</p>
       </main>
     );
@@ -157,7 +157,7 @@ export default async function AdminAuditPage() {
   };
 
   return (
-    <main style={{ minHeight: '100vh', background: '#F5F1EB', color: '#1a1612', fontFamily: "'DM Sans', -apple-system, sans-serif" }}>
+    <main style={{ minHeight: '100vh', background: '#F5F1EB', color: '#1a1612', fontFamily: "'Inter', -apple-system, system-ui, sans-serif" }}>
       <style>{pageCss}</style>
       <div className="au-shell">
         <header className="au-header">

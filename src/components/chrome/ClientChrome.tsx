@@ -11,7 +11,7 @@ const BG = '#0A0A0A';
 const INK = '#F5F5F0';
 const TEAL = '#14B8A6';
 const MUTE = 'rgba(245, 245, 240, 0.72)';
-const SERIF = 'Georgia, serif';
+const SERIF = 'Fraunces, Georgia, serif';
 const BODY = 'DM Sans, -apple-system, sans-serif';
 const MONO = 'JetBrains Mono, monospace';
 

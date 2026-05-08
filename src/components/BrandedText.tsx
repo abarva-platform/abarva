@@ -2,7 +2,7 @@
 import React from 'react'
 
 const TEAL = '#14B8A6'
-const SERIF = 'Georgia, "Times New Roman", serif'
+const SERIF = 'Fraunces, Georgia, serif'
 
 function Word({ kind, color }: { kind: 'AbarNexus' | 'AbarVa'; color?: string }) {
   const second = kind === 'AbarNexus' ? 'Nexus' : 'Va'

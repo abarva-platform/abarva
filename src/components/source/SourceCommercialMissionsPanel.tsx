@@ -115,7 +115,7 @@ export function SourceCommercialMissionsPanel({
     border: `1px solid ${C.border}`,
     borderRadius: 12,
     overflow: 'hidden',
-    fontFamily: "'DM Sans', sans-serif",
+    fontFamily: "'Inter', sans-serif",
   };
 
   // Header

@@ -183,7 +183,7 @@ export function IntelligenceLensTabs({
         </div>
         <h1
           style={{
-            fontFamily: 'Georgia, serif',
+            fontFamily: 'Fraunces, Georgia, serif',
             fontSize: 22,
             fontWeight: 600,
             color: C.ink,
@@ -386,7 +386,7 @@ function SummaryPanel({ tenant }: { tenant: TenantSeedPlan }) {
           </div>
           <h2
             style={{
-              fontFamily: 'Georgia, serif',
+              fontFamily: 'Fraunces, Georgia, serif',
               fontSize: 18,
               fontWeight: 600,
               color: C.ink,
@@ -1021,7 +1021,7 @@ function SectionMeta({
       </div>
       <h2
         style={{
-          fontFamily: 'Georgia, serif',
+          fontFamily: 'Fraunces, Georgia, serif',
           fontSize: 22,
           fontWeight: 600,
           color: C.ink,
@@ -1210,7 +1210,7 @@ function AttentionKpi({
       </span>
       <span
         style={{
-          fontFamily: 'Georgia, serif',
+          fontFamily: 'Fraunces, Georgia, serif',
           fontSize: 22,
           fontWeight: 600,
           color: C.ink,

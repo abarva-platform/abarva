@@ -115,7 +115,7 @@ function markdownToHtml(md: string, title: string): string {
   <title>${escapeHtml(title)}</title>
   <style>
     body {
-      font-family: 'DM Sans', system-ui, -apple-system, sans-serif;
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
       font-size: 14px;
       line-height: 1.65;
       color: #1A1A18;

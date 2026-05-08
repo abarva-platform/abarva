@@ -49,7 +49,7 @@ const GRAY_BG = '#EFEDE8';
 const GRAY_FG = '#525866';
 
 const FONT_BODY =
-  '"DM Sans", system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif';
+  '"Inter", system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif';
 
 // ---------------------------------------------------------------------
 // Agent label resolver — text-only, calm, no avatars.

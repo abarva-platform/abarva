@@ -15,7 +15,7 @@ const T = {
   indigo: '#818CF8',
   mono: 'JetBrains Mono, monospace',
   sans: 'DM Sans, sans-serif',
-  serif: 'Georgia, serif',
+  serif: 'Fraunces, Georgia, serif',
 }
 
 interface OutputRendererProps {

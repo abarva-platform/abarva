@@ -287,7 +287,7 @@ export function SeedTenantTowerSubsurface({ tenant, surface }: { tenant: TenantS
     >
       <div className="del-panel" style={{ borderColor: 'rgba(245, 158, 11, 0.5)', background: 'rgba(245, 158, 11, 0.08)' }}>
         <div className="del-eyebrow">Scheduled state</div>
-        <h2 style={{ margin: '10px 0 8px', fontFamily: 'Georgia, serif', fontSize: 'clamp(28px, 4vw, 44px)', lineHeight: 1.02 }}>
+        <h2 style={{ margin: '10px 0 8px', fontFamily: 'Fraunces, Georgia, serif', fontSize: 'clamp(28px, 4vw, 44px)', lineHeight: 1.02 }}>
           This surface ships in the next build cycle
         </h2>
         <p style={{ color: 'var(--del-muted)', lineHeight: 1.65, margin: 0 }}>

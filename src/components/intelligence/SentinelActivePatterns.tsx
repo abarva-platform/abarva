@@ -129,7 +129,7 @@ export function SentinelActivePatterns({ tenant, view }: SentinelActivePatternsP
         <h2
           style={{
             margin: 0,
-            fontFamily: 'Georgia, "Times New Roman", serif',
+            fontFamily: 'Fraunces, Georgia, serif',
             fontSize: 22,
             fontWeight: 600,
             lineHeight: 1.25,
@@ -235,7 +235,7 @@ function SentinelBriefPanel({ brief }: { brief: SentinelBrief }) {
           <h3
             style={{
               margin: 0,
-              fontFamily: 'Georgia, "Times New Roman", serif',
+              fontFamily: 'Fraunces, Georgia, serif',
               fontSize: 18,
               fontWeight: 600,
               lineHeight: 1.3,
@@ -411,7 +411,7 @@ function PatternCard({ card }: { card: SentinelPatternCard }) {
       <h3
         style={{
           margin: 0,
-          fontFamily: 'Georgia, "Times New Roman", serif',
+          fontFamily: 'Fraunces, Georgia, serif',
           fontSize: 15,
           fontWeight: 600,
           lineHeight: 1.35,
@@ -645,7 +645,7 @@ function SectionHeading({ eyebrow, title }: { eyebrow: string; title: string }) 
       <h3
         style={{
           margin: 0,
-          fontFamily: 'Georgia, "Times New Roman", serif',
+          fontFamily: 'Fraunces, Georgia, serif',
           fontSize: 16,
           fontWeight: 600,
           lineHeight: 1.3,

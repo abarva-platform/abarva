@@ -15,7 +15,7 @@ export default function TowerOnboardIndex() {
       <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 10, letterSpacing: '0.14em', color: TEAL, textTransform: 'uppercase', marginBottom: 10 }}>
         Control Tower · Data setup
       </div>
-      <h1 style={{ fontFamily: 'Georgia, serif', fontSize: 36, fontWeight: 400, color: INK, margin: 0, lineHeight: 1.2 }}>
+      <h1 style={{ fontFamily: 'Fraunces, Georgia, serif', fontSize: 36, fontWeight: 400, color: INK, margin: 0, lineHeight: 1.2 }}>
         Populate the Tower
       </h1>
       <p style={{ fontSize: 15, color: MUTE, marginTop: 10, maxWidth: 720, lineHeight: 1.55 }}>

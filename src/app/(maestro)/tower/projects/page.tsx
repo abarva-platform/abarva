@@ -154,7 +154,7 @@ export default async function ProjectsPage({
       </Link>
 
       <div style={{ display: 'flex', alignItems: 'baseline', gap: 16, marginTop: 14, marginBottom: 4 }}>
-        <h1 style={{ fontFamily: 'Georgia, serif', fontSize: 30, fontWeight: 400, color: INK, margin: 0 }}>
+        <h1 style={{ fontFamily: 'Fraunces, Georgia, serif', fontSize: 30, fontWeight: 400, color: INK, margin: 0 }}>
           Technology Projects
         </h1>
         {active && (
@@ -340,7 +340,7 @@ function Tile({ label, value, sub, accent, isLast }: { label: string; value: str
   return (
     <div style={{ padding: '14px 16px', borderRight: isLast ? 'none' : BORDER, background: 'rgba(255,255,255,0.02)' }}>
       <div style={{ fontFamily: MONO, fontSize: 9, color: MUTE, letterSpacing: '0.14em' }}>{label}</div>
-      <div style={{ fontFamily: 'Georgia, serif', fontSize: 22, fontWeight: 400, color: accent, marginTop: 4, lineHeight: 1 }}>{value}</div>
+      <div style={{ fontFamily: 'Fraunces, Georgia, serif', fontSize: 22, fontWeight: 400, color: accent, marginTop: 4, lineHeight: 1 }}>{value}</div>
       <div style={{ fontSize: 11, color: DIM, marginTop: 4 }}>{sub}</div>
     </div>
   );

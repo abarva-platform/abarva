@@ -101,7 +101,7 @@ export default async function CharterPage({
         <div style={{ fontFamily: MONO, fontSize: 10, color: PURPLE, letterSpacing: '0.14em', marginBottom: 6 }}>
           ENGAGEMENT CHARTER
         </div>
-        <h1 style={{ fontFamily: 'Georgia, serif', fontSize: 28, fontWeight: 400, margin: 0, letterSpacing: '-0.01em' }}>
+        <h1 style={{ fontFamily: 'Fraunces, Georgia, serif', fontSize: 28, fontWeight: 400, margin: 0, letterSpacing: '-0.01em' }}>
           {engagement.name}
         </h1>
         <div style={{ fontFamily: MONO, fontSize: 10, color: MUTE, letterSpacing: '0.1em', marginTop: 6 }}>

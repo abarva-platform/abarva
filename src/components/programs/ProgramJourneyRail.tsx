@@ -66,7 +66,7 @@ const TOKEN = {
 } as const;
 
 const MONO = '"JetBrains Mono", "Fira Code", monospace';
-const SANS = '"DM Sans", -apple-system, BlinkMacSystemFont, sans-serif';
+const SANS = '"Inter", -apple-system, BlinkMacSystemFont, sans-serif';
 
 // ─── State label text ────────────────────────────────────────────────────────
 

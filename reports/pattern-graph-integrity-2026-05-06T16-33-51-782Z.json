@@ -1,0 +1,17 @@
+{
+  "summary": {
+    "patternCount": 17,
+    "tenantCount": 4,
+    "programCount": 19,
+    "deliverableCount": 457,
+    "edgeCounts": {
+      "relatedTo": 76,
+      "appliedIn": 14,
+      "applicableToTenant": 44,
+      "sourcedFrom": 334
+    }
+  },
+  "errors": [],
+  "warnings": [],
+  "orphanPatternSlugs": []
+}

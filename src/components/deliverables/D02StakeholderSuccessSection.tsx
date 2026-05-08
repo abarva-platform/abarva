@@ -55,7 +55,7 @@ export function D02StakeholderSuccessSection({ programCode, existing }: D02Secti
         <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 11, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#9B6DFF', fontWeight: 700 }}>
           Phase 1 → 2 gate requirement · FM-04
         </div>
-        <h2 style={{ fontFamily: 'Georgia, serif', fontSize: 24, letterSpacing: '-0.015em', margin: '6px 0 0', color: '#1a1612' }}>
+        <h2 style={{ fontFamily: 'Fraunces, Georgia, serif', fontSize: 24, letterSpacing: '-0.015em', margin: '6px 0 0', color: '#1a1612' }}>
           Stakeholder success definitions
         </h2>
         <p style={{ margin: '6px 0 0', fontSize: 13, lineHeight: 1.55, color: '#544b42' }}>

@@ -93,7 +93,7 @@ export function ExecutiveCard({
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          fontFamily: 'Georgia, serif',
+          fontFamily: 'Fraunces, Georgia, serif',
           fontSize: avatarSize * 0.36,
           fontWeight: 500,
           letterSpacing: '-0.01em',
@@ -107,7 +107,7 @@ export function ExecutiveCard({
         ) : null}
         <div
           style={{
-            fontFamily: 'Georgia, serif',
+            fontFamily: 'Fraunces, Georgia, serif',
             fontSize: nameSize,
             fontWeight: 400,
             color: COLORS.textPrimary,

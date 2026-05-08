@@ -73,7 +73,7 @@ export function ApproveActions({ programCode, deliverableCode, phase, decision, 
             justifyContent: 'center',
             fontSize: 13,
             fontWeight: 700,
-            fontFamily: 'Georgia, serif',
+            fontFamily: 'Fraunces, Georgia, serif',
           }}
         >
           \u2014
@@ -169,7 +169,7 @@ const approveCss = `
   padding: 12px 16px; border-radius: 14px;
   background: rgba(245,197,74,0.12);
   border: 1px solid rgba(245,197,74,0.32);
-  font-family: 'DM Sans', -apple-system, sans-serif;
+  font-family: 'Inter', -apple-system, system-ui, sans-serif;
   flex-wrap: wrap;
 }
 .apv-btn {

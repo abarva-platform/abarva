@@ -58,7 +58,7 @@ function VendorCard({ vendor }: { vendor: AmsVendorStorylineItem }) {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '8px' }}>
         <div>
           <div style={{
-            fontFamily: 'Georgia, serif',
+            fontFamily: 'Fraunces, Georgia, serif',
             fontWeight: 400,
             fontSize: '14px',
             color: '#0A0C12',
@@ -220,7 +220,7 @@ export function AmsVendorStorylinePanel({ storyline }: AmsVendorStorylinePanelPr
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
         <h3 style={{
-          fontFamily: 'Georgia, serif',
+          fontFamily: 'Fraunces, Georgia, serif',
           fontWeight: 400,
           fontSize: '15px',
           color: '#0A0C12',

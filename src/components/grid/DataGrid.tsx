@@ -647,7 +647,7 @@ export function DataGrid<T>({
           border: 0.5px solid rgba(45,212,200,0.35);
           border-radius: 999px;
           color: ${COLORS.textPrimary};
-          font-family: 'DM Sans', sans-serif;
+          font-family: 'Inter', sans-serif;
           font-size: 12px;
         }
         .grid-chip-clear, :global(.grid-chip-clear) {
@@ -696,7 +696,7 @@ export function DataGrid<T>({
           background: transparent;
           border: none;
           color: ${COLORS.textPrimary};
-          font-family: 'DM Sans', sans-serif;
+          font-family: 'Inter', sans-serif;
           font-size: 13px;
           text-align: left;
           cursor: pointer;
@@ -734,7 +734,7 @@ export function DataGrid<T>({
           border-radius: 10px;
           color: ${COLORS.textPrimary};
           cursor: pointer;
-          font-family: 'DM Sans', sans-serif;
+          font-family: 'Inter', sans-serif;
           font-size: 13px;
         }
         .grid-mobile-card:hover {

@@ -1,0 +1,873 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nexus · Type & Color System Preview</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,300;1,9..144,400&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    /* Canonical product tokens — source: docs/design/strategic-moves/tokens.css */
+    --bg-white:   #FFFFFF;
+    --bg-cream:   #f5f1eb;
+    --bg-paper:   #faf7f1;   /* brand-tokens.css fallback */
+
+    /* Type */
+    --font-display: 'Fraunces', Georgia, serif;
+    --font-body:    'Inter', system-ui, sans-serif;
+    --font-mono:    'JetBrains Mono', 'Fira Code', monospace;
+
+    /* Ink */
+    --ink-900: #0F172A;   /* near-black — canonical body text on white */
+    --ink-700: #1A1A18;   /* current product headings (slightly warm) */
+    --ink-500: #525866;   /* secondary / muted labels */
+    --ink-300: #9AA3B2;   /* placeholder / disabled */
+    --ink-100: #E2DFD8;   /* borders / dividers */
+
+    /* Brand */
+    --navy:       #1B2B5C;   /* product primary — CTAs, active tab, phase rail */
+    --signal:     #0066CC;   /* abarva-signal-blue — links, interactive accents */
+    --teal:       #1d9e75;   /* on-track / validated */
+    --amber:      #ba7517;   /* at-risk / pending */
+    --red:        #a32d2d;   /* blocked / overdue */
+    --gold:       #c9a227;   /* milestone accent */
+  }
+
+  html { font-family: var(--font-body); font-size: 14px; line-height: 1.5; color: var(--ink-900); }
+  body { background: #f0eee9; min-height: 100vh; }
+
+  /* ── Layout ──────────────────────────────────────────────────────────────── */
+  .page { max-width: 1200px; margin: 0 auto; padding: 40px 24px 80px; }
+  .meta-header { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-500); margin-bottom: 8px; }
+  .page-title { font-family: var(--font-display); font-size: 32px; font-weight: 400; color: var(--ink-700); margin-bottom: 4px; line-height: 1.2; }
+  .page-sub { font-family: var(--font-body); font-size: 13px; color: var(--ink-500); margin-bottom: 40px; }
+
+  .section-label {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ink-300);
+    margin: 48px 0 16px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--ink-100);
+  }
+
+  /* ── Surface toggle ──────────────────────────────────────────────────────── */
+  .toggle-row { display: flex; gap: 8px; margin-bottom: 32px; }
+  .toggle-btn {
+    font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.08em;
+    text-transform: uppercase; padding: 5px 14px; border-radius: 4px; border: 1px solid var(--ink-100);
+    cursor: pointer; background: var(--bg-white); color: var(--ink-500); transition: all 0.12s;
+  }
+  .toggle-btn.active { background: var(--navy); color: #fff; border-color: var(--navy); }
+
+  /* ── Dual surface panels ─────────────────────────────────────────────────── */
+  .surface-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 24px; }
+  .surface-panel {
+    border-radius: 8px;
+    border: 1px solid var(--ink-100);
+    overflow: hidden;
+  }
+  .surface-label {
+    font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.1em;
+    text-transform: uppercase; padding: 8px 16px;
+    background: var(--ink-100); color: var(--ink-500);
+    border-bottom: 1px solid var(--ink-100);
+  }
+  .surface-white { background: var(--bg-white); }
+  .surface-cream  { background: var(--bg-cream); }
+  .surface-inner { padding: 20px; }
+
+  /* ── Type scale ──────────────────────────────────────────────────────────── */
+  .type-row { display: flex; align-items: baseline; gap: 20px; margin-bottom: 20px; }
+  .type-spec {
+    font-family: var(--font-mono); font-size: 10px; color: var(--ink-300);
+    letter-spacing: 0.06em; min-width: 110px; flex-shrink: 0;
+    line-height: 1;
+  }
+  .type-sample { flex: 1; }
+
+  .display-48 { font-family: var(--font-display); font-size: 48px; font-weight: 400; line-height: 1.05; color: var(--ink-700); }
+  .display-32 { font-family: var(--font-display); font-size: 32px; font-weight: 400; line-height: 1.15; color: var(--ink-700); }
+  .display-24 { font-family: var(--font-display); font-size: 24px; font-weight: 400; line-height: 1.2; color: var(--ink-700); }
+  .display-20 { font-family: var(--font-display); font-size: 20px; font-weight: 400; line-height: 1.3; color: var(--ink-700); }
+  .display-italic { font-style: italic; color: var(--ink-500); }
+
+  .body-16-600  { font-family: var(--font-body); font-size: 16px; font-weight: 600; color: var(--ink-900); }
+  .body-14-600  { font-family: var(--font-body); font-size: 14px; font-weight: 600; color: var(--ink-900); }
+  .body-14-500  { font-family: var(--font-body); font-size: 14px; font-weight: 500; color: var(--ink-900); }
+  .body-14-400  { font-family: var(--font-body); font-size: 14px; font-weight: 400; color: var(--ink-700); }
+  .body-13-400  { font-family: var(--font-body); font-size: 13px; font-weight: 400; color: var(--ink-500); }
+  .body-12-500  { font-family: var(--font-body); font-size: 12px; font-weight: 500; color: var(--ink-500); }
+
+  .mono-12 { font-family: var(--font-mono); font-size: 12px; font-weight: 400; letter-spacing: 0.03em; color: var(--ink-500); }
+  .mono-11-upper { font-family: var(--font-mono); font-size: 11px; font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-300); }
+  .mono-10-upper { font-family: var(--font-mono); font-size: 10px; font-weight: 400; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-300); }
+
+  /* ── Color swatches ──────────────────────────────────────────────────────── */
+  .swatch-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 12px; }
+  .swatch-card { border-radius: 6px; overflow: hidden; border: 1px solid var(--ink-100); }
+  .swatch-block { height: 56px; }
+  .swatch-info { padding: 8px 10px; background: var(--bg-white); }
+  .swatch-name { font-family: var(--font-body); font-size: 11px; font-weight: 600; color: var(--ink-700); }
+  .swatch-hex  { font-family: var(--font-mono); font-size: 10px; color: var(--ink-300); letter-spacing: 0.06em; margin-top: 1px; }
+  .swatch-use  { font-family: var(--font-body); font-size: 10px; color: var(--ink-500); margin-top: 2px; }
+
+  /* ── UI Component samples ────────────────────────────────────────────────── */
+  .component-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+
+  .component-card {
+    background: var(--bg-white);
+    border: 1px solid var(--ink-100);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  .component-label {
+    font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.1em;
+    text-transform: uppercase; padding: 7px 14px;
+    background: var(--bg-cream); color: var(--ink-500);
+    border-bottom: 1px solid var(--ink-100);
+  }
+  .component-inner { padding: 20px; }
+
+  /* KPI card */
+  .kpi-card {
+    background: var(--bg-white);
+    border: 1px solid var(--ink-100);
+    border-radius: 6px;
+    padding: 16px;
+  }
+  .kpi-eyebrow { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-300); margin-bottom: 4px; }
+  .kpi-value { font-family: var(--font-display); font-size: 32px; font-weight: 400; color: var(--ink-700); line-height: 1; margin-bottom: 4px; }
+  .kpi-label { font-family: var(--font-body); font-size: 12px; color: var(--ink-500); }
+  .kpi-delta { font-family: var(--font-body); font-size: 11px; font-weight: 600; color: var(--teal); margin-top: 8px; }
+  .kpi-delta-neg { color: var(--red); }
+  .kpi-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+
+  /* Move row */
+  .move-row {
+    display: flex; align-items: center; gap: 12px;
+    padding: 12px 14px;
+    border: 1px solid var(--ink-100);
+    border-radius: 6px;
+    margin-bottom: 8px;
+    background: var(--bg-white);
+  }
+  .move-row:last-child { margin-bottom: 0; }
+  .move-code { font-family: var(--font-mono); font-size: 11px; font-weight: 500; color: var(--navy); letter-spacing: 0.05em; min-width: 60px; }
+  .move-name { font-family: var(--font-body); font-size: 13px; font-weight: 500; color: var(--ink-700); flex: 1; }
+  .move-phase { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.08em; color: var(--ink-300); }
+  .status-dot {
+    width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0;
+  }
+  .dot-green  { background: var(--teal); box-shadow: 0 0 0 2px rgba(29,158,117,0.2); }
+  .dot-amber  { background: var(--amber); box-shadow: 0 0 0 2px rgba(186,117,23,0.2); }
+  .dot-red    { background: var(--red); box-shadow: 0 0 0 2px rgba(163,45,45,0.2); }
+  .dot-grey   { background: var(--ink-300); }
+
+  /* Status badge */
+  .badge {
+    font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.06em;
+    text-transform: uppercase; font-weight: 500;
+    padding: 3px 8px; border-radius: 3px; white-space: nowrap;
+  }
+  .badge-teal   { background: rgba(29,158,117,0.1);  color: #0e7455; }
+  .badge-amber  { background: rgba(186,117,23,0.12); color: #8a5510; }
+  .badge-red    { background: rgba(163,45,45,0.1);   color: #7c2020; }
+  .badge-navy   { background: rgba(27,43,92,0.08);   color: var(--navy); }
+  .badge-grey   { background: var(--ink-100); color: var(--ink-500); }
+
+  /* Table */
+  .data-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  .data-table th {
+    font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--ink-300); text-align: left; padding: 0 10px 8px;
+    border-bottom: 1px solid var(--ink-100);
+  }
+  .data-table td {
+    padding: 10px 10px; border-bottom: 1px solid rgba(226,223,216,0.5);
+    font-family: var(--font-body); color: var(--ink-700); vertical-align: middle;
+  }
+  .data-table tr:last-child td { border-bottom: none; }
+  .data-table .td-mono { font-family: var(--font-mono); font-size: 11px; color: var(--navy); }
+  .data-table .td-muted { color: var(--ink-300); font-size: 11px; }
+
+  /* Breadcrumb + heading */
+  .breadcrumb { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; }
+  .breadcrumb a { font-family: var(--font-body); font-size: 12px; color: var(--ink-300); text-decoration: none; }
+  .breadcrumb span { font-size: 11px; color: var(--ink-300); }
+  .page-h1 { font-family: var(--font-display); font-size: 22px; font-weight: 400; color: var(--ink-700); margin-bottom: 3px; }
+  .page-meta { font-family: var(--font-body); font-size: 13px; color: var(--ink-500); }
+
+  /* Buttons */
+  .btn-row { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn {
+    font-family: var(--font-body); font-size: 12px; font-weight: 600;
+    padding: 6px 14px; border-radius: 5px; cursor: default;
+    text-decoration: none; display: inline-flex; align-items: center; gap: 5px;
+    border: 1px solid transparent;
+  }
+  .btn-primary { background: var(--navy); color: #fff; border-color: var(--navy); }
+  .btn-ghost   { background: #F8F7F4; color: var(--ink-500); border-color: var(--ink-100); }
+  .btn-teal    { background: var(--teal); color: #fff; border-color: var(--teal); }
+  .btn-signal  { background: var(--signal); color: #fff; border-color: var(--signal); }
+  .btn-danger  { background: transparent; color: var(--red); border-color: rgba(163,45,45,0.3); }
+
+  /* Tab bar */
+  .tab-bar { display: flex; border-bottom: 1px solid var(--ink-100); margin-bottom: 16px; }
+  .tab-item {
+    font-family: var(--font-body); font-size: 12px; font-weight: 500;
+    padding: 8px 16px; color: var(--ink-300); text-decoration: none;
+    border-bottom: 2px solid transparent; margin-bottom: -1px; cursor: default;
+  }
+  .tab-item.active { font-weight: 700; color: var(--ink-700); border-bottom-color: var(--navy); }
+
+  /* Phase rail */
+  .phase-rail { display: flex; gap: 3px; align-items: center; margin-top: 12px; }
+  .phase-pip {
+    height: 4px; border-radius: 2px; flex: 1;
+    background: var(--ink-100);
+    transition: background 0.2s;
+  }
+  .phase-pip.done   { background: var(--teal); }
+  .phase-pip.active { background: var(--navy); }
+  .phase-pip.blocked{ background: var(--red); }
+
+  .phase-label-row { display: flex; gap: 3px; margin-top: 4px; }
+  .phase-lbl {
+    flex: 1; font-family: var(--font-mono); font-size: 9px;
+    letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--ink-300); text-align: center;
+  }
+  .phase-lbl.active { color: var(--navy); font-weight: 500; }
+
+  /* Divider */
+  .divider { border: none; border-top: 1px solid var(--ink-100); margin: 0; }
+
+  /* Document row */
+  .doc-row {
+    display: flex; align-items: center; gap: 10px; padding: 10px 14px;
+    border-left: 3px solid var(--navy);
+    background: var(--bg-white);
+    border-radius: 0 5px 5px 0;
+    margin-bottom: 6px;
+    border-top: 1px solid var(--ink-100);
+    border-right: 1px solid var(--ink-100);
+    border-bottom: 1px solid var(--ink-100);
+  }
+  .doc-row.working { border-left-color: var(--ink-300); }
+  .doc-name { font-family: var(--font-body); font-size: 13px; font-weight: 500; color: var(--ink-700); flex: 1; }
+  .doc-audience { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.06em; color: var(--ink-300); }
+  .pill {
+    font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.08em; text-transform: uppercase;
+    padding: 2px 7px; border-radius: 3px; font-weight: 500;
+  }
+  .pill-html  { background: rgba(27,43,92,0.07);  color: var(--navy); }
+  .pill-word  { background: rgba(0,102,204,0.08); color: var(--signal); }
+  .pill-excel { background: rgba(29,158,117,0.1); color: #0e7455; }
+
+  /* Cream vs white annotation */
+  .annotation {
+    font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.08em;
+    color: var(--ink-300); text-align: center; padding: 6px 0 0;
+  }
+
+  /* Chat bubble sample */
+  .chat-bubble-nexus {
+    background: rgba(27,43,92,0.06);
+    border: 1px solid rgba(27,43,92,0.1);
+    border-radius: 0 8px 8px 8px;
+    padding: 10px 14px;
+    font-family: var(--font-body); font-size: 13px; color: var(--ink-700);
+    max-width: 80%;
+    margin-bottom: 8px;
+  }
+  .chat-bubble-user {
+    background: var(--navy);
+    border-radius: 8px 0 8px 8px;
+    padding: 10px 14px;
+    font-family: var(--font-body); font-size: 13px; color: #fff;
+    max-width: 72%;
+    margin-left: auto;
+    margin-bottom: 8px;
+  }
+  .chat-agent-row { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+  .chat-avatar { width: 24px; height: 24px; border-radius: 50%; background: var(--navy); display: flex; align-items: center; justify-content: center; font-size: 11px; color: #fff; }
+  .chat-agent-name { font-family: var(--font-body); font-size: 12px; font-weight: 600; color: var(--ink-700); }
+  .chat-agent-scope { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.08em; color: var(--ink-300); }
+
+  /* ── Responsive ──────────────────────────────────────────────────────────── */
+  @media (max-width: 720px) {
+    .surface-grid, .component-grid { grid-template-columns: 1fr; }
+    .kpi-grid { grid-template-columns: 1fr 1fr; }
+    .display-48 { font-size: 32px; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- Header -->
+  <div class="meta-header">Nexus · Design System · Type &amp; Color Preview</div>
+  <h1 class="page-title">AbarVa Design Tokens — Canonical</h1>
+  <p class="page-sub">All samples rendered on white (#FFFFFF). Side-by-side with cream (#f5f1eb) where surface matters. Fonts: Fraunces · Inter · JetBrains Mono</p>
+
+  <!-- ───────────────────────────────────────────────────────── TYPE SCALE ── -->
+  <div class="section-label">01 · Display type — Fraunces (serif)</div>
+
+  <div class="type-row">
+    <div class="type-spec">Fraunces 48 / 400<br>#1A1A18</div>
+    <div class="type-sample display-48">Strategic Moves</div>
+  </div>
+  <div class="type-row">
+    <div class="type-spec">Fraunces 48 / 400<br>italic #525866</div>
+    <div class="type-sample display-48 display-italic">Phase Documents</div>
+  </div>
+  <div class="type-row">
+    <div class="type-spec">Fraunces 32 / 400<br>#1A1A18</div>
+    <div class="type-sample display-32">Contact Center AI Transformation</div>
+  </div>
+  <div class="type-row">
+    <div class="type-spec">Fraunces 24 / 400<br>#1A1A18</div>
+    <div class="type-sample display-24">Target State Architecture</div>
+  </div>
+  <div class="type-row">
+    <div class="type-spec">Fraunces 20 / 400<br>#1A1A18</div>
+    <div class="type-sample display-20">Phase Evidence Hub — Apex Retail</div>
+  </div>
+
+  <hr class="divider" style="margin: 24px 0;">
+
+  <!-- ─────────────────────────────────────────────────────────── BODY TYPE ── -->
+  <div class="section-label">02 · Body type — Inter (sans-serif)</div>
+
+  <div class="type-row">
+    <div class="type-spec">Inter 16 / 600<br>#0F172A</div>
+    <div class="type-sample body-16-600">Section heading · Program Overview</div>
+  </div>
+  <div class="type-row">
+    <div class="type-spec">Inter 14 / 600<br>#0F172A</div>
+    <div class="type-sample body-14-600">Sub-section label · Gate Criteria</div>
+  </div>
+  <div class="type-row">
+    <div class="type-spec">Inter 14 / 500<br>#0F172A</div>
+    <div class="type-sample body-14-500">Data value · Contact Center AI: 4 moves in pipeline, 2 active</div>
+  </div>
+  <div class="type-row">
+    <div class="type-spec">Inter 14 / 400<br>#1A1A18</div>
+    <div class="type-sample body-14-400">Body copy. Nexus maps criteria to gate requirements and links the latest evidence for review. Phase 3 target-state work accounts for the majority of the value at stake.</div>
+  </div>
+  <div class="type-row">
+    <div class="type-spec">Inter 13 / 400<br>#525866</div>
+    <div class="type-sample body-13-400">Secondary text · Sponsor: DIANA WALSH · Tenant: Apex Retail · Archetype: ENTERPRISE_AI</div>
+  </div>
+  <div class="type-row">
+    <div class="type-spec">Inter 12 / 500<br>#525866</div>
+    <div class="type-sample body-12-500">Micro label · View all activity → · Back to move · ← Documents</div>
+  </div>
+
+  <hr class="divider" style="margin: 24px 0;">
+
+  <!-- ──────────────────────────────────────────────────────── MONO / LABEL ── -->
+  <div class="section-label">03 · Eyebrow &amp; label type — JetBrains Mono</div>
+
+  <div class="type-row">
+    <div class="type-spec">Mono 12 / 400<br>#525866 · 0.03em</div>
+    <div class="type-sample mono-12">SM-2024-0041 · Phase 3 of 5 · USD 2,400,000–3,100,000</div>
+  </div>
+  <div class="type-row">
+    <div class="type-spec">Mono 11 / 500 UC<br>#9AA3B2 · 0.12em</div>
+    <div class="type-sample mono-11-upper">Scoped to SM-2024-0041 · Strategic Moves</div>
+  </div>
+  <div class="type-row">
+    <div class="type-spec">Mono 10 / 400 UC<br>#9AA3B2 · 0.14em</div>
+    <div class="type-sample mono-10-upper">Phase 3 · Solution Architecture · Gate artifact · Audience: CTO / Exec</div>
+  </div>
+
+  <!-- ───────────────────────────────────────────────────── COLOR PALETTE ── -->
+  <div class="section-label">04 · Color palette</div>
+
+  <div class="swatch-grid">
+    <!-- Ink -->
+    <div class="swatch-card">
+      <div class="swatch-block" style="background:#0F172A;"></div>
+      <div class="swatch-info">
+        <div class="swatch-name">Ink 900</div>
+        <div class="swatch-hex">#0F172A</div>
+        <div class="swatch-use">Body text · data values</div>
+      </div>
+    </div>
+    <div class="swatch-card">
+      <div class="swatch-block" style="background:#1A1A18;"></div>
+      <div class="swatch-info">
+        <div class="swatch-name">Ink 700 (warm)</div>
+        <div class="swatch-hex">#1A1A18</div>
+        <div class="swatch-use">Headings · current product</div>
+      </div>
+    </div>
+    <div class="swatch-card">
+      <div class="swatch-block" style="background:#525866;"></div>
+      <div class="swatch-info">
+        <div class="swatch-name">Ink 500</div>
+        <div class="swatch-hex">#525866</div>
+        <div class="swatch-use">Secondary text · labels</div>
+      </div>
+    </div>
+    <div class="swatch-card">
+      <div class="swatch-block" style="background:#9AA3B2;"></div>
+      <div class="swatch-info">
+        <div class="swatch-name">Ink 300</div>
+        <div class="swatch-hex">#9AA3B2</div>
+        <div class="swatch-use">Muted / breadcrumb / meta</div>
+      </div>
+    </div>
+    <div class="swatch-card">
+      <div class="swatch-block" style="background:#E2DFD8; border-bottom: 1px solid #ccc;"></div>
+      <div class="swatch-info">
+        <div class="swatch-name">Ink 100</div>
+        <div class="swatch-hex">#E2DFD8</div>
+        <div class="swatch-use">Borders · dividers</div>
+      </div>
+    </div>
+    <!-- Surfaces -->
+    <div class="swatch-card">
+      <div class="swatch-block" style="background:#FFFFFF; border-bottom: 1px solid #E2DFD8;"></div>
+      <div class="swatch-info">
+        <div class="swatch-name">White</div>
+        <div class="swatch-hex">#FFFFFF</div>
+        <div class="swatch-use">Cards · panels · content</div>
+      </div>
+    </div>
+    <div class="swatch-card">
+      <div class="swatch-block" style="background:#f5f1eb; border-bottom: 1px solid #E2DFD8;"></div>
+      <div class="swatch-info">
+        <div class="swatch-name">Cream</div>
+        <div class="swatch-hex">#f5f1eb</div>
+        <div class="swatch-use">Page background · canon</div>
+      </div>
+    </div>
+    <div class="swatch-card">
+      <div class="swatch-block" style="background:#faf7f1; border-bottom: 1px solid #E2DFD8;"></div>
+      <div class="swatch-info">
+        <div class="swatch-name">Paper</div>
+        <div class="swatch-hex">#faf7f1</div>
+        <div class="swatch-use">Lighter page bg variant</div>
+      </div>
+    </div>
+    <!-- Brand -->
+    <div class="swatch-card">
+      <div class="swatch-block" style="background:#1B2B5C;"></div>
+      <div class="swatch-info">
+        <div class="swatch-name">Navy</div>
+        <div class="swatch-hex">#1B2B5C</div>
+        <div class="swatch-use">Primary CTAs · active tab</div>
+      </div>
+    </div>
+    <div class="swatch-card">
+      <div class="swatch-block" style="background:#0066CC;"></div>
+      <div class="swatch-info">
+        <div class="swatch-name">Signal Blue</div>
+        <div class="swatch-hex">#0066CC</div>
+        <div class="swatch-use">Links · interactive accents</div>
+      </div>
+    </div>
+    <!-- Semantic -->
+    <div class="swatch-card">
+      <div class="swatch-block" style="background:#1d9e75;"></div>
+      <div class="swatch-info">
+        <div class="swatch-name">Teal</div>
+        <div class="swatch-hex">#1d9e75</div>
+        <div class="swatch-use">On-track · validated</div>
+      </div>
+    </div>
+    <div class="swatch-card">
+      <div class="swatch-block" style="background:#ba7517;"></div>
+      <div class="swatch-info">
+        <div class="swatch-name">Amber</div>
+        <div class="swatch-hex">#ba7517</div>
+        <div class="swatch-use">At-risk · pending gate</div>
+      </div>
+    </div>
+    <div class="swatch-card">
+      <div class="swatch-block" style="background:#a32d2d;"></div>
+      <div class="swatch-info">
+        <div class="swatch-name">Red</div>
+        <div class="swatch-hex">#a32d2d</div>
+        <div class="swatch-use">Blocked · overdue</div>
+      </div>
+    </div>
+    <div class="swatch-card">
+      <div class="swatch-block" style="background:#c9a227;"></div>
+      <div class="swatch-info">
+        <div class="swatch-name">Gold</div>
+        <div class="swatch-hex">#c9a227</div>
+        <div class="swatch-use">Milestone · highlight</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─────────────────────────────────────── SURFACE COMPARISON: WHITE/CREAM ── -->
+  <div class="section-label">05 · Surface comparison — White vs Cream</div>
+  <p style="font-family: var(--font-body); font-size: 12px; color: var(--ink-500); margin-bottom: 16px;">
+    The same component on each surface. Cards and panels are always white; the surface difference is in the page/shell background only.
+  </p>
+
+  <div class="surface-grid">
+    <div class="surface-panel">
+      <div class="surface-label">Page background: White #FFFFFF</div>
+      <div class="surface-inner surface-white">
+        <!-- Heading block -->
+        <div style="margin-bottom: 16px;">
+          <div class="breadcrumb">
+            <a href="#">Strategic Moves</a>
+            <span>›</span>
+            <a href="#">Apex Retail</a>
+            <span>›</span>
+            <span style="font-family: var(--font-body); font-size: 12px; color: var(--ink-300);">SM-2024-0041</span>
+          </div>
+          <div class="page-h1">Contact Center AI</div>
+          <div class="page-meta">ENTERPRISE_AI · Sponsor: DIANA WALSH</div>
+        </div>
+        <!-- Phase rail -->
+        <div class="phase-rail">
+          <div class="phase-pip done"></div>
+          <div class="phase-pip done"></div>
+          <div class="phase-pip active"></div>
+          <div class="phase-pip"></div>
+          <div class="phase-pip"></div>
+        </div>
+        <div class="phase-label-row">
+          <div class="phase-lbl">Charter</div>
+          <div class="phase-lbl">Discovery</div>
+          <div class="phase-lbl active">Design</div>
+          <div class="phase-lbl">Execute</div>
+          <div class="phase-lbl">Validate</div>
+        </div>
+      </div>
+    </div>
+    <div class="surface-panel">
+      <div class="surface-label">Page background: Cream #f5f1eb</div>
+      <div class="surface-inner surface-cream">
+        <!-- Heading block (identical) -->
+        <div style="margin-bottom: 16px;">
+          <div class="breadcrumb">
+            <a href="#">Strategic Moves</a>
+            <span>›</span>
+            <a href="#">Apex Retail</a>
+            <span>›</span>
+            <span style="font-family: var(--font-body); font-size: 12px; color: var(--ink-300);">SM-2024-0041</span>
+          </div>
+          <div class="page-h1">Contact Center AI</div>
+          <div class="page-meta">ENTERPRISE_AI · Sponsor: DIANA WALSH</div>
+        </div>
+        <!-- Phase rail -->
+        <div class="phase-rail">
+          <div class="phase-pip done"></div>
+          <div class="phase-pip done"></div>
+          <div class="phase-pip active"></div>
+          <div class="phase-pip"></div>
+          <div class="phase-pip"></div>
+        </div>
+        <div class="phase-label-row">
+          <div class="phase-lbl">Charter</div>
+          <div class="phase-lbl">Discovery</div>
+          <div class="phase-lbl active">Design</div>
+          <div class="phase-lbl">Execute</div>
+          <div class="phase-lbl">Validate</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <p class="annotation" style="padding: 10px 0 0;">
+    White feels crisper / more clinical. Cream is warmer but can flatten contrast on cards.<br>
+    The canvas choice here is purely about the shell/page background — content surfaces are white either way.
+  </p>
+
+  <!-- ──────────────────────────────────────────── UI COMPONENT SAMPLES ── -->
+  <div class="section-label">06 · Component samples — all on white</div>
+
+  <div class="component-grid">
+
+    <!-- KPI cards -->
+    <div class="component-card">
+      <div class="component-label">KPI strip — Fraunces numerals</div>
+      <div class="component-inner">
+        <div class="kpi-grid">
+          <div class="kpi-card">
+            <div class="kpi-eyebrow">Value at Stake</div>
+            <div class="kpi-value">$2.8M</div>
+            <div class="kpi-label">projected range</div>
+            <div class="kpi-delta">↑ 14% vs baseline</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-eyebrow">Phase</div>
+            <div class="kpi-value">3 / 5</div>
+            <div class="kpi-label">Design &amp; Architecture</div>
+            <div class="kpi-delta" style="color: var(--amber);">Gate pending</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-eyebrow">Moves Active</div>
+            <div class="kpi-value">4</div>
+            <div class="kpi-label">across all phases</div>
+            <div class="kpi-delta kpi-delta-neg">1 blocked</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Move list rows -->
+    <div class="component-card">
+      <div class="component-label">Move list — status dots + badges</div>
+      <div class="component-inner">
+        <div class="move-row">
+          <div class="status-dot dot-green"></div>
+          <div class="move-code">SM-041</div>
+          <div class="move-name">Contact Center AI</div>
+          <span class="badge badge-teal">On Track</span>
+          <div class="move-phase">P3</div>
+        </div>
+        <div class="move-row">
+          <div class="status-dot dot-amber"></div>
+          <div class="move-code">SM-038</div>
+          <div class="move-name">CDP &amp; Unified Profile</div>
+          <span class="badge badge-amber">At Risk</span>
+          <div class="move-phase">P2</div>
+        </div>
+        <div class="move-row">
+          <div class="status-dot dot-red"></div>
+          <div class="move-code">SM-033</div>
+          <div class="move-name">Store Associate Productivity</div>
+          <span class="badge badge-red">Gate Blocked</span>
+          <div class="move-phase">P3</div>
+        </div>
+        <div class="move-row">
+          <div class="status-dot dot-grey"></div>
+          <div class="move-code">SM-029</div>
+          <div class="move-name">Demand Forecasting Engine</div>
+          <span class="badge badge-navy">Validated</span>
+          <div class="move-phase">P5</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Document list -->
+    <div class="component-card">
+      <div class="component-label">Phase document list — gate vs working</div>
+      <div class="component-inner">
+        <div style="font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-300); margin-bottom: 8px;">Phase 3 · Design &amp; Architecture</div>
+        <div class="doc-row">
+          <div>
+            <div class="doc-name">Target State Architecture</div>
+            <div class="doc-audience">CTO / Exec Sponsor</div>
+          </div>
+          <span class="pill pill-html">HTML</span>
+          <span class="pill pill-word">Word</span>
+          <div class="status-dot dot-green" style="margin-left: 4px;"></div>
+        </div>
+        <div class="doc-row">
+          <div>
+            <div class="doc-name">Solution Design Document</div>
+            <div class="doc-audience">Engineering Lead / IT Arch</div>
+          </div>
+          <span class="pill pill-html">HTML</span>
+          <span class="pill pill-word">Word</span>
+          <div class="status-dot dot-amber" style="margin-left: 4px;"></div>
+        </div>
+        <div class="doc-row working">
+          <div>
+            <div class="doc-name">Operating Model Design</div>
+            <div class="doc-audience">COO / HR Lead</div>
+          </div>
+          <span class="pill pill-html">HTML</span>
+          <span class="pill pill-word">Word</span>
+          <div class="status-dot dot-grey" style="margin-left: 4px;"></div>
+        </div>
+        <div class="doc-row working">
+          <div>
+            <div class="doc-name">Financial Model (Excel)</div>
+            <div class="doc-audience">CFO / Finance</div>
+          </div>
+          <span class="pill pill-excel">Excel</span>
+          <div class="status-dot dot-grey" style="margin-left: 4px;"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab bar + data table -->
+    <div class="component-card">
+      <div class="component-label">Tab bar + data table</div>
+      <div class="component-inner" style="padding: 16px 0 0;">
+        <div class="tab-bar" style="padding: 0 16px;">
+          <a class="tab-item" href="#">Overview</a>
+          <a class="tab-item active" href="#">Documents</a>
+          <a class="tab-item" href="#">Activity</a>
+        </div>
+        <div style="padding: 0 4px;">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Document</th>
+                <th>Phase</th>
+                <th>Status</th>
+                <th>Format</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><span class="td-mono">TARGET_STATE_ARCH</span></td>
+                <td class="td-muted">P3</td>
+                <td><span class="badge badge-teal">Done</span></td>
+                <td class="td-muted">HTML · Word</td>
+              </tr>
+              <tr>
+                <td><span class="td-mono">BUSINESS_CASE</span></td>
+                <td class="td-muted">P4</td>
+                <td><span class="badge badge-grey">Pending</span></td>
+                <td class="td-muted">HTML · Word</td>
+              </tr>
+              <tr>
+                <td><span class="td-mono">FINANCIAL_MODEL</span></td>
+                <td class="td-muted">P4</td>
+                <td><span class="badge badge-amber">Draft</span></td>
+                <td class="td-muted">Excel</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Agent chat bubble -->
+    <div class="component-card">
+      <div class="component-label">Agent chat — Nexus voice</div>
+      <div class="component-inner">
+        <div class="chat-agent-row">
+          <div class="chat-avatar">✦</div>
+          <div>
+            <div class="chat-agent-name">Nexus</div>
+            <div class="chat-agent-scope">SCOPED TO SM-2024-0041</div>
+          </div>
+        </div>
+        <div class="chat-bubble-nexus">
+          I'm scoped to <em>SM-2024-0041</em> — Contact Center AI. Currently in <em>Phase 3 Design</em>. Status: <em>on track</em>.
+        </div>
+        <div class="chat-bubble-nexus">
+          Three gate criteria are still open. Want me to draft the Target State Architecture document now — I have the discovery context loaded.
+        </div>
+        <div class="chat-bubble-user">Yes — generate it with the Apex Retail context.</div>
+        <div class="chat-bubble-nexus">
+          Generating Target State Architecture for Apex Retail… this will cover conceptual, logical, and physical views with integration patterns.
+        </div>
+      </div>
+    </div>
+
+    <!-- Button + badge library -->
+    <div class="component-card">
+      <div class="component-label">Buttons &amp; badges — full set</div>
+      <div class="component-inner">
+        <div class="btn-row" style="margin-bottom: 16px;">
+          <span class="btn btn-primary">Continue Phase 3 →</span>
+          <span class="btn btn-ghost">← Back to move</span>
+          <span class="btn btn-teal">Mark complete</span>
+          <span class="btn btn-danger">Block gate</span>
+        </div>
+        <div class="btn-row" style="margin-bottom: 20px;">
+          <span class="btn btn-signal">Open workspace →</span>
+          <span class="btn btn-ghost">Generate documents</span>
+        </div>
+        <div style="font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-300); margin-bottom: 8px;">Status badges</div>
+        <div style="display: flex; flex-wrap: wrap; gap: 6px;">
+          <span class="badge badge-teal">On Track</span>
+          <span class="badge badge-amber">At Risk</span>
+          <span class="badge badge-red">Blocked</span>
+          <span class="badge badge-navy">Validated</span>
+          <span class="badge badge-grey">Pending</span>
+          <span class="badge badge-grey">Draft</span>
+          <span class="badge" style="background: rgba(201,162,39,0.12); color: #7a5a00;">Milestone</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ───────────────────────────────────────── FONT CONSISTENCY SUMMARY ── -->
+  <div class="section-label">07 · Decision summary</div>
+  <div style="background: var(--bg-white); border: 1px solid var(--ink-100); border-radius: 8px; overflow: hidden;">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Role</th>
+          <th>Font</th>
+          <th>Size / Weight</th>
+          <th>Color</th>
+          <th>Current state</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Page titles / KPI numerals</strong></td>
+          <td><span class="td-mono">Fraunces</span></td>
+          <td class="td-muted">20–48px / 400</td>
+          <td class="td-muted">#1A1A18 / #0F172A</td>
+          <td><span class="badge badge-teal">✓ Consistent</span></td>
+        </tr>
+        <tr>
+          <td><strong>Body / UI text</strong></td>
+          <td><span class="td-mono">Inter</span></td>
+          <td class="td-muted">12–16px / 400–600</td>
+          <td class="td-muted">#0F172A → #525866</td>
+          <td><span class="badge badge-amber">DM Sans conflict</span></td>
+        </tr>
+        <tr>
+          <td><strong>Eyebrow / labels / codes</strong></td>
+          <td><span class="td-mono">JetBrains Mono</span></td>
+          <td class="td-muted">10–12px / 400–500</td>
+          <td class="td-muted">#9AA3B2 → #525866</td>
+          <td><span class="badge badge-teal">✓ Consistent</span></td>
+        </tr>
+        <tr>
+          <td><strong>Page background</strong></td>
+          <td>—</td>
+          <td class="td-muted">—</td>
+          <td class="td-muted">#f5f1eb (cream)</td>
+          <td><span class="badge badge-amber">3 competing values</span></td>
+        </tr>
+        <tr>
+          <td><strong>Primary CTA</strong></td>
+          <td>—</td>
+          <td class="td-muted">—</td>
+          <td class="td-muted">#1B2B5C navy</td>
+          <td><span class="badge badge-teal">✓ Consistent</span></td>
+        </tr>
+        <tr>
+          <td><strong>Active tab underline</strong></td>
+          <td>—</td>
+          <td class="td-muted">—</td>
+          <td class="td-muted">#1B2B5C navy</td>
+          <td><span class="badge badge-teal">✓ Consistent</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div style="margin-top: 16px; padding: 14px 16px; background: rgba(186,117,23,0.06); border: 1px solid rgba(186,117,23,0.2); border-radius: 6px; border-left: 3px solid var(--amber);">
+    <div style="font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--amber); margin-bottom: 6px;">Two fixes needed</div>
+    <div style="font-family: var(--font-body); font-size: 13px; color: var(--ink-700);">
+      <strong>1. Body font:</strong> <code style="font-family: var(--font-mono); font-size: 11px; background: rgba(0,0,0,0.05); padding: 1px 5px; border-radius: 3px;">abarva-canon.css</code> declares <code style="font-family: var(--font-mono); font-size: 11px; background: rgba(0,0,0,0.05); padding: 1px 5px; border-radius: 3px;">DM Sans</code> — should be <code style="font-family: var(--font-mono); font-size: 11px; background: rgba(0,0,0,0.05); padding: 1px 5px; border-radius: 3px;">Inter</code> per <code style="font-family: var(--font-mono); font-size: 11px; background: rgba(0,0,0,0.05); padding: 1px 5px; border-radius: 3px;">tokens.css</code>.
+      <br><br>
+      <strong>2. Background:</strong> <code style="font-family: var(--font-mono); font-size: 11px; background: rgba(0,0,0,0.05); padding: 1px 5px; border-radius: 3px;">globals.css</code> sets <code style="font-family: var(--font-mono); font-size: 11px; background: rgba(0,0,0,0.05); padding: 1px 5px; border-radius: 3px;">#060a12</code> (dark), <code style="font-family: var(--font-mono); font-size: 11px; background: rgba(0,0,0,0.05); padding: 1px 5px; border-radius: 3px;">abarva-canon.css</code> sets <code style="font-family: var(--font-mono); font-size: 11px; background: rgba(0,0,0,0.05); padding: 1px 5px; border-radius: 3px;">#f5f1eb</code>, <code style="font-family: var(--font-mono); font-size: 11px; background: rgba(0,0,0,0.05); padding: 1px 5px; border-radius: 3px;">brand-tokens.css</code> sets <code style="font-family: var(--font-mono); font-size: 11px; background: rgba(0,0,0,0.05); padding: 1px 5px; border-radius: 3px;">#faf7f1</code>. The canonical value is <code style="font-family: var(--font-mono); font-size: 11px; background: rgba(0,0,0,0.05); padding: 1px 5px; border-radius: 3px;">--canon-bg-cream: #f5f1eb</code> from <code style="font-family: var(--font-mono); font-size: 11px; background: rgba(0,0,0,0.05); padding: 1px 5px; border-radius: 3px;">tokens.css</code>.
+    </div>
+  </div>
+
+  <div style="margin-top: 32px; padding-top: 16px; border-top: 1px solid var(--ink-100); font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.08em; color: var(--ink-300); text-align: center;">
+    Nexus · AbarVa Design System v2 · 2026-05-07
+  </div>
+
+</div>
+</body>
+</html>

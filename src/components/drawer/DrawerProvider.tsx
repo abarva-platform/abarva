@@ -201,7 +201,7 @@ const drawerCss = `
   display: flex; flex-direction: column;
   z-index: 91;
   animation: drw-slide-in 200ms cubic-bezier(0.22, 1, 0.36, 1);
-  font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-family: 'Inter', -apple-system, system-ui, sans-serif;
   color: #1a1612;
 }
 @keyframes drw-slide-in {

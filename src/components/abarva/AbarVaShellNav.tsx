@@ -114,7 +114,7 @@ const TEXT_BODY = '#1F2433';
 const TEXT_MUTED = '#525866';
 const NAVY = '#1B2B5C';
 const FONT_BODY =
-  "'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
+  "'Inter', -apple-system, system-ui, sans-serif";
 
 export function AbarVaShellNav({
   surfaces = ABARVA_SHELL_SURFACES,

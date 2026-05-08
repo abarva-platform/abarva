@@ -130,7 +130,7 @@ export function PressureCardDerivation({
             {isUnowned ? 'UNOWNED' : `Owner · ${owner}`}
           </span>
         </div>
-        <h2 style={{ margin: 0, fontFamily: 'Georgia, serif', fontSize: 24, lineHeight: 1.2, letterSpacing: '-0.015em', color: '#1a1612' }}>
+        <h2 style={{ margin: 0, fontFamily: 'Fraunces, Georgia, serif', fontSize: 24, lineHeight: 1.2, letterSpacing: '-0.015em', color: '#1a1612' }}>
           {title}
         </h2>
         <div

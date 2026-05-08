@@ -50,7 +50,7 @@ export function VendorPortfolioSurface({ vm }: Props) {
         <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 11, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#D97706', fontWeight: 700 }}>
           {vm.tenantDisplay} · Control Tower · Vendors
         </div>
-        <h1 style={{ margin: '6px 0 0', fontFamily: 'Georgia, serif', fontSize: 32, letterSpacing: '-0.02em', color: '#1a1612' }}>
+        <h1 style={{ margin: '6px 0 0', fontFamily: 'Fraunces, Georgia, serif', fontSize: 32, letterSpacing: '-0.02em', color: '#1a1612' }}>
           Vendor concentration & rationalization
         </h1>
         <p style={{ margin: '8px 0 0', fontSize: 14, lineHeight: 1.6, color: '#544b42', maxWidth: 720 }}>
@@ -80,7 +80,7 @@ export function VendorPortfolioSurface({ vm }: Props) {
           <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 10, letterSpacing: '0.14em', textTransform: 'uppercase', color: RISK_META[summary.largestVendor.riskLevel].color, fontWeight: 700 }}>
             Largest single-vendor exposure · {summary.largestVendor.riskLevel}
           </div>
-          <h3 style={{ margin: '6px 0 4px', fontFamily: 'Georgia, serif', fontSize: 20, color: '#1a1612' }}>
+          <h3 style={{ margin: '6px 0 4px', fontFamily: 'Fraunces, Georgia, serif', fontSize: 20, color: '#1a1612' }}>
             {summary.largestVendor.name} · ${summary.largestVendor.annualSpendMillions}M/year
           </h3>
           <p style={{ margin: 0, fontSize: 13.5, lineHeight: 1.6, color: '#3d342d' }}>{summary.largestVendor.keyRisk}</p>

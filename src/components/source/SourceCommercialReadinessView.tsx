@@ -192,7 +192,7 @@ export function SourceCommercialReadinessView({
             fontSize: '16px',
             fontWeight: 600,
             color: '#0F0E0D',
-            fontFamily: 'Georgia, serif',
+            fontFamily: 'Fraunces, Georgia, serif',
             margin: 0,
             letterSpacing: '-0.01em',
           }}

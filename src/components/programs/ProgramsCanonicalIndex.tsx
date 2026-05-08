@@ -74,7 +74,7 @@ export function ProgramsCanonicalIndex({ tenant }: ProgramsCanonicalIndexProps) 
           </div>
           <h1
             style={{
-              fontFamily: 'Georgia, "Times New Roman", serif',
+              fontFamily: 'Fraunces, Georgia, serif',
               fontSize: 30,
               fontWeight: 600,
               margin: 0,
@@ -203,7 +203,7 @@ export function ProgramsCanonicalIndex({ tenant }: ProgramsCanonicalIndexProps) 
                     </div>
                     <div
                       style={{
-                        fontFamily: 'Georgia, serif',
+                        fontFamily: 'Fraunces, Georgia, serif',
                         fontSize: 18,
                         fontWeight: 600,
                         marginBottom: 6,

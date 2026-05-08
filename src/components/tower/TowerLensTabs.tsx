@@ -539,7 +539,7 @@ function SectionMeta({
       </div>
       <h2
         style={{
-          fontFamily: 'Georgia, serif',
+          fontFamily: 'Fraunces, Georgia, serif',
           fontSize: 22,
           fontWeight: 600,
           color: C.ink,

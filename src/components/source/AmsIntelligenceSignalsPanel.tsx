@@ -60,7 +60,7 @@ function SignalCard({ signal }: { signal: AmsIntelligenceSignal }) {
             {signal.patternId} · {CATEGORY_LABELS[signal.category]}
           </div>
           <div style={{
-            fontFamily: 'Georgia, serif',
+            fontFamily: 'Fraunces, Georgia, serif',
             fontWeight: 400,
             fontSize: '14px',
             color: '#0A0C12',
@@ -168,7 +168,7 @@ export function AmsIntelligenceSignalsPanel({ bundle }: AmsIntelligenceSignalsPa
       {/* Header */}
       <div>
         <h3 style={{
-          fontFamily: 'Georgia, serif',
+          fontFamily: 'Fraunces, Georgia, serif',
           fontWeight: 400,
           fontSize: '15px',
           color: '#0A0C12',

@@ -139,7 +139,7 @@ export function ProgramPressureCards({ tenant, view, topN }: ProgramPressureCard
         <h2
           style={{
             margin: 0,
-            fontFamily: 'Georgia, "Times New Roman", serif',
+            fontFamily: 'Fraunces, Georgia, serif',
             fontSize: 22,
             fontWeight: 600,
             lineHeight: 1.25,
@@ -234,7 +234,7 @@ function AtlasExecutiveBriefPanel({ brief }: { brief: AtlasProgramPressureBrief 
           <h3
             style={{
               margin: 0,
-              fontFamily: 'Georgia, "Times New Roman", serif',
+              fontFamily: 'Fraunces, Georgia, serif',
               fontSize: 18,
               fontWeight: 600,
               lineHeight: 1.3,

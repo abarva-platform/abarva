@@ -162,7 +162,7 @@ const bellCss = `
   background: #FFFFFF; color: #1a1612;
   border: 1px solid rgba(26,22,18,0.12);
   border-radius: 12px; box-shadow: 0 16px 40px rgba(10,10,11,0.14);
-  z-index: 80; font-family: 'DM Sans', sans-serif;
+  z-index: 80; font-family: 'Inter', sans-serif;
 }
 .nb-panel-head {
   display: flex; justify-content: space-between; align-items: center;

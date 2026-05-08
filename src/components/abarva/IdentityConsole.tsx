@@ -31,7 +31,7 @@ const MUTE = 'rgba(245, 245, 240, 0.72)';
 const BORDER_SOFT = '0.5px solid rgba(255,255,255,0.08)';
 const FONT_BODY = 'DM Sans, -apple-system, sans-serif';
 const FONT_MONO = 'JetBrains Mono, monospace';
-const FONT_SERIF = 'Georgia, serif';
+const FONT_SERIF = 'Fraunces, Georgia, serif';
 
 function stripUserReadyBlock(text: string): string {
   return text.replace(/<user_ready>[\s\S]*?<\/user_ready>/g, '').trim();

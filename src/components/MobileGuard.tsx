@@ -27,13 +27,13 @@ export default function MobileGuard({ children }: { children: React.ReactNode })
     }}>
       <div style={{ fontSize: '32px', marginBottom: '24px' }}>⬛</div>
       <div style={{
-        fontFamily: "'DM Sans', sans-serif", fontWeight: 700,
+        fontFamily: "'Inter', sans-serif", fontWeight: 700,
         fontSize: '22px', color: '#E6EDF3', marginBottom: '12px', lineHeight: 1.3,
       }}>
         AbarVa is built for desktop
       </div>
       <div style={{
-        fontFamily: "'DM Sans', sans-serif", fontWeight: 400,
+        fontFamily: "'Inter', sans-serif", fontWeight: 400,
         fontSize: '15px', color: '#6B7280', maxWidth: '320px', lineHeight: 1.6,
       }}>
         Open this on a laptop or desktop for the full intelligence experience.

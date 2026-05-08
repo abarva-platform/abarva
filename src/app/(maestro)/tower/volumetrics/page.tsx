@@ -79,7 +79,7 @@ function LineChart({
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 10 }}>
         <div style={{ fontFamily: MONO, fontSize: 10, color, letterSpacing: '0.14em', textTransform: 'uppercase' }}>{label}</div>
         <div style={{ display: 'flex', gap: 12, alignItems: 'baseline' }}>
-          <div style={{ fontSize: 18, fontWeight: 500, color: INK, fontFamily: 'Georgia, serif' }}>
+          <div style={{ fontSize: 18, fontWeight: 500, color: INK, fontFamily: 'Fraunces, Georgia, serif' }}>
             {data[data.length - 1]?.value.toFixed(2)}
             <span style={{ fontSize: 11, color: MUTE, marginLeft: 6 }}>{unit}</span>
           </div>
@@ -145,7 +145,7 @@ export default async function VolumetricsPage({
       </Link>
 
       <div style={{ display: 'flex', alignItems: 'baseline', gap: 16, marginTop: 14, marginBottom: 4 }}>
-        <h1 style={{ fontFamily: 'Georgia, serif', fontSize: 30, fontWeight: 400, color: INK, margin: 0 }}>
+        <h1 style={{ fontFamily: 'Fraunces, Georgia, serif', fontSize: 30, fontWeight: 400, color: INK, margin: 0 }}>
           Volumetrics
         </h1>
         {active && (
@@ -188,7 +188,7 @@ function DeltaTile({ label, value, delta, color }: { label: string; value: strin
   return (
     <div style={{ padding: '14px 16px', borderRight: BORDER, background: 'rgba(255,255,255,0.02)' }}>
       <div style={{ fontFamily: MONO, fontSize: 9, color: MUTE, letterSpacing: '0.14em' }}>{label}</div>
-      <div style={{ fontFamily: 'Georgia, serif', fontSize: 22, fontWeight: 400, color, marginTop: 4, lineHeight: 1 }}>{value}</div>
+      <div style={{ fontFamily: 'Fraunces, Georgia, serif', fontSize: 22, fontWeight: 400, color, marginTop: 4, lineHeight: 1 }}>{value}</div>
       <div style={{ fontFamily: MONO, fontSize: 11, color: trendColor(delta), marginTop: 4 }}>
         {deltaLabel(delta)} · 30d
       </div>
@@ -200,7 +200,7 @@ function StaticTile({ label, value, sub, accent, isLast }: { label: string; valu
   return (
     <div style={{ padding: '14px 16px', borderRight: isLast ? 'none' : BORDER, background: 'rgba(255,255,255,0.02)' }}>
       <div style={{ fontFamily: MONO, fontSize: 9, color: MUTE, letterSpacing: '0.14em' }}>{label}</div>
-      <div style={{ fontFamily: 'Georgia, serif', fontSize: 22, fontWeight: 400, color: accent, marginTop: 4, lineHeight: 1 }}>{value}</div>
+      <div style={{ fontFamily: 'Fraunces, Georgia, serif', fontSize: 22, fontWeight: 400, color: accent, marginTop: 4, lineHeight: 1 }}>{value}</div>
       <div style={{ fontFamily: MONO, fontSize: 11, color: DIM, marginTop: 4 }}>{sub}</div>
     </div>
   );

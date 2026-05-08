@@ -48,7 +48,7 @@ const NAVY_DARK_PANEL = '#0F1E3F';
 const NAVY_SOFT = 'rgba(27,43,92,0.08)';
 
 const FONT_BODY =
-  '"DM Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+  '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
 
 // ----- props ----------------------------------------------------------
 

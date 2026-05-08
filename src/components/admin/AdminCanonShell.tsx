@@ -76,7 +76,7 @@ const COLOR_MUTED = '#525866';
 const COLOR_NAVY = '#1B2B5C';
 
 const FONT_BODY =
-  "'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
+  "'Inter', -apple-system, system-ui, sans-serif";
 
 // ---------------------------------------------------------------------
 // Component

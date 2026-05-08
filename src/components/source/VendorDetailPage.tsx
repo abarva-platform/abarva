@@ -33,7 +33,7 @@ const VENDOR_HEAD: CSSProperties = {
 };
 
 const VENDOR_NAME: CSSProperties = {
-  fontFamily: "'Georgia', serif",
+  fontFamily: "'Fraunces, Georgia, serif', serif",
   fontSize: 22,
   fontWeight: 400,
   color: SHELL.INK,

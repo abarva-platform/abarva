@@ -95,7 +95,7 @@ export function OutcomeVerdict({ verdict, onNextStep }: OutcomeVerdictProps) {
       <h3
         style={{
           margin: 0,
-          fontFamily: 'Georgia, "Times New Roman", serif',
+          fontFamily: 'Fraunces, Georgia, serif',
           fontSize: 20,
           lineHeight: 1.25,
           letterSpacing: '-0.01em',

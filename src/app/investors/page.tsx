@@ -32,7 +32,7 @@ const PAGE_DARK_PANEL = '#171D24'
 const PAGE_DARK_SOFT = '#B6C0CD'
 const PAGE_DARK_LINE = 'rgba(255, 255, 255, 0.1)'
 const SERIF = '"Fraunces", Georgia, serif'
-const SANS = '"DM Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif'
+const SANS = '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif'
 const MONO = '"JetBrains Mono", "Fira Code", monospace'
 
 const investorSignals = [

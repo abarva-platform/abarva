@@ -40,7 +40,7 @@ export default async function DimensionOnboardPage({ params }: { params: Promise
         </span>
       </div>
 
-      <h1 style={{ fontFamily: 'Georgia, serif', fontSize: 36, fontWeight: 400, color: INK, margin: 0, lineHeight: 1.2 }}>
+      <h1 style={{ fontFamily: 'Fraunces, Georgia, serif', fontSize: 36, fontWeight: 400, color: INK, margin: 0, lineHeight: 1.2 }}>
         Populate the {dim.name} dimension
       </h1>
       <p style={{ fontSize: 15, color: MUTE, marginTop: 10, maxWidth: 720, lineHeight: 1.55 }}>

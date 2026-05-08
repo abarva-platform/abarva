@@ -91,7 +91,7 @@ export function ProgramCard({
           <EyebrowLabel tone="teal" size="xs">PHASE {clampedPhase} · {phaseLabel.toUpperCase()}</EyebrowLabel>
           <div
             style={{
-              fontFamily: 'Georgia, serif',
+              fontFamily: 'Fraunces, Georgia, serif',
               fontSize: isProminent ? 24 : 18,
               fontWeight: 400,
               color: COLORS.textPrimary,

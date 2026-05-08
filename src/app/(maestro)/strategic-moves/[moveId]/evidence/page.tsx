@@ -43,7 +43,7 @@ export default async function PhaseEvidenceHubPage({ params }: Props) {
           </div>
           <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
             <div>
-              <h1 style={{ fontFamily: 'Georgia, serif', fontSize: 22, fontWeight: 'normal', margin: '0 0 3px', color: '#1A1A18' }}>
+              <h1 style={{ fontFamily: 'Fraunces, Georgia, serif', fontSize: 22, fontWeight: 'normal', margin: '0 0 3px', color: '#1A1A18' }}>
                 Phase Documents
               </h1>
               <div style={{ fontSize: 13, color: '#525866' }}>

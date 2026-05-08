@@ -26,7 +26,7 @@ function AdminOnlyNotice() {
       }}
     >
       <main style={{ padding: 40, fontFamily: 'DM Sans, sans-serif' }}>
-        <h1 style={{ fontFamily: 'Georgia, serif' }}>Admin access only</h1>
+        <h1 style={{ fontFamily: 'Fraunces, Georgia, serif' }}>Admin access only</h1>
         <p>Founder Build Control Tower is restricted to platform administrators.</p>
       </main>
     </AdminCanonShell>

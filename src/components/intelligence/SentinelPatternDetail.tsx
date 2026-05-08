@@ -104,7 +104,7 @@ export function SentinelPatternDetail({ view }: SentinelPatternDetailProps) {
           <h1
             style={{
               margin: 0,
-              fontFamily: 'Georgia, "Times New Roman", serif',
+              fontFamily: 'Fraunces, Georgia, serif',
               fontSize: 26,
               fontWeight: 600,
               lineHeight: 1.25,

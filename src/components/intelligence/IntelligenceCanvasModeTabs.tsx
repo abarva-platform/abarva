@@ -259,7 +259,7 @@ function EmptyHint({ children }: { children: React.ReactNode }) {
 function headingStyle(): React.CSSProperties {
   return {
     margin: 0,
-    fontFamily: 'Georgia, "Times New Roman", serif',
+    fontFamily: 'Fraunces, Georgia, serif',
     fontSize: 16,
     fontWeight: 600,
     color: COLORS.ink,

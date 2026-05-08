@@ -380,7 +380,7 @@ export function EngagementConsole({
           </div>
           <div
             style={{
-              fontFamily: 'Georgia, serif',
+              fontFamily: 'Fraunces, Georgia, serif',
               fontSize: 38,
               fontWeight: 400,
               color: '#F5F5F0',
@@ -497,7 +497,7 @@ export function EngagementConsole({
       {/* Header */}
       <div style={{ padding: '18px 24px', borderBottom: '0.5px solid rgba(255,255,255,0.08)' }}>
         <div style={{ maxWidth: 1480, margin: '0 auto', width: '100%' }}>
-          <div style={{ fontFamily: 'Georgia, serif', marginBottom: 4 }}>
+          <div style={{ fontFamily: 'Fraunces, Georgia, serif', marginBottom: 4 }}>
             <span style={{ color: '#F5F5F0', fontSize: 17, fontWeight: 800 }}>Abar</span>
             <span style={{ color: '#14B8A6', fontSize: 23, fontWeight: 900 }}>Va</span>
           </div>
@@ -563,7 +563,7 @@ export function EngagementConsole({
                   </div>
                   <div
                     style={{
-                      fontFamily: 'Georgia, serif',
+                      fontFamily: 'Fraunces, Georgia, serif',
                       fontSize: 20,
                       color: '#F5F5F0',
                       letterSpacing: '-0.01em',

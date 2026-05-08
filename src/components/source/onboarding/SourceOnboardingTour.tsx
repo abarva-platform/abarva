@@ -175,7 +175,7 @@ const STEP_INDICATOR_STYLE: CSSProperties = {
 
 const TITLE_STYLE: CSSProperties = {
   margin: 0,
-  fontFamily: 'Cormorant Garamond, Georgia, serif',
+  fontFamily: 'Fraunces, Georgia, serif',
   fontSize: 22,
   fontWeight: 400,
   lineHeight: 1.2,

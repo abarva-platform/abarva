@@ -10,7 +10,7 @@ const WHITE  = '#EFF6FF'
 const MUTED  = 'rgba(255,255,255,0.85)'
 const MONO   = 'JetBrains Mono, monospace'
 const SANS   = 'DM Sans, sans-serif'
-const SERIF  = 'Georgia, serif'
+const SERIF  = 'Fraunces, Georgia, serif'
 
 export interface ModuleStat {
   value: string

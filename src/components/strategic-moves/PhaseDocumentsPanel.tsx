@@ -318,7 +318,7 @@ export async function PhaseDocumentsPanel({ moveId, currentPhase, compact }: Pro
               border: '1px solid #E2DFD8', borderRadius: 5, minWidth: 70,
             }}>
               <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 9, color: '#9AA3B2', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 1 }}>{kpi.label}</div>
-              <div style={{ fontFamily: 'Georgia, serif', fontSize: 18, color: '#1A1A18' }}>{kpi.value}</div>
+              <div style={{ fontFamily: 'Fraunces, Georgia, serif', fontSize: 18, color: '#1A1A18' }}>{kpi.value}</div>
             </div>
           ))}
         </div>
@@ -361,7 +361,7 @@ export async function PhaseDocumentsPanel({ moveId, currentPhase, compact }: Pro
             }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <span style={{
-                  fontFamily: 'Georgia, serif',
+                  fontFamily: 'Fraunces, Georgia, serif',
                   fontSize: compact ? 14 : 15,
                   color: isCurrent ? '#1A1A18' : '#525866',
                   fontWeight: isCurrent ? 'normal' : 'normal',

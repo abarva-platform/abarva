@@ -9,7 +9,7 @@ const TEXT   = '#0C0C0C'
 const MUTED  = '#3C3C3C'
 const DIM    = '#888888'
 const TEAL   = '#14B8A6'
-const SERIF  = 'Georgia, "Times New Roman", serif'
+const SERIF  = 'Fraunces, Georgia, serif'
 const SANS   = 'DM Sans, sans-serif'
 const MONO   = 'JetBrains Mono, monospace'
 

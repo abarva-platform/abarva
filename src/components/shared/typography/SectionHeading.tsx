@@ -22,7 +22,7 @@ export function SectionHeading({ children, as = 'h2', size = 'md', style, id }: 
     <Tag
       id={id}
       style={{
-        fontFamily: 'Georgia, serif',
+        fontFamily: 'Fraunces, Georgia, serif',
         fontSize,
         fontWeight: 400,
         color: COLORS.textPrimary,

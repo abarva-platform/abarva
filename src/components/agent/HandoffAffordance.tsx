@@ -95,7 +95,7 @@ export function HandoffAffordance({ affordance }: HandoffAffordanceProps) {
           display: 'inline-flex',
           alignItems: 'center',
           justifyContent: 'center',
-          fontFamily: 'Georgia, serif',
+          fontFamily: 'Fraunces, Georgia, serif',
           fontSize: 14,
           flexShrink: 0,
         }}

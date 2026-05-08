@@ -10,7 +10,7 @@ const GREEN = '#3FB27F';
 const CORAL = '#FF6B4A';
 const BORDER = '0.5px solid rgba(255,255,255,0.08)';
 const MONO = 'JetBrains Mono, monospace';
-const SERIF = 'Georgia, serif';
+const SERIF = 'Fraunces, Georgia, serif';
 
 const PHASE_LABELS = ['Start', 'Diagnose', 'Design', 'Execute', 'Verify'];
 const PHASE_COLORS = [TEAL, TEAL, AMBER, '#FB923C', GREEN];

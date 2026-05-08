@@ -68,7 +68,7 @@ export function DeliverableTierRenderer({
               <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 11, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#0E9F8C', fontWeight: 700 }}>
                 Phase 1 → 2 gate requirement · FM-03
               </div>
-              <h2 style={{ fontFamily: 'Georgia, serif', fontSize: 24, letterSpacing: '-0.015em', margin: '8px 0 0', color: '#1a1612' }}>
+              <h2 style={{ fontFamily: 'Fraunces, Georgia, serif', fontSize: 24, letterSpacing: '-0.015em', margin: '8px 0 0', color: '#1a1612' }}>
                 Sponsor commitment
               </h2>
             </div>
@@ -87,7 +87,7 @@ export function DeliverableTierRenderer({
               <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 11, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#0E9F8C', fontWeight: 700 }}>
                 Phase 1 → 2 gate requirement · FM-02
               </div>
-              <h2 style={{ fontFamily: 'Georgia, serif', fontSize: 24, letterSpacing: '-0.015em', margin: '8px 0 0', color: '#1a1612' }}>
+              <h2 style={{ fontFamily: 'Fraunces, Georgia, serif', fontSize: 24, letterSpacing: '-0.015em', margin: '8px 0 0', color: '#1a1612' }}>
                 Data readiness
               </h2>
             </div>
@@ -116,7 +116,7 @@ export function DeliverablePageStyles() {
         --del-amber: #a96f00;
         --del-red: #b5452f;
         --del-serif: Georgia, 'Times New Roman', serif;
-        --del-sans: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        --del-sans: 'Inter', -apple-system, system-ui, sans-serif;
         --del-mono: 'JetBrains Mono', 'SFMono-Regular', Consolas, monospace;
       }
       .del-page { min-height: 100vh; background: radial-gradient(circle at 8% 4%, rgba(14,159,140,.13), transparent 30rem), radial-gradient(circle at 92% 6%, rgba(169,111,0,.12), transparent 30rem), var(--del-bg); color: var(--del-ink); font-family: var(--del-sans); padding: clamp(32px, 5vw, 72px) clamp(20px, 5vw, 76px); }
