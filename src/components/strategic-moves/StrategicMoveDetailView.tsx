@@ -3,7 +3,7 @@ import { Suspense } from 'react';
 import styles from './StrategicMoves.module.css';
 import { PhaseRail } from './PhaseRail';
 import { MoveArtifactUpload } from './MoveArtifactUpload';
-import { MoveDetailSplitter } from './MoveDetailSplitter';
+import { StrategicMoveDetailClient } from './StrategicMoveDetailClient';
 import { PhaseDocumentsPanel } from './PhaseDocumentsPanel';
 import type { StrategicMove } from '@/lib/programs/types.ui';
 
@@ -247,12 +247,59 @@ function DocumentsContent({ move }: { move: StrategicMove }) {
   );
 }
 
-// ── Main view ─────────────────────────────────────────────────────────────────
+// ── Right pane (workspace) ────────────────────────────────────────────────────
 
-export function StrategicMoveDetailView({ move, activeTab = 'overview' }: Props) {
+function RightPane({ move, activeTab }: { move: StrategicMove; activeTab: Tab }) {
   const primary = primaryAction(move);
   const secondary = secondaryAction(move);
 
+  return (
+    <article className={styles.rightPane}>
+      <div className={styles.detailHead}>
+        <div className={styles.detailHeadTop}>
+          <div className={styles.detailHeadLeft}>
+            <div className={styles.detailBreadcrumb}>
+              <Link className={styles.detailCrumb} href="/strategic-moves">
+                Strategic Moves
+              </Link>
+              <span aria-hidden>&rsaquo;</span>
+              <span>{move.tenant.name}</span>
+              <span aria-hidden>&rsaquo;</span>
+              <span>{move.displayCode}</span>
+            </div>
+            <h1 className={styles.detailTitle}>{move.name}</h1>
+            <div className={styles.detailId}>
+              {move.archetype} &middot; Sponsor: {(move.sponsor?.name ?? 'Unassigned').toUpperCase()}
+            </div>
+          </div>
+          <div className={styles.detailHeadActions}>
+            {secondary && (
+              <Link className={styles.btnGhost} href={secondary.href}>
+                {secondary.label}
+              </Link>
+            )}
+            <Link className={styles.btnPhase} href={primary.href}>
+              {primary.label} <span className={styles.btnArrow} aria-hidden>&rarr;</span>
+            </Link>
+          </div>
+        </div>
+        <PhaseRail current={move.currentPhase} status={move.statusColor} />
+      </div>
+
+      <div style={{ paddingLeft: 0, paddingRight: 0 }}>
+        <TabBar moveId={move.id} active={activeTab} />
+      </div>
+
+      {activeTab === 'overview'  && <OverviewContent move={move} />}
+      {activeTab === 'documents' && <DocumentsContent move={move} />}
+      {activeTab === 'activity'  && <ActivityContent move={move} />}
+    </article>
+  );
+}
+
+// ── Main view ─────────────────────────────────────────────────────────────────
+
+export function StrategicMoveDetailView({ move, activeTab = 'overview' }: Props) {
   return (
     <div className={styles.page}>
       <div
@@ -264,93 +311,9 @@ export function StrategicMoveDetailView({ move, activeTab = 'overview' }: Props)
           gap: 0,
         }}
       >
-        <MoveDetailSplitter
-          chatPane={
-            <aside className={styles.chatPane}>
-              <div className={styles.chatHead}>
-                <div className={styles.agentRow}>
-                  <div className={styles.agentAvatar} aria-hidden>✦</div>
-                  <div>
-                    <div className={styles.agentName}>Nexus</div>
-                    <div className={styles.agentStatus}>
-                      <span className={styles.agentStatusDot} aria-hidden />
-                      SCOPED TO {move.displayCode}
-                    </div>
-                  </div>
-                </div>
-                <div className={styles.chatSubhead}>
-                  Ask anything about this move. I&rsquo;ll work in the right pane.
-                </div>
-              </div>
-              <div className={styles.chatThread}>
-                <div className={styles.bubbleNexus}>
-                  I&rsquo;m scoped to <em>{move.displayCode}</em> &mdash; {move.name}. Currently in{' '}
-                  <em>{move.phaseLabel}</em>. Status: <em>{move.status.text.toLowerCase()}</em>.
-                </div>
-                <div className={styles.bubbleNexus}>
-                  {move.status.description}. Want me to walk through what&rsquo;s needed to advance?
-                </div>
-                <div className={styles.bubbleUser}>Show me what is still missing for this gate.</div>
-                <div className={styles.bubbleNexus}>
-                  I mapped the criteria on the right rail and linked the latest evidence so you can review quickly.
-                </div>
-              </div>
-              <div className={styles.chatInput}>
-                <div className={styles.suggestedPrompts}>
-                  <button className={styles.promptChip} type="button">What&rsquo;s blocking the gate?</button>
-                </div>
-                <div className={styles.inputRow}>
-                  <input type="text" placeholder={`Ask Nexus about ${move.displayCode}…`} />
-                  <button className={styles.sendBtn} type="button" aria-label="Send">&#8593;</button>
-                </div>
-              </div>
-            </aside>
-          }
-          rightPane={
-            <article className={styles.rightPane}>
-              {/* ── Fixed header (stays across all tabs) ── */}
-              <div className={styles.detailHead}>
-                <div className={styles.detailHeadTop}>
-                  <div className={styles.detailHeadLeft}>
-                    <div className={styles.detailBreadcrumb}>
-                      <Link className={styles.detailCrumb} href="/strategic-moves">
-                        Strategic Moves
-                      </Link>
-                      <span aria-hidden>&rsaquo;</span>
-                      <span>{move.tenant.name}</span>
-                      <span aria-hidden>&rsaquo;</span>
-                      <span>{move.displayCode}</span>
-                    </div>
-                    <h1 className={styles.detailTitle}>{move.name}</h1>
-                    <div className={styles.detailId}>
-                      {move.archetype} &middot; Sponsor: {(move.sponsor?.name ?? 'Unassigned').toUpperCase()}
-                    </div>
-                  </div>
-                  <div className={styles.detailHeadActions}>
-                    {secondary && (
-                      <Link className={styles.btnGhost} href={secondary.href}>
-                        {secondary.label}
-                      </Link>
-                    )}
-                    <Link className={styles.btnPhase} href={primary.href}>
-                      {primary.label} <span className={styles.btnArrow} aria-hidden>&rarr;</span>
-                    </Link>
-                  </div>
-                </div>
-                <PhaseRail current={move.currentPhase} status={move.statusColor} />
-              </div>
-
-              {/* ── Tab bar ── */}
-              <div style={{ paddingLeft: 0, paddingRight: 0 }}>
-                <TabBar moveId={move.id} active={activeTab} />
-              </div>
-
-              {/* ── Tab content ── */}
-              {activeTab === 'overview'  && <OverviewContent move={move} />}
-              {activeTab === 'documents' && <DocumentsContent move={move} />}
-              {activeTab === 'activity'  && <ActivityContent move={move} />}
-            </article>
-          }
+        <StrategicMoveDetailClient
+          move={move}
+          workspace={<RightPane move={move} activeTab={activeTab} />}
         />
       </div>
     </div>

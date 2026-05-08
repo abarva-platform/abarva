@@ -211,4 +211,56 @@ describe('POST /api/v1/agent/attachments', () => {
     const insertedRow = insertMock.mock.calls[0][0];
     expect(insertedRow.extracted_text).toBeNull();
   });
+
+  // Move-detail surface · linked_move_id stamping. The dock threads
+  // `surfaceContext` as a JSON form field; the route extracts moveId
+  // and stamps it on the row at insert. Unwired today (no migration
+  // chip yet), but here so future per-event linkage chips don't
+  // forget to mirror this contract.
+  it('stamps linked_move_id when surfaceContext.moveId is a valid UUID', async () => {
+    const moveUuid = '11111111-2222-3333-4444-555555555555';
+    const req = makeMultipartRequest('deck.pdf', 'application/pdf', 1024, {
+      surface: 'moves/detail',
+      agent: 'nexus',
+      surfaceContext: JSON.stringify({ moveId: moveUuid, moveCode: 'APX-CDP-2026' }),
+    });
+    const res = await POST(req as unknown as Parameters<typeof POST>[0]);
+    expect(res.status).toBe(200);
+    const insertedRow = insertMock.mock.calls[0][0];
+    expect(insertedRow.linked_move_id).toBe(moveUuid);
+    expect(insertedRow.surface).toBe('moves/detail');
+    expect(insertedRow.agent).toBe('nexus');
+  });
+
+  it('leaves linked_move_id null when surfaceContext is absent', async () => {
+    const req = makeMultipartRequest('deck.pdf', 'application/pdf', 1024, {
+      surface: 'source/new',
+    });
+    const res = await POST(req as unknown as Parameters<typeof POST>[0]);
+    expect(res.status).toBe(200);
+    const insertedRow = insertMock.mock.calls[0][0];
+    expect(insertedRow.linked_move_id).toBeNull();
+  });
+
+  it('rejects a malformed surfaceContext.moveId rather than crashing the insert', async () => {
+    const req = makeMultipartRequest('deck.pdf', 'application/pdf', 1024, {
+      surface: 'moves/detail',
+      surfaceContext: JSON.stringify({ moveId: 'not-a-uuid' }),
+    });
+    const res = await POST(req as unknown as Parameters<typeof POST>[0]);
+    expect(res.status).toBe(200);
+    const insertedRow = insertMock.mock.calls[0][0];
+    expect(insertedRow.linked_move_id).toBeNull();
+  });
+
+  it('tolerates unparseable surfaceContext JSON', async () => {
+    const req = makeMultipartRequest('deck.pdf', 'application/pdf', 1024, {
+      surface: 'moves/detail',
+      surfaceContext: '{not json',
+    });
+    const res = await POST(req as unknown as Parameters<typeof POST>[0]);
+    expect(res.status).toBe(200);
+    const insertedRow = insertMock.mock.calls[0][0];
+    expect(insertedRow.linked_move_id).toBeNull();
+  });
 });
