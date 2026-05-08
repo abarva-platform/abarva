@@ -150,40 +150,42 @@ export function IntelligenceV3Page({
         // PR-K2 corpus surfaces · render full-width (Brief/Map carry
         // their own masthead + right rail; embedding inside the v3
         // grid would squeeze them). Sentinel chat is integrated into
-        // each component's right-rail design.
+        // each component's left-rail design (post-AgentDock migration).
         stage === 'brief'
-          ? <IntelligenceBrief data={getMeridianBriefData()} />
-          : <IntelligenceMap data={getMeridianMapData()} />
+          ? <IntelligenceBrief data={getMeridianBriefData()} activeClient={data.tenantName} />
+          : <IntelligenceMap data={getMeridianMapData()} activeClient={data.tenantName} />
       ) : (
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'minmax(0, 1fr) 440px',
-            alignItems: 'start',
-          }}
-        >
-          <main
-            style={{
-              padding: `${SPACING.lg}px clamp(${SPACING.lg}px, 4vw, ${SPACING.xxxl}px)`,
-              width: '100%',
-              boxSizing: 'border-box',
-              paddingBottom: SPACING.xxxl + 56, // bottom gutter for any docked chat
-            }}
-          >
-            {isAopStage && <ArtOfPossibleCanvas data={aopBands} />}
-            {stage === 'today' && <TodayCxoCanvas />}
-            {stage === 'by-function' && <ByFunctionCxoCanvas />}
-            {stage === 'patterns' && <PatternsCxoCanvas />}
-            {stage === 'vendors' && <VendorsCxoCanvas />}
-            {stage === 'peer-activity' && <PeerActivityCxoCanvas />}
-            {stage === 'my-strategy' && <MyStrategyCxoCanvas />}
-            {stage === 'sessions' && <SessionsCxoCanvas />}
-          </main>
-
+        // Non-corpus stages render through SentinelChat's <AgentDock>
+        // layout · chat LEFT, workspace RIGHT, resizable splitter,
+        // mode-pickable. Workspace is the existing canvas content.
+        // The wrapper height = viewport - top nav (56) - stage strip
+        // (~56), so the splitter has a finite box to fill.
+        <div style={{ height: 'calc(100vh - 112px)', minHeight: 0 }}>
           <SentinelChat
             scopeLabel={`${data.tenantName} · this page`}
             opener={data.sentinelOpener}
             conversation={data.conversation}
+            surfaceContext={{ activeTab: stage, activeClient: data.tenantName }}
+            workspace={
+              <main
+                style={{
+                  padding: `${SPACING.lg}px clamp(${SPACING.lg}px, 4vw, ${SPACING.xxxl}px)`,
+                  width: '100%',
+                  boxSizing: 'border-box',
+                  paddingBottom: SPACING.xxxl + 56,
+                  overflowY: 'auto',
+                }}
+              >
+                {isAopStage && <ArtOfPossibleCanvas data={aopBands} />}
+                {stage === 'today' && <TodayCxoCanvas />}
+                {stage === 'by-function' && <ByFunctionCxoCanvas />}
+                {stage === 'patterns' && <PatternsCxoCanvas />}
+                {stage === 'vendors' && <VendorsCxoCanvas />}
+                {stage === 'peer-activity' && <PeerActivityCxoCanvas />}
+                {stage === 'my-strategy' && <MyStrategyCxoCanvas />}
+                {stage === 'sessions' && <SessionsCxoCanvas />}
+              </main>
+            }
           />
         </div>
       )}

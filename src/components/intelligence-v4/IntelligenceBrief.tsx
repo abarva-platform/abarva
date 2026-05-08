@@ -51,6 +51,12 @@ const C = {
 
 interface Props {
   data: BriefData;
+  /**
+   * Tenant key forwarded to the Sentinel surfaceContext so the upload
+   * route can scope attachments to the active client. Optional · falls
+   * back to data.tenantName when omitted.
+   */
+  activeClient?: string;
 }
 
 function fmtUsd(n: number): string {
@@ -59,7 +65,7 @@ function fmtUsd(n: number): string {
   return `$${n}`;
 }
 
-export function IntelligenceBrief({ data }: Props) {
+export function IntelligenceBrief({ data, activeClient }: Props) {
   // Collapsed-by-default. Click the bet header to expand the full
   // McKinsey detail. None expanded out of the box — summary-first
   // is the CXO read.
@@ -79,24 +85,10 @@ export function IntelligenceBrief({ data }: Props) {
   const sentinelConversation: ReadonlyArray<ChatMessage> = [];
   const sentinelOpener = `I composed this brief for ${data.tenantName} from the corpus. Top three above the line · ${data.bets.length} ranked. Ask me anything about the bets, the patterns, the vendor short list, or what would change if you re-prioritized.`;
 
-  return (
-    <div
-      data-testid="intelligence-brief"
-      style={{ background: C.surface, fontFamily: F_BODY, color: C.body, minHeight: '100%' }}
-    >
-      {/* Body grid — masthead lives INSIDE the left column so the
-          Sentinel chat rail aligns with the very top of the surface
-          and the composer is visible without scrolling (claude.ai
-          pattern). */}
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'minmax(0, 1fr) 440px',
-          alignItems: 'start',
-          gap: 0,
-        }}
-      >
-        <main style={{ padding: '24px 56px 80px' }}>
+  // Workspace · the surface body that Sentinel chat docks against.
+  // Post-AgentDock migration this lives on the RIGHT of the chat lane.
+  const workspace = (
+    <main style={{ padding: '24px 56px 80px', overflowY: 'auto' }}>
           {/* Compact masthead — eyebrow + 1-line title only */}
           <div style={{ marginBottom: 18 }}>
             <div
@@ -371,14 +363,34 @@ export function IntelligenceBrief({ data }: Props) {
             {data.totals.totalUseCases} use cases · {data.totals.totalPatterns} patterns · {data.totals.totalVendors} vendors · {data.proofPoints.length} proof points · refreshed {data.totals.lastRefreshQuarter}
           </div>
         </main>
+  );
 
-        {/* Sentinel chat · the agent lock — same dockable component as v3 */}
-        <SentinelChat
-          scopeLabel={`${data.tenantName} · The Brief`}
-          opener={sentinelOpener}
-          conversation={sentinelConversation}
-        />
-      </div>
+  return (
+    <div
+      data-testid="intelligence-brief"
+      style={{
+        background: C.surface,
+        fontFamily: F_BODY,
+        color: C.body,
+        // The dock owns its own viewport-tall splitter when in
+        // side-rail mode; constrain the corpus surface so the right
+        // pane scrolls instead of forcing the whole page to grow.
+        height: 'calc(100vh - 112px)',
+        minHeight: 0,
+      }}
+    >
+      {/* Sentinel chat is now on the LEFT (was right) — matches the
+          rest of the product. The workspace is the brief body. */}
+      <SentinelChat
+        scopeLabel={`${data.tenantName} · The Brief`}
+        opener={sentinelOpener}
+        conversation={sentinelConversation}
+        surfaceContext={{
+          activeTab: 'brief',
+          activeClient: activeClient ?? data.tenantName,
+        }}
+        workspace={workspace}
+      />
     </div>
   );
 }
