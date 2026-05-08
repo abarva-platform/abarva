@@ -19,6 +19,10 @@ import type {
   BandMetric,
   TowerBandMetricsView,
 } from '@/lib/tower/band-metrics-view';
+import type {
+  PressureCardView,
+  TowerPressuresView,
+} from '@/lib/tower/pressure-cards-view';
 
 // ─── Tower-specific tokens (broadsheet feel) ───────────────────────────────────
 const T = {
@@ -221,6 +225,53 @@ function SubstrateKpi({
         </span>
       </MetricProvenance>
     </Kpi>
+  );
+}
+
+// ─── T-6 (Bind 2): Substrate-bound pressure card ─────────────────────────────
+//
+// Renders a Pressure card from a pre-composed `PressureCardView`. Maps the
+// view-model's confidence enum to the existing cvalStyle/ConfTag treatment
+// so visual doctrine holds across substrate-bound and legacy code paths.
+function SubstratePressure({ card }: { card: PressureCardView }) {
+  const conf: Confidence =
+    card.magnitudeConfidence === 'high'
+      ? 'high'
+      : card.magnitudeConfidence === 'med'
+        ? 'med'
+        : 'low';
+  const showConfTag = card.magnitudeConfidence !== 'high';
+  return (
+    <Pressure
+      type={card.type}
+      id={card.id}
+      label={card.label}
+      headline={card.headline}
+      lede={card.lede}
+      meta={card.meta.map((m) => ({ k: m.k, v: m.v }))}
+      magnitude={
+        <span style={cvalStyle(conf)}>
+          {card.magnitudeValue}
+          {card.magnitudeUnit && (
+            <span
+              style={{
+                fontSize: 13,
+                fontWeight: 500,
+                fontStyle: 'italic',
+                color: T.GRAY_DK,
+                marginLeft: 2,
+                letterSpacing: 0,
+              }}
+            >
+              {card.magnitudeUnit}
+            </span>
+          )}
+          {showConfTag && <ConfTag conf={conf} />}
+        </span>
+      }
+      magnitudeLabel={card.magnitudeLabel}
+      nextAction={card.nextAction}
+    />
   );
 }
 
@@ -904,6 +955,12 @@ interface TowerIndexPageProps {
    * Apex Retail demo values so the page still renders pre-substrate.
    */
   bandMetrics?: TowerBandMetricsView;
+  /**
+   * T-6 (Bind 2): substrate-derived pressure cards. When omitted or empty,
+   * the pressure section falls back to the legacy hardcoded Apex Retail
+   * demo cards so the page still renders pre-substrate.
+   */
+  pressuresView?: TowerPressuresView;
   /** Slots are accepted for backward compatibility but not rendered in the broadsheet design. */
   provenanceSlot?: ReactNode;
   portfolioSummarySlot?: ReactNode;
@@ -918,6 +975,7 @@ export function TowerIndexPage({
   context = 'Control Tower · Portfolio Index',
   initiatives,
   bandMetrics,
+  pressuresView,
   provenanceSlot: _p1,
   portfolioSummarySlot: _p2,
   cascadeGraphSlot: _p3,
@@ -932,6 +990,8 @@ export function TowerIndexPage({
   const bandByKey = useSubstrateBand
     ? new Map(bandMetrics!.metrics.map((m) => [m.key, m] as const))
     : null;
+  // T-6: render pressure cards from substrate when available; fall back to legacy hardcoded.
+  const useSubstratePressures = Boolean(pressuresView && !pressuresView.isEmpty);
   const searchParams = useSearchParams();
   const router = useRouter();
   const activeLens = (searchParams?.get('lens') ?? 'value') as 'value' | 'risk' | 'contract' | 'adopt';
@@ -1174,7 +1234,9 @@ export function TowerIndexPage({
                 marginBottom: 8,
               }}
             >
-              Today&apos;s pressures · 7 active · 3 demanding decisions
+              {useSubstratePressures && pressuresView
+                ? `Today's pressures · ${pressuresView.totalActive} active · ${pressuresView.demandingDecisions} demanding decisions`
+                : "Today's pressures · 7 active · 3 demanding decisions"}
             </div>
             <h2
               style={{
@@ -1188,7 +1250,9 @@ export function TowerIndexPage({
                 color: T.INK,
               }}
             >
-              Three pressures need a CFO posture before the EA renewal closes.
+              {useSubstratePressures && pressuresView
+                ? pressuresView.sectionHeadline
+                : 'Three pressures need a CFO posture before the EA renewal closes.'}
             </h2>
             <p
               style={{
@@ -1203,121 +1267,129 @@ export function TowerIndexPage({
             </p>
           </div>
 
-          {/* Pressures list */}
+          {/* Pressures list — T-6: substrate-bound when available, legacy fallback otherwise. */}
           <div style={{ padding: '0 32px 28px', display: 'flex', flexDirection: 'column' }}>
-            <Pressure
-              type="cost"
-              id="P-COST-2026-04"
-              label={'Cost\nOverrun'}
-              headline="LLM inference burn is on pace to overrun the AI envelope by $2.4M before Q3."
-              lede="Five programs share the budget pool. Joule and the internal Copilot pilot are 71% of token volume but 38% of measured value. Sentinel raised the flag 12 days ago; it's been trending faster since the Q1 model swap."
-              meta={[
-                { k: 'Programs affected', v: '5' },
-                { k: 'First seen', v: '12 days ago' },
-                { k: 'Owner', v: 'P. Iyer · CTO office' },
-              ]}
-              magnitude={
-                <span style={cvalStyle('high')}>
-                  $2.4<span style={{ fontSize: 13, fontWeight: 500, fontStyle: 'italic', color: T.GRAY_DK, marginLeft: 2, letterSpacing: 0 }}>M</span>
-                </span>
-              }
-              magnitudeLabel="Q3 projected overrun · HIGH conf"
-              nextAction={
-                <>
-                  Atlas suggests <strong style={{ color: T.INK }}>opening a Move on token-routing policy</strong> — would deflect ~$1.6M without touching the rate cards.
-                </>
-              }
-            />
-            <Pressure
-              type="dupl"
-              id="P-DUPL-2026-02"
-              label={'Capability\nDuplication'}
-              headline="Now Assist and M365 Copilot are converging on the same internal helpdesk use case."
-              lede="Both tools are being adopted by IT support, with overlapping deflection metrics and conflicting analytics. ServiceNow renewal is Q4 ($4.1M ARR); the duplication is real but attribution to either tool is currently low-confidence."
-              meta={[
-                { k: 'Programs affected', v: '2' },
-                { k: 'First seen', v: '28 days ago' },
-                { k: 'Owner', v: 'J. Park · Steward' },
-              ]}
-              magnitude={
-                <span style={cvalStyle('med')}>
-                  $1.2<span style={{ fontSize: 13, fontWeight: 500, fontStyle: 'italic', color: T.GRAY_DK, marginLeft: 2, letterSpacing: 0 }}>M</span>
-                  <ConfTag conf="med" />
-                </span>
-              }
-              magnitudeLabel="Annual exposure · attribution loose"
-              nextAction={
-                <>
-                  Atlas wants to <strong style={{ color: T.INK }}>run a 6-week clean attribution study</strong> before recommending consolidation.
-                </>
-              }
-            />
-            <Pressure
-              type="vend"
-              id="P-VEND-2026-01"
-              label={'Vendor\nClock'}
-              headline="Microsoft EA renewal closes in 47 days. Brief is open in Source. Decision posture undefined."
-              lede="$31.4M aggregate spend. Three product lines in scope (M365, Azure consumption, Copilot E5). Atlas's pre-brief surfaced two negotiation levers tied to current pressures: tie EA volume to inference deflection (P-COST), and use the Now Assist overlap (P-DUPL) as a swap argument on Copilot quantity."
-              meta={[
-                { k: 'Programs touched', v: '11' },
-                { k: 'Lead', v: 'M. Desai · Source' },
-                { k: 'Brief', v: 'draft v2 in Source' },
-              ]}
-              magnitude={
-                <span style={cvalStyle('high')}>
-                  47<span style={{ fontSize: 13, fontWeight: 500, fontStyle: 'italic', color: T.GRAY_DK, marginLeft: 2, letterSpacing: 0 }}>d</span>
-                </span>
-              }
-              magnitudeLabel="Until close · HIGH conf · CFO posture due"
-              nextAction={
-                <>
-                  Atlas drafted a <strong style={{ color: T.INK }}>negotiation thesis</strong> tying the EA to two open pressures. Read in Source brief.
-                </>
-              }
-            />
-            <Pressure
-              type="adopt"
-              id="P-ADOPT-2026-03"
-              label={'Adoption\nGap'}
-              headline="M365 Copilot adoption is at 24% of seats licensed. Plan was 60% by month 6."
-              lede={
-                <>
-                  Six months in. Two functions over 50% (Finance, Legal); IT and Sales under 15%. Steward is preparing a re-baseline proposal. <em>This is not a decision today — it&apos;s a watch item until the EA brief lands.</em>
-                </>
-              }
-              meta={[
-                { k: 'Seats licensed', v: '8,400' },
-                { k: 'Active seats', v: '2,016' },
-                { k: 'Watch since', v: '2 weeks' },
-              ]}
-              magnitude={
-                <span style={cvalStyle('med')}>
-                  24<span style={{ fontSize: 13, fontWeight: 500, fontStyle: 'italic', color: T.GRAY_DK, marginLeft: 2, letterSpacing: 0 }}>%</span>
-                  <ConfTag conf="med" />
-                </span>
-              }
-              magnitudeLabel="Active rate · vs 60% target"
-              nextAction="Watch · re-baseline pending. Tied to EA brief."
-            />
-            <Pressure
-              type="value"
-              id="P-VALUE-2026-05"
-              label={'Value\nLag'}
-              headline="Joule rollout is under-realizing on the projected efficiency line."
-              lede="Committed $3.2M annual; measured $1.4M after 9 months. Steward attributes 60% of the gap to slower-than-planned RPA pipeline migration. Re-baseline expected at next governance review."
-              meta={[
-                { k: 'Tied program', v: 'SAP Joule rollout' },
-                { k: 'Owner', v: 'SAP COE' },
-              ]}
-              magnitude={
-                <span style={cvalStyle('med')}>
-                  $1.8<span style={{ fontSize: 13, fontWeight: 500, fontStyle: 'italic', color: T.GRAY_DK, marginLeft: 2, letterSpacing: 0 }}>M</span>
-                  <ConfTag conf="med" />
-                </span>
-              }
-              magnitudeLabel="Realization gap · 9 months in"
-              nextAction="Re-baseline at next governance review."
-            />
+            {useSubstratePressures && pressuresView ? (
+              pressuresView.cards.map((card) => (
+                <SubstratePressure key={card.key} card={card} />
+              ))
+            ) : (
+              <>
+                <Pressure
+                  type="cost"
+                  id="P-COST-2026-04"
+                  label={'Cost\nOverrun'}
+                  headline="LLM inference burn is on pace to overrun the AI envelope by $2.4M before Q3."
+                  lede="Five programs share the budget pool. Joule and the internal Copilot pilot are 71% of token volume but 38% of measured value. Sentinel raised the flag 12 days ago; it's been trending faster since the Q1 model swap."
+                  meta={[
+                    { k: 'Programs affected', v: '5' },
+                    { k: 'First seen', v: '12 days ago' },
+                    { k: 'Owner', v: 'P. Iyer · CTO office' },
+                  ]}
+                  magnitude={
+                    <span style={cvalStyle('high')}>
+                      $2.4<span style={{ fontSize: 13, fontWeight: 500, fontStyle: 'italic', color: T.GRAY_DK, marginLeft: 2, letterSpacing: 0 }}>M</span>
+                    </span>
+                  }
+                  magnitudeLabel="Q3 projected overrun · HIGH conf"
+                  nextAction={
+                    <>
+                      Atlas suggests <strong style={{ color: T.INK }}>opening a Move on token-routing policy</strong> — would deflect ~$1.6M without touching the rate cards.
+                    </>
+                  }
+                />
+                <Pressure
+                  type="dupl"
+                  id="P-DUPL-2026-02"
+                  label={'Capability\nDuplication'}
+                  headline="Now Assist and M365 Copilot are converging on the same internal helpdesk use case."
+                  lede="Both tools are being adopted by IT support, with overlapping deflection metrics and conflicting analytics. ServiceNow renewal is Q4 ($4.1M ARR); the duplication is real but attribution to either tool is currently low-confidence."
+                  meta={[
+                    { k: 'Programs affected', v: '2' },
+                    { k: 'First seen', v: '28 days ago' },
+                    { k: 'Owner', v: 'J. Park · Steward' },
+                  ]}
+                  magnitude={
+                    <span style={cvalStyle('med')}>
+                      $1.2<span style={{ fontSize: 13, fontWeight: 500, fontStyle: 'italic', color: T.GRAY_DK, marginLeft: 2, letterSpacing: 0 }}>M</span>
+                      <ConfTag conf="med" />
+                    </span>
+                  }
+                  magnitudeLabel="Annual exposure · attribution loose"
+                  nextAction={
+                    <>
+                      Atlas wants to <strong style={{ color: T.INK }}>run a 6-week clean attribution study</strong> before recommending consolidation.
+                    </>
+                  }
+                />
+                <Pressure
+                  type="vend"
+                  id="P-VEND-2026-01"
+                  label={'Vendor\nClock'}
+                  headline="Microsoft EA renewal closes in 47 days. Brief is open in Source. Decision posture undefined."
+                  lede="$31.4M aggregate spend. Three product lines in scope (M365, Azure consumption, Copilot E5). Atlas's pre-brief surfaced two negotiation levers tied to current pressures: tie EA volume to inference deflection (P-COST), and use the Now Assist overlap (P-DUPL) as a swap argument on Copilot quantity."
+                  meta={[
+                    { k: 'Programs touched', v: '11' },
+                    { k: 'Lead', v: 'M. Desai · Source' },
+                    { k: 'Brief', v: 'draft v2 in Source' },
+                  ]}
+                  magnitude={
+                    <span style={cvalStyle('high')}>
+                      47<span style={{ fontSize: 13, fontWeight: 500, fontStyle: 'italic', color: T.GRAY_DK, marginLeft: 2, letterSpacing: 0 }}>d</span>
+                    </span>
+                  }
+                  magnitudeLabel="Until close · HIGH conf · CFO posture due"
+                  nextAction={
+                    <>
+                      Atlas drafted a <strong style={{ color: T.INK }}>negotiation thesis</strong> tying the EA to two open pressures. Read in Source brief.
+                    </>
+                  }
+                />
+                <Pressure
+                  type="adopt"
+                  id="P-ADOPT-2026-03"
+                  label={'Adoption\nGap'}
+                  headline="M365 Copilot adoption is at 24% of seats licensed. Plan was 60% by month 6."
+                  lede={
+                    <>
+                      Six months in. Two functions over 50% (Finance, Legal); IT and Sales under 15%. Steward is preparing a re-baseline proposal. <em>This is not a decision today — it&apos;s a watch item until the EA brief lands.</em>
+                    </>
+                  }
+                  meta={[
+                    { k: 'Seats licensed', v: '8,400' },
+                    { k: 'Active seats', v: '2,016' },
+                    { k: 'Watch since', v: '2 weeks' },
+                  ]}
+                  magnitude={
+                    <span style={cvalStyle('med')}>
+                      24<span style={{ fontSize: 13, fontWeight: 500, fontStyle: 'italic', color: T.GRAY_DK, marginLeft: 2, letterSpacing: 0 }}>%</span>
+                      <ConfTag conf="med" />
+                    </span>
+                  }
+                  magnitudeLabel="Active rate · vs 60% target"
+                  nextAction="Watch · re-baseline pending. Tied to EA brief."
+                />
+                <Pressure
+                  type="value"
+                  id="P-VALUE-2026-05"
+                  label={'Value\nLag'}
+                  headline="Joule rollout is under-realizing on the projected efficiency line."
+                  lede="Committed $3.2M annual; measured $1.4M after 9 months. Steward attributes 60% of the gap to slower-than-planned RPA pipeline migration. Re-baseline expected at next governance review."
+                  meta={[
+                    { k: 'Tied program', v: 'SAP Joule rollout' },
+                    { k: 'Owner', v: 'SAP COE' },
+                  ]}
+                  magnitude={
+                    <span style={cvalStyle('med')}>
+                      $1.8<span style={{ fontSize: 13, fontWeight: 500, fontStyle: 'italic', color: T.GRAY_DK, marginLeft: 2, letterSpacing: 0 }}>M</span>
+                      <ConfTag conf="med" />
+                    </span>
+                  }
+                  magnitudeLabel="Realization gap · 9 months in"
+                  nextAction="Re-baseline at next governance review."
+                />
+              </>
+            )}
           </div>
 
           {/* Strategic alignment matrix */}
