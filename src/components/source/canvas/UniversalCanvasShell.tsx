@@ -15,6 +15,8 @@ const XLSX_GENERATABLE_CODES_CLIENT: ReadonlySet<string> = new Set([
   'd11_response_checklist',
   'd16_scorecard',
   'd19_pricing_workbook',
+  'd20_trap_log',
+  'd22_bafo_question_pack',
 ]);
 // Comparison-mode codes — show a second "Download comparison xlsx"
 // anchor alongside the standard template. Today only d19 (pricing).

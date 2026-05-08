@@ -62,6 +62,14 @@ import {
   buildScorecardWorkbook,
   type ScorecardPayload,
 } from './renderers/scorecard';
+import {
+  buildTrapLogWorkbook,
+  type TrapLogPayload,
+} from './renderers/trap-log';
+import {
+  buildBafoQuestionPackWorkbook,
+  type BafoQuestionPackPayload,
+} from './renderers/bafo-question-pack';
 
 export { XLSX_CONTENT_TYPE } from './renderers/xlsx-base';
 export { DOCX_CONTENT_TYPE } from './renderers/docx-base';
@@ -77,6 +85,8 @@ export const XLSX_GENERATABLE_CODES = new Set([
   'd11_response_checklist',
   'd16_scorecard',
   'd19_pricing_workbook',
+  'd20_trap_log',
+  'd22_bafo_question_pack',
 ]);
 
 /**
@@ -190,6 +200,10 @@ export async function renderArtifactXlsx(
       );
     case 'd16_scorecard':
       return buildScorecardWorkbook(args.payload as ScorecardPayload);
+    case 'd20_trap_log':
+      return buildTrapLogWorkbook(args.payload as TrapLogPayload);
+    case 'd22_bafo_question_pack':
+      return buildBafoQuestionPackWorkbook(args.payload as BafoQuestionPackPayload);
     default:
       throw new Error(
         `No xlsx generator wired for ${args.artifactCode}. ` +
@@ -295,6 +309,7 @@ export function renderArtifactPdf(args: RenderPdfArgs): import('react').ReactEle
 
 export type {
   AppInventoryPayload,
+  BafoQuestionPackPayload,
   NarrativeHtmlConfig,
   NarrativeHtmlPayload,
   NarrativePdfConfig,
@@ -304,4 +319,5 @@ export type {
   ResponseChecklistPayload,
   ScopeMemoDocxPayload,
   ScorecardPayload,
+  TrapLogPayload,
 };

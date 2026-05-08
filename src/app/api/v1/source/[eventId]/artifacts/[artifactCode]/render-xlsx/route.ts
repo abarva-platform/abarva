@@ -30,6 +30,8 @@ import { buildPricingTemplatePayloadFromContext } from '@/lib/source/exports/pay
 import { buildAppInventoryPayloadFromContext } from '@/lib/source/exports/payloads/app-inventory-payload';
 import { buildResponseChecklistPayloadFromContext } from '@/lib/source/exports/payloads/response-checklist-payload';
 import { buildScorecardPayloadFromContext } from '@/lib/source/exports/payloads/scorecard-payload';
+import { buildTrapLogPayloadFromContext } from '@/lib/source/exports/payloads/trap-log-payload';
+import { buildBafoQuestionPackPayloadFromContext } from '@/lib/source/exports/payloads/bafo-question-pack-payload';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -119,6 +121,12 @@ export async function GET(_req: NextRequest, { params }: RouteCtx) {
         break;
       case 'd16_scorecard':
         payload = buildScorecardPayloadFromContext(ctx, generatedAt);
+        break;
+      case 'd20_trap_log':
+        payload = buildTrapLogPayloadFromContext(ctx, generatedAt);
+        break;
+      case 'd22_bafo_question_pack':
+        payload = buildBafoQuestionPackPayloadFromContext(ctx, generatedAt);
         break;
       default:
         // Defensive — isXlsxGeneratable should have caught this above.
