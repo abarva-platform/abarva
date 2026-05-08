@@ -28,7 +28,7 @@ import {
   findMissingUpstreamCodes,
   getPromptTemplate,
   type SourceArtifactBodyGenerationMetadata,
-} from '@/lib/source/agent-generation';
+} from '@/lib/source/agent-generation/server';
 import {
   artifactStateRowToView,
   type SourceEventArtifactState,
