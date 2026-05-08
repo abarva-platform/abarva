@@ -1,11 +1,12 @@
 'use client';
-// /home/learn layout — persistent left sidebar + scrollable content area.
-// The sidebar always shows; content fills the remaining width.
-// Both the sidebar and content are independently scrollable.
+// Home-area layout — persistent left sidebar visible on /home and all
+// /home/learn/* routes. The sidebar renders Learn navigation; when on
+// the main dashboard the sidebar is still shown so "Learn" is always
+// one click away.
 
 import { LearnSideNav } from '@/components/home/learn/LearnSideNav';
 
-export default function LearnLayout({ children }: { children: React.ReactNode }) {
+export default function HomeLayout({ children }: { children: React.ReactNode }) {
   return (
     <div
       style={{
@@ -15,28 +16,28 @@ export default function LearnLayout({ children }: { children: React.ReactNode })
         background: '#ffffff',
       }}
     >
-      {/* Left sidebar — fixed height, independent scroll */}
+      {/* Persistent left sidebar */}
       <div
         style={{
+          flexShrink: 0,
           height: '100vh',
           overflowY: 'auto',
-          flexShrink: 0,
         }}
       >
         <LearnSideNav />
       </div>
 
-      {/* Content area — fills remaining width, independently scrollable */}
-      <main
+      {/* Main content — fills remaining width, independently scrollable */}
+      <div
         style={{
           flex: 1,
           height: '100vh',
           overflowY: 'auto',
-          background: '#ffffff',
+          minWidth: 0,
         }}
       >
         {children}
-      </main>
+      </div>
     </div>
   );
 }

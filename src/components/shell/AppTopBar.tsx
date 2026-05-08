@@ -36,7 +36,7 @@ const NAV_ITEMS: CockpitNavItem[] = [
     match: (pathname) =>
       pathname === "/" ||
       pathname === "/home" ||
-      pathname.startsWith("/home/") ||
+      (pathname.startsWith("/home/") && !pathname.startsWith("/home/learn")) ||
       pathname === "/dashboard" ||
       pathname.startsWith("/dashboard/"),
   },
@@ -95,9 +95,9 @@ const NAV_ITEMS: CockpitNavItem[] = [
   {
     key: "learn",
     label: "Learn",
-    href: "/learn",
+    href: "/home/learn",
     match: (pathname) =>
-      pathname === "/learn" || pathname.startsWith("/learn/"),
+      pathname === "/home/learn" || pathname.startsWith("/home/learn/"),
   },
   {
     key: "product",

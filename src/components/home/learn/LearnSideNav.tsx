@@ -53,27 +53,10 @@ export function LearnSideNav() {
       {/* Header */}
       <div
         style={{
-          padding: '20px 20px 14px',
+          padding: '16px 20px 12px',
           borderBottom: `1px solid ${T.border}`,
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 6,
         }}
       >
-        <Link
-          href="/home"
-          style={{
-            fontFamily: T.fMono,
-            fontSize: 9,
-            fontWeight: 700,
-            letterSpacing: '0.12em',
-            textTransform: 'uppercase',
-            color: T.muted,
-            textDecoration: 'none',
-          }}
-        >
-          ← Home
-        </Link>
         <div
           style={{
             fontFamily: T.fDisp,
@@ -81,10 +64,33 @@ export function LearnSideNav() {
             fontWeight: 400,
             color: T.ink,
             letterSpacing: '-0.01em',
+            marginBottom: 12,
           }}
         >
-          User Guide
+          AbarVa
         </div>
+        {/* Dashboard link */}
+        <Link
+          href="/home"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 8,
+            fontFamily: T.fBody,
+            fontSize: 13,
+            fontWeight: pathname === '/home' ? 600 : 400,
+            color: pathname === '/home' ? T.navy : T.body,
+            background: pathname === '/home' ? T.navySoft : 'transparent',
+            borderLeft: `2px solid ${pathname === '/home' ? T.navy : 'transparent'}`,
+            padding: '6px 8px',
+            borderRadius: '0 6px 6px 0',
+            textDecoration: 'none',
+            margin: '0 -8px',
+          }}
+        >
+          <span style={{ fontSize: 14 }}>⌂</span>
+          <span>Dashboard</span>
+        </Link>
       </div>
 
       {/* Nav */}
