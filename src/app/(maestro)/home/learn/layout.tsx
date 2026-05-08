@@ -1,9 +1,10 @@
 'use client';
-// Learn sub-shell — AppTopBar + LearnSideNav for all /home/learn/* routes.
-// The root /home uses its own AppShell (HomeIndexPage); this layout is
-// scoped to the learn guide only so the two shells never conflict.
+// Learn sub-shell — AppTopBarBlack + LearnSideNav for all /home/learn/*
+// routes. Aligned with the canonical /home top bar (black / 22px wordmark
+// / "AI Success Platform" tagline) so chrome stays consistent across
+// every /home surface.
 
-import { AppTopBar } from '@/components/shell/AppTopBar';
+import { AppTopBarBlack } from '@/components/shell/AppTopBarBlack';
 import { LearnSideNav } from '@/components/home/learn/LearnSideNav';
 
 export default function HomeLearnLayout({ children }: { children: React.ReactNode }) {
@@ -17,7 +18,7 @@ export default function HomeLearnLayout({ children }: { children: React.ReactNod
         background: '#ffffff',
       }}
     >
-      <AppTopBar />
+      <AppTopBarBlack />
 
       <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
         <LearnSideNav />
