@@ -223,36 +223,42 @@ function renderTable(node: MdTable): ReactNode {
 }
 
 // ── Inline ─────────────────────────────────────────────────────────────────
+//
+// react-pdf flattens text — when you nest <Text> in <Text>, layout
+// math breaks for long bodies (it runs into floating-point overflow on
+// very large paragraphs, throwing "unsupported number: -8.5e+21" or
+// similar). Strategy: only emit nested <Text> when we need a different
+// font/style; plain text emits as raw strings inside the parent Text.
 
-function renderInline(children: PhrasingContent[]): ReactNode {
-  return children.map((child, idx) => (
-    <Text key={idx}>{renderInlineNode(child)}</Text>
-  ));
+function renderInline(children: PhrasingContent[]): ReactNode[] {
+  // Returns an array of (string | ReactElement) children that the parent
+  // <Text> element can splice in directly. No outer <Text> wrapper.
+  return children.map((child, idx) => renderInlineNode(child, idx));
 }
 
-function renderInlineNode(node: PhrasingContent): ReactNode {
+function renderInlineNode(node: PhrasingContent, key: number): ReactNode {
   switch (node.type) {
     case 'text':
+      // Plain text becomes a raw string child of the parent Text. This
+      // is the load-bearing case for long bodies — wrapping plain text
+      // in <Text> is what triggers the layout overflow.
       return (node as MdText).value;
     case 'strong':
       return (
-        <Text style={{ fontFamily: PDF_FONTS.BODY_BOLD }}>
-          {(node as Strong).children.map((c, i) => (
-            <Text key={i}>{renderInlineNode(c)}</Text>
-          ))}
+        <Text key={key} style={{ fontFamily: PDF_FONTS.BODY_BOLD }}>
+          {(node as Strong).children.map((c, i) => renderInlineNode(c, i))}
         </Text>
       );
     case 'emphasis':
       return (
-        <Text style={{ fontFamily: PDF_FONTS.BODY_ITALIC }}>
-          {(node as Emphasis).children.map((c, i) => (
-            <Text key={i}>{renderInlineNode(c)}</Text>
-          ))}
+        <Text key={key} style={{ fontFamily: PDF_FONTS.BODY_ITALIC }}>
+          {(node as Emphasis).children.map((c, i) => renderInlineNode(c, i))}
         </Text>
       );
     case 'inlineCode':
       return (
         <Text
+          key={key}
           style={{
             fontFamily: PDF_FONTS.MONO,
             backgroundColor: PDF_COLORS.SOFT,
@@ -270,17 +276,20 @@ function renderInlineNode(node: PhrasingContent): ReactNode {
         .map((c) => extractPlain(c as Content))
         .join('');
       return (
-        <Text style={{ color: '#1B5BB8', textDecoration: 'underline' }}>
+        <Text
+          key={key}
+          style={{ color: '#1B5BB8', textDecoration: 'underline' }}
+        >
           {inner}
         </Text>
       );
     }
     case 'delete':
       return (
-        <Text style={{ textDecoration: 'line-through' }}>
-          {(node as { children: PhrasingContent[] }).children.map((c, i) => (
-            <Text key={i}>{renderInlineNode(c)}</Text>
-          ))}
+        <Text key={key} style={{ textDecoration: 'line-through' }}>
+          {(node as { children: PhrasingContent[] }).children.map((c, i) =>
+            renderInlineNode(c, i),
+          )}
         </Text>
       );
     default:
