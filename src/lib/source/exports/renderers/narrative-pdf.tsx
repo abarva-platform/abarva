@@ -32,8 +32,8 @@ import {
   type NarrativeDocxConfig,
   type NarrativeDocxPayload,
 } from './narrative-docx';
-import { markdownToPdfNodes } from './markdown-to-pdf';
-import { PDF_COLORS, PDF_STYLES } from './pdf-base';
+import { markdownToPdfNodes } from '@/lib/exports-shared/markdown-to-pdf';
+import { PDF_COLORS, PDF_STYLES } from '@/lib/exports-shared/pdf-base';
 
 export type NarrativePdfConfig = NarrativeDocxConfig;
 export type NarrativePdfPayload = NarrativeDocxPayload;

@@ -1,4 +1,4 @@
-import { markdownToHtml } from '../renderers/markdown-to-html';
+import { markdownToHtml } from '@/lib/exports-shared/markdown-to-html';
 
 describe('markdownToHtml', () => {
   it('returns an empty string for empty input', () => {

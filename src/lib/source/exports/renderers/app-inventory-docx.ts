@@ -26,11 +26,11 @@ import {
   coverTitleParagraph,
   eyebrowParagraph,
   heading2,
-} from './docx-base';
+} from '@/lib/exports-shared/docx-base';
 import {
   buildKeyValueTable,
   buildMultiColumnTable,
-} from './structured-docx-base';
+} from '@/lib/exports-shared/structured-docx-base';
 import type { AppInventoryPayload } from './app-inventory';
 
 export function buildAppInventoryDocx(payload: AppInventoryPayload): Document {

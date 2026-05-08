@@ -32,7 +32,7 @@ import {
   applyLockedRow,
   buildCoverSheet,
   safeCell,
-} from './xlsx-base';
+} from '@/lib/exports-shared/xlsx-base';
 
 /** One row in either the Mandatory or Optional Items sheet. */
 export interface ResponseChecklistItem {

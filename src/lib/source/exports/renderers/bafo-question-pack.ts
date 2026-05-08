@@ -28,7 +28,7 @@ import {
   applyLockedRow,
   buildCoverSheet,
   safeCell,
-} from './xlsx-base';
+} from '@/lib/exports-shared/xlsx-base';
 
 export interface BafoQuestion {
   /** Stable id — TQ-* for trap-driven, VQ-* for value-uplift. */

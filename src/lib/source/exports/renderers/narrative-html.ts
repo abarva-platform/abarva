@@ -13,7 +13,7 @@
 
 import 'server-only';
 
-import { markdownToHtml } from './markdown-to-html';
+import { markdownToHtml } from '@/lib/exports-shared/markdown-to-html';
 import {
   DECISION_BRIEF_DOCX_CONFIG,
   RFP_PACK_DOCX_CONFIG,

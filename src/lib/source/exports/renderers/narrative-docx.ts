@@ -29,8 +29,8 @@ import {
   coverSubtitleParagraph,
   coverTitleParagraph,
   eyebrowParagraph,
-} from './docx-base';
-import { markdownToDocxBlocks } from './markdown-to-docx';
+} from '@/lib/exports-shared/docx-base';
+import { markdownToDocxBlocks } from '@/lib/exports-shared/markdown-to-docx';
 
 /** Payload all narrative renderers consume. */
 export interface NarrativeDocxPayload {

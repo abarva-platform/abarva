@@ -35,7 +35,7 @@ import {
   applyLockedRow,
   buildCoverSheet,
   safeCell,
-} from './xlsx-base';
+} from '@/lib/exports-shared/xlsx-base';
 import type {
   PricingAssumption,
   PricingLineItem,

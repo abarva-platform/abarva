@@ -28,7 +28,7 @@ import {
   applyLockedRow,
   buildCoverSheet,
   safeCell,
-} from './xlsx-base';
+} from '@/lib/exports-shared/xlsx-base';
 
 /** One row in the Application Inventory sheet. Buyer fills tier + owner. */
 export interface AppInventoryRow {

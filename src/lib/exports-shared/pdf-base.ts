@@ -1,185 +1,250 @@
-// exports-shared · @react-pdf base primitives.
+// Source · pdf renderer base styles
 //
-// StyleSheet definitions and color tokens for @react-pdf/renderer.
-// Zero coupling to any product module — may be imported by
-// programs/exports, moves/exports, or any future module that generates PDF.
+// Shared style tokens + StyleSheet for every Source PDF renderer.
+// Mirrors the docx-base / xlsx-base pattern. Uses @react-pdf/renderer's
+// StyleSheet API (Flexbox-like; not full CSS).
 //
-// PDF renderers are deferred to EXPORT-5 (per DELIVERABLE_EXPORT_DESIGN.md).
-// This module establishes the shared foundation so all PDF renderers share
-// a single token source. Added in the journey-kit-phase3 wave.
+// Brand parity: same color palette + typography intent as the docx
+// and HTML renderers. AbarVa v3 typography is Fraunces (display) /
+// Inter (body) / JetBrains Mono (per src/app/layout.tsx). @react-pdf
+// only ships built-in fonts (Helvetica / Times-Roman / Courier);
+// registering the v3 fonts via `Font.register({ family, src })`
+// requires the actual woff/ttf files served from a stable URL — both
+// fonts are OFL-licensed and ship on Google Fonts CDN.
 //
-// @react-pdf/renderer is installed when PDF support ships (EXPORT-5).
-// The StyleSheet stub below satisfies the type system until then.
+// Deferred to its own slice (Slice 7.2) until the font files are
+// deployed under /public/fonts/ or a CDN strategy is settled. For now
+// PDFs use built-in fonts that approximate the brand:
+//   - Body: Helvetica (clean sans, closest built-in to Inter)
+//   - Display: Times-Roman (closest built-in to Fraunces)
+//   - Mono: Courier (closest built-in to JetBrains Mono)
+//
+// docx + HTML do already use the v3 fonts (Word substitutes; HTML
+// loads via Google Fonts CSS); only PDF lags until font registration
+// lands.
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-let StyleSheet: { create: (styles: Record<string, Record<string, any>>) => Record<string, Record<string, any>> };
-try {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  StyleSheet = require('@react-pdf/renderer').StyleSheet;
-} catch {
-  // @react-pdf/renderer not yet installed; provide a pass-through stub so
-  // this module can be imported without error at type-check and test time.
-  StyleSheet = {
-    create: <T extends Record<string, Record<string, unknown>>>(styles: T): T => styles,
-  };
-}
+import 'server-only';
 
-// ── Color tokens ─────────────────────────────────────────────────────────
+import { StyleSheet } from '@react-pdf/renderer';
 
-/** Color palette matching the AbarVa design system. */
 export const PDF_COLORS = {
-  /** Near-black background and foreground text. */
-  ink: '#0A0A0A',
-  /** Warm off-white page background. */
-  pageBg: '#F8F7F4',
-  /** Near-white text on dark headers. */
-  headerText: '#F5F5F0',
-  /** Accent teal. */
-  accent: '#2DD4C8',
-  /** Muted warm grey for secondary text. */
-  muted: '#706D66',
-  /** Amber for warnings/contradictions. */
-  amber: '#B45309',
-  /** Soft yellow for contradiction rows. */
-  contradictionBg: '#FFFBDB',
-  /** Light grey for alternating row bands. */
-  bandBg: '#F8F7F4',
-  /** White. */
-  white: '#FFFFFF',
+  /** AbarVa ink (deep navy). */
+  HEADER: '#0C1A3A',
+  /** AbarVa muted text. */
+  MUTED: '#706D66',
+  /** Sentinel teal accent. */
+  ACCENT: '#2DD4C8',
+  /** Soft amber for callouts. */
+  WARNING: '#F4B400',
+  /** Cream / page bg. */
+  BG: '#F8F7F4',
+  /** Soft surface (list bg, code bg). */
+  SOFT: '#F4F2EC',
+  /** Rule color. */
+  RULE: '#D8D5CC',
 } as const;
 
-// ── Typography tokens ────────────────────────────────────────────────────
-
-/** Font sizes (in pt) matching the docx-base scale. */
-export const PDF_FONT_SIZES = {
-  title: 22,
-  subtitle: 12,
-  sectionHeading: 15,
-  subsectionHeading: 12,
-  body: 11,
-  small: 9,
-  table: 10,
+export const PDF_FONTS = {
+  BODY: 'Helvetica',
+  BODY_BOLD: 'Helvetica-Bold',
+  BODY_ITALIC: 'Helvetica-Oblique',
+  DISPLAY: 'Times-Roman',
+  DISPLAY_BOLD: 'Times-Bold',
+  MONO: 'Courier',
 } as const;
 
-// ── StyleSheet ───────────────────────────────────────────────────────────
-
-/**
- * Canonical @react-pdf StyleSheet.
- *
- * Renderers import this and reference style keys by name, matching the
- * helper function names in docx-base.ts for conceptual parity.
- */
-export const styles = StyleSheet.create({
+export const PDF_STYLES = StyleSheet.create({
+  // Page-level
   page: {
-    backgroundColor: PDF_COLORS.pageBg,
-    paddingTop: 48,
-    paddingBottom: 48,
-    paddingLeft: 56,
-    paddingRight: 56,
-    fontFamily: 'Helvetica',
+    backgroundColor: PDF_COLORS.BG,
+    padding: 48,
+    fontFamily: PDF_FONTS.BODY,
+    fontSize: 10,
+    color: PDF_COLORS.HEADER,
+    lineHeight: 1.45,
   },
-
-  // Cover page
-  titleHeading: {
-    fontSize: PDF_FONT_SIZES.title,
-    fontWeight: 'bold',
-    color: PDF_COLORS.ink,
-    marginBottom: 8,
-  },
-  subtitleParagraph: {
-    fontSize: PDF_FONT_SIZES.subtitle,
-    fontStyle: 'italic',
-    color: PDF_COLORS.muted,
+  // Cover
+  eyebrow: {
+    fontSize: 8,
+    fontFamily: PDF_FONTS.BODY_BOLD,
+    color: PDF_COLORS.MUTED,
+    letterSpacing: 1.2,
     marginBottom: 6,
+    textTransform: 'uppercase',
   },
-  tenantKey: {
-    fontSize: PDF_FONT_SIZES.small,
-    color: PDF_COLORS.muted,
-    fontFamily: 'Courier',
+  title: {
+    fontSize: 22,
+    fontFamily: PDF_FONTS.DISPLAY,
+    color: PDF_COLORS.HEADER,
+    marginBottom: 12,
+  },
+  meta: {
+    fontSize: 10,
+    color: PDF_COLORS.MUTED,
     marginBottom: 4,
   },
-  timestamp: {
-    fontSize: PDF_FONT_SIZES.small,
-    fontStyle: 'italic',
-    color: PDF_COLORS.muted,
-    marginBottom: 16,
+  scaffoldWarning: {
+    backgroundColor: '#FBEFC4',
+    borderColor: PDF_COLORS.WARNING,
+    borderWidth: 1,
+    borderRadius: 4,
+    padding: 10,
+    marginTop: 12,
+    marginBottom: 6,
+    fontSize: 9,
+    color: '#5B3F00',
   },
-  gateBanner: {
-    fontSize: 11,
-    fontWeight: 'bold',
-    color: PDF_COLORS.ink,
-    borderTopWidth: 2,
-    borderBottomWidth: 2,
-    borderColor: PDF_COLORS.ink,
-    paddingTop: 6,
-    paddingBottom: 6,
-    marginBottom: 24,
+  divider: {
+    borderBottomColor: PDF_COLORS.RULE,
+    borderBottomWidth: 1,
+    marginVertical: 16,
   },
-
   // Body
-  sectionHeading: {
-    fontSize: PDF_FONT_SIZES.sectionHeading,
-    fontWeight: 'bold',
-    color: PDF_COLORS.ink,
-    marginTop: 18,
+  h1: {
+    fontSize: 16,
+    fontFamily: PDF_FONTS.BODY_BOLD,
+    color: PDF_COLORS.HEADER,
+    marginTop: 16,
+    marginBottom: 8,
+  },
+  h2: {
+    fontSize: 13,
+    fontFamily: PDF_FONTS.BODY_BOLD,
+    color: PDF_COLORS.HEADER,
+    marginTop: 14,
     marginBottom: 6,
   },
-  subsectionHeading: {
-    fontSize: PDF_FONT_SIZES.subsectionHeading,
-    fontWeight: 'bold',
-    color: PDF_COLORS.ink,
+  h3: {
+    fontSize: 11,
+    fontFamily: PDF_FONTS.BODY_BOLD,
+    color: PDF_COLORS.HEADER,
     marginTop: 12,
     marginBottom: 4,
   },
-  bodyParagraph: {
-    fontSize: PDF_FONT_SIZES.body,
-    color: PDF_COLORS.ink,
-    lineHeight: 1.5,
+  body: {
+    fontSize: 10,
+    color: PDF_COLORS.HEADER,
     marginBottom: 6,
-  },
-  italicParagraph: {
-    fontSize: PDF_FONT_SIZES.body,
-    fontStyle: 'italic',
-    color: PDF_COLORS.ink,
     lineHeight: 1.5,
-    marginBottom: 6,
   },
-  bulletItem: {
-    fontSize: PDF_FONT_SIZES.body,
-    color: PDF_COLORS.ink,
-    marginLeft: 12,
+  hr: {
+    borderBottomColor: PDF_COLORS.RULE,
+    borderBottomWidth: 1,
+    marginVertical: 12,
+  },
+  // Lists
+  list: {
+    marginVertical: 6,
+    marginLeft: 4,
+  },
+  listNested: {
+    marginLeft: 16,
+    marginVertical: 4,
+  },
+  listItem: {
+    flexDirection: 'row',
     marginBottom: 3,
   },
-  labeledLine: {
-    fontSize: PDF_FONT_SIZES.body,
-    color: PDF_COLORS.ink,
-    marginBottom: 3,
+  listMarker: {
+    width: 14,
+    fontSize: 10,
+    color: PDF_COLORS.MUTED,
   },
-
+  listItemBody: {
+    flex: 1,
+  },
+  listItemText: {
+    fontSize: 10,
+    color: PDF_COLORS.HEADER,
+    lineHeight: 1.45,
+  },
+  // Block quote
+  blockquote: {
+    borderLeftColor: PDF_COLORS.ACCENT,
+    borderLeftWidth: 2,
+    paddingLeft: 10,
+    paddingVertical: 4,
+    marginVertical: 8,
+    backgroundColor: PDF_COLORS.SOFT,
+  },
+  blockquoteText: {
+    fontSize: 9,
+    fontFamily: PDF_FONTS.BODY_ITALIC,
+    color: PDF_COLORS.MUTED,
+  },
+  // Code block
+  codeBlock: {
+    backgroundColor: PDF_COLORS.SOFT,
+    borderLeftColor: PDF_COLORS.RULE,
+    borderLeftWidth: 2,
+    padding: 8,
+    marginVertical: 6,
+    borderRadius: 3,
+  },
+  codeBlockText: {
+    fontFamily: PDF_FONTS.MONO,
+    fontSize: 8,
+    color: '#383530',
+    lineHeight: 1.35,
+  },
   // Tables
-  tableHeaderCell: {
-    backgroundColor: PDF_COLORS.ink,
-    color: PDF_COLORS.headerText,
-    fontSize: PDF_FONT_SIZES.table,
-    fontWeight: 'bold',
-    padding: 4,
-    flex: 1,
+  table: {
+    marginVertical: 8,
+    borderColor: PDF_COLORS.RULE,
+    borderWidth: 1,
+    borderRadius: 2,
   },
-  tableDataCell: {
-    fontSize: PDF_FONT_SIZES.table,
-    color: PDF_COLORS.ink,
-    padding: 4,
-    flex: 1,
+  tableHeaderRow: {
+    flexDirection: 'row',
+    backgroundColor: PDF_COLORS.HEADER,
   },
   tableRow: {
     flexDirection: 'row',
-    borderBottomWidth: 0.5,
-    borderColor: '#D0CEC9',
+    borderTopColor: PDF_COLORS.RULE,
+    borderTopWidth: 0.5,
   },
-  tableBandedRow: {
+  tableHeaderCell: {
+    flex: 1,
+    paddingHorizontal: 6,
+    paddingVertical: 4,
+  },
+  tableCell: {
+    flex: 1,
+    paddingHorizontal: 6,
+    paddingVertical: 4,
+  },
+  tableHeaderText: {
+    color: '#FAF7F1',
+    fontFamily: PDF_FONTS.BODY_BOLD,
+    fontSize: 9,
+  },
+  tableCellText: {
+    color: PDF_COLORS.HEADER,
+    fontSize: 9,
+  },
+  // Page header / footer
+  pageHeader: {
+    position: 'absolute',
+    top: 20,
+    left: 48,
+    right: 48,
+    fontSize: 8,
+    color: PDF_COLORS.MUTED,
     flexDirection: 'row',
-    backgroundColor: PDF_COLORS.bandBg,
-    borderBottomWidth: 0.5,
-    borderColor: '#D0CEC9',
+    justifyContent: 'space-between',
+  },
+  pageFooter: {
+    position: 'absolute',
+    bottom: 20,
+    left: 48,
+    right: 48,
+    fontSize: 8,
+    color: PDF_COLORS.MUTED,
+    fontFamily: PDF_FONTS.BODY_ITALIC,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
   },
 });
+
+/** PDF MIME (Adobe). */
+export const PDF_CONTENT_TYPE = 'application/pdf';

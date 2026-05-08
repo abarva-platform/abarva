@@ -33,7 +33,7 @@ import {
   applyLockedRow,
   buildCoverSheet,
   safeCell,
-} from './xlsx-base';
+} from '@/lib/exports-shared/xlsx-base';
 
 /** One row in the Pricing Detail sheet. Vendors fill `unitPrice`. */
 export interface PricingLineItem {
