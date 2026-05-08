@@ -1,12 +1,15 @@
 'use client';
 
 import Link from 'next/link';
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import type { CSSProperties, ReactNode } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { AppShell } from '@/components/shell/AppShell';
 import { MetricProvenance } from '@/components/tower/MetricProvenance';
 import { DeferredMetricsBlock } from '@/components/tower/DeferredMetricsBlock';
+import { AtlasChatPanel, type AtlasMessage } from '@/components/atlas/AtlasChatPanel';
+import type { AttachmentRef } from '@/components/agent/AgentDock';
+import type { AtlasChatResponse, AtlasSuggestion } from '@/lib/atlas/types';
 import {
   buildStrategicAlignment2x2View,
   dotsByQuadrant,
@@ -697,18 +700,21 @@ interface SynthBlock {
   actions?: AtlasAction[];
 }
 
+// AtlasColumn · Tower right rail (synthesis-only). The chat composer that
+// previously lived at the bottom of this aside has migrated to the shared
+// `<AgentDock>` mounted at the page level (side-rail mode, left pane). The
+// dock provides the resizable composer, paperclip uploads, mode picker, and
+// sticky bottom positioning. This panel keeps the rich observation +
+// action-chip rendering that the dock's plain-text thread can't represent.
 function AtlasColumn({
   headline,
   meta,
   synth,
-  prompts,
 }: {
   headline: string;
   meta: string;
   synth: SynthBlock[];
-  prompts: string[];
 }) {
-  const [input, setInput] = useState('');
   return (
     <aside
       style={{
@@ -769,7 +775,6 @@ function AtlasColumn({
       <div
         style={{
           padding: '16px 22px',
-          borderBottom: `1px solid ${T.RULE}`,
           flex: 1,
           overflowY: 'auto',
         }}
@@ -803,87 +808,6 @@ function AtlasColumn({
             ))}
           </div>
         ))}
-      </div>
-
-      {/* atlas-prompt */}
-      <div style={{ padding: '14px 18px', borderTop: `1px solid ${T.RULE}` }}>
-        <div
-          style={{
-            fontFamily: T.MONO,
-            fontSize: 9,
-            letterSpacing: '1.4px',
-            color: T.GRAY_DK,
-            fontWeight: 600,
-            marginBottom: 8,
-          }}
-        >
-          ↳ Suggested prompts
-        </div>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 4, marginBottom: 12 }}>
-          {prompts.map((p) => (
-            <button
-              key={p}
-              onClick={() => setInput(p)}
-              style={{
-                fontSize: 12,
-                padding: '8px 11px',
-                border: `1px solid ${T.BORDER}`,
-                borderRadius: 7,
-                cursor: 'pointer',
-                background: T.CREAM,
-                lineHeight: 1.4,
-                color: T.INK_2,
-                textAlign: 'left',
-                fontFamily: 'inherit',
-              }}
-            >
-              <span style={{ color: T.PURPLE, fontWeight: 700, marginRight: 5 }}>→</span>
-              {p}
-            </button>
-          ))}
-        </div>
-        <div
-          style={{
-            display: 'flex',
-            gap: 6,
-            alignItems: 'center',
-            padding: '8px 10px',
-            border: `1px solid ${T.BORDER_STRONG}`,
-            borderRadius: 7,
-            background: T.CREAM,
-          }}
-        >
-          <input
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            type="text"
-            placeholder="Ask Atlas about the portfolio…"
-            style={{
-              flex: 1,
-              border: 'none',
-              background: 'transparent',
-              outline: 'none',
-              fontSize: 12,
-              fontFamily: 'inherit',
-              color: T.INK,
-            }}
-          />
-          <button
-            style={{
-              background: T.PURPLE,
-              color: 'white',
-              border: 'none',
-              width: 24,
-              height: 24,
-              borderRadius: '50%',
-              cursor: 'pointer',
-              fontWeight: 700,
-              fontSize: 12,
-            }}
-          >
-            ↑
-          </button>
-        </div>
       </div>
     </aside>
   );
@@ -948,6 +872,12 @@ interface TowerIndexPageProps {
   tenantName?: string;
   context?: string;
   /**
+   * Tenant client id for the active session — wires the AgentDock chat lane
+   * to /api/v1/atlas/chat. When omitted the chat composer disables
+   * gracefully (renders the rest of the page unchanged).
+   */
+  clientId?: string;
+  /**
    * T-4 (AI Initiatives Substrate v1.1.0): real registry initiatives to plot
    * in the Strategic Alignment 2×2. When omitted or empty, the 2×2 falls back
    * to the legacy hardcoded display so the page still renders pre-substrate.
@@ -982,6 +912,7 @@ interface TowerIndexPageProps {
 export function TowerIndexPage({
   tenantName = 'Meridian Enterprises',
   context = 'Control Tower · Portfolio Index',
+  clientId,
   initiatives,
   bandMetrics,
   pressuresView,
@@ -1017,26 +948,135 @@ export function TowerIndexPage({
   const monthDay = today.toLocaleDateString('en-US', { month: 'long', day: 'numeric' });
   const timestamp = today.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
 
-  return (
-    <AppShell
-      surface="tower"
-      topBarProps={{ tenantName, showLocked: true, context }}
-      middleStrip={towerSubmenuSlot}
+  // ─── Atlas chat state · wired to /api/v1/atlas/chat via the shared
+  // <AgentDock> mounted around the workspace below. The dock owns the
+  // composer (auto-grow, paperclip, mode picker, sticky bottom, resize) so
+  // the previous AtlasColumn stub composer is gone. We keep the messages /
+  // suggestions state here so the runtime contract (threadId, suggestions
+  // round-trip) is preserved across turns. ────────────────────────────
+  const initialOpener: AtlasMessage = {
+    id: 'atlas-opener',
+    role: 'atlas',
+    content: atlasObservationsView?.headline ??
+      'Three threads run through this morning’s pressures. Ask Atlas about portfolio state, peer position, or the EA renewal window.',
+  };
+  const [atlasMessages, setAtlasMessages] = useState<AtlasMessage[]>([initialOpener]);
+  const [atlasPending, setAtlasPending] = useState(false);
+  const [atlasThreadId, setAtlasThreadId] = useState<string | null>(null);
+  const initialPrompts: string[] = atlasObservationsView?.suggestedPrompts.slice() ?? [
+    'Show me the 3 lagging programs',
+    'What if I cut LLM tokens by 30%?',
+    'Re-rank pressures by attribution confidence',
+    'Brief me for the 9 AM staff meeting',
+  ];
+  const [atlasSuggestions, setAtlasSuggestions] = useState<AtlasSuggestion[]>(
+    initialPrompts.map((label) => ({ label, value: label, kind: 'message' as const })),
+  );
+
+  const sendToAtlas = useCallback(
+    async (text: string, attachments: AttachmentRef[]) => {
+      const trimmed = text.trim();
+      if (!trimmed && attachments.length === 0) return;
+      // Without a tenant binding we can't authenticate the chat call. Keep
+      // the user turn visible and surface a soft error.
+      const userTurn: AtlasMessage = {
+        id: `user-${Date.now()}`,
+        role: 'user',
+        content: trimmed.length > 0 ? trimmed : `Attached ${attachments.length} file${attachments.length === 1 ? '' : 's'}.`,
+      };
+      setAtlasMessages((prev) => [...prev, userTurn]);
+
+      if (!clientId) {
+        setAtlasMessages((prev) => [
+          ...prev,
+          {
+            id: `atlas-no-tenant-${Date.now()}`,
+            role: 'atlas',
+            content: 'Atlas needs an active tenant to answer. Sign in or pick a tenant from the top bar to wake up the live response path.',
+          },
+        ]);
+        return;
+      }
+
+      setAtlasPending(true);
+      const controller = new AbortController();
+      const timeout = window.setTimeout(() => controller.abort(), 18_000);
+      try {
+        const res = await fetch('/api/v1/atlas/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            message: trimmed,
+            threadId: atlasThreadId,
+            clientId,
+            attachments: attachments.map((a) => ({ id: a.id, file_name: a.file_name, mime: a.mime })),
+          }),
+          signal: controller.signal,
+        });
+        const json = (await res.json().catch(() => ({}))) as Partial<AtlasChatResponse>;
+        if (!res.ok || !json.response || !json.threadId) {
+          setAtlasMessages((prev) => [
+            ...prev,
+            {
+              id: `atlas-error-${Date.now()}`,
+              role: 'atlas',
+              content: 'Atlas could not answer that right now. Honest read: the Tower summary is still valid, but the live response path needs a retry.',
+            },
+          ]);
+          return;
+        }
+        setAtlasThreadId(json.threadId);
+        setAtlasMessages((prev) => [
+          ...prev,
+          { id: `atlas-${Date.now()}`, role: 'atlas', content: json.response! },
+        ]);
+        if (json.suggestions) setAtlasSuggestions(json.suggestions);
+      } catch (err) {
+        setAtlasMessages((prev) => [
+          ...prev,
+          {
+            id: `atlas-error-${Date.now()}`,
+            role: 'atlas',
+            content: err instanceof DOMException && err.name === 'AbortError'
+              ? 'Atlas timed out before the portfolio response came back. Retry the prompt or open a linked surface while I keep the Tower summary anchored.'
+              : 'Atlas could not reach the live response path just now. The pressure cards are still server-rendered, but this reply is unavailable until the next retry.',
+          },
+        ]);
+      } finally {
+        window.clearTimeout(timeout);
+        setAtlasPending(false);
+      }
+    },
+    [clientId, atlasThreadId],
+  );
+
+  const handleAtlasSuggestion = useCallback(
+    (suggestion: AtlasSuggestion) => {
+      if (suggestion.kind === 'link' && suggestion.href) {
+        router.push(suggestion.href);
+        return;
+      }
+      void sendToAtlas(suggestion.value, []);
+    },
+    [router, sendToAtlas],
+  );
+
+  const towerWorkspace: ReactNode = (
+    <div
+      style={{
+        display: 'grid',
+        gridTemplateColumns: 'minmax(0, 1fr) 320px',
+        gap: 0,
+        minHeight: '100%',
+        background: T.PAGE_BG,
+        color: T.INK,
+        fontFamily: T.SANS,
+        overflow: 'auto',
+        height: '100%',
+      }}
     >
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'minmax(0, 1fr) 320px',
-          gap: 0,
-          minHeight: '100%',
-          background: T.PAGE_BG,
-          color: T.INK,
-          fontFamily: T.SANS,
-          overflow: 'auto',
-        }}
-      >
-        {/* ─── MAIN COLUMN ─── */}
-        <div style={{ minWidth: 0, padding: 0 }}>
+      {/* ─── MAIN COLUMN ─── */}
+      <div style={{ minWidth: 0, padding: 0 }}>
           {/* Masthead */}
           <div
             style={{
@@ -1714,7 +1754,7 @@ export function TowerIndexPage({
           </div>
         </div>
 
-        {/* ─── ATLAS COLUMN ─── */}
+        {/* ─── ATLAS COLUMN (synthesis-only · composer migrated to AgentDock) ─── */}
         {atlasObservationsView && !atlasObservationsView.isEmpty ? (
           <AtlasColumn
             headline={atlasObservationsView.headline}
@@ -1736,7 +1776,6 @@ export function TowerIndexPage({
                 body: <em>{atlasObservationsView.ifYouOnlyDoOneToday}</em>,
               },
             ]}
-            prompts={atlasObservationsView.suggestedPrompts.slice()}
           />
         ) : (
           <AtlasColumn
@@ -1810,15 +1849,34 @@ export function TowerIndexPage({
                 ),
               },
             ]}
-            prompts={[
-              'Show me the 3 lagging programs',
-              'What if I cut LLM tokens by 30%?',
-              'Re-rank pressures by attribution confidence',
-              'Brief me for the 9 AM staff meeting',
-            ]}
           />
         )}
       </div>
+  );
+
+  return (
+    <AppShell
+      surface="tower"
+      topBarProps={{ tenantName, showLocked: true, context }}
+      middleStrip={towerSubmenuSlot}
+    >
+      <AtlasChatPanel
+        messages={atlasMessages}
+        pending={atlasPending}
+        onSubmit={sendToAtlas}
+        suggestions={atlasSuggestions}
+        onSuggestion={handleAtlasSuggestion}
+        workspace={towerWorkspace}
+        surface="tower"
+        surfaceContext={{
+          clientId: clientId ?? null,
+          tenantName,
+          activeTowerLens: activeLens,
+          context,
+        }}
+        defaultLeftPercent={35}
+        minLeftPx={320}
+      />
     </AppShell>
   );
 }

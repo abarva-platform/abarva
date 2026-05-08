@@ -1,13 +1,35 @@
 'use client';
 
-import type { AtlasSuggestion } from '@/lib/atlas/types';
-import { AutosizeTextarea } from '@/components/shared/AutosizeTextarea';
+// AtlasChatPanel · Tower-flavored AgentDock preset.
+//
+// Migrated from a custom chat panel (with maxHeight: 360 thread + non-sticky
+// composer) to the shared `<AgentDock>` foundation. Tower Atlas surfaces now
+// inherit:
+//   - resizable side-rail (chat left, workspace right) with width persisted
+//   - 5-mode picker (side-rail / pin-bottom / pin-top / expand / collapsed)
+//   - sticky composer that doesn't scroll away
+//   - paperclip uploads via /api/v1/agent/attachments
+//   - Enter submits, Shift+Enter inserts newline, drag-drop files anywhere
+//
+// Back-compat: callers continue to pass `messages`, `suggestions`, and a
+// submit handler. We translate to AgentDock's `thread` / `suggestedActions` /
+// `onMessage` shape internally. The pending flag synthesizes a transient
+// "Atlas is thinking…" agent turn at the tail of the thread so the user gets
+// the same affordance as before.
+//
+// Surface key defaults to "tower" — drives localStorage persistence
+// (mode + side-rail split width) and acts as the telemetry key for upload
+// rows in `agent_attachment`.
 
-const INK = '#F8FAFC';
-const MUTE = '#CBD5E1';
-const SOFT = '#94A3B8';
-const TEAL = '#14B8A6';
-const ATLAS = '#F59E0B';
+import { useMemo, type ReactNode } from 'react';
+import {
+  AgentDock,
+  type AgentProfile,
+  type AttachmentRef,
+  type ChatMessage,
+  type DockMode,
+} from '@/components/agent/AgentDock';
+import type { AtlasSuggestion } from '@/lib/atlas/types';
 
 export interface AtlasMessage {
   id: string;
@@ -15,152 +37,110 @@ export interface AtlasMessage {
   content: string;
 }
 
+export const ATLAS_AGENT: AgentProfile = {
+  initials: 'A',
+  name: 'Atlas',
+  role: 'Tower Conductor — observes portfolio pressure, drift, and signals.',
+};
+
+export interface AtlasChatPanelProps {
+  /** Conversation thread. Atlas turns + user turns. */
+  messages: AtlasMessage[];
+  /** When true a transient "Atlas is thinking…" turn appears at thread tail. */
+  pending: boolean;
+  /**
+   * Caller's send handler. AgentDock owns composer state and forwards both
+   * the trimmed text and any successfully uploaded attachment refs.
+   */
+  onSubmit: (text: string, attachments: AttachmentRef[]) => void | Promise<void>;
+  /** Atlas-suggested follow-ups rendered above the composer. */
+  suggestions: AtlasSuggestion[];
+  /** Caller decides whether to navigate, open a drawer, or send a message. */
+  onSuggestion: (suggestion: AtlasSuggestion) => void;
+  /**
+   * Right-pane content. For Tower this is typically the portfolio body
+   * (masthead + KPI band + pressure cards + handoff strips).
+   */
+  workspace: ReactNode;
+  /** Optional surface override (default "tower"). */
+  surface?: string;
+  /** Optional surface context round-tripped to upload metadata. */
+  surfaceContext?: Record<string, unknown>;
+  /** Optional agent override (default ATLAS_AGENT). */
+  agent?: AgentProfile;
+  /** Optional eyebrow above the thread. */
+  initialQuote?: string;
+  /** Side-rail splitter overrides. */
+  defaultLeftPercent?: number;
+  minLeftPx?: number;
+  /** Default mode for first-time visitors (default "side-rail"). */
+  defaultMode?: DockMode;
+}
+
+const ATLAS_THINKING_ID = 'atlas-thinking-transient';
+
 export function AtlasChatPanel({
   messages,
   pending,
-  input,
-  onInputChange,
   onSubmit,
   suggestions,
   onSuggestion,
-}: {
-  messages: AtlasMessage[];
-  pending: boolean;
-  input: string;
-  onInputChange: (value: string) => void;
-  onSubmit: () => void;
-  suggestions: AtlasSuggestion[];
-  onSuggestion: (suggestion: AtlasSuggestion) => void;
-}) {
+  workspace,
+  surface = 'tower',
+  surfaceContext,
+  agent = ATLAS_AGENT,
+  initialQuote,
+  defaultLeftPercent = 35,
+  minLeftPx = 320,
+  defaultMode = 'side-rail',
+}: AtlasChatPanelProps) {
+  // Translate legacy AtlasMessage[] → AgentDock ChatMessage[].
+  // Append a transient "thinking" turn while the caller is awaiting the
+  // /atlas/chat response — preserves the previous affordance.
+  const thread: ChatMessage[] = useMemo(() => {
+    const base: ChatMessage[] = messages.map((m) => ({
+      id: m.id,
+      role: m.role === 'atlas' ? 'agent' : 'user',
+      body: m.content,
+    }));
+    if (pending) {
+      base.push({
+        id: ATLAS_THINKING_ID,
+        role: 'agent',
+        body: 'Atlas is thinking…',
+      });
+    }
+    return base;
+  }, [messages, pending]);
+
+  // Suggestions → AgentDock SuggestedAction[]. We do NOT pre-fill the
+  // composer; the caller's onSuggestion routes signal/link/message kinds
+  // (open detail drawer, navigate, or fire a message). To honour that we
+  // bind onClick on each suggestion and supply a no-op body.
+  const suggestedActions = useMemo(
+    () =>
+      suggestions.map((s, i) => ({
+        id: `${s.kind ?? 'message'}-${i}`,
+        label: s.label,
+        body: s.value,
+        onClick: () => onSuggestion(s),
+      })),
+    [suggestions, onSuggestion],
+  );
+
   return (
-    <div style={{ display: 'grid', gap: 12 }}>
-      <div
-        style={{
-          fontFamily: 'JetBrains Mono, monospace',
-          fontSize: 10,
-          fontWeight: 600,
-          letterSpacing: '0.14em',
-          textTransform: 'uppercase',
-          color: TEAL,
-        }}
-      >
-        Atlas chat
-      </div>
-
-      <div style={{ display: 'grid', gap: 10, maxHeight: 360, overflowY: 'auto', paddingRight: 4 }}>
-        {messages.map((message) => (
-          <div
-            key={message.id}
-            style={{
-              padding: 14,
-              borderRadius: 18,
-              background:
-                message.role === 'atlas'
-                  ? 'linear-gradient(180deg, rgba(30,41,59,0.98), rgba(28,34,46,0.98))'
-                  : 'rgba(15,23,42,0.48)',
-              border:
-                message.role === 'atlas'
-                  ? '0.5px solid rgba(245,158,11,0.18)'
-                  : '0.5px solid rgba(148,163,184,0.14)',
-            }}
-          >
-            <div
-              style={{
-                marginBottom: 6,
-                fontFamily: 'JetBrains Mono, monospace',
-                fontSize: 10,
-                fontWeight: 600,
-                letterSpacing: '0.14em',
-                textTransform: 'uppercase',
-                color: message.role === 'atlas' ? ATLAS : SOFT,
-              }}
-            >
-              {message.role === 'atlas' ? 'Atlas' : 'You'}
-            </div>
-            <div style={{ whiteSpace: 'pre-wrap', fontSize: 13, lineHeight: 1.6, color: message.role === 'atlas' ? MUTE : INK }}>
-              {message.content}
-            </div>
-          </div>
-        ))}
-        {pending && <div style={{ fontSize: 12, color: SOFT }}>Atlas is thinking…</div>}
-      </div>
-
-      {suggestions.length > 0 && (
-        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-          {suggestions.map((suggestion) => (
-            <button
-              key={`${suggestion.kind ?? 'message'}:${suggestion.label}:${suggestion.value}`}
-              type="button"
-              onClick={() => onSuggestion(suggestion)}
-              style={{
-                padding: '8px 10px',
-                borderRadius: 999,
-                border: '0.5px solid rgba(148,163,184,0.18)',
-                background: suggestion.kind === 'link' ? 'rgba(20,184,166,0.08)' : 'rgba(15,23,42,0.32)',
-                color: INK,
-                fontSize: 12,
-                cursor: 'pointer',
-              }}
-            >
-              {suggestion.label}
-            </button>
-          ))}
-        </div>
-      )}
-
-      <div
-        style={{
-          display: 'flex',
-          gap: 8,
-          alignItems: 'flex-end',
-          padding: 10,
-          borderRadius: 18,
-          border: '0.5px solid rgba(148,163,184,0.18)',
-          background: 'rgba(15,23,42,0.42)',
-        }}
-      >
-        <AutosizeTextarea
-          value={input}
-          onChange={(event) => onInputChange(event.target.value)}
-          onKeyDown={(event) => {
-            if (event.key === 'Enter' && !event.shiftKey) {
-              event.preventDefault();
-              onSubmit();
-            }
-          }}
-          placeholder="Ask Atlas about portfolio state…"
-          minRows={1}
-          maxRows={5}
-          style={{
-            flex: 1,
-            background: 'transparent',
-            border: 'none',
-            outline: 'none',
-            color: INK,
-            fontSize: 13,
-            lineHeight: 1.55,
-            minHeight: 44,
-            padding: '11px 0',
-          }}
-        />
-        <button
-          type="button"
-          onClick={onSubmit}
-          disabled={pending}
-          style={{
-            padding: '10px 14px',
-            borderRadius: 14,
-            border: 'none',
-            background: 'linear-gradient(135deg, rgba(20,184,166,0.96), rgba(37,99,235,0.92))',
-            color: '#03121A',
-            fontWeight: 800,
-            cursor: pending ? 'default' : 'pointer',
-            opacity: pending ? 0.6 : 1,
-          }}
-        >
-          Send
-        </button>
-      </div>
-    </div>
+    <AgentDock
+      agent={agent}
+      surface={surface}
+      defaultMode={defaultMode}
+      defaultLeftPercent={defaultLeftPercent}
+      minLeftPx={minLeftPx}
+      surfaceContext={surfaceContext}
+      initialQuote={initialQuote}
+      thread={thread}
+      suggestedActions={suggestedActions}
+      onMessage={(text, attachments) => onSubmit(text, attachments)}
+      workspace={workspace}
+    />
   );
 }
