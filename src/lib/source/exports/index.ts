@@ -13,6 +13,10 @@ import {
   type PricingTemplatePayload,
 } from './renderers/pricing-template';
 import {
+  buildPricingComparisonWorkbook,
+  type PricingComparisonPayload,
+} from './renderers/pricing-comparison';
+import {
   buildAppInventoryWorkbook,
   type AppInventoryPayload,
 } from './renderers/app-inventory';
@@ -38,13 +42,30 @@ export const XLSX_GENERATABLE_CODES = new Set([
   'd19_pricing_workbook',
 ]);
 
+/**
+ * Artifact codes for which a "comparison" mode is available — i.e. a
+ * second xlsx that aggregates vendor submissions side-by-side. Today
+ * only d19 (pricing). Surfaces a separate "Download comparison xlsx"
+ * anchor in the canvas alongside the standard template anchor.
+ */
+export const XLSX_COMPARISON_CODES = new Set(['d19_pricing_workbook']);
+
 export function isXlsxGeneratable(artifactCode: string): boolean {
   return XLSX_GENERATABLE_CODES.has(artifactCode);
+}
+
+export function hasXlsxComparison(artifactCode: string): boolean {
+  return XLSX_COMPARISON_CODES.has(artifactCode);
 }
 
 export interface RenderXlsxArgs {
   artifactCode: string;
   payload: unknown;
+  /**
+   * Variant. `template` is the buyer-issued empty template (default).
+   * `comparison` aggregates vendor submissions (currently d19 only).
+   */
+  variant?: 'template' | 'comparison';
 }
 
 /**
@@ -54,6 +75,18 @@ export interface RenderXlsxArgs {
 export async function renderArtifactXlsx(
   args: RenderXlsxArgs,
 ): Promise<ExcelJS.Workbook> {
+  const variant = args.variant ?? 'template';
+  if (variant === 'comparison') {
+    if (args.artifactCode !== 'd19_pricing_workbook') {
+      throw new Error(
+        `No comparison generator wired for ${args.artifactCode}. ` +
+          `Supported: ${Array.from(XLSX_COMPARISON_CODES).join(', ')}.`,
+      );
+    }
+    return buildPricingComparisonWorkbook(
+      args.payload as PricingComparisonPayload,
+    );
+  }
   switch (args.artifactCode) {
     case 'd19_pricing_workbook':
       return buildPricingTemplateWorkbook(
@@ -77,6 +110,7 @@ export async function renderArtifactXlsx(
 
 export type {
   AppInventoryPayload,
+  PricingComparisonPayload,
   PricingTemplatePayload,
   ResponseChecklistPayload,
   ScorecardPayload,

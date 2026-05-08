@@ -16,6 +16,11 @@ const XLSX_GENERATABLE_CODES_CLIENT: ReadonlySet<string> = new Set([
   'd16_scorecard',
   'd19_pricing_workbook',
 ]);
+// Comparison-mode codes — show a second "Download comparison xlsx"
+// anchor alongside the standard template. Today only d19 (pricing).
+const XLSX_COMPARISON_CODES_CLIENT: ReadonlySet<string> = new Set([
+  'd19_pricing_workbook',
+]);
 import type {
   SourceEventArtifactState,
   SourceEventArtifactStatus,
@@ -405,6 +410,10 @@ export function UniversalCanvasShell({
           xlsxGeneratableCodes={XLSX_GENERATABLE_CODES_CLIENT}
           xlsxDownloadHref={(code) =>
             `/api/v1/source/${event.id}/artifacts/${encodeURIComponent(code)}/render-xlsx`
+          }
+          xlsxComparisonCodes={XLSX_COMPARISON_CODES_CLIENT}
+          xlsxComparisonDownloadHref={(code) =>
+            `/api/v1/source/${event.id}/artifacts/${encodeURIComponent(code)}/render-comparison-xlsx`
           }
         />
       ),
