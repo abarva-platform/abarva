@@ -72,6 +72,13 @@ interface DocumentTabProps {
   xlsxComparisonCodes?: ReadonlySet<string>;
   /** Build the comparison xlsx download URL for a given artifact code. */
   xlsxComparisonDownloadHref?: (code: string) => string;
+  /**
+   * Set of codes that have a docx renderer wired. The card shows a
+   * "Download docx" anchor when its code is in this set.
+   */
+  docxGeneratableCodes?: ReadonlySet<string>;
+  /** Build the docx download URL for a given artifact code. */
+  docxDownloadHref?: (code: string) => string;
 }
 
 const STATUS_LABEL: Record<SourceEventArtifactStatus, string> = {
@@ -107,6 +114,8 @@ export function DocumentTab({
   xlsxDownloadHref,
   xlsxComparisonCodes,
   xlsxComparisonDownloadHref,
+  docxGeneratableCodes,
+  docxDownloadHref,
 }: DocumentTabProps) {
   if (artifacts.length === 0) {
     return (
@@ -220,6 +229,11 @@ export function DocumentTab({
                   ? xlsxComparisonDownloadHref(active.artifactCode)
                   : null
               }
+              docxDownloadHref={
+                docxGeneratableCodes?.has(active.artifactCode) && docxDownloadHref
+                  ? docxDownloadHref(active.artifactCode)
+                  : null
+              }
             />
             {eventId && VENDOR_SUBMISSIONS_CODES.has(active.artifactCode) ? (
               <VendorPricingSubmissionsPanel
@@ -261,6 +275,8 @@ interface ArtifactBodyEditorProps {
   xlsxDownloadHref: string | null;
   /** When non-null the card shows a "Download comparison xlsx" anchor. */
   xlsxComparisonDownloadHref?: string | null;
+  /** When non-null the card shows a "Download docx" anchor. */
+  docxDownloadHref?: string | null;
 }
 
 function ArtifactBodyEditor({
@@ -275,6 +291,7 @@ function ArtifactBodyEditor({
   generationPending,
   xlsxDownloadHref,
   xlsxComparisonDownloadHref,
+  docxDownloadHref,
 }: ArtifactBodyEditorProps) {
   const [editing, setEditing] = useState(false);
   const [generationError, setGenerationError] = useState<string | null>(null);
@@ -411,6 +428,17 @@ function ArtifactBodyEditor({
               title="Side-by-side comparison of vendor pricing submissions (currently demo mode)."
             >
               Download comparison xlsx
+            </a>
+          ) : null}
+          {docxDownloadHref ? (
+            <a
+              href={docxDownloadHref}
+              data-testid={`source-canvas-document-body-download-docx-${artifact.artifactCode}`}
+              style={{ ...GHOST_BUTTON_STYLE, textDecoration: 'none' }}
+              download
+              title="Download as Word document — uses the authored body when present, canonical scaffold otherwise."
+            >
+              Download docx
             </a>
           ) : null}
         </div>

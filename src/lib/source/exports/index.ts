@@ -1,17 +1,23 @@
-// Source · xlsx exports · public surface
+// Source · xlsx + docx exports · public surface
 //
-// Server-only registry mapping artifact codes to their xlsx renderers.
-// Slice 2a shipped d19a (Pricing Template). Slice 2b adds d04 (App
-// Inventory), d11 (Response Checklist), d16 (Scorecard).
+// Server-only registry mapping artifact codes to their xlsx and docx
+// renderers. Slice 2a-c shipped the xlsx surface (d04 / d11 / d16 / d19
+// + d19c comparison). Slice 3 adds the docx surface, starting with d05
+// Scope Memo.
 
 import 'server-only';
 
 import type ExcelJS from 'exceljs';
+import type { Document as DocxDocument } from 'docx';
 
 import {
   buildPricingTemplateWorkbook,
   type PricingTemplatePayload,
 } from './renderers/pricing-template';
+import {
+  buildScopeMemoDocx,
+  type ScopeMemoDocxPayload,
+} from './renderers/scope-memo-docx';
 import {
   buildPricingComparisonWorkbook,
   type PricingComparisonPayload,
@@ -30,6 +36,7 @@ import {
 } from './renderers/scorecard';
 
 export { XLSX_CONTENT_TYPE } from './renderers/xlsx-base';
+export { DOCX_CONTENT_TYPE } from './renderers/docx-base';
 
 /**
  * Codes for which Source has an xlsx generator. Surfaces in the UI as
@@ -50,12 +57,25 @@ export const XLSX_GENERATABLE_CODES = new Set([
  */
 export const XLSX_COMPARISON_CODES = new Set(['d19_pricing_workbook']);
 
+/**
+ * Codes for which Source has a docx renderer. Surfaces a "Download
+ * docx" anchor on the artifact card. Slice 3 starts with d05; future
+ * slices add d09 / d24 / d27.
+ */
+export const DOCX_GENERATABLE_CODES = new Set([
+  'd05_scope_memo',
+]);
+
 export function isXlsxGeneratable(artifactCode: string): boolean {
   return XLSX_GENERATABLE_CODES.has(artifactCode);
 }
 
 export function hasXlsxComparison(artifactCode: string): boolean {
   return XLSX_COMPARISON_CODES.has(artifactCode);
+}
+
+export function isDocxGeneratable(artifactCode: string): boolean {
+  return DOCX_GENERATABLE_CODES.has(artifactCode);
 }
 
 export interface RenderXlsxArgs {
@@ -108,10 +128,34 @@ export async function renderArtifactXlsx(
   }
 }
 
+export interface RenderDocxArgs {
+  artifactCode: string;
+  payload: unknown;
+}
+
+/**
+ * Build a docx Document for an artifact code. The route serializes via
+ * docx.Packer.toBuffer; this stays pure.
+ */
+export async function renderArtifactDocx(
+  args: RenderDocxArgs,
+): Promise<DocxDocument> {
+  switch (args.artifactCode) {
+    case 'd05_scope_memo':
+      return buildScopeMemoDocx(args.payload as ScopeMemoDocxPayload);
+    default:
+      throw new Error(
+        `No docx generator wired for ${args.artifactCode}. ` +
+          `Supported codes: ${Array.from(DOCX_GENERATABLE_CODES).join(', ')}.`,
+      );
+  }
+}
+
 export type {
   AppInventoryPayload,
   PricingComparisonPayload,
   PricingTemplatePayload,
   ResponseChecklistPayload,
+  ScopeMemoDocxPayload,
   ScorecardPayload,
 };

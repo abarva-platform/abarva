@@ -21,6 +21,10 @@ const XLSX_GENERATABLE_CODES_CLIENT: ReadonlySet<string> = new Set([
 const XLSX_COMPARISON_CODES_CLIENT: ReadonlySet<string> = new Set([
   'd19_pricing_workbook',
 ]);
+// Codes for which Source has a docx renderer. Slice 3.1 starts with d05.
+const DOCX_GENERATABLE_CODES_CLIENT: ReadonlySet<string> = new Set([
+  'd05_scope_memo',
+]);
 import type {
   SourceEventArtifactState,
   SourceEventArtifactStatus,
@@ -414,6 +418,10 @@ export function UniversalCanvasShell({
           xlsxComparisonCodes={XLSX_COMPARISON_CODES_CLIENT}
           xlsxComparisonDownloadHref={(code) =>
             `/api/v1/source/${event.id}/artifacts/${encodeURIComponent(code)}/render-comparison-xlsx`
+          }
+          docxGeneratableCodes={DOCX_GENERATABLE_CODES_CLIENT}
+          docxDownloadHref={(code) =>
+            `/api/v1/source/${event.id}/artifacts/${encodeURIComponent(code)}/render-docx`
           }
           eventId={event.id}
         />
