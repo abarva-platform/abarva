@@ -20,13 +20,13 @@ export const LEARN_SECTIONS: ReadonlyArray<LearnSection> = [
   {
     id: 'quickstart',
     index: 1,
-    label: 'Quickstart',
+    label: 'Quickstart & Training',
     routeSegment: 'quickstart',
-    oneLineHook: 'For first-time users · 5-min tour · "make your first Move"',
+    oneLineHook: 'For first-time users · step-by-step training guides · "make your first Move"',
     futureContentSummary:
       '90-second product tour, step-by-step "First Move" walkthrough, video / animated walkthrough, common first-day questions.',
     shellPlaceholder:
-      'Quickstart guide coming soon — for now, start at the AI Initiatives panel to see what is already loaded for your tenant.',
+      'Training guides and quickstart walkthroughs. The "How to Create a Strategic Move" guide is live — see Workflows below.',
   },
   {
     id: 'glossary',
@@ -91,13 +91,13 @@ export const LEARN_SECTIONS: ReadonlyArray<LearnSection> = [
     index: 5,
     label: 'Workflows',
     routeSegment: 'workflows',
-    oneLineHook: 'Step-by-step for common tasks',
+    oneLineHook: 'Step-by-step for common tasks · training guides',
     futureContentSummary:
       'Originating a Strategic Move, reviewing portfolio, handling a pressure card, onboarding a connector, validating substrate, per-phase guidance.',
     shellPlaceholder:
-      'Workflow guides coming soon. The most-asked tasks, walked through end to end.',
+      'Workflow guides — the most-asked tasks, walked through end to end. The "How to Create a Strategic Move" training guide is live now.',
     sampleSubPages: [
-      { slug: 'originate-a-move', label: 'Originate a Strategic Move' },
+      { slug: 'originate-a-move', label: 'How to Create a Strategic Move ↗' },
       { slug: 'review-portfolio', label: 'Review portfolio performance' },
       { slug: 'handle-pressure-card', label: 'Handle a pressure card' },
       { slug: 'onboard-connector', label: 'Onboard a new connector' },

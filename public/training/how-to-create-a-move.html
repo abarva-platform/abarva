@@ -1,0 +1,1982 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>How to Create a Strategic Move — AbarVa Training Guide</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;0,9..144,700;1,9..144,300;1,9..144,400&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --ink:        #0A0C12;
+      --ink2:       #1C1F2E;
+      --body:       #1F2433;
+      --muted:      #3D4454;
+      --faint:      #6B7280;
+      --navy:       #1B2B5C;
+      --navy-mid:   #253872;
+      --navy-soft:  rgba(27,43,92,0.08);
+      --navy-line:  rgba(27,43,92,0.15);
+      --teal:       #0E8A65;
+      --teal-soft:  rgba(14,138,101,0.09);
+      --teal-line:  rgba(14,138,101,0.25);
+      --amber:      #92400E;
+      --amber-soft: rgba(146,64,14,0.08);
+      --amber-line: rgba(146,64,14,0.25);
+      --red:        #991B1B;
+      --red-soft:   rgba(153,27,27,0.07);
+      --red-line:   rgba(153,27,27,0.25);
+      --slate:      #374151;
+      --border:     #D1D5DB;
+      --border-light: #E5E7EB;
+      --surface:    #ffffff;
+      --surface2:   #F9FAFB;
+      --surface3:   #F3F4F6;
+      --sidebar-w:  260px;
+      --f-display:  'Fraunces', Georgia, serif;
+      --f-body:     'Inter', -apple-system, sans-serif;
+      --f-mono:     'JetBrains Mono', ui-monospace, monospace;
+    }
+
+    html { font-size: 15px; scroll-behavior: smooth; }
+
+    body {
+      font-family: var(--f-body);
+      background: var(--surface);
+      color: var(--body);
+      line-height: 1.65;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ═══════════════════════════════════
+       HERO BAND — full bleed
+    ═══════════════════════════════════ */
+    .hero {
+      background: var(--navy);
+      color: #ffffff;
+      padding: 64px 64px 56px;
+      position: relative;
+      overflow: hidden;
+    }
+    .hero::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 80% 60% at 90% 50%, rgba(255,255,255,0.04) 0%, transparent 70%),
+        radial-gradient(ellipse 40% 80% at 5% 100%, rgba(255,255,255,0.03) 0%, transparent 60%);
+      pointer-events: none;
+    }
+    .hero-eyebrow {
+      font-family: var(--f-mono);
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.5);
+      margin-bottom: 18px;
+    }
+    .hero-eyebrow span { color: rgba(255,255,255,0.9); }
+    .hero-title {
+      font-family: var(--f-display);
+      font-size: clamp(36px, 5vw, 58px);
+      font-weight: 400;
+      color: #ffffff;
+      line-height: 1.05;
+      letter-spacing: -0.02em;
+      margin-bottom: 18px;
+      max-width: 640px;
+    }
+    .hero-sub {
+      font-size: 16px;
+      color: rgba(255,255,255,0.72);
+      max-width: 560px;
+      line-height: 1.6;
+      margin-bottom: 40px;
+    }
+    .hero-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .hero-tag {
+      font-family: var(--f-mono);
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      padding: 5px 12px;
+      border-radius: 4px;
+      background: rgba(255,255,255,0.1);
+      color: rgba(255,255,255,0.85);
+      border: 1px solid rgba(255,255,255,0.12);
+    }
+    .hero-tag.accent { background: rgba(255,255,255,0.18); color: #fff; }
+
+    /* ═══════════════════════════════════
+       BODY LAYOUT — sidebar + content
+    ═══════════════════════════════════ */
+    .body-wrap {
+      display: grid;
+      grid-template-columns: var(--sidebar-w) 1fr;
+      min-height: calc(100vh - 200px);
+      align-items: start;
+    }
+
+    /* ── Sticky sidebar ── */
+    .sidebar {
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow-y: auto;
+      border-right: 1px solid var(--border-light);
+      background: var(--surface2);
+      padding: 32px 0 48px;
+    }
+    .sidebar::-webkit-scrollbar { width: 0; }
+    .sidebar-label {
+      font-family: var(--f-mono);
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--faint);
+      padding: 0 24px;
+      margin-bottom: 14px;
+    }
+    .toc-list { list-style: none; }
+    .toc-item a {
+      display: flex;
+      align-items: baseline;
+      gap: 10px;
+      padding: 9px 24px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--muted);
+      text-decoration: none;
+      border-left: 2px solid transparent;
+      transition: all 120ms ease;
+    }
+    .toc-item a:hover { color: var(--ink); background: var(--surface3); }
+    .toc-item a.active { color: var(--navy); border-left-color: var(--navy); background: var(--navy-soft); font-weight: 600; }
+    .toc-num {
+      font-family: var(--f-mono);
+      font-size: 9px;
+      font-weight: 700;
+      color: var(--faint);
+      flex-shrink: 0;
+    }
+    .toc-item a.active .toc-num { color: var(--navy); }
+
+    /* ── Content area ── */
+    .content {
+      padding: 0;
+    }
+
+    /* ── Sections ── */
+    .section {
+      padding: 64px 72px 0;
+      border-bottom: 1px solid var(--border-light);
+      padding-bottom: 64px;
+    }
+    .section:last-child { border-bottom: none; }
+
+    .section-eyebrow {
+      font-family: var(--f-mono);
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--faint);
+      margin-bottom: 10px;
+    }
+    .section-title {
+      font-family: var(--f-display);
+      font-size: clamp(26px, 3vw, 34px);
+      font-weight: 400;
+      color: var(--ink);
+      line-height: 1.1;
+      letter-spacing: -0.02em;
+      margin-bottom: 20px;
+    }
+    .section-lead {
+      font-size: 16px;
+      font-weight: 400;
+      color: var(--muted);
+      line-height: 1.65;
+      max-width: 72ch;
+      margin-bottom: 40px;
+    }
+
+    /* ── Running body text ── */
+    .body-text {
+      font-size: 15px;
+      color: var(--body);
+      line-height: 1.7;
+      max-width: 74ch;
+    }
+    .body-text + .body-text { margin-top: 16px; }
+
+    h3.sub-heading {
+      font-family: var(--f-display);
+      font-size: 20px;
+      font-weight: 500;
+      color: var(--ink);
+      letter-spacing: -0.01em;
+      margin: 40px 0 12px;
+    }
+    h4.sub-heading-sm {
+      font-family: var(--f-body);
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--slate);
+      margin: 32px 0 12px;
+    }
+
+    /* ═══════════════════════════════════
+       FLOW DIAGRAM — horizontal arrow chain
+    ═══════════════════════════════════ */
+    .flow {
+      display: flex;
+      align-items: stretch;
+      gap: 0;
+      margin: 40px 0;
+      overflow-x: auto;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: var(--surface2);
+    }
+    .flow-step {
+      flex: 1;
+      min-width: 110px;
+      padding: 20px 18px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      gap: 8px;
+      position: relative;
+      border-right: 1px solid var(--border);
+    }
+    .flow-step:last-child { border-right: none; }
+    .flow-step::after {
+      content: '→';
+      position: absolute;
+      right: -12px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 16px;
+      color: var(--faint);
+      z-index: 2;
+      background: var(--surface2);
+      padding: 0 2px;
+    }
+    .flow-step:last-child::after { display: none; }
+    .flow-badge {
+      font-family: var(--f-mono);
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      padding: 3px 8px;
+      border-radius: 4px;
+      background: var(--navy);
+      color: #fff;
+    }
+    .flow-badge.teal { background: var(--teal); }
+    .flow-badge.slate { background: var(--slate); }
+    .flow-badge.amber { background: var(--amber); }
+    .flow-badge.red { background: var(--red); }
+    .flow-icon {
+      font-size: 22px;
+      line-height: 1;
+    }
+    .flow-label {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--ink);
+      line-height: 1.3;
+    }
+    .flow-desc {
+      font-size: 11px;
+      color: var(--faint);
+      line-height: 1.4;
+    }
+
+    /* ═══════════════════════════════════
+       ANATOMY DIAGRAM
+    ═══════════════════════════════════ */
+    .anatomy {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+      margin: 36px 0;
+    }
+    .anatomy-pane {
+      padding: 24px 28px;
+    }
+    .anatomy-pane:first-child { border-right: 1px solid var(--border); }
+    .anatomy-label {
+      font-family: var(--f-mono);
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--faint);
+      margin-bottom: 16px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--border-light);
+    }
+    .anatomy-item {
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+      margin-bottom: 11px;
+      font-size: 13px;
+      color: var(--body);
+      line-height: 1.4;
+    }
+    .anatomy-item::before {
+      content: '→';
+      color: var(--navy);
+      font-weight: 700;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+
+    /* ═══════════════════════════════════
+       PHASE CARDS
+    ═══════════════════════════════════ */
+    .phases {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      margin: 36px 0;
+    }
+    .phase-card {
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+    }
+    .phase-header {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 18px 24px;
+      background: var(--surface2);
+      border-bottom: 1px solid var(--border-light);
+    }
+    .phase-num {
+      font-family: var(--f-mono);
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      color: #fff;
+      background: var(--navy);
+      padding: 4px 9px;
+      border-radius: 5px;
+      flex-shrink: 0;
+    }
+    .phase-name {
+      font-family: var(--f-display);
+      font-size: 19px;
+      font-weight: 500;
+      color: var(--ink);
+      letter-spacing: -0.01em;
+    }
+    .phase-gate-badge {
+      margin-left: auto;
+      font-family: var(--f-mono);
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      padding: 4px 10px;
+      border-radius: 4px;
+      background: var(--teal-soft);
+      color: var(--teal);
+      border: 1px solid var(--teal-line);
+      flex-shrink: 0;
+    }
+    .phase-body {
+      padding: 20px 24px 22px;
+    }
+    .phase-goal {
+      font-size: 14px;
+      color: var(--body);
+      line-height: 1.6;
+      margin-bottom: 16px;
+      max-width: 80ch;
+    }
+    .phase-cols {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      margin-top: 16px;
+    }
+    .phase-col-label {
+      font-family: var(--f-mono);
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--faint);
+      margin-bottom: 10px;
+    }
+    .doc-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--ink2);
+      background: var(--surface3);
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      padding: 4px 9px;
+      margin: 3px 3px 3px 0;
+    }
+    .doc-chip .chip-icon { font-size: 12px; }
+    .chip-tag {
+      font-family: var(--f-mono);
+      font-size: 8px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      padding: 2px 5px;
+      border-radius: 3px;
+      background: #E5E7EB;
+      color: var(--slate);
+    }
+    .chip-tag.gate { background: rgba(14,138,101,0.12); color: var(--teal); }
+    .gate-item {
+      font-size: 13px;
+      color: var(--body);
+      line-height: 1.5;
+      padding: 6px 0;
+      border-bottom: 1px solid var(--border-light);
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+    }
+    .gate-item:last-child { border-bottom: none; }
+    .gate-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--navy);
+      flex-shrink: 0;
+      margin-top: 5px;
+    }
+    .gate-dot.soft { background: var(--faint); }
+    .gate-hard-label {
+      font-size: 9px;
+      font-weight: 700;
+      font-family: var(--f-mono);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      padding: 1px 5px;
+      border-radius: 3px;
+      background: rgba(27,43,92,0.1);
+      color: var(--navy);
+      flex-shrink: 0;
+    }
+    .gate-soft-label {
+      font-size: 9px;
+      font-weight: 700;
+      font-family: var(--f-mono);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      padding: 1px 5px;
+      border-radius: 3px;
+      background: var(--surface3);
+      color: var(--faint);
+      flex-shrink: 0;
+    }
+
+    /* Example callout inside phase */
+    .phase-example {
+      margin-top: 14px;
+      background: var(--navy-soft);
+      border: 1px solid var(--navy-line);
+      border-radius: 7px;
+      padding: 14px 18px;
+    }
+    .phase-example-label {
+      font-family: var(--f-mono);
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--navy);
+      margin-bottom: 6px;
+    }
+    .phase-example-text {
+      font-size: 13px;
+      color: var(--navy);
+      font-style: italic;
+      line-height: 1.5;
+    }
+
+    /* ═══════════════════════════════════
+       SCAFFOLD TABLE
+    ═══════════════════════════════════ */
+    .scaffold-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 32px 0;
+      font-size: 14px;
+    }
+    .scaffold-table thead th {
+      font-family: var(--f-mono);
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--faint);
+      padding: 10px 16px;
+      text-align: left;
+      border-bottom: 2px solid var(--border);
+      background: var(--surface2);
+    }
+    .scaffold-table thead th:first-child { border-radius: 8px 0 0 0; }
+    .scaffold-table thead th:last-child  { border-radius: 0 8px 0 0; }
+    .scaffold-table tbody tr { border-bottom: 1px solid var(--border-light); transition: background 100ms; }
+    .scaffold-table tbody tr:hover { background: var(--surface2); }
+    .scaffold-table tbody td { padding: 14px 16px; color: var(--body); vertical-align: top; }
+    .field-name {
+      font-weight: 700;
+      color: var(--ink);
+      font-size: 13.5px;
+    }
+    .field-desc {
+      font-size: 12.5px;
+      color: var(--muted);
+      margin-top: 3px;
+      line-height: 1.5;
+    }
+    .field-example {
+      font-size: 12px;
+      color: var(--navy);
+      font-style: italic;
+      margin-top: 5px;
+      padding: 5px 10px;
+      background: var(--navy-soft);
+      border-radius: 4px;
+      border-left: 2px solid var(--navy-line);
+    }
+    .badge-req {
+      font-family: var(--f-mono);
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      padding: 3px 8px;
+      border-radius: 4px;
+      background: rgba(27,43,92,0.1);
+      color: var(--navy);
+      white-space: nowrap;
+    }
+    .badge-opt {
+      font-family: var(--f-mono);
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      padding: 3px 8px;
+      border-radius: 4px;
+      background: var(--surface3);
+      color: var(--faint);
+      white-space: nowrap;
+    }
+
+    /* ═══════════════════════════════════
+       NUMBERED STEPS
+    ═══════════════════════════════════ */
+    .steps {
+      counter-reset: step;
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      margin: 32px 0;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+    }
+    .step {
+      display: grid;
+      grid-template-columns: 52px 1fr;
+      border-bottom: 1px solid var(--border-light);
+    }
+    .step:last-child { border-bottom: none; }
+    .step-num {
+      background: var(--surface2);
+      border-right: 1px solid var(--border-light);
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding-top: 20px;
+    }
+    .step-num::before {
+      counter-increment: step;
+      content: counter(step);
+      font-family: var(--f-mono);
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--navy);
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      background: var(--navy-soft);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .step-body {
+      padding: 18px 22px;
+    }
+    .step-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--ink);
+      margin-bottom: 5px;
+    }
+    .step-desc {
+      font-size: 13.5px;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+    .step-desc strong { color: var(--body); font-weight: 600; }
+    .step-note {
+      margin-top: 10px;
+      font-size: 12px;
+      color: var(--navy);
+      background: var(--navy-soft);
+      border-radius: 5px;
+      padding: 8px 12px;
+      border-left: 2px solid var(--navy-line);
+    }
+    .step-path {
+      margin-top: 8px;
+      font-family: var(--f-mono);
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--slate);
+      background: var(--surface3);
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      padding: 6px 10px;
+      display: inline-block;
+    }
+
+    /* ═══════════════════════════════════
+       CALLOUT BOXES
+    ═══════════════════════════════════ */
+    .callout {
+      border-radius: 8px;
+      padding: 16px 20px;
+      margin: 24px 0;
+      display: flex;
+      gap: 14px;
+      align-items: flex-start;
+    }
+    .callout-icon { font-size: 18px; flex-shrink: 0; line-height: 1.2; }
+    .callout-body { flex: 1; min-width: 0; }
+    .callout-label {
+      font-family: var(--f-mono);
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      margin-bottom: 5px;
+    }
+    .callout-text {
+      font-size: 14px;
+      line-height: 1.6;
+    }
+    .callout.info    { background: var(--navy-soft); border: 1px solid var(--navy-line); }
+    .callout.info .callout-label  { color: var(--navy); }
+    .callout.info .callout-text   { color: var(--navy-mid); }
+    .callout.success { background: var(--teal-soft); border: 1px solid var(--teal-line); }
+    .callout.success .callout-label { color: var(--teal); }
+    .callout.success .callout-text  { color: #065F46; }
+    .callout.warn    { background: var(--amber-soft); border: 1px solid var(--amber-line); }
+    .callout.warn .callout-label { color: var(--amber); }
+    .callout.warn .callout-text  { color: var(--amber); }
+    .callout.danger  { background: var(--red-soft); border: 1px solid var(--red-line); }
+    .callout.danger .callout-label { color: var(--red); }
+    .callout.danger .callout-text  { color: var(--red); }
+
+    /* ═══════════════════════════════════
+       GATE STATUS DIAGRAM
+    ═══════════════════════════════════ */
+    .gate-states {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+      margin: 28px 0;
+    }
+    .gate-state {
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 18px 20px;
+      text-align: center;
+    }
+    .gate-state-icon { font-size: 28px; margin-bottom: 8px; }
+    .gate-state-name {
+      font-family: var(--f-mono);
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+    .gate-state-desc {
+      font-size: 12.5px;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+    .gate-state.pending { border-color: var(--border); }
+    .gate-state.pending .gate-state-name { color: var(--faint); }
+    .gate-state.open    { border-color: var(--amber-line); background: var(--amber-soft); }
+    .gate-state.open .gate-state-name { color: var(--amber); }
+    .gate-state.cleared { border-color: var(--teal-line); background: var(--teal-soft); }
+    .gate-state.cleared .gate-state-name { color: var(--teal); }
+
+    .gate-criteria-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin: 24px 0;
+    }
+    .gate-criteria-box {
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .gate-criteria-header {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border-light);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .gate-criteria-header.hard { background: rgba(27,43,92,0.05); }
+    .gate-criteria-header.soft { background: var(--surface2); }
+    .gc-label {
+      font-family: var(--f-mono);
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+    }
+    .gc-label.hard { color: var(--navy); }
+    .gc-label.soft { color: var(--faint); }
+    .gc-tag {
+      font-size: 10px;
+      color: var(--muted);
+      font-style: italic;
+    }
+    .gate-criteria-list { padding: 10px 0; }
+    .gc-item {
+      padding: 8px 16px;
+      font-size: 13px;
+      color: var(--body);
+      border-bottom: 1px solid var(--border-light);
+      display: flex;
+      gap: 8px;
+    }
+    .gc-item:last-child { border-bottom: none; }
+    .gc-icon { font-size: 12px; flex-shrink: 0; margin-top: 1px; }
+
+    /* ═══════════════════════════════════
+       SCREEN LAYOUT DIAGRAM
+    ═══════════════════════════════════ */
+    .screen-mockup {
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+      margin: 28px 0;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.06);
+    }
+    .screen-titlebar {
+      background: var(--navy);
+      padding: 10px 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .screen-dots {
+      display: flex;
+      gap: 5px;
+    }
+    .screen-dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.25);
+    }
+    .screen-url {
+      font-family: var(--f-mono);
+      font-size: 11px;
+      color: rgba(255,255,255,0.6);
+      background: rgba(255,255,255,0.1);
+      padding: 4px 12px;
+      border-radius: 4px;
+      flex: 1;
+    }
+    .screen-body {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      min-height: 260px;
+    }
+    .screen-pane {
+      padding: 20px 22px;
+    }
+    .screen-pane:first-child { border-right: 1px solid var(--border); }
+    .screen-pane-label {
+      font-family: var(--f-mono);
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--faint);
+      margin-bottom: 14px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--border-light);
+    }
+    .mock-chat {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .mock-msg {
+      border-radius: 8px;
+      padding: 10px 13px;
+      font-size: 12.5px;
+      line-height: 1.5;
+    }
+    .mock-msg.nexus {
+      background: var(--navy-soft);
+      border: 1px solid var(--navy-line);
+      color: var(--navy-mid);
+      align-self: flex-start;
+      max-width: 90%;
+    }
+    .mock-msg.user {
+      background: var(--surface3);
+      border: 1px solid var(--border);
+      color: var(--body);
+      align-self: flex-end;
+      max-width: 85%;
+    }
+    .mock-sender {
+      font-family: var(--f-mono);
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+    .mock-sender.nexus { color: var(--navy); }
+    .mock-sender.user  { color: var(--faint); text-align: right; }
+    .mock-field {
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 10px 12px;
+      margin-bottom: 8px;
+    }
+    .mock-field.filled { border-color: var(--navy-line); background: var(--navy-soft); }
+    .mock-field-label {
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--faint);
+      font-family: var(--f-mono);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      margin-bottom: 3px;
+    }
+    .mock-field.filled .mock-field-label { color: var(--navy); }
+    .mock-field-value {
+      font-size: 12.5px;
+      color: var(--muted);
+      line-height: 1.4;
+    }
+    .mock-field.filled .mock-field-value { color: var(--body); font-weight: 500; }
+
+    /* ═══════════════════════════════════
+       TIPS GRID
+    ═══════════════════════════════════ */
+    .tips-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      margin: 28px 0;
+    }
+    .tip-card {
+      border: 1px solid var(--border);
+      border-radius: 9px;
+      padding: 18px 20px;
+    }
+    .tip-card.do   { border-left: 3px solid var(--teal); }
+    .tip-card.dont { border-left: 3px solid var(--red); }
+    .tip-badge {
+      font-family: var(--f-mono);
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+    .tip-card.do .tip-badge   { color: var(--teal); }
+    .tip-card.dont .tip-badge { color: var(--red); }
+    .tip-text {
+      font-size: 13.5px;
+      color: var(--body);
+      line-height: 1.6;
+    }
+    .tip-example {
+      margin-top: 8px;
+      font-size: 12.5px;
+      font-style: italic;
+      color: var(--muted);
+    }
+
+    /* ═══════════════════════════════════
+       DELIVERABLE FLOW DIAGRAM
+    ═══════════════════════════════════ */
+    .gen-flow {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+      margin: 28px 0;
+    }
+    .gen-step {
+      display: flex;
+      align-items: flex-start;
+      gap: 18px;
+      padding: 18px 24px;
+      border-bottom: 1px solid var(--border-light);
+      background: var(--surface);
+    }
+    .gen-step:last-child { border-bottom: none; }
+    .gen-step-num {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: var(--navy);
+      color: #fff;
+      font-family: var(--f-mono);
+      font-size: 11px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+    .gen-step-content { flex: 1; }
+    .gen-step-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--ink);
+      margin-bottom: 4px;
+    }
+    .gen-step-desc {
+      font-size: 13px;
+      color: var(--muted);
+      line-height: 1.55;
+    }
+    .gen-step-path {
+      margin-top: 6px;
+      font-family: var(--f-mono);
+      font-size: 11px;
+      color: var(--slate);
+      background: var(--surface3);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 4px 9px;
+      display: inline-block;
+    }
+    .gen-step-arrow {
+      font-size: 18px;
+      color: var(--faint);
+      margin-top: 5px;
+      flex-shrink: 0;
+    }
+
+    /* ═══════════════════════════════════
+       INLINE CODE
+    ═══════════════════════════════════ */
+    code {
+      font-family: var(--f-mono);
+      font-size: 12px;
+      font-weight: 600;
+      background: var(--surface3);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 1px 5px;
+      color: var(--slate);
+    }
+
+    /* ═══════════════════════════════════
+       CHECKLIST
+    ═══════════════════════════════════ */
+    .checklist {
+      list-style: none;
+      margin: 20px 0;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .checklist li {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      font-size: 14px;
+      color: var(--body);
+      line-height: 1.55;
+      padding: 12px 16px;
+      background: var(--surface2);
+      border: 1px solid var(--border-light);
+      border-radius: 7px;
+    }
+    .check-box {
+      width: 18px;
+      height: 18px;
+      border: 1.5px solid var(--border);
+      border-radius: 4px;
+      background: #fff;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+    .checklist li strong { color: var(--ink); font-weight: 700; }
+    .checklist li span { color: var(--muted); font-size: 13px; display: block; margin-top: 2px; }
+
+    /* ═══════════════════════════════════
+       DIVIDER
+    ═══════════════════════════════════ */
+    .divider {
+      border: none;
+      border-top: 1px solid var(--border-light);
+      margin: 40px 0;
+    }
+
+    /* ═══════════════════════════════════
+       FOOTER
+    ═══════════════════════════════════ */
+    .doc-footer {
+      padding: 32px 72px;
+      border-top: 1px solid var(--border-light);
+      background: var(--surface2);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+    }
+    .doc-footer-brand {
+      font-family: var(--f-display);
+      font-size: 16px;
+      font-weight: 400;
+      color: var(--navy);
+    }
+    .doc-footer-meta {
+      font-family: var(--f-mono);
+      font-size: 10px;
+      color: var(--faint);
+      letter-spacing: 0.08em;
+    }
+
+    /* ═══════════════════════════════════
+       RESPONSIVE
+    ═══════════════════════════════════ */
+    @media (max-width: 900px) {
+      .body-wrap { grid-template-columns: 1fr; }
+      .sidebar { display: none; }
+      .section { padding: 48px 32px; }
+      .phase-cols { grid-template-columns: 1fr; }
+      .tips-grid { grid-template-columns: 1fr; }
+      .gate-criteria-grid { grid-template-columns: 1fr; }
+      .gate-states { grid-template-columns: 1fr; }
+      .anatomy { grid-template-columns: 1fr; }
+      .screen-body { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ════════════════ HERO ════════════════ -->
+<div class="hero">
+  <div class="hero-eyebrow">AbarVa · <span>Training Guide</span> · Strategic Moves</div>
+  <h1 class="hero-title">How to Create a Strategic Move</h1>
+  <p class="hero-sub">Everything a new user needs to take an initiative from a one-line idea to a fully gated, deliverable-backed transformation program — end to end.</p>
+  <div class="hero-meta">
+    <span class="hero-tag accent">Surface: Strategic Moves</span>
+    <span class="hero-tag">Agent: Nexus</span>
+    <span class="hero-tag">P0 Originate → P1–P5 → Tower</span>
+    <span class="hero-tag">Audience: New Users</span>
+  </div>
+</div>
+
+<!-- ════════════════ BODY ════════════════ -->
+<div class="body-wrap">
+
+  <!-- Sidebar TOC -->
+  <aside class="sidebar">
+    <div class="sidebar-label">In this guide</div>
+    <ul class="toc-list">
+      <li class="toc-item"><a href="#s01"><span class="toc-num">01</span> What is a Strategic Move?</a></li>
+      <li class="toc-item"><a href="#s02"><span class="toc-num">02</span> The end-to-end workflow</a></li>
+      <li class="toc-item"><a href="#s03"><span class="toc-num">03</span> Before you start</a></li>
+      <li class="toc-item"><a href="#s04"><span class="toc-num">04</span> Originate a new move (P0)</a></li>
+      <li class="toc-item"><a href="#s05"><span class="toc-num">05</span> The seven scaffold fields</a></li>
+      <li class="toc-item"><a href="#s06"><span class="toc-num">06</span> Working through the five phases</a></li>
+      <li class="toc-item"><a href="#s07"><span class="toc-num">07</span> Understanding gates</a></li>
+      <li class="toc-item"><a href="#s08"><span class="toc-num">08</span> Generating deliverables</a></li>
+      <li class="toc-item"><a href="#s09"><span class="toc-num">09</span> The Evidence Hub</a></li>
+      <li class="toc-item"><a href="#s10"><span class="toc-num">10</span> Do's and don'ts</a></li>
+    </ul>
+  </aside>
+
+  <!-- Main content -->
+  <main class="content">
+
+    <!-- ─── 01. What is a Move ─── -->
+    <section class="section" id="s01">
+      <div class="section-eyebrow">01</div>
+      <h2 class="section-title">What is a Strategic Move?</h2>
+      <p class="section-lead">A Strategic Move is a phase-gated transformation program — a structured way to take any AI or operational initiative from a one-line hypothesis all the way through to a handed-off delivery.</p>
+
+      <p class="body-text">Every Move has exactly the same anatomy: five phases (P1–P5), a quality gate at the end of each phase that must be cleared before you can advance, and a set of consulting-grade deliverables generated at each phase. The whole journey runs inside the Strategic Moves surface. When a Move completes P5, it transitions automatically into <strong>Control Tower</strong> for ongoing execution tracking.</p>
+
+      <div class="callout info">
+        <div class="callout-icon">💬</div>
+        <div class="callout-body">
+          <div class="callout-label">One voice: Nexus</div>
+          <div class="callout-text">All chat on the Strategic Moves surface goes to <strong>Nexus</strong>, your front agent. Behind it are 12 specialist agents handling gate enforcement, evidence indexing, document versioning, and more — you never interact with them directly. Nexus sounds like one coherent system; the specialisation is invisible.</div>
+        </div>
+      </div>
+
+      <h3 class="sub-heading">The Move anatomy at a glance</h3>
+      <div class="flow">
+        <div class="flow-step">
+          <span class="flow-badge slate">P0</span>
+          <span class="flow-icon">✏️</span>
+          <span class="flow-label">Originate</span>
+          <span class="flow-desc">7-field scaffold, Nexus-guided chat</span>
+        </div>
+        <div class="flow-step">
+          <span class="flow-badge">P1</span>
+          <span class="flow-icon">📋</span>
+          <span class="flow-label">Charter</span>
+          <span class="flow-desc">Program charter + stakeholder map</span>
+        </div>
+        <div class="flow-step">
+          <span class="flow-badge">P2</span>
+          <span class="flow-icon">🔍</span>
+          <span class="flow-label">Discover</span>
+          <span class="flow-desc">As-is assessment, root cause</span>
+        </div>
+        <div class="flow-step">
+          <span class="flow-badge">P3</span>
+          <span class="flow-icon">🎯</span>
+          <span class="flow-label">Design</span>
+          <span class="flow-desc">Target state + solution architecture</span>
+        </div>
+        <div class="flow-step">
+          <span class="flow-badge">P4</span>
+          <span class="flow-icon">📊</span>
+          <span class="flow-label">Roadmap</span>
+          <span class="flow-desc">Execution plan + business case</span>
+        </div>
+        <div class="flow-step">
+          <span class="flow-badge teal">P5</span>
+          <span class="flow-icon">🚀</span>
+          <span class="flow-label">Mobilize</span>
+          <span class="flow-desc">Handoff package → Tower</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ─── 02. End-to-end workflow ─── -->
+    <section class="section" id="s02">
+      <div class="section-eyebrow">02</div>
+      <h2 class="section-title">The end-to-end workflow</h2>
+      <p class="section-lead">Here is the complete journey from idea to handoff. Use this as your orientation map before diving into any individual step.</p>
+
+      <div class="gen-flow">
+        <div class="gen-step">
+          <span class="gen-step-num">1</span>
+          <div class="gen-step-content">
+            <div class="gen-step-title">Navigate to Strategic Moves and click "New Move"</div>
+            <div class="gen-step-desc">The origination screen opens with Nexus chat on the left and the scaffold panel on the right.</div>
+            <span class="gen-step-path">/strategic-moves → New Move</span>
+          </div>
+        </div>
+        <div class="gen-step">
+          <span class="gen-step-num">2</span>
+          <div class="gen-step-content">
+            <div class="gen-step-title">Fill the 7-field scaffold through chat (P0 Originate)</div>
+            <div class="gen-step-desc">Talk to Nexus in natural language. It extracts the required fields — bet/outcome, archetype, sponsor, scope, value hypothesis, evidence family, and foundation readiness — as you describe the initiative. Fields 1–4 are required before you can promote.</div>
+          </div>
+        </div>
+        <div class="gen-step">
+          <span class="gen-step-num">3</span>
+          <div class="gen-step-content">
+            <div class="gen-step-title">Name the move and click "Promote to P1 Charter"</div>
+            <div class="gen-step-desc">Enter a program name (this becomes the Move's permanent identifier). The large black button at the bottom of the scaffold commits the draft and opens the P1 workspace.</div>
+          </div>
+        </div>
+        <div class="gen-step">
+          <span class="gen-step-num">4</span>
+          <div class="gen-step-content">
+            <div class="gen-step-title">Work each phase: chat with Nexus, generate deliverables, clear the gate</div>
+            <div class="gen-step-desc">Each phase has a left Nexus chat pane and a right canvas. The canvas shows: phase-specific content sections, a gate criteria checklist (hard + soft criteria), a Generate Deliverables tab, and a link to the Evidence Hub.</div>
+          </div>
+        </div>
+        <div class="gen-step">
+          <span class="gen-step-num">5</span>
+          <div class="gen-step-content">
+            <div class="gen-step-title">Clear the gate to advance to the next phase</div>
+            <div class="gen-step-desc">All hard criteria must be met (blocking). Soft criteria are advisory but visible to reviewers. When the gate clears, the Advance button becomes active.</div>
+          </div>
+        </div>
+        <div class="gen-step">
+          <span class="gen-step-num">6</span>
+          <div class="gen-step-content">
+            <div class="gen-step-title">After P5: the Move transitions to Control Tower</div>
+            <div class="gen-step-desc">Gating out of P5 automatically hands the Move to Atlas in Control Tower for ongoing execution tracking. You'll see a "→ Tower" indicator on the phase rail.</div>
+            <span class="gen-step-path">/tower → your program appears in the portfolio</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ─── 03. Before you start ─── -->
+    <section class="section" id="s03">
+      <div class="section-eyebrow">03</div>
+      <h2 class="section-title">Before you start</h2>
+      <p class="section-lead">Have these four things ready before opening the origination screen. They're the minimum required to create a Move — Nexus will ask about all of them.</p>
+
+      <ul class="checklist">
+        <li>
+          <div class="check-box"></div>
+          <div>
+            <strong>The bet / outcome</strong>
+            <span>What are you trying to achieve? One clear sentence. Not a project name; an outcome with direction and magnitude.</span>
+            <span style="color:var(--navy);font-style:italic;margin-top:6px;display:block;">e.g. "Reduce contact center handle time by 30% using AI-assisted routing."</span>
+          </div>
+        </li>
+        <li>
+          <div class="check-box"></div>
+          <div>
+            <strong>An executive sponsor</strong>
+            <span>Name and title. Without a sponsor, the Move can't advance past P1 (the charter gate requires sponsor sign-off as a hard criterion).</span>
+            <span style="color:var(--navy);font-style:italic;margin-top:6px;display:block;">e.g. "Sarah Chen, Chief Operations Officer"</span>
+          </div>
+        </li>
+        <li>
+          <div class="check-box"></div>
+          <div>
+            <strong>A scope boundary</strong>
+            <span>What's explicitly in and what's out? Scope creep is a primary failure mode. Nexus will push you to be specific. "All of customer service" is not a scope.</span>
+            <span style="color:var(--navy);font-style:italic;margin-top:6px;display:block;">e.g. "In scope: inbound routing layer. Out of scope: agent training, CRM changes."</span>
+          </div>
+        </li>
+        <li>
+          <div class="check-box"></div>
+          <div>
+            <strong>A rough value hypothesis</strong>
+            <span>What's the magnitude of impact? Doesn't need to be a full business case yet — a directional range is enough.</span>
+            <span style="color:var(--navy);font-style:italic;margin-top:6px;display:block;">e.g. "$2–4M annual cost avoidance if handle time targets are met."</span>
+          </div>
+        </li>
+      </ul>
+
+      <div class="callout success">
+        <div class="callout-icon">✓</div>
+        <div class="callout-body">
+          <div class="callout-label">You don't need everything upfront</div>
+          <div class="callout-text">The three optional enrichment fields — evidence family, value hypothesis seed, and foundation readiness — are filled through conversation with Nexus. You don't need to prepare them in advance. Nexus will ask targeted follow-up questions during origination.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ─── 04. Originate ─── -->
+    <section class="section" id="s04">
+      <div class="section-eyebrow">04</div>
+      <h2 class="section-title">Originate a new move (P0)</h2>
+      <p class="section-lead">The origination screen is where a Move is born. It has two panes: Nexus chat on the left, and a live scaffold panel on the right that fills as you talk.</p>
+
+      <div class="screen-mockup">
+        <div class="screen-titlebar">
+          <div class="screen-dots"><div class="screen-dot"></div><div class="screen-dot"></div><div class="screen-dot"></div></div>
+          <div class="screen-url">/strategic-moves/new</div>
+        </div>
+        <div class="screen-body">
+          <div class="screen-pane">
+            <div class="screen-pane-label">Left pane · Nexus chat</div>
+            <div class="mock-chat">
+              <div>
+                <div class="mock-sender nexus">Nexus</div>
+                <div class="mock-msg nexus">Let's build your Move. Start by telling me what outcome you're aiming for. One sentence is ideal — what changes if this program succeeds?</div>
+              </div>
+              <div>
+                <div class="mock-sender user">You</div>
+                <div class="mock-msg user">We want to cut contact center handle time by 30% using AI-assisted routing. CFO is sponsoring it. Scope is just the inbound routing layer.</div>
+              </div>
+              <div>
+                <div class="mock-sender nexus">Nexus</div>
+                <div class="mock-msg nexus">Got it — I've filled the bet/outcome, sponsor, and scope fields. This looks like a <strong>Cost Reduction</strong> archetype. Confirm? And do you have a rough value hypothesis — even a range?</div>
+              </div>
+            </div>
+          </div>
+          <div class="screen-pane">
+            <div class="screen-pane-label">Right pane · Scaffold</div>
+            <div class="mock-field filled">
+              <div class="mock-field-label">01 · Bet / outcome</div>
+              <div class="mock-field-value">Reduce contact center handle time by 30% using AI-assisted routing.</div>
+            </div>
+            <div class="mock-field filled">
+              <div class="mock-field-label">02 · Archetype</div>
+              <div class="mock-field-value">Cost Reduction</div>
+            </div>
+            <div class="mock-field filled">
+              <div class="mock-field-label">03 · Executive sponsor</div>
+              <div class="mock-field-value">CFO (confirm name)</div>
+            </div>
+            <div class="mock-field filled">
+              <div class="mock-field-label">04 · Scope boundary</div>
+              <div class="mock-field-value">In: inbound routing layer. Out: agent training, CRM.</div>
+            </div>
+            <div class="mock-field">
+              <div class="mock-field-label">05 · Value hypothesis</div>
+              <div class="mock-field-value" style="color:var(--faint);font-style:italic;">Awaiting your response…</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <h4 class="sub-heading-sm">Step-by-step: Originating a Move</h4>
+      <div class="steps">
+        <div class="step">
+          <div class="step-num"></div>
+          <div class="step-body">
+            <div class="step-title">Go to Strategic Moves and click "New Move"</div>
+            <div class="step-desc">The origination screen opens. Nexus greets you with an opening question about your outcome.</div>
+            <span class="step-path">/strategic-moves → + New Move</span>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num"></div>
+          <div class="step-body">
+            <div class="step-title">Describe the initiative in your own words</div>
+            <div class="step-desc">Don't try to fill fields manually. Just talk. <strong>"We're trying to cut call handle time by 30%, CFO is sponsoring it, scope is just the routing layer"</strong> fills three fields in one message.</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num"></div>
+          <div class="step-body">
+            <div class="step-title">Answer Nexus follow-up questions</div>
+            <div class="step-desc">Nexus will ask clarifying questions to extract each field. It will suggest values (like archetype) based on your description — confirm or correct them.</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num"></div>
+          <div class="step-body">
+            <div class="step-title">Watch fields fill on the right panel</div>
+            <div class="step-desc">Fields 1–4 have solid borders when filled. Fields 5–7 are optional enrichments. Once all four required fields show content, the Promote button activates.</div>
+            <div class="step-note">The scaffold auto-saves as you chat. If you close the tab, your draft is preserved.</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num"></div>
+          <div class="step-body">
+            <div class="step-title">Optionally add enrichment (fields 5–7)</div>
+            <div class="step-desc">Keep chatting to fill Evidence Family, Value Hypothesis Seed, and Foundation Readiness. These improve document quality but aren't required to promote.</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num"></div>
+          <div class="step-body">
+            <div class="step-title">Give the Move a program name</div>
+            <div class="step-desc">Enter a program name in the name field at the bottom of the scaffold. This becomes the Move's permanent identifier across all surfaces.</div>
+            <div class="step-note">Keep it clear and specific. "AI Contact Center Routing — Phase 1" is better than "CC AI Project."</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num"></div>
+          <div class="step-body">
+            <div class="step-title">Click "Promote to P1 Charter"</div>
+            <div class="step-desc">The large black button at the bottom of the scaffold commits the draft into an active Move and opens the P1 Charter workspace. The origination draft is saved in full.</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ─── 05. Seven scaffold fields ─── -->
+    <section class="section" id="s05">
+      <div class="section-eyebrow">05</div>
+      <h2 class="section-title">The seven scaffold fields</h2>
+      <p class="section-lead">These are the exact fields Nexus populates during origination. Fields 1–4 are required to promote. Fields 5–7 are optional enrichments that improve the quality of all generated documents.</p>
+
+      <table class="scaffold-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Field</th>
+            <th>What to provide &amp; example</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td style="font-family:var(--f-mono);font-size:11px;color:var(--faint);font-weight:700;">01</td>
+            <td>
+              <div class="field-name">Bet / outcome</div>
+              <div class="field-desc">The result you're targeting. One sentence, outcome-level, not a project name.</div>
+            </td>
+            <td>
+              <div class="field-desc">Outcome with direction and magnitude.</div>
+              <div class="field-example">"Reduce contact center handle time by 30% using AI-assisted routing."</div>
+            </td>
+            <td><span class="badge-req">Required</span></td>
+          </tr>
+          <tr>
+            <td style="font-family:var(--f-mono);font-size:11px;color:var(--faint);font-weight:700;">02</td>
+            <td>
+              <div class="field-name">Archetype classification</div>
+              <div class="field-desc">The type of Move. Nexus will suggest based on your description.</div>
+            </td>
+            <td>
+              <div class="field-desc">One of: Cost Reduction, Revenue Growth, Risk Mitigation, Operational Excellence. Nexus suggests, you confirm.</div>
+              <div class="field-example">"Cost Reduction" — confirmed by user after Nexus suggestion.</div>
+            </td>
+            <td><span class="badge-req">Required</span></td>
+          </tr>
+          <tr>
+            <td style="font-family:var(--f-mono);font-size:11px;color:var(--faint);font-weight:700;">03</td>
+            <td>
+              <div class="field-name">Executive sponsor</div>
+              <div class="field-desc">Name and title of the accountable executive. Required for P1 gate.</div>
+            </td>
+            <td>
+              <div class="field-desc">Full name + title. Without a named sponsor, the charter gate (P1) cannot clear.</div>
+              <div class="field-example">"Sarah Chen, Chief Operations Officer"</div>
+            </td>
+            <td><span class="badge-req">Required</span></td>
+          </tr>
+          <tr>
+            <td style="font-family:var(--f-mono);font-size:11px;color:var(--faint);font-weight:700;">04</td>
+            <td>
+              <div class="field-name">Scope boundary</div>
+              <div class="field-desc">Explicit in-scope and out-of-scope. Nexus will push back on vague scope.</div>
+            </td>
+            <td>
+              <div class="field-desc">Two-part: what's in, what's out. Be explicit. Vague scope is a gate failure mode.</div>
+              <div class="field-example">"In: inbound routing and IVR layer. Out: agent training, CRM system, workforce management."</div>
+            </td>
+            <td><span class="badge-req">Required</span></td>
+          </tr>
+          <tr>
+            <td style="font-family:var(--f-mono);font-size:11px;color:var(--faint);font-weight:700;">05</td>
+            <td>
+              <div class="field-name">Value hypothesis seed</div>
+              <div class="field-desc">Directional estimate of impact. Used to seed the financial model in P4.</div>
+            </td>
+            <td>
+              <div class="field-desc">Order-of-magnitude range. Not a full business case — that's built in P4. A rough range is enough.</div>
+              <div class="field-example">"$2–4M annual cost avoidance if 30% handle time reduction is achieved."</div>
+            </td>
+            <td><span class="badge-opt">Optional</span></td>
+          </tr>
+          <tr>
+            <td style="font-family:var(--f-mono);font-size:11px;color:var(--faint);font-weight:700;">06</td>
+            <td>
+              <div class="field-name">Evidence family</div>
+              <div class="field-desc">The type of data or evidence that will validate this Move.</div>
+            </td>
+            <td>
+              <div class="field-desc">Helps Nexus route evidence-gathering tasks to the right specialists and index uploads correctly.</div>
+              <div class="field-example">"Call center ops data, routing system logs, agent utilisation reports."</div>
+            </td>
+            <td><span class="badge-opt">Optional</span></td>
+          </tr>
+          <tr>
+            <td style="font-family:var(--f-mono);font-size:11px;color:var(--faint);font-weight:700;">07</td>
+            <td>
+              <div class="field-name">Foundation readiness</div>
+              <div class="field-desc">Current state of data, infrastructure, or change capacity relevant to this Move.</div>
+            </td>
+            <td>
+              <div class="field-desc">Honest assessment of what's already in place vs. what needs to be built. Feeds the risk register in P3.</div>
+              <div class="field-example">"Routing system is on legacy platform (end-of-life 2027). No ML infrastructure in-house yet."</div>
+            </td>
+            <td><span class="badge-opt">Optional</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- ─── 06. Five phases ─── -->
+    <section class="section" id="s06">
+      <div class="section-eyebrow">06</div>
+      <h2 class="section-title">Working through the five phases</h2>
+      <p class="section-lead">Each phase has the same two-pane layout: Nexus chat on the left, a phase canvas on the right. The canvas has 3–5 content sections, a gate criteria checklist, a Generate Deliverables tab, and an Evidence Hub link.</p>
+
+      <div class="anatomy">
+        <div class="anatomy-pane">
+          <div class="anatomy-label">Left pane · Nexus chat</div>
+          <div class="anatomy-item">Phase-specific opening message from Nexus</div>
+          <div class="anatomy-item">Ask Nexus anything about the phase</div>
+          <div class="anatomy-item">Request specific deliverable inputs via chat</div>
+          <div class="anatomy-item">Attach files (.pdf, .docx, .xlsx, .csv) via paperclip</div>
+          <div class="anatomy-item">Phase progress chips at bottom of chat</div>
+          <div class="anatomy-item">Gate advancement button (when ready)</div>
+        </div>
+        <div class="anatomy-pane">
+          <div class="anatomy-label">Right pane · Phase canvas</div>
+          <div class="anatomy-item">3–5 phase-specific content sections</div>
+          <div class="anatomy-item">Gate criteria checklist (hard + soft)</div>
+          <div class="anatomy-item">Generate Deliverables tab</div>
+          <div class="anatomy-item">Evidence Hub link</div>
+          <div class="anatomy-item">Document status indicators (Draft / In Review / Signed Off)</div>
+        </div>
+      </div>
+
+      <div class="phases">
+
+        <!-- P1 -->
+        <div class="phase-card">
+          <div class="phase-header">
+            <span class="phase-num">P1</span>
+            <span class="phase-name">Charter</span>
+            <span class="phase-gate-badge">Gate: Charter Approval</span>
+          </div>
+          <div class="phase-body">
+            <div class="phase-goal">Formalize the program scope, objectives, and governance. Define who owns what and establish the baseline timeline. The Charter Gate requires a named sponsor, defined scope, and approved charter document.</div>
+            <div class="phase-example">
+              <div class="phase-example-label">Example chat with Nexus</div>
+              <div class="phase-example-text">"Nexus, help me draft the stakeholder map. The COO is sponsor, the VP of CX is the program lead, and we'll need IT and Finance as working stakeholders." → Nexus populates the stakeholder section, assigns RACI roles for each name, and flags two decision-rights gaps that need to be resolved before the Charter gate can clear.</div>
+            </div>
+            <div class="phase-cols">
+              <div>
+                <div class="phase-col-label">Deliverables generated</div>
+                <div>
+                  <span class="doc-chip"><span class="chip-icon">📄</span> Program Charter <span class="chip-tag gate">GATE</span></span>
+                  <span class="doc-chip"><span class="chip-icon">👥</span> Stakeholder Map</span>
+                  <span class="doc-chip"><span class="chip-icon">📅</span> Baseline Timeline</span>
+                  <span class="doc-chip"><span class="chip-icon">🗂️</span> RACI Matrix</span>
+                </div>
+              </div>
+              <div>
+                <div class="phase-col-label">Gate criteria</div>
+                <div class="gate-item"><div class="gate-dot"></div><div>Named executive sponsor confirmed <span class="gate-hard-label">Hard</span></div></div>
+                <div class="gate-item"><div class="gate-dot"></div><div>Scope boundary documented and approved <span class="gate-hard-label">Hard</span></div></div>
+                <div class="gate-item"><div class="gate-dot"></div><div>Charter document generated and signed off <span class="gate-hard-label">Hard</span></div></div>
+                <div class="gate-item"><div class="gate-dot soft"></div><div>Stakeholder RACI reviewed by sponsor <span class="gate-soft-label">Soft</span></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- P2 -->
+        <div class="phase-card">
+          <div class="phase-header">
+            <span class="phase-num">P2</span>
+            <span class="phase-name">Discover &amp; Diagnose</span>
+            <span class="phase-gate-badge">Gate: Diagnosis Sign-Off</span>
+          </div>
+          <div class="phase-body">
+            <div class="phase-goal">Map the current state, identify root causes, and build a structured problem statement. This phase includes a critical Continue/Discontinue decision — if the diagnosis surfaces a fundamental blocker, you record it here and can formally discontinue the Move.</div>
+            <div class="phase-example">
+              <div class="phase-example-label">Example chat with Nexus</div>
+              <div class="phase-example-text">"Nexus, I'm uploading last quarter's AHT data. Can you help me identify the top 3 call categories driving high handle time?" → Nexus parses the file, surfaces that authentication failures, billing disputes, and routing timeouts account for 61% of excess handle time, and pre-fills the Root Cause Analysis section with supporting data points.</div>
+            </div>
+            <div class="phase-cols">
+              <div>
+                <div class="phase-col-label">Deliverables generated</div>
+                <div>
+                  <span class="doc-chip"><span class="chip-icon">📊</span> Current State Assessment <span class="chip-tag gate">GATE</span></span>
+                  <span class="doc-chip"><span class="chip-icon">🔍</span> Root Cause Analysis</span>
+                  <span class="doc-chip"><span class="chip-icon">📌</span> Problem Statement</span>
+                  <span class="doc-chip"><span class="chip-icon">⚠️</span> Risk Register</span>
+                </div>
+              </div>
+              <div>
+                <div class="phase-col-label">Gate criteria</div>
+                <div class="gate-item"><div class="gate-dot"></div><div>As-is process documented with data evidence <span class="gate-hard-label">Hard</span></div></div>
+                <div class="gate-item"><div class="gate-dot"></div><div>Root causes validated, not just symptoms <span class="gate-hard-label">Hard</span></div></div>
+                <div class="gate-item"><div class="gate-dot soft"></div><div>Continue/Discontinue decision recorded <span class="gate-soft-label">Soft</span></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- P3 -->
+        <div class="phase-card">
+          <div class="phase-header">
+            <span class="phase-num">P3</span>
+            <span class="phase-name">Design Future State</span>
+            <span class="phase-gate-badge">Gate: Design Approval</span>
+          </div>
+          <div class="phase-body">
+            <div class="phase-goal">Define target state architecture and operating model. Address each root cause from P2 with a specific design decision. Define sourcing strategy — build, buy, or partner — and complete solution design for all in-scope components.</div>
+            <div class="phase-example">
+              <div class="phase-example-label">Example chat with Nexus</div>
+              <div class="phase-example-text">"The routing engine needs ML-based intent classification. We'll buy a vendor solution, not build in-house — the foundation isn't there. Nexus, add that to the Sourcing Strategy with the rationale." → Nexus documents the build-vs-buy decision, links it to the Foundation Readiness gap flagged in origination, and adds a vendor evaluation criterion to the P4 roadmap.</div>
+            </div>
+            <div class="phase-cols">
+              <div>
+                <div class="phase-col-label">Deliverables generated</div>
+                <div>
+                  <span class="doc-chip"><span class="chip-icon">🏗️</span> Target State Architecture <span class="chip-tag gate">GATE</span></span>
+                  <span class="doc-chip"><span class="chip-icon">🎨</span> Solution Design</span>
+                  <span class="doc-chip"><span class="chip-icon">⚙️</span> Operating Model Design</span>
+                  <span class="doc-chip"><span class="chip-icon">🤝</span> Sourcing Strategy</span>
+                </div>
+              </div>
+              <div>
+                <div class="phase-col-label">Gate criteria</div>
+                <div class="gate-item"><div class="gate-dot"></div><div>Each root cause from P2 addressed in design <span class="gate-hard-label">Hard</span></div></div>
+                <div class="gate-item"><div class="gate-dot"></div><div>Sourcing decision documented with rationale <span class="gate-hard-label">Hard</span></div></div>
+                <div class="gate-item"><div class="gate-dot soft"></div><div>Architecture reviewed with technical stakeholders <span class="gate-soft-label">Soft</span></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- P4 -->
+        <div class="phase-card">
+          <div class="phase-header">
+            <span class="phase-num">P4</span>
+            <span class="phase-name">Roadmap &amp; Business Case</span>
+            <span class="phase-gate-badge">Gate: Investment Approval</span>
+          </div>
+          <div class="phase-body">
+            <div class="phase-goal">Translate the P3 design into an execution roadmap and build the business case economics. Define Control Tower metrics. The P4 gate is the investment approval gate — it requires both a signed-off business case and an execution roadmap before any implementation begins.</div>
+            <div class="phase-example">
+              <div class="phase-example-label">Example chat with Nexus</div>
+              <div class="phase-example-text">"Nexus, the Financial Model needs updating — vendor cost came in at $420K not $380K. Recalculate the payback period." → Nexus updates the Financial Model, recalculates break-even (now 14 months not 12), flags that the Business Case needs re-review before the P4 gate, and adds a note to the executive summary explaining the revision.</div>
+            </div>
+            <div class="phase-cols">
+              <div>
+                <div class="phase-col-label">Deliverables generated</div>
+                <div>
+                  <span class="doc-chip"><span class="chip-icon">🗺️</span> Execution Roadmap <span class="chip-tag gate">GATE</span></span>
+                  <span class="doc-chip"><span class="chip-icon">💼</span> Business Case <span class="chip-tag gate">GATE</span></span>
+                  <span class="doc-chip"><span class="chip-icon">📈</span> Financial Model <span class="chip-tag">EXCEL</span></span>
+                  <span class="doc-chip"><span class="chip-icon">📡</span> Tower Metrics Plan</span>
+                </div>
+              </div>
+              <div>
+                <div class="phase-col-label">Gate criteria</div>
+                <div class="gate-item"><div class="gate-dot"></div><div>Financial model with 3-year projection <span class="gate-hard-label">Hard</span></div></div>
+                <div class="gate-item"><div class="gate-dot"></div><div>Roadmap with milestones and owners <span class="gate-hard-label">Hard</span></div></div>
+                <div class="gate-item"><div class="gate-dot"></div><div>Executive sponsor sign-off on business case <span class="gate-hard-label">Hard</span></div></div>
+                <div class="gate-item"><div class="gate-dot soft"></div><div>Tower metrics defined and agreed <span class="gate-soft-label">Soft</span></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- P5 -->
+        <div class="phase-card">
+          <div class="phase-header">
+            <span class="phase-num" style="background:var(--teal);">P5</span>
+            <span class="phase-name">Mobilize &amp; Handoff</span>
+            <span class="phase-gate-badge" style="color:var(--navy);border-color:var(--navy-line);background:var(--navy-soft);">Gate: Tower Acceptance</span>
+          </div>
+          <div class="phase-body">
+            <div class="phase-goal">Assemble the delivery team and RACI. Build the handoff package. Verify execution readiness. Secure Tower acceptance. Gating out of P5 closes the Move and transitions it to Control Tower for ongoing execution tracking.</div>
+            <div class="phase-example">
+              <div class="phase-example-label">Example chat with Nexus</div>
+              <div class="phase-example-text">"Nexus, generate the Handoff Package. Include the charter, roadmap, business case, and the risk register from P2. The delivery team is confirmed: PM is Priya, tech lead is Marcus." → Nexus assembles the package, pre-fills the RACI with Priya and Marcus's roles, and flags two open risks from the P2 register that need owner assignment before Tower acceptance can be confirmed.</div>
+            </div>
+            <div class="phase-cols">
+              <div>
+                <div class="phase-col-label">Deliverables generated</div>
+                <div>
+                  <span class="doc-chip"><span class="chip-icon">🚀</span> Handoff Package <span class="chip-tag gate">GATE</span></span>
+                  <span class="doc-chip"><span class="chip-icon">✅</span> Readiness Assessment</span>
+                </div>
+              </div>
+              <div>
+                <div class="phase-col-label">Gate criteria</div>
+                <div class="gate-item"><div class="gate-dot"></div><div>Delivery team assembled with named PM <span class="gate-hard-label">Hard</span></div></div>
+                <div class="gate-item"><div class="gate-dot"></div><div>Handoff package generated and complete <span class="gate-hard-label">Hard</span></div></div>
+                <div class="gate-item"><div class="gate-dot"></div><div>Tower acceptance confirmed <span class="gate-hard-label">Hard</span></div></div>
+                <div class="gate-item"><div class="gate-dot soft"></div><div>All previous deliverables reviewed by sponsor <span class="gate-soft-label">Soft</span></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /phases -->
+
+      <div class="callout info">
+        <div class="callout-icon">→</div>
+        <div class="callout-body">
+          <div class="callout-label">After P5: Control Tower</div>
+          <div class="callout-text">When a Move gates out of P5, it appears automatically in <strong>Control Tower</strong> under Atlas. The program shows on the portfolio heatmap and receives ongoing signal tracking. You'll see a "→ Tower" indicator on the P5 phase rail once this transition completes.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ─── 07. Gates ─── -->
+    <section class="section" id="s07">
+      <div class="section-eyebrow">07</div>
+      <h2 class="section-title">Understanding gates</h2>
+      <p class="section-lead">Every phase ends with a quality gate. Gates are not bureaucratic checkboxes — they're the mechanism that ensures each phase has genuine outputs before implementation begins.</p>
+
+      <h3 class="sub-heading">Gate status: three states</h3>
+      <div class="gate-states">
+        <div class="gate-state pending">
+          <div class="gate-state-icon">🔒</div>
+          <div class="gate-state-name">Pending</div>
+          <div class="gate-state-desc">Phase hasn't started or not all hard criteria have been addressed yet. Advance button is locked.</div>
+        </div>
+        <div class="gate-state open">
+          <div class="gate-state-icon">⚠️</div>
+          <div class="gate-state-name">Open</div>
+          <div class="gate-state-desc">Phase is in progress. Some criteria met, some still outstanding. Advance button shows which criteria are blocking.</div>
+        </div>
+        <div class="gate-state cleared">
+          <div class="gate-state-icon">✅</div>
+          <div class="gate-state-name">Cleared</div>
+          <div class="gate-state-desc">All hard criteria met. Advance button is active. Soft criteria may still be advisory warnings.</div>
+        </div>
+      </div>
+
+      <h3 class="sub-heading">Hard vs. soft criteria</h3>
+      <div class="gate-criteria-grid">
+        <div class="gate-criteria-box">
+          <div class="gate-criteria-header hard">
+            <span class="gc-label hard">Hard criteria</span>
+            <span class="gc-tag">— blocking, must be met</span>
+          </div>
+          <div class="gate-criteria-list">
+            <div class="gc-item"><span class="gc-icon">🚫</span>Gate cannot clear until these are satisfied</div>
+            <div class="gc-item"><span class="gc-icon">🚫</span>Advance button is locked if any hard criterion is open</div>
+            <div class="gc-item"><span class="gc-icon">📋</span>Examples: named sponsor, scope boundary, gate document generated</div>
+            <div class="gc-item"><span class="gc-icon">📋</span>Nexus tracks these automatically from your inputs</div>
+          </div>
+        </div>
+        <div class="gate-criteria-box">
+          <div class="gate-criteria-header soft">
+            <span class="gc-label soft">Soft criteria</span>
+            <span class="gc-tag">— advisory, visible to reviewers</span>
+          </div>
+          <div class="gate-criteria-list">
+            <div class="gc-item"><span class="gc-icon">⚠️</span>Gate can clear even with open soft criteria</div>
+            <div class="gc-item"><span class="gc-icon">⚠️</span>Shown as advisory warnings in the gate view</div>
+            <div class="gc-item"><span class="gc-icon">📋</span>Examples: stakeholder review done, technical sign-off obtained</div>
+            <div class="gc-item"><span class="gc-icon">📋</span>Appear in the evidence trail viewed by Tower</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="callout warn">
+        <div class="callout-icon">⚠️</div>
+        <div class="callout-body">
+          <div class="callout-label">Gates cannot self-approve</div>
+          <div class="callout-text">In the current pilot configuration, any user can approve their own gate. In production, only admin or Maestro-role users will be able to approve. Gate sign-off is recorded in the audit trail — Nexus (the AI) cannot approve a gate on your behalf.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ─── 08. Generating deliverables ─── -->
+    <section class="section" id="s08">
+      <div class="section-eyebrow">08</div>
+      <h2 class="section-title">Generating deliverables</h2>
+      <p class="section-lead">Every phase generates consulting-grade documents — charters, assessments, roadmaps, financial models, and more. All documents are generated on demand from the Generate Deliverables tab in the phase canvas.</p>
+
+      <div class="callout warn">
+        <div class="callout-icon">⚠️</div>
+        <div class="callout-body">
+          <div class="callout-label">Generate before you download</div>
+          <div class="callout-text">Download links in the Evidence Hub only appear after a document has been generated. If a document shows "not generated," go back to the phase workspace, open the Generate tab, and generate it first.</div>
+        </div>
+      </div>
+
+      <h4 class="sub-heading-sm">How to generate a deliverable</h4>
+      <div class="gen-flow">
+        <div class="gen-step">
+          <span class="gen-step-num">1</span>
+          <div class="gen-step-content">
+            <div class="gen-step-title">Navigate to the phase workspace</div>
+            <div class="gen-step-desc">Open the Move and click the phase (e.g. P2) in the phase rail at the top.</div>
+            <span class="gen-step-path">/strategic-moves/{id}/phase/2</span>
+          </div>
+        </div>
+        <div class="gen-step">
+          <span class="gen-step-num">2</span>
+          <div class="gen-step-content">
+            <div class="gen-step-title">Click the "Generate Deliverables" tab in the canvas</div>
+            <div class="gen-step-desc">The tab is in the right-hand phase canvas. It shows all documents available for this phase with their current status.</div>
+          </div>
+        </div>
+        <div class="gen-step">
+          <span class="gen-step-num">3</span>
+          <div class="gen-step-content">
+            <div class="gen-step-title">Select the document you want and click Generate</div>
+            <div class="gen-step-desc">Each document shows its format (HTML preview + Word download, or Excel for financial models). Gate artifacts are marked with a green GATE chip.</div>
+          </div>
+        </div>
+        <div class="gen-step">
+          <span class="gen-step-num">4</span>
+          <div class="gen-step-content">
+            <div class="gen-step-title">Wait for generation (typically 10–30 seconds)</div>
+            <div class="gen-step-desc">Nexus assembles the document from your scaffold data, phase inputs, and chat history. Complex documents like the Business Case or Financial Model may take longer.</div>
+          </div>
+        </div>
+        <div class="gen-step">
+          <span class="gen-step-num">5</span>
+          <div class="gen-step-content">
+            <div class="gen-step-title">Preview the HTML version or download Word / Excel</div>
+            <div class="gen-step-desc">HTML is for review in-browser. Word is for editing and sharing externally. Excel is for the Financial Model (5 sheets). All versions are linked from the Evidence Hub.</div>
+          </div>
+        </div>
+      </div>
+
+      <h4 class="sub-heading-sm">What each format means</h4>
+      <div style="display:flex;gap:14px;flex-wrap:wrap;margin:16px 0 24px;">
+        <div style="border:1px solid var(--border);border-radius:8px;padding:16px 20px;flex:1;min-width:180px;">
+          <div style="font-family:var(--f-mono);font-size:9px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:var(--slate);margin-bottom:6px;">HTML</div>
+          <div style="font-size:13.5px;color:var(--body);line-height:1.5;">Read-only in-browser preview. Use for reviewing, sharing links internally, or presenting in a meeting.</div>
+        </div>
+        <div style="border:1px solid var(--border);border-radius:8px;padding:16px 20px;flex:1;min-width:180px;">
+          <div style="font-family:var(--f-mono);font-size:9px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:var(--slate);margin-bottom:6px;">Word (.docx)</div>
+          <div style="font-size:13.5px;color:var(--body);line-height:1.5;">Editable document for external sharing, client delivery, or stakeholder sign-off. All narrative documents.</div>
+        </div>
+        <div style="border:1px solid var(--border);border-radius:8px;padding:16px 20px;flex:1;min-width:180px;">
+          <div style="font-family:var(--f-mono);font-size:9px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:var(--slate);margin-bottom:6px;">Excel (.xlsx)</div>
+          <div style="font-size:13.5px;color:var(--body);line-height:1.5;">The P4 Financial Model only. 5 sheets: assumptions, 3-year P&L projection, NPV/IRR, sensitivity analysis, and payback curve.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ─── 09. Evidence Hub ─── -->
+    <section class="section" id="s09">
+      <div class="section-eyebrow">09</div>
+      <h2 class="section-title">The Evidence Hub</h2>
+      <p class="section-lead">The Evidence Hub is the single document store for a Move — all generated deliverables and manually uploaded attachments, organized by phase, with current status and download links.</p>
+
+      <div style="font-family:var(--f-mono);font-size:12px;font-weight:600;color:var(--slate);background:var(--surface3);border:1px solid var(--border);border-radius:6px;padding:10px 14px;display:inline-block;margin:0 0 28px;">/strategic-moves/{id}/evidence</div>
+
+      <div class="anatomy">
+        <div class="anatomy-pane">
+          <div class="anatomy-label">Gate artifacts — blue left border</div>
+          <div class="anatomy-item">Required for the phase gate to clear</div>
+          <div class="anatomy-item">Show a <code>GATE</code> label in the document list</div>
+          <div class="anatomy-item">Status must be Draft → In Review → Signed Off before gate clears</div>
+          <div class="anatomy-item">Examples: Program Charter, Current State Assessment, Execution Roadmap</div>
+        </div>
+        <div class="anatomy-pane">
+          <div class="anatomy-label">Working documents — grey left border</div>
+          <div class="anatomy-item">Supporting analysis and design artifacts</div>
+          <div class="anatomy-item">Not required for gate clearance</div>
+          <div class="anatomy-item">Still tracked and versioned</div>
+          <div class="anatomy-item">Examples: Stakeholder Map, Root Cause Analysis, Risk Register</div>
+        </div>
+      </div>
+
+      <h3 class="sub-heading">Uploading supporting evidence</h3>
+      <p class="body-text">You can upload supporting files directly to the Evidence Hub — or attach them in the Nexus chat with the paperclip icon. Uploaded files are indexed by the evidence specialist and attached to the relevant phase. Supported formats: PDF, Word, Excel, CSV, PowerPoint.</p>
+    </section>
+
+    <!-- ─── 10. Do's and don'ts ─── -->
+    <section class="section" id="s10">
+      <div class="section-eyebrow">10</div>
+      <h2 class="section-title">Do's and don'ts</h2>
+      <p class="section-lead">The most common mistakes new users make — and how to avoid them.</p>
+
+      <div class="tips-grid">
+        <div class="tip-card do">
+          <div class="tip-badge">✓ Do</div>
+          <div class="tip-text">Talk to Nexus like a colleague describing a situation.</div>
+          <div class="tip-example">"We're trying to cut call handle time by 30%, CFO is sponsor, scope is just the routing layer" — fills three fields in one message.</div>
+        </div>
+        <div class="tip-card dont">
+          <div class="tip-badge">✗ Don't</div>
+          <div class="tip-text">Try to fill scaffold fields manually, one at a time.</div>
+          <div class="tip-example">The scaffold panel is read-only — it updates from what Nexus extracts. Describe the program in chat.</div>
+        </div>
+        <div class="tip-card do">
+          <div class="tip-badge">✓ Do</div>
+          <div class="tip-text">Use the P2 Continue/Discontinue decision explicitly.</div>
+          <div class="tip-example">If diagnosis reveals a fundamental blocker, say "Nexus, record a Discontinue decision for this Move with rationale: [reason]."</div>
+        </div>
+        <div class="tip-card dont">
+          <div class="tip-badge">✗ Don't</div>
+          <div class="tip-text">Leave a Move open indefinitely with no progress.</div>
+          <div class="tip-example">Stale Moves in P1 or P2 with no gate advancement in 30+ days surface in Control Tower as portfolio risk signals.</div>
+        </div>
+        <div class="tip-card do">
+          <div class="tip-badge">✓ Do</div>
+          <div class="tip-text">Generate deliverables before presenting or distributing.</div>
+          <div class="tip-example">Regenerate after major chat updates — document content is assembled at generation time from your latest inputs.</div>
+        </div>
+        <div class="tip-card dont">
+          <div class="tip-badge">✗ Don't</div>
+          <div class="tip-text">Skip the scope boundary because "everyone knows what's in scope."</div>
+          <div class="tip-example">Scope disputes are the #1 cause of program failure. Document it explicitly even if it feels obvious.</div>
+        </div>
+        <div class="tip-card do">
+          <div class="tip-badge">✓ Do</div>
+          <div class="tip-text">Upload supporting data files during P2 via the paperclip.</div>
+          <div class="tip-example">Nexus can parse call logs, ops reports, and financial data to build the Current State Assessment from real evidence, not assumptions.</div>
+        </div>
+        <div class="tip-card dont">
+          <div class="tip-badge">✗ Don't</div>
+          <div class="tip-text">Wait until P4 to check the Financial Model assumptions.</div>
+          <div class="tip-example">The value hypothesis seed from origination seeds the model. Enter a realistic range upfront so P4 refinement is a calibration, not a rebuild.</div>
+        </div>
+      </div>
+
+      <div class="callout success">
+        <div class="callout-icon">💡</div>
+        <div class="callout-body">
+          <div class="callout-label">Getting the most from Nexus</div>
+          <div class="callout-text">Nexus works best when you give it context, not just commands. Instead of "generate the charter," try "generate the charter — the sponsor is Sarah Chen (COO), scope is inbound routing only, and the program needs to be completed before our legacy routing contract expires in Q3." Richer context produces better documents.</div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+</div><!-- /body-wrap -->
+
+<!-- ════════════════ FOOTER ════════════════ -->
+<footer class="doc-footer">
+  <span class="doc-footer-brand">AbarVa</span>
+  <span class="doc-footer-meta">Training Guide · Strategic Moves · v1.0 · 2026-05-07</span>
+</footer>
+
+<script>
+  // Active TOC link on scroll
+  const sections = document.querySelectorAll('section[id]');
+  const links = document.querySelectorAll('.toc-item a');
+  const io = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        links.forEach(l => l.classList.remove('active'));
+        const a = document.querySelector(`.toc-item a[href="#${e.target.id}"]`);
+        if (a) a.classList.add('active');
+      }
+    });
+  }, { rootMargin: '-15% 0px -70% 0px' });
+  sections.forEach(s => io.observe(s));
+</script>
+
+</body>
+</html>
