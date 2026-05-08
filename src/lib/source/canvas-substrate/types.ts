@@ -33,6 +33,10 @@ export interface SourceEventArtifactStateRow {
   gate_defining: boolean;
   linked_artifact_id: string | null;
   notes: string | null;
+  body: string | null;
+  body_format: 'markdown' | 'html' | 'plain';
+  body_authored_by: string | null;
+  body_updated_at: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -51,6 +55,10 @@ export interface SourceEventArtifactState {
   gateDefining: boolean;
   linkedArtifactId: string | null;
   notes: string | null;
+  body: string | null;
+  bodyFormat: 'markdown' | 'html' | 'plain';
+  bodyAuthoredBy: string | null;
+  bodyUpdatedAt: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -157,6 +165,10 @@ export function artifactStateRowToView(
     gateDefining: row.gate_defining,
     linkedArtifactId: row.linked_artifact_id,
     notes: row.notes,
+    body: row.body ?? null,
+    bodyFormat: row.body_format ?? 'markdown',
+    bodyAuthoredBy: row.body_authored_by ?? null,
+    bodyUpdatedAt: row.body_updated_at ?? null,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };

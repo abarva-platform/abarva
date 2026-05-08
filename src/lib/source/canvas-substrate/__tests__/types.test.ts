@@ -24,6 +24,10 @@ describe('artifactStateRowToView', () => {
       gate_defining: true,
       linked_artifact_id: null,
       notes: null,
+      body: null,
+      body_format: 'markdown',
+      body_authored_by: null,
+      body_updated_at: null,
       created_at: '2026-05-07T20:00:00Z',
       updated_at: '2026-05-07T20:00:00Z',
     };
@@ -32,6 +36,35 @@ describe('artifactStateRowToView', () => {
     expect(view.artifactCode).toBe('d05_scope_memo');
     expect(view.stage).toBe('scope');
     expect(view.gateDefining).toBe(true);
+    expect(view.body).toBeNull();
+    expect(view.bodyFormat).toBe('markdown');
+  });
+
+  it('passes through authored body content + audit fields', () => {
+    const row: SourceEventArtifactStateRow = {
+      id: 'a2',
+      source_event_id: 'evt-2',
+      tenant_key: 'meridian',
+      artifact_code: 'd01_strategy_memo',
+      stage_key: 'strategy',
+      artifact_family: 'sourcing_strategy',
+      tier: 'outline',
+      status: 'approved',
+      requirement_level: 'required',
+      gate_defining: true,
+      linked_artifact_id: null,
+      notes: null,
+      body: '# Sourcing Strategy Memo\n\nReal authored content.',
+      body_format: 'markdown',
+      body_authored_by: 'user_clerk_123',
+      body_updated_at: '2026-05-08T01:00:00Z',
+      created_at: '2026-05-07T20:00:00Z',
+      updated_at: '2026-05-08T01:00:00Z',
+    };
+    const view = artifactStateRowToView(row);
+    expect(view.body).toContain('Real authored content');
+    expect(view.bodyAuthoredBy).toBe('user_clerk_123');
+    expect(view.bodyUpdatedAt).toBe('2026-05-08T01:00:00Z');
   });
 });
 
