@@ -89,10 +89,12 @@ function colorForId(id: string): string {
 // at a glance whether it's done.
 //
 // Completion rule per `buildGateCriteriaForPhase`:
+//   - P0 Originate: criteria driven by charter.scaffold field presence
+//     (data-backed) when charter is available, else hash-fallback for
+//     legacy engagements.
 //   - criteria whose owning phase < currentPhase → all 5 checked
-//   - criteria for the currentPhase → 2-3 of 5 checked, deterministic by
-//     hashStringToInt(move.id). Specifically: count = 2 + (hash % 2).
-//     Indexes 0..(count-1) checked; the rest unchecked.
+//   - criteria for the currentPhase → data-backed or 2-3 of 5 checked
+//     deterministic by hashStringToInt(move.id).
 //   - criteria for phases > currentPhase → all 5 unchecked
 //
 // The component renders only the currentPhase's 5 criteria (the others
@@ -165,18 +167,63 @@ const GATE_CRITERIA_DOCTRINE: GateCriterion[][] = [
   ],
 ];
 
+/**
+ * Derive P0 gate completion from charter.scaffold fields.
+ * Returns a parallel boolean array aligned to GATE_CRITERIA_DOCTRINE[0].
+ * Falls back to hash-based completion for legacy engagements (charter=null).
+ */
+function p0GateCompletionFromCharter(
+  charter: Record<string, unknown> | null,
+  moveId: string,
+): boolean[] {
+  if (!charter) {
+    // Legacy engagement — use hash-based cosmetic completion
+    const count = 2 + (hashStringToInt(moveId) % 2);
+    return GATE_CRITERIA_DOCTRINE[0].map((_, i) => i < count);
+  }
+  const s = (charter.scaffold ?? {}) as Record<string, string | null | undefined>;
+  const has = (k: string) => typeof s[k] === 'string' && (s[k] as string).trim().length > 0;
+  // p0-1: hypothesis = problem_statement
+  // p0-2: sponsor = sponsor_candidate
+  // p0-3: scope = scope_boundary
+  // p0-4: archetype classification
+  // p0-5: evidence request routed → derived from lifecycle_state (caller injects via 5th value)
+  //       We mark it false here; the caller may override based on lifecycle_state.
+  return [
+    has('problem_statement'),
+    has('sponsor_candidate'),
+    has('scope_boundary'),
+    has('archetype'),
+    false, // p0-5 evaluated by lifecycle_state below
+  ];
+}
+
 function buildGateCriteriaForPhase(
   phase: number,
   moveId: string,
+  opts: { charter?: Record<string, unknown> | null; lifecycleState?: string | null } = {},
 ): StrategicMove['gateCriteria'] {
   const bounded = Math.max(0, Math.min(7, phase));
   const criteria = GATE_CRITERIA_DOCTRINE[bounded] ?? GATE_CRITERIA_DOCTRINE[0];
-  // Count of checked criteria for the current phase: 2 + (hash % 2) → {2, 3}.
-  const checkedCount = 2 + (hashStringToInt(moveId) % 2);
+
+  let completions: boolean[];
+  if (bounded === 0) {
+    // P0: data-backed from charter.scaffold
+    completions = p0GateCompletionFromCharter(opts.charter ?? null, moveId);
+    // p0-5 = "P1 evidence request drafted and routed" → submitted_for_approval or beyond
+    const lifecycleRoutedStates = new Set(['submitted_for_approval', 'approved', 'active']);
+    completions[4] = lifecycleRoutedStates.has(opts.lifecycleState ?? '');
+  } else {
+    // Other phases: use hash-based cosmetic completion for now
+    // (will be data-backed in future waves as more phase gates are wired)
+    const checkedCount = 2 + (hashStringToInt(moveId) % 2);
+    completions = criteria.map((_, i) => i < checkedCount);
+  }
+
   return criteria.map((c, i) => ({
     id: c.id,
     label: c.label,
-    completed: i < checkedCount,
+    completed: completions[i] ?? false,
   }));
 }
 
@@ -1025,6 +1072,7 @@ export async function buildStrategicMove(
   const gateCriteria: StrategicMove['gateCriteria'] = buildGateCriteriaForPhase(
     phase,
     move.id,
+    { charter: move.charter, lifecycleState: move.lifecycleState },
   );
 
   const client = (clientRow.data as { id: string; name: string; industry_code: string | null; slug: string | null } | null) ?? {
