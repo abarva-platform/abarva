@@ -5,6 +5,7 @@
 // (Meridian / Apex / FirstCap) at full wireframe fidelity.
 
 import type { Metadata } from 'next';
+import { AppTopBar } from '@/components/shell/AppTopBar';
 import { TenantHomePage } from '@/components/home/TenantHomePage';
 import { resolveTenantHome } from '@/components/home/tenant-home-fixtures';
 import { getActiveClientRow } from '@/lib/active-client';
@@ -16,5 +17,10 @@ export const revalidate = 0;
 export default async function HomePage() {
   const activeClient = await getActiveClientRow().catch(() => null);
   const data = resolveTenantHome(activeClient?.key);
-  return <TenantHomePage data={data} />;
+  return (
+    <>
+      <AppTopBar />
+      <TenantHomePage data={data} />
+    </>
+  );
 }
