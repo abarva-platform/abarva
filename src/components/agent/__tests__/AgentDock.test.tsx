@@ -368,7 +368,7 @@ describe('AgentDock · viewport-bound side-rail', () => {
   // its parent flex pane. On surfaces whose document scrolled (e.g.
   // /source/new with 1587px doc height vs 827px viewport), the composer
   // ended up below the fold. The shell now self-imposes
-  //   height: calc(100vh - var(--agent-dock-top-offset, 64px))
+  //   height: calc(100vh - var(--agent-dock-self-top, ...))
   // so the dock stays viewport-bounded irrespective of workspace height.
 
   it('renders the dock inside a viewport-bound shell with explicit height', () => {
@@ -396,6 +396,8 @@ describe('AgentDock · viewport-bound side-rail', () => {
     const height = shell.style.height;
     const maxHeight = shell.style.maxHeight;
     expect(height).toMatch(/calc\(100vh/);
+    // self-top is the primary source; legacy top-offset is the fallback.
+    expect(height).toContain('var(--agent-dock-self-top');
     expect(height).toContain('var(--agent-dock-top-offset');
     // dvh fallback for mobile address-bar collapse.
     expect(maxHeight).toMatch(/calc\(100dvh/);
@@ -458,5 +460,98 @@ describe('AgentDock · viewport-bound side-rail', () => {
     const form = screen.getByTestId('agent-dock-form');
     // Should NOT carry position:sticky any longer.
     expect(form.style.position).not.toBe('sticky');
+  });
+});
+
+describe('AgentDock · self-measured top offset', () => {
+  // Regression: PR #1773 hardcoded a 64px top offset. On surfaces with
+  // additional sticky chrome above the dock (Intelligence's secondary
+  // tab nav adds 84px, Source canvas's 11-stage rail, the events
+  // portfolio's sourcing-journey strip), 64px under-counts and the
+  // composer drops below the fold.
+  //
+  // Fix: dock self-measures its top y-offset via getBoundingClientRect
+  // and writes it to `--agent-dock-self-top` on the shell. The calc()
+  // expressions consume that value as the primary subtractor and pin
+  // offset, falling back to the legacy 64px var only if measurement
+  // hasn't run yet.
+
+  it('writes --agent-dock-self-top after mount based on getBoundingClientRect', () => {
+    // Force getBoundingClientRect to report a 200px push-down so we can
+    // assert on the measured value. jsdom's default rect is all zeros.
+    const originalGBCR = HTMLElement.prototype.getBoundingClientRect;
+    HTMLElement.prototype.getBoundingClientRect = function (): DOMRect {
+      // Only override for the side-rail shell. Other elements keep zeros.
+      if (this.getAttribute('data-testid') === 'agent-dock-side-rail-shell') {
+        return {
+          top: 200,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          width: 0,
+          height: 0,
+          x: 0,
+          y: 200,
+          toJSON: () => ({}),
+        } as DOMRect;
+      }
+      return originalGBCR.call(this);
+    };
+
+    try {
+      render(
+        <div data-testid="push-down" style={{ paddingTop: 200 }}>
+          <AgentDock
+            agent={AGENT}
+            surface={SURFACE}
+            thread={[]}
+            onMessage={jest.fn()}
+            workspace={<div data-testid="workspace">w</div>}
+          />
+        </div>,
+      );
+
+      const shell = screen.getByTestId('agent-dock-side-rail-shell');
+      // useLayoutEffect runs synchronously during render in @testing-library.
+      // The hook should have set the custom property to 200px.
+      expect(shell.style.getPropertyValue('--agent-dock-self-top')).toBe('200px');
+    } finally {
+      HTMLElement.prototype.getBoundingClientRect = originalGBCR;
+    }
+  });
+
+  it('uses the measured value as the primary source in the height calc', () => {
+    render(
+      <AgentDock
+        agent={AGENT}
+        surface={SURFACE}
+        thread={[]}
+        onMessage={jest.fn()}
+        workspace={<div>w</div>}
+      />,
+    );
+    const shell = screen.getByTestId('agent-dock-side-rail-shell');
+    // The height calc must consume --agent-dock-self-top with a fallback
+    // chain to --agent-dock-top-offset → 64px.
+    expect(shell.style.height).toContain('var(--agent-dock-self-top');
+    expect(shell.style.height).toContain('var(--agent-dock-top-offset, 64px)');
+    // The sticky `top` uses the same measured value.
+    expect(shell.style.top).toContain('var(--agent-dock-self-top');
+  });
+
+  it('also applies the measured top to pin-top and pin-bottom layouts', () => {
+    window.localStorage.setItem(modeStorageKey(SURFACE), 'pin-bottom');
+    render(
+      <AgentDock
+        agent={AGENT}
+        surface={SURFACE}
+        thread={[]}
+        onMessage={jest.fn()}
+        workspace={<div>w</div>}
+      />,
+    );
+    const pinShell = screen.getByTestId('agent-dock-pin-shell');
+    expect(pinShell.style.height).toContain('var(--agent-dock-self-top');
+    expect(pinShell.style.top).toContain('var(--agent-dock-self-top');
   });
 });
