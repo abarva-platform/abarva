@@ -35,8 +35,14 @@ import {
 } from '@/lib/setup';
 import {
   listInitiativesForClient,
+  listVendorsForClient,
   type AIInitiative,
+  type AIInitiativeVendorRow,
 } from '@/lib/admin/ai-initiatives/queries';
+import {
+  buildTowerBandMetrics,
+  type TowerBandMetricsView,
+} from '@/lib/tower/band-metrics-view';
 
 export const metadata = { title: 'Control Tower · AbarVa' };
 
@@ -55,6 +61,31 @@ async function buildTowerInitiatives(): Promise<ReadonlyArray<AIInitiative>> {
   } catch {
     return [];
   }
+}
+
+/**
+ * T-5 (Bind 1): query tenant-level vendor records so the dashboard band
+ * can compute Renewals · 90d from real contract renewal dates. Fail-soft:
+ * any error (auth, DB, RLS) returns an empty array so the page still
+ * renders — the band tile shows "0 / none in 90d" with a "no substrate"
+ * tooltip.
+ */
+async function buildTowerVendors(): Promise<ReadonlyArray<AIInitiativeVendorRow>> {
+  try {
+    const tenancy = await requireTenancy();
+    return await listVendorsForClient(tenancy.clientId);
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * T-5 (Bind 1): today's date for the band tile computations. Pinned to
+ * 2026-05-07 per the demo timeline (memory: currentDate). Keeps the
+ * deterministic-seed promise of the view-models.
+ */
+function buildTowerToday(): string {
+  return '2026-05-07';
 }
 
 // T-2 (Tower Fix Package): reduced from 10 to 5 tabs. Dropped:
@@ -462,6 +493,12 @@ export default async function TowerPage({
   const towerHandoffSourceEvents = await buildTowerHandoffSourceEvents();
   const towerSetupInitiativesFeed = await buildTowerSetupInitiativesFeed();
   const towerInitiatives = await buildTowerInitiatives();
+  const towerVendors = await buildTowerVendors();
+  const towerBandMetrics: TowerBandMetricsView = buildTowerBandMetrics(
+    towerInitiatives,
+    towerVendors,
+    buildTowerToday(),
+  );
   const resolvedSearchParams = searchParams ? await searchParams : {};
   const activeTab = resolveTowerTab(resolvedSearchParams.tab);
   const seedTenant =
@@ -473,6 +510,7 @@ export default async function TowerPage({
       tenantName={towerSetupInitiativesFeed.tenantName}
       context={`Control Tower · ${TOWER_SUBMENU_LABELS[activeTab]} · ${towerSetupInitiativesFeed.summary.total} initiatives observed`}
       initiatives={towerInitiatives}
+      bandMetrics={towerBandMetrics}
       towerSubmenuSlot={<TowerMainSubmenuStrip activeTab={activeTab} />}
       provenanceSlot={
         <>
