@@ -29,16 +29,16 @@ import {
 import { AdminCanonShellV2 } from '@/components/admin/AdminCanonShellV2';
 import { SetupChatRail } from '@/components/admin/SetupChatRail';
 import { SetupLandingTelemetryBridge } from '@/components/admin/setup/SetupLandingTelemetryBridge';
-import { HomeTenantHeader } from '@/components/home/HomeTenantHeader';
-import { StatusHeader } from '@/components/admin/overview/StatusHeader';
-import { StewardOrientation } from '@/components/admin/overview/StewardOrientation';
-import { ActionQueue } from '@/components/admin/overview/ActionQueue';
-import { RecentActivity } from '@/components/admin/overview/RecentActivity';
+import { HomeOverviewV2 } from '@/components/home/HomeOverviewV2';
 import { composeOverviewBlocks } from '@/lib/admin/overview-composer';
-import { SETUP } from '@/lib/admin/setup-tokens';
+import { composeHomeV2Extras } from '@/lib/admin/home-overview-v2';
 import { getApprovalQueueForTenant } from '@/lib/programs/approval';
 import { canonicalClientDisplayName, isClientKey } from '@/lib/client-config';
-import { SPACING } from '@/lib/design/design-tokens';
+import { getServerSupabase } from '@/lib/supabase-server';
+import {
+  listInitiativesForClient,
+  type AIInitiative,
+} from '@/lib/admin/ai-initiatives/queries';
 
 export const metadata = { title: 'Setup · AbarVa' };
 export const dynamic = 'force-dynamic';
@@ -88,42 +88,59 @@ export default async function AdminOverviewPage() {
     recentSnapshotActivity,
   });
 
+  // Section 01 + 05 inputs: programs + source events + initiatives
+  // counts. Fail-soft to zero so the page still renders for unbound
+  // tenants.
+  const sb = (() => {
+    try { return getServerSupabase(); } catch { return null; }
+  })();
+  const clientId = activeClient?.id ?? null;
+
+  // Pull engagements + source events + initiatives in parallel,
+  // fail-soft per-query so the page renders even when a tenant is
+  // unbound or RLS blocks a row.
+  const [programsRes, sourceEventsRes, initiativesList] = await Promise.all([
+    sb && clientId
+      ? sb.from('engagements').select('id, current_phase').eq('client_id', clientId)
+      : Promise.resolve({ data: null }),
+    sb
+      ? sb.from('source_events').select('id, lifecycle_state').eq('client_key', clientKey)
+      : Promise.resolve({ data: null }),
+    clientId
+      ? listInitiativesForClient(clientId).catch(() => [] as ReadonlyArray<AIInitiative>)
+      : Promise.resolve([] as ReadonlyArray<AIInitiative>),
+  ]);
+  const programsRows = (programsRes.data ?? []) as Array<{ id: string; current_phase: number | null }>;
+  const sourceEventsRows = (sourceEventsRes.data ?? []) as Array<{ id: string; lifecycle_state: string | null }>;
+  const programsCount = programsRows.length;
+  const programsP6Count = programsRows.filter((r) => (r.current_phase ?? 0) >= 6).length;
+  const sourceEventsCount = sourceEventsRows.length;
+  const sourceEventsAtRiskCount = sourceEventsRows.filter((r) =>
+    /risk|blocked|stalled/i.test(r.lifecycle_state ?? ''),
+  ).length;
+  const initiativesAtRiskCount = initiativesList.filter((i: AIInitiative) =>
+    /risk|blocked|attention/i.test(i.statusFlag ?? ''),
+  ).length;
+
+  const extras = composeHomeV2Extras({
+    segments,
+    programsCount,
+    programsP6Count,
+    sourceEventsCount,
+    sourceEventsAtRiskCount,
+    initiativesCount: initiativesList.length,
+    initiativesAtRiskCount,
+    lastIngestedAt: snapshot?.lastIngestedAt ?? null,
+  });
+
   return (
     <AdminCanonShellV2 agentRail={<SetupChatRail />} tenantName={activeClientDisplayName}>
-      <div
-        data-testid="overview-page"
-        style={{
-          display: 'flex',
-          flexDirection: 'column',
-          gap: SPACING.lg,
-          padding: SPACING.xl,
-          background: SETUP.paper,
-        }}
-      >
-        <HomeTenantHeader
-          tenantName={activeClientDisplayName}
-          clientKey={isClientKey(clientKey) ? clientKey : null}
-        />
-        <StatusHeader
-          tenantName={blocks.status.tenantName}
-          readinessPercent={blocks.status.readinessPercent}
-          agentLevel={blocks.status.agentLevel}
-          blockedCapabilityTracks={blocks.status.blockedCapabilityTracks}
-        />
-        <StewardOrientation
-          tenantName={blocks.orientation.tenantName}
-          industryPhrase={blocks.orientation.industryPhrase}
-          loadedSummary={blocks.orientation.loadedSummary}
-          missingSummary={blocks.orientation.missingSummary}
-          nextLoadName={blocks.orientation.nextLoadName}
-          nextLoadConsequence={blocks.orientation.nextLoadConsequence}
-        />
-        <ActionQueue
-          items={blocks.actionQueue.items}
-          totalPending={blocks.actionQueue.totalPending}
-        />
-        <RecentActivity items={blocks.recentActivity.items} />
-      </div>
+      <HomeOverviewV2
+        tenantName={activeClientDisplayName}
+        clientKey={isClientKey(clientKey) ? clientKey : null}
+        blocks={blocks}
+        extras={extras}
+      />
       <SetupLandingTelemetryBridge
         tenantKey={brokerTenantKey}
         tenantDataRichness={content.tenantDataRichness}

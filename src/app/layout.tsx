@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import { Suspense } from 'react'
 import { ClerkProvider } from '@clerk/nextjs'
-import { Fraunces, Inter } from 'next/font/google'
+import { Fraunces, Inter, JetBrains_Mono } from 'next/font/google'
 import './globals.css'
 import PostHogProvider from '@/components/PostHogProvider'
 import PostHogPageView from './posthog-pageview'
@@ -26,6 +26,14 @@ const inter = Inter({
   display: 'swap',
 })
 
+// JetBrains Mono — labels, eyebrows, IDs, KPI badges.
+const jetbrainsMono = JetBrains_Mono({
+  subsets: ['latin'],
+  weight: ['500', '600', '700'],
+  variable: '--font-jetbrains-mono',
+  display: 'swap',
+})
+
 export const metadata: Metadata = {
   title: 'AbarVa',
   description: 'Intelligence. Now act on it.',
@@ -44,7 +52,7 @@ export default function RootLayout({
 }) {
   return (
     <ClerkProvider signInUrl="/sign-in" afterSignOutUrl="/" signInForceRedirectUrl="/auth-redirect" signUpForceRedirectUrl="/auth-redirect">
-      <html lang="en" className={`${fraunces.variable} ${inter.variable}`}>
+      <html lang="en" className={`${fraunces.variable} ${inter.variable} ${jetbrainsMono.variable}`}>
         <head>
           <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
           <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
