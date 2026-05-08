@@ -35,8 +35,8 @@ export function LearnSideNav() {
     );
   }
 
-  // Special case: /home/learn itself → highlight welcome
-  const onLearnRoot = pathname === '/home/learn';
+  // /home and /home/learn both highlight the welcome item
+  const onRoot = pathname === '/home' || pathname === '/home/learn';
 
   return (
     <aside
@@ -53,7 +53,7 @@ export function LearnSideNav() {
       {/* Header */}
       <div
         style={{
-          padding: '16px 20px 12px',
+          padding: '16px 20px 14px',
           borderBottom: `1px solid ${T.border}`,
         }}
       >
@@ -64,33 +64,23 @@ export function LearnSideNav() {
             fontWeight: 400,
             color: T.ink,
             letterSpacing: '-0.01em',
-            marginBottom: 12,
           }}
         >
           AbarVa
         </div>
-        {/* Dashboard link */}
-        <Link
-          href="/home"
+        <div
           style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 8,
-            fontFamily: T.fBody,
-            fontSize: 13,
-            fontWeight: pathname === '/home' ? 600 : 400,
-            color: pathname === '/home' ? T.navy : T.body,
-            background: pathname === '/home' ? T.navySoft : 'transparent',
-            borderLeft: `2px solid ${pathname === '/home' ? T.navy : 'transparent'}`,
-            padding: '6px 8px',
-            borderRadius: '0 6px 6px 0',
-            textDecoration: 'none',
-            margin: '0 -8px',
+            fontFamily: T.fMono,
+            fontSize: 9,
+            fontWeight: 700,
+            letterSpacing: '0.12em',
+            textTransform: 'uppercase',
+            color: T.muted,
+            marginTop: 3,
           }}
         >
-          <span style={{ fontSize: 14 }}>⌂</span>
-          <span>Dashboard</span>
-        </Link>
+          Guide & Reference
+        </div>
       </div>
 
       {/* Nav */}
@@ -120,7 +110,7 @@ export function LearnSideNav() {
 
             {/* Items */}
             {group.items.map((item) => {
-              const active = isActive(item.slug) || (onLearnRoot && item.slug === 'welcome');
+              const active = isActive(item.slug) || (onRoot && item.slug === 'welcome');
               const badgeColor = item.phaseColor ? BADGE_COLORS[item.phaseColor] : T.navy;
               return (
                 <Link

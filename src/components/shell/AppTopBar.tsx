@@ -35,8 +35,7 @@ const NAV_ITEMS: CockpitNavItem[] = [
     href: "/home",
     match: (pathname) =>
       pathname === "/" ||
-      pathname === "/home" ||
-      (pathname.startsWith("/home/") && !pathname.startsWith("/home/learn")) ||
+      pathname.startsWith("/home") ||
       pathname === "/dashboard" ||
       pathname.startsWith("/dashboard/"),
   },
