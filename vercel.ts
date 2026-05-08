@@ -2,10 +2,14 @@
  * Vercel programmatic configuration.
  * https://vercel.com/docs/project-configuration/vercel-ts
  *
- * The buildCommand here is the only place we customise the deploy. It runs
- * once per deploy on Vercel build infrastructure. The shell command we
- * compose decides — based on `process.env.VERCEL_ENV` — whether to apply
- * pending Supabase migrations BEFORE running `next build`.
+ * The buildCommand below decides — at *deploy time*, in the shell — whether
+ * to apply pending Supabase migrations before running `next build`. The
+ * decision lives inside a single shell expression because Vercel's config
+ * loader requires `buildCommand` to be a STATIC string (any value computed
+ * from runtime expressions like `process.env.VERCEL_ENV` is rejected with
+ * "Dynamic values found in static properties: buildCommand"). The shell
+ * `case` statement is evaluated by the Vercel build container at deploy
+ * time, when `VERCEL_ENV` is correctly set.
  *
  * Behaviour matrix
  * ─────────────────────────────────────────────────────────────────────
@@ -47,20 +51,23 @@
  * marker. This prevents accidental data loss on auto-apply.
  */
 
-import type { VercelConfig } from '@vercel/config/v1/types';
+import { type VercelConfig } from '@vercel/config/v1';
 
-const vercelEnv = process.env.VERCEL_ENV;
-const isProductionDeploy = vercelEnv === 'production';
-
-// Pre-build step. We use `&&` so any non-zero exit from the migration
-// runner aborts the deploy before next build runs.
-const preBuildStep = isProductionDeploy
-  ? // Production: actually apply migrations.
-    'npm run db:migrate -- --ci'
-  : // Preview / development / local: log a skip line, then proceed.
-    `node -e "console.log('⏭  Skipping migrations (VERCEL_ENV=${vercelEnv ?? 'unset'}, prod-only)')"`;
-
+// IMPORTANT: buildCommand MUST be a literal string in the export. Anything
+// dynamic (template literal interpolating process.env, conditional
+// expression at object-construction time, etc.) is rejected by the Vercel
+// config loader with "Dynamic values found in static properties:
+// buildCommand". The `case` statement below is plain shell that the
+// Vercel build container evaluates at deploy time, when $VERCEL_ENV is
+// correctly set.
+//
+// Shell logic:
+//   - VERCEL_ENV=production: apply migrations (db:migrate --ci). On
+//     non-zero exit, `&&` short-circuits and the build aborts.
+//   - any other value (preview / development / unset): print a skip
+//     line and continue to the build.
 export const config: VercelConfig = {
   framework: 'nextjs',
-  buildCommand: `${preBuildStep} && npm run build`,
+  buildCommand:
+    'case "$VERCEL_ENV" in production) echo "[vercel.ts] Production deploy detected — applying pending Supabase migrations..." && npm run db:migrate -- --ci ;; *) echo "[vercel.ts] Skipping migrations (VERCEL_ENV=${VERCEL_ENV:-unset}, prod-only)" ;; esac && npm run build',
 };
