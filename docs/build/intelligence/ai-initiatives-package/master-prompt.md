@@ -40,7 +40,7 @@ ai-initiatives-package/
 ├── CATEGORY_TAXONOMY.md                              (the 8 categories with definitions)
 ├── BUSINESS_GOAL_LINKAGE.md                          (which goal each initiative serves)
 ├── DATA_MODEL.md                                     (database schema · table definitions)
-├── SETUP_UI_SPEC.md                                  (where in Setup the registry surfaces)
+├── HOME_UI_SPEC.md                                  (where in Home the registry surfaces)
 ├── LOAD_INSTRUCTIONS.md                              (step-by-step ingestion runbook)
 └── templates/
     ├── apex-retail/
@@ -63,11 +63,11 @@ ai-initiatives-package/
 1. **Read INVENTORY.md** to understand all 21 initiatives
 2. **Read CATEGORY_TAXONOMY.md** to understand the 8 categories
 3. **Read DATA_MODEL.md** to understand the database schema
-4. **Read SETUP_UI_SPEC.md** to understand where this surfaces in Setup
+4. **Read HOME_UI_SPEC.md** to understand where this surfaces in Home
 5. **Read LOAD_INSTRUCTIONS.md** for the actual ingestion steps
 6. **Apply the database migrations** (schema in DATA_MODEL.md)
 7. **Load all template JSON files** into the database per LOAD_INSTRUCTIONS.md
-8. **Build the Setup → AI Initiatives Registry view** per SETUP_UI_SPEC.md
+8. **Build the Home → AI Initiatives Registry view** per HOME_UI_SPEC.md
 9. **Verify via browser-Chrome MCP tool** that the registry renders for all 3 tenants
 10. **Tag the substrate** as `ai_initiatives_v1.0.0` for downstream packages to depend on
 
@@ -90,8 +90,8 @@ After this lands, Tower Fix Package T-1/T-2/T-3 and Intelligence Augmentation Pa
 
 - **Day 1:** Schema migrations applied
 - **Day 1-2:** Template JSON files loaded for all 3 tenants
-- **Day 2-3:** Setup → AI Initiatives Registry view built
+- **Day 2-3:** Home → AI Initiatives Registry view built
 - **Day 3:** Browser-Chrome verification across all 3 tenants
 - **Day 4:** Substrate tagged `ai_initiatives_v1.0.0`; downstream packages unblocked
 
-Total: ~4 days for substrate + Setup view. After this, everything else can move.
+Total: ~4 days for substrate + Home view. After this, everything else can move.

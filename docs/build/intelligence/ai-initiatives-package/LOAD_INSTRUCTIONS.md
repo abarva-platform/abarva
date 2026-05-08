@@ -1,6 +1,6 @@
 # Load Instructions · Step-by-Step Ingestion Runbook
 
-This is the runbook for Claude Code (or a human operator) to load this package end-to-end. After this runs, the AI Initiatives Registry exists in the database and the Setup → AI Initiatives view renders for all 3 demo tenants.
+This is the runbook for Claude Code (or a human operator) to load this package end-to-end. After this runs, the AI Initiatives Registry exists in the database and the Home → AI Initiatives view renders for all 3 demo tenants.
 
 ---
 
@@ -143,30 +143,30 @@ If any verification query returns unexpected results, halt and investigate. Do n
 
 ---
 
-## Step 4 · Build Setup → AI Initiatives view
+## Step 4 · Build Home → AI Initiatives view
 
-Per `SETUP_UI_SPEC.md`, build the new Setup panel:
+Per `HOME_UI_SPEC.md`, build the new Home panel:
 
 ```
-app/setup/ai-initiatives/page.tsx                            (new — view container with toggle)
-app/setup/ai-initiatives/components/ByGoalView.tsx           (new)
-app/setup/ai-initiatives/components/ByCategoryView.tsx       (new)
-app/setup/ai-initiatives/components/AllInitiativesTable.tsx  (new)
-app/setup/ai-initiatives/[initiativeId]/page.tsx             (new — detail page)
-app/setup/ai-initiatives/[initiativeId]/components/OverviewTab.tsx
-app/setup/ai-initiatives/[initiativeId]/components/KpisTab.tsx
-app/setup/ai-initiatives/[initiativeId]/components/StakeholdersTab.tsx
-app/setup/ai-initiatives/[initiativeId]/components/DecisionsTab.tsx
-app/setup/ai-initiatives/[initiativeId]/components/VendorsTab.tsx
-app/setup/ai-initiatives/[initiativeId]/components/ScenariosTab.tsx
-app/setup/ai-initiatives/[initiativeId]/components/ProvenanceTab.tsx
+app/home/ai-initiatives/page.tsx                            (new — view container with toggle)
+app/home/ai-initiatives/components/ByGoalView.tsx           (new)
+app/home/ai-initiatives/components/ByCategoryView.tsx       (new)
+app/home/ai-initiatives/components/AllInitiativesTable.tsx  (new)
+app/home/ai-initiatives/[initiativeId]/page.tsx             (new — detail page)
+app/home/ai-initiatives/[initiativeId]/components/OverviewTab.tsx
+app/home/ai-initiatives/[initiativeId]/components/KpisTab.tsx
+app/home/ai-initiatives/[initiativeId]/components/StakeholdersTab.tsx
+app/home/ai-initiatives/[initiativeId]/components/DecisionsTab.tsx
+app/home/ai-initiatives/[initiativeId]/components/VendorsTab.tsx
+app/home/ai-initiatives/[initiativeId]/components/ScenariosTab.tsx
+app/home/ai-initiatives/[initiativeId]/components/ProvenanceTab.tsx
 
 hooks/useAIInitiatives.ts                                    (new)
 hooks/useAIInitiative.ts                                     (new — single initiative)
 hooks/useAIBusinessGoals.ts                                  (new)
 hooks/useAICategories.ts                                     (new)
 
-components/setup/SetupNav.tsx                                (update — add AI Initiatives entry)
+components/home/HomeNav.tsx                                (update — add AI Initiatives entry)
 ```
 
 Hook signatures:
@@ -192,11 +192,11 @@ useAICategories()
 
 ```
 Step 1 · Navigate to /setup (Castillo · Meridian)
-  - assert: Setup nav contains "AI Initiatives" entry (7th item)
+  - assert: Home nav contains "AI Initiatives" entry (7th item)
   - screenshot
 
 Step 2 · Click "AI Initiatives"
-  - assert: page loads at /setup/ai-initiatives
+  - assert: page loads at /home/ai-initiatives
   - assert: "By Business Goal" view active by default
   - assert: 4 business goal sections render
   - assert: 7 initiatives total visible across goals
@@ -230,7 +230,7 @@ Step 7 · Click Provenance tab
   - screenshot
 
 Step 8 · Switch tenant to Apex Retail
-  - navigate to /setup/ai-initiatives in Apex tenant context
+  - navigate to /home/ai-initiatives in Apex tenant context
   - assert: 7 Apex initiatives render
   - assert: 2 ⭐ markers (AR-03, AR-05)
   - screenshot
@@ -313,7 +313,7 @@ After all 6 steps execute successfully:
 - ✅ ~14 vendor records
 - ✅ ~10 forward-looking scenarios
 - ✅ All records carry `loaded_via_template` provenance
-- ✅ Setup → AI Initiatives view renders for all 3 tenants
+- ✅ Home → AI Initiatives view renders for all 3 tenants
 - ✅ Substrate version tagged v1.0.0
 - ✅ Downstream packages unblocked
 
