@@ -45,6 +45,12 @@ const C = {
 
 interface Props {
   data: MapData;
+  /**
+   * Tenant key forwarded to the Sentinel surfaceContext so the upload
+   * route can scope attachments to the active client. Optional · falls
+   * back to data.tenantName when omitted.
+   */
+  activeClient?: string;
 }
 
 const SVG_W = 760;
@@ -99,7 +105,7 @@ const ENGAGEMENT_FILTERS: ReadonlyArray<{ key: EngagementFilter; label: string }
   { key: 'scaled', label: 'Scaled' },
 ];
 
-export function IntelligenceMap({ data }: Props) {
+export function IntelligenceMap({ data, activeClient }: Props) {
   const [selectedId, setSelectedId] = useState<string>(data.defaultSelectedId);
   // Kanban is the default · the scatter chart has structural label
   // overlap when many bubbles cluster in the same value/lifecycle
@@ -196,11 +202,19 @@ export function IntelligenceMap({ data }: Props) {
         )}
       </div>
 
-      {/* Body grid · masthead lives INSIDE the left column so the
-          Sentinel rail aligns with the very top of the surface and the
-          composer is visible without scrolling (claude.ai pattern). */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 440px', alignItems: 'start' }}>
-        <main style={{ padding: '24px 36px 80px', display: 'grid', gap: 18, gridTemplateColumns: '1fr', minWidth: 0 }}>
+      {/* Body · the Sentinel chat dock owns the splitter; the workspace
+          (right pane) hosts the masthead, toolbar, view, and detail. */}
+      <div style={{ height: 'calc(100vh - 112px - 36px)', minHeight: 0 }}>
+        <SentinelChat
+          scopeLabel={`${data.tenantName} · The Map`}
+          opener={mapSentinelOpener(data, selected)}
+          conversation={MAP_SENTINEL_CONVERSATION}
+          surfaceContext={{
+            activeTab: 'map',
+            activeClient: activeClient ?? data.tenantName,
+          }}
+          workspace={
+        <main style={{ padding: '24px 36px 80px', display: 'grid', gap: 18, gridTemplateColumns: '1fr', minWidth: 0, overflowY: 'auto' }}>
           {/* Compact masthead — eyebrow + 1-line title + pills inline */}
           <div>
             <div
@@ -535,12 +549,7 @@ export function IntelligenceMap({ data }: Props) {
           {/* Selected node detail — inline below the chart */}
           {selected && <DetailCard node={selected} />}
         </main>
-
-        {/* Sentinel chat · the agent lock — always visible without scrolling */}
-        <SentinelChat
-          scopeLabel={`${data.tenantName} · The Map`}
-          opener={mapSentinelOpener(data, selected)}
-          conversation={MAP_SENTINEL_CONVERSATION}
+          }
         />
       </div>
     </div>
