@@ -19,7 +19,7 @@
 //   - Chat-driven page state (Move cards mutate per conversation)
 //   - Shape-into-Move click → Strategic Moves originate flow
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { COLORS, FONT, SPACING } from '@/lib/design/abarva-theme';
 import { IntelligenceV3TopNav } from './IntelligenceV3TopNav';
 import { IntelligenceV3StageTabs } from './IntelligenceV3StageTabs';
@@ -31,6 +31,9 @@ import { PeerActivityCanvas } from './PeerActivityCanvas';
 import { MyStrategyCanvas } from './MyStrategyCanvas';
 import { SessionsCanvas } from './SessionsCanvas';
 import { SentinelChat } from './SentinelChat';
+import { IntelligenceMap } from '@/components/intelligence-v4/IntelligenceMap';
+import { IntelligenceBrief } from '@/components/intelligence-v4/IntelligenceBrief';
+import { getMeridianMapData, getMeridianBriefData } from '@/lib/knowledge-corpus/fixtures/meridian-healthcare';
 import { FIRST_CAPITAL_DEMO } from './demo-data';
 import type { IntelligenceV3PageData, StageKey } from './types';
 import type { VendorsData } from '@/lib/intelligence-v3/vendors-display';
@@ -65,7 +68,37 @@ export function IntelligenceV3Page({
   initiatives = null,
 }: Props = {}) {
   const data = dataProp ?? FIRST_CAPITAL_DEMO;
-  const [stage, setStage] = useState<StageKey>('today');
+  // PR-K2 · default landing is The Brief — it's the canonical
+  // corpus-grounded synthesis surface. Other stages remain reachable
+  // via the tab strip. URL hash (e.g. /intelligence#map) drives the
+  // active stage so deep links from /intelligence/map redirect → hash
+  // work without per-route page components.
+  const [stage, setStage] = useState<StageKey>('brief');
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const sync = () => {
+      const h = window.location.hash.replace('#', '');
+      if (
+        h === 'map' || h === 'brief' || h === 'today' || h === 'by-function' ||
+        h === 'patterns' || h === 'vendors' || h === 'peer-activity' ||
+        h === 'my-strategy' || h === 'sessions'
+      ) {
+        setStage(h as StageKey);
+      }
+    };
+    sync();
+    window.addEventListener('hashchange', sync);
+    return () => window.removeEventListener('hashchange', sync);
+  }, []);
+  const handleStageChange = (next: StageKey) => {
+    setStage(next);
+    if (typeof window !== 'undefined') {
+      const url = new URL(window.location.href);
+      url.hash = next === 'brief' ? '' : next;
+      window.history.replaceState(null, '', url.toString());
+    }
+  };
+  const isCorpusStage = stage === 'brief' || stage === 'map';
 
   return (
     <div
@@ -79,7 +112,7 @@ export function IntelligenceV3Page({
     >
       <IntelligenceV3TopNav tenantName={data.tenantName} />
 
-      {!isLiveBound && (
+      {!isLiveBound && !isCorpusStage && (
         <div
           role="status"
           style={{
@@ -96,62 +129,75 @@ export function IntelligenceV3Page({
         </div>
       )}
 
+      {/* Stage tabs strip · always visible above the canvas */}
       <div
         style={{
-          display: 'grid',
-          gridTemplateColumns: 'minmax(0, 1fr) 440px',
-          alignItems: 'start',
+          background: COLORS.surface,
+          borderBottom: `1px solid ${COLORS.border}`,
+          padding: `${SPACING.md}px clamp(${SPACING.lg}px, 4vw, ${SPACING.xxxl}px)`,
         }}
       >
-        <main
+        <IntelligenceV3StageTabs active={stage} onChange={handleStageChange} />
+      </div>
+
+      {isCorpusStage ? (
+        // PR-K2 corpus surfaces · render full-width (Brief/Map carry
+        // their own masthead + right rail; embedding inside the v3
+        // grid would squeeze them). Sentinel chat is integrated into
+        // each component's right-rail design.
+        stage === 'brief'
+          ? <IntelligenceBrief data={getMeridianBriefData()} />
+          : <IntelligenceMap data={getMeridianMapData()} />
+      ) : (
+        <div
           style={{
-            // PR-H9 (2026-05-07): drop the 1280 maxWidth cap. The
-            // outer grid is `1fr 440px`, so the 1fr cell is already
-            // viewport − 440 (chat). Capping at 1280 left cream gaps
-            // on wide monitors and made the page read as "not using
-            // full width." Padding still keeps breathing room from
-            // the edges.
-            padding: `${SPACING.lg}px clamp(${SPACING.lg}px, 4vw, ${SPACING.xxxl}px)`,
-            width: '100%',
-            boxSizing: 'border-box',
-            paddingBottom: SPACING.xxxl + 56, // bottom gutter for any docked chat
+            display: 'grid',
+            gridTemplateColumns: 'minmax(0, 1fr) 440px',
+            alignItems: 'start',
           }}
         >
-          <Hero data={data} />
+          <main
+            style={{
+              padding: `${SPACING.lg}px clamp(${SPACING.lg}px, 4vw, ${SPACING.xxxl}px)`,
+              width: '100%',
+              boxSizing: 'border-box',
+              paddingBottom: SPACING.xxxl + 56, // bottom gutter for any docked chat
+            }}
+          >
+            <Hero data={data} />
 
-          <IntelligenceV3StageTabs active={stage} onChange={setStage} />
+            {stage === 'today' && <TodayCanvas data={data} />}
+            {stage === 'vendors' &&
+              (vendorsData ? <VendorsCanvas data={vendorsData} /> : <StageStub stage={stage} />)}
+            {stage === 'by-function' &&
+              (byFunctionData ? (
+                <ByFunctionCanvas data={byFunctionData} />
+              ) : (
+                <StageStub stage={stage} />
+              ))}
+            {stage === 'patterns' && <PatternsCanvas initiatives={initiatives ?? []} />}
+            {stage === 'peer-activity' &&
+              (peerActivityData ? (
+                <PeerActivityCanvas data={peerActivityData} />
+              ) : (
+                <StageStub stage={stage} />
+              ))}
+            {stage === 'my-strategy' &&
+              (myStrategyData ? (
+                <MyStrategyCanvas data={myStrategyData} />
+              ) : (
+                <StageStub stage={stage} />
+              ))}
+            {stage === 'sessions' && <SessionsCanvas data={data} />}
+          </main>
 
-          {stage === 'today' && <TodayCanvas data={data} />}
-          {stage === 'vendors' &&
-            (vendorsData ? <VendorsCanvas data={vendorsData} /> : <StageStub stage={stage} />)}
-          {stage === 'by-function' &&
-            (byFunctionData ? (
-              <ByFunctionCanvas data={byFunctionData} />
-            ) : (
-              <StageStub stage={stage} />
-            ))}
-          {stage === 'patterns' && <PatternsCanvas initiatives={initiatives ?? []} />}
-          {stage === 'peer-activity' &&
-            (peerActivityData ? (
-              <PeerActivityCanvas data={peerActivityData} />
-            ) : (
-              <StageStub stage={stage} />
-            ))}
-          {stage === 'my-strategy' &&
-            (myStrategyData ? (
-              <MyStrategyCanvas data={myStrategyData} />
-            ) : (
-              <StageStub stage={stage} />
-            ))}
-          {stage === 'sessions' && <SessionsCanvas data={data} />}
-        </main>
-
-        <SentinelChat
-          scopeLabel={`${data.tenantName} · this page`}
-          opener={data.sentinelOpener}
-          conversation={data.conversation}
-        />
-      </div>
+          <SentinelChat
+            scopeLabel={`${data.tenantName} · this page`}
+            opener={data.sentinelOpener}
+            conversation={data.conversation}
+          />
+        </div>
+      )}
     </div>
   );
 }

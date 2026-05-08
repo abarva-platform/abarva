@@ -1,26 +1,15 @@
-// /intelligence/brief · Sentinel's tenant-overlay synthesis. Three
-// candidate bets above the line, each with full citation discipline:
-// factor breakdown · binding success patterns with quantified signal ·
-// anti-patterns with early signals · vendor short list with tier +
-// trajectory · regulatory headwinds.
+// /intelligence/brief · deep-link redirect to the integrated tab.
 //
-// Currently fixture-bound (Meridian healthcare) for the v1.1 ship.
-// Live corpus retrieval lands in PR-K3.
+// PR-K2 (initial) shipped the Brief as a standalone route. PR-K2.1
+// integrates it as a native tab inside the IntelligenceV3 shell —
+// Brief is now the default landing on /intelligence. Maintained as a
+// stable deep-link URL.
 
-import type { Metadata } from 'next';
-import { IntelligenceBrief } from '@/components/intelligence-v4/IntelligenceBrief';
-import { getMeridianBriefData } from '@/lib/knowledge-corpus/fixtures/meridian-healthcare';
+import { redirect } from 'next/navigation';
 
-export const metadata: Metadata = {
-  title: 'Intelligence · The Brief · AbarVa',
-  description:
-    "Sentinel's quarterly synthesis of which AI bets are above the line for your tenant — fully cited, with binding patterns and proof points.",
-};
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
 export default function IntelligenceBriefPage() {
-  // TODO(PR-K3): replace with live tenant lookup + corpus retrieval.
-  const data = getMeridianBriefData();
-  return <IntelligenceBrief data={data} />;
+  redirect('/intelligence');
 }
