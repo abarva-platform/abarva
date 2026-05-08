@@ -62,6 +62,12 @@ interface EngagementRow {
   deleted_at: string | null;
   created_at: string;
   updated_at: string | null;
+  // Origination charter: all 7 scaffold fields + classification + initiative context.
+  // Written by submitOriginationBrief at P0 promote; null for legacy engagements.
+  charter: Record<string, unknown> | null;
+  // Formal gate-pass ledger updated by advance_phase. Used for gate completion
+  // display and hard-gate enforcement.
+  gates_passed: unknown[] | null;
 }
 
 function rowToProgram(r: EngagementRow): ProgramCore {
@@ -106,6 +112,8 @@ function rowToProgram(r: EngagementRow): ProgramCore {
     deletedAt: r.deleted_at,
     createdAt: r.created_at,
     updatedAt: r.updated_at,
+    charter: r.charter ?? null,
+    gatesPassed: Array.isArray(r.gates_passed) ? r.gates_passed : [],
   };
 }
 
@@ -123,7 +131,7 @@ export async function getProgramPortfolio(
   if (allowedProgramIds && allowedProgramIds.length === 0) return [];
   let query = sb
     .from('engagements')
-    .select('id, client_id, name, sponsor_person_id, problem_statement, target_outcome, timeline_horizon, value_projected_low_usd, value_projected_high_usd, value_verified_usd, value_verified_status, value_currency, value_assumptions_jsonb, baseline_metrics, program_archetype, origin_source, origin_source_ref, status, lifecycle_state, current_phase, current_module_key, maestro_oversight_level, founder_approval_required, phase_locked_at, phase_locked_by_user_id, data_residency_region, retention_policy_years, archived_at, deleted_at, created_at, updated_at')
+    .select('id, client_id, name, sponsor_person_id, problem_statement, target_outcome, timeline_horizon, value_projected_low_usd, value_projected_high_usd, value_verified_usd, value_verified_status, value_currency, value_assumptions_jsonb, baseline_metrics, program_archetype, origin_source, origin_source_ref, status, lifecycle_state, current_phase, current_module_key, maestro_oversight_level, founder_approval_required, phase_locked_at, phase_locked_by_user_id, data_residency_region, retention_policy_years, archived_at, deleted_at, created_at, updated_at, charter, gates_passed')
     .eq('client_id', ctx.clientId)
     .is('archived_at', null)
     .is('deleted_at', null)
@@ -146,7 +154,7 @@ export async function getProgramById(
   const sb = opts.supabase ?? getServerSupabase();
   const { data, error } = await sb
     .from('engagements')
-    .select('id, client_id, name, sponsor_person_id, problem_statement, target_outcome, timeline_horizon, value_projected_low_usd, value_projected_high_usd, value_verified_usd, value_verified_status, value_currency, value_assumptions_jsonb, baseline_metrics, program_archetype, origin_source, origin_source_ref, status, lifecycle_state, current_phase, current_module_key, maestro_oversight_level, founder_approval_required, phase_locked_at, phase_locked_by_user_id, data_residency_region, retention_policy_years, archived_at, deleted_at, created_at, updated_at')
+    .select('id, client_id, name, sponsor_person_id, problem_statement, target_outcome, timeline_horizon, value_projected_low_usd, value_projected_high_usd, value_verified_usd, value_verified_status, value_currency, value_assumptions_jsonb, baseline_metrics, program_archetype, origin_source, origin_source_ref, status, lifecycle_state, current_phase, current_module_key, maestro_oversight_level, founder_approval_required, phase_locked_at, phase_locked_by_user_id, data_residency_region, retention_policy_years, archived_at, deleted_at, created_at, updated_at, charter, gates_passed')
     .eq('id', programId)
     .eq('client_id', ctx.clientId)
     .maybeSingle();

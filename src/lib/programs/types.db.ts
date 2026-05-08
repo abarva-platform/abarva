@@ -89,6 +89,14 @@ export interface ProgramCore {
   deletedAt: string | null;
   createdAt: string;
   updatedAt: string | null;
+  // Origination charter written by submitOriginationBrief. Contains all 7
+  // scaffold fields + classification + initiative_context. null for legacy
+  // engagements created before the charter write was introduced.
+  charter: Record<string, unknown> | null;
+  // Formal gate-pass array updated by advance_phase. Each entry is a phase
+  // number that has passed its gate. Used for gate criteria display and
+  // hard-gate enforcement.
+  gatesPassed: unknown[];
 }
 
 export interface ProgramModuleRow {
