@@ -33,10 +33,12 @@ const SAMPLE_THREAD: ChatMessage[] = [
 ];
 
 type WorkspaceVariant = 'short' | 'tall';
+type ChromeVariant = 'normal' | 'tall-top';
 
 export default function AgentDockPlaygroundPage() {
   const [thread, setThread] = useState<ChatMessage[]>(SAMPLE_THREAD);
   const [variant, setVariant] = useState<WorkspaceVariant>('short');
+  const [chrome, setChrome] = useState<ChromeVariant>('normal');
 
   function handleMessage(text: string, attachments: AttachmentRef[]) {
     const userMsg: ChatMessage = {
@@ -95,29 +97,54 @@ export default function AgentDockPlaygroundPage() {
           Switch dock modes via the 5-icon row in the top-right of the
           chat header. Mode persists in localStorage.
         </span>
-        <span role="radiogroup" aria-label="Workspace variant" style={{ display: 'inline-flex', gap: 6 }}>
-          <button
-            type="button"
-            role="radio"
-            aria-checked={variant === 'short'}
-            data-testid="dev-workspace-variant-short"
-            onClick={() => setVariant('short')}
-            style={variantBtn(variant === 'short')}
-          >
-            Short workspace
-          </button>
-          <button
-            type="button"
-            role="radio"
-            aria-checked={variant === 'tall'}
-            data-testid="dev-workspace-variant-tall"
-            onClick={() => setVariant('tall')}
-            style={variantBtn(variant === 'tall')}
-          >
-            Tall workspace (3000px)
-          </button>
+        <span style={{ display: 'inline-flex', gap: 12, alignItems: 'center' }}>
+          <span role="radiogroup" aria-label="Chrome variant" style={{ display: 'inline-flex', gap: 6 }}>
+            <button
+              type="button"
+              role="radio"
+              aria-checked={chrome === 'normal'}
+              data-testid="dev-chrome-variant-normal"
+              onClick={() => setChrome('normal')}
+              style={variantBtn(chrome === 'normal')}
+            >
+              Normal chrome
+            </button>
+            <button
+              type="button"
+              role="radio"
+              aria-checked={chrome === 'tall-top'}
+              data-testid="dev-chrome-variant-tall-top"
+              onClick={() => setChrome('tall-top')}
+              style={variantBtn(chrome === 'tall-top')}
+            >
+              Tall top chrome (200px push-down)
+            </button>
+          </span>
+          <span role="radiogroup" aria-label="Workspace variant" style={{ display: 'inline-flex', gap: 6 }}>
+            <button
+              type="button"
+              role="radio"
+              aria-checked={variant === 'short'}
+              data-testid="dev-workspace-variant-short"
+              onClick={() => setVariant('short')}
+              style={variantBtn(variant === 'short')}
+            >
+              Short workspace
+            </button>
+            <button
+              type="button"
+              role="radio"
+              aria-checked={variant === 'tall'}
+              data-testid="dev-workspace-variant-tall"
+              onClick={() => setVariant('tall')}
+              style={variantBtn(variant === 'tall')}
+            >
+              Tall workspace (3000px)
+            </button>
+          </span>
         </span>
       </div>
+      {chrome === 'tall-top' ? <FakeSecondaryNav /> : null}
       <AgentDock
         agent={{
           initials: 'S',
@@ -137,6 +164,44 @@ export default function AgentDockPlaygroundPage() {
           variant === 'tall' ? <TallWorkspaceFixture /> : <ShortWorkspaceFixture />
         }
       />
+    </div>
+  );
+}
+
+// FakeSecondaryNav · 200px-tall stand-in for surfaces that stack
+// extra sticky chrome above the dock (Intelligence's secondary tab
+// nav, Source canvas's 11-stage progress rail, the events-portfolio
+// sourcing-journey strip). With this rendered, the AgentDock side-rail
+// must auto-measure its own top y-offset to ~252px (52 banner +
+// 200 nav) and resize accordingly — composer stays above the fold.
+function FakeSecondaryNav() {
+  return (
+    <div
+      data-testid="dev-fake-secondary-nav"
+      style={{
+        height: 200,
+        flexShrink: 0,
+        background:
+          'repeating-linear-gradient(45deg, #f1f4fa 0 12px, #fff 12px 24px)',
+        borderBottom: '1px solid rgba(10,10,11,0.10)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        fontFamily: 'system-ui, sans-serif',
+        color: '#5b6c8a',
+        fontSize: 13,
+        textAlign: 'center',
+        padding: '0 24px',
+        boxSizing: 'border-box',
+      }}
+    >
+      <span>
+        <strong style={{ color: '#0c1a3a' }}>200px tall fake nav</strong>
+        {' · '}
+        Auto-measurement should detect the dock now starts ~252px from
+        the viewport top and shrink height/move sticky-top accordingly.
+        Composer stays in view without page scrolling.
+      </span>
     </div>
   );
 }
