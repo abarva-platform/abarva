@@ -514,6 +514,12 @@ export default async function TowerPage({
   const towerSetupInitiativesFeed = await buildTowerSetupInitiativesFeed();
   const towerInitiatives = await buildTowerInitiatives();
   const towerVendors = await buildTowerVendors();
+  // Active client id (when bound) — wires the AgentDock chat lane to
+  // /api/v1/atlas/chat. Fail-soft: when no client row resolves we omit
+  // clientId and the dock surfaces a soft "Atlas needs an active tenant"
+  // message instead of crashing the page.
+  const activeClient = await getActiveClientRow().catch(() => null);
+  const activeClientId = activeClient?.id ?? null;
   const resolvedSearchParams = searchParams ? await searchParams : {};
   const activeTab = resolveTowerTab(resolvedSearchParams.tab);
   // T-8 (Bind 4): resolve the active lens server-side so the band/pressures
@@ -545,6 +551,7 @@ export default async function TowerPage({
     <TowerIndexPage
       tenantName={towerSetupInitiativesFeed.tenantName}
       context={`Control Tower · ${TOWER_SUBMENU_LABELS[activeTab]} · ${towerSetupInitiativesFeed.summary.total} initiatives observed`}
+      clientId={activeClientId ?? undefined}
       initiatives={towerInitiatives}
       bandMetrics={towerBandMetrics}
       pressuresView={towerPressures}
