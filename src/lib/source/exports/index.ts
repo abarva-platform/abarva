@@ -26,6 +26,15 @@ import {
 // payload shape is identical to NarrativeDocxPayload.
 import type { ScopeMemoDocxPayload } from './renderers/scope-memo-docx';
 import {
+  DECISION_BRIEF_HTML_CONFIG,
+  RFP_PACK_HTML_CONFIG,
+  SCOPE_MEMO_HTML_CONFIG,
+  SELECTION_MEMO_HTML_CONFIG,
+  buildNarrativeHtml,
+  type NarrativeHtmlConfig,
+  type NarrativeHtmlPayload,
+} from './renderers/narrative-html';
+import {
   buildPricingComparisonWorkbook,
   type PricingComparisonPayload,
 } from './renderers/pricing-comparison';
@@ -44,6 +53,7 @@ import {
 
 export { XLSX_CONTENT_TYPE } from './renderers/xlsx-base';
 export { DOCX_CONTENT_TYPE } from './renderers/docx-base';
+export { HTML_CONTENT_TYPE } from './renderers/narrative-html';
 
 /**
  * Codes for which Source has an xlsx generator. Surfaces in the UI as
@@ -76,6 +86,18 @@ export const DOCX_GENERATABLE_CODES = new Set([
   'd27_selection_memo',
 ]);
 
+/**
+ * Codes for which Source has an HTML renderer. Slice 4.1 covers the
+ * same narrative artifacts as docx so the buyer can share a viewable
+ * link in addition to the downloadable docx file.
+ */
+export const HTML_GENERATABLE_CODES = new Set([
+  'd05_scope_memo',
+  'd09_rfp_pack',
+  'd24_decision_brief',
+  'd27_selection_memo',
+]);
+
 export function isXlsxGeneratable(artifactCode: string): boolean {
   return XLSX_GENERATABLE_CODES.has(artifactCode);
 }
@@ -86,6 +108,10 @@ export function hasXlsxComparison(artifactCode: string): boolean {
 
 export function isDocxGeneratable(artifactCode: string): boolean {
   return DOCX_GENERATABLE_CODES.has(artifactCode);
+}
+
+export function isHtmlGeneratable(artifactCode: string): boolean {
+  return HTML_GENERATABLE_CODES.has(artifactCode);
 }
 
 export interface RenderXlsxArgs {
@@ -168,8 +194,38 @@ export async function renderArtifactDocx(
   }
 }
 
+export interface RenderHtmlArgs {
+  artifactCode: string;
+  payload: unknown;
+}
+
+/**
+ * Build the HTML string for an artifact code. The route returns the
+ * string with a text/html content-type; this stays pure.
+ */
+export function renderArtifactHtml(args: RenderHtmlArgs): string {
+  const payload = args.payload as NarrativeHtmlPayload;
+  switch (args.artifactCode) {
+    case 'd05_scope_memo':
+      return buildNarrativeHtml(payload, SCOPE_MEMO_HTML_CONFIG);
+    case 'd09_rfp_pack':
+      return buildNarrativeHtml(payload, RFP_PACK_HTML_CONFIG);
+    case 'd24_decision_brief':
+      return buildNarrativeHtml(payload, DECISION_BRIEF_HTML_CONFIG);
+    case 'd27_selection_memo':
+      return buildNarrativeHtml(payload, SELECTION_MEMO_HTML_CONFIG);
+    default:
+      throw new Error(
+        `No HTML generator wired for ${args.artifactCode}. ` +
+          `Supported codes: ${Array.from(HTML_GENERATABLE_CODES).join(', ')}.`,
+      );
+  }
+}
+
 export type {
   AppInventoryPayload,
+  NarrativeHtmlConfig,
+  NarrativeHtmlPayload,
   PricingComparisonPayload,
   PricingTemplatePayload,
   ResponseChecklistPayload,
