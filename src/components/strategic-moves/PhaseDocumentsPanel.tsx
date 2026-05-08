@@ -154,8 +154,8 @@ function linkStyle(variant: 'primary' | 'ghost' | 'muted' | 'excel'): React.CSSP
   };
   switch (variant) {
     case 'primary': return { ...base, backgroundColor: '#1B2B5C', border: '1px solid #1B2B5C', color: '#FFFFFF' };
-    case 'ghost':   return { ...base, backgroundColor: '#F8F7F4', border: '1px solid #D4D0C8', color: '#1A1A18' };
-    case 'muted':   return { ...base, backgroundColor: 'transparent', border: '1px solid #E2DFD8', color: '#525866' };
+    case 'ghost':   return { ...base, backgroundColor: '#ffffff', border: '1px solid #e5e5e5', color: '#1A1A18' };
+    case 'muted':   return { ...base, backgroundColor: 'transparent', border: '1px solid #e5e5e5', color: '#525866' };
     case 'excel':   return { ...base, backgroundColor: 'rgba(22,163,74,0.08)', border: '1px solid rgba(22,163,74,0.3)', color: '#15803D' };
   }
 }
@@ -181,8 +181,8 @@ function DocumentRow({
       gap: 12,
       padding: '10px 12px',
       background: '#FFFFFF',
-      border: '1px solid #ECEAE4',
-      borderLeft: `3px solid ${spec.gateArtifact ? '#1B2B5C' : '#D4D0C8'}`,
+      border: '1px solid #e5e5e5',
+      borderLeft: `3px solid ${spec.gateArtifact ? '#1B2B5C' : '#e5e5e5'}`,
       borderRadius: 6,
       flexWrap: 'wrap',
     }}>
@@ -215,7 +215,7 @@ function DocumentRow({
             <span style={{ fontSize: 10, color: '#6B7280' }}>{dot.label}</span>
           </>
         ) : (
-          <span style={{ fontSize: 10, color: '#C4C0B8', fontStyle: 'italic' }}>not generated</span>
+          <span style={{ fontSize: 10, color: '#b4b4b8', fontStyle: 'italic' }}>not generated</span>
         )}
       </div>
 
@@ -232,7 +232,7 @@ function DocumentRow({
             {(isExcel || spec.formatRecommendation === 'html-word-excel') && (
               <a href={`${base}?format=xlsx`} style={linkStyle('excel')}>↓ Excel</a>
             )}
-            <span style={{ fontSize: 10, color: '#C4C0B8' }}>{formatDate(dbRow.updated_at)}</span>
+            <span style={{ fontSize: 10, color: '#b4b4b8' }}>{formatDate(dbRow.updated_at)}</span>
           </>
         ) : (
           <a href={`/strategic-moves/${moveId}/phase/${spec.phase}`} style={linkStyle('muted')}>
@@ -251,7 +251,7 @@ function AttachmentRow({ attachment, moveId }: { attachment: AttachmentRecord; m
       style={{
         display: 'flex', alignItems: 'center', gap: 10,
         padding: '9px 12px',
-        backgroundColor: '#FAFAF8', border: '1px solid #ECEAE4',
+        backgroundColor: '#fafafa', border: '1px solid #e5e5e5',
         borderRadius: 5, textDecoration: 'none', color: 'inherit',
       }}
     >
@@ -315,7 +315,7 @@ export async function PhaseDocumentsPanel({ moveId, currentPhase, compact }: Pro
           ].map((kpi) => (
             <div key={kpi.label} style={{
               padding: '6px 12px', backgroundColor: '#FFFFFF',
-              border: '1px solid #E2DFD8', borderRadius: 5, minWidth: 70,
+              border: '1px solid #e5e5e5', borderRadius: 5, minWidth: 70,
             }}>
               <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 9, color: '#9AA3B2', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 1 }}>{kpi.label}</div>
               <div style={{ fontFamily: 'Fraunces, Georgia, serif', fontSize: 18, color: '#1A1A18' }}>{kpi.value}</div>
@@ -331,7 +331,7 @@ export async function PhaseDocumentsPanel({ moveId, currentPhase, compact }: Pro
           Gate artifact
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 10, color: '#6B7280' }}>
-          <div style={{ width: 3, height: 12, backgroundColor: '#D4D0C8', borderRadius: 1 }} />
+          <div style={{ width: 3, height: 12, backgroundColor: '#e5e5e5', borderRadius: 1 }} />
           Working document
         </div>
       </div>
@@ -357,7 +357,7 @@ export async function PhaseDocumentsPanel({ moveId, currentPhase, compact }: Pro
               justifyContent: 'space-between',
               paddingBottom: 8,
               marginBottom: 8,
-              borderBottom: `2px solid ${isCurrent ? '#1B2B5C' : '#E2DFD8'}`,
+              borderBottom: `2px solid ${isCurrent ? '#1B2B5C' : '#e5e5e5'}`,
             }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <span style={{
@@ -404,7 +404,7 @@ export async function PhaseDocumentsPanel({ moveId, currentPhase, compact }: Pro
               {phaseAttachments.length > 0 && (
                 <div style={{ marginTop: 4, display: 'flex', flexDirection: 'column', gap: 4 }}>
                   <div style={{
-                    fontSize: 9, fontWeight: 700, letterSpacing: '0.08em', color: '#C4C0B8',
+                    fontSize: 9, fontWeight: 700, letterSpacing: '0.08em', color: '#b4b4b8',
                     fontFamily: 'JetBrains Mono, monospace', textTransform: 'uppercase', marginBottom: 2,
                   }}>
                     Uploaded evidence ({phaseAttachments.length})
@@ -421,7 +421,7 @@ export async function PhaseDocumentsPanel({ moveId, currentPhase, compact }: Pro
 
       {/* Legacy / extra deliverables */}
       {extraDeliverables.length > 0 && (
-        <div style={{ marginTop: 8, paddingTop: 16, borderTop: '1px dashed #D4D0C8' }}>
+        <div style={{ marginTop: 8, paddingTop: 16, borderTop: '1px dashed #e5e5e5' }}>
           <div style={{ fontSize: 10, color: '#9AA3B2', fontStyle: 'italic', marginBottom: 8 }}>
             Other documents (legacy)
           </div>
@@ -433,11 +433,11 @@ export async function PhaseDocumentsPanel({ moveId, currentPhase, compact }: Pro
               <div key={row.id} style={{
                 display: 'flex', alignItems: 'center', gap: 10,
                 padding: '8px 12px', marginBottom: 6,
-                background: '#FAFAF8', border: '1px solid #ECEAE4', borderRadius: 5,
+                background: '#fafafa', border: '1px solid #e5e5e5', borderRadius: 5,
                 flexWrap: 'wrap',
               }}>
                 <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: 10, color: '#C4C0B8', fontFamily: 'JetBrains Mono, monospace' }}>{row.deliverable_type_key}</div>
+                  <div style={{ fontSize: 10, color: '#b4b4b8', fontFamily: 'JetBrains Mono, monospace' }}>{row.deliverable_type_key}</div>
                   <div style={{ fontSize: 12, fontWeight: 600, color: '#525866' }}>{title}</div>
                 </div>
                 {hasContent && (

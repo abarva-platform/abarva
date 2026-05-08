@@ -78,10 +78,10 @@ function DownloadLinks({ deliverableId, programId, format }: { deliverableId: st
       </a>
       {format !== 'excel' && (
         <>
-          <a href={`${base}?format=docx`} style={{ ...btnStyle, backgroundColor: '#F8F7F4', border: '1px solid #D4D0C8', color: '#1A1A18' }}>
+          <a href={`${base}?format=docx`} style={{ ...btnStyle, backgroundColor: '#ffffff', border: '1px solid #e5e5e5', color: '#1A1A18' }}>
             ↓ Word
           </a>
-          <a href={`${base}?format=html`} style={{ ...btnStyle, backgroundColor: '#F8F7F4', border: '1px solid #D4D0C8', color: '#1A1A18' }}>
+          <a href={`${base}?format=html`} style={{ ...btnStyle, backgroundColor: '#ffffff', border: '1px solid #e5e5e5', color: '#1A1A18' }}>
             ↓ HTML
           </a>
         </>
@@ -116,8 +116,8 @@ function DocumentRow({
     <div style={{
       padding: '14px 16px',
       background: '#FFFFFF',
-      border: `1px solid ${isDone ? 'rgba(22,163,74,0.25)' : isError ? 'rgba(185,28,28,0.2)' : '#E8E6E0'}`,
-      borderLeft: `3px solid ${spec.gateArtifact ? '#1B2B5C' : '#D4D0C8'}`,
+      border: `1px solid ${isDone ? 'rgba(22,163,74,0.25)' : isError ? 'rgba(185,28,28,0.2)' : '#e5e5e5'}`,
+      borderLeft: `3px solid ${spec.gateArtifact ? '#1B2B5C' : '#e5e5e5'}`,
       borderRadius: 8,
       display: 'flex',
       flexDirection: 'column',

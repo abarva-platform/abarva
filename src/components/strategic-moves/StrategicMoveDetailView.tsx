@@ -51,7 +51,7 @@ function TabBar({ moveId, active }: { moveId: string; active: Tab }) {
     <div style={{
       display: 'flex',
       gap: 0,
-      borderBottom: '1px solid #E2DFD8',
+      borderBottom: '1px solid #e5e5e5',
       marginBottom: 20,
       marginTop: 2,
     }}>

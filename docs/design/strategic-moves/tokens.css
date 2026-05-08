@@ -49,7 +49,7 @@
 :root {
   /* Surfaces */
   --canon-bg-dark:    #0a0a0b;          /* Authenticated navbar, decision-grade contrast */
-  --canon-bg-cream:   #f5f1eb;          /* App page background (a touch warmer than paper) */
+  --canon-bg-cream:   #ffffff;          /* App page background — white (v3 design system) */
   --canon-bg-surface: #ffffff;          /* Cards, sections, deliverable content */
 
   /* Semantic accent — gate / status / severity */
@@ -62,12 +62,12 @@
   --canon-red-light:  #fceded;
 
   /* Neutral scale */
-  --canon-gray-900:   #2c2c2a;
-  --canon-gray-700:   #444441;
+  --canon-gray-900:   #1a1a18;
+  --canon-gray-700:   #444444;
   --canon-gray-500:   #5f5e5a;
-  --canon-gray-300:   #b4b2a9;
-  --canon-gray-200:   #d3d1c7;
-  --canon-gray-100:   #f1efe8;
+  --canon-gray-300:   #b4b4b8;
+  --canon-gray-200:   #e5e5e5;
+  --canon-gray-100:   #f4f4f4;
 
   --canon-border:        rgba(10, 10, 11, 0.12);
   --canon-border-strong: rgba(10, 10, 11, 0.24);
