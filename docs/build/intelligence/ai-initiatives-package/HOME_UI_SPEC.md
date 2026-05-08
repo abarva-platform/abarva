@@ -1,15 +1,15 @@
-# Setup UI Spec · AI Initiatives Registry View
+# Home UI Spec · AI Initiatives Registry View
 
-The registry surfaces in Setup as a new panel: **Setup → AI Initiatives**. This becomes the canonical "what AI is in flight" view for a tenant. Every other surface (Tower, Intelligence, Strategic Moves) reads from this registry.
+The registry surfaces in Home as a new panel: **Home → AI Initiatives**. This becomes the canonical "what AI is in flight" view for a tenant. Every other surface (Tower, Intelligence, Strategic Moves) reads from this registry.
 
 ---
 
-## Setup nav placement
+## Home nav placement
 
-Per the Setup Redesign Package, Setup nav is being reduced from 10 panels to 6. Add AI Initiatives as the 7th panel:
+Per the Home Redesign Package, Home nav is being reduced from 10 panels to 6. Add AI Initiatives as the 7th panel:
 
 ```
-Setup nav (post-redesign + this package):
+Home nav (post-redesign + this package):
   Overview · Data Trust · AI Initiatives · Agent Readiness · Connectors · Tenant Profile · Configuration
 ```
 
@@ -17,7 +17,7 @@ AI Initiatives sits between Data Trust and Agent Readiness because it depends on
 
 ---
 
-## Page · `/setup/ai-initiatives`
+## Page · `/home/ai-initiatives`
 
 ### Header
 
@@ -110,7 +110,7 @@ Sort: any column
 
 ---
 
-## Initiative detail page · `/setup/ai-initiatives/[initiative-id]`
+## Initiative detail page · `/home/ai-initiatives/[initiative-id]`
 
 Per-initiative deep view. Tabs:
 
@@ -153,7 +153,7 @@ This is the "day-1 vs future" honesty surface — explicit about what's manual n
 
 ## Cross-surface implications
 
-After the registry exists in Setup:
+After the registry exists in Home:
 
 **Tower** reads from `ai_initiatives` to populate the strategic alignment 2×2. The "23 programs plotted" claim becomes literal — there are exactly N programs in the registry, and the chart shows them. No invention.
 
@@ -167,9 +167,9 @@ This is the substrate everything has been waiting for.
 
 ---
 
-## Acceptance criteria for Setup → AI Initiatives view
+## Acceptance criteria for Home → AI Initiatives view
 
-1. Page loads at `/setup/ai-initiatives` for authenticated tenant context
+1. Page loads at `/home/ai-initiatives` for authenticated tenant context
 2. Default view is "By Business Goal"
 3. Toggle switches to "By Category" and "All initiatives" without page reload
 4. ⭐ marker visible on the 2 aligned-callout initiatives per tenant
@@ -186,7 +186,7 @@ This is the substrate everything has been waiting for.
 
 ```
 Step 1 · Navigate to /setup (authenticated as Castillo · Meridian)
-  - assert: AI Initiatives appears in Setup nav (7th panel)
+  - assert: AI Initiatives appears in Home nav (7th panel)
   - screenshot
 
 Step 2 · Click AI Initiatives

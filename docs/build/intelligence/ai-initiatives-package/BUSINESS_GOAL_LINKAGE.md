@@ -70,7 +70,7 @@ Strategic context: HIPAA + emerging AI regulation + clinical safety bar means AI
 
 When a CXO opens Tower or Intelligence, they should see initiatives **organized by business goal**, not by technology category. The category taxonomy is for the platform's internal accounting; the business goal is what the CXO recognizes.
 
-The Setup → AI Initiatives Registry view should default to **"By Business Goal"** view, with toggle to **"By Category"** view available.
+The Home → AI Initiatives Registry view should default to **"By Business Goal"** view, with toggle to **"By Category"** view available.
 
 ---
 
