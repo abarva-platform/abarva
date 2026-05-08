@@ -45,12 +45,12 @@ export function VendorPortfolioSurface({ vm }: Props) {
   }, [vm.vendors, riskFilter, sortKey]);
 
   return (
-    <article style={{ display: 'flex', flexDirection: 'column', gap: 20, fontFamily: 'DM Sans, -apple-system, sans-serif' }}>
+    <article style={{ display: 'flex', flexDirection: 'column', gap: 20, fontFamily: 'Inter, -apple-system, sans-serif' }}>
       <header>
         <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 11, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#D97706', fontWeight: 700 }}>
           {vm.tenantDisplay} · Control Tower · Vendors
         </div>
-        <h1 style={{ margin: '6px 0 0', fontFamily: 'Fraunces, Georgia, serif', fontSize: 32, letterSpacing: '-0.02em', color: '#1a1612' }}>
+        <h1 style={{ margin: '6px 0 0', fontFamily: 'Fraunces, Georgia, serif', fontSize: 32, letterSpacing: '-0.02em', color: '#1A1A18' }}>
           Vendor concentration & rationalization
         </h1>
         <p style={{ margin: '8px 0 0', fontSize: 14, lineHeight: 1.6, color: '#544b42', maxWidth: 720 }}>
@@ -80,7 +80,7 @@ export function VendorPortfolioSurface({ vm }: Props) {
           <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 10, letterSpacing: '0.14em', textTransform: 'uppercase', color: RISK_META[summary.largestVendor.riskLevel].color, fontWeight: 700 }}>
             Largest single-vendor exposure · {summary.largestVendor.riskLevel}
           </div>
-          <h3 style={{ margin: '6px 0 4px', fontFamily: 'Fraunces, Georgia, serif', fontSize: 20, color: '#1a1612' }}>
+          <h3 style={{ margin: '6px 0 4px', fontFamily: 'Fraunces, Georgia, serif', fontSize: 20, color: '#1A1A18' }}>
             {summary.largestVendor.name} · ${summary.largestVendor.annualSpendMillions}M/year
           </h3>
           <p style={{ margin: 0, fontSize: 13.5, lineHeight: 1.6, color: '#3d342d' }}>{summary.largestVendor.keyRisk}</p>
@@ -115,7 +115,7 @@ export function VendorPortfolioSurface({ vm }: Props) {
         </div>
       </section>
 
-      <table style={{ width: '100%', borderCollapse: 'collapse', fontFamily: 'DM Sans, sans-serif', fontSize: 13 }}>
+      <table style={{ width: '100%', borderCollapse: 'collapse', fontFamily: 'Inter, sans-serif', fontSize: 13 }}>
         <thead>
           <tr>
             <Th>Vendor</Th>
@@ -153,7 +153,7 @@ function riskRank(r: VendorRiskLevel): number {
 }
 
 function Metric({ label, value, detail, tone = 'default' }: { label: string; value: string; detail?: string; tone?: 'default' | 'critical' | 'warning' }) {
-  const color = tone === 'critical' ? '#E04444' : tone === 'warning' ? '#D97706' : '#1a1612';
+  const color = tone === 'critical' ? '#E04444' : tone === 'warning' ? '#D97706' : '#1A1A18';
   return (
     <div style={{ padding: 14, borderRadius: 10, background: '#FFFDF8', border: '1px solid rgba(26,22,18,0.08)' }}>
       <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 10, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#8a7e72', fontWeight: 700 }}>
@@ -190,7 +190,7 @@ function Row({ v }: { v: VendorRow }) {
   return (
     <tr>
       <td style={tdStyle}>
-        <div style={{ fontWeight: 600, color: '#1a1612' }}>{v.name}</div>
+        <div style={{ fontWeight: 600, color: '#1A1A18' }}>{v.name}</div>
         <div style={{ fontSize: 11, color: '#8a7e72' }}>{v.product}</div>
       </td>
       <td style={tdStyle}>{v.category}</td>

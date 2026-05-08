@@ -14,10 +14,10 @@ export function TowerRouteShell({
   caveat = 'Deterministic signals. No live procurement monitoring.',
 }: TowerRouteShellProps) {
   return (
-    <div style={{ fontFamily: 'DM Sans, sans-serif', backgroundColor: '#F8F7F4', minHeight: '100vh' }}>
+    <div style={{ fontFamily: 'Inter, sans-serif', backgroundColor: '#ffffff', minHeight: '100vh' }}>
       {/* Orientation strip — primary agent: Atlas */}
       <div style={{
-        borderBottom: '1px solid #E8E6E1',
+        borderBottom: '1px solid #e5e5e5',
         padding: '8px 24px',
         backgroundColor: '#FFFFFF',
         display: 'flex',

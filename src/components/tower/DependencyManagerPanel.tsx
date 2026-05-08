@@ -25,7 +25,7 @@ import type { LinkType } from '@/lib/reasoning';
 // ─────────────────────────────────────────────────────────────────────────────
 
 const C = {
-  surface: '#F8F7F4',
+  surface: '#ffffff',
   card: '#FFFFFF',
   ink: '#0A0C12',
   muted: '#525866',

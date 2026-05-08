@@ -61,7 +61,7 @@ import { DependencyManagerPanel } from '@/components/tower/DependencyManagerPane
 // ─────────────────────────────────────────────────────────────────────────────
 
 const C = {
-  surface: '#F8F7F4',
+  surface: '#ffffff',
   card: '#FFFFFF',
   ink: '#0A0C12',
   muted: '#525866',
@@ -108,7 +108,7 @@ export function TowerLensTabs({
     <div
       data-testid="tower-lens-tabs"
       data-active-tab={activeTab}
-      style={{ fontFamily: 'DM Sans, sans-serif' }}
+      style={{ fontFamily: 'Inter, sans-serif' }}
     >
       {showTabBar && (
         <nav

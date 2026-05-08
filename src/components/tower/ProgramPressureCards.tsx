@@ -87,13 +87,13 @@ interface ProgramPressureCardsProps {
 }
 
 const COLORS = {
-  ink: '#1a1612',
+  ink: '#1A1A18',
   muted: '#5a5148',
   mutedSoft: '#8a7e72',
   border: 'rgba(26,22,18,0.08)',
   borderSoft: 'rgba(26,22,18,0.04)',
   card: '#FFFFFF',
-  surface: '#F8F7F4',
+  surface: '#ffffff',
   accent: '#0E9F8C',
   accentSoft: 'rgba(14,159,140,0.08)',
   amber: '#D97706',
@@ -115,7 +115,7 @@ export function ProgramPressureCards({ tenant, view, topN }: ProgramPressureCard
         background: COLORS.card,
         border: `1px solid ${COLORS.border}`,
         borderRadius: 12,
-        fontFamily: 'DM Sans, -apple-system, sans-serif',
+        fontFamily: 'Inter, -apple-system, sans-serif',
         color: COLORS.ink,
         display: 'flex',
         flexDirection: 'column',

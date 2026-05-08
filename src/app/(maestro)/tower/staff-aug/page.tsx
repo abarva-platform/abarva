@@ -141,7 +141,7 @@ export default async function StaffAugPage({
   const towerHref = overrideId ? `/tower?clientId=${overrideId}` : '/tower';
 
   return (
-    <div style={{ padding: '32px 40px 64px', width: '100%', maxWidth: 1800, margin: '0 auto', color: INK, fontFamily: 'DM Sans, sans-serif' }}>
+    <div style={{ padding: '32px 40px 64px', width: '100%', maxWidth: 1800, margin: '0 auto', color: INK, fontFamily: 'Inter, sans-serif' }}>
       <Link href={towerHref} style={{ fontFamily: MONO, fontSize: 10, color: TEAL, textDecoration: 'none', letterSpacing: '0.14em' }}>
         ← CONTROL TOWER
       </Link>
