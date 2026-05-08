@@ -130,12 +130,17 @@ export function IntelligenceV3Page({
         </div>
       )}
 
-      {/* Stage tabs strip · always visible above the canvas */}
+      {/* Stage tabs strip · sticky below the V3 top nav so it stays
+          visible AND the Sentinel chat rail can compute its own
+          sticky offset against a known stack. */}
       <div
         style={{
           background: COLORS.surface,
           borderBottom: `1px solid ${COLORS.border}`,
-          padding: `${SPACING.md}px clamp(${SPACING.lg}px, 4vw, ${SPACING.xxxl}px)`,
+          padding: `${SPACING.sm}px clamp(${SPACING.lg}px, 4vw, ${SPACING.xxxl}px)`,
+          position: 'sticky',
+          top: 56,
+          zIndex: 199,
         }}
       >
         <IntelligenceV3StageTabs active={stage} onChange={handleStageChange} />

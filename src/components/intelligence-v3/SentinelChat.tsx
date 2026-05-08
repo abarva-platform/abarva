@@ -151,8 +151,11 @@ function SideRail({ agentName, scopeLabel, opener, conversation, onMode }: ModeP
         display: 'flex',
         flexDirection: 'column',
         position: 'sticky',
-        top: 56, // sit below TopNav (56px)
-        height: 'calc(100vh - 56px)',
+        // Sit below V3 TopNav (56px) + sticky stage-tabs strip (~56px).
+        // Computing this against the known nav stack keeps the
+        // composer in the viewport without scrolling.
+        top: 112,
+        height: 'calc(100vh - 112px)',
         borderLeft: `1px solid ${COLORS.border}`,
       }}
     >
