@@ -54,6 +54,15 @@ interface DocumentTabProps {
    * no fetch + Blob plumbing on the client.
    */
   xlsxDownloadHref?: (code: string) => string;
+  /**
+   * Set of codes that have a comparison-mode xlsx renderer (e.g. d19
+   * pricing-comparison aggregating vendor submissions). When a code is
+   * in this set the card shows a second "Download comparison xlsx"
+   * anchor alongside the standard template anchor.
+   */
+  xlsxComparisonCodes?: ReadonlySet<string>;
+  /** Build the comparison xlsx download URL for a given artifact code. */
+  xlsxComparisonDownloadHref?: (code: string) => string;
 }
 
 const STATUS_LABEL: Record<SourceEventArtifactStatus, string> = {
@@ -86,6 +95,8 @@ export function DocumentTab({
   generationPendingByCode,
   xlsxGeneratableCodes,
   xlsxDownloadHref,
+  xlsxComparisonCodes,
+  xlsxComparisonDownloadHref,
 }: DocumentTabProps) {
   if (artifacts.length === 0) {
     return (
@@ -194,6 +205,11 @@ export function DocumentTab({
                   ? xlsxDownloadHref(active.artifactCode)
                   : null
               }
+              xlsxComparisonDownloadHref={
+                xlsxComparisonCodes?.has(active.artifactCode) && xlsxComparisonDownloadHref
+                  ? xlsxComparisonDownloadHref(active.artifactCode)
+                  : null
+              }
             />
             {body ? null : (
               <p style={MISSING_TEMPLATE_STYLE}>
@@ -227,6 +243,8 @@ interface ArtifactBodyEditorProps {
   generationPending: boolean;
   /** When non-null the card shows a "Download xlsx template" anchor. */
   xlsxDownloadHref: string | null;
+  /** When non-null the card shows a "Download comparison xlsx" anchor. */
+  xlsxComparisonDownloadHref?: string | null;
 }
 
 function ArtifactBodyEditor({
@@ -240,6 +258,7 @@ function ArtifactBodyEditor({
   isGeneratable,
   generationPending,
   xlsxDownloadHref,
+  xlsxComparisonDownloadHref,
 }: ArtifactBodyEditorProps) {
   const [editing, setEditing] = useState(false);
   const [generationError, setGenerationError] = useState<string | null>(null);
@@ -365,6 +384,17 @@ function ArtifactBodyEditor({
               download
             >
               Download xlsx template
+            </a>
+          ) : null}
+          {xlsxComparisonDownloadHref ? (
+            <a
+              href={xlsxComparisonDownloadHref}
+              data-testid={`source-canvas-document-body-download-xlsx-comparison-${artifact.artifactCode}`}
+              style={{ ...GHOST_BUTTON_STYLE, textDecoration: 'none' }}
+              download
+              title="Side-by-side comparison of vendor pricing submissions (currently demo mode)."
+            >
+              Download comparison xlsx
             </a>
           ) : null}
         </div>
