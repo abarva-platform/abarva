@@ -4,8 +4,9 @@
 // from the canvas substrate (event metadata + authored / scaffold
 // markdown body), and streams the bytes back as an attachment download.
 //
-// Slice 3.1 ships d05 Scope Memo. Other docx-generatable codes (d09,
-// d24, d27) land in Slice 3.2+.
+// Slice 3.1 shipped d05 Scope Memo. Slice 3.2 adds d09 RFP Package,
+// d24 Atlas Decision Brief, d27 Selection Memo — all narrative
+// markdown bodies that share the same renderer + binder pattern.
 //
 // Auth: same gate as render-xlsx (requireTenancy +
 // canUploadSourceArtifacts | canGenerateSourcingArtifacts | canonical-
@@ -24,7 +25,7 @@ import {
   isDocxGeneratable,
   renderArtifactDocx,
 } from '@/lib/source/exports';
-import { buildScopeMemoDocxPayloadFromContext } from '@/lib/source/exports/payloads/scope-memo-docx-payload';
+import { buildNarrativeDocxPayloadFromContext } from '@/lib/source/exports/payloads/narrative-docx-payload';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -97,20 +98,18 @@ export async function GET(_req: NextRequest, { params }: RouteCtx) {
     );
   }
 
-  // Build payload + render.
+  // Build payload + render. All narrative artifacts (d05/d09/d24/d27)
+  // share the same payload shape — they only differ in the cover-block
+  // config that the renderer dispatcher applies.
   const generatedAt = new Date().toISOString();
   let document;
   try {
-    if (artifactCode === 'd05_scope_memo') {
-      const payload = buildScopeMemoDocxPayloadFromContext(ctx, generatedAt);
-      document = await renderArtifactDocx({ artifactCode, payload });
-    } else {
-      // Defensive — isDocxGeneratable should have caught this above.
-      return Response.json(
-        { error: 'unsupported_artifact', detail: artifactCode },
-        { status: 404 },
-      );
-    }
+    const payload = buildNarrativeDocxPayloadFromContext(
+      ctx,
+      artifactCode,
+      generatedAt,
+    );
+    document = await renderArtifactDocx({ artifactCode, payload });
   } catch (err) {
     console.error(
       '[GET /api/v1/source/:eventId/artifacts/:artifactCode/render-docx] renderer error',

@@ -15,9 +15,16 @@ import {
   type PricingTemplatePayload,
 } from './renderers/pricing-template';
 import {
-  buildScopeMemoDocx,
-  type ScopeMemoDocxPayload,
-} from './renderers/scope-memo-docx';
+  DECISION_BRIEF_DOCX_CONFIG,
+  RFP_PACK_DOCX_CONFIG,
+  SCOPE_MEMO_DOCX_CONFIG,
+  SELECTION_MEMO_DOCX_CONFIG,
+  buildNarrativeDocx,
+  type NarrativeDocxPayload,
+} from './renderers/narrative-docx';
+// Re-export the scope-memo type alias for backwards compat — the
+// payload shape is identical to NarrativeDocxPayload.
+import type { ScopeMemoDocxPayload } from './renderers/scope-memo-docx';
 import {
   buildPricingComparisonWorkbook,
   type PricingComparisonPayload,
@@ -59,11 +66,14 @@ export const XLSX_COMPARISON_CODES = new Set(['d19_pricing_workbook']);
 
 /**
  * Codes for which Source has a docx renderer. Surfaces a "Download
- * docx" anchor on the artifact card. Slice 3 starts with d05; future
- * slices add d09 / d24 / d27.
+ * docx" anchor on the artifact card. Slice 3.1 shipped d05; Slice 3.2
+ * adds the rest of the narrative artifacts.
  */
 export const DOCX_GENERATABLE_CODES = new Set([
   'd05_scope_memo',
+  'd09_rfp_pack',
+  'd24_decision_brief',
+  'd27_selection_memo',
 ]);
 
 export function isXlsxGeneratable(artifactCode: string): boolean {
@@ -140,9 +150,16 @@ export interface RenderDocxArgs {
 export async function renderArtifactDocx(
   args: RenderDocxArgs,
 ): Promise<DocxDocument> {
+  const payload = args.payload as NarrativeDocxPayload;
   switch (args.artifactCode) {
     case 'd05_scope_memo':
-      return buildScopeMemoDocx(args.payload as ScopeMemoDocxPayload);
+      return buildNarrativeDocx(payload, SCOPE_MEMO_DOCX_CONFIG);
+    case 'd09_rfp_pack':
+      return buildNarrativeDocx(payload, RFP_PACK_DOCX_CONFIG);
+    case 'd24_decision_brief':
+      return buildNarrativeDocx(payload, DECISION_BRIEF_DOCX_CONFIG);
+    case 'd27_selection_memo':
+      return buildNarrativeDocx(payload, SELECTION_MEMO_DOCX_CONFIG);
     default:
       throw new Error(
         `No docx generator wired for ${args.artifactCode}. ` +
