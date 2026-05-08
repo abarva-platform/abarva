@@ -4,17 +4,24 @@
 // Mirrors the docx-base / xlsx-base pattern. Uses @react-pdf/renderer's
 // StyleSheet API (Flexbox-like; not full CSS).
 //
-// Brand parity: same color palette + typography intent as the docx and
-// HTML renderers. @react-pdf only ships built-in fonts (Helvetica /
-// Times / Courier); registering AbarVa display fonts (DM Sans / Georgia)
-// would require shipping font files. For v1 we use the closest built-in
-// matches:
-//   - Body: Helvetica (DM Sans equivalent — clean sans)
-//   - Display: Times-Roman (Georgia equivalent — serif)
-//   - Mono: Courier
+// Brand parity: same color palette + typography intent as the docx
+// and HTML renderers. AbarVa v3 typography is Fraunces (display) /
+// Inter (body) / JetBrains Mono (per src/app/layout.tsx). @react-pdf
+// only ships built-in fonts (Helvetica / Times-Roman / Courier);
+// registering the v3 fonts via `Font.register({ family, src })`
+// requires the actual woff/ttf files served from a stable URL — both
+// fonts are OFL-licensed and ship on Google Fonts CDN.
 //
-// A future slice can register actual AbarVa font files via Font.register
-// for closer brand fidelity once we have them deployed.
+// Deferred to its own slice (Slice 7.2) until the font files are
+// deployed under /public/fonts/ or a CDN strategy is settled. For now
+// PDFs use built-in fonts that approximate the brand:
+//   - Body: Helvetica (clean sans, closest built-in to Inter)
+//   - Display: Times-Roman (closest built-in to Fraunces)
+//   - Mono: Courier (closest built-in to JetBrains Mono)
+//
+// docx + HTML do already use the v3 fonts (Word substitutes; HTML
+// loads via Google Fonts CSS); only PDF lags until font registration
+// lands.
 
 import 'server-only';
 

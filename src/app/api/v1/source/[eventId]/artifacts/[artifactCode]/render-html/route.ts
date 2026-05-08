@@ -128,11 +128,12 @@ export async function GET(_req: NextRequest, { params }: RouteCtx) {
       'x-source-artifact-code': artifactCode,
       'x-source-event-code': ctx.event.code,
       'x-source-artifact-format': 'html',
-      // Strict CSP — no scripts, no remote assets. Keeps the rendered
-      // HTML safe to share even when a vendor opens it in a third-party
-      // viewer.
+      // Strict CSP — no scripts. Allows Google Fonts (Inter / Fraunces /
+      // JetBrains Mono per AbarVa v3 typography) but no other remote
+      // resources. Safe to share with vendors / archive in third-party
+      // viewers.
       'content-security-policy':
-        "default-src 'none'; img-src 'self' data:; style-src 'unsafe-inline'; font-src 'self' data:;",
+        "default-src 'none'; img-src 'self' data:; style-src 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com;",
       'x-content-type-options': 'nosniff',
     },
   });

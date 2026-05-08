@@ -34,12 +34,15 @@ export const SOURCE_DOCX = {
   WARNING_COLOR: 'F4B400',
   /** Cream cover bg analog (used as table fill on cover). */
   COVER_BG: 'F8F7F4',
-  /** Body font stack (DM Sans → Calibri fallback for Word). */
-  BODY_FONT: 'DM Sans',
-  /** Big-heading font (Georgia for cover/cover-page-style headings). */
-  DISPLAY_FONT: 'Georgia',
-  /** Monospace for code blocks. */
-  MONO_FONT: 'Menlo',
+  /** AbarVa v3 body sans — Inter (matches src/app/layout.tsx). Word
+   *  substitutes with the closest installed sans (Inter is now common
+   *  on Win11/macOS; older systems fall back to Calibri / Helvetica). */
+  BODY_FONT: 'Inter',
+  /** AbarVa v3 display serif — Fraunces. Word substitutes with the
+   *  closest serif (Georgia is the most likely fallback). */
+  DISPLAY_FONT: 'Fraunces',
+  /** AbarVa v3 mono — JetBrains Mono. Word fallbacks to Consolas/Menlo. */
+  MONO_FONT: 'JetBrains Mono',
 } as const;
 
 /** Standard body run options. */
