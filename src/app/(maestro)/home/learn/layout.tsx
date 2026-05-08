@@ -1,12 +1,12 @@
 'use client';
-// Home-area shell — AppTopBar + LearnSideNav persist across /home and all
-// /home/learn/* routes. Individual page components render content only,
-// no AppShell wrapper needed.
+// Learn sub-shell — AppTopBar + LearnSideNav for all /home/learn/* routes.
+// The root /home uses its own AppShell (HomeIndexPage); this layout is
+// scoped to the learn guide only so the two shells never conflict.
 
 import { AppTopBar } from '@/components/shell/AppTopBar';
 import { LearnSideNav } from '@/components/home/learn/LearnSideNav';
 
-export default function HomeLayout({ children }: { children: React.ReactNode }) {
+export default function HomeLearnLayout({ children }: { children: React.ReactNode }) {
   return (
     <div
       style={{
