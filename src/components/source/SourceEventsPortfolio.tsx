@@ -14,6 +14,7 @@ import {
 } from '@/lib/source/financial-display';
 import { SourceAlertPanel } from './SourceAlertPanel';
 import { SourcingEventTable } from './SourcingEventTable';
+import { SourceEventsViewToggle } from './SourceEventsViewToggle';
 
 const SURFACE_CARD: CSSProperties = {
   background: SHELL.CARD_WHITE,
@@ -445,10 +446,16 @@ export function SourceEventsPortfolio({
       </section>
 
       {filteredEvents.length > 0 ? (
-        <SourcingEventTable
+        <SourceEventsViewToggle
           events={filteredEvents}
-          variant="light"
           canViewFinancialValues={canViewFinancialValues}
+          listView={
+            <SourcingEventTable
+              events={filteredEvents}
+              variant="light"
+              canViewFinancialValues={canViewFinancialValues}
+            />
+          }
         />
       ) : (
         <section style={SURFACE_CARD}>
