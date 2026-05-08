@@ -405,12 +405,30 @@ export interface BriefBet {
   regulatory: Array<{ regulatory: Regulatory; currencyDate: string }>;
 }
 
+/** Compact below-the-line brief row · scannable list under the top 3 picks. */
+export interface BelowTheLineBet {
+  rank: number;
+  useCaseId: string;
+  useCaseName: string;
+  score: number;
+  state: 'in_portfolio' | 'candidate' | 'evaluating' | 'retired';
+  initiativeDisplayId?: string;
+  /** Compact value range, e.g. "$3M-$8M". */
+  valueLabel: string;
+  /** Time to value, e.g. "9-14 mo". */
+  ttvLabel: string;
+  /** One-line CXO hint (why we're tracking it). */
+  hint: string;
+}
+
 export interface BriefData {
   tenantName: string;
   tenantBrandColor: string;
   industry: Industry;
   composedAt: string;             // ISO
   bets: BriefBet[];
+  /** Bets below the line · scannable list under the 3 hero cards. */
+  belowTheLine?: BelowTheLineBet[];
   patternsTriggered: Array<{
     pattern: Pattern;
     issue: string;

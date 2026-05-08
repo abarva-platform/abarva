@@ -18,7 +18,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import type { BriefData, BriefBet } from '@/lib/knowledge-corpus/types';
+import type { BelowTheLineBet, BriefData, BriefBet } from '@/lib/knowledge-corpus/types';
 import { SentinelChat } from '@/components/intelligence-v3/SentinelChat';
 import type { ChatMessage } from '@/components/intelligence-v3/types';
 
@@ -178,7 +178,10 @@ export function IntelligenceBrief({ data }: Props) {
             </div>
           ))}
 
-          {/* Bet stack — summary-first */}
+          {/* Above the line · top 3 picks as full cards */}
+          <div style={{ marginBottom: 8 }}>
+            <SectionEyebrow>Above the line · top {data.bets.length} this quarter</SectionEyebrow>
+          </div>
           <div style={{ display: 'grid', gap: 14 }}>
             {data.bets.map((bet) => (
               <BetSummary
@@ -189,6 +192,32 @@ export function IntelligenceBrief({ data }: Props) {
               />
             ))}
           </div>
+
+          {/* Below the line · scannable list */}
+          {data.belowTheLine && data.belowTheLine.length > 0 && (
+            <div style={{ marginTop: 28 }}>
+              <SectionEyebrow>
+                Below the line · {data.belowTheLine.length} bets evaluating
+              </SectionEyebrow>
+              <div
+                style={{
+                  background: C.surface,
+                  border: `1px solid ${C.borderLight}`,
+                  borderRadius: 10,
+                  overflow: 'hidden',
+                  marginTop: 10,
+                }}
+              >
+                {data.belowTheLine.map((b, i) => (
+                  <BelowTheLineRow
+                    key={b.useCaseId}
+                    bet={b}
+                    isLast={i === data.belowTheLine!.length - 1}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Move cascade · forward-looking strip below the bets */}
           {data.cascadeIfSucceeds && (
@@ -719,4 +748,160 @@ function tierStyle(tier: 'incumbent' | 'challenger' | 'emerging'): React.CSSProp
   if (tier === 'incumbent') return { ...base, color: C.navy, background: C.navySoft, borderColor: C.navyLine };
   if (tier === 'challenger') return { ...base, color: C.teal, background: C.tealSoft, borderColor: C.tealLine };
   return { ...base, color: C.amber, background: C.amberSoft, borderColor: C.amberLine };
+}
+
+// ── Section eyebrow (above-the-line / below-the-line headers) ─────
+
+function SectionEyebrow({ children }: { children: React.ReactNode }) {
+  return (
+    <div
+      style={{
+        fontFamily: F_MONO,
+        fontSize: 10,
+        fontWeight: 700,
+        letterSpacing: '0.18em',
+        textTransform: 'uppercase',
+        color: C.faint,
+        marginBottom: 4,
+      }}
+    >
+      {children}
+    </div>
+  );
+}
+
+// ── Below-the-line row · 1 line per bet, scannable, expandable ────
+
+function BelowTheLineRow({ bet, isLast }: { bet: BelowTheLineBet; isLast: boolean }) {
+  const stateStyle = belowStateStyle(bet.state);
+  const scoreColor = bet.score >= 70 ? C.teal : bet.score >= 60 ? C.amber : C.faint;
+  return (
+    <div
+      data-rank={bet.rank}
+      style={{
+        display: 'grid',
+        gridTemplateColumns: '36px 1fr 130px 100px 100px 60px',
+        gap: 14,
+        alignItems: 'center',
+        padding: '12px 18px',
+        borderBottom: isLast ? 'none' : `1px solid ${C.borderLight}`,
+        cursor: 'default',
+      }}
+    >
+      <span
+        style={{
+          fontFamily: F_DISPLAY,
+          fontSize: 18,
+          fontWeight: 300,
+          color: C.faint,
+          letterSpacing: '-0.01em',
+        }}
+      >
+        {String(bet.rank).padStart(2, '0')}
+      </span>
+      <div style={{ minWidth: 0 }}>
+        <div
+          style={{
+            fontFamily: F_BODY,
+            fontSize: 13.5,
+            fontWeight: 600,
+            color: C.ink,
+            display: 'flex',
+            alignItems: 'baseline',
+            gap: 8,
+            flexWrap: 'wrap',
+          }}
+        >
+          {bet.useCaseName}
+          <span
+            style={{
+              fontFamily: F_MONO,
+              fontSize: 9.5,
+              color: C.faint,
+              letterSpacing: '0.04em',
+              fontWeight: 400,
+            }}
+          >
+            {bet.useCaseId}
+            {bet.initiativeDisplayId && ` · ${bet.initiativeDisplayId}`}
+          </span>
+        </div>
+        <div style={{ fontSize: 11.5, color: C.muted, marginTop: 2, lineHeight: 1.45 }}>
+          {bet.hint}
+        </div>
+      </div>
+      <span
+        style={{
+          fontFamily: F_MONO,
+          fontSize: 9.5,
+          fontWeight: 700,
+          letterSpacing: '0.12em',
+          color: stateStyle.fg,
+          background: stateStyle.bg,
+          border: `1px solid ${stateStyle.border}`,
+          padding: '3px 8px',
+          borderRadius: 3,
+          textTransform: 'uppercase',
+          textAlign: 'center',
+          whiteSpace: 'nowrap',
+        }}
+      >
+        {stateStyle.label}
+      </span>
+      <span
+        style={{
+          fontFamily: F_BODY,
+          fontSize: 12.5,
+          fontWeight: 600,
+          color: C.ink,
+          textAlign: 'right',
+          letterSpacing: '-0.005em',
+        }}
+      >
+        {bet.valueLabel}
+      </span>
+      <span
+        style={{
+          fontFamily: F_MONO,
+          fontSize: 11,
+          color: C.muted,
+          textAlign: 'right',
+          letterSpacing: '0.04em',
+        }}
+      >
+        {bet.ttvLabel}
+      </span>
+      <span
+        style={{
+          fontFamily: F_MONO,
+          fontSize: 11,
+          fontWeight: 700,
+          color: scoreColor,
+          textAlign: 'right',
+          letterSpacing: '0.04em',
+        }}
+      >
+        {bet.score}
+      </span>
+    </div>
+  );
+}
+
+function belowStateStyle(state: BelowTheLineBet['state']): {
+  label: string;
+  fg: string;
+  bg: string;
+  border: string;
+} {
+  switch (state) {
+    case 'in_portfolio':
+      return { label: 'In flight', fg: C.teal, bg: C.tealSoft, border: C.tealLine };
+    case 'candidate':
+      return { label: 'Candidate', fg: C.navy, bg: C.navySoft, border: C.navyLine };
+    case 'evaluating':
+      return { label: 'Evaluating', fg: C.amber, bg: C.amberSoft, border: C.amberLine };
+    case 'retired':
+    default:
+      return { label: 'Retired', fg: C.faint, bg: C.surface3, border: C.borderLight };
+  }
 }
