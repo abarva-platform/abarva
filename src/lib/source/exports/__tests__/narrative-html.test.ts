@@ -91,11 +91,13 @@ describe('buildNarrativeHtml', () => {
     expect(out).toContain('Title with &amp; ampersand');
   });
 
-  it('embeds the AbarVa typography stylesheet inline', () => {
+  it('embeds the AbarVa v3 typography stylesheet inline', () => {
     const out = buildNarrativeHtml(makePayload(), SCOPE_MEMO_HTML_CONFIG);
     expect(out).toContain('<style>');
-    expect(out).toContain("'DM Sans'");
-    expect(out).toContain('Georgia');
+    expect(out).toContain("'Inter'");
+    expect(out).toContain("'Fraunces'");
+    expect(out).toContain('JetBrains Mono');
+    expect(out).toContain('fonts.googleapis.com');
     expect(out).toContain('--bg: #F8F7F4');
   });
 

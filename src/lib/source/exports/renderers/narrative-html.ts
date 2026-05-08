@@ -46,8 +46,11 @@ const STYLE_BLOCK = `
     --soft: #F4F2EC;
   }
   html, body { margin: 0; padding: 0; background: var(--bg); color: var(--fg); }
+  /* AbarVa v3 typography. Inter for body, Fraunces for display
+     headings (loaded via Google Fonts CDN below). */
+  @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
   body {
-    font-family: 'DM Sans', -apple-system, 'Segoe UI', sans-serif;
+    font-family: 'Inter', -apple-system, 'Segoe UI', sans-serif;
     font-size: 15px;
     line-height: 1.55;
     padding: 48px 32px;
@@ -62,10 +65,10 @@ const STYLE_BLOCK = `
     margin-bottom: 12px;
   }
   .source-doc__title {
-    font-family: Georgia, 'Times New Roman', serif;
+    font-family: 'Fraunces', Georgia, 'Times New Roman', serif;
     font-size: 32px;
     line-height: 1.15;
-    font-weight: 400;
+    font-weight: 500;
     color: var(--fg);
     margin: 0 0 16px;
   }
@@ -109,7 +112,7 @@ const STYLE_BLOCK = `
   .source-doc__body li { margin: 4px 0; }
   .source-doc__body code {
     background: var(--soft); border-radius: 3px; padding: 1px 5px;
-    font-size: 13px; font-family: 'Menlo', 'Consolas', monospace;
+    font-size: 13px; font-family: 'JetBrains Mono', 'Menlo', 'Consolas', monospace;
   }
   .source-doc__body pre {
     background: var(--soft); padding: 12px 16px; border-radius: 6px;
