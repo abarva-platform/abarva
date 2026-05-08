@@ -1567,7 +1567,7 @@
             <div class="phase-goal">Formalize the program scope, objectives, and governance. Define who owns what and establish the baseline timeline. The Charter Gate requires a named sponsor, defined scope, and approved charter document.</div>
             <div class="phase-example">
               <div class="phase-example-label">Example chat with Nexus</div>
-              <div class="phase-example-text">"Nexus, help me draft the stakeholder map. The COO is sponsor, the VP of CX is the program lead, and we'll need IT and Finance as working stakeholders." → Nexus populates the stakeholder section and flags missing RACI entries.</div>
+              <div class="phase-example-text">"Nexus, help me draft the stakeholder map. The COO is sponsor, the VP of CX is the program lead, and we'll need IT and Finance as working stakeholders." → Nexus populates the stakeholder section, assigns RACI roles for each name, and flags two decision-rights gaps that need to be resolved before the Charter gate can clear.</div>
             </div>
             <div class="phase-cols">
               <div>
@@ -1576,13 +1576,15 @@
                   <span class="doc-chip"><span class="chip-icon">📄</span> Program Charter <span class="chip-tag gate">GATE</span></span>
                   <span class="doc-chip"><span class="chip-icon">👥</span> Stakeholder Map</span>
                   <span class="doc-chip"><span class="chip-icon">📅</span> Baseline Timeline</span>
+                  <span class="doc-chip"><span class="chip-icon">🗂️</span> RACI Matrix</span>
                 </div>
               </div>
               <div>
-                <div class="phase-col-label">Gate criteria (hard)</div>
-                <div class="gate-item"><div class="gate-dot"></div><div>Named executive sponsor confirmed</div></div>
-                <div class="gate-item"><div class="gate-dot"></div><div>Scope boundary documented and approved</div></div>
-                <div class="gate-item"><div class="gate-dot"></div><div>Charter document generated and signed off</div></div>
+                <div class="phase-col-label">Gate criteria</div>
+                <div class="gate-item"><div class="gate-dot"></div><div>Named executive sponsor confirmed <span class="gate-hard-label">Hard</span></div></div>
+                <div class="gate-item"><div class="gate-dot"></div><div>Scope boundary documented and approved <span class="gate-hard-label">Hard</span></div></div>
+                <div class="gate-item"><div class="gate-dot"></div><div>Charter document generated and signed off <span class="gate-hard-label">Hard</span></div></div>
+                <div class="gate-item"><div class="gate-dot soft"></div><div>Stakeholder RACI reviewed by sponsor <span class="gate-soft-label">Soft</span></div></div>
               </div>
             </div>
           </div>
@@ -1598,8 +1600,8 @@
           <div class="phase-body">
             <div class="phase-goal">Map the current state, identify root causes, and build a structured problem statement. This phase includes a critical Continue/Discontinue decision — if the diagnosis surfaces a fundamental blocker, you record it here and can formally discontinue the Move.</div>
             <div class="phase-example">
-              <div class="phase-example-label">Example</div>
-              <div class="phase-example-text">"Nexus, I'm uploading last quarter's AHT data. Can you help me identify the top 3 call categories driving high handle time?" → Nexus parses the file, identifies patterns, and populates the Current State Assessment with the top drivers.</div>
+              <div class="phase-example-label">Example chat with Nexus</div>
+              <div class="phase-example-text">"Nexus, I'm uploading last quarter's AHT data. Can you help me identify the top 3 call categories driving high handle time?" → Nexus parses the file, surfaces that authentication failures, billing disputes, and routing timeouts account for 61% of excess handle time, and pre-fills the Root Cause Analysis section with supporting data points.</div>
             </div>
             <div class="phase-cols">
               <div>
@@ -1631,8 +1633,8 @@
           <div class="phase-body">
             <div class="phase-goal">Define target state architecture and operating model. Address each root cause from P2 with a specific design decision. Define sourcing strategy — build, buy, or partner — and complete solution design for all in-scope components.</div>
             <div class="phase-example">
-              <div class="phase-example-label">Example</div>
-              <div class="phase-example-text">"The routing engine needs ML-based intent classification. We'll buy a vendor solution, not build in-house — the foundation isn't there. Nexus, add that to the Sourcing Strategy with the rationale."</div>
+              <div class="phase-example-label">Example chat with Nexus</div>
+              <div class="phase-example-text">"The routing engine needs ML-based intent classification. We'll buy a vendor solution, not build in-house — the foundation isn't there. Nexus, add that to the Sourcing Strategy with the rationale." → Nexus documents the build-vs-buy decision, links it to the Foundation Readiness gap flagged in origination, and adds a vendor evaluation criterion to the P4 roadmap.</div>
             </div>
             <div class="phase-cols">
               <div>
@@ -1664,8 +1666,8 @@
           <div class="phase-body">
             <div class="phase-goal">Translate the P3 design into an execution roadmap and build the business case economics. Define Control Tower metrics. The P4 gate is the investment approval gate — it requires both a signed-off business case and an execution roadmap before any implementation begins.</div>
             <div class="phase-example">
-              <div class="phase-example-label">Example</div>
-              <div class="phase-example-text">"Nexus, the Financial Model needs updating — vendor cost came in at $420K not $380K. Recalculate the payback period." → Nexus updates the Financial Model, recalculates break-even (now 14 months not 12), and flags the Business Case needs re-review.</div>
+              <div class="phase-example-label">Example chat with Nexus</div>
+              <div class="phase-example-text">"Nexus, the Financial Model needs updating — vendor cost came in at $420K not $380K. Recalculate the payback period." → Nexus updates the Financial Model, recalculates break-even (now 14 months not 12), flags that the Business Case needs re-review before the P4 gate, and adds a note to the executive summary explaining the revision.</div>
             </div>
             <div class="phase-cols">
               <div>
@@ -1698,8 +1700,8 @@
           <div class="phase-body">
             <div class="phase-goal">Assemble the delivery team and RACI. Build the handoff package. Verify execution readiness. Secure Tower acceptance. Gating out of P5 closes the Move and transitions it to Control Tower for ongoing execution tracking.</div>
             <div class="phase-example">
-              <div class="phase-example-label">Example</div>
-              <div class="phase-example-text">"Nexus, generate the Handoff Package. Include the charter, roadmap, business case, and the risk register from P2. The delivery team is confirmed: PM is Priya, tech lead is Marcus."</div>
+              <div class="phase-example-label">Example chat with Nexus</div>
+              <div class="phase-example-text">"Nexus, generate the Handoff Package. Include the charter, roadmap, business case, and the risk register from P2. The delivery team is confirmed: PM is Priya, tech lead is Marcus." → Nexus assembles the package, pre-fills the RACI with Priya and Marcus's roles, and flags two open risks from the P2 register that need owner assignment before Tower acceptance can be confirmed.</div>
             </div>
             <div class="phase-cols">
               <div>
