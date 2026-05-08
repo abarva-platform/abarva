@@ -1,0 +1,256 @@
+'use client';
+import { Section, Eyebrow, SectionTitle, Lead, PhaseCard, Callout, TermGrid, Term, T } from './primitives';
+
+interface PhaseDef {
+  num: string;
+  name: string;
+  gate: string;
+  eyebrow: string;
+  intro: string;
+  goal: string;
+  chatExample: string;
+  deliverables: Array<{ label: string; isGate?: boolean; tag?: string }>;
+  criteria: Array<{ text: string; hard: boolean }>;
+  callout: { kind: 'info' | 'warn' | 'success'; icon: string; label: string; body: string };
+  terms: Array<{ name: string; def: string }>;
+  color?: 'navy' | 'teal';
+}
+
+const PHASES: Record<string, PhaseDef> = {
+  p0: {
+    num: 'P0',
+    name: 'Originate',
+    gate: 'Promotion to P1',
+    eyebrow: 'Strategic Moves · P0',
+    intro: "Where a Move is born. You describe the initiative in natural language chat with Nexus. It extracts seven structured fields into a scaffold panel on the right. Once four required fields are filled, you name and promote the Move to P1.",
+    goal: "Describe the initiative conversationally — Nexus extracts the seven scaffold fields from your chat. Once the four required fields are filled and you name the Move, you can promote to P1.",
+    chatExample: '"We want to cut contact center handle time by 30% using AI-assisted routing. COO is sponsoring it. Scope is just the inbound routing layer." → Nexus filled bet/outcome, sponsor, and scope. "This looks like Cost Reduction — confirm? And do you have a rough value estimate?"',
+    deliverables: [
+      { label: '📋 Origination Scaffold', isGate: true },
+      { label: '🎯 Move Record' },
+    ],
+    criteria: [
+      { text: 'Bet / outcome field filled (outcome-level, directional)', hard: true },
+      { text: 'Archetype confirmed', hard: true },
+      { text: 'Executive sponsor named', hard: true },
+      { text: 'Scope boundary explicit (in / out)', hard: true },
+      { text: 'Value hypothesis entered (order-of-magnitude ok)', hard: false },
+      { text: 'Foundation readiness assessed', hard: false },
+    ],
+    callout: {
+      kind: 'info',
+      icon: '💡',
+      label: 'The seven scaffold fields',
+      body: 'Fields 1–4 are Required (gate-blocking). Fields 5–7 are optional but improve downstream document quality. Nexus fills them from chat — you correct or confirm. The scaffold seeds every deliverable generated in P1–P5.',
+    },
+    terms: [
+      { name: 'Scaffold', def: 'The seven-field structure Nexus fills during P0. It seeds all downstream documents and gate criteria. A well-filled scaffold = much better phase documents.' },
+      { name: 'Bet / outcome', def: 'Field 1: the result you\'re targeting — one sentence, outcome-level, with direction and magnitude. Not a project name. "Reduce contact center AHT by 30%" not "CC AI Project."' },
+      { name: 'Archetype', def: 'Field 2: Cost Reduction, Revenue Growth, Risk Mitigation, or Operational Excellence. Nexus suggests based on your description — confirm or correct.' },
+      { name: 'Foundation readiness', def: 'Field 7: honest assessment of current-state data/infra. "Routing system on legacy platform (EOL 2027). No ML infra in-house." Used in P3 sourcing decisions.' },
+    ],
+  },
+  p1: {
+    num: 'P1',
+    name: 'Charter',
+    gate: 'Charter Approval',
+    eyebrow: 'Strategic Moves · P1',
+    intro: "Formalize the program scope, objectives, and governance. Define who owns what and establish the baseline timeline.",
+    goal: "Formalize the program scope, objectives, and governance. Define who owns what and establish the baseline timeline. The Charter Gate requires a named sponsor, a defined scope, and a signed-off charter document before you can advance to discovery.",
+    chatExample: '"Nexus, help me draft the stakeholder map. The COO is sponsor, the VP of CX is program lead, and we\'ll need IT and Finance as working stakeholders." → Nexus populates the stakeholder section, assigns RACI roles for each name, and flags two decision-rights gaps that need resolving before the gate can clear.',
+    deliverables: [
+      { label: '📄 Program Charter', isGate: true },
+      { label: '👥 Stakeholder Map' },
+      { label: '📅 Baseline Timeline' },
+      { label: '🗂️ RACI Matrix' },
+    ],
+    criteria: [
+      { text: 'Named executive sponsor confirmed', hard: true },
+      { text: 'Scope boundary documented & approved', hard: true },
+      { text: 'Charter document generated & signed off', hard: true },
+      { text: 'Stakeholder RACI reviewed by sponsor', hard: false },
+    ],
+    callout: {
+      kind: 'info',
+      icon: '💡',
+      label: 'Terminology: Charter',
+      body: 'The Program Charter is the formal contract for the Move. It locks scope, confirms the sponsor, and establishes decision rights. Once signed off, changing scope requires a formal charter amendment — Nexus will enforce this.',
+    },
+    terms: [
+      { name: 'Program Charter', def: 'The gate artifact for P1. Locks scope, sponsor, and decision rights. Generated by Nexus from your P0 scaffold + P1 chat inputs.' },
+      { name: 'RACI Matrix', def: 'Responsible / Accountable / Consulted / Informed for each workstream. Nexus generates a draft from your stakeholder list — edit before sign-off.' },
+      { name: 'Scope boundary', def: 'The explicit in-scope and out-of-scope for the Move. Written during P0 but formalized in the P1 Charter. Vague scope is the #1 cause of program failure.' },
+    ],
+  },
+  p2: {
+    num: 'P2',
+    name: 'Discover & Diagnose',
+    gate: 'Diagnosis Sign-Off',
+    eyebrow: 'Strategic Moves · P2',
+    intro: "Map the current state, identify root causes, and build a structured problem statement.",
+    goal: "Map the current state, identify root causes, and build a structured problem statement. This phase includes a critical Continue / Discontinue decision — if diagnosis reveals a fundamental blocker (wrong scope, wrong sponsor, non-viable economics), you record it here and can formally discontinue the Move rather than letting it stall.",
+    chatExample: '"Nexus, I\'m uploading last quarter\'s AHT data. Can you identify the top 3 call categories driving high handle time?" → Nexus parses the file, surfaces that authentication failures, billing disputes, and routing timeouts account for 61% of excess handle time, and pre-fills the Root Cause Analysis with supporting data points.',
+    deliverables: [
+      { label: '📊 Current State Assessment', isGate: true },
+      { label: '🔍 Root Cause Analysis' },
+      { label: '📌 Problem Statement' },
+      { label: '⚠️ Risk Register' },
+    ],
+    criteria: [
+      { text: 'As-is process documented with data evidence', hard: true },
+      { text: 'Root causes validated, not just symptoms', hard: true },
+      { text: 'Continue/Discontinue decision recorded', hard: false },
+      { text: 'Risk register populated', hard: false },
+    ],
+    callout: {
+      kind: 'warn',
+      icon: '⚠️',
+      label: 'The Continue/Discontinue decision',
+      body: 'P2 is the last low-cost exit point. If discovery reveals the economics don\'t work, the scope was wrong, or there\'s no sponsor alignment — record a Discontinue decision with rationale. A formally discontinued Move is better than a stalled one. Say: "Nexus, record a Discontinue decision for this Move. Rationale: [reason]."',
+    },
+    terms: [
+      { name: 'Current State Assessment', def: 'The P2 gate artifact. Documents the as-is process with data evidence. Must be signed off before advancing.' },
+      { name: 'Root cause', def: 'The underlying driver of a problem — not the symptom. "High AHT" is a symptom. "Mis-routed calls requiring three transfers" is a root cause. Nexus will push back if you only document symptoms.' },
+      { name: 'Continue / Discontinue', def: 'The formal binary decision at P2. Continue = commit to P3. Discontinue = formally close the Move with documented rationale. Discontinue is not failure — it\'s discipline.' },
+    ],
+  },
+  p3: {
+    num: 'P3',
+    name: 'Design Future State',
+    gate: 'Design Approval',
+    eyebrow: 'Strategic Moves · P3',
+    intro: "Define the target state architecture and operating model. Address each root cause from P2 with a specific design decision.",
+    goal: "Define the target state architecture and operating model. Address each root cause from P2 with a specific design decision. Define the sourcing strategy — build, buy, or partner — and complete solution design for all in-scope components. Every design decision should trace back to a P2 root cause.",
+    chatExample: '"The routing engine needs ML-based intent classification. We\'ll buy a vendor solution — the foundation isn\'t there to build in-house. Nexus, add that to the Sourcing Strategy with the rationale." → Nexus documents the build-vs-buy decision, links it to the Foundation Readiness gap from origination, and adds a vendor evaluation criterion to the P4 roadmap.',
+    deliverables: [
+      { label: '🏗️ Target State Architecture', isGate: true },
+      { label: '🎨 Solution Design' },
+      { label: '⚙️ Operating Model Design' },
+      { label: '🤝 Sourcing Strategy' },
+    ],
+    criteria: [
+      { text: 'Each P2 root cause addressed in design', hard: true },
+      { text: 'Sourcing decision documented with rationale', hard: true },
+      { text: 'Architecture reviewed with technical stakeholders', hard: false },
+      { text: 'Operating model changes identified', hard: false },
+    ],
+    callout: {
+      kind: 'info',
+      icon: '💡',
+      label: 'Terminology: Build / Buy / Partner',
+      body: 'The sourcing decision in P3 determines P4 economics. Build = internal development (high cost, high control). Buy = vendor solution (faster, less custom). Partner = joint delivery with a SI or specialist firm. Nexus will ask you to justify the choice against the Foundation Readiness assessment from P0.',
+    },
+    terms: [
+      { name: 'Target State Architecture', def: 'The P3 gate artifact. Describes the to-be technical and operational state. Must address each P2 root cause explicitly.' },
+      { name: 'Sourcing Strategy', def: 'Build / Buy / Partner decision for each major component, with rationale. Feeds directly into P4 Financial Model cost assumptions.' },
+      { name: 'Operating Model', def: 'How the organization will work differently after the Move. Roles, processes, and accountabilities in the to-be state.' },
+    ],
+  },
+  p4: {
+    num: 'P4',
+    name: 'Roadmap & Business Case',
+    gate: 'Investment Approval',
+    eyebrow: 'Strategic Moves · P4',
+    intro: "Translate the P3 design into an execution roadmap and build the business case economics.",
+    goal: "Translate the P3 design into an execution roadmap and build the business case economics. The P4 gate is the investment approval gate — the highest-stakes gate. It requires a sponsor-signed business case, a milestoned roadmap with named owners, and a financial model before any implementation begins.",
+    chatExample: '"Nexus, the Financial Model needs updating — vendor cost came in at $420K not $380K. Recalculate the payback period." → Nexus updates the model, recalculates break-even (now 14 months not 12), flags the Business Case needs re-review, and adds a note to the executive summary explaining the revision.',
+    deliverables: [
+      { label: '🗺️ Execution Roadmap', isGate: true },
+      { label: '💼 Business Case', isGate: true },
+      { label: '📈 Financial Model', tag: 'EXCEL' },
+      { label: '📡 Tower Metrics Plan' },
+    ],
+    criteria: [
+      { text: 'Financial model with 3-year projection', hard: true },
+      { text: 'Roadmap with milestones & owners', hard: true },
+      { text: 'Executive sponsor sign-off on business case', hard: true },
+      { text: 'Tower metrics defined & agreed', hard: false },
+    ],
+    callout: {
+      kind: 'info',
+      icon: '💡',
+      label: 'Terminology: Financial Model (Excel)',
+      body: 'The P4 Financial Model is a 5-sheet Excel workbook: Assumptions, 3-year P&L projection, NPV/IRR, Sensitivity analysis, and Payback curve. The value hypothesis seed you entered at P0 pre-fills the assumptions — update it with actuals from vendor quotes and internal cost data before gating out.',
+    },
+    terms: [
+      { name: 'Business Case', def: 'The P4 gate artifact. Summarizes the investment rationale, expected returns, risks, and P4 Financial Model. Must be signed off by the executive sponsor before advancing.' },
+      { name: 'Financial Model', def: 'A 5-sheet Excel workbook: Assumptions / 3-year P&L / NPV+IRR / Sensitivity / Payback. Generated by Nexus from your P0 value hypothesis and P3 sourcing costs.' },
+      { name: 'Tower Metrics Plan', def: 'The KPIs and measurement approach Atlas will track after P5 handoff. Defined in P4 so Tower is ready to monitor from day one.' },
+    ],
+  },
+  p5: {
+    num: 'P5',
+    name: 'Mobilize & Handoff',
+    gate: 'Tower Acceptance',
+    eyebrow: 'Strategic Moves · P5',
+    intro: "Assemble the delivery team and RACI. Build the handoff package. Verify execution readiness. Secure Tower acceptance.",
+    goal: "Assemble the delivery team and RACI. Build the handoff package. Verify execution readiness. Secure Tower acceptance. Gating out of P5 closes the Move and transitions it to Control Tower — where Atlas tracks execution progress, KPIs, and ongoing signal health.",
+    chatExample: '"Nexus, generate the Handoff Package. Include the charter, roadmap, business case, and the risk register from P2. Delivery team: PM is Priya, tech lead is Marcus." → Nexus assembles the package, pre-fills the RACI with their roles, and flags two open risks from P2 that need owner assignment before Tower acceptance can confirm.',
+    deliverables: [
+      { label: '🚀 Handoff Package', isGate: true },
+      { label: '✅ Readiness Assessment' },
+    ],
+    criteria: [
+      { text: 'Delivery team assembled with named PM', hard: true },
+      { text: 'Handoff package generated & complete', hard: true },
+      { text: 'Tower acceptance confirmed', hard: true },
+      { text: 'All deliverables reviewed by sponsor', hard: false },
+    ],
+    callout: {
+      kind: 'success',
+      icon: '→',
+      label: 'After P5: Control Tower',
+      body: 'The Move transitions to Control Tower automatically. Atlas picks it up, the program appears in the portfolio heatmap, and ongoing signal tracking begins. You\'ll see a "→ Tower" indicator on the phase rail once the transition completes.',
+    },
+    terms: [
+      { name: 'Handoff Package', def: 'The P5 gate artifact. A compiled bundle of all key deliverables from P1–P4 plus the delivery team RACI and readiness assessment. Atlas uses this as the Tower intake record.' },
+      { name: 'Readiness Assessment', def: 'A pre-launch checklist: team assembled, risks owned, metrics defined, exec briefed. Generated by Nexus — review and sign off before submitting for Tower acceptance.' },
+      { name: 'Tower acceptance', def: 'The confirmation from the Control Tower view that Atlas has received the handoff and the Move is ready to transition. A hard gate criterion — the program can\'t close without it.' },
+    ],
+    color: 'teal' as const,
+  },
+};
+
+export function PhaseSection({ phase }: { phase: string }) {
+  const def = PHASES[phase];
+  if (!def) return null;
+
+  return (
+    <>
+      <Section>
+        <Eyebrow>{def.eyebrow}</Eyebrow>
+        <SectionTitle>{def.num} — {def.name}</SectionTitle>
+        <Lead>{def.intro}</Lead>
+
+        <PhaseCard
+          num={def.num}
+          name={def.name}
+          gate={def.gate}
+          goal={def.goal}
+          chatExample={def.chatExample}
+          deliverables={def.deliverables}
+          criteria={def.criteria}
+          color={def.color ?? 'navy'}
+        />
+
+        <Callout kind={def.callout.kind} icon={def.callout.icon} label={def.callout.label}>
+          {def.callout.body}
+        </Callout>
+      </Section>
+
+      {def.terms.length > 0 && (
+        <Section>
+          <Eyebrow>{def.eyebrow} · Key Terms</Eyebrow>
+          <SectionTitle>Key terms — {def.name}</SectionTitle>
+          <TermGrid>
+            {def.terms.map((t) => (
+              <Term key={t.name} name={t.name}>
+                {t.def}
+              </Term>
+            ))}
+          </TermGrid>
+        </Section>
+      )}
+    </>
+  );
+}
