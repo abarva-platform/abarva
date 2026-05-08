@@ -23,50 +23,47 @@ import { useEffect, useState } from 'react';
 import { COLORS, FONT, SPACING } from '@/lib/design/abarva-theme';
 import { IntelligenceV3TopNav } from './IntelligenceV3TopNav';
 import { IntelligenceV3StageTabs } from './IntelligenceV3StageTabs';
-import { TodayCanvas } from './TodayCanvas';
-import { VendorsCanvas } from './VendorsCanvas';
-import { ByFunctionCanvas } from './ByFunctionCanvas';
-import { PatternsCanvas } from './PatternsCanvas';
-import { PeerActivityCanvas } from './PeerActivityCanvas';
-import { MyStrategyCanvas } from './MyStrategyCanvas';
-import { SessionsCanvas } from './SessionsCanvas';
+import { TodayCxoCanvas } from './TodayCxoCanvas';
+import { ByFunctionCxoCanvas } from './ByFunctionCxoCanvas';
+import { PatternsCxoCanvas } from './PatternsCxoCanvas';
+import { VendorsCxoCanvas } from './VendorsCxoCanvas';
+import { PeerActivityCxoCanvas } from './PeerActivityCxoCanvas';
+import { MyStrategyCxoCanvas } from './MyStrategyCxoCanvas';
+import { SessionsCxoCanvas } from './SessionsCxoCanvas';
 import { SentinelChat } from './SentinelChat';
-import { ArtOfPossibleBandsCanvas } from './ArtOfPossibleBandsCanvas';
+import { ArtOfPossibleCanvas } from './ArtOfPossibleCanvas';
 import { IntelligenceMap } from '@/components/intelligence-v4/IntelligenceMap';
 import { IntelligenceBrief } from '@/components/intelligence-v4/IntelligenceBrief';
 import { getMeridianMapData, getMeridianBriefData } from '@/lib/knowledge-corpus/fixtures/meridian-healthcare';
 import { FIRST_CAPITAL_DEMO, MERIDIAN_AOP_DEMO } from './demo-data';
 import type { IntelligenceV3PageData, StageKey } from './types';
-import type { VendorsData } from '@/lib/intelligence-v3/vendors-display';
-import type {
-  ByFunctionData,
-  PeerActivityData,
-  MyStrategyData,
-} from '@/lib/intelligence-v3/stages-display';
-import type { AIInitiative } from '@/lib/admin/ai-initiatives/queries';
 
 interface Props {
   /** Server-side composed page data. Defaults to the demo fixture. */
   data?: IntelligenceV3PageData;
   /** True when `data` reflects real DB substrate; false for fallback. */
   isLiveBound?: boolean;
-  /** Vendors stage data — null when not loaded. */
-  vendorsData?: VendorsData | null;
-  byFunctionData?: ByFunctionData | null;
-  peerActivityData?: PeerActivityData | null;
-  myStrategyData?: MyStrategyData | null;
-  /** Initiatives passed through for the Patterns stage exposure overlay. */
-  initiatives?: ReadonlyArray<AIInitiative> | null;
+  /**
+   * Legacy server-loaded props (vendorsData, byFunctionData, etc.)
+   * are accepted for back-compat but ignored — PR-K2.4 CXO canvases
+   * use their own embedded Meridian fixtures until the live overlay
+   * lands in PR-K3+.
+   */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  vendorsData?: any;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  byFunctionData?: any;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  peerActivityData?: any;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  myStrategyData?: any;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  initiatives?: any;
 }
 
 export function IntelligenceV3Page({
   data: dataProp,
   isLiveBound = false,
-  vendorsData = null,
-  byFunctionData = null,
-  peerActivityData = null,
-  myStrategyData = null,
-  initiatives = null,
 }: Props = {}) {
   const data = dataProp ?? FIRST_CAPITAL_DEMO;
   // PR-K2 · default landing is The Brief — it's the canonical
@@ -168,32 +165,14 @@ export function IntelligenceV3Page({
               paddingBottom: SPACING.xxxl + 56, // bottom gutter for any docked chat
             }}
           >
-            <Hero data={data} />
-
-            {isAopStage && <ArtOfPossibleBandsCanvas data={aopBands} />}
-            {stage === 'today' && <TodayCanvas data={data} />}
-            {stage === 'vendors' &&
-              (vendorsData ? <VendorsCanvas data={vendorsData} /> : <StageStub stage={stage} />)}
-            {stage === 'by-function' &&
-              (byFunctionData ? (
-                <ByFunctionCanvas data={byFunctionData} />
-              ) : (
-                <StageStub stage={stage} />
-              ))}
-            {stage === 'patterns' && <PatternsCanvas initiatives={initiatives ?? []} />}
-            {stage === 'peer-activity' &&
-              (peerActivityData ? (
-                <PeerActivityCanvas data={peerActivityData} />
-              ) : (
-                <StageStub stage={stage} />
-              ))}
-            {stage === 'my-strategy' &&
-              (myStrategyData ? (
-                <MyStrategyCanvas data={myStrategyData} />
-              ) : (
-                <StageStub stage={stage} />
-              ))}
-            {stage === 'sessions' && <SessionsCanvas data={data} />}
+            {isAopStage && <ArtOfPossibleCanvas data={aopBands} />}
+            {stage === 'today' && <TodayCxoCanvas />}
+            {stage === 'by-function' && <ByFunctionCxoCanvas />}
+            {stage === 'patterns' && <PatternsCxoCanvas />}
+            {stage === 'vendors' && <VendorsCxoCanvas />}
+            {stage === 'peer-activity' && <PeerActivityCxoCanvas />}
+            {stage === 'my-strategy' && <MyStrategyCxoCanvas />}
+            {stage === 'sessions' && <SessionsCxoCanvas />}
           </main>
 
           <SentinelChat
@@ -207,85 +186,3 @@ export function IntelligenceV3Page({
   );
 }
 
-function Hero({ data }: { data: typeof FIRST_CAPITAL_DEMO }) {
-  return (
-    <header
-      style={{
-        background: COLORS.surface2,
-        border: `1px solid ${COLORS.border}`,
-        borderRadius: 8,
-        padding: `${SPACING.lg}px ${SPACING.xl}px`,
-        marginBottom: SPACING.lg,
-      }}
-    >
-      <div
-        style={{
-          fontFamily: FONT.mono,
-          fontSize: 10,
-          letterSpacing: '0.14em',
-          textTransform: 'uppercase',
-          color: COLORS.muted,
-          marginBottom: SPACING.xs,
-        }}
-      >
-        Intelligence · {data.tenantName}
-      </div>
-      <h1
-        style={{
-          fontFamily: FONT.body,
-          fontSize: 26,
-          fontWeight: 700,
-          color: COLORS.ink,
-          letterSpacing: '-0.01em',
-          marginBottom: SPACING.xs,
-        }}
-      >
-        What we&apos;re seeing across {data.tenantName.split(' ').slice(0, 2).join(' ')}.
-      </h1>
-      <p
-        style={{
-          fontFamily: FONT.body,
-          fontSize: 13,
-          color: COLORS.muted,
-          margin: 0,
-        }}
-      >
-        {data.stats.patterns} patterns · {data.stats.contradictions} contradictions ·{' '}
-        {data.stats.syntheses} synthesis ready · {data.refreshedLabel}
-      </p>
-    </header>
-  );
-}
-
-function StageStub({ stage }: { stage: StageKey }) {
-  return (
-    <section
-      data-testid={`stage-stub-${stage}`}
-      style={{
-        border: `1px dashed ${COLORS.border}`,
-        background: COLORS.card,
-        borderRadius: 8,
-        padding: SPACING.xxl,
-        textAlign: 'center',
-        color: COLORS.muted,
-      }}
-    >
-      <div
-        style={{
-          fontFamily: FONT.mono,
-          fontSize: 10,
-          letterSpacing: '0.14em',
-          textTransform: 'uppercase',
-          color: COLORS.muted,
-          marginBottom: SPACING.sm,
-        }}
-      >
-        Stage · {stage}
-      </div>
-      <div style={{ fontFamily: FONT.body, fontSize: 14, color: COLORS.body }}>
-        Content for this stage ships in a follow-up wave. The Today
-        stage has the v3 IA fully wired.
-      </div>
-    </section>
-  );
-}
