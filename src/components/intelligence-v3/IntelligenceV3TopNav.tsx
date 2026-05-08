@@ -1,11 +1,11 @@
 // Intelligence v3 · top navigation strip.
 //
-// Mirrors the v3 wireframe nav: brand · Home · Setup · Strategic Moves ·
-// Source · Intelligence (active) · Learn · Product · tenant · user pill.
-//
-// No Tower link — per design intent §2.6 + Q5 best-answer (no Tower
-// references on Intelligence until Tower ships). When Tower ships,
-// add the link here and to the global AbarvaNav.
+// Canonical 5-item nav per Home Refinement Package
+// (NAV_REORGANIZATION.md): Home · Intelligence (active) · Moves ·
+// Source · Tower. The Q5 "no Tower references until Tower ships"
+// rule from the original design intent is superseded by the
+// Home Refinement Package — Tower is now a first-class top-nav
+// item across the tenant-side surface.
 
 import Link from 'next/link';
 import { COLORS, FONT, BORDER, SPACING } from '@/lib/design/abarva-theme';
@@ -17,12 +17,10 @@ interface NavLink {
 
 const LINKS: ReadonlyArray<NavLink> = [
   { label: 'Home', href: '/home' },
-  { label: 'Setup', href: '/admin' },
-  { label: 'Strategic Moves', href: '/strategic-moves' },
-  { label: 'Source', href: '/source' },
   { label: 'Intelligence', href: '/intelligence' },
-  { label: 'Learn', href: '/learn' },
-  { label: 'Product', href: '/product' },
+  { label: 'Moves', href: '/strategic-moves' },
+  { label: 'Source', href: '/source' },
+  { label: 'Tower', href: '/tower' },
 ];
 
 interface Props {

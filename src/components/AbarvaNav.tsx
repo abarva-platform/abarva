@@ -71,14 +71,17 @@ function NavInner({ activePage, compact = false }: NavProps) {
 
   // ── Active states · pathname first (truth), activePage prop fallback
   // for legacy callers.
-  const tenantProgramsActive = pathname.startsWith('/tenant/') && pathname.includes('/programs')
+  // tenantProgramsActive removed in H1 nav reorganization (Programs
+  // / Engagements is no longer a top-nav surface; Moves replaces it).
   const tenantIntelligenceActive = pathname.startsWith('/tenant/') && pathname.includes('/intelligence')
   const tenantTowerActive = pathname.startsWith('/tenant/') && pathname.includes('/tower')
   const homeActive         = pathname === '/home' || pathname.startsWith('/home/')
                               || pathname === '/dashboard' || pathname.startsWith('/dashboard/')
                               || pathname === '/' || activePage === 'home'
-  const engagementsActive  = pathname === '/engagements' || pathname.startsWith('/engagements/')
-                              || pathname.startsWith('/engage/') || tenantProgramsActive || activePage === 'engagements'
+  // engagementsActive / adminActive removed in H1 nav reorganization —
+  // their nav items folded into Home. tenantProgramsActive remains
+  // useful upstream for `programsActive` semantics; reintroduce when
+  // a tenant-context Programs surface returns.
   const sourceActive       = pathname === '/source' || pathname.startsWith('/source/') || activePage === 'source'
   const strategicMovesActive = pathname === '/strategic-moves' || pathname.startsWith('/strategic-moves/')
                               || activePage === 'strategic-moves'
@@ -86,15 +89,6 @@ function NavInner({ activePage, compact = false }: NavProps) {
                               || tenantIntelligenceActive || activePage === 'intelligence'
   const towerActive        = pathname === '/tower' || pathname.startsWith('/tower/')
                               || tenantTowerActive || activePage === 'tower'
-  // Admin takes precedence · when the pathname is under /platform/admin,
-  // only the Admin pill should light up, not both Platform and Admin.
-  const adminActive        = pathname.startsWith('/admin') || pathname.startsWith('/platform/admin')
-                              || (activePage || '').startsWith('admin')
-  const platformActive     = !adminActive && (
-                              pathname === '/platform'
-                                || pathname.startsWith('/platform/')
-                                || activePage === 'platform'
-                            )
   const investorActive     = pathname.startsWith('/investor') || activePage === 'investor'
 
   const navLink = (label: string, href: string, active: boolean) => (
@@ -133,24 +127,11 @@ function NavInner({ activePage, compact = false }: NavProps) {
     </span>
   )
 
-  // Admin nav item — shown only when setup access is granted.
-  const adminNavItem = () => (
-    <a
-      href="/admin"
-      key="admin-nav"
-      style={{
-        fontSize: '15px',
-        fontWeight: adminActive ? 700 : 600,
-        letterSpacing: '-0.01em',
-        color: adminActive ? NAVY : NAV_TEXT,
-        padding: '8px 20px', fontFamily: SANS, textDecoration: 'none', flexShrink: 0,
-        borderBottom: adminActive ? `1px solid ${NAVY}` : '1px solid transparent',
-        cursor: 'pointer',
-      }}
-    >
-      Admin
-    </a>
-  )
+  // Admin nav item removed in H1 nav reorganization (Setup folds into
+  // Home). The /admin route stays accessible (and is being migrated to
+  // /home in PR-H2) but no longer surfaces as a separate nav button.
+  // `adminActive` is still computed above because the user-menu hover
+  // state still references it for the Platform link below.
 
   // Static client label for all roles.
   const staticClientLabel = () => (
@@ -255,31 +236,31 @@ function NavInner({ activePage, compact = false }: NavProps) {
             When compact=true (MaestroChrome has PrimaryNav below), skip the
             primary items to avoid a duplicate nav row.
         ══════════════════════════════════════════════════════════════════ */}
+        {/* H1 (2026-05-07) · Canonical 5-item nav per Home Refinement
+            Package NAV_REORGANIZATION.md. Order: Home · Intelligence ·
+            Moves · Source · Tower. Labels: "Moves" (URL stays
+            /strategic-moves for SEO), "Tower" (was "Control Tower"). */}
         {signedIn && isOperator && (
           <>
             {staticClientLabel()}
             {!compact && navLink('Home', '/home', homeActive)}
-            {!compact && canShow('programs') && navLink('Strategic Moves', '/strategic-moves', strategicMovesActive)}
-            {!compact && canShow('source') && navLink('Source', '/source', sourceActive)}
             {!compact && canShow('intelligence') && navLink('Intelligence', intelligencePath, intelligenceActive)}
-            {!compact && canShow('tower') && navLink('Control Tower', '/tower', towerActive)}
-            {!compact && canShow('setup') && navLink('Platform', '/platform', platformActive)}
+            {!compact && canShow('programs') && navLink('Moves', '/strategic-moves', strategicMovesActive)}
+            {!compact && canShow('source') && navLink('Source', '/source', sourceActive)}
+            {!compact && canShow('tower') && navLink('Tower', '/tower', towerActive)}
           </>
         )}
 
-        {/* ══════════════════════════════════════════════════════════════════
-            SIGNED-IN CLIENT (Prat, Priya, Dan) — 4 product items only.
-            No Platform, no Investor, no Admin. Client's own org is implicit;
-            no client switcher. Matches post-test-drive corrections doc §P0-4.
-        ══════════════════════════════════════════════════════════════════ */}
+        {/* SIGNED-IN CLIENT — same 5-item nav as operators. Setup folds
+            into Home; Platform demoted to admin tools (right-side menu). */}
         {signedIn && isClient && (
           <>
             {staticClientLabel()}
             {!compact && navLink('Home', '/home', homeActive)}
-            {!compact && canShow('programs') && navLink('Strategic Moves', '/strategic-moves', strategicMovesActive)}
-            {!compact && canShow('source') && navLink('Source', '/source', sourceActive)}
             {!compact && canShow('intelligence') && navLink('Intelligence', intelligencePath, intelligenceActive)}
-            {!compact && canShow('tower') && navLink('Control Tower', '/tower', towerActive)}
+            {!compact && canShow('programs') && navLink('Moves', '/strategic-moves', strategicMovesActive)}
+            {!compact && canShow('source') && navLink('Source', '/source', sourceActive)}
+            {!compact && canShow('tower') && navLink('Tower', '/tower', towerActive)}
           </>
         )}
 
@@ -296,7 +277,11 @@ function NavInner({ activePage, compact = false }: NavProps) {
         {/* ── Right side: Admin portal shortcut + user avatar ─── */}
         <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: `${SPACING.xs}px` }}>
           {signedIn && (isAdmin || isInvestor) && navLink('Investor', '/investor', investorActive)}
-          {signedIn && canShow('setup') && adminNavItem()}
+          {/* H1 (2026-05-07) · Right-side Admin button removed per Home
+              Refinement Package. Setup folds into Home. Admin-only
+              configuration remains accessible via Home → Configure
+              group (Connectors / Tenant Profile / Configuration) or
+              the user menu's "Platform" entry below. */}
           {/* ⌘K search hint */}
           {signedIn && (
             <span
