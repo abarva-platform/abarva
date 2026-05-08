@@ -588,15 +588,23 @@ export function AgentDock(props: AgentDockProps) {
   }
 
   if (mode === 'side-rail') {
+    // The dock is always viewport-bounded — height is NEVER inherited from
+    // the workspace pane. This guarantees the composer is always above the
+    // fold even when the workspace renders a 3000px-tall scroll body.
+    //
+    // Surfaces with extra sticky chrome (sub-nav, banners) can override the
+    // top offset by setting `--agent-dock-top-offset` on a parent.
     return (
-      <ResizableSplitter
-        left={chatPanel}
-        right={<div style={WORKSPACE_PANE_STYLE}>{workspace}</div>}
-        defaultLeftPercent={defaultLeftPercent}
-        minLeftPx={minLeftPx}
-        minRightPx={Math.max(420, minLeftPx)}
-        storageKey={splitStorageKey(surface)}
-      />
+      <div data-testid="agent-dock-side-rail-shell" style={SIDE_RAIL_SHELL_STYLE}>
+        <ResizableSplitter
+          left={chatPanel}
+          right={<div style={WORKSPACE_PANE_STYLE}>{workspace}</div>}
+          defaultLeftPercent={defaultLeftPercent}
+          minLeftPx={minLeftPx}
+          minRightPx={Math.max(420, minLeftPx)}
+          storageKey={splitStorageKey(surface)}
+        />
+      </div>
     );
   }
 
@@ -861,10 +869,43 @@ function CloseIcon() {
 
 // ── Styles ────────────────────────────────────────────────────────────────
 
+// Side-rail shell — viewport-bounded so the dock never grows with its
+// workspace sibling. The shell sets an explicit, viewport-relative height
+// regardless of how tall the workspace flex pane renders, so the composer
+// can never end up below the fold.
+//
+//   height:    calc(100vh - top - bottom)   // safe default, every browser
+//   maxHeight: calc(100dvh - top - bottom)  // mobile-aware upper bound
+//
+// `100dvh` accounts for mobile address-bar collapse — when the bar hides,
+// dvh shrinks the cap so the composer remains in view. Older browsers
+// without dvh ignore the maxHeight and fall back to the vh height.
+//
+// `position: sticky; top: var(--agent-dock-top-offset, 64px)` keeps the
+// dock pinned in the visible viewport when the page scrolls (e.g. the
+// 1587px-document /source/new regression). When the parent is itself
+// height-constrained (overflow: hidden), sticky has no effect but the
+// explicit calc-height already does the work.
+//
+// CSS variables let surfaces with extra sticky chrome (sub-nav, banners)
+// override the offsets on any parent — no prop drilling required.
+const SIDE_RAIL_SHELL_STYLE: CSSProperties = {
+  position: 'sticky',
+  top: 'var(--agent-dock-top-offset, 64px)',
+  display: 'flex',
+  alignItems: 'stretch',
+  width: '100%',
+  height: 'calc(100vh - var(--agent-dock-top-offset, 64px) - var(--agent-dock-bottom-padding, 0px))',
+  maxHeight: 'calc(100dvh - var(--agent-dock-top-offset, 64px) - var(--agent-dock-bottom-padding, 0px))',
+  minHeight: 0,
+  overflow: 'hidden',
+};
+
 const PANEL_STYLE: CSSProperties = {
   display: 'flex',
   flexDirection: 'column',
   height: '100%',
+  width: '100%',
   background: CANVAS.CHAT_BG,
   borderRight: `1px solid ${CANVAS.HAIRLINE}`,
   minHeight: 0,
@@ -964,13 +1005,17 @@ const QUOTE_BODY_STYLE: CSSProperties = {
 };
 
 const THREAD_STYLE: CSSProperties = {
-  flex: 1,
+  flex: '1 1 auto',
   minHeight: 0,
   overflowY: 'auto',
   padding: '20px 18px',
   display: 'grid',
   gap: 14,
   alignContent: 'start',
+  // Same chat-panel background as the panel + composer so the three regions
+  // never appear striped. User flagged this explicitly as "must be same
+  // color background".
+  background: CANVAS.CHAT_BG,
 };
 
 const EMPTY_STATE_STYLE: CSSProperties = {
@@ -1124,6 +1169,12 @@ const CHIP_SPINNER_STYLE: CSSProperties = {
   animation: 'agent-dock-spin 800ms linear infinite',
 };
 
+// Composer · `flex: 0 0 auto` keeps it pinned at the bottom of the panel's
+// flex column without needing `position: sticky`. The parent shell already
+// caps overall height, so the composer cannot fall below the fold.
+//
+// Background matches CHAT_BG so the composer doesn't visually stripe
+// against the thread or panel.
 const INPUT_FORM_STYLE: CSSProperties = {
   display: 'flex',
   alignItems: 'flex-end',
@@ -1131,9 +1182,7 @@ const INPUT_FORM_STYLE: CSSProperties = {
   padding: '12px 18px 16px',
   borderTop: `1px solid ${CANVAS.HAIRLINE}`,
   background: CANVAS.CHAT_BG,
-  flexShrink: 0,
-  position: 'sticky',
-  bottom: 0,
+  flex: '0 0 auto',
 };
 
 const ATTACH_BUTTON_STYLE: CSSProperties = {
@@ -1187,12 +1236,20 @@ const WORKSPACE_PANE_STYLE: CSSProperties = {
   overflow: 'hidden',
 };
 
+// Pin layout — same viewport-bound contract as the side-rail shell so
+// pin-top / pin-bottom never let the composer drift below the fold. The
+// workspace pane keeps internal scroll behavior; the dock bar stays
+// visible above the fold.
 const PIN_LAYOUT_STYLE: CSSProperties = {
+  position: 'sticky',
+  top: 'var(--agent-dock-top-offset, 64px)',
   display: 'flex',
   flexDirection: 'column',
-  height: '100%',
+  height: 'calc(100vh - var(--agent-dock-top-offset, 64px) - var(--agent-dock-bottom-padding, 0px))',
+  maxHeight: 'calc(100dvh - var(--agent-dock-top-offset, 64px) - var(--agent-dock-bottom-padding, 0px))',
   width: '100%',
   minHeight: 0,
+  overflow: 'hidden',
 };
 
 const PIN_PANEL_STYLE_BOTTOM: CSSProperties = {
