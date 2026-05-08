@@ -86,6 +86,7 @@ function makeArtifactState(
     bodyFormat: 'markdown',
     bodyAuthoredBy: null,
     bodyUpdatedAt: null,
+    bodyGenerationMetadata: null,
     createdAt: '2026-05-07T20:00:00Z',
     updatedAt: '2026-05-07T20:00:00Z',
     ...overrides,
@@ -262,6 +263,44 @@ describe('UniversalCanvasShell · SSR render', () => {
     // Choice strip label reflects the populate-not-submit semantics.
     expect(html).toContain('Try one for');
     expect(html).not.toContain('Three choices for');
+  });
+
+  // ── Slice 1 · Generate with Sentinel ──────────────────────────────────────
+  it('renders Generate with Sentinel button on a generatable artifact (d01)', () => {
+    const html = render({
+      artifactStates: [
+        makeArtifactState({ artifactCode: 'd01_strategy_memo', body: null }),
+      ],
+    });
+    // d01 / d05 / d09 are wired in the prompt registry; UniversalCanvasShell
+    // exposes them via generatableCodes.
+    expect(html).toContain('source-canvas-document-body-generate-d01_strategy_memo');
+    expect(html).toContain('Generate with Sentinel');
+  });
+
+  it('button label flips to Regenerate once a body is authored (or generated)', () => {
+    const html = render({
+      artifactStates: [
+        makeArtifactState({
+          artifactCode: 'd01_strategy_memo',
+          body: '# Authored content',
+        }),
+      ],
+    });
+    expect(html).toContain('Regenerate with Sentinel');
+  });
+
+  it('does NOT render Generate button on artifacts not in the prompt registry', () => {
+    const html = render({
+      artifactStates: [
+        // d05 is not the artifact we set up here; the active will be d05_scope_memo
+        // override → fixture default code is overridden via the makeArtifactState
+        // shape. Use a code that's NOT in the registry (d04_app_inv).
+        makeArtifactState({ artifactCode: 'd04_app_inv', body: null }),
+      ],
+    });
+    // d04 isn't in the prompt registry yet — Slice 1 covers d01 / d05 / d09 only.
+    expect(html).not.toContain('source-canvas-document-body-generate-d04_app_inv');
   });
 
   // ── Inline body editor (per-event content) ────────────────────────────────
