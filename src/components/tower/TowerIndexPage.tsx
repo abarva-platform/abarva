@@ -15,6 +15,10 @@ import {
   type StrategicAlignment2x2View,
 } from '@/lib/tower/strategic-alignment-2x2-view';
 import type { AIInitiative } from '@/lib/admin/ai-initiatives/queries';
+import type {
+  BandMetric,
+  TowerBandMetricsView,
+} from '@/lib/tower/band-metrics-view';
 
 // ─── Tower-specific tokens (broadsheet feel) ───────────────────────────────────
 const T = {
@@ -175,6 +179,48 @@ function Kpi({ label, hero, isFirst, children, subtext, tooltip }: KpiProps) {
         )}
       </div>
     </div>
+  );
+}
+
+// ─── T-5 (Bind 1): Substrate-bound KPI tile ──────────────────────────────────
+//
+// Renders a band tile from a pre-computed `BandMetric` (substrate aggregation).
+// Maps the view-model's confidence enum to the existing cvalStyle/ConfTag
+// treatment so visual doctrine (solid HIGH · dashed MED · dotted LOW) holds
+// across substrate-bound and legacy code paths.
+function SubstrateKpi({
+  metric,
+  hero,
+  isFirst,
+}: {
+  metric: BandMetric;
+  hero?: boolean;
+  isFirst?: boolean;
+}) {
+  // Map BandConfidence to the cvalStyle Confidence union; 'none' falls back
+  // to 'low' so we still get the dotted-underline treatment for placeholders.
+  const conf: Confidence =
+    metric.confidence === 'high'
+      ? 'high'
+      : metric.confidence === 'med'
+        ? 'med'
+        : 'low';
+  const showConfTag = metric.confidence === 'med' || metric.confidence === 'low';
+  return (
+    <Kpi
+      label={metric.label}
+      hero={hero}
+      isFirst={isFirst}
+      subtext={metric.subtext}
+      tooltip={metric.tooltip}
+    >
+      <MetricProvenance metricKey={metric.key}>
+        <span style={cvalStyle(conf)} data-band-confidence={metric.confidence}>
+          {metric.value}
+          {showConfTag && <ConfTag conf={conf} />}
+        </span>
+      </MetricProvenance>
+    </Kpi>
   );
 }
 
@@ -852,6 +898,12 @@ interface TowerIndexPageProps {
    * to the legacy hardcoded display so the page still renders pre-substrate.
    */
   initiatives?: ReadonlyArray<AIInitiative>;
+  /**
+   * T-5 (Bind 1): pre-computed band tile aggregations from substrate.
+   * When omitted or `isEmpty`, the band falls back to the legacy hardcoded
+   * Apex Retail demo values so the page still renders pre-substrate.
+   */
+  bandMetrics?: TowerBandMetricsView;
   /** Slots are accepted for backward compatibility but not rendered in the broadsheet design. */
   provenanceSlot?: ReactNode;
   portfolioSummarySlot?: ReactNode;
@@ -865,6 +917,7 @@ export function TowerIndexPage({
   tenantName = 'Meridian Enterprises',
   context = 'Control Tower · Portfolio Index',
   initiatives,
+  bandMetrics,
   provenanceSlot: _p1,
   portfolioSummarySlot: _p2,
   cascadeGraphSlot: _p3,
@@ -874,6 +927,11 @@ export function TowerIndexPage({
 }: TowerIndexPageProps = {}) {
   void _p1; void _p2; void _p3; void _p4; void _p6;
   const alignment2x2View = buildStrategicAlignment2x2View(initiatives ?? []);
+  // T-5: render band from substrate when available; fall back to legacy hardcoded.
+  const useSubstrateBand = Boolean(bandMetrics && !bandMetrics.isEmpty);
+  const bandByKey = useSubstrateBand
+    ? new Map(bandMetrics!.metrics.map((m) => [m.key, m] as const))
+    : null;
   const searchParams = useSearchParams();
   const router = useRouter();
   const activeLens = (searchParams?.get('lens') ?? 'value') as 'value' | 'risk' | 'contract' | 'adopt';
@@ -1030,65 +1088,77 @@ export function TowerIndexPage({
               alignItems: 'center',
             }}
           >
-            <Kpi
-              label="Portfolio ROI · 12-month rolling"
-              hero
-              isFirst
-              subtext={<>target 3.5× · <span style={{ color: T.RED, fontWeight: 700 }}>▼0.4×</span> vs Q1</>}
-              tooltip="35% of programs measured. 41% modeled. +24% pending baseline."
-            >
-              <MetricProvenance metricKey="portfolio_roi">
-                <span style={cvalStyle('high')}>
-                  2.8<span style={{ fontSize: '0.55em' }}>×</span>
-                </span>
-              </MetricProvenance>
-            </Kpi>
+            {useSubstrateBand && bandByKey ? (
+              <>
+                <SubstrateKpi metric={bandByKey.get('portfolio_roi')!} hero isFirst />
+                <SubstrateKpi metric={bandByKey.get('active_pressures')!} />
+                <SubstrateKpi metric={bandByKey.get('spend_at_risk')!} />
+                <SubstrateKpi metric={bandByKey.get('renewals_90d')!} />
+                <SubstrateKpi metric={bandByKey.get('adoption_rate')!} />
+              </>
+            ) : (
+              <>
+                <Kpi
+                  label="Portfolio ROI · 12-month rolling"
+                  hero
+                  isFirst
+                  subtext={<>target 3.5× · <span style={{ color: T.RED, fontWeight: 700 }}>▼0.4×</span> vs Q1</>}
+                  tooltip="35% of programs measured. 41% modeled. +24% pending baseline."
+                >
+                  <MetricProvenance metricKey="portfolio_roi">
+                    <span style={cvalStyle('high')}>
+                      2.8<span style={{ fontSize: '0.55em' }}>×</span>
+                    </span>
+                  </MetricProvenance>
+                </Kpi>
 
-            <Kpi
-              label="Active pressures"
-              subtext={<>3 high · 4 watch · <span style={{ color: T.GREEN, fontWeight: 700 }}>▲2</span></>}
-              tooltip="3 high-magnitude pressures and 4 on watch. ▲2 new this week."
-            >
-              <MetricProvenance metricKey="active_pressures">
-                <span style={cvalStyle('high')}>7</span>
-              </MetricProvenance>
-            </Kpi>
+                <Kpi
+                  label="Active pressures"
+                  subtext={<>3 high · 4 watch · <span style={{ color: T.GREEN, fontWeight: 700 }}>▲2</span></>}
+                  tooltip="3 high-magnitude pressures and 4 on watch. ▲2 new this week."
+                >
+                  <MetricProvenance metricKey="active_pressures">
+                    <span style={cvalStyle('high')}>7</span>
+                  </MetricProvenance>
+                </Kpi>
 
-            <Kpi
-              label="Spend at risk"
-              subtext={<><span style={{ color: T.RED, fontWeight: 700 }}>▲$1.2M</span> MoM</>}
-              tooltip="Cost overrun and capability duplication exposure across the AI portfolio."
-            >
-              <MetricProvenance metricKey="spend_at_risk">
-                <span style={cvalStyle('med')}>
-                  $8.4<span style={{ fontSize: '0.55em' }}>M</span>
-                  <ConfTag conf="med" />
-                </span>
-              </MetricProvenance>
-            </Kpi>
+                <Kpi
+                  label="Spend at risk"
+                  subtext={<><span style={{ color: T.RED, fontWeight: 700 }}>▲$1.2M</span> MoM</>}
+                  tooltip="Cost overrun and capability duplication exposure across the AI portfolio."
+                >
+                  <MetricProvenance metricKey="spend_at_risk">
+                    <span style={cvalStyle('med')}>
+                      $8.4<span style={{ fontSize: '0.55em' }}>M</span>
+                      <ConfTag conf="med" />
+                    </span>
+                  </MetricProvenance>
+                </Kpi>
 
-            <Kpi
-              label="Renewals · 90d"
-              subtext={<>EA 47d · $48.2M</>}
-              tooltip="4 vendor renewals in the next 90 days totaling $48.2M aggregate. EA renewal due in 47 days; brief is open in Source."
-            >
-              <MetricProvenance metricKey="renewals_90d">
-                <span style={cvalStyle('high')}>4</span>
-              </MetricProvenance>
-            </Kpi>
+                <Kpi
+                  label="Renewals · 90d"
+                  subtext={<>EA 47d · $48.2M</>}
+                  tooltip="4 vendor renewals in the next 90 days totaling $48.2M aggregate. EA renewal due in 47 days; brief is open in Source."
+                >
+                  <MetricProvenance metricKey="renewals_90d">
+                    <span style={cvalStyle('high')}>4</span>
+                  </MetricProvenance>
+                </Kpi>
 
-            <Kpi
-              label="Adoption"
-              subtext={<>2 sources missing</>}
-              tooltip="2 identity sources (Okta, EntraID) not yet connected; until they land, adoption confidence is LOW. Connect identity sources from Atlas observations."
-            >
-              <MetricProvenance metricKey="adoption_rate">
-                <span style={cvalStyle('low')}>
-                  53<span style={{ fontSize: '0.55em' }}>%</span>
-                  <ConfTag conf="low" />
-                </span>
-              </MetricProvenance>
-            </Kpi>
+                <Kpi
+                  label="Adoption"
+                  subtext={<>2 sources missing</>}
+                  tooltip="2 identity sources (Okta, EntraID) not yet connected; until they land, adoption confidence is LOW. Connect identity sources from Atlas observations."
+                >
+                  <MetricProvenance metricKey="adoption_rate">
+                    <span style={cvalStyle('low')}>
+                      53<span style={{ fontSize: '0.55em' }}>%</span>
+                      <ConfTag conf="low" />
+                    </span>
+                  </MetricProvenance>
+                </Kpi>
+              </>
+            )}
           </section>
 
           {/* Section headline */}
