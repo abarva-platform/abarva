@@ -77,6 +77,9 @@ export function UniversalCanvasShell({
   const [pendingStatusByCode, setPendingStatusByCode] = useState<
     Record<string, boolean>
   >({});
+  const [pendingBodyByCode, setPendingBodyByCode] = useState<
+    Record<string, boolean>
+  >({});
   // Same pattern for gate criteria — Mark met / Reopen flips
   // criterion state without round-tripping through the server props.
   const [criterionStateMap, setCriterionStateMap] = useState<
@@ -193,6 +196,49 @@ export function UniversalCanvasShell({
     }
   };
 
+  const handleArtifactBodySave = async (
+    code: string,
+    body: string,
+  ): Promise<void> => {
+    const previous = artifactStateMap[code];
+    if (!previous) return;
+    setPendingBodyByCode((prev) => ({ ...prev, [code]: true }));
+    setArtifactStateMap((prev) => ({
+      ...prev,
+      [code]: {
+        ...previous,
+        body: body.trim().length === 0 ? null : body,
+        bodyUpdatedAt: new Date().toISOString(),
+      },
+    }));
+    try {
+      const res = await fetch(
+        `/api/v1/source/${event.id}/artifacts/${encodeURIComponent(code)}/body`,
+        {
+          method: 'PATCH',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ body }),
+        },
+      );
+      if (!res.ok) {
+        setArtifactStateMap((prev) => ({ ...prev, [code]: previous }));
+        return;
+      }
+      const payload = (await res.json()) as { artifact?: SourceEventArtifactState };
+      if (payload.artifact) {
+        setArtifactStateMap((prev) => ({ ...prev, [code]: payload.artifact! }));
+      }
+    } catch {
+      setArtifactStateMap((prev) => ({ ...prev, [code]: previous }));
+    } finally {
+      setPendingBodyByCode((prev) => {
+        const next = { ...prev };
+        delete next[code];
+        return next;
+      });
+    }
+  };
+
   const handleArtifactStatusChange = async (
     code: string,
     next: SourceEventArtifactStatus,
@@ -281,6 +327,8 @@ export function UniversalCanvasShell({
           onSelectCode={setSelectedDocCode}
           onChangeStatus={handleArtifactStatusChange}
           pendingByCode={pendingStatusByCode}
+          onSaveBody={handleArtifactBodySave}
+          bodyPendingByCode={pendingBodyByCode}
         />
       ),
     },

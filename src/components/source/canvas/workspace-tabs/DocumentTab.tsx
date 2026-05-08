@@ -1,4 +1,4 @@
-import type { CSSProperties } from 'react';
+import { useEffect, useState, type CSSProperties } from 'react';
 import { specByCode, type SourceArtifactSpec } from '@/lib/source/canonical-specs';
 import type {
   SourceEventArtifactState,
@@ -24,6 +24,13 @@ interface DocumentTabProps {
   onChangeStatus?: (code: string, next: SourceEventArtifactStatus) => Promise<void>;
   /** Per-artifact pending flag — disables the button while the PATCH is in flight. */
   pendingByCode?: Record<string, boolean>;
+  /**
+   * Body mutator. When omitted the artifact body stays read-only —
+   * the canvas falls back to the canonical template.
+   */
+  onSaveBody?: (code: string, body: string) => Promise<void>;
+  /** Per-artifact body-pending flag (separate from status pending). */
+  bodyPendingByCode?: Record<string, boolean>;
 }
 
 const STATUS_LABEL: Record<SourceEventArtifactStatus, string> = {
@@ -49,6 +56,8 @@ export function DocumentTab({
   onSelectCode,
   onChangeStatus,
   pendingByCode,
+  onSaveBody,
+  bodyPendingByCode,
 }: DocumentTabProps) {
   if (artifacts.length === 0) {
     return (
@@ -70,7 +79,12 @@ export function DocumentTab({
   const active =
     ordered.find((a) => a.artifactCode === selectedCode) ?? ordered[0] ?? null;
   const activeSpec = active ? specByCode(active.artifactCode) : null;
-  const body = active ? templateByCode[active.artifactCode] ?? null : null;
+  // Per-event authored body wins; falls back to the canonical template
+  // when the user hasn't authored anything yet.
+  const authoredBody = active?.body ?? null;
+  const templateBody = active ? templateByCode[active.artifactCode] ?? null : null;
+  const body = authoredBody ?? templateBody;
+  const bodyIsAuthored = Boolean(authoredBody);
 
   return (
     <div data-testid="source-canvas-document-tab" style={CONTAINER_STYLE}>
@@ -132,11 +146,16 @@ export function DocumentTab({
               </div>
               <p style={BODY_DESC_STYLE}>{activeSpec.description}</p>
             </header>
-            {body ? (
-              <pre style={MARKDOWN_BODY_STYLE} data-testid="source-canvas-document-body">
-                {body}
-              </pre>
-            ) : (
+            <ArtifactBodyEditor
+              artifact={active}
+              templateBody={templateBody}
+              authoredBody={authoredBody}
+              bodyIsAuthored={bodyIsAuthored}
+              onSaveBody={onSaveBody}
+              pending={bodyPendingByCode?.[active.artifactCode] ?? false}
+              stage={stage}
+            />
+            {body ? null : (
               <p style={MISSING_TEMPLATE_STYLE}>
                 No template content found for this artifact code. Add a markdown
                 file at{' '}
@@ -149,6 +168,107 @@ export function DocumentTab({
           </>
         ) : null}
       </article>
+    </div>
+  );
+}
+
+interface ArtifactBodyEditorProps {
+  artifact: SourceEventArtifactState;
+  templateBody: string | null;
+  authoredBody: string | null;
+  bodyIsAuthored: boolean;
+  onSaveBody?: (code: string, body: string) => Promise<void>;
+  pending: boolean;
+  stage: SourceStageKey;
+}
+
+function ArtifactBodyEditor({
+  artifact,
+  templateBody,
+  authoredBody,
+  bodyIsAuthored,
+  onSaveBody,
+  pending,
+}: ArtifactBodyEditorProps) {
+  const [editing, setEditing] = useState(false);
+  // Seed the textarea: real authored content > template scaffold.
+  const seed = authoredBody ?? templateBody ?? '';
+  const [draft, setDraft] = useState(seed);
+
+  // If the user navigates between artifacts the seed changes — sync.
+  useEffect(() => {
+    setDraft(seed);
+    setEditing(false);
+  }, [seed]);
+
+  if (editing && onSaveBody) {
+    return (
+      <div style={EDITOR_WRAP_STYLE}>
+        <textarea
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+          spellCheck
+          rows={20}
+          data-testid={`source-canvas-document-body-editor-${artifact.artifactCode}`}
+          style={EDITOR_TEXTAREA_STYLE}
+        />
+        <div style={EDITOR_TOOLBAR_STYLE}>
+          <span style={EDITOR_HINT_STYLE}>
+            Markdown · per-event content · saves to{' '}
+            <code>source_event_artifact_states.body</code>
+          </span>
+          <div style={EDITOR_BUTTONS_STYLE}>
+            <button
+              type="button"
+              onClick={() => {
+                setDraft(seed);
+                setEditing(false);
+              }}
+              data-testid={`source-canvas-document-body-cancel-${artifact.artifactCode}`}
+              style={GHOST_BUTTON_STYLE}
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              disabled={pending}
+              onClick={async () => {
+                await onSaveBody(artifact.artifactCode, draft);
+                setEditing(false);
+              }}
+              data-testid={`source-canvas-document-body-save-${artifact.artifactCode}`}
+              style={{ ...PRIMARY_BUTTON_STYLE, opacity: pending ? 0.55 : 1 }}
+            >
+              {pending ? 'Saving…' : 'Save body'}
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div style={READER_WRAP_STYLE}>
+      <div style={READER_HEADER_STYLE}>
+        <span style={READER_BADGE_STYLE}>
+          {bodyIsAuthored ? 'Authored content' : 'Template scaffold (not yet authored)'}
+        </span>
+        {onSaveBody ? (
+          <button
+            type="button"
+            onClick={() => setEditing(true)}
+            data-testid={`source-canvas-document-body-edit-${artifact.artifactCode}`}
+            style={GHOST_BUTTON_STYLE}
+          >
+            {bodyIsAuthored ? 'Edit body' : 'Author content'}
+          </button>
+        ) : null}
+      </div>
+      {(authoredBody ?? templateBody) ? (
+        <pre style={MARKDOWN_BODY_STYLE} data-testid="source-canvas-document-body">
+          {authoredBody ?? templateBody}
+        </pre>
+      ) : null}
     </div>
   );
 }
@@ -441,6 +561,72 @@ const PRIMARY_BUTTON_STYLE: CSSProperties = {
   letterSpacing: '0.08em',
   textTransform: 'uppercase',
   cursor: 'pointer',
+};
+
+const EDITOR_WRAP_STYLE: CSSProperties = {
+  display: 'grid',
+  gap: 10,
+  marginTop: 4,
+};
+
+const EDITOR_TEXTAREA_STYLE: CSSProperties = {
+  width: '100%',
+  minHeight: 360,
+  padding: '14px 16px',
+  border: `1px solid ${CANVAS.RULE}`,
+  borderRadius: CANVAS.RADIUS_TIGHT,
+  fontFamily: CANVAS.MONO,
+  fontSize: 13,
+  lineHeight: 1.6,
+  color: CANVAS.INK,
+  background: '#ffffff',
+  resize: 'vertical',
+  outline: 'none',
+  boxSizing: 'border-box',
+};
+
+const EDITOR_TOOLBAR_STYLE: CSSProperties = {
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'space-between',
+  gap: 12,
+  flexWrap: 'wrap',
+};
+
+const EDITOR_HINT_STYLE: CSSProperties = {
+  fontFamily: CANVAS.SANS,
+  fontSize: 11.5,
+  color: CANVAS.INK_SOFT,
+  fontStyle: 'italic',
+};
+
+const EDITOR_BUTTONS_STYLE: CSSProperties = {
+  display: 'inline-flex',
+  alignItems: 'center',
+  gap: 8,
+};
+
+const READER_WRAP_STYLE: CSSProperties = {
+  display: 'grid',
+  gap: 10,
+  marginTop: 4,
+};
+
+const READER_HEADER_STYLE: CSSProperties = {
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'space-between',
+  gap: 12,
+  paddingBottom: 6,
+};
+
+const READER_BADGE_STYLE: CSSProperties = {
+  fontFamily: CANVAS.MONO,
+  fontSize: 9,
+  letterSpacing: '0.10em',
+  textTransform: 'uppercase',
+  color: CANVAS.INK_SOFT,
+  fontWeight: 600,
 };
 
 const GHOST_BUTTON_STYLE: CSSProperties = {

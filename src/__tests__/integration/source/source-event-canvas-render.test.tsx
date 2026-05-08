@@ -82,6 +82,10 @@ function makeArtifactState(
     gateDefining: true,
     linkedArtifactId: null,
     notes: null,
+    body: null,
+    bodyFormat: 'markdown',
+    bodyAuthoredBy: null,
+    bodyUpdatedAt: null,
     createdAt: '2026-05-07T20:00:00Z',
     updatedAt: '2026-05-07T20:00:00Z',
     ...overrides,
@@ -258,6 +262,35 @@ describe('UniversalCanvasShell · SSR render', () => {
     // Choice strip label reflects the populate-not-submit semantics.
     expect(html).toContain('Try one for');
     expect(html).not.toContain('Three choices for');
+  });
+
+  // ── Inline body editor (per-event content) ────────────────────────────────
+  it('renders the Edit / Author body button on the active artifact', () => {
+    const html = render({
+      artifactStates: [
+        makeArtifactState({ artifactCode: 'd05_scope_memo', body: null }),
+      ],
+    });
+    // Button surfaces because UniversalCanvasShell wires onSaveBody.
+    expect(html).toContain('source-canvas-document-body-edit-d05_scope_memo');
+    // Badge tells the user the displayed content is template scaffold,
+    // not authored.
+    expect(html).toContain('Template scaffold (not yet authored)');
+  });
+
+  it('shows authored content + Edit button when artifact body is non-null', () => {
+    const html = render({
+      artifactStates: [
+        makeArtifactState({
+          artifactCode: 'd05_scope_memo',
+          body: '# Scope Memo\n\nReal authored content for this event.',
+          bodyAuthoredBy: 'user_clerk_123',
+        }),
+      ],
+    });
+    expect(html).toContain('Real authored content for this event');
+    expect(html).toContain('Authored content');
+    expect(html).toContain('source-canvas-document-body-edit-d05_scope_memo');
   });
 
   // ── B1: artifact mark-complete ─────────────────────────────────────────────
