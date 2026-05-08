@@ -1,8 +1,11 @@
 "use client";
 // AppTopBarBlack — Option B · "Executive cockpit" variant.
 //
-// True black bar (#000000), canonical inverse logo (white "Abar" +
-// signal-blue "Va"), signal-blue active accent, mono status rail.
+// True black bar (#000000), canonical inverse logo at 22px (Claude /
+// ChatGPT scale), "AI Success Platform" tagline next to it (Inter
+// regular with bold "AI"), centered nav (inactive at 72% white,
+// active = full white + bold + 3px signal-blue underline).
+//
 // All colors from the locked brand kit (no green, no teal in chrome).
 
 import Image from "next/image";
@@ -22,10 +25,11 @@ const BRAND = {
 };
 
 interface Props {
+  /** Reserved for future per-tenant chrome accents; currently unused. */
   tenantName?: string;
 }
 
-export function AppTopBarBlack({ tenantName }: Props) {
+export function AppTopBarBlack(_props: Props = {}) {
   const pathname = usePathname() ?? "";
   const router = useRouter();
   const { isLoaded, user } = useUser();
@@ -70,47 +74,34 @@ export function AppTopBarBlack({ tenantName }: Props) {
         .b-nav-link:hover { color: white !important; }
       `}</style>
 
-      <div style={{ display: "flex", alignItems: "center", gap: 36, minWidth: 0 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 14, minWidth: 0 }}>
         <Link href="/home" style={{ display: "flex", alignItems: "center", textDecoration: "none" }}>
           <Image
             src="/brand/abarva-logo-inverse.svg"
             alt="AbarVa"
-            width={139}
-            height={36}
-            style={{ height: 36, width: "auto", display: "block" }}
+            width={85}
+            height={22}
+            style={{ height: 22, width: "auto", display: "block" }}
             priority
           />
         </Link>
-
-        {tenantName && (
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 10,
-              fontFamily: "JetBrains Mono, ui-monospace, monospace",
-              fontSize: 10,
-              fontWeight: 700,
-              letterSpacing: "0.16em",
-              textTransform: "uppercase",
-              color: BRAND.textFaint,
-              paddingLeft: 28,
-              borderLeft: `1px solid ${BRAND.hair}`,
-            }}
-          >
-            <span
-              aria-hidden="true"
-              style={{
-                width: 7,
-                height: 7,
-                borderRadius: "50%",
-                background: BRAND.signalBlue,
-                boxShadow: "0 0 0 3px rgba(0,102,204,0.22)",
-              }}
-            />
-            <span>{tenantName} · Live</span>
-          </div>
-        )}
+        <div
+          aria-hidden="true"
+          style={{ width: 1, height: 20, background: BRAND.hair }}
+        />
+        <div
+          style={{
+            fontFamily: "Inter, system-ui, sans-serif",
+            fontSize: 14.5,
+            fontWeight: 400,
+            color: "white",
+            letterSpacing: "-0.005em",
+            lineHeight: 1,
+            whiteSpace: "nowrap",
+          }}
+        >
+          <strong style={{ fontWeight: 600 }}>AI</strong> Success Platform
+        </div>
       </div>
 
       {navItems.length > 0 && (
@@ -142,7 +133,7 @@ export function AppTopBarBlack({ tenantName }: Props) {
                       left: 14,
                       right: 14,
                       bottom: 0,
-                      height: 2,
+                      height: 3,
                       background: BRAND.signalBlue,
                       borderRadius: 2,
                     }}
