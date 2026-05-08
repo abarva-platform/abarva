@@ -12,16 +12,17 @@
  * Moves which are designed against the existing COLORS/SHELL tokens.
  *
  * Tokens locked: never alter without explicit instruction.
+ * Updated 2026-05-07: white background approved by user; DM Sans → Inter globally.
  */
 
 export const SETUP = {
   // ── Surface ─────────────────────────────────────────────
-  paper: '#f5f1eb',         // canon-bg-cream — page background
-  paperSoft: '#faf7f1',     // abarva-paper — softer card lift
+  paper: '#ffffff',         // white — page background (user-approved 2026-05-07)
+  paperSoft: '#fafafa',     // near-white — subtle content lift
   cardWhite: '#ffffff',     // canon-bg-surface — primary card
-  cardLine: '#e8e2d4',      // hairline default
-  cardLineStrong: '#d6cebd',
-  grayBg: '#ece7dc',
+  cardLine: '#e5e5e5',      // neutral hairline on white
+  cardLineStrong: '#d0d0d0',
+  grayBg: '#f4f4f4',
 
   // ── Ink ─────────────────────────────────────────────────
   ink: '#000000',           // abarva-ink-black — primary text

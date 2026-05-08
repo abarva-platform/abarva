@@ -26,8 +26,8 @@
   --abarva-border: rgba(10, 10, 11, 0.12);
   --abarva-border-strong: rgba(10, 10, 11, 0.24);
 
-  --abarva-serif: 'Georgia', serif;
-  --abarva-sans: 'DM Sans', -apple-system, sans-serif;
+  --abarva-serif: 'Fraunces', Georgia, serif;
+  --abarva-sans: 'Inter', -apple-system, system-ui, sans-serif;
   --abarva-mono: 'JetBrains Mono', 'Fira Code', monospace;
 }
 
