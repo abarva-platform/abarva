@@ -7,6 +7,8 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { SentinelChat } from '@/components/intelligence-v3/SentinelChat';
+import type { ChatMessage } from '@/components/intelligence-v3/types';
 import type { MapData, MapNode } from '@/lib/knowledge-corpus/types';
 
 const F_DISPLAY = 'var(--font-fraunces), Georgia, serif';
@@ -113,35 +115,87 @@ export function IntelligenceMap({ data }: Props) {
         </div>
       </header>
 
-      {/* What changed ticker */}
+      {/* What changed · top 3 only · compact treatment */}
       <div
         style={{
           background: C.ink,
-          color: 'rgba(255,255,255,0.85)',
+          color: 'rgba(255,255,255,0.88)',
           padding: '10px 64px',
-          fontFamily: F_MONO,
-          fontSize: 11,
-          letterSpacing: '0.04em',
-          display: 'flex',
-          gap: 32,
-          overflowX: 'auto',
-          whiteSpace: 'nowrap',
+          fontFamily: F_BODY,
+          fontSize: 12,
+          display: 'grid',
+          gridTemplateColumns: 'auto 1fr auto',
+          gap: 24,
+          alignItems: 'center',
         }}
       >
-        <span style={{ color: 'rgba(255,255,255,0.4)', fontWeight: 700, letterSpacing: '0.16em', textTransform: 'uppercase' }}>
-          What changed
+        <span
+          style={{
+            fontFamily: F_MONO,
+            fontSize: 9.5,
+            color: 'rgba(255,255,255,0.5)',
+            fontWeight: 700,
+            letterSpacing: '0.18em',
+            textTransform: 'uppercase',
+          }}
+        >
+          ⚡ Last 7 days
         </span>
-        {data.whatChanged.map((c) => (
-          <span key={c.entityId}>
-            · <span style={{ color: '#7BA8FF', fontWeight: 600 }}>{c.entityId}</span> ·{' '}
-            <span style={{ color: '#fff' }}>{c.summary}</span>{' '}
-            <span style={{ color: 'rgba(255,255,255,0.5)' }}>[{c.source}]</span>
+        <ul
+          style={{
+            display: 'flex',
+            gap: 28,
+            margin: 0,
+            padding: 0,
+            listStyle: 'none',
+            overflow: 'hidden',
+          }}
+        >
+          {data.whatChanged.slice(0, 3).map((c) => (
+            <li
+              key={c.entityId}
+              style={{
+                display: 'inline-flex',
+                gap: 8,
+                alignItems: 'baseline',
+                whiteSpace: 'nowrap',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+              }}
+            >
+              <span
+                style={{
+                  fontFamily: F_MONO,
+                  fontSize: 10,
+                  color: '#7BA8FF',
+                  fontWeight: 700,
+                  letterSpacing: '0.04em',
+                }}
+              >
+                {c.entityId}
+              </span>
+              <span style={{ color: '#fff' }}>{c.summary}</span>
+            </li>
+          ))}
+        </ul>
+        {data.whatChanged.length > 3 && (
+          <span
+            style={{
+              fontFamily: F_MONO,
+              fontSize: 9.5,
+              color: 'rgba(255,255,255,0.5)',
+              letterSpacing: '0.1em',
+              textTransform: 'uppercase',
+            }}
+          >
+            +{data.whatChanged.length - 3} more →
           </span>
-        ))}
+        )}
       </div>
 
-      {/* Body: map left, panel right */}
-      <main style={{ padding: '28px 36px 40px', display: 'grid', gridTemplateColumns: '1fr 360px', gap: 28 }}>
+      {/* Body: map + (selected detail below) on the left · Sentinel chat as the right rail */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 440px', alignItems: 'start' }}>
+        <main style={{ padding: '28px 36px 80px', display: 'grid', gap: 24, gridTemplateColumns: '1fr', minWidth: 0 }}>
         {/* Map card */}
         <div style={{ border: `1px solid ${C.borderLight}`, background: C.surface, borderRadius: 10, overflow: 'hidden' }}>
           <div
@@ -298,13 +352,28 @@ export function IntelligenceMap({ data }: Props) {
           </div>
         </div>
 
-        {/* Right detail panel */}
-        <aside style={{ display: 'grid', gap: 14 }}>
+          {/* Selected node detail — inline below the map (no longer requires the right rail) */}
           {selected && <DetailCard node={selected} />}
-        </aside>
-      </main>
+        </main>
+
+        {/* Sentinel chat · the agent lock — always visible without scrolling */}
+        <SentinelChat
+          scopeLabel={`${data.tenantName} · The Map`}
+          opener={mapSentinelOpener(data, selected)}
+          conversation={MAP_SENTINEL_CONVERSATION}
+        />
+      </div>
     </div>
   );
+}
+
+const MAP_SENTINEL_CONVERSATION: ReadonlyArray<ChatMessage> = [];
+
+function mapSentinelOpener(data: MapData, selected: MapNode | undefined): string {
+  if (selected) {
+    return `Looking at ${selected.useCase.name} (${selected.useCase.id}). Lifecycle ${selected.useCase.lifecycleStage} · engagement ${selected.engagementState.replace('_', ' ')}. Ask me about cascade dependencies, evidence, or how this connects to the rest of your portfolio.`;
+  }
+  return `${data.totalUseCases} use cases on the landscape · ${data.inFlightCount} in flight · ${data.atRiskCount} at risk · ${data.candidateCount} candidate. Click any node to see how it fits — or ask me what's worth shaping into a Move next.`;
 }
 
 function truncate(s: string, n: number): string {

@@ -212,9 +212,87 @@ export const MERIDIAN_PATTERNS: ReadonlyArray<PatternRow> = [
 ];
 
 // ─── Vendors ─────────────────────────────────────────────────────
+//
+// CIO-quality view: IT spend rolls up by category
+// (Hardware/Cloud · Software/SaaS · Services/SI), then drills into
+// individual vendors. Renewal calendar and risk quadrant are
+// secondary views via the chart toggle.
 
 export type VendorTier = 'incumbent' | 'challenger' | 'emerging';
 export type VendorHealth = 'healthy' | 'watch' | 'risk';
+export type VendorCategory = 'hardware-cloud' | 'software-saas' | 'services-si';
+
+export interface VendorSpendRow {
+  vendor: string;
+  category: VendorCategory;
+  /** Sub-category inside the broader bucket (e.g. "Cloud · IaaS"). */
+  subcategory: string;
+  /** Annualized spend in USD millions (numeric for sorting/aggregation). */
+  spendUsdM: number;
+  spendLabel: string;
+  tier: VendorTier;
+  health: VendorHealth;
+  /** Months until renewal · null for evergreen / consumption. */
+  renewsInMonths: number | null;
+  takeaway: string;
+}
+
+export const VENDOR_CATEGORIES: ReadonlyArray<{
+  key: VendorCategory;
+  label: string;
+  shortLabel: string;
+  description: string;
+  accent: string;
+}> = [
+  {
+    key: 'hardware-cloud',
+    label: 'Hardware · private cloud · infrastructure',
+    shortLabel: 'Hardware / Cloud',
+    description: 'Compute · storage · network · public + private cloud',
+    accent: '#1F3A6E',
+  },
+  {
+    key: 'software-saas',
+    label: 'Software · SaaS · platforms',
+    shortLabel: 'Software / SaaS',
+    description: 'Core systems · productivity · domain platforms · vertical apps',
+    accent: '#0E8C7E',
+  },
+  {
+    key: 'services-si',
+    label: 'Services · SIs · advisory',
+    shortLabel: 'Services / SI',
+    description: 'Implementation · managed services · staff aug · advisory',
+    accent: '#C8881C',
+  },
+];
+
+export const MERIDIAN_VENDOR_SPEND: ReadonlyArray<VendorSpendRow> = [
+  // Software/SaaS · the largest bucket
+  { vendor: 'Epic Systems', category: 'software-saas', subcategory: 'EHR + revenue cycle', spendUsdM: 28.0, spendLabel: '$28.0M', tier: 'incumbent', health: 'watch', renewsInMonths: 14, takeaway: 'Negotiation leverage thin · MH-04 ties to roadmap · re-evaluate before renewal.' },
+  { vendor: 'Microsoft 365 + Azure AD', category: 'software-saas', subcategory: 'Productivity + identity', spendUsdM: 6.4, spendLabel: '$6.4M', tier: 'incumbent', health: 'healthy', renewsInMonths: 18, takeaway: 'Standard EA · co-term with Azure consumption.' },
+  { vendor: 'Workday', category: 'software-saas', subcategory: 'HCM + finance', spendUsdM: 5.2, spendLabel: '$5.2M', tier: 'incumbent', health: 'healthy', renewsInMonths: 22, takeaway: 'No friction · HCM consolidation completed in 2024.' },
+  { vendor: 'Innovaccer', category: 'software-saas', subcategory: 'Pop health + analytics', spendUsdM: 4.2, spendLabel: '$4.2M', tier: 'incumbent', health: 'risk', renewsInMonths: 8, takeaway: 'Same factor profile as 2023 platform consolidation · alternatives in scan.' },
+  { vendor: 'Snowflake', category: 'software-saas', subcategory: 'Data platform', spendUsdM: 3.8, spendLabel: '$3.8M', tier: 'incumbent', health: 'healthy', renewsInMonths: null, takeaway: 'Consumption-priced · compute trended +18% YoY.' },
+  { vendor: 'ServiceNow', category: 'software-saas', subcategory: 'ITSM + workflow', spendUsdM: 2.6, spendLabel: '$2.6M', tier: 'incumbent', health: 'healthy', renewsInMonths: 10, takeaway: 'Module sprawl · audit before renewal.' },
+  { vendor: 'Okta', category: 'software-saas', subcategory: 'Identity', spendUsdM: 1.4, spendLabel: '$1.4M', tier: 'incumbent', health: 'healthy', renewsInMonths: 16, takeaway: 'Steady · workforce identity standardized.' },
+  { vendor: 'Abridge', category: 'software-saas', subcategory: 'Ambient documentation (AI)', spendUsdM: 1.1, spendLabel: '$1.1M (pilot)', tier: 'challenger', health: 'healthy', renewsInMonths: 11, takeaway: 'Pilot landing · expand contingent on CMIO co-sponsorship.' },
+  { vendor: 'Tableau', category: 'software-saas', subcategory: 'BI + analytics', spendUsdM: 0.9, spendLabel: '$0.9M', tier: 'incumbent', health: 'watch', renewsInMonths: 6, takeaway: 'Snowflake-native viz alternatives reduce footprint.' },
+  { vendor: 'Slack', category: 'software-saas', subcategory: 'Collaboration', spendUsdM: 0.6, spendLabel: '$0.6M', tier: 'incumbent', health: 'healthy', renewsInMonths: 12, takeaway: 'Standard · Salesforce co-term.' },
+  // Hardware / Cloud
+  { vendor: 'AWS', category: 'hardware-cloud', subcategory: 'Public cloud · primary', spendUsdM: 14.8, spendLabel: '$14.8M', tier: 'incumbent', health: 'healthy', renewsInMonths: null, takeaway: 'Consumption · 2026 commit at $52M · negotiated +15% headroom.' },
+  { vendor: 'Cisco', category: 'hardware-cloud', subcategory: 'Network + collab', spendUsdM: 5.6, spendLabel: '$5.6M', tier: 'incumbent', health: 'watch', renewsInMonths: 9, takeaway: 'Refresh due · evaluate Arista in DC tier.' },
+  { vendor: 'Dell EMC', category: 'hardware-cloud', subcategory: 'Compute + storage', spendUsdM: 4.9, spendLabel: '$4.9M', tier: 'incumbent', health: 'healthy', renewsInMonths: null, takeaway: 'On-prem footprint shrinking as workloads cloud-shift.' },
+  { vendor: 'Pure Storage', category: 'hardware-cloud', subcategory: 'Primary storage', spendUsdM: 3.2, spendLabel: '$3.2M', tier: 'incumbent', health: 'healthy', renewsInMonths: 13, takeaway: 'Subscription · capacity tracking against PACS growth.' },
+  { vendor: 'CrowdStrike', category: 'hardware-cloud', subcategory: 'Endpoint security', spendUsdM: 2.1, spendLabel: '$2.1M', tier: 'incumbent', health: 'healthy', renewsInMonths: 7, takeaway: 'Co-term opportunity with Microsoft Defender bundle.' },
+  { vendor: 'Palo Alto Networks', category: 'hardware-cloud', subcategory: 'Network security', spendUsdM: 1.8, spendLabel: '$1.8M', tier: 'incumbent', health: 'healthy', renewsInMonths: 11, takeaway: 'Stable · NGFW + Prisma Cloud bundled.' },
+  // Services / SI
+  { vendor: 'Deloitte', category: 'services-si', subcategory: 'Strategy + advisory', spendUsdM: 6.8, spendLabel: '$6.8M', tier: 'incumbent', health: 'watch', renewsInMonths: 5, takeaway: 'Three concurrent engagements · consolidate or rotate.' },
+  { vendor: 'Accenture', category: 'services-si', subcategory: 'Epic implementation', spendUsdM: 5.4, spendLabel: '$5.4M', tier: 'incumbent', health: 'healthy', renewsInMonths: 4, takeaway: 'Tied to Epic AI revenue cycle build · ongoing.' },
+  { vendor: 'Infosys', category: 'services-si', subcategory: 'Application managed services', spendUsdM: 4.1, spendLabel: '$4.1M', tier: 'incumbent', health: 'healthy', renewsInMonths: 8, takeaway: 'Steady · 24/7 ops · India + Mexico delivery.' },
+  { vendor: 'KPMG', category: 'services-si', subcategory: 'Risk + compliance', spendUsdM: 2.6, spendLabel: '$2.6M', tier: 'incumbent', health: 'healthy', renewsInMonths: 14, takeaway: 'HIPAA + SOC 2 attestation · annual cadence.' },
+  { vendor: 'Slalom', category: 'services-si', subcategory: 'Cloud + data engineering', spendUsdM: 1.9, spendLabel: '$1.9M', tier: 'challenger', health: 'healthy', renewsInMonths: 6, takeaway: 'Snowflake + AWS work · expand for Pop Health build.' },
+];
 
 export interface VendorRenewalRow {
   vendor: string;
