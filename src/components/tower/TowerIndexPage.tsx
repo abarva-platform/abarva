@@ -23,6 +23,10 @@ import type {
   PressureCardView,
   TowerPressuresView,
 } from '@/lib/tower/pressure-cards-view';
+import type {
+  AtlasObservation,
+  AtlasObservationsView,
+} from '@/lib/tower/atlas-observations-view';
 
 // ─── Tower-specific tokens (broadsheet feel) ───────────────────────────────────
 const T = {
@@ -961,6 +965,11 @@ interface TowerIndexPageProps {
    * demo cards so the page still renders pre-substrate.
    */
   pressuresView?: TowerPressuresView;
+  /**
+   * T-7 (Bind 3): substrate-derived Atlas observations. When omitted or
+   * empty, the right rail falls back to the legacy hardcoded observations.
+   */
+  atlasObservationsView?: AtlasObservationsView;
   /** Slots are accepted for backward compatibility but not rendered in the broadsheet design. */
   provenanceSlot?: ReactNode;
   portfolioSummarySlot?: ReactNode;
@@ -976,6 +985,7 @@ export function TowerIndexPage({
   initiatives,
   bandMetrics,
   pressuresView,
+  atlasObservationsView,
   provenanceSlot: _p1,
   portfolioSummarySlot: _p2,
   cascadeGraphSlot: _p3,
@@ -1703,84 +1713,109 @@ export function TowerIndexPage({
         </div>
 
         {/* ─── ATLAS COLUMN ─── */}
-        <AtlasColumn
-          headline="Three threads run through this morning's pressures."
-          meta={`${timestamp} · Read time 90 sec · 3 observations · 4 prompts`}
-          synth={[
-            {
-              h: 'Observation · 01',
-              body: (
-                <>
-                  The <strong style={{ color: T.INK }}>EA renewal</strong> isn&apos;t separate from the{' '}
-                  <strong style={{ color: T.INK }}>cost overrun</strong> and{' '}
-                  <strong style={{ color: T.INK }}>capability duplication</strong> — they share root nodes. If you take a posture on the EA without resolving the overlap, you&apos;ll renew at the wrong volumes.
-                </>
-              ),
-              actions: [
-                {
-                  label: 'Open EA brief in Source',
-                  href: '/source',
-                  pending: true,
-                },
-              ],
-            },
-            {
-              h: 'Observation · 02',
-              body: (
-                <>
-                  Your <strong style={{ color: T.INK }}>portfolio ROI is at 2.8×, target 3.5×</strong>. The shortfall is concentrated in three programs (Joule, Copilot E5, Now Assist) where measured value is lagging committed by <em>more than 40%</em>. Two of those three are in the 47-day EA window.
-                </>
-              ),
-              actions: [
-                {
-                  label: 'See programs lagging on value',
-                  href: '/programs?lens=value',
-                },
-                {
-                  label: 'Set attribution baseline',
-                  timeHint: '5 min',
-                  href: '/tower/settings/attribution',
-                  pending: true,
-                  secondary: true,
-                },
-              ],
-            },
-            {
-              h: 'Observation · 03',
-              body: (
-                <>
-                  Adoption confidence is <strong style={{ color: T.INK }}>LOW</strong> because Okta and EntraID aren&apos;t connected. Until those land, the 24% Copilot number is directional, not auditable.
-                </>
-              ),
-              actions: [
-                {
-                  label: 'Connect identity sources',
-                  timeHint: '5 min',
-                  href: '/admin/connectors',
-                },
-                {
-                  label: 'Connect Okta + EntraID',
-                  href: '/admin/connectors',
-                  secondary: true,
-                },
-              ],
-            },
-            {
-              h: 'If you only do one thing today',
-              body: (
-                <>
-                  <em>Open the EA brief and read Atlas&apos;s negotiation thesis.</em> The other pressures route through it. Steward and Sentinel are both aligned on what the brief should ask for.
-                </>
-              ),
-            },
-          ]}
-          prompts={[
-            'Show me the 3 lagging programs',
-            'What if I cut LLM tokens by 30%?',
-            'Re-rank pressures by attribution confidence',
-            'Brief me for the 9 AM staff meeting',
-          ]}
-        />
+        {atlasObservationsView && !atlasObservationsView.isEmpty ? (
+          <AtlasColumn
+            headline={atlasObservationsView.headline}
+            meta={`${timestamp} · Read time 90 sec · ${atlasObservationsView.metaSuffix}`}
+            synth={[
+              ...atlasObservationsView.observations.map((o: AtlasObservation) => ({
+                h: `Observation · ${String(o.number).padStart(2, '0')}`,
+                body: <>{o.body}</>,
+                actions: o.actions.map((a) => ({
+                  label: a.label,
+                  href: a.href,
+                  timeHint: a.timeHint,
+                  pending: a.pending,
+                  secondary: a.secondary,
+                })),
+              })),
+              {
+                h: 'If you only do one thing today',
+                body: <em>{atlasObservationsView.ifYouOnlyDoOneToday}</em>,
+              },
+            ]}
+            prompts={atlasObservationsView.suggestedPrompts.slice()}
+          />
+        ) : (
+          <AtlasColumn
+            headline="Three threads run through this morning's pressures."
+            meta={`${timestamp} · Read time 90 sec · 3 observations · 4 prompts`}
+            synth={[
+              {
+                h: 'Observation · 01',
+                body: (
+                  <>
+                    The <strong style={{ color: T.INK }}>EA renewal</strong> isn&apos;t separate from the{' '}
+                    <strong style={{ color: T.INK }}>cost overrun</strong> and{' '}
+                    <strong style={{ color: T.INK }}>capability duplication</strong> — they share root nodes. If you take a posture on the EA without resolving the overlap, you&apos;ll renew at the wrong volumes.
+                  </>
+                ),
+                actions: [
+                  {
+                    label: 'Open EA brief in Source',
+                    href: '/source',
+                    pending: true,
+                  },
+                ],
+              },
+              {
+                h: 'Observation · 02',
+                body: (
+                  <>
+                    Your <strong style={{ color: T.INK }}>portfolio ROI is at 2.8×, target 3.5×</strong>. The shortfall is concentrated in three programs (Joule, Copilot E5, Now Assist) where measured value is lagging committed by <em>more than 40%</em>. Two of those three are in the 47-day EA window.
+                  </>
+                ),
+                actions: [
+                  {
+                    label: 'See programs lagging on value',
+                    href: '/programs?lens=value',
+                  },
+                  {
+                    label: 'Set attribution baseline',
+                    timeHint: '5 min',
+                    href: '/tower/settings/attribution',
+                    pending: true,
+                    secondary: true,
+                  },
+                ],
+              },
+              {
+                h: 'Observation · 03',
+                body: (
+                  <>
+                    Adoption confidence is <strong style={{ color: T.INK }}>LOW</strong> because Okta and EntraID aren&apos;t connected. Until those land, the 24% Copilot number is directional, not auditable.
+                  </>
+                ),
+                actions: [
+                  {
+                    label: 'Connect identity sources',
+                    timeHint: '5 min',
+                    href: '/admin/connectors',
+                  },
+                  {
+                    label: 'Connect Okta + EntraID',
+                    href: '/admin/connectors',
+                    secondary: true,
+                  },
+                ],
+              },
+              {
+                h: 'If you only do one thing today',
+                body: (
+                  <>
+                    <em>Open the EA brief and read Atlas&apos;s negotiation thesis.</em> The other pressures route through it. Steward and Sentinel are both aligned on what the brief should ask for.
+                  </>
+                ),
+              },
+            ]}
+            prompts={[
+              'Show me the 3 lagging programs',
+              'What if I cut LLM tokens by 30%?',
+              'Re-rank pressures by attribution confidence',
+              'Brief me for the 9 AM staff meeting',
+            ]}
+          />
+        )}
       </div>
     </AppShell>
   );
