@@ -1,128 +1,55 @@
 "use client";
+// AppTopBar — unified black top bar across the entire product.
+//
+// Founder-approved 2026-05-08: a single chrome surface for /home,
+// /home/learn/*, /intelligence, /strategic-moves, /source, /tower,
+// and any other route that mounts AppShell. This is the canonical
+// implementation; the previously-shipped AppTopBarBlack is now a
+// thin re-export pointing here.
+//
+// Spec:
+// - True black bar (#000000), 64px tall, sticky, z-index 50
+// - 22px AbarVa wordmark (Claude / ChatGPT scale)
+// - Hairline divider, then "AI Success Platform" (Inter regular,
+//   bold "AI") — same typographic register as Snowflake's promo line
+// - Centered nav · inactive items at 72% white · active = full white
+//   + 600 weight + 3px signal-blue underline
+// - Right rail: avatar + first name + ghost Sign-out pill
+// - All colors from the locked brand kit (no green / teal in chrome)
+//
+// Backward-compat: the legacy props (showLocked, context, timeString)
+// are accepted but unused — they were status-rail params on the
+// pre-redesign bar. AppShell still passes them; a follow-up cleanup
+// can drop them once no caller relies on them.
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useClerk, useUser } from "@clerk/nextjs";
-import { SHELL } from "@/lib/shell/shell-tokens";
 import { clearActiveClientContext } from "@/lib/auth/client-context-storage";
-import {
-  resolveModuleAccess,
-  type ProductModule,
-} from "@/lib/auth/module-access";
-// getAtriumProductNavLabel was used to source the 'Strategic Moves'
-// label dynamically; H1b inlines 'Moves' per Home Refinement Package
-// canonical nav. Re-import if the dynamic label is needed again.
-import { AbarVaLogo } from "@/components/abarva/AbarVaLogo";
+import { getVisibleNavItems } from "@/components/shell/topbar-nav-items";
 
 export interface AppTopBarProps {
   tenantName?: string;
-  showLocked?: boolean;
-  context?: string;
-  timeString?: string;
+  /** Hide the product nav entirely (used by sign-out / error chrome). */
   showProductNav?: boolean;
+  /** @deprecated retained for AppShell call-site compat; unused in v2. */
+  showLocked?: boolean;
+  /** @deprecated retained for AppShell call-site compat; unused in v2. */
+  context?: string;
+  /** @deprecated retained for AppShell call-site compat; unused in v2. */
+  timeString?: string;
 }
 
-type CockpitNavItem = {
-  key: "home" | ProductModule;
-  label: string;
-  href: string;
-  match: (pathname: string) => boolean;
-  module?: ProductModule;
+const BRAND = {
+  ink: "#000000",
+  signalBlue: "#0066CC",
+  hair: "rgba(255,255,255,0.10)",
+  textMute: "rgba(255,255,255,0.72)",
+  textStrong: "rgba(255,255,255,0.92)",
 };
 
-// H1b (2026-05-07) · Canonical 5-item nav per Home Refinement Package
-// NAV_REORGANIZATION.md. Order: Home · Intelligence · Moves · Source ·
-// Tower. PR-H1 updated AbarvaNav, but the actual rendered nav on
-// /home / /strategic-moves / /tower etc. is AppTopBar — this fixes it.
-//
-// Removed: 'setup' (folds into Home; /admin/* 301→/home/* via proxy),
-// 'learn' (now /home/learn — accessible via Home panel grid), 'product'
-// (marketing surface, not a tenant nav item).
-const NAV_ITEMS: CockpitNavItem[] = [
-  {
-    key: "home",
-    label: "Home",
-    href: "/home",
-    match: (pathname) =>
-      pathname === "/" ||
-      pathname === "/home" ||
-      pathname.startsWith("/home/") ||
-      pathname === "/dashboard" ||
-      pathname.startsWith("/dashboard/") ||
-      // Old /admin/* redirects to /home/* via proxy; if anything still
-      // bookmarks /admin, surface "Home" as active in the brief moment
-      // before the 301 fires.
-      pathname.startsWith("/admin"),
-  },
-  {
-    key: "intelligence",
-    label: "Intelligence",
-    href: "/intelligence",
-    module: "intelligence",
-    match: (pathname) =>
-      pathname === "/intelligence" ||
-      pathname.startsWith("/intelligence/") ||
-      (pathname.startsWith("/tenant/") && pathname.includes("/intelligence")),
-  },
-  {
-    key: "programs",
-    // Package label is 'Moves' (URL stays /strategic-moves for SEO).
-    // getAtriumProductNavLabel('programs') returns 'Strategic Moves';
-    // override here for the canonical 5-item nav.
-    label: "Moves",
-    href: "/strategic-moves",
-    module: "programs",
-    match: (pathname) =>
-      pathname === "/strategic-moves" ||
-      pathname.startsWith("/strategic-moves/") ||
-      pathname === "/programs" ||
-      pathname.startsWith("/programs/") ||
-      pathname === "/engagements" ||
-      pathname.startsWith("/engagements/") ||
-      (pathname.startsWith("/tenant/") && pathname.includes("/programs")),
-  },
-  {
-    key: "source",
-    label: "Source",
-    href: "/source",
-    module: "source",
-    match: (pathname) =>
-      pathname === "/source" || pathname.startsWith("/source/"),
-  },
-  {
-    key: "tower",
-    label: "Tower",
-    href: "/tower",
-    module: "tower",
-    match: (pathname) =>
-      pathname === "/tower" ||
-      pathname.startsWith("/tower/") ||
-      (pathname.startsWith("/tenant/") && pathname.includes("/tower")),
-  },
-];
-
-function getVisibleNavItems(
-  user: ReturnType<typeof useUser>["user"],
-): CockpitNavItem[] {
-  if (!user) return [];
-  const email =
-    user.primaryEmailAddress?.emailAddress ??
-    user.emailAddresses?.[0]?.emailAddress ??
-    null;
-  const moduleAccess = resolveModuleAccess({
-    role: user.publicMetadata?.role as string | undefined,
-    email,
-    publicMetadata: user.publicMetadata as
-      | Record<string, unknown>
-      | null
-      | undefined,
-  });
-  return NAV_ITEMS.filter(
-    (item) => !item.module || moduleAccess.modules.includes(item.module),
-  );
-}
-
-export function AppTopBar({ showProductNav = true }: AppTopBarProps) {
+export function AppTopBar({ showProductNav = true }: AppTopBarProps = {}) {
   const pathname = usePathname() ?? "";
   const router = useRouter();
   const { isLoaded, user } = useUser();
@@ -134,7 +61,7 @@ export function AppTopBar({ showProductNav = true }: AppTopBarProps) {
     "User";
   const initials = displayName
     .split(" ")
-    .map((name) => name[0])
+    .map((n) => n[0])
     .join("")
     .slice(0, 2)
     .toUpperCase();
@@ -147,249 +74,101 @@ export function AppTopBar({ showProductNav = true }: AppTopBarProps) {
 
   return (
     <header
-      className="app-top-bar"
       data-testid="app-top-bar"
       style={{
-        minHeight: 58,
-        background: "#ffffff",
-        borderBottom: `1px solid ${SHELL.CARD_LINE}`,
+        background: BRAND.ink,
+        color: "white",
+        height: 64,
         display: "flex",
         alignItems: "center",
         justifyContent: "space-between",
-        gap: 18,
-        padding: "0 clamp(16px, 3vw, 34px)",
+        padding: "0 32px",
+        borderBottom: `1px solid ${BRAND.hair}`,
         position: "sticky",
         top: 0,
         zIndex: 50,
         flexShrink: 0,
-        boxShadow: "0 10px 28px rgba(12, 26, 58, 0.045)",
       }}
     >
       <style jsx global>{`
-        @media (max-width: 720px) {
-          .app-top-bar {
-            min-height: 104px !important;
-            display: grid !important;
-            grid-template-columns: minmax(0, 1fr) auto !important;
-            grid-template-areas:
-              "brand account"
-              "nav nav" !important;
-            align-items: center !important;
-            gap: 8px !important;
-            padding: 10px 16px 8px !important;
-          }
-
-          .app-top-bar__left {
-            display: contents !important;
-          }
-
-          .app-top-bar__brand {
-            grid-area: brand !important;
-          }
-
-          .app-top-bar__nav {
-            grid-area: nav !important;
-            width: 100% !important;
-            padding-bottom: 2px !important;
-          }
-
-          .app-top-bar__account {
-            grid-area: account !important;
-            position: static !important;
-          }
-
-          .app-top-bar__account-name {
-            display: none !important;
-          }
-        }
-
-        .app-top-bar__nav {
-          -webkit-overflow-scrolling: touch;
-          scroll-snap-type: x proximity;
-        }
-
-        .app-top-bar__nav::-webkit-scrollbar {
-          display: none;
-        }
-
-        .app-top-bar__nav-link {
-          scroll-snap-align: center;
-          outline: none;
-          transition:
-            color 160ms ease,
-            background 160ms ease,
-            box-shadow 160ms ease,
-            transform 160ms ease;
-        }
-
-        .app-top-bar__nav-link:hover {
-          color: ${SHELL.INK} !important;
-          background: rgba(12, 26, 58, 0.045);
-        }
-
-        .app-top-bar__nav-link:focus-visible,
-        .app-top-bar__sign-out:focus-visible,
-        .app-top-bar__sign-in:focus-visible {
-          outline: 2px solid #0b4a91;
-          outline-offset: 3px;
-          box-shadow: 0 0 0 5px rgba(11, 74, 145, 0.14);
-        }
-
-        @media (prefers-reduced-motion: reduce) {
-          .app-top-bar__nav-link {
-            transition: none;
-          }
-        }
-
-        @media (max-width: 960px) {
-          .app-top-bar {
-            gap: 12px !important;
-            padding-inline: 18px !important;
-          }
-
-          .app-top-bar__left {
-            gap: 14px !important;
-          }
-
-          .app-top-bar__nav {
-            max-width: calc(100vw - 294px);
-            mask-image: linear-gradient(
-              90deg,
-              transparent 0,
-              #000 16px,
-              #000 calc(100% - 16px),
-              transparent 100%
-            );
-          }
-
-          .app-top-bar__account-name {
-            max-width: 112px !important;
-          }
-        }
-
-        @media (max-width: 720px) {
-          .app-top-bar__nav {
-            max-width: 100%;
-            mask-image: linear-gradient(
-              90deg,
-              #000 0,
-              #000 calc(100% - 22px),
-              transparent 100%
-            );
-          }
-        }
-
-        @media (max-width: 430px) {
-          .app-top-bar__sign-out-text {
-            display: none;
-          }
-
-          .app-top-bar__sign-out {
-            width: 34px;
-            height: 34px;
-            padding: 0 !important;
-          }
-
-          .app-top-bar__sign-out::before {
-            content: "Out";
-            font-size: 10px;
-            letter-spacing: 0.04em;
-          }
-        }
+        .app-top-bar__nav-link { transition: color 140ms ease; }
+        .app-top-bar__nav-link:hover { color: white !important; }
       `}</style>
-      <div
-        className="app-top-bar__left"
-        style={{ display: "flex", alignItems: "center", gap: 22, minWidth: 0 }}
-      >
+
+      <div style={{ display: "flex", alignItems: "center", gap: 14, minWidth: 0 }}>
         <Link
-          className="app-top-bar__brand"
           href="/home"
           aria-label="AbarVa Home"
-          style={{
-            display: "flex",
-            alignItems: "center",
-            textDecoration: "none",
-            flexShrink: 0,
-          }}
+          style={{ display: "flex", alignItems: "center", textDecoration: "none", flexShrink: 0 }}
         >
-          <AbarVaLogo
-            variant="wordmark"
-            size="md"
-            label="AbarVa"
-            style={{ height: 26, width: 'auto' }}
+          <Image
+            src="/brand/abarva-logo-inverse.svg"
+            alt="AbarVa"
+            width={85}
+            height={22}
+            style={{ height: 22, width: "auto", display: "block" }}
+            priority
           />
         </Link>
-
-        {navItems.length > 0 ? (
-          <nav
-            className="app-top-bar__nav"
-            aria-label="Product modules"
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 2,
-              minWidth: 0,
-              overflowX: "auto",
-              scrollbarWidth: "none",
-            }}
-          >
-            {navItems.map((item) => {
-              const active = item.match(pathname);
-              return (
-                <Link
-                  className="app-top-bar__nav-link"
-                  key={item.key}
-                  href={item.href}
-                  aria-current={active ? "page" : undefined}
-                  data-nav-key={item.key}
-                  style={{
-                    position: "relative",
-                    display: "flex",
-                    alignItems: "center",
-                    minHeight: 38,
-                    padding: "0 11px",
-                    borderRadius: 0,
-                    color: active ? SHELL.INK : SHELL.INK_SOFT,
-                    fontFamily: SHELL.SANS,
-                    fontSize: 14,
-                    fontWeight: active ? 700 : 560,
-                    letterSpacing: "-0.01em",
-                    textDecoration: "none",
-                    whiteSpace: "nowrap",
-                    WebkitTapHighlightColor: "transparent",
-                  }}
-                >
-                  {item.label}
-                  {active ? (
-                    <span
-                      aria-hidden="true"
-                      style={{
-                        position: "absolute",
-                        left: 11,
-                        right: 11,
-                        bottom: 1,
-                        height: 2,
-                        borderRadius: 999,
-                        background: SHELL.INK,
-                      }}
-                    />
-                  ) : null}
-                </Link>
-              );
-            })}
-          </nav>
-        ) : null}
+        <div aria-hidden="true" style={{ width: 1, height: 20, background: BRAND.hair }} />
+        <div
+          style={{
+            fontFamily: "Inter, system-ui, sans-serif",
+            fontSize: 14.5,
+            fontWeight: 400,
+            color: "white",
+            letterSpacing: "-0.005em",
+            lineHeight: 1,
+            whiteSpace: "nowrap",
+          }}
+        >
+          <strong style={{ fontWeight: 600 }}>AI</strong> Success Platform
+        </div>
       </div>
 
-      <div
-        className="app-top-bar__account"
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: 12,
-          flexShrink: 0,
-        }}
-      >
+      {navItems.length > 0 && (
+        <nav aria-label="Product modules" style={{ display: "flex", alignItems: "center", gap: 4 }}>
+          {navItems.map((item) => {
+            const active = item.match(pathname);
+            return (
+              <Link
+                key={item.key}
+                href={item.href}
+                className="app-top-bar__nav-link"
+                aria-current={active ? "page" : undefined}
+                style={{
+                  fontFamily: "Inter, system-ui, sans-serif",
+                  fontSize: 13.5,
+                  fontWeight: active ? 600 : 500,
+                  color: active ? "white" : BRAND.textMute,
+                  textDecoration: "none",
+                  padding: "22px 14px",
+                  letterSpacing: "-0.005em",
+                  position: "relative",
+                }}
+              >
+                {item.label}
+                {active && (
+                  <span
+                    aria-hidden="true"
+                    style={{
+                      position: "absolute",
+                      left: 14,
+                      right: 14,
+                      bottom: 0,
+                      height: 3,
+                      background: BRAND.signalBlue,
+                      borderRadius: 2,
+                    }}
+                  />
+                )}
+              </Link>
+            );
+          })}
+        </nav>
+      )}
+
+      <div style={{ display: "flex", alignItems: "center", gap: 14, flexShrink: 0 }}>
         {signedIn ? (
           <>
             <div
@@ -397,8 +176,9 @@ export function AppTopBar({ showProductNav = true }: AppTopBarProps) {
               style={{
                 display: "flex",
                 alignItems: "center",
-                gap: 9,
-                minWidth: 0,
+                gap: 10,
+                paddingRight: 14,
+                borderRight: `1px solid ${BRAND.hair}`,
               }}
             >
               <span
@@ -407,27 +187,26 @@ export function AppTopBar({ showProductNav = true }: AppTopBarProps) {
                   width: 28,
                   height: 28,
                   borderRadius: "50%",
-                  background: "rgba(12, 26, 58, 0.07)",
-                  color: SHELL.INK,
+                  background: "rgba(255,255,255,0.08)",
+                  color: "white",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
-                  fontFamily: SHELL.SANS,
-                  fontSize: 11,
-                  fontWeight: 800,
-                  lineHeight: 1,
+                  fontFamily: "Inter, system-ui, sans-serif",
+                  fontSize: 10.5,
+                  fontWeight: 700,
+                  border: `1px solid ${BRAND.hair}`,
                 }}
               >
                 {initials || "U"}
               </span>
               <span
-                className="app-top-bar__account-name"
                 style={{
-                  fontFamily: SHELL.SANS,
+                  fontFamily: "Inter, system-ui, sans-serif",
                   fontSize: 13,
-                  color: SHELL.INK,
-                  fontWeight: 600,
-                  maxWidth: 172,
+                  fontWeight: 500,
+                  color: BRAND.textStrong,
+                  maxWidth: 160,
                   overflow: "hidden",
                   textOverflow: "ellipsis",
                   whiteSpace: "nowrap",
@@ -437,40 +216,37 @@ export function AppTopBar({ showProductNav = true }: AppTopBarProps) {
               </span>
             </div>
             <button
-              className="app-top-bar__sign-out"
               type="button"
               onClick={handleSignOut}
               aria-label="Sign out"
               style={{
-                border: `1px solid ${SHELL.CARD_LINE}`,
+                background: "transparent",
+                border: "1px solid rgba(255,255,255,0.20)",
+                color: "white",
+                fontFamily: "Inter, system-ui, sans-serif",
+                fontSize: 12,
+                fontWeight: 600,
+                padding: "8px 14px",
                 borderRadius: 999,
-                background: "#FFFFFF",
-                color: SHELL.INK,
                 cursor: "pointer",
-                fontFamily: SHELL.SANS,
-                fontSize: 13,
-                fontWeight: 700,
-                lineHeight: 1,
-                padding: "8px 12px",
+                letterSpacing: "0.01em",
               }}
             >
-              <span className="app-top-bar__sign-out-text">Sign out</span>
+              Sign out
             </button>
           </>
         ) : (
           <Link
-            className="app-top-bar__sign-in"
             href="/sign-in"
             style={{
-              border: `1px solid ${SHELL.CARD_LINE}`,
+              border: "1px solid rgba(255,255,255,0.20)",
               borderRadius: 999,
-              background: "#FFFFFF",
-              color: SHELL.INK,
-              fontFamily: SHELL.SANS,
-              fontSize: 13,
-              fontWeight: 700,
-              lineHeight: 1,
-              padding: "8px 12px",
+              background: "transparent",
+              color: "white",
+              fontFamily: "Inter, system-ui, sans-serif",
+              fontSize: 12,
+              fontWeight: 600,
+              padding: "8px 14px",
               textDecoration: "none",
             }}
           >
