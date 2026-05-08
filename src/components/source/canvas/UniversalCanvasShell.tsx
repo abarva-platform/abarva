@@ -439,23 +439,23 @@ export function UniversalCanvasShell({
           generationPendingByCode={pendingGenerationByCode}
           xlsxGeneratableCodes={XLSX_GENERATABLE_CODES_CLIENT}
           xlsxDownloadHref={(code) =>
-            `/api/v1/source/${event.id}/artifacts/${encodeURIComponent(code)}/render-xlsx`
+            `/api/v1/source/${event.id}/artifacts/${encodeURIComponent(code)}/render?format=xlsx`
           }
           xlsxComparisonCodes={XLSX_COMPARISON_CODES_CLIENT}
           xlsxComparisonDownloadHref={(code) =>
-            `/api/v1/source/${event.id}/artifacts/${encodeURIComponent(code)}/render-comparison-xlsx`
+            `/api/v1/source/${event.id}/artifacts/${encodeURIComponent(code)}/render?format=xlsx&variant=comparison`
           }
           docxGeneratableCodes={DOCX_GENERATABLE_CODES_CLIENT}
           docxDownloadHref={(code) =>
-            `/api/v1/source/${event.id}/artifacts/${encodeURIComponent(code)}/render-docx`
+            `/api/v1/source/${event.id}/artifacts/${encodeURIComponent(code)}/render?format=docx`
           }
           htmlGeneratableCodes={HTML_GENERATABLE_CODES_CLIENT}
           htmlViewHref={(code) =>
-            `/api/v1/source/${event.id}/artifacts/${encodeURIComponent(code)}/render-html`
+            `/api/v1/source/${event.id}/artifacts/${encodeURIComponent(code)}/render?format=html`
           }
           pdfGeneratableCodes={PDF_GENERATABLE_CODES_CLIENT}
           pdfDownloadHref={(code) =>
-            `/api/v1/source/${event.id}/artifacts/${encodeURIComponent(code)}/render-pdf`
+            `/api/v1/source/${event.id}/artifacts/${encodeURIComponent(code)}/render?format=pdf`
           }
           eventId={event.id}
         />

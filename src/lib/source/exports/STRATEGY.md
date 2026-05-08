@@ -1,235 +1,187 @@
-# Document Generation Strategy
+# Source Document Generation Strategy
 
-Canonical reference for the 10 patterns that govern all document generation
-(XLSX, DOCX, PDF, Markdown walkers) across the platform. These patterns were
-codified from the ~3,500 LOC of infrastructure in `src/lib/programs/exports/`
-and are portable to any module (Source, Moves, Tower, etc.) via
-`src/lib/exports-shared/`.
+Canonical reference for how Source emits structured exports (xlsx, docx, html, pdf) for every artifact in its 11-stage lifecycle. Updated after the Path C migration (Slices 8.1–8.5) unified Source's pipeline on the same `DeliverableSpec` envelope as Programs.
+
+This document is the single source of truth for any future module (Moves, Tower, etc.) that wants to add a structured export pipeline. The patterns documented below have been validated in production across 10+ artifacts × 4 formats × prod-verified rendering.
 
 ---
 
-## Pattern 1 · Spec envelope
+## 1 · Architectural overview
 
-Every renderer accepts a `DeliverableSpec` envelope with a stable set of
-top-level fields:
-
-```ts
-// src/lib/programs/exports/types.ts
-interface DeliverableSpec {
-  kind: DeliverableKind;   // discriminator
-  tenantKey: string;       // broker tenant key
-  programId?: string;      // optional program scope
-  title: string;           // document title
-  subtitle?: string;
-  generatedAt?: string;    // ISO; stamps now() if omitted
-  authors?: string[];
-  payload: Record<string, unknown>; // kind-specific data (narrowed per renderer)
-  brandSubtitle?: string;  // default: 'AbarVa · Programs'
-}
 ```
-
-Renderers narrow `payload` using a local interface per kind (e.g.
-`ProgramCharterPayload` in `renderers/program-charter.ts`). The dispatcher
-(`renderers/docx.ts`, `renderers/xlsx.ts`) does a shallow guard check before
-calling the per-kind builder.
-
----
-
-## Pattern 2 · Format router
-
-A static two-map router (`src/lib/programs/exports/format-router.ts`)
-separates "what is the canonical format for this kind" from "what formats does
-this kind allow". The router throws on unsupported format requests so the API
-layer can return 400 rather than silently handing the wrong format to the caller.
-
-```ts
-// format-router.ts
-export function routeFormat(
-  kind: DeliverableKind,
-  requestedFormat?: DeliverableFormat,
-): DeliverableFormat { ... }
-```
-
-Default formats: `program-charter → docx`, `okr-baseline → xlsx`,
-`roadmap → html`. Overrides are validated against `ALLOWED_FORMATS`.
-
----
-
-## Pattern 3 · Dispatcher → builder split
-
-Each format has a dispatcher module (`docx.ts`, `xlsx.ts`) that:
-
-1. Guards the payload shape.
-2. Constructs the narrow spec (`ProgramCharterSpec`, `OkrBaselineSpec`, …).
-3. Calls the per-kind builder (`buildProgramCharterDocument`, `buildOkrBaselineWorkbook`).
-4. Serializes the result (Packer.toBuffer / workbook.xlsx.writeBuffer).
-5. Returns a `DeliverableRenderResult`.
-
-Per-kind builders are pure: they accept a typed spec, return a `Document`
-(docx) or `Workbook` (xlsx), and perform no I/O. This keeps renderers unit-
-testable without mocking the file system.
-
-```ts
-// renderers/docx.ts
-case 'program-charter': {
-  const doc = buildProgramCharterDocument(charterSpec);  // pure
-  const buffer = await Packer.toBuffer(doc);              // I/O happens here
-  ...
-}
+┌─────────────────────────────────────────────────────────────────────┐
+│ Substrate (Postgres)                                                │
+│   source_events / source_event_artifact_states / pricing            │
+│   submissions / etc.                                                │
+└─────────────────┬───────────────────────────────────────────────────┘
+                  │
+                  ▼
+┌─────────────────────────────────────────────────────────────────────┐
+│ SourceGenerationContext                                             │
+│   tenant + event + artifactStates + gateCriteria + evidence         │
+└─────────────────┬───────────────────────────────────────────────────┘
+                  │
+                  ▼
+┌─────────────────────────────────────────────────────────────────────┐
+│ buildSourceDeliverableSpec(ctx, kind, generatedAt)                  │
+│   one builder per SourceDeliverableKind; reuses legacy payload      │
+│   binders to preserve substrate / fallback / archetype-default      │
+│   behavior from Slices 2-7                                          │
+└─────────────────┬───────────────────────────────────────────────────┘
+                  │
+                  ▼
+┌─────────────────────────────────────────────────────────────────────┐
+│ SourceDeliverableSpec                                               │
+│   { kind, tenantKey, sourceEventId, title, payload, generatedAt }   │
+│   structurally identical to Programs' DeliverableSpec               │
+└─────────────────┬───────────────────────────────────────────────────┘
+                  │
+                  ▼
+┌─────────────────────────────────────────────────────────────────────┐
+│ renderSourceDeliverable(spec, requestedFormat?)                     │
+│   1. routeFormat(spec.kind, requestedFormat) → DeliverableFormat    │
+│   2. switch (spec.kind) → kind-specific adapter                     │
+│   3. adapter calls the legacy renderer with kind-converted payload  │
+└─────────────────┬───────────────────────────────────────────────────┘
+                  │
+                  ▼
+        SourceDeliverableRenderResult
+        { format, buffer, filename, contentType, sizeBytes }
+                  │
+                  ▼
+   GET /api/v1/source/:eventId/artifacts/:code/render?format=…
+        bytes + audit headers
+                  │
+                  ▼
+        Canvas anchor (DocumentTab) — download / view
 ```
 
 ---
 
-## Pattern 4 · Brand tokens (shared)
+## 2 · The 11 SourceDeliverableKinds
 
-All renderers share the same brand token constants, sourced from
-`src/lib/exports-shared/`:
+| Kind | Artifact code | Default format | Allowed formats |
+|------|---------------|:--------------:|:---------------:|
+| `scope-memo` | d05_scope_memo | docx | docx · html · pdf |
+| `rfp-package` | d09_rfp_pack | docx | docx · html · pdf |
+| `decision-brief` | d24_decision_brief | docx | docx · html · pdf |
+| `selection-memo` | d27_selection_memo | docx | docx · html · pdf |
+| `app-inventory` | d04_app_inv | xlsx | xlsx · docx |
+| `response-checklist` | d11_response_checklist | xlsx | xlsx · docx |
+| `scorecard` | d16_scorecard | xlsx | xlsx · docx |
+| `pricing-template` | d19_pricing_workbook | xlsx | xlsx |
+| `pricing-comparison` | d19_pricing_workbook (variant=comparison) | xlsx | xlsx |
+| `trap-log` | d20_trap_log | xlsx | xlsx |
+| `bafo-question-pack` | d22_bafo_question_pack | xlsx | xlsx |
 
-```ts
-// exports-shared/xlsx-base.ts
-export const HEADER_FILL = 'FF0A0A0A';  // near-black
-export const HEADER_TEXT = 'FFF5F5F0';  // near-white
-export const BAND_FILL   = 'FFF8F7F4';  // warm off-white
-export const ACCENT_FILL = 'FF2DD4C8';  // teal
-export const MUTED_TEXT  = 'FF706D66';  // warm grey
+The artifact-code ↔ kind mapping is bidirectional; URLs use codes, the dispatcher uses kinds.
 
-// exports-shared/docx-base.ts
-export const SERIF_HEADING_FONT = 'Georgia';
-export const SANS_BODY_FONT     = 'Calibri';
+---
 
-// exports-shared/pdf-base.ts
-export const PDF_COLORS = { ink: '#0A0A0A', accent: '#2DD4C8', ... };
+## 3 · The 10 patterns
+
+### Pattern 1 · Spec envelope, not direct payload
+Callers never pass typed payloads to the dispatcher. They pass a `SourceDeliverableSpec` envelope with a `kind` discriminator. The dispatcher narrows by kind and converts the spec's `payload: Record<string, unknown>` to the appropriate typed shape internally.
+
+### Pattern 2 · Per-kind narrow types
+Each kind has a typed alias (`ScopeMemoSpec`, `AppInventorySpec`, etc.) extending a common `BaseSourceSpec`. These are the surface that callers and tests use; the dispatcher internally accepts the wider `SourceDeliverableSpec`.
+
+### Pattern 3 · Substrate context → spec via a single builder
+`buildSourceDeliverableSpec(ctx, kind, generatedAt)` is the *only* function that knows how to pull from substrate for each kind. It internally delegates to the legacy payload binders that ship the substrate / fallback / archetype-default behavior.
+
+### Pattern 4 · Two-tier dispatch (kind → format)
+1. `routeFormat(kind, requestedFormat?)` resolves the format (kind's default if unset; throws if requested format isn't allowed for the kind).
+2. `renderSourceDeliverable(spec, format?)` switches on `spec.kind` to the right adapter, which invokes the right legacy renderer.
+
+### Pattern 5 · Adapter, not rewrite
+The migration from Slices 2-7's per-format dispatchers to the unified pipeline used **adapters** that call the existing renderers underneath. No rewrites of battle-tested rendering code. The adapter cost: one converter + one switch case per kind.
+
+### Pattern 6 · Shared infrastructure under `src/lib/exports-shared/`
+Every base helper (xlsx-base, docx-base, pdf-base, structured-docx-base, the 3 markdown-to-{html,docx,pdf} walkers) lives at the canonical shared path. Source imports from there. Moves and any future module imports from there. No copy-paste.
+
+### Pattern 7 · Defensive fallbacks at every layer
+- Missing body → canonical scaffold (with warning banner)
+- Missing scope memo → archetype default
+- Missing vendor submissions → demo-mode synthesis (with banner)
+- PDF render fails → degraded cover-only fallback
+- DB unavailable → empty list (graceful UI)
+
+### Pattern 8 · Audit headers on every emission
+- `x-source-artifact-code` — canonical d-code
+- `x-source-event-code` — event code
+- `x-source-artifact-format` — xlsx | docx | html | pdf
+- `x-source-artifact-kind` — the SourceDeliverableKind
+- `x-source-artifact-variant` — template | comparison (when set)
+- `x-source-pdf-degraded: true` — when the PDF fallback fired
+
+### Pattern 9 · One unified route, format as query param
+```
+GET /api/v1/source/:eventId/artifacts/:artifactCode/render?format=docx
+GET /api/v1/source/:eventId/artifacts/:artifactCode/render?format=xlsx&variant=comparison
 ```
 
-Do not redeclare these constants in individual renderer files.
+The legacy `/render-{xlsx,docx,html,pdf}` routes still exist during the transition. They continue to work but new code should use the unified route.
+
+### Pattern 10 · Vertical slicing
+Each PR ships **one artifact × one format** end-to-end (renderer + binder + dispatcher case + tests + prod verification). NOT "all renderers first, all UIs second."
 
 ---
 
-## Pattern 5 · Cover sheet
+## 4 · Reuse map for future modules (Moves, Tower, …)
 
-Every document opens with a cover sheet or cover page:
+To add a structured export pipeline to a new module, follow this checklist:
 
-- **XLSX** — `buildCoverSheet(options)` in `exports-shared/xlsx-base.ts`.
-  Adds a protected "Cover" tab with title, subtitle, metadata lines, and a
-  generation timestamp. Tab color: `ACCENT_FILL`. Protected as read-only.
+1. **Define the module's deliverable kind union** (`MoveDeliverableKind = 'm01-charter' | 'm02-…'`) in `src/lib/<module>/exports/types.ts`. Mirror the `SourceDeliverableKind` shape.
 
-- **DOCX** — `titleHeading()`, `subtitleParagraph()`, `tenantKeyParagraph()`,
-  `timestampParagraph()`, and `gateBannerParagraph()` in
-  `exports-shared/docx-base.ts`. The banner paragraph carries the document
-  class (e.g. `SIGNED PROGRAM CHARTER · P2 GATE PACKAGE`).
+2. **Define the per-module spec interface** extending Programs' `DeliverableSpec` envelope (or copying its shape). One spec interface per kind (narrow type alias).
 
-- **PDF** — `styles.gateBanner`, `styles.titleHeading`, and
-  `styles.timestamp` in `exports-shared/pdf-base.ts`.
+3. **Build the format router** (`src/lib/<module>/exports/format-router.ts`) with `DEFAULT_FORMAT` + `ALLOWED_FORMATS` maps + `routeFormat(kind, requested?)`.
 
----
+4. **Build the spec-builder** (`src/lib/<module>/exports/spec-builder.ts`) with `buildModuleDeliverableSpec(ctx, kind, generatedAt)`. Internally call legacy payload binders (or skip if you're starting fresh).
 
-## Pattern 6 · Paragraph helpers (DOCX)
+5. **Build the dispatcher** (`src/lib/<module>/exports/dispatch.ts`) with `renderModuleDeliverable(spec, format?)`. Use the adapter pattern — one switch case per kind, each calling the right renderer with the right payload converter.
 
-Seven reusable paragraph factories in `exports-shared/docx-base.ts`:
+6. **Wire the unified route** at `/api/v1/<module>/.../:artifactCode/render?format=…&variant=…` matching Source's shape exactly.
 
-| Helper | Purpose |
-|---|---|
-| `titleHeading(text)` | H1 serif bold 44pt |
-| `sectionHeading(text)` | H2 serif bold 30pt |
-| `subsectionHeading(text)` | H3 serif bold 24pt |
-| `bodyParagraph(text)` | 22pt Calibri |
-| `italicParagraph(text)` | 22pt Calibri italic |
-| `bulletParagraph(text)` | bullet level 0 |
-| `labeledLine(label, value)` | bold label + plain value |
-| `bodyParagraphRich(runs)` | mixed bold/italic/color runs |
+7. **Use shared infrastructure from `src/lib/exports-shared/`** — don't duplicate the bases or the markdown walkers.
 
-These replace the 7-copy-paste block that existed in every renderer prior to
-the journey-kit-phase3 extraction.
+8. **Wire canvas anchors** to point at the unified route with the right `format` and (where applicable) `variant` query params.
+
+9. **Add tests at every layer** — format-router, dispatcher per kind, spec-builder, route.
+
+10. **Verify on prod** end-to-end by downloading the generated artifact + opening it in the target application (Word, Excel, browser, PDF viewer).
 
 ---
 
-## Pattern 7 · Table primitives (DOCX)
+## 5 · Why this strategy
 
-Two table primitives in `exports-shared/structured-docx-base.ts`:
-
-```ts
-// Two-column key/value table:
-buildKeyValueTable(entries: [string, string][]): Table
-
-// N-column table with configurable headers:
-buildMultiColumnTable(
-  columnSpecs: ColumnSpec[],
-  rows: string[][],
-  opts?: { boldFirstColumn?: boolean },
-): Table
-```
-
-Lower-level: `makeHeaderCell(text, opts?)` and `makeDataCell(text, opts?)`
-for renderers that need non-standard table shapes.
+- **Single envelope across modules** — Programs and Source both use `DeliverableSpec`. Future modules drop in seamlessly. A future "Universal AbarVa Export" library could swap in any module's dispatcher with the same call shape.
+- **Kind-based dispatch is testable + debuggable** — the switch at the top of `renderSourceDeliverable` is the single place where format × kind decisions happen. New kinds add one case; new formats add one branch.
+- **Adapter-first migration kept Slices 2-7's investment** — 10+ artifacts × 4 formats × 576 tests × prod verification all preserved without renderer rewrites.
+- **Shared infrastructure stops drift** — every module shares the same docx-base, the same markdown-to-html walker, the same v3 typography. No fork divergence.
+- **Vertical slicing made the multi-day migration shippable** — Slice 8.1 → 8.5 each landed independently with prod-green tests at every step.
 
 ---
 
-## Pattern 8 · Formula injection guard (XLSX)
+## 6 · Path C migration changelog (Slices 8.1–8.5)
 
-All string values written to XLSX cells are passed through `safeCell()` from
-`exports-shared/xlsx-base.ts`. This prefixes values starting with `=`, `+`,
-`-`, or `@` with a single quote to prevent formula injection.
+| Slice | What | Commit |
+|-------|------|--------|
+| 8.1 | Foundations — `SourceDeliverableKind`, `SourceDeliverableSpec`, `format-router.ts` | `ef38f2d9` |
+| 8.1.1 | Hotfix — duplicate Jest mocks at `src/lib/exports-shared/__mocks__/` were silently overriding the canonical `src/__tests__/__mocks__/` via haste-map | `05b5ba3f` |
+| 8.1.2 | Bases extraction — `exports-shared/` replaced with Source's v3 versions; m01-charter rewritten to match | `96806047` |
+| 8.2 | First adapter — d05 scope-memo dispatched end-to-end | `799aae56` |
+| 8.3 | Remaining 10 kinds wired through `dispatch.ts` | `226ce7bb` |
+| 8.4 | Unified `/render?format=…` route + `spec-builder.ts` | `a05cd016` |
+| 8.5 | Canvas anchors repointed at unified route + this STRATEGY.md update | _this PR_ |
 
-```ts
-// exports-shared/xlsx-base.ts
-export function safeCell(value: string): string {
-  const first = value.charAt(0);
-  if (['=', '+', '-', '@'].includes(first)) return `'${value}`;
-  return value;
-}
-```
-
-Never write raw user-controlled strings directly to `cell.value`.
+After 8.5: the legacy per-format routes (`/render-xlsx` / `/render-docx` / `/render-html` / `/render-pdf` / `/render-comparison-xlsx`) still exist for backward compatibility with any external consumer that might hit them. Schedule for deletion: when no traffic has hit them for 2+ weeks, or in a future cleanup slice.
 
 ---
 
-## Pattern 9 · Markdown walker
+## 7 · Open questions / future work
 
-Three walkers in `exports-shared/` that share the `MdastNode` type:
-
-| Module | Output |
-|---|---|
-| `markdown-to-html.ts` | `mdastToHtml(root): string` |
-| `markdown-to-docx.ts` | `mdastToDocxChildren(root): (Paragraph | Table)[]` |
-| `markdown-to-pdf.tsx` | `<MdastToPdf root={root} />` (React component) |
-
-All three are pure — no I/O, no browser APIs. Callers parse with
-`mdast-util-from-markdown` + `micromark-extension-gfm` + `mdast-util-gfm`
-and pass the root node.
-
-Jest mocks for all three packages live in `exports-shared/__mocks__/` and
-are wired in `jest.config.ts` as `moduleNameMapper` entries.
-
----
-
-## Pattern 10 · Audit trail
-
-Every export attempt is recorded to `program_export_log` via
-`recordExportAudit()` in `src/lib/programs/exports/audit.ts`. The audit
-record captures: `programId`, `tenantKey`, `kind`, `format`, `sizeBytes`,
-`userId`, `success`, and an optional `errorMessage`. The API route
-(`EXPORT-4`) calls this even on failure so the log is complete.
-
-This pattern applies to Moves exports too: `src/lib/moves/exports/` renderers
-must call an equivalent `recordExportAudit` before returning.
-
----
-
-## Reuse map
-
-| Module | Portable to Moves | Notes |
-|---|---|---|
-| `exports-shared/xlsx-base.ts` | Yes | Zero product coupling |
-| `exports-shared/docx-base.ts` | Yes | Zero product coupling |
-| `exports-shared/pdf-base.ts` | Yes | Zero product coupling |
-| `exports-shared/structured-docx-base.ts` | Yes | Depends on docx-base only |
-| `exports-shared/markdown-to-html.ts` | Yes | Pure, no deps |
-| `exports-shared/markdown-to-docx.ts` | Yes | Depends on docx-base + structured-docx-base |
-| `exports-shared/markdown-to-pdf.tsx` | Yes | Depends on pdf-base |
-| `exports-shared/__mocks__/` | Yes | Jest config wires per-project |
-| `programs/exports/types.ts` (DeliverableSpec) | Needs Move equivalent | `DeliverableKind` is programs-scoped; Moves needs its own `MoveDocumentKind` + `MoveDocumentSpec` |
-| `programs/exports/format-router.ts` | Needs Move equivalent | Moves has different kind→format defaults |
-| `programs/exports/audit.ts` | Needs Move equivalent | Same shape; reference `program_export_log` becomes `move_export_log` |
-| `programs/exports/renderers/docx.ts` (dispatcher) | Needs Move equivalent | Per-kind guard + dispatch; Moves writes its own |
-| `programs/exports/renderers/xlsx.ts` (dispatcher) | Needs Move equivalent | Same as above |
-| Per-kind builders (program-charter.ts, etc.) | No | Programs-specific payload types |
+- **Programs convergence on this strategy** — Programs has its own pipeline at `src/lib/programs/exports/` with the same `DeliverableSpec` envelope shape. The two pipelines are conceptually unified but physically separate; a future slice can deduplicate by extracting the dispatcher pattern into `src/lib/exports-shared/` itself.
+- **PDF font registration** — PDFs still use built-in Helvetica + Times-Roman + Courier as approximations of v3 typography. A future slice (formerly Slice 7.2) registers actual woff2 font files via `@react-pdf/renderer`'s `Font.register` API.
+- **Vendor upload-back UI for d19c** — the upload pipeline shipped (Slice 2c.2) but the migration to apply has not been run on prod Supabase. Until then, the pricing-comparison stays in demo mode (still useful synthetic data).
+- **Moves transport** — the m01-charter stub is in place using the shared infrastructure. The Moves canonical spec catalog + substrate schema + per-kind narrow types remain to be defined before m01 can ship as a real artifact.
