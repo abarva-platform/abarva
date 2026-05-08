@@ -327,7 +327,12 @@ export async function POST(request: Request) {
         : 'corpus';
     voiceLine = composeSentinelSystemPrompt({
       mode: inferredMode,
-      tenantKey: null,
+      // Pass tenantName as tenantKey so that aiInitiativeCitationLine()
+      // injects the MH-XX / AP-XX citation discipline. Display name is
+      // sufficient here — the guard is truthiness, not slug equality.
+      // PROBE 7-1 fix: without this, Sentinel narrates initiative names
+      // without citing their structured display IDs.
+      tenantKey: tenantName || null,
       surface,
       vectorIndexPending: true,
       worldviewPending: true,
@@ -430,6 +435,24 @@ export async function POST(request: Request) {
           `Evidence items: ${evidence.length} uploaded`,
           `Gate approvals: ${latestGate}`,
         );
+
+        // PROBE 11-1 — Nexus initiative registry access.
+        // If this Move was originated from an AI initiative page (or
+        // an Intelligence pattern card), the charter.initiative_context
+        // field carries the display ID and gap. Inject it so Nexus can
+        // cite the originating initiative by its structured ID.
+        const charter = engagement.charter as Record<string, unknown> | null;
+        const initiativeCtx = charter?.initiative_context as Record<string, unknown> | null;
+        if (initiativeCtx?.initiative_id) {
+          const initId = String(initiativeCtx.initiative_id);
+          const gapUsd = typeof initiativeCtx.gap_usd === 'number' ? initiativeCtx.gap_usd : null;
+          const gapLine = gapUsd
+            ? ` (value gap: $${(gapUsd / 1_000_000).toFixed(1)}M)`
+            : '';
+          contextLines.push(
+            `Originating AI initiative: ${initId}${gapLine}. This Move was shaped from initiative ${initId}. When discussing this Move in context of the AI portfolio or initiative risk, cite the initiative as "${initId}".`,
+          );
+        }
 
         // Phase pack — V2 when PHASE_PACK_V2=true, else V1 (T-D.2)
         const useV2Pack = process.env.PHASE_PACK_V2 !== 'false';

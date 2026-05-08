@@ -1,6 +1,8 @@
 import Link from 'next/link';
 import styles from './StrategicMoves.module.css';
 import { PhaseRail } from './PhaseRail';
+import { MoveArtifactUpload } from './MoveArtifactUpload';
+import { MoveDetailSplitter } from './MoveDetailSplitter';
 import type { StrategicMove } from '@/lib/programs/types.ui';
 
 interface Props {
@@ -36,8 +38,21 @@ export function StrategicMoveDetailView({ move }: Props) {
   const secondary = secondaryAction(move);
   return (
     <div className={styles.page}>
-      <section className={styles.detailShell}>
-        <aside className={styles.chatPane}>
+      {/* ResizableSplitter replaces the fixed-grid detailShell.
+          MoveDetailSplitter is a thin Client Component wrapper;
+          the chat and right-pane JSX are Server-rendered ReactNodes
+          passed through as props. */}
+      <div
+        data-testid="move-detail-splitter-shell"
+        style={{
+          height: 'calc(100vh - 220px)',
+          minHeight: 620,
+          display: 'flex',
+          gap: 0,
+        }}
+      >
+      <MoveDetailSplitter
+        chatPane={<aside className={styles.chatPane}>
           <div className={styles.chatHead}>
             <div className={styles.agentRow}>
               <div className={styles.agentAvatar} aria-hidden>✦</div>
@@ -75,9 +90,8 @@ export function StrategicMoveDetailView({ move }: Props) {
               <button className={styles.sendBtn} type="button" aria-label="Send">&#8593;</button>
             </div>
           </div>
-        </aside>
-
-        <article className={styles.rightPane}>
+        </aside>}
+        rightPane={<article className={styles.rightPane}>
           <div className={styles.detailHead}>
             <div className={styles.detailHeadTop}>
               <div className={styles.detailHeadLeft}>
@@ -231,9 +245,21 @@ export function StrategicMoveDetailView({ move }: Props) {
                 )}
               </div>
             </section>
+
+            <section
+              className={styles.detailSection}
+              data-testid="move-artifact-upload-section"
+            >
+              <div className={styles.detailSectionTitle}>Attachments</div>
+              <MoveArtifactUpload
+                programId={move.id}
+                phase={move.currentPhase ?? 0}
+              />
+            </section>
           </div>
-        </article>
-      </section>
+        </article>}
+      />
+      </div>
     </div>
   );
 }

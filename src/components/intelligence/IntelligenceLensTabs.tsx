@@ -101,6 +101,30 @@ const C = {
   red: '#B91C1C',
 } as const;
 
+// Display IDs for each pattern key — used in "Shape into a Move →" CTA URLs
+// and shown as the ID chip on pattern cards per §4.1 (pattern-named, evidence-cited).
+const PATTERN_DISPLAY_IDS: Record<string, string> = {
+  value_ledger_incompleteness: 'INT-VL',
+  evidence_chain_gap: 'INT-EC',
+  gate_governance_gap: 'INT-GG',
+  program_context_sparsity: 'INT-CS',
+  ai_governance_operating_model_gap: 'INT-AI',
+};
+
+/** Build the "Shape into a Move →" href for a pattern card.
+ *  Routes to /strategic-moves/new via the 2D Nexus first-message variant. */
+function buildShapeHref(card: SentinelPatternCard, idx: number): string {
+  const displayId = PATTERN_DISPLAY_IDS[card.detection.patternKey] ?? `INT-${idx + 1}`;
+  const parts = [
+    'fromInitiative=1',
+    `fromId=${encodeURIComponent(displayId)}`,
+    `fromName=${encodeURIComponent(card.detection.patternName)}`,
+    `fromStatus=${encodeURIComponent(card.detection.severity.toUpperCase())}`,
+    `fromGoal=${encodeURIComponent(card.detection.whyItMatters.slice(0, 100))}`,
+  ];
+  return `/strategic-moves/new?${parts.join('&')}`;
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Props
 // ─────────────────────────────────────────────────────────────────────────────
@@ -122,6 +146,12 @@ export function IntelligenceLensTabs({
   baseUrl,
 }: IntelligenceLensTabsProps) {
   const view = buildIntelligenceLensTabsView(activeTab);
+  // Pre-compute pattern counts for the page header sub-line (deterministic).
+  const sentinelView = buildSentinelIntelligenceView(tenant);
+  const headerPatternCount = sentinelView.cards.length;
+  const headerContradictionCount = sentinelView.detections.filter(
+    (d) => d.severity === 'critical',
+  ).length;
 
   return (
     <div
@@ -129,6 +159,51 @@ export function IntelligenceLensTabs({
       data-active-tab={activeTab}
       style={{ fontFamily: 'DM Sans, sans-serif' }}
     >
+      {/* ── Page header — §5.1 above the fold ──────────────────────────── */}
+      <header
+        data-testid="intelligence-page-header"
+        style={{
+          padding: '20px 24px 16px',
+          borderBottom: `1px solid ${C.border}`,
+          backgroundColor: C.card,
+        }}
+      >
+        <div
+          style={{
+            fontFamily: 'JetBrains Mono, monospace',
+            fontSize: 10,
+            letterSpacing: '0.12em',
+            textTransform: 'uppercase',
+            color: C.mutedSoft,
+            fontWeight: 700,
+            marginBottom: 4,
+          }}
+        >
+          Intelligence · {tenant.displayName}
+        </div>
+        <h1
+          style={{
+            fontFamily: 'Georgia, serif',
+            fontSize: 22,
+            fontWeight: 600,
+            color: C.ink,
+            margin: '0 0 4px',
+          }}
+        >
+          What we&apos;re seeing across {tenant.displayName}
+        </h1>
+        <p style={{ fontSize: 12, color: C.muted, margin: 0 }}>
+          Last refreshed today
+          {headerPatternCount > 0
+            ? ` · ${headerPatternCount} pattern${headerPatternCount !== 1 ? 's' : ''} surfacing`
+            : ''}
+          {headerContradictionCount > 0
+            ? ` · ${headerContradictionCount} contradiction${headerContradictionCount !== 1 ? 's' : ''} open`
+            : ''}
+          {' · Sentinel pattern detection'}
+        </p>
+      </header>
+
       {/* Tab bar */}
       <nav
         aria-label="Intelligence lens tabs"
@@ -219,153 +294,225 @@ export function IntelligenceLensTabs({
 // Tab panels
 // ─────────────────────────────────────────────────────────────────────────────
 
-/** Summary — Sentinel brief + active patterns + compact context framing */
+/** Summary — §5 pattern-to-Move funnel: attention strip → top synthesis → pattern queue → what we can't yet see */
 function SummaryPanel({ tenant }: { tenant: TenantSeedPlan }) {
   const view = buildSentinelIntelligenceView(tenant);
-  const topDetection = view.detections[0] ?? null;
-  const contextUsed = topDetection
-    ? [
-        `${topDetection.sourceSignalIds.length} seeded control-tower signals across ${topDetection.affectedPrograms.length} affected program routes`,
-        `${topDetection.evidenceSignals.length} evidence-linked signals inform the lead pattern`,
-      ]
-    : [];
+  const topCard = view.cards[0] ?? null;
+
+  // Attention strip metrics
+  const patternCount = view.cards.length;
+  const contradictionCount = view.detections.filter((d) => d.severity === 'critical').length;
+  // Confidence average: low=0.33, medium=0.67, high=1.0
+  const confidenceAvg =
+    view.detections.length > 0
+      ? view.detections.reduce((sum, d) => {
+          const w = d.confidence === 'high' ? 1.0 : d.confidence === 'medium' ? 0.67 : 0.33;
+          return sum + w;
+        }, 0) / view.detections.length
+      : 0;
+  const confidenceDisplay =
+    confidenceAvg >= 0.8 ? 'HIGH' : confidenceAvg >= 0.5 ? 'MED' : confidenceAvg > 0 ? 'LOW' : '—';
+
+  // Collect unique missing inputs across all detections for "What we can't yet see"
+  const allMissingInputs = [
+    ...new Set(view.detections.flatMap((d) => d.missingInputs)),
+  ];
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 16, maxWidth: 960 }}>
-      {/* Sentinel Brief */}
+    <div
+      data-testid="intelligence-summary-panel"
+      style={{ display: 'flex', flexDirection: 'column', gap: 20, maxWidth: 960 }}
+    >
+      {/* §5.1 Attention strip — 4 KPI chips */}
       <section
-        aria-label="Sentinel brief"
+        data-testid="intelligence-attention-strip"
+        aria-label="Intelligence attention strip"
         style={{
-          backgroundColor: '#0F1E3F',
-          color: '#FFFFFF',
-          padding: '18px 22px',
-          borderRadius: 6,
+          display: 'grid',
+          gridTemplateColumns: 'repeat(4, 1fr)',
+          gap: 8,
         }}
       >
-        <div
-          style={{
-            fontSize: 10,
-            fontWeight: 600,
-            letterSpacing: '0.08em',
-            color: '#9AA3B2',
-            textTransform: 'uppercase',
-            marginBottom: 6,
-          }}
-        >
-          SENTINEL · SUMMARY · DETERMINISTIC SEED
-        </div>
-        <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 8 }}>
-          {view.brief.topPattern}
-        </div>
-        <div style={{ fontSize: 12, color: '#D1D5DB', lineHeight: 1.5 }}>
-          {view.brief.whatSentinelSees}
-        </div>
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-            gap: 10,
-            marginTop: 14,
-          }}
-        >
-          <MetricChip label="Confidence" value={view.brief.topConfidence} />
-          <MetricChip label="Severity" value={view.brief.topSeverity} />
-          <MetricChip
-            label="Patterns detected"
-            value={String(view.cards.length)}
-          />
-          <MetricChip
-            label="Affected programmes"
-            value={view.brief.affectedPrograms}
-          />
-        </div>
-        <div
-          style={{
-            marginTop: 12,
-            fontSize: 10,
-            color: '#525866',
-            borderTop: '1px solid #1F2F5A',
-            paddingTop: 10,
-          }}
-        >
-          {view.brief.interpretationBasis}
-        </div>
+        <AttentionKpi label="Patterns surfacing" value={String(patternCount)} />
+        <AttentionKpi label="Contradictions open" value={String(contradictionCount)} />
+        <AttentionKpi label="Syntheses ready" value="0" subdued />
+        <AttentionKpi label="Confidence" value={confidenceDisplay} />
       </section>
 
-      {topDetection && (
+      {/* §5.1 Top synthesis card — highest-priority pattern with "Shape into a Move →" */}
+      {topCard ? (
         <section
-          aria-label="Summary context used"
+          data-testid="intelligence-top-synthesis"
+          aria-label="Top synthesis"
           style={{
-            padding: '12px 16px',
+            padding: '18px 20px',
             backgroundColor: C.card,
             border: `1px solid ${C.border}`,
+            borderLeft: `4px solid ${C.navy}`,
             borderRadius: 6,
-            display: 'grid',
-            gap: 10,
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 8,
           }}
         >
-          <SectionLabel>Context used</SectionLabel>
-          <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'grid', gap: 4 }}>
-            {contextUsed.map((item) => (
-              <li key={item} style={{ fontSize: 12, color: C.ink }}>
-                <span style={{ color: C.navy, fontWeight: 600, marginRight: 6 }}>·</span>
-                {item}
-              </li>
-            ))}
-          </ul>
-          {topDetection.missingInputs.length > 0 && (
-            <div
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+            <span
               style={{
-                padding: '10px 12px',
-                backgroundColor: C.amberSoft,
-                border: `1px solid ${C.amber}44`,
-                borderRadius: 6,
-                fontSize: 12,
-                color: C.ink,
+                fontFamily: 'JetBrains Mono, monospace',
+                fontSize: 10,
+                fontWeight: 700,
+                letterSpacing: '0.1em',
+                textTransform: 'uppercase',
+                color: C.mutedSoft,
               }}
             >
-              Missing inputs: {topDetection.missingInputs.slice(0, 3).join(' · ')}
+              {PATTERN_DISPLAY_IDS[topCard.detection.patternKey] ?? 'INT-1'}
+            </span>
+            <span
+              style={{
+                fontSize: 10,
+                fontWeight: 700,
+                letterSpacing: '0.08em',
+                textTransform: 'uppercase',
+                padding: '2px 6px',
+                borderRadius: 3,
+                backgroundColor: C.navySoft,
+                color: C.navy,
+              }}
+            >
+              Pattern
+            </span>
+            <ConfidenceBadge level={topCard.confidenceLabel} />
+          </div>
+          <h2
+            style={{
+              fontFamily: 'Georgia, serif',
+              fontSize: 18,
+              fontWeight: 600,
+              color: C.ink,
+              margin: 0,
+              lineHeight: 1.3,
+            }}
+          >
+            {topCard.detection.patternName}
+          </h2>
+          <p style={{ fontSize: 13, color: C.muted, margin: 0, lineHeight: 1.5 }}>
+            {topCard.detection.whyItMatters}
+          </p>
+          {topCard.detection.affectedPrograms.length > 0 && (
+            <div style={{ fontSize: 11, color: C.mutedSoft }}>
+              Affects:{' '}
+              {topCard.detection.affectedPrograms
+                .map((ap) => ap.programName)
+                .join(' · ')}
             </div>
           )}
-        </section>
-      )}
-
-      <KnowledgeFabricHealthPanel />
-
-      {/* Recommended action */}
-      <section
-        aria-label="Recommended action"
-        style={{
-          padding: '12px 16px',
-          backgroundColor: C.navySoft,
-          border: `1px solid ${C.navy}22`,
-          borderLeft: `3px solid ${C.navy}`,
-          borderRadius: 6,
-        }}
-      >
-        <span style={{ fontSize: 12, fontWeight: 600, color: C.navy }}>
-          Sentinel recommends:{' '}
-        </span>
-        <span style={{ fontSize: 12, color: C.ink }}>{view.brief.recommendedAction}</span>
-      </section>
-
-      {/* Active patterns (top 3) */}
-      {view.cards.length > 0 ? (
-        <section aria-label="Active pattern detections">
-          <SectionLabel>Active pattern detections</SectionLabel>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            {view.cards.slice(0, 3).map((card) => (
-              <PatternRow key={card.detection.patternKey} card={card} />
-            ))}
+          <div
+            style={{
+              display: 'flex',
+              gap: 10,
+              marginTop: 4,
+              flexWrap: 'wrap',
+              alignItems: 'center',
+            }}
+          >
+            <Link
+              href={buildShapeHref(topCard, 0)}
+              data-testid="intelligence-shape-into-move"
+              style={{
+                fontSize: 13,
+                fontWeight: 600,
+                color: '#FFFFFF',
+                textDecoration: 'none',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 4,
+                padding: '6px 14px',
+                borderRadius: 4,
+                backgroundColor: C.navy,
+              }}
+            >
+              Shape into a Move →
+            </Link>
+            <span style={{ fontSize: 11, color: C.mutedSoft }}>
+              {topCard.sourceSignalCount} signal{topCard.sourceSignalCount !== 1 ? 's' : ''}{' · '}
+              {topCard.affectedProgramCount} program{topCard.affectedProgramCount !== 1 ? 's' : ''}
+            </span>
           </div>
         </section>
       ) : (
         <EmptyState message="No pattern detections seeded for this tenant." />
       )}
 
+      {/* §5.2 Pattern queue — remaining patterns with "Shape into a Move →" on each */}
+      {view.cards.length > 1 && (
+        <section aria-label="Pattern queue">
+          <SectionLabel>Pattern queue</SectionLabel>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {view.cards.slice(1).map((card, i) => (
+              <PatternRow
+                key={card.detection.patternKey}
+                card={card}
+                displayId={PATTERN_DISPLAY_IDS[card.detection.patternKey] ?? `INT-${i + 2}`}
+                shapeIntoMoveHref={buildShapeHref(card, i + 1)}
+              />
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* §5.3 What we can't yet see — honest substrate gaps */}
+      {allMissingInputs.length > 0 && (
+        <section
+          data-testid="intelligence-cant-see"
+          aria-label="What we can't yet see"
+          style={{
+            padding: '14px 16px',
+            backgroundColor: C.surface,
+            border: `1px solid ${C.border}`,
+            borderRadius: 6,
+          }}
+        >
+          <SectionLabel>What we can&apos;t yet see</SectionLabel>
+          <ul
+            style={{
+              listStyle: 'none',
+              margin: 0,
+              padding: 0,
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 6,
+            }}
+          >
+            {allMissingInputs.slice(0, 5).map((input) => (
+              <li
+                key={input}
+                style={{ fontSize: 12, color: C.muted, display: 'flex', gap: 6 }}
+              >
+                <span style={{ color: C.amber, flexShrink: 0, fontWeight: 700 }}>·</span>
+                {input}
+              </li>
+            ))}
+          </ul>
+          <div style={{ marginTop: 10 }}>
+            <Link
+              href="/setup"
+              style={{
+                fontSize: 11,
+                color: C.navy,
+                textDecoration: 'underline',
+              }}
+            >
+              Load substrate in Setup →
+            </Link>
+          </div>
+        </section>
+      )}
+
       <Caveat>
-        This Summary tab is deterministic and context-first. It does not open a live
-        Sentinel chat session and it does not invent unseen evidence.
+        Patterns are deterministic from seeded substrate. Syntheses ready counter will increase as
+        additional substrate segments are loaded (segments 15–23). No live model calls on this
+        surface.
       </Caveat>
     </div>
   );
@@ -947,7 +1094,15 @@ function ConfidenceBadge({ level }: { level: string }) {
   );
 }
 
-function PatternRow({ card }: { card: SentinelPatternCard }) {
+function PatternRow({
+  card,
+  shapeIntoMoveHref,
+  displayId,
+}: {
+  card: SentinelPatternCard;
+  shapeIntoMoveHref?: string;
+  displayId?: string;
+}) {
   return (
     <article
       style={{
@@ -961,12 +1116,109 @@ function PatternRow({ card }: { card: SentinelPatternCard }) {
         gap: 4,
       }}
     >
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
-        <span style={{ fontSize: 13, fontWeight: 600, color: C.ink }}>{card.detection.patternName}</span>
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'flex-start',
+          gap: 8,
+        }}
+      >
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+          {displayId && (
+            <span
+              style={{
+                fontFamily: 'JetBrains Mono, monospace',
+                fontSize: 10,
+                fontWeight: 700,
+                letterSpacing: '0.1em',
+                textTransform: 'uppercase',
+                color: C.mutedSoft,
+              }}
+            >
+              {displayId}
+            </span>
+          )}
+          <span style={{ fontSize: 13, fontWeight: 600, color: C.ink }}>
+            {card.detection.patternName}
+          </span>
+        </div>
         <ConfidenceBadge level={card.confidenceLabel} />
       </div>
       <span style={{ fontSize: 12, color: C.muted }}>{card.detection.whyItMatters}</span>
+      {shapeIntoMoveHref && (
+        <div style={{ marginTop: 6 }}>
+          <Link
+            href={shapeIntoMoveHref}
+            data-testid="intelligence-pattern-shape-move"
+            style={{
+              fontSize: 12,
+              fontWeight: 600,
+              color: C.navy,
+              textDecoration: 'none',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 4,
+              padding: '4px 10px',
+              borderRadius: 4,
+              backgroundColor: C.navySoft,
+              border: `1px solid ${C.navy}22`,
+            }}
+          >
+            Shape into a Move →
+          </Link>
+        </div>
+      )}
     </article>
+  );
+}
+
+/** KPI chip for the §5.1 attention strip. Light background variant (not dark like MetricChip). */
+function AttentionKpi({
+  label,
+  value,
+  subdued,
+}: {
+  label: string;
+  value: string;
+  subdued?: boolean;
+}) {
+  return (
+    <div
+      style={{
+        padding: '10px 14px',
+        backgroundColor: C.card,
+        border: `1px solid ${C.border}`,
+        borderRadius: 6,
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 4,
+        opacity: subdued ? 0.55 : 1,
+      }}
+    >
+      <span
+        style={{
+          fontFamily: 'JetBrains Mono, monospace',
+          fontSize: 10,
+          fontWeight: 700,
+          letterSpacing: '0.1em',
+          textTransform: 'uppercase',
+          color: C.mutedSoft,
+        }}
+      >
+        {label}
+      </span>
+      <span
+        style={{
+          fontFamily: 'Georgia, serif',
+          fontSize: 22,
+          fontWeight: 600,
+          color: C.ink,
+        }}
+      >
+        {value}
+      </span>
+    </div>
   );
 }
 

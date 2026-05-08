@@ -28,6 +28,10 @@ export interface EngagementPhaseData {
     maestro_person_id: string | null;
     sponsor: { name: string; role: string | null } | null;
     lead: { name: string; role: string | null } | null;
+    /** Origination charter JSONB. Includes initiative_context with the
+     *  AI initiative display ID when the Move was originated from an
+     *  Intelligence pattern or initiative page. Null for legacy Moves. */
+    charter: Record<string, unknown> | null;
     program_milestones: Array<{
       id: string;
       name: string;
@@ -122,6 +126,7 @@ export async function getEngagementWithPhaseData(
         maestro_oversight_level,
         sponsor_person_id,
         maestro_person_id,
+        charter,
         program_milestones(id, name, status, target_date, phase_number),
         program_risks(id, title, likelihood, impact, status, phase_number)
       `)
