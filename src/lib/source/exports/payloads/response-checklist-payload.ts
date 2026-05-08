@@ -205,7 +205,7 @@ function defaultMandatoryItems(archetype: string | null): ResponseChecklistItem[
       requirement: 'Three (3) reference customers in a comparable scope tier; willing to take a 30-min reference call.',
     },
   ];
-  if (family.includes('cloud')) {
+  if (family.includes('cloud') || family.includes('infrastructure')) {
     base.push({
       id: 'M-CLOUD-01',
       section: 'Cloud',
