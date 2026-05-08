@@ -1,28 +1,17 @@
-// /intelligence/map · the canonical "where am I in the universe of
-// AI bets" surface. Reads the active tenant + renders MapData from
-// the knowledge corpus. Currently fixture-bound (Meridian healthcare)
-// for the v1.1 ship; once corpus population lands, the loader in
-// src/lib/knowledge-corpus/ supplies live MapData per tenant.
+// /intelligence/map · deep-link redirect to the integrated tab.
+//
+// PR-K2 (initial) shipped the Map as a standalone route. PR-K2.1
+// integrates it as a native tab inside the IntelligenceV3 shell so
+// the founder sees Brief + Map in the Intelligence sub-menu with
+// Sentinel chat alongside the other stages. This route now redirects
+// to /intelligence — the IntelligenceV3Page reads the URL hash or
+// keeps Brief as default. Maintained as a stable deep-link URL.
 
-import type { Metadata } from 'next';
-import { IntelligenceMap } from '@/components/intelligence-v4/IntelligenceMap';
-import { getMeridianMapData } from '@/lib/knowledge-corpus/fixtures/meridian-healthcare';
+import { redirect } from 'next/navigation';
 
-export const metadata: Metadata = {
-  title: 'Intelligence · The Map · AbarVa',
-  description:
-    'A 2-D landscape of every AI bet for your industry — lifecycle stage × value-leverage at your scale, color-coded by your engagement.',
-};
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
 export default function IntelligenceMapPage() {
-  // TODO(PR-K3): replace with live tenant lookup + corpus retrieval:
-  //   const tenant = await getActiveClientRow();
-  //   const data = await loadMapForTenant(tenant);
-  // For PR-K2 we ship Meridian healthcare as the canonical demo
-  // tenant. Other tenants render with the same component once
-  // fixtures or live data exist for them.
-  const data = getMeridianMapData();
-  return <IntelligenceMap data={data} />;
+  redirect('/intelligence#map');
 }

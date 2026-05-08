@@ -11,6 +11,12 @@
 export type ChatMode = 'side-rail' | 'dock-expanded' | 'dock-collapsed';
 
 export const STAGE_KEYS = [
+  // PR-K2: Brief + Map promoted to the front of the stage list.
+  // These are the canonical corpus-grounded surfaces (the "WOW
+  // impact" pair). Today/by-function/etc. follow as the deeper
+  // exploration stages.
+  'brief',
+  'map',
   'today',
   'by-function',
   'patterns',
@@ -27,9 +33,13 @@ export interface StageDef {
   label: string;
   /** Maturity tier shown on the tab pill. */
   stage: 1 | 2 | 3;
+  /** When true, render with elevated treatment (the canonical pair). */
+  primary?: boolean;
 }
 
 export const STAGES: ReadonlyArray<StageDef> = [
+  { key: 'brief', label: 'The Brief', stage: 1, primary: true },
+  { key: 'map', label: 'The Map', stage: 1, primary: true },
   { key: 'today', label: 'Today', stage: 1 },
   { key: 'by-function', label: 'By function', stage: 2 },
   { key: 'patterns', label: 'Patterns', stage: 1 },
