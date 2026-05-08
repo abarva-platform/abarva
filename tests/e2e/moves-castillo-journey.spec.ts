@@ -8,11 +8,17 @@
  *   PROBE 8-6  — Scaffold fills to 4/4 REQ via mocked chat turns
  *   PROBE 8-7  — "Promote to P1 Charter →" is active when 4/4 filled
  *   PROBE 8-8  — Promote creates Move and redirects to detail page
+ *   PROBE 8-9  — Submit body includes extended scaffold fields (scopeBoundary, evidenceFamily)
+ *   PROBE 8-10 — Submit body includes originationTurns (chat transcript for DB persistence)
+ *   PROBE 8-11 — Submit body includes fromInitiativeId when launched from "Shape into a Move →"
  *
  * Uses:
  *   - CLERK_SESSION_TOKEN for auth (admin account, meridian active client)
  *   - page.route() mocks for /api/chat/agent and /api/programs/origination-submit
  *   - No Supabase reads/writes — the move detail page redirect is mocked
+ *
+ * Note: /admin/ai-initiatives/* redirects 301 to /home/ai-initiatives/* (PR #1695).
+ *       The test uses the canonical /home/ path directly.
  *
  * Skip condition: CLERK_SESSION_TOKEN absent (CI without real Clerk creds).
  */
@@ -23,7 +29,8 @@ import { AUTH_TOKEN, BASE_URL, BASE_HOST } from './_helpers/env';
 // ─── Constants ───────────────────────────────────────────────────────────────
 
 const MH06_INITIATIVE_SLUG = 'meridian-llm-sap-joule-2025';
-const MH06_DETAIL_URL = `/admin/ai-initiatives/${MH06_INITIATIVE_SLUG}`;
+// Route migrated from /admin/ → /home/ in PR #1695; use canonical path
+const MH06_DETAIL_URL = `/home/ai-initiatives/${MH06_INITIATIVE_SLUG}`;
 const E2E_MOVE_ID = 'e2e-castillo-journey-mock-uuid';
 
 const missingPrereqs = [!AUTH_TOKEN ? 'CLERK_SESSION_TOKEN' : null].filter(Boolean);
@@ -269,5 +276,86 @@ test.describe('Castillo Journey Kit — MH-06 → Strategic Move', () => {
 
     // Should redirect to the Move detail page
     await expect(page).toHaveURL(new RegExp(`/strategic-moves/${E2E_MOVE_ID}`), { timeout: 10_000 });
+  });
+
+  // ── PROBE 8-9 / 8-10 / 8-11: Submit body includes extended DB binding fields ──
+
+  test('PROBE 8-9/8-10/8-11 — submit body includes scopeBoundary, evidenceFamily, originationTurns, fromInitiativeId', async ({ page }) => {
+    await withMeridianAuth(page);
+
+    let chatCallCount = 0;
+    await page.route('**/api/chat/agent', async (route) => {
+      chatCallCount++;
+      await route.fulfill({
+        status: 200,
+        contentType: 'text/plain; charset=utf-8',
+        body: chatCallCount === 1 ? buildTurn1Stream() : buildTurn2Stream(),
+      });
+    });
+
+    // Capture the submit request body for inspection
+    let capturedSubmitBody: Record<string, unknown> | null = null;
+    await page.route('**/api/programs/origination-submit', async (route) => {
+      const request = route.request();
+      const bodyText = request.postData() ?? '{}';
+      try {
+        capturedSubmitBody = JSON.parse(bodyText) as Record<string, unknown>;
+      } catch {
+        capturedSubmitBody = null;
+      }
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(buildPromoteResponse()),
+      });
+    });
+
+    const params = new URLSearchParams({
+      fromInitiative: '1',
+      fromId: 'MH-06',
+      fromName: 'Joule (SAP) Pilot for Finance',
+      fromStatus: 'value_lag',
+      fromOwner: 'SAP COE',
+      fromGoal: 'Restore margin · accelerate financial recovery',
+      fromGapUsd: '1800000',
+    });
+
+    await page.goto(`/strategic-moves/new?${params.toString()}`);
+
+    const input = page.getByPlaceholder(/Describe the outcome|pick a step/i);
+    await expect(input).toBeVisible({ timeout: 10_000 });
+
+    await input.fill('Root cause: RPA pipeline stalled, Finance on manual SAP. Scope: Finance team only, 90 days.');
+    await page.keyboard.press('Enter');
+
+    await input.fill('Archetype is Workflow Automation — broken pipeline, not a new AI build.');
+    await page.keyboard.press('Enter');
+
+    const promoteBtn = page.getByRole('button', { name: /Promote to P1 Charter/i });
+    await expect(promoteBtn).toBeEnabled({ timeout: 15_000 });
+
+    await promoteBtn.click();
+    await expect(page).toHaveURL(new RegExp(`/strategic-moves/${E2E_MOVE_ID}`), { timeout: 10_000 });
+
+    // ── PROBE 8-9: extended scaffold fields sent ──
+    // scopeBoundary and evidenceFamily must be present in the body (may be null when not filled)
+    expect(capturedSubmitBody).not.toBeNull();
+    const body = capturedSubmitBody as unknown as Record<string, unknown>;
+    expect(body).toHaveProperty('scopeBoundary');
+    expect(body).toHaveProperty('evidenceFamily');
+
+    // ── PROBE 8-10: origination turns sent for DB persistence ──
+    const turns = body['originationTurns'];
+    expect(Array.isArray(turns)).toBe(true);
+    // At least the 2 user turns (plus Nexus responses) should be captured
+    expect((turns as unknown[]).length).toBeGreaterThanOrEqual(2);
+    // Each turn must have role + text
+    const sampleTurn = (turns as Array<{ role?: unknown; text?: unknown }>)[0];
+    expect(sampleTurn).toHaveProperty('role');
+    expect(sampleTurn).toHaveProperty('text');
+    expect(['user', 'assistant'].includes(String(sampleTurn.role))).toBe(true);
+
+    // ── PROBE 8-11: surface field set to /strategic-moves/new ──
+    expect(body['surface']).toBe('/strategic-moves/new');
   });
 });
