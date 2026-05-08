@@ -105,10 +105,14 @@ export function IntelligenceV3Page({
       >
         <main
           style={{
+            // PR-H9 (2026-05-07): drop the 1280 maxWidth cap. The
+            // outer grid is `1fr 440px`, so the 1fr cell is already
+            // viewport − 440 (chat). Capping at 1280 left cream gaps
+            // on wide monitors and made the page read as "not using
+            // full width." Padding still keeps breathing room from
+            // the edges.
             padding: `${SPACING.lg}px clamp(${SPACING.lg}px, 4vw, ${SPACING.xxxl}px)`,
-            maxWidth: 1280,
             width: '100%',
-            margin: '0 auto',
             boxSizing: 'border-box',
             paddingBottom: SPACING.xxxl + 56, // bottom gutter for any docked chat
           }}
