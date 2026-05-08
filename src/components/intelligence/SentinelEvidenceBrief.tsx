@@ -7,7 +7,7 @@ interface SentinelEvidenceBriefProps {
 
 export function SentinelEvidenceBrief({ view }: SentinelEvidenceBriefProps) {
   return (
-    <div style={{ fontFamily: 'DM Sans, sans-serif', backgroundColor: '#FBFAF7', padding: '20px', maxWidth: '640px' }}>
+    <div style={{ fontFamily: 'Inter, -apple-system, sans-serif', backgroundColor: '#ffffff', padding: '20px', maxWidth: '640px' }}>
       {/* Header */}
       <div style={{ marginBottom: '16px' }}>
         <div style={{ fontSize: '10px', fontWeight: 600, color: '#1B2B5C', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: '4px' }}>

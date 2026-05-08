@@ -12,7 +12,7 @@
 import { listDeferredMetrics, type DeferredMetricView } from '@/lib/tower/deferred-metrics';
 
 const C = {
-  cream: '#F8F7F4',
+  cream: '#ffffff',
   card: '#FFFFFF',
   ink: '#0A0C12',
   inkMuted: '#525866',

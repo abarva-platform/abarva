@@ -46,7 +46,7 @@ export function EvidenceChipList({
             }}>
               {ref.id} · {ref.kind}
             </div>
-            <h2 style={{ fontFamily: 'Georgia, serif', fontSize: 26, letterSpacing: '-0.02em', margin: 0, fontWeight: 700, lineHeight: 1.15 }}>
+            <h2 style={{ fontFamily: 'Fraunces, Georgia, serif', fontSize: 26, letterSpacing: '-0.02em', margin: 0, fontWeight: 700, lineHeight: 1.15 }}>
               {ref.label}
             </h2>
           </header>

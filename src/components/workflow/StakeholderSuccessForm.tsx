@@ -119,7 +119,7 @@ export function StakeholderSuccessForm({
         <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 10, fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#9B6DFF' }}>
           Success definition · {stakeholderRole}
         </div>
-        <h4 style={{ margin: '6px 0 0', fontFamily: 'Georgia, serif', fontSize: 17, color: '#1a1612' }}>
+        <h4 style={{ margin: '6px 0 0', fontFamily: 'Fraunces, Georgia, serif', fontSize: 17, color: '#1a1612' }}>
           {stakeholderName} — what does success look like for you?
         </h4>
       </header>
@@ -192,7 +192,7 @@ function CommittedView({ record }: { record: StakeholderSuccessRecord }) {
       <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 10, fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#9B6DFF' }}>
         Captured · {record.stakeholderRole}
       </div>
-      <div style={{ fontFamily: 'Georgia, serif', fontSize: 16, color: '#1a1612' }}>{record.stakeholderName}</div>
+      <div style={{ fontFamily: 'Fraunces, Georgia, serif', fontSize: 16, color: '#1a1612' }}>{record.stakeholderName}</div>
       <p style={{ margin: 0, fontSize: 13, lineHeight: 1.55, color: '#3d342d' }}>{record.successDefinition}</p>
       <div style={{ fontSize: 12, color: '#6d625a' }}>
         <strong>{record.metric}</strong> · {record.target} · horizon {record.horizonMonths} mo

@@ -18,7 +18,7 @@ import type { InstanceHealthGrade } from '@/lib/reasoning/instance-health';
 // ─────────────────────────────────────────────────────────────────────────────
 
 const C = {
-  surface: '#F8F7F4',
+  surface: '#ffffff',
   card: '#FFFFFF',
   ink: '#0A0C12',
   muted: '#525866',
@@ -158,7 +158,7 @@ export function PortfolioPhaseHeatmap() {
         style={{
           display: 'grid',
           gridTemplateColumns,
-          fontFamily: 'DM Sans, sans-serif',
+          fontFamily: 'Inter, sans-serif',
         }}
       >
         {/* ── Header row ── */}

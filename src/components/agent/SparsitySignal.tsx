@@ -38,7 +38,7 @@ export function SparsitySignal({ phraseIndex = 0, evidenceSummary }: SparsitySig
       role="note"
       aria-label="Evidence disclosure"
       style={{
-        fontFamily: 'Georgia, "Times New Roman", serif',
+        fontFamily: 'Fraunces, Georgia, serif',
         fontStyle: 'italic',
         fontSize: 14,
         lineHeight: 1.6,

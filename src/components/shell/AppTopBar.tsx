@@ -151,8 +151,8 @@ export function AppTopBar({ showProductNav = true }: AppTopBarProps) {
       data-testid="app-top-bar"
       style={{
         minHeight: 58,
-        background: "#FBFAF7",
-        borderBottom: `1px solid ${SHELL.CARD_LINE_SOFT}`,
+        background: "#ffffff",
+        borderBottom: `1px solid ${SHELL.CARD_LINE}`,
         display: "flex",
         alignItems: "center",
         justifyContent: "space-between",
@@ -407,7 +407,7 @@ export function AppTopBar({ showProductNav = true }: AppTopBarProps) {
                   width: 28,
                   height: 28,
                   borderRadius: "50%",
-                  background: "#E8E2D8",
+                  background: "rgba(12, 26, 58, 0.07)",
                   color: SHELL.INK,
                   display: "flex",
                   alignItems: "center",

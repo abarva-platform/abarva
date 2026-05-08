@@ -45,7 +45,7 @@ const exportCss = `
   padding: 10px 14px; border-radius: 14px;
   background: rgba(14,159,140,0.08);
   border: 1px solid rgba(14,159,140,0.22);
-  font-family: 'DM Sans', -apple-system, sans-serif;
+  font-family: 'Inter', -apple-system, system-ui, sans-serif;
   flex-wrap: wrap;
 }
 .exp-btn {

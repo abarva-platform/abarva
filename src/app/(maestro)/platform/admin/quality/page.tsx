@@ -5,7 +5,7 @@ import type { CSSProperties } from 'react'
 import { calculateConfidence } from '@/lib/confidence'
 
 const S = {
-  page: { minHeight: '100vh', background: '#F8F7F4', fontFamily: "'DM Sans', -apple-system, sans-serif", color: '#111827' } as CSSProperties,
+  page: { minHeight: '100vh', background: '#F8F7F4', fontFamily: "'Inter', -apple-system, system-ui, sans-serif", color: '#111827' } as CSSProperties,
   shell: { maxWidth: '1480px', margin: '0 auto', padding: '32px 40px 64px' } as CSSProperties,
   card: { background: '#FFFFFF', border: '1px solid #E8E6E3', borderRadius: '16px', boxShadow: '0 18px 38px rgba(15,23,42,0.04)' } as CSSProperties,
   label: { fontSize: '11px', fontWeight: 700, color: '#6B7280', textTransform: 'uppercase' as const, letterSpacing: '0.12em' } as CSSProperties,
@@ -520,7 +520,7 @@ export default function AdminQualityOps() {
           <div style={{ display: 'flex', justifyContent: 'space-between', gap: '20px', flexWrap: 'wrap', alignItems: 'flex-start' }}>
             <div style={{ maxWidth: '880px' }}>
               <div style={{ ...S.label, color: '#14B8A6', marginBottom: '10px' }}>Quality Ops</div>
-              <h1 style={{ fontSize: '34px', lineHeight: 1.02, letterSpacing: '-0.04em', margin: 0, color: '#111827', fontFamily: 'Georgia, serif' }}>
+              <h1 style={{ fontSize: '34px', lineHeight: 1.02, letterSpacing: '-0.04em', margin: 0, color: '#111827', fontFamily: 'Fraunces, Georgia, serif' }}>
                 Score the corpus. Show the gaps. Move the score with operator work.
               </h1>
               <p style={{ margin: '16px 0 0', fontSize: '16px', lineHeight: 1.7, color: '#4B5563', maxWidth: '820px' }}>
@@ -584,7 +584,7 @@ export default function AdminQualityOps() {
               <div style={{ display: 'flex', justifyContent: 'space-between', gap: '16px', alignItems: 'flex-start', flexWrap: 'wrap' }}>
                 <div style={{ maxWidth: '760px' }}>
                   <div style={{ ...S.label, color: '#14B8A6', marginBottom: '10px' }}>Execution tracker</div>
-                  <div style={{ fontSize: '28px', lineHeight: 1.04, letterSpacing: '-0.03em', fontWeight: 700, color: '#111827', fontFamily: 'Georgia, serif' }}>
+                  <div style={{ fontSize: '28px', lineHeight: 1.04, letterSpacing: '-0.03em', fontWeight: 700, color: '#111827', fontFamily: 'Fraunces, Georgia, serif' }}>
                     Execute the backlog one item at a time, with status always visible.
                   </div>
                   <div style={{ marginTop: '12px', fontSize: '15px', lineHeight: 1.75, color: '#4B5563', maxWidth: '720px' }}>

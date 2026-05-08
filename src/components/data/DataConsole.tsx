@@ -33,7 +33,7 @@ const MUTE = 'rgba(245, 245, 240, 0.72)';
 const CORAL = '#FF6B4A';
 const FONT_BODY = 'DM Sans, -apple-system, sans-serif';
 const FONT_MONO = 'JetBrains Mono, monospace';
-const FONT_SERIF = 'Georgia, serif';
+const FONT_SERIF = 'Fraunces, Georgia, serif';
 
 const ACCEPTED = '.pdf,.docx,.md,.txt';
 

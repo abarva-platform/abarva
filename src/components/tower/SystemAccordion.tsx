@@ -26,7 +26,7 @@ export function SystemAccordion({ system }: { system: CatalogSystem }) {
           background: 'transparent',
           border: 'none',
           color: INK,
-          fontFamily: 'DM Sans, sans-serif',
+          fontFamily: 'Inter, sans-serif',
           cursor: 'pointer',
           textAlign: 'left',
         }}

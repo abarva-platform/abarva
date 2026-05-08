@@ -105,7 +105,7 @@ function BreadthChipCard({ chip }: { chip: BreadthChip }) {
       </EyebrowLabel>
       <div
         style={{
-          fontFamily: 'Georgia, serif',
+          fontFamily: 'Fraunces, Georgia, serif',
           fontSize: 22,
           fontWeight: 400,
           color: COLORS.textPrimary,

@@ -141,14 +141,14 @@ export default async function StaffAugPage({
   const towerHref = overrideId ? `/tower?clientId=${overrideId}` : '/tower';
 
   return (
-    <div style={{ padding: '32px 40px 64px', width: '100%', maxWidth: 1800, margin: '0 auto', color: INK, fontFamily: 'DM Sans, sans-serif' }}>
+    <div style={{ padding: '32px 40px 64px', width: '100%', maxWidth: 1800, margin: '0 auto', color: INK, fontFamily: 'Inter, sans-serif' }}>
       <Link href={towerHref} style={{ fontFamily: MONO, fontSize: 10, color: TEAL, textDecoration: 'none', letterSpacing: '0.14em' }}>
         ← CONTROL TOWER
       </Link>
 
       {/* Header meta strip */}
       <div style={{ display: 'flex', alignItems: 'baseline', gap: 16, marginTop: 14, marginBottom: 4 }}>
-        <h1 style={{ fontFamily: 'Georgia, serif', fontSize: 30, fontWeight: 400, color: INK, margin: 0 }}>
+        <h1 style={{ fontFamily: 'Fraunces, Georgia, serif', fontSize: 30, fontWeight: 400, color: INK, margin: 0 }}>
           Staff Augmentation
         </h1>
         {active && (
@@ -338,7 +338,7 @@ function Tile({ label, value, sub, accent, isLast }: { label: string; value: str
   return (
     <div style={{ padding: '14px 16px', borderRight: isLast ? 'none' : BORDER, background: 'rgba(255,255,255,0.02)' }}>
       <div style={{ fontFamily: MONO, fontSize: 9, color: MUTE, letterSpacing: '0.14em' }}>{label}</div>
-      <div style={{ fontFamily: 'Georgia, serif', fontSize: 22, fontWeight: 400, color: accent, marginTop: 4, lineHeight: 1 }}>{value}</div>
+      <div style={{ fontFamily: 'Fraunces, Georgia, serif', fontSize: 22, fontWeight: 400, color: accent, marginTop: 4, lineHeight: 1 }}>{value}</div>
       <div style={{ fontSize: 11, color: DIM, marginTop: 4 }}>{sub}</div>
     </div>
   );

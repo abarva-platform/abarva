@@ -162,7 +162,7 @@ export default async function DeliverableDetailPage({
         <div style={{ fontFamily: MONO, fontSize: 10, color: PURPLE, letterSpacing: '0.14em', marginBottom: 6 }}>
           {engagement.name.toUpperCase()} · {deliverable.deliverable_type_key}
         </div>
-        <h1 style={{ fontFamily: 'Georgia, serif', fontSize: 28, fontWeight: 400, margin: '0 0 8px' }}>
+        <h1 style={{ fontFamily: 'Fraunces, Georgia, serif', fontSize: 28, fontWeight: 400, margin: '0 0 8px' }}>
           {deliverable.title}
         </h1>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, alignItems: 'baseline', fontSize: 12 }}>
@@ -496,7 +496,7 @@ function Tile({ label, value, sub, accent, isLast }: { label: string; value: str
   return (
     <div style={{ padding: '14px 16px', borderRight: isLast ? 'none' : BORDER, background: 'rgba(255,255,255,0.02)' }}>
       <div style={{ fontFamily: MONO, fontSize: 9, color: MUTE, letterSpacing: '0.14em' }}>{label}</div>
-      <div style={{ fontFamily: 'Georgia, serif', fontSize: 22, fontWeight: 400, color: accent, marginTop: 4, lineHeight: 1 }}>{value}</div>
+      <div style={{ fontFamily: 'Fraunces, Georgia, serif', fontSize: 22, fontWeight: 400, color: accent, marginTop: 4, lineHeight: 1 }}>{value}</div>
       <div style={{ fontSize: 11, color: DIM, marginTop: 4 }}>{sub}</div>
     </div>
   );

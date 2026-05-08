@@ -115,7 +115,7 @@ export function ProgramTensionForm({
         <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 10, fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#D97706' }}>
           Tension captured · {status.record.category}
         </div>
-        <div style={{ fontFamily: 'Georgia, serif', fontSize: 15, color: '#1a1612' }}>{status.record.stakeholderName}</div>
+        <div style={{ fontFamily: 'Fraunces, Georgia, serif', fontSize: 15, color: '#1a1612' }}>{status.record.stakeholderName}</div>
         <p style={{ margin: 0, fontSize: 13, lineHeight: 1.55, color: '#3d342d' }}>{status.record.tension}</p>
         <div style={{ fontSize: 12, color: '#6d625a' }}>
           <strong>Resolution:</strong> {status.record.resolutionPath} · owned by {status.record.owner}
@@ -142,7 +142,7 @@ export function ProgramTensionForm({
         <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 10, fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#D97706' }}>
           Tension capture
         </div>
-        <h4 style={{ margin: '6px 0 0', fontFamily: 'Georgia, serif', fontSize: 17, color: '#1a1612' }}>
+        <h4 style={{ margin: '6px 0 0', fontFamily: 'Fraunces, Georgia, serif', fontSize: 17, color: '#1a1612' }}>
           {stakeholderName} — what is the top tension that could block this program?
         </h4>
       </header>

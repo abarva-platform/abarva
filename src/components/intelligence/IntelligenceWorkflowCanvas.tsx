@@ -8,7 +8,7 @@ interface IntelligenceWorkflowCanvasProps {
 export function IntelligenceWorkflowCanvas({ view }: IntelligenceWorkflowCanvasProps) {
   const { sentinelBrief, patternStrip, activeMode, availableModes } = view;
   return (
-    <div style={{ fontFamily: 'DM Sans, sans-serif', backgroundColor: '#FBFAF7', padding: '24px' }}>
+    <div style={{ fontFamily: 'Inter, -apple-system, sans-serif', backgroundColor: '#ffffff', padding: '24px' }}>
       {/* Sentinel Brief */}
       <div style={{
         backgroundColor: '#0F1E3F',

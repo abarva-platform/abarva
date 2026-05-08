@@ -41,7 +41,7 @@ const GREEN = '#0F766E';
 const GREEN_TINT = '#EAF5EE';
 
 const FONT =
-  '"DM Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+  '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
 const SERIF = 'Georgia, "Times New Roman", "Iowan Old Style", serif';
 
 export interface NexusProgramWorkbenchProps extends NexusProgramWorkbenchInput {

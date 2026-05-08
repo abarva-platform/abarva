@@ -340,7 +340,7 @@ function railCss(accent: string, accentSoft: string): string {
       --ar-accent: ${accent};
       --ar-accent-soft: ${accentSoft};
     }
-    .ar-collapsed, .ar-expanded { font-family: 'DM Sans', -apple-system, sans-serif; }
+    .ar-collapsed, .ar-expanded { font-family: 'Inter', -apple-system, system-ui, sans-serif; }
 
     .ar-collapsed {
       position: fixed;
@@ -370,7 +370,7 @@ function railCss(accent: string, accentSoft: string): string {
       width: 32px; height: 32px; border-radius: 50%;
       background: var(--ar-accent); color: #FFFFFF;
       display: flex; align-items: center; justify-content: center;
-      font-family: 'Georgia', serif; font-size: 18px;
+      font-family: 'Fraunces, Georgia, serif', serif; font-size: 18px;
     }
     .ar-collapsed-name {
       font-family: 'JetBrains Mono', monospace;
@@ -402,7 +402,7 @@ function railCss(accent: string, accentSoft: string): string {
       width: 16px; height: 16px; border-radius: 50%;
       background: #E04444; color: #FFFFFF;
       display: flex; align-items: center; justify-content: center;
-      font-family: 'Georgia', serif; font-size: 11px; font-weight: 700;
+      font-family: 'Fraunces, Georgia, serif', serif; font-size: 11px; font-weight: 700;
     }
     @keyframes ar-halo {
       0%, 100% { box-shadow: 0 0 0 2px var(--ar-accent-soft); opacity: 1; }
@@ -440,10 +440,10 @@ function railCss(accent: string, accentSoft: string): string {
       width: 36px; height: 36px; border-radius: 50%;
       background: var(--ar-accent); color: #FFFFFF;
       display: flex; align-items: center; justify-content: center;
-      font-family: 'Georgia', serif; font-size: 20px;
+      font-family: 'Fraunces, Georgia, serif', serif; font-size: 20px;
     }
     .ar-name {
-      font-family: 'Georgia', serif;
+      font-family: 'Fraunces, Georgia, serif', serif;
       font-size: 18px;
       font-weight: 600;
       color: #1a1612;
@@ -518,7 +518,7 @@ function railCss(accent: string, accentSoft: string): string {
     }
     .ar-bubble.agent .ar-bubble-avatar {
       background: var(--ar-accent); color: #FFFFFF;
-      font-family: 'Georgia', serif; font-size: 15px;
+      font-family: 'Fraunces, Georgia, serif', serif; font-size: 15px;
     }
     .ar-bubble-content { flex: 1; min-width: 0; }
     .ar-bubble-speaker {
@@ -564,7 +564,7 @@ function railCss(accent: string, accentSoft: string): string {
       border: 1px solid rgba(10,10,11,0.12);
       border-radius: 8px;
       cursor: pointer;
-      font-family: 'DM Sans', sans-serif;
+      font-family: 'Inter', sans-serif;
       font-size: 13px;
       color: #1a1612;
       transition: all 0.15s;
@@ -689,7 +689,7 @@ export function ConversationTurn({ turn, agent, userInitials = 'YO', streaming =
 
 function turnCss(accent: string): string {
   return `
-    .ct-bubble { display: flex; gap: 10px; font-family: 'DM Sans', -apple-system, sans-serif; }
+    .ct-bubble { display: flex; gap: 10px; font-family: 'Inter', -apple-system, system-ui, sans-serif; }
     .ct-avatar {
       width: 28px; height: 28px; border-radius: 50%;
       flex-shrink: 0;
@@ -699,7 +699,7 @@ function turnCss(accent: string): string {
     .ct-bubble.you .ct-avatar { background: rgba(10,10,11,0.08); color: #1a1612; }
     .ct-bubble.agent .ct-avatar {
       background: ${accent}; color: #FFFFFF;
-      font-family: 'Georgia', serif; font-size: 15px;
+      font-family: 'Fraunces, Georgia, serif', serif; font-size: 15px;
     }
     .ct-content { flex: 1; min-width: 0; }
     .ct-speaker {

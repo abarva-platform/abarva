@@ -40,7 +40,7 @@ export default async function DimensionOnboardPage({ params }: { params: Promise
         </span>
       </div>
 
-      <h1 style={{ fontFamily: 'Georgia, serif', fontSize: 36, fontWeight: 400, color: INK, margin: 0, lineHeight: 1.2 }}>
+      <h1 style={{ fontFamily: 'Fraunces, Georgia, serif', fontSize: 36, fontWeight: 400, color: INK, margin: 0, lineHeight: 1.2 }}>
         Populate the {dim.name} dimension
       </h1>
       <p style={{ fontSize: 15, color: MUTE, marginTop: 10, maxWidth: 720, lineHeight: 1.55 }}>
@@ -94,7 +94,7 @@ export default async function DimensionOnboardPage({ params }: { params: Promise
               background: 'transparent',
               border: `1px solid ${TEAL}`,
               color: TEAL,
-              fontFamily: 'DM Sans, sans-serif',
+              fontFamily: 'Inter, sans-serif',
               fontSize: 14,
               fontWeight: 600,
               borderRadius: 6,
@@ -114,7 +114,7 @@ export default async function DimensionOnboardPage({ params }: { params: Promise
               background: 'transparent',
               border: `1px solid ${MUTE}`,
               color: INK,
-              fontFamily: 'DM Sans, sans-serif',
+              fontFamily: 'Inter, sans-serif',
               fontSize: 14,
               fontWeight: 600,
               borderRadius: 6,
@@ -133,7 +133,7 @@ export default async function DimensionOnboardPage({ params }: { params: Promise
               background: 'transparent',
               border: `1px solid ${MUTE}`,
               color: INK,
-              fontFamily: 'DM Sans, sans-serif',
+              fontFamily: 'Inter, sans-serif',
               fontSize: 14,
               fontWeight: 600,
               borderRadius: 6,
@@ -163,7 +163,7 @@ export default async function DimensionOnboardPage({ params }: { params: Promise
                 border: `0.5px solid rgba(245,245,240,0.18)`,
                 borderRadius: 999,
                 color: INK,
-                fontFamily: 'DM Sans, sans-serif',
+                fontFamily: 'Inter, sans-serif',
                 fontSize: 13,
                 textDecoration: 'none',
               }}

@@ -93,7 +93,7 @@ export default async function QueuePage() {
     .slice(0, 5);
 
   return (
-    <main style={{ minHeight: '100vh', background: '#F5F1EB', color: '#1a1612', fontFamily: "'DM Sans', -apple-system, sans-serif" }}>
+    <main style={{ minHeight: '100vh', background: '#F5F1EB', color: '#1a1612', fontFamily: "'Inter', -apple-system, system-ui, sans-serif" }}>
       <style>{pageCss}</style>
       <div className="q-shell">
         <header className="q-header">

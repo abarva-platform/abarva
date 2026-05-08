@@ -2,7 +2,7 @@
 import { useState } from 'react'
 
 const S = {
-  page: { minHeight: '100vh', background: '#F8F7F4', fontFamily: "'DM Sans', -apple-system, sans-serif" } as React.CSSProperties,
+  page: { minHeight: '100vh', background: '#F8F7F4', fontFamily: "'Inter', -apple-system, system-ui, sans-serif" } as React.CSSProperties,
   card: { background: '#FFFFFF', border: '1px solid #E8E6E3', borderRadius: '8px', padding: '24px' } as React.CSSProperties,
   label: { fontSize: '11px', fontWeight: 700, color: '#6B7280', textTransform: 'uppercase' as const, letterSpacing: '0.08em', marginBottom: '12px' } as React.CSSProperties,
 }
@@ -271,7 +271,7 @@ export default function AdminData() {
       <div style={{ maxWidth: '1400px', margin: '0 auto', padding: '32px 48px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '24px' }}>
           <div>
-            <h1 style={{ fontSize: '22px', fontWeight: 700, color: '#0C0C0C', marginBottom: '4px', fontFamily: "'DM Sans', sans-serif" }}>Data Repository</h1>
+            <h1 style={{ fontSize: '22px', fontWeight: 700, color: '#0C0C0C', marginBottom: '4px', fontFamily: "'Inter', sans-serif" }}>Data Repository</h1>
             <p style={{ fontSize: '14px', color: '#6B7280' }}>All client files ingested, categorised, and approved for intelligence.</p>
           </div>
           <button onClick={() => setShowModal(true)} style={{ padding: '9px 18px', borderRadius: '6px', background: '#0C0C0C', color: '#FFFFFF', border: 'none', fontSize: '13px', fontWeight: 600, cursor: 'pointer' }}>
@@ -368,16 +368,16 @@ export default function AdminData() {
               borderBottom: i < displayFiles.length - 1 ? '1px solid #F3F2F0' : 'none',
               background: f.status === 'missing' ? '#FEF2F2' : i % 2 === 0 ? '#FFFFFF' : '#FAFAF9',
             }}>
-              <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '13px', color: f.status === 'missing' ? '#DC2626' : '#0C0C0C', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const }}>
+              <div style={{ fontFamily: "'Inter', sans-serif", fontSize: '13px', color: f.status === 'missing' ? '#DC2626' : '#0C0C0C', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const }}>
                 {f.status === 'missing' ? '○ ' : ''}{f.name}
               </div>
               <div>
                 <span style={{ fontFamily: 'monospace', fontSize: '9px', fontWeight: 700, color: FILE_TYPE_COLOR[f.type], background: `${FILE_TYPE_COLOR[f.type]}12`, padding: '2px 5px', borderRadius: '3px', textTransform: 'uppercase' as const }}>{f.type}</span>
               </div>
-              <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '12px', color: '#6B7280' }}>{f.segment}</div>
-              <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '12px', color: '#6B7280' }}>{f.category}</div>
+              <div style={{ fontFamily: "'Inter', sans-serif", fontSize: '12px', color: '#6B7280' }}>{f.segment}</div>
+              <div style={{ fontFamily: "'Inter', sans-serif", fontSize: '12px', color: '#6B7280' }}>{f.category}</div>
               <div style={{ fontFamily: 'monospace', fontSize: '11px', color: '#9CA3AF' }}>{f.date}</div>
-              <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '12px', fontWeight: 600, color: f.confidence >= 90 ? '#16A34A' : f.confidence >= 80 ? '#2563EB' : f.confidence > 0 ? '#D97706' : '#9CA3AF' }}>
+              <div style={{ fontFamily: "'Inter', sans-serif", fontSize: '12px', fontWeight: 600, color: f.confidence >= 90 ? '#16A34A' : f.confidence >= 80 ? '#2563EB' : f.confidence > 0 ? '#D97706' : '#9CA3AF' }}>
                 {f.confidence > 0 ? `${f.confidence}%` : '—'}
               </div>
               <div>
@@ -433,7 +433,7 @@ export default function AdminData() {
                     </div>
                     <textarea rows={2} placeholder={q.placeholder} value={answers[q.id] || ''}
                       onChange={e => setAnswers(p => ({ ...p, [q.id]: e.target.value }))}
-                      style={{ width: '100%', padding: '10px 12px', border: '1px solid #E8E6E3', borderRadius: '6px', fontSize: '13px', fontFamily: "'DM Sans', sans-serif", color: '#0C0C0C', resize: 'none' as const, boxSizing: 'border-box' as const }}
+                      style={{ width: '100%', padding: '10px 12px', border: '1px solid #E8E6E3', borderRadius: '6px', fontSize: '13px', fontFamily: "'Inter', sans-serif", color: '#0C0C0C', resize: 'none' as const, boxSizing: 'border-box' as const }}
                     />
                     {i < Q_UPDATE_QUESTIONS.length - 1 && <div style={{ height: '1px', background: '#F3F2F0', marginTop: '16px' }} />}
                   </div>

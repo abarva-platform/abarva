@@ -97,7 +97,7 @@ export function ContradictionResolutionPanel({
           alignItems: 'center',
           gap: 10,
           padding: '16px 20px',
-          fontFamily: '"DM Sans", "Inter", system-ui, -apple-system, sans-serif',
+          fontFamily: '"Inter", "Inter", system-ui, -apple-system, sans-serif',
           fontSize: 14,
           color: '#1B5E20',
           background: '#E8F5E8',
@@ -140,7 +140,7 @@ export function ContradictionResolutionPanel({
               <div
                 role="alert"
                 style={{
-                  fontFamily: '"DM Sans", "Inter", system-ui, -apple-system, sans-serif',
+                  fontFamily: '"Inter", "Inter", system-ui, -apple-system, sans-serif',
                   fontSize: 12,
                   color: '#8B1F0F',
                   background: '#FFE6E1',

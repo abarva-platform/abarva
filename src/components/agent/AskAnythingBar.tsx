@@ -271,7 +271,7 @@ export function AskAnythingBar({
                   width: 26, height: 26, borderRadius: '50%', flexShrink: 0,
                   background: cfg.accent, color: '#fff',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  fontSize: 13, fontFamily: 'Georgia, serif',
+                  fontSize: 13, fontFamily: 'Fraunces, Georgia, serif',
                 }}>
                   {cfg.glyph}
                 </div>
@@ -336,7 +336,7 @@ export function AskAnythingBar({
               width: 16, height: 16, borderRadius: '50%',
               background: cfg.accent, color: '#fff', flexShrink: 0,
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: 9, fontFamily: 'Georgia, serif',
+              fontSize: 9, fontFamily: 'Fraunces, Georgia, serif',
             }}>
               {cfg.glyph}
             </div>

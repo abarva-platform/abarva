@@ -162,7 +162,7 @@ export default async function DeliverablesPage({
         <div style={{ fontFamily: MONO, fontSize: 10, color: PURPLE, letterSpacing: '0.14em', marginBottom: 4 }}>
           DELIVERABLES · {engagement.name}
         </div>
-        <h1 style={{ fontFamily: 'Georgia, serif', fontSize: 26, fontWeight: 400, margin: 0 }}>
+        <h1 style={{ fontFamily: 'Fraunces, Georgia, serif', fontSize: 26, fontWeight: 400, margin: 0 }}>
           Work products
         </h1>
       </div>

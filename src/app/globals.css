@@ -28,7 +28,7 @@
   --color-indigo: #818cf8;
   --color-indigo-dim: rgba(129, 140, 248, 0.12);
 
-  --font-body-sans: "DM Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-body-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
   --font-body-mono: "JetBrains Mono", "Fira Code", monospace;
   --font-body-serif: "Fraunces", Georgia, serif;
 

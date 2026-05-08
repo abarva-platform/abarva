@@ -30,7 +30,7 @@ export function AmsBafoPanel({ round }: AmsBafoPanelProps) {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '8px', flexWrap: 'wrap' }}>
         <div>
           <h3 style={{
-            fontFamily: 'Georgia, serif',
+            fontFamily: 'Fraunces, Georgia, serif',
             fontWeight: 400,
             fontSize: '15px',
             color: '#0A0C12',
@@ -149,7 +149,7 @@ export function AmsBafoPanel({ round }: AmsBafoPanelProps) {
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '8px', flexWrap: 'wrap' }}>
                   <div>
                     <div style={{
-                      fontFamily: 'Georgia, serif',
+                      fontFamily: 'Fraunces, Georgia, serif',
                       fontWeight: 400,
                       fontSize: '14px',
                       color: '#0A0C12',

@@ -53,7 +53,7 @@ export default async function EvidenceDetailPage({
           <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 12, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#8a7e72', fontWeight: 700 }}>
             {entry.id} · {entry.kind}
           </div>
-          <h1 className="del-title" style={{ fontFamily: 'Georgia, serif', fontSize: 'clamp(40px, 5vw, 72px)', lineHeight: 0.96, letterSpacing: '-0.02em', margin: 0 }}>
+          <h1 className="del-title" style={{ fontFamily: 'Fraunces, Georgia, serif', fontSize: 'clamp(40px, 5vw, 72px)', lineHeight: 0.96, letterSpacing: '-0.02em', margin: 0 }}>
             {entry.label}
           </h1>
           <p style={{ margin: 0, fontSize: 18, lineHeight: 1.6, color: '#4d443d' }}>

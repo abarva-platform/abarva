@@ -18,7 +18,7 @@ export function ControlTowerActiveLens({ view }: ControlTowerActiveLensProps) {
   };
 
   return (
-    <div style={{ fontFamily: 'DM Sans, sans-serif', backgroundColor: '#FBFAF7', padding: '20px' }}>
+    <div style={{ fontFamily: 'Inter, sans-serif', backgroundColor: '#ffffff', padding: '20px' }}>
       {/* Lens tabs */}
       <div
         style={{

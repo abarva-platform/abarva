@@ -7,25 +7,32 @@ import { AppShell } from '@/components/shell/AppShell';
 
 export const dynamic = 'force-dynamic';
 
+type Tab = 'overview' | 'documents' | 'activity';
+
 interface Props {
   params: Promise<{ moveId: string }>;
+  searchParams: Promise<{ tab?: string }>;
 }
 
-export default async function StrategicMoveDetailPage({ params }: Props) {
+function resolveTab(raw: string | undefined): Tab {
+  if (raw === 'documents' || raw === 'activity') return raw;
+  return 'overview';
+}
+
+export default async function StrategicMoveDetailPage({ params, searchParams }: Props) {
   await requireProductModule('programs');
   const ctx = await getStrategicMovesTenancy();
-  if (!ctx) {
-    redirect('/sign-in');
-  }
+  if (!ctx) redirect('/sign-in');
 
-  const { moveId } = await params;
+  const [{ moveId }, sp] = await Promise.all([params, searchParams]);
+  const activeTab = resolveTab(sp.tab);
+
   const move = await getStrategicMoveById(ctx, moveId);
   if (!move) notFound();
 
   return (
     <AppShell surface="programs-detail">
-      <StrategicMoveDetailView move={move} />
+      <StrategicMoveDetailView move={move} activeTab={activeTab} />
     </AppShell>
   );
 }
-

@@ -96,7 +96,7 @@ export function PhaseGateCanvas(props: PhaseGateCanvasProps) {
     <div
       style={{
         background: SURFACE,
-        fontFamily: "'DM Sans', -apple-system, sans-serif",
+        fontFamily: "'Inter', -apple-system, system-ui, sans-serif",
         color: BODY,
         display: 'flex',
         flexDirection: 'column',

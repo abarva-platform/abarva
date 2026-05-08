@@ -162,7 +162,7 @@ export function StewardSetupControlCenter({ view }: StewardSetupControlCenterPro
             <h1
               style={{
                 margin: 0,
-                fontFamily: 'Georgia, "Times New Roman", serif',
+                fontFamily: 'Fraunces, Georgia, serif',
                 fontSize: 26,
                 fontWeight: 600,
                 lineHeight: 1.2,
@@ -296,7 +296,7 @@ function StewardBriefPanel({ brief }: { brief: StewardBrief }) {
           <h2
             style={{
               margin: 0,
-              fontFamily: 'Georgia, "Times New Roman", serif',
+              fontFamily: 'Fraunces, Georgia, serif',
               fontSize: 18,
               fontWeight: 600,
               lineHeight: 1.3,
@@ -793,7 +793,7 @@ function Card({
         ) : null}
         <div
           style={{
-            fontFamily: 'Georgia, "Times New Roman", serif',
+            fontFamily: 'Fraunces, Georgia, serif',
             fontSize: 16,
             fontWeight: 600,
             color: COLORS.ink,

@@ -104,7 +104,7 @@ export function ErrorStateCard({
           fontSize: 20,
           fontWeight: 700,
           flexShrink: 0,
-          fontFamily: 'Georgia, serif',
+          fontFamily: 'Fraunces, Georgia, serif',
         }}
       >
         !

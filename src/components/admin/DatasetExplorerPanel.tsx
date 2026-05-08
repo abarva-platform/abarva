@@ -87,7 +87,7 @@ export function DatasetExplorerPanel({ view }: DatasetExplorerPanelProps) {
           <h2
             style={{
               margin: 0,
-              fontFamily: 'Georgia, "Times New Roman", serif',
+              fontFamily: 'Fraunces, Georgia, serif',
               fontSize: 18,
               fontWeight: 600,
               lineHeight: 1.25,
@@ -228,7 +228,7 @@ function DomainRollupCard({ domain }: { domain: DatasetExplorerDomainRollup }) {
       </header>
       <div
         style={{
-          fontFamily: 'Georgia, "Times New Roman", serif',
+          fontFamily: 'Fraunces, Georgia, serif',
           fontSize: 14,
           fontWeight: 600,
           lineHeight: 1.3,

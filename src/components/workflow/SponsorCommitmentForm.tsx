@@ -125,7 +125,7 @@ export function SponsorCommitmentForm({ programCode, existing, onCommitted }: Sp
         <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 10, fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#0E9F8C' }}>
           Sponsor commitment · {programCode}
         </div>
-        <h3 style={{ margin: '8px 0 0', fontFamily: 'Georgia, serif', fontSize: 20, color: '#1a1612', letterSpacing: '-0.01em' }}>
+        <h3 style={{ margin: '8px 0 0', fontFamily: 'Fraunces, Georgia, serif', fontSize: 20, color: '#1a1612', letterSpacing: '-0.01em' }}>
           What are you committing to before this phase advances?
         </h3>
         <p style={{ margin: '8px 0 0', fontSize: 13, lineHeight: 1.6, color: '#544b42' }}>
@@ -295,7 +295,7 @@ function CommittedView({ record }: { record: SponsorCommitmentRecord }) {
         <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 10, fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#0E9F8C' }}>
           Sponsor commitment \u00b7 COMMITTED
         </div>
-        <h3 style={{ margin: '8px 0 0', fontFamily: 'Georgia, serif', fontSize: 20, color: '#1a1612' }}>
+        <h3 style={{ margin: '8px 0 0', fontFamily: 'Fraunces, Georgia, serif', fontSize: 20, color: '#1a1612' }}>
           {record.sponsorName ?? record.sponsorEmail ?? 'Sponsor'} committed {new Date(record.committedAt).toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' })}
         </h3>
       </header>

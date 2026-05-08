@@ -16,6 +16,7 @@ import { extractArtifacts, visibleArtifactPendingText } from '@/lib/agent/artifa
 import type { StrategicMove } from '@/lib/programs/types.ui';
 import styles from './StrategicMoves.module.css';
 import { PhaseRail } from './PhaseRail';
+import { GeneratePhasePackage } from './GeneratePhasePackage';
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -645,6 +646,26 @@ export function StrategicMovePhaseClient({ move, phaseNum }: Props) {
                 </div>
               </section>
             ))}
+
+            {/* Generate full package */}
+            <section
+              id={`ws-canvas-p${phaseNum}-generate`}
+              className={styles.detailSection}
+            >
+              <div className={styles.detailSectionTitle}>
+                Generate full package
+              </div>
+              <div style={{ fontSize: 12, color: 'var(--abarva-slate)', marginBottom: 10, lineHeight: 1.5 }}>
+                Assembles all available context — engagement data, prior phase deliverables, client segments,
+                matched patterns, and phase methodology — and generates a complete consulting-grade document.
+                Equivalent to a McKinsey phase deliverable. Saves to the Evidence Hub.
+              </div>
+              <GeneratePhasePackage
+                programId={move.id}
+                phaseNum={phaseNum}
+                phaseLabel={config.label}
+              />
+            </section>
 
             {/* Artifact shelf */}
             <section

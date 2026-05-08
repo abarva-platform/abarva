@@ -76,7 +76,7 @@ export function PressureCardDerivation({
   return (
     <article
       style={{
-        fontFamily: 'DM Sans, -apple-system, sans-serif',
+        fontFamily: 'Inter, -apple-system, sans-serif',
         display: 'flex',
         flexDirection: 'column',
         gap: 18,
@@ -130,7 +130,7 @@ export function PressureCardDerivation({
             {isUnowned ? 'UNOWNED' : `Owner · ${owner}`}
           </span>
         </div>
-        <h2 style={{ margin: 0, fontFamily: 'Georgia, serif', fontSize: 24, lineHeight: 1.2, letterSpacing: '-0.015em', color: '#1a1612' }}>
+        <h2 style={{ margin: 0, fontFamily: 'Fraunces, Georgia, serif', fontSize: 24, lineHeight: 1.2, letterSpacing: '-0.015em', color: '#1A1A18' }}>
           {title}
         </h2>
         <div
@@ -177,7 +177,7 @@ export function PressureCardDerivation({
               }}
             >
               <div style={{ display: 'flex', flexDirection: 'column', gap: 2, minWidth: 0 }}>
-                <span style={{ fontSize: 13, fontWeight: 600, color: '#1a1612' }}>
+                <span style={{ fontSize: 13, fontWeight: 600, color: '#1A1A18' }}>
                   {input.href ? (
                     <Link href={input.href} style={{ color: 'inherit', textDecoration: 'underline', textDecorationColor: meta.accent }}>
                       {input.label}

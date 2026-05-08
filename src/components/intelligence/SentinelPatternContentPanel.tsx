@@ -51,7 +51,7 @@ export function SentinelPatternContentPanel({
         display: 'flex',
         flexDirection: 'column',
         gap: 14,
-        fontFamily: 'DM Sans, -apple-system, sans-serif',
+        fontFamily: 'Inter, -apple-system, sans-serif',
         color: COLORS.ink,
       }}
     >
@@ -81,7 +81,7 @@ export function SentinelPatternContentPanel({
           <h2
             style={{
               margin: 0,
-              fontFamily: 'Georgia, "Times New Roman", serif',
+              fontFamily: 'Fraunces, Georgia, serif',
               fontSize: 18,
               fontWeight: 600,
               lineHeight: 1.3,

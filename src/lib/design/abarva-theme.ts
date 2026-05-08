@@ -12,17 +12,17 @@
 // COLOR PALETTE
 // ---------------------------------------------------------------------
 //
-// Light surfaces (default page background): warm off-white. NAVY is the
-// canonical accent. Dark surfaces are reserved for high-impact briefs
-// (e.g. Atlas Brief hero) — never whole pages.
+// Light surfaces (default page background): WHITE. NAVY is the canonical
+// accent. Dark surfaces reserved for high-impact briefs — never whole pages.
+// Updated 2026-05-07: cream → white per user approval (v3 design system).
 
 export const COLORS = {
   // Surfaces
-  surface: '#FBFAF7',
-  surface2: '#F5F3EE',
-  card: '#FFFFFF',
-  border: '#E8E6E1',
-  borderSoft: '#F0EEEA',
+  surface: '#ffffff',
+  surface2: '#fafafa',
+  card: '#ffffff',
+  border: '#e5e5e5',
+  borderSoft: '#f0f0f0',
 
   // Text
   ink: '#0A0C12',
@@ -51,12 +51,13 @@ export const COLORS = {
 // FONT FAMILIES
 // ---------------------------------------------------------------------
 //
-// Body and headings: DM Sans only (no serif body — serif is intentionally
-// retired from the v2 canon).
-// Mono: JetBrains Mono for eyebrow chips, status pills, file types.
+// Display headings: Fraunces (optical serif, v3 canon).
+// Body + UI: Inter (clean sans, v3 canon). DM Sans retired 2026-05-07.
+// Mono: JetBrains Mono for eyebrow chips, status pills, codes.
 
 export const FONT = {
-  body: "'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+  display: "'Fraunces', Georgia, serif",
+  body: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif",
   mono: "'JetBrains Mono', 'SFMono-Regular', 'Menlo', monospace",
 } as const;
 
@@ -65,25 +66,34 @@ export const FONT = {
 // ---------------------------------------------------------------------
 
 export const TYPE = {
+  // Page-level display heading — Fraunces, light weight (v3 canon)
+  display: {
+    fontFamily: FONT.display,
+    fontSize: 32,
+    fontWeight: 400,
+    lineHeight: 1.1,
+    color: COLORS.ink,
+    letterSpacing: '-0.018em',
+  },
   h1: {
-    fontFamily: FONT.body,
-    fontSize: 28,
-    fontWeight: 600,
+    fontFamily: FONT.display,
+    fontSize: 24,
+    fontWeight: 400,
     lineHeight: 1.2,
     color: COLORS.ink,
-    letterSpacing: '-0.01em',
+    letterSpacing: '-0.012em',
   },
   h2: {
-    fontFamily: FONT.body,
-    fontSize: 20,
-    fontWeight: 600,
+    fontFamily: FONT.display,
+    fontSize: 18,
+    fontWeight: 500,
     lineHeight: 1.25,
     color: COLORS.ink,
-    letterSpacing: '-0.005em',
+    letterSpacing: '-0.008em',
   },
   h3: {
     fontFamily: FONT.body,
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: 600,
     lineHeight: 1.3,
     color: COLORS.ink,

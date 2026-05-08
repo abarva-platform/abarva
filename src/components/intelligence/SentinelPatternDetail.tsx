@@ -57,7 +57,7 @@ export function SentinelPatternDetail({ view }: SentinelPatternDetailProps) {
         border: `1px solid ${COLORS.border}`,
         borderTop: `3px solid ${accent}`,
         borderRadius: 12,
-        fontFamily: 'DM Sans, -apple-system, sans-serif',
+        fontFamily: 'Inter, -apple-system, sans-serif',
         color: COLORS.ink,
         display: 'flex',
         flexDirection: 'column',
@@ -104,7 +104,7 @@ export function SentinelPatternDetail({ view }: SentinelPatternDetailProps) {
           <h1
             style={{
               margin: 0,
-              fontFamily: 'Georgia, "Times New Roman", serif',
+              fontFamily: 'Fraunces, Georgia, serif',
               fontSize: 26,
               fontWeight: 600,
               lineHeight: 1.25,

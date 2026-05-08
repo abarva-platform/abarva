@@ -20,7 +20,7 @@ export function PageTitle({ children, as = 'h1', size = 'page', style, id }: Pro
     <Tag
       id={id}
       style={{
-        fontFamily: 'Georgia, serif',
+        fontFamily: 'Fraunces, Georgia, serif',
         fontSize,
         fontWeight: 400,
         color: COLORS.textPrimary,

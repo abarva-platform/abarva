@@ -39,7 +39,7 @@ interface TowerProvenanceRibbonProps {
   eventId?: string;
 }
 
-const RIBBON_BG = '#F8F7F4';
+const RIBBON_BG = '#ffffff';
 const SECTION_GAP = 14;
 const VISIBLE_CITATION_LIMIT = 4;
 

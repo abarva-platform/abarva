@@ -51,7 +51,7 @@ export function IntelligenceSourceBasisPanel({ view }: IntelligenceSourceBasisPa
         <h2
           style={{
             margin: 0,
-            fontFamily: 'Georgia, "Times New Roman", serif',
+            fontFamily: 'Fraunces, Georgia, serif',
             fontSize: 18,
             color: COLORS.ink,
           }}

@@ -24,7 +24,7 @@ const C = {
   ink: '#0A0C12',
   inkMuted: '#525866',
   inkSoft: '#6b7280',
-  cream: '#F8F7F4',
+  cream: '#ffffff',
   card: '#FFFFFF',
   border: '#E8E6E1',
   borderStrong: '#d3cdbf',

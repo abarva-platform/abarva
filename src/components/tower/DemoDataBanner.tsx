@@ -52,7 +52,7 @@ export function DemoDataBanner({ clientId, demoRowCount, realRowCount }: Props) 
         alignItems: 'center',
         gap: 16,
         color: INK,
-        fontFamily: 'DM Sans, sans-serif',
+        fontFamily: 'Inter, sans-serif',
       }}
     >
       <span style={{ color: TEAL, fontSize: 12, letterSpacing: '0.08em', fontWeight: 700, fontFamily: 'JetBrains Mono, monospace' }}>◆</span>
@@ -80,7 +80,7 @@ export function DemoDataBanner({ clientId, demoRowCount, realRowCount }: Props) 
           borderRadius: 6,
           color: INK,
           fontSize: 12,
-          fontFamily: 'DM Sans, sans-serif',
+          fontFamily: 'Inter, sans-serif',
           fontWeight: 600,
           cursor: removing ? 'default' : 'pointer',
           opacity: removing ? 0.5 : 1,

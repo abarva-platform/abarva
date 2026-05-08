@@ -14,7 +14,7 @@ import { PressureCardDerivation } from '@/components/tower/PressureCardDerivatio
 // metric tiles, adds a Pressure-Today row above the strip, and demotes
 // Atlas to a right-edge dock.
 
-const PAGE_BG = '#F8F7F4';
+const PAGE_BG = '#ffffff';
 const PANEL_BG = '#FFFDFC';
 const INK = '#171411';
 const INK_SOFT = '#3A312A';
@@ -29,7 +29,7 @@ const CORAL = '#CE5A3B';
 const CORAL_SOFT = 'rgba(206,90,59,0.1)';
 const SERIF = '"Fraunces", Georgia, serif';
 const MONO = '"JetBrains Mono", "Fira Code", monospace';
-const SANS = '"DM Sans", -apple-system, sans-serif';
+const SANS = '"Inter", -apple-system, sans-serif';
 
 type PillarKey = 'inventory' | 'adoption' | 'value' | 'risk' | 'cost';
 

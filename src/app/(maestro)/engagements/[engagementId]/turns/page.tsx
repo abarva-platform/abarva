@@ -111,7 +111,7 @@ export default async function TurnsPage({
         <div style={{ fontFamily: MONO, fontSize: 10, color: PURPLE, letterSpacing: '0.14em', marginBottom: 4 }}>
           TURNS · {engagement.name}
         </div>
-        <h1 style={{ fontFamily: 'Georgia, serif', fontSize: 24, fontWeight: 400, margin: 0 }}>
+        <h1 style={{ fontFamily: 'Fraunces, Georgia, serif', fontSize: 24, fontWeight: 400, margin: 0 }}>
           Conversation history
         </h1>
       </div>

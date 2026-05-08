@@ -93,7 +93,7 @@ export interface SourceCommercialWorkflowCanvasProps {
   decisionSlot?: React.ReactNode;
 }
 
-const FONT_STACK = "'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif";
+const FONT_STACK = "'Inter', -apple-system, BlinkMacSystemFont, sans-serif";
 
 const wrapperStyle: React.CSSProperties = {
   backgroundColor: '#FBFAF7',

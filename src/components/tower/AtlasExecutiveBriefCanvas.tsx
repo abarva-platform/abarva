@@ -7,7 +7,7 @@ interface AtlasExecutiveBriefCanvasProps {
 
 export function AtlasExecutiveBriefCanvas({ view }: AtlasExecutiveBriefCanvasProps) {
   return (
-    <div style={{ fontFamily: 'DM Sans, sans-serif', maxWidth: '800px' }}>
+    <div style={{ fontFamily: 'Inter, sans-serif', maxWidth: '800px' }}>
       {/* Executive Brief — dark panel (approved for high-impact use) */}
       <div style={{
         backgroundColor: '#0F1E3F',

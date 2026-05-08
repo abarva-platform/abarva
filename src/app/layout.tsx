@@ -1,24 +1,15 @@
 import type { Metadata } from 'next'
 import { Suspense } from 'react'
 import { ClerkProvider } from '@clerk/nextjs'
-import { Cormorant_Garamond, Fraunces, Inter } from 'next/font/google'
+import { Fraunces, Inter } from 'next/font/google'
 import './globals.css'
 import PostHogProvider from '@/components/PostHogProvider'
 import PostHogPageView from './posthog-pageview'
 import MobileGuard from '@/components/MobileGuard'
 import { ToastProvider } from '@/components/shell/Toast'
 
-// Cormorant Garamond — canonical AbarVa serif for wordmark + admin headings.
-// Application of the variable lands in ADMIN2; this slice only registers the
-// font so subsequent slices can opt in via `var(--font-cormorant)`.
-const cormorantGaramond = Cormorant_Garamond({
-  subsets: ['latin'],
-  weight: ['400', '700'],
-  variable: '--font-cormorant',
-  display: 'swap',
-})
-
-// Fraunces — shell serif for agent quotes, badges, and surface headings.
+// Fraunces — canonical display serif (v3 design system). Used for all page
+// titles, section headings, and KPI numerals across the product.
 const fraunces = Fraunces({
   subsets: ['latin'],
   weight: ['400', '500', '600', '700'],
@@ -53,7 +44,7 @@ export default function RootLayout({
 }) {
   return (
     <ClerkProvider signInUrl="/sign-in" afterSignOutUrl="/" signInForceRedirectUrl="/auth-redirect" signUpForceRedirectUrl="/auth-redirect">
-      <html lang="en" className={`${cormorantGaramond.variable} ${fraunces.variable} ${inter.variable}`}>
+      <html lang="en" className={`${fraunces.variable} ${inter.variable}`}>
         <head>
           <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
           <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />

@@ -68,7 +68,7 @@ export function IntelligenceCanvasModeTabs({
         background: COLORS.card,
         border: `1px solid ${COLORS.border}`,
         borderRadius: 12,
-        fontFamily: 'DM Sans, -apple-system, sans-serif',
+        fontFamily: 'Inter, -apple-system, sans-serif',
         color: COLORS.ink,
       }}
     >
@@ -259,7 +259,7 @@ function EmptyHint({ children }: { children: React.ReactNode }) {
 function headingStyle(): React.CSSProperties {
   return {
     margin: 0,
-    fontFamily: 'Georgia, "Times New Roman", serif',
+    fontFamily: 'Fraunces, Georgia, serif',
     fontSize: 16,
     fontWeight: 600,
     color: COLORS.ink,

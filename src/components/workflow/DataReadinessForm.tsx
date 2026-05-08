@@ -123,7 +123,7 @@ export function DataReadinessForm({ programCode, existing, onCommitted }: DataRe
         <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 10, fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#0E9F8C' }}>
           Data readiness · FM-02 · {programCode}
         </div>
-        <h3 style={{ margin: '6px 0 0', fontFamily: 'Georgia, serif', fontSize: 20, color: '#1a1612' }}>
+        <h3 style={{ margin: '6px 0 0', fontFamily: 'Fraunces, Georgia, serif', fontSize: 20, color: '#1a1612' }}>
           Five dimensions, named owners, no silent gaps.
         </h3>
       </header>

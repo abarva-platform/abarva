@@ -329,7 +329,7 @@ const DARK = '#101214';
 const DARK_PANEL = '#171A1D';
 const DARK_LINE = 'rgba(255,255,255,0.12)';
 const CREAM = '#F7F2EA';
-const SANS = '"DM Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+const SANS = '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
 const SERIF = '"Fraunces", Georgia, serif';
 const MONO = '"JetBrains Mono", "Fira Code", monospace';
 

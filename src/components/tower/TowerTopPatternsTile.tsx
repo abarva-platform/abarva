@@ -26,7 +26,7 @@ import { findLifecyclePattern } from '@/lib/reasoning/lifecycle-pattern-lookup';
 import { PatternDoctrineLink } from '@/components/source/PatternDoctrineLink';
 import { SHELL } from '@/lib/shell/shell-tokens';
 
-const TILE_BG = '#F8F7F4';
+const TILE_BG = '#ffffff';
 
 /**
  * Pure formatter for a single top-patterns row. Resolves the pattern ID to

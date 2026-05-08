@@ -47,7 +47,7 @@ const sectionStyle: React.CSSProperties = {
   border: '1px solid #E5DCD2',
   borderRadius: '8px',
   marginTop: '24px',
-  fontFamily: "'DM Sans', sans-serif",
+  fontFamily: "'Inter', sans-serif",
   overflow: 'hidden',
 };
 
