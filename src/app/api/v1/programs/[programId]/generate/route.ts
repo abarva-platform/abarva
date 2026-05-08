@@ -10,20 +10,17 @@
 //
 // Body: { phase: number, deliverableTypeKey: string, title?: string }
 //
-// What gets assembled and sent to Claude:
+// Context assembled per request:
 //   1. Engagement record (name, archetype, sponsor, current phase, charter)
-//   2. Phase pack V2 (methodology, questions, anti-patterns, gate criteria)
-//   3. Prior phase deliverables with FULL content (P1 charter, P2 root causes)
-//   4. Tenant enterprise context chunks (client segments, personas, org data)
-//   5. Pattern preload (canonical shape for the program's matched pattern)
-//   6. Active flags and risks
+//   2. Phase pack V2 (methodology, frameworks, questions, anti-patterns)
+//   3. Prior phase deliverables with FULL content
+//   4. Tenant enterprise context chunks (segments, personas, org data)
+//   5. Matched canonical pattern (shape, failure modes, success signals)
+//   6. Deliverable spec from registry (sections, format, consulting analog)
 //
-// The generation prompt explicitly instructs Claude to produce:
-//   - Structured sections matching the phase deliverable type
-//   - Specific, client-named content (not generic placeholders)
-//   - Mermaid diagrams where applicable (architecture, operating model)
-//   - Quantitative estimates grounded in available context
-//   - Consulting-grade prose (not bullet dump)
+// For Excel-format deliverables (financial_model), Claude generates
+// structured markdown tables that the content-export route parses into
+// a proper .xlsx workbook with formulas and editable assumption cells.
 
 import 'server-only';
 import { requireTenancy, tenancyErrorResponse } from '../../_auth';
@@ -37,10 +34,14 @@ import { getActiveClientRow } from '@/lib/active-client';
 import { clientKeyToInventorySubstrateKey } from '@/lib/agent/tools/intelligence/_shared';
 import { streamAgentTurn } from '@/lib/agent/stream';
 import { draftModuleDeliverable } from '@/lib/programs/nexus';
+import {
+  getDeliverableSpec,
+  type DeliverableSpec,
+} from '@/lib/programs/deliverable-registry';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
-export const maxDuration = 120; // full doc generation takes time
+export const maxDuration = 120; // full doc generation takes 30–90s
 
 const PHASE_LABEL: Record<number, string> = {
   0: 'P0 Originate',
@@ -51,84 +52,9 @@ const PHASE_LABEL: Record<number, string> = {
   5: 'P5 Mobilize & Handoff',
 };
 
-// Deliverable type → generation spec
-// Tells the prompt what sections to produce and what the document IS
-const DELIVERABLE_SPECS: Record<string, {
-  documentTitle: string;
-  sections: string[];
-  diagramType?: string;
-  consultingAnalog: string;
-}> = {
-  // P1
-  charter: {
-    documentTitle: 'Program Charter',
-    sections: [
-      'Executive Summary (1 paragraph — problem, recommended approach, value hypothesis)',
-      'Sponsor Commitment (named sponsor, role, decision rights, cadence)',
-      'Stakeholder Map (decision-makers, contributors, blockers — named individuals)',
-      'Success Metrics & Value Range (primary KPI with baseline, preliminary value range $M–$M with stated assumptions)',
-      'Scope Boundary (in scope / out of scope — specific, not generic)',
-      'Kill Criterion (specific observable condition that terminates the program)',
-    ],
-    consultingAnalog: 'McKinsey Engagement Scope & Charter Document',
-  },
-  // P2
-  discovery_report: {
-    documentTitle: 'Discovery & Diagnosis Report',
-    sections: [
-      'Current State Baseline (quantified metrics with sources — not placeholder ranges)',
-      'Root Cause Analysis (3–5 root causes ranked by impact, each with evidence)',
-      'Data & AI Readiness Assessment (specific gaps, data availability, governance posture)',
-      'Continuation Verdict (CONTINUE_TO_P3 or DISCONTINUE with rationale)',
-      'P2 Gate Evidence Summary (hard criteria met/not met)',
-    ],
-    consultingAnalog: 'McKinsey Diagnostic & Root Cause Report',
-  },
-  // P3
-  p3_design: {
-    documentTitle: 'Design Future State — Architecture & Operating Model',
-    sections: [
-      'Root Cause → Design Requirement Traceability Matrix (every root cause from P2 mapped to ≥1 design requirement)',
-      'Architecture Options (3 options: Option A, B, C — each with capability description, integration approach, build/buy/configure decision, and explicit trade-offs)',
-      'Recommended Architecture (chosen option with rationale tied to design requirements)',
-      'Target State Architecture Diagram (Mermaid diagram showing components, integrations, data flows, AI/agent placement)',
-      'Target Operating Model (Today vs Tomorrow: named roles, responsibilities, handoffs, decision rights, escalation paths)',
-      'Sourcing Strategy (build/buy/configure/partner decision with vendor shortlist if applicable)',
-      'Key Risks & Mitigations (5–7 named risks with likelihood, impact, mitigation)',
-      'P3 Gate Readiness Summary (each gate criterion: met/at risk/not met)',
-    ],
-    diagramType: 'architecture',
-    consultingAnalog: 'McKinsey Target Architecture & Operating Model Design Document',
-  },
-  // P4
-  roadmap: {
-    documentTitle: 'Execution Roadmap & Business Case',
-    sections: [
-      'Workstream Breakdown (named workstreams, leads, interdependencies)',
-      'Timeline & Milestones (phased delivery plan with value realization milestones)',
-      'Resource Model (FTEs by role and workstream, SI involvement)',
-      'Business Case (implementation cost estimate, value realization timeline, NPV/IRR framework, sensitivity analysis)',
-      'Risk Register (implementation risks with mitigation owners)',
-      'Tower Monitoring Plan (KPIs Tower tracks post-handoff, measurement methodology)',
-    ],
-    consultingAnalog: 'McKinsey Implementation Roadmap & Business Case',
-  },
-  // P5
-  handoff_package: {
-    documentTitle: 'Mobilization & Tower Handoff Package',
-    sections: [
-      'Delivery RACI (named leads for every workstream — people, not roles)',
-      'Change Management Plan (stakeholder readiness, communication plan, training approach)',
-      'Tower Acceptance Criteria (explicit conditions for Tower acceptance — acknowledged ≠ accepted)',
-      'Value Measurement Contract (committed outcomes, measurement methodology, accountable owner)',
-      'Risk Handoff Register (open risks transferring to Tower)',
-    ],
-    consultingAnalog: 'McKinsey Mobilization & Handoff Package',
-  },
-};
+// ── Context assembly ──────────────────────────────────────────────────────────
 
-// Fetch prior phase deliverable content (the actual markdown from previous phases)
-async function fetchPriorPhaseContent(programId: string, maxPhase: number): Promise<string> {
+async function fetchPriorPhaseContent(programId: string): Promise<string> {
   const sb = getServerSupabase();
   const { data } = await sb
     .from('deliverables_v2')
@@ -167,7 +93,6 @@ async function fetchPriorPhaseContent(programId: string, maxPhase: number): Prom
   return lines.length > 3 ? lines.join('\n') : '';
 }
 
-// Fetch engagement record with full detail
 async function fetchEngagementDetail(programId: string) {
   const sb = getServerSupabase();
   const { data } = await sb
@@ -191,7 +116,7 @@ async function fetchEngagementDetail(programId: string) {
   let leadName = '';
 
   if (personIds.length > 0) {
-    const { data: people } = await sb
+    const { data: people } = await getServerSupabase()
       .from('persons')
       .select('id, name, role')
       .in('id', personIds);
@@ -208,7 +133,8 @@ async function fetchEngagementDetail(programId: string) {
   return { eng, sponsorName, sponsorRole, leadName };
 }
 
-// Build the generation prompt — this is the core of the endpoint
+// ── Prompt builder ────────────────────────────────────────────────────────────
+
 function buildGenerationPrompt(args: {
   programName: string;
   archetype: string;
@@ -225,8 +151,7 @@ function buildGenerationPrompt(args: {
   priorContent: string;
   tenantContext: string;
   patternContext: string;
-  deliverableSpec: typeof DELIVERABLE_SPECS[string];
-  deliverableTypeKey: string;
+  spec: DeliverableSpec;
   title: string;
 }): string {
   const {
@@ -234,11 +159,13 @@ function buildGenerationPrompt(args: {
     sponsorName, sponsorRole, leadName, charter,
     milestones, risks,
     phasePackBlock, priorContent, tenantContext, patternContext,
-    deliverableSpec, title,
+    spec, title,
   } = args;
 
+  const isExcel = spec.formatRecommendation === 'excel';
+
   const charterContext = charter
-    ? `Charter context: ${JSON.stringify(charter, null, 2).slice(0, 2000)}`
+    ? `Charter context:\n${JSON.stringify(charter, null, 2).slice(0, 2000)}`
     : '';
 
   const milestonesText = milestones.length > 0
@@ -249,7 +176,9 @@ function buildGenerationPrompt(args: {
     ? `Known risks: ${risks.map((r) => `${r.title} (${r.likelihood} likelihood, ${r.impact} impact, ${r.status})`).join('; ')}`
     : '';
 
-  return `You are a senior transformation consultant generating a complete, professional deliverable for a client engagement. This document will replace the equivalent McKinsey or Bain consulting output. Do not hedge. Do not use placeholder text. Generate specific, substantive content grounded in the context provided.
+  const hasArchDiagram = ['target_state_architecture'].includes(spec.deliverableTypeKey);
+
+  return `You are a senior transformation consultant generating a complete, professional deliverable for a client engagement. This document will replace the equivalent McKinsey, Bain, or BCG consulting output. Do not hedge. Do not use placeholder text. Generate specific, substantive content grounded in the context provided.
 
 ENGAGEMENT:
 - Program: ${programName}
@@ -269,29 +198,54 @@ ${priorContent ? priorContent + '\n' : ''}
 ${phasePackBlock ? '--- PHASE METHODOLOGY ---\n' + phasePackBlock + '\n--- END METHODOLOGY ---\n' : ''}
 
 DELIVERABLE TO GENERATE: ${title}
-Consulting analog: ${deliverableSpec.consultingAnalog}
+Document type: ${spec.documentTitle}
+Primary audience: ${spec.audiencePrimary}
+Purpose: ${spec.documentPurpose}
+Consulting analog: ${spec.consultingAnalog}
 
-Generate a complete, structured document with the following sections. Each section must contain specific, substantive content — not generic descriptions of what the section should contain. Use the client name, program name, sponsor name, and specific context from the engagement data above throughout the document.
+${isExcel ? `
+EXCEL FORMAT DOCUMENT:
+This deliverable will be exported as an Excel workbook. Generate ONLY structured markdown tables in the exact section format below.
+Do NOT add narrative paragraphs. Do NOT add section intros or outros. Output ONLY the section headers and their tables.
+Each section header must exactly match the ## heading specified.
+Numbers must be realistic estimates grounded in the engagement context — do not use placeholder ranges like $X–$Y.
+${spec.generationPromptHint ?? ''}
+
+REQUIRED SECTIONS (output these exact headers and tables, nothing else):
+${spec.sections.join('\n\n')}
+` : `
+Generate a complete, structured document with the following sections.
+Each section must contain specific, substantive content grounded in the engagement above.
+Use the client name, program name, sponsor name throughout the document.
+Write in professional consulting prose — not pure bullet dumps.
+
+${spec.generationPromptHint ? `ADDITIONAL GUIDANCE: ${spec.generationPromptHint}\n` : ''}
 
 REQUIRED SECTIONS:
-${deliverableSpec.sections.map((s, i) => `${i + 1}. ${s}`).join('\n')}
+${spec.sections.map((s, i) => `${i + 1}. ${s}`).join('\n')}
 
-${deliverableSpec.diagramType === 'architecture' ? `
-ARCHITECTURE DIAGRAM REQUIREMENT:
-Include a Mermaid diagram in the Target State Architecture section. Use graph TD or graph LR format. Show the key components, integration points, data flows, and AI/agent placement specific to this program and archetype. Label nodes with actual system names where known from context.
+${hasArchDiagram ? `
+MERMAID DIAGRAM REQUIREMENTS:
+Include THREE Mermaid diagrams:
+1. In the Conceptual Architecture section: a capability domain map (graph LR or graph TD)
+2. In the Logical Architecture section: a component/integration diagram showing system relationships, data flows, and AI placement
+3. In the Physical Architecture section: a deployment diagram showing infrastructure, cloud regions, and security zones
+Use actual system names and component names that are relevant to the ${archetype} archetype and ${tenantName} context.
 ` : ''}
 
 DOCUMENT QUALITY REQUIREMENTS:
-- Every claim must be grounded in the engagement context above
-- Use specific numbers, names, and dates from the available context
-- Where the context does not provide specific data, use reasonable estimates and state assumptions explicitly
-- Write in professional consulting prose, not bullet points alone
-- The document should be self-contained — a new team member reading it should understand the program
-- Length: comprehensive enough to be the authoritative phase record. Do not truncate.
-- Where prior phase deliverables exist, build on them explicitly (reference root causes by name, reference baseline metrics)
+- Every claim grounded in the engagement context
+- Specific numbers, names, dates — not generic placeholders
+- Where context is absent, use reasonable estimates with explicit assumptions
+- The document should be self-contained and authoritative
+- Length: comprehensive enough to be the definitive phase record — do not truncate
+- Reference prior phase deliverables explicitly (name root causes, cite baseline metrics)
+`}
 
-Generate the complete document now. Start with a brief executive summary, then each required section.`;
+Generate the complete document now.`;
 }
+
+// ── Route handler ─────────────────────────────────────────────────────────────
 
 export async function POST(
   req: Request,
@@ -315,11 +269,19 @@ export async function POST(
 
   const targetPhase = body.phase ?? program.currentPhase ?? 1;
   const deliverableTypeKey = body.deliverableTypeKey ?? `p${targetPhase}_package`;
-  const title = body.title ?? `${PHASE_LABEL[targetPhase] ?? `Phase ${targetPhase}`} — ${program.name}`;
 
-  // Get deliverable spec — fall back to a generic one if type not in registry
-  const deliverableSpec = DELIVERABLE_SPECS[deliverableTypeKey] ?? DELIVERABLE_SPECS[`p${targetPhase}_design`] ?? {
-    documentTitle: title,
+  // Resolve spec from registry — fall back to a generic spec if unknown key
+  const registrySpec = getDeliverableSpec(deliverableTypeKey);
+  const spec: DeliverableSpec = registrySpec ?? {
+    deliverableTypeKey,
+    documentTitle: body.title ?? `Phase ${targetPhase} Deliverable`,
+    phase: targetPhase,
+    phaseLabel: PHASE_LABEL[targetPhase] ?? `P${targetPhase}`,
+    audiencePrimary: 'Program team',
+    documentPurpose: 'Phase deliverable',
+    formatRecommendation: 'html-word',
+    gateArtifact: false,
+    standAlone: true,
     sections: [
       'Executive Summary',
       'Current Situation',
@@ -330,10 +292,12 @@ export async function POST(
     consultingAnalog: 'Consulting Phase Deliverable',
   };
 
+  const title = body.title ?? `${spec.documentTitle} — ${program.name}`;
+
   // Assemble all context in parallel
   const [engDetail, priorContent, activeClient] = await Promise.all([
     fetchEngagementDetail(programId),
-    fetchPriorPhaseContent(programId, targetPhase - 1),
+    fetchPriorPhaseContent(programId),
     getActiveClientRow().catch(() => null),
   ]);
 
@@ -341,16 +305,16 @@ export async function POST(
 
   const { eng, sponsorName, sponsorRole, leadName } = engDetail;
 
-  // Tenant context (enterprise_context_chunks)
   const tenantInventoryKey = activeClient?.key
     ? clientKeyToInventorySubstrateKey(activeClient.key)
     : null;
+
   const [tenantContext, modules] = await Promise.all([
     buildTenantContextBlock(tenantInventoryKey).catch(() => null),
     getModuleState(ctx, programId, { supabase }).catch(() => []),
   ]);
 
-  // Pattern preload from engagement topics
+  // Matched pattern from engagement topics
   const sb = getServerSupabase();
   const { data: patternMatch } = await sb
     .from('pattern_match_logs')
@@ -381,7 +345,6 @@ export async function POST(
     }
   }
 
-  // Phase pack
   const phasePack = getPhasePackV2(targetPhase);
   const phasePackBlock = phasePack ? formatPhasePackV2ForPrompt(phasePack) : '';
 
@@ -401,22 +364,21 @@ export async function POST(
     priorContent,
     tenantContext: tenantContext ?? '',
     patternContext,
-    deliverableSpec,
-    deliverableTypeKey,
+    spec,
     title,
   });
 
-  // Generate with Claude — no character limit, full document
+  // Generate with Claude — no character limit
   let content = '';
   try {
     for await (const chunk of streamAgentTurn({
-      system: 'You are a senior transformation consultant generating a complete consulting deliverable. Be specific, substantive, and comprehensive. Do not truncate. Write as if this is the definitive record for the engagement.',
+      system: 'You are a senior transformation consultant generating a complete consulting deliverable. Be specific, substantive, and comprehensive. Do not truncate.',
       messages: [{ role: 'user', content: generationPrompt }],
     })) {
       content += chunk;
     }
   } catch (err) {
-    console.error('[generate/phase-package] generation error', err);
+    console.error('[generate] generation error', err);
     return Response.json({ error: 'generation_failed', detail: err instanceof Error ? err.message : 'unknown' }, { status: 500 });
   }
 
@@ -438,11 +400,11 @@ export async function POST(
     deliverableId = result.deliverableId;
     versionId = result.versionId;
   } catch (saveErr) {
-    console.error('[generate/phase-package] save error', saveErr);
-    // Return content even if save failed — don't lose the generation
+    console.error('[generate] save error', saveErr);
+    // Return content even if save failed
   }
 
-  void modules; // used in future for module status context
+  void modules;
 
   return Response.json({
     deliverableId,
@@ -452,6 +414,7 @@ export async function POST(
     content,
     saved: Boolean(deliverableId),
     phase: targetPhase,
-    sections: deliverableSpec.sections,
+    format: spec.formatRecommendation,
+    audiencePrimary: spec.audiencePrimary,
   });
 }

@@ -1,17 +1,14 @@
 // GET /api/programs/[id]/deliverables/[deliverableId]/content-export
 //
-// Exports the latest markdown content from deliverable_versions as either:
+// Exports the latest markdown content from deliverable_versions as:
 //   ?format=html  — standalone HTML document (inline CSS, AbarVa palette)
 //   ?format=docx  — Word document (.docx) built from markdown headings/lists/text
-//
-// This is a simpler, complementary route to the structured-spec export at
-// /api/programs/[id]/deliverables/[kind]/export. That route requires a
-// typed DeliverableSpec payload; this route works from the raw Nexus-authored
-// markdown stored in deliverable_versions.content (the "concise markdown
-// artifact" written by the agent during phase work).
+//   ?format=xlsx  — Excel workbook for financial_model deliverables
+//                   Parses structured markdown tables (## SECTION + table)
+//                   into separate worksheets: Assumptions, Benefit Levers,
+//                   Implementation Costs, Value Model, Scenarios
 //
 // Auth: requireTenancy + program tenant gate (403 if program not visible).
-// The deliverable row must belong to the program (defense in depth).
 //
 // Returns:
 //   200  — binary with Content-Type + Content-Disposition: attachment
@@ -22,6 +19,7 @@
 
 import 'server-only';
 
+import ExcelJS from 'exceljs';
 import { Document, Packer, Paragraph, TextRun, HeadingLevel, AlignmentType } from 'docx';
 import { requireTenancy, tenancyErrorResponse } from '@/app/api/v1/programs/_auth';
 import { getServerSupabase } from '@/lib/supabase-server';
@@ -29,7 +27,7 @@ import { getServerSupabase } from '@/lib/supabase-server';
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-type Format = 'html' | 'docx';
+type Format = 'html' | 'docx' | 'xlsx';
 
 function jsonError(status: number, code: string, detail?: string): Response {
   return Response.json({ error: code, ...(detail ? { detail } : {}) }, { status });
@@ -276,6 +274,172 @@ function markdownToDocx(md: string, title: string): Promise<Uint8Array> {
   return Packer.toBuffer(doc) as Promise<Uint8Array>;
 }
 
+// ── Markdown → Excel (financial model) ──────────────────────────────────────
+//
+// Claude generates the financial model as structured markdown tables under
+// ## SECTION_NAME headers. This parser extracts those tables and builds a
+// proper Excel workbook with one sheet per section.
+//
+// Sheet mapping:
+//   ## ASSUMPTIONS          → "Assumptions" (editable inputs, yellow header)
+//   ## BENEFIT_LEVERS       → "Benefit Levers" (editable, green header)
+//   ## IMPLEMENTATION_COSTS → "Implementation Costs" (editable, orange header)
+//   ## VALUE_MODEL          → "Value Model" (calculated, blue header)
+//   ## SCENARIOS            → "Scenarios" (calculated, purple header)
+
+type ParsedTable = { headers: string[]; rows: string[][] };
+
+function parseMarkdownTable(lines: string[]): ParsedTable | null {
+  const tableLines = lines.filter((l) => l.trim().startsWith('|'));
+  if (tableLines.length < 2) return null;
+
+  const parseRow = (line: string): string[] =>
+    line.split('|').slice(1, -1).map((cell) => cell.trim());
+
+  const headers = parseRow(tableLines[0]);
+  // Skip separator row (---|---|...)
+  const dataRows = tableLines.slice(2).map(parseRow);
+  return { headers, rows: dataRows };
+}
+
+function extractSections(md: string): Map<string, ParsedTable> {
+  const result = new Map<string, ParsedTable>();
+  const sectionRegex = /^##\s+([A-Z_]+)\s*$/gm;
+  const parts = md.split(sectionRegex);
+  // parts = [before, sectionName1, content1, sectionName2, content2, ...]
+  for (let i = 1; i < parts.length - 1; i += 2) {
+    const sectionKey = parts[i].trim();
+    const sectionContent = parts[i + 1] ?? '';
+    const tableLines = sectionContent.split('\n').filter(Boolean);
+    const table = parseMarkdownTable(tableLines);
+    if (table) result.set(sectionKey, table);
+  }
+  return result;
+}
+
+const SHEET_CONFIG: Array<{
+  sectionKey: string;
+  sheetName: string;
+  headerColor: string; // ARGB hex
+  editable: boolean;
+}> = [
+  { sectionKey: 'ASSUMPTIONS',          sheetName: 'Assumptions',          headerColor: 'FF1B2B5C', editable: true },
+  { sectionKey: 'BENEFIT_LEVERS',        sheetName: 'Benefit Levers',        headerColor: 'FF166534', editable: true },
+  { sectionKey: 'IMPLEMENTATION_COSTS',  sheetName: 'Implementation Costs',  headerColor: 'FF92400E', editable: true },
+  { sectionKey: 'VALUE_MODEL',           sheetName: 'Value Model',           headerColor: 'FF1E3A5F', editable: false },
+  { sectionKey: 'SCENARIOS',             sheetName: 'Scenarios',             headerColor: 'FF4C1D95', editable: false },
+];
+
+async function markdownToXlsx(md: string, title: string): Promise<Buffer> {
+  const workbook = new ExcelJS.Workbook();
+  workbook.creator = 'Nexus';
+  workbook.created = new Date();
+  workbook.title = title;
+
+  const sections = extractSections(md);
+
+  // Add a cover sheet
+  const cover = workbook.addWorksheet('Cover');
+  cover.getColumn(1).width = 60;
+  cover.getRow(2).getCell(1).value = title;
+  cover.getRow(2).getCell(1).font = { name: 'Calibri', size: 16, bold: true, color: { argb: 'FF1B2B5C' } };
+  cover.getRow(3).getCell(1).value = `Generated by Nexus · ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}`;
+  cover.getRow(3).getCell(1).font = { name: 'Calibri', size: 10, color: { argb: 'FF6B7280' } };
+  cover.getRow(5).getCell(1).value = 'This workbook contains the following sheets:';
+  cover.getRow(5).getCell(1).font = { name: 'Calibri', size: 11, bold: true };
+  let coverRow = 6;
+  for (const cfg of SHEET_CONFIG) {
+    if (sections.has(cfg.sectionKey)) {
+      const cell = cover.getRow(coverRow++).getCell(1);
+      cell.value = `• ${cfg.sheetName}${cfg.editable ? ' (editable inputs)' : ' (calculated)'}`;
+      cell.font = { name: 'Calibri', size: 10 };
+    }
+  }
+
+  // Add data sheets
+  for (const cfg of SHEET_CONFIG) {
+    const table = sections.get(cfg.sectionKey);
+    if (!table || table.headers.length === 0) continue;
+
+    const sheet = workbook.addWorksheet(cfg.sheetName);
+
+    // Column widths
+    table.headers.forEach((_, colIdx) => {
+      sheet.getColumn(colIdx + 1).width = Math.max(18,
+        Math.min(40, Math.max(...table.rows.map((r) => (r[colIdx] ?? '').length), table.headers[colIdx].length) + 4)
+      );
+    });
+
+    // Header row
+    const headerRow = sheet.getRow(1);
+    table.headers.forEach((h, colIdx) => {
+      const cell = headerRow.getCell(colIdx + 1);
+      cell.value = h;
+      cell.font = { name: 'Calibri', size: 10, bold: true, color: { argb: 'FFFFFFFF' } };
+      cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: cfg.headerColor } };
+      cell.alignment = { vertical: 'middle', wrapText: true };
+      cell.border = {
+        bottom: { style: 'thin', color: { argb: 'FFFFFFFF' } },
+      };
+    });
+    headerRow.height = 24;
+
+    // Data rows
+    table.rows.forEach((row, rowIdx) => {
+      const sheetRow = sheet.getRow(rowIdx + 2);
+      row.forEach((val, colIdx) => {
+        const cell = sheetRow.getCell(colIdx + 1);
+        // Try to parse as number
+        const asNum = val.replace(/[$%,]/g, '').trim();
+        const num = Number(asNum);
+        if (!Number.isNaN(num) && asNum !== '' && !/[a-zA-Z]/.test(asNum)) {
+          cell.value = num;
+          if (val.includes('%')) {
+            cell.numFmt = '0.0%';
+            cell.value = num / 100; // store as decimal
+          } else if (val.includes('$') || /^\d+\.\d/.test(asNum)) {
+            cell.numFmt = '#,##0.0';
+          }
+        } else {
+          cell.value = val;
+        }
+        cell.font = { name: 'Calibri', size: 10 };
+        const isAlt = rowIdx % 2 === 1;
+        if (isAlt) {
+          cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF8F7F4' } };
+        }
+        if (cfg.editable && colIdx === 1) {
+          // Highlight the value column for editable sheets
+          cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: isAlt ? 'FFFFFBE6' : 'FFFFFFF0' } };
+        }
+      });
+      sheetRow.height = 18;
+    });
+
+    // Freeze header row
+    sheet.views = [{ state: 'frozen', ySplit: 1 }];
+
+    // Note for editable sheets
+    if (cfg.editable) {
+      const noteRow = sheet.getRow(table.rows.length + 3);
+      const noteCell = noteRow.getCell(1);
+      noteCell.value = '← Yellow cells are input assumptions. Update these to run scenarios.';
+      noteCell.font = { name: 'Calibri', size: 9, italic: true, color: { argb: 'FF92400E' } };
+    }
+  }
+
+  // If no sections were parsed, add a fallback raw-content sheet
+  if (workbook.worksheets.length === 1) {
+    const raw = workbook.addWorksheet('Content');
+    raw.getColumn(1).width = 80;
+    md.split('\n').forEach((line, idx) => {
+      raw.getRow(idx + 1).getCell(1).value = line;
+    });
+  }
+
+  return workbook.xlsx.writeBuffer() as unknown as Promise<Buffer>;
+}
+
 // ── Route handler ─────────────────────────────────────────────────────────────
 
 export async function GET(
@@ -296,8 +460,8 @@ export async function GET(
 
   const url = new URL(req.url);
   const formatParam = url.searchParams.get('format') ?? 'html';
-  if (formatParam !== 'html' && formatParam !== 'docx') {
-    return jsonError(400, 'invalid_format', 'format must be html or docx');
+  if (formatParam !== 'html' && formatParam !== 'docx' && formatParam !== 'xlsx') {
+    return jsonError(400, 'invalid_format', 'format must be html, docx, or xlsx');
   }
   const format: Format = formatParam;
 
@@ -354,17 +518,31 @@ export async function GET(
       });
     }
 
-    // docx
-    const rawBuffer = await markdownToDocx(content, title);
-    // Copy into a guaranteed ArrayBuffer-backed Uint8Array (Node Buffer's
-    // backing is ArrayBufferLike which may not satisfy BodyInit in strict mode).
-    const arrayBuffer = new ArrayBuffer(rawBuffer.byteLength);
-    new Uint8Array(arrayBuffer).set(rawBuffer);
-    return new Response(arrayBuffer, {
+    if (format === 'docx') {
+      const rawBuffer = await markdownToDocx(content, title);
+      // Copy into a guaranteed ArrayBuffer-backed Uint8Array (Node Buffer's
+      // backing is ArrayBufferLike which may not satisfy BodyInit in strict mode).
+      const arrayBuffer = new ArrayBuffer(rawBuffer.byteLength);
+      new Uint8Array(arrayBuffer).set(rawBuffer);
+      return new Response(arrayBuffer, {
+        status: 200,
+        headers: {
+          'Content-Type': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+          'Content-Disposition': `attachment; filename="${safeFilename(title, 'docx')}"`,
+          'Cache-Control': 'private, max-age=0',
+        },
+      });
+    }
+
+    // xlsx — financial model
+    const xlsxBuffer = await markdownToXlsx(content, title);
+    const xlsxArrayBuffer = new ArrayBuffer(xlsxBuffer.byteLength);
+    new Uint8Array(xlsxArrayBuffer).set(xlsxBuffer);
+    return new Response(xlsxArrayBuffer, {
       status: 200,
       headers: {
-        'Content-Type': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-        'Content-Disposition': `attachment; filename="${safeFilename(title, 'docx')}"`,
+        'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        'Content-Disposition': `attachment; filename="${safeFilename(title, 'xlsx')}"`,
         'Cache-Control': 'private, max-age=0',
       },
     });
