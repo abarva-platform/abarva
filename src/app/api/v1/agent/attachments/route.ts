@@ -52,6 +52,7 @@ export async function POST(req: NextRequest) {
   const file = formData.get('file');
   const surface = (formData.get('surface') as string | null)?.trim();
   const agent = (formData.get('agent') as string | null)?.trim() ?? 'sentinel';
+  const surfaceContextRaw = (formData.get('surfaceContext') as string | null) ?? null;
 
   if (!(file instanceof File)) {
     return Response.json({ error: 'bad_request', detail: 'file required' }, { status: 400 });
@@ -59,6 +60,13 @@ export async function POST(req: NextRequest) {
   if (!surface) {
     return Response.json({ error: 'bad_request', detail: 'surface required' }, { status: 400 });
   }
+
+  // Per-surface entity linkage. The dock threads its `surfaceContext`
+  // through as a JSON form field so we can stamp foreign keys at insert
+  // time without a follow-up update round-trip. Today we read `moveId`
+  // for the Moves detail surface; canvas / brief surfaces will add
+  // `linked_event_id` etc. the same way in their own migration chips.
+  const linkedMoveId = extractUuid(surfaceContextRaw, 'moveId');
 
   if (!isAllowedAgentAttachmentMime(file.type)) {
     return Response.json(
@@ -122,6 +130,7 @@ export async function POST(req: NextRequest) {
     bytes: file.size,
     storage_path: storagePath,
     extracted_text: extractedText || null,
+    linked_move_id: linkedMoveId,
   });
 
   if (insertError) {
@@ -147,4 +156,25 @@ export async function POST(req: NextRequest) {
     },
     { status: 200 },
   );
+}
+
+// Defensive: surfaceContext is client-supplied JSON. Pull the named
+// field, validate UUID v4-ish shape, and return null on any whiff of
+// trouble. The agent_attachment table column is UUID, so a malformed
+// value would crash the insert and reject the whole upload.
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+function extractUuid(rawJson: string | null, key: string): string | null {
+  if (!rawJson) return null;
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(rawJson);
+  } catch {
+    return null;
+  }
+  if (!parsed || typeof parsed !== 'object') return null;
+  const value = (parsed as Record<string, unknown>)[key];
+  if (typeof value !== 'string') return null;
+  if (!UUID_RE.test(value)) return null;
+  return value;
 }
