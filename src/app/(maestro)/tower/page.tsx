@@ -43,6 +43,10 @@ import {
   buildTowerBandMetrics,
   type TowerBandMetricsView,
 } from '@/lib/tower/band-metrics-view';
+import {
+  buildTowerPressuresView,
+  type TowerPressuresView,
+} from '@/lib/tower/pressure-cards-view';
 
 export const metadata = { title: 'Control Tower · AbarVa' };
 
@@ -499,6 +503,11 @@ export default async function TowerPage({
     towerVendors,
     buildTowerToday(),
   );
+  const towerPressures: TowerPressuresView = buildTowerPressuresView(
+    towerInitiatives,
+    towerVendors,
+    buildTowerToday(),
+  );
   const resolvedSearchParams = searchParams ? await searchParams : {};
   const activeTab = resolveTowerTab(resolvedSearchParams.tab);
   const seedTenant =
@@ -511,6 +520,7 @@ export default async function TowerPage({
       context={`Control Tower · ${TOWER_SUBMENU_LABELS[activeTab]} · ${towerSetupInitiativesFeed.summary.total} initiatives observed`}
       initiatives={towerInitiatives}
       bandMetrics={towerBandMetrics}
+      pressuresView={towerPressures}
       towerSubmenuSlot={<TowerMainSubmenuStrip activeTab={activeTab} />}
       provenanceSlot={
         <>
