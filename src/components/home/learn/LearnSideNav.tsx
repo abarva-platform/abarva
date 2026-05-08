@@ -35,8 +35,8 @@ export function LearnSideNav() {
     );
   }
 
-  // /home and /home/learn both highlight the welcome item
-  const onRoot = pathname === '/home' || pathname === '/home/learn';
+  // only /home/learn (not bare /home) highlights the welcome item
+  const onRoot = pathname === '/home/learn';
 
   return (
     <aside
