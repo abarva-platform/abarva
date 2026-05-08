@@ -55,7 +55,7 @@ export function AppTopBarEditorial({ tenantName }: Props) {
       style={{
         background: BRAND.paper,
         borderBottom: `1px solid ${BRAND.paperLine}`,
-        padding: "18px 32px 14px",
+        padding: "10px 32px",
         display: "grid",
         gridTemplateColumns: "auto 1fr auto",
         alignItems: "center",
@@ -70,43 +70,28 @@ export function AppTopBarEditorial({ tenantName }: Props) {
         .c-nav-link:hover { color: ${BRAND.ink} !important; }
       `}</style>
 
-      <div style={{ display: "flex", alignItems: "center", gap: 18 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
         <Link href="/home" style={{ display: "flex", alignItems: "center", textDecoration: "none" }}>
           <Image
             src="/brand/abarva-logo.svg"
             alt="AbarVa"
-            width={190}
-            height={38}
-            style={{ height: 38, width: "auto", display: "block" }}
+            width={124}
+            height={32}
+            style={{ height: 32, width: "auto", display: "block" }}
             priority
           />
         </Link>
-        <div style={{ width: 1, height: 36, background: BRAND.paperLineMid }} aria-hidden="true" />
-        <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
-          <div
-            style={{
-              fontFamily: "JetBrains Mono, ui-monospace, monospace",
-              fontSize: 9.5,
-              fontWeight: 700,
-              letterSpacing: "0.20em",
-              textTransform: "uppercase",
-              color: BRAND.faint,
-            }}
-          >
-            A Knowledge Layer for AI Programs
-          </div>
-          <div
-            style={{
-              fontFamily: "Fraunces, Georgia, serif",
-              fontSize: 13,
-              fontStyle: "italic",
-              fontWeight: 300,
-              color: BRAND.muted,
-              letterSpacing: "-0.005em",
-            }}
-          >
-            live workspace · enterprise-grade
-          </div>
+        <div style={{ width: 1, height: 22, background: BRAND.paperLineMid }} aria-hidden="true" />
+        <div
+          style={{
+            fontFamily: "Inter, system-ui, sans-serif",
+            fontSize: 12.5,
+            fontWeight: 500,
+            color: BRAND.muted,
+            letterSpacing: "-0.005em",
+          }}
+        >
+          AI Success Platform
         </div>
       </div>
 

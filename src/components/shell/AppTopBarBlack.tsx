@@ -75,9 +75,9 @@ export function AppTopBarBlack({ tenantName }: Props) {
           <Image
             src="/brand/abarva-logo-inverse.svg"
             alt="AbarVa"
-            width={140}
-            height={28}
-            style={{ height: 28, width: "auto", display: "block" }}
+            width={139}
+            height={36}
+            style={{ height: 36, width: "auto", display: "block" }}
             priority
           />
         </Link>
