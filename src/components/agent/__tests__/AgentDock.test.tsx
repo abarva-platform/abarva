@@ -362,3 +362,101 @@ describe('AgentDock · thread render', () => {
     expect(turns[1]).toHaveAttribute('data-testid', 'agent-dock-turn-user');
   });
 });
+
+describe('AgentDock · viewport-bound side-rail', () => {
+  // Regression: prior to this fix, side-rail dock height was inherited from
+  // its parent flex pane. On surfaces whose document scrolled (e.g.
+  // /source/new with 1587px doc height vs 827px viewport), the composer
+  // ended up below the fold. The shell now self-imposes
+  //   height: calc(100vh - var(--agent-dock-top-offset, 64px))
+  // so the dock stays viewport-bounded irrespective of workspace height.
+
+  it('renders the dock inside a viewport-bound shell with explicit height', () => {
+    render(
+      <AgentDock
+        agent={AGENT}
+        surface={SURFACE}
+        thread={[]}
+        onMessage={jest.fn()}
+        workspace={
+          <div data-testid="tall-workspace" style={{ height: 3000 }}>
+            tall content
+          </div>
+        }
+      />,
+    );
+
+    const shell = screen.getByTestId('agent-dock-side-rail-shell');
+    expect(shell).toBeInTheDocument();
+
+    // jsdom doesn't compute layout, so we assert on the inline style
+    // contract. The shell MUST set an explicit, viewport-relative height
+    // via calc() — never `100%`. That is the load-bearing invariant; if
+    // someone removes it, the bug returns.
+    const height = shell.style.height;
+    const maxHeight = shell.style.maxHeight;
+    expect(height).toMatch(/calc\(100vh/);
+    expect(height).toContain('var(--agent-dock-top-offset');
+    // dvh fallback for mobile address-bar collapse.
+    expect(maxHeight).toMatch(/calc\(100dvh/);
+  });
+
+  it('does not depend on parent flex height — dock height is self-imposed', () => {
+    // Render the dock inside a deliberately mis-sized parent. Pre-fix,
+    // dock height tracked parent. Post-fix, dock has its own height.
+    render(
+      <div style={{ height: 5000 }}>
+        <AgentDock
+          agent={AGENT}
+          surface={SURFACE}
+          thread={[]}
+          onMessage={jest.fn()}
+          workspace={<div style={{ height: 5000 }}>tall</div>}
+        />
+      </div>,
+    );
+
+    const shell = screen.getByTestId('agent-dock-side-rail-shell');
+    // Height comes from the calc() expression, NOT from `100%`.
+    expect(shell.style.height.startsWith('calc(')).toBe(true);
+    expect(shell.style.height).not.toBe('100%');
+  });
+
+  it('keeps the panel and composer using a single chat-panel background', () => {
+    render(
+      <AgentDock
+        agent={AGENT}
+        surface={SURFACE}
+        thread={[{ id: 'a', role: 'agent', body: 'Hi.' }]}
+        onMessage={jest.fn()}
+        workspace={<div>w</div>}
+      />,
+    );
+    const panel = screen.getByTestId('agent-dock-panel');
+    const thread = screen.getByTestId('agent-dock-thread');
+    const form = screen.getByTestId('agent-dock-form');
+
+    // Panel, thread, and composer all read from CANVAS.CHAT_BG. Tokens
+    // resolve to `rgb(253, 251, 247)` in jsdom. They must match — the
+    // user explicitly flagged background striping.
+    const expected = 'rgb(253, 251, 247)';
+    expect(panel.style.background).toBe(expected);
+    expect(thread.style.background).toBe(expected);
+    expect(form.style.background).toBe(expected);
+  });
+
+  it('drops the legacy sticky-bottom on the composer (handled by flex-column now)', () => {
+    render(
+      <AgentDock
+        agent={AGENT}
+        surface={SURFACE}
+        thread={[]}
+        onMessage={jest.fn()}
+        workspace={<div>w</div>}
+      />,
+    );
+    const form = screen.getByTestId('agent-dock-form');
+    // Should NOT carry position:sticky any longer.
+    expect(form.style.position).not.toBe('sticky');
+  });
+});
