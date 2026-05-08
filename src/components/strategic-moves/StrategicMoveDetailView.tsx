@@ -115,6 +115,13 @@ export function StrategicMoveDetailView({ move }: Props) {
                     {secondary.label}
                   </Link>
                 ) : null}
+                <Link
+                  className={styles.btnGhost}
+                  href={`/strategic-moves/${move.id}/evidence`}
+                  data-testid="move-evidence-hub-link"
+                >
+                  Phase evidence
+                </Link>
                 <Link className={styles.btnPhase} href={primary.href}>
                   {primary.label} <span className={styles.btnArrow} aria-hidden>&rarr;</span>
                 </Link>
