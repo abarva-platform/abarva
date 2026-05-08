@@ -79,43 +79,8 @@ export function IntelligenceMap({ data }: Props) {
   const selected = data.nodes.find((n) => n.useCase.id === selectedId) ?? data.nodes[0];
 
   return (
-    <div style={{ background: C.surface2, fontFamily: F_BODY, color: C.body, minHeight: '100%' }}>
-      {/* Masthead */}
-      <header style={{ background: C.surface, borderBottom: `1px solid ${C.borderLight}`, padding: '28px 64px 22px' }}>
-        <div style={{ fontFamily: F_MONO, fontSize: 10, fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: C.faint, marginBottom: 6 }}>
-          INTELLIGENCE · <span style={{ color: C.ink }}>WHERE YOU ARE IN THE UNIVERSE OF AI BETS</span>
-        </div>
-        <h1
-          style={{
-            fontFamily: F_DISPLAY,
-            fontSize: 32,
-            fontWeight: 400,
-            color: C.ink,
-            letterSpacing: '-0.012em',
-            lineHeight: 1.05,
-            margin: '0 0 6px 0',
-          }}
-        >
-          The {data.industry === 'healthcare' ? 'healthcare' : data.industry} AI landscape — and where {data.tenantName} sits in it.
-        </h1>
-        <p style={{ fontSize: 14, color: C.muted, marginBottom: 14, maxWidth: '80ch' }}>
-          {data.totalUseCases} use cases canonicalized. Position is lifecycle stage × value-leverage at your scale. Color is your engagement. Lines connect bets that succeed (or fail) together.
-        </p>
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-          <Pill bg={`${data.tenantBrandColor}14`} fg={data.tenantBrandColor} border={`${data.tenantBrandColor}33`}>
-            Industry: {data.industry === 'healthcare' ? 'Healthcare IDN' : data.industry}
-          </Pill>
-          <Pill>{data.totalUseCases} use cases canonical</Pill>
-          <Pill bg={C.tealSoft} fg={C.teal} border={C.tealLine}>{data.inFlightCount} in flight</Pill>
-          {data.atRiskCount > 0 && (
-            <Pill bg={C.amberSoft} fg={C.amber} border={C.amberLine}>{data.atRiskCount} at risk</Pill>
-          )}
-          <Pill>{data.candidateCount} candidate bets</Pill>
-          <Pill muted>Refreshed {data.refreshedLabel}</Pill>
-        </div>
-      </header>
-
-      {/* What changed · top 3 only · compact treatment */}
+    <div style={{ background: C.surface, fontFamily: F_BODY, color: C.body, minHeight: '100%' }}>
+      {/* What changed · top 3 only · compact treatment · pinned above the grid */}
       <div
         style={{
           background: C.ink,
@@ -193,9 +158,52 @@ export function IntelligenceMap({ data }: Props) {
         )}
       </div>
 
-      {/* Body: map + (selected detail below) on the left · Sentinel chat as the right rail */}
+      {/* Body grid · masthead lives INSIDE the left column so the
+          Sentinel rail aligns with the very top of the surface and the
+          composer is visible without scrolling (claude.ai pattern). */}
       <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 440px', alignItems: 'start' }}>
-        <main style={{ padding: '28px 36px 80px', display: 'grid', gap: 24, gridTemplateColumns: '1fr', minWidth: 0 }}>
+        <main style={{ padding: '24px 36px 80px', display: 'grid', gap: 18, gridTemplateColumns: '1fr', minWidth: 0 }}>
+          {/* Compact masthead — eyebrow + 1-line title + pills inline */}
+          <div>
+            <div
+              style={{
+                fontFamily: F_MONO,
+                fontSize: 10,
+                fontWeight: 700,
+                letterSpacing: '0.2em',
+                textTransform: 'uppercase',
+                color: C.faint,
+                marginBottom: 6,
+              }}
+            >
+              INTELLIGENCE · <span style={{ color: C.ink }}>THE MAP</span>
+            </div>
+            <h1
+              style={{
+                fontFamily: F_DISPLAY,
+                fontSize: 26,
+                fontWeight: 400,
+                color: C.ink,
+                letterSpacing: '-0.014em',
+                lineHeight: 1.15,
+                margin: '0 0 10px 0',
+                maxWidth: '52ch',
+              }}
+            >
+              The {data.industry === 'healthcare' ? 'healthcare' : data.industry} AI landscape — where {data.tenantName} sits in it.
+            </h1>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+              <Pill bg={`${data.tenantBrandColor}14`} fg={data.tenantBrandColor} border={`${data.tenantBrandColor}33`}>
+                {data.industry === 'healthcare' ? 'Healthcare IDN' : data.industry}
+              </Pill>
+              <Pill>{data.totalUseCases} use cases</Pill>
+              <Pill bg={C.tealSoft} fg={C.teal} border={C.tealLine}>{data.inFlightCount} in flight</Pill>
+              {data.atRiskCount > 0 && (
+                <Pill bg={C.amberSoft} fg={C.amber} border={C.amberLine}>{data.atRiskCount} at risk</Pill>
+              )}
+              <Pill>{data.candidateCount} candidate</Pill>
+            </div>
+          </div>
         {/* Map card */}
         <div style={{ border: `1px solid ${C.borderLight}`, background: C.surface, borderRadius: 10, overflow: 'hidden' }}>
           <div

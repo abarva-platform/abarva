@@ -82,39 +82,12 @@ export function IntelligenceBrief({ data }: Props) {
   return (
     <div
       data-testid="intelligence-brief"
-      style={{ background: C.surface2, fontFamily: F_BODY, color: C.body, minHeight: '100%' }}
+      style={{ background: C.surface, fontFamily: F_BODY, color: C.body, minHeight: '100%' }}
     >
-      {/* Compact masthead — CXO-skim-first */}
-      <header
-        style={{
-          background: C.surface,
-          borderBottom: `1px solid ${C.borderLight}`,
-          padding: '28px 56px 22px',
-        }}
-      >
-        <div style={{ fontFamily: F_MONO, fontSize: 10, fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: C.faint, marginBottom: 6 }}>
-          INTELLIGENCE · <span style={{ color: C.ink }}>SENTINEL&apos;S BRIEF FOR YOU</span>
-        </div>
-        <h1
-          style={{
-            fontFamily: F_DISPLAY,
-            fontSize: 32,
-            fontWeight: 400,
-            color: C.ink,
-            letterSpacing: '-0.018em',
-            lineHeight: 1.05,
-            margin: '0 0 6px 0',
-            maxWidth: '40ch',
-          }}
-        >
-          Three bets are above the line for {data.tenantName} this quarter.
-        </h1>
-        <p style={{ fontSize: 13, color: C.muted, maxWidth: '80ch' }}>
-          Tenant-overlay scored against your size, segment, current portfolio, regulatory exposure, and strategic context. Click any bet for the full analysis. Ask Sentinel for follow-ups on the right.
-        </p>
-      </header>
-
-      {/* Body grid — 1fr main + 440px Sentinel rail (matches v3) */}
+      {/* Body grid — masthead lives INSIDE the left column so the
+          Sentinel chat rail aligns with the very top of the surface
+          and the composer is visible without scrolling (claude.ai
+          pattern). */}
       <div
         style={{
           display: 'grid',
@@ -123,31 +96,69 @@ export function IntelligenceBrief({ data }: Props) {
           gap: 0,
         }}
       >
-        <main style={{ padding: '28px 56px 80px' }}>
-          {/* Patterns-triggered banner · attention strip */}
+        <main style={{ padding: '24px 56px 80px' }}>
+          {/* Compact masthead — eyebrow + 1-line title only */}
+          <div style={{ marginBottom: 18 }}>
+            <div
+              style={{
+                fontFamily: F_MONO,
+                fontSize: 10,
+                fontWeight: 700,
+                letterSpacing: '0.2em',
+                textTransform: 'uppercase',
+                color: C.faint,
+                marginBottom: 6,
+              }}
+            >
+              INTELLIGENCE · <span style={{ color: C.ink }}>SENTINEL&apos;S BRIEF</span>
+            </div>
+            <h1
+              style={{
+                fontFamily: F_DISPLAY,
+                fontSize: 26,
+                fontWeight: 400,
+                color: C.ink,
+                letterSpacing: '-0.014em',
+                lineHeight: 1.15,
+                margin: 0,
+                maxWidth: '52ch',
+              }}
+            >
+              Three bets above the line for {data.tenantName} this quarter.
+            </h1>
+          </div>
+
+          {/* Patterns-triggered · compact one-line strip (no banner block) */}
           {data.patternsTriggered.map((pt) => (
             <div
               key={pt.pattern.id}
               style={{
                 background: C.amberSoft,
-                border: `1px solid ${C.amberLine}`,
-                borderRadius: 8,
-                padding: '14px 18px',
-                marginBottom: 24,
+                borderLeft: `3px solid ${C.amber}`,
+                borderRadius: '0 6px 6px 0',
+                padding: '8px 14px',
+                marginBottom: 14,
                 display: 'flex',
                 alignItems: 'center',
-                gap: 16,
+                gap: 12,
                 flexWrap: 'wrap',
               }}
             >
-              <span style={{ fontFamily: F_MONO, fontSize: 9.5, fontWeight: 700, letterSpacing: '0.16em', textTransform: 'uppercase', color: C.amber, whiteSpace: 'nowrap' }}>
-                ⚠ Pattern triggered
+              <span
+                style={{
+                  fontFamily: F_MONO,
+                  fontSize: 9.5,
+                  fontWeight: 700,
+                  letterSpacing: '0.14em',
+                  textTransform: 'uppercase',
+                  color: C.amber,
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                ⚠ {pt.pattern.id}
               </span>
-              <span style={{ flex: 1, minWidth: 240, fontSize: 13.5, color: C.ink, lineHeight: 1.5 }}>
-                <strong style={{ fontWeight: 600 }}>{pt.issue}</strong>{' '}
-                <span style={{ color: C.muted }}>
-                  {pt.pattern.id} · {pt.pattern.quantifiedSignal && `with ${pt.pattern.quantifiedSignal.withPattern.valueRange} adoption · without ${pt.pattern.quantifiedSignal.withoutPattern.valueRange}`}
-                </span>
+              <span style={{ flex: 1, minWidth: 240, fontSize: 12.5, color: C.ink, lineHeight: 1.5 }}>
+                <strong style={{ fontWeight: 600 }}>{pt.issue}</strong>
               </span>
               <Link
                 href={pt.cta.primary.href}
@@ -157,15 +168,12 @@ export function IntelligenceBrief({ data }: Props) {
                   fontWeight: 600,
                   letterSpacing: '0.08em',
                   textTransform: 'uppercase',
-                  padding: '8px 14px',
-                  borderRadius: 4,
-                  textDecoration: 'none',
-                  background: C.amber,
-                  color: C.surface,
+                  textDecoration: 'underline',
+                  color: C.amber,
                   whiteSpace: 'nowrap',
                 }}
               >
-                {pt.cta.primary.label}
+                {pt.cta.primary.label} →
               </Link>
             </div>
           ))}
@@ -224,32 +232,21 @@ export function IntelligenceBrief({ data }: Props) {
             </div>
           )}
 
-          {/* Compact provenance / audit footer */}
+          {/* One-line provenance (collapsed clutter) */}
           <div
             style={{
-              marginTop: 32,
-              padding: '14px 18px',
-              border: `1px dashed ${C.borderLight}`,
-              borderRadius: 6,
-              background: C.surface,
-              display: 'flex',
-              flexWrap: 'wrap',
-              gap: 24,
+              marginTop: 24,
               fontFamily: F_MONO,
               fontSize: 10,
               color: C.faint,
               letterSpacing: '0.04em',
+              borderTop: `1px solid ${C.borderLight}`,
+              paddingTop: 12,
             }}
           >
-            <span>
-              <span style={{ color: C.navy, fontWeight: 700 }}>SENTINEL</span> · brief composed {new Date(data.composedAt).toISOString().slice(0, 16).replace('T', ' ')}
-            </span>
-            <span>
-              Substrate · {data.totals.totalUseCases} use cases · {data.totals.totalPatterns} patterns · {data.totals.totalVendors} vendors · {data.totals.totalRegulatory} regulatory · {data.proofPoints.length} proof points cited
-            </span>
-            <span>
-              Refresh · {data.totals.refreshCadence} · last {data.totals.lastRefreshQuarter}
-            </span>
+            <span style={{ color: C.navy, fontWeight: 700 }}>SENTINEL</span>
+            {' · '}
+            {data.totals.totalUseCases} use cases · {data.totals.totalPatterns} patterns · {data.totals.totalVendors} vendors · {data.proofPoints.length} proof points · refreshed {data.totals.lastRefreshQuarter}
           </div>
         </main>
 
