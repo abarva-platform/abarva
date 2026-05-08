@@ -1,4 +1,5 @@
 import {
+  canvasDockAgentForStage,
   deriveBlockerLine,
   deriveValuePosture,
   formatStageEntered,
@@ -57,6 +58,37 @@ describe('leadAgentForStage', () => {
     expect(leadAgentForStage('vendor_responses')).toBe('Sentinel');
     expect(leadAgentForStage('orals_bafo')).toBe('Nexus');
     expect(leadAgentForStage('value_realization')).toBe('Atlas');
+  });
+});
+
+describe('canvasDockAgentForStage', () => {
+  it('uses Sentinel for stages 1–9 (Strategy through Selection)', () => {
+    expect(canvasDockAgentForStage('strategy')).toBe('Sentinel');
+    expect(canvasDockAgentForStage('scope')).toBe('Sentinel');
+    expect(canvasDockAgentForStage('rfp')).toBe('Sentinel');
+    expect(canvasDockAgentForStage('responses')).toBe('Sentinel');
+    expect(canvasDockAgentForStage('evaluation')).toBe('Sentinel');
+    expect(canvasDockAgentForStage('pricing')).toBe('Sentinel');
+    expect(canvasDockAgentForStage('bafo')).toBe('Sentinel');
+    expect(canvasDockAgentForStage('executive_decision')).toBe('Sentinel');
+    expect(canvasDockAgentForStage('selection')).toBe('Sentinel');
+  });
+
+  it('uses Atlas for stages 10–11 (Transition, Value)', () => {
+    expect(canvasDockAgentForStage('transition')).toBe('Atlas');
+    expect(canvasDockAgentForStage('value')).toBe('Atlas');
+  });
+
+  it('routes legacy aliases to the correct dock agent', () => {
+    // Aliases that resolve to stages 1–9 → Sentinel.
+    expect(canvasDockAgentForStage('intake')).toBe('Sentinel');
+    expect(canvasDockAgentForStage('sourcing_strategy')).toBe('Sentinel');
+    expect(canvasDockAgentForStage('rfp_rfi_package')).toBe('Sentinel');
+    expect(canvasDockAgentForStage('vendor_responses')).toBe('Sentinel');
+    expect(canvasDockAgentForStage('orals_bafo')).toBe('Sentinel');
+    // Aliases that resolve to stages 10–11 → Atlas.
+    expect(canvasDockAgentForStage('contract_mobilization')).toBe('Atlas');
+    expect(canvasDockAgentForStage('value_realization')).toBe('Atlas');
   });
 });
 

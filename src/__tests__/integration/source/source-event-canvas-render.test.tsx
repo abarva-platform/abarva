@@ -190,20 +190,34 @@ describe('UniversalCanvasShell · SSR render', () => {
     }
   });
 
-  it('renders chat lane with stage-specific lead agent and 3 choices', () => {
+  it('renders the AgentDock side-rail with stage-appropriate agent and 3 suggestions', () => {
     const html = render();
-    expect(html).toContain('source-canvas-chat-lane');
-    // Scope stage → Nexus
-    expect(html).toContain('Nexus');
-    expect(html).toContain('source-canvas-choice-0');
-    expect(html).toContain('source-canvas-choice-1');
-    expect(html).toContain('source-canvas-choice-2');
+    // AgentDock panel replaces the legacy EventChatLane testid.
+    expect(html).toContain('agent-dock-panel');
+    // Scope stage (1-9) → Sentinel per canvasDockAgentForStage.
+    expect(html).toContain('Sentinel');
+    // Three-choice catalog now renders as AgentDock suggested actions.
+    expect(html).toContain('agent-dock-suggestion-c0');
+    expect(html).toContain('agent-dock-suggestion-c1');
+    expect(html).toContain('agent-dock-suggestion-c2');
   });
 
-  it('renders sticky chat input', () => {
+  it('renders the sticky AgentDock composer', () => {
     const html = render();
-    expect(html).toContain('source-canvas-chat-input');
-    expect(html).toContain('Ask Nexus…');
+    expect(html).toContain('agent-dock-input');
+    expect(html).toContain('Ask Sentinel…');
+    // Paperclip upload button is rendered.
+    expect(html).toContain('agent-dock-attach');
+  });
+
+  it('uses Atlas as the lead agent on transition (stage 10) and value (stage 11)', () => {
+    const transitionHtml = render({ viewStage: 'transition' });
+    expect(transitionHtml).toContain('Ask Atlas…');
+    expect(transitionHtml).toContain('agent-dock-panel');
+
+    const valueHtml = render({ viewStage: 'value' });
+    expect(valueHtml).toContain('Ask Atlas…');
+    expect(valueHtml).toContain('agent-dock-panel');
   });
 
   it('renders workspace with all four tabs', () => {
@@ -246,6 +260,9 @@ describe('UniversalCanvasShell · SSR render', () => {
         makeEvidence({ requirementId: 'EVID-2', currentState: 'Loaded' }),
       ],
     });
+    // The context strip moved from the chat lane header to the workspace
+    // pane after the AgentDock migration; same data, new home.
+    expect(html).toContain('source-canvas-context-strip');
     // 1 of 2 evidence sources usable → readiness "1 / 2"
     expect(html).toContain('Readiness 1 / 2');
     // 0 promoted artifacts of 2 total → artifacts "0 / 2"
@@ -253,16 +270,15 @@ describe('UniversalCanvasShell · SSR render', () => {
   });
 
   // ── B4: suggested chat prompts populate the composer ──────────────────────
-  it('renders the empty-thread hint that explains what the agent can do', () => {
+  it('renders the AgentDock empty-thread hint and "Try one" suggestions label', () => {
     const html = render();
-    // Agent depends on the stage — scope → Nexus per leadAgentForStage.
-    expect(html).toMatch(/Ask (Nexus|Sentinel|Atlas|Steward) anything about this step/);
-    // The new subtitle covers the "what does the agent do?" gap.
-    expect(html).toMatch(
-      /can draft any artifact, run the gate check, and propose your[\s]+next move/,
-    );
-    // Choice strip label reflects the populate-not-submit semantics.
-    expect(html).toContain('Try one for');
+    // Scope stage (1-9) → Sentinel per canvasDockAgentForStage.
+    expect(html).toContain('Ask Sentinel anything.');
+    // The dock surfaces the agent role under the name as the empty-state
+    // subtitle (matches the AGENT_DOCK_ROLE_COPY entry for Sentinel).
+    expect(html).toContain('Drafts artifacts, surfaces evidence, flags gaps before they cost you.');
+    // Suggestions block label reflects the populate-not-submit semantics.
+    expect(html).toContain('Try one');
     expect(html).not.toContain('Three choices for');
   });
 
@@ -283,7 +299,7 @@ describe('UniversalCanvasShell · SSR render', () => {
     expect(html).toContain('Download xlsx template');
     // Anchor links to the GET endpoint with the event UUID + code.
     expect(html).toMatch(
-      /href="[^"]*\/api\/v1\/source\/[^/]+\/artifacts\/d19_pricing_workbook\/render-xlsx"/,
+      /href="[^"]*\/api\/v1\/source\/[^/]+\/artifacts\/d19_pricing_workbook\/render\?format=xlsx"/,
     );
   });
 

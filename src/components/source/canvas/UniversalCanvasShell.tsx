@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState, type CSSProperties } from 'react';
+import { useMemo, useState, type CSSProperties, type ReactNode } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { AppShell } from '@/components/shell/AppShell';
 import { SourceOnboardingTour } from '@/components/source/onboarding/SourceOnboardingTour';
@@ -59,12 +59,17 @@ import type {
   SourceEventGateCriterionState,
 } from '@/lib/source/canvas-substrate';
 import { SOURCE_STAGE_LABELS } from '@/lib/source/constants';
+import { canvasDockAgentForStage } from '@/lib/source/portfolio-derivations';
 import type { SourceStageKey, SourcingEventSummary } from '@/lib/source/types';
-import { EventChatLane, type ChatTurn } from './EventChatLane';
+import {
+  AgentDock,
+  type AttachmentRef,
+  type ChatMessage,
+  type SuggestedAction,
+} from '@/components/agent/AgentDock';
 import { EventIdStrip } from './EventIdStrip';
 import { EventStepRail } from './EventStepRail';
 import { EventWorkspace, type WorkspaceTabKey } from './EventWorkspace';
-import { ResizableSplitter } from './ResizableSplitter';
 import { CANVAS } from './canvas-tokens';
 import { DocumentTab } from './workspace-tabs/DocumentTab';
 import { GateTab } from './workspace-tabs/GateTab';
@@ -91,12 +96,21 @@ interface UniversalCanvasShellProps {
 
 /**
  * Top-level universal sourcing canvas. Renders the id strip, step rail, and
- * a resizable two-pane body (chat lane left · workspace right).
+ * the shared `<AgentDock>` (chat lane on the left, workspace on the right
+ * by default — five toggleable dock modes per surface).
  *
  * Reads real data from the canvas substrate — pre-filtered to the stage being
- * viewed. The chat is not yet wired to a backend; the input + 3 choices are
- * functional but submitting a message just appends a placeholder turn for
- * now (Wave 2 wires the agent).
+ * viewed. Chat goes through the existing source Sentinel/Atlas runtime at
+ * `/api/v1/source/[eventId]/nexus/ask`; AgentDock paperclip uploads carry
+ * the event id so the route can stamp `agent_attachment.linked_event_id`
+ * before invoking the deterministic stub. The runtime itself is unchanged.
+ *
+ * Stage→agent mapping is binary at the dock surface:
+ *   stages 1–9 (Strategy → Selection)  → Sentinel
+ *   stages 10–11 (Transition, Value)   → Atlas
+ * (`canvasDockAgentForStage`). Specialist agents (Nexus, Steward) still
+ * lead their respective workflows via tool calls invoked by the front
+ * agent — they don't host the chat surface here.
  */
 export function UniversalCanvasShell({
   event,
@@ -109,8 +123,7 @@ export function UniversalCanvasShell({
   tenantName,
 }: UniversalCanvasShellProps) {
   const router = useRouter();
-  const [thread, setThread] = useState<ChatTurn[]>([]);
-  const [isStreaming, setIsStreaming] = useState(false);
+  const [thread, setThread] = useState<ChatMessage[]>([]);
   const [selectedDocCode, setSelectedDocCode] = useState<string | undefined>(undefined);
   const [promotePending, setPromotePending] = useState(false);
 
@@ -387,35 +400,81 @@ export function UniversalCanvasShell({
     }
   };
 
-  const handleSubmit = (text: string) => {
-    // Wave 1 stub: append the user turn + a placeholder agent ack.
-    // Wave 2 will route this through the agent backend.
-    const userTurn: ChatTurn = {
+  const dockAgent = canvasDockAgentForStage(viewStage);
+
+  // POSTs the message + attachment ids to the source Sentinel/Atlas runtime.
+  // The route handler links the attachments to this event (via
+  // linked_event_id) before invoking the deterministic stub. The runtime
+  // itself is unchanged — we just feed it the canvas-scoped attachment refs.
+  const handleAgentMessage = async (
+    text: string,
+    attachments: AttachmentRef[],
+  ): Promise<void> => {
+    const trimmed = text.trim();
+    const attachmentIds = attachments.map((a) => a.id);
+    if (!trimmed && attachmentIds.length === 0) return;
+
+    const userTurn: ChatMessage = {
       id: `u-${Date.now()}`,
       role: 'user',
-      body: text,
+      body: trimmed.length > 0
+        ? trimmed
+        : `Attached ${attachmentIds.length} file${attachmentIds.length === 1 ? '' : 's'}.`,
     };
-    const agentTurn: ChatTurn = {
-      id: `a-${Date.now() + 1}`,
-      role: 'agent',
-      body:
-        'Agent backend is not wired up in this build. The substrate, three-choice catalog, and workspace tabs are live; the chat will be connected in the next slice.',
-    };
-    setIsStreaming(true);
     setThread((t) => [...t, userTurn]);
-    // Simulate a tiny pause so the UI doesn't feel instant-fake.
-    setTimeout(() => {
+
+    try {
+      const res = await fetch(`/api/v1/source/${event.id}/nexus/ask`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          prompt: trimmed,
+          mode: 'event',
+          stageKey: viewStage,
+          selectedAttachmentIds: attachmentIds,
+        }),
+      });
+      const payload = (await res.json().catch(() => null)) as {
+        summary?: string;
+        nexusSummary?: { summary?: string } | null;
+        error?: { message?: string };
+      } | null;
+      const body =
+        payload?.summary ??
+        payload?.nexusSummary?.summary ??
+        payload?.error?.message ??
+        `${dockAgent} could not produce a response right now.`;
+      const agentTurn: ChatMessage = {
+        id: `a-${Date.now() + 1}`,
+        role: 'agent',
+        body,
+      };
       setThread((t) => [...t, agentTurn]);
-      setIsStreaming(false);
-    }, 250);
+    } catch (err) {
+      const agentTurn: ChatMessage = {
+        id: `a-${Date.now() + 1}`,
+        role: 'agent',
+        body:
+          err instanceof Error
+            ? `Network error: ${err.message}`
+            : 'Network error reaching the agent runtime.',
+      };
+      setThread((t) => [...t, agentTurn]);
+    }
   };
 
-  // B4 — clicking a suggested choice now POPULATES the composer (handled
-  // inside EventChatLane). The parent observes the pick for analytics; we
-  // intentionally do NOT auto-submit so the user can edit before sending.
-  const handleChoice = (_choice: string) => {
-    /* analytics hook — kept for parity, no auto-submit */
-  };
+  // Three-choice catalog mapped to AgentDock SuggestedActions. Click pre-fills
+  // the composer rather than auto-submitting so the user can edit first
+  // (B4 semantics preserved from the prior chat lane).
+  const suggestedActions: SuggestedAction[] = useMemo(
+    () =>
+      threeChoicesForStage(viewStage).map((choice, i) => ({
+        id: `c${i}`,
+        label: choice,
+        body: choice,
+      })),
+    [viewStage],
+  );
 
   const initialTab: WorkspaceTabKey = 'document';
   const tabs = [
@@ -492,7 +551,7 @@ export function UniversalCanvasShell({
   return (
     <AppShell
       surface="source-detail"
-      agentName="Sentinel"
+      agentName={dockAgent}
       surfaceContext={{
         sourceEventId: event.id,
         sourceEventCode: event.code,
@@ -514,24 +573,93 @@ export function UniversalCanvasShell({
           />
         </div>
         <div style={SPLITTER_WRAPPER_STYLE}>
-          <ResizableSplitter
-            left={
-              <EventChatLane
-                stage={viewStage}
+          <AgentDock
+            agent={{
+              initials: dockAgent[0],
+              name: dockAgent,
+              role: AGENT_DOCK_ROLE_COPY[dockAgent],
+            }}
+            surface="source/events/canvas"
+            defaultMode="side-rail"
+            surfaceContext={{
+              sourceEventId: event.id,
+              sourceEventCode: event.code,
+              viewStage,
+            }}
+            suggestedActions={suggestedActions}
+            thread={thread}
+            onMessage={handleAgentMessage}
+            workspace={
+              <CanvasContextStrip
+                stageKey={viewStage}
                 contextBundle={contextBundle}
-                thread={thread}
-                choices={threeChoicesForStage(viewStage)}
-                isStreaming={isStreaming}
-                onSubmit={handleSubmit}
-                onChoice={handleChoice}
-              />
+              >
+                <EventWorkspace tabs={tabs} defaultTab={initialTab} />
+              </CanvasContextStrip>
             }
-            right={<EventWorkspace tabs={tabs} defaultTab={initialTab} />}
+            defaultLeftPercent={45}
+            minLeftPx={320}
           />
         </div>
         <CanvasTour />
       </main>
     </AppShell>
+  );
+}
+
+// Eyebrow copy under the agent name in the dock header. Action verbs the
+// user can ask for, not abstract role descriptions. Mirrors the previous
+// EventChatLane.AGENT_DESCRIPTION map (Sentinel + Atlas only — the canvas
+// dock is a binary surface; see `canvasDockAgentForStage`).
+const AGENT_DOCK_ROLE_COPY: Record<'Sentinel' | 'Atlas', string> = {
+  Sentinel: 'Drafts artifacts, surfaces evidence, flags gaps before they cost you.',
+  Atlas: 'Frames the executive brief, ranks finalists, locks the decision.',
+};
+
+interface CanvasContextStripProps {
+  stageKey: SourceStageKey;
+  contextBundle: {
+    readiness: string;
+    artifacts: string;
+    vendors?: string;
+    evidence?: string;
+  };
+  children: ReactNode;
+}
+
+// Stage label + readiness/artifact counts that previously lived inside the
+// chat lane header. AgentDock owns the chat chrome now, so the workspace
+// pane absorbs this strip — same data, same testid surface, just hosted by
+// the right pane instead of the chat one.
+function CanvasContextStrip({ stageKey, contextBundle, children }: CanvasContextStripProps) {
+  const stageLabel = SOURCE_STAGE_LABELS[stageKey];
+  return (
+    <div style={WORKSPACE_WRAPPER_STYLE}>
+      <div
+        data-testid="source-canvas-context-strip"
+        style={CONTEXT_STRIP_STYLE}
+        aria-label="Context bundle"
+      >
+        <span style={CONTEXT_LABEL_STYLE}>Step {stageLabel.toUpperCase()}</span>
+        <span style={DOT_SEP}>·</span>
+        <span>Readiness {contextBundle.readiness}</span>
+        <span style={DOT_SEP}>·</span>
+        <span>Artifacts {contextBundle.artifacts}</span>
+        {contextBundle.vendors ? (
+          <>
+            <span style={DOT_SEP}>·</span>
+            <span>Vendors {contextBundle.vendors}</span>
+          </>
+        ) : null}
+        {contextBundle.evidence ? (
+          <>
+            <span style={DOT_SEP}>·</span>
+            <span>Evidence {contextBundle.evidence}</span>
+          </>
+        ) : null}
+      </div>
+      <div style={WORKSPACE_INNER_STYLE}>{children}</div>
+    </div>
   );
 }
 
@@ -550,8 +678,9 @@ function CanvasTour() {
             Each artifact has a <strong>Mark complete</strong> button — flip them
             as the work lands. Switch to the <strong>Gate</strong> tab to see
             what&rsquo;s blocking promotion; once everything&rsquo;s green,{' '}
-            <strong>Promote stage</strong> moves the event forward. The chat on
-            the left can draft any artifact for you.
+            <strong>Promote stage</strong> moves the event forward. The agent
+            dock on the left can draft any artifact for you — drag a vendor
+            response onto it to bring those documents into the conversation.
           </>
         ),
         nextLabel: 'Got it',
@@ -600,4 +729,47 @@ const SPLITTER_WRAPPER_STYLE: CSSProperties = {
   display: 'flex',
   minHeight: 0,
   overflow: 'hidden',
+};
+
+const WORKSPACE_WRAPPER_STYLE: CSSProperties = {
+  display: 'flex',
+  flexDirection: 'column',
+  flex: 1,
+  minHeight: 0,
+  background: CANVAS.PAGE_BG,
+};
+
+const WORKSPACE_INNER_STYLE: CSSProperties = {
+  flex: 1,
+  display: 'flex',
+  flexDirection: 'column',
+  minHeight: 0,
+  overflow: 'hidden',
+};
+
+const CONTEXT_STRIP_STYLE: CSSProperties = {
+  display: 'flex',
+  flexWrap: 'wrap',
+  alignItems: 'center',
+  gap: 6,
+  padding: '8px 18px',
+  fontFamily: CANVAS.MONO,
+  fontSize: 10,
+  letterSpacing: '0.06em',
+  color: CANVAS.INK_SOFT,
+  background: 'rgba(10,10,11,0.025)',
+  borderBottom: `1px solid ${CANVAS.HAIRLINE}`,
+  flexShrink: 0,
+};
+
+const CONTEXT_LABEL_STYLE: CSSProperties = {
+  fontWeight: 700,
+  color: CANVAS.INK,
+  textTransform: 'uppercase',
+  letterSpacing: '0.12em',
+  marginRight: 4,
+};
+
+const DOT_SEP: CSSProperties = {
+  color: CANVAS.GRAY,
 };
