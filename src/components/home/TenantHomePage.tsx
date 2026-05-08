@@ -63,7 +63,7 @@ export function TenantHomePage({ data }: Props) {
       data-testid="tenant-home-page"
       data-tenant={data.key}
       style={{
-        background: T.surface2,
+        background: T.surface,
         color: T.body,
         fontFamily: T.fBody,
         fontSize: 15,
