@@ -456,6 +456,26 @@ const MULTI_TURN_POLICY = `Multi-turn policy:
 
   Re-retrieve every turn. Treat conversation history as context, not grounding. Do not reuse a prior turn's citations unless they are present in the current bundle.`;
 
+// Tenant AI-initiative citation discipline — PROBE 7-1.
+// When a tenant is in scope and the question touches AI initiatives,
+// Sentinel must cite the structured display ID (MH-XX, AP-XX, FCF-XX, etc.)
+// rather than describing the initiative by narrative name alone. This makes
+// responses auditable and linkable back to the AI Initiatives registry.
+const AI_INITIATIVE_CITATION_RULE = `AI initiatives citation discipline:
+
+  When answering questions that involve a specific AI initiative for this tenant, always include
+  its structured display ID (e.g. MH-06, AP-03, FCF-02) in your response — not just the
+  initiative name. Format: "MH-06 (Joule SAP Pilot for Finance)" on first reference, then
+  "MH-06" on subsequent references. This applies to: risk rankings, status summaries,
+  recommendations, and any claim about initiative performance or ownership. If you cannot
+  identify the display ID from the bundle, state that the ID is unavailable rather than
+  omitting it silently.`;
+
+function aiInitiativeCitationLine(input: ComposeSentinelSystemPromptInput): string {
+  // Only inject when a tenant is authenticated — anonymous visitors have no initiative registry.
+  return input.tenantKey ? AI_INITIATIVE_CITATION_RULE : '';
+}
+
 function bundleContextLines(input: ComposeSentinelSystemPromptInput): string {
   const lines: string[] = [];
   lines.push(`Bundle mode: ${input.mode}.`);
@@ -582,6 +602,8 @@ export function composeSentinelSystemPrompt(
     isSource ? SOURCE_SPECIALIST_DISPATCH : '',
     '',
     bundleContextLines(input),
+    '',
+    aiInitiativeCitationLine(input),
     '',
     wordCapLine(input),
     '',
