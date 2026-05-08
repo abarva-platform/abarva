@@ -22,6 +22,7 @@
 // Pure deterministic helper. Same input → identical output.
 
 import type { AIInitiative, AIInitiativeVendorRow } from '@/lib/admin/ai-initiatives/queries';
+import type { TowerLens } from '@/lib/tower/band-metrics-view';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Public types
@@ -108,6 +109,21 @@ const TYPE_PRIORITY: Record<PressureType, number> = {
   dupl: 2,
   value: 3,
   adopt: 4,
+};
+
+/**
+ * T-8: per-lens priority overrides. Each lens promotes its primary
+ * pressure types to the top while preserving the rest.
+ *   - Value lens (default): no override — full TYPE_PRIORITY applies.
+ *   - Risk lens: cost + dupl + value (financial-risk pressures) lead.
+ *   - Contract lens: vend always leads; non-vendor pressures demote.
+ *   - Adoption lens: adopt + foundation-aligned pressures lead.
+ */
+const PRIORITY_BY_LENS: Record<TowerLens, Record<PressureType, number>> = {
+  value: TYPE_PRIORITY,
+  risk: { cost: 0, dupl: 1, value: 2, vend: 3, adopt: 4 },
+  contract: { vend: 0, cost: 1, dupl: 2, value: 3, adopt: 4 },
+  adopt: { adopt: 0, vend: 1, value: 2, dupl: 3, cost: 4 },
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -285,21 +301,26 @@ function composeVendorPressures(
 /**
  * Build the pressure cards view for Tower CFO View.
  * Returns an empty view (with hint) if substrate has no pressuring initiatives.
+ *
+ * `lens` (T-8) re-ranks pressure cards so the lens-relevant pressures
+ * surface first. Defaults to 'value' which preserves pre-T-8 ordering.
  */
 export function buildTowerPressuresView(
   initiatives: ReadonlyArray<AIInitiative>,
   vendors: ReadonlyArray<AIInitiativeVendorRow>,
   todayIso: string,
+  lens: TowerLens = 'value',
 ): TowerPressuresView {
   const initiativeCards = initiatives
     .map(composeInitiativePressure)
     .filter((c): c is PressureCardView => c !== null);
   const vendorCards = composeVendorPressures(vendors, todayIso);
 
-  // Combine + sort: vendor clock first, then by initiative pressure type.
+  // Combine + sort by lens-specific priority.
+  const priority = PRIORITY_BY_LENS[lens] ?? TYPE_PRIORITY;
   const combined = [...vendorCards, ...initiativeCards].sort((a, b) => {
-    const pa = TYPE_PRIORITY[a.type] ?? 99;
-    const pb = TYPE_PRIORITY[b.type] ?? 99;
+    const pa = priority[a.type] ?? 99;
+    const pb = priority[b.type] ?? 99;
     return pa - pb;
   });
 

@@ -996,10 +996,8 @@ export function TowerIndexPage({
   void _p1; void _p2; void _p3; void _p4; void _p6;
   const alignment2x2View = buildStrategicAlignment2x2View(initiatives ?? []);
   // T-5: render band from substrate when available; fall back to legacy hardcoded.
+  // T-8: iterate metrics in lens-determined order rather than keying by name.
   const useSubstrateBand = Boolean(bandMetrics && !bandMetrics.isEmpty);
-  const bandByKey = useSubstrateBand
-    ? new Map(bandMetrics!.metrics.map((m) => [m.key, m] as const))
-    : null;
   // T-6: render pressure cards from substrate when available; fall back to legacy hardcoded.
   const useSubstratePressures = Boolean(pressuresView && !pressuresView.isEmpty);
   const searchParams = useSearchParams();
@@ -1158,13 +1156,17 @@ export function TowerIndexPage({
               alignItems: 'center',
             }}
           >
-            {useSubstrateBand && bandByKey ? (
+            {useSubstrateBand && bandMetrics ? (
               <>
-                <SubstrateKpi metric={bandByKey.get('portfolio_roi')!} hero isFirst />
-                <SubstrateKpi metric={bandByKey.get('active_pressures')!} />
-                <SubstrateKpi metric={bandByKey.get('spend_at_risk')!} />
-                <SubstrateKpi metric={bandByKey.get('renewals_90d')!} />
-                <SubstrateKpi metric={bandByKey.get('adoption_rate')!} />
+                {/* T-8: iterate in lens-determined order; hero tile leads. */}
+                {bandMetrics.metrics.map((m, i) => (
+                  <SubstrateKpi
+                    key={m.key}
+                    metric={m}
+                    hero={m.hero}
+                    isFirst={i === 0}
+                  />
+                ))}
               </>
             ) : (
               <>
