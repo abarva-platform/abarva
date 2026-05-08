@@ -1,5 +1,6 @@
 import { Metadata } from 'next';
 import { HomeIndexPage } from '@/components/home/HomeIndexPage';
+import { HomePanelGrid } from '@/components/home/HomePanelGrid';
 import type { HomeProgramRow } from '@/components/home/HomeIndexPage';
 import { getActiveClientRow } from '@/lib/active-client';
 import { buildReasoningDashboardSummary } from '@/lib/reasoning/dashboard-summary';
@@ -53,12 +54,20 @@ export default async function HomePage() {
   }
 
   return (
-    <HomeIndexPage
-      activeTenantName={activeClientDisplayName}
-      hasTenantKey={Boolean(activeClient)}
-      moduleAccess={moduleAccess.access}
-      reasoning={reasoning}
-      livePrograms={livePrograms}
-    />
+    <>
+      <HomeIndexPage
+        activeTenantName={activeClientDisplayName}
+        hasTenantKey={Boolean(activeClient)}
+        moduleAccess={moduleAccess.access}
+        reasoning={reasoning}
+        livePrograms={livePrograms}
+      />
+      {/* H3 (2026-05-07) · Canonical Home panel grid per
+           docs/build/home-refinement-package/HOME_PANELS_INVENTORY.md.
+           8 panels grouped Explore / Configure / Learn. Renders below
+           the existing HomeIndexPage portfolio dashboard so neither
+           displaces the other. */}
+      <HomePanelGrid />
+    </>
   );
 }
