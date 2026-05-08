@@ -37,6 +37,14 @@ const HTML_GENERATABLE_CODES_CLIENT: ReadonlySet<string> = new Set([
   'd24_decision_brief',
   'd27_selection_memo',
 ]);
+// Codes for which Source has a PDF renderer. Slice 4.2 — programmatic
+// PDF for archives + signatures (HTML's print-to-PDF still works too).
+const PDF_GENERATABLE_CODES_CLIENT: ReadonlySet<string> = new Set([
+  'd05_scope_memo',
+  'd09_rfp_pack',
+  'd24_decision_brief',
+  'd27_selection_memo',
+]);
 import type {
   SourceEventArtifactState,
   SourceEventArtifactStatus,
@@ -438,6 +446,10 @@ export function UniversalCanvasShell({
           htmlGeneratableCodes={HTML_GENERATABLE_CODES_CLIENT}
           htmlViewHref={(code) =>
             `/api/v1/source/${event.id}/artifacts/${encodeURIComponent(code)}/render-html`
+          }
+          pdfGeneratableCodes={PDF_GENERATABLE_CODES_CLIENT}
+          pdfDownloadHref={(code) =>
+            `/api/v1/source/${event.id}/artifacts/${encodeURIComponent(code)}/render-pdf`
           }
           eventId={event.id}
         />

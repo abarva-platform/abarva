@@ -102,6 +102,7 @@
     "@anthropic-ai/sdk": "^0.85.0",
     "@clerk/nextjs": "^7.0.11",
     "@pinecone-database/pinecone": "^7.2.0",
+    "@react-pdf/renderer": "^4.5.1",
     "@supabase/ssr": "^0.10.2",
     "@supabase/supabase-js": "^2.104.0",
     "@types/papaparse": "^5.5.2",
