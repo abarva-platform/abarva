@@ -573,17 +573,18 @@ function ChatInput({
   scopeLabel: string;
   dockExpanded?: boolean;
 }) {
-  // Two-row Claude-style composer · text input on top, tools row below.
-  // Lifted off the bottom edge with extra bottom padding so the agent's last
-  // message stays visible above it without scrolling.
+  // Two-row Claude/GPT-style composer · text on top, tools row below.
+  // Lifted off the viewport bottom with significant breathing room
+  // (~36px) so the composer floats rather than feeling glued to the
+  // edge. Matches the chat patterns in claude.ai / chat.openai.com.
   return (
     <div
       style={{
         borderTop: `1px solid rgba(255,255,255,0.06)`,
         padding: dockExpanded
-          ? `${SPACING.sm}px ${SPACING.xxl}px ${SPACING.lg}px`
-          : `${SPACING.sm}px ${SPACING.md}px ${SPACING.lg}px`,
-        background: 'linear-gradient(to top, rgba(0,0,0,0.18), transparent)',
+          ? `${SPACING.sm}px ${SPACING.xxl}px 36px`
+          : `${SPACING.sm}px ${SPACING.md}px 36px`,
+        background: 'linear-gradient(to top, rgba(0,0,0,0.22), transparent)',
         flexShrink: 0,
       }}
     >

@@ -5,11 +5,17 @@
 // landscape (lifecycle × value-leverage) of every Use Case for the
 // active tenant's industry, with engagement state encoded as color.
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import Link from 'next/link';
 import { SentinelChat } from '@/components/intelligence-v3/SentinelChat';
 import type { ChatMessage } from '@/components/intelligence-v3/types';
-import type { MapData, MapNode } from '@/lib/knowledge-corpus/types';
+import type {
+  EngagementState,
+  LifecycleStage,
+  MapData,
+  MapNode,
+  Office,
+} from '@/lib/knowledge-corpus/types';
 
 const F_DISPLAY = 'var(--font-fraunces), Georgia, serif';
 const F_BODY = 'var(--font-inter), -apple-system, BlinkMacSystemFont, system-ui, sans-serif';
@@ -43,7 +49,7 @@ interface Props {
 
 const SVG_W = 760;
 const SVG_H = 480;
-const PAD_L = 60;
+const PAD_L = 78; // bumped so "VERY HIGH" tick label doesn't clip
 const PAD_R = 30;
 const PAD_T = 40;
 const PAD_B = 50;
@@ -74,9 +80,37 @@ function nodeFill(node: MapNode): { fill: string; stroke?: string; opacity: numb
   }
 }
 
+type MapView = 'landscape' | 'kanban' | 'heatmap' | 'list';
+type EngagementFilter = EngagementState | 'all';
+
+const VIEW_OPTIONS: ReadonlyArray<{ key: MapView; label: string }> = [
+  { key: 'landscape', label: 'Landscape' },
+  { key: 'kanban', label: 'Kanban' },
+  { key: 'heatmap', label: 'Heatmap' },
+  { key: 'list', label: 'List' },
+];
+
+const ENGAGEMENT_FILTERS: ReadonlyArray<{ key: EngagementFilter; label: string }> = [
+  { key: 'all', label: 'All' },
+  { key: 'in_flight', label: 'In flight' },
+  { key: 'at_risk', label: 'At risk' },
+  { key: 'not_started', label: 'Candidate' },
+  { key: 'failed', label: 'Retired' },
+  { key: 'scaled', label: 'Scaled' },
+];
+
 export function IntelligenceMap({ data }: Props) {
   const [selectedId, setSelectedId] = useState<string>(data.defaultSelectedId);
-  const selected = data.nodes.find((n) => n.useCase.id === selectedId) ?? data.nodes[0];
+  const [view, setView] = useState<MapView>('landscape');
+  const [engagement, setEngagement] = useState<EngagementFilter>('all');
+
+  const visibleNodes = useMemo(() => {
+    if (engagement === 'all') return data.nodes;
+    return data.nodes.filter((n) => n.engagementState === engagement);
+  }, [data.nodes, engagement]);
+
+  const selected =
+    visibleNodes.find((n) => n.useCase.id === selectedId) ?? visibleNodes[0] ?? data.nodes[0];
 
   return (
     <div style={{ background: C.surface, fontFamily: F_BODY, color: C.body, minHeight: '100%' }}>
@@ -204,14 +238,108 @@ export function IntelligenceMap({ data }: Props) {
               <Pill>{data.candidateCount} candidate</Pill>
             </div>
           </div>
-        {/* Map card */}
+        {/* Toolbar · filter chips left · view toggle right */}
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            gap: 12,
+            flexWrap: 'wrap',
+          }}
+        >
+          <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+            <span
+              style={{
+                fontFamily: F_MONO,
+                fontSize: 9.5,
+                fontWeight: 700,
+                letterSpacing: '0.16em',
+                color: C.faint,
+                textTransform: 'uppercase',
+                marginRight: 4,
+              }}
+            >
+              Filter
+            </span>
+            {ENGAGEMENT_FILTERS.map((f) => {
+              const isActive = engagement === f.key;
+              const count = f.key === 'all'
+                ? data.nodes.length
+                : data.nodes.filter((n) => n.engagementState === f.key).length;
+              if (count === 0 && f.key !== 'all') return null;
+              return (
+                <button
+                  key={f.key}
+                  type="button"
+                  onClick={() => setEngagement(f.key)}
+                  style={{
+                    fontFamily: F_MONO,
+                    fontSize: 10,
+                    fontWeight: 600,
+                    letterSpacing: '0.08em',
+                    textTransform: 'uppercase',
+                    padding: '4px 10px',
+                    borderRadius: 4,
+                    border: `1px solid ${isActive ? C.ink : C.borderLight}`,
+                    background: isActive ? C.ink : C.surface,
+                    color: isActive ? C.surface : C.body,
+                    cursor: 'pointer',
+                  }}
+                >
+                  {f.label} <span style={{ opacity: 0.6, marginLeft: 3 }}>{count}</span>
+                </button>
+              );
+            })}
+          </div>
+          <div
+            style={{
+              display: 'inline-flex',
+              gap: 0,
+              border: `1px solid ${C.borderLight}`,
+              borderRadius: 8,
+              padding: 3,
+              background: '#FAFAF7',
+              alignItems: 'center',
+            }}
+          >
+            {VIEW_OPTIONS.map((v) => {
+              const isActive = view === v.key;
+              return (
+                <button
+                  key={v.key}
+                  type="button"
+                  onClick={() => setView(v.key)}
+                  style={{
+                    fontFamily: F_MONO,
+                    fontSize: 10,
+                    fontWeight: 600,
+                    letterSpacing: '0.1em',
+                    textTransform: 'uppercase',
+                    padding: '6px 11px',
+                    borderRadius: 5,
+                    border: 0,
+                    background: isActive ? C.ink : 'transparent',
+                    color: isActive ? C.surface : C.muted,
+                    cursor: 'pointer',
+                  }}
+                >
+                  {v.label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* View body · conditional on `view` */}
+        {view === 'landscape' && (
         <div style={{ border: `1px solid ${C.borderLight}`, background: C.surface, borderRadius: 10, overflow: 'hidden' }}>
           <div
             style={{
               display: 'flex',
               justifyContent: 'space-between',
               alignItems: 'center',
-              padding: '14px 22px',
+              padding: '12px 22px',
               borderBottom: `1px solid ${C.borderLight}`,
               background: '#FAFAF7',
               flexWrap: 'wrap',
@@ -219,7 +347,7 @@ export function IntelligenceMap({ data }: Props) {
             }}
           >
             <div style={{ fontFamily: F_MONO, fontSize: 10, fontWeight: 700, letterSpacing: '0.16em', textTransform: 'uppercase', color: C.faint }}>
-              Landscape · click any node for the brief
+              {visibleNodes.length} of {data.nodes.length} bets · click any node for the brief
             </div>
             <div style={{ display: 'flex', gap: 14, fontFamily: F_MONO, fontSize: 10, letterSpacing: '0.06em', color: C.faint, alignItems: 'center' }}>
               <LegendDot color={C.teal} label="In flight" />
@@ -313,8 +441,8 @@ export function IntelligenceMap({ data }: Props) {
                 );
               })()}
 
-              {/* Nodes */}
-              {data.nodes.map((node) => {
+              {/* Nodes · filtered by engagement */}
+              {visibleNodes.map((node) => {
                 const cx = nodeX(node);
                 const cy = nodeY(node);
                 const fill = nodeFill(node);
@@ -359,8 +487,19 @@ export function IntelligenceMap({ data }: Props) {
             </svg>
           </div>
         </div>
+        )}
 
-          {/* Selected node detail — inline below the map (no longer requires the right rail) */}
+        {view === 'kanban' && (
+          <KanbanView nodes={visibleNodes} onSelect={setSelectedId} selectedId={selected?.useCase.id} />
+        )}
+        {view === 'heatmap' && (
+          <HeatmapView nodes={visibleNodes} onSelect={setSelectedId} />
+        )}
+        {view === 'list' && (
+          <ListView nodes={visibleNodes} onSelect={setSelectedId} selectedId={selected?.useCase.id} />
+        )}
+
+          {/* Selected node detail — inline below the chart */}
           {selected && <DetailCard node={selected} />}
         </main>
 
@@ -568,5 +707,531 @@ function LegendDot({ color, stroke, label }: { color: string; stroke?: string; l
       />
       {label}
     </span>
+  );
+}
+
+// ─── Kanban view · columns by engagement state ────────────────────
+
+const KANBAN_COLUMNS: ReadonlyArray<{
+  state: EngagementState;
+  label: string;
+  accent: string;
+}> = [
+  { state: 'in_flight', label: 'In flight', accent: C.teal },
+  { state: 'at_risk', label: 'At risk', accent: C.amber },
+  { state: 'not_started', label: 'Candidate', accent: C.navy },
+  { state: 'failed', label: 'Retired', accent: C.red },
+];
+
+function KanbanView({
+  nodes,
+  selectedId,
+  onSelect,
+}: {
+  nodes: ReadonlyArray<MapNode>;
+  selectedId?: string;
+  onSelect: (id: string) => void;
+}) {
+  const visibleColumns = KANBAN_COLUMNS.filter((col) =>
+    nodes.some((n) => n.engagementState === col.state),
+  );
+  const columnsToShow = visibleColumns.length > 0 ? visibleColumns : KANBAN_COLUMNS.slice(0, 3);
+  return (
+    <div
+      style={{
+        display: 'grid',
+        gridTemplateColumns: `repeat(${columnsToShow.length}, 1fr)`,
+        gap: 10,
+      }}
+    >
+      {columnsToShow.map((col) => {
+        const colNodes = nodes.filter((n) => n.engagementState === col.state);
+        return (
+          <div
+            key={col.state}
+            style={{
+              background: C.surface,
+              border: `1px solid ${C.borderLight}`,
+              borderTop: `3px solid ${col.accent}`,
+              borderRadius: 8,
+              minHeight: 360,
+              display: 'flex',
+              flexDirection: 'column',
+            }}
+          >
+            <div
+              style={{
+                padding: '10px 14px',
+                borderBottom: `1px solid ${C.borderLight}`,
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+              }}
+            >
+              <span
+                aria-hidden="true"
+                style={{ width: 8, height: 8, borderRadius: '50%', background: col.accent }}
+              />
+              <span
+                style={{
+                  fontFamily: F_MONO,
+                  fontSize: 10,
+                  fontWeight: 700,
+                  letterSpacing: '0.16em',
+                  textTransform: 'uppercase',
+                  color: col.accent,
+                }}
+              >
+                {col.label}
+              </span>
+              <span
+                style={{
+                  fontFamily: F_MONO,
+                  fontSize: 10,
+                  color: C.faint,
+                  marginLeft: 'auto',
+                }}
+              >
+                {colNodes.length}
+              </span>
+            </div>
+            <div style={{ padding: 8, display: 'flex', flexDirection: 'column', gap: 6, flex: 1 }}>
+              {colNodes.length === 0 ? (
+                <div
+                  style={{
+                    fontFamily: F_MONO,
+                    fontSize: 10,
+                    color: C.faint,
+                    letterSpacing: '0.06em',
+                    textAlign: 'center',
+                    padding: 16,
+                    border: `1px dashed ${C.borderLight}`,
+                    borderRadius: 6,
+                  }}
+                >
+                  — empty —
+                </div>
+              ) : (
+                colNodes.map((node) => (
+                  <KanbanCard
+                    key={node.useCase.id}
+                    node={node}
+                    accent={col.accent}
+                    isSelected={node.useCase.id === selectedId}
+                    onSelect={onSelect}
+                  />
+                ))
+              )}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function KanbanCard({
+  node,
+  accent,
+  isSelected,
+  onSelect,
+}: {
+  node: MapNode;
+  accent: string;
+  isSelected: boolean;
+  onSelect: (id: string) => void;
+}) {
+  const valueRange =
+    node.useCase.businessValueRanges.perCompanySize.mid ??
+    node.useCase.businessValueRanges.perCompanySize.large ??
+    '—';
+  return (
+    <button
+      type="button"
+      onClick={() => onSelect(node.useCase.id)}
+      style={{
+        textAlign: 'left',
+        background: isSelected ? `${accent}10` : C.surface,
+        border: `1px solid ${isSelected ? accent : C.borderLight}`,
+        borderLeft: `3px solid ${accent}`,
+        borderRadius: 6,
+        padding: '10px 12px',
+        cursor: 'pointer',
+        fontFamily: F_BODY,
+        color: 'inherit',
+      }}
+    >
+      <div style={{ fontSize: 13, fontWeight: 600, color: C.ink, marginBottom: 4, lineHeight: 1.25 }}>
+        {node.useCase.name}
+      </div>
+      <div
+        style={{
+          fontFamily: F_MONO,
+          fontSize: 9,
+          color: C.faint,
+          letterSpacing: '0.04em',
+          marginBottom: 6,
+        }}
+      >
+        {node.useCase.id}
+        {node.initiativeDisplayId && ` · ${node.initiativeDisplayId}`}
+      </div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', gap: 6, fontSize: 11, color: C.muted }}>
+        <span>{lifecycleLabel(node.useCase.lifecycleStage)}</span>
+        <span style={{ color: C.ink, fontWeight: 600 }}>{valueRange}</span>
+      </div>
+    </button>
+  );
+}
+
+function lifecycleLabel(s: LifecycleStage): string {
+  if (s === 'emerging') return 'Emerging';
+  if (s === 'scaling') return 'Scaling';
+  if (s === 'mature') return 'Mature';
+  return 'Declining';
+}
+
+// ─── Heatmap view · function rows × lifecycle cols ────────────────
+
+const HEATMAP_OFFICES: ReadonlyArray<{ key: Office; label: string }> = [
+  { key: 'front', label: 'Front office' },
+  { key: 'middle', label: 'Middle office' },
+  { key: 'back', label: 'Back office' },
+];
+
+const HEATMAP_STAGES: ReadonlyArray<{ key: LifecycleStage; label: string }> = [
+  { key: 'emerging', label: 'Emerging' },
+  { key: 'scaling', label: 'Scaling' },
+  { key: 'mature', label: 'Mature' },
+  { key: 'declining', label: 'Declining' },
+];
+
+function HeatmapView({
+  nodes,
+  onSelect,
+}: {
+  nodes: ReadonlyArray<MapNode>;
+  onSelect: (id: string) => void;
+}) {
+  return (
+    <div
+      style={{
+        background: C.surface,
+        border: `1px solid ${C.borderLight}`,
+        borderRadius: 10,
+        padding: 18,
+      }}
+    >
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: `160px repeat(${HEATMAP_STAGES.length}, 1fr)`,
+          gap: 4,
+          marginBottom: 4,
+        }}
+      >
+        <div />
+        {HEATMAP_STAGES.map((s) => (
+          <div
+            key={s.key}
+            style={{
+              fontFamily: F_MONO,
+              fontSize: 9.5,
+              fontWeight: 700,
+              letterSpacing: '0.14em',
+              color: C.faint,
+              textTransform: 'uppercase',
+              textAlign: 'center',
+              padding: '6px 0',
+            }}
+          >
+            {s.label}
+          </div>
+        ))}
+      </div>
+      {HEATMAP_OFFICES.map((office) => (
+        <div
+          key={office.key}
+          style={{
+            display: 'grid',
+            gridTemplateColumns: `160px repeat(${HEATMAP_STAGES.length}, 1fr)`,
+            gap: 4,
+            marginBottom: 4,
+          }}
+        >
+          <div
+            style={{
+              fontFamily: F_BODY,
+              fontSize: 12,
+              fontWeight: 600,
+              color: C.ink,
+              padding: '8px 0',
+              alignSelf: 'center',
+            }}
+          >
+            {office.label}
+          </div>
+          {HEATMAP_STAGES.map((stage) => {
+            const cellNodes = nodes.filter(
+              (n) => n.useCase.office === office.key && n.useCase.lifecycleStage === stage.key,
+            );
+            return (
+              <HeatmapCell
+                key={stage.key}
+                nodes={cellNodes}
+                onSelect={onSelect}
+              />
+            );
+          })}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function HeatmapCell({
+  nodes,
+  onSelect,
+}: {
+  nodes: ReadonlyArray<MapNode>;
+  onSelect: (id: string) => void;
+}) {
+  const inFlight = nodes.filter((n) => n.engagementState === 'in_flight').length;
+  const atRisk = nodes.filter((n) => n.engagementState === 'at_risk').length;
+  const total = nodes.length;
+  const intensity = total === 0 ? 0 : Math.min(1, total / 4);
+  const baseColor =
+    inFlight > 0 ? C.teal : atRisk > 0 ? C.amber : total > 0 ? C.navy : 'transparent';
+  return (
+    <div
+      style={{
+        background: total === 0 ? 'rgba(0,0,0,0.02)' : `${baseColor}${Math.round(20 + intensity * 60).toString(16).padStart(2, '0')}`,
+        border: total === 0 ? `1px dashed ${C.borderLight}` : `1px solid ${baseColor}40`,
+        borderRadius: 6,
+        minHeight: 64,
+        padding: 6,
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 2,
+      }}
+    >
+      {nodes.length === 0 ? (
+        <span
+          style={{
+            fontFamily: F_MONO,
+            fontSize: 9.5,
+            color: C.faint,
+            letterSpacing: '0.06em',
+            margin: 'auto',
+          }}
+        >
+          —
+        </span>
+      ) : (
+        <>
+          <div
+            style={{
+              fontFamily: F_MONO,
+              fontSize: 9,
+              fontWeight: 700,
+              letterSpacing: '0.1em',
+              color: baseColor,
+              marginBottom: 2,
+            }}
+          >
+            {total} {total === 1 ? 'BET' : 'BETS'}
+            {inFlight > 0 && ` · ${inFlight} ACTIVE`}
+            {atRisk > 0 && ` · ${atRisk} AT RISK`}
+          </div>
+          {nodes.slice(0, 3).map((n) => (
+            <button
+              key={n.useCase.id}
+              type="button"
+              onClick={() => onSelect(n.useCase.id)}
+              style={{
+                textAlign: 'left',
+                background: 'transparent',
+                border: 0,
+                padding: 0,
+                fontFamily: F_BODY,
+                fontSize: 11,
+                color: C.ink,
+                cursor: 'pointer',
+                lineHeight: 1.3,
+              }}
+            >
+              {truncate(n.useCase.name, 28)}
+            </button>
+          ))}
+          {nodes.length > 3 && (
+            <span
+              style={{
+                fontFamily: F_MONO,
+                fontSize: 9,
+                color: C.faint,
+                letterSpacing: '0.04em',
+              }}
+            >
+              +{nodes.length - 3} more
+            </span>
+          )}
+        </>
+      )}
+    </div>
+  );
+}
+
+// ─── List view · sortable table ────────────────────────────────────
+
+function ListView({
+  nodes,
+  selectedId,
+  onSelect,
+}: {
+  nodes: ReadonlyArray<MapNode>;
+  selectedId?: string;
+  onSelect: (id: string) => void;
+}) {
+  const sorted = [...nodes].sort((a, b) => {
+    const order: Record<EngagementState, number> = {
+      at_risk: 0,
+      in_flight: 1,
+      scaled: 2,
+      not_started: 3,
+      failed: 4,
+    };
+    return order[a.engagementState] - order[b.engagementState];
+  });
+  return (
+    <div
+      style={{
+        background: C.surface,
+        border: `1px solid ${C.borderLight}`,
+        borderRadius: 10,
+        overflow: 'hidden',
+      }}
+    >
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: '120px 1fr 130px 130px 110px 110px',
+          gap: 0,
+          padding: '10px 16px',
+          background: '#FAFAF7',
+          borderBottom: `1px solid ${C.borderLight}`,
+          fontFamily: F_MONO,
+          fontSize: 9.5,
+          fontWeight: 700,
+          letterSpacing: '0.14em',
+          color: C.faint,
+          textTransform: 'uppercase',
+        }}
+      >
+        <span>State</span>
+        <span>Name</span>
+        <span>Office</span>
+        <span>Lifecycle</span>
+        <span style={{ textAlign: 'right' }}>Value</span>
+        <span style={{ textAlign: 'right' }}>TTV</span>
+      </div>
+      {sorted.map((node) => {
+        const isSelected = node.useCase.id === selectedId;
+        const fill = nodeFill(node);
+        const stateLabel =
+          node.engagementState === 'in_flight' ? 'In flight' :
+          node.engagementState === 'at_risk' ? 'At risk' :
+          node.engagementState === 'failed' ? 'Retired' :
+          node.engagementState === 'scaled' ? 'Scaled' : 'Candidate';
+        const value =
+          node.useCase.businessValueRanges.perCompanySize.mid ??
+          node.useCase.businessValueRanges.perCompanySize.large ??
+          '—';
+        return (
+          <button
+            key={node.useCase.id}
+            type="button"
+            onClick={() => onSelect(node.useCase.id)}
+            style={{
+              display: 'grid',
+              gridTemplateColumns: '120px 1fr 130px 130px 110px 110px',
+              gap: 0,
+              padding: '10px 16px',
+              background: isSelected ? `${C.navy}06` : C.surface,
+              borderBottom: `1px solid ${C.borderLight}`,
+              fontFamily: F_BODY,
+              fontSize: 12.5,
+              color: 'inherit',
+              cursor: 'pointer',
+              textAlign: 'left',
+              borderLeft: 0,
+              borderRight: 0,
+              borderTop: 0,
+              alignItems: 'center',
+              width: '100%',
+            }}
+          >
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+              <span
+                aria-hidden="true"
+                style={{
+                  width: 8,
+                  height: 8,
+                  borderRadius: '50%',
+                  background: fill.fill,
+                  border: fill.stroke ? `2px solid ${fill.stroke}` : 'none',
+                }}
+              />
+              <span
+                style={{
+                  fontFamily: F_MONO,
+                  fontSize: 10,
+                  fontWeight: 600,
+                  letterSpacing: '0.06em',
+                  color: C.muted,
+                }}
+              >
+                {stateLabel}
+              </span>
+            </span>
+            <span>
+              <span style={{ color: C.ink, fontWeight: 600 }}>{node.useCase.name}</span>
+              <span
+                style={{
+                  fontFamily: F_MONO,
+                  fontSize: 9.5,
+                  color: C.faint,
+                  letterSpacing: '0.04em',
+                  marginLeft: 8,
+                }}
+              >
+                {node.useCase.id}
+                {node.initiativeDisplayId && ` · ${node.initiativeDisplayId}`}
+              </span>
+            </span>
+            <span style={{ color: C.muted, fontSize: 12 }}>
+              {node.useCase.office === 'front' ? 'Front office' :
+                node.useCase.office === 'middle' ? 'Middle office' : 'Back office'}
+            </span>
+            <span style={{ color: C.muted, fontSize: 12 }}>
+              {lifecycleLabel(node.useCase.lifecycleStage)}
+            </span>
+            <span style={{ textAlign: 'right', color: C.ink, fontWeight: 600 }}>
+              {value}
+            </span>
+            <span
+              style={{
+                textAlign: 'right',
+                fontFamily: F_MONO,
+                fontSize: 11,
+                color: C.faint,
+                letterSpacing: '0.04em',
+              }}
+            >
+              {node.useCase.businessValueRanges.timeToValueMonths}mo
+            </span>
+          </button>
+        );
+      })}
+    </div>
   );
 }
