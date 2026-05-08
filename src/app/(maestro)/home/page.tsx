@@ -1,14 +1,13 @@
-import { Metadata } from 'next';
-import { HomeIndexPage } from '@/components/home/HomeIndexPage';
-import type { HomeProgramRow } from '@/components/home/HomeIndexPage';
+// /home · tenant home page · masthead + sidebar + 5 numbered sections.
+//
+// Locked design from docs/training/setup-home-{apex,firstcap,meridian}.html.
+// Resolves the active client and renders the matching tenant fixture
+// (Meridian / Apex / FirstCap) at full wireframe fidelity.
+
+import type { Metadata } from 'next';
+import { TenantHomePage } from '@/components/home/TenantHomePage';
+import { resolveTenantHome } from '@/components/home/tenant-home-fixtures';
 import { getActiveClientRow } from '@/lib/active-client';
-import { buildReasoningDashboardSummary } from '@/lib/reasoning/dashboard-summary';
-import { getCurrentUser } from '@/lib/auth/current-user';
-import { getCurrentModuleAccess } from '@/lib/auth/server-module-access';
-import { getProgramPortfolio } from '@/lib/programs/queries';
-import { PHASE_LABEL_MAP } from '@/lib/programs/programs-fixture';
-import type { ProgramPhaseId } from '@/lib/programs/programs-types';
-import { canonicalClientDisplayName } from '@/lib/client-config';
 
 export const metadata: Metadata = { title: 'Home · AbarVa' };
 export const dynamic = 'force-dynamic';
@@ -16,49 +15,6 @@ export const revalidate = 0;
 
 export default async function HomePage() {
   const activeClient = await getActiveClientRow().catch(() => null);
-  const activeClientDisplayName =
-    canonicalClientDisplayName({ key: activeClient?.key, name: activeClient?.name }) ??
-    'AbarVa Client';
-  const moduleAccess = await getCurrentModuleAccess();
-  const reasoning = buildReasoningDashboardSummary();
-  let livePrograms: HomeProgramRow[] = [];
-  const canUsePrograms = moduleAccess.access.modules.includes('programs');
-
-  if (activeClient && canUsePrograms) {
-    try {
-      const user = await getCurrentUser();
-      const programs = await getProgramPortfolio({
-        clientId: activeClient.id,
-        userId: user?.personId ?? user?.clerkUserId ?? 'home-page',
-      });
-      livePrograms = programs
-        .filter((program) => program.lifecycleState === 'approved' || program.status === 'active')
-        .map((program) => {
-          const rawPhase = program.currentPhase ?? 0;
-          const phase = Math.max(0, Math.min(6, rawPhase)) as ProgramPhaseId;
-          return {
-            id: program.id,
-            displayId: program.id.toUpperCase().slice(0, 12),
-            name: program.name,
-            phase,
-            phaseLabel: PHASE_LABEL_MAP[phase] ?? `Phase ${phase}`,
-            gateStatus: 'open' as const,
-            href: `/programs/${program.id}`,
-          };
-        })
-        .slice(0, 3);
-    } catch {
-      livePrograms = [];
-    }
-  }
-
-  return (
-    <HomeIndexPage
-      activeTenantName={activeClientDisplayName}
-      hasTenantKey={Boolean(activeClient)}
-      moduleAccess={moduleAccess.access}
-      reasoning={reasoning}
-      livePrograms={livePrograms}
-    />
-  );
+  const data = resolveTenantHome(activeClient?.key);
+  return <TenantHomePage data={data} />;
 }
