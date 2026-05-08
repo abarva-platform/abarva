@@ -37,6 +37,7 @@ export interface SourceEventArtifactStateRow {
   body_format: 'markdown' | 'html' | 'plain';
   body_authored_by: string | null;
   body_updated_at: string | null;
+  body_generation_metadata: Record<string, unknown> | null;
   created_at: string;
   updated_at: string;
 }
@@ -59,6 +60,7 @@ export interface SourceEventArtifactState {
   bodyFormat: 'markdown' | 'html' | 'plain';
   bodyAuthoredBy: string | null;
   bodyUpdatedAt: string | null;
+  bodyGenerationMetadata: Record<string, unknown> | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -169,6 +171,7 @@ export function artifactStateRowToView(
     bodyFormat: row.body_format ?? 'markdown',
     bodyAuthoredBy: row.body_authored_by ?? null,
     bodyUpdatedAt: row.body_updated_at ?? null,
+    bodyGenerationMetadata: row.body_generation_metadata ?? null,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };

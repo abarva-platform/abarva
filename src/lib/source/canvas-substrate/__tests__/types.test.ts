@@ -28,6 +28,7 @@ describe('artifactStateRowToView', () => {
       body_format: 'markdown',
       body_authored_by: null,
       body_updated_at: null,
+      body_generation_metadata: null,
       created_at: '2026-05-07T20:00:00Z',
       updated_at: '2026-05-07T20:00:00Z',
     };
@@ -58,11 +59,17 @@ describe('artifactStateRowToView', () => {
       body_format: 'markdown',
       body_authored_by: 'user_clerk_123',
       body_updated_at: '2026-05-08T01:00:00Z',
+      body_generation_metadata: {
+        model: 'claude-sonnet-4-6',
+        promptTemplateId: 'd01_strategy_memo',
+        promptTemplateVersion: 1,
+      },
       created_at: '2026-05-07T20:00:00Z',
       updated_at: '2026-05-08T01:00:00Z',
     };
     const view = artifactStateRowToView(row);
     expect(view.body).toContain('Real authored content');
+    expect(view.bodyGenerationMetadata).toMatchObject({ model: 'claude-sonnet-4-6' });
     expect(view.bodyAuthoredBy).toBe('user_clerk_123');
     expect(view.bodyUpdatedAt).toBe('2026-05-08T01:00:00Z');
   });

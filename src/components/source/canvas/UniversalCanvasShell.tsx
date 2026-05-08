@@ -4,6 +4,7 @@ import { useMemo, useState, type CSSProperties } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { AppShell } from '@/components/shell/AppShell';
 import { SourceOnboardingTour } from '@/components/source/onboarding/SourceOnboardingTour';
+import { listSupportedGenerationCodes } from '@/lib/source/agent-generation';
 import type {
   SourceEventArtifactState,
   SourceEventArtifactStatus,
@@ -80,6 +81,13 @@ export function UniversalCanvasShell({
   const [pendingBodyByCode, setPendingBodyByCode] = useState<
     Record<string, boolean>
   >({});
+  const [pendingGenerationByCode, setPendingGenerationByCode] = useState<
+    Record<string, boolean>
+  >({});
+  const generatableCodes = useMemo(
+    () => new Set(listSupportedGenerationCodes()),
+    [],
+  );
   // Same pattern for gate criteria — Mark met / Reopen flips
   // criterion state without round-tripping through the server props.
   const [criterionStateMap, setCriterionStateMap] = useState<
@@ -191,6 +199,57 @@ export function UniversalCanvasShell({
       setPendingCriterionByCriterionId((prev) => {
         const next = { ...prev };
         delete next[criterionId];
+        return next;
+      });
+    }
+  };
+
+  const handleArtifactGenerate = async (
+    code: string,
+  ): Promise<
+    { ok: true } | { ok: false; error: string; detail: string; missingUpstream?: string[] }
+  > => {
+    setPendingGenerationByCode((prev) => ({ ...prev, [code]: true }));
+    try {
+      const res = await fetch(
+        `/api/v1/source/${event.id}/artifacts/${encodeURIComponent(code)}/generate-from-claude`,
+        {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({}),
+        },
+      );
+      const payload = (await res.json().catch(() => null)) as {
+        artifact?: SourceEventArtifactState;
+        error?: string;
+        detail?: string;
+        missingUpstream?: string[];
+      } | null;
+      if (!res.ok || !payload) {
+        return {
+          ok: false,
+          error: payload?.error ?? 'unknown',
+          detail: payload?.detail ?? `Generation failed (HTTP ${res.status}).`,
+          missingUpstream: payload?.missingUpstream,
+        };
+      }
+      if (payload.artifact) {
+        setArtifactStateMap((prev) => ({
+          ...prev,
+          [code]: payload.artifact!,
+        }));
+      }
+      return { ok: true };
+    } catch (err) {
+      return {
+        ok: false,
+        error: 'network',
+        detail: err instanceof Error ? err.message : 'Network error',
+      };
+    } finally {
+      setPendingGenerationByCode((prev) => {
+        const next = { ...prev };
+        delete next[code];
         return next;
       });
     }
@@ -329,6 +388,9 @@ export function UniversalCanvasShell({
           pendingByCode={pendingStatusByCode}
           onSaveBody={handleArtifactBodySave}
           bodyPendingByCode={pendingBodyByCode}
+          onGenerateFromClaude={handleArtifactGenerate}
+          generatableCodes={generatableCodes}
+          generationPendingByCode={pendingGenerationByCode}
         />
       ),
     },
