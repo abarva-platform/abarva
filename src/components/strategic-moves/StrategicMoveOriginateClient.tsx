@@ -312,6 +312,12 @@ export function StrategicMoveOriginateClient({ tenantName, initialTurns }: Props
       'Untitled Strategic Move';
     startTransition(() => {
       void (async () => {
+        // Snapshot origination turns before submit (filter empty turns, cap at 40)
+        const originationTurns = turnsRef.current
+          .filter((t) => t.text.trim().length > 0)
+          .slice(-40)
+          .map((t) => ({ role: t.role, text: t.text }));
+
         const res = await fetch('/api/programs/origination-submit', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -325,6 +331,11 @@ export function StrategicMoveOriginateClient({ tenantName, initialTurns }: Props
             sponsor: brief.fields['sponsor-candidate'],
             lead: brief.fields['sponsor-candidate'],
             matchedPatternId: null,
+            // Extended scaffold fields
+            scopeBoundary: brief.fields['scope-boundary'] || null,
+            evidenceFamily: brief.fields['evidence-family'] || null,
+            // Origination chat transcript → persisted to turns table
+            originationTurns,
           }),
         });
         const payload = (await res.json()) as {
