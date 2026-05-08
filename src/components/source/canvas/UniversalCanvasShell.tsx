@@ -21,9 +21,13 @@ const XLSX_GENERATABLE_CODES_CLIENT: ReadonlySet<string> = new Set([
 const XLSX_COMPARISON_CODES_CLIENT: ReadonlySet<string> = new Set([
   'd19_pricing_workbook',
 ]);
-// Codes for which Source has a docx renderer. Slice 3.1 starts with d05.
+// Codes for which Source has a docx renderer. Slice 3.1 shipped d05;
+// Slice 3.2 adds d09 (RFP), d24 (Decision Brief), d27 (Selection Memo).
 const DOCX_GENERATABLE_CODES_CLIENT: ReadonlySet<string> = new Set([
   'd05_scope_memo',
+  'd09_rfp_pack',
+  'd24_decision_brief',
+  'd27_selection_memo',
 ]);
 import type {
   SourceEventArtifactState,

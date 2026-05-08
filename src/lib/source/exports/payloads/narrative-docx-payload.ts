@@ -1,22 +1,24 @@
-// Source · d05 Scope Memo docx payload binder
+// Source · narrative docx payload binders
 //
-// Pulls the d05 authored body (or canonical template scaffold as a
-// fallback) plus event metadata, and produces the ScopeMemoDocxPayload
-// the renderer consumes.
+// One binder per narrative artifact code (d05 / d09 / d24 / d27). Each
+// pulls the authored body from substrate, falls back to the canonical
+// template scaffold via loadArtifactTemplate, and produces the generic
+// NarrativeDocxPayload the renderer consumes.
 
 import 'server-only';
 
 import type { SourceGenerationContext } from '@/lib/source/agent-generation/types';
 import { loadArtifactTemplate } from '@/lib/source/canvas-substrate/templates';
-import type { ScopeMemoDocxPayload } from '../renderers/scope-memo-docx';
+import type { NarrativeDocxPayload } from '../renderers/narrative-docx';
 
-export function buildScopeMemoDocxPayloadFromContext(
+export function buildNarrativeDocxPayloadFromContext(
   ctx: SourceGenerationContext,
+  artifactCode: string,
   generatedAt: string,
-): ScopeMemoDocxPayload {
-  const d05 = ctx.artifactStates.find((a) => a.artifactCode === 'd05_scope_memo');
-  const authoredBody = d05?.body ?? null;
-  const fallbackBody = loadCanonicalScaffold('d05_scope_memo');
+): NarrativeDocxPayload {
+  const state = ctx.artifactStates.find((a) => a.artifactCode === artifactCode);
+  const authoredBody = state?.body ?? null;
+  const fallbackBody = loadCanonicalScaffold(artifactCode);
 
   return {
     tenantName: ctx.tenantName,
@@ -29,10 +31,6 @@ export function buildScopeMemoDocxPayloadFromContext(
   };
 }
 
-/**
- * Best-effort canonical-scaffold fetch. Returns the canonical template
- * markdown if available, otherwise a minimal stub explaining the gap.
- */
 function loadCanonicalScaffold(artifactCode: string): string {
   const template = loadArtifactTemplate(artifactCode);
   if (template?.body) return template.body;
