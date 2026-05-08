@@ -17,6 +17,7 @@ export const STAGE_KEYS = [
   // exploration stages.
   'brief',
   'map',
+  'art-of-possible',
   'today',
   'by-function',
   'patterns',
@@ -40,6 +41,7 @@ export interface StageDef {
 export const STAGES: ReadonlyArray<StageDef> = [
   { key: 'brief', label: 'The Brief', stage: 1, primary: true },
   { key: 'map', label: 'The Map', stage: 1, primary: true },
+  { key: 'art-of-possible', label: 'Art of Possible', stage: 1, primary: true },
   { key: 'today', label: 'Today', stage: 1 },
   { key: 'by-function', label: 'By function', stage: 2 },
   { key: 'patterns', label: 'Patterns', stage: 1 },
@@ -48,6 +50,50 @@ export const STAGES: ReadonlyArray<StageDef> = [
   { key: 'my-strategy', label: 'My strategy', stage: 2 },
   { key: 'sessions', label: 'Sessions', stage: 1 },
 ];
+
+// Art of Possible · honest-asymmetry band model (PR-K2.3).
+//
+// Each band is one outcome category for the tenant (e.g. workforce
+// productivity, margin, clinical care, foundation). Bands are ordered by
+// the tenant's actual portfolio weight — heavy categories at the top,
+// empty categories visible (whitespace stays whitespace · we don't pretend
+// every category is filled). The band's bar shows in-flight / candidate /
+// risk / empty proportions out of "$ possible."
+
+export type OutcomeBandTone = 'heavy' | 'thin' | 'gap' | 'foundation';
+
+export interface OutcomeBand {
+  key: string;
+  /** Display name of the outcome category, e.g. "Workforce productivity". */
+  label: string;
+  /** Tone drives the accent color · heavy=teal · thin=amber · gap=red · foundation=navy. */
+  tone: OutcomeBandTone;
+  /** Total $ possible if the category were fully addressed. */
+  possibleUsd: string;
+  /** $ currently in flight against this band. */
+  capturingUsd: string;
+  /** Stacked-bar proportions · must sum to 100. */
+  segments: {
+    inFlight: number;
+    candidate: number;
+    risk: number;
+    empty: number;
+  };
+  /** One-line verdict for CXO (e.g. "Over-indexed · 3 active programs"). */
+  verdict: string;
+  /** Optional dependency call-out (e.g. "MH-07 blocks clinical"). */
+  blocker?: string;
+}
+
+export interface ArtOfPossibleData {
+  /** Total possible across all bands · "$60-150M possible". */
+  totalPossibleLabel: string;
+  /** What the tenant is actually capturing today · "~$13M capturing (~12%)". */
+  totalCapturingLabel: string;
+  /** CXO frame line at the bottom of the canvas. */
+  cxoFrame: string;
+  bands: ReadonlyArray<OutcomeBand>;
+}
 
 export type LayerKey = 'experience' | 'decision' | 'operations';
 
@@ -105,6 +151,13 @@ export interface IntelligenceV3PageData {
   pressureCards: ReadonlyArray<PressureCard>;
   conversationContext: { activeThread: string; layerFocus: string };
   artOfThePossible: ReadonlyArray<LayerColumn>;
+  /**
+   * Honest-asymmetry band view of the same Art of Possible (PR-K2.3).
+   * When present, the dedicated `art-of-possible` stage tab renders this
+   * instead of the legacy 3-column layer grid. Optional · falls back to
+   * a stub when missing so existing tenants continue to render.
+   */
+  aopBands?: ArtOfPossibleData;
   whatWeCantSee: ReadonlyArray<string>;
   sentinelOpener: string;
   conversation: ReadonlyArray<ChatMessage>;
