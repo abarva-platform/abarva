@@ -26,6 +26,13 @@ import {
   renderArtifactPdf,
 } from '@/lib/source/exports';
 import { buildNarrativeDocxPayloadFromContext } from '@/lib/source/exports/payloads/narrative-docx-payload';
+import {
+  DECISION_BRIEF_PDF_CONFIG,
+  RFP_PACK_PDF_CONFIG,
+  SCOPE_MEMO_PDF_CONFIG,
+  SELECTION_MEMO_PDF_CONFIG,
+  buildNarrativePdf,
+} from '@/lib/source/exports/renderers/narrative-pdf';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -99,34 +106,57 @@ export async function GET(_req: NextRequest, { params }: RouteCtx) {
   }
 
   const generatedAt = new Date().toISOString();
-  let buffer: Buffer;
-  try {
-    const payload = buildNarrativeDocxPayloadFromContext(
-      ctx,
-      artifactCode,
-      generatedAt,
-    );
-    const element = renderArtifactPdf({ artifactCode, payload });
-    // pdf().toBuffer returns a Promise<NodeJS.ReadableStream> rather
-    // than a Buffer directly. Drain it.
+  const payload = buildNarrativeDocxPayloadFromContext(
+    ctx,
+    artifactCode,
+    generatedAt,
+  );
+
+  // Strategy: try the full body render first. If @react-pdf throws —
+  // typically pdfkit's "unsupported number" float-overflow on long /
+  // structurally-complex bodies — fall back to a degraded cover-only
+  // render with a notice pointing the user at docx + html for the full
+  // content. The buyer always gets a PDF; quality degrades gracefully.
+  const renderToBuffer = async (degraded: boolean): Promise<Buffer> => {
+    const element = degraded
+      ? buildNarrativePdf(payload, configForCode(artifactCode), { degraded: true })
+      : renderArtifactPdf({ artifactCode, payload });
     const stream = await pdf(element).toBuffer();
     const chunks: Buffer[] = [];
     for await (const chunk of stream as AsyncIterable<Buffer | string>) {
       chunks.push(typeof chunk === 'string' ? Buffer.from(chunk) : chunk);
     }
-    buffer = Buffer.concat(chunks);
+    return Buffer.concat(chunks);
+  };
+
+  let buffer: Buffer;
+  let degraded = false;
+  try {
+    buffer = await renderToBuffer(false);
   } catch (err) {
-    console.error(
-      '[GET /api/v1/source/:eventId/artifacts/:artifactCode/render-pdf] renderer error',
-      err,
+    console.warn(
+      '[render-pdf] full-body render threw; falling back to degraded cover-only',
+      { artifactCode, error: err instanceof Error ? err.message : String(err) },
     );
-    return Response.json(
-      {
-        error: 'render_failed',
-        detail: err instanceof Error ? err.message : 'PDF renderer failed',
-      },
-      { status: 500 },
-    );
+    try {
+      buffer = await renderToBuffer(true);
+      degraded = true;
+    } catch (fallbackErr) {
+      console.error(
+        '[render-pdf] degraded cover-only fallback also threw',
+        fallbackErr,
+      );
+      return Response.json(
+        {
+          error: 'render_failed',
+          detail:
+            fallbackErr instanceof Error
+              ? fallbackErr.message
+              : 'PDF renderer failed',
+        },
+        { status: 500 },
+      );
+    }
   }
 
   const filename = `${artifactCode}__${ctx.event.code}__${generatedAt.slice(0, 10)}.pdf`;
@@ -139,6 +169,27 @@ export async function GET(_req: NextRequest, { params }: RouteCtx) {
       'x-source-artifact-code': artifactCode,
       'x-source-event-code': ctx.event.code,
       'x-source-artifact-format': 'pdf',
+      ...(degraded ? { 'x-source-pdf-degraded': 'true' } : {}),
     },
   });
+}
+
+/**
+ * Map an artifact code to its PDF config. Mirrors the dispatcher in
+ * src/lib/source/exports/index.ts but exposed locally so the route can
+ * invoke the degraded-mode renderer with the right per-artifact config.
+ */
+function configForCode(artifactCode: string) {
+  switch (artifactCode) {
+    case 'd05_scope_memo':
+      return SCOPE_MEMO_PDF_CONFIG;
+    case 'd09_rfp_pack':
+      return RFP_PACK_PDF_CONFIG;
+    case 'd24_decision_brief':
+      return DECISION_BRIEF_PDF_CONFIG;
+    case 'd27_selection_memo':
+      return SELECTION_MEMO_PDF_CONFIG;
+    default:
+      throw new Error(`No PDF config for ${artifactCode}`);
+  }
 }
