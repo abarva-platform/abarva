@@ -9,7 +9,9 @@ import {
   resolveModuleAccess,
   type ProductModule,
 } from "@/lib/auth/module-access";
-import { getAtriumProductNavLabel } from "@/lib/shell/atrium-contract";
+// getAtriumProductNavLabel was used to source the 'Strategic Moves'
+// label dynamically; H1b inlines 'Moves' per Home Refinement Package
+// canonical nav. Re-import if the dynamic label is needed again.
 import { AbarVaLogo } from "@/components/abarva/AbarVaLogo";
 
 export interface AppTopBarProps {
@@ -21,13 +23,21 @@ export interface AppTopBarProps {
 }
 
 type CockpitNavItem = {
-  key: "home" | ProductModule | "learn" | "product";
+  key: "home" | ProductModule;
   label: string;
   href: string;
   match: (pathname: string) => boolean;
   module?: ProductModule;
 };
 
+// H1b (2026-05-07) · Canonical 5-item nav per Home Refinement Package
+// NAV_REORGANIZATION.md. Order: Home · Intelligence · Moves · Source ·
+// Tower. PR-H1 updated AbarvaNav, but the actual rendered nav on
+// /home / /strategic-moves / /tower etc. is AppTopBar — this fixes it.
+//
+// Removed: 'setup' (folds into Home; /admin/* 301→/home/* via proxy),
+// 'learn' (now /home/learn — accessible via Home panel grid), 'product'
+// (marketing surface, not a tenant nav item).
 const NAV_ITEMS: CockpitNavItem[] = [
   {
     key: "home",
@@ -38,21 +48,28 @@ const NAV_ITEMS: CockpitNavItem[] = [
       pathname === "/home" ||
       pathname.startsWith("/home/") ||
       pathname === "/dashboard" ||
-      pathname.startsWith("/dashboard/"),
+      pathname.startsWith("/dashboard/") ||
+      // Old /admin/* redirects to /home/* via proxy; if anything still
+      // bookmarks /admin, surface "Home" as active in the brief moment
+      // before the 301 fires.
+      pathname.startsWith("/admin"),
   },
   {
-    key: "setup",
-    label: "Setup",
-    href: "/admin",
-    module: "setup",
+    key: "intelligence",
+    label: "Intelligence",
+    href: "/intelligence",
+    module: "intelligence",
     match: (pathname) =>
-      pathname.startsWith("/admin") ||
-      pathname.startsWith("/platform/admin") ||
-      pathname === "/platform",
+      pathname === "/intelligence" ||
+      pathname.startsWith("/intelligence/") ||
+      (pathname.startsWith("/tenant/") && pathname.includes("/intelligence")),
   },
   {
     key: "programs",
-    label: getAtriumProductNavLabel("programs"),
+    // Package label is 'Moves' (URL stays /strategic-moves for SEO).
+    // getAtriumProductNavLabel('programs') returns 'Strategic Moves';
+    // override here for the canonical 5-item nav.
+    label: "Moves",
     href: "/strategic-moves",
     module: "programs",
     match: (pathname) =>
@@ -73,16 +90,6 @@ const NAV_ITEMS: CockpitNavItem[] = [
       pathname === "/source" || pathname.startsWith("/source/"),
   },
   {
-    key: "intelligence",
-    label: "Intelligence",
-    href: "/intelligence",
-    module: "intelligence",
-    match: (pathname) =>
-      pathname === "/intelligence" ||
-      pathname.startsWith("/intelligence/") ||
-      (pathname.startsWith("/tenant/") && pathname.includes("/intelligence")),
-  },
-  {
     key: "tower",
     label: "Tower",
     href: "/tower",
@@ -91,20 +98,6 @@ const NAV_ITEMS: CockpitNavItem[] = [
       pathname === "/tower" ||
       pathname.startsWith("/tower/") ||
       (pathname.startsWith("/tenant/") && pathname.includes("/tower")),
-  },
-  {
-    key: "learn",
-    label: "Learn",
-    href: "/learn",
-    match: (pathname) =>
-      pathname === "/learn" || pathname.startsWith("/learn/"),
-  },
-  {
-    key: "product",
-    label: "Product",
-    href: "/product",
-    match: (pathname) =>
-      pathname === "/product" || pathname.startsWith("/product/"),
   },
 ];
 
