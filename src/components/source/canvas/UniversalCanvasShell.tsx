@@ -415,6 +415,7 @@ export function UniversalCanvasShell({
           xlsxComparisonDownloadHref={(code) =>
             `/api/v1/source/${event.id}/artifacts/${encodeURIComponent(code)}/render-comparison-xlsx`
           }
+          eventId={event.id}
         />
       ),
     },

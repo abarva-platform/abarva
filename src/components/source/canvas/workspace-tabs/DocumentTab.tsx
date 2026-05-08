@@ -7,8 +7,17 @@ import type {
 import type { SourceStageKey } from '@/lib/source/types';
 import { SOURCE_STAGE_LABELS } from '@/lib/source/constants';
 import { CANVAS } from '../canvas-tokens';
+import { VendorPricingSubmissionsPanel } from './VendorPricingSubmissionsPanel';
+
+// Codes that surface the vendor-pricing-submissions panel below the
+// body editor. Today only d19 (pricing); future variants would extend.
+const VENDOR_SUBMISSIONS_CODES: ReadonlySet<string> = new Set([
+  'd19_pricing_workbook',
+]);
 
 interface DocumentTabProps {
+  /** Source event id; used by the vendor-submissions panel for API calls. */
+  eventId?: string;
   stage: SourceStageKey;
   artifacts: SourceEventArtifactState[];
   /** Map of artifact code → markdown template body (server-loaded). */
@@ -81,6 +90,7 @@ const STATUS_LABEL: Record<SourceEventArtifactStatus, string> = {
  * content when promoted).
  */
 export function DocumentTab({
+  eventId,
   stage,
   artifacts,
   templateByCode,
@@ -211,6 +221,12 @@ export function DocumentTab({
                   : null
               }
             />
+            {eventId && VENDOR_SUBMISSIONS_CODES.has(active.artifactCode) ? (
+              <VendorPricingSubmissionsPanel
+                eventId={eventId}
+                artifactCode={active.artifactCode}
+              />
+            ) : null}
             {body ? null : (
               <p style={MISSING_TEMPLATE_STYLE}>
                 No template content found for this artifact code. Add a markdown
