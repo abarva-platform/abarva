@@ -29,6 +29,14 @@ const DOCX_GENERATABLE_CODES_CLIENT: ReadonlySet<string> = new Set([
   'd24_decision_brief',
   'd27_selection_memo',
 ]);
+// Codes for which Source has an HTML renderer. Slice 4.1 — same
+// narrative artifacts as docx so the buyer can share a viewable link.
+const HTML_GENERATABLE_CODES_CLIENT: ReadonlySet<string> = new Set([
+  'd05_scope_memo',
+  'd09_rfp_pack',
+  'd24_decision_brief',
+  'd27_selection_memo',
+]);
 import type {
   SourceEventArtifactState,
   SourceEventArtifactStatus,
@@ -426,6 +434,10 @@ export function UniversalCanvasShell({
           docxGeneratableCodes={DOCX_GENERATABLE_CODES_CLIENT}
           docxDownloadHref={(code) =>
             `/api/v1/source/${event.id}/artifacts/${encodeURIComponent(code)}/render-docx`
+          }
+          htmlGeneratableCodes={HTML_GENERATABLE_CODES_CLIENT}
+          htmlViewHref={(code) =>
+            `/api/v1/source/${event.id}/artifacts/${encodeURIComponent(code)}/render-html`
           }
           eventId={event.id}
         />

@@ -42,8 +42,10 @@ export function fromMarkdown(input: string): Root {
       i += 1;
       continue;
     }
-    // Fenced code block
+    // Fenced code block (with optional language tag after backticks)
     if (/^```/.test(line)) {
+      const langMatch = line.match(/^```([a-zA-Z0-9_-]*)/);
+      const lang = langMatch?.[1] ?? '';
       const codeLines: string[] = [];
       i += 1;
       while (i < lines.length && !/^```/.test(lines[i] ?? '')) {
@@ -53,6 +55,7 @@ export function fromMarkdown(input: string): Root {
       i += 1;
       children.push({
         type: 'code',
+        lang: lang || null,
         value: codeLines.join('\n'),
       } as Code);
       continue;
@@ -150,8 +153,9 @@ export function fromMarkdown(input: string): Root {
 
 function parseInline(text: string): PhrasingContent[] {
   const out: PhrasingContent[] = [];
-  // Tokenize bold (**...**), italic (*...*), inline code (`...`)
-  const tokenRe = /(\*\*[^*]+\*\*|\*[^*]+\*|`[^`]+`)/g;
+  // Tokenize bold (**...**), italic (*...*), inline code (`...`),
+  // and links ([text](url)).
+  const tokenRe = /(\*\*[^*]+\*\*|\*[^*]+\*|`[^`]+`|\[[^\]]+\]\([^)]+\))/g;
   let lastIdx = 0;
   let m: RegExpExecArray | null;
   while ((m = tokenRe.exec(text)) !== null) {
@@ -166,6 +170,19 @@ function parseInline(text: string): PhrasingContent[] {
       });
     } else if (tok.startsWith('`')) {
       out.push({ type: 'inlineCode', value: tok.slice(1, -1) });
+    } else if (tok.startsWith('[')) {
+      // [text](url)
+      const linkMatch = tok.match(/^\[([^\]]+)\]\(([^)]+)\)$/);
+      if (linkMatch) {
+        out.push({
+          type: 'link',
+          url: linkMatch[2]!,
+          title: null,
+          children: [{ type: 'text', value: linkMatch[1]! }],
+        });
+      } else {
+        out.push({ type: 'text', value: tok });
+      }
     } else {
       out.push({
         type: 'emphasis',

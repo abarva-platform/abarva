@@ -79,6 +79,13 @@ interface DocumentTabProps {
   docxGeneratableCodes?: ReadonlySet<string>;
   /** Build the docx download URL for a given artifact code. */
   docxDownloadHref?: (code: string) => string;
+  /**
+   * Set of codes that have an HTML renderer wired. Card shows a
+   * "View HTML" anchor (opens in a new tab, no attachment).
+   */
+  htmlGeneratableCodes?: ReadonlySet<string>;
+  /** Build the HTML view URL for a given artifact code. */
+  htmlViewHref?: (code: string) => string;
 }
 
 const STATUS_LABEL: Record<SourceEventArtifactStatus, string> = {
@@ -116,6 +123,8 @@ export function DocumentTab({
   xlsxComparisonDownloadHref,
   docxGeneratableCodes,
   docxDownloadHref,
+  htmlGeneratableCodes,
+  htmlViewHref,
 }: DocumentTabProps) {
   if (artifacts.length === 0) {
     return (
@@ -234,6 +243,11 @@ export function DocumentTab({
                   ? docxDownloadHref(active.artifactCode)
                   : null
               }
+              htmlViewHref={
+                htmlGeneratableCodes?.has(active.artifactCode) && htmlViewHref
+                  ? htmlViewHref(active.artifactCode)
+                  : null
+              }
             />
             {eventId && VENDOR_SUBMISSIONS_CODES.has(active.artifactCode) ? (
               <VendorPricingSubmissionsPanel
@@ -277,6 +291,8 @@ interface ArtifactBodyEditorProps {
   xlsxComparisonDownloadHref?: string | null;
   /** When non-null the card shows a "Download docx" anchor. */
   docxDownloadHref?: string | null;
+  /** When non-null the card shows a "View HTML" anchor (target="_blank"). */
+  htmlViewHref?: string | null;
 }
 
 function ArtifactBodyEditor({
@@ -292,6 +308,7 @@ function ArtifactBodyEditor({
   xlsxDownloadHref,
   xlsxComparisonDownloadHref,
   docxDownloadHref,
+  htmlViewHref,
 }: ArtifactBodyEditorProps) {
   const [editing, setEditing] = useState(false);
   const [generationError, setGenerationError] = useState<string | null>(null);
@@ -439,6 +456,18 @@ function ArtifactBodyEditor({
               title="Download as Word document — uses the authored body when present, canonical scaffold otherwise."
             >
               Download docx
+            </a>
+          ) : null}
+          {htmlViewHref ? (
+            <a
+              href={htmlViewHref}
+              data-testid={`source-canvas-document-body-view-html-${artifact.artifactCode}`}
+              style={{ ...GHOST_BUTTON_STYLE, textDecoration: 'none' }}
+              target="_blank"
+              rel="noopener noreferrer"
+              title="View as a browser-readable HTML document — useful for sharing as a link, or printing to PDF from the browser."
+            >
+              View HTML
             </a>
           ) : null}
         </div>
