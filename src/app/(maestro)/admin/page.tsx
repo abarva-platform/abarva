@@ -29,7 +29,7 @@ import {
 import { AdminCanonShellV2 } from '@/components/admin/AdminCanonShellV2';
 import { SetupChatRail } from '@/components/admin/SetupChatRail';
 import { SetupLandingTelemetryBridge } from '@/components/admin/setup/SetupLandingTelemetryBridge';
-import { PageHead } from '@/components/admin/overview/PageHead';
+import { HomeTenantHeader } from '@/components/home/HomeTenantHeader';
 import { StatusHeader } from '@/components/admin/overview/StatusHeader';
 import { StewardOrientation } from '@/components/admin/overview/StewardOrientation';
 import { ActionQueue } from '@/components/admin/overview/ActionQueue';
@@ -37,7 +37,7 @@ import { RecentActivity } from '@/components/admin/overview/RecentActivity';
 import { composeOverviewBlocks } from '@/lib/admin/overview-composer';
 import { SETUP } from '@/lib/admin/setup-tokens';
 import { getApprovalQueueForTenant } from '@/lib/programs/approval';
-import { canonicalClientDisplayName } from '@/lib/client-config';
+import { canonicalClientDisplayName, isClientKey } from '@/lib/client-config';
 import { SPACING } from '@/lib/design/design-tokens';
 
 export const metadata = { title: 'Setup · AbarVa' };
@@ -100,10 +100,9 @@ export default async function AdminOverviewPage() {
           background: SETUP.paper,
         }}
       >
-        <PageHead
-          eyebrow={`Setup · ${activeClientDisplayName}`}
-          title="Where you stand and what to do next"
-          lede="Six panels do the work. This page orients you and routes you to the right one."
+        <HomeTenantHeader
+          tenantName={activeClientDisplayName}
+          clientKey={isClientKey(clientKey) ? clientKey : null}
         />
         <StatusHeader
           tenantName={blocks.status.tenantName}
