@@ -1,9 +1,26 @@
-// IntelligenceBrief · v1.1 corpus surface
-// Translates docs/training/intelligence-brief-wireframe.html into a
-// React component consuming BriefData from the knowledge corpus.
+'use client';
 
+// IntelligenceBrief · v1.1 corpus surface · CXO summary-first edition.
+//
+// PR-K2.2 (founder feedback): the prior layout dropped 1800px of
+// dense McKinsey detail on the page. Not CXO-friendly. This rewrite:
+//
+//   1. Bet cards are summary-first by default (~150px each).
+//      Score · value · time-to-value · primary binding pattern · CTA.
+//      Click "Show full analysis" to expand the full McKinsey detail.
+//
+//   2. Right rail is the v3 SentinelChat (3-mode dock-able agent),
+//      not four static cards. The agent lock is back.
+//
+//   3. Patterns triggered + Move cascade promoted to compact strips
+//      bracketing the bet stack — urgent attention above, forward-
+//      looking below — so the right rail is the agent only.
+
+import { useState } from 'react';
 import Link from 'next/link';
 import type { BriefData, BriefBet } from '@/lib/knowledge-corpus/types';
+import { SentinelChat } from '@/components/intelligence-v3/SentinelChat';
+import type { ChatMessage } from '@/components/intelligence-v3/types';
 
 const F_DISPLAY = 'var(--font-fraunces), Georgia, serif';
 const F_BODY = 'var(--font-inter), -apple-system, BlinkMacSystemFont, system-ui, sans-serif';
@@ -43,313 +60,411 @@ function fmtUsd(n: number): string {
 }
 
 export function IntelligenceBrief({ data }: Props) {
+  // Collapsed-by-default. Click the bet header to expand the full
+  // McKinsey detail. None expanded out of the box — summary-first
+  // is the CXO read.
+  const [expanded, setExpanded] = useState<Set<number>>(new Set());
+
+  const toggle = (rank: number) => {
+    setExpanded((prev) => {
+      const next = new Set(prev);
+      if (next.has(rank)) next.delete(rank); else next.add(rank);
+      return next;
+    });
+  };
+
+  // Seed Sentinel chat with a brief-aware opener that mirrors the
+  // synthesis voice. The conversation accepts follow-ups; future
+  // PR-K3+ wires the LLM call.
+  const sentinelConversation: ReadonlyArray<ChatMessage> = [];
+  const sentinelOpener = `I composed this brief for ${data.tenantName} from the corpus. Top three above the line · ${data.bets.length} ranked. Ask me anything about the bets, the patterns, the vendor short list, or what would change if you re-prioritized.`;
+
   return (
     <div
       data-testid="intelligence-brief"
       style={{ background: C.surface2, fontFamily: F_BODY, color: C.body, minHeight: '100%' }}
     >
+      {/* Compact masthead — CXO-skim-first */}
       <header
         style={{
           background: C.surface,
           borderBottom: `1px solid ${C.borderLight}`,
-          padding: '32px 64px 24px',
+          padding: '28px 56px 22px',
         }}
       >
-        <div style={{ fontFamily: F_MONO, fontSize: 10, fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: C.faint, marginBottom: 8 }}>
+        <div style={{ fontFamily: F_MONO, fontSize: 10, fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: C.faint, marginBottom: 6 }}>
           INTELLIGENCE · <span style={{ color: C.ink }}>SENTINEL&apos;S BRIEF FOR YOU</span>
         </div>
         <h1
           style={{
             fontFamily: F_DISPLAY,
-            fontSize: 38,
+            fontSize: 32,
             fontWeight: 400,
             color: C.ink,
             letterSpacing: '-0.018em',
             lineHeight: 1.05,
-            margin: '0 0 8px 0',
-            maxWidth: '30ch',
+            margin: '0 0 6px 0',
+            maxWidth: '40ch',
           }}
         >
           Three bets are above the line for {data.tenantName} this quarter.
         </h1>
-        <p style={{ fontSize: 14, color: C.muted, maxWidth: '80ch' }}>
-          Tenant-overlay scored against your size, segment, current portfolio, regulatory exposure, and strategic context. Top three surface here; the remaining {data.totals.totalUseCases - data.bets.length} are browseable on the Map.
+        <p style={{ fontSize: 13, color: C.muted, maxWidth: '80ch' }}>
+          Tenant-overlay scored against your size, segment, current portfolio, regulatory exposure, and strategic context. Click any bet for the full analysis. Ask Sentinel for follow-ups on the right.
         </p>
-        <div
-          style={{
-            fontFamily: F_MONO,
-            fontSize: 11,
-            color: C.muted,
-            letterSpacing: '0.04em',
-            marginTop: 14,
-            paddingTop: 14,
-            borderTop: `1px solid ${C.borderLight}`,
-            display: 'flex',
-            gap: 24,
-            flexWrap: 'wrap',
-          }}
-        >
-          <span><span style={{ color: C.navy }}>SENTINEL</span> · brief composed {new Date(data.composedAt).toISOString().slice(0, 16).replace('T', ' ')}</span>
-          <span>Substrate · {data.totals.totalUseCases} use cases · {data.totals.totalPatterns} patterns · {data.totals.totalVendors} vendors · {data.totals.totalRegulatory} regulatory</span>
-          <span>Refresh · {data.totals.refreshCadence} · last {data.totals.lastRefreshQuarter}</span>
-        </div>
       </header>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 320px', gap: 0 }}>
-        <main
-          style={{
-            padding: '36px 56px 80px',
-            borderRight: `1px solid ${C.borderLight}`,
-            background: C.surface,
-          }}
-        >
-          <p
-            style={{
-              fontFamily: F_DISPLAY,
-              fontSize: 21,
-              fontWeight: 400,
-              color: C.body,
-              lineHeight: 1.4,
-              letterSpacing: '-0.005em',
-              marginBottom: 26,
-              maxWidth: '62ch',
-            }}
-          >
-            Of the {data.totals.totalUseCases} {data.industry === 'healthcare' ? 'healthcare' : data.industry} AI bets that exist for {data.industry === 'healthcare' ? 'IDNs at your scale' : 'companies at your scale'}, three score above the line for {data.tenantName} this quarter.{' '}
-            <strong style={{ fontWeight: 600, color: C.ink }}>{data.bets[0]?.useCase.name}</strong> is the highest-leverage candidate ·{' '}
-            <strong style={{ fontWeight: 600, color: C.ink }}>{data.bets[1]?.useCase.name}</strong> needs binding-pattern attention ·{' '}
-            <strong style={{ fontWeight: 600, color: C.ink }}>{data.bets[2]?.useCase.name}</strong> is a margin-leverage bet given strategic context.
-          </p>
-
-          {data.bets.map((bet, i) => <BetSection key={bet.useCase.id} bet={bet} isFirst={i === 0} />)}
-
-          <div
-            style={{
-              marginTop: 48,
-              padding: '18px 22px',
-              border: `1px dashed ${C.borderLight}`,
-              borderRadius: 8,
-              background: C.surface2,
-            }}
-          >
-            <BlockLabel color={C.faint}>Brief composition · audit trail</BlockLabel>
-            <p style={{ fontSize: 12.5, color: C.muted, lineHeight: 1.55, marginTop: 6 }}>
-              Composed by Sentinel from the AbarVa knowledge corpus (locked v1.1 · {data.totals.lastRefreshQuarter}) with tenant overlay applied per {data.tenantName}&apos;s profile. Every claim cites a corpus entity ID; every value range cites primary source provenance. Full reasoning trace available · click any score to see factor breakdown.
-            </p>
-          </div>
-        </main>
-
-        <aside
-          style={{
-            padding: '28px 24px 60px',
-            background: C.surface2,
-            display: 'grid',
-            gap: 14,
-            alignContent: 'start',
-            position: 'sticky',
-            top: 0,
-            maxHeight: '100vh',
-            overflowY: 'auto',
-          }}
-        >
+      {/* Body grid — 1fr main + 440px Sentinel rail (matches v3) */}
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'minmax(0, 1fr) 440px',
+          alignItems: 'start',
+          gap: 0,
+        }}
+      >
+        <main style={{ padding: '28px 56px 80px' }}>
+          {/* Patterns-triggered banner · attention strip */}
           {data.patternsTriggered.map((pt) => (
             <div
               key={pt.pattern.id}
               style={{
-                background: C.navySoft,
-                border: `1px solid ${C.navyLine}`,
-                borderRadius: 10,
-                padding: 16,
+                background: C.amberSoft,
+                border: `1px solid ${C.amberLine}`,
+                borderRadius: 8,
+                padding: '14px 18px',
+                marginBottom: 24,
+                display: 'flex',
+                alignItems: 'center',
+                gap: 16,
+                flexWrap: 'wrap',
               }}
             >
-              <BlockLabel color={C.navy}>◆ Patterns triggered for you</BlockLabel>
-              <h4 style={{ fontFamily: F_DISPLAY, fontSize: 15, fontWeight: 500, color: C.ink, letterSpacing: '-0.005em', lineHeight: 1.35, margin: '8px 0' }}>
-                {pt.issue}
-              </h4>
-              <p style={{ fontSize: 12.5, color: C.body, lineHeight: 1.5 }}>{pt.recommendedAction}</p>
-              <div style={{ display: 'flex', gap: 6, marginTop: 8, flexWrap: 'wrap' }}>
-                <Cta href={pt.cta.primary.href} primary>{pt.cta.primary.label}</Cta>
-                {pt.cta.secondary && <Cta href={pt.cta.secondary.href}>{pt.cta.secondary.label}</Cta>}
-              </div>
+              <span style={{ fontFamily: F_MONO, fontSize: 9.5, fontWeight: 700, letterSpacing: '0.16em', textTransform: 'uppercase', color: C.amber, whiteSpace: 'nowrap' }}>
+                ⚠ Pattern triggered
+              </span>
+              <span style={{ flex: 1, minWidth: 240, fontSize: 13.5, color: C.ink, lineHeight: 1.5 }}>
+                <strong style={{ fontWeight: 600 }}>{pt.issue}</strong>{' '}
+                <span style={{ color: C.muted }}>
+                  {pt.pattern.id} · {pt.pattern.quantifiedSignal && `with ${pt.pattern.quantifiedSignal.withPattern.valueRange} adoption · without ${pt.pattern.quantifiedSignal.withoutPattern.valueRange}`}
+                </span>
+              </span>
+              <Link
+                href={pt.cta.primary.href}
+                style={{
+                  fontFamily: F_MONO,
+                  fontSize: 10,
+                  fontWeight: 600,
+                  letterSpacing: '0.08em',
+                  textTransform: 'uppercase',
+                  padding: '8px 14px',
+                  borderRadius: 4,
+                  textDecoration: 'none',
+                  background: C.amber,
+                  color: C.surface,
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                {pt.cta.primary.label}
+              </Link>
             </div>
           ))}
 
-          {data.cascadeIfSucceeds && (
-            <div
-              style={{ background: C.surface, border: `1px solid ${C.borderLight}`, borderRadius: 10, padding: 16 }}
-            >
-              <BlockLabel color={C.navy}>Move cascade · if {data.cascadeIfSucceeds.triggerInitiativeId} succeeds</BlockLabel>
-              <h4 style={{ fontFamily: F_DISPLAY, fontSize: 15, fontWeight: 500, color: C.ink, letterSpacing: '-0.005em', lineHeight: 1.35, margin: '8px 0' }}>
-                {data.cascadeIfSucceeds.followOnUseCases.length} follow-on bets become natural in 12–18 months.
-              </h4>
-              {data.cascadeIfSucceeds.followOnUseCases.map((u) => (
-                <p key={u.useCaseId} style={{ fontFamily: F_MONO, fontSize: 11, color: C.navy, letterSpacing: '0.04em', margin: '4px 0' }}>
-                  → {u.useCaseName}
-                </p>
-              ))}
-              <p style={{ fontFamily: F_MONO, fontSize: 10, color: C.faint, letterSpacing: '0.04em', marginTop: 8 }}>
-                {data.cascadeIfSucceeds.evidenceLine}
-              </p>
-            </div>
-          )}
-
-          <div style={{ background: C.surface, border: `1px solid ${C.borderLight}`, borderRadius: 10, padding: 16 }}>
-            <BlockLabel color={C.navy}>Proof points · cited in this brief</BlockLabel>
-            {data.proofPoints.map((pp) => (
-              <div key={pp.id} style={{ padding: '7px 0', borderBottom: `1px solid ${C.borderLight}` }}>
-                <div style={{ fontSize: 12, color: C.ink, fontWeight: 500, lineHeight: 1.4 }}>{pp.name}</div>
-                <div style={{ fontFamily: F_MONO, fontSize: 9.5, color: C.faint, letterSpacing: '0.04em', marginTop: 2 }}>
-                  {pp.useCaseId}
-                  {pp.deployment.scope && ` · ${pp.deployment.scope}`}
-                </div>
-                {pp.measuredOutcomes.slice(0, 1).map((mo, idx) => (
-                  <div key={idx} style={{ fontSize: 12, color: C.teal, fontWeight: 600, marginTop: 3 }}>
-                    {mo.value}
-                    {mo.metric && <span style={{ color: C.muted, fontWeight: 400 }}> · {mo.metric}</span>}
-                  </div>
-                ))}
-              </div>
+          {/* Bet stack — summary-first */}
+          <div style={{ display: 'grid', gap: 14 }}>
+            {data.bets.map((bet) => (
+              <BetSummary
+                key={bet.useCase.id}
+                bet={bet}
+                isExpanded={expanded.has(bet.rank)}
+                onToggle={() => toggle(bet.rank)}
+              />
             ))}
           </div>
 
-          <div style={{ background: C.surface3, border: `1px solid ${C.borderLight}`, borderRadius: 10, padding: 16 }}>
-            <BlockLabel color={C.faint}>Ask Sentinel anything</BlockLabel>
-            <p style={{ fontFamily: F_MONO, fontSize: 11, color: C.faint, marginTop: 6, letterSpacing: '0.04em', lineHeight: 1.5 }}>
-              &ldquo;What if we paused MH-04 and pushed Population Health first?&rdquo;<br />
-              &ldquo;How does Innovaccer compare to Arcadia for our scale?&rdquo;<br />
-              &ldquo;Show me the CMIO sponsorship pattern in detail.&rdquo;
-            </p>
-          </div>
-        </aside>
-      </div>
+          {/* Move cascade · forward-looking strip below the bets */}
+          {data.cascadeIfSucceeds && (
+            <div
+              style={{
+                marginTop: 24,
+                background: C.navySoft,
+                border: `1px solid ${C.navyLine}`,
+                borderRadius: 8,
+                padding: '16px 20px',
+              }}
+            >
+              <div style={{ fontFamily: F_MONO, fontSize: 9.5, fontWeight: 700, letterSpacing: '0.16em', textTransform: 'uppercase', color: C.navy, marginBottom: 6 }}>
+                → If {data.cascadeIfSucceeds.triggerInitiativeId} succeeds · move cascade
+              </div>
+              <div style={{ fontFamily: F_DISPLAY, fontSize: 17, fontWeight: 500, color: C.ink, letterSpacing: '-0.005em', marginBottom: 8 }}>
+                {data.cascadeIfSucceeds.followOnUseCases.length} follow-on bets become natural in 12–18 months.
+              </div>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, marginBottom: 6 }}>
+                {data.cascadeIfSucceeds.followOnUseCases.map((u) => (
+                  <span
+                    key={u.useCaseId}
+                    style={{
+                      fontFamily: F_MONO,
+                      fontSize: 11,
+                      color: C.navy,
+                      letterSpacing: '0.04em',
+                      padding: '4px 10px',
+                      border: `1px solid ${C.navyLine}`,
+                      borderRadius: 3,
+                      background: C.surface,
+                    }}
+                  >
+                    → {u.useCaseName}
+                  </span>
+                ))}
+              </div>
+              <div style={{ fontFamily: F_MONO, fontSize: 10, color: C.faint, letterSpacing: '0.04em' }}>
+                {data.cascadeIfSucceeds.evidenceLine}
+              </div>
+            </div>
+          )}
 
-      <div
-        style={{
-          background: C.ink,
-          color: 'rgba(255,255,255,0.75)',
-          padding: '14px 64px',
-          fontFamily: F_MONO,
-          fontSize: 10,
-          letterSpacing: '0.04em',
-        }}
-      >
-        <strong style={{ color: '#fff' }}>Provenance · The Brief</strong> · {data.totals.totalUseCases} corpus entities cited · {data.proofPoints.length} proof points surfaced · all claims provenance-tagged · refresh due {nextRefresh(data.totals.lastRefreshQuarter)}
+          {/* Compact provenance / audit footer */}
+          <div
+            style={{
+              marginTop: 32,
+              padding: '14px 18px',
+              border: `1px dashed ${C.borderLight}`,
+              borderRadius: 6,
+              background: C.surface,
+              display: 'flex',
+              flexWrap: 'wrap',
+              gap: 24,
+              fontFamily: F_MONO,
+              fontSize: 10,
+              color: C.faint,
+              letterSpacing: '0.04em',
+            }}
+          >
+            <span>
+              <span style={{ color: C.navy, fontWeight: 700 }}>SENTINEL</span> · brief composed {new Date(data.composedAt).toISOString().slice(0, 16).replace('T', ' ')}
+            </span>
+            <span>
+              Substrate · {data.totals.totalUseCases} use cases · {data.totals.totalPatterns} patterns · {data.totals.totalVendors} vendors · {data.totals.totalRegulatory} regulatory · {data.proofPoints.length} proof points cited
+            </span>
+            <span>
+              Refresh · {data.totals.refreshCadence} · last {data.totals.lastRefreshQuarter}
+            </span>
+          </div>
+        </main>
+
+        {/* Sentinel chat · the agent lock — same dockable component as v3 */}
+        <SentinelChat
+          scopeLabel={`${data.tenantName} · The Brief`}
+          opener={sentinelOpener}
+          conversation={sentinelConversation}
+        />
       </div>
     </div>
   );
 }
 
-function nextRefresh(quarter: string): string {
-  // 2026-Q1 → 2026-Q3
-  const m = quarter.match(/^(\d{4})-Q([1-4])$/);
-  if (!m) return quarter;
-  const year = Number(m[1]!);
-  const q = Number(m[2]!);
-  const nextQ = ((q + 1) % 4) || 4;
-  const nextY = nextQ <= q ? year + 1 : year;
-  return `${nextY}-Q${nextQ}`;
-}
+// ── Bet summary card (summary-first, expandable) ──────────────────
 
-// ── Sub-components ──────────────────────────────────────────────
+function BetSummary({
+  bet,
+  isExpanded,
+  onToggle,
+}: {
+  bet: BriefBet;
+  isExpanded: boolean;
+  onToggle: () => void;
+}) {
+  const valueRange =
+    bet.useCase.businessValueRanges.perCompanySize.mid ??
+    bet.useCase.businessValueRanges.perCompanySize.large ??
+    '—';
+  const primaryPattern = bet.bindingPatterns[0];
+  const stateLabel =
+    bet.engagementState === 'in_flight'
+      ? `IN PORTFOLIO${bet.initiativeDisplayId ? ` · ${bet.initiativeDisplayId}` : ''}`
+      : 'CANDIDATE BET';
+  const scoreColor = bet.score >= 80 ? C.teal : bet.score >= 70 ? C.amber : C.red;
 
-function BetSection({ bet, isFirst }: { bet: BriefBet; isFirst: boolean }) {
   return (
-    <section
+    <article
       style={{
-        paddingTop: isFirst ? 18 : 32,
-        paddingBottom: 36,
-        borderTop: isFirst ? 'none' : `1px solid ${C.borderLight}`,
+        background: C.surface,
+        border: `1px solid ${C.borderLight}`,
+        borderRadius: 10,
+        overflow: 'hidden',
+        transition: 'box-shadow 0.12s, border-color 0.12s',
+        boxShadow: isExpanded ? '0 4px 16px rgba(10,12,18,0.06)' : 'none',
+        borderColor: isExpanded ? C.navyLine : C.borderLight,
       }}
     >
-      <div
+      {/* Always-visible summary row */}
+      <button
+        type="button"
+        onClick={onToggle}
+        aria-expanded={isExpanded}
         style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'flex-start',
-          gap: 24,
-          marginBottom: 14,
-          flexWrap: 'wrap',
+          width: '100%',
+          background: 'transparent',
+          border: 'none',
+          padding: '20px 24px',
+          textAlign: 'left',
+          cursor: 'pointer',
+          fontFamily: 'inherit',
+          color: 'inherit',
         }}
       >
-        <div style={{ display: 'flex', gap: 18, alignItems: 'flex-start' }}>
+        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 18 }}>
           <div
             style={{
               fontFamily: F_DISPLAY,
-              fontSize: 48,
+              fontSize: 36,
               fontWeight: 300,
               color: C.navy,
               lineHeight: 1,
               letterSpacing: '-0.02em',
+              flexShrink: 0,
+              minWidth: 50,
             }}
           >
             {String(bet.rank).padStart(2, '0')}
           </div>
-          <div>
-            <div style={{ fontFamily: F_MONO, fontSize: 10, fontWeight: 700, letterSpacing: '0.16em', color: C.navy, textTransform: 'uppercase' }}>
-              {bet.useCase.id} ·{' '}
-              {bet.engagementState === 'in_flight'
-                ? `IN PORTFOLIO${bet.initiativeDisplayId ? ` · ${bet.initiativeDisplayId}` : ''}`
-                : 'CANDIDATE BET · NEW'}
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: 12, flexWrap: 'wrap', marginBottom: 4 }}>
+              <span style={{ fontFamily: F_MONO, fontSize: 10, fontWeight: 700, letterSpacing: '0.16em', color: C.navy, textTransform: 'uppercase' }}>
+                {bet.useCase.id}
+              </span>
+              <span style={{ fontFamily: F_MONO, fontSize: 9.5, fontWeight: 600, letterSpacing: '0.12em', color: bet.engagementState === 'in_flight' ? C.teal : C.faint, textTransform: 'uppercase' }}>
+                · {stateLabel}
+              </span>
             </div>
             <h2
               style={{
                 fontFamily: F_DISPLAY,
-                fontSize: 30,
+                fontSize: 22,
                 fontWeight: 500,
                 color: C.ink,
-                letterSpacing: '-0.018em',
-                lineHeight: 1.15,
-                margin: '6px 0',
-                maxWidth: '30ch',
+                letterSpacing: '-0.012em',
+                lineHeight: 1.2,
+                margin: '0 0 6px 0',
               }}
             >
               {bet.useCase.name}
               {bet.engagementState === 'in_flight' && ' — expansion'}
             </h2>
-            <p
-              style={{
-                fontFamily: F_DISPLAY,
-                fontSize: 18,
-                fontWeight: 400,
-                color: C.body,
-                lineHeight: 1.45,
-                letterSpacing: '-0.005em',
-                marginBottom: 0,
-                maxWidth: '60ch',
-              }}
-            >
+            <p style={{ fontSize: 13.5, color: C.muted, lineHeight: 1.5, marginBottom: 10, maxWidth: '60ch' }}>
               {bet.useCase.artOfPossibleFraming}
             </p>
+
+            {/* 3-stat row · CXO scan-line */}
+            <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap', alignItems: 'baseline', marginTop: 12 }}>
+              <Stat label="Value · annual" value={valueRange} valueFont={F_DISPLAY} />
+              <Stat label="Time to value" value={`${bet.useCase.businessValueRanges.timeToValueMonths} mo`} valueFont={F_DISPLAY} />
+              {primaryPattern && (
+                <Stat
+                  label="Binding pattern"
+                  value={primaryPattern.pattern.id}
+                  valueFont={F_MONO}
+                  small
+                />
+              )}
+              {bet.measuredVsCommitted && (
+                <Stat
+                  label="Measured vs committed"
+                  value={`${Math.round((bet.measuredVsCommitted.measured / bet.measuredVsCommitted.committed) * 100)}%`}
+                  valueFont={F_DISPLAY}
+                />
+              )}
+            </div>
+          </div>
+
+          {/* Score + expand chevron · right edge */}
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 8, flexShrink: 0 }}>
+            <span
+              style={{
+                fontFamily: F_MONO,
+                fontSize: 10,
+                fontWeight: 700,
+                letterSpacing: '0.16em',
+                color: scoreColor,
+                textTransform: 'uppercase',
+              }}
+            >
+              SCORE {bet.score} / 100
+            </span>
+            <span
+              style={{
+                fontFamily: F_MONO,
+                fontSize: 10,
+                fontWeight: 600,
+                letterSpacing: '0.06em',
+                color: C.faint,
+                textTransform: 'uppercase',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              {isExpanded ? 'Hide detail ↑' : 'Show full analysis ↓'}
+            </span>
           </div>
         </div>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 4, alignItems: 'flex-end' }}>
-          <span
-            style={{
-              fontFamily: F_MONO,
-              fontSize: 10,
-              fontWeight: 700,
-              letterSpacing: '0.16em',
-              color: bet.score >= 80 ? C.teal : bet.score >= 70 ? C.amber : C.red,
-              textTransform: 'uppercase',
-            }}
-          >
-            SCORE {bet.score} / 100
-          </span>
-          <span style={{ fontFamily: F_MONO, fontSize: 10, fontWeight: 600, color: C.faint, letterSpacing: '0.06em' }}>
-            Click to see why →
-          </span>
-        </div>
-      </div>
+      </button>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px 32px', marginBottom: 18 }}>
+      {/* Expanded detail · the McKinsey synthesis */}
+      {isExpanded && (
+        <div
+          style={{
+            padding: '0 24px 24px 24px',
+            borderTop: `1px solid ${C.borderLight}`,
+            background: C.surface2,
+          }}
+        >
+          <BetExpandedDetail bet={bet} />
+        </div>
+      )}
+    </article>
+  );
+}
+
+function Stat({ label, value, valueFont, small }: { label: string; value: string; valueFont: string; small?: boolean }) {
+  return (
+    <div>
+      <div style={{ fontFamily: F_MONO, fontSize: 9.5, letterSpacing: '0.1em', color: C.faint, textTransform: 'uppercase', marginBottom: 2 }}>
+        {label}
+      </div>
+      <div
+        style={{
+          fontFamily: valueFont,
+          fontSize: small ? 13 : 18,
+          fontWeight: small ? 600 : 500,
+          color: C.ink,
+          letterSpacing: small ? '0.04em' : '-0.012em',
+          lineHeight: 1.2,
+        }}
+      >
+        {value}
+      </div>
+    </div>
+  );
+}
+
+// ── Expanded detail · the McKinsey synthesis ──────────────────────
+
+function BetExpandedDetail({ bet }: { bet: BriefBet }) {
+  const valueRange =
+    bet.useCase.businessValueRanges.perCompanySize.mid ??
+    bet.useCase.businessValueRanges.perCompanySize.large ??
+    '—';
+  return (
+    <div style={{ paddingTop: 20 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px 28px', marginBottom: 18 }}>
         <div>
           <BlockLabel color={C.navy}>Why this bet for {bet.useCase.name.split(' ')[0]}</BlockLabel>
-          <ul style={{ listStyle: 'none', padding: 0, fontSize: 13.5, color: C.body, lineHeight: 1.55 }}>
+          <ul style={{ listStyle: 'none', padding: 0, fontSize: 13, color: C.body, lineHeight: 1.5 }}>
             {bet.scoreFactors.map((f) => (
               <li
                 key={f.name}
                 style={{
-                  padding: '6px 0',
+                  padding: '5px 0',
                   borderBottom: `1px solid ${C.borderLight}`,
                   display: 'flex',
                   justifyContent: 'space-between',
@@ -374,57 +489,30 @@ function BetSection({ bet, isFirst }: { bet: BriefBet; isFirst: boolean }) {
         </div>
 
         <div>
-          <BlockLabel color={C.navy}>Value range · at your scale</BlockLabel>
-          <div
-            style={{
-              fontFamily: F_DISPLAY,
-              fontSize: 24,
-              fontWeight: 500,
-              color: C.ink,
-              letterSpacing: '-0.018em',
-              lineHeight: 1.2,
-            }}
-          >
-            {bet.useCase.businessValueRanges.perCompanySize.mid ?? bet.useCase.businessValueRanges.perCompanySize.large ?? '—'}
-            <span style={{ fontFamily: F_MONO, fontSize: 10, color: C.faint, letterSpacing: '0.06em', fontWeight: 400, marginLeft: 8, verticalAlign: 'middle' }}>
-              {bet.useCase.provenance.primarySources[0] && `[per ${bet.useCase.provenance.primarySources[0].source} · ${bet.useCase.provenance.primarySources[0].reliability}]`}
-            </span>
+          <BlockLabel color={C.navy}>Value range</BlockLabel>
+          <div style={{ fontFamily: F_DISPLAY, fontSize: 22, fontWeight: 500, color: C.ink, letterSpacing: '-0.018em', lineHeight: 1.2 }}>
+            {valueRange}
           </div>
-          <div style={{ height: 14 }} />
-          <BlockLabel color={C.faint}>Time to value · payback</BlockLabel>
-          <div style={{ fontFamily: F_DISPLAY, fontSize: 18, color: C.ink, fontWeight: 500, letterSpacing: '-0.01em' }}>
-            {bet.useCase.businessValueRanges.timeToValueMonths} months
-            {bet.useCase.businessValueRanges.paybackMonths && ` · payback ~${bet.useCase.businessValueRanges.paybackMonths} months`}
+          <div style={{ fontFamily: F_MONO, fontSize: 10, color: C.faint, letterSpacing: '0.04em', marginTop: 4 }}>
+            {bet.useCase.provenance.primarySources[0] && `[per ${bet.useCase.provenance.primarySources[0].source} · ${bet.useCase.provenance.primarySources[0].reliability}]`}
           </div>
           {bet.measuredVsCommitted && (
             <>
-              <div style={{ height: 18 }} />
-              <BlockLabel color={C.faint}>Current measured value{bet.initiativeDisplayId && ` · ${bet.initiativeDisplayId}`}</BlockLabel>
-              <div style={{ fontSize: 13.5, color: C.body, lineHeight: 1.5 }}>
-                <strong style={{ color: C.ink, fontWeight: 600 }}>{fmtUsd(bet.measuredVsCommitted.measured)} measured</strong> against{' '}
-                {fmtUsd(bet.measuredVsCommitted.committed)} committed annual ·{' '}
-                {Math.round((bet.measuredVsCommitted.measured / bet.measuredVsCommitted.committed) * 100)}% of expected band{' '}
-                <span style={{ fontFamily: F_MONO, fontSize: 10, color: C.faint }}>[from your AI Initiatives Registry]</span>
-              </div>
-            </>
-          )}
-          {!bet.measuredVsCommitted && (
-            <>
-              <div style={{ height: 18 }} />
-              <BlockLabel color={C.faint}>Lifecycle position</BlockLabel>
-              <div style={{ fontSize: 13.5, color: C.body, lineHeight: 1.5 }}>
-                <strong style={{ color: C.ink, fontWeight: 600, textTransform: 'capitalize' }}>{bet.useCase.lifecycleStage}</strong>
-                {bet.useCase.lifecycleBasis && ` · ${bet.useCase.lifecycleBasis.replace(/^[A-Z]/, (c) => c.toLowerCase())}`}
+              <div style={{ height: 14 }} />
+              <BlockLabel color={C.faint}>Measured vs committed{bet.initiativeDisplayId && ` · ${bet.initiativeDisplayId}`}</BlockLabel>
+              <div style={{ fontSize: 13, color: C.body, lineHeight: 1.5 }}>
+                <strong style={{ color: C.ink, fontWeight: 600 }}>{fmtUsd(bet.measuredVsCommitted.measured)}</strong> measured · {fmtUsd(bet.measuredVsCommitted.committed)} committed annual ·{' '}
+                {Math.round((bet.measuredVsCommitted.measured / bet.measuredVsCommitted.committed) * 100)}% of band
               </div>
             </>
           )}
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px 32px', marginBottom: 18 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px 28px', marginBottom: 18 }}>
         <div>
-          <BlockLabel color={C.teal}>Binding success patterns · honor these</BlockLabel>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <BlockLabel color={C.teal}>Binding success patterns</BlockLabel>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
             {bet.bindingPatterns.map((bp) => (
               <QuantRow
                 key={bp.pattern.id}
@@ -445,7 +533,7 @@ function BetSection({ bet, isFirst }: { bet: BriefBet; isFirst: boolean }) {
 
         <div>
           <BlockLabel color={C.amber}>Anti-patterns to avoid</BlockLabel>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
             {bet.antiPatterns.map((ap) => (
               <QuantRow
                 key={ap.antiPattern.id}
@@ -465,43 +553,37 @@ function BetSection({ bet, isFirst }: { bet: BriefBet; isFirst: boolean }) {
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px 32px', marginBottom: 18 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px 28px', marginBottom: 18 }}>
         <div>
-          <BlockLabel color={C.navy}>Vendor short list · for evaluation</BlockLabel>
+          <BlockLabel color={C.navy}>Vendor short list</BlockLabel>
           {bet.vendors.map((v) => (
             <div
               key={v.vendor.id}
               style={{
                 display: 'grid',
-                gridTemplateColumns: '1fr auto auto',
+                gridTemplateColumns: '1fr auto',
                 gap: 12,
                 alignItems: 'center',
-                padding: '10px 0',
+                padding: '8px 0',
                 borderBottom: `1px solid ${C.borderLight}`,
               }}
             >
               <div>
-                <div style={{ fontSize: 13.5, color: C.ink, fontWeight: 500 }}>
+                <div style={{ fontSize: 13, color: C.ink, fontWeight: 500 }}>
                   {v.vendor.name}
                   {v.isCurrent && (
-                    <span style={{ fontFamily: F_MONO, fontSize: 9.5, color: C.teal, marginLeft: 6, fontWeight: 600, letterSpacing: '0.06em' }}>
-                      YOUR CURRENT VENDOR
+                    <span style={{ fontFamily: F_MONO, fontSize: 9, color: C.teal, marginLeft: 6, fontWeight: 600, letterSpacing: '0.06em' }}>
+                      CURRENT
                     </span>
                   )}
                 </div>
-                <div style={{ fontFamily: F_MONO, fontSize: 10, color: C.faint, letterSpacing: '0.04em', marginTop: 1 }}>
-                  {v.vendor.id}
+                <div style={{ fontFamily: F_MONO, fontSize: 9.5, color: C.faint, letterSpacing: '0.04em' }}>
+                  {v.vendor.id} · {v.healthLabel}
                 </div>
               </div>
               <span style={tierStyle(v.tier)}>{v.tier === 'incumbent' ? 'Incumbent' : v.tier === 'challenger' ? 'Challenger' : 'Emerging'}</span>
-              <span style={{ fontFamily: F_MONO, fontSize: 9.5, color: C.faint, letterSpacing: '0.04em', whiteSpace: 'nowrap' }}>
-                {v.healthLabel}
-              </span>
             </div>
           ))}
-          <p style={{ fontFamily: F_MONO, fontSize: 10, color: C.faint, marginTop: 10, letterSpacing: '0.04em' }}>
-            For deep vendor evaluation → Source surface
-          </p>
         </div>
 
         {bet.regulatory.length > 0 && (
@@ -511,7 +593,7 @@ function BetSection({ bet, isFirst }: { bet: BriefBet; isFirst: boolean }) {
               <div
                 key={r.regulatory.id}
                 style={{
-                  fontSize: 13,
+                  fontSize: 12.5,
                   color: C.body,
                   padding: '6px 0',
                   borderBottom: `1px solid ${C.borderLight}`,
@@ -523,9 +605,8 @@ function BetSection({ bet, isFirst }: { bet: BriefBet; isFirst: boolean }) {
               >
                 <span>
                   <strong style={{ color: C.ink, fontWeight: 600 }}>{r.regulatory.name.split(' · ')[0]}</strong>
-                  {r.regulatory.summary && ` · ${r.regulatory.summary.slice(0, 80)}${r.regulatory.summary.length > 80 ? '…' : ''}`}
                 </span>
-                <span style={{ fontFamily: F_MONO, fontSize: 10, color: C.navy, letterSpacing: '0.04em', whiteSpace: 'nowrap' }}>
+                <span style={{ fontFamily: F_MONO, fontSize: 9.5, color: C.navy, letterSpacing: '0.04em', whiteSpace: 'nowrap', textAlign: 'right' }}>
                   {r.regulatory.id}
                   <br />
                   <span style={{ color: C.faint }}>{r.currencyDate}</span>
@@ -536,14 +617,14 @@ function BetSection({ bet, isFirst }: { bet: BriefBet; isFirst: boolean }) {
         )}
       </div>
 
-      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', paddingTop: 18 }}>
+      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', paddingTop: 8 }}>
         <Cta href="/strategic-moves" primary>
           {bet.engagementState === 'in_flight' ? 'Shape expansion in Nexus' : 'Shape as Move in Nexus'}
         </Cta>
         <Cta href="/source">Source vendors</Cta>
-        <Cta href="/intelligence/map" ghost>Open in Map</Cta>
+        <Cta href="/intelligence#map" ghost>Open in Map</Cta>
       </div>
-    </section>
+    </div>
   );
 }
 
@@ -572,21 +653,21 @@ function QuantRow({ badge, tone, description }: { badge: string; tone: 'yes' | '
   return (
     <div
       style={{
-        fontSize: 13,
+        fontSize: 12.5,
         color: C.body,
-        lineHeight: 1.55,
-        padding: '6px 0',
+        lineHeight: 1.5,
+        padding: '5px 0',
         borderBottom: `1px solid ${C.borderLight}`,
         display: 'grid',
         gridTemplateColumns: 'auto 1fr',
-        gap: 14,
+        gap: 12,
         alignItems: 'baseline',
       }}
     >
       <span
         style={{
           fontFamily: F_MONO,
-          fontSize: 10,
+          fontSize: 9.5,
           fontWeight: 700,
           padding: '2px 6px',
           borderRadius: 3,
@@ -611,7 +692,7 @@ function Cta({ href, children, primary, ghost }: { href: string; children: React
     fontWeight: 600,
     letterSpacing: '0.08em',
     textTransform: 'uppercase',
-    padding: '10px 16px',
+    padding: '9px 14px',
     borderRadius: 4,
     textDecoration: 'none',
     whiteSpace: 'nowrap',
@@ -620,7 +701,6 @@ function Cta({ href, children, primary, ghost }: { href: string; children: React
     background: primary ? C.ink : C.surface,
     display: 'inline-block',
   };
-  // Internal links use next/link; external (e.g. anchors) keep <a>.
   if (href.startsWith('/')) {
     return <Link href={href} style={sx}>{children}</Link>;
   }
@@ -630,7 +710,7 @@ function Cta({ href, children, primary, ghost }: { href: string; children: React
 function tierStyle(tier: 'incumbent' | 'challenger' | 'emerging'): React.CSSProperties {
   const base: React.CSSProperties = {
     fontFamily: F_MONO,
-    fontSize: 9.5,
+    fontSize: 9,
     padding: '2px 7px',
     borderRadius: 3,
     letterSpacing: '0.08em',
