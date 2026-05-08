@@ -15,17 +15,33 @@ import 'server-only';
 import type { SourceGenerationContext } from '@/lib/source/agent-generation/types';
 import type { PricingComparisonPayload, VendorPricingSubmission } from '../renderers/pricing-comparison';
 import { buildPricingTemplatePayloadFromContext } from './pricing-template-payload';
+import { listActiveSubmissionsForEvent } from '@/lib/source/pricing-submissions/dao';
+import type { VendorPricingSubmissionRow } from '@/lib/source/pricing-submissions/types';
 
-/** Build the comparison payload. Returns demo-mode synthetic vendors. */
-export function buildPricingComparisonPayloadFromContext(
+/**
+ * Build the comparison payload. As of Slice 2c.2 the binder reads real
+ * vendor submissions from the substrate when any exist, and falls back
+ * to synthesizing 3 demo vendors when none have been uploaded yet.
+ */
+export async function buildPricingComparisonPayloadFromContext(
   ctx: SourceGenerationContext,
   generatedAt: string,
-): PricingComparisonPayload {
+): Promise<PricingComparisonPayload> {
   // Reuse the d19a template binder so locked rows match exactly.
   const template = buildPricingTemplatePayloadFromContext(ctx, generatedAt);
-  // Slice 2c.1: synthesize 3 vendors with reasonable variance. Slice
-  // 2c.2 will replace this with real submissions from the substrate.
-  const submissions = synthesizeDemoSubmissions(template.lineItems, generatedAt);
+
+  // Slice 2c.2: pull real submissions if any exist; fall back to synthetic.
+  const realRows = await listActiveSubmissionsForEvent(ctx.event.id);
+  let submissions: VendorPricingSubmission[];
+  let demoMode: boolean;
+  if (realRows.length > 0) {
+    submissions = realRows.map(submissionRowToRendererSubmission);
+    demoMode = false;
+  } else {
+    submissions = synthesizeDemoSubmissions(template.lineItems, generatedAt);
+    demoMode = true;
+  }
+
   return {
     tenantName: template.tenantName,
     eventCode: template.eventCode,
@@ -36,7 +52,21 @@ export function buildPricingComparisonPayloadFromContext(
     escalator: template.escalator,
     tcoYears: template.tcoYears,
     submissions,
-    demoMode: true,
+    demoMode,
+  };
+}
+
+/** Map the substrate row shape onto the renderer's submission shape. */
+function submissionRowToRendererSubmission(
+  row: VendorPricingSubmissionRow,
+): VendorPricingSubmission {
+  return {
+    vendorName: row.vendorName,
+    submittedAt: row.submittedAt,
+    unitPricesById: row.unitPricesById,
+    vendorNotesById: row.vendorNotesById,
+    pricingNotes: row.pricingNotes,
+    assumptionDeviations: row.assumptionDeviations,
   };
 }
 
