@@ -12,6 +12,11 @@ import { normalizeProgramArchetype } from '@/lib/programs/archetype-normalizatio
 import { buildEngagementGraphNodeId } from '@/lib/programs/mutations';
 import { parseUsdRangeFromText } from '@/lib/programs/value-utils';
 
+export interface OriginationTurn {
+  role: 'user' | 'assistant';
+  text: string;
+}
+
 export interface SubmitOriginationBriefInput {
   surface: string;
   programName: string;
@@ -22,6 +27,14 @@ export interface SubmitOriginationBriefInput {
   sponsor: string;
   lead?: string | null;
   matchedPatternId?: string | null;
+  // Extended scaffold fields (steps 4–5)
+  scopeBoundary?: string | null;
+  evidenceFamily?: string | null;
+  // From "Shape into a Move →" initiative context
+  fromInitiativeId?: string | null;
+  fromGapUsd?: number | null;
+  // Origination chat turns for persistence to turns table
+  originationTurns?: OriginationTurn[] | null;
 }
 
 export interface SubmitOriginationBriefResult {
@@ -234,6 +247,62 @@ async function insertParticipant(input: {
   if (error) throw error;
 }
 
+/** Build the charter JSONB written to engagements.charter at P0 origination. */
+function buildOriginationCharter(
+  input: SubmitOriginationBriefInput,
+  derived: Classification,
+  sponsor: ResolvedPerson,
+  programArchetype: string | null,
+): Record<string, unknown> {
+  return {
+    version: 1,
+    captured_at: new Date().toISOString(),
+    scaffold: {
+      problem_statement: input.problemStatement,
+      archetype: programArchetype,
+      sponsor_candidate: `${sponsor.name}${sponsor.role ? ` · ${sponsor.role}` : ''}`,
+      scope_boundary: input.scopeBoundary ?? null,
+      evidence_family: input.evidenceFamily ?? null,
+      value_hypothesis: input.targetOutcome ?? null,
+      foundation_readiness: input.timeline ?? null,
+    },
+    classification: {
+      function_code: derived.functionCode,
+      objective_code: derived.objectiveCode,
+      topic_code: derived.topicCode,
+    },
+    initiative_context: input.fromInitiativeId
+      ? {
+          initiative_id: input.fromInitiativeId,
+          gap_usd: input.fromGapUsd ?? null,
+        }
+      : null,
+  };
+}
+
+/** Persist origination chat turns to the turns table (phase 0, best-effort). */
+async function persistOriginationTurns(
+  programId: string,
+  turns: OriginationTurn[],
+): Promise<void> {
+  if (!turns.length) return;
+  const sb = getServerSupabase();
+  const rows = turns
+    .filter((t) => t.text.trim().length > 0)
+    .map((t) => ({
+      engagement_id: programId,
+      phase: 0,
+      sender: t.role === 'assistant' ? 'agent' : 'user',
+      text: t.text.trim(),
+    }));
+  if (!rows.length) return;
+  const { error } = await sb.from('turns').insert(rows);
+  if (error) {
+    // Non-fatal — turns are enrichment. Log and continue.
+    console.error('[origination-submit] turns persist failed', { programId, error: error.message });
+  }
+}
+
 async function rollbackEngagement(programId: string): Promise<void> {
   try {
     await getServerSupabase().from('engagements').delete().eq('id', programId);
@@ -259,6 +328,11 @@ export async function submitOriginationBrief(
     sponsor: requiredText(rawInput.sponsor, 'sponsor'),
     lead: optionalText(rawInput.lead) ?? requiredText(rawInput.sponsor, 'sponsor'),
     matchedPatternId: optionalText(rawInput.matchedPatternId),
+    scopeBoundary: optionalText(rawInput.scopeBoundary),
+    evidenceFamily: optionalText(rawInput.evidenceFamily),
+    fromInitiativeId: optionalText(rawInput.fromInitiativeId),
+    fromGapUsd: typeof rawInput.fromGapUsd === 'number' ? rawInput.fromGapUsd : null,
+    originationTurns: Array.isArray(rawInput.originationTurns) ? rawInput.originationTurns : null,
   };
 
   let tenancy;
@@ -342,6 +416,11 @@ export async function submitOriginationBrief(
     activeClient.industry_code?.trim() || CLIENT_KEY_TO_INDUSTRY_CODE[activeClient.key]
   ).toUpperCase();
   const graphNodeId = buildEngagementGraphNodeId(input.programName);
+  // Charter JSONB: persists all 7 scaffold fields + classification + initiative
+  // context at the moment the brief is promoted. Written once; amended later
+  // by the P1 Evidence & Assessment phase when the brief is upgraded to a
+  // full charter document.
+  const charter = buildOriginationCharter(input, derived, sponsor, programArchetype);
 
   const { data: inserted, error: insertError } = await sb
     .from('engagements')
@@ -374,6 +453,7 @@ export async function submitOriginationBrief(
       founder_approval_required: false,
       data_residency_region: null,
       retention_policy_years: 7,
+      charter,
     })
     .select('id, name')
     .single();
@@ -429,6 +509,11 @@ export async function submitOriginationBrief(
       });
     }
     await markDraftCommitted(tenancy, input.surface, programId).catch(() => undefined);
+
+    // Persist origination chat turns (best-effort — non-fatal).
+    if (input.originationTurns?.length) {
+      await persistOriginationTurns(programId, input.originationTurns);
+    }
 
     return {
       engagementId: programId,
