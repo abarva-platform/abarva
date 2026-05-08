@@ -35,6 +35,15 @@ import {
   type NarrativeHtmlPayload,
 } from './renderers/narrative-html';
 import {
+  DECISION_BRIEF_PDF_CONFIG,
+  RFP_PACK_PDF_CONFIG,
+  SCOPE_MEMO_PDF_CONFIG,
+  SELECTION_MEMO_PDF_CONFIG,
+  buildNarrativePdf,
+  type NarrativePdfConfig,
+  type NarrativePdfPayload,
+} from './renderers/narrative-pdf';
+import {
   buildPricingComparisonWorkbook,
   type PricingComparisonPayload,
 } from './renderers/pricing-comparison';
@@ -54,6 +63,7 @@ import {
 export { XLSX_CONTENT_TYPE } from './renderers/xlsx-base';
 export { DOCX_CONTENT_TYPE } from './renderers/docx-base';
 export { HTML_CONTENT_TYPE } from './renderers/narrative-html';
+export { PDF_CONTENT_TYPE } from './renderers/pdf-base';
 
 /**
  * Codes for which Source has an xlsx generator. Surfaces in the UI as
@@ -98,6 +108,18 @@ export const HTML_GENERATABLE_CODES = new Set([
   'd27_selection_memo',
 ]);
 
+/**
+ * Codes for which Source has a PDF renderer. Slice 4.2 covers the same
+ * narrative artifacts so every long-form deliverable has a print-ready
+ * PDF available for sharing / archiving.
+ */
+export const PDF_GENERATABLE_CODES = new Set([
+  'd05_scope_memo',
+  'd09_rfp_pack',
+  'd24_decision_brief',
+  'd27_selection_memo',
+]);
+
 export function isXlsxGeneratable(artifactCode: string): boolean {
   return XLSX_GENERATABLE_CODES.has(artifactCode);
 }
@@ -112,6 +134,10 @@ export function isDocxGeneratable(artifactCode: string): boolean {
 
 export function isHtmlGeneratable(artifactCode: string): boolean {
   return HTML_GENERATABLE_CODES.has(artifactCode);
+}
+
+export function isPdfGeneratable(artifactCode: string): boolean {
+  return PDF_GENERATABLE_CODES.has(artifactCode);
 }
 
 export interface RenderXlsxArgs {
@@ -222,10 +248,41 @@ export function renderArtifactHtml(args: RenderHtmlArgs): string {
   }
 }
 
+export interface RenderPdfArgs {
+  artifactCode: string;
+  payload: unknown;
+}
+
+/**
+ * Build a React element representing a PDF document for an artifact
+ * code. The route serializes via @react-pdf/renderer's `pdf().toBuffer()`.
+ * Pure: returns a React element, no I/O.
+ */
+export function renderArtifactPdf(args: RenderPdfArgs): import('react').ReactElement<import('@react-pdf/renderer').DocumentProps> {
+  const payload = args.payload as NarrativePdfPayload;
+  switch (args.artifactCode) {
+    case 'd05_scope_memo':
+      return buildNarrativePdf(payload, SCOPE_MEMO_PDF_CONFIG);
+    case 'd09_rfp_pack':
+      return buildNarrativePdf(payload, RFP_PACK_PDF_CONFIG);
+    case 'd24_decision_brief':
+      return buildNarrativePdf(payload, DECISION_BRIEF_PDF_CONFIG);
+    case 'd27_selection_memo':
+      return buildNarrativePdf(payload, SELECTION_MEMO_PDF_CONFIG);
+    default:
+      throw new Error(
+        `No PDF generator wired for ${args.artifactCode}. ` +
+          `Supported codes: ${Array.from(PDF_GENERATABLE_CODES).join(', ')}.`,
+      );
+  }
+}
+
 export type {
   AppInventoryPayload,
   NarrativeHtmlConfig,
   NarrativeHtmlPayload,
+  NarrativePdfConfig,
+  NarrativePdfPayload,
   PricingComparisonPayload,
   PricingTemplatePayload,
   ResponseChecklistPayload,

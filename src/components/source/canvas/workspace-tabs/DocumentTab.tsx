@@ -86,6 +86,13 @@ interface DocumentTabProps {
   htmlGeneratableCodes?: ReadonlySet<string>;
   /** Build the HTML view URL for a given artifact code. */
   htmlViewHref?: (code: string) => string;
+  /**
+   * Set of codes that have a PDF renderer wired. Card shows a
+   * "Download PDF" anchor.
+   */
+  pdfGeneratableCodes?: ReadonlySet<string>;
+  /** Build the PDF download URL for a given artifact code. */
+  pdfDownloadHref?: (code: string) => string;
 }
 
 const STATUS_LABEL: Record<SourceEventArtifactStatus, string> = {
@@ -125,6 +132,8 @@ export function DocumentTab({
   docxDownloadHref,
   htmlGeneratableCodes,
   htmlViewHref,
+  pdfGeneratableCodes,
+  pdfDownloadHref,
 }: DocumentTabProps) {
   if (artifacts.length === 0) {
     return (
@@ -248,6 +257,11 @@ export function DocumentTab({
                   ? htmlViewHref(active.artifactCode)
                   : null
               }
+              pdfDownloadHref={
+                pdfGeneratableCodes?.has(active.artifactCode) && pdfDownloadHref
+                  ? pdfDownloadHref(active.artifactCode)
+                  : null
+              }
             />
             {eventId && VENDOR_SUBMISSIONS_CODES.has(active.artifactCode) ? (
               <VendorPricingSubmissionsPanel
@@ -293,6 +307,8 @@ interface ArtifactBodyEditorProps {
   docxDownloadHref?: string | null;
   /** When non-null the card shows a "View HTML" anchor (target="_blank"). */
   htmlViewHref?: string | null;
+  /** When non-null the card shows a "Download PDF" anchor. */
+  pdfDownloadHref?: string | null;
 }
 
 function ArtifactBodyEditor({
@@ -309,6 +325,7 @@ function ArtifactBodyEditor({
   xlsxComparisonDownloadHref,
   docxDownloadHref,
   htmlViewHref,
+  pdfDownloadHref,
 }: ArtifactBodyEditorProps) {
   const [editing, setEditing] = useState(false);
   const [generationError, setGenerationError] = useState<string | null>(null);
@@ -468,6 +485,17 @@ function ArtifactBodyEditor({
               title="View as a browser-readable HTML document — useful for sharing as a link, or printing to PDF from the browser."
             >
               View HTML
+            </a>
+          ) : null}
+          {pdfDownloadHref ? (
+            <a
+              href={pdfDownloadHref}
+              data-testid={`source-canvas-document-body-download-pdf-${artifact.artifactCode}`}
+              style={{ ...GHOST_BUTTON_STYLE, textDecoration: 'none' }}
+              download
+              title="Download as PDF — print-ready archival format with cover page, page numbers, and confidentiality footer."
+            >
+              Download PDF
             </a>
           ) : null}
         </div>
