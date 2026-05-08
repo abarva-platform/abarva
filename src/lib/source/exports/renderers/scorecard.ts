@@ -31,7 +31,7 @@ import {
   applyLockedRow,
   buildCoverSheet,
   safeCell,
-} from './xlsx-base';
+} from '@/lib/exports-shared/xlsx-base';
 
 /** One criterion. Weight is the integer percentage (0-100). */
 export interface ScorecardCriterion {

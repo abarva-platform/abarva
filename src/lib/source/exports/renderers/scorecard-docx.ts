@@ -27,11 +27,11 @@ import {
   coverTitleParagraph,
   eyebrowParagraph,
   heading2,
-} from './docx-base';
+} from '@/lib/exports-shared/docx-base';
 import {
   buildKeyValueTable,
   buildMultiColumnTable,
-} from './structured-docx-base';
+} from '@/lib/exports-shared/structured-docx-base';
 import type { ScorecardPayload } from './scorecard';
 
 export function buildScorecardDocx(payload: ScorecardPayload): Document {

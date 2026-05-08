@@ -1,5 +1,5 @@
 import { Packer, Paragraph, Table } from 'docx';
-import { markdownToDocxBlocks } from '../renderers/markdown-to-docx';
+import { markdownToDocxBlocks } from '@/lib/exports-shared/markdown-to-docx';
 
 describe('markdownToDocxBlocks', () => {
   it('renders an empty input as zero blocks', () => {

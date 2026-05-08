@@ -23,7 +23,7 @@ import {
   applyLockedRow,
   buildCoverSheet,
   safeCell,
-} from './xlsx-base';
+} from '@/lib/exports-shared/xlsx-base';
 
 /** Severity tiers for traps. P0 = deal-shaping, P1 = material, P2 = noted. */
 export type TrapSeverity = 'P0' | 'P1' | 'P2';

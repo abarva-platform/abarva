@@ -71,10 +71,10 @@ import {
   type BafoQuestionPackPayload,
 } from './renderers/bafo-question-pack';
 
-export { XLSX_CONTENT_TYPE } from './renderers/xlsx-base';
-export { DOCX_CONTENT_TYPE } from './renderers/docx-base';
+export { XLSX_CONTENT_TYPE } from '@/lib/exports-shared/xlsx-base';
+export { DOCX_CONTENT_TYPE } from '@/lib/exports-shared/docx-base';
 export { HTML_CONTENT_TYPE } from './renderers/narrative-html';
-export { PDF_CONTENT_TYPE } from './renderers/pdf-base';
+export { PDF_CONTENT_TYPE } from '@/lib/exports-shared/pdf-base';
 
 /**
  * Codes for which Source has an xlsx generator. Surfaces in the UI as
