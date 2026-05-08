@@ -26,6 +26,16 @@ import {
   renderArtifactDocx,
 } from '@/lib/source/exports';
 import { buildNarrativeDocxPayloadFromContext } from '@/lib/source/exports/payloads/narrative-docx-payload';
+import { buildAppInventoryPayloadFromContext } from '@/lib/source/exports/payloads/app-inventory-payload';
+import { buildResponseChecklistPayloadFromContext } from '@/lib/source/exports/payloads/response-checklist-payload';
+import { buildScorecardPayloadFromContext } from '@/lib/source/exports/payloads/scorecard-payload';
+
+const NARRATIVE_CODES = new Set([
+  'd05_scope_memo',
+  'd09_rfp_pack',
+  'd24_decision_brief',
+  'd27_selection_memo',
+]);
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -98,17 +108,29 @@ export async function GET(_req: NextRequest, { params }: RouteCtx) {
     );
   }
 
-  // Build payload + render. All narrative artifacts (d05/d09/d24/d27)
-  // share the same payload shape — they only differ in the cover-block
-  // config that the renderer dispatcher applies.
+  // Build payload + render. Narrative artifacts (d05/d09/d24/d27) use
+  // the shared narrative payload shape; structured-data artifacts
+  // (d04/d11/d16) reuse the same payload binders that the xlsx
+  // pipeline uses.
   const generatedAt = new Date().toISOString();
   let document;
   try {
-    const payload = buildNarrativeDocxPayloadFromContext(
-      ctx,
-      artifactCode,
-      generatedAt,
-    );
+    let payload: unknown;
+    if (NARRATIVE_CODES.has(artifactCode)) {
+      payload = buildNarrativeDocxPayloadFromContext(ctx, artifactCode, generatedAt);
+    } else if (artifactCode === 'd04_app_inv') {
+      payload = buildAppInventoryPayloadFromContext(ctx, generatedAt);
+    } else if (artifactCode === 'd11_response_checklist') {
+      payload = buildResponseChecklistPayloadFromContext(ctx, generatedAt);
+    } else if (artifactCode === 'd16_scorecard') {
+      payload = buildScorecardPayloadFromContext(ctx, generatedAt);
+    } else {
+      // Defensive — isDocxGeneratable should have caught this.
+      return Response.json(
+        { error: 'unsupported_artifact', detail: artifactCode },
+        { status: 404 },
+      );
+    }
     document = await renderArtifactDocx({ artifactCode, payload });
   } catch (err) {
     console.error(
