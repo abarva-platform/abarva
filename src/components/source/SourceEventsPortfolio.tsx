@@ -314,45 +314,11 @@ export function SourceEventsPortfolio({
             <div style={{ ...SOURCE_MUTED, fontSize: '13px' }}>
               Seeded event list, stage labels, alert counts, value-at-stake, and linked-program hints. Vendor counts and live bid timelines are not surfaced at the portfolio layer yet.
             </div>
-            <label htmlFor="source-events-custom-input" style={{ display: 'grid', gap: 6 }}>
-              <div style={{ ...FILTER_LABEL, marginTop: 8 }}>Ask Sentinel (deferred)</div>
-              <div style={{ display: 'flex', gap: 8 }}>
-                <input
-                  id="source-events-custom-input"
-                  type="text"
-                  readOnly
-                  disabled
-                  aria-disabled="true"
-                  placeholder="Ask Sentinel about this event portfolio, stage priorities, blockers, or evidence..."
-                  style={{
-                    ...SOURCE_SECTION_LABEL,
-                    background: '#F8FAFC',
-                    border: '1px solid #D0D8E8',
-                    borderRadius: 8,
-                    color: '#6B7280',
-                    fontFamily: SHELL.SANS,
-                    padding: '8px 10px',
-                    fontWeight: 500,
-                    fontSize: 12,
-                    width: '100%',
-                  }}
-                />
-                <button
-                  type="button"
-                  disabled
-                  aria-disabled="true"
-                  title="Open a Source event to talk to Sentinel. Portfolio Sentinel runtime is deferred."
-                  style={{
-                    ...SOURCE_ACTION_LINK_SECONDARY,
-                    whiteSpace: 'nowrap',
-                    cursor: 'not-allowed',
-                    opacity: 0.72,
-                  }}
-                >
-                  Submit (disabled until runtime)
-                </button>
-              </div>
-            </label>
+            <div style={{ ...SOURCE_MUTED, fontSize: '12px', marginTop: 4 }}>
+              Ask Sentinel directly in the chat lane on the left of this page —
+              the dock supports portfolio-level questions, drag-and-drop file
+              uploads, and resize / pin / expand modes.
+            </div>
           </div>
         </article>
 
