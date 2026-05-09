@@ -31,6 +31,8 @@ describe('authenticated Tower submenu wiring', () => {
     expect(indexSource).toContain('tower-pressure-detail-link');
     expect(indexSource).toContain('function TowerInlineDetailPanel');
     expect(indexSource).toContain('data-testid="tower-inline-detail-panel"');
+    expect(indexSource).toContain('activeDetailId ? (');
+    expect(indexSource).toContain('towerCanvasRef.current?.scrollTo');
     expect(indexSource).toContain('detailHrefFor(card.displayId, card.id)');
     expect(indexSource).toContain("params.set('detail', detail)");
     expect(indexSource).toContain("params.set('pressure', pressure)");

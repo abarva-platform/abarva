@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import type { CSSProperties, ReactNode } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { AppShell } from '@/components/shell/AppShell';
@@ -1414,6 +1414,7 @@ export function TowerIndexPage({
   const useSubstratePressures = Boolean(pressuresView);
   const searchParams = useSearchParams();
   const router = useRouter();
+  const towerCanvasRef = useRef<HTMLDivElement>(null);
   const activeLens = (searchParams?.get('lens') ?? 'value') as 'value' | 'risk' | 'contract' | 'adopt';
   const activeDetailId = searchParams?.get('detail') ?? null;
   const activePressureId = searchParams?.get('pressure') ?? null;
@@ -1449,6 +1450,11 @@ export function TowerIndexPage({
 
   const closeDetailHref = buildTowerHref({ detail: null, pressure: null });
 
+  useEffect(() => {
+    if (!activeDetailId) return;
+    towerCanvasRef.current?.scrollTo({ top: 0, behavior: 'auto' });
+  }, [activeDetailId, activeTab]);
+
   const lensTabs: { key: typeof activeLens; label: string }[] = [
     { key: 'value', label: 'Value' },
     { key: 'risk', label: 'Risk' },
@@ -1456,7 +1462,7 @@ export function TowerIndexPage({
     { key: 'adopt', label: 'Adoption' },
   ];
 
-  // Date — use today's date (2026-05-06 per memory) but format for the masthead
+  // Date is resolved at runtime so Tower stays aligned with the live pilot week.
   const today = new Date();
   const dayName = today.toLocaleDateString('en-US', { weekday: 'long' });
   const monthDay = today.toLocaleDateString('en-US', { month: 'long', day: 'numeric' });
@@ -1608,6 +1614,7 @@ export function TowerIndexPage({
 
   const towerWorkspace: ReactNode = (
     <div
+      ref={towerCanvasRef}
       style={{
         display: 'grid',
         gridTemplateColumns: 'minmax(0, 1fr) 320px',
@@ -1726,15 +1733,15 @@ export function TowerIndexPage({
             </div>
           </div>
 
-          <TowerInlineDetailPanel
-            detailId={activeDetailId}
-            initiative={detailInitiative}
-            vendors={vendors ?? []}
-            pressure={detailPressure}
-            closeHref={closeDetailHref}
-          />
-
-          {activeTab === 'portfolio' ? (
+          {activeDetailId ? (
+            <TowerInlineDetailPanel
+              detailId={activeDetailId}
+              initiative={detailInitiative}
+              vendors={vendors ?? []}
+              pressure={detailPressure}
+              closeHref={closeDetailHref}
+            />
+          ) : activeTab === 'portfolio' ? (
             <>
           {/* KPI band — T-1 compression: ~80px tall, 2-line tiles, no inline CTAs.
               Displaced detail (3-line descriptions) lives in hover tooltip;
