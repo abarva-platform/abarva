@@ -31,8 +31,21 @@ export interface CxoPersona {
   titleFull: string;
   /** Tenant display name. */
   tenant: string;
-  /** Tenant key used by app routing / data layer. */
+  /**
+   * Canonical app ClientKey — matches src/lib/client-config.ts.
+   * Used for active-client resolution and Supabase clients-table
+   * lookup (clients.name LIKE: Apex Retail / Meridian / Arcturus or
+   * First Capital). MUST be one of: apexretail · meridian · arcturus.
+   */
+  clientKey: 'apexretail' | 'meridian' | 'arcturus';
+  /**
+   * Tenant key used by the data-room / broker layer — a parallel
+   * namespace per project memory ("App ClientKey is `apexretail`;
+   * broker is `apex-retail`"). Kept for chrome rendering.
+   */
   tenantKey: 'apex-retail' | 'meridian-health' | 'firstcapital';
+  /** Graph node id used by persons.graph_node_id (Supabase). */
+  graphNodeId: string;
   /** Monogram background — tenant theme color (NOT brand chrome). */
   monogramBg: string;
   /** One-line bio for tooltip / sign-in card hover. */
@@ -55,7 +68,9 @@ export const CXO_PERSONAS: ReadonlyArray<CxoPersona> = [
     titleShort: 'CIO',
     titleFull: 'Chief Information Officer',
     tenant: 'Apex Retail Group',
+    clientKey: 'apexretail',
     tenantKey: 'apex-retail',
+    graphNodeId: 'person:apex:carlos-rivera',
     monogramBg: '#C2410C',
     bioShort: '6 yrs CIO. Pragmatic, vendor-skeptical post-2023 AMS rebuild.',
     bioLong:
@@ -74,7 +89,9 @@ export const CXO_PERSONAS: ReadonlyArray<CxoPersona> = [
     titleShort: 'CDO',
     titleFull: 'Chief Data Officer',
     tenant: 'Apex Retail Group',
+    clientKey: 'apexretail',
     tenantKey: 'apex-retail',
+    graphNodeId: 'person:apex:lynne-stratham',
     monogramBg: '#C2410C',
     bioShort: '0.5 yrs. Joined from Albertsons. Owns the live CDP Activation 2026 program.',
     bioLong:
@@ -93,7 +110,9 @@ export const CXO_PERSONAS: ReadonlyArray<CxoPersona> = [
     titleShort: 'CDIO',
     titleFull: 'Chief Digital + Information Officer',
     tenant: 'Meridian Health System',
+    clientKey: 'meridian',
     tenantKey: 'meridian-health',
+    graphNodeId: 'person:meridian:anita-krishnamurthy',
     monogramBg: '#0E8A65',
     bioShort: '0.5 yrs. New combined CDIO role. Owns digital strategy, info, AI governance.',
     bioLong:
@@ -112,7 +131,9 @@ export const CXO_PERSONAS: ReadonlyArray<CxoPersona> = [
     titleShort: 'CIO',
     titleFull: 'Chief Information Officer',
     tenant: 'First Capital',
+    clientKey: 'arcturus',
     tenantKey: 'firstcapital',
+    graphNodeId: 'person:firstcapital:patricia-huang',
     monogramBg: '#1E3A8A',
     bioShort: '2 yrs. Ex-Top-5-bank Digital Payments VP. "FedNow is a survival project."',
     bioLong:

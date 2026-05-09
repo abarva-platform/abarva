@@ -1,119 +1,40 @@
 // scripts/provision-cxo-personas.ts
 //
-// Wave 2 of the 2026-05-08 sign-in cleanup. Provisions the four
-// canonical CXO Clerk users (each bound to a real persona from the
-// existing tenant org charts) and disables every other *.example.com
-// demo account.
+// Provisions the four canonical CXO Clerk users AND their Supabase
+// person + person_client_memberships rows so the active-client
+// resolver can find them. Disables every other *.example.com demo
+// account.
 //
 // Run:
-//   npx tsx scripts/provision-cxo-personas.ts --dry-run        # default, lists actions
-//   npx tsx scripts/provision-cxo-personas.ts --apply           # actually mutate Clerk
+//   npx tsx scripts/provision-cxo-personas.ts --dry-run        # default
+//   npx tsx scripts/provision-cxo-personas.ts --apply           # mutate
 //
-// Requires CLERK_SECRET_KEY in .env.local (production secret key).
+// Requires in .env.local:
+//   CLERK_SECRET_KEY
+//   NEXT_PUBLIC_SUPABASE_URL
+//   SUPABASE_SERVICE_ROLE_KEY
 //
 // Safety:
 //   - --dry-run is the default. --apply must be passed explicitly.
 //   - anand.sundaram@thesundaram.com is hardcoded as never-touched.
-//   - Banning is reversible (clerk.users.unbanUser) and does not delete
-//     the account. Restore via Clerk dashboard or the unban command if
-//     anything is mis-flagged.
-//   - Personas are bound to publicMetadata so the platform can surface
-//     persona name + title consistently across the chrome and corpus.
+//   - Banning is reversible (clerk.users.unbanUser).
 
 import { config as loadEnv } from 'dotenv';
 import { createClerkClient } from '@clerk/backend';
+import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import path from 'node:path';
+import { CXO_PERSONAS } from '../src/lib/auth/cxo-personas';
 
 loadEnv({ path: path.resolve(process.cwd(), '.env.local') });
 
 const PROTECTED_EMAILS = new Set<string>([
-  'anand.sundaram@thesundaram.com', // founder · platform admin · NEVER touch
+  'anand.sundaram@thesundaram.com',
 ]);
 
 const DEMO_PASSWORD = 'Demo2026!';
-
-interface PersonaSpec {
-  email: string;
-  password: string;
-  firstName: string;
-  lastName: string;
-  publicMetadata: {
-    role: 'maestro';
-    personaName: string;
-    personaTitle: string;
-    personaTitleShort: string;
-    tenantKey: string;
-    tenantName: string;
-    bio: string;
-  };
-}
-
-const PERSONAS: PersonaSpec[] = [
-  {
-    email: 'cio@apex-retail.example.com',
-    password: DEMO_PASSWORD,
-    firstName: 'Carlos',
-    lastName: 'Rivera',
-    publicMetadata: {
-      role: 'maestro',
-      personaName: 'Carlos Rivera',
-      personaTitle: 'Chief Information Officer',
-      personaTitleShort: 'CIO',
-      tenantKey: 'apex-retail',
-      tenantName: 'Apex Retail Group',
-      bio: '6 yrs CIO. Pragmatic, vendor-skeptical post-2023 AMS rebuild. Owns AI platform readiness.',
-    },
-  },
-  {
-    email: 'cdo@apex-retail.example.com',
-    password: DEMO_PASSWORD,
-    firstName: 'Lynne',
-    lastName: 'Stratham',
-    publicMetadata: {
-      role: 'maestro',
-      personaName: 'Lynne Stratham',
-      personaTitle: 'Chief Data Officer',
-      personaTitleShort: 'CDO',
-      tenantKey: 'apex-retail',
-      tenantName: 'Apex Retail Group',
-      bio: '0.5 yrs. Joined from Albertsons. Owns the live CDP Activation 2026 program.',
-    },
-  },
-  {
-    email: 'cdio@meridian-health.example.com',
-    password: DEMO_PASSWORD,
-    firstName: 'Anita',
-    lastName: 'Krishnamurthy',
-    publicMetadata: {
-      role: 'maestro',
-      personaName: 'Dr. Anita Krishnamurthy',
-      personaTitle: 'Chief Digital + Information Officer',
-      personaTitleShort: 'CDIO',
-      tenantKey: 'meridian-health',
-      tenantName: 'Meridian Health System',
-      bio: '0.5 yrs. New combined CDIO role. Owns digital strategy, info, AI governance.',
-    },
-  },
-  {
-    email: 'cio@firstcapital.example.com',
-    password: DEMO_PASSWORD,
-    firstName: 'Patricia',
-    lastName: 'Huang',
-    publicMetadata: {
-      role: 'maestro',
-      personaName: 'Patricia Huang',
-      personaTitle: 'Chief Information Officer',
-      personaTitleShort: 'CIO',
-      tenantKey: 'firstcapital',
-      tenantName: 'First Capital',
-      bio: '2 yrs. Ex-Top-5-bank Digital Payments VP. "FedNow is a survival project."',
-    },
-  },
-];
-
 const KEEP_EMAILS = new Set<string>([
   ...PROTECTED_EMAILS,
-  ...PERSONAS.map((p) => p.email),
+  ...CXO_PERSONAS.map((p) => p.email),
 ]);
 
 function requireEnv(name: string): string {
@@ -126,11 +47,35 @@ function makeClerk() {
   return createClerkClient({ secretKey: requireEnv('CLERK_SECRET_KEY') });
 }
 
+function makeSupabase(): SupabaseClient {
+  return createClient(
+    requireEnv('NEXT_PUBLIC_SUPABASE_URL'),
+    requireEnv('SUPABASE_SERVICE_ROLE_KEY'),
+    { auth: { persistSession: false } },
+  ) as SupabaseClient;
+}
+
 function parseArgs() {
   const args = new Set(process.argv.slice(2));
-  return {
-    apply: args.has('--apply'),
-  };
+  return { apply: args.has('--apply') };
+}
+
+interface ClientRow {
+  id: string;
+  name: string;
+}
+
+async function loadClientsByKey(sb: SupabaseClient): Promise<Map<string, ClientRow>> {
+  const { data, error } = await sb.from('clients').select('id, name');
+  if (error) throw error;
+
+  const byKey = new Map<string, ClientRow>();
+  for (const row of (data as ClientRow[] | null) ?? []) {
+    if (/Meridian/i.test(row.name)) byKey.set('meridian', row);
+    if (/Arcturus|First Capital/i.test(row.name)) byKey.set('arcturus', row);
+    if (/Apex Retail/i.test(row.name)) byKey.set('apexretail', row);
+  }
+  return byKey;
 }
 
 async function findUserByEmail(clerk: ReturnType<typeof createClerkClient>, email: string) {
@@ -138,67 +83,162 @@ async function findUserByEmail(clerk: ReturnType<typeof createClerkClient>, emai
   return list.data[0] ?? null;
 }
 
+interface PersonaActions {
+  clerkAction: 'create' | 'update' | 'noop';
+  personAction: 'create' | 'update' | 'noop';
+  membershipAction: 'create' | 'update' | 'noop';
+}
+
 async function provisionPersona(
   clerk: ReturnType<typeof createClerkClient>,
-  spec: PersonaSpec,
+  sb: SupabaseClient,
+  persona: (typeof CXO_PERSONAS)[number],
+  clientRow: ClientRow,
   apply: boolean,
-): Promise<{ action: string; detail: string }> {
-  const existing = await findUserByEmail(clerk, spec.email);
+): Promise<PersonaActions> {
+  const result: PersonaActions = {
+    clerkAction: 'noop',
+    personAction: 'noop',
+    membershipAction: 'noop',
+  };
 
+  // Build the canonical publicMetadata. The active-client resolver
+  // reads `clientId` (canonical app key) — this is the field that was
+  // missing in the v1 script. Other fields are persona surface data.
+  const publicMetadata = {
+    role: 'maestro',
+    clientId: persona.clientKey, // ← critical: drives getActiveClientKey()
+    tenantKey: persona.tenantKey, // broker-namespace (separate)
+    personaName: persona.personaName,
+    personaTitle: persona.titleFull,
+    personaTitleShort: persona.titleShort,
+    tenantName: persona.tenant,
+    bio: persona.bioShort,
+  };
+
+  // ── Phase A · Clerk user ──────────────────────────────────────
+  const existing = await findUserByEmail(clerk, persona.email);
   if (!existing) {
-    if (!apply) {
-      return { action: 'CREATE', detail: `${spec.email} (${spec.firstName} ${spec.lastName})` };
+    result.clerkAction = 'create';
+    if (apply) {
+      await clerk.users.createUser({
+        emailAddress: [persona.email],
+        password: DEMO_PASSWORD,
+        firstName: persona.firstName,
+        lastName: persona.lastName,
+        publicMetadata,
+        skipPasswordChecks: true,
+        skipPasswordRequirement: false,
+      });
     }
-    await clerk.users.createUser({
-      emailAddress: [spec.email],
-      password: spec.password,
-      firstName: spec.firstName,
-      lastName: spec.lastName,
-      publicMetadata: spec.publicMetadata,
-      skipPasswordChecks: true,
-      skipPasswordRequirement: false,
-    });
-    return { action: 'CREATED', detail: `${spec.email}` };
+  } else {
+    result.clerkAction = 'update';
+    if (apply) {
+      await clerk.users.updateUser(existing.id, {
+        firstName: persona.firstName,
+        lastName: persona.lastName,
+        publicMetadata,
+        password: DEMO_PASSWORD,
+        skipPasswordChecks: true,
+      });
+      if (existing.banned) await clerk.users.unbanUser(existing.id);
+    }
   }
 
-  // User exists — make sure password, name, and metadata are right.
-  const updates: string[] = [];
+  // ── Phase B · Supabase persons row ────────────────────────────
+  // Look up by email first, then by graph_node_id as a secondary key.
+  const { data: existingPerson } = await sb
+    .from('persons')
+    .select('id, email, graph_node_id')
+    .or(`email.eq.${persona.email},graph_node_id.eq.${persona.graphNodeId}`)
+    .maybeSingle();
 
-  if (existing.firstName !== spec.firstName || existing.lastName !== spec.lastName) {
-    updates.push(`name=${spec.firstName} ${spec.lastName}`);
+  // `primary_role` is the user_role_type enum (maestro / client_viewer / etc.),
+  // NOT the persona title. The persona title goes into the free-text `role`
+  // field. Founder-confirmed all four CXO accounts get maestro.
+  const personPayload = {
+    graph_node_id: persona.graphNodeId,
+    name: persona.personaName,
+    email: persona.email,
+    role: persona.titleFull,
+    organization: persona.tenant,
+    primary_role: 'maestro',
+    familiarity: 'first_meeting',
+    communication_style: {},
+    working_rhythm: {},
+    personal_threads: [],
+  };
+
+  let personId: string;
+  if (existingPerson) {
+    result.personAction = 'update';
+    personId = (existingPerson as { id: string }).id;
+    if (apply) {
+      const { error } = await sb.from('persons').update(personPayload).eq('id', personId);
+      if (error) throw error;
+    }
+  } else {
+    result.personAction = 'create';
+    if (apply) {
+      const { data, error } = await sb.from('persons').insert(personPayload).select('id').single();
+      if (error) throw error;
+      personId = (data as { id: string }).id;
+    } else {
+      personId = '<DRY-RUN-PERSON-ID>';
+    }
   }
-  // Compare metadata shallowly — any mismatch triggers a refresh.
-  const meta = existing.publicMetadata as Record<string, unknown> | null;
-  const wantMeta = spec.publicMetadata as Record<string, unknown>;
-  const metaMatches =
-    meta &&
-    Object.keys(wantMeta).every((k) => (meta as Record<string, unknown>)[k] === wantMeta[k]);
-  if (!metaMatches) updates.push('publicMetadata');
 
-  // Always rotate password to spec — explicit founder direction.
-  updates.push('password');
+  // ── Phase C · person_client_memberships row ───────────────────
+  // In dry-run we skip this lookup if person was newly created
+  // (would FK to nothing). Otherwise we report the planned action.
+  if (apply || result.personAction !== 'create') {
+    const { data: existingMembership } = await sb
+      .from('person_client_memberships')
+      .select('id, role')
+      .eq('person_id', personId)
+      .eq('client_id', clientRow.id)
+      .maybeSingle();
 
-  if (!apply) {
-    return {
-      action: 'UPDATE',
-      detail: `${spec.email} (existing) → ${updates.join(', ')}`,
+    const membershipPayload = {
+      role: 'maestro',
+      access_level: null,
+      financial_visibility: true,
+      can_admin_users: true,
+      can_create_programs: true,
+      can_approve_gates: true,
+      can_create_source_events: true,
+      can_approve_source_stages: true,
+      can_approve_award: true,
+      can_upload_source_artifacts: true,
+      can_generate_sourcing_artifacts: true,
+      can_publish_sourcing_artifacts: true,
     };
+
+    if (existingMembership) {
+      result.membershipAction = 'update';
+      if (apply) {
+        const { error } = await sb
+          .from('person_client_memberships')
+          .update(membershipPayload)
+          .eq('id', (existingMembership as { id: string }).id);
+        if (error) throw error;
+      }
+    } else {
+      result.membershipAction = 'create';
+      if (apply) {
+        const { error } = await sb.from('person_client_memberships').insert({
+          person_id: personId,
+          client_id: clientRow.id,
+          ...membershipPayload,
+        });
+        if (error) throw error;
+      }
+    }
+  } else {
+    result.membershipAction = 'create';
   }
 
-  await clerk.users.updateUser(existing.id, {
-    firstName: spec.firstName,
-    lastName: spec.lastName,
-    publicMetadata: spec.publicMetadata,
-    password: spec.password,
-    skipPasswordChecks: true,
-  });
-
-  // Clear banned flag if previously banned.
-  if (existing.banned) {
-    await clerk.users.unbanUser(existing.id);
-  }
-
-  return { action: 'UPDATED', detail: spec.email };
+  return result;
 }
 
 async function listAllUsers(clerk: ReturnType<typeof createClerkClient>) {
@@ -224,20 +264,29 @@ async function main() {
   console.log(`AbarVa CXO persona provisioning · ${apply ? 'APPLY MODE' : 'DRY-RUN'}`);
   console.log('━'.repeat(70));
   if (!apply) {
-    console.log('No changes will be made. Re-run with --apply to mutate Clerk.\n');
+    console.log('No changes will be made. Re-run with --apply to mutate.\n');
   } else {
-    console.log('⚠️  APPLY MODE — Clerk will be mutated. Hit Ctrl-C now to abort.\n');
+    console.log('⚠️  APPLY MODE — Clerk + Supabase will be mutated. Hit Ctrl-C now to abort.\n');
     await new Promise((r) => setTimeout(r, 3_000));
   }
 
   const clerk = makeClerk();
+  const sb = makeSupabase();
+  const clients = await loadClientsByKey(sb);
 
   // ── Phase 1 · provision the 4 CXO personas ─────────────────────
-  console.log('Phase 1 · Provision CXO personas');
+  console.log('Phase 1 · Provision CXO personas (Clerk + Supabase)');
   console.log('─'.repeat(70));
-  for (const spec of PERSONAS) {
-    const r = await provisionPersona(clerk, spec, apply);
-    console.log(`  [${r.action}] ${r.detail}`);
+  for (const persona of CXO_PERSONAS) {
+    const clientRow = clients.get(persona.clientKey);
+    if (!clientRow) {
+      console.log(`  [SKIP] ${persona.email} — clients table has no ${persona.clientKey}`);
+      continue;
+    }
+    const r = await provisionPersona(clerk, sb, persona, clientRow, apply);
+    console.log(
+      `  ${persona.shortLabel.padEnd(22)} → clerk:${r.clerkAction.padEnd(6)} person:${r.personAction.padEnd(6)} membership:${r.membershipAction}`,
+    );
   }
   console.log();
 
@@ -246,10 +295,7 @@ async function main() {
   console.log('─'.repeat(70));
   const allUsers = await listAllUsers(clerk);
   const toBan = allUsers.filter(
-    (u) =>
-      u.email.endsWith('.example.com') && // only target demo-domain users
-      !KEEP_EMAILS.has(u.email) && // not protected
-      !u.banned, // not already banned
+    (u) => u.email.endsWith('.example.com') && !KEEP_EMAILS.has(u.email) && !u.banned,
   );
 
   if (toBan.length === 0) {
@@ -269,7 +315,7 @@ async function main() {
   // ── Phase 3 · summary ──────────────────────────────────────────
   console.log('Summary');
   console.log('─'.repeat(70));
-  console.log(`  Personas provisioned: ${PERSONAS.length}`);
+  console.log(`  Personas provisioned: ${CXO_PERSONAS.length}`);
   console.log(`  Legacy demo accounts banned: ${toBan.length}`);
   console.log(`  Protected (always kept): ${[...PROTECTED_EMAILS].join(', ')}`);
   console.log();
