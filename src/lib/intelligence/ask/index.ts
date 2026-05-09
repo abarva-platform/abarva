@@ -6,6 +6,12 @@ import { retrieveWorldview } from './retrievers/worldview';
 import { retrieveSurfaceContextSources } from './retrievers/surface-context';
 import { retrieveTenantTechnologySources } from '@/lib/knowledge/tenant-technology-context';
 import type { AskSource, IntentClassification, AskIntent, AskSurfaceContext } from './types';
+import {
+  buildCurrentStateAdvisory,
+  chunkAskText,
+  isBroadCurrentStateQuestion,
+  sanitizeAskSynthesis,
+} from './response-policy';
 
 export type { AskIntent, AskSource, AskSurfaceContext, IntentClassification } from './types';
 
@@ -93,7 +99,7 @@ export async function* askIntelligence(query: string, opts: AskOptions = {}): As
 
     const handoff = atlasStakeholderConflictHandoff(trimmed);
     if (handoff) {
-      for (const chunk of handoff.match(/.{1,80}(?:\s|$)/g) ?? [handoff]) {
+      for (const chunk of chunkAskText(sanitizeAskSynthesis(handoff, 140))) {
         yield { type: 'delta', text: chunk.trimEnd() };
       }
       yield { type: 'followups', followups: ['Ask Atlas to map the contradiction', 'Show the evidence behind this tension'] };
@@ -101,9 +107,24 @@ export async function* askIntelligence(query: string, opts: AskOptions = {}): As
       return;
     }
 
+    if (isBroadCurrentStateQuestion(trimmed)) {
+      const advisory = buildCurrentStateAdvisory(sources);
+      if (advisory) {
+        for (const chunk of chunkAskText(sanitizeAskSynthesis(advisory, 170))) {
+          yield { type: 'delta', text: chunk };
+        }
+        yield {
+          type: 'followups',
+          followups: ['Give me the CFO value lens', 'Give me the CIO delivery lens', 'Pressure-test the CMO growth lens'],
+        };
+        yield { type: 'done' };
+        return;
+      }
+    }
+
     if (sources.length === 0) {
       const msg = emptyStateMessage(classification.intent);
-      for (const chunk of msg.match(/.{1,40}/g) ?? []) yield { type: 'delta', text: chunk };
+      for (const chunk of chunkAskText(sanitizeAskSynthesis(msg))) yield { type: 'delta', text: chunk };
       yield { type: 'done' };
       return;
     }
@@ -122,8 +143,9 @@ export async function* askIntelligence(query: string, opts: AskOptions = {}): As
         answer += prefix;
         confidencePrefixDone = true;
       }
-      answer += delta;
-      yield { type: 'delta', text: delta };
+      const cleanDelta = sanitizeAskSynthesis(delta, 500);
+      answer += cleanDelta;
+      yield { type: 'delta', text: cleanDelta };
     }
 
     const followups = await generateFollowups({

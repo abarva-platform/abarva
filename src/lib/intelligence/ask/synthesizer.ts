@@ -1,5 +1,8 @@
 import Anthropic from '@anthropic-ai/sdk';
 import type { AskSource, AskIntent } from './types';
+import { chunkAskText, sanitizeAskSynthesis } from './response-policy';
+
+export { chunkAskText, sanitizeAskSynthesis } from './response-policy';
 
 let _client: Anthropic | null = null;
 function getClient(): Anthropic | null {
@@ -18,9 +21,9 @@ RULES:
 1. Every claim must be attributable to one of the provided sources. No invention.
 2. If the sources don't contain an answer, say so explicitly. "We don't have
    indexed data on that" is a valid response.
-3. Keep responses under 120 words — 2-3 tight paragraphs maximum. Bold specific
-   numbers, vendor names, and pattern codes. No headers or lists unless the answer
-   genuinely requires structured enumeration.
+3. Keep responses under 120 words — 2-3 tight paragraphs maximum. Do not use
+   Markdown formatting, bold markers, bullets, headings, or raw citation syntax.
+   The chat surface renders plain text.
 4. When a source is low-confidence or the sample is small, say so in the answer.
 5. Never reference a specific user, engagement, or client name unless the source
    itself does.
@@ -38,7 +41,10 @@ RULES:
    important on this page.
 12. If TENANT or GRAPH sources say the active tenant is Apex Retail, never use
    healthcare, Epic, IDN, clinical, CMIO, HIPAA, or Meridian facts unless the user
-   explicitly asks for a cross-industry comparison.`;
+   explicitly asks for a cross-industry comparison.
+13. For broad current-state questions, lead with the executive interpretation.
+   Do not lead with dollar amounts, counts, or pattern statistics unless the user
+   explicitly asks for math.`;
 
 function chooseModel(intent: AskIntent): string {
   if (intent === 'vendor_comparison' || intent === 'topic_synthesis' || intent === 'general_synthesis') {
@@ -52,28 +58,6 @@ function formatSourcesBlock(sources: AskSource[]): string {
   return sources
     .map((s, i) => `[SOURCE ${i + 1} · ${s.type} · ${s.name}]\n${s.detail}`)
     .join('\n\n');
-}
-
-const HOLLOW_OPENER_RE =
-  /^\s*(?:good|great|excellent)\s+question(?:,\s*[A-Z][a-z]+)?\.?\s*(?:let me\s+(?:give|be|walk|explain)[^.]*\.\s*)?/i;
-
-export function sanitizeAskSynthesis(text: string, maxWords = 120): string {
-  const withoutOpener = text.replace(HOLLOW_OPENER_RE, '').trim();
-  const words = withoutOpener.split(/\s+/).filter(Boolean);
-  if (words.length <= maxWords) return withoutOpener;
-
-  const capped = words.slice(0, maxWords).join(' ');
-  const lastSentenceEnd = Math.max(
-    capped.lastIndexOf('.'),
-    capped.lastIndexOf('?'),
-    capped.lastIndexOf('!'),
-  );
-  if (lastSentenceEnd > 80) return capped.slice(0, lastSentenceEnd + 1);
-  return `${capped.replace(/[,\s;:]+$/, '')}…`;
-}
-
-export function chunkAskText(text: string): string[] {
-  return text.match(/.{1,80}(?:\s|$)/g) ?? [text];
 }
 
 export async function* synthesizeStream(args: {

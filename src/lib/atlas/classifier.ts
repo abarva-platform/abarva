@@ -36,7 +36,25 @@ export function classifyAtlasIntent(message: string): AtlasClassification {
     return { intent: 'llm', routeType: 'llm' };
   }
 
-  if (hasAny(text, ['good morning', 'morning summary', 'welcome back', 'portfolio look like', 'portfolio status'])) {
+  if (
+    hasAny(text, [
+      'good morning',
+      'morning summary',
+      'welcome back',
+      'portfolio look like',
+      'portfolio status',
+      'current state',
+      'state of play',
+      'where are we',
+      'where do we stand',
+      'how are we doing',
+      'what is going on',
+      'what do you see',
+      'give me perspective',
+      'your perspective',
+      'executive read',
+    ])
+  ) {
     return { intent: 'morning_summary', routeType: 'scripted' };
   }
 
