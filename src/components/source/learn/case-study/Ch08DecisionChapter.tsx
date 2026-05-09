@@ -23,7 +23,7 @@ export function Ch08DecisionChapter() {
   return (
     <ChapterShell slug="decision">
       <HeroBand color="purple">
-        <Eyebrow light>Meridian Case Study · Chapter 08 · Stage 08 Decision</Eyebrow>
+        <Eyebrow light>Heliara Case Study · Chapter 08 · Stage 08 Decision</Eyebrow>
         <SectionTitle light size="xl">Day 90. CTO + CFO sign d24.</SectionTitle>
         <Lead light>
           Atlas (not Sentinel) composes the decision brief. The lead-agent
@@ -36,7 +36,7 @@ export function Ch08DecisionChapter() {
       </HeroBand>
 
       <StoryRecap>
-        BAFO closed on Day 65 with A withdrawn, B clean at $9.4M, D
+        BAFO closed on Day 65 with A withdrawn, B clean at $21.6M, D
         residual. Janet has spent the 25 days since putting the
         cumulative event state into shape for d24 composition — d20 trap
         log finalized, d16 scoring locked, d19 normalized, d22 closure
@@ -89,30 +89,30 @@ export function Ch08DecisionChapter() {
 
         <ArtifactSpecimen
           code="d24"
-          title="Decision brief · Meridian Health Cloud (excerpt)"
+          title="Decision brief · Heliara Health Enterprise Cloud (excerpt)"
         >
           <p style={{ marginBottom: 10 }}>
-            <strong>Recommendation.</strong> Award the Meridian Health
-            Cloud &amp; Infrastructure event to <strong>Vendor B</strong>{' '}
-            at $9.4M committed annual run-rate. Five-year TCO at the
-            protected-4% escalator: $50.9M. Term: 5 years initial, no
+            <strong>Recommendation.</strong> Award the Heliara Health
+            Enterprise Cloud event to <strong>Vendor B</strong>{' '}
+            at $21.6M committed annual run-rate. Five-year TCO at the
+            protected-4% escalator: $118M. Term: 5 years initial, no
             automatic renewal. Effective date: 2026-09-01 (Day 100).
             Cutover target: 2027-03-01 (Month 7).
           </p>
           <p style={{ marginBottom: 10 }}>
             <strong>Decision criterion.</strong> Highest combined
             d16 score (87 of 100) with all P0 traps closed in BAFO and
-            committed pricing inside the d01 value band ($8M–$12M
+            committed pricing inside the d01 value band ($18M–$26M
             annual). Pricing differential to second-place finisher
-            (Vendor D, $52.4M 5-yr TCO): $1.5M over 5 years. Vendor D
+            (Vendor D, $124M 5-yr TCO): $6M over 5 years. Vendor D
             carries an open P1 residual on escalator (capped at 5% vs
             assumption-stated 4%) that Vendor B does not.
           </p>
           <p style={{ marginBottom: 10 }}>
-            <strong>Value at stake.</strong> $40M committed over 5
-            years (vs alternative continuation in Newark colo at 18%
-            YoY escalation, modeled at $54M cumulative).{' '}
-            <strong>Net value differential vs status quo: $14M
+            <strong>Value at stake.</strong> $108M committed over 5
+            years (vs alternative continuation in Portland colo at 18%
+            YoY escalation plus duplicated integration operations, modeled at $146M cumulative).{' '}
+            <strong>Net value differential vs status quo: $38M
             over 5 years.</strong>
           </p>
           <p style={{ marginBottom: 10 }}>
@@ -120,12 +120,12 @@ export function Ch08DecisionChapter() {
             Cloverleaf integration middleware is the principal risk;
             B&rsquo;s migration plan addresses it but discovery during
             transition may extend the cutover window. DR posture for
-            47 Tier-1 systems clean; BAA + DPA accepted with standard
+            68 Tier-1 systems clean; BAA + DPA accepted with standard
             redlines.
           </p>
           <p style={{ marginBottom: 10 }}>
             <strong>BAFO closures.</strong> 1 of 1 P0 trap closed on
-            Vendor B (workload count corrected from 203 → 280 at
+            Vendor B (workload count corrected from 760 → 920 at
             committed unit pricing). Full d20 trap log attached as
             Appendix B.
           </p>
@@ -152,10 +152,10 @@ export function Ch08DecisionChapter() {
         <SubHead>Challenge 1 · Is &ldquo;workload growth flat&rdquo; realistic?</SubHead>
         <BodyP>
           Sarah&rsquo;s point: the d21 assumption set says workload growth
-          is flat over 5 years; in reality Meridian opens 2 new clinics in
-          2027 and 1 in 2029, each of which adds load. Karen&rsquo;s
-          response: the new clinics&rsquo; workloads are inside the 280
-          count (existing in-house apps just running on more endpoints);
+          is flat over 5 years; in reality Heliara opens 12 clinics and
+          one ambulatory surgery center in 2027-2029, each of which adds load.
+          Karen&rsquo;s response: the new sites&rsquo; workloads are inside the 920
+          count (existing apps just running on more endpoints);
           per-endpoint load growth is what would bend the assumption.
           Sentinel&rsquo;s archive of 6-year IT-load data shows
           per-endpoint compute flat to slightly declining. The assumption
@@ -165,8 +165,8 @@ export function Ch08DecisionChapter() {
         <SubHead>Challenge 2 · Why $14M differential, not $20M?</SubHead>
         <BodyP>
           Sarah&rsquo;s point: the colo continuation alternative is
-          modeled at $54M cumulative; the cloud alternative is $40M
-          committed; cloud also has $4M of one-time transition cost
+          modeled at $146M cumulative; the cloud alternative is $108M
+          committed; cloud also has $9M of one-time transition cost
           (modeled in d23, not d19). So the real differential is closer
           to $10M, not $14M. Janet&rsquo;s response: agreed, the brief
           should call out the $4M transition cost line; the net is
@@ -305,7 +305,7 @@ export function Ch08DecisionChapter() {
         </BodyP>
         <SubHead>The decision</SubHead>
         <BodyP>
-          Vendor B awarded at $9.4M committed annual / $50.9M 5-year
+          Vendor B awarded at $21.6M committed annual / $118M 5-year
           TCO. Effective Day 100 (2026-09-01). Cutover target Month 7
           (2027-03-01). All P0 traps closed; one P1 residual on Vendor D
           documented but not material to the choice.

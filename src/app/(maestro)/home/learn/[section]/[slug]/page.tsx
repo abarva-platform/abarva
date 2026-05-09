@@ -25,7 +25,7 @@ import { SourceGlossarySection } from '@/components/source/learn/SourceGlossaryS
 import { SourceGatesSection } from '@/components/source/learn/SourceGatesSection';
 import { SourceExportsSection } from '@/components/source/learn/SourceExportsSection';
 import { SourceTowerSection } from '@/components/source/learn/SourceTowerSection';
-import { MeridianCaseStudyIntro } from '@/components/source/learn/case-study/MeridianCaseStudyIntro';
+import { HeliaraCaseStudyIntro } from '@/components/source/learn/case-study/HeliaraCaseStudyIntro';
 import { Ch01StrategyChapter } from '@/components/source/learn/case-study/Ch01StrategyChapter';
 import { Ch02ScopeChapter } from '@/components/source/learn/case-study/Ch02ScopeChapter';
 import { Ch03RfpChapter } from '@/components/source/learn/case-study/Ch03RfpChapter';
@@ -100,11 +100,11 @@ export default async function LearnSubPage({ params }: Props) {
       case 'glossary':
         return <SourceGlossarySection />;
 
-      // Meridian case study intro
+      // Heliara case study intro
       case 'case-study':
-        return <MeridianCaseStudyIntro />;
+        return <HeliaraCaseStudyIntro />;
 
-      // Meridian case study — 11 stage chapters
+      // Heliara case study — 11 stage chapters
       case 'strategy':
         return <Ch01StrategyChapter />;
       case 'scope':

@@ -2,7 +2,7 @@
  * @jest-environment jsdom
  */
 
-// Meridian case study · chapter render smoke tests.
+// Heliara case study · chapter render smoke tests.
 //
 // We don't snapshot full DOM (chapters are 800+ words each). Instead
 // we render the entry point + 2 representative chapters and assert
@@ -19,7 +19,7 @@
 import '@testing-library/jest-dom';
 import { render, screen, within } from '@testing-library/react';
 
-import { MeridianCaseStudyIntro } from '../MeridianCaseStudyIntro';
+import { HeliaraCaseStudyIntro } from '../HeliaraCaseStudyIntro';
 import { Ch06PricingChapter } from '../Ch06PricingChapter';
 import { Ch07BafoChapter } from '../Ch07BafoChapter';
 
@@ -30,15 +30,15 @@ jest.mock('next/navigation', () => ({
   usePathname: () => '/source/learn/pricing',
 }));
 
-describe('MeridianCaseStudyIntro', () => {
+describe('HeliaraCaseStudyIntro', () => {
   it('renders the case study overview with cast of characters + ToC', () => {
-    render(<MeridianCaseStudyIntro />);
+    render(<HeliaraCaseStudyIntro />);
 
     // Hero
     expect(
       screen.getByRole('heading', {
         level: 2,
-        name: /Meridian Health · \$8M Cloud & Infrastructure/i,
+        name: /Heliara Health · Enterprise Cloud, Epic & Integration Sourcing/i,
       }),
     ).toBeInTheDocument();
 
@@ -51,7 +51,7 @@ describe('MeridianCaseStudyIntro', () => {
 
     // Trigger detail — the specifics that make the case study legible
     expect(
-      screen.getByText(/Newark colocation lease expires Q3 2027/i),
+      screen.getByText(/Portland colocation lease expires Q3 2027/i),
     ).toBeInTheDocument();
     expect(screen.getByText(/18% YoY/i)).toBeInTheDocument();
 
@@ -112,7 +112,7 @@ describe('Ch06PricingChapter', () => {
 
     // The Vendor B P1 (workload count) is also surfaced
     expect(
-      screen.getAllByText(/Workload count 203 vs scope 280/i).length,
+      screen.getAllByText(/Workload count 760 vs scope 920/i).length,
     ).toBeGreaterThan(0);
 
     // Cell coordinates appear (pedagogical specificity).
@@ -168,10 +168,10 @@ describe('Ch07BafoChapter', () => {
     ).toBeInTheDocument();
 
     // Final closure summary numbers — load-bearing case study facts
-    expect(screen.getAllByText(/\$9\.4M/i).length).toBeGreaterThan(0);
-    expect(screen.getAllByText(/\$50\.9M/i).length).toBeGreaterThan(0);
-    expect(screen.getAllByText(/\$10\.8M/i).length).toBeGreaterThan(0);
-    expect(screen.getAllByText(/\$52\.4M/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/\$21\.6M/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/\$118M/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/\$24\.8M/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/\$124M/i).length).toBeGreaterThan(0);
 
     // Vendor A withdrawal narrative
     expect(screen.getAllByText(/Withdrawn/i).length).toBeGreaterThan(0);

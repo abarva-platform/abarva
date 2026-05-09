@@ -23,15 +23,15 @@ export function Ch11ValueChapter() {
   return (
     <ChapterShell slug="value">
       <HeroBand color="teal">
-        <Eyebrow light>Meridian Case Study · Chapter 11 · Stage 11 Value</Eyebrow>
-        <SectionTitle light size="xl">Month 18. $11.2M of $14.4M.</SectionTitle>
+        <Eyebrow light>Heliara Case Study · Chapter 11 · Stage 11 Value</Eyebrow>
+        <SectionTitle light size="xl">Month 18. $29.8M of $38.4M.</SectionTitle>
         <Lead light>
           Eighteen months after Day 100. Twelve months after the value
           clock would have started under the d24-committed Month-7
           cutover, but only 9 months after the actual Month-9 cutover.
-          Atlas&rsquo;s d32 ledger reads $11.2M realized against a
-          straight-line projection of $14.4M. The $3.2M gap traces
-          entirely to the 2-month slip. Variance owned, not hidden.
+          Atlas&rsquo;s d32 ledger reads $29.8M realized against a
+          straight-line projection of $38.4M. The $8.6M gap traces to the
+          2-month slip and delayed payer-data controls. Variance owned, not hidden.
         </Lead>
       </HeroBand>
 
@@ -59,12 +59,12 @@ export function Ch11ValueChapter() {
         </Lead>
 
         <BodyP>
-          The annual value-band figure from d24 was $14M against the
-          colo continuation baseline (the $54M cumulative cost
+          The annual value-band figure from d24 was $38M against the
+          colo continuation baseline (the $146M cumulative cost
           differential from Sarah&rsquo;s Chapter 8 challenge minus
-          the $4M transition cost minus year-on-year ramp). At
+          the $9M transition cost minus year-on-year ramp). At
           Month 18, straight-line projection from Month 7 says we
-          should be at 12 months × $1.2M / month = $14.4M cumulative
+          should be at 12 months × $3.2M / month = $38.4M cumulative
           realized.
         </BodyP>
 
@@ -79,14 +79,14 @@ export function Ch11ValueChapter() {
           because it&rsquo;s the simplest legible reference for a panel
           read. The ledger also carries a contoured projection that
           accounts for ramp; the variance against the contoured
-          projection is smaller (~$2.6M vs $3.2M against straight-line)
+          projection is smaller (~$6.9M vs $8.6M against straight-line)
           but tells the same story.
         </Callout>
       </Section>
 
       <Section>
         <Eyebrow>The variance math</Eyebrow>
-        <SectionTitle>Why $11.2M, not $14.4M</SectionTitle>
+        <SectionTitle>Why $29.8M, not $38.4M</SectionTitle>
         <Lead>
           The full variance attribution, surfaced by Atlas in the d32
           ledger, runs like this.
@@ -98,15 +98,15 @@ export function Ch11ValueChapter() {
         >
           <p style={{ marginBottom: 8 }}>
             <strong>Projected (straight-line from Month 7).</strong> 12
-            months of realization × $1.2M / month = $14.4M cumulative.
+            months of realization × $3.2M / month = $38.4M cumulative.
           </p>
           <p style={{ marginBottom: 8 }}>
             <strong>Actual cutover (Month 9).</strong> Realization began
-            Month 9, not Month 7. 10 months realized at $1.12M / month
-            = $11.2M cumulative.
+            Month 9, not Month 7. 10 months realized at $2.98M / month
+            = $29.8M cumulative.
           </p>
           <p style={{ marginBottom: 8 }}>
-            <strong>Variance vs projection: $3.2M behind.</strong>
+            <strong>Variance vs projection: $8.6M behind.</strong>
           </p>
           <p style={{ marginBottom: 8 }}>
             <strong>Variance attribution.</strong>
@@ -114,19 +114,19 @@ export function Ch11ValueChapter() {
           <ul style={{ marginLeft: 18, marginTop: 4, lineHeight: 1.6 }}>
             <li>
               <em>2-month delay in realization start:</em> 2 months ×
-              $1.2M / month = $2.4M (75% of variance)
+              $3.2M / month = $6.4M (74% of variance)
             </li>
             <li>
-              <em>Lower per-month run-rate vs projection:</em> $0.08M /
-              month × 10 months = $0.8M (25% of variance)
+              <em>Lower per-month run-rate vs projection:</em> $0.22M /
+              month × 10 months = $2.2M (26% of variance)
             </li>
           </ul>
           <p style={{ marginBottom: 8 }}>
             <strong>Per-month run-rate variance driver.</strong> Two of
-            47 Cloverleaf integrations remain on workaround through
-            Q4 2027; their operational cost is ~$80k / month higher
-            than the straight-line model assumed. Resolves on
-            scheduled Q4 2027 maintenance window.
+            9 Cloverleaf integrations and two payer-data controls remain on
+            workaround through Q4 2027; their operational cost is ~$220k / month
+            higher than the straight-line model assumed. Resolves on scheduled
+            Q4 2027 maintenance window.
           </p>
           <p style={{ marginBottom: 8 }}>
             <strong>Owner.</strong> Karen Liu (CIO). Measurement cadence:
@@ -135,11 +135,11 @@ export function Ch11ValueChapter() {
           </p>
           <p style={{ marginBottom: 0 }}>
             <strong>5-year projection refresh.</strong> Original
-            committed 5-year value: $70M cumulative against colo
-            baseline. Refreshed projection at Month 18: $66.8M (–$3.2M
-            from the slip) plus $0.4M recovery expected post-Q4 2027
-            workaround resolution = <strong>$67.2M projected
-            5-year</strong>, vs $70M committed. Variance −4.0%.
+            committed 5-year value: $190M cumulative against colo
+            baseline. Refreshed projection at Month 18: $181.4M (–$8.6M
+            from the slip and control delay) plus $1.1M recovery expected
+            post-Q4 2027 workaround resolution = <strong>$182.5M projected
+            5-year</strong>, vs $190M committed. Variance −3.9%.
           </p>
         </ArtifactSpecimen>
       </Section>
@@ -311,7 +311,7 @@ export function Ch11ValueChapter() {
         <Eyebrow>Where the story ends</Eyebrow>
         <SectionTitle>The event is closed</SectionTitle>
         <Lead>
-          MERI-MERIDIAN-HEALTH-CLOUD-2026 closes at Month 18 with the
+          HLRA-HELIARA-CLOUD-2026 closes at Month 18 with the
           d32 ledger committed, the structural fixes carried forward,
           and the next event (Tier-2 DR, 2027) opening with the
           learning-review inputs from this one. Marcus signs the event
@@ -321,7 +321,7 @@ export function Ch11ValueChapter() {
         <BodyP>
           From Day 1 (Marcus walks into Janet&rsquo;s office with the
           lease letter) to Month 18 (Atlas&rsquo;s d32 ledger commits),
-          we ran one $40M sourcing event end-to-end. We made one
+          we ran one $108M sourcing event end-to-end. We made one
           structural mistake (under-enumerated Cloverleaf
           integrations); we had one big win (caught Vendor A&rsquo;s
           egress trap pre-BAFO); we honored the procurement

@@ -18,7 +18,7 @@ export interface LearnNavItem {
   /**
    * Optional kind hint for the side nav. Currently only the
    * `caseStudy` value is meaningful — it lets the side nav anchor a
-   * group of indented chapter entries below the "Meridian Cloud · case
+   * group of indented chapter entries below the "Heliara Cloud · case
    * study" link so the hierarchy is obvious.
    */
   kind?: 'caseStudy';
@@ -84,7 +84,7 @@ export const LEARN_NAV: ReadonlyArray<LearnNavGroup> = [
       { slug: 'source/intake', label: 'Creating your first event' },
       { slug: 'source/sentinel', label: 'Working with Sentinel' },
       // Case study anchor — chapters below indent under it.
-      { slug: 'source/case-study', label: 'Meridian Cloud · case study', kind: 'caseStudy' },
+      { slug: 'source/case-study', label: 'Heliara Enterprise Cloud · case study', kind: 'caseStudy' },
       { slug: 'source/strategy', label: 'Ch.01 Strategy', stageBadge: '01', stageColor: 'grey', indent: true },
       { slug: 'source/scope', label: 'Ch.02 Scope', stageBadge: '02', stageColor: 'grey', indent: true },
       { slug: 'source/rfp', label: 'Ch.03 RFP', stageBadge: '03', stageColor: 'navy', indent: true },

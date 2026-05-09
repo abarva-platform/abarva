@@ -24,7 +24,7 @@ export function Ch06PricingChapter() {
   return (
     <ChapterShell slug="pricing">
       <HeroBand color="navy">
-        <Eyebrow light>Meridian Case Study · Chapter 06 · Stage 06 Pricing</Eyebrow>
+        <Eyebrow light>Heliara Case Study · Chapter 06 · Stage 06 Pricing</Eyebrow>
         <SectionTitle light size="xl">Day 50. Three P0 traps surface.</SectionTitle>
         <Lead light>
           Sentinel&rsquo;s pricing-trap detector reads each vendor&rsquo;s
@@ -115,7 +115,7 @@ export function Ch06PricingChapter() {
             Appendix C for egress pricing. Appendix C contains a tiered
             schedule that prices outbound data at $0.082 / GB across all
             tiers, with no volume discount and no exit-time concession.
-            Sentinel modeled the d05 expected egress profile (47 Tier-1
+            Sentinel modeled the d05 expected egress profile (68 Tier-1
             DR replication + cross-tenant analytics flows + monthly Epic
             data-room exports) at ~840 TB / yr.
           </p>
@@ -215,10 +215,10 @@ export function Ch06PricingChapter() {
         <Eyebrow>The two P1 deviations</Eyebrow>
         <SectionTitle>Mechanical fixes, not deal-shapers</SectionTitle>
 
-        <SubHead>P1 · Vendor B · 200 workloads, not 280</SubHead>
+        <SubHead>P1 · Vendor B · 760 workloads, not 920</SubHead>
         <BodyP>
           Sentinel reads B&rsquo;s d19a workload-by-tier rollup; the
-          unit-count summed across the rollup is 203, not 280. The
+          unit-count summed across the rollup is 760, not 920. The
           d09/d05 in-scope count is 280. Sentinel flags as P1 — this is
           either a scope misread or a deliberate underbid. B&rsquo;s
           rollup priced unit cost is competitive enough that the
@@ -230,7 +230,7 @@ export function Ch06PricingChapter() {
             who: 'Sentinel',
             did: (
               <>
-                Computed the unit-count delta (203 vs 280 = 77 missing).
+                Computed the unit-count delta (760 vs 920 = 160 missing).
                 Modeled the corrected commitment by applying B&rsquo;s
                 weighted-average unit cost to the missing 77 workloads.
                 Modeled correction range $1.4M–$1.9M / yr depending on
@@ -312,7 +312,7 @@ export function Ch06PricingChapter() {
               <tr style={{ borderBottom: '1px solid #E5E7EB' }}>
                 <td style={{ padding: '6px 8px' }}>4</td>
                 <td style={{ padding: '6px 8px' }}>B</td>
-                <td style={{ padding: '6px 8px' }}>Workload count 203 vs scope 280</td>
+                <td style={{ padding: '6px 8px' }}>Workload count 760 vs scope 920</td>
                 <td style={{ padding: '6px 8px', color: T.faint, fontWeight: 700 }}>P1</td>
                 <td style={{ padding: '6px 8px' }}>+15% (correctable)</td>
               </tr>

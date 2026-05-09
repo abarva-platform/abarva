@@ -1,6 +1,6 @@
 'use client';
 // Apex Retail case study · shared shell.
-// Mirrors _shell.tsx from the Meridian study but with Apex-specific chapter
+// Mirrors _shell.tsx from the Heliara study but with Apex-specific chapter
 // slugs, routing, and the /home/learn URL base.
 
 import Link from 'next/link';

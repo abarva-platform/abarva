@@ -12,10 +12,10 @@ export function WelcomeSection() {
         <Eyebrow light>AbarVa · User Guide</Eyebrow>
         <SectionTitle light size="xl">Two companies. One complete platform story.</SectionTitle>
         <Lead light>
-          This guide teaches AbarVa through two real companies running real programs. Apex Retail threads through Setup, Intelligence, Moves, and Tower. Meridian Health threads through Source. Follow their stories — the platform makes more sense with numbers behind it.
+          This guide teaches AbarVa through two enterprise-scale composite clients running real programs. Apex Retail threads through Setup, Intelligence, Moves, and Tower. Heliara Health threads through Source. Follow their stories — the platform makes more sense with numbers behind it.
         </Lead>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 4 }}>
-          {['4 modules · 2 case studies', 'Apex Retail + Meridian Health', '~2 hr full read'].map((tag) => (
+          {['4 modules · 2 case studies', 'Apex Retail + Heliara Health', '~2 hr full read'].map((tag) => (
             <span key={tag} style={{ fontFamily: T.fMono, fontSize: 10, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', padding: '5px 12px', borderRadius: 4, background: 'rgba(255,255,255,0.14)', color: 'rgba(255,255,255,0.9)', border: '1px solid rgba(255,255,255,0.14)' }}>{tag}</span>
           ))}
         </div>
@@ -35,7 +35,7 @@ export function WelcomeSection() {
             <div style={{ background: 'linear-gradient(135deg,#4C1D95 0%,#5B21B6 100%)', padding: '20px 24px' }}>
               <div style={{ fontFamily: T.fMono, fontSize: 10, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.6)', marginBottom: 6 }}>Case study · Setup → Intelligence → Moves → Tower</div>
               <div style={{ fontFamily: T.fDisp, fontSize: 22, color: '#fff', letterSpacing: '-0.01em', marginBottom: 4 }}>Apex Retail</div>
-              <div style={{ fontFamily: T.fBody, fontSize: 13, color: 'rgba(255,255,255,0.75)', lineHeight: 1.5 }}>$18B specialty retailer · 1,200 stores · 38% private label GMV · 6 active AI programs</div>
+              <div style={{ fontFamily: T.fBody, fontSize: 13, color: 'rgba(255,255,255,0.75)', lineHeight: 1.5 }}>$24.8B omnichannel retailer · 480 stores · 12 DCs · 6 active AI programs</div>
             </div>
             <div style={{ padding: '20px 24px', background: T.surface }}>
               {[
@@ -55,19 +55,19 @@ export function WelcomeSection() {
             </div>
           </div>
 
-          {/* Meridian Health */}
+          {/* Heliara Health */}
           <div style={{ border: `2px solid ${T.navyLine}`, borderRadius: 12, overflow: 'hidden' }}>
             <div style={{ background: 'linear-gradient(135deg,#1B2B5C 0%,#253872 100%)', padding: '20px 24px' }}>
               <div style={{ fontFamily: T.fMono, fontSize: 10, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.6)', marginBottom: 6 }}>Case study · Source</div>
-              <div style={{ fontFamily: T.fDisp, fontSize: 22, color: '#fff', letterSpacing: '-0.01em', marginBottom: 4 }}>Meridian Health</div>
-              <div style={{ fontFamily: T.fBody, fontSize: 13, color: 'rgba(255,255,255,0.75)', lineHeight: 1.5 }}>$3B regional health system · 8 hospitals · $8M cloud infrastructure sourcing event · 11 chapters</div>
+              <div style={{ fontFamily: T.fDisp, fontSize: 22, color: '#fff', letterSpacing: '-0.01em', marginBottom: 4 }}>Heliara Health</div>
+              <div style={{ fontFamily: T.fBody, fontSize: 13, color: 'rgba(255,255,255,0.75)', lineHeight: 1.5 }}>$18.6B provider-payer IDN · 23 hospitals · 142 clinics · $7.1B plan revenue · 11 Source chapters</div>
             </div>
             <div style={{ padding: '20px 24px', background: T.surface }}>
               {[
-                { icon: '📋', module: 'Source', desc: 'One real sourcing event. CTO\'s lease expiry to $9.4M Vendor B contract.' },
+                { icon: '📋', module: 'Source', desc: 'One enterprise sourcing event: cloud, Epic, integration, and health-plan data posture.' },
                 { icon: '⚖️', module: 'Ch.01–05', desc: 'Strategy → Scope → RFP → Responses → Evaluation.' },
                 { icon: '💰', module: 'Ch.06–08', desc: 'Pricing traps → BAFO → Decision. Three P0 pricing issues caught.' },
-                { icon: '🚀', module: 'Ch.09–11', desc: 'Selection → Transition slip → $3.2M value gap traced.' },
+                { icon: '🚀', module: 'Ch.09–11', desc: 'Selection → Transition slip → value-realization gap traced.' },
               ].map(({ icon, module, desc }) => (
                 <div key={module} style={{ display: 'flex', gap: 12, padding: '10px 0', borderBottom: `1px solid ${T.borderLt}` }}>
                   <span style={{ fontSize: 16, flexShrink: 0, width: 20, textAlign: 'center' }}>{icon}</span>
@@ -148,9 +148,9 @@ export function WelcomeSection() {
           Start at <Link href="/home/learn/setup" style={{ color: T.purple, fontWeight: 600 }}>Setup</Link> — see what they connected and why. Then <Link href="/home/learn/intelligence" style={{ color: T.purple, fontWeight: 600 }}>Intelligence</Link> — the signals their substrate surfaced. Then <Link href="/home/learn/moves-overview" style={{ color: T.purple, fontWeight: 600 }}>Strategic Moves</Link> — APX-01 walked P0 to P5. Then <Link href="/home/learn/tower" style={{ color: T.purple, fontWeight: 600 }}>Tower</Link> — Atlas watching the portfolio. About 90 minutes cover-to-cover.
         </BodyP>
 
-        <SubHead>Follow Meridian for Source</SubHead>
+        <SubHead>Follow Heliara for Source</SubHead>
         <BodyP>
-          <Link href="/home/learn/source/welcome" style={{ color: T.navy, fontWeight: 600 }}>Source</Link> has its own case study — Meridian Health&rsquo;s $8M cloud infrastructure event, eleven chapters from the day the CTO circled a lease number in red to the month-18 value realization audit. About 50 minutes cover-to-cover.
+          <Link href="/home/learn/source/welcome" style={{ color: T.navy, fontWeight: 600 }}>Source</Link> has its own case study — Heliara Health&rsquo;s enterprise cloud, Epic integration, and health-plan data sourcing event, eleven chapters from the day the CTO circled a lease number in red to the month-18 value realization audit. About 50 minutes cover-to-cover.
         </BodyP>
 
         <SubHead>Jump to where you are</SubHead>

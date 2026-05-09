@@ -1,5 +1,5 @@
 'use client';
-// Meridian case study · shared shell for chapter components.
+// Heliara case study · shared shell for chapter components.
 //
 // Renders prev/next chapter links at the bottom of each chapter so a
 // reader can walk the whole story like a single document. Also exposes
