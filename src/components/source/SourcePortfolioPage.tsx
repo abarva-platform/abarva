@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState, type CSSProperties } from 'react';
+import React, { useMemo, useState, type CSSProperties } from 'react';
 import Link from 'next/link';
 import { AppShell } from '@/components/shell/AppShell';
 import {
@@ -20,6 +20,14 @@ import {
   SourceOnboardingTour,
   SourceTourEntryLink,
 } from '@/components/source/onboarding/SourceOnboardingTour';
+import {
+  KanbanBoard,
+  ScatterPlot,
+  SCATTER_VALUE_COVERAGE_THRESHOLD,
+  readStoredViewMode,
+  persistViewMode,
+  type ViewMode,
+} from '@/components/source/SourceEventsViewToggle';
 import { SOURCE_STAGE_ORDER } from '@/lib/source/constants';
 import {
   computePortfolioKpis,
@@ -139,6 +147,7 @@ function PopulatedView({
 }: PopulatedViewProps) {
   const [filters, setFilters] = useState<PortfolioFilterState>(EMPTY_FILTER_STATE);
   const [searchQuery, setSearchQuery] = useState('');
+  const [viewMode, setViewMode] = useState<ViewMode>(readStoredViewMode);
 
   const isMature = portfolioState === 'mature';
 
@@ -177,6 +186,20 @@ function PopulatedView({
     [events],
   );
 
+  const valueCapturedCount = useMemo(
+    () => filteredEvents.filter((e) => (e.valueAtStakeUsd ?? 0) > 0).length,
+    [filteredEvents],
+  );
+  const scatterAvailable =
+    filteredEvents.length === 0 ||
+    valueCapturedCount / filteredEvents.length >= SCATTER_VALUE_COVERAGE_THRESHOLD;
+
+  function handleViewMode(next: ViewMode) {
+    const safe = next === 'scatter' && !scatterAvailable ? 'list' : next;
+    setViewMode(safe);
+    persistViewMode(safe);
+  }
+
   return (
     <>
       <CompactHeader
@@ -200,20 +223,38 @@ function PopulatedView({
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
         activeFilterCount={totalFilterCount(filters)}
+        viewMode={viewMode}
+        onViewModeChange={handleViewMode}
+        scatterAvailable={scatterAvailable}
+        valueCapturedCount={valueCapturedCount}
       />
 
-      <section
-        aria-label="Sourcing events with filters"
-        data-testid="source-portfolio-detail-shell"
-        style={DETAIL_SHELL_STYLE}
-      >
-        <PortfolioFilterSidebar events={events} state={filters} onChange={setFilters} />
-        <PortfolioEventsTable
-          rows={tableRows}
-          groupBy={isMature ? 'stage-band' : 'none'}
-          canViewFinancialValues={canViewFinancialValues}
-        />
-      </section>
+      {viewMode === 'list' ? (
+        <section
+          aria-label="Sourcing events with filters"
+          data-testid="source-portfolio-detail-shell"
+          style={DETAIL_SHELL_STYLE}
+        >
+          <PortfolioFilterSidebar events={events} state={filters} onChange={setFilters} />
+          <PortfolioEventsTable
+            rows={tableRows}
+            groupBy={isMature ? 'stage-band' : 'none'}
+            canViewFinancialValues={canViewFinancialValues}
+          />
+        </section>
+      ) : null}
+
+      {viewMode === 'kanban' ? (
+        <div style={FULLWIDTH_VIEW_STYLE} data-testid="source-portfolio-kanban">
+          <KanbanBoard events={filteredEvents} canViewFinancialValues={canViewFinancialValues} />
+        </div>
+      ) : null}
+
+      {viewMode === 'scatter' && scatterAvailable ? (
+        <div style={FULLWIDTH_VIEW_STYLE} data-testid="source-portfolio-scatter">
+          <ScatterPlot events={filteredEvents} canViewFinancialValues={canViewFinancialValues} />
+        </div>
+      ) : null}
     </>
   );
 }
@@ -359,9 +400,7 @@ function buildSubline(
   return `${lead} ${attentionCount} need your attention today.`;
 }
 
-// ── Sub-header strip — search + result count ─────────────────────────────────
-// Strategic Moves equivalent of "14 MOVES · ALL TENANTS · SORT: PHASE ▾". For
-// Source we keep it minimal: search + count. Sort/view-toggle are deferred.
+// ── Sub-header strip — count · search · view toggle ──────────────────────────
 
 function SubHeader({
   eventCount,
@@ -369,31 +408,118 @@ function SubHeader({
   searchQuery,
   onSearchChange,
   activeFilterCount,
+  viewMode,
+  onViewModeChange,
+  scatterAvailable,
+  valueCapturedCount,
 }: {
   eventCount: number;
   visibleCount: number;
   searchQuery: string;
   onSearchChange: (q: string) => void;
   activeFilterCount: number;
+  viewMode: ViewMode;
+  onViewModeChange: (m: ViewMode) => void;
+  scatterAvailable: boolean;
+  valueCapturedCount: number;
 }) {
   const showFiltered = visibleCount !== eventCount || activeFilterCount > 0;
   return (
     <div style={SUB_HEADER_STYLE}>
+      {/* Left: result count */}
       <span style={SUB_LABEL_STYLE}>
         {showFiltered
           ? `${visibleCount} of ${eventCount} ${eventCount === 1 ? 'event' : 'events'}`
           : `${eventCount} ${eventCount === 1 ? 'event' : 'events'}`}
       </span>
-      <input
-        type="search"
-        placeholder="Search events, codes, owners…"
-        value={searchQuery}
-        onChange={(e) => onSearchChange(e.target.value)}
-        data-testid="source-portfolio-search"
-        aria-label="Search events"
-        style={SEARCH_INPUT_STYLE}
-      />
+
+      {/* Right: search + view toggle */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+        <input
+          type="search"
+          placeholder="Search events, codes, owners…"
+          value={searchQuery}
+          onChange={(e) => onSearchChange(e.target.value)}
+          data-testid="source-portfolio-search"
+          aria-label="Search events"
+          style={SEARCH_INPUT_STYLE}
+        />
+
+        {/* View toggle — list · kanban · scatter */}
+        <div
+          role="tablist"
+          aria-label="Portfolio view"
+          style={VIEW_TOGGLE_GROUP_STYLE}
+        >
+          {(
+            [
+              { mode: 'list' as const, icon: <ListIcon />, label: 'List view', disabled: false },
+              { mode: 'kanban' as const, icon: <KanbanIcon />, label: 'Kanban view', disabled: false },
+              {
+                mode: 'scatter' as const,
+                icon: <ScatterIcon />,
+                label: scatterAvailable
+                  ? 'Scatter chart'
+                  : `Scatter requires value data on ≥50% of events (${valueCapturedCount}/${eventCount} captured)`,
+                disabled: !scatterAvailable,
+              },
+            ] satisfies Array<{ mode: ViewMode; icon: React.ReactNode; label: string; disabled: boolean }>
+          ).map(({ mode, icon, label, disabled }) => (
+            <button
+              key={mode}
+              type="button"
+              role="tab"
+              aria-selected={viewMode === mode}
+              aria-label={label}
+              title={label}
+              disabled={disabled}
+              onClick={() => !disabled && onViewModeChange(mode)}
+              style={{
+                ...VIEW_TOGGLE_BTN_STYLE,
+                ...(viewMode === mode ? VIEW_TOGGLE_BTN_ACTIVE : {}),
+                ...(disabled ? VIEW_TOGGLE_BTN_DISABLED : {}),
+              }}
+            >
+              {icon}
+            </button>
+          ))}
+        </div>
+      </div>
     </div>
+  );
+}
+
+// ── View toggle icons (inline SVG — no dep) ───────────────────────────────────
+
+function ListIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden>
+      <rect x="1" y="2" width="12" height="1.5" rx="0.75" fill="currentColor" />
+      <rect x="1" y="6.25" width="12" height="1.5" rx="0.75" fill="currentColor" />
+      <rect x="1" y="10.5" width="12" height="1.5" rx="0.75" fill="currentColor" />
+    </svg>
+  );
+}
+
+function KanbanIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden>
+      <rect x="1" y="1.5" width="3.5" height="11" rx="1" fill="currentColor" />
+      <rect x="5.25" y="1.5" width="3.5" height="7.5" rx="1" fill="currentColor" />
+      <rect x="9.5" y="1.5" width="3.5" height="9.5" rx="1" fill="currentColor" />
+    </svg>
+  );
+}
+
+function ScatterIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden>
+      <circle cx="3.5" cy="10" r="1.25" fill="currentColor" />
+      <circle cx="6.5" cy="6" r="1.25" fill="currentColor" />
+      <circle cx="10.5" cy="3.5" r="1.25" fill="currentColor" />
+      <circle cx="9" cy="8.5" r="1.25" fill="currentColor" />
+      <circle cx="4.5" cy="4.5" r="1" fill="currentColor" opacity="0.6" />
+    </svg>
   );
 }
 
@@ -589,4 +715,42 @@ const DETAIL_SHELL_STYLE: CSSProperties = {
   gridTemplateColumns: '220px minmax(0, 1fr)',
   gap: 28,
   alignItems: 'start',
+};
+
+const FULLWIDTH_VIEW_STYLE: CSSProperties = {
+  width: '100%',
+  marginTop: 4,
+};
+
+const VIEW_TOGGLE_GROUP_STYLE: CSSProperties = {
+  display: 'inline-flex',
+  alignItems: 'center',
+  border: `1px solid ${PORTFOLIO.RULE}`,
+  borderRadius: 6,
+  background: PORTFOLIO.CARD,
+  overflow: 'hidden',
+  flexShrink: 0,
+};
+
+const VIEW_TOGGLE_BTN_STYLE: CSSProperties = {
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  width: 32,
+  height: 30,
+  background: 'transparent',
+  border: 'none',
+  cursor: 'pointer',
+  color: PORTFOLIO.INK_SOFT,
+  transition: 'background 100ms ease, color 100ms ease',
+};
+
+const VIEW_TOGGLE_BTN_ACTIVE: CSSProperties = {
+  background: PORTFOLIO.INK,
+  color: '#ffffff',
+};
+
+const VIEW_TOGGLE_BTN_DISABLED: CSSProperties = {
+  opacity: 0.35,
+  cursor: 'not-allowed',
 };
