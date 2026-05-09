@@ -1,8 +1,8 @@
 // Learn panel section structure per
 // docs/build/home-refinement-package/LEARN_PANEL_SHELL.md.
 //
-// Six sections, in canonical order. The shell ships with structure +
-// placeholder content; future Learn Content Package fills each section.
+// Six sections, in canonical order. The shell ships with structure plus
+// starter content; the Learn Content Package deepens each section.
 
 export interface LearnSection {
   id: 'quickstart' | 'glossary' | 'doctrine' | 'agents' | 'workflows' | 'about';
@@ -26,7 +26,7 @@ export const LEARN_SECTIONS: ReadonlyArray<LearnSection> = [
     futureContentSummary:
       '90-second product tour, step-by-step "First Move" walkthrough, video / animated walkthrough, common first-day questions.',
     shellPlaceholder:
-      'Quickstart guide coming soon — for now, start at the AI Initiatives panel to see what is already loaded for your tenant.',
+      'Quickstart guide: start at the AI Initiatives panel to see what is already loaded for your tenant.',
   },
   {
     id: 'glossary',
@@ -38,7 +38,7 @@ export const LEARN_SECTIONS: ReadonlyArray<LearnSection> = [
     futureContentSummary:
       'Alphabetical glossary of platform terms with plain-language definitions, longer reference, one example each.',
     shellPlaceholder:
-      'Glossary index coming soon. Stub list of common terms below.',
+      'Glossary index with the core platform terms used across Intelligence, Moves, Source, and Tower.',
     sampleSubPages: [
       { slug: 'ai-initiative', label: 'AI Initiative' },
       { slug: 'strategic-move', label: 'Strategic Move' },
@@ -60,7 +60,7 @@ export const LEARN_SECTIONS: ReadonlyArray<LearnSection> = [
     futureContentSummary:
       '6-phase Strategic Moves model, 5 archetypes, 8 AI categories, Three Tests gate, substrate-to-surface contract.',
     shellPlaceholder:
-      'Doctrine reference coming soon. The opinionated framework underneath AbarVa.',
+      'Doctrine reference for the opinionated framework underneath AbarVa.',
     sampleSubPages: [
       { slug: 'phases', label: 'The 6 phases (P0–P5)' },
       { slug: 'archetypes', label: 'The 5 Move archetypes' },
@@ -78,7 +78,7 @@ export const LEARN_SECTIONS: ReadonlyArray<LearnSection> = [
     futureContentSummary:
       'One page per agent (Sentinel · Atlas · Nexus · Steward): job, surface, substrate access, sample questions, behavior expectations.',
     shellPlaceholder:
-      'Agent reference coming soon. Each agent has a job, a surface, and a personality.',
+      'Agent reference: each agent has a job, a surface, and a defined operating posture.',
     sampleSubPages: [
       { slug: 'sentinel', label: 'Sentinel · Intelligence + Source' },
       { slug: 'atlas', label: 'Atlas · Tower' },
@@ -95,7 +95,7 @@ export const LEARN_SECTIONS: ReadonlyArray<LearnSection> = [
     futureContentSummary:
       'Originating a Strategic Move, reviewing portfolio, handling a pressure card, onboarding a connector, validating substrate, per-phase guidance.',
     shellPlaceholder:
-      'Workflow guides coming soon. The most-asked tasks, walked through end to end.',
+      'Workflow guides for the most-asked tasks, walked through end to end.',
     sampleSubPages: [
       { slug: 'originate-a-move', label: 'Originate a Strategic Move' },
       { slug: 'review-portfolio', label: 'Review portfolio performance' },
