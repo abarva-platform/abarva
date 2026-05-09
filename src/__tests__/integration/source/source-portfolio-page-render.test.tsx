@@ -194,7 +194,7 @@ describe('SourcePortfolioPage redesigned render', () => {
     expect(html).toContain('source-portfolio-header');
     expect(html).toContain('source-portfolio-scorecard');
     expect(html).toContain('Total value');
-    expect(html).toContain('Value by category');
+    expect(html).toContain('Decision focus');
     expect(html).toContain('source-portfolio-filter-sidebar');
     expect(html).toContain('source-portfolio-events-table');
     expect(html).toContain('source-portfolio-search');
