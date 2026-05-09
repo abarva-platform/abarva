@@ -3,6 +3,7 @@
 import Image from 'next/image'
 import { useMemo, useState } from 'react'
 import { DEMO_CODE_ALLOWED_EMAILS, DEMO_CODE_VALUE, isDemoCodeEmail } from '@/lib/auth/demo-code'
+import { CXO_PERSONAS } from '@/lib/auth/cxo-personas'
 
 interface Props {
   redirectUrl: string
@@ -32,75 +33,11 @@ interface ClerkWindow extends Window {
   }
 }
 
-// ─── Client identity cards (one per persona) ─────────────────────────
-// Each card binds a role-based login (role@<tenant>) to a real persona
-// from the existing tenant org charts. The persona's bio, decisions,
-// programs, and political positioning are already threaded through
-// the corpus — logging in as Carlos Rivera surfaces all of Carlos's
-// IT-modernization context, while logging in as Lynne Stratham
-// surfaces the CDP / data-strategy view of the same Apex tenant.
-//
-// Keyed off DEMO_CODE_ALLOWED_EMAILS — if the canonical roster
-// changes, identities not in the roster automatically drop out of
-// the UI (see filter below).
-interface ClientIdentity {
-  email: string // full email stored in Clerk
-  shortLabel: string // prominent mono label on the card
-  personaName: string // real-name persona (drives bottom subtitle)
-  titleShort: string // CIO · CDO · CDIO
-  titleFull: string // for tooltips and the Wave 2 Clerk metadata
-  tenant: string
-  monogramBg: string // tenant theme color (not chrome — Apex orange / Meridian teal / FirstCap navy)
-  monogram: string // 2-char persona initials
-}
-
-const CLIENT_IDENTITIES: ReadonlyArray<ClientIdentity> = [
-  // ─ Apex Retail Group ─────────────────────────────────────────────
-  {
-    email: 'cio@apex-retail.example.com',
-    shortLabel: 'cio@apex',
-    personaName: 'Carlos Rivera',
-    titleShort: 'CIO',
-    titleFull: 'Chief Information Officer',
-    tenant: 'Apex Retail Group',
-    monogramBg: '#C2410C', // Apex orange
-    monogram: 'CR',
-  },
-  {
-    email: 'cdo@apex-retail.example.com',
-    shortLabel: 'cdo@apex',
-    personaName: 'Lynne Stratham',
-    titleShort: 'CDO',
-    titleFull: 'Chief Data Officer',
-    tenant: 'Apex Retail Group',
-    monogramBg: '#C2410C',
-    monogram: 'LS',
-  },
-
-  // ─ Meridian Health System ────────────────────────────────────────
-  {
-    email: 'cdio@meridian-health.example.com',
-    shortLabel: 'cdio@meridian-health',
-    personaName: 'Dr. Anita Krishnamurthy',
-    titleShort: 'CDIO',
-    titleFull: 'Chief Digital + Information Officer',
-    tenant: 'Meridian Health System',
-    monogramBg: '#0E8A65', // Meridian teal
-    monogram: 'AK',
-  },
-
-  // ─ First Capital ─────────────────────────────────────────────────
-  {
-    email: 'cio@firstcapital.example.com',
-    shortLabel: 'cio@firstcapital',
-    personaName: 'Patricia Huang',
-    titleShort: 'CIO',
-    titleFull: 'Chief Information Officer',
-    tenant: 'First Capital',
-    monogramBg: '#1E3A8A', // FirstCap navy
-    monogram: 'PH',
-  },
-]
+// Client identity cards source from the shared CXO_PERSONAS module
+// (lib/auth/cxo-personas.ts). Same persona data also drives the
+// hosted invite route at /invite/<slug> and the static invite HTML
+// generator (scripts/generate-invite-html.ts). Edit personas there.
+const CLIENT_IDENTITIES = CXO_PERSONAS
 
 function describeFailure(err: unknown, alreadySignedIn: boolean): string {
   if (alreadySignedIn) {

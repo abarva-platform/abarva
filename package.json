@@ -91,6 +91,7 @@
     "testing:findings:compare": "npx tsx src/scripts/testing/compare-findings-cycles.ts",
     "testing:create-test-users": "npx tsx scripts/create-test-users.ts",
     "auth:provision-cxo-personas": "npx tsx scripts/provision-cxo-personas.ts",
+    "auth:generate-invites": "npx tsx scripts/generate-invite-html.ts",
     "reasoning:report": "npx tsx scripts/reasoning-report.ts",
     "embed:pending-chunks": "NODE_OPTIONS='--require ./src/scripts/_mock-server-only-preload.cjs' npx tsx src/scripts/embed-pending-chunks.ts",
     "ingest:worldview": "npx tsx src/scripts/ingest-worldview-chunks.ts",
