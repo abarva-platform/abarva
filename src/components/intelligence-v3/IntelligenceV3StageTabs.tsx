@@ -2,11 +2,10 @@
 
 // Intelligence v3 · stage tab navigation.
 //
-// Renders the Intelligence submenu as one quiet toolbar. The stage
-// metadata stays in the route model; the CXO-facing navigation only
-// shows the destination names with a clear active underline.
+// Renders the Intelligence submenu as a quiet toolbar: text labels,
+// one active underline, no stage badges, no pill row.
 
-import { COLORS, FONT, RADIUS, SPACING } from '@/lib/design/abarva-theme';
+import { COLORS, FONT, SPACING } from '@/lib/design/abarva-theme';
 import { STAGES, type StageKey } from './types';
 
 interface Props {
@@ -22,16 +21,14 @@ export function IntelligenceV3StageTabs({ active, onChange }: Props) {
       style={{
         display: 'flex',
         alignItems: 'center',
-        gap: 2,
+        gap: SPACING.xxl,
         overflowX: 'auto',
-        border: `1px solid ${COLORS.border}`,
-        borderRadius: RADIUS.md,
-        background: COLORS.surface2,
-        padding: 4,
+        borderBottom: `1px solid ${COLORS.border}`,
+        background: COLORS.surface,
+        padding: `0 ${SPACING.xs}px`,
         margin: 0,
-        width: 'fit-content',
+        width: '100%',
         maxWidth: '100%',
-        boxShadow: '0 1px 2px rgba(10, 12, 18, 0.03)',
       }}
     >
       {STAGES.map((stage) => {
@@ -49,22 +46,19 @@ export function IntelligenceV3StageTabs({ active, onChange }: Props) {
               display: 'inline-flex',
               alignItems: 'center',
               justifyContent: 'center',
-              minHeight: 34,
+              minHeight: 42,
               border: 'none',
-              background: isActive ? COLORS.surface : 'transparent',
+              borderBottom: `2px solid ${isActive ? COLORS.navy : 'transparent'}`,
+              background: 'transparent',
               color: isActive ? COLORS.ink : COLORS.muted,
               fontFamily: FONT.body,
               fontSize: 13,
               fontWeight: isActive ? 700 : 600,
               letterSpacing: 0,
-              padding: `${SPACING.sm}px ${SPACING.md + 2}px ${SPACING.sm + 2}px`,
-              borderRadius: RADIUS.sm,
+              padding: `${SPACING.md}px 0 ${SPACING.sm}px`,
               cursor: 'pointer',
               whiteSpace: 'nowrap',
-              boxShadow: isActive
-                ? `0 1px 4px rgba(10, 12, 18, 0.08), inset 0 -2px 0 ${COLORS.navy}`
-                : 'inset 0 -2px 0 transparent',
-              transition: 'background 140ms ease, color 140ms ease, box-shadow 140ms ease',
+              transition: 'border-color 140ms ease, color 140ms ease',
             }}
           >
             {stage.label}
