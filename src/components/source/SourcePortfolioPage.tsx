@@ -37,6 +37,7 @@ import {
   groupEventsByStageBand,
   STAGE_BANDS,
   attentionEvents,
+  stageBandFor,
 } from '@/lib/source/portfolio-filtering';
 import type { SourcingEventSummary } from '@/lib/source/types';
 
@@ -209,16 +210,7 @@ function PopulatedView({
         attentionCount={kpis.attentionCount}
         variant={portfolioState}
       />
-      <DashboardStrip
-        attention={kpis.attentionCount}
-        waiting={kpis.waiting}
-        active={kpis.active}
-        completed={kpis.completed}
-        valueAtStakeUsd={kpis.valueAtStakeUsd}
-        oldestAgingDays={oldestAgingDays}
-        canViewFinancialValues={canViewFinancialValues}
-      />
-      <ExecutiveReadout
+      <PortfolioScorecard
         events={events}
         kpis={kpis}
         oldestAgingDays={oldestAgingDays}
@@ -266,7 +258,7 @@ function PopulatedView({
   );
 }
 
-function ExecutiveReadout({
+function PortfolioScorecard({
   events,
   kpis,
   oldestAgingDays,
@@ -278,54 +270,67 @@ function ExecutiveReadout({
   canViewFinancialValues: boolean;
 }) {
   const attentionQueue = attentionEvents(events);
-  const topAttention = attentionQueue[0];
-  const largestOpenEvent = events
+  const openEvents = events
     .filter((event) => event.status !== 'completed' && event.status !== 'archived')
-    .sort((a, b) => (b.valueAtStakeUsd ?? 0) - (a.valueAtStakeUsd ?? 0))[0];
-  const nextGateEvent = [...events]
-    .filter((event) => event.status !== 'completed' && event.status !== 'archived')
-    .sort((a, b) => b.agingDays - a.agingDays)[0];
+  const openValueUsd = openEvents.reduce((sum, event) => sum + (event.valueAtStakeUsd ?? 0), 0);
+  const attentionValueUsd = attentionQueue.reduce(
+    (sum, item) => sum + (item.event.valueAtStakeUsd ?? 0),
+    0,
+  );
+  const stageMix = buildStageMix(events);
+  const categoryMix = buildCategoryMix(events);
 
   return (
     <section
-      aria-label="Executive Source portfolio readout"
-      data-testid="source-portfolio-executive-readout"
-      style={EXEC_READOUT_STYLE}
+      aria-label="Source portfolio scorecard"
+      data-testid="source-portfolio-scorecard"
+      style={SCORECARD_STYLE}
     >
-      <ExecutiveTile
-        label="Decision pressure"
-        value={topAttention ? topAttention.event.name : 'No blocked decisions'}
-        detail={
-          topAttention
-            ? `${topAttention.attention.diagnosis} ${topAttention.attention.detail}`
-            : `${kpis.onTrack} event${kpis.onTrack === 1 ? '' : 's'} are moving without an intervention flag.`
-        }
-        accent={topAttention?.attention.severity === 'critical' ? PORTFOLIO.BLOCKED : undefined}
-      />
-      <ExecutiveTile
-        label="Largest open exposure"
-        value={largestOpenEvent?.name ?? 'No open exposure'}
-        detail={
-          largestOpenEvent
-            ? `${canViewFinancialValues ? formatCompactUsd(largestOpenEvent.valueAtStakeUsd) : 'Restricted value'} at stake in ${largestOpenEvent.currentStageLabel}.`
-            : 'All visible sourcing value is completed or archived.'
-        }
-      />
-      <ExecutiveTile
-        label="Aging watch"
-        value={nextGateEvent?.name ?? 'No active aging'}
-        detail={
-          nextGateEvent
-            ? `${oldestAgingDays}d oldest stage age. Owner: ${nextGateEvent.owner || 'Unassigned'}.`
-            : 'No active stage-age watch item.'
-        }
-        accent={oldestAgingDays >= 5 ? PORTFOLIO.BLOCKED : oldestAgingDays >= 3 ? PORTFOLIO.WAITING : undefined}
-      />
+      <div style={SCORECARD_METRICS_STYLE}>
+        <ScoreMetric
+          label="Total value"
+          value={canViewFinancialValues ? formatCompactUsd(kpis.valueAtStakeUsd) : 'Restricted'}
+          detail={`${kpis.total} sourcing event${kpis.total === 1 ? '' : 's'}`}
+        />
+        <ScoreMetric
+          label="Open pipeline"
+          value={canViewFinancialValues ? formatCompactUsd(openValueUsd) : 'Restricted'}
+          detail={`${openEvents.length} active or waiting event${openEvents.length === 1 ? '' : 's'}`}
+        />
+        <ScoreMetric
+          label="At-risk exposure"
+          value={canViewFinancialValues ? formatCompactUsd(attentionValueUsd) : 'Restricted'}
+          detail={`${kpis.attentionCount} event${kpis.attentionCount === 1 ? '' : 's'} need attention`}
+          accent={kpis.attentionCount > 0 ? PORTFOLIO.BLOCKED : undefined}
+        />
+        <ScoreMetric
+          label="Oldest stage age"
+          value={oldestAgingDays === 0 ? '—' : `${oldestAgingDays}d`}
+          detail={`${kpis.waiting} waiting · ${kpis.completed} completed`}
+          accent={oldestAgingDays >= 5 ? PORTFOLIO.BLOCKED : oldestAgingDays >= 3 ? PORTFOLIO.WAITING : undefined}
+        />
+      </div>
+      <div style={SCORECARD_CHARTS_STYLE}>
+        <ScoreBarStack
+          label="Stage mix"
+          total={events.length}
+          items={stageMix.map((item) => ({
+            key: item.key,
+            label: item.label,
+            value: item.count,
+            color: item.color,
+          }))}
+        />
+        <CategoryValueBars
+          items={categoryMix}
+          canViewFinancialValues={canViewFinancialValues}
+        />
+      </div>
     </section>
   );
 }
 
-function ExecutiveTile({
+function ScoreMetric({
   label,
   value,
   detail,
@@ -337,17 +342,146 @@ function ExecutiveTile({
   accent?: string;
 }) {
   return (
-    <div style={{ ...EXEC_TILE_STYLE, borderTopColor: accent ?? PORTFOLIO.RULE_STRONG }}>
-      <div style={EXEC_TILE_LABEL_STYLE}>{label}</div>
-      <div style={EXEC_TILE_VALUE_STYLE}>{value}</div>
-      <div style={EXEC_TILE_DETAIL_STYLE}>{detail}</div>
+    <div style={SCORE_METRIC_STYLE}>
+      <div style={SCORE_METRIC_LABEL_STYLE}>{label}</div>
+      <div style={{ ...SCORE_METRIC_VALUE_STYLE, color: accent ?? PORTFOLIO.INK }}>
+        {value}
+      </div>
+      <div style={SCORE_METRIC_DETAIL_STYLE}>{detail}</div>
     </div>
   );
 }
 
+function ScoreBarStack({
+  label,
+  total,
+  items,
+}: {
+  label: string;
+  total: number;
+  items: Array<{ key: string; label: string; value: number; color: string }>;
+}) {
+  const visibleItems = items.filter((item) => item.value > 0);
+  return (
+    <div style={SCORE_CHART_STYLE}>
+      <div style={SCORE_CHART_HEADER_STYLE}>
+        <span>{label}</span>
+        <span>{total} total</span>
+      </div>
+      <div style={STACK_BAR_STYLE} aria-hidden>
+        {visibleItems.length === 0 ? (
+          <span style={{ ...STACK_SEGMENT_STYLE, width: '100%', background: PORTFOLIO.RULE }} />
+        ) : (
+          visibleItems.map((item) => (
+            <span
+              key={item.key}
+              style={{
+                ...STACK_SEGMENT_STYLE,
+                width: `${Math.max(4, (item.value / Math.max(total, 1)) * 100)}%`,
+                background: item.color,
+              }}
+            />
+          ))
+        )}
+      </div>
+      <div style={STACK_LEGEND_STYLE}>
+        {items.map((item) => (
+          <span key={item.key} style={STACK_LEGEND_ITEM_STYLE}>
+            <span aria-hidden style={{ ...STACK_LEGEND_DOT_STYLE, background: item.color }} />
+            <span>{item.label}</span>
+            <span style={STACK_LEGEND_COUNT_STYLE}>{item.value}</span>
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function CategoryValueBars({
+  items,
+  canViewFinancialValues,
+}: {
+  items: CategoryMixItem[];
+  canViewFinancialValues: boolean;
+}) {
+  const maxValue = Math.max(...items.map((item) => item.valueUsd), 1);
+  return (
+    <div style={SCORE_CHART_STYLE}>
+      <div style={SCORE_CHART_HEADER_STYLE}>
+        <span>Value by category</span>
+        <span>top {items.length}</span>
+      </div>
+      <div style={CATEGORY_BARS_STYLE}>
+        {items.map((item) => (
+          <div key={item.label} style={CATEGORY_ROW_STYLE}>
+            <div style={CATEGORY_LABEL_ROW_STYLE}>
+              <span style={CATEGORY_LABEL_STYLE}>{item.label}</span>
+              <span style={CATEGORY_VALUE_STYLE}>
+                {canViewFinancialValues ? formatCompactUsd(item.valueUsd) : 'Restricted'} · {item.count}
+              </span>
+            </div>
+            <div style={CATEGORY_TRACK_STYLE} aria-hidden>
+              <span
+                style={{
+                  ...CATEGORY_FILL_STYLE,
+                  width: `${Math.max(6, (item.valueUsd / maxValue) * 100)}%`,
+                }}
+              />
+            </div>
+          </div>
+        ))}
+        {items.length === 0 ? (
+          <div style={CATEGORY_EMPTY_STYLE}>No category values captured yet.</div>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
+interface StageMixItem {
+  key: string;
+  label: string;
+  count: number;
+  color: string;
+}
+
+interface CategoryMixItem {
+  label: string;
+  count: number;
+  valueUsd: number;
+}
+
+function buildStageMix(events: SourcingEventSummary[]): StageMixItem[] {
+  const counts = new Map<string, number>();
+  for (const event of events) {
+    const band = STAGE_BANDS[stageBandFor(event.currentStageKey, event.status)];
+    counts.set(band.key, (counts.get(band.key) ?? 0) + 1);
+  }
+  return Object.values(STAGE_BANDS).map((band) => ({
+    key: band.key,
+    label: band.title.replace(' & ', ' + '),
+    count: counts.get(band.key) ?? 0,
+    color: STAGE_MIX_COLORS[band.key],
+  }));
+}
+
+function buildCategoryMix(events: SourcingEventSummary[]): CategoryMixItem[] {
+  const byCategory = new Map<string, CategoryMixItem>();
+  for (const event of events) {
+    const label = event.archetype || 'Uncategorized';
+    const current = byCategory.get(label) ?? { label, count: 0, valueUsd: 0 };
+    current.count += 1;
+    current.valueUsd += event.valueAtStakeUsd ?? 0;
+    byCategory.set(label, current);
+  }
+  return Array.from(byCategory.values())
+    .sort((a, b) => b.valueUsd - a.valueUsd || b.count - a.count || a.label.localeCompare(b.label))
+    .slice(0, 4);
+}
+
 // ── Compact header — title + subline + CTA ──────────────────────────────────
-// Title row stays focused on identity. Status counts live in the dedicated
-// DashboardStrip directly below, where they have room to breathe.
+// Title row stays focused on identity. Portfolio value and mix live in the
+// scorecard below, where they can read as analysis instead of navigation.
 
 interface CompactHeaderProps {
   eventCount: number;
@@ -380,87 +514,6 @@ function CompactHeader({
       </div>
       {subline ? <p style={SUBLINE_STYLE}>{subline}</p> : null}
     </header>
-  );
-}
-
-// ── Thin dashboard strip — sits above the search bar / table ─────────────────
-// One horizontal row. Status pills on the left (At risk · Waiting · Active ·
-// Completed) + portfolio aggregates on the right (Value at stake · Oldest aging).
-// Replaces the inline legend that previously crowded the title row.
-
-interface DashboardStripProps {
-  attention: number;
-  waiting: number;
-  active: number;
-  completed: number;
-  valueAtStakeUsd: number;
-  oldestAgingDays: number;
-  canViewFinancialValues: boolean;
-}
-
-function DashboardStrip({
-  attention,
-  waiting,
-  active,
-  completed,
-  valueAtStakeUsd,
-  oldestAgingDays,
-  canViewFinancialValues,
-}: DashboardStripProps) {
-  return (
-    <div data-testid="source-portfolio-dashboard-strip" style={STRIP_STYLE}>
-      <div style={STRIP_LEFT_STYLE}>
-        <StripStat color={PORTFOLIO.BLOCKED} label="At risk" count={attention} />
-        <StripStat color={PORTFOLIO.WAITING} label="Waiting" count={waiting} />
-        <StripStat color={PORTFOLIO.ACTIVE} label="Active" count={active} />
-        <StripStat color={PORTFOLIO.COMPLETED} label="Completed" count={completed} />
-      </div>
-      <div style={STRIP_RIGHT_STYLE}>
-        <StripMetric
-          label="Value at stake"
-          value={canViewFinancialValues ? formatCompactUsd(valueAtStakeUsd) : '—'}
-        />
-        <StripMetric
-          label="Oldest aging"
-          value={oldestAgingDays === 0 ? '—' : `${oldestAgingDays}d`}
-          accent={oldestAgingDays >= 5 ? PORTFOLIO.BLOCKED : oldestAgingDays >= 3 ? PORTFOLIO.WAITING : undefined}
-        />
-      </div>
-    </div>
-  );
-}
-
-function StripStat({ color, label, count }: { color: string; label: string; count: number }) {
-  return (
-    <span style={STRIP_STAT_STYLE}>
-      <span aria-hidden style={{ ...STRIP_DOT_STYLE, background: color }} />
-      <span style={STRIP_LABEL_STYLE}>{label}</span>
-      <span style={STRIP_COUNT_STYLE}>{count}</span>
-    </span>
-  );
-}
-
-function StripMetric({
-  label,
-  value,
-  accent,
-}: {
-  label: string;
-  value: string;
-  accent?: string;
-}) {
-  return (
-    <span style={STRIP_STAT_STYLE}>
-      <span style={STRIP_LABEL_STYLE}>{label}</span>
-      <span
-        style={{
-          ...STRIP_VALUE_STYLE,
-          color: accent ?? PORTFOLIO.INK,
-        }}
-      >
-        {value}
-      </span>
-    </span>
   );
 }
 
@@ -690,110 +743,191 @@ const SUBLINE_STYLE: CSSProperties = {
   maxWidth: 720,
 };
 
-const STRIP_STYLE: CSSProperties = {
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'space-between',
-  gap: 24,
-  padding: '10px 16px',
+const STAGE_MIX_COLORS: Record<keyof typeof STAGE_BANDS, string> = {
+  discovery: '#335C81',
+  evaluation: PORTFOLIO.ACTIVE,
+  decision: PORTFOLIO.WAITING,
+  transition: '#7C3AED',
+  completed: PORTFOLIO.COMPLETED,
+};
+
+const SCORECARD_STYLE: CSSProperties = {
+  display: 'grid',
+  gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 520px), 1fr))',
+  gap: 20,
   marginTop: 16,
-  borderRadius: PORTFOLIO.RADIUS_TIGHT,
+  padding: '14px 16px',
   border: `1px solid ${PORTFOLIO.HAIRLINE}`,
-  background: PORTFOLIO.CARD,
-  flexWrap: 'wrap',
-};
-
-const EXEC_READOUT_STYLE: CSSProperties = {
-  display: 'grid',
-  gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
-  gap: 12,
-  marginTop: 12,
-};
-
-const EXEC_TILE_STYLE: CSSProperties = {
-  display: 'grid',
-  gap: 7,
-  minHeight: 104,
-  padding: '13px 14px',
-  border: `1px solid ${PORTFOLIO.HAIRLINE}`,
-  borderTop: `3px solid ${PORTFOLIO.RULE_STRONG}`,
   borderRadius: PORTFOLIO.RADIUS_TIGHT,
   background: PORTFOLIO.CARD,
 };
 
-const EXEC_TILE_LABEL_STYLE: CSSProperties = {
+const SCORECARD_METRICS_STYLE: CSSProperties = {
+  display: 'grid',
+  gridTemplateColumns: 'repeat(auto-fit, minmax(132px, 1fr))',
+  gap: 14,
+  alignItems: 'stretch',
+};
+
+const SCORE_METRIC_STYLE: CSSProperties = {
+  display: 'grid',
+  alignContent: 'start',
+  gap: 4,
+  minWidth: 0,
+};
+
+const SCORE_METRIC_LABEL_STYLE: CSSProperties = {
   fontFamily: PORTFOLIO.MONO,
   fontSize: PORTFOLIO.T_MICRO_SMALL,
-  letterSpacing: '0.12em',
+  letterSpacing: '0.11em',
+  textTransform: 'uppercase',
+  color: PORTFOLIO.INK_MUTED,
+  fontWeight: 700,
+  whiteSpace: 'nowrap',
+};
+
+const SCORE_METRIC_VALUE_STYLE: CSSProperties = {
+  fontFamily: PORTFOLIO.MONO,
+  fontSize: 18,
+  lineHeight: 1.18,
+  fontWeight: 800,
+  fontVariantNumeric: 'tabular-nums',
+};
+
+const SCORE_METRIC_DETAIL_STYLE: CSSProperties = {
+  fontFamily: PORTFOLIO.SANS,
+  fontSize: PORTFOLIO.T_META,
+  lineHeight: 1.35,
+  color: PORTFOLIO.INK_SOFT,
+};
+
+const SCORECARD_CHARTS_STYLE: CSSProperties = {
+  display: 'grid',
+  gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 260px), 1fr))',
+  gap: 22,
+  minWidth: 0,
+};
+
+const SCORE_CHART_STYLE: CSSProperties = {
+  display: 'grid',
+  alignContent: 'start',
+  gap: 8,
+  minWidth: 0,
+};
+
+const SCORE_CHART_HEADER_STYLE: CSSProperties = {
+  display: 'flex',
+  justifyContent: 'space-between',
+  gap: 12,
+  fontFamily: PORTFOLIO.MONO,
+  fontSize: PORTFOLIO.T_MICRO_SMALL,
+  letterSpacing: '0.10em',
   textTransform: 'uppercase',
   color: PORTFOLIO.INK_MUTED,
   fontWeight: 700,
 };
 
-const EXEC_TILE_VALUE_STYLE: CSSProperties = {
-  fontFamily: PORTFOLIO.SANS,
-  fontSize: PORTFOLIO.T_BODY,
-  lineHeight: 1.28,
-  color: PORTFOLIO.INK,
-  fontWeight: 700,
+const STACK_BAR_STYLE: CSSProperties = {
+  display: 'flex',
+  width: '100%',
+  height: 9,
+  overflow: 'hidden',
+  borderRadius: 999,
+  background: PORTFOLIO.RULE,
 };
 
-const EXEC_TILE_DETAIL_STYLE: CSSProperties = {
+const STACK_SEGMENT_STYLE: CSSProperties = {
+  display: 'block',
+  height: '100%',
+};
+
+const STACK_LEGEND_STYLE: CSSProperties = {
+  display: 'grid',
+  gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
+  gap: '5px 12px',
+};
+
+const STACK_LEGEND_ITEM_STYLE: CSSProperties = {
+  display: 'inline-flex',
+  alignItems: 'center',
+  minWidth: 0,
+  gap: 6,
   fontFamily: PORTFOLIO.SANS,
   fontSize: PORTFOLIO.T_META,
-  lineHeight: 1.4,
   color: PORTFOLIO.INK_SOFT,
 };
 
-const STRIP_LEFT_STYLE: CSSProperties = {
-  display: 'inline-flex',
-  alignItems: 'center',
-  gap: 24,
-  flexWrap: 'wrap',
-};
-
-const STRIP_RIGHT_STYLE: CSSProperties = {
-  display: 'inline-flex',
-  alignItems: 'center',
-  gap: 24,
-  flexWrap: 'wrap',
-};
-
-const STRIP_STAT_STYLE: CSSProperties = {
-  display: 'inline-flex',
-  alignItems: 'center',
-  gap: 8,
-};
-
-const STRIP_DOT_STYLE: CSSProperties = {
+const STACK_LEGEND_DOT_STYLE: CSSProperties = {
   width: 7,
   height: 7,
   borderRadius: 999,
-  display: 'inline-block',
+  flexShrink: 0,
 };
 
-const STRIP_LABEL_STYLE: CSSProperties = {
-  fontFamily: PORTFOLIO.MONO,
-  fontSize: PORTFOLIO.T_MICRO_SMALL,
-  letterSpacing: '0.10em',
-  textTransform: 'uppercase',
-  color: PORTFOLIO.INK_SOFT,
-  fontWeight: 600,
-};
-
-const STRIP_COUNT_STYLE: CSSProperties = {
+const STACK_LEGEND_COUNT_STYLE: CSSProperties = {
+  marginLeft: 'auto',
   fontFamily: PORTFOLIO.MONO,
   fontSize: PORTFOLIO.T_MICRO,
+  color: PORTFOLIO.INK,
+  fontWeight: 700,
+};
+
+const CATEGORY_BARS_STYLE: CSSProperties = {
+  display: 'grid',
+  gap: 7,
+};
+
+const CATEGORY_ROW_STYLE: CSSProperties = {
+  display: 'grid',
+  gap: 4,
+};
+
+const CATEGORY_LABEL_ROW_STYLE: CSSProperties = {
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'space-between',
+  gap: 10,
+  minWidth: 0,
+};
+
+const CATEGORY_LABEL_STYLE: CSSProperties = {
+  overflow: 'hidden',
+  textOverflow: 'ellipsis',
+  whiteSpace: 'nowrap',
+  fontFamily: PORTFOLIO.SANS,
+  fontSize: PORTFOLIO.T_META,
   fontWeight: 700,
   color: PORTFOLIO.INK,
+};
+
+const CATEGORY_VALUE_STYLE: CSSProperties = {
+  flexShrink: 0,
+  fontFamily: PORTFOLIO.MONO,
+  fontSize: PORTFOLIO.T_MICRO,
+  color: PORTFOLIO.INK_SOFT,
+  fontWeight: 700,
   fontVariantNumeric: 'tabular-nums',
 };
 
-const STRIP_VALUE_STYLE: CSSProperties = {
-  fontFamily: PORTFOLIO.MONO,
-  fontSize: PORTFOLIO.T_BODY_SMALL,
-  fontWeight: 700,
-  fontVariantNumeric: 'tabular-nums',
+const CATEGORY_TRACK_STYLE: CSSProperties = {
+  width: '100%',
+  height: 5,
+  borderRadius: 999,
+  background: PORTFOLIO.RULE,
+  overflow: 'hidden',
+};
+
+const CATEGORY_FILL_STYLE: CSSProperties = {
+  display: 'block',
+  height: '100%',
+  borderRadius: 999,
+  background: PORTFOLIO.INK,
+};
+
+const CATEGORY_EMPTY_STYLE: CSSProperties = {
+  fontFamily: PORTFOLIO.SANS,
+  fontSize: PORTFOLIO.T_META,
+  color: PORTFOLIO.INK_SOFT,
 };
 
 const CTA_STYLE: CSSProperties = {
