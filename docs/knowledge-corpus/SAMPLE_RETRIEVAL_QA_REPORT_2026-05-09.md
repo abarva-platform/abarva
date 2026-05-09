@@ -1,6 +1,6 @@
 # Sample Retrieval QA Report - 2026-05-09
 
-Generated at: `2026-05-09T22:08:05.347Z`
+Generated at: `2026-05-09T22:42:16.202Z`
 
 Input: `docs/knowledge-corpus/generated/canonical-corpus-backfill-preview.json`
 

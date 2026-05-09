@@ -50,6 +50,12 @@ type IncludedSourceSystem = Extract<
 type SourceStatus = 'included' | 'skipped';
 type DuplicateRisk = 'low' | 'medium' | 'high';
 
+interface CollisionResolutionRule {
+  canonical_id: string;
+  preferred_source_key: string;
+  merge_note: string;
+}
+
 interface SourceCount {
   source_system: SourceSystem;
   count: number;
@@ -111,6 +117,68 @@ export interface CanonicalBackfillPreviewReport {
   };
   write_status: 'not_executed_dry_run_only';
 }
+
+export const CANONICAL_COLLISION_RESOLUTION_RULES: CollisionResolutionRule[] = [
+  {
+    canonical_id: 'AIP-CROSS-INDUSTRY-AI_GOVERNANCE_OPERATING_MODEL',
+    preferred_source_key: 'generated_pattern_manifest:pattern_ai_governance_operating_model',
+    merge_note: 'Generated manifest carries fuller provenance; pattern seed remains as source crosswalk.',
+  },
+  {
+    canonical_id: 'AIP-CROSS-INDUSTRY-AI_LED_PDLC',
+    preferred_source_key: 'generated_pattern_manifest:pattern_ai_led_pdlc',
+    merge_note: 'Generated manifest carries fuller provenance; pattern seed remains as source crosswalk.',
+  },
+  {
+    canonical_id: 'AIP-CROSS-INDUSTRY-AI_USE_CASE_PORTFOLIO_MANAGEMENT',
+    preferred_source_key: 'generated_pattern_manifest:pattern_ai_use_case_portfolio',
+    merge_note: 'Generated manifest carries fuller provenance; pattern seed remains as source crosswalk.',
+  },
+  {
+    canonical_id: 'AIP-CROSS-INDUSTRY-VENDOR_SPRAWL_AI_TOOL_RATIONALIZATION',
+    preferred_source_key: 'generated_pattern_manifest:pattern_vendor_sprawl_ai_tool_rationalization',
+    merge_note: 'Generated manifest carries fuller provenance; pattern seed remains as source crosswalk.',
+  },
+  {
+    canonical_id: 'AIP-ENERGY-PREDICTIVE_MAINTENANCE_MODERNIZATION',
+    preferred_source_key: 'generated_pattern_manifest:pattern_predictive_maintenance_modernization',
+    merge_note: 'Generated manifest carries fuller provenance; pattern seed remains as source crosswalk.',
+  },
+  {
+    canonical_id: 'AIP-FINANCIAL-SERVICES-CUSTOMER_ONBOARDING_KYC_AI',
+    preferred_source_key: 'generated_pattern_manifest:pattern_customer_onboarding_kyc_ai',
+    merge_note: 'Generated manifest carries fuller provenance; pattern seed remains as source crosswalk.',
+  },
+  {
+    canonical_id: 'AIP-FINANCIAL-SERVICES-FRAUD_DETECTION_MODERNIZATION',
+    preferred_source_key: 'generated_pattern_manifest:pattern_fraud_detection_modernization',
+    merge_note: 'Generated manifest carries fuller provenance; pattern seed remains as source crosswalk.',
+  },
+  {
+    canonical_id: 'AIP-HEALTHCARE-AMBIENT_INTELLIGENCE_CLINICAL_VALUE_CHAIN_AUTOMATION',
+    preferred_source_key: 'generated_pattern_manifest:pattern_ambient_clinical_value_chain',
+    merge_note: 'Generated manifest carries fuller provenance; pattern seed remains as source crosswalk.',
+  },
+  {
+    canonical_id: 'AIP-HEALTHCARE-PRIOR_AUTHORIZATION_AUTOMATION',
+    preferred_source_key: 'generated_pattern_manifest:pattern_prior_authorization_automation',
+    merge_note: 'Generated manifest carries fuller provenance; pattern seed remains as source crosswalk.',
+  },
+  {
+    canonical_id: 'AIP-RETAIL-DEMAND_FORECASTING_INVENTORY_AI',
+    preferred_source_key: 'generated_pattern_manifest:pattern_demand_forecasting_inventory_ai',
+    merge_note: 'Generated manifest carries fuller provenance; pattern seed remains as source crosswalk.',
+  },
+  {
+    canonical_id: 'AIP-RETAIL-OWNED_BRAND_MARGIN_RECOVERY',
+    preferred_source_key: 'generated_pattern_manifest:pattern_owned_brand_margin_recovery',
+    merge_note: 'Generated manifest carries fuller provenance; pattern seed remains as source crosswalk.',
+  },
+];
+
+const CANONICAL_COLLISION_RULE_BY_ID = new Map(
+  CANONICAL_COLLISION_RESOLUTION_RULES.map((rule) => [rule.canonical_id, rule]),
+);
 
 function readOptionalEnvFile(): void {
   const explicitPath = process.env.KNOWLEDGE_BACKFILL_ENV_FILE;
@@ -400,6 +468,105 @@ function canonicalIdCollisions(rows: CanonicalBackfillPreviewRow[]): Array<{ can
     .sort((a, b) => a.canonical_id.localeCompare(b.canonical_id));
 }
 
+function previewSourceKeys(row: CanonicalBackfillPreviewRow): string[] {
+  return row.source_systems.map((source, index) => `${source}:${row.source_ids[index] ?? 'unknown'}`);
+}
+
+function uniqueStringArray(values: unknown[]): string[] {
+  return [...new Set(values.flatMap((value) => (
+    Array.isArray(value)
+      ? value.filter((item): item is string => typeof item === 'string' && item.trim().length > 0)
+      : []
+  )))].sort();
+}
+
+function uniqueObjectArray(values: unknown[]): unknown[] {
+  const byStableJson = new Map<string, unknown>();
+  for (const collection of values) {
+    if (!Array.isArray(collection)) continue;
+    for (const value of collection) {
+      byStableJson.set(stableJson(value), value);
+    }
+  }
+
+  return [...byStableJson.entries()]
+    .sort(([left], [right]) => left.localeCompare(right))
+    .map(([, value]) => value);
+}
+
+function mergeResolvedCollisionRows(
+  rows: CanonicalBackfillPreviewRow[],
+  rule: CollisionResolutionRule,
+): CanonicalBackfillPreviewRow {
+  const preferred = rows.find((row) => previewSourceKeys(row).includes(rule.preferred_source_key));
+  if (!preferred) return rows[0];
+
+  const mergedPayload = {
+    ...preferred.upsert_payload,
+    source_crosswalk: uniqueObjectArray(rows.map((row) => row.upsert_payload.source_crosswalk)),
+    source_systems: uniqueStringArray(rows.map((row) => row.upsert_payload.source_systems)),
+    source_ids: uniqueStringArray(rows.map((row) => row.upsert_payload.source_ids)),
+    source_references: uniqueObjectArray(rows.map((row) => row.upsert_payload.source_references)),
+    quantitative_claims: uniqueObjectArray(rows.map((row) => row.upsert_payload.quantitative_claims)),
+    unsupported_claim_flags: uniqueObjectArray(rows.map((row) => row.upsert_payload.unsupported_claim_flags)),
+    missing_required_fields: [...new Set(rows.flatMap((row) => row.missing_required_fields))].sort(),
+    missing_provenance: rows.some((row) => row.missing_provenance),
+    duplicate_risk: rows.some((row) => row.duplicate_risk === 'high')
+      ? 'high'
+      : rows.some((row) => row.duplicate_risk === 'medium')
+        ? 'medium'
+        : rows.some((row) => row.duplicate_risk === 'low')
+          ? 'low'
+          : null,
+    full_pattern: {
+      selected: preferred.upsert_payload.full_pattern,
+      merged_alternatives: rows
+        .filter((row) => row !== preferred)
+        .map((row) => row.upsert_payload.full_pattern),
+      collision_resolution: {
+        rule: 'canonical_collision_resolution_2026_05_09',
+        preferred_source_key: rule.preferred_source_key,
+        merged_source_keys: rows.flatMap(previewSourceKeys).sort(),
+        note: rule.merge_note,
+      },
+    },
+  };
+  const mergedHash = contentHash(mergedPayload);
+
+  return {
+    ...preferred,
+    source_systems: mergedPayload.source_systems as string[],
+    source_ids: mergedPayload.source_ids as string[],
+    content_hash: mergedHash,
+    duplicate_risk: mergedPayload.duplicate_risk as DuplicateRisk | null,
+    likely_duplicate_ids: [...new Set(rows.flatMap((row) => row.likely_duplicate_ids))].sort(),
+    missing_required_fields: mergedPayload.missing_required_fields as string[],
+    missing_provenance: mergedPayload.missing_provenance as boolean,
+    unsupported_claim_count: (mergedPayload.unsupported_claim_flags as unknown[]).length,
+    upsert_payload: {
+      ...mergedPayload,
+      content_hash: mergedHash,
+    },
+  };
+}
+
+export function resolveCanonicalPreviewCollisions(
+  rows: CanonicalBackfillPreviewRow[],
+): CanonicalBackfillPreviewRow[] {
+  const byCanonicalId = new Map<string, CanonicalBackfillPreviewRow[]>();
+  for (const row of rows) {
+    byCanonicalId.set(row.canonical_id, [...(byCanonicalId.get(row.canonical_id) ?? []), row]);
+  }
+
+  return [...byCanonicalId.entries()]
+    .flatMap(([canonicalId, groupRows]) => {
+      if (groupRows.length <= 1) return groupRows;
+      const rule = CANONICAL_COLLISION_RULE_BY_ID.get(canonicalId);
+      return rule ? [mergeResolvedCollisionRows(groupRows, rule)] : groupRows;
+    })
+    .sort((a, b) => a.canonical_id.localeCompare(b.canonical_id));
+}
+
 function markdownTable(headers: string[], rows: string[][]): string {
   const escape = (value: string) => String(value).replace(/\|/g, '\\|').replace(/\n/g, ' ');
   return [
@@ -510,9 +677,9 @@ export async function buildCanonicalBackfillPreviewReport(generatedAt: string): 
   }
 
   const crosswalkIndex = indexCrosswalkInventory();
-  const previewRows = drafts
+  const previewRows = resolveCanonicalPreviewCollisions(drafts
     .map(({ draft }) => buildPreviewRow(draft, generatedAt, crosswalkIndex))
-    .sort((a, b) => a.canonical_id.localeCompare(b.canonical_id));
+    .sort((a, b) => a.canonical_id.localeCompare(b.canonical_id)));
   const collisions = canonicalIdCollisions(previewRows);
   const sourceCount = (source: IncludedSourceSystem): number => drafts.filter((draft) => draft.source === source).length;
   const dbStatus: CanonicalBackfillPreviewReport['db_status'] = {

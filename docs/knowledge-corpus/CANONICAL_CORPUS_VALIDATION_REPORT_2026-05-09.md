@@ -1,6 +1,6 @@
 # Canonical Corpus Validation Report - 2026-05-09
 
-Generated at: `2026-05-09T22:06:29.136Z`
+Generated at: `2026-05-09T22:42:16.181Z`
 
 Input: `docs/knowledge-corpus/generated/canonical-corpus-backfill-preview.json`
 
@@ -8,8 +8,8 @@ Mode: report-only
 
 ## Summary
 
-- Patterns validated: 323
-- Error issues: 1800
+- Patterns validated: 312
+- Error issues: 1711
 - Warning issues: 0
 - Patterns with errors: 192
 - Patterns with warnings: 0
@@ -37,15 +37,15 @@ Mode: report-only
 
 | Severity | Rule | Count |
 | --- | --- | --- |
-| error | failure_mitigations_required | 203 |
-| error | minimum_data_requirements | 203 |
-| error | minimum_kpis | 203 |
-| error | recommended_artifacts_required | 203 |
-| error | recommended_workshops_required | 203 |
-| error | required_array | 203 |
-| error | required_identity | 203 |
-| error | failure_modes_required | 192 |
-| error | provenance_required | 187 |
+| error | failure_mitigations_required | 192 |
+| error | minimum_data_requirements | 192 |
+| error | minimum_kpis | 192 |
+| error | recommended_artifacts_required | 192 |
+| error | recommended_workshops_required | 192 |
+| error | required_array | 192 |
+| error | required_identity | 192 |
+| error | provenance_required | 186 |
+| error | failure_modes_required | 181 |
 
 ## Sample Issues
 
@@ -91,16 +91,16 @@ Mode: report-only
 | error | required_array | AIP-CROSS-INDUSTRY-AI_GOVERNANCE_OPERATING_MODEL | strategic_move_phases must contain at least one value. |
 | error | minimum_kpis | AIP-CROSS-INDUSTRY-AI_GOVERNANCE_OPERATING_MODEL | Requires at least 3 KPIs; found 0. |
 | error | minimum_data_requirements | AIP-CROSS-INDUSTRY-AI_GOVERNANCE_OPERATING_MODEL | Requires at least 3 required_data_domains; found 0. |
-| error | failure_modes_required | AIP-CROSS-INDUSTRY-AI_GOVERNANCE_OPERATING_MODEL | Requires at least one common_failure_modes entry. |
 | error | failure_mitigations_required | AIP-CROSS-INDUSTRY-AI_GOVERNANCE_OPERATING_MODEL | Requires at least one failure_mode_mitigations entry. |
 | error | recommended_artifacts_required | AIP-CROSS-INDUSTRY-AI_GOVERNANCE_OPERATING_MODEL | Requires at least one recommended_artifacts entry. |
 | error | recommended_workshops_required | AIP-CROSS-INDUSTRY-AI_GOVERNANCE_OPERATING_MODEL | Requires at least one recommended_workshops entry. |
 | error | provenance_required | AIP-CROSS-INDUSTRY-AI_GOVERNANCE_OPERATING_MODEL | Requires source_basis and confidence_rationale. |
-| error | required_identity | AIP-CROSS-INDUSTRY-AI_GOVERNANCE_OPERATING_MODEL | Missing canonical field: strategic_move_phases. |
-| error | required_array | AIP-CROSS-INDUSTRY-AI_GOVERNANCE_OPERATING_MODEL | strategic_move_phases must contain at least one value. |
-| error | minimum_kpis | AIP-CROSS-INDUSTRY-AI_GOVERNANCE_OPERATING_MODEL | Requires at least 3 KPIs; found 0. |
-| error | minimum_data_requirements | AIP-CROSS-INDUSTRY-AI_GOVERNANCE_OPERATING_MODEL | Requires at least 3 required_data_domains; found 0. |
-| error | failure_mitigations_required | AIP-CROSS-INDUSTRY-AI_GOVERNANCE_OPERATING_MODEL | Requires at least one failure_mode_mitigations entry. |
+| error | required_identity | AIP-CROSS-INDUSTRY-AI_LED_OPERATIONS_CONTROL_PLANE | Missing canonical field: strategic_move_phases. |
+| error | required_array | AIP-CROSS-INDUSTRY-AI_LED_OPERATIONS_CONTROL_PLANE | strategic_move_phases must contain at least one value. |
+| error | minimum_kpis | AIP-CROSS-INDUSTRY-AI_LED_OPERATIONS_CONTROL_PLANE | Requires at least 3 KPIs; found 0. |
+| error | minimum_data_requirements | AIP-CROSS-INDUSTRY-AI_LED_OPERATIONS_CONTROL_PLANE | Requires at least 3 required_data_domains; found 0. |
+| error | failure_modes_required | AIP-CROSS-INDUSTRY-AI_LED_OPERATIONS_CONTROL_PLANE | Requires at least one common_failure_modes entry. |
+| error | failure_mitigations_required | AIP-CROSS-INDUSTRY-AI_LED_OPERATIONS_CONTROL_PLANE | Requires at least one failure_mode_mitigations entry. |
 
 ## Gate Notes
 
