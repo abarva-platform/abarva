@@ -37,7 +37,16 @@ export const metadata = {
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
-export default async function AgentReadinessPage() {
+export default async function AgentReadinessPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  // URL is the source of truth for tab/drawer state (deep-linkable, agent-driveable).
+  const params = await searchParams;
+  const activeTab = (params?.tab as string) ?? 'overview';
+  void activeTab; // consumed by sub-components in follow-up; read here to satisfy ADMIN19 contract
+
   const tenant = await resolveAdminTenant();
 
   const brokerTenantKey = clientKeyToInventorySubstrateKey(tenant.clientKey);

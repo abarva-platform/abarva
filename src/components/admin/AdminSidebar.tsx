@@ -1,15 +1,11 @@
-"use client";
-import { usePathname } from "next/navigation";
-import Link from "next/link";
-import { ADMIN_SUB_SECTIONS } from "@/lib/admin/admin-shell-config";
-import { SHELL } from "@/lib/shell/shell-tokens";
-
-const NAVY = "#1B2B5C";
-const NAVY_SOFT = "rgba(27,43,92,0.06)";
-const INK = "#1A1A18";
-const MUTED = "#9AA3B2";
-const BORDER = "#e5e5e5";
-const MONO = '"JetBrains Mono", ui-monospace, monospace';
+'use client';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import { COLORS, TYPOGRAPHY } from '@/lib/design/design-tokens';
+import {
+  ADMIN_SUB_SECTIONS,
+  LIVE_CAVEAT_TEXT,
+} from '@/lib/admin/admin-shell-config';
 
 export function AdminSidebar() {
   const pathname = usePathname();
@@ -17,28 +13,29 @@ export function AdminSidebar() {
   return (
     <aside
       style={{
-        background: "#ffffff",
-        borderRight: `1px solid ${BORDER}`,
-        display: "flex",
-        flexDirection: "column",
-        overflowY: "auto",
+        background: COLORS.white,
+        borderRight: `1px solid ${COLORS.ink}14`,
+        display: 'flex',
+        flexDirection: 'column',
+        overflowY: 'auto',
         minHeight: 0,
+        width: '280px',
       }}
     >
       {/* Section header */}
       <div
         style={{
-          padding: "20px 20px 16px",
-          borderBottom: `1px solid ${BORDER}`,
+          padding: '20px 20px 16px',
+          borderBottom: `1px solid ${COLORS.ink}14`,
         }}
       >
         <div
           style={{
-            fontFamily: MONO,
+            fontFamily: TYPOGRAPHY.mono,
             fontSize: 10,
-            letterSpacing: "0.14em",
-            textTransform: "uppercase",
-            color: MUTED,
+            letterSpacing: '0.14em',
+            textTransform: 'uppercase',
+            color: `${COLORS.ink}80`,
             fontWeight: 500,
             marginBottom: 6,
           }}
@@ -47,10 +44,10 @@ export function AdminSidebar() {
         </div>
         <div
           style={{
-            fontFamily: SHELL.SERIF,
+            fontFamily: TYPOGRAPHY.serif,
             fontSize: 18,
             fontWeight: 400,
-            color: INK,
+            color: COLORS.ink,
             lineHeight: 1.2,
           }}
         >
@@ -58,9 +55,9 @@ export function AdminSidebar() {
         </div>
         <div
           style={{
-            fontFamily: SHELL.SANS,
+            fontFamily: TYPOGRAPHY.sans,
             fontSize: 11,
-            color: MUTED,
+            color: `${COLORS.ink}80`,
             marginTop: 3,
             lineHeight: 1.4,
           }}
@@ -72,42 +69,42 @@ export function AdminSidebar() {
       {/* Nav */}
       <nav
         style={{
-          display: "flex",
-          flexDirection: "column",
+          display: 'flex',
+          flexDirection: 'column',
           flex: 1,
-          padding: "12px 0",
+          padding: '12px 0',
         }}
       >
         {ADMIN_SUB_SECTIONS.map((section) => {
           const isActive =
-            section.href === "/admin"
-              ? pathname === "/admin"
+            section.href === '/admin'
+              ? pathname === '/admin'
               : pathname.startsWith(section.href);
 
           return (
             <Link
               key={section.id}
               href={section.href}
-              aria-current={isActive ? "page" : undefined}
+              aria-current={isActive ? 'page' : undefined}
               style={{
-                display: "flex",
-                flexDirection: "column",
+                display: 'flex',
+                flexDirection: 'column',
                 gap: 1,
-                padding: "9px 20px 9px 17px",
+                padding: '9px 20px 9px 17px',
                 borderLeft: isActive
-                  ? `3px solid ${NAVY}`
-                  : "3px solid transparent",
-                background: isActive ? NAVY_SOFT : "transparent",
-                textDecoration: "none",
-                transition: "background 0.1s",
+                  ? `3px solid ${COLORS.navy}`
+                  : '3px solid transparent',
+                background: isActive ? `${COLORS.navy}0a` : 'transparent',
+                textDecoration: 'none',
+                transition: 'background 0.1s',
               }}
             >
               <span
                 style={{
-                  fontFamily: SHELL.SANS,
+                  fontFamily: TYPOGRAPHY.sans,
                   fontSize: 13,
                   fontWeight: isActive ? 600 : 500,
-                  color: isActive ? NAVY : INK,
+                  color: isActive ? COLORS.navy : COLORS.ink,
                   lineHeight: 1.3,
                 }}
               >
@@ -115,10 +112,10 @@ export function AdminSidebar() {
               </span>
               <span
                 style={{
-                  fontFamily: MONO,
+                  fontFamily: TYPOGRAPHY.mono,
                   fontSize: 10,
-                  letterSpacing: "0.06em",
-                  color: MUTED,
+                  letterSpacing: '0.06em',
+                  color: `${COLORS.ink}80`,
                   lineHeight: 1.3,
                 }}
               >
@@ -129,26 +126,25 @@ export function AdminSidebar() {
         })}
       </nav>
 
-      {/* Footer caveat */}
+      {/* Footer — Live caveat pill */}
       <div
         style={{
-          padding: "12px 20px",
-          borderTop: `1px solid ${BORDER}`,
+          padding: '12px 20px',
+          borderTop: `1px solid ${COLORS.ink}14`,
         }}
       >
         <div
           style={{
-            fontFamily: MONO,
+            fontFamily: TYPOGRAPHY.mono,
             fontSize: 9,
-            letterSpacing: "0.08em",
-            textTransform: "uppercase",
-            color: MUTED,
+            letterSpacing: '0.08em',
+            textTransform: 'uppercase',
+            color: `${COLORS.ink}80`,
             lineHeight: 1.5,
           }}
         >
-          Read-only · deterministic read models
-          <br />
-          No live connector or model claims
+          {/* Live caveat: Repository manifest + deterministic read models */}
+          {LIVE_CAVEAT_TEXT}
         </div>
       </div>
     </aside>

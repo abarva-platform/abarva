@@ -22,6 +22,7 @@ import {
   useRef,
   useState,
 } from 'react';
+import { COLORS } from '@/lib/design/design-tokens';
 import { SHELL } from '@/lib/shell/shell-tokens';
 import { useAtlasPageState } from '@/components/shell/AtlasPageStateProvider';
 import { useAgentStream } from '@/hooks/useAgentStream';
@@ -479,7 +480,7 @@ export function StewardAskBar({
             flexShrink: 0,
           }}
         >
-          <span style={{ color: '#7aab5a', fontSize: 9 }}>●</span>
+          <span style={{ color: COLORS.mintInk, fontSize: 9 }}>●</span>
           Active
         </div>
       </div>
@@ -556,10 +557,10 @@ export function StewardAskBar({
             style={{
               fontFamily: SHELL.SANS,
               fontSize: 11.5,
-              color: '#c0392b',
+              color: COLORS.coralInk,
               padding: '7px 10px',
-              background: 'rgba(192,57,43,0.06)',
-              border: '1px solid rgba(192,57,43,0.14)',
+              background: `${COLORS.coralSoft}60`,
+              border: `1px solid ${COLORS.coralSoft}`,
               borderRadius: 7,
               marginBottom: 10,
               flexShrink: 0,

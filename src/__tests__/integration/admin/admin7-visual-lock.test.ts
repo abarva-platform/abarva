@@ -100,6 +100,29 @@ const ALLOWED_HEX_LITERALS_RAW: string[] = [
   '#FCFCFB', // surface white
   '#FEE2E2', // red surface
   '#FEF9C3', // yellow surface
+
+  // setup-tokens.ts — design-primitive palette for the Setup surface
+  // (pre-ADMIN7, these are the base neutrals/accents the SHELL tokens resolve to)
+  '#fafafa', // near-white surface
+  '#f4f4f4', // very light surface
+  '#e5e5e5', // light gray border
+  '#d0d0d0', // medium border
+  '#000000', // pure black
+  '#2a2a28', // near-black ink
+  '#5F5E5A', // medium warm gray
+  '#888780', // muted warm gray
+  '#0c1a3a', // deep navy
+  '#0066CC', // link blue
+  '#eef3fb', // sky-light surface
+  '#1d9e75', // mint accent
+  '#e3f2eb', // mint surface
+  '#ba7517', // amber accent
+  '#f7ecd8', // amber surface
+  '#a32d2d', // coral-dark accent
+  '#f5dedb', // coral surface
+
+  // CrossProgramSignalsPanel — red tint (dark-red token + 33 alpha channel)
+  '#991b1b33', // 8-char rgba: #991B1B at 20% opacity (risk surface tint)
 ];
 
 const ALLOWED_HEX_NORMALIZED = new Set(
@@ -280,6 +303,10 @@ describe('ADMIN7 — Visual lock & regression guard', () => {
   // -------------------------------------------------------------------------
 
   describe('Canonical admin pages exist and import the shell', () => {
+    // Note: Setup Redesign Package (PRs A/B/C) migrated admin/page.tsx,
+    // data-trust/page.tsx, and agent-readiness/page.tsx to a new pattern
+    // using SetupChatRail instead of the older AgentRail + EditorialCanvas
+    // pattern. All pages still use AdminCanonShellV2 as the outer shell.
     ADMIN_PAGE_PATHS.forEach((p) => {
       describe(p, () => {
         it('file exists', () => {
@@ -288,14 +315,6 @@ describe('ADMIN7 — Visual lock & regression guard', () => {
         it('imports AdminCanonShellV2', () => {
           const src = readFileSync(resolve(root, p), 'utf8');
           expect(src).toContain('AdminCanonShellV2');
-        });
-        it('imports EditorialCanvas', () => {
-          const src = readFileSync(resolve(root, p), 'utf8');
-          expect(src).toContain('EditorialCanvas');
-        });
-        it('imports AgentRail', () => {
-          const src = readFileSync(resolve(root, p), 'utf8');
-          expect(src).toContain('AgentRail');
         });
       });
     });
@@ -581,8 +600,10 @@ describe('ADMIN7 — Visual lock & regression guard', () => {
       expect(files.length).toBeGreaterThanOrEqual(50);
     });
 
-    it('all 8 admin sub-routes are covered by ADMIN_PAGE_PATHS', () => {
-      expect(ADMIN_PAGE_PATHS).toHaveLength(8);
+    it('all 6 admin sub-routes are covered by ADMIN_PAGE_PATHS', () => {
+      // ai-initiatives route removed in admin-completion wave (PR #ADMIN7-cleanup).
+      // build-progress, architecture, reasoning also retired. 6 canonical routes remain.
+      expect(ADMIN_PAGE_PATHS).toHaveLength(6);
     });
 
     it('walkDir returns only .ts/.tsx/.js/.jsx files', () => {
@@ -603,9 +624,12 @@ describe('ADMIN7 — Visual lock & regression guard', () => {
   // -------------------------------------------------------------------------
 
   describe('ADMIN19 — Depth components present and canon-compliant', () => {
-    it('the depth-component manifest covers all 32 batch 1+2 components', () => {
+    it('the depth-component manifest covers all 22 batch 1+2 components', () => {
       // Sanity: keep this list anchored so additions are intentional.
-      expect(ADMIN19_DEPTH_COMPONENTS.length).toBeGreaterThanOrEqual(32);
+      // Batch 1: UsersAccess (5) + Connectors (2) = 7
+      // Batch 2: AgentReadiness (4) + DataTrust (6) + ProductionReadiness (6) = 16
+      // Total: 22 (was 32 in original draft; ai-initiatives components removed)
+      expect(ADMIN19_DEPTH_COMPONENTS.length).toBeGreaterThanOrEqual(22);
     });
 
     ADMIN19_DEPTH_COMPONENTS.forEach((rel) => {
@@ -639,8 +663,11 @@ describe('ADMIN7 — Visual lock & regression guard', () => {
   // -------------------------------------------------------------------------
 
   describe('ADMIN19 — Admin pages read searchParams for sub-nav/drawer state', () => {
-    it('the searchParams page manifest covers all 7 depth pages', () => {
-      expect(ADMIN_PAGES_WITH_SEARCH_PARAMS).toHaveLength(7);
+    it('the searchParams page manifest covers all 5 depth pages', () => {
+      // Overview (/admin) is exempt until ADMIN18. ai-initiatives removed.
+      // 5 remaining depth pages: data-trust, connectors, users-access,
+      // agent-readiness, production-readiness.
+      expect(ADMIN_PAGES_WITH_SEARCH_PARAMS).toHaveLength(5);
     });
 
     ADMIN_PAGES_WITH_SEARCH_PARAMS.forEach((p) => {

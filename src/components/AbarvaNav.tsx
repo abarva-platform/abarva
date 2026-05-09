@@ -341,7 +341,12 @@ function NavInner({ activePage, compact = false }: NavProps) {
                       Maestro Workspace
                     </Link>
                   )}
-                  {canShow('setup') && (
+                  {isAdmin && (
+                    <Link href={isAdmin ? '/admin' : undefined} className="abarva-menu-item" style={{ display: 'block', padding: '9px 14px', textDecoration: 'none', fontFamily: SANS, fontSize: '13px', color: DROP_HEAD, borderRadius: '8px', margin: '0 4px' }}>
+                      Setup
+                    </Link>
+                  )}
+                  {!isAdmin && canShow('setup') && (
                     <Link href="/platform" className="abarva-menu-item" style={{ display: 'block', padding: '9px 14px', textDecoration: 'none', fontFamily: SANS, fontSize: '13px', color: DROP_HEAD, borderRadius: '8px', margin: '0 4px' }}>
                       Platform
                     </Link>

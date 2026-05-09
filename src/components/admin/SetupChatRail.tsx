@@ -4,7 +4,7 @@
 //
 // Historically this rendered the Steward chat lane directly via
 // <StewardAskBar/>. After the AgentDock migration (admin sibling chip of
-// PR #1764) the chat lane is owned by <StewardDockPane/>, which in turn
+// PR 1764) the chat lane is owned by <StewardDockPane/>, which in turn
 // uses the shared <AgentDock>. AdminCanonShellV2 detects this element by
 // type and switches to a chat-dock layout where the dock owns the
 // resizable splitter between chat and main content.
