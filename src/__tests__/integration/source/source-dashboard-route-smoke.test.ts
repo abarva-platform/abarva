@@ -82,11 +82,10 @@ describe('Source dashboard route smoke', () => {
     expect(eventsRouteSource).toContain('Start IT sourcing event');
     expect(eventsRouteSource).toContain('The table is supporting evidence');
     // Compact-header portfolio surface — KPI strip + attention banners removed.
-    // Status counts live in a thin DashboardStrip above the table; table rows
-    // carry their own per-event signals.
+    // Portfolio totals and mix now live in a thin Scorecard above the table;
+    // table rows carry their own per-event signals.
     expect(componentSource).toContain('CompactHeader');
-    expect(componentSource).toContain('DashboardStrip');
-    expect(componentSource).toContain('ExecutiveReadout');
+    expect(componentSource).toContain('PortfolioScorecard');
     expect(componentSource).toContain('PortfolioFilterSidebar');
     expect(componentSource).toContain('PortfolioEventsTable');
     expect(componentSource).toContain('PortfolioEmptyState');
