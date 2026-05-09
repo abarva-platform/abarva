@@ -17,6 +17,9 @@ import { SourceWelcomeSection } from '@/components/source/learn/SourceWelcomeSec
 import { SourceIntakeSection } from '@/components/source/learn/SourceIntakeSection';
 import { SourceSentinelSection } from '@/components/source/learn/SourceSentinelSection';
 import { SourceGlossarySection } from '@/components/source/learn/SourceGlossarySection';
+import { SourceGatesSection } from '@/components/source/learn/SourceGatesSection';
+import { SourceExportsSection } from '@/components/source/learn/SourceExportsSection';
+import { SourceTowerSection } from '@/components/source/learn/SourceTowerSection';
 import { MeridianCaseStudyIntro } from '@/components/source/learn/case-study/MeridianCaseStudyIntro';
 import { Ch01StrategyChapter } from '@/components/source/learn/case-study/Ch01StrategyChapter';
 import { Ch02ScopeChapter } from '@/components/source/learn/case-study/Ch02ScopeChapter';
@@ -89,6 +92,14 @@ export default async function LearnSubPage({ params }: Props) {
         return <Ch10TransitionChapter />;
       case 'value':
         return <Ch11ValueChapter />;
+
+      // Reference pages
+      case 'gates':
+        return <SourceGatesSection />;
+      case 'exports':
+        return <SourceExportsSection />;
+      case 'tower':
+        return <SourceTowerSection />;
     }
 
     notFound();
