@@ -34,8 +34,8 @@ interface SourceEventAgentCanvasProps {
 }
 
 const SENTINEL_EVENT_AGENT = {
-  initials: 'Se',
-  name: 'Sentinel',
+  initials: 'SS',
+  name: 'Sentinel Source',
   role: 'Source Orchestrator',
 } as const;
 
@@ -327,10 +327,10 @@ function StageAction({
       }}
       disabled={disabled}
       onClick={() => pageState?.ask(prompt)}
-      aria-label={`Ask Sentinel: ${label}`}
+      aria-label={`Ask Sentinel Source: ${label}`}
       data-testid={`source-stage-action-${label.toLowerCase().replaceAll(' ', '-')}`}
     >
-      <div style={EVENT_ACTION_PROMPT}>Ask Sentinel</div>
+      <div style={EVENT_ACTION_PROMPT}>Ask Sentinel Source</div>
       <div style={EVENT_ACTION_LABEL}>{label}</div>
       <div style={EVENT_ACTION_DETAIL}>{detail}</div>
     </button>

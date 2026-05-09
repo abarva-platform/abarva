@@ -42,7 +42,7 @@ export function IntelligencePatternDetailSentinel({
 
   return (
     <AgentColumn
-      agent={{ initials: 'Sn', name: 'Sentinel', role: 'Pattern Validator' }}
+      agent={{ initials: 'SI', name: 'Sentinel Intel', role: 'Pattern Validator' }}
       quote={agentQuote}
       agentContext={agentContext}
       actions={actions}

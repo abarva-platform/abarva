@@ -10,7 +10,7 @@
 //   - Related failure modes (link cards back to
 //     /intelligence/failure-modes/<slug>)
 //   - Example program archetypes (chip list)
-//   - Affordances: "Ask Sentinel about this topic →" + back to topics
+//   - Affordances: "Ask Sentinel Intel about this topic →" + back to topics
 //
 // Per docs/build/intelligence/INT-2_DETAILED_DESIGN.md §4.2 + §2.3.
 //
@@ -494,7 +494,7 @@ export default async function TopicDeepDivePage({ params }: PageProps) {
                 fontWeight: 500,
               }}
             >
-              Ask Sentinel about this topic →
+              Ask Sentinel Intel about this topic →
             </J1TopicLink>
             <Link
               href="/intelligence/topics"
