@@ -19,6 +19,7 @@ import {
   sourceAllowsLabel,
   type MetricProvenanceKey,
 } from '@/lib/tower/metric-provenance';
+import type { BandConfidence } from '@/lib/tower/band-metrics-view';
 
 const C = {
   ink: '#0A0C12',
@@ -36,12 +37,43 @@ interface MetricProvenanceProps {
   metricKey: MetricProvenanceKey;
   /** The rendered metric value (e.g. `<span>2.8×</span>`). */
   children: ReactNode;
+  /** Formatted value threaded to Atlas when the user asks for a drill-down. */
+  displayValue?: string;
+  /** Confidence threaded to Atlas when the user asks for a drill-down. */
+  displayConfidence?: BandConfidence;
+  /** Opens Atlas chat with this metric preloaded as explainability context. */
+  onAskAtlas?: (request: {
+    metricKey: MetricProvenanceKey;
+    metricLabel: string;
+    displayValue?: string;
+    displayConfidence?: BandConfidence;
+    mode: 'why' | 'levers';
+  }) => void;
 }
 
-export function MetricProvenance({ metricKey, children }: MetricProvenanceProps) {
+export function MetricProvenance({
+  metricKey,
+  children,
+  displayValue,
+  displayConfidence,
+  onAskAtlas,
+}: MetricProvenanceProps) {
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLSpanElement>(null);
   const panel = getTowerMetricProvenance(metricKey);
+  const canAskAtlas = Boolean(panel && onAskAtlas);
+
+  function askAtlas(mode: 'why' | 'levers') {
+    if (!panel || !onAskAtlas) return;
+    onAskAtlas({
+      metricKey,
+      metricLabel: panel.metricLabel,
+      displayValue,
+      displayConfidence,
+      mode,
+    });
+    setOpen(false);
+  }
 
   // Close on outside click / Escape.
   useEffect(() => {
@@ -183,9 +215,54 @@ export function MetricProvenance({ metricKey, children }: MetricProvenanceProps)
           >
             Last refreshed: {panel.lastRefreshed}
           </div>
+
+          {canAskAtlas && (
+            <div
+              style={{
+                marginTop: 10,
+                paddingTop: 10,
+                borderTop: `1px solid ${C.border}`,
+                display: 'grid',
+                gap: 6,
+              }}
+            >
+              <AskAtlasButton onClick={() => askAtlas('why')}>
+                Ask Atlas why this is {displayValue ? `at ${displayValue}` : 'here'}
+              </AskAtlasButton>
+              <AskAtlasButton onClick={() => askAtlas('levers')}>
+                See the lever map
+              </AskAtlasButton>
+            </div>
+          )}
         </div>
       )}
     </span>
+  );
+}
+
+function AskAtlasButton({ children, onClick }: { children: ReactNode; onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={(e) => {
+        e.stopPropagation();
+        onClick();
+      }}
+      style={{
+        border: `1px solid ${C.border}`,
+        background: C.cream,
+        color: C.navy,
+        borderRadius: 6,
+        padding: '7px 8px',
+        fontFamily: 'ui-sans-serif, system-ui, sans-serif',
+        fontSize: 12,
+        fontWeight: 700,
+        textAlign: 'left',
+        cursor: 'pointer',
+      }}
+    >
+      {children}
+    </button>
   );
 }
 
