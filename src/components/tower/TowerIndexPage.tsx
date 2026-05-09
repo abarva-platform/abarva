@@ -462,80 +462,17 @@ interface MatrixDot {
   confidenceLevel?: 'HIGH' | 'MED' | 'LOW';
 }
 
-// T-4b: legacy Strategic Bets fallback used when no substrate is loaded.
-// Keeps the pre-substrate Tower visually intact for tests + screenshots.
-interface StrategicBetCard {
-  key: string;
-  displayId?: string;
-  name: string;
-  meta: string;
-  desc: ReactNode;
-  cta: ReactNode;
-}
-
-const LEGACY_STRATEGIC_BETS: StrategicBetCard[] = [
-  {
-    key: 'agent-platform-foundation',
-    name: 'Agent platform foundation',
-    meta: 'Year 1 of 3 · $4.2M committed · attribution LOW',
-    desc: "Building the Sentinel/Steward/Atlas substrate that the rest of the AbarVa stack runs on. Won't show measured value until programs migrate.",
-    cta: null,
-  },
-  {
-    key: 'data-sovereignty',
-    name: 'Data sovereignty re-architecture',
-    meta: 'Year 1 of 2 · $1.8M committed · attribution MED',
-    desc: "Tied to EU operations. Compliance value is binary — either it lands by Q4 2026 or we're out of compliance, regardless of TCO.",
-    cta: null,
-  },
-  {
-    key: 'vendor-consolidation',
-    name: 'Vendor consolidation thesis',
-    meta: 'Year 0 · $0.9M committed · attribution LOW',
-    desc: 'Hypothesis: 23 strategic suppliers can become 12 by 2027. Atlas is modeling. No measured value until first wave of consolidations.',
-    cta: null,
-  },
-];
-
-// T-4: legacy hardcoded 2×2 fallback used when no `initiatives` prop is passed.
-// Keeps the pre-substrate Tower visually intact for tests + screenshots.
-const LEGACY_2X2_DOTS: Record<AlignmentQuadrant, MatrixDot[]> = {
-  tl: [
-    { name: 'JOULE', amount: '$3.2M', left: '18%', top: '32%' },
-    { name: 'DATABRICKS', amount: '$2.1M', left: '56%', top: '14%' },
-    { name: 'FINOPS-CLI', amount: '$0.6M', left: '30%', top: '60%' },
-  ],
-  tr: [
-    { name: 'M365-CORE', amount: '$8.4M', left: '22%', top: '22%' },
-    { name: 'AZURE-PROD', amount: '$11.2M', left: '58%', top: '38%' },
-    { name: 'SNOW-CMDB', amount: '$1.4M', left: '36%', top: '62%' },
-  ],
-  bl: [
-    { name: 'LEGACY-VPN', amount: '$0.4M', left: '20%', top: '28%' },
-    { name: 'ON-PREM-CRM', amount: '$1.1M', left: '56%', top: '56%' },
-  ],
-  br: [
-    { name: 'COPILOT-E5', amount: '$2.8M', left: '28%', top: '18%' },
-    { name: 'NOW-ASSIST', amount: '$0.9M', left: '60%', top: '42%' },
-  ],
-};
-
 /** T-4: shorten an initiative name for the 2×2 dot label (~22 chars). */
 function truncateName(name: string): string {
   if (name.length <= 22) return name;
   return `${name.slice(0, 21)}…`;
 }
 
-/**
- * T-4: resolve quadrant dots from substrate when present, fall back to the
- * legacy hardcoded list when the registry hasn't been loaded for this tenant.
- */
 function resolveQuadrantDots(
   view: StrategicAlignment2x2View,
   quadrant: AlignmentQuadrant,
-  fallback: MatrixDot[],
 ): MatrixDot[] {
-  if (view.dots.length === 0) return fallback;
+  if (view.dots.length === 0) return [];
   const grouped = dotsByQuadrant(view);
   const live = grouped[quadrant] ?? [];
   return live.map((d: AlignmentDot) => ({
@@ -547,6 +484,51 @@ function resolveQuadrantDots(
     alignedCallout: d.alignedCallout,
     confidenceLevel: d.confidenceLevel,
   }));
+}
+
+function TowerEmptyState({
+  eyebrow,
+  title,
+  body,
+  style,
+}: {
+  eyebrow: string;
+  title: string;
+  body: string;
+  style?: CSSProperties;
+}) {
+  return (
+    <div
+      style={{
+        border: `1px dashed ${T.RULE_STRONG}`,
+        background: T.CREAM_2,
+        padding: '16px 18px',
+        borderRadius: 8,
+        color: T.INK_2,
+        ...style,
+      }}
+    >
+      <div
+        style={{
+          fontFamily: T.MONO,
+          fontSize: 9,
+          letterSpacing: '1.4px',
+          textTransform: 'uppercase',
+          color: T.GOLD,
+          fontWeight: 700,
+          marginBottom: 6,
+        }}
+      >
+        {eyebrow}
+      </div>
+      <div style={{ fontFamily: T.SERIF, fontSize: 16, fontWeight: 700, color: T.INK }}>
+        {title}
+      </div>
+      <div style={{ fontSize: 12.5, lineHeight: 1.5, color: T.GRAY_DK, marginTop: 4 }}>
+        {body}
+      </div>
+    </div>
+  );
 }
 
 function Quadrant({
@@ -888,27 +870,22 @@ interface TowerIndexPageProps {
   clientId?: string;
   /**
    * T-4 (AI Initiatives Substrate v1.1.0): real registry initiatives to plot
-   * in the Strategic Alignment 2×2. When omitted or empty, the 2×2 falls back
-   * to the legacy hardcoded display so the page still renders pre-substrate.
+   * in the Strategic Alignment 2×2. When omitted or empty, Tower shows an
+   * explicit DB-empty state; it never substitutes demo tenant rows.
    */
   initiatives?: ReadonlyArray<AIInitiative>;
   /** Tenant vendor rows used for Atlas metric explainability drill-downs. */
   vendors?: ReadonlyArray<AIInitiativeVendorRow>;
   /**
-   * T-5 (Bind 1): pre-computed band tile aggregations from substrate.
-   * When omitted or `isEmpty`, the band falls back to the legacy hardcoded
-   * Apex Retail demo values so the page still renders pre-substrate.
+   * T-5 (Bind 1): pre-computed band tile aggregations from DB substrate.
    */
   bandMetrics?: TowerBandMetricsView;
   /**
-   * T-6 (Bind 2): substrate-derived pressure cards. When omitted or empty,
-   * the pressure section falls back to the legacy hardcoded Apex Retail
-   * demo cards so the page still renders pre-substrate.
+   * T-6 (Bind 2): DB-derived pressure cards.
    */
   pressuresView?: TowerPressuresView;
   /**
-   * T-7 (Bind 3): substrate-derived Atlas observations. When omitted or
-   * empty, the right rail falls back to the legacy hardcoded observations.
+   * T-7 (Bind 3): DB-derived Atlas observations.
    */
   atlasObservationsView?: AtlasObservationsView;
   /** Slots are accepted for backward compatibility but not rendered in the broadsheet design. */
@@ -929,7 +906,7 @@ type MetricAskHandler = (request: {
 }) => void;
 
 export function TowerIndexPage({
-  tenantName = 'Meridian Enterprises',
+  tenantName = 'Active client',
   context = 'Control Tower · Portfolio Index',
   clientId,
   initiatives,
@@ -947,11 +924,9 @@ export function TowerIndexPage({
   void _p1; void _p2; void _p3; void _p4; void _p6;
   void vendors;
   const alignment2x2View = buildStrategicAlignment2x2View(initiatives ?? []);
-  // T-5: render band from substrate when available; fall back to legacy hardcoded.
   // T-8: iterate metrics in lens-determined order rather than keying by name.
-  const useSubstrateBand = Boolean(bandMetrics && !bandMetrics.isEmpty);
-  // T-6: render pressure cards from substrate when available; fall back to legacy hardcoded.
-  const useSubstratePressures = Boolean(pressuresView && !pressuresView.isEmpty);
+  const useSubstrateBand = Boolean(bandMetrics);
+  const useSubstratePressures = Boolean(pressuresView);
   const searchParams = useSearchParams();
   const router = useRouter();
   const activeLens = (searchParams?.get('lens') ?? 'value') as 'value' | 'risk' | 'contract' | 'adopt';
@@ -979,16 +954,16 @@ export function TowerIndexPage({
     id: 'atlas-opener',
     role: 'atlas',
     content: atlasObservationsView?.headline ??
-      'Three threads run through this morning’s pressures. Ask Atlas about portfolio state, peer position, or the EA renewal window.',
+      'Atlas is waiting for tenant-bound Tower substrate before it can answer portfolio questions.',
   };
   const [atlasMessages, setAtlasMessages] = useState<AtlasMessage[]>([initialOpener]);
   const [atlasPending, setAtlasPending] = useState(false);
   const [atlasThreadId, setAtlasThreadId] = useState<string | null>(null);
   const initialPrompts: string[] = atlasObservationsView?.suggestedPrompts.slice() ?? [
-    'Show me the 3 lagging programs',
-    'What if I cut LLM tokens by 30%?',
-    'Re-rank pressures by attribution confidence',
-    'Brief me for the 9 AM staff meeting',
+    'What tenant data is loaded?',
+    'Which programs have pressure signals?',
+    'Show renewal windows from the DB',
+    'Explain missing Tower substrate',
   ];
   const [atlasSuggestions, setAtlasSuggestions] = useState<AtlasSuggestion[]>(
     initialPrompts.map((label) => ({ label, value: label, kind: 'message' as const })),
@@ -1262,92 +1237,12 @@ export function TowerIndexPage({
                 ))}
               </>
             ) : (
-              <>
-                <Kpi
-                  label="Portfolio ROI · 12-month rolling"
-                  hero
-                  isFirst
-                  subtext={<>target 3.5× · <span style={{ color: T.RED, fontWeight: 700 }}>▼0.4×</span> vs Q1</>}
-                  tooltip="35% of programs measured. 41% modeled. +24% pending baseline."
-                >
-                  <MetricProvenance
-                    metricKey="portfolio_roi"
-                    displayValue="2.8×"
-                    displayConfidence="high"
-                    onAskAtlas={handleMetricAsk}
-                  >
-                    <span style={cvalStyle('high')}>
-                      2.8<span style={{ fontSize: '0.55em' }}>×</span>
-                    </span>
-                  </MetricProvenance>
-                </Kpi>
-
-                <Kpi
-                  label="Active pressures"
-                  subtext={<>3 high · 4 watch · <span style={{ color: T.GREEN, fontWeight: 700 }}>▲2</span></>}
-                  tooltip="3 high-magnitude pressures and 4 on watch. ▲2 new this week."
-                >
-                  <MetricProvenance
-                    metricKey="active_pressures"
-                    displayValue="7"
-                    displayConfidence="high"
-                    onAskAtlas={handleMetricAsk}
-                  >
-                    <span style={cvalStyle('high')}>7</span>
-                  </MetricProvenance>
-                </Kpi>
-
-                <Kpi
-                  label="Spend at risk"
-                  subtext={<><span style={{ color: T.RED, fontWeight: 700 }}>▲$1.2M</span> MoM</>}
-                  tooltip="Cost overrun and capability duplication exposure across the AI portfolio."
-                >
-                  <MetricProvenance
-                    metricKey="spend_at_risk"
-                    displayValue="$8.4M"
-                    displayConfidence="med"
-                    onAskAtlas={handleMetricAsk}
-                  >
-                    <span style={cvalStyle('med')}>
-                      $8.4<span style={{ fontSize: '0.55em' }}>M</span>
-                      <ConfTag conf="med" />
-                    </span>
-                  </MetricProvenance>
-                </Kpi>
-
-                <Kpi
-                  label="Renewals · 90d"
-                  subtext={<>EA 47d · $48.2M</>}
-                  tooltip="4 vendor renewals in the next 90 days totaling $48.2M aggregate. EA renewal due in 47 days; brief is open in Source."
-                >
-                  <MetricProvenance
-                    metricKey="renewals_90d"
-                    displayValue="4"
-                    displayConfidence="high"
-                    onAskAtlas={handleMetricAsk}
-                  >
-                    <span style={cvalStyle('high')}>4</span>
-                  </MetricProvenance>
-                </Kpi>
-
-                <Kpi
-                  label="Adoption"
-                  subtext={<>2 sources missing</>}
-                  tooltip="2 identity sources (Okta, EntraID) not yet connected; until they land, adoption confidence is LOW. Connect identity sources from Atlas observations."
-                >
-                  <MetricProvenance
-                    metricKey="adoption_rate"
-                    displayValue="53%"
-                    displayConfidence="low"
-                    onAskAtlas={handleMetricAsk}
-                  >
-                    <span style={cvalStyle('low')}>
-                      53<span style={{ fontSize: '0.55em' }}>%</span>
-                      <ConfTag conf="low" />
-                    </span>
-                  </MetricProvenance>
-                </Kpi>
-              </>
+              <TowerEmptyState
+                eyebrow="DB substrate required"
+                title="No tenant-bound KPI data is available."
+                body="Tower will not substitute demo KPI values. Load initiatives and vendors for this client before using the executive band."
+                style={{ gridColumn: '1 / -1' }}
+              />
             )}
           </section>
 
@@ -1366,7 +1261,7 @@ export function TowerIndexPage({
             >
               {useSubstratePressures && pressuresView
                 ? `Today's pressures · ${pressuresView.totalActive} active · ${pressuresView.demandingDecisions} demanding decisions`
-                : "Today's pressures · 7 active · 3 demanding decisions"}
+                : "Today's pressures · DB substrate required"}
             </div>
             <h2
               style={{
@@ -1382,7 +1277,7 @@ export function TowerIndexPage({
             >
               {useSubstratePressures && pressuresView
                 ? pressuresView.sectionHeadline
-                : 'Three pressures need a CFO posture before the EA renewal closes.'}
+                : 'Tower needs tenant-bound data before it can rank portfolio pressures.'}
             </h2>
             <p
               style={{
@@ -1397,128 +1292,18 @@ export function TowerIndexPage({
             </p>
           </div>
 
-          {/* Pressures list — T-6: substrate-bound when available, legacy fallback otherwise. */}
+          {/* Pressures list — T-6: substrate-bound only. */}
           <div style={{ padding: '0 32px 28px', display: 'flex', flexDirection: 'column' }}>
-            {useSubstratePressures && pressuresView ? (
+            {useSubstratePressures && pressuresView && pressuresView.cards.length > 0 ? (
               pressuresView.cards.map((card) => (
                 <SubstratePressure key={card.key} card={card} />
               ))
             ) : (
-              <>
-                <Pressure
-                  type="cost"
-                  id="P-COST-2026-04"
-                  label={'Cost\nOverrun'}
-                  headline="LLM inference burn is on pace to overrun the AI envelope by $2.4M before Q3."
-                  lede="Five programs share the budget pool. Joule and the internal Copilot pilot are 71% of token volume but 38% of measured value. Sentinel raised the flag 12 days ago; it's been trending faster since the Q1 model swap."
-                  meta={[
-                    { k: 'Programs affected', v: '5' },
-                    { k: 'First seen', v: '12 days ago' },
-                    { k: 'Owner', v: 'P. Iyer · CTO office' },
-                  ]}
-                  magnitude={
-                    <span style={cvalStyle('high')}>
-                      $2.4<span style={{ fontSize: 13, fontWeight: 500, fontStyle: 'italic', color: T.GRAY_DK, marginLeft: 2, letterSpacing: 0 }}>M</span>
-                    </span>
-                  }
-                  magnitudeLabel="Q3 projected overrun · HIGH conf"
-                  nextAction={
-                    <>
-                      Atlas suggests <strong style={{ color: T.INK }}>opening a Move on token-routing policy</strong> — would deflect ~$1.6M without touching the rate cards.
-                    </>
-                  }
-                />
-                <Pressure
-                  type="dupl"
-                  id="P-DUPL-2026-02"
-                  label={'Capability\nDuplication'}
-                  headline="Now Assist and M365 Copilot are converging on the same internal helpdesk use case."
-                  lede="Both tools are being adopted by IT support, with overlapping deflection metrics and conflicting analytics. ServiceNow renewal is Q4 ($4.1M ARR); the duplication is real but attribution to either tool is currently low-confidence."
-                  meta={[
-                    { k: 'Programs affected', v: '2' },
-                    { k: 'First seen', v: '28 days ago' },
-                    { k: 'Owner', v: 'J. Park · Steward' },
-                  ]}
-                  magnitude={
-                    <span style={cvalStyle('med')}>
-                      $1.2<span style={{ fontSize: 13, fontWeight: 500, fontStyle: 'italic', color: T.GRAY_DK, marginLeft: 2, letterSpacing: 0 }}>M</span>
-                      <ConfTag conf="med" />
-                    </span>
-                  }
-                  magnitudeLabel="Annual exposure · attribution loose"
-                  nextAction={
-                    <>
-                      Atlas wants to <strong style={{ color: T.INK }}>run a 6-week clean attribution study</strong> before recommending consolidation.
-                    </>
-                  }
-                />
-                <Pressure
-                  type="vend"
-                  id="P-VEND-2026-01"
-                  label={'Vendor\nClock'}
-                  headline="Microsoft EA renewal closes in 47 days. Brief is open in Source. Decision posture undefined."
-                  lede="$31.4M aggregate spend. Three product lines in scope (M365, Azure consumption, Copilot E5). Atlas's pre-brief surfaced two negotiation levers tied to current pressures: tie EA volume to inference deflection (P-COST), and use the Now Assist overlap (P-DUPL) as a swap argument on Copilot quantity."
-                  meta={[
-                    { k: 'Programs touched', v: '11' },
-                    { k: 'Lead', v: 'M. Desai · Source' },
-                    { k: 'Brief', v: 'draft v2 in Source' },
-                  ]}
-                  magnitude={
-                    <span style={cvalStyle('high')}>
-                      47<span style={{ fontSize: 13, fontWeight: 500, fontStyle: 'italic', color: T.GRAY_DK, marginLeft: 2, letterSpacing: 0 }}>d</span>
-                    </span>
-                  }
-                  magnitudeLabel="Until close · HIGH conf · CFO posture due"
-                  nextAction={
-                    <>
-                      Atlas drafted a <strong style={{ color: T.INK }}>negotiation thesis</strong> tying the EA to two open pressures. Read in Source brief.
-                    </>
-                  }
-                />
-                <Pressure
-                  type="adopt"
-                  id="P-ADOPT-2026-03"
-                  label={'Adoption\nGap'}
-                  headline="M365 Copilot adoption is at 24% of seats licensed. Plan was 60% by month 6."
-                  lede={
-                    <>
-                      Six months in. Two functions over 50% (Finance, Legal); IT and Sales under 15%. Steward is preparing a re-baseline proposal. <em>This is not a decision today — it&apos;s a watch item until the EA brief lands.</em>
-                    </>
-                  }
-                  meta={[
-                    { k: 'Seats licensed', v: '8,400' },
-                    { k: 'Active seats', v: '2,016' },
-                    { k: 'Watch since', v: '2 weeks' },
-                  ]}
-                  magnitude={
-                    <span style={cvalStyle('med')}>
-                      24<span style={{ fontSize: 13, fontWeight: 500, fontStyle: 'italic', color: T.GRAY_DK, marginLeft: 2, letterSpacing: 0 }}>%</span>
-                      <ConfTag conf="med" />
-                    </span>
-                  }
-                  magnitudeLabel="Active rate · vs 60% target"
-                  nextAction="Watch · re-baseline pending. Tied to EA brief."
-                />
-                <Pressure
-                  type="value"
-                  id="P-VALUE-2026-05"
-                  label={'Value\nLag'}
-                  headline="Joule rollout is under-realizing on the projected efficiency line."
-                  lede="Committed $3.2M annual; measured $1.4M after 9 months. Steward attributes 60% of the gap to slower-than-planned RPA pipeline migration. Re-baseline expected at next governance review."
-                  meta={[
-                    { k: 'Tied program', v: 'SAP Joule rollout' },
-                    { k: 'Owner', v: 'SAP COE' },
-                  ]}
-                  magnitude={
-                    <span style={cvalStyle('med')}>
-                      $1.8<span style={{ fontSize: 13, fontWeight: 500, fontStyle: 'italic', color: T.GRAY_DK, marginLeft: 2, letterSpacing: 0 }}>M</span>
-                      <ConfTag conf="med" />
-                    </span>
-                  }
-                  magnitudeLabel="Realization gap · 9 months in"
-                  nextAction="Re-baseline at next governance review."
-                />
-              </>
+              <TowerEmptyState
+                eyebrow="No pressure cards"
+                title="No tenant pressure signals were derived from the DB."
+                body={pressuresView?.emptyHint ?? 'Tower will stay empty until the active client has initiative and vendor substrate.'}
+              />
             )}
           </div>
 
@@ -1536,7 +1321,7 @@ export function TowerIndexPage({
                   marginBottom: 8,
                 }}
               >
-                Strategic alignment · {alignment2x2View.dots.length > 0 ? alignment2x2View.totalPlotted : 23} programs plotted · current Value lens
+                Strategic alignment · {alignment2x2View.totalPlotted} programs plotted · current Value lens
               </div>
               <h2
                 style={{
@@ -1603,30 +1388,29 @@ export function TowerIndexPage({
                 position="tl"
                 qlabel="High value · Low alignment"
                 qhead="Useful but off-strategy. Sustain or rationalize."
-                dots={resolveQuadrantDots(alignment2x2View, 'tl', LEGACY_2X2_DOTS.tl)}
+                dots={resolveQuadrantDots(alignment2x2View, 'tl')}
               />
               <Quadrant
                 position="tr"
                 qlabel="High value · High alignment · the prize"
                 qhead="Defend, scale, lock baselines."
-                dots={resolveQuadrantDots(alignment2x2View, 'tr', LEGACY_2X2_DOTS.tr)}
+                dots={resolveQuadrantDots(alignment2x2View, 'tr')}
               />
               <Quadrant
                 position="bl"
                 qlabel="Low value · Low alignment"
                 qhead={
                   <>
-                    Sunset candidates.{' '}
-                    <span style={{ color: T.RED, fontFamily: T.MONO, fontSize: 11 }}>3 flagged</span>
+                    Sunset candidates.
                   </>
                 }
-                dots={resolveQuadrantDots(alignment2x2View, 'bl', LEGACY_2X2_DOTS.bl)}
+                dots={resolveQuadrantDots(alignment2x2View, 'bl')}
               />
               <Quadrant
                 position="br"
                 qlabel="Low value · High alignment"
                 qhead="Strategic but not yet earning. Watch closely."
-                dots={resolveQuadrantDots(alignment2x2View, 'br', LEGACY_2X2_DOTS.br)}
+                dots={resolveQuadrantDots(alignment2x2View, 'br')}
               />
 
               {/* X axis */}
@@ -1681,7 +1465,7 @@ export function TowerIndexPage({
                     textTransform: 'uppercase',
                   }}
                 >
-                  Strategic bets · {alignment2x2View.strategicBets.length > 0 ? alignment2x2View.strategicBets.length : 3} programs · T-FOW lens
+                  Strategic bets · {alignment2x2View.strategicBets.length} programs · T-FOW lens
                 </span>
                 <span
                   style={{
@@ -1698,21 +1482,19 @@ export function TowerIndexPage({
               <div
                 style={{
                   display: 'grid',
-                  gridTemplateColumns: `repeat(${Math.max(alignment2x2View.strategicBets.length, 3)}, 1fr)`,
+                  gridTemplateColumns: `repeat(${Math.max(alignment2x2View.strategicBets.length, 1)}, 1fr)`,
                   gap: 14,
                 }}
               >
-                {(alignment2x2View.strategicBets.length > 0
-                  ? alignment2x2View.strategicBets.map((bet) => ({
+                {alignment2x2View.strategicBets.length > 0 ? (
+                  alignment2x2View.strategicBets.map((bet) => ({
                       key: bet.displayId,
                       displayId: bet.displayId,
                       name: bet.name,
                       meta: `${bet.stageDetail} · ${bet.amount} committed · attribution ${bet.confidenceLevel}`,
                       desc: null as ReactNode,
                       cta: null as ReactNode,
-                    }))
-                  : LEGACY_STRATEGIC_BETS
-                ).map((card) => (
+                    })).map((card) => (
                   <div
                     key={card.key}
                     data-testid={
@@ -1778,7 +1560,14 @@ export function TowerIndexPage({
                     )}
                     {card.cta && <div>{card.cta}</div>}
                   </div>
-                ))}
+                  ))
+                ) : (
+                  <TowerEmptyState
+                    eyebrow="No strategic bets"
+                    title="No foundation-stage initiatives were found in the DB."
+                    body="Tower will not add placeholder bets for this tenant."
+                  />
+                )}
               </div>
             </div>
           </section>
@@ -1833,102 +1622,44 @@ export function TowerIndexPage({
         </div>
 
         {/* ─── ATLAS COLUMN (synthesis-only · composer migrated to AgentDock) ─── */}
-        {atlasObservationsView && !atlasObservationsView.isEmpty ? (
-          <AtlasColumn
-            headline={atlasObservationsView.headline}
-            meta={`${timestamp} · Read time 90 sec · ${atlasObservationsView.metaSuffix}`}
-            synth={[
-              ...atlasObservationsView.observations.map((o: AtlasObservation) => ({
-                h: `Observation · ${String(o.number).padStart(2, '0')}`,
-                body: <>{o.body}</>,
-                actions: o.actions.map((a) => ({
-                  label: a.label,
-                  href: a.href,
-                  timeHint: a.timeHint,
-                  pending: a.pending,
-                  secondary: a.secondary,
-                })),
-              })),
-              {
-                h: 'If you only do one thing today',
-                body: <em>{atlasObservationsView.ifYouOnlyDoOneToday}</em>,
-              },
-            ]}
-          />
-        ) : (
-          <AtlasColumn
-            headline="Three threads run through this morning's pressures."
-            meta={`${timestamp} · Read time 90 sec · 3 observations · 4 prompts`}
-            synth={[
-              {
-                h: 'Observation · 01',
-                body: (
-                  <>
-                    The <strong style={{ color: T.INK }}>EA renewal</strong> isn&apos;t separate from the{' '}
-                    <strong style={{ color: T.INK }}>cost overrun</strong> and{' '}
-                    <strong style={{ color: T.INK }}>capability duplication</strong> — they share root nodes. If you take a posture on the EA without resolving the overlap, you&apos;ll renew at the wrong volumes.
-                  </>
-                ),
-                actions: [
+        <AtlasColumn
+          headline={
+            atlasObservationsView?.headline ??
+            'Atlas needs tenant-bound Tower substrate.'
+          }
+          meta={`${timestamp} · ${atlasObservationsView?.metaSuffix ?? 'No DB observations'}`}
+          synth={
+            atlasObservationsView && atlasObservationsView.observations.length > 0
+              ? [
+                  ...atlasObservationsView.observations.map((o: AtlasObservation) => ({
+                    h: `Observation · ${String(o.number).padStart(2, '0')}`,
+                    body: <>{o.body}</>,
+                    actions: o.actions.map((a) => ({
+                      label: a.label,
+                      href: a.href,
+                      timeHint: a.timeHint,
+                      pending: a.pending,
+                      secondary: a.secondary,
+                    })),
+                  })),
                   {
-                    label: 'Open EA brief in Source',
-                    href: '/source',
-                    pending: true,
+                    h: 'If you only do one thing today',
+                    body: <em>{atlasObservationsView.ifYouOnlyDoOneToday}</em>,
                   },
-                ],
-              },
-              {
-                h: 'Observation · 02',
-                body: (
-                  <>
-                    Your <strong style={{ color: T.INK }}>portfolio ROI is at 2.8×, target 3.5×</strong>. The shortfall is concentrated in three programs (Joule, Copilot E5, Now Assist) where measured value is lagging committed by <em>more than 40%</em>. Two of those three are in the 47-day EA window.
-                  </>
-                ),
-                actions: [
+                ]
+              : [
                   {
-                    label: 'See programs lagging on value',
-                    href: '/programs?lens=value',
+                    h: 'DB substrate required',
+                    body: (
+                      <>
+                        {atlasObservationsView?.emptyHint ??
+                          'No tenant-bound initiatives or vendors were loaded, so Atlas is not synthesizing observations for this Tower view.'}
+                      </>
+                    ),
                   },
-                  {
-                    label: 'Set attribution baseline',
-                    timeHint: '5 min',
-                    href: '/tower/settings/attribution',
-                    pending: true,
-                    secondary: true,
-                  },
-                ],
-              },
-              {
-                h: 'Observation · 03',
-                body: (
-                  <>
-                    Adoption confidence is <strong style={{ color: T.INK }}>LOW</strong> because Okta and EntraID aren&apos;t connected. Until those land, the 24% Copilot number is directional, not auditable.
-                  </>
-                ),
-                actions: [
-                  {
-                    label: 'Connect identity sources',
-                    timeHint: '5 min',
-                    href: '/admin/connectors',
-                  },
-                  {
-                    label: 'Connect Okta + EntraID',
-                    href: '/admin/connectors',
-                    secondary: true,
-                  },
-                ],
-              },
-              {
-                h: 'If you only do one thing today',
-                body: (
-                  <>
-                    <em>Open the EA brief and read Atlas&apos;s negotiation thesis.</em> The other pressures route through it. Steward and Sentinel are both aligned on what the brief should ask for.
-                  </>
-                ),
-              },
-            ]}
-          />
-        )}
+                ]
+          }
+        />
       </div>
   );
 
