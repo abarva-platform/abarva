@@ -59,7 +59,21 @@ const C = {
   hair: 'rgba(21,21,26,0.08)',
 };
 
-export function ProductMarketingPage() {
+interface ProductMarketingSpotlight {
+  clientName: string;
+  clientShortName: string;
+}
+
+const DEFAULT_SPOTLIGHT: ProductMarketingSpotlight = {
+  clientName: 'your active client',
+  clientShortName: 'your client',
+};
+
+export function ProductMarketingPage({
+  spotlight = DEFAULT_SPOTLIGHT,
+}: {
+  spotlight?: ProductMarketingSpotlight;
+}) {
   return (
     <div
       data-testid="product-marketing-page"
@@ -72,19 +86,19 @@ export function ProductMarketingPage() {
         minHeight: '100vh',
       }}
     >
-      <Hero />
+      <Hero spotlight={spotlight} />
       <FourSurfaces />
       <MoveLifecycle />
-      <Substrate />
+      <Substrate spotlight={spotlight} />
       <Differentiators />
-      <Cta />
+      <Cta spotlight={spotlight} />
     </div>
   );
 }
 
 // ─── Hero ─────────────────────────────────────────────────────────
 
-function Hero() {
+function Hero({ spotlight }: { spotlight: ProductMarketingSpotlight }) {
   return (
     <section
       style={{
@@ -167,7 +181,7 @@ function Hero() {
                 gap: 8,
               }}
             >
-              See it on Meridian →
+              See it on {spotlight.clientShortName} →
             </Link>
             <Link
               href="/intelligence#brief"
@@ -936,7 +950,7 @@ function MoveLifecycle() {
 
 // ─── Substrate ────────────────────────────────────────────────────
 
-function Substrate() {
+function Substrate({ spotlight }: { spotlight: ProductMarketingSpotlight }) {
   return (
     <section style={{ padding: '96px 64px', borderBottom: `1px solid ${C.border}` }}>
       <div
@@ -981,7 +995,7 @@ function Substrate() {
             />
           </div>
         </div>
-        <SubstrateIllustration />
+        <SubstrateIllustration spotlight={spotlight} />
       </div>
     </section>
   );
@@ -1038,7 +1052,11 @@ function SubstrateRow({
   );
 }
 
-function SubstrateIllustration() {
+function SubstrateIllustration({
+  spotlight,
+}: {
+  spotlight: ProductMarketingSpotlight;
+}) {
   // Three concentric layered rings.
   return (
     <svg viewBox="0 0 420 420" width="100%" style={{ maxWidth: 420 }} role="img" aria-label="Substrate">
@@ -1068,7 +1086,7 @@ function SubstrateIllustration() {
         TENANT
       </text>
       <text x="210" y="218" fontFamily={F_SERIF} fontSize="20" fill={C.ink} fontWeight={500} textAnchor="middle">
-        Meridian
+        {spotlight.clientShortName}
       </text>
       <text x="210" y="234" fontFamily={F_MONO} fontSize="9" fill={C.inkMute} letterSpacing="0.12em" textAnchor="middle">
         23 / 23 SEGMENTS
@@ -1241,7 +1259,7 @@ function DiffMark({ variant }: { variant: 'grounded' | 'overlay' | 'agent' }) {
 
 // ─── CTA ─────────────────────────────────────────────────────────
 
-function Cta() {
+function Cta({ spotlight }: { spotlight: ProductMarketingSpotlight }) {
   return (
     <section
       style={{
@@ -1286,8 +1304,7 @@ function Cta() {
             margin: '0 0 36px',
           }}
         >
-          Meridian Health is loaded with 23 substrate segments, 47 patterns,
-          and 7 active AI initiatives. Pop in and see how{' '}
+          {spotlight.clientName} is loaded as this signed-in workspace. Pop in and see how{' '}
           <AbarvaWordmark inverse /> shapes their
           quarterly read.
         </p>
@@ -1306,7 +1323,7 @@ function Cta() {
               textDecoration: 'none',
             }}
           >
-            Open Intelligence on Meridian →
+            Open Intelligence on {spotlight.clientShortName} →
           </Link>
           <Link
             href="/home"
