@@ -16,6 +16,22 @@ export function classifyAtlasIntent(message: string): AtlasClassification {
     return { intent: 'morning_summary', routeType: 'scripted' };
   }
 
+  if (
+    hasAny(text, [
+      'what are others doing',
+      'what are peers doing',
+      'what are other companies doing',
+      'industry insight',
+      'industry context',
+      'knowledge corpus',
+      'corpus',
+      'market practice',
+      'best practice',
+    ])
+  ) {
+    return { intent: 'llm', routeType: 'llm' };
+  }
+
   if (hasAny(text, ['good morning', 'morning summary', 'welcome back', 'portfolio look like', 'portfolio status'])) {
     return { intent: 'morning_summary', routeType: 'scripted' };
   }

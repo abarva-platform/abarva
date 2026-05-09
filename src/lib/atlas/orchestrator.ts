@@ -246,7 +246,12 @@ export async function runAtlasTurnDetailed(input: {
     response = metricTurn.response;
     toolResults = metricTurn.toolResults;
   } else if (classification.routeType === 'scripted' || classification.routeType === 'hybrid') {
-    const scripted = await runScriptedAtlasIntent(input.ctx, classification.intent, input.message);
+    const scripted = await runScriptedAtlasIntent(
+      input.ctx,
+      classification.intent,
+      input.message,
+      input.surfaceContext,
+    );
     toolResults = scripted.toolResults;
     response = makeScriptedChatResponse(
       {
@@ -257,7 +262,7 @@ export async function runAtlasTurnDetailed(input: {
       scripted,
     );
   } else {
-    const llm = await runAtlasLlm(input.ctx, input.message);
+    const llm = await runAtlasLlm(input.ctx, input.message, input.surfaceContext);
     modelName = llm.modelName;
     toolResults = llm.toolResults;
     response = {
@@ -279,7 +284,9 @@ export async function runAtlasTurnDetailed(input: {
     summary: response.response.slice(0, 480),
     details: {
       source_message: input.message,
-      system_prompt: buildAtlasSystemPrompt(toolResults.portfolio?.clientName ?? 'Apex Retail Group'),
+      system_prompt: buildAtlasSystemPrompt(
+        toolResults.towerState?.client.clientName ?? toolResults.portfolio?.clientName ?? 'Active client',
+      ),
       suggestions: response.suggestions,
       surface_context: input.surfaceContext ?? null,
       metric_explanation: response.metricExplanation ?? null,
