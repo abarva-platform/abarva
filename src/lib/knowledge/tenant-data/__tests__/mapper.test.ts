@@ -72,10 +72,13 @@ describe('mapTenantRecordToContextItem — per record_kind', () => {
       classification: 'internal',
       payload: {
         current_value: '51.1%',
+        trend: 'Down 130bp',
         target_fy2026: '56.4%',
         source_system: 'system:meridian:epic-ambulatory',
         data_owner: 'person:meridian:harold-kim',
-        confidence: 0.9,
+        business_owner: 'person:meridian:cfo',
+        confidence_in_measurement: 'High',
+        notes: 'Board recovery target',
       },
     });
 
@@ -85,15 +88,19 @@ describe('mapTenantRecordToContextItem — per record_kind', () => {
     expect(item!.kind).toBe('kpi_metric');
     expect(item!.id).toBe('tenant-data:kpi_dictionary:kpi:meridian:001');
     expect(item!.summary).toContain('current 51.1%');
+    expect(item!.summary).toContain('trend Down 130bp');
     expect(item!.summary).toContain('target 56.4%');
     expect(item!.summary).toContain('source system:meridian:epic-ambulatory');
     expect(item!.summary).toContain('data owner person:meridian:harold-kim');
-    expect(item!.summary).toContain('confidence 0.9');
+    expect(item!.summary).toContain('business owner person:meridian:cfo');
+    expect(item!.summary).toContain('confidence High');
+    expect(item!.summary).toContain('notes Board recovery target');
     expect(item!.provenanceIds).toEqual(
       expect.arrayContaining([
         'kpi_dictionary:kpi:meridian:001',
         'system:meridian:epic-ambulatory',
         'person:meridian:harold-kim',
+        'person:meridian:cfo',
       ]),
     );
     expect(item!.sensitivity).toBe('summary');
