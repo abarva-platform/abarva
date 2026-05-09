@@ -192,9 +192,14 @@ describe('SourcePortfolioPage redesigned render', () => {
 
     expect(html).toContain('data-portfolio-state="partial"');
     expect(html).toContain('source-portfolio-header');
+    expect(html).toContain('source-portfolio-executive-readout');
     expect(html).toContain('source-portfolio-filter-sidebar');
     expect(html).toContain('source-portfolio-events-table');
     expect(html).toContain('source-portfolio-search');
+    expect(html).toContain('Portfolio view');
+    expect(html).toContain('Table');
+    expect(html).toContain('Kanban');
+    expect(html).toContain('Value map');
     // No stage-band groups in partial state.
     expect(html).toContain('data-group-by="none"');
     expect(html).not.toContain('source-portfolio-group-discovery');
@@ -302,6 +307,8 @@ describe('SourcePortfolioPage redesigned render', () => {
     expect(html).toContain('v2 pending');
     // "entered N days ago" copy
     expect(html).toContain('entered 1 day ago');
+    // The table now collapses tenant/code/rigor into the event column.
+    expect(html).toContain('APEX');
   });
 
   it('does not include any pulse animation class — productivity-first design', () => {
