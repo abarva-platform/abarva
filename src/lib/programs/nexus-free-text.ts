@@ -1,4 +1,9 @@
 import { getAnthropicClient } from '@/lib/agent/stream';
+import {
+  buildAgentGroundingDisclosure,
+  formatUnsupportedClaimFlag,
+  type AgentGroundingDisclosure,
+} from '@/lib/intelligence/canonical/agent-grounding-disclosure';
 import type {
   CanonicalConfidenceLevel,
   CanonicalIndustry,
@@ -105,6 +110,7 @@ export interface ProgramsNexusTurnResponse {
   suggestions: string[];
   activePatternSlug: string | null;
   patternEvidence: ProgramsNexusPatternEvidence;
+  groundingDisclosure: AgentGroundingDisclosure;
 }
 
 export interface ProgramsNexusPatternEvidencePattern {
@@ -359,6 +365,28 @@ function buildPatternEvidence(
     query: canonicalPatternIndex.filters_applied,
     patterns,
   };
+}
+
+function buildNexusGroundingDisclosure(
+  patternEvidence: ProgramsNexusPatternEvidence,
+): AgentGroundingDisclosure {
+  return buildAgentGroundingDisclosure({
+    source: patternEvidence.source,
+    status: patternEvidence.status,
+    warnings: patternEvidence.warnings,
+    patterns: patternEvidence.patterns.map((pattern) => ({
+      canonicalId: pattern.canonicalId,
+      title: pattern.title,
+      sourceBasis: pattern.sourceBasis,
+      confidenceLevel: pattern.confidenceLevel,
+      confidenceRationale: pattern.confidenceRationale,
+      sourceReferenceCount: pattern.sourceReferenceCount,
+      missingRequiredFields: pattern.missingRequiredFields,
+      missingProvenance: pattern.missingProvenance,
+      unsupportedClaimFlags: pattern.unsupportedClaimFlags.map(formatUnsupportedClaimFlag),
+      matchReasons: pattern.matchReasons,
+    })),
+  });
 }
 
 function missingEvidenceLine(patternEvidence: ProgramsNexusPatternEvidence): string | null {
@@ -706,6 +734,7 @@ export async function runProgramsNexusTurn(args: {
   canonicalPatternIndex?: CanonicalPatternIndexResult | null;
 }): Promise<ProgramsNexusTurnResponse> {
   const patternEvidence = buildPatternEvidence(args.canonicalPatternIndex);
+  const groundingDisclosure = buildNexusGroundingDisclosure(patternEvidence);
   const canonicalCitations = args.canonicalPatternIndex?.status === 'ready'
     ? args.canonicalPatternIndex.patterns.slice(0, 3).map(buildCanonicalCitation)
     : [];
@@ -770,6 +799,7 @@ export async function runProgramsNexusTurn(args: {
     suggestions: buildFollowUps(citations, args.message),
     activePatternSlug: citations[0]?.slug ?? anchorKey,
     patternEvidence,
+    groundingDisclosure,
   };
 }
 

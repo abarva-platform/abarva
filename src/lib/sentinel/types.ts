@@ -1,3 +1,5 @@
+import type { AgentGroundingDisclosure } from '@/lib/intelligence/canonical/agent-grounding-disclosure';
+
 export type SentinelConfidenceBand = 'high' | 'medium' | 'thin';
 
 export interface SentinelCitation {
@@ -50,4 +52,5 @@ export interface SentinelQueryResponse {
   suggestions: string[];
   activePatternSlug: string | null;
   grounding: SentinelGroundingSummary;
+  groundingDisclosure: AgentGroundingDisclosure;
 }

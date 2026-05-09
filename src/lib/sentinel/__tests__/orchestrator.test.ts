@@ -36,6 +36,12 @@ describe('runSentinelTurn canonical grounding', () => {
       limit: 3,
     }));
     expect(result.grounding.status).toBe('no_match');
+    expect(result.groundingDisclosure).toMatchObject({
+      source: 'persisted_canonical_corpus',
+      status: 'no_match',
+      retrievedPatternCount: 0,
+      warnings: ['WARNING_CANONICAL_PATTERN_NO_MATCH: no persisted canonical patterns matched the query.'],
+    });
     expect(result.grounding.gaps).toEqual(expect.arrayContaining([
       expect.objectContaining({ type: 'canonical_pattern_no_match' }),
     ]));

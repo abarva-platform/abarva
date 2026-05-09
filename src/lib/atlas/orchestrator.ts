@@ -12,6 +12,7 @@ import { makeScriptedChatResponse, runScriptedAtlasIntent } from '@/lib/atlas/sc
 import { listInitiativesForClient, listVendorsForClient } from '@/lib/admin/ai-initiatives/queries';
 import { buildTowerBandMetrics, type TowerLens } from '@/lib/tower/band-metrics-view';
 import { buildMetricExplanation, renderMetricExplanationForAtlas } from '@/lib/tower/metric-explanation-view';
+import { buildAtlasGroundingDisclosure } from '@/lib/atlas/value-grounding';
 import {
   ATLAS_REASONING_MODEL,
   ATLAS_TRAINING_PACKAGE_VERSION,
@@ -288,6 +289,7 @@ export async function runAtlasTurn(input: {
     signalId: detailed.signalId ?? null,
     observationId: detailed.observationId ?? null,
     toolsUsed: detailed.toolsUsed,
+    groundingDisclosure: detailed.groundingDisclosure,
   };
 }
 
@@ -361,6 +363,14 @@ export async function runAtlasTurnDetailed(input: {
       toolsUsed: llm.toolsUsed,
       signalId: llm.toolResults.signalDetail?.id ?? llm.toolResults.signals?.[0]?.id ?? null,
       observationId: null,
+    };
+  }
+
+  const groundingDisclosure = buildAtlasGroundingDisclosure(toolResults.valueGrounding);
+  if (groundingDisclosure) {
+    response = {
+      ...response,
+      groundingDisclosure,
     };
   }
 

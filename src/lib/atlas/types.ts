@@ -2,6 +2,7 @@ import type { MetricExplanation } from '@/lib/tower/metric-explanation-view';
 import type { MetricProvenanceKey } from '@/lib/tower/metric-provenance';
 import type { RetrievalContext } from '@/lib/agent/retrieval';
 import type { AtlasTowerCurrentState } from '@/lib/atlas/tower-grounding';
+import type { AgentGroundingDisclosure } from '@/lib/intelligence/canonical/agent-grounding-disclosure';
 
 export type AtlasRouteType = 'scripted' | 'llm' | 'hybrid' | 'tool_augmented';
 
@@ -214,4 +215,5 @@ export interface AtlasChatResponse {
   observationId?: string | null;
   toolsUsed: string[];
   metricExplanation?: MetricExplanation;
+  groundingDisclosure?: AgentGroundingDisclosure;
 }
