@@ -131,10 +131,11 @@ describe('ADMIN10 — Legacy /platform/admin/* disposition', () => {
 
     it('admin nav link href targets /admin (not /platform/admin)', () => {
       const src = readFileSync(resolve(root, navPath), 'utf8');
-      // The admin nav item href should resolve to '/admin' — no longer the
-      // legacy '/platform/admin' redirect hop.
-      expect(src).toContain("href={isAdmin ? '/admin' : undefined}");
-      expect(src).not.toContain("href={isAdmin ? '/platform/admin' : undefined}");
+      // The admin nav item must route to '/admin'. The guard block (isAdmin && ...)
+      // makes the ternary redundant — href="/admin" is the type-safe canonical form.
+      expect(src).toContain("href=\"/admin\"");
+      // Must not still point to the legacy platform/admin redirect hop.
+      expect(src).not.toContain('/platform/admin');
     });
   });
 

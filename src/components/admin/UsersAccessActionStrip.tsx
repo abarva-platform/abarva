@@ -73,6 +73,7 @@ export function UsersAccessActionStrip({ actions }: UsersAccessActionStripProps)
             key={action.id}
             data-action-id={action.id}
             data-action-status="hard_gated"
+            aria-disabled="true"
             style={{
               display: 'inline-flex',
               alignItems: 'center',
