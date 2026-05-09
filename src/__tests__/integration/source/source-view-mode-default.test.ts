@@ -10,8 +10,8 @@ type MockWindow = {
 function installMockWindow(storedValue: string | null): MockWindow {
   const mockWindow: MockWindow = {
     localStorage: {
-      getItem: jest.fn(() => storedValue),
-      setItem: jest.fn(),
+      getItem: jest.fn<string | null, [string]>(() => storedValue),
+      setItem: jest.fn<void, [string, string]>(),
     },
   };
 
@@ -24,7 +24,7 @@ function installMockWindow(storedValue: string | null): MockWindow {
 }
 
 function removeMockWindow() {
-  delete (globalThis as typeof globalThis & { window?: unknown }).window;
+  delete (globalThis as { window?: unknown }).window;
 }
 
 describe('Source portfolio view-mode default', () => {
