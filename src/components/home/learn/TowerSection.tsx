@@ -29,7 +29,7 @@ export function TowerSection() {
             A signal generated during execution — e.g. a KPI that missed target, a vendor dependency flagged, or a timeline slip. <em>These are fed back into Intelligence and may spawn new Moves.</em>
           </Term>
           <Term name="Atlas">
-            The Tower agent. Answers questions about portfolio status, execution risk, and signal health. <em>"Atlas, which Move is at highest risk of missing P4 this quarter?"</em>
+            The Tower agent. Answers questions about portfolio status, execution risk, and signal health. <em>&ldquo;Atlas, which Move is at highest risk of missing P4 this quarter?&rdquo;</em>
           </Term>
         </TermGrid>
       </Section>

@@ -85,7 +85,7 @@ export function GlossarySection() {
           <Term name="Signal">An AI-detected pattern in operational or financial data, surfaced automatically by the intelligence substrate.</Term>
           <Term name="Soft criterion">An advisory gate requirement. Gate can clear even if open, but shows as a warning in audit trail.</Term>
           <Term name="Substrate">The combined data layer all agents query: connector data, document embeddings, and tenant context.</Term>
-          <Term name="Tenant">Your organization's isolated AbarVa instance. All data, agents, and Moves are scoped to your tenant.</Term>
+          <Term name="Tenant">Your organization&rsquo;s isolated AbarVa instance. All data, agents, and Moves are scoped to your tenant.</Term>
         </TermGrid>
       </Section>
     </>

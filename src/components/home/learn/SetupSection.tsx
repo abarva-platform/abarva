@@ -12,7 +12,7 @@ export function SetupSection() {
         <Eyebrow light>Setup</Eyebrow>
         <SectionTitle light>Setup — before you begin</SectionTitle>
         <Lead light>
-          Setup is where you wire AbarVa into your organization's data and context. Without Setup, Intelligence has nothing to analyze and Nexus produces generic documents. Good Setup = high-quality everything else.
+          Setup is where you wire AbarVa into your organization&rsquo;s data and context. Without Setup, Intelligence has nothing to analyze and Nexus produces generic documents. Good Setup = high-quality everything else.
         </Lead>
       </HeroBand>
 
@@ -21,7 +21,7 @@ export function SetupSection() {
         <Eyebrow>Setup · Connectors</Eyebrow>
         <SectionTitle>Connectors & data sources</SectionTitle>
         <Lead>
-          Connectors are the pipes from your organization's systems into AbarVa's intelligence substrate. They're what makes signals specific to your business rather than generic industry patterns.
+          Connectors are the pipes from your organization&rsquo;s systems into AbarVa&rsquo;s intelligence substrate. They&rsquo;re what makes signals specific to your business rather than generic industry patterns.
         </Lead>
 
         <TileGrid>
@@ -52,7 +52,7 @@ export function SetupSection() {
         </TileGrid>
 
         <Callout kind="warn" icon="⚠️" label="Foundation readiness matters">
-          The "Foundation readiness" field you fill during Move origination (P0) is partly a reflection of Setup completeness. If connectors are sparse, Nexus will flag a readiness gap that will slow P3 design and P4 business case quality. The more connected Setup is, the better every Move document becomes.
+          The &ldquo;Foundation readiness&rdquo; field you fill during Move origination (P0) is partly a reflection of Setup completeness. If connectors are sparse, Nexus will flag a readiness gap that will slow P3 design and P4 business case quality. The more connected Setup is, the better every Move document becomes.
         </Callout>
       </Section>
 
@@ -61,7 +61,7 @@ export function SetupSection() {
         <Eyebrow>Setup · Tenant Profile</Eyebrow>
         <SectionTitle>Tenant profile & org context</SectionTitle>
         <Lead>
-          The tenant profile is your organization's context layer — who the key executives are, what the strategic priorities are, and how the business is structured. This is how AbarVa learns to talk about your company correctly.
+          The tenant profile is your organization&rsquo;s context layer — who the key executives are, what the strategic priorities are, and how the business is structured. This is how AbarVa learns to talk about your company correctly.
         </Lead>
 
         <StepList>
@@ -69,7 +69,7 @@ export function SetupSection() {
             Name and title for each C-suite and VP-level stakeholder. When you name a sponsor in a Move, Nexus can look up their role and ensure the charter addresses their reporting context.
           </Step>
           <Step title="Set your strategic priorities">
-            2–5 top-level priorities your organization is working on (e.g. "Cost efficiency", "Customer experience transformation"). Intelligence uses these to weight which patterns are most relevant to surface.
+            2–5 top-level priorities your organization is working on (e.g. &ldquo;Cost efficiency&rdquo;, &ldquo;Customer experience transformation&rdquo;). Intelligence uses these to weight which patterns are most relevant to surface.
           </Step>
           <Step title="Define your business units">
             A flat list of major divisions or functions. Used to scope Moves correctly and filter Intelligence signals by area of impact.
@@ -92,7 +92,7 @@ export function SetupSection() {
             An assessment of how complete and current your substrate is for a given initiative. <em>Low foundation readiness = higher risk of thin documents and missed risks.</em>
           </Term>
           <Term name="Tenant">
-            Your organization's isolated instance of AbarVa. All data, agents, and Moves are scoped to your tenant — no data is shared across tenants.
+            Your organization&rsquo;s isolated instance of AbarVa. All data, agents, and Moves are scoped to your tenant — no data is shared across tenants.
           </Term>
         </TermGrid>
       </Section>
