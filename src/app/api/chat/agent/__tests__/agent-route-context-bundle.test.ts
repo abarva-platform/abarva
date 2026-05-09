@@ -163,18 +163,24 @@ describe('agent route · CB-6 context-bundle wiring', () => {
     expect(source).toContain('context_bundle_assembly_failed');
   });
 
-  it('injects a private-plane broker receipt into the prompt and suppresses legacy tenant block for private tenants', () => {
+  it('injects private-plane posture while preserving Nexus current-state grounding', () => {
     expect(source).toContain('PRIVATE DATA PLANE CONTEXT:');
     expect(source).toContain('CONTEXT BROKER RECEIPT:');
     expect(source).toContain('Private client facts:');
     expect(source).toContain('Shared AbarVa corpus/worldview chunks:');
-    expect(source).toMatch(/const tenantSystemBlock =\s*privateDataPlane\s*\?/);
-    expect(source).toContain('isNexusProgramsSurface && activeClient?.key && !privateDataPlane');
+    expect(source).toContain('await buildTenantContextBlock(tenantInventoryKey)');
+    expect(source).toContain('if (isTenantCurrentStateSurface && activeClient?.key)');
+    expect(source).toContain('await buildProgramsContextBundleAsync(brokerRequest)');
+    expect(source).not.toContain('isNexusProgramsSurface && activeClient?.key && !privateDataPlane');
   });
 
-  it('treats Strategic Moves as a Nexus current-state surface', () => {
+  it('treats tenant current state as shared grounding for every canonical agent', () => {
+    expect(source).toContain('let agentTenantContextBlock');
+    expect(source).toContain('const isTenantCurrentStateSurface');
+    expect(source).toContain('const enterpriseAgentName = normalizeEnterpriseAgentName(agentName)');
+    expect(source).toContain('agentName: enterpriseAgentName');
     expect(source).toContain('isStrategicMovesSurface(surface)');
-    expect(source).toContain("surface === '/programs' || isProgramDetailSurface || isStrategicMoveSurface");
+    expect(source).toContain("surface.startsWith('/programs') || isStrategicMoveSurface || surface.startsWith('/moves')");
     expect(source).toContain("'system_landscape'");
     expect(source).toContain("'financials'");
     expect(source).toContain("'evidence_provenance'");

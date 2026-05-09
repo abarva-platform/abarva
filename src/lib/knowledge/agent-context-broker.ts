@@ -668,7 +668,7 @@ async function selectPersistedContextItems(
         fetch('vendor_contracts', 6);
       }
       if (request.requestedDomains?.includes('financials')) {
-        fetch('kpi_dictionary', 6);
+        fetch('kpi_dictionary', 24);
       }
       break;
     case 'Sentinel':
@@ -676,22 +676,40 @@ async function selectPersistedContextItems(
       // citation discipline. Intelligence-surface questions often ask
       // for current-state technology, so include it_landscape before
       // falling back to doctrine/pattern-only answers.
+      fetch('org_structure', 8);
+      fetch('program_inventory', 6);
+      fetch('cross_program_signals', 4);
       fetch('evidence_ledger', 8);
-      fetch('kpi_dictionary', 6);
-      fetch('it_landscape', request.surface === 'intelligence' ? 8 : 4);
+      fetch('kpi_dictionary', 24);
+      fetch('it_landscape', request.surface === 'intelligence' ? 8 : 6);
+      if (request.requestedDomains?.includes('vendor_contracts')) {
+        fetch('vendor_contracts', 6);
+      }
       break;
     case 'Atlas':
       // Atlas reasons over financial / system-landscape posture. KPI
       // metrics carry their own provenance (source_system, data_owner,
       // confidence) — surface those verbatim instead of folding into
       // financial_metric (per design doc §3.1).
-      fetch('kpi_dictionary', 8);
-      fetch('it_landscape', 4);
+      fetch('org_structure', 8);
+      fetch('program_inventory', 6);
+      fetch('cross_program_signals', 4);
+      fetch('evidence_ledger', 6);
+      fetch('kpi_dictionary', 24);
+      fetch('it_landscape', 8);
+      if (request.requestedDomains?.includes('vendor_contracts')) {
+        fetch('vendor_contracts', 6);
+      }
       break;
     case 'Steward':
       // Steward owns vendor + policy posture. Compliance segment has
       // no mapper case yet; the mapper drops those records and a
       // follow-on TD-4 extension can add the mapping.
+      fetch('org_structure', 8);
+      fetch('program_inventory', 6);
+      fetch('kpi_dictionary', 12);
+      fetch('it_landscape', 6);
+      fetch('evidence_ledger', 6);
       fetch('vendor_contracts', 6);
       break;
     default:

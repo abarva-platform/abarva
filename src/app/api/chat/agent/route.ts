@@ -99,7 +99,9 @@ import { buildAmsBafoView } from "@/lib/source/ams-bafo-view";
 // founder feedback #1 from the production walk.
 import {
   buildProgramsContextBundle,
+  buildProgramsContextBundleAsync,
   formatProgramsBrokerBundleForPrompt,
+  type ProgramsBrokerRequest,
 } from "@/lib/programs/programs-broker-adapter";
 import {
   buildEnterpriseAgentContextBundle,
@@ -646,10 +648,8 @@ export async function POST(request: Request) {
       ].join('\n')
     : '';
   const tenantSystemBlock =
-    privateDataPlane
-      ? ''
-      : ((await buildTenantContextBlock(tenantInventoryKey)) ??
-          getTenantSystemBlock(effectiveClientKey));
+    (await buildTenantContextBlock(tenantInventoryKey)) ??
+    getTenantSystemBlock(effectiveClientKey);
   const tenantTechnologyContextBlock =
     agentName === 'Sentinel' && typeof surface === 'string' && surface.startsWith('/intelligence')
       ? await buildTenantTechnologyContextBlock(tenantInventoryKey, message, {
@@ -697,13 +697,14 @@ export async function POST(request: Request) {
       ? ARTIFACT_CHANNEL_INSTRUCTIONS
       : '';
 
-  // PR-R · founder feedback #1 — Nexus on /programs surfaces now
-  // receives tenant current-state context from the broker so it can
-  // resolve roles, systems, financial posture, renewals, evidence,
-  // and portfolio/program inventory into named facts without making
-  // them up. Strategic Moves shares this path so Move-shaping has the
-  // same intelligence substrate as the legacy Programs surface.
-  let nexusTenantContextBlock = '';
+  // PR-R / CXO grounding — every canonical agent receives tenant
+  // current-state context when an active tenant is available. This is
+  // intentionally broader than Programs/Moves: users expect Nexus,
+  // Sentinel, Atlas, and Steward to know the client's strategy, org,
+  // KPIs, financial posture, systems, programs, and evidence wherever
+  // they ask from. Private data-plane posture augments this block; it
+  // must not suppress it.
+  let agentTenantContextBlock = '';
   let sourceTenantContextBlock = '';
   // TD-7 · cross-program-signal artifacts. The broker bundle's
   // cross_program_signal items are surfaced as their own system-prompt
@@ -712,17 +713,27 @@ export async function POST(request: Request) {
   // `cross-program-signal` artifact when the user's question makes the
   // signal relevant. Empty string when the bundle has no signals.
   let crossProgramSignalsBlock = '';
-  const isNexusProgramsSurface =
-    agentName === 'Nexus' &&
+  const isTenantCurrentStateSurface =
+    normalizeEnterpriseAgentName(agentName) !== null &&
     typeof surface === 'string' &&
-    (surface === '/programs' || isProgramDetailSurface || isStrategicMoveSurface);
-  if (isNexusProgramsSurface && activeClient?.key && !privateDataPlane) {
+    !surface.startsWith('/auth') &&
+    !surface.startsWith('/sign-in');
+  if (isTenantCurrentStateSurface && activeClient?.key) {
     try {
-      const brokerBundle = buildProgramsContextBundle({
+      const enterpriseAgentName = normalizeEnterpriseAgentName(agentName);
+      const brokerRequest: ProgramsBrokerRequest = {
         tenantKey: clientKeyToBrokerTenantKey(activeClient.key),
         programId: programId ?? undefined,
-        agentName: 'Nexus',
-        surface: 'programs',
+        agentName: enterpriseAgentName,
+        surface: isSourceSurface(surface)
+          ? 'source'
+          : surface.startsWith('/intelligence')
+            ? 'intelligence'
+            : surface.startsWith('/tower')
+              ? 'tower'
+              : surface.startsWith('/programs') || isStrategicMoveSurface || surface.startsWith('/moves')
+                ? 'programs'
+                : 'chat',
         requestedDomains: [
           'people_org',
           'program_lifecycle',
@@ -731,8 +742,11 @@ export async function POST(request: Request) {
           'financials',
           'evidence_provenance',
         ],
-      });
-      nexusTenantContextBlock = formatProgramsBrokerBundleForPrompt(brokerBundle);
+      };
+      const brokerBundle = privateDataPlane
+        ? await buildProgramsContextBundleAsync(brokerRequest)
+        : buildProgramsContextBundle(brokerRequest);
+      agentTenantContextBlock = formatProgramsBrokerBundleForPrompt(brokerBundle);
       crossProgramSignalsBlock = composeCrossProgramSignalsBlockForSurface(
         surface,
         brokerBundle.items,
@@ -864,9 +878,9 @@ export async function POST(request: Request) {
     "",
     artifactInstructions,
     "",
-    // PR-R / CXO grounding · tenant current-state block for Nexus on
-    // Programs and Strategic Moves surfaces. Empty string elsewhere.
-    nexusTenantContextBlock,
+    // PR-R / CXO grounding · tenant current-state block for all
+    // canonical agents on tenant-scoped surfaces.
+    agentTenantContextBlock,
     "",
     // TD-7 · cross-program-signal block for Nexus on /programs surfaces.
     // Lists the canonical multi-program dependency / conflict signals

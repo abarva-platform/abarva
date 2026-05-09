@@ -169,18 +169,37 @@ function mapKpiMetric(
   const dataOwner =
     readString(payload.data_owner) ??
     readString(payload.data_owner_person_id);
-  const confidence = readScalar(payload.confidence);
+  const businessOwner =
+    readString(payload.business_owner) ??
+    readString(payload.business_owner_person_id);
+  const confidence =
+    readScalar(payload.confidence) ??
+    readScalar(payload.confidence_in_measurement);
+  const trend = readScalar(payload.trend);
+  const notes = readString(payload.notes);
 
-  if (!currentValue && !targetFy && !sourceSystem && !dataOwner && confidence === undefined) {
+  if (
+    !currentValue &&
+    !targetFy &&
+    !sourceSystem &&
+    !dataOwner &&
+    !businessOwner &&
+    confidence === undefined &&
+    trend === undefined &&
+    !notes
+  ) {
     return null;
   }
 
   const summary = [
     currentValue !== undefined ? `current ${currentValue}` : null,
+    trend !== undefined ? `trend ${trend}` : null,
     targetFy !== undefined ? `target ${targetFy}` : null,
     sourceSystem ? `source ${sourceSystem}` : null,
     dataOwner ? `data owner ${dataOwner}` : null,
+    businessOwner ? `business owner ${businessOwner}` : null,
     confidence !== undefined ? `confidence ${confidence}` : null,
+    notes ? `notes ${notes}` : null,
   ]
     .filter((piece): piece is string => Boolean(piece))
     .join('; ');
@@ -189,7 +208,7 @@ function mapKpiMetric(
     record,
     kind: 'kpi_metric',
     summary,
-    extraProvenanceIds: dedupe([sourceSystem, dataOwner]),
+    extraProvenanceIds: dedupe([sourceSystem, dataOwner, businessOwner]),
   });
 }
 
