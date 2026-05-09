@@ -2,8 +2,10 @@ import type { IndustryAIPatternDraft } from '@/lib/intelligence/canonical/indust
 
 import {
   CANONICAL_BACKFILL_SCHEMA_VERSION,
+  CANONICAL_COLLISION_RESOLUTION_RULES,
   buildPreviewRow,
   contentHash,
+  resolveCanonicalPreviewCollisions,
   sanitizeLegacyClientNames,
   stableJson,
 } from './preview-canonical-corpus-backfill';
@@ -130,6 +132,49 @@ describe('preview canonical corpus backfill helpers', () => {
     expect(sanitized).toEqual({
       email: 'maria.delgado@apex-retail.example.com',
       nested: ['Apex Retail Group', { label: 'Apex Retail' }],
+    });
+  });
+
+  it('resolves reviewed canonical id collisions without dropping source crosswalks', () => {
+    const seedRow = buildPreviewRow({
+      ...baseDraft,
+      canonical_id: 'AIP-RETAIL-DEMAND_FORECASTING_INVENTORY_AI',
+      source_crosswalk: [{
+        source_system: 'pattern_seed',
+        source_id: 'PAT-IND-RET-002',
+        relationship: 'primary',
+      }],
+      source_systems: ['pattern_seed'],
+      source_ids: ['PAT-IND-RET-002'],
+      missing_provenance: true,
+      missing_required_fields: ['confidence_rationale'],
+    }, '2026-05-09T00:00:00.000Z');
+    const manifestRow = buildPreviewRow({
+      ...baseDraft,
+      canonical_id: 'AIP-RETAIL-DEMAND_FORECASTING_INVENTORY_AI',
+      source_crosswalk: [{
+        source_system: 'generated_pattern_manifest',
+        source_id: 'pattern_demand_forecasting_inventory_ai',
+        relationship: 'primary',
+      }],
+      source_systems: ['generated_pattern_manifest'],
+      source_ids: ['pattern_demand_forecasting_inventory_ai'],
+      missing_provenance: false,
+      missing_required_fields: [],
+    }, '2026-05-09T00:00:00.000Z');
+
+    const resolved = resolveCanonicalPreviewCollisions([seedRow, manifestRow]);
+
+    expect(CANONICAL_COLLISION_RESOLUTION_RULES).toHaveLength(11);
+    expect(resolved).toHaveLength(1);
+    expect(resolved[0].source_systems).toEqual(['generated_pattern_manifest', 'pattern_seed']);
+    expect(resolved[0].source_ids).toEqual(['PAT-IND-RET-002', 'pattern_demand_forecasting_inventory_ai']);
+    expect(resolved[0].missing_required_fields).toEqual(['confidence_rationale']);
+    expect(resolved[0].missing_provenance).toBe(true);
+    expect(resolved[0].upsert_payload.full_pattern).toMatchObject({
+      collision_resolution: {
+        preferred_source_key: 'generated_pattern_manifest:pattern_demand_forecasting_inventory_ai',
+      },
     });
   });
 });
