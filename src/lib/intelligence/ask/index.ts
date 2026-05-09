@@ -20,6 +20,7 @@ export interface AskEvent {
 export interface AskOptions {
   userContextBlock?: string;
   tenantInventoryKey?: string | null;
+  tenantName?: string | null;
 }
 
 export function atlasStakeholderConflictHandoff(query: string): string | null {
@@ -111,6 +112,7 @@ export async function* askIntelligence(query: string, opts: AskOptions = {}): As
       sources,
       intent: classification.intent,
       userContextBlock: opts.userContextBlock,
+      tenantName: opts.tenantName,
     })) {
       if (!confidencePrefixDone && averageConfidence < 0.6) {
         const prefix = 'Limited indexed data — confidence is moderate. ';

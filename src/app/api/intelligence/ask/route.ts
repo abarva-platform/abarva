@@ -21,6 +21,7 @@ export async function GET(req: NextRequest) {
 
   let userContextBlock = '';
   let tenantInventoryKey: string | null = null;
+  let tenantName: string | null = null;
   try {
     const [person, client] = await Promise.all([
       getCurrentPerson(),
@@ -29,6 +30,7 @@ export async function GET(req: NextRequest) {
     tenantInventoryKey = client?.key
       ? clientKeyToInventorySubstrateKey(client.key)
       : null;
+    tenantName = client?.name ?? null;
     if (person) {
       userContextBlock = await assembleUserContextBlock({
         personId: person.id,
@@ -44,7 +46,7 @@ export async function GET(req: NextRequest) {
   const stream = new ReadableStream({
     async start(controller) {
       try {
-        for await (const event of askIntelligence(query, { userContextBlock, tenantInventoryKey })) {
+        for await (const event of askIntelligence(query, { userContextBlock, tenantInventoryKey, tenantName })) {
           controller.enqueue(encoder.encode(JSON.stringify(event) + '\n'));
         }
       } catch (err) {
