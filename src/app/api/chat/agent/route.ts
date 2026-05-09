@@ -25,6 +25,7 @@ import {
   formatCrossTenantWriteRefusal,
 } from "@/lib/agent/tenant-guardrails";
 import { getUserContextPromptBlock } from "@/lib/agent/userContext";
+import { composeAllAgentDoctrineBlock } from "@/lib/agent/all-agent-doctrine";
 import {
   formatUserProgramAccessPolicyForPrompt,
   loadUserProgramAccessPolicy,
@@ -855,6 +856,8 @@ export async function POST(request: Request) {
 
   const systemPrompt = [
     voiceLine,
+    "",
+    composeAllAgentDoctrineBlock({ agentName, surface }),
     "",
     userContextBlock,
     userAccessPolicyBlock,
