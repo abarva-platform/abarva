@@ -726,6 +726,7 @@ function DetailCard({ node }: { node: MapNode }) {
         </Link>
         <Link
           href="/strategic-moves"
+          prefetch={false}
           style={{
             fontFamily: F_MONO,
             fontSize: 10,
