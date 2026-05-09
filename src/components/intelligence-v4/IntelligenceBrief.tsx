@@ -932,7 +932,7 @@ function Cta({ href, children, primary, ghost }: { href: string; children: React
     display: 'inline-block',
   };
   if (href.startsWith('/')) {
-    return <Link href={href} style={sx}>{children}</Link>;
+    return <Link href={href} prefetch={false} style={sx}>{children}</Link>;
   }
   return <a href={href} style={sx}>{children}</a>;
 }

@@ -184,6 +184,7 @@ function StrategicPatternsEmptyState() {
         </p>
         <Link
           href="/strategic-moves/new"
+          prefetch={false}
           style={{
             display: 'inline-flex',
             alignItems: 'center',
