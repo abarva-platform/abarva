@@ -17,11 +17,13 @@ import {
   type AlignmentQuadrant,
   type StrategicAlignment2x2View,
 } from '@/lib/tower/strategic-alignment-2x2-view';
-import type { AIInitiative } from '@/lib/admin/ai-initiatives/queries';
+import type { AIInitiative, AIInitiativeVendorRow } from '@/lib/admin/ai-initiatives/queries';
 import type {
   BandMetric,
+  BandConfidence,
   TowerBandMetricsView,
 } from '@/lib/tower/band-metrics-view';
+import type { MetricProvenanceKey } from '@/lib/tower/metric-provenance';
 import type {
   PressureCardView,
   TowerPressuresView,
@@ -203,10 +205,12 @@ function SubstrateKpi({
   metric,
   hero,
   isFirst,
+  onAskAtlas,
 }: {
   metric: BandMetric;
   hero?: boolean;
   isFirst?: boolean;
+  onAskAtlas?: MetricAskHandler;
 }) {
   // Map BandConfidence to the cvalStyle Confidence union; 'none' falls back
   // to 'low' so we still get the dotted-underline treatment for placeholders.
@@ -225,7 +229,12 @@ function SubstrateKpi({
       subtext={metric.subtext}
       tooltip={metric.tooltip}
     >
-      <MetricProvenance metricKey={metric.key}>
+      <MetricProvenance
+        metricKey={metric.key}
+        displayValue={metric.value}
+        displayConfidence={metric.confidence}
+        onAskAtlas={onAskAtlas}
+      >
         <span style={cvalStyle(conf)} data-band-confidence={metric.confidence}>
           {metric.value}
           {showConfTag && <ConfTag conf={conf} />}
@@ -883,6 +892,8 @@ interface TowerIndexPageProps {
    * to the legacy hardcoded display so the page still renders pre-substrate.
    */
   initiatives?: ReadonlyArray<AIInitiative>;
+  /** Tenant vendor rows used for Atlas metric explainability drill-downs. */
+  vendors?: ReadonlyArray<AIInitiativeVendorRow>;
   /**
    * T-5 (Bind 1): pre-computed band tile aggregations from substrate.
    * When omitted or `isEmpty`, the band falls back to the legacy hardcoded
@@ -909,11 +920,20 @@ interface TowerIndexPageProps {
   towerLensSlot?: ReactNode;
 }
 
+type MetricAskHandler = (request: {
+  metricKey: MetricProvenanceKey;
+  metricLabel: string;
+  displayValue?: string;
+  displayConfidence?: BandConfidence;
+  mode: 'why' | 'levers';
+}) => void;
+
 export function TowerIndexPage({
   tenantName = 'Meridian Enterprises',
   context = 'Control Tower · Portfolio Index',
   clientId,
   initiatives,
+  vendors,
   bandMetrics,
   pressuresView,
   atlasObservationsView,
@@ -925,6 +945,7 @@ export function TowerIndexPage({
   towerLensSlot: _p6,
 }: TowerIndexPageProps = {}) {
   void _p1; void _p2; void _p3; void _p4; void _p6;
+  void vendors;
   const alignment2x2View = buildStrategicAlignment2x2View(initiatives ?? []);
   // T-5: render band from substrate when available; fall back to legacy hardcoded.
   // T-8: iterate metrics in lens-determined order rather than keying by name.
@@ -974,7 +995,11 @@ export function TowerIndexPage({
   );
 
   const sendToAtlas = useCallback(
-    async (text: string, attachments: AttachmentRef[]) => {
+    async (
+      text: string,
+      attachments: AttachmentRef[],
+      surfaceContextPatch?: Record<string, unknown>,
+    ) => {
       const trimmed = text.trim();
       if (!trimmed && attachments.length === 0) return;
       // Without a tenant binding we can't authenticate the chat call. Keep
@@ -1010,6 +1035,13 @@ export function TowerIndexPage({
             threadId: atlasThreadId,
             clientId,
             attachments: attachments.map((a) => ({ id: a.id, file_name: a.file_name, mime: a.mime })),
+            surfaceContext: {
+              clientId,
+              tenantName,
+              activeTowerLens: activeLens,
+              context,
+              ...surfaceContextPatch,
+            },
           }),
           signal: controller.signal,
         });
@@ -1047,7 +1079,27 @@ export function TowerIndexPage({
         setAtlasPending(false);
       }
     },
-    [clientId, atlasThreadId],
+    [activeLens, clientId, atlasThreadId, context, tenantName],
+  );
+
+  const handleMetricAsk = useCallback<MetricAskHandler>(
+    (request) => {
+      const valueClause = request.displayValue ? ` at ${request.displayValue}` : '';
+      const prompt =
+        request.mode === 'levers'
+          ? `Show the lever map for ${request.metricLabel}${valueClause}.`
+          : `Why is ${request.metricLabel}${valueClause}?`;
+      void sendToAtlas(prompt, [], {
+        metricExplanationRequest: {
+          source: 'tower_metric_provenance',
+          metricKey: request.metricKey,
+          displayValue: request.displayValue,
+          displayConfidence: request.displayConfidence,
+          mode: request.mode,
+        },
+      });
+    },
+    [sendToAtlas],
   );
 
   const handleAtlasSuggestion = useCallback(
@@ -1205,6 +1257,7 @@ export function TowerIndexPage({
                     metric={m}
                     hero={m.hero}
                     isFirst={i === 0}
+                    onAskAtlas={handleMetricAsk}
                   />
                 ))}
               </>
@@ -1217,7 +1270,12 @@ export function TowerIndexPage({
                   subtext={<>target 3.5× · <span style={{ color: T.RED, fontWeight: 700 }}>▼0.4×</span> vs Q1</>}
                   tooltip="35% of programs measured. 41% modeled. +24% pending baseline."
                 >
-                  <MetricProvenance metricKey="portfolio_roi">
+                  <MetricProvenance
+                    metricKey="portfolio_roi"
+                    displayValue="2.8×"
+                    displayConfidence="high"
+                    onAskAtlas={handleMetricAsk}
+                  >
                     <span style={cvalStyle('high')}>
                       2.8<span style={{ fontSize: '0.55em' }}>×</span>
                     </span>
@@ -1229,7 +1287,12 @@ export function TowerIndexPage({
                   subtext={<>3 high · 4 watch · <span style={{ color: T.GREEN, fontWeight: 700 }}>▲2</span></>}
                   tooltip="3 high-magnitude pressures and 4 on watch. ▲2 new this week."
                 >
-                  <MetricProvenance metricKey="active_pressures">
+                  <MetricProvenance
+                    metricKey="active_pressures"
+                    displayValue="7"
+                    displayConfidence="high"
+                    onAskAtlas={handleMetricAsk}
+                  >
                     <span style={cvalStyle('high')}>7</span>
                   </MetricProvenance>
                 </Kpi>
@@ -1239,7 +1302,12 @@ export function TowerIndexPage({
                   subtext={<><span style={{ color: T.RED, fontWeight: 700 }}>▲$1.2M</span> MoM</>}
                   tooltip="Cost overrun and capability duplication exposure across the AI portfolio."
                 >
-                  <MetricProvenance metricKey="spend_at_risk">
+                  <MetricProvenance
+                    metricKey="spend_at_risk"
+                    displayValue="$8.4M"
+                    displayConfidence="med"
+                    onAskAtlas={handleMetricAsk}
+                  >
                     <span style={cvalStyle('med')}>
                       $8.4<span style={{ fontSize: '0.55em' }}>M</span>
                       <ConfTag conf="med" />
@@ -1252,7 +1320,12 @@ export function TowerIndexPage({
                   subtext={<>EA 47d · $48.2M</>}
                   tooltip="4 vendor renewals in the next 90 days totaling $48.2M aggregate. EA renewal due in 47 days; brief is open in Source."
                 >
-                  <MetricProvenance metricKey="renewals_90d">
+                  <MetricProvenance
+                    metricKey="renewals_90d"
+                    displayValue="4"
+                    displayConfidence="high"
+                    onAskAtlas={handleMetricAsk}
+                  >
                     <span style={cvalStyle('high')}>4</span>
                   </MetricProvenance>
                 </Kpi>
@@ -1262,7 +1335,12 @@ export function TowerIndexPage({
                   subtext={<>2 sources missing</>}
                   tooltip="2 identity sources (Okta, EntraID) not yet connected; until they land, adoption confidence is LOW. Connect identity sources from Atlas observations."
                 >
-                  <MetricProvenance metricKey="adoption_rate">
+                  <MetricProvenance
+                    metricKey="adoption_rate"
+                    displayValue="53%"
+                    displayConfidence="low"
+                    onAskAtlas={handleMetricAsk}
+                  >
                     <span style={cvalStyle('low')}>
                       53<span style={{ fontSize: '0.55em' }}>%</span>
                       <ConfTag conf="low" />

@@ -572,6 +572,7 @@ export default async function TowerPage({
       context={`Control Tower · ${TOWER_SUBMENU_LABELS[activeTab]} · ${towerSetupInitiativesFeed.summary.total} initiatives observed`}
       clientId={activeClientId ?? undefined}
       initiatives={towerInitiatives}
+      vendors={towerVendors}
       bandMetrics={towerBandMetrics}
       pressuresView={towerPressures}
       atlasObservationsView={towerAtlasObservations}
