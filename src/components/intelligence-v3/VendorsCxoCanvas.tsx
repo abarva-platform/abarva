@@ -8,6 +8,7 @@
 // quadrant as secondary views.
 
 import { useMemo, useState } from 'react';
+import Link from 'next/link';
 import { COLORS, FONT, BORDER, SPACING, RADIUS } from '@/lib/design/abarva-theme';
 import { CanvasHead } from './CanvasHead';
 import {
@@ -16,10 +17,10 @@ import {
   type VendorCategory,
   type VendorHealth,
   type VendorSpendRow,
-  type VendorTier,
 } from './cxo-fixtures';
 
 type VendorsView = 'spend' | 'renewals' | 'risk';
+type VendorRiskFilter = 'all' | 'risk' | 'watch';
 
 const VIEWS: ReadonlyArray<{ key: VendorsView; label: string }> = [
   { key: 'spend', label: 'By category' },
@@ -34,12 +35,6 @@ const HEALTH_TONE: Record<
   healthy: { accent: '#0E8C7E', chip: 'rgba(14,140,126,0.12)', chipText: '#0E8C7E', label: 'Healthy' },
   watch: { accent: '#C8881C', chip: 'rgba(200,136,28,0.14)', chipText: '#C8881C', label: 'Watch' },
   risk: { accent: '#B8443A', chip: 'rgba(184,68,58,0.12)', chipText: '#B8443A', label: 'At risk' },
-};
-
-const TIER_LABEL: Record<VendorTier, string> = {
-  incumbent: 'Incumbent',
-  challenger: 'Challenger',
-  emerging: 'Emerging',
 };
 
 interface Props {
@@ -121,6 +116,11 @@ function computeCategoryTotals(spend: ReadonlyArray<VendorSpendRow>): CategoryTo
 // ─── View 1 · By category (default · CIO read) ─────────────────
 
 function SpendView({ totals, totalUsdM }: { totals: CategoryTotal[]; totalUsdM: number }) {
+  const [selectedCategory, setSelectedCategory] = useState<VendorCategory>(totals[0]?.key ?? 'hardware-cloud');
+  const [riskFilter, setRiskFilter] = useState<VendorRiskFilter>('all');
+  const selectedTotal = totals.find((cat) => cat.key === selectedCategory) ?? totals[0];
+  const allVendors = totals.flatMap((cat) => cat.topVendors);
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: SPACING.lg }}>
       <SpendHero totals={totals} totalUsdM={totalUsdM} />
@@ -132,9 +132,28 @@ function SpendView({ totals, totalUsdM }: { totals: CategoryTotal[]; totalUsdM: 
         }}
       >
         {totals.map((cat) => (
-          <CategoryCard key={cat.key} cat={cat} totalUsdM={totalUsdM} />
+          <CategoryCard
+            key={cat.key}
+            cat={cat}
+            totalUsdM={totalUsdM}
+            isActive={cat.key === selectedCategory}
+            onSelect={() => {
+              setSelectedCategory(cat.key);
+              setRiskFilter('all');
+            }}
+          />
         ))}
       </div>
+      {selectedTotal && (
+        <VendorSpendDrilldown
+          selected={selectedTotal}
+          totals={totals}
+          allVendors={allVendors}
+          riskFilter={riskFilter}
+          onCategoryChange={setSelectedCategory}
+          onRiskChange={setRiskFilter}
+        />
+      )}
     </div>
   );
 }
@@ -280,18 +299,42 @@ function SpendHero({ totals, totalUsdM }: { totals: CategoryTotal[]; totalUsdM: 
   );
 }
 
-function CategoryCard({ cat, totalUsdM }: { cat: CategoryTotal; totalUsdM: number }) {
+function CategoryCard({
+  cat,
+  totalUsdM,
+  isActive,
+  onSelect,
+}: {
+  cat: CategoryTotal;
+  totalUsdM: number;
+  isActive: boolean;
+  onSelect: () => void;
+}) {
   const pctOfTotal = (cat.totalUsdM / totalUsdM) * 100;
   return (
     <article
+      role="button"
+      tabIndex={0}
+      onClick={onSelect}
+      onKeyDown={(event) => {
+        if (event.key !== 'Enter' && event.key !== ' ') return;
+        event.preventDefault();
+        onSelect();
+      }}
       style={{
         background: COLORS.card,
-        border: BORDER.hairline,
+        border: isActive ? `1px solid ${cat.accent}` : BORDER.hairline,
         borderTop: `3px solid ${cat.accent}`,
         borderRadius: RADIUS.md,
         padding: SPACING.lg,
         display: 'flex',
         flexDirection: 'column',
+        textAlign: 'left',
+        cursor: 'pointer',
+        color: 'inherit',
+        boxShadow: isActive ? '0 14px 34px rgba(10, 12, 18, 0.08)' : 'none',
+        transform: isActive ? 'translateY(-1px)' : 'none',
+        transition: 'box-shadow 140ms ease, transform 140ms ease, border-color 140ms ease',
       }}
     >
       <div
@@ -379,6 +422,274 @@ function CategoryCard({ cat, totalUsdM }: { cat: CategoryTotal; totalUsdM: numbe
       </ul>
     </article>
   );
+}
+
+function VendorSpendDrilldown({
+  selected,
+  totals,
+  allVendors,
+  riskFilter,
+  onCategoryChange,
+  onRiskChange,
+}: {
+  selected: CategoryTotal;
+  totals: CategoryTotal[];
+  allVendors: ReadonlyArray<VendorSpendRow>;
+  riskFilter: VendorRiskFilter;
+  onCategoryChange: (category: VendorCategory) => void;
+  onRiskChange: (filter: VendorRiskFilter) => void;
+}) {
+  const visibleVendors = selected.topVendors.filter((vendor) => {
+    if (riskFilter === 'all') return true;
+    return vendor.health === riskFilter;
+  });
+  const atRiskCount = allVendors.filter((vendor) => vendor.health === 'risk').length;
+  const watchCount = allVendors.filter((vendor) => vendor.health === 'watch').length;
+
+  return (
+    <section
+      aria-label="Vendor spend drilldown"
+      style={{
+        background: COLORS.card,
+        border: BORDER.hairline,
+        borderRadius: RADIUS.md,
+        overflow: 'hidden',
+      }}
+    >
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          gap: SPACING.lg,
+          alignItems: 'center',
+          padding: `${SPACING.lg}px ${SPACING.xl}px`,
+          background: COLORS.surface2,
+          borderBottom: BORDER.hairline,
+          flexWrap: 'wrap',
+        }}
+      >
+        <div>
+          <div
+            style={{
+              fontFamily: FONT.mono,
+              fontSize: 9.5,
+              fontWeight: 700,
+              letterSpacing: '0.18em',
+              textTransform: 'uppercase',
+              color: COLORS.muted,
+              marginBottom: 5,
+            }}
+          >
+            Spend drilldown
+          </div>
+          <h3
+            style={{
+              fontFamily: FONT.display,
+              fontSize: 24,
+              fontWeight: 400,
+              color: COLORS.ink,
+              letterSpacing: '-0.012em',
+              margin: 0,
+              lineHeight: 1.12,
+            }}
+          >
+            {selected.shortLabel} vendors
+          </h3>
+        </div>
+        <div style={{ display: 'flex', gap: SPACING.xs, flexWrap: 'wrap' }}>
+          <Link href="/source" prefetch={false} style={actionButtonStyle(true)}>
+            Open Source event
+          </Link>
+          <Link href="/source#scope" prefetch={false} style={actionButtonStyle(false)}>
+            Shape sourcing move
+          </Link>
+        </div>
+      </div>
+
+      <div
+        style={{
+          display: 'flex',
+          gap: SPACING.xs,
+          flexWrap: 'wrap',
+          padding: `${SPACING.sm}px ${SPACING.xl}px`,
+          borderBottom: BORDER.hairlineSoft,
+        }}
+      >
+        {totals.map((cat) => (
+          <button
+            key={cat.key}
+            type="button"
+            onClick={() => {
+              onCategoryChange(cat.key);
+              onRiskChange('all');
+            }}
+            style={filterButtonStyle(cat.key === selected.key)}
+          >
+            {cat.shortLabel}
+          </button>
+        ))}
+        <button type="button" onClick={() => onRiskChange('risk')} style={filterButtonStyle(riskFilter === 'risk')}>
+          At risk {atRiskCount}
+        </button>
+        <button type="button" onClick={() => onRiskChange('watch')} style={filterButtonStyle(riskFilter === 'watch')}>
+          Watch {watchCount}
+        </button>
+        <button type="button" onClick={() => onRiskChange('all')} style={filterButtonStyle(riskFilter === 'all')}>
+          All risk
+        </button>
+      </div>
+
+      <div style={{ overflowX: 'auto' }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 920 }}>
+          <thead>
+            <tr>
+              {['Vendor', 'Bucket', 'Spend', 'Renewal', 'Linked AI bets', 'Status', 'Action'].map((header) => (
+                <th key={header} style={tableHeadStyle(header === 'Spend' || header === 'Renewal' ? 'right' : 'left')}>
+                  {header}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {visibleVendors.map((vendor) => (
+              <VendorSpendTableRow key={vendor.vendor} vendor={vendor} selected={selected} />
+            ))}
+            {visibleVendors.length === 0 && (
+              <tr>
+                <td colSpan={7} style={{ padding: SPACING.xl, color: COLORS.muted, fontSize: 13 }}>
+                  No vendors match this slice.
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  );
+}
+
+function VendorSpendTableRow({ vendor, selected }: { vendor: VendorSpendRow; selected: CategoryTotal }) {
+  const tone = HEALTH_TONE[vendor.health];
+  return (
+    <tr>
+      <td style={tableCellStyle()}>
+        <div style={{ fontSize: 13, fontWeight: 700, color: COLORS.ink }}>{vendor.vendor}</div>
+        <div style={{ fontFamily: FONT.mono, fontSize: 10, color: COLORS.muted, letterSpacing: '0.04em', marginTop: 3 }}>
+          {vendor.subcategory}
+        </div>
+      </td>
+      <td style={tableCellStyle()}>{selected.shortLabel}</td>
+      <td style={{ ...tableCellStyle('right'), fontWeight: 800, color: COLORS.ink, whiteSpace: 'nowrap' }}>
+        {vendor.spendLabel}
+      </td>
+      <td style={tableCellStyle('right')}>{vendor.renewsInMonths === null ? 'Consumption' : `${vendor.renewsInMonths} mo`}</td>
+      <td style={tableCellStyle()}>{linkedBetsForVendor(vendor)}</td>
+      <td style={tableCellStyle()}>
+        <Pill tone={tone}>{tone.label}</Pill>
+      </td>
+      <td style={tableCellStyle()}>
+        <Link href={`/source?vendor=${encodeURIComponent(vendor.vendor)}`} prefetch={false} style={sourceEventButtonStyle()}>
+          Source event
+        </Link>
+      </td>
+    </tr>
+  );
+}
+
+function linkedBetsForVendor(vendor: VendorSpendRow): string {
+  const text = `${vendor.vendor} ${vendor.subcategory} ${vendor.takeaway}`.toLowerCase();
+  if (text.includes('adobe') || text.includes('salesforce') || text.includes('cdp') || text.includes('loyalty')) {
+    return 'Loyalty AI, personalization, returns fraud';
+  }
+  if (text.includes('blue yonder') || text.includes('forecast') || text.includes('demand')) {
+    return 'Demand sensing, replenishment';
+  }
+  if (text.includes('zebra') || text.includes('store') || text.includes('workforce')) {
+    return 'Store productivity, workforce scheduling';
+  }
+  if (text.includes('accenture') || text.includes('deloitte') || text.includes('integration')) {
+    return 'CDP readiness, AI governance';
+  }
+  return 'Portfolio dependency';
+}
+
+function tableHeadStyle(align: 'left' | 'right' = 'left'): React.CSSProperties {
+  return {
+    textAlign: align,
+    padding: `${SPACING.sm}px ${SPACING.md}px`,
+    borderBottom: BORDER.hairline,
+    fontFamily: FONT.mono,
+    fontSize: 9.5,
+    fontWeight: 700,
+    letterSpacing: '0.14em',
+    color: COLORS.muted,
+    textTransform: 'uppercase',
+    whiteSpace: 'nowrap',
+  };
+}
+
+function tableCellStyle(align: 'left' | 'right' = 'left'): React.CSSProperties {
+  return {
+    textAlign: align,
+    padding: `${SPACING.sm}px ${SPACING.md}px`,
+    borderBottom: BORDER.hairlineSoft,
+    fontSize: 12.5,
+    color: COLORS.body,
+    verticalAlign: 'top',
+    lineHeight: 1.45,
+  };
+}
+
+function filterButtonStyle(active: boolean): React.CSSProperties {
+  return {
+    border: active ? `1px solid ${COLORS.ink}` : BORDER.hairline,
+    background: active ? COLORS.ink : COLORS.card,
+    color: active ? COLORS.surface : COLORS.body,
+    borderRadius: RADIUS.pill,
+    padding: '7px 11px',
+    fontFamily: FONT.body,
+    fontSize: 12,
+    fontWeight: 700,
+    cursor: 'pointer',
+  };
+}
+
+function actionButtonStyle(primary: boolean): React.CSSProperties {
+  return {
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    border: `1px solid ${COLORS.ink}`,
+    background: primary ? COLORS.ink : COLORS.card,
+    color: primary ? COLORS.surface : COLORS.ink,
+    borderRadius: 5,
+    padding: '9px 12px',
+    fontFamily: FONT.mono,
+    fontSize: 10,
+    fontWeight: 700,
+    letterSpacing: '0.08em',
+    textTransform: 'uppercase',
+    textDecoration: 'none',
+    whiteSpace: 'nowrap',
+  };
+}
+
+function sourceEventButtonStyle(): React.CSSProperties {
+  return {
+    display: 'inline-flex',
+    border: `1px solid ${COLORS.ink}`,
+    background: COLORS.card,
+    color: COLORS.ink,
+    borderRadius: 5,
+    padding: '7px 9px',
+    fontFamily: FONT.mono,
+    fontSize: 9.5,
+    fontWeight: 700,
+    letterSpacing: '0.08em',
+    textTransform: 'uppercase',
+    textDecoration: 'none',
+    whiteSpace: 'nowrap',
+  };
 }
 
 function VendorRow({ v, catTotalUsdM }: { v: VendorSpendRow; catTotalUsdM: number }) {

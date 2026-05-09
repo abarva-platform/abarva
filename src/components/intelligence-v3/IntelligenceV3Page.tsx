@@ -117,7 +117,7 @@ export function IntelligenceV3Page({
   const briefData = apexRetailData?.briefData ?? getMeridianBriefData();
   const mapData = apexRetailData?.mapData ?? getMeridianMapData();
   const sentinelOpener = isApexBound
-    ? `Apex Retail Intelligence is live on Supabase: ${apexRetailData?.status.patterns} patterns, ${apexRetailData?.status.sources} summarized sources, ${apexRetailData?.status.useCases} use cases, and ${apexRetailData?.status.contradictions} open contradictions. Ask me which CXO tension matters first.`
+    ? `Apex Retail intelligence is ready: ${apexRetailData?.status.patterns} retail patterns, ${apexRetailData?.status.summarizedSources}/${apexRetailData?.status.sources} summarized sources, ${apexRetailData?.status.useCases} use cases, and ${apexRetailData?.status.contradictions} open tensions. Ask me which CXO decision matters first.`
     : data.sentinelOpener;
   const surfaceContext = buildSentinelIntelContext({
     activeClient: activeTenantName,

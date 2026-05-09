@@ -31,7 +31,7 @@ describe('buildSentinelIntelContext', () => {
 
     expect(context).toEqual(expect.objectContaining({
       tenantFacts: expect.arrayContaining([
-        expect.stringContaining('Apex Retail is the active retail demo tenant'),
+        expect.stringContaining('Apex Retail is the active retail client'),
       ]),
       vendorFacts: expect.arrayContaining([
         expect.stringContaining('Data and analytics landscape'),
@@ -42,10 +42,11 @@ describe('buildSentinelIntelContext', () => {
         expect.stringContaining('data readiness'),
       ]),
       qualityFacts: expect.arrayContaining([
-        expect.stringContaining('current-state answers must start from SURFACE'),
+        expect.stringContaining('current-state answers must start from the visible surface'),
+        expect.stringContaining('plain strategic language'),
       ]),
     }));
 
-    expect((context.facts as string[]).join('\n')).toContain('Neo4j not required');
+    expect((context.facts as string[]).join('\n')).toContain('portfolio relationships');
   });
 });
