@@ -29,10 +29,7 @@ import type {
   PressureCardView,
   TowerPressuresView,
 } from '@/lib/tower/pressure-cards-view';
-import type {
-  AtlasObservation,
-  AtlasObservationsView,
-} from '@/lib/tower/atlas-observations-view';
+import type { AtlasObservationsView } from '@/lib/tower/atlas-observations-view';
 import type { TowerTabKey } from '@/lib/tower/tower-lens-tabs-view';
 
 export interface TowerSubstrateCounts {
@@ -139,20 +136,40 @@ interface KpiProps {
   subtext?: ReactNode;
   /** Full displaced description shown as native browser tooltip on hover. */
   tooltip?: string;
+  active?: boolean;
+  onActivate?: () => void;
+  drillLabel?: string;
 }
 
-function Kpi({ label, hero, isFirst, children, subtext, tooltip }: KpiProps) {
+function Kpi({ label, hero, isFirst, children, subtext, tooltip, active, onActivate, drillLabel }: KpiProps) {
+  const interactive = Boolean(onActivate);
+  const resolvedTitle = [tooltip, drillLabel].filter(Boolean).join('\n\n');
   return (
     <div
-      title={tooltip}
+      title={resolvedTitle || undefined}
+      role={interactive ? 'button' : undefined}
+      tabIndex={interactive ? 0 : undefined}
+      aria-pressed={interactive ? active : undefined}
+      onClick={onActivate}
+      onKeyDown={(event) => {
+        if (!interactive) return;
+        if (event.key !== 'Enter' && event.key !== ' ') return;
+        event.preventDefault();
+        onActivate?.();
+      }}
       style={{
-        padding: isFirst ? '0 22px 0 0' : '0 22px',
+        padding: isFirst ? '0 14px 0 0' : '0 14px',
         borderLeft: isFirst ? 'none' : `1px solid ${T.RULE}`,
         position: 'relative',
         display: 'flex',
         flexDirection: 'column',
-        gap: 6,
-        cursor: tooltip ? 'help' : 'default',
+        gap: 4,
+        cursor: interactive ? 'pointer' : tooltip ? 'help' : 'default',
+        outline: active ? `2px solid ${T.PURPLE}` : 'none',
+        outlineOffset: active ? 3 : 0,
+        borderRadius: active ? 6 : 0,
+        minHeight: 58,
+        justifyContent: 'center',
       }}
     >
       <div
@@ -179,10 +196,10 @@ function Kpi({ label, hero, isFirst, children, subtext, tooltip }: KpiProps) {
           style={{
             fontFamily: T.SERIF,
             fontWeight: hero ? 800 : 700,
-            letterSpacing: '-0.8px',
+            letterSpacing: 0,
             lineHeight: 1,
             color: T.INK,
-            fontSize: hero ? 38 : 32,
+            fontSize: hero ? 32 : 28,
           }}
         >
           {children}
@@ -217,11 +234,15 @@ function SubstrateKpi({
   hero,
   isFirst,
   onAskAtlas,
+  active,
+  onDrill,
 }: {
   metric: BandMetric;
   hero?: boolean;
   isFirst?: boolean;
   onAskAtlas?: MetricAskHandler;
+  active?: boolean;
+  onDrill?: (metricKey: MetricProvenanceKey) => void;
 }) {
   // Map BandConfidence to the cvalStyle Confidence union; 'none' falls back
   // to 'low' so we still get the dotted-underline treatment for placeholders.
@@ -239,6 +260,9 @@ function SubstrateKpi({
       isFirst={isFirst}
       subtext={metric.subtext}
       tooltip={metric.tooltip}
+      active={active}
+      onActivate={onDrill ? () => onDrill(metric.key) : undefined}
+      drillLabel="Open the related Tower canvas view"
     >
       <MetricProvenance
         metricKey={metric.key}
@@ -311,6 +335,7 @@ function SubstratePressure({
 
 // ─── Pressure card ────────────────────────────────────────────────────────────
 type PressureType = 'cost' | 'dupl' | 'vend' | 'adopt' | 'value';
+type PortfolioCanvasView = 'pressures' | 'alignment' | 'evidence';
 
 interface PressureProps {
   type: PressureType;
@@ -1038,6 +1063,96 @@ function currentPageEvidence(activeTab: TowerTabKey, lens: TowerLens): string {
   return 'The portfolio view combines the registry, vendor rows, and derived pressure cards into a current-state read.';
 }
 
+const PORTFOLIO_CANVAS_TABS: ReadonlyArray<{
+  key: PortfolioCanvasView;
+  label: string;
+  hint: string;
+}> = [
+  { key: 'pressures', label: "Today's pressures", hint: 'Decision-ranked actions' },
+  { key: 'alignment', label: 'Strategic alignment', hint: 'Portfolio 2x2' },
+  { key: 'evidence', label: 'Evidence map', hint: 'Feeds and gaps' },
+];
+
+function PortfolioCanvasToggle({
+  activeView,
+  hrefFor,
+}: {
+  activeView: PortfolioCanvasView;
+  hrefFor: (view: PortfolioCanvasView) => string;
+}) {
+  return (
+    <nav
+      aria-label="Portfolio canvas view"
+      style={{
+        padding: '14px 32px 12px',
+        borderBottom: `1px solid ${T.RULE}`,
+        display: 'flex',
+        justifyContent: 'center',
+      }}
+    >
+      <div
+        role="tablist"
+        style={{
+          display: 'inline-grid',
+          gridTemplateColumns: 'repeat(3, minmax(160px, 1fr))',
+          gap: 4,
+          padding: 4,
+          border: `1px solid ${T.RULE}`,
+          borderRadius: 8,
+          background: T.CREAM_2,
+        }}
+      >
+        {PORTFOLIO_CANVAS_TABS.map((tab) => {
+          const isActive = tab.key === activeView;
+          return (
+            <Link
+              key={tab.key}
+              href={hrefFor(tab.key)}
+              scroll={false}
+              role="tab"
+              aria-selected={isActive}
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: 2,
+                padding: '8px 14px',
+                borderRadius: 6,
+                background: isActive ? T.INK : 'transparent',
+                color: isActive ? T.CREAM : T.INK_2,
+                textDecoration: 'none',
+                fontFamily: T.SANS,
+                minHeight: 46,
+              }}
+            >
+              <span
+                style={{
+                  fontFamily: T.MONO,
+                  fontSize: 10,
+                  letterSpacing: '1.2px',
+                  textTransform: 'uppercase',
+                  fontWeight: 800,
+                }}
+              >
+                {tab.label}
+              </span>
+              <span
+                style={{
+                  fontSize: 11.5,
+                  lineHeight: 1.2,
+                  opacity: isActive ? 0.78 : 0.72,
+                }}
+              >
+                {tab.hint}
+              </span>
+            </Link>
+          );
+        })}
+      </div>
+    </nav>
+  );
+}
+
 function TowerDataDesignPanel({
   activeTab,
   activeLens,
@@ -1065,6 +1180,9 @@ function TowerDataDesignPanel({
       table: 'ai_initiatives',
       count: substrateCounts?.initiatives ?? initiatives.length,
       supports: 'Project name, owner, stage, status, confidence, committed and measured value.',
+      refreshNow: 'Weekly',
+      refreshFuture: 'Daily API/export',
+      dashboardUpdate: 'Refreshes portfolio, gates, scorecards, and executive pressure cards after validated register rows commit.',
       day1: 'PMO portfolio export or AI initiative inventory spreadsheet.',
     },
     {
@@ -1072,6 +1190,9 @@ function TowerDataDesignPanel({
       table: 'ai_initiative_kpis',
       count: substrateCounts?.kpis,
       supports: 'Quarterly actuals, targets, peer medians, and confidence floors behind scorecards.',
+      refreshNow: 'Weekly',
+      refreshFuture: 'Daily API/export',
+      dashboardUpdate: 'Refreshes value, adoption, risk, and metric explanations after KPI rows pass confidence checks.',
       day1: 'Finance/BI export from Power BI, Tableau, Looker, Excel, or metric owners.',
     },
     {
@@ -1079,6 +1200,9 @@ function TowerDataDesignPanel({
       table: 'ai_initiative_vendors',
       count: substrateCounts?.vendors ?? vendors.length,
       supports: 'Dependencies, contract lens, renewal clock, vendor health, and spend exposure.',
+      refreshNow: 'Weekly',
+      refreshFuture: 'Daily API/export',
+      dashboardUpdate: 'Refreshes dependency ranking, contract lens, 90-day renewal count, and spend-at-risk cards.',
       day1: 'Vendor master, procurement contract register, SaaS renewal calendar, Coupa/Ariba export.',
     },
     {
@@ -1086,6 +1210,9 @@ function TowerDataDesignPanel({
       table: 'ai_initiative_decisions',
       count: substrateCounts?.decisions,
       supports: 'Gate posture, stalled approvals, dissent, and executive-brief decision load.',
+      refreshNow: 'Weekly',
+      refreshFuture: 'Daily API/export',
+      dashboardUpdate: 'Refreshes gates and executive decision load after steering outcomes are logged.',
       day1: 'Steering committee decision log, RAID log, project governance minutes.',
     },
     {
@@ -1093,6 +1220,9 @@ function TowerDataDesignPanel({
       table: 'ai_initiative_stakeholder_notes',
       count: substrateCounts?.stakeholderNotes,
       supports: 'Adoption blockers, executive quotes, theme-only evidence, and confidence context.',
+      refreshNow: 'Weekly',
+      refreshFuture: 'Daily API/export',
+      dashboardUpdate: 'Refreshes adoption blockers and Atlas citations after consent and theme checks.',
       day1: 'Interview notes, change-readiness survey, enablement feedback, workshop notes.',
     },
     {
@@ -1100,6 +1230,9 @@ function TowerDataDesignPanel({
       table: 'ai_initiative_scenarios',
       count: substrateCounts?.scenarios,
       supports: 'What-if questions, probability-weighted risk, and decision alternatives.',
+      refreshNow: 'Weekly',
+      refreshFuture: 'Daily API/export',
+      dashboardUpdate: 'Refreshes what-if answers and risk alternatives after probability and owner review.',
       day1: 'Risk register, scenario workbook, architecture dependency assessment.',
     },
   ];
@@ -1161,6 +1294,12 @@ function TowerDataDesignPanel({
                   <span style={{ fontFamily: T.MONO, fontSize: 10, color: T.GRAY_DK }}>{row.count ?? 'needed'} rows</span>
                 </div>
                 <div style={{ marginTop: 3, color: T.INK_2, fontSize: 12.5, lineHeight: 1.45 }}>{row.supports}</div>
+                <div style={{ marginTop: 3, color: T.INK, fontSize: 12, lineHeight: 1.45 }}>
+                  Refresh: {row.refreshNow} now · {row.refreshFuture} future.
+                </div>
+                <div style={{ marginTop: 3, color: T.GRAY_DK, fontSize: 12, lineHeight: 1.45 }}>
+                  Dashboard rule: {row.dashboardUpdate}
+                </div>
                 <div style={{ marginTop: 3, color: T.GRAY_DK, fontSize: 12, lineHeight: 1.45 }}>
                   Day 1: {row.day1}
                 </div>
@@ -1608,199 +1747,6 @@ function Quadrant({
   );
 }
 
-// ─── Atlas synthesis (right column) ───────────────────────────────────────────
-//
-// T-3 (Tower Fix Package, 2026-05-07): observations gain inline action chips.
-// The CTAs T-1 displaced from the dashboard band now land here, where the
-// observation gives the action context.
-//
-// AtlasAction: a chip with a verb-leading label and a destination.
-//   - primary chips render with `→` arrow flush-left.
-//   - secondary chips render with `↳` indent prefix (for absorbed band CTAs).
-//   - timeHint adds a "(5 min)" parenthetical.
-//   - pending=true marks chips whose destination is a placeholder; useful
-//     for the follow-up wave that wires real flows.
-interface AtlasAction {
-  label: string;
-  timeHint?: string;
-  href: string;
-  pending?: boolean;
-  secondary?: boolean;
-}
-
-interface SynthBlock {
-  h: string;
-  body: ReactNode;
-  actions?: AtlasAction[];
-}
-
-// AtlasColumn · Tower right rail (synthesis-only). The chat composer that
-// previously lived at the bottom of this aside has migrated to the shared
-// `<AgentDock>` mounted at the page level (side-rail mode, left pane). The
-// dock provides the resizable composer, paperclip uploads, mode picker, and
-// sticky bottom positioning. This panel keeps the rich observation +
-// action-chip rendering that the dock's plain-text thread can't represent.
-function AtlasColumn({
-  headline,
-  meta,
-  synth,
-}: {
-  headline: string;
-  meta: string;
-  synth: SynthBlock[];
-}) {
-  return (
-    <aside
-      style={{
-        borderLeft: `1px solid ${T.RULE}`,
-        background: T.CREAM_2,
-        display: 'flex',
-        flexDirection: 'column',
-        position: 'sticky',
-        top: 0,
-        height: '100vh',
-        minWidth: 0,
-      }}
-    >
-      {/* atlas-head */}
-      <div style={{ padding: '22px 22px 14px', borderBottom: `1px solid ${T.RULE}` }}>
-        <div
-          style={{
-            fontFamily: T.MONO,
-            fontSize: 10,
-            letterSpacing: '1.6px',
-            fontWeight: 700,
-            color: T.PURPLE,
-            textTransform: 'uppercase',
-            marginBottom: 6,
-          }}
-        >
-          ✦ Atlas · Synthesis
-        </div>
-        <h3
-          style={{
-            fontFamily: T.SERIF,
-            fontSize: 18,
-            fontWeight: 700,
-            letterSpacing: '-0.3px',
-            lineHeight: 1.25,
-            marginBottom: 8,
-            margin: 0,
-            color: T.INK,
-          }}
-        >
-          {headline}
-        </h3>
-        <div
-          style={{
-            fontFamily: T.MONO,
-            fontSize: 9,
-            letterSpacing: '1.2px',
-            color: T.GRAY_DK,
-            fontWeight: 600,
-            marginTop: 6,
-          }}
-        >
-          {meta}
-        </div>
-      </div>
-
-      {/* atlas-synth */}
-      <div
-        style={{
-          padding: '16px 22px',
-          flex: 1,
-          overflowY: 'auto',
-        }}
-      >
-        {synth.map((block, i) => (
-          <div key={i} style={{ marginBottom: i === synth.length - 1 ? 0 : 18 }}>
-            <div
-              style={{
-                fontFamily: T.MONO,
-                fontSize: 9,
-                letterSpacing: '1.5px',
-                fontWeight: 700,
-                color: T.GOLD,
-                textTransform: 'uppercase',
-                marginBottom: 6,
-              }}
-            >
-              {block.h}
-            </div>
-            <div
-              style={{
-                fontSize: 13,
-                lineHeight: 1.55,
-                color: T.INK_2,
-              }}
-            >
-              {block.body}
-            </div>
-            {block.actions?.map((action, j) => (
-              <AtlasActionChip key={`${i}-${j}`} action={action} />
-            ))}
-          </div>
-        ))}
-      </div>
-    </aside>
-  );
-}
-
-// ─── Atlas action chip (T-3) ──────────────────────────────────────────────────
-//
-// Action-direction (verb-leading) chip that lives below an observation's body.
-// Primary chips ("→ Open EA brief in Source") sit flush-left; secondary chips
-// ("↳ Set attribution baseline (5 min)") indent under the primary to show the
-// CTA was absorbed from a tile T-1 removed.
-function AtlasActionChip({ action }: { action: AtlasAction }) {
-  const arrow = action.secondary ? '↳' : '→';
-  const indent = action.secondary ? 12 : 0;
-  return (
-    <Link
-      href={action.href}
-      data-testid={`atlas-action-chip-${action.label.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')}`}
-      data-attr-chip-pending={action.pending ? 'true' : undefined}
-      style={{
-        display: 'inline-flex',
-        alignItems: 'center',
-        gap: 6,
-        marginTop: 6,
-        marginLeft: indent,
-        padding: '5px 10px',
-        fontFamily: T.MONO,
-        fontSize: 10,
-        letterSpacing: '0.06em',
-        fontWeight: 700,
-        color: T.PURPLE,
-        background: 'transparent',
-        border: `1px solid ${T.RULE}`,
-        borderRadius: 6,
-        textDecoration: 'none',
-        cursor: 'pointer',
-        transition: 'background 120ms ease',
-      }}
-      onMouseEnter={(e) => {
-        e.currentTarget.style.background = T.CREAM;
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.background = 'transparent';
-      }}
-    >
-      <span aria-hidden style={{ fontWeight: 700 }}>{arrow}</span>
-      <span>
-        {action.label}
-        {action.timeHint && (
-          <span style={{ color: T.GRAY_DK, fontWeight: 600, marginLeft: 4 }}>
-            ({action.timeHint})
-          </span>
-        )}
-      </span>
-      <span aria-hidden style={{ marginLeft: 2 }}>→</span>
-    </Link>
-  );
-}
-
 // ─── Main page ────────────────────────────────────────────────────────────────
 interface TowerIndexPageProps {
   tenantName?: string;
@@ -1879,6 +1825,9 @@ export function TowerIndexPage({
   const router = useRouter();
   const towerCanvasRef = useRef<HTMLDivElement>(null);
   const activeLens = (searchParams?.get('lens') ?? 'value') as TowerLens;
+  const rawCanvasView = searchParams?.get('view');
+  const activeCanvasView: PortfolioCanvasView =
+    rawCanvasView === 'alignment' || rawCanvasView === 'evidence' ? rawCanvasView : 'pressures';
   const activeDetailId = searchParams?.get('detail') ?? null;
   const activePressureId = searchParams?.get('pressure') ?? null;
   const detailInitiative = findInitiativeDetail(initiatives ?? [], activeDetailId);
@@ -1888,11 +1837,13 @@ export function TowerIndexPage({
       : null;
 
   const buildTowerHref = useCallback(
-    (next: { lens?: typeof activeLens; detail?: string | null; pressure?: string | null } = {}) => {
+    (next: { lens?: typeof activeLens; view?: PortfolioCanvasView; detail?: string | null; pressure?: string | null } = {}) => {
       const params = new URLSearchParams();
       if (activeTab !== 'portfolio') params.set('tab', activeTab);
       const lens = next.lens ?? activeLens;
       if (lens !== 'value') params.set('lens', lens);
+      const view = next.view ?? activeCanvasView;
+      if (activeTab === 'portfolio' && view !== 'pressures') params.set('view', view);
       const detail = next.detail === undefined ? activeDetailId : next.detail;
       if (detail) params.set('detail', detail);
       const pressure = next.pressure === undefined ? activePressureId : next.pressure;
@@ -1900,7 +1851,7 @@ export function TowerIndexPage({
       const query = params.toString();
       return query ? `/tower?${query}` : '/tower';
     },
-    [activeDetailId, activeLens, activePressureId, activeTab],
+    [activeCanvasView, activeDetailId, activeLens, activePressureId, activeTab],
   );
 
   const detailHrefFor = useCallback<DetailHrefBuilder>(
@@ -1924,6 +1875,39 @@ export function TowerIndexPage({
     { key: 'contract', label: 'Contract' },
     { key: 'adopt', label: 'Adoption' },
   ];
+
+  const canvasViewHref = useCallback(
+    (view: PortfolioCanvasView) => buildTowerHref({
+      view,
+      lens: view === 'alignment' ? 'value' : activeLens,
+      detail: null,
+      pressure: null,
+    }),
+    [activeLens, buildTowerHref],
+  );
+
+  const handleMetricDrill = useCallback(
+    (metricKey: MetricProvenanceKey) => {
+      if (metricKey === 'portfolio_roi') {
+        router.push(buildTowerHref({ lens: 'value', view: 'alignment', detail: null, pressure: null }), { scroll: false });
+        return;
+      }
+      if (metricKey === 'spend_at_risk') {
+        router.push(buildTowerHref({ lens: 'risk', view: 'pressures', detail: null, pressure: null }), { scroll: false });
+        return;
+      }
+      if (metricKey === 'renewals_90d') {
+        router.push(buildTowerHref({ lens: 'contract', view: 'pressures', detail: null, pressure: null }), { scroll: false });
+        return;
+      }
+      if (metricKey === 'adoption_rate') {
+        router.push(buildTowerHref({ lens: 'adopt', view: 'pressures', detail: null, pressure: null }), { scroll: false });
+        return;
+      }
+      router.push(buildTowerHref({ view: 'pressures', detail: null, pressure: null }), { scroll: false });
+    },
+    [buildTowerHref, router],
+  );
 
   // Date is resolved at runtime so Tower stays aligned with the live pilot week.
   const today = new Date();
@@ -2079,9 +2063,6 @@ export function TowerIndexPage({
     <div
       ref={towerCanvasRef}
       style={{
-        display: 'grid',
-        gridTemplateColumns: 'minmax(0, 1fr) 320px',
-        gap: 0,
         minHeight: '100%',
         background: T.PAGE_BG,
         color: T.INK,
@@ -2215,10 +2196,11 @@ export function TowerIndexPage({
             style={{
               display: 'grid',
               gridTemplateColumns: '1.4fr 1fr 1fr 1fr 1fr',
-              padding: '14px 32px',
+              padding: '10px 32px',
               borderBottom: `1px solid ${T.RULE_STRONG}`,
               gap: 0,
               alignItems: 'center',
+              minHeight: 74,
             }}
           >
             {useSubstrateBand && bandMetrics ? (
@@ -2231,6 +2213,14 @@ export function TowerIndexPage({
                     hero={m.hero}
                     isFirst={i === 0}
                     onAskAtlas={handleMetricAsk}
+                    active={
+                      (m.key === 'portfolio_roi' && activeCanvasView === 'alignment' && activeLens === 'value') ||
+                      (m.key === 'active_pressures' && activeCanvasView === 'pressures' && activeLens === 'value') ||
+                      (m.key === 'spend_at_risk' && activeCanvasView === 'pressures' && activeLens === 'risk') ||
+                      (m.key === 'renewals_90d' && activeCanvasView === 'pressures' && activeLens === 'contract') ||
+                      (m.key === 'adoption_rate' && activeCanvasView === 'pressures' && activeLens === 'adopt')
+                    }
+                    onDrill={handleMetricDrill}
                   />
                 ))}
               </>
@@ -2244,8 +2234,12 @@ export function TowerIndexPage({
             )}
           </section>
 
+          <PortfolioCanvasToggle activeView={activeCanvasView} hrefFor={canvasViewHref} />
+
           {/* Section headline */}
-          <div style={{ padding: '26px 32px 14px' }}>
+          {activeCanvasView === 'pressures' && (
+          <>
+          <div style={{ padding: '24px 32px 14px' }}>
             <div
               style={{
                 fontFamily: T.MONO,
@@ -2308,9 +2302,12 @@ export function TowerIndexPage({
               />
             )}
           </div>
+          </>
+          )}
 
           {/* Strategic alignment matrix */}
-          <section style={{ padding: '30px 32px', borderTop: `1px solid ${T.RULE_STRONG}` }}>
+          {activeCanvasView === 'alignment' && (
+          <section style={{ padding: '28px 32px 30px' }}>
             <div style={{ paddingBottom: 12 }}>
               <div
                 style={{
@@ -2589,6 +2586,19 @@ export function TowerIndexPage({
               </div>
             </div>
           </section>
+          )}
+
+          {activeCanvasView === 'evidence' && (
+            <div style={{ padding: '24px 32px 32px' }}>
+              <TowerDataDesignPanel
+                activeTab={activeTab}
+                activeLens={activeLens}
+                initiatives={initiatives ?? []}
+                vendors={vendors ?? []}
+                substrateCounts={substrateCounts}
+              />
+            </div>
+          )}
 
           {/* T-4: "Coming next" block — deferred metrics roadmap signal,
               rendered above the doctrine line. Conditionally hides itself
@@ -2652,45 +2662,6 @@ export function TowerIndexPage({
           )}
         </div>
 
-        {/* ─── ATLAS COLUMN (synthesis-only · composer migrated to AgentDock) ─── */}
-        <AtlasColumn
-          headline={
-            atlasObservationsView?.headline ??
-            'Atlas needs tenant-bound Tower substrate.'
-          }
-          meta={`${timestamp} · ${atlasObservationsView?.metaSuffix ?? 'No DB observations'}`}
-          synth={
-            atlasObservationsView && atlasObservationsView.observations.length > 0
-              ? [
-                  ...atlasObservationsView.observations.map((o: AtlasObservation) => ({
-                    h: `Observation · ${String(o.number).padStart(2, '0')}`,
-                    body: <>{o.body}</>,
-                    actions: o.actions.map((a) => ({
-                      label: a.label,
-                      href: a.href,
-                      timeHint: a.timeHint,
-                      pending: a.pending,
-                      secondary: a.secondary,
-                    })),
-                  })),
-                  {
-                    h: 'If you only do one thing today',
-                    body: <em>{atlasObservationsView.ifYouOnlyDoOneToday}</em>,
-                  },
-                ]
-              : [
-                  {
-                    h: 'DB substrate required',
-                    body: (
-                      <>
-                        {atlasObservationsView?.emptyHint ??
-                          'No tenant-bound initiatives or vendors were loaded, so Atlas is not synthesizing observations for this Tower view.'}
-                      </>
-                    ),
-                  },
-                ]
-          }
-        />
       </div>
   );
 

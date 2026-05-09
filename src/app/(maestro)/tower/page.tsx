@@ -189,10 +189,11 @@ function TowerMainSubmenuStrip({ activeTab }: { activeTab: TowerTabKey }) {
       style={{
         display: 'flex',
         alignItems: 'center',
+        justifyContent: 'center',
         gap: 10,
         width: '100%',
         overflowX: 'auto',
-        padding: '0 10px',
+        padding: '0 18px',
       }}
     >
       <span
