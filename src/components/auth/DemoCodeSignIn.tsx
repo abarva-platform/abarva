@@ -33,43 +33,42 @@ interface ClerkWindow extends Window {
 }
 
 // ─── Client identity cards (one per admin) ───────────────────────────
-// Surfaces a human-readable label per demo identity instead of the
-// cryptic *.example.com email. Keyed off the same canonical roster
-// as DEMO_CODE_ALLOWED_EMAILS — if the roster changes, this map
+// Surfaces a role-based username (cxo@<tenant>) per demo identity
+// instead of person names. Keyed off the same canonical roster as
+// DEMO_CODE_ALLOWED_EMAILS — if the roster changes, this map
 // degrades gracefully (unknown emails still show the raw address).
+//
+// Founder direction (2026-05-08): one CXO username per tenant, no
+// individual person names.
 interface ClientIdentity {
-  email: string
-  name: string
+  email: string // full email stored in Clerk
+  shortLabel: string // what we show prominently on the card
   tenant: string
-  role: string
   monogramBg: string
-  initials: string
+  monogram: string
 }
 
 const CLIENT_IDENTITIES: ReadonlyArray<ClientIdentity> = [
   {
-    email: 'nina.patel@meridian-health.example.com',
-    name: 'Nina Patel',
+    email: 'cxo@meridian-health.example.com',
+    shortLabel: 'cxo@meridian-health',
     tenant: 'Meridian Health System',
-    role: 'CIO · Tenant admin',
     monogramBg: '#0E8A65', // Meridian teal (tenant theme, not chrome)
-    initials: 'NP',
+    monogram: 'MH',
   },
   {
-    email: 'maya.desai@apex-retail.example.com',
-    name: 'Maya Desai',
+    email: 'cxo@apex-retail.example.com',
+    shortLabel: 'cxo@apex',
     tenant: 'Apex Retail Group',
-    role: 'CDO · Tenant admin',
     monogramBg: '#C2410C', // Apex orange
-    initials: 'MD',
+    monogram: 'AR',
   },
   {
-    email: 'ethan.brooks@firstcapital.example.com',
-    name: 'Ethan Brooks',
+    email: 'cxo@firstcapital.example.com',
+    shortLabel: 'cxo@firstcapital',
     tenant: 'First Capital',
-    role: 'CTO · Tenant admin',
     monogramBg: '#1E3A8A', // FirstCap navy
-    initials: 'EB',
+    monogram: 'FC',
   },
 ]
 
@@ -376,19 +375,21 @@ export function DemoCodeSignIn({ redirectUrl }: Props) {
                     letterSpacing: '0.02em',
                   }}
                 >
-                  {id.initials}
+                  {id.monogram}
                 </span>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div
                     style={{
-                      fontSize: 13.5,
+                      fontFamily: BRAND.fMono,
+                      fontSize: 13,
                       fontWeight: 600,
                       color: BRAND.textStrong,
                       lineHeight: 1.25,
-                      marginBottom: 2,
+                      marginBottom: 3,
+                      letterSpacing: '-0.005em',
                     }}
                   >
-                    {id.name}
+                    {id.shortLabel}
                   </div>
                   <div
                     style={{
@@ -397,7 +398,7 @@ export function DemoCodeSignIn({ redirectUrl }: Props) {
                       lineHeight: 1.3,
                     }}
                   >
-                    {id.tenant} · {id.role}
+                    {id.tenant} · Tenant admin
                   </div>
                 </div>
                 {isSelected && (
