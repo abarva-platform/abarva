@@ -7,8 +7,9 @@
 // SourcingEventTable; kanban groups events by current stage; value chart
 // shows portfolio exposure by stage/status with ranked open events.
 //
-// Persists the active mode in localStorage so a refresh keeps the
-// user where they were.
+// Persists non-default active modes in localStorage so a refresh keeps the
+// user where they were. The portfolio itself defaults to Kanban because the
+// table is a drill-down surface, not the CXO/operator landing posture.
 
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
@@ -29,15 +30,20 @@ import {
 export type ViewMode = 'list' | 'kanban' | 'scatter';
 
 const STORAGE_KEY = 'source-events-view-mode';
+const DEFAULT_VIEW_MODE: ViewMode = 'kanban';
 
 export function readStoredViewMode(): ViewMode {
-  if (typeof window === 'undefined') return 'list';
+  if (typeof window === 'undefined') return DEFAULT_VIEW_MODE;
   try {
     const stored = window.localStorage.getItem(STORAGE_KEY);
     if (stored === 'value') return 'scatter';
-    if (stored === 'list' || stored === 'kanban' || stored === 'scatter') return stored;
+    if (stored === 'kanban' || stored === 'scatter') return stored;
+    if (stored === 'list') {
+      window.localStorage.setItem(STORAGE_KEY, DEFAULT_VIEW_MODE);
+      return DEFAULT_VIEW_MODE;
+    }
   } catch { /* ignore */ }
-  return 'list';
+  return DEFAULT_VIEW_MODE;
 }
 
 export function persistViewMode(mode: ViewMode) {

@@ -4,7 +4,7 @@
  * Auth-gated routes can't be visited in the dev server without real Clerk keys,
  * so this test renders SourcePortfolioPage directly with synthesized event
  * fixtures and asserts that:
- *   - the new redesign elements render (header, KPI strip, filter pills, table)
+ *   - the new redesign elements render (header, scorecard, search, Kanban default)
  *   - the deprecated UI is NOT present (no agent canvas, work dock, mission preview)
  *   - test artifacts (E2E-CRAWL) are filtered out before render
  *   - the empty / partial / mature state determination works end-to-end
@@ -167,13 +167,10 @@ describe('SourcePortfolioPage redesigned render', () => {
       makeEvent({ id: 'd', code: 'SRC-OTHER-001', name: 'Other Event' }),
     ];
     const html = render(events);
-    // Count <tr> rows. The link inside uses `source-portfolio-row-link-{id}`,
-    // so we exclude any testid that contains `-link-`.
-    const allMatches = html.match(/data-testid="source-portfolio-row-[a-z0-9-]+"/g) ?? [];
-    const trRows = allMatches.filter((m) => !m.includes('-link-'));
-    expect(trRows.length).toBe(2);
-    // The most-advanced stage wins for the duplicate (pricing → 06 of 11).
-    expect(html).toContain('06 / 11');
+    expect(html).toContain('source-portfolio-kanban');
+    expect((html.match(/SRC-DUP-001/g) ?? []).length).toBe(1);
+    expect((html.match(/SRC-OTHER-001/g) ?? []).length).toBe(1);
+    expect(html).toContain('Other Event');
   });
 
   it('renders empty state when only test artifacts exist', () => {
@@ -184,7 +181,7 @@ describe('SourcePortfolioPage redesigned render', () => {
     expect(html).toContain('data-portfolio-state="empty"');
   });
 
-  it('renders partial state with compact header, filter sidebar, and ungrouped table when 1-9 events', () => {
+  it('renders partial state with compact header and Kanban as the default view when 1-9 events', () => {
     const events = Array.from({ length: 5 }, (_, i) =>
       makeEvent({ id: `evt-${i}`, code: `SRC-APX-${100 + i}`, name: `Event ${i}` }),
     );
@@ -195,22 +192,21 @@ describe('SourcePortfolioPage redesigned render', () => {
     expect(html).toContain('source-portfolio-scorecard');
     expect(html).toContain('Total value');
     expect(html).toContain('Decision focus');
-    expect(html).toContain('source-portfolio-filter-sidebar');
-    expect(html).toContain('source-portfolio-events-table');
     expect(html).toContain('source-portfolio-search');
     expect(html).toContain('Portfolio view');
     expect(html).toContain('Table');
     expect(html).toContain('Kanban');
     expect(html).toContain('Value chart');
-    // No stage-band groups in partial state.
-    expect(html).toContain('data-group-by="none"');
-    expect(html).not.toContain('source-portfolio-group-discovery');
+    expect(html).toContain('source-portfolio-kanban');
+    expect(html).toContain('aria-selected="true" aria-label="Kanban view"');
+    expect(html).not.toContain('source-portfolio-filter-sidebar');
+    expect(html).not.toContain('source-portfolio-events-table');
     // Compact pattern: KPI cards + attention banners are intentionally gone.
     expect(html).not.toContain('source-portfolio-kpi-strip');
     expect(html).not.toContain('source-portfolio-attention-stack');
   });
 
-  it('renders mature state with stage-band groups and filter sidebar at 10+ events', () => {
+  it('renders mature state in Kanban with stage-band columns at 10+ events', () => {
     const events = [
       ...Array.from({ length: 4 }, (_, i) =>
         makeEvent({
@@ -243,15 +239,14 @@ describe('SourcePortfolioPage redesigned render', () => {
     const html = render(events);
 
     expect(html).toContain('data-portfolio-state="mature"');
-    expect(html).toContain('data-group-by="stage-band"');
-    expect(html).toContain('source-portfolio-group-discovery');
-    expect(html).toContain('source-portfolio-group-evaluation');
-    expect(html).toContain('source-portfolio-group-decision');
+    expect(html).toContain('source-portfolio-kanban');
     expect(html).toContain('Discovery &amp; Scope');
     expect(html).toContain('Evaluation &amp; Pricing');
     expect(html).toContain('BAFO &amp; Decision');
-    // Sidebar carries the filter taxonomy.
-    expect(html).toContain('source-portfolio-filter-sidebar');
+    expect(html).toContain('Discovery 0');
+    expect(html).toContain('Eval 0');
+    expect(html).toContain('Decision 0');
+    expect(html).not.toContain('source-portfolio-filter-sidebar');
   });
 
   it('shows attention count via the legend + subline (no separate banner stack)', () => {
@@ -274,16 +269,16 @@ describe('SourcePortfolioPage redesigned render', () => {
       makeEvent({ id: 'r3', code: 'SRC-C', name: 'Healthy event' }),
     ];
     const html = render(events);
-    // Banners removed — counts surface in the table rows themselves
-    // (red aging, agent-tagged blocker) and the header subline.
+    // Banners removed — counts surface in the Kanban cards and the header
+    // subline, keeping the landing page portfolio-oriented.
     expect(html).not.toContain('source-portfolio-attention-stack');
     expect(html).toMatch(/need your attention today/);
-    // Both at-risk events still appear in the table.
+    // Both at-risk events still appear in the default Kanban view.
     expect(html).toContain('Stuck on Vendor');
     expect(html).toContain('Approval Pending');
   });
 
-  it('renders elegant row density: agent-tag prefix, value range with v2 caveat', () => {
+  it('renders concise Kanban card density by default', () => {
     const events = [
       makeEvent({
         id: 'row-1',
@@ -297,20 +292,12 @@ describe('SourcePortfolioPage redesigned render', () => {
     ];
     const html = render(events);
 
-    // Mini-rail aria label (Stage X of 11)
-    expect(html).toContain('Stage 2 of 11');
-    // Numeric label + stage name in the mini-rail
-    expect(html).toContain('02 / 11');
-    // Agent tag derived from current stage (Scope → Nexus)
-    expect(html).toContain('NEXUS');
-    expect(html).toContain('Ticket history missing');
-    // Value range derived ±20% with v2 caveat
-    expect(html).toContain('$8.0M – $12.0M');
-    expect(html).toContain('v2 pending');
-    // "entered N days ago" copy
-    expect(html).toContain('entered 1 day ago');
-    // The table now collapses tenant/code/rigor into the event column.
-    expect(html).toContain('APEX');
+    expect(html).toContain('source-portfolio-kanban');
+    expect(html).toContain('AMS Outsourcing 2026');
+    expect(html).toContain('SRC-APX-001 · Apex Retail Group');
+    expect(html).toContain('Scope · Active · 1d');
+    expect(html).toContain('$10.0M');
+    expect(html).not.toContain('v2 pending');
   });
 
   it('does not include any pulse animation class — productivity-first design', () => {
@@ -319,7 +306,7 @@ describe('SourcePortfolioPage redesigned render', () => {
     expect(html).not.toMatch(/animation:\s*[a-z-]*pulse/);
   });
 
-  it('exposes the filter sidebar with the three essential filter groups', () => {
+  it('keeps the filter sidebar out of the default Kanban landing view', () => {
     const events = [
       makeEvent({
         id: 'a',
@@ -336,24 +323,13 @@ describe('SourcePortfolioPage redesigned render', () => {
       }),
     ];
     const html = render(events);
-    expect(html).toContain('source-portfolio-filter-sidebar');
-    // Three essential groups — Lead agent dropped (workflow-anchored UI keeps
-    // agents hidden behind primary surfaces). Aging / Value band / Rigor /
-    // Flags also removed to reduce filter-bar bloat.
-    expect(html).toContain('Status');
-    expect(html).toContain('Stage band');
-    expect(html).toContain('Tenant');
-    // Tenant group only renders when 2+ tenants are in view.
+    expect(html).toContain('source-portfolio-kanban');
+    expect(html).not.toContain('source-portfolio-filter-sidebar');
     expect(html).toContain('Apex Retail Group');
     expect(html).toContain('Meridian Health System');
-    // Removed filter groups should NOT appear as group headers in the sidebar.
-    expect(html).not.toContain('Lead agent');
-    expect(html).not.toContain('Value band');
-    expect(html).not.toContain('Rigor');
-    expect(html).not.toContain('Flags');
   });
 
-  it('agent-tags use stage-specific lead — Steward for evaluation, Atlas for decision', () => {
+  it('Kanban uses stage lanes instead of agent tags by default', () => {
     const events = [
       makeEvent({
         id: 'eval-1',
@@ -371,8 +347,10 @@ describe('SourcePortfolioPage redesigned render', () => {
       }),
     ];
     const html = render(events);
-    expect(html).toContain('STEWARD');
-    expect(html).toContain('ATLAS');
+    expect(html).toContain('Evaluation &amp; Pricing');
+    expect(html).toContain('BAFO &amp; Decision');
+    expect(html).not.toContain('STEWARD');
+    expect(html).not.toContain('ATLAS');
   });
 
   it('does NOT render any of the deprecated /source UI elements', () => {
