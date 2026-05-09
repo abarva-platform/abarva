@@ -69,7 +69,7 @@ export function AppTopBar({ showProductNav = true }: AppTopBarProps = {}) {
 
   function handleSignOut() {
     clearActiveClientContext();
-    void signOut(() => router.push("/"));
+    void signOut(() => router.push("/signed-out"));
   }
 
   return (
