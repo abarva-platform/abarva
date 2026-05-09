@@ -52,6 +52,7 @@ import {
   buildTowerAtlasObservationsView,
   type AtlasObservationsView,
 } from '@/lib/tower/atlas-observations-view';
+import { resolveTowerToday } from '@/lib/tower/today-resolution';
 
 export const metadata = { title: 'Control Tower · AbarVa' };
 
@@ -89,12 +90,12 @@ async function buildTowerVendors(): Promise<ReadonlyArray<AIInitiativeVendorRow>
 }
 
 /**
- * T-5 (Bind 1): today's date for the band tile computations. Pinned to
- * 2026-05-07 per the demo timeline (memory: currentDate). Keeps the
- * deterministic-seed promise of the view-models.
+ * T-5 (Bind 1): resolve today's date once for all Tower view-models.
+ * `TOWER_DEMO_TODAY` lets pilot deploys pin a specific day; the fallback
+ * stays stable for demo determinism across local, preview, and production.
  */
 function buildTowerToday(): string {
-  return '2026-05-07';
+  return resolveTowerToday();
 }
 
 /**
@@ -525,23 +526,24 @@ export default async function TowerPage({
   // T-8 (Bind 4): resolve the active lens server-side so the band/pressures
   // view-models can re-rank per lens. Falls back to 'value' for unknown.
   const activeLens: TowerLens = resolveTowerLens(resolvedSearchParams.lens);
+  const towerToday = buildTowerToday();
   const towerBandMetrics: TowerBandMetricsView = buildTowerBandMetrics(
     towerInitiatives,
     towerVendors,
-    buildTowerToday(),
+    towerToday,
     activeLens,
   );
   const towerPressures: TowerPressuresView = buildTowerPressuresView(
     towerInitiatives,
     towerVendors,
-    buildTowerToday(),
+    towerToday,
     activeLens,
   );
   const towerAtlasObservations: AtlasObservationsView = buildTowerAtlasObservationsView(
     towerInitiatives,
     towerVendors,
     towerPressures,
-    buildTowerToday(),
+    towerToday,
   );
   const seedTenant =
     findTenantByRouteSlug(towerSetupInitiativesFeed.tenantKey) ??
