@@ -360,7 +360,9 @@ ${markdownTable(
 - \`pass\` means the top deterministic hit satisfied the configured industry/function/process/title/KPI expectations.
 - \`fail\` means retrieval found a plausible pattern, but the current corpus does not yet satisfy the expected facet for that executive query.
 - \`no_match\` on target queries means the canonical preview has no usable pattern for the query under the deterministic fallback.
-- Current failures should drive Wave 3 content enrichment before strict retrieval QA is made a hard CI gate.
+- ${result.fail_count > 0
+    ? 'Current failures should drive Wave 3 content enrichment before strict retrieval QA is made a hard CI gate.'
+    : 'All configured target queries pass in the deterministic preview fallback; keep this suite green as new content lands.'}
 `;
 }
 
