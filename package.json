@@ -81,6 +81,8 @@
     "db:verify:briefings": "npx tsx src/scripts/seed/verify-briefings.ts",
     "intel:patterns:generate": "npx tsx src/scripts/intelligence/generate-pattern-manifest.ts",
     "intel:canonical-corpus:preview": "npx tsx src/scripts/intelligence/preview-canonical-corpus-backfill.ts",
+    "intel:canonical-corpus:backfill:dry": "npx tsx src/scripts/intelligence/backfill-canonical-corpus.ts",
+    "intel:canonical-corpus:backfill:write": "npx tsx src/scripts/intelligence/backfill-canonical-corpus.ts --apply",
     "intel:canonical-corpus:validate": "npx tsx src/scripts/intelligence/validate-canonical-corpus.ts",
     "intel:canonical-corpus:sample-retrieval-qa": "npx tsx src/scripts/intelligence/sample-retrieval-qa.ts",
     "integrity:link-crawler": "npx tsx src/scripts/integrity/run-link-crawler.ts",
