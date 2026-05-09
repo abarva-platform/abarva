@@ -1,6 +1,7 @@
 import type {
   SourceAuthenticatedUser,
   SourceContextAssemblyInput,
+  SourceLiveTenantContextSnapshot,
 } from '../agent-context';
 import type { SourceSurface } from '../agent-context';
 import { getServerSupabase } from '@/lib/supabase-server';
@@ -9,20 +10,29 @@ export const APEX_RETAIL_CLIENT_KEY = 'apexretail';
 export const APEX_RETAIL_BROKER_TENANT_KEY = 'apex-retail';
 
 export const APEX_RETAIL_DATA_SEGMENTS = [
-  'enterprise_profile',
-  'org_structure',
-  'it_landscape',
-  'it_financials',
-  'kpi_dictionary',
-  'program_inventory',
-  'sourcing_artifacts',
-  'program_deliverables',
-  'evidence_ledger',
-  'operating_telemetry',
-  'vendor_contracts',
+  'ai_transformation',
   'compliance',
-  'industry_context',
   'cross_program_signals',
+  'decision_traces',
+  'enterprise_profile',
+  'evidence_ledger',
+  'financial_model',
+  'graph_relationships',
+  'industry_context',
+  'it_financials',
+  'it_landscape',
+  'kpi_dictionary',
+  'kpi_history',
+  'operating_telemetry',
+  'org_structure',
+  'peer_benchmarks',
+  'program_deliverables',
+  'program_inventory',
+  'scenario_library',
+  'sourcing_artifacts',
+  'stakeholder_notes',
+  'vendor_contracts',
+  'vendor_intelligence',
 ] as const;
 
 export type ApexRetailDataSegment = typeof APEX_RETAIL_DATA_SEGMENTS[number];
@@ -42,9 +52,21 @@ export interface ApexRetailSourceEventRow {
   event_code: string;
   event_name: string;
   client_key: string;
-  current_stage_key: string | null;
-  lifecycle_state: string | null;
+  event_type: string;
+  current_stage_key: string;
+  lifecycle_state: string;
+  linked_program_id: string | null;
+  estimated_value_usd: number | null;
+  trigger_description: string | null;
+  scope_description: string | null;
+  decision_owner: string | null;
+  created_by_user_id: string | null;
+  created_at: string;
   updated_at: string;
+  value_at_stake_low_usd?: number | null;
+  value_at_stake_high_usd?: number | null;
+  lead_agent?: string | null;
+  current_stage_entered_at?: string | null;
 }
 
 interface ApexRetailInventoryRecordRow {
@@ -72,6 +94,8 @@ export interface ApexRetailAdapterLiveContext {
   sourceEventFound: boolean;
   sourceEvent?: ApexRetailSourceEventRow;
   segmentCounts: Record<string, number>;
+  contextChunkSegmentCounts: Record<string, number>;
+  embeddedChunkSegmentCounts: Record<string, number>;
   embeddingStatusCounts: Record<string, number>;
 }
 
@@ -118,8 +142,62 @@ export async function buildApexRetailSourceContextAssemblyInput(
       sourceEventFound: Boolean(sourceEvent),
       sourceEvent: sourceEvent ?? undefined,
       segmentCounts: countBy(inventoryRecords, (record) => record.segment_id),
+      contextChunkSegmentCounts: countBy(contextChunks, (chunk) => chunk.source_segment_id),
+      embeddedChunkSegmentCounts: countBy(
+        contextChunks.filter((chunk) => chunk.embedding_status === 'embedded'),
+        (chunk) => chunk.source_segment_id,
+      ),
       embeddingStatusCounts: countBy(contextChunks, (chunk) => chunk.embedding_status),
     },
+  };
+}
+
+export function toApexRetailLiveTenantContextSnapshot(
+  liveContext: ApexRetailAdapterLiveContext,
+): SourceLiveTenantContextSnapshot {
+  const segments = APEX_RETAIL_DATA_SEGMENTS.map((segmentId) => ({
+    segmentId,
+    inventoryRecords: liveContext.segmentCounts[segmentId] ?? 0,
+    contextChunks: liveContext.contextChunkSegmentCounts[segmentId] ?? 0,
+    embeddedChunks: liveContext.embeddedChunkSegmentCounts[segmentId] ?? 0,
+  }));
+  const activeSegments = segments.filter((segment) =>
+    segment.inventoryRecords > 0 || segment.contextChunks > 0,
+  );
+  const embeddedContextChunkCount = segments.reduce(
+    (sum, segment) => sum + segment.embeddedChunks,
+    0,
+  );
+  const warnings: string[] = [];
+  if (!liveContext.sourceEventFound) {
+    warnings.push('No persisted Apex Retail source event matched this request.');
+  }
+  if (liveContext.inventoryRecordCount === 0) {
+    warnings.push('Apex Retail current-state inventory records are unavailable.');
+  }
+  if (liveContext.contextChunkCount === 0) {
+    warnings.push('Apex Retail enterprise context chunks are unavailable.');
+  }
+  if (embeddedContextChunkCount < liveContext.contextChunkCount) {
+    warnings.push('Some Apex Retail context chunks are not embedded yet; semantic retrieval may be partial.');
+  }
+
+  return {
+    clientKey: liveContext.clientKey,
+    brokerTenantKey: liveContext.brokerTenantKey,
+    inventoryRecordCount: liveContext.inventoryRecordCount,
+    contextChunkCount: liveContext.contextChunkCount,
+    embeddedContextChunkCount,
+    sourceEventFound: liveContext.sourceEventFound,
+    segments: activeSegments,
+    currentStateAreas: activeSegments.map((segment) => formatSegmentLabel(segment.segmentId)),
+    evidenceBasis: activeSegments
+      .sort((a, b) => (b.inventoryRecords + b.contextChunks) - (a.inventoryRecords + a.contextChunks))
+      .slice(0, 10)
+      .map((segment) => (
+        `${formatSegmentLabel(segment.segmentId)}: ${segment.inventoryRecords} records, ${segment.contextChunks} chunks, ${segment.embeddedChunks} embedded`
+      )),
+    warnings,
   };
 }
 
@@ -129,13 +207,15 @@ async function loadApexRetailSourceEvent(
 ): Promise<ApexRetailSourceEventRow | null> {
   let query = supabase
     .from('source_events')
-    .select('id,event_code,event_name,client_key,current_stage_key,lifecycle_state,updated_at')
+    .select('id,event_code,event_name,client_key,event_type,current_stage_key,lifecycle_state,linked_program_id,estimated_value_usd,trigger_description,scope_description,decision_owner,created_by_user_id,created_at,updated_at,value_at_stake_low_usd,value_at_stake_high_usd,lead_agent,current_stage_entered_at')
     .eq('client_key', APEX_RETAIL_CLIENT_KEY)
     .neq('lifecycle_state', 'archived')
     .order('updated_at', { ascending: false });
 
   if (eventId) {
-    query = query.or(`id.eq.${eventId},event_code.eq.${eventId}`);
+    query = UUID_REGEX.test(eventId)
+      ? query.eq('id', eventId)
+      : query.eq('event_code', eventId);
   }
 
   const { data, error } = await query.limit(1).maybeSingle();
@@ -192,6 +272,16 @@ function normalizeStageKey(stageKey: string | null | undefined): SourceContextAs
   if (stageKey === 'contract_mobilization') return 'transition';
   if (stageKey === 'value_realization') return 'value';
   return stageKey as SourceContextAssemblyInput['stageKey'];
+}
+
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+function formatSegmentLabel(segmentId: string): string {
+  const acronyms = new Set(['ai', 'it', 'kpi']);
+  return segmentId
+    .split('_')
+    .map((part) => acronyms.has(part) ? part.toUpperCase() : part.charAt(0).toUpperCase() + part.slice(1))
+    .join(' ');
 }
 
 function countBy<T>(items: T[], getKey: (item: T) => string): Record<string, number> {
