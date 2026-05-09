@@ -433,7 +433,7 @@ export function FirstMoveSection() {
               'Sponsor engagement documented (COO)',
               'Stakeholder map with decision rights',
               'Value range: $2M–$5M (PRELIMINARY ESTIMATE)',
-              'Primary metric: AHT (baseline TBD in P2)',
+              'Primary metric: AHT (baseline to be established in P2)',
               'Gate readiness summary',
             ]}
           />
