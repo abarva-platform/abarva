@@ -13,6 +13,7 @@ import { GlossarySection } from '@/components/home/learn/GlossarySection';
 import { NexusGuideSection } from '@/components/home/learn/NexusGuideSection';
 import { FirstMoveSection } from '@/components/home/learn/FirstMoveSection';
 import { MovesReferenceCard } from '@/components/home/learn/MovesReferenceCard';
+import { CaseStudySection } from '@/components/home/learn/CaseStudySection';
 import { LearnSectionPlaceholder } from '@/components/home/LearnSectionPlaceholder';
 import { findLearnSection } from '@/lib/home/learn-sections';
 import { findLearnNavItem } from '@/lib/home/learn-nav';
@@ -43,6 +44,9 @@ export default async function LearnSectionPage({ params }: Props) {
 
     case 'intelligence':
       return <IntelligenceSection />;
+
+    case 'case-study':
+      return <CaseStudySection />;
 
     case 'moves-overview':
       return <MovesOverviewSection />;

@@ -36,8 +36,9 @@ export const LEARN_NAV: ReadonlyArray<LearnNavGroup> = [
   {
     group: 'Strategic Moves',
     items: [
+      { slug: 'case-study', label: '↗ Case study: $35M Move' },
       { slug: 'moves-overview', label: 'What is a Move?' },
-      { slug: 'first-move', label: 'Your first Move ↗' },
+      { slug: 'first-move', label: 'Your first Move walkthrough' },
       { slug: 'nexus-guide', label: 'Working with Nexus' },
       { slug: 'moves-reference', label: 'Quick reference card' },
       { slug: 'p0', label: 'Originate', phaseBadge: 'P0', phaseColor: 'grey' },
