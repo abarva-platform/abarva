@@ -22,7 +22,7 @@ Current truth:
 - Canonical schema and normalization foundation: Done.
 - Pattern inventory and duplicate-risk visibility: Done.
 - Persistence decision: Done; canonical corpus data must be persisted.
-- Persisted canonical corpus system of record: Not started.
+- Persisted canonical corpus system of record: In PR-A1.
 - Runtime pattern-first retrieval in agents: Not started.
 - Large industry corpus expansion: Deferred until persistence and retrieval are in place.
 - End-to-end validation that agents retrieve and use patterns: Not started.
@@ -39,6 +39,12 @@ Current truth:
 | [#1829](https://github.com/anandsundaram-hash/abarva/pull/1829) | Done | `c3f91db922188c1178ba9a405f7648adca7a359a` | Wave 1 execution summary. |
 | [#1831](https://github.com/anandsundaram-hash/abarva/pull/1831) | Done | `c93fa0fa06b6e2dbe7552c6aa65d8aef1f752d65` | Persistence decision locked: canonical corpus must be persisted. |
 
+## Execution Ledger
+
+| Slice | PR | Branch / worktree | Agent owner | Files changed | Validation run | DB migration/backfill status | Open issues | Next slice | Gate status |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| PR-A1 Persisted Canonical Corpus Schema | [#1835](https://github.com/anandsundaram-hash/abarva/pull/1835) Add persisted canonical corpus schema | `knowledge/persisted-canonical-corpus-schema-2026-05-09` / `/tmp/nexus-kc-a1` | DB/Persistence | `supabase/migrations/20260513150000_canonical_industry_ai_patterns.sql`; `src/lib/intelligence/canonical/persistence-contract.ts`; `src/lib/intelligence/canonical/persistence-contract.test.ts`; `docs/knowledge-corpus/CANONICAL_CORPUS_PERSISTENCE_READ_CONTRACT_2026-05-09.md`; tracker | `git diff --check`; `npm test -- --runInBand src/lib/intelligence/canonical/persistence-contract.test.ts`; `npx tsc --noEmit --pretty false`; CI/build required before merge | Additive migration only. No backfill writes. Authenticated read-only RLS; service-role write path. DB application pending normal migration deployment. | Backfill not executed by design; runtime readers not wired yet. | PR-A2 Backfill Preview | amber until CI/build pass; green after merge |
+
 ## Full Report Outcome Tracker
 
 | Workstream | Status | Evidence in `main` | What remains |
@@ -51,7 +57,7 @@ Current truth:
 | Canonical enum normalization | Done | `normalizers.ts`; `normalizers.test.ts`; alias rules doc. | Runtime source data is not rewritten, by design. |
 | Canonical draft builders | Done | `build-canonical-pattern.ts`; `build-canonical-pattern.test.ts`. | Builders expose drafts only; they do not persist canonical records. |
 | Persistence architecture decision | Done | PR #1831; Wave 1 summary and retrieval docs updated. | Implementation of the persisted system of record remains. |
-| Persisted canonical corpus table/view | Not started | None. | Additive schema/view design, migration, RLS/access rules, and read API. |
+| Persisted canonical corpus table/view | In PR-A1 | PR #1835 adds additive table, RLS/read contract, tests, and docs. | Merge after CI/build pass; DB migration application follows normal deployment process. |
 | Canonical corpus backfill | Deferred | None. | Wait until persisted schema/view is reviewed; then run deterministic backfill from crosswalked sources. |
 | Runtime canonical pattern index | Not started | Design only in retrieval blueprint. | Build index from persisted source of record, with source-code/DB transition adapters as needed. |
 | Nexus pattern-first retrieval | Not started | Design only. | Update Nexus program/chat routes so patterns are retrieved after tenant/move/evidence and before synthesis. |
@@ -149,4 +155,3 @@ Stop and report before claiming completion if:
 - content is added before duplicate-risk and provenance handling are resolved
 - quantitative claims are present without source basis and confidence rationale
 - DB writes are required but migration/backfill review has not happened
-
