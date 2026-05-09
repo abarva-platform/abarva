@@ -13,6 +13,11 @@ import { notFound } from 'next/navigation';
 import { LearnSectionPlaceholder } from '@/components/home/LearnSectionPlaceholder';
 import { findLearnSection } from '@/lib/home/learn-sections';
 import { findLearnNavItem } from '@/lib/home/learn-nav';
+import { ApexCaseStudyIntro } from '@/components/home/learn/intelligence/ApexCaseStudyIntro';
+import { Ch01OwnedBrandChapter } from '@/components/home/learn/intelligence/Ch01OwnedBrandChapter';
+import { Ch02DemandForecastChapter } from '@/components/home/learn/intelligence/Ch02DemandForecastChapter';
+import { Ch03SupplyChainChapter } from '@/components/home/learn/intelligence/Ch03SupplyChainChapter';
+import { Ch04WhatToWatchChapter } from '@/components/home/learn/intelligence/Ch04WhatToWatchChapter';
 import { SourceWelcomeSection } from '@/components/source/learn/SourceWelcomeSection';
 import { SourceIntakeSection } from '@/components/source/learn/SourceIntakeSection';
 import { SourceSentinelSection } from '@/components/source/learn/SourceSentinelSection';
@@ -55,11 +60,32 @@ export async function generateMetadata({ params }: Props) {
     const item = findLearnNavItem(`source/${slug}`);
     return { title: `${item?.label ?? slug} · Source · Learn | AbarVa` };
   }
+  if (section === 'intelligence') {
+    const item = findLearnNavItem(`intelligence/${slug}`);
+    return { title: `${item?.label ?? slug} · Intelligence · Learn | AbarVa` };
+  }
   return { title: `${slug} · ${section} · Learn | AbarVa` };
 }
 
 export default async function LearnSubPage({ params }: Props) {
   const { section, slug } = await params;
+
+  // ── Intelligence case study ────────────────────────────────────────────────
+  if (section === 'intelligence') {
+    switch (slug) {
+      case 'case-study':
+        return <ApexCaseStudyIntro />;
+      case 'owned-brand':
+        return <Ch01OwnedBrandChapter />;
+      case 'demand-forecast':
+        return <Ch02DemandForecastChapter />;
+      case 'supply-chain':
+        return <Ch03SupplyChainChapter />;
+      case 'what-to-watch':
+        return <Ch04WhatToWatchChapter />;
+    }
+    notFound();
+  }
 
   // ── Source primer (folded into the unified guide) ──────────────────────────
   if (section === 'source') {

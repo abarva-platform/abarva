@@ -15,7 +15,7 @@ export async function retrieveKnowledge(
   const sb = getServerSupabase();
   let query = sb
     .from('knowledge_sources')
-    .select('id, source_key, title, publisher, content_type, industry_tags, topic_tags, published_at, status')
+    .select('id, source_key, title, publisher, content_type, industry_tags, topic_tags, published_at, status, summary')
     .eq('status', 'active')
     .limit(8);
 
@@ -33,7 +33,7 @@ export async function retrieveKnowledge(
 
   const { data, error } = await query;
   if (error) return { sources: [], averageConfidence: 0 };
-  const rows = (data as Array<{ id: string; source_key: string; title: string; publisher: string; content_type: string; industry_tags: string[] | null; topic_tags: string[] | null; published_at: string | null }> | null) ?? [];
+  const rows = (data as Array<{ id: string; source_key: string; title: string; publisher: string; content_type: string; industry_tags: string[] | null; topic_tags: string[] | null; published_at: string | null; summary: string | null }> | null) ?? [];
 
   const sources: AskSource[] = rows.map((r) => ({
     type: typeMap(r.content_type) ?? sourceTypeLabel,
@@ -43,12 +43,15 @@ export async function retrieveKnowledge(
       r.publisher,
       r.content_type,
       r.published_at ? `Published ${r.published_at}` : null,
+      // Summary is the authoritative prose sent to the synthesizer — without it,
+      // the model only has the title to reason from.
+      r.summary ? r.summary : null,
       r.topic_tags && r.topic_tags.length > 0 ? `Topics: ${r.topic_tags.join(', ')}` : null,
     ]
       .filter(Boolean)
       .join(' · '),
     url: `/intelligence/library?source=${r.source_key}`,
-    confidence: 0.8,
+    confidence: r.summary ? 0.85 : 0.5,
   }));
 
   const avg = sources.length > 0 ? sources.reduce((s, x) => s + (x.confidence ?? 0), 0) / sources.length : 0;
