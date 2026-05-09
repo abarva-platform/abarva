@@ -31,6 +31,16 @@ export interface FromInitiativeCtx {
   goalName: string;    // primary business goal name
 }
 
+/** Context passed when the user arrives from Intelligence pattern evidence. */
+export interface FromIntelligenceCtx {
+  patternId: string;
+  patternName: string;
+  useCaseName: string;
+  sourceTitle?: string | null;
+  contradictionTitle?: string | null;
+  failureRatePct?: number | null;
+}
+
 // Step label and one-line description per Layer 5 §2B table.
 const SCAFFOLD_STEP_DESCRIPTIONS: Record<
   number,
@@ -107,6 +117,33 @@ ${sponsorLine}`,
   };
 }
 
+function composeFromIntelligenceMessage(from: FromIntelligenceCtx): OriginateFirstMessage {
+  const sourceLine = from.sourceTitle
+    ? `Evidence source: **${from.sourceTitle}**.`
+    : 'Evidence source: use the linked Intelligence source summaries as the evidence family.';
+  const contradictionLine = from.contradictionTitle
+    ? `Open tension: **${from.contradictionTitle}**.`
+    : 'Open tension: confirm the sponsor, platform, and data-readiness assumptions before chartering.';
+  const failureLine =
+    typeof from.failureRatePct === 'number' && Number.isFinite(from.failureRatePct)
+      ? `The linked Genome pattern carries an estimated **${Math.round(from.failureRatePct)}% failure risk without controls**.`
+      : 'The linked Genome pattern has a material failure risk without controls.';
+
+  return {
+    role: 'assistant',
+    agentName: 'Nexus',
+    text: `You're shaping a Strategic Move from Intelligence: **${from.useCaseName}**.
+
+Binding pattern: **${from.patternId} — ${from.patternName}**. ${failureLine}
+
+${sourceLine}
+${contradictionLine}
+
+To turn this into a Move, I need to lock four things: the business outcome, the executive sponsor, the scope boundary, and the first evidence gate. My suggested first draft is a pattern-controlled Move that proves the use case only after the data and ownership contradictions are resolved.`,
+    id: `originate-open-intelligence-${from.patternId.toLowerCase().replace(/[^a-z0-9]/g, '-')}`,
+  };
+}
+
 // ---------------------------------------------------------------------
 // Main export
 // ---------------------------------------------------------------------
@@ -114,7 +151,12 @@ ${sponsorLine}`,
 export async function composeOriginateFirstMessage(
   ctx: TenancyCtx,
   fromInitiative?: FromInitiativeCtx | null,
+  fromIntelligence?: FromIntelligenceCtx | null,
 ): Promise<OriginateFirstMessage> {
+  if (fromIntelligence?.patternId) {
+    return composeFromIntelligenceMessage(fromIntelligence);
+  }
+
   // 2D — arriving from "Shape into a Move →" on an AI Initiative page
   if (fromInitiative?.displayId) {
     return composeFromInitiativeMessage(fromInitiative);
