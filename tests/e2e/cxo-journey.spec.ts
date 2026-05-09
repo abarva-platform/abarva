@@ -55,7 +55,7 @@ test.describe('CXO journey: Apex CIO', () => {
   test('renders the first Move walkthrough content', async ({ page }) => {
     await page.goto('/home/learn/first-move');
 
-    await expect(page.getByRole('navigation', { name: 'Learn sections' })).toBeVisible();
+    await expect(page.getByRole('navigation', { name: 'Learn sections' }).first()).toBeVisible();
     await expect(page.getByRole('heading', { level: 1, name: 'First Move walkthrough' })).toBeVisible();
     await expect(page.getByText('Contact Center AI Routing')).toBeVisible();
     await expectNoRuntimeError(page);

@@ -923,6 +923,7 @@ export function PressureCardMock() {
         </div>
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
           <button
+            type="button"
             style={{
               fontFamily: T.fBody,
               fontSize: 12,
@@ -938,6 +939,7 @@ export function PressureCardMock() {
             → Originate a Move
           </button>
           <button
+            type="button"
             style={{
               fontFamily: T.fBody,
               fontSize: 12,
@@ -952,6 +954,7 @@ export function PressureCardMock() {
             Deep dive
           </button>
           <button
+            type="button"
             style={{
               fontFamily: T.fBody,
               fontSize: 12,

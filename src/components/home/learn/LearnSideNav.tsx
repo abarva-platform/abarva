@@ -87,6 +87,7 @@ export function LearnSideNav() {
 
       {/* Nav */}
       <nav
+        role="navigation"
         aria-label="Learn sections"
         style={{
           flex: 1,

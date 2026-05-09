@@ -7,7 +7,7 @@ export function GatesSection() {
       {/* Gates */}
       <Section>
         <Eyebrow>Gates & Evidence</Eyebrow>
-        <SectionTitle>Understanding gates</SectionTitle>
+        <SectionTitle level={1}>Understanding gates</SectionTitle>
         <Lead>
           Gates are the quality checkpoints at the end of each phase. They&rsquo;re not bureaucratic formalities — they&rsquo;re the mechanism that ensures each phase has genuine outputs before you commit to the next investment level.
         </Lead>

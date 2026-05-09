@@ -10,7 +10,7 @@ export function SetupSection() {
       {/* Band */}
       <HeroBand color="slate">
         <Eyebrow light>Setup</Eyebrow>
-        <SectionTitle light>Setup — before you begin</SectionTitle>
+        <SectionTitle light level={1}>Setup — before you begin</SectionTitle>
         <Lead light>
           Setup is where you wire AbarVa into your organization&rsquo;s data and context. Without Setup, Intelligence has nothing to analyze and Nexus produces generic documents. Good Setup = high-quality everything else.
         </Lead>

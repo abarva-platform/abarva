@@ -245,7 +245,7 @@ export function FirstMoveSection() {
     <>
       <HeroBand color="slate">
         <Eyebrow light>First Move · Walkthrough</Eyebrow>
-        <SectionTitle light size="xl">Your first Move, step by step</SectionTitle>
+        <SectionTitle light size="xl" level={1}>First Move walkthrough</SectionTitle>
         <Lead light>
           A complete walkthrough of the P0 → P5 workflow using a realistic example: reducing contact center handle time with AI routing. You'll see exactly what Nexus does at each phase and what decisions stay with you.
         </Lead>
@@ -277,7 +277,7 @@ export function FirstMoveSection() {
         <Eyebrow>The scenario</Eyebrow>
         <SectionTitle>The initiative we'll run</SectionTitle>
         <Lead>
-          You're a CIO at a retail company. The CEO just sent a note: the contact center is running at 9 minutes average handle time, industry peers are at 5.5. There's a $4M gap. He wants someone to own it.
+          You're a CIO at a retail company. The demo Move is <strong>Contact Center AI Routing</strong>: the CEO just sent a note that the contact center is running at 9 minutes average handle time, industry peers are at 5.5. There's a $4M gap. He wants someone to own it.
         </Lead>
 
         <div

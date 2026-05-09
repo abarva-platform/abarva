@@ -115,7 +115,7 @@ export function MovesOverviewSection() {
     <>
       <HeroBand color="teal">
         <Eyebrow light>Strategic Moves</Eyebrow>
-        <SectionTitle light size="xl">What is a Strategic Move?</SectionTitle>
+        <SectionTitle light size="xl" level={1}>What is a Strategic Move?</SectionTitle>
         <Lead light>
           A Strategic Move is a phase-gated transformation program — a structured, evidence-backed way to
           take any AI or operational initiative from a one-line hypothesis to a handed-off delivery with
