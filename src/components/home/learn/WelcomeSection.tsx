@@ -1,6 +1,6 @@
 'use client';
 import {
-  Section, HeroBand, Eyebrow, SectionTitle, Lead, BodyP, SubHead,
+  Section, HeroBand, Eyebrow, SectionTitle, Lead, BodyP,
   Callout, StepList, Step, Flow, FlowStep, T,
 } from './primitives';
 
@@ -10,7 +10,7 @@ export function WelcomeSection() {
       {/* Hero */}
       <HeroBand color="navy">
         <Eyebrow light>AbarVa · User Guide</Eyebrow>
-        <SectionTitle light size="xl">Welcome to AbarVa.</SectionTitle>
+        <SectionTitle light size="xl" level={1}>Welcome to AbarVa.</SectionTitle>
         <Lead light>
           AbarVa is the operating system for enterprise AI programs — it helps strategy leads originate, validate, and govern AI initiatives with evidence grounded in your own data.
         </Lead>

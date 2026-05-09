@@ -1,5 +1,5 @@
 'use client';
-import { Section, Eyebrow, SectionTitle, Lead, PhaseCard, Callout, TermGrid, Term, T } from './primitives';
+import { Section, Eyebrow, SectionTitle, Lead, PhaseCard, Callout, TermGrid, Term } from './primitives';
 
 interface PhaseDef {
   num: string;
@@ -219,7 +219,7 @@ export function PhaseSection({ phase }: { phase: string }) {
     <>
       <Section>
         <Eyebrow>{def.eyebrow}</Eyebrow>
-        <SectionTitle>{def.num} — {def.name}</SectionTitle>
+        <SectionTitle level={1}>{def.num} — {def.name}</SectionTitle>
         <Lead>{def.intro}</Lead>
 
         <PhaseCard

@@ -115,7 +115,7 @@ export function MovesReferenceCard() {
       {/* Header */}
       <Section>
         <Eyebrow>Quick Reference</Eyebrow>
-        <SectionTitle>Strategic Moves reference card</SectionTitle>
+        <SectionTitle level={1}>Strategic Moves reference card</SectionTitle>
         <Lead>
           Everything you need in a single view — all six phases, their gate criteria, and key deliverables. Use this as a checklist when running a Move.
         </Lead>

@@ -6,7 +6,7 @@ export function TowerSection() {
     <>
       <Section>
         <Eyebrow>Control Tower</Eyebrow>
-        <SectionTitle>After a Move completes</SectionTitle>
+        <SectionTitle level={1}>After a Move completes</SectionTitle>
         <Lead>
           When a Move gates out of P5, it transitions automatically to Control Tower. Atlas — the Tower agent — takes over and starts tracking execution health using the metrics you defined in P4.
         </Lead>

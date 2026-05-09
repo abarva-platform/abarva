@@ -115,7 +115,7 @@ export function NexusGuideSection() {
       {/* Hero */}
       <HeroBand color="navy">
         <Eyebrow light>Nexus · Agent Guide</Eyebrow>
-        <SectionTitle light size="xl">Working with Nexus</SectionTitle>
+        <SectionTitle light size="xl" level={1}>Working with Nexus</SectionTitle>
         <Lead light>
           Nexus is the AI agent behind Strategic Moves. It helps you structure programs, draft documents, and navigate phase gates — but it doesn't replace your judgment on the decisions that count.
         </Lead>
