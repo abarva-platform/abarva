@@ -94,6 +94,9 @@ export const LEARN_NAV: ReadonlyArray<LearnNavGroup> = [
       { slug: 'source/transition', label: 'Ch.10 Transition', stageBadge: '10', stageColor: 'teal', indent: true },
       { slug: 'source/value', label: 'Ch.11 Value', stageBadge: '11', stageColor: 'teal', indent: true },
       { slug: 'source/glossary', label: 'Glossary & pitfalls' },
+      { slug: 'source/gates', label: 'Gates & evidence' },
+      { slug: 'source/exports', label: 'Export formats' },
+      { slug: 'source/tower', label: 'After the event' },
     ],
   },
   {
