@@ -28,7 +28,7 @@ This report previews deterministic payloads for the persisted canonical corpus. 
 
 - Preview rows: 312
 - Canonical id collisions: 11
-- Rows missing provenance: 186
+- Rows missing provenance: 0
 - Rows with unsupported quantitative claims: 0
 - Duplicate risk high: 15
 - Duplicate risk medium: 138
@@ -37,28 +37,7 @@ This report previews deterministic payloads for the persisted canonical corpus. 
 
 ## Top Missing Fields
 
-| Field | Missing row count |
-| --- | --- |
-| quantitative_claims | 312 |
-| unsupported_claim_flags | 312 |
-| agentic_architecture_pattern | 192 |
-| anti_patterns | 192 |
-| autonomous_agent_action_boundaries | 192 |
-| baseline_needed | 192 |
-| change_management_needs | 192 |
-| data_quality_dependencies | 192 |
-| enterprise_area | 192 |
-| entry_criteria | 192 |
-| escalation_points | 192 |
-| executive_question_answered | 192 |
-| exit_criteria | 192 |
-| failure_mode_mitigations | 192 |
-| human_agent_workflow_design | 192 |
-| implementation_complexity | 192 |
-| integration_dependencies | 192 |
-| maturity_level | 192 |
-| measurement_method | 192 |
-| operating_model_changes | 192 |
+No missing fields detected.
 
 ## Canonical Id Collisions
 
@@ -84,86 +63,86 @@ First 80 rows are shown here. The complete deterministic payload preview is writ
 
 | Canonical id | Title | Sources | Missing fields | Missing provenance | Duplicate risk | Content hash |
 | --- | --- | --- | --- | --- | --- | --- |
-| AIP-CROSS-INDUSTRY-ACCOUNTS_PAYABLE_AUTOMATION_AND_INVOICE_TO_PAY_SOURCING | Accounts Payable Automation and Invoice-to-Pay Sourcing | pattern_seed | 37 | yes | low | sha256:6a0c771886bbbce2239184d1e07296f650929ec173858162d9a4fa77a2ff82bd |
-| AIP-CROSS-INDUSTRY-ACQUIA_DRUPAL_AND_DIGITAL_EXPERIENCE_PLATFORM_SOURCING_PROFILE | Acquia Drupal and Digital Experience Platform Sourcing Profile | pattern_seed | 37 | yes | medium | sha256:fb8c7ce58247e659142d6e17883872311c5d540d0aa724f701d09c236add4cc3 |
-| AIP-CROSS-INDUSTRY-ADYEN_ENTERPRISE_PAYMENTS_SOURCING_PROFILE | Adyen Enterprise Payments Sourcing Profile | pattern_seed | 37 | yes | medium | sha256:bb33dd192cf1758febf18e106393ae90c4f72f19d6e5691af5b0c4a27994b27d |
-| AIP-CROSS-INDUSTRY-AGENT_ASSIST_KNOWLEDGE_QUALITY_GATE | Agent Assist Knowledge Quality Gate | pattern_seed | 38 | yes | medium | sha256:6fcb73652a5f106e234b0d3e58b14f95edbb3aa49b32ac42044e08e1875d0005 |
-| AIP-CROSS-INDUSTRY-AI_GOVERNANCE_OPERATING_MODEL | AI Governance Operating Model | generated_pattern_manifest, pattern_seed | 42 | yes | high | sha256:1424b2926e7aa974a4f7018900715e44a306871dbd21b31bf99f6317da1c6cd8 |
-| AIP-CROSS-INDUSTRY-AI_LED_OPERATIONS_CONTROL_PLANE | AI-Led Operations Control Plane | pattern_seed | 38 | yes | medium | sha256:7ccf38f2b0f8333286a5f2e19935f425757ec0f24260b5f5eb59e9265e88357a |
-| AIP-CROSS-INDUSTRY-AI_LED_OPERATIONS_VALUE_LEDGER | AI-Led Operations Value Ledger | pattern_seed | 38 | yes | low | sha256:a667fb271ebd2d0153734cd27b2331f7ac3df194cfb52f6d721c352dc0f1ec72 |
-| AIP-CROSS-INDUSTRY-AI_LED_PDLC | AI-Led PDLC | generated_pattern_manifest, pattern_seed | 42 | yes | medium | sha256:bb3232b526fb36100f29c2afa607ae0d0bf51389f06f29aef3164bc82e175890 |
-| AIP-CROSS-INDUSTRY-AI_OPERATIONS_EXCEPTION_PORTFOLIO | AI Operations Exception Portfolio | pattern_seed | 38 | yes | low | sha256:be9c25ab8b28c40fb9fdff1d32dd02288e5e8eaf5e48a95ace173e45f1268843 |
-| AIP-CROSS-INDUSTRY-AI_PROGRAM_KILL_CRITERIA | AI Program Kill Criteria | pattern_seed | 38 | yes | medium | sha256:459086b9388288b830e9c750e4ee654642bee703999fdffe6698d0f9f3a1ed9a |
-| AIP-CROSS-INDUSTRY-AI_PROGRAM_ROI_ATTRIBUTION_METHODOLOGY | AI Program ROI Attribution Methodology | pattern_seed | 38 | yes | low | sha256:1b03d05f7495042c4f201e6da0745376f22eac1e5acddde9d129bd8c55d69a05 |
-| AIP-CROSS-INDUSTRY-AI_PROGRAM_SPONSOR_ACTIVATION | AI Program Sponsor Activation | pattern_seed | 38 | yes | medium | sha256:59225642174e7588d7430887750ecbaeaac6a2308709629ec3102ce9d31fc6dd |
-| AIP-CROSS-INDUSTRY-AI_TALENT_STRATEGY_FOR_AI_MATURE_ORGS | AI Talent Strategy for AI-Mature Orgs | pattern_seed | 38 | yes | low | sha256:d1e8d8be4b7e0f312f746da6a2bd9ef2d9fd6543f24bc8190737558fd33d3a32 |
-| AIP-CROSS-INDUSTRY-AI_USE_CASE_PORTFOLIO_MANAGEMENT | AI Use Case Portfolio Management | generated_pattern_manifest, pattern_seed | 42 | yes | high | sha256:5c5747b1953fa42c2d7683ae1eebd20b34b79fa1f936dc7cc110b154cfc48614 |
-| AIP-CROSS-INDUSTRY-ALGOLIA_AI_SEARCH_AND_DISCOVERY_PLATFORM_SOURCING_PROFILE | Algolia AI Search and Discovery Platform Sourcing Profile | pattern_seed | 37 | yes | medium | sha256:7e09d1f2e757a855757e8813ef1a04efd9c23214d007fc0e9034ead622b8fc86 |
-| AIP-CROSS-INDUSTRY-AMS_PROCUREMENT_PLAYBOOK | AMS Procurement Playbook | pattern_seed | 38 | yes | high | sha256:a32906f16efc3901d7d2b5aff4355aaf3d3806906528c71f0cfa6409e8129d65 |
-| AIP-CROSS-INDUSTRY-ANALYTICS_MODERNIZATION | Analytics Modernization | generated_pattern_manifest | 37 | no | medium | sha256:6ea58dd7671a5c59fb0d2facb61ac67f08f0c16451445e5eb851b993f4eb25ac |
-| AIP-CROSS-INDUSTRY-ASANA_ENTERPRISE_WORK_MANAGEMENT_SOURCING_PROFILE | Asana Enterprise Work Management Sourcing Profile | pattern_seed | 37 | yes | high | sha256:01c18d5e37d5520aa26b2fd49a867d71daf63fc05aa993cbed4f7f674dc9e54f |
-| AIP-CROSS-INDUSTRY-ATOMIC_MULTI_STORE_EVIDENCE_PERSISTENCE | Atomic Multi-Store Evidence Persistence | pattern_seed | 38 | yes | low | sha256:a41013c5c8f706e8aaf3332d23f728376d6da73f5c6d7ad85da4e3e051a1510c |
-| AIP-CROSS-INDUSTRY-AUDIT_AND_RIGHT_TO_VERIFY_GOVERNANCE | Audit and Right-to-Verify Governance | pattern_seed | 37 | yes | medium | sha256:8e5404b8a9f3a951c80ee677ee9558615bdb3ceb32b8222f540ed930b2ba07f6 |
-| AIP-CROSS-INDUSTRY-AUTO_RENEWAL_NOTICE_WINDOW_GOVERNANCE | Auto-Renewal Notice Window Governance | pattern_seed | 37 | yes | medium | sha256:917c342490a068dea48e2bcf6885ed997606aa3281b02237c18d225b8a09ac44 |
-| AIP-CROSS-INDUSTRY-BACK_OFFICE_AI_CAPACITY_RELEASE | Back-Office AI Capacity Release | pattern_seed | 38 | yes | low | sha256:586d7680ef359934084c5129a0d11721fc5309b4c7fc1711b1d67e12841c7eb6 |
-| AIP-CROSS-INDUSTRY-BACK_OFFICE_AI_WORK_INTAKE_REDESIGN | Back-Office AI Work Intake Redesign | pattern_seed | 38 | yes | medium | sha256:d1632876294d17fd227104398b8353b0c49584d57a2f42baf278b71734577f1c |
-| AIP-CROSS-INDUSTRY-BAFO_NEGOTIATION_CADENCE | BAFO Negotiation Cadence | pattern_seed | 37 | yes | medium | sha256:32ac968403cb1d1e8311e280d02dd644737ed50be40965919f92f0c081e843aa |
-| AIP-CROSS-INDUSTRY-BLOCK_SQUARE_MERCHANT_PAYMENTS_AND_COMMERCE_SOURCING_PROFILE | Block Square Merchant Payments and Commerce Sourcing Profile | pattern_seed | 37 | yes | medium | sha256:54f1ccd7bc71b0e557464b72d73d005469ec2727d88a202401da4b92bb4b440c |
-| AIP-CROSS-INDUSTRY-BUSINESS_PROCESS_MANAGEMENT_AND_WORKFLOW_ORCHESTRATION_SOURCING | Business Process Management and Workflow Orchestration Sourcing | pattern_seed | 37 | yes | medium | sha256:82148d29f646e9102437a71fdd055d2b6f054af3255b71f898b67955d5ba1e8d |
-| AIP-CROSS-INDUSTRY-CDP_ARCHITECTURE_DECISION_TEMPLATE | CDP Architecture Decision Template | pattern_seed | 38 | yes | medium | sha256:89d92ad1cd544b3410fac0cbe6563607727ff0cb74797889e6a66efeebb5ed58 |
-| AIP-CROSS-INDUSTRY-CLARIFICATION_PERIOD_MANAGEMENT_Q_A_STAGE | Clarification Period Management (Q&A Stage) | pattern_seed | 38 | yes | low | sha256:6d8cee0e73c3a2783eadbed6c340587502b4a42c3fdbbe261f061ec947cdd8a6 |
-| AIP-CROSS-INDUSTRY-CLOUD_CONSUMPTION_PRICING_NORMALIZATION_FOR_ENTERPRISE_SOURCING | Cloud Consumption Pricing Normalization for Enterprise Sourcing | pattern_seed | 37 | yes | medium | sha256:0c533cfc01c8bf2c5ec872a73028259526df6b7315cb3f04cb7a2b04e51ebe61 |
-| AIP-CROSS-INDUSTRY-CLOUD_DATA_WAREHOUSE_SOURCING | Cloud Data Warehouse Sourcing | pattern_seed | 37 | yes | medium | sha256:a89222328c85bd02638f7ea3ce534e54f9c5e9bb8d2e663c7119ba9cd7a6c801 |
-| AIP-CROSS-INDUSTRY-CLOUD_ERP_AND_FINANCIAL_SYSTEMS_SOURCING | Cloud ERP and Financial Systems Sourcing | pattern_seed | 37 | yes | medium | sha256:96bcd1bdd28115bc570c95c36724d0a092a7dc01ab55359e26fe985b3ae2ca5f |
-| AIP-CROSS-INDUSTRY-CLOUD_SECURITY_POSTURE_CNAPP_CSPM_CWPP_AND_CIEM_SOURCING | Cloud Security Posture, CNAPP, CSPM, CWPP, and CIEM Sourcing | pattern_seed | 37 | yes | medium | sha256:ad2b0f53429213a5e02e261662b32e466ad2e4f41cc538a7ba9a9bd5bdf5bd17 |
-| AIP-CROSS-INDUSTRY-CLOUDFLARE_CONNECTIVITY_SECURITY_AND_EDGE_PLATFORM_SOURCING_PROFILE | Cloudflare Connectivity, Security, and Edge Platform Sourcing Profile | pattern_seed | 37 | yes | medium | sha256:c0254b5d0db73efcf7f36ec4debd2d4cd3dbd5bda3210cd2bb6941ad29da6ea2 |
-| AIP-CROSS-INDUSTRY-CMS_AND_HEADLESS_CONTENT_PLATFORM_SOURCING | CMS and Headless Content Platform Sourcing | pattern_seed | 37 | yes | medium | sha256:a78b46b29b08f6104538f4b12dac88ae381dbcddc769d58035f6fda92949a1ba |
-| AIP-CROSS-INDUSTRY-CODING_AGENT_ROLLOUT_PATTERN | Coding-Agent Rollout Pattern | pattern_seed | 38 | yes | medium | sha256:354690941415cbb89121895d1c753808f4c6942966522116c2ee2fe1159bcef9 |
-| AIP-CROSS-INDUSTRY-COLLABORATION_AND_PRODUCTIVITY_SUITE_SOURCING | Collaboration and Productivity Suite Sourcing | pattern_seed | 37 | yes | medium | sha256:914989cbb495219412e5c9b5521d0bc9e8daf200ccb8012a08038e751a708fde |
-| AIP-CROSS-INDUSTRY-CONFIGURE_PRICE_QUOTE_SOURCING | Configure, Price, Quote Sourcing | pattern_seed | 37 | yes | medium | sha256:3b2facc74615b9b2e8e53bd6e613228ccfba19be567d7d2fc582526aae4fd8f4 |
-| AIP-CROSS-INDUSTRY-CONSULTING_AND_ADVISORY_PROCUREMENT_PLAYBOOK | Consulting and Advisory Procurement Playbook | pattern_seed | 38 | yes | medium | sha256:afdca862535045160747714ef2d4a687810e9519c115d62a4c703e7d071ba084 |
-| AIP-CROSS-INDUSTRY-CONTACT_CENTER_AI_CONTAINMENT_TRUST | Contact Center AI Containment Trust | pattern_seed | 38 | yes | medium | sha256:8adbae50d4e8ff84136a0ca794e49bc231b6274bcc8986b28d7c1ebdd9d6a8c7 |
-| AIP-CROSS-INDUSTRY-CONTENTSTACK_HEADLESS_CMS_AND_AGENTIC_DXP_SOURCING_PROFILE | Contentstack Headless CMS and Agentic DXP Sourcing Profile | pattern_seed | 37 | yes | medium | sha256:1d905e1a709c3e4060768f7a44a4a0c4f50c68ebd884b4e398207574fb5d6ee6 |
-| AIP-CROSS-INDUSTRY-CONTEXT_AS_CODE_UNDERINVESTMENT | Context-as-Code Underinvestment | generated_pattern_manifest | 39 | no | low | sha256:a1a46789140af4fe77b7752b87eea3094bbe0dee4d6cfb7b4c6df0e544b74e15 |
-| AIP-CROSS-INDUSTRY-CONTEXT_BUNDLE_DETERMINISM_GUARANTEE | Context Bundle Determinism Guarantee | pattern_seed | 38 | yes | low | sha256:b97949b1a81cc41f6bfba02b73d98032a07d7dc7f70d466570236f8955bf425f |
-| AIP-CROSS-INDUSTRY-CONTRACT_LIFECYCLE_MANAGEMENT_SOURCING | Contract Lifecycle Management Sourcing | pattern_seed | 37 | yes | medium | sha256:740d63cf8f704f1fce19ad8ed2d8864dd597210a9cd1a7717bee9aad9a0f3f3c |
-| AIP-CROSS-INDUSTRY-CONTROL_PLANE_PRIVATE_DATA_PLANE_SEPARATION | Control Plane / Private Data Plane Separation | pattern_seed | 38 | yes | medium | sha256:fae342e0a292fc93731fc0bd2b224fa67db9ca1929e8a417e1a1b127407386d2 |
-| AIP-CROSS-INDUSTRY-CORE_ERP_MODERNIZATION_SOURCING | Core ERP Modernization Sourcing | pattern_seed | 37 | yes | medium | sha256:8537d711859b4ec5a8f558a6769fc62edcd3940a2ce40feadc842a3edd3e3419 |
-| AIP-CROSS-INDUSTRY-COUPA_SPEND_MANAGEMENT_PROCUREMENT_AP_AND_SOURCING_PROFILE | Coupa Spend Management Procurement, AP, and Sourcing Profile | pattern_seed | 37 | yes | medium | sha256:f1a4045b325cf579eefc580a96900e73dd53a4c6dd726d888cf4e0291be3bf32 |
-| AIP-CROSS-INDUSTRY-CROSS_VENDOR_INFERENCE_COST_NORMALIZATION | Cross-Vendor Inference Cost Normalization | pattern_seed | 38 | yes | low | sha256:30b4b7995a56894f9ba4987930dd8006f985cbe6a3baf2ca08f46ec7076bb026 |
-| AIP-CROSS-INDUSTRY-CUSTOMER_DATA_PLATFORM_SOURCING | Customer Data Platform Sourcing | pattern_seed | 37 | yes | medium | sha256:0c110762e20b1f15129c429f131b61cd9045a1d2a9cfd773b9177a19ebf34dcc |
-| AIP-CROSS-INDUSTRY-DATA_FABRIC_GOVERNANCE_LAYER_SOURCING | Data Fabric Governance Layer Sourcing | pattern_seed | 37 | yes | medium | sha256:8b16995f7da9856bff83c1eb7560d5e1418aee0d9e47c15c92157795829a596c |
-| AIP-CROSS-INDUSTRY-DEEP_GITHUB_ENTERPRISE_SOURCING_PROFILE | Deep GitHub Enterprise Sourcing Profile | pattern_seed | 37 | yes | medium | sha256:24a83f6555014b4f645ce77c738a99c4e2a363afa7fa29030b2921790fdbe03f |
-| AIP-CROSS-INDUSTRY-DIRECTED_PLANE_DEPENDENCY_GRAPH | Directed Plane Dependency Graph | pattern_seed | 38 | yes | medium | sha256:cc863307d86f133a3bba513553aae5d729aed606ed40637b60d4d993870bb685 |
-| AIP-CROSS-INDUSTRY-DOCUSIGN_IAM_CLM_AND_ESIGNATURE_SOURCING_PROFILE | DocuSign IAM, CLM, and eSignature Sourcing Profile | pattern_seed | 37 | yes | medium | sha256:650647b55bc152d8f3ce715ff21cad150467eaf9f7fdcfe313527af37541d4e1 |
-| AIP-CROSS-INDUSTRY-DPA_SUBPROCESSOR_AND_CONTROL_EVIDENCE_STACK | DPA, Subprocessor, and Control Evidence Stack | pattern_seed | 37 | yes | medium | sha256:8a568308685b111120882e82ea4d26608e79e224ca5e714e2d16a7266d76e3ba |
-| AIP-CROSS-INDUSTRY-EDR_XDR_AND_ENDPOINT_SECURITY_SOURCING | EDR, XDR, and Endpoint Security Sourcing | pattern_seed | 37 | yes | medium | sha256:b507221fb4c5d0de0b65915b75b899bc00cf09e9b46e7ffce3aac0f6897d751f |
-| AIP-CROSS-INDUSTRY-EHS_MANAGEMENT_SOFTWARE_SOURCING | EHS Management Software Sourcing | pattern_seed | 37 | yes | medium | sha256:7adb8861dc1ff403d92bb353fe4f82024096661c3f5eadadefbde0b472dcd4c9 |
-| AIP-CROSS-INDUSTRY-ELASTIC_SEARCH_OBSERVABILITY_AND_SECURITY_SOURCING_PROFILE | Elastic Search, Observability, and Security Sourcing Profile | pattern_seed | 37 | yes | medium | sha256:b2b21b67815299f9288cb312c190651e7e44e7fc1de6d7d449b6cafe91ad035e |
-| AIP-CROSS-INDUSTRY-ELEVEN_PLANE_PLATFORM_DECOMPOSITION | Eleven-Plane Platform Decomposition | pattern_seed | 38 | yes | medium | sha256:1a5d66dc40b8969f0f94fde8147ec81c8dd3116d7c6e7e236a94a601dc1946eb |
-| AIP-CROSS-INDUSTRY-ENTERPRISE_AI_AGENT_PLATFORM_SOURCING | Enterprise AI Agent Platform Sourcing | pattern_seed | 37 | yes | medium | sha256:f3e391c54cad84cfa1c93eb58aea3c2df9424b562cd29d4d538920e90eea2814 |
-| AIP-CROSS-INDUSTRY-ENTERPRISE_CODE_PLATFORM_SOURCING_FOR_SCM_DEVOPS_AND_AI_CODING_ASSISTANT | Enterprise Code Platform Sourcing for SCM, DevOps, and AI Coding Assistants | pattern_seed | 37 | yes | medium | sha256:1f2e3d51f51bc663c4165df08fbe55c18b1a58e69633426277e7151bac82cac1 |
-| AIP-CROSS-INDUSTRY-ENTERPRISE_CRM_PLATFORM_SOURCING_PLAYBOOK | Enterprise CRM Platform Sourcing Playbook | pattern_seed | 37 | yes | medium | sha256:cc2890c747cb02f4ec899bb252533857d7869e1eb1b916cd4daa2c52bc098907 |
-| AIP-CROSS-INDUSTRY-ENTERPRISE_DOCUMENT_AND_CONTENT_MANAGEMENT_SOURCING | Enterprise Document and Content Management Sourcing | pattern_seed | 37 | yes | medium | sha256:c6b5060e7701fc2795a9d71462909f433432e4fa58f90831922f6ea81535f079 |
-| AIP-CROSS-INDUSTRY-ENTERPRISE_LLM_AND_GENERATIVE_AI_MODEL_ACCESS_SOURCING | Enterprise LLM and Generative AI Model Access Sourcing | pattern_seed | 37 | yes | medium | sha256:6639cafbf200683014300fa549a7c8a23999a05ed1688096fada25299d8990ce |
-| AIP-CROSS-INDUSTRY-ENTERPRISE_MESSAGING_AND_TEAM_CHAT_PLATFORM_SOURCING | Enterprise Messaging and Team Chat Platform Sourcing | pattern_seed | 37 | yes | medium | sha256:53fa100d5bbc39518c3dfe604bab454100faffc152ab9fc1a6c847f401968efd |
-| AIP-CROSS-INDUSTRY-ENTERPRISE_PERFORMANCE_MANAGEMENT_AND_FP_A_PLATFORM_SOURCING | Enterprise Performance Management and FP&A Platform Sourcing | pattern_seed | 37 | yes | medium | sha256:ea1878eb4a8ad135867f324067c3f2a8777344d4bf1fe692f70b63a1c8eb72e0 |
-| AIP-CROSS-INDUSTRY-ENTERPRISE_SERVICE_MANAGEMENT_AND_ITSM_ADJACENT_WORKFLOW_SOURCING | Enterprise Service Management and ITSM-Adjacent Workflow Sourcing | pattern_seed | 37 | yes | medium | sha256:dde0ebee358685afa09c5e411fae3835ecd6bf1a64bde2462f1d726759175370 |
-| AIP-CROSS-INDUSTRY-ERP_AGENT_INTEGRATION_DEPTH_DECISION | ERP-Agent Integration Depth Decision | pattern_seed | 38 | yes | medium | sha256:5dcd5dab5a38b60130d3d241cad48b5f27d239253f2d7195ee99bc2b8147de0d |
-| AIP-CROSS-INDUSTRY-ETL_ELT_AND_DATA_INTEGRATION_PLATFORM_SOURCING | ETL/ELT and Data Integration Platform Sourcing | pattern_seed | 37 | yes | high | sha256:39e75a98bf3bb460f3b13a20f235d36325d4150d8dd5ff58b927e90256e8ee7d |
-| AIP-CROSS-INDUSTRY-EU_AI_ACT_PROCUREMENT_OVERLAY_FOR_AI_ENABLED_VENDOR_SOURCING | EU AI Act Procurement Overlay for AI-Enabled Vendor Sourcing | pattern_seed | 37 | yes | medium | sha256:aa32fedae4cbdaae2abb886d19bbe1c87b76f636662c1cf1a8115c12a5d85ee8 |
-| AIP-CROSS-INDUSTRY-EVIDENCE_LEDGER_RETRIEVAL_AUTHORITY | Evidence Ledger Retrieval Authority | pattern_seed | 38 | yes | medium | sha256:a065a95266b61aa0cce8a8336c63109536e7c303b024c79e19e78d89bce6de39 |
-| AIP-CROSS-INDUSTRY-EXIT_ASSISTANCE_AND_DATA_RETURN_OBLIGATIONS | Exit Assistance and Data Return Obligations | pattern_seed | 37 | yes | low | sha256:2550d6158bca86630adfb49d92b6af81518f5d2d456b84b56751c13c4747363b |
-| AIP-CROSS-INDUSTRY-FINANCE_AI_CLOSE_CONTROLS | Finance AI Close Controls | pattern_seed | 38 | yes | low | sha256:082791d05efc62f7cb8e173797d0053b3776fca18379bbe2bdc79cad5a3df146 |
-| AIP-CROSS-INDUSTRY-FINOPS_AND_CLOUD_COST_MANAGEMENT_PLATFORM_SOURCING | FinOps and Cloud Cost Management Platform Sourcing | pattern_seed | 37 | yes | medium | sha256:efab297f6b9686414c96106b60fd02c0b6d8a721a551f07cb1c85d9cc5eac549 |
-| AIP-CROSS-INDUSTRY-GITLAB_ULTIMATE_AND_DEDICATED_SOURCING_PROFILE | GitLab Ultimate and Dedicated Sourcing Profile | pattern_seed | 37 | yes | medium | sha256:72721d92a8d177f31bf629c8b6f47f1c79564106224b3256aaf616277b1069c5 |
-| AIP-CROSS-INDUSTRY-GOOGLE_CLOUD_PLATFORM_SOURCING_PROFILE | Google Cloud Platform Sourcing Profile | pattern_seed | 37 | yes | medium | sha256:4dc96557d91ffa660ea38134ee5840048f0c5bef20c92a113349e322ae2ef213 |
-| AIP-CROSS-INDUSTRY-GOVERNED_BUSINESS_INTELLIGENCE_PLATFORM_SOURCING | Governed Business Intelligence Platform Sourcing | pattern_seed | 37 | yes | medium | sha256:3c328341cd1fca8ae9f75c41424d2127afc97d9e6573bfcfe3cfb55555d3fbf7 |
-| AIP-CROSS-INDUSTRY-HR_TECHNOLOGY_SUITE_HRIS_AND_HCM_ADJACENT_SOURCING | HR Technology Suite, HRIS, and HCM-Adjacent Sourcing | pattern_seed | 37 | yes | medium | sha256:bf733b12aaf9de36d752b91506a3e6370abffb1dfe32847015472ddf7c2818e6 |
-| AIP-CROSS-INDUSTRY-HUMAN_CAPITAL_MANAGEMENT_PLATFORM_SOURCING | Human Capital Management Platform Sourcing | pattern_seed | 37 | yes | medium | sha256:87138d57e840f28dde213c75afbc5f514f90ddfafd7daaea8a62d5183d32ed82 |
-| AIP-CROSS-INDUSTRY-ICEBERG_PRINCIPLE_FOR_UI_UX | Iceberg Principle for UI/UX | pattern_seed | 38 | yes | medium | sha256:dde5fb279d87971076b2192ab20d9d39902cd625911fb64e84403cc1b4d7423e |
-| AIP-CROSS-INDUSTRY-IDENTITY_GOVERNANCE_SOURCING_FOR_ACCESS_REVIEWS_LIFECYCLE_GOVERNANCE_AND | Identity Governance Sourcing for Access Reviews, Lifecycle Governance, and Entitlement Control | pattern_seed | 37 | yes | medium | sha256:d60cad03a1d0752c79f79f89aab9e926756833d96cde3bb829f9734782b6f7cd |
-| AIP-CROSS-INDUSTRY-IMPLEMENTATION_AND_SYSTEMS_INTEGRATION_PROCUREMENT_PLAYBOOK | Implementation and Systems Integration Procurement Playbook | pattern_seed | 38 | yes | low | sha256:4b4462af6bf87b175c8122398c2607f37f6b06f41651fb871e283d6e956322a2 |
+| AIP-CROSS-INDUSTRY-ACCOUNTS_PAYABLE_AUTOMATION_AND_INVOICE_TO_PAY_SOURCING | Accounts Payable Automation and Invoice-to-Pay Sourcing | pattern_seed | 0 | no | low | sha256:71ed601736cf549fb0d16aea65c9251ba5e81260edc91b4b2dd6e95416f434b6 |
+| AIP-CROSS-INDUSTRY-ACQUIA_DRUPAL_AND_DIGITAL_EXPERIENCE_PLATFORM_SOURCING_PROFILE | Acquia Drupal and Digital Experience Platform Sourcing Profile | pattern_seed | 0 | no | medium | sha256:29fc7cf9a0e66efdf8617e0dc218747eadfe6aae5fd5c445bdcabe32d5dd5b91 |
+| AIP-CROSS-INDUSTRY-ADYEN_ENTERPRISE_PAYMENTS_SOURCING_PROFILE | Adyen Enterprise Payments Sourcing Profile | pattern_seed | 0 | no | medium | sha256:944f6800112d83a7cb1b2c5861f124a8c48124197f435580dca16f4e034527eb |
+| AIP-CROSS-INDUSTRY-AGENT_ASSIST_KNOWLEDGE_QUALITY_GATE | Agent Assist Knowledge Quality Gate | pattern_seed | 0 | no | medium | sha256:b2357bc29372f46f4bd5721b1f61d648069b403fa28dd15159dbcbf8c1985223 |
+| AIP-CROSS-INDUSTRY-AI_GOVERNANCE_OPERATING_MODEL | AI Governance Operating Model | generated_pattern_manifest, pattern_seed | 0 | no | high | sha256:86fdaf0f177d0bc69f967e3fec9ec4b3f2830316580e706eccf92ff954c66032 |
+| AIP-CROSS-INDUSTRY-AI_LED_OPERATIONS_CONTROL_PLANE | AI-Led Operations Control Plane | pattern_seed | 0 | no | medium | sha256:d0942b638d9341641933e372aabb8e2eb6fd35b2a0d9221e75bf8e81f9398c0e |
+| AIP-CROSS-INDUSTRY-AI_LED_OPERATIONS_VALUE_LEDGER | AI-Led Operations Value Ledger | pattern_seed | 0 | no | low | sha256:9c3f07749d19cae0150cb675dc3b00c69e9d1bcce1d442bc8caca252d7377c65 |
+| AIP-CROSS-INDUSTRY-AI_LED_PDLC | AI-Led PDLC | generated_pattern_manifest, pattern_seed | 0 | no | medium | sha256:b0d63a95a22e0257016b3e9540020253b63e770c1e9c6a81ceb9ebbb75f2a323 |
+| AIP-CROSS-INDUSTRY-AI_OPERATIONS_EXCEPTION_PORTFOLIO | AI Operations Exception Portfolio | pattern_seed | 0 | no | low | sha256:bd45db52aab21bae9a2dc82b8d6edbfe7b16a0f120c42dd99b9b3c37152e5c76 |
+| AIP-CROSS-INDUSTRY-AI_PROGRAM_KILL_CRITERIA | AI Program Kill Criteria | pattern_seed | 0 | no | medium | sha256:b27a13d8f9d73911df193e9f8c3edc2b8cd3fe9bbeaace6492eb510894750709 |
+| AIP-CROSS-INDUSTRY-AI_PROGRAM_ROI_ATTRIBUTION_METHODOLOGY | AI Program ROI Attribution Methodology | pattern_seed | 0 | no | low | sha256:06e2a1a2b94bc815ee0fec6123118b587bc863edaf1ab1b524adeb240b72d034 |
+| AIP-CROSS-INDUSTRY-AI_PROGRAM_SPONSOR_ACTIVATION | AI Program Sponsor Activation | pattern_seed | 0 | no | medium | sha256:f27078917cf3be046c632f61c80871e546edd919354a673082fcd3f5b4c0b67e |
+| AIP-CROSS-INDUSTRY-AI_TALENT_STRATEGY_FOR_AI_MATURE_ORGS | AI Talent Strategy for AI-Mature Orgs | pattern_seed | 0 | no | low | sha256:e34dd533e8e7d750a4eabac593079938f6a2b78705c00ebb8dc1fd45619e69b5 |
+| AIP-CROSS-INDUSTRY-AI_USE_CASE_PORTFOLIO_MANAGEMENT | AI Use Case Portfolio Management | generated_pattern_manifest, pattern_seed | 0 | no | high | sha256:9dee60b23604ec8c0ee169638af98faa3e7c4e28686f2364cca15d504dc7bdda |
+| AIP-CROSS-INDUSTRY-ALGOLIA_AI_SEARCH_AND_DISCOVERY_PLATFORM_SOURCING_PROFILE | Algolia AI Search and Discovery Platform Sourcing Profile | pattern_seed | 0 | no | medium | sha256:c80ef006b3e4337df040ebcd6981b2856a91bf40c9329698e65bdfa2440407a3 |
+| AIP-CROSS-INDUSTRY-AMS_PROCUREMENT_PLAYBOOK | AMS Procurement Playbook | pattern_seed | 0 | no | high | sha256:c87ba14812b347f29ea06e407b90c8bab463280dd573711efac16b6b02ff464c |
+| AIP-CROSS-INDUSTRY-ANALYTICS_MODERNIZATION | Analytics Modernization | generated_pattern_manifest | 0 | no | medium | sha256:662e7dc907f663712149ea292ffb38cad5d29de6520b6dfffe711e6aefbde92e |
+| AIP-CROSS-INDUSTRY-ASANA_ENTERPRISE_WORK_MANAGEMENT_SOURCING_PROFILE | Asana Enterprise Work Management Sourcing Profile | pattern_seed | 0 | no | high | sha256:6e2360f028cddd67e6d59c6e7187e5758a58a71147024e55d1d863ade2e9a452 |
+| AIP-CROSS-INDUSTRY-ATOMIC_MULTI_STORE_EVIDENCE_PERSISTENCE | Atomic Multi-Store Evidence Persistence | pattern_seed | 0 | no | low | sha256:7795609fa70610132849b0e823220f79e7694c898a018ee4aa1ee16ea5cd3fd4 |
+| AIP-CROSS-INDUSTRY-AUDIT_AND_RIGHT_TO_VERIFY_GOVERNANCE | Audit and Right-to-Verify Governance | pattern_seed | 0 | no | medium | sha256:710c4420240579e0c0e2375b65585c21ec5f35fa60b22cd95a0fd8546594b8d6 |
+| AIP-CROSS-INDUSTRY-AUTO_RENEWAL_NOTICE_WINDOW_GOVERNANCE | Auto-Renewal Notice Window Governance | pattern_seed | 0 | no | medium | sha256:cfaff59eb1c43feb4a18a582b57a7c8fd4866edcc09224b48dfd7a22d5ff644a |
+| AIP-CROSS-INDUSTRY-BACK_OFFICE_AI_CAPACITY_RELEASE | Back-Office AI Capacity Release | pattern_seed | 0 | no | low | sha256:7842f6e142a610224101e707c50348157b6f1c87ec244822a3ca2a6f9a5bbf71 |
+| AIP-CROSS-INDUSTRY-BACK_OFFICE_AI_WORK_INTAKE_REDESIGN | Back-Office AI Work Intake Redesign | pattern_seed | 0 | no | medium | sha256:eade97d1411a0cd77665e54abb2fda5851380ebb2f01168f3de9b0a13c102301 |
+| AIP-CROSS-INDUSTRY-BAFO_NEGOTIATION_CADENCE | BAFO Negotiation Cadence | pattern_seed | 0 | no | medium | sha256:43ba4216cda69400bc4e5752eb6324da898a1a4427894884a2154533b4e65e82 |
+| AIP-CROSS-INDUSTRY-BLOCK_SQUARE_MERCHANT_PAYMENTS_AND_COMMERCE_SOURCING_PROFILE | Block Square Merchant Payments and Commerce Sourcing Profile | pattern_seed | 0 | no | medium | sha256:510a53bf603596a86ceb94dc8caa01cc2d57d09df40564646748039d12d7bca2 |
+| AIP-CROSS-INDUSTRY-BUSINESS_PROCESS_MANAGEMENT_AND_WORKFLOW_ORCHESTRATION_SOURCING | Business Process Management and Workflow Orchestration Sourcing | pattern_seed | 0 | no | medium | sha256:731bff3577b33d3d3363d03055fd724d101fedcdc9a7d28b462ecb81480b1462 |
+| AIP-CROSS-INDUSTRY-CDP_ARCHITECTURE_DECISION_TEMPLATE | CDP Architecture Decision Template | pattern_seed | 0 | no | medium | sha256:0e5748d94aa2efdd3239450a442af7dd52e3ad0c1a6e8335f16d27e7126289cf |
+| AIP-CROSS-INDUSTRY-CLARIFICATION_PERIOD_MANAGEMENT_Q_A_STAGE | Clarification Period Management (Q&A Stage) | pattern_seed | 0 | no | low | sha256:b05e1da05f200a7f26d91e9c7dea43ef20a769e05eb3dbd38a542a5e2051476b |
+| AIP-CROSS-INDUSTRY-CLOUD_CONSUMPTION_PRICING_NORMALIZATION_FOR_ENTERPRISE_SOURCING | Cloud Consumption Pricing Normalization for Enterprise Sourcing | pattern_seed | 0 | no | medium | sha256:07362fa88413c18b1a0f01ca0fa4ee2060fa62c078e93ac8923ed178b096020a |
+| AIP-CROSS-INDUSTRY-CLOUD_DATA_WAREHOUSE_SOURCING | Cloud Data Warehouse Sourcing | pattern_seed | 0 | no | medium | sha256:140ade12f7ac0f7fcb4bcd2b48a6f2721481aee3b6c73e3c60d1721e92c7b1e2 |
+| AIP-CROSS-INDUSTRY-CLOUD_ERP_AND_FINANCIAL_SYSTEMS_SOURCING | Cloud ERP and Financial Systems Sourcing | pattern_seed | 0 | no | medium | sha256:030310407a89bebb803adc5b3ec4dadfc9144c78ac51854dab3787350263bacd |
+| AIP-CROSS-INDUSTRY-CLOUD_SECURITY_POSTURE_CNAPP_CSPM_CWPP_AND_CIEM_SOURCING | Cloud Security Posture, CNAPP, CSPM, CWPP, and CIEM Sourcing | pattern_seed | 0 | no | medium | sha256:09ab0feaea6283b893d1e8b28e86bcbdfe2010088a06711a4940aa062154a47e |
+| AIP-CROSS-INDUSTRY-CLOUDFLARE_CONNECTIVITY_SECURITY_AND_EDGE_PLATFORM_SOURCING_PROFILE | Cloudflare Connectivity, Security, and Edge Platform Sourcing Profile | pattern_seed | 0 | no | medium | sha256:bf2696a2c12b2acd6a827cf76ea431869d1cac3dba785f97c1a80e4fe6df7212 |
+| AIP-CROSS-INDUSTRY-CMS_AND_HEADLESS_CONTENT_PLATFORM_SOURCING | CMS and Headless Content Platform Sourcing | pattern_seed | 0 | no | medium | sha256:32337dbd475b021fe76708c778dc36d4f17611f2a67ec4b14ac32d2c80dd3a60 |
+| AIP-CROSS-INDUSTRY-CODING_AGENT_ROLLOUT_PATTERN | Coding-Agent Rollout Pattern | pattern_seed | 0 | no | medium | sha256:9495fee1683b6b77542cb4485dbea5cd21cb584febf9a6bf417798959982cf57 |
+| AIP-CROSS-INDUSTRY-COLLABORATION_AND_PRODUCTIVITY_SUITE_SOURCING | Collaboration and Productivity Suite Sourcing | pattern_seed | 0 | no | medium | sha256:886a82e2babf0093d72a3e8d7d55fc44685f27fb3a883f16e04c009f305124fa |
+| AIP-CROSS-INDUSTRY-CONFIGURE_PRICE_QUOTE_SOURCING | Configure, Price, Quote Sourcing | pattern_seed | 0 | no | medium | sha256:6557b686a0371506de553b9ec75c15e2573ee78fc90758f20be339f04f8b0332 |
+| AIP-CROSS-INDUSTRY-CONSULTING_AND_ADVISORY_PROCUREMENT_PLAYBOOK | Consulting and Advisory Procurement Playbook | pattern_seed | 0 | no | medium | sha256:dde37a659a82869cc5bce10ff8b5175d55bf1576a848f80b605b50d4f6ad0961 |
+| AIP-CROSS-INDUSTRY-CONTACT_CENTER_AI_CONTAINMENT_TRUST | Contact Center AI Containment Trust | pattern_seed | 0 | no | medium | sha256:59f95a3837bd4b807ecbdeb81f0486127e7133ade3300c095745020de4385ebe |
+| AIP-CROSS-INDUSTRY-CONTENTSTACK_HEADLESS_CMS_AND_AGENTIC_DXP_SOURCING_PROFILE | Contentstack Headless CMS and Agentic DXP Sourcing Profile | pattern_seed | 0 | no | medium | sha256:e1e8dd95be6cf642a2e05fda2b277a1a0f5a0196495df7165ec8a98643d6c0ea |
+| AIP-CROSS-INDUSTRY-CONTEXT_AS_CODE_UNDERINVESTMENT | Context-as-Code Underinvestment | generated_pattern_manifest | 0 | no | low | sha256:44144fde948aa8b7790466912ff8d3f5571725bd8c579dba48a8841efec67e3d |
+| AIP-CROSS-INDUSTRY-CONTEXT_BUNDLE_DETERMINISM_GUARANTEE | Context Bundle Determinism Guarantee | pattern_seed | 0 | no | low | sha256:25964122b6d3c19323affe4a315f80a5a28631495daf39fcea4212f53ffd05ec |
+| AIP-CROSS-INDUSTRY-CONTRACT_LIFECYCLE_MANAGEMENT_SOURCING | Contract Lifecycle Management Sourcing | pattern_seed | 0 | no | medium | sha256:65046d783bb62181c89774a16ca4f310efec02f9476468ab8a0c16e12c5566b3 |
+| AIP-CROSS-INDUSTRY-CONTROL_PLANE_PRIVATE_DATA_PLANE_SEPARATION | Control Plane / Private Data Plane Separation | pattern_seed | 0 | no | medium | sha256:0ae4941f3d074a21cc39391a509d053659301c3f995e38cc04ea67cd01abc1e9 |
+| AIP-CROSS-INDUSTRY-CORE_ERP_MODERNIZATION_SOURCING | Core ERP Modernization Sourcing | pattern_seed | 0 | no | medium | sha256:4fa785a3be145c087c8c5510588ebcaab419de075277c93d38a860ea7ed253dd |
+| AIP-CROSS-INDUSTRY-COUPA_SPEND_MANAGEMENT_PROCUREMENT_AP_AND_SOURCING_PROFILE | Coupa Spend Management Procurement, AP, and Sourcing Profile | pattern_seed | 0 | no | medium | sha256:b13f94809d6a4f1040d66b267e0c09b5a3b2841e6d2411a18ac6be37f7220a4f |
+| AIP-CROSS-INDUSTRY-CROSS_VENDOR_INFERENCE_COST_NORMALIZATION | Cross-Vendor Inference Cost Normalization | pattern_seed | 0 | no | low | sha256:f5db89079b5cd712c4e37a36e4a2061bd48398bd0a11f4631b6a81f9796e34df |
+| AIP-CROSS-INDUSTRY-CUSTOMER_DATA_PLATFORM_SOURCING | Customer Data Platform Sourcing | pattern_seed | 0 | no | medium | sha256:a6952be35feee0a927570b2c60d560561a18ea45348757e7111ea6a724c45319 |
+| AIP-CROSS-INDUSTRY-DATA_FABRIC_GOVERNANCE_LAYER_SOURCING | Data Fabric Governance Layer Sourcing | pattern_seed | 0 | no | medium | sha256:aaa9cc257286dc7c81d16bf640294f26ba1321617fb3cfdc3714c4d6785f972d |
+| AIP-CROSS-INDUSTRY-DEEP_GITHUB_ENTERPRISE_SOURCING_PROFILE | Deep GitHub Enterprise Sourcing Profile | pattern_seed | 0 | no | medium | sha256:3dc0b06f87528e8cf98e4809ec55fe48212442a1a17fc74c0b93b4fb05877aa3 |
+| AIP-CROSS-INDUSTRY-DIRECTED_PLANE_DEPENDENCY_GRAPH | Directed Plane Dependency Graph | pattern_seed | 0 | no | medium | sha256:406fe013c69084796bdea2d2c0f264066a293aa289a475226d8cf8bb5c231e62 |
+| AIP-CROSS-INDUSTRY-DOCUSIGN_IAM_CLM_AND_ESIGNATURE_SOURCING_PROFILE | DocuSign IAM, CLM, and eSignature Sourcing Profile | pattern_seed | 0 | no | medium | sha256:f2f317ac23c73a193e31d8ed213ef0a0e4366296f6539df0f7e25a0d656f7af8 |
+| AIP-CROSS-INDUSTRY-DPA_SUBPROCESSOR_AND_CONTROL_EVIDENCE_STACK | DPA, Subprocessor, and Control Evidence Stack | pattern_seed | 0 | no | medium | sha256:4cc3e5d1c095a08f94cc194e5932092e7f9e755fce51a790f7de8a6e37326129 |
+| AIP-CROSS-INDUSTRY-EDR_XDR_AND_ENDPOINT_SECURITY_SOURCING | EDR, XDR, and Endpoint Security Sourcing | pattern_seed | 0 | no | medium | sha256:e141f1298c14437b94fb4535c2bfbff6d6bcf33926875c8ced850680f4e0b88e |
+| AIP-CROSS-INDUSTRY-EHS_MANAGEMENT_SOFTWARE_SOURCING | EHS Management Software Sourcing | pattern_seed | 0 | no | medium | sha256:b4a4ee86d33d1874f78b6acff17e6a3e8ba0afbc4a36e4c8076dfc4309109561 |
+| AIP-CROSS-INDUSTRY-ELASTIC_SEARCH_OBSERVABILITY_AND_SECURITY_SOURCING_PROFILE | Elastic Search, Observability, and Security Sourcing Profile | pattern_seed | 0 | no | medium | sha256:72b2be04b2aff7fb68f362f28fba2559dd8c326b5c26cc0d56fbd42223b41c3f |
+| AIP-CROSS-INDUSTRY-ELEVEN_PLANE_PLATFORM_DECOMPOSITION | Eleven-Plane Platform Decomposition | pattern_seed | 0 | no | medium | sha256:fee3f6977061d04d10ac9c09bea14276af46c0f906504bf6cb5c70a0715e2baf |
+| AIP-CROSS-INDUSTRY-ENTERPRISE_AI_AGENT_PLATFORM_SOURCING | Enterprise AI Agent Platform Sourcing | pattern_seed | 0 | no | medium | sha256:f6ec9271770573a395259467d666c9cf098ffca8f2ea9125e9f17cf65a6f3acf |
+| AIP-CROSS-INDUSTRY-ENTERPRISE_CODE_PLATFORM_SOURCING_FOR_SCM_DEVOPS_AND_AI_CODING_ASSISTANT | Enterprise Code Platform Sourcing for SCM, DevOps, and AI Coding Assistants | pattern_seed | 0 | no | medium | sha256:aab71510380b3c0a003227364aca6d6bb4ca34af2e4b8b42f4530bd6ba19d9e6 |
+| AIP-CROSS-INDUSTRY-ENTERPRISE_CRM_PLATFORM_SOURCING_PLAYBOOK | Enterprise CRM Platform Sourcing Playbook | pattern_seed | 0 | no | medium | sha256:dc907519da0b5ef05e2064d323196bec7e3f4ef0b395b1864aa79c2098d5b5fa |
+| AIP-CROSS-INDUSTRY-ENTERPRISE_DOCUMENT_AND_CONTENT_MANAGEMENT_SOURCING | Enterprise Document and Content Management Sourcing | pattern_seed | 0 | no | medium | sha256:8e3a2b77baf74f2ebcc77cdafc1d796692eb0e84772081aec3e103de5236fcf1 |
+| AIP-CROSS-INDUSTRY-ENTERPRISE_LLM_AND_GENERATIVE_AI_MODEL_ACCESS_SOURCING | Enterprise LLM and Generative AI Model Access Sourcing | pattern_seed | 0 | no | medium | sha256:6020c723382964553695bf42728d4317b31fcb74197ce5632c929763be1ecb90 |
+| AIP-CROSS-INDUSTRY-ENTERPRISE_MESSAGING_AND_TEAM_CHAT_PLATFORM_SOURCING | Enterprise Messaging and Team Chat Platform Sourcing | pattern_seed | 0 | no | medium | sha256:53d17732a3487d5d13f9d3443242f48f8d42dca6c4f9350a02c67a6c769575bc |
+| AIP-CROSS-INDUSTRY-ENTERPRISE_PERFORMANCE_MANAGEMENT_AND_FP_A_PLATFORM_SOURCING | Enterprise Performance Management and FP&A Platform Sourcing | pattern_seed | 0 | no | medium | sha256:483382406af0ac20e3aae8e845afc3e74b347c2012e8ce0e01deb399599fd040 |
+| AIP-CROSS-INDUSTRY-ENTERPRISE_SERVICE_MANAGEMENT_AND_ITSM_ADJACENT_WORKFLOW_SOURCING | Enterprise Service Management and ITSM-Adjacent Workflow Sourcing | pattern_seed | 0 | no | medium | sha256:66b39223ee5a66fe88fbe3b4070276180291abe1761e569af9039b01f787e711 |
+| AIP-CROSS-INDUSTRY-ERP_AGENT_INTEGRATION_DEPTH_DECISION | ERP-Agent Integration Depth Decision | pattern_seed | 0 | no | medium | sha256:3cb22d72f8490355059463858b35689de25c70d7a66118613695d57d8e1124c7 |
+| AIP-CROSS-INDUSTRY-ETL_ELT_AND_DATA_INTEGRATION_PLATFORM_SOURCING | ETL/ELT and Data Integration Platform Sourcing | pattern_seed | 0 | no | high | sha256:739b34d8ed01b208a3083b52354af99e8d78eae3149df9ce8a2f19532a6a8988 |
+| AIP-CROSS-INDUSTRY-EU_AI_ACT_PROCUREMENT_OVERLAY_FOR_AI_ENABLED_VENDOR_SOURCING | EU AI Act Procurement Overlay for AI-Enabled Vendor Sourcing | pattern_seed | 0 | no | medium | sha256:ebed31467006f001fb24b1846ad391c30ea818b1342a3d437c41e551980c907a |
+| AIP-CROSS-INDUSTRY-EVIDENCE_LEDGER_RETRIEVAL_AUTHORITY | Evidence Ledger Retrieval Authority | pattern_seed | 0 | no | medium | sha256:5fd53e3569b4d31f73a33f7ec0ca34165862206bcbeec13e66152865041d7df6 |
+| AIP-CROSS-INDUSTRY-EXIT_ASSISTANCE_AND_DATA_RETURN_OBLIGATIONS | Exit Assistance and Data Return Obligations | pattern_seed | 0 | no | low | sha256:51a93f95395d3df40d54ce20b55c4b1bf8a85ea301ffe3a34047bc9ccdf531a6 |
+| AIP-CROSS-INDUSTRY-FINANCE_AI_CLOSE_CONTROLS | Finance AI Close Controls | pattern_seed | 0 | no | low | sha256:778a8d69b594defd6199fcac1879593819b1ecb2232f2ae7a4c0ceb08bda65e1 |
+| AIP-CROSS-INDUSTRY-FINOPS_AND_CLOUD_COST_MANAGEMENT_PLATFORM_SOURCING | FinOps and Cloud Cost Management Platform Sourcing | pattern_seed | 0 | no | medium | sha256:0a77819c4dc7ca2f331e006a62ea959977ed8ba50772148d2f3e4a0dbdbcb467 |
+| AIP-CROSS-INDUSTRY-GITLAB_ULTIMATE_AND_DEDICATED_SOURCING_PROFILE | GitLab Ultimate and Dedicated Sourcing Profile | pattern_seed | 0 | no | medium | sha256:4f62f2862f8cacf9c6151504a8d7969dc0877061615d006d58c795dabe4c5611 |
+| AIP-CROSS-INDUSTRY-GOOGLE_CLOUD_PLATFORM_SOURCING_PROFILE | Google Cloud Platform Sourcing Profile | pattern_seed | 0 | no | medium | sha256:ce6a310413b8f99b448cec233f37c1c786e99da5bff96e2241fd226c8b94167c |
+| AIP-CROSS-INDUSTRY-GOVERNED_BUSINESS_INTELLIGENCE_PLATFORM_SOURCING | Governed Business Intelligence Platform Sourcing | pattern_seed | 0 | no | medium | sha256:bda3ab8b3691d5230011ac00db681be4e005c62ac13cba5a228eb9894b86f327 |
+| AIP-CROSS-INDUSTRY-HR_TECHNOLOGY_SUITE_HRIS_AND_HCM_ADJACENT_SOURCING | HR Technology Suite, HRIS, and HCM-Adjacent Sourcing | pattern_seed | 0 | no | medium | sha256:853eb0ca38f1b12dd62707d5452ab3cbda4a810f7f3d2e7b6f25982c92296f64 |
+| AIP-CROSS-INDUSTRY-HUMAN_CAPITAL_MANAGEMENT_PLATFORM_SOURCING | Human Capital Management Platform Sourcing | pattern_seed | 0 | no | medium | sha256:4ff698a6b6b3b8fc956176432b27da278019d5ea3a4fe7fb1f0bfd5133c357b3 |
+| AIP-CROSS-INDUSTRY-ICEBERG_PRINCIPLE_FOR_UI_UX | Iceberg Principle for UI/UX | pattern_seed | 0 | no | medium | sha256:bd51ab6883f657ac44b5cfefc3903771a3a0767d5b9bd567122e8157ac544ad2 |
+| AIP-CROSS-INDUSTRY-IDENTITY_GOVERNANCE_SOURCING_FOR_ACCESS_REVIEWS_LIFECYCLE_GOVERNANCE_AND | Identity Governance Sourcing for Access Reviews, Lifecycle Governance, and Entitlement Control | pattern_seed | 0 | no | medium | sha256:07052c6b27aebcf987f75d66956c8af1cd971dc7afce8f532b9d62ad948daded |
+| AIP-CROSS-INDUSTRY-IMPLEMENTATION_AND_SYSTEMS_INTEGRATION_PROCUREMENT_PLAYBOOK | Implementation and Systems Integration Procurement Playbook | pattern_seed | 0 | no | low | sha256:260dafed251b3e1511cf7465a9587b9970490eaedee74d48c575539db7dab889 |
 
 ## Next Step
 

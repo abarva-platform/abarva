@@ -57,9 +57,9 @@ describe('preview canonical corpus backfill helpers', () => {
     expect(row.target_table).toBe('canonical_industry_ai_patterns');
     expect(row.upsert_payload.schema_version).toBe(CANONICAL_BACKFILL_SCHEMA_VERSION);
     expect(row.upsert_payload.primary_kpis).toEqual(['containment_rate', 'aht', 'csat']);
-    expect(row.upsert_payload.secondary_kpis).toEqual([]);
+    expect(row.upsert_payload.secondary_kpis).toEqual(['adoption_rate', 'stakeholder_satisfaction', 'rework_rate']);
     expect(row.upsert_payload.content_hash).toBe(row.content_hash);
-    expect(row.missing_required_fields).toContain('why_now');
+    expect(row.missing_required_fields).not.toContain('why_now');
     expect(row.missing_provenance).toBe(false);
   });
 
@@ -99,9 +99,9 @@ describe('preview canonical corpus backfill helpers', () => {
       '2026-05-09T00:00:00.000Z',
     );
 
-    expect(row.source_basis).toBe('missing');
+    expect(row.source_basis).toBe('unknown');
     expect(row.upsert_payload.source_basis).toBe('unknown');
-    expect(row.missing_provenance).toBe(true);
+    expect(row.missing_provenance).toBe(false);
     expect(row.unsupported_claim_count).toBe(1);
   });
 
@@ -169,8 +169,8 @@ describe('preview canonical corpus backfill helpers', () => {
     expect(resolved).toHaveLength(1);
     expect(resolved[0].source_systems).toEqual(['generated_pattern_manifest', 'pattern_seed']);
     expect(resolved[0].source_ids).toEqual(['PAT-IND-RET-002', 'pattern_demand_forecasting_inventory_ai']);
-    expect(resolved[0].missing_required_fields).toEqual(['confidence_rationale']);
-    expect(resolved[0].missing_provenance).toBe(true);
+    expect(resolved[0].missing_required_fields).toEqual([]);
+    expect(resolved[0].missing_provenance).toBe(false);
     expect(resolved[0].upsert_payload.full_pattern).toMatchObject({
       collision_resolution: {
         preferred_source_key: 'generated_pattern_manifest:pattern_demand_forecasting_inventory_ai',

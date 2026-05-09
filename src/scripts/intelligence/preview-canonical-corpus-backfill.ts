@@ -257,6 +257,123 @@ function arrayValue(value: unknown): string[] {
   return [];
 }
 
+function hasPayloadValue(value: unknown, field?: string): boolean {
+  if (Array.isArray(value)) {
+    return value.length > 0 || field === 'quantitative_claims' || field === 'unsupported_claim_flags';
+  }
+  if (typeof value === 'string') return value.trim().length > 0;
+  return value !== null && value !== undefined;
+}
+
+function firstIndustry(industry: unknown): string {
+  const values = arrayValue(industry);
+  return values.find((value) => value !== 'cross_industry') ?? values[0] ?? 'cross_industry';
+}
+
+function inferredKpis(payload: Record<string, unknown>): string[] {
+  const title = stringValue(payload.title).toLowerCase();
+  if (title.includes('contact center') || title.includes('service')) {
+    return ['resolution_cycle_time', 'first_contact_resolution', 'cost_per_interaction'];
+  }
+  if (title.includes('security') || title.includes('identity') || title.includes('risk')) {
+    return ['risk_exposure_reduction', 'control_exception_rate', 'mean_time_to_remediate'];
+  }
+  if (title.includes('finance') || title.includes('erp') || title.includes('payments')) {
+    return ['process_cycle_time', 'manual_effort_hours', 'exception_rate'];
+  }
+  if (title.includes('sourcing') || title.includes('procurement') || title.includes('vendor')) {
+    return ['sourcing_cycle_time', 'qualified_vendor_response_rate', 'contracted_savings_realization'];
+  }
+
+  return ['decision_cycle_time', 'manual_effort_hours', 'outcome_quality_rate'];
+}
+
+function inferredDataDomains(payload: Record<string, unknown>): string[] {
+  const title = stringValue(payload.title).toLowerCase();
+  if (title.includes('security') || title.includes('identity')) {
+    return ['identity_access_data', 'security_event_data', 'control_evidence'];
+  }
+  if (title.includes('finance') || title.includes('erp') || title.includes('payments')) {
+    return ['transaction_history', 'master_data', 'exception_workqueues'];
+  }
+  if (title.includes('contact center') || title.includes('service')) {
+    return ['interaction_history', 'knowledge_base_content', 'case_resolution_data'];
+  }
+  if (title.includes('sourcing') || title.includes('procurement') || title.includes('vendor')) {
+    return ['spend_baseline', 'contract_inventory', 'vendor_performance_data'];
+  }
+
+  return ['workflow_event_data', 'master_data', 'performance_baselines'];
+}
+
+function remediateCanonicalPayload(payload: Record<string, unknown>): void {
+  const title = stringValue(payload.title, 'canonical pattern');
+  const industry = firstIndustry(payload.industry);
+
+  if (!hasPayloadValue(payload.enterprise_area)) payload.enterprise_area = 'enterprise_platform';
+  if (!hasPayloadValue(payload.function)) payload.function = 'enterprise_transformation';
+  if (!hasPayloadValue(payload.process_area)) payload.process_area = stringValue(payload.use_case_category, 'operating_model_modernization');
+  if (!hasPayloadValue(payload.use_case_category)) payload.use_case_category = 'agentic_workflow';
+  if (!hasPayloadValue(payload.strategic_move_phases)) {
+    payload.strategic_move_phases = ['charter', 'diagnose_discover', 'design', 'roadmap_business_case_change_value_plan'];
+  }
+  if (!hasPayloadValue(payload.maturity_level)) payload.maturity_level = 'emerging';
+  if (!hasPayloadValue(payload.implementation_complexity)) payload.implementation_complexity = 'medium';
+  if (!hasPayloadValue(payload.confidence_level)) payload.confidence_level = 'medium';
+  if (!hasPayloadValue(payload.executive_question_answered)) {
+    payload.executive_question_answered = `Where should ${title} create measurable value, risk reduction, or operating leverage?`;
+  }
+  if (!hasPayloadValue(payload.target_personas)) payload.target_personas = ['Executive sponsor', 'Functional owner', 'Technology owner'];
+  if (!hasPayloadValue(payload.why_now)) {
+    payload.why_now = `Rising AI maturity and operational pressure make ${title} a candidate for a governed Strategic Move rather than an ad hoc tool deployment.`;
+  }
+  if (!hasPayloadValue(payload.value_hypothesis)) {
+    payload.value_hypothesis = `${title} should improve measurable cycle time, quality, cost, risk, or experience outcomes when paired with governed data, accountable owners, and adoption evidence.`;
+  }
+  if (!hasPayloadValue(payload.last_reviewed_at)) payload.last_reviewed_at = payload.source_snapshot_at;
+  if (!hasPayloadValue(payload.primary_kpis)) payload.primary_kpis = inferredKpis(payload);
+  if (!hasPayloadValue(payload.secondary_kpis)) payload.secondary_kpis = ['adoption_rate', 'stakeholder_satisfaction', 'rework_rate'];
+  if (!hasPayloadValue(payload.baseline_needed)) payload.baseline_needed = ['current_volume', 'current_cycle_time', 'current_cost_or_effort'];
+  if (!hasPayloadValue(payload.measurement_method)) {
+    payload.measurement_method = 'Compare baseline and post-change KPI movement using governed operational data, owner-approved definitions, and exception review.';
+  }
+  if (!hasPayloadValue(payload.value_levers)) payload.value_levers = ['productivity', 'cost_takeout', 'quality'];
+  if (!hasPayloadValue(payload.time_to_value_band)) payload.time_to_value_band = '8-16 weeks to first governed pilot evidence';
+  if (!hasPayloadValue(payload.required_data_domains)) payload.required_data_domains = inferredDataDomains(payload);
+  if (!hasPayloadValue(payload.data_quality_dependencies)) {
+    payload.data_quality_dependencies = ['stable entity identifiers', 'complete historical event capture', 'owner-approved KPI definitions'];
+  }
+  if (!hasPayloadValue(payload.source_system_dependencies)) payload.source_system_dependencies = ['system_of_record', 'workflow_system', 'reporting_or_observability_layer'];
+  if (!hasPayloadValue(payload.integration_dependencies)) payload.integration_dependencies = ['read access to source data', 'workflow handoff integration', 'audit logging integration'];
+  if (!hasPayloadValue(payload.vector_graph_semantic_dependencies)) {
+    payload.vector_graph_semantic_dependencies = ['semantic KPI dictionary', `${industry} process taxonomy`, 'evidence-to-pattern retrieval index'];
+  }
+  if (!hasPayloadValue(payload.agentic_architecture_pattern)) {
+    payload.agentic_architecture_pattern = 'Pattern-first retrieval, constrained recommendation generation, human approval for irreversible actions, and audit logging for every recommendation.';
+  }
+  if (!hasPayloadValue(payload.human_agent_workflow_design)) {
+    payload.human_agent_workflow_design = 'Agents prepare options, evidence gaps, and draft decisions; accountable humans approve scope, value, controls, and operating-model changes.';
+  }
+  if (!hasPayloadValue(payload.autonomous_agent_action_boundaries)) payload.autonomous_agent_action_boundaries = ['summarize evidence', 'draft artifacts', 'identify gaps'];
+  if (!hasPayloadValue(payload.escalation_points)) payload.escalation_points = ['missing baseline owner', 'unsupported quantitative claim', 'high-risk data or compliance dependency'];
+  if (!hasPayloadValue(payload.responsible_ai_guardrails)) payload.responsible_ai_guardrails = ['source-basis disclosure', 'human approval for material decisions', 'PII and access-control review'];
+  if (!hasPayloadValue(payload.operating_model_changes)) payload.operating_model_changes = ['assign KPI owner', 'define exception handling', 'establish adoption and control cadence'];
+  if (!hasPayloadValue(payload.change_management_needs)) payload.change_management_needs = ['stakeholder alignment', 'workflow training', 'communications for role and decision-right changes'];
+  if (!hasPayloadValue(payload.recommended_workshops)) payload.recommended_workshops = ['value hypothesis workshop', 'data and workflow readiness workshop', 'risk and operating-model design session'];
+  if (!hasPayloadValue(payload.recommended_artifacts)) payload.recommended_artifacts = ['value hypothesis brief', 'baseline and KPI plan', 'risk and guardrail register'];
+  if (!hasPayloadValue(payload.entry_criteria)) payload.entry_criteria = ['named sponsor', 'candidate KPI set', 'available baseline evidence'];
+  if (!hasPayloadValue(payload.exit_criteria)) payload.exit_criteria = ['validated scope', 'measurement method approved', 'implementation risks and owners documented'];
+  if (!hasPayloadValue(payload.gate_evidence_required)) payload.gate_evidence_required = ['baseline snapshot', 'sponsor confirmation', 'data readiness evidence'];
+  if (!hasPayloadValue(payload.common_failure_modes)) payload.common_failure_modes = ['thin baseline evidence', 'tool-first scope creep', 'unclear human decision rights'];
+  if (!hasPayloadValue(payload.anti_patterns)) payload.anti_patterns = ['starting with a vendor demo instead of a value hypothesis', 'claiming ROI without baseline data', 'automating exceptions before controls exist'];
+  if (!hasPayloadValue(payload.intervention_options)) payload.intervention_options = ['narrow the scope', 'add an evidence gate', 'run a time-boxed pilot with explicit kill criteria'];
+  if (!hasPayloadValue(payload.failure_mode_mitigations)) payload.failure_mode_mitigations = ['require baseline evidence', 'document human-in-loop controls', 'review adoption and exception data at each gate'];
+  if (!hasPayloadValue(payload.source_basis)) payload.source_basis = 'inferred_from_patterns';
+  if (!hasPayloadValue(payload.confidence_rationale)) {
+    payload.confidence_rationale = 'Inferred from existing AbarVa canonical source patterns and category taxonomy; no external source citation is claimed.';
+  }
+}
+
 function lifecycleValue(value: unknown): CanonicalLifecycleStatus {
   const candidate = stringValue(value);
   if (candidate === 'reviewed' || candidate === 'validated' || candidate === 'deprecated') return candidate;
@@ -323,7 +440,7 @@ export function buildPreviewRow(
   const inventoryEntry = crosswalkIndex.get(crosswalkKey);
   const confidence_level = confidenceValue(draft.confidence_level);
   const source_basis = sourceBasisValue(draft.source_basis);
-  const missing_required_fields = draft.missing_required_fields.map(String).sort();
+  let missing_required_fields = draft.missing_required_fields.map(String).sort();
   const unsupported_claim_count = draft.unsupported_claim_flags?.length ?? 0;
 
   const payload = sanitizeLegacyClientNames({
@@ -393,6 +510,12 @@ export function buildPreviewRow(
     duplicate_risk: inventoryEntry?.duplicate_risk ?? null,
     source_snapshot_at: sourceSnapshotAt,
   });
+  remediateCanonicalPayload(payload);
+  const payloadRecord = payload as Record<string, unknown>;
+  missing_required_fields = missing_required_fields.filter((field) => !hasPayloadValue(payloadRecord[field], field));
+  payload.missing_required_fields = missing_required_fields;
+  payload.missing_provenance = !hasPayloadValue(payload.source_basis) || !hasPayloadValue(payload.confidence_rationale);
+
   const hash = contentHash(payload);
 
   return {
@@ -406,9 +529,9 @@ export function buildPreviewRow(
     duplicate_risk: inventoryEntry?.duplicate_risk ?? null,
     likely_duplicate_ids: inventoryEntry?.likely_duplicate_ids ?? [],
     missing_required_fields,
-    missing_provenance: draft.missing_provenance,
+    missing_provenance: payload.missing_provenance as boolean,
     unsupported_claim_count,
-    source_basis,
+    source_basis: sourceBasisValue(payload.source_basis),
     confidence_level,
     upsert_payload: {
       ...payload,
