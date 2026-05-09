@@ -1,6 +1,6 @@
 # Canonical Corpus Validation Report - 2026-05-09
 
-Generated at: `2026-05-09T21:30:49.506Z`
+Generated at: `2026-05-09T22:00:53.246Z`
 
 Input: `docs/knowledge-corpus/generated/canonical-corpus-backfill-preview.json`
 
@@ -8,7 +8,7 @@ Mode: report-only
 
 ## Summary
 
-- Patterns validated: 243
+- Patterns validated: 283
 - Error issues: 1800
 - Warning issues: 0
 - Patterns with errors: 192
@@ -19,19 +19,19 @@ Mode: report-only
 
 | Strategic Move phase | Pattern count |
 | --- | --- |
-| originate | 16 |
-| charter | 31 |
-| diagnose_discover | 37 |
-| design | 37 |
-| roadmap_business_case_change_value_plan | 36 |
-| mobilize_handoff | 28 |
+| originate | 56 |
+| charter | 71 |
+| diagnose_discover | 77 |
+| design | 77 |
+| roadmap_business_case_change_value_plan | 76 |
+| mobilize_handoff | 68 |
 
 ## Source System Counts
 
 | Source system | Pattern count |
 | --- | --- |
 | generated_pattern_manifest | 17 |
-| pattern_seed | 226 |
+| pattern_seed | 266 |
 
 ## Issue Summary
 
