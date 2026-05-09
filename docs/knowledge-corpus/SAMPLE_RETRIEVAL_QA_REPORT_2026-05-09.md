@@ -1,6 +1,6 @@
 # Sample Retrieval QA Report - 2026-05-09
 
-Generated at: `2026-05-09T22:42:16.202Z`
+Generated at: `2026-05-09T23:01:05.029Z`
 
 Input: `docs/knowledge-corpus/generated/canonical-corpus-backfill-preview.json`
 
@@ -23,7 +23,7 @@ Mode: deterministic canonical preview retrieval fallback. This does not mutate d
 | pass | Financial services AML agentic workflow | industry=financial_services; title_terms=aml/bsa/compliance; function_terms=financial_crimes/compliance; process_terms=financial_crimes/compliance | AIP-FINANCIAL-SERVICES-AML_ALERT_TRIAGE_AI | AML Alert Triage AI (1.1) | Top hit satisfied configured expectations. |
 | pass | Back office AI productivity use cases for healthcare | industry=healthcare; enterprise_area=back_office; function_terms=productivity/finance/hr/it/operations; process_terms=productivity/finance/hr/it/operations | AIP-HEALTHCARE-HEALTHCARE_CLAIMS_PAYMENT_INTEGRITY_AI | Healthcare Claims Payment Integrity AI (1.35) | Top hit satisfied configured expectations. |
 | pass | How should a retailer reimagine merchandising with AI? | industry=retail; function_terms=merchandising/merchandise; process_terms=merchandising/scenario/margin; title_terms=merchandise/merchandising/margin | AIP-RETAIL-OWNED_BRAND_MARGIN_RECOVERY | Owned Brand Margin Recovery (1.3) | Top hit satisfied configured expectations. |
-| pass | What are the KPIs for AI-enabled contact center transformation? | title_terms=contact/center; function_terms=contact/service/ai_programs; process_terms=contact/service/ai_programs; kpi_minimum=3 | AIP-FINANCIAL-SERVICES-CONTACT_CENTER_RESOLUTION_AI | Contact Center Resolution AI (1.1) | Top hit satisfied configured expectations. |
+| pass | What are the KPIs for AI-enabled contact center transformation? | title_terms=contact/center; function_terms=contact/service/ai_programs; process_terms=contact/service/ai_programs; kpi_minimum=3 | AIP-RETAIL-CONTACT_TO_EXPERIENCE_OPERATING_MODEL | Contact-to-Experience Operating Model (1.2) | Top hit satisfied configured expectations. |
 
 ## No-Match Behavior
 
