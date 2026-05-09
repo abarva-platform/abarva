@@ -140,6 +140,11 @@ export interface PatternRow {
   withPct: number;
   withoutPct: number;
   bindsTo: string;
+  officeCategory?: string;
+  failureRatePct?: number;
+  sourceTitles?: string[];
+  contradictionTitles?: string[];
+  useCaseNames?: string[];
 }
 
 export const MERIDIAN_PATTERNS: ReadonlyArray<PatternRow> = [

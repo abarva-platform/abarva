@@ -20,6 +20,10 @@ import {
 } from '@/lib/intelligence-v3/stages-data';
 import { getActiveClientRow } from '@/lib/active-client';
 import { listInitiativesForClient } from '@/lib/admin/ai-initiatives/queries';
+import {
+  loadApexRetailIntelligenceData,
+  loadApexRetailIntelligenceDataForDemo,
+} from '@/lib/intelligence-v3/apex-retail-live';
 
 export const metadata = {
   title: 'Intelligence · Explore layer for AI bets | AbarVa',
@@ -30,8 +34,19 @@ export const metadata = {
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
-export default async function IntelligencePage() {
-  const client = await getActiveClientRow().catch(() => null);
+interface IntelligencePageProps {
+  searchParams?: Promise<{ [key: string]: string | string[] | undefined }>;
+}
+
+function firstSearchValue(value: string | string[] | undefined): string | null {
+  if (Array.isArray(value)) return value[0] ?? null;
+  return value ?? null;
+}
+
+export default async function IntelligencePage({ searchParams }: IntelligencePageProps = {}) {
+  const requestedClient = firstSearchValue((await searchParams)?.client);
+  const forceApexRetail = requestedClient === 'apexretail';
+  const client = await getActiveClientRow(requestedClient).catch(() => null);
 
   const [
     { data, isLiveBound },
@@ -40,6 +55,7 @@ export default async function IntelligencePage() {
     peerActivityData,
     myStrategyData,
     initiatives,
+    apexRetailData,
   ] = await Promise.all([
     buildIntelligenceV3PageData(),
     client ? getVendorsForClient(client.id).catch(() => null) : Promise.resolve(null),
@@ -47,6 +63,11 @@ export default async function IntelligencePage() {
     getPeerActivityData().catch(() => null),
     getMyStrategyData().catch(() => null),
     client ? listInitiativesForClient(client.id).catch(() => []) : Promise.resolve([]),
+    (
+      forceApexRetail
+        ? loadApexRetailIntelligenceDataForDemo()
+        : loadApexRetailIntelligenceData(client)
+    ).catch(() => null),
   ]);
 
   return (
@@ -58,6 +79,7 @@ export default async function IntelligencePage() {
       peerActivityData={peerActivityData}
       myStrategyData={myStrategyData}
       initiatives={initiatives}
+      apexRetailData={apexRetailData}
     />
   );
 }

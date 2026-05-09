@@ -12,6 +12,7 @@ export const maxDuration = 60;
 export async function GET(req: NextRequest) {
   const url = new URL(req.url);
   const query = url.searchParams.get('q') ?? '';
+  const requestedClient = url.searchParams.get('client');
   if (!query.trim()) {
     return new Response(JSON.stringify({ error: 'q required' }), {
       status: 400,
@@ -24,7 +25,7 @@ export async function GET(req: NextRequest) {
   try {
     const [person, client] = await Promise.all([
       getCurrentPerson(),
-      getActiveClientRow().catch(() => null),
+      getActiveClientRow(requestedClient).catch(() => null),
     ]);
     tenantInventoryKey = client?.key
       ? clientKeyToInventorySubstrateKey(client.key)

@@ -126,9 +126,8 @@ export function SentinelChat({
     return turns;
   }, [opener, conversation]);
 
-  // Append the user turn locally so the dock thread reflects the send
-  // immediately; the runtime hookup (LLM completion) lands in a
-  // follow-up wave per the original SentinelChat doc.
+  // Append the user turn locally, then stream the Intelligence answer
+  // from the existing NDJSON endpoint into the dock thread.
   const [localTurns, setLocalTurns] = useState<DockMessage[]>([]);
   const fullThread = useMemo(
     () => [...dockThread, ...localTurns],
@@ -147,9 +146,75 @@ export function SentinelChat({
       ...prev,
       { id: `local-${Date.now()}`, role: 'user', body },
     ]);
-    // TODO(PR-K3+): POST to Sentinel runtime here and append the agent
-    // response when it arrives. The dock surface is ready — only the
-    // model wiring is still a placeholder.
+
+    const agentTurnId = `local-agent-${Date.now()}`;
+    setLocalTurns((prev) => [
+      ...prev,
+      { id: agentTurnId, role: 'agent', body: 'Reading the Intelligence substrate...' },
+    ]);
+
+    try {
+      const params = new URLSearchParams({ q: text || body });
+      const clientKey = typeof surfaceContext?.clientKey === 'string' ? surfaceContext.clientKey : null;
+      if (clientKey) params.set('client', clientKey);
+      const response = await fetch(`/api/intelligence/ask?${params.toString()}`, {
+        headers: { Accept: 'application/x-ndjson' },
+      });
+      if (!response.ok || !response.body) {
+        throw new Error(`Sentinel request failed (${response.status})`);
+      }
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+      let answer = '';
+      let sawDelta = false;
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop() ?? '';
+        for (const line of lines) {
+          if (!line.trim()) continue;
+          const event = JSON.parse(line) as { type?: string; delta?: string; error?: string };
+          if (event.type === 'delta' && event.delta) {
+            sawDelta = true;
+            answer += event.delta;
+            setLocalTurns((prev) =>
+              prev.map((turn) =>
+                turn.id === agentTurnId ? { ...turn, body: answer } : turn,
+              ),
+            );
+          }
+          if (event.type === 'error') throw new Error(event.error ?? 'Sentinel stream error');
+        }
+      }
+
+      if (!sawDelta) {
+        setLocalTurns((prev) =>
+          prev.map((turn) =>
+            turn.id === agentTurnId
+              ? { ...turn, body: 'I did not find enough indexed Intelligence evidence to answer that yet.' }
+              : turn,
+          ),
+        );
+      }
+    } catch (error) {
+      setLocalTurns((prev) =>
+        prev.map((turn) =>
+          turn.id === agentTurnId
+            ? {
+                ...turn,
+                body: error instanceof Error
+                  ? `Sentinel could not complete that request: ${error.message}`
+                  : 'Sentinel could not complete that request.',
+              }
+            : turn,
+        ),
+      );
+    }
   };
 
   const role = `Intelligence Conductor · ${scopeLabel}`;

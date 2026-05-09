@@ -10,12 +10,21 @@ import { useState } from 'react';
 import { COLORS, FONT, BORDER, SPACING, RADIUS } from '@/lib/design/abarva-theme';
 import { CanvasHead } from './CanvasHead';
 import { MERIDIAN_PATTERNS, type PatternRow } from './cxo-fixtures';
+import { StrategicPatternsList } from './StrategicPatternsList';
 
 type PatternsView = 'list' | 'quantbars';
+type OfficeFilter = 'all' | 'front_office' | 'middle_office' | 'back_office';
 
 const VIEWS: ReadonlyArray<{ key: PatternsView; label: string }> = [
   { key: 'list', label: 'List' },
   { key: 'quantbars', label: 'Quantified bars' },
+];
+
+const OFFICE_FILTERS: ReadonlyArray<{ key: OfficeFilter; label: string }> = [
+  { key: 'all', label: 'All' },
+  { key: 'front_office', label: 'Front office' },
+  { key: 'middle_office', label: 'Middle office' },
+  { key: 'back_office', label: 'Back office' },
 ];
 
 interface Props {
@@ -24,6 +33,17 @@ interface Props {
 
 export function PatternsCxoCanvas({ patterns = MERIDIAN_PATTERNS }: Props) {
   const [view, setView] = useState<PatternsView>('list');
+  const [officeFilter, setOfficeFilter] = useState<OfficeFilter>('all');
+  const [selectedId, setSelectedId] = useState(patterns[0]?.id ?? null);
+  const filteredPatterns =
+    officeFilter === 'all'
+      ? patterns
+      : patterns.filter((pattern) => pattern.officeCategory === officeFilter);
+  const selectedPattern =
+    patterns.find((pattern) => pattern.id === selectedId) ??
+    filteredPatterns[0] ??
+    patterns[0] ??
+    null;
 
   return (
     <section data-canvas="patterns" data-view={view}>
@@ -46,77 +66,50 @@ export function PatternsCxoCanvas({ patterns = MERIDIAN_PATTERNS }: Props) {
         onViewChange={setView}
       />
 
-      {view === 'list' && <ListView patterns={patterns} />}
-      {view === 'quantbars' && <QuantBarsView patterns={patterns} />}
-    </section>
-  );
-}
+      <div style={{ display: 'flex', gap: SPACING.xs, flexWrap: 'wrap', marginBottom: SPACING.md }}>
+        {OFFICE_FILTERS.map((filter) => (
+          <button
+            key={filter.key}
+            type="button"
+            onClick={() => setOfficeFilter(filter.key)}
+            style={{
+              border: filter.key === officeFilter ? `1px solid ${COLORS.navy}` : BORDER.hairline,
+              background: filter.key === officeFilter ? 'rgba(27,43,92,0.08)' : COLORS.card,
+              color: filter.key === officeFilter ? COLORS.navy : COLORS.body,
+              borderRadius: 6,
+              padding: '7px 10px',
+              fontFamily: FONT.mono,
+              fontSize: 10,
+              fontWeight: 700,
+              letterSpacing: '0.08em',
+              textTransform: 'uppercase',
+              cursor: 'pointer',
+            }}
+          >
+            {filter.label}
+          </button>
+        ))}
+      </div>
 
-function ListView({ patterns }: { patterns: ReadonlyArray<PatternRow> }) {
-  return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: SPACING.sm }}>
-      {patterns.map((p) => (
-        <article
-          key={p.id}
+      {view === 'list' && (
+        <div
           style={{
-            background: COLORS.card,
-            border: BORDER.hairline,
-            borderRadius: RADIUS.md,
-            padding: `${SPACING.md}px ${SPACING.xl}px`,
             display: 'grid',
-            gridTemplateColumns: '110px 1fr 220px',
+            gridTemplateColumns: 'minmax(0, 1.3fr) minmax(280px, 0.7fr)',
             gap: SPACING.lg,
-            alignItems: 'flex-start',
+            alignItems: 'start',
           }}
         >
-          <div>
-            <div
-              style={{
-                fontFamily: FONT.mono,
-                fontSize: 10.5,
-                fontWeight: 700,
-                letterSpacing: '0.1em',
-                color: COLORS.navy,
-              }}
-            >
-              {p.id}
-            </div>
-            <div
-              style={{
-                fontFamily: FONT.mono,
-                fontSize: 9.5,
-                color: COLORS.muted,
-                letterSpacing: '0.06em',
-                marginTop: 4,
-              }}
-            >
-              binds · {p.bindsTo}
-            </div>
-          </div>
-          <div>
-            <h3
-              style={{
-                fontFamily: FONT.display,
-                fontSize: 17,
-                fontWeight: 400,
-                color: COLORS.ink,
-                letterSpacing: '-0.008em',
-                margin: '0 0 4px',
-                lineHeight: 1.25,
-              }}
-            >
-              {p.name}
-            </h3>
-            <p style={{ fontSize: 13, color: COLORS.body, margin: 0, lineHeight: 1.55 }}>
-              {p.description}
-            </p>
-          </div>
-          <div>
-            <BarPair pattern={p} />
-          </div>
-        </article>
-      ))}
-    </div>
+          <StrategicPatternsList
+            patterns={filteredPatterns}
+            selectedId={selectedPattern?.id ?? null}
+            onSelect={setSelectedId}
+          />
+          <PatternGraphNeighborhood pattern={selectedPattern} />
+        </div>
+      )}
+      {view === 'quantbars' && <QuantBarsView patterns={filteredPatterns} />}
+    </section>
   );
 }
 
@@ -234,11 +227,90 @@ function Bar({ pct, label, tone }: { pct: number; label: string; tone: string })
   );
 }
 
-function BarPair({ pattern }: { pattern: PatternRow }) {
+function PatternGraphNeighborhood({ pattern }: { pattern: PatternRow | null }) {
+  if (!pattern) return null;
+
+  const groups = [
+    { label: 'Apex use cases', values: pattern.useCaseNames ?? [], tone: '#1B2B5C' },
+    { label: 'Knowledge sources', values: pattern.sourceTitles ?? [], tone: '#0E8C7E' },
+    { label: 'Contradictions', values: pattern.contradictionTitles ?? [], tone: '#B8443A' },
+  ];
+  const moveParams = new URLSearchParams({
+    fromIntelligence: '1',
+    client: 'apexretail',
+    patternId: pattern.id,
+    patternName: pattern.name,
+    useCaseName: pattern.useCaseNames?.[0] ?? pattern.bindsTo,
+    sourceTitle: pattern.sourceTitles?.[0] ?? '',
+    contradictionTitle: pattern.contradictionTitles?.[0] ?? '',
+    failureRatePct: String(pattern.failureRatePct ?? pattern.withoutPct),
+  });
+
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-      <Bar pct={pattern.withPct} label={pattern.withLabel} tone="#0E8C7E" />
-      <Bar pct={pattern.withoutPct} label={pattern.withoutLabel} tone="#B8443A" />
-    </div>
+    <aside
+      style={{
+        background: COLORS.card,
+        border: BORDER.hairline,
+        borderRadius: RADIUS.md,
+        padding: SPACING.lg,
+        position: 'sticky',
+        top: 142,
+      }}
+    >
+      <div style={{ fontFamily: FONT.mono, fontSize: 10, fontWeight: 700, letterSpacing: '0.14em', color: COLORS.navy, textTransform: 'uppercase' }}>
+        Graph neighborhood
+      </div>
+      <h3 style={{ fontFamily: FONT.display, fontSize: 20, fontWeight: 500, color: COLORS.ink, margin: '8px 0 6px' }}>
+        {pattern.id} · {pattern.name}
+      </h3>
+      <p style={{ fontSize: 13, lineHeight: 1.5, color: COLORS.body, margin: '0 0 14px' }}>
+        {pattern.description}
+      </p>
+      <a
+        href={`/strategic-moves/new?${moveParams.toString()}`}
+        style={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          minHeight: 36,
+          width: '100%',
+          borderRadius: 6,
+          background: COLORS.navy,
+          color: COLORS.card,
+          textDecoration: 'none',
+          fontFamily: FONT.body,
+          fontSize: 13,
+          fontWeight: 700,
+          marginBottom: SPACING.sm,
+        }}
+      >
+        Shape into Move
+      </a>
+      {groups.map((group) => (
+        <div key={group.label} style={{ borderTop: BORDER.hairlineSoft, paddingTop: SPACING.sm, marginTop: SPACING.sm }}>
+          <div style={{ fontFamily: FONT.mono, fontSize: 9.5, fontWeight: 700, letterSpacing: '0.14em', color: group.tone, textTransform: 'uppercase', marginBottom: 8 }}>
+            {group.label}
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            {(group.values.length > 0 ? group.values : ['No edge indexed yet']).slice(0, 4).map((value) => (
+              <span
+                key={value}
+                style={{
+                  border: `1px solid ${group.values.length > 0 ? group.tone : COLORS.border}`,
+                  background: group.values.length > 0 ? `${group.tone}12` : COLORS.surface2,
+                  color: group.values.length > 0 ? group.tone : COLORS.muted,
+                  borderRadius: 4,
+                  padding: '6px 8px',
+                  fontSize: 12,
+                  lineHeight: 1.35,
+                }}
+              >
+                {value}
+              </span>
+            ))}
+          </div>
+        </div>
+      ))}
+    </aside>
   );
 }
