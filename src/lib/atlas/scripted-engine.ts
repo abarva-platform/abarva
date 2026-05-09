@@ -37,13 +37,18 @@ function topSignal(signals: AtlasSignalDetail[] | AtlasToolResultMap['signals'])
   return (signals ?? [])[0] ?? null;
 }
 
+function sentence(value: string | null | undefined): string | null {
+  if (!value) return null;
+  return value.endsWith('.') || value.endsWith('?') || value.endsWith('!') ? value : `${value}.`;
+}
+
 function morningSuggestions(signalId?: string | null): AtlasSuggestion[] {
   return [
-    { label: 'Shadow AI', value: 'Tell me more about Shadow AI', kind: 'message' },
-    { label: 'Peer position', value: 'How do we compare to peers?', kind: 'message' },
+    { label: 'CFO lens', value: 'Give me the CFO value lens on the current state', kind: 'message' },
+    { label: 'CIO lens', value: 'Give me the CIO delivery lens on the current state', kind: 'message' },
     signalId
-      ? { label: 'Originate program', value: 'Originate program', kind: 'link', href: `/programs/new?source=tower_signal&signalId=${encodeURIComponent(signalId)}` }
-      : { label: 'Program roster', value: 'Show active programs', kind: 'message' },
+      ? { label: 'Walk top pressure', value: 'Walk me through the top pressure strategically', kind: 'message' }
+      : { label: 'Program load', value: 'Show active programs', kind: 'message' },
   ];
 }
 
@@ -55,34 +60,32 @@ function buildMorningSummary(
 ): string {
   const hero = tower?.bandMetrics.metrics.find((metric) => metric.hero) ?? tower?.bandMetrics.metrics[0];
   const topPressure = tower?.pressuresView.cards[0];
-  const lines = [
-    tower
-      ? `${portfolio.clientName} Tower is showing ${tower.substrateCounts.initiatives} initiatives, ${tower.substrateCounts.pressures} pressure cards, and ${tower.substrateCounts.observations} Atlas observations from the tenant DB.`
-      : `${portfolio.clientName} is carrying ${portfolio.activeUseCaseCount} active use cases, ${portfolio.criticalSignalCount} critical signal, and ${portfolio.warningSignalCount} warnings.`,
-  ];
+  const pressureRead = topPressure
+    ? sentence(topPressure.headline)
+    : primary
+      ? sentence(primary.signalTitle)
+      : 'The portfolio is active, but Atlas does not see a single dominant pressure in the current Tower state.';
+  const technicalDepth = tower
+    ? `The technical substrate is usable: Tower has initiative, vendor, KPI, decision, scenario, stakeholder, pressure, and observation coverage for this tenant.`
+    : `The technical substrate is thinner than I want, so I would keep this as a directional read rather than a board-ready conclusion.`;
+  const businessEvidence = hero
+    ? `The business signal I would not ignore is ${hero.label.toLowerCase()} at ${hero.value}; that is a prompt for governance, not a standalone verdict.`
+    : portfolio.valueAttainmentPctAvg != null
+      ? `The business signal I would not ignore is value attainment around ${percent(portfolio.valueAttainmentPctAvg)}; that needs owner-by-owner interpretation before it becomes a decision.`
+      : `The business signal is not clean enough to quantify from this turn alone.`;
+  const secondary = secondaryHeadline
+    ? `There is a second pressure behind it - ${secondaryHeadline.toLowerCase()} - so I would avoid treating this as a one-metric problem.`
+    : null;
 
-  if (hero) {
-    lines.push(`The lead displayed metric is ${hero.label}: ${hero.value} (${hero.confidence}).`);
-  }
-
-  if (topPressure) {
-    lines.push(`The lead displayed pressure is ${topPressure.headline}`);
-  }
-
-  if (primary) {
-    const ratio = primary.percentile != null ? ` You are at the ${primary.percentile}th percentile on this metric.` : '';
-    lines.push(`${primary.signalTitle} is the loudest issue at ${dollars(primary.impactUsd)}.${ratio}`);
-  }
-
-  if (secondaryHeadline) {
-    lines.push(`The next item behind it is ${secondaryHeadline.toLowerCase()}.`);
-  }
-
-  if (portfolio.adoptionPenetrationPctAvg != null) {
-    lines.push(`Portfolio adoption is ${percent(portfolio.adoptionPenetrationPctAvg)} with ${portfolio.trackedActiveUsers?.toLocaleString() ?? 'n/a'} tracked active users.`);
-  }
-
-  return lines.join(' ');
+  return [
+    `My read: ${portfolio.clientName} is past the "do we have AI activity?" question. The issue now is whether the portfolio is sequenced, owned, and measured well enough for CXO confidence.`,
+    `Business lens: ${pressureRead} ${businessEvidence}`,
+    `Technical lens: ${technicalDepth} The gap to watch is not retrieval; it is whether baselines, ownership, and value evidence are strong enough to support decisions.`,
+    secondary,
+    `I would sharpen this with one clarification: do you want the CFO value lens first, or the CIO delivery-risk lens first?`,
+  ]
+    .filter(Boolean)
+    .join('\n\n');
 }
 
 function buildShadowAiDetail(signal: AtlasSignalDetail): string {
