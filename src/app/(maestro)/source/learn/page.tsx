@@ -1,15 +1,11 @@
-// /source/learn — root primer page renders the welcome section directly.
-// The layout wraps it with the side-nav.
+// /source/learn — legacy entry point. The Source primer has been
+// folded into the unified user guide at /home/learn so all training
+// lives under a single nav. Bookmarks land at the new welcome page.
 
-import { SourceWelcomeSection } from '@/components/source/learn/SourceWelcomeSection';
-
-export const metadata = {
-  title: 'Source primer | AbarVa',
-};
+import { redirect } from 'next/navigation';
 
 export const dynamic = 'force-dynamic';
-export const revalidate = 0;
 
-export default function SourceLearnPage() {
-  return <SourceWelcomeSection />;
+export default function SourceLearnRedirect() {
+  redirect('/home/learn/source/welcome');
 }
