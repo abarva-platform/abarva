@@ -1,8 +1,15 @@
 // Source Learn primer · navigation structure.
 //
-// Drives the left sidebar on /source/learn/* and the [slug] route
-// lookup. Mirrors the shape of src/lib/home/learn-nav.ts so the two
-// surfaces feel native together.
+// DEPRECATED: Source learn nav merged into src/lib/home/learn-nav.ts.
+// The primer now lives under the unified guide at
+// /home/learn/source/*. Legacy /source/learn URLs redirect to the new
+// surface. This file is kept intact (and exported) only so the case
+// study agent's in-flight chapter work can land cleanly; once that PR
+// merges and is rebased, this file becomes safe to delete.
+//
+// Drives the (now-unused) left sidebar on /source/learn/* and the
+// [slug] route lookup. Mirrors the shape of src/lib/home/learn-nav.ts
+// so the two surfaces feel native together.
 //
 // Slice S1 ships the four framing pages (welcome / intake / sentinel
 // / glossary). Slice S2 replaces the abstract per-stage walkthroughs
