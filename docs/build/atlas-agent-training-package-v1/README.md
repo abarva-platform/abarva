@@ -1,9 +1,11 @@
-# Atlas Agent Training Package · v1.0.0
+# Atlas Agent Training Package · v1.1.0
 
 **Locked:** 2026-05-09
 **Surface:** Tower CFO View (and CIO View when it ships)
 **Agent:** Atlas — the CIO chief-of-staff who lives on Tower
-**Outcome:** A tightly-scoped training package that closes the 8/10 → 10/10 CXO-grasp gap. Moves Atlas from rule-based template substitution to grounded reasoning, without breaking the substrate-to-surface contract built by the Tower Fix Package + AI Initiatives Substrate Package.
+**Outcome:** A tightly-scoped training package that closes the 8/10 → 10/10 CXO-grasp gap. Moves Atlas from rule-based template substitution to grounded reasoning AND makes every displayed metric interrogable on demand, without breaking the substrate-to-surface contract built by the Tower Fix Package + AI Initiatives Substrate Package.
+
+**v1.1 adds** Metric Explainability — the contract that says every number Atlas displays, Atlas can explain. When a CFO asks "why is Meridian's adoption at 50%?", Atlas drills into substrate composition, contributor rows, exclusions, levers, and confidence floor.
 
 ---
 
@@ -40,10 +42,11 @@ atlas-agent-training-package-v1/
 ├── 06-QUALITY-BAR.md                  template-grade vs insight-grade · 6 worked examples
 ├── 07-EVAL-HARNESS.md                 test inputs + expected output shapes · 24 cases · 4 lenses
 ├── 08-FAILURE-MODES.md                hallucination prevention · refusal patterns · the dangerous middle
-└── 09-OBSERVABILITY.md                what Atlas logs to traces · how to grade a turn
+├── 09-OBSERVABILITY.md                what Atlas logs to traces · how to grade a turn
+└── 10-METRIC-EXPLAINABILITY.md  ★NEW  every number Atlas displays, Atlas can explain · drill-down contract
 ```
 
-Total: ~1800 lines of grounded prose. No code in this package — implementation is a follow-up wave that consumes this.
+Total: ~2900 lines of grounded prose. No code in this package — implementation is a follow-up wave that consumes this.
 
 ---
 
@@ -61,7 +64,8 @@ For an engineer or another AI tasked with implementing Atlas's reasoning layer:
 8. Read **07-EVAL-HARNESS.md** to know how Atlas will be graded
 9. Read **08-FAILURE-MODES.md** to know what to refuse
 10. Read **09-OBSERVABILITY.md** for the trace shape
-11. Then implement, test against the eval harness, ship
+11. Read **10-METRIC-EXPLAINABILITY.md** for the drill-down contract — Atlas as the live encyclopedia for every displayed number
+12. Then implement, test against the eval harness, ship
 
 ---
 
@@ -98,6 +102,7 @@ After this package + its implementation wave land:
 - ✅ "If you only do one thing today" is interpretation, not template substitution
 - ✅ Pattern detection across multiple pressures works (e.g., "two value-lags share a root")
 - ✅ Atlas's voice is consistent with the senior-advisor system prompt today
+- ✅ Every band tile / pressure card / 2×2 dot / Strategic Bets card has an "Ask Atlas" affordance; Atlas drills into composition + contributors + levers + confidence floor on demand (v1.1)
 - ✅ The 8/10 CXO-grasp re-score for Meridian persona becomes 9-10/10
 
 ---

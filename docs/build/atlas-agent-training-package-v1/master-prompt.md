@@ -43,7 +43,8 @@ atlas-agent-training-package-v1/
 ├── 06-QUALITY-BAR.md                  template-grade vs insight-grade
 ├── 07-EVAL-HARNESS.md                 24-case grading harness · 4 lenses
 ├── 08-FAILURE-MODES.md                hallucination prevention · the dangerous middle
-└── 09-OBSERVABILITY.md                trace shape · grading hooks
+├── 09-OBSERVABILITY.md                trace shape · grading hooks
+└── 10-METRIC-EXPLAINABILITY.md  ★v1.1 every number queryable on demand · drill-down contract
 ```
 
 ---
