@@ -133,6 +133,7 @@ export interface AtlasObservation {
 export interface AtlasToolResultMap {
   towerState?: AtlasTowerCurrentState;
   retrievalContext?: RetrievalContext;
+  valueGrounding?: AtlasValueGrounding;
   portfolio?: AtlasPortfolioSummary;
   signals?: AtlasSignalSummary[];
   signalDetail?: AtlasSignalDetail | null;
@@ -153,6 +154,48 @@ export interface AtlasToolResultMap {
     vendor: string | null;
   }>;
   metricExplanation?: MetricExplanation;
+}
+
+export interface AtlasValueEvidencePoint {
+  label: string;
+  value: string;
+  basis: string;
+  status: 'projected' | 'tracked' | 'verified' | 'missing';
+}
+
+export interface AtlasValueGroundingPattern {
+  canonicalId: string;
+  title: string;
+  confidenceLevel: string;
+  score: number;
+  matchReasons: string[];
+  valueHypothesis: string;
+  primaryKpis: string[];
+  secondaryKpis: string[];
+  baselineNeeded: string[];
+  measurementMethod: string;
+  valueLevers: string[];
+  sourceBasis: string;
+  sourceReferencesCount: number;
+  confidenceRationale: string;
+  missingProvenance: boolean;
+  missingRequiredFields: string[];
+  unsupportedClaimFlags: string[];
+  quantitativeClaimCount: number;
+}
+
+export interface AtlasValueGrounding {
+  source: 'persisted_canonical_corpus';
+  status: 'ready' | 'empty' | 'no_match' | 'error';
+  warnings: string[];
+  filtersApplied: Record<string, unknown>;
+  valueSeparation: {
+    projected: AtlasValueEvidencePoint;
+    tracked: AtlasValueEvidencePoint[];
+    verified: AtlasValueEvidencePoint;
+  };
+  patterns: AtlasValueGroundingPattern[];
+  missingEvidence: string[];
 }
 
 export interface AtlasTurnResult extends AtlasChatResponse {

@@ -14,6 +14,7 @@ import type {
   CanonicalStrategicMovePhase,
   CanonicalUnsupportedClaimFlag,
   CanonicalValueLever,
+  CanonicalQuantitativeClaim,
   IndustryAIPattern,
 } from './industry-ai-pattern';
 import {
@@ -65,6 +66,13 @@ export interface CanonicalPatternIndexHit {
   strategic_move_phases: CanonicalStrategicMovePhase[];
   maturity_level: CanonicalMaturityLevel;
   confidence_level: CanonicalConfidenceLevel;
+  value_hypothesis: string;
+  primary_kpis: string[];
+  secondary_kpis: string[];
+  baseline_needed: string[];
+  measurement_method: string;
+  value_levers: CanonicalValueLever[];
+  quantitative_claims: CanonicalQuantitativeClaim[];
   source_basis: CanonicalSourceBasis;
   source_references: CanonicalSourceReference[];
   confidence_rationale: string;
@@ -255,6 +263,13 @@ function toIndexHit(
     strategic_move_phases: row.strategic_move_phases,
     maturity_level: row.maturity_level,
     confidence_level: row.confidence_level,
+    value_hypothesis: row.value_hypothesis,
+    primary_kpis: row.primary_kpis,
+    secondary_kpis: row.secondary_kpis,
+    baseline_needed: row.baseline_needed,
+    measurement_method: row.measurement_method,
+    value_levers: row.value_levers,
+    quantitative_claims: row.quantitative_claims,
     source_basis: row.source_basis,
     source_references: row.source_references,
     confidence_rationale: row.confidence_rationale,

@@ -14,6 +14,7 @@ export function buildAtlasSystemPrompt(clientName: string): string {
     '- Focus on Tower scope: portfolio state, displayed metrics, pressure cards, evidence chains, AI initiative health, vendors and renewals, scenarios, stakeholder themes, peer context, industry patterns, and programs already in motion.',
     '- If asked what Tower can answer, define scope from the available substrate: current portfolio state, metric math, pressure causality, confidence gaps, renewal clocks, decision/dissent history, stakeholder themes, scenarios, peer/corpus context, and clean handoffs.',
     '- For "what are others doing" questions, separate: current tenant facts, corpus or industry retrieval, and what is only a hypothesis.',
+    '- For financial and value advice, separate projected value, tracked value, and verified realized value. Tie advice to canonical pattern confidence, KPIs, baseline requirements, and measurement method. Do not invent quantified outcomes; surface missing baseline, measurement, or provenance.',
     '',
     'Scope discipline:',
     '- You are not Nexus. Do not run a program workflow or pretend to manipulate program state.',

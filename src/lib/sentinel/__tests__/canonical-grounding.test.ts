@@ -59,7 +59,7 @@ function program(overrides: Partial<PatternApplicableProgram> = {}): PatternAppl
 }
 
 function canonicalHit(overrides: Partial<CanonicalPatternIndexHit> = {}): CanonicalPatternIndexHit {
-  return {
+  const hit: CanonicalPatternIndexHit = {
     canonical_id: 'AIP-TEST-001',
     title: 'Canonical Test Pattern',
     summary: 'Canonical summary.',
@@ -71,6 +71,13 @@ function canonicalHit(overrides: Partial<CanonicalPatternIndexHit> = {}): Canoni
     strategic_move_phases: ['charter'],
     maturity_level: 'proven',
     confidence_level: 'high',
+    value_hypothesis: 'Better routing improves customer experience and frontline productivity.',
+    primary_kpis: ['containment_rate', 'aht', 'csat'],
+    secondary_kpis: ['first_contact_resolution', 'transfer_rate'],
+    baseline_needed: ['current_contact_volume', 'current_aht', 'current_csat'],
+    measurement_method: 'Compare baseline and pilot cohorts by channel and intent.',
+    value_levers: ['experience', 'productivity', 'cost_takeout'],
+    quantitative_claims: [],
     source_basis: 'internal_pattern',
     source_references: [],
     confidence_rationale: 'Internal pattern only.',
@@ -85,8 +92,9 @@ function canonicalHit(overrides: Partial<CanonicalPatternIndexHit> = {}): Canoni
     duplicate_risk: null,
     score: 0.8,
     match_reasons: ['query:test'],
-    ...overrides,
   };
+
+  return { ...hit, ...overrides } as CanonicalPatternIndexHit;
 }
 
 function canonicalResult(patterns: CanonicalPatternIndexHit[]): CanonicalPatternIndexResult {
