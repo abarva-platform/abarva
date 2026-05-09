@@ -412,27 +412,13 @@ interface SurfaceMeta {
   ctaLabel: string;
 }
 
+// Order follows the customer journey: discover the bet (Intelligence)
+// → shape and ship it (Moves) → the agent that stays in the room
+// (Sentinel) → source the vendors and contracts (Source) → see the
+// whole portfolio (Tower).
 const SURFACES: ReadonlyArray<SurfaceMeta> = [
   {
     num: '01',
-    name: 'Tower',
-    tagline: 'AI portfolio command',
-    body: 'Every AI bet your enterprise has placed — measured against committed value. The view a CIO opens before a steering committee, not after.',
-    illustration: <TowerIllustration />,
-    href: '/tower',
-    ctaLabel: 'Open Tower →',
-  },
-  {
-    num: '02',
-    name: 'Source',
-    tagline: 'Vendor + contract intelligence',
-    body: 'Where the IT spend goes — by category, by vendor, by renewal pressure. Surfaces the leverage thinness before the negotiation, not during it.',
-    illustration: <SourceIllustration />,
-    href: '/source',
-    ctaLabel: 'Open Source →',
-  },
-  {
-    num: '03',
     name: 'Intelligence',
     tagline: 'Pattern → Move funnel',
     body: 'Corpus-grounded patterns scored against your tenant context. The Brief tells you what bets are above the line. The Map shows where you sit in the universe.',
@@ -441,7 +427,7 @@ const SURFACES: ReadonlyArray<SurfaceMeta> = [
     ctaLabel: 'Open Intelligence →',
   },
   {
-    num: '04',
+    num: '02',
     name: 'Strategic Moves',
     tagline: 'Origination → ship → measure',
     body: 'The lifecycle a Move travels through, end-to-end. Gated approvals, audit trail, value attribution. Failure modes detected before they cost you a quarter.',
@@ -450,13 +436,31 @@ const SURFACES: ReadonlyArray<SurfaceMeta> = [
     ctaLabel: 'Open Moves →',
   },
   {
-    num: '05',
+    num: '03',
     name: 'Sentinel',
     tagline: 'The agent · always on',
     body: 'View-aware, context-aware. Sentinel composes the brief, pushes back on the framing, surfaces the binding pattern, and never forgets what the corpus knows.',
     illustration: <SentinelIllustration />,
     href: '/intelligence',
     ctaLabel: 'Meet Sentinel →',
+  },
+  {
+    num: '04',
+    name: 'Source',
+    tagline: 'Vendor + contract intelligence',
+    body: 'Where the IT spend goes — by category, by vendor, by renewal pressure. Surfaces the leverage thinness before the negotiation, not during it.',
+    illustration: <SourceIllustration />,
+    href: '/source',
+    ctaLabel: 'Open Source →',
+  },
+  {
+    num: '05',
+    name: 'Tower',
+    tagline: 'AI portfolio command',
+    body: 'Every AI bet your enterprise has placed — measured against committed value. The view a CIO opens before a steering committee, not after.',
+    illustration: <TowerIllustration />,
+    href: '/tower',
+    ctaLabel: 'Open Tower →',
   },
 ];
 
