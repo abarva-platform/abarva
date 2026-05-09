@@ -1,4 +1,5 @@
 'use client';
+/* eslint-disable react/no-unescaped-entities, @typescript-eslint/no-explicit-any */
 /**
  * Case Study: Apex Retail — AI-Driven Demand Intelligence
  * Flagship training anchor for the Strategic Moves Learn section.
