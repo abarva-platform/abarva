@@ -27,10 +27,14 @@ describe('authenticated Tower submenu wiring', () => {
     expect(indexSource).toContain('Tower will not fall back to Apex fixture dependencies.');
   });
 
-  it('links portfolio pressure and matrix items to real tenant-scoped initiative details', () => {
+  it('opens portfolio pressure and matrix items in an inline detail canvas', () => {
     expect(indexSource).toContain('tower-pressure-detail-link');
-    expect(indexSource).toContain('Open Tower initiative detail');
-    expect(indexSource).toContain('/tower/programs/${encodeURIComponent');
+    expect(indexSource).toContain('function TowerInlineDetailPanel');
+    expect(indexSource).toContain('data-testid="tower-inline-detail-panel"');
+    expect(indexSource).toContain('detailHrefFor(card.displayId, card.id)');
+    expect(indexSource).toContain("params.set('detail', detail)");
+    expect(indexSource).toContain("params.set('pressure', pressure)");
+    expect(indexSource).toContain('Open Tower detail in this canvas');
     expect(detailSource).toContain('listInitiativesForClient(activeClient.id)');
     expect(detailSource).toContain('listVendorsForClient(activeClient.id)');
     expect(detailSource).not.toContain('ProgramScopePage');

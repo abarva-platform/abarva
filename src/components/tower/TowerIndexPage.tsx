@@ -250,7 +250,13 @@ function SubstrateKpi({
 // Renders a Pressure card from a pre-composed `PressureCardView`. Maps the
 // view-model's confidence enum to the existing cvalStyle/ConfTag treatment
 // so visual doctrine holds across substrate-bound and legacy code paths.
-function SubstratePressure({ card }: { card: PressureCardView }) {
+function SubstratePressure({
+  card,
+  detailHref,
+}: {
+  card: PressureCardView;
+  detailHref?: string;
+}) {
   const conf: Confidence =
     card.magnitudeConfidence === 'high'
       ? 'high'
@@ -288,7 +294,7 @@ function SubstratePressure({ card }: { card: PressureCardView }) {
       }
       magnitudeLabel={card.magnitudeLabel}
       nextAction={card.nextAction}
-      detailHref={card.displayId ? `/tower/programs/${encodeURIComponent(card.displayId)}` : undefined}
+      detailHref={detailHref}
     />
   );
 }
@@ -457,8 +463,9 @@ function Pressure(props: PressureProps) {
     return (
       <Link
         href={props.detailHref}
+        scroll={false}
         data-testid={`tower-pressure-detail-link-${props.id}`}
-        title="Open Tower initiative detail"
+        title="Open Tower detail in this canvas"
         style={wrapperStyle}
       >
         {content}
@@ -572,6 +579,167 @@ function workspaceTitle(activeTab: TowerTabKey): string {
   return 'The IT Portfolio';
 }
 
+type DetailHrefBuilder = (displayId: string | null | undefined, pressureId?: string | null) => string | undefined;
+
+function findInitiativeDetail(
+  initiatives: ReadonlyArray<AIInitiative>,
+  rawId: string | null,
+): AIInitiative | null {
+  if (!rawId) return null;
+  const decoded = decodeURIComponent(rawId).trim().toLowerCase();
+  return initiatives.find((initiative) => (
+    initiative.displayId.toLowerCase() === decoded ||
+    initiative.initiativeId.toLowerCase() === decoded
+  )) ?? null;
+}
+
+function TowerInlineDetailPanel({
+  detailId,
+  initiative,
+  vendors,
+  pressure,
+  closeHref,
+}: {
+  detailId: string | null;
+  initiative: AIInitiative | null;
+  vendors: ReadonlyArray<AIInitiativeVendorRow>;
+  pressure: PressureCardView | null;
+  closeHref: string;
+}) {
+  if (!detailId) return null;
+
+  if (!initiative) {
+    return (
+      <section style={{ padding: '18px 32px 0' }} data-testid="tower-inline-detail-panel">
+        <TowerEmptyState
+          eyebrow="Detail unavailable"
+          title="Tower could not find that item in the active tenant substrate."
+          body="The URL points at an initiative that is not present for the logged-in client's DB rows. No fixture detail has been substituted."
+        />
+      </section>
+    );
+  }
+
+  const linkedVendors = vendors.filter((vendor) => vendor.initiativeId === initiative.initiativeId);
+  const committed = initiative.committedAnnualUsd ?? initiative.committedTotalUsd ?? 0;
+  const measured = initiative.measuredValueUsd ?? 0;
+  const delta = measured - committed;
+
+  return (
+    <section
+      data-testid="tower-inline-detail-panel"
+      style={{
+        margin: '18px 32px 4px',
+        border: `1px solid ${T.RULE_STRONG}`,
+        borderRadius: 10,
+        background: T.CREAM_2,
+        overflow: 'hidden',
+      }}
+    >
+      <div style={{ padding: '16px 18px', borderBottom: `1px solid ${T.RULE}`, display: 'flex', justifyContent: 'space-between', gap: 16 }}>
+        <div>
+          <div style={{ fontFamily: T.MONO, fontSize: 9.5, letterSpacing: '1.7px', textTransform: 'uppercase', color: T.GOLD, fontWeight: 800 }}>
+            Detail canvas · {initiative.displayId} · {labelize(initiative.stage)}
+          </div>
+          <h2 style={{ margin: '6px 0 0', fontFamily: T.SERIF, fontSize: 26, lineHeight: 1.08, color: T.INK }}>
+            {initiative.name}
+          </h2>
+        </div>
+        <Link
+          href={closeHref}
+          scroll={false}
+          style={{
+            alignSelf: 'flex-start',
+            fontFamily: T.MONO,
+            fontSize: 10,
+            letterSpacing: '1.2px',
+            textTransform: 'uppercase',
+            color: T.INK_2,
+            textDecoration: 'none',
+            border: `1px solid ${T.RULE_STRONG}`,
+            borderRadius: 999,
+            padding: '7px 10px',
+            background: '#fff',
+          }}
+        >
+          Close detail
+        </Link>
+      </div>
+
+      <div style={{ padding: 18, display: 'grid', gap: 16 }}>
+        {pressure ? (
+          <div style={{ border: `1px solid ${T.RULE}`, borderLeft: `4px solid ${pressureColor(pressure.type)}`, borderRadius: 8, background: '#fff', padding: '12px 14px' }}>
+            <div style={{ fontFamily: T.MONO, fontSize: 9, letterSpacing: '1.4px', textTransform: 'uppercase', color: T.GRAY_DK, fontWeight: 800 }}>
+              Selected pressure · {pressure.id}
+            </div>
+            <div style={{ marginTop: 5, fontFamily: T.SERIF, fontSize: 18, color: T.INK, fontWeight: 750 }}>
+              {pressure.headline}
+            </div>
+            <div style={{ marginTop: 5, color: T.INK_2, fontSize: 12.5, lineHeight: 1.5 }}>{pressure.nextAction}</div>
+          </div>
+        ) : null}
+
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: 10 }}>
+          <DataCard title="Committed" meta="DB registry" detail={formatMoney(committed)} accent={T.PURPLE} />
+          <DataCard title="Measured value" meta="DB registry" detail={formatMoney(measured)} accent={measured > 0 ? T.GREEN : T.GRAY} />
+          <DataCard title="Delta" meta="Measured minus committed" detail={formatMoney(delta)} accent={delta >= 0 ? T.GREEN : T.RED} />
+          <DataCard title="Vendors" meta="Linked rows" detail={`${linkedVendors.length} vendor${linkedVendors.length === 1 ? '' : 's'}`} accent={linkedVendors.length > 0 ? T.PURPLE : T.GRAY} />
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1.2fr) minmax(280px, 0.8fr)', gap: 14 }}>
+          <div style={{ border: `1px solid ${T.RULE}`, borderRadius: 8, background: '#fff', padding: 14 }}>
+            <div style={{ fontFamily: T.MONO, fontSize: 9, letterSpacing: '1.4px', textTransform: 'uppercase', color: T.GRAY_DK, fontWeight: 800 }}>
+              Atlas read · {labelize(initiative.statusFlag)} · confidence {initiative.confidenceLevel}
+            </div>
+            <p style={{ margin: '8px 0 0', color: T.INK_2, fontSize: 13, lineHeight: 1.55 }}>{initiative.statusSummary}</p>
+            {initiative.alignedRationale ? (
+              <p style={{ margin: '10px 0 0', color: T.INK, fontSize: 13, lineHeight: 1.55 }}>
+                <strong>Alignment rationale:</strong> {initiative.alignedRationale}
+              </p>
+            ) : null}
+          </div>
+          <div style={{ border: `1px solid ${T.RULE}`, borderRadius: 8, background: '#fff', padding: 14 }}>
+            <div style={{ fontFamily: T.MONO, fontSize: 9, letterSpacing: '1.4px', textTransform: 'uppercase', color: T.GRAY_DK, fontWeight: 800 }}>
+              Ownership
+            </div>
+            <div style={{ marginTop: 8, fontFamily: T.SERIF, fontSize: 18, fontWeight: 750, color: T.INK }}>{initiative.ownerName}</div>
+            <div style={{ marginTop: 4, color: T.INK_2, fontSize: 12.5, lineHeight: 1.5 }}>
+              {initiative.ownerTitle} · {initiative.ownerFunction ?? 'Unassigned function'}
+            </div>
+            <div style={{ marginTop: 8, color: T.GRAY_DK, fontSize: 12.5, lineHeight: 1.5 }}>
+              {initiative.primaryGoalName} · {initiative.primaryCategoryName}
+            </div>
+          </div>
+        </div>
+
+        {linkedVendors.length > 0 ? (
+          <div style={{ display: 'grid', gap: 8 }}>
+            {linkedVendors.map((vendor) => (
+              <div key={vendor.vendorId} style={{ border: `1px solid ${T.RULE}`, borderRadius: 8, background: '#fff', padding: '11px 13px', display: 'flex', justifyContent: 'space-between', gap: 14 }}>
+                <div>
+                  <div style={{ fontWeight: 800, color: T.INK }}>{vendor.vendorName}</div>
+                  <div style={{ marginTop: 3, color: T.GRAY_DK, fontSize: 12 }}>
+                    Contract {formatMoney(vendor.contractValueUsd)} · health {labelize(vendor.financialHealth)}
+                  </div>
+                </div>
+                <div style={{ fontFamily: T.MONO, fontSize: 10, letterSpacing: '1.2px', color: T.GRAY_DK, textTransform: 'uppercase' }}>
+                  {vendor.renewalDate ?? 'No renewal date'}
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <TowerEmptyState
+            eyebrow="No vendor rows"
+            title="No linked vendor dependencies are loaded for this initiative."
+            body="The detail canvas is staying DB-honest: no renewal or dependency fixture is being added."
+          />
+        )}
+      </div>
+    </section>
+  );
+}
+
 function stageSort(stage: string): number {
   const order = ['intake', 'pilot', 'scaled', 'multi_year_strategic_bet', 'retired'];
   const index = order.indexOf(stage);
@@ -659,7 +827,7 @@ function DataCard({
       <div style={{ marginTop: 6, fontSize: 12.5, color: T.INK_2, lineHeight: 1.45 }}>{detail}</div>
     </>
   );
-  return href ? <Link href={href} style={style}>{content}</Link> : <div style={style}>{content}</div>;
+  return href ? <Link href={href} scroll={false} style={style}>{content}</Link> : <div style={style}>{content}</div>;
 }
 
 function TowerWorkspaceTabPanel({
@@ -668,12 +836,14 @@ function TowerWorkspaceTabPanel({
   vendors,
   pressuresView,
   alignment2x2View,
+  detailHrefFor,
 }: {
   activeTab: TowerTabKey;
   initiatives: ReadonlyArray<AIInitiative>;
   vendors: ReadonlyArray<AIInitiativeVendorRow>;
   pressuresView?: TowerPressuresView;
   alignment2x2View: StrategicAlignment2x2View;
+  detailHrefFor: DetailHrefBuilder;
 }) {
   if (initiatives.length === 0) {
     return (
@@ -698,7 +868,7 @@ function TowerWorkspaceTabPanel({
           {initiatives.map((initiative) => (
             <DataCard
               key={initiative.initiativeId}
-              href={`/tower/programs/${encodeURIComponent(initiative.displayId)}`}
+              href={detailHrefFor(initiative.displayId)}
               title={initiative.name}
               meta={`${initiative.displayId} · ${labelize(initiative.statusFlag)} · ${initiative.confidenceLevel}`}
               detail={`${initiative.ownerName} · ${labelize(initiative.stage)} · committed ${formatMoney(initiative.committedAnnualUsd)} annual · measured ${formatMoney(initiative.measuredValueUsd)}.`}
@@ -737,7 +907,7 @@ function TowerWorkspaceTabPanel({
                 {rows.map((initiative) => (
                   <DataCard
                     key={initiative.initiativeId}
-                    href={`/tower/programs/${encodeURIComponent(initiative.displayId)}`}
+                    href={detailHrefFor(initiative.displayId)}
                     title={initiative.name}
                     meta={`${initiative.displayId} · ${labelize(initiative.statusFlag)}`}
                     detail={initiative.stageDetail ?? initiative.statusSummary}
@@ -770,7 +940,7 @@ function TowerWorkspaceTabPanel({
             {vendors.map((vendor) => (
               <DataCard
                 key={vendor.vendorId}
-                href={`/tower/programs/${encodeURIComponent(vendor.initiativeDisplayId)}`}
+                href={detailHrefFor(vendor.initiativeDisplayId)}
                 title={vendor.vendorName}
                 meta={`${vendor.initiativeDisplayId} · ${vendor.renewalDate ?? 'no renewal date'}`}
                 detail={`${vendor.initiativeName} · contract ${formatMoney(vendor.contractValueUsd)} · financial health ${labelize(vendor.financialHealth)}.`}
@@ -802,7 +972,7 @@ function TowerWorkspaceTabPanel({
           {pressuresView?.cards.slice(0, 5).map((card) => (
             <DataCard
               key={card.key}
-              href={card.displayId ? `/tower/programs/${encodeURIComponent(card.displayId)}` : undefined}
+              href={detailHrefFor(card.displayId, card.id)}
               title={card.headline}
               meta={`${card.id} · ${card.magnitudeLabel}`}
               detail={card.nextAction}
@@ -826,11 +996,13 @@ function Quadrant({
   qlabel,
   qhead,
   dots,
+  detailHrefFor,
 }: {
   position: 'tl' | 'tr' | 'bl' | 'br';
   qlabel: string;
   qhead: ReactNode;
   dots: MatrixDot[];
+  detailHrefFor: DetailHrefBuilder;
 }) {
   const styles: CSSProperties = {
     padding: '14px 16px',
@@ -948,13 +1120,16 @@ function Quadrant({
           );
 
           if (dot.displayId) {
+            const href = detailHrefFor(dot.displayId);
+            if (!href) return <div key={dot.displayId} style={dotStyle}>{dotBody}</div>;
             return (
               <Link
                 key={dot.displayId}
-                href={`/tower/programs/${encodeURIComponent(dot.displayId)}`}
+                href={href}
+                scroll={false}
                 data-testid={`tower-2x2-dot-${dot.displayId}`}
                 data-aligned-callout={dot.alignedCallout ? 'true' : undefined}
-                title="Open Tower initiative detail"
+                title="Open Tower detail in this canvas"
                 style={dotStyle}
               >
                 {dotBody}
@@ -1240,6 +1415,39 @@ export function TowerIndexPage({
   const searchParams = useSearchParams();
   const router = useRouter();
   const activeLens = (searchParams?.get('lens') ?? 'value') as 'value' | 'risk' | 'contract' | 'adopt';
+  const activeDetailId = searchParams?.get('detail') ?? null;
+  const activePressureId = searchParams?.get('pressure') ?? null;
+  const detailInitiative = findInitiativeDetail(initiatives ?? [], activeDetailId);
+  const detailPressure =
+    activePressureId && pressuresView
+      ? pressuresView.cards.find((card) => card.id === activePressureId) ?? null
+      : null;
+
+  const buildTowerHref = useCallback(
+    (next: { lens?: typeof activeLens; detail?: string | null; pressure?: string | null } = {}) => {
+      const params = new URLSearchParams();
+      if (activeTab !== 'portfolio') params.set('tab', activeTab);
+      const lens = next.lens ?? activeLens;
+      if (lens !== 'value') params.set('lens', lens);
+      const detail = next.detail === undefined ? activeDetailId : next.detail;
+      if (detail) params.set('detail', detail);
+      const pressure = next.pressure === undefined ? activePressureId : next.pressure;
+      if (pressure) params.set('pressure', pressure);
+      const query = params.toString();
+      return query ? `/tower?${query}` : '/tower';
+    },
+    [activeDetailId, activeLens, activePressureId, activeTab],
+  );
+
+  const detailHrefFor = useCallback<DetailHrefBuilder>(
+    (displayId, pressureId = null) => {
+      if (!displayId) return undefined;
+      return buildTowerHref({ detail: displayId, pressure: pressureId });
+    },
+    [buildTowerHref],
+  );
+
+  const closeDetailHref = buildTowerHref({ detail: null, pressure: null });
 
   const lensTabs: { key: typeof activeLens; label: string }[] = [
     { key: 'value', label: 'Value' },
@@ -1484,7 +1692,7 @@ export function TowerIndexPage({
                 return (
                   <button
                     key={tab.key}
-                    onClick={() => router.push(tab.key === 'value' ? '/tower' : `/tower?lens=${tab.key}`)}
+                    onClick={() => router.push(buildTowerHref({ lens: tab.key }), { scroll: false })}
                     style={{
                       fontFamily: T.MONO,
                       fontSize: 9.5,
@@ -1517,6 +1725,14 @@ export function TowerIndexPage({
               })}
             </div>
           </div>
+
+          <TowerInlineDetailPanel
+            detailId={activeDetailId}
+            initiative={detailInitiative}
+            vendors={vendors ?? []}
+            pressure={detailPressure}
+            closeHref={closeDetailHref}
+          />
 
           {activeTab === 'portfolio' ? (
             <>
@@ -1608,7 +1824,11 @@ export function TowerIndexPage({
           <div style={{ padding: '0 32px 28px', display: 'flex', flexDirection: 'column' }}>
             {useSubstratePressures && pressuresView && pressuresView.cards.length > 0 ? (
               pressuresView.cards.map((card) => (
-                <SubstratePressure key={card.key} card={card} />
+                <SubstratePressure
+                  key={card.key}
+                  card={card}
+                  detailHref={detailHrefFor(card.displayId, card.id)}
+                />
               ))
             ) : (
               <TowerEmptyState
@@ -1701,12 +1921,14 @@ export function TowerIndexPage({
                 qlabel="High value · Low alignment"
                 qhead="Useful but off-strategy. Sustain or rationalize."
                 dots={resolveQuadrantDots(alignment2x2View, 'tl')}
+                detailHrefFor={detailHrefFor}
               />
               <Quadrant
                 position="tr"
                 qlabel="High value · High alignment · the prize"
                 qhead="Defend, scale, lock baselines."
                 dots={resolveQuadrantDots(alignment2x2View, 'tr')}
+                detailHrefFor={detailHrefFor}
               />
               <Quadrant
                 position="bl"
@@ -1717,12 +1939,14 @@ export function TowerIndexPage({
                   </>
                 }
                 dots={resolveQuadrantDots(alignment2x2View, 'bl')}
+                detailHrefFor={detailHrefFor}
               />
               <Quadrant
                 position="br"
                 qlabel="Low value · High alignment"
                 qhead="Strategic but not yet earning. Watch closely."
                 dots={resolveQuadrantDots(alignment2x2View, 'br')}
+                detailHrefFor={detailHrefFor}
               />
 
               {/* X axis */}
@@ -1873,9 +2097,10 @@ export function TowerIndexPage({
                       return card.displayId ? (
                         <Link
                           key={card.key}
-                          href={`/tower/programs/${encodeURIComponent(card.displayId)}`}
+                          href={detailHrefFor(card.displayId) ?? '/tower'}
+                          scroll={false}
                           data-testid={`tower-strategic-bet-${card.displayId}`}
-                          title="Open Tower initiative detail"
+                          title="Open Tower detail in this canvas"
                           style={style}
                         >
                           {cardBody}
@@ -1950,6 +2175,7 @@ export function TowerIndexPage({
               vendors={vendors ?? []}
               pressuresView={pressuresView}
               alignment2x2View={alignment2x2View}
+              detailHrefFor={detailHrefFor}
             />
           )}
         </div>
