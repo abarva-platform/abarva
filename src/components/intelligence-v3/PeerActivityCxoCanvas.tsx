@@ -18,9 +18,13 @@ const VIEWS: ReadonlyArray<{ key: PeerView; label: string }> = [
 
 interface Props {
   rows?: ReadonlyArray<PeerRow>;
+  lead?: string;
 }
 
-export function PeerActivityCxoCanvas({ rows = MERIDIAN_PEER_ROWS }: Props) {
+export function PeerActivityCxoCanvas({
+  rows = MERIDIAN_PEER_ROWS,
+  lead = 'Adoption read across your IDN and AMC cohorts. The Epic-instance cohort is where the laggard signal is loudest.',
+}: Props) {
   const [view, setView] = useState<PeerView>('list');
 
   const avg = Math.round(rows.reduce((s, r) => s + r.adoptionPct, 0) / rows.length);
@@ -34,7 +38,7 @@ export function PeerActivityCxoCanvas({ rows = MERIDIAN_PEER_ROWS }: Props) {
           </>
         }
         title="What are your named peers actually doing — and where are you the laggard?"
-        lead="Adoption read across your IDN and AMC cohorts. The Epic-instance cohort is where the laggard signal is loudest."
+        lead={lead}
         meta={
           <>
             <strong style={{ color: COLORS.ink }}>{rows.length}</strong> cohorts ·{' '}

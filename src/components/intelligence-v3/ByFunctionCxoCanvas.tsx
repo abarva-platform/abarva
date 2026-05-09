@@ -11,6 +11,7 @@ import { CanvasHead } from './CanvasHead';
 import {
   BY_FN_OUTCOMES,
   MERIDIAN_BY_FN_ROWS,
+  type ByFnOutcome,
   type ByFnCell,
   type ByFnCellState,
   type ByFnRow,
@@ -56,9 +57,10 @@ const STATE_COLORS: Record<
 
 interface Props {
   rows?: ReadonlyArray<ByFnRow>;
+  outcomes?: ReadonlyArray<ByFnOutcome>;
 }
 
-export function ByFunctionCxoCanvas({ rows = MERIDIAN_BY_FN_ROWS }: Props) {
+export function ByFunctionCxoCanvas({ rows = MERIDIAN_BY_FN_ROWS, outcomes = BY_FN_OUTCOMES }: Props) {
   const [view, setView] = useState<ByFnView>('matrix');
 
   const counts = countStates(rows);
@@ -86,14 +88,20 @@ export function ByFunctionCxoCanvas({ rows = MERIDIAN_BY_FN_ROWS }: Props) {
         onViewChange={setView}
       />
 
-      {view === 'matrix' && <MatrixView rows={rows} />}
+      {view === 'matrix' && <MatrixView rows={rows} outcomes={outcomes} />}
       {view === 'maturity' && <MaturityView rows={rows} />}
-      {view === 'radar' && <RadarView rows={rows} />}
+      {view === 'radar' && <RadarView rows={rows} outcomes={outcomes} />}
     </section>
   );
 }
 
-function MatrixView({ rows }: { rows: ReadonlyArray<ByFnRow> }) {
+function MatrixView({
+  rows,
+  outcomes,
+}: {
+  rows: ReadonlyArray<ByFnRow>;
+  outcomes: ReadonlyArray<ByFnOutcome>;
+}) {
   return (
     <div
       style={{
@@ -112,7 +120,7 @@ function MatrixView({ rows }: { rows: ReadonlyArray<ByFnRow> }) {
         }}
       >
         <div style={headCellStyle()} />
-        {BY_FN_OUTCOMES.map((o) => (
+        {outcomes.map((o) => (
           <div key={o.key} style={headCellStyle()}>
             {o.label}
           </div>
@@ -291,9 +299,15 @@ function MaturityView({ rows }: { rows: ReadonlyArray<ByFnRow> }) {
   );
 }
 
-function RadarView({ rows }: { rows: ReadonlyArray<ByFnRow> }) {
+function RadarView({
+  rows,
+  outcomes,
+}: {
+  rows: ReadonlyArray<ByFnRow>;
+  outcomes: ReadonlyArray<ByFnOutcome>;
+}) {
   // Lightweight radar: per-outcome aggregation, drawn as a bar fan.
-  const outcomeTotals = BY_FN_OUTCOMES.map((o, i) => {
+  const outcomeTotals = outcomes.map((o, i) => {
     const inFlight = rows.filter((r) => r.cells[i]!.state === 'in-flight').length;
     const candidate = rows.filter((r) => r.cells[i]!.state === 'candidate').length;
     return {
