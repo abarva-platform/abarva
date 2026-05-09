@@ -8,6 +8,8 @@ Wave 1 status: complete.
 
 No live database content was mutated. No large-volume new pattern content was added. No duplicate durable pattern store was created.
 
+Persistence decision after Wave 1: canonical corpus data will have a durable persisted system of record. In-memory and generated artifacts are runtime projections, validation aids, or cache/index layers only.
+
 ## PRs Merged
 
 | PR | Title | Merge commit |
@@ -215,13 +217,12 @@ Remote CI checks passed for every PR:
 
 ## Top Unresolved Decisions
 
-1. Whether canonical patterns should remain an in-memory/generated read model or become a persisted DB view/table after Wave 2.
-2. Final canonical id format and review workflow.
-3. Who owns ongoing pattern review, confidence assignment, and last-reviewed dates.
-4. Whether `genome_patterns` becomes the long-term normalized store or remains one source feeding the canonical model.
-5. How user-facing source basis and confidence should appear in Nexus/Sentinel/Atlas responses.
-6. Which duplicate-risk rows should be merged, normalized, deprecated, or enriched first.
-7. Whether a separate Handoff phase pack should be created or Mobilize & Handoff should remain one pack.
+1. Final canonical id format and review workflow.
+2. Who owns ongoing pattern review, confidence assignment, and last-reviewed dates.
+3. Whether `genome_patterns` becomes the long-term normalized store, feeds a new canonical store, or is exposed through an approved persisted canonical view.
+4. How user-facing source basis and confidence should appear in Nexus/Sentinel/Atlas responses.
+5. Which duplicate-risk rows should be merged, normalized, deprecated, or enriched first.
+6. Whether a separate Handoff phase pack should be created or Mobilize & Handoff should remain one pack.
 
 ## Risks Before Adding New Content
 
@@ -229,7 +230,8 @@ Remote CI checks passed for every PR:
 2. Adding content before retrieval integration would make agents smarter on paper but not in runtime behavior.
 3. Adding quantitative outcomes without source references would weaken trust.
 4. Adding industry depth before taxonomy review could lock in inconsistent function/process names.
-5. Adding DB migrations before the runtime read model is proven could create unnecessary schema churn.
+5. Adding DB persistence before additive schema/view review could create unnecessary schema churn.
+6. Backfilling canonical content before persistence design review could make later normalization and provenance cleanup harder.
 
 ## Recommended Wave 2 Prompt
 
@@ -245,20 +247,22 @@ Use the merged Wave 1 artifacts as binding source of truth:
 - PATTERN_FIRST_AGENT_RETRIEVAL_DESIGN_2026-05-09.md
 
 Mission:
-Wire canonical pattern-first retrieval into Nexus, Sentinel, and Atlas without mutating DB content and without adding large new pattern volumes.
+Wire canonical pattern-first retrieval into Nexus, Sentinel, and Atlas, and design the persisted canonical corpus system of record, without adding large new pattern volumes.
 
 Scope:
-1. Build an in-memory canonical pattern index from current source-code and DB-backed sources using the Wave 1 normalizers and draft builders.
-2. Add deterministic ranking in src/lib/intelligence/agent-retrieval.ts by industry, enterprise_area, function, process_area, use_case_category, strategic_move_phase, provenance completeness, missing-field count, and duplicate risk.
-3. Hydrate corpusPatterns in src/lib/knowledge/context-broker/broker.ts.
-4. Update src/lib/intelligence/ask/retrievers/pattern.ts and src/lib/agent/tools/intelligence/* to return canonical draft metadata, source_basis, confidence_level, missing_required_fields, and unsupported_claim_flags.
-5. Update Nexus routes so canonical patterns are retrieved after move/evidence context and before synthesis.
-6. Add Sentinel checks for missing evidence, artifacts, KPIs, guardrails, and failure-mode mitigation.
-7. Add Atlas value handling so projected, tracked, and verified value are separated.
-8. Add tests for the six sample retrieval queries from the audit.
+1. Design an additive persisted canonical corpus table or approved persisted canonical view using the Wave 1 contract.
+2. Build an in-memory canonical pattern index from the persisted canonical source of record and current source-code/DB-backed sources using the Wave 1 normalizers and draft builders.
+3. Add deterministic ranking in src/lib/intelligence/agent-retrieval.ts by industry, enterprise_area, function, process_area, use_case_category, strategic_move_phase, provenance completeness, missing-field count, and duplicate risk.
+4. Hydrate corpusPatterns in src/lib/knowledge/context-broker/broker.ts.
+5. Update src/lib/intelligence/ask/retrievers/pattern.ts and src/lib/agent/tools/intelligence/* to return canonical draft metadata, source_basis, confidence_level, missing_required_fields, and unsupported_claim_flags.
+6. Update Nexus routes so canonical patterns are retrieved after move/evidence context and before synthesis.
+7. Add Sentinel checks for missing evidence, artifacts, KPIs, guardrails, and failure-mode mitigation.
+8. Add Atlas value handling so projected, tracked, and verified value are separated.
+9. Add tests for the six sample retrieval queries from the audit.
 
 Guardrails:
-- No DB mutation.
+- Persistence is required, but the implementation must be additive and non-destructive.
+- No content backfill or live corpus mutation until the persistence design is reviewed and approved.
 - No new large-volume pattern content.
 - No unsupported quantitative claims.
 - No source citation fabrication.
