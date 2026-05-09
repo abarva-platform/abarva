@@ -103,7 +103,7 @@ export function LearnSectionPlaceholder({ section, subPage = null }: Props) {
             marginBottom: SPACING.sm,
           }}
         >
-          Coming soon
+          Reference shell
         </div>
         <p
           style={{

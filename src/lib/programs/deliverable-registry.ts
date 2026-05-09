@@ -396,7 +396,7 @@ export const DELIVERABLE_REGISTRY: DeliverableSpec[] = [
     gateArtifact: true,
     standAlone: true,
     sections: [
-      'Delivery RACI (named people for every workstream — not roles, not "TBD")',
+      'Delivery RACI (named people for every workstream, not role-only placeholders)',
       'Open Decisions Register (every unresolved decision: what it is, who decides, by when, what is blocked)',
       'Risk Handoff Register (open risks transferring to Tower: likelihood, impact, mitigation owner, trigger)',
       'Artifact Inventory (complete list of all P1–P4 artifacts with status: final / approved / pending)',
