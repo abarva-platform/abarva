@@ -2,7 +2,7 @@
 //
 // Replaces the prior internal-doctrine ProductPage with a pitch-style
 // landing aligned to docs/training/abarva-marketing-page-v3.5.html.
-// Five modules + Move lifecycle + substrate + differentiators, each
+// Four surfaces + Move lifecycle + substrate + differentiators, each
 // section anchored by its own SVG illustration.
 //
 // SVG art is hand-rolled (deterministic, scalable, theme-tunable)
@@ -44,7 +44,7 @@ export function ProductMarketingPage() {
       }}
     >
       <Hero />
-      <FiveSurfaces />
+      <FourSurfaces />
       <MoveLifecycle />
       <Substrate />
       <Differentiators />
@@ -400,7 +400,7 @@ function HeroIllustration() {
   );
 }
 
-// ─── Five surfaces ───────────────────────────────────────────────
+// ─── Four surfaces ───────────────────────────────────────────────
 
 interface SurfaceMeta {
   num: string;
@@ -437,24 +437,15 @@ const SURFACES: ReadonlyArray<SurfaceMeta> = [
   },
   {
     num: '03',
-    name: 'Sentinel',
-    tagline: 'The agent · always on',
-    body: 'View-aware, context-aware. Sentinel composes the brief, pushes back on the framing, surfaces the binding pattern, and never forgets what the corpus knows.',
-    illustration: <SentinelIllustration />,
-    href: '/intelligence',
-    ctaLabel: 'Meet Sentinel →',
-  },
-  {
-    num: '04',
     name: 'Source',
     tagline: 'Vendor + contract intelligence',
-    body: 'Where the IT spend goes — by category, by vendor, by renewal pressure. Surfaces the leverage thinness before the negotiation, not during it.',
+    body: 'Where the IT spend goes — by category, by vendor, by renewal pressure. Sentinel fronts this surface, surfacing leverage thinness before the negotiation, not during it.',
     illustration: <SourceIllustration />,
     href: '/source',
     ctaLabel: 'Open Source →',
   },
   {
-    num: '05',
+    num: '04',
     name: 'Tower',
     tagline: 'AI portfolio command',
     body: 'Every AI bet your enterprise has placed — measured against committed value. The view a CIO opens before a steering committee, not after.',
@@ -464,12 +455,12 @@ const SURFACES: ReadonlyArray<SurfaceMeta> = [
   },
 ];
 
-function FiveSurfaces() {
+function FourSurfaces() {
   return (
     <section style={{ padding: '96px 64px', borderBottom: `1px solid ${C.border}` }}>
       <div style={{ maxWidth: 1280, margin: '0 auto' }}>
-        <SectionEyebrow num="02">The five surfaces</SectionEyebrow>
-        <SectionTitle>One platform. Five surfaces. Each one a CXO answer.</SectionTitle>
+        <SectionEyebrow num="02">The four surfaces</SectionEyebrow>
+        <SectionTitle>One platform. Four surfaces. Each one a CXO answer.</SectionTitle>
         <SectionLead>
           AbarVa isn't a dashboard. Each surface answers a different decision —
           and they're all wired into the same substrate so the answers stay
@@ -817,37 +808,6 @@ function MovesIllustration() {
           </text>
         );
       })}
-    </svg>
-  );
-}
-
-function SentinelIllustration() {
-  // Soft beam / lighthouse · presence with modes.
-  return (
-    <svg viewBox="0 0 280 220" width="100%" style={{ maxWidth: 280 }} role="img" aria-label="Sentinel">
-      <defs>
-        <radialGradient id="sentinel-glow" cx="50%" cy="40%" r="55%">
-          <stop offset="0%" stopColor={C.accentWarm} stopOpacity="0.6" />
-          <stop offset="60%" stopColor={C.accent} stopOpacity="0.15" />
-          <stop offset="100%" stopColor={C.cream} stopOpacity="0" />
-        </radialGradient>
-        <linearGradient id="sentinel-beam" x1="50%" y1="0%" x2="50%" y2="100%">
-          <stop offset="0%" stopColor={C.accentWarm} stopOpacity="0.5" />
-          <stop offset="100%" stopColor={C.accentWarm} stopOpacity="0" />
-        </linearGradient>
-      </defs>
-      {/* Beam */}
-      <polygon points="125,90 155,90 220,210 60,210" fill="url(#sentinel-beam)" />
-      {/* Glow */}
-      <circle cx="140" cy="90" r="80" fill="url(#sentinel-glow)" />
-      {/* Core */}
-      <circle cx="140" cy="90" r="22" fill={C.ink} />
-      <circle cx="140" cy="90" r="14" fill={C.accentWarm} opacity={0.85} />
-      <circle cx="140" cy="90" r="6" fill={C.surface} />
-      {/* Mode labels — three concentric rings */}
-      <text x="140" y="50" fontFamily={F_MONO} fontSize="9" fill={C.accent} letterSpacing="0.16em" textAnchor="middle" fontWeight={700}>
-        AMBIENT · ENGAGED · FOCUS
-      </text>
     </svg>
   );
 }
