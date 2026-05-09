@@ -35,7 +35,15 @@ import { ArtOfPossibleCanvas } from './ArtOfPossibleCanvas';
 import { IntelligenceMap } from '@/components/intelligence-v4/IntelligenceMap';
 import { IntelligenceBrief } from '@/components/intelligence-v4/IntelligenceBrief';
 import { getMeridianMapData, getMeridianBriefData } from '@/lib/knowledge-corpus/fixtures/meridian-healthcare';
-import { FIRST_CAPITAL_DEMO, MERIDIAN_AOP_DEMO } from './demo-data';
+import { FIRST_CAPITAL_DEMO, MERIDIAN_AOP_DEMO, APEX_RETAIL_AOP_DEMO } from './demo-data';
+import {
+  APEX_RETAIL_BY_FN_OUTCOMES,
+  APEX_RETAIL_BY_FN_ROWS,
+  APEX_RETAIL_PEER_ROWS,
+  APEX_RETAIL_SESSIONS,
+  APEX_RETAIL_STRATEGY_BULLETS,
+  APEX_RETAIL_VENDOR_SPEND,
+} from './cxo-fixtures';
 import type { IntelligenceV3PageData, RetailIntelligenceStatus, StageKey } from './types';
 import type { ApexRetailIntelligenceData } from '@/lib/intelligence-v3/apex-retail-live';
 
@@ -102,8 +110,8 @@ export function IntelligenceV3Page({
   };
   const isCorpusStage = stage === 'brief' || stage === 'map';
   const isAopStage = stage === 'art-of-possible';
-  const aopBands = data.aopBands ?? MERIDIAN_AOP_DEMO;
   const isApexBound = Boolean(apexRetailData);
+  const aopBands = isApexBound ? APEX_RETAIL_AOP_DEMO : data.aopBands ?? MERIDIAN_AOP_DEMO;
   const activeTenantName = isApexBound ? 'Apex Retail Group' : data.tenantName;
   const briefData = apexRetailData?.briefData ?? getMeridianBriefData();
   const mapData = apexRetailData?.mapData ?? getMeridianMapData();
@@ -195,12 +203,32 @@ export function IntelligenceV3Page({
               >
                 {isAopStage && <ArtOfPossibleCanvas data={aopBands} />}
                 {stage === 'today' && <TodayCxoCanvas items={apexRetailData?.todayItems} />}
-                {stage === 'by-function' && <ByFunctionCxoCanvas />}
+                {stage === 'by-function' && (
+                  <ByFunctionCxoCanvas
+                    rows={isApexBound ? APEX_RETAIL_BY_FN_ROWS : undefined}
+                    outcomes={isApexBound ? APEX_RETAIL_BY_FN_OUTCOMES : undefined}
+                  />
+                )}
                 {stage === 'patterns' && <PatternsCxoCanvas patterns={apexRetailData?.patterns} />}
-                {stage === 'vendors' && <VendorsCxoCanvas />}
-                {stage === 'peer-activity' && <PeerActivityCxoCanvas />}
-                {stage === 'my-strategy' && <MyStrategyCxoCanvas />}
-                {stage === 'sessions' && <SessionsCxoCanvas />}
+                {stage === 'vendors' && <VendorsCxoCanvas spend={isApexBound ? APEX_RETAIL_VENDOR_SPEND : undefined} />}
+                {stage === 'peer-activity' && (
+                  <PeerActivityCxoCanvas
+                    rows={isApexBound ? APEX_RETAIL_PEER_ROWS : undefined}
+                    lead={
+                      isApexBound
+                        ? 'Adoption read across retail cohorts: specialty, big-box, grocery, luxury, and marketplace-first peers. The laggard signal is strongest where customer identity and item-location history are weak.'
+                        : undefined
+                    }
+                  />
+                )}
+                {stage === 'my-strategy' && <MyStrategyCxoCanvas bullets={isApexBound ? APEX_RETAIL_STRATEGY_BULLETS : undefined} />}
+                {stage === 'sessions' && (
+                  <SessionsCxoCanvas
+                    rows={isApexBound ? APEX_RETAIL_SESSIONS : undefined}
+                    totalConversations={isApexBound ? 18 : undefined}
+                    recentWindowCount={isApexBound ? 6 : undefined}
+                  />
+                )}
               </main>
             }
           />

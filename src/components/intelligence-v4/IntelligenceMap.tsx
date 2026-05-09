@@ -105,6 +105,44 @@ const ENGAGEMENT_FILTERS: ReadonlyArray<{ key: EngagementFilter; label: string }
   { key: 'scaled', label: 'Scaled' },
 ];
 
+const ENGAGEMENT_META: Record<EngagementState, { label: string; accent: string }> = {
+  at_risk: { label: 'At risk', accent: C.amber },
+  in_flight: { label: 'In flight', accent: C.teal },
+  scaled: { label: 'Scaled', accent: C.navy },
+  not_started: { label: 'Candidate', accent: C.navy },
+  failed: { label: 'Retired', accent: C.red },
+};
+
+function clampNumber(value: number, min: number, max: number, fallback: number): number {
+  if (!Number.isFinite(value)) return fallback;
+  return Math.min(max, Math.max(min, value));
+}
+
+function normalizeMapNode(node: MapNode, index: number): MapNode {
+  return {
+    ...node,
+    x: clampNumber(node.x, 0, 100, 12 + ((index * 19) % 76)),
+    y: clampNumber(node.y, 0, 100, 14 + ((index * 23) % 72)),
+    r: clampNumber(node.r, 8, 24, 13),
+  };
+}
+
+function officeLabel(office: Office): string {
+  if (office === 'front') return 'Front office';
+  if (office === 'middle') return 'Middle office';
+  return 'Back office';
+}
+
+function displayValue(node: MapNode): string {
+  return (
+    node.useCase.businessValueRanges.perCompanySize.mid ??
+    node.useCase.businessValueRanges.perCompanySize.large ??
+    node.useCase.businessValueRanges.perCompanySize.veryLarge ??
+    node.useCase.businessValueRanges.perCompanySize.small ??
+    '—'
+  );
+}
+
 export function IntelligenceMap({ data, activeClient }: Props) {
   const [selectedId, setSelectedId] = useState<string>(data.defaultSelectedId);
   // Kanban is the default · the scatter chart has structural label
@@ -114,13 +152,47 @@ export function IntelligenceMap({ data, activeClient }: Props) {
   const [view, setView] = useState<MapView>('kanban');
   const [engagement, setEngagement] = useState<EngagementFilter>('all');
 
+  const allNodes = useMemo(
+    () => data.nodes.map((node, index) => normalizeMapNode(node, index)),
+    [data.nodes],
+  );
+  const nodesById = useMemo(
+    () => new Map(allNodes.map((node) => [node.useCase.id, node])),
+    [allNodes],
+  );
+  const countsByState = useMemo(() => {
+    const counts: Record<EngagementState, number> = {
+      not_started: 0,
+      in_flight: 0,
+      scaled: 0,
+      failed: 0,
+      at_risk: 0,
+    };
+    allNodes.forEach((node) => {
+      counts[node.engagementState] += 1;
+    });
+    return counts;
+  }, [allNodes]);
   const visibleNodes = useMemo(() => {
-    if (engagement === 'all') return data.nodes;
-    return data.nodes.filter((n) => n.engagementState === engagement);
-  }, [data.nodes, engagement]);
+    if (engagement === 'all') return allNodes;
+    return allNodes.filter((n) => n.engagementState === engagement);
+  }, [allNodes, engagement]);
+  const visibleNodeIds = useMemo(
+    () => new Set(visibleNodes.map((node) => node.useCase.id)),
+    [visibleNodes],
+  );
+  const visibleEdges = useMemo(
+    () =>
+      data.edges.filter(
+        (edge) =>
+          visibleNodeIds.has(edge.fromUseCaseId) &&
+          visibleNodeIds.has(edge.toUseCaseId),
+      ),
+    [data.edges, visibleNodeIds],
+  );
 
   const selected =
-    visibleNodes.find((n) => n.useCase.id === selectedId) ?? visibleNodes[0] ?? data.nodes[0];
+    visibleNodes.find((n) => n.useCase.id === selectedId) ?? visibleNodes[0] ?? allNodes[0];
 
   return (
     <div style={{ background: C.surface, fontFamily: F_BODY, color: C.body, minHeight: '100%' }}>
@@ -160,9 +232,9 @@ export function IntelligenceMap({ data, activeClient }: Props) {
             overflow: 'hidden',
           }}
         >
-          {data.whatChanged.slice(0, 3).map((c) => (
+          {data.whatChanged.slice(0, 3).map((c, index) => (
             <li
-              key={c.entityId}
+              key={`${c.entityId}-${c.entityType}-${index}`}
               style={{
                 display: 'inline-flex',
                 gap: 8,
@@ -282,9 +354,7 @@ export function IntelligenceMap({ data, activeClient }: Props) {
             </span>
             {ENGAGEMENT_FILTERS.map((f) => {
               const isActive = engagement === f.key;
-              const count = f.key === 'all'
-                ? data.nodes.length
-                : data.nodes.filter((n) => n.engagementState === f.key).length;
+              const count = f.key === 'all' ? allNodes.length : countsByState[f.key];
               if (count === 0 && f.key !== 'all') return null;
               return (
                 <button
@@ -365,7 +435,7 @@ export function IntelligenceMap({ data, activeClient }: Props) {
             }}
           >
             <div style={{ fontFamily: F_MONO, fontSize: 10, fontWeight: 700, letterSpacing: '0.16em', textTransform: 'uppercase', color: C.faint }}>
-              {visibleNodes.length} of {data.nodes.length} bets · click any node for the brief
+              {visibleNodes.length} of {allNodes.length} bets · click any node for the brief
             </div>
             <div style={{ display: 'flex', gap: 14, fontFamily: F_MONO, fontSize: 10, letterSpacing: '0.06em', color: C.faint, alignItems: 'center' }}>
               <LegendDot color={C.teal} label="In flight" />
@@ -375,7 +445,17 @@ export function IntelligenceMap({ data, activeClient }: Props) {
             </div>
           </div>
           <div style={{ padding: '8px 12px 14px' }}>
-            <svg viewBox={`0 0 ${SVG_W} ${SVG_H}`} width="100%" preserveAspectRatio="xMidYMid meet" style={{ display: 'block' }}>
+            <svg
+              viewBox={`0 0 ${SVG_W} ${SVG_H}`}
+              width="100%"
+              preserveAspectRatio="xMidYMid meet"
+              style={{
+                display: 'block',
+                aspectRatio: `${SVG_W} / ${SVG_H}`,
+                minHeight: 360,
+                height: 'auto',
+              }}
+            >
               {/* Grid lines */}
               {[PAD_L, PAD_L + PLOT_W * 0.25, PAD_L + PLOT_W * 0.5, PAD_L + PLOT_W * 0.75, PAD_L + PLOT_W].map((x) => (
                 <line key={`vx-${x}`} x1={x} y1={PAD_T} x2={x} y2={PAD_T + PLOT_H} stroke={C.borderLight} strokeWidth={1} strokeDasharray="2 4" />
@@ -431,9 +511,9 @@ export function IntelligenceMap({ data, activeClient }: Props) {
               ))}
 
               {/* Edges */}
-              {data.edges.map((e, i) => {
-                const a = data.nodes.find((n) => n.useCase.id === e.fromUseCaseId);
-                const b = data.nodes.find((n) => n.useCase.id === e.toUseCaseId);
+              {visibleEdges.map((e, i) => {
+                const a = nodesById.get(e.fromUseCaseId);
+                const b = nodesById.get(e.toUseCaseId);
                 if (!a || !b) return null;
                 const ax = nodeX(a);
                 const ay = nodeY(a);
@@ -572,16 +652,11 @@ function truncate(s: string, n: number): string {
 
 function DetailCard({ node }: { node: MapNode }) {
   const uc = node.useCase;
-  const valueRange =
-    uc.businessValueRanges.perCompanySize.mid ??
-    uc.businessValueRanges.perCompanySize.large ??
-    uc.businessValueRanges.perCompanySize.small ??
-    '—';
+  const valueRange = displayValue(node);
   const stateLabel =
-    node.engagementState === 'in_flight' ? 'IN PORTFOLIO' :
-    node.engagementState === 'at_risk' ? 'AT RISK' :
-    node.engagementState === 'failed' ? 'RETIRED' :
-    'CANDIDATE';
+    node.engagementState === 'in_flight'
+      ? 'IN PORTFOLIO'
+      : ENGAGEMENT_META[node.engagementState].label.toUpperCase();
   return (
     <div style={{ border: `1px solid ${C.borderLight}`, background: C.surface, borderRadius: 10, padding: 18 }}>
       <span
@@ -605,7 +680,7 @@ function DetailCard({ node }: { node: MapNode }) {
       <p style={{ fontSize: 13, color: C.body, lineHeight: 1.55, marginBottom: 10 }}>{uc.problemStatement}</p>
 
       <Row k="Lifecycle" v={`${uc.lifecycleStage}${uc.provenance.primarySources[0] ? ` · [per ${uc.provenance.primarySources[0].source}]` : ''}`} />
-      <Row k="Value · IDN scale" v={`${valueRange}`} />
+      <Row k="Value · scale" v={`${valueRange}`} />
       <Row k="Time to value" v={`${uc.businessValueRanges.timeToValueMonths} months`} />
 
       {uc.successPatterns.length > 0 && (
@@ -761,6 +836,7 @@ const KANBAN_COLUMNS: ReadonlyArray<{
 }> = [
   { state: 'in_flight', label: 'In flight', accent: C.teal },
   { state: 'at_risk', label: 'At risk', accent: C.amber },
+  { state: 'scaled', label: 'Scaled', accent: C.navy },
   { state: 'not_started', label: 'Candidate', accent: C.navy },
   { state: 'failed', label: 'Retired', accent: C.red },
 ];
@@ -883,10 +959,7 @@ function KanbanCard({
   isSelected: boolean;
   onSelect: (id: string) => void;
 }) {
-  const valueRange =
-    node.useCase.businessValueRanges.perCompanySize.mid ??
-    node.useCase.businessValueRanges.perCompanySize.large ??
-    '—';
+  const valueRange = displayValue(node);
   return (
     <button
       type="button"
@@ -1179,15 +1252,8 @@ function ListView({
       {sorted.map((node) => {
         const isSelected = node.useCase.id === selectedId;
         const fill = nodeFill(node);
-        const stateLabel =
-          node.engagementState === 'in_flight' ? 'In flight' :
-          node.engagementState === 'at_risk' ? 'At risk' :
-          node.engagementState === 'failed' ? 'Retired' :
-          node.engagementState === 'scaled' ? 'Scaled' : 'Candidate';
-        const value =
-          node.useCase.businessValueRanges.perCompanySize.mid ??
-          node.useCase.businessValueRanges.perCompanySize.large ??
-          '—';
+        const stateLabel = ENGAGEMENT_META[node.engagementState].label;
+        const value = displayValue(node);
         return (
           <button
             key={node.useCase.id}
@@ -1251,8 +1317,7 @@ function ListView({
               </span>
             </span>
             <span style={{ color: C.muted, fontSize: 12 }}>
-              {node.useCase.office === 'front' ? 'Front office' :
-                node.useCase.office === 'middle' ? 'Middle office' : 'Back office'}
+              {officeLabel(node.useCase.office)}
             </span>
             <span style={{ color: C.muted, fontSize: 12 }}>
               {lifecycleLabel(node.useCase.lifecycleStage)}

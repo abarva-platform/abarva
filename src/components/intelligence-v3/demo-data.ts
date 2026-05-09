@@ -60,6 +60,64 @@ export const MERIDIAN_AOP_DEMO: ArtOfPossibleData = {
   ],
 };
 
+export const APEX_RETAIL_AOP_DEMO: ArtOfPossibleData = {
+  totalPossibleLabel: '$72-180M possible',
+  totalCapturingLabel: '~$18M (~16%)',
+  cxoFrame:
+    "Apex is capturing a small slice of the retail AI opportunity. Customer growth is active, merchandising margin is thin, store operations need adoption proof, and data/platform ownership is the unlock.",
+  bands: [
+    {
+      key: 'customer-growth',
+      label: 'Customer growth + loyalty',
+      tone: 'heavy',
+      possibleUsd: '$18-44M',
+      capturingUsd: '$7.2M',
+      segments: { inFlight: 38, candidate: 24, risk: 18, empty: 20 },
+      verdict: 'Active · ownership split',
+      blocker: 'CMO owns loyalty, IT owns CDP',
+    },
+    {
+      key: 'merch-margin',
+      label: 'Merchandising margin',
+      tone: 'thin',
+      possibleUsd: '$20-52M',
+      capturingUsd: '$4.8M',
+      segments: { inFlight: 22, candidate: 30, risk: 10, empty: 38 },
+      verdict: 'Thin · data dependent',
+      blocker: 'Item-location history not audit-ready',
+    },
+    {
+      key: 'store-ops',
+      label: 'Store productivity + shrink',
+      tone: 'gap',
+      possibleUsd: '$16-38M',
+      capturingUsd: '$2.6M',
+      segments: { inFlight: 12, candidate: 28, risk: 20, empty: 40 },
+      verdict: 'Whitespace · adoption risk',
+      blocker: 'Intervention protocol missing',
+    },
+    {
+      key: 'supply-chain',
+      label: 'Supply chain resilience',
+      tone: 'thin',
+      possibleUsd: '$12-30M',
+      capturingUsd: '$2.1M',
+      segments: { inFlight: 18, candidate: 34, risk: 8, empty: 40 },
+      verdict: 'Candidate-rich',
+    },
+    {
+      key: 'foundation',
+      label: 'Data + platform foundation',
+      tone: 'foundation',
+      possibleUsd: '$6-16M',
+      capturingUsd: '$1.3M',
+      segments: { inFlight: 26, candidate: 18, risk: 30, empty: 26 },
+      verdict: 'Binding constraint',
+      blocker: 'Integration-hub decision unresolved',
+    },
+  ],
+};
+
 export const FIRST_CAPITAL_DEMO: IntelligenceV3PageData = {
   tenantName: 'First Capital Financial',
   industry: 'Banking',
