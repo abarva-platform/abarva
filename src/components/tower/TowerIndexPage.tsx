@@ -1063,93 +1063,100 @@ function currentPageEvidence(activeTab: TowerTabKey, lens: TowerLens): string {
   return 'The portfolio view combines the registry, vendor rows, and derived pressure cards into a current-state read.';
 }
 
-const PORTFOLIO_CANVAS_TABS: ReadonlyArray<{
-  key: PortfolioCanvasView;
-  label: string;
-  hint: string;
-}> = [
-  { key: 'pressures', label: "Today's pressures", hint: 'Decision-ranked actions' },
-  { key: 'alignment', label: 'Strategic alignment', hint: 'Portfolio 2x2' },
-  { key: 'evidence', label: 'Evidence map', hint: 'Feeds and gaps' },
-];
-
-function PortfolioCanvasToggle({
+function PortfolioDrillContext({
   activeView,
+  activeLens,
   hrefFor,
 }: {
   activeView: PortfolioCanvasView;
-  hrefFor: (view: PortfolioCanvasView) => string;
+  activeLens: TowerLens;
+  hrefFor: (next?: { lens?: TowerLens; view?: PortfolioCanvasView; detail?: string | null; pressure?: string | null }) => string;
 }) {
+  const copy =
+    activeView === 'alignment'
+      ? {
+          eyebrow: 'Dashboard drill-down · Portfolio ROI',
+          body: 'ROI opens the strategic 2x2. Risk, contract, adoption, and active pressure tiles return to the pressure list with that lens applied.',
+          primary: "Today's pressures",
+          primaryHref: hrefFor({ lens: activeLens, view: 'pressures', detail: null, pressure: null }),
+        }
+      : activeView === 'evidence'
+        ? {
+            eyebrow: 'Data evidence · Source map',
+            body: 'This view explains the loaded source feeds, refresh cadence, and which Tower slices each dataset supports.',
+            primary: "Today's pressures",
+            primaryHref: hrefFor({ lens: activeLens, view: 'pressures', detail: null, pressure: null }),
+          }
+        : {
+            eyebrow: `Dashboard drill-down · ${activeLens === 'risk' ? 'Risk' : activeLens === 'contract' ? 'Contract' : activeLens === 'adopt' ? 'Adoption' : 'Active pressures'}`,
+            body: 'The KPI band is the navigation: open a tile to change the canvas, then double-click or open any row for the same-page detail.',
+            primary: 'Evidence map',
+            primaryHref: hrefFor({ lens: activeLens, view: 'evidence', detail: null, pressure: null }),
+          };
+
   return (
-    <nav
-      aria-label="Portfolio canvas view"
+    <div
       style={{
-        padding: '14px 32px 12px',
+        padding: '8px 32px',
         borderBottom: `1px solid ${T.RULE}`,
         display: 'flex',
-        justifyContent: 'center',
+        justifyContent: 'space-between',
+        gap: 24,
+        alignItems: 'center',
+        minHeight: 38,
       }}
     >
       <div
-        role="tablist"
         style={{
-          display: 'inline-grid',
-          gridTemplateColumns: 'repeat(3, minmax(160px, 1fr))',
-          gap: 4,
-          padding: 4,
-          border: `1px solid ${T.RULE}`,
-          borderRadius: 8,
-          background: T.CREAM_2,
+          display: 'flex',
+          alignItems: 'baseline',
+          gap: 10,
+          minWidth: 0,
         }}
       >
-        {PORTFOLIO_CANVAS_TABS.map((tab) => {
-          const isActive = tab.key === activeView;
-          return (
-            <Link
-              key={tab.key}
-              href={hrefFor(tab.key)}
-              scroll={false}
-              role="tab"
-              aria-selected={isActive}
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                gap: 2,
-                padding: '8px 14px',
-                borderRadius: 6,
-                background: isActive ? T.INK : 'transparent',
-                color: isActive ? T.CREAM : T.INK_2,
-                textDecoration: 'none',
-                fontFamily: T.SANS,
-                minHeight: 46,
-              }}
-            >
-              <span
-                style={{
-                  fontFamily: T.MONO,
-                  fontSize: 10,
-                  letterSpacing: '1.2px',
-                  textTransform: 'uppercase',
-                  fontWeight: 800,
-                }}
-              >
-                {tab.label}
-              </span>
-              <span
-                style={{
-                  fontSize: 11.5,
-                  lineHeight: 1.2,
-                  opacity: isActive ? 0.78 : 0.72,
-                }}
-              >
-                {tab.hint}
-              </span>
-            </Link>
-          );
-        })}
+        <span
+          style={{
+            fontFamily: T.MONO,
+            fontSize: 9,
+            letterSpacing: '1.5px',
+            textTransform: 'uppercase',
+            color: T.GOLD,
+            fontWeight: 800,
+            flex: '0 0 auto',
+          }}
+        >
+          {copy.eyebrow}
+        </span>
+        <span
+          style={{
+            fontSize: 12.5,
+            color: T.INK_2,
+            lineHeight: 1.35,
+            whiteSpace: 'nowrap',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+          }}
+        >
+          {copy.body}
+        </span>
       </div>
-    </nav>
+      <Link
+        href={copy.primaryHref}
+        scroll={false}
+        style={{
+          fontFamily: T.MONO,
+          fontSize: 9,
+          letterSpacing: '1.2px',
+          textTransform: 'uppercase',
+          color: T.INK,
+          fontWeight: 800,
+          textDecoration: 'none',
+          flex: '0 0 auto',
+        }}
+      >
+        {copy.primary} →
+      </Link>
+    </div>
   );
 }
 
@@ -1604,11 +1611,11 @@ function Quadrant({
   detailHrefFor: DetailHrefBuilder;
 }) {
   const styles: CSSProperties = {
-    padding: '14px 16px',
+    padding: '10px 12px',
     position: 'relative',
     background: T.CREAM_2,
     border: `1px solid ${T.RULE}`,
-    minHeight: 220,
+    minHeight: 154,
   };
   if (position === 'tl') {
     styles.gridColumn = 2;
@@ -1638,7 +1645,7 @@ function Quadrant({
           fontWeight: 700,
           color: T.GRAY_DK,
           textTransform: 'uppercase',
-          marginBottom: 6,
+          marginBottom: 5,
         }}
       >
         {qlabel}
@@ -1646,17 +1653,17 @@ function Quadrant({
       <div
         style={{
           fontFamily: T.SERIF,
-          fontSize: 14,
+          fontSize: 12.5,
           fontWeight: 700,
           letterSpacing: '-0.2px',
-          marginBottom: 12,
+          marginBottom: 8,
           lineHeight: 1.25,
           maxWidth: '30ch',
         }}
       >
         {qhead}
       </div>
-      <div style={{ position: 'relative', height: 130 }}>
+      <div style={{ position: 'relative', height: 88 }}>
         {dots.map((dot) => {
           // T-4: substrate-derived dots show displayId + ⭐ + confidence outline.
           // Legacy dots (no displayId) keep the original rendering.
@@ -1667,18 +1674,18 @@ function Quadrant({
             position: 'absolute',
             left: dot.left,
             top: dot.top,
-            padding: '6px 10px',
+            padding: '4px 7px',
             background: T.INK,
             color: T.CREAM,
             fontFamily: T.MONO,
-            fontSize: 9.5,
-            letterSpacing: '1px',
+            fontSize: 8.3,
+            letterSpacing: '0.8px',
             fontWeight: 700,
-            borderRadius: 5,
+            borderRadius: 4,
             cursor: isSubstrate ? 'pointer' : 'default',
             lineHeight: 1.2,
             border: isSubstrate ? `1.5px ${borderStyle} ${T.CREAM}` : undefined,
-            maxWidth: 180,
+            maxWidth: 150,
             textDecoration: 'none',
           };
           const dotBody = (
@@ -1687,7 +1694,7 @@ function Quadrant({
                 <span
                   style={{
                     display: 'block',
-                    fontSize: 8.5,
+                    fontSize: 7.8,
                     letterSpacing: '0.16em',
                     opacity: 0.7,
                     marginBottom: 1,
@@ -1706,7 +1713,7 @@ function Quadrant({
                 style={{
                   display: 'block',
                   fontFamily: T.SERIF,
-                  fontSize: 11,
+                  fontSize: 9.5,
                   fontWeight: 700,
                   marginTop: 1,
                   letterSpacing: 0,
@@ -1869,22 +1876,17 @@ export function TowerIndexPage({
     towerCanvasRef.current?.scrollTo({ top: 0, behavior: 'auto' });
   }, [activeDetailId, activeTab]);
 
+  useEffect(() => {
+    if (activeDetailId || activeTab !== 'portfolio') return;
+    towerCanvasRef.current?.scrollTo({ top: 0, behavior: 'auto' });
+  }, [activeCanvasView, activeDetailId, activeLens, activeTab]);
+
   const lensTabs: { key: typeof activeLens; label: string }[] = [
     { key: 'value', label: 'Value' },
     { key: 'risk', label: 'Risk' },
     { key: 'contract', label: 'Contract' },
     { key: 'adopt', label: 'Adoption' },
   ];
-
-  const canvasViewHref = useCallback(
-    (view: PortfolioCanvasView) => buildTowerHref({
-      view,
-      lens: view === 'alignment' ? 'value' : activeLens,
-      detail: null,
-      pressure: null,
-    }),
-    [activeLens, buildTowerHref],
-  );
 
   const handleMetricDrill = useCallback(
     (metricKey: MetricProvenanceKey) => {
@@ -2076,11 +2078,11 @@ export function TowerIndexPage({
           {/* Masthead */}
           <div
             style={{
-              padding: '22px 32px 18px',
+              padding: '14px 32px 12px',
               borderBottom: `1px solid ${T.RULE_STRONG}`,
               display: 'grid',
               gridTemplateColumns: '1fr auto',
-              gap: 18,
+              gap: 16,
               alignItems: 'end',
             }}
           >
@@ -2093,7 +2095,7 @@ export function TowerIndexPage({
                   fontWeight: 700,
                   color: T.GOLD,
                   textTransform: 'uppercase',
-                  marginBottom: 8,
+                  marginBottom: 5,
                 }}
               >
                 Tower · {workspaceTitle(activeTab)} · TWR-IDX-{activeTab.replace(/_/g, '-').toUpperCase()}
@@ -2101,9 +2103,9 @@ export function TowerIndexPage({
               <h1
                 style={{
                   fontFamily: T.SERIF,
-                  fontSize: 44,
+                  fontSize: 36,
                   fontWeight: 900,
-                  letterSpacing: '-1.2px',
+                  letterSpacing: '-0.9px',
                   lineHeight: 1,
                   marginBottom: 6,
                   margin: 0,
@@ -2113,7 +2115,7 @@ export function TowerIndexPage({
                 {workspaceTitle(activeTab)}{' '}
                 <span
                   style={{
-                    fontSize: 22,
+                    fontSize: 19,
                     fontWeight: 500,
                     fontStyle: 'italic',
                     color: T.GRAY_DK,
@@ -2131,7 +2133,7 @@ export function TowerIndexPage({
                   color: T.GRAY_DK,
                   fontWeight: 600,
                   textTransform: 'uppercase',
-                  marginTop: 6,
+                  marginTop: 5,
                 }}
               >
                 M. Castillo · CFO · {tenantName} · {timestamp} PT
@@ -2150,7 +2152,7 @@ export function TowerIndexPage({
                       letterSpacing: '1.4px',
                       textTransform: 'uppercase',
                       fontWeight: 700,
-                      padding: '8px 14px',
+                      padding: '7px 12px',
                       border: `1px solid ${isCurrent ? T.INK : T.BORDER}`,
                       borderRadius: 999,
                       cursor: 'pointer',
@@ -2196,11 +2198,11 @@ export function TowerIndexPage({
             style={{
               display: 'grid',
               gridTemplateColumns: '1.4fr 1fr 1fr 1fr 1fr',
-              padding: '10px 32px',
+              padding: '8px 32px',
               borderBottom: `1px solid ${T.RULE_STRONG}`,
               gap: 0,
               alignItems: 'center',
-              minHeight: 74,
+              minHeight: 62,
             }}
           >
             {useSubstrateBand && bandMetrics ? (
@@ -2234,12 +2236,12 @@ export function TowerIndexPage({
             )}
           </section>
 
-          <PortfolioCanvasToggle activeView={activeCanvasView} hrefFor={canvasViewHref} />
+          <PortfolioDrillContext activeView={activeCanvasView} activeLens={activeLens} hrefFor={buildTowerHref} />
 
           {/* Section headline */}
           {activeCanvasView === 'pressures' && (
           <>
-          <div style={{ padding: '24px 32px 14px' }}>
+          <div style={{ padding: '16px 32px 10px' }}>
             <div
               style={{
                 fontFamily: T.MONO,
@@ -2258,9 +2260,9 @@ export function TowerIndexPage({
             <h2
               style={{
                 fontFamily: T.SERIF,
-                fontSize: 30,
+                fontSize: 27,
                 fontWeight: 800,
-                letterSpacing: '-0.7px',
+                letterSpacing: '-0.5px',
                 lineHeight: 1.1,
                 maxWidth: '32ch',
                 margin: 0,
@@ -2275,7 +2277,7 @@ export function TowerIndexPage({
               style={{
                 fontSize: 13.5,
                 color: T.GRAY_DK,
-                marginTop: 8,
+                marginTop: 6,
                 maxWidth: '64ch',
                 lineHeight: 1.55,
               }}
@@ -2285,7 +2287,7 @@ export function TowerIndexPage({
           </div>
 
           {/* Pressures list — T-6: substrate-bound only. */}
-          <div style={{ padding: '0 32px 28px', display: 'flex', flexDirection: 'column' }}>
+          <div style={{ padding: '0 32px 24px', display: 'flex', flexDirection: 'column' }}>
             {useSubstratePressures && pressuresView && pressuresView.cards.length > 0 ? (
               pressuresView.cards.map((card) => (
                 <SubstratePressure
@@ -2307,56 +2309,66 @@ export function TowerIndexPage({
 
           {/* Strategic alignment matrix */}
           {activeCanvasView === 'alignment' && (
-          <section style={{ padding: '28px 32px 30px' }}>
-            <div style={{ paddingBottom: 12 }}>
-              <div
-                style={{
-                  fontFamily: T.MONO,
-                  fontSize: 10,
-                  letterSpacing: '2px',
-                  fontWeight: 700,
-                  color: T.GOLD,
-                  textTransform: 'uppercase',
-                  marginBottom: 8,
-                }}
-              >
-                Strategic alignment · {alignment2x2View.totalPlotted} programs plotted · current Value lens
-              </div>
-              <h2
-                style={{
-                  fontFamily: T.SERIF,
-                  fontSize: 30,
-                  fontWeight: 800,
-                  letterSpacing: '-0.7px',
-                  lineHeight: 1.1,
-                  maxWidth: '32ch',
-                  margin: 0,
-                }}
-              >
-                Where the portfolio is, against where the strategy says it should be.
-              </h2>
-              <p
-                style={{
-                  fontSize: 13.5,
-                  color: T.GRAY_DK,
-                  marginTop: 8,
-                  maxWidth: '64ch',
-                  lineHeight: 1.55,
-                }}
-              >
-                Confidence shows up as outline weight: <strong>solid = HIGH</strong>, <strong>dashed = MEDIUM/LOW</strong>. Strategic bets (T-FOW) are pulled into a separate row below — they don&apos;t have measured ROI yet, and mixing them on the matrix would be dishonest.
-              </p>
-            </div>
-
+          <section style={{ padding: '14px 32px 24px' }}>
             <div
               style={{
                 display: 'grid',
-                gridTemplateColumns: '80px 1fr 1fr',
-                gridTemplateRows: '1fr 1fr 60px',
-                gap: 0,
-                marginTop: 18,
+                gridTemplateColumns: 'minmax(260px, 0.36fr) minmax(560px, 0.64fr)',
+                gap: 24,
+                alignItems: 'start',
               }}
             >
+              <div>
+                <div
+                  style={{
+                    fontFamily: T.MONO,
+                    fontSize: 9.5,
+                    letterSpacing: '1.8px',
+                    fontWeight: 700,
+                    color: T.GOLD,
+                    textTransform: 'uppercase',
+                    marginBottom: 7,
+                  }}
+                >
+                  Strategic alignment · {alignment2x2View.totalPlotted} programs plotted · current Value lens
+                </div>
+                <h2
+                  style={{
+                    fontFamily: T.SERIF,
+                    fontSize: 28,
+                    fontWeight: 800,
+                    letterSpacing: '-0.5px',
+                    lineHeight: 1.07,
+                    maxWidth: '20ch',
+                    margin: 0,
+                  }}
+                >
+                  Where the portfolio is, against where the strategy says it should be.
+                </h2>
+                <p
+                  style={{
+                    fontSize: 13,
+                    color: T.GRAY_DK,
+                    marginTop: 8,
+                    maxWidth: '39ch',
+                    lineHeight: 1.45,
+                  }}
+                >
+                  Confidence uses outline weight: <strong>solid = HIGH</strong>, <strong>dashed = MEDIUM/LOW</strong>. Strategic bets sit below because they do not have measured ROI yet.
+                </p>
+              </div>
+
+              <div
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: '56px minmax(0, 1fr) minmax(0, 1fr)',
+                  gridTemplateRows: 'minmax(154px, auto) minmax(154px, auto) 36px',
+                  gap: 0,
+                  width: '100%',
+                  maxWidth: 760,
+                  justifySelf: 'end',
+                }}
+              >
               {/* Y axis */}
               <div
                 style={{
@@ -2424,7 +2436,7 @@ export function TowerIndexPage({
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  paddingTop: 8,
+                  paddingTop: 6,
                 }}
               >
                 <span
@@ -2441,13 +2453,14 @@ export function TowerIndexPage({
                 </span>
               </div>
             </div>
+            </div>
 
             {/* T-FOW row */}
             <div
               style={{
-                padding: '18px 0 28px',
+                padding: '14px 0 20px',
                 borderTop: `1px dashed ${T.RULE_STRONG}`,
-                marginTop: 18,
+                marginTop: 14,
               }}
             >
               <div
