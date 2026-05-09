@@ -237,8 +237,8 @@ describe('evaluateGate', () => {
     deliverableVersionsFixture = [
       {
         content:
-          'P1 Discovery Report. Attendees: Maya Desai sponsor, Noah Patel lead, ' +
-          'Sofia Bennett store operations, Camila Torres data products, and David Kim supply chain. ' +
+          'P1 Discovery Report. Attendees: Carlos Rivera sponsor, Priya Iyer lead, ' +
+          'Brandon Hayes store operations, James Wright data products, and Michael Tanaka supply chain. ' +
           'Workshop notes: POS/RMS/WMS lineage workshop captured inventory accuracy, replenishment exception cycle time, ' +
           'digital substitution rate, store task SLA, and demand forecast override rate. ' +
           'Baselines captured and owner attestation recorded. Source of record: POS/RMS/WMS lineage workshop and store operations intake log. ' +

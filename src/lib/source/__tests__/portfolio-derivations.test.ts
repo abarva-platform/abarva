@@ -25,7 +25,7 @@ function makeEvent(overrides: Partial<SourcingEventSummary> = {}): SourcingEvent
     currentStageKey: 'scope',
     currentStageLabel: 'Scope',
     openAlerts: 0,
-    owner: 'Maya Desai',
+    owner: 'Nathan Kohl',
     agingDays: 4,
     blocker: null,
     nextAction: 'Run scope cycle',

@@ -501,13 +501,13 @@ export const USERS_FIXTURE: UserItem[] = [
   { id: 'u2', name: 'Priya Sharma', email: 'priya@apexretail.com', role: 'collaborator', surface: 'Programs · Source', lastActive: 'Yesterday', status: 'active' },
   { id: 'u3', name: 'Marcus Webb', email: 'marcus@apexretail.com', role: 'collaborator', surface: 'Tower · Intelligence', lastActive: 'Apr 24', status: 'active' },
   { id: 'u4', name: 'Sofia Navarro', email: 'sofia@apexretail.com', role: 'viewer', surface: 'Programs', lastActive: 'Apr 20', status: 'active' },
-  { id: 'u5', name: 'James Okafor', email: 'james@apexretail.com', role: 'collaborator', surface: 'Source', lastActive: 'Never', status: 'pending' },
+  { id: 'u5', name: 'Carlos Rivera', email: 'carlos@apexretail.com', role: 'collaborator', surface: 'Source', lastActive: 'Never', status: 'pending' },
 ];
 
 export const USERS_AGENT_VOICE = {
-  quote: '5 users total — 4 active, 1 invite pending (James Okafor, Source collaborator). David Chen is the only admin. Priya and Marcus are active collaborators covering Programs, Source, Tower, and Intelligence.',
+  quote: '5 users total — 4 active, 1 invite pending (Carlos Rivera, Source collaborator). David Chen is the only admin. Priya and Marcus are active collaborators covering Programs, Source, Tower, and Intelligence.',
   actions: [
-    { letter: 'A' as const, text: 'Resend James Okafor invite', detail: 'Source collaborator — pending since Apr 22' },
+    { letter: 'A' as const, text: 'Resend Carlos Rivera invite', detail: 'Source collaborator — pending since Apr 22' },
     { letter: 'B' as const, text: 'Review access for Sofia', detail: 'Viewer-only on Programs — consider adding Tower' },
     { letter: 'C' as const, text: 'Invite new collaborator', detail: 'Add team member to AbarVa workspace' },
   ],
@@ -533,7 +533,7 @@ export const AUDIT_LOG_FIXTURE: AuditEntry[] = [
   { id: 'a4', timestamp: 'Apr 26 · 09:18', actor: 'Priya Sharma', actorInitials: 'PS', action: 'Source event updated — AMS BAFO Stage 7', surface: 'Source', detail: 'Vendor B SOC-2 gap flagged', severity: 'warn' },
   { id: 'a5', timestamp: 'Apr 25 · 15:55', actor: 'Atlas', actorInitials: 'At', action: 'AI Cloud Spend pressure escalated to HIGH', surface: 'Tower', detail: '$2.4M actual vs $1.8M budget (+33%)', severity: 'critical' },
   { id: 'a6', timestamp: 'Apr 24 · 12:00', actor: 'David Chen', actorInitials: 'DC', action: 'Pattern T3-H01 applied to APX-CDP-2026', surface: 'Intelligence', detail: 'Ambient Intelligence Capture linked', severity: 'info' },
-  { id: 'a7', timestamp: 'Apr 23 · 10:30', actor: 'James Okafor', actorInitials: 'JO', action: 'Invite sent — Source collaborator', surface: 'Setup', detail: 'Pending acceptance', severity: 'info' },
+  { id: 'a7', timestamp: 'Apr 23 · 10:30', actor: 'Carlos Rivera', actorInitials: 'CR', action: 'Invite sent — Source collaborator', surface: 'Setup', detail: 'Pending acceptance', severity: 'info' },
 ];
 
 export const AUDIT_AGENT_VOICE = {

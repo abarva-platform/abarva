@@ -73,7 +73,7 @@ describe('create_milestones tool', () => {
           {
             name: 'BAFO vendor selected',
             description:
-              'Owner: Maya Desai. Dependency: baseline confirmed. Decision: sponsor accepts scorecard.',
+              'Owner: Nathan Kohl. Dependency: baseline confirmed. Decision: sponsor accepts scorecard.',
             module_key: 'execution_roadmap',
           },
         ],

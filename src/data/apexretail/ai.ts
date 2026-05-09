@@ -1,3 +1,5 @@
+import { apexExecutiveName } from "./org-structure";
+
 export const apexRetailAI = {
   maturity: {
     dataReadiness: { overall: 54, customer: 48, inventory: 42, financial: 68, store: 52, supplyChain: 58 },
@@ -11,20 +13,20 @@ export const apexRetailAI = {
     ],
     pattern: "PILOT_PURGATORY",
     pilotsPurgatory: 4,
-    patternDescription: "4 AI initiatives and 0 at enterprise scale. CDO vacant, no MLOps, SAP blocks real-time data, Segment CDP fragmented.",
+    patternDescription: "4 AI initiatives and 0 at enterprise scale. CDO mandate is active but data product ownership is immature, MLOps is thin, SAP blocks real-time data, and Segment CDP remains fragmented.",
   },
   interviews: {
-    ceo: { name: "Margaret Chen", tenure: "3 years", aiPriority: "Personalization — 18 million loyalty members marketed to like strangers is inexcusable", biggestBlocker: "Data fragmentation — Segment CDP 50% fragmentation, SAP not connected to Snowflake", investmentAppetite: "$20-40M if it moves digital revenue from 28% to 40%", successMetric: "Digital revenue above 35% and loyalty active rate above 60% by FY2026", changeReadiness: "High", aiQuote: "Amazon knows what our customers want before they do. We are marketing to 18 million people like they are the same person." },
-    cto: { name: "James Okafor", tenure: "18 months", aiPriority: "Complete the data foundation — Snowflake, Databricks, SAP integration — before adding more AI", biggestBlocker: "SAP ECC blocks real-time data flow. 8,400 customizations mean every integration is a project.", investmentAppetite: "$15-25M for AI after data foundation is fixed", successMetric: "Databricks models from 3 to 15 in production by Q4 2025", changeReadiness: "Medium", aiQuote: "We have Databricks, Snowflake, and Segment. We have the tools. We need the data plumbing and the people." },
-    cfo: { name: "Robert Martinez", tenure: "6 years", aiPriority: "Inventory optimization — $180M in excess inventory is a balance sheet problem", biggestBlocker: "Every technology project has gone over budget. I need outcome-based contracts.", investmentAppetite: "$10-20M with outcome-based fees tied to inventory reduction", successMetric: "Inventory turnover above 5.5x and shrinkage below 2.0% by FY2026", changeReadiness: "Medium", aiQuote: "Complete the o9 implementation we already paid for before buying anything new." },
-    cmo: { name: "David Park", tenure: "2 years", aiPriority: "Activate Salesforce Einstein NOW — we are paying for it and not using it", biggestBlocker: "Segment CDP fragmentation — cannot personalize when same customer counted 2.8 times", investmentAppetite: "$5-8M for personalization and loyalty activation", successMetric: "Email conversion rate 3x and loyalty redemption above 45%", changeReadiness: "High", aiQuote: "Einstein is sitting there, paid for, and not activated. That is the first call I make Monday morning." },
+    ceo: { name: apexExecutiveName("CEO"), tenure: "4 years", aiPriority: "Move Apex from pilots to scaled AI outcomes tied to digital revenue and margin", biggestBlocker: "Executive alignment is fragmented across platform readiness, cost-takeout, and customer activation", investmentAppetite: "$20-40M if it moves digital revenue from 28% to 40%", successMetric: "Digital revenue above 35% and at least one AI initiative scaled enterprise-wide by FY2026", changeReadiness: "High", aiQuote: "Show me one operating result that scales." },
+    cio: { name: apexExecutiveName("CIO"), tenure: "18 months", aiPriority: "Complete the data foundation - Snowflake, Databricks, SAP integration, and run ownership - before adding complexity", biggestBlocker: "SAP ECC blocks real-time data flow. 8,400 customizations mean every integration is a project.", investmentAppetite: "$15-25M for AI after the data foundation and operating model are fixed", successMetric: "Databricks models from 3 to 15 in production by Q4 2026", changeReadiness: "Medium", aiQuote: "We need the foundation stable, but we also need to stop confusing sequencing with paralysis." },
+    cfo: { name: apexExecutiveName("CFO"), tenure: "9 years", aiPriority: "Inventory optimization and platform decisions that improve margin without uncontrolled capital risk", biggestBlocker: "Every technology project has gone over budget. Outcome-based contracts are the approval path.", investmentAppetite: "$10-20M with fees tied to inventory reduction, margin lift, or shrink reduction", successMetric: "Inventory turnover above 5.5x and shrinkage below 2.0% by FY2026", changeReadiness: "Medium", aiQuote: "I am not writing a large check at 3.8% operating margin without iron-clad ROI." },
+    cmo: { name: apexExecutiveName("CMO"), tenure: "2 years", aiPriority: "Activate Salesforce Einstein and loyalty personalization once CDP identity resolution is funded", biggestBlocker: "Segment CDP fragmentation - cannot personalize when the same customer is counted multiple times", investmentAppetite: "$5-8M for personalization and loyalty activation", successMetric: "Email conversion rate 3x and loyalty redemption above 45%", changeReadiness: "High", aiQuote: "We have loyalty data, but we still market to too many customers like strangers." },
   },
   changeReadiness: {
     overall: 36,
     components: { leadership: 52, workforce: 28, technology: 44, culture: 32, capacity: 24 },
     riskFactors: [
       "68% annual store staff turnover — training AI tools on staff that leave is wasted investment",
-      "CDO role vacant — no AI strategy ownership",
+      "CDO mandate active but data product ownership and AI governance still maturing",
       "SAP ECC migration decision pending — IT team cannot focus on AI",
       "o9 implementation failure creating cynicism about AI promises",
       "28,000 store employees across 42 states — change management at scale is complex",
