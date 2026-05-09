@@ -23,7 +23,6 @@ import {
 import {
   KanbanBoard,
   ScatterPlot,
-  SCATTER_VALUE_COVERAGE_THRESHOLD,
   readStoredViewMode,
   persistViewMode,
   type ViewMode,
@@ -37,7 +36,6 @@ import {
   groupEventsByStageBand,
   STAGE_BANDS,
   attentionEvents,
-  stageBandFor,
 } from '@/lib/source/portfolio-filtering';
 import type { SourcingEventSummary } from '@/lib/source/types';
 
@@ -188,18 +186,9 @@ function PopulatedView({
     [events],
   );
 
-  const valueCapturedCount = useMemo(
-    () => filteredEvents.filter((e) => (e.valueAtStakeUsd ?? 0) > 0).length,
-    [filteredEvents],
-  );
-  const scatterAvailable =
-    filteredEvents.length === 0 ||
-    valueCapturedCount / filteredEvents.length >= SCATTER_VALUE_COVERAGE_THRESHOLD;
-
   function handleViewMode(next: ViewMode) {
-    const safe = next === 'scatter' && !scatterAvailable ? 'list' : next;
-    setViewMode(safe);
-    persistViewMode(safe);
+    setViewMode(next);
+    persistViewMode(next);
   }
 
   return (
@@ -224,8 +213,6 @@ function PopulatedView({
         activeFilterCount={totalFilterCount(filters)}
         viewMode={viewMode}
         onViewModeChange={handleViewMode}
-        scatterAvailable={scatterAvailable}
-        valueCapturedCount={valueCapturedCount}
       />
 
       {viewMode === 'list' ? (
@@ -249,8 +236,8 @@ function PopulatedView({
         </div>
       ) : null}
 
-      {viewMode === 'scatter' && scatterAvailable ? (
-        <div style={FULLWIDTH_VIEW_STYLE} data-testid="source-portfolio-scatter">
+      {viewMode === 'scatter' ? (
+        <div style={FULLWIDTH_VIEW_STYLE} data-testid="source-portfolio-value-view">
           <ScatterPlot events={filteredEvents} canViewFinancialValues={canViewFinancialValues} />
         </div>
       ) : null}
@@ -277,7 +264,6 @@ function PortfolioScorecard({
     (sum, item) => sum + (item.event.valueAtStakeUsd ?? 0),
     0,
   );
-  const stageMix = buildStageMix(events);
   const categoryMix = buildCategoryMix(events);
 
   return (
@@ -311,16 +297,6 @@ function PortfolioScorecard({
         />
       </div>
       <div style={SCORECARD_CHARTS_STYLE}>
-        <ScoreBarStack
-          label="Stage mix"
-          total={events.length}
-          items={stageMix.map((item) => ({
-            key: item.key,
-            label: item.label,
-            value: item.count,
-            color: item.color,
-          }))}
-        />
         <CategoryValueBars
           items={categoryMix}
           canViewFinancialValues={canViewFinancialValues}
@@ -348,51 +324,6 @@ function ScoreMetric({
         {value}
       </div>
       <div style={SCORE_METRIC_DETAIL_STYLE}>{detail}</div>
-    </div>
-  );
-}
-
-function ScoreBarStack({
-  label,
-  total,
-  items,
-}: {
-  label: string;
-  total: number;
-  items: Array<{ key: string; label: string; value: number; color: string }>;
-}) {
-  const visibleItems = items.filter((item) => item.value > 0);
-  return (
-    <div style={SCORE_CHART_STYLE}>
-      <div style={SCORE_CHART_HEADER_STYLE}>
-        <span>{label}</span>
-        <span>{total} total</span>
-      </div>
-      <div style={STACK_BAR_STYLE} aria-hidden>
-        {visibleItems.length === 0 ? (
-          <span style={{ ...STACK_SEGMENT_STYLE, width: '100%', background: PORTFOLIO.RULE }} />
-        ) : (
-          visibleItems.map((item) => (
-            <span
-              key={item.key}
-              style={{
-                ...STACK_SEGMENT_STYLE,
-                width: `${Math.max(4, (item.value / Math.max(total, 1)) * 100)}%`,
-                background: item.color,
-              }}
-            />
-          ))
-        )}
-      </div>
-      <div style={STACK_LEGEND_STYLE}>
-        {items.map((item) => (
-          <span key={item.key} style={STACK_LEGEND_ITEM_STYLE}>
-            <span aria-hidden style={{ ...STACK_LEGEND_DOT_STYLE, background: item.color }} />
-            <span>{item.label}</span>
-            <span style={STACK_LEGEND_COUNT_STYLE}>{item.value}</span>
-          </span>
-        ))}
-      </div>
     </div>
   );
 }
@@ -438,31 +369,10 @@ function CategoryValueBars({
   );
 }
 
-interface StageMixItem {
-  key: string;
-  label: string;
-  count: number;
-  color: string;
-}
-
 interface CategoryMixItem {
   label: string;
   count: number;
   valueUsd: number;
-}
-
-function buildStageMix(events: SourcingEventSummary[]): StageMixItem[] {
-  const counts = new Map<string, number>();
-  for (const event of events) {
-    const band = STAGE_BANDS[stageBandFor(event.currentStageKey, event.status)];
-    counts.set(band.key, (counts.get(band.key) ?? 0) + 1);
-  }
-  return Object.values(STAGE_BANDS).map((band) => ({
-    key: band.key,
-    label: band.title.replace(' & ', ' + '),
-    count: counts.get(band.key) ?? 0,
-    color: STAGE_MIX_COLORS[band.key],
-  }));
 }
 
 function buildCategoryMix(events: SourcingEventSummary[]): CategoryMixItem[] {
@@ -549,8 +459,6 @@ function SubHeader({
   activeFilterCount,
   viewMode,
   onViewModeChange,
-  scatterAvailable,
-  valueCapturedCount,
 }: {
   eventCount: number;
   visibleCount: number;
@@ -559,8 +467,6 @@ function SubHeader({
   activeFilterCount: number;
   viewMode: ViewMode;
   onViewModeChange: (m: ViewMode) => void;
-  scatterAvailable: boolean;
-  valueCapturedCount: number;
 }) {
   const showFiltered = visibleCount !== eventCount || activeFilterCount > 0;
   const viewOptions = [
@@ -569,11 +475,9 @@ function SubHeader({
     {
       mode: 'scatter' as const,
       icon: <ScatterIcon />,
-      label: 'Value map',
-      title: scatterAvailable
-        ? 'Value map'
-        : `Value map requires value data on at least 50% of events (${valueCapturedCount}/${eventCount} captured)`,
-      disabled: !scatterAvailable,
+      label: 'Value chart',
+      title: 'Value chart',
+      disabled: false,
     },
   ] satisfies Array<{ mode: ViewMode; icon: React.ReactNode; label: string; title: string; disabled: boolean }>;
 
@@ -743,18 +647,10 @@ const SUBLINE_STYLE: CSSProperties = {
   maxWidth: 720,
 };
 
-const STAGE_MIX_COLORS: Record<keyof typeof STAGE_BANDS, string> = {
-  discovery: '#335C81',
-  evaluation: PORTFOLIO.ACTIVE,
-  decision: PORTFOLIO.WAITING,
-  transition: '#7C3AED',
-  completed: PORTFOLIO.COMPLETED,
-};
-
 const SCORECARD_STYLE: CSSProperties = {
   display: 'grid',
-  gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 520px), 1fr))',
-  gap: 20,
+  gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 420px), 1fr))',
+  gap: 28,
   marginTop: 16,
   padding: '14px 16px',
   border: `1px solid ${PORTFOLIO.HAIRLINE}`,
@@ -803,8 +699,7 @@ const SCORE_METRIC_DETAIL_STYLE: CSSProperties = {
 
 const SCORECARD_CHARTS_STYLE: CSSProperties = {
   display: 'grid',
-  gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 260px), 1fr))',
-  gap: 22,
+  gap: 10,
   minWidth: 0,
 };
 
@@ -827,54 +722,9 @@ const SCORE_CHART_HEADER_STYLE: CSSProperties = {
   fontWeight: 700,
 };
 
-const STACK_BAR_STYLE: CSSProperties = {
-  display: 'flex',
-  width: '100%',
-  height: 9,
-  overflow: 'hidden',
-  borderRadius: 999,
-  background: PORTFOLIO.RULE,
-};
-
-const STACK_SEGMENT_STYLE: CSSProperties = {
-  display: 'block',
-  height: '100%',
-};
-
-const STACK_LEGEND_STYLE: CSSProperties = {
-  display: 'grid',
-  gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
-  gap: '5px 12px',
-};
-
-const STACK_LEGEND_ITEM_STYLE: CSSProperties = {
-  display: 'inline-flex',
-  alignItems: 'center',
-  minWidth: 0,
-  gap: 6,
-  fontFamily: PORTFOLIO.SANS,
-  fontSize: PORTFOLIO.T_META,
-  color: PORTFOLIO.INK_SOFT,
-};
-
-const STACK_LEGEND_DOT_STYLE: CSSProperties = {
-  width: 7,
-  height: 7,
-  borderRadius: 999,
-  flexShrink: 0,
-};
-
-const STACK_LEGEND_COUNT_STYLE: CSSProperties = {
-  marginLeft: 'auto',
-  fontFamily: PORTFOLIO.MONO,
-  fontSize: PORTFOLIO.T_MICRO,
-  color: PORTFOLIO.INK,
-  fontWeight: 700,
-};
-
 const CATEGORY_BARS_STYLE: CSSProperties = {
   display: 'grid',
-  gap: 7,
+  gap: 9,
 };
 
 const CATEGORY_ROW_STYLE: CSSProperties = {
