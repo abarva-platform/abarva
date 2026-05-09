@@ -22,7 +22,7 @@ export function Ch03RfpChapter() {
   return (
     <ChapterShell slug="rfp">
       <HeroBand color="navy">
-        <Eyebrow light>Meridian Case Study · Chapter 03 · Stage 03 RFP</Eyebrow>
+        <Eyebrow light>Heliara Case Study · Chapter 03 · Stage 03 RFP</Eyebrow>
         <SectionTitle light size="xl">Day 12. Sentinel composes d09.</SectionTitle>
         <Lead light>
           The RFP package is the buyer&rsquo;s contract with the vendors:
@@ -130,7 +130,7 @@ export function Ch03RfpChapter() {
           }}
         >
           <li>
-            <strong>Workload placement.</strong> For each of the 280 in-scope
+            <strong>Workload placement.</strong> For each of the 920 in-scope
             workloads, propose target tier (single-tenant, multi-tenant
             shared, multi-tenant dedicated). Identify any workloads you
             cannot host and explain why.
@@ -195,10 +195,10 @@ export function Ch03RfpChapter() {
 
         <ArtifactSpecimen
           code="d09"
-          title="RFP package · Meridian Health Cloud · v1.0 issued (cover note)"
+          title="RFP package · Heliara Health Enterprise Cloud · v1.0 issued (cover note)"
         >
           <p>
-            <strong>Issued by:</strong> Janet Fischer, VP IT Ops, Meridian
+            <strong>Issued by:</strong> Janet Fischer, VP IT Ops, Heliara
             Health · 2026-04-13
           </p>
           <p>
@@ -210,10 +210,11 @@ export function Ch03RfpChapter() {
             2026-05-04 18:00 EST
           </p>
           <p>
-            <strong>Strategic driver:</strong> Newark colocation lease
+            <strong>Strategic driver:</strong> Portland colocation lease
             expires Q3 2027 with rate escalation locked at 18% YoY.
-            Rebuilding the CIS stack on bare-metal at a new colocation
-            facility is not under consideration.
+            Epic, MyChart, Cloverleaf integration middleware, payer-data
+            controls, and Tier-1 clinical DR are in scope across 23 hospitals
+            and 142 clinics.
           </p>
           <p>
             <strong>Response format:</strong> Required artifacts are listed
@@ -273,7 +274,7 @@ export function Ch03RfpChapter() {
           d11 response checklist · 8 mandatory + 14 recommended items.
           d16 scoring rubric · 6 criteria with weights summing to 100.
           d19a pricing template · 14 line items in the locked workbook.
-          Plus the BAA + DPA templates pulled from the Meridian master
+          Plus the BAA + DPA templates pulled from the Heliara master
           contract library.
         </BodyP>
         <SubHead>The decision</SubHead>
@@ -288,7 +289,7 @@ export function Ch03RfpChapter() {
           We don&rsquo;t know who will respond seriously. We don&rsquo;t
           know which vendor will try to substitute their own pricing format
           (it&rsquo;ll be Vendor C). We don&rsquo;t know which vendor will
-          quietly assume only 200 of the 280 workloads (Vendor B) or who
+          quietly assume only 760 of the 920 workloads (Vendor B) or who
           will price an 8% YoY escalator under a heading that says
           &ldquo;protected at 4%&rdquo; (Vendor D). The next 21 days are
           quiet on our side; the responses will tell us a lot.

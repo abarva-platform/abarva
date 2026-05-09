@@ -14,26 +14,28 @@ import {
 } from '@/components/home/learn/primitives';
 import { CASE_STUDY_CHAPTER_SLUGS, findSourceLearnNavItem } from '@/lib/source/learn/learn-nav';
 
-export function MeridianCaseStudyIntro() {
+export function HeliaraCaseStudyIntro() {
   return (
     <>
       <HeroBand color="navy">
-        <Eyebrow light>Source · Meridian Case Study</Eyebrow>
+        <Eyebrow light>Source · Heliara Case Study</Eyebrow>
         <SectionTitle light size="xl">
-          Meridian Health · $8M Cloud &amp; Infrastructure.
+          Heliara Health · Enterprise Cloud, Epic &amp; Integration Sourcing.
         </SectionTitle>
         <Lead light>
-          One real sourcing event, walked end-to-end. Eleven chapters mapping 1:1 to
-          the Source lifecycle, but read as one story — from the day CTO Marcus
-          Webb says &ldquo;the lease is up&rdquo; to month 18 when Atlas&rsquo;s
-          d32 ledger surfaces a $3.2M variance against the straight-line
-          projection. Specifics over abstractions; lessons over walkthroughs.
+          One enterprise sourcing event for an $18.6B provider-payer IDN, walked
+          end-to-end. Heliara runs 23 hospitals, 142 clinics, and a $7.1B health
+          plan business across the Pacific Northwest, Northern California, and the
+          Mountain West. Eleven chapters map 1:1 to the Source lifecycle, but read
+          as one story — from the day CTO Marcus Webb says &ldquo;the lease is
+          up&rdquo; to month 18 when Atlas&rsquo;s d32 ledger surfaces a
+          value-realization variance against the projection.
         </Lead>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 4 }}>
           {[
             'Archetype: Cloud / Infrastructure',
-            'Value: $8M low / $12M high annual',
-            'Rigor: Standard',
+            'Value: $18M low / $26M high annual',
+            'Rigor: Strict',
             'Time: ~50 min · 11 chapters',
           ].map((tag) => (
             <span
@@ -74,7 +76,7 @@ export function MeridianCaseStudyIntro() {
           label="Read it as one document"
         >
           Each chapter ends with a <em>Next chapter →</em> link. Read in order and
-          you&rsquo;ll have a complete picture of a real $8M sourcing event in
+          you&rsquo;ll have a complete picture of a real enterprise sourcing event in
           about 50 minutes. The side-nav lets you jump to a specific chapter,
           but the connective tissue lives in the recap paragraph that opens
           each one.
@@ -130,19 +132,20 @@ export function MeridianCaseStudyIntro() {
         <Eyebrow>The trigger</Eyebrow>
         <SectionTitle>Why this event exists</SectionTitle>
         <Lead>
-          The Newark colocation lease expires Q3 2027 with an 18% YoY rate
-          escalation locked in. Rebuilding bare-metal at a new colo is
-          explicitly out of consideration — the CTO&rsquo;s decision before
-          this event opens. Cloud is the move. The question is which cloud, on
-          what terms, with what exit posture.
+          The Portland colocation lease expires Q3 2027 with an 18% YoY rate
+          escalation locked in. Rebuilding bare-metal at a new colo is explicitly
+          out of consideration — the CTO&rsquo;s decision before this event opens.
+          Cloud is the move, but the real decision spans Epic hosting posture,
+          Cloverleaf integration, payer-data controls, and a transition plan that
+          cannot disrupt Medicare Advantage operations.
         </Lead>
 
         <SubHead>What&rsquo;s in scope</SubHead>
         <BodyP>
-          280 production workloads — Epic CIS (the clinical record), MyChart
+          920 production workloads — Epic CIS (the clinical record), MyChart
           (the patient portal), Cloverleaf integration middleware (the
-          interface engine that talks to 47 downstream systems), ServiceNow
-          ITSM, and roughly 180 in-house apps. DR for 47 Tier-1 systems is in;
+          interface engine that talks to 134 downstream systems), ServiceNow
+          ITSM, and roughly 540 in-house apps. DR for 68 Tier-1 systems is in;
           DR for Tier-2 is explicitly deferred to a follow-on event.
         </BodyP>
 
@@ -155,10 +158,10 @@ export function MeridianCaseStudyIntro() {
 
         <SubHead>Value at stake</SubHead>
         <BodyP>
-          $8M low / $12M high annual run-rate, depending on architecture. Over
-          a 5-year contract that&rsquo;s $40M–$60M committed. Standard rigor —
-          this isn&rsquo;t board-visible enough to need elevated rigor, but
-          it&rsquo;s big enough that every decision will be audited.
+          $18M low / $26M high annual run-rate, depending on architecture. Over
+          a 5-year contract that&rsquo;s $90M–$130M committed. Strict rigor:
+          the scope touches clinical systems, PHI-bearing integration flows,
+          payer-data controls, and a board-visible value-based-care operating model.
         </BodyP>
       </Section>
 
@@ -282,7 +285,7 @@ const CHAPTER_SUMMARIES: Record<string, string> = {
   strategy:
     'Day 1. CTO Marcus Webb names the trigger. Sentinel drafts d01 from intake metadata. Three gate criteria.',
   scope:
-    'Day 4. Karen Liu and Janet Fischer agree the 280-workload boundary. d05 scope memo. Cloverleaf integrations under-enumerated — a chapter-10 problem in the making.',
+    'Day 4. Karen Liu and Janet Fischer agree the 920-workload boundary. d05 scope memo. Cloverleaf integrations under-enumerated — a chapter-10 problem in the making.',
   rfp:
     'Day 12. Sentinel composes d09 from d01 + d05 + d21. Eight scoping questions. Vendor pool of four (A, B, C, D) shortlisted from market scan.',
   responses:
@@ -292,15 +295,15 @@ const CHAPTER_SUMMARIES: Record<string, string> = {
   pricing:
     'Day 50. Sentinel&rsquo;s pricing-trap detector finds 3 P0 + 2 P1 issues across the three vendors. d20 trap log compiled. The egress trap on Vendor A is the dramatic one.',
   bafo:
-    'Day 65. Janet authors d22 with 12 BAFO questions across two finalists. A refuses to remove a 7-year exclusivity clause and drops. B and D respond; B comes back at $9.4M and wins on price + scope correction.',
+    'Day 65. Janet authors d22 with 12 BAFO questions across two finalists. A refuses to remove a 7-year exclusivity clause and drops. B and D respond; B comes back at $21.6M and wins on price + scope correction.',
   decision:
-    'Day 90. Atlas composes d24 from the cumulative event state. CTO Marcus and CFO Sarah sign. Recommends Vendor B at $9.4M committed, value-at-stake $40M over 5 years.',
+    'Day 90. Atlas composes d24 from the cumulative event state. CTO Marcus and CFO Sarah sign. Recommends Vendor B at $21.6M committed, value-at-stake $108M over 5 years.',
   selection:
     'Day 95. Sentinel drafts one winner letter to B and two loser letters to A and D — each with rubric breakdown and the specific concern that closed them out.',
   transition:
     'Day 100 → Month 9. Cutover plan slips 2 months. Cloverleaf middleware hid 47 custom integrations Chapter 2&rsquo;s scope memo didn&rsquo;t enumerate. Day-1 checkpoint moves from month 7 to month 9.',
   value:
-    'Month 18. Atlas&rsquo;s d32 ledger reads $11.2M realized vs $14.4M straight-line projection. The $3.2M gap traces entirely to the 2-month slip. Owner named, measurement cadence set.',
+    'Month 18. Atlas&rsquo;s d32 ledger reads realized value against the straight-line projection. The gap traces to the transition slip and delayed payer-data controls. Owner named, measurement cadence set.',
 };
 
 function CastCard({

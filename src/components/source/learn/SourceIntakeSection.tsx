@@ -11,7 +11,6 @@ import {
   Callout,
   StepList,
   Step,
-  T,
 } from '@/components/home/learn/primitives';
 
 export function SourceIntakeSection() {
@@ -55,7 +54,7 @@ export function SourceIntakeSection() {
         <SubHead>1 · Event name</SubHead>
         <BodyP>
           Plain-language name as it appears in every export header (e.g.{' '}
-          <em>&ldquo;Meridian Health Cloud &amp; Infrastructure&rdquo;</em>). Keep
+          <em>&ldquo;Heliara Health Enterprise Cloud&rdquo;</em>). Keep
           it scannable. The event code is auto-generated from the tenant and a
           time stamp.
         </BodyP>
@@ -109,9 +108,10 @@ export function SourceIntakeSection() {
           One paragraph on why this event exists. Lease expiring? Vendor
           contract ending? New regulatory requirement? Sentinel uses this verbatim
           in the d01 strategy memo; the d09 RFP package opens with it as
-          &ldquo;Strategic driver.&rdquo; Be specific — &ldquo;Newark colo lease
-          expires Q3 2027 with 18% YoY rate escalation locked&rdquo; is much
-          better than &ldquo;cloud transformation.&rdquo;
+          &ldquo;Strategic driver.&rdquo; Be specific — &ldquo;Portland colo lease
+          expires Q3 2027 with 18% YoY rate escalation locked, while Epic
+          Hyperdrive and payer-data controls must be ready for 23 hospitals and
+          142 clinics&rdquo; is much better than &ldquo;cloud transformation.&rdquo;
         </BodyP>
 
         <SubHead>8 · Scope description (optional but high-leverage)</SubHead>
@@ -125,24 +125,23 @@ export function SourceIntakeSection() {
 
       <Section>
         <Eyebrow>Worked example</Eyebrow>
-        <SectionTitle>Filling out an $8M Cloud event</SectionTitle>
+        <SectionTitle>Filling out an enterprise cloud event</SectionTitle>
         <Lead>
-          Here&rsquo;s the actual intake for the Meridian Health Cloud demo event
+          Here&rsquo;s the actual intake for the Heliara Health demo event
           you&rsquo;ll see when you open the canvas. Use it as a reference shape
-          for your first real event.
+          for an enterprise healthcare sourcing event.
         </Lead>
-        <Callout kind="info" icon="📋" label="Meridian Health Cloud · MERI-MERIDIAN-HEALTH-CLOUD-2026">
-          <strong>Archetype:</strong> Infrastructure (cloud-shaped) · <strong>Rigor:</strong> Standard ·{' '}
-          <strong>Value band:</strong> $8M low / $12M high annual ·{' '}
+        <Callout kind="info" icon="📋" label="Heliara Health Enterprise Cloud · HLRA-HELIARA-CLOUD-2026">
+          <strong>Archetype:</strong> Infrastructure (cloud + integration) · <strong>Rigor:</strong> Strict ·{' '}
+          <strong>Value band:</strong> $18M low / $26M high annual ·{' '}
           <strong>Sponsor:</strong> CTO Marcus Webb (decision sponsor) + CFO Sarah Kim ·{' '}
           <strong>Procurement:</strong> Janet Fischer, VP IT Ops ·{' '}
-          <strong>Trigger:</strong> Newark colocation lease expires Q3 2027 with rate escalation locked at 18% YoY. Rebuilding the CIS stack on bare-metal at a new colocation facility is not under consideration.
+          <strong>Trigger:</strong> Portland colocation lease expires Q3 2027 with rate escalation locked at 18% YoY. Epic, MyChart, Cloverleaf, health-plan data controls, and DR for Tier-1 clinical systems are in scope across the 23-hospital / 142-clinic estate.
         </Callout>
         <BodyP>
           Note how the trigger paragraph is specific (named lease, Q3 2027,
-          18% rate, rebuild explicitly out of consideration). Sentinel can use
-          that level of detail; &ldquo;cloud migration&rdquo; alone leaves it
-          guessing.
+          18% rate, systems in scope, and enterprise footprint). Sentinel can use
+          that level of detail; &ldquo;cloud migration&rdquo; alone leaves it guessing.
         </BodyP>
       </Section>
 
@@ -160,7 +159,7 @@ export function SourceIntakeSection() {
           </Step>
           <Step title="Click + New event">
             The intake card opens. Fill in the seven fields — use a real-world
-            sourcing situation you&rsquo;re thinking about, or copy the Meridian
+            sourcing situation you&rsquo;re thinking about, or copy the Heliara
             shape above.
           </Step>
           <Step title="Submit">

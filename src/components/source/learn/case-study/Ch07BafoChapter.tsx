@@ -24,13 +24,13 @@ export function Ch07BafoChapter() {
   return (
     <ChapterShell slug="bafo">
       <HeroBand color="navy">
-        <Eyebrow light>Meridian Case Study · Chapter 07 · Stage 07 BAFO</Eyebrow>
+        <Eyebrow light>Heliara Case Study · Chapter 07 · Stage 07 BAFO</Eyebrow>
         <SectionTitle light size="xl">Day 65. Vendor A drops; B wins.</SectionTitle>
         <Lead light>
           Twelve BAFO questions across three vendors. Vendor A refuses to
           remove the 7-year exclusivity clause and walks. Vendor D caps the
           escalator at 5% but won&rsquo;t go to 4%. Vendor B accepts the
-          scope correction, comes back at $9.4M committed, and wins on
+          scope correction, comes back at $21.6M committed, and wins on
           price + clean trap closure. The shape of the deal locks here.
         </Lead>
       </HeroBand>
@@ -105,7 +105,7 @@ export function Ch07BafoChapter() {
           title="Question A.3 · §7.4 exclusivity clause removal"
         >
           <p style={{ marginBottom: 8 }}>
-            <strong>Authority.</strong> The Meridian d01 strategic
+            <strong>Authority.</strong> The Heliara d01 strategic
             posture (issued with d09) explicitly maintains
             &ldquo;optionality on workload placement&rdquo; over the
             5-year term. The d09 question 5 (Egress + Exit) requires
@@ -139,22 +139,22 @@ export function Ch07BafoChapter() {
           title="Question B.1 · workload count correction"
         >
           <p style={{ marginBottom: 8 }}>
-            <strong>Authority.</strong> The Meridian d05 scope memo
-            (issued with d09 as Appendix B) names 280 in-scope production
+            <strong>Authority.</strong> The Heliara d05 scope memo
+            (issued with d09 as Appendix B) names 920 in-scope production
             workloads, with the per-tier breakdown in d04 (Appendix C).
           </p>
           <p style={{ marginBottom: 8 }}>
             <strong>Observation.</strong> Vendor B&rsquo;s d19a
-            workload-by-tier rollup sums to 203, which is 77 short of the
-            280 in-scope count. The deviation is consistent with a
+            workload-by-tier rollup sums to 760, which is 160 short of the
+            920 in-scope count. The deviation is consistent with a
             scope-read at the application layer that did not include
             in-house apps marked Tier-3 in d04.
           </p>
           <p style={{ marginBottom: 8 }}>
             <strong>Required response.</strong> Confirm pricing for the
-            full 280 workloads at the unit pricing already submitted.
-            Provide an updated d19a rollup that sums to 280. Indicate
-            whether the additional 77 workloads will be priced at the
+            full 920 workloads at the unit pricing already submitted.
+            Provide an updated d19a rollup that sums to 920. Indicate
+            whether the additional 160 workloads will be priced at the
             stated Tier-3 unit cost or at a different schedule.
           </p>
           <p style={{ marginBottom: 0 }}>
@@ -219,7 +219,7 @@ export function Ch07BafoChapter() {
           Janet asks Sentinel to draft the day-62 vendor letter to A.
           Sentinel produces a clean, factual paragraph: the BAFO
           response retained §7.4 unchanged; this clause is inconsistent
-          with Meridian&rsquo;s strategic posture; Vendor A is therefore
+          with Heliara&rsquo;s strategic posture; Vendor A is therefore
           withdrawn from further consideration; a formal close-out letter
           will follow in Stage 9. Janet sends. Vendor A&rsquo;s status
           flips to <em>withdrawn at BAFO</em>. The pool is now two.
@@ -250,7 +250,7 @@ export function Ch07BafoChapter() {
         <SubHead>Vendor B · scope correction + shaped pricing</SubHead>
         <BodyP>
           B&rsquo;s response on the workload count: confirmed pricing for
-          the full 280 workloads at the unit pricing already submitted.
+          the full 920 workloads at the unit pricing already submitted.
           They also volunteer a 4% blended discount on Tier-2 unit pricing
           conditional on a 5-year initial term commitment (no renewal
           lock-in). The discount is a sales move; Sentinel logs it but
@@ -258,7 +258,7 @@ export function Ch07BafoChapter() {
           trap.
         </BodyP>
         <BodyP>
-          B&rsquo;s revised year-1 commitment lands at <strong>$9.4M
+          B&rsquo;s revised year-1 commitment lands at <strong>$21.6M
           annual</strong>, down from their initial $11.0M. Five-year TCO
           at the protected-4% escalator: <strong>$50.9M</strong>.
         </BodyP>
@@ -288,15 +288,15 @@ export function Ch07BafoChapter() {
               <tr style={{ borderBottom: '1px solid #E5E7EB' }}>
                 <td style={{ padding: '6px 8px' }}>B</td>
                 <td style={{ padding: '6px 8px' }}>1 of 1 (P1 closed)</td>
-                <td style={{ padding: '6px 8px', fontWeight: 700 }}>$9.4M</td>
-                <td style={{ padding: '6px 8px', fontWeight: 700 }}>$50.9M</td>
+                <td style={{ padding: '6px 8px', fontWeight: 700 }}>$21.6M</td>
+                <td style={{ padding: '6px 8px', fontWeight: 700 }}>$118M</td>
                 <td style={{ padding: '6px 8px', color: T.teal, fontWeight: 700 }}>Close</td>
               </tr>
               <tr>
                 <td style={{ padding: '6px 8px' }}>D</td>
                 <td style={{ padding: '6px 8px' }}>0.5 of 1 (5% cap, not 4%)</td>
-                <td style={{ padding: '6px 8px' }}>$10.8M</td>
-                <td style={{ padding: '6px 8px' }}>$52.4M</td>
+                <td style={{ padding: '6px 8px' }}>$24.8M</td>
+                <td style={{ padding: '6px 8px' }}>$124M</td>
                 <td style={{ padding: '6px 8px' }}>Open · P1 residual</td>
               </tr>
             </tbody>
@@ -308,10 +308,10 @@ export function Ch07BafoChapter() {
         <Eyebrow>The decision is now obvious</Eyebrow>
         <SectionTitle>B wins on price, scope correction, and trap closure</SectionTitle>
         <Lead>
-          With A withdrawn and D at $52.4M with a residual escalator
-          deviation, Vendor B at $50.9M with all traps closed is the
+          With A withdrawn and D at $124M with a residual escalator
+          deviation, Vendor B at $118M with all traps closed is the
           clear choice. The combined d16 score updates to B 87, D 75.
-          Pricing differential is $1.5M over 5 years. Janet authors the
+          Pricing differential is $6M over 5 years. Janet authors the
           recommendation memo for d24.
         </Lead>
 
@@ -349,7 +349,7 @@ export function Ch07BafoChapter() {
               status: 'met',
             },
             {
-              text: 'Recommendation framed for d24 (Vendor B at $9.4M / yr committed)',
+              text: 'Recommendation framed for d24 (Vendor B at $21.6M / yr committed)',
               status: 'met',
             },
           ]}
@@ -369,7 +369,7 @@ export function Ch07BafoChapter() {
         </BodyP>
         <SubHead>The decision</SubHead>
         <BodyP>
-          Vendor A withdrawn. Vendor B selected at $9.4M annual committed
+          Vendor A withdrawn. Vendor B selected at $21.6M annual committed
           / $50.9M 5-year TCO. Vendor D second with a P1 residual on the
           escalator. Pricing differential between B and D is $1.5M over
           5 years; trap closure differential is binary (B clean, D not).

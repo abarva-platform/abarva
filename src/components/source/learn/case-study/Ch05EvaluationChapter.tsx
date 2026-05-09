@@ -23,7 +23,7 @@ export function Ch05EvaluationChapter() {
   return (
     <ChapterShell slug="evaluation">
       <HeroBand color="navy">
-        <Eyebrow light>Meridian Case Study · Chapter 05 · Stage 05 Evaluation</Eyebrow>
+        <Eyebrow light>Heliara Case Study · Chapter 05 · Stage 05 Evaluation</Eyebrow>
         <SectionTitle light size="xl">Day 42. Blind scoring. B leads.</SectionTitle>
         <Lead light>
           Three vendors, six criteria, four scorers, one rubric. Sentinel
@@ -55,7 +55,7 @@ export function Ch05EvaluationChapter() {
 
         <ArtifactSpecimen
           code="d16"
-          title="Scoring rubric · Meridian Health Cloud (issued with d09)"
+          title="Scoring rubric · Heliara Health Cloud (issued with d09)"
         >
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
             <thead>

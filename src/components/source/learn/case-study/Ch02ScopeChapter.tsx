@@ -23,8 +23,8 @@ export function Ch02ScopeChapter() {
   return (
     <ChapterShell slug="scope">
       <HeroBand color="navy">
-        <Eyebrow light>Meridian Case Study · Chapter 02 · Stage 02 Scope</Eyebrow>
-        <SectionTitle light size="xl">Day 4. The 280-workload boundary.</SectionTitle>
+        <Eyebrow light>Heliara Case Study · Chapter 02 · Stage 02 Scope</Eyebrow>
+        <SectionTitle light size="xl">Day 4. The 920-workload boundary.</SectionTitle>
         <Lead light>
           Karen Liu and Janet Fischer spend three working days enumerating
           what&rsquo;s in and what&rsquo;s out. The d05 scope memo is what
@@ -93,7 +93,7 @@ export function Ch02ScopeChapter() {
               <>
                 Walked the 33 disagreement rows with her ops leads. Promoted
                 12 to Tier-1, demoted 4 to Tier-3 with documented rationale,
-                left 17 unchanged. Decided that the 47 systems that actually
+                left 17 unchanged. Decided that the 68 systems that actually
                 belong in DR-IN are the ones with both Tier-1 + an SLA &gt;=
                 99.95%.
               </>
@@ -154,7 +154,7 @@ export function Ch02ScopeChapter() {
 
         <ArtifactSpecimen
           code="d05"
-          title="Scope memo · Meridian Health Cloud (excerpt)"
+          title="Scope memo · Heliara Health Cloud (excerpt)"
         >
           <p>
             <strong>In-scope systems (count: 280).</strong>
@@ -177,7 +177,7 @@ export function Ch02ScopeChapter() {
             <li>End-user device fleet · separate refresh cycle</li>
           </ul>
           <p>
-            <strong>DR boundary.</strong> 47 Tier-1 systems with SLA &gt;=
+            <strong>DR boundary.</strong> 68 Tier-1 systems with SLA &gt;=
             99.95% require active DR with RPO &lt;= 4 hours and RTO &lt;= 8
             hours. Full enumeration in d04.
           </p>
@@ -241,7 +241,7 @@ export function Ch02ScopeChapter() {
           integrations sets up the Chapter 10 slip. The mitigation
           would&rsquo;ve been to either enumerate the integrations directly
           in d05 or write the BAFO question in advance: <em>&ldquo;Confirm
-          your migration plan addresses the 47 Cloverleaf integrations
+          your migration plan addresses the 134 Cloverleaf integrations
           enumerated in Appendix C.&rdquo;</em> Future events should treat
           middleware integration count as a required scope-memo field.
         </PitfallBox>
@@ -260,7 +260,7 @@ export function Ch02ScopeChapter() {
         </BodyP>
         <SubHead>The decision</SubHead>
         <BodyP>
-          280 workloads in. 47 systems get DR. Tier-2 DR explicitly deferred.
+          920 workloads in. 68 systems get DR. Tier-2 DR explicitly deferred.
           Cloverleaf in as one system. Vendors will be asked to price these
           terms.
         </BodyP>
