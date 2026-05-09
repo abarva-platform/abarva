@@ -26,6 +26,10 @@ import {
   buildSentinelSourceBriefing,
   adaptSentinelBriefingToMultiAgent,
 } from './sentinel-source-orchestrator';
+import {
+  buildSourceAnswerEngine,
+  type SourceAnswerEngineOutput,
+} from './source-answer-engine';
 import type { SourceStageKey, SourcingEventDetail } from './types';
 import {
   getSourceWorkflowValidationReadableReport,
@@ -121,6 +125,7 @@ export interface SourceNexusApiStubResponse {
     selectedAttachmentIds: string[];
   };
   sourceIntelligence: SourceNexusSourceIntelligenceSummary | null;
+  sourceAnswer: SourceAnswerEngineOutput | null;
   sentinelBriefing: SentinelSourceBriefing | null;
   /** @deprecated Use sentinelBriefing. Reconstructed via adapter for back-compat; retire in next wave. */
   multiAgentBriefing: SourceMultiAgentBriefing | null;
@@ -233,9 +238,17 @@ export function createSourceNexusApiStubResponse(
   const suggestedActions = getSourceMultiAgentSuggestedActions(multiAgentBriefing);
   const answerStatus = deriveAnswerStatus(contextResult.bundle, contextValidationReport, workflowValidationReport, sentinelBriefing);
   const intakeGuidance = maybeBuildIntakeGuidance(prompt);
+  const sourceAnswer = intakeGuidance
+    ? null
+    : buildSourceAnswerEngine({
+        prompt,
+        contextBundle: contextResult.bundle,
+        userRole: input.userRole,
+        mode,
+      });
   const summary = intakeGuidance
     ? formatIntakeGuidanceSummary(intakeGuidance)
-    : sentinelBriefing.combinedSummary;
+    : sourceAnswer?.answerText ?? sentinelBriefing.combinedSummary;
 
   return {
     ok: answerStatus !== 'error',
@@ -258,16 +271,17 @@ export function createSourceNexusApiStubResponse(
       selectedAttachmentIds: [...contextResult.bundle.selectedAttachmentIds],
     },
     sourceIntelligence: summarizeSourceIntelligence(contextResult.bundle),
+    sourceAnswer,
     sentinelBriefing,
     multiAgentBriefing,
     nexusSummary: {
-      title: intakeGuidance ? 'Event intake facts required' : sentinelBriefing.primaryVoice.title,
-      summary: intakeGuidance?.opening ?? sentinelBriefing.primaryVoice.summary,
+      title: intakeGuidance ? 'Event intake facts required' : sourceAnswer?.title ?? sentinelBriefing.primaryVoice.title,
+      summary: intakeGuidance?.opening ?? sourceAnswer?.answerText ?? sentinelBriefing.primaryVoice.summary,
       primaryFinding: intakeGuidance
         ? 'The event can be opened once the minimum facts are captured.'
-        : sentinelBriefing.primaryVoice.primaryFinding,
-      recommendedNextAction: intakeGuidance?.nextStep ?? sentinelBriefing.primaryVoice.recommendedNextAction,
-      confidence: intakeGuidance ? 'medium' : sentinelBriefing.primaryVoice.confidence,
+        : sourceAnswer?.currentStateFindings[0] ?? sentinelBriefing.primaryVoice.primaryFinding,
+      recommendedNextAction: intakeGuidance?.nextStep ?? sourceAnswer?.recommendedNextAction ?? sentinelBriefing.primaryVoice.recommendedNextAction,
+      confidence: intakeGuidance ? 'medium' : sourceAnswer?.confidence ?? sentinelBriefing.primaryVoice.confidence,
     },
     suggestedActions,
     contextValidationSummary: summarizeContextValidation(contextValidationReport),
@@ -326,6 +340,7 @@ function createErrorResponse(args: {
       selectedAttachmentIds: [],
     },
     sourceIntelligence: null,
+    sourceAnswer: null,
     sentinelBriefing: null,
     multiAgentBriefing: null,
     nexusSummary: null,
