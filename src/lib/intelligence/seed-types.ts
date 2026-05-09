@@ -1,3 +1,12 @@
+import type {
+  CanonicalConfidenceLevel,
+  CanonicalEnterpriseArea,
+  CanonicalMaturityLevel,
+  CanonicalSourceBasis,
+  CanonicalStrategicMovePhase,
+  CanonicalValueLever,
+} from './canonical/industry-ai-pattern';
+
 export type PatternDomain =
   | 'meta'
   | 'sourcing'
@@ -283,6 +292,51 @@ export interface PatternSeed extends SourcingPatternExtensions {
   derivedFromPatternIds: string[];
   taggedContradictionIds: string[];
   body: string;
+  /** Optional canonical IndustryAIPattern enrichment consumed by the canonical preview/backfill path. */
+  canonical?: {
+    enterprise_area?: CanonicalEnterpriseArea;
+    function?: string;
+    process_area?: string;
+    use_case_category?: string;
+    strategic_move_phases?: CanonicalStrategicMovePhase[];
+    maturity_level?: CanonicalMaturityLevel;
+    confidence_level?: CanonicalConfidenceLevel;
+    executive_question_answered?: string;
+    target_personas?: string[];
+    business_problem?: string;
+    why_now?: string;
+    value_hypothesis?: string;
+    primary_kpis?: string[];
+    secondary_kpis?: string[];
+    baseline_needed?: string[];
+    measurement_method?: string;
+    value_levers?: CanonicalValueLever[];
+    time_to_value_band?: string;
+    implementation_complexity?: 'low' | 'medium' | 'high' | 'unknown';
+    required_data_domains?: string[];
+    data_quality_dependencies?: string[];
+    source_system_dependencies?: string[];
+    integration_dependencies?: string[];
+    vector_graph_semantic_dependencies?: string[];
+    agentic_architecture_pattern?: string;
+    human_agent_workflow_design?: string;
+    autonomous_agent_action_boundaries?: string[];
+    escalation_points?: string[];
+    responsible_ai_guardrails?: string[];
+    operating_model_changes?: string[];
+    change_management_needs?: string[];
+    recommended_workshops?: string[];
+    recommended_artifacts?: string[];
+    entry_criteria?: string[];
+    exit_criteria?: string[];
+    gate_evidence_required?: string[];
+    common_failure_modes?: string[];
+    anti_patterns?: string[];
+    intervention_options?: string[];
+    failure_mode_mitigations?: string[];
+    source_basis?: CanonicalSourceBasis;
+    confidence_rationale?: string;
+  };
   /** Defaults to 'knowledge' for back-compat with existing patterns. */
   kind?: PatternKind;
 }

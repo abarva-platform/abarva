@@ -1,6 +1,6 @@
 # Canonical Corpus Validation Report - 2026-05-09
 
-Generated at: `2026-05-09T20:37:31.043Z`
+Generated at: `2026-05-09T21:30:49.506Z`
 
 Input: `docs/knowledge-corpus/generated/canonical-corpus-backfill-preview.json`
 
@@ -8,47 +8,44 @@ Mode: report-only
 
 ## Summary
 
-- Patterns validated: 271
-- Error issues: 2297
-- Warning issues: 40
-- Patterns with errors: 260
-- Patterns with warnings: 40
-- DB/backfill status: DB credentials were available; pattern_packs and genome_patterns were included read-only.
+- Patterns validated: 243
+- Error issues: 1800
+- Warning issues: 0
+- Patterns with errors: 192
+- Patterns with warnings: 0
+- DB/backfill status: DB credentials were unavailable or query failed; DB-backed pattern rows were skipped.
 
 ## Phase Coverage
 
 | Strategic Move phase | Pattern count |
 | --- | --- |
-| originate | 0 |
-| charter | 23 |
-| diagnose_discover | 11 |
-| design | 25 |
-| roadmap_business_case_change_value_plan | 25 |
-| mobilize_handoff | 0 |
+| originate | 16 |
+| charter | 31 |
+| diagnose_discover | 37 |
+| design | 37 |
+| roadmap_business_case_change_value_plan | 36 |
+| mobilize_handoff | 28 |
 
 ## Source System Counts
 
 | Source system | Pattern count |
 | --- | --- |
 | generated_pattern_manifest | 17 |
-| genome_patterns | 40 |
-| pattern_packs | 28 |
-| pattern_seed | 186 |
+| pattern_seed | 226 |
 
 ## Issue Summary
 
 | Severity | Rule | Count |
 | --- | --- | --- |
-| error | failure_mitigations_required | 271 |
-| error | minimum_data_requirements | 271 |
-| error | minimum_kpis | 271 |
-| error | recommended_workshops_required | 271 |
-| error | provenance_required | 255 |
-| error | recommended_artifacts_required | 246 |
-| error | required_array | 246 |
-| error | required_identity | 246 |
-| error | failure_modes_required | 220 |
-| warning | unsupported_claim_flags_present | 40 |
+| error | failure_mitigations_required | 203 |
+| error | minimum_data_requirements | 203 |
+| error | minimum_kpis | 203 |
+| error | recommended_artifacts_required | 203 |
+| error | recommended_workshops_required | 203 |
+| error | required_array | 203 |
+| error | required_identity | 203 |
+| error | failure_modes_required | 192 |
+| error | provenance_required | 187 |
 
 ## Sample Issues
 

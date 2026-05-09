@@ -1,4 +1,5 @@
 import type { PatternSeed } from './seed-types';
+import { RETAIL_AI_PATTERNS } from './seed-patterns-retail-ai';
 
 const INDUSTRY_COMMON = {
   domain: 'industry_specific',
@@ -27,6 +28,7 @@ const INDUSTRY_COMMON = {
 >;
 
 export const INDUSTRY_PATTERNS: PatternSeed[] = [
+  ...RETAIL_AI_PATTERNS,
   {
     ...INDUSTRY_COMMON,
     id: 'PAT-IND-HC-001',
