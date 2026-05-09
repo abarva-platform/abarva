@@ -159,17 +159,6 @@ function buildTowerToday(): string {
   return resolveTowerToday();
 }
 
-/**
- * T-8 (Bind 4): resolve `?lens=<key>` to a valid TowerLens, defaulting to
- * 'value' for unknown / missing values. Mirrors resolveTowerTab pattern.
- */
-function resolveTowerLens(raw: string | undefined): TowerLens {
-  if (raw === 'value' || raw === 'risk' || raw === 'contract' || raw === 'adopt') {
-    return raw;
-  }
-  return 'value';
-}
-
 // T-2 (Tower Fix Package): reduced from 10 to 5 tabs. Dropped:
 // pressure, source_commercial, decisions, value_at_risk,
 // reasoning_activity (duplicates Portfolio / lives elsewhere).
@@ -565,9 +554,9 @@ export default async function TowerPage({
   const towerVendors = await buildTowerVendors(activeClientId);
   const towerSubstrateCounts = await buildTowerSubstrateCounts(towerInitiatives, towerVendors);
   const activeTab = resolveTowerTab(resolvedSearchParams.tab);
-  // T-8 (Bind 4): resolve the active lens server-side so the band/pressures
-  // view-models can re-rank per lens. Falls back to 'value' for unknown.
-  const activeLens: TowerLens = resolveTowerLens(resolvedSearchParams.lens);
+  // The dashboard band is fixed. Canvas controls can change the lower pane,
+  // but stale ?lens= URLs must not re-rank the executive metrics underneath.
+  const activeLens: TowerLens = 'value';
   const towerToday = buildTowerToday();
   const towerBandMetrics: TowerBandMetricsView = buildTowerBandMetrics(
     towerInitiatives,
