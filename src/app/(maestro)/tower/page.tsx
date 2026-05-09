@@ -51,13 +51,14 @@ export const metadata = { title: 'Control Tower · AbarVa' };
  * Registry for the active tenant so Tower CFO View can plot real names in
  * the Strategic Alignment 2×2 instead of invented placeholders.
  *
- * Fail-soft: any error (auth, DB, RLS) returns an empty array. The Tower UI
- * renders an explicit DB-empty state instead of substituting demo data.
+ * Fail-soft: any error (DB, RLS, missing active client) returns an empty
+ * array. The Tower UI renders an explicit DB-empty state instead of
+ * substituting demo data.
  */
-async function buildTowerInitiatives(): Promise<ReadonlyArray<AIInitiative>> {
+async function buildTowerInitiatives(clientId: string | null): Promise<ReadonlyArray<AIInitiative>> {
+  if (!clientId) return [];
   try {
-    const tenancy = await requireTenancy();
-    return await listInitiativesForClient(tenancy.clientId);
+    return await listInitiativesForClient(clientId);
   } catch {
     return [];
   }
@@ -70,10 +71,10 @@ async function buildTowerInitiatives(): Promise<ReadonlyArray<AIInitiative>> {
  * renders — the band tile shows "0 / none in 90d" with a "no substrate"
  * tooltip.
  */
-async function buildTowerVendors(): Promise<ReadonlyArray<AIInitiativeVendorRow>> {
+async function buildTowerVendors(clientId: string | null): Promise<ReadonlyArray<AIInitiativeVendorRow>> {
+  if (!clientId) return [];
   try {
-    const tenancy = await requireTenancy();
-    return await listVendorsForClient(tenancy.clientId);
+    return await listVendorsForClient(clientId);
   } catch {
     return [];
   }
@@ -247,7 +248,9 @@ async function buildTowerHandoffSourceEvents() {
   }
 }
 
-async function buildTowerSetupInitiativesFeed() {
+async function buildTowerSetupInitiativesFeed(
+  activeClient: Awaited<ReturnType<typeof getActiveClientRow>>,
+) {
   const empty = {
     tenantName: 'AbarVa Client',
     tenantKey: 'unknown',
@@ -259,16 +262,17 @@ async function buildTowerSetupInitiativesFeed() {
   };
 
   try {
-    const tenancy = await requireTenancy();
-    const activeClient = await getActiveClientRow();
-    if (!activeClient || activeClient.id !== tenancy.clientId) return empty;
+    if (!activeClient) return empty;
+    const tenancy = await requireTenancy().catch(() => null);
 
-    const [programPolicy, sourcePolicy] = await Promise.all([
-      loadUserProgramAccessPolicy(tenancy).catch(() => null),
-      loadUserSourceAccessPolicy(tenancy, {
-        activeClientKey: activeClient.key,
-      }).catch(() => null),
-    ]);
+    const [programPolicy, sourcePolicy] = tenancy && tenancy.clientId === activeClient.id
+      ? await Promise.all([
+          loadUserProgramAccessPolicy(tenancy).catch(() => null),
+          loadUserSourceAccessPolicy(tenancy, {
+            activeClientKey: activeClient.key,
+          }).catch(() => null),
+        ])
+      : [null, null];
     const financialVisibility = Boolean(
       programPolicy?.canViewFinancialData || sourcePolicy?.canViewFinancialData,
     );
@@ -474,20 +478,20 @@ function TowerSetupInitiativesPanel({
 export default async function TowerPage({
   searchParams,
 }: {
-  searchParams?: Promise<{ tab?: string; lens?: string }>;
+  searchParams?: Promise<{ tab?: string; lens?: string; client?: string }>;
 }) {
-  const towerHandoffPrograms = await buildTowerHandoffPrograms();
-  const towerHandoffSourceEvents = await buildTowerHandoffSourceEvents();
-  const towerSetupInitiativesFeed = await buildTowerSetupInitiativesFeed();
-  const towerInitiatives = await buildTowerInitiatives();
-  const towerVendors = await buildTowerVendors();
+  const resolvedSearchParams = searchParams ? await searchParams : {};
   // Active client id (when bound) — wires the AgentDock chat lane to
   // /api/v1/atlas/chat. Fail-soft: when no client row resolves we omit
   // clientId and the dock surfaces a soft "Atlas needs an active tenant"
   // message instead of crashing the page.
-  const activeClient = await getActiveClientRow().catch(() => null);
+  const activeClient = await getActiveClientRow(resolvedSearchParams.client).catch(() => null);
   const activeClientId = activeClient?.id ?? null;
-  const resolvedSearchParams = searchParams ? await searchParams : {};
+  const towerHandoffPrograms = await buildTowerHandoffPrograms();
+  const towerHandoffSourceEvents = await buildTowerHandoffSourceEvents();
+  const towerSetupInitiativesFeed = await buildTowerSetupInitiativesFeed(activeClient);
+  const towerInitiatives = await buildTowerInitiatives(activeClientId);
+  const towerVendors = await buildTowerVendors(activeClientId);
   const activeTab = resolveTowerTab(resolvedSearchParams.tab);
   // T-8 (Bind 4): resolve the active lens server-side so the band/pressures
   // view-models can re-rank per lens. Falls back to 'value' for unknown.

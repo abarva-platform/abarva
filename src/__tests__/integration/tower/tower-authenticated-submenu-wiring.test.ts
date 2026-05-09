@@ -17,6 +17,15 @@ describe('authenticated Tower submenu wiring', () => {
     expect(indexSource).toContain("activeTab = 'portfolio'");
   });
 
+  it('loads Tower substrate from the active client row, not person-tenancy side effects', () => {
+    expect(pageSource).toContain('getActiveClientRow(resolvedSearchParams.client)');
+    expect(pageSource).toContain('buildTowerInitiatives(activeClientId)');
+    expect(pageSource).toContain('buildTowerVendors(activeClientId)');
+    expect(pageSource).toContain('buildTowerSetupInitiativesFeed(activeClient)');
+    expect(pageSource).toContain('const tenancy = await requireTenancy().catch(() => null)');
+    expect(pageSource).not.toContain('const tenancy = await requireTenancy();\\n    return await listInitiativesForClient(tenancy.clientId);');
+  });
+
   it('renders non-portfolio submenu panels from tenant-bound DB substrate', () => {
     expect(indexSource).toContain('function TowerWorkspaceTabPanel');
     expect(indexSource).toContain("activeTab === 'portfolio' ? (");
