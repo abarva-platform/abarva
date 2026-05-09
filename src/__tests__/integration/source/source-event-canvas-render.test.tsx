@@ -16,6 +16,7 @@ import type {
   SourceEventEvidence,
   SourceEventGateCriterion,
 } from '@/lib/source/canvas-substrate';
+import type { SourceArtifactRegistryRecord } from '@/lib/source/artifact-registry/types';
 import type { SourcingEventSummary } from '@/lib/source/types';
 
 // Shell uses next/navigation + Clerk hooks; mock so SSR doesn't blow up.
@@ -134,11 +135,49 @@ function makeEvidence(
   };
 }
 
+function makeRegistryArtifact(
+  overrides: Partial<SourceArtifactRegistryRecord> = {},
+): SourceArtifactRegistryRecord {
+  return {
+    id: 'registry-doc-1',
+    tenantKey: 'apex-retail',
+    sourceEventId: 'evt-canvas-1',
+    sourceEventRowId: 'evt-canvas-1',
+    stageKey: 'rfp',
+    artifactFamily: 'rfp',
+    artifactKind: 'agent_generated_packet',
+    sourceOrigin: 'generated',
+    sourceFormat: 'markdown',
+    originalName: 'RFP_RFI_Package_generated_packet.md',
+    blobUri: 'apex-retail/evt-canvas-1/registry-doc-1/RFP_RFI_Package_generated_packet.md',
+    uploaderUserId: 'system',
+    mimeType: 'text/markdown',
+    sizeBytes: 7453,
+    sha256: 'hash',
+    parseStatus: 'pending',
+    embeddingStatus: 'pending',
+    graphStatus: 'pending',
+    classificationStatus: 'pending',
+    dataClassification: 'Confidential',
+    evidenceState: 'unparsed',
+    approvalState: 'draft',
+    version: 1,
+    supersedesArtifactVersionId: null,
+    createdBy: 'system',
+    validatedBy: null,
+    createdAt: '2026-05-07T20:00:00Z',
+    updatedAt: '2026-05-07T20:00:00Z',
+    deletedAt: null,
+    ...overrides,
+  };
+}
+
 function render(
   options: {
     artifactStates?: SourceEventArtifactState[];
     gateCriterionStates?: SourceEventGateCriterion[];
     evidenceStates?: SourceEventEvidence[];
+    registryArtifacts?: SourceArtifactRegistryRecord[];
     templateByCode?: Record<string, string | null>;
     viewStage?: SourceEventArtifactState['stage'];
   } = {},
@@ -150,6 +189,7 @@ function render(
       artifactStates: options.artifactStates ?? [makeArtifactState()],
       gateCriterionStates: options.gateCriterionStates ?? [makeCriterion()],
       evidenceStates: options.evidenceStates ?? [makeEvidence()],
+      registryArtifacts: options.registryArtifacts ?? [],
       templateByCode: options.templateByCode ?? {
         d05_scope_memo: '# Scope Memo\n\n§1 In scope ...',
       },
@@ -233,9 +273,22 @@ describe('UniversalCanvasShell · SSR render', () => {
     const html = render();
     expect(html).toContain('data-active-tab="document"');
     expect(html).toContain('source-canvas-document-tab');
+    expect(html).toContain('No DB-backed documents yet');
     expect(html).toContain('source-canvas-artifact-d05_scope_memo');
     expect(html).toContain('Scope Memo with Boundaries'); // canonical name
     expect(html).toContain('§1 In scope'); // template body content
+  });
+
+  it('renders persisted source_artifacts documents with browse links', () => {
+    const html = render({
+      registryArtifacts: [makeRegistryArtifact()],
+    });
+    expect(html).toContain('1 DB-backed document');
+    expect(html).toContain('source_artifacts');
+    expect(html).toContain('RFP_RFI_Package_generated_packet.md');
+    expect(html).toContain('RFP · parse pending · approval draft');
+    expect(html).toContain('source-canvas-registry-doc-registry-doc-1');
+    expect(html).toContain('/source/events/evt-canvas-1/artifacts/registry-doc-1');
   });
 
   it('renders splitter handle as a separator with role + aria', () => {

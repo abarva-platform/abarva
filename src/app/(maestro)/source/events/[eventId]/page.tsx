@@ -9,6 +9,7 @@ import {
   listGateCriterionStatesForEvent,
   loadArtifactTemplate,
 } from '@/lib/source/canvas-substrate';
+import { listSourceArtifactsForSourceEventId } from '@/lib/source/artifact-registry';
 import { SOURCE_ARTIFACT_SPECS } from '@/lib/source/canonical-specs';
 import { SOURCE_STAGE_ORDER, normalizeSourceStageKey } from '@/lib/source/constants';
 import type { SourceStageKey } from '@/lib/source/types';
@@ -49,6 +50,13 @@ export default async function SourceEventDetailPage({
     listGateCriterionStatesForEvent(event.id),
     listEvidenceStatesForEvent(event.id),
   ]);
+  const registryArtifacts = await listSourceArtifactsForSourceEventId(event.id).catch((error) => {
+    console.error(
+      '[SourceEventDetailPage] source_artifacts registry read failed',
+      error instanceof Error ? error.message : String(error),
+    );
+    return [];
+  });
 
   // Pre-load all template bodies — server-side only because the loader uses
   // fs. Pre-loading the full catalog keeps tab switching snappy without a
@@ -79,6 +87,7 @@ export default async function SourceEventDetailPage({
       artifactStates={artifactStates}
       gateCriterionStates={gateCriterionStates}
       evidenceStates={evidenceStates}
+      registryArtifacts={registryArtifacts}
       templateByCode={templateByCode}
       activityEntries={activityEntries}
       tenantName={tenantName}

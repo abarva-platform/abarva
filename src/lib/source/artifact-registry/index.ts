@@ -261,6 +261,22 @@ export async function listSourceArtifactsForEvent(
   return ((data as unknown as SourceArtifactRow[] | null) ?? []).map(rowToRecord);
 }
 
+export async function listSourceArtifactsForSourceEventId(
+  sourceEventId: string,
+): Promise<SourceArtifactRegistryRecord[]> {
+  if (!sourceEventId) throw new Error('[source-artifacts] sourceEventId is required');
+  const supabase = getServerSupabase();
+  const { data, error } = await supabase
+    .from('source_artifacts')
+    .select(SELECT_COLUMNS)
+    .or(`source_event_id.eq.${sourceEventId},source_event_row_id.eq.${sourceEventId}`)
+    .is('deleted_at', null)
+    .order('updated_at', { ascending: false });
+
+  if (error) throw error;
+  return ((data as unknown as SourceArtifactRow[] | null) ?? []).map(rowToRecord);
+}
+
 export async function listSourceArtifactsForStage(
   tenantKey: string,
   sourceEventId: string,
