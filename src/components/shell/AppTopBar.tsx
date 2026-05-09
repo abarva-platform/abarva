@@ -169,6 +169,33 @@ export function AppTopBar({ showProductNav = true }: AppTopBarProps = {}) {
       )}
 
       <div style={{ display: "flex", alignItems: "center", gap: 14, flexShrink: 0 }}>
+        {/* Right-aligned Product link · separate from the canonical
+            5-module nav · acts as a "see what AbarVa is" pitch link
+            outside the operational IA. key: "product" / label: "Product" /
+            href: "/product" / pathname === "/product" */}
+        {signedIn && (
+          <Link
+            href="/product"
+            data-nav-key="product"
+            aria-current={pathname === "/product" || pathname.startsWith("/product/") ? "page" : undefined}
+            style={{
+              fontFamily: "Inter, system-ui, sans-serif",
+              fontSize: 13,
+              fontWeight: 600,
+              letterSpacing: "0.01em",
+              color: pathname === "/product" || pathname.startsWith("/product/") ? "white" : BRAND.textStrong,
+              textDecoration: "none",
+              padding: "7px 14px",
+              borderRadius: 999,
+              border: `1px solid rgba(255,255,255,0.20)`,
+              background: pathname === "/product" || pathname.startsWith("/product/") ? "rgba(255,255,255,0.08)" : "transparent",
+              whiteSpace: "nowrap",
+              marginRight: 4,
+            }}
+          >
+            Product
+          </Link>
+        )}
         {signedIn ? (
           <>
             <div

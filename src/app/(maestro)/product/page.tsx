@@ -1,7 +1,7 @@
 import { currentUser } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import { AppShell } from "@/components/shell/AppShell";
-import { ProductPage } from "@/components/product/ProductPage";
+import { ProductMarketingPage } from "@/components/product/ProductMarketingPage";
 
 export const metadata = { title: "Product - AbarVa" };
 export const dynamic = "force-dynamic";
@@ -16,7 +16,7 @@ export default async function ProductRoutePage() {
       topBarProps={{ context: "Product" }}
       agentName="Atlas coach"
     >
-      <ProductPage />
+      <ProductMarketingPage />
     </AppShell>
   );
 }
