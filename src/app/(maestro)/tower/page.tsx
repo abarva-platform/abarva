@@ -54,7 +54,12 @@ import {
 } from '@/lib/tower/atlas-observations-view';
 import { resolveTowerToday } from '@/lib/tower/today-resolution';
 import { buildStrategicAlignment2x2View } from '@/lib/tower/strategic-alignment-2x2-view';
-import { buildAtlasInterpretation } from '@/lib/tower/atlas-interpretation-view';
+import {
+  buildAtlasInterpretation,
+  type AtlasReasoningInput,
+} from '@/lib/tower/atlas-interpretation-view';
+import { buildTowerRightRailReasoningTrace } from '@/lib/tower/atlas-reasoning-trace';
+import { appendAtlasReasoningTrace } from '@/lib/atlas/repository';
 
 export const metadata = { title: 'Control Tower · AbarVa' };
 
@@ -548,7 +553,7 @@ export default async function TowerPage({
     towerToday,
   );
   const towerAlignment2x2 = buildStrategicAlignment2x2View(towerInitiatives);
-  const towerAtlasInterpretation = buildAtlasInterpretation({
+  const atlasReasoningInput: AtlasReasoningInput = {
     tenant: { name: towerSetupInitiativesFeed.tenantName, clientId: activeClientId },
     todayIso: towerToday,
     lens: activeLens,
@@ -557,11 +562,27 @@ export default async function TowerPage({
     alignment2x2View: towerAlignment2x2,
     initiatives: towerInitiatives,
     vendors: towerVendors,
-  });
+  };
+  const towerAtlasInterpretation = buildAtlasInterpretation(atlasReasoningInput);
   const towerAtlasObservations: AtlasObservationsView =
     towerAtlasInterpretation.interpretationConfidence === 'low'
       ? deterministicAtlasObservations
       : towerAtlasInterpretation;
+  if (activeClientId) {
+    const traceTenancy = await requireTenancy().catch(() => null);
+    await appendAtlasReasoningTrace(
+      buildTowerRightRailReasoningTrace({
+        ctx: {
+          clientId: activeClientId,
+          userId: traceTenancy?.userId ?? null,
+        },
+        reasoningInput: atlasReasoningInput,
+        interpretation: towerAtlasInterpretation,
+        fallbackUsed: towerAtlasInterpretation.interpretationConfidence === 'low',
+        fallbackReason: towerAtlasInterpretation.interpretationConfidence === 'low' ? 'low_confidence' : null,
+      }),
+    ).catch(() => null);
+  }
   const seedTenant =
     findTenantByRouteSlug(towerSetupInitiativesFeed.tenantKey) ??
     findTenantByRouteSlug('apexretail');

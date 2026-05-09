@@ -3,6 +3,7 @@ import { runAtlasLlm } from '@/lib/atlas/llm';
 import { buildAtlasSystemPrompt, ATLAS_PROMPT_VERSION } from '@/lib/atlas/prompt';
 import {
   appendAtlasTrace,
+  appendAtlasReasoningTrace,
   createAtlasObservation,
   getOrCreateAtlasThread,
   touchAtlasThread,
@@ -11,6 +12,10 @@ import { makeScriptedChatResponse, runScriptedAtlasIntent } from '@/lib/atlas/sc
 import { listInitiativesForClient, listVendorsForClient } from '@/lib/admin/ai-initiatives/queries';
 import { buildTowerBandMetrics, type TowerLens } from '@/lib/tower/band-metrics-view';
 import { buildMetricExplanation, renderMetricExplanationForAtlas } from '@/lib/tower/metric-explanation-view';
+import {
+  ATLAS_REASONING_MODEL,
+  ATLAS_TRAINING_PACKAGE_VERSION,
+} from '@/lib/tower/atlas-reasoning-trace';
 import { resolveTowerToday } from '@/lib/tower/today-resolution';
 import type {
   AtlasChatResponse,
@@ -28,6 +33,8 @@ const METRIC_KEYS = new Set([
   'renewals_90d',
   'adoption_rate',
 ]);
+
+const PRESSURE_FLAGS = new Set(['cost_overrun', 'value_lag', 'stalled', 'duplication_risk', 'adoption_gap']);
 
 function guessObservationKind(intent: AtlasChatResponse['intent']): AtlasObservation['observationKind'] {
   if (intent === 'morning_summary' || intent === 'portfolio_status') return 'summary';
@@ -47,6 +54,22 @@ function extractSeverity(text: string): AtlasObservation['severity'] {
 function resolveLens(value: unknown): TowerLens {
   if (value === 'risk' || value === 'contract' || value === 'adopt') return value;
   return 'value';
+}
+
+function confidenceFloorFromBand(
+  bandMetrics: ReturnType<typeof buildTowerBandMetrics>,
+): 'high' | 'med' | 'low' | 'none' {
+  const values = bandMetrics.metrics.map((metric) => metric.confidence);
+  if (values.includes('low')) return 'low';
+  if (values.includes('med')) return 'med';
+  if (values.includes('none')) return 'none';
+  return 'high';
+}
+
+function lowerConfidence(value: 'HIGH' | 'MED' | 'LOW'): 'high' | 'med' | 'low' {
+  if (value === 'HIGH') return 'high';
+  if (value === 'MED') return 'med';
+  return 'low';
 }
 
 function readMetricExplanationRequest(
@@ -98,6 +121,41 @@ async function runMetricExplanationTurn(input: {
     vendors,
     bandMetrics,
   });
+  await appendAtlasReasoningTrace({
+    threadId: input.threadId,
+    tenantId: input.ctx.clientId,
+    userId: input.ctx.userId,
+    trigger: 'metric_explanation',
+    inputSummary: {
+      initiativesCount: initiatives.length,
+      vendorsCount: vendors.length,
+      pressuresCount: initiatives.filter((initiative) => PRESSURE_FLAGS.has(initiative.statusFlag)).length,
+      bandConfidenceFloor: confidenceFloorFromBand(bandMetrics),
+      lens,
+      todayIso,
+      metricKey: explanation.metricKey,
+    },
+    patternsFired: [],
+    patternsSkipped: [],
+    observations: [
+      {
+        number: 1,
+        topic: explanation.metricKey,
+        body: explanation.headline,
+        confidenceFloor: explanation.confidenceFloor.level,
+        citationsCount: explanation.citations.length,
+        actionsCount: explanation.levers.length,
+      },
+    ],
+    ifYouOnlyDoOneToday: explanation.levers[0]?.action ?? null,
+    citations: explanation.citations,
+    interpretationConfidence: lowerConfidence(explanation.confidenceFloor.level),
+    fallbackUsed: false,
+    fallbackReason: null,
+    model: ATLAS_REASONING_MODEL,
+    promptVersion: ATLAS_PROMPT_VERSION,
+    packageVersion: ATLAS_TRAINING_PACKAGE_VERSION,
+  }).catch(() => null);
 
   return {
     toolResults: { metricExplanation: explanation },

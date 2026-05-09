@@ -21,6 +21,21 @@ const ALLOWED_FIELD_PREFIXES = [
   'tower_view.',
 ];
 
+export function validateAtlasCitationList(
+  citations: ReadonlyArray<AtlasCitation>,
+): ReadonlyArray<string> {
+  const errors: string[] = [];
+  citations.forEach((citation, index) => {
+    if (!ALLOWED_FIELD_PREFIXES.some((prefix) => citation.field.startsWith(prefix))) {
+      errors.push(`citation${index + 1}: unknown citation field ${citation.field}`);
+    }
+    if (citation.value === '') {
+      errors.push(`citation${index + 1}: empty citation value for ${citation.field}`);
+    }
+  });
+  return errors;
+}
+
 const NUMBER_PATTERN = /(?<![A-Za-z-])(?:\$)?\d+(?:\.\d+)?(?:%|M|K|d| days?)?/g;
 
 function compactNumberVariants(value: string | number): ReadonlyArray<string> {
