@@ -247,33 +247,34 @@ export function IntelligenceV3Page({
 
 function ApexReadinessStrip({ status }: { status: RetailIntelligenceStatus }) {
   const items = [
-    { label: 'Supabase Genome live', value: status.runtime },
+    { label: 'Apex intelligence', value: 'Live' },
     { label: 'Retail patterns', value: status.patterns.toString() },
-    { label: 'Summarized sources', value: `${status.summarizedSources}/${status.sources}` },
-    { label: 'Apex use cases', value: status.useCases.toString() },
-    { label: 'Open contradictions', value: status.contradictions.toString() },
-    { label: 'Graph edges', value: status.graphEdges.toString() },
-    { label: 'Neo4j', value: 'not required' },
+    { label: 'Sources summarized', value: `${status.summarizedSources}/${status.sources}` },
+    { label: 'Use cases', value: status.useCases.toString() },
+    { label: 'Open tensions', value: status.contradictions.toString() },
   ];
 
   return (
     <div
       role="status"
       style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
-        gap: 1,
-        background: COLORS.border,
+        display: 'flex',
+        alignItems: 'center',
+        gap: SPACING.lg,
+        overflowX: 'auto',
+        background: COLORS.surface2,
         borderBottom: `1px solid ${COLORS.border}`,
+        padding: `${SPACING.sm}px clamp(${SPACING.lg}px, 4vw, ${SPACING.xxxl}px)`,
       }}
     >
       {items.map((item) => (
         <div
           key={item.label}
           style={{
-            background: COLORS.surface2,
-            padding: `${SPACING.xs}px ${SPACING.md}px`,
-            minWidth: 0,
+            display: 'inline-flex',
+            alignItems: 'baseline',
+            gap: SPACING.xs,
+            flex: '0 0 auto',
           }}
         >
           <div
@@ -285,13 +286,11 @@ function ApexReadinessStrip({ status }: { status: RetailIntelligenceStatus }) {
               textTransform: 'uppercase',
               color: COLORS.muted,
               whiteSpace: 'nowrap',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
             }}
           >
             {item.label}
           </div>
-          <div style={{ fontFamily: FONT.body, fontSize: 13, fontWeight: 700, color: COLORS.ink }}>
+          <div style={{ fontFamily: FONT.body, fontSize: 13, fontWeight: 700, color: COLORS.ink, whiteSpace: 'nowrap' }}>
             {item.value}
           </div>
         </div>
