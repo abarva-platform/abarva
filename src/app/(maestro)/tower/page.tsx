@@ -53,6 +53,8 @@ import {
   type AtlasObservationsView,
 } from '@/lib/tower/atlas-observations-view';
 import { resolveTowerToday } from '@/lib/tower/today-resolution';
+import { buildStrategicAlignment2x2View } from '@/lib/tower/strategic-alignment-2x2-view';
+import { buildAtlasInterpretation } from '@/lib/tower/atlas-interpretation-view';
 
 export const metadata = { title: 'Control Tower · AbarVa' };
 
@@ -539,12 +541,27 @@ export default async function TowerPage({
     towerToday,
     activeLens,
   );
-  const towerAtlasObservations: AtlasObservationsView = buildTowerAtlasObservationsView(
+  const deterministicAtlasObservations: AtlasObservationsView = buildTowerAtlasObservationsView(
     towerInitiatives,
     towerVendors,
     towerPressures,
     towerToday,
   );
+  const towerAlignment2x2 = buildStrategicAlignment2x2View(towerInitiatives);
+  const towerAtlasInterpretation = buildAtlasInterpretation({
+    tenant: { name: towerSetupInitiativesFeed.tenantName, clientId: activeClientId },
+    todayIso: towerToday,
+    lens: activeLens,
+    bandMetrics: towerBandMetrics,
+    pressuresView: towerPressures,
+    alignment2x2View: towerAlignment2x2,
+    initiatives: towerInitiatives,
+    vendors: towerVendors,
+  });
+  const towerAtlasObservations: AtlasObservationsView =
+    towerAtlasInterpretation.interpretationConfidence === 'low'
+      ? deterministicAtlasObservations
+      : towerAtlasInterpretation;
   const seedTenant =
     findTenantByRouteSlug(towerSetupInitiativesFeed.tenantKey) ??
     findTenantByRouteSlug('apexretail');

@@ -12,6 +12,7 @@
     "test:behaviors": "jest src/__tests__/behaviors",
     "test:integration": "jest src/__tests__/integration",
     "test:integration:nexus": "jest src/__tests__/integration/nexus",
+    "test:atlas-eval": "TS_NODE_BASEURL=. TS_NODE_COMPILER_OPTIONS='{\"module\":\"commonjs\"}' ts-node -r tsconfig-paths/register src/__tests__/atlas-eval/run-eval.ts",
     "test:e2e": "playwright test",
     "test:e2e:intelligence": "playwright test tests/e2e/intelligence-*.spec.ts",
     "test:e2e:phase-0": "playwright test tests/e2e/programs-phase-0.spec.ts",
