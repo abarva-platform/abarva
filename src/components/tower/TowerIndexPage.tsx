@@ -631,6 +631,48 @@ function workspaceTitle(activeTab: TowerTabKey): string {
 
 type DetailHrefBuilder = (displayId: string | null | undefined, pressureId?: string | null) => string | undefined;
 
+function defaultPortfolioCanvasView(lens: TowerLens): PortfolioCanvasView {
+  return lens === 'value' ? 'alignment' : 'pressures';
+}
+
+function portfolioPressureCardsForLens(
+  cards: ReadonlyArray<PressureCardView>,
+  lens: TowerLens,
+): ReadonlyArray<PressureCardView> {
+  if (lens === 'contract') return cards.filter((card) => card.type === 'vend');
+  if (lens === 'adopt') return cards.filter((card) => card.type === 'adopt');
+  if (lens === 'risk') return cards.filter((card) => card.type === 'cost' || card.type === 'dupl' || card.type === 'value');
+  return cards;
+}
+
+function portfolioPressureNarrative(lens: TowerLens, count: number): { eyebrow: string; headline: string; body: string } {
+  if (lens === 'contract') {
+    return {
+      eyebrow: `Renewal clocks · ${count} inside the decision window`,
+      headline: count === 1
+        ? '1 renewal decision needs a CFO posture.'
+        : `${count} renewal decisions need a CFO posture.`,
+      body: 'Only vendor-clock cards are shown here. This lens is for negotiation timing, renewal exposure, and Source follow-through.',
+    };
+  }
+  if (lens === 'adopt') {
+    return {
+      eyebrow: `Adoption blockers · ${count} active`,
+      headline: count === 1
+        ? '1 adoption blocker needs an enablement posture.'
+        : `${count} adoption blockers need an enablement posture.`,
+      body: 'Only adoption-gap cards are shown here. This lens is for usage, workflow change, training, and operating-model conversion.',
+    };
+  }
+  return {
+    eyebrow: `Risk pressures · ${count} active`,
+    headline: count === 1
+      ? '1 risk pressure needs owner intervention.'
+      : `${count} risk pressures need owner intervention.`,
+    body: 'Cost, duplication, and value-lag cards are shown here. Renewal clocks move to the Contract lens so this read stays clean.',
+  };
+}
+
 function findInitiativeDetail(
   initiatives: ReadonlyArray<AIInitiative>,
   rawId: string | null,
@@ -1075,21 +1117,21 @@ function PortfolioDrillContext({
   const copy =
     activeView === 'alignment'
       ? {
-          eyebrow: 'Dashboard drill-down · Portfolio ROI',
-          body: 'ROI opens the strategic 2x2. Risk, contract, adoption, and active pressure tiles return to the pressure list with that lens applied.',
-          primary: "Today's pressures",
-          primaryHref: hrefFor({ lens: activeLens, view: 'pressures', detail: null, pressure: null }),
+          eyebrow: 'Value lens · strategic alignment',
+          body: 'Value owns the portfolio 2x2: measured ROI on the x-axis, strategic alignment on the y-axis.',
+          primary: 'Evidence map',
+          primaryHref: hrefFor({ lens: activeLens, view: 'evidence', detail: null, pressure: null }),
         }
       : activeView === 'evidence'
         ? {
             eyebrow: 'Data evidence · Source map',
             body: 'This view explains the loaded source feeds, refresh cadence, and which Tower slices each dataset supports.',
-            primary: "Today's pressures",
-            primaryHref: hrefFor({ lens: activeLens, view: 'pressures', detail: null, pressure: null }),
+            primary: activeLens === 'value' ? 'Value lens' : `${lensLabel(activeLens)} lens`,
+            primaryHref: hrefFor({ lens: activeLens, view: defaultPortfolioCanvasView(activeLens), detail: null, pressure: null }),
           }
         : {
-            eyebrow: `Dashboard drill-down · ${activeLens === 'risk' ? 'Risk' : activeLens === 'contract' ? 'Contract' : activeLens === 'adopt' ? 'Adoption' : 'Active pressures'}`,
-            body: 'The KPI band is the navigation: open a tile to change the canvas, then double-click or open any row for the same-page detail.',
+            eyebrow: `${lensLabel(activeLens)} lens · focused pressure list`,
+            body: 'The lens toggle controls this canvas. Open any pressure row for same-page detail; KPI tiles above are read-only evidence.',
             primary: 'Evidence map',
             primaryHref: hrefFor({ lens: activeLens, view: 'evidence', detail: null, pressure: null }),
           };
@@ -1831,12 +1873,16 @@ export function TowerIndexPage({
   const searchParams = useSearchParams();
   const router = useRouter();
   const towerCanvasRef = useRef<HTMLDivElement>(null);
-  const activeLens = (searchParams?.get('lens') ?? 'value') as TowerLens;
+  const rawLens = searchParams?.get('lens');
+  const activeLens: TowerLens =
+    rawLens === 'risk' || rawLens === 'contract' || rawLens === 'adopt' ? rawLens : 'value';
   const rawCanvasView = searchParams?.get('view');
   const activeCanvasView: PortfolioCanvasView =
-    rawCanvasView === 'alignment' || rawCanvasView === 'evidence' ? rawCanvasView : 'pressures';
+    rawCanvasView === 'evidence' ? 'evidence' : defaultPortfolioCanvasView(activeLens);
   const activeDetailId = searchParams?.get('detail') ?? null;
   const activePressureId = searchParams?.get('pressure') ?? null;
+  const visiblePressureCards = portfolioPressureCardsForLens(pressuresView?.cards ?? [], activeLens);
+  const visiblePressureNarrative = portfolioPressureNarrative(activeLens, visiblePressureCards.length);
   const detailInitiative = findInitiativeDetail(initiatives ?? [], activeDetailId);
   const detailPressure =
     activePressureId && pressuresView
@@ -1849,8 +1895,9 @@ export function TowerIndexPage({
       if (activeTab !== 'portfolio') params.set('tab', activeTab);
       const lens = next.lens ?? activeLens;
       if (lens !== 'value') params.set('lens', lens);
-      const view = next.view ?? activeCanvasView;
-      if (activeTab === 'portfolio' && view !== 'pressures') params.set('view', view);
+      const defaultView = defaultPortfolioCanvasView(lens);
+      const view = next.view ?? defaultView;
+      if (activeTab === 'portfolio' && view !== defaultView) params.set('view', view);
       const detail = next.detail === undefined ? activeDetailId : next.detail;
       if (detail) params.set('detail', detail);
       const pressure = next.pressure === undefined ? activePressureId : next.pressure;
@@ -1858,7 +1905,7 @@ export function TowerIndexPage({
       const query = params.toString();
       return query ? `/tower?${query}` : '/tower';
     },
-    [activeCanvasView, activeDetailId, activeLens, activePressureId, activeTab],
+    [activeDetailId, activeLens, activePressureId, activeTab],
   );
 
   const detailHrefFor = useCallback<DetailHrefBuilder>(
@@ -1887,29 +1934,6 @@ export function TowerIndexPage({
     { key: 'contract', label: 'Contract' },
     { key: 'adopt', label: 'Adoption' },
   ];
-
-  const handleMetricDrill = useCallback(
-    (metricKey: MetricProvenanceKey) => {
-      if (metricKey === 'portfolio_roi') {
-        router.push(buildTowerHref({ lens: 'value', view: 'alignment', detail: null, pressure: null }), { scroll: false });
-        return;
-      }
-      if (metricKey === 'spend_at_risk') {
-        router.push(buildTowerHref({ lens: 'risk', view: 'pressures', detail: null, pressure: null }), { scroll: false });
-        return;
-      }
-      if (metricKey === 'renewals_90d') {
-        router.push(buildTowerHref({ lens: 'contract', view: 'pressures', detail: null, pressure: null }), { scroll: false });
-        return;
-      }
-      if (metricKey === 'adoption_rate') {
-        router.push(buildTowerHref({ lens: 'adopt', view: 'pressures', detail: null, pressure: null }), { scroll: false });
-        return;
-      }
-      router.push(buildTowerHref({ view: 'pressures', detail: null, pressure: null }), { scroll: false });
-    },
-    [buildTowerHref, router],
-  );
 
   // Date is resolved at runtime so Tower stays aligned with the live pilot week.
   const today = new Date();
@@ -2145,7 +2169,15 @@ export function TowerIndexPage({
                 return (
                   <button
                     key={tab.key}
-                    onClick={() => router.push(buildTowerHref({ lens: tab.key }), { scroll: false })}
+                    onClick={() => router.push(
+                      buildTowerHref({
+                        lens: tab.key,
+                        view: defaultPortfolioCanvasView(tab.key),
+                        detail: null,
+                        pressure: null,
+                      }),
+                      { scroll: false },
+                    )}
                     style={{
                       fontFamily: T.MONO,
                       fontSize: 9.5,
@@ -2215,14 +2247,6 @@ export function TowerIndexPage({
                     hero={m.hero}
                     isFirst={i === 0}
                     onAskAtlas={handleMetricAsk}
-                    active={
-                      (m.key === 'portfolio_roi' && activeCanvasView === 'alignment' && activeLens === 'value') ||
-                      (m.key === 'active_pressures' && activeCanvasView === 'pressures' && activeLens === 'value') ||
-                      (m.key === 'spend_at_risk' && activeCanvasView === 'pressures' && activeLens === 'risk') ||
-                      (m.key === 'renewals_90d' && activeCanvasView === 'pressures' && activeLens === 'contract') ||
-                      (m.key === 'adoption_rate' && activeCanvasView === 'pressures' && activeLens === 'adopt')
-                    }
-                    onDrill={handleMetricDrill}
                   />
                 ))}
               </>
@@ -2254,7 +2278,7 @@ export function TowerIndexPage({
               }}
             >
               {useSubstratePressures && pressuresView
-                ? `Today's pressures · ${pressuresView.totalActive} active · ${pressuresView.demandingDecisions} demanding decisions`
+                ? visiblePressureNarrative.eyebrow
                 : "Today's pressures · DB substrate required"}
             </div>
             <h2
@@ -2270,7 +2294,7 @@ export function TowerIndexPage({
               }}
             >
               {useSubstratePressures && pressuresView
-                ? pressuresView.sectionHeadline
+                ? visiblePressureNarrative.headline
                 : 'Tower needs tenant-bound data before it can rank portfolio pressures.'}
             </h2>
             <p
@@ -2282,14 +2306,14 @@ export function TowerIndexPage({
                 lineHeight: 1.55,
               }}
             >
-              In order of decision-pressure, not magnitude. Atlas has prepared one-page synthesis for each — open any to see the underlying programs, evidence, and recommended Move.
+              {visiblePressureNarrative.body}
             </p>
           </div>
 
           {/* Pressures list — T-6: substrate-bound only. */}
           <div style={{ padding: '0 32px 24px', display: 'flex', flexDirection: 'column' }}>
-            {useSubstratePressures && pressuresView && pressuresView.cards.length > 0 ? (
-              pressuresView.cards.map((card) => (
+            {useSubstratePressures && pressuresView && visiblePressureCards.length > 0 ? (
+              visiblePressureCards.map((card) => (
                 <SubstratePressure
                   key={card.key}
                   card={card}
@@ -2299,8 +2323,8 @@ export function TowerIndexPage({
             ) : (
               <TowerEmptyState
                 eyebrow="No pressure cards"
-                title="No tenant pressure signals were derived from the DB."
-                body={pressuresView?.emptyHint ?? 'Tower will stay empty until the active client has initiative and vendor substrate.'}
+                title={`No ${lensLabel(activeLens).toLowerCase()} pressure cards are loaded for this tenant.`}
+                body={pressuresView?.emptyHint ?? 'The data is present, but this lens has no matching pressure rows. Switch lenses or load additional source rows.'}
               />
             )}
           </div>
@@ -2313,8 +2337,8 @@ export function TowerIndexPage({
             <div
               style={{
                 display: 'grid',
-                gridTemplateColumns: 'minmax(260px, 0.36fr) minmax(560px, 0.64fr)',
-                gap: 24,
+                gridTemplateColumns: '280px minmax(0, 1fr)',
+                gap: 18,
                 alignItems: 'start',
               }}
             >
@@ -2365,8 +2389,7 @@ export function TowerIndexPage({
                   gridTemplateRows: 'minmax(154px, auto) minmax(154px, auto) 36px',
                   gap: 0,
                   width: '100%',
-                  maxWidth: 760,
-                  justifySelf: 'end',
+                  justifySelf: 'stretch',
                 }}
               >
               {/* Y axis */}
