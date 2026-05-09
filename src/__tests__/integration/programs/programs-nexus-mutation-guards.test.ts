@@ -13,6 +13,8 @@ const getProgramById = jest.fn();
 
 const getActiveClientRow = jest.fn();
 const runProgramsNexusTurn = jest.fn();
+const buildProgramsNexusCanonicalPatternQuery = jest.fn();
+const searchCanonicalPatternIndex = jest.fn();
 const assembleContext = jest.fn();
 const describePendingComposerCall = jest.fn();
 const createThread = jest.fn();
@@ -45,6 +47,11 @@ jest.mock('@/lib/active-client', () => ({
 
 jest.mock('@/lib/programs/nexus-free-text', () => ({
   runProgramsNexusTurn,
+  buildProgramsNexusCanonicalPatternQuery,
+}));
+
+jest.mock('@/lib/intelligence/canonical/runtime-pattern-index', () => ({
+  searchCanonicalPatternIndex,
 }));
 
 jest.mock('@/lib/programs/nexus', () => ({
@@ -116,6 +123,22 @@ beforeEach(() => {
     industry_code: 'HC',
   });
   createThread.mockResolvedValue({ id: 'thread_1' });
+  buildProgramsNexusCanonicalPatternQuery.mockReturnValue({
+    tenant_key: 'meridian',
+    client_id: CTX.clientId,
+    industry: 'healthcare',
+    query: 'How do we modernize analytics?',
+    limit: 3,
+  });
+  searchCanonicalPatternIndex.mockResolvedValue({
+    source: 'persisted_canonical_corpus',
+    status: 'no_match',
+    patterns: [],
+    total: 0,
+    warnings: [],
+    filters_applied: {},
+    cache: { mode: 'disabled', key: null, ttl_ms: 60000 },
+  });
   assembleContext.mockResolvedValue({
     programId: OWN_PROGRAM,
     program: { name: 'Move 1', archetype: 'healthcare', currentPhase: 1 },
@@ -133,6 +156,16 @@ beforeEach(() => {
     confidence: 0.82,
     sparseEvidence: false,
     activePatternSlug: null,
+    patternEvidence: {
+      source: 'persisted_canonical_corpus',
+      status: 'no_match',
+      retrievedCount: 0,
+      warnings: [],
+      noMatch: true,
+      missingEvidence: false,
+      query: {},
+      patterns: [],
+    },
   });
   touchThread.mockResolvedValue(undefined);
   describePendingComposerCall.mockReturnValue({

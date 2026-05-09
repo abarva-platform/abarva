@@ -9,11 +9,15 @@
 
 import { NextRequest } from 'next/server';
 import { getActiveClientRow } from '@/lib/active-client';
-import { runProgramsNexusTurn } from '@/lib/programs/nexus-free-text';
+import {
+  buildProgramsNexusCanonicalPatternQuery,
+  runProgramsNexusTurn,
+} from '@/lib/programs/nexus-free-text';
 import { assembleContext, createThread, touchThread } from '@/lib/programs/nexus';
 import { requireTenancy, TenancyError } from '../../../_auth';
 import { getProgramById } from '@/lib/programs/queries';
 import { getProgramsRouteSupabase } from '@/lib/programs/programs-auth-mode-server';
+import { searchCanonicalPatternIndex } from '@/lib/intelligence/canonical/runtime-pattern-index';
 import type { SupabaseClient } from '@supabase/supabase-js';
 
 export const runtime = 'nodejs';
@@ -139,15 +143,26 @@ export async function POST(
           hasPatternAnchor: Boolean(context.patternPreload?.topic_key),
         });
 
+        const nexusCtx = {
+          clientKey: activeClient.key,
+          clientName: activeClient.name,
+          industryCode: activeClient.industry_code,
+          userId: ctx.userId,
+        };
+        const canonicalPatternIndex = await searchCanonicalPatternIndex(
+          buildProgramsNexusCanonicalPatternQuery({
+            ctx: nexusCtx,
+            message: userQuery,
+            context,
+            clientId: activeClient.id ?? ctx.clientId,
+          }),
+        );
+
         const result = await runProgramsNexusTurn({
-          ctx: {
-            clientKey: activeClient.key,
-            clientName: activeClient.name,
-            industryCode: activeClient.industry_code,
-            userId: ctx.userId,
-          },
+          ctx: nexusCtx,
           message: userQuery,
           context,
+          canonicalPatternIndex,
         });
 
         for (const source of result.sources) {
@@ -170,6 +185,7 @@ export async function POST(
           confidence: result.confidence,
           sparseEvidence: result.sparseEvidence,
           activePatternSlug: result.activePatternSlug,
+          patternEvidence: result.patternEvidence,
           citationCount: result.citations.length,
           citations: result.citations,
           suggestions: result.suggestions,
