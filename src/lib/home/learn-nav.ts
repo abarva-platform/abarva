@@ -40,7 +40,6 @@ export const LEARN_NAV: ReadonlyArray<LearnNavGroup> = [
     group: 'Getting Started',
     items: [
       { slug: 'welcome', label: 'Welcome & overview' },
-      { slug: 'first-steps', label: 'Your first 30 minutes' },
     ],
   },
   {
@@ -103,7 +102,6 @@ export const LEARN_NAV: ReadonlyArray<LearnNavGroup> = [
     group: 'Reference',
     items: [
       { slug: 'gates', label: 'Gates & evidence' },
-      { slug: 'tower', label: 'Control Tower' },
       { slug: 'glossary', label: 'Glossary' },
     ],
   },
