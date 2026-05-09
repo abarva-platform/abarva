@@ -8,6 +8,12 @@ import {
   getPatternManifestEntriesWithMetrics,
   patternMatchesIndustry,
 } from '@/lib/intelligence/pattern-manifest';
+import { searchCanonicalPatternIndex } from '@/lib/intelligence/canonical/runtime-pattern-index';
+import {
+  buildSentinelGroundingSummary,
+  formatGroundingFlagText,
+  normalizeCanonicalIndustry,
+} from '@/lib/sentinel/canonical-grounding';
 import type {
   SentinelCitation,
   SentinelConfidenceBand,
@@ -277,6 +283,7 @@ export async function runSentinelTurn(args: {
   ctx: SentinelTenancyCtx;
   message: string;
   activePatternSlug?: string | null;
+  canonicalPatternSearch?: typeof searchCanonicalPatternIndex;
 }): Promise<SentinelQueryResponse> {
   const patterns = getPatternManifestEntriesWithMetrics(args.ctx.clientKey)
     .filter((pattern) => patternMatchesIndustry(pattern, args.ctx.industryCode));
@@ -300,15 +307,31 @@ export async function runSentinelTurn(args: {
     rankedPatterns,
     activeClientName: args.ctx.clientName,
   });
+  const canonicalPatternSearch = args.canonicalPatternSearch ?? searchCanonicalPatternIndex;
+  const canonicalResult = await canonicalPatternSearch({
+    tenant_key: args.ctx.clientKey,
+    industry: normalizeCanonicalIndustry(args.ctx.industryCode),
+    query: rankedPatterns[0]?.pattern.name ?? args.message,
+    limit: 3,
+  });
+  const grounding = buildSentinelGroundingSummary({
+    canonicalResult,
+    rankedPatterns,
+    tenantKey: args.ctx.clientKey,
+  });
+  const groundingFlagText = formatGroundingFlagText(grounding);
 
   const llmText = await synthesizeWithClaude({
     message: args.message,
     ctx: args.ctx,
     rankedPatterns,
   }).catch(() => null);
+  const responseText = [llmText ?? fallback.text, groundingFlagText]
+    .filter(Boolean)
+    .join(' ');
 
   return {
-    response: llmText ?? fallback.text,
+    response: responseText,
     routeType: llmText ? 'llm' : 'manifest_fallback',
     confidence: fallback.confidence,
     citations,
@@ -316,5 +339,6 @@ export async function runSentinelTurn(args: {
       .slice(0, 2)
       .map(({ pattern }) => `Open ${pattern.name}`),
     activePatternSlug: rankedPatterns[0]?.pattern.slug ?? anchorSlug,
+    grounding,
   };
 }
