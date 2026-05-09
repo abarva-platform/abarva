@@ -12,7 +12,13 @@ Target table: `canonical_industry_ai_patterns`
 
 Input preview: `docs/knowledge-corpus/generated/canonical-corpus-backfill-preview.json`
 
-DB status: `comparison_skipped_missing_credentials`
+DB status: `comparison_success`
+
+Execution history:
+
+- Credentialed dry-run before write: 312 rows would insert, 0 would update, 0 unchanged, 0 written.
+- Explicit write execution: 312 rows written to `canonical_industry_ai_patterns` with `canonical_id` upsert semantics.
+- Post-write verification dry-run: 0 rows would insert, 0 would update, 312 unchanged, 0 written.
 
 
 
@@ -20,9 +26,9 @@ DB status: `comparison_skipped_missing_credentials`
 
 - Source preview rows: 312
 - Rows considered after collision blocklist: 312
-- Rows that would insert: 312
+- Rows that would insert: 0
 - Rows that would update: 0
-- Rows unchanged: 0
+- Rows unchanged: 312
 - Rows written: 0
 - Rows skipped: 0
 - Canonical-id collision groups: 0
