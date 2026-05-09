@@ -84,7 +84,7 @@ export function IntelligenceBrief({ data, activeClient, surfaceContext }: Props)
   // synthesis voice. The conversation accepts follow-ups; future
   // PR-K3+ wires the LLM call.
   const sentinelConversation: ReadonlyArray<ChatMessage> = [];
-  const sentinelOpener = `I composed this brief for ${data.tenantName} from the corpus. Top three above the line · ${data.bets.length} ranked. Ask me anything about the bets, the patterns, the vendor short list, or what would change if you re-prioritized.`;
+  const sentinelOpener = `${data.tenantName} has ${data.bets.length} AI bets worth deciding this quarter. Ask me which one should move now, what evidence would change the ranking, or where ownership is still blocking value.`;
   const sentinelSurfaceContext = mergeSurfaceContext(surfaceContext, {
     activeTab: 'brief',
     activeClient: activeClient ?? data.tenantName,

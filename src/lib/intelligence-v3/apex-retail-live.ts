@@ -85,13 +85,13 @@ const BRAND = '#0E8C7E';
 const PROVENANCE: Provenance = {
   primarySources: [
     {
-      source: 'AbarVa Supabase retail Intelligence seed',
+      source: 'AbarVa Apex Retail intelligence layer',
       currencyDate: '2026-05',
       reliability: 'HIGH',
     },
   ],
   curationPass: 'apex-retail-live-v1',
-  notes: 'Composed from Supabase genome_patterns, knowledge_sources, use_cases, contradictions, and intelligence_graph_edges.',
+  notes: 'Composed from Apex Retail patterns, knowledge sources, use cases, open tensions, and portfolio relationships.',
 };
 
 export async function loadApexRetailIntelligenceData(
@@ -264,7 +264,7 @@ function toPatternRow(
   return {
     id: pattern.code,
     name: pattern.name,
-    description: pattern.summary ?? pattern.description ?? 'Retail Genome pattern',
+    description: pattern.summary ?? pattern.description ?? 'Retail failure pattern',
     withLabel: `With controls · ${withPct}% confidence`,
     withoutLabel: `No controls · ${Math.round(failureRate)}% failure`,
     withPct,
@@ -321,7 +321,7 @@ function buildMapData(
       entityId: row.severity.toUpperCase(),
       entityType: 'pattern' as const,
       summary: row.short_title ?? row.summary ?? 'Apex contradiction refreshed',
-      source: 'Supabase contradictions',
+      source: 'Apex Retail open tensions',
     })),
     nodes,
     edges: nodes.slice(1).map((node, index) => ({
@@ -352,7 +352,7 @@ function buildBriefData(
     industry: 'retail',
     composedAt: new Date().toISOString(),
     synthesis:
-      'Sentinel sees three Apex Retail priorities above the line: fix customer identity before scaling loyalty AI, sequence demand sensing through data readiness, and make the AI roadmap honest about platform prerequisites. The portfolio now has retail Genome patterns, summarized sources, use cases, contradictions, and graph edges in Supabase, so the demo no longer depends on Neo4j.',
+      'Sentinel sees three Apex Retail priorities above the line: fix customer identity before scaling loyalty AI, prove demand-sensing data readiness before committing forecast lift, and keep the AI roadmap honest about platform prerequisites. This is not an idea shortage; it is a sequencing and accountability decision.',
     bets: topUseCases.map((useCase, index) => {
       const relatedPatternCodes = useCase.metadata?.related_patterns ?? [];
       const bindingPatterns = relatedPatternCodes
@@ -365,7 +365,7 @@ function buildBriefData(
         score: 88 - index * 5,
         scoreFactors: [
           { name: 'Apex use case seeded', delta: 18 },
-          { name: 'Retail Genome pattern bound', delta: bindingPatterns.length * 7 },
+          { name: 'Retail failure pattern bound', delta: bindingPatterns.length * 7 },
           { name: 'Open contradiction exposure', delta: index === 0 ? -6 : -3, isWarning: true },
           { name: 'Summarized retail source coverage', delta: 16 },
         ],
@@ -382,7 +382,7 @@ function buildBriefData(
             withLabel: 'Governed',
             withoutLabel: `${Math.round(Number(pattern.failure_rate_pct ?? 0))}% fail`,
             description: pattern.summary ?? pattern.description ?? pattern.name,
-            source: 'Retail Genome seed',
+            source: 'Retail pattern library',
           },
         })),
         antiPatterns: [],
@@ -404,7 +404,7 @@ function buildBriefData(
     patternsTriggered: topPatterns.map((pattern) => ({
       pattern: toKnowledgePattern(pattern),
       issue: pattern.summary ?? pattern.description ?? pattern.name,
-      recommendedAction: 'Bind this pattern to the relevant Apex use case before the CXO demo.',
+      recommendedAction: 'Bind this pattern to the relevant Apex use case before approving the next quarter roadmap.',
       cta: { primary: { label: 'Review pattern', href: `/intelligence#patterns` } },
     })),
     proofPoints: [],
@@ -413,7 +413,7 @@ function buildBriefData(
       totalPatterns: patterns.length,
       totalVendors: 5,
       totalRegulatory: sources.filter((source) => source.content_type === 'regulation' || source.content_type === 'framework').length,
-      refreshCadence: 'live Supabase seed',
+      refreshCadence: 'monthly intelligence refresh',
       lastRefreshQuarter: '2026-Q2',
     },
   };
@@ -437,7 +437,7 @@ function toUseCase(row: UseCaseRow, index: number): UseCase {
       confidenceBand: 'MED',
     },
     lifecycleStage: row.stage === 'execute' || row.stage === 'realize' ? 'scaling' : 'emerging',
-    lifecycleBasis: 'Apex Retail Supabase use_cases seed',
+    lifecycleBasis: 'Apex Retail use-case portfolio',
     successPatterns: (row.metadata?.related_patterns ?? []).map((patternId) => ({ patternId, relevance: 'HIGH' })),
     vendorLandscape: {
       incumbent: splitVendor(row.vendor).slice(0, 1),
@@ -471,7 +471,7 @@ function toKnowledgePattern(row: GenomePatternRow): Pattern {
     quantifiedSignal: {
       withPattern: { metric: 'readiness confidence', valueRange: '70-90%' },
       withoutPattern: { metric: 'failure rate', valueRange: `${Math.round(Number(row.failure_rate_pct ?? 0))}%` },
-      source: 'Retail Genome seed',
+      source: 'Retail pattern library',
       confidence: 'MED',
     },
     failureConsequence: row.description ?? undefined,

@@ -27,11 +27,11 @@ export function buildSentinelIntelContext(args: BuildSentinelIntelContextArgs): 
     `Tenant: ${args.activeClient}.`,
     `Active Intelligence tab: ${args.stage}.`,
     args.status
-      ? `Readiness strip: ${args.status.runtime} runtime, ${args.status.patterns} retail patterns, ${args.status.summarizedSources}/${args.status.sources} summarized sources, ${args.status.useCases} Apex use cases, ${args.status.contradictions} open contradictions, ${args.status.graphEdges} graph edges, Neo4j not required.`
+      ? `Readiness strip: ${args.status.patterns} retail patterns, ${args.status.summarizedSources}/${args.status.sources} summarized sources, ${args.status.useCases} Apex use cases, ${args.status.contradictions} open tensions, ${args.status.graphEdges} portfolio relationships.`
       : null,
     args.isApexBound
-      ? 'This is the live Apex Retail Intelligence substrate, not the Meridian or Epic healthcare fixture.'
-      : 'This page may be using fallback demo substrate.',
+      ? 'This is the Apex Retail Intelligence layer. Keep answers scoped to retail strategy, CXO ownership, value capture, vendor leverage, and readiness.'
+      : 'This page may be using fallback sample content.',
   ].filter((fact): fact is string => Boolean(fact));
 
   const stageFacts = stageSurfaceFacts(args);
@@ -124,13 +124,13 @@ function stageSurfaceFacts(args: BuildSentinelIntelContextArgs): string[] {
 function tenant360Facts(args: BuildSentinelIntelContextArgs): string[] {
   if (!args.isApexBound) return [];
   const facts = [
-    'Tenant 360: Apex Retail is the active retail demo tenant. Do not use Meridian Healthcare, Epic EHR, IDN, CMIO, HIPAA, or clinical AI facts unless the user explicitly asks for healthcare examples.',
+    'Tenant 360: Apex Retail is the active retail client. Do not use Meridian Healthcare, Epic EHR, IDN, CMIO, HIPAA, or clinical AI facts unless the user explicitly asks for healthcare examples.',
     'Executive posture: CMO wants loyalty and personalization outcomes, CTO owns platform/CDP plumbing, CFO wants cost-takeout evidence, CIO is sequencing platform modernization.',
     'Current strategic center: resolve customer identity and consent, decide the integration hub, sequence demand sensing through item-location readiness, and prevent AI pilots from outrunning data readiness.',
   ];
   if (args.status) {
     facts.push(
-      `Substrate coverage: ${args.status.patterns} retail patterns, ${args.status.sources} knowledge sources, ${args.status.useCases} Apex use cases, ${args.status.contradictions} open contradictions, ${args.status.graphEdges} graph edges.`,
+      `Intelligence coverage: ${args.status.patterns} retail patterns, ${args.status.sources} knowledge sources, ${args.status.useCases} Apex use cases, ${args.status.contradictions} open tensions, ${args.status.graphEdges} portfolio relationships.`,
     );
   }
   if (args.briefData?.synthesis) facts.push(`Brief synthesis: ${args.briefData.synthesis}`);
@@ -210,15 +210,15 @@ function apexUseCaseFacts(args: BuildSentinelIntelContextArgs): string[] {
 
 function apexGraphFacts(args: BuildSentinelIntelContextArgs): string[] {
   const patternEdges = args.patterns.slice(0, 14).flatMap((pattern) => [
-    ...(pattern.useCaseNames ?? []).slice(0, 3).map((name) => `Edge use_case -> genome_pattern: ${name} binds to ${pattern.id} ${pattern.name}.`),
-    ...(pattern.sourceTitles ?? []).slice(0, 2).map((title) => `Edge genome_pattern -> knowledge_source: ${pattern.id} sourced from ${title}.`),
-    ...(pattern.contradictionTitles ?? []).slice(0, 2).map((title) => `Edge contradiction -> genome_pattern: ${title} pressure-tests ${pattern.id}.`),
+    ...(pattern.useCaseNames ?? []).slice(0, 3).map((name) => `Relationship: ${name} binds to ${pattern.id} ${pattern.name}.`),
+    ...(pattern.sourceTitles ?? []).slice(0, 2).map((title) => `Evidence: ${pattern.id} is supported by ${title}.`),
+    ...(pattern.contradictionTitles ?? []).slice(0, 2).map((title) => `Tension: ${title} pressure-tests ${pattern.id}.`),
   ]);
   return uniqueFacts([
-    'Graph edge: CMO loyalty outcome ownership contradicts CTO CDP/platform control; impacts Salesforce, Adobe Experience Platform, identity, consent, and loyalty AI.',
-    'Graph edge: Adobe Experience Platform, Salesforce Commerce + Marketing Cloud, and Accenture Retail all claim integration-hub adjacency to the same customer data layer.',
-    'Graph edge: AI timeline depends on data readiness; item-location, identity stitching, consent, promo history, and substitution history are gating inputs.',
-    'Graph edge: sustainability KPIs conflict with omnichannel fulfillment speed and split-shipment promises.',
+    'Portfolio relationship: CMO loyalty outcome ownership contradicts CTO CDP/platform control; impacts Salesforce, Adobe Experience Platform, identity, consent, and loyalty AI.',
+    'Portfolio relationship: Adobe Experience Platform, Salesforce Commerce + Marketing Cloud, and Accenture Retail all claim integration-hub adjacency to the same customer data layer.',
+    'Portfolio relationship: AI timeline depends on data readiness; item-location, identity stitching, consent, promo history, and substitution history are gating inputs.',
+    'Portfolio relationship: sustainability KPIs conflict with omnichannel fulfillment speed and split-shipment promises.',
     ...patternEdges,
   ]).slice(0, 24);
 }
@@ -254,7 +254,9 @@ function apexQualityFacts(args: BuildSentinelIntelContextArgs): string[] {
   const sourceCount = args.status?.sources ?? 0;
   return [
     'Quality gate: if a query names Apex Retail, do not answer from Meridian, Epic, healthcare, IDN, clinical, or CMIO fixtures.',
-    'Quality gate: current-state answers must start from SURFACE, TENANT, and GRAPH sources before generic corpus or worldview sources.',
+    'Quality gate: current-state answers must start from the visible surface, tenant facts, and portfolio relationships before generic knowledge.',
+    'Answering style: for simple executive questions, answer directly in plain strategic language first; use numbers only when they change the decision.',
+    'Answering style: never expose implementation plumbing such as database names, runtimes, seed labels, graph internals, or markdown syntax to the user.',
     sourceCount > 0
       ? `Quality gate: ${summaryCount}/${sourceCount} retail sources have summaries available to the synthesizer.`
       : 'Quality gate: no retail source count is available in the current payload.',
