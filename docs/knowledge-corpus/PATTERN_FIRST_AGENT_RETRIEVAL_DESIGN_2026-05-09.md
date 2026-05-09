@@ -32,7 +32,7 @@ Wave 1 created:
 - Runtime-safe enum normalizers.
 - Draft builders for `PatternSeed`, generated manifest entries, `pattern_packs`, and `genome_patterns`.
 
-Wave 2 should use these as an in-memory or generated read model first. It should not introduce another durable pattern store until the canonical crosswalk is accepted.
+Wave 2 should introduce a durable persisted canonical corpus system of record or approved persisted canonical view after additive schema review. In-memory and generated artifacts remain runtime projections, validation aids, or cache/index layers only.
 
 ## Target Retrieval Flow
 
@@ -244,22 +244,28 @@ Atlas should not:
 
 Wave 2 should change these files deliberately and in this order:
 
-1. `src/lib/intelligence/agent-retrieval.ts`
+1. Canonical persistence layer
+   - design an additive persisted canonical corpus table or approved persisted canonical view
+   - keep existing source tables intact
+   - avoid content backfill until persistence design and migration are reviewed
+2. `src/lib/intelligence/agent-retrieval.ts`
    - add canonical pattern retrieval API
+   - read from the persisted canonical source of record when available
+   - maintain in-memory indexes as projections/caches only
    - rank by industry, enterprise area, function, process, use case, phase, provenance, missing fields, and duplicate risk
-2. `src/lib/intelligence/ask/retrievers/pattern.ts`
+3. `src/lib/intelligence/ask/retrievers/pattern.ts`
    - route pattern queries through the canonical draft/index layer
    - return source basis, confidence, missing fields, and unsupported claim flags
-3. `src/lib/agent/tools/intelligence/*`
+4. `src/lib/agent/tools/intelligence/*`
    - expose canonical search, neighborhood, and evidence-gap data to Sentinel and other tools
-4. `src/lib/knowledge/context-broker/broker.ts`
+5. `src/lib/knowledge/context-broker/broker.ts`
    - hydrate `corpusPatterns`
    - resolve `WARNING_CORPUS_PENDING`
    - include canonical pattern summaries in corpus and full modes
-5. `src/app/api/v1/programs/[programId]/nexus/ask/route.ts`
+6. `src/app/api/v1/programs/[programId]/nexus/ask/route.ts`
    - retrieve canonical patterns after move/evidence context and before synthesis
    - emit source/confidence metadata in citation/source events
-6. `src/app/api/chat/agent/route.ts`
+7. `src/app/api/chat/agent/route.ts`
    - add pattern-first retrieval blocks for Nexus, Sentinel, and Atlas
    - preserve phase-pack behavior while adding canonical pattern grounding
 
@@ -271,7 +277,7 @@ Current issue: corpus mode warns that pattern catalog integration is pending and
 
 Wave 2 target:
 
-- build a canonical pattern index from existing source-code and DB-backed sources
+- build a canonical pattern index from the persisted canonical source of record plus existing source-code and DB-backed sources during transition
 - hydrate `corpusPatterns` with top-ranked canonical drafts
 - include missing-field and provenance metadata
 - only remove the warning when the broker returns pattern candidates or an explicit no-match result
@@ -350,21 +356,22 @@ Recommended uncertainty language:
 
 ## Wave 2 Implementation Sequence
 
-1. Add an in-memory canonical pattern index builder that uses existing sources and the draft builders.
-2. Add deterministic ranking and filters in `agent-retrieval.ts`.
-3. Add tests for sample queries:
+1. Design and review an additive persisted canonical corpus table or approved persisted canonical view.
+2. Add an in-memory canonical pattern index builder that uses the persisted canonical source of record, existing sources during transition, and the draft builders.
+3. Add deterministic ranking and filters in `agent-retrieval.ts`.
+4. Add tests for sample queries:
    - "AI use cases for retail store operations"
    - "How should a payer use agentic AI for prior auth?"
    - "Financial services AML agentic workflow"
    - "Back office AI productivity use cases for healthcare"
    - "How should a retailer reimagine merchandising with AI?"
    - "What are the KPIs for AI-enabled contact center transformation?"
-4. Hydrate `corpusPatterns` in the context broker.
-5. Add Nexus pattern-first retrieval to program ask routes.
-6. Add Sentinel evidence-gap checks against required canonical fields.
-7. Add Atlas KPI/value confidence handling from canonical fields.
-8. Add user-visible source basis and confidence display.
-9. Keep runtime changes behind a narrow feature flag until tests and demo flows pass.
+5. Hydrate `corpusPatterns` in the context broker.
+6. Add Nexus pattern-first retrieval to program ask routes.
+7. Add Sentinel evidence-gap checks against required canonical fields.
+8. Add Atlas KPI/value confidence handling from canonical fields.
+9. Add user-visible source basis and confidence display.
+10. Keep runtime changes behind a narrow feature flag until tests and demo flows pass.
 
 ## QA For Wave 2
 
@@ -377,4 +384,4 @@ Wave 2 should pass:
 - Atlas tests for projected/tracked/verified value separation
 - build and CI
 
-No live DB mutation is required for Wave 2 unless a later approved migration creates a canonical persisted view.
+Wave 2 requires an approved additive persistence design. Content backfill and live corpus mutation remain separate reviewed steps.

@@ -11,7 +11,9 @@ Runtime files:
 
 ## Purpose
 
-The canonical draft builder projects existing pattern-like records into `IndustryAIPatternDraft` objects. It does not create a new source of truth, persist records, mutate database content, or rewrite source data.
+The canonical draft builder projects existing pattern-like records into `IndustryAIPatternDraft` objects. It does not create the long-term source of truth, mutate database content, or rewrite source data.
+
+Persistence decision after Wave 1: canonical corpus data will have a durable persisted system of record. Drafts are staging and projection objects used to normalize current sources, expose gaps, validate migrations, and feed retrieval indexes.
 
 The view-model layer exists so Wave 2 retrieval can ask a simple question:
 
@@ -71,7 +73,7 @@ Every draft includes:
 - `missing_required_fields`
 - `missing_provenance`
 
-Downstream Wave 2 retrieval should use these draft fields as a normalized read model, not as proof that the corpus is complete.
+Downstream Wave 2 retrieval should use these draft fields as a normalized projection and migration aid, not as proof that the corpus is complete and not as the durable system of record.
 
 ## Quantitative Claim Handling
 
@@ -81,12 +83,14 @@ If a source row provides a quantitative field without a structured source refere
 
 ## Recommended Wave 2 Use
 
-1. Build an in-memory canonical pattern index from existing sources.
-2. Retrieve candidate drafts by industry, enterprise area, function, process area, use-case category, and phase.
-3. Prefer drafts with fewer missing fields and complete provenance.
-4. Show source basis and confidence when recommending a pattern.
-5. Ask the user for missing evidence when required fields are absent.
-6. Refuse to make precise value claims when `unsupported_claim_flags` are present.
+1. Design and review the additive persisted canonical corpus table or approved persisted canonical view.
+2. Use draft builders to normalize existing sources into the persisted canonical design and into runtime projections.
+3. Build an in-memory canonical pattern index from the persisted canonical source of record when available.
+4. Retrieve candidate drafts by industry, enterprise area, function, process area, use-case category, and phase.
+5. Prefer drafts with fewer missing fields and complete provenance.
+6. Show source basis and confidence when recommending a pattern.
+7. Ask the user for missing evidence when required fields are absent.
+8. Refuse to make precise value claims when `unsupported_claim_flags` are present.
 
 ## QA Coverage
 
