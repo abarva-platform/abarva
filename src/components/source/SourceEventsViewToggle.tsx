@@ -1,12 +1,11 @@
 'use client';
 
-// Source events page · view-mode toggle (list / kanban / scatter).
+// Source events page · view-mode toggle (list / kanban / value chart).
 //
 // Mirrors the toggle pattern from src/components/strategic-moves/
 // StrategicMovesHomeClient.tsx. List view wraps the existing
-// SourcingEventTable; kanban groups events by current stage; scatter
-// is gated on value-at-stake coverage (≥ 50% of events with a value)
-// and disabled with a tooltip otherwise.
+// SourcingEventTable; kanban groups events by current stage; value chart
+// shows portfolio exposure by stage/status with ranked open events.
 //
 // Persists the active mode in localStorage so a refresh keeps the
 // user where they were.
@@ -22,6 +21,7 @@ import type {
 import { formatSourceFinancialValue } from '@/lib/source/financial-display';
 import {
   STAGE_BANDS,
+  needsAttention,
   stageBandFor,
   type StageBandKey,
 } from '@/lib/source/portfolio-filtering';
@@ -29,12 +29,12 @@ import {
 export type ViewMode = 'list' | 'kanban' | 'scatter';
 
 const STORAGE_KEY = 'source-events-view-mode';
-export const SCATTER_VALUE_COVERAGE_THRESHOLD = 0.5;
 
 export function readStoredViewMode(): ViewMode {
   if (typeof window === 'undefined') return 'list';
   try {
     const stored = window.localStorage.getItem(STORAGE_KEY);
+    if (stored === 'value') return 'scatter';
     if (stored === 'list' || stored === 'kanban' || stored === 'scatter') return stored;
   } catch { /* ignore */ }
   return 'list';
@@ -42,6 +42,12 @@ export function readStoredViewMode(): ViewMode {
 
 export function persistViewMode(mode: ViewMode) {
   try { window.localStorage.setItem(STORAGE_KEY, mode); } catch { /* ignore */ }
+}
+
+function viewModeLabel(mode: ViewMode): string {
+  if (mode === 'list') return 'Table';
+  if (mode === 'kanban') return 'Kanban';
+  return 'Value chart';
 }
 
 interface Props {
@@ -63,18 +69,7 @@ export function SourceEventsViewToggle({
   // typeof-window guard in readStoredMode). Avoids setting state inside effects.
   const [requestedMode, setRequestedMode] = useState<ViewMode>(readStoredMode);
 
-  const valueCapturedCount = useMemo(
-    () => events.filter((e) => (e.valueAtStakeUsd ?? 0) > 0).length,
-    [events],
-  );
-  const scatterAvailable =
-    events.length === 0 ||
-    valueCapturedCount / events.length >= SCATTER_VALUE_COVERAGE_THRESHOLD;
-
-  // Derived — if scatter is unavailable we fall back to list without
-  // mutating state. Keeps the stored preference so it can be restored
-  // when scatter becomes available again.
-  const mode: ViewMode = !scatterAvailable && requestedMode === 'scatter' ? 'list' : requestedMode;
+  const mode = requestedMode;
 
   function persist(next: ViewMode) {
     try {
@@ -97,8 +92,9 @@ export function SourceEventsViewToggle({
         </span>
         <div style={TOGGLE_GROUP_STYLE} role="tablist" aria-label="View mode">
           {(['list', 'kanban', 'scatter'] as const).map((m) => {
-            const disabled = m === 'scatter' && !scatterAvailable;
+            const disabled = false;
             const active = mode === m;
+            const label = viewModeLabel(m);
             return (
               <button
                 key={m}
@@ -108,20 +104,14 @@ export function SourceEventsViewToggle({
                 aria-disabled={disabled || undefined}
                 disabled={disabled}
                 onClick={() => !disabled && activate(m)}
-                title={
-                  disabled
-                    ? `Scatter requires value-at-stake on ≥ ${Math.round(
-                        SCATTER_VALUE_COVERAGE_THRESHOLD * 100,
-                      )}% of events. Currently ${valueCapturedCount}/${events.length}.`
-                    : undefined
-                }
+                title={label}
                 style={{
                   ...TOGGLE_BTN_STYLE,
                   ...(active ? TOGGLE_BTN_ACTIVE_STYLE : {}),
                   ...(disabled ? TOGGLE_BTN_DISABLED_STYLE : {}),
                 }}
               >
-                {m}
+                {label}
               </button>
             );
           })}
@@ -132,15 +122,8 @@ export function SourceEventsViewToggle({
       {mode === 'kanban' ? (
         <KanbanBoard events={events} canViewFinancialValues={canViewFinancialValues} />
       ) : null}
-      {mode === 'scatter' && scatterAvailable ? (
+      {mode === 'scatter' ? (
         <ScatterPlot events={events} canViewFinancialValues={canViewFinancialValues} />
-      ) : null}
-      {mode === 'scatter' && !scatterAvailable ? (
-        <div style={EMPTY_STATE_STYLE}>
-          Scatter view requires value-at-stake on at least{' '}
-          {Math.round(SCATTER_VALUE_COVERAGE_THRESHOLD * 100)}% of events.
-          Currently {valueCapturedCount}/{events.length} captured.
-        </div>
       ) : null}
     </div>
   );
@@ -209,7 +192,7 @@ export function KanbanBoard({
   );
 }
 
-// ── Scatter ───────────────────────────────────────────────────────────────
+// ── Value chart ───────────────────────────────────────────────────────────
 
 export function ScatterPlot({
   events,
@@ -218,93 +201,234 @@ export function ScatterPlot({
   events: ReadonlyArray<SourcingEventSummary>;
   canViewFinancialValues: boolean;
 }) {
-  // X: aging days · Y: value at stake (log scale for spread)
-  const valueEvents = events.filter((e) => e.valueAtStakeUsd > 0);
-  if (valueEvents.length === 0) {
+  if (events.length === 0) {
     return (
       <div style={EMPTY_STATE_STYLE}>
-        No events have a captured value-at-stake yet.
+        No events match the current filters.
       </div>
     );
   }
-  const maxAging = Math.max(...valueEvents.map((e) => e.agingDays), 1);
-  const maxValue = Math.max(...valueEvents.map((e) => e.valueAtStakeUsd));
-  const PLOT_W = 1120;
-  const PLOT_H = 330;
-  const PAD = 48;
+  const openEvents = events.filter((event) => event.status !== 'completed' && event.status !== 'archived');
+  const rows = buildValueRows(openEvents).filter((row) => row.count > 0);
+  const totalValueUsd = openEvents.reduce((sum, event) => sum + Math.max(0, event.valueAtStakeUsd ?? 0), 0);
+  const hasCapturedValue = totalValueUsd > 0;
+  const atRiskEvents = openEvents.filter((event) => needsAttention(event));
+  const totalAtRiskUsd = atRiskEvents.reduce(
+    (sum, event) => sum + Math.max(0, event.valueAtStakeUsd ?? 0),
+    0,
+  );
+  const maxBasis = Math.max(...rows.map((row) => row.basis), 1);
+  const largestOpenEvents = [...openEvents]
+    .sort((a, b) => {
+      const valueDelta = (b.valueAtStakeUsd ?? 0) - (a.valueAtStakeUsd ?? 0);
+      if (valueDelta !== 0) return valueDelta;
+      return b.agingDays - a.agingDays;
+    })
+    .slice(0, 5);
 
   return (
-    <div style={SCATTER_WRAP_STYLE}>
-      <div style={SCATTER_HEAD_STYLE}>
-        <div style={SCATTER_TITLE_STYLE}>Value at stake by aging</div>
-        <div style={SCATTER_SUBTITLE_STYLE}>
-          Open exposure against current-stage aging.
+    <div style={VALUE_VIEW_STYLE} data-testid="source-portfolio-value-chart">
+      <div style={VALUE_VIEW_HEADER_STYLE}>
+        <div>
+          <div style={VALUE_VIEW_TITLE_STYLE}>Open value by stage</div>
+          <div style={VALUE_VIEW_SUBTITLE_STYLE}>
+            Stage exposure, at-risk value, and the largest open events.
+          </div>
+        </div>
+        <div style={VALUE_SUMMARY_STYLE}>
+          <ValueSummaryItem
+            label="Total"
+            value={formatValueLabel(totalValueUsd, openEvents.length, hasCapturedValue, canViewFinancialValues)}
+          />
+          <ValueSummaryItem
+            label="Needs attention"
+            value={formatValueLabel(
+              totalAtRiskUsd,
+              atRiskEvents.length,
+              hasCapturedValue,
+              canViewFinancialValues,
+            )}
+            accent="#B91C1C"
+          />
         </div>
       </div>
-      <svg width="100%" height={PLOT_H} viewBox={`0 0 ${PLOT_W} ${PLOT_H}`} style={SCATTER_SVG_STYLE}>
-        {/* Grid lines */}
-        {[0.25, 0.5, 0.75, 1].map((t) => (
-          <line
-            key={`gx-${t}`}
-            x1={PAD + t * (PLOT_W - 2 * PAD)}
-            y1={PAD}
-            x2={PAD + t * (PLOT_W - 2 * PAD)}
-            y2={PLOT_H - PAD}
-            stroke="#E5E7EB"
-            strokeWidth={1}
-          />
-        ))}
-        {[0.25, 0.5, 0.75, 1].map((t) => (
-          <line
-            key={`gy-${t}`}
-            x1={PAD}
-            y1={PLOT_H - PAD - t * (PLOT_H - 2 * PAD)}
-            x2={PLOT_W - PAD}
-            y2={PLOT_H - PAD - t * (PLOT_H - 2 * PAD)}
-            stroke="#E5E7EB"
-            strokeWidth={1}
-          />
-        ))}
-        {/* Axes labels */}
-        <text x={PAD} y={PLOT_H - 12} fontSize={11} fill="#6B7280">
-          Aging (days)
-        </text>
-        <text
-          x={12}
-          y={PAD - 8}
-          fontSize={11}
-          fill="#6B7280"
-        >
-          Value at stake
-        </text>
-        {/* Points */}
-        {valueEvents.map((e) => {
-          const x = PAD + (e.agingDays / maxAging) * (PLOT_W - 2 * PAD);
-          const y =
-            PLOT_H - PAD - (e.valueAtStakeUsd / maxValue) * (PLOT_H - 2 * PAD);
-          const color = statusFillColor(e.status, e.isAtRisk);
-          return (
-            <Link key={e.id} href={`/source/events/${e.id}`}>
-              <g>
-                <circle cx={x} cy={y} r={8} fill={color} fillOpacity={0.7} />
-                <circle cx={x} cy={y} r={8} fill="none" stroke={color} strokeWidth={1.5} />
-                <title>
-                  {e.name} · {e.statusLabel} · {e.agingDays}d ·{' '}
-                  {formatSourceFinancialValue(e.valueAtStakeUsd, canViewFinancialValues)}
-                </title>
-              </g>
-            </Link>
-          );
-        })}
-      </svg>
-      <div style={SCATTER_LEGEND_STYLE}>
-        <span style={legendDotStyle('#1B2B5C')}>Active</span>
-        <span style={legendDotStyle('#0E8A65')}>Completed</span>
-        <span style={legendDotStyle('#B7791F')}>Waiting</span>
-        <span style={legendDotStyle('#B91C1C')}>At risk</span>
+
+      <div style={VALUE_LAYOUT_STYLE}>
+        <div style={VALUE_STAGE_PANEL_STYLE}>
+          {rows.map((row) => (
+            <div key={row.key} style={VALUE_STAGE_ROW_STYLE}>
+              <div style={VALUE_STAGE_LABEL_STYLE}>
+                <span style={VALUE_STAGE_NAME_STYLE}>{row.label}</span>
+                <span style={VALUE_STAGE_META_STYLE}>
+                  {row.count} {row.count === 1 ? 'event' : 'events'}
+                </span>
+              </div>
+              <div style={VALUE_BAR_CELL_STYLE}>
+                <div style={VALUE_BAR_TRACK_STYLE} aria-hidden>
+                  <div
+                    style={{
+                      ...VALUE_BAR_WIDTH_STYLE,
+                      width: `${Math.max(row.basis > 0 ? 5 : 0, (row.basis / maxBasis) * 100)}%`,
+                    }}
+                  >
+                    {row.segments.map((segment) => (
+                      <span
+                        key={segment.key}
+                        style={{
+                          ...VALUE_BAR_SEGMENT_STYLE,
+                          width: `${segment.widthPct}%`,
+                          background: segment.color,
+                        }}
+                      />
+                    ))}
+                  </div>
+                </div>
+                <div style={VALUE_BAR_META_STYLE}>
+                  <span>{formatValueLabel(row.valueUsd, row.count, hasCapturedValue, canViewFinancialValues)}</span>
+                  <span>{row.atRiskCount > 0 ? `${row.atRiskCount} needs attention` : 'on track'}</span>
+                </div>
+              </div>
+            </div>
+          ))}
+          <div style={VALUE_LEGEND_STYLE}>
+            <span style={legendDotStyle('#1B2B5C')}>Active</span>
+            <span style={legendDotStyle('#B7791F')}>Waiting</span>
+            <span style={legendDotStyle('#B91C1C')}>Needs attention</span>
+            <span style={legendDotStyle('#0E8A65')}>Completed</span>
+          </div>
+        </div>
+
+        <aside style={VALUE_RANK_PANEL_STYLE} aria-label="Largest open sourcing exposures">
+          <div style={VALUE_RANK_HEADER_STYLE}>Largest open exposure</div>
+          <div style={VALUE_RANK_LIST_STYLE}>
+            {largestOpenEvents.map((event) => (
+              <Link key={event.id} href={`/source/events/${event.id}`} style={VALUE_RANK_LINK_STYLE}>
+                <span
+                  aria-hidden
+                  style={{
+                    ...VALUE_RANK_DOT_STYLE,
+                    background: needsAttention(event)
+                      ? '#B91C1C'
+                      : statusFillColor(event.status, event.isAtRisk),
+                  }}
+                />
+                <span style={VALUE_RANK_BODY_STYLE}>
+                  <span style={VALUE_RANK_TITLE_STYLE}>{event.name}</span>
+                  <span style={VALUE_RANK_META_STYLE}>
+                    {event.code} · {event.currentStageLabel} · {event.statusLabel} · {event.agingDays}d
+                  </span>
+                </span>
+                <span style={VALUE_RANK_VALUE_STYLE}>
+                  {formatValueLabel(
+                    event.valueAtStakeUsd ?? 0,
+                    1,
+                    hasCapturedValue,
+                    canViewFinancialValues,
+                  )}
+                </span>
+              </Link>
+            ))}
+          </div>
+        </aside>
       </div>
+
+      {!hasCapturedValue ? (
+        <div style={VALUE_FOOTNOTE_STYLE}>
+          Values are not captured on these events yet, so this view falls back to event counts.
+        </div>
+      ) : null}
     </div>
   );
+}
+
+function ValueSummaryItem({
+  label,
+  value,
+  accent,
+}: {
+  label: string;
+  value: string;
+  accent?: string;
+}) {
+  return (
+    <span style={VALUE_SUMMARY_ITEM_STYLE}>
+      <span style={VALUE_SUMMARY_LABEL_STYLE}>{label}</span>
+      <span style={{ ...VALUE_SUMMARY_VALUE_STYLE, color: accent ?? '#0C1A3A' }}>{value}</span>
+    </span>
+  );
+}
+
+interface ValueStageRow {
+  key: StageBandKey;
+  label: string;
+  count: number;
+  atRiskCount: number;
+  valueUsd: number;
+  basis: number;
+  segments: Array<{
+    key: ValueSegmentKey;
+    basis: number;
+    widthPct: number;
+    color: string;
+  }>;
+}
+
+type ValueSegmentKey = 'active' | 'waiting' | 'attention' | 'completed';
+
+const VALUE_SEGMENTS: Array<{ key: ValueSegmentKey; color: string }> = [
+  { key: 'active', color: '#1B2B5C' },
+  { key: 'waiting', color: '#B7791F' },
+  { key: 'attention', color: '#B91C1C' },
+  { key: 'completed', color: '#0E8A65' },
+];
+
+function buildValueRows(events: ReadonlyArray<SourcingEventSummary>): ValueStageRow[] {
+  const hasCapturedValue = events.some((event) => (event.valueAtStakeUsd ?? 0) > 0);
+  return Object.values(STAGE_BANDS).map((band) => {
+    const bucket = events.filter((event) => stageBandFor(event.currentStageKey, event.status) === band.key);
+    const valueUsd = bucket.reduce((sum, event) => sum + Math.max(0, event.valueAtStakeUsd ?? 0), 0);
+    const basis = hasCapturedValue ? valueUsd : bucket.length;
+    const segments = VALUE_SEGMENTS.map((segment) => {
+      const matching = bucket.filter((event) => valueSegmentFor(event) === segment.key);
+      const segmentBasis = hasCapturedValue
+        ? matching.reduce((sum, event) => sum + Math.max(0, event.valueAtStakeUsd ?? 0), 0)
+        : matching.length;
+      return {
+        key: segment.key,
+        basis: segmentBasis,
+        widthPct: basis > 0 ? (segmentBasis / basis) * 100 : 0,
+        color: segment.color,
+      };
+    }).filter((segment) => segment.basis > 0);
+
+    return {
+      key: band.key,
+      label: band.title,
+      count: bucket.length,
+      atRiskCount: bucket.filter((event) => needsAttention(event)).length,
+      valueUsd,
+      basis,
+      segments,
+    };
+  });
+}
+
+function valueSegmentFor(event: SourcingEventSummary): ValueSegmentKey {
+  if (needsAttention(event)) return 'attention';
+  if (event.status === 'completed' || event.status === 'archived') return 'completed';
+  if (isWaitingStatus(event.status)) return 'waiting';
+  return 'active';
+}
+
+function formatValueLabel(
+  valueUsd: number,
+  count: number,
+  hasCapturedValue: boolean,
+  canViewFinancialValues: boolean,
+): string {
+  if (!hasCapturedValue) return `${count} ${count === 1 ? 'event' : 'events'}`;
+  if (!canViewFinancialValues) return 'Restricted';
+  return formatSourceFinancialValue(valueUsd, canViewFinancialValues);
 }
 
 // ── Helpers ────────────────────────────────────────────────────────────────
@@ -516,37 +640,193 @@ const KANBAN_EMPTY_STYLE: CSSProperties = {
   padding: '20px 0',
 };
 
-const SCATTER_WRAP_STYLE: CSSProperties = {
-  display: 'flex',
-  flexDirection: 'column',
-  gap: 14,
+const VALUE_VIEW_STYLE: CSSProperties = {
+  display: 'grid',
+  gap: 16,
   background: '#FFFFFF',
   border: '1px solid ' + SHELL.CARD_LINE,
   borderRadius: 8,
   padding: 18,
-  alignItems: 'stretch',
 };
-const SCATTER_SVG_STYLE: CSSProperties = { maxWidth: '100%', height: 'auto' };
-const SCATTER_HEAD_STYLE: CSSProperties = {
-  display: 'grid',
-  gap: 4,
+const VALUE_VIEW_HEADER_STYLE: CSSProperties = {
+  display: 'flex',
+  alignItems: 'start',
+  justifyContent: 'space-between',
+  gap: 16,
+  flexWrap: 'wrap',
 };
-const SCATTER_TITLE_STYLE: CSSProperties = {
+const VALUE_VIEW_TITLE_STYLE: CSSProperties = {
   fontFamily: SHELL.SANS,
-  fontSize: 15,
+  fontSize: 16,
   fontWeight: 700,
   color: '#0A0C12',
 };
-const SCATTER_SUBTITLE_STYLE: CSSProperties = {
+const VALUE_VIEW_SUBTITLE_STYLE: CSSProperties = {
+  marginTop: 4,
   fontFamily: SHELL.SANS,
   fontSize: 12,
   color: SHELL.INK_SOFT,
 };
-const SCATTER_LEGEND_STYLE: CSSProperties = {
+const VALUE_SUMMARY_STYLE: CSSProperties = {
+  display: 'inline-flex',
+  gap: 18,
+  flexWrap: 'wrap',
+};
+const VALUE_SUMMARY_ITEM_STYLE: CSSProperties = {
+  display: 'grid',
+  gap: 3,
+  justifyItems: 'end',
+};
+const VALUE_SUMMARY_LABEL_STYLE: CSSProperties = {
+  fontFamily: SHELL.MONO,
+  fontSize: 10,
+  letterSpacing: '0.12em',
+  textTransform: 'uppercase',
+  color: SHELL.INK_SOFT,
+};
+const VALUE_SUMMARY_VALUE_STYLE: CSSProperties = {
+  fontFamily: SHELL.MONO,
+  fontSize: 14,
+  fontWeight: 700,
+  fontVariantNumeric: 'tabular-nums',
+};
+const VALUE_LAYOUT_STYLE: CSSProperties = {
+  display: 'grid',
+  gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 280px), 1fr))',
+  gap: 22,
+  alignItems: 'start',
+};
+const VALUE_STAGE_PANEL_STYLE: CSSProperties = {
+  display: 'grid',
+  gap: 12,
+  minWidth: 0,
+};
+const VALUE_STAGE_ROW_STYLE: CSSProperties = {
+  display: 'grid',
+  gridTemplateColumns: 'minmax(150px, 0.32fr) minmax(0, 0.68fr)',
+  gap: 14,
+  alignItems: 'center',
+};
+const VALUE_STAGE_LABEL_STYLE: CSSProperties = {
+  display: 'grid',
+  gap: 3,
+  minWidth: 0,
+};
+const VALUE_STAGE_NAME_STYLE: CSSProperties = {
+  fontFamily: SHELL.SANS,
+  fontSize: 12,
+  fontWeight: 700,
+  color: '#0A0C12',
+};
+const VALUE_STAGE_META_STYLE: CSSProperties = {
+  fontFamily: SHELL.SANS,
+  fontSize: 11,
+  color: SHELL.INK_SOFT,
+};
+const VALUE_BAR_CELL_STYLE: CSSProperties = {
+  display: 'grid',
+  gap: 5,
+  minWidth: 0,
+};
+const VALUE_BAR_TRACK_STYLE: CSSProperties = {
+  height: 12,
+  width: '100%',
+  background: '#ECEAE3',
+  borderRadius: 999,
+  overflow: 'hidden',
+};
+const VALUE_BAR_WIDTH_STYLE: CSSProperties = {
   display: 'flex',
-  gap: 16,
+  height: '100%',
+  borderRadius: 999,
+  overflow: 'hidden',
+};
+const VALUE_BAR_SEGMENT_STYLE: CSSProperties = {
+  display: 'block',
+  height: '100%',
+  minWidth: 2,
+};
+const VALUE_BAR_META_STYLE: CSSProperties = {
+  display: 'flex',
+  justifyContent: 'space-between',
+  gap: 12,
+  fontFamily: SHELL.MONO,
+  fontSize: 10,
+  color: SHELL.INK_SOFT,
+};
+const VALUE_LEGEND_STYLE: CSSProperties = {
+  display: 'flex',
+  gap: 14,
   flexWrap: 'wrap',
   fontFamily: SHELL.SANS,
+};
+const VALUE_RANK_PANEL_STYLE: CSSProperties = {
+  display: 'grid',
+  gap: 10,
+  padding: 12,
+  border: '1px solid ' + SHELL.CARD_LINE,
+  borderRadius: 6,
+  background: '#FAF9F6',
+};
+const VALUE_RANK_HEADER_STYLE: CSSProperties = {
+  fontFamily: SHELL.MONO,
+  fontSize: 10,
+  letterSpacing: '0.12em',
+  textTransform: 'uppercase',
+  color: SHELL.INK_SOFT,
+  fontWeight: 700,
+};
+const VALUE_RANK_LIST_STYLE: CSSProperties = {
+  display: 'grid',
+  gap: 2,
+};
+const VALUE_RANK_LINK_STYLE: CSSProperties = {
+  display: 'grid',
+  gridTemplateColumns: '8px minmax(0, 1fr) auto',
+  gap: 9,
+  alignItems: 'center',
+  padding: '8px 0',
+  borderTop: '1px solid rgba(17, 24, 39, 0.08)',
+  color: '#0A0C12',
+  textDecoration: 'none',
+};
+const VALUE_RANK_DOT_STYLE: CSSProperties = {
+  width: 7,
+  height: 7,
+  borderRadius: 999,
+};
+const VALUE_RANK_BODY_STYLE: CSSProperties = {
+  display: 'grid',
+  gap: 2,
+  minWidth: 0,
+};
+const VALUE_RANK_TITLE_STYLE: CSSProperties = {
+  overflow: 'hidden',
+  textOverflow: 'ellipsis',
+  whiteSpace: 'nowrap',
+  fontFamily: SHELL.SANS,
+  fontSize: 12,
+  fontWeight: 700,
+};
+const VALUE_RANK_META_STYLE: CSSProperties = {
+  overflow: 'hidden',
+  textOverflow: 'ellipsis',
+  whiteSpace: 'nowrap',
+  fontFamily: SHELL.SANS,
+  fontSize: 11,
+  color: SHELL.INK_SOFT,
+};
+const VALUE_RANK_VALUE_STYLE: CSSProperties = {
+  fontFamily: SHELL.MONO,
+  fontSize: 11,
+  fontWeight: 700,
+  color: '#0C1A3A',
+  fontVariantNumeric: 'tabular-nums',
+};
+const VALUE_FOOTNOTE_STYLE: CSSProperties = {
+  fontFamily: SHELL.SANS,
+  fontSize: 12,
+  color: SHELL.INK_SOFT,
 };
 
 const EMPTY_STATE_STYLE: CSSProperties = {

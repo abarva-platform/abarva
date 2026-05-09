@@ -194,7 +194,6 @@ describe('SourcePortfolioPage redesigned render', () => {
     expect(html).toContain('source-portfolio-header');
     expect(html).toContain('source-portfolio-scorecard');
     expect(html).toContain('Total value');
-    expect(html).toContain('Stage mix');
     expect(html).toContain('Value by category');
     expect(html).toContain('source-portfolio-filter-sidebar');
     expect(html).toContain('source-portfolio-events-table');
@@ -202,7 +201,7 @@ describe('SourcePortfolioPage redesigned render', () => {
     expect(html).toContain('Portfolio view');
     expect(html).toContain('Table');
     expect(html).toContain('Kanban');
-    expect(html).toContain('Value map');
+    expect(html).toContain('Value chart');
     // No stage-band groups in partial state.
     expect(html).toContain('data-group-by="none"');
     expect(html).not.toContain('source-portfolio-group-discovery');
