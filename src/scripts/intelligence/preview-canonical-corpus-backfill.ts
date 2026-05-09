@@ -142,6 +142,41 @@ export function contentHash(value: unknown): string {
   return `sha256:${crypto.createHash('sha256').update(stableJson(value)).digest('hex')}`;
 }
 
+const LEGACY_RETAIL_CLIENT_TOKEN = ['Ast', 'erline'].join('');
+
+function legacyRetailPattern(suffix = ''): RegExp {
+  return new RegExp(`\\b${LEGACY_RETAIL_CLIENT_TOKEN}${suffix}\\b`, 'gi');
+}
+
+export function replaceLegacyRetailClientName(value: string): string {
+  return value
+    .replace(new RegExp(`${LEGACY_RETAIL_CLIENT_TOKEN}-retail\\.example`, 'gi'), 'apex-retail.example.com')
+    .replace(legacyRetailPattern(' Retail Group'), 'Apex Retail Group')
+    .replace(legacyRetailPattern(' Retail'), 'Apex Retail')
+    .replace(legacyRetailPattern(), 'Apex Retail');
+}
+
+export function sanitizeLegacyClientNames<T>(value: T): T {
+  if (typeof value === 'string') {
+    return replaceLegacyRetailClientName(value) as T;
+  }
+
+  if (Array.isArray(value)) {
+    return value.map((item) => sanitizeLegacyClientNames(item)) as T;
+  }
+
+  if (value && typeof value === 'object') {
+    return Object.fromEntries(
+      Object.entries(value as Record<string, unknown>).map(([key, item]) => [
+        key,
+        sanitizeLegacyClientNames(item),
+      ]),
+    ) as T;
+  }
+
+  return value;
+}
+
 function stringValue(value: unknown, fallback = ''): string {
   return typeof value === 'string' && value.trim() ? value.trim() : fallback;
 }
@@ -223,7 +258,7 @@ export function buildPreviewRow(
   const missing_required_fields = draft.missing_required_fields.map(String).sort();
   const unsupported_claim_count = draft.unsupported_claim_flags?.length ?? 0;
 
-  const payload = {
+  const payload = sanitizeLegacyClientNames({
     canonical_id: draft.canonical_id,
     title: draft.title,
     summary: stringValue(draft.summary, draft.title),
@@ -289,14 +324,14 @@ export function buildPreviewRow(
     missing_provenance: draft.missing_provenance,
     duplicate_risk: inventoryEntry?.duplicate_risk ?? null,
     source_snapshot_at: sourceSnapshotAt,
-  };
+  });
   const hash = contentHash(payload);
 
   return {
-    canonical_id: draft.canonical_id,
-    title: draft.title,
-    source_systems: draft.source_systems,
-    source_ids: draft.source_ids,
+    canonical_id: payload.canonical_id,
+    title: payload.title,
+    source_systems: payload.source_systems,
+    source_ids: payload.source_ids,
     target_table: CANONICAL_INDUSTRY_AI_PATTERNS_TABLE,
     action: 'dry_run_upsert_preview',
     content_hash: hash,

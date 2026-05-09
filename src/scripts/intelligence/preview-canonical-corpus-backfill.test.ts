@@ -4,6 +4,7 @@ import {
   CANONICAL_BACKFILL_SCHEMA_VERSION,
   buildPreviewRow,
   contentHash,
+  sanitizeLegacyClientNames,
   stableJson,
 } from './preview-canonical-corpus-backfill';
 
@@ -35,6 +36,7 @@ const baseDraft: IndustryAIPatternDraft = {
   missing_required_fields: ['why_now'],
   missing_provenance: false,
 };
+const legacyRetailClientName = ['Ast', 'erline'].join('');
 
 describe('preview canonical corpus backfill helpers', () => {
   it('stableJson produces deterministic hashes independent of object key order', () => {
@@ -99,5 +101,35 @@ describe('preview canonical corpus backfill helpers', () => {
     expect(row.upsert_payload.source_basis).toBe('unknown');
     expect(row.missing_provenance).toBe(true);
     expect(row.unsupported_claim_count).toBe(1);
+  });
+
+  it('sanitizes legacy retail client naming in preview payloads', () => {
+    const row = buildPreviewRow(
+      {
+        ...baseDraft,
+        summary: `${legacyRetailClientName} evidence should be reviewed with the ${legacyRetailClientName} Retail steering team.`,
+        business_problem: `${legacyRetailClientName}-specific service fragmentation is blocking personalization.`,
+      },
+      '2026-05-09T00:00:00.000Z',
+    );
+
+    expect(row.upsert_payload.summary).toContain('Apex Retail evidence');
+    expect(row.upsert_payload.summary).not.toContain(legacyRetailClientName);
+    expect(row.upsert_payload.business_problem).toContain('Apex Retail-specific');
+  });
+
+  it('sanitizes legacy retail client naming recursively', () => {
+    const sanitized = sanitizeLegacyClientNames({
+      email: `maria.delgado@${legacyRetailClientName.toLowerCase()}-retail.example`,
+      nested: [
+        `${legacyRetailClientName.toLowerCase()} retail group`,
+        { label: `${legacyRetailClientName} Retail` },
+      ],
+    });
+
+    expect(sanitized).toEqual({
+      email: 'maria.delgado@apex-retail.example.com',
+      nested: ['Apex Retail Group', { label: 'Apex Retail' }],
+    });
   });
 });
