@@ -21,6 +21,12 @@ import {
 
 export const ACTIVE_CLIENT_COOKIE = 'abarva_active_client';
 
+const CLIENT_KEY_TO_DB_SLUGS: Record<ClientKey, string[]> = {
+  meridian: ['meridian', 'meridian-health'],
+  arcturus: ['arcturus', 'first-capital', 'first-capital-financial'],
+  apexretail: ['apexretail', 'apex-retail'],
+};
+
 type SessionClientContext = {
   role?: string;
   clientId?: string;
@@ -109,12 +115,66 @@ export async function getActiveClientRow(requestedClientId?: string | null): Pro
   const key = await getActiveClientKey(requestedClientId);
   const { getServerSupabase } = await import('@/lib/supabase-server');
   const sb = getServerSupabase();
+
+  for (const tenantKey of [key, ...CLIENT_KEY_TO_DB_SLUGS[key]]) {
+    const { data } = await sb
+      .from('clients')
+      .select('id, name, industry_code')
+      .eq('tenant_key', tenantKey)
+      .limit(1)
+      .maybeSingle();
+    if (data) {
+      const row = data as { id: string; name: string; industry_code: string | null };
+      return {
+        id: row.id,
+        name: row.name,
+        industry_code: row.industry_code?.trim() || CLIENT_KEY_TO_INDUSTRY_CODE[key],
+        key,
+      };
+    }
+  }
+
+  for (const slug of CLIENT_KEY_TO_DB_SLUGS[key]) {
+    const { data } = await sb
+      .from('clients')
+      .select('id, name, industry_code')
+      .eq('slug', slug)
+      .limit(1)
+      .maybeSingle();
+    if (data) {
+      const row = data as { id: string; name: string; industry_code: string | null };
+      return {
+        id: row.id,
+        name: row.name,
+        industry_code: row.industry_code?.trim() || CLIENT_KEY_TO_INDUSTRY_CODE[key],
+        key,
+      };
+    }
+  }
+
   const candidates = CLIENT_KEY_TO_DB_NAME[key];
   for (const candidate of candidates) {
     const { data } = await sb
       .from('clients')
       .select('id, name, industry_code')
       .ilike('name', candidate)
+      .maybeSingle();
+    if (data) {
+      const row = data as { id: string; name: string; industry_code: string | null };
+      return {
+        id: row.id,
+        name: row.name,
+        industry_code: row.industry_code?.trim() || CLIENT_KEY_TO_INDUSTRY_CODE[key],
+        key,
+      };
+    }
+  }
+  for (const candidate of candidates) {
+    const { data } = await sb
+      .from('clients')
+      .select('id, name, industry_code')
+      .ilike('name', `${candidate}%`)
+      .limit(1)
       .maybeSingle();
     if (data) {
       const row = data as { id: string; name: string; industry_code: string | null };
