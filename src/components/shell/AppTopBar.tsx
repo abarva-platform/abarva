@@ -10,11 +10,11 @@
 // Spec:
 // - True black bar (#000000), 64px tall, sticky, z-index 50
 // - 22px AbarVa wordmark (Claude / ChatGPT scale)
-// - Hairline divider, then "AI Success Platform" (Inter regular,
-//   bold "AI") — same typographic register as Snowflake's promo line
+// - Hairline divider, then compact handwritten "AI Success Platform"
+//   tagline — quiet supporting note, not a second logo
 // - Centered nav · inactive items at 72% white · active = full white
 //   + 600 weight + 3px signal-blue underline
-// - Right rail: avatar + first name + ghost Sign-out pill
+// - Right rail: active client, Learn, Product, avatar + first name + Sign-out
 // - All colors from the locked brand kit (no green / teal in chrome)
 //
 // Backward-compat: the legacy props (showLocked, context, timeString)
@@ -28,6 +28,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useClerk, useUser } from "@clerk/nextjs";
 import { clearActiveClientContext } from "@/lib/auth/client-context-storage";
 import { getVisibleNavItems } from "@/components/shell/topbar-nav-items";
+import { useClientContext } from "@/lib/use-client-context";
 
 export interface AppTopBarProps {
   tenantName?: string;
@@ -49,12 +50,14 @@ const BRAND = {
   textStrong: "rgba(255,255,255,0.92)",
 };
 
-export function AppTopBar({ showProductNav = true }: AppTopBarProps = {}) {
+export function AppTopBar({ tenantName, showProductNav = true }: AppTopBarProps = {}) {
   const pathname = usePathname() ?? "";
   const router = useRouter();
   const { isLoaded, user } = useUser();
   const { signOut } = useClerk();
+  const { currentClient } = useClientContext();
   const signedIn = isLoaded && Boolean(user);
+  const resolvedTenantName = tenantName ?? currentClient?.name ?? null;
   const displayName =
     user?.fullName ||
     user?.emailAddresses?.[0]?.emailAddress?.split("@")?.[0] ||
@@ -95,7 +98,7 @@ export function AppTopBar({ showProductNav = true }: AppTopBarProps = {}) {
         .app-top-bar__nav-link:hover { color: white !important; }
       `}</style>
 
-      <div style={{ display: "flex", alignItems: "center", gap: 14, minWidth: 0 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0 }}>
         <Link
           href="/home"
           aria-label="AbarVa Home"
@@ -110,19 +113,21 @@ export function AppTopBar({ showProductNav = true }: AppTopBarProps = {}) {
             priority
           />
         </Link>
-        <div aria-hidden="true" style={{ width: 1, height: 20, background: BRAND.hair }} />
+        <div aria-hidden="true" style={{ width: 1, height: 16, background: BRAND.hair }} />
         <div
+          data-testid="app-top-bar-tagline"
           style={{
-            fontFamily: "Inter, system-ui, sans-serif",
-            fontSize: 14.5,
-            fontWeight: 400,
-            color: "white",
-            letterSpacing: "-0.005em",
+            fontFamily: "'Bradley Hand', 'Segoe Print', 'Comic Sans MS', cursive",
+            fontSize: 12,
+            fontWeight: 500,
+            color: "rgba(255,255,255,0.76)",
+            letterSpacing: "0.01em",
             lineHeight: 1,
             whiteSpace: "nowrap",
+            transform: "translateY(1px)",
           }}
         >
-          <strong style={{ fontWeight: 600 }}>AI</strong> Success Platform
+          <span style={{ fontWeight: 600 }}>AI</span> Success Platform
         </div>
       </div>
 
@@ -168,11 +173,54 @@ export function AppTopBar({ showProductNav = true }: AppTopBarProps = {}) {
         </nav>
       )}
 
-      <div style={{ display: "flex", alignItems: "center", gap: 14, flexShrink: 0 }}>
-        {/* Right-aligned Product link · separate from the canonical
-            5-module nav · acts as a "see what AbarVa is" pitch link
-            outside the operational IA. key: "product" / label: "Product" /
-            href: "/product" / pathname === "/product" */}
+      <div style={{ display: "flex", alignItems: "center", gap: 10, flexShrink: 0 }}>
+        {signedIn && resolvedTenantName && (
+          <span
+            title={resolvedTenantName}
+            aria-label={`Active client ${resolvedTenantName}`}
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              maxWidth: 220,
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
+              fontFamily: "Inter, system-ui, sans-serif",
+              fontSize: 12,
+              fontWeight: 600,
+              letterSpacing: "0.01em",
+              color: BRAND.textStrong,
+              padding: "7px 12px",
+              borderRadius: 999,
+              border: `1px solid rgba(255,255,255,0.16)`,
+              background: "rgba(255,255,255,0.05)",
+            }}
+          >
+            {resolvedTenantName}
+          </span>
+        )}
+        {signedIn && (
+          <Link
+            href="/home/learn"
+            data-nav-key="learn"
+            aria-current={pathname === "/home/learn" || pathname.startsWith("/home/learn/") ? "page" : undefined}
+            style={{
+              fontFamily: "Inter, system-ui, sans-serif",
+              fontSize: 13,
+              fontWeight: 600,
+              letterSpacing: "0.01em",
+              color: pathname === "/home/learn" || pathname.startsWith("/home/learn/") ? "white" : BRAND.textStrong,
+              textDecoration: "none",
+              padding: "7px 14px",
+              borderRadius: 999,
+              border: `1px solid rgba(255,255,255,0.20)`,
+              background: pathname === "/home/learn" || pathname.startsWith("/home/learn/") ? "rgba(255,255,255,0.08)" : "transparent",
+              whiteSpace: "nowrap",
+            }}
+          >
+            Learn
+          </Link>
+        )}
         {signedIn && (
           <Link
             href="/product"
