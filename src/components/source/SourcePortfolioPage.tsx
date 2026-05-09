@@ -264,7 +264,9 @@ function PortfolioScorecard({
     (sum, item) => sum + (item.event.valueAtStakeUsd ?? 0),
     0,
   );
-  const categoryMix = buildCategoryMix(events);
+  const largestOpenEvent = [...openEvents].sort(
+    (a, b) => (b.valueAtStakeUsd ?? 0) - (a.valueAtStakeUsd ?? 0) || b.agingDays - a.agingDays,
+  )[0];
 
   return (
     <section
@@ -297,8 +299,9 @@ function PortfolioScorecard({
         />
       </div>
       <div style={SCORECARD_CHARTS_STYLE}>
-        <CategoryValueBars
-          items={categoryMix}
+        <DecisionFocusCard
+          largestOpenEvent={largestOpenEvent}
+          attentionCount={kpis.attentionCount}
           canViewFinancialValues={canViewFinancialValues}
         />
       </div>
@@ -328,65 +331,54 @@ function ScoreMetric({
   );
 }
 
-function CategoryValueBars({
-  items,
+function DecisionFocusCard({
+  largestOpenEvent,
+  attentionCount,
   canViewFinancialValues,
 }: {
-  items: CategoryMixItem[];
+  largestOpenEvent: SourcingEventSummary | undefined;
+  attentionCount: number;
   canViewFinancialValues: boolean;
 }) {
-  const maxValue = Math.max(...items.map((item) => item.valueUsd), 1);
   return (
     <div style={SCORE_CHART_STYLE}>
       <div style={SCORE_CHART_HEADER_STYLE}>
-        <span>Value by category</span>
-        <span>top {items.length}</span>
+        <span>Decision focus</span>
+        <span>{attentionCount} need attention</span>
       </div>
-      <div style={CATEGORY_BARS_STYLE}>
-        {items.map((item) => (
-          <div key={item.label} style={CATEGORY_ROW_STYLE}>
-            <div style={CATEGORY_LABEL_ROW_STYLE}>
-              <span style={CATEGORY_LABEL_STYLE}>{item.label}</span>
-              <span style={CATEGORY_VALUE_STYLE}>
-                {canViewFinancialValues ? formatCompactUsd(item.valueUsd) : 'Restricted'} · {item.count}
-              </span>
+
+      {largestOpenEvent ? (
+        <div style={CATEGORY_SUMMARY_STYLE}>
+          <div style={CATEGORY_HERO_STYLE}>
+            <span style={CATEGORY_LABEL_STYLE}>Largest open event</span>
+            <strong style={CATEGORY_HERO_NAME_STYLE}>{largestOpenEvent.name}</strong>
+            <span style={CATEGORY_HERO_DETAIL_STYLE}>
+              {canViewFinancialValues ? formatCompactUsd(largestOpenEvent.valueAtStakeUsd ?? 0) : 'Restricted'}
+              {` · ${largestOpenEvent.currentStageLabel} · ${largestOpenEvent.statusLabel}`}
+            </span>
+          </div>
+          <div style={CATEGORY_FACT_GRID_STYLE}>
+            <div style={CATEGORY_FACT_STYLE}>
+              <span style={CATEGORY_FACT_LABEL_STYLE}>Next action</span>
+              <strong style={CATEGORY_FACT_VALUE_STYLE}>
+                {largestOpenEvent.nextAction || largestOpenEvent.nextDecision || 'Confirm owner and next gate'}
+              </strong>
             </div>
-            <div style={CATEGORY_TRACK_STYLE} aria-hidden>
-              <span
-                style={{
-                  ...CATEGORY_FILL_STYLE,
-                  width: `${Math.max(6, (item.valueUsd / maxValue) * 100)}%`,
-                }}
-              />
+            <div style={CATEGORY_FACT_STYLE}>
+              <span style={CATEGORY_FACT_LABEL_STYLE}>Attention queue</span>
+              <strong style={CATEGORY_FACT_VALUE_STYLE}>
+                {attentionCount === 0
+                  ? 'No urgent decisions'
+                  : `${attentionCount} event${attentionCount === 1 ? '' : 's'} need executive attention`}
+              </strong>
             </div>
           </div>
-        ))}
-        {items.length === 0 ? (
-          <div style={CATEGORY_EMPTY_STYLE}>No category values captured yet.</div>
-        ) : null}
-      </div>
+        </div>
+      ) : (
+        <div style={CATEGORY_EMPTY_STYLE}>No open sourcing decisions yet.</div>
+      )}
     </div>
   );
-}
-
-interface CategoryMixItem {
-  label: string;
-  count: number;
-  valueUsd: number;
-}
-
-function buildCategoryMix(events: SourcingEventSummary[]): CategoryMixItem[] {
-  const byCategory = new Map<string, CategoryMixItem>();
-  for (const event of events) {
-    const label = event.archetype || 'Uncategorized';
-    const current = byCategory.get(label) ?? { label, count: 0, valueUsd: 0 };
-    current.count += 1;
-    current.valueUsd += event.valueAtStakeUsd ?? 0;
-    byCategory.set(label, current);
-  }
-  return Array.from(byCategory.values())
-    .sort((a, b) => b.valueUsd - a.valueUsd || b.count - a.count || a.label.localeCompare(b.label))
-    .slice(0, 4);
 }
 
 // ── Compact header — title + subline + CTA ──────────────────────────────────
@@ -722,56 +714,89 @@ const SCORE_CHART_HEADER_STYLE: CSSProperties = {
   fontWeight: 700,
 };
 
-const CATEGORY_BARS_STYLE: CSSProperties = {
+const CATEGORY_SUMMARY_STYLE: CSSProperties = {
   display: 'grid',
-  gap: 9,
+  gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 180px), 1fr))',
+  gap: 12,
+  alignItems: 'stretch',
 };
 
-const CATEGORY_ROW_STYLE: CSSProperties = {
+const CATEGORY_HERO_STYLE: CSSProperties = {
   display: 'grid',
-  gap: 4,
-};
-
-const CATEGORY_LABEL_ROW_STYLE: CSSProperties = {
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'space-between',
-  gap: 10,
+  alignContent: 'center',
+  gap: 5,
+  minHeight: 82,
   minWidth: 0,
+  padding: '12px 14px',
+  border: `1px solid ${PORTFOLIO.HAIRLINE}`,
+  borderRadius: PORTFOLIO.RADIUS_TIGHT,
+  background: '#ffffff',
 };
 
 const CATEGORY_LABEL_STYLE: CSSProperties = {
+  fontFamily: PORTFOLIO.MONO,
+  fontSize: PORTFOLIO.T_MICRO_SMALL,
+  letterSpacing: '0.10em',
+  textTransform: 'uppercase',
+  color: PORTFOLIO.INK_MUTED,
+  fontWeight: 700,
+};
+
+const CATEGORY_HERO_NAME_STYLE: CSSProperties = {
   overflow: 'hidden',
   textOverflow: 'ellipsis',
   whiteSpace: 'nowrap',
   fontFamily: PORTFOLIO.SANS,
-  fontSize: PORTFOLIO.T_META,
-  fontWeight: 700,
+  fontSize: 15,
+  lineHeight: 1.2,
+  fontWeight: 800,
   color: PORTFOLIO.INK,
 };
 
-const CATEGORY_VALUE_STYLE: CSSProperties = {
-  flexShrink: 0,
+const CATEGORY_HERO_DETAIL_STYLE: CSSProperties = {
   fontFamily: PORTFOLIO.MONO,
-  fontSize: PORTFOLIO.T_MICRO,
+  fontSize: PORTFOLIO.T_META,
   color: PORTFOLIO.INK_SOFT,
   fontWeight: 700,
   fontVariantNumeric: 'tabular-nums',
 };
 
-const CATEGORY_TRACK_STYLE: CSSProperties = {
-  width: '100%',
-  height: 5,
-  borderRadius: 999,
-  background: PORTFOLIO.RULE,
-  overflow: 'hidden',
+const CATEGORY_FACT_GRID_STYLE: CSSProperties = {
+  display: 'grid',
+  gridTemplateColumns: '1fr',
+  gap: 8,
+  minWidth: 0,
 };
 
-const CATEGORY_FILL_STYLE: CSSProperties = {
-  display: 'block',
-  height: '100%',
-  borderRadius: 999,
-  background: PORTFOLIO.INK,
+const CATEGORY_FACT_STYLE: CSSProperties = {
+  display: 'grid',
+  gap: 3,
+  minWidth: 0,
+  padding: '10px 12px',
+  border: `1px solid ${PORTFOLIO.HAIRLINE}`,
+  borderRadius: PORTFOLIO.RADIUS_TIGHT,
+  background: PORTFOLIO.PAGE_BG,
+};
+
+const CATEGORY_FACT_LABEL_STYLE: CSSProperties = {
+  fontFamily: PORTFOLIO.MONO,
+  fontSize: PORTFOLIO.T_MICRO_SMALL,
+  letterSpacing: '0.10em',
+  textTransform: 'uppercase',
+  color: PORTFOLIO.INK_MUTED,
+  fontWeight: 700,
+};
+
+const CATEGORY_FACT_VALUE_STYLE: CSSProperties = {
+  overflow: 'hidden',
+  display: '-webkit-box',
+  WebkitBoxOrient: 'vertical',
+  WebkitLineClamp: 2,
+  fontFamily: PORTFOLIO.SANS,
+  fontSize: PORTFOLIO.T_META,
+  lineHeight: 1.3,
+  color: PORTFOLIO.INK,
+  fontWeight: 800,
 };
 
 const CATEGORY_EMPTY_STYLE: CSSProperties = {
