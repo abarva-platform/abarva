@@ -46,13 +46,14 @@ export async function loadEnterpriseSummary(clientId: string): Promise<Enterpris
   const sb = getServerSupabase();
 
   const [techRes, projRes, augRes, volRes] = await Promise.all([
-    sb.from('tech_stack_items').select('category, annual_spend_usd, touches_ai').eq('client_id', clientId),
-    sb.from('tech_projects').select('status, touches_ai, total_budget_usd, spent_to_date_usd').eq('client_id', clientId),
-    sb.from('staff_augmentation').select('headcount_fte, annual_spend_usd, touches_ai').eq('client_id', clientId),
+    sb.from('tech_stack_items').select('category, annual_spend_usd, touches_ai').eq('client_id', clientId).eq('is_demo_data', false),
+    sb.from('tech_projects').select('status, touches_ai, total_budget_usd, spent_to_date_usd').eq('client_id', clientId).eq('is_demo_data', false),
+    sb.from('staff_augmentation').select('headcount_fte, annual_spend_usd, touches_ai').eq('client_id', clientId).eq('is_demo_data', false),
     sb
       .from('volumetrics_snapshots')
       .select('snapshot_date, api_calls_millions, tokens_billions, active_models, data_pipelines, storage_tb')
       .eq('client_id', clientId)
+      .eq('is_demo_data', false)
       .order('snapshot_date', { ascending: true })
       .limit(30),
   ]);

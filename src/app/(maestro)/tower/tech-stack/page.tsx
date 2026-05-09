@@ -95,6 +95,7 @@ export default async function TechStackPage({
     .select(
       'id, category, vendor_name, product_name, deployment_model, annual_spend_usd, contract_end, seat_count, owning_function, touches_ai, status',
     )
+    .eq('is_demo_data', false)
     .order('annual_spend_usd', { ascending: false, nullsFirst: false });
   if (effectiveClientId) query.eq('client_id', effectiveClientId);
   const { data } = await query;

@@ -85,6 +85,7 @@ export default async function ProjectsPage({
   const query = sb
     .from('tech_projects')
     .select('id, name, description, program_domain, status, start_date, planned_end_date, total_budget_usd, spent_to_date_usd, exec_sponsor, touches_ai')
+    .eq('is_demo_data', false)
     .order('total_budget_usd', { ascending: false, nullsFirst: false });
   if (effectiveClientId) query.eq('client_id', effectiveClientId);
   const { data } = await query;
