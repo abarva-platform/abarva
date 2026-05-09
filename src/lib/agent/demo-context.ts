@@ -1,12 +1,13 @@
 // demo-context.ts
 //
-// Shared demo context injected into every agent system prompt.
+// Shared fallback demo context injected into agent system prompts.
 // Bridges the gap between shell fixture data (T3-H01, T3-H03, APX-CDP-2026,
 // etc.) and the LLM calls that have no knowledge of AbarVa-specific naming
 // or the current Apex Retail demo state.
 //
 // Rules:
-//   - Keep this file as the single source of truth for what the agents know.
+//   - Treat persisted DB rows, page-local program context, broker bundles, and
+//     context-broker receipts as more current than this fallback block.
 //   - Update here when fixture data changes (phase advances, gate clears, etc.)
 //   - Do NOT import React or any component code — this is pure TypeScript.
 
@@ -28,13 +29,14 @@ Soft gates allow the next phase to open but flag gaps. Evidence coverage (0–10
 `.trim();
 
 // ── Apex Retail demo tenant context ─────────────────────────────────────────
-// Current state of the demo tenant as of Apr 27 2026.
-// Matches shell-*-fixture.ts files exactly.
+// Fallback state of the demo tenant as of May 9 2026.
 
 export const APEX_RETAIL_DEMO_CONTEXT = `
 DEMO TENANT: Apex Retail Group (locked)
 
 PROGRAMS IN FLIGHT (6 total):
+Authoritative rule: if a persisted Strategic Move row, page context, or broker receipt conflicts with this fallback list, trust the persisted/current context.
+
 1. APX-CDP-2026 | Apex Retail CDP Activation | P3 Design | FLAGSHIP
    - Design gate cleared Apr 27 2026 (all 5 criteria met, evidence 100%)
    - Execution Roadmap gate (P3→P4) is the next milestone — currently 2 of 5 criteria met
@@ -42,10 +44,10 @@ PROGRAMS IN FLIGHT (6 total):
    - Architecture sprint is active. Vendor C selected as managed CDP layer via AMS BAFO — reduces in-house build scope ~40%.
    - Patterns in use: T3-H01 Ambient AI in Retail, T3-H03 Unified Loyalty Intelligence (personalization layer)
 
-2. APX-CC-2026 | Contact Center AI Transformation | P4 Execution Roadmap
-   - Build 68% complete. NLP intent classifier deployed to staging (94% accuracy).
-   - Remaining blockers: IVR routing rules, supervisor dashboard MVP
-   - Approval / Mobilization gate (P4→P5) target: May 15 2026
+2. Contact Center AI Routing | P3 Design | CXO DEMO MOVE
+   - Persisted Strategic Move for Apex Retail; P0-P2 artifacts are completed and P3 Design gate/workspace is open.
+   - Current executive question: whether AI routing design has enough operational, technology, evidence, and change-readiness proof to continue.
+   - Use Move/page context for exact phase, sponsor, evidence, deliverable, and gate state before relying on this fallback summary.
 
 3. APX-SAP-2026 | Store Associate Productivity AI | P1 Discovery
    - Early discovery phase. Field workflows still being mapped.

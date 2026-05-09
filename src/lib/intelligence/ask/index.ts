@@ -3,10 +3,11 @@ import { route } from './router';
 import { synthesizeStream } from './synthesizer';
 import { generateFollowups } from './followups';
 import { retrieveWorldview } from './retrievers/worldview';
+import { retrieveSurfaceContextSources } from './retrievers/surface-context';
 import { retrieveTenantTechnologySources } from '@/lib/knowledge/tenant-technology-context';
-import type { AskSource, IntentClassification, AskIntent } from './types';
+import type { AskSource, IntentClassification, AskIntent, AskSurfaceContext } from './types';
 
-export type { AskIntent, AskSource, IntentClassification } from './types';
+export type { AskIntent, AskSource, AskSurfaceContext, IntentClassification } from './types';
 
 export interface AskEvent {
   type: 'classified' | 'sources' | 'delta' | 'followups' | 'done' | 'error';
@@ -20,7 +21,7 @@ export interface AskEvent {
 export interface AskOptions {
   userContextBlock?: string;
   tenantInventoryKey?: string | null;
-  tenantName?: string | null;
+  surfaceContext?: AskSurfaceContext | null;
 }
 
 export function atlasStakeholderConflictHandoff(query: string): string | null {
@@ -73,16 +74,18 @@ export async function* askIntelligence(query: string, opts: AskOptions = {}): As
     const classification = await classifyIntent(trimmed);
     yield { type: 'classified', classification };
 
+    const surfaceContext = retrieveSurfaceContextSources(opts.surfaceContext, trimmed);
     const [tenantTechnology, routed, worldview] = await Promise.all([
       retrieveTenantTechnologySources(opts.tenantInventoryKey, trimmed),
       route(classification.intent, classification.entities),
       retrieveWorldview(trimmed),
     ]);
     const sources: AskSource[] = [
+      ...surfaceContext,
       ...tenantTechnology,
       ...routed.sources,
       ...worldview.sources,
-    ].slice(0, 10);
+    ].slice(0, 16);
     const averageConfidence = sources.length > 0
       ? sources.reduce((s, x) => s + (x.confidence ?? 0), 0) / sources.length
       : 0;
@@ -112,7 +115,6 @@ export async function* askIntelligence(query: string, opts: AskOptions = {}): As
       sources,
       intent: classification.intent,
       userContextBlock: opts.userContextBlock,
-      tenantName: opts.tenantName,
     })) {
       if (!confidencePrefixDone && averageConfidence < 0.6) {
         const prefix = 'Limited indexed data — confidence is moderate. ';

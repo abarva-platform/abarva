@@ -42,6 +42,32 @@ describe('inferModeForSurface · CB-6', () => {
     });
   });
 
+  describe('/strategic-moves', () => {
+    it('returns "tenant" for /strategic-moves/new when tenantKey is present', () => {
+      expect(
+        inferModeForSurface({ surface: '/strategic-moves/new', tenantKey: 'apex-retail' }),
+      ).toBe('tenant');
+    });
+
+    it('returns "full" for a Strategic Move detail page when tenantKey is present', () => {
+      expect(
+        inferModeForSurface({ surface: '/strategic-moves/move-123', tenantKey: 'apex-retail' }),
+      ).toBe('full');
+    });
+
+    it('returns "full" for a Strategic Move phase workspace when tenantKey is present', () => {
+      expect(
+        inferModeForSurface({ surface: '/strategic-moves/move-123/phase/3', tenantKey: 'apex-retail' }),
+      ).toBe('full');
+    });
+
+    it('returns "generic" for Strategic Move detail without tenantKey', () => {
+      expect(
+        inferModeForSurface({ surface: '/strategic-moves/move-123', tenantKey: null }),
+      ).toBe('generic');
+    });
+  });
+
   describe('/intelligence', () => {
     it('returns "corpus" with tenantKey', () => {
       expect(

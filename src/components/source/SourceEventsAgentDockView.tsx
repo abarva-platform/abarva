@@ -44,10 +44,11 @@ interface Props {
 }
 
 const SENTINEL_AGENT = {
-  initials: 'Sn',
-  name: 'Sentinel',
+  initials: 'SS',
+  name: 'Sentinel Source',
   role: 'Source Portfolio Conductor',
 };
+const SENTINEL_RUNTIME_AGENT_NAME = 'Sentinel';
 
 /** Keep the suggestion ids stable for telemetry. */
 const SUGGESTION_IDS = {
@@ -111,7 +112,7 @@ export function SourceEventsAgentDockView({ workspace, filterStage, filterStatus
             message: messageForRuntime,
             context,
             surface: 'source/events',
-            agentName: SENTINEL_AGENT.name,
+            agentName: SENTINEL_RUNTIME_AGENT_NAME,
           }),
         });
         if (!res.ok) {

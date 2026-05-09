@@ -36,24 +36,25 @@ interface Props {
   canViewFinancialValues?: boolean;
 }
 
+function readStoredMode(): ViewMode {
+  if (typeof window === 'undefined') return 'list';
+  try {
+    const stored = window.localStorage.getItem(STORAGE_KEY);
+    if (stored === 'list' || stored === 'kanban' || stored === 'scatter') return stored;
+  } catch {
+    // ignore — localStorage may be unavailable
+  }
+  return 'list';
+}
+
 export function SourceEventsViewToggle({
   events,
   listView,
   canViewFinancialValues = false,
 }: Props) {
-  const [mode, setMode] = useState<ViewMode>('list');
-
-  // Restore prior mode on mount.
-  useEffect(() => {
-    try {
-      const stored = window.localStorage.getItem(STORAGE_KEY);
-      if (stored === 'list' || stored === 'kanban' || stored === 'scatter') {
-        setMode(stored);
-      }
-    } catch {
-      // ignore — localStorage may be unavailable
-    }
-  }, []);
+  // Lazy initializer reads localStorage once on mount (SSR-safe via the
+  // typeof-window guard in readStoredMode). Avoids setting state inside effects.
+  const [requestedMode, setRequestedMode] = useState<ViewMode>(readStoredMode);
 
   const valueCapturedCount = useMemo(
     () => events.filter((e) => (e.valueAtStakeUsd ?? 0) > 0).length,
@@ -63,13 +64,10 @@ export function SourceEventsViewToggle({
     events.length === 0 ||
     valueCapturedCount / events.length >= SCATTER_VALUE_COVERAGE_THRESHOLD;
 
-  // Auto-fall-back to list if scatter becomes unavailable.
-  useEffect(() => {
-    if (!scatterAvailable && mode === 'scatter') {
-      setMode('list');
-      persist('list');
-    }
-  }, [scatterAvailable, mode]);
+  // Derived — if scatter is unavailable we fall back to list without
+  // mutating state. Keeps the stored preference so it can be restored
+  // when scatter becomes available again.
+  const mode: ViewMode = !scatterAvailable && requestedMode === 'scatter' ? 'list' : requestedMode;
 
   function persist(next: ViewMode) {
     try {
@@ -80,7 +78,7 @@ export function SourceEventsViewToggle({
   }
 
   function activate(next: ViewMode) {
-    setMode(next);
+    setRequestedMode(next);
     persist(next);
   }
 

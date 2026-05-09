@@ -1,3 +1,8 @@
+import type { MetricExplanation } from '@/lib/tower/metric-explanation-view';
+import type { MetricProvenanceKey } from '@/lib/tower/metric-provenance';
+import type { RetrievalContext } from '@/lib/agent/retrieval';
+import type { AtlasTowerCurrentState } from '@/lib/atlas/tower-grounding';
+
 export type AtlasRouteType = 'scripted' | 'llm' | 'hybrid' | 'tool_augmented';
 
 export type AtlasIntent =
@@ -5,11 +10,20 @@ export type AtlasIntent =
   | 'shadow_ai_detail'
   | 'cohort_position'
   | 'portfolio_status'
+  | 'metric_explanation'
   | 'roi'
   | 'idle_seats'
   | 'signal_detail'
   | 'strategy_refusal'
   | 'llm';
+
+export interface AtlasMetricExplanationRequest {
+  source: 'tower_metric_provenance';
+  metricKey: MetricProvenanceKey;
+  displayValue?: string;
+  displayConfidence?: 'high' | 'med' | 'low' | 'none';
+  mode?: 'why' | 'levers';
+}
 
 export interface AtlasTenancyCtx {
   clientId: string;
@@ -117,6 +131,8 @@ export interface AtlasObservation {
 }
 
 export interface AtlasToolResultMap {
+  towerState?: AtlasTowerCurrentState;
+  retrievalContext?: RetrievalContext;
   portfolio?: AtlasPortfolioSummary;
   signals?: AtlasSignalSummary[];
   signalDetail?: AtlasSignalDetail | null;
@@ -136,6 +152,7 @@ export interface AtlasToolResultMap {
     businessUnit: string | null;
     vendor: string | null;
   }>;
+  metricExplanation?: MetricExplanation;
 }
 
 export interface AtlasTurnResult extends AtlasChatResponse {
@@ -153,4 +170,5 @@ export interface AtlasChatResponse {
   signalId?: string | null;
   observationId?: string | null;
   toolsUsed: string[];
+  metricExplanation?: MetricExplanation;
 }

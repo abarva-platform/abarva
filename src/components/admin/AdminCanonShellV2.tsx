@@ -1,4 +1,5 @@
 import { isValidElement, type ReactElement, type ReactNode } from 'react';
+import { COLORS } from '@/lib/design/design-tokens';
 import { SHELL } from '@/lib/shell/shell-tokens';
 import { AdminSidebar } from './AdminSidebar';
 import { AppShell } from '@/components/shell/AppShell';
@@ -90,7 +91,7 @@ export function AdminCanonShellV2({
           <AdminSidebar />
           <div
             data-admin-chat-dock
-            style={{ minWidth: 0, minHeight: 0, height: '100%', overflow: 'hidden' }}
+            style={{ minWidth: 0, minHeight: 0, height: '100%', overflow: 'hidden', background: COLORS.cream }}
           >
             <StewardDockPane
               workspace={
@@ -113,12 +114,14 @@ export function AdminCanonShellV2({
         </div>
       ) : (
         // ── Layout B · legacy 3-col (sidebar | main | static rail) ────────
+        // Canonical 3-zone dimensions: gridTemplateColumns: '280px 1fr 320px'
+        // (sidebar=280px, main=1fr, agent-rail=320px per ADMIN_LAYOUT_DIMS)
         <div
           style={{
             display: 'grid',
             gridTemplateColumns: agentRail
-              ? '240px minmax(0, 1fr) minmax(360px, 28vw)'
-              : '240px minmax(0, 1fr)',
+              ? '280px 1fr 320px'
+              : '280px minmax(0, 1fr)',
             flex: 1,
             minHeight: 0,
             height: 'calc(100vh - 48px)',

@@ -290,7 +290,7 @@ function buildEventName(clientShortName: string, intake: IntakeState, selectedCa
   return `${clientShortName} ${triggerClause || 'Technology'} Sourcing Event`.slice(0, 120);
 }
 
-const SENTINEL_INTAKE_AGENT = { initials: 'Se', name: 'Sentinel', role: 'Source Orchestrator' } as const;
+const SENTINEL_INTAKE_AGENT = { initials: 'SS', name: 'Sentinel Source', role: 'Source Orchestrator' } as const;
 
 export function SourceOriginatePage({
   clientName = 'Apex Retail Group',

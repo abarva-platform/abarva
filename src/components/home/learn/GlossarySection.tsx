@@ -7,7 +7,7 @@ export function GlossarySection() {
       {/* Tips */}
       <Section>
         <Eyebrow>Reference</Eyebrow>
-        <SectionTitle>Tips & common mistakes</SectionTitle>
+        <SectionTitle level={1}>Tips & common mistakes</SectionTitle>
         <Lead>The most common mistakes new users make — and what to do instead.</Lead>
 
         <SubHead>Setup</SubHead>

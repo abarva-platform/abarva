@@ -18,9 +18,15 @@ const VIEWS: ReadonlyArray<{ key: SessionsView; label: string }> = [
 
 interface Props {
   rows?: ReadonlyArray<SessionRow>;
+  totalConversations?: number;
+  recentWindowCount?: number;
 }
 
-export function SessionsCxoCanvas({ rows = MERIDIAN_SESSIONS }: Props) {
+export function SessionsCxoCanvas({
+  rows = MERIDIAN_SESSIONS,
+  totalConversations = 132,
+  recentWindowCount = 8,
+}: Props) {
   const [view, setView] = useState<SessionsView>('threaded');
 
   const pinned = rows.filter((r) => r.pinned);
@@ -38,8 +44,8 @@ export function SessionsCxoCanvas({ rows = MERIDIAN_SESSIONS }: Props) {
         lead="Three pinned threads stay surfaced. Recent sessions cluster around the current focus areas. Search by topic via the right rail."
         meta={
           <>
-            <strong style={{ color: COLORS.ink }}>132</strong> total conversations ·{' '}
-            <strong style={{ color: COLORS.ink }}>8</strong> in the last 3 days
+            <strong style={{ color: COLORS.ink }}>{totalConversations}</strong> total conversations ·{' '}
+            <strong style={{ color: COLORS.ink }}>{recentWindowCount}</strong> in the last 3 days
           </>
         }
         views={VIEWS}

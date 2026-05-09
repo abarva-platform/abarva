@@ -28,6 +28,7 @@ import type {
   SourceDecisionSnapshot,
   SourceEventSnapshot,
   SourceGateSnapshot,
+  SourceLiveTenantContextSnapshot,
   SourcePatternContext,
   SourcePersona,
   SourceRiskSnapshot,
@@ -102,7 +103,6 @@ export function buildSourceContextFromSeed(input: SourceContextBuilderInput): So
   const activeStage = requestedStage ?? getActiveStage(event.stages);
   const requiredInputs = getRequiredInputs(event, activeStage);
   const missingInputs = getMissingInputs(event, activeStage);
-  const blockers = uniqueStrings([event.blocker, activeStage.gate.blocker].filter(Boolean) as string[]);
   const selectedAttachmentIds = input.selectedAttachmentIds ?? [];
   const uploadedFiles = getSourceAttachmentSeed(event, selectedAttachmentIds);
   const parsedFileSummaries = getSourceAttachmentSummarySeed(uploadedFiles);
@@ -110,6 +110,54 @@ export function buildSourceContextFromSeed(input: SourceContextBuilderInput): So
   const evidenceCitations = getSourceEvidenceSeed(event);
   const scorecardDefaultWeights = getSourceScorecardDefaultWeightsSeed(event);
   const clientItContext = getSourceTechnologySourcingContextFromSetupSeed(event.id);
+
+  return buildSourceContextFromEventDetail(input, event, {
+    activeStage,
+    requiredInputs,
+    missingInputs,
+    uploadedFiles,
+    parsedFileSummaries,
+    relevantPatternSections,
+    evidenceCitations,
+    scorecardDefaultWeights,
+    clientItContext: clientItContext ?? undefined,
+  });
+}
+
+export function buildSourceContextFromEventDetail(
+  input: SourceContextBuilderInput,
+  event: SourcingEventDetail,
+  overrides: {
+    liveTenantContext?: SourceLiveTenantContextSnapshot;
+    activeStage?: WorkflowStage;
+    requiredInputs?: string[];
+    missingInputs?: string[];
+    uploadedFiles?: SourceAgentContextBundle['uploadedFiles'];
+    parsedFileSummaries?: SourceAgentContextBundle['parsedFileSummaries'];
+    relevantPatternSections?: SourceAgentContextBundle['relevantPatternSections'];
+    evidenceCitations?: SourceAgentContextBundle['evidenceCitations'];
+    scorecardDefaultWeights?: SourceScorecardSnapshot['defaultWeights'];
+    clientItContext?: SourceAgentContextBundle['clientItContext'];
+  } = {},
+): SourceAgentContextBundle {
+  const requestedStage = input.stageKey
+    ? event.stages.find((stage) => stage.key === input.stageKey)
+    : undefined;
+  const activeStage = overrides.activeStage ?? requestedStage ?? getActiveStage(event.stages);
+  const requiredInputs = overrides.requiredInputs ?? getRequiredInputs(event, activeStage);
+  const missingInputs = overrides.missingInputs ?? getMissingInputs(event, activeStage);
+  const selectedAttachmentIds = input.selectedAttachmentIds ?? [];
+  const uploadedFiles = overrides.uploadedFiles ?? getSourceAttachmentSeed(event, selectedAttachmentIds);
+  const parsedFileSummaries = overrides.parsedFileSummaries ?? getSourceAttachmentSummarySeed(uploadedFiles);
+  const relevantPatternSections = overrides.relevantPatternSections ?? getSourcePatternSectionsSeed(event);
+  const liveTenantContext = overrides.liveTenantContext;
+  const blockers = uniqueStrings([event.blocker, activeStage.gate.blocker].filter(Boolean) as string[]);
+  const evidenceCitations = uniqueEvidenceContexts([
+    ...(overrides.evidenceCitations ?? getSourceEvidenceSeed(event)),
+    ...toLiveTenantEvidenceContext(liveTenantContext),
+  ]);
+  const scorecardDefaultWeights = overrides.scorecardDefaultWeights ?? getSourceScorecardDefaultWeightsSeed(event);
+  const clientItContext = overrides.clientItContext ?? getSourceTechnologySourcingContextFromSetupSeed(event.id);
 
   const bundle: SourceAgentContextBundle = {
     ...createEmptySourceContextBundle(input),
@@ -126,6 +174,7 @@ export function buildSourceContextFromSeed(input: SourceContextBuilderInput): So
     stageOwner: activeStage.gate.ownerRole,
     decisionOwner: event.scorecard.decisionOwner,
     clientItContext: clientItContext ?? undefined,
+    liveTenantContext,
     agingDays: event.agingDays,
     blockers,
     waitState: toWaitState(event, activeStage),
@@ -168,6 +217,13 @@ export function buildSourceContextFromSeed(input: SourceContextBuilderInput): So
         updatedAt: reference.lastReviewed ?? clientItContext.updatedAt,
         stale: false,
       })) ?? []),
+      ...(liveTenantContext
+        ? [{
+            source: `live-tenant-context:${liveTenantContext.brokerTenantKey}`,
+            updatedAt: new Date().toISOString(),
+            stale: false,
+          }]
+        : []),
     ],
   };
 
@@ -301,6 +357,7 @@ export function getSourceContextUsed(bundle: SourceAgentContextBundle): SourceCo
         ...(bundle.nextAction ? ['nextAction'] : []),
         ...(bundle.eventOwner ? ['eventOwner'] : []),
         ...(bundle.clientItContext ? ['clientItContext'] : []),
+        ...(bundle.liveTenantContext ? ['liveTenantContext'] : []),
         ...(typeof bundle.agingDays === 'number' ? ['agingDays'] : []),
         ...(bundle.stageGates.length ? ['stageGates'] : []),
         ...(bundle.artifacts.length ? ['artifacts'] : []),
@@ -383,6 +440,9 @@ export function getMissingContextReasons(bundle: SourceAgentContextBundle): stri
   }
   if (bundle.sourcingEvent && bundle.evidenceCitations.length === 0) {
     reasons.push('No evidence citations are available in the current seed context.');
+  }
+  if (bundle.liveTenantContext?.warnings.length) {
+    reasons.push(...bundle.liveTenantContext.warnings);
   }
   if (bundle.citationCoverage?.missingCitationClaims.length) {
     reasons.push(`Client-specific citation coverage is still incomplete for: ${bundle.citationCoverage.missingCitationClaims.join('; ')}.`);
@@ -585,6 +645,38 @@ function toValueLedgerLineSnapshot(
   };
 }
 
+function toLiveTenantEvidenceContext(
+  liveTenantContext: SourceLiveTenantContextSnapshot | undefined,
+): SourceAgentContextBundle['evidenceCitations'] {
+  if (!liveTenantContext) return [];
+  const basis = liveTenantContext.evidenceBasis.slice(0, 8);
+  const citations: SourceAgentContextBundle['evidenceCitations'] = basis.map((line) => {
+    const segmentLabel = line.split(':')[0] ?? 'Apex Retail current-state context';
+    const sourceId = segmentLabel.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '');
+    return {
+      id: `live-apex-${sourceId}`,
+      label: `Apex current-state: ${segmentLabel}`,
+      sourceType: 'citation' as const,
+      sourceId,
+      confidence: 'high' as const,
+      excerpt: line,
+    };
+  });
+
+  if (liveTenantContext.sourceEventFound) {
+    citations.unshift({
+      id: 'live-apex-source-event',
+      label: 'Apex persisted Source event',
+      sourceType: 'eventState',
+      sourceId: liveTenantContext.clientKey,
+      confidence: 'high',
+      excerpt: `Persisted source_events row found for ${liveTenantContext.clientKey}.`,
+    });
+  }
+
+  return citations;
+}
+
 function toPatternContext(
   event: SourcingEventDetail,
   relevantSections: SourcePatternContext['relevantSections'],
@@ -739,6 +831,12 @@ function toSuggestedIntent(action: SourceAllowedAction): SourceSuggestedAction['
 
 function uniqueActions(actions: SourceAllowedAction[]): SourceAllowedAction[] {
   return Array.from(new Map(actions.map((action) => [action.id, action])).values());
+}
+
+function uniqueEvidenceContexts(
+  citations: SourceAgentContextBundle['evidenceCitations'],
+): SourceAgentContextBundle['evidenceCitations'] {
+  return Array.from(new Map(citations.map((citation) => [citation.id, citation])).values());
 }
 
 function uniqueStrings(values: string[]): string[] {

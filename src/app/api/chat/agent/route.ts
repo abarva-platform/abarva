@@ -1,14 +1,13 @@
 // /api/chat/agent · Universal agent chat endpoint
 //
 // Shell Layout Spec v2 §6.3 — this route is the only path to an agent response.
-// AGENT_DEMO_SYSTEM_BLOCK is injected on EVERY path so the agent always knows:
-//   - the AbarVa platform and 7-phase model
-//   - all 6 Apex Retail programs and their current phases
-//   - active patterns, Tower pressures, AMS source event
+// The system prompt combines platform context, active tenant context,
+// broker receipts, and page-local program state so the agent can answer
+// from current state before falling back to demo context.
 //
 // Wave SHELL-V2-1 adds: tenantName, agentName, stage, surfaceContext fields.
-// The "Atlas doesn't know Apex Retail" bug is architecturally impossible
-// because AGENT_DEMO_SYSTEM_BLOCK is now unconditional.
+// The "Atlas doesn't know Apex Retail" bug is guarded by active-client
+// tenant resolution plus broker/context-bundle fallbacks.
 
 import Anthropic from "@anthropic-ai/sdk";
 import { requireTenancy } from "@/app/api/v1/programs/_auth";
@@ -236,8 +235,10 @@ export function getAgentResponseTokenBudget(surface: string): number {
   if (
     surface === '/programs' ||
     surface === '/programs/new' ||
+    surface === '/strategic-moves' ||
     surface === '/strategic-moves/new' ||
-    surface.startsWith('/programs/')
+    surface.startsWith('/programs/') ||
+    surface.startsWith('/strategic-moves/')
   ) {
     return PROGRAM_AGENT_RESPONSE_MAX_TOKENS;
   }
@@ -305,7 +306,7 @@ export async function POST(request: Request) {
   // Three layers:
   //   1. Agent voice (who the LLM is)
   //   2. Page context (tenant, surface, stage, program data if available)
-  //   3. AGENT_DEMO_SYSTEM_BLOCK (unconditional — platform + Apex demo context)
+  //   3. Tenant/broker context, with demo context as fallback only
 
   // INT-VOICE: for Sentinel on Intelligence surfaces, replace the
   // one-line voice prompt with the full doctrine spec (sample
@@ -686,22 +687,22 @@ export async function POST(request: Request) {
     typeof surface === 'string' &&
     /^\/programs\/[^/]+$/.test(surface) &&
     surface !== '/programs/new';
+  const isStrategicMoveSurface = isStrategicMovesSurface(surface);
   // Wave 4A: workspace phase surfaces follow the pattern /strategic-moves/<id>/phase/<n>
-  const isWorkspacePhaceSurface =
+  const isWorkspacePhaseSurface =
     typeof surface === 'string' &&
     /^\/strategic-moves\/[^/]+\/phase\/[1-5]$/.test(surface);
   const artifactInstructions =
-    surfacesWithArtifactChannel.has(surface) || isProgramDetailSurface || isSourceSurface(surface) || isWorkspacePhaceSurface
+    surfacesWithArtifactChannel.has(surface) || isProgramDetailSurface || isSourceSurface(surface) || isWorkspacePhaseSurface
       ? ARTIFACT_CHANNEL_INSTRUCTIONS
       : '';
 
   // PR-R · founder feedback #1 — Nexus on /programs surfaces now
-  // receives tenant org-structure context (executive bench + program
-  // inventory) from the broker so it can resolve roles ("CIO", "VP
-  // of Applications") into actual named people without making them
-  // up. Scoped narrowly: only Nexus, only /programs and
-  // /programs/<id>, only when the active tenant has a data room
-  // (broker returns '' for unknown tenants).
+  // receives tenant current-state context from the broker so it can
+  // resolve roles, systems, financial posture, renewals, evidence,
+  // and portfolio/program inventory into named facts without making
+  // them up. Strategic Moves shares this path so Move-shaping has the
+  // same intelligence substrate as the legacy Programs surface.
   let nexusTenantContextBlock = '';
   let sourceTenantContextBlock = '';
   // TD-7 · cross-program-signal artifacts. The broker bundle's
@@ -714,7 +715,7 @@ export async function POST(request: Request) {
   const isNexusProgramsSurface =
     agentName === 'Nexus' &&
     typeof surface === 'string' &&
-    (surface === '/programs' || isProgramDetailSurface);
+    (surface === '/programs' || isProgramDetailSurface || isStrategicMoveSurface);
   if (isNexusProgramsSurface && activeClient?.key && !privateDataPlane) {
     try {
       const brokerBundle = buildProgramsContextBundle({
@@ -722,6 +723,14 @@ export async function POST(request: Request) {
         programId: programId ?? undefined,
         agentName: 'Nexus',
         surface: 'programs',
+        requestedDomains: [
+          'people_org',
+          'program_lifecycle',
+          'system_landscape',
+          'vendor_contracts',
+          'financials',
+          'evidence_provenance',
+        ],
       });
       nexusTenantContextBlock = formatProgramsBrokerBundleForPrompt(brokerBundle);
       crossProgramSignalsBlock = composeCrossProgramSignalsBlockForSurface(
@@ -855,8 +864,8 @@ export async function POST(request: Request) {
     "",
     artifactInstructions,
     "",
-    // PR-R · tenant org-structure block for Nexus on /programs
-    // surfaces. Empty string on every other surface/agent.
+    // PR-R / CXO grounding · tenant current-state block for Nexus on
+    // Programs and Strategic Moves surfaces. Empty string elsewhere.
     nexusTenantContextBlock,
     "",
     // TD-7 · cross-program-signal block for Nexus on /programs surfaces.
@@ -917,9 +926,10 @@ export async function POST(request: Request) {
     "Response guidelines:",
     "- Keep responses under 200 words. Be direct, specific, actionable.",
     "- Reference tenant and program names from context.",
-    "- Never say you don't have specific information about the tenant — use the demo context below.",
+    "- If current-state context is present, use it before demo fallback context. If a persisted program/Move row, page context, broker block, or context-bundle receipt conflicts with demo context, trust the persisted/current context and say the older demo fallback appears stale.",
+    "- Do not invent current-state facts. If org, financial, technology, renewal, or evidence data is absent from current context, say what is missing and give the next evidence question or retrieval target.",
     "- TENANT SAFETY: the active tenant is locked. If the user asks to create, copy, sponsor, or submit a program for any other client, refuse clearly and generically: 'This session can only originate programs for <active tenant>. I cannot create or sponsor a program for another client from here. No record was created.' Do not name or retrieve another client's executives, sponsors, programs, or datasets. Do not ask follow-up details for the other client.",
-    "- CONTEXT SOURCE DISCIPLINE: when retrieval context is present, separate private client facts from shared AbarVa corpus/worldview knowledge. Say 'From the private client data...' for tenant-specific facts and 'From AbarVa's shared corpus...' for reusable doctrine. Never blur them.",
+    "- CONTEXT SOURCE DISCIPLINE: when retrieval context is present, separate Move facts, private client facts, shared AbarVa corpus/worldview knowledge, and inference. Say 'From the Move record...', 'From the private client data...', 'From AbarVa's shared corpus...', or 'My read is...' as appropriate. Never blur them.",
     "- ACCESS DISCIPLINE: program visibility, approval rights, and financial visibility are hard control-plane rules from USER ACCESS POLICY. Do not claim the user can see, approve, publish, or create records unless that policy says so.",
     "- CANVAS CONTINUITY: if the user wants to start, scope, or create a new program, do not navigate them to /programs/new. Continue in this same canvas: confirm the intent, collect sponsor, lead, target outcome, and timeline, use lookup_person/register_placeholder_person/commit_program when available, and only mention the program detail link after the brief is submitted.",
     ...(isProgramsSurface(surface)
@@ -1144,6 +1154,10 @@ export async function POST(request: Request) {
 
 function isSourceSurface(surface: string): boolean {
   return surface === '/source' || surface.startsWith('/source/');
+}
+
+function isStrategicMovesSurface(surface: string): boolean {
+  return surface === '/strategic-moves' || surface.startsWith('/strategic-moves/');
 }
 
 /**

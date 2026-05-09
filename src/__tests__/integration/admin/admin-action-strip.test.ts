@@ -11,7 +11,6 @@ import {
   getBlockedAdminActions,
   type AdminActionStripView,
   type AdminActionStatus,
-  type AdminActionCategory,
 } from '@/lib/admin/admin-action-strip-view';
 
 // ===========================================================================

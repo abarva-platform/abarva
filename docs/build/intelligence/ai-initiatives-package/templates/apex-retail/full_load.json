@@ -1,8 +1,7 @@
 {
   "tenant_slug": "apex-retail",
-  "template_version": "v1.0.0",
-  "loaded_at": "2026-05-07T00:00:00Z",
-
+  "template_version": "v1.2.0-tower-agent-depth",
+  "loaded_at": "2026-05-09T00:00:00Z",
   "business_goals": [
     {
       "goal_id": "AR-GOAL-01",
@@ -29,7 +28,6 @@
       "display_order": 4
     }
   ],
-
   "initiatives": [
     {
       "initiative_id": "apex-llm-copilot-2025",
@@ -179,50 +177,1648 @@
       "aligned_rationale": null
     }
   ],
-
   "kpi_history": [
-    {"initiative_id": "apex-llm-copilot-2025", "kpi_name": "Active seats %", "kpi_unit": "%", "quarter": "Q4-2025", "kpi_value": 18, "target_value": 50, "confidence_level": "HIGH"},
-    {"initiative_id": "apex-llm-copilot-2025", "kpi_name": "Active seats %", "kpi_unit": "%", "quarter": "Q1-2026", "kpi_value": 26, "target_value": 60, "confidence_level": "HIGH"},
-    {"initiative_id": "apex-llm-copilot-2025", "kpi_name": "Active seats %", "kpi_unit": "%", "quarter": "Q2-2026", "kpi_value": 32, "target_value": 70, "confidence_level": "HIGH"},
-    {"initiative_id": "apex-sdlc-github-copilot-2025", "kpi_name": "PR cycle time", "kpi_unit": "days", "quarter": "Q3-2025", "kpi_value": 5.4, "target_value": 4.0, "confidence_level": "HIGH"},
-    {"initiative_id": "apex-sdlc-github-copilot-2025", "kpi_name": "PR cycle time", "kpi_unit": "days", "quarter": "Q4-2025", "kpi_value": 4.6, "target_value": 4.0, "confidence_level": "HIGH"},
-    {"initiative_id": "apex-sdlc-github-copilot-2025", "kpi_name": "PR cycle time", "kpi_unit": "days", "quarter": "Q1-2026", "kpi_value": 4.2, "target_value": 4.0, "confidence_level": "HIGH"},
-    {"initiative_id": "apex-agentic-cx-2026", "kpi_name": "Containment rate", "kpi_unit": "%", "quarter": "Q1-2026", "kpi_value": 38, "target_value": 65, "confidence_level": "MED"},
-    {"initiative_id": "apex-agentic-cx-2026", "kpi_name": "Containment rate", "kpi_unit": "%", "quarter": "Q2-2026", "kpi_value": 47, "target_value": 65, "confidence_level": "MED"},
-    {"initiative_id": "apex-erp-joule-merch-2025", "kpi_name": "Realized value", "kpi_unit": "$M", "quarter": "Q4-2025", "kpi_value": 0.3, "target_value": 0.7, "confidence_level": "MED"},
-    {"initiative_id": "apex-erp-joule-merch-2025", "kpi_name": "Realized value", "kpi_unit": "$M", "quarter": "Q1-2026", "kpi_value": 0.5, "target_value": 1.0, "confidence_level": "MED"},
-    {"initiative_id": "apex-erp-joule-merch-2025", "kpi_name": "Realized value", "kpi_unit": "$M", "quarter": "Q2-2026", "kpi_value": 0.8, "target_value": 1.4, "confidence_level": "MED"},
-    {"initiative_id": "apex-ml-demand-forecast-2024", "kpi_name": "Forecast accuracy MAPE", "kpi_unit": "%", "quarter": "Q1-2024", "kpi_value": 18.4, "target_value": 12.0, "confidence_level": "HIGH"},
-    {"initiative_id": "apex-ml-demand-forecast-2024", "kpi_name": "Forecast accuracy MAPE", "kpi_unit": "%", "quarter": "Q1-2025", "kpi_value": 14.2, "target_value": 12.0, "confidence_level": "HIGH"},
-    {"initiative_id": "apex-ml-demand-forecast-2024", "kpi_name": "Forecast accuracy MAPE", "kpi_unit": "%", "quarter": "Q1-2026", "kpi_value": 12.5, "target_value": 12.0, "confidence_level": "HIGH"},
-    {"initiative_id": "apex-customer-personalization-2024", "kpi_name": "Revenue per session", "kpi_unit": "$", "quarter": "Q1-2024", "kpi_value": 4.20, "target_value": 5.50, "confidence_level": "HIGH"},
-    {"initiative_id": "apex-customer-personalization-2024", "kpi_name": "Revenue per session", "kpi_unit": "$", "quarter": "Q1-2025", "kpi_value": 4.80, "target_value": 5.50, "confidence_level": "HIGH"},
-    {"initiative_id": "apex-customer-personalization-2024", "kpi_name": "Revenue per session", "kpi_unit": "$", "quarter": "Q1-2026", "kpi_value": 5.24, "target_value": 5.80, "confidence_level": "HIGH"}
+    {
+      "initiative_id": "apex-llm-copilot-2025",
+      "kpi_name": "Adoption penetration %",
+      "kpi_unit": "%",
+      "quarter": "Q3-2025",
+      "kpi_value": 13,
+      "target_value": 77,
+      "peer_median": 67,
+      "confidence_level": "MED"
+    },
+    {
+      "initiative_id": "apex-llm-copilot-2025",
+      "kpi_name": "Adoption penetration %",
+      "kpi_unit": "%",
+      "quarter": "Q4-2025",
+      "kpi_value": 14,
+      "target_value": 77,
+      "peer_median": 67,
+      "confidence_level": "MED"
+    },
+    {
+      "initiative_id": "apex-llm-copilot-2025",
+      "kpi_name": "Adoption penetration %",
+      "kpi_unit": "%",
+      "quarter": "Q1-2026",
+      "kpi_value": 22,
+      "target_value": 77,
+      "peer_median": 67,
+      "confidence_level": "MED"
+    },
+    {
+      "initiative_id": "apex-llm-copilot-2025",
+      "kpi_name": "Adoption penetration %",
+      "kpi_unit": "%",
+      "quarter": "Q2-2026",
+      "kpi_value": 27,
+      "target_value": 77,
+      "peer_median": 67,
+      "confidence_level": "MED"
+    },
+    {
+      "initiative_id": "apex-llm-copilot-2025",
+      "kpi_name": "Value realization $M",
+      "kpi_unit": "$M",
+      "quarter": "Q3-2025",
+      "kpi_value": 0.1,
+      "target_value": 1.8,
+      "peer_median": 1.6,
+      "confidence_level": "MED"
+    },
+    {
+      "initiative_id": "apex-llm-copilot-2025",
+      "kpi_name": "Value realization $M",
+      "kpi_unit": "$M",
+      "quarter": "Q4-2025",
+      "kpi_value": 0.2,
+      "target_value": 1.8,
+      "peer_median": 1.6,
+      "confidence_level": "MED"
+    },
+    {
+      "initiative_id": "apex-llm-copilot-2025",
+      "kpi_name": "Value realization $M",
+      "kpi_unit": "$M",
+      "quarter": "Q1-2026",
+      "kpi_value": 0.3,
+      "target_value": 1.8,
+      "peer_median": 1.6,
+      "confidence_level": "MED"
+    },
+    {
+      "initiative_id": "apex-llm-copilot-2025",
+      "kpi_name": "Value realization $M",
+      "kpi_unit": "$M",
+      "quarter": "Q2-2026",
+      "kpi_value": 0.3,
+      "target_value": 1.8,
+      "peer_median": 1.6,
+      "confidence_level": "MED"
+    },
+    {
+      "initiative_id": "apex-llm-copilot-2025",
+      "kpi_name": "Control coverage %",
+      "kpi_unit": "%",
+      "quarter": "Q3-2025",
+      "kpi_value": 50,
+      "target_value": 85,
+      "peer_median": 71,
+      "confidence_level": "MED"
+    },
+    {
+      "initiative_id": "apex-llm-copilot-2025",
+      "kpi_name": "Control coverage %",
+      "kpi_unit": "%",
+      "quarter": "Q4-2025",
+      "kpi_value": 53,
+      "target_value": 85,
+      "peer_median": 71,
+      "confidence_level": "MED"
+    },
+    {
+      "initiative_id": "apex-llm-copilot-2025",
+      "kpi_name": "Control coverage %",
+      "kpi_unit": "%",
+      "quarter": "Q1-2026",
+      "kpi_value": 62,
+      "target_value": 85,
+      "peer_median": 71,
+      "confidence_level": "MED"
+    },
+    {
+      "initiative_id": "apex-llm-copilot-2025",
+      "kpi_name": "Control coverage %",
+      "kpi_unit": "%",
+      "quarter": "Q2-2026",
+      "kpi_value": 68,
+      "target_value": 85,
+      "peer_median": 71,
+      "confidence_level": "MED"
+    },
+    {
+      "initiative_id": "apex-llm-copilot-2025",
+      "kpi_name": "Outcome attainment index",
+      "kpi_unit": "index",
+      "quarter": "Q3-2025",
+      "kpi_value": 9,
+      "target_value": 75,
+      "peer_median": 64,
+      "confidence_level": "MED"
+    },
+    {
+      "initiative_id": "apex-llm-copilot-2025",
+      "kpi_name": "Outcome attainment index",
+      "kpi_unit": "index",
+      "quarter": "Q4-2025",
+      "kpi_value": 12,
+      "target_value": 75,
+      "peer_median": 64,
+      "confidence_level": "MED"
+    },
+    {
+      "initiative_id": "apex-llm-copilot-2025",
+      "kpi_name": "Outcome attainment index",
+      "kpi_unit": "index",
+      "quarter": "Q1-2026",
+      "kpi_value": 20,
+      "target_value": 75,
+      "peer_median": 64,
+      "confidence_level": "MED"
+    },
+    {
+      "initiative_id": "apex-llm-copilot-2025",
+      "kpi_name": "Outcome attainment index",
+      "kpi_unit": "index",
+      "quarter": "Q2-2026",
+      "kpi_value": 25,
+      "target_value": 75,
+      "peer_median": 64,
+      "confidence_level": "MED"
+    },
+    {
+      "initiative_id": "apex-sdlc-github-copilot-2025",
+      "kpi_name": "Adoption penetration %",
+      "kpi_unit": "%",
+      "quarter": "Q3-2025",
+      "kpi_value": 56,
+      "target_value": 77,
+      "peer_median": 67,
+      "confidence_level": "HIGH"
+    },
+    {
+      "initiative_id": "apex-sdlc-github-copilot-2025",
+      "kpi_name": "Adoption penetration %",
+      "kpi_unit": "%",
+      "quarter": "Q4-2025",
+      "kpi_value": 61,
+      "target_value": 77,
+      "peer_median": 67,
+      "confidence_level": "HIGH"
+    },
+    {
+      "initiative_id": "apex-sdlc-github-copilot-2025",
+      "kpi_name": "Adoption penetration %",
+      "kpi_unit": "%",
+      "quarter": "Q1-2026",
+      "kpi_value": 66,
+      "target_value": 77,
+      "peer_median": 67,
+      "confidence_level": "HIGH"
+    },
+    {
+      "initiative_id": "apex-sdlc-github-copilot-2025",
+      "kpi_name": "Adoption penetration %",
+      "kpi_unit": "%",
+      "quarter": "Q2-2026",
+      "kpi_value": 70,
+      "target_value": 77,
+      "peer_median": 67,
+      "confidence_level": "HIGH"
+    },
+    {
+      "initiative_id": "apex-sdlc-github-copilot-2025",
+      "kpi_name": "Value realization $M",
+      "kpi_unit": "$M",
+      "quarter": "Q3-2025",
+      "kpi_value": 0.6,
+      "target_value": 1.8,
+      "peer_median": 1.6,
+      "confidence_level": "HIGH"
+    },
+    {
+      "initiative_id": "apex-sdlc-github-copilot-2025",
+      "kpi_name": "Value realization $M",
+      "kpi_unit": "$M",
+      "quarter": "Q4-2025",
+      "kpi_value": 0.9,
+      "target_value": 1.8,
+      "peer_median": 1.6,
+      "confidence_level": "HIGH"
+    },
+    {
+      "initiative_id": "apex-sdlc-github-copilot-2025",
+      "kpi_name": "Value realization $M",
+      "kpi_unit": "$M",
+      "quarter": "Q1-2026",
+      "kpi_value": 1.1,
+      "target_value": 1.8,
+      "peer_median": 1.6,
+      "confidence_level": "HIGH"
+    },
+    {
+      "initiative_id": "apex-sdlc-github-copilot-2025",
+      "kpi_name": "Value realization $M",
+      "kpi_unit": "$M",
+      "quarter": "Q2-2026",
+      "kpi_value": 1.4,
+      "target_value": 1.8,
+      "peer_median": 1.6,
+      "confidence_level": "HIGH"
+    },
+    {
+      "initiative_id": "apex-sdlc-github-copilot-2025",
+      "kpi_name": "Control coverage %",
+      "kpi_unit": "%",
+      "quarter": "Q3-2025",
+      "kpi_value": 68,
+      "target_value": 85,
+      "peer_median": 71,
+      "confidence_level": "HIGH"
+    },
+    {
+      "initiative_id": "apex-sdlc-github-copilot-2025",
+      "kpi_name": "Control coverage %",
+      "kpi_unit": "%",
+      "quarter": "Q4-2025",
+      "kpi_value": 74,
+      "target_value": 85,
+      "peer_median": 71,
+      "confidence_level": "HIGH"
+    },
+    {
+      "initiative_id": "apex-sdlc-github-copilot-2025",
+      "kpi_name": "Control coverage %",
+      "kpi_unit": "%",
+      "quarter": "Q1-2026",
+      "kpi_value": 80,
+      "target_value": 85,
+      "peer_median": 71,
+      "confidence_level": "HIGH"
+    },
+    {
+      "initiative_id": "apex-sdlc-github-copilot-2025",
+      "kpi_name": "Control coverage %",
+      "kpi_unit": "%",
+      "quarter": "Q2-2026",
+      "kpi_value": 86,
+      "target_value": 85,
+      "peer_median": 71,
+      "confidence_level": "HIGH"
+    },
+    {
+      "initiative_id": "apex-sdlc-github-copilot-2025",
+      "kpi_name": "Outcome attainment index",
+      "kpi_unit": "index",
+      "quarter": "Q3-2025",
+      "kpi_value": 50,
+      "target_value": 75,
+      "peer_median": 64,
+      "confidence_level": "HIGH"
+    },
+    {
+      "initiative_id": "apex-sdlc-github-copilot-2025",
+      "kpi_name": "Outcome attainment index",
+      "kpi_unit": "index",
+      "quarter": "Q4-2025",
+      "kpi_value": 55,
+      "target_value": 75,
+      "peer_median": 64,
+      "confidence_level": "HIGH"
+    },
+    {
+      "initiative_id": "apex-sdlc-github-copilot-2025",
+      "kpi_name": "Outcome attainment index",
+      "kpi_unit": "index",
+      "quarter": "Q1-2026",
+      "kpi_value": 60,
+      "target_value": 75,
+      "peer_median": 64,
+      "confidence_level": "HIGH"
+    },
+    {
+      "initiative_id": "apex-sdlc-github-copilot-2025",
+      "kpi_name": "Outcome attainment index",
+      "kpi_unit": "index",
+      "quarter": "Q2-2026",
+      "kpi_value": 66,
+      "target_value": 75,
+      "peer_median": 64,
+      "confidence_level": "HIGH"
+    },
+    {
+      "initiative_id": "apex-agentic-cx-2026",
+      "kpi_name": "Adoption penetration %",
+      "kpi_unit": "%",
+      "quarter": "Q3-2025",
+      "kpi_value": 16,
+      "target_value": 77,
+      "peer_median": 67,
+      "confidence_level": "MED"
+    },
+    {
+      "initiative_id": "apex-agentic-cx-2026",
+      "kpi_name": "Adoption penetration %",
+      "kpi_unit": "%",
+      "quarter": "Q4-2025",
+      "kpi_value": 18,
+      "target_value": 77,
+      "peer_median": 67,
+      "confidence_level": "MED"
+    },
+    {
+      "initiative_id": "apex-agentic-cx-2026",
+      "kpi_name": "Adoption penetration %",
+      "kpi_unit": "%",
+      "quarter": "Q1-2026",
+      "kpi_value": 25,
+      "target_value": 77,
+      "peer_median": 67,
+      "confidence_level": "MED"
+    },
+    {
+      "initiative_id": "apex-agentic-cx-2026",
+      "kpi_name": "Adoption penetration %",
+      "kpi_unit": "%",
+      "quarter": "Q2-2026",
+      "kpi_value": 30,
+      "target_value": 77,
+      "peer_median": 67,
+      "confidence_level": "MED"
+    },
+    {
+      "initiative_id": "apex-agentic-cx-2026",
+      "kpi_name": "Value realization $M",
+      "kpi_unit": "$M",
+      "quarter": "Q3-2025",
+      "kpi_value": 0.2,
+      "target_value": 2.3,
+      "peer_median": 1.6,
+      "confidence_level": "MED"
+    },
+    {
+      "initiative_id": "apex-agentic-cx-2026",
+      "kpi_name": "Value realization $M",
+      "kpi_unit": "$M",
+      "quarter": "Q4-2025",
+      "kpi_value": 0.3,
+      "target_value": 2.3,
+      "peer_median": 1.6,
+      "confidence_level": "MED"
+    },
+    {
+      "initiative_id": "apex-agentic-cx-2026",
+      "kpi_name": "Value realization $M",
+      "kpi_unit": "$M",
+      "quarter": "Q1-2026",
+      "kpi_value": 0.4,
+      "target_value": 2.3,
+      "peer_median": 1.6,
+      "confidence_level": "MED"
+    },
+    {
+      "initiative_id": "apex-agentic-cx-2026",
+      "kpi_name": "Value realization $M",
+      "kpi_unit": "$M",
+      "quarter": "Q2-2026",
+      "kpi_value": 0.5,
+      "target_value": 2.3,
+      "peer_median": 1.6,
+      "confidence_level": "MED"
+    },
+    {
+      "initiative_id": "apex-agentic-cx-2026",
+      "kpi_name": "Control coverage %",
+      "kpi_unit": "%",
+      "quarter": "Q3-2025",
+      "kpi_value": 55,
+      "target_value": 85,
+      "peer_median": 71,
+      "confidence_level": "MED"
+    },
+    {
+      "initiative_id": "apex-agentic-cx-2026",
+      "kpi_name": "Control coverage %",
+      "kpi_unit": "%",
+      "quarter": "Q4-2025",
+      "kpi_value": 58,
+      "target_value": 85,
+      "peer_median": 71,
+      "confidence_level": "MED"
+    },
+    {
+      "initiative_id": "apex-agentic-cx-2026",
+      "kpi_name": "Control coverage %",
+      "kpi_unit": "%",
+      "quarter": "Q1-2026",
+      "kpi_value": 67,
+      "target_value": 85,
+      "peer_median": 71,
+      "confidence_level": "MED"
+    },
+    {
+      "initiative_id": "apex-agentic-cx-2026",
+      "kpi_name": "Control coverage %",
+      "kpi_unit": "%",
+      "quarter": "Q2-2026",
+      "kpi_value": 73,
+      "target_value": 85,
+      "peer_median": 71,
+      "confidence_level": "MED"
+    },
+    {
+      "initiative_id": "apex-agentic-cx-2026",
+      "kpi_name": "Outcome attainment index",
+      "kpi_unit": "index",
+      "quarter": "Q3-2025",
+      "kpi_value": 18,
+      "target_value": 75,
+      "peer_median": 64,
+      "confidence_level": "MED"
+    },
+    {
+      "initiative_id": "apex-agentic-cx-2026",
+      "kpi_name": "Outcome attainment index",
+      "kpi_unit": "index",
+      "quarter": "Q4-2025",
+      "kpi_value": 21,
+      "target_value": 75,
+      "peer_median": 64,
+      "confidence_level": "MED"
+    },
+    {
+      "initiative_id": "apex-agentic-cx-2026",
+      "kpi_name": "Outcome attainment index",
+      "kpi_unit": "index",
+      "quarter": "Q1-2026",
+      "kpi_value": 29,
+      "target_value": 75,
+      "peer_median": 64,
+      "confidence_level": "MED"
+    },
+    {
+      "initiative_id": "apex-agentic-cx-2026",
+      "kpi_name": "Outcome attainment index",
+      "kpi_unit": "index",
+      "quarter": "Q2-2026",
+      "kpi_value": 34,
+      "target_value": 75,
+      "peer_median": 64,
+      "confidence_level": "MED"
+    },
+    {
+      "initiative_id": "apex-erp-joule-merch-2025",
+      "kpi_name": "Adoption penetration %",
+      "kpi_unit": "%",
+      "quarter": "Q3-2025",
+      "kpi_value": 8,
+      "target_value": 77,
+      "peer_median": 67,
+      "confidence_level": "MED"
+    },
+    {
+      "initiative_id": "apex-erp-joule-merch-2025",
+      "kpi_name": "Adoption penetration %",
+      "kpi_unit": "%",
+      "quarter": "Q4-2025",
+      "kpi_value": 10,
+      "target_value": 77,
+      "peer_median": 67,
+      "confidence_level": "MED"
+    },
+    {
+      "initiative_id": "apex-erp-joule-merch-2025",
+      "kpi_name": "Adoption penetration %",
+      "kpi_unit": "%",
+      "quarter": "Q1-2026",
+      "kpi_value": 17,
+      "target_value": 77,
+      "peer_median": 67,
+      "confidence_level": "MED"
+    },
+    {
+      "initiative_id": "apex-erp-joule-merch-2025",
+      "kpi_name": "Adoption penetration %",
+      "kpi_unit": "%",
+      "quarter": "Q2-2026",
+      "kpi_value": 22,
+      "target_value": 77,
+      "peer_median": 67,
+      "confidence_level": "MED"
+    },
+    {
+      "initiative_id": "apex-erp-joule-merch-2025",
+      "kpi_name": "Value realization $M",
+      "kpi_unit": "$M",
+      "quarter": "Q3-2025",
+      "kpi_value": 0.4,
+      "target_value": 1.9,
+      "peer_median": 1.6,
+      "confidence_level": "MED"
+    },
+    {
+      "initiative_id": "apex-erp-joule-merch-2025",
+      "kpi_name": "Value realization $M",
+      "kpi_unit": "$M",
+      "quarter": "Q4-2025",
+      "kpi_value": 0.5,
+      "target_value": 1.9,
+      "peer_median": 1.6,
+      "confidence_level": "MED"
+    },
+    {
+      "initiative_id": "apex-erp-joule-merch-2025",
+      "kpi_name": "Value realization $M",
+      "kpi_unit": "$M",
+      "quarter": "Q1-2026",
+      "kpi_value": 0.7,
+      "target_value": 1.9,
+      "peer_median": 1.6,
+      "confidence_level": "MED"
+    },
+    {
+      "initiative_id": "apex-erp-joule-merch-2025",
+      "kpi_name": "Value realization $M",
+      "kpi_unit": "$M",
+      "quarter": "Q2-2026",
+      "kpi_value": 0.8,
+      "target_value": 1.9,
+      "peer_median": 1.6,
+      "confidence_level": "MED"
+    },
+    {
+      "initiative_id": "apex-erp-joule-merch-2025",
+      "kpi_name": "Control coverage %",
+      "kpi_unit": "%",
+      "quarter": "Q3-2025",
+      "kpi_value": 50,
+      "target_value": 85,
+      "peer_median": 71,
+      "confidence_level": "MED"
+    },
+    {
+      "initiative_id": "apex-erp-joule-merch-2025",
+      "kpi_name": "Control coverage %",
+      "kpi_unit": "%",
+      "quarter": "Q4-2025",
+      "kpi_value": 53,
+      "target_value": 85,
+      "peer_median": 71,
+      "confidence_level": "MED"
+    },
+    {
+      "initiative_id": "apex-erp-joule-merch-2025",
+      "kpi_name": "Control coverage %",
+      "kpi_unit": "%",
+      "quarter": "Q1-2026",
+      "kpi_value": 62,
+      "target_value": 85,
+      "peer_median": 71,
+      "confidence_level": "MED"
+    },
+    {
+      "initiative_id": "apex-erp-joule-merch-2025",
+      "kpi_name": "Control coverage %",
+      "kpi_unit": "%",
+      "quarter": "Q2-2026",
+      "kpi_value": 68,
+      "target_value": 85,
+      "peer_median": 71,
+      "confidence_level": "MED"
+    },
+    {
+      "initiative_id": "apex-erp-joule-merch-2025",
+      "kpi_name": "Outcome attainment index",
+      "kpi_unit": "index",
+      "quarter": "Q3-2025",
+      "kpi_value": 0,
+      "target_value": 75,
+      "peer_median": 64,
+      "confidence_level": "MED"
+    },
+    {
+      "initiative_id": "apex-erp-joule-merch-2025",
+      "kpi_name": "Outcome attainment index",
+      "kpi_unit": "index",
+      "quarter": "Q4-2025",
+      "kpi_value": 2,
+      "target_value": 75,
+      "peer_median": 64,
+      "confidence_level": "MED"
+    },
+    {
+      "initiative_id": "apex-erp-joule-merch-2025",
+      "kpi_name": "Outcome attainment index",
+      "kpi_unit": "index",
+      "quarter": "Q1-2026",
+      "kpi_value": 11,
+      "target_value": 75,
+      "peer_median": 64,
+      "confidence_level": "MED"
+    },
+    {
+      "initiative_id": "apex-erp-joule-merch-2025",
+      "kpi_name": "Outcome attainment index",
+      "kpi_unit": "index",
+      "quarter": "Q2-2026",
+      "kpi_value": 16,
+      "target_value": 75,
+      "peer_median": 64,
+      "confidence_level": "MED"
+    },
+    {
+      "initiative_id": "apex-ml-demand-forecast-2024",
+      "kpi_name": "Adoption penetration %",
+      "kpi_unit": "%",
+      "quarter": "Q3-2025",
+      "kpi_value": 62,
+      "target_value": 77,
+      "peer_median": 67,
+      "confidence_level": "HIGH"
+    },
+    {
+      "initiative_id": "apex-ml-demand-forecast-2024",
+      "kpi_name": "Adoption penetration %",
+      "kpi_unit": "%",
+      "quarter": "Q4-2025",
+      "kpi_value": 66,
+      "target_value": 77,
+      "peer_median": 67,
+      "confidence_level": "HIGH"
+    },
+    {
+      "initiative_id": "apex-ml-demand-forecast-2024",
+      "kpi_name": "Adoption penetration %",
+      "kpi_unit": "%",
+      "quarter": "Q1-2026",
+      "kpi_value": 71,
+      "target_value": 77,
+      "peer_median": 67,
+      "confidence_level": "HIGH"
+    },
+    {
+      "initiative_id": "apex-ml-demand-forecast-2024",
+      "kpi_name": "Adoption penetration %",
+      "kpi_unit": "%",
+      "quarter": "Q2-2026",
+      "kpi_value": 76,
+      "target_value": 77,
+      "peer_median": 67,
+      "confidence_level": "HIGH"
+    },
+    {
+      "initiative_id": "apex-ml-demand-forecast-2024",
+      "kpi_name": "Value realization $M",
+      "kpi_unit": "$M",
+      "quarter": "Q3-2025",
+      "kpi_value": 1.9,
+      "target_value": 5.3,
+      "peer_median": 1.6,
+      "confidence_level": "HIGH"
+    },
+    {
+      "initiative_id": "apex-ml-demand-forecast-2024",
+      "kpi_name": "Value realization $M",
+      "kpi_unit": "$M",
+      "quarter": "Q4-2025",
+      "kpi_value": 2.7,
+      "target_value": 5.3,
+      "peer_median": 1.6,
+      "confidence_level": "HIGH"
+    },
+    {
+      "initiative_id": "apex-ml-demand-forecast-2024",
+      "kpi_name": "Value realization $M",
+      "kpi_unit": "$M",
+      "quarter": "Q1-2026",
+      "kpi_value": 3.4,
+      "target_value": 5.3,
+      "peer_median": 1.6,
+      "confidence_level": "HIGH"
+    },
+    {
+      "initiative_id": "apex-ml-demand-forecast-2024",
+      "kpi_name": "Value realization $M",
+      "kpi_unit": "$M",
+      "quarter": "Q2-2026",
+      "kpi_value": 4.2,
+      "target_value": 5.3,
+      "peer_median": 1.6,
+      "confidence_level": "HIGH"
+    },
+    {
+      "initiative_id": "apex-ml-demand-forecast-2024",
+      "kpi_name": "Control coverage %",
+      "kpi_unit": "%",
+      "quarter": "Q3-2025",
+      "kpi_value": 73,
+      "target_value": 85,
+      "peer_median": 71,
+      "confidence_level": "HIGH"
+    },
+    {
+      "initiative_id": "apex-ml-demand-forecast-2024",
+      "kpi_name": "Control coverage %",
+      "kpi_unit": "%",
+      "quarter": "Q4-2025",
+      "kpi_value": 79,
+      "target_value": 85,
+      "peer_median": 71,
+      "confidence_level": "HIGH"
+    },
+    {
+      "initiative_id": "apex-ml-demand-forecast-2024",
+      "kpi_name": "Control coverage %",
+      "kpi_unit": "%",
+      "quarter": "Q1-2026",
+      "kpi_value": 85,
+      "target_value": 85,
+      "peer_median": 71,
+      "confidence_level": "HIGH"
+    },
+    {
+      "initiative_id": "apex-ml-demand-forecast-2024",
+      "kpi_name": "Control coverage %",
+      "kpi_unit": "%",
+      "quarter": "Q2-2026",
+      "kpi_value": 91,
+      "target_value": 85,
+      "peer_median": 71,
+      "confidence_level": "HIGH"
+    },
+    {
+      "initiative_id": "apex-ml-demand-forecast-2024",
+      "kpi_name": "Outcome attainment index",
+      "kpi_unit": "index",
+      "quarter": "Q3-2025",
+      "kpi_value": 59,
+      "target_value": 75,
+      "peer_median": 64,
+      "confidence_level": "HIGH"
+    },
+    {
+      "initiative_id": "apex-ml-demand-forecast-2024",
+      "kpi_name": "Outcome attainment index",
+      "kpi_unit": "index",
+      "quarter": "Q4-2025",
+      "kpi_value": 64,
+      "target_value": 75,
+      "peer_median": 64,
+      "confidence_level": "HIGH"
+    },
+    {
+      "initiative_id": "apex-ml-demand-forecast-2024",
+      "kpi_name": "Outcome attainment index",
+      "kpi_unit": "index",
+      "quarter": "Q1-2026",
+      "kpi_value": 69,
+      "target_value": 75,
+      "peer_median": 64,
+      "confidence_level": "HIGH"
+    },
+    {
+      "initiative_id": "apex-ml-demand-forecast-2024",
+      "kpi_name": "Outcome attainment index",
+      "kpi_unit": "index",
+      "quarter": "Q2-2026",
+      "kpi_value": 75,
+      "target_value": 75,
+      "peer_median": 64,
+      "confidence_level": "HIGH"
+    },
+    {
+      "initiative_id": "apex-infra-finops-ai-2026",
+      "kpi_name": "Adoption penetration %",
+      "kpi_unit": "%",
+      "quarter": "Q3-2025",
+      "kpi_value": 15,
+      "target_value": 77,
+      "peer_median": 67,
+      "confidence_level": "MED"
+    },
+    {
+      "initiative_id": "apex-infra-finops-ai-2026",
+      "kpi_name": "Adoption penetration %",
+      "kpi_unit": "%",
+      "quarter": "Q4-2025",
+      "kpi_value": 19,
+      "target_value": 77,
+      "peer_median": 67,
+      "confidence_level": "MED"
+    },
+    {
+      "initiative_id": "apex-infra-finops-ai-2026",
+      "kpi_name": "Adoption penetration %",
+      "kpi_unit": "%",
+      "quarter": "Q1-2026",
+      "kpi_value": 24,
+      "target_value": 77,
+      "peer_median": 67,
+      "confidence_level": "MED"
+    },
+    {
+      "initiative_id": "apex-infra-finops-ai-2026",
+      "kpi_name": "Adoption penetration %",
+      "kpi_unit": "%",
+      "quarter": "Q2-2026",
+      "kpi_value": 29,
+      "target_value": 77,
+      "peer_median": 67,
+      "confidence_level": "MED"
+    },
+    {
+      "initiative_id": "apex-infra-finops-ai-2026",
+      "kpi_name": "Value realization $M",
+      "kpi_unit": "$M",
+      "quarter": "Q3-2025",
+      "kpi_value": 0,
+      "target_value": 0.4,
+      "peer_median": 1.6,
+      "confidence_level": "MED"
+    },
+    {
+      "initiative_id": "apex-infra-finops-ai-2026",
+      "kpi_name": "Value realization $M",
+      "kpi_unit": "$M",
+      "quarter": "Q4-2025",
+      "kpi_value": 0,
+      "target_value": 0.4,
+      "peer_median": 1.6,
+      "confidence_level": "MED"
+    },
+    {
+      "initiative_id": "apex-infra-finops-ai-2026",
+      "kpi_name": "Value realization $M",
+      "kpi_unit": "$M",
+      "quarter": "Q1-2026",
+      "kpi_value": 0.1,
+      "target_value": 0.4,
+      "peer_median": 1.6,
+      "confidence_level": "MED"
+    },
+    {
+      "initiative_id": "apex-infra-finops-ai-2026",
+      "kpi_name": "Value realization $M",
+      "kpi_unit": "$M",
+      "quarter": "Q2-2026",
+      "kpi_value": 0.1,
+      "target_value": 0.4,
+      "peer_median": 1.6,
+      "confidence_level": "MED"
+    },
+    {
+      "initiative_id": "apex-infra-finops-ai-2026",
+      "kpi_name": "Control coverage %",
+      "kpi_unit": "%",
+      "quarter": "Q3-2025",
+      "kpi_value": 50,
+      "target_value": 85,
+      "peer_median": 71,
+      "confidence_level": "MED"
+    },
+    {
+      "initiative_id": "apex-infra-finops-ai-2026",
+      "kpi_name": "Control coverage %",
+      "kpi_unit": "%",
+      "quarter": "Q4-2025",
+      "kpi_value": 56,
+      "target_value": 85,
+      "peer_median": 71,
+      "confidence_level": "MED"
+    },
+    {
+      "initiative_id": "apex-infra-finops-ai-2026",
+      "kpi_name": "Control coverage %",
+      "kpi_unit": "%",
+      "quarter": "Q1-2026",
+      "kpi_value": 62,
+      "target_value": 85,
+      "peer_median": 71,
+      "confidence_level": "MED"
+    },
+    {
+      "initiative_id": "apex-infra-finops-ai-2026",
+      "kpi_name": "Control coverage %",
+      "kpi_unit": "%",
+      "quarter": "Q2-2026",
+      "kpi_value": 68,
+      "target_value": 85,
+      "peer_median": 71,
+      "confidence_level": "MED"
+    },
+    {
+      "initiative_id": "apex-infra-finops-ai-2026",
+      "kpi_name": "Outcome attainment index",
+      "kpi_unit": "index",
+      "quarter": "Q3-2025",
+      "kpi_value": 3,
+      "target_value": 75,
+      "peer_median": 64,
+      "confidence_level": "MED"
+    },
+    {
+      "initiative_id": "apex-infra-finops-ai-2026",
+      "kpi_name": "Outcome attainment index",
+      "kpi_unit": "index",
+      "quarter": "Q4-2025",
+      "kpi_value": 9,
+      "target_value": 75,
+      "peer_median": 64,
+      "confidence_level": "MED"
+    },
+    {
+      "initiative_id": "apex-infra-finops-ai-2026",
+      "kpi_name": "Outcome attainment index",
+      "kpi_unit": "index",
+      "quarter": "Q1-2026",
+      "kpi_value": 14,
+      "target_value": 75,
+      "peer_median": 64,
+      "confidence_level": "MED"
+    },
+    {
+      "initiative_id": "apex-infra-finops-ai-2026",
+      "kpi_name": "Outcome attainment index",
+      "kpi_unit": "index",
+      "quarter": "Q2-2026",
+      "kpi_value": 19,
+      "target_value": 75,
+      "peer_median": 64,
+      "confidence_level": "MED"
+    },
+    {
+      "initiative_id": "apex-customer-personalization-2024",
+      "kpi_name": "Adoption penetration %",
+      "kpi_unit": "%",
+      "quarter": "Q3-2025",
+      "kpi_value": 65,
+      "target_value": 77,
+      "peer_median": 67,
+      "confidence_level": "HIGH"
+    },
+    {
+      "initiative_id": "apex-customer-personalization-2024",
+      "kpi_name": "Adoption penetration %",
+      "kpi_unit": "%",
+      "quarter": "Q4-2025",
+      "kpi_value": 70,
+      "target_value": 77,
+      "peer_median": 67,
+      "confidence_level": "HIGH"
+    },
+    {
+      "initiative_id": "apex-customer-personalization-2024",
+      "kpi_name": "Adoption penetration %",
+      "kpi_unit": "%",
+      "quarter": "Q1-2026",
+      "kpi_value": 74,
+      "target_value": 77,
+      "peer_median": 67,
+      "confidence_level": "HIGH"
+    },
+    {
+      "initiative_id": "apex-customer-personalization-2024",
+      "kpi_name": "Adoption penetration %",
+      "kpi_unit": "%",
+      "quarter": "Q2-2026",
+      "kpi_value": 79,
+      "target_value": 77,
+      "peer_median": 67,
+      "confidence_level": "HIGH"
+    },
+    {
+      "initiative_id": "apex-customer-personalization-2024",
+      "kpi_name": "Value realization $M",
+      "kpi_unit": "$M",
+      "quarter": "Q3-2025",
+      "kpi_value": 2.9,
+      "target_value": 8,
+      "peer_median": 1.6,
+      "confidence_level": "HIGH"
+    },
+    {
+      "initiative_id": "apex-customer-personalization-2024",
+      "kpi_name": "Value realization $M",
+      "kpi_unit": "$M",
+      "quarter": "Q4-2025",
+      "kpi_value": 4.1,
+      "target_value": 8,
+      "peer_median": 1.6,
+      "confidence_level": "HIGH"
+    },
+    {
+      "initiative_id": "apex-customer-personalization-2024",
+      "kpi_name": "Value realization $M",
+      "kpi_unit": "$M",
+      "quarter": "Q1-2026",
+      "kpi_value": 5.2,
+      "target_value": 8,
+      "peer_median": 1.6,
+      "confidence_level": "HIGH"
+    },
+    {
+      "initiative_id": "apex-customer-personalization-2024",
+      "kpi_name": "Value realization $M",
+      "kpi_unit": "$M",
+      "quarter": "Q2-2026",
+      "kpi_value": 6.4,
+      "target_value": 8,
+      "peer_median": 1.6,
+      "confidence_level": "HIGH"
+    },
+    {
+      "initiative_id": "apex-customer-personalization-2024",
+      "kpi_name": "Control coverage %",
+      "kpi_unit": "%",
+      "quarter": "Q3-2025",
+      "kpi_value": 68,
+      "target_value": 85,
+      "peer_median": 71,
+      "confidence_level": "HIGH"
+    },
+    {
+      "initiative_id": "apex-customer-personalization-2024",
+      "kpi_name": "Control coverage %",
+      "kpi_unit": "%",
+      "quarter": "Q4-2025",
+      "kpi_value": 74,
+      "target_value": 85,
+      "peer_median": 71,
+      "confidence_level": "HIGH"
+    },
+    {
+      "initiative_id": "apex-customer-personalization-2024",
+      "kpi_name": "Control coverage %",
+      "kpi_unit": "%",
+      "quarter": "Q1-2026",
+      "kpi_value": 80,
+      "target_value": 85,
+      "peer_median": 71,
+      "confidence_level": "HIGH"
+    },
+    {
+      "initiative_id": "apex-customer-personalization-2024",
+      "kpi_name": "Control coverage %",
+      "kpi_unit": "%",
+      "quarter": "Q2-2026",
+      "kpi_value": 86,
+      "target_value": 85,
+      "peer_median": 71,
+      "confidence_level": "HIGH"
+    },
+    {
+      "initiative_id": "apex-customer-personalization-2024",
+      "kpi_name": "Outcome attainment index",
+      "kpi_unit": "index",
+      "quarter": "Q3-2025",
+      "kpi_value": 50,
+      "target_value": 75,
+      "peer_median": 64,
+      "confidence_level": "HIGH"
+    },
+    {
+      "initiative_id": "apex-customer-personalization-2024",
+      "kpi_name": "Outcome attainment index",
+      "kpi_unit": "index",
+      "quarter": "Q4-2025",
+      "kpi_value": 55,
+      "target_value": 75,
+      "peer_median": 64,
+      "confidence_level": "HIGH"
+    },
+    {
+      "initiative_id": "apex-customer-personalization-2024",
+      "kpi_name": "Outcome attainment index",
+      "kpi_unit": "index",
+      "quarter": "Q1-2026",
+      "kpi_value": 60,
+      "target_value": 75,
+      "peer_median": 64,
+      "confidence_level": "HIGH"
+    },
+    {
+      "initiative_id": "apex-customer-personalization-2024",
+      "kpi_name": "Outcome attainment index",
+      "kpi_unit": "index",
+      "quarter": "Q2-2026",
+      "kpi_value": 66,
+      "target_value": 75,
+      "peer_median": 64,
+      "confidence_level": "HIGH"
+    }
   ],
-
   "stakeholder_notes": [
-    {"initiative_id": "apex-llm-copilot-2025", "stakeholder_name": "L. Tanaka", "stakeholder_title": "VP Store Operations", "interview_date": "2026-04-18", "quote": "Associates who use Copilot daily love it. The problem is getting them past day 3. We need to fix onboarding before we expand.", "themes": ["adoption", "onboarding"], "attribution_consent": true},
-    {"initiative_id": "apex-agentic-cx-2026", "stakeholder_name": "M. Reyes", "stakeholder_title": "VP Customer Care", "interview_date": "2026-04-22", "quote": "The escalations the agent sends us are worse than the ones humans escalate. Quality of handoff matters more than containment rate.", "themes": ["escalation", "quality"], "attribution_consent": true},
-    {"initiative_id": "apex-ml-demand-forecast-2024", "stakeholder_name": "P. Anand", "stakeholder_title": "VP Supply Chain", "interview_date": "2026-03-12", "quote": "This is the program that bought us credibility for everything else we're doing in AI. Don't break it.", "themes": ["foundation", "credibility"], "attribution_consent": true}
+    {
+      "initiative_id": "apex-llm-copilot-2025",
+      "stakeholder_name": "VP Store Operations sponsor",
+      "stakeholder_title": "VP Store Operations",
+      "interview_date": "2026-04-08",
+      "quote": "AR-01 needs a cleaner evidence chain before the next governance meeting.",
+      "themes": [
+        "value evidence",
+        "adoption gap",
+        "retail"
+      ],
+      "attribution_consent": true
+    },
+    {
+      "initiative_id": "apex-llm-copilot-2025",
+      "stakeholder_name": "VP Store Operations operator",
+      "stakeholder_title": "Operations operator",
+      "interview_date": "2026-04-18",
+      "quote": "The next decision should separate adoption, cost, and evidence quality instead of blending them into one status color.",
+      "themes": [
+        "operating readiness",
+        "confidence floor",
+        "CAT-01"
+      ],
+      "attribution_consent": false
+    },
+    {
+      "initiative_id": "apex-sdlc-github-copilot-2025",
+      "stakeholder_name": "CTO sponsor",
+      "stakeholder_title": "CTO",
+      "interview_date": "2026-04-09",
+      "quote": "AR-02 is one of the few AI efforts where operating teams can point to the value without a translation layer.",
+      "themes": [
+        "value evidence",
+        "healthy",
+        "retail"
+      ],
+      "attribution_consent": false
+    },
+    {
+      "initiative_id": "apex-sdlc-github-copilot-2025",
+      "stakeholder_name": "CTO operator",
+      "stakeholder_title": "IT operator",
+      "interview_date": "2026-04-19",
+      "quote": "The next decision should separate adoption, cost, and evidence quality instead of blending them into one status color.",
+      "themes": [
+        "operating readiness",
+        "confidence floor",
+        "CAT-02"
+      ],
+      "attribution_consent": true
+    },
+    {
+      "initiative_id": "apex-agentic-cx-2026",
+      "stakeholder_name": "VP Customer Care sponsor",
+      "stakeholder_title": "VP Customer Care",
+      "interview_date": "2026-04-10",
+      "quote": "AR-03 needs a cleaner evidence chain before the next governance meeting.",
+      "themes": [
+        "value evidence",
+        "value lag",
+        "retail"
+      ],
+      "attribution_consent": true
+    },
+    {
+      "initiative_id": "apex-agentic-cx-2026",
+      "stakeholder_name": "VP Customer Care operator",
+      "stakeholder_title": "Customer Service operator",
+      "interview_date": "2026-04-20",
+      "quote": "The next decision should separate adoption, cost, and evidence quality instead of blending them into one status color.",
+      "themes": [
+        "operating readiness",
+        "confidence floor",
+        "CAT-03"
+      ],
+      "attribution_consent": false
+    },
+    {
+      "initiative_id": "apex-erp-joule-merch-2025",
+      "stakeholder_name": "Chief Merchandising Officer sponsor",
+      "stakeholder_title": "Chief Merchandising Officer",
+      "interview_date": "2026-04-11",
+      "quote": "AR-04 needs a cleaner evidence chain before the next governance meeting.",
+      "themes": [
+        "value evidence",
+        "value lag",
+        "retail"
+      ],
+      "attribution_consent": true
+    },
+    {
+      "initiative_id": "apex-erp-joule-merch-2025",
+      "stakeholder_name": "Chief Merchandising Officer operator",
+      "stakeholder_title": "Merchandising operator",
+      "interview_date": "2026-04-21",
+      "quote": "The next decision should separate adoption, cost, and evidence quality instead of blending them into one status color.",
+      "themes": [
+        "operating readiness",
+        "confidence floor",
+        "CAT-04"
+      ],
+      "attribution_consent": false
+    },
+    {
+      "initiative_id": "apex-ml-demand-forecast-2024",
+      "stakeholder_name": "VP Supply Chain sponsor",
+      "stakeholder_title": "VP Supply Chain",
+      "interview_date": "2026-04-12",
+      "quote": "AR-05 is one of the few AI efforts where operating teams can point to the value without a translation layer.",
+      "themes": [
+        "value evidence",
+        "healthy",
+        "retail"
+      ],
+      "attribution_consent": false
+    },
+    {
+      "initiative_id": "apex-ml-demand-forecast-2024",
+      "stakeholder_name": "VP Supply Chain operator",
+      "stakeholder_title": "Supply Chain operator",
+      "interview_date": "2026-04-22",
+      "quote": "The next decision should separate adoption, cost, and evidence quality instead of blending them into one status color.",
+      "themes": [
+        "operating readiness",
+        "confidence floor",
+        "CAT-05"
+      ],
+      "attribution_consent": true
+    },
+    {
+      "initiative_id": "apex-infra-finops-ai-2026",
+      "stakeholder_name": "CFO sponsor",
+      "stakeholder_title": "CFO",
+      "interview_date": "2026-04-13",
+      "quote": "AR-06 needs a cleaner evidence chain before the next governance meeting.",
+      "themes": [
+        "value evidence",
+        "foundation phase",
+        "retail"
+      ],
+      "attribution_consent": true
+    },
+    {
+      "initiative_id": "apex-infra-finops-ai-2026",
+      "stakeholder_name": "CFO operator",
+      "stakeholder_title": "Finance operator",
+      "interview_date": "2026-04-23",
+      "quote": "The platform work is necessary, but we should not sell it as realized value yet.",
+      "themes": [
+        "operating readiness",
+        "confidence floor",
+        "CAT-06"
+      ],
+      "attribution_consent": false
+    },
+    {
+      "initiative_id": "apex-customer-personalization-2024",
+      "stakeholder_name": "Chief Digital Officer sponsor",
+      "stakeholder_title": "Chief Digital Officer",
+      "interview_date": "2026-04-14",
+      "quote": "AR-07 is one of the few AI efforts where operating teams can point to the value without a translation layer.",
+      "themes": [
+        "value evidence",
+        "healthy",
+        "retail"
+      ],
+      "attribution_consent": true
+    },
+    {
+      "initiative_id": "apex-customer-personalization-2024",
+      "stakeholder_name": "Chief Digital Officer operator",
+      "stakeholder_title": "Digital operator",
+      "interview_date": "2026-04-24",
+      "quote": "The next decision should separate adoption, cost, and evidence quality instead of blending them into one status color.",
+      "themes": [
+        "operating readiness",
+        "confidence floor",
+        "CAT-07"
+      ],
+      "attribution_consent": false
+    }
   ],
-
   "decisions": [
-    {"initiative_id": "apex-llm-copilot-2025", "decision_name": "Pilot expansion to 20 stores", "decision_date": null, "sponsor_name": "L. Tanaka", "decision_status": "pending", "dissent_recorded": false, "outcome_status": "Awaiting Q3 governance review"},
-    {"initiative_id": "apex-agentic-cx-2026", "decision_name": "Voice channel expansion", "decision_date": null, "sponsor_name": "M. Reyes", "decision_status": "pending", "dissent_recorded": true, "dissent_summary": "VP Brand concerned about voice agent representing company in customer's ear without sufficient quality bar", "outcome_status": "Q2 2026 governance review"},
-    {"initiative_id": "apex-erp-joule-merch-2025", "decision_name": "POS data integration acceleration", "decision_date": "2026-02-15", "sponsor_name": "K. Singh", "decision_status": "decided", "dissent_recorded": false, "outcome_status": "Approved · resourced for Q2 delivery"},
-    {"initiative_id": "apex-customer-personalization-2024", "decision_name": "ML platform contract renewal", "decision_date": null, "sponsor_name": "J. Wright", "decision_status": "pending", "dissent_recorded": false, "outcome_status": "Q1 2027 renewal · negotiation underway"}
+    {
+      "initiative_id": "apex-llm-copilot-2025",
+      "decision_name": "AR-01 evidence gate",
+      "decision_date": "2026-03-05",
+      "sponsor_name": "L. Tanaka",
+      "decision_status": "decided",
+      "dissent_recorded": true,
+      "dissent_summary": "Dissent recorded: sponsor wanted to continue, finance or risk asked for stronger measured-value evidence before scaling AR-01.",
+      "outcome_status": "open"
+    },
+    {
+      "initiative_id": "apex-llm-copilot-2025",
+      "decision_name": "AR-01 next-quarter funding posture",
+      "decision_date": "2026-04-03",
+      "sponsor_name": "L. Tanaka",
+      "decision_status": "pending",
+      "dissent_recorded": true,
+      "dissent_summary": "Minority view: defer incremental funding until AR-01 has clearer operating telemetry.",
+      "outcome_status": "pending review"
+    },
+    {
+      "initiative_id": "apex-sdlc-github-copilot-2025",
+      "decision_name": "AR-02 evidence gate",
+      "decision_date": "2026-03-06",
+      "sponsor_name": "R. Chen",
+      "decision_status": "pending",
+      "dissent_recorded": false,
+      "dissent_summary": null,
+      "outcome_status": "accepted"
+    },
+    {
+      "initiative_id": "apex-sdlc-github-copilot-2025",
+      "decision_name": "AR-02 next-quarter funding posture",
+      "decision_date": "2026-04-04",
+      "sponsor_name": "R. Chen",
+      "decision_status": "pending",
+      "dissent_recorded": false,
+      "dissent_summary": null,
+      "outcome_status": "pending review"
+    },
+    {
+      "initiative_id": "apex-agentic-cx-2026",
+      "decision_name": "AR-03 evidence gate",
+      "decision_date": "2026-03-07",
+      "sponsor_name": "M. Reyes",
+      "decision_status": "stalled",
+      "dissent_recorded": true,
+      "dissent_summary": "Dissent recorded: sponsor wanted to continue, finance or risk asked for stronger measured-value evidence before scaling AR-03.",
+      "outcome_status": "open"
+    },
+    {
+      "initiative_id": "apex-agentic-cx-2026",
+      "decision_name": "AR-03 next-quarter funding posture",
+      "decision_date": "2026-04-05",
+      "sponsor_name": "M. Reyes",
+      "decision_status": "pending",
+      "dissent_recorded": false,
+      "dissent_summary": null,
+      "outcome_status": "defend while resolving"
+    },
+    {
+      "initiative_id": "apex-erp-joule-merch-2025",
+      "decision_name": "AR-04 evidence gate",
+      "decision_date": "2026-03-08",
+      "sponsor_name": "K. Singh",
+      "decision_status": "decided",
+      "dissent_recorded": true,
+      "dissent_summary": "Dissent recorded: sponsor wanted to continue, finance or risk asked for stronger measured-value evidence before scaling AR-04.",
+      "outcome_status": "open"
+    },
+    {
+      "initiative_id": "apex-erp-joule-merch-2025",
+      "decision_name": "AR-04 next-quarter funding posture",
+      "decision_date": "2026-04-06",
+      "sponsor_name": "K. Singh",
+      "decision_status": "pending",
+      "dissent_recorded": false,
+      "dissent_summary": null,
+      "outcome_status": "pending review"
+    },
+    {
+      "initiative_id": "apex-ml-demand-forecast-2024",
+      "decision_name": "AR-05 evidence gate",
+      "decision_date": "2026-03-09",
+      "sponsor_name": "P. Anand",
+      "decision_status": "reversed",
+      "dissent_recorded": false,
+      "dissent_summary": null,
+      "outcome_status": "accepted"
+    },
+    {
+      "initiative_id": "apex-ml-demand-forecast-2024",
+      "decision_name": "AR-05 next-quarter funding posture",
+      "decision_date": "2026-04-07",
+      "sponsor_name": "P. Anand",
+      "decision_status": "pending",
+      "dissent_recorded": true,
+      "dissent_summary": "Minority view: defer incremental funding until AR-05 has clearer operating telemetry.",
+      "outcome_status": "defend while resolving"
+    },
+    {
+      "initiative_id": "apex-infra-finops-ai-2026",
+      "decision_name": "AR-06 evidence gate",
+      "decision_date": "2026-03-10",
+      "sponsor_name": "D. Park",
+      "decision_status": "pending",
+      "dissent_recorded": false,
+      "dissent_summary": null,
+      "outcome_status": "watch"
+    },
+    {
+      "initiative_id": "apex-infra-finops-ai-2026",
+      "decision_name": "AR-06 next-quarter funding posture",
+      "decision_date": "2026-04-08",
+      "sponsor_name": "D. Park",
+      "decision_status": "pending",
+      "dissent_recorded": false,
+      "dissent_summary": null,
+      "outcome_status": "pending review"
+    },
+    {
+      "initiative_id": "apex-customer-personalization-2024",
+      "decision_name": "AR-07 evidence gate",
+      "decision_date": "2026-03-11",
+      "sponsor_name": "J. Wright",
+      "decision_status": "decided",
+      "dissent_recorded": false,
+      "dissent_summary": null,
+      "outcome_status": "accepted"
+    },
+    {
+      "initiative_id": "apex-customer-personalization-2024",
+      "decision_name": "AR-07 next-quarter funding posture",
+      "decision_date": "2026-04-09",
+      "sponsor_name": "J. Wright",
+      "decision_status": "pending",
+      "dissent_recorded": false,
+      "dissent_summary": null,
+      "outcome_status": "pending review"
+    }
   ],
-
   "vendors": [
-    {"initiative_id": "apex-llm-copilot-2025", "vendor_name": "Microsoft", "contract_value_usd": 1600000, "renewal_date": "2027-12-31", "financial_health": "strong", "notes": "Part of broader M365 contract"},
-    {"initiative_id": "apex-sdlc-github-copilot-2025", "vendor_name": "GitHub (Microsoft)", "contract_value_usd": 900000, "renewal_date": "2026-09-30", "financial_health": "strong", "notes": "Per-seat licensing"},
-    {"initiative_id": "apex-agentic-cx-2026", "vendor_name": "Sierra", "contract_value_usd": 2100000, "renewal_date": "2027-03-31", "financial_health": "moderate", "notes": "Newer vendor; financial health bears watching"},
-    {"initiative_id": "apex-erp-joule-merch-2025", "vendor_name": "SAP", "contract_value_usd": 3400000, "renewal_date": "2027-12-31", "financial_health": "strong", "notes": "Bundled with ECC modernization contract"}
+    {
+      "initiative_id": "apex-llm-copilot-2025",
+      "vendor_name": "Microsoft",
+      "contract_value_usd": 1600000,
+      "renewal_date": "2026-06-28",
+      "financial_health": "strong",
+      "notes": "Part of broader M365 contract; 47 days from 2026-05-12 demo pin"
+    },
+    {
+      "initiative_id": "apex-sdlc-github-copilot-2025",
+      "vendor_name": "GitHub (Microsoft)",
+      "contract_value_usd": 900000,
+      "renewal_date": "2026-07-10",
+      "financial_health": "strong",
+      "notes": "Per-seat licensing; potential bundle with Microsoft EA"
+    },
+    {
+      "initiative_id": "apex-agentic-cx-2026",
+      "vendor_name": "Sierra",
+      "contract_value_usd": 2100000,
+      "renewal_date": "2026-12-31",
+      "financial_health": "moderate",
+      "notes": "Newer vendor; financial health bears watching"
+    },
+    {
+      "initiative_id": "apex-erp-joule-merch-2025",
+      "vendor_name": "SAP",
+      "contract_value_usd": 3400000,
+      "renewal_date": "2026-08-04",
+      "financial_health": "strong",
+      "notes": "Bundled with ECC modernization contract; 84 days from 2026-05-12 demo pin"
+    },
+    {
+      "initiative_id": "apex-sdlc-github-copilot-2025",
+      "vendor_name": "Microsoft",
+      "contract_value_usd": 900000,
+      "renewal_date": "2027-02-28",
+      "financial_health": "moderate",
+      "notes": "Tower substrate vendor anchor for AR-02."
+    },
+    {
+      "initiative_id": "apex-agentic-cx-2026",
+      "vendor_name": "Microsoft",
+      "contract_value_usd": 2100000,
+      "renewal_date": "2027-03-28",
+      "financial_health": "moderate",
+      "notes": "Tower substrate vendor anchor for AR-03."
+    },
+    {
+      "initiative_id": "apex-erp-joule-merch-2025",
+      "vendor_name": "Microsoft",
+      "contract_value_usd": 1700000,
+      "renewal_date": "2027-04-28",
+      "financial_health": "moderate",
+      "notes": "Tower substrate vendor anchor for AR-04."
+    },
+    {
+      "initiative_id": "apex-ml-demand-forecast-2024",
+      "vendor_name": "Microsoft",
+      "contract_value_usd": 700000,
+      "renewal_date": "2027-05-28",
+      "financial_health": "moderate",
+      "notes": "Tower substrate vendor anchor for AR-05."
+    },
+    {
+      "initiative_id": "apex-infra-finops-ai-2026",
+      "vendor_name": "Microsoft",
+      "contract_value_usd": 400000,
+      "renewal_date": "2027-06-28",
+      "financial_health": "moderate",
+      "notes": "Tower substrate vendor anchor for AR-06."
+    },
+    {
+      "initiative_id": "apex-customer-personalization-2024",
+      "vendor_name": "Microsoft",
+      "contract_value_usd": 2800000,
+      "renewal_date": "2027-07-28",
+      "financial_health": "moderate",
+      "notes": "Tower substrate vendor anchor for AR-07."
+    }
   ],
-
   "scenarios": [
-    {"initiative_id": "apex-agentic-cx-2026", "scenario_name": "Containment misses target by Q4 2026", "trigger_event": "Q3 2026 review", "time_horizon_months": 6, "probability_pct": 45, "impact_summary": "Voice expansion paused; CX agent contained to chat only; renewal at risk"},
-    {"initiative_id": "apex-erp-joule-merch-2025", "scenario_name": "POS integration slips Q3 2026", "trigger_event": "POS modernization delays", "time_horizon_months": 4, "probability_pct": 35, "impact_summary": "Joule value lag persists; Y2 budget pressured"},
-    {"initiative_id": "apex-llm-copilot-2025", "scenario_name": "Adoption stays below 40% through Q3", "trigger_event": "Q3 2026 review", "time_horizon_months": 4, "probability_pct": 55, "impact_summary": "Expansion canceled; pilot wound down; $1.6M reallocated"}
+    {
+      "initiative_id": "apex-llm-copilot-2025",
+      "scenario_name": "AR-01 scale-with-controls scenario",
+      "trigger_event": "next governance gate approves scale path",
+      "time_horizon_months": 3,
+      "probability_pct": 35,
+      "impact_summary": "If controls and telemetry clear, AR-01 can move from status adoption_gap toward a defended scale posture without changing the tenant strategy."
+    },
+    {
+      "initiative_id": "apex-llm-copilot-2025",
+      "scenario_name": "AR-01 evidence-shortfall scenario",
+      "trigger_event": "confidence floor remains below governance threshold",
+      "time_horizon_months": 6,
+      "probability_pct": 18,
+      "impact_summary": "If evidence remains thin, Tower should keep AR-01 in pressure or watch posture and route the next action to the accountable operating lane."
+    },
+    {
+      "initiative_id": "apex-sdlc-github-copilot-2025",
+      "scenario_name": "AR-02 scale-with-controls scenario",
+      "trigger_event": "next governance gate approves scale path",
+      "time_horizon_months": 6,
+      "probability_pct": 42,
+      "impact_summary": "If controls and telemetry clear, AR-02 can move from status healthy toward a defended scale posture without changing the tenant strategy."
+    },
+    {
+      "initiative_id": "apex-sdlc-github-copilot-2025",
+      "scenario_name": "AR-02 evidence-shortfall scenario",
+      "trigger_event": "confidence floor remains below governance threshold",
+      "time_horizon_months": 9,
+      "probability_pct": 29,
+      "impact_summary": "If evidence remains thin, Tower should keep AR-02 in pressure or watch posture and route the next action to the accountable operating lane."
+    },
+    {
+      "initiative_id": "apex-agentic-cx-2026",
+      "scenario_name": "AR-03 scale-with-controls scenario",
+      "trigger_event": "next governance gate approves scale path",
+      "time_horizon_months": 9,
+      "probability_pct": 49,
+      "impact_summary": "If controls and telemetry clear, AR-03 can move from status value_lag toward a defended scale posture without changing the tenant strategy."
+    },
+    {
+      "initiative_id": "apex-agentic-cx-2026",
+      "scenario_name": "AR-03 evidence-shortfall scenario",
+      "trigger_event": "confidence floor remains below governance threshold",
+      "time_horizon_months": 12,
+      "probability_pct": 40,
+      "impact_summary": "If evidence remains thin, Tower should keep AR-03 in pressure or watch posture and route the next action to the accountable operating lane."
+    },
+    {
+      "initiative_id": "apex-erp-joule-merch-2025",
+      "scenario_name": "AR-04 scale-with-controls scenario",
+      "trigger_event": "next governance gate approves scale path",
+      "time_horizon_months": 12,
+      "probability_pct": 56,
+      "impact_summary": "If controls and telemetry clear, AR-04 can move from status value_lag toward a defended scale posture without changing the tenant strategy."
+    },
+    {
+      "initiative_id": "apex-erp-joule-merch-2025",
+      "scenario_name": "AR-04 evidence-shortfall scenario",
+      "trigger_event": "confidence floor remains below governance threshold",
+      "time_horizon_months": 6,
+      "probability_pct": 51,
+      "impact_summary": "If evidence remains thin, Tower should keep AR-04 in pressure or watch posture and route the next action to the accountable operating lane."
+    },
+    {
+      "initiative_id": "apex-ml-demand-forecast-2024",
+      "scenario_name": "AR-05 scale-with-controls scenario",
+      "trigger_event": "next governance gate approves scale path",
+      "time_horizon_months": 3,
+      "probability_pct": 63,
+      "impact_summary": "If controls and telemetry clear, AR-05 can move from status healthy toward a defended scale posture without changing the tenant strategy."
+    },
+    {
+      "initiative_id": "apex-ml-demand-forecast-2024",
+      "scenario_name": "AR-05 evidence-shortfall scenario",
+      "trigger_event": "confidence floor remains below governance threshold",
+      "time_horizon_months": 9,
+      "probability_pct": 62,
+      "impact_summary": "If evidence remains thin, Tower should keep AR-05 in pressure or watch posture and route the next action to the accountable operating lane."
+    },
+    {
+      "initiative_id": "apex-infra-finops-ai-2026",
+      "scenario_name": "AR-06 scale-with-controls scenario",
+      "trigger_event": "platform control milestone clears",
+      "time_horizon_months": 6,
+      "probability_pct": 70,
+      "impact_summary": "If controls and telemetry clear, AR-06 can move from status foundation_phase toward a defended scale posture without changing the tenant strategy."
+    },
+    {
+      "initiative_id": "apex-infra-finops-ai-2026",
+      "scenario_name": "AR-06 evidence-shortfall scenario",
+      "trigger_event": "confidence floor remains below governance threshold",
+      "time_horizon_months": 12,
+      "probability_pct": 23,
+      "impact_summary": "If evidence remains thin, Tower should keep AR-06 in pressure or watch posture and route the next action to the accountable operating lane."
+    },
+    {
+      "initiative_id": "apex-customer-personalization-2024",
+      "scenario_name": "AR-07 scale-with-controls scenario",
+      "trigger_event": "next governance gate approves scale path",
+      "time_horizon_months": 9,
+      "probability_pct": 77,
+      "impact_summary": "If controls and telemetry clear, AR-07 can move from status healthy toward a defended scale posture without changing the tenant strategy."
+    },
+    {
+      "initiative_id": "apex-customer-personalization-2024",
+      "scenario_name": "AR-07 evidence-shortfall scenario",
+      "trigger_event": "confidence floor remains below governance threshold",
+      "time_horizon_months": 6,
+      "probability_pct": 34,
+      "impact_summary": "If evidence remains thin, Tower should keep AR-07 in pressure or watch posture and route the next action to the accountable operating lane."
+    }
   ]
 }

@@ -57,7 +57,11 @@ export const LEARN_NAV: ReadonlyArray<LearnNavGroup> = [
   {
     group: 'Strategic Moves',
     items: [
+      { slug: 'case-study', label: '↗ Case study: $35M Move' },
       { slug: 'moves-overview', label: 'What is a Move?' },
+      { slug: 'first-move', label: 'Your first Move walkthrough' },
+      { slug: 'nexus-guide', label: 'Working with Nexus' },
+      { slug: 'moves-reference', label: 'Quick reference card' },
       { slug: 'p0', label: 'Originate', phaseBadge: 'P0', phaseColor: 'grey' },
       { slug: 'p1', label: 'Charter', phaseBadge: 'P1', phaseColor: 'navy' },
       { slug: 'p2', label: 'Discover & Diagnose', phaseBadge: 'P2', phaseColor: 'navy' },
@@ -92,6 +96,16 @@ export const LEARN_NAV: ReadonlyArray<LearnNavGroup> = [
       { slug: 'source/selection', label: 'Ch.09 Selection', stageBadge: '09', stageColor: 'teal', indent: true },
       { slug: 'source/transition', label: 'Ch.10 Transition', stageBadge: '10', stageColor: 'teal', indent: true },
       { slug: 'source/value', label: 'Ch.11 Value', stageBadge: '11', stageColor: 'teal', indent: true },
+      // Apex Retail case study — $35M AMS Outsourcing 2026
+      { slug: 'source/apex-retail-case-study', label: 'Apex Retail · $35M AMS', kind: 'caseStudy' },
+      { slug: 'source/apex-strategy',   label: 'Ch.01 Strategy',         stageBadge: '01', stageColor: 'grey',  indent: true },
+      { slug: 'source/apex-scope',      label: 'Ch.02 Scope',            stageBadge: '02', stageColor: 'grey',  indent: true },
+      { slug: 'source/apex-rfp',        label: 'Ch.03 RFP',              stageBadge: '03', stageColor: 'navy',  indent: true },
+      { slug: 'source/apex-responses',  label: 'Ch.04 Responses',        stageBadge: '04', stageColor: 'navy',  indent: true },
+      { slug: 'source/apex-evaluation', label: 'Ch.05 Evaluation',       stageBadge: '05', stageColor: 'navy',  indent: true },
+      { slug: 'source/apex-pricing',    label: 'Ch.06 Pricing',          stageBadge: '06', stageColor: 'navy',  indent: true },
+      { slug: 'source/apex-bafo',       label: 'Ch.07 BAFO · active',    stageBadge: '07', stageColor: 'amber', indent: true },
+      { slug: 'source/apex-decision',   label: 'Ch.08 Decision · pending', stageBadge: '08', stageColor: 'grey', indent: true },
       { slug: 'source/glossary', label: 'Glossary & pitfalls' },
       { slug: 'source/gates', label: 'Gates & evidence' },
       { slug: 'source/exports', label: 'Export formats' },

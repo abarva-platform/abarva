@@ -1,6 +1,7 @@
 import { AI_PROGRAM_PATTERNS } from './seed-patterns-ai-programs';
 import { ARCHITECTURE_PATTERNS } from './seed-patterns-architecture';
 import { CDP_PATTERNS } from './seed-patterns-cdp';
+import { CXO_THEME_PATTERNS } from './seed-patterns-cxo-themes';
 import { INDUSTRY_PATTERNS } from './seed-patterns-industry';
 import { META_PATTERNS } from './seed-patterns-meta';
 import { SOURCING_PATTERNS } from './seed-patterns-sourcing';
@@ -19,6 +20,7 @@ const DEFAULT_PATTERNS: readonly PatternSeed[] = [
   ...AI_PROGRAM_PATTERNS,
   ...ARCHITECTURE_PATTERNS,
   ...CDP_PATTERNS,
+  ...CXO_THEME_PATTERNS,
   ...INDUSTRY_PATTERNS,
   ...META_PATTERNS,
   ...SOURCING_PATTERNS,

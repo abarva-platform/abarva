@@ -9,31 +9,34 @@
 // rather than raster AI-generated — same visual register without
 // the bandwidth/auth cost of an external image service.
 
+import Image from 'next/image';
 import Link from 'next/link';
 import type { ReactNode } from 'react';
 
-/** Inline AbarVa wordmark — replaces the word "AbarVa" in body copy.
- *  Uses a plain <img> (not Next.js Image) so em-relative height + width:auto
- *  resolve against the SVG's actual 3.86:1 intrinsic ratio without
- *  the width={px} prop fighting width:auto. */
+/** Inline AbarVa wordmark — replaces the word "AbarVa" in body copy
+ *  so the brand mark is shown rather than the word. Sized to match
+ *  surrounding text. `inverse` flips it for dark backgrounds. */
 function AbarvaWordmark({
+  height = '0.78em',
   inverse = false,
 }: {
+  height?: string | number;
   inverse?: boolean;
 }) {
   return (
-    // eslint-disable-next-line @next/next/no-img-element
-    <img
+    <Image
       src={inverse ? '/brand/abarva-logo-inverse.svg' : '/brand/abarva-logo.svg'}
       alt="AbarVa"
+      width={130}
+      height={42}
       style={{
-        height: '0.82em',
+        height,
         width: 'auto',
         display: 'inline-block',
-        verticalAlign: '-0.07em',
-        margin: '0 0.15em',
-        flexShrink: 0,
+        verticalAlign: '-0.13em',
+        margin: '0 0.05em',
       }}
+      unoptimized
     />
   );
 }
@@ -56,7 +59,21 @@ const C = {
   hair: 'rgba(21,21,26,0.08)',
 };
 
-export function ProductMarketingPage({ tenantName = 'Meridian' }: { tenantName?: string }) {
+interface ProductMarketingSpotlight {
+  clientName: string;
+  clientShortName: string;
+}
+
+const DEFAULT_SPOTLIGHT: ProductMarketingSpotlight = {
+  clientName: 'your active client',
+  clientShortName: 'your client',
+};
+
+export function ProductMarketingPage({
+  spotlight = DEFAULT_SPOTLIGHT,
+}: {
+  spotlight?: ProductMarketingSpotlight;
+}) {
   return (
     <div
       data-testid="product-marketing-page"
@@ -69,19 +86,19 @@ export function ProductMarketingPage({ tenantName = 'Meridian' }: { tenantName?:
         minHeight: '100vh',
       }}
     >
-      <Hero tenantName={tenantName} />
+      <Hero spotlight={spotlight} />
       <FourSurfaces />
       <MoveLifecycle />
-      <Substrate tenantName={tenantName} />
+      <Substrate spotlight={spotlight} />
       <Differentiators />
-      <Cta tenantName={tenantName} />
+      <Cta spotlight={spotlight} />
     </div>
   );
 }
 
 // ─── Hero ─────────────────────────────────────────────────────────
 
-function Hero({ tenantName }: { tenantName: string }) {
+function Hero({ spotlight }: { spotlight: ProductMarketingSpotlight }) {
   return (
     <section
       style={{
@@ -164,7 +181,7 @@ function Hero({ tenantName }: { tenantName: string }) {
                 gap: 8,
               }}
             >
-              See it on {tenantName} →
+              See it on {spotlight.clientShortName} →
             </Link>
             <Link
               href="/intelligence#brief"
@@ -488,8 +505,8 @@ function FourSurfaces() {
         <SectionEyebrow num="02">The four surfaces</SectionEyebrow>
         <SectionTitle>One platform. Four surfaces. Each one a CXO answer.</SectionTitle>
         <SectionLead>
-          <AbarvaWordmark /> isn't a dashboard. Each surface answers a different decision —
-          and they're all wired into the same substrate so the answers stay
+          <AbarvaWordmark /> isn&rsquo;t a dashboard. Each surface answers a different decision —
+          and they&rsquo;re all wired into the same substrate so the answers stay
           consistent.
         </SectionLead>
         <div
@@ -933,7 +950,7 @@ function MoveLifecycle() {
 
 // ─── Substrate ────────────────────────────────────────────────────
 
-function Substrate({ tenantName }: { tenantName: string }) {
+function Substrate({ spotlight }: { spotlight: ProductMarketingSpotlight }) {
   return (
     <section style={{ padding: '96px 64px', borderBottom: `1px solid ${C.border}` }}>
       <div
@@ -949,12 +966,12 @@ function Substrate({ tenantName }: { tenantName: string }) {
         <div>
           <SectionEyebrow num="04">The substrate</SectionEyebrow>
           <SectionTitle>
-            What <AbarvaWordmark /> knows · before it answers.
+            What <AbarvaWordmark height="0.7em" /> knows · before it answers.
           </SectionTitle>
           <p style={{ fontSize: 15.5, color: C.inkSoft, lineHeight: 1.65, marginBottom: 20, maxWidth: '54ch' }}>
             Every CXO answer is grounded in three layers of substrate. The
             tenant layer is what we know about you. The corpus is the cross-
-            tenant pattern library. The industry layer is what's possible at
+            tenant pattern library. The industry layer is what&rsquo;s possible at
             the frontier.
           </p>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14, marginTop: 28 }}>
@@ -978,7 +995,7 @@ function Substrate({ tenantName }: { tenantName: string }) {
             />
           </div>
         </div>
-        <SubstrateIllustration tenantName={tenantName} />
+        <SubstrateIllustration spotlight={spotlight} />
       </div>
     </section>
   );
@@ -1035,7 +1052,11 @@ function SubstrateRow({
   );
 }
 
-function SubstrateIllustration({ tenantName = 'Meridian' }: { tenantName?: string }) {
+function SubstrateIllustration({
+  spotlight,
+}: {
+  spotlight: ProductMarketingSpotlight;
+}) {
   // Three concentric layered rings.
   return (
     <svg viewBox="0 0 420 420" width="100%" style={{ maxWidth: 420 }} role="img" aria-label="Substrate">
@@ -1065,7 +1086,7 @@ function SubstrateIllustration({ tenantName = 'Meridian' }: { tenantName?: strin
         TENANT
       </text>
       <text x="210" y="218" fontFamily={F_SERIF} fontSize="20" fill={C.ink} fontWeight={500} textAnchor="middle">
-        {tenantName}
+        {spotlight.clientShortName}
       </text>
       <text x="210" y="234" fontFamily={F_MONO} fontSize="9" fill={C.inkMute} letterSpacing="0.12em" textAnchor="middle">
         23 / 23 SEGMENTS
@@ -1238,7 +1259,7 @@ function DiffMark({ variant }: { variant: 'grounded' | 'overlay' | 'agent' }) {
 
 // ─── CTA ─────────────────────────────────────────────────────────
 
-function Cta({ tenantName }: { tenantName: string }) {
+function Cta({ spotlight }: { spotlight: ProductMarketingSpotlight }) {
   return (
     <section
       style={{
@@ -1283,8 +1304,7 @@ function Cta({ tenantName }: { tenantName: string }) {
             margin: '0 0 36px',
           }}
         >
-          {tenantName} is loaded with real substrate data, cross-engagement
-          patterns, and active AI initiatives. Pop in and see how{' '}
+          {spotlight.clientName} is loaded as this signed-in workspace. Pop in and see how{' '}
           <AbarvaWordmark inverse /> shapes their
           quarterly read.
         </p>
@@ -1303,7 +1323,7 @@ function Cta({ tenantName }: { tenantName: string }) {
               textDecoration: 'none',
             }}
           >
-            Open Intelligence on {tenantName} →
+            Open Intelligence on {spotlight.clientShortName} →
           </Link>
           <Link
             href="/home"

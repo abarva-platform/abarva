@@ -9,7 +9,7 @@
 //     associatedFailureModeIds[] includes this failure mode
 //     (INT-2.4 new section).
 //   - INT-2 coming-soon notice REPLACED with a contextual nav
-//     block ("Explore related topics ↓ · Ask Sentinel about
+//     block ("Explore related topics ↓ · Ask Sentinel Intel about
 //     this →").
 //
 // Server component; public route. Per
@@ -541,7 +541,7 @@ export default async function FailureModePage({ params }: PageProps) {
                 fontWeight: 500,
               }}
             >
-              Ask Sentinel about this →
+              Ask Sentinel Intel about this →
             </Link>
             <Link
               href="/intelligence"

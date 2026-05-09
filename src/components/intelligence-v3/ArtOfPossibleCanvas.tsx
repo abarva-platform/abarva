@@ -242,15 +242,10 @@ function DonutView({ data }: { data: ArtOfPossibleData }) {
   });
   const total = slices.reduce((sum, s) => sum + s.value, 0);
 
-  let cumulative = 0;
-  const segs = slices.map((s) => {
-    const start = cumulative;
-    cumulative += s.value;
-    return {
-      ...s,
-      pctStart: start / total,
-      pctEnd: cumulative / total,
-    };
+  const segs = slices.map((s, i) => {
+    const pctStart = slices.slice(0, i).reduce((sum, x) => sum + x.value, 0) / total;
+    const pctEnd = pctStart + s.value / total;
+    return { ...s, pctStart, pctEnd };
   });
 
   // Build conic-gradient string

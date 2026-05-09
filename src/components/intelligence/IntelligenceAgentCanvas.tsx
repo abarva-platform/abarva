@@ -43,8 +43,8 @@ export interface IntelligenceAgentCanvasProps {
 }
 
 const SENTINEL_AGENT = {
-  initials: 'Sn',
-  name: 'Sentinel',
+  initials: 'SI',
+  name: 'Sentinel Intel',
   role: 'Knowledge Librarian',
 } as const;
 

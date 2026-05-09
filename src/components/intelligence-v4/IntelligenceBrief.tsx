@@ -57,6 +57,7 @@ interface Props {
    * back to data.tenantName when omitted.
    */
   activeClient?: string;
+  surfaceContext?: Record<string, unknown>;
 }
 
 function fmtUsd(n: number): string {
@@ -65,7 +66,7 @@ function fmtUsd(n: number): string {
   return `$${n}`;
 }
 
-export function IntelligenceBrief({ data, activeClient }: Props) {
+export function IntelligenceBrief({ data, activeClient, surfaceContext }: Props) {
   // Collapsed-by-default. Click the bet header to expand the full
   // McKinsey detail. None expanded out of the box — summary-first
   // is the CXO read.
@@ -84,6 +85,16 @@ export function IntelligenceBrief({ data, activeClient }: Props) {
   // PR-K3+ wires the LLM call.
   const sentinelConversation: ReadonlyArray<ChatMessage> = [];
   const sentinelOpener = `I composed this brief for ${data.tenantName} from the corpus. Top three above the line · ${data.bets.length} ranked. Ask me anything about the bets, the patterns, the vendor short list, or what would change if you re-prioritized.`;
+  const sentinelSurfaceContext = mergeSurfaceContext(surfaceContext, {
+    activeTab: 'brief',
+    activeClient: activeClient ?? data.tenantName,
+    stageFacts: [
+      `Brief visible state: ${data.bets.length} above-the-line bets, ${data.belowTheLine?.length ?? 0} below-the-line bets, ${data.patternsTriggered.length} triggered patterns.`,
+      ...data.bets.slice(0, 3).map((bet) =>
+        `Visible brief bet ${bet.rank}: ${bet.useCase.name}; score ${bet.score}; state ${bet.engagementState}; decision ${bet.decision?.label ?? 'review'}.`,
+      ),
+    ],
+  });
 
   // Workspace · the surface body that Sentinel chat docks against.
   // Post-AgentDock migration this lives on the RIGHT of the chat lane.
@@ -182,7 +193,7 @@ export function IntelligenceBrief({ data, activeClient }: Props) {
                 marginBottom: 22,
               }}
             >
-              <SectionEyebrow>Sentinel's read · this quarter</SectionEyebrow>
+              <SectionEyebrow>Sentinel&rsquo;s read · this quarter</SectionEyebrow>
               <p
                 style={{
                   fontFamily: F_BODY,
@@ -385,14 +396,29 @@ export function IntelligenceBrief({ data, activeClient }: Props) {
         scopeLabel={`${data.tenantName} · The Brief`}
         opener={sentinelOpener}
         conversation={sentinelConversation}
-        surfaceContext={{
-          activeTab: 'brief',
-          activeClient: activeClient ?? data.tenantName,
-        }}
+        surfaceContext={sentinelSurfaceContext}
         workspace={workspace}
       />
     </div>
   );
+}
+
+function mergeSurfaceContext(
+  base: Record<string, unknown> | undefined,
+  override: Record<string, unknown>,
+): Record<string, unknown> {
+  return {
+    ...(base ?? {}),
+    ...override,
+    stageFacts: [
+      ...readStringArray(base?.stageFacts),
+      ...readStringArray(override.stageFacts),
+    ],
+  };
+}
+
+function readStringArray(value: unknown): string[] {
+  return Array.isArray(value) ? value.filter((item): item is string => typeof item === 'string') : [];
 }
 
 // ── Bet summary card (3-up grid · scoreboard tile · A2 + A3) ──────
@@ -932,7 +958,7 @@ function Cta({ href, children, primary, ghost }: { href: string; children: React
     display: 'inline-block',
   };
   if (href.startsWith('/')) {
-    return <Link href={href} style={sx}>{children}</Link>;
+    return <Link href={href} prefetch={false} style={sx}>{children}</Link>;
   }
   return <a href={href} style={sx}>{children}</a>;
 }

@@ -318,6 +318,34 @@ export const P2_DIAGNOSE_PACK: PhasePack = {
       what_to_flag: 'The gate recommendation must be CONTINUE_TO_P3 or DISCONTINUE. Ambiguous recommendations leave the team in limbo.',
       mitigation: 'Force a binary verdict. If the team cannot decide, that itself is a signal — surface the specific blocker preventing a clear verdict.',
     },
+    {
+      id: 'AP-P2-5',
+      label: 'Thin data dressed as diagnosis',
+      detection_hint: 'The baseline relies on one slice, one anecdotal report, or one weak proxy while the narrative treats it as complete',
+      what_to_flag: 'This is not yet a diagnosis. It is a partial evidence slice. P2 needs enough source-backed data to decide whether design investment is justified.',
+      mitigation: 'Name the missing data slices, lower confidence, and ask for the minimum additional evidence needed before making the P2 verdict.',
+    },
+    {
+      id: 'AP-P2-6',
+      label: 'Symptom-only diagnosis',
+      detection_hint: 'The analysis repeats observed pain points but never explains the underlying driver or mechanism',
+      what_to_flag: 'These are symptoms. P2 needs root causes that explain why the current state exists and which causes are addressable within the Move scope.',
+      mitigation: 'Convert each symptom into a "because" statement, require an evidence citation, and separate causal drivers from downstream effects.',
+    },
+    {
+      id: 'AP-P2-7',
+      label: 'Skipping Continue/Discontinue',
+      detection_hint: 'The team jumps from findings into P3 design questions without recording an explicit CONTINUE_TO_P3 or DISCONTINUE verdict',
+      what_to_flag: 'P2 is the decision gate. Do not let the team drift into design without the explicit gate verdict and rationale.',
+      mitigation: 'Pause P3 framing, draft the binary verdict, cite the evidence for the decision, and ask the sponsor to confirm.',
+    },
+    {
+      id: 'AP-P2-8',
+      label: 'Diagnosis scope creep',
+      detection_hint: 'New problem areas, departments, vendors, or transformation ideas are added during diagnosis without tying back to the P1 charter',
+      what_to_flag: 'The diagnosis is expanding beyond the chartered Move. P2 may refine the hypothesis, but it cannot silently widen the scope.',
+      mitigation: 'Classify each new issue as in-scope, out-of-scope, or separate Move candidate. Keep the P2 verdict anchored to the approved P1 scope.',
+    },
   ],
 
   self_approval_rules: [
@@ -373,6 +401,48 @@ export const P2_DIAGNOSE_PACK: PhasePack = {
       ],
       prohibited_behaviors: ['Accepting estimated baseline without source citation'],
     },
+    {
+      id: 'FX-P2-2',
+      name: 'Thin data overconfidence',
+      description: 'User has one weekly report and wants to declare the diagnosis complete',
+      input: {
+        evidence: 'We have last week\'s Zendesk export. It shows 31% order-status contacts. Let us call that the baseline and move to design.',
+      },
+      expected_behaviors: [
+        'Nexus identifies the evidence as a partial slice, not a full baseline',
+        'Nexus asks for the minimum additional date range, channel mix, and source coverage needed',
+        'Nexus lowers confidence until the missing slices are provided or explicitly accepted as a limitation',
+      ],
+      prohibited_behaviors: ['Treating one weekly export as a complete baseline without limitations'],
+    },
+    {
+      id: 'FX-P2-3',
+      name: 'Symptom-only diagnosis',
+      description: 'User lists operational pain points but no root causes or evidence links',
+      input: {
+        diagnosis: 'Agents are slow, customers repeat themselves, and supervisors do too many escalations. The root cause is bad customer service.',
+      },
+      expected_behaviors: [
+        'Nexus separates symptoms from root causes',
+        'Nexus asks what evidence explains why the symptoms happen',
+        'Nexus refuses to write RCA-P2 until each root cause has a citation',
+      ],
+      prohibited_behaviors: ['Publishing a root cause analysis that repeats symptoms as causes'],
+    },
+    {
+      id: 'FX-P2-4',
+      name: 'Design drift before verdict',
+      description: 'User tries to skip the Continue/Discontinue decision and widen scope into workforce optimization',
+      input: {
+        request: 'The data mostly supports the routing hypothesis. Let us skip the gate writeup and start designing routing plus workforce scheduling.',
+      },
+      expected_behaviors: [
+        'Nexus pauses the move into P3 until CONTINUE_TO_P3 or DISCONTINUE is explicit',
+        'Nexus flags workforce scheduling as scope creep unless it is tied to the P1 charter',
+        'Nexus drafts the P2 verdict rationale before discussing design options',
+      ],
+      prohibited_behaviors: ['Moving into P3 design without the P2 verdict and scope boundary'],
+    },
   ],
 
   coaching_rules: [
@@ -389,6 +459,27 @@ export const P2_DIAGNOSE_PACK: PhasePack = {
       trigger: 'User provides baseline value without naming a source',
       required_behavior: '"What is the source for that value — is there a report, system, or upload we can cite?"',
       prohibited_behavior: 'Accepting baseline values without source citations',
+    },
+    {
+      id: 'CR-P2-3',
+      rule: 'Treat thin evidence as a confidence problem, not a formatting problem',
+      trigger: 'Evidence is real but too narrow to support the gate verdict',
+      required_behavior: '"This is useful evidence, but it is not enough yet for the P2 verdict. We still need [missing slice] before I can recommend CONTINUE_TO_P3 with confidence."',
+      prohibited_behavior: 'Inflating confidence because at least one source-backed data point exists',
+    },
+    {
+      id: 'CR-P2-4',
+      rule: 'Force symptoms through a causal test before writing RCA-P2',
+      trigger: 'User names pain points as root causes',
+      required_behavior: '"That describes the symptom. What evidence shows what is causing it, and is that cause addressable inside this Move?"',
+      prohibited_behavior: 'Accepting symptom labels as root causes because they sound operationally plausible',
+    },
+    {
+      id: 'CR-P2-5',
+      rule: 'Make the gate verdict explicit before any P3 design discussion',
+      trigger: 'User asks for solution design, vendor framing, or roadmap work before the P2 verdict is recorded',
+      required_behavior: '"Before we move into P3, I need to record the P2 gate verdict: CONTINUE_TO_P3 or DISCONTINUE, with the evidence and sponsor confirmation."',
+      prohibited_behavior: 'Proceeding into design while the P2 Continue/Discontinue decision is implicit',
     },
   ],
 

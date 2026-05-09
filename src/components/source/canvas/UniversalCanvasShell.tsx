@@ -575,8 +575,8 @@ export function UniversalCanvasShell({
         <div style={SPLITTER_WRAPPER_STYLE}>
           <AgentDock
             agent={{
-              initials: dockAgent[0],
-              name: dockAgent,
+              initials: displayAgentInitials(dockAgent),
+              name: displayAgentName(dockAgent),
               role: AGENT_DOCK_ROLE_COPY[dockAgent],
             }}
             surface="source/events/canvas"
@@ -615,6 +615,14 @@ const AGENT_DOCK_ROLE_COPY: Record<'Sentinel' | 'Atlas', string> = {
   Sentinel: 'Drafts artifacts, surfaces evidence, flags gaps before they cost you.',
   Atlas: 'Frames the executive brief, ranks finalists, locks the decision.',
 };
+
+function displayAgentName(agent: 'Sentinel' | 'Atlas'): string {
+  return agent === 'Sentinel' ? 'Sentinel Source' : agent;
+}
+
+function displayAgentInitials(agent: 'Sentinel' | 'Atlas'): string {
+  return agent === 'Sentinel' ? 'SS' : agent[0];
+}
 
 interface CanvasContextStripProps {
   stageKey: SourceStageKey;

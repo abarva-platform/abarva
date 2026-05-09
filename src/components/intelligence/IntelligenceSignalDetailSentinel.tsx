@@ -40,7 +40,7 @@ export function IntelligenceSignalDetailSentinel({
 
   return (
     <AgentColumn
-      agent={{ initials: 'Sn', name: 'Sentinel', role: 'Signal Monitor' }}
+      agent={{ initials: 'SI', name: 'Sentinel Intel', role: 'Signal Monitor' }}
       quote={agentQuote}
       agentContext={agentContext}
       actions={actions}

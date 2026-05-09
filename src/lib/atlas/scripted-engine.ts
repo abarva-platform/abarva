@@ -5,6 +5,7 @@ import {
   query_programs,
   query_signal_evidence,
   query_signals,
+  query_tower_current_state,
   query_use_cases,
 } from '@/lib/atlas/tool-belt';
 import type {
@@ -16,6 +17,7 @@ import type {
   AtlasTenancyCtx,
   AtlasToolResultMap,
 } from '@/lib/atlas/types';
+import type { AtlasTowerCurrentState } from '@/lib/atlas/tower-grounding';
 
 function dollars(value: number | null | undefined): string {
   if (typeof value !== 'number' || !Number.isFinite(value)) return 'n/a';
@@ -43,10 +45,27 @@ function morningSuggestions(signalId?: string | null): AtlasSuggestion[] {
   ];
 }
 
-function buildMorningSummary(portfolio: AtlasPortfolioSummary, primary: AtlasSignalDetail | null, secondaryHeadline?: string | null): string {
+function buildMorningSummary(
+  portfolio: AtlasPortfolioSummary,
+  primary: AtlasSignalDetail | null,
+  secondaryHeadline?: string | null,
+  tower?: AtlasTowerCurrentState,
+): string {
+  const hero = tower?.bandMetrics.metrics.find((metric) => metric.hero) ?? tower?.bandMetrics.metrics[0];
+  const topPressure = tower?.pressuresView.cards[0];
   const lines = [
-    `Apex is carrying ${portfolio.activeUseCaseCount} active use cases, ${portfolio.criticalSignalCount} critical signal, and ${portfolio.warningSignalCount} warnings.`,
+    tower
+      ? `${portfolio.clientName} Tower is showing ${tower.substrateCounts.initiatives} initiatives, ${tower.substrateCounts.pressures} pressure cards, and ${tower.substrateCounts.observations} Atlas observations from the tenant DB.`
+      : `${portfolio.clientName} is carrying ${portfolio.activeUseCaseCount} active use cases, ${portfolio.criticalSignalCount} critical signal, and ${portfolio.warningSignalCount} warnings.`,
   ];
+
+  if (hero) {
+    lines.push(`The lead displayed metric is ${hero.label}: ${hero.value} (${hero.confidence}).`);
+  }
+
+  if (topPressure) {
+    lines.push(`The lead displayed pressure is ${topPressure.headline}`);
+  }
 
   if (primary) {
     const ratio = primary.percentile != null ? ` You are at the ${primary.percentile}th percentile on this metric.` : '';
@@ -76,7 +95,7 @@ function buildShadowAiDetail(signal: AtlasSignalDetail): string {
 
   return [
     `${signal.headline}. The current annualized impact is ${dollars(signal.impactUsd)}.`,
-    peerMedian ? `Retail peer median is ${dollars(peerMedian)}${ratio ? `, so Apex is running at ${ratio} median` : ''}.` : null,
+    peerMedian ? `Peer median is ${dollars(peerMedian)}${ratio ? `, so this tenant is running at ${ratio} median` : ''}.` : null,
     evidenceLead ? `The evidence chain is anchored by ${evidenceLead}.` : null,
     'The clean next move is to review renewal windows, assign owners, and originate the consolidation program if the exposure is real.',
   ]
@@ -88,8 +107,8 @@ function buildCohortPosition(portfolio: AtlasPortfolioSummary, adoptionBenchmark
   const median = adoptionBenchmark?.p50;
   const percentileRank = adoptionBenchmark?.apexPercentile;
   return [
-    `Apex is sitting at ${percent(portfolio.adoptionPenetrationPctAvg)} average adoption.`,
-    median != null ? `Retail peer median is ${percent(median)}.` : null,
+    `${portfolio.clientName} is sitting at ${percent(portfolio.adoptionPenetrationPctAvg)} average adoption.`,
+    median != null ? `Peer median is ${percent(median)}.` : null,
     percentileRank != null ? `That puts the portfolio around the ${percentileRank}th percentile.` : null,
     adoptionBenchmark?.note ?? null,
   ]
@@ -127,7 +146,12 @@ function buildStrategyRefusal(): string {
   return "That crosses from portfolio state into strategy. I can show you the concentration facts, evidence chains, program load, and peer context, but the actual choice belongs in Sentinel or a Program charter.";
 }
 
-export async function runScriptedAtlasIntent(ctx: AtlasTenancyCtx, intent: AtlasIntent, message: string): Promise<{
+export async function runScriptedAtlasIntent(
+  ctx: AtlasTenancyCtx,
+  intent: AtlasIntent,
+  message: string,
+  surfaceContext?: Record<string, unknown>,
+): Promise<{
   response: string;
   suggestions: AtlasSuggestion[];
   signalId?: string | null;
@@ -135,6 +159,8 @@ export async function runScriptedAtlasIntent(ctx: AtlasTenancyCtx, intent: Atlas
   toolResults: AtlasToolResultMap;
 }> {
   const toolResults: AtlasToolResultMap = {};
+  const towerState = await query_tower_current_state(ctx, surfaceContext);
+  toolResults.towerState = towerState;
 
   if (intent === 'morning_summary' || intent === 'portfolio_status') {
     const [opening, portfolio] = await Promise.all([get_scripted_opening(ctx), query_portfolio_aggregates(ctx)]);
@@ -147,10 +173,10 @@ export async function runScriptedAtlasIntent(ctx: AtlasTenancyCtx, intent: Atlas
     if (primary) toolResults.signalDetail = primary;
 
     return {
-      response: buildMorningSummary(portfolio, primary, second),
+      response: buildMorningSummary(portfolio, primary, second, towerState),
       suggestions: morningSuggestions(primary?.id ?? opening.signals[0]?.id ?? null),
       signalId: primary?.id ?? opening.signals[0]?.id ?? null,
-      toolsUsed: ['get_scripted_opening', 'query_portfolio_aggregates', ...(primary ? ['query_signal_evidence'] : [])],
+      toolsUsed: ['query_tower_current_state', 'get_scripted_opening', 'query_portfolio_aggregates', ...(primary ? ['query_signal_evidence'] : [])],
       toolResults,
     };
   }
@@ -173,7 +199,7 @@ export async function runScriptedAtlasIntent(ctx: AtlasTenancyCtx, intent: Atlas
           ]
         : [{ label: 'Portfolio status', value: 'What is the portfolio look like?', kind: 'message' }],
       signalId: detail?.id ?? null,
-      toolsUsed: ['query_signals', ...(detail ? ['query_signal_evidence'] : [])],
+      toolsUsed: ['query_tower_current_state', 'query_signals', ...(detail ? ['query_signal_evidence'] : [])],
       toolResults,
     };
   }
@@ -191,7 +217,7 @@ export async function runScriptedAtlasIntent(ctx: AtlasTenancyCtx, intent: Atlas
         { label: 'Adoption drag', value: 'What is dragging adoption?', kind: 'message' },
         { label: 'Shadow AI', value: 'Tell me more about Shadow AI', kind: 'message' },
       ],
-      toolsUsed: ['query_portfolio_aggregates', 'query_cohort_benchmarks'],
+      toolsUsed: ['query_tower_current_state', 'query_portfolio_aggregates', 'query_cohort_benchmarks'],
       toolResults,
     };
   }
@@ -205,7 +231,7 @@ export async function runScriptedAtlasIntent(ctx: AtlasTenancyCtx, intent: Atlas
         { label: 'Peer value', value: 'How do we compare to peers on value attainment?', kind: 'message' },
         { label: 'Programs', value: 'Show active programs', kind: 'message' },
       ],
-      toolsUsed: ['query_portfolio_aggregates'],
+      toolsUsed: ['query_tower_current_state', 'query_portfolio_aggregates'],
       toolResults,
     };
   }
@@ -220,7 +246,7 @@ export async function runScriptedAtlasIntent(ctx: AtlasTenancyCtx, intent: Atlas
         { label: 'Copilot exposure', value: 'Show active signals', kind: 'message' },
         { label: 'Shadow AI', value: 'Tell me more about Shadow AI', kind: 'message' },
       ],
-      toolsUsed: ['query_use_cases', 'query_portfolio_aggregates'],
+      toolsUsed: ['query_tower_current_state', 'query_use_cases', 'query_portfolio_aggregates'],
       toolResults,
     };
   }
@@ -235,12 +261,12 @@ export async function runScriptedAtlasIntent(ctx: AtlasTenancyCtx, intent: Atlas
         { label: 'Open Sentinel', value: 'Open in Sentinel', kind: 'link', href: '/intelligence' },
         { label: 'Originate program', value: 'Originate program', kind: 'link', href: '/programs/new?source=tower_signal' },
       ],
-      toolsUsed: ['query_programs', 'query_portfolio_aggregates'],
+      toolsUsed: ['query_tower_current_state', 'query_programs', 'query_portfolio_aggregates'],
       toolResults,
     };
   }
 
-  const fallback = await runScriptedAtlasIntent(ctx, 'morning_summary', message);
+  const fallback = await runScriptedAtlasIntent(ctx, 'morning_summary', message, surfaceContext);
   return fallback;
 }
 

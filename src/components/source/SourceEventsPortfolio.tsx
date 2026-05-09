@@ -315,7 +315,7 @@ export function SourceEventsPortfolio({
               Seeded event list, stage labels, alert counts, value-at-stake, and linked-program hints. Vendor counts and live bid timelines are not surfaced at the portfolio layer yet.
             </div>
             <div style={{ ...SOURCE_MUTED, fontSize: '12px', marginTop: 4 }}>
-              Ask Sentinel directly in the chat lane on the left of this page —
+              Ask Sentinel Source directly in the chat lane on the left of this page —
               the dock supports portfolio-level questions, drag-and-drop file
               uploads, and resize / pin / expand modes.
             </div>

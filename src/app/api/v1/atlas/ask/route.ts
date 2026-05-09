@@ -13,6 +13,7 @@ export async function POST(req: NextRequest) {
       threadId?: string | null;
       signalId?: string | null;
       clientId?: string | null;
+      surfaceContext?: Record<string, unknown>;
     };
 
     const ctx = await requireAtlasTenancy(body.clientId);
@@ -26,6 +27,7 @@ export async function POST(req: NextRequest) {
       message,
       threadId: body.threadId,
       signalId: body.signalId,
+      surfaceContext: body.surfaceContext,
     });
 
     return Response.json({

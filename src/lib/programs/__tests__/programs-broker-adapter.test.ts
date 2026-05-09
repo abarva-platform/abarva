@@ -109,6 +109,28 @@ describe('formatProgramsBrokerBundleForPrompt', () => {
     expect(block).toContain('Active program inventory');
   });
 
+  it('can format CXO current-state domains for Move shaping', () => {
+    const bundle = buildProgramsContextBundle({
+      tenantKey: 'apex-retail',
+      agentName: 'Nexus',
+      requestedDomains: [
+        'people_org',
+        'program_lifecycle',
+        'system_landscape',
+        'vendor_contracts',
+        'financials',
+        'evidence_provenance',
+      ],
+    });
+
+    const block = formatProgramsBrokerBundleForPrompt(bundle);
+    expect(block).toContain('Technology landscape');
+    expect(block).toContain('Vendor contracts and renewal posture');
+    expect(block).toContain('Financial current state');
+    expect(block).toContain('Evidence ledger');
+    expect(block).toContain('Do not invent role titles, people, systems, values, or renewal dates');
+  });
+
   it('returns empty string for an unknown tenant (no people/programs)', () => {
     const bundle = buildProgramsContextBundle({
       tenantKey: 'unknown-tenant',

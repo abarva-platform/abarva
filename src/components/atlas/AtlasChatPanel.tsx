@@ -50,9 +50,14 @@ export interface AtlasChatPanelProps {
   pending: boolean;
   /**
    * Caller's send handler. AgentDock owns composer state and forwards both
-   * the trimmed text and any successfully uploaded attachment refs.
+   * the trimmed text and any successfully uploaded attachment refs. Tower can
+   * also call the same handler directly with a metric-context patch.
    */
-  onSubmit: (text: string, attachments: AttachmentRef[]) => void | Promise<void>;
+  onSubmit: (
+    text: string,
+    attachments: AttachmentRef[],
+    surfaceContextPatch?: Record<string, unknown>,
+  ) => void | Promise<void>;
   /** Atlas-suggested follow-ups rendered above the composer. */
   suggestions: AtlasSuggestion[];
   /** Caller decides whether to navigate, open a drawer, or send a message. */

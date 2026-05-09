@@ -242,7 +242,7 @@ function IntakeOperatingCard({ progress }: { progress: SourcingStageProgressArti
     {
       key: 'owner',
       label: 'Decision owner',
-      detail: 'Seeded Apex CIO: Thomas Reeves. Confirm stop/go authority.',
+      detail: 'Seeded Apex CIO: Carlos Rivera. Confirm stop/go authority.',
       status: inferProgressStatus(progress, ['business-owner', 'sponsor', 'owner']),
     },
     {

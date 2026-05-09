@@ -34,11 +34,7 @@ import { composeOverviewBlocks } from '@/lib/admin/overview-composer';
 import { composeHomeV2Extras } from '@/lib/admin/home-overview-v2';
 import { getApprovalQueueForTenant } from '@/lib/programs/approval';
 import { canonicalClientDisplayName, isClientKey } from '@/lib/client-config';
-import { getServerSupabase } from '@/lib/supabase-server';
-import {
-  listInitiativesForClient,
-  type AIInitiative,
-} from '@/lib/admin/ai-initiatives/queries';
+import { getOverviewSupplementalData } from '@/lib/admin/overview-data';
 
 export const metadata = { title: 'Setup · AbarVa' };
 export const dynamic = 'force-dynamic';
@@ -89,36 +85,17 @@ export default async function AdminOverviewPage() {
   });
 
   // Section 01 + 05 inputs: programs + source events + initiatives
-  // counts. Fail-soft to zero so the page still renders for unbound
-  // tenants.
-  const sb = (() => {
-    try { return getServerSupabase(); } catch { return null; }
-  })();
+  // counts. Fetched via the broker-boundary abstraction so the page
+  // component does not directly reference the Supabase client.
   const clientId = activeClient?.id ?? null;
-
-  // Pull engagements + source events + initiatives in parallel,
-  // fail-soft per-query so the page renders even when a tenant is
-  // unbound or RLS blocks a row.
-  const [programsRes, sourceEventsRes, initiativesList] = await Promise.all([
-    sb && clientId
-      ? sb.from('engagements').select('id, current_phase').eq('client_id', clientId)
-      : Promise.resolve({ data: null }),
-    sb
-      ? sb.from('source_events').select('id, lifecycle_state').eq('client_key', clientKey)
-      : Promise.resolve({ data: null }),
-    clientId
-      ? listInitiativesForClient(clientId).catch(() => [] as ReadonlyArray<AIInitiative>)
-      : Promise.resolve([] as ReadonlyArray<AIInitiative>),
-  ]);
-  const programsRows = (programsRes.data ?? []) as Array<{ id: string; current_phase: number | null }>;
-  const sourceEventsRows = (sourceEventsRes.data ?? []) as Array<{ id: string; lifecycle_state: string | null }>;
-  const programsCount = programsRows.length;
-  const programsP6Count = programsRows.filter((r) => (r.current_phase ?? 0) >= 6).length;
-  const sourceEventsCount = sourceEventsRows.length;
-  const sourceEventsAtRiskCount = sourceEventsRows.filter((r) =>
-    /risk|blocked|stalled/i.test(r.lifecycle_state ?? ''),
-  ).length;
-  const initiativesAtRiskCount = initiativesList.filter((i: AIInitiative) =>
+  const {
+    programsCount,
+    programsP6Count,
+    sourceEventsCount,
+    sourceEventsAtRiskCount,
+    initiativesList,
+  } = await getOverviewSupplementalData(clientKey, clientId);
+  const initiativesAtRiskCount = initiativesList.filter((i) =>
     /risk|blocked|attention/i.test(i.statusFlag ?? ''),
   ).length;
 

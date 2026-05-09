@@ -18,14 +18,14 @@ import { IntelligenceAgentCanvas } from '@/components/intelligence/IntelligenceA
 import { IntelligenceReasoningModeStrip } from '@/components/intelligence/IntelligenceReasoningModeStrip';
 
 const SENTINEL_QUOTE =
-  'I am Sentinel — AbarVa\'s knowledge librarian. Ask me about the corpus, ' +
+  'I am Sentinel Intel — AbarVa\'s knowledge librarian. Ask me about the corpus, ' +
   'cite evidence against a claim, or ask me to vet a synthesis. Cards on the ' +
   'right materialize as I retrieve.';
 
 export const metadata = {
-  title: 'Sentinel · Ask | AbarVa',
+  title: 'Sentinel Intel · Ask | AbarVa',
   description:
-    'Sentinel — AbarVa\'s knowledge librarian. Ask about the corpus, cite ' +
+    'Sentinel Intel — AbarVa\'s knowledge librarian. Ask about the corpus, cite ' +
     'evidence, or vet a synthesis.',
 };
 
@@ -41,7 +41,7 @@ export default async function IntelligenceAskPage({
       topBarProps={{
         tenantName: 'Apex Retail Group',
         showLocked: true,
-        context: 'Intelligence · Ask Sentinel',
+        context: 'Intelligence · Ask Sentinel Intel',
       }}
     >
       <style>{`
@@ -89,7 +89,7 @@ export default async function IntelligenceAskPage({
               ← Intelligence
             </Link>
             <span style={{ margin: '0 8px' }}>·</span>
-            <span style={{ color: SHELL.INK_MUTED }}>Ask Sentinel</span>
+            <span style={{ color: SHELL.INK_MUTED }}>Ask Sentinel Intel</span>
           </nav>
 
           {/* Page header */}
@@ -104,7 +104,7 @@ export default async function IntelligenceAskPage({
                 marginBottom: 4,
               }}
             >
-              Sentinel · knowledge librarian
+              Sentinel Intel · knowledge librarian
             </div>
             <h1
               style={{

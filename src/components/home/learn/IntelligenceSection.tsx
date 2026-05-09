@@ -17,7 +17,7 @@ export function IntelligenceSection() {
 
       <HeroBand color="purple">
         <Eyebrow light>Intelligence</Eyebrow>
-        <SectionTitle light size="xl">The art of the possible.</SectionTitle>
+        <SectionTitle light size="xl" level={1}>The art of the possible.</SectionTitle>
         <Lead light>
           Intelligence is the most powerful surface for strategic discovery. It continuously analyzes your connected data to surface patterns, risks, and opportunities — and turns them into Move hypotheses with one click. Below the conceptual primer is a full Apex Retail case study: six AI programs, four chapters, real numbers.
         </Lead>

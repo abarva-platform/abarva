@@ -1,6 +1,5 @@
 import Anthropic from '@anthropic-ai/sdk';
 import type { AskSource, AskIntent } from './types';
-import { assembleIntelligenceSystemPrompt } from '@/lib/agent/prompts/intelligence';
 
 let _client: Anthropic | null = null;
 function getClient(): Anthropic | null {
@@ -10,6 +9,36 @@ function getClient(): Anthropic | null {
   _client = new Anthropic({ apiKey: key });
   return _client;
 }
+
+const SYSTEM_PROMPT = `You are AbarVa's Ask Intelligence — a knowledge librarian that surfaces what the
+platform knows about enterprise transformation, AI programs, vendors, patterns,
+and research.
+
+RULES:
+1. Every claim must be attributable to one of the provided sources. No invention.
+2. If the sources don't contain an answer, say so explicitly. "We don't have
+   indexed data on that" is a valid response.
+3. Keep responses under 120 words — 2-3 tight paragraphs maximum. Bold specific
+   numbers, vendor names, and pattern codes. No headers or lists unless the answer
+   genuinely requires structured enumeration.
+4. When a source is low-confidence or the sample is small, say so in the answer.
+5. Never reference a specific user, engagement, or client name unless the source
+   itself does.
+6. Write like a senior analyst — concise, confident, unpadded.
+7. Do not output source citations inline — the UI renders them separately.
+8. Do not preamble. Start the answer directly.
+9. Never start with hollow acknowledgements like "Good question", "Great question",
+   "Excellent question", "Happy to", or "Let me".
+10. Evidence priority is SURFACE first, then TENANT, then GRAPH, then routed
+   corpus/vendor/pattern/source evidence, then WORLDVIEW last. If those sources
+   conflict, prefer the higher-priority source and name the uncertainty.
+11. If a SURFACE source is provided, treat it as the user's current live page
+   substrate. Use it before broader tenant, corpus, vendor, or worldview sources
+   when answering what is current, visible, at risk, pending, or strategically
+   important on this page.
+12. If TENANT or GRAPH sources say the active tenant is Apex Retail, never use
+   healthcare, Epic, IDN, clinical, CMIO, HIPAA, or Meridian facts unless the user
+   explicitly asks for a cross-industry comparison.`;
 
 function chooseModel(intent: AskIntent): string {
   if (intent === 'vendor_comparison' || intent === 'topic_synthesis' || intent === 'general_synthesis') {
@@ -43,8 +72,8 @@ export function sanitizeAskSynthesis(text: string, maxWords = 120): string {
   return `${capped.replace(/[,\s;:]+$/, '')}…`;
 }
 
-function chunkText(text: string): string[] {
-  return text.match(/.{1,80}(?:\s|$)/g)?.map((chunk) => chunk.trimEnd()) ?? [text];
+export function chunkAskText(text: string): string[] {
+  return text.match(/.{1,80}(?:\s|$)/g) ?? [text];
 }
 
 export async function* synthesizeStream(args: {
@@ -52,7 +81,6 @@ export async function* synthesizeStream(args: {
   sources: AskSource[];
   intent: AskIntent;
   userContextBlock?: string;
-  tenantName?: string | null;
 }): AsyncGenerator<string> {
   const client = getClient();
   if (!client) {
@@ -62,11 +90,9 @@ export async function* synthesizeStream(args: {
     return;
   }
 
-  const system = assembleIntelligenceSystemPrompt({
-    intent: args.intent,
-    userContextBlock: args.userContextBlock,
-    tenantName: args.tenantName,
-  });
+  const system = args.userContextBlock && args.userContextBlock.trim().length > 0
+    ? `${args.userContextBlock}\n\n${SYSTEM_PROMPT}`
+    : SYSTEM_PROMPT;
   const prompt = `SOURCES PROVIDED:\n${formatSourcesBlock(args.sources)}\n\nUSER QUESTION:\n${args.query}\n\nRespond with your synthesis.`;
 
   try {
@@ -85,7 +111,7 @@ export async function* synthesizeStream(args: {
       }
     }
 
-    for (const chunk of chunkText(sanitizeAskSynthesis(text))) {
+    for (const chunk of chunkAskText(sanitizeAskSynthesis(text))) {
       yield chunk;
     }
   } catch (err) {

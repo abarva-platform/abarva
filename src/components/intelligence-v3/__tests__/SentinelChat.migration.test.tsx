@@ -16,12 +16,29 @@
 // chip doesn't accidentally re-introduce the legacy key.
 
 import '@testing-library/jest-dom';
-import { render } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { TextDecoder } from 'util';
 import { SentinelChat } from '../SentinelChat';
 
 const LEGACY = 'abarva.intelligence.chat-mode';
 const NEW = 'abarva.agent-dock.intelligence.mode';
 const FLAG = 'abarva.intelligence.chat-mode.migrated';
+
+function makeMockBody(text: string) {
+  const bytes = new Uint8Array(Array.from(text).map((c) => c.charCodeAt(0)));
+  let yielded = false;
+  return {
+    getReader() {
+      return {
+        async read() {
+          if (yielded) return { done: true, value: undefined as Uint8Array | undefined };
+          yielded = true;
+          return { done: false, value: bytes };
+        },
+      };
+    },
+  };
+}
 
 function renderHarness() {
   return render(
@@ -37,6 +54,8 @@ function renderHarness() {
 describe('SentinelChat · legacy mode-key migration', () => {
   beforeEach(() => {
     window.localStorage.clear();
+    (global as { fetch: unknown }).fetch = undefined;
+    globalThis.TextDecoder = TextDecoder as typeof globalThis.TextDecoder;
   });
 
   it('migrates side-rail → side-rail', () => {
@@ -94,5 +113,66 @@ describe('SentinelChat · legacy mode-key migration', () => {
     expect(
       getByText(/I composed this brief for Meridian Health/),
     ).toBeInTheDocument();
+  });
+
+  it('renders text-based NDJSON delta chunks from the Intelligence ask endpoint', async () => {
+    const fetchMock = jest.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      body: makeMockBody(
+        [
+          JSON.stringify({ type: 'classified', classification: { intent: 'general_synthesis', entities: [] } }),
+          JSON.stringify({ type: 'sources', sources: [] }),
+          JSON.stringify({ type: 'delta', text: 'Apex has current Intelligence evidence.' }),
+          JSON.stringify({ type: 'done' }),
+          '',
+        ].join('\n'),
+      ),
+    });
+    (global as { fetch: unknown }).fetch = fetchMock;
+
+    render(
+      <SentinelChat
+        scopeLabel="Apex Retail Group · this page"
+        opener="Apex Retail Intelligence is live."
+        conversation={[]}
+        surfaceContext={{ clientKey: 'apex-retail' }}
+        workspace={<div>workspace</div>}
+      />,
+    );
+
+    await act(async () => {
+      fireEvent.change(screen.getByTestId('agent-dock-input'), {
+        target: { value: 'current state of data analytics landscape' },
+      });
+    });
+
+    await act(async () => {
+      fireEvent.submit(screen.getByTestId('agent-dock-form'));
+    });
+
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+    await waitFor(() => {
+      expect(screen.getByText('Apex has current Intelligence evidence.')).toBeInTheDocument();
+    });
+    expect(screen.queryByText(/I did not find enough indexed Intelligence evidence/i)).not.toBeInTheDocument();
+    expect(fetchMock).toHaveBeenCalledWith(
+      '/api/intelligence/ask',
+      expect.objectContaining({
+        method: 'POST',
+        headers: {
+          Accept: 'application/x-ndjson',
+          'Content-Type': 'application/json',
+        },
+        body: expect.any(String),
+      }),
+    );
+    const [, init] = fetchMock.mock.calls[0];
+    const body = JSON.parse(init.body);
+    expect(body).toMatchObject({
+      q: 'current state of data analytics landscape',
+      client: 'apex-retail',
+      surfaceContext: { clientKey: 'apex-retail' },
+    });
   });
 });

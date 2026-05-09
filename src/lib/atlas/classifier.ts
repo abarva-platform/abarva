@@ -16,6 +16,26 @@ export function classifyAtlasIntent(message: string): AtlasClassification {
     return { intent: 'morning_summary', routeType: 'scripted' };
   }
 
+  if (
+    hasAny(text, [
+      'what are others doing',
+      'what are peers doing',
+      'what are other companies doing',
+      'industry insight',
+      'industry context',
+      'knowledge corpus',
+      'corpus',
+      'market practice',
+      'best practice',
+      'what can tower answer',
+      'what can you answer',
+      'what is in scope',
+      'tower scope',
+    ])
+  ) {
+    return { intent: 'llm', routeType: 'llm' };
+  }
+
   if (hasAny(text, ['good morning', 'morning summary', 'welcome back', 'portfolio look like', 'portfolio status'])) {
     return { intent: 'morning_summary', routeType: 'scripted' };
   }
@@ -48,6 +68,11 @@ export function classifyAtlasIntent(message: string): AtlasClassification {
       'should we consolidate',
       'should we exit',
       'should we double down',
+      'cancel the',
+      'approve the',
+      'terminate the',
+      'renegotiate the',
+      'sign the',
     ])
   ) {
     return { intent: 'strategy_refusal', routeType: 'scripted' };

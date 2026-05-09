@@ -62,7 +62,12 @@ export interface ByFnRow {
   cells: [ByFnCell, ByFnCell, ByFnCell, ByFnCell]; // workforce · margin · clinical · foundation
 }
 
-export const BY_FN_OUTCOMES: ReadonlyArray<{ key: string; label: string }> = [
+export interface ByFnOutcome {
+  key: string;
+  label: string;
+}
+
+export const BY_FN_OUTCOMES: ReadonlyArray<ByFnOutcome> = [
   { key: 'workforce', label: 'Workforce' },
   { key: 'margin', label: 'Margin' },
   { key: 'clinical', label: 'Clinical' },
@@ -126,6 +131,70 @@ export const MERIDIAN_BY_FN_ROWS: ReadonlyArray<ByFnRow> = [
   },
 ];
 
+export const APEX_RETAIL_BY_FN_OUTCOMES: ReadonlyArray<ByFnOutcome> = [
+  { key: 'customer', label: 'Customer growth' },
+  { key: 'margin', label: 'Merch margin' },
+  { key: 'operations', label: 'Store ops' },
+  { key: 'foundation', label: 'Data foundation' },
+];
+
+export const APEX_RETAIL_BY_FN_ROWS: ReadonlyArray<ByFnRow> = [
+  {
+    function: 'Customer + loyalty',
+    cells: [
+      { state: 'in-flight', ref: 'AR-LOYALTY_AI' },
+      { state: 'candidate', ref: 'AR-PERSONALIZATION_ENGINE' },
+      { state: 'empty' },
+      { state: 'risk', ref: 'CDP' },
+    ],
+  },
+  {
+    function: 'Digital commerce',
+    cells: [
+      { state: 'in-flight', ref: 'AR-OMNICHANNEL_FULFILLMENT' },
+      { state: 'candidate', ref: 'AR-PRICING_OPTIMIZATION' },
+      { state: 'candidate', ref: 'RETURNS' },
+      { state: 'risk', ref: 'DATA' },
+    ],
+  },
+  {
+    function: 'Store operations',
+    cells: [
+      { state: 'candidate', ref: 'CLIENTELING' },
+      { state: 'candidate', ref: 'AR-WORKFORCE_SCHEDULING' },
+      { state: 'in-flight', ref: 'ASSOCIATE_AI' },
+      { state: 'empty' },
+    ],
+  },
+  {
+    function: 'Merchandising + pricing',
+    cells: [
+      { state: 'empty' },
+      { state: 'in-flight', ref: 'AR-MARKDOWN_OPTIMIZATION' },
+      { state: 'candidate', ref: 'PLANOGRAM' },
+      { state: 'risk', ref: 'ITEM_MASTER' },
+    ],
+  },
+  {
+    function: 'Supply chain + inventory',
+    cells: [
+      { state: 'empty' },
+      { state: 'candidate', ref: 'AR-DEMAND_SENSING' },
+      { state: 'in-flight', ref: 'AR-SUPPLY_CHAIN_CONTROL_TOWER' },
+      { state: 'candidate', ref: 'VENDOR_DATA' },
+    ],
+  },
+  {
+    function: 'Finance, risk + IT',
+    cells: [
+      { state: 'empty' },
+      { state: 'candidate', ref: 'AR-VENDOR_COMPLIANCE' },
+      { state: 'risk', ref: 'AR-SHRINK_ANALYTICS' },
+      { state: 'in-flight', ref: 'PLATFORM' },
+    ],
+  },
+];
+
 // ─── Patterns ────────────────────────────────────────────────────
 
 export interface PatternRow {
@@ -140,6 +209,11 @@ export interface PatternRow {
   withPct: number;
   withoutPct: number;
   bindsTo: string;
+  officeCategory?: string;
+  failureRatePct?: number;
+  sourceTitles?: string[];
+  contradictionTitles?: string[];
+  useCaseNames?: string[];
 }
 
 export const MERIDIAN_PATTERNS: ReadonlyArray<PatternRow> = [
@@ -294,6 +368,30 @@ export const MERIDIAN_VENDOR_SPEND: ReadonlyArray<VendorSpendRow> = [
   { vendor: 'Slalom', category: 'services-si', subcategory: 'Cloud + data engineering', spendUsdM: 1.9, spendLabel: '$1.9M', tier: 'challenger', health: 'healthy', renewsInMonths: 6, takeaway: 'Snowflake + AWS work · expand for Pop Health build.' },
 ];
 
+export const APEX_RETAIL_VENDOR_SPEND: ReadonlyArray<VendorSpendRow> = [
+  { vendor: 'Salesforce Commerce + Marketing Cloud', category: 'software-saas', subcategory: 'Commerce + loyalty activation', spendUsdM: 14.6, spendLabel: '$14.6M', tier: 'incumbent', health: 'watch', renewsInMonths: 11, takeaway: 'CMO owns loyalty outcomes, but IT owns CDP plumbing. Renewal leverage depends on the identity cleanup sequence.' },
+  { vendor: 'Adobe Experience Platform', category: 'software-saas', subcategory: 'CDP + journey orchestration', spendUsdM: 8.8, spendLabel: '$8.8M', tier: 'incumbent', health: 'risk', renewsInMonths: 7, takeaway: 'Three teams treat AEP as the integration hub; data readiness audit says consent and identity stitching are not ready.' },
+  { vendor: 'Blue Yonder', category: 'software-saas', subcategory: 'Demand forecasting + replenishment', spendUsdM: 6.4, spendLabel: '$6.4M', tier: 'incumbent', health: 'healthy', renewsInMonths: 19, takeaway: 'Good fit for demand sensing once item-location history is normalized.' },
+  { vendor: 'Manhattan Active Omni', category: 'software-saas', subcategory: 'Order management + fulfillment', spendUsdM: 5.7, spendLabel: '$5.7M', tier: 'incumbent', health: 'watch', renewsInMonths: 9, takeaway: 'Fulfillment promise logic conflicts with sustainability and margin guardrails.' },
+  { vendor: 'Microsoft 365 + Entra ID', category: 'software-saas', subcategory: 'Productivity + workforce identity', spendUsdM: 5.2, spendLabel: '$5.2M', tier: 'incumbent', health: 'healthy', renewsInMonths: 18, takeaway: 'Store workforce identity standardization is a useful anchor for associate AI.' },
+  { vendor: 'Snowflake', category: 'software-saas', subcategory: 'Retail data cloud', spendUsdM: 3.8, spendLabel: '$3.8M', tier: 'incumbent', health: 'healthy', renewsInMonths: null, takeaway: 'Consumption rising with loyalty and inventory workloads; needs FinOps guardrails before more AI pilots.' },
+  { vendor: 'ServiceNow', category: 'software-saas', subcategory: 'ITSM + workflow', spendUsdM: 3.5, spendLabel: '$3.5M', tier: 'incumbent', health: 'healthy', renewsInMonths: 13, takeaway: 'Useful operational backbone for exception workflows and vendor compliance.' },
+  { vendor: 'Databricks', category: 'software-saas', subcategory: 'ML platform + feature engineering', spendUsdM: 2.7, spendLabel: '$2.7M', tier: 'challenger', health: 'watch', renewsInMonths: 10, takeaway: 'Promising for personalization and demand sensing, but model governance is still immature.' },
+  { vendor: 'Shopify Plus', category: 'software-saas', subcategory: 'Digital storefront expansion', spendUsdM: 1.8, spendLabel: '$1.8M', tier: 'challenger', health: 'healthy', renewsInMonths: 16, takeaway: 'Selective category storefronts, not a core commerce replacement.' },
+  { vendor: 'Okta', category: 'software-saas', subcategory: 'Customer + workforce identity', spendUsdM: 1.5, spendLabel: '$1.5M', tier: 'incumbent', health: 'healthy', renewsInMonths: 21, takeaway: 'Identity controls are steady; customer identity ownership still needs a business decision.' },
+  { vendor: 'AWS', category: 'hardware-cloud', subcategory: 'Public cloud · analytics primary', spendUsdM: 13.6, spendLabel: '$13.6M', tier: 'incumbent', health: 'healthy', renewsInMonths: null, takeaway: 'Consumption profile supports retail data workloads; commitment should be tied to AI portfolio sequencing.' },
+  { vendor: 'Microsoft Azure', category: 'hardware-cloud', subcategory: 'ERP + identity adjacent cloud', spendUsdM: 6.2, spendLabel: '$6.2M', tier: 'incumbent', health: 'healthy', renewsInMonths: null, takeaway: 'Useful for enterprise apps, but not the primary retail ML runtime today.' },
+  { vendor: 'Zebra Technologies', category: 'hardware-cloud', subcategory: 'Store devices + inventory scanning', spendUsdM: 4.1, spendLabel: '$4.1M', tier: 'incumbent', health: 'watch', renewsInMonths: 6, takeaway: 'Device refresh can unlock shelf availability and shrink telemetry if stores accept process change.' },
+  { vendor: 'Cisco Meraki', category: 'hardware-cloud', subcategory: 'Store network + edge', spendUsdM: 3.8, spendLabel: '$3.8M', tier: 'incumbent', health: 'healthy', renewsInMonths: 14, takeaway: 'Store network health is adequate for associate tooling; edge analytics scope should stay narrow.' },
+  { vendor: 'Google Cloud', category: 'hardware-cloud', subcategory: 'Analytics sandbox + media clean rooms', spendUsdM: 2.4, spendLabel: '$2.4M', tier: 'challenger', health: 'watch', renewsInMonths: 8, takeaway: 'Marketing analytics overlap with AEP and Snowflake needs a rationalization decision.' },
+  { vendor: 'CrowdStrike', category: 'hardware-cloud', subcategory: 'Endpoint security', spendUsdM: 2.3, spendLabel: '$2.3M', tier: 'incumbent', health: 'healthy', renewsInMonths: 12, takeaway: 'Stable endpoint posture across stores and corporate users.' },
+  { vendor: 'Accenture Retail', category: 'services-si', subcategory: 'Commerce + data transformation', spendUsdM: 6.2, spendLabel: '$6.2M', tier: 'incumbent', health: 'risk', renewsInMonths: 5, takeaway: 'Claiming integration-hub ownership alongside Adobe and Salesforce; scope needs a hard decision.' },
+  { vendor: 'Deloitte Retail AI', category: 'services-si', subcategory: 'AI governance + operating model', spendUsdM: 5.4, spendLabel: '$5.4M', tier: 'incumbent', health: 'watch', renewsInMonths: 4, takeaway: 'Good governance help, but CFO wants cost-takeout evidence before more advisory spend.' },
+  { vendor: 'Infosys Retail AMS', category: 'services-si', subcategory: 'Application managed services', spendUsdM: 4.0, spendLabel: '$4.0M', tier: 'incumbent', health: 'healthy', renewsInMonths: 15, takeaway: 'Stable run support for POS, OMS, and merchandising integrations.' },
+  { vendor: 'Publicis Sapient', category: 'services-si', subcategory: 'Experience design + personalization', spendUsdM: 3.1, spendLabel: '$3.1M', tier: 'challenger', health: 'healthy', renewsInMonths: 8, takeaway: 'Useful for customer journeys once CDP ownership is settled.' },
+  { vendor: 'Slalom', category: 'services-si', subcategory: 'Data engineering + delivery squads', spendUsdM: 2.3, spendLabel: '$2.3M', tier: 'challenger', health: 'healthy', renewsInMonths: 6, takeaway: 'Focused delivery capacity for demand sensing and inventory quality fixes.' },
+];
+
 export interface VendorRenewalRow {
   vendor: string;
   category: string;
@@ -416,6 +514,44 @@ export const MERIDIAN_PEER_ROWS: ReadonlyArray<PeerRow> = [
   },
 ];
 
+export const APEX_RETAIL_PEER_ROWS: ReadonlyArray<PeerRow> = [
+  {
+    cohort: '8 specialty retail peers',
+    size: 8,
+    outcome: 'Loyalty personalization at scale',
+    adoptionPct: 63,
+    delta: '5 of 8 active · Apex is in flight but blocked by identity stitching',
+  },
+  {
+    cohort: '6 big-box omnichannel peers',
+    size: 6,
+    outcome: 'Fulfillment promise optimization',
+    adoptionPct: 83,
+    delta: '5 of 6 active · sustainability trade-offs now surfaced',
+  },
+  {
+    cohort: '10 grocery + pharmacy peers',
+    size: 10,
+    outcome: 'Demand sensing + automated replenishment',
+    adoptionPct: 70,
+    delta: '7 of 10 in flight · item-location history separates winners',
+  },
+  {
+    cohort: '5 luxury clienteling peers',
+    size: 5,
+    outcome: 'Associate copilots + clienteling',
+    adoptionPct: 40,
+    delta: '2 of 5 active · privacy and store adoption slow rollouts',
+  },
+  {
+    cohort: '7 marketplace-first retailers',
+    size: 7,
+    outcome: 'Vendor compliance + catalog quality AI',
+    adoptionPct: 57,
+    delta: '4 of 7 active · supplier data contracts are the gating factor',
+  },
+];
+
 // ─── My strategy ─────────────────────────────────────────────────
 
 export interface StrategyBullet {
@@ -446,6 +582,30 @@ export const MERIDIAN_STRATEGY_BULLETS: ReadonlyArray<StrategyBullet> = [
     body:
       'Pattern P-HC-028 favors HCC accuracy first. The CFO pitch lands when the year-1 MLR lift is concrete · Innovaccer renegotiation contingent on this sequencing.',
     evidence: 'P-HC-028 · 14 VBC programs · 2–3x MLR lift sequencing first',
+  },
+];
+
+export const APEX_RETAIL_STRATEGY_BULLETS: ReadonlyArray<StrategyBullet> = [
+  {
+    number: '01',
+    title: 'Resolve CDP ownership before scaling loyalty AI',
+    body:
+      'Apex has enough customer data to shape the loyalty and personalization moves, but the operating model is split: CMO owns the outcome while IT owns the platform. The first move is a decision-rights reset, not another model pilot.',
+    evidence: 'F200, F203, F207 · identity and consent controls drive retail AI failure-rate reduction',
+  },
+  {
+    number: '02',
+    title: 'Sequence demand sensing through item-location data readiness',
+    body:
+      'Demand sensing can move margin, inventory turns, and service levels, but only if SKU, location, promo, and substitution history are clean enough to trust. Sentinel should keep this as an evidence-gated move until the data audit is green.',
+    evidence: 'F215, F217, F231 · 12 Apex use cases bound to Supabase graph edges',
+  },
+  {
+    number: '03',
+    title: 'Force the integration-hub decision before vendor renewal season',
+    body:
+      'Adobe, Salesforce, and Accenture are all implicitly claiming the same integration layer. Apex should make one architecture decision before renewals, or the AI portfolio will inherit overlapping contracts and unclear accountability.',
+    evidence: 'Open contradiction · integration hub claims across AEP, Salesforce, and SI scope',
   },
 ];
 
@@ -501,5 +661,50 @@ export const MERIDIAN_SESSIONS: ReadonlyArray<SessionRow> = [
     ageLabel: '3d ago',
     exchanges: 5,
     lastTurn: 'P-HC-005 framing locked · agenda drafted',
+  },
+];
+
+export const APEX_RETAIL_SESSIONS: ReadonlyArray<SessionRow> = [
+  {
+    pinned: true,
+    thread: 'CDP ownership · loyalty AI decision rights',
+    ageLabel: '4h ago',
+    exchanges: 11,
+    lastTurn: 'CMO outcome ownership and CTO platform control need CEO arbitration before scale',
+  },
+  {
+    pinned: true,
+    thread: 'Demand sensing · item-location readiness',
+    ageLabel: '1d ago',
+    exchanges: 8,
+    lastTurn: 'Data audit shows promo and substitution history are the gating inputs',
+  },
+  {
+    pinned: true,
+    thread: 'Vendor integration hub · renewal prep',
+    ageLabel: '2d ago',
+    exchanges: 9,
+    lastTurn: 'Adobe, Salesforce, and Accenture claims mapped to the same data layer',
+  },
+  {
+    pinned: false,
+    thread: 'Shrink analytics · store adoption risk',
+    ageLabel: '6h ago',
+    exchanges: 5,
+    lastTurn: 'Loss prevention and operations need a shared intervention protocol',
+  },
+  {
+    pinned: false,
+    thread: 'Sustainability vs fulfillment promises',
+    ageLabel: '3d ago',
+    exchanges: 6,
+    lastTurn: 'Fast-ship targets conflict with emissions and split-shipment KPIs',
+  },
+  {
+    pinned: false,
+    thread: 'Markdown optimization · margin proof',
+    ageLabel: '5d ago',
+    exchanges: 4,
+    lastTurn: 'Merchandising wants the test; finance wants baseline leakage quantified first',
   },
 ];

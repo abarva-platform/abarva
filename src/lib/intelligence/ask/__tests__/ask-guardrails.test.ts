@@ -1,7 +1,8 @@
 jest.mock('server-only', () => ({}));
 
 import { atlasStakeholderConflictHandoff } from '../index';
-import { sanitizeAskSynthesis } from '../synthesizer';
+import { retrieveSurfaceContextSources } from '../retrievers/surface-context';
+import { chunkAskText, sanitizeAskSynthesis } from '../synthesizer';
 
 describe('Ask Intelligence guardrails', () => {
   it('routes advice requests about executive contradictions to Atlas', () => {
@@ -26,5 +27,71 @@ describe('Ask Intelligence guardrails', () => {
     const capped = sanitizeAskSynthesis(long, 120);
 
     expect(capped.split(/\s+/).filter(Boolean).length).toBeLessThanOrEqual(120);
+  });
+
+  it('preserves whitespace across streamed synthesis chunks', () => {
+    const text = 'Apex data and analytics current state includes Snowflake, Adobe Experience Platform, and Salesforce Marketing Cloud.';
+
+    expect(chunkAskText(text).join('')).toBe(text);
+  });
+
+  it('promotes live surface facts as high-confidence Intelligence evidence', () => {
+    const sources = retrieveSurfaceContextSources(
+      {
+        activeTab: 'vendors',
+        activeClient: 'Apex Retail Group',
+        clientKey: 'apexretail',
+        stageFacts: ['Vendors tab: $107.4M spend across 21 active vendors.'],
+        pageFacts: ['This is the live Apex Retail Intelligence substrate, not a healthcare fixture.'],
+      },
+      'current state of data analytics landscape',
+    );
+
+    expect(sources).toHaveLength(1);
+    expect(sources[0]).toMatchObject({
+      type: 'SURFACE',
+      name: 'Apex Retail Group live Intelligence surface',
+      id: 'vendors',
+      confidence: 0.99,
+    });
+    expect(sources[0].detail).toContain('Vendors tab: $107.4M spend');
+    expect(sources[0].detail).toContain('not a healthcare fixture');
+  });
+
+  it('promotes tenant and graph context for Apex current-state questions', () => {
+    const sources = retrieveSurfaceContextSources(
+      {
+        activeTab: 'vendors',
+        activeClient: 'Apex Retail Group',
+        clientKey: 'apexretail',
+        stageFacts: ['Vendors tab: $107.4M spend across 21 active vendors.'],
+        tenantFacts: [
+          'Tenant 360: Apex Retail is the active retail demo tenant. Do not use Meridian Healthcare, Epic EHR, IDN, CMIO, HIPAA, or clinical AI facts.',
+        ],
+        vendorFacts: [
+          'Data and analytics landscape: Adobe Experience Platform $8.8M - CDP; Snowflake $3.8M - analytics foundation.',
+        ],
+        graphFacts: [
+          'Graph edge: Adobe Experience Platform, Salesforce Commerce + Marketing Cloud, and Accenture Retail all claim integration-hub adjacency to the same customer data layer.',
+        ],
+      },
+      'Can you give me a perspective of current state of data analytics landscape?',
+    );
+
+    expect(sources.map((source) => source.type)).toEqual(['SURFACE', 'TENANT', 'GRAPH']);
+    expect(sources[1]).toMatchObject({
+      type: 'TENANT',
+      name: 'Apex Retail Group 360 Intelligence substrate',
+      id: 'apexretail',
+      confidence: 0.96,
+    });
+    expect(sources[1].detail).toContain('Adobe Experience Platform $8.8M');
+    expect(sources[1].detail).toContain('Do not use Meridian Healthcare');
+    expect(sources[2]).toMatchObject({
+      type: 'GRAPH',
+      name: 'Apex Retail Group Intelligence graph',
+      id: 'apexretail',
+    });
+    expect(sources[2].detail).toContain('integration-hub adjacency');
   });
 });

@@ -11,6 +11,10 @@ import 'server-only';
  *
  *   /programs/<id>     → 'full'    (user is in their data)
  *   /programs/new      → 'tenant'  (origination uses tenant context only)
+ *   /strategic-moves/<id> and phase workspaces
+ *                       → 'full'    (Move shaping needs program + tenant + corpus)
+ *   /strategic-moves/new
+ *                       → 'tenant'  (origination uses tenant context only)
  *   /intelligence      → 'corpus'  (Sentinel pattern catalog dominates)
  *   /tower             → 'full'    (cross-program rollup)
  *   /source            → 'full'    (tenant sourcing facts + shared corpus)
@@ -41,6 +45,8 @@ export interface InferModeInput {
 }
 
 const PROGRAM_DETAIL_PATTERN = /^\/programs\/[^/]+$/;
+const STRATEGIC_MOVE_DETAIL_PATTERN = /^\/strategic-moves\/[^/]+$/;
+const STRATEGIC_MOVE_PHASE_PATTERN = /^\/strategic-moves\/[^/]+\/phase\/[0-6]$/;
 const SOURCE_DETAIL_PATTERN = /^\/source(\/.*)?$/;
 const INTELLIGENCE_PATTERN = /^\/intelligence(\/.*)?$/;
 const TOWER_PATTERN = /^\/tower(\/.*)?$/;
@@ -53,13 +59,16 @@ const HOME_PATTERN = /^\/home(\/.*)?$/;
  *   1. /programs/new                                     → 'tenant'
  *   2. /programs/<id> (not /programs/new) (with tenant)  → 'full'
  *      /programs/<id>             (no tenant)            → 'generic'
- *   3. /tower (with tenant)                              → 'full'
+ *   3. /strategic-moves/new                              → 'tenant'
+ *   4. /strategic-moves/<id> or /phase/<n> (with tenant) → 'full'
+ *      /strategic-moves/<id> or /phase/<n> (no tenant)   → 'generic'
+ *   5. /tower (with tenant)                              → 'full'
  *      /tower (no tenant)                                → 'generic'
- *   4. /intelligence (any auth state)                    → 'corpus'
- *   5. /source (with tenant)                             → 'full'
+ *   6. /intelligence (any auth state)                    → 'corpus'
+ *   7. /source (with tenant)                             → 'full'
  *      /source (no tenant)                               → 'generic'
- *   6. /home (with tenant) → 'tenant'; /home (no tenant) → 'generic'
- *   7. fallback: 'tenant' if tenantKey, else 'generic'
+ *   8. /home (with tenant) → 'tenant'; /home (no tenant) → 'generic'
+ *   9. fallback: 'tenant' if tenantKey, else 'generic'
  */
 export function inferModeForSurface(input: InferModeInput): BrokerMode {
   const surface = (input.surface ?? '').trim();
@@ -73,6 +82,17 @@ export function inferModeForSurface(input: InferModeInput): BrokerMode {
   }
 
   if (PROGRAM_DETAIL_PATTERN.test(surface)) {
+    return tenantKey ? 'full' : 'generic';
+  }
+
+  if (surface === '/strategic-moves/new') {
+    return tenantKey ? 'tenant' : 'generic';
+  }
+
+  if (
+    STRATEGIC_MOVE_DETAIL_PATTERN.test(surface) ||
+    STRATEGIC_MOVE_PHASE_PATTERN.test(surface)
+  ) {
     return tenantKey ? 'full' : 'generic';
   }
 

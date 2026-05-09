@@ -9,7 +9,6 @@ import {
   buildEvidenceDatasetDrawerSeedAll,
   getInternalSources,
   getExternalSources,
-  type EvidenceDatasetDrawerView,
   type EvidenceDatasetEntry,
   type EvidenceDatasetSourceKind,
   type EvidenceFreshnessLabel,
@@ -406,6 +405,3 @@ function stripComments(src: string): string {
   return lineStripped.replace(/\/\*[\s\S]*?\*\//g, '');
 }
 
-// Reference unused imports to keep the linter happy when the view shape
-// is consumed only via JSON.stringify in some tests.
-type _Touch = EvidenceDatasetDrawerView;

@@ -5,7 +5,7 @@ Status: production-ready for internal Pinecone ingestion after human editorial r
 ## Corpus Summary
 
 - Total theses: 5
-- Total chunks: 82
+- Total chunks: 97
 - Pinecone namespace: worldview
 - Embedding target: text-embedding-3-large
 - Embedding dimension: 3072
@@ -15,7 +15,7 @@ Status: production-ready for internal Pinecone ingestion after human editorial r
 |---|---:|---:|---:|---:|---:|
 | W1 | 17 | 520-584 | 550 | 25 | 92 |
 | W2 | 16 | 544-584 | 564 | 30 | 154 |
-| W3 | 17 | 521-584 | 552 | 32 | 221 |
+| W3 | 32 | 372-584 | 469 | 32 | 221 |
 | W4 | 17 | 525-556 | 546 | 29 | 84 |
 | W5 | 15 | 521-568 | 536 | 24 | 109 |
 
@@ -37,4 +37,4 @@ Status: production-ready for internal Pinecone ingestion after human editorial r
 
 ## Declaration
 
-Worldview content production complete. 5 theses, 82 chunks, ready for Pinecone ingestion after human editorial citation-excerpt review. Synthesis checks and quality gate evaluated.
+Worldview content production complete. 5 theses, 97 chunks, ready for Pinecone ingestion after human editorial citation-excerpt review. Synthesis checks and quality gate evaluated.

@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { COLORS, SPACING } from '@/lib/design/design-tokens';
+import { COLORS, SPACING, TYPOGRAPHY } from '@/lib/design/design-tokens';
 import { SHELL } from '@/lib/shell/shell-tokens';
 
 export interface EditorialCanvasProps {
@@ -38,7 +38,7 @@ export function EditorialCanvas({ eyebrow, title, subtitle, children }: Editoria
         </p>
         <h1
           style={{
-            fontFamily: SHELL.SERIF,
+            fontFamily: TYPOGRAPHY.serif,
             fontSize: 56,
             fontWeight: 700,
             color: SHELL.INK,

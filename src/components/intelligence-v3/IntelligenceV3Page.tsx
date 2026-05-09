@@ -35,8 +35,18 @@ import { ArtOfPossibleCanvas } from './ArtOfPossibleCanvas';
 import { IntelligenceMap } from '@/components/intelligence-v4/IntelligenceMap';
 import { IntelligenceBrief } from '@/components/intelligence-v4/IntelligenceBrief';
 import { getMeridianMapData, getMeridianBriefData } from '@/lib/knowledge-corpus/fixtures/meridian-healthcare';
-import { FIRST_CAPITAL_DEMO, MERIDIAN_AOP_DEMO } from './demo-data';
-import type { IntelligenceV3PageData, StageKey } from './types';
+import { FIRST_CAPITAL_DEMO, MERIDIAN_AOP_DEMO, APEX_RETAIL_AOP_DEMO } from './demo-data';
+import { buildSentinelIntelContext } from '@/lib/intelligence-v3/sentinel-intel-context';
+import {
+  APEX_RETAIL_BY_FN_OUTCOMES,
+  APEX_RETAIL_BY_FN_ROWS,
+  APEX_RETAIL_PEER_ROWS,
+  APEX_RETAIL_SESSIONS,
+  APEX_RETAIL_STRATEGY_BULLETS,
+  APEX_RETAIL_VENDOR_SPEND,
+} from './cxo-fixtures';
+import type { IntelligenceV3PageData, RetailIntelligenceStatus, StageKey } from './types';
+import type { ApexRetailIntelligenceData } from '@/lib/intelligence-v3/apex-retail-live';
 
 interface Props {
   /** Server-side composed page data. Defaults to the demo fixture. */
@@ -59,11 +69,13 @@ interface Props {
   myStrategyData?: any;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   initiatives?: any;
+  apexRetailData?: ApexRetailIntelligenceData | null;
 }
 
 export function IntelligenceV3Page({
   data: dataProp,
   isLiveBound = false,
+  apexRetailData = null,
 }: Props = {}) {
   const data = dataProp ?? FIRST_CAPITAL_DEMO;
   // PR-K2 · default landing is The Brief — it's the canonical
@@ -99,7 +111,25 @@ export function IntelligenceV3Page({
   };
   const isCorpusStage = stage === 'brief' || stage === 'map';
   const isAopStage = stage === 'art-of-possible';
-  const aopBands = data.aopBands ?? MERIDIAN_AOP_DEMO;
+  const isApexBound = Boolean(apexRetailData);
+  const aopBands = isApexBound ? APEX_RETAIL_AOP_DEMO : data.aopBands ?? MERIDIAN_AOP_DEMO;
+  const activeTenantName = isApexBound ? 'Apex Retail Group' : data.tenantName;
+  const briefData = apexRetailData?.briefData ?? getMeridianBriefData();
+  const mapData = apexRetailData?.mapData ?? getMeridianMapData();
+  const sentinelOpener = isApexBound
+    ? `Apex Retail Intelligence is live on Supabase: ${apexRetailData?.status.patterns} patterns, ${apexRetailData?.status.sources} summarized sources, ${apexRetailData?.status.useCases} use cases, and ${apexRetailData?.status.contradictions} open contradictions. Ask me which CXO tension matters first.`
+    : data.sentinelOpener;
+  const surfaceContext = buildSentinelIntelContext({
+    activeClient: activeTenantName,
+    stage,
+    isApexBound,
+    status: apexRetailData?.status ?? null,
+    patterns: apexRetailData?.patterns ?? [],
+    todayItems: apexRetailData?.todayItems ?? [],
+    aopBands,
+    briefData,
+    mapData,
+  });
 
   return (
     <div
@@ -111,7 +141,7 @@ export function IntelligenceV3Page({
         color: COLORS.body,
       }}
     >
-      <IntelligenceV3TopNav tenantName={data.tenantName} />
+      <IntelligenceV3TopNav tenantName={activeTenantName} />
 
       {!isLiveBound && !isCorpusStage && (
         <div
@@ -146,14 +176,16 @@ export function IntelligenceV3Page({
         <IntelligenceV3StageTabs active={stage} onChange={handleStageChange} />
       </div>
 
+      {apexRetailData && <ApexReadinessStrip status={apexRetailData.status} />}
+
       {isCorpusStage ? (
         // PR-K2 corpus surfaces · render full-width (Brief/Map carry
         // their own masthead + right rail; embedding inside the v3
         // grid would squeeze them). Sentinel chat is integrated into
         // each component's left-rail design (post-AgentDock migration).
         stage === 'brief'
-          ? <IntelligenceBrief data={getMeridianBriefData()} activeClient={data.tenantName} />
-          : <IntelligenceMap data={getMeridianMapData()} activeClient={data.tenantName} />
+          ? <IntelligenceBrief data={briefData} activeClient={activeTenantName} surfaceContext={surfaceContext} />
+          : <IntelligenceMap data={mapData} activeClient={activeTenantName} surfaceContext={surfaceContext} />
       ) : (
         // Non-corpus stages render through SentinelChat's <AgentDock>
         // layout · chat LEFT, workspace RIGHT, resizable splitter,
@@ -162,10 +194,10 @@ export function IntelligenceV3Page({
         // (~56), so the splitter has a finite box to fill.
         <div style={{ height: 'calc(100vh - 112px)', minHeight: 0 }}>
           <SentinelChat
-            scopeLabel={`${data.tenantName} · this page`}
-            opener={data.sentinelOpener}
+            scopeLabel={`${activeTenantName} · this page`}
+            opener={sentinelOpener}
             conversation={data.conversation}
-            surfaceContext={{ activeTab: stage, activeClient: data.tenantName }}
+            surfaceContext={surfaceContext}
             workspace={
               <main
                 style={{
@@ -177,13 +209,33 @@ export function IntelligenceV3Page({
                 }}
               >
                 {isAopStage && <ArtOfPossibleCanvas data={aopBands} />}
-                {stage === 'today' && <TodayCxoCanvas />}
-                {stage === 'by-function' && <ByFunctionCxoCanvas />}
-                {stage === 'patterns' && <PatternsCxoCanvas />}
-                {stage === 'vendors' && <VendorsCxoCanvas />}
-                {stage === 'peer-activity' && <PeerActivityCxoCanvas />}
-                {stage === 'my-strategy' && <MyStrategyCxoCanvas />}
-                {stage === 'sessions' && <SessionsCxoCanvas />}
+                {stage === 'today' && <TodayCxoCanvas items={apexRetailData?.todayItems} />}
+                {stage === 'by-function' && (
+                  <ByFunctionCxoCanvas
+                    rows={isApexBound ? APEX_RETAIL_BY_FN_ROWS : undefined}
+                    outcomes={isApexBound ? APEX_RETAIL_BY_FN_OUTCOMES : undefined}
+                  />
+                )}
+                {stage === 'patterns' && <PatternsCxoCanvas patterns={apexRetailData?.patterns} />}
+                {stage === 'vendors' && <VendorsCxoCanvas spend={isApexBound ? APEX_RETAIL_VENDOR_SPEND : undefined} />}
+                {stage === 'peer-activity' && (
+                  <PeerActivityCxoCanvas
+                    rows={isApexBound ? APEX_RETAIL_PEER_ROWS : undefined}
+                    lead={
+                      isApexBound
+                        ? 'Adoption read across retail cohorts: specialty, big-box, grocery, luxury, and marketplace-first peers. The laggard signal is strongest where customer identity and item-location history are weak.'
+                        : undefined
+                    }
+                  />
+                )}
+                {stage === 'my-strategy' && <MyStrategyCxoCanvas bullets={isApexBound ? APEX_RETAIL_STRATEGY_BULLETS : undefined} />}
+                {stage === 'sessions' && (
+                  <SessionsCxoCanvas
+                    rows={isApexBound ? APEX_RETAIL_SESSIONS : undefined}
+                    totalConversations={isApexBound ? 18 : undefined}
+                    recentWindowCount={isApexBound ? 6 : undefined}
+                  />
+                )}
               </main>
             }
           />
@@ -193,3 +245,57 @@ export function IntelligenceV3Page({
   );
 }
 
+function ApexReadinessStrip({ status }: { status: RetailIntelligenceStatus }) {
+  const items = [
+    { label: 'Supabase Genome live', value: status.runtime },
+    { label: 'Retail patterns', value: status.patterns.toString() },
+    { label: 'Summarized sources', value: `${status.summarizedSources}/${status.sources}` },
+    { label: 'Apex use cases', value: status.useCases.toString() },
+    { label: 'Open contradictions', value: status.contradictions.toString() },
+    { label: 'Graph edges', value: status.graphEdges.toString() },
+    { label: 'Neo4j', value: 'not required' },
+  ];
+
+  return (
+    <div
+      role="status"
+      style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
+        gap: 1,
+        background: COLORS.border,
+        borderBottom: `1px solid ${COLORS.border}`,
+      }}
+    >
+      {items.map((item) => (
+        <div
+          key={item.label}
+          style={{
+            background: COLORS.surface2,
+            padding: `${SPACING.xs}px ${SPACING.md}px`,
+            minWidth: 0,
+          }}
+        >
+          <div
+            style={{
+              fontFamily: FONT.mono,
+              fontSize: 9,
+              fontWeight: 700,
+              letterSpacing: '0.14em',
+              textTransform: 'uppercase',
+              color: COLORS.muted,
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+            }}
+          >
+            {item.label}
+          </div>
+          <div style={{ fontFamily: FONT.body, fontSize: 13, fontWeight: 700, color: COLORS.ink }}>
+            {item.value}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}

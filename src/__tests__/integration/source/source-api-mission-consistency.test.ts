@@ -139,10 +139,9 @@ describe('Source API and mission report consistency', () => {
     expect(missionReport.defers.length).toBeGreaterThan(0);
   });
 
-  it('does not import model providers, persistence, upload parsing, or UI runtime', () => {
+  it('keeps deterministic Source mission/runtime modules free of model providers, persistence, upload parsing, or UI runtime', () => {
     const sources = [
       'src/lib/source/nexus-api.ts',
-      'src/app/api/v1/source/[eventId]/nexus/ask/route.ts',
       'src/lib/source/agent-mission-report.ts',
       'src/lib/source/agent-missions.ts',
     ].map((filePath) => readFileSync(join(process.cwd(), filePath), 'utf8')).join('\n');
