@@ -552,6 +552,7 @@ export default async function TowerPage({
       bandMetrics={towerBandMetrics}
       pressuresView={towerPressures}
       atlasObservationsView={towerAtlasObservations}
+      activeTab={activeTab}
       towerSubmenuSlot={<TowerMainSubmenuStrip activeTab={activeTab} />}
       towerHandoffSlot={
         <>

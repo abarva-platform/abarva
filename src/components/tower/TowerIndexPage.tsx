@@ -32,6 +32,7 @@ import type {
   AtlasObservation,
   AtlasObservationsView,
 } from '@/lib/tower/atlas-observations-view';
+import type { TowerTabKey } from '@/lib/tower/tower-lens-tabs-view';
 
 // ─── Tower-specific tokens (v3 design: white bg, navy accent) ─────────────────
 const T = {
@@ -287,6 +288,7 @@ function SubstratePressure({ card }: { card: PressureCardView }) {
       }
       magnitudeLabel={card.magnitudeLabel}
       nextAction={card.nextAction}
+      detailHref={card.displayId ? `/tower/programs/${encodeURIComponent(card.displayId)}` : undefined}
     />
   );
 }
@@ -304,6 +306,7 @@ interface PressureProps {
   magnitude: ReactNode;
   magnitudeLabel: string;
   nextAction: ReactNode;
+  detailHref?: string;
 }
 
 function pressureColor(type: PressureType): string {
@@ -317,18 +320,19 @@ function pressureColor(type: PressureType): string {
 function Pressure(props: PressureProps) {
   const labelColor = pressureColor(props.type);
   const labelLines = props.label.split('\n');
-  return (
-    <div
-      style={{
-        padding: '22px 0',
-        borderTop: `1px solid ${T.RULE}`,
-        display: 'grid',
-        gridTemplateColumns: '110px 1fr 320px',
-        gap: 24,
-        alignItems: 'start',
-        cursor: 'pointer',
-      }}
-    >
+  const wrapperStyle: CSSProperties = {
+    padding: '22px 0',
+    borderTop: `1px solid ${T.RULE}`,
+    display: 'grid',
+    gridTemplateColumns: '110px 1fr 320px',
+    gap: 24,
+    alignItems: 'start',
+    cursor: props.detailHref ? 'pointer' : 'default',
+    color: 'inherit',
+    textDecoration: 'none',
+  };
+  const content = (
+    <>
       {/* ptag */}
       <div
         style={{
@@ -446,8 +450,23 @@ function Pressure(props: PressureProps) {
           {props.nextAction}
         </div>
       </div>
-    </div>
+    </>
   );
+
+  if (props.detailHref) {
+    return (
+      <Link
+        href={props.detailHref}
+        data-testid={`tower-pressure-detail-link-${props.id}`}
+        title="Open Tower initiative detail"
+        style={wrapperStyle}
+      >
+        {content}
+      </Link>
+    );
+  }
+
+  return <div style={wrapperStyle}>{content}</div>;
 }
 
 // ─── Strategic alignment matrix ───────────────────────────────────────────────
@@ -531,6 +550,277 @@ function TowerEmptyState({
   );
 }
 
+function formatMoney(usd: number | null | undefined): string {
+  const value = Number(usd ?? 0);
+  if (!value) return '$0';
+  if (Math.abs(value) >= 1_000_000_000) return `$${(value / 1_000_000_000).toFixed(1)}B`;
+  if (Math.abs(value) >= 1_000_000) return `$${(value / 1_000_000).toFixed(1)}M`;
+  if (Math.abs(value) >= 1_000) return `$${Math.round(value / 1_000)}K`;
+  return `$${Math.round(value)}`;
+}
+
+function labelize(value: string | null | undefined): string {
+  if (!value) return 'Unassigned';
+  return value.replace(/_/g, ' ').replace(/\b\w/g, (letter) => letter.toUpperCase());
+}
+
+function workspaceTitle(activeTab: TowerTabKey): string {
+  if (activeTab === 'scorecards') return 'Scorecards';
+  if (activeTab === 'programme_gates') return 'Portfolio Gates';
+  if (activeTab === 'dependencies') return 'Dependencies';
+  if (activeTab === 'executive_brief') return 'Executive Brief';
+  return 'The IT Portfolio';
+}
+
+function stageSort(stage: string): number {
+  const order = ['intake', 'pilot', 'scaled', 'multi_year_strategic_bet', 'retired'];
+  const index = order.indexOf(stage);
+  return index >= 0 ? index : 99;
+}
+
+function TowerTabPanelShell({
+  eyebrow,
+  title,
+  body,
+  children,
+}: {
+  eyebrow: string;
+  title: string;
+  body: string;
+  children: ReactNode;
+}) {
+  return (
+    <section style={{ padding: '28px 32px 36px' }} data-testid="tower-active-submenu-panel">
+      <div
+        style={{
+          fontFamily: T.MONO,
+          fontSize: 10,
+          letterSpacing: '2px',
+          fontWeight: 700,
+          color: T.GOLD,
+          textTransform: 'uppercase',
+          marginBottom: 8,
+        }}
+      >
+        {eyebrow}
+      </div>
+      <h2
+        style={{
+          fontFamily: T.SERIF,
+          fontSize: 34,
+          fontWeight: 850,
+          letterSpacing: '-0.8px',
+          lineHeight: 1.05,
+          margin: 0,
+          color: T.INK,
+        }}
+      >
+        {title}
+      </h2>
+      <p style={{ margin: '8px 0 22px', maxWidth: '68ch', fontSize: 13.5, color: T.GRAY_DK, lineHeight: 1.55 }}>
+        {body}
+      </p>
+      {children}
+    </section>
+  );
+}
+
+function DataCard({
+  href,
+  title,
+  meta,
+  detail,
+  accent = T.PURPLE,
+}: {
+  href?: string;
+  title: string;
+  meta: string;
+  detail: string;
+  accent?: string;
+}) {
+  const style: CSSProperties = {
+    display: 'block',
+    border: `1px solid ${T.RULE}`,
+    borderLeft: `4px solid ${accent}`,
+    borderRadius: 8,
+    background: T.CREAM_2,
+    padding: '14px 16px',
+    color: T.INK,
+    textDecoration: 'none',
+  };
+  const content = (
+    <>
+      <div style={{ fontFamily: T.MONO, fontSize: 9, letterSpacing: '1.3px', color: T.GRAY_DK, fontWeight: 700, textTransform: 'uppercase' }}>
+        {meta}
+      </div>
+      <div style={{ marginTop: 6, fontFamily: T.SERIF, fontSize: 18, fontWeight: 760, letterSpacing: '-0.2px' }}>
+        {title}
+      </div>
+      <div style={{ marginTop: 6, fontSize: 12.5, color: T.INK_2, lineHeight: 1.45 }}>{detail}</div>
+    </>
+  );
+  return href ? <Link href={href} style={style}>{content}</Link> : <div style={style}>{content}</div>;
+}
+
+function TowerWorkspaceTabPanel({
+  activeTab,
+  initiatives,
+  vendors,
+  pressuresView,
+  alignment2x2View,
+}: {
+  activeTab: TowerTabKey;
+  initiatives: ReadonlyArray<AIInitiative>;
+  vendors: ReadonlyArray<AIInitiativeVendorRow>;
+  pressuresView?: TowerPressuresView;
+  alignment2x2View: StrategicAlignment2x2View;
+}) {
+  if (initiatives.length === 0) {
+    return (
+      <div style={{ padding: '28px 32px 36px' }}>
+        <TowerEmptyState
+          eyebrow="DB substrate required"
+          title="No tenant-bound initiative rows are available for this submenu."
+          body="Tower will not render fixture scorecards, gates, dependencies, or briefs. Load this client's AI Initiatives substrate in the database first."
+        />
+      </div>
+    );
+  }
+
+  if (activeTab === 'scorecards') {
+    return (
+      <TowerTabPanelShell
+        eyebrow="Scorecards · DB initiatives"
+        title="Per-initiative scorecards from the active client's registry."
+        body="Every row links to the tenant-scoped initiative detail. No fixture program cards are substituted when the registry is thin."
+      >
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 12 }}>
+          {initiatives.map((initiative) => (
+            <DataCard
+              key={initiative.initiativeId}
+              href={`/tower/programs/${encodeURIComponent(initiative.displayId)}`}
+              title={initiative.name}
+              meta={`${initiative.displayId} · ${labelize(initiative.statusFlag)} · ${initiative.confidenceLevel}`}
+              detail={`${initiative.ownerName} · ${labelize(initiative.stage)} · committed ${formatMoney(initiative.committedAnnualUsd)} annual · measured ${formatMoney(initiative.measuredValueUsd)}.`}
+              accent={initiative.statusFlag === 'healthy' ? T.GREEN : initiative.statusFlag === 'cost_overrun' ? T.RED : T.PURPLE}
+            />
+          ))}
+        </div>
+      </TowerTabPanelShell>
+    );
+  }
+
+  if (activeTab === 'programme_gates') {
+    const byStage = new Map<string, AIInitiative[]>();
+    for (const initiative of initiatives) {
+      const list = byStage.get(initiative.stage) ?? [];
+      list.push(initiative);
+      byStage.set(initiative.stage, list);
+    }
+    const stages = [...byStage.entries()].sort(([a], [b]) => stageSort(a) - stageSort(b));
+    return (
+      <TowerTabPanelShell
+        eyebrow="Gates · lifecycle posture"
+        title="Portfolio gates are grouped from initiative stage rows."
+        body="Gate counts come from the DB registry. A missing phase is left missing; Tower does not invent stage coverage."
+      >
+        <div style={{ display: 'grid', gap: 14 }}>
+          {stages.map(([stage, rows]) => (
+            <section key={stage} style={{ border: `1px solid ${T.RULE}`, borderRadius: 8, padding: 16, background: T.CREAM_2 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', gap: 16, alignItems: 'baseline' }}>
+                <h3 style={{ margin: 0, fontFamily: T.SERIF, fontSize: 20, color: T.INK }}>{labelize(stage)}</h3>
+                <span style={{ fontFamily: T.MONO, fontSize: 10, letterSpacing: '1.3px', color: T.GRAY_DK, fontWeight: 700 }}>
+                  {rows.length} initiative{rows.length === 1 ? '' : 's'}
+                </span>
+              </div>
+              <div style={{ marginTop: 12, display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 10 }}>
+                {rows.map((initiative) => (
+                  <DataCard
+                    key={initiative.initiativeId}
+                    href={`/tower/programs/${encodeURIComponent(initiative.displayId)}`}
+                    title={initiative.name}
+                    meta={`${initiative.displayId} · ${labelize(initiative.statusFlag)}`}
+                    detail={initiative.stageDetail ?? initiative.statusSummary}
+                    accent={initiative.alignedCallout ? T.GREEN : T.GOLD}
+                  />
+                ))}
+              </div>
+            </section>
+          ))}
+        </div>
+      </TowerTabPanelShell>
+    );
+  }
+
+  if (activeTab === 'dependencies') {
+    return (
+      <TowerTabPanelShell
+        eyebrow="Dependencies · vendors and renewals"
+        title="Vendor dependencies are read from ai_initiative_vendors."
+        body="This view only shows dependencies that exist in the database for the active client. Renewal timing and contract value stay attached to the owning initiative."
+      >
+        {vendors.length === 0 ? (
+          <TowerEmptyState
+            eyebrow="No dependency rows"
+            title="No vendor dependency records are loaded for this tenant."
+            body="Add ai_initiative_vendors rows to populate dependency and renewal exposure. Tower will not fall back to Apex fixture dependencies."
+          />
+        ) : (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 12 }}>
+            {vendors.map((vendor) => (
+              <DataCard
+                key={vendor.vendorId}
+                href={`/tower/programs/${encodeURIComponent(vendor.initiativeDisplayId)}`}
+                title={vendor.vendorName}
+                meta={`${vendor.initiativeDisplayId} · ${vendor.renewalDate ?? 'no renewal date'}`}
+                detail={`${vendor.initiativeName} · contract ${formatMoney(vendor.contractValueUsd)} · financial health ${labelize(vendor.financialHealth)}.`}
+                accent={vendor.financialHealth === 'at_risk' || vendor.financialHealth === 'watch' ? T.AMBER : T.PURPLE}
+              />
+            ))}
+          </div>
+        )}
+      </TowerTabPanelShell>
+    );
+  }
+
+  const pressureCount = pressuresView?.cards.length ?? 0;
+  const strategicBetCount = alignment2x2View.strategicBets.length;
+  return (
+    <TowerTabPanelShell
+      eyebrow="Executive brief · grounded summary"
+      title="A board-ready read from the active client's Tower substrate."
+      body="The brief is assembled from DB-backed initiatives, vendor rows, pressure cards, and the strategic alignment matrix. Empty areas stay disclosed."
+    >
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: 10, marginBottom: 18 }}>
+        <DataCard title="Initiatives" meta="Registry count" detail={`${initiatives.length} tenant-bound records`} accent={T.PURPLE} />
+        <DataCard title="Active pressures" meta="Decision load" detail={`${pressureCount} derived from status flags and renewals`} accent={pressureCount > 0 ? T.RED : T.GREEN} />
+        <DataCard title="Strategic bets" meta="Foundation row" detail={`${strategicBetCount} not plotted in the 2x2`} accent={T.GOLD} />
+        <DataCard title="Vendor links" meta="Dependency substrate" detail={`${vendors.length} vendor records loaded`} accent={vendors.length > 0 ? T.PURPLE : T.GRAY} />
+      </div>
+      {pressureCount > 0 ? (
+        <div style={{ display: 'grid', gap: 10 }}>
+          {pressuresView?.cards.slice(0, 5).map((card) => (
+            <DataCard
+              key={card.key}
+              href={card.displayId ? `/tower/programs/${encodeURIComponent(card.displayId)}` : undefined}
+              title={card.headline}
+              meta={`${card.id} · ${card.magnitudeLabel}`}
+              detail={card.nextAction}
+              accent={pressureColor(card.type)}
+            />
+          ))}
+        </div>
+      ) : (
+        <TowerEmptyState
+          eyebrow="No pressure cards"
+          title="No executive pressure narrative is available."
+          body={pressuresView?.emptyHint ?? 'Load initiative status flags and vendor renewals before using the executive brief.'}
+        />
+      )}
+    </TowerTabPanelShell>
+  );
+}
+
 function Quadrant({
   position,
   qlabel,
@@ -602,29 +892,26 @@ function Quadrant({
           const isSubstrate = Boolean(dot.displayId);
           const conf = dot.confidenceLevel ?? 'HIGH';
           const borderStyle = conf === 'HIGH' ? 'solid' : conf === 'MED' ? 'dashed' : 'dotted';
-          return (
-            <div
-              key={dot.displayId ?? dot.name}
-              data-testid={isSubstrate ? `tower-2x2-dot-${dot.displayId}` : undefined}
-              data-aligned-callout={dot.alignedCallout ? 'true' : undefined}
-              style={{
-                position: 'absolute',
-                left: dot.left,
-                top: dot.top,
-                padding: '6px 10px',
-                background: T.INK,
-                color: T.CREAM,
-                fontFamily: T.MONO,
-                fontSize: 9.5,
-                letterSpacing: '1px',
-                fontWeight: 700,
-                borderRadius: 5,
-                cursor: 'pointer',
-                lineHeight: 1.2,
-                border: isSubstrate ? `1.5px ${borderStyle} ${T.CREAM}` : undefined,
-                maxWidth: 180,
-              }}
-            >
+          const dotStyle: CSSProperties = {
+            position: 'absolute',
+            left: dot.left,
+            top: dot.top,
+            padding: '6px 10px',
+            background: T.INK,
+            color: T.CREAM,
+            fontFamily: T.MONO,
+            fontSize: 9.5,
+            letterSpacing: '1px',
+            fontWeight: 700,
+            borderRadius: 5,
+            cursor: isSubstrate ? 'pointer' : 'default',
+            lineHeight: 1.2,
+            border: isSubstrate ? `1.5px ${borderStyle} ${T.CREAM}` : undefined,
+            maxWidth: 180,
+            textDecoration: 'none',
+          };
+          const dotBody = (
+            <>
               {isSubstrate && (
                 <span
                   style={{
@@ -657,6 +944,27 @@ function Quadrant({
               >
                 {dot.amount}
               </span>
+            </>
+          );
+
+          if (dot.displayId) {
+            return (
+              <Link
+                key={dot.displayId}
+                href={`/tower/programs/${encodeURIComponent(dot.displayId)}`}
+                data-testid={`tower-2x2-dot-${dot.displayId}`}
+                data-aligned-callout={dot.alignedCallout ? 'true' : undefined}
+                title="Open Tower initiative detail"
+                style={dotStyle}
+              >
+                {dotBody}
+              </Link>
+            );
+          }
+
+          return (
+            <div key={dot.name} style={dotStyle}>
+              {dotBody}
             </div>
           );
         })}
@@ -888,6 +1196,8 @@ interface TowerIndexPageProps {
    * T-7 (Bind 3): DB-derived Atlas observations.
    */
   atlasObservationsView?: AtlasObservationsView;
+  /** Active workspace submenu resolved from /tower?tab=. */
+  activeTab?: TowerTabKey;
   /** Slots are accepted for backward compatibility but not rendered in the broadsheet design. */
   provenanceSlot?: ReactNode;
   portfolioSummarySlot?: ReactNode;
@@ -914,6 +1224,7 @@ export function TowerIndexPage({
   bandMetrics,
   pressuresView,
   atlasObservationsView,
+  activeTab = 'portfolio',
   provenanceSlot: _p1,
   portfolioSummarySlot: _p2,
   cascadeGraphSlot: _p3,
@@ -922,7 +1233,6 @@ export function TowerIndexPage({
   towerLensSlot: _p6,
 }: TowerIndexPageProps = {}) {
   void _p1; void _p2; void _p3; void _p4; void _p6;
-  void vendors;
   const alignment2x2View = buildStrategicAlignment2x2View(initiatives ?? []);
   // T-8: iterate metrics in lens-determined order rather than keying by name.
   const useSubstrateBand = Boolean(bandMetrics);
@@ -1127,7 +1437,7 @@ export function TowerIndexPage({
                   marginBottom: 8,
                 }}
               >
-                Tower · Portfolio Index · TWR-IDX-PORTFOLIO
+                Tower · {workspaceTitle(activeTab)} · TWR-IDX-{activeTab.replace(/_/g, '-').toUpperCase()}
               </div>
               <h1
                 style={{
@@ -1141,7 +1451,7 @@ export function TowerIndexPage({
                   color: T.INK,
                 }}
               >
-                The IT Portfolio{' '}
+                {workspaceTitle(activeTab)}{' '}
                 <span
                   style={{
                     fontSize: 22,
@@ -1208,6 +1518,8 @@ export function TowerIndexPage({
             </div>
           </div>
 
+          {activeTab === 'portfolio' ? (
+            <>
           {/* KPI band — T-1 compression: ~80px tall, 2-line tiles, no inline CTAs.
               Displaced detail (3-line descriptions) lives in hover tooltip;
               displaced CTAs ("+24% pending baseline →" and "Connect Okta +
@@ -1494,73 +1806,84 @@ export function TowerIndexPage({
                       meta: `${bet.stageDetail} · ${bet.amount} committed · attribution ${bet.confidenceLevel}`,
                       desc: null as ReactNode,
                       cta: null as ReactNode,
-                    })).map((card) => (
-                  <div
-                    key={card.key}
-                    data-testid={
-                      card.displayId
-                        ? `tower-strategic-bet-${card.displayId}`
-                        : undefined
-                    }
-                    style={{
-                      padding: '14px 16px',
-                      border: `1px dashed ${T.RULE_STRONG}`,
-                      borderRadius: 8,
-                      background: 'transparent',
-                    }}
-                  >
-                    {card.displayId && (
-                      <div
-                        style={{
-                          fontFamily: T.MONO,
-                          fontSize: 9,
-                          letterSpacing: '1.6px',
-                          color: T.GRAY_DK,
-                          fontWeight: 700,
-                          marginBottom: 2,
-                        }}
-                      >
-                        {card.displayId}
-                      </div>
-                    )}
-                    <div
-                      style={{
-                        fontFamily: T.SERIF,
-                        fontSize: 16,
-                        fontWeight: 700,
-                        letterSpacing: '-0.2px',
-                        marginBottom: 4,
-                      }}
-                    >
-                      {card.name}
-                    </div>
-                    <div
-                      style={{
-                        fontFamily: T.MONO,
-                        fontSize: 9,
-                        letterSpacing: '1.2px',
-                        color: T.GRAY_DK,
-                        fontWeight: 600,
-                        textTransform: 'uppercase',
-                      }}
-                    >
-                      {card.meta}
-                    </div>
-                    {card.desc && (
-                      <div
-                        style={{
-                          fontSize: 12.5,
-                          color: T.INK_2,
-                          lineHeight: 1.5,
-                          margin: '8px 0',
-                        }}
-                      >
-                        {card.desc}
-                      </div>
-                    )}
-                    {card.cta && <div>{card.cta}</div>}
-                  </div>
-                  ))
+                    })).map((card) => {
+                      const cardBody = (
+                        <>
+                          {card.displayId && (
+                            <div
+                              style={{
+                                fontFamily: T.MONO,
+                                fontSize: 9,
+                                letterSpacing: '1.6px',
+                                color: T.GRAY_DK,
+                                fontWeight: 700,
+                                marginBottom: 2,
+                              }}
+                            >
+                              {card.displayId}
+                            </div>
+                          )}
+                          <div
+                            style={{
+                              fontFamily: T.SERIF,
+                              fontSize: 16,
+                              fontWeight: 700,
+                              letterSpacing: '-0.2px',
+                              marginBottom: 4,
+                              color: T.INK,
+                            }}
+                          >
+                            {card.name}
+                          </div>
+                          <div
+                            style={{
+                              fontFamily: T.MONO,
+                              fontSize: 9,
+                              letterSpacing: '1.2px',
+                              color: T.GRAY_DK,
+                              fontWeight: 600,
+                              textTransform: 'uppercase',
+                            }}
+                          >
+                            {card.meta}
+                          </div>
+                          {card.desc && (
+                            <div
+                              style={{
+                                fontSize: 12.5,
+                                color: T.INK_2,
+                                lineHeight: 1.5,
+                                margin: '8px 0',
+                              }}
+                            >
+                              {card.desc}
+                            </div>
+                          )}
+                          {card.cta && <div>{card.cta}</div>}
+                        </>
+                      );
+                      const style: CSSProperties = {
+                        display: 'block',
+                        padding: '14px 16px',
+                        border: `1px dashed ${T.RULE_STRONG}`,
+                        borderRadius: 8,
+                        background: 'transparent',
+                        textDecoration: 'none',
+                      };
+                      return card.displayId ? (
+                        <Link
+                          key={card.key}
+                          href={`/tower/programs/${encodeURIComponent(card.displayId)}`}
+                          data-testid={`tower-strategic-bet-${card.displayId}`}
+                          title="Open Tower initiative detail"
+                          style={style}
+                        >
+                          {cardBody}
+                        </Link>
+                      ) : (
+                        <div key={card.key} style={style}>{cardBody}</div>
+                      );
+                    })
                 ) : (
                   <TowerEmptyState
                     eyebrow="No strategic bets"
@@ -1619,6 +1942,16 @@ export function TowerIndexPage({
               v2 confidence bands · substrate v0.9
             </div>
           </div>
+            </>
+          ) : (
+            <TowerWorkspaceTabPanel
+              activeTab={activeTab}
+              initiatives={initiatives ?? []}
+              vendors={vendors ?? []}
+              pressuresView={pressuresView}
+              alignment2x2View={alignment2x2View}
+            />
+          )}
         </div>
 
         {/* ─── ATLAS COLUMN (synthesis-only · composer migrated to AgentDock) ─── */}
