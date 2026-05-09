@@ -9,34 +9,31 @@
 // rather than raster AI-generated — same visual register without
 // the bandwidth/auth cost of an external image service.
 
-import Image from 'next/image';
 import Link from 'next/link';
 import type { ReactNode } from 'react';
 
-/** Inline AbarVa wordmark — replaces the word "AbarVa" in body copy
- *  so the brand mark is shown rather than the word. Sized to match
- *  surrounding text. `inverse` flips it for dark backgrounds. */
+/** Inline AbarVa wordmark — replaces the word "AbarVa" in body copy.
+ *  Uses a plain <img> (not Next.js Image) so em-relative height + width:auto
+ *  resolve against the SVG's actual 3.86:1 intrinsic ratio without
+ *  the width={px} prop fighting width:auto. */
 function AbarvaWordmark({
-  height = '1.2em',
   inverse = false,
 }: {
-  height?: string | number;
   inverse?: boolean;
 }) {
   return (
-    <Image
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
       src={inverse ? '/brand/abarva-logo-inverse.svg' : '/brand/abarva-logo.svg'}
       alt="AbarVa"
-      width={130}
-      height={42}
       style={{
-        height,
+        height: '0.82em',
         width: 'auto',
         display: 'inline-block',
-        verticalAlign: '-0.13em',
-        margin: '0 0.05em',
+        verticalAlign: '-0.07em',
+        margin: '0 0.15em',
+        flexShrink: 0,
       }}
-      unoptimized
     />
   );
 }
