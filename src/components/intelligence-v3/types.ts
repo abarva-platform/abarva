@@ -42,13 +42,7 @@ export const STAGES: ReadonlyArray<StageDef> = [
   { key: 'brief', label: 'The Brief', stage: 1, primary: true },
   { key: 'map', label: 'The Map', stage: 1, primary: true },
   { key: 'art-of-possible', label: 'Art of Possible', stage: 1, primary: true },
-  { key: 'today', label: 'Today', stage: 1 },
-  { key: 'by-function', label: 'By function', stage: 2 },
-  { key: 'patterns', label: 'Patterns', stage: 1 },
   { key: 'vendors', label: 'Vendors', stage: 3 },
-  { key: 'peer-activity', label: 'Peer activity', stage: 3 },
-  { key: 'my-strategy', label: 'My strategy', stage: 2 },
-  { key: 'sessions', label: 'Sessions', stage: 1 },
 ];
 
 // Art of Possible · honest-asymmetry band model (PR-K2.3).

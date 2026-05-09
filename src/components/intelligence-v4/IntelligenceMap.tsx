@@ -427,7 +427,17 @@ export function IntelligenceMap({ data, activeClient, surfaceContext }: Props) {
           </div>
         </div>
 
-        {/* View body · conditional on `view` */}
+        {/* View body · conditional on `view`, with the selected idea
+            pinned in the same canvas so clicks visibly open detail. */}
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'minmax(0, 1fr) minmax(320px, 360px)',
+            gap: 14,
+            alignItems: 'start',
+          }}
+        >
+          <div style={{ minWidth: 0 }}>
         {view === 'landscape' && (
         <div style={{ border: `1px solid ${C.borderLight}`, background: C.surface, borderRadius: 10, overflow: 'hidden' }}>
           <div
@@ -624,18 +634,31 @@ export function IntelligenceMap({ data, activeClient, surfaceContext }: Props) {
         </div>
         )}
 
-        {view === 'kanban' && (
-          <KanbanView nodes={visibleNodes} onSelect={setSelectedId} selectedId={selected?.useCase.id} />
-        )}
-        {view === 'heatmap' && (
-          <HeatmapView nodes={visibleNodes} onSelect={setSelectedId} />
-        )}
-        {view === 'list' && (
-          <ListView nodes={visibleNodes} onSelect={setSelectedId} selectedId={selected?.useCase.id} />
-        )}
+            {view === 'kanban' && (
+              <KanbanView nodes={visibleNodes} onSelect={setSelectedId} selectedId={selected?.useCase.id} />
+            )}
+            {view === 'heatmap' && (
+              <HeatmapView nodes={visibleNodes} onSelect={setSelectedId} selectedId={selected?.useCase.id} />
+            )}
+            {view === 'list' && (
+              <ListView nodes={visibleNodes} onSelect={setSelectedId} selectedId={selected?.useCase.id} />
+            )}
+          </div>
 
-          {/* Selected node detail — inline below the chart */}
-          {selected && <DetailCard node={selected} />}
+          {selected && (
+            <aside
+              aria-live="polite"
+              aria-label="Selected intelligence idea"
+              style={{
+                position: 'sticky',
+                top: 8,
+                minWidth: 0,
+              }}
+            >
+              <DetailCard node={selected} />
+            </aside>
+          )}
+        </div>
         </main>
           }
         />
@@ -1051,9 +1074,11 @@ const HEATMAP_STAGES: ReadonlyArray<{ key: LifecycleStage; label: string }> = [
 function HeatmapView({
   nodes,
   onSelect,
+  selectedId,
 }: {
   nodes: ReadonlyArray<MapNode>;
   onSelect: (id: string) => void;
+  selectedId?: string;
 }) {
   return (
     <div
@@ -1122,6 +1147,7 @@ function HeatmapView({
                 key={stage.key}
                 nodes={cellNodes}
                 onSelect={onSelect}
+                selectedId={selectedId}
               />
             );
           })}
@@ -1134,9 +1160,11 @@ function HeatmapView({
 function HeatmapCell({
   nodes,
   onSelect,
+  selectedId,
 }: {
   nodes: ReadonlyArray<MapNode>;
   onSelect: (id: string) => void;
+  selectedId?: string;
 }) {
   const inFlight = nodes.filter((n) => n.engagementState === 'in_flight').length;
   const atRisk = nodes.filter((n) => n.engagementState === 'at_risk').length;
@@ -1192,9 +1220,10 @@ function HeatmapCell({
               onClick={() => onSelect(n.useCase.id)}
               style={{
                 textAlign: 'left',
-                background: 'transparent',
-                border: 0,
-                padding: 0,
+                background: n.useCase.id === selectedId ? `${C.navy}10` : 'transparent',
+                border: n.useCase.id === selectedId ? `1px solid ${C.navyLine}` : '1px solid transparent',
+                borderRadius: 4,
+                padding: '2px 4px',
                 fontFamily: F_BODY,
                 fontSize: 11,
                 color: C.ink,
