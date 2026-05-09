@@ -17,7 +17,7 @@ import type { ReactNode } from 'react';
  *  so the brand mark is shown rather than the word. Sized to match
  *  surrounding text. `inverse` flips it for dark backgrounds. */
 function AbarvaWordmark({
-  height = '1em',
+  height = '1.2em',
   inverse = false,
 }: {
   height?: string | number;
@@ -59,7 +59,7 @@ const C = {
   hair: 'rgba(21,21,26,0.08)',
 };
 
-export function ProductMarketingPage() {
+export function ProductMarketingPage({ tenantName = 'Meridian' }: { tenantName?: string }) {
   return (
     <div
       data-testid="product-marketing-page"
@@ -72,19 +72,19 @@ export function ProductMarketingPage() {
         minHeight: '100vh',
       }}
     >
-      <Hero />
+      <Hero tenantName={tenantName} />
       <FourSurfaces />
       <MoveLifecycle />
-      <Substrate />
+      <Substrate tenantName={tenantName} />
       <Differentiators />
-      <Cta />
+      <Cta tenantName={tenantName} />
     </div>
   );
 }
 
 // ─── Hero ─────────────────────────────────────────────────────────
 
-function Hero() {
+function Hero({ tenantName }: { tenantName: string }) {
   return (
     <section
       style={{
@@ -167,7 +167,7 @@ function Hero() {
                 gap: 8,
               }}
             >
-              See it on Meridian →
+              See it on {tenantName} →
             </Link>
             <Link
               href="/intelligence#brief"
@@ -936,7 +936,7 @@ function MoveLifecycle() {
 
 // ─── Substrate ────────────────────────────────────────────────────
 
-function Substrate() {
+function Substrate({ tenantName }: { tenantName: string }) {
   return (
     <section style={{ padding: '96px 64px', borderBottom: `1px solid ${C.border}` }}>
       <div
@@ -981,7 +981,7 @@ function Substrate() {
             />
           </div>
         </div>
-        <SubstrateIllustration />
+        <SubstrateIllustration tenantName={tenantName} />
       </div>
     </section>
   );
@@ -1038,7 +1038,7 @@ function SubstrateRow({
   );
 }
 
-function SubstrateIllustration() {
+function SubstrateIllustration({ tenantName = 'Meridian' }: { tenantName?: string }) {
   // Three concentric layered rings.
   return (
     <svg viewBox="0 0 420 420" width="100%" style={{ maxWidth: 420 }} role="img" aria-label="Substrate">
@@ -1068,7 +1068,7 @@ function SubstrateIllustration() {
         TENANT
       </text>
       <text x="210" y="218" fontFamily={F_SERIF} fontSize="20" fill={C.ink} fontWeight={500} textAnchor="middle">
-        Meridian
+        {tenantName}
       </text>
       <text x="210" y="234" fontFamily={F_MONO} fontSize="9" fill={C.inkMute} letterSpacing="0.12em" textAnchor="middle">
         23 / 23 SEGMENTS
@@ -1241,7 +1241,7 @@ function DiffMark({ variant }: { variant: 'grounded' | 'overlay' | 'agent' }) {
 
 // ─── CTA ─────────────────────────────────────────────────────────
 
-function Cta() {
+function Cta({ tenantName }: { tenantName: string }) {
   return (
     <section
       style={{
@@ -1286,8 +1286,8 @@ function Cta() {
             margin: '0 0 36px',
           }}
         >
-          Meridian Health is loaded with 23 substrate segments, 47 patterns,
-          and 7 active AI initiatives. Pop in and see how{' '}
+          {tenantName} is loaded with real substrate data, cross-engagement
+          patterns, and active AI initiatives. Pop in and see how{' '}
           <AbarvaWordmark inverse /> shapes their
           quarterly read.
         </p>
@@ -1306,7 +1306,7 @@ function Cta() {
               textDecoration: 'none',
             }}
           >
-            Open Intelligence on Meridian →
+            Open Intelligence on {tenantName} →
           </Link>
           <Link
             href="/home"
