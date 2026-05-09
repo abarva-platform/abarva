@@ -20,6 +20,13 @@ const nextConfig: NextConfig = {
     authInterrupts: true,
   },
 
+  turbopack: {
+    // Pin the workspace root so Turbopack doesn't scan git worktrees
+    // under .claude/worktrees/ — they contain conflicting [kind] / [deliverableId]
+    // route segments that crash the dev server route loader.
+    root: '.',
+  },
+
   // Product-map · legacy paths redirect to their new homes under the
   // five-item nav.
   //
