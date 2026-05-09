@@ -27,6 +27,10 @@ export function classifyAtlasIntent(message: string): AtlasClassification {
       'corpus',
       'market practice',
       'best practice',
+      'what can tower answer',
+      'what can you answer',
+      'what is in scope',
+      'tower scope',
     ])
   ) {
     return { intent: 'llm', routeType: 'llm' };
@@ -64,6 +68,11 @@ export function classifyAtlasIntent(message: string): AtlasClassification {
       'should we consolidate',
       'should we exit',
       'should we double down',
+      'cancel the',
+      'approve the',
+      'terminate the',
+      'renegotiate the',
+      'sign the',
     ])
   ) {
     return { intent: 'strategy_refusal', routeType: 'scripted' };
