@@ -57,9 +57,15 @@ import {
 } from '@/lib/knowledge/context-broker/embedding-client';
 import {
   getPineconeClient,
+  privateTenantPineconeIndexConfig,
+  type PineconeIndexConfig,
   type PineconeClient,
   type PineconeUpsertItem,
 } from '@/lib/knowledge/context-broker/pinecone-client';
+import {
+  getPrivateDataPlaneResource,
+  isPrivateVectorAvailable,
+} from '@/lib/knowledge/private-data-plane/registry';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -178,6 +184,19 @@ function resolveIndexName(): string {
   );
 }
 
+function resolvePineconeIndexConfig(tenantKey: string | null): PineconeIndexConfig {
+  const resource = getPrivateDataPlaneResource(tenantKey);
+  if (isPrivateVectorAvailable(resource) && resource?.privatePineconeIndex) {
+    return privateTenantPineconeIndexConfig(resource.privatePineconeIndex);
+  }
+  return {
+    name: resolveIndexName(),
+    dimension: EMBEDDING_DIM,
+    metric: 'cosine',
+    mode: 'tenant',
+  };
+}
+
 function readPositiveInt(name: string, fallback: number): number {
   const raw = process.env[name];
   if (!raw) return fallback;
@@ -203,8 +222,9 @@ export async function runEmbedJob(
   // skip-warning at most once per execution.
   let pinecone: PineconeClient | null = null;
   let pineconeEnabled = false;
+  const pineconeConfig = resolvePineconeIndexConfig(options.tenantKey);
   if (!options.dryRun && !options.postgresOnly) {
-    pinecone = options.pineconeClient ?? getPineconeClient();
+    pinecone = options.pineconeClient ?? getPineconeClient(pineconeConfig);
     if (pinecone) {
       pineconeEnabled = true;
     } else {
@@ -228,10 +248,12 @@ export async function runEmbedJob(
     dryRun: options.dryRun,
   };
 
+  let queueDrained = false;
   for (let batch = 0; batch < options.maxBatches; batch += 1) {
     const rows = await fetchPendingBatch(supabase, options);
     if (rows.length === 0) {
       log(`[batch ${batch + 1}] no more pending chunks; stopping.`);
+      queueDrained = true;
       break;
     }
 
@@ -308,7 +330,7 @@ export async function runEmbedJob(
         result.pineconeUpserts += upsert.upsertedCount;
         log(
           `[batch ${batch + 1}] pinecone: upserted ${upsert.upsertedCount} vector(s) ` +
-            `to ${resolveIndexName()}`,
+            `to ${pineconeConfig.name}`,
         );
       } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
@@ -327,11 +349,12 @@ export async function runEmbedJob(
 
     if (rows.length < options.batchSize) {
       log(`[batch ${batch + 1}] short batch — assuming queue drained; stopping.`);
+      queueDrained = true;
       break;
     }
   }
 
-  if (result.batchesRun >= options.maxBatches) {
+  if (!queueDrained && result.batchesRun >= options.maxBatches) {
     result.hitMaxBatches = true;
   }
 
@@ -506,7 +529,7 @@ export async function main(argv: string[] = process.argv.slice(2)): Promise<Embe
   console.log(` postgres only   : ${args.postgresOnly ? 'YES' : 'no'}`);
   console.log(` pinecone        : ${pineconeMode}`);
   if (!args.dryRun && !args.postgresOnly && pineconeKeyPresent) {
-    console.log(` pinecone index  : ${resolveIndexName()}`);
+    console.log(` pinecone index  : ${resolvePineconeIndexConfig(args.tenantKey).name}`);
   }
   console.log(` ceiling cost*   : ~$${estimateCostUsd(hardCap * 500).toFixed(4)}  (assumes ~500 tok/chunk)`);
   console.log('────────────────────────────────────────────────────────────');

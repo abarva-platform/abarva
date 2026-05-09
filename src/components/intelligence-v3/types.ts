@@ -162,3 +162,13 @@ export interface IntelligenceV3PageData {
   sentinelOpener: string;
   conversation: ReadonlyArray<ChatMessage>;
 }
+
+export interface RetailIntelligenceStatus {
+  patterns: number;
+  sources: number;
+  summarizedSources: number;
+  useCases: number;
+  contradictions: number;
+  graphEdges: number;
+  runtime: 'supabase' | 'fixtures';
+}

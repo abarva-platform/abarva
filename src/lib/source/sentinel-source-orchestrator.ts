@@ -51,6 +51,165 @@ function rankSpecialists(
 
 const SOURCE_SENTINEL_WORD_CAP = 120;
 
+type BriefingPatch = Partial<
+  Pick<
+    SourceAgentBriefing,
+    | 'primaryFinding'
+    | 'summary'
+    | 'confidence'
+    | 'recommendedNextAction'
+    | 'suggestedActions'
+    | 'cannotProceedReasons'
+    | 'handoffRecommendation'
+  >
+>;
+
+function withBriefingPatch(
+  base: SourceAgentBriefing,
+  patch: BriefingPatch,
+): SourceAgentBriefing {
+  return {
+    ...base,
+    ...patch,
+  };
+}
+
+function action(
+  id: string,
+  label: string,
+  agentName: SourceAgentName,
+) {
+  return {
+    id,
+    label,
+    description: label,
+    actionType: 'showEvidenceGaps' as const,
+    agentName,
+    enabled: true,
+  };
+}
+
+function valueLabel(input: SourceAgentBriefingInput): 'projected' | 'seeded' | 'realized' {
+  if ((input.contextBundle.realizedValueLedger ?? []).length > 0) return 'realized';
+  if (input.contextBundle.projectedValueLedger.length > 0) return 'projected';
+  return 'seeded';
+}
+
+function valueAtStake(input: SourceAgentBriefingInput): number {
+  return input.contextBundle.sourcingEvent?.valueAtStakeUsd
+    ?? input.contextBundle.projectedValueLedger.reduce((sum, item) => sum + item.amountUsd, 0);
+}
+
+function formatUsd(value: number): string {
+  return `$${Math.round(value).toLocaleString('en-US')}`;
+}
+
+function buildContextValidationChecker(
+  input: SourceAgentBriefingInput,
+  base: SourceAgentBriefing,
+): SourceAgentBriefing {
+  const verdict = input.contextValidationReport?.suite.verdict ?? 'unknown';
+  const gaps = input.contextValidationReport?.remainingContextGaps.length ?? 0;
+  return withBriefingPatch(base, {
+    primaryFinding: `Context validation verdict is ${verdict}; ${gaps} context gap${gaps === 1 ? '' : 's'} remain before the recommendation is decision-grade.`,
+    confidence: verdict === 'pass' ? 'high' : 'medium',
+    cannotProceedReasons: input.contextValidationReport?.rejectReasons.map((reject) => reject.reason) ?? [],
+    handoffRecommendation: 'Sentinel to Nexus: use the validation verdict to shape the next safe action.',
+  });
+}
+
+function buildEvidenceGapDetector(
+  input: SourceAgentBriefingInput,
+  base: SourceAgentBriefing,
+): SourceAgentBriefing {
+  const missing = input.contextBundle.citationCoverage?.missingCitationClaims ?? [];
+  const gap = missing[0] ?? input.contextValidationReport?.remainingContextGaps[0]?.summary ?? 'Missing source evidence';
+  return withBriefingPatch(base, {
+    primaryFinding: `${gap} could make the downstream recommendation non-decision-grade.`,
+    confidence: missing.length > 0 ? 'medium' : base.confidence,
+    suggestedActions: [
+      action('evidence-gap-show', 'Show evidence gaps', 'sentinel'),
+      action('evidence-gap-explain', 'Explain weak claims', 'sentinel'),
+    ],
+    cannotProceedReasons: input.contextValidationReport?.rejectReasons.map((reject) => reject.reason) ?? [],
+    handoffRecommendation: 'Sentinel to Nexus: evidence gaps must bound the next recommendation.',
+  });
+}
+
+function buildNextActionRecommender(
+  input: SourceAgentBriefingInput,
+  base: SourceAgentBriefing,
+): SourceAgentBriefing {
+  const actionText = input.contextBundle.nextAction ?? 'Resolve missing sourcing inputs';
+  const reason = input.contextBundle.missingInputs[0] ?? input.contextBundle.blockers[0] ?? 'advance the sourcing workflow safely';
+  return withBriefingPatch(base, {
+    primaryFinding: `[ACTION] ${actionText} - required to ${reason}.`,
+    confidence: input.contextBundle.missingInputs.length > 0 || input.contextBundle.blockers.length > 0 ? 'medium' : base.confidence,
+    cannotProceedReasons: base.cannotProceedReasons,
+    handoffRecommendation: 'Nexus to Steward: a gate or workflow blocker needs enforcement before action.',
+  });
+}
+
+function buildMinimumDataRequestGenerator(
+  input: SourceAgentBriefingInput,
+  base: SourceAgentBriefing,
+): SourceAgentBriefing {
+  const items = input.contextBundle.missingInputs;
+  return withBriefingPatch(base, {
+    primaryFinding: `The minimum data request to advance is: [${items.length} item${items.length === 1 ? '' : 's'}] ${items.join('; ') || 'No missing inputs'}.`,
+    confidence: items.length > 0 ? 'medium' : base.confidence,
+    cannotProceedReasons: items,
+    handoffRecommendation: 'Nexus to Steward: missing data must be collected or waived before the workflow advances.',
+  });
+}
+
+function buildValueAtStakeSummarizer(
+  input: SourceAgentBriefingInput,
+  base: SourceAgentBriefing,
+): SourceAgentBriefing {
+  const label = valueLabel(input);
+  return withBriefingPatch(base, {
+    primaryFinding: `${formatUsd(valueAtStake(input))} ${label} value at stake. Evidence citations available: ${input.contextBundle.evidenceCitations.length}.`,
+    confidence: 'medium',
+    cannotProceedReasons: label === 'realized' ? [] : ['Atlas cannot label value as realized without measurement evidence.'],
+    handoffRecommendation: 'Atlas to Nexus: value framing needs operational follow-up in the sourcing workflow.',
+  });
+}
+
+function buildExecutiveDecisionBriefWriter(
+  input: SourceAgentBriefingInput,
+  base: SourceAgentBriefing,
+): SourceAgentBriefing {
+  const eventName = input.contextBundle.sourcingEvent?.name ?? 'Source event';
+  const stage = input.contextBundle.workflowStage?.label ?? 'current stage';
+  const label = valueLabel(input);
+  return withBriefingPatch(base, {
+    primaryFinding: `Decision: ${eventName} vs no-action baseline - turning on ${stage}. Value at stake: ${formatUsd(valueAtStake(input))} ${label}.`,
+    summary: `${eventName} needs an executive decision on ${stage}. Value is ${label} and must stay bounded by evidence. Missing inputs must be resolved before Atlas can write realized-value language.`,
+    confidence: 'medium',
+    cannotProceedReasons: input.contextBundle.missingInputs,
+    handoffRecommendation: 'Atlas to Nexus: convert the executive brief into the next operational action.',
+  });
+}
+
+function buildWorkflowBlockerDetector(
+  input: SourceAgentBriefingInput,
+  base: SourceAgentBriefing,
+): SourceAgentBriefing {
+  const workflow = input.workflowValidationReport;
+  const primaryFinding = workflow?.failedExpectations.length
+    ? 'Workflow validation has failed expectations; review should stop.'
+    : workflow?.blockerExplanations.length || workflow?.intentionalDefers.length || input.contextBundle.blockers.length
+      ? 'Workflow gates contain blockers that must remain enforced.'
+      : 'No workflow blocker was found in the provided deterministic context.';
+  return withBriefingPatch(base, {
+    primaryFinding,
+    confidence: workflow ? 'high' : 'medium',
+    cannotProceedReasons: base.cannotProceedReasons,
+    handoffRecommendation: 'Steward to Nexus: workflow action is blocked or deferred; Nexus should guide the unblock path, not bypass the gate.',
+  });
+}
+
 function synthesiseSummary(
   ranked: SpecialistContribution[],
   overallReadiness: SourceMultiAgentOverallReadiness,
@@ -138,43 +297,43 @@ export function buildSentinelSourceBriefing(
       specialistId: 'context-validation-checker',
       specialistFlavor: 'sentinel',
       missionType: 'validation_defer',
-      contribution: multi.sentinel,
+      contribution: buildContextValidationChecker(input, multi.sentinel),
     },
     {
       specialistId: 'evidence-gap-detector',
       specialistFlavor: 'sentinel',
       missionType: 'evidence_gap',
-      contribution: multi.sentinel,
+      contribution: buildEvidenceGapDetector(input, multi.sentinel),
     },
     {
       specialistId: 'next-action-recommender',
       specialistFlavor: 'nexus',
       missionType: 'next_action',
-      contribution: multi.nexus,
+      contribution: buildNextActionRecommender(input, multi.nexus),
     },
     {
       specialistId: 'minimum-data-request-generator',
       specialistFlavor: 'nexus',
       missionType: 'data_readiness',
-      contribution: multi.nexus,
+      contribution: buildMinimumDataRequestGenerator(input, multi.nexus),
     },
     {
       specialistId: 'value-at-stake-summarizer',
       specialistFlavor: 'atlas',
       missionType: 'value_risk',
-      contribution: multi.atlas,
+      contribution: buildValueAtStakeSummarizer(input, multi.atlas),
     },
     {
       specialistId: 'executive-decision-brief-writer',
       specialistFlavor: 'atlas',
       missionType: 'executive_brief',
-      contribution: multi.atlas,
+      contribution: buildExecutiveDecisionBriefWriter(input, multi.atlas),
     },
     {
       specialistId: 'workflow-blocker-detector',
       specialistFlavor: 'steward',
       missionType: 'workflow_blocker',
-      contribution: multi.steward,
+      contribution: buildWorkflowBlockerDetector(input, multi.steward),
     },
   ];
 

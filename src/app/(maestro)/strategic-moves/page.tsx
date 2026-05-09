@@ -20,7 +20,7 @@ export default async function StrategicMovesPage() {
   }
 
   const [portfolio, prefs] = await Promise.all([
-    getStrategicMovePortfolio(ctx),
+    getStrategicMovePortfolio(ctx, { limit: 8 }),
     getStrategicMovesPreferences(ctx).catch(() => DEFAULT_STRATEGIC_MOVES_PREFERENCES),
   ]);
 

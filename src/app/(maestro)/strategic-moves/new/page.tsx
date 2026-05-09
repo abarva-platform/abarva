@@ -6,6 +6,7 @@ import { StrategicMoveOriginateClient } from '@/components/strategic-moves/Strat
 import {
   composeOriginateFirstMessage,
   type FromInitiativeCtx,
+  type FromIntelligenceCtx,
 } from '@/components/strategic-moves/composeOriginateFirstMessage';
 import { AppShell } from '@/components/shell/AppShell';
 
@@ -40,24 +41,49 @@ function parseFromInitiative(
   };
 }
 
+function parseFromIntelligence(
+  params: Record<string, string | string[] | undefined>,
+): FromIntelligenceCtx | null {
+  const raw = (key: string) => {
+    const v = params[key];
+    return typeof v === 'string' ? v : undefined;
+  };
+  if (raw('fromIntelligence') !== '1') return null;
+  const patternId = raw('patternId');
+  const patternName = raw('patternName');
+  if (!patternId || !patternName) return null;
+  const failureRateRaw = raw('failureRatePct');
+  return {
+    patternId,
+    patternName,
+    useCaseName: raw('useCaseName') ?? patternName,
+    sourceTitle: raw('sourceTitle') ?? null,
+    contradictionTitle: raw('contradictionTitle') ?? null,
+    failureRatePct: failureRateRaw ? Number(failureRateRaw) : null,
+  };
+}
+
 export default async function StrategicMoveOriginatePage({ searchParams }: PageProps) {
   await requireProductModule('programs');
-  const activeClient = await getActiveClientRow();
+  const params = await searchParams;
+  const requestedClient = typeof params.client === 'string' ? params.client : undefined;
+  const activeClient = await getActiveClientRow(requestedClient);
   if (!activeClient) {
     redirect('/sign-in');
   }
 
-  const params = await searchParams;
   const fromInitiative = parseFromInitiative(params);
+  const fromIntelligence = parseFromIntelligence(params);
 
   // Compose first-message variant server-side:
   //   2A — empty entry (no draft, no initiative context)
   //   2B — partial draft return
   //   2D — from "Shape into a Move →" CTA on an AI Initiative page
+  //   Intelligence — from a pattern/use-case/contradiction evidence edge
   let firstMessage = null;
   try {
     const ctx = await requireTenancy();
-    firstMessage = await composeOriginateFirstMessage(ctx, fromInitiative);
+    firstMessage = await composeOriginateFirstMessage(ctx, fromInitiative, fromIntelligence);
   } catch {
     // Tenancy or draft read failure — fall through; client uses its default 2A message.
   }
@@ -71,4 +97,3 @@ export default async function StrategicMoveOriginatePage({ searchParams }: PageP
     </AppShell>
   );
 }
-

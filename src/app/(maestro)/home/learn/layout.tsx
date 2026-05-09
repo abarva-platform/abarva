@@ -24,6 +24,7 @@ export default function HomeLearnLayout({ children }: { children: React.ReactNod
         <LearnSideNav />
 
         <main
+          aria-label="Learn content"
           style={{
             flex: 1,
             height: '100%',

@@ -44,8 +44,6 @@ import type {
 import {
   getMilestones,
   getModuleState,
-  getOpenMaestroFlags,
-  getPendingApprovals,
   getRisks,
   getWorkItems,
 } from './queries';
@@ -771,7 +769,7 @@ export async function getMoveStatus(
   move: Pick<ProgramCore, 'id' | 'status' | 'lifecycleState' | 'currentPhase'>,
 ): Promise<MoveStatus> {
   const sb = getServerSupabase();
-  const [latestSnapshot, openFlags, pendingFounder, milestones] = await Promise.all([
+  const [latestSnapshot, openFlagsResult, pendingFounderResult, milestonesResult] = await Promise.all([
     sb
       .from('phase_snapshots')
       .select('approval_status, created_at')
@@ -779,11 +777,28 @@ export async function getMoveStatus(
       .order('created_at', { ascending: false })
       .limit(1)
       .maybeSingle(),
-    getOpenMaestroFlags(ctx, move.id),
-    getPendingApprovals(ctx, move.id),
-    getMilestones(ctx, move.id),
+    sb
+      .from('maestro_oversight_flags')
+      .select('severity')
+      .eq('engagement_id', move.id)
+      .is('resolved_at', null),
+    sb
+      .from('founder_approval_requests')
+      .select('id')
+      .eq('engagement_id', move.id)
+      .eq('status', 'pending')
+      .limit(1),
+    sb
+      .from('program_milestones')
+      .select('name, status, target_date')
+      .eq('engagement_id', move.id)
+      .order('target_date', { ascending: true, nullsFirst: false }),
   ]);
 
+  void ctx;
+  const openFlags = (openFlagsResult.data as Array<{ severity: string | null }> | null) ?? [];
+  const pendingFounder = (pendingFounderResult.data as Array<{ id: string }> | null) ?? [];
+  const milestones = (milestonesResult.data as Array<{ name: string; status: string | null }> | null) ?? [];
   const hasCriticalFlag = openFlags.some((flag) => flag.severity === 'critical');
   if (hasCriticalFlag) {
     return {
