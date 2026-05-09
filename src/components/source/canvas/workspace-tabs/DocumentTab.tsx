@@ -299,9 +299,6 @@ interface RegistryDocumentsShelfProps {
 }
 
 function RegistryDocumentsShelf({ eventId, documents }: RegistryDocumentsShelfProps) {
-  const visible = documents.slice(0, 8);
-  const remaining = Math.max(0, documents.length - visible.length);
-
   return (
     <section style={REGISTRY_SHELF_STYLE} aria-label="Stored source documents">
       <div style={REGISTRY_SHELF_HEADER_STYLE}>
@@ -324,7 +321,7 @@ function RegistryDocumentsShelf({ eventId, documents }: RegistryDocumentsShelfPr
         </p>
       ) : (
         <div style={REGISTRY_GRID_STYLE}>
-          {visible.map((doc) => {
+          {documents.map((doc) => {
             const href = eventId
               ? `/source/events/${encodeURIComponent(eventId)}/artifacts/${encodeURIComponent(doc.id)}`
               : undefined;
@@ -349,9 +346,6 @@ function RegistryDocumentsShelf({ eventId, documents }: RegistryDocumentsShelfPr
               </a>
             );
           })}
-          {remaining > 0 ? (
-            <div style={REGISTRY_MORE_STYLE}>+{remaining} more in registry</div>
-          ) : null}
         </div>
       )}
     </section>
@@ -830,22 +824,6 @@ const REGISTRY_DOC_META_STYLE: CSSProperties = {
   fontFamily: CANVAS.SANS,
   fontSize: 12,
   lineHeight: 1.35,
-  color: CANVAS.INK_SOFT,
-};
-
-const REGISTRY_MORE_STYLE: CSSProperties = {
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  minHeight: 70,
-  padding: '10px 11px',
-  border: `1px dashed ${CANVAS.HAIRLINE}`,
-  borderRadius: 6,
-  fontFamily: CANVAS.MONO,
-  fontSize: 10,
-  fontWeight: 700,
-  letterSpacing: '0.08em',
-  textTransform: 'uppercase',
   color: CANVAS.INK_SOFT,
 };
 
