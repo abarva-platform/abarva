@@ -1,4 +1,8 @@
 import { getServerSupabase } from '@/lib/supabase-server';
+import {
+  searchCanonicalPatternIndex,
+  type CanonicalPatternIndexHit,
+} from '@/lib/intelligence/canonical/runtime-pattern-index';
 import type { RetrievalResult, AskSource } from '../types';
 
 // GP-1 · Supabase-native pattern retriever.
@@ -43,24 +47,64 @@ function buildSource(row: PatternRow, confidence: number): AskSource {
   };
 }
 
+function buildCanonicalSource(hit: CanonicalPatternIndexHit): AskSource {
+  const kpis = [...hit.primary_kpis, ...hit.secondary_kpis].slice(0, 4);
+  const detailParts = [
+    hit.summary,
+    hit.source_basis ? `source_basis=${hit.source_basis}` : null,
+    hit.confidence_level ? `confidence=${hit.confidence_level}` : null,
+    kpis.length > 0 ? `KPIs: ${kpis.join(', ')}` : null,
+  ].filter((part): part is string => Boolean(part));
+  return {
+    type: 'PATTERN',
+    name: hit.title,
+    id: hit.canonical_id,
+    detail: detailParts.join(' · '),
+    confidence: hit.score,
+  };
+}
+
+async function retrieveCanonicalFallback(
+  entities: string[],
+  seen: Set<string>,
+): Promise<AskSource[]> {
+  const sources: AskSource[] = [];
+  for (const entity of entities.slice(0, 3)) {
+    const result = await searchCanonicalPatternIndex({
+      query: entity,
+      limit: 5,
+    }, { useCache: false });
+    for (const hit of result.patterns) {
+      const key = hit.canonical_id;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      sources.push(buildCanonicalSource(hit));
+      if (sources.length >= 8) return sources;
+    }
+  }
+  return sources;
+}
+
 export async function retrievePattern(entities: string[]): Promise<RetrievalResult> {
   if (entities.length === 0) return { sources: [], averageConfidence: 0 };
 
   const sb = getServerSupabase();
   const sources: AskSource[] = [];
   const seen = new Set<string>();
+  let shouldTryCanonicalFallback = false;
 
   for (const entity of entities.slice(0, 3)) {
     const isCode = /^F\d{3}$/i.test(entity);
 
     if (isCode) {
-      const { data } = await sb
+      const { data, error } = await sb
         .from('genome_patterns')
         .select('id, code, name, description, failure_rate_pct, office_category, vertical, summary, tags')
         .eq('code', entity.toUpperCase())
         .eq('is_active', true)
         .maybeSingle();
 
+      if (error) shouldTryCanonicalFallback = true;
       if (data) {
         const key = String(data.code ?? data.id);
         if (!seen.has(key)) { seen.add(key); sources.push(buildSource(data as PatternRow, 0.95)); }
@@ -69,13 +113,14 @@ export async function retrievePattern(entities: string[]): Promise<RetrievalResu
     }
 
     // Full-text search on name + description
-    const { data: ftsRows } = await sb
+    const { data: ftsRows, error: ftsError } = await sb
       .from('genome_patterns')
       .select('id, code, name, description, failure_rate_pct, office_category, vertical, summary, tags')
       .eq('is_active', true)
       .textSearch('name', entity, { config: 'english', type: 'websearch' })
       .limit(5);
 
+    if (ftsError) shouldTryCanonicalFallback = true;
     for (const row of (ftsRows ?? [])) {
       const key = String(row.code ?? row.id);
       if (!seen.has(key)) { seen.add(key); sources.push(buildSource(row as PatternRow, 0.85)); }
@@ -83,18 +128,23 @@ export async function retrievePattern(entities: string[]): Promise<RetrievalResu
 
     // Vertical / tag fallback for broad queries like "retail patterns" or "supply chain"
     if (sources.length < 3) {
-      const { data: tagRows } = await sb
+      const { data: tagRows, error: tagError } = await sb
         .from('genome_patterns')
         .select('id, code, name, description, failure_rate_pct, office_category, vertical, summary, tags')
         .eq('is_active', true)
         .or(`vertical.ilike.%${entity}%,name.ilike.%${entity}%`)
         .limit(5);
 
+      if (tagError) shouldTryCanonicalFallback = true;
       for (const row of (tagRows ?? [])) {
         const key = String(row.code ?? row.id);
         if (!seen.has(key)) { seen.add(key); sources.push(buildSource(row as PatternRow, 0.70)); }
       }
     }
+  }
+  if (shouldTryCanonicalFallback || sources.length === 0) {
+    const fallbackSources = await retrieveCanonicalFallback(entities, seen);
+    sources.push(...fallbackSources);
   }
 
   const avg = sources.length > 0

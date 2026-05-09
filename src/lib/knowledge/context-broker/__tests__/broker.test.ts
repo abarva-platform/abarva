@@ -514,7 +514,7 @@ describe('DefaultContextBroker.assemble — tenant mode', () => {
       tenantKey: 'northstar-health',
     });
 
-    expect(adapter.chunksByVector).toHaveBeenCalled();
+    expect(adapter.chunksByVector).not.toHaveBeenCalled();
     expect(bundle.retrievalTrace).toMatchObject({
       tenant_key: 'northstar-health',
       data_plane_id: 'pdp:northstar-health:prod',

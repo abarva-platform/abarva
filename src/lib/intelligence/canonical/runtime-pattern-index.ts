@@ -30,9 +30,12 @@ export const WARNING_CANONICAL_PATTERN_NO_MATCH =
   'WARNING_CANONICAL_PATTERN_NO_MATCH: no persisted canonical patterns matched the query.';
 export const WARNING_CANONICAL_CORPUS_READ_FAILED =
   'WARNING_CANONICAL_CORPUS_READ_FAILED: persisted canonical corpus read failed.';
+export const WARNING_CANONICAL_KEYWORD_FALLBACK_USED =
+  'WARNING_CANONICAL_KEYWORD_FALLBACK_USED: vector/full-phrase retrieval unavailable or thin; used persisted canonical keyword fallback.';
 
 const DEFAULT_LIMIT = 8;
 const MAX_LIMIT = 50;
+const KEYWORD_FALLBACK_SCAN_LIMIT = 500;
 const CACHE_TTL_MS = 60_000;
 
 export interface CanonicalPatternIndexQuery {
@@ -177,35 +180,7 @@ async function readCanonicalPatternIndex(
 ): Promise<CanonicalPatternIndexResult> {
   try {
     const supabase = (options.supabase ?? getServerSupabase()) as CanonicalPatternIndexSupabase;
-    let request = supabase
-      .from(CANONICAL_INDUSTRY_AI_PATTERNS_TABLE)
-      .select('*', { count: 'exact' }) as unknown as PatternQueryBuilder;
-
-    request = request.eq('lifecycle_status', query.lifecycle_status ?? 'reviewed');
-    if (!query.include_private) request = request.neq('visibility_scope', 'private');
-
-    if (query.tenant_key || query.client_id) {
-      const visibilityClauses = ['visibility_scope.eq.global'];
-      if (query.tenant_key) visibilityClauses.push(`tenant_key.eq.${escapeSupabaseOrValue(query.tenant_key)}`);
-      if (query.client_id) visibilityClauses.push(`client_id.eq.${escapeSupabaseOrValue(query.client_id)}`);
-      request = request.or(visibilityClauses.join(','));
-    } else {
-      request = request.eq('visibility_scope', 'global');
-    }
-
-    if (query.industry) request = request.contains('industry', [query.industry]);
-    if (query.enterprise_area) request = request.eq('enterprise_area', query.enterprise_area);
-    if (query.function) request = request.eq('function', query.function);
-    if (query.process_area) request = request.eq('process_area', query.process_area);
-    if (query.use_case_category) request = request.eq('use_case_category', query.use_case_category);
-    if (query.strategic_move_phase) request = request.contains('strategic_move_phases', [query.strategic_move_phase]);
-    if (query.confidence_level) request = request.eq('confidence_level', query.confidence_level);
-    if (query.maturity_level) request = request.eq('maturity_level', query.maturity_level);
-    if (query.source_system) request = request.contains('source_systems', [query.source_system]);
-    if (query.value_lever) request = request.contains('value_levers', [query.value_lever]);
-    if (query.query) request = request.or(searchClause(query.query));
-
-    const response = await request
+    const response = await buildPatternRequest(supabase, query, { includeQueryClause: true })
       .order('confidence_level', { ascending: false })
       .order('updated_at', { ascending: false })
       .limit(query.limit ?? DEFAULT_LIMIT);
@@ -216,6 +191,24 @@ async function readCanonicalPatternIndex(
 
     const rows = (response.data ?? []) as PersistedCanonicalIndustryAIPatternRow[];
     if (rows.length === 0) {
+      const fallback = query.query
+        ? await readPersistedKeywordFallback(supabase, query)
+        : [];
+      if (fallback.length > 0) {
+        const patterns = fallback
+          .map((row) => toIndexHit(row, query))
+          .sort((a, b) => b.score - a.score || confidenceRank(b.confidence_level) - confidenceRank(a.confidence_level))
+          .slice(0, query.limit ?? DEFAULT_LIMIT);
+        return {
+          source: CANONICAL_PATTERN_INDEX_SOURCE,
+          status: 'ready',
+          patterns,
+          total: patterns.length,
+          warnings: [WARNING_CANONICAL_KEYWORD_FALLBACK_USED],
+          filters_applied: query,
+          cache: { mode: 'disabled', key: null, ttl_ms: CACHE_TTL_MS },
+        };
+      }
       const emptyStatus = hasAnySearchFilter(query) ? 'no_match' : 'empty';
       return {
         source: CANONICAL_PATTERN_INDEX_SOURCE,
@@ -244,6 +237,62 @@ async function readCanonicalPatternIndex(
   } catch (error) {
     return errorResult(query, error instanceof Error ? error.message : String(error));
   }
+}
+
+function buildPatternRequest(
+  supabase: CanonicalPatternIndexSupabase,
+  query: CanonicalPatternIndexQuery,
+  options: { includeQueryClause: boolean },
+): PatternQueryBuilder {
+  let request = supabase
+    .from(CANONICAL_INDUSTRY_AI_PATTERNS_TABLE)
+    .select('*', { count: 'exact' }) as unknown as PatternQueryBuilder;
+
+  request = request.eq('lifecycle_status', query.lifecycle_status ?? 'reviewed');
+  if (!query.include_private) request = request.neq('visibility_scope', 'private');
+
+  if (query.tenant_key || query.client_id) {
+    const visibilityClauses = ['visibility_scope.eq.global'];
+    if (query.tenant_key) visibilityClauses.push(`tenant_key.eq.${escapeSupabaseOrValue(query.tenant_key)}`);
+    if (query.client_id) visibilityClauses.push(`client_id.eq.${escapeSupabaseOrValue(query.client_id)}`);
+    request = request.or(visibilityClauses.join(','));
+  } else {
+    request = request.eq('visibility_scope', 'global');
+  }
+
+  if (query.industry) request = request.contains('industry', [query.industry]);
+  if (query.enterprise_area) request = request.eq('enterprise_area', query.enterprise_area);
+  if (query.function) request = request.eq('function', query.function);
+  if (query.process_area) request = request.eq('process_area', query.process_area);
+  if (query.use_case_category) request = request.eq('use_case_category', query.use_case_category);
+  if (query.strategic_move_phase) request = request.contains('strategic_move_phases', [query.strategic_move_phase]);
+  if (query.confidence_level) request = request.eq('confidence_level', query.confidence_level);
+  if (query.maturity_level) request = request.eq('maturity_level', query.maturity_level);
+  if (query.source_system) request = request.contains('source_systems', [query.source_system]);
+  if (query.value_lever) request = request.contains('value_levers', [query.value_lever]);
+  if (options.includeQueryClause && query.query) request = request.or(searchClause(query.query));
+
+  return request;
+}
+
+async function readPersistedKeywordFallback(
+  supabase: CanonicalPatternIndexSupabase,
+  query: CanonicalPatternIndexQuery,
+): Promise<PersistedCanonicalIndustryAIPatternRow[]> {
+  const response = await buildPatternRequest(supabase, query, { includeQueryClause: false })
+    .order('confidence_level', { ascending: false })
+    .order('updated_at', { ascending: false })
+    .limit(Math.max(query.limit ?? DEFAULT_LIMIT, KEYWORD_FALLBACK_SCAN_LIMIT));
+
+  if (response.error) return [];
+  const rows = (response.data ?? []) as PersistedCanonicalIndustryAIPatternRow[];
+  const tokens = tokenize(query.query ?? '');
+  if (tokens.length === 0) return [];
+  return rows
+    .map((row) => ({ row, hits: keywordMatchCount(row, tokens) }))
+    .filter((entry) => entry.hits > 0)
+    .sort((a, b) => b.hits - a.hits || confidenceRank(b.row.confidence_level) - confidenceRank(a.row.confidence_level))
+    .map((entry) => entry.row);
 }
 
 function toIndexHit(
@@ -342,6 +391,30 @@ function matchReasons(row: PersistedCanonicalIndustryAIPatternRow, query: Canoni
   }
 
   return reasons.length > 0 ? reasons : ['persisted_canonical_corpus'];
+}
+
+function keywordMatchCount(row: PersistedCanonicalIndustryAIPatternRow, tokens: string[]): number {
+  const haystack = [
+    row.canonical_id,
+    row.title,
+    row.summary,
+    row.business_problem,
+    row.value_hypothesis,
+    row.executive_question_answered,
+    row.function,
+    row.process_area,
+    row.use_case_category,
+    row.enterprise_area,
+    ...row.industry,
+    ...row.primary_kpis,
+    ...row.secondary_kpis,
+    ...row.required_data_domains,
+    ...row.recommended_artifacts,
+    ...row.recommended_workshops,
+    ...row.common_failure_modes,
+    ...row.failure_mode_mitigations,
+  ].join(' ').toLowerCase();
+  return tokens.reduce((count, term) => count + (haystack.includes(term) ? 1 : 0), 0);
 }
 
 function scoreRow(

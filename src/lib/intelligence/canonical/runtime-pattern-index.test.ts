@@ -1,6 +1,7 @@
 import type { PersistedCanonicalIndustryAIPatternRow } from './persistence-contract';
 import {
   WARNING_CANONICAL_CORPUS_EMPTY,
+  WARNING_CANONICAL_KEYWORD_FALLBACK_USED,
   WARNING_CANONICAL_CORPUS_READ_FAILED,
   WARNING_CANONICAL_PATTERN_NO_MATCH,
   clearCanonicalPatternIndexCache,
@@ -54,13 +55,18 @@ class FakeQueryBuilder {
   }
 }
 
-function fakeSupabase(response: QueryResponse) {
+function fakeSupabase(response: QueryResponse | QueryResponse[]) {
   const builders: FakeQueryBuilder[] = [];
+  const responses = Array.isArray(response) ? [...response] : [response];
   return {
     builders,
     supabase: {
       from: jest.fn(() => {
-        const builder = new FakeQueryBuilder(response);
+        const builder = new FakeQueryBuilder(responses.shift() ?? responses[responses.length - 1] ?? {
+          data: [],
+          error: null,
+          count: 0,
+        });
         builders.push(builder);
         return builder;
       }),
@@ -224,6 +230,49 @@ describe('runtime canonical pattern index', () => {
     expect(result.status).toBe('no_match');
     expect(result.patterns).toEqual([]);
     expect(result.warnings).toEqual([WARNING_CANONICAL_PATTERN_NO_MATCH]);
+  });
+
+  it('falls back to persisted keyword scoring when phrase search returns no rows', async () => {
+    const healthcareRow: PersistedCanonicalIndustryAIPatternRow = {
+      ...baseRow,
+      canonical_id: 'AIP-HEALTHCARE-PRIOR_AUTH_AGENTIC_WORKFLOW',
+      title: 'Prior Authorization Agentic Workflow',
+      summary: 'Coordinate payer prior authorization intake, evidence checks, and escalation.',
+      industry: ['healthcare'],
+      enterprise_area: 'middle_office',
+      function: 'utilization_management',
+      process_area: 'prior_authorization',
+      business_problem: 'Prior authorization delays create rework, provider friction, and avoidable denials.',
+      primary_kpis: ['authorization_cycle_time', 'denial_rate', 'touchless_review_rate'],
+      required_data_domains: ['authorization_requests', 'clinical_policy', 'claims_history'],
+    };
+    const weakerRow: PersistedCanonicalIndustryAIPatternRow = {
+      ...baseRow,
+      canonical_id: 'AIP-RETAIL-STORE_OPERATIONS_AI',
+      title: 'Retail Store Operations AI',
+      summary: 'Improve store task execution and labor planning.',
+      industry: ['retail'],
+    };
+    const { supabase, builders } = fakeSupabase([
+      { data: [], error: null, count: 0 },
+      { data: [weakerRow, healthcareRow], error: null, count: 2 },
+    ]);
+
+    const result = await searchCanonicalPatternIndex({
+      query: 'How should a payer use agentic AI for prior auth?',
+      limit: 3,
+    }, { supabase, useCache: false });
+
+    expect(result.status).toBe('ready');
+    expect(result.warnings).toContain(WARNING_CANONICAL_KEYWORD_FALLBACK_USED);
+    expect(result.patterns[0]).toMatchObject({
+      canonical_id: healthcareRow.canonical_id,
+      title: healthcareRow.title,
+    });
+    expect(result.patterns[0].match_reasons.join(' ')).toContain('query:');
+    expect(builders).toHaveLength(2);
+    expect(builders[0].calls.some((call) => call.method === 'or' && String(call.args[0]).includes('canonical_id.ilike'))).toBe(true);
+    expect(builders[1].calls.some((call) => call.method === 'or' && String(call.args[0]).includes('canonical_id.ilike'))).toBe(false);
   });
 
   it('returns an error result when the persisted read fails', async () => {

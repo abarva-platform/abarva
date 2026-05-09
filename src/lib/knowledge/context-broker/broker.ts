@@ -524,31 +524,40 @@ export class DefaultContextBroker implements ContextBroker {
     // empty-state copy.
     let semanticChunks: SemanticChunkHit[] = [];
     let vectorSucceeded = false;
-    try {
-      // Embed the query once. `embedTexts` throws if OPENAI_API_KEY
-      // is missing — which we catch below and fall back as if
-      // Pinecone weren't configured.
-      const embedResult = await embedTexts([input.query], undefined, this.openaiClient);
-      const queryVector = embedResult.results[0]?.embedding ?? [];
-      if (queryVector.length === 0) {
-        throw new Error('embedTexts returned an empty embedding for the query.');
-      }
-      const vectorChunks = await this.adapter.chunksByVector(
-        tenantKey,
-        queryVector,
-        maxChunks,
-      );
-      semanticChunks = vectorChunks.map((chunk) => ({
-        chunk,
-        score: chunk.vectorScore ?? 0,
-      }));
-      vectorSucceeded = true;
-    } catch {
+    const vectorBlocked = Boolean(privateResource && !isPrivateVectorAvailable(privateResource));
+    if (vectorBlocked) {
       warnings.push(WARNING_VECTOR_PENDING);
       const fallback: ContextChunk[] = keywords.length > 0
         ? await this.adapter.chunksByKeyword(tenantKey, keywords, maxChunks)
         : [];
       semanticChunks = fallback.map((chunk) => ({ chunk, score: 0 }));
+    } else {
+      try {
+        // Embed the query once. `embedTexts` throws if OPENAI_API_KEY
+        // is missing — which we catch below and fall back as if
+        // Pinecone weren't configured.
+        const embedResult = await embedTexts([input.query], undefined, this.openaiClient);
+        const queryVector = embedResult.results[0]?.embedding ?? [];
+        if (queryVector.length === 0) {
+          throw new Error('embedTexts returned an empty embedding for the query.');
+        }
+        const vectorChunks = await this.adapter.chunksByVector(
+          tenantKey,
+          queryVector,
+          maxChunks,
+        );
+        semanticChunks = vectorChunks.map((chunk) => ({
+          chunk,
+          score: chunk.vectorScore ?? 0,
+        }));
+        vectorSucceeded = true;
+      } catch {
+        warnings.push(WARNING_VECTOR_PENDING);
+        const fallback: ContextChunk[] = keywords.length > 0
+          ? await this.adapter.chunksByKeyword(tenantKey, keywords, maxChunks)
+          : [];
+        semanticChunks = fallback.map((chunk) => ({ chunk, score: 0 }));
+      }
     }
     if (vectorSucceeded) {
       // CB-10 · vector-retrieval-succeeded is success metadata, not a
