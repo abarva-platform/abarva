@@ -4,6 +4,7 @@ import { clerkUserExists, missingAuthPrereqs, withClerkAuth } from './_helpers/a
 
 const APEX_CIO_EMAIL = 'cio@apex-retail.example.com';
 const APEX_CIO = findPersonaByEmail(APEX_CIO_EMAIL);
+const APEX_DEMO_MOVE_ID = process.env.APEX_DEMO_MOVE_ID ?? 'b7b90f51-72cd-4ea1-93b8-285d484063c9';
 
 if (!APEX_CIO) {
   throw new Error(`Missing CXO persona fixture for ${APEX_CIO_EMAIL}`);
@@ -58,6 +59,19 @@ test.describe('CXO journey: Apex CIO', () => {
     await expect(page.getByRole('navigation', { name: 'Learn sections' }).first()).toBeVisible();
     await expect(page.getByRole('heading', { level: 1, name: 'First Move walkthrough' })).toBeVisible();
     await expect(page.getByText('Contact Center AI Routing')).toBeVisible();
+    await expectNoRuntimeError(page);
+  });
+
+  test('generates a Nexus current-state brief for the Apex demo Move', async ({ page }) => {
+    await page.goto(`/strategic-moves/${APEX_DEMO_MOVE_ID}`);
+
+    await expect(page.getByRole('heading', { level: 1, name: 'Contact Center AI Routing' })).toBeVisible();
+    await page.getByRole('button', { name: 'Generate brief' }).click();
+
+    await expect(page.getByRole('heading', { name: 'Org Structure & Decision Rights' })).toBeVisible({ timeout: 15000 });
+    await expect(page.getByRole('heading', { name: 'Technology Landscape' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Financial Baselines & Value Levers' })).toBeVisible();
+    await expect(page.getByLabel('Ask Nexus a current-state question')).toBeVisible();
     await expectNoRuntimeError(page);
   });
 });
