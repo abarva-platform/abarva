@@ -6,7 +6,8 @@ export type AdminSubSectionId =
   | "connectors"
   | "users-access"
   | "agent-readiness"
-  | "production-readiness";
+  | "production-readiness"
+  | "training";
 
 export interface AdminSubSection {
   id: AdminSubSectionId;
@@ -51,6 +52,12 @@ export const ADMIN_SUB_SECTIONS: ReadonlyArray<AdminSubSection> = [
     label: "Production Readiness",
     subtitle: "Demo / pilot / production",
     href: "/admin/production-readiness",
+  },
+  {
+    id: "training",
+    label: "Training",
+    subtitle: "AbarVa guide & reference",
+    href: "/home/learn",
   },
 ];
 
