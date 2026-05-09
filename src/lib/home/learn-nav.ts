@@ -53,11 +53,6 @@ export const LEARN_NAV: ReadonlyArray<LearnNavGroup> = [
     group: 'Intelligence',
     items: [
       { slug: 'intelligence', label: 'Art of the possible' },
-      { slug: 'intelligence/case-study', label: 'Apex Retail · case study', kind: 'caseStudy' },
-      { slug: 'intelligence/owned-brand', label: 'Ch.01 Owned Brand Margin', indent: true },
-      { slug: 'intelligence/demand-forecast', label: 'Ch.02 Demand Forecasting', indent: true },
-      { slug: 'intelligence/supply-chain', label: 'Ch.03 Supply Chain Risk', indent: true },
-      { slug: 'intelligence/what-to-watch', label: 'Ch.04 What to Watch', indent: true },
     ],
   },
   {
