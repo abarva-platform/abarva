@@ -429,6 +429,23 @@ describe('runEmbedJob — Pinecone integration (CB-3)', () => {
 });
 
 describe('runEmbedJob — batch ceiling', () => {
+  it('does not report max-batch pressure when the final allowed batch drains the queue', async () => {
+    const { client } = makeFakeSupabase([
+      makeChunk('c1'),
+      makeChunk('c2'),
+      makeChunk('c3'),
+    ]);
+    const result = await runEmbedJob(client, {
+      ...baseOptions,
+      batchSize: 2,
+      maxBatches: 2,
+      openaiClient: makeOk(),
+    });
+    expect(result.batchesRun).toBe(2);
+    expect(result.embedded).toBe(3);
+    expect(result.hitMaxBatches).toBe(false);
+  });
+
   it('stops after EMBEDDING_MAX_BATCHES even if pending remains', async () => {
     const { client, rows } = makeFakeSupabase(
       Array.from({ length: 10 }, (_, i) => makeChunk(`c${i}`)),

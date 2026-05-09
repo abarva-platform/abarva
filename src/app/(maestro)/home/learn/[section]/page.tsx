@@ -10,9 +10,9 @@ import { PhaseSection } from '@/components/home/learn/PhaseSection';
 import { GatesSection } from '@/components/home/learn/GatesSection';
 import { TowerSection } from '@/components/home/learn/TowerSection';
 import { GlossarySection } from '@/components/home/learn/GlossarySection';
+import { FirstMoveSection } from '@/components/home/learn/FirstMoveSection';
 import { LearnSectionPlaceholder } from '@/components/home/LearnSectionPlaceholder';
 import { findLearnSection } from '@/lib/home/learn-sections';
-import { findLearnNavItem } from '@/lib/home/learn-nav';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -43,6 +43,9 @@ export default async function LearnSectionPage({ params }: Props) {
 
     case 'moves-overview':
       return <MovesOverviewSection />;
+
+    case 'first-move':
+      return <FirstMoveSection />;
 
     case 'p0':
     case 'p1':
