@@ -76,6 +76,8 @@ export function buildNexusBriefing(input: SourceAgentBriefingInput): SourceAgent
     ? `${eventName} cannot move cleanly until ${missingInputs.length} missing input${plural(missingInputs.length)} are resolved.`
     : blockers.length > 0
       ? `${eventName} is blocked by ${blockers[0]}.`
+      : bundle.liveTenantContext
+        ? `${eventName} has live Apex current-state grounding across ${formatCurrentStateAreas(bundle.liveTenantContext.currentStateAreas)}.`
       : `${eventName} has enough deterministic context for current-state sourcing guidance.`;
   // Prepend stage-specific focus lens when a known stageKey is present so the
   // briefing is contextually differentiated from other stages.
@@ -86,7 +88,7 @@ export function buildNexusBriefing(input: SourceAgentBriefingInput): SourceAgent
   return {
     agentName: 'nexus',
     title: 'Nexus sourcing command read',
-    summary: `${eventName} is in ${stageLabel}. ${formatLifecycle(input)} ${formatValueAtStake(input)}`,
+    summary: `${eventName} is in ${stageLabel}. ${formatLifecycle(input)} ${formatValueAtStake(input)} ${formatLiveContextSummary(input)}`.trim(),
     primaryFinding,
     confidence,
     contextUsed: getSourceContextUsed(bundle),
@@ -530,8 +532,26 @@ function formatEvidenceNotes(input: SourceAgentBriefingInput): string[] {
   if (bundle.projectedValueLedger.length > 0) {
     notes.push('Value context is projected/seeded unless realized measurement evidence exists.');
   }
+  if (bundle.liveTenantContext) {
+    notes.push(formatLiveContextSummary(input));
+    if (bundle.liveTenantContext.evidenceBasis.length > 0) {
+      notes.push(`Current-state evidence basis: ${bundle.liveTenantContext.evidenceBasis.slice(0, 4).join('; ')}.`);
+    }
+  }
 
   return unique(notes);
+}
+
+function formatLiveContextSummary(input: SourceAgentBriefingInput): string {
+  const live = input.contextBundle.liveTenantContext;
+  if (!live) return '';
+  return `Live Apex context: ${live.inventoryRecordCount} inventory records, ${live.contextChunkCount} context chunks, ${live.embeddedContextChunkCount} embedded chunks.`;
+}
+
+function formatCurrentStateAreas(areas: string[]): string {
+  if (areas.length === 0) return 'no loaded current-state areas';
+  if (areas.length <= 4) return areas.join(', ');
+  return `${areas.slice(0, 4).join(', ')}, plus ${areas.length - 4} more areas`;
 }
 
 function formatContextValidationNote(input: SourceAgentBriefingInput): string {

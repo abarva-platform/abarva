@@ -348,6 +348,26 @@ export interface SourceContextAssemblyInput {
   priorConversationTurns?: SourceChatMessage[];
 }
 
+export interface SourceLiveTenantContextSegment {
+  segmentId: string;
+  inventoryRecords: number;
+  contextChunks: number;
+  embeddedChunks: number;
+}
+
+export interface SourceLiveTenantContextSnapshot {
+  clientKey: string;
+  brokerTenantKey: string;
+  inventoryRecordCount: number;
+  contextChunkCount: number;
+  embeddedContextChunkCount: number;
+  sourceEventFound: boolean;
+  segments: SourceLiveTenantContextSegment[];
+  currentStateAreas: string[];
+  evidenceBasis: string[];
+  warnings: string[];
+}
+
 export interface SourceContextAssemblyFailure {
   code:
     | 'missingTenant'
@@ -391,6 +411,7 @@ export interface SourceAgentContextBundle {
   stageOwner?: string;
   decisionOwner?: string;
   clientItContext?: SourceClientItContextSnapshot;
+  liveTenantContext?: SourceLiveTenantContextSnapshot;
   dueDate?: string;
   agingDays?: number;
   blockers: string[];

@@ -1,0 +1,87 @@
+import { createSourceNexusApiStubResponse } from '../nexus-api';
+import { sourceEventRowToDetail, type SourceEventRow } from '../queries';
+import type { SourceLiveTenantContextSnapshot } from '../agent-context';
+
+const liveEventRow: SourceEventRow = {
+  id: 'apx-src-cdp-2026',
+  client_key: 'apexretail',
+  event_code: 'APX-SRC-CDP-2026',
+  event_name: 'CDP Vendor Selection',
+  event_type: 'platform_selection',
+  current_stage_key: 'evaluation',
+  lifecycle_state: 'active',
+  linked_program_id: 'APX-CDP-2026',
+  estimated_value_usd: 2_400_000,
+  trigger_description: 'Unify customer data activation before loyalty and media budget planning.',
+  scope_description: 'CDP vendor selection, implementation partner fit, integration scope, and value case.',
+  decision_owner: 'Chief Digital Officer',
+  created_by_user_id: 'user-apex-source',
+  created_at: '2026-05-01T00:00:00.000Z',
+  updated_at: '2026-05-09T00:00:00.000Z',
+};
+
+const liveTenantContext: SourceLiveTenantContextSnapshot = {
+  clientKey: 'apexretail',
+  brokerTenantKey: 'apex-retail',
+  inventoryRecordCount: 403,
+  contextChunkCount: 935,
+  embeddedContextChunkCount: 935,
+  sourceEventFound: true,
+  segments: [
+    { segmentId: 'org_structure', inventoryRecords: 36, contextChunks: 36, embeddedChunks: 36 },
+    { segmentId: 'it_financials', inventoryRecords: 71, contextChunks: 71, embeddedChunks: 71 },
+    { segmentId: 'it_landscape', inventoryRecords: 96, contextChunks: 96, embeddedChunks: 96 },
+    { segmentId: 'vendor_contracts', inventoryRecords: 38, contextChunks: 38, embeddedChunks: 38 },
+  ],
+  currentStateAreas: ['Org Structure', 'IT Financials', 'IT Landscape', 'Vendor Contracts'],
+  evidenceBasis: [
+    'It Landscape: 96 records, 96 chunks, 96 embedded',
+    'It Financials: 71 records, 71 chunks, 71 embedded',
+    'Vendor Contracts: 38 records, 38 chunks, 38 embedded',
+    'Org Structure: 36 records, 36 chunks, 36 embedded',
+  ],
+  warnings: [],
+};
+
+describe('Source Nexus API live context', () => {
+  it('answers persisted Apex source events with live current-state intelligence instead of seed-only event lookup', () => {
+    const response = createSourceNexusApiStubResponse({
+      eventId: 'APX-SRC-CDP-2026',
+      prompt: 'What is the current state and how should the CXO shape this sourcing event?',
+      tenant: {
+        tenantId: 'apex-retail',
+        tenantKey: 'apexretail',
+        tenantName: 'Apex Retail Group',
+        activeClientId: 'apexretail',
+        activeClientName: 'Apex Retail Group',
+      },
+      user: { id: 'user-apex-source' },
+      userRole: 'cio',
+      liveEventDetail: sourceEventRowToDetail(liveEventRow, 'Apex Retail Group'),
+      liveTenantContext,
+    });
+
+    expect(response.ok).toBe(true);
+    expect(response.httpStatus).toBe(200);
+    expect(response.error).toBeUndefined();
+    expect(response.context.eventName).toBe('CDP Vendor Selection');
+    expect(response.sourceIntelligence).toEqual({
+      liveContextAvailable: true,
+      sourceEventFound: true,
+      inventoryRecordCount: 403,
+      contextChunkCount: 935,
+      embeddedContextChunkCount: 935,
+      currentStateAreas: ['Org Structure', 'IT Financials', 'IT Landscape', 'Vendor Contracts'],
+      evidenceBasis: liveTenantContext.evidenceBasis,
+      warnings: [],
+    });
+    expect(response.sentinelBriefing?.primaryVoice.contextUsed[0]?.deterministicFieldsUsed).toEqual(
+      expect.arrayContaining(['sourcingEvent', 'workflowStage', 'liveTenantContext']),
+    );
+    expect(response.sentinelBriefing?.primaryVoice.evidenceNotes).toEqual(
+      expect.arrayContaining([
+        'Live Apex context: 403 inventory records, 935 context chunks, 935 embedded chunks.',
+      ]),
+    );
+  });
+});
