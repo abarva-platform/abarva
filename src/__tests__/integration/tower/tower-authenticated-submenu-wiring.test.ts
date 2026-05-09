@@ -20,10 +20,17 @@ describe('authenticated Tower submenu wiring', () => {
   it('renders non-portfolio submenu panels from tenant-bound DB substrate', () => {
     expect(indexSource).toContain('function TowerWorkspaceTabPanel');
     expect(indexSource).toContain("activeTab === 'portfolio' ? (");
+    expect(indexSource).toContain('activeLens={activeLens}');
+    expect(indexSource).toContain('tabLensNarrative(activeTab, activeLens)');
+    expect(indexSource).toContain('rankInitiativesForLens(initiatives, vendors, activeLens)');
+    expect(indexSource).toContain('rankVendorsForLens(vendors, initiatives, activeLens)');
     expect(indexSource).toContain("activeTab === 'scorecards'");
     expect(indexSource).toContain("activeTab === 'programme_gates'");
     expect(indexSource).toContain("activeTab === 'dependencies'");
     expect(indexSource).toContain('ai_initiative_vendors');
+    expect(indexSource).toContain('Vendor dependencies ranked by renewal clock.');
+    expect(indexSource).toContain('Vendor dependencies ranked by financial health and initiative pressure.');
+    expect(indexSource).toContain('Which initiatives are furthest from earning their commitment?');
     expect(indexSource).toContain('Tower will not fall back to Apex fixture dependencies.');
   });
 

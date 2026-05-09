@@ -21,6 +21,7 @@ import type { AIInitiative, AIInitiativeVendorRow } from '@/lib/admin/ai-initiat
 import type {
   BandMetric,
   BandConfidence,
+  TowerLens,
   TowerBandMetricsView,
 } from '@/lib/tower/band-metrics-view';
 import type { MetricProvenanceKey } from '@/lib/tower/metric-provenance';
@@ -746,6 +747,260 @@ function stageSort(stage: string): number {
   return index >= 0 ? index : 99;
 }
 
+const STATUS_RISK_RANK: Record<string, number> = {
+  cost_overrun: 0,
+  stalled: 1,
+  duplication_risk: 2,
+  value_lag: 3,
+  adoption_gap: 4,
+  healthy: 8,
+};
+
+const HEALTH_RISK_RANK: Record<string, number> = {
+  at_risk: 0,
+  watch: 1,
+  moderate: 2,
+  strong: 3,
+};
+
+function initiativeCommitment(initiative: AIInitiative): number {
+  return initiative.committedAnnualUsd ?? initiative.committedTotalUsd ?? 0;
+}
+
+function initiativeMeasured(initiative: AIInitiative): number {
+  return initiative.measuredValueUsd ?? 0;
+}
+
+function initiativeDelta(initiative: AIInitiative): number {
+  return initiativeMeasured(initiative) - initiativeCommitment(initiative);
+}
+
+function renewalRank(date: string | null | undefined): number {
+  if (!date) return Number.POSITIVE_INFINITY;
+  const parsed = Date.parse(date);
+  return Number.isFinite(parsed) ? parsed : Number.POSITIVE_INFINITY;
+}
+
+function daysUntilLabel(date: string | null | undefined): string {
+  if (!date) return 'no renewal date';
+  const parsed = Date.parse(date);
+  if (!Number.isFinite(parsed)) return date;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const diff = Math.ceil((parsed - today.getTime()) / (1000 * 60 * 60 * 24));
+  if (diff < 0) return `${Math.abs(diff)}d past renewal`;
+  if (diff === 0) return 'renews today';
+  return `${diff}d to renewal`;
+}
+
+function vendorsByDisplayId(
+  vendors: ReadonlyArray<AIInitiativeVendorRow>,
+): Map<string, AIInitiativeVendorRow[]> {
+  const grouped = new Map<string, AIInitiativeVendorRow[]>();
+  for (const vendor of vendors) {
+    const rows = grouped.get(vendor.initiativeDisplayId) ?? [];
+    rows.push(vendor);
+    grouped.set(vendor.initiativeDisplayId, rows);
+  }
+  return grouped;
+}
+
+function nearestVendor(rows: ReadonlyArray<AIInitiativeVendorRow>): AIInitiativeVendorRow | null {
+  return [...rows].sort((a, b) => renewalRank(a.renewalDate) - renewalRank(b.renewalDate))[0] ?? null;
+}
+
+function rankInitiativesForLens(
+  initiatives: ReadonlyArray<AIInitiative>,
+  vendors: ReadonlyArray<AIInitiativeVendorRow>,
+  lens: TowerLens,
+): AIInitiative[] {
+  const vendorMap = vendorsByDisplayId(vendors);
+  return [...initiatives].sort((a, b) => {
+    if (lens === 'contract') {
+      const aVendor = nearestVendor(vendorMap.get(a.displayId) ?? []);
+      const bVendor = nearestVendor(vendorMap.get(b.displayId) ?? []);
+      const renewalDelta = renewalRank(aVendor?.renewalDate) - renewalRank(bVendor?.renewalDate);
+      if (renewalDelta !== 0) return renewalDelta;
+      return (bVendor?.contractValueUsd ?? 0) - (aVendor?.contractValueUsd ?? 0);
+    }
+    if (lens === 'risk') {
+      const riskDelta = (STATUS_RISK_RANK[a.statusFlag] ?? 7) - (STATUS_RISK_RANK[b.statusFlag] ?? 7);
+      if (riskDelta !== 0) return riskDelta;
+      return initiativeCommitment(b) - initiativeCommitment(a);
+    }
+    if (lens === 'adopt') {
+      const adoptDelta = (a.statusFlag === 'adoption_gap' ? 0 : 1) - (b.statusFlag === 'adoption_gap' ? 0 : 1);
+      if (adoptDelta !== 0) return adoptDelta;
+      const stageDelta = stageSort(a.stage) - stageSort(b.stage);
+      if (stageDelta !== 0) return stageDelta;
+      return initiativeCommitment(b) - initiativeCommitment(a);
+    }
+    const valueDelta = initiativeDelta(a) - initiativeDelta(b);
+    if (valueDelta !== 0) return valueDelta;
+    return initiativeCommitment(b) - initiativeCommitment(a);
+  });
+}
+
+function rankVendorsForLens(
+  vendors: ReadonlyArray<AIInitiativeVendorRow>,
+  initiatives: ReadonlyArray<AIInitiative>,
+  lens: TowerLens,
+): AIInitiativeVendorRow[] {
+  const initiativeById = new Map(initiatives.map((initiative) => [initiative.initiativeId, initiative] as const));
+  return [...vendors].sort((a, b) => {
+    const ai = initiativeById.get(a.initiativeId);
+    const bi = initiativeById.get(b.initiativeId);
+    if (lens === 'risk') {
+      const healthDelta = (HEALTH_RISK_RANK[a.financialHealth ?? 'moderate'] ?? 2) - (HEALTH_RISK_RANK[b.financialHealth ?? 'moderate'] ?? 2);
+      if (healthDelta !== 0) return healthDelta;
+      return (STATUS_RISK_RANK[ai?.statusFlag ?? 'healthy'] ?? 7) - (STATUS_RISK_RANK[bi?.statusFlag ?? 'healthy'] ?? 7);
+    }
+    if (lens === 'value') {
+      return (b.contractValueUsd ?? 0) - (a.contractValueUsd ?? 0);
+    }
+    if (lens === 'adopt') {
+      const adoptDelta = (ai?.statusFlag === 'adoption_gap' ? 0 : 1) - (bi?.statusFlag === 'adoption_gap' ? 0 : 1);
+      if (adoptDelta !== 0) return adoptDelta;
+      return stageSort(ai?.stage ?? '') - stageSort(bi?.stage ?? '');
+    }
+    return renewalRank(a.renewalDate) - renewalRank(b.renewalDate);
+  });
+}
+
+function lensLabel(lens: TowerLens): string {
+  if (lens === 'risk') return 'Risk';
+  if (lens === 'contract') return 'Contract';
+  if (lens === 'adopt') return 'Adoption';
+  return 'Value';
+}
+
+function lensAccent(lens: TowerLens): string {
+  if (lens === 'risk') return T.RED;
+  if (lens === 'contract') return T.PURPLE;
+  if (lens === 'adopt') return T.GREEN;
+  return T.GOLD;
+}
+
+function initiativeLensMeta(initiative: AIInitiative, lens: TowerLens): string {
+  if (lens === 'risk') return `${initiative.displayId} · risk posture · ${labelize(initiative.statusFlag)}`;
+  if (lens === 'contract') return `${initiative.displayId} · vendor exposure · ${initiative.confidenceLevel}`;
+  if (lens === 'adopt') return `${initiative.displayId} · adoption path · ${labelize(initiative.stage)}`;
+  return `${initiative.displayId} · value realization · ${initiative.confidenceLevel}`;
+}
+
+function initiativeLensDetail(
+  initiative: AIInitiative,
+  linkedVendors: ReadonlyArray<AIInitiativeVendorRow>,
+  lens: TowerLens,
+): string {
+  const committed = initiativeCommitment(initiative);
+  const measured = initiativeMeasured(initiative);
+  const delta = initiativeDelta(initiative);
+  if (lens === 'risk') {
+    return `${labelize(initiative.statusFlag)} · ${initiative.statusSummary} Owner: ${initiative.ownerName}. Exposure: ${formatMoney(committed)}.`;
+  }
+  if (lens === 'contract') {
+    const vendor = nearestVendor(linkedVendors);
+    return vendor
+      ? `${vendor.vendorName} · ${daysUntilLabel(vendor.renewalDate)} · contract ${formatMoney(vendor.contractValueUsd)} · health ${labelize(vendor.financialHealth)}.`
+      : `No linked vendor rows. ${initiative.name} stays outside the contract clock until ai_initiative_vendors is populated.`;
+  }
+  if (lens === 'adopt') {
+    return `${labelize(initiative.stage)} · ${initiative.stageDetail ?? initiative.statusSummary} Goal: ${initiative.primaryGoalName}.`;
+  }
+  const direction = delta >= 0 ? 'above committed' : 'below committed';
+  return `Measured ${formatMoney(measured)} vs committed ${formatMoney(committed)} · ${formatMoney(Math.abs(delta))} ${direction}.`;
+}
+
+function vendorLensDetail(
+  vendor: AIInitiativeVendorRow,
+  initiative: AIInitiative | undefined,
+  lens: TowerLens,
+): string {
+  if (lens === 'risk') {
+    return `${vendor.initiativeName} · vendor health ${labelize(vendor.financialHealth)} · initiative posture ${labelize(initiative?.statusFlag)}.`;
+  }
+  if (lens === 'value') {
+    return `${vendor.initiativeName} · contract ${formatMoney(vendor.contractValueUsd)} · measured value ${formatMoney(initiative?.measuredValueUsd)}.`;
+  }
+  if (lens === 'adopt') {
+    return `${vendor.initiativeName} · ${labelize(initiative?.stage)} · adoption signal ${labelize(initiative?.statusFlag)}.`;
+  }
+  return `${vendor.initiativeName} · contract ${formatMoney(vendor.contractValueUsd)} · ${daysUntilLabel(vendor.renewalDate)} · health ${labelize(vendor.financialHealth)}.`;
+}
+
+function tabLensNarrative(activeTab: TowerTabKey, lens: TowerLens): { eyebrow: string; title: string; body: string } {
+  const label = lensLabel(lens);
+  if (activeTab === 'scorecards') {
+    if (lens === 'risk') return {
+      eyebrow: 'Scorecards · Risk posture',
+      title: 'Which initiatives need executive risk attention first?',
+      body: 'Rows are ranked by pressure status and spend exposure so a CXO sees the problem list before the healthy list.',
+    };
+    if (lens === 'contract') return {
+      eyebrow: 'Scorecards · Contract exposure',
+      title: 'Which initiatives are tied to the nearest vendor clocks?',
+      body: 'Rows with renewal-backed vendor dependencies move up. Initiatives without vendor rows stay disclosed instead of inferred.',
+    };
+    if (lens === 'adopt') return {
+      eyebrow: 'Scorecards · Adoption path',
+      title: 'Where is adoption blocking value conversion?',
+      body: 'Adoption gaps and early-stage programs lead so the conversation turns to behavior change, not only spend.',
+    };
+    return {
+      eyebrow: 'Scorecards · Value realization',
+      title: 'Which initiatives are furthest from earning their commitment?',
+      body: 'Rows are ranked by measured-minus-committed value so the first screen exposes the largest value gaps.',
+    };
+  }
+  if (activeTab === 'programme_gates') {
+    return {
+      eyebrow: `Gates · ${label} lens`,
+      title: lens === 'contract'
+        ? 'Gate posture, with renewal clocks inside each stage.'
+        : lens === 'risk'
+          ? 'Gate posture, with the riskiest rows first inside each stage.'
+          : lens === 'adopt'
+            ? 'Gate posture, with adoption blockers pulled forward.'
+            : 'Gate posture, with value lag visible inside each stage.',
+      body: 'Stage groupings still come from the DB registry. The lens changes row priority and card evidence inside each stage; it does not invent missing phases.',
+    };
+  }
+  if (activeTab === 'dependencies') {
+    if (lens === 'risk') return {
+      eyebrow: 'Dependencies · Risk lens',
+      title: 'Vendor dependencies ranked by financial health and initiative pressure.',
+      body: 'At-risk and watch vendors move up, then inherit the owning initiative status so contract risk and portfolio risk stay connected.',
+    };
+    if (lens === 'value') return {
+      eyebrow: 'Dependencies · Value lens',
+      title: 'Vendor dependencies ranked by contract dollars at stake.',
+      body: 'The view leads with the biggest spend commitments so a CXO can see where vendor exposure most affects portfolio value.',
+    };
+    if (lens === 'adopt') return {
+      eyebrow: 'Dependencies · Adoption lens',
+      title: 'Vendor dependencies ranked by adoption blockers.',
+      body: 'Dependencies attached to adoption-gap initiatives move up so the discussion shifts to enablement, usage, and operating change.',
+    };
+    return {
+      eyebrow: 'Dependencies · Contract lens',
+      title: 'Vendor dependencies ranked by renewal clock.',
+      body: 'Nearest renewal dates lead. Timing, contract value, and financial health stay attached to the owning initiative row.',
+    };
+  }
+  return {
+    eyebrow: `Executive brief · ${label} narrative`,
+    title: lens === 'risk'
+      ? 'The board read starts with risk concentration.'
+      : lens === 'contract'
+        ? 'The board read starts with renewal decisions.'
+        : lens === 'adopt'
+          ? 'The board read starts with adoption conversion.'
+          : 'The board read starts with value realization.',
+    body: 'The brief is assembled from DB-backed initiatives, vendor rows, pressure cards, and the strategic alignment matrix. The lens changes the executive question and supporting evidence.',
+  };
+}
+
 function TowerTabPanelShell({
   eyebrow,
   title,
@@ -832,6 +1087,7 @@ function DataCard({
 
 function TowerWorkspaceTabPanel({
   activeTab,
+  activeLens,
   initiatives,
   vendors,
   pressuresView,
@@ -839,6 +1095,7 @@ function TowerWorkspaceTabPanel({
   detailHrefFor,
 }: {
   activeTab: TowerTabKey;
+  activeLens: TowerLens;
   initiatives: ReadonlyArray<AIInitiative>;
   vendors: ReadonlyArray<AIInitiativeVendorRow>;
   pressuresView?: TowerPressuresView;
@@ -857,24 +1114,34 @@ function TowerWorkspaceTabPanel({
     );
   }
 
+  const narrative = tabLensNarrative(activeTab, activeLens);
+  const groupedVendors = vendorsByDisplayId(vendors);
+  const rankedInitiatives = rankInitiativesForLens(initiatives, vendors, activeLens);
+  const rankedVendors = rankVendorsForLens(vendors, initiatives, activeLens);
+  const initiativeById = new Map(initiatives.map((initiative) => [initiative.initiativeId, initiative] as const));
+  const accent = lensAccent(activeLens);
+
   if (activeTab === 'scorecards') {
     return (
       <TowerTabPanelShell
-        eyebrow="Scorecards · DB initiatives"
-        title="Per-initiative scorecards from the active client's registry."
-        body="Every row links to the tenant-scoped initiative detail. No fixture program cards are substituted when the registry is thin."
+        eyebrow={narrative.eyebrow}
+        title={narrative.title}
+        body={narrative.body}
       >
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 12 }}>
-          {initiatives.map((initiative) => (
-            <DataCard
-              key={initiative.initiativeId}
-              href={detailHrefFor(initiative.displayId)}
-              title={initiative.name}
-              meta={`${initiative.displayId} · ${labelize(initiative.statusFlag)} · ${initiative.confidenceLevel}`}
-              detail={`${initiative.ownerName} · ${labelize(initiative.stage)} · committed ${formatMoney(initiative.committedAnnualUsd)} annual · measured ${formatMoney(initiative.measuredValueUsd)}.`}
-              accent={initiative.statusFlag === 'healthy' ? T.GREEN : initiative.statusFlag === 'cost_overrun' ? T.RED : T.PURPLE}
-            />
-          ))}
+          {rankedInitiatives.map((initiative) => {
+            const linkedVendors = groupedVendors.get(initiative.displayId) ?? [];
+            return (
+              <DataCard
+                key={initiative.initiativeId}
+                href={detailHrefFor(initiative.displayId)}
+                title={initiative.name}
+                meta={initiativeLensMeta(initiative, activeLens)}
+                detail={initiativeLensDetail(initiative, linkedVendors, activeLens)}
+                accent={initiative.statusFlag === 'healthy' ? T.GREEN : initiative.statusFlag === 'cost_overrun' ? T.RED : accent}
+              />
+            );
+          })}
         </div>
       </TowerTabPanelShell>
     );
@@ -882,7 +1149,7 @@ function TowerWorkspaceTabPanel({
 
   if (activeTab === 'programme_gates') {
     const byStage = new Map<string, AIInitiative[]>();
-    for (const initiative of initiatives) {
+    for (const initiative of rankedInitiatives) {
       const list = byStage.get(initiative.stage) ?? [];
       list.push(initiative);
       byStage.set(initiative.stage, list);
@@ -890,9 +1157,9 @@ function TowerWorkspaceTabPanel({
     const stages = [...byStage.entries()].sort(([a], [b]) => stageSort(a) - stageSort(b));
     return (
       <TowerTabPanelShell
-        eyebrow="Gates · lifecycle posture"
-        title="Portfolio gates are grouped from initiative stage rows."
-        body="Gate counts come from the DB registry. A missing phase is left missing; Tower does not invent stage coverage."
+        eyebrow={narrative.eyebrow}
+        title={narrative.title}
+        body={narrative.body}
       >
         <div style={{ display: 'grid', gap: 14 }}>
           {stages.map(([stage, rows]) => (
@@ -904,16 +1171,19 @@ function TowerWorkspaceTabPanel({
                 </span>
               </div>
               <div style={{ marginTop: 12, display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 10 }}>
-                {rows.map((initiative) => (
-                  <DataCard
-                    key={initiative.initiativeId}
-                    href={detailHrefFor(initiative.displayId)}
-                    title={initiative.name}
-                    meta={`${initiative.displayId} · ${labelize(initiative.statusFlag)}`}
-                    detail={initiative.stageDetail ?? initiative.statusSummary}
-                    accent={initiative.alignedCallout ? T.GREEN : T.GOLD}
-                  />
-                ))}
+                {rows.map((initiative) => {
+                  const linkedVendors = groupedVendors.get(initiative.displayId) ?? [];
+                  return (
+                    <DataCard
+                      key={initiative.initiativeId}
+                      href={detailHrefFor(initiative.displayId)}
+                      title={initiative.name}
+                      meta={initiativeLensMeta(initiative, activeLens)}
+                      detail={initiativeLensDetail(initiative, linkedVendors, activeLens)}
+                      accent={initiative.alignedCallout ? T.GREEN : accent}
+                    />
+                  );
+                })}
               </div>
             </section>
           ))}
@@ -925,9 +1195,9 @@ function TowerWorkspaceTabPanel({
   if (activeTab === 'dependencies') {
     return (
       <TowerTabPanelShell
-        eyebrow="Dependencies · vendors and renewals"
-        title="Vendor dependencies are read from ai_initiative_vendors."
-        body="This view only shows dependencies that exist in the database for the active client. Renewal timing and contract value stay attached to the owning initiative."
+        eyebrow={narrative.eyebrow}
+        title={narrative.title}
+        body={narrative.body}
       >
         {vendors.length === 0 ? (
           <TowerEmptyState
@@ -937,14 +1207,14 @@ function TowerWorkspaceTabPanel({
           />
         ) : (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 12 }}>
-            {vendors.map((vendor) => (
+            {rankedVendors.map((vendor) => (
               <DataCard
                 key={vendor.vendorId}
                 href={detailHrefFor(vendor.initiativeDisplayId)}
                 title={vendor.vendorName}
-                meta={`${vendor.initiativeDisplayId} · ${vendor.renewalDate ?? 'no renewal date'}`}
-                detail={`${vendor.initiativeName} · contract ${formatMoney(vendor.contractValueUsd)} · financial health ${labelize(vendor.financialHealth)}.`}
-                accent={vendor.financialHealth === 'at_risk' || vendor.financialHealth === 'watch' ? T.AMBER : T.PURPLE}
+                meta={`${vendor.initiativeDisplayId} · ${activeLens === 'contract' ? daysUntilLabel(vendor.renewalDate) : lensLabel(activeLens)}`}
+                detail={vendorLensDetail(vendor, initiativeById.get(vendor.initiativeId), activeLens)}
+                accent={vendor.financialHealth === 'at_risk' || vendor.financialHealth === 'watch' ? T.AMBER : accent}
               />
             ))}
           </div>
@@ -957,13 +1227,13 @@ function TowerWorkspaceTabPanel({
   const strategicBetCount = alignment2x2View.strategicBets.length;
   return (
     <TowerTabPanelShell
-      eyebrow="Executive brief · grounded summary"
-      title="A board-ready read from the active client's Tower substrate."
-      body="The brief is assembled from DB-backed initiatives, vendor rows, pressure cards, and the strategic alignment matrix. Empty areas stay disclosed."
+      eyebrow={narrative.eyebrow}
+      title={narrative.title}
+      body={narrative.body}
     >
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: 10, marginBottom: 18 }}>
-        <DataCard title="Initiatives" meta="Registry count" detail={`${initiatives.length} tenant-bound records`} accent={T.PURPLE} />
-        <DataCard title="Active pressures" meta="Decision load" detail={`${pressureCount} derived from status flags and renewals`} accent={pressureCount > 0 ? T.RED : T.GREEN} />
+        <DataCard title={`${lensLabel(activeLens)} lens`} meta="Narrative posture" detail={narrative.title} accent={accent} />
+        <DataCard title="Active pressures" meta="Decision load" detail={`${pressureCount} sorted by ${lensLabel(activeLens).toLowerCase()} priority`} accent={pressureCount > 0 ? T.RED : T.GREEN} />
         <DataCard title="Strategic bets" meta="Foundation row" detail={`${strategicBetCount} not plotted in the 2x2`} accent={T.GOLD} />
         <DataCard title="Vendor links" meta="Dependency substrate" detail={`${vendors.length} vendor records loaded`} accent={vendors.length > 0 ? T.PURPLE : T.GRAY} />
       </div>
@@ -1415,7 +1685,7 @@ export function TowerIndexPage({
   const searchParams = useSearchParams();
   const router = useRouter();
   const towerCanvasRef = useRef<HTMLDivElement>(null);
-  const activeLens = (searchParams?.get('lens') ?? 'value') as 'value' | 'risk' | 'contract' | 'adopt';
+  const activeLens = (searchParams?.get('lens') ?? 'value') as TowerLens;
   const activeDetailId = searchParams?.get('detail') ?? null;
   const activePressureId = searchParams?.get('pressure') ?? null;
   const detailInitiative = findInitiativeDetail(initiatives ?? [], activeDetailId);
@@ -2178,6 +2448,7 @@ export function TowerIndexPage({
           ) : (
             <TowerWorkspaceTabPanel
               activeTab={activeTab}
+              activeLens={activeLens}
               initiatives={initiatives ?? []}
               vendors={vendors ?? []}
               pressuresView={pressuresView}
