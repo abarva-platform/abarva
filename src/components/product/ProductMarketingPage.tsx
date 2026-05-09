@@ -9,8 +9,38 @@
 // rather than raster AI-generated — same visual register without
 // the bandwidth/auth cost of an external image service.
 
+import Image from 'next/image';
 import Link from 'next/link';
 import type { ReactNode } from 'react';
+
+/** Inline AbarVa wordmark — replaces the word "AbarVa" in body copy
+ *  so the brand mark is shown rather than the word. Sized to match
+ *  surrounding text. `inverse` flips it for dark backgrounds. */
+function AbarvaWordmark({
+  height = '0.78em',
+  inverse = false,
+}: {
+  height?: string | number;
+  inverse?: boolean;
+}) {
+  return (
+    <Image
+      src="/brand/abarva-logo.svg"
+      alt="AbarVa"
+      width={130}
+      height={42}
+      style={{
+        height,
+        width: 'auto',
+        display: 'inline-block',
+        verticalAlign: '-0.13em',
+        margin: '0 0.05em',
+        filter: inverse ? 'invert(1) brightness(1.05)' : undefined,
+      }}
+      unoptimized
+    />
+  );
+}
 
 const F_SERIF = "'Fraunces', Georgia, serif";
 const F_SANS = "'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif";
@@ -116,7 +146,7 @@ function Hero() {
               margin: '0 0 28px',
             }}
           >
-            AbarVa is the operating platform for shaping enterprise AI bets.
+            <AbarvaWordmark /> is the operating platform for shaping enterprise AI bets.
             Pattern-grounded, tenant-overlaid, agent-collaborative — the
             three things every failed AI program lacked.
           </p>
@@ -462,7 +492,7 @@ function FourSurfaces() {
         <SectionEyebrow num="02">The four surfaces</SectionEyebrow>
         <SectionTitle>One platform. Four surfaces. Each one a CXO answer.</SectionTitle>
         <SectionLead>
-          AbarVa isn't a dashboard. Each surface answers a different decision —
+          <AbarvaWordmark /> isn't a dashboard. Each surface answers a different decision —
           and they're all wired into the same substrate so the answers stay
           consistent.
         </SectionLead>
@@ -835,7 +865,7 @@ function MoveLifecycle() {
         <SectionEyebrow num="03">How it works</SectionEyebrow>
         <SectionTitle>The Move lifecycle · originate to measure.</SectionTitle>
         <SectionLead>
-          Every AI bet AbarVa shapes travels six phases. Each phase has a
+          Every AI bet <AbarvaWordmark /> shapes travels six phases. Each phase has a
           gate, an owner, and an audit trail — so failure modes are visible
           before they cost a quarter.
         </SectionLead>
@@ -922,7 +952,9 @@ function Substrate() {
       >
         <div>
           <SectionEyebrow num="04">The substrate</SectionEyebrow>
-          <SectionTitle>What AbarVa knows · before it answers.</SectionTitle>
+          <SectionTitle>
+            What <AbarvaWordmark height="0.7em" /> knows · before it answers.
+          </SectionTitle>
           <p style={{ fontSize: 15.5, color: C.inkSoft, lineHeight: 1.65, marginBottom: 20, maxWidth: '54ch' }}>
             Every CXO answer is grounded in three layers of substrate. The
             tenant layer is what we know about you. The corpus is the cross-
@@ -1090,7 +1122,7 @@ function SubstrateIllustration() {
 // ─── Differentiators ─────────────────────────────────────────────
 
 function Differentiators() {
-  const items: ReadonlyArray<{ num: string; title: string; body: string; mark: ReactNode }> = [
+  const items: ReadonlyArray<{ num: string; title: string; body: ReactNode; mark: ReactNode }> = [
     {
       num: '01',
       title: 'Corpus-grounded',
@@ -1100,7 +1132,13 @@ function Differentiators() {
     {
       num: '02',
       title: 'Tenant-overlaid',
-      body: 'Generic AI advice fails because it ignores your size, segment, regulatory exposure, vendor footprint, and current portfolio. AbarVa scores against all of it.',
+      body: (
+        <>
+          Generic AI advice fails because it ignores your size, segment,
+          regulatory exposure, vendor footprint, and current portfolio.{' '}
+          <AbarvaWordmark /> scores against all of it.
+        </>
+      ),
       mark: <DiffMark variant="overlay" />,
     },
     {
@@ -1250,7 +1288,8 @@ function Cta() {
           }}
         >
           Meridian Health is loaded with 23 substrate segments, 47 patterns,
-          and 7 active AI initiatives. Pop in and see how AbarVa shapes their
+          and 7 active AI initiatives. Pop in and see how{' '}
+          <AbarvaWordmark inverse /> shapes their
           quarterly read.
         </p>
         <div style={{ display: 'flex', gap: 14, justifyContent: 'center', flexWrap: 'wrap' }}>
