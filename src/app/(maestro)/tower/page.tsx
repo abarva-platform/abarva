@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { TowerIndexPage } from '@/components/tower/TowerIndexPage';
+import { TowerIndexPage, type TowerSubstrateCounts } from '@/components/tower/TowerIndexPage';
 import { getServerSupabase } from '@/lib/supabase-server';
 import { requireTenancy } from '@/lib/auth/tenancy';
 import { loadUserProgramAccessPolicy } from '@/lib/auth/program-access-policy';
@@ -109,6 +109,45 @@ async function buildTowerVendors(clientId: string | null): Promise<ReadonlyArray
   } catch {
     return [];
   }
+}
+
+async function countByInitiatives(
+  table: string,
+  initiativeIds: ReadonlyArray<string>,
+): Promise<number> {
+  if (initiativeIds.length === 0) return 0;
+  try {
+    const { count, error } = await getServerSupabase()
+      .from(table)
+      .select('initiative_id', { count: 'exact', head: true })
+      .in('initiative_id', [...initiativeIds]);
+    if (error) return 0;
+    return count ?? 0;
+  } catch {
+    return 0;
+  }
+}
+
+async function buildTowerSubstrateCounts(
+  initiatives: ReadonlyArray<AIInitiative>,
+  vendors: ReadonlyArray<AIInitiativeVendorRow>,
+): Promise<TowerSubstrateCounts> {
+  const initiativeIds = initiatives.map((initiative) => initiative.initiativeId);
+  const [kpis, decisions, stakeholderNotes, scenarios] = await Promise.all([
+    countByInitiatives('ai_initiative_kpis', initiativeIds),
+    countByInitiatives('ai_initiative_decisions', initiativeIds),
+    countByInitiatives('ai_initiative_stakeholder_notes', initiativeIds),
+    countByInitiatives('ai_initiative_scenarios', initiativeIds),
+  ]);
+
+  return {
+    initiatives: initiatives.length,
+    vendors: vendors.length,
+    kpis,
+    decisions,
+    stakeholderNotes,
+    scenarios,
+  };
 }
 
 /**
@@ -523,6 +562,7 @@ export default async function TowerPage({
   const towerSetupInitiativesFeed = await buildTowerSetupInitiativesFeed(activeClient);
   const towerInitiatives = await buildTowerInitiatives(activeClientId);
   const towerVendors = await buildTowerVendors(activeClientId);
+  const towerSubstrateCounts = await buildTowerSubstrateCounts(towerInitiatives, towerVendors);
   const activeTab = resolveTowerTab(resolvedSearchParams.tab);
   // T-8 (Bind 4): resolve the active lens server-side so the band/pressures
   // view-models can re-rank per lens. Falls back to 'value' for unknown.
@@ -587,6 +627,7 @@ export default async function TowerPage({
       bandMetrics={towerBandMetrics}
       pressuresView={towerPressures}
       atlasObservationsView={towerAtlasObservations}
+      substrateCounts={towerSubstrateCounts}
       activeTab={activeTab}
       towerSubmenuSlot={<TowerMainSubmenuStrip activeTab={activeTab} />}
       towerHandoffSlot={

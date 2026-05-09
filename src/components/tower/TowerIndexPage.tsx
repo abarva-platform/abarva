@@ -35,6 +35,15 @@ import type {
 } from '@/lib/tower/atlas-observations-view';
 import type { TowerTabKey } from '@/lib/tower/tower-lens-tabs-view';
 
+export interface TowerSubstrateCounts {
+  initiatives: number;
+  vendors: number;
+  kpis: number;
+  decisions: number;
+  stakeholderNotes: number;
+  scenarios: number;
+}
+
 // ─── Tower-specific tokens (v3 design: white bg, navy accent) ─────────────────
 const T = {
   PAGE_BG: '#ffffff',
@@ -572,6 +581,21 @@ function labelize(value: string | null | undefined): string {
   return value.replace(/_/g, ' ').replace(/\b\w/g, (letter) => letter.toUpperCase());
 }
 
+const STATUS_MEANING: Record<string, string> = {
+  adoption_gap: 'Usage or operating-model evidence is below target. The issue is enablement, workflow change, or habit formation.',
+  value_lag: 'Measured value trails the commitment. The issue is realization evidence, not necessarily project activity.',
+  healthy: 'Current evidence supports the plan. Keep monitoring; this is not a promise that the program is finished.',
+  foundation_phase: 'The work is building readiness or platform capacity. It should not be judged like an ROI-producing scaled program yet.',
+  stalled: 'Decision or execution progress has stopped long enough to need an owner intervention.',
+  duplication_risk: 'Scope overlaps with another tool, vendor, or initiative and may split adoption or spend accountability.',
+  cost_overrun: 'Spend is above the expected path or commitment without enough offsetting measured value.',
+  in_move: 'The initiative is already inside an active strategic move and should be managed through that governance path.',
+};
+
+function statusMeaning(statusFlag: string | null | undefined): string {
+  return STATUS_MEANING[statusFlag ?? ''] ?? 'A DB status flag exists, but Tower has no special interpretation for it yet.';
+}
+
 function workspaceTitle(activeTab: TowerTabKey): string {
   if (activeTab === 'scorecards') return 'Scorecards';
   if (activeTab === 'programme_gates') return 'Portfolio Gates';
@@ -918,15 +942,15 @@ function vendorLensDetail(
   lens: TowerLens,
 ): string {
   if (lens === 'risk') {
-    return `${vendor.initiativeName} · vendor health ${labelize(vendor.financialHealth)} · initiative posture ${labelize(initiative?.statusFlag)}.`;
+    return `${vendor.initiativeName}: vendor health is ${labelize(vendor.financialHealth)} from the vendor row; portfolio pressure is ${labelize(initiative?.statusFlag)} from the owning initiative.`;
   }
   if (lens === 'value') {
-    return `${vendor.initiativeName} · contract ${formatMoney(vendor.contractValueUsd)} · measured value ${formatMoney(initiative?.measuredValueUsd)}.`;
+    return `${vendor.initiativeName}: ${formatMoney(vendor.contractValueUsd)} contract exposure compared with ${formatMoney(initiative?.measuredValueUsd)} measured value.`;
   }
   if (lens === 'adopt') {
-    return `${vendor.initiativeName} · ${labelize(initiative?.stage)} · adoption signal ${labelize(initiative?.statusFlag)}.`;
+    return `${vendor.initiativeName}: ${labelize(initiative?.statusFlag)} means ${statusMeaning(initiative?.statusFlag)}`;
   }
-  return `${vendor.initiativeName} · contract ${formatMoney(vendor.contractValueUsd)} · ${daysUntilLabel(vendor.renewalDate)} · health ${labelize(vendor.financialHealth)}.`;
+  return `${vendor.initiativeName}: ${daysUntilLabel(vendor.renewalDate)} on ${formatMoney(vendor.contractValueUsd)} contract exposure; vendor health ${labelize(vendor.financialHealth)}.`;
 }
 
 function tabLensNarrative(activeTab: TowerTabKey, lens: TowerLens): { eyebrow: string; title: string; body: string } {
@@ -1001,15 +1025,165 @@ function tabLensNarrative(activeTab: TowerTabKey, lens: TowerLens): { eyebrow: s
   };
 }
 
+function currentPageEvidence(activeTab: TowerTabKey, lens: TowerLens): string {
+  if (activeTab === 'dependencies') {
+    if (lens === 'adopt') return 'Vendors are ranked by the owning initiative status. Adoption Gap is not a vendor diagnosis; it is the initiative adoption signal attached to that vendor dependency.';
+    if (lens === 'risk') return 'Vendors are ranked by vendor financial health first, then by the owning initiative pressure. This answers which third-party relationship could amplify portfolio risk.';
+    if (lens === 'contract') return 'Vendors are ranked by renewal date. This answers which decision windows are closing before the team has time to improve evidence.';
+    return 'Vendors are ranked by contract value. This answers where third-party spend most affects the portfolio value story.';
+  }
+  if (activeTab === 'scorecards') return 'Rows are initiatives. The scorecard status comes from ai_initiatives.status_flag and the dollars come from committed/measured fields in the registry.';
+  if (activeTab === 'programme_gates') return 'Rows stay grouped by initiative stage. The lens only changes priority and evidence inside each stage.';
+  if (activeTab === 'executive_brief') return 'The brief composes initiatives, vendors, pressure cards, and the 2x2 into an executive narrative. It should read as a decision packet, not a raw dashboard.';
+  return 'The portfolio view combines the registry, vendor rows, and derived pressure cards into a current-state read.';
+}
+
+function TowerDataDesignPanel({
+  activeTab,
+  activeLens,
+  initiatives,
+  vendors,
+  substrateCounts,
+}: {
+  activeTab: TowerTabKey;
+  activeLens: TowerLens;
+  initiatives: ReadonlyArray<AIInitiative>;
+  vendors: ReadonlyArray<AIInitiativeVendorRow>;
+  substrateCounts?: TowerSubstrateCounts;
+}) {
+  const vendorCountByDisplayId = new Map<string, number>();
+  for (const vendor of vendors) {
+    vendorCountByDisplayId.set(
+      vendor.initiativeDisplayId,
+      (vendorCountByDisplayId.get(vendor.initiativeDisplayId) ?? 0) + 1,
+    );
+  }
+
+  const feedRows = [
+    {
+      feed: 'Initiative registry',
+      table: 'ai_initiatives',
+      count: substrateCounts?.initiatives ?? initiatives.length,
+      supports: 'Project name, owner, stage, status, confidence, committed and measured value.',
+      day1: 'PMO portfolio export or AI initiative inventory spreadsheet.',
+    },
+    {
+      feed: 'KPI history',
+      table: 'ai_initiative_kpis',
+      count: substrateCounts?.kpis,
+      supports: 'Quarterly actuals, targets, peer medians, and confidence floors behind scorecards.',
+      day1: 'Finance/BI export from Power BI, Tableau, Looker, Excel, or metric owners.',
+    },
+    {
+      feed: 'Vendor and renewals',
+      table: 'ai_initiative_vendors',
+      count: substrateCounts?.vendors ?? vendors.length,
+      supports: 'Dependencies, contract lens, renewal clock, vendor health, and spend exposure.',
+      day1: 'Vendor master, procurement contract register, SaaS renewal calendar, Coupa/Ariba export.',
+    },
+    {
+      feed: 'Decision history',
+      table: 'ai_initiative_decisions',
+      count: substrateCounts?.decisions,
+      supports: 'Gate posture, stalled approvals, dissent, and executive-brief decision load.',
+      day1: 'Steering committee decision log, RAID log, project governance minutes.',
+    },
+    {
+      feed: 'Stakeholder notes',
+      table: 'ai_initiative_stakeholder_notes',
+      count: substrateCounts?.stakeholderNotes,
+      supports: 'Adoption blockers, executive quotes, theme-only evidence, and confidence context.',
+      day1: 'Interview notes, change-readiness survey, enablement feedback, workshop notes.',
+    },
+    {
+      feed: 'Scenario library',
+      table: 'ai_initiative_scenarios',
+      count: substrateCounts?.scenarios,
+      supports: 'What-if questions, probability-weighted risk, and decision alternatives.',
+      day1: 'Risk register, scenario workbook, architecture dependency assessment.',
+    },
+  ];
+
+  return (
+    <section style={{ border: `1px solid ${T.RULE}`, borderRadius: 8, margin: '0 0 22px', overflow: 'hidden', background: '#fff' }}>
+      <div style={{ padding: '14px 16px', borderBottom: `1px solid ${T.RULE}`, background: T.CREAM_2 }}>
+        <div style={{ fontFamily: T.MONO, fontSize: 9, letterSpacing: '1.6px', textTransform: 'uppercase', color: T.GOLD, fontWeight: 800 }}>
+          Current-state evidence map
+        </div>
+        <h3 style={{ margin: '6px 0 0', fontFamily: T.SERIF, fontSize: 22, lineHeight: 1.1, color: T.INK }}>
+          What this page is actually reading.
+        </h3>
+        <p style={{ margin: '6px 0 0', color: T.INK_2, fontSize: 13, lineHeight: 1.5 }}>
+          {currentPageEvidence(activeTab, activeLens)}
+        </p>
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1.15fr) minmax(320px, 0.85fr)', gap: 0 }}>
+        <div style={{ padding: 16, borderRight: `1px solid ${T.RULE}` }}>
+          <div style={{ fontFamily: T.MONO, fontSize: 9, letterSpacing: '1.4px', textTransform: 'uppercase', color: T.GRAY_DK, fontWeight: 800, marginBottom: 10 }}>
+            Initiative register now loaded
+          </div>
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12.5 }}>
+              <thead>
+                <tr style={{ color: T.GRAY_DK, fontFamily: T.MONO, fontSize: 9, letterSpacing: '1.1px', textTransform: 'uppercase', textAlign: 'left' }}>
+                  <th style={{ padding: '0 8px 8px 0' }}>ID</th>
+                  <th style={{ padding: '0 8px 8px' }}>Initiative</th>
+                  <th style={{ padding: '0 8px 8px' }}>State</th>
+                  <th style={{ padding: '0 8px 8px' }}>Meaning</th>
+                  <th style={{ padding: '0 0 8px 8px', textAlign: 'right' }}>Vendors</th>
+                </tr>
+              </thead>
+              <tbody>
+                {initiatives.slice(0, 8).map((initiative) => (
+                  <tr key={initiative.initiativeId} style={{ borderTop: `1px solid ${T.RULE}` }}>
+                    <td style={{ padding: '9px 8px 9px 0', fontFamily: T.MONO, fontSize: 10, color: T.GRAY_DK, whiteSpace: 'nowrap' }}>{initiative.displayId}</td>
+                    <td style={{ padding: '9px 8px', color: T.INK, fontWeight: 700 }}>{initiative.name}</td>
+                    <td style={{ padding: '9px 8px', color: T.INK_2, whiteSpace: 'nowrap' }}>{labelize(initiative.stage)} · {labelize(initiative.statusFlag)}</td>
+                    <td style={{ padding: '9px 8px', color: T.INK_2, minWidth: 220 }}>{statusMeaning(initiative.statusFlag)}</td>
+                    <td style={{ padding: '9px 0 9px 8px', color: T.INK_2, textAlign: 'right' }}>{vendorCountByDisplayId.get(initiative.displayId) ?? 0}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div style={{ padding: 16 }}>
+          <div style={{ fontFamily: T.MONO, fontSize: 9, letterSpacing: '1.4px', textTransform: 'uppercase', color: T.GRAY_DK, fontWeight: 800, marginBottom: 10 }}>
+            Data feeds and Day-1 collection
+          </div>
+          <div style={{ display: 'grid', gap: 10 }}>
+            {feedRows.map((row) => (
+              <div key={row.table} style={{ borderTop: `1px solid ${T.RULE}`, paddingTop: 9 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12 }}>
+                  <strong style={{ color: T.INK, fontSize: 13 }}>{row.feed}</strong>
+                  <span style={{ fontFamily: T.MONO, fontSize: 10, color: T.GRAY_DK }}>{row.count ?? 'needed'} rows</span>
+                </div>
+                <div style={{ marginTop: 3, color: T.INK_2, fontSize: 12.5, lineHeight: 1.45 }}>{row.supports}</div>
+                <div style={{ marginTop: 3, color: T.GRAY_DK, fontSize: 12, lineHeight: 1.45 }}>
+                  Day 1: {row.day1}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 function TowerTabPanelShell({
   eyebrow,
   title,
   body,
+  contextSlot,
   children,
 }: {
   eyebrow: string;
   title: string;
   body: string;
+  contextSlot?: ReactNode;
   children: ReactNode;
 }) {
   return (
@@ -1043,6 +1217,7 @@ function TowerTabPanelShell({
       <p style={{ margin: '8px 0 22px', maxWidth: '68ch', fontSize: 13.5, color: T.GRAY_DK, lineHeight: 1.55 }}>
         {body}
       </p>
+      {contextSlot}
       {children}
     </section>
   );
@@ -1092,6 +1267,7 @@ function TowerWorkspaceTabPanel({
   vendors,
   pressuresView,
   alignment2x2View,
+  substrateCounts,
   detailHrefFor,
 }: {
   activeTab: TowerTabKey;
@@ -1100,6 +1276,7 @@ function TowerWorkspaceTabPanel({
   vendors: ReadonlyArray<AIInitiativeVendorRow>;
   pressuresView?: TowerPressuresView;
   alignment2x2View: StrategicAlignment2x2View;
+  substrateCounts?: TowerSubstrateCounts;
   detailHrefFor: DetailHrefBuilder;
 }) {
   if (initiatives.length === 0) {
@@ -1120,6 +1297,15 @@ function TowerWorkspaceTabPanel({
   const rankedVendors = rankVendorsForLens(vendors, initiatives, activeLens);
   const initiativeById = new Map(initiatives.map((initiative) => [initiative.initiativeId, initiative] as const));
   const accent = lensAccent(activeLens);
+  const contextSlot = (
+    <TowerDataDesignPanel
+      activeTab={activeTab}
+      activeLens={activeLens}
+      initiatives={initiatives}
+      vendors={vendors}
+      substrateCounts={substrateCounts}
+    />
+  );
 
   if (activeTab === 'scorecards') {
     return (
@@ -1127,6 +1313,7 @@ function TowerWorkspaceTabPanel({
         eyebrow={narrative.eyebrow}
         title={narrative.title}
         body={narrative.body}
+        contextSlot={contextSlot}
       >
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 12 }}>
           {rankedInitiatives.map((initiative) => {
@@ -1160,6 +1347,7 @@ function TowerWorkspaceTabPanel({
         eyebrow={narrative.eyebrow}
         title={narrative.title}
         body={narrative.body}
+        contextSlot={contextSlot}
       >
         <div style={{ display: 'grid', gap: 14 }}>
           {stages.map(([stage, rows]) => (
@@ -1198,6 +1386,7 @@ function TowerWorkspaceTabPanel({
         eyebrow={narrative.eyebrow}
         title={narrative.title}
         body={narrative.body}
+        contextSlot={contextSlot}
       >
         {vendors.length === 0 ? (
           <TowerEmptyState
@@ -1230,6 +1419,7 @@ function TowerWorkspaceTabPanel({
       eyebrow={narrative.eyebrow}
       title={narrative.title}
       body={narrative.body}
+      contextSlot={contextSlot}
     >
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: 10, marginBottom: 18 }}>
         <DataCard title={`${lensLabel(activeLens)} lens`} meta="Narrative posture" detail={narrative.title} accent={accent} />
@@ -1641,6 +1831,8 @@ interface TowerIndexPageProps {
    * T-7 (Bind 3): DB-derived Atlas observations.
    */
   atlasObservationsView?: AtlasObservationsView;
+  /** Count-only DB coverage for explaining what evidence supports each Tower page. */
+  substrateCounts?: TowerSubstrateCounts;
   /** Active workspace submenu resolved from /tower?tab=. */
   activeTab?: TowerTabKey;
   /** Slots are accepted for backward compatibility but not rendered in the broadsheet design. */
@@ -1669,6 +1861,7 @@ export function TowerIndexPage({
   bandMetrics,
   pressuresView,
   atlasObservationsView,
+  substrateCounts,
   activeTab = 'portfolio',
   provenanceSlot: _p1,
   portfolioSummarySlot: _p2,
@@ -2453,6 +2646,7 @@ export function TowerIndexPage({
               vendors={vendors ?? []}
               pressuresView={pressuresView}
               alignment2x2View={alignment2x2View}
+              substrateCounts={substrateCounts}
               detailHrefFor={detailHrefFor}
             />
           )}
