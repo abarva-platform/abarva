@@ -51,6 +51,7 @@ interface Props {
    * back to data.tenantName when omitted.
    */
   activeClient?: string;
+  surfaceContext?: Record<string, unknown>;
 }
 
 const SVG_W = 760;
@@ -143,7 +144,7 @@ function displayValue(node: MapNode): string {
   );
 }
 
-export function IntelligenceMap({ data, activeClient }: Props) {
+export function IntelligenceMap({ data, activeClient, surfaceContext }: Props) {
   const [selectedId, setSelectedId] = useState<string>(data.defaultSelectedId);
   // Kanban is the default · the scatter chart has structural label
   // overlap when many bubbles cluster in the same value/lifecycle
@@ -193,6 +194,16 @@ export function IntelligenceMap({ data, activeClient }: Props) {
 
   const selected =
     visibleNodes.find((n) => n.useCase.id === selectedId) ?? visibleNodes[0] ?? allNodes[0];
+  const sentinelSurfaceContext = useMemo(() => mergeSurfaceContext(surfaceContext, {
+    activeTab: 'map',
+    activeClient: activeClient ?? data.tenantName,
+    stageFacts: [
+      `Map visible state: ${data.totalUseCases} use cases; ${data.inFlightCount} in flight, ${data.atRiskCount} at risk, ${data.candidateCount} candidates; view ${view}; filter ${engagement}.`,
+      selected
+        ? `Selected map node: ${selected.initiativeDisplayId ?? selected.useCase.id} ${selected.useCase.name}; ${selected.engagementState}; lifecycle ${selected.useCase.lifecycleStage}; score ${selected.score ?? 'n/a'}.`
+        : null,
+    ].filter((fact): fact is string => Boolean(fact)),
+  }), [activeClient, data.atRiskCount, data.candidateCount, data.inFlightCount, data.tenantName, data.totalUseCases, engagement, selected, surfaceContext, view]);
 
   return (
     <div style={{ background: C.surface, fontFamily: F_BODY, color: C.body, minHeight: '100%' }}>
@@ -281,10 +292,7 @@ export function IntelligenceMap({ data, activeClient }: Props) {
           scopeLabel={`${data.tenantName} · The Map`}
           opener={mapSentinelOpener(data, selected)}
           conversation={MAP_SENTINEL_CONVERSATION}
-          surfaceContext={{
-            activeTab: 'map',
-            activeClient: activeClient ?? data.tenantName,
-          }}
+          surfaceContext={sentinelSurfaceContext}
           workspace={
         <main style={{ padding: '24px 36px 80px', display: 'grid', gap: 18, gridTemplateColumns: '1fr', minWidth: 0, overflowY: 'auto' }}>
           {/* Compact masthead — eyebrow + 1-line title + pills inline */}
@@ -643,6 +651,24 @@ function mapSentinelOpener(data: MapData, selected: MapNode | undefined): string
     return `Looking at ${selected.useCase.name} (${selected.useCase.id}). Lifecycle ${selected.useCase.lifecycleStage} · engagement ${selected.engagementState.replace('_', ' ')}. Ask me about cascade dependencies, evidence, or how this connects to the rest of your portfolio.`;
   }
   return `${data.totalUseCases} use cases on the landscape · ${data.inFlightCount} in flight · ${data.atRiskCount} at risk · ${data.candidateCount} candidate. Click any node to see how it fits — or ask me what's worth shaping into a Move next.`;
+}
+
+function mergeSurfaceContext(
+  base: Record<string, unknown> | undefined,
+  override: Record<string, unknown>,
+): Record<string, unknown> {
+  return {
+    ...(base ?? {}),
+    ...override,
+    stageFacts: [
+      ...readStringArray(base?.stageFacts),
+      ...readStringArray(override.stageFacts),
+    ],
+  };
+}
+
+function readStringArray(value: unknown): string[] {
+  return Array.isArray(value) ? value.filter((item): item is string => typeof item === 'string') : [];
 }
 
 function truncate(s: string, n: number): string {

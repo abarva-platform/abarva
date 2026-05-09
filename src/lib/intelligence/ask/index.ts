@@ -85,7 +85,7 @@ export async function* askIntelligence(query: string, opts: AskOptions = {}): As
       ...tenantTechnology,
       ...routed.sources,
       ...worldview.sources,
-    ].slice(0, 12);
+    ].slice(0, 16);
     const averageConfidence = sources.length > 0
       ? sources.reduce((s, x) => s + (x.confidence ?? 0), 0) / sources.length
       : 0;

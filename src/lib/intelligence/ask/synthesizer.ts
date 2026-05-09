@@ -29,10 +29,16 @@ RULES:
 8. Do not preamble. Start the answer directly.
 9. Never start with hollow acknowledgements like "Good question", "Great question",
    "Excellent question", "Happy to", or "Let me".
-10. If a SURFACE source is provided, treat it as the user's current live page
+10. Evidence priority is SURFACE first, then TENANT, then GRAPH, then routed
+   corpus/vendor/pattern/source evidence, then WORLDVIEW last. If those sources
+   conflict, prefer the higher-priority source and name the uncertainty.
+11. If a SURFACE source is provided, treat it as the user's current live page
    substrate. Use it before broader tenant, corpus, vendor, or worldview sources
    when answering what is current, visible, at risk, pending, or strategically
-   important on this page.`;
+   important on this page.
+12. If TENANT or GRAPH sources say the active tenant is Apex Retail, never use
+   healthcare, Epic, IDN, clinical, CMIO, HIPAA, or Meridian facts unless the user
+   explicitly asks for a cross-industry comparison.`;
 
 function chooseModel(intent: AskIntent): string {
   if (intent === 'vendor_comparison' || intent === 'topic_synthesis' || intent === 'general_synthesis') {

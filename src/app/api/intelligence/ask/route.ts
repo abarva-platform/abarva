@@ -123,6 +123,14 @@ function normalizeSurfaceContext(value: unknown): AskSurfaceContext | null {
     substrate: record.substrate,
     pageFacts: readStringArray(record.pageFacts),
     stageFacts: readStringArray(record.stageFacts),
+    tenantFacts: readStringArray(record.tenantFacts),
+    vendorFacts: readStringArray(record.vendorFacts),
+    useCaseFacts: readStringArray(record.useCaseFacts),
+    graphFacts: readStringArray(record.graphFacts),
+    riskFacts: readStringArray(record.riskFacts),
+    strategyFacts: readStringArray(record.strategyFacts),
+    sourceFacts: readStringArray(record.sourceFacts),
+    qualityFacts: readStringArray(record.qualityFacts),
     facts: readStringArray(record.facts),
   };
 }

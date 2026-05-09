@@ -26,6 +26,7 @@ export type SourceType =
   | 'GENERAL'
   | 'WORLDVIEW'
   | 'TENANT'
+  | 'GRAPH'
   | 'SURFACE';
 
 export interface AskSource {
@@ -49,5 +50,13 @@ export interface AskSurfaceContext {
   substrate?: unknown;
   pageFacts?: string[];
   stageFacts?: string[];
+  tenantFacts?: string[];
+  vendorFacts?: string[];
+  useCaseFacts?: string[];
+  graphFacts?: string[];
+  riskFacts?: string[];
+  strategyFacts?: string[];
+  sourceFacts?: string[];
+  qualityFacts?: string[];
   facts?: string[];
 }
