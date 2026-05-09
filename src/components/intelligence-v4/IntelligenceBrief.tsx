@@ -18,7 +18,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import type { BelowTheLineBet, BetDecisionKind, BriefData, BriefBet } from '@/lib/knowledge-corpus/types';
+import type { BelowTheLineBet, BriefData, BriefBet } from '@/lib/knowledge-corpus/types';
 import { SentinelChat } from '@/components/intelligence-v3/SentinelChat';
 import type { ChatMessage } from '@/components/intelligence-v3/types';
 
@@ -96,12 +96,26 @@ export function IntelligenceBrief({ data, activeClient, surfaceContext }: Props)
     ],
   });
 
+  const leadBet = data.bets[0];
+  const leadDecision = leadBet?.decision?.label ?? 'Review first';
+  const leadPattern = leadBet?.bindingPatterns[0]?.pattern.id ?? data.patternsTriggered[0]?.pattern.id ?? 'Pattern bound';
+
   // Workspace · the surface body that Sentinel chat docks against.
   // Post-AgentDock migration this lives on the RIGHT of the chat lane.
   const workspace = (
-    <main style={{ padding: '24px 56px 80px', overflowY: 'auto' }}>
-          {/* Compact masthead — eyebrow + 1-line title only */}
-          <div style={{ marginBottom: 18 }}>
+    <main style={{ padding: '28px clamp(28px, 4vw, 64px) 80px', overflowY: 'auto' }}>
+      <div style={{ maxWidth: 1220, margin: '0 auto' }}>
+        <header
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'minmax(0, 1fr) minmax(240px, 320px)',
+            gap: 28,
+            alignItems: 'end',
+            paddingBottom: 20,
+            borderBottom: `1px solid ${C.borderLight}`,
+          }}
+        >
+          <div>
             <div
               style={{
                 fontFamily: F_MONO,
@@ -113,195 +127,181 @@ export function IntelligenceBrief({ data, activeClient, surfaceContext }: Props)
                 marginBottom: 6,
               }}
             >
-              INTELLIGENCE · <span style={{ color: C.ink }}>SENTINEL&apos;S BRIEF</span>
+              INTELLIGENCE · <span style={{ color: C.ink }}>SENTINEL INTEL</span>
             </div>
             <h1
               style={{
                 fontFamily: F_DISPLAY,
-                fontSize: 26,
+                fontSize: 32,
                 fontWeight: 400,
                 color: C.ink,
                 letterSpacing: '-0.014em',
                 lineHeight: 1.15,
                 margin: 0,
-                maxWidth: '52ch',
+                maxWidth: '28ch',
               }}
             >
-              Three bets above the line for {data.tenantName} this quarter.
+              The quarter&apos;s decision brief for {data.tenantName}.
             </h1>
-          </div>
-
-          {/* Patterns-triggered · compact one-line strip (no banner block) */}
-          {data.patternsTriggered.map((pt) => (
-            <div
-              key={pt.pattern.id}
-              style={{
-                background: C.amberSoft,
-                borderLeft: `3px solid ${C.amber}`,
-                borderRadius: '0 6px 6px 0',
-                padding: '8px 14px',
-                marginBottom: 14,
-                display: 'flex',
-                alignItems: 'center',
-                gap: 12,
-                flexWrap: 'wrap',
-              }}
-            >
-              <span
-                style={{
-                  fontFamily: F_MONO,
-                  fontSize: 9.5,
-                  fontWeight: 700,
-                  letterSpacing: '0.14em',
-                  textTransform: 'uppercase',
-                  color: C.amber,
-                  whiteSpace: 'nowrap',
-                }}
-              >
-                ⚠ {pt.pattern.id}
-              </span>
-              <span style={{ flex: 1, minWidth: 240, fontSize: 12.5, color: C.ink, lineHeight: 1.5 }}>
-                <strong style={{ fontWeight: 600 }}>{pt.issue}</strong>
-              </span>
-              <Link
-                href={pt.cta.primary.href}
-                style={{
-                  fontFamily: F_MONO,
-                  fontSize: 10,
-                  fontWeight: 600,
-                  letterSpacing: '0.08em',
-                  textTransform: 'uppercase',
-                  textDecoration: 'underline',
-                  color: C.amber,
-                  whiteSpace: 'nowrap',
-                }}
-              >
-                {pt.cta.primary.label} →
-              </Link>
-            </div>
-          ))}
-
-          {/* A1 · 1-paragraph CXO synthesis read · the morning-coffee
-              version of the brief before the cards */}
-          {data.synthesis && (
-            <div
-              style={{
-                background: C.surface2,
-                borderLeft: `3px solid ${C.navy}`,
-                borderRadius: '0 8px 8px 0',
-                padding: '14px 18px',
-                marginBottom: 22,
-              }}
-            >
-              <SectionEyebrow>Sentinel&rsquo;s read · this quarter</SectionEyebrow>
+            {data.synthesis && (
               <p
                 style={{
-                  fontFamily: F_BODY,
-                  fontSize: 14,
-                  lineHeight: 1.6,
-                  color: C.ink,
-                  margin: '6px 0 0',
+                  fontSize: 15,
+                  lineHeight: 1.65,
+                  color: C.body,
+                  margin: '14px 0 0',
                   maxWidth: '74ch',
                 }}
               >
                 {data.synthesis}
               </p>
-            </div>
-          )}
-
-          {/* Above the line · top 3 picks · 3-up side-by-side comparison row.
-              Cards expand inline (full width below) when toggled. */}
-          <div style={{ marginBottom: 8 }}>
-            <SectionEyebrow>Above the line · top {data.bets.length} this quarter</SectionEyebrow>
+            )}
           </div>
-          <div
+
+          <aside
+            aria-label="Sentinel Intel summary"
             style={{
-              display: 'grid',
-              gridTemplateColumns: `repeat(${data.bets.length}, minmax(0, 1fr))`,
-              gap: 12,
-              alignItems: 'stretch',
+              borderLeft: `3px solid ${C.navy}`,
+              padding: '2px 0 2px 18px',
             }}
           >
+            <SectionEyebrow>Decision now</SectionEyebrow>
+            <div
+              style={{
+                fontFamily: F_DISPLAY,
+                fontSize: 22,
+                lineHeight: 1.15,
+                color: C.ink,
+                letterSpacing: '-0.012em',
+                marginBottom: 10,
+              }}
+            >
+              {leadDecision}
+            </div>
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: '1fr 1fr',
+                gap: 14,
+                borderTop: `1px solid ${C.borderLight}`,
+                paddingTop: 12,
+              }}
+            >
+              <MiniMetric label="Score" value={leadBet ? `${leadBet.score}/100` : '-'} />
+              <MiniMetric label="Pattern" value={leadPattern} />
+            </div>
+          </aside>
+        </header>
+
+        <section style={{ marginTop: 28 }}>
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'baseline',
+              justifyContent: 'space-between',
+              gap: 16,
+              marginBottom: 8,
+              flexWrap: 'wrap',
+            }}
+          >
+            <SectionEyebrow>Above the line · top {data.bets.length}</SectionEyebrow>
+            <span style={{ fontSize: 12, color: C.faint }}>
+              Ranked by CXO tension, pattern binding, and time to value.
+            </span>
+          </div>
+          <div style={{ borderTop: `1px solid ${C.ink}` }}>
             {data.bets.map((bet) => (
-              <BetSummary
+              <BetDecisionRow
                 key={bet.useCase.id}
                 bet={bet}
                 isExpanded={expanded.has(bet.rank)}
                 onToggle={() => toggle(bet.rank)}
-                compact
               />
             ))}
           </div>
+        </section>
 
-          {/* When any card is expanded, render the full McKinsey detail
-              full-width below the 3-up grid. Multiple cards can be
-              expanded; each renders below in rank order. */}
-          {data.bets
-            .filter((bet) => expanded.has(bet.rank))
-            .map((bet) => (
-              <article
-                key={`exp-${bet.useCase.id}`}
-                style={{
-                  marginTop: 18,
-                  background: C.surface2,
-                  border: `1px solid ${C.navyLine}`,
-                  borderRadius: 10,
-                  padding: '20px 28px 24px',
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'baseline', gap: 12, marginBottom: 4 }}>
-                  <span
-                    style={{
-                      fontFamily: F_DISPLAY,
-                      fontSize: 22,
-                      fontWeight: 300,
-                      color: C.navy,
-                      letterSpacing: '-0.012em',
-                      lineHeight: 1,
-                    }}
-                  >
-                    {String(bet.rank).padStart(2, '0')}
-                  </span>
-                  <span
-                    style={{
-                      fontFamily: F_DISPLAY,
-                      fontSize: 20,
-                      fontWeight: 500,
-                      color: C.ink,
-                      letterSpacing: '-0.012em',
-                    }}
-                  >
-                    {bet.useCase.name}
-                  </span>
-                </div>
-                <p
+        {data.bets
+          .filter((bet) => expanded.has(bet.rank))
+          .map((bet) => (
+            <article
+              key={`exp-${bet.useCase.id}`}
+              style={{
+                marginTop: 18,
+                background: C.surface2,
+                borderTop: `2px solid ${C.navy}`,
+                padding: '20px 0 24px',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'baseline', gap: 12, marginBottom: 4, padding: '0 18px' }}>
+                <span
                   style={{
-                    fontSize: 13.5,
-                    color: C.muted,
-                    lineHeight: 1.5,
-                    margin: '0 0 12px',
-                    maxWidth: '74ch',
+                    fontFamily: F_DISPLAY,
+                    fontSize: 22,
+                    fontWeight: 300,
+                    color: C.navy,
+                    letterSpacing: '-0.012em',
+                    lineHeight: 1,
                   }}
                 >
-                  {bet.useCase.artOfPossibleFraming}
-                </p>
+                  {String(bet.rank).padStart(2, '0')}
+                </span>
+                <span
+                  style={{
+                    fontFamily: F_DISPLAY,
+                    fontSize: 20,
+                    fontWeight: 500,
+                    color: C.ink,
+                    letterSpacing: '-0.012em',
+                  }}
+                >
+                  {bet.useCase.name}
+                </span>
+              </div>
+              <p
+                style={{
+                  fontSize: 13.5,
+                  color: C.muted,
+                  lineHeight: 1.5,
+                  margin: '0 0 12px',
+                  maxWidth: '74ch',
+                  padding: '0 18px',
+                }}
+              >
+                {bet.useCase.artOfPossibleFraming}
+              </p>
+              <div style={{ padding: '0 18px' }}>
                 <BetExpandedDetail bet={bet} />
-              </article>
-            ))}
+              </div>
+            </article>
+          ))}
 
-          {/* Below the line · scannable list */}
+        <section
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'minmax(260px, 0.95fr) minmax(320px, 1.35fr)',
+            gap: 28,
+            marginTop: 30,
+            alignItems: 'start',
+          }}
+        >
+          <div>
+            <SectionEyebrow>Pattern checks</SectionEyebrow>
+            <div style={{ borderTop: `1px solid ${C.borderLight}` }}>
+              {data.patternsTriggered.map((pt) => (
+                <PatternCheckRow key={pt.pattern.id} pattern={pt} />
+              ))}
+            </div>
+          </div>
+
           {data.belowTheLine && data.belowTheLine.length > 0 && (
-            <div style={{ marginTop: 28 }}>
-              <SectionEyebrow>
-                Below the line · {data.belowTheLine.length} bets evaluating
-              </SectionEyebrow>
+            <div>
+              <SectionEyebrow>Below the line · keep warm</SectionEyebrow>
               <div
                 style={{
                   background: C.surface,
-                  border: `1px solid ${C.borderLight}`,
-                  borderRadius: 10,
-                  overflow: 'hidden',
-                  marginTop: 10,
+                  borderTop: `1px solid ${C.borderLight}`,
+                  marginTop: 4,
                 }}
               >
                 {data.belowTheLine.map((b, i) => (
@@ -314,40 +314,41 @@ export function IntelligenceBrief({ data, activeClient, surfaceContext }: Props)
               </div>
             </div>
           )}
+        </section>
 
-          {/* Move cascade · forward-looking strip below the bets */}
-          {data.cascadeIfSucceeds && (
-            <div
-              style={{
-                marginTop: 24,
-                background: C.navySoft,
-                border: `1px solid ${C.navyLine}`,
-                borderRadius: 8,
-                padding: '16px 20px',
-              }}
-            >
-              <div style={{ fontFamily: F_MONO, fontSize: 9.5, fontWeight: 700, letterSpacing: '0.16em', textTransform: 'uppercase', color: C.navy, marginBottom: 6 }}>
-                → If {data.cascadeIfSucceeds.triggerInitiativeId} succeeds · move cascade
+        {data.cascadeIfSucceeds && (
+          <div
+            style={{
+              marginTop: 28,
+              borderTop: `1px solid ${C.navyLine}`,
+              borderBottom: `1px solid ${C.navyLine}`,
+              padding: '14px 0',
+              display: 'grid',
+              gridTemplateColumns: '220px 1fr',
+              gap: 18,
+              alignItems: 'start',
+            }}
+          >
+            <SectionEyebrow>If this works</SectionEyebrow>
+            <div>
+              <div style={{ fontFamily: F_DISPLAY, fontSize: 18, fontWeight: 500, color: C.ink, letterSpacing: '-0.005em', marginBottom: 8 }}>
+                {data.cascadeIfSucceeds.followOnUseCases.length} follow-on bets become natural in 12-18 months.
               </div>
-              <div style={{ fontFamily: F_DISPLAY, fontSize: 17, fontWeight: 500, color: C.ink, letterSpacing: '-0.005em', marginBottom: 8 }}>
-                {data.cascadeIfSucceeds.followOnUseCases.length} follow-on bets become natural in 12–18 months.
-              </div>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, marginBottom: 6 }}>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 8 }}>
                 {data.cascadeIfSucceeds.followOnUseCases.map((u) => (
                   <span
                     key={u.useCaseId}
                     style={{
                       fontFamily: F_MONO,
-                      fontSize: 11,
+                      fontSize: 10,
                       color: C.navy,
                       letterSpacing: '0.04em',
-                      padding: '4px 10px',
+                      padding: '4px 8px',
                       border: `1px solid ${C.navyLine}`,
-                      borderRadius: 3,
                       background: C.surface,
                     }}
                   >
-                    → {u.useCaseName}
+                    {u.useCaseName}
                   </span>
                 ))}
               </div>
@@ -355,25 +356,26 @@ export function IntelligenceBrief({ data, activeClient, surfaceContext }: Props)
                 {data.cascadeIfSucceeds.evidenceLine}
               </div>
             </div>
-          )}
-
-          {/* One-line provenance (collapsed clutter) */}
-          <div
-            style={{
-              marginTop: 24,
-              fontFamily: F_MONO,
-              fontSize: 10,
-              color: C.faint,
-              letterSpacing: '0.04em',
-              borderTop: `1px solid ${C.borderLight}`,
-              paddingTop: 12,
-            }}
-          >
-            <span style={{ color: C.navy, fontWeight: 700 }}>SENTINEL</span>
-            {' · '}
-            {data.totals.totalUseCases} use cases · {data.totals.totalPatterns} patterns · {data.totals.totalVendors} vendors · {data.proofPoints.length} proof points · refreshed {data.totals.lastRefreshQuarter}
           </div>
-        </main>
+        )}
+
+        <div
+          style={{
+            marginTop: 24,
+            fontFamily: F_MONO,
+            fontSize: 10,
+            color: C.faint,
+            letterSpacing: '0.04em',
+            borderTop: `1px solid ${C.borderLight}`,
+            paddingTop: 12,
+          }}
+        >
+          <span style={{ color: C.navy, fontWeight: 700 }}>SENTINEL INTEL</span>
+          {' · '}
+          {data.totals.totalUseCases} use cases · {data.totals.totalPatterns} patterns · {data.totals.totalVendors} vendors · {data.proofPoints.length} proof points · refreshed {data.totals.lastRefreshQuarter}
+        </div>
+      </div>
+    </main>
   );
 
   return (
@@ -421,9 +423,28 @@ function readStringArray(value: unknown): string[] {
   return Array.isArray(value) ? value.filter((item): item is string => typeof item === 'string') : [];
 }
 
-// ── Bet summary card (3-up grid · scoreboard tile · A2 + A3) ──────
+function getBetValueRange(bet: BriefBet): string {
+  return (
+    bet.useCase.businessValueRanges.perCompanySize.mid ??
+    bet.useCase.businessValueRanges.perCompanySize.large ??
+    '-'
+  );
+}
 
-function BetSummary({
+function MiniMetric({ label, value }: { label: string; value: string }) {
+  return (
+    <div>
+      <div style={{ fontFamily: F_MONO, fontSize: 9, letterSpacing: '0.12em', color: C.faint, textTransform: 'uppercase', marginBottom: 3 }}>
+        {label}
+      </div>
+      <div style={{ fontFamily: F_MONO, fontSize: 12, fontWeight: 700, letterSpacing: '0.08em', color: C.ink }}>
+        {value}
+      </div>
+    </div>
+  );
+}
+
+function BetDecisionRow({
   bet,
   isExpanded,
   onToggle,
@@ -431,273 +452,143 @@ function BetSummary({
   bet: BriefBet;
   isExpanded: boolean;
   onToggle: () => void;
-  /** Reserved · the canvas always renders cards in 3-up compact mode now. */
-  compact?: boolean;
 }) {
-  const valueRange =
-    bet.useCase.businessValueRanges.perCompanySize.mid ??
-    bet.useCase.businessValueRanges.perCompanySize.large ??
-    '—';
+  const valueRange = getBetValueRange(bet);
+  const scoreColor = bet.score >= 80 ? C.teal : bet.score >= 70 ? C.amber : C.red;
+  const decision = bet.decision?.label ?? 'Review';
+  const reason = bet.decision?.reason ?? 'Validate readiness before moving forward.';
+  const patternId = bet.bindingPatterns[0]?.pattern.id ?? '-';
   const stateLabel =
     bet.engagementState === 'in_flight'
-      ? `IN PORTFOLIO${bet.initiativeDisplayId ? ` · ${bet.initiativeDisplayId}` : ''}`
-      : 'CANDIDATE';
-  const scoreColor = bet.score >= 80 ? C.teal : bet.score >= 70 ? C.amber : C.red;
-  const decisionStyle = bet.decision ? decisionToneStyle(bet.decision.kind) : null;
+      ? `In portfolio${bet.initiativeDisplayId ? ` · ${bet.initiativeDisplayId}` : ''}`
+      : 'Candidate';
 
   return (
     <article
       style={{
-        background: C.surface,
-        border: `1px solid ${isExpanded ? C.navy : C.borderLight}`,
-        borderRadius: 10,
-        overflow: 'hidden',
-        transition: 'box-shadow 0.12s, border-color 0.12s',
-        boxShadow: isExpanded ? '0 4px 16px rgba(10,12,18,0.06)' : 'none',
-        display: 'flex',
-        flexDirection: 'column',
-        height: '100%',
+        display: 'grid',
+        gridTemplateColumns: '52px minmax(240px, 1.4fr) minmax(150px, 0.65fr) minmax(120px, 0.45fr) minmax(150px, 0.55fr)',
+        gap: 18,
+        alignItems: 'center',
+        padding: '18px 0',
+        borderBottom: `1px solid ${C.borderLight}`,
       }}
     >
-      <button
-        type="button"
-        onClick={onToggle}
-        aria-expanded={isExpanded}
+      <div
         style={{
-          width: '100%',
-          flex: 1,
-          background: 'transparent',
-          border: 'none',
-          padding: '14px 16px 12px',
-          textAlign: 'left',
-          cursor: 'pointer',
-          fontFamily: 'inherit',
-          color: 'inherit',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 10,
+          fontFamily: F_DISPLAY,
+          fontSize: 28,
+          fontWeight: 300,
+          color: C.faint,
+          letterSpacing: '-0.012em',
         }}
       >
-        {/* Top row · rank + state on left, score on right */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 8 }}>
-          <span style={{ display: 'inline-flex', gap: 8, alignItems: 'baseline', minWidth: 0 }}>
-            <span
-              style={{
-                fontFamily: F_DISPLAY,
-                fontSize: 22,
-                fontWeight: 300,
-                color: C.faint,
-                lineHeight: 1,
-                letterSpacing: '-0.012em',
-              }}
-            >
-              {String(bet.rank).padStart(2, '0')}
-            </span>
-            <span
-              style={{
-                fontFamily: F_MONO,
-                fontSize: 9,
-                fontWeight: 700,
-                letterSpacing: '0.14em',
-                color: bet.engagementState === 'in_flight' ? C.teal : C.faint,
-                textTransform: 'uppercase',
-              }}
-            >
-              {stateLabel}
-            </span>
-          </span>
-          <span
-            style={{
-              fontFamily: F_MONO,
-              fontSize: 10,
-              fontWeight: 700,
-              letterSpacing: '0.14em',
-              color: scoreColor,
-              textTransform: 'uppercase',
-              whiteSpace: 'nowrap',
-            }}
-          >
-            {bet.score} / 100
-          </span>
+        {String(bet.rank).padStart(2, '0')}
+      </div>
+      <div style={{ minWidth: 0 }}>
+        <div style={{ fontFamily: F_MONO, fontSize: 9.5, fontWeight: 700, letterSpacing: '0.14em', color: C.navy, textTransform: 'uppercase', marginBottom: 6 }}>
+          {bet.useCase.id} · {stateLabel}
         </div>
-
-        {/* ID line */}
-        <span
-          style={{
-            fontFamily: F_MONO,
-            fontSize: 9.5,
-            fontWeight: 700,
-            letterSpacing: '0.14em',
-            color: C.navy,
-            textTransform: 'uppercase',
-          }}
-        >
-          {bet.useCase.id}
-        </span>
-
-        {/* Title · Fraunces · 2-line clamp at narrow widths */}
         <h2
           style={{
             fontFamily: F_DISPLAY,
-            fontSize: 18,
+            fontSize: 21,
             fontWeight: 500,
             color: C.ink,
             letterSpacing: '-0.01em',
-            lineHeight: 1.2,
+            lineHeight: 1.18,
             margin: 0,
           }}
         >
           {bet.useCase.name}
-          {bet.engagementState === 'in_flight' && ' — expansion'}
         </h2>
-
-        {/* Two-stat row · scoreboard for at-a-glance comparison */}
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: '1fr 1fr',
-            gap: 10,
-            paddingTop: 8,
-            borderTop: `1px solid ${C.borderLight}`,
-          }}
-        >
-          <Stat label="Value · annual" value={valueRange} valueFont={F_DISPLAY} small />
-          <Stat
-            label="Time to value"
-            value={`${bet.useCase.businessValueRanges.timeToValueMonths} mo`}
-            valueFont={F_DISPLAY}
-            small
-          />
-          {bet.measuredVsCommitted && (
-            <Stat
-              label="Measured / commit"
-              value={`${Math.round((bet.measuredVsCommitted.measured / bet.measuredVsCommitted.committed) * 100)}%`}
-              valueFont={F_DISPLAY}
-              small
-            />
-          )}
-          {bet.bindingPatterns[0] && (
-            <Stat
-              label="Binding pattern"
-              value={bet.bindingPatterns[0].pattern.id}
-              valueFont={F_MONO}
-              small
-            />
-          )}
-        </div>
-
-        {/* A2 · explicit CXO decision pill */}
-        {bet.decision && decisionStyle && (
-          <div
-            style={{
-              marginTop: 'auto',
-              paddingTop: 8,
-              borderTop: `1px dashed ${C.borderLight}`,
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 4,
-            }}
-          >
-            <span
-              style={{
-                fontFamily: F_MONO,
-                fontSize: 9,
-                fontWeight: 700,
-                letterSpacing: '0.16em',
-                color: C.faint,
-                textTransform: 'uppercase',
-                marginBottom: 2,
-              }}
-            >
-              Decision
-            </span>
-            <span
-              style={{
-                fontFamily: F_BODY,
-                fontSize: 12.5,
-                fontWeight: 700,
-                color: decisionStyle.fg,
-                background: decisionStyle.bg,
-                border: `1px solid ${decisionStyle.border}`,
-                padding: '5px 10px',
-                borderRadius: 4,
-                alignSelf: 'flex-start',
-                letterSpacing: '-0.005em',
-              }}
-            >
-              {decisionStyle.icon} {bet.decision.label}
-            </span>
-            {bet.decision.reason && (
-              <span
-                style={{
-                  fontSize: 11.5,
-                  color: C.muted,
-                  lineHeight: 1.45,
-                }}
-              >
-                {bet.decision.reason}
-              </span>
-            )}
-          </div>
-        )}
-
-        {/* Toggle hint at bottom */}
-        <span
-          style={{
-            fontFamily: F_MONO,
-            fontSize: 9.5,
-            fontWeight: 600,
-            letterSpacing: '0.08em',
-            color: isExpanded ? C.navy : C.faint,
-            textTransform: 'uppercase',
-            marginTop: 6,
-          }}
-        >
-          {isExpanded ? 'Hide detail ↑' : 'Show full analysis ↓'}
+        <p style={{ fontSize: 12.5, lineHeight: 1.5, color: C.muted, margin: '7px 0 0', maxWidth: '64ch' }}>
+          {reason}
+        </p>
+      </div>
+      <div>
+        <MiniMetric label="Decision" value={decision} />
+      </div>
+      <div style={{ display: 'grid', gap: 10 }}>
+        <MiniMetric label="Score" value={`${bet.score}/100`} />
+        <span style={{ width: '100%', height: 2, background: C.borderLight, display: 'block' }}>
+          <span style={{ width: `${Math.min(100, Math.max(0, bet.score))}%`, height: 2, background: scoreColor, display: 'block' }} />
         </span>
-      </button>
+      </div>
+      <div style={{ display: 'grid', gap: 9 }}>
+        <MiniMetric label="Value" value={valueRange} />
+        <MiniMetric label="Pattern" value={patternId} />
+        <button
+          type="button"
+          onClick={onToggle}
+          aria-expanded={isExpanded}
+          style={{
+            justifySelf: 'start',
+            border: 'none',
+            borderBottom: `1px solid ${isExpanded ? C.navy : C.faint}`,
+            background: 'transparent',
+            color: isExpanded ? C.navy : C.muted,
+            padding: '2px 0',
+            fontFamily: F_MONO,
+            fontSize: 10,
+            fontWeight: 700,
+            letterSpacing: '0.08em',
+            textTransform: 'uppercase',
+            cursor: 'pointer',
+          }}
+        >
+          {isExpanded ? 'Hide detail' : 'Open detail'}
+        </button>
+      </div>
     </article>
   );
 }
 
-function decisionToneStyle(kind: BetDecisionKind): {
-  fg: string;
-  bg: string;
-  border: string;
-  icon: string;
-} {
-  switch (kind) {
-    case 'originate':
-      return { fg: '#1F3A6E', bg: 'rgba(31,58,110,0.08)', border: 'rgba(31,58,110,0.25)', icon: '🆕' };
-    case 'approve_scale':
-      return { fg: C.teal, bg: C.tealSoft, border: C.tealLine, icon: '✓' };
-    case 'wait':
-      return { fg: C.amber, bg: C.amberSoft, border: C.amberLine, icon: '⏸' };
-    case 'evaluate':
-      return { fg: C.faint, bg: C.surface3, border: C.borderLight, icon: '◯' };
-    case 'retire':
-    default:
-      return { fg: C.faint, bg: C.surface3, border: C.borderLight, icon: '✕' };
-  }
-}
-
-function Stat({ label, value, valueFont, small }: { label: string; value: string; valueFont: string; small?: boolean }) {
+function PatternCheckRow({ pattern }: { pattern: BriefData['patternsTriggered'][number] }) {
   return (
-    <div>
-      <div style={{ fontFamily: F_MONO, fontSize: 9.5, letterSpacing: '0.1em', color: C.faint, textTransform: 'uppercase', marginBottom: 2 }}>
-        {label}
-      </div>
-      <div
+    <div
+      style={{
+        display: 'grid',
+        gridTemplateColumns: '58px 1fr',
+        gap: 12,
+        padding: '12px 0',
+        borderBottom: `1px solid ${C.borderLight}`,
+      }}
+    >
+      <Link
+        href={pattern.cta.primary.href}
         style={{
-          fontFamily: valueFont,
-          fontSize: small ? 13 : 18,
-          fontWeight: small ? 600 : 500,
-          color: C.ink,
-          letterSpacing: small ? '0.04em' : '-0.012em',
-          lineHeight: 1.2,
+          fontFamily: F_MONO,
+          fontSize: 10,
+          fontWeight: 700,
+          letterSpacing: '0.12em',
+          color: C.amber,
+          textDecoration: 'none',
+          textTransform: 'uppercase',
         }}
       >
-        {value}
+        {pattern.pattern.id}
+      </Link>
+      <div>
+        <p style={{ margin: 0, fontSize: 12.5, lineHeight: 1.5, color: C.ink }}>
+          {pattern.issue}
+        </p>
+        <Link
+          href={pattern.cta.primary.href}
+          style={{
+            display: 'inline-block',
+            marginTop: 6,
+            fontFamily: F_MONO,
+            fontSize: 9.5,
+            fontWeight: 700,
+            letterSpacing: '0.08em',
+            color: C.amber,
+            textDecoration: 'underline',
+            textTransform: 'uppercase',
+          }}
+        >
+          {pattern.cta.primary.label}
+        </Link>
       </div>
     </div>
   );
