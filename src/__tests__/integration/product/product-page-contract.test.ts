@@ -11,6 +11,9 @@ describe("Product page contract", () => {
   const topBarSource = read("src/components/shell/AppTopBar.tsx");
   const maestroChromeSource = read("src/components/chrome/MaestroChrome.tsx");
   const productPageSource = read("src/components/product/ProductPage.tsx");
+  const productMarketingPageSource = read(
+    "src/components/product/ProductMarketingPage.tsx",
+  );
   const contentSource = read("src/lib/product/product-page-content.ts");
 
   it("is an authenticated AppShell surface, not a standalone marketing page", () => {
@@ -37,6 +40,23 @@ describe("Product page contract", () => {
   it("bypasses legacy MaestroChrome to avoid duplicate navigation", () => {
     expect(maestroChromeSource).toContain("/learn");
     expect(maestroChromeSource).toContain("/product");
+  });
+
+  it("binds the signed-in Product spotlight to the active client", () => {
+    expect(pageSource).toContain("getActiveClientKey");
+    expect(pageSource).toContain("getActiveClientRow");
+    expect(pageSource).toContain("canonicalClientDisplayName");
+    expect(pageSource).toContain("spotlight={{");
+    expect(productMarketingPageSource).toContain(
+      "See it on {spotlight.clientShortName}",
+    );
+    expect(productMarketingPageSource).toContain(
+      "Open Intelligence on {spotlight.clientShortName}",
+    );
+    expect(productMarketingPageSource).not.toContain("See it on Meridian");
+    expect(productMarketingPageSource).not.toContain(
+      "Open Intelligence on Meridian",
+    );
   });
 
   it("ships the five required Atrium product tabs", () => {
