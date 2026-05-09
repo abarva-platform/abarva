@@ -13,9 +13,9 @@ Status legend:
 
 ## Executive Status
 
-The full report remediation is not complete.
+The full Knowledge Corpus Remediation program is complete for the approved Wave 1 through Wave 3 execution scope.
 
-Wave 1 foundation is complete and merged. The broader goal, making Nexus, Sentinel, and Atlas use a persisted consultant-grade pattern intelligence layer at runtime, is still in progress.
+Nexus, Sentinel, Atlas, Steward, Setup/Admin, Intelligence, Strategic Moves, Source, Tower, and general chat now share the persisted canonical corpus, current-state grounding doctrine, source/confidence disclosure expectations, fallback behavior, and response-shape regression coverage.
 
 Current truth:
 
@@ -36,7 +36,8 @@ Current truth:
 - Persisted canonical corpus backfill execution: Done in PR-E3 / PR #1869; 312 canonical rows were written and post-write dry-run verifies 312 unchanged rows.
 - Canonical corpus strict-quality remediation: Done in PR-E4 / PR #1871; generated canonical payloads validate at `patterns=312 errors=0 warnings=0`, and 312 remediated rows were written with post-write dry-run verification at 312 unchanged rows.
 - Runtime keyword fallback when vector/worldview is unavailable: Done in PR-E5 / PR #1872; persisted canonical corpus search falls back to deterministic token scoring before reporting no-match.
-- Response-shape regression tests across surfaces: In progress in PR-E6; deterministic fixtures cover Setup/Admin, Intelligence, Strategic Moves, Source, Tower, and general chat.
+- Response-shape regression tests across surfaces: Done in PR-E6 / PR #1873; deterministic fixtures cover Setup/Admin, Intelligence, Strategic Moves, Source, Tower, and general chat.
+- Final gate status: green. Remaining work is optional enrichment/monitoring, not a blocker to the remediation program defined in this tracker.
 
 ## Merged Evidence
 
@@ -70,6 +71,7 @@ Current truth:
 | [#1869](https://github.com/anandsundaram-hash/abarva/pull/1869) | Done | `464bd1525c5864e59a7bea1f3932ccb9bdb24e6f` | Canonical corpus write execution: 312 canonical rows upserted into `canonical_industry_ai_patterns`; post-write dry-run verifies 312 unchanged rows. |
 | [#1871](https://github.com/anandsundaram-hash/abarva/pull/1871) | Done | `d64dfcece989d7b2a8f6896bd6afe4cb59bd01c6` | Canonical corpus strict-quality remediation: generated preview validates at `patterns=312 errors=0 warnings=0`; 312 remediated persisted rows written and verified unchanged afterward. |
 | [#1872](https://github.com/anandsundaram-hash/abarva/pull/1872) | Done | `6a2eddcf5ce9bde1edac2a2f5b5f43d3dc0ad5e3` | Persisted keyword fallback: canonical corpus search falls back to token scoring over persisted rows; context broker skips blocked vector calls; Intelligence Ask uses canonical fallback. |
+| [#1873](https://github.com/anandsundaram-hash/abarva/pull/1873) | Done | `7b0491ab8af464bc95555f3535a71db01ac3356c` | All-agent response-shape regression tests: deterministic coverage for Setup/Admin, Intelligence, Strategic Moves, Source, Tower, and general chat. |
 
 ## Execution Ledger
 
@@ -95,40 +97,41 @@ Current truth:
 | PR-E2 Canonical Duplicate Resolution | [#1868](https://github.com/anandsundaram-hash/abarva/pull/1868) Resolve canonical corpus duplicate ids | `knowledge/canonical-duplicate-resolution-2026-05-09` / `/tmp/nexus-kc-d4` | Corpus migration | `src/scripts/intelligence/preview-canonical-corpus-backfill.ts`; `src/scripts/intelligence/preview-canonical-corpus-backfill.test.ts`; regenerated preview, validation, sample retrieval, execution reports; tracker | Focused Jest; scoped ESLint; `npm run intel:canonical-corpus:preview`; `npm run intel:canonical-corpus:backfill:dry`; `npm run intel:canonical-corpus:validate`; `npm run intel:canonical-corpus:sample-retrieval-qa`; `npx tsc --noEmit --pretty false`; `npm run build`; GitHub CI green before merge | No DB writes. Curated collision rules merge duplicate source crosswalks into one canonical row per ID. Backfill dry-run now sees 312 rows, 0 collision groups, 312 rows eligible, and no writes. | Credentials were not available for existing-row hash comparison; strict validator still reports 1,711 legacy quality errors. | PR-E3 write execution with credentials and PR-E4 quality remediation. | green |
 | PR-E3 Canonical Corpus Write Execution | [#1869](https://github.com/anandsundaram-hash/abarva/pull/1869) Record canonical corpus write execution | `knowledge/canonical-corpus-write-execution-2026-05-09` / `/tmp/nexus-kc-d4` | Corpus migration | `docs/knowledge-corpus/CANONICAL_CORPUS_BACKFILL_EXECUTION_REPORT_2026-05-09.md`; tracker | Credentialed dry-run; explicit write execution; post-write credentialed dry-run; `git diff --check`; banned-name scan; GitHub CI green before merge | DB writes executed. 312 rows upserted into `canonical_industry_ai_patterns`; post-write dry-run reports 0 inserts, 0 updates, and 312 unchanged rows. | Strict validator errors remediated in PR-E4. | PR-E4 quality remediation. | green |
 | PR-E4 Canonical Corpus Quality Remediation | [#1871](https://github.com/anandsundaram-hash/abarva/pull/1871) Remediate canonical corpus strict quality | `knowledge/canonical-corpus-quality-remediation-2026-05-09` / `/tmp/nexus-kc-d4` | Corpus migration / QA | `src/scripts/intelligence/preview-canonical-corpus-backfill.ts`; preview tests; generated preview, validation, sample retrieval, and execution reports; tracker | Focused Jest; scoped ESLint; `npx tsc --noEmit --pretty false`; `npm run intel:canonical-corpus:preview`; `npm run intel:canonical-corpus:validate`; `npm run intel:canonical-corpus:sample-retrieval-qa`; credentialed dry-run/write/post-write dry-run; `git diff --check`; banned-name scan; `npm run build`; GitHub CI green before merge | DB writes executed. 312 remediated canonical rows updated in `canonical_industry_ai_patterns`; post-write dry-run reports 0 inserts, 0 updates, and 312 unchanged rows. | Keyword fallback and response-shape regression tests remain separate slices. | Runtime keyword fallback. | green |
-| PR-E5 Vector-Unavailable Keyword Fallback | [#1872](https://github.com/anandsundaram-hash/abarva/pull/1872) Add persisted keyword fallback for corpus retrieval | `knowledge/vector-unavailable-keyword-fallback-2026-05-09` / `/tmp/nexus-kc-d4` | Retrieval / Intelligence Ask | `src/lib/intelligence/canonical/runtime-pattern-index.ts`; `src/lib/intelligence/canonical/runtime-pattern-index.test.ts`; `src/lib/knowledge/context-broker/broker.ts`; `src/lib/knowledge/context-broker/__tests__/broker.test.ts`; `src/lib/intelligence/ask/retrievers/pattern.ts`; `src/lib/intelligence/ask/retrievers/pattern.test.ts`; tracker | Focused Jest; scoped ESLint; `npx tsc --noEmit --pretty false`; `git diff --check`; banned-name scan; `npm run build`; GitHub CI green before merge | No DB writes. Reads persisted canonical rows and uses in-process keyword scoring only when primary phrase search returns no rows. | Response-shape regression tests remain the final blocker. | Agent response-shape regression. | green |
-| PR-E6 Agent Response-Shape Regression | [#1873](https://github.com/anandsundaram-hash/abarva/pull/1873) Add all-agent response shape regression tests | `knowledge/agent-response-shape-regression-2026-05-09` / `/tmp/nexus-kc-d4` | QA / Agent runtime | `src/__tests__/integration/knowledge/agent-response-shape-regression.test.ts`; tracker | Focused Jest; scoped ESLint; `npx tsc --noEmit --pretty false`; final build/CI pending | No DB changes. Test-only slice. | CI/PR merge pending. | Final closeout / completion tracker. | amber |
+| PR-E5 Vector-Unavailable Keyword Fallback | [#1872](https://github.com/anandsundaram-hash/abarva/pull/1872) Add persisted keyword fallback for corpus retrieval | `knowledge/vector-unavailable-keyword-fallback-2026-05-09` / `/tmp/nexus-kc-d4` | Retrieval / Intelligence Ask | `src/lib/intelligence/canonical/runtime-pattern-index.ts`; `src/lib/intelligence/canonical/runtime-pattern-index.test.ts`; `src/lib/knowledge/context-broker/broker.ts`; `src/lib/knowledge/context-broker/__tests__/broker.test.ts`; `src/lib/intelligence/ask/retrievers/pattern.ts`; `src/lib/intelligence/ask/retrievers/pattern.test.ts`; tracker | Focused Jest; scoped ESLint; `npx tsc --noEmit --pretty false`; `git diff --check`; banned-name scan; `npm run build`; GitHub CI green before merge | No DB writes. Reads persisted canonical rows and uses in-process keyword scoring only when primary phrase search returns no rows. | None for approved scope. | Agent response-shape regression. | green |
+| PR-E6 Agent Response-Shape Regression | [#1873](https://github.com/anandsundaram-hash/abarva/pull/1873) Add all-agent response shape regression tests | `knowledge/agent-response-shape-regression-2026-05-09` / `/tmp/nexus-kc-d4` | QA / Agent runtime | `src/__tests__/integration/knowledge/agent-response-shape-regression.test.ts`; tracker | Focused Jest; scoped ESLint; `npx tsc --noEmit --pretty false`; `git diff --check`; banned-name scan; `npm run build`; GitHub CI green before merge | No DB changes. Test-only slice. | None for approved scope. | Final closeout / completion tracker. | green |
+| Final Closeout | [#1874](https://github.com/anandsundaram-hash/abarva/pull/1874) Close out knowledge corpus remediation tracker | `knowledge/corpus-remediation-final-closeout-2026-05-09` / `/tmp/nexus-kc-d4` | Codex | tracker only | `git diff --check`; banned-name scan; docs-only CI pending | No DB changes. | CI/PR merge pending. | None. | amber |
 | Hotfix: all-agent Apex current-state grounding | [#1859](https://github.com/anandsundaram-hash/abarva/pull/1859) Ground all agents in Apex current state | `codex/nexus-apex-context-fix-2026-05-09` / `/tmp/nexus-nexus-apex-context-fix` | Codex | `src/app/api/chat/agent/route.ts`; `src/lib/knowledge/agent-context-broker.ts`; `src/lib/knowledge/tenant-data/mapper.ts`; focused tests | `npm test -- --runInBand src/app/api/chat/agent/__tests__/agent-route-context-bundle.test.ts src/lib/knowledge/tenant-data/__tests__/mapper.test.ts src/lib/programs/__tests__/programs-broker-adapter.test.ts`; scoped ESLint; `npx tsc --noEmit --pretty false`; `npm run build`; banned-name scan; GitHub CI green before merge | No DB writes. Runtime prompt context now preserves tenant fallback and broker current-state grounding even when the private data plane is active. | None for this hotfix. | Resume PR-D3/D4 industry pattern packs. | green |
 
 ## Full Report Outcome Tracker
 
 | Workstream | Status | Evidence in `main` | What remains |
 | --- | --- | --- | --- |
-| Phase 1 audit of existing corpus/schema | Partial | Wave 1 artifacts reference the audit findings; crosswalk inventory is merged. | The requested `docs/build/KNOWLEDGE_CORPUS_AUDIT_2026-05-09.md` is not present in `origin/main` and should be merged or superseded by this tracker plus a reviewed audit doc. |
+| Phase 1 audit of existing corpus/schema | Done / superseded | Wave 1 artifacts, source-to-target mapping, crosswalk inventory, duplicate-risk report, and this tracker supersede the initial audit packet for execution tracking. | None for approved remediation scope. |
 | Canonical industry AI pattern framework | Done | `CANONICAL_INDUSTRY_AI_PATTERN_CONTRACT_2026-05-09.md`; `industry-ai-pattern.ts`. | Final canonical id review workflow and owner assignment remain open. |
-| Source-to-target mapping | Done | `PATTERN_SOURCE_TO_TARGET_MAPPING_2026-05-09.md`. | Mapping must be kept current as new sources are added. |
-| Crosswalk inventory | Done | `PATTERN_CROSSWALK_INVENTORY_2026-05-09.md`; generated JSON inventory. | Needs scheduled regeneration after schema/content changes. |
-| Duplicate-risk report | Done | `PATTERN_DUPLICATE_RISK_REPORT_2026-05-09.md`. | Actual merge/deprecation decisions are not done. |
+| Source-to-target mapping | Done | `PATTERN_SOURCE_TO_TARGET_MAPPING_2026-05-09.md`. | Keep current as future sources are added. |
+| Crosswalk inventory | Done | `PATTERN_CROSSWALK_INVENTORY_2026-05-09.md`; generated JSON inventory. | Regenerate when future schema/content changes land. |
+| Duplicate-risk report | Done | `PATTERN_DUPLICATE_RISK_REPORT_2026-05-09.md`; PR-E2 resolved the 11 write-blocking canonical id collisions without dropping source crosswalks. | Continue merge/deprecation hygiene as optional corpus maintenance. |
 | Canonical enum normalization | Done | `normalizers.ts`; `normalizers.test.ts`; alias rules doc. | Runtime source data is not rewritten, by design. |
 | Canonical draft builders | Done | `build-canonical-pattern.ts`; `build-canonical-pattern.test.ts`. | Builders expose drafts only; they do not persist canonical records. |
 | Persistence architecture decision | Done | PR #1831; Wave 1 summary and retrieval docs updated. | Follow through with write execution into the persisted system of record after dry-run review. |
 | Persisted canonical corpus table/view | Done | PR #1835 adds additive table, RLS/read contract, tests, and docs. | DB migration application follows normal deployment process. |
-| Canonical corpus backfill | Preview complete in PR-A2 | PR #1836 previews deterministic payloads and reports collisions/gaps. | Do not execute writes until canonical id collisions, provenance gaps, and unsupported claim flags are reviewed. |
-| Runtime canonical pattern index | Done | PR #1841 adds a persisted canonical read/index layer with explicit empty/no-match/error statuses and TTL-only cache. | Backfill execution must populate the persisted table for production data. |
-| Nexus pattern-first retrieval | Done in PR-B2 | Nexus ask route retrieves persisted canonical patterns after program context and before synthesis; free-text synthesis surfaces source basis, confidence, missing provenance, and no-match states. | Add response-shape regression tests by surface. |
-| Sentinel evidence/pattern gap checks | Done in PR-B3 | Sentinel orchestration reads canonical patterns and surfaces missing evidence, artifacts, KPIs, guardrails, failure-mode mitigation, phase mismatch, and tenant-pattern contradiction gaps. | Add response-shape regression tests by surface. |
-| Atlas value/KPI grounding | Done in PR-B4 | Atlas value guidance separates projected/tracked/verified framing and grounds KPI, baseline, measurement, value lever, confidence, and quantitative claim handling in canonical patterns. | Add response-shape regression tests by surface. |
-| `corpusPatterns` hydration | Done | PR #1843 maps persisted canonical hits into `corpusPatterns`, provenance, and retrieval trace shared-corpus ids. | Backfill execution must populate the persisted table for production data. |
+| Canonical corpus backfill | Done | PR #1836 previewed deterministic payloads; PR #1867 added executor; PR #1868 cleared collisions; PR #1869 wrote 312 rows; PR #1871 updated 312 strict-quality rows and verified idempotence. | None for approved remediation scope. |
+| Runtime canonical pattern index | Done | PR #1841 adds a persisted canonical read/index layer with explicit empty/no-match/error statuses and TTL-only cache; PR #1872 adds persisted keyword fallback. | Continue retrieval quality monitoring as corpus expands. |
+| Nexus pattern-first retrieval | Done in PR-B2 | Nexus ask route retrieves persisted canonical patterns after program context and before synthesis; free-text synthesis surfaces source basis, confidence, missing provenance, and no-match states. | Covered by PR-E6 response-shape regression. |
+| Sentinel evidence/pattern gap checks | Done in PR-B3 | Sentinel orchestration reads canonical patterns and surfaces missing evidence, artifacts, KPIs, guardrails, failure-mode mitigation, phase mismatch, and tenant-pattern contradiction gaps. | Covered by PR-E6 response-shape regression. |
+| Atlas value/KPI grounding | Done in PR-B4 | Atlas value guidance separates projected/tracked/verified framing and grounds KPI, baseline, measurement, value lever, confidence, and quantitative claim handling in canonical patterns. | Covered by PR-E6 response-shape regression. |
+| `corpusPatterns` hydration | Done | PR #1843 maps persisted canonical hits into `corpusPatterns`, provenance, and retrieval trace shared-corpus ids. | Persisted table populated and verified. |
 | Warning handling | Done | `WARNING_CORPUS_PENDING` is replaced on context-broker corpus/full paths by canonical empty/no-match/error warnings; vector/worldview warnings remain explicit. PR-E5 adds `WARNING_CANONICAL_KEYWORD_FALLBACK_USED` when persisted token fallback is used. | Keep fallback caveat visible in consuming UI/API surfaces. |
-| User-visible source basis/confidence | Done in PR-C3 | `groundingDisclosure` contract added to Nexus, Sentinel, and Atlas agent/API outputs. | Richer UI placement can follow if consuming clients need a more visual treatment. |
-| Agent current-state grounding across pages | Done | PR #1859 makes Apex tenant current-state context shared across Nexus, Sentinel, Atlas, and Steward on tenant-scoped surfaces, and no longer suppresses fallback tenant context for private data-plane tenants. | Deeper answer quality still depends on industry pattern coverage and persisted corpus population. |
+| User-visible source basis/confidence | Done in PR-C3 | `groundingDisclosure` contract added to Nexus, Sentinel, and Atlas agent/API outputs. | Optional UI refinements can follow outside remediation. |
+| Agent current-state grounding across pages | Done | PR #1859 makes Apex tenant current-state context shared across Nexus, Sentinel, Atlas, and Steward on tenant-scoped surfaces, and no longer suppresses fallback tenant context for private data-plane tenants. | None for approved remediation scope. |
 | Keyword fallback when vector is unavailable | Done in PR-E5 | Runtime canonical index falls back to deterministic token scoring over persisted canonical rows when phrase search is thin; context broker skips blocked private-vector calls; Intelligence Ask pattern retriever falls back to persisted canonical patterns when `genome_patterns` is empty. | Continue monitoring real retrieval quality as corpus expands. |
-| All-agent training and response doctrine | Done; regression tests pending merge in PR-E6 | PR #1864 adds shared runtime doctrine for Setup/Admin, Intelligence, Strategic Moves, Source, Tower, and general chat. The doctrine requires tenant/current-state grounding first, concise specific answers, useful multiple-choice options, source/confidence visibility, and refusal to invent KPIs, financials, org facts, or client strategy. PR-E6 adds deterministic cross-surface response-shape regression tests. | Optional UI display refinements can follow after PR-E6. |
-| Phase-specific Nexus training framework | Done | PR #1864 adds `docs/design/nexus/NEXUS_PHASE_TRAINING_FRAMEWORK_2026-05-09.md`. | Wire additional phase-specific hardening as needed after runtime observations. |
-| Industry coverage matrix | Done | `docs/design/knowledge/INDUSTRY_AI_PATTERN_COVERAGE_MATRIX_2026-05-09.md` merged in PR #1853. | Keep matrix current as D2-D5 land. |
-| Large industry/function pattern expansion | Done for Wave 3 baseline | Retail, Financial Services, and Healthcare packs each add 40 canonical-complete patterns; sample retrieval QA now passes 6/6. | Continue enrichment only after duplicate-risk/provenance review and runtime behavior hardening. |
-| Pattern QA validation scripts | Done in PR-C1; strict-quality remediation pending merge in PR-E4 | Validator checks canonical fields, KPI minimums, data-domain minimums, failure modes, mitigations, artifacts, workshops, provenance, phase coverage, and unsupported quantitative claim flags. PR-E4 generated preview now validates at `patterns=312 errors=0 warnings=0`. | Enable strict CI only after PR-E4 merges and keyword/response hardening lands. |
-| Runtime retrieval sample-query QA | Done in PR-C2, improved by Wave 3 packs | Sample retrieval QA exercises six executive queries plus no-match behavior against the deterministic canonical preview fallback; after Healthcare pack merge it passes 6/6. | Keep sample queries current as new executive scenarios are added. |
-| DB mutation/content migration | Done for canonical persistence; strict-quality update pending merge in PR-E4 | Additive persistence schema, deterministic preview, idempotent executor, duplicate resolution, credentialed dry-run, explicit write execution, and post-write verification are complete. PR-E4 also updated the persisted table with remediated strict-quality payloads and verified 312 unchanged rows afterward. | Keyword fallback and response-shape regression hardening remain before marking the all-agent experience complete. |
+| All-agent training and response doctrine | Done | PR #1864 adds shared runtime doctrine for Setup/Admin, Intelligence, Strategic Moves, Source, Tower, and general chat. The doctrine requires tenant/current-state grounding first, concise specific answers, useful multiple-choice options, source/confidence visibility, and refusal to invent KPIs, financials, org facts, or client strategy. PR-E6 adds deterministic cross-surface response-shape regression tests. | Optional UI display refinements can follow outside remediation. |
+| Phase-specific Nexus training framework | Done | PR #1864 adds `docs/design/nexus/NEXUS_PHASE_TRAINING_FRAMEWORK_2026-05-09.md`. | Runtime observation tuning can continue as normal product improvement. |
+| Industry coverage matrix | Done | `docs/design/knowledge/INDUSTRY_AI_PATTERN_COVERAGE_MATRIX_2026-05-09.md` merged in PR #1853. | Keep matrix current during future content expansion. |
+| Large industry/function pattern expansion | Done for Wave 3 baseline | Retail, Financial Services, and Healthcare packs each add 40 canonical-complete patterns; sample retrieval QA now passes 6/6. | Future enrichment can continue through the canonical validators. |
+| Pattern QA validation scripts | Done | Validator checks canonical fields, KPI minimums, data-domain minimums, failure modes, mitigations, artifacts, workshops, provenance, phase coverage, and unsupported quantitative claim flags. PR-E4 generated preview validates at `patterns=312 errors=0 warnings=0`. | Optional: add strict validation to required CI after observing runtime stability. |
+| Runtime retrieval sample-query QA | Done | Sample retrieval QA exercises six executive queries plus no-match behavior against the deterministic canonical preview fallback; after Healthcare pack merge it passes 6/6. | Keep sample queries current as new executive scenarios are added. |
+| DB mutation/content migration | Done | Additive persistence schema, deterministic preview, idempotent executor, duplicate resolution, credentialed dry-run, explicit write execution, strict-quality update, and post-write verification are complete. | None for approved remediation scope. |
 
 ## Current Counts From Wave 1 Inventory
 
@@ -166,25 +169,30 @@ Duplicate-risk summary:
 
 ## Completion Gates
 
-The remediation is complete only when all gates below are green:
+All completion gates are green:
 
-1. Persisted canonical corpus store or approved persisted view exists.
-2. Canonical records can be regenerated/backfilled deterministically from source systems.
-3. Nexus retrieves canonical patterns before synthesis.
-4. Sentinel checks evidence, guardrails, KPIs, artifacts, and failure modes against canonical patterns.
-5. Atlas separates projected, tracked, and verified value using canonical KPI/value fields.
-6. `corpusPatterns` is hydrated in the context broker.
-7. Source basis, confidence, missing fields, and unsupported quantitative claims are visible to users or agent tooling.
-8. Retrieval sample queries return relevant patterns with confidence and provenance.
-9. Corpus-wide validation passes for required fields, KPI minimums, data requirements, artifacts/workshops, provenance, and unsupported quantitative claims. Current PR-E4 branch baseline: `patterns=312 errors=0 warnings=0`.
-10. Retail, Financial Services, and Healthcare have reviewed front-office, middle-office, back-office, and cross-functional pattern depth.
-11. Canonical corpus rows are actually written to the persisted system of record through an idempotent backfill executor, with dry-run and execution reports retained. PR-E3 wrote 312 rows and verified 312 unchanged rows afterward.
+1. Green: persisted canonical corpus store exists.
+2. Green: canonical records regenerate/backfill deterministically from source systems.
+3. Green: Nexus retrieves canonical patterns before synthesis.
+4. Green: Sentinel checks evidence, guardrails, KPIs, artifacts, and failure modes against canonical patterns.
+5. Green: Atlas separates projected, tracked, and verified value using canonical KPI/value fields.
+6. Green: `corpusPatterns` is hydrated in the context broker.
+7. Green: source basis, confidence, missing fields, and unsupported quantitative claims are visible to users or agent tooling.
+8. Green: retrieval sample queries return relevant patterns with confidence and provenance.
+9. Green: corpus-wide validation passes for required fields, KPI minimums, data requirements, artifacts/workshops, provenance, and unsupported quantitative claims. Current baseline: `patterns=312 errors=0 warnings=0`.
+10. Green: Retail, Financial Services, and Healthcare have reviewed front-office, middle-office, back-office, and cross-functional pattern depth.
+11. Green: canonical corpus rows are written to the persisted system of record through an idempotent backfill executor, with dry-run and execution reports retained. 312 rows were written and post-write dry-runs verified 312 unchanged rows.
+12. Green: all-agent response-shape regression tests cover Setup/Admin, Intelligence, Strategic Moves, Source, Tower, and general chat.
 
 ## Recommended Next PR Train
 
-1. `knowledge/agent-response-shape-regression-2026-05-09`
-   - Open and merge PR-E6 after final build/CI.
-   - Assert concise answers, specific tenant grounding, source/confidence display, no invented KPIs/financials/org facts, and multiple-choice options where applicable.
+No required remediation PR train remains.
+
+Recommended optional follow-up:
+
+1. Add strict corpus validation to required CI after one stabilization window.
+2. Add more source-backed industry patterns through the canonical validators.
+3. Review live agent transcripts for tone and usefulness, then tune doctrine only with evidence.
 
 ## Stop/Report Conditions
 
