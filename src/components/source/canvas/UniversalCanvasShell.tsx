@@ -58,6 +58,7 @@ import type {
   SourceEventGateCriterion,
   SourceEventGateCriterionState,
 } from '@/lib/source/canvas-substrate';
+import type { SourceArtifactRegistryRecord } from '@/lib/source/artifact-registry/types';
 import { SOURCE_STAGE_LABELS } from '@/lib/source/constants';
 import { canvasDockAgentForStage } from '@/lib/source/portfolio-derivations';
 import type { SourceStageKey, SourcingEventSummary } from '@/lib/source/types';
@@ -87,6 +88,7 @@ interface UniversalCanvasShellProps {
   artifactStates: SourceEventArtifactState[];
   gateCriterionStates: SourceEventGateCriterion[];
   evidenceStates: SourceEventEvidence[];
+  registryArtifacts?: SourceArtifactRegistryRecord[];
   /** Map of artifact code → markdown body. Server-loaded. */
   templateByCode: Record<string, string | null>;
   /** Activity log entries (most recent first). */
@@ -118,6 +120,7 @@ export function UniversalCanvasShell({
   artifactStates,
   gateCriterionStates,
   evidenceStates,
+  registryArtifacts = [],
   templateByCode,
   activityEntries,
   tenantName,
@@ -486,6 +489,7 @@ export function UniversalCanvasShell({
         <DocumentTab
           stage={viewStage}
           artifacts={stageArtifacts}
+          registryArtifacts={registryArtifacts}
           templateByCode={templateByCode}
           selectedCode={selectedDocCode}
           onSelectCode={setSelectedDocCode}

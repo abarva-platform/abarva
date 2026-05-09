@@ -4,6 +4,7 @@ import type {
   SourceEventArtifactState,
   SourceEventArtifactStatus,
 } from '@/lib/source/canvas-substrate';
+import type { SourceArtifactRegistryRecord } from '@/lib/source/artifact-registry/types';
 import type { SourceStageKey } from '@/lib/source/types';
 import { SOURCE_STAGE_LABELS } from '@/lib/source/constants';
 import { CANVAS } from '../canvas-tokens';
@@ -20,6 +21,8 @@ interface DocumentTabProps {
   eventId?: string;
   stage: SourceStageKey;
   artifacts: SourceEventArtifactState[];
+  /** Uploaded/generated documents persisted in source_artifacts for the event. */
+  registryArtifacts?: SourceArtifactRegistryRecord[];
   /** Map of artifact code → markdown template body (server-loaded). */
   templateByCode: Record<string, string | null>;
   /** Currently focused artifact code; UI lets user switch. */
@@ -114,6 +117,7 @@ export function DocumentTab({
   eventId,
   stage,
   artifacts,
+  registryArtifacts = [],
   templateByCode,
   selectedCode,
   onSelectCode,
@@ -163,7 +167,9 @@ export function DocumentTab({
   const bodyIsAuthored = Boolean(authoredBody);
 
   return (
-    <div data-testid="source-canvas-document-tab" style={CONTAINER_STYLE}>
+    <div data-testid="source-canvas-document-tab" style={DOCUMENT_TAB_STYLE}>
+      <RegistryDocumentsShelf eventId={eventId} documents={registryArtifacts} />
+      <div style={CONTAINER_STYLE}>
       {/* Artifact list (left) */}
       <aside style={LIST_STYLE} aria-label={`Artifacts at ${SOURCE_STAGE_LABELS[stage]}`}>
         {required.length > 0 ? (
@@ -282,8 +288,92 @@ export function DocumentTab({
           </>
         ) : null}
       </article>
+      </div>
     </div>
   );
+}
+
+interface RegistryDocumentsShelfProps {
+  eventId?: string;
+  documents: SourceArtifactRegistryRecord[];
+}
+
+function RegistryDocumentsShelf({ eventId, documents }: RegistryDocumentsShelfProps) {
+  const visible = documents.slice(0, 8);
+  const remaining = Math.max(0, documents.length - visible.length);
+
+  return (
+    <section style={REGISTRY_SHELF_STYLE} aria-label="Stored source documents">
+      <div style={REGISTRY_SHELF_HEADER_STYLE}>
+        <div>
+          <div style={GROUP_LABEL_STYLE}>Stored documents</div>
+          <h2 style={REGISTRY_SHELF_TITLE_STYLE}>
+            {documents.length === 0
+              ? 'No DB-backed documents yet'
+              : `${documents.length} DB-backed document${documents.length === 1 ? '' : 's'}`}
+          </h2>
+        </div>
+        {documents.length > 0 ? (
+          <span style={REGISTRY_SHELF_BADGE_STYLE}>source_artifacts</span>
+        ) : null}
+      </div>
+      {documents.length === 0 ? (
+        <p style={REGISTRY_EMPTY_STYLE}>
+          Uploaded files and generated packets will appear here when they are persisted to the
+          Source artifact registry.
+        </p>
+      ) : (
+        <div style={REGISTRY_GRID_STYLE}>
+          {visible.map((doc) => {
+            const href = eventId
+              ? `/source/events/${encodeURIComponent(eventId)}/artifacts/${encodeURIComponent(doc.id)}`
+              : undefined;
+            return (
+              <a
+                key={doc.id}
+                href={href}
+                data-testid={`source-canvas-registry-doc-${doc.id}`}
+                style={REGISTRY_DOC_LINK_STYLE}
+              >
+                <span style={REGISTRY_DOC_TOPLINE_STYLE}>
+                  <span>{SOURCE_STAGE_LABELS[doc.stageKey]}</span>
+                  <span style={DOT_STYLE}>·</span>
+                  <span>{doc.sourceFormat}</span>
+                  <span style={DOT_STYLE}>·</span>
+                  <span>{formatFileSize(doc.sizeBytes)}</span>
+                </span>
+                <span style={REGISTRY_DOC_NAME_STYLE}>{doc.originalName}</span>
+                <span style={REGISTRY_DOC_META_STYLE}>
+                  {formatDocumentFamily(doc.artifactFamily)} · parse {doc.parseStatus} · approval {doc.approvalState}
+                </span>
+              </a>
+            );
+          })}
+          {remaining > 0 ? (
+            <div style={REGISTRY_MORE_STYLE}>+{remaining} more in registry</div>
+          ) : null}
+        </div>
+      )}
+    </section>
+  );
+}
+
+function formatDocumentFamily(value: SourceArtifactRegistryRecord['artifactFamily']): string {
+  if (value === 'rfp') return 'RFP';
+  if (value === 'rfi') return 'RFI';
+  if (value === 'bafo') return 'BAFO';
+  return value
+    .split('_')
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(' ');
+}
+
+function formatFileSize(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`;
+  const kb = bytes / 1024;
+  if (kb < 1024) return `${kb.toFixed(kb >= 10 ? 0 : 1)} KB`;
+  const mb = kb / 1024;
+  return `${mb.toFixed(mb >= 10 ? 0 : 1)} MB`;
 }
 
 interface ArtifactBodyEditorProps {
@@ -645,6 +735,119 @@ function tierStyle(tier: SourceEventArtifactState['tier']): CSSProperties {
     tier === 'rich' ? CANVAS.ACTIVE : tier === 'outline' ? CANVAS.WAITING : CANVAS.GRAY_DK;
   return { color, fontWeight: 600 };
 }
+
+const DOCUMENT_TAB_STYLE: CSSProperties = {
+  display: 'grid',
+  gap: 20,
+};
+
+const REGISTRY_SHELF_STYLE: CSSProperties = {
+  display: 'grid',
+  gap: 12,
+  padding: '14px 16px',
+  border: `1px solid ${CANVAS.HAIRLINE}`,
+  borderRadius: 8,
+  background: '#fff',
+};
+
+const REGISTRY_SHELF_HEADER_STYLE: CSSProperties = {
+  display: 'flex',
+  alignItems: 'flex-start',
+  justifyContent: 'space-between',
+  gap: 16,
+};
+
+const REGISTRY_SHELF_TITLE_STYLE: CSSProperties = {
+  margin: 0,
+  fontFamily: CANVAS.SERIF,
+  fontSize: 20,
+  lineHeight: 1.15,
+  color: CANVAS.INK,
+  letterSpacing: 0,
+};
+
+const REGISTRY_SHELF_BADGE_STYLE: CSSProperties = {
+  fontFamily: CANVAS.MONO,
+  fontSize: 10,
+  fontWeight: 700,
+  letterSpacing: '0.10em',
+  textTransform: 'uppercase',
+  color: CANVAS.ACTIVE,
+  border: `1px solid ${CANVAS.HAIRLINE}`,
+  borderRadius: 999,
+  padding: '5px 8px',
+  whiteSpace: 'nowrap',
+};
+
+const REGISTRY_EMPTY_STYLE: CSSProperties = {
+  margin: 0,
+  fontFamily: CANVAS.SANS,
+  fontSize: 13,
+  lineHeight: 1.45,
+  color: CANVAS.INK_SOFT,
+};
+
+const REGISTRY_GRID_STYLE: CSSProperties = {
+  display: 'grid',
+  gridTemplateColumns: 'repeat(auto-fit, minmax(230px, 1fr))',
+  gap: 8,
+};
+
+const REGISTRY_DOC_LINK_STYLE: CSSProperties = {
+  display: 'grid',
+  gap: 5,
+  minWidth: 0,
+  padding: '10px 11px',
+  border: `1px solid ${CANVAS.HAIRLINE}`,
+  borderRadius: 6,
+  color: CANVAS.INK,
+  textDecoration: 'none',
+  background: '#fafafa',
+};
+
+const REGISTRY_DOC_TOPLINE_STYLE: CSSProperties = {
+  display: 'inline-flex',
+  alignItems: 'center',
+  gap: 6,
+  minWidth: 0,
+  fontFamily: CANVAS.MONO,
+  fontSize: 9,
+  letterSpacing: '0.08em',
+  textTransform: 'uppercase',
+  color: CANVAS.GRAY_DK,
+};
+
+const REGISTRY_DOC_NAME_STYLE: CSSProperties = {
+  fontFamily: CANVAS.SANS,
+  fontSize: 13,
+  fontWeight: 650,
+  lineHeight: 1.3,
+  color: CANVAS.INK,
+  overflowWrap: 'anywhere',
+};
+
+const REGISTRY_DOC_META_STYLE: CSSProperties = {
+  fontFamily: CANVAS.SANS,
+  fontSize: 12,
+  lineHeight: 1.35,
+  color: CANVAS.INK_SOFT,
+};
+
+const REGISTRY_MORE_STYLE: CSSProperties = {
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  minHeight: 70,
+  padding: '10px 11px',
+  border: `1px dashed ${CANVAS.HAIRLINE}`,
+  borderRadius: 6,
+  fontFamily: CANVAS.MONO,
+  fontSize: 10,
+  fontWeight: 700,
+  letterSpacing: '0.08em',
+  textTransform: 'uppercase',
+  color: CANVAS.INK_SOFT,
+};
 
 const CONTAINER_STYLE: CSSProperties = {
   display: 'grid',
