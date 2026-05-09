@@ -23,7 +23,6 @@ import {
 import {
   KanbanBoard,
   ScatterPlot,
-  SCATTER_VALUE_COVERAGE_THRESHOLD,
   readStoredViewMode,
   persistViewMode,
   type ViewMode,
@@ -37,7 +36,6 @@ import {
   groupEventsByStageBand,
   STAGE_BANDS,
   attentionEvents,
-  stageBandFor,
 } from '@/lib/source/portfolio-filtering';
 import type { SourcingEventSummary } from '@/lib/source/types';
 
@@ -188,18 +186,9 @@ function PopulatedView({
     [events],
   );
 
-  const valueCapturedCount = useMemo(
-    () => filteredEvents.filter((e) => (e.valueAtStakeUsd ?? 0) > 0).length,
-    [filteredEvents],
-  );
-  const scatterAvailable =
-    filteredEvents.length === 0 ||
-    valueCapturedCount / filteredEvents.length >= SCATTER_VALUE_COVERAGE_THRESHOLD;
-
   function handleViewMode(next: ViewMode) {
-    const safe = next === 'scatter' && !scatterAvailable ? 'list' : next;
-    setViewMode(safe);
-    persistViewMode(safe);
+    setViewMode(next);
+    persistViewMode(next);
   }
 
   return (
@@ -224,8 +213,6 @@ function PopulatedView({
         activeFilterCount={totalFilterCount(filters)}
         viewMode={viewMode}
         onViewModeChange={handleViewMode}
-        scatterAvailable={scatterAvailable}
-        valueCapturedCount={valueCapturedCount}
       />
 
       {viewMode === 'list' ? (
@@ -249,8 +236,8 @@ function PopulatedView({
         </div>
       ) : null}
 
-      {viewMode === 'scatter' && scatterAvailable ? (
-        <div style={FULLWIDTH_VIEW_STYLE} data-testid="source-portfolio-scatter">
+      {viewMode === 'scatter' ? (
+        <div style={FULLWIDTH_VIEW_STYLE} data-testid="source-portfolio-value-view">
           <ScatterPlot events={filteredEvents} canViewFinancialValues={canViewFinancialValues} />
         </div>
       ) : null}
@@ -277,8 +264,9 @@ function PortfolioScorecard({
     (sum, item) => sum + (item.event.valueAtStakeUsd ?? 0),
     0,
   );
-  const stageMix = buildStageMix(events);
-  const categoryMix = buildCategoryMix(events);
+  const largestOpenEvent = [...openEvents].sort(
+    (a, b) => (b.valueAtStakeUsd ?? 0) - (a.valueAtStakeUsd ?? 0) || b.agingDays - a.agingDays,
+  )[0];
 
   return (
     <section
@@ -311,18 +299,9 @@ function PortfolioScorecard({
         />
       </div>
       <div style={SCORECARD_CHARTS_STYLE}>
-        <ScoreBarStack
-          label="Stage mix"
-          total={events.length}
-          items={stageMix.map((item) => ({
-            key: item.key,
-            label: item.label,
-            value: item.count,
-            color: item.color,
-          }))}
-        />
-        <CategoryValueBars
-          items={categoryMix}
+        <DecisionFocusCard
+          largestOpenEvent={largestOpenEvent}
+          attentionCount={kpis.attentionCount}
           canViewFinancialValues={canViewFinancialValues}
         />
       </div>
@@ -352,131 +331,54 @@ function ScoreMetric({
   );
 }
 
-function ScoreBarStack({
-  label,
-  total,
-  items,
-}: {
-  label: string;
-  total: number;
-  items: Array<{ key: string; label: string; value: number; color: string }>;
-}) {
-  const visibleItems = items.filter((item) => item.value > 0);
-  return (
-    <div style={SCORE_CHART_STYLE}>
-      <div style={SCORE_CHART_HEADER_STYLE}>
-        <span>{label}</span>
-        <span>{total} total</span>
-      </div>
-      <div style={STACK_BAR_STYLE} aria-hidden>
-        {visibleItems.length === 0 ? (
-          <span style={{ ...STACK_SEGMENT_STYLE, width: '100%', background: PORTFOLIO.RULE }} />
-        ) : (
-          visibleItems.map((item) => (
-            <span
-              key={item.key}
-              style={{
-                ...STACK_SEGMENT_STYLE,
-                width: `${Math.max(4, (item.value / Math.max(total, 1)) * 100)}%`,
-                background: item.color,
-              }}
-            />
-          ))
-        )}
-      </div>
-      <div style={STACK_LEGEND_STYLE}>
-        {items.map((item) => (
-          <span key={item.key} style={STACK_LEGEND_ITEM_STYLE}>
-            <span aria-hidden style={{ ...STACK_LEGEND_DOT_STYLE, background: item.color }} />
-            <span>{item.label}</span>
-            <span style={STACK_LEGEND_COUNT_STYLE}>{item.value}</span>
-          </span>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function CategoryValueBars({
-  items,
+function DecisionFocusCard({
+  largestOpenEvent,
+  attentionCount,
   canViewFinancialValues,
 }: {
-  items: CategoryMixItem[];
+  largestOpenEvent: SourcingEventSummary | undefined;
+  attentionCount: number;
   canViewFinancialValues: boolean;
 }) {
-  const maxValue = Math.max(...items.map((item) => item.valueUsd), 1);
   return (
     <div style={SCORE_CHART_STYLE}>
       <div style={SCORE_CHART_HEADER_STYLE}>
-        <span>Value by category</span>
-        <span>top {items.length}</span>
+        <span>Decision focus</span>
+        <span>{attentionCount} need attention</span>
       </div>
-      <div style={CATEGORY_BARS_STYLE}>
-        {items.map((item) => (
-          <div key={item.label} style={CATEGORY_ROW_STYLE}>
-            <div style={CATEGORY_LABEL_ROW_STYLE}>
-              <span style={CATEGORY_LABEL_STYLE}>{item.label}</span>
-              <span style={CATEGORY_VALUE_STYLE}>
-                {canViewFinancialValues ? formatCompactUsd(item.valueUsd) : 'Restricted'} · {item.count}
-              </span>
+
+      {largestOpenEvent ? (
+        <div style={CATEGORY_SUMMARY_STYLE}>
+          <div style={CATEGORY_HERO_STYLE}>
+            <span style={CATEGORY_LABEL_STYLE}>Largest open event</span>
+            <strong style={CATEGORY_HERO_NAME_STYLE}>{largestOpenEvent.name}</strong>
+            <span style={CATEGORY_HERO_DETAIL_STYLE}>
+              {canViewFinancialValues ? formatCompactUsd(largestOpenEvent.valueAtStakeUsd ?? 0) : 'Restricted'}
+              {` · ${largestOpenEvent.currentStageLabel} · ${largestOpenEvent.statusLabel}`}
+            </span>
+          </div>
+          <div style={CATEGORY_FACT_GRID_STYLE}>
+            <div style={CATEGORY_FACT_STYLE}>
+              <span style={CATEGORY_FACT_LABEL_STYLE}>Next action</span>
+              <strong style={CATEGORY_FACT_VALUE_STYLE}>
+                {largestOpenEvent.nextAction || largestOpenEvent.nextDecision || 'Confirm owner and next gate'}
+              </strong>
             </div>
-            <div style={CATEGORY_TRACK_STYLE} aria-hidden>
-              <span
-                style={{
-                  ...CATEGORY_FILL_STYLE,
-                  width: `${Math.max(6, (item.valueUsd / maxValue) * 100)}%`,
-                }}
-              />
+            <div style={CATEGORY_FACT_STYLE}>
+              <span style={CATEGORY_FACT_LABEL_STYLE}>Attention queue</span>
+              <strong style={CATEGORY_FACT_VALUE_STYLE}>
+                {attentionCount === 0
+                  ? 'No urgent decisions'
+                  : `${attentionCount} event${attentionCount === 1 ? '' : 's'} need executive attention`}
+              </strong>
             </div>
           </div>
-        ))}
-        {items.length === 0 ? (
-          <div style={CATEGORY_EMPTY_STYLE}>No category values captured yet.</div>
-        ) : null}
-      </div>
+        </div>
+      ) : (
+        <div style={CATEGORY_EMPTY_STYLE}>No open sourcing decisions yet.</div>
+      )}
     </div>
   );
-}
-
-interface StageMixItem {
-  key: string;
-  label: string;
-  count: number;
-  color: string;
-}
-
-interface CategoryMixItem {
-  label: string;
-  count: number;
-  valueUsd: number;
-}
-
-function buildStageMix(events: SourcingEventSummary[]): StageMixItem[] {
-  const counts = new Map<string, number>();
-  for (const event of events) {
-    const band = STAGE_BANDS[stageBandFor(event.currentStageKey, event.status)];
-    counts.set(band.key, (counts.get(band.key) ?? 0) + 1);
-  }
-  return Object.values(STAGE_BANDS).map((band) => ({
-    key: band.key,
-    label: band.title.replace(' & ', ' + '),
-    count: counts.get(band.key) ?? 0,
-    color: STAGE_MIX_COLORS[band.key],
-  }));
-}
-
-function buildCategoryMix(events: SourcingEventSummary[]): CategoryMixItem[] {
-  const byCategory = new Map<string, CategoryMixItem>();
-  for (const event of events) {
-    const label = event.archetype || 'Uncategorized';
-    const current = byCategory.get(label) ?? { label, count: 0, valueUsd: 0 };
-    current.count += 1;
-    current.valueUsd += event.valueAtStakeUsd ?? 0;
-    byCategory.set(label, current);
-  }
-  return Array.from(byCategory.values())
-    .sort((a, b) => b.valueUsd - a.valueUsd || b.count - a.count || a.label.localeCompare(b.label))
-    .slice(0, 4);
 }
 
 // ── Compact header — title + subline + CTA ──────────────────────────────────
@@ -549,8 +451,6 @@ function SubHeader({
   activeFilterCount,
   viewMode,
   onViewModeChange,
-  scatterAvailable,
-  valueCapturedCount,
 }: {
   eventCount: number;
   visibleCount: number;
@@ -559,8 +459,6 @@ function SubHeader({
   activeFilterCount: number;
   viewMode: ViewMode;
   onViewModeChange: (m: ViewMode) => void;
-  scatterAvailable: boolean;
-  valueCapturedCount: number;
 }) {
   const showFiltered = visibleCount !== eventCount || activeFilterCount > 0;
   const viewOptions = [
@@ -569,11 +467,9 @@ function SubHeader({
     {
       mode: 'scatter' as const,
       icon: <ScatterIcon />,
-      label: 'Value map',
-      title: scatterAvailable
-        ? 'Value map'
-        : `Value map requires value data on at least 50% of events (${valueCapturedCount}/${eventCount} captured)`,
-      disabled: !scatterAvailable,
+      label: 'Value chart',
+      title: 'Value chart',
+      disabled: false,
     },
   ] satisfies Array<{ mode: ViewMode; icon: React.ReactNode; label: string; title: string; disabled: boolean }>;
 
@@ -743,18 +639,10 @@ const SUBLINE_STYLE: CSSProperties = {
   maxWidth: 720,
 };
 
-const STAGE_MIX_COLORS: Record<keyof typeof STAGE_BANDS, string> = {
-  discovery: '#335C81',
-  evaluation: PORTFOLIO.ACTIVE,
-  decision: PORTFOLIO.WAITING,
-  transition: '#7C3AED',
-  completed: PORTFOLIO.COMPLETED,
-};
-
 const SCORECARD_STYLE: CSSProperties = {
   display: 'grid',
-  gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 520px), 1fr))',
-  gap: 20,
+  gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 420px), 1fr))',
+  gap: 28,
   marginTop: 16,
   padding: '14px 16px',
   border: `1px solid ${PORTFOLIO.HAIRLINE}`,
@@ -803,8 +691,7 @@ const SCORE_METRIC_DETAIL_STYLE: CSSProperties = {
 
 const SCORECARD_CHARTS_STYLE: CSSProperties = {
   display: 'grid',
-  gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 260px), 1fr))',
-  gap: 22,
+  gap: 10,
   minWidth: 0,
 };
 
@@ -827,101 +714,89 @@ const SCORE_CHART_HEADER_STYLE: CSSProperties = {
   fontWeight: 700,
 };
 
-const STACK_BAR_STYLE: CSSProperties = {
-  display: 'flex',
-  width: '100%',
-  height: 9,
-  overflow: 'hidden',
-  borderRadius: 999,
-  background: PORTFOLIO.RULE,
-};
-
-const STACK_SEGMENT_STYLE: CSSProperties = {
-  display: 'block',
-  height: '100%',
-};
-
-const STACK_LEGEND_STYLE: CSSProperties = {
+const CATEGORY_SUMMARY_STYLE: CSSProperties = {
   display: 'grid',
-  gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
-  gap: '5px 12px',
+  gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 180px), 1fr))',
+  gap: 12,
+  alignItems: 'stretch',
 };
 
-const STACK_LEGEND_ITEM_STYLE: CSSProperties = {
-  display: 'inline-flex',
-  alignItems: 'center',
+const CATEGORY_HERO_STYLE: CSSProperties = {
+  display: 'grid',
+  alignContent: 'center',
+  gap: 5,
+  minHeight: 82,
   minWidth: 0,
-  gap: 6,
-  fontFamily: PORTFOLIO.SANS,
-  fontSize: PORTFOLIO.T_META,
-  color: PORTFOLIO.INK_SOFT,
-};
-
-const STACK_LEGEND_DOT_STYLE: CSSProperties = {
-  width: 7,
-  height: 7,
-  borderRadius: 999,
-  flexShrink: 0,
-};
-
-const STACK_LEGEND_COUNT_STYLE: CSSProperties = {
-  marginLeft: 'auto',
-  fontFamily: PORTFOLIO.MONO,
-  fontSize: PORTFOLIO.T_MICRO,
-  color: PORTFOLIO.INK,
-  fontWeight: 700,
-};
-
-const CATEGORY_BARS_STYLE: CSSProperties = {
-  display: 'grid',
-  gap: 7,
-};
-
-const CATEGORY_ROW_STYLE: CSSProperties = {
-  display: 'grid',
-  gap: 4,
-};
-
-const CATEGORY_LABEL_ROW_STYLE: CSSProperties = {
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'space-between',
-  gap: 10,
-  minWidth: 0,
+  padding: '12px 14px',
+  border: `1px solid ${PORTFOLIO.HAIRLINE}`,
+  borderRadius: PORTFOLIO.RADIUS_TIGHT,
+  background: '#ffffff',
 };
 
 const CATEGORY_LABEL_STYLE: CSSProperties = {
+  fontFamily: PORTFOLIO.MONO,
+  fontSize: PORTFOLIO.T_MICRO_SMALL,
+  letterSpacing: '0.10em',
+  textTransform: 'uppercase',
+  color: PORTFOLIO.INK_MUTED,
+  fontWeight: 700,
+};
+
+const CATEGORY_HERO_NAME_STYLE: CSSProperties = {
   overflow: 'hidden',
   textOverflow: 'ellipsis',
   whiteSpace: 'nowrap',
   fontFamily: PORTFOLIO.SANS,
-  fontSize: PORTFOLIO.T_META,
-  fontWeight: 700,
+  fontSize: 15,
+  lineHeight: 1.2,
+  fontWeight: 800,
   color: PORTFOLIO.INK,
 };
 
-const CATEGORY_VALUE_STYLE: CSSProperties = {
-  flexShrink: 0,
+const CATEGORY_HERO_DETAIL_STYLE: CSSProperties = {
   fontFamily: PORTFOLIO.MONO,
-  fontSize: PORTFOLIO.T_MICRO,
+  fontSize: PORTFOLIO.T_META,
   color: PORTFOLIO.INK_SOFT,
   fontWeight: 700,
   fontVariantNumeric: 'tabular-nums',
 };
 
-const CATEGORY_TRACK_STYLE: CSSProperties = {
-  width: '100%',
-  height: 5,
-  borderRadius: 999,
-  background: PORTFOLIO.RULE,
-  overflow: 'hidden',
+const CATEGORY_FACT_GRID_STYLE: CSSProperties = {
+  display: 'grid',
+  gridTemplateColumns: '1fr',
+  gap: 8,
+  minWidth: 0,
 };
 
-const CATEGORY_FILL_STYLE: CSSProperties = {
-  display: 'block',
-  height: '100%',
-  borderRadius: 999,
-  background: PORTFOLIO.INK,
+const CATEGORY_FACT_STYLE: CSSProperties = {
+  display: 'grid',
+  gap: 3,
+  minWidth: 0,
+  padding: '10px 12px',
+  border: `1px solid ${PORTFOLIO.HAIRLINE}`,
+  borderRadius: PORTFOLIO.RADIUS_TIGHT,
+  background: PORTFOLIO.PAGE_BG,
+};
+
+const CATEGORY_FACT_LABEL_STYLE: CSSProperties = {
+  fontFamily: PORTFOLIO.MONO,
+  fontSize: PORTFOLIO.T_MICRO_SMALL,
+  letterSpacing: '0.10em',
+  textTransform: 'uppercase',
+  color: PORTFOLIO.INK_MUTED,
+  fontWeight: 700,
+};
+
+const CATEGORY_FACT_VALUE_STYLE: CSSProperties = {
+  overflow: 'hidden',
+  display: '-webkit-box',
+  WebkitBoxOrient: 'vertical',
+  WebkitLineClamp: 2,
+  fontFamily: PORTFOLIO.SANS,
+  fontSize: PORTFOLIO.T_META,
+  lineHeight: 1.3,
+  color: PORTFOLIO.INK,
+  fontWeight: 800,
 };
 
 const CATEGORY_EMPTY_STYLE: CSSProperties = {
