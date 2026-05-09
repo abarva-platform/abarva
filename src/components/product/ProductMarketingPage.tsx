@@ -17,7 +17,7 @@ import type { ReactNode } from 'react';
  *  so the brand mark is shown rather than the word. Sized to match
  *  surrounding text. `inverse` flips it for dark backgrounds. */
 function AbarvaWordmark({
-  height = '0.78em',
+  height = '1em',
   inverse = false,
 }: {
   height?: string | number;
@@ -952,7 +952,7 @@ function Substrate() {
         <div>
           <SectionEyebrow num="04">The substrate</SectionEyebrow>
           <SectionTitle>
-            What <AbarvaWordmark height="0.7em" /> knows · before it answers.
+            What <AbarvaWordmark /> knows · before it answers.
           </SectionTitle>
           <p style={{ fontSize: 15.5, color: C.inkSoft, lineHeight: 1.65, marginBottom: 20, maxWidth: '54ch' }}>
             Every CXO answer is grounded in three layers of substrate. The
