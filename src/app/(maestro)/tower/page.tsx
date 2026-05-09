@@ -46,6 +46,37 @@ import { appendAtlasReasoningTrace } from '@/lib/atlas/repository';
 
 export const metadata = { title: 'Control Tower · AbarVa' };
 
+type TowerClientRow = NonNullable<Awaited<ReturnType<typeof getActiveClientRow>>>;
+
+const TOWER_PILOT_CLIENT_KEYS = ['apexretail', 'meridian', 'arcturus'] as const;
+
+async function clientHasTowerSubstrate(clientId: string): Promise<boolean> {
+  try {
+    const { count, error } = await getServerSupabase()
+      .from('ai_initiatives')
+      .select('initiative_id', { count: 'exact', head: true })
+      .eq('client_id', clientId);
+    if (error) return false;
+    return Number(count ?? 0) > 0;
+  } catch {
+    return false;
+  }
+}
+
+async function resolveTowerClient(requestedClientKey?: string): Promise<TowerClientRow | null> {
+  const activeClient = await getActiveClientRow(requestedClientKey).catch(() => null);
+  if (activeClient) return activeClient;
+  if (requestedClientKey) return null;
+
+  for (const clientKey of TOWER_PILOT_CLIENT_KEYS) {
+    const candidate = await getActiveClientRow(clientKey).catch(() => null);
+    if (candidate && await clientHasTowerSubstrate(candidate.id)) {
+      return candidate;
+    }
+  }
+  return null;
+}
+
 /**
  * T-4 (AI Initiatives Substrate v1.1.0): query the canonical AI Initiatives
  * Registry for the active tenant so Tower CFO View can plot real names in
@@ -482,10 +513,10 @@ export default async function TowerPage({
 }) {
   const resolvedSearchParams = searchParams ? await searchParams : {};
   // Active client id (when bound) — wires the AgentDock chat lane to
-  // /api/v1/atlas/chat. Fail-soft: when no client row resolves we omit
-  // clientId and the dock surfaces a soft "Atlas needs an active tenant"
-  // message instead of crashing the page.
-  const activeClient = await getActiveClientRow(resolvedSearchParams.client).catch(() => null);
+  // /api/v1/atlas/chat. If the session has no resolvable client row (for
+  // example an internal pilot account with cleared active-client cookie),
+  // bind Tower to the first pilot client that has real AI Initiative rows.
+  const activeClient = await resolveTowerClient(resolvedSearchParams.client);
   const activeClientId = activeClient?.id ?? null;
   const towerHandoffPrograms = await buildTowerHandoffPrograms();
   const towerHandoffSourceEvents = await buildTowerHandoffSourceEvents();

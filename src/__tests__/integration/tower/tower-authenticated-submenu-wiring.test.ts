@@ -18,7 +18,9 @@ describe('authenticated Tower submenu wiring', () => {
   });
 
   it('loads Tower substrate from the active client row, not person-tenancy side effects', () => {
-    expect(pageSource).toContain('getActiveClientRow(resolvedSearchParams.client)');
+    expect(pageSource).toContain('resolveTowerClient(resolvedSearchParams.client)');
+    expect(pageSource).toContain('TOWER_PILOT_CLIENT_KEYS');
+    expect(pageSource).toContain('clientHasTowerSubstrate(candidate.id)');
     expect(pageSource).toContain('buildTowerInitiatives(activeClientId)');
     expect(pageSource).toContain('buildTowerVendors(activeClientId)');
     expect(pageSource).toContain('buildTowerSetupInitiativesFeed(activeClient)');
