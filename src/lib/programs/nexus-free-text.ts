@@ -1,5 +1,19 @@
 import { getAnthropicClient } from '@/lib/agent/stream';
 import type {
+  CanonicalConfidenceLevel,
+  CanonicalIndustry,
+  CanonicalSourceBasis,
+  CanonicalStrategicMovePhase,
+  CanonicalUnsupportedClaimFlag,
+} from '@/lib/intelligence/canonical/industry-ai-pattern';
+import type {
+  CANONICAL_PATTERN_INDEX_SOURCE,
+  CanonicalPatternIndexHit,
+  CanonicalPatternIndexQuery,
+  CanonicalPatternIndexResult,
+  CanonicalPatternIndexStatus,
+} from '@/lib/intelligence/canonical/runtime-pattern-index';
+import type {
   PatternApplicableProgram,
   PatternManifestEntry,
 } from '@/lib/intelligence/pattern-manifest';
@@ -72,6 +86,13 @@ export interface ProgramsNexusCitation {
   confidence: number;
   confidenceBand: NexusConfidence;
   matchReason: string;
+  sourceKind?: 'canonical_pattern' | 'manifest_pattern';
+  canonicalId?: string;
+  sourceBasis?: CanonicalSourceBasis;
+  canonicalConfidenceLevel?: CanonicalConfidenceLevel;
+  missingRequiredFields?: string[];
+  missingProvenance?: boolean;
+  unsupportedClaimFlags?: CanonicalUnsupportedClaimFlag[];
 }
 
 export interface ProgramsNexusTurnResponse {
@@ -83,6 +104,32 @@ export interface ProgramsNexusTurnResponse {
   sources: Source[];
   suggestions: string[];
   activePatternSlug: string | null;
+  patternEvidence: ProgramsNexusPatternEvidence;
+}
+
+export interface ProgramsNexusPatternEvidencePattern {
+  canonicalId: string;
+  title: string;
+  summary: string;
+  sourceBasis: CanonicalSourceBasis;
+  confidenceLevel: CanonicalConfidenceLevel;
+  confidenceRationale: string;
+  missingRequiredFields: string[];
+  missingProvenance: boolean;
+  unsupportedClaimFlags: CanonicalUnsupportedClaimFlag[];
+  sourceReferenceCount: number;
+  matchReasons: string[];
+}
+
+export interface ProgramsNexusPatternEvidence {
+  source: typeof CANONICAL_PATTERN_INDEX_SOURCE | null;
+  status: CanonicalPatternIndexStatus | 'not_requested';
+  retrievedCount: number;
+  warnings: string[];
+  noMatch: boolean;
+  missingEvidence: boolean;
+  query: CanonicalPatternIndexQuery | null;
+  patterns: ProgramsNexusPatternEvidencePattern[];
 }
 
 interface RankedPattern {
@@ -152,11 +199,27 @@ function programContextSource(context: ProgramContextBundle): Source {
 }
 
 function buildSource(citation: ProgramsNexusCitation): Source {
+  const provenance = citation.sourceKind === 'canonical_pattern'
+    ? [
+      `canonical confidence ${citation.canonicalConfidenceLevel ?? citation.confidenceBand}`,
+      citation.sourceBasis ? `source basis ${citation.sourceBasis}` : null,
+      citation.missingProvenance ? 'missing provenance' : null,
+      citation.missingRequiredFields?.length ? `missing ${citation.missingRequiredFields.join(', ')}` : null,
+      citation.unsupportedClaimFlags?.length ? `${citation.unsupportedClaimFlags.length} unsupported claim flags` : null,
+    ].filter(Boolean).join(' · ')
+    : null;
+
   return {
     id: `pattern:${citation.slug}`,
     type: 'pattern',
     name: citation.label,
-    detail: `${citation.evidenceCount} evidence sources · ${citation.observationCount} observations · ${citation.deliverableCount} tenant deliverables · ${citation.matchReason}`,
+    detail: [
+      `${citation.evidenceCount} evidence sources`,
+      `${citation.observationCount} observations`,
+      `${citation.deliverableCount} tenant deliverables`,
+      citation.matchReason,
+      provenance,
+    ].filter(Boolean).join(' · '),
     confidence: citation.confidenceBand,
     url: citation.href,
     asOf: citation.freshnessLabel,
@@ -202,7 +265,126 @@ function buildCitation(
     confidence: ranked.confidence,
     confidenceBand: ranked.confidenceBand,
     matchReason: ranked.matchReason,
+    sourceKind: 'manifest_pattern',
   };
+}
+
+function canonicalConfidenceBand(value: CanonicalConfidenceLevel): NexusConfidence {
+  switch (value) {
+    case 'validated':
+    case 'high':
+      return 'high';
+    case 'medium':
+      return 'medium';
+    case 'low':
+      return 'low';
+  }
+}
+
+function canonicalConfidenceScore(value: CanonicalConfidenceLevel, retrievalScore: number): number {
+  const base = value === 'validated' ? 0.92 : value === 'high' ? 0.82 : value === 'medium' ? 0.66 : 0.42;
+  return Math.max(0.2, Math.min(0.97, Number((base * 0.75 + retrievalScore * 0.25).toFixed(2))));
+}
+
+function canonicalHref(canonicalId: string): string {
+  return `/intelligence/patterns?canonicalId=${encodeURIComponent(canonicalId)}`;
+}
+
+function buildCanonicalCitation(hit: CanonicalPatternIndexHit): ProgramsNexusCitation {
+  const missingRequiredFields = hit.missing_required_fields.map(String);
+  return {
+    slug: hit.canonical_id,
+    label: hit.title,
+    href: canonicalHref(hit.canonical_id),
+    evidenceCount: hit.source_references.length,
+    observationCount: 0,
+    deliverableCount: 0,
+    freshnessLabel: 'canonical corpus',
+    confidence: canonicalConfidenceScore(hit.confidence_level, hit.score),
+    confidenceBand: canonicalConfidenceBand(hit.confidence_level),
+    matchReason: `canonical corpus match · ${hit.match_reasons.join(', ')}`,
+    sourceKind: 'canonical_pattern',
+    canonicalId: hit.canonical_id,
+    sourceBasis: hit.source_basis,
+    canonicalConfidenceLevel: hit.confidence_level,
+    missingRequiredFields,
+    missingProvenance: hit.missing_provenance,
+    unsupportedClaimFlags: hit.unsupported_claim_flags,
+  };
+}
+
+function buildPatternEvidence(
+  canonicalPatternIndex: CanonicalPatternIndexResult | null | undefined,
+): ProgramsNexusPatternEvidence {
+  if (!canonicalPatternIndex) {
+    return {
+      source: null,
+      status: 'not_requested',
+      retrievedCount: 0,
+      warnings: [],
+      noMatch: false,
+      missingEvidence: false,
+      query: null,
+      patterns: [],
+    };
+  }
+
+  const patterns = canonicalPatternIndex.patterns.map((pattern) => ({
+    canonicalId: pattern.canonical_id,
+    title: pattern.title,
+    summary: pattern.summary,
+    sourceBasis: pattern.source_basis,
+    confidenceLevel: pattern.confidence_level,
+    confidenceRationale: pattern.confidence_rationale,
+    missingRequiredFields: pattern.missing_required_fields.map(String),
+    missingProvenance: pattern.missing_provenance,
+    unsupportedClaimFlags: pattern.unsupported_claim_flags,
+    sourceReferenceCount: pattern.source_references.length,
+    matchReasons: pattern.match_reasons,
+  }));
+
+  return {
+    source: canonicalPatternIndex.source,
+    status: canonicalPatternIndex.status,
+    retrievedCount: patterns.length,
+    warnings: canonicalPatternIndex.warnings,
+    noMatch: canonicalPatternIndex.status === 'empty'
+      || canonicalPatternIndex.status === 'no_match'
+      || canonicalPatternIndex.status === 'error',
+    missingEvidence: patterns.some((pattern) =>
+      pattern.missingProvenance
+      || pattern.missingRequiredFields.length > 0
+      || pattern.unsupportedClaimFlags.length > 0,
+    ),
+    query: canonicalPatternIndex.filters_applied,
+    patterns,
+  };
+}
+
+function missingEvidenceLine(patternEvidence: ProgramsNexusPatternEvidence): string | null {
+  if (patternEvidence.noMatch) {
+    const status = patternEvidence.status === 'error' ? 'read failed' : patternEvidence.status.replace(/_/g, ' ');
+    return `Canonical pattern evidence status: ${status}. I will not infer a canonical pattern where the index did not return one.`;
+  }
+
+  const missing = patternEvidence.patterns
+    .filter((pattern) =>
+      pattern.missingProvenance
+      || pattern.missingRequiredFields.length > 0
+      || pattern.unsupportedClaimFlags.length > 0,
+    )
+    .map((pattern) => {
+      const gaps = [
+        pattern.missingProvenance ? 'missing provenance' : null,
+        pattern.missingRequiredFields.length ? `missing fields: ${pattern.missingRequiredFields.join(', ')}` : null,
+        pattern.unsupportedClaimFlags.length ? `${pattern.unsupportedClaimFlags.length} unsupported claim flags` : null,
+      ].filter(Boolean).join('; ');
+      return `${pattern.title} (${gaps})`;
+    });
+
+  return missing.length > 0
+    ? `Canonical pattern evidence has gaps: ${missing.join(' · ')}. I will keep those claims directional.`
+    : null;
 }
 
 function scorePattern(args: {
@@ -325,23 +507,27 @@ function scorePattern(args: {
 function buildSparseResponse(args: {
   context: ProgramContextBundle;
   citations: ProgramsNexusCitation[];
+  patternEvidence: ProgramsNexusPatternEvidence;
 }): string {
   const primary = args.citations[0];
   const programPhase = args.context.program.currentPhase === null
     ? 'an unassigned phase'
     : `Phase ${args.context.program.currentPhase}`;
+  const evidenceLine = missingEvidenceLine(args.patternEvidence);
 
   if (!primary) {
     return [
       `Evidence is thin for this question inside ${args.context.program.name}. I can see the program is sitting in ${programPhase} with ${args.context.deliverables.length} deliverables and ${args.context.flags.length} open flags, but the current retrieval pass did not return a pattern I can cite honestly.`,
+      evidenceLine,
       `Next step: point me at the exact deliverable, estimate, or decision you want pressure-tested and I will stay explicit about what is evidence versus what is still an assumption.`,
-    ].join('\n\n');
+    ].filter(Boolean).join('\n\n');
   }
 
   return [
     `Evidence is thin beyond ${renderCitation(primary)}. That pattern is the best available anchor for ${args.context.program.name}, but the live program context still looks lighter than a measured-outcomes case.`,
+    evidenceLine,
     `Next step: give me the specific assumption chain or deliverable you want to interrogate, and I will tell you what supports it versus what still needs proof.`,
-  ].join('\n\n');
+  ].filter(Boolean).join('\n\n');
 }
 
 function buildFollowUps(
@@ -382,9 +568,11 @@ function buildStructuredResponse(args: {
   context: ProgramContextBundle;
   citations: ProgramsNexusCitation[];
   sparseEvidence: boolean;
+  patternEvidence: ProgramsNexusPatternEvidence;
 }): string {
   const [primary, secondary] = args.citations;
   if (!primary) return buildSparseResponse(args);
+  const evidenceLine = missingEvidenceLine(args.patternEvidence);
 
   const leadSignal =
     readStringList(args.context.patternPreload?.failure_modes)[0]
@@ -400,14 +588,15 @@ function buildStructuredResponse(args: {
   if (/(plain english|stop the structured output|just tell me|plainly)/i.test(args.message)) {
     return [
       `Plain English: I would anchor this on ${renderCitation(primary)}. The load-bearing issue is ${leadSignal.toLowerCase()}, and I would not pretend the current program context proves more than it does.`,
+      evidenceLine,
       `${args.sparseEvidence ? 'Evidence is thin beyond that anchor.' : `The evidence base behind that anchor is ${primary.evidenceCount} sources and ${primary.observationCount} observations.`} The next question that will move the answer most is "${diagnosticQuestion}"`,
-    ].join('\n\n');
+    ].filter(Boolean).join('\n\n');
   }
 
   if (/(assumption|assumptions|confidence|interval|derive|derivation|range|estimate|math)/i.test(args.message)) {
     return [
       `1. Best anchor: ${renderCitation(primary)} is the closest pattern I can cite for ${args.context.program.name}. Confidence is ${primary.confidenceBand} because the live program context shows ${args.context.deliverables.length} deliverables and ${args.context.flags.length} open flags, but not a fully exposed derivation chain.`,
-      `2. What underpins the range: the pattern says the pressure usually sits in ${leadSignal.toLowerCase()}. I have ${primary.evidenceCount} sources and ${primary.observationCount} observations behind that anchor, which is enough to frame the assumption stack but not enough to call it measured customer-outcome evidence.`,
+      `2. What underpins the range: the pattern says the pressure usually sits in ${leadSignal.toLowerCase()}. I have ${primary.evidenceCount} sources and ${primary.observationCount} observations behind that anchor, which is enough to frame the assumption stack but not enough to call it measured customer-outcome evidence.${evidenceLine ? ` ${evidenceLine}` : ''}`,
       `3. What I would test next: answer "${diagnosticQuestion}" before treating the range as board-ready. ${nextPattern}`,
     ].join('\n\n');
   }
@@ -415,14 +604,14 @@ function buildStructuredResponse(args: {
   if (/(risk|blocker|pressure|concern|stall|slip|contradiction|red flag|why)/i.test(args.message)) {
     return [
       `1. Load-bearing risk: ${renderCitation(primary)} is the pattern that best explains the pressure here. The first signal I would hold onto is ${leadSignal.toLowerCase()}.`,
-      `2. What that means: ${args.sparseEvidence ? 'evidence is still thin, so I would treat this as a pressure-tested hypothesis, not settled fact.' : `this is grounded in ${primary.evidenceCount} sources and ${primary.observationCount} observations, but it is still authored/composite evidence rather than measured customer outcomes.`}`,
+      `2. What that means: ${args.sparseEvidence ? 'evidence is still thin, so I would treat this as a pressure-tested hypothesis, not settled fact.' : `this is grounded in ${primary.evidenceCount} sources and ${primary.observationCount} observations, but it is still authored/composite evidence rather than measured customer outcomes.`}${evidenceLine ? ` ${evidenceLine}` : ''}`,
       `3. Next move: put "${diagnosticQuestion}" in front of the sponsor or workstream lead this turn. ${nextPattern}`,
     ].join('\n\n');
   }
 
   return [
     `1. Best anchor: ${renderCitation(primary)} is the most relevant pattern for this ask in ${args.context.program.name}.`,
-    `2. What I would pressure-test: ${leadSignal}. ${args.sparseEvidence ? 'Evidence is thin beyond this anchor, so I would keep the claim directional.' : `The support behind it is ${primary.evidenceCount} sources and ${primary.observationCount} observations, still mostly authored/composite rather than measured outcomes.`}`,
+    `2. What I would pressure-test: ${leadSignal}. ${args.sparseEvidence ? 'Evidence is thin beyond this anchor, so I would keep the claim directional.' : `The support behind it is ${primary.evidenceCount} sources and ${primary.observationCount} observations, still mostly authored/composite rather than measured outcomes.`}${evidenceLine ? ` ${evidenceLine}` : ''}`,
     `3. Concrete next step: force an answer to "${diagnosticQuestion}" before you lock scope, funding, or delivery commitments. ${nextPattern}`,
   ].join('\n\n');
 }
@@ -433,6 +622,7 @@ async function synthesizeWithClaude(args: {
   context: ProgramContextBundle;
   citations: ProgramsNexusCitation[];
   sparseEvidence: boolean;
+  patternEvidence: ProgramsNexusPatternEvidence;
 }): Promise<string | null> {
   if (
     process.env.NODE_ENV === 'test'
@@ -452,6 +642,7 @@ async function synthesizeWithClaude(args: {
       'Stay direct, structured, and specific. Never flatter the user.',
       'Use the provided markdown citations verbatim.',
       'If sparseEvidence is true, say "Evidence is thin" in the first sentence.',
+      'If canonicalPatternEvidence.noMatch or missingEvidence is true, surface that limitation explicitly and do not fill gaps with invented pattern evidence.',
       'Be explicit that most support here is authored/composite unless the composition says otherwise.',
       'Close with one concrete next step.',
       AGENT_DEMO_SYSTEM_BLOCK,
@@ -470,6 +661,7 @@ async function synthesizeWithClaude(args: {
                 deliverables: args.context.deliverables,
                 flags: args.context.flags,
                 sparseEvidence: args.sparseEvidence,
+                canonicalPatternEvidence: args.patternEvidence,
                 question: args.message,
                 citationRegistry: args.citations.map((citation) => ({
                   label: citation.label,
@@ -477,6 +669,12 @@ async function synthesizeWithClaude(args: {
                   evidenceCount: citation.evidenceCount,
                   observationCount: citation.observationCount,
                   matchReason: citation.matchReason,
+                  sourceKind: citation.sourceKind,
+                  sourceBasis: citation.sourceBasis,
+                  confidenceLevel: citation.canonicalConfidenceLevel,
+                  missingRequiredFields: citation.missingRequiredFields,
+                  missingProvenance: citation.missingProvenance,
+                  unsupportedClaimFlags: citation.unsupportedClaimFlags,
                 })),
               },
               null,
@@ -505,7 +703,12 @@ export async function runProgramsNexusTurn(args: {
   ctx: ProgramsNexusTenantCtx;
   message: string;
   context: ProgramContextBundle;
+  canonicalPatternIndex?: CanonicalPatternIndexResult | null;
 }): Promise<ProgramsNexusTurnResponse> {
+  const patternEvidence = buildPatternEvidence(args.canonicalPatternIndex);
+  const canonicalCitations = args.canonicalPatternIndex?.status === 'ready'
+    ? args.canonicalPatternIndex.patterns.slice(0, 3).map(buildCanonicalCitation)
+    : [];
   const patterns = getPatternManifestEntriesWithMetrics(args.ctx.clientKey)
     .filter((pattern) => patternMatchesIndustry(pattern, args.ctx.industryCode));
   const anchorKey = normalizePatternKey((args.context.patternPreload?.topic_key as string | undefined) ?? null);
@@ -522,14 +725,22 @@ export async function runProgramsNexusTurn(args: {
     .sort((a, b) => b.score - a.score)
     .slice(0, 3);
 
-  const citations = rankedPatterns.map((entry) => buildCitation(entry));
-  const confidentMatches = rankedPatterns.filter((entry) => entry.confidence >= 0.6);
-  const sparseEvidence = confidentMatches.length < 3;
+  const canonicalLabels = new Set(canonicalCitations.map((citation) => citation.label.trim().toLowerCase()));
+  const citations = [
+    ...canonicalCitations,
+    ...rankedPatterns
+      .map((entry) => buildCitation(entry))
+      .filter((citation) => !canonicalLabels.has(citation.label.trim().toLowerCase())),
+  ].slice(0, 3);
+  const sparseEvidence = citations.filter((citation) => citation.confidence >= 0.6).length < 3
+    || patternEvidence.noMatch
+    || patternEvidence.missingEvidence;
   const fallback = buildStructuredResponse({
     message: args.message,
     context: args.context,
     citations,
     sparseEvidence,
+    patternEvidence,
   });
 
   const llmText = await synthesizeWithClaude({
@@ -538,6 +749,7 @@ export async function runProgramsNexusTurn(args: {
     context: args.context,
     citations,
     sparseEvidence,
+    patternEvidence,
   }).catch(() => null);
 
   const response = llmText ?? fallback;
@@ -557,5 +769,74 @@ export async function runProgramsNexusTurn(args: {
     sources,
     suggestions: buildFollowUps(citations, args.message),
     activePatternSlug: citations[0]?.slug ?? anchorKey,
+    patternEvidence,
+  };
+}
+
+export function normalizeProgramsNexusCanonicalIndustry(value: string | null | undefined): CanonicalIndustry | undefined {
+  const normalized = value?.trim().toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '');
+  if (!normalized) return undefined;
+  if (normalized.includes('retail')) return 'retail';
+  if (normalized.includes('health') || normalized === 'hc') return 'healthcare';
+  if (normalized.includes('fin') || normalized.includes('bank')) return 'financial_services';
+  if (normalized.includes('energy')) return 'energy';
+  if (normalized.includes('public') || normalized.includes('government')) return 'public_sector';
+  return undefined;
+}
+
+export function mapProgramPhaseToCanonicalMovePhase(
+  phase: number | null | undefined,
+): CanonicalStrategicMovePhase | undefined {
+  switch (phase) {
+    case 0:
+      return 'originate';
+    case 1:
+      return 'charter';
+    case 2:
+      return 'diagnose_discover';
+    case 3:
+      return 'design';
+    case 4:
+      return 'roadmap_business_case_change_value_plan';
+    case 5:
+      return 'mobilize_handoff';
+    default:
+      return undefined;
+  }
+}
+
+export function buildProgramsNexusCanonicalPatternQuery(args: {
+  ctx: ProgramsNexusTenantCtx;
+  context: ProgramContextBundle;
+  message: string;
+  clientId?: string | null;
+}): CanonicalPatternIndexQuery {
+  const patternPreloadTitle = typeof args.context.patternPreload?.title === 'string'
+    ? args.context.patternPreload.title
+    : '';
+  const patternPreloadKey = typeof args.context.patternPreload?.topic_key === 'string'
+    ? args.context.patternPreload.topic_key
+    : '';
+  const evidenceTerms = [
+    args.message,
+    args.context.program.name,
+    args.context.program.archetype ?? '',
+    patternPreloadTitle,
+    patternPreloadKey,
+    ...args.context.flags.map((flag) => flag.headline),
+    ...args.context.deliverables.map((deliverable) => `${deliverable.title} ${deliverable.typeKey}`),
+  ]
+    .join(' ')
+    .replace(/[_-]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+  return {
+    tenant_key: args.ctx.clientKey,
+    client_id: args.clientId ?? undefined,
+    industry: normalizeProgramsNexusCanonicalIndustry(args.ctx.industryCode),
+    strategic_move_phase: mapProgramPhaseToCanonicalMovePhase(args.context.program.currentPhase),
+    query: evidenceTerms || args.message,
+    limit: 3,
   };
 }

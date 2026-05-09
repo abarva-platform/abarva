@@ -6,6 +6,10 @@ const createThread = jest.fn();
 const assembleContext = jest.fn();
 const touchThread = jest.fn();
 const runProgramsNexusTurn = jest.fn();
+const buildProgramsNexusCanonicalPatternQuery = jest.fn();
+const searchCanonicalPatternIndex = jest.fn();
+const getProgramsRouteSupabase = jest.fn();
+const getProgramById = jest.fn();
 
 jest.mock('@/app/api/v1/programs/_auth', () => {
   class MockTenancyError extends Error {
@@ -32,6 +36,19 @@ jest.mock('@/lib/programs/nexus', () => ({
 
 jest.mock('@/lib/programs/nexus-free-text', () => ({
   runProgramsNexusTurn,
+  buildProgramsNexusCanonicalPatternQuery,
+}));
+
+jest.mock('@/lib/intelligence/canonical/runtime-pattern-index', () => ({
+  searchCanonicalPatternIndex,
+}));
+
+jest.mock('@/lib/programs/programs-auth-mode-server', () => ({
+  getProgramsRouteSupabase,
+}));
+
+jest.mock('@/lib/programs/queries', () => ({
+  getProgramById,
 }));
 
 function makeRequest(body: unknown | string): NextRequest {
@@ -69,7 +86,33 @@ describe('POST /api/v1/programs/[programId]/nexus/ask', () => {
       name: 'Apex Retail',
       industry_code: 'retail',
     });
+    getProgramsRouteSupabase.mockResolvedValue({
+      mode: 'service_role',
+      supabase: { mocked: true },
+    });
+    getProgramById.mockResolvedValue({
+      id: 'program_1',
+      name: 'Morrison Owned-Brand Margin Recovery',
+      currentPhase: 2,
+    });
     createThread.mockResolvedValue({ id: 'thread_program_1' });
+    buildProgramsNexusCanonicalPatternQuery.mockReturnValue({
+      tenant_key: 'apexretail',
+      client_id: 'client_1',
+      industry: 'retail',
+      strategic_move_phase: 'diagnose_discover',
+      query: 'What assumptions are load-bearing?',
+      limit: 3,
+    });
+    searchCanonicalPatternIndex.mockResolvedValue({
+      source: 'persisted_canonical_corpus',
+      status: 'no_match',
+      patterns: [],
+      total: 0,
+      warnings: ['WARNING_CANONICAL_PATTERN_NO_MATCH: no persisted canonical patterns matched the query.'],
+      filters_applied: {},
+      cache: { mode: 'disabled', key: null, ttl_ms: 60000 },
+    });
     assembleContext.mockResolvedValue({
       programId: 'program_1',
       program: {
@@ -90,6 +133,16 @@ describe('POST /api/v1/programs/[programId]/nexus/ask', () => {
       sparseEvidence: false,
       activePatternSlug: 'owned-brand-margin-recovery',
       suggestions: ['Pressure-test the assumptions behind Owned Brand Margin Recovery'],
+      patternEvidence: {
+        source: 'persisted_canonical_corpus',
+        status: 'ready',
+        retrievedCount: 1,
+        warnings: [],
+        noMatch: false,
+        missingEvidence: false,
+        query: {},
+        patterns: [],
+      },
       citations: [
         {
           slug: 'owned-brand-margin-recovery',
@@ -147,12 +200,18 @@ describe('POST /api/v1/programs/[programId]/nexus/ask', () => {
       expect.objectContaining({
         ctx: expect.objectContaining({ clientKey: 'apex-retail', clientName: 'Apex Retail' }),
         message: 'What assumptions are load-bearing?',
+        canonicalPatternIndex: expect.objectContaining({ status: 'no_match' }),
       }),
     );
+    expect(searchCanonicalPatternIndex).toHaveBeenCalledWith(expect.objectContaining({
+      industry: 'retail',
+      strategic_move_phase: 'diagnose_discover',
+    }));
     expect(events.at(-1)?.data).toMatchObject({
       threadId: 'thread_program_1',
       routeType: 'manifest_fallback',
       confidence: 'medium',
+      patternEvidence: expect.objectContaining({ status: 'ready' }),
       citationCount: 1,
     });
     expect(touchThread).toHaveBeenCalledWith('thread_program_1');
