@@ -23,10 +23,23 @@ import type {
 } from '@/lib/source/types';
 import { formatSourceFinancialValue } from '@/lib/source/financial-display';
 
-type ViewMode = 'list' | 'kanban' | 'scatter';
+export type ViewMode = 'list' | 'kanban' | 'scatter';
 
 const STORAGE_KEY = 'source-events-view-mode';
-const SCATTER_VALUE_COVERAGE_THRESHOLD = 0.5;
+export const SCATTER_VALUE_COVERAGE_THRESHOLD = 0.5;
+
+export function readStoredViewMode(): ViewMode {
+  if (typeof window === 'undefined') return 'list';
+  try {
+    const stored = window.localStorage.getItem(STORAGE_KEY);
+    if (stored === 'list' || stored === 'kanban' || stored === 'scatter') return stored;
+  } catch { /* ignore */ }
+  return 'list';
+}
+
+export function persistViewMode(mode: ViewMode) {
+  try { window.localStorage.setItem(STORAGE_KEY, mode); } catch { /* ignore */ }
+}
 
 interface Props {
   events: ReadonlyArray<SourcingEventSummary>;
@@ -36,16 +49,7 @@ interface Props {
   canViewFinancialValues?: boolean;
 }
 
-function readStoredMode(): ViewMode {
-  if (typeof window === 'undefined') return 'list';
-  try {
-    const stored = window.localStorage.getItem(STORAGE_KEY);
-    if (stored === 'list' || stored === 'kanban' || stored === 'scatter') return stored;
-  } catch {
-    // ignore — localStorage may be unavailable
-  }
-  return 'list';
-}
+const readStoredMode = readStoredViewMode;
 
 export function SourceEventsViewToggle({
   events,
@@ -141,7 +145,7 @@ export function SourceEventsViewToggle({
 
 // ── Kanban ────────────────────────────────────────────────────────────────
 
-function KanbanBoard({
+export function KanbanBoard({
   events,
   canViewFinancialValues,
 }: {
@@ -203,7 +207,7 @@ function KanbanBoard({
 
 // ── Scatter ───────────────────────────────────────────────────────────────
 
-function ScatterPlot({
+export function ScatterPlot({
   events,
   canViewFinancialValues,
 }: {
