@@ -1,5 +1,7 @@
+import { randomUUID } from 'node:crypto';
 import { buildTowerViewModel } from '@/lib/tower/aggregate';
 import { getServerSupabase } from '@/lib/supabase-server';
+import { validateAtlasCitationList, type AtlasCitation } from '@/lib/tower/atlas-citation-validator';
 import type {
   AtlasBenchmark,
   AtlasBenchmarkPoint,
@@ -13,6 +15,52 @@ import type {
 } from '@/lib/atlas/types';
 
 type JsonObject = Record<string, unknown>;
+
+export type AtlasReasoningTraceTrigger =
+  | 'tower_right_rail_render'
+  | 'atlas_chat_turn'
+  | 'metric_explanation';
+
+export interface AtlasReasoningTraceInputSummary {
+  initiativesCount: number;
+  vendorsCount: number;
+  pressuresCount: number;
+  bandConfidenceFloor: 'high' | 'med' | 'low' | 'none';
+  lens: string;
+  todayIso: string;
+  metricKey?: string;
+}
+
+export interface AtlasReasoningTraceObservation {
+  number: number;
+  topic: string;
+  body: string;
+  confidenceFloor: 'HIGH' | 'MED' | 'LOW';
+  citationsCount: number;
+  actionsCount: number;
+}
+
+export interface AtlasReasoningTraceInput {
+  threadId?: string | null;
+  tenantId: string;
+  userId?: string | null;
+  trigger: AtlasReasoningTraceTrigger;
+  inputSummary: AtlasReasoningTraceInputSummary;
+  patternsFired: ReadonlyArray<string>;
+  patternsSkipped: ReadonlyArray<{ pattern: string; reason: string }>;
+  observations: ReadonlyArray<AtlasReasoningTraceObservation>;
+  ifYouOnlyDoOneToday?: string | null;
+  citations: ReadonlyArray<AtlasCitation>;
+  interpretationConfidence: 'high' | 'med' | 'low';
+  fallbackUsed: boolean;
+  fallbackReason?: string | null;
+  latencyMs?: number | null;
+  promptTokens?: number | null;
+  completionTokens?: number | null;
+  model: string;
+  promptVersion: string;
+  packageVersion: string;
+}
 
 const SIGNAL_METRIC_MAP: Record<string, string> = {
   shadow_ai_detected: 'shadow_ai_annual_spend_usd',
@@ -546,6 +594,37 @@ export async function appendAtlasTrace(input: {
     model_name: input.modelName ?? null,
     prompt_version: input.promptVersion ?? null,
     latency_ms: input.latencyMs ?? null,
+  });
+  if (error) throw new Error(error.message);
+}
+
+export async function appendAtlasReasoningTrace(input: AtlasReasoningTraceInput) {
+  const citationErrors = validateAtlasCitationList(input.citations);
+  if (citationErrors.length > 0) {
+    throw new Error(`Invalid Atlas reasoning trace citations: ${citationErrors.join('; ')}`);
+  }
+
+  const { error } = await getServerSupabase().from('atlas_reasoning_traces').insert({
+    trace_id: `atlas_rt_${randomUUID()}`,
+    thread_id: input.threadId ?? null,
+    tenant_id: input.tenantId,
+    user_id: input.userId ?? null,
+    trigger: input.trigger,
+    input_summary: input.inputSummary,
+    patterns_fired: input.patternsFired,
+    patterns_skipped: input.patternsSkipped,
+    observations: input.observations,
+    if_you_only_do_one: input.ifYouOnlyDoOneToday ?? null,
+    citations: input.citations,
+    interpretation_confidence: input.interpretationConfidence,
+    fallback_used: input.fallbackUsed,
+    fallback_reason: input.fallbackReason ?? null,
+    latency_ms: input.latencyMs ?? null,
+    prompt_tokens: input.promptTokens ?? null,
+    completion_tokens: input.completionTokens ?? null,
+    model: input.model,
+    prompt_version: input.promptVersion,
+    package_version: input.packageVersion,
   });
   if (error) throw new Error(error.message);
 }
