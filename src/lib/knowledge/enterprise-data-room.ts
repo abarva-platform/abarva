@@ -5,6 +5,7 @@ import { apexFinancials } from '@/data/apexretail/financials';
 import { apexLeadership } from '@/data/apexretail/leadership';
 import { apexOpportunities } from '@/data/apexretail/opportunities';
 import { apexOutcomes } from '@/data/apexretail/outcomes';
+import { APEX_EXECUTIVE_BENCH } from '@/data/apexretail/org-structure';
 import { apexRFP } from '@/data/apexretail/rfp_data';
 import { apexRetailTechInventory } from '@/data/apexretail/technology_inventory';
 import { apexVendors } from '@/data/apexretail/vendors';
@@ -382,21 +383,30 @@ function personId(name: string): string {
 
 function roleOrgUnit(role: string): string {
   if (role.includes('CFO')) return 'Finance';
+  if (role.includes('COO')) return 'Operations';
   if (role.includes('CIO') || role.includes('CTO')) return 'Enterprise IT';
+  if (role.includes('CISO')) return 'Security';
   if (role.includes('CDO')) return 'Data and Analytics';
-  if (role.includes('CPO')) return 'People';
+  if (role.includes('CHRO') || role.includes('CPO')) return 'People';
   if (role.includes('Supply Chain')) return 'Supply Chain';
   if (role.includes('CMO')) return 'Marketing';
+  if (role.includes('Merchandising')) return 'Merchandising';
+  if (role.includes('Sustainability')) return 'Sustainability';
+  if (role.includes('General Counsel')) return 'Legal';
   return 'Executive Leadership';
 }
 
 function buildApexPeople(): EnterprisePersonRecord[] {
+  const orgByName = new Map<string, (typeof APEX_EXECUTIVE_BENCH)[number]>(
+    APEX_EXECUTIVE_BENCH.map((leader) => [leader.name, leader] as const),
+  );
+
   return apexLeadership.executives.map((leader) => ({
     id: personId(leader.name),
     name: leader.name,
     role: leader.role,
     orgUnit: roleOrgUnit(leader.role),
-    reportsToRole: leader.role === 'CEO' ? undefined : 'CEO',
+    reportsToRole: orgByName.get(leader.name)?.reportsToRole ?? undefined,
     priorities: leader.priorities,
     ownsSystems: leader.ownsSystems ?? [],
     sponsorsPrograms: leader.role === 'CFO'

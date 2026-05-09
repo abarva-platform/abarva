@@ -100,7 +100,7 @@ export const apexOpportunities = {
       pilotStatus: "Live — 12 stores, 4 months",
       pilotSavingsMillions: 0.6,
       pilotTargetMillions: 0.8,
-      keyBenefit: "Scale pilot results from 12 to 1,240 stores. CPO (Lisa Chen) is a champion.",
+      keyBenefit: "Scale pilot results from 12 to 1,240 stores. CHRO (Thomas Brennan) is a champion.",
     },
     {
       id: "op-006",

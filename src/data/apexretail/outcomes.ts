@@ -23,7 +23,7 @@ export const apexOutcomes = {
       progressPercent: 75,
       trajectory: "On track",
       notes:
-        "12 stores live for 4 months. $0.6M savings delivered against $0.8M commitment. Early but on pace. CPO (Lisa Chen) is active champion. Full rollout to 1,240 stores would yield $28M annually.",
+        "12 stores live for 4 months. $0.6M savings delivered against $0.8M commitment. Early but on pace. CHRO (Thomas Brennan) is active champion. Full rollout to 1,240 stores would yield $28M annually.",
       metrics: {
         laborHoursReducedPercent: 8.2,
         schedulingAccuracyImprovement: 14,

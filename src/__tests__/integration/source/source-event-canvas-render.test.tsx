@@ -53,7 +53,7 @@ function makeEvent(overrides: Partial<SourcingEventSummary> = {}): SourcingEvent
     currentStageKey: 'scope',
     currentStageLabel: 'Scope',
     openAlerts: 0,
-    owner: 'Maya Desai',
+    owner: 'Nathan Kohl',
     agingDays: 4,
     blocker: null,
     nextAction: 'Lock scope memo',
@@ -205,7 +205,7 @@ describe('UniversalCanvasShell · SSR render', () => {
   it('renders the sticky AgentDock composer', () => {
     const html = render();
     expect(html).toContain('agent-dock-input');
-    expect(html).toContain('Ask Sentinel…');
+    expect(html).toContain('Ask Sentinel Source…');
     // Paperclip upload button is rendered.
     expect(html).toContain('agent-dock-attach');
   });
@@ -272,8 +272,8 @@ describe('UniversalCanvasShell · SSR render', () => {
   // ── B4: suggested chat prompts populate the composer ──────────────────────
   it('renders the AgentDock empty-thread hint and "Try one" suggestions label', () => {
     const html = render();
-    // Scope stage (1-9) → Sentinel per canvasDockAgentForStage.
-    expect(html).toContain('Ask Sentinel anything.');
+    // Scope stage (1-9) renders the Source-branded Sentinel lane.
+    expect(html).toContain('Ask Sentinel Source anything.');
     // The dock surfaces the agent role under the name as the empty-state
     // subtitle (matches the AGENT_DOCK_ROLE_COPY entry for Sentinel).
     expect(html).toContain('Drafts artifacts, surfaces evidence, flags gaps before they cost you.');

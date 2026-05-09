@@ -4,7 +4,7 @@ export const apexRFP = {
     rfpIssuedDate: "January 2026",
     rfpDeadline: "March 2026",
     evaluationCompletedDate: "April 2026",
-    evaluatingTeam: ["SVP Supply Chain (David Kim)", "CIO (Thomas Reeves)", "AbarVa Intelligence"],
+    evaluatingTeam: ["Chief Supply Chain Officer (Michael Tanaka)", "CIO (Carlos Rivera)", "AbarVa Intelligence"],
     totalVendorsEvaluated: 4,
     recommendation: "Blue Yonder",
   },

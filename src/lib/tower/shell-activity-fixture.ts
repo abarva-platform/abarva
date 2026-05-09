@@ -22,7 +22,7 @@ export const ACTIVITY_LOG: ActivityEntry[] = [
   { id: 'ac8', timestamp: 'Apr 25 · 10:30', actor: 'Sentinel', actorInitials: 'Sn', actorType: 'sentinel', event: 'T3-H01 Ambient AI pattern validated across 4 programs', surface: 'Intelligence', detail: 'Highest program citation count in library — recommended for featured status' },
   { id: 'ac9', timestamp: 'Apr 24 · 14:00', actor: 'Marcus Webb', actorInitials: 'MW', actorType: 'human', event: 'APX-CC-2026 NLP classifier hit 94% accuracy', surface: 'Programs', linkedProgram: 'APX-CC-2026', linkedProgramHref: '/programs/apx-cc-2026' },
   { id: 'ac10', timestamp: 'Apr 24 · 11:20', actor: 'Nexus', actorInitials: 'Nx', actorType: 'nexus', event: 'APX-SAP-2026 Discovery phase — 4 of 6 interviews complete', surface: 'Programs', linkedProgram: 'APX-SAP-2026', linkedProgramHref: '/programs/apx-sap-2026' },
-  { id: 'ac11', timestamp: 'Apr 23 · 16:00', actor: 'Steward', actorInitials: 'St', actorType: 'steward', event: 'James Okafor invite sent — Source collaborator', surface: 'Setup' },
+  { id: 'ac11', timestamp: 'Apr 23 · 16:00', actor: 'Steward', actorInitials: 'St', actorType: 'steward', event: 'Carlos Rivera invite sent — Source collaborator', surface: 'Setup' },
   { id: 'ac12', timestamp: 'Apr 22 · 09:00', actor: 'Atlas', actorInitials: 'At', actorType: 'atlas', event: 'DFv2 Q1 outcome report published — restricted savings confirmed', surface: 'Programs', linkedProgram: 'APX-DFV2-2025', linkedProgramHref: '/programs/apx-dfv2-2025' },
 ];
 
