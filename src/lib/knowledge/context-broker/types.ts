@@ -95,11 +95,6 @@ export interface SemanticChunkHit {
   score: number;
 }
 
-/**
- * Corpus pattern hit (placeholder shape; full type lives in the
- * intelligence module). CB-6 narrows this when it wires real corpus
- * retrieval. CB-1 always returns `[]` for corpus pattern hits.
- */
 export interface CorpusPatternHit {
   patternId: string;
   patternName: string;
@@ -107,6 +102,12 @@ export interface CorpusPatternHit {
   score?: number;
   /** One-line summary for the panel. */
   summary?: string;
+  sourceBasis?: string;
+  confidenceLevel?: string;
+  missingRequiredFields?: string[];
+  missingProvenance?: boolean;
+  unsupportedClaimCount?: number;
+  matchReasons?: string[];
 }
 
 /**

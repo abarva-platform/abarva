@@ -38,6 +38,14 @@ import {
   isPrivateVectorAvailable,
   type PrivateDataPlaneResource,
 } from '@/lib/knowledge/private-data-plane/registry';
+import {
+  searchCanonicalPatternIndex,
+  WARNING_CANONICAL_CORPUS_EMPTY,
+  WARNING_CANONICAL_CORPUS_READ_FAILED,
+  WARNING_CANONICAL_PATTERN_NO_MATCH,
+  type CanonicalPatternIndexHit,
+  type CanonicalPatternIndexResult,
+} from '@/lib/intelligence/canonical/runtime-pattern-index';
 import type { TenantDataAdapter } from '@/lib/knowledge/tenant-data';
 import type {
   ContextChunk,
@@ -54,6 +62,7 @@ import {
   type ContextAssembleInput,
   type ContextBundle,
   type ContextProvenance,
+  type CorpusPatternHit,
   type GraphPath,
   type SemanticChunkHit,
   type WorldviewChunkHit,
@@ -64,6 +73,11 @@ import { callWorldviewRetriever } from './worldview-retrieval';
 export interface ContextBroker {
   assemble(input: ContextAssembleInput): Promise<ContextBundle>;
 }
+
+export type CorpusPatternRetriever = (
+  input: ContextAssembleInput,
+  tenantKey: string | null,
+) => Promise<CanonicalPatternIndexResult>;
 
 const DEFAULTS = {
   maxFacts: 12,
@@ -217,6 +231,7 @@ function emptyBundle(
   warnings: string[],
   infoTags: string[] = [],
   worldviewChunks: WorldviewChunkHit[] = [],
+  corpusPatterns: CorpusPatternHit[] = [],
 ): ContextBundle {
   const resource = getPrivateDataPlaneResource(tenantKey);
   return {
@@ -226,7 +241,7 @@ function emptyBundle(
     facts: [],
     graphPaths: [],
     semanticChunks: [],
-    corpusPatterns: [],
+    corpusPatterns,
     worldviewChunks,
     provenance: [],
     assembledAt: nowIso(),
@@ -239,6 +254,7 @@ function emptyBundle(
       graphPaths: [],
       semanticChunks: [],
       worldviewChunks,
+      corpusPatterns,
     }),
   };
 }
@@ -255,13 +271,17 @@ function buildRetrievalTrace(args: {
   graphPaths: Array<GraphNeighborhood | GraphPath>;
   semanticChunks: SemanticChunkHit[];
   worldviewChunks: WorldviewChunkHit[];
+  corpusPatterns: CorpusPatternHit[];
 }): NonNullable<ContextBundle['retrievalTrace']> {
   const privateFactIds = args.facts.map((fact) => fact.recordId);
   const privateChunkIds = args.semanticChunks.map((hit) => hit.chunk.chunkId);
   const graphRootIds = args.graphPaths
     .map(graphRootId)
     .filter((id): id is string => Boolean(id));
-  const sharedCorpusIds = args.worldviewChunks.map((hit) => hit.chunkId);
+  const sharedCorpusIds = [
+    ...args.worldviewChunks.map((hit) => hit.chunkId),
+    ...args.corpusPatterns.map((hit) => hit.patternId),
+  ];
   return {
     tenant_key: args.tenantKey,
     data_plane_id: args.resource?.dataPlaneId ?? null,
@@ -316,6 +336,53 @@ function provenanceForWorldviewChunk(hit: WorldviewChunkHit): ContextProvenance 
   };
 }
 
+function provenanceForCorpusPattern(hit: CorpusPatternHit): ContextProvenance {
+  return {
+    sourceClass: 'pattern_catalog',
+    sourceId: hit.patternId,
+    sourceDoc: hit.sourceBasis,
+    confidence: hit.score,
+    classification: 'internal',
+  };
+}
+
+function corpusPatternInfoTag(hits: number): string {
+  return `Canonical pattern retrieval via persisted corpus (hits=${hits}).`;
+}
+
+function patternHitFromCanonical(hit: CanonicalPatternIndexHit): CorpusPatternHit {
+  return {
+    patternId: hit.canonical_id,
+    patternName: hit.title,
+    score: hit.score,
+    summary: hit.summary,
+    sourceBasis: hit.source_basis,
+    confidenceLevel: hit.confidence_level,
+    missingRequiredFields: hit.missing_required_fields.map(String),
+    missingProvenance: hit.missing_provenance,
+    unsupportedClaimCount: hit.unsupported_claim_flags.length,
+    matchReasons: hit.match_reasons,
+  };
+}
+
+function corpusWarningsFromIndex(result: CanonicalPatternIndexResult): string[] {
+  if (result.status === 'ready') return [];
+  if (result.status === 'empty') return [WARNING_CANONICAL_CORPUS_EMPTY];
+  if (result.status === 'no_match') return [WARNING_CANONICAL_PATTERN_NO_MATCH];
+  return [WARNING_CANONICAL_CORPUS_READ_FAILED];
+}
+
+async function defaultCorpusPatternRetriever(
+  input: ContextAssembleInput,
+  tenantKey: string | null,
+): Promise<CanonicalPatternIndexResult> {
+  return searchCanonicalPatternIndex({
+    query: input.query,
+    tenant_key: tenantKey ?? undefined,
+    limit: 8,
+  });
+}
+
 /**
  * Default `ContextBroker` — TD-2/TD-3-backed for facts/graph/chunks
  * + Pinecone vector retrieval (CB-3); corpus retrieval is still
@@ -330,6 +397,7 @@ export class DefaultContextBroker implements ContextBroker {
   constructor(
     private readonly adapter: TenantDataAdapter = getTenantDataAdapter(),
     private readonly openaiClient?: OpenAIEmbeddingsLike,
+    private readonly corpusPatternRetriever: CorpusPatternRetriever = defaultCorpusPatternRetriever,
   ) {}
 
   async assemble(input: ContextAssembleInput): Promise<ContextBundle> {
@@ -351,6 +419,8 @@ export class DefaultContextBroker implements ContextBroker {
       // pattern-catalog warning since the user IS getting corpus
       // content. When worldview itself is unreachable we tag both.
       const worldviewResult = await this.queryWorldviewSafe(input.query);
+      const corpusPatternResult = await this.queryCorpusPatternsSafe(input, null);
+      const corpusPatterns = corpusPatternResult.patterns.map(patternHitFromCanonical);
       const corpusWarnings: string[] = [];
       const corpusInfoTags: string[] = [];
       if (worldviewResult.reached) {
@@ -359,20 +429,25 @@ export class DefaultContextBroker implements ContextBroker {
             worldviewRetrievalInfoTag(worldviewResult.hits.length, 6),
           );
         }
-        // Pattern catalog remains pending — distinct from worldview.
-        corpusWarnings.push(WARNING_CORPUS_PENDING);
       } else {
         corpusWarnings.push(WARNING_WORLDVIEW_PENDING);
-        corpusWarnings.push(WARNING_CORPUS_PENDING);
       }
+      if (corpusPatterns.length > 0) {
+        corpusInfoTags.push(corpusPatternInfoTag(corpusPatterns.length));
+      }
+      corpusWarnings.push(...corpusWarningsFromIndex(corpusPatternResult));
       const bundle = emptyBundle(
         input,
         null,
         corpusWarnings,
         corpusInfoTags,
         worldviewResult.hits,
+        corpusPatterns,
       );
-      bundle.provenance = worldviewResult.hits.map(provenanceForWorldviewChunk);
+      bundle.provenance = [
+        ...worldviewResult.hits.map(provenanceForWorldviewChunk),
+        ...corpusPatterns.map(provenanceForCorpusPattern),
+      ];
       return bundle;
     }
 
@@ -489,19 +564,23 @@ export class DefaultContextBroker implements ContextBroker {
     // reach — otherwise corpus content IS being delivered, just from
     // the worldview namespace rather than the pattern manifest.
     let worldviewChunks: WorldviewChunkHit[] = [];
+    let corpusPatterns: CorpusPatternHit[] = [];
     if (input.mode === 'full') {
       const worldviewResult = await this.queryWorldviewSafe(input.query);
+      const corpusPatternResult = await this.queryCorpusPatternsSafe(input, tenantKey);
+      corpusPatterns = corpusPatternResult.patterns.map(patternHitFromCanonical);
       worldviewChunks = worldviewResult.hits;
       if (worldviewResult.reached) {
         if (worldviewChunks.length > 0) {
           infoTags.push(worldviewRetrievalInfoTag(worldviewChunks.length, 6));
         }
-        // Pattern catalog still pending — distinct gap.
-        warnings.push(WARNING_CORPUS_PENDING);
       } else {
         warnings.push(WARNING_WORLDVIEW_PENDING);
-        warnings.push(WARNING_CORPUS_PENDING);
       }
+      if (corpusPatterns.length > 0) {
+        infoTags.push(corpusPatternInfoTag(corpusPatterns.length));
+      }
+      warnings.push(...corpusWarningsFromIndex(corpusPatternResult));
     }
 
     // ──────────────── Provenance ────────────────
@@ -510,6 +589,7 @@ export class DefaultContextBroker implements ContextBroker {
       ...graphPaths.map((path) => provenanceForNeighborhood(path, privateResource)),
       ...semanticChunks.map((chunk) => provenanceForChunk(chunk, privateResource)),
       ...worldviewChunks.map(provenanceForWorldviewChunk),
+      ...corpusPatterns.map(provenanceForCorpusPattern),
     ];
 
     return {
@@ -519,7 +599,7 @@ export class DefaultContextBroker implements ContextBroker {
       facts,
       graphPaths,
       semanticChunks,
-      corpusPatterns: [],
+      corpusPatterns,
       worldviewChunks,
       provenance,
       assembledAt: nowIso(),
@@ -532,6 +612,7 @@ export class DefaultContextBroker implements ContextBroker {
         graphPaths,
         semanticChunks,
         worldviewChunks,
+        corpusPatterns,
       }),
     };
   }
@@ -548,6 +629,26 @@ export class DefaultContextBroker implements ContextBroker {
     const queryVector = await embedQueryForWorldview(query, this.openaiClient);
     if (!queryVector) return { hits: [], reached: false };
     return callWorldviewRetriever({ queryVector });
+  }
+
+  private async queryCorpusPatternsSafe(
+    input: ContextAssembleInput,
+    tenantKey: string | null,
+  ): Promise<CanonicalPatternIndexResult> {
+    try {
+      return await this.corpusPatternRetriever(input, tenantKey);
+    } catch (error) {
+      return {
+        source: 'persisted_canonical_corpus',
+        status: 'error',
+        patterns: [],
+        total: 0,
+        warnings: [WARNING_CANONICAL_CORPUS_READ_FAILED],
+        filters_applied: { query: input.query, tenant_key: tenantKey ?? undefined, limit: 8 },
+        cache: { mode: 'disabled', key: null, ttl_ms: 0 },
+        error: error instanceof Error ? error.message : String(error),
+      };
+    }
   }
 }
 

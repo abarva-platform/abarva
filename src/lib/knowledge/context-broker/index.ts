@@ -37,7 +37,7 @@ export type {
 
 export { MissingTenantKeyError } from './types';
 
-export type { ContextBroker } from './broker';
+export type { ContextBroker, CorpusPatternRetriever } from './broker';
 
 export {
   DefaultContextBroker,

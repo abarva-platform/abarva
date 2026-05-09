@@ -16,7 +16,14 @@ import {
   extractKeywords,
   vectorRetrievalInfoTag,
   type ContextBroker,
+  type CorpusPatternRetriever,
 } from '..';
+import {
+  WARNING_CANONICAL_CORPUS_EMPTY,
+  WARNING_CANONICAL_PATTERN_NO_MATCH,
+  type CanonicalPatternIndexHit,
+  type CanonicalPatternIndexResult,
+} from '@/lib/intelligence/canonical/runtime-pattern-index';
 import type { OpenAIEmbeddingsLike } from '../embedding-client';
 import type { TenantDataAdapter } from '@/lib/knowledge/tenant-data';
 import type {
@@ -44,6 +51,44 @@ function makeFakeOpenAI(): OpenAIEmbeddingsLike {
 }
 
 const TENANT = 'apex-retail';
+
+const canonicalPatternHit: CanonicalPatternIndexHit = {
+  canonical_id: 'AIP-RETAIL-CONTACT-CENTER-AI-ROUTING',
+  title: 'Contact Center AI Routing',
+  summary: 'Route customer contacts using intent, value, and service context.',
+  industry: ['retail'],
+  enterprise_area: 'front_office',
+  function: 'contact_center',
+  process_area: 'service_routing_and_resolution',
+  use_case_category: 'agentic_workflow',
+  strategic_move_phases: ['design'],
+  maturity_level: 'proven',
+  confidence_level: 'high',
+  source_basis: 'internal_pattern',
+  source_references: [],
+  confidence_rationale: 'Reviewed internal pattern.',
+  missing_required_fields: [],
+  missing_provenance: false,
+  unsupported_claim_flags: [],
+  duplicate_risk: null,
+  score: 0.82,
+  match_reasons: ['query:contact+center+routing'],
+};
+
+function makePatternResult(
+  overrides: Partial<CanonicalPatternIndexResult> = {},
+): CanonicalPatternIndexResult {
+  return {
+    source: 'persisted_canonical_corpus',
+    status: 'empty',
+    patterns: [],
+    total: 0,
+    warnings: [WARNING_CANONICAL_CORPUS_EMPTY],
+    filters_applied: { query: 'test', limit: 8 },
+    cache: { mode: 'disabled', key: null, ttl_ms: 0 },
+    ...overrides,
+  };
+}
 
 function makeRecord(recordId: string, title = recordId): TenantRecord {
   return {
@@ -128,10 +173,11 @@ function buildAdapter(overrides: AdapterOverrides = {}): TenantDataAdapter {
 function makeBroker(
   overrides: AdapterOverrides = {},
   openai: OpenAIEmbeddingsLike = makeFakeOpenAI(),
-): { broker: ContextBroker; adapter: TenantDataAdapter } {
+  patternRetriever: CorpusPatternRetriever = jest.fn().mockResolvedValue(makePatternResult()),
+): { broker: ContextBroker; adapter: TenantDataAdapter; patternRetriever: CorpusPatternRetriever } {
   const adapter = buildAdapter(overrides);
-  const broker = new DefaultContextBroker(adapter, openai);
-  return { broker, adapter };
+  const broker = new DefaultContextBroker(adapter, openai, patternRetriever);
+  return { broker, adapter, patternRetriever };
 }
 
 describe('extractKeywords', () => {
@@ -182,7 +228,7 @@ describe('DefaultContextBroker.assemble — generic mode', () => {
 });
 
 describe('DefaultContextBroker.assemble — corpus mode', () => {
-  it('returns empty bundle with worldview-pending + CB-6 warnings when worldview index is unreachable', async () => {
+  it('returns empty bundle with worldview-pending + canonical-corpus empty warnings when indexes have no hits', async () => {
     // INT-WV-2: with no PINECONE_API_KEY in test env, the worldview
     // retriever returns reached=false and the broker tags both the
     // worldview-pending and pattern-catalog (CB-6) gaps.
@@ -198,7 +244,46 @@ describe('DefaultContextBroker.assemble — corpus mode', () => {
     expect(bundle.worldviewChunks).toEqual([]);
     expect(bundle.provenance).toEqual([]);
     expect(bundle.warnings).toContain(WARNING_WORLDVIEW_PENDING);
-    expect(bundle.warnings).toContain(WARNING_CORPUS_PENDING);
+    expect(bundle.warnings).toContain(WARNING_CANONICAL_CORPUS_EMPTY);
+  });
+
+  it('hydrates corpusPatterns from the persisted canonical index', async () => {
+    const patternRetriever = jest.fn().mockResolvedValue(makePatternResult({
+      status: 'ready',
+      patterns: [canonicalPatternHit],
+      total: 1,
+      warnings: [],
+    }));
+    const { broker } = makeBroker({}, makeFakeOpenAI(), patternRetriever);
+
+    const bundle = await broker.assemble({
+      query: 'contact center routing',
+      mode: 'corpus',
+    });
+
+    expect(patternRetriever).toHaveBeenCalledWith(
+      expect.objectContaining({ query: 'contact center routing', mode: 'corpus' }),
+      null,
+    );
+    expect(bundle.corpusPatterns).toEqual([{
+      patternId: canonicalPatternHit.canonical_id,
+      patternName: canonicalPatternHit.title,
+      score: canonicalPatternHit.score,
+      summary: canonicalPatternHit.summary,
+      sourceBasis: 'internal_pattern',
+      confidenceLevel: 'high',
+      missingRequiredFields: [],
+      missingProvenance: false,
+      unsupportedClaimCount: 0,
+      matchReasons: ['query:contact+center+routing'],
+    }]);
+    expect(bundle.provenance).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        sourceClass: 'pattern_catalog',
+        sourceId: canonicalPatternHit.canonical_id,
+      }),
+    ]));
+    expect(bundle.retrievalTrace?.shared_corpus_ids).toContain(canonicalPatternHit.canonical_id);
   });
 });
 
@@ -471,16 +556,21 @@ describe('DefaultContextBroker.assemble — full mode', () => {
     ).rejects.toBeInstanceOf(MissingTenantKeyError);
   });
 
-  it('behaves like tenant mode + tags the corpus-pending warning', async () => {
+  it('behaves like tenant mode + hydrates canonical corpus pattern gaps', async () => {
     const seedChunks: ContextChunk[] = [
       makeChunk('chunk:apex:cdp:001', 'program:apex-cdp-2026'),
     ];
+    const patternRetriever = jest.fn().mockResolvedValue(makePatternResult({
+      status: 'no_match',
+      warnings: [WARNING_CANONICAL_PATTERN_NO_MATCH],
+      filters_applied: { query: 'apex cdp sponsor', tenant_key: TENANT, limit: 8 },
+    }));
     const { broker } = makeBroker({
       chunksByKeyword: jest.fn().mockResolvedValue(seedChunks),
       getRecord: jest.fn().mockResolvedValue(makeRecord('program:apex-cdp-2026')),
       getGraphNeighborhood: jest.fn().mockImplementation((_t: string, rootId: string) =>
         Promise.resolve(makeNeighborhood(rootId))),
-    });
+    }, makeFakeOpenAI(), patternRetriever);
 
     const bundle = await broker.assemble({
       query: 'apex cdp sponsor',
@@ -492,7 +582,11 @@ describe('DefaultContextBroker.assemble — full mode', () => {
     expect(bundle.facts.length).toBeGreaterThan(0);
     expect(bundle.graphPaths.length).toBeGreaterThan(0);
     expect(bundle.warnings).toContain(WARNING_VECTOR_PENDING);
-    expect(bundle.warnings).toContain(WARNING_CORPUS_PENDING);
+    expect(bundle.warnings).toContain(WARNING_CANONICAL_PATTERN_NO_MATCH);
+    expect(patternRetriever).toHaveBeenCalledWith(
+      expect.objectContaining({ mode: 'full' }),
+      TENANT,
+    );
   });
 });
 
