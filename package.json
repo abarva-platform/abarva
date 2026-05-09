@@ -54,6 +54,8 @@
     "db:load:ai-initiatives": "npx tsx src/scripts/seed/load-ai-initiatives.ts --all",
     "db:backfill:source-canvas": "npx tsx src/scripts/source/backfill-canvas-substrate.ts",
     "db:backfill:source-canvas:dry": "npx tsx src/scripts/source/backfill-canvas-substrate.ts --dry",
+    "db:ensure:client-sourcing-events": "npx tsx src/scripts/source/ensure-client-sourcing-events.ts --no-dry-run",
+    "db:ensure:client-sourcing-events:dry": "npx tsx src/scripts/source/ensure-client-sourcing-events.ts",
     "db:seed:apex-setup-data": "npx tsx src/scripts/setup-data/load-apex-setup-data.ts",
     "db:verify:apex-setup-data": "npx tsx src/scripts/setup-data/verify-apex-setup-data.ts",
     "db:seed:meridian-setup-data": "npx tsx src/scripts/setup-data/load-meridian-setup-data.ts",
