@@ -80,7 +80,7 @@ jest.mock('@/lib/agent/tools/intelligence/_shared', () => ({
 }));
 
 // Import AFTER all mocks are registered.
-import { POST } from '@/app/api/programs/[id]/deliverables/[kind]/export/route';
+import { POST } from '@/app/api/programs/[id]/deliverables/[deliverableId]/export/route';
 
 const PROGRAM_ID = 'APX-CDP-2026';
 
@@ -165,13 +165,13 @@ beforeEach(() => {
 });
 
 const PARAMS_CHARTER = {
-  params: Promise.resolve({ id: PROGRAM_ID, kind: 'program-charter' }),
+  params: Promise.resolve({ id: PROGRAM_ID, deliverableId: 'program-charter' }),
 };
 const PARAMS_OKR = {
-  params: Promise.resolve({ id: PROGRAM_ID, kind: 'okr-baseline' }),
+  params: Promise.resolve({ id: PROGRAM_ID, deliverableId: 'okr-baseline' }),
 };
 
-describe('POST /api/programs/[id]/deliverables/[kind]/export', () => {
+describe('POST /api/programs/[id]/deliverables/[deliverableId]/export', () => {
   it('returns 401 when unauthenticated', async () => {
     requireTenancyMock.mockRejectedValue(new TestTenancyError('unauthenticated'));
     const res = await POST(makeRequest({ spec: charterSpec }), PARAMS_CHARTER);
@@ -214,7 +214,7 @@ describe('POST /api/programs/[id]/deliverables/[kind]/export', () => {
       },
     );
     const res = await POST(req, {
-      params: Promise.resolve({ id: PROGRAM_ID, kind: 'not-a-kind' }),
+      params: Promise.resolve({ id: PROGRAM_ID, deliverableId: 'not-a-kind' }),
     });
     expect(res.status).toBe(400);
     const body = (await res.json()) as { error: string };
