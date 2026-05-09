@@ -86,6 +86,7 @@ describe('Source dashboard route smoke', () => {
     // carry their own per-event signals.
     expect(componentSource).toContain('CompactHeader');
     expect(componentSource).toContain('DashboardStrip');
+    expect(componentSource).toContain('ExecutiveReadout');
     expect(componentSource).toContain('PortfolioFilterSidebar');
     expect(componentSource).toContain('PortfolioEventsTable');
     expect(componentSource).toContain('PortfolioEmptyState');
@@ -111,7 +112,7 @@ describe('Source dashboard route smoke', () => {
     const report = buildDashboardMissionReport();
 
     expect(report.sourceEventId).toBe(SOURCE_GOLDEN_EVENT_IDS.dataAiModernization);
-    expect(report.missionCount).toBe(11);
+    expect(report.missionCount).toBe(12);
     expect(report.countByAgent).toMatchObject({
       nexus: expect.any(Number),
       sentinel: expect.any(Number),

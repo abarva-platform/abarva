@@ -12,16 +12,19 @@
 // user where they were.
 
 import Link from 'next/link';
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import type { CSSProperties } from 'react';
 import { SHELL } from '@/lib/shell/shell-tokens';
-import { SOURCE_STAGE_LABELS, SOURCE_STAGE_ORDER } from '@/lib/source/constants';
 import type {
   SourceLifecycleStatus,
-  SourceStageKey,
   SourcingEventSummary,
 } from '@/lib/source/types';
 import { formatSourceFinancialValue } from '@/lib/source/financial-display';
+import {
+  STAGE_BANDS,
+  stageBandFor,
+  type StageBandKey,
+} from '@/lib/source/portfolio-filtering';
 
 export type ViewMode = 'list' | 'kanban' | 'scatter';
 
@@ -152,18 +155,19 @@ export function KanbanBoard({
   events: ReadonlyArray<SourcingEventSummary>;
   canViewFinancialValues: boolean;
 }) {
+  const grouped = useMemo(() => groupKanbanEventsByStageBand(events), [events]);
+
   return (
     <div style={KANBAN_GRID_STYLE}>
-      {SOURCE_STAGE_ORDER.map((stageKey) => {
-        const inStage = events.filter((e) => e.currentStageKey === stageKey);
-        const label = SOURCE_STAGE_LABELS[stageKey];
+      {Object.values(STAGE_BANDS).map((band) => {
+        const inStage = grouped.get(band.key) ?? [];
         return (
-          <section key={stageKey} style={KANBAN_COL_STYLE}>
+          <section key={band.key} style={KANBAN_COL_STYLE}>
             <header style={KANBAN_COL_HEAD_STYLE}>
               <span style={KANBAN_COL_BADGE_STYLE}>
-                {String(SOURCE_STAGE_ORDER.indexOf(stageKey) + 1).padStart(2, '0')}
+                {kanbanBandCode(band.key)}
               </span>
-              <span style={KANBAN_COL_LABEL_STYLE}>{label}</span>
+              <span style={KANBAN_COL_LABEL_STYLE}>{band.title}</span>
               <span style={KANBAN_COL_COUNT_STYLE}>{inStage.length}</span>
             </header>
             <div style={KANBAN_COL_LIST_STYLE}>
@@ -173,7 +177,7 @@ export function KanbanBoard({
                 inStage.map((event) => (
                   <Link
                     key={event.id}
-                    href={`/source/events/${event.code}`}
+                    href={`/source/events/${event.id}`}
                     style={{
                       ...KANBAN_CARD_STYLE,
                       ...statusBorderStyle(event.status, event.isAtRisk),
@@ -184,7 +188,7 @@ export function KanbanBoard({
                       {event.code} · {event.accountName}
                     </div>
                     <div style={KANBAN_CARD_STATUS_STYLE}>
-                      {event.statusLabel} · {event.agingDays}d
+                      {event.currentStageLabel} · {event.statusLabel} · {event.agingDays}d
                     </div>
                     {event.valueAtStakeUsd > 0 ? (
                       <div style={KANBAN_CARD_VALUE_STYLE}>
@@ -223,15 +227,21 @@ export function ScatterPlot({
       </div>
     );
   }
-  const maxAging = Math.max(...valueEvents.map((e) => e.agingDays), 30);
+  const maxAging = Math.max(...valueEvents.map((e) => e.agingDays), 1);
   const maxValue = Math.max(...valueEvents.map((e) => e.valueAtStakeUsd));
-  const PLOT_W = 720;
-  const PLOT_H = 360;
+  const PLOT_W = 1120;
+  const PLOT_H = 330;
   const PAD = 48;
 
   return (
     <div style={SCATTER_WRAP_STYLE}>
-      <svg width={PLOT_W} height={PLOT_H} style={SCATTER_SVG_STYLE}>
+      <div style={SCATTER_HEAD_STYLE}>
+        <div style={SCATTER_TITLE_STYLE}>Value at stake by aging</div>
+        <div style={SCATTER_SUBTITLE_STYLE}>
+          Open exposure against current-stage aging.
+        </div>
+      </div>
+      <svg width="100%" height={PLOT_H} viewBox={`0 0 ${PLOT_W} ${PLOT_H}`} style={SCATTER_SVG_STYLE}>
         {/* Grid lines */}
         {[0.25, 0.5, 0.75, 1].map((t) => (
           <line
@@ -274,7 +284,7 @@ export function ScatterPlot({
             PLOT_H - PAD - (e.valueAtStakeUsd / maxValue) * (PLOT_H - 2 * PAD);
           const color = statusFillColor(e.status, e.isAtRisk);
           return (
-            <Link key={e.id} href={`/source/events/${e.code}`}>
+            <Link key={e.id} href={`/source/events/${e.id}`}>
               <g>
                 <circle cx={x} cy={y} r={8} fill={color} fillOpacity={0.7} />
                 <circle cx={x} cy={y} r={8} fill="none" stroke={color} strokeWidth={1.5} />
@@ -334,7 +344,37 @@ function legendDotStyle(color: string): CSSProperties {
     gap: 6,
     fontSize: 12,
     color: SHELL.INK_SOFT,
+    borderLeft: `8px solid ${color}`,
+    paddingLeft: 7,
   };
+}
+
+function groupKanbanEventsByStageBand(
+  events: ReadonlyArray<SourcingEventSummary>,
+): Map<StageBandKey, SourcingEventSummary[]> {
+  const grouped = new Map<StageBandKey, SourcingEventSummary[]>();
+  for (const band of Object.values(STAGE_BANDS)) {
+    grouped.set(band.key, []);
+  }
+  for (const event of events) {
+    grouped.get(stageBandFor(event.currentStageKey, event.status))?.push(event);
+  }
+  for (const [band, bucket] of grouped.entries()) {
+    grouped.set(
+      band,
+      [...bucket].sort((a, b) => {
+        if (b.agingDays !== a.agingDays) return b.agingDays - a.agingDays;
+        return (b.valueAtStakeUsd ?? 0) - (a.valueAtStakeUsd ?? 0);
+      }),
+    );
+  }
+  return grouped;
+}
+
+function kanbanBandCode(band: StageBandKey): string {
+  if (band === 'completed') return '✓';
+  const order = Object.keys(STAGE_BANDS).indexOf(band) + 1;
+  return String(order).padStart(2, '0');
 }
 
 // ── Styles ────────────────────────────────────────────────────────────────
@@ -384,8 +424,8 @@ const TOGGLE_BTN_DISABLED_STYLE: CSSProperties = {
 
 const KANBAN_GRID_STYLE: CSSProperties = {
   display: 'grid',
-  gridTemplateColumns: 'repeat(11, minmax(180px, 1fr))',
-  gap: 12,
+  gridTemplateColumns: 'repeat(5, minmax(220px, 1fr))',
+  gap: 14,
   overflowX: 'auto',
   paddingBottom: 8,
 };
@@ -399,7 +439,7 @@ const KANBAN_COL_HEAD_STYLE: CSSProperties = {
   display: 'flex',
   alignItems: 'center',
   gap: 6,
-  padding: '8px 10px',
+  padding: '10px 12px',
   background: '#F8F7F4',
   border: '1px solid ' + SHELL.CARD_LINE,
   borderRadius: 6,
@@ -437,7 +477,7 @@ const KANBAN_CARD_STYLE: CSSProperties = {
   border: '1px solid ' + SHELL.CARD_LINE,
   borderLeft: '3px solid #1B2B5C',
   borderRadius: 6,
-  padding: '10px 12px',
+  padding: '12px',
   display: 'flex',
   flexDirection: 'column',
   gap: 4,
@@ -479,14 +519,29 @@ const KANBAN_EMPTY_STYLE: CSSProperties = {
 const SCATTER_WRAP_STYLE: CSSProperties = {
   display: 'flex',
   flexDirection: 'column',
-  gap: 12,
+  gap: 14,
   background: '#FFFFFF',
   border: '1px solid ' + SHELL.CARD_LINE,
   borderRadius: 8,
-  padding: 16,
-  alignItems: 'flex-start',
+  padding: 18,
+  alignItems: 'stretch',
 };
 const SCATTER_SVG_STYLE: CSSProperties = { maxWidth: '100%', height: 'auto' };
+const SCATTER_HEAD_STYLE: CSSProperties = {
+  display: 'grid',
+  gap: 4,
+};
+const SCATTER_TITLE_STYLE: CSSProperties = {
+  fontFamily: SHELL.SANS,
+  fontSize: 15,
+  fontWeight: 700,
+  color: '#0A0C12',
+};
+const SCATTER_SUBTITLE_STYLE: CSSProperties = {
+  fontFamily: SHELL.SANS,
+  fontSize: 12,
+  color: SHELL.INK_SOFT,
+};
 const SCATTER_LEGEND_STYLE: CSSProperties = {
   display: 'flex',
   gap: 16,

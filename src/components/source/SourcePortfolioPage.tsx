@@ -36,6 +36,7 @@ import {
   filterOutTestArtifacts,
   groupEventsByStageBand,
   STAGE_BANDS,
+  attentionEvents,
 } from '@/lib/source/portfolio-filtering';
 import type { SourcingEventSummary } from '@/lib/source/types';
 
@@ -217,6 +218,12 @@ function PopulatedView({
         oldestAgingDays={oldestAgingDays}
         canViewFinancialValues={canViewFinancialValues}
       />
+      <ExecutiveReadout
+        events={events}
+        kpis={kpis}
+        oldestAgingDays={oldestAgingDays}
+        canViewFinancialValues={canViewFinancialValues}
+      />
       <SubHeader
         eventCount={events.length}
         visibleCount={filteredEvents.length}
@@ -256,6 +263,85 @@ function PopulatedView({
         </div>
       ) : null}
     </>
+  );
+}
+
+function ExecutiveReadout({
+  events,
+  kpis,
+  oldestAgingDays,
+  canViewFinancialValues,
+}: {
+  events: SourcingEventSummary[];
+  kpis: ReturnType<typeof computePortfolioKpis>;
+  oldestAgingDays: number;
+  canViewFinancialValues: boolean;
+}) {
+  const attentionQueue = attentionEvents(events);
+  const topAttention = attentionQueue[0];
+  const largestOpenEvent = events
+    .filter((event) => event.status !== 'completed' && event.status !== 'archived')
+    .sort((a, b) => (b.valueAtStakeUsd ?? 0) - (a.valueAtStakeUsd ?? 0))[0];
+  const nextGateEvent = [...events]
+    .filter((event) => event.status !== 'completed' && event.status !== 'archived')
+    .sort((a, b) => b.agingDays - a.agingDays)[0];
+
+  return (
+    <section
+      aria-label="Executive Source portfolio readout"
+      data-testid="source-portfolio-executive-readout"
+      style={EXEC_READOUT_STYLE}
+    >
+      <ExecutiveTile
+        label="Decision pressure"
+        value={topAttention ? topAttention.event.name : 'No blocked decisions'}
+        detail={
+          topAttention
+            ? `${topAttention.attention.diagnosis} ${topAttention.attention.detail}`
+            : `${kpis.onTrack} event${kpis.onTrack === 1 ? '' : 's'} are moving without an intervention flag.`
+        }
+        accent={topAttention?.attention.severity === 'critical' ? PORTFOLIO.BLOCKED : undefined}
+      />
+      <ExecutiveTile
+        label="Largest open exposure"
+        value={largestOpenEvent?.name ?? 'No open exposure'}
+        detail={
+          largestOpenEvent
+            ? `${canViewFinancialValues ? formatCompactUsd(largestOpenEvent.valueAtStakeUsd) : 'Restricted value'} at stake in ${largestOpenEvent.currentStageLabel}.`
+            : 'All visible sourcing value is completed or archived.'
+        }
+      />
+      <ExecutiveTile
+        label="Aging watch"
+        value={nextGateEvent?.name ?? 'No active aging'}
+        detail={
+          nextGateEvent
+            ? `${oldestAgingDays}d oldest stage age. Owner: ${nextGateEvent.owner || 'Unassigned'}.`
+            : 'No active stage-age watch item.'
+        }
+        accent={oldestAgingDays >= 5 ? PORTFOLIO.BLOCKED : oldestAgingDays >= 3 ? PORTFOLIO.WAITING : undefined}
+      />
+    </section>
+  );
+}
+
+function ExecutiveTile({
+  label,
+  value,
+  detail,
+  accent,
+}: {
+  label: string;
+  value: string;
+  detail: string;
+  accent?: string;
+}) {
+  return (
+    <div style={{ ...EXEC_TILE_STYLE, borderTopColor: accent ?? PORTFOLIO.RULE_STRONG }}>
+      <div style={EXEC_TILE_LABEL_STYLE}>{label}</div>
+      <div style={EXEC_TILE_VALUE_STYLE}>{value}</div>
+      <div style={EXEC_TILE_DETAIL_STYLE}>{detail}</div>
+    </div>
   );
 }
 
@@ -424,6 +510,20 @@ function SubHeader({
   valueCapturedCount: number;
 }) {
   const showFiltered = visibleCount !== eventCount || activeFilterCount > 0;
+  const viewOptions = [
+    { mode: 'list' as const, icon: <ListIcon />, label: 'Table', title: 'Table view', disabled: false },
+    { mode: 'kanban' as const, icon: <KanbanIcon />, label: 'Kanban', title: 'Kanban view', disabled: false },
+    {
+      mode: 'scatter' as const,
+      icon: <ScatterIcon />,
+      label: 'Value map',
+      title: scatterAvailable
+        ? 'Value map'
+        : `Value map requires value data on at least 50% of events (${valueCapturedCount}/${eventCount} captured)`,
+      disabled: !scatterAvailable,
+    },
+  ] satisfies Array<{ mode: ViewMode; icon: React.ReactNode; label: string; title: string; disabled: boolean }>;
+
   return (
     <div style={SUB_HEADER_STYLE}>
       {/* Left: result count */}
@@ -434,7 +534,7 @@ function SubHeader({
       </span>
 
       {/* Right: search + view toggle */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+      <div style={SUB_ACTIONS_STYLE}>
         <input
           type="search"
           placeholder="Search events, codes, owners…"
@@ -445,44 +545,34 @@ function SubHeader({
           style={SEARCH_INPUT_STYLE}
         />
 
-        {/* View toggle — list · kanban · scatter */}
-        <div
-          role="tablist"
-          aria-label="Portfolio view"
-          style={VIEW_TOGGLE_GROUP_STYLE}
-        >
-          {(
-            [
-              { mode: 'list' as const, icon: <ListIcon />, label: 'List view', disabled: false },
-              { mode: 'kanban' as const, icon: <KanbanIcon />, label: 'Kanban view', disabled: false },
-              {
-                mode: 'scatter' as const,
-                icon: <ScatterIcon />,
-                label: scatterAvailable
-                  ? 'Scatter chart'
-                  : `Scatter requires value data on ≥50% of events (${valueCapturedCount}/${eventCount} captured)`,
-                disabled: !scatterAvailable,
-              },
-            ] satisfies Array<{ mode: ViewMode; icon: React.ReactNode; label: string; disabled: boolean }>
-          ).map(({ mode, icon, label, disabled }) => (
-            <button
-              key={mode}
-              type="button"
-              role="tab"
-              aria-selected={viewMode === mode}
-              aria-label={label}
-              title={label}
-              disabled={disabled}
-              onClick={() => !disabled && onViewModeChange(mode)}
-              style={{
-                ...VIEW_TOGGLE_BTN_STYLE,
-                ...(viewMode === mode ? VIEW_TOGGLE_BTN_ACTIVE : {}),
-                ...(disabled ? VIEW_TOGGLE_BTN_DISABLED : {}),
-              }}
-            >
-              {icon}
-            </button>
-          ))}
+        <div style={VIEW_SWITCHER_STYLE}>
+          <span style={VIEW_SWITCHER_LABEL_STYLE}>Portfolio view</span>
+          <div
+            role="tablist"
+            aria-label="Portfolio view"
+            style={VIEW_TOGGLE_GROUP_STYLE}
+          >
+            {viewOptions.map(({ mode, icon, label, title, disabled }) => (
+              <button
+                key={mode}
+                type="button"
+                role="tab"
+                aria-selected={viewMode === mode}
+                aria-label={title}
+                title={title}
+                disabled={disabled}
+                onClick={() => !disabled && onViewModeChange(mode)}
+                style={{
+                  ...VIEW_TOGGLE_BTN_STYLE,
+                  ...(viewMode === mode ? VIEW_TOGGLE_BTN_ACTIVE : {}),
+                  ...(disabled ? VIEW_TOGGLE_BTN_DISABLED : {}),
+                }}
+              >
+                <span aria-hidden style={VIEW_TOGGLE_ICON_STYLE}>{icon}</span>
+                <span>{label}</span>
+              </button>
+            ))}
+          </div>
         </div>
       </div>
     </div>
@@ -613,6 +703,48 @@ const STRIP_STYLE: CSSProperties = {
   flexWrap: 'wrap',
 };
 
+const EXEC_READOUT_STYLE: CSSProperties = {
+  display: 'grid',
+  gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
+  gap: 12,
+  marginTop: 12,
+};
+
+const EXEC_TILE_STYLE: CSSProperties = {
+  display: 'grid',
+  gap: 7,
+  minHeight: 104,
+  padding: '13px 14px',
+  border: `1px solid ${PORTFOLIO.HAIRLINE}`,
+  borderTop: `3px solid ${PORTFOLIO.RULE_STRONG}`,
+  borderRadius: PORTFOLIO.RADIUS_TIGHT,
+  background: PORTFOLIO.CARD,
+};
+
+const EXEC_TILE_LABEL_STYLE: CSSProperties = {
+  fontFamily: PORTFOLIO.MONO,
+  fontSize: PORTFOLIO.T_MICRO_SMALL,
+  letterSpacing: '0.12em',
+  textTransform: 'uppercase',
+  color: PORTFOLIO.INK_MUTED,
+  fontWeight: 700,
+};
+
+const EXEC_TILE_VALUE_STYLE: CSSProperties = {
+  fontFamily: PORTFOLIO.SANS,
+  fontSize: PORTFOLIO.T_BODY,
+  lineHeight: 1.28,
+  color: PORTFOLIO.INK,
+  fontWeight: 700,
+};
+
+const EXEC_TILE_DETAIL_STYLE: CSSProperties = {
+  fontFamily: PORTFOLIO.SANS,
+  fontSize: PORTFOLIO.T_META,
+  lineHeight: 1.4,
+  color: PORTFOLIO.INK_SOFT,
+};
+
 const STRIP_LEFT_STYLE: CSSProperties = {
   display: 'inline-flex',
   alignItems: 'center',
@@ -685,8 +817,9 @@ const SUB_HEADER_STYLE: CSSProperties = {
   alignItems: 'center',
   justifyContent: 'space-between',
   gap: 16,
-  padding: '12px 0',
+  padding: '14px 0',
   marginBottom: 16,
+  flexWrap: 'wrap',
 };
 
 const SUB_LABEL_STYLE: CSSProperties = {
@@ -699,15 +832,23 @@ const SUB_LABEL_STYLE: CSSProperties = {
 };
 
 const SEARCH_INPUT_STYLE: CSSProperties = {
-  width: 280,
+  width: 320,
   fontFamily: PORTFOLIO.SANS,
   fontSize: PORTFOLIO.T_BODY_SMALL,
-  padding: '6px 12px',
+  padding: '8px 12px',
   borderRadius: PORTFOLIO.RADIUS_TIGHT,
   border: `1px solid ${PORTFOLIO.RULE}`,
   background: PORTFOLIO.CARD,
   color: PORTFOLIO.INK,
   outline: 'none',
+};
+
+const SUB_ACTIONS_STYLE: CSSProperties = {
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'flex-end',
+  gap: 12,
+  flexWrap: 'wrap',
 };
 
 const DETAIL_SHELL_STYLE: CSSProperties = {
@@ -726,23 +867,50 @@ const VIEW_TOGGLE_GROUP_STYLE: CSSProperties = {
   display: 'inline-flex',
   alignItems: 'center',
   border: `1px solid ${PORTFOLIO.RULE}`,
-  borderRadius: 6,
+  borderRadius: PORTFOLIO.RADIUS_TIGHT,
   background: PORTFOLIO.CARD,
   overflow: 'hidden',
   flexShrink: 0,
 };
 
+const VIEW_SWITCHER_STYLE: CSSProperties = {
+  display: 'inline-flex',
+  alignItems: 'center',
+  gap: 8,
+};
+
+const VIEW_SWITCHER_LABEL_STYLE: CSSProperties = {
+  fontFamily: PORTFOLIO.MONO,
+  fontSize: PORTFOLIO.T_MICRO_SMALL,
+  letterSpacing: '0.10em',
+  textTransform: 'uppercase',
+  color: PORTFOLIO.INK_MUTED,
+  fontWeight: 700,
+  whiteSpace: 'nowrap',
+};
+
 const VIEW_TOGGLE_BTN_STYLE: CSSProperties = {
-  display: 'flex',
+  display: 'inline-flex',
   alignItems: 'center',
   justifyContent: 'center',
-  width: 32,
-  height: 30,
+  gap: 6,
+  minWidth: 86,
+  height: 34,
+  padding: '0 11px',
   background: 'transparent',
   border: 'none',
   cursor: 'pointer',
   color: PORTFOLIO.INK_SOFT,
+  fontFamily: PORTFOLIO.SANS,
+  fontSize: PORTFOLIO.T_META,
+  fontWeight: 700,
   transition: 'background 100ms ease, color 100ms ease',
+};
+
+const VIEW_TOGGLE_ICON_STYLE: CSSProperties = {
+  display: 'inline-flex',
+  alignItems: 'center',
+  justifyContent: 'center',
 };
 
 const VIEW_TOGGLE_BTN_ACTIVE: CSSProperties = {

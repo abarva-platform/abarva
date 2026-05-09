@@ -62,15 +62,22 @@ export function PortfolioEventsTable({
       style={CARD_STYLE}
     >
       <table style={TABLE_STYLE}>
+        <colgroup>
+          <col style={{ width: '36%' }} />
+          <col style={{ width: '22%' }} />
+          <col style={{ width: '11%' }} />
+          <col style={{ width: '15%' }} />
+          <col style={{ width: '11%' }} />
+          <col style={{ width: '5%' }} />
+        </colgroup>
         <thead>
           <tr>
-            <th style={{ ...HEADER_CELL_STYLE, width: 60 }}>Tenant</th>
-            <th style={HEADER_CELL_STYLE}>Event</th>
-            <th style={{ ...HEADER_CELL_STYLE, width: 220 }}>Stage</th>
-            <th style={{ ...HEADER_CELL_STYLE, width: 110 }}>Status</th>
-            <th style={{ ...HEADER_CELL_STYLE, width: 130 }}>Owner</th>
-            <th style={{ ...HEADER_CELL_STYLE, width: 130, textAlign: 'right' }}>Value</th>
-            <th style={{ ...HEADER_CELL_STYLE, width: 60, textAlign: 'right' }}>Aging</th>
+            <th style={HEADER_CELL_STYLE}>Event / decision</th>
+            <th style={HEADER_CELL_STYLE}>Stage</th>
+            <th style={HEADER_CELL_STYLE}>Status</th>
+            <th style={HEADER_CELL_STYLE}>Owner</th>
+            <th style={{ ...HEADER_CELL_STYLE, textAlign: 'right' }}>Value</th>
+            <th style={{ ...HEADER_CELL_STYLE, textAlign: 'right' }}>Aging</th>
           </tr>
         </thead>
         <tbody>
@@ -81,7 +88,7 @@ export function PortfolioEventsTable({
                   key={`group-${row.band}-${idx}`}
                   data-testid={`source-portfolio-group-${row.band}`}
                 >
-                  <td colSpan={7} style={GROUP_CELL_STYLE}>
+                  <td colSpan={6} style={GROUP_CELL_STYLE}>
                     <span style={GROUP_RANGE_STYLE}>{STAGE_BANDS[row.band].rangeLabel}</span>
                     <span style={GROUP_TITLE_STYLE}>{STAGE_BANDS[row.band].title}</span>
                     <span style={GROUP_COUNT_STYLE}>
@@ -121,6 +128,7 @@ function EventRow({
   const blockerLine = deriveBlockerLine(event);
   const valuePosture = deriveValuePosture(event);
   const valueDisplay = formatValuePosture(valuePosture, canViewFinancialValues);
+  const decisionText = blockerLine?.body ?? event.nextDecision ?? event.nextAction;
 
   return (
     <tr
@@ -133,38 +141,39 @@ function EventRow({
       }}
     >
       <td style={CELL_STYLE}>
-        <span style={TENANT_LABEL_STYLE} title={event.accountName}>
-          {tenantBadge}
-        </span>
-      </td>
-      <td style={CELL_STYLE}>
         <Link
           href={`/source/events/${event.id}`}
           data-testid={`source-portfolio-row-link-${event.id}`}
           style={EVENT_LINK_STYLE}
         >
+          <span style={EVENT_SUPERLINE_STYLE}>
+            <span style={TENANT_LABEL_STYLE} title={event.accountName}>
+              {tenantBadge}
+            </span>
+            <span style={DOT_SEP_STYLE}>·</span>
+            <span style={CODE_INLINE_STYLE}>{event.code}</span>
+            <span style={DOT_SEP_STYLE}>·</span>
+            <span>{rigorLabel(event.rigor)}</span>
+          </span>
           <span
             style={{
               ...EVENT_NAME_STYLE,
-              textDecoration: hovered ? 'underline' : 'none',
+              textDecorationLine: hovered ? 'underline' : 'none',
               textDecorationColor: PORTFOLIO.RULE,
               textUnderlineOffset: 3,
             }}
           >
             {event.name}
           </span>
-          <span style={EVENT_META_STYLE}>
-            <span style={CODE_INLINE_STYLE}>{event.code}</span>
-            <span style={DOT_SEP_STYLE}>·</span>
-            <span>{rigorLabel(event.rigor)}</span>
-          </span>
-          {blockerLine ? (
+          {decisionText ? (
             <span
               style={BLOCKER_STYLE}
-              data-testid={`source-portfolio-row-blocker-${event.id}`}
+              data-testid={`source-portfolio-decision-line-${event.id}`}
             >
-              <span style={AGENT_TAG_STYLE}>{blockerLine.agent.toUpperCase()}</span>
-              <span> · {blockerLine.body}</span>
+              <span style={AGENT_TAG_STYLE}>
+                {blockerLine ? blockerLine.agent.toUpperCase() : 'NEXT'}
+              </span>
+              <span> · {decisionText}</span>
             </span>
           ) : null}
         </Link>
@@ -271,6 +280,7 @@ const EMPTY_STYLE: CSSProperties = {
 const TABLE_STYLE: CSSProperties = {
   width: '100%',
   borderCollapse: 'collapse',
+  tableLayout: 'fixed',
 };
 
 const HEADER_CELL_STYLE: CSSProperties = {
@@ -280,9 +290,9 @@ const HEADER_CELL_STYLE: CSSProperties = {
   textTransform: 'uppercase',
   color: PORTFOLIO.GRAY_DK,
   textAlign: 'left',
-  padding: '14px 16px 10px',
+  padding: '12px 16px 10px',
   borderBottom: `1px solid ${PORTFOLIO.RULE}`,
-  fontWeight: 500,
+  fontWeight: 700,
 };
 
 const ROW_STYLE: CSSProperties = {
@@ -291,7 +301,7 @@ const ROW_STYLE: CSSProperties = {
 };
 
 const CELL_STYLE: CSSProperties = {
-  padding: '16px 16px',
+  padding: '18px 16px',
   fontFamily: PORTFOLIO.SANS,
   fontSize: PORTFOLIO.T_BODY_SMALL,
   lineHeight: 1.4,
@@ -302,7 +312,7 @@ const CELL_STYLE: CSSProperties = {
 const TENANT_LABEL_STYLE: CSSProperties = {
   fontFamily: PORTFOLIO.MONO,
   fontSize: PORTFOLIO.T_MICRO,
-  fontWeight: 600,
+  fontWeight: 800,
   letterSpacing: '0.10em',
   color: PORTFOLIO.GRAY_DK,
   textTransform: 'uppercase',
@@ -310,26 +320,27 @@ const TENANT_LABEL_STYLE: CSSProperties = {
 
 const EVENT_LINK_STYLE: CSSProperties = {
   display: 'grid',
-  gap: 4,
+  gap: 5,
   textDecoration: 'none',
   color: PORTFOLIO.INK,
 };
 
-const EVENT_NAME_STYLE: CSSProperties = {
-  fontFamily: PORTFOLIO.SANS,
-  fontSize: PORTFOLIO.T_BODY,
-  fontWeight: 500,
-  color: PORTFOLIO.INK,
-  lineHeight: 1.35,
-};
-
-const EVENT_META_STYLE: CSSProperties = {
-  display: 'inline-flex',
+const EVENT_SUPERLINE_STYLE: CSSProperties = {
+  display: 'flex',
   alignItems: 'center',
+  flexWrap: 'wrap',
   gap: 6,
   fontFamily: PORTFOLIO.SANS,
   fontSize: PORTFOLIO.T_META,
   color: PORTFOLIO.INK_SOFT,
+};
+
+const EVENT_NAME_STYLE: CSSProperties = {
+  fontFamily: PORTFOLIO.SANS,
+  fontSize: 15,
+  fontWeight: 800,
+  color: PORTFOLIO.INK,
+  lineHeight: 1.3,
 };
 
 const CODE_INLINE_STYLE: CSSProperties = {
@@ -349,7 +360,7 @@ const BLOCKER_STYLE: CSSProperties = {
   lineHeight: 1.45,
   color: PORTFOLIO.INK_SOFT,
   marginTop: 2,
-  maxWidth: 380,
+  maxWidth: 560,
 };
 
 const AGENT_TAG_STYLE: CSSProperties = {
@@ -397,6 +408,9 @@ const OWNER_STYLE: CSSProperties = {
   fontFamily: PORTFOLIO.SANS,
   fontSize: PORTFOLIO.T_BODY_SMALL,
   color: PORTFOLIO.INK,
+  display: 'block',
+  maxWidth: 210,
+  overflowWrap: 'anywhere',
 };
 
 const VALUE_STACK_STYLE: CSSProperties = {
