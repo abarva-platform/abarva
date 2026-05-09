@@ -10,6 +10,9 @@ import { PhaseSection } from '@/components/home/learn/PhaseSection';
 import { GatesSection } from '@/components/home/learn/GatesSection';
 import { TowerSection } from '@/components/home/learn/TowerSection';
 import { GlossarySection } from '@/components/home/learn/GlossarySection';
+import { NexusGuideSection } from '@/components/home/learn/NexusGuideSection';
+import { FirstMoveSection } from '@/components/home/learn/FirstMoveSection';
+import { MovesReferenceCard } from '@/components/home/learn/MovesReferenceCard';
 import { LearnSectionPlaceholder } from '@/components/home/LearnSectionPlaceholder';
 import { findLearnSection } from '@/lib/home/learn-sections';
 import { findLearnNavItem } from '@/lib/home/learn-nav';
@@ -43,6 +46,15 @@ export default async function LearnSectionPage({ params }: Props) {
 
     case 'moves-overview':
       return <MovesOverviewSection />;
+
+    case 'first-move':
+      return <FirstMoveSection />;
+
+    case 'nexus-guide':
+      return <NexusGuideSection />;
+
+    case 'moves-reference':
+      return <MovesReferenceCard />;
 
     case 'p0':
     case 'p1':

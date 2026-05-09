@@ -37,6 +37,9 @@ export const LEARN_NAV: ReadonlyArray<LearnNavGroup> = [
     group: 'Strategic Moves',
     items: [
       { slug: 'moves-overview', label: 'What is a Move?' },
+      { slug: 'first-move', label: 'Your first Move ↗' },
+      { slug: 'nexus-guide', label: 'Working with Nexus' },
+      { slug: 'moves-reference', label: 'Quick reference card' },
       { slug: 'p0', label: 'Originate', phaseBadge: 'P0', phaseColor: 'grey' },
       { slug: 'p1', label: 'Charter', phaseBadge: 'P1', phaseColor: 'navy' },
       { slug: 'p2', label: 'Discover & Diagnose', phaseBadge: 'P2', phaseColor: 'navy' },
