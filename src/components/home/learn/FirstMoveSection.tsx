@@ -1,4 +1,5 @@
 'use client';
+/* eslint-disable react/no-unescaped-entities */
 import {
   Section,
   HeroBand,
@@ -433,7 +434,7 @@ export function FirstMoveSection() {
               'Sponsor engagement documented (COO)',
               'Stakeholder map with decision rights',
               'Value range: $2M–$5M (PRELIMINARY ESTIMATE)',
-              'Primary metric: AHT (baseline TBD in P2)',
+              'Primary metric: AHT, with baseline capture assigned to P2 diagnosis',
               'Gate readiness summary',
             ]}
           />

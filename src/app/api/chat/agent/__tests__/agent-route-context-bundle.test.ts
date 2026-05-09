@@ -155,8 +155,8 @@ describe('agent route · CB-6 context-bundle wiring', () => {
     expect(source).toContain('PROGRAM ORIGINATION STYLE');
     expect(source).toContain('Ask at most ONE question per reply');
     expect(source).toContain("include 'type your own'");
-    expect(source).toContain('Created record: <program name>');
-    expect(source).toContain('Phase 0 unlocks after tenant-admin approval');
+    expect(source).toContain('Submitted for approval: <program name>');
+    expect(source).toContain('Phase 0 unlocks after Setup approval');
   });
 
   it('catches assembly errors so the stream still proceeds', () => {
@@ -170,6 +170,15 @@ describe('agent route · CB-6 context-bundle wiring', () => {
     expect(source).toContain('Shared AbarVa corpus/worldview chunks:');
     expect(source).toMatch(/const tenantSystemBlock =\s*privateDataPlane\s*\?/);
     expect(source).toContain('isNexusProgramsSurface && activeClient?.key && !privateDataPlane');
+  });
+
+  it('treats Strategic Moves as a Nexus current-state surface', () => {
+    expect(source).toContain('isStrategicMovesSurface(surface)');
+    expect(source).toContain("surface === '/programs' || isProgramDetailSurface || isStrategicMoveSurface");
+    expect(source).toContain("'system_landscape'");
+    expect(source).toContain("'financials'");
+    expect(source).toContain("'evidence_provenance'");
+    expect(source).toContain('If a persisted program/Move row, page context, broker block, or context-bundle receipt conflicts with demo context');
   });
 
   it('injects user access policy and restricted financial output discipline', () => {

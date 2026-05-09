@@ -1,4 +1,5 @@
 'use client';
+/* eslint-disable react/no-unescaped-entities, @typescript-eslint/no-explicit-any */
 /**
  * Case Study: Apex Retail — AI-Driven Demand Intelligence
  * Flagship training anchor for the Strategic Moves Learn section.
@@ -709,7 +710,7 @@ export function CaseStudySection() {
           situation="Two weeks to assemble the delivery team, resolve every open risk, compile the handoff package, and get Tower acceptance. Nexus flagged three risks from the P2 register that still needed owners — one of which (change management for buyer adoption) was the exact failure mode that killed the 2022 initiative."
           nexusDidItems={[
             'Compiled full Handoff Package: Charter (P1), Current State Assessment (P2), Target State Architecture (P3), Business Case + Financial Model (P4), Roadmap, Risk Register',
-            'Pre-filled RACI with delivery team: PM = Head of Digital Transformation, Tech Lead = Director of Platform Engineering, Vendor Lead = TBD (RFP live)',
+            'Pre-filled RACI with delivery team: PM = Head of Digital Transformation, Tech Lead = Director of Platform Engineering, Vendor Lead = selected after RFP award',
             'Flagged 3 open risks needing owners before Tower acceptance: change management (buyer adoption), SAP integration timeline buffer, vendor selection delay risk',
             'Submitted for Tower acceptance — Atlas confirmed intake and added the Move to the portfolio heatmap',
           ]}

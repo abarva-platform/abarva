@@ -1,6 +1,7 @@
 import type {
   SourceAgentContextBundle,
   SourceAuthenticatedUser,
+  SourceLiveTenantContextSnapshot,
   SourceTenantContext,
   SourceUserRole,
 } from './agent-context';
@@ -10,6 +11,7 @@ import {
 } from './agent-validation-report';
 import {
   buildSourceContextAssemblyResultFromSeed,
+  buildSourceContextFromEventDetail,
 } from './context-builder';
 import {
   getSourceMultiAgentSuggestedActions,
@@ -24,7 +26,7 @@ import {
   buildSentinelSourceBriefing,
   adaptSentinelBriefingToMultiAgent,
 } from './sentinel-source-orchestrator';
-import type { SourceStageKey } from './types';
+import type { SourceStageKey, SourcingEventDetail } from './types';
 import {
   getSourceWorkflowValidationReadableReport,
   type SourceWorkflowValidationReadableReport,
@@ -57,6 +59,8 @@ export interface SourceNexusApiStubInput extends SourceNexusApiRequestBody {
   tenant: SourceTenantContext;
   user: SourceAuthenticatedUser;
   generatedAt?: string;
+  liveEventDetail?: SourcingEventDetail;
+  liveTenantContext?: SourceLiveTenantContextSnapshot;
 }
 
 export interface SourceNexusApiValidationSummary {
@@ -116,6 +120,7 @@ export interface SourceNexusApiStubResponse {
     blockers: string[];
     selectedAttachmentIds: string[];
   };
+  sourceIntelligence: SourceNexusSourceIntelligenceSummary | null;
   sentinelBriefing: SentinelSourceBriefing | null;
   /** @deprecated Use sentinelBriefing. Reconstructed via adapter for back-compat; retire in next wave. */
   multiAgentBriefing: SourceMultiAgentBriefing | null;
@@ -135,6 +140,17 @@ export interface SourceNexusApiStubResponse {
   summary: string;
   intakeGuidance?: SourceNexusIntakeGuidance;
   error?: SourceNexusApiStubError;
+}
+
+export interface SourceNexusSourceIntelligenceSummary {
+  liveContextAvailable: boolean;
+  sourceEventFound: boolean;
+  inventoryRecordCount: number;
+  contextChunkCount: number;
+  embeddedContextChunkCount: number;
+  currentStateAreas: string[];
+  evidenceBasis: string[];
+  warnings: string[];
 }
 
 const DEFAULT_PROMPT = 'Provide the current Source command read.';
@@ -164,18 +180,26 @@ export function createSourceNexusApiStubResponse(
     });
   }
 
-  const contextResult = buildSourceContextAssemblyResultFromSeed({
+  const sourceContextInput = {
     tenant: input.tenant,
     user: input.user,
     userRole: input.userRole ?? 'unknown',
     persona: input.userRole ?? 'unknown',
     route: `/api/v1/source/${eventId}/nexus/ask`,
-    surface: 'nexusPanel',
+    surface: 'nexusPanel' as const,
     userPrompt: prompt,
     eventId,
     stageKey: input.stageKey,
     selectedAttachmentIds: input.selectedAttachmentIds ?? [],
-  });
+  };
+  const contextResult = input.liveEventDetail
+    ? {
+        ok: true as const,
+        bundle: buildSourceContextFromEventDetail(sourceContextInput, input.liveEventDetail, {
+          liveTenantContext: input.liveTenantContext,
+        }),
+      }
+    : buildSourceContextAssemblyResultFromSeed(sourceContextInput);
 
   if (!contextResult.ok || !contextResult.bundle) {
     const failure = contextResult.failure;
@@ -233,6 +257,7 @@ export function createSourceNexusApiStubResponse(
       blockers: [...contextResult.bundle.blockers],
       selectedAttachmentIds: [...contextResult.bundle.selectedAttachmentIds],
     },
+    sourceIntelligence: summarizeSourceIntelligence(contextResult.bundle),
     sentinelBriefing,
     multiAgentBriefing,
     nexusSummary: {
@@ -300,6 +325,7 @@ function createErrorResponse(args: {
       blockers: [],
       selectedAttachmentIds: [],
     },
+    sourceIntelligence: null,
     sentinelBriefing: null,
     multiAgentBriefing: null,
     nexusSummary: null,
@@ -311,6 +337,23 @@ function createErrorResponse(args: {
     cannotProceedReasons: [args.error.message],
     summary: args.error.message,
     error: args.error,
+  };
+}
+
+function summarizeSourceIntelligence(
+  bundle: SourceAgentContextBundle,
+): SourceNexusSourceIntelligenceSummary | null {
+  const live = bundle.liveTenantContext;
+  if (!live) return null;
+  return {
+    liveContextAvailable: true,
+    sourceEventFound: live.sourceEventFound,
+    inventoryRecordCount: live.inventoryRecordCount,
+    contextChunkCount: live.contextChunkCount,
+    embeddedContextChunkCount: live.embeddedContextChunkCount,
+    currentStateAreas: [...live.currentStateAreas],
+    evidenceBasis: [...live.evidenceBasis],
+    warnings: [...live.warnings],
   };
 }
 

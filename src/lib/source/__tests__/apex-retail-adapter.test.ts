@@ -3,6 +3,7 @@ import {
   APEX_RETAIL_CLIENT_KEY,
   APEX_RETAIL_DATA_SEGMENTS,
   buildApexRetailSourceContextAssemblyInput,
+  toApexRetailLiveTenantContextSnapshot,
   type ApexRetailAdapterOptions,
 } from '../adapters/apex-retail-adapter';
 
@@ -20,8 +21,16 @@ function createSupabaseStub() {
       event_code: 'SRC-APX-CCA-2026',
       event_name: 'Contact Center AI Platform',
       client_key: APEX_RETAIL_CLIENT_KEY,
+      event_type: 'platform_selection',
       current_stage_key: 'orals_bafo',
       lifecycle_state: 'active',
+      linked_program_id: 'APX-CC-2026',
+      estimated_value_usd: 1_800_000,
+      trigger_description: 'Contain contact center run cost while improving experience.',
+      scope_description: 'Contact center AI platform selection.',
+      decision_owner: 'Chief Customer Officer',
+      created_by_user_id: 'user-apex-source',
+      created_at: '2026-05-01T00:00:00.000Z',
       updated_at: '2026-05-09T00:00:00.000Z',
     },
     data_inventory_records: [
@@ -126,6 +135,8 @@ describe('Apex Retail Source adapter', () => {
     expect(result.liveContext.dataSegmentsRequested).toEqual(APEX_RETAIL_DATA_SEGMENTS);
     expect(result.liveContext.inventoryRecordCount).toBe(2);
     expect(result.liveContext.contextChunkCount).toBe(2);
+    expect(result.liveContext.contextChunkSegmentCounts).toEqual({ sourcing_artifacts: 1, evidence_ledger: 1 });
+    expect(result.liveContext.embeddedChunkSegmentCounts).toEqual({ evidence_ledger: 1 });
     expect(result.liveContext.embeddingStatusCounts).toEqual({ pending: 1, embedded: 1 });
     expect(calls.map((call) => call.table)).toEqual(
       expect.arrayContaining([
@@ -134,6 +145,12 @@ describe('Apex Retail Source adapter', () => {
         'enterprise_context_chunks',
       ]),
     );
+    expect(calls).toEqual(
+      expect.arrayContaining([
+        { table: 'source_events', op: 'eq', args: ['event_code', 'apex-retail-contact-center-ai-2026'] },
+      ]),
+    );
+    expect(calls.some((call) => call.op === 'or')).toBe(false);
   });
 
   it('uses the broker tenant key for inventory substrate queries', async () => {
@@ -150,6 +167,42 @@ describe('Apex Retail Source adapter', () => {
     expect(tenantKeyFilters.map((call) => call.args[1])).toEqual([
       APEX_RETAIL_BROKER_TENANT_KEY,
       APEX_RETAIL_BROKER_TENANT_KEY,
+    ]);
+  });
+
+  it('summarizes the live Apex corpus as current-state sourcing intelligence', async () => {
+    const { supabase } = createSupabaseStub();
+    const result = await buildApexRetailSourceContextAssemblyInput({
+      supabase: supabase as unknown as ApexRetailAdapterOptions['supabase'],
+      user: { id: 'user-apex-source' },
+      userPrompt: 'What is the current contact center AI sourcing state?',
+      eventId: 'SRC-APX-CCA-2026',
+    });
+
+    const snapshot = toApexRetailLiveTenantContextSnapshot(result.liveContext);
+
+    expect(APEX_RETAIL_DATA_SEGMENTS).toEqual(
+      expect.arrayContaining([
+        'org_structure',
+        'it_financials',
+        'it_landscape',
+        'financial_model',
+        'kpi_history',
+        'vendor_intelligence',
+        'peer_benchmarks',
+        'ai_transformation',
+      ]),
+    );
+    expect(snapshot.sourceEventFound).toBe(true);
+    expect(snapshot.currentStateAreas).toEqual(expect.arrayContaining(['Sourcing Artifacts', 'Evidence Ledger']));
+    expect(snapshot.evidenceBasis).toEqual(
+      expect.arrayContaining([
+        'Sourcing Artifacts: 1 records, 1 chunks, 0 embedded',
+        'Evidence Ledger: 1 records, 1 chunks, 1 embedded',
+      ]),
+    );
+    expect(snapshot.warnings).toEqual([
+      'Some Apex Retail context chunks are not embedded yet; semantic retrieval may be partial.',
     ]);
   });
 });

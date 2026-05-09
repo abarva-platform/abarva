@@ -1,4 +1,5 @@
 'use client';
+/* eslint-disable react/no-unescaped-entities */
 /**
  * Moves Quick Reference Card
  * Printable single-page summary of P0–P5 phases, gate criteria, and key terms.

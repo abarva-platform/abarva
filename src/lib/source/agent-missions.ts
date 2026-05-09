@@ -35,11 +35,40 @@ const STATE_RANK: Record<SourceAgentMissionState, number> = {
 
 export function buildSourceAgentMissions(input: SourceAgentMissionInput): SourceAgentMission[] {
   return prioritizeSourceAgentMissions([
+    ...buildNexusSourceMissions(input),
     ...buildSentinelWorkflowMissions(input),
     ...buildSentinelSourceMissions(input),
     ...buildAtlasSourceMissions(input),
     ...buildStewardSourceMissions(input),
   ]);
+}
+
+export function buildNexusSourceMissions(input: SourceAgentMissionInput): SourceAgentMission[] {
+  const bundle = input.contextBundle;
+  const eventName = getEventName(input);
+  const blocker = firstOrUndefined(bundle.blockers);
+  const missingInputCount = bundle.missingInputs.length;
+
+  return [
+    createMission(input, {
+      agentName: 'nexus',
+      missionType: 'next_action',
+      title: 'Nexus command next action',
+      summary: blocker
+        ? `${eventName} needs Nexus to keep the next action tied to the active blocker.`
+        : missingInputCount > 0
+          ? `${eventName} needs Nexus to sequence ${missingInputCount} missing input${plural(missingInputCount)}.`
+          : `${eventName} has enough context for Nexus to keep the Source workflow moving.`,
+      priority: blocker || missingInputCount > 0 ? 'high' : 'medium',
+      state: blocker ? 'blocked' : 'active',
+      trigger: bundle.workflowStage ? 'stage_focus' : 'event_load',
+      evidenceStatus: deriveEvidenceStatus(input),
+      blockerReason: blocker,
+      recommendedAction: bundle.nextAction ?? getFallbackNextAction(input),
+      suggestedActions: getNexusSuggestedActions(input),
+      handoffTarget: blocker ? 'steward' : undefined,
+    }),
+  ];
 }
 
 // Workflow-stage-specific Sentinel missions: next action, data readiness, pattern signal.
@@ -61,7 +90,7 @@ export function buildSentinelWorkflowMissions(input: SourceAgentMissionInput): S
       evidenceStatus: deriveEvidenceStatus(input),
       blockerReason: firstOrUndefined(bundle.blockers),
       recommendedAction: bundle.nextAction ?? getFallbackNextAction(input),
-      suggestedActions: getSentinelSuggestedActions(input),
+      suggestedActions: getNexusSuggestedActions(input),
       handoffTarget: bundle.blockers.length > 0 ? 'steward' : undefined,
     }),
   ];
@@ -430,7 +459,7 @@ function createMissionId(
   ].join(':');
 }
 
-function getSentinelSuggestedActions(input: SourceAgentMissionInput): SourceSuggestedAgentAction[] {
+function getNexusSuggestedActions(input: SourceAgentMissionInput): SourceSuggestedAgentAction[] {
   const bundle = input.contextBundle;
 
   if (bundle.blockers.length > 0 || input.workflowValidationReport?.blockerExplanations.length) {
