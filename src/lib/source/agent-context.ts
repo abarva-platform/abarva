@@ -355,6 +355,19 @@ export interface SourceLiveTenantContextSegment {
   embeddedChunks: number;
 }
 
+export interface SourceLiveTenantEvidenceItem {
+  id: string;
+  segmentId: string;
+  recordId: string;
+  title: string;
+  sourceType: 'inventoryRecord' | 'contextChunk';
+  sourceDoc?: string;
+  sourcePath?: string;
+  excerpt: string;
+  confidence: 'low' | 'medium' | 'high';
+  score: number;
+}
+
 export interface SourceLiveTenantContextSnapshot {
   clientKey: string;
   brokerTenantKey: string;
@@ -365,6 +378,7 @@ export interface SourceLiveTenantContextSnapshot {
   segments: SourceLiveTenantContextSegment[];
   currentStateAreas: string[];
   evidenceBasis: string[];
+  retrievedEvidence: SourceLiveTenantEvidenceItem[];
   warnings: string[];
 }
 

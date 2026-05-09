@@ -40,6 +40,30 @@ const liveTenantContext: SourceLiveTenantContextSnapshot = {
     'Vendor Contracts: 38 records, 38 chunks, 38 embedded',
     'Org Structure: 36 records, 36 chunks, 36 embedded',
   ],
+  retrievedEvidence: [
+    {
+      id: 'chunk:it_landscape:cdp',
+      segmentId: 'it_landscape',
+      recordId: 'it_landscape:cdp',
+      title: 'CDP integration baseline',
+      sourceType: 'contextChunk',
+      sourceDoc: 'CDP-Round-1-Selection-Memo-2026-04-15.pdf',
+      excerpt: 'claim: Deloitte Digital was selected as CDP implementation partner; Treasure Data and Segment advanced to BAFO.',
+      confidence: 'high',
+      score: 12,
+    },
+    {
+      id: 'chunk:evidence_ledger:identity',
+      segmentId: 'evidence_ledger',
+      recordId: 'evidence_ledger:identity',
+      title: 'Identity match baseline',
+      sourceType: 'contextChunk',
+      sourceDoc: 'data-quality-baseline-2026-q1.xlsx',
+      excerpt: 'claim: Identity match rate across customer source systems is currently 71%.',
+      confidence: 'high',
+      score: 11,
+    },
+  ],
   warnings: [],
 };
 
@@ -75,6 +99,20 @@ describe('Source Nexus API live context', () => {
       evidenceBasis: liveTenantContext.evidenceBasis,
       warnings: [],
     });
+    expect(response.sourceAnswer).toMatchObject({
+      engineVersion: 'source-answer-engine/v1',
+      mode: 'cxo_guidance',
+      confidence: 'medium',
+      recommendedNextAction: 'Lock CDP scoring around identity, activation, integration ownership, governance, and full TCO before BAFO.',
+    });
+    expect(response.sourceAnswer?.answerText).toContain('CXO guidance');
+    expect(response.sourceAnswer?.evidenceCitations.map((citation) => citation.sourceDoc)).toEqual(
+      expect.arrayContaining([
+        'CDP-Round-1-Selection-Memo-2026-04-15.pdf',
+        'data-quality-baseline-2026-q1.xlsx',
+      ]),
+    );
+    expect(response.summary).toBe(response.sourceAnswer?.answerText);
     expect(response.sentinelBriefing?.primaryVoice.contextUsed[0]?.deterministicFieldsUsed).toEqual(
       expect.arrayContaining(['sourcingEvent', 'workflowStage', 'liveTenantContext']),
     );

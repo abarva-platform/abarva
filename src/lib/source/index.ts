@@ -64,6 +64,7 @@ export * from './commercial-signals';
 export * from './commercial-mission-adapter-types';
 export * from './commercial-mission-adapter';
 export * from './source-commercial-summary';
+export * from './source-answer-engine';
 export * from './source-pricing-comparison-view';
 export * from './source-bafo-negotiation-view';
 export * from './source-commercial-risk-view';
@@ -103,6 +104,9 @@ export type {
   SourceEventSnapshot,
   SourceEvidenceContext,
   SourceGateSnapshot,
+  SourceLiveTenantEvidenceItem,
+  SourceLiveTenantContextSnapshot,
+  SourceLiveTenantContextSegment,
   SourcePatternContext,
   SourcePatternSectionContext,
   SourcePersona,
