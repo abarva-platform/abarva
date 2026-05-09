@@ -1,5 +1,5 @@
 'use client';
-import { Section, HeroBand, Eyebrow, SectionTitle, Lead, BodyP, Callout, TermGrid, Term, T } from './primitives';
+import { Section, HeroBand, Eyebrow, SectionTitle, Lead, BodyP, SubHead, Callout, TermGrid, Term, T } from './primitives';
 
 export function TowerSection() {
   return (
@@ -94,7 +94,7 @@ export function TowerSection() {
               phaseLabel: 'Biz Case',
               status: 'amber',
               statusLabel: 'At risk',
-              signal: 'Sponsor change: Sarah Torres on leave; Ops Council has not assigned an interim owner. Investment approval gate stalled at week 3.',
+              signal: 'Sponsor change: Sarah Torres on leave, interim sponsor TBD. Investment approval gate stalled at week 3.',
               detail: 'Gate blocked · Sponsor gap flagged · Atlas escalation sent',
             },
             {
