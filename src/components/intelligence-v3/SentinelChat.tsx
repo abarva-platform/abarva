@@ -178,10 +178,11 @@ export function SentinelChat({
         buffer = lines.pop() ?? '';
         for (const line of lines) {
           if (!line.trim()) continue;
-          const event = JSON.parse(line) as { type?: string; delta?: string; error?: string };
-          if (event.type === 'delta' && event.delta) {
+          const event = JSON.parse(line) as { type?: string; delta?: string; text?: string; error?: string };
+          const delta = event.delta ?? event.text;
+          if (event.type === 'delta' && delta) {
             sawDelta = true;
-            answer += event.delta;
+            answer += delta;
             setLocalTurns((prev) =>
               prev.map((turn) =>
                 turn.id === agentTurnId ? { ...turn, body: answer } : turn,
