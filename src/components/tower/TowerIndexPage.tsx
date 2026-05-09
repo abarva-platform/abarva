@@ -1105,103 +1105,6 @@ function currentPageEvidence(activeTab: TowerTabKey, lens: TowerLens): string {
   return 'The portfolio view combines the registry, vendor rows, and derived pressure cards into a current-state read.';
 }
 
-function PortfolioDrillContext({
-  activeView,
-  activeLens,
-  hrefFor,
-}: {
-  activeView: PortfolioCanvasView;
-  activeLens: TowerLens;
-  hrefFor: (next?: { lens?: TowerLens; view?: PortfolioCanvasView; detail?: string | null; pressure?: string | null }) => string;
-}) {
-  const copy =
-    activeView === 'alignment'
-      ? {
-          eyebrow: 'Value lens · strategic alignment',
-          body: 'Value owns the portfolio 2x2: measured ROI on the x-axis, strategic alignment on the y-axis.',
-          primary: 'Evidence map',
-          primaryHref: hrefFor({ lens: activeLens, view: 'evidence', detail: null, pressure: null }),
-        }
-      : activeView === 'evidence'
-        ? {
-            eyebrow: 'Data evidence · Source map',
-            body: 'This view explains the loaded source feeds, refresh cadence, and which Tower slices each dataset supports.',
-            primary: activeLens === 'value' ? 'Value lens' : `${lensLabel(activeLens)} lens`,
-            primaryHref: hrefFor({ lens: activeLens, view: defaultPortfolioCanvasView(activeLens), detail: null, pressure: null }),
-          }
-        : {
-            eyebrow: `${lensLabel(activeLens)} lens · focused pressure list`,
-            body: 'The lens toggle controls this canvas. Open any pressure row for same-page detail; KPI tiles above are read-only evidence.',
-            primary: 'Evidence map',
-            primaryHref: hrefFor({ lens: activeLens, view: 'evidence', detail: null, pressure: null }),
-          };
-
-  return (
-    <div
-      style={{
-        padding: '8px 32px',
-        borderBottom: `1px solid ${T.RULE}`,
-        display: 'flex',
-        justifyContent: 'space-between',
-        gap: 24,
-        alignItems: 'center',
-        minHeight: 38,
-      }}
-    >
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'baseline',
-          gap: 10,
-          minWidth: 0,
-        }}
-      >
-        <span
-          style={{
-            fontFamily: T.MONO,
-            fontSize: 9,
-            letterSpacing: '1.5px',
-            textTransform: 'uppercase',
-            color: T.GOLD,
-            fontWeight: 800,
-            flex: '0 0 auto',
-          }}
-        >
-          {copy.eyebrow}
-        </span>
-        <span
-          style={{
-            fontSize: 12.5,
-            color: T.INK_2,
-            lineHeight: 1.35,
-            whiteSpace: 'nowrap',
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-          }}
-        >
-          {copy.body}
-        </span>
-      </div>
-      <Link
-        href={copy.primaryHref}
-        scroll={false}
-        style={{
-          fontFamily: T.MONO,
-          fontSize: 9,
-          letterSpacing: '1.2px',
-          textTransform: 'uppercase',
-          color: T.INK,
-          fontWeight: 800,
-          textDecoration: 'none',
-          flex: '0 0 auto',
-        }}
-      >
-        {copy.primary} →
-      </Link>
-    </div>
-  );
-}
-
 function TowerDataDesignPanel({
   activeTab,
   activeLens,
@@ -1454,7 +1357,6 @@ function TowerWorkspaceTabPanel({
   initiatives,
   vendors,
   pressuresView,
-  alignment2x2View,
   substrateCounts,
   detailHrefFor,
 }: {
@@ -1463,7 +1365,6 @@ function TowerWorkspaceTabPanel({
   initiatives: ReadonlyArray<AIInitiative>;
   vendors: ReadonlyArray<AIInitiativeVendorRow>;
   pressuresView?: TowerPressuresView;
-  alignment2x2View: StrategicAlignment2x2View;
   substrateCounts?: TowerSubstrateCounts;
   detailHrefFor: DetailHrefBuilder;
 }) {
@@ -1485,15 +1386,6 @@ function TowerWorkspaceTabPanel({
   const rankedVendors = rankVendorsForLens(vendors, initiatives, activeLens);
   const initiativeById = new Map(initiatives.map((initiative) => [initiative.initiativeId, initiative] as const));
   const accent = lensAccent(activeLens);
-  const contextSlot = (
-    <TowerDataDesignPanel
-      activeTab={activeTab}
-      activeLens={activeLens}
-      initiatives={initiatives}
-      vendors={vendors}
-      substrateCounts={substrateCounts}
-    />
-  );
 
   if (activeTab === 'scorecards') {
     return (
@@ -1501,7 +1393,6 @@ function TowerWorkspaceTabPanel({
         eyebrow={narrative.eyebrow}
         title={narrative.title}
         body={narrative.body}
-        contextSlot={contextSlot}
       >
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 12 }}>
           {rankedInitiatives.map((initiative) => {
@@ -1535,7 +1426,6 @@ function TowerWorkspaceTabPanel({
         eyebrow={narrative.eyebrow}
         title={narrative.title}
         body={narrative.body}
-        contextSlot={contextSlot}
       >
         <div style={{ display: 'grid', gap: 14 }}>
           {stages.map(([stage, rows]) => (
@@ -1574,7 +1464,6 @@ function TowerWorkspaceTabPanel({
         eyebrow={narrative.eyebrow}
         title={narrative.title}
         body={narrative.body}
-        contextSlot={contextSlot}
       >
         {vendors.length === 0 ? (
           <TowerEmptyState
@@ -1601,19 +1490,16 @@ function TowerWorkspaceTabPanel({
   }
 
   const pressureCount = pressuresView?.cards.length ?? 0;
-  const strategicBetCount = alignment2x2View.strategicBets.length;
   return (
     <TowerTabPanelShell
       eyebrow={narrative.eyebrow}
       title={narrative.title}
       body={narrative.body}
-      contextSlot={contextSlot}
     >
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: 10, marginBottom: 18 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 10, marginBottom: 18 }}>
         <DataCard title={`${lensLabel(activeLens)} lens`} meta="Narrative posture" detail={narrative.title} accent={accent} />
         <DataCard title="Active pressures" meta="Decision load" detail={`${pressureCount} sorted by ${lensLabel(activeLens).toLowerCase()} priority`} accent={pressureCount > 0 ? T.RED : T.GREEN} />
-        <DataCard title="Strategic bets" meta="Foundation row" detail={`${strategicBetCount} not plotted in the 2x2`} accent={T.GOLD} />
-        <DataCard title="Vendor links" meta="Dependency substrate" detail={`${vendors.length} vendor records loaded`} accent={vendors.length > 0 ? T.PURPLE : T.GRAY} />
+        <DataCard title="Decision evidence" meta="Governance load" detail={`${substrateCounts?.decisions ?? 0} decision rows · ${substrateCounts?.stakeholderNotes ?? 0} stakeholder notes`} accent={T.PURPLE} />
       </div>
       {pressureCount > 0 ? (
         <div style={{ display: 'grid', gap: 10 }}>
@@ -1653,11 +1539,11 @@ function Quadrant({
   detailHrefFor: DetailHrefBuilder;
 }) {
   const styles: CSSProperties = {
-    padding: '10px 12px',
+    padding: '14px 16px',
     position: 'relative',
     background: T.CREAM_2,
     border: `1px solid ${T.RULE}`,
-    minHeight: 154,
+    minHeight: 222,
   };
   if (position === 'tl') {
     styles.gridColumn = 2;
@@ -1695,17 +1581,17 @@ function Quadrant({
       <div
         style={{
           fontFamily: T.SERIF,
-          fontSize: 12.5,
+          fontSize: 14,
           fontWeight: 700,
           letterSpacing: '-0.2px',
-          marginBottom: 8,
+          marginBottom: 12,
           lineHeight: 1.25,
           maxWidth: '30ch',
         }}
       >
         {qhead}
       </div>
-      <div style={{ position: 'relative', height: 88 }}>
+      <div style={{ position: 'relative', height: 150 }}>
         {dots.map((dot) => {
           // T-4: substrate-derived dots show displayId + ⭐ + confidence outline.
           // Legacy dots (no displayId) keep the original rendering.
@@ -1716,18 +1602,19 @@ function Quadrant({
             position: 'absolute',
             left: dot.left,
             top: dot.top,
-            padding: '4px 7px',
-            background: T.INK,
-            color: T.CREAM,
+            padding: '6px 9px',
+            background: '#fffdf7',
+            color: T.INK,
             fontFamily: T.MONO,
-            fontSize: 8.3,
-            letterSpacing: '0.8px',
+            fontSize: 8.7,
+            letterSpacing: '0.7px',
             fontWeight: 700,
             borderRadius: 4,
             cursor: isSubstrate ? 'pointer' : 'default',
             lineHeight: 1.2,
-            border: isSubstrate ? `1.5px ${borderStyle} ${T.CREAM}` : undefined,
-            maxWidth: 150,
+            border: isSubstrate ? `1.5px ${borderStyle} ${T.INK}` : `1px solid ${T.RULE_STRONG}`,
+            boxShadow: '0 2px 8px rgba(17, 24, 39, 0.12)',
+            maxWidth: 178,
             textDecoration: 'none',
           };
           const dotBody = (
@@ -1755,7 +1642,7 @@ function Quadrant({
                 style={{
                   display: 'block',
                   fontFamily: T.SERIF,
-                  fontSize: 9.5,
+                  fontSize: 10,
                   fontWeight: 700,
                   marginTop: 1,
                   letterSpacing: 0,
@@ -2260,8 +2147,6 @@ export function TowerIndexPage({
             )}
           </section>
 
-          <PortfolioDrillContext activeView={activeCanvasView} activeLens={activeLens} hrefFor={buildTowerHref} />
-
           {/* Section headline */}
           {activeCanvasView === 'pressures' && (
           <>
@@ -2333,65 +2218,16 @@ export function TowerIndexPage({
 
           {/* Strategic alignment matrix */}
           {activeCanvasView === 'alignment' && (
-          <section style={{ padding: '14px 32px 24px' }}>
+          <section style={{ padding: '26px 32px 28px' }}>
             <div
               style={{
                 display: 'grid',
-                gridTemplateColumns: '280px minmax(0, 1fr)',
-                gap: 18,
-                alignItems: 'start',
+                gridTemplateColumns: '64px minmax(0, 1fr) minmax(0, 1fr)',
+                gridTemplateRows: 'minmax(222px, auto) minmax(222px, auto) 42px',
+                gap: 0,
+                width: '100%',
               }}
             >
-              <div>
-                <div
-                  style={{
-                    fontFamily: T.MONO,
-                    fontSize: 9.5,
-                    letterSpacing: '1.8px',
-                    fontWeight: 700,
-                    color: T.GOLD,
-                    textTransform: 'uppercase',
-                    marginBottom: 7,
-                  }}
-                >
-                  Strategic alignment · {alignment2x2View.totalPlotted} programs plotted · current Value lens
-                </div>
-                <h2
-                  style={{
-                    fontFamily: T.SERIF,
-                    fontSize: 28,
-                    fontWeight: 800,
-                    letterSpacing: '-0.5px',
-                    lineHeight: 1.07,
-                    maxWidth: '20ch',
-                    margin: 0,
-                  }}
-                >
-                  Where the portfolio is, against where the strategy says it should be.
-                </h2>
-                <p
-                  style={{
-                    fontSize: 13,
-                    color: T.GRAY_DK,
-                    marginTop: 8,
-                    maxWidth: '39ch',
-                    lineHeight: 1.45,
-                  }}
-                >
-                  Confidence uses outline weight: <strong>solid = HIGH</strong>, <strong>dashed = MEDIUM/LOW</strong>. Strategic bets sit below because they do not have measured ROI yet.
-                </p>
-              </div>
-
-              <div
-                style={{
-                  display: 'grid',
-                  gridTemplateColumns: '56px minmax(0, 1fr) minmax(0, 1fr)',
-                  gridTemplateRows: 'minmax(154px, auto) minmax(154px, auto) 36px',
-                  gap: 0,
-                  width: '100%',
-                  justifySelf: 'stretch',
-                }}
-              >
               {/* Y axis */}
               <div
                 style={{
@@ -2476,151 +2312,6 @@ export function TowerIndexPage({
                 </span>
               </div>
             </div>
-            </div>
-
-            {/* T-FOW row */}
-            <div
-              style={{
-                padding: '14px 0 20px',
-                borderTop: `1px dashed ${T.RULE_STRONG}`,
-                marginTop: 14,
-              }}
-            >
-              <div
-                style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'baseline',
-                  marginBottom: 12,
-                }}
-              >
-                <span
-                  style={{
-                    fontFamily: T.MONO,
-                    fontSize: 10,
-                    letterSpacing: '1.6px',
-                    color: T.GOLD,
-                    fontWeight: 700,
-                    textTransform: 'uppercase',
-                  }}
-                >
-                  Strategic bets · {alignment2x2View.strategicBets.length} programs · T-FOW lens
-                </span>
-                <span
-                  style={{
-                    fontFamily: T.MONO,
-                    fontSize: 9,
-                    letterSpacing: '1.2px',
-                    color: T.GRAY_DK,
-                    fontStyle: 'italic',
-                  }}
-                >
-                  Plotted separately — attribution is too loose for the 2×2 today.
-                </span>
-              </div>
-              <div
-                style={{
-                  display: 'grid',
-                  gridTemplateColumns: `repeat(${Math.max(alignment2x2View.strategicBets.length, 1)}, 1fr)`,
-                  gap: 14,
-                }}
-              >
-                {alignment2x2View.strategicBets.length > 0 ? (
-                  alignment2x2View.strategicBets.map((bet) => ({
-                      key: bet.displayId,
-                      displayId: bet.displayId,
-                      name: bet.name,
-                      meta: `${bet.stageDetail} · ${bet.amount} committed · attribution ${bet.confidenceLevel}`,
-                      desc: null as ReactNode,
-                      cta: null as ReactNode,
-                    })).map((card) => {
-                      const cardBody = (
-                        <>
-                          {card.displayId && (
-                            <div
-                              style={{
-                                fontFamily: T.MONO,
-                                fontSize: 9,
-                                letterSpacing: '1.6px',
-                                color: T.GRAY_DK,
-                                fontWeight: 700,
-                                marginBottom: 2,
-                              }}
-                            >
-                              {card.displayId}
-                            </div>
-                          )}
-                          <div
-                            style={{
-                              fontFamily: T.SERIF,
-                              fontSize: 16,
-                              fontWeight: 700,
-                              letterSpacing: '-0.2px',
-                              marginBottom: 4,
-                              color: T.INK,
-                            }}
-                          >
-                            {card.name}
-                          </div>
-                          <div
-                            style={{
-                              fontFamily: T.MONO,
-                              fontSize: 9,
-                              letterSpacing: '1.2px',
-                              color: T.GRAY_DK,
-                              fontWeight: 600,
-                              textTransform: 'uppercase',
-                            }}
-                          >
-                            {card.meta}
-                          </div>
-                          {card.desc && (
-                            <div
-                              style={{
-                                fontSize: 12.5,
-                                color: T.INK_2,
-                                lineHeight: 1.5,
-                                margin: '8px 0',
-                              }}
-                            >
-                              {card.desc}
-                            </div>
-                          )}
-                          {card.cta && <div>{card.cta}</div>}
-                        </>
-                      );
-                      const style: CSSProperties = {
-                        display: 'block',
-                        padding: '14px 16px',
-                        border: `1px dashed ${T.RULE_STRONG}`,
-                        borderRadius: 8,
-                        background: 'transparent',
-                        textDecoration: 'none',
-                      };
-                      return card.displayId ? (
-                        <Link
-                          key={card.key}
-                          href={detailHrefFor(card.displayId) ?? '/tower'}
-                          scroll={false}
-                          data-testid={`tower-strategic-bet-${card.displayId}`}
-                          title="Open Tower detail in this canvas"
-                          style={style}
-                        >
-                          {cardBody}
-                        </Link>
-                      ) : (
-                        <div key={card.key} style={style}>{cardBody}</div>
-                      );
-                    })
-                ) : (
-                  <TowerEmptyState
-                    eyebrow="No strategic bets"
-                    title="No foundation-stage initiatives were found in the DB."
-                    body="Tower will not add placeholder bets for this tenant."
-                  />
-                )}
-              </div>
-            </div>
           </section>
           )}
 
@@ -2691,7 +2382,6 @@ export function TowerIndexPage({
               initiatives={initiatives ?? []}
               vendors={vendors ?? []}
               pressuresView={pressuresView}
-              alignment2x2View={alignment2x2View}
               substrateCounts={substrateCounts}
               detailHrefFor={detailHrefFor}
             />
