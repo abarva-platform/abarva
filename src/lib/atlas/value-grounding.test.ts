@@ -1,4 +1,8 @@
-import { buildAtlasValueGrounding, renderAtlasValueGrounding } from '@/lib/atlas/value-grounding';
+import {
+  buildAtlasGroundingDisclosure,
+  buildAtlasValueGrounding,
+  renderAtlasValueGrounding,
+} from '@/lib/atlas/value-grounding';
 import type { AtlasPortfolioSummary } from '@/lib/atlas/types';
 import type { AtlasTowerCurrentState } from '@/lib/atlas/tower-grounding';
 import type { CanonicalPatternIndexResult } from '@/lib/intelligence/canonical/runtime-pattern-index';
@@ -120,6 +124,21 @@ describe('Atlas value grounding', () => {
       primaryKpis: ['clinician_time_saved', 'documentation_lag', 'note_quality'],
       baselineNeeded: ['pre_pilot_documentation_time', 'same-cohort_note_quality'],
       measurementMethod: 'Compare pre-pilot baseline to matched pilot cohort by specialty.',
+    });
+
+    expect(buildAtlasGroundingDisclosure(grounding)).toMatchObject({
+      source: 'persisted_canonical_corpus',
+      status: 'ready',
+      retrievedPatternCount: 1,
+      sourceBasis: ['internal_pattern'],
+      confidenceLevels: ['high'],
+      patterns: [
+        expect.objectContaining({
+          canonicalId: 'AIP-HEALTHCARE-AMBIENT-DOC-VALUE',
+          sourceReferenceCount: 1,
+          quantitativeClaimCount: 0,
+        }),
+      ],
     });
   });
 

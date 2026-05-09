@@ -2,6 +2,10 @@ import 'server-only';
 
 import { normalizeIndustry } from '@/lib/intelligence/canonical/normalizers';
 import {
+  buildAgentGroundingDisclosure,
+  type AgentGroundingDisclosure,
+} from '@/lib/intelligence/canonical/agent-grounding-disclosure';
+import {
   searchCanonicalPatternIndex,
   type CanonicalPatternIndexOptions,
   type CanonicalPatternIndexQuery,
@@ -262,4 +266,30 @@ export function renderAtlasValueGrounding(grounding: AtlasValueGrounding): strin
     patternLine,
     missingLine,
   ].join(' ');
+}
+
+export function buildAtlasGroundingDisclosure(
+  grounding: AtlasValueGrounding | undefined,
+): AgentGroundingDisclosure | undefined {
+  if (!grounding) return undefined;
+
+  return buildAgentGroundingDisclosure({
+    source: grounding.source,
+    status: grounding.status,
+    warnings: grounding.warnings,
+    missingEvidence: grounding.missingEvidence,
+    patterns: grounding.patterns.map((pattern) => ({
+      canonicalId: pattern.canonicalId,
+      title: pattern.title,
+      sourceBasis: pattern.sourceBasis,
+      confidenceLevel: pattern.confidenceLevel,
+      confidenceRationale: pattern.confidenceRationale,
+      sourceReferenceCount: pattern.sourceReferencesCount,
+      missingRequiredFields: pattern.missingRequiredFields,
+      missingProvenance: pattern.missingProvenance,
+      unsupportedClaimFlags: pattern.unsupportedClaimFlags,
+      quantitativeClaimCount: pattern.quantitativeClaimCount,
+      matchReasons: pattern.matchReasons,
+    })),
+  });
 }

@@ -3,6 +3,11 @@ import type {
   CanonicalStrategicMovePhase,
   IndustryAIPattern,
 } from '@/lib/intelligence/canonical/industry-ai-pattern';
+import {
+  buildAgentGroundingDisclosure,
+  formatUnsupportedClaimFlag,
+  type AgentGroundingDisclosure,
+} from '@/lib/intelligence/canonical/agent-grounding-disclosure';
 import type {
   CanonicalPatternIndexHit,
   CanonicalPatternIndexResult,
@@ -103,6 +108,29 @@ export function buildSentinelGroundingSummary(
     warnings: args.canonicalResult.warnings,
     gaps: dedupeGaps([...indexGaps, ...canonicalGaps, ...manifestGaps]),
   };
+}
+
+export function buildSentinelGroundingDisclosure(
+  canonicalResult: CanonicalPatternIndexResult,
+): AgentGroundingDisclosure {
+  return buildAgentGroundingDisclosure({
+    source: canonicalResult.source,
+    status: canonicalResult.status,
+    warnings: canonicalResult.warnings,
+    patterns: canonicalResult.patterns.map((pattern) => ({
+      canonicalId: pattern.canonical_id,
+      title: pattern.title,
+      sourceBasis: pattern.source_basis,
+      confidenceLevel: pattern.confidence_level,
+      confidenceRationale: pattern.confidence_rationale,
+      sourceReferenceCount: pattern.source_references.length,
+      missingRequiredFields: pattern.missing_required_fields.map(String),
+      missingProvenance: pattern.missing_provenance,
+      unsupportedClaimFlags: pattern.unsupported_claim_flags.map(formatUnsupportedClaimFlag),
+      quantitativeClaimCount: pattern.quantitative_claims.length,
+      matchReasons: pattern.match_reasons,
+    })),
+  });
 }
 
 export function formatGroundingFlagText(summary: SentinelGroundingSummary): string | null {

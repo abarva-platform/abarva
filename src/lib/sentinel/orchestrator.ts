@@ -10,6 +10,7 @@ import {
 } from '@/lib/intelligence/pattern-manifest';
 import { searchCanonicalPatternIndex } from '@/lib/intelligence/canonical/runtime-pattern-index';
 import {
+  buildSentinelGroundingDisclosure,
   buildSentinelGroundingSummary,
   formatGroundingFlagText,
   normalizeCanonicalIndustry,
@@ -319,6 +320,7 @@ export async function runSentinelTurn(args: {
     rankedPatterns,
     tenantKey: args.ctx.clientKey,
   });
+  const groundingDisclosure = buildSentinelGroundingDisclosure(canonicalResult);
   const groundingFlagText = formatGroundingFlagText(grounding);
 
   const llmText = await synthesizeWithClaude({
@@ -340,5 +342,6 @@ export async function runSentinelTurn(args: {
       .map(({ pattern }) => `Open ${pattern.name}`),
     activePatternSlug: rankedPatterns[0]?.pattern.slug ?? anchorSlug,
     grounding,
+    groundingDisclosure,
   };
 }

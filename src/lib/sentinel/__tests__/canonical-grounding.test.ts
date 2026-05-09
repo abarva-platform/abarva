@@ -1,4 +1,5 @@
 import {
+  buildSentinelGroundingDisclosure,
   buildSentinelGroundingSummary,
   formatGroundingFlagText,
   normalizeCanonicalIndustry,
@@ -172,5 +173,28 @@ describe('Sentinel canonical grounding', () => {
 
     expect(formatGroundingFlagText(summary)).toContain('Grounding check:');
     expect(formatGroundingFlagText(summary)).toContain('No canonical pattern matched');
+  });
+
+  it('exposes source basis, confidence, missing fields, and unsupported claim flags', () => {
+    const disclosure = buildSentinelGroundingDisclosure(canonicalResult([
+      canonicalHit({
+        unsupported_claim_flags: [{
+          claim: '20% productivity lift',
+          reason: 'No supporting source reference.',
+          recommended_action: 'source_required',
+        }],
+      }),
+    ]));
+
+    expect(disclosure.patterns[0]).toMatchObject({
+      canonicalId: 'AIP-TEST-001',
+      sourceBasis: 'internal_pattern',
+      confidenceLevel: 'high',
+      missingProvenance: true,
+    });
+    expect(disclosure.patterns[0].missingRequiredFields).toContain('primary_kpis');
+    expect(disclosure.unsupportedClaimFlags).toEqual([
+      '20% productivity lift: No supporting source reference.',
+    ]);
   });
 });

@@ -36,6 +36,7 @@ export async function POST(req: NextRequest) {
       observationId: result.observationId ?? null,
       routeType: result.routeType,
       intent: result.intent,
+      groundingDisclosure: result.groundingDisclosure,
       renderedResponse: buildAtlasRenderedResponse({
         clientName: result.toolResults.portfolio?.clientName ?? 'Active client',
         message,

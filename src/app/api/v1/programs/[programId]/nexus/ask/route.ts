@@ -186,6 +186,7 @@ export async function POST(
           sparseEvidence: result.sparseEvidence,
           activePatternSlug: result.activePatternSlug,
           patternEvidence: result.patternEvidence,
+          groundingDisclosure: result.groundingDisclosure,
           citationCount: result.citations.length,
           citations: result.citations,
           suggestions: result.suggestions,
