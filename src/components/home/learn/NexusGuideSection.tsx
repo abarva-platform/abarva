@@ -24,7 +24,8 @@ const OWNERSHIP_ROWS: Array<{ task: string; nexus: 'auto' | 'draft' | 'no'; you:
   { task: 'Define the scope boundary', nexus: 'no', you: 'direct' },
   { task: 'Seed the value hypothesis', nexus: 'draft', you: 'confirm' },
   { task: 'Draft the charter', nexus: 'auto', you: 'confirm' },
-  { task: 'Confirm sponsor commitment', nexus: 'no', you: 'direct' },
+  { task: 'Engage sponsor on scope and charter (P1)', nexus: 'draft', you: 'confirm' },
+  { task: 'Formal investment sign-off — cost, solution, timeline (P4)', nexus: 'no', you: 'direct' },
   { task: 'Lock the value range', nexus: 'no', you: 'direct' },
   { task: 'Assign stakeholder decision rights', nexus: 'draft', you: 'confirm' },
   { task: 'Conduct interviews / collect data', nexus: 'no', you: 'direct' },
@@ -358,8 +359,8 @@ export function NexusGuideSection() {
               phase: 'P1',
               name: 'Charter',
               color: T.navy,
-              posture: 'Disciplined & focused',
-              behavior: 'The sponsor question is the first blocker. Nexus will not proceed with charter work while the sponsor is uncommitted. Once sponsor is confirmed, it drafts the charter in one call and flags which fields need your input before it can finalize.',
+              posture: 'Engagement-focused',
+              behavior: 'P1 is about engaging the named sponsor — not extracting a financial commitment. Nexus will ask whether the sponsor has been briefed and is aligned, draft the charter from your inputs, and flag scope or governance gaps. It will not ask whether they have approved cost or timeline — that is P4. The P1 gate clears when the sponsor has engaged on scope and the charter is signed off.',
             },
             {
               phase: 'P2',
@@ -456,8 +457,8 @@ export function NexusGuideSection() {
         </Lead>
 
         <TermGrid>
-          <Term name="Sponsor commitment">
-            Nexus can propose a sponsor candidate based on ACL/people data, but it cannot record the sponsor as committed without explicit human confirmation in the session. "They'll commit when they see the charter" is not confirmation.
+          <Term name="Sponsor naming vs. investment approval">
+            There are two distinct sponsor milestones. <strong>P0–P1:</strong> Name the sponsor candidate and engage them on scope and charter — no financial commitment yet. <strong>P4:</strong> Formal investment approval — the sponsor (and/or board) approves the business case, cost, solution, and timeline. This is the real commitment gate. Nexus will not conflate these two steps.
           </Term>
           <Term name="Gate approval">
             No gate can be approved by Nexus. Gate approvals are always human actions. This is by design: gate approval signals program-level accountability, not just document completeness.

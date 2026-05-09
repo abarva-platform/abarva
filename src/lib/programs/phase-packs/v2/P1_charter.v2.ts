@@ -8,7 +8,7 @@ export const P1_CHARTER_PACK: PhasePack = {
   phase_id: 1,
   phase_name: 'P1 Charter',
   phase_intent:
-    'Convert the P0 hypothesis into a sponsor-committed charter with value range locked. No charter without a named, committed sponsor. No move past P1 without a signed value range.',
+    'Engage the P0 sponsor candidate on scope and governance. Produce a charter that reflects their input. P1 = sponsor named + engaged + charter signed. Financial commitment (cost, solution, timeline approval) is a P4 gate — do NOT treat charter sign-off as investment approval.',
 
   entry_criteria: [
     {
@@ -32,11 +32,11 @@ export const P1_CHARTER_PACK: PhasePack = {
   workflow_steps: [
     {
       step_id: 'P1.1',
-      step_name: 'Sponsor commitment',
-      step_goal: 'Confirm sponsor is named, willing, and authorized. Surface as #1 blocker if not yet committed.',
+      step_name: 'Sponsor engagement',
+      step_goal: 'Confirm the P0 sponsor candidate is aware of the initiative, aligned on scope, and willing to participate in charter development. P1 does NOT require financial commitment — cost and timeline approval happen at the P4 gate after the business case is built.',
       required_user_inputs: [
-        'Explicit confirmation that named sponsor candidate has committed',
-        'Or: uploaded document showing sponsor sign-off',
+        'Confirmation that sponsor has been briefed on the initiative and is engaged',
+        'Sponsor\'s name and role (may carry from P0)',
       ],
       accepted_uploads: [
         'application/pdf',
@@ -46,32 +46,33 @@ export const P1_CHARTER_PACK: PhasePack = {
       ],
       patterns_to_load: ['PAT-PRG-001', 'seed-patterns-meta'],
       questions_to_ask: [
-        'Has [sponsor candidate name] formally agreed to sponsor this Move — are they committed?',
-        'Does [sponsor name] have authority to approve the scope, commit resources, and make the key decisions this Move requires?',
-        'What triggered the sponsor commitment — what did they see or hear?',
-        'Is there a document — even a brief email — that captures the sponsor commitment?',
+        'Has [sponsor candidate name] been briefed on the initiative and agreed to be the named sponsor?',
+        'Is [sponsor name] the right functional owner — does this initiative sit within their P&L or OKR?',
+        'Do they want to be involved in scoping and charter review, or will they review the charter at the end?',
+        'Are there any concerns from the sponsor at this point — about scope, timing, or direction?',
       ],
       artifact_sections_to_update: [
         'charter.sponsor_name',
         'charter.sponsor_role',
-        'charter.sponsor_commitment_evidence',
-        'charter.sponsor_commitment_date',
+        'charter.sponsor_engagement_note',
+        'charter.sponsor_functional_ownership',
       ],
       evidence_to_capture: [
-        'method_of_confirmation',
+        'sponsor_briefing_method',
         'sponsor_name_and_role',
-        'commitment_date',
-        'nature_of_authorization',
+        'functional_ownership_confirmation',
+        'sponsor_concerns_if_any',
       ],
       quality_checks: [
-        'AH-P1-1: sponsor_committed requires explicit confirmation — not "basically in"',
-        'Sponsor is named individual, not committee',
-        'Sponsor authority sufficient for charter scope',
+        'AH-P1-1: sponsor_engaged requires user confirmation — not assumed from P0 candidate alone',
+        'Sponsor is named individual with functional ownership of this outcome',
+        'CRITICAL: do NOT ask whether sponsor has approved cost or budget — that is a P4 gate question, not P1',
+        'CRITICAL: do NOT conflate charter sign-off with investment approval',
       ],
       completion_criteria: [
-        'sponsor_committed = true (explicit confirmation, not inferred)',
+        'sponsor_engaged = true (user confirmed sponsor is aware and participating)',
         'sponsor_name populated (named individual)',
-        'sponsor_commitment_evidence populated (not null)',
+        'sponsor_functional_ownership confirmed',
         'human_confirmation_required = true (not self-approvable)',
       ],
     },
@@ -230,7 +231,7 @@ export const P1_CHARTER_PACK: PhasePack = {
   ],
 
   phase_outcome:
-    'A sponsor-committed charter with: named committed sponsor (documented), primary success metric defined (measurable), preliminary value range (low–high with stated assumptions, labeled PRELIMINARY_ESTIMATE), scope boundary confirmed, stakeholder map with decision rights, governance model, and gate readiness summary.',
+    'A sponsor-engaged charter: named functional sponsor confirmed (engaged and participating), primary success metric defined (measurable), preliminary value range (low–high with stated assumptions, labeled PRELIMINARY_ESTIMATE), scope boundary confirmed, stakeholder map with decision rights, governance model, gate readiness summary. NOTE: formal investment approval (cost + solution + timeline) is a P4 gate outcome, not P1.',
 
   phase_scope_boundary: {
     in: [
@@ -250,9 +251,9 @@ export const P1_CHARTER_PACK: PhasePack = {
   },
 
   agent_posture_coaching_arc: {
-    entry: 'Confirm sponsor commitment first — everything else in P1 depends on this. If not yet committed, surface it as the #1 blocker and pause. Do not proceed with stakeholder mapping or value range work while the sponsor is uncommitted.',
-    mid: 'Drive stakeholder mapping and success metric. Ask one question at a time. For the value range, push for low–high with stated assumptions — never accept a point estimate without reframing.',
-    exit: 'Before producing the gate readiness summary, run AH-P1-1 through AH-P1-4 checks. Label every criterion as self-approved or human-confirmed. The gate verdict must be unambiguous.',
+    entry: 'Confirm sponsor engagement first — not financial commitment. Ask: has the sponsor been briefed and agreed to be the named functional owner? If they have not been engaged at all, surface it as a blocker. If they are engaged but have not yet approved cost/timeline, that is fine — that comes at P4. Do not ask about budget approval in P1.',
+    mid: 'Drive stakeholder mapping and success metric. Ask one question at a time. For the value range, push for low–high with stated assumptions — never accept a point estimate without reframing. The value range is preliminary context for P2–P4, not a financial commitment.',
+    exit: 'Before producing the gate readiness summary, run AH-P1-1 through AH-P1-4 checks. Confirm sponsor is engaged (not just named). Label every criterion as self-approved or human-confirmed. The gate verdict must be unambiguous. NEVER ask whether the sponsor has approved cost or budget — that question belongs at P4.',
   },
 
   question_sequencing: {
@@ -300,7 +301,7 @@ export const P1_CHARTER_PACK: PhasePack = {
   ],
 
   exit_criteria: [
-    { id: 'EX-P1-1', description: 'Sponsor committed (signed charter or documented commitment)', type: 'hard' },
+    { id: 'EX-P1-1', description: 'Sponsor engaged — named functional owner, briefed, participating in or aligned on charter (investment approval is NOT required at P1 — that is P4)', type: 'hard' },
     { id: 'EX-P1-2', description: 'Primary success metric defined and measurable', type: 'hard' },
     { id: 'EX-P1-3', description: 'Value range locked (range + assumptions, PRELIMINARY_ESTIMATE)', type: 'hard' },
     { id: 'EX-P1-4', description: 'Scope boundary confirmed (in/out documented)', type: 'hard' },
@@ -311,11 +312,11 @@ export const P1_CHARTER_PACK: PhasePack = {
   gate_criteria: [
     {
       id: 'GC-P1-1',
-      label: 'Sponsor committed (signed charter or documented commitment)',
+      label: 'Sponsor engaged — named functional owner, briefed and participating in charter',
       type: 'hard',
-      evaluation: 'Must have uploaded document or explicit user statement confirming commitment. "Basically in" does not pass AH-P1-1.',
+      evaluation: 'User has confirmed sponsor is aware of the initiative and is the named functional owner. Charter reflects their input or review. NOTE: financial commitment (cost + timeline approval) is NOT required at P1 — that is GC-P4-3 (Investment Approval). Do not conflate.',
       gating_rule: 'blocks_promotion',
-      pilot_approval_note: 'Sponsor (named individual) must confirm.',
+      pilot_approval_note: 'User must confirm sponsor has been engaged and is the named functional owner.',
     },
     {
       id: 'GC-P1-2',
@@ -370,10 +371,10 @@ export const P1_CHARTER_PACK: PhasePack = {
   anti_patterns: [
     {
       id: 'AP-P1-1',
-      label: 'Uncommitted sponsor',
-      detection_hint: "User says sponsor is 'basically committed' or 'will commit when we have a charter'",
-      what_to_flag: 'That is a sponsor candidate, not a committed sponsor. P1 requires commitment before chartering — not after.',
-      mitigation: 'Block P1.1 advancement. Ask user to confirm commitment before proceeding.',
+      label: 'Sponsor not yet engaged at all',
+      detection_hint: "User says they haven't spoken to the sponsor yet or sponsor doesn't know the initiative exists",
+      what_to_flag: "P1 needs the sponsor engaged — they should know this initiative is happening and have agreed to be the named functional owner. 'Will commit when we have a charter' is fine. 'Haven't talked to them yet' is not — charter development should happen with the sponsor, not before.",
+      mitigation: 'Ask user to brief the sponsor before proceeding with charter work. Note: financial approval is NOT needed — just awareness and engagement.',
     },
     {
       id: 'AP-P1-2',
@@ -446,22 +447,25 @@ export const P1_CHARTER_PACK: PhasePack = {
   first_message: [
     {
       variant: 'default',
-      template: "I am scoped to [Move name], currently in P1 Charter. The P0 gate passed — we have a hypothesis and sponsor candidate. P1 goal: get the sponsor committed and produce a signed charter with value range. Where are we on sponsor commitment?",
+      template: "I am scoped to [Move name], currently in P1 Charter. The P0 gate passed — we have a hypothesis and a sponsor candidate: [sponsor name]. P1 goal: engage the sponsor on scope and governance, then produce a charter that reflects their input. Has [sponsor name] been briefed on the initiative and agreed to be the named functional owner? Note: formal investment approval (cost, solution, and timeline) is a P4 gate milestone — we're not asking for that yet.",
     },
   ],
 
   fixtures: [
     {
       id: 'FX-P1-1',
-      name: 'Sponsor named but not committed',
-      description: 'User says sponsor will commit once they have the charter',
-      input: { sponsorStatement: 'She will commit when she sees the charter' },
+      name: 'Sponsor will review charter — not yet financially committed',
+      description: 'User says sponsor will commit when she sees the charter and the business case',
+      input: { sponsorStatement: 'She will make her final decision once we have the business case' },
       expected_behaviors: [
-        'AH-P1-1 fires',
-        'Nexus blocks P1.1 advancement',
-        'Nexus asks user to get explicit confirmation before proceeding',
+        'Nexus acknowledges this is the correct sequence — P4 Investment Approval is where financial commitment is captured',
+        'Nexus clarifies: "That is exactly right — the investment decision happens at the P4 gate. For P1, has she been briefed and agreed to be the named functional owner?"',
+        'Does NOT block advancement because of absence of financial commitment',
       ],
-      prohibited_behaviors: ['Marking sponsor_committed = true'],
+      prohibited_behaviors: [
+        'Treating absence of financial commitment as a P1 blocker',
+        'Marking sponsor_engaged = false because investment has not been approved',
+      ],
     },
     {
       id: 'FX-P1-2',
@@ -480,10 +484,10 @@ export const P1_CHARTER_PACK: PhasePack = {
   coaching_rules: [
     {
       id: 'CR-P1-1',
-      rule: "Block P1.1 advancement when sponsor is described as 'basically committed' or 'will commit after charter'",
-      trigger: "Sponsor described as 'basically committed' or 'will commit when we have a charter'",
-      required_behavior: 'Block: "That is a sponsor candidate, not a committed sponsor. Please engage [name] and confirm their commitment before we proceed."',
-      prohibited_behavior: 'Proceeding with charter work while sponsor commitment is unconfirmed',
+      rule: 'Distinguish sponsor engagement (P1 requirement) from investment approval (P4 requirement)',
+      trigger: 'Any reference to whether sponsor has approved cost, budget, or investment',
+      required_behavior: 'Clarify: "Budget and timeline approval happens at the P4 Investment Approval gate — after the business case is built. For P1, we need the sponsor engaged and aligned on scope. Have they been briefed and agreed to be the named functional owner?"',
+      prohibited_behavior: 'Treating absence of financial approval as a P1 blocker. Treating "will approve when they see the business case" as a problem — that is the correct P4 sequence.',
     },
     {
       id: 'CR-P1-2',
@@ -512,10 +516,10 @@ export const P1_CHARTER_PACK: PhasePack = {
   anti_hallucination_rules: [
     {
       id: 'AH-P1-1',
-      rule: 'Must not claim sponsor is committed without explicit confirmation in the substrate or upload',
-      trigger: 'Every reference to sponsor commitment status',
-      required_behavior: 'Must have: (a) an uploaded document showing sponsor commitment, or (b) an explicit user statement in the current session confirming commitment.',
-      prohibited_behavior: "'They are basically in' or 'they will commit when we have a charter' does NOT satisfy this rule.",
+      rule: 'Must not conflate sponsor engagement (P1) with investment approval (P4)',
+      trigger: 'Every reference to sponsor status or any question about cost, budget, or timeline approval',
+      required_behavior: 'P1 requires sponsor ENGAGEMENT — they are briefed, named as functional owner, and participating in charter. NEVER ask whether the sponsor has approved the cost or budget in P1 — that is the P4 Investment Approval gate question. If user volunteers financial approval language, acknowledge it but clarify: "That formal approval will be captured at the P4 gate after the business case is complete."',
+      prohibited_behavior: "Asking 'Has the sponsor approved the budget/cost?' or treating absence of financial approval as a P1 blocker. Also: 'They will commit when we have a charter' is OK for P1 — what matters is that they are engaged and will review the charter.",
     },
     {
       id: 'AH-P1-2',

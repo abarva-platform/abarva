@@ -388,41 +388,41 @@ export function FirstMoveSection() {
       <Section>
         <PhaseStep phase="P1" name="Charter" color={T.navy} gate="Charter Approval">
           <BodyP>
-            <strong>What you do:</strong> Engage the COO formally. Confirm she's committed — not just interested. Run the charter session with Nexus to map stakeholders and lock a value range.
+            <strong>What you do:</strong> Brief the COO on the structured initiative and engage her as the named functional sponsor. Her sign-off at P1 means she's aligned on scope and governance — not yet approving cost or timeline. That comes at P4 after the business case is built.
           </BodyP>
 
           <ChatWindow title="Nexus · P1 Charter">
             <ChatMessage role="nexus">
-              Welcome to P1. The P0 gate cleared. Primary goal here: get the COO committed and produce a signed charter. Has the COO confirmed she'll sponsor this Move?
+              Welcome to P1. The P0 gate cleared — we have a hypothesis and a sponsor candidate: the COO. P1 goal: engage her on scope and governance, then produce a charter that reflects her input. Has she had a chance to review the initiative framing?
             </ChatMessage>
             <ChatMessage role="user">
-              Yes — she had a 30-min call with me yesterday. She's committed. She wants to see a business case by Q3.
+              Yes — we had a 30-min call yesterday. She's aware and engaged. She wants to see a business case by Q3 — she said she'll make a final call on funding once we have cost and timeline.
             </ChatMessage>
             <ChatMessage role="nexus">
-              Confirmed. I'll record the COO as committed sponsor with the Q3 business case target.
+              Good. I'll record: COO as named sponsor, engaged and aligned, with a Q3 business case target. Her formal investment decision (approve cost + timeline) will happen at the P4 gate — that's by design. For P1, we need her sign-off on scope and the charter.
               <br /><br />
-              Next: stakeholder map. Beyond the COO, who else must approve scope, investment, or direction? And who can block this Move?
+              Next: stakeholder map. Beyond the COO, who else must weigh in on scope, investment, or delivery direction?
             </ChatMessage>
             <ChatMessage role="user">
-              VP of Customer Experience is the program lead. IT needs to sign off on the routing system changes. Finance needs to approve the business case. Operations will need to be consulted on any workflow changes but they don't have veto.
+              VP of Customer Experience is the program lead. IT needs to sign off on routing system changes. Finance needs to approve the business case. Operations consulted but no veto.
             </ChatMessage>
             <ChatMessage role="nexus">
               Mapped. Decision rights draft:<br />
-              • COO — Approves / final authority<br />
+              • COO — Final investment authority (P4 gate)<br />
               • VP CX — Accountable / program lead<br />
-              • IT — Consulted / sign-off on routing<br />
-              • Finance — Consulted / business case approval<br />
+              • IT — Consulted / routing sign-off<br />
+              • Finance — Consulted / business case review<br />
               • Operations — Informed<br />
               <br />
-              One question: what is the value range the COO is working with — low end and high end, with the assumptions?
+              For the value range: the COO mentioned "somewhere between $2M and $5M." What assumption drives that range?
             </ChatMessage>
             <ChatMessage role="user">
-              She said "somewhere between $2M and $5M depending on how much of the routing we can automate." The assumption is we can hit 75–85% automation on the top 3 call categories.
+              She's assuming 75–85% automation rate on the top 3 call categories.
             </ChatMessage>
             <ChatMessage role="nexus">
-              Value range locked: <em>$2M–$5M annually (PRELIMINARY ESTIMATE — dependent on P2 baseline and automation rate assumption: 75–85% of top 3 call categories). </em>
+              Value range: <em>$2M–$5M annually (PRELIMINARY ESTIMATE — dependent on P2 baseline and automation rate assumption: 75–85% of top 3 call categories).</em>
               <br /><br />
-              Ready to draft the charter. Should I proceed?
+              Ready to draft the charter for the COO to review and sign off. Should I proceed?
             </ChatMessage>
           </ChatWindow>
 
@@ -430,7 +430,7 @@ export function FirstMoveSection() {
             label="What Nexus produced at P1"
             items={[
               'Program Charter (11 sections)',
-              'Sponsor commitment documented',
+              'Sponsor engagement documented (COO)',
               'Stakeholder map with decision rights',
               'Value range: $2M–$5M (PRELIMINARY ESTIMATE)',
               'Primary metric: AHT (baseline TBD in P2)',
@@ -438,8 +438,8 @@ export function FirstMoveSection() {
             ]}
           />
 
-          <Callout kind="warn" icon="⚠️" label="Your decision at P1: confirm the value range">
-            The value range cannot be self-approved by Nexus. You confirm it because you have the context — what the COO said, what assumptions she used. Nexus formats it correctly and flags it appropriately, but the deliberation is yours.
+          <Callout kind="info" icon="💡" label="Charter sign-off ≠ investment approval">
+            The COO signed the charter — she's the named sponsor and is aligned on scope. She has NOT yet approved the investment. That happens at P4 when the business case is complete and the cost/timeline are known. This is the right sequence: engage first, commit investment after evidence.
           </Callout>
         </PhaseStep>
       </Section>
@@ -644,7 +644,7 @@ export function FirstMoveSection() {
             You named the COO as sponsor candidate and bounded the scope to inbound routing. Nexus extracted the hypothesis and value seed — you confirmed.
           </Term>
           <Term name="P1 decision">
-            You confirmed sponsor commitment (after the call with the COO) and deliberated the value range ($2–$5M with stated assumptions).
+            You engaged the COO as named sponsor — she's aligned on scope and signed the charter. The value range ($2–$5M with stated assumptions) was deliberated together. Her formal investment approval comes at P4 after the business case.
           </Term>
           <Term name="P2 decision">
             You made the Continue/Discontinue call. (In this case: Continue.) Nexus surfaced the root causes — but the judgment to proceed was yours.
