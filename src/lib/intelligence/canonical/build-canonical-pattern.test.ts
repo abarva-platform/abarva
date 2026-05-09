@@ -88,6 +88,50 @@ describe('canonical pattern draft builders', () => {
     expect(missingFieldNames(draft)).toContain('primary_kpis');
   });
 
+  it('preserves canonical PatternSeed enrichment for retail AI patterns', () => {
+    const draft = fromPatternSeed(patternSeed({
+      id: 'PAT-IND-RET-AI-TEST',
+      title: 'Apex Retail Contact Center AI Routing',
+      vertical: 'retail',
+      canonical: {
+        enterprise_area: 'front_office',
+        function: 'customer_service',
+        process_area: 'contact_center',
+        use_case_category: 'agentic_routing',
+        strategic_move_phases: ['diagnose_discover', 'design'],
+        maturity_level: 'proven',
+        confidence_level: 'high',
+        target_personas: ['Chief Customer Officer', 'Contact Center VP'],
+        business_problem: 'Contact routing lacks customer, order, and policy context.',
+        why_now: 'Apex Retail needs faster routing with stronger containment and escalation controls.',
+        value_hypothesis: 'A grounded routing agent can improve containment and service quality.',
+        primary_kpis: ['containment_rate', 'average_handle_time', 'transfer_rate'],
+        secondary_kpis: ['csat', 'escalation_rate', 'qa_score'],
+        baseline_needed: ['current_containment_rate', 'current_average_handle_time', 'current_transfer_rate'],
+        measurement_method: 'Compare pilot queues to matched baseline queues.',
+        value_levers: ['experience', 'productivity', 'cost_takeout'],
+        required_data_domains: ['customer_profile', 'case_history', 'order_status'],
+        recommended_workshops: ['Contact center diagnostic workshop'],
+        recommended_artifacts: ['Routing policy map'],
+        common_failure_modes: ['Routing model optimizes speed but misses escalation risk'],
+        failure_mode_mitigations: ['Require escalation guardrails before autonomous routing'],
+        source_basis: 'inferred_from_patterns',
+        confidence_rationale: 'Internal retail corpus enrichment; no external quantitative claim embedded.',
+      },
+    }));
+
+    expect(draft.title).toBe('Apex Retail Contact Center AI Routing');
+    expect(draft.enterprise_area).toBe('front_office');
+    expect(draft.function).toBe('customer_service');
+    expect(draft.strategic_move_phases).toEqual(['diagnose_discover', 'design']);
+    expect(draft.primary_kpis).toEqual(['containment_rate', 'average_handle_time', 'transfer_rate']);
+    expect(draft.required_data_domains).toEqual(['customer_profile', 'case_history', 'order_status']);
+    expect(draft.recommended_workshops).toEqual(['Contact center diagnostic workshop']);
+    expect(draft.source_basis).toBe('inferred_from_patterns');
+    expect(draft.missing_provenance).toBe(false);
+    expect(missingFieldNames(draft)).not.toContain('primary_kpis');
+  });
+
   it('builds a Healthcare PatternSeed draft', () => {
     const draft = fromPatternSeed(patternSeed({
       id: 'PAT-IND-HC-001',

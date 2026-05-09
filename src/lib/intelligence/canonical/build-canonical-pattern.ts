@@ -68,37 +68,7 @@ export interface GenomePatternRow {
   failure_rate_pct?: number | null;
 }
 
-type DraftSourceInput = Pick<
-  IndustryAIPatternDraft,
-  | 'canonical_id'
-  | 'title'
-  | 'summary'
-  | 'source_crosswalk'
-  | 'source_systems'
-  | 'source_ids'
-  | 'version'
-  | 'lifecycle_status'
-  | 'industry'
-  | 'enterprise_area'
-  | 'function'
-  | 'process_area'
-  | 'use_case_category'
-  | 'strategic_move_phases'
-  | 'confidence_level'
-  | 'business_problem'
-  | 'value_hypothesis'
-  | 'time_to_value_band'
-  | 'common_failure_modes'
-  | 'anti_patterns'
-  | 'intervention_options'
-  | 'recommended_artifacts'
-  | 'gate_evidence_required'
-  | 'source_basis'
-  | 'source_references'
-  | 'confidence_rationale'
-  | 'quantitative_claims'
-  | 'unsupported_claim_flags'
->;
+type DraftSourceInput = Omit<IndustryAIPatternDraft, 'missing_required_fields' | 'missing_provenance'>;
 
 const PHASES_BY_PATTERN_PACK_DELIVERABLE_FIELD: Array<[keyof PatternPackRow, CanonicalStrategicMovePhase]> = [
   ['phase_1_deliverables', 'charter'],
@@ -210,8 +180,10 @@ function buildDraft(input: DraftSourceInput): IndustryAIPatternDraft {
 }
 
 export function fromPatternSeed(pattern: PatternSeed): IndustryAIPatternDraft {
+  const canonical = pattern.canonical ?? {};
   const industry = normalizeIndustry(pattern.vertical).values;
-  const confidence = firstValue(normalizeConfidenceLevel(pattern.confidence).values);
+  const enterpriseArea = firstValue(normalizeEnterpriseArea(canonical.enterprise_area).values);
+  const confidence = firstValue(normalizeConfidenceLevel(canonical.confidence_level ?? pattern.confidence).values);
   const sourceReferences = sourceReferencesFromDocuments(pattern.sourceDocuments);
 
   return buildDraft({
@@ -223,16 +195,52 @@ export function fromPatternSeed(pattern: PatternSeed): IndustryAIPatternDraft {
     source_ids: [pattern.id],
     version: pattern.version,
     lifecycle_status: lifecycleFromPatternStatus(pattern.status),
+    owner: pattern.createdBy || 'abarva-corpus',
+    last_reviewed_at: pattern.createdAt,
     industry,
-    function: firstValue(normalizeFunction(pattern.domain).values),
-    process_area: firstValue(normalizeProcessArea(pattern.category ?? pattern.domain).values),
-    use_case_category: firstValue(normalizeUseCaseCategory(pattern.kind ?? pattern.domain).values),
+    enterprise_area: enterpriseArea,
+    function: firstValue(normalizeFunction(canonical.function ?? pattern.domain).values),
+    process_area: firstValue(normalizeProcessArea(canonical.process_area ?? pattern.category ?? pattern.domain).values),
+    use_case_category: firstValue(normalizeUseCaseCategory(canonical.use_case_category ?? pattern.kind ?? pattern.domain).values),
+    strategic_move_phases: canonical.strategic_move_phases,
+    maturity_level: canonical.maturity_level,
     confidence_level: confidence,
-    business_problem: pattern.applicability,
-    value_hypothesis: pattern.thesis,
-    common_failure_modes: pattern.taggedContradictionIds,
-    intervention_options: pattern.riskFactors?.flatMap((risk) => risk.mitigations),
+    executive_question_answered: canonical.executive_question_answered,
+    target_personas: canonical.target_personas,
+    business_problem: canonical.business_problem ?? pattern.applicability,
+    why_now: canonical.why_now,
+    value_hypothesis: canonical.value_hypothesis ?? pattern.thesis,
+    primary_kpis: canonical.primary_kpis,
+    secondary_kpis: canonical.secondary_kpis,
+    baseline_needed: canonical.baseline_needed,
+    measurement_method: canonical.measurement_method,
+    value_levers: canonical.value_levers,
+    time_to_value_band: canonical.time_to_value_band,
+    implementation_complexity: canonical.implementation_complexity,
+    required_data_domains: canonical.required_data_domains,
+    data_quality_dependencies: canonical.data_quality_dependencies,
+    source_system_dependencies: canonical.source_system_dependencies,
+    integration_dependencies: canonical.integration_dependencies,
+    vector_graph_semantic_dependencies: canonical.vector_graph_semantic_dependencies,
+    agentic_architecture_pattern: canonical.agentic_architecture_pattern,
+    human_agent_workflow_design: canonical.human_agent_workflow_design,
+    autonomous_agent_action_boundaries: canonical.autonomous_agent_action_boundaries,
+    escalation_points: canonical.escalation_points,
+    responsible_ai_guardrails: canonical.responsible_ai_guardrails,
+    operating_model_changes: canonical.operating_model_changes,
+    change_management_needs: canonical.change_management_needs,
+    recommended_workshops: canonical.recommended_workshops,
+    recommended_artifacts: canonical.recommended_artifacts,
+    entry_criteria: canonical.entry_criteria,
+    exit_criteria: canonical.exit_criteria,
+    gate_evidence_required: canonical.gate_evidence_required,
+    common_failure_modes: canonical.common_failure_modes ?? pattern.taggedContradictionIds,
+    anti_patterns: canonical.anti_patterns,
+    intervention_options: canonical.intervention_options ?? pattern.riskFactors?.flatMap((risk) => risk.mitigations),
+    failure_mode_mitigations: canonical.failure_mode_mitigations,
+    source_basis: canonical.source_basis,
     source_references: sourceReferences,
+    confidence_rationale: canonical.confidence_rationale,
     quantitative_claims: [],
     unsupported_claim_flags: [],
   });
