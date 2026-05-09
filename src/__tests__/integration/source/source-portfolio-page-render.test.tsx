@@ -191,7 +191,11 @@ describe('SourcePortfolioPage redesigned render', () => {
     expect(html).toContain('source-portfolio-header');
     expect(html).toContain('source-portfolio-scorecard');
     expect(html).toContain('Total value');
-    expect(html).toContain('Decision focus');
+    expect(html).toContain('Active events');
+    expect(html).toContain('Waiting');
+    expect(html).not.toContain('Decision focus');
+    expect(html).not.toContain('Next action');
+    expect(html).not.toContain('Attention queue');
     expect(html).toContain('source-portfolio-search');
     expect(html).toContain('Portfolio view');
     expect(html).toContain('Table');
@@ -297,6 +301,7 @@ describe('SourcePortfolioPage redesigned render', () => {
     expect(html).toContain('SRC-APX-001 · Apex Retail Group');
     expect(html).toContain('Scope · Active · 1d');
     expect(html).toContain('$10.0M');
+    expect(html).not.toContain('Next ·');
     expect(html).not.toContain('v2 pending');
   });
 

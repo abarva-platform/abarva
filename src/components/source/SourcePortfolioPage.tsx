@@ -264,9 +264,6 @@ function PortfolioScorecard({
     (sum, item) => sum + (item.event.valueAtStakeUsd ?? 0),
     0,
   );
-  const largestOpenEvent = [...openEvents].sort(
-    (a, b) => (b.valueAtStakeUsd ?? 0) - (a.valueAtStakeUsd ?? 0) || b.agingDays - a.agingDays,
-  )[0];
 
   return (
     <section
@@ -286,6 +283,17 @@ function PortfolioScorecard({
           detail={`${openEvents.length} active or waiting event${openEvents.length === 1 ? '' : 's'}`}
         />
         <ScoreMetric
+          label="Active events"
+          value={String(kpis.active)}
+          detail="moving through gates"
+        />
+        <ScoreMetric
+          label="Waiting"
+          value={String(kpis.waiting)}
+          detail="client, vendor, or executive hold"
+          accent={kpis.waiting > 0 ? PORTFOLIO.WAITING : undefined}
+        />
+        <ScoreMetric
           label="At-risk exposure"
           value={canViewFinancialValues ? formatCompactUsd(attentionValueUsd) : 'Restricted'}
           detail={`${kpis.attentionCount} event${kpis.attentionCount === 1 ? '' : 's'} need attention`}
@@ -296,13 +304,6 @@ function PortfolioScorecard({
           value={oldestAgingDays === 0 ? '—' : `${oldestAgingDays}d`}
           detail={`${kpis.waiting} waiting · ${kpis.completed} completed`}
           accent={oldestAgingDays >= 5 ? PORTFOLIO.BLOCKED : oldestAgingDays >= 3 ? PORTFOLIO.WAITING : undefined}
-        />
-      </div>
-      <div style={SCORECARD_CHARTS_STYLE}>
-        <DecisionFocusCard
-          largestOpenEvent={largestOpenEvent}
-          attentionCount={kpis.attentionCount}
-          canViewFinancialValues={canViewFinancialValues}
         />
       </div>
     </section>
@@ -327,56 +328,6 @@ function ScoreMetric({
         {value}
       </div>
       <div style={SCORE_METRIC_DETAIL_STYLE}>{detail}</div>
-    </div>
-  );
-}
-
-function DecisionFocusCard({
-  largestOpenEvent,
-  attentionCount,
-  canViewFinancialValues,
-}: {
-  largestOpenEvent: SourcingEventSummary | undefined;
-  attentionCount: number;
-  canViewFinancialValues: boolean;
-}) {
-  return (
-    <div style={SCORE_CHART_STYLE}>
-      <div style={SCORE_CHART_HEADER_STYLE}>
-        <span>Decision focus</span>
-        <span>{attentionCount} need attention</span>
-      </div>
-
-      {largestOpenEvent ? (
-        <div style={CATEGORY_SUMMARY_STYLE}>
-          <div style={CATEGORY_HERO_STYLE}>
-            <span style={CATEGORY_LABEL_STYLE}>Largest open event</span>
-            <strong style={CATEGORY_HERO_NAME_STYLE}>{largestOpenEvent.name}</strong>
-            <span style={CATEGORY_HERO_DETAIL_STYLE}>
-              {canViewFinancialValues ? formatCompactUsd(largestOpenEvent.valueAtStakeUsd ?? 0) : 'Restricted'}
-              {` · ${largestOpenEvent.currentStageLabel} · ${largestOpenEvent.statusLabel}`}
-            </span>
-          </div>
-          <div style={CATEGORY_FACT_GRID_STYLE}>
-            <div style={CATEGORY_FACT_STYLE}>
-              <span style={CATEGORY_FACT_LABEL_STYLE}>Next action</span>
-              <strong style={CATEGORY_FACT_VALUE_STYLE}>
-                {largestOpenEvent.nextAction || largestOpenEvent.nextDecision || 'Confirm owner and next gate'}
-              </strong>
-            </div>
-            <div style={CATEGORY_FACT_STYLE}>
-              <span style={CATEGORY_FACT_LABEL_STYLE}>Attention queue</span>
-              <strong style={CATEGORY_FACT_VALUE_STYLE}>
-                {attentionCount === 0
-                  ? 'No urgent decisions'
-                  : `${attentionCount} event${attentionCount === 1 ? '' : 's'} need executive attention`}
-              </strong>
-            </div>
-          </div>
-        </div>
-      ) : (
-        <div style={CATEGORY_EMPTY_STYLE}>No open sourcing decisions yet.</div>
-      )}
     </div>
   );
 }
@@ -641,10 +592,10 @@ const SUBLINE_STYLE: CSSProperties = {
 
 const SCORECARD_STYLE: CSSProperties = {
   display: 'grid',
-  gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 420px), 1fr))',
-  gap: 28,
+  gridTemplateColumns: '1fr',
+  gap: 0,
   marginTop: 16,
-  padding: '14px 16px',
+  padding: '12px 16px',
   border: `1px solid ${PORTFOLIO.HAIRLINE}`,
   borderRadius: PORTFOLIO.RADIUS_TIGHT,
   background: PORTFOLIO.CARD,
@@ -652,7 +603,7 @@ const SCORECARD_STYLE: CSSProperties = {
 
 const SCORECARD_METRICS_STYLE: CSSProperties = {
   display: 'grid',
-  gridTemplateColumns: 'repeat(auto-fit, minmax(132px, 1fr))',
+  gridTemplateColumns: 'repeat(auto-fit, minmax(124px, 1fr))',
   gap: 14,
   alignItems: 'stretch',
 };
@@ -686,122 +637,6 @@ const SCORE_METRIC_DETAIL_STYLE: CSSProperties = {
   fontFamily: PORTFOLIO.SANS,
   fontSize: PORTFOLIO.T_META,
   lineHeight: 1.35,
-  color: PORTFOLIO.INK_SOFT,
-};
-
-const SCORECARD_CHARTS_STYLE: CSSProperties = {
-  display: 'grid',
-  gap: 10,
-  minWidth: 0,
-};
-
-const SCORE_CHART_STYLE: CSSProperties = {
-  display: 'grid',
-  alignContent: 'start',
-  gap: 8,
-  minWidth: 0,
-};
-
-const SCORE_CHART_HEADER_STYLE: CSSProperties = {
-  display: 'flex',
-  justifyContent: 'space-between',
-  gap: 12,
-  fontFamily: PORTFOLIO.MONO,
-  fontSize: PORTFOLIO.T_MICRO_SMALL,
-  letterSpacing: '0.10em',
-  textTransform: 'uppercase',
-  color: PORTFOLIO.INK_MUTED,
-  fontWeight: 700,
-};
-
-const CATEGORY_SUMMARY_STYLE: CSSProperties = {
-  display: 'grid',
-  gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 180px), 1fr))',
-  gap: 12,
-  alignItems: 'stretch',
-};
-
-const CATEGORY_HERO_STYLE: CSSProperties = {
-  display: 'grid',
-  alignContent: 'center',
-  gap: 5,
-  minHeight: 82,
-  minWidth: 0,
-  padding: '12px 14px',
-  border: `1px solid ${PORTFOLIO.HAIRLINE}`,
-  borderRadius: PORTFOLIO.RADIUS_TIGHT,
-  background: '#ffffff',
-};
-
-const CATEGORY_LABEL_STYLE: CSSProperties = {
-  fontFamily: PORTFOLIO.MONO,
-  fontSize: PORTFOLIO.T_MICRO_SMALL,
-  letterSpacing: '0.10em',
-  textTransform: 'uppercase',
-  color: PORTFOLIO.INK_MUTED,
-  fontWeight: 700,
-};
-
-const CATEGORY_HERO_NAME_STYLE: CSSProperties = {
-  overflow: 'hidden',
-  textOverflow: 'ellipsis',
-  whiteSpace: 'nowrap',
-  fontFamily: PORTFOLIO.SANS,
-  fontSize: 15,
-  lineHeight: 1.2,
-  fontWeight: 800,
-  color: PORTFOLIO.INK,
-};
-
-const CATEGORY_HERO_DETAIL_STYLE: CSSProperties = {
-  fontFamily: PORTFOLIO.MONO,
-  fontSize: PORTFOLIO.T_META,
-  color: PORTFOLIO.INK_SOFT,
-  fontWeight: 700,
-  fontVariantNumeric: 'tabular-nums',
-};
-
-const CATEGORY_FACT_GRID_STYLE: CSSProperties = {
-  display: 'grid',
-  gridTemplateColumns: '1fr',
-  gap: 8,
-  minWidth: 0,
-};
-
-const CATEGORY_FACT_STYLE: CSSProperties = {
-  display: 'grid',
-  gap: 3,
-  minWidth: 0,
-  padding: '10px 12px',
-  border: `1px solid ${PORTFOLIO.HAIRLINE}`,
-  borderRadius: PORTFOLIO.RADIUS_TIGHT,
-  background: PORTFOLIO.PAGE_BG,
-};
-
-const CATEGORY_FACT_LABEL_STYLE: CSSProperties = {
-  fontFamily: PORTFOLIO.MONO,
-  fontSize: PORTFOLIO.T_MICRO_SMALL,
-  letterSpacing: '0.10em',
-  textTransform: 'uppercase',
-  color: PORTFOLIO.INK_MUTED,
-  fontWeight: 700,
-};
-
-const CATEGORY_FACT_VALUE_STYLE: CSSProperties = {
-  overflow: 'hidden',
-  display: '-webkit-box',
-  WebkitBoxOrient: 'vertical',
-  WebkitLineClamp: 2,
-  fontFamily: PORTFOLIO.SANS,
-  fontSize: PORTFOLIO.T_META,
-  lineHeight: 1.3,
-  color: PORTFOLIO.INK,
-  fontWeight: 800,
-};
-
-const CATEGORY_EMPTY_STYLE: CSSProperties = {
-  fontFamily: PORTFOLIO.SANS,
-  fontSize: PORTFOLIO.T_META,
   color: PORTFOLIO.INK_SOFT,
 };
 
