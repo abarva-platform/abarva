@@ -1,5 +1,7 @@
 import type { MetricExplanation } from '@/lib/tower/metric-explanation-view';
 import type { MetricProvenanceKey } from '@/lib/tower/metric-provenance';
+import type { RetrievalContext } from '@/lib/agent/retrieval';
+import type { AtlasTowerCurrentState } from '@/lib/atlas/tower-grounding';
 
 export type AtlasRouteType = 'scripted' | 'llm' | 'hybrid' | 'tool_augmented';
 
@@ -129,6 +131,8 @@ export interface AtlasObservation {
 }
 
 export interface AtlasToolResultMap {
+  towerState?: AtlasTowerCurrentState;
+  retrievalContext?: RetrievalContext;
   portfolio?: AtlasPortfolioSummary;
   signals?: AtlasSignalSummary[];
   signalDetail?: AtlasSignalDetail | null;

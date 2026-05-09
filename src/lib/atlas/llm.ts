@@ -6,14 +6,59 @@ import {
   query_programs,
   query_signal_evidence,
   query_signals,
+  query_tower_current_state,
   query_use_cases,
 } from '@/lib/atlas/tool-belt';
+import { assembleRetrievalContext } from '@/lib/agent/retrieval';
+import { CITATION_INSTRUCTION, formatRetrievedContext } from '@/lib/agent/retrieval-format';
+import { formatTowerCurrentStateForPrompt } from '@/lib/atlas/tower-grounding';
 import type { AtlasSuggestion, AtlasTenancyCtx, AtlasToolResultMap } from '@/lib/atlas/types';
 
+function sanitizeForTenantPrompt(value: unknown): unknown {
+  if (Array.isArray(value)) {
+    return value.map((item) => sanitizeForTenantPrompt(item));
+  }
+
+  if (!value || typeof value !== 'object') {
+    return value;
+  }
+
+  const safe: Record<string, unknown> = {};
+  for (const [key, rawValue] of Object.entries(value as Record<string, unknown>)) {
+    const safeKey = key === 'apexValue'
+      ? 'tenantValue'
+      : key === 'apexPercentile'
+        ? 'tenantPercentile'
+        : key === 'apex_to_median_ratio'
+          ? 'tenant_to_median_ratio'
+          : key;
+    safe[safeKey] = sanitizeForTenantPrompt(rawValue);
+  }
+  return safe;
+}
+
 function buildFallback(toolResults: AtlasToolResultMap): string {
+  const tower = toolResults.towerState;
   const portfolio = toolResults.portfolio;
   const topSignal = toolResults.signalDetail ?? toolResults.signals?.[0];
   const programCount = toolResults.programs?.length ?? 0;
+  if (tower) {
+    const hero = tower.bandMetrics.metrics.find((metric) => metric.hero) ?? tower.bandMetrics.metrics[0];
+    const topPressure = tower.pressuresView.cards[0];
+    const corpusNote =
+      toolResults.retrievalContext &&
+      (toolResults.retrievalContext.industryChunks.length > 0 ||
+        toolResults.retrievalContext.topicChunks.length > 0 ||
+        toolResults.retrievalContext.clientChunks.length > 0)
+        ? 'I also pulled corpus or industry context for this turn.'
+        : 'No corpus or industry chunks were retrieved for this turn, so I will keep external comparisons qualified.';
+    return [
+      `${tower.client.clientName} Tower is grounded on ${tower.substrateCounts.initiatives} initiatives, ${tower.substrateCounts.vendors} vendors, ${tower.substrateCounts.kpiSnapshots} KPI snapshots, ${tower.substrateCounts.decisions} decisions, and ${tower.substrateCounts.scenarios} scenarios.`,
+      hero ? `The lead displayed metric is ${hero.label}: ${hero.value} (${hero.confidence}).` : null,
+      topPressure ? `The lead pressure is ${topPressure.headline}` : 'No active pressure card is displayed from the DB.',
+      corpusNote,
+    ].filter(Boolean).join(' ');
+  }
   const lines = [
     portfolio
       ? `${portfolio.clientName} is carrying ${portfolio.activeUseCaseCount} active use cases with ${portfolio.criticalSignalCount} critical and ${portfolio.warningSignalCount} warning signals.`
@@ -30,6 +75,7 @@ function buildFallback(toolResults: AtlasToolResultMap): string {
 export async function runAtlasLlm(
   ctx: AtlasTenancyCtx,
   message: string,
+  surfaceContext?: Record<string, unknown>,
 ): Promise<{
   response: string;
   toolsUsed: string[];
@@ -38,15 +84,26 @@ export async function runAtlasLlm(
   modelName: string | null;
   promptVersion: string;
 }> {
-  const [portfolio, signals, programs, useCases, benchmark] = await Promise.all([
+  const towerState = await query_tower_current_state(ctx, surfaceContext);
+  const [portfolio, signals, programs, useCases, benchmark, retrievalContext] = await Promise.all([
     query_portfolio_aggregates(ctx),
     query_signals(ctx, { limit: 4 }),
     query_programs(ctx),
     query_use_cases(ctx),
     query_cohort_benchmarks(ctx, 'adoption_penetration_pct_avg'),
+    assembleRetrievalContext({
+      clientId: ctx.clientId,
+      industry: towerState.client.industryCode,
+      userQuery: message,
+      topKClient: 3,
+      topKIndustry: 4,
+      topKTopic: 3,
+    }),
   ]);
 
   const toolResults: AtlasToolResultMap = {
+    towerState,
+    retrievalContext,
     portfolio,
     signals,
     programs,
@@ -55,6 +112,8 @@ export async function runAtlasLlm(
   };
 
   const toolsUsed = [
+    'query_tower_current_state',
+    'assemble_retrieval_context',
     'query_portfolio_aggregates',
     'query_signals',
     'query_programs',
@@ -84,8 +143,10 @@ export async function runAtlasLlm(
   }
 
   const client = getAnthropicClient();
-  const system = buildAtlasSystemPrompt(portfolio.clientName);
-  const payload = JSON.stringify(toolResults, null, 2);
+  const system = buildAtlasSystemPrompt(towerState.client.clientName);
+  const towerContext = formatTowerCurrentStateForPrompt(towerState);
+  const retrievedContext = formatRetrievedContext(retrievalContext);
+  const payload = JSON.stringify(sanitizeForTenantPrompt(toolResults), null, 2);
 
   const result = await client.messages.create({
     model: 'claude-opus-4-7',
@@ -100,8 +161,15 @@ export async function runAtlasLlm(
             text: [
               `User question: ${message}`,
               '',
-              'Use only the tool context below. If the ask is strategic, answer with scope discipline and route to Sentinel or a Program charter.',
+              'Answer from the current Tower state first. Then use retrieved corpus / industry context when present. If the ask is strategic, explain the implications but route the actual choice to Sentinel or a Program charter.',
               '',
+              towerContext,
+              '',
+              retrievedContext || 'RETRIEVED CONTEXT\nNo corpus, industry, or client vector chunks were retrieved for this turn.',
+              '',
+              CITATION_INSTRUCTION,
+              '',
+              'Raw tool context follows for exact IDs and auditability. Do not surface raw JSON unless asked.',
               payload,
             ].join('\n'),
           },
@@ -123,6 +191,7 @@ export async function runAtlasLlm(
     toolsUsed,
     suggestions: [
       { label: 'Peer context', value: 'How do we compare to peers?', kind: 'message' },
+      { label: 'Industry moves', value: 'What are others doing in this industry?', kind: 'message' },
       topSignal ? { label: 'Open top signal', value: `signal:${topSignal.id}`, kind: 'signal' } : { label: 'Programs', value: 'Show active programs', kind: 'message' },
     ],
     toolResults,

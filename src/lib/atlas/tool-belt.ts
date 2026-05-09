@@ -8,6 +8,7 @@ import {
   listAtlasSignals,
   listAtlasUseCases,
 } from '@/lib/atlas/repository';
+import { buildAtlasTowerCurrentState } from '@/lib/atlas/tower-grounding';
 import type { AtlasSignalSummary, AtlasTenancyCtx } from '@/lib/atlas/types';
 
 export async function query_portfolio_aggregates(ctx: AtlasTenancyCtx) {
@@ -37,6 +38,16 @@ export async function query_use_cases(ctx: AtlasTenancyCtx) {
 
 export async function query_programs(ctx: AtlasTenancyCtx) {
   return listAtlasPrograms(ctx);
+}
+
+export async function query_tower_current_state(
+  ctx: AtlasTenancyCtx,
+  surfaceContext?: Record<string, unknown>,
+) {
+  return buildAtlasTowerCurrentState({
+    clientId: ctx.clientId,
+    surfaceContext,
+  });
 }
 
 export async function get_scripted_opening(ctx: AtlasTenancyCtx) {
