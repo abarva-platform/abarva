@@ -12,9 +12,10 @@
 // - 22px AbarVa wordmark (Claude / ChatGPT scale)
 // - Hairline divider, then compact handwritten "AI Success Platform"
 //   tagline — quiet supporting note, not a second logo
-// - Centered nav · inactive items at 72% white · active = full white
+// - Centered nav · client context sits quietly before Home
+// - Module nav inactive items at 72% white · active = full white
 //   + 600 weight + 3px signal-blue underline
-// - Right rail: active client, Learn, Product, avatar + first name + Sign-out
+// - Right rail: Learn, Product, avatar + first name + Sign-out
 // - All colors from the locked brand kit (no green / teal in chrome)
 //
 // Backward-compat: the legacy props (showLocked, context, timeString)
@@ -133,6 +134,40 @@ export function AppTopBar({ tenantName, showProductNav = true }: AppTopBarProps 
 
       {navItems.length > 0 && (
         <nav aria-label="Product modules" style={{ display: "flex", alignItems: "center", gap: 4 }}>
+          {signedIn && resolvedTenantName && (
+            <>
+              <span
+                title={resolvedTenantName}
+                aria-label={`Active client ${resolvedTenantName}`}
+                style={{
+                  display: "inline-block",
+                  maxWidth: 210,
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  whiteSpace: "nowrap",
+                  fontFamily: "Newsreader, Georgia, 'Times New Roman', serif",
+                  fontSize: 13,
+                  fontStyle: "italic",
+                  fontWeight: 600,
+                  color: "rgba(255,255,255,0.82)",
+                  letterSpacing: "0.01em",
+                  padding: "22px 12px 22px 0",
+                  transform: "translateY(1px)",
+                }}
+              >
+                {resolvedTenantName}
+              </span>
+              <span
+                aria-hidden="true"
+                style={{
+                  width: 1,
+                  height: 16,
+                  background: BRAND.hair,
+                  marginRight: 2,
+                }}
+              />
+            </>
+          )}
           {navItems.map((item) => {
             const active = item.match(pathname);
             return (
@@ -173,32 +208,7 @@ export function AppTopBar({ tenantName, showProductNav = true }: AppTopBarProps 
         </nav>
       )}
 
-      <div style={{ display: "flex", alignItems: "center", gap: 10, flexShrink: 0 }}>
-        {signedIn && resolvedTenantName && (
-          <span
-            title={resolvedTenantName}
-            aria-label={`Active client ${resolvedTenantName}`}
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              maxWidth: 220,
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-              whiteSpace: "nowrap",
-              fontFamily: "Inter, system-ui, sans-serif",
-              fontSize: 12,
-              fontWeight: 600,
-              letterSpacing: "0.01em",
-              color: BRAND.textStrong,
-              padding: "7px 12px",
-              borderRadius: 999,
-              border: `1px solid rgba(255,255,255,0.16)`,
-              background: "rgba(255,255,255,0.05)",
-            }}
-          >
-            {resolvedTenantName}
-          </span>
-        )}
+      <div style={{ display: "flex", alignItems: "center", gap: 16, flexShrink: 0 }}>
         {signedIn && (
           <Link
             href="/home/learn"
@@ -210,11 +220,10 @@ export function AppTopBar({ tenantName, showProductNav = true }: AppTopBarProps 
               fontWeight: 600,
               letterSpacing: "0.01em",
               color: pathname === "/home/learn" || pathname.startsWith("/home/learn/") ? "white" : BRAND.textStrong,
-              textDecoration: "none",
-              padding: "7px 14px",
-              borderRadius: 999,
-              border: `1px solid rgba(255,255,255,0.20)`,
-              background: pathname === "/home/learn" || pathname.startsWith("/home/learn/") ? "rgba(255,255,255,0.08)" : "transparent",
+              textDecoration: pathname === "/home/learn" || pathname.startsWith("/home/learn/") ? "underline" : "none",
+              textDecorationColor: BRAND.signalBlue,
+              textUnderlineOffset: 6,
+              padding: "22px 0",
               whiteSpace: "nowrap",
             }}
           >
@@ -232,13 +241,12 @@ export function AppTopBar({ tenantName, showProductNav = true }: AppTopBarProps 
               fontWeight: 600,
               letterSpacing: "0.01em",
               color: pathname === "/product" || pathname.startsWith("/product/") ? "white" : BRAND.textStrong,
-              textDecoration: "none",
-              padding: "7px 14px",
-              borderRadius: 999,
-              border: `1px solid rgba(255,255,255,0.20)`,
-              background: pathname === "/product" || pathname.startsWith("/product/") ? "rgba(255,255,255,0.08)" : "transparent",
+              textDecoration: pathname === "/product" || pathname.startsWith("/product/") ? "underline" : "none",
+              textDecorationColor: BRAND.signalBlue,
+              textUnderlineOffset: 6,
+              padding: "22px 0",
               whiteSpace: "nowrap",
-              marginRight: 4,
+              marginRight: 2,
             }}
           >
             Product
