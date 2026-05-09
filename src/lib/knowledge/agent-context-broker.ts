@@ -415,6 +415,64 @@ function selectFixtureContextItems(
       provenanceIds: [artifact.id, ...artifact.linkedProgramIds],
       linkedEvidence: citationsForIds(citations, artifact.linkedEvidenceIds),
     })));
+
+    const requestedDomains = new Set(request.requestedDomains ?? []);
+    if (requestedDomains.has('system_landscape')) {
+      items.push(...room.systems.slice(0, 8).map((system) => ({
+        id: `ctx:${system.id}`,
+        kind: 'system' as const,
+        title: system.name,
+        summary: `${system.vendor}; ${system.category}; owner ${system.itOwner}; annual spend ${system.annualSpendUsd}; expiry ${system.contractExpiry ?? 'not recorded'}; criticality ${system.criticality}; lifecycle ${system.lifecycleState}`,
+        tenantKey: room.tenantKey,
+        sourceBasis: system.sourceBasis,
+        dataClassification: 'synthetic' as const,
+        sensitivity: 'structured' as const,
+        provenanceIds: [system.id],
+        linkedEvidence: [],
+      })));
+    }
+    if (requestedDomains.has('vendor_contracts')) {
+      items.push(...room.vendorContracts.slice(0, 6).map((contract) => ({
+        id: `ctx:${contract.id}`,
+        kind: 'vendor_contract' as const,
+        title: `${contract.vendorName} - ${contract.product}`,
+        summary: `${contract.category}; spend ${contract.annualSpendUsd}; status ${contract.contractStatus}; renewal ${contract.renewalOrExpiry ?? 'not recorded'}; risk ${contract.riskLevel}; ${contract.keyRisk}`,
+        tenantKey: room.tenantKey,
+        sourceBasis: contract.sourceBasis,
+        dataClassification: 'synthetic' as const,
+        sensitivity: 'structured' as const,
+        provenanceIds: [contract.id],
+        linkedEvidence: [],
+      })));
+    }
+    if (requestedDomains.has('financials')) {
+      items.push(...room.financials.slice(0, 8).map((metric) => ({
+        id: `ctx:${metric.id}`,
+        kind: 'financial_metric' as const,
+        title: metric.metric,
+        summary: `${metric.value} ${metric.unit}; category ${metric.category}`,
+        tenantKey: room.tenantKey,
+        sourceBasis: metric.sourceBasis,
+        dataClassification: 'synthetic' as const,
+        sensitivity: 'summary' as const,
+        provenanceIds: [metric.id],
+        linkedEvidence: citationsForIds(citations, metric.evidenceIds),
+      })));
+    }
+    if (requestedDomains.has('evidence_provenance')) {
+      items.push(...room.evidence.slice(0, 6).map((evidence) => ({
+        id: `ctx:${evidence.id}`,
+        kind: 'evidence' as const,
+        title: evidence.citationLocator,
+        summary: `${evidence.claimText} (${evidence.usabilityState}; confidence ${evidence.confidence})`,
+        tenantKey: room.tenantKey,
+        sourceBasis: evidence.sourceBasis,
+        dataClassification: evidence.dataClassification,
+        sensitivity: 'structured' as const,
+        provenanceIds: [evidence.id, evidence.sourceArtifactId, ...evidence.linkedArtifactIds],
+        linkedEvidence: [toCitation(evidence)],
+      })));
+    }
   }
 
   if (request.agentName === 'Sentinel') {
@@ -603,6 +661,15 @@ async function selectPersistedContextItems(
       fetch('program_inventory', 6);
       fetch('cross_program_signals', 4);
       fetch('evidence_ledger', 5);
+      if (request.requestedDomains?.includes('system_landscape')) {
+        fetch('it_landscape', 8);
+      }
+      if (request.requestedDomains?.includes('vendor_contracts')) {
+        fetch('vendor_contracts', 6);
+      }
+      if (request.requestedDomains?.includes('financials')) {
+        fetch('kpi_dictionary', 6);
+      }
       break;
     case 'Sentinel':
       // Sentinel is the librarian agent — corpus-wide retrieval and

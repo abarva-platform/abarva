@@ -5,6 +5,15 @@ import {
   createSourceNexusApiStubResponse,
   normalizeSourceNexusApiRequestBody,
 } from '@/lib/source/nexus-api';
+import { getActiveClientRow } from '@/lib/active-client';
+import {
+  APEX_RETAIL_BROKER_TENANT_KEY,
+  APEX_RETAIL_CLIENT_KEY,
+  buildApexRetailSourceContextAssemblyInput,
+  toApexRetailLiveTenantContextSnapshot,
+  type ApexRetailAdapterResult,
+} from '@/lib/source/adapters/apex-retail-adapter';
+import { sourceEventRowToDetail } from '@/lib/source/queries';
 import { getServerSupabase } from '@/lib/supabase-server';
 
 export const runtime = 'nodejs';
@@ -28,6 +37,21 @@ export async function POST(
     }
 
     const normalizedBody = normalizeSourceNexusApiRequestBody(bodyResult.body);
+    const activeClient = await getActiveClientRow().catch(() => null);
+    const apexContext = await loadApexRetailSourceIntelligence({
+      eventId,
+      userId: tenancy.userId,
+      prompt: normalizedBody.prompt,
+      selectedAttachmentIds: normalizedBody.selectedAttachmentIds,
+      clientId: tenancy.clientId,
+      clientKey: activeClient?.key,
+    });
+    const liveEventDetail = apexContext?.liveContext.sourceEvent
+      ? sourceEventRowToDetail(apexContext.liveContext.sourceEvent, 'Apex Retail Group')
+      : undefined;
+    const liveTenantContext = apexContext
+      ? toApexRetailLiveTenantContextSnapshot(apexContext.liveContext)
+      : undefined;
 
     // Source canvas migration · before invoking the (unchanged) deterministic
     // runtime, link any attachments from this turn to the source event so the
@@ -49,13 +73,18 @@ export async function POST(
     const response = createSourceNexusApiStubResponse({
       ...normalizedBody,
       eventId,
-      tenant: {
+      tenant: apexContext?.input.tenant ?? {
         tenantId: tenancy.clientId,
+        tenantKey: activeClient?.key,
+        tenantName: activeClient?.name,
         activeClientId: tenancy.clientId,
+        activeClientName: activeClient?.name,
       },
       user: {
         id: tenancy.userId,
       },
+      liveEventDetail,
+      liveTenantContext,
     });
 
     return Response.json(response, { status: response.httpStatus });
@@ -74,6 +103,53 @@ export async function POST(
       );
     }
   }
+}
+
+async function loadApexRetailSourceIntelligence(args: {
+  eventId?: string;
+  userId: string;
+  prompt?: string;
+  selectedAttachmentIds?: string[];
+  clientId?: string;
+  clientKey?: string;
+}): Promise<ApexRetailAdapterResult | null> {
+  const { eventId, clientId, clientKey } = args;
+  if (!shouldUseApexRetailAdapter(eventId, clientId, clientKey)) return null;
+
+  try {
+    return await buildApexRetailSourceContextAssemblyInput({
+      eventId,
+      user: { id: args.userId },
+      userPrompt: args.prompt ?? 'Provide the current Source command read.',
+      surface: 'nexusPanel',
+      selectedAttachmentIds: args.selectedAttachmentIds ?? [],
+    });
+  } catch (error) {
+    console.error(
+      '[source-nexus-ask] Apex Retail source intelligence load failed',
+      error instanceof Error ? error.message : error,
+    );
+    return null;
+  }
+}
+
+function shouldUseApexRetailAdapter(
+  eventId: string | undefined,
+  clientId: string | undefined,
+  clientKey: string | undefined,
+): boolean {
+  const normalizedClientId = clientId?.trim().toLowerCase();
+  const normalizedClientKey = clientKey?.trim().toLowerCase();
+  if (
+    normalizedClientId === APEX_RETAIL_CLIENT_KEY ||
+    normalizedClientId === APEX_RETAIL_BROKER_TENANT_KEY ||
+    normalizedClientKey === APEX_RETAIL_CLIENT_KEY ||
+    normalizedClientKey === APEX_RETAIL_BROKER_TENANT_KEY
+  ) {
+    return true;
+  }
+  const normalizedEventId = eventId?.trim().toUpperCase() ?? '';
+  return normalizedEventId.startsWith('APX-') || normalizedEventId.startsWith('SRC-APX-');
 }
 
 /**
