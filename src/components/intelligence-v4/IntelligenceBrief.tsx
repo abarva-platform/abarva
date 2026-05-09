@@ -182,7 +182,7 @@ export function IntelligenceBrief({ data, activeClient }: Props) {
                 marginBottom: 22,
               }}
             >
-              <SectionEyebrow>Sentinel's read · this quarter</SectionEyebrow>
+              <SectionEyebrow>Sentinel&rsquo;s read · this quarter</SectionEyebrow>
               <p
                 style={{
                   fontFamily: F_BODY,
