@@ -89,10 +89,14 @@ const ROUTE_RULES: RouteRule[] = [
     routePattern: '/source/events',
     routeFile: 'src/app/(maestro)/source/events/page.tsx',
     ownerSurface: 'source',
-    requiredCanonicalShellMarkers: ['AppShell', 'SentinelAgentColumn'],
-    requiredWorkflowMarkers: ['SentinelAgentColumn'],
+    // The events portfolio migrated to the shared AgentDock side-rail (sibling
+    // of PR #1764 — feat(agent): shared AgentDock with 5 modes). Either marker
+    // satisfies the canonical-shell requirement; the verification is a literal
+    // substring scan and one of the two must be present in the route file.
+    requiredCanonicalShellMarkers: ['AppShell', 'SourceEventsAgentDockView'],
+    requiredWorkflowMarkers: ['SourceEventsAgentDockView'],
     disallowedLegacyImports: ['StewardAdminRail', 'SourceCanonShell', 'SourceFoundationShell', 'SourceRouteShell'],
-    remediation: 'Use AppShell + SentinelAgentColumn on source events index route (Wave S1 migration).',
+    remediation: 'Use AppShell + SourceEventsAgentDockView on source events index route (Wave S1 migration · AgentDock conversion).',
   },
   {
     routePattern: '/source/events/[eventId]',

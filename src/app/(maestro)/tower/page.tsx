@@ -1,20 +1,5 @@
 import Link from 'next/link';
 import { TowerIndexPage } from '@/components/tower/TowerIndexPage';
-import { TowerLensTabs } from '@/components/tower/TowerLensTabs';
-import { TowerProvenanceRibbon } from '@/components/tower/TowerProvenanceRibbon';
-import { TowerTopPatternsTile } from '@/components/tower/TowerTopPatternsTile';
-import { TowerMissionQueue } from '@/components/tower/TowerMissionQueue';
-import { TowerPortfolioSummaryStrip } from '@/components/tower/TowerPortfolioSummaryStrip';
-import { TowerPortfolioCascadeGraph } from '@/components/tower/TowerPortfolioCascadeGraph';
-import { PortfolioAlertsPanel } from '@/components/tower/PortfolioAlertsPanel';
-import { RiskRegisterPanel } from '@/components/_shared/RiskRegisterPanel';
-import { ReasoningErrorBoundary } from '@/components/reasoning/ReasoningErrorBoundary';
-import { buildTowerSynthesisContext } from '@/lib/reasoning/tower-synthesis-context-builder';
-import { buildPortfolioRiskRegister } from '@/lib/reasoning/risk-register';
-import { buildPortfolioAlerts } from '@/lib/reasoning/portfolio-alerts';
-import { APEX_RETAIL_PROGRAM_INSTANCES } from '@/lib/programs/program-instances';
-import { SOURCE_EVENT_INSTANCES } from '@/lib/source/source-event-instances';
-import { findTenantByRouteSlug } from '@/lib/deliverables/seed-route-resolver';
 import { getServerSupabase } from '@/lib/supabase-server';
 import { requireTenancy } from '@/lib/auth/tenancy';
 import { loadUserProgramAccessPolicy } from '@/lib/auth/program-access-policy';
@@ -26,8 +11,6 @@ import {
   type TowerTabKey,
 } from '@/lib/tower/tower-lens-tabs-view';
 import {
-  applySetupAiInitiativeFinancialFirewall,
-  getSetupAiInitiatives,
   listPersistedSetupAiInitiatives,
   normalizeSetupAiInitiativeTenantKey,
   summarizeSetupAiInitiatives,
@@ -35,8 +18,31 @@ import {
 } from '@/lib/setup';
 import {
   listInitiativesForClient,
+  listVendorsForClient,
   type AIInitiative,
+  type AIInitiativeVendorRow,
 } from '@/lib/admin/ai-initiatives/queries';
+import {
+  buildTowerBandMetrics,
+  type TowerBandMetricsView,
+  type TowerLens,
+} from '@/lib/tower/band-metrics-view';
+import {
+  buildTowerPressuresView,
+  type TowerPressuresView,
+} from '@/lib/tower/pressure-cards-view';
+import {
+  buildTowerAtlasObservationsView,
+  type AtlasObservationsView,
+} from '@/lib/tower/atlas-observations-view';
+import { resolveTowerToday } from '@/lib/tower/today-resolution';
+import { buildStrategicAlignment2x2View } from '@/lib/tower/strategic-alignment-2x2-view';
+import {
+  buildAtlasInterpretation,
+  type AtlasReasoningInput,
+} from '@/lib/tower/atlas-interpretation-view';
+import { buildTowerRightRailReasoningTrace } from '@/lib/tower/atlas-reasoning-trace';
+import { appendAtlasReasoningTrace } from '@/lib/atlas/repository';
 
 export const metadata = { title: 'Control Tower · AbarVa' };
 
@@ -45,8 +51,8 @@ export const metadata = { title: 'Control Tower · AbarVa' };
  * Registry for the active tenant so Tower CFO View can plot real names in
  * the Strategic Alignment 2×2 instead of invented placeholders.
  *
- * Fail-soft: any error (auth, DB, RLS) returns an empty array so the legacy
- * hardcoded 2×2 fallback continues to render — never blocks the page.
+ * Fail-soft: any error (auth, DB, RLS) returns an empty array. The Tower UI
+ * renders an explicit DB-empty state instead of substituting demo data.
  */
 async function buildTowerInitiatives(): Promise<ReadonlyArray<AIInitiative>> {
   try {
@@ -55,6 +61,42 @@ async function buildTowerInitiatives(): Promise<ReadonlyArray<AIInitiative>> {
   } catch {
     return [];
   }
+}
+
+/**
+ * T-5 (Bind 1): query tenant-level vendor records so the dashboard band
+ * can compute Renewals · 90d from real contract renewal dates. Fail-soft:
+ * any error (auth, DB, RLS) returns an empty array so the page still
+ * renders — the band tile shows "0 / none in 90d" with a "no substrate"
+ * tooltip.
+ */
+async function buildTowerVendors(): Promise<ReadonlyArray<AIInitiativeVendorRow>> {
+  try {
+    const tenancy = await requireTenancy();
+    return await listVendorsForClient(tenancy.clientId);
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * T-5 (Bind 1): resolve today's date once for all Tower view-models.
+ * `TOWER_DEMO_TODAY` lets pilot deploys pin a specific day; the fallback
+ * stays stable for demo determinism across local, preview, and production.
+ */
+function buildTowerToday(): string {
+  return resolveTowerToday();
+}
+
+/**
+ * T-8 (Bind 4): resolve `?lens=<key>` to a valid TowerLens, defaulting to
+ * 'value' for unknown / missing values. Mirrors resolveTowerTab pattern.
+ */
+function resolveTowerLens(raw: string | undefined): TowerLens {
+  if (raw === 'value' || raw === 'risk' || raw === 'contract' || raw === 'adopt') {
+    return raw;
+  }
+  return 'value';
 }
 
 // T-2 (Tower Fix Package): reduced from 10 to 5 tabs. Dropped:
@@ -240,18 +282,13 @@ async function buildTowerSetupInitiativesFeed() {
       privateSchema: null,
       initiatives: [] as SetupAiInitiativeRecord[],
     }));
-    const fromPrivate =
-      persisted.status === 'private_db' && persisted.initiatives.length > 0;
-    const initiatives = fromPrivate
-      ? [...persisted.initiatives]
-      : getSetupAiInitiatives(tenantKey).map((record) =>
-          applySetupAiInitiativeFinancialFirewall(record, financialVisibility),
-        );
+    const fromPrivate = persisted.status === 'private_db';
+    const initiatives = fromPrivate ? [...persisted.initiatives] : [];
 
     return {
       tenantName: activeClient.name,
       tenantKey,
-      source: fromPrivate ? ('private_db' as const) : ('fixture_fallback' as const),
+      source: fromPrivate ? ('private_db' as const) : ('empty' as const),
       privateSchema: persisted.privateSchema,
       financialVisibility,
       summary: summarizeSetupAiInitiatives(tenantKey, initiatives),
@@ -386,7 +423,7 @@ function TowerSetupInitiativesPanel({
           </div>
         </div>
         <div style={{ fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace', fontSize: 10, letterSpacing: '0.10em', textTransform: 'uppercase', color: '#66715e', whiteSpace: 'nowrap' }}>
-          {feed.source === 'private_db' ? 'Private plane' : 'Fixture fallback'}
+          {feed.source === 'private_db' ? 'Private plane' : 'DB required'}
           {feed.privateSchema ? ` · ${feed.privateSchema}` : ''}
         </div>
       </div>
@@ -437,87 +474,91 @@ function TowerSetupInitiativesPanel({
 export default async function TowerPage({
   searchParams,
 }: {
-  searchParams?: Promise<{ tab?: string }>;
+  searchParams?: Promise<{ tab?: string; lens?: string }>;
 }) {
-  // REASON-29 — Build the portfolio-level Atlas SynthesisContext server-side so
-  // the provenance ribbon can surface the inputs that grounded the streamed
-  // Atlas synthesis quote (patterns cited, gate counts, blockers, cascades).
-  const synthesisContext = buildTowerSynthesisContext(
-    APEX_RETAIL_PROGRAM_INSTANCES,
-    SOURCE_EVENT_INSTANCES,
-  );
-
-  // Portfolio-level risk register: top 10 risks aggregated across every
-  // active program + source-event instance, sorted globally by severity
-  // and confidence.
-  const portfolioRisks = buildPortfolioRiskRegister();
-
-  // Portfolio alerts: cross-instance feed of urgent reasoning signals
-  // (red-grade health, high-severity contradictions, high-confidence
-  // failure modes, high-impact cascades). Surfaces above the provenance
-  // ribbon so the executive sees the most urgent items first.
-  const portfolioAlerts = buildPortfolioAlerts();
-
   const towerHandoffPrograms = await buildTowerHandoffPrograms();
   const towerHandoffSourceEvents = await buildTowerHandoffSourceEvents();
   const towerSetupInitiativesFeed = await buildTowerSetupInitiativesFeed();
   const towerInitiatives = await buildTowerInitiatives();
+  const towerVendors = await buildTowerVendors();
+  // Active client id (when bound) — wires the AgentDock chat lane to
+  // /api/v1/atlas/chat. Fail-soft: when no client row resolves we omit
+  // clientId and the dock surfaces a soft "Atlas needs an active tenant"
+  // message instead of crashing the page.
+  const activeClient = await getActiveClientRow().catch(() => null);
+  const activeClientId = activeClient?.id ?? null;
   const resolvedSearchParams = searchParams ? await searchParams : {};
   const activeTab = resolveTowerTab(resolvedSearchParams.tab);
-  const seedTenant =
-    findTenantByRouteSlug(towerSetupInitiativesFeed.tenantKey) ??
-    findTenantByRouteSlug('apexretail');
-
+  // T-8 (Bind 4): resolve the active lens server-side so the band/pressures
+  // view-models can re-rank per lens. Falls back to 'value' for unknown.
+  const activeLens: TowerLens = resolveTowerLens(resolvedSearchParams.lens);
+  const towerToday = buildTowerToday();
+  const towerBandMetrics: TowerBandMetricsView = buildTowerBandMetrics(
+    towerInitiatives,
+    towerVendors,
+    towerToday,
+    activeLens,
+  );
+  const towerPressures: TowerPressuresView = buildTowerPressuresView(
+    towerInitiatives,
+    towerVendors,
+    towerToday,
+    activeLens,
+  );
+  const deterministicAtlasObservations: AtlasObservationsView = buildTowerAtlasObservationsView(
+    towerInitiatives,
+    towerVendors,
+    towerPressures,
+    towerToday,
+  );
+  const towerAlignment2x2 = buildStrategicAlignment2x2View(towerInitiatives);
+  const atlasReasoningInput: AtlasReasoningInput = {
+    tenant: { name: towerSetupInitiativesFeed.tenantName, clientId: activeClientId },
+    todayIso: towerToday,
+    lens: activeLens,
+    bandMetrics: towerBandMetrics,
+    pressuresView: towerPressures,
+    alignment2x2View: towerAlignment2x2,
+    initiatives: towerInitiatives,
+    vendors: towerVendors,
+  };
+  const towerAtlasInterpretation = buildAtlasInterpretation(atlasReasoningInput);
+  const towerAtlasObservations: AtlasObservationsView =
+    towerAtlasInterpretation.interpretationConfidence === 'low'
+      ? deterministicAtlasObservations
+      : towerAtlasInterpretation;
+  if (activeClientId) {
+    const traceTenancy = await requireTenancy().catch(() => null);
+    await appendAtlasReasoningTrace(
+      buildTowerRightRailReasoningTrace({
+        ctx: {
+          clientId: activeClientId,
+          userId: traceTenancy?.userId ?? null,
+        },
+        reasoningInput: atlasReasoningInput,
+        interpretation: towerAtlasInterpretation,
+        fallbackUsed: towerAtlasInterpretation.interpretationConfidence === 'low',
+        fallbackReason: towerAtlasInterpretation.interpretationConfidence === 'low' ? 'low_confidence' : null,
+      }),
+    ).catch(() => null);
+  }
   return (
     <TowerIndexPage
       tenantName={towerSetupInitiativesFeed.tenantName}
       context={`Control Tower · ${TOWER_SUBMENU_LABELS[activeTab]} · ${towerSetupInitiativesFeed.summary.total} initiatives observed`}
+      clientId={activeClientId ?? undefined}
       initiatives={towerInitiatives}
+      vendors={towerVendors}
+      bandMetrics={towerBandMetrics}
+      pressuresView={towerPressures}
+      atlasObservationsView={towerAtlasObservations}
       towerSubmenuSlot={<TowerMainSubmenuStrip activeTab={activeTab} />}
-      provenanceSlot={
-        <>
-          <PortfolioAlertsPanel alerts={portfolioAlerts} />
-          <TowerProvenanceRibbon context={synthesisContext} />
-          <ReasoningErrorBoundary section="Risk Register">
-            <RiskRegisterPanel
-              risks={portfolioRisks}
-              title="Risk register · portfolio"
-              maxRows={10}
-            />
-          </ReasoningErrorBoundary>
-          <TowerTopPatternsTile />
-          <TowerMissionQueue limit={8} />
-        </>
-      }
-      portfolioSummarySlot={<TowerPortfolioSummaryStrip />}
-      cascadeGraphSlot={<TowerPortfolioCascadeGraph />}
       towerHandoffSlot={
         <>
           <TowerSetupInitiativesPanel feed={towerSetupInitiativesFeed} />
           <TowerHandoffProgramsPanel programs={towerHandoffPrograms} />
           <TowerHandoffSourceEventsPanel events={towerHandoffSourceEvents} />
         </>
-      }
-      towerLensSlot={
-        seedTenant ? (
-          <section
-            aria-label={`${TOWER_SUBMENU_LABELS[activeTab]} Tower lens`}
-            data-testid="tower-main-lens-canvas"
-            style={{
-              border: '1px solid #e5dfd2',
-              borderRadius: 12,
-              background: '#ffffff',
-              overflow: 'hidden',
-            }}
-          >
-            <TowerLensTabs
-              tenant={seedTenant}
-              activeTab={activeTab}
-              baseUrl="/tower"
-              showTabBar={false}
-            />
-          </section>
-        ) : null
       }
     />
   );

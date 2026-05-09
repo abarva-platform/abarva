@@ -8,8 +8,13 @@ import { SHELL } from '@/lib/shell/shell-tokens';
 
 export const PORTFOLIO = {
   // ── Surface ────────────────────────────────────────────────────────────────
-  PAGE_BG: '#f5f1eb',           // cream — same as the rest of the cockpit
-  CARD: '#fdfbf7',              // warm white — used sparingly
+  // PR-H10 (2026-05-08): aligned to the canonical AbarVa light
+  // surface — pure white. Previously cream (`#f5f1eb`) which read as
+  // a different design language than Setup/Tower (now on `#ffffff`).
+  // Cards stay white; row hover and grouping rules carry the
+  // hierarchy without a tint wash.
+  PAGE_BG: '#FFFFFF',           // white — matches Setup/Tower canonical
+  CARD: '#FFFFFF',              // white — cards/tables
   SURFACE_HOVER: 'rgba(10,10,11,0.035)',  // table row hover
   SURFACE_HOVER_STRONG: 'rgba(10,10,11,0.06)',  // sidebar checkbox hover
 

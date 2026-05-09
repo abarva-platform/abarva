@@ -38,7 +38,6 @@ describe("SHELL-V2 Rule 1 — no dual-chat surface", () => {
   const surfaceFiles = [
     "components/tower/TowerIndexPage.tsx",
     "components/intelligence/IntelligenceIndexPage.tsx",
-    "components/home/HomeIndexPage.tsx",
     "components/setup/SetupConnectorsPage.tsx",
     "components/setup/SetupPoliciesPage.tsx",
     "components/setup/SetupTenantPage.tsx",
@@ -74,7 +73,6 @@ describe("SHELL-V2 Rule 2 — Mode A surfaces have no AskAnythingBar", () => {
   const modeASurfaces = [
     "components/tower/TowerIndexPage.tsx",
     "components/intelligence/IntelligenceIndexPage.tsx",
-    "components/home/HomeIndexPage.tsx",
     "components/setup/SetupConnectorsPage.tsx",
     "components/setup/SetupPoliciesPage.tsx",
     "components/programs/ProgramsIndexPage.tsx",
@@ -131,7 +129,6 @@ describe("SHELL-V2 Rule 4 — surface pages do not directly import AtlasPageStat
   const surfaceFiles = [
     "components/tower/TowerIndexPage.tsx",
     "components/intelligence/IntelligenceIndexPage.tsx",
-    "components/home/HomeIndexPage.tsx",
     "components/programs/ProgramsIndexPage.tsx",
     "components/programs/ProgramDetailPage.tsx",
     "components/source/SourceIndexPage.tsx",

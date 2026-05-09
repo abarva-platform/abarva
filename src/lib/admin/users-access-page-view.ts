@@ -376,8 +376,8 @@ const ACTION_STRIP: ReadonlyArray<UsersAccessActionRow> = [
   {
     id: 'configure_sso',
     label: 'Configure SSO',
-    status: 'safe',
-    href: '/admin/users-access/sso-configuration',
+    status: 'hard_gated',
+    reason: 'SSO configuration and identity provider wiring ships in Wave 27 with the Clerk org-level integration.',
   },
   {
     id: 'export_users',

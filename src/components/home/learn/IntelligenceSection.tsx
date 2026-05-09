@@ -1,7 +1,7 @@
 'use client';
 import {
   Section, HeroBand, Eyebrow, SectionTitle, Lead, BodyP,
-  Callout, StepList, Step, TermGrid, Term, IntelCard, PressureCardMock, T,
+  Callout, StepList, Step, TermGrid, Term, IntelCard, PressureCardMock,
 } from './primitives';
 
 export function IntelligenceSection() {
@@ -50,14 +50,14 @@ export function IntelligenceSection() {
         </div>
 
         <BodyP>
-          Each pressure card shows you: what the signal is, the data evidence behind it, which business unit it affects, the magnitude of impact, and a recommended action — usually "Originate a Move."
+          Each pressure card shows you: what the signal is, the data evidence behind it, which business unit it affects, the magnitude of impact, and a recommended action — usually &ldquo;Originate a Move.&rdquo;
         </BodyP>
 
         {/* Live pressure card mockup */}
         <PressureCardMock />
 
         <Callout kind="success" icon="✓" label="Pressure cards pre-fill Moves">
-          When you click "Originate a Move" from a pressure card, Nexus pre-populates the bet/outcome, value hypothesis, and evidence family fields from the card's data. You start P0 already 60% complete instead of from scratch.
+          When you click &ldquo;Originate a Move&rdquo; from a pressure card, Nexus pre-populates the bet/outcome, value hypothesis, and evidence family fields from the card&rsquo;s data. You start P0 already 60% complete instead of from scratch.
         </Callout>
       </Section>
 
@@ -77,7 +77,7 @@ export function IntelligenceSection() {
             Check the evidence sources. Are they recent? Is the data from connected systems you trust? The stronger the evidence, the more defensible the business case in P4 will be.
           </Step>
           <Step title="Ask Sentinel to go deeper">
-            Use the chat to ask <strong>"What's driving the 18% AHT increase?"</strong> or <strong>"Which teams are most affected?"</strong> Sentinel can drill further into the substrate before you decide to act.
+            Use the chat to ask <strong>&ldquo;What&rsquo;s driving the 18% AHT increase?&rdquo;</strong> or <strong>&ldquo;Which teams are most affected?&rdquo;</strong> Sentinel can drill further into the substrate before you decide to act.
           </Step>
           <Step title='Click "→ Originate a Move" to promote the signal' path="Pressure card → Originate a Move → /strategic-moves/new">
             This opens the P0 origination screen with the pressure card data pre-loaded into the scaffold. You confirm the fields, name the Move, and promote it to P1.
@@ -91,7 +91,7 @@ export function IntelligenceSection() {
         <SectionTitle>Key terms in Intelligence</SectionTitle>
         <TermGrid>
           <Term name="Signal">
-            An AI-detected pattern in operational or financial data. Signals are surfaced automatically from connected data sources. <em>You don't need to ask for them — they appear when the substrate finds something worth noting.</em>
+            An AI-detected pattern in operational or financial data. Signals are surfaced automatically from connected data sources. <em>You don&rsquo;t need to ask for them — they appear when the substrate finds something worth noting.</em>
           </Term>
           <Term name="Pressure card">
             The structured presentation of a signal. Includes type, severity, evidence, impact estimate, and recommended action. <em>Think of it as an AI-authored executive brief on a specific problem.</em>

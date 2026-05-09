@@ -3,7 +3,6 @@ import { COLORS, ADMIN_LAYOUT } from "@/lib/design/design-tokens";
 export type AdminSubSectionId =
   | "overview"
   | "data-trust"
-  | "ai-initiatives"
   | "connectors"
   | "users-access"
   | "agent-readiness"
@@ -29,12 +28,6 @@ export const ADMIN_SUB_SECTIONS: ReadonlyArray<AdminSubSection> = [
     label: "Data Trust",
     subtitle: "Loaded → usable evidence",
     href: "/admin/data-trust",
-  },
-  {
-    id: "ai-initiatives",
-    label: "AI Initiatives",
-    subtitle: "Registry of AI in flight",
-    href: "/admin/ai-initiatives",
   },
   {
     id: "connectors",

@@ -203,7 +203,7 @@ describe('Source Nexus API stub contract', () => {
     });
   });
 
-  it('does not import model providers, persistence, upload parsing, or program runtime', () => {
+  it('does not import model providers, upload parsing, or program runtime', () => {
     const helperSource = readFileSync(resolve(process.cwd(), 'src/lib/source/nexus-api.ts'), 'utf8');
     const routeSource = readFileSync(
       resolve(process.cwd(), 'src/app/api/v1/source/[eventId]/nexus/ask/route.ts'),
@@ -211,8 +211,15 @@ describe('Source Nexus API stub contract', () => {
     );
     const combined = `${helperSource}\n${routeSource}`;
 
+    // The deterministic stub MUST NOT call any model.
     expect(combined).not.toMatch(/from ['"][^'"]*(openai|anthropic|@anthropic-ai\/sdk|ai\/react|ai)['"]/i);
-    expect(combined).not.toMatch(/from ['"][^'"]*(supabase|threadRepository|turnRepository|upload|parse|programs\/mock|ProgramSurface)[^'"]*['"]/i);
+    // The runtime helper MUST stay free of persistence so it can be
+    // exercised by tests with no Supabase deps. The ROUTE handler is
+    // allowed to do bounded persistence (e.g. AgentDock canvas migration
+    // links agent_attachment.linked_event_id before invoking the runtime
+    // — server-side, tenant-scoped via getServerSupabase).
+    expect(helperSource).not.toMatch(/from ['"][^'"]*(supabase|threadRepository|turnRepository|upload|parse|programs\/mock|ProgramSurface)[^'"]*['"]/i);
+    expect(combined).not.toMatch(/from ['"][^'"]*(threadRepository|turnRepository|upload|parse|programs\/mock|ProgramSurface)[^'"]*['"]/i);
     expect(combined).not.toContain('runPipeline');
     expect(combined).not.toContain('createThread');
     expect(combined).not.toContain('appendTurn');

@@ -5,6 +5,7 @@ import {
   createSourceNexusApiStubResponse,
   normalizeSourceNexusApiRequestBody,
 } from '@/lib/source/nexus-api';
+import { getServerSupabase } from '@/lib/supabase-server';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -27,6 +28,24 @@ export async function POST(
     }
 
     const normalizedBody = normalizeSourceNexusApiRequestBody(bodyResult.body);
+
+    // Source canvas migration · before invoking the (unchanged) deterministic
+    // runtime, link any attachments from this turn to the source event so the
+    // canvas owns them across turns and a future Atlas read can join on
+    // linked_event_id. The DB column is nullable + tenant-isolated via RLS,
+    // so a no-op is safe when no attachments are present.
+    if (
+      eventId &&
+      normalizedBody.selectedAttachmentIds &&
+      normalizedBody.selectedAttachmentIds.length > 0
+    ) {
+      await linkAttachmentsToEvent({
+        attachmentIds: normalizedBody.selectedAttachmentIds,
+        tenantId: tenancy.clientId,
+        eventId,
+      });
+    }
+
     const response = createSourceNexusApiStubResponse({
       ...normalizedBody,
       eventId,
@@ -54,6 +73,37 @@ export async function POST(
         { status: 500 },
       );
     }
+  }
+}
+
+/**
+ * Stamp `linked_event_id` on AgentDock attachment rows referenced by this
+ * turn so the canvas owns them across the conversation. Tenant-scoped to
+ * keep the update honest under RLS.
+ *
+ * Best-effort: persistence failures must not block the agent runtime —
+ * the attachment metadata is recoverable, the user-facing response is not.
+ */
+async function linkAttachmentsToEvent(args: {
+  attachmentIds: string[];
+  tenantId: string;
+  eventId: string;
+}): Promise<void> {
+  const { attachmentIds, tenantId, eventId } = args;
+  if (attachmentIds.length === 0) return;
+  try {
+    const sb = getServerSupabase();
+    await sb
+      .from('agent_attachment')
+      .update({ linked_event_id: eventId })
+      .in('id', attachmentIds)
+      .eq('tenant_id', tenantId)
+      .is('linked_event_id', null);
+  } catch {
+    // Swallow — the agent turn must still respond even if metadata
+    // persistence fails. The attachment row keeps its other context
+    // (surface, agent, surfaceContext) and a retention sweeper can
+    // reconcile from telemetry if needed.
   }
 }
 

@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Learn · Intelligence — AbarVa Training Guide</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;0,9..144,700;1,9..144,300;1,9..144,400&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --ink:#0A0C12; --ink2:#1C1F2E; --body:#1F2433; --muted:#3D4454; --faint:#6B7280;
+      --navy:#1B2B5C; --navy-mid:#253872;
+      --navy-soft:rgba(27,43,92,0.08); --navy-line:rgba(27,43,92,0.15);
+      --teal:#0E8A65; --teal-soft:rgba(14,138,101,0.09); --teal-line:rgba(14,138,101,0.25);
+      --amber:#92400E; --amber-soft:rgba(146,64,14,0.08); --amber-line:rgba(146,64,14,0.25);
+      --red:#991B1B; --red-soft:rgba(153,27,27,0.07); --red-line:rgba(153,27,27,0.25);
+      --slate:#374151; --border:#D1D5DB; --border-light:#E5E7EB;
+      --surface:#fff; --surface2:#F9FAFB; --surface3:#F3F4F6;
+      --sidebar-w:260px;
+      --f-display:'Fraunces',Georgia,serif;
+      --f-body:'Inter',-apple-system,sans-serif;
+      --f-mono:'JetBrains Mono',ui-monospace,monospace;
+    }
+
+    html { font-size:15px; scroll-behavior:smooth; }
+    body { font-family:var(--f-body); background:var(--surface); color:var(--body); line-height:1.65; -webkit-font-smoothing:antialiased; }
+
+    /* Hero */
+    .hero { background:var(--navy); color:#fff; padding:64px 64px 56px; position:relative; overflow:hidden; }
+    .hero::before { content:''; position:absolute; inset:0; background:radial-gradient(ellipse 80% 60% at 90% 50%, rgba(255,255,255,0.04) 0%, transparent 70%), radial-gradient(ellipse 40% 80% at 5% 100%, rgba(255,255,255,0.03) 0%, transparent 60%); pointer-events:none; }
+    .hero-eyebrow { font-family:var(--f-mono); font-size:10px; font-weight:700; letter-spacing:0.2em; text-transform:uppercase; color:rgba(255,255,255,0.5); margin-bottom:18px; }
+    .hero-eyebrow span { color:rgba(255,255,255,0.9); }
+    .hero-title { font-family:var(--f-display); font-size:clamp(36px, 5vw, 56px); font-weight:400; color:#fff; line-height:1.05; letter-spacing:-0.02em; margin-bottom:18px; max-width:680px; }
+    .hero-sub { font-size:16px; color:rgba(255,255,255,0.72); max-width:560px; line-height:1.6; margin-bottom:40px; }
+    .hero-meta { display:flex; flex-wrap:wrap; gap:10px; }
+    .hero-tag { font-family:var(--f-mono); font-size:10px; font-weight:600; letter-spacing:0.12em; text-transform:uppercase; padding:5px 12px; border-radius:4px; background:rgba(255,255,255,0.1); color:rgba(255,255,255,0.85); border:1px solid rgba(255,255,255,0.12); }
+    .hero-tag.accent { background:rgba(255,255,255,0.18); color:#fff; }
+
+    /* Body layout */
+    .body-wrap { display:grid; grid-template-columns:var(--sidebar-w) 1fr; }
+
+    /* Sidebar */
+    .sidebar { background:var(--surface2); border-right:1px solid var(--border-light); padding:36px 22px 60px; position:sticky; top:0; align-self:start; max-height:100vh; overflow-y:auto; }
+    .sidebar-label { font-family:var(--f-mono); font-size:10px; font-weight:700; letter-spacing:0.18em; text-transform:uppercase; color:var(--faint); margin-bottom:18px; }
+    .toc-list { list-style:none; }
+    .toc-item { margin-bottom:2px; }
+    .toc-item a { display:flex; align-items:baseline; gap:12px; padding:8px 12px; border-radius:5px; font-size:13px; color:var(--muted); text-decoration:none; line-height:1.4; }
+    .toc-num { font-family:var(--f-mono); font-size:10px; font-weight:700; color:var(--faint); min-width:18px; }
+    .toc-item:hover a { background:rgba(27,43,92,0.04); color:var(--ink); }
+    .toc-item.active a { background:var(--navy-soft); color:var(--ink); font-weight:600; }
+    .toc-item.active .toc-num { color:var(--navy); }
+    .sidebar-foot { margin-top:30px; padding-top:22px; border-top:1px solid var(--border-light); padding-left:12px; font-family:var(--f-mono); font-size:10px; color:var(--faint); letter-spacing:0.05em; line-height:1.7; }
+    .sidebar-foot a { color:var(--navy); text-decoration:none; }
+    .sidebar-cross { margin-top:18px; padding:12px 14px; background:var(--surface); border:1px solid var(--border-light); border-radius:6px; }
+    .sidebar-cross-lab { font-family:var(--f-mono); font-size:9px; font-weight:700; letter-spacing:0.16em; color:var(--faint); text-transform:uppercase; margin-bottom:6px; }
+    .sidebar-cross a { display:block; font-size:12px; color:var(--ink); text-decoration:none; margin-bottom:4px; padding:3px 0; }
+    .sidebar-cross a:hover { color:var(--navy); }
+
+    /* Content */
+    .content { padding:56px 72px 96px; max-width:920px; }
+
+    .section { margin-bottom:72px; scroll-margin-top:24px; }
+    .section-eyebrow { font-family:var(--f-mono); font-size:10px; font-weight:700; letter-spacing:0.2em; text-transform:uppercase; color:var(--navy); margin-bottom:10px; }
+    .section-title { font-family:var(--f-display); font-size:36px; font-weight:400; color:var(--ink); letter-spacing:-0.018em; line-height:1.1; margin-bottom:16px; }
+    .section-lead { font-family:var(--f-display); font-size:21px; font-weight:400; color:var(--body); line-height:1.45; letter-spacing:-0.005em; margin-bottom:24px; max-width:62ch; }
+    .body-text { font-size:15px; color:var(--body); line-height:1.7; margin-bottom:18px; max-width:64ch; }
+    .body-text strong { color:var(--ink); font-weight:600; }
+    .body-text em { font-style:italic; color:var(--ink); }
+    .sub-heading { font-family:var(--f-display); font-size:21px; font-weight:500; color:var(--ink); letter-spacing:-0.01em; margin:36px 0 12px; }
+
+    /* Callouts */
+    .callout { border-left:3px solid var(--navy); background:var(--navy-soft); padding:18px 22px; margin:24px 0; border-radius:0 8px 8px 0; display:flex; gap:14px; }
+    .callout.success { border-left-color:var(--teal); background:var(--teal-soft); }
+    .callout.warning { border-left-color:var(--amber); background:var(--amber-soft); }
+    .callout-icon { font-size:22px; flex-shrink:0; }
+    .callout-body { flex:1; }
+    .callout-label { font-family:var(--f-mono); font-size:10px; font-weight:700; letter-spacing:0.16em; color:var(--navy); text-transform:uppercase; margin-bottom:6px; }
+    .callout.success .callout-label { color:var(--teal); }
+    .callout.warning .callout-label { color:var(--amber); }
+    .callout-text { font-size:14px; line-height:1.6; color:var(--body); }
+    .callout-text strong { color:var(--ink); font-weight:600; }
+
+    /* Mini-map of the 5 surfaces */
+    .surface-grid { display:grid; grid-template-columns:repeat(2, 1fr); gap:14px; margin:24px 0; max-width:760px; }
+    .surface-card { background:var(--surface); border:1px solid var(--border-light); border-radius:8px; padding:18px 20px; }
+    .surface-card .num { font-family:var(--f-mono); font-size:9.5px; font-weight:700; letter-spacing:0.18em; color:var(--navy); text-transform:uppercase; margin-bottom:6px; }
+    .surface-card .name { font-family:var(--f-display); font-size:20px; font-weight:500; color:var(--ink); letter-spacing:-0.005em; margin-bottom:8px; }
+    .surface-card .lede { font-size:13.5px; color:var(--muted); line-height:1.55; margin-bottom:10px; }
+    .surface-card .answers { font-family:var(--f-mono); font-size:10px; letter-spacing:0.06em; color:var(--faint); padding-top:10px; border-top:1px dashed var(--border-light); }
+    .surface-card .answers strong { color:var(--ink); }
+
+    /* Pressure card mockup */
+    .mockup { background:var(--surface3); border:1px dashed var(--border); border-radius:10px; padding:20px; margin:24px 0; position:relative; }
+    .mockup-label { position:absolute; top:-9px; left:18px; background:var(--surface); padding:0 10px; font-family:var(--f-mono); font-size:10px; font-weight:700; letter-spacing:0.16em; color:var(--faint); text-transform:uppercase; }
+    .mockup-pressure { background:#fff; border:1px solid var(--border-light); border-left:4px solid var(--red); border-radius:8px; padding:18px 22px; max-width:660px; }
+    .pressure-tag { display:inline-flex; align-items:center; gap:6px; font-family:var(--f-mono); font-size:9.5px; font-weight:700; letter-spacing:0.16em; color:var(--red); text-transform:uppercase; margin-bottom:8px; }
+    .pressure-headline { font-family:var(--f-display); font-size:22px; font-weight:500; color:var(--ink); letter-spacing:-0.012em; line-height:1.25; margin-bottom:10px; max-width:60ch; }
+    .pressure-body { font-size:13.5px; color:var(--body); line-height:1.55; margin-bottom:14px; }
+    .pressure-body strong { color:var(--ink); font-weight:600; }
+    .pressure-body .src { font-family:var(--f-mono); font-size:10px; color:var(--faint); letter-spacing:0.04em; }
+    .pressure-actions { display:flex; gap:8px; padding-top:8px; border-top:1px solid var(--border-light); }
+    .pressure-cta { font-family:var(--f-mono); font-size:10px; font-weight:600; letter-spacing:0.08em; text-transform:uppercase; padding:8px 14px; border-radius:4px; border:1px solid var(--ink); background:#fff; color:var(--ink); text-decoration:none; }
+    .pressure-cta.primary { background:var(--ink); color:#fff; }
+
+    /* Annotation arrows around the mockup */
+    .annotation-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-top:18px; }
+    .annotation { font-size:12.5px; color:var(--muted); line-height:1.55; padding-left:16px; border-left:2px solid var(--border-light); }
+    .annotation strong { color:var(--ink); font-weight:600; display:block; margin-bottom:3px; font-family:var(--f-display); font-size:14px; }
+
+    /* Pattern → Move flow */
+    .flow { display:flex; gap:0; align-items:stretch; flex-wrap:wrap; margin:28px 0; max-width:880px; }
+    .flow-step { flex:1; min-width:170px; background:var(--surface); border:1px solid var(--border-light); border-radius:8px; padding:18px; position:relative; margin-right:24px; margin-bottom:14px; }
+    .flow-step:last-child { margin-right:0; }
+    .flow-step::after { content:'→'; position:absolute; right:-22px; top:50%; transform:translateY(-50%); font-size:18px; color:var(--navy); font-weight:700; }
+    .flow-step:last-child::after { display:none; }
+    .flow-step .num { font-family:var(--f-mono); font-size:9.5px; font-weight:700; letter-spacing:0.18em; color:var(--navy); text-transform:uppercase; margin-bottom:6px; }
+    .flow-step .where { font-family:var(--f-display); font-size:14px; font-weight:500; color:var(--ink); margin-bottom:8px; letter-spacing:-0.005em; }
+    .flow-step .what { font-size:12.5px; color:var(--muted); line-height:1.5; }
+
+    /* Glossary chips */
+    .glossary { display:grid; grid-template-columns:1fr 1fr; gap:10px 18px; margin:18px 0; max-width:760px; }
+    .glossary-row { padding:10px 0; border-bottom:1px solid var(--border-light); }
+    .glossary-row .term { font-family:var(--f-display); font-size:15px; font-weight:500; color:var(--ink); letter-spacing:-0.005em; margin-bottom:3px; }
+    .glossary-row .term-id { font-family:var(--f-mono); font-size:10px; color:var(--faint); letter-spacing:0.06em; margin-left:6px; font-weight:400; }
+    .glossary-row .def { font-size:13px; color:var(--muted); line-height:1.55; }
+
+    /* Common mistakes list */
+    .mistakes { margin:18px 0; }
+    .mistake { padding:12px 0; border-bottom:1px solid var(--border-light); display:grid; grid-template-columns:auto 1fr; gap:14px; align-items:start; }
+    .mistake-mark { font-family:var(--f-mono); font-size:11px; font-weight:700; letter-spacing:0.06em; padding:3px 8px; border-radius:3px; background:var(--red-soft); color:var(--red); border:1px solid var(--red-line); white-space:nowrap; height:fit-content; }
+    .mistake-mark.tip { background:var(--teal-soft); color:var(--teal); border-color:var(--teal-line); }
+    .mistake .what { font-size:14px; color:var(--body); line-height:1.6; }
+    .mistake .what strong { color:var(--ink); font-weight:600; }
+
+    /* Pull quote */
+    .pull { font-family:var(--f-display); font-size:24px; font-weight:400; color:var(--ink); letter-spacing:-0.01em; line-height:1.4; margin:32px 0 32px; padding:24px 0 24px 28px; border-left:3px solid var(--navy); max-width:60ch; font-style:italic; }
+    .pull-attr { font-family:var(--f-mono); font-size:11px; letter-spacing:0.08em; color:var(--faint); font-style:normal; margin-top:10px; text-transform:uppercase; }
+
+  </style>
+</head>
+<body>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-eyebrow">ABARVA · <span>Training Guide</span> · Intelligence</div>
+  <h1 class="hero-title">Intelligence — the layer where what's possible meets what's true for you.</h1>
+  <p class="hero-sub">A 30-minute primer for CXOs and analysts. How Intelligence works, what each surface answers, how the agent reads your portfolio, and how patterns become Moves.</p>
+  <div class="hero-meta">
+    <span class="hero-tag accent">Surface: Intelligence</span>
+    <span class="hero-tag">Agent: Sentinel</span>
+    <span class="hero-tag">Audience: CXO + Analyst</span>
+    <span class="hero-tag">Read time: ~30 min</span>
+  </div>
+</div>
+
+<!-- BODY -->
+<div class="body-wrap">
+
+  <aside class="sidebar">
+    <div class="sidebar-label">In this guide</div>
+    <ul class="toc-list">
+      <li class="toc-item active"><a href="#s01"><span class="toc-num">01</span> What is Intelligence?</a></li>
+      <li class="toc-item"><a href="#s02"><span class="toc-num">02</span> The three substrates</a></li>
+      <li class="toc-item"><a href="#s03"><span class="toc-num">03</span> The five surfaces</a></li>
+      <li class="toc-item"><a href="#s04"><span class="toc-num">04</span> Sentinel · the agent</a></li>
+      <li class="toc-item"><a href="#s05"><span class="toc-num">05</span> Reading a pressure card</a></li>
+      <li class="toc-item"><a href="#s06"><span class="toc-num">06</span> Pattern → Move flow</a></li>
+      <li class="toc-item"><a href="#s07"><span class="toc-num">07</span> Tenant overlay</a></li>
+      <li class="toc-item"><a href="#s08"><span class="toc-num">08</span> Provenance discipline</a></li>
+      <li class="toc-item"><a href="#s09"><span class="toc-num">09</span> Common mistakes</a></li>
+      <li class="toc-item"><a href="#s10"><span class="toc-num">10</span> Glossary</a></li>
+    </ul>
+
+    <div class="sidebar-cross">
+      <div class="sidebar-cross-lab">Other guides</div>
+      <a href="how-to-create-a-move.html">→ How to Create a Move</a>
+      <a href="#">→ Setup &amp; Connectors <span style="color:var(--faint);">soon</span></a>
+      <a href="#">→ Gates &amp; Deliverables <span style="color:var(--faint);">soon</span></a>
+      <a href="#">→ Tower · reading the portfolio <span style="color:var(--faint);">soon</span></a>
+    </div>
+
+    <div class="sidebar-foot">
+      Surface canon · Intelligence v1.1<br />
+      Corpus version · 2026-Q1<br /><br />
+      <a href="#">→ See live Intelligence</a><br />
+      <a href="#">→ Open Sentinel chat</a>
+    </div>
+  </aside>
+
+  <main class="content">
+
+    <!-- ─── 01 · What is Intelligence ─── -->
+    <section class="section" id="s01">
+      <div class="section-eyebrow">01</div>
+      <h2 class="section-title">What is Intelligence?</h2>
+      <p class="section-lead">Intelligence is the AbarVa surface where industry knowledge meets your portfolio reality. It's where you ask "what bets should I be considering?" and get a substantive, sourced answer — not a generic LLM reply.</p>
+
+      <p class="body-text">Most AI tools answer questions from generic training data. Intelligence answers from a <strong>shared corpus of industry-specific use cases, patterns, vendors, and proof points</strong> overlaid against your tenant's actual data — your initiatives, KPIs, regulatory exposure, and strategic context. The result is reasoning at industry-grade specificity.</p>
+
+      <p class="pull">
+        "Intelligence is what makes the platform demonstrably know your industry — not just respond to your questions."
+        <span class="pull-attr">— Bet-shaping doctrine</span>
+      </p>
+
+      <p class="body-text">Three things make Intelligence different from a chatbot:</p>
+
+      <div class="callout">
+        <div class="callout-icon">①</div>
+        <div class="callout-body">
+          <div class="callout-label">Citation discipline</div>
+          <div class="callout-text"><strong>Every claim has a source.</strong> When Sentinel says "ambient AI delivers 35-50% documentation-time reduction," it cites <em>KLAS Research 2025-Q4 (HIGH reliability)</em>. You can click through. You can challenge it. The platform's epistemic humility is visible.</div>
+        </div>
+      </div>
+
+      <div class="callout">
+        <div class="callout-icon">②</div>
+        <div class="callout-body">
+          <div class="callout-label">Tenant overlay</div>
+          <div class="callout-text"><strong>The same corpus, scored for you.</strong> A Boston IDN and a Texas community hospital see the same 23 healthcare AI bets — but ranked differently based on size, segment, regulatory exposure, and current portfolio. Top 3 are CIO-relevant; the rest are browseable.</div>
+        </div>
+      </div>
+
+      <div class="callout">
+        <div class="callout-icon">③</div>
+        <div class="callout-body">
+          <div class="callout-label">Lane discipline</div>
+          <div class="callout-text"><strong>Sentinel knows what it's not for.</strong> Vendor evaluation depth is Source's job. Move shaping is Nexus's job. Sentinel synthesizes patterns and frames bets, then hands off cleanly. No agent does everything.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ─── 02 · Three substrates ─── -->
+    <section class="section" id="s02">
+      <div class="section-eyebrow">02</div>
+      <h2 class="section-title">The three substrates Intelligence reads from</h2>
+      <p class="section-lead">Intelligence sits on top of three layered substrates. Understanding what's in each one explains what Sentinel can confidently say versus what it has to qualify.</p>
+
+      <h3 class="sub-heading">i. Tenant substrate · what we know about you</h3>
+      <p class="body-text">Loaded via the AI Initiatives Registry plus your Setup data inventory. Includes your active initiatives (e.g. <em>MH-01 Ambient Documentation</em> at $5.8M measured), per-initiative KPIs, your regulatory exposure, your stakeholder map, your industry-context strategic notes. <strong>This is the truth for you.</strong></p>
+
+      <h3 class="sub-heading">ii. Industry corpus · what patterns exist</h3>
+      <p class="body-text">A canonical knowledge layer covering ~23 healthcare use cases, ~28 patterns, ~47 vendors, ~30 named proof points, ~16 regulatory entries — plus parallel sets for retail and financial services. Curated by AbarVa, refreshed quarterly. <strong>This is the truth for the industry.</strong></p>
+
+      <h3 class="sub-heading">iii. Cross-tenant signal · what peers are doing</h3>
+      <p class="body-text">Anonymized signal pool from other AbarVa tenants — what use cases they're running, what patterns they observe, what anti-patterns they hit. Activates when 5+ tenants contribute signal. <strong>This is the truth for your peer set.</strong> (Currently in build; lands as v2 of the corpus.)</p>
+
+      <div class="callout success">
+        <div class="callout-icon">✓</div>
+        <div class="callout-body">
+          <div class="callout-label">How Sentinel uses all three</div>
+          <div class="callout-text">When you ask <em>"should we be considering Population Health AI?"</em>, Sentinel pulls from the corpus (use case definition, patterns, vendors, proof points), scores it against your tenant substrate (your size, your portfolio, your regulatory exposure), and — when peer signal is rich enough — surfaces what comparable IDNs have actually achieved. The answer is grounded in all three.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ─── 03 · Five surfaces ─── -->
+    <section class="section" id="s03">
+      <div class="section-eyebrow">03</div>
+      <h2 class="section-title">The five primary surfaces</h2>
+      <p class="section-lead">Intelligence is one page with five canonical surfaces, plus secondary tabs (Vendors · By function · Sessions). Each answers a different CXO question.</p>
+
+      <div class="surface-grid">
+
+        <article class="surface-card">
+          <div class="num">Primary · 01</div>
+          <div class="name">The Brief</div>
+          <div class="lede">Sentinel's quarterly synthesis. Three candidate bets above the line for your tenant — full citation discipline, factor breakdown on every score, expand-on-click for the McKinsey detail.</div>
+          <div class="answers">Answers · <strong>"What 3 bets should I focus on?"</strong></div>
+        </article>
+
+        <article class="surface-card">
+          <div class="num">Primary · 02</div>
+          <div class="name">The Map</div>
+          <div class="lede">2-D landscape of every canonical AI bet for your industry. Position is lifecycle stage × value-leverage at your scale; color is your engagement; lines connect bets that succeed (or fail) together.</div>
+          <div class="answers">Answers · <strong>"Where am I in the universe of bets?"</strong></div>
+        </article>
+
+        <article class="surface-card">
+          <div class="num">Primary · 03</div>
+          <div class="name">Art of Possible</div>
+          <div class="lede">The full universe organized by outcome (Margin · Workforce · Clinical · Foundation). Each card leads with value at stake + a named proof point. Imagination, not status.</div>
+          <div class="answers">Answers · <strong>"What's possible · across outcomes?"</strong></div>
+        </article>
+
+        <article class="surface-card">
+          <div class="num">Secondary · 04</div>
+          <div class="name">Today</div>
+          <div class="lede">Three pressure cards Sentinel surfaced this morning. One urgent / one attention / one opportunity, with named CTAs and source attribution. Replaces the "morning email" — but actually grounded.</div>
+          <div class="answers">Answers · <strong>"What needs me today?"</strong></div>
+        </article>
+
+        <article class="surface-card">
+          <div class="num">Secondary · 05</div>
+          <div class="name">Patterns</div>
+          <div class="lede">Top patterns active for your portfolio. Quantified with-vs-without numbers visible. Filters: For my portfolio · All success · All anti · Cross-industry. Click any pattern for the evidence base.</div>
+          <div class="answers">Answers · <strong>"What's been observed across deployments?"</strong></div>
+        </article>
+
+        <article class="surface-card">
+          <div class="num">Secondary · 06</div>
+          <div class="name">Vendors</div>
+          <div class="lede">Renewals + at-risk vendors at the top. Full 47-vendor portfolio behind a lens toggle (Risk · Contract · Adoption · Value). CXO doesn't dive in unless something needs them.</div>
+          <div class="answers">Answers · <strong>"What vendor decisions need attention?"</strong></div>
+        </article>
+
+      </div>
+
+      <p class="body-text">Sentinel chat is mounted as the right rail across all five surfaces — same agent, view-aware opener. When you switch from Brief to Map, Sentinel's first message changes to reflect what you're now looking at.</p>
+    </section>
+
+    <!-- ─── 04 · Sentinel agent ─── -->
+    <section class="section" id="s04">
+      <div class="section-eyebrow">04</div>
+      <h2 class="section-title">Sentinel — the Intelligence agent</h2>
+      <p class="section-lead">Sentinel is the named agent on the Intelligence surface. It synthesizes corpus content, scores against your tenant, and answers questions in citation-disciplined prose. It does <em>not</em> evaluate vendors in depth or shape Moves — those are Source's and Nexus's jobs.</p>
+
+      <h3 class="sub-heading">Three layout modes</h3>
+      <p class="body-text">Click the controls in the chat header to switch:</p>
+
+      <div class="callout">
+        <div class="callout-icon">⊟</div>
+        <div class="callout-body">
+          <div class="callout-label">Side rail · default</div>
+          <div class="callout-text">440px column on the right. Scope-aware opener appears when the page first loads or you switch tabs. Best for active conversation alongside the canvas.</div>
+        </div>
+      </div>
+
+      <div class="callout">
+        <div class="callout-icon">⇲</div>
+        <div class="callout-body">
+          <div class="callout-label">Bottom dock · expanded</div>
+          <div class="callout-text">Full-width 360px-tall dock at the bottom of the page. Best when you're deep in the canvas and want chat to take less horizontal space.</div>
+        </div>
+      </div>
+
+      <div class="callout">
+        <div class="callout-icon">▶</div>
+        <div class="callout-body">
+          <div class="callout-label">Bottom dock · collapsed</div>
+          <div class="callout-text">56px strip at the bottom. Sentinel is still listening; tap any prompt suggestion or the input to expand. Best when you want full canvas attention.</div>
+        </div>
+      </div>
+
+      <h3 class="sub-heading">What Sentinel does · what it doesn't</h3>
+      <table style="width:100%; max-width:760px; margin:18px 0; border-collapse:collapse; font-size:13.5px;">
+        <thead>
+          <tr style="background:var(--surface2); text-align:left;">
+            <th style="padding:10px 14px; border-bottom:2px solid var(--border-light); font-family:var(--f-mono); font-size:10px; letter-spacing:0.12em; color:var(--faint); text-transform:uppercase;">Sentinel does</th>
+            <th style="padding:10px 14px; border-bottom:2px solid var(--border-light); font-family:var(--f-mono); font-size:10px; letter-spacing:0.12em; color:var(--faint); text-transform:uppercase;">Defers to</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td style="padding:10px 14px; border-bottom:1px solid var(--border-light);">Score use cases for your tenant</td><td style="padding:10px 14px; border-bottom:1px solid var(--border-light); color:var(--muted); font-style:italic;">— stays in lane</td></tr>
+          <tr><td style="padding:10px 14px; border-bottom:1px solid var(--border-light);">Cite patterns + quantified signal</td><td style="padding:10px 14px; border-bottom:1px solid var(--border-light); color:var(--muted); font-style:italic;">— stays in lane</td></tr>
+          <tr><td style="padding:10px 14px; border-bottom:1px solid var(--border-light);">Surface regulatory headwinds</td><td style="padding:10px 14px; border-bottom:1px solid var(--border-light); color:var(--muted); font-style:italic;">— stays in lane</td></tr>
+          <tr><td style="padding:10px 14px; border-bottom:1px solid var(--border-light);">Reference vendor names + tier</td><td style="padding:10px 14px; border-bottom:1px solid var(--border-light); color:var(--navy);"><strong>Source</strong> for vendor depth</td></tr>
+          <tr><td style="padding:10px 14px; border-bottom:1px solid var(--border-light);">Suggest a Move shape</td><td style="padding:10px 14px; border-bottom:1px solid var(--border-light); color:var(--navy);"><strong>Nexus</strong> for P0 Originate</td></tr>
+          <tr><td style="padding:10px 14px;">Read your KPI history</td><td style="padding:10px 14px; color:var(--navy);"><strong>Tower</strong> for portfolio reads</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- ─── 05 · Pressure card ─── -->
+    <section class="section" id="s05">
+      <div class="section-eyebrow">05</div>
+      <h2 class="section-title">How to read a pressure card</h2>
+      <p class="section-lead">"Pressure cards" are the attention items Sentinel surfaces on Today. Each one has a fixed shape so you can read it in 10 seconds.</p>
+
+      <div class="mockup">
+        <div class="mockup-label">Mockup · Pressure card · Urgent tone</div>
+        <div class="mockup-pressure">
+          <div class="pressure-tag">⚠ URGENT · ATTENTION-BLOCKING</div>
+          <h3 class="pressure-headline">MH-07 Model Governance is at risk — and it's blocking 4 candidate bets in clinical.</h3>
+          <p class="pressure-body">$0 measured against $1.4M committed annual. <strong>This isn't just one stalled program</strong> — Model Governance is the foundational substrate for Sepsis EWS, Care Management AI, Clinical Risk expansion, and Imaging AI rollouts. Without an MRM platform live, you can't deploy the SR 11-7-style governance that those clinical AI bets require for FDA SaMD compliance.<br /><br />Recommended response · re-baseline MH-07 with MRM platform vendor selection. <span class="src">[per AbarVa pattern observation · n=8 IDN deployments]</span></p>
+          <div class="pressure-actions">
+            <a class="pressure-cta primary" href="#">Open MH-07 in Tower</a>
+            <a class="pressure-cta" href="#">See the 4 blocked bets</a>
+            <a class="pressure-cta" href="#">Ask Sentinel: replan</a>
+          </div>
+        </div>
+      </div>
+
+      <div class="annotation-grid">
+        <div class="annotation">
+          <strong>Tone tag</strong>
+          Urgent (red) · Attention (amber) · Opportunity (teal). The visual border picks up the tone color. Sentinel limits Today to 3 cards · one of each tone is the typical mix.
+        </div>
+        <div class="annotation">
+          <strong>Headline</strong>
+          Single Fraunces sentence that compresses the situation into something a CXO can act on. Always names the entity (initiative ID, use case ID, vendor ID).
+        </div>
+        <div class="annotation">
+          <strong>Body</strong>
+          ~80–120 words. Explains <em>why this matters now</em>. Always ends with the recommended response framed as Sentinel's read · not a directive.
+        </div>
+        <div class="annotation">
+          <strong>Source attribution</strong>
+          Closes with <span style="font-family:var(--f-mono); font-size:11px;">[per &lt;source&gt; · &lt;currency&gt;]</span>. Click through to the corpus entry. No source = no card.
+        </div>
+        <div class="annotation">
+          <strong>Named CTAs</strong>
+          Up to three. Always concrete: <em>"Open in Tower"</em>, <em>"Shape in Nexus"</em>, <em>"Ask Sentinel"</em>. Never generic <em>"Learn more"</em>.
+        </div>
+        <div class="annotation">
+          <strong>Below-the-fold tease</strong>
+          A "+ N more signals" link at the bottom of the stack — Sentinel surfaces ~7 signals daily but caps Today at 3. The other 4 are browseable.
+        </div>
+      </div>
+    </section>
+
+    <!-- ─── 06 · Pattern → Move flow ─── -->
+    <section class="section" id="s06">
+      <div class="section-eyebrow">06</div>
+      <h2 class="section-title">The Pattern → Move flow</h2>
+      <p class="section-lead">Intelligence's job is not to make decisions. It's to surface signals that warrant a Move. Here's how a pattern in the corpus becomes an active Move in your portfolio.</p>
+
+      <div class="flow">
+        <div class="flow-step">
+          <span class="num">Step 1 · Sentinel</span>
+          <div class="where">Pattern triggered</div>
+          <div class="what">Sentinel notices a corpus pattern (P-HC-005 · CMIO sponsorship) is binding for one of your initiatives that doesn't have it. Surfaces in the Patterns tab + Today.</div>
+        </div>
+        <div class="flow-step">
+          <span class="num">Step 2 · You</span>
+          <div class="where">Read the evidence</div>
+          <div class="what">Click through. See the with-vs-without numbers (65–75% adoption with CMIO; 25–40% without · KLAS n=12). Decide if the pattern applies.</div>
+        </div>
+        <div class="flow-step">
+          <span class="num">Step 3 · Handoff</span>
+          <div class="where">Hand off to Nexus</div>
+          <div class="what">Click "Shape as Move" → Nexus opens P0 Originate with the pattern context pre-loaded. Pattern ID becomes a binding constraint on the Move's gate criteria.</div>
+        </div>
+        <div class="flow-step">
+          <span class="num">Step 4 · Move</span>
+          <div class="where">Move enters P0</div>
+          <div class="what">Move is shaped by Nexus, charters at P1, advances through P2-P5. Pattern compliance is checked at each gate. Sentinel watches for pattern-related signals.</div>
+        </div>
+      </div>
+
+      <p class="body-text">The flow is intentional · <strong>Intelligence surfaces, you decide, Nexus shapes, Tower observes</strong>. No agent acts unilaterally. This is the doctrine — pattern matching is automated, decision-making stays with you.</p>
+    </section>
+
+    <!-- ─── 07 · Tenant overlay ─── -->
+    <section class="section" id="s07">
+      <div class="section-eyebrow">07</div>
+      <h2 class="section-title">Tenant overlay · what makes this <em>yours</em></h2>
+      <p class="section-lead">The corpus is canonical industry knowledge. The overlay scores corpus content for your tenant profile. Same corpus, different rankings per tenant.</p>
+
+      <p class="body-text">When Sentinel says "for Meridian, Population Health for ACOs scores 87/100" — that score is composed from <strong>seven factor weights</strong>:</p>
+
+      <div class="callout">
+        <div class="callout-icon">⚖</div>
+        <div class="callout-body">
+          <div class="callout-label">Score factor breakdown · UC-HC-MIDDLE-007 for Meridian</div>
+          <div class="callout-text">
+            ACO contracts active <strong style="color:var(--teal);">+18</strong> · 8-hospital IDN segment fit <strong style="color:var(--teal);">+12</strong> · Margin pressure context <strong style="color:var(--teal);">+10</strong> · CMS quality reporting exposure <strong style="color:var(--teal);">+8</strong> · Recently entered scaling stage <strong style="color:var(--teal);">+5</strong> · Not in current portfolio · candidate <strong style="color:var(--teal);">+15</strong> · Substrate maturity for grounding <strong style="color:var(--teal);">+19</strong> ·· <strong>Total: 87 / 100</strong>
+          </div>
+        </div>
+      </div>
+
+      <p class="body-text">Click any score in The Brief to see this breakdown. CIOs trust scoring when they can see what drove it. <strong>The score is always derived, never opinion.</strong></p>
+
+      <p class="body-text">A retail tenant with the same corpus would see Population Health filter out entirely (industry mismatch → score 0). A healthcare community-hospital tenant might see it score 65 · same use case, different segment. <strong>The corpus stays canonical; the surface adapts.</strong></p>
+    </section>
+
+    <!-- ─── 08 · Provenance ─── -->
+    <section class="section" id="s08">
+      <div class="section-eyebrow">08</div>
+      <h2 class="section-title">Provenance discipline</h2>
+      <p class="section-lead">Every claim Sentinel makes traces to a source. Currency-dated. Reliability-rated. Stale-flagged. This is what separates Intelligence from a chatbot.</p>
+
+      <p class="body-text">Provenance shows up in three places:</p>
+
+      <div class="callout">
+        <div class="callout-icon">①</div>
+        <div class="callout-body">
+          <div class="callout-label">Inline · attached to every claim</div>
+          <div class="callout-text">Format · <span style="font-family:var(--f-mono); font-size:12px;">[per &lt;source name&gt; · &lt;currency-date&gt; · &lt;reliability&gt;]</span> — e.g. <em>"$8-24M annual at IDN scale [per McKinsey 2025-Q4 · HIGH]"</em>. The bracketed pill is hoverable; click for the corpus entry with full version history.</div>
+        </div>
+      </div>
+
+      <div class="callout">
+        <div class="callout-icon">②</div>
+        <div class="callout-body">
+          <div class="callout-label">In the audit footer</div>
+          <div class="callout-text">Every Brief renders a footer line: <em>"Substrate · 23 use cases · 28 patterns · 47 vendors · 16 regulatory · 14 proof points cited · refresh quarterly · last 2026-Q1"</em>. The composer's audit trail.</div>
+        </div>
+      </div>
+
+      <div class="callout warning">
+        <div class="callout-icon">!</div>
+        <div class="callout-body">
+          <div class="callout-label">Stale flags</div>
+          <div class="callout-text">When a corpus claim is past its refresh cadence, Sentinel surfaces an amber flag inline · <em>"vendor financial health is 4 months old; recent changes may not be reflected"</em>. The platform's epistemic humility is visible — you don't have to trust uncritically.</div>
+        </div>
+      </div>
+
+      <p class="body-text">There are three reliability ratings:</p>
+      <p class="body-text"><strong>HIGH</strong> · peer-reviewed studies (JAMIA, NEJM Catalyst), public earnings, regulatory filings, established analyst firms (Gartner, KLAS, Forrester) on their core competency.<br /><strong>MED</strong> · trade press, vendor case studies (with vendor-curated caveat), conference presentations.<br /><strong>LOW</strong> · anonymous forums, vendor marketing without supporting data. Low-reliability claims don't enter the corpus unless corroborated.</p>
+    </section>
+
+    <!-- ─── 09 · Common mistakes ─── -->
+    <section class="section" id="s09">
+      <div class="section-eyebrow">09</div>
+      <h2 class="section-title">Common mistakes · do's and don'ts</h2>
+      <p class="section-lead">Watching CXOs use Intelligence for the first time, six things trip people up.</p>
+
+      <div class="mistakes">
+        <div class="mistake">
+          <span class="mistake-mark">DON'T</span>
+          <div class="what"><strong>Treat the score as gospel.</strong> A 87/100 means high relevance per the factor weights · not certainty. Always click through to see <em>which factors</em> drove the score. If the strategic-context match is doing the work, that's softer than a regulatory-alignment match.</div>
+        </div>
+        <div class="mistake">
+          <span class="mistake-mark">DON'T</span>
+          <div class="what"><strong>Skip the anti-patterns.</strong> Failure modes are usually more predictive than success patterns. If the binding success pattern is at 65–75% adoption and the anti-pattern is at 70% of failed deployments, the anti-pattern is the load-bearing signal — not the success rate.</div>
+        </div>
+        <div class="mistake">
+          <span class="mistake-mark">DON'T</span>
+          <div class="what"><strong>Take Sentinel's vendor opinion at face value.</strong> Sentinel surfaces vendor names + tier classifications + financial-health signals. It does <em>not</em> evaluate vendor fit for your specific contract structure or your buyer dynamic. That's Source's job. Use Sentinel to <em>shortlist</em>; use Source to <em>decide</em>.</div>
+        </div>
+        <div class="mistake">
+          <span class="mistake-mark">DON'T</span>
+          <div class="what"><strong>Ignore the cascade rail.</strong> If MH-04 is over-performing and there's a Move Cascade saying it enables three follow-on bets, that's the most concrete forward-look the platform has on your portfolio. Cascades are observed, not theorized.</div>
+        </div>
+        <div class="mistake">
+          <span class="mistake-mark tip">DO</span>
+          <div class="what"><strong>Ask Sentinel "why this score?"</strong> The factor breakdown is the most useful conversation starter. From there, ask "what would change if our regulatory exposure shifted?" — Sentinel will re-score in real time and explain.</div>
+        </div>
+        <div class="mistake">
+          <span class="mistake-mark tip">DO</span>
+          <div class="what"><strong>Read Today before reading the Brief.</strong> Today surfaces what changed since yesterday. The Brief is your quarterly synthesis. Reading them in order gives you the delta before the snapshot.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ─── 10 · Glossary ─── -->
+    <section class="section" id="s10">
+      <div class="section-eyebrow">10</div>
+      <h2 class="section-title">Glossary</h2>
+      <p class="section-lead">Twelve terms you'll encounter across Intelligence. Click any to jump to the canonical corpus entry.</p>
+
+      <div class="glossary">
+        <div class="glossary-row">
+          <div class="term">Use Case <span class="term-id">UC-{INDUSTRY}-{OFFICE}-{N}</span></div>
+          <div class="def">A named AI initiative pattern in industry — e.g. UC-HC-FRONT-001 Ambient Clinical Documentation. The corpus has ~23 healthcare, ~22 retail, ~22 finserv use cases canonical at IDN+ scale.</div>
+        </div>
+        <div class="glossary-row">
+          <div class="term">Pattern <span class="term-id">P-{INDUSTRY}-{N}</span></div>
+          <div class="def">A recurring success or failure pattern observable across deployments. Carries quantified with-vs-without numbers + provenance. ~28 healthcare patterns canonical.</div>
+        </div>
+        <div class="glossary-row">
+          <div class="term">Anti-Pattern <span class="term-id">AP-{INDUSTRY}-{N}</span></div>
+          <div class="def">Cross-use-case failure modes promoted from inline failure_modes. Pilot-to-scale gap, model bias drift, IT-imposed workflow framing. The negative-space pattern library.</div>
+        </div>
+        <div class="glossary-row">
+          <div class="term">Vendor <span class="term-id">V-{INDUSTRY}-{N}</span></div>
+          <div class="def">Company providing AI products in this industry. Carries product lines, financial health, share trajectory (gaining / holding / losing), customer roster.</div>
+        </div>
+        <div class="glossary-row">
+          <div class="term">Proof Point <span class="term-id">PP-{INDUSTRY}-{N}</span></div>
+          <div class="def">A named customer deployment with a measured outcome and a HIGH-reliability source. "Cleveland Clinic · DAX · 2024 · 67% physician adoption." Credibility carrier.</div>
+        </div>
+        <div class="glossary-row">
+          <div class="term">Move Cascade <span class="term-id">MC-{INDUSTRY}-{N}</span></div>
+          <div class="def">A sequence of use cases with pre/post conditions. "If you do X and succeed, the natural next bet is Y." Observed evidence + completion rate + handoff failure modes.</div>
+        </div>
+        <div class="glossary-row">
+          <div class="term">Persona <span class="term-id">PER-{ROLE}-{N}</span></div>
+          <div class="def">A named role (CIO, CFO, CMIO, CHRO, CDO) with concerns, objections, KPI focus, hypotheses. Sentinel adjusts voice + content per persona.</div>
+        </div>
+        <div class="glossary-row">
+          <div class="term">Engagement state</div>
+          <div class="def">Your tenant's current relationship with a use case · in flight · candidate · at risk · scaled · failed. Color-coded across all surfaces.</div>
+        </div>
+        <div class="glossary-row">
+          <div class="term">Lifecycle stage</div>
+          <div class="def">Where a use case sits on the industry maturity curve · emerging · scaling · mature · declining. Drives The Map's X axis.</div>
+        </div>
+        <div class="glossary-row">
+          <div class="term">Tenant overlay</div>
+          <div class="def">Query-time scoring layer that adapts canonical corpus content to your tenant profile. Same corpus, different rankings per tenant.</div>
+        </div>
+        <div class="glossary-row">
+          <div class="term">Pressure card</div>
+          <div class="def">An attention item on the Today surface · urgent / attention / opportunity. Headline + body + named CTAs + source attribution. Three per day; more in the tease.</div>
+        </div>
+        <div class="glossary-row">
+          <div class="term">Binding pattern</div>
+          <div class="def">A success pattern that's necessary, not optional. If it's not honored, the deployment typically fails. Surfaces as a chip on every relevant use case + as a pre-Move requirement.</div>
+        </div>
+      </div>
+
+      <div class="callout success" style="margin-top:36px;">
+        <div class="callout-icon">→</div>
+        <div class="callout-body">
+          <div class="callout-label">What's next</div>
+          <div class="callout-text">Open <a href="#" style="color:var(--teal); border-bottom:1px solid var(--teal-line); text-decoration:none;">/intelligence</a> with this primer in mind. Read Today first to see what's changed; then Brief for the synthesis; then Map for the universe. Ask Sentinel anything that doesn't track.</div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+</body>
+</html>

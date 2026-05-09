@@ -9,6 +9,7 @@ import type {
   AdminConnectorStatus,
 } from './admin-connectors-adapter-types';
 import {
+  AdminDataMigrationPendingError,
   isFixtureMode,
 } from './admin-data-mode';
 import {
@@ -23,8 +24,10 @@ export async function getAdminConnectors(
   tenantSlug: string,
 ): Promise<ReadonlyArray<AdminConnectorRow>> {
   if (isFixtureMode()) return adminConnectorsFixture(tenantSlug);
+  // Live DB tables not yet migrated — throw until ADMIN-DATA10 lands.
+  throw new AdminDataMigrationPendingError('admin_connectors');
 
-  const clientId = await requireClientId(tenantSlug);
+  const clientId = await requireClientId(tenantSlug); // unreachable until DATA10
   const supabase = getServerSupabase();
   const { data, error } = await supabase
     .from('admin_connectors')

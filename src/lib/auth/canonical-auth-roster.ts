@@ -1,36 +1,43 @@
-export const CANONICAL_AUTH_EMAILS = [
-  // Meridian Health System
-  'nina.patel@meridian-health.example.com',
-  'elena.rivera@meridian-health.example.com',
-  'caleb.nguyen@meridian-health.example.com',
-  'marcus.chen@meridian-health.example.com',
-  'omar.rahman@meridian-health.example.com',
-  'david.henderson@meridian-health.example.com',
-  'rebecca.hollings@meridian-health.example.com',
+// Canonical demo-account roster for the sign-in surface.
+//
+// Founder direction (2026-05-08):
+//   - Role-based usernames (role@<tenant>) instead of person names.
+//   - Each Clerk account is bound to a real persona from the existing
+//     tenant org charts (apex-data, meridian-data, firstcapital). This
+//     gives every login rich corpus context: charters they signed,
+//     meetings they attended, programs they sponsor, decisions they
+//     made — all already threaded through the data.
+//
+// Anand (anand.sundaram@thesundaram.com) is not in this roster — he
+// is a platform super-user via PLATFORM_ADMIN_EMAIL_ALLOWLIST in
+// tenant-roles.ts and signs in through normal Clerk flows, not the
+// demo OTP picker.
+//
+// Persona binding (display name maintained in DemoCodeSignIn.tsx and
+// in the Clerk user metadata seeded by the Wave 2 provisioning script):
+//
+//   cio@apex-retail.example.com      → Carlos Rivera (CIO · Apex Retail)
+//   cdo@apex-retail.example.com      → Lynne Stratham (CDO · Apex Retail)
+//   cdio@meridian-health.example.com → Dr. Anita Krishnamurthy (CDIO · Meridian)
+//   cio@firstcapital.example.com     → Patricia Huang (CIO · First Capital)
 
+export const CANONICAL_AUTH_EMAILS = [
   // Apex Retail Group
-  'maya.desai@apex-retail.example.com',
-  'noah.patel@apex-retail.example.com',
-  'sofia.bennett@apex-retail.example.com',
-  'camila.torres@apex-retail.example.com',
-  'evelyn.brooks@apex-retail.example.com',
-  'david.kim@apex-retail.example.com',
-  'priya.nair@apex-retail.example.com',
+  'cio@apex-retail.example.com', // Carlos Rivera · CIO
+  'cdo@apex-retail.example.com', // Lynne Stratham · Chief Data Officer
+
+  // Meridian Health System
+  'cdio@meridian-health.example.com', // Dr. Anita Krishnamurthy · CDIO
 
   // First Capital
-  'ethan.brooks@firstcapital.example.com',
-  'lena.ortiz@firstcapital.example.com',
-  'rachel.kim@firstcapital.example.com',
-  'priya.mehta@firstcapital.example.com',
-  'nadia.rahman@firstcapital.example.com',
-  'james.park@firstcapital.example.com',
-  'kevin.walsh@firstcapital.example.com',
+  'cio@firstcapital.example.com', // Patricia Huang · CIO
 ] as const;
 
 export const CANONICAL_CLIENT_ADMIN_EMAILS = [
-  'nina.patel@meridian-health.example.com',
-  'maya.desai@apex-retail.example.com',
-  'ethan.brooks@firstcapital.example.com',
+  'cio@apex-retail.example.com',
+  'cdo@apex-retail.example.com',
+  'cdio@meridian-health.example.com',
+  'cio@firstcapital.example.com',
 ] as const;
 
 export type CanonicalAuthEmail = (typeof CANONICAL_AUTH_EMAILS)[number];

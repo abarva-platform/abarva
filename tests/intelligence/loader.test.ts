@@ -6,7 +6,7 @@ import type { SolutionSeed } from '../../src/lib/intelligence/seed-solutions';
 
 describe('intelligence corpus loader', () => {
   it('loads the shipped Phase 1 corpus counts', () => {
-    expect(corpus.patterns).toHaveLength(162);
+    expect(corpus.patterns).toHaveLength(186);
     expect(corpus.signals).toHaveLength(30);
     expect(corpus.solutions).toHaveLength(9);
     expect(corpus.contradictions).toHaveLength(10);
@@ -18,6 +18,7 @@ describe('intelligence corpus loader', () => {
       ...corpus.signals,
       ...corpus.solutions,
       ...corpus.contradictions,
+      ...corpus.metrics,
     ];
 
     expect(corpus.byId.size).toBe(allEntities.length);
@@ -28,7 +29,7 @@ describe('intelligence corpus loader', () => {
   });
 
   it('groups patterns by domain and tier', () => {
-    expect(corpus.byDomain.get('ai_programs')).toHaveLength(14);
+    expect(corpus.byDomain.get('ai_programs')).toHaveLength(27);
     expect(corpus.byDomain.get('meta')).toHaveLength(6);
     expect(corpus.byTier.get('M')).toHaveLength(6);
     expect(corpus.loadedAt).toEqual(expect.any(String));

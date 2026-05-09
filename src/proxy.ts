@@ -20,6 +20,8 @@ const PRODUCTION_READINESS_NO_STORE_HEADERS = {
 
 export const PUBLIC_ROUTE_PATTERNS = [
   '/sign-in(.*)',
+  '/signed-out(.*)',
+  '/invite(.*)',
   '/auth-redirect(.*)',
   '/',
   '/demo(.*)',

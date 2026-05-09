@@ -29,21 +29,22 @@ export function SignInShell({ redirectUrl }: Props) {
           width: '100%',
           display: 'grid',
           justifyItems: 'center',
-          gap: '14px',
+          gap: 16,
         }}
       >
         <DemoCodeSignIn redirectUrl={redirectUrl} />
         <div
           style={{
-            maxWidth: 420,
-            color: '#64748B',
-            fontSize: 12,
-            lineHeight: 1.5,
+            maxWidth: 460,
+            color: 'rgba(255,255,255,0.45)',
+            fontSize: 11.5,
+            lineHeight: 1.55,
             textAlign: 'center',
+            fontFamily: 'Inter, system-ui, sans-serif',
+            letterSpacing: '-0.005em',
           }}
         >
-          App access is locked to the approved demo identities for this crawl window. Sign out clears the active
-          client binding before returning here.
+          AbarVa · AI Success Platform · Access is restricted to invited client identities.
         </div>
       </div>
     </div>

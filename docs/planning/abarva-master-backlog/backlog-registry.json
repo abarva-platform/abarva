@@ -539,7 +539,7 @@
       "title": "Commercial active canvas tab consolidation",
       "track": "02-source-commercial",
       "priority": "P1",
-      "status": "pending",
+      "status": "in_progress",
       "ownerAgent": "Nexus",
       "productArea": "Source and commercial intelligence",
       "recommendedWave": "WAVE-22",
@@ -3415,6 +3415,7 @@
         "docs/planning/abarva-master-backlog/waves/WAVE-26-PILOT-HARDENING.md",
         "docs/planning/abarva-master-backlog/backlog-registry.json",
         "docs/planning/abarva-master-backlog/README.md",
+        "docs/planning/abarva-master-backlog/BACKLOG_CURRENT_STATE.md",
         "docs/planning/abarva-master-backlog/CODEX_ORCHESTRATION_RUNBOOK.md",
         "docs/planning/abarva-master-backlog/12_CODEX_OPERATING_MODEL_AND_WORK_ORDER_STANDARDS.md"
       ],
@@ -3444,7 +3445,7 @@
         "Validation commands documented and executed by Codex worker.",
         "Merge decision recorded with completion metadata in registry."
       ],
-      "executionNotes": "Wave WAVE-30 execution for track 12-build-ops-orchestration. Owner validates design and sequencing before work starts.",
+      "executionNotes": "Wave WAVE-30 execution for track 12-build-ops-orchestration. OPS15 operationalizes in-repo backlog-registry ingestion and checkpoint usage under docs/planning with no runtime code changes.",
       "completedPr": null,
       "completedCommit": null,
       "completedAt": null

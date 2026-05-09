@@ -2,7 +2,7 @@
 
 **Version:** 1.0.0
 **Locked:** 2026-05-07
-**Outcome:** 21 real AI initiatives loaded into substrate across 3 demo tenants, surfaced via new Setup → AI Initiatives panel. Downstream packages (Tower Fix, Intelligence Augmentation) get real data to bind to.
+**Outcome:** 21 real AI initiatives loaded into substrate across 3 demo tenants, surfaced via new Home → AI Initiatives panel. Downstream packages (Tower Fix, Intelligence Augmentation) get real data to bind to.
 
 ---
 
@@ -28,7 +28,7 @@ ai-initiatives-package/
 ├── CATEGORY_TAXONOMY.md                       8 AI categories with definitions
 ├── BUSINESS_GOAL_LINKAGE.md                   which business goal each initiative serves
 ├── DATA_MODEL.md                              database schema · DDL
-├── SETUP_UI_SPEC.md                           Setup → AI Initiatives view spec
+├── HOME_UI_SPEC.md                           Home → AI Initiatives view spec
 ├── LOAD_INSTRUCTIONS.md                       step-by-step ingestion runbook
 └── templates/
     ├── apex-retail/full_load.json             (7 initiatives + supporting data)
@@ -44,7 +44,7 @@ ai-initiatives-package/
 2. Read `INVENTORY.md` to understand the 21 initiatives
 3. Read `CATEGORY_TAXONOMY.md` and `BUSINESS_GOAL_LINKAGE.md` for the structure
 4. Read `DATA_MODEL.md` for the database schema
-5. Read `SETUP_UI_SPEC.md` for the Setup view to build
+5. Read `HOME_UI_SPEC.md` for the Home view to build
 6. Follow `LOAD_INSTRUCTIONS.md` step-by-step
 
 Total elapsed: 2-4 days for full execution by Claude Code.
@@ -124,7 +124,7 @@ After this lands, the demo story is legible:
 
 - "What AI initiatives are you tracking?" → answered by the registry, not invention
 - "Where did that number come from?" → click-through to substrate via provenance tab
-- "How did you load all this?" → Setup → Data Trust + Provenance tab show templates and refresh state
+- "How did you load all this?" → Home → Data Trust + Provenance tab show templates and refresh state
 - "What will this look like in production?" → templates marked as day-1; integrations come later replacing them
 
 This is the substrate-ahead-of-surface discipline applied honestly. Surface work resumes after substrate is real.
@@ -133,7 +133,7 @@ This is the substrate-ahead-of-surface discipline applied honestly. Surface work
 
 ## Dependencies and downstream effects
 
-**Upstream:** Setup Redesign Package (Setup nav must be in modern shape before AI Initiatives panel adds to it). If Setup Redesign hasn't shipped, AI Initiatives panel can be added to current Setup nav and migrated when Setup Redesign lands.
+**Upstream:** Home Redesign Package (Home nav must be in modern shape before AI Initiatives panel adds to it). If Home Redesign hasn't shipped, AI Initiatives panel can be added to current Home nav and migrated when Home Redesign lands.
 
 **Downstream:**
 - Tower Fix Package — strategic alignment 2×2 binds to real initiatives
@@ -160,7 +160,7 @@ After execution:
 - 21 initiatives in DB
 - 12 business goals in DB
 - ~50 KPI history records, ~12 stakeholder notes, ~15 decisions, ~14 vendor records, ~10 scenarios
-- Setup → AI Initiatives view renders for all 3 tenants with By Goal / By Category / Table views
+- Home → AI Initiatives view renders for all 3 tenants with By Goal / By Category / Table views
 - Detail page works with 7 tabs per initiative
 - Provenance tab shows template name and version
 - Substrate tagged `ai_initiatives_v1.0.0`
@@ -177,6 +177,6 @@ This package is the foundation everything else has been waiting for. Ship this f
 Recommended execution order across all packages now:
 
 1. **AI Initiatives Substrate Package** (this one) — ship first
-2. **Setup Redesign Package** — can ship in parallel
+2. **Home Redesign Package** — can ship in parallel
 3. **Tower Fix Package** — ships after this; revised T-1/T-2/T-3 specs bind to real data
 4. **Intelligence Augmentation Package** — ships after this; data binding catalog already references the new substrate

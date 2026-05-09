@@ -40,11 +40,14 @@ export default async function SourceEventDetailPage({
     normalizedView ??
     (SOURCE_STAGE_ORDER.includes(event.currentStageKey) ? event.currentStageKey : 'strategy');
 
-  // Read canvas substrate (RLS-scoped server-side).
+  // Read canvas substrate (RLS-scoped server-side). Use the resolved
+  // event.id (UUID) — when the slug is an event_code (B7), passing the
+  // raw URL slug to these queries returns empty silently because
+  // source_event_*_states.source_event_id is a UUID FK.
   const [artifactStates, gateCriterionStates, evidenceStates] = await Promise.all([
-    listArtifactStatesForEvent(eventId),
-    listGateCriterionStatesForEvent(eventId),
-    listEvidenceStatesForEvent(eventId),
+    listArtifactStatesForEvent(event.id),
+    listGateCriterionStatesForEvent(event.id),
+    listEvidenceStatesForEvent(event.id),
   ]);
 
   // Pre-load all template bodies — server-side only because the loader uses

@@ -6,7 +6,7 @@
 // transform config; for all other tests, this mock returns an empty root
 // node so the import tree resolves without parsing ESM.
 
-import type { MdastNode } from '../markdown-to-html';
+type MdastNode = { type: string; children?: MdastNode[] };
 
 /** Return a minimal mdast root with no children. */
 export function fromMarkdown(_source: string): MdastNode {

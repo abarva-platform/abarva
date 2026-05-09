@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Art of the Possible · CXO mode · honest distribution · AbarVa</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --ink:#0A0C12; --body:#1F2433; --muted:#3D4454; --faint:#6B7280;
+      --navy:#1B2B5C; --navy-soft:rgba(27,43,92,0.06); --navy-line:rgba(27,43,92,0.15);
+      --teal:#0E8A65; --teal-soft:rgba(14,138,101,0.09); --teal-line:rgba(14,138,101,0.25);
+      --amber:#92400E; --amber-soft:rgba(146,64,14,0.08); --amber-line:rgba(146,64,14,0.25);
+      --red:#991B1B; --red-soft:rgba(153,27,27,0.07); --red-line:rgba(153,27,27,0.25);
+      --border-light:#E5E7EB; --surface:#fff; --surface2:#FBFAF7; --surface3:#F5F3EE;
+      --tenant:#0F766E;
+      --chat-bg:#10193A; --chat-text:#CDD5E0;
+      --f-display:'Fraunces',Georgia,serif; --f-body:'Inter',sans-serif; --f-mono:'JetBrains Mono',monospace;
+    }
+    html { font-size:15px; }
+    body { font-family:var(--f-body); background:var(--surface2); color:var(--body); line-height:1.55; -webkit-font-smoothing:antialiased; }
+
+    .banner { background:#0A0C12; color:#fff; padding:8px 16px; font-family:var(--f-mono); font-size:10px; letter-spacing:0.16em; text-transform:uppercase; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; }
+    .banner a { color:rgba(255,255,255,0.85); text-decoration:none; border-bottom:1px solid rgba(255,255,255,0.3); padding-bottom:1px; }
+
+    .topnav { background:#FBFAF7; border-bottom:1px solid var(--border-light); padding:14px 56px; display:flex; justify-content:space-between; align-items:center; }
+    .topnav-brand { font-family:var(--f-display); font-size:18px; font-weight:600; color:var(--ink); letter-spacing:-0.005em; }
+    .topnav-links { display:flex; gap:24px; }
+    .topnav-link { font-size:13px; color:var(--muted); text-decoration:none; font-weight:500; padding:6px 0; border-bottom:2px solid transparent; }
+    .topnav-link.active { color:var(--ink); border-bottom-color:var(--ink); font-weight:600; }
+    .topnav-tenant { font-family:var(--f-mono); font-size:10px; color:var(--faint); letter-spacing:0.12em; text-transform:uppercase; }
+
+    .stage-strip { background:#fff; border-bottom:1px solid var(--border-light); padding:12px 56px; display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+    .stage-pill { display:inline-flex; align-items:baseline; gap:6px; padding:6px 14px; border-radius:999px; font-size:13px; color:var(--body); border:1px solid var(--border-light); background:#fff; cursor:pointer; white-space:nowrap; font-weight:500; text-decoration:none; }
+    .stage-pill.primary { font-family:var(--f-display); font-size:15px; font-weight:500; padding:7px 16px; }
+    .stage-pill.active { background:var(--ink); color:#fff; border-color:var(--ink); }
+    .stage-divider { width:1px; height:18px; background:var(--border-light); }
+
+    .body-grid { display:grid; grid-template-columns:1fr 440px; align-items:start; }
+    main { padding:32px 56px 80px; min-width:0; }
+
+    .hero { padding-bottom:24px; border-bottom:1px solid var(--border-light); margin-bottom:28px; }
+    .hero-eyebrow { font-family:var(--f-mono); font-size:10px; font-weight:700; letter-spacing:0.2em; text-transform:uppercase; color:var(--faint); margin-bottom:8px; }
+    .hero-eyebrow span { color:var(--ink); }
+    .hero-title { font-family:var(--f-display); font-size:34px; font-weight:400; color:var(--ink); letter-spacing:-0.018em; line-height:1.1; margin-bottom:14px; max-width:30ch; }
+    .hero-summary { display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-top:18px; max-width:780px; }
+    .hero-stat { background:var(--surface); border:1px solid var(--border-light); border-radius:8px; padding:14px 18px; }
+    .hero-stat .lab { font-family:var(--f-mono); font-size:9.5px; font-weight:700; letter-spacing:0.18em; color:var(--faint); text-transform:uppercase; margin-bottom:4px; }
+    .hero-stat .v { font-family:var(--f-display); font-size:22px; font-weight:500; color:var(--ink); letter-spacing:-0.018em; line-height:1.15; }
+    .hero-stat .v .pct { color:var(--teal); font-weight:600; font-size:15px; margin-left:4px; }
+    .hero-stat .v .annual { font-family:var(--f-mono); font-size:11px; font-weight:600; color:var(--faint); letter-spacing:0.06em; vertical-align:middle; margin-left:4px; }
+    .hero-stat .meta { font-size:12px; color:var(--muted); margin-top:4px; line-height:1.45; }
+
+    .bands { display:grid; gap:14px; }
+    .band { background:#fff; border:1px solid var(--border-light); border-radius:10px; overflow:hidden; }
+    .band.heavy { border-left:6px solid var(--teal); }
+    .band.thin { border-left:6px solid var(--amber); }
+    .band.gap { border-left:6px solid var(--red); }
+    .band.foundation { border-left:6px solid var(--navy); }
+    .band-row { padding:18px 22px; display:grid; grid-template-columns:auto 1fr auto; gap:24px; align-items:center; }
+    .band-name { display:flex; flex-direction:column; gap:2px; min-width:170px; }
+    .band-name .cat { font-family:var(--f-mono); font-size:10px; font-weight:700; letter-spacing:0.16em; text-transform:uppercase; color:var(--faint); }
+    .band.heavy .cat { color:var(--teal); }
+    .band.thin .cat { color:var(--amber); }
+    .band.gap .cat { color:var(--red); }
+    .band.foundation .cat { color:var(--navy); }
+    .band-name .val { font-family:var(--f-display); font-size:22px; font-weight:500; color:var(--ink); letter-spacing:-0.018em; line-height:1.1; }
+    .band-name .val .annual { font-family:var(--f-mono); font-size:11px; font-weight:600; color:var(--faint); letter-spacing:0.06em; vertical-align:middle; margin-left:4px; }
+
+    .band-bar { display:flex; flex-direction:column; gap:8px; min-width:240px; }
+    .band-bar-row { display:flex; align-items:center; gap:10px; }
+    .band-bar-track { flex:1; height:14px; background:var(--surface3); border-radius:3px; overflow:hidden; display:flex; }
+    .band-bar-fill { height:100%; }
+    .band-bar-fill.flight { background:var(--teal); }
+    .band-bar-fill.candidate { background:var(--navy); opacity:0.4; }
+    .band-bar-fill.risk { background:var(--amber); }
+    .band-bar-fill.empty { background:transparent; }
+    .band-bar-label { font-family:var(--f-mono); font-size:10px; color:var(--ink); letter-spacing:0.04em; white-space:nowrap; font-weight:600; }
+    .band-bar-readout { font-size:12.5px; color:var(--ink); line-height:1.45; }
+    .band-bar-readout strong { font-weight:600; }
+
+    .band-take { display:flex; flex-direction:column; gap:8px; min-width:280px; max-width:340px; }
+    .band-take .verdict { font-family:var(--f-display); font-size:16px; font-weight:500; letter-spacing:-0.005em; line-height:1.3; }
+    .band-take .verdict.bad { color:var(--red); }
+    .band-take .verdict.warn { color:var(--amber); }
+    .band-take .verdict.good { color:var(--teal); }
+    .band-take .example { font-size:12px; color:var(--muted); line-height:1.5; padding-top:8px; border-top:1px dashed var(--border-light); }
+    .band-take .example .pp { font-family:var(--f-mono); font-size:10px; color:var(--teal); letter-spacing:0.04em; font-weight:600; display:block; margin-top:3px; }
+    .band-take .drill { font-family:var(--f-mono); font-size:10px; font-weight:600; letter-spacing:0.06em; text-transform:uppercase; color:var(--ink); padding:6px 10px; border:1px solid var(--ink); border-radius:4px; text-decoration:none; align-self:flex-start; margin-top:8px; }
+
+    .sentinel { position:sticky; top:0; height:100vh; width:440px; background:var(--chat-bg); color:var(--chat-text); display:flex; flex-direction:column; border-left:1px solid rgba(255,255,255,0.05); }
+    .sentinel-head { padding:18px 22px 14px; border-bottom:1px solid rgba(255,255,255,0.1); }
+    .sentinel-tag { font-family:var(--f-mono); font-size:9.5px; font-weight:700; letter-spacing:0.18em; color:#F4B800; text-transform:uppercase; margin-bottom:6px; }
+    .sentinel-name { font-family:var(--f-display); font-size:18px; font-weight:500; color:#fff; letter-spacing:-0.005em; }
+    .sentinel-scope { font-family:var(--f-mono); font-size:10px; color:rgba(205,213,224,0.7); letter-spacing:0.04em; margin-top:4px; }
+    .sentinel-body { flex:1; padding:18px 22px; overflow-y:auto; }
+    .sentinel-opener { background:rgba(244,184,0,0.06); border:1px solid rgba(244,184,0,0.15); border-radius:8px; padding:14px 16px; font-size:13.5px; line-height:1.6; color:#fff; }
+    .sentinel-opener .auto-context { font-family:var(--f-mono); font-size:9.5px; font-weight:700; letter-spacing:0.16em; color:#F4B800; text-transform:uppercase; margin-bottom:8px; }
+    .sentinel-opener strong { color:#fff; font-weight:600; }
+    .sentinel-opener .id { font-family:var(--f-mono); font-size:11px; color:#7BA8FF; letter-spacing:0.04em; }
+    .sentinel-opener .gap { color:#FBA94B; font-weight:600; }
+    .sentinel-prompts { margin-top:14px; }
+    .sentinel-prompt { padding:10px 14px; border:1px solid rgba(255,255,255,0.1); border-radius:6px; font-size:12.5px; color:rgba(205,213,224,0.85); margin-bottom:8px; cursor:pointer; }
+    .sentinel-input { padding:14px 18px 16px; border-top:1px solid rgba(255,255,255,0.1); }
+    .sentinel-input-box { background:rgba(0,0,0,0.2); border:1px solid rgba(255,255,255,0.12); border-radius:8px; padding:10px 14px; font-size:13px; color:rgba(205,213,224,0.7); }
+
+  </style>
+</head>
+<body>
+
+<div class="banner">
+  <span>Art of the Possible · <strong>CXO mode · honest distribution</strong> · 4 bands · the asymmetry IS the insight</span>
+  <span>Compare → <a href="intelligence-cxo-kanban-wireframe.html">prior kanban</a> · <a href="intelligence-cxo-all-stages-wireframe.html">all stages</a></span>
+</div>
+
+<header class="topnav">
+  <div class="topnav-brand">AbarVa</div>
+  <nav class="topnav-links">
+    <a class="topnav-link" href="#">Home</a>
+    <a class="topnav-link active" href="#">Intelligence</a>
+    <a class="topnav-link" href="#">Moves</a>
+    <a class="topnav-link" href="#">Source</a>
+    <a class="topnav-link" href="#">Tower</a>
+  </nav>
+  <span class="topnav-tenant">Meridian Health · CIO Iyer</span>
+</header>
+
+<div class="stage-strip">
+  <a class="stage-pill primary" href="#">The Brief</a>
+  <a class="stage-pill primary" href="#">The Map</a>
+  <a class="stage-pill primary active" href="#">Art of Possible</a>
+  <span class="stage-divider"></span>
+  <a class="stage-pill" href="#">Today</a>
+  <a class="stage-pill" href="#">By function</a>
+  <a class="stage-pill" href="#">Patterns</a>
+  <a class="stage-pill" href="#">Vendors</a>
+  <a class="stage-pill" href="#">Sessions</a>
+</div>
+
+<div class="body-grid">
+
+<main>
+  <section class="hero">
+    <div class="hero-eyebrow">03 · <span>WHAT'S POSSIBLE · WHAT YOU'RE CAPTURING</span></div>
+    <h1 class="hero-title">You're concentrated in workforce. The biggest gap is clinical.</h1>
+    <p style="font-size:14px; color:var(--muted); max-width:64ch; line-height:1.55;">Real portfolios are asymmetric — Sentinel's job is to show the asymmetry, not normalize it. Where Meridian's $108M AI budget is actually going, what's possible at IDN scale, where the gap is largest.</p>
+
+    <div class="hero-summary">
+      <div class="hero-stat">
+        <div class="lab">Possible value · industry universe</div>
+        <div class="v">$60M – $150M <span class="annual">annual at IDN scale</span></div>
+        <div class="meta">23 canonical bets across 4 outcome categories</div>
+      </div>
+      <div class="hero-stat">
+        <div class="lab">You're capturing today</div>
+        <div class="v">~$13M <span class="pct">~12%</span></div>
+        <div class="meta">Across 7 in-flight initiatives, mostly workforce-relief</div>
+      </div>
+    </div>
+  </section>
+
+  <div class="bands">
+
+    <!-- WORKFORCE · OVER-INDEXED -->
+    <div class="band heavy">
+      <div class="band-row">
+        <div class="band-name">
+          <div class="cat">Workforce relief</div>
+          <div class="val">$8M – $25M <span class="annual">possible</span></div>
+        </div>
+        <div class="band-bar">
+          <div class="band-bar-row">
+            <div class="band-bar-track">
+              <div class="band-bar-fill flight" style="width:50%"></div>
+              <div class="band-bar-fill candidate" style="width:30%"></div>
+              <div class="band-bar-fill empty" style="width:20%"></div>
+            </div>
+            <span class="band-bar-label">3 in flight / 6 total</span>
+          </div>
+          <div class="band-bar-readout">
+            <strong>3 active</strong> · MH-01 Ambient Docs · MH-02 Vibe Coding · MH-03 Now Assist · 3 candidates remain
+          </div>
+        </div>
+        <div class="band-take">
+          <div class="verdict warn">⚠ Over-indexed · diminishing returns at +1 more bet</div>
+          <div class="example">
+            Cleveland Clinic · DAX · 67% adoption · 41% docs time ↓
+            <span class="pp">PP-HC-001 · binding pattern P-HC-005 · YOUR MH-01 missing CMIO sponsor</span>
+          </div>
+          <a href="#" class="drill">3 candidates →</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- MARGIN · SINGLE POINT -->
+    <div class="band thin">
+      <div class="band-row">
+        <div class="band-name">
+          <div class="cat">Margin uplift</div>
+          <div class="val">$15M – $45M <span class="annual">possible</span></div>
+        </div>
+        <div class="band-bar">
+          <div class="band-bar-row">
+            <div class="band-bar-track">
+              <div class="band-bar-fill flight" style="width:20%"></div>
+              <div class="band-bar-fill candidate" style="width:60%"></div>
+              <div class="band-bar-fill empty" style="width:20%"></div>
+            </div>
+            <span class="band-bar-label">1 in flight / 5 total</span>
+          </div>
+          <div class="band-bar-readout">
+            <strong>1 active</strong> · MH-04 Epic AI Revenue Cycle · 108% of band · cascade enabler · 4 candidates blocked behind it
+          </div>
+        </div>
+        <div class="band-take">
+          <div class="verdict warn">⚠ Single-point margin dependency</div>
+          <div class="example">
+            UPMC · Population Health · $31M MSSP shared savings 2024
+            <span class="pp">PP-HC-002 · cascade MC-HC-003 · enabled by MH-04 success</span>
+          </div>
+          <a href="#" class="drill">4 candidates →</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- CLINICAL · BIGGEST GAP -->
+    <div class="band gap">
+      <div class="band-row">
+        <div class="band-name">
+          <div class="cat">Clinical quality</div>
+          <div class="val">$12M – $40M <span class="annual">possible</span></div>
+        </div>
+        <div class="band-bar">
+          <div class="band-bar-row">
+            <div class="band-bar-track">
+              <div class="band-bar-fill flight" style="width:15%"></div>
+              <div class="band-bar-fill candidate" style="width:65%"></div>
+              <div class="band-bar-fill empty" style="width:20%"></div>
+            </div>
+            <span class="band-bar-label">1 in flight / 5 total</span>
+          </div>
+          <div class="band-bar-readout">
+            <strong>1 active</strong> · MH-05 Clinical Risk · post-COVID bias drift risk · 4 candidates with high tenant fit
+          </div>
+        </div>
+        <div class="band-take">
+          <div class="verdict bad">⚠ Largest unaddressed gap · ~$13M untouched</div>
+          <div class="example">
+            Sutter Health · Sepsis EWS · 31% mortality reduction
+            <span class="pp">PP-HC-003 · 4 candidates · Sepsis · Care Mgmt · Pop Health · Imaging</span>
+          </div>
+          <a href="#" class="drill">4 candidates →</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- FOUNDATION · BLOCKING -->
+    <div class="band foundation">
+      <div class="band-row">
+        <div class="band-name">
+          <div class="cat">Innovation foundation</div>
+          <div class="val">$25M – $40M <span class="annual">enabling</span></div>
+        </div>
+        <div class="band-bar">
+          <div class="band-bar-row">
+            <div class="band-bar-track">
+              <div class="band-bar-fill flight" style="width:30%"></div>
+              <div class="band-bar-fill risk" style="width:25%"></div>
+              <div class="band-bar-fill empty" style="width:45%"></div>
+            </div>
+            <span class="band-bar-label">2 active · 1 at risk / 4 total</span>
+          </div>
+          <div class="band-bar-readout">
+            <strong>2 in flight, 1 at risk</strong> · MH-06 SAP Joule · <span style="color:var(--amber); font-weight:600;">MH-07 Model Governance ($0 measured · blocking 4 clinical bets)</span>
+          </div>
+        </div>
+        <div class="band-take">
+          <div class="verdict bad">⚠ MH-07 failure cascades into the clinical gap</div>
+          <div class="example">
+            Without MRM substrate live, your $13M clinical opportunity stays theoretical
+            <span class="pp">AP-HC-MRM · foundation-after-deployment failure pattern</span>
+          </div>
+          <a href="#" class="drill">Open MH-07 →</a>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div style="margin-top:32px; padding:18px 22px; background:var(--surface); border:1px dashed var(--border-light); border-radius:8px;">
+    <div style="font-family:var(--f-mono); font-size:9.5px; font-weight:700; letter-spacing:0.16em; text-transform:uppercase; color:var(--faint); margin-bottom:8px;">The CXO frame</div>
+    <p style="font-size:13.5px; color:var(--ink); line-height:1.6; max-width:80ch;">
+      You're capturing <strong>~12% of what's possible</strong>. The asymmetry is the insight: <strong>workforce is over-indexed</strong>, <strong>clinical is the biggest unaddressed gap</strong>, and <strong>foundation failure (MH-07) is what's actually blocking clinical capture</strong>. The right next bet isn't a fifth workforce initiative — it's fixing MH-07 to unlock the $13M clinical pool.
+    </p>
+  </div>
+
+</main>
+
+<aside class="sentinel">
+  <div class="sentinel-head">
+    <div class="sentinel-tag">✦ Sentinel · agent</div>
+    <div class="sentinel-name">Sentinel</div>
+    <div class="sentinel-scope">Meridian Health · Art of Possible · honest distribution</div>
+  </div>
+  <div class="sentinel-body">
+    <div class="sentinel-opener">
+      <div class="auto-context">⚡ context · imbalance read</div>
+      Your portfolio is <strong>concentrated in workforce relief</strong> (3 bets · $42M of AI spend) and <strong>under-indexed in clinical quality</strong> (1 bet · ~$8M of $108M).
+      <br /><br />
+      The single biggest leverage move isn't another workforce bet · it's fixing <span class="id">MH-07 Model Governance</span>. That at-risk foundation bet is what's blocking the <span class="gap">$13M clinical gap</span> from being addressable.
+      <br /><br />
+      You're capturing <strong>~12% of the possible value</strong> in this universe. That's normal for an IDN your size · but the asymmetry tells you where to invest next.
+      <br /><br />
+      <strong>Want me to model the cascade if MH-07 came back online?</strong>
+    </div>
+    <div class="sentinel-prompts">
+      <div class="sentinel-prompt">→ What does fixing MH-07 unlock · in dollar terms?</div>
+      <div class="sentinel-prompt">→ Why am I over-indexed in workforce · is it value-driven or org-driven?</div>
+      <div class="sentinel-prompt">→ What would a balanced portfolio look like for an 8-hospital IDN?</div>
+      <div class="sentinel-prompt">→ Top 3 clinical candidates, ranked by foundation dependency.</div>
+    </div>
+  </div>
+  <div class="sentinel-input">
+    <div class="sentinel-input-box">Ask about the imbalance…</div>
+  </div>
+</aside>
+
+</div>
+
+</body>
+</html>

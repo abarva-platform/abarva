@@ -1,11 +1,11 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import type { CSSProperties } from 'react';
+import type { CSSProperties, ReactNode } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { AppShell } from '@/components/shell/AppShell';
-import { AtlasDrawer } from '@/components/shell/AtlasDrawer';
-import { ResizableSplitter } from '@/components/source/canvas/ResizableSplitter';
+import { useAtlasPageState } from '@/components/shell/AtlasPageStateProvider';
+import { AgentDock, type AttachmentRef, type ChatMessage } from '@/components/agent/AgentDock';
 import { SourceOnboardingTour } from '@/components/source/onboarding/SourceOnboardingTour';
 import { SHELL } from '@/lib/shell/shell-tokens';
 
@@ -400,6 +400,174 @@ export function SourceOriginatePage({
     router.push(finalUrl);
   }
 
+  const intakeWorkspace: ReactNode = (
+    <aside style={INTAKE_PANE_STYLE}>
+      <section aria-label="New sourcing event intake" style={INTAKE_PANEL}>
+        {/* Context strip */}
+        <div style={CONTEXT_STRIP}>
+          <span style={STRIP_TOKEN}>{clientName.length > 26 ? clientName.slice(0, 24) + '…' : clientName}</span>
+          <span style={STRIP_DOT}>·</span>
+          <span style={STRIP_TOKEN}>New sourcing event</span>
+          <span style={STRIP_DOT}>·</span>
+          <span style={STRIP_TOKEN}>{completedCount} of {INTAKE_FIELDS.length} captured</span>
+        </div>
+
+        {/* Header */}
+        <div>
+          <div style={EYEBROW}>Step 0 · Sentinel</div>
+          <h2 style={HEADING}>Sourcing event intake</h2>
+          <p style={SUBHEAD}>Trigger is required. Category and remaining fields can be refined via Sentinel after the event opens.</p>
+          {restoredAt ? (
+            <div data-testid="source-originate-draft-restored" style={DRAFT_RESTORED_STYLE}>
+              <span>
+                Draft restored from autosave
+                {restoredAt !== 'unknown' ? ` · ${formatRelativeTime(restoredAt)}` : ''}.
+              </span>
+              <button
+                type="button"
+                onClick={() => {
+                  clearAutosavedDraft(clientKey);
+                  setIntake(initialIntakeState);
+                  setSelectedCategoryId(null);
+                  setRestoredAt(null);
+                  setSubmitState({ status: 'idle' });
+                }}
+                data-testid="source-originate-draft-discard"
+                style={DRAFT_DISCARD_STYLE}
+              >
+                Discard draft
+              </button>
+            </div>
+          ) : null}
+        </div>
+
+        {/* T02 — Category picker */}
+        <div style={{ display: 'grid', gap: 7 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
+            <div style={SECTION_LABEL}>IT sourcing category</div>
+            {selectedCategory ? (
+              <span style={{ ...STATUS_CHIP, background: SHELL.MINT_BG, borderColor: SHELL.MINT_LINE, color: SHELL.MINT_TEXT }}>
+                {selectedCategory.label}
+              </span>
+            ) : (
+              <span style={{ ...STATUS_CHIP, background: SHELL.PAPER_SOFT, borderColor: SHELL.CARD_LINE, color: SHELL.INK_MUTED }}>
+                Optional
+              </span>
+            )}
+          </div>
+          <div style={{ display: 'grid', gap: 6 }}>
+            {SOURCE_CATEGORIES.map((category) => (
+              <CategoryCard
+                key={category.id}
+                category={category}
+                selected={selectedCategoryId === category.id}
+                onSelect={() => {
+                  setSelectedCategoryId((prev) => prev === category.id ? null : category.id);
+                  setSubmitState({ status: 'idle' });
+                }}
+              />
+            ))}
+          </div>
+        </div>
+
+        {/* Intake fields */}
+        <div style={{ display: 'grid', gap: 0 }}>
+          <div style={{ ...SECTION_LABEL, marginBottom: 4 }}>Event facts</div>
+          {INTAKE_FIELDS.map((field) => {
+            const value = intake[field.id];
+            const complete = value.trim().length > 0;
+            const isRequired = field.id === 'trigger';
+            return (
+              <label
+                key={field.id}
+                style={{ display: 'grid', gap: 6, borderTop: `1px solid ${SHELL.CARD_LINE}`, padding: '11px 0' }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8, alignItems: 'flex-start' }}>
+                  <div>
+                    <div style={FIELD_LABEL}>
+                      {field.label}{isRequired && <span style={{ color: SHELL.PEACH_TEXT }}> *</span>}
+                    </div>
+                    <div style={FIELD_PROMPT}>{field.prompt}</div>
+                  </div>
+                  <span style={{
+                    flex: '0 0 auto', ...STATUS_CHIP,
+                    background: complete ? SHELL.MINT_BG : (isRequired ? SHELL.PEACH_BG : SHELL.PAPER_SOFT),
+                    borderColor: complete ? SHELL.MINT_LINE : (isRequired ? SHELL.PEACH_LINE : SHELL.CARD_LINE),
+                    color: complete ? SHELL.MINT_TEXT : (isRequired ? SHELL.PEACH_TEXT : SHELL.INK_MUTED),
+                  }}>
+                    {complete ? 'Captured' : (isRequired ? 'Required' : `${field.agent} needs`)}
+                  </span>
+                </div>
+                <textarea
+                  value={value}
+                  onChange={(e) => patchIntake(field.id, e.target.value)}
+                  placeholder={field.placeholder}
+                  rows={2}
+                  style={{
+                    width: '100%', boxSizing: 'border-box',
+                    border: `1px solid ${complete ? SHELL.CARD_LINE : (isRequired ? SHELL.PEACH_LINE : SHELL.CARD_LINE)}`,
+                    borderRadius: 8, background: SHELL.PAPER, color: SHELL.INK,
+                    fontFamily: SHELL.SANS, fontSize: 12, lineHeight: 1.45,
+                    padding: '8px 10px', resize: 'vertical', outline: 'none',
+                  }}
+                />
+              </label>
+            );
+          })}
+        </div>
+
+        {/* Submit */}
+        <div style={{ display: 'grid', gap: 7 }}>
+          <button
+            type="button"
+            onClick={createEvent}
+            disabled={!canCreate}
+            style={{
+              border: 'none', borderRadius: 10,
+              background: canCreate ? SHELL.INK : SHELL.GRAY_BG,
+              color: canCreate ? SHELL.PAPER : SHELL.GRAY_TEXT,
+              cursor: canCreate ? 'pointer' : 'not-allowed',
+              fontFamily: SHELL.MONO, fontSize: 10, letterSpacing: '0.08em',
+              textTransform: 'uppercase', fontWeight: 700, padding: '11px 14px',
+            }}
+          >
+            {submitState.status === 'submitting' ? 'Opening event canvas…' : 'Open sourcing event →'}
+          </button>
+
+          {submitState.status === 'error' && (
+            <div
+              role="alert"
+              style={{
+                borderRadius: 8, border: `1px solid ${SHELL.PEACH_LINE}`, background: SHELL.PEACH_BG,
+                padding: '8px 10px', fontFamily: SHELL.SANS, fontSize: 12, color: SHELL.PEACH_TEXT,
+              }}
+            >
+              {submitState.message}
+            </div>
+          )}
+
+          <a
+            href="/source"
+            style={{
+              textAlign: 'center', fontFamily: SHELL.MONO, fontSize: 9,
+              letterSpacing: '0.08em', textTransform: 'uppercase', color: SHELL.INK_MUTED, textDecoration: 'none',
+            }}
+          >
+            ← Back to Source portfolio
+          </a>
+        </div>
+      </section>
+
+      {/* Guidance cards */}
+      <section style={{ display: 'grid', gap: 6 }}>
+        <div style={SECTION_LABEL}>Agent guidance</div>
+        {AGENT_GUIDANCE.map((item) => (
+          <GuidanceCard key={item.label} {...item} />
+        ))}
+      </section>
+    </aside>
+  );
+
   return (
     <AppShell
       surface="source"
@@ -408,192 +576,10 @@ export function SourceOriginatePage({
       onArtifact={() => undefined}
     >
       <main data-testid="source-originate-canvas" style={MAIN_STYLE}>
-        <ResizableSplitter
-          defaultLeftPercent={45}
-          minLeftPx={340}
-          minRightPx={480}
-          storageKey="abarva.source.originate.splitter"
-          left={
-            <div style={CHAT_PANE_STYLE}>
-              <AtlasDrawer
-                embedded
-                isOpen={true}
-                onClose={() => undefined}
-                agent={SENTINEL_INTAKE_AGENT}
-                quote={`Ready to stand up a new IT sourcing event for ${clientName}. Tell me the trigger and I'll help you scope and open the event on the canvas.`}
-                surface="/source"
-                onArtifact={() => undefined}
-                composerPlacement="afterHeader"
-              />
-            </div>
-          }
-          right={
-            <aside style={INTAKE_PANE_STYLE}>
-              <section aria-label="New sourcing event intake" style={INTAKE_PANEL}>
-                {/* Context strip */}
-              <div style={CONTEXT_STRIP}>
-                <span style={STRIP_TOKEN}>{clientName.length > 26 ? clientName.slice(0, 24) + '…' : clientName}</span>
-                <span style={STRIP_DOT}>·</span>
-                <span style={STRIP_TOKEN}>New sourcing event</span>
-                <span style={STRIP_DOT}>·</span>
-                <span style={STRIP_TOKEN}>{completedCount} of {INTAKE_FIELDS.length} captured</span>
-              </div>
-
-              {/* Header */}
-              <div>
-                <div style={EYEBROW}>Step 0 · Sentinel</div>
-                <h2 style={HEADING}>Sourcing event intake</h2>
-                <p style={SUBHEAD}>Trigger is required. Category and remaining fields can be refined via Sentinel after the event opens.</p>
-                {restoredAt ? (
-                  <div data-testid="source-originate-draft-restored" style={DRAFT_RESTORED_STYLE}>
-                    <span>
-                      Draft restored from autosave
-                      {restoredAt !== 'unknown' ? ` · ${formatRelativeTime(restoredAt)}` : ''}.
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        clearAutosavedDraft(clientKey);
-                        setIntake(initialIntakeState);
-                        setSelectedCategoryId(null);
-                        setRestoredAt(null);
-                        setSubmitState({ status: 'idle' });
-                      }}
-                      data-testid="source-originate-draft-discard"
-                      style={DRAFT_DISCARD_STYLE}
-                    >
-                      Discard draft
-                    </button>
-                  </div>
-                ) : null}
-              </div>
-
-              {/* T02 — Category picker */}
-              <div style={{ display: 'grid', gap: 7 }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
-                  <div style={SECTION_LABEL}>IT sourcing category</div>
-                  {selectedCategory ? (
-                    <span style={{ ...STATUS_CHIP, background: SHELL.MINT_BG, borderColor: SHELL.MINT_LINE, color: SHELL.MINT_TEXT }}>
-                      {selectedCategory.label}
-                    </span>
-                  ) : (
-                    <span style={{ ...STATUS_CHIP, background: SHELL.PAPER_SOFT, borderColor: SHELL.CARD_LINE, color: SHELL.INK_MUTED }}>
-                      Optional
-                    </span>
-                  )}
-                </div>
-                <div style={{ display: 'grid', gap: 6 }}>
-                  {SOURCE_CATEGORIES.map((category) => (
-                    <CategoryCard
-                      key={category.id}
-                      category={category}
-                      selected={selectedCategoryId === category.id}
-                      onSelect={() => {
-                        setSelectedCategoryId((prev) => prev === category.id ? null : category.id);
-                        setSubmitState({ status: 'idle' });
-                      }}
-                    />
-                  ))}
-                </div>
-              </div>
-
-              {/* Intake fields */}
-              <div style={{ display: 'grid', gap: 0 }}>
-                <div style={{ ...SECTION_LABEL, marginBottom: 4 }}>Event facts</div>
-                {INTAKE_FIELDS.map((field) => {
-                  const value = intake[field.id];
-                  const complete = value.trim().length > 0;
-                  const isRequired = field.id === 'trigger';
-                  return (
-                    <label
-                      key={field.id}
-                      style={{ display: 'grid', gap: 6, borderTop: `1px solid ${SHELL.CARD_LINE}`, padding: '11px 0' }}
-                    >
-                      <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8, alignItems: 'flex-start' }}>
-                        <div>
-                          <div style={FIELD_LABEL}>
-                            {field.label}{isRequired && <span style={{ color: SHELL.PEACH_TEXT }}> *</span>}
-                          </div>
-                          <div style={FIELD_PROMPT}>{field.prompt}</div>
-                        </div>
-                        <span style={{
-                          flex: '0 0 auto', ...STATUS_CHIP,
-                          background: complete ? SHELL.MINT_BG : (isRequired ? SHELL.PEACH_BG : SHELL.PAPER_SOFT),
-                          borderColor: complete ? SHELL.MINT_LINE : (isRequired ? SHELL.PEACH_LINE : SHELL.CARD_LINE),
-                          color: complete ? SHELL.MINT_TEXT : (isRequired ? SHELL.PEACH_TEXT : SHELL.INK_MUTED),
-                        }}>
-                          {complete ? 'Captured' : (isRequired ? 'Required' : `${field.agent} needs`)}
-                        </span>
-                      </div>
-                      <textarea
-                        value={value}
-                        onChange={(e) => patchIntake(field.id, e.target.value)}
-                        placeholder={field.placeholder}
-                        rows={2}
-                        style={{
-                          width: '100%', boxSizing: 'border-box',
-                          border: `1px solid ${complete ? SHELL.CARD_LINE : (isRequired ? SHELL.PEACH_LINE : SHELL.CARD_LINE)}`,
-                          borderRadius: 8, background: SHELL.PAPER, color: SHELL.INK,
-                          fontFamily: SHELL.SANS, fontSize: 12, lineHeight: 1.45,
-                          padding: '8px 10px', resize: 'vertical', outline: 'none',
-                        }}
-                      />
-                    </label>
-                  );
-                })}
-              </div>
-
-              {/* Submit */}
-              <div style={{ display: 'grid', gap: 7 }}>
-                <button
-                  type="button"
-                  onClick={createEvent}
-                  disabled={!canCreate}
-                  style={{
-                    border: 'none', borderRadius: 10,
-                    background: canCreate ? SHELL.INK : SHELL.GRAY_BG,
-                    color: canCreate ? SHELL.PAPER : SHELL.GRAY_TEXT,
-                    cursor: canCreate ? 'pointer' : 'not-allowed',
-                    fontFamily: SHELL.MONO, fontSize: 10, letterSpacing: '0.08em',
-                    textTransform: 'uppercase', fontWeight: 700, padding: '11px 14px',
-                  }}
-                >
-                  {submitState.status === 'submitting' ? 'Opening event canvas…' : 'Open sourcing event →'}
-                </button>
-
-                {submitState.status === 'error' && (
-                  <div
-                    role="alert"
-                    style={{
-                      borderRadius: 8, border: `1px solid ${SHELL.PEACH_LINE}`, background: SHELL.PEACH_BG,
-                      padding: '8px 10px', fontFamily: SHELL.SANS, fontSize: 12, color: SHELL.PEACH_TEXT,
-                    }}
-                  >
-                    {submitState.message}
-                  </div>
-                )}
-
-                <a
-                  href="/source"
-                  style={{
-                    textAlign: 'center', fontFamily: SHELL.MONO, fontSize: 9,
-                    letterSpacing: '0.08em', textTransform: 'uppercase', color: SHELL.INK_MUTED, textDecoration: 'none',
-                  }}
-                >
-                  ← Back to Source portfolio
-                </a>
-              </div>
-            </section>
-
-              {/* Guidance cards */}
-              <section style={{ display: 'grid', gap: 6 }}>
-                <div style={SECTION_LABEL}>Agent guidance</div>
-                {AGENT_GUIDANCE.map((item) => (
-                  <GuidanceCard key={item.label} {...item} />
-                ))}
-              </section>
-            </aside>
-          }
+        <SourceOriginateDock
+          clientName={clientName}
+          clientKey={clientKey}
+          workspace={intakeWorkspace}
         />
         <SourceOnboardingTour
           active={tourActive}
@@ -616,6 +602,62 @@ export function SourceOriginatePage({
   );
 }
 
+// ── SourceOriginateDock ───────────────────────────────────────────────────
+//
+// Thin connector between AgentDock (presentation) and the AtlasPageState
+// runtime (Sentinel conversation). Reads `conversation` + `ask` from
+// shared shell state so this surface keeps the existing Sentinel runtime
+// contract untouched while picking up the AgentDock chrome (5 modes,
+// Claude-style upload, mode picker, persisted side-rail width).
+function SourceOriginateDock({
+  clientName,
+  clientKey,
+  workspace,
+}: {
+  clientName: string;
+  clientKey: string;
+  workspace: ReactNode;
+}) {
+  const pageState = useAtlasPageState();
+
+  const thread: ChatMessage[] = useMemo(() => {
+    if (!pageState) return [];
+    return pageState.conversation.map((turn) => ({
+      id: turn.id,
+      role: turn.role,
+      body: turn.text,
+      at: new Date(turn.timestamp).toISOString(),
+    }));
+  }, [pageState]);
+
+  const onMessage = (text: string, attachments: AttachmentRef[]) => {
+    if (!pageState) return;
+    const trimmed = text.trim();
+    if (!trimmed && attachments.length === 0) return;
+    const fileNote = attachments.length > 0
+      ? `\n[Attached evidence: ${attachments
+          .map((a) => `${a.file_name} (${a.id})`)
+          .join('; ')}]`
+      : '';
+    pageState.ask((trimmed + fileNote).trim());
+  };
+
+  return (
+    <AgentDock
+      agent={SENTINEL_INTAKE_AGENT}
+      surface="source/new"
+      defaultMode="side-rail"
+      defaultLeftPercent={45}
+      minLeftPx={340}
+      surfaceContext={{ sourceIntakeMode: true, clientKey, clientName }}
+      initialQuote={`Ready to stand up a new IT sourcing event for ${clientName}. Tell me the trigger and I'll help you scope and open the event on the canvas.`}
+      thread={thread}
+      onMessage={onMessage}
+      workspace={workspace}
+    />
+  );
+}
+
 // Full-bleed flex shell — no max-width cap; chat lane and intake pane share
 // the viewport horizontally and the user can drag the splitter to redistribute.
 const MAIN_STYLE: CSSProperties = {
@@ -627,15 +669,6 @@ const MAIN_STYLE: CSSProperties = {
   height: 'calc(100vh - 64px)',
   overflow: 'hidden',
   background: SHELL.PAPER,
-};
-
-const CHAT_PANE_STYLE: CSSProperties = {
-  display: 'flex',
-  flexDirection: 'column',
-  width: '100%',
-  height: '100%',
-  minWidth: 0,
-  minHeight: 0,
 };
 
 const INTAKE_PANE_STYLE: CSSProperties = {

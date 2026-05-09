@@ -1,9 +1,23 @@
 'use client';
 
+// AtlasRail · self-contained Tower Atlas surface backed by `<AgentDock>`.
+//
+// Observations / signals / portfolio quick-read render in the workspace
+// (right pane); chat (resizable, sticky composer, paperclip uploads, mode
+// picker) lives in the side-rail (left pane). Mode + split-width persist
+// per-surface via AgentDock localStorage keys.
+//
+// Pre-migration this component was a 320px sticky aside that wrapped the
+// legacy AtlasChatPanel. The chat lane drifted from peer surfaces (no
+// paperclip, single-line input, no resize, composer scrolled away). The
+// shared dock fixes all of that without changing the Atlas runtime
+// contract — only the surface widget swapped.
+
 import Link from 'next/link';
-import { startTransition, useEffect, useState } from 'react';
+import { startTransition, useEffect, useState, type ReactNode } from 'react';
 import { AtlasChatPanel, type AtlasMessage } from '@/components/atlas/AtlasChatPanel';
 import { AtlasSignalDetailPanel } from '@/components/atlas/AtlasSignalDetailPanel';
+import type { AttachmentRef } from '@/components/agent/AgentDock';
 import type { AtlasChatResponse, AtlasObservation, AtlasPortfolioSummary, AtlasSignalSummary, AtlasSuggestion } from '@/lib/atlas/types';
 
 const INK = '#F8FAFC';
@@ -52,13 +66,35 @@ type LoadState =
   | { kind: 'error'; message: string }
   | { kind: 'ready'; payload: AtlasRailPayload };
 
-export function AtlasRail({ clientId, clientName }: { clientId: string; clientName: string }) {
-  const [expanded, setExpanded] = useState(true);
+interface AtlasRailProps {
+  clientId: string;
+  clientName: string;
+  /**
+   * Optional Tower body content to render alongside the rail panels in the
+   * workspace pane. When omitted the workspace shows only the Atlas
+   * observations / portfolio / signals.
+   */
+  workspaceExtra?: ReactNode;
+  /**
+   * Optional context forwarded to upload metadata (active program / module /
+   * tower view). Round-tripped to /api/v1/agent/attachments on every upload.
+   */
+  surfaceContext?: Record<string, unknown>;
+  /** Surface key for AgentDock persistence + telemetry (default "tower"). */
+  surface?: string;
+}
+
+export function AtlasRail({
+  clientId,
+  clientName,
+  workspaceExtra,
+  surfaceContext,
+  surface = 'tower',
+}: AtlasRailProps) {
   const [state, setState] = useState<LoadState>({ kind: 'loading' });
   const [messages, setMessages] = useState<AtlasMessage[]>([]);
   const [suggestions, setSuggestions] = useState<AtlasSuggestion[]>([]);
   const [threadId, setThreadId] = useState<string | null>(null);
-  const [input, setInput] = useState('');
   const [pending, setPending] = useState(false);
   const [activeSignalId, setActiveSignalId] = useState<string | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
@@ -118,7 +154,7 @@ export function AtlasRail({ clientId, clientName }: { clientId: string; clientNa
     };
   }, [clientId]);
 
-  async function sendMessage(message: string, signalId?: string | null) {
+  async function sendMessage(message: string, signalId?: string | null, attachments: AttachmentRef[] = []) {
     const trimmed = message.trim();
     if (!trimmed || pending) return;
 
@@ -131,7 +167,13 @@ export function AtlasRail({ clientId, clientName }: { clientId: string; clientNa
       const res = await fetch('/api/v1/atlas/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: trimmed, threadId, signalId, clientId }),
+        body: JSON.stringify({
+          message: trimmed,
+          threadId,
+          signalId,
+          clientId,
+          attachments: attachments.map((a) => ({ id: a.id, file_name: a.file_name, mime: a.mime })),
+        }),
         signal: controller.signal,
       });
       const json = (await res.json().catch(() => ({}))) as Partial<AtlasChatResponse>;
@@ -195,21 +237,20 @@ export function AtlasRail({ clientId, clientName }: { clientId: string; clientNa
     });
   }
 
-  return (
+  // ── Workspace pane (observations / portfolio / signals + caller-supplied
+  // tower body) — rendered to the right of the AgentDock chat lane.
+  const workspace: ReactNode = (
     <>
       <aside
         style={{
-          position: 'sticky',
-          top: 24,
-          alignSelf: 'start',
+          margin: 16,
           borderRadius: 24,
           border: '0.5px solid rgba(148,163,184,0.22)',
           background: 'linear-gradient(180deg, rgba(30,41,59,0.98), rgba(20,32,52,0.98))',
           boxShadow: '0 24px 60px rgba(2,6,23,0.34)',
-          padding: expanded ? 18 : 12,
+          padding: 18,
           display: 'grid',
           gap: 16,
-          minHeight: expanded ? 640 : 'auto',
         }}
       >
         <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'flex-start' }}>
@@ -235,173 +276,141 @@ export function AtlasRail({ clientId, clientName }: { clientId: string; clientNa
                   : 'Loading portfolio context…'}
             </div>
           </div>
-
-          <button
-            type="button"
-            onClick={() => setExpanded((value) => !value)}
-            style={{
-              padding: '8px 10px',
-              borderRadius: 999,
-              border: '0.5px solid rgba(148,163,184,0.22)',
-              background: 'transparent',
-              color: MUTE,
-              cursor: 'pointer',
-            }}
-          >
-            {expanded ? 'Collapse' : 'Open'}
-          </button>
         </div>
 
-        {expanded && (
-          <>
-            <div
+        <div
+          style={{
+            padding: 16,
+            borderRadius: 20,
+            border: '0.5px solid rgba(245,158,11,0.24)',
+            background: 'linear-gradient(180deg, rgba(245,158,11,0.14), rgba(15,23,42,0.42))',
+            display: 'grid',
+            gap: 10,
+          }}
+        >
+          <div style={{ fontSize: 14, lineHeight: 1.6, color: INK }}>
+            {state.kind === 'error'
+              ? `Atlas can't reach the observations endpoint right now · ${state.message}. Tower tiles on the left are server-rendered and still accurate.`
+              : topSummary(payload)}
+          </div>
+          {payload?.signals[0] && (
+            <button
+              type="button"
+              onClick={() => {
+                setActiveSignalId(payload.signals[0].id);
+                setDetailOpen(true);
+              }}
               style={{
-                padding: 16,
-                borderRadius: 20,
-                border: '0.5px solid rgba(245,158,11,0.24)',
-                background: 'linear-gradient(180deg, rgba(245,158,11,0.14), rgba(15,23,42,0.42))',
-                display: 'grid',
-                gap: 10,
+                justifySelf: 'start',
+                padding: '10px 12px',
+                borderRadius: 14,
+                border: 'none',
+                background: 'linear-gradient(135deg, rgba(20,184,166,0.96), rgba(37,99,235,0.92))',
+                color: '#03121A',
+                fontWeight: 800,
+                cursor: 'pointer',
               }}
             >
-              <div style={{ fontSize: 14, lineHeight: 1.6, color: INK }}>
-                {state.kind === 'error'
-                  ? `Atlas can't reach the observations endpoint right now · ${state.message}. Tower tiles on the left are server-rendered and still accurate.`
-                  : topSummary(payload)}
-              </div>
-              {payload?.signals[0] && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setActiveSignalId(payload.signals[0].id);
-                    setDetailOpen(true);
-                  }}
-                  style={{
-                    justifySelf: 'start',
-                    padding: '10px 12px',
-                    borderRadius: 14,
-                    border: 'none',
-                    background: 'linear-gradient(135deg, rgba(20,184,166,0.96), rgba(37,99,235,0.92))',
-                    color: '#03121A',
-                    fontWeight: 800,
-                    cursor: 'pointer',
-                  }}
-                >
-                  Open hero signal
-                </button>
-              )}
+              Open hero signal
+            </button>
+          )}
+        </div>
+
+        {payload?.signals && payload.signals.length > 0 && (
+          <div style={{ display: 'grid', gap: 10 }}>
+            <div
+              style={{
+                fontFamily: 'JetBrains Mono, monospace',
+                fontSize: 10,
+                fontWeight: 600,
+                letterSpacing: '0.14em',
+                textTransform: 'uppercase',
+                color: TEAL,
+              }}
+            >
+              Signals
             </div>
-
-            {payload?.signals && payload.signals.length > 0 && (
-              <div style={{ display: 'grid', gap: 10 }}>
-                <div
-                  style={{
-                    fontFamily: 'JetBrains Mono, monospace',
-                    fontSize: 10,
-                    fontWeight: 600,
-                    letterSpacing: '0.14em',
-                    textTransform: 'uppercase',
-                    color: TEAL,
-                  }}
-                >
-                  Signals
-                </div>
-                {payload.signals.map((signal) => (
-                  <button
-                    key={signal.id}
-                    type="button"
-                    onClick={() => {
-                      setActiveSignalId(signal.id);
-                      setDetailOpen(true);
-                    }}
-                    style={{
-                      textAlign: 'left',
-                      padding: 14,
-                      borderRadius: 18,
-                      border: '0.5px solid rgba(148,163,184,0.18)',
-                      background: 'rgba(15,23,42,0.34)',
-                      cursor: 'pointer',
-                    }}
-                  >
-                    <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12 }}>
-                      <div
-                        style={{
-                          fontFamily: 'JetBrains Mono, monospace',
-                          fontSize: 10,
-                          fontWeight: 600,
-                          letterSpacing: '0.14em',
-                          textTransform: 'uppercase',
-                          color: severityColor(signal.severity),
-                        }}
-                      >
-                        {signal.severity}
-                      </div>
-                      <div style={{ fontSize: 11, color: SOFT }}>{dollars(signal.impactUsd)}</div>
-                    </div>
-                    <div style={{ marginTop: 8, fontSize: 13, lineHeight: 1.5, color: INK }}>{signal.headline}</div>
-                    {signal.cohortLabel && <div style={{ marginTop: 6, fontSize: 11, color: MUTE }}>{signal.cohortLabel}</div>}
-                  </button>
-                ))}
-              </div>
-            )}
-
-            {payload?.portfolio && (
-              <div
+            {payload.signals.map((signal) => (
+              <button
+                key={signal.id}
+                type="button"
+                onClick={() => {
+                  setActiveSignalId(signal.id);
+                  setDetailOpen(true);
+                }}
                 style={{
+                  textAlign: 'left',
                   padding: 14,
                   borderRadius: 18,
                   border: '0.5px solid rgba(148,163,184,0.18)',
                   background: 'rgba(15,23,42,0.34)',
-                  display: 'grid',
-                  gap: 8,
+                  cursor: 'pointer',
                 }}
               >
-                <div
-                  style={{
-                    fontFamily: 'JetBrains Mono, monospace',
-                    fontSize: 10,
-                    fontWeight: 600,
-                    letterSpacing: '0.14em',
-                    textTransform: 'uppercase',
-                    color: TEAL,
-                  }}
-                >
-                  Quick read
+                <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12 }}>
+                  <div
+                    style={{
+                      fontFamily: 'JetBrains Mono, monospace',
+                      fontSize: 10,
+                      fontWeight: 600,
+                      letterSpacing: '0.14em',
+                      textTransform: 'uppercase',
+                      color: severityColor(signal.severity),
+                    }}
+                  >
+                    {signal.severity}
+                  </div>
+                  <div style={{ fontSize: 11, color: SOFT }}>{dollars(signal.impactUsd)}</div>
                 </div>
-                <div style={{ fontSize: 13, color: MUTE, lineHeight: 1.5 }}>
-                  Shadow AI {dollars(payload.portfolio.shadowAiSpendUsd)} · realized value {dollars(payload.portfolio.realizedValueUsd)} · trustworthiness {payload.portfolio.averageTrustworthinessScore ?? 'n/a'}
-                </div>
-                <Link
-                  href="/engagements"
-                  style={{
-                    justifySelf: 'start',
-                    fontSize: 12,
-                    color: TEAL,
-                    textDecoration: 'none',
-                    fontWeight: 700,
-                  }}
-                >
-                  Open Programs →
-                </Link>
-              </div>
-            )}
+                <div style={{ marginTop: 8, fontSize: 13, lineHeight: 1.5, color: INK }}>{signal.headline}</div>
+                {signal.cohortLabel && <div style={{ marginTop: 6, fontSize: 11, color: MUTE }}>{signal.cohortLabel}</div>}
+              </button>
+            ))}
+          </div>
+        )}
 
-            <AtlasChatPanel
-              messages={messages}
-              pending={pending}
-              input={input}
-              onInputChange={setInput}
-              onSubmit={() => {
-                const message = input;
-                setInput('');
-                void sendMessage(message, activeSignalId);
+        {payload?.portfolio && (
+          <div
+            style={{
+              padding: 14,
+              borderRadius: 18,
+              border: '0.5px solid rgba(148,163,184,0.18)',
+              background: 'rgba(15,23,42,0.34)',
+              display: 'grid',
+              gap: 8,
+            }}
+          >
+            <div
+              style={{
+                fontFamily: 'JetBrains Mono, monospace',
+                fontSize: 10,
+                fontWeight: 600,
+                letterSpacing: '0.14em',
+                textTransform: 'uppercase',
+                color: TEAL,
               }}
-              suggestions={suggestions}
-              onSuggestion={handleSuggestion}
-            />
-          </>
+            >
+              Quick read
+            </div>
+            <div style={{ fontSize: 13, color: MUTE, lineHeight: 1.5 }}>
+              Shadow AI {dollars(payload.portfolio.shadowAiSpendUsd)} · realized value {dollars(payload.portfolio.realizedValueUsd)} · trustworthiness {payload.portfolio.averageTrustworthinessScore ?? 'n/a'}
+            </div>
+            <Link
+              href="/engagements"
+              style={{
+                justifySelf: 'start',
+                fontSize: 12,
+                color: TEAL,
+                textDecoration: 'none',
+                fontWeight: 700,
+              }}
+            >
+              Open Programs →
+            </Link>
+          </div>
         )}
       </aside>
+      {workspaceExtra}
 
       <AtlasSignalDetailPanel
         clientId={clientId}
@@ -414,5 +423,23 @@ export function AtlasRail({ clientId, clientName }: { clientId: string; clientNa
         }}
       />
     </>
+  );
+
+  return (
+    <AtlasChatPanel
+      messages={messages}
+      pending={pending}
+      onSubmit={(text, attachments) => sendMessage(text, activeSignalId, attachments)}
+      suggestions={suggestions}
+      onSuggestion={handleSuggestion}
+      workspace={workspace}
+      surface={surface}
+      surfaceContext={{
+        clientId,
+        clientName,
+        activeSignalId,
+        ...surfaceContext,
+      }}
+    />
   );
 }

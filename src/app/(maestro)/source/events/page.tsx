@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { AppShell } from '@/components/shell/AppShell';
 import { StageTrackerStrip } from '@/components/shell/StageTrackerStrip';
-import { SentinelAgentColumn } from '@/components/source/SentinelAgentColumn';
+import { SourceEventsAgentDockView } from '@/components/source/SourceEventsAgentDockView';
 import { SourceWorkingPane } from '@/components/source/SourceWorkingPane';
 import { SourceEventsPortfolio } from '@/components/source/SourceEventsPortfolio';
 import { SourceEmptyState } from '@/components/source/SourceEmptyState';
@@ -61,32 +61,27 @@ export default async function SourceEventsPage({
       {events.length === 0 ? (
         <SourceEmptyState />
       ) : (
-        <>
-          <SourceWorkingPane>
-            {pendingEvents.length > 0 && (
-              <AdminSourceEventApprovalQueue events={pendingEvents} />
-            )}
-            <SourceEventsEntryHeader
-              events={events}
-              canViewFinancialValues={sourceAccessPolicy?.canViewFinancialData === true}
-            />
-            <SourceEventsPortfolio
-              events={events}
-              activeStage={stage ?? null}
-              activeStatus={status ?? null}
-              canViewFinancialValues={sourceAccessPolicy?.canViewFinancialData === true}
-            />
-          </SourceWorkingPane>
-          <SentinelAgentColumn
-            quote="Events portfolio command read: sort the IT sourcing queue by active pressure, weak evidence, blocked gates, and value exposure before opening a canvas."
-            agentContext="Sentinel · Source events portfolio · active-client scoped facts"
-            actions={[
-              { letter: 'A', text: 'Start IT sourcing event', detail: 'Open the deterministic create-event entry path' },
-              { letter: 'B', text: 'Review BAFO events', detail: 'Sourcing events currently in Orals/BAFO stage' },
-              { letter: 'C', text: 'Review at-risk events', detail: 'Events flagged with blockers or governance gaps' },
-            ]}
-          />
-        </>
+        <SourceEventsAgentDockView
+          filterStage={stage ?? null}
+          filterStatus={status ?? null}
+          workspace={
+            <SourceWorkingPane>
+              {pendingEvents.length > 0 && (
+                <AdminSourceEventApprovalQueue events={pendingEvents} />
+              )}
+              <SourceEventsEntryHeader
+                events={events}
+                canViewFinancialValues={sourceAccessPolicy?.canViewFinancialData === true}
+              />
+              <SourceEventsPortfolio
+                events={events}
+                activeStage={stage ?? null}
+                activeStatus={status ?? null}
+                canViewFinancialValues={sourceAccessPolicy?.canViewFinancialData === true}
+              />
+            </SourceWorkingPane>
+          }
+        />
       )}
     </AppShell>
   );

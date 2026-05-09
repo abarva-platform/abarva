@@ -1,277 +1,363 @@
-// exports-shared · Pure mdast → docx walker.
+// Source · markdown → docx walker
 //
-// Converts a mdast (markdown abstract syntax tree) node tree to an array
-// of docx block elements (Paragraph | Table). Zero coupling to any product
-// module, zero I/O, zero auth.
+// Parses an authored markdown body via mdast (the unified ecosystem's
+// AST format used by react-markdown + remark) and emits a flat list of
+// docx paragraphs / tables. Used by every long-form Source docx
+// renderer (d05 scope memo, d09 RFP, d24 decision brief, d27 selection
+// memo) so authored markdown round-trips without per-renderer parsing.
 //
-// Callers parse markdown with mdast-util-from-markdown + mdast-util-gfm
-// and pass the root node to `mdastToDocxChildren`. The resulting array can
-// be spread into a docx Document section's `children` array.
+// Coverage:
+//   - Headings 1-3 (and 4-6 collapse to 3) → styled headings
+//   - Paragraphs with mixed bold / italic / inline-code runs
+//   - Bulleted + ordered lists (depth ≤ 2)
+//   - Block quotes
+//   - Code blocks (preserved as monospaced paragraphs)
+//   - GFM tables (rendered as docx Table)
+//   - Horizontal rule (rendered as a 1-pt border-only paragraph)
+//   - Soft breaks within a paragraph
 //
-// Supported node types: heading (H1–H6), paragraph, text, strong,
-// emphasis, inlineCode, code, blockquote, list, listItem, link,
-// thematicBreak, table (GFM), tableRow, tableCell.
-//
-// Added in the journey-kit-phase3 wave.
+// Out of scope (returns the raw text as a paragraph):
+//   - Images (would need server-side fetch + embed)
+//   - Footnotes
+//   - HTML embeds
 
+import 'server-only';
+
+import { fromMarkdown } from 'mdast-util-from-markdown';
+import { gfmFromMarkdown } from 'mdast-util-gfm';
+import { gfm } from 'micromark-extension-gfm';
 import {
-  HeadingLevel,
+  BorderStyle,
   Paragraph,
   Table,
   TableCell,
   TableRow,
   TextRun,
   WidthType,
+  type IRunOptions,
+  type ParagraphChild,
 } from 'docx';
+import type {
+  Blockquote,
+  Code,
+  Content,
+  Emphasis,
+  Heading,
+  InlineCode,
+  Link,
+  List,
+  ListItem,
+  Paragraph as MdParagraph,
+  PhrasingContent,
+  Root,
+  RootContent,
+  Strong,
+  Table as MdTable,
+  TableCell as MdTableCell,
+  TableRow as MdTableRow,
+  Text,
+} from 'mdast';
 
 import {
-  SANS_BODY_FONT,
-  SERIF_HEADING_FONT,
+  ORDERED_NUMBERING_REF,
+  SOURCE_DOCX,
   bodyParagraph,
-  bulletParagraph,
+  bodyRun,
+  codeRun,
+  heading1,
+  heading2,
+  heading3,
+  quoteParagraph,
 } from './docx-base';
-import { makeDataCell, makeHeaderCell } from './structured-docx-base';
-import type { MdastNode } from './markdown-to-html';
 
-// ── Inline run builder ───────────────────────────────────────────────────
+/** Top-level entry. Parses md and returns an array of docx blocks. */
+export function markdownToDocxBlocks(md: string): Array<Paragraph | Table> {
+  const tree = fromMarkdown(md, {
+    extensions: [gfm()],
+    mdastExtensions: [gfmFromMarkdown()],
+  }) as Root;
+  const out: Array<Paragraph | Table> = [];
+  for (const child of tree.children) {
+    out.push(...renderRoot(child));
+  }
+  return out;
+}
 
-/**
- * Flatten an inline mdast subtree into an array of TextRun objects.
- *
- * Supports: text, strong, emphasis, inlineCode, link (href not preserved
- * in docx — link text only). Unknown inline nodes recurse into children.
- */
-function inlineRuns(
-  node: MdastNode,
-  opts?: { bold?: boolean; italic?: boolean; color?: string },
-): TextRun[] {
+function renderRoot(node: RootContent): Array<Paragraph | Table> {
+  switch (node.type) {
+    case 'heading':
+      return [renderHeading(node)];
+    case 'paragraph':
+      return [renderParagraph(node)];
+    case 'list':
+      return renderList(node, 0);
+    case 'blockquote':
+      return renderBlockquote(node);
+    case 'code':
+      return [renderCodeBlock(node)];
+    case 'table':
+      return [renderTable(node)];
+    case 'thematicBreak':
+      return [renderThematicBreak()];
+    case 'html':
+      // Render raw HTML as plain text (best-effort).
+      return [bodyParagraph([bodyRun(node.value)])];
+    case 'definition':
+    case 'footnoteDefinition':
+    case 'yaml':
+      // Skip (frontmatter, link defs, footnotes — out of scope).
+      return [];
+    default:
+      // Unknown root — render the node's text content if any.
+      return [bodyParagraph([bodyRun(extractPlain(node as Content))])];
+  }
+}
+
+// ── Headings ───────────────────────────────────────────────────────────────
+
+function renderHeading(node: Heading): Paragraph {
+  const text = renderInline(node.children).map(textOf).join('');
+  switch (node.depth) {
+    case 1:
+      return heading1(text);
+    case 2:
+      return heading2(text);
+    default:
+      return heading3(text);
+  }
+}
+
+// ── Paragraphs ─────────────────────────────────────────────────────────────
+
+function renderParagraph(node: MdParagraph): Paragraph {
+  return bodyParagraph(renderInline(node.children));
+}
+
+// ── Lists ──────────────────────────────────────────────────────────────────
+
+function renderList(node: List, depth: number): Paragraph[] {
+  const out: Paragraph[] = [];
+  for (const item of node.children as ListItem[]) {
+    out.push(...renderListItem(item, !!node.ordered, depth));
+  }
+  return out;
+}
+
+function renderListItem(
+  item: ListItem,
+  ordered: boolean,
+  depth: number,
+): Paragraph[] {
+  const out: Paragraph[] = [];
+  for (const child of item.children) {
+    if (child.type === 'paragraph') {
+      const runs = renderInline(child.children);
+      out.push(
+        new Paragraph({
+          children: runs,
+          spacing: { before: 40, after: 40 },
+          ...(ordered
+            ? {
+                numbering: {
+                  reference: ORDERED_NUMBERING_REF,
+                  level: Math.min(depth, 1),
+                },
+              }
+            : { bullet: { level: Math.min(depth, 2) } }),
+        }),
+      );
+    } else if (child.type === 'list') {
+      out.push(...renderList(child, depth + 1));
+    } else {
+      out.push(bodyParagraph([bodyRun(extractPlain(child as Content))]));
+    }
+  }
+  return out;
+}
+
+// ── Blockquote ─────────────────────────────────────────────────────────────
+
+function renderBlockquote(node: Blockquote): Paragraph[] {
+  const out: Paragraph[] = [];
+  for (const child of node.children) {
+    if (child.type === 'paragraph') {
+      const text = renderInline(child.children).map(textOf).join('');
+      out.push(quoteParagraph(text));
+    } else {
+      out.push(...renderRoot(child as RootContent).filter((b): b is Paragraph => b instanceof Paragraph));
+    }
+  }
+  return out;
+}
+
+// ── Code block ─────────────────────────────────────────────────────────────
+
+function renderCodeBlock(node: Code): Paragraph {
+  const lines = node.value.split('\n');
+  const runs: TextRun[] = [];
+  lines.forEach((line, idx) => {
+    runs.push(codeRun(line));
+    if (idx < lines.length - 1) {
+      runs.push(new TextRun({ text: '', break: 1 }));
+    }
+  });
+  return new Paragraph({
+    children: runs,
+    spacing: { before: 120, after: 120 },
+    border: {
+      left: {
+        color: SOURCE_DOCX.MUTED_COLOR,
+        space: 12,
+        style: BorderStyle.SINGLE,
+        size: 6,
+      },
+    },
+    indent: { left: 240 },
+    shading: { fill: 'F4F2EC', type: 'clear', color: 'auto' },
+  });
+}
+
+// ── Tables ─────────────────────────────────────────────────────────────────
+
+function renderTable(node: MdTable): Table {
+  const rows: TableRow[] = [];
+  let isHeader = true;
+  for (const r of node.children as MdTableRow[]) {
+    const cells: TableCell[] = (r.children as MdTableCell[]).map(
+      (c) => renderTableCell(c, isHeader),
+    );
+    rows.push(new TableRow({ children: cells, tableHeader: isHeader }));
+    isHeader = false;
+  }
+  return new Table({
+    rows,
+    width: { size: 100, type: WidthType.PERCENTAGE },
+    borders: {
+      top: { style: BorderStyle.SINGLE, size: 4, color: 'D8D5CC' },
+      bottom: { style: BorderStyle.SINGLE, size: 4, color: 'D8D5CC' },
+      left: { style: BorderStyle.SINGLE, size: 4, color: 'D8D5CC' },
+      right: { style: BorderStyle.SINGLE, size: 4, color: 'D8D5CC' },
+      insideHorizontal: { style: BorderStyle.SINGLE, size: 2, color: 'ECE9E0' },
+      insideVertical: { style: BorderStyle.SINGLE, size: 2, color: 'ECE9E0' },
+    },
+  });
+}
+
+function renderTableCell(node: MdTableCell, isHeader: boolean): TableCell {
+  const runs = renderInline(node.children);
+  if (isHeader) {
+    return new TableCell({
+      shading: { fill: SOURCE_DOCX.HEADER_COLOR, type: 'clear', color: 'auto' },
+      children: [
+        new Paragraph({
+          children: runs.map((r) =>
+            r instanceof TextRun
+              ? new TextRun({
+                  text: textOf(r),
+                  font: SOURCE_DOCX.BODY_FONT,
+                  size: 20,
+                  bold: true,
+                  color: 'FAF7F1',
+                })
+              : r,
+          ),
+          spacing: { before: 60, after: 60 },
+        }),
+      ],
+    });
+  }
+  return new TableCell({
+    children: [
+      new Paragraph({
+        children: runs,
+        spacing: { before: 40, after: 40 },
+      }),
+    ],
+  });
+}
+
+// ── Thematic break ─────────────────────────────────────────────────────────
+
+function renderThematicBreak(): Paragraph {
+  return new Paragraph({
+    children: [new TextRun({ text: '' })],
+    spacing: { before: 200, after: 200 },
+    border: {
+      bottom: {
+        color: SOURCE_DOCX.MUTED_COLOR,
+        space: 1,
+        style: BorderStyle.SINGLE,
+        size: 6,
+      },
+    },
+  });
+}
+
+// ── Inline ─────────────────────────────────────────────────────────────────
+
+function renderInline(
+  children: PhrasingContent[],
+  inheritedStyle: Partial<IRunOptions> = {},
+): ParagraphChild[] {
+  const out: ParagraphChild[] = [];
+  for (const c of children) {
+    out.push(...renderInlineNode(c, inheritedStyle));
+  }
+  return out;
+}
+
+function renderInlineNode(
+  node: PhrasingContent,
+  style: Partial<IRunOptions>,
+): ParagraphChild[] {
   switch (node.type) {
     case 'text':
-      return [
-        new TextRun({
-          text: node.value ?? '',
-          bold: opts?.bold,
-          italics: opts?.italic,
-          color: opts?.color,
-          size: 22,
-          font: SANS_BODY_FONT,
-        }),
-      ];
-
+      return [bodyRun((node as Text).value, style)];
     case 'strong':
-      return (node.children ?? []).flatMap((c) =>
-        inlineRuns(c, { ...opts, bold: true }),
-      );
-
+      return renderInline((node as Strong).children, { ...style, bold: true });
     case 'emphasis':
-      return (node.children ?? []).flatMap((c) =>
-        inlineRuns(c, { ...opts, italic: true }),
-      );
-
+      return renderInline((node as Emphasis).children, { ...style, italics: true });
     case 'inlineCode':
-      return [
-        new TextRun({
-          text: node.value ?? '',
-          font: 'Courier New',
-          size: 20,
-          color: '706D66',
-        }),
-      ];
-
-    case 'link':
-      // Docx link support via ExternalHyperlink would require extra imports;
-      // for now render as plain text to keep this module zero-dependency on
-      // the docx hyperlink API. Callers who need clickable links should post-
-      // process the output or use the ExternalHyperlink wrapper themselves.
-      return (node.children ?? []).flatMap((c) => inlineRuns(c, opts));
-
+      return [codeRun((node as InlineCode).value, style)];
+    case 'break':
+      return [new TextRun({ text: '', break: 1 })];
+    case 'link': {
+      const text = (node as Link).children.map((c) => extractPlain(c as Content)).join('');
+      return [bodyRun(text, { ...style, color: '1B5BB8', underline: {} })];
+    }
+    case 'delete':
+      return renderInline(
+        (node as { children: PhrasingContent[] }).children,
+        { ...style, strike: true },
+      );
+    case 'html':
+      return [bodyRun((node as { value: string }).value, style)];
     default:
-      return (node.children ?? []).flatMap((c) => inlineRuns(c, opts));
+      return [bodyRun(extractPlain(node as Content), style)];
   }
 }
 
-// ── Block node converter ─────────────────────────────────────────────────
+// ── Helpers ────────────────────────────────────────────────────────────────
 
-const HEADING_LEVEL_MAP: Record<number, typeof HeadingLevel[keyof typeof HeadingLevel]> = {
-  1: HeadingLevel.HEADING_1,
-  2: HeadingLevel.HEADING_2,
-  3: HeadingLevel.HEADING_3,
-  4: HeadingLevel.HEADING_4,
-  5: HeadingLevel.HEADING_5,
-  6: HeadingLevel.HEADING_6,
-};
-
-const HEADING_FONT_SIZES: Record<number, number> = {
-  1: 44,
-  2: 30,
-  3: 24,
-  4: 22,
-  5: 20,
-  6: 18,
-};
-
-/**
- * Convert a single mdast block node to docx block elements.
- *
- * Returns an array because some nodes (e.g. lists) produce multiple
- * top-level Paragraphs, and tables produce a Table.
- */
-function blockNode(node: MdastNode): Array<Paragraph | Table> {
-  switch (node.type) {
-    case 'root':
-      return (node.children ?? []).flatMap(blockNode);
-
-    case 'heading': {
-      const depth = Math.min(Math.max(node.depth ?? 2, 1), 6);
-      const level = HEADING_LEVEL_MAP[depth] ?? HeadingLevel.HEADING_2;
-      const fontSize = HEADING_FONT_SIZES[depth] ?? 24;
-      return [
-        new Paragraph({
-          heading: level,
-          spacing: { before: depth <= 2 ? 360 : 240, after: depth <= 2 ? 120 : 80 },
-          children: [
-            new TextRun({
-              text: (node.children ?? [])
-                .map((c) => (c.type === 'text' ? (c.value ?? '') : ''))
-                .join(''),
-              bold: true,
-              size: fontSize,
-              font: SERIF_HEADING_FONT,
-            }),
-          ],
-        }),
-      ];
-    }
-
-    case 'paragraph':
-      return [
-        new Paragraph({
-          spacing: { after: 120 },
-          children: (node.children ?? []).flatMap((c) => inlineRuns(c)),
-        }),
-      ];
-
-    case 'blockquote': {
-      // Render as indented italic body paragraphs.
-      const inner = (node.children ?? []).flatMap(blockNode);
-      return inner.map((p) => {
-        if (p instanceof Paragraph) {
-          return new Paragraph({
-            spacing: { after: 120 },
-            indent: { left: 720 },
-            children: [
-              new TextRun({
-                text: '» ',
-                italics: true,
-                size: 22,
-                font: SANS_BODY_FONT,
-                color: '706D66',
-              }),
-            ],
-          });
-        }
-        return p;
-      });
-    }
-
-    case 'list':
-      return (node.children ?? []).flatMap((item) => {
-        const text = (item.children ?? [])
-          .flatMap((c) => (c.type === 'paragraph' ? (c.children ?? []) : [c]))
-          .map((c) => (c.type === 'text' ? (c.value ?? '') : ''))
-          .join('');
-        return [bulletParagraph(text)];
-      });
-
-    case 'listItem': {
-      const text = (node.children ?? [])
-        .flatMap((c) => (c.type === 'paragraph' ? (c.children ?? []) : [c]))
-        .map((c) => (c.type === 'text' ? (c.value ?? '') : ''))
-        .join('');
-      return [bulletParagraph(text)];
-    }
-
-    case 'code':
-      return [bodyParagraph(`[Code: ${node.lang ?? ''}]\n${node.value ?? ''}`)];
-
-    case 'thematicBreak':
-      return [
-        new Paragraph({
-          spacing: { before: 200, after: 200 },
-          children: [new TextRun({ text: '─'.repeat(60), size: 16, color: '706D66' })],
-        }),
-      ];
-
-    case 'table': {
-      const [headerRow, ...dataRows] = node.children ?? [];
-      const headers = (headerRow?.children ?? []).map((cell) =>
-        (cell.children ?? [])
-          .map((c) => (c.type === 'text' ? (c.value ?? '') : ''))
-          .join(''),
-      );
-      const columnCount = headers.length;
-      const colWidth = Math.floor(9000 / Math.max(columnCount, 1));
-
-      const tHeaderRow = new TableRow({
-        tableHeader: true,
-        children: headers.map((h) =>
-          makeHeaderCell(h, { widthDxa: colWidth }),
-        ),
-      });
-
-      const tDataRows = dataRows.map((row) =>
-        new TableRow({
-          children: (row.children ?? []).map((cell, ci) => {
-            const text = (cell.children ?? [])
-              .map((c) => (c.type === 'text' ? (c.value ?? '') : ''))
-              .join('');
-            return makeDataCell(text, {
-              widthDxa: colWidth,
-              bold: ci === 0,
-            });
-          }),
-        }),
-      );
-
-      return [
-        new Table({
-          width: { size: 100, type: WidthType.PERCENTAGE },
-          rows: [tHeaderRow, ...tDataRows],
-        }),
-      ];
-    }
-
-    default:
-      // Unknown block — try to render children.
-      return (node.children ?? []).flatMap(blockNode);
+function extractPlain(node: Content): string {
+  if (typeof (node as { value?: string }).value === 'string') {
+    return (node as { value: string }).value;
   }
+  if (Array.isArray((node as { children?: Content[] }).children)) {
+    return ((node as { children: Content[] }).children)
+      .map(extractPlain)
+      .join('');
+  }
+  return '';
 }
 
-/**
- * Convert a mdast root node to an array of docx block elements.
- *
- * The returned array can be spread into a Document section's `children`:
- *
- * @example
- * ```ts
- * import { fromMarkdown } from 'mdast-util-from-markdown';
- * import { gfm } from 'micromark-extension-gfm';
- * import { gfmFromMarkdown } from 'mdast-util-gfm';
- * import { mdastToDocxChildren } from '@/lib/exports-shared/markdown-to-docx';
- *
- * const tree = fromMarkdown(source, {
- *   extensions: [gfm()],
- *   mdastExtensions: [gfmFromMarkdown()],
- * });
- * const blocks = mdastToDocxChildren(tree);
- * // new Document({ sections: [{ children: [...coverPage, ...blocks] }] })
- * ```
- */
-export function mdastToDocxChildren(
-  root: MdastNode,
-): Array<Paragraph | Table> {
-  return blockNode(root);
+function textOf(child: ParagraphChild): string {
+  // ParagraphChild can be TextRun (with options.text) or other shapes.
+  // Use a defensive read since TextRun doesn't expose a .text property
+  // publicly — but we only feed our own bodyRun-produced runs through
+  // here, so we know they were built from a string.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const opts = (child as any).options;
+  if (opts && typeof opts.text === 'string') return opts.text;
+  return '';
 }
-
-// Re-export the node type so callers don't need to import from markdown-to-html.
-export type { MdastNode };

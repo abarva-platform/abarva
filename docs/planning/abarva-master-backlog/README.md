@@ -24,3 +24,12 @@ The planning-path control plane is being reconciled to the already-merged produc
 - Local validation before PR
 - Merge only when merge policy allows
 - Update registry and checkpoint after each merge
+
+## OPS15 ingestion status
+
+- Item: `OPS15` - backlog registry ingestion into repo
+- Current status: `in_progress`
+- Operational usage:
+  - Treat `backlog-registry.json` in this folder as the canonical in-repo execution queue.
+  - Keep `BACKLOG_CURRENT_STATE.md` synchronized whenever OPS15 state changes.
+  - Update OPS15 to `done` only after merge metadata (`completedPr`, `completedCommit`, `completedAt`) is available.

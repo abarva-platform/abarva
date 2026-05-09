@@ -8,6 +8,7 @@ import type {
   StrategicMovesListView,
   StrategicMovesSort,
 } from '@/lib/programs/strategic-moves-preferences';
+import { SHELL } from '@/lib/shell/shell-tokens';
 
 /* Scatter view needs enough captured value data to be meaningful.
  * Below this ratio the chart collapses to the "unknown lane" and the
@@ -126,6 +127,20 @@ export function StrategicMovesHomeClient({
     for (const move of sortedMoves) counts[move.currentPhase] = (counts[move.currentPhase] ?? 0) + 1;
     return counts;
   }, [sortedMoves]);
+
+  if (sortedMoves.length === 0) {
+    return (
+      <div className={styles.page}>
+        <div className={styles.topbar}>
+          <h1 className={styles.pageTitle}>Strategic Moves</h1>
+          <Link className={styles.newMove} href="/strategic-moves/new">
+            + New Move
+          </Link>
+        </div>
+        <StrategicMovesEmptyState />
+      </div>
+    );
+  }
 
   return (
     <div className={styles.page}>
@@ -443,5 +458,79 @@ export function StrategicMovesHomeClient({
         ) : null}
       </section>
     </div>
+  );
+}
+
+function StrategicMovesEmptyState() {
+  return (
+    <section
+      aria-label="No Strategic Moves yet"
+      style={{
+        background: SHELL.PAPER_SOFT,
+        borderTop: `1px solid ${SHELL.CARD_LINE}`,
+        borderBottom: `1px solid ${SHELL.CARD_LINE}`,
+        padding: '56px clamp(24px, 5vw, 72px)',
+      }}
+    >
+      <div style={{ maxWidth: 720 }}>
+        <p
+          style={{
+            margin: '0 0 8px',
+            fontFamily: SHELL.MONO,
+            fontSize: 10,
+            letterSpacing: '0.14em',
+            textTransform: 'uppercase',
+            color: SHELL.INK_SOFT,
+            fontWeight: 700,
+          }}
+        >
+          No Moves yet
+        </p>
+        <h2
+          style={{
+            margin: '0 0 10px',
+            fontFamily: SHELL.SERIF,
+            fontSize: 32,
+            lineHeight: 1.12,
+            color: SHELL.INK,
+            fontWeight: 700,
+          }}
+        >
+          Strategic Moves appear here once a signal becomes an executive program.
+        </h2>
+        <p
+          style={{
+            margin: '0 0 22px',
+            fontFamily: SHELL.SANS,
+            fontSize: 14,
+            lineHeight: 1.55,
+            color: SHELL.INK_SOFT,
+          }}
+        >
+          Use this portfolio to track phase gates, sponsor decisions, evidence,
+          value at stake, and next actions across every Move in flight. Start a
+          Move from a qualified Intelligence pressure or originate one directly
+          when the sponsor already knows the business problem.
+        </p>
+        <Link
+          href="/strategic-moves/new"
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            minHeight: 40,
+            padding: '0 18px',
+            borderRadius: 8,
+            background: SHELL.INK,
+            color: SHELL.PAPER,
+            fontFamily: SHELL.SANS,
+            fontSize: 13,
+            fontWeight: 700,
+            textDecoration: 'none',
+          }}
+        >
+          Create a Move
+        </Link>
+      </div>
+    </section>
   );
 }

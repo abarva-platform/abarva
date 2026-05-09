@@ -7,6 +7,10 @@
 import Link from 'next/link';
 import { COLORS, FONT, BORDER, SPACING, RADIUS } from '@/lib/design/abarva-theme';
 import { panelsByGroup, type HomePanelMetadata } from '@/lib/home/panel-inventory';
+// ROLE_KIT_FILTER_HOOK · TODO: filter panels through
+// isVisibleToCurrentUser(panel, currentUser.roles) when role kit
+// ships. Today every signed-in user sees every panel.
+// import { isVisibleToCurrentUser } from '@/lib/home/role-visibility';
 
 export function HomePanelGrid() {
   const groups = panelsByGroup();

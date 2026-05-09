@@ -56,6 +56,28 @@ export function leadAgentForStage(stageKey: SourceStageKey): SourceLeadAgent {
   return STAGE_LEAD_AGENT[stageKey] ?? 'Sentinel';
 }
 
+// ── Canvas dock agent (binary: Sentinel | Atlas) ────────────────────────────
+// The shared AgentDock surfaces ONE lead agent per surface. The canvas dock
+// uses a simpler binary split than `leadAgentForStage`:
+//
+//   Stages 1–9 (Strategy → Selection)          → Sentinel  (drafts artifacts,
+//                                                            surfaces evidence)
+//   Stages 10–11 (Transition → Value)          → Atlas     (frames the brief,
+//                                                            locks the decision)
+//
+// This pair owns the canvas conversation end-to-end. Nexus / Steward still
+// drive their respective workflows (gate runs, scorecards) via tool calls
+// the lead agent invokes; they don't host the chat surface here.
+
+export type CanvasDockAgent = 'Sentinel' | 'Atlas';
+
+export function canvasDockAgentForStage(stageKey: SourceStageKey): CanvasDockAgent {
+  // Resolve any legacy alias to the canonical key before deciding.
+  const canonical = (SOURCE_LEGACY_STAGE_ALIASES[stageKey] ?? stageKey) as SourceStageKey;
+  if (canonical === 'transition' || canonical === 'value') return 'Atlas';
+  return 'Sentinel';
+}
+
 // ── Agent-tagged blocker line ───────────────────────────────────────────────
 // Format mirrors v0.3 rows: `SENTINEL · ticket history missing from L2/L3`.
 // Returns null when there is no blocker AND no notable next-decision text —

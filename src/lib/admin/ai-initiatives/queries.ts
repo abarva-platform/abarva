@@ -241,3 +241,62 @@ export function groupInitiativesByCategory(
     .map((category) => ({ category, initiatives: byCategory.get(category.categoryId) ?? [] }))
     .filter((group) => group.initiatives.length > 0);
 }
+
+// ---------------------------------------------------------------------
+// T-5: tenant-level vendor list (all vendors across all initiatives).
+// Used by Tower CFO View band tile aggregations (e.g., Renewals · 90d).
+// ---------------------------------------------------------------------
+
+export interface AIInitiativeVendorRow {
+  vendorId: string;
+  initiativeId: string;
+  initiativeDisplayId: string;
+  initiativeName: string;
+  vendorName: string;
+  contractValueUsd: number | null;
+  renewalDate: string | null;
+  financialHealth: 'strong' | 'moderate' | 'watch' | 'at_risk' | null;
+}
+
+interface VendorRow {
+  vendor_id: string;
+  initiative_id: string;
+  vendor_name: string;
+  contract_value_usd: number | string | null;
+  renewal_date: string | null;
+  financial_health: 'strong' | 'moderate' | 'watch' | 'at_risk' | null;
+}
+
+export async function listVendorsForClient(
+  clientId: string,
+): Promise<ReadonlyArray<AIInitiativeVendorRow>> {
+  const sb = getServerSupabase();
+  const initiatives = await listInitiativesForClient(clientId);
+  if (initiatives.length === 0) return [];
+  const initiativeIds = initiatives.map((i) => i.initiativeId);
+  const initiativeById = new Map(initiatives.map((i) => [i.initiativeId, i] as const));
+
+  const { data, error } = await sb
+    .from('ai_initiative_vendors')
+    .select(
+      'vendor_id, initiative_id, vendor_name, contract_value_usd, renewal_date, financial_health',
+    )
+    .in('initiative_id', initiativeIds)
+    .order('renewal_date', { ascending: true, nullsFirst: false });
+  if (error) throw new Error(`listVendorsForClient: ${error.message}`);
+  const rows = (data ?? []) as ReadonlyArray<VendorRow>;
+
+  return rows.map((r) => {
+    const initiative = initiativeById.get(r.initiative_id);
+    return {
+      vendorId: r.vendor_id,
+      initiativeId: r.initiative_id,
+      initiativeDisplayId: initiative?.displayId ?? r.initiative_id,
+      initiativeName: initiative?.name ?? r.initiative_id,
+      vendorName: r.vendor_name,
+      contractValueUsd: toNumber(r.contract_value_usd),
+      renewalDate: r.renewal_date,
+      financialHealth: r.financial_health,
+    };
+  });
+}

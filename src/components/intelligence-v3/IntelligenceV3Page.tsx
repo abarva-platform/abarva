@@ -19,53 +19,105 @@
 //   - Chat-driven page state (Move cards mutate per conversation)
 //   - Shape-into-Move click → Strategic Moves originate flow
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { COLORS, FONT, SPACING } from '@/lib/design/abarva-theme';
 import { IntelligenceV3TopNav } from './IntelligenceV3TopNav';
 import { IntelligenceV3StageTabs } from './IntelligenceV3StageTabs';
-import { TodayCanvas } from './TodayCanvas';
-import { VendorsCanvas } from './VendorsCanvas';
-import { ByFunctionCanvas } from './ByFunctionCanvas';
-import { PatternsCanvas } from './PatternsCanvas';
-import { PeerActivityCanvas } from './PeerActivityCanvas';
-import { MyStrategyCanvas } from './MyStrategyCanvas';
-import { SessionsCanvas } from './SessionsCanvas';
+import { TodayCxoCanvas } from './TodayCxoCanvas';
+import { ByFunctionCxoCanvas } from './ByFunctionCxoCanvas';
+import { PatternsCxoCanvas } from './PatternsCxoCanvas';
+import { VendorsCxoCanvas } from './VendorsCxoCanvas';
+import { PeerActivityCxoCanvas } from './PeerActivityCxoCanvas';
+import { MyStrategyCxoCanvas } from './MyStrategyCxoCanvas';
+import { SessionsCxoCanvas } from './SessionsCxoCanvas';
 import { SentinelChat } from './SentinelChat';
-import { FIRST_CAPITAL_DEMO } from './demo-data';
-import type { IntelligenceV3PageData, StageKey } from './types';
-import type { VendorsData } from '@/lib/intelligence-v3/vendors-display';
-import type {
-  ByFunctionData,
-  PeerActivityData,
-  MyStrategyData,
-} from '@/lib/intelligence-v3/stages-display';
-import type { AIInitiative } from '@/lib/admin/ai-initiatives/queries';
+import { ArtOfPossibleCanvas } from './ArtOfPossibleCanvas';
+import { IntelligenceMap } from '@/components/intelligence-v4/IntelligenceMap';
+import { IntelligenceBrief } from '@/components/intelligence-v4/IntelligenceBrief';
+import { getMeridianMapData, getMeridianBriefData } from '@/lib/knowledge-corpus/fixtures/meridian-healthcare';
+import { FIRST_CAPITAL_DEMO, MERIDIAN_AOP_DEMO, APEX_RETAIL_AOP_DEMO } from './demo-data';
+import {
+  APEX_RETAIL_BY_FN_OUTCOMES,
+  APEX_RETAIL_BY_FN_ROWS,
+  APEX_RETAIL_PEER_ROWS,
+  APEX_RETAIL_SESSIONS,
+  APEX_RETAIL_STRATEGY_BULLETS,
+  APEX_RETAIL_VENDOR_SPEND,
+} from './cxo-fixtures';
+import type { IntelligenceV3PageData, RetailIntelligenceStatus, StageKey } from './types';
+import type { ApexRetailIntelligenceData } from '@/lib/intelligence-v3/apex-retail-live';
 
 interface Props {
   /** Server-side composed page data. Defaults to the demo fixture. */
   data?: IntelligenceV3PageData;
   /** True when `data` reflects real DB substrate; false for fallback. */
   isLiveBound?: boolean;
-  /** Vendors stage data — null when not loaded. */
-  vendorsData?: VendorsData | null;
-  byFunctionData?: ByFunctionData | null;
-  peerActivityData?: PeerActivityData | null;
-  myStrategyData?: MyStrategyData | null;
-  /** Initiatives passed through for the Patterns stage exposure overlay. */
-  initiatives?: ReadonlyArray<AIInitiative> | null;
+  /**
+   * Legacy server-loaded props (vendorsData, byFunctionData, etc.)
+   * are accepted for back-compat but ignored — PR-K2.4 CXO canvases
+   * use their own embedded Meridian fixtures until the live overlay
+   * lands in PR-K3+.
+   */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  vendorsData?: any;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  byFunctionData?: any;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  peerActivityData?: any;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  myStrategyData?: any;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  initiatives?: any;
+  apexRetailData?: ApexRetailIntelligenceData | null;
 }
 
 export function IntelligenceV3Page({
   data: dataProp,
   isLiveBound = false,
-  vendorsData = null,
-  byFunctionData = null,
-  peerActivityData = null,
-  myStrategyData = null,
-  initiatives = null,
+  apexRetailData = null,
 }: Props = {}) {
   const data = dataProp ?? FIRST_CAPITAL_DEMO;
-  const [stage, setStage] = useState<StageKey>('today');
+  // PR-K2 · default landing is The Brief — it's the canonical
+  // corpus-grounded synthesis surface. Other stages remain reachable
+  // via the tab strip. URL hash (e.g. /intelligence#map) drives the
+  // active stage so deep links from /intelligence/map redirect → hash
+  // work without per-route page components.
+  const [stage, setStage] = useState<StageKey>('brief');
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const sync = () => {
+      const h = window.location.hash.replace('#', '');
+      if (
+        h === 'map' || h === 'brief' || h === 'art-of-possible' ||
+        h === 'today' || h === 'by-function' ||
+        h === 'patterns' || h === 'vendors' || h === 'peer-activity' ||
+        h === 'my-strategy' || h === 'sessions'
+      ) {
+        setStage(h as StageKey);
+      }
+    };
+    sync();
+    window.addEventListener('hashchange', sync);
+    return () => window.removeEventListener('hashchange', sync);
+  }, []);
+  const handleStageChange = (next: StageKey) => {
+    setStage(next);
+    if (typeof window !== 'undefined') {
+      const url = new URL(window.location.href);
+      url.hash = next === 'brief' ? '' : next;
+      window.history.replaceState(null, '', url.toString());
+    }
+  };
+  const isCorpusStage = stage === 'brief' || stage === 'map';
+  const isAopStage = stage === 'art-of-possible';
+  const isApexBound = Boolean(apexRetailData);
+  const aopBands = isApexBound ? APEX_RETAIL_AOP_DEMO : data.aopBands ?? MERIDIAN_AOP_DEMO;
+  const activeTenantName = isApexBound ? 'Apex Retail Group' : data.tenantName;
+  const briefData = apexRetailData?.briefData ?? getMeridianBriefData();
+  const mapData = apexRetailData?.mapData ?? getMeridianMapData();
+  const sentinelOpener = isApexBound
+    ? `Apex Retail Intelligence is live on Supabase: ${apexRetailData?.status.patterns} patterns, ${apexRetailData?.status.sources} summarized sources, ${apexRetailData?.status.useCases} use cases, and ${apexRetailData?.status.contradictions} open contradictions. Ask me which CXO tension matters first.`
+    : data.sentinelOpener;
 
   return (
     <div
@@ -77,9 +129,9 @@ export function IntelligenceV3Page({
         color: COLORS.body,
       }}
     >
-      <IntelligenceV3TopNav tenantName={data.tenantName} />
+      <IntelligenceV3TopNav tenantName={activeTenantName} />
 
-      {!isLiveBound && (
+      {!isLiveBound && !isCorpusStage && (
         <div
           role="status"
           style={{
@@ -96,141 +148,147 @@ export function IntelligenceV3Page({
         </div>
       )}
 
+      {/* Stage tabs strip · sticky below the V3 top nav so it stays
+          visible AND the Sentinel chat rail can compute its own
+          sticky offset against a known stack. */}
       <div
         style={{
-          display: 'grid',
-          gridTemplateColumns: 'minmax(0, 1fr) 440px',
-          alignItems: 'start',
+          background: COLORS.surface,
+          borderBottom: `1px solid ${COLORS.border}`,
+          padding: `${SPACING.sm}px clamp(${SPACING.lg}px, 4vw, ${SPACING.xxxl}px)`,
+          position: 'sticky',
+          top: 56,
+          zIndex: 199,
         }}
       >
-        <main
-          style={{
-            padding: `${SPACING.lg}px clamp(${SPACING.lg}px, 4vw, ${SPACING.xxxl}px)`,
-            maxWidth: 1280,
-            width: '100%',
-            margin: '0 auto',
-            boxSizing: 'border-box',
-            paddingBottom: SPACING.xxxl + 56, // bottom gutter for any docked chat
-          }}
-        >
-          <Hero data={data} />
-
-          <IntelligenceV3StageTabs active={stage} onChange={setStage} />
-
-          {stage === 'today' && <TodayCanvas data={data} />}
-          {stage === 'vendors' &&
-            (vendorsData ? <VendorsCanvas data={vendorsData} /> : <StageStub stage={stage} />)}
-          {stage === 'by-function' &&
-            (byFunctionData ? (
-              <ByFunctionCanvas data={byFunctionData} />
-            ) : (
-              <StageStub stage={stage} />
-            ))}
-          {stage === 'patterns' && <PatternsCanvas initiatives={initiatives ?? []} />}
-          {stage === 'peer-activity' &&
-            (peerActivityData ? (
-              <PeerActivityCanvas data={peerActivityData} />
-            ) : (
-              <StageStub stage={stage} />
-            ))}
-          {stage === 'my-strategy' &&
-            (myStrategyData ? (
-              <MyStrategyCanvas data={myStrategyData} />
-            ) : (
-              <StageStub stage={stage} />
-            ))}
-          {stage === 'sessions' && <SessionsCanvas data={data} />}
-        </main>
-
-        <SentinelChat
-          scopeLabel={`${data.tenantName} · this page`}
-          opener={data.sentinelOpener}
-          conversation={data.conversation}
-        />
+        <IntelligenceV3StageTabs active={stage} onChange={handleStageChange} />
       </div>
+
+      {apexRetailData && <ApexReadinessStrip status={apexRetailData.status} />}
+
+      {isCorpusStage ? (
+        // PR-K2 corpus surfaces · render full-width (Brief/Map carry
+        // their own masthead + right rail; embedding inside the v3
+        // grid would squeeze them). Sentinel chat is integrated into
+        // each component's left-rail design (post-AgentDock migration).
+        stage === 'brief'
+          ? <IntelligenceBrief data={briefData} activeClient={activeTenantName} />
+          : <IntelligenceMap data={mapData} activeClient={activeTenantName} />
+      ) : (
+        // Non-corpus stages render through SentinelChat's <AgentDock>
+        // layout · chat LEFT, workspace RIGHT, resizable splitter,
+        // mode-pickable. Workspace is the existing canvas content.
+        // The wrapper height = viewport - top nav (56) - stage strip
+        // (~56), so the splitter has a finite box to fill.
+        <div style={{ height: 'calc(100vh - 112px)', minHeight: 0 }}>
+          <SentinelChat
+            scopeLabel={`${activeTenantName} · this page`}
+            opener={sentinelOpener}
+            conversation={data.conversation}
+            surfaceContext={{
+              activeTab: stage,
+              activeClient: activeTenantName,
+              clientKey: isApexBound ? 'apexretail' : null,
+              substrate: apexRetailData?.status ?? null,
+            }}
+            workspace={
+              <main
+                style={{
+                  padding: `${SPACING.lg}px clamp(${SPACING.lg}px, 4vw, ${SPACING.xxxl}px)`,
+                  width: '100%',
+                  boxSizing: 'border-box',
+                  paddingBottom: SPACING.xxxl + 56,
+                  overflowY: 'auto',
+                }}
+              >
+                {isAopStage && <ArtOfPossibleCanvas data={aopBands} />}
+                {stage === 'today' && <TodayCxoCanvas items={apexRetailData?.todayItems} />}
+                {stage === 'by-function' && (
+                  <ByFunctionCxoCanvas
+                    rows={isApexBound ? APEX_RETAIL_BY_FN_ROWS : undefined}
+                    outcomes={isApexBound ? APEX_RETAIL_BY_FN_OUTCOMES : undefined}
+                  />
+                )}
+                {stage === 'patterns' && <PatternsCxoCanvas patterns={apexRetailData?.patterns} />}
+                {stage === 'vendors' && <VendorsCxoCanvas spend={isApexBound ? APEX_RETAIL_VENDOR_SPEND : undefined} />}
+                {stage === 'peer-activity' && (
+                  <PeerActivityCxoCanvas
+                    rows={isApexBound ? APEX_RETAIL_PEER_ROWS : undefined}
+                    lead={
+                      isApexBound
+                        ? 'Adoption read across retail cohorts: specialty, big-box, grocery, luxury, and marketplace-first peers. The laggard signal is strongest where customer identity and item-location history are weak.'
+                        : undefined
+                    }
+                  />
+                )}
+                {stage === 'my-strategy' && <MyStrategyCxoCanvas bullets={isApexBound ? APEX_RETAIL_STRATEGY_BULLETS : undefined} />}
+                {stage === 'sessions' && (
+                  <SessionsCxoCanvas
+                    rows={isApexBound ? APEX_RETAIL_SESSIONS : undefined}
+                    totalConversations={isApexBound ? 18 : undefined}
+                    recentWindowCount={isApexBound ? 6 : undefined}
+                  />
+                )}
+              </main>
+            }
+          />
+        </div>
+      )}
     </div>
   );
 }
 
-function Hero({ data }: { data: typeof FIRST_CAPITAL_DEMO }) {
-  return (
-    <header
-      style={{
-        background: COLORS.surface2,
-        border: `1px solid ${COLORS.border}`,
-        borderRadius: 8,
-        padding: `${SPACING.lg}px ${SPACING.xl}px`,
-        marginBottom: SPACING.lg,
-      }}
-    >
-      <div
-        style={{
-          fontFamily: FONT.mono,
-          fontSize: 10,
-          letterSpacing: '0.14em',
-          textTransform: 'uppercase',
-          color: COLORS.muted,
-          marginBottom: SPACING.xs,
-        }}
-      >
-        Intelligence · {data.tenantName}
-      </div>
-      <h1
-        style={{
-          fontFamily: FONT.body,
-          fontSize: 26,
-          fontWeight: 700,
-          color: COLORS.ink,
-          letterSpacing: '-0.01em',
-          marginBottom: SPACING.xs,
-        }}
-      >
-        What we&apos;re seeing across {data.tenantName.split(' ').slice(0, 2).join(' ')}.
-      </h1>
-      <p
-        style={{
-          fontFamily: FONT.body,
-          fontSize: 13,
-          color: COLORS.muted,
-          margin: 0,
-        }}
-      >
-        {data.stats.patterns} patterns · {data.stats.contradictions} contradictions ·{' '}
-        {data.stats.syntheses} synthesis ready · {data.refreshedLabel}
-      </p>
-    </header>
-  );
-}
+function ApexReadinessStrip({ status }: { status: RetailIntelligenceStatus }) {
+  const items = [
+    { label: 'Supabase Genome live', value: status.runtime },
+    { label: 'Retail patterns', value: status.patterns.toString() },
+    { label: 'Summarized sources', value: `${status.summarizedSources}/${status.sources}` },
+    { label: 'Apex use cases', value: status.useCases.toString() },
+    { label: 'Open contradictions', value: status.contradictions.toString() },
+    { label: 'Graph edges', value: status.graphEdges.toString() },
+    { label: 'Neo4j', value: 'not required' },
+  ];
 
-function StageStub({ stage }: { stage: StageKey }) {
   return (
-    <section
-      data-testid={`stage-stub-${stage}`}
+    <div
+      role="status"
       style={{
-        border: `1px dashed ${COLORS.border}`,
-        background: COLORS.card,
-        borderRadius: 8,
-        padding: SPACING.xxl,
-        textAlign: 'center',
-        color: COLORS.muted,
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
+        gap: 1,
+        background: COLORS.border,
+        borderBottom: `1px solid ${COLORS.border}`,
       }}
     >
-      <div
-        style={{
-          fontFamily: FONT.mono,
-          fontSize: 10,
-          letterSpacing: '0.14em',
-          textTransform: 'uppercase',
-          color: COLORS.muted,
-          marginBottom: SPACING.sm,
-        }}
-      >
-        Stage · {stage}
-      </div>
-      <div style={{ fontFamily: FONT.body, fontSize: 14, color: COLORS.body }}>
-        Content for this stage ships in a follow-up wave. The Today
-        stage has the v3 IA fully wired.
-      </div>
-    </section>
+      {items.map((item) => (
+        <div
+          key={item.label}
+          style={{
+            background: COLORS.surface2,
+            padding: `${SPACING.xs}px ${SPACING.md}px`,
+            minWidth: 0,
+          }}
+        >
+          <div
+            style={{
+              fontFamily: FONT.mono,
+              fontSize: 9,
+              fontWeight: 700,
+              letterSpacing: '0.14em',
+              textTransform: 'uppercase',
+              color: COLORS.muted,
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+            }}
+          >
+            {item.label}
+          </div>
+          <div style={{ fontFamily: FONT.body, fontSize: 13, fontWeight: 700, color: COLORS.ink }}>
+            {item.value}
+          </div>
+        </div>
+      ))}
+    </div>
   );
 }

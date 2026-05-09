@@ -9,7 +9,7 @@ export function GatesSection() {
         <Eyebrow>Gates & Evidence</Eyebrow>
         <SectionTitle>Understanding gates</SectionTitle>
         <Lead>
-          Gates are the quality checkpoints at the end of each phase. They're not bureaucratic formalities — they're the mechanism that ensures each phase has genuine outputs before you commit to the next investment level.
+          Gates are the quality checkpoints at the end of each phase. They&rsquo;re not bureaucratic formalities — they&rsquo;re the mechanism that ensures each phase has genuine outputs before you commit to the next investment level.
         </Lead>
 
         {/* Gate states */}
@@ -71,7 +71,7 @@ export function GatesSection() {
             The tab is in the right-hand phase canvas. It shows all documents for this phase with their current status (not generated / Draft / In Review / Signed Off).
           </Step>
           <Step title="Select the document and click Generate">
-            Gate artifacts are marked with a green GATE chip. Generate these first — they're what the gate checks for. Format is HTML preview + Word download for narrative docs; Excel for the Financial Model.
+            Gate artifacts are marked with a green GATE chip. Generate these first — they&rsquo;re what the gate checks for. Format is HTML preview + Word download for narrative docs; Excel for the Financial Model.
           </Step>
           <Step title="Wait ~10–30s, then preview or download" note="💡 Give Nexus rich context when generating: 'generate the charter — sponsor is Sarah Chen (COO), scope is inbound routing only, deadline is Q3.' More context = better document.">
             Nexus assembles the document from your scaffold data, phase inputs, and chat history. Complex documents (Business Case, Financial Model) may take longer. Regenerate any time after major chat updates.
@@ -92,7 +92,7 @@ export function GatesSection() {
 
         <TermGrid>
           <Term name="Gate artifact">
-            Documents with a <strong>blue left border</strong>. Required for the phase gate to clear. Must reach "Signed Off" status before the gate can clear. <em>Examples: Program Charter, Current State Assessment, Execution Roadmap.</em>
+            Documents with a <strong>blue left border</strong>. Required for the phase gate to clear. Must reach &ldquo;Signed Off&rdquo; status before the gate can clear. <em>Examples: Program Charter, Current State Assessment, Execution Roadmap.</em>
           </Term>
           <Term name="Working document">
             Documents with a <strong>grey left border</strong>. Supporting analysis and design artifacts — tracked and versioned but not blocking the gate. <em>Examples: Stakeholder Map, Risk Register, Root Cause Analysis.</em>

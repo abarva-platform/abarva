@@ -1,4 +1,4 @@
-import type { CSSProperties } from 'react';
+import { useState, type CSSProperties } from 'react';
 import { specByCode, type SourceArtifactSpec } from '@/lib/source/canonical-specs';
 import type {
   SourceEventArtifactState,
@@ -7,8 +7,17 @@ import type {
 import type { SourceStageKey } from '@/lib/source/types';
 import { SOURCE_STAGE_LABELS } from '@/lib/source/constants';
 import { CANVAS } from '../canvas-tokens';
+import { VendorPricingSubmissionsPanel } from './VendorPricingSubmissionsPanel';
+
+// Codes that surface the vendor-pricing-submissions panel below the
+// body editor. Today only d19 (pricing); future variants would extend.
+const VENDOR_SUBMISSIONS_CODES: ReadonlySet<string> = new Set([
+  'd19_pricing_workbook',
+]);
 
 interface DocumentTabProps {
+  /** Source event id; used by the vendor-submissions panel for API calls. */
+  eventId?: string;
   stage: SourceStageKey;
   artifacts: SourceEventArtifactState[];
   /** Map of artifact code → markdown template body (server-loaded). */
@@ -24,6 +33,66 @@ interface DocumentTabProps {
   onChangeStatus?: (code: string, next: SourceEventArtifactStatus) => Promise<void>;
   /** Per-artifact pending flag — disables the button while the PATCH is in flight. */
   pendingByCode?: Record<string, boolean>;
+  /**
+   * Body mutator. When omitted the artifact body stays read-only —
+   * the canvas falls back to the canonical template.
+   */
+  onSaveBody?: (code: string, body: string) => Promise<void>;
+  /** Per-artifact body-pending flag (separate from status pending). */
+  bodyPendingByCode?: Record<string, boolean>;
+  /**
+   * Trigger Claude generation for a specific artifact code.
+   * Returns generation result so the caller can surface failure
+   * states (missing upstream, etc.).
+   */
+  onGenerateFromClaude?: (code: string) => Promise<
+    { ok: true } | { ok: false; error: string; detail: string; missingUpstream?: string[] }
+  >;
+  /** Set of codes the prompt registry knows how to generate. */
+  generatableCodes?: ReadonlySet<string>;
+  /** Per-artifact generation-pending flag. */
+  generationPendingByCode?: Record<string, boolean>;
+  /**
+   * Set of codes that have an xlsx renderer wired. The card shows a
+   * "Download xlsx template" button when its code is in this set.
+   */
+  xlsxGeneratableCodes?: ReadonlySet<string>;
+  /**
+   * Build the xlsx download URL for a given artifact code. Page passes
+   * this so the button can deep-link directly to the GET endpoint —
+   * no fetch + Blob plumbing on the client.
+   */
+  xlsxDownloadHref?: (code: string) => string;
+  /**
+   * Set of codes that have a comparison-mode xlsx renderer (e.g. d19
+   * pricing-comparison aggregating vendor submissions). When a code is
+   * in this set the card shows a second "Download comparison xlsx"
+   * anchor alongside the standard template anchor.
+   */
+  xlsxComparisonCodes?: ReadonlySet<string>;
+  /** Build the comparison xlsx download URL for a given artifact code. */
+  xlsxComparisonDownloadHref?: (code: string) => string;
+  /**
+   * Set of codes that have a docx renderer wired. The card shows a
+   * "Download docx" anchor when its code is in this set.
+   */
+  docxGeneratableCodes?: ReadonlySet<string>;
+  /** Build the docx download URL for a given artifact code. */
+  docxDownloadHref?: (code: string) => string;
+  /**
+   * Set of codes that have an HTML renderer wired. Card shows a
+   * "View HTML" anchor (opens in a new tab, no attachment).
+   */
+  htmlGeneratableCodes?: ReadonlySet<string>;
+  /** Build the HTML view URL for a given artifact code. */
+  htmlViewHref?: (code: string) => string;
+  /**
+   * Set of codes that have a PDF renderer wired. Card shows a
+   * "Download PDF" anchor.
+   */
+  pdfGeneratableCodes?: ReadonlySet<string>;
+  /** Build the PDF download URL for a given artifact code. */
+  pdfDownloadHref?: (code: string) => string;
 }
 
 const STATUS_LABEL: Record<SourceEventArtifactStatus, string> = {
@@ -42,6 +111,7 @@ const STATUS_LABEL: Record<SourceEventArtifactStatus, string> = {
  * content when promoted).
  */
 export function DocumentTab({
+  eventId,
   stage,
   artifacts,
   templateByCode,
@@ -49,6 +119,21 @@ export function DocumentTab({
   onSelectCode,
   onChangeStatus,
   pendingByCode,
+  onSaveBody,
+  bodyPendingByCode,
+  onGenerateFromClaude,
+  generatableCodes,
+  generationPendingByCode,
+  xlsxGeneratableCodes,
+  xlsxDownloadHref,
+  xlsxComparisonCodes,
+  xlsxComparisonDownloadHref,
+  docxGeneratableCodes,
+  docxDownloadHref,
+  htmlGeneratableCodes,
+  htmlViewHref,
+  pdfGeneratableCodes,
+  pdfDownloadHref,
 }: DocumentTabProps) {
   if (artifacts.length === 0) {
     return (
@@ -70,7 +155,12 @@ export function DocumentTab({
   const active =
     ordered.find((a) => a.artifactCode === selectedCode) ?? ordered[0] ?? null;
   const activeSpec = active ? specByCode(active.artifactCode) : null;
-  const body = active ? templateByCode[active.artifactCode] ?? null : null;
+  // Per-event authored body wins; falls back to the canonical template
+  // when the user hasn't authored anything yet.
+  const authoredBody = active?.body ?? null;
+  const templateBody = active ? templateByCode[active.artifactCode] ?? null : null;
+  const body = authoredBody ?? templateBody;
+  const bodyIsAuthored = Boolean(authoredBody);
 
   return (
     <div data-testid="source-canvas-document-tab" style={CONTAINER_STYLE}>
@@ -132,11 +222,54 @@ export function DocumentTab({
               </div>
               <p style={BODY_DESC_STYLE}>{activeSpec.description}</p>
             </header>
-            {body ? (
-              <pre style={MARKDOWN_BODY_STYLE} data-testid="source-canvas-document-body">
-                {body}
-              </pre>
-            ) : (
+            <ArtifactBodyEditor
+              artifact={active}
+              templateBody={templateBody}
+              authoredBody={authoredBody}
+              bodyIsAuthored={bodyIsAuthored}
+              onSaveBody={onSaveBody}
+              pending={bodyPendingByCode?.[active.artifactCode] ?? false}
+              stage={stage}
+              onGenerateFromClaude={onGenerateFromClaude}
+              isGeneratable={
+                generatableCodes?.has(active.artifactCode) ?? false
+              }
+              generationPending={
+                generationPendingByCode?.[active.artifactCode] ?? false
+              }
+              xlsxDownloadHref={
+                xlsxGeneratableCodes?.has(active.artifactCode) && xlsxDownloadHref
+                  ? xlsxDownloadHref(active.artifactCode)
+                  : null
+              }
+              xlsxComparisonDownloadHref={
+                xlsxComparisonCodes?.has(active.artifactCode) && xlsxComparisonDownloadHref
+                  ? xlsxComparisonDownloadHref(active.artifactCode)
+                  : null
+              }
+              docxDownloadHref={
+                docxGeneratableCodes?.has(active.artifactCode) && docxDownloadHref
+                  ? docxDownloadHref(active.artifactCode)
+                  : null
+              }
+              htmlViewHref={
+                htmlGeneratableCodes?.has(active.artifactCode) && htmlViewHref
+                  ? htmlViewHref(active.artifactCode)
+                  : null
+              }
+              pdfDownloadHref={
+                pdfGeneratableCodes?.has(active.artifactCode) && pdfDownloadHref
+                  ? pdfDownloadHref(active.artifactCode)
+                  : null
+              }
+            />
+            {eventId && VENDOR_SUBMISSIONS_CODES.has(active.artifactCode) ? (
+              <VendorPricingSubmissionsPanel
+                eventId={eventId}
+                artifactCode={active.artifactCode}
+              />
+            ) : null}
+            {body ? null : (
               <p style={MISSING_TEMPLATE_STYLE}>
                 No template content found for this artifact code. Add a markdown
                 file at{' '}
@@ -149,6 +282,242 @@ export function DocumentTab({
           </>
         ) : null}
       </article>
+    </div>
+  );
+}
+
+interface ArtifactBodyEditorProps {
+  artifact: SourceEventArtifactState;
+  templateBody: string | null;
+  authoredBody: string | null;
+  bodyIsAuthored: boolean;
+  onSaveBody?: (code: string, body: string) => Promise<void>;
+  pending: boolean;
+  stage: SourceStageKey;
+  onGenerateFromClaude?: (code: string) => Promise<
+    { ok: true } | { ok: false; error: string; detail: string; missingUpstream?: string[] }
+  >;
+  isGeneratable: boolean;
+  generationPending: boolean;
+  /** When non-null the card shows a "Download xlsx template" anchor. */
+  xlsxDownloadHref: string | null;
+  /** When non-null the card shows a "Download comparison xlsx" anchor. */
+  xlsxComparisonDownloadHref?: string | null;
+  /** When non-null the card shows a "Download docx" anchor. */
+  docxDownloadHref?: string | null;
+  /** When non-null the card shows a "View HTML" anchor (target="_blank"). */
+  htmlViewHref?: string | null;
+  /** When non-null the card shows a "Download PDF" anchor. */
+  pdfDownloadHref?: string | null;
+}
+
+function ArtifactBodyEditor({
+  artifact,
+  templateBody,
+  authoredBody,
+  bodyIsAuthored,
+  onSaveBody,
+  pending,
+  onGenerateFromClaude,
+  isGeneratable,
+  generationPending,
+  xlsxDownloadHref,
+  xlsxComparisonDownloadHref,
+  docxDownloadHref,
+  htmlViewHref,
+  pdfDownloadHref,
+}: ArtifactBodyEditorProps) {
+  const [editing, setEditing] = useState(false);
+  const [generationError, setGenerationError] = useState<string | null>(null);
+  // Seed the textarea: real authored content > template scaffold.
+  const seed = authoredBody ?? templateBody ?? '';
+  const [draft, setDraft] = useState(seed);
+
+  // If the user navigates between artifacts the seed changes — sync draft
+  // during render (React docs pattern: compare prev prop with useState, no
+  // useEffect needed). See react.dev/learn/you-might-not-need-an-effect.
+  const [prevSeed, setPrevSeed] = useState(seed);
+  if (prevSeed !== seed) {
+    setPrevSeed(seed);
+    setDraft(seed);
+    setEditing(false);
+    setGenerationError(null);
+  }
+
+  const handleGenerate = async () => {
+    if (!onGenerateFromClaude) return;
+    setGenerationError(null);
+    const result = await onGenerateFromClaude(artifact.artifactCode);
+    if (!result.ok) {
+      const detail =
+        result.error === 'upstream_required' && result.missingUpstream
+          ? `Author and approve these first: ${result.missingUpstream.join(', ')}`
+          : result.detail;
+      setGenerationError(detail);
+    }
+  };
+
+  if (editing && onSaveBody) {
+    return (
+      <div style={EDITOR_WRAP_STYLE}>
+        <textarea
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+          spellCheck
+          rows={20}
+          data-testid={`source-canvas-document-body-editor-${artifact.artifactCode}`}
+          style={EDITOR_TEXTAREA_STYLE}
+        />
+        <div style={EDITOR_TOOLBAR_STYLE}>
+          <span style={EDITOR_HINT_STYLE}>
+            Markdown · per-event content · saves to{' '}
+            <code>source_event_artifact_states.body</code>
+          </span>
+          <div style={EDITOR_BUTTONS_STYLE}>
+            <button
+              type="button"
+              onClick={() => {
+                setDraft(seed);
+                setEditing(false);
+              }}
+              data-testid={`source-canvas-document-body-cancel-${artifact.artifactCode}`}
+              style={GHOST_BUTTON_STYLE}
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              disabled={pending}
+              onClick={async () => {
+                await onSaveBody(artifact.artifactCode, draft);
+                setEditing(false);
+              }}
+              data-testid={`source-canvas-document-body-save-${artifact.artifactCode}`}
+              style={{ ...PRIMARY_BUTTON_STYLE, opacity: pending ? 0.55 : 1 }}
+            >
+              {pending ? 'Saving…' : 'Save body'}
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const isGenerated =
+    artifact.bodyGenerationMetadata !== null && bodyIsAuthored;
+
+  return (
+    <div style={READER_WRAP_STYLE}>
+      <div style={READER_HEADER_STYLE}>
+        <span style={READER_BADGE_STYLE}>
+          {isGenerated
+            ? 'Generated by Sentinel · editable'
+            : bodyIsAuthored
+              ? 'Authored content'
+              : 'Template scaffold (not yet authored)'}
+        </span>
+        <div style={READER_BUTTONS_STYLE}>
+          {onGenerateFromClaude && isGeneratable ? (
+            <button
+              type="button"
+              disabled={generationPending}
+              onClick={handleGenerate}
+              data-testid={`source-canvas-document-body-generate-${artifact.artifactCode}`}
+              style={{
+                ...PRIMARY_BUTTON_STYLE,
+                opacity: generationPending ? 0.55 : 1,
+                background: '#0c1a3a',
+                color: '#faf7f1',
+              }}
+            >
+              {generationPending
+                ? 'Generating with Sentinel…'
+                : isGenerated || bodyIsAuthored
+                  ? 'Regenerate with Sentinel'
+                  : 'Generate with Sentinel'}
+            </button>
+          ) : null}
+          {onSaveBody ? (
+            <button
+              type="button"
+              onClick={() => setEditing(true)}
+              data-testid={`source-canvas-document-body-edit-${artifact.artifactCode}`}
+              style={GHOST_BUTTON_STYLE}
+            >
+              {bodyIsAuthored ? 'Edit body' : 'Author content'}
+            </button>
+          ) : null}
+          {xlsxDownloadHref ? (
+            <a
+              href={xlsxDownloadHref}
+              data-testid={`source-canvas-document-body-download-xlsx-${artifact.artifactCode}`}
+              style={{ ...GHOST_BUTTON_STYLE, textDecoration: 'none' }}
+              download
+            >
+              Download xlsx template
+            </a>
+          ) : null}
+          {xlsxComparisonDownloadHref ? (
+            <a
+              href={xlsxComparisonDownloadHref}
+              data-testid={`source-canvas-document-body-download-xlsx-comparison-${artifact.artifactCode}`}
+              style={{ ...GHOST_BUTTON_STYLE, textDecoration: 'none' }}
+              download
+              title="Side-by-side comparison of vendor pricing submissions (currently demo mode)."
+            >
+              Download comparison xlsx
+            </a>
+          ) : null}
+          {docxDownloadHref ? (
+            <a
+              href={docxDownloadHref}
+              data-testid={`source-canvas-document-body-download-docx-${artifact.artifactCode}`}
+              style={{ ...GHOST_BUTTON_STYLE, textDecoration: 'none' }}
+              download
+              title="Download as Word document — uses the authored body when present, canonical scaffold otherwise."
+            >
+              Download docx
+            </a>
+          ) : null}
+          {htmlViewHref ? (
+            <a
+              href={htmlViewHref}
+              data-testid={`source-canvas-document-body-view-html-${artifact.artifactCode}`}
+              style={{ ...GHOST_BUTTON_STYLE, textDecoration: 'none' }}
+              target="_blank"
+              rel="noopener noreferrer"
+              title="View as a browser-readable HTML document — useful for sharing as a link, or printing to PDF from the browser."
+            >
+              View HTML
+            </a>
+          ) : null}
+          {pdfDownloadHref ? (
+            <a
+              href={pdfDownloadHref}
+              data-testid={`source-canvas-document-body-download-pdf-${artifact.artifactCode}`}
+              style={{ ...GHOST_BUTTON_STYLE, textDecoration: 'none' }}
+              download
+              title="Download as PDF — print-ready archival format with cover page, page numbers, and confidentiality footer."
+            >
+              Download PDF
+            </a>
+          ) : null}
+        </div>
+      </div>
+      {generationError ? (
+        <div
+          role="alert"
+          data-testid={`source-canvas-document-body-generation-error-${artifact.artifactCode}`}
+          style={GENERATION_ERROR_STYLE}
+        >
+          Generation failed — {generationError}
+        </div>
+      ) : null}
+      {(authoredBody ?? templateBody) ? (
+        <pre style={MARKDOWN_BODY_STYLE} data-testid="source-canvas-document-body">
+          {authoredBody ?? templateBody}
+        </pre>
+      ) : null}
     </div>
   );
 }
@@ -441,6 +810,90 @@ const PRIMARY_BUTTON_STYLE: CSSProperties = {
   letterSpacing: '0.08em',
   textTransform: 'uppercase',
   cursor: 'pointer',
+};
+
+const EDITOR_WRAP_STYLE: CSSProperties = {
+  display: 'grid',
+  gap: 10,
+  marginTop: 4,
+};
+
+const EDITOR_TEXTAREA_STYLE: CSSProperties = {
+  width: '100%',
+  minHeight: 360,
+  padding: '14px 16px',
+  border: `1px solid ${CANVAS.RULE}`,
+  borderRadius: CANVAS.RADIUS_TIGHT,
+  fontFamily: CANVAS.MONO,
+  fontSize: 13,
+  lineHeight: 1.6,
+  color: CANVAS.INK,
+  background: '#ffffff',
+  resize: 'vertical',
+  outline: 'none',
+  boxSizing: 'border-box',
+};
+
+const EDITOR_TOOLBAR_STYLE: CSSProperties = {
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'space-between',
+  gap: 12,
+  flexWrap: 'wrap',
+};
+
+const EDITOR_HINT_STYLE: CSSProperties = {
+  fontFamily: CANVAS.SANS,
+  fontSize: 11.5,
+  color: CANVAS.INK_SOFT,
+  fontStyle: 'italic',
+};
+
+const EDITOR_BUTTONS_STYLE: CSSProperties = {
+  display: 'inline-flex',
+  alignItems: 'center',
+  gap: 8,
+};
+
+const READER_WRAP_STYLE: CSSProperties = {
+  display: 'grid',
+  gap: 10,
+  marginTop: 4,
+};
+
+const READER_HEADER_STYLE: CSSProperties = {
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'space-between',
+  gap: 12,
+  paddingBottom: 6,
+  flexWrap: 'wrap',
+};
+
+const READER_BUTTONS_STYLE: CSSProperties = {
+  display: 'inline-flex',
+  alignItems: 'center',
+  gap: 8,
+};
+
+const GENERATION_ERROR_STYLE: CSSProperties = {
+  borderRadius: CANVAS.RADIUS_TIGHT,
+  border: '1px solid rgba(186,117,23,0.30)',
+  background: 'rgba(186,117,23,0.06)',
+  padding: '10px 12px',
+  fontFamily: CANVAS.SANS,
+  fontSize: 12.5,
+  color: '#A66400',
+  lineHeight: 1.5,
+};
+
+const READER_BADGE_STYLE: CSSProperties = {
+  fontFamily: CANVAS.MONO,
+  fontSize: 9,
+  letterSpacing: '0.10em',
+  textTransform: 'uppercase',
+  color: CANVAS.INK_SOFT,
+  fontWeight: 600,
 };
 
 const GHOST_BUTTON_STYLE: CSSProperties = {

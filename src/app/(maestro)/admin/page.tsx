@@ -29,16 +29,12 @@ import {
 import { AdminCanonShellV2 } from '@/components/admin/AdminCanonShellV2';
 import { SetupChatRail } from '@/components/admin/SetupChatRail';
 import { SetupLandingTelemetryBridge } from '@/components/admin/setup/SetupLandingTelemetryBridge';
-import { PageHead } from '@/components/admin/overview/PageHead';
-import { StatusHeader } from '@/components/admin/overview/StatusHeader';
-import { StewardOrientation } from '@/components/admin/overview/StewardOrientation';
-import { ActionQueue } from '@/components/admin/overview/ActionQueue';
-import { RecentActivity } from '@/components/admin/overview/RecentActivity';
+import { HomeOverviewV2 } from '@/components/home/HomeOverviewV2';
 import { composeOverviewBlocks } from '@/lib/admin/overview-composer';
-import { SETUP } from '@/lib/admin/setup-tokens';
+import { composeHomeV2Extras } from '@/lib/admin/home-overview-v2';
 import { getApprovalQueueForTenant } from '@/lib/programs/approval';
-import { canonicalClientDisplayName } from '@/lib/client-config';
-import { SPACING } from '@/lib/design/design-tokens';
+import { canonicalClientDisplayName, isClientKey } from '@/lib/client-config';
+import { getOverviewSupplementalData } from '@/lib/admin/overview-data';
 
 export const metadata = { title: 'Setup · AbarVa' };
 export const dynamic = 'force-dynamic';
@@ -88,43 +84,40 @@ export default async function AdminOverviewPage() {
     recentSnapshotActivity,
   });
 
+  // Section 01 + 05 inputs: programs + source events + initiatives
+  // counts. Fetched via the broker-boundary abstraction so the page
+  // component does not directly reference the Supabase client.
+  const clientId = activeClient?.id ?? null;
+  const {
+    programsCount,
+    programsP6Count,
+    sourceEventsCount,
+    sourceEventsAtRiskCount,
+    initiativesList,
+  } = await getOverviewSupplementalData(clientKey, clientId);
+  const initiativesAtRiskCount = initiativesList.filter((i) =>
+    /risk|blocked|attention/i.test(i.statusFlag ?? ''),
+  ).length;
+
+  const extras = composeHomeV2Extras({
+    segments,
+    programsCount,
+    programsP6Count,
+    sourceEventsCount,
+    sourceEventsAtRiskCount,
+    initiativesCount: initiativesList.length,
+    initiativesAtRiskCount,
+    lastIngestedAt: snapshot?.lastIngestedAt ?? null,
+  });
+
   return (
     <AdminCanonShellV2 agentRail={<SetupChatRail />} tenantName={activeClientDisplayName}>
-      <div
-        data-testid="overview-page"
-        style={{
-          display: 'flex',
-          flexDirection: 'column',
-          gap: SPACING.lg,
-          padding: SPACING.xl,
-          background: SETUP.paper,
-        }}
-      >
-        <PageHead
-          eyebrow={`Setup · ${activeClientDisplayName}`}
-          title="Where you stand and what to do next"
-          lede="Six panels do the work. This page orients you and routes you to the right one."
-        />
-        <StatusHeader
-          tenantName={blocks.status.tenantName}
-          readinessPercent={blocks.status.readinessPercent}
-          agentLevel={blocks.status.agentLevel}
-          blockedCapabilityTracks={blocks.status.blockedCapabilityTracks}
-        />
-        <StewardOrientation
-          tenantName={blocks.orientation.tenantName}
-          industryPhrase={blocks.orientation.industryPhrase}
-          loadedSummary={blocks.orientation.loadedSummary}
-          missingSummary={blocks.orientation.missingSummary}
-          nextLoadName={blocks.orientation.nextLoadName}
-          nextLoadConsequence={blocks.orientation.nextLoadConsequence}
-        />
-        <ActionQueue
-          items={blocks.actionQueue.items}
-          totalPending={blocks.actionQueue.totalPending}
-        />
-        <RecentActivity items={blocks.recentActivity.items} />
-      </div>
+      <HomeOverviewV2
+        tenantName={activeClientDisplayName}
+        clientKey={isClientKey(clientKey) ? clientKey : null}
+        blocks={blocks}
+        extras={extras}
+      />
       <SetupLandingTelemetryBridge
         tenantKey={brokerTenantKey}
         tenantDataRichness={content.tenantDataRichness}

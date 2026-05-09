@@ -239,7 +239,10 @@ function NavInner({ activePage, compact = false }: NavProps) {
         {/* H1 (2026-05-07) · Canonical 5-item nav per Home Refinement
             Package NAV_REORGANIZATION.md. Order: Home · Intelligence ·
             Moves · Source · Tower. Labels: "Moves" (URL stays
-            /strategic-moves for SEO), "Tower" (was "Control Tower"). */}
+            /strategic-moves for SEO), "Tower" (was "Control Tower").
+            Metadata pendant: src/lib/home/top-nav-items.ts (PR-H5).
+            ROLE_KIT_FILTER_HOOK · enforce visibleToRoles when role
+            kit ships. */}
         {signedIn && isOperator && (
           <>
             {staticClientLabel()}
@@ -338,7 +341,12 @@ function NavInner({ activePage, compact = false }: NavProps) {
                       Maestro Workspace
                     </Link>
                   )}
-                  {canShow('setup') && (
+                  {isAdmin && (
+                    <Link href="/admin" className="abarva-menu-item" style={{ display: 'block', padding: '9px 14px', textDecoration: 'none', fontFamily: SANS, fontSize: '13px', color: DROP_HEAD, borderRadius: '8px', margin: '0 4px' }}>
+                      Setup
+                    </Link>
+                  )}
+                  {!isAdmin && canShow('setup') && (
                     <Link href="/platform" className="abarva-menu-item" style={{ display: 'block', padding: '9px 14px', textDecoration: 'none', fontFamily: SANS, fontSize: '13px', color: DROP_HEAD, borderRadius: '8px', margin: '0 4px' }}>
                       Platform
                     </Link>

@@ -212,7 +212,7 @@ export function AppRail() {
               onClick={() => {
                 setMenuOpen(false);
                 clearActiveClientContext();
-                signOut(() => router.push('/'));
+                signOut(() => router.push('/signed-out'));
               }}
               style={{ width: '100%', textAlign: 'left', padding: '7px 12px', fontSize: 12, color: SHELL.INK, background: 'transparent', border: 'none', cursor: 'pointer', fontFamily: SHELL.SANS }}
             >

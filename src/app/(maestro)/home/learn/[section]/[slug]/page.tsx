@@ -1,22 +1,49 @@
-// /home/learn/<section>/<slug> · per-entry page.
-// Known training guides render via LearnTrainingFrame (full-height iframe).
-// All other slugs fall back to the generic placeholder.
+// /home/learn/<section>/<slug> · per-entry sub-page.
+//
+// This route serves two purposes:
+//   1. Render Source primer pages under the unified guide
+//      (/home/learn/source/welcome, /home/learn/source/strategy, …).
+//      The Source primer used to live at /source/learn — it has been
+//      folded into the global guide so all training is at one URL
+//      surface. Legacy /source/learn/* URLs redirect here.
+//   2. Fall back to the generic Learn Content Package placeholder for
+//      any other section/slug pair.
 
 import { notFound } from 'next/navigation';
 import { LearnSectionPlaceholder } from '@/components/home/LearnSectionPlaceholder';
-import { LearnTrainingFrame } from '@/components/home/LearnTrainingFrame';
 import { findLearnSection } from '@/lib/home/learn-sections';
+import { findLearnNavItem } from '@/lib/home/learn-nav';
+import { SourceWelcomeSection } from '@/components/source/learn/SourceWelcomeSection';
+import { SourceIntakeSection } from '@/components/source/learn/SourceIntakeSection';
+import { SourceSentinelSection } from '@/components/source/learn/SourceSentinelSection';
+import { SourceGlossarySection } from '@/components/source/learn/SourceGlossarySection';
+import { SourceGatesSection } from '@/components/source/learn/SourceGatesSection';
+import { SourceExportsSection } from '@/components/source/learn/SourceExportsSection';
+import { SourceTowerSection } from '@/components/source/learn/SourceTowerSection';
+import { MeridianCaseStudyIntro } from '@/components/source/learn/case-study/MeridianCaseStudyIntro';
+import { Ch01StrategyChapter } from '@/components/source/learn/case-study/Ch01StrategyChapter';
+import { Ch02ScopeChapter } from '@/components/source/learn/case-study/Ch02ScopeChapter';
+import { Ch03RfpChapter } from '@/components/source/learn/case-study/Ch03RfpChapter';
+import { Ch04ResponsesChapter } from '@/components/source/learn/case-study/Ch04ResponsesChapter';
+import { Ch05EvaluationChapter } from '@/components/source/learn/case-study/Ch05EvaluationChapter';
+import { Ch06PricingChapter } from '@/components/source/learn/case-study/Ch06PricingChapter';
+import { Ch07BafoChapter } from '@/components/source/learn/case-study/Ch07BafoChapter';
+import { Ch08DecisionChapter } from '@/components/source/learn/case-study/Ch08DecisionChapter';
+import { Ch09SelectionChapter } from '@/components/source/learn/case-study/Ch09SelectionChapter';
+import { Ch10TransitionChapter } from '@/components/source/learn/case-study/Ch10TransitionChapter';
+import { Ch11ValueChapter } from '@/components/source/learn/case-study/Ch11ValueChapter';
+import { ApexRetailCaseStudyIntro } from '@/components/source/learn/case-study/apex/ApexRetailCaseStudyIntro';
+import { ApexCh01StrategyChapter } from '@/components/source/learn/case-study/apex/ApexCh01StrategyChapter';
+import { ApexCh02ScopeChapter } from '@/components/source/learn/case-study/apex/ApexCh02ScopeChapter';
+import { ApexCh03RfpChapter } from '@/components/source/learn/case-study/apex/ApexCh03RfpChapter';
+import { ApexCh04ResponsesChapter } from '@/components/source/learn/case-study/apex/ApexCh04ResponsesChapter';
+import { ApexCh05EvaluationChapter } from '@/components/source/learn/case-study/apex/ApexCh05EvaluationChapter';
+import { ApexCh06PricingChapter } from '@/components/source/learn/case-study/apex/ApexCh06PricingChapter';
+import { ApexCh07BafoChapter } from '@/components/source/learn/case-study/apex/ApexCh07BafoChapter';
+import { ApexCh08DecisionChapter } from '@/components/source/learn/case-study/apex/ApexCh08DecisionChapter';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
-
-// Map section/slug → static training asset + readable title.
-const TRAINING_GUIDES: Record<string, { src: string; title: string }> = {
-  'workflows/originate-a-move': {
-    src: '/training/how-to-create-a-move.html',
-    title: 'How to Create a Strategic Move — AbarVa Training Guide',
-  },
-};
 
 interface Props {
   params: Promise<{ section: string; slug: string }>;
@@ -24,31 +51,95 @@ interface Props {
 
 export async function generateMetadata({ params }: Props) {
   const { section, slug } = await params;
-  const guide = TRAINING_GUIDES[`${section}/${slug}`];
-  if (guide) return { title: `${guide.title} · Learn | AbarVa` };
-  return { title: `${slug} · ${section} · Learn | AbarVa Home` };
+  if (section === 'source') {
+    const item = findLearnNavItem(`source/${slug}`);
+    return { title: `${item?.label ?? slug} · Source · Learn | AbarVa` };
+  }
+  return { title: `${slug} · ${section} · Learn | AbarVa` };
 }
 
 export default async function LearnSubPage({ params }: Props) {
   const { section, slug } = await params;
+
+  // ── Source primer (folded into the unified guide) ──────────────────────────
+  if (section === 'source') {
+    switch (slug) {
+      // Framing pages
+      case 'welcome':
+        return <SourceWelcomeSection />;
+      case 'intake':
+        return <SourceIntakeSection />;
+      case 'sentinel':
+        return <SourceSentinelSection />;
+      case 'glossary':
+        return <SourceGlossarySection />;
+
+      // Meridian case study intro
+      case 'case-study':
+        return <MeridianCaseStudyIntro />;
+
+      // Meridian case study — 11 stage chapters
+      case 'strategy':
+        return <Ch01StrategyChapter />;
+      case 'scope':
+        return <Ch02ScopeChapter />;
+      case 'rfp':
+        return <Ch03RfpChapter />;
+      case 'responses':
+        return <Ch04ResponsesChapter />;
+      case 'evaluation':
+        return <Ch05EvaluationChapter />;
+      case 'pricing':
+        return <Ch06PricingChapter />;
+      case 'bafo':
+        return <Ch07BafoChapter />;
+      case 'decision':
+        return <Ch08DecisionChapter />;
+      case 'selection':
+        return <Ch09SelectionChapter />;
+      case 'transition':
+        return <Ch10TransitionChapter />;
+      case 'value':
+        return <Ch11ValueChapter />;
+
+      // Apex Retail case study — $35M AMS Outsourcing 2026
+      case 'apex-retail-case-study':
+        return <ApexRetailCaseStudyIntro />;
+      case 'apex-strategy':
+        return <ApexCh01StrategyChapter />;
+      case 'apex-scope':
+        return <ApexCh02ScopeChapter />;
+      case 'apex-rfp':
+        return <ApexCh03RfpChapter />;
+      case 'apex-responses':
+        return <ApexCh04ResponsesChapter />;
+      case 'apex-evaluation':
+        return <ApexCh05EvaluationChapter />;
+      case 'apex-pricing':
+        return <ApexCh06PricingChapter />;
+      case 'apex-bafo':
+        return <ApexCh07BafoChapter />;
+      case 'apex-decision':
+        return <ApexCh08DecisionChapter />;
+
+      // Reference pages
+      case 'gates':
+        return <SourceGatesSection />;
+      case 'exports':
+        return <SourceExportsSection />;
+      case 'tower':
+        return <SourceTowerSection />;
+    }
+
+    notFound();
+  }
+
+  // ── Legacy Learn Content Package sub-pages ─────────────────────────────────
   const def = findLearnSection(section);
   if (!def) notFound();
 
-  const guide = TRAINING_GUIDES[`${section}/${slug}`];
   const known = def.sampleSubPages?.find((p) => p.slug === slug);
   const subPage = known ?? { slug, label: slug };
-
-  if (guide) {
-    return (
-      <LearnTrainingFrame
-        src={guide.src}
-        title={guide.title}
-        sectionLabel={def.label}
-        subPageLabel={subPage.label}
-        sectionRoute={def.routeSegment}
-      />
-    );
-  }
 
   return <LearnSectionPlaceholder section={def} subPage={subPage} />;
 }

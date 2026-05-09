@@ -95,9 +95,20 @@ export function Eyebrow({ children, light }: { children: React.ReactNode; light?
 }
 
 // ─── Section title ────────────────────────────────────────────────────────────
-export function SectionTitle({ children, light, size = 'lg' }: { children: React.ReactNode; light?: boolean; size?: 'lg' | 'xl' }) {
+export function SectionTitle({
+  children,
+  light,
+  size = 'lg',
+  level = 2,
+}: {
+  children: React.ReactNode;
+  light?: boolean;
+  size?: 'lg' | 'xl';
+  level?: 1 | 2 | 3;
+}) {
+  const Tag = level === 1 ? 'h1' : level === 3 ? 'h3' : 'h2';
   return (
-    <h2
+    <Tag
       style={{
         fontFamily: T.fDisp,
         fontSize: size === 'xl' ? 'clamp(32px, 4vw, 48px)' : 'clamp(22px, 3vw, 28px)',
@@ -110,7 +121,7 @@ export function SectionTitle({ children, light, size = 'lg' }: { children: React
       }}
     >
       {children}
-    </h2>
+    </Tag>
   );
 }
 

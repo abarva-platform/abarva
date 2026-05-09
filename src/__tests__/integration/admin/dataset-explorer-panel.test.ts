@@ -3,7 +3,6 @@
 import {
   buildDatasetExplorerView,
   buildDatasetExplorerDomains,
-  type DatasetExplorerView,
 } from '@/lib/admin/dataset-explorer-view';
 import {
   buildDatasetDomainInventory,
