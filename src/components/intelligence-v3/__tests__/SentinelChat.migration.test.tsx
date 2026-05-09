@@ -157,10 +157,22 @@ describe('SentinelChat · legacy mode-key migration', () => {
     });
     expect(screen.queryByText(/I did not find enough indexed Intelligence evidence/i)).not.toBeInTheDocument();
     expect(fetchMock).toHaveBeenCalledWith(
-      '/api/intelligence/ask?q=current+state+of+data+analytics+landscape&client=apex-retail',
+      '/api/intelligence/ask',
       expect.objectContaining({
-        headers: { Accept: 'application/x-ndjson' },
+        method: 'POST',
+        headers: {
+          Accept: 'application/x-ndjson',
+          'Content-Type': 'application/json',
+        },
+        body: expect.any(String),
       }),
     );
+    const [, init] = fetchMock.mock.calls[0];
+    const body = JSON.parse(init.body);
+    expect(body).toMatchObject({
+      q: 'current state of data analytics landscape',
+      client: 'apex-retail',
+      surfaceContext: { clientKey: 'apex-retail' },
+    });
   });
 });

@@ -73,7 +73,7 @@ interface Props {
  * - localStorage migrates legacy 3-mode pref onto new dock keys once.
  */
 export function SentinelChat({
-  agentName = 'Sentinel',
+  agentName = 'Sentinel Intel',
   scopeLabel,
   opener,
   conversation,
@@ -154,11 +154,18 @@ export function SentinelChat({
     ]);
 
     try {
-      const params = new URLSearchParams({ q: text || body });
       const clientKey = typeof surfaceContext?.clientKey === 'string' ? surfaceContext.clientKey : null;
-      if (clientKey) params.set('client', clientKey);
-      const response = await fetch(`/api/intelligence/ask?${params.toString()}`, {
-        headers: { Accept: 'application/x-ndjson' },
+      const response = await fetch('/api/intelligence/ask', {
+        method: 'POST',
+        headers: {
+          Accept: 'application/x-ndjson',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          q: text || body,
+          client: clientKey,
+          surfaceContext,
+        }),
       });
       if (!response.ok || !response.body) {
         throw new Error(`Sentinel request failed (${response.status})`);
@@ -238,7 +245,7 @@ export function SentinelChat({
 
   return (
     <AgentDock
-      agent={{ initials: 'S', name: agentName, role }}
+      agent={{ initials: 'SI', name: agentName, role }}
       surface={SURFACE}
       defaultMode="side-rail"
       defaultLeftPercent={30}

@@ -44,7 +44,7 @@ import {
   APEX_RETAIL_STRATEGY_BULLETS,
   APEX_RETAIL_VENDOR_SPEND,
 } from './cxo-fixtures';
-import type { IntelligenceV3PageData, RetailIntelligenceStatus, StageKey } from './types';
+import type { ArtOfPossibleData, IntelligenceV3PageData, RetailIntelligenceStatus, StageKey } from './types';
 import type { ApexRetailIntelligenceData } from '@/lib/intelligence-v3/apex-retail-live';
 
 interface Props {
@@ -118,6 +118,15 @@ export function IntelligenceV3Page({
   const sentinelOpener = isApexBound
     ? `Apex Retail Intelligence is live on Supabase: ${apexRetailData?.status.patterns} patterns, ${apexRetailData?.status.sources} summarized sources, ${apexRetailData?.status.useCases} use cases, and ${apexRetailData?.status.contradictions} open contradictions. Ask me which CXO tension matters first.`
     : data.sentinelOpener;
+  const surfaceContext = buildSentinelSurfaceContext({
+    activeClient: activeTenantName,
+    stage,
+    isApexBound,
+    status: apexRetailData?.status ?? null,
+    patterns: apexRetailData?.patterns ?? [],
+    todayItems: apexRetailData?.todayItems ?? [],
+    aopBands,
+  });
 
   return (
     <div
@@ -185,12 +194,7 @@ export function IntelligenceV3Page({
             scopeLabel={`${activeTenantName} · this page`}
             opener={sentinelOpener}
             conversation={data.conversation}
-            surfaceContext={{
-              activeTab: stage,
-              activeClient: activeTenantName,
-              clientKey: isApexBound ? 'apexretail' : null,
-              substrate: apexRetailData?.status ?? null,
-            }}
+            surfaceContext={surfaceContext}
             workspace={
               <main
                 style={{
@@ -236,6 +240,128 @@ export function IntelligenceV3Page({
       )}
     </div>
   );
+}
+
+function buildSentinelSurfaceContext(args: {
+  activeClient: string;
+  stage: StageKey;
+  isApexBound: boolean;
+  status: RetailIntelligenceStatus | null;
+  patterns: ApexRetailIntelligenceData['patterns'];
+  todayItems: ApexRetailIntelligenceData['todayItems'];
+  aopBands: ArtOfPossibleData;
+}): Record<string, unknown> {
+  const pageFacts = [
+    `Tenant: ${args.activeClient}.`,
+    `Active Intelligence tab: ${args.stage}.`,
+    args.status
+      ? `Readiness strip: ${args.status.runtime} runtime, ${args.status.patterns} retail patterns, ${args.status.summarizedSources}/${args.status.sources} summarized sources, ${args.status.useCases} Apex use cases, ${args.status.contradictions} open contradictions, ${args.status.graphEdges} graph edges, Neo4j not required.`
+      : null,
+    args.isApexBound
+      ? 'This is the live Apex Retail Intelligence substrate, not the Meridian or Epic healthcare fixture.'
+      : 'This page may be using fallback demo substrate.',
+  ].filter((fact): fact is string => Boolean(fact));
+
+  const stageFacts = stageSurfaceFacts(args);
+
+  return {
+    activeTab: args.stage,
+    activeClient: args.activeClient,
+    clientKey: args.isApexBound ? 'apexretail' : null,
+    substrate: args.status,
+    pageFacts,
+    stageFacts,
+    facts: [...pageFacts, ...stageFacts],
+  };
+}
+
+function stageSurfaceFacts(args: {
+  stage: StageKey;
+  isApexBound: boolean;
+  patterns: ApexRetailIntelligenceData['patterns'];
+  todayItems: ApexRetailIntelligenceData['todayItems'];
+  aopBands: ArtOfPossibleData;
+}): string[] {
+  if (!args.isApexBound) return [];
+  switch (args.stage) {
+    case 'vendors':
+      return apexVendorFacts();
+    case 'patterns':
+      return args.patterns.slice(0, 10).map((pattern) =>
+        `${pattern.id} ${pattern.name}: ${pattern.description} Failure without controls ${pattern.failureRatePct ?? pattern.withoutPct}%; binds to ${pattern.bindsTo}.`,
+      );
+    case 'today':
+      return args.todayItems.map((item) =>
+        `${item.toneLabel}: ${item.title}. ${item.body}${item.dependency ? ` Dependency: ${item.dependency}` : ''}`,
+      );
+    case 'by-function':
+      return [
+        'By-function matrix shows front-office loyalty, personalization, commerce, and clienteling concentration; middle-office demand, inventory, replenishment, supply-chain, and shrink pressure; and back-office finance, workforce, loss-prevention, and platform modernization dependencies.',
+        `Front-office active refs: ${refsForByFunction('front-office').join(', ')}.`,
+        `Middle-office active refs: ${refsForByFunction('middle-office').join(', ')}.`,
+        `Back-office active refs: ${refsForByFunction('back-office').join(', ')}.`,
+      ];
+    case 'peer-activity':
+      return APEX_RETAIL_PEER_ROWS.slice(0, 8).map((row) =>
+        `${row.cohort}: ${row.outcome}; adoption ${row.adoptionPct}%; ${row.delta}.`,
+      );
+    case 'my-strategy':
+      return APEX_RETAIL_STRATEGY_BULLETS.map((bullet) =>
+        `${bullet.title}: ${bullet.body}`,
+      );
+    case 'sessions':
+      return APEX_RETAIL_SESSIONS.slice(0, 8).map((row) =>
+        `${row.thread}: ${row.lastTurn}; ${row.exchanges} exchanges; ${row.ageLabel}; ${row.pinned ? 'pinned' : 'unpinned'}.`,
+      );
+    case 'art-of-possible':
+      return [
+        `Art of Possible: ${args.aopBands.totalPossibleLabel}; ${args.aopBands.totalCapturingLabel}.`,
+        args.aopBands.cxoFrame,
+        ...args.aopBands.bands.map((band) =>
+          `${band.label}: ${band.verdict}; possible ${band.possibleUsd}; capturing ${band.capturingUsd}; ${band.blocker ?? 'no named blocker'}.`,
+        ),
+      ];
+    default:
+      return [];
+  }
+}
+
+function apexVendorFacts(): string[] {
+  const totalSpend = APEX_RETAIL_VENDOR_SPEND.reduce((sum, row) => sum + row.spendUsdM, 0);
+  const risk = APEX_RETAIL_VENDOR_SPEND.filter((row) => row.health === 'risk');
+  const watch = APEX_RETAIL_VENDOR_SPEND.filter((row) => row.health === 'watch');
+  const analytics = APEX_RETAIL_VENDOR_SPEND.filter((row) =>
+    /data|analytics|cdp|ml|cloud|identity|integration|personalization|demand/i.test(
+      `${row.vendor} ${row.subcategory} ${row.takeaway}`,
+    ),
+  );
+
+  return [
+    `Vendors tab: $${totalSpend.toFixed(1)}M annualized spend across ${APEX_RETAIL_VENDOR_SPEND.length} active vendors; ${risk.length} at risk and ${watch.length} on watch.`,
+    categoryFact('software-saas', 'Software / SaaS'),
+    categoryFact('hardware-cloud', 'Hardware / cloud'),
+    categoryFact('services-si', 'Services / SI'),
+    `At-risk vendors: ${risk.map((row) => `${row.vendor} (${row.spendLabel}; ${row.takeaway})`).join('; ')}.`,
+    `Watch vendors: ${watch.map((row) => `${row.vendor} (${row.spendLabel}; renews in ${row.renewsInMonths ?? 'n/a'}mo; ${row.takeaway})`).join('; ')}.`,
+    `Data and analytics landscape: ${analytics.map((row) => `${row.vendor} ${row.spendLabel} - ${row.subcategory}; ${row.takeaway}`).join('; ')}.`,
+    'CXO read: Adobe Experience Platform, Salesforce Commerce + Marketing Cloud, and Accenture Retail are all implicated in the integration-hub decision; Snowflake and Databricks are useful AI/data foundations but need governance, FinOps, and readiness sequencing before scale.',
+  ];
+}
+
+function categoryFact(category: string, label: string): string {
+  const rows = APEX_RETAIL_VENDOR_SPEND.filter((row) => row.category === category);
+  const spend = rows.reduce((sum, row) => sum + row.spendUsdM, 0);
+  return `${label}: $${spend.toFixed(1)}M across ${rows.length} vendors; top vendors ${rows.slice(0, 4).map((row) => `${row.vendor} ${row.spendLabel}`).join(', ')}.`;
+}
+
+function refsForByFunction(section: 'front-office' | 'middle-office' | 'back-office'): string[] {
+  const rows = APEX_RETAIL_BY_FN_ROWS.filter((row) => {
+    const key = row.function.toLowerCase();
+    if (section === 'front-office') return /loyalty|personalization|commerce|clienteling|customer/.test(key);
+    if (section === 'middle-office') return /demand|inventory|supply|shrink|replenishment/.test(key);
+    return /finance|workforce|loss|platform|it/.test(key);
+  });
+  return rows.flatMap((row) => row.cells.map((cell) => cell.ref).filter((ref): ref is string => Boolean(ref)));
 }
 
 function ApexReadinessStrip({ status }: { status: RetailIntelligenceStatus }) {

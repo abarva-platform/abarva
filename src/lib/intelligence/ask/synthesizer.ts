@@ -28,7 +28,11 @@ RULES:
 7. Do not output source citations inline — the UI renders them separately.
 8. Do not preamble. Start the answer directly.
 9. Never start with hollow acknowledgements like "Good question", "Great question",
-   "Excellent question", "Happy to", or "Let me".`;
+   "Excellent question", "Happy to", or "Let me".
+10. If a SURFACE source is provided, treat it as the user's current live page
+   substrate. Use it before broader tenant, corpus, vendor, or worldview sources
+   when answering what is current, visible, at risk, pending, or strategically
+   important on this page.`;
 
 function chooseModel(intent: AskIntent): string {
   if (intent === 'vendor_comparison' || intent === 'topic_synthesis' || intent === 'general_synthesis') {
@@ -62,8 +66,8 @@ export function sanitizeAskSynthesis(text: string, maxWords = 120): string {
   return `${capped.replace(/[,\s;:]+$/, '')}…`;
 }
 
-function chunkText(text: string): string[] {
-  return text.match(/.{1,80}(?:\s|$)/g)?.map((chunk) => chunk.trimEnd()) ?? [text];
+export function chunkAskText(text: string): string[] {
+  return text.match(/.{1,80}(?:\s|$)/g) ?? [text];
 }
 
 export async function* synthesizeStream(args: {
@@ -101,7 +105,7 @@ export async function* synthesizeStream(args: {
       }
     }
 
-    for (const chunk of chunkText(sanitizeAskSynthesis(text))) {
+    for (const chunk of chunkAskText(sanitizeAskSynthesis(text))) {
       yield chunk;
     }
   } catch (err) {

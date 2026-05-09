@@ -15,7 +15,18 @@ export interface IntentClassification {
   confidence: number;
 }
 
-export type SourceType = 'VENDOR' | 'PATTERN' | 'TOPIC' | 'RESEARCH' | 'REGULATION' | 'BENCHMARK' | 'INSIGHT' | 'GENERAL' | 'WORLDVIEW' | 'TENANT';
+export type SourceType =
+  | 'VENDOR'
+  | 'PATTERN'
+  | 'TOPIC'
+  | 'RESEARCH'
+  | 'REGULATION'
+  | 'BENCHMARK'
+  | 'INSIGHT'
+  | 'GENERAL'
+  | 'WORLDVIEW'
+  | 'TENANT'
+  | 'SURFACE';
 
 export interface AskSource {
   type: SourceType;
@@ -29,4 +40,14 @@ export interface AskSource {
 export interface RetrievalResult {
   sources: AskSource[];
   averageConfidence: number;
+}
+
+export interface AskSurfaceContext {
+  activeTab?: string | null;
+  activeClient?: string | null;
+  clientKey?: string | null;
+  substrate?: unknown;
+  pageFacts?: string[];
+  stageFacts?: string[];
+  facts?: string[];
 }

@@ -41,7 +41,7 @@ export default async function IntelligenceAskPage({
       topBarProps={{
         tenantName: 'Apex Retail Group',
         showLocked: true,
-        context: 'Intelligence · Ask Sentinel',
+        context: 'Intelligence · Ask Sentinel Intel',
       }}
     >
       <style>{`
@@ -89,7 +89,7 @@ export default async function IntelligenceAskPage({
               ← Intelligence
             </Link>
             <span style={{ margin: '0 8px' }}>·</span>
-            <span style={{ color: SHELL.INK_MUTED }}>Ask Sentinel</span>
+            <span style={{ color: SHELL.INK_MUTED }}>Ask Sentinel Intel</span>
           </nav>
 
           {/* Page header */}
