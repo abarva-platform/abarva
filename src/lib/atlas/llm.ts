@@ -12,6 +12,7 @@ import {
 import { assembleRetrievalContext } from '@/lib/agent/retrieval';
 import { CITATION_INSTRUCTION, formatRetrievedContext } from '@/lib/agent/retrieval-format';
 import { formatTowerCurrentStateForPrompt } from '@/lib/atlas/tower-grounding';
+import { buildAtlasValueGrounding, renderAtlasValueGrounding } from '@/lib/atlas/value-grounding';
 import type { AtlasSuggestion, AtlasTenancyCtx, AtlasToolResultMap } from '@/lib/atlas/types';
 
 function sanitizeForTenantPrompt(value: unknown): unknown {
@@ -56,6 +57,7 @@ function buildFallback(toolResults: AtlasToolResultMap): string {
       `${tower.client.clientName} Tower is grounded on ${tower.substrateCounts.initiatives} initiatives, ${tower.substrateCounts.vendors} vendors, ${tower.substrateCounts.kpiSnapshots} KPI snapshots, ${tower.substrateCounts.decisions} decisions, and ${tower.substrateCounts.scenarios} scenarios.`,
       hero ? `The lead displayed metric is ${hero.label}: ${hero.value} (${hero.confidence}).` : null,
       topPressure ? `The lead pressure is ${topPressure.headline}` : 'No active pressure card is displayed from the DB.',
+      toolResults.valueGrounding ? renderAtlasValueGrounding(toolResults.valueGrounding) : null,
       corpusNote,
     ].filter(Boolean).join(' ');
   }
@@ -110,6 +112,13 @@ export async function runAtlasLlm(
     useCases,
     benchmark,
   };
+  const valueGrounding = await buildAtlasValueGrounding({
+    ctx,
+    message,
+    portfolio,
+    towerState,
+  });
+  toolResults.valueGrounding = valueGrounding;
 
   const toolsUsed = [
     'query_tower_current_state',
@@ -119,6 +128,7 @@ export async function runAtlasLlm(
     'query_programs',
     'query_use_cases',
     'query_cohort_benchmarks',
+    'search_canonical_pattern_index',
   ];
 
   const topSignal = signals[0];
@@ -146,6 +156,7 @@ export async function runAtlasLlm(
   const system = buildAtlasSystemPrompt(towerState.client.clientName);
   const towerContext = formatTowerCurrentStateForPrompt(towerState);
   const retrievedContext = formatRetrievedContext(retrievalContext);
+  const valueGroundingContext = renderAtlasValueGrounding(valueGrounding);
   const payload = JSON.stringify(sanitizeForTenantPrompt(toolResults), null, 2);
 
   const result = await client.messages.create({
@@ -161,9 +172,11 @@ export async function runAtlasLlm(
             text: [
               `User question: ${message}`,
               '',
-              'Answer from the current Tower state first. Then use retrieved corpus / industry context when present. If the ask is strategic, explain the implications but route the actual choice to Sentinel or a Program charter.',
+              'Answer from the current Tower state first. Then use retrieved corpus / industry context when present. For financial or value advice, keep projected, tracked, and verified value separate and ground recommendations in the canonical pattern confidence, KPIs, baseline requirements, and measurement method. If any baseline, measurement, or provenance field is missing, say so instead of quantifying an outcome. If the ask is strategic, explain the implications but route the actual choice to Sentinel or a Program charter.',
               '',
               towerContext,
+              '',
+              `ATLAS VALUE GROUNDING\n${valueGroundingContext}`,
               '',
               retrievedContext || 'RETRIEVED CONTEXT\nNo corpus, industry, or client vector chunks were retrieved for this turn.',
               '',

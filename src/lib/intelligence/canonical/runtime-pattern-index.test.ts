@@ -169,6 +169,10 @@ describe('runtime canonical pattern index', () => {
       canonical_id: baseRow.canonical_id,
       source_basis: 'internal_pattern',
       confidence_level: 'high',
+      primary_kpis: ['containment_rate', 'aht', 'csat'],
+      baseline_needed: ['current_contact_volume', 'current_aht', 'current_csat'],
+      measurement_method: 'Compare baseline and pilot cohorts by channel and intent.',
+      value_levers: ['experience', 'productivity', 'cost_takeout'],
       missing_provenance: false,
     });
     expect(result.patterns[0].match_reasons).toEqual(expect.arrayContaining([

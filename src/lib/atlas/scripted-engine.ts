@@ -16,8 +16,10 @@ import type {
   AtlasSuggestion,
   AtlasTenancyCtx,
   AtlasToolResultMap,
+  AtlasValueGrounding,
 } from '@/lib/atlas/types';
 import type { AtlasTowerCurrentState } from '@/lib/atlas/tower-grounding';
+import { buildAtlasValueGrounding, renderAtlasValueGrounding } from '@/lib/atlas/value-grounding';
 
 function dollars(value: number | null | undefined): string {
   if (typeof value !== 'number' || !Number.isFinite(value)) return 'n/a';
@@ -116,13 +118,21 @@ function buildCohortPosition(portfolio: AtlasPortfolioSummary, adoptionBenchmark
     .join(' ');
 }
 
-function buildRoiSummary(portfolio: AtlasPortfolioSummary) {
+function buildRoiSummary(portfolio: AtlasPortfolioSummary, grounding: AtlasValueGrounding) {
   return [
-    `Realized value is ${dollars(portfolio.realizedValueUsd)} against ${dollars(portfolio.estimatedValueUsd)} estimated.`,
-    portfolio.valueAttainmentPctAvg != null ? `Average value attainment is ${percent(portfolio.valueAttainmentPctAvg)}.` : null,
+    `Projected value is ${dollars(portfolio.estimatedValueUsd)} from the Atlas portfolio estimate.`,
+    portfolio.valueAttainmentPctAvg != null
+      ? `Tracked value attainment is ${percent(portfolio.valueAttainmentPctAvg)}.`
+      : 'Tracked value attainment is missing from the portfolio aggregate.',
+    portfolio.trackedActiveUsers != null
+      ? `Tracked active users are ${portfolio.trackedActiveUsers.toLocaleString()}.`
+      : 'Tracked active users are missing from the portfolio aggregate.',
+    `Verified realized value is ${dollars(portfolio.realizedValueUsd)}.`,
+    'Do not treat projected value as verified value.',
     portfolio.averageTrustworthinessScore != null
       ? `Trustworthiness is averaging ${Math.round(portfolio.averageTrustworthinessScore)} out of 100, so the value story is credible but not fully clean.`
       : null,
+    renderAtlasValueGrounding(grounding),
   ]
     .filter(Boolean)
     .join(' ');
@@ -224,14 +234,21 @@ export async function runScriptedAtlasIntent(
 
   if (intent === 'roi') {
     const portfolio = await query_portfolio_aggregates(ctx);
+    const valueGrounding = await buildAtlasValueGrounding({
+      ctx,
+      message,
+      portfolio,
+      towerState,
+    });
     toolResults.portfolio = portfolio;
+    toolResults.valueGrounding = valueGrounding;
     return {
-      response: buildRoiSummary(portfolio),
+      response: buildRoiSummary(portfolio, valueGrounding),
       suggestions: [
         { label: 'Peer value', value: 'How do we compare to peers on value attainment?', kind: 'message' },
         { label: 'Programs', value: 'Show active programs', kind: 'message' },
       ],
-      toolsUsed: ['query_tower_current_state', 'query_portfolio_aggregates'],
+      toolsUsed: ['query_tower_current_state', 'query_portfolio_aggregates', 'search_canonical_pattern_index'],
       toolResults,
     };
   }
