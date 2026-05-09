@@ -32,6 +32,15 @@ import { Ch08DecisionChapter } from '@/components/source/learn/case-study/Ch08De
 import { Ch09SelectionChapter } from '@/components/source/learn/case-study/Ch09SelectionChapter';
 import { Ch10TransitionChapter } from '@/components/source/learn/case-study/Ch10TransitionChapter';
 import { Ch11ValueChapter } from '@/components/source/learn/case-study/Ch11ValueChapter';
+import { ApexRetailCaseStudyIntro } from '@/components/source/learn/case-study/apex/ApexRetailCaseStudyIntro';
+import { ApexCh01StrategyChapter } from '@/components/source/learn/case-study/apex/ApexCh01StrategyChapter';
+import { ApexCh02ScopeChapter } from '@/components/source/learn/case-study/apex/ApexCh02ScopeChapter';
+import { ApexCh03RfpChapter } from '@/components/source/learn/case-study/apex/ApexCh03RfpChapter';
+import { ApexCh04ResponsesChapter } from '@/components/source/learn/case-study/apex/ApexCh04ResponsesChapter';
+import { ApexCh05EvaluationChapter } from '@/components/source/learn/case-study/apex/ApexCh05EvaluationChapter';
+import { ApexCh06PricingChapter } from '@/components/source/learn/case-study/apex/ApexCh06PricingChapter';
+import { ApexCh07BafoChapter } from '@/components/source/learn/case-study/apex/ApexCh07BafoChapter';
+import { ApexCh08DecisionChapter } from '@/components/source/learn/case-study/apex/ApexCh08DecisionChapter';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -92,6 +101,26 @@ export default async function LearnSubPage({ params }: Props) {
         return <Ch10TransitionChapter />;
       case 'value':
         return <Ch11ValueChapter />;
+
+      // Apex Retail case study — $35M AMS Outsourcing 2026
+      case 'apex-retail-case-study':
+        return <ApexRetailCaseStudyIntro />;
+      case 'apex-strategy':
+        return <ApexCh01StrategyChapter />;
+      case 'apex-scope':
+        return <ApexCh02ScopeChapter />;
+      case 'apex-rfp':
+        return <ApexCh03RfpChapter />;
+      case 'apex-responses':
+        return <ApexCh04ResponsesChapter />;
+      case 'apex-evaluation':
+        return <ApexCh05EvaluationChapter />;
+      case 'apex-pricing':
+        return <ApexCh06PricingChapter />;
+      case 'apex-bafo':
+        return <ApexCh07BafoChapter />;
+      case 'apex-decision':
+        return <ApexCh08DecisionChapter />;
 
       // Reference pages
       case 'gates':
