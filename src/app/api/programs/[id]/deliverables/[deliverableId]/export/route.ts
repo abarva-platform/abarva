@@ -172,7 +172,7 @@ async function dispatchRenderer(
 
 export async function POST(
   req: Request,
-  { params }: { params: Promise<{ id: string; kind: string }> },
+  { params }: { params: Promise<{ id: string; deliverableId: string }> },
 ): Promise<Response> {
   // Resolve auth FIRST. 401 short-circuits everything downstream so
   // we don't audit unauthenticated probes.
@@ -187,7 +187,7 @@ export async function POST(
     }
   }
 
-  const { id: programId, kind: kindParam } = await params;
+  const { id: programId, deliverableId: kindParam } = await params;
   if (!programId) return jsonError(400, 'missing_program_id');
   if (!isDeliverableKind(kindParam)) {
     return jsonError(400, 'invalid_kind', `unknown deliverable kind: ${kindParam}`);
