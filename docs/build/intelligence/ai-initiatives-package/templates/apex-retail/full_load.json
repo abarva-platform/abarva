@@ -1,8 +1,7 @@
 {
   "tenant_slug": "apex-retail",
-  "template_version": "v1.0.0",
-  "loaded_at": "2026-05-07T00:00:00Z",
-
+  "template_version": "v1.1.0-apex-pilot",
+  "loaded_at": "2026-05-09T00:00:00Z",
   "business_goals": [
     {
       "goal_id": "AR-GOAL-01",
@@ -29,7 +28,6 @@
       "display_order": 4
     }
   ],
-
   "initiatives": [
     {
       "initiative_id": "apex-llm-copilot-2025",
@@ -179,50 +177,1270 @@
       "aligned_rationale": null
     }
   ],
-
   "kpi_history": [
-    {"initiative_id": "apex-llm-copilot-2025", "kpi_name": "Active seats %", "kpi_unit": "%", "quarter": "Q4-2025", "kpi_value": 18, "target_value": 50, "confidence_level": "HIGH"},
-    {"initiative_id": "apex-llm-copilot-2025", "kpi_name": "Active seats %", "kpi_unit": "%", "quarter": "Q1-2026", "kpi_value": 26, "target_value": 60, "confidence_level": "HIGH"},
-    {"initiative_id": "apex-llm-copilot-2025", "kpi_name": "Active seats %", "kpi_unit": "%", "quarter": "Q2-2026", "kpi_value": 32, "target_value": 70, "confidence_level": "HIGH"},
-    {"initiative_id": "apex-sdlc-github-copilot-2025", "kpi_name": "PR cycle time", "kpi_unit": "days", "quarter": "Q3-2025", "kpi_value": 5.4, "target_value": 4.0, "confidence_level": "HIGH"},
-    {"initiative_id": "apex-sdlc-github-copilot-2025", "kpi_name": "PR cycle time", "kpi_unit": "days", "quarter": "Q4-2025", "kpi_value": 4.6, "target_value": 4.0, "confidence_level": "HIGH"},
-    {"initiative_id": "apex-sdlc-github-copilot-2025", "kpi_name": "PR cycle time", "kpi_unit": "days", "quarter": "Q1-2026", "kpi_value": 4.2, "target_value": 4.0, "confidence_level": "HIGH"},
-    {"initiative_id": "apex-agentic-cx-2026", "kpi_name": "Containment rate", "kpi_unit": "%", "quarter": "Q1-2026", "kpi_value": 38, "target_value": 65, "confidence_level": "MED"},
-    {"initiative_id": "apex-agentic-cx-2026", "kpi_name": "Containment rate", "kpi_unit": "%", "quarter": "Q2-2026", "kpi_value": 47, "target_value": 65, "confidence_level": "MED"},
-    {"initiative_id": "apex-erp-joule-merch-2025", "kpi_name": "Realized value", "kpi_unit": "$M", "quarter": "Q4-2025", "kpi_value": 0.3, "target_value": 0.7, "confidence_level": "MED"},
-    {"initiative_id": "apex-erp-joule-merch-2025", "kpi_name": "Realized value", "kpi_unit": "$M", "quarter": "Q1-2026", "kpi_value": 0.5, "target_value": 1.0, "confidence_level": "MED"},
-    {"initiative_id": "apex-erp-joule-merch-2025", "kpi_name": "Realized value", "kpi_unit": "$M", "quarter": "Q2-2026", "kpi_value": 0.8, "target_value": 1.4, "confidence_level": "MED"},
-    {"initiative_id": "apex-ml-demand-forecast-2024", "kpi_name": "Forecast accuracy MAPE", "kpi_unit": "%", "quarter": "Q1-2024", "kpi_value": 18.4, "target_value": 12.0, "confidence_level": "HIGH"},
-    {"initiative_id": "apex-ml-demand-forecast-2024", "kpi_name": "Forecast accuracy MAPE", "kpi_unit": "%", "quarter": "Q1-2025", "kpi_value": 14.2, "target_value": 12.0, "confidence_level": "HIGH"},
-    {"initiative_id": "apex-ml-demand-forecast-2024", "kpi_name": "Forecast accuracy MAPE", "kpi_unit": "%", "quarter": "Q1-2026", "kpi_value": 12.5, "target_value": 12.0, "confidence_level": "HIGH"},
-    {"initiative_id": "apex-customer-personalization-2024", "kpi_name": "Revenue per session", "kpi_unit": "$", "quarter": "Q1-2024", "kpi_value": 4.20, "target_value": 5.50, "confidence_level": "HIGH"},
-    {"initiative_id": "apex-customer-personalization-2024", "kpi_name": "Revenue per session", "kpi_unit": "$", "quarter": "Q1-2025", "kpi_value": 4.80, "target_value": 5.50, "confidence_level": "HIGH"},
-    {"initiative_id": "apex-customer-personalization-2024", "kpi_name": "Revenue per session", "kpi_unit": "$", "quarter": "Q1-2026", "kpi_value": 5.24, "target_value": 5.80, "confidence_level": "HIGH"}
+    {
+      "initiative_id": "apex-llm-copilot-2025",
+      "kpi_name": "Active associates percent",
+      "kpi_unit": "%",
+      "quarter": "Q3-2025",
+      "kpi_value": 18,
+      "target_value": 45,
+      "peer_median": 31,
+      "confidence_level": "HIGH"
+    },
+    {
+      "initiative_id": "apex-llm-copilot-2025",
+      "kpi_name": "Active associates percent",
+      "kpi_unit": "%",
+      "quarter": "Q4-2025",
+      "kpi_value": 24,
+      "target_value": 55,
+      "peer_median": 38,
+      "confidence_level": "HIGH"
+    },
+    {
+      "initiative_id": "apex-llm-copilot-2025",
+      "kpi_name": "Active associates percent",
+      "kpi_unit": "%",
+      "quarter": "Q1-2026",
+      "kpi_value": 29,
+      "target_value": 65,
+      "peer_median": 44,
+      "confidence_level": "HIGH"
+    },
+    {
+      "initiative_id": "apex-llm-copilot-2025",
+      "kpi_name": "Active associates percent",
+      "kpi_unit": "%",
+      "quarter": "Q2-2026",
+      "kpi_value": 34,
+      "target_value": 70,
+      "peer_median": 49,
+      "confidence_level": "HIGH"
+    },
+    {
+      "initiative_id": "apex-llm-copilot-2025",
+      "kpi_name": "Return-policy lookup deflection",
+      "kpi_unit": "%",
+      "quarter": "Q3-2025",
+      "kpi_value": 9,
+      "target_value": 25,
+      "peer_median": 18,
+      "confidence_level": "MED"
+    },
+    {
+      "initiative_id": "apex-llm-copilot-2025",
+      "kpi_name": "Return-policy lookup deflection",
+      "kpi_unit": "%",
+      "quarter": "Q4-2025",
+      "kpi_value": 16,
+      "target_value": 35,
+      "peer_median": 24,
+      "confidence_level": "MED"
+    },
+    {
+      "initiative_id": "apex-llm-copilot-2025",
+      "kpi_name": "Return-policy lookup deflection",
+      "kpi_unit": "%",
+      "quarter": "Q1-2026",
+      "kpi_value": 22,
+      "target_value": 45,
+      "peer_median": 31,
+      "confidence_level": "MED"
+    },
+    {
+      "initiative_id": "apex-llm-copilot-2025",
+      "kpi_name": "Return-policy lookup deflection",
+      "kpi_unit": "%",
+      "quarter": "Q2-2026",
+      "kpi_value": 28,
+      "target_value": 50,
+      "peer_median": 36,
+      "confidence_level": "MED"
+    },
+    {
+      "initiative_id": "apex-llm-copilot-2025",
+      "kpi_name": "Shift handoff time saved",
+      "kpi_unit": "min/shift",
+      "quarter": "Q3-2025",
+      "kpi_value": 4.2,
+      "target_value": 8,
+      "peer_median": 6,
+      "confidence_level": "MED"
+    },
+    {
+      "initiative_id": "apex-llm-copilot-2025",
+      "kpi_name": "Shift handoff time saved",
+      "kpi_unit": "min/shift",
+      "quarter": "Q4-2025",
+      "kpi_value": 5.8,
+      "target_value": 10,
+      "peer_median": 7.5,
+      "confidence_level": "MED"
+    },
+    {
+      "initiative_id": "apex-llm-copilot-2025",
+      "kpi_name": "Shift handoff time saved",
+      "kpi_unit": "min/shift",
+      "quarter": "Q1-2026",
+      "kpi_value": 7.1,
+      "target_value": 12,
+      "peer_median": 9,
+      "confidence_level": "MED"
+    },
+    {
+      "initiative_id": "apex-llm-copilot-2025",
+      "kpi_name": "Shift handoff time saved",
+      "kpi_unit": "min/shift",
+      "quarter": "Q2-2026",
+      "kpi_value": 8.4,
+      "target_value": 14,
+      "peer_median": 10.5,
+      "confidence_level": "MED"
+    },
+    {
+      "initiative_id": "apex-sdlc-github-copilot-2025",
+      "kpi_name": "PR cycle time",
+      "kpi_unit": "days",
+      "quarter": "Q3-2025",
+      "kpi_value": 5.4,
+      "target_value": 4.8,
+      "peer_median": 5.1,
+      "confidence_level": "HIGH"
+    },
+    {
+      "initiative_id": "apex-sdlc-github-copilot-2025",
+      "kpi_name": "PR cycle time",
+      "kpi_unit": "days",
+      "quarter": "Q4-2025",
+      "kpi_value": 4.6,
+      "target_value": 4.4,
+      "peer_median": 4.8,
+      "confidence_level": "HIGH"
+    },
+    {
+      "initiative_id": "apex-sdlc-github-copilot-2025",
+      "kpi_name": "PR cycle time",
+      "kpi_unit": "days",
+      "quarter": "Q1-2026",
+      "kpi_value": 4.2,
+      "target_value": 4.1,
+      "peer_median": 4.5,
+      "confidence_level": "HIGH"
+    },
+    {
+      "initiative_id": "apex-sdlc-github-copilot-2025",
+      "kpi_name": "PR cycle time",
+      "kpi_unit": "days",
+      "quarter": "Q2-2026",
+      "kpi_value": 4,
+      "target_value": 3.8,
+      "peer_median": 4.2,
+      "confidence_level": "HIGH"
+    },
+    {
+      "initiative_id": "apex-sdlc-github-copilot-2025",
+      "kpi_name": "Suggestions accepted per user per day",
+      "kpi_unit": "count",
+      "quarter": "Q3-2025",
+      "kpi_value": 14,
+      "target_value": 15,
+      "peer_median": 12,
+      "confidence_level": "HIGH"
+    },
+    {
+      "initiative_id": "apex-sdlc-github-copilot-2025",
+      "kpi_name": "Suggestions accepted per user per day",
+      "kpi_unit": "count",
+      "quarter": "Q4-2025",
+      "kpi_value": 18,
+      "target_value": 18,
+      "peer_median": 15,
+      "confidence_level": "HIGH"
+    },
+    {
+      "initiative_id": "apex-sdlc-github-copilot-2025",
+      "kpi_name": "Suggestions accepted per user per day",
+      "kpi_unit": "count",
+      "quarter": "Q1-2026",
+      "kpi_value": 22,
+      "target_value": 21,
+      "peer_median": 17,
+      "confidence_level": "HIGH"
+    },
+    {
+      "initiative_id": "apex-sdlc-github-copilot-2025",
+      "kpi_name": "Suggestions accepted per user per day",
+      "kpi_unit": "count",
+      "quarter": "Q2-2026",
+      "kpi_value": 24,
+      "target_value": 24,
+      "peer_median": 19,
+      "confidence_level": "HIGH"
+    },
+    {
+      "initiative_id": "apex-sdlc-github-copilot-2025",
+      "kpi_name": "Automated test pass rate after AI edits",
+      "kpi_unit": "%",
+      "quarter": "Q3-2025",
+      "kpi_value": 76,
+      "target_value": 78,
+      "peer_median": 74,
+      "confidence_level": "MED"
+    },
+    {
+      "initiative_id": "apex-sdlc-github-copilot-2025",
+      "kpi_name": "Automated test pass rate after AI edits",
+      "kpi_unit": "%",
+      "quarter": "Q4-2025",
+      "kpi_value": 81,
+      "target_value": 82,
+      "peer_median": 78,
+      "confidence_level": "MED"
+    },
+    {
+      "initiative_id": "apex-sdlc-github-copilot-2025",
+      "kpi_name": "Automated test pass rate after AI edits",
+      "kpi_unit": "%",
+      "quarter": "Q1-2026",
+      "kpi_value": 84,
+      "target_value": 85,
+      "peer_median": 81,
+      "confidence_level": "MED"
+    },
+    {
+      "initiative_id": "apex-sdlc-github-copilot-2025",
+      "kpi_name": "Automated test pass rate after AI edits",
+      "kpi_unit": "%",
+      "quarter": "Q2-2026",
+      "kpi_value": 86,
+      "target_value": 88,
+      "peer_median": 83,
+      "confidence_level": "MED"
+    },
+    {
+      "initiative_id": "apex-agentic-cx-2026",
+      "kpi_name": "Containment rate",
+      "kpi_unit": "%",
+      "quarter": "Q3-2025",
+      "kpi_value": 24,
+      "target_value": 35,
+      "peer_median": 30,
+      "confidence_level": "MED"
+    },
+    {
+      "initiative_id": "apex-agentic-cx-2026",
+      "kpi_name": "Containment rate",
+      "kpi_unit": "%",
+      "quarter": "Q4-2025",
+      "kpi_value": 32,
+      "target_value": 45,
+      "peer_median": 38,
+      "confidence_level": "MED"
+    },
+    {
+      "initiative_id": "apex-agentic-cx-2026",
+      "kpi_name": "Containment rate",
+      "kpi_unit": "%",
+      "quarter": "Q1-2026",
+      "kpi_value": 38,
+      "target_value": 55,
+      "peer_median": 44,
+      "confidence_level": "MED"
+    },
+    {
+      "initiative_id": "apex-agentic-cx-2026",
+      "kpi_name": "Containment rate",
+      "kpi_unit": "%",
+      "quarter": "Q2-2026",
+      "kpi_value": 47,
+      "target_value": 65,
+      "peer_median": 52,
+      "confidence_level": "MED"
+    },
+    {
+      "initiative_id": "apex-agentic-cx-2026",
+      "kpi_name": "Escalation quality score",
+      "kpi_unit": "score",
+      "quarter": "Q3-2025",
+      "kpi_value": 61,
+      "target_value": 72,
+      "peer_median": 66,
+      "confidence_level": "MED"
+    },
+    {
+      "initiative_id": "apex-agentic-cx-2026",
+      "kpi_name": "Escalation quality score",
+      "kpi_unit": "score",
+      "quarter": "Q4-2025",
+      "kpi_value": 64,
+      "target_value": 76,
+      "peer_median": 69,
+      "confidence_level": "MED"
+    },
+    {
+      "initiative_id": "apex-agentic-cx-2026",
+      "kpi_name": "Escalation quality score",
+      "kpi_unit": "score",
+      "quarter": "Q1-2026",
+      "kpi_value": 68,
+      "target_value": 80,
+      "peer_median": 72,
+      "confidence_level": "MED"
+    },
+    {
+      "initiative_id": "apex-agentic-cx-2026",
+      "kpi_name": "Escalation quality score",
+      "kpi_unit": "score",
+      "quarter": "Q2-2026",
+      "kpi_value": 72,
+      "target_value": 84,
+      "peer_median": 75,
+      "confidence_level": "MED"
+    },
+    {
+      "initiative_id": "apex-agentic-cx-2026",
+      "kpi_name": "Cost per resolved chat",
+      "kpi_unit": "$",
+      "quarter": "Q3-2025",
+      "kpi_value": 5.8,
+      "target_value": 5.2,
+      "peer_median": 5.5,
+      "confidence_level": "LOW"
+    },
+    {
+      "initiative_id": "apex-agentic-cx-2026",
+      "kpi_name": "Cost per resolved chat",
+      "kpi_unit": "$",
+      "quarter": "Q4-2025",
+      "kpi_value": 5.1,
+      "target_value": 4.8,
+      "peer_median": 5,
+      "confidence_level": "LOW"
+    },
+    {
+      "initiative_id": "apex-agentic-cx-2026",
+      "kpi_name": "Cost per resolved chat",
+      "kpi_unit": "$",
+      "quarter": "Q1-2026",
+      "kpi_value": 4.6,
+      "target_value": 4.3,
+      "peer_median": 4.7,
+      "confidence_level": "LOW"
+    },
+    {
+      "initiative_id": "apex-agentic-cx-2026",
+      "kpi_name": "Cost per resolved chat",
+      "kpi_unit": "$",
+      "quarter": "Q2-2026",
+      "kpi_value": 4,
+      "target_value": 3.8,
+      "peer_median": 4.4,
+      "confidence_level": "LOW"
+    },
+    {
+      "initiative_id": "apex-erp-joule-merch-2025",
+      "kpi_name": "Realized value",
+      "kpi_unit": "$M",
+      "quarter": "Q3-2025",
+      "kpi_value": 0.2,
+      "target_value": 0.4,
+      "peer_median": 0.3,
+      "confidence_level": "MED"
+    },
+    {
+      "initiative_id": "apex-erp-joule-merch-2025",
+      "kpi_name": "Realized value",
+      "kpi_unit": "$M",
+      "quarter": "Q4-2025",
+      "kpi_value": 0.3,
+      "target_value": 0.7,
+      "peer_median": 0.5,
+      "confidence_level": "MED"
+    },
+    {
+      "initiative_id": "apex-erp-joule-merch-2025",
+      "kpi_name": "Realized value",
+      "kpi_unit": "$M",
+      "quarter": "Q1-2026",
+      "kpi_value": 0.5,
+      "target_value": 1,
+      "peer_median": 0.8,
+      "confidence_level": "MED"
+    },
+    {
+      "initiative_id": "apex-erp-joule-merch-2025",
+      "kpi_name": "Realized value",
+      "kpi_unit": "$M",
+      "quarter": "Q2-2026",
+      "kpi_value": 0.8,
+      "target_value": 1.4,
+      "peer_median": 1,
+      "confidence_level": "MED"
+    },
+    {
+      "initiative_id": "apex-erp-joule-merch-2025",
+      "kpi_name": "POS integration completion",
+      "kpi_unit": "%",
+      "quarter": "Q3-2025",
+      "kpi_value": 18,
+      "target_value": 30,
+      "peer_median": 24,
+      "confidence_level": "MED"
+    },
+    {
+      "initiative_id": "apex-erp-joule-merch-2025",
+      "kpi_name": "POS integration completion",
+      "kpi_unit": "%",
+      "quarter": "Q4-2025",
+      "kpi_value": 31,
+      "target_value": 45,
+      "peer_median": 38,
+      "confidence_level": "MED"
+    },
+    {
+      "initiative_id": "apex-erp-joule-merch-2025",
+      "kpi_name": "POS integration completion",
+      "kpi_unit": "%",
+      "quarter": "Q1-2026",
+      "kpi_value": 46,
+      "target_value": 60,
+      "peer_median": 52,
+      "confidence_level": "MED"
+    },
+    {
+      "initiative_id": "apex-erp-joule-merch-2025",
+      "kpi_name": "POS integration completion",
+      "kpi_unit": "%",
+      "quarter": "Q2-2026",
+      "kpi_value": 58,
+      "target_value": 75,
+      "peer_median": 64,
+      "confidence_level": "MED"
+    },
+    {
+      "initiative_id": "apex-erp-joule-merch-2025",
+      "kpi_name": "Markdown timing lift",
+      "kpi_unit": "%",
+      "quarter": "Q3-2025",
+      "kpi_value": 3,
+      "target_value": 8,
+      "peer_median": 5,
+      "confidence_level": "LOW"
+    },
+    {
+      "initiative_id": "apex-erp-joule-merch-2025",
+      "kpi_name": "Markdown timing lift",
+      "kpi_unit": "%",
+      "quarter": "Q4-2025",
+      "kpi_value": 6,
+      "target_value": 12,
+      "peer_median": 8,
+      "confidence_level": "LOW"
+    },
+    {
+      "initiative_id": "apex-erp-joule-merch-2025",
+      "kpi_name": "Markdown timing lift",
+      "kpi_unit": "%",
+      "quarter": "Q1-2026",
+      "kpi_value": 9,
+      "target_value": 16,
+      "peer_median": 11,
+      "confidence_level": "LOW"
+    },
+    {
+      "initiative_id": "apex-erp-joule-merch-2025",
+      "kpi_name": "Markdown timing lift",
+      "kpi_unit": "%",
+      "quarter": "Q2-2026",
+      "kpi_value": 13,
+      "target_value": 20,
+      "peer_median": 14,
+      "confidence_level": "LOW"
+    },
+    {
+      "initiative_id": "apex-ml-demand-forecast-2024",
+      "kpi_name": "Forecast accuracy MAPE",
+      "kpi_unit": "%",
+      "quarter": "Q3-2025",
+      "kpi_value": 14.2,
+      "target_value": 12,
+      "peer_median": 15,
+      "confidence_level": "HIGH"
+    },
+    {
+      "initiative_id": "apex-ml-demand-forecast-2024",
+      "kpi_name": "Forecast accuracy MAPE",
+      "kpi_unit": "%",
+      "quarter": "Q4-2025",
+      "kpi_value": 11.6,
+      "target_value": 11,
+      "peer_median": 13,
+      "confidence_level": "HIGH"
+    },
+    {
+      "initiative_id": "apex-ml-demand-forecast-2024",
+      "kpi_name": "Forecast accuracy MAPE",
+      "kpi_unit": "%",
+      "quarter": "Q1-2026",
+      "kpi_value": 9.8,
+      "target_value": 10,
+      "peer_median": 11.5,
+      "confidence_level": "HIGH"
+    },
+    {
+      "initiative_id": "apex-ml-demand-forecast-2024",
+      "kpi_name": "Forecast accuracy MAPE",
+      "kpi_unit": "%",
+      "quarter": "Q2-2026",
+      "kpi_value": 8.4,
+      "target_value": 9,
+      "peer_median": 10.5,
+      "confidence_level": "HIGH"
+    },
+    {
+      "initiative_id": "apex-ml-demand-forecast-2024",
+      "kpi_name": "Inventory write-down avoidance",
+      "kpi_unit": "$M/Q",
+      "quarter": "Q3-2025",
+      "kpi_value": 0.4,
+      "target_value": 0.5,
+      "peer_median": 0.3,
+      "confidence_level": "HIGH"
+    },
+    {
+      "initiative_id": "apex-ml-demand-forecast-2024",
+      "kpi_name": "Inventory write-down avoidance",
+      "kpi_unit": "$M/Q",
+      "quarter": "Q4-2025",
+      "kpi_value": 0.7,
+      "target_value": 0.8,
+      "peer_median": 0.5,
+      "confidence_level": "HIGH"
+    },
+    {
+      "initiative_id": "apex-ml-demand-forecast-2024",
+      "kpi_name": "Inventory write-down avoidance",
+      "kpi_unit": "$M/Q",
+      "quarter": "Q1-2026",
+      "kpi_value": 1.1,
+      "target_value": 1,
+      "peer_median": 0.8,
+      "confidence_level": "HIGH"
+    },
+    {
+      "initiative_id": "apex-ml-demand-forecast-2024",
+      "kpi_name": "Inventory write-down avoidance",
+      "kpi_unit": "$M/Q",
+      "quarter": "Q2-2026",
+      "kpi_value": 1.4,
+      "target_value": 1.2,
+      "peer_median": 1,
+      "confidence_level": "HIGH"
+    },
+    {
+      "initiative_id": "apex-ml-demand-forecast-2024",
+      "kpi_name": "Buyer override rate",
+      "kpi_unit": "%",
+      "quarter": "Q3-2025",
+      "kpi_value": 22,
+      "target_value": 20,
+      "peer_median": 26,
+      "confidence_level": "HIGH"
+    },
+    {
+      "initiative_id": "apex-ml-demand-forecast-2024",
+      "kpi_name": "Buyer override rate",
+      "kpi_unit": "%",
+      "quarter": "Q4-2025",
+      "kpi_value": 18,
+      "target_value": 17,
+      "peer_median": 22,
+      "confidence_level": "HIGH"
+    },
+    {
+      "initiative_id": "apex-ml-demand-forecast-2024",
+      "kpi_name": "Buyer override rate",
+      "kpi_unit": "%",
+      "quarter": "Q1-2026",
+      "kpi_value": 14,
+      "target_value": 14,
+      "peer_median": 19,
+      "confidence_level": "HIGH"
+    },
+    {
+      "initiative_id": "apex-ml-demand-forecast-2024",
+      "kpi_name": "Buyer override rate",
+      "kpi_unit": "%",
+      "quarter": "Q2-2026",
+      "kpi_value": 11,
+      "target_value": 12,
+      "peer_median": 16,
+      "confidence_level": "HIGH"
+    },
+    {
+      "initiative_id": "apex-infra-finops-ai-2026",
+      "kpi_name": "Cloud cost attribution coverage",
+      "kpi_unit": "%",
+      "quarter": "Q3-2025",
+      "kpi_value": 18,
+      "target_value": 25,
+      "peer_median": 21,
+      "confidence_level": "MED"
+    },
+    {
+      "initiative_id": "apex-infra-finops-ai-2026",
+      "kpi_name": "Cloud cost attribution coverage",
+      "kpi_unit": "%",
+      "quarter": "Q4-2025",
+      "kpi_value": 29,
+      "target_value": 40,
+      "peer_median": 34,
+      "confidence_level": "MED"
+    },
+    {
+      "initiative_id": "apex-infra-finops-ai-2026",
+      "kpi_name": "Cloud cost attribution coverage",
+      "kpi_unit": "%",
+      "quarter": "Q1-2026",
+      "kpi_value": 42,
+      "target_value": 55,
+      "peer_median": 47,
+      "confidence_level": "MED"
+    },
+    {
+      "initiative_id": "apex-infra-finops-ai-2026",
+      "kpi_name": "Cloud cost attribution coverage",
+      "kpi_unit": "%",
+      "quarter": "Q2-2026",
+      "kpi_value": 56,
+      "target_value": 70,
+      "peer_median": 58,
+      "confidence_level": "MED"
+    },
+    {
+      "initiative_id": "apex-infra-finops-ai-2026",
+      "kpi_name": "Model spend tagged to owner",
+      "kpi_unit": "%",
+      "quarter": "Q3-2025",
+      "kpi_value": 12,
+      "target_value": 20,
+      "peer_median": 17,
+      "confidence_level": "MED"
+    },
+    {
+      "initiative_id": "apex-infra-finops-ai-2026",
+      "kpi_name": "Model spend tagged to owner",
+      "kpi_unit": "%",
+      "quarter": "Q4-2025",
+      "kpi_value": 24,
+      "target_value": 35,
+      "peer_median": 29,
+      "confidence_level": "MED"
+    },
+    {
+      "initiative_id": "apex-infra-finops-ai-2026",
+      "kpi_name": "Model spend tagged to owner",
+      "kpi_unit": "%",
+      "quarter": "Q1-2026",
+      "kpi_value": 39,
+      "target_value": 50,
+      "peer_median": 40,
+      "confidence_level": "MED"
+    },
+    {
+      "initiative_id": "apex-infra-finops-ai-2026",
+      "kpi_name": "Model spend tagged to owner",
+      "kpi_unit": "%",
+      "quarter": "Q2-2026",
+      "kpi_value": 51,
+      "target_value": 65,
+      "peer_median": 52,
+      "confidence_level": "MED"
+    },
+    {
+      "initiative_id": "apex-infra-finops-ai-2026",
+      "kpi_name": "Budget variance detected before close",
+      "kpi_unit": "%",
+      "quarter": "Q3-2025",
+      "kpi_value": 8,
+      "target_value": 15,
+      "peer_median": 10,
+      "confidence_level": "LOW"
+    },
+    {
+      "initiative_id": "apex-infra-finops-ai-2026",
+      "kpi_name": "Budget variance detected before close",
+      "kpi_unit": "%",
+      "quarter": "Q4-2025",
+      "kpi_value": 14,
+      "target_value": 25,
+      "peer_median": 18,
+      "confidence_level": "LOW"
+    },
+    {
+      "initiative_id": "apex-infra-finops-ai-2026",
+      "kpi_name": "Budget variance detected before close",
+      "kpi_unit": "%",
+      "quarter": "Q1-2026",
+      "kpi_value": 23,
+      "target_value": 35,
+      "peer_median": 26,
+      "confidence_level": "LOW"
+    },
+    {
+      "initiative_id": "apex-infra-finops-ai-2026",
+      "kpi_name": "Budget variance detected before close",
+      "kpi_unit": "%",
+      "quarter": "Q2-2026",
+      "kpi_value": 31,
+      "target_value": 45,
+      "peer_median": 34,
+      "confidence_level": "LOW"
+    },
+    {
+      "initiative_id": "apex-customer-personalization-2024",
+      "kpi_name": "Revenue per session",
+      "kpi_unit": "$",
+      "quarter": "Q3-2025",
+      "kpi_value": 4.2,
+      "target_value": 5,
+      "peer_median": 4.7,
+      "confidence_level": "HIGH"
+    },
+    {
+      "initiative_id": "apex-customer-personalization-2024",
+      "kpi_name": "Revenue per session",
+      "kpi_unit": "$",
+      "quarter": "Q4-2025",
+      "kpi_value": 4.6,
+      "target_value": 5.2,
+      "peer_median": 4.9,
+      "confidence_level": "HIGH"
+    },
+    {
+      "initiative_id": "apex-customer-personalization-2024",
+      "kpi_name": "Revenue per session",
+      "kpi_unit": "$",
+      "quarter": "Q1-2026",
+      "kpi_value": 4.9,
+      "target_value": 5.5,
+      "peer_median": 5.1,
+      "confidence_level": "HIGH"
+    },
+    {
+      "initiative_id": "apex-customer-personalization-2024",
+      "kpi_name": "Revenue per session",
+      "kpi_unit": "$",
+      "quarter": "Q2-2026",
+      "kpi_value": 5.24,
+      "target_value": 5.8,
+      "peer_median": 5.3,
+      "confidence_level": "HIGH"
+    },
+    {
+      "initiative_id": "apex-customer-personalization-2024",
+      "kpi_name": "Personalized offer conversion",
+      "kpi_unit": "%",
+      "quarter": "Q3-2025",
+      "kpi_value": 7.8,
+      "target_value": 9,
+      "peer_median": 8.4,
+      "confidence_level": "HIGH"
+    },
+    {
+      "initiative_id": "apex-customer-personalization-2024",
+      "kpi_name": "Personalized offer conversion",
+      "kpi_unit": "%",
+      "quarter": "Q4-2025",
+      "kpi_value": 8.6,
+      "target_value": 10,
+      "peer_median": 9,
+      "confidence_level": "HIGH"
+    },
+    {
+      "initiative_id": "apex-customer-personalization-2024",
+      "kpi_name": "Personalized offer conversion",
+      "kpi_unit": "%",
+      "quarter": "Q1-2026",
+      "kpi_value": 9.4,
+      "target_value": 11,
+      "peer_median": 9.6,
+      "confidence_level": "HIGH"
+    },
+    {
+      "initiative_id": "apex-customer-personalization-2024",
+      "kpi_name": "Personalized offer conversion",
+      "kpi_unit": "%",
+      "quarter": "Q2-2026",
+      "kpi_value": 10.1,
+      "target_value": 12,
+      "peer_median": 10.2,
+      "confidence_level": "HIGH"
+    },
+    {
+      "initiative_id": "apex-customer-personalization-2024",
+      "kpi_name": "Opt-out rate",
+      "kpi_unit": "%",
+      "quarter": "Q3-2025",
+      "kpi_value": 5.8,
+      "target_value": 5.5,
+      "peer_median": 6.1,
+      "confidence_level": "MED"
+    },
+    {
+      "initiative_id": "apex-customer-personalization-2024",
+      "kpi_name": "Opt-out rate",
+      "kpi_unit": "%",
+      "quarter": "Q4-2025",
+      "kpi_value": 5.2,
+      "target_value": 5,
+      "peer_median": 5.7,
+      "confidence_level": "MED"
+    },
+    {
+      "initiative_id": "apex-customer-personalization-2024",
+      "kpi_name": "Opt-out rate",
+      "kpi_unit": "%",
+      "quarter": "Q1-2026",
+      "kpi_value": 4.7,
+      "target_value": 4.8,
+      "peer_median": 5.3,
+      "confidence_level": "MED"
+    },
+    {
+      "initiative_id": "apex-customer-personalization-2024",
+      "kpi_name": "Opt-out rate",
+      "kpi_unit": "%",
+      "quarter": "Q2-2026",
+      "kpi_value": 4.4,
+      "target_value": 4.5,
+      "peer_median": 5,
+      "confidence_level": "MED"
+    }
   ],
-
   "stakeholder_notes": [
-    {"initiative_id": "apex-llm-copilot-2025", "stakeholder_name": "L. Tanaka", "stakeholder_title": "VP Store Operations", "interview_date": "2026-04-18", "quote": "Associates who use Copilot daily love it. The problem is getting them past day 3. We need to fix onboarding before we expand.", "themes": ["adoption", "onboarding"], "attribution_consent": true},
-    {"initiative_id": "apex-agentic-cx-2026", "stakeholder_name": "M. Reyes", "stakeholder_title": "VP Customer Care", "interview_date": "2026-04-22", "quote": "The escalations the agent sends us are worse than the ones humans escalate. Quality of handoff matters more than containment rate.", "themes": ["escalation", "quality"], "attribution_consent": true},
-    {"initiative_id": "apex-ml-demand-forecast-2024", "stakeholder_name": "P. Anand", "stakeholder_title": "VP Supply Chain", "interview_date": "2026-03-12", "quote": "This is the program that bought us credibility for everything else we're doing in AI. Don't break it.", "themes": ["foundation", "credibility"], "attribution_consent": true}
+    {
+      "initiative_id": "apex-llm-copilot-2025",
+      "stakeholder_name": "VP Store Operations",
+      "stakeholder_title": "Store Operations Sponsor",
+      "interview_date": "2026-04-18",
+      "quote": "Associates who use Copilot daily love it. The problem is getting them past day three, so onboarding has to move before expansion.",
+      "themes": [
+        "adoption",
+        "onboarding"
+      ],
+      "attribution_consent": true
+    },
+    {
+      "initiative_id": "apex-llm-copilot-2025",
+      "stakeholder_name": "Store Training Lead",
+      "stakeholder_title": "Enablement Lead",
+      "interview_date": "2026-04-21",
+      "quote": "The barrier is not interest. Store managers need a two-shift routine that makes Copilot part of opening and closing work.",
+      "themes": [
+        "training",
+        "store-routine"
+      ],
+      "attribution_consent": false
+    },
+    {
+      "initiative_id": "apex-sdlc-github-copilot-2025",
+      "stakeholder_name": "Engineering Productivity Lead",
+      "stakeholder_title": "Engineering Enablement",
+      "interview_date": "2026-04-16",
+      "quote": "Copilot is no longer an experiment for engineering. The governance question is how to bundle it with Cursor without paying twice for the same behavior.",
+      "themes": [
+        "developer-productivity",
+        "vendor-bundle"
+      ],
+      "attribution_consent": true
+    },
+    {
+      "initiative_id": "apex-sdlc-github-copilot-2025",
+      "stakeholder_name": "Security Architecture Lead",
+      "stakeholder_title": "Security Architecture",
+      "interview_date": "2026-04-19",
+      "quote": "Security wants prompt-level auditability before a broader enterprise tier shift. The productivity case is strong, but controls lag the enthusiasm.",
+      "themes": [
+        "security-controls",
+        "auditability"
+      ],
+      "attribution_consent": false
+    },
+    {
+      "initiative_id": "apex-agentic-cx-2026",
+      "stakeholder_name": "VP Customer Care",
+      "stakeholder_title": "Customer Care Sponsor",
+      "interview_date": "2026-04-22",
+      "quote": "The escalations the agent sends us are worse than the ones humans escalate. Quality of handoff matters more than containment rate.",
+      "themes": [
+        "escalation",
+        "quality"
+      ],
+      "attribution_consent": true
+    },
+    {
+      "initiative_id": "apex-agentic-cx-2026",
+      "stakeholder_name": "Brand Risk Reviewer",
+      "stakeholder_title": "Brand Governance",
+      "interview_date": "2026-04-24",
+      "quote": "Voice expansion should wait until the agent can preserve tone and context during difficult returns. Chat containment alone is not enough evidence.",
+      "themes": [
+        "brand-risk",
+        "voice-expansion"
+      ],
+      "attribution_consent": false
+    },
+    {
+      "initiative_id": "apex-erp-joule-merch-2025",
+      "stakeholder_name": "Chief Merchandising Office",
+      "stakeholder_title": "Merchandising Sponsor",
+      "interview_date": "2026-04-11",
+      "quote": "Joule helps planning teams see markdown timing earlier, but the POS feed is still the blocker. Without that integration, the forecast stays half-blind.",
+      "themes": [
+        "pos-integration",
+        "value-lag"
+      ],
+      "attribution_consent": true
+    },
+    {
+      "initiative_id": "apex-erp-joule-merch-2025",
+      "stakeholder_name": "Merch Planning Manager",
+      "stakeholder_title": "Planning Operations",
+      "interview_date": "2026-04-13",
+      "quote": "Teams believe the workflow, but they are tired of reconciling two demand signals. The integration delay is becoming a credibility issue.",
+      "themes": [
+        "workflow-friction",
+        "data-integration"
+      ],
+      "attribution_consent": false
+    },
+    {
+      "initiative_id": "apex-ml-demand-forecast-2024",
+      "stakeholder_name": "Supply Chain Sponsor",
+      "stakeholder_title": "Supply Chain Executive",
+      "interview_date": "2026-03-12",
+      "quote": "This is the program that bought us credibility for everything else we are doing in AI. Do not break it.",
+      "themes": [
+        "foundation",
+        "credibility"
+      ],
+      "attribution_consent": true
+    },
+    {
+      "initiative_id": "apex-ml-demand-forecast-2024",
+      "stakeholder_name": "Inventory Director",
+      "stakeholder_title": "Inventory Operations",
+      "interview_date": "2026-04-03",
+      "quote": "The Q2 write-down avoidance is real money. Buyers are overriding less because the model finally explains itself in their terms.",
+      "themes": [
+        "inventory",
+        "buyer-adoption"
+      ],
+      "attribution_consent": true
+    },
+    {
+      "initiative_id": "apex-infra-finops-ai-2026",
+      "stakeholder_name": "FinOps Lead",
+      "stakeholder_title": "Cloud Finance",
+      "interview_date": "2026-04-27",
+      "quote": "Half the AI bill still arrives without a clean owner tag. Until we fix that, every ROI conversation starts with an argument about allocation.",
+      "themes": [
+        "cost-attribution",
+        "owner-tags"
+      ],
+      "attribution_consent": true
+    },
+    {
+      "initiative_id": "apex-infra-finops-ai-2026",
+      "stakeholder_name": "Platform Engineering Lead",
+      "stakeholder_title": "Platform Engineering",
+      "interview_date": "2026-04-29",
+      "quote": "The platform work is invisible until a program asks why their costs moved. Then everyone wants the ledger we have not finished.",
+      "themes": [
+        "platform-foundation",
+        "cost-ledger"
+      ],
+      "attribution_consent": false
+    },
+    {
+      "initiative_id": "apex-customer-personalization-2024",
+      "stakeholder_name": "Digital Commerce Sponsor",
+      "stakeholder_title": "Digital Commerce",
+      "interview_date": "2026-04-09",
+      "quote": "Personalization is working, but offer quality varies by category. The next lift comes from better merchandising feedback, not another model swap.",
+      "themes": [
+        "conversion",
+        "merch-feedback"
+      ],
+      "attribution_consent": true
+    },
+    {
+      "initiative_id": "apex-customer-personalization-2024",
+      "stakeholder_name": "Privacy Review Lead",
+      "stakeholder_title": "Privacy Governance",
+      "interview_date": "2026-04-10",
+      "quote": "Opt-out rates are manageable, but we need tighter consent lineage before pushing deeper personalization into loyalty journeys.",
+      "themes": [
+        "privacy",
+        "consent-lineage"
+      ],
+      "attribution_consent": false
+    }
   ],
-
   "decisions": [
-    {"initiative_id": "apex-llm-copilot-2025", "decision_name": "Pilot expansion to 20 stores", "decision_date": null, "sponsor_name": "L. Tanaka", "decision_status": "pending", "dissent_recorded": false, "outcome_status": "Awaiting Q3 governance review"},
-    {"initiative_id": "apex-agentic-cx-2026", "decision_name": "Voice channel expansion", "decision_date": null, "sponsor_name": "M. Reyes", "decision_status": "pending", "dissent_recorded": true, "dissent_summary": "VP Brand concerned about voice agent representing company in customer's ear without sufficient quality bar", "outcome_status": "Q2 2026 governance review"},
-    {"initiative_id": "apex-erp-joule-merch-2025", "decision_name": "POS data integration acceleration", "decision_date": "2026-02-15", "sponsor_name": "K. Singh", "decision_status": "decided", "dissent_recorded": false, "outcome_status": "Approved · resourced for Q2 delivery"},
-    {"initiative_id": "apex-customer-personalization-2024", "decision_name": "ML platform contract renewal", "decision_date": null, "sponsor_name": "J. Wright", "decision_status": "pending", "dissent_recorded": false, "outcome_status": "Q1 2027 renewal · negotiation underway"}
+    {
+      "initiative_id": "apex-llm-copilot-2025",
+      "decision_name": "Pilot expansion to 20 stores",
+      "decision_date": "2026-03-15",
+      "sponsor_name": "Store Operations Sponsor",
+      "decision_status": "pending",
+      "dissent_recorded": true,
+      "dissent_summary": "Finance wants expansion gated on active-use lift; operations argues the pilot needs more stores before adoption stabilizes.",
+      "outcome_status": "Awaiting Q3 governance review"
+    },
+    {
+      "initiative_id": "apex-llm-copilot-2025",
+      "decision_name": "Standardize two-shift onboarding routine",
+      "decision_date": "2026-04-06",
+      "sponsor_name": "Store Training Lead",
+      "decision_status": "decided",
+      "dissent_recorded": false,
+      "dissent_summary": null,
+      "outcome_status": "Approved for pilot stores before expansion gate"
+    },
+    {
+      "initiative_id": "apex-sdlc-github-copilot-2025",
+      "decision_name": "Renew GitHub Copilot enterprise tier",
+      "decision_date": "2026-04-05",
+      "sponsor_name": "CTO Office",
+      "decision_status": "decided",
+      "dissent_recorded": false,
+      "dissent_summary": null,
+      "outcome_status": "Approved pending Microsoft bundle pricing"
+    },
+    {
+      "initiative_id": "apex-sdlc-github-copilot-2025",
+      "decision_name": "Bundle Copilot and Cursor under developer tools envelope",
+      "decision_date": "2026-04-18",
+      "sponsor_name": "Engineering Productivity Council",
+      "decision_status": "pending",
+      "dissent_recorded": true,
+      "dissent_summary": "Security wants prompt audit controls before combining budgets; engineering wants to preserve both tools through Q4.",
+      "outcome_status": "Governance review scheduled for Q3 2026"
+    },
+    {
+      "initiative_id": "apex-agentic-cx-2026",
+      "decision_name": "Voice channel expansion",
+      "decision_date": null,
+      "sponsor_name": "Customer Care Sponsor",
+      "decision_status": "pending",
+      "dissent_recorded": true,
+      "dissent_summary": "Brand governance objects to voice expansion until escalation quality clears the 80-point floor for two quarters.",
+      "outcome_status": "Q2 2026 governance review"
+    },
+    {
+      "initiative_id": "apex-agentic-cx-2026",
+      "decision_name": "Reset containment target to quality-adjusted containment",
+      "decision_date": "2026-04-30",
+      "sponsor_name": "Customer Care Analytics",
+      "decision_status": "decided",
+      "dissent_recorded": false,
+      "dissent_summary": null,
+      "outcome_status": "New Q3 scorecard separates containment from handoff quality"
+    },
+    {
+      "initiative_id": "apex-erp-joule-merch-2025",
+      "decision_name": "POS data integration acceleration",
+      "decision_date": "2026-02-15",
+      "sponsor_name": "Merchandising Sponsor",
+      "decision_status": "decided",
+      "dissent_recorded": false,
+      "dissent_summary": null,
+      "outcome_status": "Approved and resourced for Q2 delivery"
+    },
+    {
+      "initiative_id": "apex-erp-joule-merch-2025",
+      "decision_name": "Defer Joule action-layer expansion until POS feed clears",
+      "decision_date": "2026-04-12",
+      "sponsor_name": "SAP COE",
+      "decision_status": "pending",
+      "dissent_recorded": true,
+      "dissent_summary": "Merch planning argues parallel expansion is feasible; finance wants the integration complete before adding workflow scope.",
+      "outcome_status": "Pending May governance review"
+    },
+    {
+      "initiative_id": "apex-ml-demand-forecast-2024",
+      "decision_name": "Expand model coverage to private-label SKUs",
+      "decision_date": "2026-03-30",
+      "sponsor_name": "Merchandising Sponsor",
+      "decision_status": "decided",
+      "dissent_recorded": false,
+      "dissent_summary": null,
+      "outcome_status": "Implemented for 2400 private-label SKUs in Q2"
+    },
+    {
+      "initiative_id": "apex-infra-finops-ai-2026",
+      "decision_name": "Require owner tags on all model spend",
+      "decision_date": "2026-04-22",
+      "sponsor_name": "Cloud Finance",
+      "decision_status": "decided",
+      "dissent_recorded": true,
+      "dissent_summary": "Platform team supports the control but objects to making untagged spend a deployment blocker before Q3 tooling lands.",
+      "outcome_status": "Policy active; deployment-blocker rule deferred"
+    },
+    {
+      "initiative_id": "apex-infra-finops-ai-2026",
+      "decision_name": "Add four FTE to AI cost attribution platform",
+      "decision_date": "2026-04-10",
+      "sponsor_name": "CTO Office",
+      "decision_status": "decided",
+      "dissent_recorded": false,
+      "dissent_summary": null,
+      "outcome_status": "Approved for Q3 milestone acceleration"
+    },
+    {
+      "initiative_id": "apex-customer-personalization-2024",
+      "decision_name": "ML platform contract renewal",
+      "decision_date": null,
+      "sponsor_name": "Digital Commerce Sponsor",
+      "decision_status": "pending",
+      "dissent_recorded": false,
+      "dissent_summary": null,
+      "outcome_status": "Q1 2027 renewal; negotiation underway"
+    }
   ],
-
   "vendors": [
-    {"initiative_id": "apex-llm-copilot-2025", "vendor_name": "Microsoft", "contract_value_usd": 1600000, "renewal_date": "2027-12-31", "financial_health": "strong", "notes": "Part of broader M365 contract"},
-    {"initiative_id": "apex-sdlc-github-copilot-2025", "vendor_name": "GitHub (Microsoft)", "contract_value_usd": 900000, "renewal_date": "2026-09-30", "financial_health": "strong", "notes": "Per-seat licensing"},
-    {"initiative_id": "apex-agentic-cx-2026", "vendor_name": "Sierra", "contract_value_usd": 2100000, "renewal_date": "2027-03-31", "financial_health": "moderate", "notes": "Newer vendor; financial health bears watching"},
-    {"initiative_id": "apex-erp-joule-merch-2025", "vendor_name": "SAP", "contract_value_usd": 3400000, "renewal_date": "2027-12-31", "financial_health": "strong", "notes": "Bundled with ECC modernization contract"}
+    {
+      "initiative_id": "apex-llm-copilot-2025",
+      "vendor_name": "Microsoft",
+      "contract_value_usd": 1600000,
+      "renewal_date": "2026-06-28",
+      "financial_health": "strong",
+      "notes": "Part of broader M365 contract; 47 days from 2026-05-12 demo pin"
+    },
+    {
+      "initiative_id": "apex-sdlc-github-copilot-2025",
+      "vendor_name": "GitHub (Microsoft)",
+      "contract_value_usd": 900000,
+      "renewal_date": "2026-07-10",
+      "financial_health": "strong",
+      "notes": "Per-seat licensing; potential bundle with Microsoft EA"
+    },
+    {
+      "initiative_id": "apex-agentic-cx-2026",
+      "vendor_name": "Sierra",
+      "contract_value_usd": 2100000,
+      "renewal_date": "2026-12-31",
+      "financial_health": "moderate",
+      "notes": "Newer vendor; financial health bears watching"
+    },
+    {
+      "initiative_id": "apex-erp-joule-merch-2025",
+      "vendor_name": "SAP",
+      "contract_value_usd": 3400000,
+      "renewal_date": "2026-08-04",
+      "financial_health": "strong",
+      "notes": "Bundled with ECC modernization contract; 84 days from 2026-05-12 demo pin"
+    }
   ],
-
   "scenarios": [
-    {"initiative_id": "apex-agentic-cx-2026", "scenario_name": "Containment misses target by Q4 2026", "trigger_event": "Q3 2026 review", "time_horizon_months": 6, "probability_pct": 45, "impact_summary": "Voice expansion paused; CX agent contained to chat only; renewal at risk"},
-    {"initiative_id": "apex-erp-joule-merch-2025", "scenario_name": "POS integration slips Q3 2026", "trigger_event": "POS modernization delays", "time_horizon_months": 4, "probability_pct": 35, "impact_summary": "Joule value lag persists; Y2 budget pressured"},
-    {"initiative_id": "apex-llm-copilot-2025", "scenario_name": "Adoption stays below 40% through Q3", "trigger_event": "Q3 2026 review", "time_horizon_months": 4, "probability_pct": 55, "impact_summary": "Expansion canceled; pilot wound down; $1.6M reallocated"}
+    {
+      "initiative_id": "apex-llm-copilot-2025",
+      "scenario_name": "Adoption stays below 40 percent through Q3",
+      "trigger_event": "Q3 2026 review",
+      "time_horizon_months": 4,
+      "probability_pct": 55,
+      "impact_summary": "Expansion canceled; pilot wound down; 1.6M annual spend reallocated to store training and workflow redesign."
+    },
+    {
+      "initiative_id": "apex-llm-copilot-2025",
+      "scenario_name": "Microsoft EA renewal closes without store-associate bundle",
+      "trigger_event": "June 2026 EA negotiation misses bundle terms",
+      "time_horizon_months": 6,
+      "probability_pct": 25,
+      "impact_summary": "Sustaining current seats adds roughly 0.6M annual cost and delays any store expansion beyond Q4."
+    },
+    {
+      "initiative_id": "apex-sdlc-github-copilot-2025",
+      "scenario_name": "Developer tools bundle reduces per-seat cost",
+      "trigger_event": "Microsoft EA includes Copilot enterprise tier shift",
+      "time_horizon_months": 3,
+      "probability_pct": 60,
+      "impact_summary": "Per-seat cost drops about 25 percent; engineering expands coverage to remaining teams without raising the envelope."
+    },
+    {
+      "initiative_id": "apex-sdlc-github-copilot-2025",
+      "scenario_name": "Prompt audit requirement delays enterprise expansion",
+      "trigger_event": "Security review blocks broader tier until audit controls land",
+      "time_horizon_months": 5,
+      "probability_pct": 35,
+      "impact_summary": "Expansion waits until Q4; engineering preserves current cohort but loses forecasted roadmap acceleration."
+    },
+    {
+      "initiative_id": "apex-agentic-cx-2026",
+      "scenario_name": "Containment misses target by Q4 2026",
+      "trigger_event": "Q3 2026 review",
+      "time_horizon_months": 6,
+      "probability_pct": 45,
+      "impact_summary": "Voice expansion paused; CX agent contained to chat only; renewal at risk."
+    },
+    {
+      "initiative_id": "apex-agentic-cx-2026",
+      "scenario_name": "Quality-adjusted containment clears the gate",
+      "trigger_event": "Two consecutive months above 80 escalation quality score",
+      "time_horizon_months": 4,
+      "probability_pct": 30,
+      "impact_summary": "Voice pilot opens for limited categories; customer-care savings shift from directional to defensible."
+    },
+    {
+      "initiative_id": "apex-erp-joule-merch-2025",
+      "scenario_name": "POS integration slips Q3 2026",
+      "trigger_event": "POS modernization delays",
+      "time_horizon_months": 4,
+      "probability_pct": 35,
+      "impact_summary": "Joule value lag persists; year-two budget pressured and action-layer expansion likely deferred."
+    },
+    {
+      "initiative_id": "apex-erp-joule-merch-2025",
+      "scenario_name": "Parallel planning workflow expansion approved",
+      "trigger_event": "Merch planning receives backfill for POS reconciliation work",
+      "time_horizon_months": 5,
+      "probability_pct": 30,
+      "impact_summary": "Joule reaches about 80 percent of target value by Q4 and avoids a re-baseline fight."
+    },
+    {
+      "initiative_id": "apex-ml-demand-forecast-2024",
+      "scenario_name": "Model accuracy degrades more than two MAPE points",
+      "trigger_event": "Drift monitor breaches quarterly threshold",
+      "time_horizon_months": 3,
+      "probability_pct": 15,
+      "impact_summary": "Steward model-risk review opens; retraining pause exposes up to 0.8M quarterly write-down risk."
+    },
+    {
+      "initiative_id": "apex-infra-finops-ai-2026",
+      "scenario_name": "Owner tagging reaches 70 percent by Q3",
+      "trigger_event": "Cost attribution platform clears Q3 milestone",
+      "time_horizon_months": 4,
+      "probability_pct": 65,
+      "impact_summary": "Three dependent initiatives gain cleaner ROI evidence and governance can compare spend by owner."
+    },
+    {
+      "initiative_id": "apex-infra-finops-ai-2026",
+      "scenario_name": "Platform delivery slips two quarters",
+      "trigger_event": "Two critical attribution milestones miss Q3 deadline",
+      "time_horizon_months": 6,
+      "probability_pct": 25,
+      "impact_summary": "Dependent initiatives stay blocked; aggregate value gap grows 2M to 3M and sponsor confidence deteriorates."
+    },
+    {
+      "initiative_id": "apex-customer-personalization-2024",
+      "scenario_name": "Consent lineage blocks deeper loyalty personalization",
+      "trigger_event": "Privacy review finds incomplete lineage for loyalty audiences",
+      "time_horizon_months": 5,
+      "probability_pct": 20,
+      "impact_summary": "Personalization expansion narrows to low-risk categories until governance can prove consent paths."
+    }
   ]
 }
