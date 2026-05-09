@@ -3,6 +3,7 @@ import { Suspense } from 'react';
 import styles from './StrategicMoves.module.css';
 import { PhaseRail } from './PhaseRail';
 import { MoveArtifactUpload } from './MoveArtifactUpload';
+import { NexusCurrentStateBriefingPanel } from './NexusCurrentStateBriefingPanel';
 import { StrategicMoveDetailClient } from './StrategicMoveDetailClient';
 import { PhaseDocumentsPanel } from './PhaseDocumentsPanel';
 import type { StrategicMove } from '@/lib/programs/types.ui';
@@ -102,6 +103,8 @@ function OverviewContent({ move }: { move: StrategicMove }) {
           <div className={styles.statusBannerDesc}>{move.status.description}</div>
         </div>
       </div>
+
+      <NexusCurrentStateBriefingPanel moveId={move.id} />
 
       <section className={styles.detailSection}>
         <div className={styles.detailSectionTitle}>

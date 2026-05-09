@@ -74,6 +74,7 @@ export default async function StaffAugPage({
   const query = sb
     .from('staff_augmentation')
     .select('id, vendor_name, engagement_type, function_area, headcount_fte, annual_spend_usd, contract_start, contract_end, touches_ai, notes')
+    .eq('is_demo_data', false)
     .order('annual_spend_usd', { ascending: false, nullsFirst: false });
   if (effectiveClientId) query.eq('client_id', effectiveClientId);
   const { data } = await query;
@@ -84,7 +85,6 @@ export default async function StaffAugPage({
   const totalFte = rows.reduce((s, r) => s + Number(r.headcount_fte ?? 0), 0);
   const aiTouchingRows = rows.filter((r) => r.touches_ai);
   const aiFte = aiTouchingRows.reduce((s, r) => s + Number(r.headcount_fte ?? 0), 0);
-  const aiSpend = aiTouchingRows.reduce((s, r) => s + Number(r.annual_spend_usd ?? 0), 0);
 
   // Vendor groups
   const vendorMap = new Map<string, { fte: number; spend: number; engagements: number; functions: Set<string>; aiFte: number }>();

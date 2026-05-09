@@ -114,6 +114,7 @@ export default async function VolumetricsPage({
   const query = sb
     .from('volumetrics_snapshots')
     .select('snapshot_date, api_calls_millions, tokens_billions, storage_tb, queries_millions, active_models, data_pipelines')
+    .eq('is_demo_data', false)
     .order('snapshot_date', { ascending: true });
   if (effectiveClientId) query.eq('client_id', effectiveClientId);
   const { data } = await query;
