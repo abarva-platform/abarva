@@ -1,8 +1,7 @@
 {
   "tenant_slug": "meridian-health",
-  "template_version": "v1.0.0",
-  "loaded_at": "2026-05-07T00:00:00Z",
-
+  "template_version": "v1.1.0-tower-agent-depth",
+  "loaded_at": "2026-05-09T00:00:00Z",
   "business_goals": [
     {
       "goal_id": "MH-GOAL-01",
@@ -29,7 +28,6 @@
       "display_order": 4
     }
   ],
-
   "initiatives": [
     {
       "initiative_id": "meridian-llm-clinical-doc-2025",
@@ -181,54 +179,1672 @@
       "aligned_rationale": null
     }
   ],
-
   "kpi_history": [
-    {"initiative_id": "meridian-llm-clinical-doc-2025", "kpi_name": "Physician satisfaction NPS", "kpi_unit": "NPS pts", "quarter": "Q1-2025", "kpi_value": 12, "target_value": 25, "confidence_level": "HIGH"},
-    {"initiative_id": "meridian-llm-clinical-doc-2025", "kpi_name": "Physician satisfaction NPS", "kpi_unit": "NPS pts", "quarter": "Q3-2025", "kpi_value": 28, "target_value": 35, "confidence_level": "HIGH"},
-    {"initiative_id": "meridian-llm-clinical-doc-2025", "kpi_name": "Physician satisfaction NPS", "kpi_unit": "NPS pts", "quarter": "Q1-2026", "kpi_value": 33, "target_value": 40, "confidence_level": "HIGH"},
-    {"initiative_id": "meridian-llm-clinical-doc-2025", "kpi_name": "Documentation time per encounter", "kpi_unit": "min", "quarter": "Q1-2025", "kpi_value": 17, "target_value": 12, "confidence_level": "HIGH"},
-    {"initiative_id": "meridian-llm-clinical-doc-2025", "kpi_name": "Documentation time per encounter", "kpi_unit": "min", "quarter": "Q1-2026", "kpi_value": 11, "target_value": 10, "confidence_level": "HIGH"},
-    {"initiative_id": "meridian-erp-epic-revcycle-2025", "kpi_name": "Denials reduction %", "kpi_unit": "%", "quarter": "Q4-2025", "kpi_value": 3, "target_value": 8, "confidence_level": "MED"},
-    {"initiative_id": "meridian-erp-epic-revcycle-2025", "kpi_name": "Denials reduction %", "kpi_unit": "%", "quarter": "Q1-2026", "kpi_value": 6, "target_value": 12, "confidence_level": "MED"},
-    {"initiative_id": "meridian-erp-epic-revcycle-2025", "kpi_name": "Denials reduction %", "kpi_unit": "%", "quarter": "Q2-2026", "kpi_value": 8, "target_value": 15, "confidence_level": "MED"},
-    {"initiative_id": "meridian-ml-clinical-risk-2024", "kpi_name": "Readmission rate (30d)", "kpi_unit": "%", "quarter": "Q1-2024", "kpi_value": 14.2, "target_value": 12.0, "confidence_level": "HIGH"},
-    {"initiative_id": "meridian-ml-clinical-risk-2024", "kpi_name": "Readmission rate (30d)", "kpi_unit": "%", "quarter": "Q1-2025", "kpi_value": 13.5, "target_value": 12.0, "confidence_level": "HIGH"},
-    {"initiative_id": "meridian-ml-clinical-risk-2024", "kpi_name": "Readmission rate (30d)", "kpi_unit": "%", "quarter": "Q1-2026", "kpi_value": 13.2, "target_value": 12.0, "confidence_level": "HIGH"},
-    {"initiative_id": "meridian-llm-sap-joule-2025", "kpi_name": "Realized value", "kpi_unit": "$M", "quarter": "Q3-2025", "kpi_value": 0.4, "target_value": 1.0, "confidence_level": "MED"},
-    {"initiative_id": "meridian-llm-sap-joule-2025", "kpi_name": "Realized value", "kpi_unit": "$M", "quarter": "Q4-2025", "kpi_value": 0.8, "target_value": 1.6, "confidence_level": "MED"},
-    {"initiative_id": "meridian-llm-sap-joule-2025", "kpi_name": "Realized value", "kpi_unit": "$M", "quarter": "Q2-2026", "kpi_value": 1.4, "target_value": 3.2, "confidence_level": "MED"},
-    {"initiative_id": "meridian-agentic-now-assist-2026", "kpi_name": "Auto-resolution rate", "kpi_unit": "%", "quarter": "Q1-2026", "kpi_value": 24, "target_value": 50, "confidence_level": "LOW"},
-    {"initiative_id": "meridian-agentic-now-assist-2026", "kpi_name": "Auto-resolution rate", "kpi_unit": "%", "quarter": "Q2-2026", "kpi_value": 31, "target_value": 50, "confidence_level": "LOW"}
+    {
+      "initiative_id": "meridian-llm-clinical-doc-2025",
+      "kpi_name": "Adoption penetration %",
+      "kpi_unit": "%",
+      "quarter": "Q3-2025",
+      "kpi_value": 35,
+      "target_value": 58,
+      "peer_median": 48,
+      "confidence_level": "HIGH"
+    },
+    {
+      "initiative_id": "meridian-llm-clinical-doc-2025",
+      "kpi_name": "Adoption penetration %",
+      "kpi_unit": "%",
+      "quarter": "Q4-2025",
+      "kpi_value": 40,
+      "target_value": 58,
+      "peer_median": 48,
+      "confidence_level": "HIGH"
+    },
+    {
+      "initiative_id": "meridian-llm-clinical-doc-2025",
+      "kpi_name": "Adoption penetration %",
+      "kpi_unit": "%",
+      "quarter": "Q1-2026",
+      "kpi_value": 45,
+      "target_value": 58,
+      "peer_median": 48,
+      "confidence_level": "HIGH"
+    },
+    {
+      "initiative_id": "meridian-llm-clinical-doc-2025",
+      "kpi_name": "Adoption penetration %",
+      "kpi_unit": "%",
+      "quarter": "Q2-2026",
+      "kpi_value": 49,
+      "target_value": 58,
+      "peer_median": 48,
+      "confidence_level": "HIGH"
+    },
+    {
+      "initiative_id": "meridian-llm-clinical-doc-2025",
+      "kpi_name": "Value realization $M",
+      "kpi_unit": "$M",
+      "quarter": "Q3-2025",
+      "kpi_value": 2.6,
+      "target_value": 7.3,
+      "peer_median": 1.25,
+      "confidence_level": "HIGH"
+    },
+    {
+      "initiative_id": "meridian-llm-clinical-doc-2025",
+      "kpi_name": "Value realization $M",
+      "kpi_unit": "$M",
+      "quarter": "Q4-2025",
+      "kpi_value": 3.7,
+      "target_value": 7.3,
+      "peer_median": 1.25,
+      "confidence_level": "HIGH"
+    },
+    {
+      "initiative_id": "meridian-llm-clinical-doc-2025",
+      "kpi_name": "Value realization $M",
+      "kpi_unit": "$M",
+      "quarter": "Q1-2026",
+      "kpi_value": 4.7,
+      "target_value": 7.3,
+      "peer_median": 1.25,
+      "confidence_level": "HIGH"
+    },
+    {
+      "initiative_id": "meridian-llm-clinical-doc-2025",
+      "kpi_name": "Value realization $M",
+      "kpi_unit": "$M",
+      "quarter": "Q2-2026",
+      "kpi_value": 5.8,
+      "target_value": 7.3,
+      "peer_median": 1.25,
+      "confidence_level": "HIGH"
+    },
+    {
+      "initiative_id": "meridian-llm-clinical-doc-2025",
+      "kpi_name": "Control coverage %",
+      "kpi_unit": "%",
+      "quarter": "Q3-2025",
+      "kpi_value": 73,
+      "target_value": 85,
+      "peer_median": 74,
+      "confidence_level": "HIGH"
+    },
+    {
+      "initiative_id": "meridian-llm-clinical-doc-2025",
+      "kpi_name": "Control coverage %",
+      "kpi_unit": "%",
+      "quarter": "Q4-2025",
+      "kpi_value": 79,
+      "target_value": 85,
+      "peer_median": 74,
+      "confidence_level": "HIGH"
+    },
+    {
+      "initiative_id": "meridian-llm-clinical-doc-2025",
+      "kpi_name": "Control coverage %",
+      "kpi_unit": "%",
+      "quarter": "Q1-2026",
+      "kpi_value": 85,
+      "target_value": 85,
+      "peer_median": 74,
+      "confidence_level": "HIGH"
+    },
+    {
+      "initiative_id": "meridian-llm-clinical-doc-2025",
+      "kpi_name": "Control coverage %",
+      "kpi_unit": "%",
+      "quarter": "Q2-2026",
+      "kpi_value": 91,
+      "target_value": 85,
+      "peer_median": 74,
+      "confidence_level": "HIGH"
+    },
+    {
+      "initiative_id": "meridian-llm-clinical-doc-2025",
+      "kpi_name": "Outcome attainment index",
+      "kpi_unit": "index",
+      "quarter": "Q3-2025",
+      "kpi_value": 53,
+      "target_value": 75,
+      "peer_median": 58,
+      "confidence_level": "HIGH"
+    },
+    {
+      "initiative_id": "meridian-llm-clinical-doc-2025",
+      "kpi_name": "Outcome attainment index",
+      "kpi_unit": "index",
+      "quarter": "Q4-2025",
+      "kpi_value": 58,
+      "target_value": 75,
+      "peer_median": 58,
+      "confidence_level": "HIGH"
+    },
+    {
+      "initiative_id": "meridian-llm-clinical-doc-2025",
+      "kpi_name": "Outcome attainment index",
+      "kpi_unit": "index",
+      "quarter": "Q1-2026",
+      "kpi_value": 63,
+      "target_value": 75,
+      "peer_median": 58,
+      "confidence_level": "HIGH"
+    },
+    {
+      "initiative_id": "meridian-llm-clinical-doc-2025",
+      "kpi_name": "Outcome attainment index",
+      "kpi_unit": "index",
+      "quarter": "Q2-2026",
+      "kpi_value": 69,
+      "target_value": 75,
+      "peer_median": 58,
+      "confidence_level": "HIGH"
+    },
+    {
+      "initiative_id": "meridian-sdlc-cursor-2026",
+      "kpi_name": "Adoption penetration %",
+      "kpi_unit": "%",
+      "quarter": "Q3-2025",
+      "kpi_value": 2,
+      "target_value": 58,
+      "peer_median": 48,
+      "confidence_level": "MED"
+    },
+    {
+      "initiative_id": "meridian-sdlc-cursor-2026",
+      "kpi_name": "Adoption penetration %",
+      "kpi_unit": "%",
+      "quarter": "Q4-2025",
+      "kpi_value": 7,
+      "target_value": 58,
+      "peer_median": 48,
+      "confidence_level": "MED"
+    },
+    {
+      "initiative_id": "meridian-sdlc-cursor-2026",
+      "kpi_name": "Adoption penetration %",
+      "kpi_unit": "%",
+      "quarter": "Q1-2026",
+      "kpi_value": 12,
+      "target_value": 58,
+      "peer_median": 48,
+      "confidence_level": "MED"
+    },
+    {
+      "initiative_id": "meridian-sdlc-cursor-2026",
+      "kpi_name": "Adoption penetration %",
+      "kpi_unit": "%",
+      "quarter": "Q2-2026",
+      "kpi_value": 16,
+      "target_value": 58,
+      "peer_median": 48,
+      "confidence_level": "MED"
+    },
+    {
+      "initiative_id": "meridian-sdlc-cursor-2026",
+      "kpi_name": "Value realization $M",
+      "kpi_unit": "$M",
+      "quarter": "Q3-2025",
+      "kpi_value": 0.1,
+      "target_value": 0.4,
+      "peer_median": 1.25,
+      "confidence_level": "MED"
+    },
+    {
+      "initiative_id": "meridian-sdlc-cursor-2026",
+      "kpi_name": "Value realization $M",
+      "kpi_unit": "$M",
+      "quarter": "Q4-2025",
+      "kpi_value": 0.1,
+      "target_value": 0.4,
+      "peer_median": 1.25,
+      "confidence_level": "MED"
+    },
+    {
+      "initiative_id": "meridian-sdlc-cursor-2026",
+      "kpi_name": "Value realization $M",
+      "kpi_unit": "$M",
+      "quarter": "Q1-2026",
+      "kpi_value": 0.1,
+      "target_value": 0.4,
+      "peer_median": 1.25,
+      "confidence_level": "MED"
+    },
+    {
+      "initiative_id": "meridian-sdlc-cursor-2026",
+      "kpi_name": "Value realization $M",
+      "kpi_unit": "$M",
+      "quarter": "Q2-2026",
+      "kpi_value": 0.2,
+      "target_value": 0.4,
+      "peer_median": 1.25,
+      "confidence_level": "MED"
+    },
+    {
+      "initiative_id": "meridian-sdlc-cursor-2026",
+      "kpi_name": "Control coverage %",
+      "kpi_unit": "%",
+      "quarter": "Q3-2025",
+      "kpi_value": 50,
+      "target_value": 85,
+      "peer_median": 74,
+      "confidence_level": "MED"
+    },
+    {
+      "initiative_id": "meridian-sdlc-cursor-2026",
+      "kpi_name": "Control coverage %",
+      "kpi_unit": "%",
+      "quarter": "Q4-2025",
+      "kpi_value": 56,
+      "target_value": 85,
+      "peer_median": 74,
+      "confidence_level": "MED"
+    },
+    {
+      "initiative_id": "meridian-sdlc-cursor-2026",
+      "kpi_name": "Control coverage %",
+      "kpi_unit": "%",
+      "quarter": "Q1-2026",
+      "kpi_value": 62,
+      "target_value": 85,
+      "peer_median": 74,
+      "confidence_level": "MED"
+    },
+    {
+      "initiative_id": "meridian-sdlc-cursor-2026",
+      "kpi_name": "Control coverage %",
+      "kpi_unit": "%",
+      "quarter": "Q2-2026",
+      "kpi_value": 68,
+      "target_value": 85,
+      "peer_median": 74,
+      "confidence_level": "MED"
+    },
+    {
+      "initiative_id": "meridian-sdlc-cursor-2026",
+      "kpi_name": "Outcome attainment index",
+      "kpi_unit": "index",
+      "quarter": "Q3-2025",
+      "kpi_value": 2,
+      "target_value": 75,
+      "peer_median": 58,
+      "confidence_level": "MED"
+    },
+    {
+      "initiative_id": "meridian-sdlc-cursor-2026",
+      "kpi_name": "Outcome attainment index",
+      "kpi_unit": "index",
+      "quarter": "Q4-2025",
+      "kpi_value": 7,
+      "target_value": 75,
+      "peer_median": 58,
+      "confidence_level": "MED"
+    },
+    {
+      "initiative_id": "meridian-sdlc-cursor-2026",
+      "kpi_name": "Outcome attainment index",
+      "kpi_unit": "index",
+      "quarter": "Q1-2026",
+      "kpi_value": 12,
+      "target_value": 75,
+      "peer_median": 58,
+      "confidence_level": "MED"
+    },
+    {
+      "initiative_id": "meridian-sdlc-cursor-2026",
+      "kpi_name": "Outcome attainment index",
+      "kpi_unit": "index",
+      "quarter": "Q2-2026",
+      "kpi_value": 18,
+      "target_value": 75,
+      "peer_median": 58,
+      "confidence_level": "MED"
+    },
+    {
+      "initiative_id": "meridian-agentic-now-assist-2026",
+      "kpi_name": "Adoption penetration %",
+      "kpi_unit": "%",
+      "quarter": "Q3-2025",
+      "kpi_value": 7,
+      "target_value": 58,
+      "peer_median": 48,
+      "confidence_level": "MED"
+    },
+    {
+      "initiative_id": "meridian-agentic-now-assist-2026",
+      "kpi_name": "Adoption penetration %",
+      "kpi_unit": "%",
+      "quarter": "Q4-2025",
+      "kpi_value": 11,
+      "target_value": 58,
+      "peer_median": 48,
+      "confidence_level": "MED"
+    },
+    {
+      "initiative_id": "meridian-agentic-now-assist-2026",
+      "kpi_name": "Adoption penetration %",
+      "kpi_unit": "%",
+      "quarter": "Q1-2026",
+      "kpi_value": 16,
+      "target_value": 58,
+      "peer_median": 48,
+      "confidence_level": "MED"
+    },
+    {
+      "initiative_id": "meridian-agentic-now-assist-2026",
+      "kpi_name": "Adoption penetration %",
+      "kpi_unit": "%",
+      "quarter": "Q2-2026",
+      "kpi_value": 21,
+      "target_value": 58,
+      "peer_median": 48,
+      "confidence_level": "MED"
+    },
+    {
+      "initiative_id": "meridian-agentic-now-assist-2026",
+      "kpi_name": "Value realization $M",
+      "kpi_unit": "$M",
+      "quarter": "Q3-2025",
+      "kpi_value": 0.2,
+      "target_value": 1,
+      "peer_median": 1.25,
+      "confidence_level": "MED"
+    },
+    {
+      "initiative_id": "meridian-agentic-now-assist-2026",
+      "kpi_name": "Value realization $M",
+      "kpi_unit": "$M",
+      "quarter": "Q4-2025",
+      "kpi_value": 0.2,
+      "target_value": 1,
+      "peer_median": 1.25,
+      "confidence_level": "MED"
+    },
+    {
+      "initiative_id": "meridian-agentic-now-assist-2026",
+      "kpi_name": "Value realization $M",
+      "kpi_unit": "$M",
+      "quarter": "Q1-2026",
+      "kpi_value": 0.3,
+      "target_value": 1,
+      "peer_median": 1.25,
+      "confidence_level": "MED"
+    },
+    {
+      "initiative_id": "meridian-agentic-now-assist-2026",
+      "kpi_name": "Value realization $M",
+      "kpi_unit": "$M",
+      "quarter": "Q2-2026",
+      "kpi_value": 0.4,
+      "target_value": 1,
+      "peer_median": 1.25,
+      "confidence_level": "MED"
+    },
+    {
+      "initiative_id": "meridian-agentic-now-assist-2026",
+      "kpi_name": "Control coverage %",
+      "kpi_unit": "%",
+      "quarter": "Q3-2025",
+      "kpi_value": 50,
+      "target_value": 85,
+      "peer_median": 74,
+      "confidence_level": "MED"
+    },
+    {
+      "initiative_id": "meridian-agentic-now-assist-2026",
+      "kpi_name": "Control coverage %",
+      "kpi_unit": "%",
+      "quarter": "Q4-2025",
+      "kpi_value": 56,
+      "target_value": 85,
+      "peer_median": 74,
+      "confidence_level": "MED"
+    },
+    {
+      "initiative_id": "meridian-agentic-now-assist-2026",
+      "kpi_name": "Control coverage %",
+      "kpi_unit": "%",
+      "quarter": "Q1-2026",
+      "kpi_value": 62,
+      "target_value": 85,
+      "peer_median": 74,
+      "confidence_level": "MED"
+    },
+    {
+      "initiative_id": "meridian-agentic-now-assist-2026",
+      "kpi_name": "Control coverage %",
+      "kpi_unit": "%",
+      "quarter": "Q2-2026",
+      "kpi_value": 68,
+      "target_value": 85,
+      "peer_median": 74,
+      "confidence_level": "MED"
+    },
+    {
+      "initiative_id": "meridian-agentic-now-assist-2026",
+      "kpi_name": "Outcome attainment index",
+      "kpi_unit": "index",
+      "quarter": "Q3-2025",
+      "kpi_value": 5,
+      "target_value": 75,
+      "peer_median": 58,
+      "confidence_level": "MED"
+    },
+    {
+      "initiative_id": "meridian-agentic-now-assist-2026",
+      "kpi_name": "Outcome attainment index",
+      "kpi_unit": "index",
+      "quarter": "Q4-2025",
+      "kpi_value": 10,
+      "target_value": 75,
+      "peer_median": 58,
+      "confidence_level": "MED"
+    },
+    {
+      "initiative_id": "meridian-agentic-now-assist-2026",
+      "kpi_name": "Outcome attainment index",
+      "kpi_unit": "index",
+      "quarter": "Q1-2026",
+      "kpi_value": 16,
+      "target_value": 75,
+      "peer_median": 58,
+      "confidence_level": "MED"
+    },
+    {
+      "initiative_id": "meridian-agentic-now-assist-2026",
+      "kpi_name": "Outcome attainment index",
+      "kpi_unit": "index",
+      "quarter": "Q2-2026",
+      "kpi_value": 21,
+      "target_value": 75,
+      "peer_median": 58,
+      "confidence_level": "MED"
+    },
+    {
+      "initiative_id": "meridian-erp-epic-revcycle-2025",
+      "kpi_name": "Adoption penetration %",
+      "kpi_unit": "%",
+      "quarter": "Q3-2025",
+      "kpi_value": 3,
+      "target_value": 58,
+      "peer_median": 48,
+      "confidence_level": "MED"
+    },
+    {
+      "initiative_id": "meridian-erp-epic-revcycle-2025",
+      "kpi_name": "Adoption penetration %",
+      "kpi_unit": "%",
+      "quarter": "Q4-2025",
+      "kpi_value": 5,
+      "target_value": 58,
+      "peer_median": 48,
+      "confidence_level": "MED"
+    },
+    {
+      "initiative_id": "meridian-erp-epic-revcycle-2025",
+      "kpi_name": "Adoption penetration %",
+      "kpi_unit": "%",
+      "quarter": "Q1-2026",
+      "kpi_value": 13,
+      "target_value": 58,
+      "peer_median": 48,
+      "confidence_level": "MED"
+    },
+    {
+      "initiative_id": "meridian-erp-epic-revcycle-2025",
+      "kpi_name": "Adoption penetration %",
+      "kpi_unit": "%",
+      "quarter": "Q2-2026",
+      "kpi_value": 17,
+      "target_value": 58,
+      "peer_median": 48,
+      "confidence_level": "MED"
+    },
+    {
+      "initiative_id": "meridian-erp-epic-revcycle-2025",
+      "kpi_name": "Value realization $M",
+      "kpi_unit": "$M",
+      "quarter": "Q3-2025",
+      "kpi_value": 0.6,
+      "target_value": 1.8,
+      "peer_median": 1.25,
+      "confidence_level": "MED"
+    },
+    {
+      "initiative_id": "meridian-erp-epic-revcycle-2025",
+      "kpi_name": "Value realization $M",
+      "kpi_unit": "$M",
+      "quarter": "Q4-2025",
+      "kpi_value": 0.9,
+      "target_value": 1.8,
+      "peer_median": 1.25,
+      "confidence_level": "MED"
+    },
+    {
+      "initiative_id": "meridian-erp-epic-revcycle-2025",
+      "kpi_name": "Value realization $M",
+      "kpi_unit": "$M",
+      "quarter": "Q1-2026",
+      "kpi_value": 1.1,
+      "target_value": 1.8,
+      "peer_median": 1.25,
+      "confidence_level": "MED"
+    },
+    {
+      "initiative_id": "meridian-erp-epic-revcycle-2025",
+      "kpi_name": "Value realization $M",
+      "kpi_unit": "$M",
+      "quarter": "Q2-2026",
+      "kpi_value": 1.4,
+      "target_value": 1.8,
+      "peer_median": 1.25,
+      "confidence_level": "MED"
+    },
+    {
+      "initiative_id": "meridian-erp-epic-revcycle-2025",
+      "kpi_name": "Control coverage %",
+      "kpi_unit": "%",
+      "quarter": "Q3-2025",
+      "kpi_value": 55,
+      "target_value": 85,
+      "peer_median": 74,
+      "confidence_level": "MED"
+    },
+    {
+      "initiative_id": "meridian-erp-epic-revcycle-2025",
+      "kpi_name": "Control coverage %",
+      "kpi_unit": "%",
+      "quarter": "Q4-2025",
+      "kpi_value": 58,
+      "target_value": 85,
+      "peer_median": 74,
+      "confidence_level": "MED"
+    },
+    {
+      "initiative_id": "meridian-erp-epic-revcycle-2025",
+      "kpi_name": "Control coverage %",
+      "kpi_unit": "%",
+      "quarter": "Q1-2026",
+      "kpi_value": 67,
+      "target_value": 85,
+      "peer_median": 74,
+      "confidence_level": "MED"
+    },
+    {
+      "initiative_id": "meridian-erp-epic-revcycle-2025",
+      "kpi_name": "Control coverage %",
+      "kpi_unit": "%",
+      "quarter": "Q2-2026",
+      "kpi_value": 73,
+      "target_value": 85,
+      "peer_median": 74,
+      "confidence_level": "MED"
+    },
+    {
+      "initiative_id": "meridian-erp-epic-revcycle-2025",
+      "kpi_name": "Outcome attainment index",
+      "kpi_unit": "index",
+      "quarter": "Q3-2025",
+      "kpi_value": 8,
+      "target_value": 75,
+      "peer_median": 58,
+      "confidence_level": "MED"
+    },
+    {
+      "initiative_id": "meridian-erp-epic-revcycle-2025",
+      "kpi_name": "Outcome attainment index",
+      "kpi_unit": "index",
+      "quarter": "Q4-2025",
+      "kpi_value": 10,
+      "target_value": 75,
+      "peer_median": 58,
+      "confidence_level": "MED"
+    },
+    {
+      "initiative_id": "meridian-erp-epic-revcycle-2025",
+      "kpi_name": "Outcome attainment index",
+      "kpi_unit": "index",
+      "quarter": "Q1-2026",
+      "kpi_value": 18,
+      "target_value": 75,
+      "peer_median": 58,
+      "confidence_level": "MED"
+    },
+    {
+      "initiative_id": "meridian-erp-epic-revcycle-2025",
+      "kpi_name": "Outcome attainment index",
+      "kpi_unit": "index",
+      "quarter": "Q2-2026",
+      "kpi_value": 24,
+      "target_value": 75,
+      "peer_median": 58,
+      "confidence_level": "MED"
+    },
+    {
+      "initiative_id": "meridian-ml-clinical-risk-2024",
+      "kpi_name": "Adoption penetration %",
+      "kpi_unit": "%",
+      "quarter": "Q3-2025",
+      "kpi_value": 42,
+      "target_value": 58,
+      "peer_median": 48,
+      "confidence_level": "HIGH"
+    },
+    {
+      "initiative_id": "meridian-ml-clinical-risk-2024",
+      "kpi_name": "Adoption penetration %",
+      "kpi_unit": "%",
+      "quarter": "Q4-2025",
+      "kpi_value": 47,
+      "target_value": 58,
+      "peer_median": 48,
+      "confidence_level": "HIGH"
+    },
+    {
+      "initiative_id": "meridian-ml-clinical-risk-2024",
+      "kpi_name": "Adoption penetration %",
+      "kpi_unit": "%",
+      "quarter": "Q1-2026",
+      "kpi_value": 51,
+      "target_value": 58,
+      "peer_median": 48,
+      "confidence_level": "HIGH"
+    },
+    {
+      "initiative_id": "meridian-ml-clinical-risk-2024",
+      "kpi_name": "Adoption penetration %",
+      "kpi_unit": "%",
+      "quarter": "Q2-2026",
+      "kpi_value": 56,
+      "target_value": 58,
+      "peer_median": 48,
+      "confidence_level": "HIGH"
+    },
+    {
+      "initiative_id": "meridian-ml-clinical-risk-2024",
+      "kpi_name": "Value realization $M",
+      "kpi_unit": "$M",
+      "quarter": "Q3-2025",
+      "kpi_value": 1.7,
+      "target_value": 4.8,
+      "peer_median": 1.25,
+      "confidence_level": "HIGH"
+    },
+    {
+      "initiative_id": "meridian-ml-clinical-risk-2024",
+      "kpi_name": "Value realization $M",
+      "kpi_unit": "$M",
+      "quarter": "Q4-2025",
+      "kpi_value": 2.4,
+      "target_value": 4.8,
+      "peer_median": 1.25,
+      "confidence_level": "HIGH"
+    },
+    {
+      "initiative_id": "meridian-ml-clinical-risk-2024",
+      "kpi_name": "Value realization $M",
+      "kpi_unit": "$M",
+      "quarter": "Q1-2026",
+      "kpi_value": 3.1,
+      "target_value": 4.8,
+      "peer_median": 1.25,
+      "confidence_level": "HIGH"
+    },
+    {
+      "initiative_id": "meridian-ml-clinical-risk-2024",
+      "kpi_name": "Value realization $M",
+      "kpi_unit": "$M",
+      "quarter": "Q2-2026",
+      "kpi_value": 3.8,
+      "target_value": 4.8,
+      "peer_median": 1.25,
+      "confidence_level": "HIGH"
+    },
+    {
+      "initiative_id": "meridian-ml-clinical-risk-2024",
+      "kpi_name": "Control coverage %",
+      "kpi_unit": "%",
+      "quarter": "Q3-2025",
+      "kpi_value": 68,
+      "target_value": 85,
+      "peer_median": 74,
+      "confidence_level": "HIGH"
+    },
+    {
+      "initiative_id": "meridian-ml-clinical-risk-2024",
+      "kpi_name": "Control coverage %",
+      "kpi_unit": "%",
+      "quarter": "Q4-2025",
+      "kpi_value": 74,
+      "target_value": 85,
+      "peer_median": 74,
+      "confidence_level": "HIGH"
+    },
+    {
+      "initiative_id": "meridian-ml-clinical-risk-2024",
+      "kpi_name": "Control coverage %",
+      "kpi_unit": "%",
+      "quarter": "Q1-2026",
+      "kpi_value": 80,
+      "target_value": 85,
+      "peer_median": 74,
+      "confidence_level": "HIGH"
+    },
+    {
+      "initiative_id": "meridian-ml-clinical-risk-2024",
+      "kpi_name": "Control coverage %",
+      "kpi_unit": "%",
+      "quarter": "Q2-2026",
+      "kpi_value": 86,
+      "target_value": 85,
+      "peer_median": 74,
+      "confidence_level": "HIGH"
+    },
+    {
+      "initiative_id": "meridian-ml-clinical-risk-2024",
+      "kpi_name": "Outcome attainment index",
+      "kpi_unit": "index",
+      "quarter": "Q3-2025",
+      "kpi_value": 44,
+      "target_value": 75,
+      "peer_median": 58,
+      "confidence_level": "HIGH"
+    },
+    {
+      "initiative_id": "meridian-ml-clinical-risk-2024",
+      "kpi_name": "Outcome attainment index",
+      "kpi_unit": "index",
+      "quarter": "Q4-2025",
+      "kpi_value": 49,
+      "target_value": 75,
+      "peer_median": 58,
+      "confidence_level": "HIGH"
+    },
+    {
+      "initiative_id": "meridian-ml-clinical-risk-2024",
+      "kpi_name": "Outcome attainment index",
+      "kpi_unit": "index",
+      "quarter": "Q1-2026",
+      "kpi_value": 54,
+      "target_value": 75,
+      "peer_median": 58,
+      "confidence_level": "HIGH"
+    },
+    {
+      "initiative_id": "meridian-ml-clinical-risk-2024",
+      "kpi_name": "Outcome attainment index",
+      "kpi_unit": "index",
+      "quarter": "Q2-2026",
+      "kpi_value": 60,
+      "target_value": 75,
+      "peer_median": 58,
+      "confidence_level": "HIGH"
+    },
+    {
+      "initiative_id": "meridian-llm-sap-joule-2025",
+      "kpi_name": "Adoption penetration %",
+      "kpi_unit": "%",
+      "quarter": "Q3-2025",
+      "kpi_value": 14,
+      "target_value": 58,
+      "peer_median": 48,
+      "confidence_level": "MED"
+    },
+    {
+      "initiative_id": "meridian-llm-sap-joule-2025",
+      "kpi_name": "Adoption penetration %",
+      "kpi_unit": "%",
+      "quarter": "Q4-2025",
+      "kpi_value": 15,
+      "target_value": 58,
+      "peer_median": 48,
+      "confidence_level": "MED"
+    },
+    {
+      "initiative_id": "meridian-llm-sap-joule-2025",
+      "kpi_name": "Adoption penetration %",
+      "kpi_unit": "%",
+      "quarter": "Q1-2026",
+      "kpi_value": 23,
+      "target_value": 58,
+      "peer_median": 48,
+      "confidence_level": "MED"
+    },
+    {
+      "initiative_id": "meridian-llm-sap-joule-2025",
+      "kpi_name": "Adoption penetration %",
+      "kpi_unit": "%",
+      "quarter": "Q2-2026",
+      "kpi_value": 28,
+      "target_value": 58,
+      "peer_median": 48,
+      "confidence_level": "MED"
+    },
+    {
+      "initiative_id": "meridian-llm-sap-joule-2025",
+      "kpi_name": "Value realization $M",
+      "kpi_unit": "$M",
+      "quarter": "Q3-2025",
+      "kpi_value": 0.6,
+      "target_value": 3.5,
+      "peer_median": 1.25,
+      "confidence_level": "MED"
+    },
+    {
+      "initiative_id": "meridian-llm-sap-joule-2025",
+      "kpi_name": "Value realization $M",
+      "kpi_unit": "$M",
+      "quarter": "Q4-2025",
+      "kpi_value": 0.9,
+      "target_value": 3.5,
+      "peer_median": 1.25,
+      "confidence_level": "MED"
+    },
+    {
+      "initiative_id": "meridian-llm-sap-joule-2025",
+      "kpi_name": "Value realization $M",
+      "kpi_unit": "$M",
+      "quarter": "Q1-2026",
+      "kpi_value": 1.1,
+      "target_value": 3.5,
+      "peer_median": 1.25,
+      "confidence_level": "MED"
+    },
+    {
+      "initiative_id": "meridian-llm-sap-joule-2025",
+      "kpi_name": "Value realization $M",
+      "kpi_unit": "$M",
+      "quarter": "Q2-2026",
+      "kpi_value": 1.4,
+      "target_value": 3.5,
+      "peer_median": 1.25,
+      "confidence_level": "MED"
+    },
+    {
+      "initiative_id": "meridian-llm-sap-joule-2025",
+      "kpi_name": "Control coverage %",
+      "kpi_unit": "%",
+      "quarter": "Q3-2025",
+      "kpi_value": 50,
+      "target_value": 85,
+      "peer_median": 74,
+      "confidence_level": "MED"
+    },
+    {
+      "initiative_id": "meridian-llm-sap-joule-2025",
+      "kpi_name": "Control coverage %",
+      "kpi_unit": "%",
+      "quarter": "Q4-2025",
+      "kpi_value": 53,
+      "target_value": 85,
+      "peer_median": 74,
+      "confidence_level": "MED"
+    },
+    {
+      "initiative_id": "meridian-llm-sap-joule-2025",
+      "kpi_name": "Control coverage %",
+      "kpi_unit": "%",
+      "quarter": "Q1-2026",
+      "kpi_value": 62,
+      "target_value": 85,
+      "peer_median": 74,
+      "confidence_level": "MED"
+    },
+    {
+      "initiative_id": "meridian-llm-sap-joule-2025",
+      "kpi_name": "Control coverage %",
+      "kpi_unit": "%",
+      "quarter": "Q2-2026",
+      "kpi_value": 68,
+      "target_value": 85,
+      "peer_median": 74,
+      "confidence_level": "MED"
+    },
+    {
+      "initiative_id": "meridian-llm-sap-joule-2025",
+      "kpi_name": "Outcome attainment index",
+      "kpi_unit": "index",
+      "quarter": "Q3-2025",
+      "kpi_value": 7,
+      "target_value": 75,
+      "peer_median": 58,
+      "confidence_level": "MED"
+    },
+    {
+      "initiative_id": "meridian-llm-sap-joule-2025",
+      "kpi_name": "Outcome attainment index",
+      "kpi_unit": "index",
+      "quarter": "Q4-2025",
+      "kpi_value": 9,
+      "target_value": 75,
+      "peer_median": 58,
+      "confidence_level": "MED"
+    },
+    {
+      "initiative_id": "meridian-llm-sap-joule-2025",
+      "kpi_name": "Outcome attainment index",
+      "kpi_unit": "index",
+      "quarter": "Q1-2026",
+      "kpi_value": 18,
+      "target_value": 75,
+      "peer_median": 58,
+      "confidence_level": "MED"
+    },
+    {
+      "initiative_id": "meridian-llm-sap-joule-2025",
+      "kpi_name": "Outcome attainment index",
+      "kpi_unit": "index",
+      "quarter": "Q2-2026",
+      "kpi_value": 23,
+      "target_value": 75,
+      "peer_median": 58,
+      "confidence_level": "MED"
+    },
+    {
+      "initiative_id": "meridian-infra-governance-finops-2026",
+      "kpi_name": "Adoption penetration %",
+      "kpi_unit": "%",
+      "quarter": "Q3-2025",
+      "kpi_value": 5,
+      "target_value": 58,
+      "peer_median": 48,
+      "confidence_level": "LOW"
+    },
+    {
+      "initiative_id": "meridian-infra-governance-finops-2026",
+      "kpi_name": "Adoption penetration %",
+      "kpi_unit": "%",
+      "quarter": "Q4-2025",
+      "kpi_value": 10,
+      "target_value": 58,
+      "peer_median": 48,
+      "confidence_level": "LOW"
+    },
+    {
+      "initiative_id": "meridian-infra-governance-finops-2026",
+      "kpi_name": "Adoption penetration %",
+      "kpi_unit": "%",
+      "quarter": "Q1-2026",
+      "kpi_value": 15,
+      "target_value": 58,
+      "peer_median": 48,
+      "confidence_level": "LOW"
+    },
+    {
+      "initiative_id": "meridian-infra-governance-finops-2026",
+      "kpi_name": "Adoption penetration %",
+      "kpi_unit": "%",
+      "quarter": "Q2-2026",
+      "kpi_value": 19,
+      "target_value": 58,
+      "peer_median": 48,
+      "confidence_level": "LOW"
+    },
+    {
+      "initiative_id": "meridian-infra-governance-finops-2026",
+      "kpi_name": "Value realization $M",
+      "kpi_unit": "$M",
+      "quarter": "Q3-2025",
+      "kpi_value": 0.1,
+      "target_value": 1.5,
+      "peer_median": 1.25,
+      "confidence_level": "LOW"
+    },
+    {
+      "initiative_id": "meridian-infra-governance-finops-2026",
+      "kpi_name": "Value realization $M",
+      "kpi_unit": "$M",
+      "quarter": "Q4-2025",
+      "kpi_value": 0.1,
+      "target_value": 1.5,
+      "peer_median": 1.25,
+      "confidence_level": "LOW"
+    },
+    {
+      "initiative_id": "meridian-infra-governance-finops-2026",
+      "kpi_name": "Value realization $M",
+      "kpi_unit": "$M",
+      "quarter": "Q1-2026",
+      "kpi_value": 0.1,
+      "target_value": 1.5,
+      "peer_median": 1.25,
+      "confidence_level": "LOW"
+    },
+    {
+      "initiative_id": "meridian-infra-governance-finops-2026",
+      "kpi_name": "Value realization $M",
+      "kpi_unit": "$M",
+      "quarter": "Q2-2026",
+      "kpi_value": 0.1,
+      "target_value": 1.5,
+      "peer_median": 1.25,
+      "confidence_level": "LOW"
+    },
+    {
+      "initiative_id": "meridian-infra-governance-finops-2026",
+      "kpi_name": "Control coverage %",
+      "kpi_unit": "%",
+      "quarter": "Q3-2025",
+      "kpi_value": 28,
+      "target_value": 85,
+      "peer_median": 74,
+      "confidence_level": "LOW"
+    },
+    {
+      "initiative_id": "meridian-infra-governance-finops-2026",
+      "kpi_name": "Control coverage %",
+      "kpi_unit": "%",
+      "quarter": "Q4-2025",
+      "kpi_value": 34,
+      "target_value": 85,
+      "peer_median": 74,
+      "confidence_level": "LOW"
+    },
+    {
+      "initiative_id": "meridian-infra-governance-finops-2026",
+      "kpi_name": "Control coverage %",
+      "kpi_unit": "%",
+      "quarter": "Q1-2026",
+      "kpi_value": 40,
+      "target_value": 85,
+      "peer_median": 74,
+      "confidence_level": "LOW"
+    },
+    {
+      "initiative_id": "meridian-infra-governance-finops-2026",
+      "kpi_name": "Control coverage %",
+      "kpi_unit": "%",
+      "quarter": "Q2-2026",
+      "kpi_value": 46,
+      "target_value": 85,
+      "peer_median": 74,
+      "confidence_level": "LOW"
+    },
+    {
+      "initiative_id": "meridian-infra-governance-finops-2026",
+      "kpi_name": "Outcome attainment index",
+      "kpi_unit": "index",
+      "quarter": "Q3-2025",
+      "kpi_value": -5,
+      "target_value": 75,
+      "peer_median": 58,
+      "confidence_level": "LOW"
+    },
+    {
+      "initiative_id": "meridian-infra-governance-finops-2026",
+      "kpi_name": "Outcome attainment index",
+      "kpi_unit": "index",
+      "quarter": "Q4-2025",
+      "kpi_value": 0,
+      "target_value": 75,
+      "peer_median": 58,
+      "confidence_level": "LOW"
+    },
+    {
+      "initiative_id": "meridian-infra-governance-finops-2026",
+      "kpi_name": "Outcome attainment index",
+      "kpi_unit": "index",
+      "quarter": "Q1-2026",
+      "kpi_value": 6,
+      "target_value": 75,
+      "peer_median": 58,
+      "confidence_level": "LOW"
+    },
+    {
+      "initiative_id": "meridian-infra-governance-finops-2026",
+      "kpi_name": "Outcome attainment index",
+      "kpi_unit": "index",
+      "quarter": "Q2-2026",
+      "kpi_value": 11,
+      "target_value": 75,
+      "peer_median": 58,
+      "confidence_level": "LOW"
+    }
   ],
-
   "stakeholder_notes": [
-    {"initiative_id": "meridian-llm-clinical-doc-2025", "stakeholder_name": "Dr. A. Hassan", "stakeholder_title": "CMIO", "interview_date": "2026-04-12", "quote": "This is the AI program that physicians actually thank us for. That's never happened before in my career.", "themes": ["adoption", "value", "physician satisfaction"], "attribution_consent": true},
-    {"initiative_id": "meridian-erp-epic-revcycle-2025", "stakeholder_name": "S. Williams", "stakeholder_title": "CFO Revenue Cycle", "interview_date": "2026-04-18", "quote": "If Epic AI hits the 15% denials reduction target, it pays for itself in 14 months. We're tracking 8%. The math still works but the runway is tightening.", "themes": ["financial", "trajectory"], "attribution_consent": true},
-    {"initiative_id": "meridian-llm-sap-joule-2025", "stakeholder_name": "M. Castillo", "stakeholder_title": "CFO", "interview_date": "2026-04-25", "quote": "Joule is the program I'm most worried about. We committed $3.2M based on a vendor demo. Nine months in we have $1.4M of measured value. That's not the trajectory we sold the board.", "themes": ["value lag", "vendor", "board narrative"], "attribution_consent": true},
-    {"initiative_id": "meridian-agentic-now-assist-2026", "stakeholder_name": "J. Park", "stakeholder_title": "Steward · IT Operations", "interview_date": "2026-04-08", "quote": "Now Assist is good at the easy stuff. The problem is M365 Copilot is also pitched at the easy stuff. We have two tools competing for the same use cases.", "themes": ["duplication", "vendor strategy"], "attribution_consent": true}
+    {
+      "initiative_id": "meridian-llm-clinical-doc-2025",
+      "stakeholder_name": "CMIO sponsor",
+      "stakeholder_title": "CMIO",
+      "interview_date": "2026-04-08",
+      "quote": "MH-01 is one of the few AI efforts where operating teams can point to the value without a translation layer.",
+      "themes": [
+        "value evidence",
+        "healthy",
+        "healthcare"
+      ],
+      "attribution_consent": true
+    },
+    {
+      "initiative_id": "meridian-llm-clinical-doc-2025",
+      "stakeholder_name": "CMIO operator",
+      "stakeholder_title": "Clinical operator",
+      "interview_date": "2026-04-18",
+      "quote": "The next decision should separate adoption, cost, and evidence quality instead of blending them into one status color.",
+      "themes": [
+        "operating readiness",
+        "confidence floor",
+        "CAT-01"
+      ],
+      "attribution_consent": false
+    },
+    {
+      "initiative_id": "meridian-sdlc-cursor-2026",
+      "stakeholder_name": "CTO sponsor",
+      "stakeholder_title": "CTO",
+      "interview_date": "2026-04-09",
+      "quote": "MH-02 needs a cleaner evidence chain before the next governance meeting.",
+      "themes": [
+        "value evidence",
+        "foundation phase",
+        "healthcare"
+      ],
+      "attribution_consent": false
+    },
+    {
+      "initiative_id": "meridian-sdlc-cursor-2026",
+      "stakeholder_name": "CTO operator",
+      "stakeholder_title": "IT operator",
+      "interview_date": "2026-04-19",
+      "quote": "The platform work is necessary, but we should not sell it as realized value yet.",
+      "themes": [
+        "operating readiness",
+        "confidence floor",
+        "CAT-02"
+      ],
+      "attribution_consent": true
+    },
+    {
+      "initiative_id": "meridian-agentic-now-assist-2026",
+      "stakeholder_name": "Steward · IT Operations sponsor",
+      "stakeholder_title": "Steward · IT Operations",
+      "interview_date": "2026-04-10",
+      "quote": "MH-03 needs a cleaner evidence chain before the next governance meeting.",
+      "themes": [
+        "value evidence",
+        "duplication risk",
+        "healthcare"
+      ],
+      "attribution_consent": true
+    },
+    {
+      "initiative_id": "meridian-agentic-now-assist-2026",
+      "stakeholder_name": "Steward · IT Operations operator",
+      "stakeholder_title": "IT operator",
+      "interview_date": "2026-04-20",
+      "quote": "The next decision should separate adoption, cost, and evidence quality instead of blending them into one status color.",
+      "themes": [
+        "operating readiness",
+        "confidence floor",
+        "CAT-03"
+      ],
+      "attribution_consent": false
+    },
+    {
+      "initiative_id": "meridian-erp-epic-revcycle-2025",
+      "stakeholder_name": "CFO Revenue Cycle sponsor",
+      "stakeholder_title": "CFO Revenue Cycle",
+      "interview_date": "2026-04-11",
+      "quote": "MH-04 needs a cleaner evidence chain before the next governance meeting.",
+      "themes": [
+        "value evidence",
+        "value lag",
+        "healthcare"
+      ],
+      "attribution_consent": true
+    },
+    {
+      "initiative_id": "meridian-erp-epic-revcycle-2025",
+      "stakeholder_name": "CFO Revenue Cycle operator",
+      "stakeholder_title": "Revenue Cycle operator",
+      "interview_date": "2026-04-21",
+      "quote": "The next decision should separate adoption, cost, and evidence quality instead of blending them into one status color.",
+      "themes": [
+        "operating readiness",
+        "confidence floor",
+        "CAT-04"
+      ],
+      "attribution_consent": false
+    },
+    {
+      "initiative_id": "meridian-ml-clinical-risk-2024",
+      "stakeholder_name": "Chief Quality Officer sponsor",
+      "stakeholder_title": "Chief Quality Officer",
+      "interview_date": "2026-04-12",
+      "quote": "MH-05 is one of the few AI efforts where operating teams can point to the value without a translation layer.",
+      "themes": [
+        "value evidence",
+        "healthy",
+        "healthcare"
+      ],
+      "attribution_consent": false
+    },
+    {
+      "initiative_id": "meridian-ml-clinical-risk-2024",
+      "stakeholder_name": "Chief Quality Officer operator",
+      "stakeholder_title": "Quality operator",
+      "interview_date": "2026-04-22",
+      "quote": "The next decision should separate adoption, cost, and evidence quality instead of blending them into one status color.",
+      "themes": [
+        "operating readiness",
+        "confidence floor",
+        "CAT-05"
+      ],
+      "attribution_consent": true
+    },
+    {
+      "initiative_id": "meridian-llm-sap-joule-2025",
+      "stakeholder_name": "Center of Excellence sponsor",
+      "stakeholder_title": "Center of Excellence",
+      "interview_date": "2026-04-13",
+      "quote": "MH-06 needs a cleaner evidence chain before the next governance meeting.",
+      "themes": [
+        "value evidence",
+        "value lag",
+        "healthcare"
+      ],
+      "attribution_consent": true
+    },
+    {
+      "initiative_id": "meridian-llm-sap-joule-2025",
+      "stakeholder_name": "Center of Excellence operator",
+      "stakeholder_title": "Finance operator",
+      "interview_date": "2026-04-23",
+      "quote": "The next decision should separate adoption, cost, and evidence quality instead of blending them into one status color.",
+      "themes": [
+        "operating readiness",
+        "confidence floor",
+        "CAT-04"
+      ],
+      "attribution_consent": false
+    },
+    {
+      "initiative_id": "meridian-infra-governance-finops-2026",
+      "stakeholder_name": "CTO sponsor",
+      "stakeholder_title": "CTO / CFO",
+      "interview_date": "2026-04-14",
+      "quote": "MH-07 needs a cleaner evidence chain before the next governance meeting.",
+      "themes": [
+        "value evidence",
+        "foundation phase",
+        "healthcare"
+      ],
+      "attribution_consent": true
+    },
+    {
+      "initiative_id": "meridian-infra-governance-finops-2026",
+      "stakeholder_name": "CTO operator",
+      "stakeholder_title": "IT / Finance operator",
+      "interview_date": "2026-04-24",
+      "quote": "The platform work is necessary, but we should not sell it as realized value yet.",
+      "themes": [
+        "operating readiness",
+        "confidence floor",
+        "CAT-06"
+      ],
+      "attribution_consent": false
+    }
   ],
-
   "decisions": [
-    {"initiative_id": "meridian-llm-clinical-doc-2025", "decision_name": "Expansion to remaining 5 hospitals", "decision_date": "2026-02-08", "sponsor_name": "Dr. A. Hassan + Castillo", "decision_status": "decided", "dissent_recorded": false, "outcome_status": "Approved · FY26 budget allocated"},
-    {"initiative_id": "meridian-erp-epic-revcycle-2025", "decision_name": "Y2 budget release", "decision_date": null, "sponsor_name": "S. Williams + Castillo", "decision_status": "pending", "dissent_recorded": true, "dissent_summary": "Castillo wants Y2 release tied to denials trajectory hitting 12% by Q3", "outcome_status": "Q3 2026 review gate"},
-    {"initiative_id": "meridian-llm-sap-joule-2025", "decision_name": "Joule re-baseline or sunset", "decision_date": null, "sponsor_name": "Castillo", "decision_status": "pending", "dissent_recorded": true, "dissent_summary": "SAP COE wants re-baseline; Castillo open to sunset if Y3 doesn't show clear path to $3M+ realized", "outcome_status": "Next governance review · May 19"},
-    {"initiative_id": "meridian-agentic-now-assist-2026", "decision_name": "Now Assist vs M365 Copilot consolidation", "decision_date": null, "sponsor_name": "J. Park", "decision_status": "pending", "dissent_recorded": false, "outcome_status": "Atlas-recommended attribution study underway · 6-week timeline"},
-    {"initiative_id": "meridian-sdlc-cursor-2026", "decision_name": "Expansion to clinical-adjacent codebases", "decision_date": null, "sponsor_name": "P. Iyer", "decision_status": "pending", "dissent_recorded": false, "outcome_status": "CISO review pending"}
+    {
+      "initiative_id": "meridian-llm-clinical-doc-2025",
+      "decision_name": "MH-01 evidence gate",
+      "decision_date": "2026-03-05",
+      "sponsor_name": "Dr. A. Hassan",
+      "decision_status": "decided",
+      "dissent_recorded": false,
+      "dissent_summary": null,
+      "outcome_status": "accepted"
+    },
+    {
+      "initiative_id": "meridian-llm-clinical-doc-2025",
+      "decision_name": "MH-01 next-quarter funding posture",
+      "decision_date": "2026-04-03",
+      "sponsor_name": "Dr. A. Hassan",
+      "decision_status": "pending",
+      "dissent_recorded": true,
+      "dissent_summary": "Minority view: defer incremental funding until MH-01 has clearer operating telemetry.",
+      "outcome_status": "defend while resolving"
+    },
+    {
+      "initiative_id": "meridian-sdlc-cursor-2026",
+      "decision_name": "MH-02 evidence gate",
+      "decision_date": "2026-03-06",
+      "sponsor_name": "P. Iyer",
+      "decision_status": "pending",
+      "dissent_recorded": false,
+      "dissent_summary": null,
+      "outcome_status": "watch"
+    },
+    {
+      "initiative_id": "meridian-sdlc-cursor-2026",
+      "decision_name": "MH-02 next-quarter funding posture",
+      "decision_date": "2026-04-04",
+      "sponsor_name": "P. Iyer",
+      "decision_status": "pending",
+      "dissent_recorded": false,
+      "dissent_summary": null,
+      "outcome_status": "pending review"
+    },
+    {
+      "initiative_id": "meridian-agentic-now-assist-2026",
+      "decision_name": "MH-03 evidence gate",
+      "decision_date": "2026-03-07",
+      "sponsor_name": "J. Park",
+      "decision_status": "stalled",
+      "dissent_recorded": true,
+      "dissent_summary": "Dissent recorded: sponsor wanted to continue, finance or risk asked for stronger measured-value evidence before scaling MH-03.",
+      "outcome_status": "open"
+    },
+    {
+      "initiative_id": "meridian-agentic-now-assist-2026",
+      "decision_name": "MH-03 next-quarter funding posture",
+      "decision_date": "2026-04-05",
+      "sponsor_name": "J. Park",
+      "decision_status": "pending",
+      "dissent_recorded": false,
+      "dissent_summary": null,
+      "outcome_status": "pending review"
+    },
+    {
+      "initiative_id": "meridian-erp-epic-revcycle-2025",
+      "decision_name": "MH-04 evidence gate",
+      "decision_date": "2026-03-08",
+      "sponsor_name": "S. Williams",
+      "decision_status": "decided",
+      "dissent_recorded": true,
+      "dissent_summary": "Dissent recorded: sponsor wanted to continue, finance or risk asked for stronger measured-value evidence before scaling MH-04.",
+      "outcome_status": "open"
+    },
+    {
+      "initiative_id": "meridian-erp-epic-revcycle-2025",
+      "decision_name": "MH-04 next-quarter funding posture",
+      "decision_date": "2026-04-06",
+      "sponsor_name": "S. Williams",
+      "decision_status": "pending",
+      "dissent_recorded": false,
+      "dissent_summary": null,
+      "outcome_status": "defend while resolving"
+    },
+    {
+      "initiative_id": "meridian-ml-clinical-risk-2024",
+      "decision_name": "MH-05 evidence gate",
+      "decision_date": "2026-03-09",
+      "sponsor_name": "Dr. R. Kim",
+      "decision_status": "reversed",
+      "dissent_recorded": false,
+      "dissent_summary": null,
+      "outcome_status": "accepted"
+    },
+    {
+      "initiative_id": "meridian-ml-clinical-risk-2024",
+      "decision_name": "MH-05 next-quarter funding posture",
+      "decision_date": "2026-04-07",
+      "sponsor_name": "Dr. R. Kim",
+      "decision_status": "pending",
+      "dissent_recorded": true,
+      "dissent_summary": "Minority view: defer incremental funding until MH-05 has clearer operating telemetry.",
+      "outcome_status": "pending review"
+    },
+    {
+      "initiative_id": "meridian-llm-sap-joule-2025",
+      "decision_name": "MH-06 evidence gate",
+      "decision_date": "2026-03-10",
+      "sponsor_name": "SAP COE",
+      "decision_status": "pending",
+      "dissent_recorded": true,
+      "dissent_summary": "Dissent recorded: sponsor wanted to continue, finance or risk asked for stronger measured-value evidence before scaling MH-06.",
+      "outcome_status": "open"
+    },
+    {
+      "initiative_id": "meridian-llm-sap-joule-2025",
+      "decision_name": "MH-06 next-quarter funding posture",
+      "decision_date": "2026-04-08",
+      "sponsor_name": "SAP COE",
+      "decision_status": "pending",
+      "dissent_recorded": false,
+      "dissent_summary": null,
+      "outcome_status": "pending review"
+    },
+    {
+      "initiative_id": "meridian-infra-governance-finops-2026",
+      "decision_name": "MH-07 evidence gate",
+      "decision_date": "2026-03-11",
+      "sponsor_name": "P. Iyer / M. Castillo",
+      "decision_status": "decided",
+      "dissent_recorded": false,
+      "dissent_summary": null,
+      "outcome_status": "watch"
+    },
+    {
+      "initiative_id": "meridian-infra-governance-finops-2026",
+      "decision_name": "MH-07 next-quarter funding posture",
+      "decision_date": "2026-04-09",
+      "sponsor_name": "P. Iyer / M. Castillo",
+      "decision_status": "pending",
+      "dissent_recorded": false,
+      "dissent_summary": null,
+      "outcome_status": "pending review"
+    }
   ],
-
   "vendors": [
-    {"initiative_id": "meridian-llm-clinical-doc-2025", "vendor_name": "Nuance / Microsoft (DAX Express)", "contract_value_usd": 4100000, "renewal_date": "2027-06-30", "financial_health": "strong", "notes": "Bundled with M365 health"},
-    {"initiative_id": "meridian-sdlc-cursor-2026", "vendor_name": "Cursor (Anysphere)", "contract_value_usd": 400000, "renewal_date": "2027-04-30", "financial_health": "moderate", "notes": "Younger vendor"},
-    {"initiative_id": "meridian-agentic-now-assist-2026", "vendor_name": "ServiceNow", "contract_value_usd": 4100000, "renewal_date": "2026-12-31", "financial_health": "strong", "notes": "Renewal in 8 months · scope refresh in progress"},
-    {"initiative_id": "meridian-erp-epic-revcycle-2025", "vendor_name": "Epic Systems", "contract_value_usd": 2600000, "renewal_date": "2028-06-30", "financial_health": "strong", "notes": "Strategic vendor · multi-year"},
-    {"initiative_id": "meridian-llm-sap-joule-2025", "vendor_name": "SAP", "contract_value_usd": 3200000, "renewal_date": "2027-12-31", "financial_health": "strong", "notes": "Bundled with broader SAP modernization"},
-    {"initiative_id": "meridian-llm-sap-joule-2025", "vendor_name": "Innovaccer", "contract_value_usd": 1800000, "renewal_date": "2027-01-31", "financial_health": "watch", "notes": "Vendor-first signals detected · 2 peer health systems delayed renewals citing implementation risk"}
+    {
+      "initiative_id": "meridian-llm-clinical-doc-2025",
+      "vendor_name": "Nuance / Microsoft (DAX Express)",
+      "contract_value_usd": 4100000,
+      "renewal_date": "2027-06-30",
+      "financial_health": "strong",
+      "notes": "Bundled with M365 health"
+    },
+    {
+      "initiative_id": "meridian-sdlc-cursor-2026",
+      "vendor_name": "Cursor (Anysphere)",
+      "contract_value_usd": 400000,
+      "renewal_date": "2027-04-30",
+      "financial_health": "moderate",
+      "notes": "Younger vendor"
+    },
+    {
+      "initiative_id": "meridian-agentic-now-assist-2026",
+      "vendor_name": "ServiceNow",
+      "contract_value_usd": 4100000,
+      "renewal_date": "2026-12-31",
+      "financial_health": "strong",
+      "notes": "Renewal in 8 months · scope refresh in progress"
+    },
+    {
+      "initiative_id": "meridian-erp-epic-revcycle-2025",
+      "vendor_name": "Epic Systems",
+      "contract_value_usd": 2600000,
+      "renewal_date": "2026-06-19",
+      "financial_health": "strong",
+      "notes": "Strategic vendor · multi-year"
+    },
+    {
+      "initiative_id": "meridian-llm-sap-joule-2025",
+      "vendor_name": "SAP",
+      "contract_value_usd": 3200000,
+      "renewal_date": "2027-12-31",
+      "financial_health": "strong",
+      "notes": "Bundled with broader SAP modernization"
+    },
+    {
+      "initiative_id": "meridian-llm-sap-joule-2025",
+      "vendor_name": "Innovaccer",
+      "contract_value_usd": 1800000,
+      "renewal_date": "2027-01-31",
+      "financial_health": "watch",
+      "notes": "Vendor-first signals detected · 2 peer health systems delayed renewals citing implementation risk"
+    },
+    {
+      "initiative_id": "meridian-llm-clinical-doc-2025",
+      "vendor_name": "AbarVa Benchmark Vendor",
+      "contract_value_usd": 4100000,
+      "renewal_date": "2027-01-28",
+      "financial_health": "moderate",
+      "notes": "Tower substrate vendor anchor for MH-01."
+    },
+    {
+      "initiative_id": "meridian-sdlc-cursor-2026",
+      "vendor_name": "AbarVa Benchmark Vendor",
+      "contract_value_usd": 400000,
+      "renewal_date": "2027-02-28",
+      "financial_health": "moderate",
+      "notes": "Tower substrate vendor anchor for MH-02."
+    },
+    {
+      "initiative_id": "meridian-agentic-now-assist-2026",
+      "vendor_name": "AbarVa Benchmark Vendor",
+      "contract_value_usd": 900000,
+      "renewal_date": "2027-03-28",
+      "financial_health": "moderate",
+      "notes": "Tower substrate vendor anchor for MH-03."
+    },
+    {
+      "initiative_id": "meridian-erp-epic-revcycle-2025",
+      "vendor_name": "AbarVa Benchmark Vendor",
+      "contract_value_usd": 1300000,
+      "renewal_date": "2027-04-28",
+      "financial_health": "moderate",
+      "notes": "Tower substrate vendor anchor for MH-04."
+    },
+    {
+      "initiative_id": "meridian-ml-clinical-risk-2024",
+      "vendor_name": "AbarVa Benchmark Vendor",
+      "contract_value_usd": 600000,
+      "renewal_date": "2027-05-28",
+      "financial_health": "moderate",
+      "notes": "Tower substrate vendor anchor for MH-05."
+    },
+    {
+      "initiative_id": "meridian-llm-sap-joule-2025",
+      "vendor_name": "AbarVa Benchmark Vendor",
+      "contract_value_usd": 3200000,
+      "renewal_date": "2027-06-28",
+      "financial_health": "moderate",
+      "notes": "Tower substrate vendor anchor for MH-06."
+    },
+    {
+      "initiative_id": "meridian-infra-governance-finops-2026",
+      "vendor_name": "AbarVa Benchmark Vendor",
+      "contract_value_usd": 1400000,
+      "renewal_date": "2027-07-28",
+      "financial_health": "moderate",
+      "notes": "Tower substrate vendor anchor for MH-07."
+    }
   ],
-
   "scenarios": [
-    {"initiative_id": "meridian-llm-sap-joule-2025", "scenario_name": "Joule sunset at next governance review", "trigger_event": "May 19 governance review · realized value still tracking below 50% of committed", "time_horizon_months": 1, "probability_pct": 30, "impact_summary": "$3.2M annual reallocated · finance team productivity work pivoted · vendor relationship damaged"},
-    {"initiative_id": "meridian-erp-epic-revcycle-2025", "scenario_name": "Denials reduction stalls at 10%", "trigger_event": "Q3 2026 review", "time_horizon_months": 4, "probability_pct": 35, "impact_summary": "Y2 budget release contested · CFO posture shifts · re-scope expected"},
-    {"initiative_id": "meridian-agentic-now-assist-2026", "scenario_name": "ServiceNow renewal scope reduction", "trigger_event": "Q4 2026 renewal · Now Assist + M365 Copilot duplication unresolved", "time_horizon_months": 8, "probability_pct": 50, "impact_summary": "Now Assist scope reduced or removed from renewal · $0.9M reallocated"},
-    {"initiative_id": "meridian-llm-clinical-doc-2025", "scenario_name": "Expansion to 5 hospitals lands ahead of schedule", "trigger_event": "Q3 2026 cohort completes", "time_horizon_months": 5, "probability_pct": 65, "impact_summary": "Physician satisfaction lifts further · physician retention metric improves · serves as proof-point for board"}
+    {
+      "initiative_id": "meridian-llm-clinical-doc-2025",
+      "scenario_name": "MH-01 scale-with-controls scenario",
+      "trigger_event": "next governance gate approves scale path",
+      "time_horizon_months": 3,
+      "probability_pct": 35,
+      "impact_summary": "If controls and telemetry clear, MH-01 can move from status healthy toward a defended scale posture without changing the tenant strategy."
+    },
+    {
+      "initiative_id": "meridian-llm-clinical-doc-2025",
+      "scenario_name": "MH-01 evidence-shortfall scenario",
+      "trigger_event": "confidence floor remains below governance threshold",
+      "time_horizon_months": 6,
+      "probability_pct": 18,
+      "impact_summary": "If evidence remains thin, Tower should keep MH-01 in pressure or watch posture and route the next action to the accountable operating lane."
+    },
+    {
+      "initiative_id": "meridian-sdlc-cursor-2026",
+      "scenario_name": "MH-02 scale-with-controls scenario",
+      "trigger_event": "platform control milestone clears",
+      "time_horizon_months": 6,
+      "probability_pct": 42,
+      "impact_summary": "If controls and telemetry clear, MH-02 can move from status foundation_phase toward a defended scale posture without changing the tenant strategy."
+    },
+    {
+      "initiative_id": "meridian-sdlc-cursor-2026",
+      "scenario_name": "MH-02 evidence-shortfall scenario",
+      "trigger_event": "confidence floor remains below governance threshold",
+      "time_horizon_months": 9,
+      "probability_pct": 29,
+      "impact_summary": "If evidence remains thin, Tower should keep MH-02 in pressure or watch posture and route the next action to the accountable operating lane."
+    },
+    {
+      "initiative_id": "meridian-agentic-now-assist-2026",
+      "scenario_name": "MH-03 scale-with-controls scenario",
+      "trigger_event": "next governance gate approves scale path",
+      "time_horizon_months": 9,
+      "probability_pct": 49,
+      "impact_summary": "If controls and telemetry clear, MH-03 can move from status duplication_risk toward a defended scale posture without changing the tenant strategy."
+    },
+    {
+      "initiative_id": "meridian-agentic-now-assist-2026",
+      "scenario_name": "MH-03 evidence-shortfall scenario",
+      "trigger_event": "confidence floor remains below governance threshold",
+      "time_horizon_months": 12,
+      "probability_pct": 40,
+      "impact_summary": "If evidence remains thin, Tower should keep MH-03 in pressure or watch posture and route the next action to the accountable operating lane."
+    },
+    {
+      "initiative_id": "meridian-erp-epic-revcycle-2025",
+      "scenario_name": "MH-04 scale-with-controls scenario",
+      "trigger_event": "next governance gate approves scale path",
+      "time_horizon_months": 12,
+      "probability_pct": 56,
+      "impact_summary": "If controls and telemetry clear, MH-04 can move from status value_lag toward a defended scale posture without changing the tenant strategy."
+    },
+    {
+      "initiative_id": "meridian-erp-epic-revcycle-2025",
+      "scenario_name": "MH-04 evidence-shortfall scenario",
+      "trigger_event": "confidence floor remains below governance threshold",
+      "time_horizon_months": 6,
+      "probability_pct": 51,
+      "impact_summary": "If evidence remains thin, Tower should keep MH-04 in pressure or watch posture and route the next action to the accountable operating lane."
+    },
+    {
+      "initiative_id": "meridian-ml-clinical-risk-2024",
+      "scenario_name": "MH-05 scale-with-controls scenario",
+      "trigger_event": "next governance gate approves scale path",
+      "time_horizon_months": 3,
+      "probability_pct": 63,
+      "impact_summary": "If controls and telemetry clear, MH-05 can move from status healthy toward a defended scale posture without changing the tenant strategy."
+    },
+    {
+      "initiative_id": "meridian-ml-clinical-risk-2024",
+      "scenario_name": "MH-05 evidence-shortfall scenario",
+      "trigger_event": "confidence floor remains below governance threshold",
+      "time_horizon_months": 9,
+      "probability_pct": 62,
+      "impact_summary": "If evidence remains thin, Tower should keep MH-05 in pressure or watch posture and route the next action to the accountable operating lane."
+    },
+    {
+      "initiative_id": "meridian-llm-sap-joule-2025",
+      "scenario_name": "MH-06 scale-with-controls scenario",
+      "trigger_event": "next governance gate approves scale path",
+      "time_horizon_months": 6,
+      "probability_pct": 70,
+      "impact_summary": "If controls and telemetry clear, MH-06 can move from status value_lag toward a defended scale posture without changing the tenant strategy."
+    },
+    {
+      "initiative_id": "meridian-llm-sap-joule-2025",
+      "scenario_name": "MH-06 evidence-shortfall scenario",
+      "trigger_event": "confidence floor remains below governance threshold",
+      "time_horizon_months": 12,
+      "probability_pct": 23,
+      "impact_summary": "If evidence remains thin, Tower should keep MH-06 in pressure or watch posture and route the next action to the accountable operating lane."
+    },
+    {
+      "initiative_id": "meridian-infra-governance-finops-2026",
+      "scenario_name": "MH-07 scale-with-controls scenario",
+      "trigger_event": "platform control milestone clears",
+      "time_horizon_months": 9,
+      "probability_pct": 77,
+      "impact_summary": "If controls and telemetry clear, MH-07 can move from status foundation_phase toward a defended scale posture without changing the tenant strategy."
+    },
+    {
+      "initiative_id": "meridian-infra-governance-finops-2026",
+      "scenario_name": "MH-07 evidence-shortfall scenario",
+      "trigger_event": "confidence floor remains below governance threshold",
+      "time_horizon_months": 6,
+      "probability_pct": 34,
+      "impact_summary": "If evidence remains thin, Tower should keep MH-07 in pressure or watch posture and route the next action to the accountable operating lane."
+    }
   ]
 }

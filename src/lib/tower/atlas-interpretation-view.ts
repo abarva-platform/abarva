@@ -141,6 +141,8 @@ function composeTopPressure(input: AtlasReasoningInput, number: number): AtlasIn
       { initiativeId: initiative.initiativeId, field: 'ai_initiatives.status_summary', value: initiative.statusSummary },
       { initiativeId: initiative.initiativeId, field: 'ai_initiatives.committed_annual_usd', value: initiative.committedAnnualUsd ?? 0 },
       { initiativeId: initiative.initiativeId, field: 'ai_initiatives.measured_value_usd', value: initiative.measuredValueUsd ?? 0 },
+      { initiativeId: initiative.initiativeId, field: 'tower_view.pressure_magnitude', value: pressure.magnitudeValue },
+      { initiativeId: initiative.initiativeId, field: 'tower_view.pressure_next_action', value: pressure.nextAction },
       ...(pressure.type === 'dupl'
         ? [{ field: 'tower_view.attribution_study_weeks', value: 6 } satisfies AtlasCitation]
         : []),

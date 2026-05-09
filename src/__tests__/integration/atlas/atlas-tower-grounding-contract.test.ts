@@ -12,12 +12,25 @@ describe('Atlas Tower grounding contract', () => {
       intent: 'llm',
       routeType: 'llm',
     });
+    expect(classifyAtlasIntent('what can Tower answer?')).toEqual({
+      intent: 'llm',
+      routeType: 'llm',
+    });
+  });
+
+  it('routes operational action requests to refusal discipline', () => {
+    expect(classifyAtlasIntent('cancel the ServiceNow renewal')).toEqual({
+      intent: 'strategy_refusal',
+      routeType: 'scripted',
+    });
   });
 
   it('system prompt prioritizes current Tower state and retrieved corpus context', () => {
     const prompt = buildAtlasSystemPrompt('Meridian Health');
     expect(prompt).toContain('Treat TOWER CURRENT STATE as the first source of truth');
     expect(prompt).toContain('For "what are others doing" questions');
+    expect(prompt).toContain('If asked what Tower can answer');
+    expect(prompt).toContain('Do not execute or simulate operational actions');
     expect(prompt).toContain('Never answer from another tenant');
     expect(prompt).not.toContain('Apex Retail Group');
   });
@@ -30,5 +43,11 @@ describe('Atlas Tower grounding contract', () => {
     expect(source).toContain('formatRetrievedContext');
     expect(source).toContain('CITATION_INSTRUCTION');
     expect(source).toContain('sanitizeForTenantPrompt');
+  });
+
+  it('retrieval has a Postgres corpus fallback when vector search is unavailable', () => {
+    const source = readFileSync('src/lib/agent/retrieval.ts', 'utf8');
+    expect(source).toContain('queryPostgresContextChunks');
+    expect(source).toContain('enterprise_context_chunks');
   });
 });

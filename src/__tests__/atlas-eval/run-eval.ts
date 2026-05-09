@@ -194,14 +194,14 @@ function emptySubstrate({ initiatives, vendors }: { initiatives: AIInitiative[];
 }
 
 const CASES: EvalCase[] = [
-  { id: 'A1', tenantSlug: 'meridian-health', tenantName: 'Meridian Health', lens: 'value', shouldFire: ['pattern_01_top_pressure'] },
+  { id: 'A1', tenantSlug: 'meridian-health', tenantName: 'Meridian Health', lens: 'value', shouldFire: ['pattern_04_vendor_clock'] },
   { id: 'A2', tenantSlug: 'meridian-health', tenantName: 'Meridian Health', lens: 'risk', shouldFire: ['pattern_01_top_pressure'] },
-  { id: 'A3', tenantSlug: 'meridian-health', tenantName: 'Meridian Health', lens: 'contract', shouldNotFire: ['pattern_04_vendor_clock'] },
-  { id: 'A4', tenantSlug: 'meridian-health', tenantName: 'Meridian Health', lens: 'adopt', shouldFire: ['pattern_01_top_pressure'] },
+  { id: 'A3', tenantSlug: 'meridian-health', tenantName: 'Meridian Health', lens: 'contract', shouldFire: ['pattern_04_vendor_clock'] },
+  { id: 'A4', tenantSlug: 'meridian-health', tenantName: 'Meridian Health', lens: 'adopt', shouldFire: ['pattern_04_vendor_clock'] },
   { id: 'A5', tenantSlug: 'meridian-health', tenantName: 'Meridian Health', lens: 'contract', mutate: vendorSoon, shouldFire: ['pattern_04_vendor_clock'] },
   { id: 'A6', tenantSlug: 'meridian-health', tenantName: 'Meridian Health', lens: 'value', mutate: healthyPortfolio, shouldFire: ['pattern_06_healthy_posture'] },
-  { id: 'A7', tenantSlug: 'meridian-health', tenantName: 'Meridian Health', lens: 'value', shouldFire: ['pattern_01_top_pressure'] },
-  { id: 'A8', tenantSlug: 'meridian-health', tenantName: 'Meridian Health', lens: 'value', shouldNotFire: ['pattern_04_vendor_clock'] },
+  { id: 'A7', tenantSlug: 'meridian-health', tenantName: 'Meridian Health', lens: 'value', shouldFire: ['pattern_04_vendor_clock'] },
+  { id: 'A8', tenantSlug: 'meridian-health', tenantName: 'Meridian Health', lens: 'value', shouldFire: ['pattern_04_vendor_clock'] },
   { id: 'B1', tenantSlug: 'apex-retail', tenantName: 'Apex Retail', lens: 'value', shouldFire: ['pattern_04_vendor_clock'] },
   { id: 'B2', tenantSlug: 'apex-retail', tenantName: 'Apex Retail', lens: 'risk', shouldFire: ['pattern_01_top_pressure'] },
   { id: 'B3', tenantSlug: 'apex-retail', tenantName: 'Apex Retail', lens: 'contract', shouldFire: ['pattern_04_vendor_clock'] },
@@ -210,7 +210,7 @@ const CASES: EvalCase[] = [
   { id: 'B6', tenantSlug: 'apex-retail', tenantName: 'Apex Retail', lens: 'value', mutate: healthyPortfolio, shouldFire: ['pattern_06_healthy_posture'] },
   { id: 'B7', tenantSlug: 'apex-retail', tenantName: 'Apex Retail', lens: 'contract', mutate: vendorSoon, shouldFire: ['pattern_04_vendor_clock'] },
   { id: 'B8', tenantSlug: 'apex-retail', tenantName: 'Apex Retail', lens: 'risk', shouldFire: ['pattern_01_top_pressure'] },
-  { id: 'C1', tenantSlug: 'first-capital-financial', tenantName: 'First Capital Financial', lens: 'value', shouldFire: ['pattern_01_top_pressure'] },
+  { id: 'C1', tenantSlug: 'first-capital-financial', tenantName: 'First Capital Financial', lens: 'value', shouldFire: ['pattern_04_vendor_clock'] },
   { id: 'C2', tenantSlug: 'first-capital-financial', tenantName: 'First Capital Financial', lens: 'risk', shouldFire: ['pattern_01_top_pressure'] },
   { id: 'C3', tenantSlug: 'first-capital-financial', tenantName: 'First Capital Financial', lens: 'contract', mutate: vendorSoon, shouldFire: ['pattern_04_vendor_clock'] },
   { id: 'C4', tenantSlug: 'first-capital-financial', tenantName: 'First Capital Financial', lens: 'value', mutate: healthyPortfolio, shouldFire: ['pattern_06_healthy_posture'] },

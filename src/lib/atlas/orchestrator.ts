@@ -17,6 +17,7 @@ import {
   ATLAS_TRAINING_PACKAGE_VERSION,
 } from '@/lib/tower/atlas-reasoning-trace';
 import { resolveTowerToday } from '@/lib/tower/today-resolution';
+import { selectAtlasPatterns } from '@/lib/tower/atlas-pattern-selectors';
 import type {
   AtlasChatResponse,
   AtlasMetricExplanationRequest,
@@ -70,6 +71,22 @@ function lowerConfidence(value: 'HIGH' | 'MED' | 'LOW'): 'high' | 'med' | 'low' 
   if (value === 'HIGH') return 'high';
   if (value === 'MED') return 'med';
   return 'low';
+}
+
+function confidenceFloorFromTowerState(
+  towerState: NonNullable<AtlasToolResultMap['towerState']>,
+): 'high' | 'med' | 'low' | 'none' {
+  const values = towerState.bandMetrics.metrics.map((metric) => metric.confidence);
+  if (values.includes('low')) return 'low';
+  if (values.includes('med')) return 'med';
+  if (values.includes('none')) return 'none';
+  return 'high';
+}
+
+function traceConfidenceFloor(value: 'high' | 'med' | 'low' | 'none'): 'HIGH' | 'MED' | 'LOW' {
+  if (value === 'high') return 'HIGH';
+  if (value === 'med') return 'MED';
+  return 'LOW';
 }
 
 function readMetricExplanationRequest(
@@ -182,6 +199,76 @@ async function runMetricExplanationTurn(input: {
       metricExplanation: explanation,
     },
   };
+}
+
+async function appendChatReasoningTrace(input: {
+  ctx: AtlasTenancyCtx;
+  threadId: string;
+  response: AtlasChatResponse;
+  toolResults: AtlasToolResultMap;
+  latencyMs: number;
+  modelName: string | null;
+}): Promise<void> {
+  const towerState = input.toolResults.towerState;
+  if (!towerState) return;
+
+  const patterns = selectAtlasPatterns({
+    initiatives: towerState.initiatives,
+    vendors: towerState.vendors,
+    pressuresView: towerState.pressuresView,
+    alignment2x2View: towerState.alignment2x2View,
+    todayIso: towerState.todayIso,
+  });
+  const patternsFired = [patterns.leadPattern, ...patterns.secondaryPatterns];
+  const bandFloor = confidenceFloorFromTowerState(towerState);
+  const citations = [
+    { field: 'tower_view.initiative_count', value: towerState.substrateCounts.initiatives },
+    { field: 'tower_view.vendor_count', value: towerState.substrateCounts.vendors },
+    { field: 'tower_view.kpi_snapshot_count', value: towerState.substrateCounts.kpiSnapshots },
+    { field: 'tower_view.pressure_count', value: towerState.substrateCounts.pressures },
+    { field: 'tower_view.observation_count', value: towerState.substrateCounts.observations },
+  ];
+
+  await appendAtlasReasoningTrace({
+    threadId: input.threadId,
+    tenantId: input.ctx.clientId,
+    userId: input.ctx.userId,
+    trigger: 'atlas_chat_turn',
+    inputSummary: {
+      initiativesCount: towerState.substrateCounts.initiatives,
+      vendorsCount: towerState.substrateCounts.vendors,
+      pressuresCount: towerState.substrateCounts.pressures,
+      bandConfidenceFloor: bandFloor,
+      lens: towerState.activeLens,
+      todayIso: towerState.todayIso,
+    },
+    patternsFired,
+    patternsSkipped: [],
+    observations: [
+      {
+        number: 1,
+        topic: input.response.intent,
+        body: input.response.response.slice(0, 900),
+        confidenceFloor: traceConfidenceFloor(bandFloor),
+        citationsCount: citations.length,
+        actionsCount: input.response.suggestions.length,
+      },
+    ],
+    ifYouOnlyDoOneToday: input.response.suggestions[0]?.value ?? null,
+    citations,
+    interpretationConfidence:
+      towerState.substrateCounts.initiatives === 0
+        ? 'low'
+        : bandFloor === 'low' || bandFloor === 'none'
+          ? 'med'
+          : 'high',
+    fallbackUsed: false,
+    fallbackReason: null,
+    latencyMs: input.latencyMs,
+    model: input.modelName ?? ATLAS_REASONING_MODEL,
+    promptVersion: ATLAS_PROMPT_VERSION,
+    packageVersion: ATLAS_TRAINING_PACKAGE_VERSION,
+  }).catch(() => null);
 }
 
 export async function runAtlasTurn(input: {
@@ -311,6 +398,15 @@ export async function runAtlasTurnDetailed(input: {
     promptVersion: ATLAS_PROMPT_VERSION,
     latencyMs: Date.now() - startedAt,
     observationId,
+  });
+
+  await appendChatReasoningTrace({
+    ctx: input.ctx,
+    threadId: thread.id,
+    response,
+    toolResults,
+    latencyMs: Date.now() - startedAt,
+    modelName,
   });
 
   await touchAtlasThread(thread.id);
