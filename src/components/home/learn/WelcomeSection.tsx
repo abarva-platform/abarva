@@ -70,13 +70,13 @@ export function WelcomeSection() {
             Before anything else, see what data is already connected and who the named executives are. This is the foundation everything else builds on.
           </Step>
           <Step title="Open Intelligence — read 3 pressure cards" path="/intelligence → Pressure Cards">
-            Intelligence surfaces AI-detected patterns in your data. Reading pressure cards tells you what the system already knows about your operational state — before you've done any work.
+            Intelligence surfaces AI-detected patterns in your data. Reading pressure cards tells you what the system already knows about your operational state — before you&rsquo;ve done any work.
           </Step>
           <Step title="Notice which patterns could become Moves">
-            Look for the "→ Originate Move" prompt on any pressure card. This is the fastest path from signal to action — Intelligence shows you the problem, Moves is how you fix it.
+            Look for the &ldquo;→ Originate Move&rdquo; prompt on any pressure card. This is the fastest path from signal to action — Intelligence shows you the problem, Moves is how you fix it.
           </Step>
           <Step title="Open Strategic Moves — try originating a new Move" path="/strategic-moves → + New Move">
-            Click <strong>"New Move"</strong> and describe the initiative in chat. Nexus handles the rest. You don't need perfect information — a one-sentence hypothesis is enough to start.
+            Click <strong>&ldquo;New Move&rdquo;</strong> and describe the initiative in chat. Nexus handles the rest. You don&rsquo;t need perfect information — a one-sentence hypothesis is enough to start.
           </Step>
         </StepList>
 

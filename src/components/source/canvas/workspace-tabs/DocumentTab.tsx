@@ -1,4 +1,4 @@
-import { useEffect, useState, type CSSProperties } from 'react';
+import { useState, type CSSProperties } from 'react';
 import { specByCode, type SourceArtifactSpec } from '@/lib/source/canonical-specs';
 import type {
   SourceEventArtifactState,
@@ -333,12 +333,16 @@ function ArtifactBodyEditor({
   const seed = authoredBody ?? templateBody ?? '';
   const [draft, setDraft] = useState(seed);
 
-  // If the user navigates between artifacts the seed changes — sync.
-  useEffect(() => {
+  // If the user navigates between artifacts the seed changes — sync draft
+  // during render (React docs pattern: compare prev prop with useState, no
+  // useEffect needed). See react.dev/learn/you-might-not-need-an-effect.
+  const [prevSeed, setPrevSeed] = useState(seed);
+  if (prevSeed !== seed) {
+    setPrevSeed(seed);
     setDraft(seed);
     setEditing(false);
     setGenerationError(null);
-  }, [seed]);
+  }
 
   const handleGenerate = async () => {
     if (!onGenerateFromClaude) return;

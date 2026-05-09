@@ -9,7 +9,6 @@ import * as path from 'path';
 import {
   buildMilestoneTrackerView,
   type MilestoneTrackerView,
-  type ProgrammeMilestoneSchedule,
 } from '@/lib/intelligence/milestone-tracker-view';
 
 // ─────────────────────────────────────────────────────────────────────────────

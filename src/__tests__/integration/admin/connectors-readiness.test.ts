@@ -9,8 +9,6 @@ import {
   buildConnectorsReadinessView,
   getPilotBlockerConnectors,
   type ConnectorsReadinessView,
-  type ConnectorStatus,
-  type ConnectorKind,
 } from '@/lib/admin/connectors-readiness-view';
 
 // ===========================================================================

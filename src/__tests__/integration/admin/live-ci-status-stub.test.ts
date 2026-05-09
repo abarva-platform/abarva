@@ -2,7 +2,6 @@ import {
   buildLiveCiStatusStubReport,
   getLiveCiStatusProviders,
   type LiveCiStatusStubReport,
-  type CiProviderStub,
 } from '@/lib/admin/live-ci-status-stub'
 
 describe('buildLiveCiStatusStubReport', () => {

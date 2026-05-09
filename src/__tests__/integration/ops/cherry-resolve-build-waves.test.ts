@@ -14,7 +14,6 @@ import {
   type WaveEntry,
   type WavesDoc,
   type WaveValidationStatus,
-  type WaveStatus,
 } from '../../../lib/ops/waves-merge-utils';
 
 // ---------------------------------------------------------------------------

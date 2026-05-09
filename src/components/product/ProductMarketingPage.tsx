@@ -491,8 +491,8 @@ function FourSurfaces() {
         <SectionEyebrow num="02">The four surfaces</SectionEyebrow>
         <SectionTitle>One platform. Four surfaces. Each one a CXO answer.</SectionTitle>
         <SectionLead>
-          <AbarvaWordmark /> isn't a dashboard. Each surface answers a different decision —
-          and they're all wired into the same substrate so the answers stay
+          <AbarvaWordmark /> isn&rsquo;t a dashboard. Each surface answers a different decision —
+          and they&rsquo;re all wired into the same substrate so the answers stay
           consistent.
         </SectionLead>
         <div
@@ -957,7 +957,7 @@ function Substrate() {
           <p style={{ fontSize: 15.5, color: C.inkSoft, lineHeight: 1.65, marginBottom: 20, maxWidth: '54ch' }}>
             Every CXO answer is grounded in three layers of substrate. The
             tenant layer is what we know about you. The corpus is the cross-
-            tenant pattern library. The industry layer is what's possible at
+            tenant pattern library. The industry layer is what&rsquo;s possible at
             the frontier.
           </p>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14, marginTop: 28 }}>
