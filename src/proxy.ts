@@ -29,6 +29,9 @@ export const PUBLIC_ROUTE_PATTERNS = [
   // Demo code sign-in starts unauthenticated from /sign-in, so the ticket
   // handoff route must stay publicly reachable and perform its own checks.
   '/api/auth/demo-code-sign-in(.*)',
+  // Count-only Tower substrate diagnostic. Returns no secrets or row payloads;
+  // used to verify production DB substrate without exposing tenant data.
+  '/api/debug/tower-substrate(.*)',
   // INT-V3 (2026-05-07) · /intelligence is the public Explore Layer
   // surface — corpus doctrine, no tenant data leakage. Auth-required
   // sub-paths (author / quality / synthesize / ask / validate) are
