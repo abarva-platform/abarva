@@ -32,43 +32,73 @@ interface ClerkWindow extends Window {
   }
 }
 
-// ─── Client identity cards (one per admin) ───────────────────────────
-// Surfaces a role-based username (cxo@<tenant>) per demo identity
-// instead of person names. Keyed off the same canonical roster as
-// DEMO_CODE_ALLOWED_EMAILS — if the roster changes, this map
-// degrades gracefully (unknown emails still show the raw address).
+// ─── Client identity cards (one per persona) ─────────────────────────
+// Each card binds a role-based login (role@<tenant>) to a real persona
+// from the existing tenant org charts. The persona's bio, decisions,
+// programs, and political positioning are already threaded through
+// the corpus — logging in as Carlos Rivera surfaces all of Carlos's
+// IT-modernization context, while logging in as Lynne Stratham
+// surfaces the CDP / data-strategy view of the same Apex tenant.
 //
-// Founder direction (2026-05-08): one CXO username per tenant, no
-// individual person names.
+// Keyed off DEMO_CODE_ALLOWED_EMAILS — if the canonical roster
+// changes, identities not in the roster automatically drop out of
+// the UI (see filter below).
 interface ClientIdentity {
   email: string // full email stored in Clerk
-  shortLabel: string // what we show prominently on the card
+  shortLabel: string // prominent mono label on the card
+  personaName: string // real-name persona (drives bottom subtitle)
+  titleShort: string // CIO · CDO · CDIO
+  titleFull: string // for tooltips and the Wave 2 Clerk metadata
   tenant: string
-  monogramBg: string
-  monogram: string
+  monogramBg: string // tenant theme color (not chrome — Apex orange / Meridian teal / FirstCap navy)
+  monogram: string // 2-char persona initials
 }
 
 const CLIENT_IDENTITIES: ReadonlyArray<ClientIdentity> = [
+  // ─ Apex Retail Group ─────────────────────────────────────────────
   {
-    email: 'cxo@meridian-health.example.com',
-    shortLabel: 'cxo@meridian-health',
-    tenant: 'Meridian Health System',
-    monogramBg: '#0E8A65', // Meridian teal (tenant theme, not chrome)
-    monogram: 'MH',
-  },
-  {
-    email: 'cxo@apex-retail.example.com',
-    shortLabel: 'cxo@apex',
+    email: 'cio@apex-retail.example.com',
+    shortLabel: 'cio@apex',
+    personaName: 'Carlos Rivera',
+    titleShort: 'CIO',
+    titleFull: 'Chief Information Officer',
     tenant: 'Apex Retail Group',
     monogramBg: '#C2410C', // Apex orange
-    monogram: 'AR',
+    monogram: 'CR',
   },
   {
-    email: 'cxo@firstcapital.example.com',
-    shortLabel: 'cxo@firstcapital',
+    email: 'cdo@apex-retail.example.com',
+    shortLabel: 'cdo@apex',
+    personaName: 'Lynne Stratham',
+    titleShort: 'CDO',
+    titleFull: 'Chief Data Officer',
+    tenant: 'Apex Retail Group',
+    monogramBg: '#C2410C',
+    monogram: 'LS',
+  },
+
+  // ─ Meridian Health System ────────────────────────────────────────
+  {
+    email: 'cdio@meridian-health.example.com',
+    shortLabel: 'cdio@meridian-health',
+    personaName: 'Dr. Anita Krishnamurthy',
+    titleShort: 'CDIO',
+    titleFull: 'Chief Digital + Information Officer',
+    tenant: 'Meridian Health System',
+    monogramBg: '#0E8A65', // Meridian teal
+    monogram: 'AK',
+  },
+
+  // ─ First Capital ─────────────────────────────────────────────────
+  {
+    email: 'cio@firstcapital.example.com',
+    shortLabel: 'cio@firstcapital',
+    personaName: 'Patricia Huang',
+    titleShort: 'CIO',
+    titleFull: 'Chief Information Officer',
     tenant: 'First Capital',
     monogramBg: '#1E3A8A', // FirstCap navy
-    monogram: 'FC',
+    monogram: 'PH',
   },
 ]
 
@@ -392,13 +422,17 @@ export function DemoCodeSignIn({ redirectUrl }: Props) {
                     {id.shortLabel}
                   </div>
                   <div
+                    title={`${id.personaName} · ${id.titleFull} · ${id.tenant}`}
                     style={{
                       fontSize: 12,
                       color: BRAND.textMute,
                       lineHeight: 1.3,
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
                     }}
                   >
-                    {id.tenant} · Tenant admin
+                    {id.personaName} · {id.titleShort} · {id.tenant}
                   </div>
                 </div>
                 {isSelected && (
