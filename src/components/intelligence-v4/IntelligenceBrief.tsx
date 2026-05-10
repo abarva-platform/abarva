@@ -97,8 +97,11 @@ export function IntelligenceBrief({ data, activeClient, surfaceContext }: Props)
   });
 
   const leadBet = data.bets[0];
-  const leadDecision = leadBet?.decision?.label ?? 'Review first';
+  const leadDecision = leadBet ? decisionCtaLabel(leadBet) : 'Review first';
   const leadPattern = leadBet?.bindingPatterns[0]?.pattern.id ?? data.patternsTriggered[0]?.pattern.id ?? 'Pattern bound';
+  const heroTitle = data.industry === 'retail'
+    ? 'Apex has three AI bets worth moving now, but one decision blocks the portfolio.'
+    : `Three AI bets are worth moving now for ${data.tenantName}.`;
 
   // Workspace · the surface body that Sentinel chat docks against.
   // Post-AgentDock migration this lives on the RIGHT of the chat lane.
@@ -108,10 +111,10 @@ export function IntelligenceBrief({ data, activeClient, surfaceContext }: Props)
         <header
           style={{
             display: 'grid',
-            gridTemplateColumns: 'minmax(0, 1fr) minmax(240px, 320px)',
-            gap: 28,
-            alignItems: 'end',
-            paddingBottom: 20,
+            gridTemplateColumns: 'minmax(0, 1fr) minmax(280px, 320px)',
+            gap: 34,
+            alignItems: 'start',
+            paddingBottom: 18,
             borderBottom: `1px solid ${C.borderLight}`,
           }}
         >
@@ -132,25 +135,25 @@ export function IntelligenceBrief({ data, activeClient, surfaceContext }: Props)
             <h1
               style={{
                 fontFamily: F_DISPLAY,
-                fontSize: 32,
-                fontWeight: 400,
+                fontSize: 'clamp(28px, 3.1vw, 42px)',
+                fontWeight: 520,
                 color: C.ink,
-                letterSpacing: '-0.014em',
-                lineHeight: 1.15,
+                letterSpacing: '-0.012em',
+                lineHeight: 1.04,
                 margin: 0,
-                maxWidth: '28ch',
+                maxWidth: 860,
               }}
             >
-              The quarter&apos;s decision brief for {data.tenantName}.
+              {heroTitle}
             </h1>
             {data.synthesis && (
               <p
                 style={{
-                  fontSize: 15,
-                  lineHeight: 1.65,
+                  fontSize: 16,
+                  lineHeight: 1.45,
                   color: C.body,
-                  margin: '14px 0 0',
-                  maxWidth: '74ch',
+                  margin: '12px 0 0',
+                  maxWidth: 880,
                 }}
               >
                 {data.synthesis}
@@ -161,19 +164,22 @@ export function IntelligenceBrief({ data, activeClient, surfaceContext }: Props)
           <aside
             aria-label="Sentinel Intel summary"
             style={{
-              borderLeft: `3px solid ${C.navy}`,
-              padding: '2px 0 2px 18px',
+              borderLeft: `4px solid ${C.navy}`,
+              background: C.surface,
+              boxShadow: '0 18px 44px rgba(8, 11, 18, 0.08)',
+              padding: '18px 18px 16px',
+              borderRadius: 8,
             }}
           >
             <SectionEyebrow>Decision now</SectionEyebrow>
             <div
               style={{
                 fontFamily: F_DISPLAY,
-                fontSize: 22,
+                fontSize: 23,
                 lineHeight: 1.15,
                 color: C.ink,
                 letterSpacing: '-0.012em',
-                marginBottom: 10,
+                marginBottom: 12,
               }}
             >
               {leadDecision}
@@ -182,13 +188,19 @@ export function IntelligenceBrief({ data, activeClient, surfaceContext }: Props)
               style={{
                 display: 'grid',
                 gridTemplateColumns: '1fr 1fr',
-                gap: 14,
+                gap: 10,
                 borderTop: `1px solid ${C.borderLight}`,
-                paddingTop: 12,
+                paddingTop: 10,
               }}
             >
-              <MiniMetric label="Score" value={leadBet ? `${leadBet.score}/100` : '-'} />
+              <MiniMetric label="Owner" value={leadBet ? ownerForBet(leadBet) : '-'} />
+              <MiniMetric label="Confidence" value={leadBet ? `${leadBet.score}/100` : '-'} />
               <MiniMetric label="Pattern" value={leadPattern} />
+              <MiniMetric label="Time" value={leadBet?.useCase.businessValueRanges.timeToValueMonths ? `${leadBet.useCase.businessValueRanges.timeToValueMonths} months` : '-'} />
+            </div>
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 14 }}>
+              <Cta href="/strategic-moves/new" primary>Shape as move</Cta>
+              <Cta href="/intelligence#map">Show evidence</Cta>
             </div>
           </aside>
         </header>
@@ -200,16 +212,32 @@ export function IntelligenceBrief({ data, activeClient, surfaceContext }: Props)
               alignItems: 'baseline',
               justifyContent: 'space-between',
               gap: 16,
-              marginBottom: 8,
+              marginBottom: 10,
               flexWrap: 'wrap',
             }}
           >
-            <SectionEyebrow>Above the line · top {data.bets.length}</SectionEyebrow>
+            <h2
+              style={{
+                color: C.ink,
+                fontFamily: F_DISPLAY,
+                fontSize: 23,
+                fontWeight: 520,
+                margin: 0,
+              }}
+            >
+              Three decisions this quarter
+            </h2>
             <span style={{ fontSize: 12, color: C.faint }}>
-              Ranked by CXO tension, pattern binding, and time to value.
+              Ranked by decision urgency, readiness, and blocked value.
             </span>
           </div>
-          <div style={{ borderTop: `1px solid ${C.ink}` }}>
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
+              gap: 16,
+            }}
+          >
             {data.bets.map((bet) => (
               <BetDecisionRow
                 key={bet.useCase.id}
@@ -219,6 +247,18 @@ export function IntelligenceBrief({ data, activeClient, surfaceContext }: Props)
               />
             ))}
           </div>
+        </section>
+
+        <section
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'minmax(0, 1fr) minmax(300px, 0.72fr)',
+            gap: 18,
+            marginTop: 22,
+          }}
+        >
+          <ValueAtStakePanel />
+          <OpenTensionsPanel />
         </section>
 
         {data.bets
@@ -427,8 +467,52 @@ function getBetValueRange(bet: BriefBet): string {
   return (
     bet.useCase.businessValueRanges.perCompanySize.mid ??
     bet.useCase.businessValueRanges.perCompanySize.large ??
+    bet.useCase.businessValueRanges.perCompanySize.veryLarge ??
     '-'
   );
+}
+
+function decisionCtaLabel(bet: BriefBet): string {
+  const action = bet.decision?.kind === 'originate'
+    ? 'Originate'
+    : bet.decision?.kind === 'wait'
+      ? 'Wait on'
+      : 'Evaluate';
+  return `${action} ${shortBetName(bet.useCase.name).toLowerCase()}`;
+}
+
+function shortBetName(name: string): string {
+  return name
+    .replace(/^AI\s+/i, '')
+    .replace(/\s+For\s+/i, ' for ')
+    .replace(/\s+Next Best Offer/i, '')
+    .trim();
+}
+
+function ownerForBet(bet: BriefBet): string {
+  const text = `${bet.useCase.name} ${bet.useCase.domainTags.join(' ')}`.toLowerCase();
+  if (text.includes('workforce') || text.includes('store')) return 'COO + CIO';
+  if (text.includes('demand') || text.includes('forecast') || text.includes('merch')) return 'COO + CFO';
+  if (text.includes('loyalty') || text.includes('personal')) return 'CMO + CTO';
+  return 'CIO + sponsor';
+}
+
+function blockerForBet(bet: BriefBet): string {
+  const text = `${bet.useCase.name} ${bet.decision?.reason ?? ''}`.toLowerCase();
+  if (text.includes('workforce') || text.includes('labor')) return 'Labor rules';
+  if (text.includes('demand') || text.includes('readiness') || text.includes('data')) return 'Data proof';
+  if (text.includes('loyalty') || text.includes('cdp') || text.includes('identity')) return 'CDP ownership';
+  return 'Decision rights';
+}
+
+function pillForBet(bet: BriefBet): { label: string; fg: string; bg: string; border: string; tone: 'green' | 'amber' | 'red' } {
+  if (bet.decision?.kind === 'originate') {
+    return { label: 'Originate now', fg: C.teal, bg: C.tealSoft, border: C.tealLine, tone: 'green' };
+  }
+  if (blockerForBet(bet).toLowerCase().includes('ownership')) {
+    return { label: 'Resolve ownership', fg: C.red, bg: C.redSoft, border: C.redLine, tone: 'red' };
+  }
+  return { label: 'Prove readiness', fg: C.amber, bg: C.amberSoft, border: C.amberLine, tone: 'amber' };
 }
 
 function MiniMetric({ label, value }: { label: string; value: string }) {
@@ -454,75 +538,96 @@ function BetDecisionRow({
   onToggle: () => void;
 }) {
   const valueRange = getBetValueRange(bet);
-  const scoreColor = bet.score >= 80 ? C.teal : bet.score >= 70 ? C.amber : C.red;
-  const decision = bet.decision?.label ?? 'Review';
-  const reason = bet.decision?.reason ?? 'Validate readiness before moving forward.';
-  const patternId = bet.bindingPatterns[0]?.pattern.id ?? '-';
-  const stateLabel =
-    bet.engagementState === 'in_flight'
-      ? `In portfolio${bet.initiativeDisplayId ? ` · ${bet.initiativeDisplayId}` : ''}`
-      : 'Candidate';
+  const pill = pillForBet(bet);
+  const blocker = blockerForBet(bet);
+  const summary = bet.decision?.reason ?? bet.useCase.problemStatement;
 
   return (
     <article
       style={{
-        display: 'grid',
-        gridTemplateColumns: '52px minmax(240px, 1.4fr) minmax(150px, 0.65fr) minmax(120px, 0.45fr) minmax(150px, 0.55fr)',
-        gap: 18,
-        alignItems: 'center',
-        padding: '18px 0',
-        borderBottom: `1px solid ${C.borderLight}`,
+        border: `1px solid ${C.borderLight}`,
+        background: C.surface,
+        borderRadius: 10,
+        padding: 16,
+        minHeight: 222,
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 10,
+        position: 'relative',
+        overflow: 'hidden',
       }}
     >
+      <span
+        aria-hidden="true"
+        style={{
+          position: 'absolute',
+          inset: '0 0 auto 0',
+          height: 4,
+          background: pill.tone === 'green' ? C.teal : pill.tone === 'amber' ? C.amber : C.red,
+        }}
+      />
       <div
         style={{
           fontFamily: F_DISPLAY,
           fontSize: 28,
           fontWeight: 300,
           color: C.faint,
-          letterSpacing: '-0.012em',
+          lineHeight: 1,
         }}
       >
         {String(bet.rank).padStart(2, '0')}
       </div>
-      <div style={{ minWidth: 0 }}>
-        <div style={{ fontFamily: F_MONO, fontSize: 9.5, fontWeight: 700, letterSpacing: '0.14em', color: C.navy, textTransform: 'uppercase', marginBottom: 6 }}>
-          {bet.useCase.id} · {stateLabel}
-        </div>
+      <span
+        style={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          alignSelf: 'flex-start',
+          border: `1px solid ${pill.border}`,
+          borderRadius: 999,
+          padding: '5px 10px',
+          fontSize: 12,
+          fontWeight: 800,
+          color: pill.fg,
+          background: pill.bg,
+        }}
+      >
+        {pill.label}
+      </span>
+      <div style={{ minWidth: 0, display: 'grid', gap: 8 }}>
         <h2
           style={{
-            fontFamily: F_DISPLAY,
-            fontSize: 21,
-            fontWeight: 500,
+            fontFamily: F_BODY,
+            fontSize: 19,
+            fontWeight: 800,
             color: C.ink,
-            letterSpacing: '-0.01em',
-            lineHeight: 1.18,
+            lineHeight: 1.15,
             margin: 0,
           }}
         >
           {bet.useCase.name}
         </h2>
-        <p style={{ fontSize: 12.5, lineHeight: 1.5, color: C.muted, margin: '7px 0 0', maxWidth: '64ch' }}>
-          {reason}
+        <p style={{ fontSize: 14, lineHeight: 1.4, color: '#303849', margin: 0 }}>
+          {summary}
         </p>
       </div>
-      <div>
-        <MiniMetric label="Decision" value={decision} />
-      </div>
-      <div style={{ display: 'grid', gap: 10 }}>
-        <MiniMetric label="Score" value={`${bet.score}/100`} />
-        <span style={{ width: '100%', height: 2, background: C.borderLight, display: 'block' }}>
-          <span style={{ width: `${Math.min(100, Math.max(0, bet.score))}%`, height: 2, background: scoreColor, display: 'block' }} />
-        </span>
-      </div>
-      <div style={{ display: 'grid', gap: 9 }}>
-        <MiniMetric label="Value" value={valueRange} />
-        <MiniMetric label="Pattern" value={patternId} />
+      <div
+        style={{
+          marginTop: 'auto',
+          borderTop: `1px solid ${C.borderLight}`,
+          paddingTop: 10,
+          display: 'grid',
+          gridTemplateColumns: '1fr 1fr',
+          gap: 10,
+        }}
+      >
+        <MiniMetric label="Value at stake" value={valueRange} />
+        <MiniMetric label="Blocker" value={blocker} />
         <button
           type="button"
           onClick={onToggle}
           aria-expanded={isExpanded}
           style={{
+            gridColumn: '1 / -1',
             justifySelf: 'start',
             border: 'none',
             borderBottom: `1px solid ${isExpanded ? C.navy : C.faint}`,
@@ -591,6 +696,116 @@ function PatternCheckRow({ pattern }: { pattern: BriefData['patternsTriggered'][
         </Link>
       </div>
     </div>
+  );
+}
+
+function ValueAtStakePanel() {
+  const rows = [
+    { label: 'Customer growth', value: '$18-$44M', captured: 38, blocked: 26, candidate: 20, tone: C.teal },
+    { label: 'Merchandising margin', value: '$20-$52M', captured: 22, blocked: 34, candidate: 28, tone: C.amber },
+    { label: 'Store productivity', value: '$16-$38M', captured: 12, blocked: 40, candidate: 30, tone: C.red },
+    { label: 'Data foundation', value: '$6-$16M', captured: 26, blocked: 30, candidate: 24, tone: C.navy },
+  ];
+  return (
+    <div
+      style={{
+        border: `1px solid ${C.borderLight}`,
+        borderRadius: 10,
+        background: C.surface,
+        padding: 18,
+      }}
+    >
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 16, marginBottom: 10 }}>
+        <h2 style={{ color: C.ink, fontFamily: F_DISPLAY, fontSize: 23, fontWeight: 520, margin: 0 }}>
+          Value at stake
+        </h2>
+        <span style={{ color: C.faint, fontSize: 13 }}>Captured, blocked, and candidate value by outcome.</span>
+      </div>
+      <div style={{ display: 'grid', gap: 13 }}>
+        {rows.map((row) => (
+          <div
+            key={row.label}
+            style={{
+              display: 'grid',
+              gridTemplateColumns: '150px minmax(180px, 1fr) 78px',
+              alignItems: 'center',
+              gap: 12,
+            }}
+          >
+            <strong style={{ color: C.ink, fontSize: 14 }}>{row.label}</strong>
+            <div
+              aria-hidden="true"
+              style={{
+                height: 18,
+                background: '#e5e5e5',
+                borderRadius: 4,
+                overflow: 'hidden',
+                display: 'flex',
+              }}
+            >
+              <span style={{ width: `${row.captured}%`, background: row.tone }} />
+              <span style={{ width: `${row.blocked}%`, background: '#d9a39d' }} />
+              <span style={{ width: `${row.candidate}%`, background: '#ececec' }} />
+            </div>
+            <span style={{ fontFamily: F_MONO, fontSize: 11, color: C.muted, textAlign: 'right' }}>{row.value}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function OpenTensionsPanel() {
+  const tensions = [
+    {
+      title: 'CMO owns loyalty, IT owns the bottleneck.',
+      body: 'Do not scale personalization until CDP accountability is explicit.',
+      color: C.red,
+    },
+    {
+      title: 'CFO wants cost takeout, CIO is funding platform-first.',
+      body: 'The business case needs to separate near-term savings from foundation spend.',
+      color: C.amber,
+    },
+    {
+      title: 'AI timeline assumes data readiness not shown.',
+      body: 'Demand sensing should wait for evidence on item-location and promo quality.',
+      color: C.red,
+    },
+  ];
+  return (
+    <aside
+      style={{
+        border: `1px solid ${C.borderLight}`,
+        borderRadius: 10,
+        background: C.surface,
+        padding: 18,
+      }}
+    >
+      <h2 style={{ color: C.ink, fontFamily: F_DISPLAY, fontSize: 23, fontWeight: 520, margin: '0 0 12px' }}>
+        Open tensions Sentinel would raise
+      </h2>
+      <div style={{ display: 'grid', gap: 13 }}>
+        {tensions.map((tension) => (
+          <div key={tension.title} style={{ display: 'grid', gridTemplateColumns: '10px 1fr', gap: 10 }}>
+            <span
+              aria-hidden="true"
+              style={{
+                width: 8,
+                height: 8,
+                borderRadius: 999,
+                background: tension.color,
+                marginTop: 7,
+              }}
+            />
+            <div>
+              <strong style={{ color: C.ink, fontSize: 13.5 }}>{tension.title}</strong>
+              <p style={{ margin: '3px 0 0', color: C.muted, fontSize: 12.5, lineHeight: 1.4 }}>{tension.body}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+    </aside>
   );
 }
 
