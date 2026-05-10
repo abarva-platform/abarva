@@ -232,6 +232,8 @@ function mapChunkRow(row: ContextChunkRow): ContextChunk {
   return {
     tenantKey: row.tenant_key,
     chunkId: row.chunk_id,
+    sourceSegmentId: row.source_segment_id,
+    sourceDoc: row.source_doc,
     recordId: row.source_record_id ?? undefined,
     text: row.chunk_text,
     embeddingStatus: mapEmbeddingStatus(row.embedding_status),
@@ -500,6 +502,7 @@ export class SupabaseTenantDataAdapter implements TenantDataAdapter {
     tenantKey: string,
     opts?: {
       recordIds?: string[];
+      segmentIds?: SegmentId[];
       embeddingStatus?: ChunkEmbeddingStatus;
       limit?: number;
     },
@@ -508,11 +511,32 @@ export class SupabaseTenantDataAdapter implements TenantDataAdapter {
       MAX_CHUNK_KEYWORD_LIMIT,
       Math.max(1, opts?.limit ?? DEFAULT_CHUNK_LIMIT),
     );
+    const queryPublicRows = async (): Promise<ContextChunkRow[] | null> => {
+      let fallbackQuery = this.client
+        .from('enterprise_context_chunks')
+        .select(CHUNK_COLUMNS)
+        .eq('tenant_key', tenantKey);
+      if (opts?.recordIds && opts.recordIds.length > 0) {
+        fallbackQuery = fallbackQuery.in('source_record_id', opts.recordIds);
+      }
+      if (opts?.segmentIds && opts.segmentIds.length > 0) {
+        fallbackQuery = fallbackQuery.in('source_segment_id', opts.segmentIds);
+      }
+      if (opts?.embeddingStatus) {
+        fallbackQuery = fallbackQuery.eq('embedding_status', opts.embeddingStatus);
+      }
+      const fallback = await fallbackQuery.limit(limit);
+      if (fallback.error) return null;
+      return (fallback.data ?? []) as unknown as ContextChunkRow[];
+    };
     let query = this.table(tenantKey, 'enterprise_context_chunks')
       .select(CHUNK_COLUMNS)
       .eq('tenant_key', tenantKey);
     if (opts?.recordIds && opts.recordIds.length > 0) {
       query = query.in('source_record_id', opts.recordIds);
+    }
+    if (opts?.segmentIds && opts.segmentIds.length > 0) {
+      query = query.in('source_segment_id', opts.segmentIds);
     }
     if (opts?.embeddingStatus) {
       query = query.eq('embedding_status', opts.embeddingStatus);
@@ -526,23 +550,35 @@ export class SupabaseTenantDataAdapter implements TenantDataAdapter {
           whereSql.push(`source_record_id = any($${values.length + 1}::text[])`);
           values.push(opts.recordIds);
         }
+        if (opts?.segmentIds && opts.segmentIds.length > 0) {
+          whereSql.push(`source_segment_id = any($${values.length + 1}::text[])`);
+          values.push(opts.segmentIds);
+        }
         if (opts?.embeddingStatus) {
           whereSql.push(`embedding_status = $${values.length + 1}`);
           values.push(opts.embeddingStatus);
         }
-        const rows = await queryPrivateRows<ContextChunkRow>(
-          tenantKey,
-          'enterprise_context_chunks',
-          CHUNK_COLUMNS,
-          whereSql,
-          values,
-          limit,
-        );
-        return rows.map(mapChunkRow);
+        try {
+          const rows = await queryPrivateRows<ContextChunkRow>(
+            tenantKey,
+            'enterprise_context_chunks',
+            CHUNK_COLUMNS,
+            whereSql,
+            values,
+            limit,
+          );
+          return rows.map(mapChunkRow);
+        } catch {
+          const publicRows = await queryPublicRows();
+          if (publicRows) return publicRows.map(mapChunkRow);
+        }
       }
       throw new Error(`listContextChunks failed for tenant '${tenantKey}': ${error.message}`);
     }
-    const rows = (data ?? []) as unknown as ContextChunkRow[];
+    let rows = (data ?? []) as unknown as ContextChunkRow[];
+    if (rows.length === 0 && privateSchemaForTenant(tenantKey)) {
+      rows = (await queryPublicRows()) ?? rows;
+    }
     return rows.map(mapChunkRow);
   }
 

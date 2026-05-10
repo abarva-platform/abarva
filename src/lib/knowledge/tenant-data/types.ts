@@ -19,6 +19,7 @@ export type SegmentId =
   | 'enterprise_profile'
   | 'org_structure'
   | 'it_landscape'
+  | 'it_financials'
   | 'kpi_dictionary'
   | 'program_inventory'
   | 'evidence_ledger'
@@ -138,6 +139,8 @@ export type ChunkEmbeddingStatus = 'pending' | 'embedding' | 'embedded' | 'error
 export interface ContextChunk {
   tenantKey: string;
   chunkId: string;
+  sourceSegmentId?: string;
+  sourceDoc?: string;
   /** Optional source record provenance. */
   recordId?: string;
   text: string;

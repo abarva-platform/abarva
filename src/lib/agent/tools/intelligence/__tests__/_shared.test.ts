@@ -131,10 +131,12 @@ describe('clientKeyToBrokerTenantKey · PR-INT-G Apex tenant key split', () => {
     expect(clientKeyToBrokerTenantKey('keystone')).toBe('keystone');
   });
 
-  it("substrate map: 'apexretail' → 'apex-retail' and 'meridian' → 'meridian-health'", () => {
+  it("substrate map points app client keys at persisted setup-data tenant keys", () => {
     expect(clientKeyToInventorySubstrateKey('apexretail')).toBe('apex-retail');
     expect(clientKeyToInventorySubstrateKey('meridian')).toBe('meridian-health');
-    expect(clientKeyToInventorySubstrateKey('arcturus')).toBe('arcturus');
+    expect(clientKeyToInventorySubstrateKey('arcturus')).toBe('first-capital');
+    expect(clientKeyToInventorySubstrateKey('firstcapital')).toBe('first-capital');
+    expect(clientKeyToInventorySubstrateKey('first-capital')).toBe('first-capital');
     expect(clientKeyToInventorySubstrateKey('keystone')).toBe('keystone');
   });
 

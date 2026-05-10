@@ -65,15 +65,20 @@ export function clientKeyToBrokerTenantKey(clientKey: ClientKey | string): strin
  * Map an app-tier ClientKey to the tenant_key used in the
  * `data_inventory_*` Postgres substrate (Codex's 2026-04-30 data
  * layer). Differs from `clientKeyToBrokerTenantKey` only for
- * Meridian, where the substrate keys with a dash:
+ * Meridian and First Capital, where the substrate keys differ from
+ * the app-facing client key:
  *   - app `'apexretail'` → substrate `'apex-retail'`
  *   - app `'meridian'`   → substrate `'meridian-health'`
+ *   - app `'arcturus'`   → substrate `'first-capital'`
  */
 export function clientKeyToInventorySubstrateKey(
   clientKey: ClientKey | string,
 ): string {
   if (clientKey === 'apexretail') return 'apex-retail';
   if (clientKey === 'meridian') return 'meridian-health';
+  if (clientKey === 'arcturus' || clientKey === 'firstcapital' || clientKey === 'first-capital') {
+    return 'first-capital';
+  }
   return clientKey;
 }
 

@@ -63,7 +63,12 @@ export interface TenantDataAdapter {
   /** Context chunks for the tenant, optionally narrowed. See design doc §5. */
   listContextChunks(
     tenantKey: string,
-    opts?: { recordIds?: string[]; embeddingStatus?: ChunkEmbeddingStatus; limit?: number },
+    opts?: {
+      recordIds?: string[];
+      segmentIds?: SegmentId[];
+      embeddingStatus?: ChunkEmbeddingStatus;
+      limit?: number;
+    },
   ): Promise<ContextChunk[]>;
 
   /** All chunks linked to a single source record. */
