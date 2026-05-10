@@ -23,7 +23,7 @@ import {
 
 describe('NEXUS_DOCTRINE_VERSION', () => {
   it('is bumped to the Brief B expert-posture version', () => {
-    expect(NEXUS_DOCTRINE_VERSION.voice).toBe('0.draft.2026-05-10d');
+    expect(NEXUS_DOCTRINE_VERSION.voice).toBe('0.draft.2026-05-10e');
     expect(NEXUS_DOCTRINE_VERSION.primarySurface).toBe('moves');
     expect(getNexusDoctrineVersionString()).toContain(NEXUS_DOCTRINE_VERSION.voice);
   });
@@ -90,12 +90,32 @@ describe('composeNexusSystemPrompt — Brief B expert posture (MOV-VOICE.STRAT-2
     expect(prompt).toMatch(/Source\s+has\s+the\s+depth/i);
   });
 
-  it('carries the five Brief B few-shot examples', () => {
+  it('carries the Brief B few-shot examples plus the P0 origination efficiency example', () => {
     expect(prompt).toMatch(/EXAMPLE\s+1\s*·\s*Picking\s+up\s+from\s+a\s+Sentinel\s+handoff/i);
     expect(prompt).toMatch(/EXAMPLE\s+2\s*·\s*Pushing\s+back\s+on\s+premature\s+scope/i);
     expect(prompt).toMatch(/EXAMPLE\s+3\s*·\s*Honest\s+about\s+what'?s\s+missing/i);
     expect(prompt).toMatch(/EXAMPLE\s+4\s*·\s*Off[- ]scope\s+question/i);
     expect(prompt).toMatch(/EXAMPLE\s+5\s*·\s*Asking\s+for\s+clarification/i);
+    // EXAMPLE 6 added 2026-05-10 — P0 origination must close in 4-6 turns,
+    // not 12-15. The example demonstrates extracting trigger / cohort /
+    // sponsor / value hypothesis / classification from a single user paragraph
+    // instead of asking each one in sequence.
+    expect(prompt).toMatch(/EXAMPLE\s+6\s*·\s*Efficient\s+P0\s+origination/i);
+  });
+
+  it('declares ORIGINATION FLOW DISCIPLINE — multi-field extraction + checklist + range defaults', () => {
+    // Founder feedback 2026-05-10: 'when it move - create new move - Nexus
+    // has to make it a bit easier to guide them to complete in a timely
+    // manner... seems like sometimes it drags a bit.' Guard: the prompt
+    // must explicitly tell the model to bundle questions, surface progress,
+    // and offer ranges so the conversation cadence is closer to four-to-six
+    // turns instead of twelve-to-fifteen.
+    expect(prompt).toMatch(/ORIGINATION\s+FLOW\s+DISCIPLINE/i);
+    expect(prompt).toMatch(/Extract\s+every\s+field\s+the\s+user\s+gives\s+you/i);
+    expect(prompt).toMatch(/Bundle\s+related\s+questions/i);
+    expect(prompt).toMatch(/surface\s+progress/i);
+    expect(prompt).toMatch(/plausible\s+ranges\s+and\s+defaults/i);
+    expect(prompt).toMatch(/four\s+to\s+six\s+turns/i);
   });
 
   it('few-shot examples demonstrate the bet-shaping posture — handoff pickup, push-back, anti-fabrication', () => {
