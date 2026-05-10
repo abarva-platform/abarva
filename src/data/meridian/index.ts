@@ -2,6 +2,7 @@ export { meridianFinancials } from './financials'
 export { meridianTechnology } from './technology'
 export { meridianClinical } from './clinical'
 export { meridianLeadership } from './leadership'
+export { meridianResearchAI } from './research_ai'
 
 export const meridianHealth = {
   org: {
@@ -54,6 +55,26 @@ export const meridianHealth = {
       priorAuthPeerDays: 1.8,
     },
   },
+  researchAI: {
+    posture: "local-first research AI",
+    controlPlane: "Palantir Foundry",
+    compute: "legacy NVIDIA/private GPU research cloud",
+    legacyDataGravity: "Hadoop research lake",
+    cloudGenAIStatus: "evaluating, not adopted for active research workloads",
+    activeResearchClaudeUsage: false,
+    activeResearchOpenAIUsage: false,
+    activeResearchBedrockUsage: false,
+    activeResearchAzureFoundryUsage: false,
+    digitalTwinStatus: "research exploration only",
+    privacyAndSecurityBlockers: [
+      "PHI boundary",
+      "IRB approval",
+      "data egress",
+      "model validation",
+      "prompt and output audit logging",
+      "external model retention rules",
+    ],
+  },
   financials: {
     revenue2023: 11.2,
     operatingMargin2023: 1.8,
@@ -86,6 +107,7 @@ export const meridianHealth = {
     "Denial write-off reported as $94M — total economic impact $127M including $33M in rework labor and secondary write-offs",
     "Coding AI outperforming committed target — but model retrain in Q3 2026 is unmonitored risk, and 28-FTE coder reduction plan may trigger union discussion in NC — neither flagged to CFO",
     "Sepsis AI described as 'in pilot at 2 hospitals' — now live at 5, failing at 3, blocked at 13 — COO says 18-month scaling timeline but CMIO says technical deployment is 4-6 months",
+    "Research team is operating local-first AI on Palantir, Hadoop, and a legacy NVIDIA/private GPU stack while the new CIO is pushing cloud AI evaluation — no active Claude on Bedrock, Azure Foundry, or external OpenAI/Anthropic research runtime is in place yet",
   ],
   interviewInsights: {
     cio: "Marcus Webb: I inherited a mess. We have 23 hospitals that operate like 23 different companies. I need 6 months just to do a proper assessment.",

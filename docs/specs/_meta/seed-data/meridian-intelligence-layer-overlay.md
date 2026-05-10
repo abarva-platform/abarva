@@ -448,7 +448,7 @@ Hospital operations, ambulatory, Meridian Health Plans, medical group, specialty
 
 **Analytics.** Epic Cogito, Clarify Health, Arcadia, Health Catalyst.
 
-**AI/ML.** Microsoft Azure Health, Google Cloud Healthcare, OpenAI (via vendor APIs with BAA).
+**AI/ML.** Enterprise analytics uses Azure-oriented tooling, but research AI is local-first today: Palantir Foundry, Hadoop research lake, and an on-prem NVIDIA/private GPU stack with locally hosted models. Claude on Bedrock, Azure Foundry, OpenAI, and GCP healthcare AI are evaluation paths, not active research runtimes; privacy, security, IRB, and data-egress controls are the gating issues.
 
 **Cybersecurity.** HITRUST-certified vendors, FireEye/Trellix, medical device security.
 

@@ -476,7 +476,7 @@ Including behavioral health expansion, transplant program growth, specialty bund
 ### 7.2 · AI and analytics stack
 
 - **Cloud:** Multi-cloud with AWS primary, Azure secondary
-- **LLM providers:** Anthropic (primary for clinical, selected for governance properties), Microsoft OpenAI (secondary), Google Med-PaLM selective use
+- **LLM providers:** Research does not currently use Anthropic Claude on Bedrock, Azure Foundry, OpenAI, or other external hosted LLMs for active research workflows. The current research runtime is local-first (Palantir, Hadoop, and an on-prem NVIDIA/private GPU stack with locally hosted models). The new CIO is evaluating governed cloud AI options, including GCP-style healthcare research patterns observed at academic medical centers, but PHI, IRB, data-egress, and security controls remain gating issues.
 - **Clinical AI tools:** Ambient documentation (DAX, Abridge under evaluation), imaging AI across modalities, clinical decision support via Epic tools, sepsis prediction, readmission risk
 - **Analytics:** Tableau, internal tools, Tableau Cloud migration in progress
 
