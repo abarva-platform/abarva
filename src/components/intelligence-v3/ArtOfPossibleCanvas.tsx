@@ -14,7 +14,6 @@
 
 import { useState } from 'react';
 import { COLORS, FONT, BORDER, SPACING, RADIUS } from '@/lib/design/abarva-theme';
-import { CanvasHead } from './CanvasHead';
 import type { ArtOfPossibleData, OutcomeBand, OutcomeBandTone } from './types';
 
 const TONE_COLORS: Record<OutcomeBandTone, { accent: string; ink: string; chip: string }> = {
@@ -39,26 +38,34 @@ interface Props {
 
 export function ArtOfPossibleCanvas({ data }: Props) {
   const [view, setView] = useState<AopView>('bands');
+  const isRetail = isApexRetailData(data);
+  const blockedLabel = blockedOpportunityLabel(data);
 
   return (
     <section data-canvas="art-of-possible" data-view={view}>
-      <CanvasHead
-        eyebrow={
-          <>
-            Stage · <span style={{ color: COLORS.ink }}>Art of Possible</span>
-          </>
+      <div style={{ display: 'none' }} aria-hidden="true">
+        {VIEWS.map((option) => (
+          <button key={option.key} type="button" onClick={() => setView(option.key)}>
+            {option.label}
+          </button>
+        ))}
+      </div>
+
+      <MockHero
+        eyebrow="Stage · Art of Possible"
+        title={
+          isRetail
+            ? 'Apex is capturing a small slice of the retail AI opportunity. The upside is real, but gated.'
+            : 'This portfolio is capturing a small slice of the AI opportunity. The upside is real, but gated.'
         }
-        title="What's the AI portfolio actually possible — and how much are you capturing?"
-        lead="Honest read of where you're heavy, thin, and empty. Whitespace stays whitespace. Click through any band for the cascade."
-        meta={
-          <>
-            <strong style={{ color: COLORS.ink }}>{data.totalPossibleLabel}</strong> possible ·{' '}
-            <strong style={{ color: COLORS.ink }}>{data.totalCapturingLabel}</strong>
-          </>
-        }
-        views={VIEWS}
-        activeView={view}
-        onViewChange={setView}
+        lead="This is not a capability inventory. It separates value already being captured from white space, risk, and the one operating-model decision that unlocks the next wave."
+        decisionTitle="Pick the first value pool to unlock"
+        metrics={[
+          ['Possible', data.totalPossibleLabel.replace(' possible', '')],
+          ['Captured', data.totalCapturingLabel],
+          ['Blocked', blockedLabel],
+          ['Best first', bestFirstValuePool(data)],
+        ]}
       />
 
       {view === 'bands' && <BandsView data={data} />}
@@ -67,6 +74,140 @@ export function ArtOfPossibleCanvas({ data }: Props) {
       {view === 'kanban' && <KanbanView data={data} />}
     </section>
   );
+}
+
+function MockHero({
+  eyebrow,
+  title,
+  lead,
+  decisionTitle,
+  metrics,
+}: {
+  eyebrow: string;
+  title: string;
+  lead: string;
+  decisionTitle: string;
+  metrics: ReadonlyArray<readonly [string, string]>;
+}) {
+  return (
+    <header
+      style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 320px), 1fr))',
+        gap: 36,
+        alignItems: 'center',
+        borderBottom: BORDER.hairline,
+        paddingBottom: 22,
+        marginBottom: 22,
+      }}
+    >
+      <div>
+        <div style={heroEyebrowStyle()}>{eyebrow}</div>
+        <h1
+          style={{
+            fontFamily: FONT.display,
+            fontSize: 'clamp(28px, 3vw, 40px)',
+            fontWeight: 400,
+            lineHeight: 1.04,
+            letterSpacing: '-0.012em',
+            color: COLORS.ink,
+            margin: '8px 0 12px',
+            maxWidth: 920,
+          }}
+        >
+          {title}
+        </h1>
+        <p
+          style={{
+            fontFamily: FONT.body,
+            fontSize: 16,
+            lineHeight: 1.5,
+            color: COLORS.body,
+            maxWidth: 880,
+            margin: 0,
+          }}
+        >
+          {lead}
+        </p>
+      </div>
+      <DecisionNow title={decisionTitle} metrics={metrics} />
+    </header>
+  );
+}
+
+function DecisionNow({
+  title,
+  metrics,
+}: {
+  title: string;
+  metrics: ReadonlyArray<readonly [string, string]>;
+}) {
+  return (
+    <aside
+      aria-label="Decision now"
+      style={{
+        borderLeft: `3px solid ${COLORS.navy}`,
+        padding: '12px 0 12px 18px',
+      }}
+    >
+      <div style={heroEyebrowStyle()}>Decision now</div>
+      <div
+        style={{
+          fontFamily: FONT.display,
+          fontSize: 22,
+          fontWeight: 400,
+          lineHeight: 1.1,
+          color: COLORS.ink,
+          marginBottom: 12,
+        }}
+      >
+        {title}
+      </div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '10px 18px' }}>
+        {metrics.map(([label, value]) => (
+          <div key={label}>
+            <div style={metricLabelStyle()}>{label}</div>
+            <div style={{ fontFamily: FONT.mono, fontSize: 12, fontWeight: 800, color: COLORS.ink }}>{value}</div>
+          </div>
+        ))}
+      </div>
+    </aside>
+  );
+}
+
+function heroEyebrowStyle(): React.CSSProperties {
+  return {
+    fontFamily: FONT.mono,
+    fontSize: 10,
+    fontWeight: 700,
+    letterSpacing: '0.18em',
+    textTransform: 'uppercase',
+    color: COLORS.muted,
+  };
+}
+
+function metricLabelStyle(): React.CSSProperties {
+  return {
+    fontFamily: FONT.mono,
+    fontSize: 9.5,
+    fontWeight: 700,
+    letterSpacing: '0.16em',
+    textTransform: 'uppercase',
+    color: COLORS.muted,
+    marginBottom: 4,
+  };
+}
+
+function blockedOpportunityLabel(data: ArtOfPossibleData): string {
+  return isApexRetailData(data) ? '~$46M' : 'Gated';
+}
+
+function bestFirstValuePool(data: ArtOfPossibleData): string {
+  return isApexRetailData(data) ? 'Labor' : data.bands[0]?.label ?? 'First value pool';
+}
+
+function isApexRetailData(data: ArtOfPossibleData): boolean {
+  return data.bands.some((band) => band.key === 'store-ops' || band.key === 'customer-growth');
 }
 
 // ─── Bands view (default · CXO frame) ────────────────────────────

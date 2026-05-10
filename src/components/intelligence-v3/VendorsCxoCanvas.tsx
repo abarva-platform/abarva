@@ -10,7 +10,6 @@
 import { useMemo, useState } from 'react';
 import Link from 'next/link';
 import { COLORS, FONT, BORDER, SPACING, RADIUS } from '@/lib/design/abarva-theme';
-import { CanvasHead } from './CanvasHead';
 import {
   MERIDIAN_VENDOR_SPEND,
   VENDOR_CATEGORIES,
@@ -48,33 +47,202 @@ export function VendorsCxoCanvas({ spend = MERIDIAN_VENDOR_SPEND }: Props) {
   const totalSpendUsdM = totals.reduce((sum, c) => sum + c.totalUsdM, 0);
   const atRisk = spend.filter((v) => v.health === 'risk').length;
   const watchlist = spend.filter((v) => v.health === 'watch').length;
+  const decisionVendor = useMemo(() => pickDecisionVendor(spend), [spend]);
 
   return (
     <section data-canvas="vendors" data-view={view}>
-      <CanvasHead
-        eyebrow={
-          <>
-            Stage · <span style={{ color: COLORS.ink }}>Vendors</span>
-          </>
-        }
-        title="Where's IT spend going — and which vendors carry strategic risk?"
-        lead="Annualized spend rolled up by category, then drill in to individuals. Renewal pressure and risk leverage land on the secondary views."
-        meta={
-          <>
-            <strong style={{ color: COLORS.ink }}>${totalSpendUsdM.toFixed(1)}M</strong> annualized ·{' '}
-            <strong style={{ color: COLORS.ink }}>{spend.length}</strong> vendors ·{' '}
-            <strong style={{ color: COLORS.ink }}>{atRisk}</strong> at risk · {watchlist} on watch
-          </>
-        }
-        views={VIEWS}
-        activeView={view}
-        onViewChange={setView}
+      <div style={{ display: 'none' }} aria-hidden="true">
+        {VIEWS.map((option) => (
+          <button key={option.key} type="button" onClick={() => setView(option.key)}>
+            {option.label}
+          </button>
+        ))}
+      </div>
+
+      <VendorMockHero
+        totalSpendUsdM={totalSpendUsdM}
+        vendorCount={spend.length}
+        atRisk={atRisk}
+        watchlist={watchlist}
+        decisionVendor={decisionVendor}
       />
 
       {view === 'spend' && <SpendView totals={totals} totalUsdM={totalSpendUsdM} />}
       {view === 'renewals' && <RenewalsView spend={spend} />}
       {view === 'risk' && <RiskQuadrantView spend={spend} />}
     </section>
+  );
+}
+
+function VendorMockHero({
+  totalSpendUsdM,
+  vendorCount,
+  atRisk,
+  watchlist,
+  decisionVendor,
+}: {
+  totalSpendUsdM: number;
+  vendorCount: number;
+  atRisk: number;
+  watchlist: number;
+  decisionVendor?: VendorSpendRow;
+}) {
+  const isAdobe = decisionVendor?.vendor.toLowerCase().includes('adobe') ?? false;
+  return (
+    <header
+      style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 320px), 1fr))',
+        gap: 36,
+        alignItems: 'center',
+        borderBottom: BORDER.hairline,
+        paddingBottom: 22,
+        marginBottom: 22,
+      }}
+    >
+      <div>
+        <div style={heroEyebrowStyle()}>Stage · Vendors</div>
+        <h1
+          style={{
+            fontFamily: FONT.display,
+            fontSize: 'clamp(28px, 3vw, 40px)',
+            fontWeight: 400,
+            lineHeight: 1.04,
+            letterSpacing: '-0.012em',
+            color: COLORS.ink,
+            margin: '8px 0 12px',
+            maxWidth: 920,
+          }}
+        >
+          Vendor risk is not the spend number. It is where spend controls the AI roadmap.
+        </h1>
+        <p
+          style={{
+            fontFamily: FONT.body,
+            fontSize: 16,
+            lineHeight: 1.5,
+            color: COLORS.body,
+            maxWidth: 860,
+            margin: 0,
+          }}
+        >
+          Spend is sliced into the operating choices it creates: renewals that force architecture decisions,
+          vendors claiming the same integration layer, and sourcing events that can become executive moves.
+        </p>
+        <div
+          style={{
+            fontFamily: FONT.mono,
+            fontSize: 10,
+            fontWeight: 700,
+            letterSpacing: '0.14em',
+            textTransform: 'uppercase',
+            color: COLORS.muted,
+            marginTop: 12,
+          }}
+        >
+          ${totalSpendUsdM.toFixed(1)}M annualized · {vendorCount} vendors · {atRisk} at risk · {watchlist} on watch
+        </div>
+      </div>
+      <DecisionNow
+        title={
+          isAdobe
+            ? 'Use the Adobe renewal to force CDP clarity'
+            : `Use the ${decisionVendor?.vendor ?? 'next'} renewal to force platform clarity`
+        }
+        metrics={[
+          ['Spend at risk', decisionVendor?.spendLabel ?? 'TBD'],
+          [
+            'Renews',
+            decisionVendor?.renewsInMonths === null
+              ? 'Consumption'
+              : decisionVendor?.renewsInMonths
+                ? `${decisionVendor.renewsInMonths} months`
+                : 'TBD',
+          ],
+          ['Linked bets', decisionVendor ? (isAdobe ? '3' : linkedBetsForVendor(decisionVendor).split(',').length.toString()) : 'TBD'],
+          ['Risk', decisionVendor?.health === 'risk' ? 'High' : 'Watch'],
+        ]}
+      />
+    </header>
+  );
+}
+
+function DecisionNow({
+  title,
+  metrics,
+}: {
+  title: string;
+  metrics: ReadonlyArray<readonly [string, string]>;
+}) {
+  return (
+    <aside
+      aria-label="Decision now"
+      style={{
+        borderLeft: `3px solid ${COLORS.navy}`,
+        padding: '12px 0 12px 18px',
+      }}
+    >
+      <div style={heroEyebrowStyle()}>Decision now</div>
+      <div
+        style={{
+          fontFamily: FONT.display,
+          fontSize: 22,
+          fontWeight: 400,
+          lineHeight: 1.1,
+          color: COLORS.ink,
+          marginBottom: 12,
+        }}
+      >
+        {title}
+      </div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '10px 18px' }}>
+        {metrics.map(([label, value]) => (
+          <div key={label}>
+            <div style={metricLabelStyle()}>{label}</div>
+            <div style={{ fontFamily: FONT.mono, fontSize: 12, fontWeight: 800, color: COLORS.ink }}>{value}</div>
+          </div>
+        ))}
+      </div>
+    </aside>
+  );
+}
+
+function heroEyebrowStyle(): React.CSSProperties {
+  return {
+    fontFamily: FONT.mono,
+    fontSize: 10,
+    fontWeight: 700,
+    letterSpacing: '0.18em',
+    textTransform: 'uppercase',
+    color: COLORS.muted,
+  };
+}
+
+function metricLabelStyle(): React.CSSProperties {
+  return {
+    fontFamily: FONT.mono,
+    fontSize: 9.5,
+    fontWeight: 700,
+    letterSpacing: '0.16em',
+    textTransform: 'uppercase',
+    color: COLORS.muted,
+    marginBottom: 4,
+  };
+}
+
+function pickDecisionVendor(spend: ReadonlyArray<VendorSpendRow>): VendorSpendRow | undefined {
+  return (
+    spend.find((vendor) => vendor.vendor.toLowerCase().includes('adobe')) ??
+    [...spend]
+      .filter((vendor) => vendor.health !== 'healthy')
+      .sort((a, b) => {
+        if (a.health !== b.health) return a.health === 'risk' ? -1 : 1;
+        const aMonths = a.renewsInMonths ?? 99;
+        const bMonths = b.renewsInMonths ?? 99;
+        if (aMonths !== bMonths) return aMonths - bMonths;
+        return b.spendUsdM - a.spendUsdM;
+      })[0] ??
+    spend[0]
   );
 }
 
@@ -123,7 +291,9 @@ function SpendView({ totals, totalUsdM }: { totals: CategoryTotal[]; totalUsdM: 
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: SPACING.lg }}>
-      <SpendHero totals={totals} totalUsdM={totalUsdM} />
+      <div style={{ display: 'none' }} aria-hidden="true">
+        <SpendHero totals={totals} totalUsdM={totalUsdM} />
+      </div>
       <div
         style={{
           display: 'grid',
