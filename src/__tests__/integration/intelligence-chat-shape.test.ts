@@ -181,29 +181,14 @@ describe('Intelligence chat surface · render contract (INT-VOICE.STRAT-2026-05-
     });
   });
 
-  describe('regression guards on adjacent surfaces (in-scope only)', () => {
-    // The fixture text below is calibrated to trip compactConsultantChatText's
-    // headline / - Evidence / - Next branch (it has a recommendation sentence
-    // and KPI evidence). Same shape both Tower and Source still produce.
-
-    it('Source surface compaction is preserved (Brief C work pending — out of scope of this fix)', () => {
-      // Until Brief C lands, /source still uses compactConsultantChatText.
-      // This test locks in the current behavior so that any future change
-      // to /source is intentional.
-      const raw = [
-        'Algonomy is the strongest fit for Apex.',
-        'Portfolio KPI evidence shows three peer specialty retailers deployed it with positive results.',
-        'I recommend shortlisting them with two competitive bids before committing.',
-      ].join(' ');
-
-      const shaped = shapeAgentResponseForSurface('/source', raw);
-      // Source still produces the structured-bullet template (for now).
-      // When Brief C extends the same fix to Source, this expectation
-      // inverts — at which point delete this test or move it under the
-      // Brief C work.
-      const hasStructuredBullet = /^\s*- (?:Evidence|Missing|Next|Question):/m.test(shaped);
-      expect(hasStructuredBullet).toBe(true);
-    });
+  describe('regression guards on adjacent surfaces', () => {
+    // VOICE.STRAT-2026-05-10f update — Source has now been removed from
+    // shouldCompactSurface alongside Strategic Moves. Detailed Source
+    // contract assertions live in src/__tests__/integration/source-chat-shape.test.ts;
+    // detailed Strategic Moves contract assertions live in
+    // src/__tests__/integration/strategic-moves-chat-shape.test.ts. The
+    // remaining adjacent-surface guard here is for Tower, which is unrelated
+    // to Briefs A/B/C and intentionally still compacts.
 
     it('Tower surface compaction is preserved (Tower is unrelated to Briefs A/B/C)', () => {
       const raw = [

@@ -11,23 +11,28 @@ describe('agent response shape', () => {
     );
   });
 
-  it('compacts Nexus Originate answers into a readable decision shape', () => {
+  // VOICE.STRAT-2026-05-10f — Strategic Moves Originate is a Brief B advisor
+  // surface and now passes through (no compaction). The compactor branch
+  // itself is gone (compactStrategicMoveOriginateText is no longer wired).
+  // The original assertion that the originate response compacts to a
+  // {headline} / - Why: / - Missing: / - Choose: shape is retired with the
+  // dispatch. See the "Strategic Moves surface — Brief B prose preservation"
+  // describe block below for the new contract.
+  it('Strategic Moves Originate (legacy /strategic-moves/new) passes Brief B prose through unchanged', () => {
     const raw = [
-      '**Demand forecasting is the highest-value AI target in merchandising.** Here\'s the ranking:',
-      '**1. Demand Forecasting / Inventory Optimization** — Highest confidence - MAPE at 28.4% (target 20%); inventory turns down to 3.6x from 4.2x; stockout rate up to 4.2%; markdown rate at 12.8% (target 11%). The $248M revenue gap and EBITDA margin compression both trace directly to forecast failure.',
-      '**2. Markdown / Allocation Optimization** — High confidence - Sell-through at 62% (target 70%); markdown rate rising.',
-      '**Explicitly missing data** that would change ranking: promotion-level forecast accuracy, allocation drift root cause, SKU contribution margins.',
-      'What do you want to do — deepen the forecasting program, or originate a Markdown Optimization move?',
+      "Demand forecasting is the highest-value AI target in merchandising — high confidence on this one.",
+      'MAPE is 28.4% against a 20% target, inventory turns dropped from 4.2x to 3.6x, and the $248M revenue gap traces directly to forecast quality.',
+      "I'd push back on parallel scope; sequence forecasting first and markdown optimization after the foundation is stable.",
+      'What do you want to do next?',
     ].join(' ');
 
     const shaped = shapeAgentResponseForSurface('/strategic-moves/new', raw);
 
-    expect(shaped).not.toContain('**');
-    expect(shaped).toContain('- Why:');
-    expect(shaped).toContain('- Missing:');
-    expect(shaped).toContain('- Choose:');
-    expect(shaped.split('\n').length).toBeLessThanOrEqual(7);
-    expect(shaped.split(/\s+/).length).toBeLessThanOrEqual(95);
+    // Prose preserved, no auto-generated structural template.
+    expect(shaped).not.toMatch(/^\s*- (?:Why|Evidence|Missing|Next|Question|Choose):/m);
+    expect(shaped).toContain('high confidence on this one');
+    expect(shaped).toContain('MAPE is 28.4%');
+    expect(shaped).toContain("I'd push back on parallel scope");
   });
 
   it('compacts Tower Atlas answers into short readable bullets', () => {
@@ -178,7 +183,11 @@ describe('agent response shape', () => {
     });
   });
 
-  it('uses sequential steps when the answer explains a path', () => {
+  it('uses sequential steps when the answer explains a path (Tower surface)', () => {
+    // VOICE.STRAT-2026-05-10f — moved from '/source' to '/tower'. Source is
+    // now a Brief C advisor surface and passes through; Tower keeps
+    // compaction (separate doctrine, no Brief A/B/C). The
+    // compactStepText branch logic is exercised here.
     const raw = [
       'The path is a three-step operating-model shift.',
       '1. Baseline. Confirm KPI owner, current value, target, and source system.',
@@ -187,7 +196,7 @@ describe('agent response shape', () => {
       'The outcome is a governed merchandising workflow, not a science project.',
     ].join(' ');
 
-    const shaped = shapeAgentResponseForSurface('/source', raw);
+    const shaped = shapeAgentResponseForSurface('/tower', raw);
 
     expect(shaped).toMatch(/^1\. Baseline\./m);
     expect(shaped).toMatch(/^2\. Design\./m);
@@ -259,5 +268,153 @@ describe('agent response shape', () => {
     );
 
     expect(streaming).toBe('the cited pattern is relevant when the data is available.');
+  });
+
+  // VOICE.STRAT-2026-05-10f · Source surface preserves Brief C prose. The
+  // 2026-05-10 Meridian production audit captured every Sentinel response
+  // being mangled into a structured-bullet template by the same compactor
+  // that hits Source. Brief C explicitly requires natural advisor prose
+  // ("Don't bullet-point everything. Use comparison tables when they earn
+  // their place — for actual head-to-head evaluation"). The shape contract
+  // for Source mirrors Intelligence.
+  describe('Source surface — Brief C prose preservation (VOICE.STRAT-2026-05-10f)', () => {
+    it('does not inject the structured-bullet template into a Brief C vendor shortlist', () => {
+      const raw = [
+        'Three credible vendors for your specific situation, with my read on each:',
+        "Algonomy is the strongest fit at the capability level. They have the most mature multi-banner specialty retail playbook, customer evidence is deep, and they've been at this long enough to have real implementation patterns. The trade-off: they're a bigger ship.",
+        'Daisy Intelligence is a credible second. Strong work in adjacent retail, financial health appears stable.',
+        "I'd drop the bigger horizontal players — capability is broader but assortment is not their lead.",
+      ].join(' ');
+
+      const shaped = shapeAgentResponseForSurface('/source', raw);
+
+      expect(shaped).not.toMatch(/^\s*- Evidence:/m);
+      expect(shaped).not.toMatch(/^\s*- Missing:/m);
+      expect(shaped).not.toMatch(/^\s*- Next:/m);
+      expect(shaped).not.toMatch(/^\s*- Question:/m);
+      expect(shaped).toContain('Algonomy is the strongest fit');
+      expect(shaped).toContain('Daisy Intelligence is a credible second');
+      expect(shaped).toContain("I'd drop the bigger horizontal players");
+    });
+
+    it('does not promote a Brief C "I don\'t have visibility into..." caveat into a "- Missing:" bullet', () => {
+      const raw = [
+        "I don't have visibility into Apex's current AI tooling spend — that would be in your procurement or finance data, not in what's connected to me.",
+        'Pattern range from corpus for multi-banner specialty retailers your size is roughly $3-15M annual on AI tooling and platforms.',
+        'If you want a real benchmark, get the actual number from finance and define the scope of what counts.',
+      ].join(' ');
+
+      const shaped = shapeAgentResponseForSurface('/source', raw);
+
+      expect(shaped).not.toMatch(/^\s*- Missing:/m);
+      expect(shaped).not.toMatch(/^\s*- Evidence:/m);
+      expect(shaped).toContain("I don't have visibility into Apex's current AI tooling spend");
+    });
+  });
+
+  // VOICE.STRAT-2026-05-10f · Strategic Moves surface preserves Brief B
+  // prose. Both the chat-level compaction (compactConsultantChatText) and
+  // the originate-level compaction (compactStrategicMoveOriginateText)
+  // were the same Brief violation by construction.
+  describe('Strategic Moves surface — Brief B prose preservation (VOICE.STRAT-2026-05-10f)', () => {
+    it('does not inject the structured-bullet template into a Brief B Sentinel-handoff pickup', () => {
+      const raw = [
+        'Picking up from your Intelligence conversation — assortment optimization for Apex, with three patterns Sentinel surfaced that need to live in the bet\'s design from the start.',
+        "We're at P0 (Originate). The first real question isn't workflow — it's whether you have the sponsorship in place to actually shape this well.",
+        'CIO-alone sponsorship for a merchandising AI bet fails most of the time. Before we go further, who\'s your CMO partner on this, and have you talked to them yet?',
+      ].join(' ');
+
+      const shaped = shapeAgentResponseForSurface('programs', raw);
+
+      expect(shaped).not.toMatch(/^\s*- Evidence:/m);
+      expect(shaped).not.toMatch(/^\s*- Missing:/m);
+      expect(shaped).not.toMatch(/^\s*- Next:/m);
+      expect(shaped).not.toMatch(/^\s*- Question:/m);
+      expect(shaped).not.toMatch(/^\s*- Why:/m);
+      expect(shaped).not.toMatch(/^\s*- Choose:/m);
+      expect(shaped).toContain('Picking up from your Intelligence conversation');
+      expect(shaped).toContain('P0 (Originate)');
+      expect(shaped).toContain('CIO-alone sponsorship');
+    });
+
+    it('passes through on programs-detail surface (Move detail / phase / evidence)', () => {
+      const raw = "I'd push back on advancing to charter — your sponsor structure isn't right yet, and three peer cases stalled in months 6-9. High confidence on this one.";
+      const shaped = shapeAgentResponseForSurface('programs-detail', raw);
+
+      expect(shaped).not.toMatch(/^\s*- (?:Evidence|Missing|Next|Question|Why|Choose):/m);
+      expect(shaped).toContain("I'd push back on advancing to charter");
+      expect(shaped).toContain('High confidence on this one');
+    });
+
+    it('passes through on the legacy /strategic-moves/new branch (no longer routed to compactStrategicMoveOriginateText)', () => {
+      const raw = [
+        "Strong opinion: assortment first, pricing second.",
+        "Pricing AI works best on top of a stable assortment foundation, and trying to do them in parallel usually means redoing the pricing work in year two.",
+        "Are you thinking about these as two separate Moves, or one combined Move?",
+      ].join(' ');
+
+      const shaped = shapeAgentResponseForSurface('/strategic-moves/new', raw);
+
+      expect(shaped).not.toMatch(/^\s*- (?:Evidence|Missing|Next|Question|Why|Choose):/m);
+      expect(shaped).toContain('Strong opinion: assortment first, pricing second');
+      expect(shaped).toContain("Are you thinking about these as two separate Moves, or one combined Move?");
+    });
+  });
+
+  // VOICE.STRAT-2026-05-10f · Anti-regression guard.
+  //
+  // Surfaces that run a Brief A/B/C-style expert-posture agent must NOT
+  // be compacted. The compaction template destructures advisor prose into
+  // headline + Evidence:/Missing:/Next:/Question: bullets, which violates
+  // the conversational-naturalness contract from the founder-approved
+  // 2026-05-10 voice doctrine package.
+  //
+  // If anyone in the future tries to add an expert-posture surface back
+  // to shouldCompactSurface (via this module's prefix list, or via a
+  // new special-case branch in shapeAgentResponseForSurface), this test
+  // catches it at PR review.
+  describe('shouldCompactSurface — guard against expert-posture surface compaction', () => {
+    const EXPERT_POSTURE_SURFACES = [
+      // Sentinel · Brief A
+      'intelligence',
+      '/intelligence',
+      // Source · Brief C
+      'source',
+      '/source',
+      // Nexus · Brief B (Strategic Moves / Programs)
+      'programs',
+      'programs-detail',
+      '/programs',
+      '/programs/new',
+      'strategic-moves',
+      'strategic-moves-new',
+      'strategic-moves-workspace',
+      '/strategic-moves',
+    ];
+
+    for (const surface of EXPERT_POSTURE_SURFACES) {
+      it(`does not auto-template surface=${JSON.stringify(surface)} (Brief A/B/C contract)`, () => {
+        // Feed a canonical Brief-style response with all the keywords that
+        // would historically trip compaction's extractors (digits, KPI,
+        // "missing", "don't have", a question). If shouldCompactSurface
+        // narrowed correctly, this will round-trip without auto-generated
+        // bullets. If a future change adds the surface back to compaction,
+        // this assertion fails.
+        const canonicalAdvisorResponse = [
+          "My read is the highest-leverage bet is X, and I'd put high confidence on that.",
+          'Three peer enterprises in the corpus saw 8-15% gains at the unit level, with KPI signals trending stable.',
+          "I don't have your specific Q3 numbers — your finance team would have them.",
+          "What's driving the question?",
+        ].join(' ');
+
+        const shaped = shapeAgentResponseForSurface(surface, canonicalAdvisorResponse);
+
+        expect(shaped).not.toMatch(/^\s*- (?:Evidence|Missing|Next|Question|Why|Choose):/m);
+        // The full advisor reasoning round-trips, not a 18-word headline.
+        expect(shaped).toContain('high confidence on that');
+        expect(shaped).toContain("I don't have your specific Q3 numbers");
+        expect(shaped).toContain("What's driving the question");
+      });
+    }
   });
 });

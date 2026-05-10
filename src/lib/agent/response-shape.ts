@@ -233,6 +233,16 @@ function compactStatStackText(text: string): string | null {
   return normalizeVisibleWhitespace([lead, ...stats, sourceDetail ? `Source: ${sentenceWithPeriod(trimWords(sourceDetail, 22))}` : null].filter(Boolean).join('\n'));
 }
 
+// VOICE.STRAT-2026-05-10f — kept but no longer wired. The legacy
+// `/strategic-moves/new` dispatch branch in shapeAgentResponseForSurface
+// that called this function was removed alongside the shouldCompactSurface
+// narrowing. Strategic Moves originate is now a Brief B advisor surface
+// and passes through to natural prose. Function preserved (rather than
+// deleted) per the brief's "don't refactor compactConsultantChatText"
+// scope, in case a non-advisor surface ever needs the
+// {headline}/-Why/-Missing/-Choose template again. If still unused at
+// the next voice-doctrine review, delete entirely.
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function compactStrategicMoveOriginateText(text: string): string {
   const comparison = compactComparisonText(text);
   if (comparison) return comparison;
@@ -330,14 +340,13 @@ function compactConsultantChatText(text: string, maxWords: number): string {
 }
 
 function shouldCompactSurface(surface: string): boolean {
-  // INT-VOICE.STRAT-2026-05-10e — Intelligence surface removed.
+  // VOICE.STRAT-2026-05-10f — Source + Strategic Moves removed.
   //
-  // The Brief A expert posture installed in src/lib/intelligence/ask/synthesizer.ts
-  // requires natural advisor prose: "Don't bullet-point everything. Use bullets
-  // when they earn their place; otherwise, write in prose. Reads like a person
-  // talking — varied sentence structure, natural transitions, length matches
-  // the question." compactConsultantChatText violates that contract by
-  // construction — it forces every response into a fixed
+  // Extension of the 2026-05-10e Intelligence-surface fix. The same render-
+  // bypass class affects every surface that runs a Brief A/B/C-style
+  // expert-posture agent. compactConsultantChatText (and the now-removed
+  // /strategic-moves/new branch's compactStrategicMoveOriginateText)
+  // disassemble advisor prose and reassemble it into a fixed
   //
   //   {headline}
   //   - Evidence: …
@@ -345,33 +354,35 @@ function shouldCompactSurface(surface: string): boolean {
   //   - Next: …
   //   - Question: …
   //
-  // template, and extractMissingLine specifically promotes any sentence
-  // containing "missing" / "don't have" / "absent" into a "- Missing:" bullet,
-  // amplifying any retrieval-thin phrasing into a compliance-style refusal
-  // shape. The 2026-05-10 Meridian production audit captured exactly this
-  // failure on every Sentinel response.
+  // template, with extractMissingLine promoting any "missing" / "don't have"
+  // / "absent" sentence into a "- Missing:" bullet — amplifying every honest
+  // data caveat into a compliance-style refusal shape. The Brief A/B/C
+  // contract explicitly requires natural advisor prose; the compaction
+  // template is a Brief violation by construction.
   //
-  // 'source' and the strategic-moves / programs / tower surfaces remain in
-  // the compaction list pending parallel updates under Briefs B and C
-  // (Nexus and Source consultant posture). Tower is unrelated to Briefs
-  // A/B/C and stays as-is. See docs/build/CODEX_BRIEF_6_CONSULTANT_POSTURE_NEXUS_SOURCE.md
-  // for the next-up work.
+  // Surfaces removed in this iteration:
+  //   - 'source' / '/source'                          (Brief C — Source)
+  //   - 'programs' / '/programs/new'                  (Brief B — Strategic Moves index + originate)
+  //   - 'programs-detail'                             (Brief B — Move detail / phase / evidence)
+  //   - 'strategic-moves' / 'strategic-moves-new' /
+  //     'strategic-moves-workspace' / '/strategic-moves'  (legacy aliases, swept for completeness)
+  //
+  // Surfaces kept (correctly compacted — dashboard / form, not advisor chat):
+  //   - 'tower' / '/tower'                            (Tower — separate doctrine, no Brief A/B/C)
+  //   - 'setup' / '/setup'                            (setup wizard form surface)
+  //   - '/platform/admin'                             (admin form surface)
+  //
+  // The anti-regression guard test in response-shape.test.ts asserts that
+  // every expert-posture surface returns false from this function. If a
+  // future change tries to silently re-add an expert-posture surface, the
+  // guard fails at PR review.
   const semanticSurface = surface.replace(/^\/+/, '');
   return [
     'tower',
-    'source',
     'setup',
-    'programs',
-    'programs-detail',
-    'strategic-moves-new',
-    'strategic-moves-workspace',
-    'strategic-moves',
     '/tower',
-    '/source',
     '/setup',
     '/platform/admin',
-    '/programs/new',
-    '/strategic-moves',
   ].some((prefix) => surface === prefix || surface.startsWith(`${prefix}/`) || semanticSurface === prefix);
 }
 
@@ -380,14 +391,16 @@ export function shapeStreamingAgentTextForSurface(_surface: string, text: string
 }
 
 export function shapeAgentResponseForSurface(surface: string, text: string): string {
+  // VOICE.STRAT-2026-05-10f — the legacy `/strategic-moves/new` special case
+  // that routed to compactStrategicMoveOriginateText was removed alongside
+  // the shouldCompactSurface narrowing. Strategic Moves originate is a
+  // Brief B advisor surface; the originate compactor was the same render-
+  // bypass class as compactConsultantChatText (different shape, same Brief
+  // violation by construction). Surfaces correctly compacted now flow
+  // through the single shouldCompactSurface gate.
   const cleaned = normalizeVisibleWhitespace(stripChatMarkdownFormatting(normalizeAgentMarkupForPlainText(text)));
-  let shaped: string;
-  if (surface === '/strategic-moves/new') {
-    shaped = compactStrategicMoveOriginateText(cleaned);
-  } else if (shouldCompactSurface(surface)) {
-    shaped = compactConsultantChatText(cleaned, 120);
-  } else {
-    shaped = cleaned;
-  }
+  const shaped = shouldCompactSurface(surface)
+    ? compactConsultantChatText(cleaned, 120)
+    : cleaned;
   return repairAgentOutputContractText(shaped).text;
 }
