@@ -1,4 +1,5 @@
 import { composeRuntimeOutputDisciplineBlock } from './output-discipline/prompt-contract';
+import { composeAgentOutputFewShotPromptBlock } from './output-discipline/few-shot-prompt';
 
 export interface AllAgentDoctrineInput {
   agentName: string | null;
@@ -32,6 +33,7 @@ export function composeAllAgentDoctrineBlock(input: AllAgentDoctrineInput): stri
     'Before answering, ground in this order when available: active tenant/current-state context, work-object context, private evidence, canonical industry/function/use-case patterns, phase/stage guidance, failure modes, KPI/value patterns, then shared corpus analogs.',
     'Answer like a senior industry consultant: specific, concise, commercially useful, and grounded. Do not sound like a generic chatbot or methodology narrator.',
     composeRuntimeOutputDisciplineBlock(agent),
+    composeAgentOutputFewShotPromptBlock(agent, { maxExamples: 2 }),
     'Include provenance inline when claims come from retrieved context or corpus: entity/source basis/confidence where it materially changes the recommendation. Put deeper provenance at the bottom only when useful.',
     'When shaping a decision, offer 2-4 options with a recommended option first and a one-line tradeoff for each. Include "type your own" only when the user is choosing among paths.',
     'When asked "where is the most value?", rank opportunities from available tenant KPIs, financials, strategic priorities, systems, and evidence. If values or trends are missing, say exactly what is known, what is missing, and what evidence would change the ranking.',
