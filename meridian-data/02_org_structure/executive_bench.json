@@ -1,6 +1,6 @@
 {
   "tenant_key": "meridian-health",
-  "last_updated": "2026-04-25",
+  "last_updated": "2026-05-10",
   "data_classification": "Internal",
   "schema_version": "1.0",
   "executives": [
@@ -503,6 +503,1077 @@
       "direct_reports_count": 0,
       "escalation_authority_summary": "Interim escalation to CDIO and VP Enterprise Architecture.",
       "scope": "shared"
+    },
+    {
+      "id": "person:meridian:marcus-henderson",
+      "full_name": "Marcus Henderson",
+      "title": "SVP Finance & Treasurer",
+      "role_scope": "system",
+      "reports_to": "person:meridian:david-park",
+      "tenure_in_role_years": 4,
+      "tenure_at_company_years": 8,
+      "prior_roles": [
+        "Regional healthcare leadership role",
+        "Academic / payer / provider operating role"
+      ],
+      "background_summary": "Marcus Henderson holds the SVP Finance & Treasurer role. The profile is intentionally operational rather than biographical: decision authority, coalition behavior, and program dependencies are what matter for Meridian reasoning.",
+      "stated_priorities_fy2026": [
+        "FY2026 margin recovery",
+        "treasury and liquidity",
+        "capital structure",
+        "rating agency relations"
+      ],
+      "known_political_positions": "Cost and capital discipline coalition; partners with CFO on every transformation business case",
+      "direct_reports_count": 5,
+      "escalation_authority_summary": "Can escalate to Executive Committee for enterprise tradeoffs; program-level issues route through sponsor and EPMO.",
+      "scope": "system"
+    },
+    {
+      "id": "person:meridian:diana-ouellette",
+      "full_name": "Diana Ouellette",
+      "title": "VP Financial Planning & Analysis",
+      "role_scope": "system",
+      "reports_to": "person:meridian:marcus-henderson",
+      "tenure_in_role_years": 2,
+      "tenure_at_company_years": 6,
+      "prior_roles": [
+        "Regional healthcare leadership role",
+        "Academic / payer / provider operating role"
+      ],
+      "background_summary": "Diana Ouellette holds the VP Financial Planning & Analysis role. The profile is intentionally operational rather than biographical: decision authority, coalition behavior, and program dependencies are what matter for Meridian reasoning.",
+      "stated_priorities_fy2026": [
+        "FY2026 forecast cycles",
+        "service-line P&L",
+        "transformation program ROI tracking",
+        "DENIALS-2024 attribution analysis"
+      ],
+      "known_political_positions": "Bridge-builder across provider and plan boundaries",
+      "direct_reports_count": 4,
+      "escalation_authority_summary": "Can escalate to Executive Committee for enterprise tradeoffs; program-level issues route through sponsor and EPMO.",
+      "scope": "system"
+    },
+    {
+      "id": "person:meridian:kenneth-walsh",
+      "full_name": "Kenneth Walsh",
+      "title": "VP Internal Audit",
+      "role_scope": "system",
+      "reports_to": "person:meridian:david-park",
+      "tenure_in_role_years": 3,
+      "tenure_at_company_years": 5,
+      "prior_roles": [
+        "Regional healthcare leadership role",
+        "Academic / payer / provider operating role"
+      ],
+      "background_summary": "Kenneth Walsh holds the VP Internal Audit role. The profile is intentionally operational rather than biographical: decision authority, coalition behavior, and program dependencies are what matter for Meridian reasoning.",
+      "stated_priorities_fy2026": [
+        "SOC controls",
+        "AI Governance Council audit liaison",
+        "post-DENIALS-2024 control review",
+        "RCM modernization risk audit"
+      ],
+      "known_political_positions": "Independent voice; reports dotted-line to Audit Committee",
+      "direct_reports_count": 3,
+      "escalation_authority_summary": "Can escalate to Executive Committee for enterprise tradeoffs; program-level issues route through sponsor and EPMO.",
+      "scope": "system"
+    },
+    {
+      "id": "person:meridian:yvette-brooks-olawale",
+      "full_name": "Yvette Brooks-Olawale",
+      "title": "VP Tax & Compliance Reporting",
+      "role_scope": "system",
+      "reports_to": "person:meridian:marcus-henderson",
+      "tenure_in_role_years": 5,
+      "tenure_at_company_years": 5,
+      "prior_roles": [
+        "Regional healthcare leadership role",
+        "Academic / payer / provider operating role"
+      ],
+      "background_summary": "Yvette Brooks-Olawale holds the VP Tax & Compliance Reporting role. The profile is intentionally operational rather than biographical: decision authority, coalition behavior, and program dependencies are what matter for Meridian reasoning.",
+      "stated_priorities_fy2026": [
+        "non-profit 990 reporting",
+        "for-profit subsidiary tax",
+        "state DOI reporting",
+        "community benefit reporting"
+      ],
+      "known_political_positions": "Bridge-builder across provider and plan boundaries",
+      "direct_reports_count": 2,
+      "escalation_authority_summary": "Can escalate to Executive Committee for enterprise tradeoffs; program-level issues route through sponsor and EPMO.",
+      "scope": "system"
+    },
+    {
+      "id": "person:meridian:robert-iverson",
+      "full_name": "Robert Iverson",
+      "title": "VP Capital Planning & Real Estate",
+      "role_scope": "system",
+      "reports_to": "person:meridian:david-park",
+      "tenure_in_role_years": 6,
+      "tenure_at_company_years": 14,
+      "prior_roles": [
+        "Regional healthcare leadership role",
+        "Academic / payer / provider operating role"
+      ],
+      "background_summary": "Robert Iverson holds the VP Capital Planning & Real Estate role. The profile is intentionally operational rather than biographical: decision authority, coalition behavior, and program dependencies are what matter for Meridian reasoning.",
+      "stated_priorities_fy2026": [
+        "$1.1B capital plan stewardship",
+        "Hawaii integration capital deferred to FY2027",
+        "Epic optimization capital",
+        "facility modernization tradeoffs"
+      ],
+      "known_political_positions": "Cost and capital discipline coalition",
+      "direct_reports_count": 3,
+      "escalation_authority_summary": "Can escalate to Executive Committee for enterprise tradeoffs; program-level issues route through sponsor and EPMO.",
+      "scope": "system"
+    },
+    {
+      "id": "person:meridian:jasmine-yi",
+      "full_name": "Jasmine Yi",
+      "title": "Director Patient Access & Pre-Service",
+      "role_scope": "provider",
+      "reports_to": "person:meridian:patricia-okafor",
+      "tenure_in_role_years": 2,
+      "tenure_at_company_years": 4,
+      "prior_roles": [
+        "Regional healthcare leadership role",
+        "Academic / payer / provider operating role"
+      ],
+      "background_summary": "Jasmine Yi holds the Director Patient Access & Pre-Service role. The profile is intentionally operational rather than biographical: decision authority, coalition behavior, and program dependencies are what matter for Meridian reasoning.",
+      "stated_priorities_fy2026": [
+        "pre-service eligibility and authorization",
+        "POS collections",
+        "patient financial counseling"
+      ],
+      "known_political_positions": "Bridge-builder across provider and plan boundaries",
+      "direct_reports_count": 4,
+      "escalation_authority_summary": "Can escalate to Executive Committee for enterprise tradeoffs; program-level issues route through sponsor and EPMO.",
+      "scope": "provider"
+    },
+    {
+      "id": "person:meridian:andre-belmont",
+      "full_name": "Andre Belmont",
+      "title": "Director Coding & Clinical Documentation Integrity",
+      "role_scope": "provider",
+      "reports_to": "person:meridian:patricia-okafor",
+      "tenure_in_role_years": 4,
+      "tenure_at_company_years": 9,
+      "prior_roles": [
+        "Regional healthcare leadership role",
+        "Academic / payer / provider operating role"
+      ],
+      "background_summary": "Andre Belmont holds the Director Coding & Clinical Documentation Integrity role. The profile is intentionally operational rather than biographical: decision authority, coalition behavior, and program dependencies are what matter for Meridian reasoning.",
+      "stated_priorities_fy2026": [
+        "HCC capture",
+        "clinical documentation specificity",
+        "AI-assisted coding pilot scoping under AI Governance"
+      ],
+      "known_political_positions": "Bridge-builder across provider and plan boundaries",
+      "direct_reports_count": 5,
+      "escalation_authority_summary": "Can escalate to Executive Committee for enterprise tradeoffs; program-level issues route through sponsor and EPMO.",
+      "scope": "provider"
+    },
+    {
+      "id": "person:meridian:kimberly-yates-cho",
+      "full_name": "Kimberly Yates-Cho",
+      "title": "Director Denials Management",
+      "role_scope": "provider",
+      "reports_to": "person:meridian:patricia-okafor",
+      "tenure_in_role_years": 1.5,
+      "tenure_at_company_years": 3,
+      "prior_roles": [
+        "Regional healthcare leadership role",
+        "Academic / payer / provider operating role"
+      ],
+      "background_summary": "Kimberly Yates-Cho holds the Director Denials Management role. The profile is intentionally operational rather than biographical: decision authority, coalition behavior, and program dependencies are what matter for Meridian reasoning.",
+      "stated_priorities_fy2026": [
+        "Q4 FY2025 denial spike root-cause",
+        "first-pass denial reduction",
+        "payer-specific denial pattern analysis"
+      ],
+      "known_political_positions": "Carries the operational weight of the DENIALS-2024 narrative day-to-day",
+      "direct_reports_count": 3,
+      "escalation_authority_summary": "Can escalate to Executive Committee for enterprise tradeoffs; program-level issues route through sponsor and EPMO.",
+      "scope": "provider"
+    },
+    {
+      "id": "person:meridian:tom\u00e1s-ferreira",
+      "full_name": "Dr. Tom\u00e1s Ferreira",
+      "title": "SVP Hospital Operations",
+      "role_scope": "provider",
+      "reports_to": "person:meridian:marcus-reid",
+      "tenure_in_role_years": 3,
+      "tenure_at_company_years": 12,
+      "prior_roles": [
+        "Regional healthcare leadership role",
+        "Academic / payer / provider operating role"
+      ],
+      "background_summary": "Dr. Tom\u00e1s Ferreira holds the SVP Hospital Operations role. The profile is intentionally operational rather than biographical: decision authority, coalition behavior, and program dependencies are what matter for Meridian reasoning.",
+      "stated_priorities_fy2026": [
+        "30-hospital performance",
+        "Hawaii integration completion (deferred FY2027)",
+        "service-line margin discipline",
+        "Epic standardization"
+      ],
+      "known_political_positions": "Operationally central; partners closely with COO O'Brien on hospital throughput",
+      "direct_reports_count": 8,
+      "escalation_authority_summary": "Can escalate to Executive Committee for enterprise tradeoffs; program-level issues route through sponsor and EPMO.",
+      "scope": "provider"
+    },
+    {
+      "id": "person:meridian:elena-castellanos",
+      "full_name": "Dr. Elena Castellanos",
+      "title": "VP Medical Group Operations",
+      "role_scope": "provider",
+      "reports_to": "person:meridian:marcus-reid",
+      "tenure_in_role_years": 4,
+      "tenure_at_company_years": 7,
+      "prior_roles": [
+        "Regional healthcare leadership role",
+        "Academic / payer / provider operating role"
+      ],
+      "background_summary": "Dr. Elena Castellanos holds the VP Medical Group Operations role. The profile is intentionally operational rather than biographical: decision authority, coalition behavior, and program dependencies are what matter for Meridian reasoning.",
+      "stated_priorities_fy2026": [
+        "7,400 employed physicians operations",
+        "ambient documentation rollout (ambient-2026)",
+        "physician burnout reduction",
+        "value-based primary care"
+      ],
+      "known_political_positions": "Bridge-builder across provider and plan boundaries",
+      "direct_reports_count": 6,
+      "escalation_authority_summary": "Can escalate to Executive Committee for enterprise tradeoffs; program-level issues route through sponsor and EPMO.",
+      "scope": "provider"
+    },
+    {
+      "id": "person:meridian:aaron-whitlock",
+      "full_name": "Dr. Aaron Whitlock",
+      "title": "VP Specialty Service Lines",
+      "role_scope": "provider",
+      "reports_to": "person:meridian:marcus-reid",
+      "tenure_in_role_years": 2,
+      "tenure_at_company_years": 5,
+      "prior_roles": [
+        "Regional healthcare leadership role",
+        "Academic / payer / provider operating role"
+      ],
+      "background_summary": "Dr. Aaron Whitlock holds the VP Specialty Service Lines role. The profile is intentionally operational rather than biographical: decision authority, coalition behavior, and program dependencies are what matter for Meridian reasoning.",
+      "stated_priorities_fy2026": [
+        "cardiovascular service-line growth",
+        "oncology institute expansion",
+        "neurosciences",
+        "orthopedics value-based bundles"
+      ],
+      "known_political_positions": "Bridge-builder across provider and plan boundaries",
+      "direct_reports_count": 8,
+      "escalation_authority_summary": "Can escalate to Executive Committee for enterprise tradeoffs; program-level issues route through sponsor and EPMO.",
+      "scope": "provider"
+    },
+    {
+      "id": "person:meridian:yasmin-sayed",
+      "full_name": "Dr. Yasmin Sayed",
+      "title": "VP Behavioral Health",
+      "role_scope": "provider",
+      "reports_to": "person:meridian:marcus-reid",
+      "tenure_in_role_years": 3,
+      "tenure_at_company_years": 3,
+      "prior_roles": [
+        "Regional healthcare leadership role",
+        "Academic / payer / provider operating role"
+      ],
+      "background_summary": "Dr. Yasmin Sayed holds the VP Behavioral Health role. The profile is intentionally operational rather than biographical: decision authority, coalition behavior, and program dependencies are what matter for Meridian reasoning.",
+      "stated_priorities_fy2026": [
+        "behavioral health integration into primary care",
+        "telebehavioral expansion",
+        "workforce shortage mitigation"
+      ],
+      "known_political_positions": "Bridge-builder across provider and plan boundaries",
+      "direct_reports_count": 4,
+      "escalation_authority_summary": "Can escalate to Executive Committee for enterprise tradeoffs; program-level issues route through sponsor and EPMO.",
+      "scope": "provider"
+    },
+    {
+      "id": "person:meridian:edward-kawano",
+      "full_name": "Dr. Edward Kawano",
+      "title": "VP Imaging & Diagnostic Services",
+      "role_scope": "provider",
+      "reports_to": "person:meridian:marcus-reid",
+      "tenure_in_role_years": 5,
+      "tenure_at_company_years": 11,
+      "prior_roles": [
+        "Regional healthcare leadership role",
+        "Academic / payer / provider operating role"
+      ],
+      "background_summary": "Dr. Edward Kawano holds the VP Imaging & Diagnostic Services role. The profile is intentionally operational rather than biographical: decision authority, coalition behavior, and program dependencies are what matter for Meridian reasoning.",
+      "stated_priorities_fy2026": [
+        "imaging volume capacity",
+        "AI-augmented imaging pilots under AI Governance Council",
+        "Paige AI evaluation in pathology"
+      ],
+      "known_political_positions": "Bridge-builder across provider and plan boundaries",
+      "direct_reports_count": 4,
+      "escalation_authority_summary": "Can escalate to Executive Committee for enterprise tradeoffs; program-level issues route through sponsor and EPMO.",
+      "scope": "provider"
+    },
+    {
+      "id": "person:meridian:marisol-tan-riveras",
+      "full_name": "Marisol Tan-Riveras",
+      "title": "VP Pharmacy Operations",
+      "role_scope": "shared",
+      "reports_to": "person:meridian:marcus-reid",
+      "tenure_in_role_years": 4,
+      "tenure_at_company_years": 9,
+      "prior_roles": [
+        "Regional healthcare leadership role",
+        "Academic / payer / provider operating role"
+      ],
+      "background_summary": "Marisol Tan-Riveras holds the VP Pharmacy Operations role. The profile is intentionally operational rather than biographical: decision authority, coalition behavior, and program dependencies are what matter for Meridian reasoning.",
+      "stated_priorities_fy2026": [
+        "specialty pharmacy growth",
+        "340B program",
+        "drug spend trend (8% per Plan MLR analysis)",
+        "pharmacy AI for utilization management"
+      ],
+      "known_political_positions": "Bridge-builder across provider and plan boundaries",
+      "direct_reports_count": 5,
+      "escalation_authority_summary": "Can escalate to Executive Committee for enterprise tradeoffs; program-level issues route through sponsor and EPMO.",
+      "scope": "shared"
+    },
+    {
+      "id": "person:meridian:felix-lin-tegene",
+      "full_name": "Dr. Felix Lin-Tegene",
+      "title": "VP Patient Safety",
+      "role_scope": "provider",
+      "reports_to": "person:meridian:james-okonjo",
+      "tenure_in_role_years": 2,
+      "tenure_at_company_years": 5,
+      "prior_roles": [
+        "Regional healthcare leadership role",
+        "Academic / payer / provider operating role"
+      ],
+      "background_summary": "Dr. Felix Lin-Tegene holds the VP Patient Safety role. The profile is intentionally operational rather than biographical: decision authority, coalition behavior, and program dependencies are what matter for Meridian reasoning.",
+      "stated_priorities_fy2026": [
+        "never-events reduction",
+        "HAI/HAC measurement",
+        "patient safety culture survey response",
+        "AI clinical decision support safety review"
+      ],
+      "known_political_positions": "Bridge-builder across provider and plan boundaries",
+      "direct_reports_count": 3,
+      "escalation_authority_summary": "Can escalate to Executive Committee for enterprise tradeoffs; program-level issues route through sponsor and EPMO.",
+      "scope": "provider"
+    },
+    {
+      "id": "person:meridian:maria-castillo-reyes",
+      "full_name": "Dr. Maria Castillo-Reyes",
+      "title": "SVP California Provider Operations",
+      "role_scope": "provider",
+      "reports_to": "person:meridian:sarah-obrien",
+      "tenure_in_role_years": 3,
+      "tenure_at_company_years": 15,
+      "prior_roles": [
+        "Regional healthcare leadership role",
+        "Academic / payer / provider operating role"
+      ],
+      "background_summary": "Dr. Maria Castillo-Reyes holds the SVP California Provider Operations role. The profile is intentionally operational rather than biographical: decision authority, coalition behavior, and program dependencies are what matter for Meridian reasoning.",
+      "stated_priorities_fy2026": [
+        "California hospital network performance",
+        "Sacramento flagship hospital operations",
+        "service-line margin discipline"
+      ],
+      "known_political_positions": "Bridge-builder across provider and plan boundaries",
+      "direct_reports_count": 6,
+      "escalation_authority_summary": "Can escalate to Executive Committee for enterprise tradeoffs; program-level issues route through sponsor and EPMO.",
+      "scope": "provider"
+    },
+    {
+      "id": "person:meridian:kenneth-akamu",
+      "full_name": "Kenneth Akamu",
+      "title": "SVP Hawaii Provider Operations",
+      "role_scope": "provider",
+      "reports_to": "person:meridian:sarah-obrien",
+      "tenure_in_role_years": 2,
+      "tenure_at_company_years": 2,
+      "prior_roles": [
+        "Regional healthcare leadership role",
+        "Academic / payer / provider operating role"
+      ],
+      "background_summary": "Kenneth Akamu holds the SVP Hawaii Provider Operations role. The profile is intentionally operational rather than biographical: decision authority, coalition behavior, and program dependencies are what matter for Meridian reasoning.",
+      "stated_priorities_fy2026": [
+        "Hawaii integration (funding deferred to FY2027)",
+        "Pacific Queens optimization",
+        "Kona Coast Cerner residual operations"
+      ],
+      "known_political_positions": "Carries the Hawaii integration narrative; budget pressure makes pace negotiation political",
+      "direct_reports_count": 3,
+      "escalation_authority_summary": "Can escalate to Executive Committee for enterprise tradeoffs; program-level issues route through sponsor and EPMO.",
+      "scope": "provider"
+    },
+    {
+      "id": "person:meridian:janet-sandoval-liu",
+      "full_name": "Janet Sandoval-Liu",
+      "title": "VP Surgical Services",
+      "role_scope": "provider",
+      "reports_to": "person:meridian:sarah-obrien",
+      "tenure_in_role_years": 3,
+      "tenure_at_company_years": 8,
+      "prior_roles": [
+        "Regional healthcare leadership role",
+        "Academic / payer / provider operating role"
+      ],
+      "background_summary": "Janet Sandoval-Liu holds the VP Surgical Services role. The profile is intentionally operational rather than biographical: decision authority, coalition behavior, and program dependencies are what matter for Meridian reasoning.",
+      "stated_priorities_fy2026": [
+        "OR utilization (target 78% from 68%)",
+        "robotic surgery program",
+        "surgical outcomes consistency"
+      ],
+      "known_political_positions": "Bridge-builder across provider and plan boundaries",
+      "direct_reports_count": 4,
+      "escalation_authority_summary": "Can escalate to Executive Committee for enterprise tradeoffs; program-level issues route through sponsor and EPMO.",
+      "scope": "provider"
+    },
+    {
+      "id": "person:meridian:hannah-yuen",
+      "full_name": "Dr. Hannah Yuen",
+      "title": "VP Emergency Services",
+      "role_scope": "provider",
+      "reports_to": "person:meridian:sarah-obrien",
+      "tenure_in_role_years": 2,
+      "tenure_at_company_years": 5,
+      "prior_roles": [
+        "Regional healthcare leadership role",
+        "Academic / payer / provider operating role"
+      ],
+      "background_summary": "Dr. Hannah Yuen holds the VP Emergency Services role. The profile is intentionally operational rather than biographical: decision authority, coalition behavior, and program dependencies are what matter for Meridian reasoning.",
+      "stated_priorities_fy2026": [
+        "ED throughput and boarding time (target 2hr from 4.2hr)",
+        "ED-to-inpatient flow",
+        "behavioral-health boarding"
+      ],
+      "known_political_positions": "Bridge-builder across provider and plan boundaries",
+      "direct_reports_count": 4,
+      "escalation_authority_summary": "Can escalate to Executive Committee for enterprise tradeoffs; program-level issues route through sponsor and EPMO.",
+      "scope": "provider"
+    },
+    {
+      "id": "person:meridian:carmela-arroyo",
+      "full_name": "Carmela Arroyo",
+      "title": "VP Ambulatory Operations",
+      "role_scope": "provider",
+      "reports_to": "person:meridian:sarah-obrien",
+      "tenure_in_role_years": 4,
+      "tenure_at_company_years": 10,
+      "prior_roles": [
+        "Regional healthcare leadership role",
+        "Academic / payer / provider operating role"
+      ],
+      "background_summary": "Carmela Arroyo holds the VP Ambulatory Operations role. The profile is intentionally operational rather than biographical: decision authority, coalition behavior, and program dependencies are what matter for Meridian reasoning.",
+      "stated_priorities_fy2026": [
+        "280-clinic operations",
+        "ambulatory access (third next available)",
+        "telehealth volume growth"
+      ],
+      "known_political_positions": "Bridge-builder across provider and plan boundaries",
+      "direct_reports_count": 6,
+      "escalation_authority_summary": "Can escalate to Executive Committee for enterprise tradeoffs; program-level issues route through sponsor and EPMO.",
+      "scope": "provider"
+    },
+    {
+      "id": "person:meridian:carrie-goldman-ekam",
+      "full_name": "Carrie Goldman-Ekam",
+      "title": "VP Nursing Operations",
+      "role_scope": "provider",
+      "reports_to": "person:meridian:robert-chen",
+      "tenure_in_role_years": 4,
+      "tenure_at_company_years": 9,
+      "prior_roles": [
+        "Regional healthcare leadership role",
+        "Academic / payer / provider operating role"
+      ],
+      "background_summary": "Carrie Goldman-Ekam holds the VP Nursing Operations role. The profile is intentionally operational rather than biographical: decision authority, coalition behavior, and program dependencies are what matter for Meridian reasoning.",
+      "stated_priorities_fy2026": [
+        "nursing turnover (target 14% from 22%)",
+        "traveler ratio reduction",
+        "nurse engagement",
+        "nurse-led documentation under ambient program"
+      ],
+      "known_political_positions": "Bridge-builder across provider and plan boundaries",
+      "direct_reports_count": 5,
+      "escalation_authority_summary": "Can escalate to Executive Committee for enterprise tradeoffs; program-level issues route through sponsor and EPMO.",
+      "scope": "provider"
+    },
+    {
+      "id": "person:meridian:latonya-briggs",
+      "full_name": "Latonya Briggs",
+      "title": "VP Allied Health Workforce",
+      "role_scope": "provider",
+      "reports_to": "person:meridian:sarah-obrien",
+      "tenure_in_role_years": 3,
+      "tenure_at_company_years": 6,
+      "prior_roles": [
+        "Regional healthcare leadership role",
+        "Academic / payer / provider operating role"
+      ],
+      "background_summary": "Latonya Briggs holds the VP Allied Health Workforce role. The profile is intentionally operational rather than biographical: decision authority, coalition behavior, and program dependencies are what matter for Meridian reasoning.",
+      "stated_priorities_fy2026": [
+        "respiratory therapy",
+        "physical/occupational therapy",
+        "imaging tech workforce"
+      ],
+      "known_political_positions": "Bridge-builder across provider and plan boundaries",
+      "direct_reports_count": 3,
+      "escalation_authority_summary": "Can escalate to Executive Committee for enterprise tradeoffs; program-level issues route through sponsor and EPMO.",
+      "scope": "provider"
+    },
+    {
+      "id": "person:meridian:daniel-roszak",
+      "full_name": "Daniel Roszak",
+      "title": "SVP Plan Operations",
+      "role_scope": "plan",
+      "reports_to": "person:meridian:thomas-hartwell",
+      "tenure_in_role_years": 4,
+      "tenure_at_company_years": 7,
+      "prior_roles": [
+        "Regional healthcare leadership role",
+        "Academic / payer / provider operating role"
+      ],
+      "background_summary": "Daniel Roszak holds the SVP Plan Operations role. The profile is intentionally operational rather than biographical: decision authority, coalition behavior, and program dependencies are what matter for Meridian reasoning.",
+      "stated_priorities_fy2026": [
+        "MLR management (target 84.5% from 87.2%)",
+        "claims operations",
+        "plan-provider economics alignment"
+      ],
+      "known_political_positions": "Bridge-builder across provider and plan boundaries",
+      "direct_reports_count": 6,
+      "escalation_authority_summary": "Can escalate to Executive Committee for enterprise tradeoffs; program-level issues route through sponsor and EPMO.",
+      "scope": "plan"
+    },
+    {
+      "id": "person:meridian:yusuf-aziz",
+      "full_name": "Yusuf Aziz",
+      "title": "VP Medicare Advantage Product",
+      "role_scope": "plan",
+      "reports_to": "person:meridian:thomas-hartwell",
+      "tenure_in_role_years": 3,
+      "tenure_at_company_years": 4,
+      "prior_roles": [
+        "Regional healthcare leadership role",
+        "Academic / payer / provider operating role"
+      ],
+      "background_summary": "Yusuf Aziz holds the VP Medicare Advantage Product role. The profile is intentionally operational rather than biographical: decision authority, coalition behavior, and program dependencies are what matter for Meridian reasoning.",
+      "stated_priorities_fy2026": [
+        "MA growth and quality",
+        "STAR rating progression to 4.5",
+        "MA bid strategy",
+        "Hawaii MA expansion"
+      ],
+      "known_political_positions": "Bridge-builder across provider and plan boundaries",
+      "direct_reports_count": 4,
+      "escalation_authority_summary": "Can escalate to Executive Committee for enterprise tradeoffs; program-level issues route through sponsor and EPMO.",
+      "scope": "plan"
+    },
+    {
+      "id": "person:meridian:susanna-marchetti",
+      "full_name": "Susanna Marchetti",
+      "title": "VP Commercial Group Product",
+      "role_scope": "plan",
+      "reports_to": "person:meridian:thomas-hartwell",
+      "tenure_in_role_years": 2,
+      "tenure_at_company_years": 2,
+      "prior_roles": [
+        "Regional healthcare leadership role",
+        "Academic / payer / provider operating role"
+      ],
+      "background_summary": "Susanna Marchetti holds the VP Commercial Group Product role. The profile is intentionally operational rather than biographical: decision authority, coalition behavior, and program dependencies are what matter for Meridian reasoning.",
+      "stated_priorities_fy2026": [
+        "commercial group retention",
+        "self-insured employer product",
+        "specialty employer ASO contracts"
+      ],
+      "known_political_positions": "Bridge-builder across provider and plan boundaries",
+      "direct_reports_count": 4,
+      "escalation_authority_summary": "Can escalate to Executive Committee for enterprise tradeoffs; program-level issues route through sponsor and EPMO.",
+      "scope": "plan"
+    },
+    {
+      "id": "person:meridian:adriana-pelletier",
+      "full_name": "Adriana Pelletier",
+      "title": "VP Medicaid Managed Care",
+      "role_scope": "plan",
+      "reports_to": "person:meridian:thomas-hartwell",
+      "tenure_in_role_years": 5,
+      "tenure_at_company_years": 8,
+      "prior_roles": [
+        "Regional healthcare leadership role",
+        "Academic / payer / provider operating role"
+      ],
+      "background_summary": "Adriana Pelletier holds the VP Medicaid Managed Care role. The profile is intentionally operational rather than biographical: decision authority, coalition behavior, and program dependencies are what matter for Meridian reasoning.",
+      "stated_priorities_fy2026": [
+        "state Medicaid contract performance",
+        "Medicaid HEDIS quality",
+        "social determinants screening"
+      ],
+      "known_political_positions": "Bridge-builder across provider and plan boundaries",
+      "direct_reports_count": 3,
+      "escalation_authority_summary": "Can escalate to Executive Committee for enterprise tradeoffs; program-level issues route through sponsor and EPMO.",
+      "scope": "plan"
+    },
+    {
+      "id": "person:meridian:kenny-tran-ardelean",
+      "full_name": "Kenny Tran-Ardelean",
+      "title": "VP Plan Marketing & Member Acquisition",
+      "role_scope": "plan",
+      "reports_to": "person:meridian:thomas-hartwell",
+      "tenure_in_role_years": 2,
+      "tenure_at_company_years": 4,
+      "prior_roles": [
+        "Regional healthcare leadership role",
+        "Academic / payer / provider operating role"
+      ],
+      "background_summary": "Kenny Tran-Ardelean holds the VP Plan Marketing & Member Acquisition role. The profile is intentionally operational rather than biographical: decision authority, coalition behavior, and program dependencies are what matter for Meridian reasoning.",
+      "stated_priorities_fy2026": [
+        "MA AEP execution",
+        "broker channel strategy",
+        "member retention loyalty programs"
+      ],
+      "known_political_positions": "Bridge-builder across provider and plan boundaries",
+      "direct_reports_count": 3,
+      "escalation_authority_summary": "Can escalate to Executive Committee for enterprise tradeoffs; program-level issues route through sponsor and EPMO.",
+      "scope": "plan"
+    },
+    {
+      "id": "person:meridian:aliana-rao",
+      "full_name": "Dr. Aliana Rao",
+      "title": "VP Plan Pharmacy & PBM Liaison",
+      "role_scope": "plan",
+      "reports_to": "person:meridian:lakshmi-venkatesan",
+      "tenure_in_role_years": 3,
+      "tenure_at_company_years": 6,
+      "prior_roles": [
+        "Regional healthcare leadership role",
+        "Academic / payer / provider operating role"
+      ],
+      "background_summary": "Dr. Aliana Rao holds the VP Plan Pharmacy & PBM Liaison role. The profile is intentionally operational rather than biographical: decision authority, coalition behavior, and program dependencies are what matter for Meridian reasoning.",
+      "stated_priorities_fy2026": [
+        "specialty pharmacy spend trend management",
+        "PBM oversight",
+        "formulary strategy"
+      ],
+      "known_political_positions": "Bridge-builder across provider and plan boundaries",
+      "direct_reports_count": 2,
+      "escalation_authority_summary": "Can escalate to Executive Committee for enterprise tradeoffs; program-level issues route through sponsor and EPMO.",
+      "scope": "plan"
+    },
+    {
+      "id": "person:meridian:imani-ferguson-marsh",
+      "full_name": "Imani Ferguson-Marsh",
+      "title": "VP Plan Member Service Operations",
+      "role_scope": "plan",
+      "reports_to": "person:meridian:thomas-hartwell",
+      "tenure_in_role_years": 2,
+      "tenure_at_company_years": 2,
+      "prior_roles": [
+        "Regional healthcare leadership role",
+        "Academic / payer / provider operating role"
+      ],
+      "background_summary": "Imani Ferguson-Marsh holds the VP Plan Member Service Operations role. The profile is intentionally operational rather than biographical: decision authority, coalition behavior, and program dependencies are what matter for Meridian reasoning.",
+      "stated_priorities_fy2026": [
+        "call center modernization",
+        "member NPS improvement",
+        "service-cost reduction with AI assist (under governance)"
+      ],
+      "known_political_positions": "Bridge-builder across provider and plan boundaries",
+      "direct_reports_count": 4,
+      "escalation_authority_summary": "Can escalate to Executive Committee for enterprise tradeoffs; program-level issues route through sponsor and EPMO.",
+      "scope": "plan"
+    },
+    {
+      "id": "person:meridian:aviva-stern",
+      "full_name": "Aviva Stern",
+      "title": "VP Plan Regulatory & Compliance Legal",
+      "role_scope": "plan",
+      "reports_to": "person:meridian:rebecca-hollings",
+      "tenure_in_role_years": 3,
+      "tenure_at_company_years": 5,
+      "prior_roles": [
+        "Regional healthcare leadership role",
+        "Academic / payer / provider operating role"
+      ],
+      "background_summary": "Aviva Stern holds the VP Plan Regulatory & Compliance Legal role. The profile is intentionally operational rather than biographical: decision authority, coalition behavior, and program dependencies are what matter for Meridian reasoning.",
+      "stated_priorities_fy2026": [
+        "state DOI compliance across CA/NV/OR/HI",
+        "CMS MA program oversight",
+        "plan privacy"
+      ],
+      "known_political_positions": "Bridge-builder across provider and plan boundaries",
+      "direct_reports_count": 2,
+      "escalation_authority_summary": "Can escalate to Executive Committee for enterprise tradeoffs; program-level issues route through sponsor and EPMO.",
+      "scope": "plan"
+    },
+    {
+      "id": "person:meridian:rashawn-adekunle",
+      "full_name": "Rashawn Adekunle",
+      "title": "VP Provider Regulatory Legal",
+      "role_scope": "provider",
+      "reports_to": "person:meridian:rebecca-hollings",
+      "tenure_in_role_years": 4,
+      "tenure_at_company_years": 7,
+      "prior_roles": [
+        "Regional healthcare leadership role",
+        "Academic / payer / provider operating role"
+      ],
+      "background_summary": "Rashawn Adekunle holds the VP Provider Regulatory Legal role. The profile is intentionally operational rather than biographical: decision authority, coalition behavior, and program dependencies are what matter for Meridian reasoning.",
+      "stated_priorities_fy2026": [
+        "medical staff governance",
+        "Stark/anti-kickback compliance",
+        "credentialing legal"
+      ],
+      "known_political_positions": "Bridge-builder across provider and plan boundaries",
+      "direct_reports_count": 2,
+      "escalation_authority_summary": "Can escalate to Executive Committee for enterprise tradeoffs; program-level issues route through sponsor and EPMO.",
+      "scope": "provider"
+    },
+    {
+      "id": "person:meridian:helena-park-bjornsson",
+      "full_name": "Helena Park-Bjornsson",
+      "title": "VP Litigation & Risk Management",
+      "role_scope": "system",
+      "reports_to": "person:meridian:rebecca-hollings",
+      "tenure_in_role_years": 6,
+      "tenure_at_company_years": 11,
+      "prior_roles": [
+        "Regional healthcare leadership role",
+        "Academic / payer / provider operating role"
+      ],
+      "background_summary": "Helena Park-Bjornsson holds the VP Litigation & Risk Management role. The profile is intentionally operational rather than biographical: decision authority, coalition behavior, and program dependencies are what matter for Meridian reasoning.",
+      "stated_priorities_fy2026": [
+        "medical malpractice defense strategy",
+        "professional liability captive",
+        "AI clinical decision liability framework"
+      ],
+      "known_political_positions": "Bridge-builder across provider and plan boundaries",
+      "direct_reports_count": 2,
+      "escalation_authority_summary": "Can escalate to Executive Committee for enterprise tradeoffs; program-level issues route through sponsor and EPMO.",
+      "scope": "system"
+    },
+    {
+      "id": "person:meridian:tomasina-olafsson",
+      "full_name": "Tomasina Olafsson",
+      "title": "VP Privacy & HIPAA Compliance",
+      "role_scope": "system",
+      "reports_to": "person:meridian:karen-mercer",
+      "tenure_in_role_years": 4,
+      "tenure_at_company_years": 6,
+      "prior_roles": [
+        "Regional healthcare leadership role",
+        "Academic / payer / provider operating role"
+      ],
+      "background_summary": "Tomasina Olafsson holds the VP Privacy & HIPAA Compliance role. The profile is intentionally operational rather than biographical: decision authority, coalition behavior, and program dependencies are what matter for Meridian reasoning.",
+      "stated_priorities_fy2026": [
+        "HIPAA breach notification readiness",
+        "BAA portfolio audit",
+        "AI/PHI handling policy under AI Governance Council"
+      ],
+      "known_political_positions": "Critical voice in AI Governance Council on PHI-adjacent use cases",
+      "direct_reports_count": 3,
+      "escalation_authority_summary": "Can escalate to Executive Committee for enterprise tradeoffs; program-level issues route through sponsor and EPMO.",
+      "scope": "system"
+    },
+    {
+      "id": "person:meridian:camille-beaufort-diallo",
+      "full_name": "Camille Beaufort-Diallo",
+      "title": "VP Government Affairs & Public Policy",
+      "role_scope": "system",
+      "reports_to": "person:meridian:rebecca-hollings",
+      "tenure_in_role_years": 2,
+      "tenure_at_company_years": 2,
+      "prior_roles": [
+        "Regional healthcare leadership role",
+        "Academic / payer / provider operating role"
+      ],
+      "background_summary": "Camille Beaufort-Diallo holds the VP Government Affairs & Public Policy role. The profile is intentionally operational rather than biographical: decision authority, coalition behavior, and program dependencies are what matter for Meridian reasoning.",
+      "stated_priorities_fy2026": [
+        "state legislative engagement (CA/NV/OR/HI)",
+        "CMS rulemaking response",
+        "value-based care policy advocacy"
+      ],
+      "known_political_positions": "Bridge-builder across provider and plan boundaries",
+      "direct_reports_count": 2,
+      "escalation_authority_summary": "Can escalate to Executive Committee for enterprise tradeoffs; program-level issues route through sponsor and EPMO.",
+      "scope": "system"
+    },
+    {
+      "id": "person:meridian:bradford-soto",
+      "full_name": "Bradford Soto",
+      "title": "SVP People & Culture",
+      "role_scope": "system",
+      "reports_to": "person:meridian:margaret-liu",
+      "tenure_in_role_years": 3,
+      "tenure_at_company_years": 5,
+      "prior_roles": [
+        "Regional healthcare leadership role",
+        "Academic / payer / provider operating role"
+      ],
+      "background_summary": "Bradford Soto holds the SVP People & Culture role. The profile is intentionally operational rather than biographical: decision authority, coalition behavior, and program dependencies are what matter for Meridian reasoning.",
+      "stated_priorities_fy2026": [
+        "nursing workforce strategy after 2025 settlement",
+        "physician retention",
+        "manager effectiveness"
+      ],
+      "known_political_positions": "Bridge-builder across provider and plan boundaries",
+      "direct_reports_count": 5,
+      "escalation_authority_summary": "Can escalate to Executive Committee for enterprise tradeoffs; program-level issues route through sponsor and EPMO.",
+      "scope": "system"
+    },
+    {
+      "id": "person:meridian:naima-ali-hassan",
+      "full_name": "Naima Ali-Hassan",
+      "title": "VP Talent Acquisition",
+      "role_scope": "system",
+      "reports_to": "person:meridian:bradford-soto",
+      "tenure_in_role_years": 3,
+      "tenure_at_company_years": 3,
+      "prior_roles": [
+        "Regional healthcare leadership role",
+        "Academic / payer / provider operating role"
+      ],
+      "background_summary": "Naima Ali-Hassan holds the VP Talent Acquisition role. The profile is intentionally operational rather than biographical: decision authority, coalition behavior, and program dependencies are what matter for Meridian reasoning.",
+      "stated_priorities_fy2026": [
+        "clinical workforce hiring (RNs, MDs)",
+        "VP Application Services search",
+        "Hawaii local recruiting"
+      ],
+      "known_political_positions": "Bridge-builder across provider and plan boundaries",
+      "direct_reports_count": 3,
+      "escalation_authority_summary": "Can escalate to Executive Committee for enterprise tradeoffs; program-level issues route through sponsor and EPMO.",
+      "scope": "system"
+    },
+    {
+      "id": "person:meridian:theodore-lim-carrasco",
+      "full_name": "Theodore Lim-Carrasco",
+      "title": "VP Total Rewards & Benefits",
+      "role_scope": "system",
+      "reports_to": "person:meridian:margaret-liu",
+      "tenure_in_role_years": 4,
+      "tenure_at_company_years": 4,
+      "prior_roles": [
+        "Regional healthcare leadership role",
+        "Academic / payer / provider operating role"
+      ],
+      "background_summary": "Theodore Lim-Carrasco holds the VP Total Rewards & Benefits role. The profile is intentionally operational rather than biographical: decision authority, coalition behavior, and program dependencies are what matter for Meridian reasoning.",
+      "stated_priorities_fy2026": [
+        "physician comp redesign (now FY2027 implementation)",
+        "nursing premium pay reduction",
+        "self-insured benefits trend"
+      ],
+      "known_political_positions": "Bridge-builder across provider and plan boundaries",
+      "direct_reports_count": 3,
+      "escalation_authority_summary": "Can escalate to Executive Committee for enterprise tradeoffs; program-level issues route through sponsor and EPMO.",
+      "scope": "system"
+    },
+    {
+      "id": "person:meridian:stephen-okonkwo",
+      "full_name": "Stephen Okonkwo",
+      "title": "VP Workforce Strategy & Analytics",
+      "role_scope": "system",
+      "reports_to": "person:meridian:bradford-soto",
+      "tenure_in_role_years": 2,
+      "tenure_at_company_years": 2,
+      "prior_roles": [
+        "Regional healthcare leadership role",
+        "Academic / payer / provider operating role"
+      ],
+      "background_summary": "Stephen Okonkwo holds the VP Workforce Strategy & Analytics role. The profile is intentionally operational rather than biographical: decision authority, coalition behavior, and program dependencies are what matter for Meridian reasoning.",
+      "stated_priorities_fy2026": [
+        "traveler dependence reduction",
+        "workforce planning analytics",
+        "burnout signal monitoring under AI Governance scope"
+      ],
+      "known_political_positions": "Bridge-builder across provider and plan boundaries",
+      "direct_reports_count": 2,
+      "escalation_authority_summary": "Can escalate to Executive Committee for enterprise tradeoffs; program-level issues route through sponsor and EPMO.",
+      "scope": "system"
+    },
+    {
+      "id": "person:meridian:chinwe-olabode",
+      "full_name": "Chinwe Olabode",
+      "title": "VP Diversity, Equity & Inclusion",
+      "role_scope": "system",
+      "reports_to": "person:meridian:margaret-liu",
+      "tenure_in_role_years": 3,
+      "tenure_at_company_years": 5,
+      "prior_roles": [
+        "Regional healthcare leadership role",
+        "Academic / payer / provider operating role"
+      ],
+      "background_summary": "Chinwe Olabode holds the VP Diversity, Equity & Inclusion role. The profile is intentionally operational rather than biographical: decision authority, coalition behavior, and program dependencies are what matter for Meridian reasoning.",
+      "stated_priorities_fy2026": [
+        "health equity measurement",
+        "workforce diversity goals",
+        "supplier diversity targets"
+      ],
+      "known_political_positions": "Bridge-builder across provider and plan boundaries",
+      "direct_reports_count": 2,
+      "escalation_authority_summary": "Can escalate to Executive Committee for enterprise tradeoffs; program-level issues route through sponsor and EPMO.",
+      "scope": "system"
+    },
+    {
+      "id": "person:meridian:esther-vainshtein",
+      "full_name": "Dr. Esther Vainshtein",
+      "title": "VP Employee Health & Well-being",
+      "role_scope": "system",
+      "reports_to": "person:meridian:bradford-soto",
+      "tenure_in_role_years": 2,
+      "tenure_at_company_years": 4,
+      "prior_roles": [
+        "Regional healthcare leadership role",
+        "Academic / payer / provider operating role"
+      ],
+      "background_summary": "Dr. Esther Vainshtein holds the VP Employee Health & Well-being role. The profile is intentionally operational rather than biographical: decision authority, coalition behavior, and program dependencies are what matter for Meridian reasoning.",
+      "stated_priorities_fy2026": [
+        "clinician burnout intervention",
+        "physical and behavioral health benefits utilization",
+        "occupational health"
+      ],
+      "known_political_positions": "Bridge-builder across provider and plan boundaries",
+      "direct_reports_count": 2,
+      "escalation_authority_summary": "Can escalate to Executive Committee for enterprise tradeoffs; program-level issues route through sponsor and EPMO.",
+      "scope": "system"
+    },
+    {
+      "id": "person:meridian:bridget-eames-tahir",
+      "full_name": "Bridget Eames-Tahir",
+      "title": "VP Strategic Sourcing & Vendor Management",
+      "role_scope": "system",
+      "reports_to": "person:meridian:angela-brooks",
+      "tenure_in_role_years": 4,
+      "tenure_at_company_years": 6,
+      "prior_roles": [
+        "Regional healthcare leadership role",
+        "Academic / payer / provider operating role"
+      ],
+      "background_summary": "Bridget Eames-Tahir holds the VP Strategic Sourcing & Vendor Management role. The profile is intentionally operational rather than biographical: decision authority, coalition behavior, and program dependencies are what matter for Meridian reasoning.",
+      "stated_priorities_fy2026": [
+        "vendor consolidation",
+        "Cohere Health contract oversight",
+        "Abridge renegotiation (April 2026 renewal)"
+      ],
+      "known_political_positions": "Bridge-builder across provider and plan boundaries",
+      "direct_reports_count": 3,
+      "escalation_authority_summary": "Can escalate to Executive Committee for enterprise tradeoffs; program-level issues route through sponsor and EPMO.",
+      "scope": "system"
+    },
+    {
+      "id": "person:meridian:lawrence-fontana",
+      "full_name": "Lawrence Fontana",
+      "title": "VP Supply Chain Operations",
+      "role_scope": "provider",
+      "reports_to": "person:meridian:angela-brooks",
+      "tenure_in_role_years": 5,
+      "tenure_at_company_years": 8,
+      "prior_roles": [
+        "Regional healthcare leadership role",
+        "Academic / payer / provider operating role"
+      ],
+      "background_summary": "Lawrence Fontana holds the VP Supply Chain Operations role. The profile is intentionally operational rather than biographical: decision authority, coalition behavior, and program dependencies are what matter for Meridian reasoning.",
+      "stated_priorities_fy2026": [
+        "medical/surgical supply costs",
+        "specialty drug logistics",
+        "GPO leverage"
+      ],
+      "known_political_positions": "Bridge-builder across provider and plan boundaries",
+      "direct_reports_count": 4,
+      "escalation_authority_summary": "Can escalate to Executive Committee for enterprise tradeoffs; program-level issues route through sponsor and EPMO.",
+      "scope": "provider"
+    },
+    {
+      "id": "person:meridian:monica-aponte",
+      "full_name": "Monica Aponte",
+      "title": "Chief Strategy Officer",
+      "role_scope": "system",
+      "reports_to": "person:meridian:elaine-morales",
+      "tenure_in_role_years": 2,
+      "tenure_at_company_years": 4,
+      "prior_roles": [
+        "Regional healthcare leadership role",
+        "Academic / payer / provider operating role"
+      ],
+      "background_summary": "Monica Aponte holds the Chief Strategy Officer role. The profile is intentionally operational rather than biographical: decision authority, coalition behavior, and program dependencies are what matter for Meridian reasoning.",
+      "stated_priorities_fy2026": [
+        "FY2026 strategic plan refresh execution",
+        "value-based care strategy",
+        "Hawaii market integration roadmap",
+        "AI strategy alignment"
+      ],
+      "known_political_positions": "Bridge-builder across provider and plan boundaries",
+      "direct_reports_count": 4,
+      "escalation_authority_summary": "Can escalate to Executive Committee for enterprise tradeoffs; program-level issues route through sponsor and EPMO.",
+      "scope": "system"
+    },
+    {
+      "id": "person:meridian:vihaan-sundaresan",
+      "full_name": "Dr. Vihaan Sundaresan",
+      "title": "VP Corporate Strategy",
+      "role_scope": "system",
+      "reports_to": "person:meridian:monica-aponte",
+      "tenure_in_role_years": 2,
+      "tenure_at_company_years": 2,
+      "prior_roles": [
+        "Regional healthcare leadership role",
+        "Academic / payer / provider operating role"
+      ],
+      "background_summary": "Dr. Vihaan Sundaresan holds the VP Corporate Strategy role. The profile is intentionally operational rather than biographical: decision authority, coalition behavior, and program dependencies are what matter for Meridian reasoning.",
+      "stated_priorities_fy2026": [
+        "service-line strategy reviews",
+        "M&A pipeline",
+        "competitive intelligence"
+      ],
+      "known_political_positions": "Bridge-builder across provider and plan boundaries",
+      "direct_reports_count": 3,
+      "escalation_authority_summary": "Can escalate to Executive Committee for enterprise tradeoffs; program-level issues route through sponsor and EPMO.",
+      "scope": "system"
+    },
+    {
+      "id": "person:meridian:penelope-whitfield-aboagye",
+      "full_name": "Penelope Whitfield-Aboagye",
+      "title": "Chief Communications Officer",
+      "role_scope": "system",
+      "reports_to": "person:meridian:elaine-morales",
+      "tenure_in_role_years": 3,
+      "tenure_at_company_years": 5,
+      "prior_roles": [
+        "Regional healthcare leadership role",
+        "Academic / payer / provider operating role"
+      ],
+      "background_summary": "Penelope Whitfield-Aboagye holds the Chief Communications Officer role. The profile is intentionally operational rather than biographical: decision authority, coalition behavior, and program dependencies are what matter for Meridian reasoning.",
+      "stated_priorities_fy2026": [
+        "board and bondholder communications",
+        "DENIALS-2024 narrative management (post-mortem messaging)",
+        "AI risk policy public posture"
+      ],
+      "known_political_positions": "Bridge-builder across provider and plan boundaries",
+      "direct_reports_count": 3,
+      "escalation_authority_summary": "Can escalate to Executive Committee for enterprise tradeoffs; program-level issues route through sponsor and EPMO.",
+      "scope": "system"
+    },
+    {
+      "id": "person:meridian:ralph-eichenberger",
+      "full_name": "Dr. Ralph Eichenberger",
+      "title": "Chief Research Officer & Director, Meridian Institute",
+      "role_scope": "system",
+      "reports_to": "person:meridian:elaine-morales",
+      "tenure_in_role_years": 4,
+      "tenure_at_company_years": 7,
+      "prior_roles": [
+        "Regional healthcare leadership role",
+        "Academic / payer / provider operating role"
+      ],
+      "background_summary": "Dr. Ralph Eichenberger holds the Chief Research Officer & Director, Meridian Institute role. The profile is intentionally operational rather than biographical: decision authority, coalition behavior, and program dependencies are what matter for Meridian reasoning.",
+      "stated_priorities_fy2026": [
+        "external grant funding ($180M baseline)",
+        "translational research",
+        "research AI runtime decisions (local-first per CDIO posture)"
+      ],
+      "known_political_positions": "Bridge-builder across provider and plan boundaries",
+      "direct_reports_count": 5,
+      "escalation_authority_summary": "Can escalate to Executive Committee for enterprise tradeoffs; program-level issues route through sponsor and EPMO.",
+      "scope": "system"
     }
   ]
 }

@@ -1,6 +1,6 @@
 {
   "tenant_key": "meridian-health",
-  "last_updated": "2026-04-25",
+  "last_updated": "2026-05-10",
   "data_classification": "Internal",
   "schema_version": "1.0",
   "ai_governance_council": {
@@ -466,6 +466,439 @@
         "cyber resilience"
       ],
       "vacancy_status": "Filled"
+    },
+    {
+      "id": "person:meridian:lior-bensimon",
+      "full_name": "Lior Bensimon",
+      "title": "Director Network Engineering",
+      "scope": "provider",
+      "reports_to": "person:meridian:wei-zhang",
+      "tenure_in_role_years": 4,
+      "domain_ownership": [
+        "WAN",
+        "data-center networking",
+        "store/clinic network"
+      ],
+      "prior_roles": [
+        "Healthcare technology leadership",
+        "Enterprise systems and operations leadership"
+      ],
+      "stated_priorities_fy2026": [
+        "Hawaii network resilience",
+        "SD-WAN rollout",
+        "multi-cloud connectivity"
+      ],
+      "vacancy_status": "filled"
+    },
+    {
+      "id": "person:meridian:alessandra-pino",
+      "full_name": "Alessandra Pino",
+      "title": "Director Storage & Compute Operations",
+      "scope": "provider",
+      "reports_to": "person:meridian:wei-zhang",
+      "tenure_in_role_years": 3,
+      "domain_ownership": [
+        "enterprise storage",
+        "compute virtualization",
+        "research GPU stack"
+      ],
+      "prior_roles": [
+        "Healthcare technology leadership",
+        "Enterprise systems and operations leadership"
+      ],
+      "stated_priorities_fy2026": [
+        "on-prem NVIDIA GPU stack stewardship",
+        "Hadoop research lake operations",
+        "storage tier rationalization"
+      ],
+      "vacancy_status": "filled"
+    },
+    {
+      "id": "person:meridian:tobias-renaud",
+      "full_name": "Tobias Renaud",
+      "title": "Director Site Reliability Engineering",
+      "scope": "shared",
+      "reports_to": "person:meridian:samuel-ito",
+      "tenure_in_role_years": 2,
+      "domain_ownership": [
+        "SRE",
+        "incident management",
+        "observability"
+      ],
+      "prior_roles": [
+        "Healthcare technology leadership",
+        "Enterprise systems and operations leadership"
+      ],
+      "stated_priorities_fy2026": [
+        "Epic uptime",
+        "RCM systems reliability",
+        "AI-system observability standards"
+      ],
+      "vacancy_status": "filled"
+    },
+    {
+      "id": "person:meridian:anuradha-kapoor",
+      "full_name": "Anuradha Kapoor",
+      "title": "Director Identity & Access Management",
+      "scope": "system",
+      "reports_to": "person:meridian:daniel-reyes",
+      "tenure_in_role_years": 3,
+      "domain_ownership": [
+        "IAM",
+        "PAM",
+        "Okta operations"
+      ],
+      "prior_roles": [
+        "Healthcare technology leadership",
+        "Enterprise systems and operations leadership"
+      ],
+      "stated_priorities_fy2026": [
+        "clinician identity workflow simplification",
+        "AI tool access governance",
+        "BAA-tracked vendor identity controls"
+      ],
+      "vacancy_status": "filled"
+    },
+    {
+      "id": "person:meridian:heinrich-kovaleski",
+      "full_name": "Heinrich Kovaleski",
+      "title": "Director Security Architecture",
+      "scope": "system",
+      "reports_to": "person:meridian:daniel-reyes",
+      "tenure_in_role_years": 4,
+      "domain_ownership": [
+        "security architecture",
+        "zero trust",
+        "AI/ML security review"
+      ],
+      "prior_roles": [
+        "Healthcare technology leadership",
+        "Enterprise systems and operations leadership"
+      ],
+      "stated_priorities_fy2026": [
+        "AI Governance Council security review",
+        "BAA enforcement architecture",
+        "post-DENIALS-2024 controls"
+      ],
+      "vacancy_status": "filled"
+    },
+    {
+      "id": "person:meridian:bisi-adekunle",
+      "full_name": "Bisi Adekunle",
+      "title": "Director Threat Intelligence & Incident Response",
+      "scope": "system",
+      "reports_to": "person:meridian:daniel-reyes",
+      "tenure_in_role_years": 2,
+      "domain_ownership": [
+        "threat hunting",
+        "IR",
+        "ransomware readiness"
+      ],
+      "prior_roles": [
+        "Healthcare technology leadership",
+        "Enterprise systems and operations leadership"
+      ],
+      "stated_priorities_fy2026": [
+        "healthcare ransomware posture",
+        "third-party risk monitoring",
+        "incident retros"
+      ],
+      "vacancy_status": "filled"
+    },
+    {
+      "id": "person:meridian:marisol-greene-yamaguchi",
+      "full_name": "Marisol Greene-Yamaguchi",
+      "title": "Director Population Health Analytics",
+      "scope": "shared",
+      "reports_to": "person:meridian:jordan-mckenzie",
+      "tenure_in_role_years": 3,
+      "domain_ownership": [
+        "population health",
+        "VBC analytics",
+        "Arcadia operations"
+      ],
+      "prior_roles": [
+        "Healthcare technology leadership",
+        "Enterprise systems and operations leadership"
+      ],
+      "stated_priorities_fy2026": [
+        "plan-provider data sharing analytics",
+        "VBC quality measurement",
+        "HEDIS analytics"
+      ],
+      "vacancy_status": "filled"
+    },
+    {
+      "id": "person:meridian:gabriel-rosenberg",
+      "full_name": "Gabriel Rosenberg",
+      "title": "Director Data Platform Engineering",
+      "scope": "shared",
+      "reports_to": "person:meridian:leah-benitez",
+      "tenure_in_role_years": 2,
+      "domain_ownership": [
+        "data platform",
+        "data lake",
+        "ETL/ELT"
+      ],
+      "prior_roles": [
+        "Healthcare technology leadership",
+        "Enterprise systems and operations leadership"
+      ],
+      "stated_priorities_fy2026": [
+        "Snowflake operations",
+        "Tableau Cloud migration",
+        "data quality program"
+      ],
+      "vacancy_status": "filled"
+    },
+    {
+      "id": "person:meridian:patience-asare",
+      "full_name": "Patience Asare",
+      "title": "Director Data Governance",
+      "scope": "system",
+      "reports_to": "person:meridian:jordan-mckenzie",
+      "tenure_in_role_years": 2,
+      "domain_ownership": [
+        "data governance",
+        "data lineage",
+        "metadata management"
+      ],
+      "prior_roles": [
+        "Healthcare technology leadership",
+        "Enterprise systems and operations leadership"
+      ],
+      "stated_priorities_fy2026": [
+        "AI training-data governance",
+        "PHI lineage",
+        "research data egress controls"
+      ],
+      "vacancy_status": "filled"
+    },
+    {
+      "id": "person:meridian:quentin-marchetti",
+      "full_name": "Quentin Marchetti",
+      "title": "Director Enterprise Architecture (Clinical)",
+      "scope": "provider",
+      "reports_to": "person:meridian:linda-howard",
+      "tenure_in_role_years": 3,
+      "domain_ownership": [
+        "Epic architecture",
+        "clinical-app integration"
+      ],
+      "prior_roles": [
+        "Healthcare technology leadership",
+        "Enterprise systems and operations leadership"
+      ],
+      "stated_priorities_fy2026": [
+        "Epic optimization",
+        "Cerner residual at Kona Coast retire/migrate",
+        "clinical AI integration patterns"
+      ],
+      "vacancy_status": "filled"
+    },
+    {
+      "id": "person:meridian:sumire-watanabe",
+      "full_name": "Sumire Watanabe",
+      "title": "Director Enterprise Architecture (Plan & Corporate)",
+      "scope": "plan",
+      "reports_to": "person:meridian:linda-howard",
+      "tenure_in_role_years": 2,
+      "domain_ownership": [
+        "plan systems",
+        "claims architecture",
+        "corporate apps"
+      ],
+      "prior_roles": [
+        "Healthcare technology leadership",
+        "Enterprise systems and operations leadership"
+      ],
+      "stated_priorities_fy2026": [
+        "plan-provider data integration patterns",
+        "claims modernization",
+        "Workday/finance integration"
+      ],
+      "vacancy_status": "filled"
+    },
+    {
+      "id": "person:meridian:dahlia-kawaguchi",
+      "full_name": "Dahlia Kawaguchi",
+      "title": "Director Patient Portal Engineering",
+      "scope": "shared",
+      "reports_to": "person:meridian:jessica-toth",
+      "tenure_in_role_years": 3,
+      "domain_ownership": [
+        "MyChart customization",
+        "patient portal product",
+        "mobile experience"
+      ],
+      "prior_roles": [
+        "Healthcare technology leadership",
+        "Enterprise systems and operations leadership"
+      ],
+      "stated_priorities_fy2026": [
+        "unified patient portal evolution",
+        "MyChart activation lift",
+        "self-service modernization"
+      ],
+      "vacancy_status": "filled"
+    },
+    {
+      "id": "person:meridian:rashid-aliyev",
+      "full_name": "Rashid Aliyev",
+      "title": "Director Telehealth Platform Engineering",
+      "scope": "shared",
+      "reports_to": "person:meridian:jessica-toth",
+      "tenure_in_role_years": 2,
+      "domain_ownership": [
+        "telehealth platform",
+        "video integration",
+        "scheduling"
+      ],
+      "prior_roles": [
+        "Healthcare technology leadership",
+        "Enterprise systems and operations leadership"
+      ],
+      "stated_priorities_fy2026": [
+        "telehealth volume from 12% to 22% target",
+        "behavioral telehealth scaling",
+        "Hawaii telehealth expansion"
+      ],
+      "vacancy_status": "filled"
+    },
+    {
+      "id": "person:meridian:ines-vargas-petrov",
+      "full_name": "Ines Vargas-Petrov",
+      "title": "Manager EPMO Portfolio Operations",
+      "scope": "system",
+      "reports_to": "person:meridian:brian-sullivan",
+      "tenure_in_role_years": 2,
+      "domain_ownership": [
+        "portfolio reporting",
+        "AI program PMO"
+      ],
+      "prior_roles": [
+        "Healthcare technology leadership",
+        "Enterprise systems and operations leadership"
+      ],
+      "stated_priorities_fy2026": [
+        "FY2026 4-program portfolio reporting",
+        "AI Governance Council program tracking",
+        "ambient/prior-auth/RCM/governance program coordination"
+      ],
+      "vacancy_status": "filled"
+    },
+    {
+      "id": "person:meridian:hyacinth-tolentino",
+      "full_name": "Dr. Hyacinth Tolentino",
+      "title": "Director Clinical Informatics",
+      "scope": "provider",
+      "reports_to": "person:meridian:jennifer-wexler",
+      "tenure_in_role_years": 3,
+      "domain_ownership": [
+        "clinical informatics",
+        "decision support governance"
+      ],
+      "prior_roles": [
+        "Healthcare technology leadership",
+        "Enterprise systems and operations leadership"
+      ],
+      "stated_priorities_fy2026": [
+        "ambient documentation rollout (P3)",
+        "clinical AI governance attestation",
+        "physician documentation efficiency"
+      ],
+      "vacancy_status": "filled"
+    },
+    {
+      "id": "person:meridian:saint-john-williams",
+      "full_name": "Dr. Saint-John Williams",
+      "title": "Director Clinical AI Governance Operations",
+      "scope": "provider",
+      "reports_to": "person:meridian:jennifer-wexler",
+      "tenure_in_role_years": 1,
+      "domain_ownership": [
+        "AI Governance Council operations",
+        "model attestation",
+        "shadow AI inventory"
+      ],
+      "prior_roles": [
+        "Healthcare technology leadership",
+        "Enterprise systems and operations leadership"
+      ],
+      "stated_priorities_fy2026": [
+        "23 use cases under review through council cycle",
+        "shadow scribe pilot resolution",
+        "FDA/state regulatory attestation framework"
+      ],
+      "vacancy_status": "filled"
+    },
+    {
+      "id": "person:meridian:sasha-pomerantz",
+      "full_name": "Sasha Pomerantz",
+      "title": "Director Patient Access Product",
+      "scope": "shared",
+      "reports_to": "person:meridian:maya-iyer",
+      "tenure_in_role_years": 2,
+      "domain_ownership": [
+        "scheduling product",
+        "self-service product"
+      ],
+      "prior_roles": [
+        "Healthcare technology leadership",
+        "Enterprise systems and operations leadership"
+      ],
+      "stated_priorities_fy2026": [
+        "third-next-available reduction product workstream",
+        "scheduling AI under governance",
+        "MyChart access flow"
+      ],
+      "vacancy_status": "filled"
+    },
+    {
+      "id": "person:meridian:aram-vartanian",
+      "full_name": "Aram Vartanian",
+      "title": "Director Care Navigation Product",
+      "scope": "shared",
+      "reports_to": "person:meridian:maya-iyer",
+      "tenure_in_role_years": 1,
+      "domain_ownership": [
+        "care navigation",
+        "post-discharge product",
+        "plan-provider digital handoff"
+      ],
+      "prior_roles": [
+        "Healthcare technology leadership",
+        "Enterprise systems and operations leadership"
+      ],
+      "stated_priorities_fy2026": [
+        "plan-provider digital experience integration",
+        "post-discharge engagement",
+        "integrated patient experience priority"
+      ],
+      "vacancy_status": "filled"
+    },
+    {
+      "id": "person:meridian:sebastian-holloway",
+      "full_name": "Dr. Sebastian Holloway",
+      "title": "Director Specialty Clinical Applications",
+      "scope": "provider",
+      "reports_to": "person:meridian:vacant-vp-applications",
+      "tenure_in_role_years": 4,
+      "domain_ownership": [
+        "specialty clinical apps",
+        "imaging integration",
+        "lab integration"
+      ],
+      "prior_roles": [
+        "Healthcare technology leadership",
+        "Enterprise systems and operations leadership"
+      ],
+      "stated_priorities_fy2026": [
+        "specialty-app rationalization",
+        "Paige AI integration evaluation",
+        "imaging modality consolidation"
+      ],
+      "vacancy_status": "filled"
     }
   ]
 }
