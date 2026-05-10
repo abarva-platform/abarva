@@ -29,6 +29,8 @@ export interface AskOptions {
   userContextBlock?: string;
   tenantInventoryKey?: string | null;
   surfaceContext?: AskSurfaceContext | null;
+  activePersonGraphNodeId?: string | null;
+  activePersonDisplayName?: string | null;
 }
 
 export function atlasStakeholderConflictHandoff(query: string): string | null {
@@ -76,7 +78,11 @@ export async function* askIntelligence(query: string, opts: AskOptions = {}): As
 
     const surfaceContext = retrieveSurfaceContextSources(opts.surfaceContext, trimmed);
     const [tenantEnterprise, tenantTechnology, routed, worldview] = await Promise.all([
-      retrieveTenantEnterpriseSources(opts.tenantInventoryKey, trimmed),
+      retrieveTenantEnterpriseSources(opts.tenantInventoryKey, trimmed, {
+        activePersonGraphNodeId: opts.activePersonGraphNodeId,
+        activePersonDisplayName: opts.activePersonDisplayName,
+        userContextBlock: opts.userContextBlock,
+      }),
       retrieveTenantTechnologySources(opts.tenantInventoryKey, trimmed),
       route(classification.intent, classification.entities),
       retrieveWorldview(trimmed),

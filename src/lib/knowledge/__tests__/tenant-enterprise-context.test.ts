@@ -6,7 +6,9 @@ import {
 } from '@/lib/knowledge/tenant-enterprise-context';
 import type {
   ContextChunk,
+  GraphEdge,
   GraphNeighborhood,
+  GraphNode,
   SegmentId,
   TenantDataAdapter,
 } from '@/lib/knowledge/tenant-data';
@@ -54,6 +56,26 @@ function chunk(segmentId: SegmentId, text: string, sourceDoc = `${segmentId}.csv
   };
 }
 
+function person(nodeId: string, title: string, payload: Record<string, unknown> = {}): GraphNode {
+  return {
+    tenantKey: 'meridian-health',
+    nodeId,
+    kind: 'person',
+    title,
+    payload,
+  };
+}
+
+function reportsTo(fromNodeId: string, toNodeId: string): GraphEdge {
+  return {
+    tenantKey: 'meridian-health',
+    edgeId: `${fromNodeId}:reports-to:${toNodeId}`,
+    fromNodeId,
+    toNodeId,
+    kind: 'REPORTS_TO',
+  };
+}
+
 describe('tenant enterprise context retrieval', () => {
   beforeEach(() => {
     const chunks = [
@@ -93,6 +115,18 @@ describe('tenant enterprise context retrieval', () => {
     );
   });
 
+  it('treats direct-report questions as tenant org-structure questions', () => {
+    expect(selectTenantEnterpriseSegments('Who are my direct reports?')).toEqual(
+      expect.arrayContaining(['org_structure']),
+    );
+  });
+
+  it('treats C-level business leader questions as tenant org-structure questions', () => {
+    expect(selectTenantEnterpriseSegments('Who is my C level leaders in business?')).toEqual(
+      expect.arrayContaining(['org_structure']),
+    );
+  });
+
   it('retrieves persisted org and budget chunks for any tenant key before Sentinel says data is unavailable', async () => {
     const sources = await retrieveTenantEnterpriseSources(
       'meridian-health',
@@ -110,6 +144,117 @@ describe('tenant enterprise context retrieval', () => {
     expect(detail).toContain('Dr. Anita Krishnamurthy');
     expect(detail).toContain('FY2026 IT budget envelope');
     expect(detail).toContain('Use these persisted setup-data chunks before saying tenant profile, org structure, budget, or system context is unavailable.');
+  });
+
+  it('adds a graph-backed direct-reports source for the active profile across clients', async () => {
+    const active = person('person:meridian:anita-krishnamurthy', 'Dr. Anita Krishnamurthy', {
+      title: 'EVP, Chief Digital and Information Officer',
+      function: 'Digital and Information',
+    });
+    const cmio = person('person:meridian:jennifer-wexler', 'Dr. Jennifer Wexler', {
+      title: 'Chief Medical Information Officer',
+      function: 'Clinical Informatics',
+    });
+    const infra = person('person:meridian:marco-silva', 'Marco Silva', {
+      title: 'VP Infrastructure and Cloud',
+      function: 'Infrastructure and Cloud',
+    });
+    fakeAdapter = {
+      ...fakeAdapter,
+      listGraphNodes: (_tenantKey, kind) => Promise.resolve(kind === 'person' ? [active, cmio, infra] : []),
+      listGraphEdgesForNode: (_tenantKey, nodeId, direction) => {
+        if (nodeId !== active.nodeId || direction !== 'incoming') return Promise.resolve([]);
+        return Promise.resolve([
+          reportsTo(cmio.nodeId, active.nodeId),
+          reportsTo(infra.nodeId, active.nodeId),
+        ]);
+      },
+    };
+
+    const sources = await retrieveTenantEnterpriseSources(
+      'meridian-health',
+      'Who are my direct reports?',
+      { activePersonGraphNodeId: active.nodeId, activePersonDisplayName: active.title },
+    );
+    const directReports = sources.find((source) => source.id.includes(':direct_reports:'));
+
+    expect(directReports?.detail).toContain('This is an in-domain tenant org-structure lookup.');
+    expect(directReports?.detail).toContain('Dr. Jennifer Wexler');
+    expect(directReports?.detail).toContain('Marco Silva');
+  });
+
+  it('falls back to org-structure chunks when graph nodes are unavailable', async () => {
+    fakeAdapter = {
+      ...fakeAdapter,
+      listGraphNodes: () => Promise.resolve([]),
+      listGraphEdgesForNode: () => Promise.resolve([]),
+      listContextChunks: (_tenantKey, opts) => {
+        const requested = new Set(opts?.segmentIds ?? []);
+        if (!requested.has('org_structure')) return Promise.resolve([]);
+        return Promise.resolve([
+          chunk(
+            'org_structure',
+            'id: person:meridian:linda-howard full_name: Linda Howard title: VP Enterprise Architecture scope: shared reports_to: person:meridian:anita-krishnamurthy vacancy_status: Filled',
+            'it_leadership.json',
+          ),
+          chunk(
+            'org_structure',
+            'id: person:meridian:wei-zhang full_name: Wei Zhang title: VP Infrastructure & Cloud scope: shared reports_to: person:meridian:anita-krishnamurthy vacancy_status: Filled',
+            'it_leadership.json',
+          ),
+        ]);
+      },
+    };
+
+    const sources = await retrieveTenantEnterpriseSources(
+      'meridian-health',
+      'Who are my direct reports?',
+      { activePersonGraphNodeId: 'person:meridian:anita-krishnamurthy', activePersonDisplayName: 'Dr. Anita Krishnamurthy' },
+    );
+    const directReports = sources.find((source) => source.id.includes(':direct_reports:'));
+
+    expect(directReports?.detail).toContain('Linda Howard — VP Enterprise Architecture — scope: shared');
+    expect(directReports?.detail).toContain('Wei Zhang — VP Infrastructure & Cloud — scope: shared');
+  });
+
+  it('adds a parsed C-level business leader source from executive org chunks', async () => {
+    fakeAdapter = {
+      ...fakeAdapter,
+      listContextChunks: (_tenantKey, opts) => {
+        const requested = new Set(opts?.segmentIds ?? []);
+        if (!requested.has('org_structure')) return Promise.resolve([]);
+        return Promise.resolve([
+          chunk(
+            'org_structure',
+            'id: person:meridian:elaine-morales full_name: Dr. Elaine Morales title: President & Chief Executive Officer scope: system reports_to: Board',
+            'executive_bench.json',
+          ),
+          chunk(
+            'org_structure',
+            'id: person:meridian:david-park full_name: David Park title: Chief Financial Officer scope: system reports_to: person:meridian:elaine-morales',
+            'executive_bench.json',
+          ),
+          chunk(
+            'org_structure',
+            'id: person:meridian:anita-krishnamurthy full_name: Dr. Anita Krishnamurthy title: Chief Digital and Information Officer scope: system reports_to: person:meridian:elaine-morales',
+            'executive_bench.json',
+          ),
+          chunk(
+            'org_structure',
+            'id: person:meridian:kavita-patel full_name: Dr. Kavita Patel title: Associate CMIO, AI scope: provider reports_to: person:meridian:jennifer-wexler',
+            'it_leadership.json',
+          ),
+        ]);
+      },
+    };
+
+    const sources = await retrieveTenantEnterpriseSources('meridian-health', 'Who is my C level leaders in business?');
+    const cLevel = sources.find((source) => source.id === 'meridian-health:c_level_business_leaders');
+
+    expect(cLevel?.detail).toContain('Dr. Elaine Morales — President & Chief Executive Officer');
+    expect(cLevel?.detail).toContain('David Park — Chief Financial Officer');
+    expect(cLevel?.detail).not.toContain('Chief Digital and Information Officer');
+    expect(cLevel?.detail).not.toContain('Associate CMIO');
   });
 
   it('does not inject tenant enterprise context for off-domain questions', async () => {
