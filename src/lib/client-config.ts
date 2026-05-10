@@ -16,8 +16,8 @@ export const ALL_CLIENTS: ClientOption[] = [
   },
   {
     id: 'meridian',
-    name: 'Heliara Health Alliance',
-    shortName: 'Heliara Health',
+    name: 'Meridian Health System',
+    shortName: 'Meridian Health',
     color: '#14B8A6',
     vertical: 'Healthcare',
   },
@@ -35,7 +35,7 @@ export type ClientKey = (typeof ALL_CLIENTS)[number]['id'];
 export const DEFAULT_CLIENT_KEY: ClientKey = 'apexretail';
 
 export const CLIENT_KEY_TO_DB_NAME: Record<ClientKey, string[]> = {
-  meridian: ['Heliara Health', 'Heliara Health Alliance', 'Meridian Health', 'Meridian Health System'],
+  meridian: ['Meridian Health', 'Meridian Health System', 'Heliara Health', 'Heliara Health Alliance'],
   arcturus: ['Brindlemark Financial', 'Brindlemark Financial Group', 'Brindlemark', 'Arcturus Financial', 'Arcturus Financial Group', 'First Capital Financial', 'First Capital'],
   apexretail: ['Apex Retail', 'Apex Retail Group'],
 };

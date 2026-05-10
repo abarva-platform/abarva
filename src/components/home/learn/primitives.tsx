@@ -125,6 +125,29 @@ export function SectionTitle({
   );
 }
 
+export function InlineAbarvaLogo({
+  light,
+  heightEm = 0.9,
+}: {
+  light?: boolean;
+  heightEm?: number;
+}) {
+  return (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={light ? '/brand/abarva-logo-inverse.svg' : '/brand/abarva-wordmark-color.svg'}
+      alt="AbarVa"
+      style={{
+        display: 'inline-block',
+        height: `${heightEm}em`,
+        width: 'auto',
+        verticalAlign: '-0.12em',
+        margin: '0 0.08em',
+      }}
+    />
+  );
+}
+
 // ─── Lead paragraph ───────────────────────────────────────────────────────────
 export function Lead({ children, light }: { children: React.ReactNode; light?: boolean }) {
   return (
