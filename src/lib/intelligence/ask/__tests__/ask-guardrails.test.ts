@@ -3,6 +3,8 @@ jest.mock('server-only', () => ({}));
 import { atlasStakeholderConflictHandoff } from '../index';
 import { retrieveSurfaceContextSources } from '../retrievers/surface-context';
 import { chunkAskText, sanitizeAskSynthesis } from '../synthesizer';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 
 describe('Ask Intelligence guardrails', () => {
   it('routes advice requests about executive contradictions to Atlas', () => {
@@ -33,6 +35,51 @@ describe('Ask Intelligence guardrails', () => {
     const text = 'Apex data and analytics current state includes Snowflake, Adobe Experience Platform, and Salesforce Marketing Cloud.';
 
     expect(chunkAskText(text).join('')).toBe(text);
+  });
+
+  // INT-VOICE.STRAT-2026-05-10 — Lock in the no-canned-refusal contract for
+  // the Ask flow. The previous version short-circuited with retrieval-mechanics
+  // framings ("We don't have indexed data...", "That topic isn't yet
+  // synthesized...", "Limited indexed data — confidence is moderate.") whenever
+  // sources were empty or low-confidence, bypassing the synthesizer's senior-
+  // advisor prompt. This test guards against any reintroduction.
+  describe('No canned-refusal short-circuit (INT-VOICE.STRAT-2026-05-10)', () => {
+    const rawIndexSource = readFileSync(
+      join(__dirname, '..', 'index.ts'),
+      'utf8',
+    );
+
+    // Strip `//` line comments and `/* */` block comments before substring-
+    // matching so the doctrine comment that explains why these phrases were
+    // removed is not itself flagged.
+    const indexCode = rawIndexSource
+      .replace(/\/\*[\s\S]*?\*\//g, '')
+      .replace(/^\s*\/\/.*$/gm, '');
+
+    it('does not contain the legacy emptyStateMessage helper', () => {
+      expect(indexCode).not.toMatch(/function\s+emptyStateMessage\s*\(/);
+    });
+
+    it('does not emit any of the legacy retrieval-mechanics canned refusals', () => {
+      const bannedSubstrings = [
+        "We don't have indexed data that answers that directly",
+        "We don't have indexed vendor data that matches that comparison",
+        "That topic isn't yet synthesized in the knowledge layer",
+        'Limited indexed data — confidence is moderate.',
+        'No matching Genome pattern is indexed yet',
+        'No insight matches that query yet',
+      ];
+      for (const phrase of bannedSubstrings) {
+        expect(indexCode).not.toContain(phrase);
+      }
+    });
+
+    it('routes empty-source queries through the synthesizer', () => {
+      expect(indexCode).toMatch(/for\s+await\s*\(\s*const\s+delta\s+of\s+synthesizeStream\s*\(/);
+      expect(indexCode).not.toMatch(
+        /if\s*\(\s*sources\.length\s*===\s*0\s*\)\s*\{\s*const\s+msg\s*=\s*emptyStateMessage/,
+      );
+    });
   });
 
   it('promotes live surface facts as high-confidence Intelligence evidence', () => {

@@ -20,7 +20,7 @@
 import type { BrokerMode } from '@/lib/knowledge/context-broker/types';
 
 export const SENTINEL_DOCTRINE_VERSION = {
-  voice: '0.draft.2026-04-30',
+  voice: '0.draft.2026-05-10',
   worldviewAddendum: 1,
   refusalTriggers: 1,
 } as const;
@@ -105,21 +105,47 @@ export const SENTINEL_BANNED_PATTERNS: ReadonlyArray<BannedPattern> = [
   // a gap when the user asked for an exact tenant fact, KPI, vendor figure, or
   // quantified value claim. Even then, the phrasing should be natural, not a
   // structural template.
+  // Naming what is or is not in the corpus / index / sources.
   { category: 'retrieval_mechanics', phrase: 'corpus lacks', pattern: /\bcorpus\s+lacks\b/i },
   {
     category: 'retrieval_mechanics',
-    phrase: 'indexed data is missing',
-    pattern: /\bindexed\s+(?:data|sources?)\s+(?:is|are)\s+missing\b/i,
+    phrase: 'corpus does not include',
+    pattern: /\bcorpus\s+(?:does\s+not|doesn'?t)\s+(?:include|contain|cover)\b/i,
   },
   {
     category: 'retrieval_mechanics',
-    phrase: "indexed sources don't contain",
-    pattern: /\bindexed\s+sources?\s+(?:don'?t|do\s+not)\s+contain\b/i,
+    phrase: 'indexed data is missing',
+    pattern: /\bindexed\s+(?:data|sources?|benchmark\s+data|evidence)\s+(?:is|are)\s+missing\b/i,
+  },
+  {
+    category: 'retrieval_mechanics',
+    phrase: 'limited indexed data',
+    pattern: /\blimited\s+indexed\s+(?:data|sources?|evidence)\b/i,
+  },
+  {
+    category: 'retrieval_mechanics',
+    phrase: "sources don't contain",
+    pattern: /\b(?:the\s+)?(?:indexed\s+)?sources?\s+(?:don'?t|do\s+not)\s+contain\b/i,
+  },
+  {
+    category: 'retrieval_mechanics',
+    phrase: "isn't in the corpus / available corpus",
+    pattern: /\b(?:is\s+not|isn'?t|aren'?t|are\s+not)\s+in\s+the\s+(?:available\s+)?corpus\b/i,
+  },
+  {
+    category: 'retrieval_mechanics',
+    phrase: "what the sources do show",
+    pattern: /\bwhat\s+the\s+(?:indexed\s+)?sources?\s+do\s+show\b/i,
   },
   {
     category: 'retrieval_mechanics',
     phrase: 'I do not have a retrieved record',
     pattern: /\bi\s+(?:do\s+not|don'?t)\s+have\s+a\s+retrieved\s+record\b/i,
+  },
+  {
+    category: 'retrieval_mechanics',
+    phrase: 'I did not find enough indexed evidence',
+    pattern: /\bi\s+did\s+not\s+find\s+enough\s+indexed\b/i,
   },
   {
     category: 'retrieval_mechanics',
@@ -452,7 +478,7 @@ const BANNED_PHRASES = `Banned phrases — these trigger voice-drift incidents a
   Hedge drift:         "in today's rapidly changing", "in the modern enterprise"
   Hollow opener:       "Great question", "Good question", "Excellent question", "I'd be happy to", "Let me help"
   Ungrounded:          "Generally speaking", "It's well-known that"
-  Retrieval mechanics: "the corpus lacks…", "the indexed sources don't contain…", "indexed data is missing…", "I do not have a retrieved record…", "Tenant evidence:" as a heading, "Pattern-level read:" as a heading`;
+  Retrieval mechanics: "the corpus lacks…", "the corpus does not include…", "the sources don't contain…", "the indexed sources don't contain…", "indexed data is missing…", "Limited indexed data…", "isn't in the available corpus", "What the sources do show…", "I do not have a retrieved record…", "I did not find enough indexed evidence…", "Tenant evidence:" as a heading, "Pattern-level read:" as a heading. ~80% of strategic CXO questions will have no direct corpus hit; that is expected, not a failure. Answer as a senior advisor from broad domain expertise plus the tenant context block.`;
 
 const STRUCTURAL_REQUIREMENT = `Structural requirement — any response of 3+ sentences must contain at least one of:
   • Inline citation matching PAT-XYZ-XYZ-001, worldview:W1:003, or a tenant record id
@@ -486,7 +512,8 @@ export const PATTERN_LEVEL_FALLBACK = `Pattern-level fallback — when corpus re
   • Lead with the best objective answer. Speak like a senior AI strategy advisor who has seen this play out at peer enterprises, drawing on broad domain expertise plus AbarVa's industry pattern library.
   • Use tenant signals where available. If the bundle has tenant facts, weave the most relevant ones into the answer to make it specific to this client.
   • Do not invent tenant facts. Never fabricate a named program, owner, KPI value, vendor performance figure, contract term, or quantified business case. For those claim types only, name the gap and offer a directional read.
-  • Avoid retrieval-mechanics language. Do not say "the corpus lacks…", "the indexed sources don't contain…", "indexed data is missing…", or "I do not have a retrieved record…". Do not use "Tenant evidence:" or "Pattern-level read:" as structural headings. Talk like an advisor, not a search UI.
+  • Avoid retrieval-mechanics language. Do not say "the corpus lacks…", "the corpus does not include…", "the sources don't contain…", "indexed data is missing…", "Limited indexed data…", "isn't in the available corpus", "What the sources do show…", "I do not have a retrieved record…", or "I did not find enough indexed evidence…". Do not use "Tenant evidence:" or "Pattern-level read:" as structural headings. Talk like an advisor, not a search UI.
+  • Roughly 80% of strategic CXO questions will have no direct corpus hit. That is expected. Refusing or naming the gap is a failure mode, not honesty — except for tenant-specific quantitative claims as listed above.
   • Keep confidence caveats short, natural, and at the end. One line is enough — for example: "Confidence: directional until Apex KPI and system-of-record evidence are confirmed."
   • Refusing or over-hedging on a general strategy question is a failure mode, not honesty. Honesty is reserved for tenant-specific quantitative claims that genuinely need proof.`;
 

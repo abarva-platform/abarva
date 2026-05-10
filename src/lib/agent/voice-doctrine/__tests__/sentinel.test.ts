@@ -161,6 +161,62 @@ describe('SENTINEL_BANNED_PATTERNS — completeness', () => {
     expect(r.violations.some((v) => v.category === 'retrieval_mechanics')).toBe(true);
   });
 
+  // INT-VOICE.STRAT-2026-05-10 · Verbatim regression from the 2026-05-10 Apex /
+  // Carlos audit. Sentinel Intel produced this exact text on the question:
+  //   "What AI bets are common at multi-banner specialty retailers our size?"
+  // It must trip the validator on at least three retrieval-mechanics phrases:
+  // "sources don't contain", "isn't in the available corpus", and "what the
+  // sources do show". The earlier doctrine version did not flag any of these.
+  it('flags the verbatim Apex / Carlos 2026-05-10 over-refusal response', () => {
+    const verbatim =
+      "The sources don't contain indexed benchmark data on AI bet prevalence " +
+      "specifically at multi-banner specialty retailers of comparable scale. " +
+      "That comparison isn't in the available corpus. " +
+      "What the sources do show is Apex's own above-the-line priorities: AI " +
+      "Workforce Scheduling is the one ready to move now, while Demand Sensing " +
+      "and Loyalty AI Next Best Offer are strong candidates held back by data " +
+      "readiness gaps.";
+    const r = checkSentinelVoice(verbatim);
+    expect(r.pass).toBe(false);
+    const retrievalHits = r.violations
+      .filter((v) => v.category === 'retrieval_mechanics')
+      .map((v) => v.phrase);
+    expect(retrievalHits).toEqual(
+      expect.arrayContaining([
+        "sources don't contain",
+        "isn't in the corpus / available corpus",
+        "what the sources do show",
+      ]),
+    );
+  });
+
+  it('flags "Limited indexed data" — the canned low-confidence prefix removed in INT-VOICE.STRAT-2026-05-10', () => {
+    const r = checkSentinelVoice(
+      'Limited indexed data — confidence is moderate. Three AI bets are common at peer retailers. PAT-RET-AI-001.',
+    );
+    expect(r.pass).toBe(false);
+    expect(r.violations.some((v) => v.phrase === 'limited indexed data')).toBe(true);
+  });
+
+  it('flags "corpus does not include" / "corpus doesn\'t include"', () => {
+    const a = checkSentinelVoice(
+      'The corpus does not include peer benchmarks at this exact scale. PAT-RET-AI-001 frames the bet space.',
+    );
+    expect(a.violations.some((v) => v.category === 'retrieval_mechanics')).toBe(true);
+
+    const b = checkSentinelVoice(
+      "The corpus doesn't include vendor performance figures for that contract. Confidence: directional.",
+    );
+    expect(b.violations.some((v) => v.category === 'retrieval_mechanics')).toBe(true);
+  });
+
+  it('flags "I did not find enough indexed evidence" — the SentinelChat empty-stream fallback', () => {
+    const r = checkSentinelVoice(
+      'I did not find enough indexed Intelligence evidence to answer that yet. Try a vendor or pattern.',
+    );
+    expect(r.violations.some((v) => v.category === 'retrieval_mechanics')).toBe(true);
+  });
+
   it('does not flag a senior-advisor answer that uses the corpus naturally', () => {
     const r = checkSentinelVoice(
       'Three AI bets are common at multi-banner specialty retailers your size: demand forecasting, assortment optimization, and store-labor planning. Pattern PAT-RET-AI-001 captures the shape; the merchandising-ops co-sponsorship binding shows up across most successful programs. Confidence: directional until Apex KPI evidence is loaded.',
