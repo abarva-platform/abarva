@@ -1,3 +1,5 @@
+import { repairAgentOutputContractText } from './output-discipline/response-contract';
+
 export function stripChatMarkdownFormatting(text: string): string {
   return text
     .replace(/\*\*([^*]+)\*\*/g, '$1')
@@ -326,16 +328,18 @@ function shouldCompactSurface(surface: string): boolean {
 }
 
 export function shapeStreamingAgentTextForSurface(_surface: string, text: string): string {
-  return stripChatMarkdownFormatting(text);
+  return repairAgentOutputContractText(stripChatMarkdownFormatting(text)).text;
 }
 
 export function shapeAgentResponseForSurface(surface: string, text: string): string {
   const cleaned = normalizeVisibleWhitespace(stripChatMarkdownFormatting(text));
+  let shaped: string;
   if (surface === '/strategic-moves/new') {
-    return compactStrategicMoveOriginateText(cleaned);
+    shaped = compactStrategicMoveOriginateText(cleaned);
+  } else if (shouldCompactSurface(surface)) {
+    shaped = compactConsultantChatText(cleaned, 120);
+  } else {
+    shaped = cleaned;
   }
-  if (shouldCompactSurface(surface)) {
-    return compactConsultantChatText(cleaned, 120);
-  }
-  return cleaned;
+  return repairAgentOutputContractText(shaped).text;
 }
