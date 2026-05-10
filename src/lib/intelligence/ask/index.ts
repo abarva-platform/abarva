@@ -4,6 +4,7 @@ import { synthesizeStream } from './synthesizer';
 import { generateFollowups } from './followups';
 import { retrieveWorldview } from './retrievers/worldview';
 import { retrieveSurfaceContextSources } from './retrievers/surface-context';
+import { retrieveTenantEnterpriseSources } from '@/lib/knowledge/tenant-enterprise-context';
 import { retrieveTenantTechnologySources } from '@/lib/knowledge/tenant-technology-context';
 import type { AskSource, IntentClassification, AskSurfaceContext } from './types';
 import {
@@ -74,13 +75,15 @@ export async function* askIntelligence(query: string, opts: AskOptions = {}): As
     yield { type: 'classified', classification };
 
     const surfaceContext = retrieveSurfaceContextSources(opts.surfaceContext, trimmed);
-    const [tenantTechnology, routed, worldview] = await Promise.all([
+    const [tenantEnterprise, tenantTechnology, routed, worldview] = await Promise.all([
+      retrieveTenantEnterpriseSources(opts.tenantInventoryKey, trimmed),
       retrieveTenantTechnologySources(opts.tenantInventoryKey, trimmed),
       route(classification.intent, classification.entities),
       retrieveWorldview(trimmed),
     ]);
     const sources: AskSource[] = [
       ...surfaceContext,
+      ...tenantEnterprise,
       ...tenantTechnology,
       ...routed.sources,
       ...worldview.sources,
