@@ -36,9 +36,36 @@ export const SOURCE_ID_REGEX = /\bSRC-[A-Z]+-\d{4}\b/g;
 export const GENERAL_PRACTICE_PREFACE =
   'Drawing on general practice (not AbarVa-specific):';
 
+export const ABARVA_ENTITY_TAG_REGEX =
+  /<abv-(pattern|usecase|vendor)\s+id="([^"]+)">([^<]+)<\/abv-\1>/g;
+
+export const ABARVA_ENTITY_TOKEN_REGEX =
+  /\[abv-(pattern|usecase|vendor):([^:\]]+):([^\]]+)\]/g;
+
+export const ABARVA_SOURCE_TAG_REGEX =
+  /<abv-source\s+ref="([^"]+)"\s+reliability="(HIGH|MEDIUM|LOW)"\/>/g;
+
+export function normalizeAbarvaAgentMarkup(text: string): string {
+  ABARVA_SOURCE_TAG_REGEX.lastIndex = 0;
+  const sourceRefs = Array.from(text.matchAll(ABARVA_SOURCE_TAG_REGEX))
+    .slice(0, 5)
+    .map((match) => `${match[1]} (${match[2]})`);
+
+  const withoutSources = text.replace(/<abv-sources>[\s\S]*?<\/abv-sources>/g, '');
+  ABARVA_ENTITY_TAG_REGEX.lastIndex = 0;
+  const withEntityTokens = withoutSources.replace(
+    ABARVA_ENTITY_TAG_REGEX,
+    (_match, kind: string, id: string, label: string) => `[abv-${kind}:${id}:${label}]`,
+  );
+
+  if (sourceRefs.length === 0) return withEntityTokens;
+  return `${withEntityTokens.trim()}\n\nSource basis: ${sourceRefs.join('; ')}.`;
+}
+
 // ── Citation chip ─────────────────────────────────────────────────────────────
 
 type CitationKind = 'user-context' | 'tenant-specific' | 'pattern';
+type AbarvaEntityKind = 'pattern' | 'usecase' | 'vendor';
 
 interface CitationChipProps {
   kind: CitationKind;
@@ -148,6 +175,40 @@ export function IdLink({ id, href, family }: IdLinkProps) {
   );
 }
 
+export function AbarvaEntityChip({
+  kind,
+  id,
+  label,
+}: {
+  kind: AbarvaEntityKind;
+  id: string;
+  label: string;
+}) {
+  const href =
+    kind === 'pattern'
+      ? `/intelligence/${encodeURIComponent(id)}`
+      : kind === 'usecase'
+        ? `/intelligence/solutions/${encodeURIComponent(id)}`
+        : `/source/vendors/${encodeURIComponent(id)}`;
+
+  return (
+    <a
+      href={href}
+      title={`${label} · ${id}`}
+      aria-label={`${label}; ${kind}; source id ${id}`}
+      style={{
+        color: BrandColors.signalBlue,
+        textDecoration: 'underline',
+        textUnderlineOffset: 2,
+        textDecorationColor: 'rgba(0,102,204,0.28)',
+        fontWeight: 600,
+      }}
+    >
+      {label}
+    </a>
+  );
+}
+
 // ── Token resolver ────────────────────────────────────────────────────────────
 //
 // Walks a string and replaces matches with React nodes. Citation tags
@@ -187,7 +248,45 @@ export function tokenize(
 }
 
 export function tokenizeWithoutInline(text: string, keyPrefix: string): ReactNode[] {
-  // Stage 1: pull out citation tags as chips. Everything between chips
+  // Stage 1: pull out AbarVa entity tags as human-readable links. Everything
+  // between entity tags continues to citation/bare-ID replacement.
+  const entityOut: ReactNode[] = [];
+  let entityCursor = 0;
+  let entityIdx = 0;
+
+  ABARVA_ENTITY_TOKEN_REGEX.lastIndex = 0;
+  let entityMatch: RegExpExecArray | null;
+  while ((entityMatch = ABARVA_ENTITY_TOKEN_REGEX.exec(text)) !== null) {
+    if (entityMatch.index > entityCursor) {
+      entityOut.push(
+        ...tokenizeWithoutAbarvaEntity(
+          text.slice(entityCursor, entityMatch.index),
+          `${keyPrefix}-entity-gap-${entityIdx}`,
+        ),
+      );
+    }
+    entityOut.push(
+      <AbarvaEntityChip
+        key={`${keyPrefix}-abv-${entityIdx++}`}
+        kind={entityMatch[1] as AbarvaEntityKind}
+        id={entityMatch[2]}
+        label={entityMatch[3]}
+      />,
+    );
+    entityCursor = entityMatch.index + entityMatch[0].length;
+  }
+
+  if (entityCursor < text.length) {
+    entityOut.push(
+      ...tokenizeWithoutAbarvaEntity(text.slice(entityCursor), `${keyPrefix}-entity-tail`),
+    );
+  }
+
+  return entityOut;
+}
+
+function tokenizeWithoutAbarvaEntity(text: string, keyPrefix: string): ReactNode[] {
+  // Stage 2: pull out citation tags as chips. Everything between chips
   // continues to stage 2 (bare ID replacement).
   const out: ReactNode[] = [];
   let cursor = 0;

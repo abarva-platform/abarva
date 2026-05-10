@@ -29,6 +29,7 @@ import rehypeSanitize from 'rehype-sanitize';
 import { BrandColors, BrandTypography } from '@/lib/shell/brand-tokens';
 import {
   GENERAL_PRACTICE_PREFACE,
+  normalizeAbarvaAgentMarkup,
   tokenizeChildren,
 } from './markdownTokens';
 
@@ -289,13 +290,14 @@ export interface AgentMarkdownProps {
  */
 export function AgentMarkdown({ text, inlineNodes }: AgentMarkdownProps) {
   const components = useMemo(() => buildComponents(inlineNodes), [inlineNodes]);
+  const normalizedText = useMemo(() => normalizeAbarvaAgentMarkup(text), [text]);
   return (
     <ReactMarkdown
       remarkPlugins={[remarkGfm]}
       rehypePlugins={[rehypeSanitize]}
       components={components}
     >
-      {text}
+      {normalizedText}
     </ReactMarkdown>
   );
 }
