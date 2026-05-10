@@ -22,7 +22,7 @@ For this to work, the platform must hold structured knowledge about each executi
 
 **Mode 1 · Real-world executive profiles.** For people AbarVa engages with in business development, investor relations, design partner cultivation. These profiles power meeting preparation, outreach strategy, relationship history, and conversation planning.
 
-**Mode 2 · Composite tenant executive profiles.** For the named executives who populate composite tenants (Jonathan Aldridge at Keystone, Marcus Whitfield at Apex, Dr. Linda Chen-Winters at Meridian, Daniel Kovač at First Capital). These profiles power demo interactions — when the maestro is reasoning as if Jonathan is the sponsor of a program, it uses Jonathan's profile.
+**Mode 2 · Composite tenant executive profiles.** For the named executives who populate composite tenants (Jonathan Aldridge at Keystone, Marcus Whitfield at Apex, Thomas Hartwell at Meridian, Daniel Kovač at First Capital). These profiles power demo interactions — when the maestro is reasoning as if Jonathan is the sponsor of a program, it uses Jonathan's profile.
 
 Same schema. Different populations. Different access scoping.
 
@@ -532,10 +532,10 @@ The composite executives already seeded in each tenant overlay. This section pro
 **Reasoning scope.** Apex-tenant maestros
 **Disclosure scope.** Apex-tenant programs as appropriate
 
-### 4.3 · Meridian Health System · Dr. Linda Chen-Winters
+### 4.3 · Meridian Health System · Thomas Hartwell
 
 **Basic attributes.**
-- Full name: Dr. Linda Chen-Winters
+- Full name: Thomas Hartwell
 - Current role: President, Meridian Health Plans
 - Current company: Meridian Health System (integrated provider-payer system)
 
@@ -556,7 +556,7 @@ The composite executives already seeded in each tenant overlay. This section pro
 - Health-plan-provider economics
 
 **Demo persona overrides.**
-- Use "Dr. Chen-Winters" in formal contexts, "Linda" if invited
+- Use "Thomas Hartwell" in formal contexts, "Linda" if invited
 - Lead with clinical-financial integration framing
 - Acknowledge HIPAA compliance as baseline
 
@@ -606,7 +606,7 @@ When a maestro is responding in a context involving a specific named executive (
 
 **Framing.** Lead with the executive's preferred frame (e.g., compound-value for Prat, integration-not-deployment for Tim/Jonathan).
 
-**Evidence selection.** Prefer evidence types matching their preference (quantitative for Daniel Kovač, clinical-financial integrated for Linda Chen-Winters).
+**Evidence selection.** Prefer evidence types matching their preference (quantitative for Daniel Kovač, clinical-financial integrated for Thomas Hartwell).
 
 **Pacing.** Adjust information density and decision-pacing expectations.
 
@@ -686,7 +686,7 @@ Composite profiles:
 **Personalization tests.**
 4. "Composite Keystone maestro greets Jonathan" → uses "Jonathan," leads with customer-technology combined-org framing
 5. "Apex maestro responds to a loyalty question posed as Marcus" → lead with customer-outcome framing
-6. "Meridian maestro briefs on Linda Chen-Winters as subject" → clinical-financial integration framing, HIPAA acknowledgment
+6. "Meridian maestro briefs on Thomas Hartwell as subject" → clinical-financial integration framing, HIPAA acknowledgment
 
 **Scope tests.**
 7. "Can a Meridian program maestro see Prat's real-world profile?" → no, scoped to Anand

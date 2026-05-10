@@ -162,7 +162,7 @@ async function main() {
     {
       question: 'Who owns the MLR metric?',
       answer: mlrOwnerAnswer,
-      passed: containsAll(mlrOwnerAnswer, ['Linda Chen-Winters', 'President Meridian Health Plans', '87.2%']),
+      passed: containsAll(mlrOwnerAnswer, ['Thomas Hartwell', 'President Meridian Health Plans', '87.2%']),
     },
     {
       question: 'How does Meridian compare on readmission?',

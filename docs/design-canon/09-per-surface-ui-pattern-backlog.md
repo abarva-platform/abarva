@@ -442,7 +442,7 @@ Drawer specs per File 04 Section 6.2.
 
 ### 6.10 · Crawler persona test
 
-Dr. L opens Ambient Clinical Value Chain Activation program page from home. Expected: program header with "Meridian Health · Phase 2 Design · Sponsor Dr. Elena Vasquez," phase timeline with Phase 2 highlighted, deliverable inventory showing 23 deliverables with D01 quality 84/100 and D27 scheduled stub, decision log showing recent decisions with cross-links, pressure cards for ambient overlap, right sidebar with Ambient Intelligence pattern cross-link. Nexus opens with Phase 2 diagnosis-specific context. If any of these fail, the pattern is not executed.
+Dr. L opens Ambient Clinical Value Chain Activation program page from home. Expected: program header with "Meridian Health · Phase 2 Design · Sponsor Dr. Jennifer Wexler," phase timeline with Phase 2 highlighted, deliverable inventory showing 23 deliverables with D01 quality 84/100 and D27 scheduled stub, decision log showing recent decisions with cross-links, pressure cards for ambient overlap, right sidebar with Ambient Intelligence pattern cross-link. Nexus opens with Phase 2 diagnosis-specific context. If any of these fail, the pattern is not executed.
 
 ---
 

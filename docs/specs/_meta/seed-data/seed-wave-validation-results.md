@@ -78,13 +78,13 @@ Answer:
 Result:
 `PASS`
 
-### 4. Linda Chen-Winters
+### 4. Thomas Hartwell
 
 Question:
-`Who is Linda Chen-Winters?`
+`Who is Thomas Hartwell?`
 
 Answer:
-`Linda Chen-Winters — President, Meridian Health Plans`
+`Thomas Hartwell — President, Meridian Health Plans`
 
 Result:
 `PASS`
