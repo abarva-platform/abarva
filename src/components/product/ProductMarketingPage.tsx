@@ -91,8 +91,296 @@ export function ProductMarketingPage({
       <MoveLifecycle />
       <Substrate spotlight={spotlight} />
       <Differentiators />
+      <CompositeTenantCaseStudies />
       <Cta spotlight={spotlight} />
     </div>
+  );
+}
+
+// ─── Composite Tenant Case Studies ───────────────────────────────────────────
+//
+// Founder directive 2026-05-10: 'Case study and example driven. Sample clients
+// must be 100% accurate. We should orient them on who they are / leadership /
+// vision / data loaded. Emphasize how intelligent our agents are.'
+//
+// Three composite tenants. Numbers reconciled to the live composite seed
+// data (executive_bench.json, function_capacity.csv, fy2026_capital_plan.csv,
+// funding_authority_matrix.csv) committed 2026-05-10.
+
+type TenantCase = {
+  industry: string;
+  industryAccent: string;
+  name: string;
+  scale: { revenue: string; footprint: string; headcount: string; itBudget: string };
+  cxoLogins: { title: string; name: string; email: string }[];
+  whatLoaded: string;
+  agentSampleQ: string;
+  agentSampleA: string;
+  agentName: 'Sentinel' | 'Nexus' | 'Source';
+  agentSurface: 'Intelligence' | 'Strategic Moves' | 'Source';
+};
+
+const TENANT_CASES: TenantCase[] = [
+  {
+    industry: 'Healthcare · Integrated Delivery Network',
+    industryAccent: '#0E8A65',
+    name: 'Meridian Health System',
+    scale: {
+      revenue: '$16.8B',
+      footprint: '30 hospitals · 280 clinics · Plan covers 1.6M members',
+      headcount: '~58k (~14,800 RNs · 7,400 employed MDs)',
+      itBudget: '$384M IT operating · $1.1B FY2026 capital plan',
+    },
+    cxoLogins: [
+      { title: 'CDIO', name: 'Dr. Anita Krishnamurthy', email: 'cdio@meridian-health.example.com' },
+      { title: 'CFO', name: 'David Park', email: 'cfo@meridian-health.example.com' },
+      { title: 'COO', name: "Sarah O'Brien", email: 'coo@meridian-health.example.com' },
+    ],
+    whatLoaded: '106 named persons · 26 sized functions · 18 capital plan lines · 10 funding authority bands · 114 systems · 45 vendor scorecards. AI Governance Council with 23 use cases under review (chaired by CMIO Wexler). Active programs: RCM modernization, ambient documentation, prior authorization (Cohere), AI governance.',
+    agentName: 'Sentinel',
+    agentSurface: 'Intelligence',
+    agentSampleQ: 'How big is our data analytics function vs. industry standard?',
+    agentSampleA: '185 FTE — 152 onshore, 18 offshore, 15 contractor. FY2026 budget $38.5M ($5.5M capex + $33M opex). Owns 14 systems including Snowflake, Epic Cogito, Epic Cosmos, the Atlas custom plan-provider platform, dbt, Tableau, Arcadia, Databricks under evaluation. Reports to VP Jordan McKenzie (CDIO direct). Sized to industry standard for a $16-20B IDN with both provider and plan analytics needs; onshore-heavy mix is typical because clinical data sensitivity makes offshore analytics hard at scale.',
+  },
+  {
+    industry: 'Retail · Mass + Specialty Omnichannel',
+    industryAccent: '#5B21B6',
+    name: 'Apex Retail Group',
+    scale: {
+      revenue: '$108B',
+      footprint: '1,976 stores · 12 DCs · 4 merch categories',
+      headcount: '~250k (largest: store associates ~219k)',
+      itBudget: '$1.62B IT operating · ~$3.5B FY2026 capital plan',
+    },
+    cxoLogins: [
+      { title: 'CIO', name: 'Carlos Rivera', email: 'cio@apex-retail.example.com' },
+      { title: 'CFO', name: 'Margaret Chen', email: 'cfo@apex-retail.example.com' },
+      { title: 'CDO', name: 'Lynne Stratham', email: 'cdo@apex-retail.example.com' },
+    ],
+    whatLoaded: '79 named persons · 30 sized functions · 15 capital plan lines · 9 funding authority bands · 65 systems · 28 vendor scorecards. Active programs: workforce scheduling, demand sensing, loyalty NBO, CDP Activation 2026 (Stratham sponsor), self-checkout deployment + RFID rollout to 1,200 stores.',
+    agentName: 'Nexus',
+    agentSurface: 'Strategic Moves',
+    agentSampleQ: "I want to fund a $4M AI workforce-scheduling pilot. What's the approval path?",
+    agentSampleA: "At $4M you're below the joint CFO+CIO threshold ($25M+) and inside CIO Carlos Rivera's single-decision authority ($5-25M band). But two parallel gates apply regardless of dollar: AI Governance Council attestation (use case design + bias assessment + workforce-data handling) and Internal Audit liaison via Joaquin Mendoza-Levitt. CFO Margaret Chen will still want a 1-page business case and 24-month payback evidence — she's the gating signature on activist-investor narrative even when she isn't a formal approver.",
+  },
+  {
+    industry: 'Banking · Regional Super-Bank',
+    industryAccent: '#1F3A8A',
+    name: 'First Capital Financial',
+    scale: {
+      revenue: '$18.2B revenue · $362B assets · $420B wealth AUM',
+      footprint: '480 branches · 720 ATMs · 4 LOBs (Consumer/Commercial/Wealth/Treasury)',
+      headcount: '~46k (~1,180 in compliance/BSA-AML alone)',
+      itBudget: '$1.67B IT operating (9.2% of revenue · 34% compliance share, highest in peer)',
+    },
+    cxoLogins: [
+      { title: 'CIO', name: 'Patricia Huang', email: 'cio@firstcapital.example.com' },
+      { title: 'CRO', name: 'James Park', email: 'cro@firstcapital.example.com' },
+      { title: 'CFO', name: 'Michael Torres', email: 'cfo@firstcapital.example.com' },
+    ],
+    whatLoaded: "92 named persons · 25 sized functions · 18 capital plan lines · 11 funding authority bands · 84 systems · 51 vendor scorecards. Active programs: FedNow build (cutover 2026), FIS Profile core banking modernization decision, AI program portfolio under SR 11-7 MRM gating (Adekoya-Park reporting to CRO).",
+    agentName: 'Source',
+    agentSurface: 'Source',
+    agentSampleQ: 'Which vendors are on renegotiation flags right now?',
+    agentSampleA: "Three vendor scorecards in renegotiation status. (1) Adenza (Nasdaq) — AxiomSL ControllerView + Calypso treasury at $9.2M annual; renewal Jun 30, 2027; price increase post-Nasdaq acquisition is the flag. (2) NICE Actimize — Fraud + AML platform at $10M annual; renewal Apr 30, 2027; expanding under OCC findings, but VP Quintero is sitting on a Verafin pilot that could shift the leverage. (3) Black Knight — Mortgage Origination + Default at $9.2M annual; renewal Sep 30, 2026; volume in current rate environment makes this a price re-cut conversation. CPO Nadia Rahman owns the bundling logic.",
+  },
+];
+
+function CompositeTenantCaseStudies() {
+  return (
+    <section
+      style={{
+        padding: '96px clamp(32px, 6vw, 96px)',
+        background: C.creamDeep,
+        borderTop: `1px solid ${C.border}`,
+        borderBottom: `1px solid ${C.border}`,
+      }}
+    >
+      <div style={{ maxWidth: 1240, margin: '0 auto' }}>
+        <SectionEyebrow num="05.5">Three composite tenants · Sample case studies</SectionEyebrow>
+        <SectionTitle>The agents are intelligent because the substrate is real.</SectionTitle>
+        <SectionLead>
+          Every recommendation lands in your enterprise truth. Three composite tenants are loaded end-to-end so any executive can pressure-test the agents the moment they sign in. The CXO logins below are pre-provisioned with shared password{' '}
+          <code style={{ fontFamily: F_MONO, fontSize: 14, padding: '2px 6px', background: C.surface, borderRadius: 3, border: `1px solid ${C.border}` }}>Demo2026!</code>
+          {' '}and OTP code{' '}
+          <code style={{ fontFamily: F_MONO, fontSize: 14, padding: '2px 6px', background: C.surface, borderRadius: 3, border: `1px solid ${C.border}` }}>424242</code>
+          .
+        </SectionLead>
+
+        <div style={{ display: 'grid', gap: 28, marginTop: 48 }}>
+          {TENANT_CASES.map((t) => (
+            <article
+              key={t.name}
+              style={{
+                background: C.surface,
+                border: `1px solid ${C.border}`,
+                borderLeft: `5px solid ${t.industryAccent}`,
+                borderRadius: 12,
+                padding: 'clamp(24px, 3vw, 36px)',
+                display: 'grid',
+                gridTemplateColumns: 'minmax(300px, 1fr) minmax(300px, 1.4fr)',
+                gap: 36,
+              }}
+            >
+              {/* LEFT: identity + scale + leadership */}
+              <div>
+                <div
+                  style={{
+                    fontFamily: F_MONO,
+                    fontSize: 11,
+                    fontWeight: 700,
+                    letterSpacing: '0.18em',
+                    textTransform: 'uppercase',
+                    color: t.industryAccent,
+                    marginBottom: 10,
+                  }}
+                >
+                  {t.industry}
+                </div>
+                <h3
+                  style={{
+                    fontFamily: F_SERIF,
+                    fontSize: 32,
+                    fontWeight: 500,
+                    color: C.ink,
+                    letterSpacing: '-0.018em',
+                    margin: '0 0 18px',
+                    lineHeight: 1.15,
+                  }}
+                >
+                  {t.name}
+                </h3>
+                <dl style={{ margin: '0 0 24px', display: 'grid', gap: 10 }}>
+                  {[
+                    ['Revenue', t.scale.revenue],
+                    ['Footprint', t.scale.footprint],
+                    ['Headcount', t.scale.headcount],
+                    ['IT spend', t.scale.itBudget],
+                  ].map(([k, v]) => (
+                    <div key={k} style={{ display: 'grid', gridTemplateColumns: '110px 1fr', gap: 12, alignItems: 'baseline' }}>
+                      <dt style={{ fontFamily: F_MONO, fontSize: 10, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: C.inkMute }}>{k}</dt>
+                      <dd style={{ margin: 0, fontFamily: F_SANS, fontSize: 13, color: C.inkSoft, lineHeight: 1.55 }}>{v}</dd>
+                    </div>
+                  ))}
+                </dl>
+                <div
+                  style={{
+                    fontFamily: F_MONO,
+                    fontSize: 10,
+                    fontWeight: 700,
+                    letterSpacing: '0.14em',
+                    textTransform: 'uppercase',
+                    color: C.inkMute,
+                    marginBottom: 10,
+                  }}
+                >
+                  3 CXO test logins
+                </div>
+                <ul style={{ margin: 0, padding: 0, listStyle: 'none', display: 'grid', gap: 8 }}>
+                  {t.cxoLogins.map((cx) => (
+                    <li
+                      key={cx.email}
+                      style={{
+                        background: C.cream,
+                        border: `1px solid ${C.hair}`,
+                        borderRadius: 6,
+                        padding: '10px 14px',
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, flexWrap: 'wrap' }}>
+                        <span style={{ fontFamily: F_MONO, fontSize: 10, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: t.industryAccent }}>{cx.title}</span>
+                        <span style={{ fontFamily: F_SANS, fontSize: 14, fontWeight: 700, color: C.ink }}>{cx.name}</span>
+                      </div>
+                      <div style={{ fontFamily: F_MONO, fontSize: 11, color: C.inkMute, marginTop: 2 }}>{cx.email}</div>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              {/* RIGHT: what's loaded + agent intelligence sample */}
+              <div>
+                <div
+                  style={{
+                    fontFamily: F_MONO,
+                    fontSize: 10,
+                    fontWeight: 700,
+                    letterSpacing: '0.14em',
+                    textTransform: 'uppercase',
+                    color: C.inkMute,
+                    marginBottom: 10,
+                  }}
+                >
+                  What is loaded
+                </div>
+                <p
+                  style={{
+                    fontFamily: F_SANS,
+                    fontSize: 14,
+                    color: C.inkSoft,
+                    lineHeight: 1.65,
+                    margin: '0 0 28px',
+                  }}
+                >
+                  {t.whatLoaded}
+                </p>
+
+                <div
+                  style={{
+                    background: C.cream,
+                    border: `1px solid ${C.hair}`,
+                    borderRadius: 10,
+                    overflow: 'hidden',
+                  }}
+                >
+                  <div
+                    style={{
+                      padding: '14px 18px',
+                      borderBottom: `1px solid ${C.hair}`,
+                      background: C.surface,
+                      display: 'flex',
+                      alignItems: 'baseline',
+                      gap: 12,
+                      flexWrap: 'wrap',
+                    }}
+                  >
+                    <span style={{ fontFamily: F_MONO, fontSize: 10, fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: t.industryAccent }}>
+                      {t.agentName} · {t.agentSurface}
+                    </span>
+                  </div>
+                  <div style={{ padding: '16px 18px' }}>
+                    <div style={{ fontFamily: F_SANS, fontSize: 13, fontWeight: 700, color: C.ink, marginBottom: 8, fontStyle: 'italic' }}>
+                      {`"${t.agentSampleQ}"`}
+                    </div>
+                    <div style={{ fontFamily: F_SANS, fontSize: 13, color: C.inkSoft, lineHeight: 1.7 }}>
+                      {t.agentSampleA}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </article>
+          ))}
+        </div>
+
+        <p
+          style={{
+            marginTop: 36,
+            fontFamily: F_SANS,
+            fontSize: 14,
+            color: C.inkMute,
+            textAlign: 'center',
+            maxWidth: 720,
+            marginLeft: 'auto',
+            marginRight: 'auto',
+            lineHeight: 1.6,
+          }}
+        >
+          The numbers, leadership, and agent answers above all reconcile to the
+          composite seed data loaded into Supabase. Sign in as any of the nine
+          CXOs and ask the same question yourself — the answer the agent
+          produces should match what you see here.
+        </p>
+      </div>
+    </section>
   );
 }
 
