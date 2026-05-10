@@ -404,7 +404,7 @@ describe('PATTERN_LEVEL_FALLBACK consultant posture — INT-VOICE.STRAT-2026-05-
     expect(prompt).toMatch(/Form\s+a\s+view,?\s+defend\s+it\s+briefly/i);
   });
 
-  it('is omitted on the Source surface, which keeps its prescriptive gate posture', () => {
+  it('is omitted on the Source surface, which has its own Brief C role', () => {
     const prompt = composeSentinelSystemPrompt({
       mode: 'corpus',
       tenantKey: 'apex-retail',
@@ -412,81 +412,177 @@ describe('PATTERN_LEVEL_FALLBACK consultant posture — INT-VOICE.STRAT-2026-05-
       vectorIndexPending: false,
       worldviewPending: false,
     });
+    // Source uses Brief C's verbatim role text — Pattern-level fallback is
+    // Intelligence-only.
     expect(prompt).not.toMatch(/Consultant\s+posture/i);
+    expect(prompt).toMatch(/You\s+are\s+Source,?\s+AbarVa'?s\s+vendor\s+selection\s+agent/i);
   });
 });
 
-// INT-VOICE.STRAT-2026-05-10c · The Ask synthesizer prompt is the primary
-// lever for Sentinel's voice on the Intelligence surface. We assert against
-// the raw prompt source since it is not exported as a constant. This guards
-// against the prompt drifting away from the consultant posture.
-describe('Ask synthesizer prompt — consultant posture (INT-VOICE.STRAT-2026-05-10c)', () => {
+// SRC-VOICE.STRAT-2026-05-10 · Brief C expert posture for the Source surface.
+// Asserts that composeSentinelSystemPrompt('/source') carries the verbatim
+// Brief C canonical text from `docs/build/CURSOR_BRIEF_C_SOURCE.md`.
+describe('Source surface — Brief C expert posture (SRC-VOICE.STRAT-2026-05-10)', () => {
+  const sourcePrompt = composeSentinelSystemPrompt({
+    mode: 'corpus',
+    tenantKey: 'apex-retail',
+    surface: '/source',
+    vectorIndexPending: false,
+    worldviewPending: false,
+  });
+
+  it('opens with the WHO YOU ARE / senior IT vendor selection advisor identity', () => {
+    expect(sourcePrompt).toMatch(/You\s+are\s+Source,?\s+AbarVa'?s\s+vendor\s+selection\s+agent/i);
+    expect(sourcePrompt).toMatch(/WHO\s+YOU\s+ARE/);
+    expect(sourcePrompt).toMatch(/senior\s+IT\s+vendor\s+selection\s+advisor/i);
+    expect(sourcePrompt).toMatch(/retail,\s+healthcare,\s+and\s+financial\s+services/i);
+  });
+
+  it('explicitly disclaims being a vendor catalog / procurement workflow / comparison-table generator', () => {
+    expect(sourcePrompt).toMatch(
+      /NOT\s+a\s+vendor\s+catalog,?\s+a\s+procurement\s+workflow\s+tool,?\s+or\s+a\s+comparison[- ]table\s+generator/i,
+    );
+  });
+
+  it('lists the three sources of intelligence (corpus + tenant + own expertise)', () => {
+    expect(sourcePrompt).toMatch(/WHAT\s+YOU\s+HAVE\s+ACCESS\s+TO/);
+    expect(sourcePrompt).toMatch(/industry\s+knowledge\s+corpus/i);
+    expect(sourcePrompt).toMatch(/tenant'?s\s+enterprise\s+knowledge\s+layer/i);
+    expect(sourcePrompt).toMatch(/own\s+deep\s+expertise/i);
+  });
+
+  it('declares the six capabilities — longlist, RFI/RFP, pricing, health, SI, decision doc', () => {
+    expect(sourcePrompt).toMatch(/WHAT\s+YOU\s+DO/);
+    expect(sourcePrompt).toMatch(/LONGLIST\s+GENERATION/);
+    expect(sourcePrompt).toMatch(/RFI\s*\/\s*RFP\s+CONSTRUCTION/);
+    expect(sourcePrompt).toMatch(/PRICING\s+INTELLIGENCE/);
+    expect(sourcePrompt).toMatch(/VENDOR\s+HEALTH\s+SIGNALS/);
+    expect(sourcePrompt).toMatch(/SI\s+PARTNER\s+MAPPING/);
+    expect(sourcePrompt).toMatch(/DECISION\s+DOCUMENTATION/);
+  });
+
+  it('mandates the HOW YOU RESPOND posture — opinions not catalogs, push-back, ask, confidence in plain language', () => {
+    expect(sourcePrompt).toMatch(/HOW\s+YOU\s+RESPOND/);
+    expect(sourcePrompt).toMatch(/OPINIONS,?\s+NOT\s+CATALOGS/);
+    expect(sourcePrompt).toMatch(/CONFIDENCE\s+IN\s+PLAIN\s+LANGUAGE/);
+    expect(sourcePrompt).toMatch(/EVIDENCE\s+WHERE\s+IT\s+STRENGTHENS\s+THE\s+ARGUMENT/);
+    expect(sourcePrompt).toMatch(/PUSH\s+BACK\s+WHEN\s+WARRANTED/);
+    expect(sourcePrompt).toMatch(/ASK\s+CLARIFYING\s+QUESTIONS/);
+  });
+
+  it('declares WHAT YOU NEVER DO — anti-fabrication of vendor metrics, customer references, tenant facts, financial health', () => {
+    expect(sourcePrompt).toMatch(/WHAT\s+YOU\s+NEVER\s+DO/);
+    expect(sourcePrompt).toMatch(/NEVER\s+fabricate\s+vendor\s+metrics/i);
+    expect(sourcePrompt).toMatch(/NEVER\s+fabricate\s+customer\s+references/i);
+    expect(sourcePrompt).toMatch(/NEVER\s+fabricate\s+tenant[- ]specific\s+facts/i);
+    expect(sourcePrompt).toMatch(/NEVER\s+fabricate\s+financial\s+health\s+metrics/i);
+    expect(sourcePrompt).toMatch(/NEVER\s+say\s+"this\s+is\s+not\s+in\s+the\s+corpus"\s+as\s+a\s+refusal/i);
+    expect(sourcePrompt).toMatch(
+      /NEVER\s+recommend\s+a\s+vendor\s+based\s+on\s+the\s+user'?s\s+apparent\s+preference\s+rather\s+than\s+evidence/i,
+    );
+  });
+
+  it('routes off-vendor lanes correctly — landscape → Sentinel, Move-shaping → Nexus', () => {
+    expect(sourcePrompt).toMatch(/landscape\s+questions[\s\S]{0,200}Sentinel/i);
+    expect(sourcePrompt).toMatch(/Move[- ]shaping[\s\S]{0,200}Nexus/i);
+  });
+
+  it('carries the five Brief C few-shot examples', () => {
+    expect(sourcePrompt).toMatch(/EXAMPLE\s+1\s*·\s*Vendor\s+shortlist\s+with\s+rationale/i);
+    expect(sourcePrompt).toMatch(/EXAMPLE\s+2\s*·\s*Pushing\s+back\s+on\s+a\s+stated\s+preference/i);
+    expect(sourcePrompt).toMatch(/EXAMPLE\s+3\s*·\s*Asking\s+for\s+clarification/i);
+    expect(sourcePrompt).toMatch(/EXAMPLE\s+4\s*·\s*Honest\s+about\s+what'?s\s+missing/i);
+    expect(sourcePrompt).toMatch(/EXAMPLE\s+5\s*·\s*Off[- ]scope\s+question/i);
+  });
+
+  it('few-shot examples demonstrate the vendor-advisor posture — opinion-led shortlist, push-back, no fabrication', () => {
+    expect(sourcePrompt).toMatch(/Three\s+credible\s+vendors\s+for\s+your\s+specific\s+situation/i);
+    expect(sourcePrompt).toMatch(/I'?d\s+push\s+back\s+on\s+locking\s+in\s+here/i);
+    expect(sourcePrompt).toMatch(/I\s+don'?t\s+have\s+visibility\s+into\s+Apex'?s\s+current/i);
+    expect(sourcePrompt).toMatch(/That'?s\s+outside\s+what\s+I\s+do/i);
+  });
+
+  it('preserves the supplementary gate-discipline scaffolding (SOURCE_FIVE_RULES, specialist dispatch)', () => {
+    expect(sourcePrompt).toMatch(/Five\s+voice\s+rules\s+on\s+Source/i);
+    expect(sourcePrompt).toMatch(/Specialist\s+lenses/i);
+    expect(sourcePrompt).toMatch(/next-action:\s*"What\s+should\s+we\s+do\s+next/i);
+  });
+});
+
+// INT-VOICE.STRAT-2026-05-10d · The Ask synthesizer prompt body is the
+// canonical Brief A text from `docs/build/CURSOR_BRIEF_A_SENTINEL.md` plus
+// the surface-conventions footer. These assertions guard against drift from
+// the canonical brief.
+describe('Ask synthesizer prompt — Brief A expert posture (INT-VOICE.STRAT-2026-05-10d)', () => {
   const synthesizerSource = readFileSync(
     join(__dirname, '..', '..', '..', 'intelligence', 'ask', 'synthesizer.ts'),
     'utf8',
   );
 
-  it('opens with the senior-consultant archetype, not librarian / search-index framing', () => {
-    expect(synthesizerSource).toMatch(/senior\s+AI[- ]strategy\s+consultant/i);
-    expect(synthesizerSource).toMatch(/CXO\s+at\s+a\s+\$1B\+/i);
-    expect(synthesizerSource).toMatch(/(?:NOT\s+a\s+corpus\s+search|NOT\s+a\s+librarian|NOT\s+a\s+neutral\s+summary)/);
+  it('opens with the WHO YOU ARE / senior advisor identity from Brief A', () => {
+    expect(synthesizerSource).toMatch(/WHO\s+YOU\s+ARE/);
+    expect(synthesizerSource).toMatch(/senior\s+AI\s+strategy\s+advisor/i);
+    expect(synthesizerSource).toMatch(/retail,\s+healthcare,\s+and\s+financial\s+services/i);
+    expect(synthesizerSource).toMatch(/senior\s+partner\s+at\s+a\s+top[- ]tier\s+firm/i);
   });
 
-  it('mandates the CORE POSTURE — opinions, verbal confidence, conversational citations, disagreement', () => {
-    expect(synthesizerSource).toMatch(/CORE\s+POSTURE/);
-    expect(synthesizerSource).toMatch(/Form\s+a\s+view,?\s+defend\s+it\s+briefly/i);
-    expect(synthesizerSource).toMatch(/Calibrate\s+confidence\s+in\s+plain\s+language/i);
-    expect(synthesizerSource).toMatch(/Cite\s+evidence\s+where\s+it\s+strengthens\s+the\s+argument/i);
-    expect(synthesizerSource).toMatch(/Disagree\s+when\s+the\s+evidence\s+supports\s+disagreement/i);
+  it('lists the three sources of intelligence (corpus + tenant + own expertise)', () => {
+    expect(synthesizerSource).toMatch(/WHAT\s+YOU\s+HAVE\s+ACCESS\s+TO/);
+    expect(synthesizerSource).toMatch(/industry\s+knowledge\s+corpus/i);
+    expect(synthesizerSource).toMatch(/tenant'?s\s+enterprise\s+knowledge\s+layer/i);
+    expect(synthesizerSource).toMatch(/your\s+own\s+deep\s+expertise/i);
   });
 
-  it('declares the one firm line — anti-fabrication of tenant facts and peer statistics', () => {
+  it('declares the HOW YOU RESPOND posture — opinions, confidence, evidence, disagree, ask, converse', () => {
+    expect(synthesizerSource).toMatch(/HOW\s+YOU\s+RESPOND/);
+    expect(synthesizerSource).toMatch(/OPINIONS,?\s+NOT\s+SUMMARIES/);
+    expect(synthesizerSource).toMatch(/CONFIDENCE\s+IN\s+PLAIN\s+LANGUAGE/);
+    expect(synthesizerSource).toMatch(/EVIDENCE\s+WHERE\s+IT\s+STRENGTHENS\s+THE\s+ARGUMENT/);
+    expect(synthesizerSource).toMatch(/DISAGREE\s+WHEN\s+WARRANTED/);
+    expect(synthesizerSource).toMatch(/ASK\s+CLARIFYING\s+QUESTIONS\s+WHEN\s+THEY\s+WOULD\s+HELP/);
+    expect(synthesizerSource).toMatch(/CONVERSE\s+NATURALLY/);
+  });
+
+  it('declares WHAT YOU NEVER DO — anti-fabrication, no corpus refusal, no decline-when-can-reason', () => {
+    expect(synthesizerSource).toMatch(/WHAT\s+YOU\s+NEVER\s+DO/);
     expect(synthesizerSource).toMatch(
-      /THE\s+ONE\s+FIRM\s+LINE[^]*DO\s+NOT\s+FABRICATE\s+TENANT[- ]SPECIFIC\s+FACTS\s+OR\s+PEER\s+STATISTICS/i,
+      /NEVER\s+fabricate\s+specific\s+tenant\s+facts/i,
+    );
+    expect(synthesizerSource).toMatch(/NEVER\s+fabricate\s+peer\s+statistics/i);
+    expect(synthesizerSource).toMatch(
+      /NEVER\s+say\s+"this\s+is\s+not\s+in\s+the\s+corpus"\s+as\s+a\s+refusal/i,
     );
     expect(synthesizerSource).toContain('73% of retailers');
     expect(synthesizerSource).toContain('Algonomy has 89% market share');
   });
 
-  it('lists banned retrieval-mechanics framings', () => {
-    expect(synthesizerSource).toMatch(/BANNED\s+FRAMINGS/);
-    expect(synthesizerSource).toContain('the sources don\'t contain');
-    expect(synthesizerSource).toContain('what the sources do show');
+  it('declares LANE DISCIPLINE — vendor depth → Source, Move-shaping → Nexus', () => {
+    expect(synthesizerSource).toMatch(/LANE\s+DISCIPLINE/);
+    expect(synthesizerSource).toMatch(/Source\s+has\s+the\s+depth/i);
+    expect(synthesizerSource).toMatch(/Nexus|Moves\s+surface/i);
   });
 
-  it('lists banned academic / cover-your-back disclaimer phrasings', () => {
-    expect(synthesizerSource).toMatch(/ALSO\s+BANNED[^]*academic/i);
-    expect(synthesizerSource).toContain('based on the limited data available to me');
-    expect(synthesizerSource).toContain('at the general AI industry level');
-    expect(synthesizerSource).toContain('On the one hand');
+  it('carries the five Brief A few-shot examples', () => {
+    expect(synthesizerSource).toMatch(/EXAMPLE\s+1\s*·\s*Strategy\s+question\s+with\s+corpus\s+evidence/i);
+    expect(synthesizerSource).toMatch(/EXAMPLE\s+2\s*·\s*Question\s+about\s+a\s+vendor/i);
+    expect(synthesizerSource).toMatch(/EXAMPLE\s+3\s*·\s*Question\s+requiring\s+clarification/i);
+    expect(synthesizerSource).toMatch(/EXAMPLE\s+4\s*·\s*The\s+"I\s+don'?t\s+know"\s+edge\s+case/i);
+    expect(synthesizerSource).toMatch(/EXAMPLE\s+5\s*·\s*Off[- ]domain\s+question/i);
   });
 
-  it('carries both worked examples — common bets AND failure modes — with verbatim BAD anchors', () => {
-    expect(synthesizerSource).toMatch(/EXAMPLE\s+1[^]*common\s+AI\s+bets/i);
-    expect(synthesizerSource).toMatch(/EXAMPLE\s+2[^]*failure\s+modes/i);
-    // The verbatim Apex / Carlos 2026-05-10 BAD responses are anchors so
-    // the model learns the exact shape to avoid.
-    expect(synthesizerSource).toContain("The sources don't contain indexed benchmark data on AI bet prevalence");
-    expect(synthesizerSource).toContain("Assortment optimization failure modes are not well-indexed");
-  });
-
-  it('GOOD examples demonstrate consultant posture — opinions, verbal confidence, push-back / handoff', () => {
-    // Example 1 GOOD: opens with a view, names the binding pattern, ends
-    // with a push-back line ("I'd push back on anyone proposing Loyalty
-    // NBO before the customer-data foundation is real").
-    expect(synthesizerSource).toMatch(/I'?d\s+push\s+back\s+on\s+anyone\s+proposing/i);
-    // Example 2 GOOD: opens with "the biggest failure mode is X — and it's
-    // the one I'd want you focused on", uses verbal confidence ("high
-    // confidence on this one"), ends with a handoff to Source.
-    expect(synthesizerSource).toMatch(/biggest\s+failure\s+mode/i);
-    expect(synthesizerSource).toMatch(/high\s+confidence\s+on\s+this\s+one/i);
+  it('few-shot examples demonstrate the consultant posture — push-back, verbal confidence, lane handoff, no fabrication, off-domain decline', () => {
+    expect(synthesizerSource).toMatch(/I'?d\s+push\s+back\s+on\s+putting\s+it\s+ahead\s+of\s+assortment/i);
+    expect(synthesizerSource).toMatch(/I'?d\s+put\s+high\s+confidence\s+on/i);
     expect(synthesizerSource).toMatch(/that'?s\s+Source'?s\s+job/i);
+    expect(synthesizerSource).toMatch(/I\s+don'?t\s+have\s+that\s+level\s+of\s+specific\s+peer\s+data/i);
+    expect(synthesizerSource).toMatch(/That'?s\s+outside\s+what\s+I'?m\s+here\s+for/i);
   });
 
-  it('explicitly bans pivoting to "what the sources do show" as a substitute', () => {
-    expect(synthesizerSource).toMatch(
-      /Do\s+not\s+pivot\s+to\s+["']?what\s+the\s+sources\s+do\s+show["']?\s+as\s+a\s+substitute/i,
-    );
+  it('preserves chat-surface output conventions outside the Brief A role text', () => {
+    expect(synthesizerSource).toMatch(/OUTPUT\s+CONVENTIONS/);
+    expect(synthesizerSource).toMatch(/chat\s+surface\s+renders\s+plain\s+text\s+only/i);
+    expect(synthesizerSource).toMatch(/Apex\s+Retail/);
+    expect(synthesizerSource).toMatch(/SURFACE\s+first,?\s+then\s+TENANT,?\s+then\s+GRAPH/);
   });
 });
 
