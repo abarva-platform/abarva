@@ -5,7 +5,7 @@ import { generateFollowups } from './followups';
 import { retrieveWorldview } from './retrievers/worldview';
 import { retrieveSurfaceContextSources } from './retrievers/surface-context';
 import { retrieveTenantTechnologySources } from '@/lib/knowledge/tenant-technology-context';
-import type { AskSource, IntentClassification, AskIntent, AskSurfaceContext } from './types';
+import type { AskSource, IntentClassification, AskSurfaceContext } from './types';
 import {
   buildCurrentStateAdvisory,
   chunkAskText,
@@ -45,29 +45,22 @@ export function atlasStakeholderConflictHandoff(query: string): string | null {
   ].join(' ');
 }
 
-function emptyStateMessage(intent: AskIntent): string {
-  switch (intent) {
-    case 'vendor_lookup':
-      return "No vendor matches that name in the current index. The vendor graph populates as Pack J + Pack K portfolios land — try a capability or industry instead, or browse /platform → Vendors.";
-    case 'vendor_comparison':
-      return "We don't have indexed vendor data that matches that comparison. Vendor pricing + performance records populate as Pack K + Pack J portfolios land. For now, browse /platform → Vendors for the current vendor graph.";
-    case 'pattern_inquiry':
-      return "No matching Genome pattern is indexed yet. The library currently holds failure patterns across AI-program governance, vendor SLAs, data readiness, and change management — try one of those angles, or browse /library for the full list.";
-    case 'topic_synthesis':
-      return "That topic isn't yet synthesized in the knowledge layer. Pack L (topics + deliverables) is staged to fill this in the next slice — for now the Library has source-level material.";
-    case 'research_query':
-      return "No research match. The research index covers AI-program ROI benchmarks, data readiness, vendor SLAs, change management, and executive-mandate patterns — try one of those angles.";
-    case 'regulation_query':
-      return "No regulatory source indexed for that query. Regulation coverage is limited to healthcare (HIPAA/42 CFR Part 2), finserv (GLBA/CFPB/FINRA/SR 11-7), and retail (PCI DSS/state privacy) — try narrowing to a specific regime.";
-    case 'benchmark_query':
-      return "No benchmark matches. The benchmark library skews industry-wide (AI programs, cost-to-income, cloud adoption) — try broadening to a category or peer cohort.";
-    case 'insight_query':
-      return "No insight matches that query yet. Insights build up from engagement outcomes — the library grows as more Phase 2/4 gates close.";
-    case 'general_synthesis':
-    default:
-      return "We don't have indexed data that answers that directly. Try narrowing to a specific vendor, pattern, client, or metric — or browse /library for what's currently indexed.";
-  }
-}
+// INT-VOICE.STRAT-2026-05-10 · Canned-refusal short-circuit removed.
+//
+// Previously this file short-circuited with retrieval-mechanics framings like
+// "We don't have indexed data that answers that directly" / "That topic isn't
+// yet synthesized in the knowledge layer" whenever the retriever returned zero
+// sources, AND prefixed every low-confidence answer with "Limited indexed data
+// — confidence is moderate." Both behaviours bypassed the synthesizer's
+// senior-advisor prompt and produced exactly the over-refusal Carlos / Apex
+// flagged in the 2026-05-10 audit.
+//
+// Doctrine now: ~80% of strategic questions will not hit the corpus directly.
+// In that case, Sentinel must take the tenant context block + broad domain
+// expertise and answer like a senior AI strategy advisor. Honesty is reserved
+// for tenant-specific quantitative claims (KPI values, exact vendor figures,
+// quantified business cases) — and the model handles that itself, in one
+// short, natural caveat at the end.
 
 export async function* askIntelligence(query: string, opts: AskOptions = {}): AsyncGenerator<AskEvent> {
   const trimmed = query.trim();
@@ -122,30 +115,29 @@ export async function* askIntelligence(query: string, opts: AskOptions = {}): As
       }
     }
 
-    if (sources.length === 0) {
-      const msg = emptyStateMessage(classification.intent);
-      for (const chunk of chunkAskText(sanitizeAskSynthesis(msg))) yield { type: 'delta', text: chunk };
-      yield { type: 'done' };
-      return;
-    }
-
+    // INT-VOICE.STRAT-2026-05-10b — Streaming whitespace bug fix.
+    //
+    // The synthesizer already runs sanitizeAskSynthesis on the full text,
+    // then chunks it via chunkAskText into ~80-char pieces that each end
+    // with the trailing whitespace from `/.{1,80}(?:\s|$)/g`. We used to
+    // call sanitizeAskSynthesis(delta, 500) again here per chunk; that
+    // call's `.trim()` stripped the trailing whitespace from every chunk,
+    // which the SentinelChat client then concatenated together producing
+    // the "ApexRetail" / "demandsensing" / "upstreamconditions" word-fusion
+    // Carlos saw on every test in the 2026-05-10 re-test. The double-
+    // sanitize is also redundant — hollow openers, markdown, and the word
+    // cap are already applied at the synthesizer entry. Pass chunks
+    // through unchanged.
     let answer = '';
-    let confidencePrefixDone = false;
     for await (const delta of synthesizeStream({
       query: trimmed,
       sources,
       intent: classification.intent,
       userContextBlock: opts.userContextBlock,
+      averageConfidence,
     })) {
-      if (!confidencePrefixDone && averageConfidence < 0.6) {
-        const prefix = 'Limited indexed data — confidence is moderate. ';
-        yield { type: 'delta', text: prefix };
-        answer += prefix;
-        confidencePrefixDone = true;
-      }
-      const cleanDelta = sanitizeAskSynthesis(delta, 500);
-      answer += cleanDelta;
-      yield { type: 'delta', text: cleanDelta };
+      answer += delta;
+      yield { type: 'delta', text: delta };
     }
 
     const followups = await generateFollowups({

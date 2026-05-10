@@ -10,12 +10,16 @@
  * each anti-pattern fails and each doctrine response passes.
  */
 
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
+
 import {
   composeSentinelSystemPrompt,
   checkSentinelVoice,
   detectRefusalNeeded,
   getSentinelDoctrineVersionString,
   isSentinelVoiceDoctrineEnabled,
+  PATTERN_LEVEL_FALLBACK,
   REFUSAL_TRIGGERS,
   SENTINEL_BANNED_PATTERNS,
   SENTINEL_DOCTRINE_VERSION,
@@ -31,6 +35,10 @@ describe('SENTINEL_BANNED_PATTERNS — completeness', () => {
     expect(categories.has('hedge_drift')).toBe(true);
     expect(categories.has('hollow_opener')).toBe(true);
     expect(categories.has('ungrounded_opener')).toBe(true);
+    expect(categories.has('retrieval_mechanics')).toBe(true);
+    // INT-VOICE.STRAT-2026-05-10c — consultant-posture pivot.
+    expect(categories.has('academic_disclaimer')).toBe(true);
+    expect(categories.has('fabricated_statistic')).toBe(true);
   });
 
   it('flags coach drift — "you should"', () => {
@@ -113,6 +121,468 @@ describe('SENTINEL_BANNED_PATTERNS — completeness', () => {
     );
     expect(r.pass).toBe(false);
     expect(r.violations.some((v) => v.category === 'ungrounded_opener')).toBe(true);
+  });
+
+  // INT-VOICE.STRAT-2026-05-10 · Sentinel must answer general AI-strategy /
+  // pattern questions like a senior advisor. Retrieval-mechanics framings
+  // ("the corpus lacks…", "Tenant evidence:" headings, etc.) are over-refusal
+  // surface signatures and must trip the validator.
+  it('flags retrieval-mechanics drift — "the corpus lacks"', () => {
+    const r = checkSentinelVoice(
+      "The corpus lacks data on multi-banner specialty retailers at this exact size. PAT-AI-RET-001.",
+    );
+    expect(r.pass).toBe(false);
+    expect(r.violations.some((v) => v.category === 'retrieval_mechanics')).toBe(true);
+  });
+
+  it('flags retrieval-mechanics drift — "indexed sources don\'t contain"', () => {
+    const r = checkSentinelVoice(
+      "The indexed sources don't contain a record on assortment optimization at Apex's scale. PAT-RET-AO-001.",
+    );
+    expect(r.pass).toBe(false);
+    expect(r.violations.some((v) => v.category === 'retrieval_mechanics')).toBe(true);
+  });
+
+  it('flags retrieval-mechanics drift — "I do not have a retrieved record"', () => {
+    const r = checkSentinelVoice(
+      "I do not have a retrieved record covering AI bets at peer specialty retailers. PAT-AI-RET-001 sketches the shape.",
+    );
+    expect(r.pass).toBe(false);
+    expect(r.violations.some((v) => v.category === 'retrieval_mechanics')).toBe(true);
+  });
+
+  it('flags retrieval-mechanics drift — "Tenant evidence:" structural heading', () => {
+    const r = checkSentinelVoice(
+      "Tenant evidence: none retrieved. Pattern PAT-AI-RET-001 frames the bet space.",
+    );
+    expect(r.pass).toBe(false);
+    expect(r.violations.some((v) => v.category === 'retrieval_mechanics')).toBe(true);
+  });
+
+  it('flags retrieval-mechanics drift — "Pattern-level read:" structural heading', () => {
+    const r = checkSentinelVoice(
+      "Pattern-level read: assortment optimization sits in the merchandising-ops pattern family. PAT-RET-AO-001.",
+    );
+    expect(r.pass).toBe(false);
+    expect(r.violations.some((v) => v.category === 'retrieval_mechanics')).toBe(true);
+  });
+
+  // INT-VOICE.STRAT-2026-05-10 · Verbatim regression from the 2026-05-10 Apex /
+  // Carlos audit. Sentinel Intel produced this exact text on the question:
+  //   "What AI bets are common at multi-banner specialty retailers our size?"
+  // It must trip the validator on at least three retrieval-mechanics phrases:
+  // "sources don't contain", "isn't in the available corpus", and "what the
+  // sources do show". The earlier doctrine version did not flag any of these.
+  it('flags the verbatim Apex / Carlos 2026-05-10 over-refusal response', () => {
+    const verbatim =
+      "The sources don't contain indexed benchmark data on AI bet prevalence " +
+      "specifically at multi-banner specialty retailers of comparable scale. " +
+      "That comparison isn't in the available corpus. " +
+      "What the sources do show is Apex's own above-the-line priorities: AI " +
+      "Workforce Scheduling is the one ready to move now, while Demand Sensing " +
+      "and Loyalty AI Next Best Offer are strong candidates held back by data " +
+      "readiness gaps.";
+    const r = checkSentinelVoice(verbatim);
+    expect(r.pass).toBe(false);
+    const retrievalHits = r.violations
+      .filter((v) => v.category === 'retrieval_mechanics')
+      .map((v) => v.phrase);
+    expect(retrievalHits).toEqual(
+      expect.arrayContaining([
+        "sources don't contain",
+        "isn't in the corpus / available corpus",
+        "what the sources do show",
+      ]),
+    );
+  });
+
+  it('flags "Limited indexed data" — the canned low-confidence prefix removed in INT-VOICE.STRAT-2026-05-10', () => {
+    const r = checkSentinelVoice(
+      'Limited indexed data — confidence is moderate. Three AI bets are common at peer retailers. PAT-RET-AI-001.',
+    );
+    expect(r.pass).toBe(false);
+    expect(r.violations.some((v) => v.phrase === 'limited indexed data')).toBe(true);
+  });
+
+  it('flags "corpus does not include" / "corpus doesn\'t include"', () => {
+    const a = checkSentinelVoice(
+      'The corpus does not include peer benchmarks at this exact scale. PAT-RET-AI-001 frames the bet space.',
+    );
+    expect(a.violations.some((v) => v.category === 'retrieval_mechanics')).toBe(true);
+
+    const b = checkSentinelVoice(
+      "The corpus doesn't include vendor performance figures for that contract. Confidence: directional.",
+    );
+    expect(b.violations.some((v) => v.category === 'retrieval_mechanics')).toBe(true);
+  });
+
+  it('flags "I did not find enough indexed evidence" — the SentinelChat empty-stream fallback', () => {
+    const r = checkSentinelVoice(
+      'I did not find enough indexed Intelligence evidence to answer that yet. Try a vendor or pattern.',
+    );
+    expect(r.violations.some((v) => v.category === 'retrieval_mechanics')).toBe(true);
+  });
+
+  it('does not flag a senior-advisor answer that uses the corpus naturally', () => {
+    const r = checkSentinelVoice(
+      'Three AI bets are common at multi-banner specialty retailers your size: demand forecasting, assortment optimization, and store-labor planning. Pattern PAT-RET-AI-001 captures the shape; the merchandising-ops co-sponsorship binding shows up across most successful programs. Confidence: directional until Apex KPI evidence is loaded.',
+    );
+    expect(r.pass).toBe(true);
+    expect(r.violations).toEqual([]);
+  });
+
+  // INT-VOICE.STRAT-2026-05-10c — consultant-posture pivot. Academic /
+  // cover-your-back disclaimers were how Tests 1, 2, and 4 in the 2026-05-10
+  // re-test scored D1=2: Sentinel kept opening with hedges before delivering
+  // the answer.
+  describe('academic_disclaimer — consultant posture (INT-VOICE.STRAT-2026-05-10c)', () => {
+    it('flags "based on the limited data available to me…"', () => {
+      const r = checkSentinelVoice(
+        'Based on the limited data available to me, three AI bets show up at peer specialty retailers. PAT-RET-AI-001.',
+      );
+      expect(r.violations.some((v) => v.category === 'academic_disclaimer')).toBe(true);
+    });
+
+    it('flags "at the general AI industry level, not corpus-grounded for [tenant]…"', () => {
+      const r = checkSentinelVoice(
+        'At the general AI industry level, not corpus-grounded for Apex specifically, four bets show up. PAT-RET-AI-001.',
+      );
+      const academicHits = r.violations.filter((v) => v.category === 'academic_disclaimer');
+      expect(academicHits.length).toBeGreaterThanOrEqual(2);
+    });
+
+    it('flags "From a high level…" / "At a high level…" as a hedge opener', () => {
+      const a = checkSentinelVoice(
+        'From a high level, the assortment-optimization bet is the most-cited pattern. PAT-RET-AI-001.',
+      );
+      expect(a.violations.some((v) => v.category === 'academic_disclaimer')).toBe(true);
+
+      const b = checkSentinelVoice(
+        'At a high level, three things are worth knowing. PAT-RET-AI-001.',
+      );
+      expect(b.violations.some((v) => v.category === 'academic_disclaimer')).toBe(true);
+    });
+
+    it('flags the "On the one hand … on the other hand …" fence-sitting pattern', () => {
+      const r = checkSentinelVoice(
+        'On the one hand, demand sensing is a strong bet. On the other hand, it depends on data readiness. PAT-RET-AI-001.',
+      );
+      expect(r.violations.some((v) => v.category === 'academic_disclaimer')).toBe(true);
+    });
+
+    it('flags "It\'s important to note…" as a hedge before reasoning', () => {
+      const r = checkSentinelVoice(
+        "It's important to note that assortment optimization is data-dependent. The COGS-margin trap is the canonical failure mode. PAT-RET-AI-001.",
+      );
+      expect(r.violations.some((v) => v.category === 'academic_disclaimer')).toBe(true);
+    });
+
+    it('does not flag a consultant-posture answer that uses verbal calibration without disclaimers', () => {
+      const r = checkSentinelVoice(
+        "The biggest failure mode at your scale is the COGS-margin trap, and it's the one I'd want you focused on. Three peer specialty retailers in the corpus saw exactly this in months 4-7 of horizontal rollout. High confidence on this one.",
+      );
+      expect(r.violations.some((v) => v.category === 'academic_disclaimer')).toBe(false);
+    });
+  });
+
+  // INT-VOICE.STRAT-2026-05-10c — the one firm anti-fabrication line.
+  // Senior consultants reason from experience and cite where they have data;
+  // they never invent precise peer-prevalence percentages or vendor market
+  // shares. The validator surfaces the obvious shape of fabrication.
+  describe('fabricated_statistic — anti-fabrication (INT-VOICE.STRAT-2026-05-10c)', () => {
+    it('flags "73% of retailers…" peer-prevalence fabrication', () => {
+      const r = checkSentinelVoice(
+        '73% of retailers in your size class run AI workforce scheduling. The pattern is well-documented.',
+      );
+      expect(r.violations.some((v) => v.category === 'fabricated_statistic')).toBe(true);
+    });
+
+    it('flags "47% of peer specialty retailers…"', () => {
+      const r = checkSentinelVoice(
+        '47% of peer specialty retailers tried this and failed in months 6-9. PAT-RET-AI-001.',
+      );
+      expect(r.violations.some((v) => v.category === 'fabricated_statistic')).toBe(true);
+    });
+
+    it('flags "Algonomy has 89% market share" vendor-share fabrication', () => {
+      const r = checkSentinelVoice(
+        'Algonomy has 89% market share in retail personalization. Their pricing is aggressive.',
+      );
+      expect(r.violations.some((v) => v.category === 'fabricated_statistic')).toBe(true);
+    });
+
+    it('does not flag advisor framings without precise fabricated stats', () => {
+      const r = checkSentinelVoice(
+        'Most retailers in the corpus that tried this saw similar lifts. Three peer specialty retailers in the corpus had this exact issue in months 4-7. High confidence on the pattern shape.',
+      );
+      expect(r.violations.some((v) => v.category === 'fabricated_statistic')).toBe(false);
+    });
+  });
+});
+
+// INT-VOICE.STRAT-2026-05-10c · Consultant posture — replaces the earlier
+// "epistemic-honesty librarian with two-tier scoping" framing after the
+// 2026-05-10 Apex / Carlos re-test showed it produced search-with-disclaimers
+// in a senior tone, not consulting. Calibration archetype: a senior AI
+// strategy consultant the user is paying $1.5K-$3K/hour. She forms opinions,
+// calibrates verbally, cites where it strengthens, pushes back when warranted,
+// and refuses exactly one thing — fabricating specific tenant facts or peer
+// statistics.
+describe('PATTERN_LEVEL_FALLBACK consultant posture — INT-VOICE.STRAT-2026-05-10c', () => {
+  it('exports the senior-consultant calibration archetype', () => {
+    expect(PATTERN_LEVEL_FALLBACK).toMatch(/Consultant\s+posture/i);
+    expect(PATTERN_LEVEL_FALLBACK).toMatch(/senior\s+AI\s+strategy\s+advisor/i);
+    expect(PATTERN_LEVEL_FALLBACK).toMatch(/(?:not\s+a|NOT\s+a)\s+corpus\s+search/i);
+  });
+
+  it('directs Sentinel to form a view, defend it briefly, surface the reasoning', () => {
+    expect(PATTERN_LEVEL_FALLBACK).toMatch(/Form\s+a\s+view,?\s+defend\s+it\s+briefly/i);
+    expect(PATTERN_LEVEL_FALLBACK).toMatch(/My\s+read\s+is\s+X/i);
+  });
+
+  it('requires verbal confidence calibration, not academic preambles', () => {
+    expect(PATTERN_LEVEL_FALLBACK).toMatch(/Calibrate\s+confidence\s+in\s+plain\s+language/i);
+    expect(PATTERN_LEVEL_FALLBACK).toMatch(/high\s+confidence\s+on\s+this/i);
+    expect(PATTERN_LEVEL_FALLBACK).toMatch(/judgment,?\s+not\s+benchmark\s+data/i);
+    expect(PATTERN_LEVEL_FALLBACK).toMatch(
+      /Calibration\s+belongs\s+in\s+how\s+you\s+phrase\s+the\s+claim,?\s+not\s+in\s+(?:an\s+academic\s+)?preamble/i,
+    );
+  });
+
+  it('directs Sentinel to cite evidence where it strengthens the argument, conversationally', () => {
+    expect(PATTERN_LEVEL_FALLBACK).toMatch(/Cite\s+evidence\s+where\s+it\s+strengthens\s+the\s+argument/i);
+    expect(PATTERN_LEVEL_FALLBACK).toMatch(/not\s+a\s+formal\s+citation\s+requirement/i);
+  });
+
+  it('directs Sentinel to disagree when the evidence supports it', () => {
+    expect(PATTERN_LEVEL_FALLBACK).toMatch(/Disagree\s+when\s+the\s+evidence\s+supports/i);
+    expect(PATTERN_LEVEL_FALLBACK).toMatch(/Neutral\s+presentation\s+of\s+options\s+is\s+not/i);
+  });
+
+  it('codifies the one firm anti-fabrication line — tenant facts and peer statistics', () => {
+    expect(PATTERN_LEVEL_FALLBACK).toMatch(
+      /one\s+firm\s+line[^]*do\s+not\s+fabricate\s+tenant[- ]specific\s+facts\s+or\s+peer\s+statistics/i,
+    );
+    expect(PATTERN_LEVEL_FALLBACK).toContain('73% of retailers');
+    expect(PATTERN_LEVEL_FALLBACK).toMatch(/(?:I\s+don'?t\s+have\s+that\s+in\s+Apex'?s?\s+connected\s+data|connected\s+data)/i);
+  });
+
+  it('forbids retrieval-mechanics framings as banned framings', () => {
+    expect(PATTERN_LEVEL_FALLBACK).toMatch(/Banned\s+framings/i);
+    expect(PATTERN_LEVEL_FALLBACK).toContain('the corpus lacks');
+    expect(PATTERN_LEVEL_FALLBACK).toContain('indexed data is missing');
+    expect(PATTERN_LEVEL_FALLBACK).toContain('I do not have a retrieved record');
+    expect(PATTERN_LEVEL_FALLBACK).toContain('Tenant evidence:');
+    expect(PATTERN_LEVEL_FALLBACK).toContain('Pattern-level read:');
+  });
+
+  it('forbids academic / cover-your-back disclaimer phrasings', () => {
+    expect(PATTERN_LEVEL_FALLBACK).toMatch(/(?:Also\s+banned[^]*academic|Carlos\s+would\s+fire)/i);
+    expect(PATTERN_LEVEL_FALLBACK).toContain('based on the limited data available to me');
+    expect(PATTERN_LEVEL_FALLBACK).toContain('at the general AI industry level');
+    expect(PATTERN_LEVEL_FALLBACK).toContain('On the one hand');
+    expect(PATTERN_LEVEL_FALLBACK).toContain("It's important to note");
+  });
+
+  it('names the ~80% no-corpus-hit doctrine line as the calibration baseline', () => {
+    expect(PATTERN_LEVEL_FALLBACK).toMatch(/80\s*%/);
+    expect(PATTERN_LEVEL_FALLBACK).toMatch(/no\s+direct\s+corpus\s+hit/i);
+    expect(PATTERN_LEVEL_FALLBACK).toMatch(
+      /Refusing\s+or\s+over[- ]hedging\s+on\s+a\s+general\s+strategy\s+question\s+is\s+a\s+failure\s+mode,\s+not\s+honesty/i,
+    );
+  });
+
+  it('is included in the Intelligence-surface system prompt', () => {
+    const prompt = composeSentinelSystemPrompt({
+      mode: 'corpus',
+      tenantKey: 'apex-retail',
+      surface: '/intelligence',
+      vectorIndexPending: false,
+      worldviewPending: false,
+    });
+    expect(prompt).toMatch(/Consultant\s+posture/i);
+    expect(prompt).toMatch(/Form\s+a\s+view,?\s+defend\s+it\s+briefly/i);
+  });
+
+  it('is omitted on the Source surface, which has its own Brief C role', () => {
+    const prompt = composeSentinelSystemPrompt({
+      mode: 'corpus',
+      tenantKey: 'apex-retail',
+      surface: '/source',
+      vectorIndexPending: false,
+      worldviewPending: false,
+    });
+    // Source uses Brief C's verbatim role text — Pattern-level fallback is
+    // Intelligence-only.
+    expect(prompt).not.toMatch(/Consultant\s+posture/i);
+    expect(prompt).toMatch(/You\s+are\s+Source,?\s+AbarVa'?s\s+vendor\s+selection\s+agent/i);
+  });
+});
+
+// SRC-VOICE.STRAT-2026-05-10 · Brief C expert posture for the Source surface.
+// Asserts that composeSentinelSystemPrompt('/source') carries the verbatim
+// Brief C canonical text from `docs/build/CURSOR_BRIEF_C_SOURCE.md`.
+describe('Source surface — Brief C expert posture (SRC-VOICE.STRAT-2026-05-10)', () => {
+  const sourcePrompt = composeSentinelSystemPrompt({
+    mode: 'corpus',
+    tenantKey: 'apex-retail',
+    surface: '/source',
+    vectorIndexPending: false,
+    worldviewPending: false,
+  });
+
+  it('opens with the WHO YOU ARE / senior IT vendor selection advisor identity', () => {
+    expect(sourcePrompt).toMatch(/You\s+are\s+Source,?\s+AbarVa'?s\s+vendor\s+selection\s+agent/i);
+    expect(sourcePrompt).toMatch(/WHO\s+YOU\s+ARE/);
+    expect(sourcePrompt).toMatch(/senior\s+IT\s+vendor\s+selection\s+advisor/i);
+    expect(sourcePrompt).toMatch(/retail,\s+healthcare,\s+and\s+financial\s+services/i);
+  });
+
+  it('explicitly disclaims being a vendor catalog / procurement workflow / comparison-table generator', () => {
+    expect(sourcePrompt).toMatch(
+      /NOT\s+a\s+vendor\s+catalog,?\s+a\s+procurement\s+workflow\s+tool,?\s+or\s+a\s+comparison[- ]table\s+generator/i,
+    );
+  });
+
+  it('lists the three sources of intelligence (corpus + tenant + own expertise)', () => {
+    expect(sourcePrompt).toMatch(/WHAT\s+YOU\s+HAVE\s+ACCESS\s+TO/);
+    expect(sourcePrompt).toMatch(/industry\s+knowledge\s+corpus/i);
+    expect(sourcePrompt).toMatch(/tenant'?s\s+enterprise\s+knowledge\s+layer/i);
+    expect(sourcePrompt).toMatch(/own\s+deep\s+expertise/i);
+  });
+
+  it('declares the six capabilities — longlist, RFI/RFP, pricing, health, SI, decision doc', () => {
+    expect(sourcePrompt).toMatch(/WHAT\s+YOU\s+DO/);
+    expect(sourcePrompt).toMatch(/LONGLIST\s+GENERATION/);
+    expect(sourcePrompt).toMatch(/RFI\s*\/\s*RFP\s+CONSTRUCTION/);
+    expect(sourcePrompt).toMatch(/PRICING\s+INTELLIGENCE/);
+    expect(sourcePrompt).toMatch(/VENDOR\s+HEALTH\s+SIGNALS/);
+    expect(sourcePrompt).toMatch(/SI\s+PARTNER\s+MAPPING/);
+    expect(sourcePrompt).toMatch(/DECISION\s+DOCUMENTATION/);
+  });
+
+  it('mandates the HOW YOU RESPOND posture — opinions not catalogs, push-back, ask, confidence in plain language', () => {
+    expect(sourcePrompt).toMatch(/HOW\s+YOU\s+RESPOND/);
+    expect(sourcePrompt).toMatch(/OPINIONS,?\s+NOT\s+CATALOGS/);
+    expect(sourcePrompt).toMatch(/CONFIDENCE\s+IN\s+PLAIN\s+LANGUAGE/);
+    expect(sourcePrompt).toMatch(/EVIDENCE\s+WHERE\s+IT\s+STRENGTHENS\s+THE\s+ARGUMENT/);
+    expect(sourcePrompt).toMatch(/PUSH\s+BACK\s+WHEN\s+WARRANTED/);
+    expect(sourcePrompt).toMatch(/ASK\s+CLARIFYING\s+QUESTIONS/);
+  });
+
+  it('declares WHAT YOU NEVER DO — anti-fabrication of vendor metrics, customer references, tenant facts, financial health', () => {
+    expect(sourcePrompt).toMatch(/WHAT\s+YOU\s+NEVER\s+DO/);
+    expect(sourcePrompt).toMatch(/NEVER\s+fabricate\s+vendor\s+metrics/i);
+    expect(sourcePrompt).toMatch(/NEVER\s+fabricate\s+customer\s+references/i);
+    expect(sourcePrompt).toMatch(/NEVER\s+fabricate\s+tenant[- ]specific\s+facts/i);
+    expect(sourcePrompt).toMatch(/NEVER\s+fabricate\s+financial\s+health\s+metrics/i);
+    expect(sourcePrompt).toMatch(/NEVER\s+say\s+"this\s+is\s+not\s+in\s+the\s+corpus"\s+as\s+a\s+refusal/i);
+    expect(sourcePrompt).toMatch(
+      /NEVER\s+recommend\s+a\s+vendor\s+based\s+on\s+the\s+user'?s\s+apparent\s+preference\s+rather\s+than\s+evidence/i,
+    );
+  });
+
+  it('routes off-vendor lanes correctly — landscape → Sentinel, Move-shaping → Nexus', () => {
+    expect(sourcePrompt).toMatch(/landscape\s+questions[\s\S]{0,200}Sentinel/i);
+    expect(sourcePrompt).toMatch(/Move[- ]shaping[\s\S]{0,200}Nexus/i);
+  });
+
+  it('carries the five Brief C few-shot examples', () => {
+    expect(sourcePrompt).toMatch(/EXAMPLE\s+1\s*·\s*Vendor\s+shortlist\s+with\s+rationale/i);
+    expect(sourcePrompt).toMatch(/EXAMPLE\s+2\s*·\s*Pushing\s+back\s+on\s+a\s+stated\s+preference/i);
+    expect(sourcePrompt).toMatch(/EXAMPLE\s+3\s*·\s*Asking\s+for\s+clarification/i);
+    expect(sourcePrompt).toMatch(/EXAMPLE\s+4\s*·\s*Honest\s+about\s+what'?s\s+missing/i);
+    expect(sourcePrompt).toMatch(/EXAMPLE\s+5\s*·\s*Off[- ]scope\s+question/i);
+  });
+
+  it('few-shot examples demonstrate the vendor-advisor posture — opinion-led shortlist, push-back, no fabrication', () => {
+    expect(sourcePrompt).toMatch(/Three\s+credible\s+vendors\s+for\s+your\s+specific\s+situation/i);
+    expect(sourcePrompt).toMatch(/I'?d\s+push\s+back\s+on\s+locking\s+in\s+here/i);
+    expect(sourcePrompt).toMatch(/I\s+don'?t\s+have\s+visibility\s+into\s+Apex'?s\s+current/i);
+    expect(sourcePrompt).toMatch(/That'?s\s+outside\s+what\s+I\s+do/i);
+  });
+
+  it('preserves the supplementary gate-discipline scaffolding (SOURCE_FIVE_RULES, specialist dispatch)', () => {
+    expect(sourcePrompt).toMatch(/Five\s+voice\s+rules\s+on\s+Source/i);
+    expect(sourcePrompt).toMatch(/Specialist\s+lenses/i);
+    expect(sourcePrompt).toMatch(/next-action:\s*"What\s+should\s+we\s+do\s+next/i);
+  });
+});
+
+// INT-VOICE.STRAT-2026-05-10d · The Ask synthesizer prompt body is the
+// canonical Brief A text from `docs/build/CURSOR_BRIEF_A_SENTINEL.md` plus
+// the surface-conventions footer. These assertions guard against drift from
+// the canonical brief.
+describe('Ask synthesizer prompt — Brief A expert posture (INT-VOICE.STRAT-2026-05-10d)', () => {
+  const synthesizerSource = readFileSync(
+    join(__dirname, '..', '..', '..', 'intelligence', 'ask', 'synthesizer.ts'),
+    'utf8',
+  );
+
+  it('opens with the WHO YOU ARE / senior advisor identity from Brief A', () => {
+    expect(synthesizerSource).toMatch(/WHO\s+YOU\s+ARE/);
+    expect(synthesizerSource).toMatch(/senior\s+AI\s+strategy\s+advisor/i);
+    expect(synthesizerSource).toMatch(/retail,\s+healthcare,\s+and\s+financial\s+services/i);
+    expect(synthesizerSource).toMatch(/senior\s+partner\s+at\s+a\s+top[- ]tier\s+firm/i);
+  });
+
+  it('lists the three sources of intelligence (corpus + tenant + own expertise)', () => {
+    expect(synthesizerSource).toMatch(/WHAT\s+YOU\s+HAVE\s+ACCESS\s+TO/);
+    expect(synthesizerSource).toMatch(/industry\s+knowledge\s+corpus/i);
+    expect(synthesizerSource).toMatch(/tenant'?s\s+enterprise\s+knowledge\s+layer/i);
+    expect(synthesizerSource).toMatch(/your\s+own\s+deep\s+expertise/i);
+  });
+
+  it('declares the HOW YOU RESPOND posture — opinions, confidence, evidence, disagree, ask, converse', () => {
+    expect(synthesizerSource).toMatch(/HOW\s+YOU\s+RESPOND/);
+    expect(synthesizerSource).toMatch(/OPINIONS,?\s+NOT\s+SUMMARIES/);
+    expect(synthesizerSource).toMatch(/CONFIDENCE\s+IN\s+PLAIN\s+LANGUAGE/);
+    expect(synthesizerSource).toMatch(/EVIDENCE\s+WHERE\s+IT\s+STRENGTHENS\s+THE\s+ARGUMENT/);
+    expect(synthesizerSource).toMatch(/DISAGREE\s+WHEN\s+WARRANTED/);
+    expect(synthesizerSource).toMatch(/ASK\s+CLARIFYING\s+QUESTIONS\s+WHEN\s+THEY\s+WOULD\s+HELP/);
+    expect(synthesizerSource).toMatch(/CONVERSE\s+NATURALLY/);
+  });
+
+  it('declares WHAT YOU NEVER DO — anti-fabrication, no corpus refusal, no decline-when-can-reason', () => {
+    expect(synthesizerSource).toMatch(/WHAT\s+YOU\s+NEVER\s+DO/);
+    expect(synthesizerSource).toMatch(
+      /NEVER\s+fabricate\s+specific\s+tenant\s+facts/i,
+    );
+    expect(synthesizerSource).toMatch(/NEVER\s+fabricate\s+peer\s+statistics/i);
+    expect(synthesizerSource).toMatch(
+      /NEVER\s+say\s+"this\s+is\s+not\s+in\s+the\s+corpus"\s+as\s+a\s+refusal/i,
+    );
+    expect(synthesizerSource).toContain('73% of retailers');
+    expect(synthesizerSource).toContain('Algonomy has 89% market share');
+  });
+
+  it('declares LANE DISCIPLINE — vendor depth → Source, Move-shaping → Nexus', () => {
+    expect(synthesizerSource).toMatch(/LANE\s+DISCIPLINE/);
+    expect(synthesizerSource).toMatch(/Source\s+has\s+the\s+depth/i);
+    expect(synthesizerSource).toMatch(/Nexus|Moves\s+surface/i);
+  });
+
+  it('carries the five Brief A few-shot examples', () => {
+    expect(synthesizerSource).toMatch(/EXAMPLE\s+1\s*·\s*Strategy\s+question\s+with\s+corpus\s+evidence/i);
+    expect(synthesizerSource).toMatch(/EXAMPLE\s+2\s*·\s*Question\s+about\s+a\s+vendor/i);
+    expect(synthesizerSource).toMatch(/EXAMPLE\s+3\s*·\s*Question\s+requiring\s+clarification/i);
+    expect(synthesizerSource).toMatch(/EXAMPLE\s+4\s*·\s*The\s+"I\s+don'?t\s+know"\s+edge\s+case/i);
+    expect(synthesizerSource).toMatch(/EXAMPLE\s+5\s*·\s*Off[- ]domain\s+question/i);
+  });
+
+  it('few-shot examples demonstrate the consultant posture — push-back, verbal confidence, lane handoff, no fabrication, off-domain decline', () => {
+    expect(synthesizerSource).toMatch(/I'?d\s+push\s+back\s+on\s+putting\s+it\s+ahead\s+of\s+assortment/i);
+    expect(synthesizerSource).toMatch(/I'?d\s+put\s+high\s+confidence\s+on/i);
+    expect(synthesizerSource).toMatch(/that'?s\s+Source'?s\s+job/i);
+    expect(synthesizerSource).toMatch(/I\s+don'?t\s+have\s+that\s+level\s+of\s+specific\s+peer\s+data/i);
+    expect(synthesizerSource).toMatch(/That'?s\s+outside\s+what\s+I'?m\s+here\s+for/i);
+  });
+
+  it('preserves chat-surface output conventions outside the Brief A role text', () => {
+    expect(synthesizerSource).toMatch(/OUTPUT\s+CONVENTIONS/);
+    expect(synthesizerSource).toMatch(/chat\s+surface\s+renders\s+plain\s+text\s+only/i);
+    expect(synthesizerSource).toMatch(/Apex\s+Retail/);
+    expect(synthesizerSource).toMatch(/SURFACE\s+first,?\s+then\s+TENANT,?\s+then\s+GRAPH/);
   });
 });
 
