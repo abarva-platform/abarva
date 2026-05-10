@@ -72,7 +72,7 @@ async function loadClientsByKey(sb: SupabaseClient): Promise<Map<string, ClientR
   const byKey = new Map<string, ClientRow>();
   for (const row of (data as ClientRow[] | null) ?? []) {
     if (/Meridian/i.test(row.name)) byKey.set('meridian', row);
-    if (/Arcturus|First Capital/i.test(row.name)) byKey.set('arcturus', row);
+    if (/Arcturus|First Capital|Brindlemark/i.test(row.name)) byKey.set('arcturus', row);
     if (/Apex Retail/i.test(row.name)) byKey.set('apexretail', row);
   }
   return byKey;
