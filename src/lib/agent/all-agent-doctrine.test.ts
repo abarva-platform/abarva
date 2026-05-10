@@ -16,6 +16,8 @@ describe('composeAllAgentDoctrineBlock', () => {
     expect(block).toContain('lead-bullets, lead-table, stat-stack, sequential-steps, or brief-narrative');
     expect(block).toContain('do not emit raw markdown emphasis markers');
     expect(block).toContain('do not show raw pattern, use-case, or vendor IDs');
+    expect(block).toContain('AGENT OUTPUT FEW-SHOT EXAMPLES');
+    expect(block).toContain('Do not copy the facts unless the current retrieved context supports them');
   });
 
   it('maps setup, intelligence, moves, source, and tower surfaces', () => {
