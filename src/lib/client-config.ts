@@ -83,6 +83,16 @@ export function canonicalClientDisplayName(args: {
   const normalizedName = name?.toLowerCase();
 
   if (
+    key === 'meridian' ||
+    normalizedName === 'heliara health alliance' ||
+    normalizedName === 'heliara health' ||
+    normalizedName === 'meridian health system' ||
+    normalizedName === 'meridian health'
+  ) {
+    return 'Meridian Health';
+  }
+
+  if (
     key === 'arcturus' ||
     key === 'firstcapital' ||
     key === 'first-capital' ||

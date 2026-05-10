@@ -69,4 +69,36 @@ describe('getActiveClientKey', () => {
     expect(from).toHaveBeenCalledWith('clients');
     expect(eq).toHaveBeenCalledWith('tenant_key', 'apexretail');
   });
+
+  it('canonicalizes legacy Heliara database rows to Meridian Health', async () => {
+    currentUserMock.mockResolvedValue({
+      publicMetadata: { role: 'client' },
+      primaryEmailAddress: { emailAddress: 'anita.krishnamurthy@meridian-health.example.com' },
+      emailAddresses: [],
+    });
+    cookiesMock.mockResolvedValue({
+      get: () => null,
+    });
+
+    const maybeSingle = jest.fn(async () => ({
+      data: {
+        id: 'client-meridian-uuid',
+        name: 'Heliara Health Alliance',
+        industry_code: 'HEALTHCARE_IDN',
+      },
+    }));
+    const limit = jest.fn(() => ({ maybeSingle }));
+    const eq = jest.fn(() => ({ limit }));
+    const ilike = jest.fn(() => ({ maybeSingle: jest.fn(async () => ({ data: null })) }));
+    const select = jest.fn(() => ({ eq, ilike }));
+    const from = jest.fn(() => ({ select }));
+    getServerSupabaseMock.mockReturnValue({ from });
+
+    await expect(getActiveClientRow()).resolves.toEqual({
+      id: 'client-meridian-uuid',
+      name: 'Meridian Health',
+      industry_code: 'HEALTHCARE_IDN',
+      key: 'meridian',
+    });
+  });
 });

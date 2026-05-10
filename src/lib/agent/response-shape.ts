@@ -1,5 +1,25 @@
 import { repairAgentOutputContractText } from './output-discipline/response-contract';
 
+function normalizeAgentMarkupForPlainText(text: string): string {
+  return text
+    .replace(/<abv-sources[\s\S]*?<\/abv-sources>/gi, '')
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<\/(?:p|div|h[1-6])>/gi, '\n\n')
+    .replace(/<(?:p|div|h[1-6])(?:\s+[^>]*)?>/gi, '\n\n')
+    .replace(/<li(?:\s+[^>]*)?>/gi, '\n- ')
+    .replace(/<\/li>/gi, '\n')
+    .replace(/<\/?(?:ul|ol)(?:\s+[^>]*)?>/gi, '\n')
+    .replace(/<abv-(?:pattern|usecase|vendor)\s+[^>]*>([^<]+)<\/abv-(?:pattern|usecase|vendor)>/gi, ' $1 ')
+    .replace(/<\/?(?:strong|b|em|i|span|cite)(?:\s+[^>]*)?>/gi, ' ')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/\s+([,.;:!?])/g, '$1')
+    .replace(/[ \t]{2,}/g, ' ')
+    .replace(/[ \t]+\n/g, '\n')
+    .replace(/\n[ \t]+/g, '\n')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+}
+
 export function stripChatMarkdownFormatting(text: string): string {
   return text
     .replace(/\*\*([^*]+)\*\*/g, '$1')
@@ -47,6 +67,10 @@ function splitSentences(text: string): string[] {
     .filter(Boolean);
 }
 
+function isRecommendationSentence(sentence: string): boolean {
+  return /\b(recommend|choose|do not|highest|lowest|defer|pursue|fix|next|pause|approve|prioritize)\b/i.test(sentence);
+}
+
 function extractNumberedItems(text: string): string[] {
   const matches = Array.from(
     text.matchAll(/(?:^|\s)([1-4])\.\s+([\s\S]*?)(?=(?:\s[1-4]\.\s+)|$)/g),
@@ -79,7 +103,8 @@ function extractMissingLine(text: string): string | null {
   if (explicit?.[1]) return trimWords(explicit[1].trim(), 28);
 
   const missingSentence = splitSentences(text).find((sentence) =>
-    /\b(missing|do not have|don't have|absent|not in the retrieved context)\b/i.test(sentence),
+    /\b(missing|do not have|don't have|absent|not in the retrieved context)\b/i.test(sentence) &&
+    !isRecommendationSentence(sentence),
   );
   return missingSentence ? trimWords(missingSentence, 28) : null;
 }
@@ -282,15 +307,15 @@ function compactConsultantChatText(text: string, maxWords: number): string {
   const missing = extractMissingLine(text);
   const question = extractQuestionLine(text);
   const evidence = sentences.find((sentence, index) =>
-    index > 0 && /\d|KPI|financial|system|strategy|baseline|risk|confidence|source/i.test(sentence),
+    index > 0 && !isRecommendationSentence(sentence) && /\d|KPI|financial|system|strategy|baseline|risk|confidence|source/i.test(sentence),
   ) ?? sentences.find((sentence, index) =>
-    index > 0 && /\b(require|proof|integration|adoption|workflow|data|guardrail|ownership|readiness|connector)\b/i.test(sentence),
+    index > 0 && !isRecommendationSentence(sentence) && /\b(require|proof|integration|adoption|workflow|data|guardrail|ownership|readiness|connector)\b/i.test(sentence),
   );
   const recommendation = sentences.find((sentence, index) =>
     index > 0 &&
     sentence !== evidence &&
     sentence !== missing &&
-    /\b(recommend|choose|do not|highest|lowest|defer|pursue|fix|next)\b/i.test(sentence),
+    isRecommendationSentence(sentence),
   );
 
   const lines = [
@@ -298,7 +323,6 @@ function compactConsultantChatText(text: string, maxWords: number): string {
     evidence ? `- Evidence: ${sentenceWithPeriod(trimWords(evidence, 28))}` : null,
     missing ? `- Missing: ${sentenceWithPeriod(missing)}` : null,
     recommendation ? `- Next: ${sentenceWithPeriod(trimWords(recommendation, 22))}` : null,
-    !recommendation && !question ? '- Next: choose an action, compare options, or ask for evidence.' : null,
     question ? `- Question: ${normalizeCompactLine(trimWords(question, 20))}` : null,
   ].filter(Boolean);
 
@@ -328,11 +352,11 @@ function shouldCompactSurface(surface: string): boolean {
 }
 
 export function shapeStreamingAgentTextForSurface(_surface: string, text: string): string {
-  return repairAgentOutputContractText(stripChatMarkdownFormatting(text)).text;
+  return repairAgentOutputContractText(stripChatMarkdownFormatting(normalizeAgentMarkupForPlainText(text))).text;
 }
 
 export function shapeAgentResponseForSurface(surface: string, text: string): string {
-  const cleaned = normalizeVisibleWhitespace(stripChatMarkdownFormatting(text));
+  const cleaned = normalizeVisibleWhitespace(stripChatMarkdownFormatting(normalizeAgentMarkupForPlainText(text)));
   let shaped: string;
   if (surface === '/strategic-moves/new') {
     shaped = compactStrategicMoveOriginateText(cleaned);

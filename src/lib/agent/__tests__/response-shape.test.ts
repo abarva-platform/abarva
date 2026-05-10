@@ -119,6 +119,30 @@ describe('agent response shape', () => {
     expect(streaming).toBe('Apex Retail has three signals. More text is still arriving.');
   });
 
+  it('preserves word boundaries when compacting model HTML markup', () => {
+    const raw = [
+      'The live brief for Meridian Health shows three above-the-line clinical<strong>AI</strong> bets, but does not surface a dedicated clinical analytics environment inventory.',
+      'What is visible points to active<strong>clinical</strong> intelligence initiatives — Population Health AI for ACOs scored at 87<strong>and</strong> flagged for origination, Ambient AI Clinical Documentation already in-flight<strong>at</strong> 82 and in design.',
+    ].join(' ');
+
+    const shaped = shapeAgentResponseForSurface('/intelligence', raw);
+
+    expect(shaped).toContain('clinical AI');
+    expect(shaped).toContain('active clinical');
+    expect(shaped).toContain('87 and');
+    expect(shaped).not.toMatch(/clinicalAI|activeclinical|87and|in-flightat/);
+    expect(shaped).not.toContain('choose an action, compare options, or ask for evidence');
+  });
+
+  it('preserves word boundaries during streaming markup repair', () => {
+    const streaming = shapeStreamingAgentTextForSurface(
+      '/intelligence',
+      'clinical<strong>AI</strong> and active<strong>clinical</strong> work scored at 87<strong>and</strong> is in-flight<strong>at</strong> 82.',
+    );
+
+    expect(streaming).toBe('clinical AI and active clinical work scored at 87 and is in-flight at 82.');
+  });
+
   it('removes raw pattern ids from visible final responses', () => {
     const shaped = shapeAgentResponseForSurface(
       '/strategic-moves/new',

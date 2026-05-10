@@ -5,6 +5,7 @@ import {
   CLIENT_KEY_TO_INDUSTRY_CODE,
   CLIENT_KEY_TO_DB_NAME,
   DEFAULT_CLIENT_KEY,
+  canonicalClientDisplayName,
   inferClientKeyFromEmail,
   isClientKey,
   type ClientKey,
@@ -127,7 +128,7 @@ export async function getActiveClientRow(requestedClientId?: string | null): Pro
       const row = data as { id: string; name: string; industry_code: string | null };
       return {
         id: row.id,
-        name: row.name,
+        name: canonicalClientDisplayName({ key, name: row.name }) ?? row.name,
         industry_code: row.industry_code?.trim() || CLIENT_KEY_TO_INDUSTRY_CODE[key],
         key,
       };
@@ -145,7 +146,7 @@ export async function getActiveClientRow(requestedClientId?: string | null): Pro
       const row = data as { id: string; name: string; industry_code: string | null };
       return {
         id: row.id,
-        name: row.name,
+        name: canonicalClientDisplayName({ key, name: row.name }) ?? row.name,
         industry_code: row.industry_code?.trim() || CLIENT_KEY_TO_INDUSTRY_CODE[key],
         key,
       };
@@ -163,7 +164,7 @@ export async function getActiveClientRow(requestedClientId?: string | null): Pro
       const row = data as { id: string; name: string; industry_code: string | null };
       return {
         id: row.id,
-        name: row.name,
+        name: canonicalClientDisplayName({ key, name: row.name }) ?? row.name,
         industry_code: row.industry_code?.trim() || CLIENT_KEY_TO_INDUSTRY_CODE[key],
         key,
       };
@@ -180,7 +181,7 @@ export async function getActiveClientRow(requestedClientId?: string | null): Pro
       const row = data as { id: string; name: string; industry_code: string | null };
       return {
         id: row.id,
-        name: row.name,
+        name: canonicalClientDisplayName({ key, name: row.name }) ?? row.name,
         industry_code: row.industry_code?.trim() || CLIENT_KEY_TO_INDUSTRY_CODE[key],
         key,
       };
