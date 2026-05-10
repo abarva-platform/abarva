@@ -118,4 +118,23 @@ describe('agent response shape', () => {
 
     expect(streaming).toBe('Apex Retail has three signals. More text is still arriving.');
   });
+
+  it('removes raw pattern ids from visible final responses', () => {
+    const shaped = shapeAgentResponseForSurface(
+      '/strategic-moves/new',
+      'The CMIO sponsorship pattern [P-HC-005] is the first gate. Missing: named clinical owner.',
+    );
+
+    expect(shaped).toContain('CMIO sponsorship pattern');
+    expect(shaped).not.toContain('P-HC-005');
+  });
+
+  it('removes raw use-case ids during streaming', () => {
+    const streaming = shapeStreamingAgentTextForSurface(
+      '/intelligence',
+      'UC-HC-FRONT-001 is relevant when the data is available.',
+    );
+
+    expect(streaming).toBe('the cited pattern is relevant when the data is available.');
+  });
 });
