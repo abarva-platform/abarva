@@ -55,11 +55,31 @@ export function normalizeAbarvaAgentMarkup(text: string): string {
   ABARVA_ENTITY_TAG_REGEX.lastIndex = 0;
   const withEntityTokens = withoutSources.replace(
     ABARVA_ENTITY_TAG_REGEX,
-    (_match, kind: string, id: string, label: string) => `[abv-${kind}:${id}:${label}]`,
+    (_match, kind: string, id: string, label: string) => ` [abv-${kind}:${id}:${label}] `,
   );
+  const withReadableSpacing = withEntityTokens
+    .replace(/<\/(p|div|h[1-6])>/gi, '\n\n')
+    .replace(/<(p|div|h[1-6])(?:\s+[^>]*)?>/gi, '\n\n')
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<li(?:\s+[^>]*)?>/gi, '\n- ')
+    .replace(/<\/li>/gi, '\n')
+    .replace(/<\/?(ul|ol)(?:\s+[^>]*)?>/gi, '\n')
+    .replace(/<\/tr>/gi, '\n')
+    .replace(/<tr(?:\s+[^>]*)?>/gi, '')
+    .replace(/<\/(td|th)>/gi, ' | ')
+    .replace(/<(td|th)(?:\s+[^>]*)?>/gi, ' | ')
+    .replace(/<\/?(table|thead|tbody)(?:\s+[^>]*)?>/gi, '\n')
+    .replace(/<\/?(strong|b|em|i|span|cite)(?:\s+[^>]*)?>/gi, ' ')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/[ \t]{2,}/g, ' ')
+    .replace(/[ \t]+\n/g, '\n')
+    .replace(/\n[ \t]+/g, '\n')
+    .replace(/\n{3,}/g, '\n\n')
+    .replace(/\s+([,.;:!?])/g, '$1')
+    .trim();
 
-  if (sourceRefs.length === 0) return withEntityTokens;
-  return `${withEntityTokens.trim()}\n\nSource basis: ${sourceRefs.join('; ')}.`;
+  if (sourceRefs.length === 0) return withReadableSpacing;
+  return `${withReadableSpacing}\n\nSource basis: ${sourceRefs.join('; ')}.`;
 }
 
 // ── Citation chip ─────────────────────────────────────────────────────────────
