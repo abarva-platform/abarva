@@ -1,15 +1,23 @@
 # Meridian Health System · Comprehensive Seed Data Specification
 
-**An Intermountain-class composite integrated health system designed to populate the AbarVa platform with Fortune-500-scale healthcare depth, including integrated payer operations, value-based care agenda, and Mountain West regional character.**
+**A composite Sacramento-headquartered integrated health system designed to populate the AbarVa platform with Fortune-500-scale healthcare depth, including integrated payer operations, value-based care exposure, and Pacific-state regional character.**
 
-Meridian Health System is a composite. It is sized and structured like a regional integrated health system with provider and payer operations, comparable in scale to systems such as Intermountain Health, Geisinger, or Henry Ford Health. The financials, named executives, initiatives, and specific details in this document are composite representations built from real healthcare transformation patterns. Meridian must always be described as "a composite organization built from real-world data" — never as a real health system.
+Meridian Health System is a composite. It is sized and structured like a regional integrated health system with provider and payer operations, comparable in scale to systems such as Sutter Health, Providence, or Kaiser Permanente Northern California. The financials, named executives, initiatives, and specific details in this document are composite representations built from real healthcare transformation patterns. Meridian must always be described as "a composite organization built from real-world data" — never as a real health system.
 
-This specification completes the healthcare vertical in the three-composite demo library, alongside Apex Retail Group (retail) and First Capital Financial (financial services). Together, these three composites span the verticals where AbarVa's beachhead opportunity is strongest and enable demo flexibility depending on the industry context of the prospect.
+This specification completes the healthcare vertical in the three-composite demo library, alongside Apex Retail Group (retail) and First Capital Financial (financial services). Together, these three composites span the verticals where AbarVa's beachhead opportunity is strongest.
+
+**Source of truth.** This document is the doc-layer reflection of the production tenant fixtures in `meridian-data/`. Where the two diverge, `meridian-data/` wins by founder directive (2026-05-10g reconciliation). Specifically:
+
+- `meridian-data/01_enterprise_profile/enterprise_profile.md` — tenant scale, financials, strategic priorities
+- `meridian-data/02_org_structure/executive_bench.json` — executive roster
+- `meridian-data/02_org_structure/it_leadership.json` — IT leadership and AI Governance Council composition
+- `meridian-data/06_program_inventory/active_programs.json` — in-flight transformation programs
+- `meridian-data/03_it_landscape/`, `meridian-data/04_it_financials/`, `meridian-data/11_vendor_contracts/` — technology, financials, vendor stack
 
 Reads alongside:
 - `docs/specs/_meta/seed-data/apex-retail-group-comprehensive-seed.md` — the retail companion composite
-- `docs/specs/platform/agent-architecture.md` — agent consumption patterns
-- `docs/specs/platform/administration-architecture.md` — Track E on org structure as intelligence input
+- `docs/specs/_meta/seed-data/first-capital-financial-comprehensive-seed.md` — the financial-services companion composite
+- `docs/specs/_meta/seed-data/meridian-intelligence-layer-overlay.md` — KPIs, patterns, telemetry sources
 
 ---
 
@@ -17,497 +25,355 @@ Reads alongside:
 
 ### 1.1 · Identity and positioning
 
-Meridian Health System is a non-profit integrated health system headquartered in Salt Lake City, Utah, serving patients and health plan members across the Mountain West region of the United States. Founded in 1973 through the consolidation of three regional hospital networks, Meridian has grown into one of the largest integrated delivery networks west of the Mississippi, distinguished by three structural characteristics that set it apart from both pure acute-care systems and pure payers:
+Meridian Health System is a non-profit 501(c)(3) integrated delivery network with for-profit subsidiaries, headquartered in Sacramento, California, serving patients and health plan members across California, Nevada, Oregon, and Hawaii. Founded in 1968 with the current holding-company structure formed in 2011, Meridian is one of the larger integrated systems on the US West Coast, distinguished by three structural characteristics:
 
-- **Integrated provider and payer operations.** Meridian operates Meridian Health Plans alongside its provider network, creating a structurally-aligned incentive system for value-based care that most US health systems lack. The payer arm covers approximately 1.4M lives across Medicare Advantage, commercial group, individual marketplace, and Medicaid managed care products.
+- **Integrated provider and payer operations.** Meridian operates Meridian Health Plans alongside its provider network. The plan subsidiary covers approximately 1.4M lives across Medicare Advantage, Medicaid managed care, and commercial products under state insurance and CMS oversight.
 
-- **Value-based care pioneer status.** Meridian has operated under risk-bearing contracts since the 1990s and has built one of the country's most sophisticated population health management capabilities. Approximately 68% of Meridian's provider revenue flows through value-based arrangements, compared to roughly 24% for the national average.
+- **Value-based care exposure.** Approximately $5.0B (~30%) of consolidated system revenue is risk-based or value-based, making Meridian materially exposed to risk performance even though its book is not as concentrated in VBC as systems like Kaiser. This level of exposure is a strategic priority area, not a marketing line.
 
-- **Research and innovation orientation.** The Meridian Institute, the system's research arm, holds over 240 active research grants with cumulative external funding exceeding $180M annually. Meridian's electronic health record is used for published clinical research at a rate comparable to academic medical centers, despite Meridian being classified as a community-based non-academic system.
-
-Meridian's brand positioning in the community emphasizes "care that stays with you" — a reference both to longitudinal patient relationships and to the integrated nature of the care-and-coverage model. Meridian's market share in its home state of Utah exceeds 45% in acute care and approximately 32% in commercial health insurance, making it the dominant health system and a meaningful regional insurer.
+- **Pacific-state regional footprint with Hawaii expansion.** Meridian acquired Pacific Queens Medical Center in Honolulu and Kona Coast Hospital on Hawaii Island during the 2022-2023 expansion cycle. Pacific Queens migrated to Epic in 2024; Kona Coast remains on Cerner Millennium after capital allocation pressure and local clinical leadership resistance paused the second-wave migration. Hawaii integration completion is named as a strategic priority but funding is deferred to FY2027.
 
 ### 1.2 · Scale and operational snapshot
 
-As of the most recent fiscal year (FY2025 ending June 30, 2025):
+As of FY2025 (fiscal year ending June 30, 2025):
 
-- **Total revenue:** $14.8B
-- **Operating income:** $612M (4.1% operating margin)
-- **Net assets:** $8.9B (non-profit; equivalent of equity)
-- **Hospitals:** 44 hospitals across Utah, Idaho, Nevada, Wyoming, Montana, and Colorado
-- **Ambulatory sites:** 380+ clinics, urgent care centers, surgery centers, and specialty facilities
-- **Employed physicians:** approximately 4,200
-- **Affiliated/contracted physicians:** approximately 6,800
-- **Total employees:** approximately 68,000
-- **Health plan covered lives:** 1.4M (680K commercial group, 320K individual/marketplace, 280K Medicare Advantage, 120K Medicaid managed care)
-- **Acute admissions:** approximately 385,000 annually
-- **Ambulatory encounters:** approximately 18.5M annually
-- **Emergency department visits:** approximately 1.6M annually
+- **Total revenue:** $16.8B
+- **Provider operations revenue:** $11.8B
+- **Health plan premium revenue:** $5.0B
+- **Risk-based / value-based revenue:** ~$5.0B (~30% of total system revenue)
+- **Operating margin:** 2.4% (compressed 80bp YoY from labor and MA rate pressure)
+- **Capital plan:** $1.1B (Epic optimization, facilities, cybersecurity, selective AI)
+- **IT operating + capital budget:** $384M (~2.3% of revenue)
+- **Hospitals:** 30 across California, Nevada, Oregon, Hawaii
+- **Ambulatory footprint:** 280 clinics, urgent care centers, ambulatory surgery centers, and specialty sites
+- **Annual ambulatory visits:** 14.0M
+- **Staffed beds:** 5,800
+- **Employed physicians:** 7,400
+- **Total employees:** 58,000
+- **Health plan covered lives:** 1.4M (Medicare Advantage, Medicaid managed care, commercial)
+- **Fiscal year:** July 1 – June 30
+- **Current dataset date:** April 2026
 
-The system operates an integrated electronic health record (Epic) across all provider sites and shares data with the payer arm through a federated data platform. Meridian's capital expenditure has averaged $800M-$1.0B annually over recent years, with approximately 40% allocated to facility expansion and modernization, 30% to technology infrastructure, 20% to clinical equipment, and 10% to research.
+### 1.3 · Legal entity structure
 
-### 1.3 · Service line structure
+Meridian Health System is the parent not-for-profit corporation. The system includes a network of hospital operating entities, **Meridian Medical Foundation** for employed physicians and ambulatory clinics, **Meridian Health Plans LLC** for plan operations, and **Meridian Properties LLC** for owned real estate and medical-office assets.
 
-Meridian's clinical operations are organized into 14 service lines, each with dedicated physician leadership, operational management, and quality oversight. The largest service lines by revenue:
+### 1.4 · Industry classification
 
-- **Cardiovascular** — approximately $1.8B, anchored by a nationally-recognized heart program and three cardiac surgery centers of excellence
-- **Oncology** — approximately $1.6B, including the Meridian Cancer Institute flagship facility in Salt Lake City and 8 regional cancer centers
-- **Orthopedics and Spine** — approximately $1.3B, driven by high-volume joint replacement programs
-- **Women's Health and Pediatrics** — approximately $1.2B, including two dedicated children's hospitals (Salt Lake City and Boise)
-- **Neurosciences** — approximately $900M, covering stroke, epilepsy, and neurosurgery programs
-- **Digestive Health** — approximately $700M
-- **Behavioral Health** — approximately $450M, with notable expansion investment in the last three years
-
-Additional service lines include Primary Care, Transplant (liver, kidney, heart, bone marrow), Trauma, Rehabilitation, Critical Care, Surgical Services, Imaging, and Laboratory.
-
-### 1.4 · Health plan structure
-
-Meridian Health Plans is organized into four product lines, each with dedicated leadership reporting to the President of Meridian Health Plans:
-
-- **Commercial Group** — 680K members across employer-sponsored products in six states, with concentration in Utah, Idaho, and Nevada
-- **Individual and Marketplace** — 320K members, growing from 180K in 2020 through marketplace expansion
-- **Medicare Advantage** — 280K members across HMO, PPO, and D-SNP products; strong 4.5-star CMS quality rating
-- **Medicaid Managed Care** — 120K members primarily in Utah and Nevada
-
-The health plan operates approximately $8.4B in premium revenue (approximately 57% of consolidated system revenue), with the balance ($6.4B) coming from third-party payer reimbursement and direct patient revenue for non-Meridian-Plan patients.
+| Area | NAICS / regulatory frame |
+|---|---|
+| General medical and surgical hospitals | NAICS 622110 |
+| Ambulatory health care services | NAICS 621498 / 621111 |
+| Health and medical insurance carriers | NAICS 524114 |
+| Pharmacy and outpatient dispensing | NAICS 446110 / 621399 |
+| Medicare Advantage plan operations | CMS Medicare Advantage Program, 42 CFR Part 422 |
+| HIPAA covered entity operations | 45 CFR Parts 160, 162, and 164 |
 
 ### 1.5 · Geographic footprint
 
-Meridian operates in six states across the Mountain West:
+Meridian operates in four states across the Pacific corridor, with concentration in California:
 
-- **Utah** — headquarters state, 22 hospitals, largest market share, 850K attributed lives
-- **Idaho** — 8 hospitals, second-largest market, 220K attributed lives
-- **Nevada** — 6 hospitals, growing Medicare Advantage presence, 180K attributed lives
-- **Wyoming** — 4 hospitals, rural access focus, 65K attributed lives
-- **Montana** — 3 hospitals, rural access focus, 45K attributed lives
-- **Colorado** — 1 hospital (western slope), 40K attributed lives
+- **California** — headquarters state, largest hospital and ambulatory footprint, dominant Medicare Advantage book
+- **Nevada** — meaningful inpatient and ambulatory footprint, growing Medicare Advantage presence
+- **Oregon** — selective hospital and ambulatory footprint
+- **Hawaii** — Pacific Queens Medical Center (Honolulu, Epic-migrated 2024) and Kona Coast Hospital (Hawaii Island, still on Cerner)
 
-Recent strategic emphasis has been on expanding ambulatory and virtual care access rather than additional acute care footprint, reflecting both the cost advantages of lower-acuity settings and the value-based care imperative to keep patients healthy rather than hospitalized.
+Strategic emphasis since FY2024 has been on operational consolidation rather than additional acute-care footprint, reflecting both the cost advantages of lower-acuity settings and the value-based care imperative to keep patients healthy rather than hospitalized.
 
 ### 1.6 · Recent corporate trajectory
 
 Significant events over the past 24 months:
 
-- **March 2024 · Merger completion.** Meridian completed the merger with Rocky Mountain Health System, adding 8 hospitals in Idaho, Wyoming, and Montana. Integration work remains ongoing and has been a major organizational focus.
+- **2022-2023 · Hawaii expansion.** Acquired Pacific Queens Medical Center (Honolulu) and Kona Coast Hospital (Hawaii Island).
 
-- **Q2 2024 · CEO transition.** Dr. Elena Vasquez succeeded retiring CEO Dr. James Forsyth, who had led Meridian for 14 years. Vasquez was previously the system's Chief Medical Officer and is the first physician CEO in Meridian's history, succeeding the second non-physician CEO.
+- **2024 · Pacific Queens Epic migration.** Pacific Queens migrated to Epic. Kona Coast remains on Cerner Millennium after capital and clinical leadership resistance paused the second-wave migration.
 
-- **Q4 2024 · Value-based care 2030 commitment.** Meridian publicly committed to having 85% of provider revenue in value-based arrangements by 2030, up from 68% at announcement. The commitment includes specific sub-targets for downside risk contracts, population health enrollment, and quality outcomes.
+- **2024 · DENIALS-2024.** A revenue-cycle technology project failed publicly, accumulating $8M in sunk cost. The project's failure created the trust deficit that the FY2026 RCM Modernization program now has to overcome and is the primary reason the CFO's office is applying a sharper attribution lens to every transformation program.
 
-- **Q2 2025 · Medicare Advantage expansion.** The health plan launched Medicare Advantage products in three new Colorado counties, expanding the MA footprint meaningfully.
+- **Q3 FY2025 · Board-issued AI risk policy.** The board issued an AI risk policy requiring clinical AI governance attestation. This is the upstream forcing function for the Clinical AI Governance Uplift program in FY2026.
 
-- **Q3 2025 · Workforce action.** A major nursing contract negotiation concluded with substantial wage increases across 11 hospitals following an actual-but-brief nursing strike in two Utah facilities. The outcome was broadly viewed as favorable to nursing staff but creates meaningful operating cost pressure.
+- **Q4 FY2025 · Denial-rate spike.** Denial rates spiked, compounding the DENIALS-2024 narrative and making revenue cycle modernization politically unavoidable.
 
-- **Q4 2025 · AI and digital health strategy announcement.** Meridian announced a $250M commitment over four years to AI-enabled clinical and operational capabilities, with specific focus areas including ambient clinical documentation, diagnostic decision support, population health risk stratification, and revenue cycle automation.
+- **FY2025 · Operating margin compression.** Operating margin compressed by 80bp due to nursing wage inflation, traveler dependence, and Medicare Advantage rate pressure.
 
-- **January 2026 · Regulatory inspection.** CMS conducted a Medicare Advantage program audit that resulted in a corrective action plan for 14 findings. Meridian is executing on the plan; initial remediation was accepted in March 2026. No civil monetary penalty was imposed, but the findings triggered internal governance changes.
+- **October 2025 · CDIO transition.** Dr. Anita Krishnamurthy joined as Chief Digital and Information Officer from Optum Care, replacing the post-DENIALS-2024 leadership gap left by Dr. Aiden Walsh. Her board mandate is to formalize clinical AI governance, modernize revenue cycle technology, and stabilize the application portfolio.
 
-- **March 2026 · Strategic plan refresh.** Board approved updated 2030 strategic plan with three anchor priorities: value-based care 2030, integrated patient experience, and AI-enabled operating model.
+- **December 2025 · VP Application Services vacancy.** The VP Application Services role went vacant after retirement and remains open as of April 2026. The vacancy creates application ownership ambiguity across Epic, plan systems, and integration programs.
+
+- **Q1 2026 · AI Governance Council operational charter.** The board-mandated AI Governance Council ratified its operational charter on 2026-01-18 with Dr. Jennifer Wexler (CMIO) as chair. Council currently has 23 use cases under review; 4 attested; 19 in progress; 3 shadow-AI scribe pilots recently surfaced.
+
+- **April 2026 · Active state.** This is the tension that defines Meridian's current data room: the organization has mature clinical data, an unusually strategic plan business, and enough scar tissue from DENIALS-2024 to make every new AI claim earn its right to proceed.
 
 ---
 
 ## Part 2 · Executive Leadership
 
-The Meridian executive committee comprises sixteen leaders reporting to CEO Dr. Elena Vasquez, reflecting the complexity of integrated provider-payer-research operations.
+The Meridian executive committee comprises 21 named leaders (per `meridian-data/02_org_structure/executive_bench.json`) reporting through CEO Dr. Elaine Morales, plus the Board Chair.
 
 ### 2.1 · Executive roster
 
-- **Dr. Elena Vasquez** — President and Chief Executive Officer (since April 2024)
-- **Dr. Marcus Halberstam** — President, Provider Operations and Chief Operating Officer
-- **Linda Chen-Winters** — President, Meridian Health Plans
-- **Daniel Okeke-Reid** — Chief Financial Officer
-- **Dr. Priya Venkataraman** — Executive Vice President and Chief Medical Officer
-- **Dr. James Morley-Kahn** — President, Meridian Institute (research)
-- **Katherine Oshima** — Chief Information Officer (previously Chief Digital Health Officer, expanded role as of January 2026)
-- **Dr. Rashid Khoury** — Chief Population Health Officer
-- **Susan Ahmadi-Clarke** — Chief Nursing Officer (system-level)
-- **Dr. Sarah Whitfield** — Chief Quality and Patient Safety Officer
-- **Thomas Berglund-Morales** — Chief Human Resources Officer
-- **Dr. Nathan Goldberg** — Chief Strategy and Growth Officer
-- **Christopher Iwuanyanwu** — Chief Diversity and Community Health Officer
-- **Meredith Ashford-Singh** — General Counsel and Chief Compliance Officer
-- **Jonathan Reese-Park** — Chief Development Officer (philanthropy and community relations)
-- **Dr. Tia Nguyen-Walsh** — Chief Clinical Officer, Ambulatory (newly elevated to exec committee 2025)
+| Person | Title | Reports to | Scope |
+|---|---|---|---|
+| **Harold Kim** | Board Chair | Board | system |
+| **Dr. Elaine Morales** | President & Chief Executive Officer | Board | system |
+| **Dr. Anita Krishnamurthy** | Chief Digital and Information Officer (CDIO) | CEO | system |
+| **David Park** | Chief Financial Officer (CFO) | CEO | system |
+| **Dr. Marcus Reid** | Chief Physician Executive (CPE) | CEO | provider |
+| **Sarah O'Brien** | Chief Operating Officer (COO) | CEO | provider |
+| **Rebecca Hollings** | General Counsel | CEO | system |
+| **Margaret Liu** | Chief Human Resources Officer (CHRO) | CEO | system |
+| **Thomas Hartwell** | President, Meridian Health Plans | CEO | plan |
+| **Angela Brooks** | Chief Procurement Officer | CFO | system |
+| **Dr. Jennifer Wexler** | Chief Medical Information Officer (CMIO) | CPE | provider |
+| **Dr. James Okonjo** | Chief Quality Officer | CPE | shared |
+| **Dr. Robert Chen** | Chief Nursing Officer | COO | provider |
+| **Patricia Okafor** | VP Revenue Cycle | CFO | provider |
+| **Karen Mercer** | Chief Compliance Officer | General Counsel | system |
+| **Maya Iyer** | Chief Product Officer, Digital Health | CDIO | shared |
+| **Dr. Lakshmi Venkatesan** | Chief Medical Officer, Meridian Health Plans | President MHP | plan |
+| **Andrew Fitzgerald** | VP Network Management | President MHP | plan |
+| **Dr. Priya Sharma** | VP Care Management & Population Health | Plan CMO | shared |
+| **Christopher Vega** | VP Risk Adjustment & STAR Quality | President MHP | plan |
+| **VACANT** | VP Application Services | CDIO | shared |
 
-### 2.2 · Board of Trustees
+### 2.2 · AI Governance Council
 
-Meridian is governed by a 17-member Board of Trustees, including four physician members, three community health leaders, seven business and civic leaders, two Meridian employees (non-executive), and the CEO. Board chair is Dr. William Kessler-Mbeki, retired physician and former system CEO from another region. Committees include Audit and Compliance, Quality and Safety (a major committee given the integrated payer-provider structure), Finance, Strategy, Compensation, and a newly-formed Technology and AI Governance Committee established in Q4 2025.
+Charter ratified 2026-01-18 following Q3 FY2025 board AI risk policy.
+
+- **Chair:** Dr. Jennifer Wexler (CMIO)
+- **Members:** Dr. Anita Krishnamurthy (CDIO), Rebecca Hollings (General Counsel), Karen Mercer (Chief Compliance Officer), Dr. Lakshmi Venkatesan (Plan CMO), Dr. Marcus Reid (CPE), Daniel Reyes, plus a rotating physician representative
+- **Cadence:** Monthly, with ad hoc review for high-risk clinical AI
+- **Authority:** Every clinical AI use case must have inventory, risk classification, FDA/state regulatory attestation, model-owner assignment, and monitoring plan
+- **Current state:** 23 use cases under review; 4 attested; 19 in progress; 3 shadow scribe pilots recently surfaced
 
 ---
 
-## Part 3 · Strategic Priorities · 2026
+## Part 3 · Strategic Priorities · FY2026
 
-Meridian operates under the 2030 Strategic Plan refreshed in March 2026. Three anchor priorities with specific 2026 deliverables.
+Meridian operates under five FY2026 strategic priorities (per `meridian-data/01_enterprise_profile/enterprise_profile.md`).
 
-### 3.1 · Anchor Priority One · Value-Based Care 2030
+### 3.1 · Operating margin recovery
 
-Commitment to 85% of provider revenue in value-based arrangements by 2030, up from 68% current state.
+After 80bp margin compression in FY2025, FY2026 priority work spans labor cost reduction, denial recovery, throughput improvement, and service-line margin discipline. CFO David Park is the de facto integrating sponsor across these workstreams.
 
-Named 2026 priorities:
+### 3.2 · Health plan growth
 
-- **Downside risk contract expansion** — increasing the share of provider revenue in full-risk or shared-risk arrangements from 34% to 42%
-- **Attributed lives growth** — expanding attributed lives under primary care risk arrangements from 740K to 880K, with growth in Idaho and Nevada specifically
-- **Value-based specialty bundles** — launching bundled-payment arrangements for five additional specialties (joint replacement, cardiac, oncology, maternity, bariatric) with both internal Meridian payers and external payer partners
-- **Commercial ACO expansion** — launching a commercial accountable care organization product with self-insured employers in partnership with Meridian Health Plans' commercial group team
-- **Provider incentive alignment** — redesigning physician compensation methodology for primary care to align with value-based outcomes rather than RVU productivity, targeting implementation in 2027
+Medicare Advantage retention and acquisition, with close attention to quality bonus performance and network adequacy. Owner: Thomas Hartwell (President MHP) with Dr. Lakshmi Venkatesan (Plan CMO) and Christopher Vega (VP Risk Adjustment & STAR Quality).
 
-### 3.2 · Anchor Priority Two · Integrated Patient Experience
+### 3.3 · Value-based care performance
 
-Creating a seamless patient experience across provider care, health plan services, digital tools, and community health programs.
+Quality measures, total cost of care, gap closure, and population health execution. Owner: Dr. Priya Sharma (VP Care Management & Population Health) with Plan CMO and CPE coordination.
 
-Named 2026 priorities:
+### 3.4 · AI governance and capability formalization
 
-- **Unified patient portal evolution** — next-generation patient portal integrating care, benefits, pharmacy, and wellness in a single experience
-- **Ambulatory access modernization** — reducing new-patient appointment wait times from 18 days average to 9 days across key specialties
-- **Virtual care expansion** — growing virtual visit volume from 15% of total ambulatory encounters to 22%, with specific focus on behavioral health and chronic disease management
-- **Care coordination platform** — rolling out enhanced care coordination technology across 220,000 complex-care patients, connecting primary care, specialist, home health, behavioral health, and health plan care management
-- **Digital front door** — redesigning the patient-facing digital experience for appointment scheduling, symptom navigation, and benefit transparency
+Board-mandated formalization following the Q3 FY2025 AI risk policy. Three named workstreams below in Part 5. Owners: Dr. Jennifer Wexler (CMIO, Council chair), Dr. Anita Krishnamurthy (CDIO), Rebecca Hollings (General Counsel), Karen Mercer (Chief Compliance).
 
-### 3.3 · Anchor Priority Three · AI-Enabled Operating Model
+### 3.5 · Hawaii market integration completion
 
-The $250M AI commitment announced in Q4 2025, positioning Meridian as a leader in AI-augmented care delivery and operations.
-
-Named 2026 priorities:
-
-- **Ambient clinical documentation rollout** — scaling ambient documentation from current 800-physician pilot to 2,400 physicians by end of 2026, targeting reduced documentation burden and physician burnout
-- **Diagnostic decision support expansion** — deploying AI-augmented imaging review across radiology, pathology, and cardiology, with governance framework managed by the new Technology and AI Governance Committee
-- **Population health risk stratification** — replacing legacy risk stratification models with next-generation AI approach, targeting improved identification of rising-risk patients for earlier intervention
-- **Revenue cycle automation** — applying AI to prior authorization, denial management, and payment integrity functions, targeting 35% reduction in administrative labor hours within affected functions
-- **Operational optimization** — AI applications in scheduling, staffing, and supply chain across hospitals
-
-### 3.4 · Cross-cutting priorities
-
-- **Rocky Mountain integration completion** — integration work from the 2024 merger remains material in 2026, including EHR standardization, care model harmonization, and service line integration
-- **Workforce sustainability** — physician and nursing workforce stability, retention, and well-being, including ongoing responses to the 2025 nursing agreement and broader burnout dynamics
-- **Financial discipline** — operating margin stability under commercial payment pressure and regulatory payment changes
-- **Regulatory and compliance posture** — strengthened governance following the January 2026 CMS audit
-
-### 3.5 · Board-level commitments
-
-From the March 2026 strategic plan board approval, Meridian publicly committed to:
-
-- 85% value-based care revenue by 2030 (with annual progression milestones)
-- 95th percentile CMS Star Ratings across all Medicare Advantage products by 2028
-- Top-quartile patient experience scores in CMS-measured programs by 2027
-- 25% reduction in preventable hospitalizations across attributed populations by 2028
-- Net-zero operational greenhouse gas emissions by 2035
+Still listed as a strategic priority but **current funding is deferred to FY2027**. The Kona Coast / Cerner residual is the main outstanding integration item.
 
 ---
 
 ## Part 4 · Executive Profiles · VIP Depth
 
-### 4.1 · Dr. Elena Vasquez · President and CEO
+Profiles below are demo-relevant subset. Full operational profiles for all 21 executives live in `meridian-data/02_org_structure/executive_bench.json`. The agent-facing profile system (in `src/scripts/seed/executive-profiles-data.ts`) currently carries the Thomas Hartwell composite as the seeded VIP profile; additional profiles get added as engagements warrant.
 
-**Background.** Joined Meridian in 2008 as an internal medicine physician at the Salt Lake City flagship hospital. Progressed through medical leadership roles — Associate Chief Medical Officer in 2013, Chief Medical Officer for the Central Utah region in 2016, system Executive Vice President and Chief Medical Officer in 2020, and President and CEO in April 2024. Internal medicine residency at UCSF; medical school at Stanford; undergraduate at Rice University. Mexican-American, 55 years old, married to a lawyer, two adult children.
+### 4.1 · Dr. Elaine Morales · President & CEO
 
-**Strategic priorities.** Vasquez is the architect of the value-based care 2030 commitment, having championed the target internally before her elevation to CEO. Her stated priorities are: completing the Rocky Mountain integration, delivering on value-based care 2030, stabilizing the workforce, and positioning Meridian as a national leader in AI-augmented care.
+- **Tenure:** 2 years in role; 9 years at Meridian
+- **Reports to:** Board (Harold Kim, Chair)
+- **Direct reports:** 8
+- **Stated FY2026 priorities:** margin recovery, clinical quality and safety, provider-plan integration, AI governance where relevant
+- **Decision pattern:** Bridge-builder across provider and plan boundaries; can escalate to Executive Committee for enterprise tradeoffs
+- **VIP-enriched reasoning notes for agents:** Lead with clinical and operational evidence. Provider-plan integration framing lands well. The post-DENIALS-2024 trust deficit means new transformation claims need attribution discipline before scope.
 
-**Communication style.** Thoughtful, precise, evidence-oriented. Brings physician discipline to executive meetings — meaning she expects data, logical structure, and explicit acknowledgment of uncertainty. Comfortable with long pauses; does not fill silence with talking. Has maintained a limited clinical practice through her executive tenure and is known to reference specific patient encounters (anonymized) when making strategic points.
+### 4.2 · Dr. Anita Krishnamurthy · CDIO
 
-**Decision pattern.** Deliberate. Will defer high-stakes decisions until evidence is comprehensive, sometimes to the frustration of faster-moving peers. Once committed, executes with full organizational mobilization.
+- **Tenure:** 0.5 years in role (joined October 2025)
+- **Prior:** Optum Care
+- **Reports to:** CEO
+- **Direct reports:** 8 (including Maya Iyer · CPO Digital Health and the VACANT VP Application Services)
+- **Stated FY2026 priorities:** AI governance formalization, RCM modernization, Epic optimization, application portfolio stabilization, cybersecurity posture
+- **Decision pattern:** Bridge-builder; pragmatic on cloud AI evaluation while keeping research workloads local-first until PHI/IRB controls are enforceable
+- **VIP-enriched reasoning notes for agents:** Likely an AbarVa champion given her recency, board mandate, and the alignment between AbarVa's positioning and her AI governance agenda. Sophisticated buyer.
 
-**Known pain points.**
-- Workforce burnout and the cost implications of the 2025 nursing settlement
-- Regulatory exposure surfaced by the CMS audit
-- The tension between value-based care strategy and fee-for-service revenue realities during transition
-- The pace of AI adoption in clinical settings, balancing innovation against patient safety
+### 4.3 · David Park · CFO
 
-**Public statements worth referencing:**
+- **Tenure:** 4 years in role; 4 years at Meridian
+- **Reports to:** CEO
+- **Direct reports:** 8 (including Patricia Okafor · VP Revenue Cycle and Angela Brooks · CPO)
+- **Stated FY2026 priorities:** margin recovery, capital allocation discipline, RCM modernization sponsorship, plan-provider economics alignment
+- **Coalition:** Cost and capital discipline coalition. Sponsor of `meridian-rcm-modernization-2026` (P1 Discovery)
+- **Known pain points:** DENIALS-2024 sunk cost narrative; Q4 FY2025 denial spike; Medicare Advantage rate pressure on plan economics; capital allocation tension between Hawaii integration, AI investment, and clinical capital
 
-*From March 2026 strategic plan announcement:*
-> "If we are still measuring our success in hospital admissions and surgical volumes in 2030, we will have failed our patients and our mission. The transition to value is not a financial strategy; it is a care strategy."
+### 4.4 · Dr. Marcus Reid · Chief Physician Executive
 
-*From a January 2026 Health Affairs interview:*
-> "I am deeply enthusiastic about AI in healthcare and deeply skeptical of the timelines people promise. These are not incompatible positions. The same care and governance we apply to any other clinical innovation must apply here."
+- **Tenure:** 7 years in role; 11 years at Meridian
+- **Reports to:** CEO
+- **Direct reports:** 8 (including Dr. Jennifer Wexler · CMIO and Dr. James Okonjo · CQO)
+- **Stated FY2026 priorities:** clinical quality and safety, physician workforce, AI governance clinical voice, value-based care execution
+- **Coalition:** Clinical autonomy and safety coalition
 
-**VIP-enriched reasoning notes for agents.** When Programs touch Vasquez directly, agents should lead with clinical evidence, acknowledge patient-impact dimensions explicitly, and respect the physician-CEO posture (she is not a business-first CEO; she is a physician who runs a business).
+### 4.5 · Dr. Jennifer Wexler · CMIO
 
-### 4.2 · Dr. Marcus Halberstam · President, Provider Operations and COO
+- **Tenure:** 5 years in role; 8 years at Meridian
+- **Reports to:** CPE (Dr. Marcus Reid)
+- **AI Governance Council chair**
+- **Sponsor of:** `meridian-ambient-2026` (Ambient Clinical Documentation, P3 Design) and `meridian-ai-governance-2026` (Clinical AI Governance Uplift, P2 Synthesis)
+- **Known concern:** Sponsor on two of four programs simultaneously creates bandwidth risk (HIGH)
 
-**Background.** Joined Meridian in 2002 as a cardiothoracic surgeon. Clinical leadership roles through the 2000s; became Chief Medical Officer for the Idaho region in 2011; President of the Idaho market in 2015; Chief Operating Officer system-level in 2019; expanded to President Provider Operations in 2024. Medical school at Johns Hopkins; cardiothoracic surgery training at Cleveland Clinic. Jewish-American, 58 years old, married with three adult children.
+### 4.6 · Sarah O'Brien · COO
 
-**Strategic priorities.** Halberstam owns the 44-hospital provider operation, the Rocky Mountain integration completion, ambulatory access modernization, and operational aspects of AI implementation. His 2026 priorities center on integration delivery, operational margin protection, and preparing the provider operation for expanded value-based care.
+- **Tenure:** 3 years in role; 7 years at Meridian
+- **Reports to:** CEO
+- **Direct reports:** 8 (including Dr. Robert Chen · CNO)
+- **Stated FY2026 priorities:** throughput, cost recovery, ambulatory access, Hawaii integration completion (funding deferred to FY2027)
+- **Coalition:** Bridge-builder across provider and plan boundaries
 
-**Communication style.** Direct, clinical, unemotional. Patient in listening; decisive in deciding. Has tremendous credibility with operational leaders and physician leadership, slightly less with technology and digital leaders where his language shifts uncomfortably.
+### 4.7 · Thomas Hartwell · President, Meridian Health Plans
 
-**Decision pattern.** Speed-oriented within his scope. Tension with Vasquez, who is more deliberative; the two complement each other.
+- **Tenure:** 6 years in role; 8 years at Meridian
+- **Reports to:** CEO
+- **Direct reports:** 8 (including Dr. Lakshmi Venkatesan · Plan CMO, Andrew Fitzgerald · VP Network, Christopher Vega · VP Risk Adjustment & STAR Quality)
+- **Stated FY2026 priorities:** Medicare Advantage growth and quality, member retention, plan-side risk adjustment, plan-provider economics
+- **Known pain points:** MA rate pressure compressed margins 80bp YoY; competitive pressure from national plans entering CA / NV / OR / HI markets; tension between commercial mandate and system VBC stance
 
-**Known pain points.**
-- Rocky Mountain integration slower than originally targeted
-- Physician recruitment and retention pressures across specialty lines
-- EHR standardization work that has dragged through 2025
-- The cost structure implications of value-based care adoption
+### 4.8 · Patricia Okafor · VP Revenue Cycle
 
-### 4.3 · Linda Chen-Winters · President, Meridian Health Plans
+- **Tenure:** 1.2 years in role; 6 years at Meridian
+- **Reports to:** CFO (David Park)
+- **Sponsor of:** `meridian-prior-auth-2026` (Prior Authorization Automation, P4 Build) — engagement with Cohere Health
+- **Known pain points:** Carrying the DENIALS-2024 narrative; Q4 FY2025 denial spike forced RCM modernization onto the FY2026 board roadmap
 
-**Background.** Joined Meridian in 2017 as Chief Operating Officer of Meridian Health Plans, after 14 years at a large national payer. Promoted to President of Meridian Health Plans in 2021. Undergraduate in actuarial science from University of Wisconsin; MBA from Northwestern Kellogg. Chinese-American of Taiwanese heritage, 51 years old, married to an oncologist, two school-aged children.
+### 4.9 · Rebecca Hollings · General Counsel
 
-**Strategic priorities.** Chen-Winters owns the four payer product lines (commercial group, individual/marketplace, Medicare Advantage, Medicaid managed care). Her 2026 priorities include Medicare Advantage growth and quality, commercial ACO launch, individual/marketplace retention, and Medicaid operations excellence.
+- **Tenure:** 9 years in role; 9 years at Meridian
+- **Reports to:** CEO
+- **Direct reports:** 4 (including Karen Mercer · Chief Compliance Officer)
+- **Stated FY2026 priorities:** AI governance legal scaffolding, plan regulatory exposure, contract reviews on the four FY2026 transformation programs
+- **AI Governance Council member**
 
-**Communication style.** Polished, commercial, fluent in both healthcare language and corporate finance. Known to run tight, structured meetings. Represents the "payer mindset" within the executive committee and occasionally creates productive friction with physician leaders over formulary, prior authorization, and utilization management decisions.
+### 4.10 · Maya Iyer · Chief Product Officer, Digital Health
 
-**Decision pattern.** Data-driven and quick. Less collaborative than physician counterparts; more willing to move forward when the data supports direction.
-
-**Known pain points.**
-- The CMS audit findings, which primarily touched Medicare Advantage operations under her scope
-- Competitive pressure in Medicare Advantage from national plans entering her markets
-- Medical loss ratio trends requiring constant vigilance
-- Tension between her commercial mandate and the system's value-based care stance
-
-### 4.4 · Daniel Okeke-Reid · CFO
-
-**Background.** Joined Meridian in 2021 from a Catholic health system where he had been Vice President of Finance. Prior roles in investment banking (healthcare coverage) and corporate finance at a managed care company. Undergraduate in economics from Williams College; MBA from University of Chicago Booth. Nigerian-American, 48 years old, married with two young children.
-
-**Strategic priorities.** Okeke-Reid owns system financial operations, capital allocation, rating agency relations, and financial implications of strategic initiatives. His 2026 priorities include operating margin stabilization under wage pressure, capital expenditure rationalization post-merger, and financial infrastructure for value-based care contracting.
-
-**Communication style.** Calm, precise, unflappable under pressure. Respected for combining financial rigor with mission orientation (important in non-profit healthcare). Comfortable pushing back on clinical and operational leaders; comfortable being pushed back on in return.
-
-**Known pain points.**
-- Operating margin erosion from wage increases
-- Capital allocation tension between merger integration, facility modernization, technology investment, and community health priorities
-- Rating agency pressure related to wage cost implications
-- Medicaid payment rate pressure
-
-### 4.5 · Dr. Priya Venkataraman · EVP and Chief Medical Officer
-
-**Background.** Joined Meridian in 2019 as Chief Quality Officer. Became Chief Medical Officer in 2023 when Vasquez was promoted to CEO. Internal medicine subspecialty in infectious disease; earlier career in academic medicine including faculty at Emory and Duke. Indian-American, 49 years old, married to a hospitalist, one teenage child.
-
-**Strategic priorities.** Venkataraman owns physician leadership across the system, medical staff relations, clinical standards, and the interface between clinical and administrative operations. Her 2026 priorities include physician workforce strategy, clinical AI governance, and quality outcomes under value-based arrangements.
-
-**Communication style.** Scholarly, deliberate, respected. Speaks with precision and expects the same. Cares deeply about clinical workforce well-being and has been publicly vocal about physician burnout.
-
-**Known pain points.**
-- Physician burnout and its interaction with ambient documentation and other AI tools meant to help
-- Clinical AI governance complexity
-- Specialty workforce shortages in critical areas (primary care, behavioral health, certain surgical subspecialties)
-- The balance between physician autonomy and standardized care pathways required by value-based arrangements
-
-### 4.6 · Dr. James Morley-Kahn · President, Meridian Institute
-
-**Background.** Joined Meridian in 2015 as Chief Scientific Officer after 20 years in academic medicine, most recently as a department chair at a top-five US medical school. Promoted to President of the Meridian Institute in 2019. Research background in cardiovascular medicine with over 140 peer-reviewed publications. Jewish-American, 62 years old, married with adult children.
-
-**Strategic priorities.** Morley-Kahn owns research operations, external grants and funding, publication output, and research infrastructure. His 2026 priorities include growing external research funding, expanding translational research capabilities, and integrating research with clinical AI development.
-
-**Communication style.** Academic, thoughtful, occasionally impatient with operational minutiae. Highly respected externally in research communities; viewed as a distinct presence within the operational executive team.
-
-### 4.7 · Katherine Oshima · Chief Information Officer
-
-**Background.** Joined Meridian in 2022 as Chief Digital Health Officer, a newly-created role. Expanded to CIO in January 2026, combining technology infrastructure with digital health strategy. Prior experience: CTO of a digital health company; VP Technology at a regional health system; engineering roles at a large technology company. Undergraduate in computer science from Carnegie Mellon; MBA from MIT Sloan. Japanese-American, 43 years old, married, one young child.
-
-**Strategic priorities.** Oshima owns technology infrastructure, clinical applications (including Epic), digital health capabilities, and the newly-expanded AI agenda. Her 2026 priorities include the $250M AI portfolio execution, EHR standardization post-merger, and cybersecurity posture enhancement.
-
-**Communication style.** Technical, clear, comfortable with executive-level framing. One of the more digitally-native leaders on the executive committee. Builds strong relationships across clinical, operational, and financial leaders.
-
-**Known pain points.**
-- Legacy technology debt, particularly from the Rocky Mountain merger where systems remain partially unintegrated
-- Clinical AI governance complexity
-- Cybersecurity threat environment in healthcare
-- Cost pressure on technology investment during wage cost pressure
-
-**VIP-enriched reasoning notes for agents.** Oshima is likely an AbarVa champion given her background and the alignment between AbarVa's positioning and her AI strategy. She is a sophisticated buyer.
-
-### 4.8 · Dr. Rashid Khoury · Chief Population Health Officer
-
-**Background.** Joined Meridian in 2012 as medical director of the Wasatch Front accountable care organization. Progressed through population health leadership to the system CPHO role in 2021. Family medicine physician by training; MPH from Johns Hopkins. Palestinian-American, 52 years old, married with three children.
-
-**Strategic priorities.** Khoury owns population health management across 740K attributed lives (growing to 880K target), the value-based care clinical model, care management operations, and the interface between population health and payer operations.
-
-**Communication style.** Mission-driven, systematic, patient. Works well across clinical and payer stakeholders because he understands both sides deeply.
-
-**Known pain points.**
-- Scaling care management capacity as attributed lives grow
-- Data integration between provider and payer systems for closed-loop population health
-- Physician compensation alignment with population health goals
-- Rural access to care coordination services
-
-### 4.9 · Susan Ahmadi-Clarke · Chief Nursing Officer (system-level)
-
-**Background.** Joined Meridian in 2008 as a hospital CNO in the Idaho market. Progressed to regional CNO; assumed system CNO in 2020. BSN from BYU; MSN from University of Utah; DNP from Johns Hopkins. Iranian-American of Persian heritage, 55 years old, married with adult children.
-
-**Strategic priorities.** Ahmadi-Clarke owns the approximately 18,000 nursing workforce across the system. Her 2026 priorities include implementing the 2025 nursing agreement, scaling nursing workforce sustainability initiatives, and navigating the interface between nursing and the AI clinical tools agenda.
-
-**Known pain points.**
-- Nursing workforce stability post-settlement
-- Nursing leadership pipeline development
-- Technology burden on nursing workflows
-- The tension between optimal nurse-to-patient ratios and financial sustainability
-
-### 4.10 · Dr. Sarah Whitfield · Chief Quality and Patient Safety Officer
-
-**Background.** Joined Meridian in 2013 as a patient safety physician. Became CQO in 2020. Anesthesiology background; Masters in patient safety from University of Illinois. Black-American, 50 years old, single, based in Salt Lake City.
-
-**Strategic priorities.** Whitfield owns the quality and patient safety program across provider operations, quality measurement and reporting for both provider and payer, and patient safety culture. Her 2026 priorities include preparing for accreditation surveys, post-CMS-audit remediation tracking, and quality infrastructure for value-based care contracts.
-
-### 4.11 through 4.16 · Additional executive profiles
-
-Abbreviated profiles for completeness; deeper development as specific engagements touch their scope.
-
-- **Thomas Berglund-Morales** (CHRO) — Swedish-Mexican heritage; joined 2022; prior CHRO experience in academic healthcare; priorities include workforce strategy post-nursing settlement and leadership development.
-- **Dr. Nathan Goldberg** (Chief Strategy and Growth Officer) — joined 2020; former McKinsey partner; priorities include service line growth, merger integration completion, and strategic partnerships.
-- **Christopher Iwuanyanwu** (Chief Diversity and Community Health Officer) — Nigerian-American; joined 2021 in a newly-created role combining DEI and community health; priorities include health equity measurement and community benefit strategy.
-- **Meredith Ashford-Singh** (General Counsel and Chief Compliance Officer) — British-Indian dual citizen; joined 2019; priorities include CMS audit remediation oversight, regulatory response, and contractual work.
-- **Jonathan Reese-Park** (Chief Development Officer) — joined 2016; priorities include philanthropic campaign execution and community relations.
-- **Dr. Tia Nguyen-Walsh** (Chief Clinical Officer, Ambulatory) — Vietnamese-Irish heritage; elevated to exec committee in 2025; priorities include ambulatory access modernization and virtual care expansion.
+- **Tenure:** 1.5 years in role; 3 years at Meridian
+- **Reports to:** CDIO (Dr. Anita Krishnamurthy)
+- **Stated FY2026 priorities:** patient access product modernization, care-navigation product portfolio, product operating model, digital product evidence and adoption metrics
+- **Coalition:** Product-outcome coalition; bridges CDIO, clinical leadership, health-plan product, and operations when digital programs risk becoming pure technology work
 
 ---
 
-## Part 5 · Active Initiatives · 2026
+## Part 5 · Active Transformation Programs · FY2026
 
-Meridian has 19 named major initiatives in-flight. Most demo-relevant:
+Four named programs in flight (per `meridian-data/06_program_inventory/active_programs.json`).
 
-### 5.1 · Clinical AI Governance and Ambient Documentation Scale-Up
+### 5.1 · `meridian-ambient-2026` · Ambient Clinical Documentation Rollout
 
-Sponsor: Dr. Priya Venkataraman (CMO) with Katherine Oshima (CIO)
-Scope: Expand ambient clinical documentation from 800 to 2,400 physicians; establish governance framework for all clinical AI
-Current phase: Scale-up in progress; governance framework in Board Technology and AI Committee review
+- **Phase:** P3 Design
+- **Sponsor:** Dr. Jennifer Wexler (CMIO)
+- **Scope:** Production rollout of ambient clinical documentation across primary care and selected specialty cohorts. Vendor evaluation: Abridge under active evaluation alongside the incumbent path.
+- **Cost note:** Abridge contracted at $3.47M annual; renewal date April 15, 2026 (now past — under renegotiation)
+- **Critical signal:** Epic integration concentration is the cross-program risk
 
-### 5.2 · Value-Based Care 2030 Progression
+### 5.2 · `meridian-prior-auth-2026` · Prior Authorization Automation
 
-Sponsor: Dr. Rashid Khoury (CPHO) with Linda Chen-Winters (President MHP)
-Scope: Cross-system initiative advancing from 68% to 85% value-based revenue by 2030
-Current phase: Annual milestone tracking and expansion workstreams
+- **Phase:** P4 Build
+- **Sponsor:** Patricia Okafor (VP Revenue Cycle)
+- **Vendor:** Cohere Health engaged
+- **Budget:** $9.8M total, $6.1M consumed
+- **Scope:** Prior authorization automation across plan and provider operations. Plan-side adoption is the bottleneck; provider-side adoption is ahead.
 
-### 5.3 · Rocky Mountain Integration Completion
+### 5.3 · `meridian-ai-governance-2026` · Clinical AI Governance Uplift
 
-Sponsor: Dr. Marcus Halberstam (President Provider Ops)
-Scope: Finish integration work from 2024 merger across Idaho, Wyoming, Montana facilities
-Current phase: EHR standardization in Wave 3 of 4; care model harmonization in progress
+- **Phase:** P2 Synthesis
+- **Sponsor:** Dr. Jennifer Wexler (CMIO)
+- **Scope:** Operationalize the AI Governance Council charter across the 23-use-case inventory; close the governance gap on the 3 surfaced shadow scribe pilots; build the attestation/monitoring infrastructure.
+- **Triggered by:** Q3 FY2025 board AI risk policy
 
-### 5.4 · CMS Audit Remediation
+### 5.4 · `meridian-rcm-modernization-2026` · RCM Modernization
 
-Sponsor: Meredith Ashford-Singh (GC) with Linda Chen-Winters (President MHP)
-Scope: 14-finding corrective action plan from January 2026 CMS MA audit
-Current phase: Initial remediation accepted March 2026; ongoing monitoring through 2026
+- **Phase:** P1 Discovery
+- **Sponsor:** David Park (CFO)
+- **Scope:** Revenue cycle technology and process modernization; carries the DENIALS-2024 trust deficit; politically unavoidable after Q4 FY2025 denial spike
+- **Cross-program dependency:** Shares Epic integration concentration with the other three programs
 
-### 5.5 · Physician Workforce Sustainability
+### 5.5 · Epic integration concentration · open critical signal
 
-Sponsor: Dr. Priya Venkataraman (CMO) with Thomas Berglund-Morales (CHRO)
-Scope: Physician burnout mitigation, recruitment and retention across specialty lines
-Current phase: Multiple workstreams; ambient documentation is a key enabler
-
-### 5.6 · Integrated Patient Portal Next Generation
-
-Sponsor: Katherine Oshima (CIO) with Dr. Tia Nguyen-Walsh (CCO Ambulatory)
-Scope: Unified patient experience across care, benefits, pharmacy, wellness
-Current phase: Vendor evaluation completed; implementation beginning Q2 2026
-
-### 5.7 · Medicare Advantage Growth and Quality
-
-Sponsor: Linda Chen-Winters (President MHP)
-Scope: Membership growth, market expansion, CMS Star Rating maintenance
-Current phase: Colorado expansion underway; Star Rating protection in progress
-
-### 5.8 · Commercial ACO Launch
-
-Sponsor: Linda Chen-Winters (President MHP) with Dr. Rashid Khoury (CPHO)
-Scope: Launch commercial ACO product for self-insured employer customers
-Current phase: Product design; initial employer customer conversations
-
-### 5.9 · Revenue Cycle Automation
-
-Sponsor: Daniel Okeke-Reid (CFO) with Katherine Oshima (CIO)
-Scope: AI applications across prior authorization, denial management, payment integrity
-Current phase: Tool selection in progress; pilot workstreams beginning
-
-### 5.10 · Through 5.19 · Additional initiatives
-
-Including behavioral health expansion, transplant program growth, specialty bundle expansion, community health strategy, women's health strategy, philanthropic campaign, research expansion, sustainability commitments, rural access strategy, and digital transformation cross-cutting program.
+A single critical cross-program signal is open: all four FY2026 transformation programs depend on the same Epic integration layer (prior-auth rule sets, ambient API access, denial adjudication, RCM revenue codes). The Kona Coast Cerner residual makes this concentration even more pronounced. This is the primary architectural risk the AI Governance Council is tracking.
 
 ---
 
 ## Part 6 · Active Patterns Observable in Meridian Data
 
-### 6.1 · Pattern: Shadow Clinical AI Tool Adoption
+Patterns the agent layer should recognize and reason about. These align with the seven full-schema pattern packs in `meridian-intelligence-layer-overlay.md` Part 3.
 
-**Summary.** Individual physicians and departments have independently adopted approximately 11 AI clinical tools across the system outside of central governance, including ambient scribes beyond the authorized pilot, diagnostic AI tools in radiology and cardiology, and documentation assistants in ambulatory settings.
+### 6.1 · Shadow AI in clinical and revenue cycle operations
 
-**Analog to the Apex Shadow AI pattern but in clinical context.** This is a dual governance challenge: financial (unmanaged spend) and clinical (patient safety implications of ungoverned AI).
+**Healthcare-specific variant of the cross-sector Shadow AI Governance pattern.** AI Governance Council surfaced 23 clinical-AI use cases under review; 4 attested; 19 in progress; 3 shadow scribe pilots recently surfaced operating outside central governance. PHI handling, BAA coverage, and clinical decision influence are the primary risks.
 
-**Severity.** High. The CMS audit flagged AI governance as an observation category; uncontrolled clinical AI could create additional exposure.
+### 6.2 · Revenue cycle denial cascade
 
-### 6.2 · Pattern: Care Coordination Gaps in Complex Patients
+Q4 FY2025 denial spike + DENIALS-2024 sunk cost narrative. First-pass denial rates, clean claim rates, and POS collections all underperform peer median. RCM Modernization program is the primary intervention.
 
-**Summary.** Approximately 14% of high-complexity patients (those with three or more chronic conditions and at least one annual hospitalization) experience documented care coordination failures per year, with downstream impact on both patient outcomes and total cost of care.
+### 6.3 · Value-based care progression lag
 
-**Program implications.** Directly relevant to value-based care performance and to the integrated patient portal investment.
+VBC revenue at ~30% of total system revenue. The lag matters because plan economics (under Hartwell) and provider risk-bearing capacity (under Reid + Sharma) diverge in interesting ways for an integrated system.
 
-### 6.3 · Pattern: Physician Burnout Signals
+### 6.4 · Care transitions and readmission gap
 
-**Summary.** Physician burnout scores across the system remain elevated, with specialty-level variation: hospitalists (62% burnout rate), primary care (58%), emergency medicine (54%), outpatient subspecialists (43%). Documentation burden is a consistently-cited driver.
+Care coordination FTE staffing below peer; readmission rate above target. Cross-program implication for VBC performance and Plan-side MLR.
 
-**Program implications.** Ambient documentation scale-up is the primary intervention; adjacent workflow redesign opportunities.
+### 6.5 · Access and capacity mismatch
 
-### 6.4 · Pattern: Medicare Advantage Risk Adjustment Opportunity
+Days to third next available exceeds peer median in primary care and specialty. ED boarding time elevated. Telehealth utilization underleveraged. Direct read on Hartwell's MA retention and Iyer's patient access product modernization work.
 
-**Summary.** Risk adjustment coding completeness varies meaningfully across Medicare Advantage provider groups, with the top quartile capturing approximately 18% more condition categories than the bottom quartile for comparable populations. Net impact estimated at $110M-$140M in annualized revenue.
+### 6.6 · Physician burnout and engagement erosion
 
-**Program implications.** Revenue cycle automation initiative intersects this opportunity; compliance dimension requires careful handling post-CMS audit.
+Burnout index elevated; documentation burden identified as primary driver. Ambient documentation rollout is the primary intervention; CMIO Wexler's bandwidth risk (sponsoring two programs) is the upstream constraint.
 
-### 6.5 · Pattern: Ambulatory Access Constraint in Specific Specialties
+### 6.7 · MA risk adjustment maturation gap
 
-**Summary.** New-patient wait times exceed 30 days in six specialties (dermatology, endocrinology, rheumatology, gastroenterology, behavioral health, and certain surgical subspecialties), constraining Meridian's ability to grow attributed lives and creating member abrasion in the health plan.
-
-**Program implications.** Ambulatory access modernization initiative; virtual care expansion; workforce strategy.
-
-### 6.6 · Pattern: Value-Based Care Contract Performance Variation
-
-**Summary.** Performance across value-based contracts varies significantly. Top-performing contracts exceed benchmarks by 4-7% on quality and cost metrics; bottom contracts underperform by 3-5%. Drivers include attributed population composition, care management intensity, and physician engagement.
-
-**Program implications.** Core to value-based care 2030 progression and to commercial ACO launch strategy.
-
-### 6.7 · Pattern: Post-Merger Operating Model Inconsistency
-
-**Summary.** 18 months after the Rocky Mountain merger, operating practices vary across the pre-existing Meridian footprint and the integrated Rocky Mountain facilities in scheduling, staffing, supply chain, and quality processes. Normalization is ongoing but slow.
-
-**Program implications.** Directly relevant to Rocky Mountain integration completion and operational margin protection.
+Plan-side risk adjustment accuracy below benchmark. Owner: Christopher Vega (VP Risk Adjustment & STAR Quality). Compounds plan margin pressure and STAR rating progression.
 
 ---
 
 ## Part 7 · Vendor and Technology Landscape
 
+Per `meridian-data/03_it_landscape/` and `meridian-data/11_vendor_contracts/`.
+
 ### 7.1 · Core clinical systems
 
-- **EHR:** Epic across all Meridian-legacy facilities; former Rocky Mountain facilities in migration from Cerner to Epic with completion targeted Q4 2026
-- **Payer core:** HealthEdge (health plan core administration) integrated with Epic
-- **Clinical data platform:** Epic Cogito with supplementary Databricks for advanced analytics
-- **Patient engagement:** Epic MyChart plus custom extensions
-- **Population health:** Internal platform with selected third-party components (HealthCatalyst, Arcadia)
+- **EHR — Epic** across the Meridian-legacy footprint and Pacific Queens (migrated 2024)
+- **EHR — Cerner Millennium** at Kona Coast Hospital (Hawaii Island; second-wave migration paused)
+- **Payer core** — health plan core administration system, integrated with Epic via federated data platform
+- **Clinical data platform** — Epic Cogito with supplementary platforms for advanced analytics
+- **Patient engagement** — Epic MyChart plus custom extensions (Maya Iyer's product remit)
+- **Population health** — internal platform with selected third-party components
 
 ### 7.2 · AI and analytics stack
 
-- **Cloud:** Multi-cloud with AWS primary, Azure secondary
-- **LLM providers:** Research does not currently use Anthropic Claude on Bedrock, Azure Foundry, OpenAI, or other external hosted LLMs for active research workflows. The current research runtime is local-first (Palantir, Hadoop, and an on-prem NVIDIA/private GPU stack with locally hosted models). The new CIO is evaluating governed cloud AI options, including GCP-style healthcare research patterns observed at academic medical centers, but PHI, IRB, data-egress, and security controls remain gating issues.
-- **Clinical AI tools:** Ambient documentation (DAX, Abridge under evaluation), imaging AI across modalities, clinical decision support via Epic tools, sepsis prediction, readmission risk
+- **Cloud:** Multi-cloud with AWS primary and Azure secondary at the enterprise analytics layer
+- **LLM providers (research):** Research does not currently use Anthropic Claude on Bedrock, Azure Foundry, OpenAI, or other external hosted LLMs for active research workflows. The current research runtime is local-first (Palantir Foundry, a Hadoop research lake, and an on-prem NVIDIA/private GPU stack with locally hosted open-weight models). The new CDIO is evaluating governed cloud AI options including GCP-style healthcare research patterns, but PHI, IRB, data-egress, and security controls remain gating issues. See `src/data/meridian/research_ai.ts` for the typed canonical posture.
+- **Clinical AI tools:** Ambient documentation (Abridge under active evaluation); imaging AI across modalities (Paige AI under review for pathology); clinical decision support via Epic tools; sepsis prediction; readmission risk
 - **Analytics:** Tableau, internal tools, Tableau Cloud migration in progress
 
-### 7.3 · AI vendor engagements
+### 7.3 · AI vendor engagements (production state)
 
-- **Central authorized:** Ambient documentation vendor (single primary, governed), imaging AI vendors per modality, Epic clinical AI tools
-- **Shadow/decentralized (the pattern):** approximately 11 tools flagged in Part 6.1
+| Vendor | Use case | Status | Annual spend |
+|---|---|---|---|
+| Cohere Health | Prior Authorization Automation | Engaged · `meridian-prior-auth-2026` P4 Build | $2.04M |
+| Abridge | Ambient Clinical Documentation | Active evaluation (renewal under negotiation) | $3.47M |
+| Paige AI | Pathology imaging | Under review | $0.61M |
+| Internal NVIDIA + Palantir + Hadoop | Research AI runtime | Local-first; cloud AI under CIO evaluation | embedded in $384M IT budget |
+
+### 7.4 · Shadow AI inventory (April 2026)
+
+23 clinical-AI use cases under AI Governance Council review; 19 not yet attested; 3 surfaced shadow scribe pilots operating outside central governance. This is the inventory that the `meridian-ai-governance-2026` program is operationalizing.
 
 ---
 
 ## Part 8 · Prior AbarVa Programs at Meridian
 
-### 8.1 · Program: Physician Compensation Redesign
-
-**Sponsor:** Dr. Priya Venkataraman (CMO) with Daniel Okeke-Reid (CFO)
-**Phases:** 0-4 completed
-**Duration:** September 2025 - March 2026
-**Outcomes:**
-- Primary care compensation methodology redesigned from RVU-heavy to value-aligned
-- Implementation plan for 2027 go-live approved
-- Specialty care compensation redesign scoped for follow-on Program
-
-### 8.2 · Program: Health Plan Member Experience Diagnostic
-
-**Sponsor:** Linda Chen-Winters (President MHP)
-**Phases:** 0-3 completed; Phase 4 in progress
-**Duration:** December 2025 - May 2026
-**Outcomes:**
-- Member journey pain points mapped and prioritized
-- Integrated patient portal requirements refined
-- Member service operations redesign in progress
+No AbarVa-shaped Programs have closed at Meridian to date. The four FY2026 transformation programs (`meridian-ambient-2026`, `meridian-prior-auth-2026`, `meridian-ai-governance-2026`, `meridian-rcm-modernization-2026`) are the active candidates for AbarVa engagement; the agent layer reasons over them as in-flight transformation work owned by named sponsors, not yet as AbarVa-shaped Strategic Moves.
 
 ---
 
@@ -515,123 +381,69 @@ Including behavioral health expansion, transplant program growth, specialty bund
 
 ### 9.1 · Peer set definition
 
-**Integrated system peers:**
-- Kaiser Permanente (larger scale, reference point for integrated model)
-- Intermountain Health (direct geographic and model peer)
-- Geisinger Health System (integrated peer, value-based care pioneer)
+**Pacific-state and integrated-IDN peers (primary):**
+- Sutter Health (CA)
+- Providence (multi-state Pacific corridor)
+- Kaiser Permanente Northern California (integrated payer-provider, larger scale)
+- CommonSpirit Health
+- Memorial Hermann (extended)
+
+**National integrated payer-provider peers (extended):**
+- Geisinger Health System
 - Henry Ford Health
-- Sentara Health
-- SSM Health
-- Advocate Health
+- Intermountain Health (extended)
 
-**Regional integrated peers:**
-- UPMC
-- Jefferson Health
-- Memorial Hermann Health System
-
-**Extended peer set for payer benchmarking:**
+**Health plan benchmarking:**
 - Humana (Medicare Advantage benchmark)
 - UnitedHealthcare (commercial benchmark)
 - Elevance Health
 
 ### 9.2 · Benchmark categories
 
-**Financial:**
-- Operating margin (non-profit health system benchmark range 2.5%-5.0%)
-- Days cash on hand
-- Debt service coverage
-- Capital expenditure as % of revenue
-- Value-based care revenue percentage
-
-**Clinical quality:**
-- CMS Star Ratings (Medicare Advantage)
-- Hospital HCAHPS scores
-- Leapfrog grades
-- Readmission rates
-- Mortality observed-to-expected ratios
-- Preventable hospitalization rates in attributed populations
-
-**Operational:**
-- Length of stay
-- Emergency department throughput
-- Ambulatory access times
-- Surgical case productivity
-- Revenue cycle days
-
-**Payer:**
-- Medical loss ratio
-- Administrative cost ratio
-- Member retention
-- Net promoter score
-
-**Workforce:**
-- Physician turnover
-- Nursing turnover
-- Employee engagement scores
-- Physician burnout rates
-
-**AI and digital:**
-- Ambient documentation adoption
-- Patient portal activation rates
-- Virtual care penetration
-- IT spending % of revenue
+Financial, clinical quality, patient experience, operational, payer, workforce, AI/digital — same shape as the apex / first-capital companion docs.
 
 ### 9.3 · Public data sources
 
-- CMS data (Hospital Compare, MA Star Ratings, ACO performance)
-- AHRQ quality indicators
-- Leapfrog data
-- Moody's and S&P rating reports
-- Specialty society publications
-- Health Affairs research
-- Peer system annual reports and 990s (for non-profits)
+CMS Hospital Compare, CMS MA Star Ratings, ACO performance data, AHRQ quality indicators, Leapfrog data, Moody's and S&P rating reports, Health Affairs research, Joint Commission reports, NCQA reports, peer 990s.
 
 ### 9.4 · Demo-relevant benchmarks
 
-- **Value-based care revenue share · national average:** 24%; Meridian at 68%; peer leaders at 78-85%
-- **Operating margin · non-profit health system average:** 2.8%; Meridian at 4.1%; peer leaders at 5.5-7.0%
-- **Medicare Advantage Stars · national average:** 3.8; Meridian at 4.5; peer leaders at 4.5-5.0
-- **Physician burnout · national average:** 53%; Meridian at 54% (slight improvement from 2024)
-- **Ambient documentation adoption · national average:** 8% of physicians; Meridian at 12% (expanding to 34% by end 2026)
-- **Patient portal activation · national average:** 62%; Meridian at 78%
+- **VBC revenue share · national average:** 24%; **Meridian:** ~30%; peer leaders 50–80%
+- **Operating margin · non-profit health system average:** 2.8%; **Meridian:** 2.4% (under pressure); peer leaders 4–6%
+- **Medicare Advantage Stars · national average:** 3.8; Meridian's MA STAR program is a named FY2026 priority under Hartwell + Vega
+- **Physician burnout · national average:** 53%; Meridian elevated, primary driver is documentation burden
+- **Ambient documentation adoption · national average:** 8% of physicians; Meridian rollout in P3 Design
 
 ---
 
 ## Part 10 · Data Room Inventory
 
-### 10.1 · Client-private datasets
+### 10.1 · Client-private datasets (`meridian-data/`)
 
-- Full org structure (68,000 employees; richest executive-level depth)
-- VIP profiles for top 16 executives plus 40+ SVPs
-- Clinical operations data (encounter-level, aggregated)
-- Financial statements and operating performance
-- Quality and safety data across all measured programs
-- Value-based contract performance
-- Member experience data (health plan)
-- Physician performance data
-- Board materials and strategic plan documents
+- Full org structure (58,000 employees; richest depth on the 21-person executive committee + AI Governance Council members)
+- VIP profiles for all 21 executives
+- IT landscape, IT financials, vendor contracts (`meridian-data/03_it_landscape/`, `04_it_financials/`, `11_vendor_contracts/`)
+- Active program inventory (`06_program_inventory/active_programs.json`)
+- KPI dictionary (`05_kpi_dictionary/`)
+- Compliance posture and audit findings (`12_compliance/`)
+- Cross-program signals (`14_cross_program_signals/`)
+- Operational telemetry (`10_operating_telemetry/`)
+- Evidence ledger (`09_evidence_ledger/`)
 
-### 10.2 · Client-contributed cross-system data
-
-- Cross-system clinical AI adoption patterns (aggregated)
-- Cross-system value-based care performance benchmarks
-- Cross-system physician workforce patterns
-
-### 10.3 · Platform-public datasets
+### 10.2 · Platform-public datasets
 
 - CMS data (continuous)
 - Peer system publicly-available data
 - Health Affairs, JAMA, NEJM research indexing
 - Regulatory updates (CMS, state health departments)
-- Industry analyst data (Moody's, S&P, sector specialists)
-- Clinical society data
+- Industry analyst data (Moody's, S&P, healthcare sector specialists)
 
-### 10.4 · Known gaps
+### 10.3 · Known gaps
 
-- Detailed vendor contract terms for clinical AI tools
-- Granular operating data from Rocky Mountain integration sites
+- Granular operating data from Kona Coast Cerner residual
 - Patient-reported outcomes data at scale
-- Social determinants of health data
+- Social determinants of health data integration
+- Plan-side claim-level adjudication detail (privacy + payer-contract sensitivity)
 
 ---
 
@@ -641,10 +453,12 @@ Same pattern as Apex seed (Part 12 of Apex document). Nexus consumes role-specif
 
 Meridian-specific adaptations:
 
-- **Clinical vs operational vs payer context** — agents recognize whether a Program touches clinical operations, payer operations, or integration, and adjust framing accordingly
-- **Value-based care reasoning** — agents understand fee-for-service vs value-based revenue dynamics in Meridian recommendations
-- **Regulatory sensitivity** — post-CMS audit, agents flag regulatory implications proactively
-- **Physician-CEO register** — agents match Vasquez's physician-CEO communication style when she is in the room
+- **Clinical vs operational vs payer context** — agents recognize whether a Program touches clinical operations (Reid / Wexler / Chen), operational throughput (O'Brien / Park), payer (Hartwell / Venkatesan / Vega / Fitzgerald), or AI governance (Wexler / Krishnamurthy / Hollings / Mercer), and adjust framing accordingly.
+- **Value-based care reasoning** — agents understand fee-for-service vs value-based revenue dynamics (~30% VBC) when shaping recommendations.
+- **DENIALS-2024 sensitivity** — every revenue cycle recommendation passes through the post-DENIALS-2024 attribution discipline filter. The CFO's office is the gating sponsor.
+- **Research AI canon** — agents must respect `src/data/meridian/research_ai.ts` posture: research is local-first today; cloud AI is under CDIO evaluation, not deployed. Anthropic Claude / OpenAI / Bedrock / Azure Foundry are evaluation paths, not active research runtimes.
+- **CMIO bandwidth risk** — Dr. Jennifer Wexler sponsors two of four FY2026 programs; agents flag this as a HIGH bandwidth risk when reasoning about program advance.
+- **Epic integration concentration** — open critical signal across all four programs.
 
 ---
 
@@ -655,16 +469,18 @@ Meridian-specific adaptations:
 | Dimension | Apex Retail Group | Meridian Health System |
 |---|---|---|
 | Industry | Retail | Healthcare (integrated provider + payer) |
-| Scale | $108B revenue | $14.8B revenue |
-| Geography | National (1,976 stores) | Regional (6 Mountain West states) |
-| Business complexity | 8 merchandise categories | 14 clinical service lines + 4 payer products + research |
-| Strategic pressure | Margin + AI adoption + activist investor | Value-based care transition + workforce + AI governance |
-| Regulatory intensity | Moderate | High (CMS, state DOIs, clinical) |
-| Demo narrative anchor | Shadow AI $2.3M signal | Shadow clinical AI + value-based care |
-| Key tensions | Merchandising ↔ Planning ↔ Supply Chain | Provider ↔ Payer + Fee-for-service ↔ Value-based |
+| Scale | $108B revenue | $16.8B revenue |
+| Geography | National (1,976 stores) | Pacific corridor (CA, NV, OR, HI) |
+| Business complexity | 8 merchandise categories | 30 hospitals + 280 ambulatory + 4 plan products + research |
+| Strategic pressure | Margin + AI adoption + activist investor | Operating margin recovery + DENIALS-2024 trust deficit + AI governance + Hawaii integration |
+| Regulatory intensity | Moderate | High (CMS, state DOIs, HIPAA, FDA) |
+| Demo narrative anchor | Shadow AI $2.3M signal | Epic integration concentration · Shadow AI scribe pilots · DENIALS-2024 trust deficit |
+| Key tensions | Merchandising ↔ Planning ↔ Supply Chain | Provider ↔ Payer · CMIO bandwidth · CDIO new (Krishnamurthy) · CFO discipline (Park) |
 
 Both composites enable rich agent reasoning. Which one anchors the demo depends on prospect industry.
 
 ---
 
 **END OF DOCUMENT · MERIDIAN HEALTH SYSTEM COMPREHENSIVE SEED DATA SPECIFICATION**
+
+*Reconciled to production fixtures 2026-05-10 per founder directive (VOICE.STRAT-2026-05-10g). Source of truth: `meridian-data/`. Prior Mountain-West / Vasquez / Oshima / Chen-Winters narrative is retired in full; do not re-introduce it without an explicit reconciliation decision reversing this directive.*

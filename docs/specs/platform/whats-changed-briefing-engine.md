@@ -413,9 +413,9 @@ Explicit overrides dominate learned patterns.
 
 **Closing.** "Jonathan, the FERC order deserves your close attention — the downstream implications for the $340M transmission capital allocation are significant."
 
-### 6.3 · Dr. Linda Chen-Winters at Meridian (President Health Plans) · Midweek briefing
+### 6.3 · Thomas Hartwell at Meridian (President Health Plans) · Midweek briefing
 
-**Opening.** "Good morning, Dr. Chen-Winters. Three items to run through — all health-plan-side, all with cross-system implications."
+**Opening.** "Good morning, Thomas Hartwell. Three items to run through — all health-plan-side, all with cross-system implications."
 
 **Section 1 · KPI Drift (sensed).**
 
@@ -432,7 +432,7 @@ Explicit overrides dominate learned patterns.
 > **Kaiser Permanente announced Medicare Advantage star-rating recovery plan.** Their plan landed 0.5-star improvement in the 2025 cycle after aggressive quality-metric focus — specifically in HCAHPS-adjacent member-experience measures and medication adherence. Their framework is publicly disclosed in a CMS-filed document. Several of their interventions are applicable to Meridian's star-rating improvement roadmap.
 > *Recommended: 20 minutes for Erin's team to assess applicable interventions for your 4.0-to-4.5 star progression plan.*
 
-**Closing.** "Dr. Chen-Winters, the MLR movement is the operational priority — everything else can wait a week."
+**Closing.** "Thomas Hartwell, the MLR movement is the operational priority — everything else can wait a week."
 
 ---
 

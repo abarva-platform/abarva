@@ -42,7 +42,7 @@ export const meridianResearchAI = {
       "care delivery digital twins",
       "real-world evidence generation",
     ],
-    executiveOwner: "Dr. James Morley-Kahn, President, Meridian Institute",
+    executiveOwner: "Dr. Marcus Reid, Chief Physician Executive (research orientation)",
     operatingTension:
       "Research sees itself as an academic-style innovation engine, while enterprise IT sees unmanaged research infrastructure as a security and data-governance risk.",
   },

@@ -60,7 +60,7 @@ async function main() {
       passed: /customer-outcome/i.test(apexLoyaltyAnswer) && /loyalty/i.test(apexLoyaltyAnswer),
     },
     {
-      question: 'Meridian maestro briefs on Linda Chen-Winters as subject',
+      question: 'Meridian maestro briefs on Thomas Hartwell as subject',
       answer: lindaBrief,
       passed: /clinical-financial|payer side|member retention|HIPAA/i.test(lindaBrief),
     },

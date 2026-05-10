@@ -79,13 +79,13 @@ describe('ApprovalQueueTable', () => {
           id === req.requestedByUserId ? 'Nina Patel (Director)' : null
         }
         resolvePersonName={(id) =>
-          id === sponsorId ? 'Katherine Oshima (CIO)' : null
+          id === sponsorId ? 'Dr. Anita Krishnamurthy (CIO)' : null
         }
       />,
     );
     expect(screen.getByText('Meridian KYC AI')).toBeInTheDocument();
     expect(screen.getByText('Nina Patel (Director)')).toBeInTheDocument();
-    expect(screen.getByText('Katherine Oshima (CIO)')).toBeInTheDocument();
+    expect(screen.getByText('Dr. Anita Krishnamurthy (CIO)')).toBeInTheDocument();
     expect(screen.queryByText(req.requestedByUserId)).not.toBeInTheDocument();
     expect(screen.queryByText(sponsorId)).not.toBeInTheDocument();
     expect(screen.getByText('AMS_CONSOLIDATION')).toBeInTheDocument();

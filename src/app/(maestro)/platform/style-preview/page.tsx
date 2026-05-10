@@ -30,13 +30,13 @@ const programRows = [
   {
     title: 'Claims AI wave sequencing',
     phase: 'Design',
-    owner: 'Elena Vasquez · CEO',
+    owner: 'Dr. Elaine Morales · CEO',
     note: 'Three-wave path sized against data readiness, value timing, and external vendor lock-in.',
   },
   {
     title: 'Executive sponsor cadence repair',
     phase: 'Execute',
-    owner: 'Linda Chen-Winters · President',
+    owner: 'Thomas Hartwell · President, Meridian Health Plans',
     note: 'Decision logs, attestation trail, and weekly operating rhythm now visible in one surface.',
   },
 ];

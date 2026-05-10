@@ -1,6 +1,6 @@
 {
   "tenant_key": "apex-retail",
-  "last_updated": "2026-04-22",
+  "last_updated": "2026-05-10",
   "data_classification": "Internal",
   "schema_version": "1.0",
   "executive_bench": [
@@ -12,7 +12,11 @@
       "tenure_in_role_years": 4,
       "tenure_at_apex_years": 12,
       "background": "Promoted from COO in 2022. Joined Apex 2014 as VP Stores. Prior: Kohl's regional ops roles (1998-2014).",
-      "stated_priorities_2026": ["margin recovery", "digital channel profitability", "AI-enabled productivity"],
+      "stated_priorities_2026": [
+        "margin recovery",
+        "digital channel profitability",
+        "AI-enabled productivity"
+      ],
       "decision_style": "data-driven, debate-tolerant, deliberate; takes time on big calls",
       "known_for": "store experience focus; less digitally fluent than peers"
     },
@@ -24,7 +28,11 @@
       "tenure_in_role_years": 3,
       "tenure_at_apex_years": 3,
       "background": "Joined from Williams-Sonoma in 2023. Prior: Macy's FP&A (2015-2019), JP Morgan retail equity research (2008-2015). CPA, CFA.",
-      "stated_priorities_2026": ["margin recovery 80bp", "vendor consolidation savings", "IT spend rationalization"],
+      "stated_priorities_2026": [
+        "margin recovery 80bp",
+        "vendor consolidation savings",
+        "IT spend rationalization"
+      ],
       "decision_style": "decisive on cost takeout; cautious on capex; strong relationship with Audit Committee",
       "known_for": "ran the 2024 SG&A reduction program (delivered $42M)"
     },
@@ -36,7 +44,11 @@
       "tenure_in_role_years": 2,
       "tenure_at_apex_years": 7,
       "background": "Promoted from EVP Stores in 2024. Joined Apex 2019. Prior: Target store operations (2008-2019).",
-      "stated_priorities_2026": ["store productivity", "DC labor efficiency", "loss prevention modernization"],
+      "stated_priorities_2026": [
+        "store productivity",
+        "DC labor efficiency",
+        "loss prevention modernization"
+      ],
       "decision_style": "operations-first; skeptical of corporate initiatives that don't reach the store level",
       "known_for": "vocal critic of the failed 2023 AMS consolidation"
     },
@@ -47,11 +59,17 @@
       "reports_to": "person:apex:robert-vance",
       "tenure_in_role_years": 5,
       "tenure_at_apex_years": 5,
-      "background": "Joined 2021 from Sephora. Prior: L'Oréal digital marketing (2012-2021).",
-      "stated_priorities_2026": ["customer experience differentiation", "loyalty member growth", "digital marketing efficiency"],
+      "background": "Joined 2021 from Sephora. Prior: L'Or\u00e9al digital marketing (2012-2021).",
+      "stated_priorities_2026": [
+        "customer experience differentiation",
+        "loyalty member growth",
+        "digital marketing efficiency"
+      ],
       "decision_style": "fast-moving; vendor-friendly; spends quickly when she sees opportunity",
       "known_for": "owns the largest discretionary budget after merchandising; sponsors apex-cdp-2026",
-      "concerns_flagged": ["digital marketing inflation eroding contribution margin"]
+      "concerns_flagged": [
+        "digital marketing inflation eroding contribution margin"
+      ]
     },
     {
       "id": "person:apex:lynne-stratham",
@@ -61,7 +79,11 @@
       "tenure_in_role_years": 0.5,
       "tenure_at_apex_years": 0.5,
       "background": "Joined October 2025 from Albertsons (VP Data). Prior: Walmart data engineering (2014-2022). Strong on data foundations; learning retail-specific operational data.",
-      "stated_priorities_2026": ["customer data unification (CDP)", "data quality program standup", "AI governance framework"],
+      "stated_priorities_2026": [
+        "customer data unification (CDP)",
+        "data quality program standup",
+        "AI governance framework"
+      ],
       "decision_style": "deliberate; building consensus; not yet a strong veto player at exec table",
       "known_for": "replaced Marcus Holloway who left July 2025 for unspecified reasons"
     },
@@ -73,7 +95,12 @@
       "tenure_in_role_years": 6,
       "tenure_at_apex_years": 9,
       "background": "Promoted from VP Infrastructure in 2020. Joined Apex 2017. Prior: Best Buy IT leadership (2009-2017).",
-      "stated_priorities_2026": ["IT cost stabilization", "AMS consolidation completion", "cloud migration phase 2", "AI platform readiness"],
+      "stated_priorities_2026": [
+        "IT cost stabilization",
+        "AMS consolidation completion",
+        "cloud migration phase 2",
+        "AI platform readiness"
+      ],
       "decision_style": "pragmatic; vendor-skeptical after the 2023 AMS failure; protective of his team",
       "known_for": "personally absorbed blame for the 2023 AMS consolidation pause; rebuilt CIO credibility through 2024-2025",
       "reports_to_relationship": "reports to COO, not CEO; structural choice from 2020 reorg that some on Board view as suboptimal"
@@ -86,7 +113,12 @@
       "tenure_in_role_years": 3,
       "tenure_at_apex_years": 3,
       "background": "Joined from Target (2023). Prior: Target CISO office (2018-2023), Mandiant consulting (2014-2018). CISSP, former active-duty USAF cyber.",
-      "stated_priorities_2026": ["AI governance and risk", "third-party risk maturity", "PCI program continuity", "incident response readiness"],
+      "stated_priorities_2026": [
+        "AI governance and risk",
+        "third-party risk maturity",
+        "PCI program continuity",
+        "incident response readiness"
+      ],
       "decision_style": "evidence-driven; will block initiatives that lack appropriate controls; respected but not always popular",
       "known_for": "ran the November 2025 PCI assessment with zero material findings"
     },
@@ -98,7 +130,11 @@
       "tenure_in_role_years": 2,
       "tenure_at_apex_years": 2,
       "background": "Joined 2024 from REI (VP Sustainability). Prior: Patagonia (2015-2024).",
-      "stated_priorities_2026": ["Scope 3 measurement maturity", "regenerative cotton program", "tier-1 supplier audit completion"],
+      "stated_priorities_2026": [
+        "Scope 3 measurement maturity",
+        "regenerative cotton program",
+        "tier-1 supplier audit completion"
+      ],
       "decision_style": "advocacy posture; works closely with brand and merchandising",
       "known_for": "successful regenerative cotton program launch in FY2024"
     },
@@ -110,7 +146,11 @@
       "tenure_in_role_years": 4,
       "tenure_at_apex_years": 4,
       "background": "Joined 2022 from Lowe's. Prior: Walmart HR (2010-2022).",
-      "stated_priorities_2026": ["AI literacy program rollout", "store labor optimization", "DEI program continuity"],
+      "stated_priorities_2026": [
+        "AI literacy program rollout",
+        "store labor optimization",
+        "DEI program continuity"
+      ],
       "decision_style": "consensus-builder; AI-cautious on workforce implications",
       "known_for": "launched the AI literacy program in early FY2026"
     },
@@ -122,7 +162,11 @@
       "tenure_in_role_years": 6,
       "tenure_at_apex_years": 6,
       "background": "Joined 2020 from Anthropologie. Prior: Free People merchandising (2014-2020).",
-      "stated_priorities_2026": ["margin recovery via assortment discipline", "private label growth", "demand forecasting accuracy"],
+      "stated_priorities_2026": [
+        "margin recovery via assortment discipline",
+        "private label growth",
+        "demand forecasting accuracy"
+      ],
       "decision_style": "instinct-driven; suspicious of pure-data approaches that ignore taste; powerful internally",
       "known_for": "private-label apparel margin program (delivered 220bp gross margin lift FY2024-2025)",
       "stance_on_ai": "willing to use it for forecasting and assortment, skeptical of using it for creative/curation decisions"
@@ -135,7 +179,11 @@
       "tenure_in_role_years": 3,
       "tenure_at_apex_years": 3,
       "background": "Joined 2023 from Macy's. Prior: Gap Inc. supply chain (2010-2020), McKinsey (2008-2010).",
-      "stated_priorities_2026": ["inventory turn recovery", "DC automation phase 2", "supplier consolidation"],
+      "stated_priorities_2026": [
+        "inventory turn recovery",
+        "DC automation phase 2",
+        "supplier consolidation"
+      ],
       "decision_style": "strategic but operationally hands-on; advocate for forecast modernization",
       "known_for": "supply chain instrumentation has been chronically under-invested; he's been pushing for modernization budget but losing to customer-facing investment"
     },
@@ -147,9 +195,576 @@
       "tenure_in_role_years": 7,
       "tenure_at_apex_years": 7,
       "background": "Joined 2019 from Williams-Sonoma legal. Prior: BigLaw partner.",
-      "stated_priorities_2026": ["AI governance", "privacy regulatory readiness", "vendor contract discipline"],
+      "stated_priorities_2026": [
+        "AI governance",
+        "privacy regulatory readiness",
+        "vendor contract discipline"
+      ],
       "decision_style": "highly trusted by CEO; works closely with CISO and CFO; strong veto power on AI initiatives that touch employment or pricing decisions",
       "known_for": "killed two AI vendor demos in 2025 that didn't pass legal review"
+    },
+    {
+      "id": "person:apex:theresa-aponte",
+      "name": "Theresa Aponte",
+      "title": "SVP Merchandising \u2014 Apparel & Accessories",
+      "reports_to": "person:apex:angela-foster",
+      "tenure_in_role_years": 4,
+      "tenure_at_apex_years": 11,
+      "background": "Theresa Aponte holds the SVP Merchandising \u2014 Apparel & Accessories role at Apex Retail. Composite operational profile focused on decision authority, coalition behavior, and program dependencies.",
+      "stated_priorities_2026": [
+        "apparel category margin recovery",
+        "private-brand growth",
+        "fashion buying cycle compression",
+        "AI-assisted assortment under governance"
+      ]
+    },
+    {
+      "id": "person:apex:bradley-wickersham",
+      "name": "Bradley Wickersham",
+      "title": "SVP Merchandising \u2014 Home & Lifestyle",
+      "reports_to": "person:apex:angela-foster",
+      "tenure_in_role_years": 3,
+      "tenure_at_apex_years": 8,
+      "background": "Bradley Wickersham holds the SVP Merchandising \u2014 Home & Lifestyle role at Apex Retail. Composite operational profile focused on decision authority, coalition behavior, and program dependencies.",
+      "stated_priorities_2026": [
+        "home category turn velocity",
+        "seasonal cycle planning",
+        "vendor consolidation"
+      ]
+    },
+    {
+      "id": "person:apex:yuki-tanaka-riveras",
+      "name": "Yuki Tanaka-Riveras",
+      "title": "SVP Merchandising \u2014 Beauty, Health & Wellness",
+      "reports_to": "person:apex:angela-foster",
+      "tenure_in_role_years": 2,
+      "tenure_at_apex_years": 5,
+      "background": "Yuki Tanaka-Riveras holds the SVP Merchandising \u2014 Beauty, Health & Wellness role at Apex Retail. Composite operational profile focused on decision authority, coalition behavior, and program dependencies.",
+      "stated_priorities_2026": [
+        "beauty category growth",
+        "wellness-adjacency expansion",
+        "private-label health"
+      ]
+    },
+    {
+      "id": "person:apex:marcus-aldridge",
+      "name": "Marcus Aldridge",
+      "title": "SVP Merchandising \u2014 Grocery & Consumables",
+      "reports_to": "person:apex:angela-foster",
+      "tenure_in_role_years": 5,
+      "tenure_at_apex_years": 12,
+      "background": "Marcus Aldridge holds the SVP Merchandising \u2014 Grocery & Consumables role at Apex Retail. Composite operational profile focused on decision authority, coalition behavior, and program dependencies.",
+      "stated_priorities_2026": [
+        "grocery category margin",
+        "private-label penetration",
+        "fresh program scaling"
+      ]
+    },
+    {
+      "id": "person:apex:dorian-petrov",
+      "name": "Dorian Petrov",
+      "title": "VP Planning & Allocation",
+      "reports_to": "person:apex:angela-foster",
+      "tenure_in_role_years": 4,
+      "tenure_at_apex_years": 9,
+      "background": "Dorian Petrov holds the VP Planning & Allocation role at Apex Retail. Composite operational profile focused on decision authority, coalition behavior, and program dependencies.",
+      "stated_priorities_2026": [
+        "allocation accuracy",
+        "stockout reduction",
+        "size/regional fit",
+        "demand forecasting AI under governance"
+      ]
+    },
+    {
+      "id": "person:apex:eliana-karimov",
+      "name": "Eliana Karimov",
+      "title": "VP Pricing & Promotions",
+      "reports_to": "person:apex:angela-foster",
+      "tenure_in_role_years": 3,
+      "tenure_at_apex_years": 6,
+      "background": "Eliana Karimov holds the VP Pricing & Promotions role at Apex Retail. Composite operational profile focused on decision authority, coalition behavior, and program dependencies.",
+      "stated_priorities_2026": [
+        "price-pack architecture",
+        "promotion ROI",
+        "competitor price intelligence"
+      ]
+    },
+    {
+      "id": "person:apex:rajat-iyengar",
+      "name": "Rajat Iyengar",
+      "title": "VP Private Brand Strategy",
+      "reports_to": "person:apex:angela-foster",
+      "tenure_in_role_years": 2,
+      "tenure_at_apex_years": 2,
+      "background": "Rajat Iyengar holds the VP Private Brand Strategy role at Apex Retail. Composite operational profile focused on decision authority, coalition behavior, and program dependencies.",
+      "stated_priorities_2026": [
+        "private-label penetration target",
+        "owned-brand portfolio",
+        "global sourcing"
+      ]
+    },
+    {
+      "id": "person:apex:felicity-ngata-brennan",
+      "name": "Felicity Ngata-Brennan",
+      "title": "VP Vendor Management & Trade",
+      "reports_to": "person:apex:angela-foster",
+      "tenure_in_role_years": 3,
+      "tenure_at_apex_years": 7,
+      "background": "Felicity Ngata-Brennan holds the VP Vendor Management & Trade role at Apex Retail. Composite operational profile focused on decision authority, coalition behavior, and program dependencies.",
+      "stated_priorities_2026": [
+        "vendor co-op funding",
+        "trade-allowance optimization",
+        "GMROI"
+      ]
+    },
+    {
+      "id": "person:apex:brendan-walsh",
+      "name": "Brendan Walsh",
+      "title": "SVP Store Operations \u2014 West",
+      "reports_to": "person:apex:david-okonjo",
+      "tenure_in_role_years": 4,
+      "tenure_at_apex_years": 14,
+      "background": "Brendan Walsh holds the SVP Store Operations \u2014 West role at Apex Retail. Composite operational profile focused on decision authority, coalition behavior, and program dependencies.",
+      "stated_priorities_2026": [
+        "West region store P&L",
+        "store-labor productivity",
+        "shrink reduction"
+      ]
+    },
+    {
+      "id": "person:apex:tasha-williams-choudhury",
+      "name": "Tasha Williams-Choudhury",
+      "title": "SVP Store Operations \u2014 East",
+      "reports_to": "person:apex:david-okonjo",
+      "tenure_in_role_years": 3,
+      "tenure_at_apex_years": 11,
+      "background": "Tasha Williams-Choudhury holds the SVP Store Operations \u2014 East role at Apex Retail. Composite operational profile focused on decision authority, coalition behavior, and program dependencies.",
+      "stated_priorities_2026": [
+        "East region store P&L",
+        "store associate engagement",
+        "format diversification"
+      ]
+    },
+    {
+      "id": "person:apex:kenny-brink",
+      "name": "Kenny Brink",
+      "title": "SVP Store Operations \u2014 Central",
+      "reports_to": "person:apex:david-okonjo",
+      "tenure_in_role_years": 5,
+      "tenure_at_apex_years": 15,
+      "background": "Kenny Brink holds the SVP Store Operations \u2014 Central role at Apex Retail. Composite operational profile focused on decision authority, coalition behavior, and program dependencies.",
+      "stated_priorities_2026": [
+        "Central region store P&L",
+        "rural-format optimization",
+        "self-checkout deployment"
+      ]
+    },
+    {
+      "id": "person:apex:maira-el-ahmadi",
+      "name": "Maira El-Ahmadi",
+      "title": "VP Store Labor & Workforce",
+      "reports_to": "person:apex:david-okonjo",
+      "tenure_in_role_years": 2,
+      "tenure_at_apex_years": 4,
+      "background": "Maira El-Ahmadi holds the VP Store Labor & Workforce role at Apex Retail. Composite operational profile focused on decision authority, coalition behavior, and program dependencies.",
+      "stated_priorities_2026": [
+        "store labor productivity",
+        "AI workforce scheduling pilot under governance",
+        "associate retention"
+      ]
+    },
+    {
+      "id": "person:apex:ronaldo-quintero",
+      "name": "Ronaldo Quintero",
+      "title": "VP Store Construction & Real Estate",
+      "reports_to": "person:apex:david-okonjo",
+      "tenure_in_role_years": 4,
+      "tenure_at_apex_years": 8,
+      "background": "Ronaldo Quintero holds the VP Store Construction & Real Estate role at Apex Retail. Composite operational profile focused on decision authority, coalition behavior, and program dependencies.",
+      "stated_priorities_2026": [
+        "1,976-store fleet rationalization",
+        "remodel cycle",
+        "small-format expansion"
+      ]
+    },
+    {
+      "id": "person:apex:ayanna-sterling-park",
+      "name": "Ayanna Sterling-Park",
+      "title": "VP Loss Prevention & Asset Protection",
+      "reports_to": "person:apex:david-okonjo",
+      "tenure_in_role_years": 3,
+      "tenure_at_apex_years": 6,
+      "background": "Ayanna Sterling-Park holds the VP Loss Prevention & Asset Protection role at Apex Retail. Composite operational profile focused on decision authority, coalition behavior, and program dependencies.",
+      "stated_priorities_2026": [
+        "organized retail crime response",
+        "shrink trend management",
+        "shrinkage AI evaluation"
+      ]
+    },
+    {
+      "id": "person:apex:garrett-whitley",
+      "name": "Garrett Whitley",
+      "title": "VP Customer Experience Operations",
+      "reports_to": "person:apex:david-okonjo",
+      "tenure_in_role_years": 2,
+      "tenure_at_apex_years": 3,
+      "background": "Garrett Whitley holds the VP Customer Experience Operations role at Apex Retail. Composite operational profile focused on decision authority, coalition behavior, and program dependencies.",
+      "stated_priorities_2026": [
+        "customer NPS at store level",
+        "service recovery operations",
+        "queue optimization"
+      ]
+    },
+    {
+      "id": "person:apex:esperanza-vargas",
+      "name": "Esperanza Vargas",
+      "title": "SVP Distribution & Fulfillment",
+      "reports_to": "person:apex:michael-tanaka",
+      "tenure_in_role_years": 3,
+      "tenure_at_apex_years": 8,
+      "background": "Esperanza Vargas holds the SVP Distribution & Fulfillment role at Apex Retail. Composite operational profile focused on decision authority, coalition behavior, and program dependencies.",
+      "stated_priorities_2026": [
+        "DC throughput",
+        "automation ROI",
+        "labor reduction in DC operations",
+        "robotics under AI governance"
+      ]
+    },
+    {
+      "id": "person:apex:chinedu-adekoya",
+      "name": "Chinedu Adekoya",
+      "title": "SVP Inventory Planning & Replenishment",
+      "reports_to": "person:apex:michael-tanaka",
+      "tenure_in_role_years": 4,
+      "tenure_at_apex_years": 10,
+      "background": "Chinedu Adekoya holds the SVP Inventory Planning & Replenishment role at Apex Retail. Composite operational profile focused on decision authority, coalition behavior, and program dependencies.",
+      "stated_priorities_2026": [
+        "sell-through (62% target 70%)",
+        "inventory turn target",
+        "out-of-stock reduction"
+      ]
+    },
+    {
+      "id": "person:apex:dieter-hauptmann",
+      "name": "Dieter Hauptmann",
+      "title": "VP Transportation & Logistics",
+      "reports_to": "person:apex:michael-tanaka",
+      "tenure_in_role_years": 3,
+      "tenure_at_apex_years": 5,
+      "background": "Dieter Hauptmann holds the VP Transportation & Logistics role at Apex Retail. Composite operational profile focused on decision authority, coalition behavior, and program dependencies.",
+      "stated_priorities_2026": [
+        "last-mile cost reduction",
+        "carrier diversification",
+        "freight optimization"
+      ]
+    },
+    {
+      "id": "person:apex:marisol-akinyemi",
+      "name": "Marisol Akinyemi",
+      "title": "VP Global Sourcing",
+      "reports_to": "person:apex:michael-tanaka",
+      "tenure_in_role_years": 4,
+      "tenure_at_apex_years": 9,
+      "background": "Marisol Akinyemi holds the VP Global Sourcing role at Apex Retail. Composite operational profile focused on decision authority, coalition behavior, and program dependencies.",
+      "stated_priorities_2026": [
+        "nearshoring vs. Asia tradeoffs",
+        "tariff-impact strategy",
+        "supplier consolidation"
+      ]
+    },
+    {
+      "id": "person:apex:fionnuala-macgregor",
+      "name": "Fionnuala Macgregor",
+      "title": "VP Supply Chain Sustainability",
+      "reports_to": "person:apex:patricia-okonkwo",
+      "tenure_in_role_years": 2,
+      "tenure_at_apex_years": 2,
+      "background": "Fionnuala Macgregor holds the VP Supply Chain Sustainability role at Apex Retail. Composite operational profile focused on decision authority, coalition behavior, and program dependencies.",
+      "stated_priorities_2026": [
+        "scope-3 emissions reduction",
+        "circular-supply-chain pilots",
+        "ESG disclosure quality"
+      ]
+    },
+    {
+      "id": "person:apex:yolanda-mendez-pearce",
+      "name": "Yolanda Mendez-Pearce",
+      "title": "SVP Brand & Marketing",
+      "reports_to": "person:apex:jennifer-park",
+      "tenure_in_role_years": 3,
+      "tenure_at_apex_years": 4,
+      "background": "Yolanda Mendez-Pearce holds the SVP Brand & Marketing role at Apex Retail. Composite operational profile focused on decision authority, coalition behavior, and program dependencies.",
+      "stated_priorities_2026": [
+        "brand health metrics",
+        "campaign ROI",
+        "private-brand storytelling"
+      ]
+    },
+    {
+      "id": "person:apex:ramon-velasquez-park",
+      "name": "Ramon Velasquez-Park",
+      "title": "VP Customer Loyalty & CRM",
+      "reports_to": "person:apex:jennifer-park",
+      "tenure_in_role_years": 2,
+      "tenure_at_apex_years": 3,
+      "background": "Ramon Velasquez-Park holds the VP Customer Loyalty & CRM role at Apex Retail. Composite operational profile focused on decision authority, coalition behavior, and program dependencies.",
+      "stated_priorities_2026": [
+        "loyalty-program LTV uplift",
+        "next-best-offer AI under governance",
+        "loyalty data integration with CDP"
+      ]
+    },
+    {
+      "id": "person:apex:hadassah-gold-bjornsson",
+      "name": "Hadassah Gold-Bjornsson",
+      "title": "VP E-commerce & Digital Commerce",
+      "reports_to": "person:apex:jennifer-park",
+      "tenure_in_role_years": 3,
+      "tenure_at_apex_years": 3,
+      "background": "Hadassah Gold-Bjornsson holds the VP E-commerce & Digital Commerce role at Apex Retail. Composite operational profile focused on decision authority, coalition behavior, and program dependencies.",
+      "stated_priorities_2026": [
+        "e-commerce GMV growth",
+        "site conversion rate",
+        "marketplace strategy"
+      ]
+    },
+    {
+      "id": "person:apex:tariq-olabode",
+      "name": "Tariq Olabode",
+      "title": "VP Customer Insights & Analytics",
+      "reports_to": "person:apex:jennifer-park",
+      "tenure_in_role_years": 2,
+      "tenure_at_apex_years": 2,
+      "background": "Tariq Olabode holds the VP Customer Insights & Analytics role at Apex Retail. Composite operational profile focused on decision authority, coalition behavior, and program dependencies.",
+      "stated_priorities_2026": [
+        "customer segmentation refresh",
+        "category-level NPS",
+        "shopper-mission analytics"
+      ]
+    },
+    {
+      "id": "person:apex:sterling-park-aboagye",
+      "name": "Sterling Park-Aboagye",
+      "title": "SVP Enterprise Data & Insights",
+      "reports_to": "person:apex:lynne-stratham",
+      "tenure_in_role_years": 3,
+      "tenure_at_apex_years": 4,
+      "background": "Sterling Park-Aboagye holds the SVP Enterprise Data & Insights role at Apex Retail. Composite operational profile focused on decision authority, coalition behavior, and program dependencies.",
+      "stated_priorities_2026": [
+        "enterprise data fabric",
+        "merch/ops/customer data unification",
+        "shadow AI inventory governance liaison"
+      ]
+    },
+    {
+      "id": "person:apex:melinda-costas",
+      "name": "Melinda Costas",
+      "title": "VP Marketing & Customer Analytics",
+      "reports_to": "person:apex:lynne-stratham",
+      "tenure_in_role_years": 2,
+      "tenure_at_apex_years": 3,
+      "background": "Melinda Costas holds the VP Marketing & Customer Analytics role at Apex Retail. Composite operational profile focused on decision authority, coalition behavior, and program dependencies.",
+      "stated_priorities_2026": [
+        "CDP utilization",
+        "campaign measurement modernization",
+        "customer-360 program"
+      ]
+    },
+    {
+      "id": "person:apex:vincent-carrera",
+      "name": "Vincent Carrera",
+      "title": "SVP Finance & Treasurer",
+      "reports_to": "person:apex:margaret-chen",
+      "tenure_in_role_years": 4,
+      "tenure_at_apex_years": 7,
+      "background": "Vincent Carrera holds the SVP Finance & Treasurer role at Apex Retail. Composite operational profile focused on decision authority, coalition behavior, and program dependencies.",
+      "stated_priorities_2026": [
+        "liquidity management",
+        "rating agency relations",
+        "store-fleet capital allocation"
+      ]
+    },
+    {
+      "id": "person:apex:daria-sokolova",
+      "name": "Daria Sokolova",
+      "title": "VP Financial Planning & Analysis",
+      "reports_to": "person:apex:vincent-carrera",
+      "tenure_in_role_years": 3,
+      "tenure_at_apex_years": 5,
+      "background": "Daria Sokolova holds the VP Financial Planning & Analysis role at Apex Retail. Composite operational profile focused on decision authority, coalition behavior, and program dependencies.",
+      "stated_priorities_2026": [
+        "category P&L analytics",
+        "AI program ROI tracking",
+        "store-level economics"
+      ]
+    },
+    {
+      "id": "person:apex:joaquin-mendoza-levitt",
+      "name": "Joaquin Mendoza-Levitt",
+      "title": "VP Internal Audit",
+      "reports_to": "person:apex:margaret-chen",
+      "tenure_in_role_years": 4,
+      "tenure_at_apex_years": 9,
+      "background": "Joaquin Mendoza-Levitt holds the VP Internal Audit role at Apex Retail. Composite operational profile focused on decision authority, coalition behavior, and program dependencies.",
+      "stated_priorities_2026": [
+        "SOX controls",
+        "AI Governance Council audit liaison",
+        "IT general controls"
+      ]
+    },
+    {
+      "id": "person:apex:paloma-ferraro",
+      "name": "Paloma Ferraro",
+      "title": "VP Investor Relations",
+      "reports_to": "person:apex:margaret-chen",
+      "tenure_in_role_years": 2,
+      "tenure_at_apex_years": 2,
+      "background": "Paloma Ferraro holds the VP Investor Relations role at Apex Retail. Composite operational profile focused on decision authority, coalition behavior, and program dependencies.",
+      "stated_priorities_2026": [
+        "activist investor narrative",
+        "AI investment communication",
+        "quarterly earnings discipline"
+      ]
+    },
+    {
+      "id": "person:apex:wendolyn-fairfax",
+      "name": "Wendolyn Fairfax",
+      "title": "SVP Talent & Organization",
+      "reports_to": "person:apex:thomas-brennan",
+      "tenure_in_role_years": 3,
+      "tenure_at_apex_years": 4,
+      "background": "Wendolyn Fairfax holds the SVP Talent & Organization role at Apex Retail. Composite operational profile focused on decision authority, coalition behavior, and program dependencies.",
+      "stated_priorities_2026": [
+        "associate retention",
+        "leadership pipeline",
+        "DEI workforce metrics"
+      ]
+    },
+    {
+      "id": "person:apex:sebastian-ojo",
+      "name": "Sebastian Ojo",
+      "title": "VP Total Rewards",
+      "reports_to": "person:apex:thomas-brennan",
+      "tenure_in_role_years": 4,
+      "tenure_at_apex_years": 6,
+      "background": "Sebastian Ojo holds the VP Total Rewards role at Apex Retail. Composite operational profile focused on decision authority, coalition behavior, and program dependencies.",
+      "stated_priorities_2026": [
+        "associate wage strategy",
+        "executive comp benchmarking",
+        "store labor cost discipline"
+      ]
+    },
+    {
+      "id": "person:apex:indira-patel-suarez",
+      "name": "Indira Patel-Suarez",
+      "title": "VP Talent Acquisition",
+      "reports_to": "person:apex:wendolyn-fairfax",
+      "tenure_in_role_years": 2,
+      "tenure_at_apex_years": 2,
+      "background": "Indira Patel-Suarez holds the VP Talent Acquisition role at Apex Retail. Composite operational profile focused on decision authority, coalition behavior, and program dependencies.",
+      "stated_priorities_2026": [
+        "store associate funnel",
+        "DC labor sourcing",
+        "tech hiring for AI program"
+      ]
+    },
+    {
+      "id": "person:apex:roosevelt-khan-jackson",
+      "name": "Roosevelt Khan-Jackson",
+      "title": "VP Workforce Experience & Culture",
+      "reports_to": "person:apex:thomas-brennan",
+      "tenure_in_role_years": 2,
+      "tenure_at_apex_years": 3,
+      "background": "Roosevelt Khan-Jackson holds the VP Workforce Experience & Culture role at Apex Retail. Composite operational profile focused on decision authority, coalition behavior, and program dependencies.",
+      "stated_priorities_2026": [
+        "associate engagement scores",
+        "manager effectiveness",
+        "frontline workforce listening"
+      ]
+    },
+    {
+      "id": "person:apex:aurelia-marin",
+      "name": "Aurelia Marin",
+      "title": "VP Commercial & Vendor Legal",
+      "reports_to": "person:apex:rebecca-singh",
+      "tenure_in_role_years": 3,
+      "tenure_at_apex_years": 5,
+      "background": "Aurelia Marin holds the VP Commercial & Vendor Legal role at Apex Retail. Composite operational profile focused on decision authority, coalition behavior, and program dependencies.",
+      "stated_priorities_2026": [
+        "vendor contract risk",
+        "AI vendor BAA-equivalent terms",
+        "private-brand IP"
+      ]
+    },
+    {
+      "id": "person:apex:demetrius-ostrowski",
+      "name": "Demetrius Ostrowski",
+      "title": "VP Privacy & Data Protection",
+      "reports_to": "person:apex:rebecca-singh",
+      "tenure_in_role_years": 2,
+      "tenure_at_apex_years": 2,
+      "background": "Demetrius Ostrowski holds the VP Privacy & Data Protection role at Apex Retail. Composite operational profile focused on decision authority, coalition behavior, and program dependencies.",
+      "stated_priorities_2026": [
+        "CCPA/CPRA compliance",
+        "loyalty/CDP data privacy",
+        "AI training-data legal review"
+      ]
+    },
+    {
+      "id": "person:apex:catherine-moseti-anderson",
+      "name": "Catherine Moseti-Anderson",
+      "title": "VP Litigation & Employment",
+      "reports_to": "person:apex:rebecca-singh",
+      "tenure_in_role_years": 4,
+      "tenure_at_apex_years": 8,
+      "background": "Catherine Moseti-Anderson holds the VP Litigation & Employment role at Apex Retail. Composite operational profile focused on decision authority, coalition behavior, and program dependencies.",
+      "stated_priorities_2026": [
+        "employment litigation defense",
+        "store-incident regulatory response",
+        "labor-relations strategy"
+      ]
+    },
+    {
+      "id": "person:apex:magnus-castellanos",
+      "name": "Magnus Castellanos",
+      "title": "Chief Strategy Officer",
+      "reports_to": "person:apex:robert-vance",
+      "tenure_in_role_years": 2,
+      "tenure_at_apex_years": 3,
+      "background": "Magnus Castellanos holds the Chief Strategy Officer role at Apex Retail. Composite operational profile focused on decision authority, coalition behavior, and program dependencies.",
+      "stated_priorities_2026": [
+        "FY2026 strategic plan",
+        "M&A pipeline",
+        "competitive intelligence vs. mass + specialty peers"
+      ]
+    },
+    {
+      "id": "person:apex:ileana-brusca-mwangi",
+      "name": "Ileana Brusca-Mwangi",
+      "title": "VP Corporate Strategy",
+      "reports_to": "person:apex:magnus-castellanos",
+      "tenure_in_role_years": 2,
+      "tenure_at_apex_years": 2,
+      "background": "Ileana Brusca-Mwangi holds the VP Corporate Strategy role at Apex Retail. Composite operational profile focused on decision authority, coalition behavior, and program dependencies.",
+      "stated_priorities_2026": [
+        "category-strategy reviews",
+        "AI program portfolio strategy",
+        "activist-investor response framing"
+      ]
+    },
+    {
+      "id": "person:apex:beatriz-soto-andersen",
+      "name": "Beatriz Soto-Andersen",
+      "title": "Chief Communications Officer",
+      "reports_to": "person:apex:robert-vance",
+      "tenure_in_role_years": 3,
+      "tenure_at_apex_years": 4,
+      "background": "Beatriz Soto-Andersen holds the Chief Communications Officer role at Apex Retail. Composite operational profile focused on decision authority, coalition behavior, and program dependencies.",
+      "stated_priorities_2026": [
+        "board and shareholder communications",
+        "AI investment public posture",
+        "labor-narrative management"
+      ]
     }
   ]
 }

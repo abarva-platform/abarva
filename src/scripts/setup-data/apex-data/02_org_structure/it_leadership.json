@@ -1,6 +1,6 @@
 {
   "tenant_key": "apex-retail",
-  "last_updated": "2026-04-22",
+  "last_updated": "2026-05-10",
   "data_classification": "Internal",
   "it_leadership": [
     {
@@ -9,7 +9,13 @@
       "title": "VP, Infrastructure & Cloud",
       "reports_to": "person:apex:carlos-rivera",
       "tenure_in_role_years": 4,
-      "domains_owned": ["network", "compute", "storage", "AWS landing zone", "DC operations"],
+      "domains_owned": [
+        "network",
+        "compute",
+        "storage",
+        "AWS landing zone",
+        "DC operations"
+      ],
       "team_size": 38,
       "known_for": "led the AWS migration phase 1 (completed 2024); managing the Bangalore tech center"
     },
@@ -19,7 +25,13 @@
       "title": "VP, Application Services",
       "reports_to": "person:apex:carlos-rivera",
       "tenure_in_role_years": 2,
-      "domains_owned": ["ERP", "CRM", "HCM apps", "merchandising apps", "store apps"],
+      "domains_owned": [
+        "ERP",
+        "CRM",
+        "HCM apps",
+        "merchandising apps",
+        "store apps"
+      ],
       "team_size": 64,
       "known_for": "joined post the 2023 AMS failure; rebuilding application portfolio discipline; co-leads the 2026 AMS consolidation"
     },
@@ -29,7 +41,13 @@
       "title": "VP, Data Engineering & Platform",
       "reports_to": "person:apex:lynne-stratham",
       "tenure_in_role_years": 1,
-      "domains_owned": ["data warehouse", "data lake", "integration platform", "MDM", "BI"],
+      "domains_owned": [
+        "data warehouse",
+        "data lake",
+        "integration platform",
+        "MDM",
+        "BI"
+      ],
       "team_size": 22,
       "known_for": "promoted by the new CDO from director level in early 2026; key player in CDP program"
     },
@@ -39,7 +57,12 @@
       "title": "VP, Enterprise Architecture",
       "reports_to": "person:apex:carlos-rivera",
       "tenure_in_role_years": 5,
-      "domains_owned": ["architecture review board", "API platform", "integration standards", "AI architecture"],
+      "domains_owned": [
+        "architecture review board",
+        "API platform",
+        "integration standards",
+        "AI architecture"
+      ],
       "team_size": 11,
       "known_for": "owns the architecture review board; gatekeeper on every program in P2 and P3; authored the AI Architecture Reference framework"
     },
@@ -49,7 +72,12 @@
       "title": "VP, Cybersecurity Operations",
       "reports_to": "person:apex:sarah-whitfield",
       "tenure_in_role_years": 3,
-      "domains_owned": ["SOC", "vulnerability management", "incident response", "PCI program ops"],
+      "domains_owned": [
+        "SOC",
+        "vulnerability management",
+        "incident response",
+        "PCI program ops"
+      ],
       "team_size": 18,
       "known_for": "owned the November 2025 PCI assessment"
     },
@@ -59,17 +87,28 @@
       "title": "VP, Digital & E-commerce Technology",
       "reports_to": "person:apex:carlos-rivera",
       "tenure_in_role_years": 3,
-      "domains_owned": ["e-commerce platform", "mobile app", "marketing technology", "site search", "personalization"],
+      "domains_owned": [
+        "e-commerce platform",
+        "mobile app",
+        "marketing technology",
+        "site search",
+        "personalization"
+      ],
       "team_size": 47,
       "known_for": "tightly aligned with the CMO; powerful internal voice on customer-facing investment"
     },
     {
       "id": "person:apex:vacant-store-tech",
-      "name": "OPEN — Acting: Brandon Hayes",
+      "name": "OPEN \u2014 Acting: Brandon Hayes",
       "title": "VP, Store Technology",
       "reports_to": "person:apex:carlos-rivera",
       "tenure_in_role_years": 0,
-      "domains_owned": ["POS systems", "store networking", "store device management", "in-store digital"],
+      "domains_owned": [
+        "POS systems",
+        "store networking",
+        "store device management",
+        "in-store digital"
+      ],
       "team_size": 29,
       "known_for": "role open since January 2026 after previous VP departed; Brandon Hayes (director) acting; recruitment in progress; impact: store technology decisions are slow"
     },
@@ -79,7 +118,12 @@
       "title": "VP, IT Procurement & Vendor Management",
       "reports_to": "person:apex:margaret-chen",
       "tenure_in_role_years": 2,
-      "domains_owned": ["IT vendor contracts", "renewals", "BAFO negotiations", "vendor risk management"],
+      "domains_owned": [
+        "IT vendor contracts",
+        "renewals",
+        "BAFO negotiations",
+        "vendor risk management"
+      ],
       "team_size": 8,
       "known_for": "reports to CFO not CIO (organizational choice from 2024); aggressive on cost; sometimes friction with IT teams over scope choices"
     },
@@ -89,7 +133,11 @@
       "title": "Director, AI & Emerging Technology",
       "reports_to": "person:apex:linda-mwangi",
       "tenure_in_role_years": 1,
-      "domains_owned": ["AI platform strategy", "model evaluation", "AI governance secretariat"],
+      "domains_owned": [
+        "AI platform strategy",
+        "model evaluation",
+        "AI governance secretariat"
+      ],
       "team_size": 4,
       "known_for": "newly created role in 2025; running the AI Governance Council; works closely with CDO on AI strategy"
     },
@@ -99,24 +147,378 @@
       "title": "Director, IT PMO",
       "reports_to": "person:apex:carlos-rivera",
       "tenure_in_role_years": 3,
-      "domains_owned": ["IT portfolio", "program management", "stage-gate governance"],
+      "domains_owned": [
+        "IT portfolio",
+        "program management",
+        "stage-gate governance"
+      ],
       "team_size": 9,
       "known_for": "post-2023-AMS-failure rebuild of IT PMO; stage-gate discipline newly stricter under his ownership"
+    },
+    {
+      "id": "person:apex:magnus-halverson",
+      "name": "Magnus Halverson",
+      "title": "Director Network & Store Connectivity",
+      "reports_to": "person:apex:raj-patel",
+      "tenure_in_role_years": 3,
+      "domain_ownership": [
+        "WAN",
+        "store networking",
+        "MPLS-to-SD-WAN migration"
+      ],
+      "stated_priorities_2026": [
+        "1,976-store SD-WAN migration",
+        "DC cross-connect",
+        "network resilience"
+      ],
+      "vacancy_status": "filled"
+    },
+    {
+      "id": "person:apex:helena-brzezinski",
+      "name": "Helena Brzezinski",
+      "title": "Director Cloud Platform Engineering",
+      "reports_to": "person:apex:raj-patel",
+      "tenure_in_role_years": 2,
+      "domain_ownership": [
+        "AWS",
+        "Azure",
+        "cloud cost management"
+      ],
+      "stated_priorities_2026": [
+        "multi-cloud cost optimization",
+        "cloud landing-zone modernization",
+        "FinOps practice"
+      ],
+      "vacancy_status": "filled"
+    },
+    {
+      "id": "person:apex:tariq-mwangi",
+      "name": "Tariq Mwangi",
+      "title": "Director Site Reliability Engineering",
+      "reports_to": "person:apex:raj-patel",
+      "tenure_in_role_years": 3,
+      "domain_ownership": [
+        "SRE",
+        "incident management",
+        "observability"
+      ],
+      "stated_priorities_2026": [
+        "e-commerce uptime",
+        "store-system reliability",
+        "AI-system observability standards"
+      ],
+      "vacancy_status": "filled"
+    },
+    {
+      "id": "person:apex:patrick-suzuki",
+      "name": "Patrick Suzuki",
+      "title": "Director Merchandising Applications",
+      "reports_to": "person:apex:diana-lopez",
+      "tenure_in_role_years": 4,
+      "domain_ownership": [
+        "merchandising apps",
+        "planning systems",
+        "JDA / Oracle Retail"
+      ],
+      "stated_priorities_2026": [
+        "allocation modernization",
+        "planning-system rationalization",
+        "AI-assisted assortment integration"
+      ],
+      "vacancy_status": "filled"
+    },
+    {
+      "id": "person:apex:aisha-sundaresan",
+      "name": "Aisha Sundaresan",
+      "title": "Director Store Systems & POS",
+      "reports_to": "person:apex:vacant-store-tech",
+      "tenure_in_role_years": 2,
+      "domain_ownership": [
+        "POS",
+        "store back-office",
+        "inventory at-store"
+      ],
+      "stated_priorities_2026": [
+        "POS modernization",
+        "self-checkout deployment",
+        "RFID rollout"
+      ],
+      "vacancy_status": "filled"
+    },
+    {
+      "id": "person:apex:reagan-cho-bjorlin",
+      "name": "Reagan Cho-Bjorlin",
+      "title": "Director ERP & Finance Applications",
+      "reports_to": "person:apex:diana-lopez",
+      "tenure_in_role_years": 4,
+      "domain_ownership": [
+        "SAP",
+        "Oracle Financials",
+        "Workday"
+      ],
+      "stated_priorities_2026": [
+        "finance close acceleration",
+        "vendor master cleanup",
+        "audit support"
+      ],
+      "vacancy_status": "filled"
+    },
+    {
+      "id": "person:apex:vidya-ravi-mendoza",
+      "name": "Vidya Ravi-Mendoza",
+      "title": "Director Data Platform Engineering",
+      "reports_to": "person:apex:james-wright",
+      "tenure_in_role_years": 3,
+      "domain_ownership": [
+        "Snowflake",
+        "data lake",
+        "ETL/ELT"
+      ],
+      "stated_priorities_2026": [
+        "Snowflake operations",
+        "category data platform unification",
+        "data-quality program"
+      ],
+      "vacancy_status": "filled"
+    },
+    {
+      "id": "person:apex:esteban-zukauskas",
+      "name": "Esteban Zukauskas",
+      "title": "Director Customer Data Platform",
+      "reports_to": "person:apex:james-wright",
+      "tenure_in_role_years": 2,
+      "domain_ownership": [
+        "CDP",
+        "customer-360",
+        "marketing data infrastructure"
+      ],
+      "stated_priorities_2026": [
+        "CDP utilization",
+        "real-time event processing",
+        "loyalty data integration"
+      ],
+      "vacancy_status": "filled"
+    },
+    {
+      "id": "person:apex:olamide-daniels-park",
+      "name": "Olamide Daniels-Park",
+      "title": "Director Enterprise Architecture (Customer & Digital)",
+      "reports_to": "person:apex:linda-mwangi",
+      "tenure_in_role_years": 3,
+      "domain_ownership": [
+        "customer journey architecture",
+        "e-commerce architecture",
+        "digital integration patterns"
+      ],
+      "stated_priorities_2026": [
+        "e-commerce-store-channel unification",
+        "loyalty integration",
+        "AI integration patterns"
+      ],
+      "vacancy_status": "filled"
+    },
+    {
+      "id": "person:apex:yousef-andrade",
+      "name": "Yousef Andrade",
+      "title": "Director Enterprise Architecture (Supply Chain & Stores)",
+      "reports_to": "person:apex:linda-mwangi",
+      "tenure_in_role_years": 3,
+      "domain_ownership": [
+        "supply-chain architecture",
+        "store-systems architecture"
+      ],
+      "stated_priorities_2026": [
+        "DC automation integration",
+        "store-system rationalization",
+        "RFID architecture"
+      ],
+      "vacancy_status": "filled"
+    },
+    {
+      "id": "person:apex:mateusz-kowalewski",
+      "name": "Mateusz Kowalewski",
+      "title": "Director Identity & Access Management",
+      "reports_to": "person:apex:kevin-harrison",
+      "tenure_in_role_years": 3,
+      "domain_ownership": [
+        "IAM",
+        "PAM",
+        "Okta operations"
+      ],
+      "stated_priorities_2026": [
+        "associate identity simplification",
+        "AI tool access governance",
+        "vendor identity controls"
+      ],
+      "vacancy_status": "filled"
+    },
+    {
+      "id": "person:apex:persephone-adeniran",
+      "name": "Persephone Adeniran",
+      "title": "Director Threat Intelligence & SOC",
+      "reports_to": "person:apex:kevin-harrison",
+      "tenure_in_role_years": 2,
+      "domain_ownership": [
+        "SOC",
+        "threat hunting",
+        "ransomware readiness"
+      ],
+      "stated_priorities_2026": [
+        "retail-sector ransomware posture",
+        "POS skimming detection",
+        "incident response"
+      ],
+      "vacancy_status": "filled"
+    },
+    {
+      "id": "person:apex:selene-aboagye",
+      "name": "Selene Aboagye",
+      "title": "Director Security Architecture",
+      "reports_to": "person:apex:sarah-whitfield",
+      "tenure_in_role_years": 4,
+      "domain_ownership": [
+        "security architecture",
+        "zero trust",
+        "AI/ML security review"
+      ],
+      "stated_priorities_2026": [
+        "AI Governance Council security review",
+        "zero-trust roadmap",
+        "vendor risk reviews"
+      ],
+      "vacancy_status": "filled"
+    },
+    {
+      "id": "person:apex:naveen-cabrera",
+      "name": "Naveen Cabrera",
+      "title": "Director E-commerce Platform Engineering",
+      "reports_to": "person:apex:priya-iyer",
+      "tenure_in_role_years": 3,
+      "domain_ownership": [
+        "e-commerce platform",
+        "site engineering",
+        "checkout"
+      ],
+      "stated_priorities_2026": [
+        "site conversion optimization",
+        "checkout reliability",
+        "marketplace integration"
+      ],
+      "vacancy_status": "filled"
+    },
+    {
+      "id": "person:apex:bethel-saadeh",
+      "name": "Bethel Saadeh",
+      "title": "Director Mobile & App Engineering",
+      "reports_to": "person:apex:priya-iyer",
+      "tenure_in_role_years": 2,
+      "domain_ownership": [
+        "iOS/Android app",
+        "mobile experience"
+      ],
+      "stated_priorities_2026": [
+        "app conversion improvement",
+        "AR features",
+        "loyalty-app integration"
+      ],
+      "vacancy_status": "filled"
+    },
+    {
+      "id": "person:apex:catalina-berrios-park",
+      "name": "Catalina Berrios-Park",
+      "title": "Manager IT PMO & AI Portfolio",
+      "reports_to": "person:apex:daniel-okeke",
+      "tenure_in_role_years": 2,
+      "domain_ownership": [
+        "IT PMO",
+        "AI program PMO"
+      ],
+      "stated_priorities_2026": [
+        "AI program portfolio reporting",
+        "transformation tracking",
+        "Apex Strategic Moves coordination"
+      ],
+      "vacancy_status": "filled"
+    },
+    {
+      "id": "person:apex:ruchira-tanaka-park",
+      "name": "Ruchira Tanaka-Park",
+      "title": "Senior Manager Emerging Tech Pilots",
+      "reports_to": "person:apex:elena-fischer",
+      "tenure_in_role_years": 2,
+      "domain_ownership": [
+        "AI pilots",
+        "emerging tech evaluation"
+      ],
+      "stated_priorities_2026": [
+        "AI pilot governance",
+        "shadow AI inventory cleanup",
+        "vendor AI evaluation"
+      ],
+      "vacancy_status": "filled"
     }
   ],
   "domain_owners": [
-    {"domain": "ERP", "owner": "person:apex:diana-lopez", "system": "system:apex:sap-s4"},
-    {"domain": "CRM", "owner": "person:apex:priya-iyer", "system": "system:apex:salesforce"},
-    {"domain": "HCM", "owner": "person:apex:diana-lopez", "system": "system:apex:workday"},
-    {"domain": "POS", "owner": "person:apex:vacant-store-tech", "system": "system:apex:oracle-retail"},
-    {"domain": "E-commerce", "owner": "person:apex:priya-iyer", "system": "system:apex:salesforce-commerce"},
-    {"domain": "Customer Data", "owner": "person:apex:james-wright", "system": "OPEN — CDP target state"},
-    {"domain": "Email Marketing", "owner": "person:apex:priya-iyer", "system": "system:apex:klaviyo"},
-    {"domain": "Demand Planning", "owner": "person:apex:michael-tanaka", "system": "system:apex:ovaa-planning"},
-    {"domain": "Data Warehouse", "owner": "person:apex:james-wright", "system": "system:apex:snowflake"},
-    {"domain": "BI", "owner": "person:apex:james-wright", "system": "system:apex:tableau"},
-    {"domain": "Identity / SSO", "owner": "person:apex:kevin-harrison", "system": "system:apex:okta"},
-    {"domain": "ITSM", "owner": "person:apex:raj-patel", "system": "system:apex:servicenow"}
+    {
+      "domain": "ERP",
+      "owner": "person:apex:diana-lopez",
+      "system": "system:apex:sap-s4"
+    },
+    {
+      "domain": "CRM",
+      "owner": "person:apex:priya-iyer",
+      "system": "system:apex:salesforce"
+    },
+    {
+      "domain": "HCM",
+      "owner": "person:apex:diana-lopez",
+      "system": "system:apex:workday"
+    },
+    {
+      "domain": "POS",
+      "owner": "person:apex:vacant-store-tech",
+      "system": "system:apex:oracle-retail"
+    },
+    {
+      "domain": "E-commerce",
+      "owner": "person:apex:priya-iyer",
+      "system": "system:apex:salesforce-commerce"
+    },
+    {
+      "domain": "Customer Data",
+      "owner": "person:apex:james-wright",
+      "system": "OPEN \u2014 CDP target state"
+    },
+    {
+      "domain": "Email Marketing",
+      "owner": "person:apex:priya-iyer",
+      "system": "system:apex:klaviyo"
+    },
+    {
+      "domain": "Demand Planning",
+      "owner": "person:apex:michael-tanaka",
+      "system": "system:apex:ovaa-planning"
+    },
+    {
+      "domain": "Data Warehouse",
+      "owner": "person:apex:james-wright",
+      "system": "system:apex:snowflake"
+    },
+    {
+      "domain": "BI",
+      "owner": "person:apex:james-wright",
+      "system": "system:apex:tableau"
+    },
+    {
+      "domain": "Identity / SSO",
+      "owner": "person:apex:kevin-harrison",
+      "system": "system:apex:okta"
+    },
+    {
+      "domain": "ITSM",
+      "owner": "person:apex:raj-patel",
+      "system": "system:apex:servicenow"
+    }
   ],
   "ai_governance_council": {
     "established": "2025-09-01",

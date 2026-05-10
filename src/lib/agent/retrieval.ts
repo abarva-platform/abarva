@@ -174,7 +174,21 @@ async function queryPostgresContextChunks(args: {
     .from('enterprise_context_chunks')
     .select('chunk_text, source_doc, source_segment_id, chunk_index, chunk_metadata, provenance, embedded_at')
     .eq('tenant_key', tenantKey)
+    // Segments the agent can pull tenant context from. Includes:
+    //  - industry_context, program_inventory, evidence_ledger, operating_telemetry,
+    //    vendor_contracts, compliance, cross_program_signals (long-standing).
+    //  - org_structure, it_landscape, it_financials, kpi_dictionary (added
+    //    2026-05-10 founder directive: "ensure the agents are intelligent to
+    //    tap into the current state and datasets"). Without these, function
+    //    capacity, FY2026 capital plan, funding authority matrix, system
+    //    inventory, and IT spend breakdown are loaded into Supabase but the
+    //    agent never sees them at retrieval time.
     .in('source_segment_id', [
+      'enterprise_profile',
+      'org_structure',
+      'it_landscape',
+      'it_financials',
+      'kpi_dictionary',
       'industry_context',
       'program_inventory',
       'evidence_ledger',
@@ -183,7 +197,7 @@ async function queryPostgresContextChunks(args: {
       'compliance',
       'cross_program_signals',
     ])
-    .limit(80);
+    .limit(160);
 
   const terms = queryTerms(args.userQuery);
   const rows = ((data as Array<Record<string, unknown>> | null) ?? [])

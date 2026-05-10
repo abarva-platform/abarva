@@ -201,7 +201,7 @@ describe('evaluateGate', () => {
     deliverableVersionsFixture = [
       {
         content:
-          'P2 Discovery Report. Attendees: Katherine Oshima sponsor, Marcus Chen data owner, ' +
+          'P2 Discovery Report. Attendees: Dr. Anita Krishnamurthy sponsor, Marcus Chen data owner, ' +
           'Linda Tran clinical informatics, Priya Nair revenue cycle, and Omar Haddad security. ' +
           'Workshop notes: data discovery session mapped Epic, claims, coding, prior auth, and VBC feeds. ' +
           'Baselines captured and owner attestation recorded. Source of record: Meridian analytics intake log and Epic/claims lineage workshop. ' +
@@ -353,7 +353,7 @@ describe('evaluateGate', () => {
     deliverableVersionsFixture = [
       {
         content:
-          'P0 Origination Brief. Sponsor: Katherine Oshima. ' +
+          'P0 Origination Brief. Sponsor: Dr. Anita Krishnamurthy. ' +
           'Problem trigger: Epic, claims, coding, and prior-auth analytics are fragmented. ' +
           'Value hypothesis: a governed analytics modernization will improve trusted delivery speed. ' +
           'Scope boundary: prior authorization and coding quality first cohort. ' +
@@ -390,7 +390,7 @@ describe('evaluateGate', () => {
       {
         request_status: 'approved',
         brief_snapshot: {
-          sponsor: 'Katherine Oshima',
+          sponsor: 'Dr. Anita Krishnamurthy',
           problem_statement:
             'Epic, claims, coding, prior-auth, and VBC analytics are fragmented.',
           target_outcome:

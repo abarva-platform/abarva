@@ -43,6 +43,9 @@ const CLIENT_FILES: Record<string, { label: string; confidence: number; files: D
       { name: 'Annual_Financial_Statements_FY2023.xlsx', owner: 'CFO Office', date: 'Jan 15', type: 'xlsx', segment: 'Business', category: 'Financial', status: 'approved', confidence: 94 },
       { name: 'Meridian_IT_Financial_Model_FY2025.xlsx', owner: 'IT Finance', date: 'Apr 8', type: 'xlsx', segment: 'Business', category: 'Financial', status: 'approved', confidence: 92 },
       { name: 'Capital_Expenditure_Plan_FY2026.xlsx', owner: 'CFO Office', date: 'Mar 15', type: 'xlsx', segment: 'Business', category: 'Financial', status: 'approved', confidence: 89 },
+      { name: 'fy2026_capital_plan.csv', owner: 'CFO Office (Park) + CDIO (Krishnamurthy)', date: 'May 10', type: 'csv', segment: 'Business', category: 'Financial', status: 'approved', confidence: 95 },
+      { name: 'funding_authority_matrix.csv', owner: 'CFO Office + Internal Audit', date: 'May 10', type: 'csv', segment: 'Business', category: 'Financial', status: 'approved', confidence: 95 },
+      { name: 'function_capacity.csv', owner: 'CHRO Office (Liu) + IT Finance', date: 'May 10', type: 'csv', segment: 'Business', category: 'Leadership', status: 'approved', confidence: 94 },
       { name: 'RCM_Revenue_Cycle_Performance_Q4_FY2025.xlsx', owner: 'Revenue Cycle', date: 'Feb 20', type: 'xlsx', segment: 'Business', category: 'Financial', status: 'approved', confidence: 94 },
       { name: 'RCM_Revenue_Cycle_Performance_Q3_FY2025.xlsx', owner: 'Revenue Cycle', date: 'Nov 15', type: 'xlsx', segment: 'Business', category: 'Financial', status: 'approved', confidence: 93 },
       { name: 'Denial_Rate_Analysis_by_Payer_FY2025.xlsx', owner: 'Revenue Cycle', date: 'Mar 1', type: 'xlsx', segment: 'Business', category: 'Financial', status: 'approved', confidence: 95 },
@@ -171,6 +174,9 @@ const CLIENT_FILES: Record<string, { label: string; confidence: number; files: D
       { name: 'Store_Performance_Data_by_Region.xlsx', owner: 'COO', date: 'Mar 20', type: 'xlsx', segment: 'Business', category: 'Financial', status: 'approved', confidence: 91 },
       { name: 'Apex_IT_Financial_Model_FY2025.xlsx', owner: 'Finance', date: 'Apr 5', type: 'xlsx', segment: 'Business', category: 'Financial', status: 'approved', confidence: 90 },
       { name: 'Capital_Allocation_Plan_FY2026.xlsx', owner: 'CFO', date: 'Mar 8', type: 'xlsx', segment: 'Business', category: 'Financial', status: 'approved', confidence: 88 },
+      { name: 'fy2026_capital_plan.csv', owner: 'CFO (Chen) + CIO (Rivera)', date: 'May 10', type: 'csv', segment: 'Business', category: 'Financial', status: 'approved', confidence: 94 },
+      { name: 'funding_authority_matrix.csv', owner: 'CFO Office + Internal Audit', date: 'May 10', type: 'csv', segment: 'Business', category: 'Financial', status: 'approved', confidence: 93 },
+      { name: 'function_capacity.csv', owner: 'CHRO (Brennan) + IT Finance', date: 'May 10', type: 'csv', segment: 'Business', category: 'Leadership', status: 'approved', confidence: 92 },
       // Business — Operations / Vendors
       { name: 'Inventory_and_Supply_Chain_Data_Q4_FY2025.xlsx', owner: 'COO', date: 'Mar 20', type: 'xlsx', segment: 'Business', category: 'Operations', status: 'approved', confidence: 90 },
       { name: 'Inventory_and_Supply_Chain_Data_Q3_FY2025.xlsx', owner: 'COO', date: 'Nov 20', type: 'xlsx', segment: 'Business', category: 'Operations', status: 'approved', confidence: 89 },
@@ -220,6 +226,39 @@ const CLIENT_FILES: Record<string, { label: string; confidence: number; files: D
       { name: 'Customer_Loyalty_Transaction_Data_FY2025.csv', owner: 'CMO', date: 'Mar 10', type: 'csv', segment: 'Third Party', category: 'Customer', status: 'approved', confidence: 88 },
       { name: 'Customer_NPS_and_Satisfaction_Survey_FY2025.xlsx', owner: 'CMO', date: 'Mar 8', type: 'xlsx', segment: 'Third Party', category: 'Customer', status: 'approved', confidence: 87 },
       { name: 'Leadership_Profiles_and_Board_Composition.pdf', owner: 'HR', date: 'Mar 25', type: 'pdf', segment: 'Third Party', category: 'Leadership', status: 'approved', confidence: 92 },
+    ],
+  },
+  firstcapital: {
+    label: 'First Capital Financial',
+    confidence: 91,
+    files: [
+      // Business — Financial
+      { name: 'Annual_Financial_Statements_FY2025.xlsx', owner: 'CFO Office (Torres)', date: 'Feb 28', type: 'xlsx', segment: 'Business', category: 'Financial', status: 'approved', confidence: 96 },
+      { name: 'Annual_Financial_Statements_FY2024.xlsx', owner: 'CFO Office (Torres)', date: 'Feb 8', type: 'xlsx', segment: 'Business', category: 'Financial', status: 'approved', confidence: 95 },
+      { name: 'IT_Spend_Breakdown_FY2026.csv', owner: 'IT Finance', date: 'May 10', type: 'csv', segment: 'IT & Technology', category: 'Financial', status: 'approved', confidence: 94 },
+      { name: 'fy2026_capital_plan.csv', owner: 'CFO (Torres) + CIO (Huang) + CRO (Park) joint', date: 'May 10', type: 'csv', segment: 'Business', category: 'Financial', status: 'approved', confidence: 95 },
+      { name: 'funding_authority_matrix.csv', owner: 'CFO Office + Internal Audit + MRM', date: 'May 10', type: 'csv', segment: 'Business', category: 'Financial', status: 'approved', confidence: 96 },
+      { name: 'function_capacity.csv', owner: 'CHRO (Castellanos) + IT Finance', date: 'May 10', type: 'csv', segment: 'Business', category: 'Leadership', status: 'approved', confidence: 93 },
+      { name: 'CCAR_Capital_Plan_2026.pdf', owner: 'CFO Office (Bernhardt Treasurer)', date: 'Mar 1', type: 'pdf', segment: 'Business', category: 'Financial', status: 'approved', confidence: 95 },
+      { name: 'OCC_Examination_Findings_Status.xlsx', owner: 'CRO (Park) + Compliance', date: 'Apr 15', type: 'xlsx', segment: 'Business', category: 'Financial', status: 'approved', confidence: 92 },
+      // Business — Vendors / Renewals
+      { name: 'vendor_scorecards.csv', owner: 'CPO (Rahman) + IT Sourcing (Brooks)', date: 'May 10', type: 'csv', segment: 'Business', category: 'Vendors', status: 'approved', confidence: 91 },
+      { name: 'renewal_calendar.csv', owner: 'CPO (Rahman)', date: 'May 10', type: 'csv', segment: 'Business', category: 'Vendors', status: 'approved', confidence: 90 },
+      { name: 'FIS_Profile_Master_Services_Agreement.pdf', owner: 'CPO + GC', date: 'Mar 12', type: 'pdf', segment: 'Business', category: 'Vendors', status: 'approved', confidence: 94 },
+      // Business — Leadership / Org
+      { name: 'executive_bench.json', owner: 'CHRO Office (Castellanos)', date: 'May 10', type: 'csv', segment: 'Business', category: 'Leadership', status: 'approved', confidence: 95 },
+      { name: 'it_leadership.json', owner: 'CIO (Huang) + CHRO Office', date: 'May 10', type: 'csv', segment: 'Business', category: 'Leadership', status: 'approved', confidence: 94 },
+      { name: 'Operating_Committee_Roster_2026.pdf', owner: 'CEO Office (Morrison)', date: 'Mar 5', type: 'pdf', segment: 'Business', category: 'Leadership', status: 'approved', confidence: 96 },
+      // IT — Technology
+      { name: 'systems_inventory.csv', owner: 'EA (Ostrowski-Brennan)', date: 'May 10', type: 'csv', segment: 'IT & Technology', category: 'Technology', status: 'approved', confidence: 92 },
+      { name: 'Core_Banking_Modernization_Discovery.pdf', owner: 'CTO (Levitt) + EA', date: 'Apr 10', type: 'pdf', segment: 'IT & Technology', category: 'Technology', status: 'approved', confidence: 88 },
+      { name: 'FedNow_Build_Status_Report.xlsx', owner: 'VP Payments Tech (Tanaka-Riveras)', date: 'Apr 25', type: 'xlsx', segment: 'IT & Technology', category: 'Technology', status: 'approved', confidence: 92 },
+      { name: 'AI_Program_Portfolio_Status.xlsx', owner: 'IT PMO (Quintero-Adekoya) + MRM', date: 'Apr 30', type: 'xlsx', segment: 'IT & Technology', category: 'AI', status: 'approved', confidence: 90 },
+      { name: 'FFIEC_Cybersecurity_Assessment.pdf', owner: 'CISO (Aboagye)', date: 'Mar 28', type: 'pdf', segment: 'IT & Technology', category: 'Technology', status: 'approved', confidence: 91 },
+      // Third Party — Benchmarks
+      { name: 'Regional_Bank_Peer_Benchmarks_2025.pdf', owner: 'AbarVa Research', date: 'Mar 8', type: 'pdf', segment: 'Third Party', category: 'Benchmarks', status: 'approved', confidence: 96 },
+      { name: 'Bank_IT_Spend_Benchmark_Top_50.xlsx', owner: 'AbarVa Research', date: 'Mar 12', type: 'xlsx', segment: 'Third Party', category: 'Benchmarks', status: 'approved', confidence: 95 },
+      { name: 'FedNow_Adoption_Benchmark_2025.pdf', owner: 'AbarVa Research', date: 'Apr 5', type: 'pdf', segment: 'Third Party', category: 'Benchmarks', status: 'approved', confidence: 94 },
     ],
   },
 }

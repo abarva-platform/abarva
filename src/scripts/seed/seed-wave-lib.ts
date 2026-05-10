@@ -139,12 +139,14 @@ export const TENANTS: Record<TenantKey, TenantConfig> = {
     vertical: 'healthcare',
     domain: 'meridian-health.example',
     specPath: 'docs/specs/_meta/seed-data/meridian-health-system-comprehensive-seed.md',
+    // VOICE.STRAT-2026-05-10g — production-canon scale.
+    // Source: meridian-data/01_enterprise_profile/enterprise_profile.md
     companyScale: {
-      revenue_usd: 14_800_000_000,
-      hospitals: 44,
-      employees: 68_000,
+      revenue_usd: 16_800_000_000,
+      hospitals: 30,
+      employees: 58_000,
       health_plan_lives: 1_400_000,
-      headquarters: 'Salt Lake City, UT',
+      headquarters: 'Sacramento, CA',
     },
     parts: {
       initiatives: 'Part 5',
@@ -656,7 +658,7 @@ function extractChiefExecutiveName(config: TenantConfig, content: string): strin
   const explicit = content.match(/- \*\*(.+?)\*\* — (?:President and )?Chief Executive Officer/i)?.[1];
   if (explicit) return explicit.trim();
   if (config.key === 'apex') return 'Vincent Okafor';
-  if (config.key === 'meridian') return 'Dr. Elena Vasquez';
+  if (config.key === 'meridian') return 'Dr. Elaine Morales';
   return 'Robert "Bo" Hargrove III';
 }
 

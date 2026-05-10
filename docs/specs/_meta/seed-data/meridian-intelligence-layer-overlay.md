@@ -6,7 +6,9 @@ Reads alongside:
 - `docs/specs/platform/intelligence-layer-north-star-spec.md` — authoritative north star
 - `docs/specs/_meta/seed-data/meridian-health-system-comprehensive-seed.md` — base tenant seed (ingested in PR #22)
 
-**Meridian is the Intermountain-class integrated provider-payer composite.** This overlay introduces the healthcare sector into AbarVa's intelligence architecture with particular attention to the dual provider-payer complexity, HIPAA compliance handling, and value-based care progression dynamics.
+**Meridian is the Pacific-corridor integrated provider-payer composite.** This overlay introduces the healthcare sector into AbarVa's intelligence architecture with particular attention to the dual provider-payer complexity, HIPAA compliance handling, and value-based care progression dynamics.
+
+**Reconciled to production fixtures 2026-05-10 per founder directive (VOICE.STRAT-2026-05-10g).** The KPI structures and pattern packs below are authoritative for schema. Where this overlay's *values* (operating margin, VBC %, MLR, etc.) conflict with `meridian-data/01_enterprise_profile/enterprise_profile.md` or `meridian-data/05_kpi_dictionary/kpi_dictionary.csv`, the production fixtures win. Notable production values: $16.8B FY2025 revenue · operating margin 2.4% · ~30% VBC revenue · 1.4M plan covered lives · CEO Dr. Elaine Morales · CDIO Dr. Anita Krishnamurthy · CFO David Park · President MHP Thomas Hartwell. The earlier Mountain-West / Vasquez / Oshima / Chen-Winters / 68%-VBC narrative is retired.
 
 ---
 
@@ -33,8 +35,8 @@ Every KPI conforms to the schema in north star Part 4.1. Meridian's dual provide
 
 **2.1.1 — Operating Margin % (Consolidated)**
 - ID: `meridian_operating_margin_consolidated`
-- Owner: CFO · Current: 2.8% · Target: 4.5% · Benchmark median (integrated systems): 3.2%
-- Trend: declining 30 bps YoY · Labor cost pressure, payer mix headwinds
+- Owner: CFO David Park · Current: 2.4% · Target: 4.0% · Benchmark median (integrated systems): 3.2%
+- Trend: down 80 bps YoY · Nursing wage inflation, traveler dependence, MA rate pressure
 - Reasoning scope: broad · Disclosure scope: broad (non-profit disclosure obligations)
 
 **2.1.2 — Days Cash on Hand**
@@ -182,12 +184,11 @@ Every KPI conforms to the schema in north star Part 4.1. Meridian's dual provide
 
 **2.6.1 — VBC Revenue %**
 - ID: `meridian_vbc_revenue_pct`
-- Owner: Chief Population Health Officer · Strategic priority: VBC Progression
-- Target: 68% by end FY26 (per CEO Q2 2025 earnings call commitment)
-- Current: 38% · Trend: +3pt YoY · Benchmark median: 42%
-- Internal program plan reaches: 52% by end FY26 (16-pt commitment gap)
+- Owner: Dr. Priya Sharma (VP Care Management & Population Health) with President MHP Thomas Hartwell · Strategic priority: Value-based care performance (FY2026 priority #3)
+- Current: ~30% (~$5.0B of $16.8B consolidated revenue, per `meridian-data/01_enterprise_profile/enterprise_profile.md`) · Trend: stable
+- Target: progression-oriented; no public quantitative commitment in production fixtures (the prior 68%-by-FY26 commitment narrative was retired in the 2026-05-10g reconciliation)
 - Linked patterns: VBC Progression Lag (3.1)
-- Reasoning scope: broad · Disclosure scope: broad (public commitment)
+- Reasoning scope: broad · Disclosure scope: broad
 
 **2.6.2 — Shared Savings Achievement**
 - ID: `meridian_shared_savings_achievement`
@@ -208,7 +209,7 @@ Every KPI conforms to the schema in north star Part 4.1. Meridian's dual provide
 
 **2.7.1 — Medical Loss Ratio (MLR)**
 - ID: `meridian_plan_mlr`
-- Owner: President Meridian Health Plans (Dr. Linda Chen-Winters)
+- Owner: President Meridian Health Plans (Thomas Hartwell)
 - Current: 87.2% · Target: 84.5% · Benchmark median: 86.8%
 - Trend: up 80 bps YoY · Medical trend pressure
 - Reasoning scope: broad · Disclosure scope: **program-scoped** (Health Plan programs disclosable; financial regulatory sensitivity for others)
@@ -344,7 +345,7 @@ Foundational pattern pack #13 — healthcare-specific.
 
 **Linked KPIs.** VBC Revenue % (2.6.1), Shared Savings (2.6.2), Risk-Adjusted PMPM (2.6.3), Attributed Lives (2.6.4)
 
-**Meridian evidence.** CEO Q2 2025 earnings commitment 68% by FY26 end · current 38%, trajectory to 52% · 16pt gap unresourced · infrastructure assessment shows risk management and analytics capability shortfalls
+**Meridian evidence (production-canon).** Current ~30% VBC revenue (~$5.0B of $16.8B consolidated) per `meridian-data/01_enterprise_profile/enterprise_profile.md`. FY2026 strategic priority #3 ("Value-based care performance") names quality measures, total cost of care, gap closure, and population health execution as the workstreams; no public quantitative VBC % commitment in current fixtures (the prior CEO 68%-by-FY26 narrative was retired in the 2026-05-10g reconciliation). Infrastructure progression — care management capacity, plan-provider data sharing, and risk adjustment maturity (see pattern 3.7) — is the binding constraint, not a public-commitment trajectory gap.
 
 ### 3.2 · Revenue Cycle Denial Cascade
 
@@ -432,7 +433,7 @@ Healthcare payer-specific pattern.
 
 ### 4.1 · Tracked executives
 
-**Executive Committee.** CEO, CFO, CMO, COO, Chief Population Health Officer, Chief Nursing Officer, Chief Experience Officer, Chief Digital Officer, Chief Information Officer, Chief Legal and Compliance Officer, President Meridian Health Plans (Dr. Linda Chen-Winters).
+**Executive Committee.** Per `meridian-data/02_org_structure/executive_bench.json`: CEO Dr. Elaine Morales · CDIO Dr. Anita Krishnamurthy · CFO David Park · CPE Dr. Marcus Reid · CMIO Dr. Jennifer Wexler · COO Sarah O'Brien · CNO Dr. Robert Chen · CHRO Margaret Liu · General Counsel Rebecca Hollings · Chief Compliance Officer Karen Mercer · Chief Procurement Officer Angela Brooks · Chief Product Officer Digital Health Maya Iyer · Chief Quality Officer Dr. James Okonjo · VP Revenue Cycle Patricia Okafor · President Meridian Health Plans Thomas Hartwell · Plan CMO Dr. Lakshmi Venkatesan · VP Network Andrew Fitzgerald · VP Care Mgmt & Pop Health Dr. Priya Sharma · VP Risk Adjustment & STAR Quality Christopher Vega · Board Chair Harold Kim. VP Application Services VACANT (since December 2025).
 
 **Extended leadership.** ~25 SVPs and service-line leaders.
 
@@ -706,7 +707,7 @@ Edge counts scale with entity relationships; approximately 2,400-3,400 edges.
 ### KPI queries
 
 1. "What is Meridian's VBC revenue percentage?" → 38% with commitment-gap context
-2. "Who owns the MLR metric?" → Dr. Linda Chen-Winters
+2. "Who owns the MLR metric?" → Thomas Hartwell (President, Meridian Health Plans)
 3. "How does Meridian compare on readmission?" → 14.2% vs 13.8% median
 4. "What KPIs does VBC Progression Lag pattern impact?" → graph traversal result
 

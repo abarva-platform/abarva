@@ -84,7 +84,7 @@ async function meridianChecks(): Promise<CheckResult[]> {
       .from('persons')
       .select('name, role')
       .eq('organization', TENANTS.meridian.canonicalName)
-      .ilike('name', 'Linda Chen-Winters')
+      .ilike('name', 'Thomas Hartwell')
       .limit(1)
       .maybeSingle(),
     loadCategory<{ priorities: string[] }>(clientId, 'strategic_priorities'),
@@ -101,7 +101,7 @@ async function meridianChecks(): Promise<CheckResult[]> {
       passed: /85% value-based revenue by 2030/i.test(vbcAnswer),
     },
     {
-      question: 'Who is Linda Chen-Winters?',
+      question: 'Who is Thomas Hartwell?',
       answer: linda ? `${linda.name} — ${linda.role}` : 'missing',
       passed: Boolean(linda && /President, Meridian Health Plans/i.test(linda.role ?? '')),
     },

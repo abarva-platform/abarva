@@ -20,14 +20,14 @@ describe('ApprovalBriefSnapshotCard', () => {
           lead_person_id: leadId,
         }}
         resolvePersonName={(id) => {
-          if (id === sponsorId) return 'Katherine Oshima (CIO)';
+          if (id === sponsorId) return 'Dr. Anita Krishnamurthy (CIO)';
           if (id === leadId) return 'Marcus Chen (VP Data and Analytics)';
           return null;
         }}
       />,
     );
 
-    expect(screen.getByText('Katherine Oshima (CIO)')).toBeInTheDocument();
+    expect(screen.getByText('Dr. Anita Krishnamurthy (CIO)')).toBeInTheDocument();
     expect(
       screen.getByText('Marcus Chen (VP Data and Analytics)'),
     ).toBeInTheDocument();

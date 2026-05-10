@@ -60,8 +60,8 @@ Q: Apex maestro responds to a loyalty question posed as the customer executive
 A: Karel profile leads with customer experience, loyalty evolution, customer data fragmentation and expects customer-outcome framing before capability talk.
 PASS: yes
 
-Q: Meridian maestro briefs on Linda Chen-Winters as subject
-A: Linda Chen-Winters: VBC progression on the payer side | MA star-rating and member retention performance | Tighter health-plan and provider economics alignment. HIPAA baseline acknowledged.
+Q: Meridian maestro briefs on Thomas Hartwell as subject
+A: Thomas Hartwell: VBC progression on the payer side | MA star-rating and member retention performance | Tighter health-plan and provider economics alignment. HIPAA baseline acknowledged.
 PASS: yes
 
 Q: First Capital maestro frames a finance conversation correctly
