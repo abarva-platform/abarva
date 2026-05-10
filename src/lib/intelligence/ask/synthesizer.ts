@@ -269,11 +269,16 @@ export async function* synthesizeStream(args: {
       }
     }
 
-    // Sanitize at 200 words to match the prompt length budget (rule 9). The
-    // older 120-word default truncated the new MANDATORY ANSWER SHAPES mid-
-    // list, which read to the auditor as the same incompleteness that scored
-    // Tests 1/2/4 D1=2 in the 2026-05-10 audit.
-    for (const chunk of chunkAskText(sanitizeAskSynthesis(text, 200))) {
+    // Sanitize cap with headroom over the prompt's named target.
+    //
+    // The OUTPUT CONVENTIONS footer tells the model "never over 200" as a
+    // target. If the cap and the target are the same number, a model that
+    // overshoots by 5-10% (typical) gets hard-truncated and then back-tracked
+    // to the last sentence end — sometimes losing 10-30 words. Setting the
+    // cap to 240 gives the model headroom to land at 195-220 without clipping
+    // and still fences off true runaway responses. The prompt remains the
+    // primary length lever; this is a safety net.
+    for (const chunk of chunkAskText(sanitizeAskSynthesis(text, 240))) {
       yield chunk;
     }
   } catch (err) {
