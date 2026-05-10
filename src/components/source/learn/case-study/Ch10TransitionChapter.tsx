@@ -23,7 +23,7 @@ export function Ch10TransitionChapter() {
   return (
     <ChapterShell slug="transition">
       <HeroBand color="teal">
-        <Eyebrow light>Heliara Case Study · Chapter 10 · Stage 10 Transition</Eyebrow>
+        <Eyebrow light>Meridian Case Study · Chapter 10 · Stage 10 Transition</Eyebrow>
         <SectionTitle light size="xl">Day 100 → Month 9. The 2-month slip.</SectionTitle>
         <Lead light>
           Contract executed Day 100. Migration kickoff Day 105. By Month
@@ -157,7 +157,7 @@ export function Ch10TransitionChapter() {
             vs Month 4 plan of 65%. Driver: 11 of 134 Cloverleaf
             integrations require rewrite to modern API surface.
             Estimated rewrite effort: 6 weeks at 2 FTE (joint Vendor B +
-            Heliara).
+            Meridian).
           </p>
           <p style={{ marginBottom: 8 }}>
             <strong>Owner.</strong> Karen Liu (CIO). Joint accountability
@@ -243,7 +243,7 @@ export function Ch10TransitionChapter() {
         <Lead>
           The next four months are operational, not narrative-rich.
           Eleven Cloverleaf integrations rewrite cleanly across the
-          joint team (Vendor B + Heliara + Cloverleaf vendor); two
+          joint team (Vendor B + Meridian + Cloverleaf vendor); two
           require a workaround that defers final fix to a Q4 2027
           maintenance window. Tier-1 first wave closes Month 6 (4
           weeks late). Tier-1 second wave closes Month 7 (2 weeks

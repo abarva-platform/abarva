@@ -92,7 +92,7 @@ function expectGroundedConciseAnswer(fixture: SurfaceFixture): void {
   expect(fixture.answer).toMatch(/Source basis:/);
   expect(fixture.answer).toMatch(/Confidence: (low|medium|high)/i);
   expect(fixture.answer).not.toMatch(/great question|happy to help|hope that helps|feel free to/i);
-  expect(fixture.answer).not.toMatch(/Heliara/i);
+  expect(fixture.answer).not.toMatch(/Meridian/i);
   expect(fixture.answer).not.toMatch(/\$[0-9]|[0-9]+%|ROI/i);
   if (fixture.tenantScoped) {
     expect(fixture.answer).toContain('Apex Retail');

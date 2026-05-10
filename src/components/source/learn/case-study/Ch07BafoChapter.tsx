@@ -24,7 +24,7 @@ export function Ch07BafoChapter() {
   return (
     <ChapterShell slug="bafo">
       <HeroBand color="navy">
-        <Eyebrow light>Heliara Case Study · Chapter 07 · Stage 07 BAFO</Eyebrow>
+        <Eyebrow light>Meridian Case Study · Chapter 07 · Stage 07 BAFO</Eyebrow>
         <SectionTitle light size="xl">Day 65. Vendor A drops; B wins.</SectionTitle>
         <Lead light>
           Twelve BAFO questions across three vendors. Vendor A refuses to
@@ -105,7 +105,7 @@ export function Ch07BafoChapter() {
           title="Question A.3 · §7.4 exclusivity clause removal"
         >
           <p style={{ marginBottom: 8 }}>
-            <strong>Authority.</strong> The Heliara d01 strategic
+            <strong>Authority.</strong> The Meridian d01 strategic
             posture (issued with d09) explicitly maintains
             &ldquo;optionality on workload placement&rdquo; over the
             5-year term. The d09 question 5 (Egress + Exit) requires
@@ -139,7 +139,7 @@ export function Ch07BafoChapter() {
           title="Question B.1 · workload count correction"
         >
           <p style={{ marginBottom: 8 }}>
-            <strong>Authority.</strong> The Heliara d05 scope memo
+            <strong>Authority.</strong> The Meridian d05 scope memo
             (issued with d09 as Appendix B) names 920 in-scope production
             workloads, with the per-tier breakdown in d04 (Appendix C).
           </p>
@@ -219,7 +219,7 @@ export function Ch07BafoChapter() {
           Janet asks Sentinel to draft the day-62 vendor letter to A.
           Sentinel produces a clean, factual paragraph: the BAFO
           response retained §7.4 unchanged; this clause is inconsistent
-          with Heliara&rsquo;s strategic posture; Vendor A is therefore
+          with Meridian&rsquo;s strategic posture; Vendor A is therefore
           withdrawn from further consideration; a formal close-out letter
           will follow in Stage 9. Janet sends. Vendor A&rsquo;s status
           flips to <em>withdrawn at BAFO</em>. The pool is now two.

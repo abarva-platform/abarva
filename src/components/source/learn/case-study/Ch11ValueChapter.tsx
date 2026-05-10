@@ -23,7 +23,7 @@ export function Ch11ValueChapter() {
   return (
     <ChapterShell slug="value">
       <HeroBand color="teal">
-        <Eyebrow light>Heliara Case Study · Chapter 11 · Stage 11 Value</Eyebrow>
+        <Eyebrow light>Meridian Case Study · Chapter 11 · Stage 11 Value</Eyebrow>
         <SectionTitle light size="xl">Month 18. $29.8M of $38.4M.</SectionTitle>
         <Lead light>
           Eighteen months after Day 100. Twelve months after the value
@@ -311,7 +311,7 @@ export function Ch11ValueChapter() {
         <Eyebrow>Where the story ends</Eyebrow>
         <SectionTitle>The event is closed</SectionTitle>
         <Lead>
-          HLRA-HELIARA-CLOUD-2026 closes at Month 18 with the
+          MERIDIAN-CLOUD-2026 closes at Month 18 with the
           d32 ledger committed, the structural fixes carried forward,
           and the next event (Tier-2 DR, 2027) opening with the
           learning-review inputs from this one. Marcus signs the event

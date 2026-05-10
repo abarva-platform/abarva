@@ -23,7 +23,7 @@ export function Ch02ScopeChapter() {
   return (
     <ChapterShell slug="scope">
       <HeroBand color="navy">
-        <Eyebrow light>Heliara Case Study · Chapter 02 · Stage 02 Scope</Eyebrow>
+        <Eyebrow light>Meridian Case Study · Chapter 02 · Stage 02 Scope</Eyebrow>
         <SectionTitle light size="xl">Day 4. The 920-workload boundary.</SectionTitle>
         <Lead light>
           Karen Liu and Janet Fischer spend three working days enumerating
@@ -154,7 +154,7 @@ export function Ch02ScopeChapter() {
 
         <ArtifactSpecimen
           code="d05"
-          title="Scope memo · Heliara Health Cloud (excerpt)"
+          title="Scope memo · Meridian Health Cloud (excerpt)"
         >
           <p>
             <strong>In-scope systems (count: 280).</strong>

@@ -118,13 +118,13 @@ export function SourceWelcomeSection() {
         <SectionTitle>Your first 30 minutes on Source</SectionTitle>
         <Lead>
           The fastest way to internalize Source is to walk through one event. Use
-          the Heliara Health enterprise cloud, Epic integration, and health-plan
+          the Meridian Health enterprise cloud, Epic integration, and health-plan
           data sourcing event — a sandbox case study with no real procurement
           consequences — and follow these steps.
         </Lead>
         <StepList>
           <Step title="Open the demo event">
-            Navigate to <strong>Source → events</strong> and pick <em>Heliara Health
+            Navigate to <strong>Source → events</strong> and pick <em>Meridian Health
             Enterprise Cloud</em>. The canvas opens with the 11-stage rail on top,
             the chat lane on the left, and the document workspace on the right.
           </Step>

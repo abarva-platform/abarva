@@ -22,7 +22,7 @@ export function Ch03RfpChapter() {
   return (
     <ChapterShell slug="rfp">
       <HeroBand color="navy">
-        <Eyebrow light>Heliara Case Study · Chapter 03 · Stage 03 RFP</Eyebrow>
+        <Eyebrow light>Meridian Case Study · Chapter 03 · Stage 03 RFP</Eyebrow>
         <SectionTitle light size="xl">Day 12. Sentinel composes d09.</SectionTitle>
         <Lead light>
           The RFP package is the buyer&rsquo;s contract with the vendors:
@@ -195,10 +195,10 @@ export function Ch03RfpChapter() {
 
         <ArtifactSpecimen
           code="d09"
-          title="RFP package · Heliara Health Enterprise Cloud · v1.0 issued (cover note)"
+          title="RFP package · Meridian Health Enterprise Cloud · v1.0 issued (cover note)"
         >
           <p>
-            <strong>Issued by:</strong> Janet Fischer, VP IT Ops, Heliara
+            <strong>Issued by:</strong> Janet Fischer, VP IT Ops, Meridian
             Health · 2026-04-13
           </p>
           <p>
@@ -274,7 +274,7 @@ export function Ch03RfpChapter() {
           d11 response checklist · 8 mandatory + 14 recommended items.
           d16 scoring rubric · 6 criteria with weights summing to 100.
           d19a pricing template · 14 line items in the locked workbook.
-          Plus the BAA + DPA templates pulled from the Heliara master
+          Plus the BAA + DPA templates pulled from the Meridian master
           contract library.
         </BodyP>
         <SubHead>The decision</SubHead>

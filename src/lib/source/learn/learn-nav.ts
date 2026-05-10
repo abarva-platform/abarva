@@ -13,7 +13,7 @@
 //
 // Slice S1 ships the four framing pages (welcome / intake / sentinel
 // / glossary). Slice S2 replaces the abstract per-stage walkthroughs
-// with a single end-to-end case study — Heliara Health's enterprise cloud
+// with a single end-to-end case study — Meridian Health's enterprise cloud
 // & Infrastructure event — broken into 11 chapters that map 1:1 to
 // the canonical Source stages but read as one connected narrative.
 
@@ -40,7 +40,7 @@ export const SOURCE_LEARN_NAV: ReadonlyArray<SourceLearnNavGroup> = [
     ],
   },
   {
-    group: 'Heliara Case Study',
+    group: 'Meridian Case Study',
     items: [
       { slug: 'case-study', label: 'Case study · overview' },
       {

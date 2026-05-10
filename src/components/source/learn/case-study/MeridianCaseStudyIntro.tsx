@@ -14,17 +14,17 @@ import {
 } from '@/components/home/learn/primitives';
 import { CASE_STUDY_CHAPTER_SLUGS, findSourceLearnNavItem } from '@/lib/source/learn/learn-nav';
 
-export function HeliaraCaseStudyIntro() {
+export function MeridianCaseStudyIntro() {
   return (
     <>
       <HeroBand color="navy">
-        <Eyebrow light>Source · Heliara Case Study</Eyebrow>
+        <Eyebrow light>Source · Meridian Case Study</Eyebrow>
         <SectionTitle light size="xl">
-          Heliara Health · Enterprise Cloud, Epic &amp; Integration Sourcing.
+          Meridian Health · Enterprise Cloud, Epic &amp; Integration Sourcing.
         </SectionTitle>
         <Lead light>
           One enterprise sourcing event for an $18.6B provider-payer IDN, walked
-          end-to-end. Heliara runs 23 hospitals, 142 clinics, and a $7.1B health
+          end-to-end. Meridian runs 23 hospitals, 142 clinics, and a $7.1B health
           plan business across the Pacific Northwest, Northern California, and the
           Mountain West. Eleven chapters map 1:1 to the Source lifecycle, but read
           as one story — from the day CTO Marcus Webb says &ldquo;the lease is

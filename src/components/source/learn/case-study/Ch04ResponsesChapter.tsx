@@ -22,7 +22,7 @@ export function Ch04ResponsesChapter() {
   return (
     <ChapterShell slug="responses">
       <HeroBand color="navy">
-        <Eyebrow light>Heliara Case Study · Chapter 04 · Stage 04 Responses</Eyebrow>
+        <Eyebrow light>Meridian Case Study · Chapter 04 · Stage 04 Responses</Eyebrow>
         <SectionTitle light size="xl">Day 35. Vendor C drops out.</SectionTitle>
         <Lead light>
           Four responses come in. Three are usable; one is not. Vendor C

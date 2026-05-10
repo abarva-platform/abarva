@@ -14,8 +14,8 @@ import {
 } from '@/lib/source/learn/learn-nav';
 
 describe('Source learn nav · case study', () => {
-  it('contains the Heliara case study group with overview + 11 chapters', () => {
-    const group = SOURCE_LEARN_NAV.find((g) => g.group === 'Heliara Case Study');
+  it('contains the Meridian case study group with overview + 11 chapters', () => {
+    const group = SOURCE_LEARN_NAV.find((g) => g.group === 'Meridian Case Study');
     expect(group).toBeDefined();
     expect(group!.items).toHaveLength(12); // overview + 11 chapters
 

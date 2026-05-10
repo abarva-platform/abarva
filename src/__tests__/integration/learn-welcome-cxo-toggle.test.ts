@@ -31,6 +31,6 @@ describe('Learn welcome CXO context switcher', () => {
   it('exposes Meridian as the healthcare client label while preserving legacy aliases', () => {
     expect(getClientOption('meridian').name).toBe('Meridian Health System');
     expect(getClientOption('meridian').shortName).toBe('Meridian Health');
-    expect(CLIENT_KEY_TO_DB_NAME.meridian).toContain('Heliara Health');
+    expect(CLIENT_KEY_TO_DB_NAME.meridian).toContain('Meridian Health');
   });
 });

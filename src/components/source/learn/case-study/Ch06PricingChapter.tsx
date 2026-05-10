@@ -24,7 +24,7 @@ export function Ch06PricingChapter() {
   return (
     <ChapterShell slug="pricing">
       <HeroBand color="navy">
-        <Eyebrow light>Heliara Case Study · Chapter 06 · Stage 06 Pricing</Eyebrow>
+        <Eyebrow light>Meridian Case Study · Chapter 06 · Stage 06 Pricing</Eyebrow>
         <SectionTitle light size="xl">Day 50. Three P0 traps surface.</SectionTitle>
         <Lead light>
           Sentinel&rsquo;s pricing-trap detector reads each vendor&rsquo;s
