@@ -110,6 +110,21 @@ describe('markdownTokens · AbarVa citation tags', () => {
     expect(normalized).not.toContain('<abv-pattern');
   });
 
+  it('preserves word boundaries when generic HTML tags wrap prose', () => {
+    const normalized = normalizeAbarvaAgentMarkup(
+      "<p>Apex Retail's data foundation is functional but carrying<strong>meaningful</strong> risk.</p><ul><li>Snowflake is the<strong>critical</strong> anchor.</li><li>FinOps is scheduled<em>but</em> not closed.</li></ul><p>The CDP<abv-pattern id=\"P-RTL-CDP-001\">program</abv-pattern> depends on loyalty flows.</p>",
+    );
+
+    expect(normalized).toContain('carrying meaningful risk');
+    expect(normalized).toContain('the critical anchor');
+    expect(normalized).toContain('scheduled but not closed');
+    expect(normalized).toContain('CDP [abv-pattern:P-RTL-CDP-001:program] depends');
+    expect(normalized).not.toContain('carryingmeaningful');
+    expect(normalized).not.toContain('thecritical');
+    expect(normalized).not.toContain('scheduledbut');
+    expect(normalized).not.toContain('CDPprogram');
+  });
+
   it('renders custom entity tokens as human-readable links with id in hover text only', () => {
     const html = render(
       tokenizeWithoutInline(
