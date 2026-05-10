@@ -10,6 +10,9 @@
  * each anti-pattern fails and each doctrine response passes.
  */
 
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
+
 import {
   composeSentinelSystemPrompt,
   checkSentinelVoice,
@@ -251,6 +254,50 @@ describe('PATTERN_LEVEL_FALLBACK doctrine — INT-VOICE.STRAT-2026-05-10', () =>
     expect(PATTERN_LEVEL_FALLBACK).toMatch(/Confidence:\s+directional/i);
   });
 
+  // INT-VOICE.STRAT-2026-05-10b · two-tier epistemic posture introduced
+  // after the 2026-05-10 Apex / Carlos re-test regressed Test 4 from
+  // ship_quality 4.4 to needs_work 3.8. The earlier doctrine version was
+  // honest but suppressed pattern-level intelligence that doesn't actually
+  // require tenant data.
+  describe('two-tier epistemic posture (Tier A vs Tier B)', () => {
+    it('names Tier A and Tier B explicitly', () => {
+      expect(PATTERN_LEVEL_FALLBACK).toMatch(/Tier\s+A/);
+      expect(PATTERN_LEVEL_FALLBACK).toMatch(/Tier\s+B/);
+    });
+
+    it('scopes Tier A to tenant-specific quantitative claims', () => {
+      expect(PATTERN_LEVEL_FALLBACK).toMatch(/Tier\s+A[^]*tenant[- ]specific\s+quantitative\s+claims/i);
+      expect(PATTERN_LEVEL_FALLBACK).toMatch(/KPI\s+values?/i);
+      expect(PATTERN_LEVEL_FALLBACK).toMatch(/exact\s+vendor\s+performance/i);
+      expect(PATTERN_LEVEL_FALLBACK).toMatch(/exact\s+NPV/i);
+    });
+
+    it('scopes Tier B to general industry / pattern-level intelligence', () => {
+      expect(PATTERN_LEVEL_FALLBACK).toMatch(/Tier\s+B[^]*general\s+industry/i);
+      expect(PATTERN_LEVEL_FALLBACK).toMatch(/failure\s+modes/i);
+      expect(PATTERN_LEVEL_FALLBACK).toMatch(/binding\s+patterns/i);
+      expect(PATTERN_LEVEL_FALLBACK).toMatch(/3.{1,4}5\s+failure\s+modes/i);
+      expect(PATTERN_LEVEL_FALLBACK).toMatch(/3.{1,4}6\s+use\s+cases/i);
+    });
+
+    it('directs Tier B to draw freely from broad domain expertise without naming the corpus', () => {
+      expect(PATTERN_LEVEL_FALLBACK).toMatch(/draw\s+freely\s+from\s+broad\s+domain\s+expertise/i);
+      expect(PATTERN_LEVEL_FALLBACK).toMatch(/Do\s+NOT\s+hedge/i);
+      expect(PATTERN_LEVEL_FALLBACK).toMatch(/Do\s+NOT\s+name\s+the\s+corpus/i);
+    });
+
+    it('forbids pivoting to adjacent tenant data as a substitute for the asked content (Test 4 regression mode)', () => {
+      expect(PATTERN_LEVEL_FALLBACK).toMatch(
+        /Do\s+NOT\s+pivot\s+to\s+adjacent\s+tenant\s+data\s+as\s+a\s+substitute/i,
+      );
+    });
+
+    it('names the ~80% no-corpus-hit doctrine line', () => {
+      expect(PATTERN_LEVEL_FALLBACK).toMatch(/80\s*%/);
+      expect(PATTERN_LEVEL_FALLBACK).toMatch(/no\s+direct\s+corpus\s+hit/i);
+    });
+  });
+
   it('is included in the Intelligence-surface system prompt', () => {
     const prompt = composeSentinelSystemPrompt({
       mode: 'corpus',
@@ -272,6 +319,54 @@ describe('PATTERN_LEVEL_FALLBACK doctrine — INT-VOICE.STRAT-2026-05-10', () =>
       worldviewPending: false,
     });
     expect(prompt).not.toContain('Pattern-level fallback');
+  });
+});
+
+// INT-VOICE.STRAT-2026-05-10b · MANDATORY ANSWER SHAPES + worked examples
+// landed in src/lib/intelligence/ask/synthesizer.ts. We assert against the
+// raw prompt source since it is not exported as a constant. This guards
+// against the prompt drifting away from the two-tier posture without the
+// regression being noticed at code review.
+describe('Ask synthesizer prompt — MANDATORY ANSWER SHAPES (INT-VOICE.STRAT-2026-05-10b)', () => {
+  const synthesizerSource = readFileSync(
+    join(__dirname, '..', '..', '..', 'intelligence', 'ask', 'synthesizer.ts'),
+    'utf8',
+  );
+
+  it('declares the MANDATORY ANSWER SHAPES section', () => {
+    expect(synthesizerSource).toMatch(/MANDATORY\s+ANSWER\s+SHAPES/);
+  });
+
+  it('requires 3–6 use cases for "common bets" question shape', () => {
+    expect(synthesizerSource).toMatch(/3.{1,4}6\s+specific\s+use\s+cases/i);
+  });
+
+  it('requires 3–5 failure modes for "what goes wrong" question shape (Test 4 regression fix)', () => {
+    expect(synthesizerSource).toMatch(/3.{1,4}5\s+specific\s+failure\s+modes/i);
+    expect(synthesizerSource).toMatch(/one[- ]line\s+mechanism/i);
+  });
+
+  it('declares the two-tier epistemic posture in the prompt body', () => {
+    expect(synthesizerSource).toMatch(/Tier\s+A.*Tenant[- ]specific/i);
+    expect(synthesizerSource).toMatch(/Tier\s+B.*General\s+industry/i);
+  });
+
+  it('carries both worked examples — common bets AND failure modes', () => {
+    expect(synthesizerSource).toMatch(/EXAMPLE\s+1[^]*common\s+AI\s+bets/i);
+    expect(synthesizerSource).toMatch(/EXAMPLE\s+2[^]*failure\s+modes/i);
+  });
+
+  it('preserves the verbatim Apex / Carlos 2026-05-10 BAD response as an anti-pattern anchor', () => {
+    // Both worked examples must show the prod over-refusal verbatim so the
+    // model learns the exact shape to avoid.
+    expect(synthesizerSource).toContain("The sources don't contain indexed benchmark data on AI bet prevalence");
+    expect(synthesizerSource).toContain("Assortment optimization failure modes are not well-indexed");
+  });
+
+  it('explicitly bans pivoting to "what the sources do show" as a substitute', () => {
+    expect(synthesizerSource).toMatch(
+      /Do\s+not\s+pivot\s+to\s+["']?what\s+the\s+sources\s+do\s+show["']?\s+as\s+a\s+substitute/i,
+    );
   });
 });
 
