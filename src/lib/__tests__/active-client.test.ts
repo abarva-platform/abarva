@@ -70,7 +70,7 @@ describe('getActiveClientKey', () => {
     expect(eq).toHaveBeenCalledWith('tenant_key', 'apexretail');
   });
 
-  it('canonicalizes legacy Heliara database rows to Meridian Health', async () => {
+  it('canonicalizes Meridian database rows to Meridian Health', async () => {
     currentUserMock.mockResolvedValue({
       publicMetadata: { role: 'client' },
       primaryEmailAddress: { emailAddress: 'anita.krishnamurthy@meridian-health.example.com' },
@@ -83,7 +83,7 @@ describe('getActiveClientKey', () => {
     const maybeSingle = jest.fn(async () => ({
       data: {
         id: 'client-meridian-uuid',
-        name: 'Heliara Health Alliance',
+        name: 'Meridian Health',
         industry_code: 'HEALTHCARE_IDN',
       },
     }));

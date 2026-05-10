@@ -361,12 +361,12 @@ async function findMeridianClientId(client: SupabaseClient): Promise<string> {
   const { data, error } = await client
     .from('clients')
     .select('id,name,legal_name,tenant_key,slug')
-    .or('tenant_key.eq.meridian,slug.eq.meridian-health,slug.eq.heliara-health,name.ilike.%Meridian%,name.ilike.%Heliara%,legal_name.ilike.%Meridian%,legal_name.ilike.%Heliara%')
+    .or('tenant_key.eq.meridian,slug.eq.meridian-health,name.ilike.%Meridian%,legal_name.ilike.%Meridian%')
     .limit(1)
     .maybeSingle();
 
   if (error) throw new Error(`clients lookup failed: ${error.message}`);
-  if (!data?.id) throw new Error('Meridian/Heliara client row not found.');
+  if (!data?.id) throw new Error('Meridian client row not found.');
   return data.id as string;
 }
 

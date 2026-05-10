@@ -35,7 +35,7 @@ export type ClientKey = (typeof ALL_CLIENTS)[number]['id'];
 export const DEFAULT_CLIENT_KEY: ClientKey = 'apexretail';
 
 export const CLIENT_KEY_TO_DB_NAME: Record<ClientKey, string[]> = {
-  meridian: ['Meridian Health', 'Meridian Health System', 'Heliara Health', 'Heliara Health Alliance'],
+  meridian: ['Meridian Health', 'Meridian Health System'],
   arcturus: ['Brindlemark Financial', 'Brindlemark Financial Group', 'Brindlemark', 'Arcturus Financial', 'Arcturus Financial Group', 'First Capital Financial', 'First Capital'],
   apexretail: ['Apex Retail', 'Apex Retail Group'],
 };
@@ -84,10 +84,8 @@ export function canonicalClientDisplayName(args: {
 
   if (
     key === 'meridian' ||
-    normalizedName === 'heliara health alliance' ||
-    normalizedName === 'heliara health' ||
-    normalizedName === 'meridian health system' ||
-    normalizedName === 'meridian health'
+    normalizedName === 'meridian health' ||
+    normalizedName === 'meridian health system'
   ) {
     return 'Meridian Health';
   }

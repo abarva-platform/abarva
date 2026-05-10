@@ -23,7 +23,7 @@ export function Ch09SelectionChapter() {
   return (
     <ChapterShell slug="selection">
       <HeroBand color="teal">
-        <Eyebrow light>Heliara Case Study · Chapter 09 · Stage 09 Selection</Eyebrow>
+        <Eyebrow light>Meridian Case Study · Chapter 09 · Stage 09 Selection</Eyebrow>
         <SectionTitle light size="xl">Day 95. One winner letter, two loser letters.</SectionTitle>
         <Lead light>
           Sentinel takes the lead-agent role back from Atlas to draft the
@@ -76,8 +76,8 @@ export function Ch09SelectionChapter() {
           </p>
           <p style={{ marginBottom: 8 }}>
             Following the conclusion of our Cloud &amp; Infrastructure
-            sourcing event (event code HLRA-HELIARA-CLOUD-2026),
-            Heliara Health is pleased to award the engagement to
+            sourcing event (event code MERIDIAN-CLOUD-2026),
+            Meridian Health is pleased to award the engagement to
             [Vendor B]. The decision was approved on June 8 by CTO
             Marcus Webb (decision sponsor) and CFO Sarah Kim (concurrence).
           </p>
@@ -108,7 +108,7 @@ export function Ch09SelectionChapter() {
             that no P0 traps remained open on your submission at award.
           </p>
           <p style={{ marginBottom: 0 }}>
-            Best regards,<br />Janet Fischer · VP IT Ops · Heliara Health
+            Best regards,<br />Janet Fischer · VP IT Ops · Meridian Health
           </p>
         </ArtifactSpecimen>
 
@@ -140,7 +140,7 @@ export function Ch09SelectionChapter() {
           </p>
           <p style={{ marginBottom: 8 }}>
             Following the conclusion of our Cloud &amp; Infrastructure
-            sourcing event, Heliara Health has selected another partner
+            sourcing event, Meridian Health has selected another partner
             for award. We appreciate the quality of your submission and
             the depth of your team&rsquo;s engagement throughout the
             process.
@@ -155,7 +155,7 @@ export function Ch09SelectionChapter() {
           <p style={{ marginBottom: 8 }}>
             <strong>Closure point.</strong> [A] withdrew at BAFO on
             Day 62 after declining to remove or cap the §7.4
-            multi-year exclusivity clause. Heliara&rsquo;s strategic
+            multi-year exclusivity clause. Meridian&rsquo;s strategic
             posture (issued in d09 with the RFP package) explicitly
             preserves &ldquo;optionality on workload placement&rdquo;
             over the 5-year term, and a 7-year effective exclusivity is
@@ -170,11 +170,11 @@ export function Ch09SelectionChapter() {
             your submission) modeled at $4.14M / 5-yr; your BAFO
             response moved this to a tiered structure but did not
             materially reduce the modeled exit fee. Future engagements
-            with Heliara would benefit from a more transparent egress
+            with Meridian would benefit from a more transparent egress
             schedule.
           </p>
           <p style={{ marginBottom: 0 }}>
-            Best regards,<br />Janet Fischer · VP IT Ops · Heliara Health
+            Best regards,<br />Janet Fischer · VP IT Ops · Meridian Health
           </p>
         </ArtifactSpecimen>
 
@@ -213,7 +213,7 @@ export function Ch09SelectionChapter() {
           </p>
           <p style={{ marginBottom: 8 }}>
             Following the conclusion of our Cloud &amp; Infrastructure
-            sourcing event, Heliara Health has selected another partner
+            sourcing event, Meridian Health has selected another partner
             for award. [D] finished as the second-ranked vendor on the
             combined score and was a serious contender through BAFO.
           </p>
@@ -228,7 +228,7 @@ export function Ch09SelectionChapter() {
             escalator clause.
           </p>
           <p style={{ marginBottom: 8 }}>
-            <strong>Closure point.</strong> The Heliara d21 assumption
+            <strong>Closure point.</strong> The Meridian d21 assumption
             set (issued with d09) protected an annual escalator at 4%.
             [D]&rsquo;s initial submission priced an 8% YoY escalator;
             BAFO question D.1 asked [D] to either accept 4% or withdraw.
@@ -246,7 +246,7 @@ export function Ch09SelectionChapter() {
             phased-migration framing in the current response.
           </p>
           <p style={{ marginBottom: 0 }}>
-            Best regards,<br />Janet Fischer · VP IT Ops · Heliara Health
+            Best regards,<br />Janet Fischer · VP IT Ops · Meridian Health
           </p>
         </ArtifactSpecimen>
 

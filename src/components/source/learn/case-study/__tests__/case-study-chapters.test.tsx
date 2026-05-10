@@ -2,7 +2,7 @@
  * @jest-environment jsdom
  */
 
-// Heliara case study · chapter render smoke tests.
+// Meridian case study · chapter render smoke tests.
 //
 // We don't snapshot full DOM (chapters are 800+ words each). Instead
 // we render the entry point + 2 representative chapters and assert
@@ -19,7 +19,7 @@
 import '@testing-library/jest-dom';
 import { render, screen, within } from '@testing-library/react';
 
-import { HeliaraCaseStudyIntro } from '../HeliaraCaseStudyIntro';
+import { MeridianCaseStudyIntro } from '../MeridianCaseStudyIntro';
 import { Ch06PricingChapter } from '../Ch06PricingChapter';
 import { Ch07BafoChapter } from '../Ch07BafoChapter';
 
@@ -30,15 +30,15 @@ jest.mock('next/navigation', () => ({
   usePathname: () => '/source/learn/pricing',
 }));
 
-describe('HeliaraCaseStudyIntro', () => {
+describe('MeridianCaseStudyIntro', () => {
   it('renders the case study overview with cast of characters + ToC', () => {
-    render(<HeliaraCaseStudyIntro />);
+    render(<MeridianCaseStudyIntro />);
 
     // Hero
     expect(
       screen.getByRole('heading', {
         level: 2,
-        name: /Heliara Health · Enterprise Cloud, Epic & Integration Sourcing/i,
+        name: /Meridian Health · Enterprise Cloud, Epic & Integration Sourcing/i,
       }),
     ).toBeInTheDocument();
 

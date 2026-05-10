@@ -23,7 +23,7 @@ export function Ch01StrategyChapter() {
   return (
     <ChapterShell slug="strategy">
       <HeroBand color="navy">
-        <Eyebrow light>Heliara Case Study · Chapter 01 · Stage 01 Strategy</Eyebrow>
+        <Eyebrow light>Meridian Case Study · Chapter 01 · Stage 01 Strategy</Eyebrow>
         <SectionTitle light size="xl">Day 1. CTO names the trigger.</SectionTitle>
         <Lead light>
           Marcus Webb walks into Janet Fischer&rsquo;s office at 9:14 a.m. on a
@@ -81,7 +81,7 @@ export function Ch01StrategyChapter() {
         <Callout
           kind="info"
           icon="📋"
-          label="Heliara Health Enterprise Cloud · HLRA-HELIARA-CLOUD-2026"
+          label="Meridian Health Enterprise Cloud · MERIDIAN-CLOUD-2026"
         >
           <strong>Archetype:</strong> Cloud / Infrastructure ·{' '}
           <strong>Rigor:</strong> Strict ·{' '}
@@ -114,7 +114,7 @@ export function Ch01StrategyChapter() {
 
         <ArtifactSpecimen
           code="d01"
-          title="Strategy memo · Heliara Health Enterprise Cloud (excerpt)"
+          title="Strategy memo · Meridian Health Enterprise Cloud (excerpt)"
         >
           <p>
             <strong>Strategic driver.</strong> The Portland colocation

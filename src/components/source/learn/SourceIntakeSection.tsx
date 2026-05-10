@@ -54,7 +54,7 @@ export function SourceIntakeSection() {
         <SubHead>1 · Event name</SubHead>
         <BodyP>
           Plain-language name as it appears in every export header (e.g.{' '}
-          <em>&ldquo;Heliara Health Enterprise Cloud&rdquo;</em>). Keep
+          <em>&ldquo;Meridian Health Enterprise Cloud&rdquo;</em>). Keep
           it scannable. The event code is auto-generated from the tenant and a
           time stamp.
         </BodyP>
@@ -127,11 +127,11 @@ export function SourceIntakeSection() {
         <Eyebrow>Worked example</Eyebrow>
         <SectionTitle>Filling out an enterprise cloud event</SectionTitle>
         <Lead>
-          Here&rsquo;s the actual intake for the Heliara Health demo event
+          Here&rsquo;s the actual intake for the Meridian Health demo event
           you&rsquo;ll see when you open the canvas. Use it as a reference shape
           for an enterprise healthcare sourcing event.
         </Lead>
-        <Callout kind="info" icon="📋" label="Heliara Health Enterprise Cloud · HLRA-HELIARA-CLOUD-2026">
+        <Callout kind="info" icon="📋" label="Meridian Health Enterprise Cloud · MERIDIAN-CLOUD-2026">
           <strong>Archetype:</strong> Infrastructure (cloud + integration) · <strong>Rigor:</strong> Strict ·{' '}
           <strong>Value band:</strong> $18M low / $26M high annual ·{' '}
           <strong>Sponsor:</strong> CTO Marcus Webb (decision sponsor) + CFO Sarah Kim ·{' '}
@@ -159,7 +159,7 @@ export function SourceIntakeSection() {
           </Step>
           <Step title="Click + New event">
             The intake card opens. Fill in the seven fields — use a real-world
-            sourcing situation you&rsquo;re thinking about, or copy the Heliara
+            sourcing situation you&rsquo;re thinking about, or copy the Meridian
             shape above.
           </Step>
           <Step title="Submit">

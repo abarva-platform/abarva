@@ -23,7 +23,7 @@ export function Ch08DecisionChapter() {
   return (
     <ChapterShell slug="decision">
       <HeroBand color="purple">
-        <Eyebrow light>Heliara Case Study · Chapter 08 · Stage 08 Decision</Eyebrow>
+        <Eyebrow light>Meridian Case Study · Chapter 08 · Stage 08 Decision</Eyebrow>
         <SectionTitle light size="xl">Day 90. CTO + CFO sign d24.</SectionTitle>
         <Lead light>
           Atlas (not Sentinel) composes the decision brief. The lead-agent
@@ -89,10 +89,10 @@ export function Ch08DecisionChapter() {
 
         <ArtifactSpecimen
           code="d24"
-          title="Decision brief · Heliara Health Enterprise Cloud (excerpt)"
+          title="Decision brief · Meridian Health Enterprise Cloud (excerpt)"
         >
           <p style={{ marginBottom: 10 }}>
-            <strong>Recommendation.</strong> Award the Heliara Health
+            <strong>Recommendation.</strong> Award the Meridian Health
             Enterprise Cloud event to <strong>Vendor B</strong>{' '}
             at $21.6M committed annual run-rate. Five-year TCO at the
             protected-4% escalator: $118M. Term: 5 years initial, no
@@ -152,7 +152,7 @@ export function Ch08DecisionChapter() {
         <SubHead>Challenge 1 · Is &ldquo;workload growth flat&rdquo; realistic?</SubHead>
         <BodyP>
           Sarah&rsquo;s point: the d21 assumption set says workload growth
-          is flat over 5 years; in reality Heliara opens 12 clinics and
+          is flat over 5 years; in reality Meridian opens 12 clinics and
           one ambulatory surgery center in 2027-2029, each of which adds load.
           Karen&rsquo;s response: the new sites&rsquo; workloads are inside the 920
           count (existing apps just running on more endpoints);
