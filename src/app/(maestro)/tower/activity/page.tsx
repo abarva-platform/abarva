@@ -1,10 +1,7 @@
-import { ActivityPage } from '@/components/tower/ActivityPage';
-import type { Metadata } from 'next';
+import { redirect } from 'next/navigation';
 
-export const metadata: Metadata = {
-  title: 'Cross-program activity · Tower',
-};
+export const dynamic = 'force-dynamic';
 
 export default function Page() {
-  return <ActivityPage />;
+  redirect('/tower?view=evidence');
 }

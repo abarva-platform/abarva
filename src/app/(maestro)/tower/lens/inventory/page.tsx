@@ -1,8 +1,7 @@
-import { Metadata } from 'next';
-import { InventoryLensPage } from '@/components/tower/InventoryLensPage';
+import { redirect } from 'next/navigation';
 
-export const metadata: Metadata = { title: 'Inventory Lens · Control Tower' };
+export const dynamic = 'force-dynamic';
 
 export default function Page() {
-  return <InventoryLensPage />;
+  redirect('/tower?view=evidence');
 }

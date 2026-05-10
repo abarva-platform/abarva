@@ -1,8 +1,7 @@
-import { Metadata } from 'next';
-import { AdoptionLensPage } from '@/components/tower/AdoptionLensPage';
+import { redirect } from 'next/navigation';
 
-export const metadata: Metadata = { title: 'Adoption Lens · Control Tower' };
+export const dynamic = 'force-dynamic';
 
 export default function Page() {
-  return <AdoptionLensPage />;
+  redirect('/tower?view=pressures');
 }

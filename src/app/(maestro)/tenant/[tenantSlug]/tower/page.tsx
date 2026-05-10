@@ -6,9 +6,7 @@
 // Tab switching is URL-searchParam-driven (?tab=<key>).
 // No client state. Server component only.
 
-import { notFound } from 'next/navigation';
-import { TowerRouteShell } from '@/components/tower/TowerRouteShell';
-import { TowerLensTabs } from '@/components/tower/TowerLensTabs';
+import { notFound, redirect } from 'next/navigation';
 import { findTenantByRouteSlug } from '@/lib/deliverables/seed-route-resolver';
 import { assertTenantAccess } from '@/lib/auth/tenant-access';
 import { resolveTowerTab } from '@/lib/tower/tower-lens-tabs-view';
@@ -28,15 +26,7 @@ export default async function TenantTowerSeedPage({
   if (!tenant) notFound();
 
   const activeTab = resolveTowerTab(tab);
-  const baseUrl = `/tenant/${tenantSlug}/tower`;
-
-  return (
-    <TowerRouteShell tenantName={tenant.displayName} activeLens={activeTab.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())}>
-      <TowerLensTabs
-        tenant={tenant}
-        activeTab={activeTab}
-        baseUrl={baseUrl}
-      />
-    </TowerRouteShell>
-  );
+  const redirectParams = new URLSearchParams({ client: tenant.tenantKey });
+  if (activeTab !== 'portfolio') redirectParams.set('tab', activeTab);
+  redirect(`/tower?${redirectParams.toString()}`);
 }
