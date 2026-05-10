@@ -1,6 +1,6 @@
 'use client';
 import {
-  Section, HeroBand, Eyebrow, SectionTitle, Lead, BodyP, SubHead,
+  Section, HeroBand, Eyebrow, SectionTitle, Lead,
   Callout, StepList, Step, TermGrid, Term, T,
 } from './primitives';
 
@@ -9,55 +9,55 @@ export function SetupSection() {
     <>
       <HeroBand color="slate">
         <Eyebrow light>Setup · Apex Retail</Eyebrow>
-        <SectionTitle light size="xl">Four connectors. Six weeks. Six pressure cards.</SectionTitle>
+        <SectionTitle light size="xl">Preloaded substrate. Current-state answers. No setup theatre.</SectionTitle>
         <Lead light>
-          When David Kim&rsquo;s team first logged into AbarVa, they had one question: &ldquo;Is our data good enough to get signal from?&rdquo; Six weeks later, Steward had a full substrate baseline and Intelligence had surfaced six pressure cards — including the 240bps Morrison margin gap that became APX-01. Here&rsquo;s how Setup created that.
+          For the CXO review, Apex Retail is already loaded. The point is not to watch connectors get configured; it is to prove AbarVa can reason from a believable enterprise baseline before it recommends an AI bet.
         </Lead>
       </HeroBand>
 
       {/* Apex timeline */}
       <Section>
         <Eyebrow>Case study · Apex Retail</Eyebrow>
-        <SectionTitle>Six weeks to substrate baseline</SectionTitle>
+        <SectionTitle>What the Apex substrate already knows</SectionTitle>
         <Lead>
-          Apex Retail wired four connectors in sequence. Each one expanded the substrate and brought new signals into range. The order mattered — they started with transactional data (what actually happened) before adding operational context (why it happened).
+          Treat Setup as the evidence room behind the demo. Apex has enterprise profile, org structure, IT landscape, IT financials, KPI history, vendor contracts, sourcing artifacts, decision traces, evidence, telemetry, graph relationships, and AI transformation records loaded before the reviewer arrives.
         </Lead>
 
         <div style={{ margin: '24px 0' }}>
           {[
             {
-              week: 'Week 1–2',
-              system: 'Oracle Retail POS + Loyalty',
+              week: 'Layer 1',
+              system: 'Enterprise + org baseline',
               icon: '🛒',
-              what: 'Point-of-sale transactions, markdown events, loyalty redemption, SKU-level sell-through.',
-              signal: 'Within 72 hours: promo miss rate signal appeared (34% vs 18% corpus median). Morrison private label SKUs flagged separately.',
+              what: 'Enterprise profile, executive roster, decision rights, political map, strategic priorities, and program ownership.',
+              signal: 'Nexus can answer who owns the decision, who should approve, and which leadership gaps would block a Move from scaling.',
               color: T.purpleLine,
               soft: T.purpleSoft,
             },
             {
-              week: 'Week 2–3',
-              system: 'Blue Yonder DC Operations',
+              week: 'Layer 2',
+              system: 'Technology + data landscape',
               icon: '🏭',
-              what: 'Distribution center inbound/outbound, ASN data, lead time actuals by vendor and lane.',
-              signal: 'Supply chain variance pattern surfaced: ±23-day lead time variability vs ±9-day peer median. Morrison seasonal line flagged as highest-risk (62% direct import).',
+              what: 'Systems inventory, integrations, ownership, infrastructure dependencies, data platforms, and known technology constraints.',
+              signal: 'Sentinel can discuss whether a Move is a product/platform problem, a vendor decision, an integration risk, or an operating-model gap.',
               color: T.navyLine,
               soft: T.navySoft,
             },
             {
-              week: 'Week 4',
-              system: 'Workday Financial',
+              week: 'Layer 3',
+              system: 'Financials + value baseline',
               icon: '💰',
-              what: 'COGS by category, gross margin actuals, SG&A by business unit, capital allocation.',
-              signal: 'GM gap decomposition became possible: 240bps gap across 14 owned brand segments confirmed with financial data. Category-level P&L visible for the first time in substrate.',
+              what: 'IT spend, financial model, KPI history, renewal posture, program economics, and value-at-stake ranges.',
+              signal: 'A CIPO or CFO can challenge whether the value case is real, which costs are in scope, and which metrics should gate approval.',
               color: T.tealLine,
               soft: T.tealSoft,
             },
             {
-              week: 'Week 5',
-              system: 'Kronos Store Ops + HR',
+              week: 'Layer 4',
+              system: 'Evidence + sourcing + portfolio signals',
               icon: '🏪',
-              what: 'Store labor hours, associate productivity metrics, scheduling data, turnover by store cohort.',
-              signal: 'Labor productivity signal added context to store-level performance variance. Connected to store associate productivity program (APX-06, later originated).',
+              what: 'Sourcing artifacts, vendor contracts, evidence ledger, operating telemetry, decision traces, and cross-program signals.',
+              signal: 'The app can decide whether the next step belongs in Intelligence, Moves, Source, or Tower instead of forcing every problem through one workflow.',
               color: '#D1FAE5',
               soft: '#ECFDF5',
             },
@@ -153,8 +153,8 @@ export function SetupSection() {
           ))}
         </div>
 
-        <Callout kind="success" icon="✓" label="Week 6: full substrate baseline">
-          By the end of week six, Steward declared the substrate baseline complete. Intelligence surfaced six pressure cards simultaneously — the Morrison GM gap (240bps), demand forecast late signal (34% promo miss rate), supply chain variance (±23 days), contact center routing inefficiency, labor cost outlier (3 stores), and a loyalty data quality flag. Six signals in one session. David Kim&rsquo;s first question — &ldquo;Is our data good enough?&rdquo; — had an answer.
+        <Callout kind="success" icon="✓" label="Demo-ready baseline">
+          The CXO reviewer does not need to set anything up. Setup should communicate what is loaded, what is stubbed or pending, and why the current-state substrate is strong enough to support a real product-and-technology conversation.
         </Callout>
       </Section>
 
@@ -371,14 +371,14 @@ export function SetupSection() {
       {/* How to do your setup */}
       <Section>
         <Eyebrow>Your Setup</Eyebrow>
-        <SectionTitle>What to do in your first setup session</SectionTitle>
+        <SectionTitle>How setup should feel for a real customer</SectionTitle>
         <Lead>
-          You don&rsquo;t need all four connectors live before Intelligence produces signal. Apex Retail had signal within 72 hours of their first connector. Start narrow, go live, and let the substrate grow.
+          The demo starts from a loaded composite tenant. In a real implementation, Steward should be explicit about what is connected, what is document-loaded, what is inferred, and what is not ready yet. That honesty is part of the product.
         </Lead>
 
         <StepList>
-          <Step title="Wire your first data connector" path="/admin → Connectors">
-            Start with transactional data — whatever system tracks what actually happened (POS, ERP, CRM). This is the evidence layer. Without it, all signals are generic industry benchmarks. With it, signals reference your actual numbers.
+          <Step title="Load the first decision substrate" path="/admin → Data">
+            Start with the facts required for executive decisions: org structure, systems, vendor contracts, financial baselines, KPIs, active initiatives, and evidence documents. Live connectors are valuable, but documents and verified extracts can create useful signal first.
           </Step>
           <Step title="Add your executive team to the tenant profile" path="/admin → Tenant Profile → Executives">
             Name and title for every executive who will sponsor, own, or be consulted on Moves. Nexus looks these up when filling P0 sponsor fields and P1 charter stakeholder maps. Unnamed executives become bottlenecks — Nexus has to ask &ldquo;Who is the CFO?&rdquo; instead of already knowing.
@@ -386,8 +386,8 @@ export function SetupSection() {
           <Step title="Set 2–3 strategic priorities">
             One sentence each. These weight which Intelligence signals are most relevant to surface for your business. Apex Retail set &ldquo;Private label margin recovery&rdquo; as Priority 1 — that&rsquo;s partly why the Morrison GM gap card appeared at the top of their substrate, not buried in a list of 40 signals.
           </Step>
-          <Step title="Check Intelligence — is signal appearing?" path="/intelligence → Pressure Cards">
-            After your first connector is live, go to Intelligence. If the substrate has enough data, you should see pressure cards within 24–72 hours. If you see fewer than 3 cards, the connector data may be sparse or misconfigured — Steward will surface a data quality flag.
+          <Step title="Check Intelligence — is the current state answerable?" path="/intelligence">
+            Before creating a Move, ask current-state questions: who owns the platform, which systems are implicated, what costs are in scope, which evidence is strong, and what is missing. If those answers are thin, the substrate is not ready for high-stakes guidance.
           </Step>
         </StepList>
       </Section>
@@ -398,10 +398,10 @@ export function SetupSection() {
         <SectionTitle>Key terms in Setup</SectionTitle>
         <TermGrid>
           <Term name="Connector">
-            An integration between AbarVa and an external data system. Connectors pull data into the intelligence substrate. <em>Without connectors, Intelligence has no evidence and Moves produce generic content.</em>
+            An integration between AbarVa and an external data system. Connectors strengthen freshness, but they are not the only evidence path. <em>Verified documents, extracts, and persisted tenant records can also ground Intelligence and Moves.</em>
           </Term>
           <Term name="Substrate">
-            The combined data layer that all agents query. It includes connector data, document embeddings, and tenant context. <em>Think of it as the shared memory of the platform — everything Sentinel, Nexus, and Atlas know about your company lives here.</em>
+            The combined data layer that agents query. It includes tenant records, documents, embeddings, graph relationships, program state, sourcing artifacts, and connector data where available. <em>Think of it as the shared evidence base, not a generic memory.</em>
           </Term>
           <Term name="Steward">
             The Setup agent. Guides connector configuration, runs data quality checks, and declares substrate readiness. <em>Steward is the only agent that can flag &ldquo;foundation not ready&rdquo; — a hard blocker on Move P3 sourcing quality.</em>

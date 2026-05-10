@@ -18,8 +18,8 @@ export interface LearnNavItem {
   /**
    * Optional kind hint for the side nav. Currently only the
    * `caseStudy` value is meaningful — it lets the side nav anchor a
-   * group of indented chapter entries below the "Heliara Cloud · case
-   * study" link so the hierarchy is obvious.
+   * group of indented chapter entries below the Apex Retail Source
+   * case study link so the hierarchy is obvious.
    */
   kind?: 'caseStudy';
   /**
@@ -83,19 +83,6 @@ export const LEARN_NAV: ReadonlyArray<LearnNavGroup> = [
       { slug: 'source/welcome', label: 'Welcome & overview' },
       { slug: 'source/intake', label: 'Creating your first event' },
       { slug: 'source/sentinel', label: 'Working with Sentinel' },
-      // Case study anchor — chapters below indent under it.
-      { slug: 'source/case-study', label: 'Heliara Enterprise Cloud · case study', kind: 'caseStudy' },
-      { slug: 'source/strategy', label: 'Ch.01 Strategy', stageBadge: '01', stageColor: 'grey', indent: true },
-      { slug: 'source/scope', label: 'Ch.02 Scope', stageBadge: '02', stageColor: 'grey', indent: true },
-      { slug: 'source/rfp', label: 'Ch.03 RFP', stageBadge: '03', stageColor: 'navy', indent: true },
-      { slug: 'source/responses', label: 'Ch.04 Responses', stageBadge: '04', stageColor: 'navy', indent: true },
-      { slug: 'source/evaluation', label: 'Ch.05 Evaluation', stageBadge: '05', stageColor: 'navy', indent: true },
-      { slug: 'source/pricing', label: 'Ch.06 Pricing', stageBadge: '06', stageColor: 'navy', indent: true },
-      { slug: 'source/bafo', label: 'Ch.07 BAFO', stageBadge: '07', stageColor: 'navy', indent: true },
-      { slug: 'source/decision', label: 'Ch.08 Decision', stageBadge: '08', stageColor: 'amber', indent: true },
-      { slug: 'source/selection', label: 'Ch.09 Selection', stageBadge: '09', stageColor: 'teal', indent: true },
-      { slug: 'source/transition', label: 'Ch.10 Transition', stageBadge: '10', stageColor: 'teal', indent: true },
-      { slug: 'source/value', label: 'Ch.11 Value', stageBadge: '11', stageColor: 'teal', indent: true },
       // Apex Retail case study — $35M AMS Outsourcing 2026
       { slug: 'source/apex-retail-case-study', label: 'Apex Retail · $35M AMS', kind: 'caseStudy' },
       { slug: 'source/apex-strategy',   label: 'Ch.01 Strategy',         stageBadge: '01', stageColor: 'grey',  indent: true },

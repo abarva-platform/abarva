@@ -673,11 +673,11 @@ export const TENANT_HOME_BY_KEY: Record<string, TenantHomeData> = {
 };
 
 export function resolveTenantHome(clientKey: string | null | undefined): TenantHomeData {
-  if (!clientKey) return MERIDIAN_HOME;
+  if (!clientKey) return APEX_HOME;
   const k = clientKey.toLowerCase().replace(/[^a-z]/g, '');
   return (
     TENANT_HOME_BY_KEY[k] ??
     TENANT_HOME_BY_KEY[clientKey.toLowerCase()] ??
-    MERIDIAN_HOME
+    APEX_HOME
   );
 }
