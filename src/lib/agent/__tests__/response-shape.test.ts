@@ -62,7 +62,11 @@ describe('agent response shape', () => {
     expect(shaped).not.toContain('**');
   });
 
-  it('uses a stat-and-stack when the answer is primarily evidence', () => {
+  it('uses a stat-and-stack when the answer is primarily evidence (Tower surface)', () => {
+    // INT-VOICE.STRAT-2026-05-10e — moved from '/intelligence' to '/tower'.
+    // The compaction template is still in scope for Tower but is a Brief A
+    // violation on Intelligence; see the Intelligence prose-preservation
+    // test below.
     const raw = [
       'The data says merchandising value is concentrated in forecast quality.',
       'MAPE is 28.4% against a 20% target.',
@@ -71,12 +75,107 @@ describe('agent response shape', () => {
       'Source basis: Apex tenant KPI snapshot and merchandising system inventory.',
     ].join(' ');
 
-    const shaped = shapeAgentResponseForSurface('/intelligence', raw);
+    const shaped = shapeAgentResponseForSurface('/tower', raw);
 
     expect(shaped).toMatch(/^MAPE is 28\.4%/m);
     expect(shaped).toMatch(/^· Inventory turns fell/m);
     expect(shaped).toMatch(/^· Markdown rate is 12\.8%/m);
     expect(shaped).toMatch(/^Source:/m);
+  });
+
+  // INT-VOICE.STRAT-2026-05-10e · Intelligence surface preserves Brief A
+  // prose. The 2026-05-10 Meridian audit captured every Sentinel response
+  // being mangled into a structured-bullet template by
+  // compactConsultantChatText at render time. Brief A explicitly requires
+  // natural advisor prose; the compaction template is a Brief A violation
+  // by construction. These tests lock in the prose-preservation contract.
+  describe('Intelligence surface — Brief A prose preservation (INT-VOICE.STRAT-2026-05-10e)', () => {
+    it('does not inject a structured-bullet template into a clean Brief A response', () => {
+      // Canonical Brief A consultant response — exactly what the synthesizer
+      // emits when the prompt is correctly deployed. Pre-fix, this would
+      // come back as headline + - Evidence: + - Missing: + - Next: +
+      // - Question: bullets. Post-fix, it round-trips structurally
+      // unchanged.
+      const raw = [
+        'For a multi-banner specialty retailer your size, the highest-leverage bet right now is assortment optimization, and I\'d put high confidence on that.',
+        'Three peer specialty retailers in the corpus saw 8-15% margin gains at the unit level, though all three also hit the COGS-margin trap on horizontal rollout — pattern I\'d want you to plan around from day one.',
+        'I\'d push back on putting dynamic pricing ahead of assortment for Apex.',
+        'What\'s driving the question — are you trying to build a 12-month plan, or evaluating one specific vendor pitch?',
+      ].join(' ');
+
+      const shaped = shapeAgentResponseForSurface('/intelligence', raw);
+
+      expect(shaped).not.toMatch(/^- Evidence:/m);
+      expect(shaped).not.toMatch(/^- Missing:/m);
+      expect(shaped).not.toMatch(/^- Next:/m);
+      expect(shaped).not.toMatch(/^- Question:/m);
+      // Multi-paragraph natural prose stays intact. The Brief A response has
+      // four sentences; after shaping it should still contain all four
+      // sentence cores — not be truncated to a 18-word headline.
+      expect(shaped).toContain('high confidence on that');
+      expect(shaped).toContain('COGS-margin trap');
+      expect(shaped).toContain("push back on putting dynamic pricing");
+      expect(shaped).toContain('What\'s driving the question');
+    });
+
+    it('does not promote a "we don\'t have that" sentence into a "- Missing:" bullet', () => {
+      // The 2026-05-10 Meridian audit's worst failure: a Brief A line like
+      // "I don't have that in your connected data" got promoted into a
+      // structured "- Missing: ..." bullet by extractMissingLine, making
+      // every honest data caveat look like a server-side refusal template.
+      const raw = [
+        "I don't have that in your connected data — your finance team would have it directly.",
+        "What I can tell you about peer benchmarks: range from corpus for IDNs your size is roughly $3-15M annual on AI tooling, but it varies enormously based on what's counted.",
+        'If you want a real benchmark, get the actual number from finance and define what counts.',
+      ].join(' ');
+
+      const shaped = shapeAgentResponseForSurface('/intelligence', raw);
+
+      expect(shaped).not.toMatch(/^- Missing:/m);
+      expect(shaped).not.toMatch(/^- Evidence:/m);
+      // The honest caveat is preserved verbatim, not promoted into a bullet.
+      expect(shaped).toContain("I don't have that in your connected data");
+    });
+
+    it('does not produce a headline-only summary that drops most of the response', () => {
+      // The compaction template took the first sentence (max 18 words) as
+      // the headline and discarded everything else that didn't match its
+      // narrow extraction regexes. Make sure that no longer happens.
+      const raw = [
+        "The biggest failure mode at your scale is the COGS-margin trap, and it's the one I'd want you focused on.",
+        'Pattern is straightforward — the model recommends a better-converting mix, revenue lifts, and margin gives the gain back because recs push toward higher-velocity items where margin is thinner.',
+        'High confidence on this one.',
+        "Two more worth knowing about, in order of how much I'd worry for Apex specifically: POS-integration depth, which is your specific risk; and seasonality blindness, less specific to Apex but worth flagging.",
+        "For vendor evaluation specifically, that's Source's job, not mine.",
+      ].join(' ');
+
+      const shaped = shapeAgentResponseForSurface('/intelligence', raw);
+
+      // All five sentences round-trip in some form.
+      expect(shaped).toContain('biggest failure mode');
+      expect(shaped).toContain('COGS-margin trap');
+      expect(shaped).toContain('High confidence on this one');
+      expect(shaped).toContain('POS-integration depth');
+      expect(shaped).toContain("Source's job");
+      // No structured-bullet shape.
+      expect(shaped).not.toMatch(/^- (?:Evidence|Missing|Next|Question):/m);
+    });
+
+    it('still strips HTML markup and Markdown bold without compacting', () => {
+      // The HTML/Markdown noise strip is preserved (it lives in
+      // normalizeAgentMarkupForPlainText + stripChatMarkdownFormatting,
+      // applied before the compaction branch). What's removed is the
+      // compaction itself.
+      const raw =
+        '**Apex Retail** has three signals. The data substrate flags <strong>POS-integration</strong> as medium-confidence.';
+
+      const shaped = shapeAgentResponseForSurface('/intelligence', raw);
+
+      expect(shaped).not.toContain('**');
+      expect(shaped).not.toContain('<strong>');
+      expect(shaped).toContain('Apex Retail');
+      expect(shaped).toContain('POS-integration');
+    });
   });
 
   it('uses sequential steps when the answer explains a path', () => {

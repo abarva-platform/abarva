@@ -330,11 +330,36 @@ function compactConsultantChatText(text: string, maxWords: number): string {
 }
 
 function shouldCompactSurface(surface: string): boolean {
+  // INT-VOICE.STRAT-2026-05-10e — Intelligence surface removed.
+  //
+  // The Brief A expert posture installed in src/lib/intelligence/ask/synthesizer.ts
+  // requires natural advisor prose: "Don't bullet-point everything. Use bullets
+  // when they earn their place; otherwise, write in prose. Reads like a person
+  // talking — varied sentence structure, natural transitions, length matches
+  // the question." compactConsultantChatText violates that contract by
+  // construction — it forces every response into a fixed
+  //
+  //   {headline}
+  //   - Evidence: …
+  //   - Missing: …
+  //   - Next: …
+  //   - Question: …
+  //
+  // template, and extractMissingLine specifically promotes any sentence
+  // containing "missing" / "don't have" / "absent" into a "- Missing:" bullet,
+  // amplifying any retrieval-thin phrasing into a compliance-style refusal
+  // shape. The 2026-05-10 Meridian production audit captured exactly this
+  // failure on every Sentinel response.
+  //
+  // 'source' and the strategic-moves / programs / tower surfaces remain in
+  // the compaction list pending parallel updates under Briefs B and C
+  // (Nexus and Source consultant posture). Tower is unrelated to Briefs
+  // A/B/C and stays as-is. See docs/build/CODEX_BRIEF_6_CONSULTANT_POSTURE_NEXUS_SOURCE.md
+  // for the next-up work.
   const semanticSurface = surface.replace(/^\/+/, '');
   return [
     'tower',
     'source',
-    'intelligence',
     'setup',
     'programs',
     'programs-detail',
@@ -343,7 +368,6 @@ function shouldCompactSurface(surface: string): boolean {
     'strategic-moves',
     '/tower',
     '/source',
-    '/intelligence',
     '/setup',
     '/platform/admin',
     '/programs/new',
