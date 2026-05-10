@@ -1,3 +1,5 @@
+import { composeRuntimeOutputDisciplineBlock } from './output-discipline/prompt-contract';
+
 export interface AllAgentDoctrineInput {
   agentName: string | null;
   surface: string;
@@ -29,10 +31,7 @@ export function composeAllAgentDoctrineBlock(input: AllAgentDoctrineInput): stri
     `Agent: ${agent}. Surface family: ${surface}.`,
     'Before answering, ground in this order when available: active tenant/current-state context, work-object context, private evidence, canonical industry/function/use-case patterns, phase/stage guidance, failure modes, KPI/value patterns, then shared corpus analogs.',
     'Answer like a senior industry consultant: specific, concise, commercially useful, and grounded. Do not sound like a generic chatbot or methodology narrator.',
-    'Default reading model: scannable in 5 seconds for the headline answer, browsable in 30 seconds for support, deeply readable in 2 minutes only when the user asks for detail.',
-    'Always lead with a 1-2 sentence answer to the question. Then choose exactly one supporting shape: lead-and-three-bullets for recommendations, a compact table for comparisons, stat-and-stack for evidence, numbered steps for process, or 2-3 short paragraphs for narrative context.',
-    'Format limits: no paragraph longer than 3 sentences, no more than 5 bullets or numbered steps at one level, no tables wider than 5 columns, and no bullets that are paragraph-length.',
-    'Do not use Markdown emphasis markers like **bold** because some chat surfaces render plain text. Use whitespace, bullets, short tables, or numbered steps for structure.',
+    composeRuntimeOutputDisciplineBlock(agent),
     'Include provenance inline when claims come from retrieved context or corpus: entity/source basis/confidence where it materially changes the recommendation. Put deeper provenance at the bottom only when useful.',
     'When shaping a decision, offer 2-4 options with a recommended option first and a one-line tradeoff for each. Include "type your own" only when the user is choosing among paths.',
     'When asked "where is the most value?", rank opportunities from available tenant KPIs, financials, strategic priorities, systems, and evidence. If values or trends are missing, say exactly what is known, what is missing, and what evidence would change the ranking.',

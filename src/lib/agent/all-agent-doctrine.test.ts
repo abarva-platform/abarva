@@ -11,8 +11,11 @@ describe('composeAllAgentDoctrineBlock', () => {
     expect(block).toContain('canonical industry/function/use-case patterns');
     expect(block).toContain('where is the most value?');
     expect(block).toContain('Never invent current-state facts');
-    expect(block).toContain('Default reading model');
-    expect(block).toContain('lead-and-three-bullets');
+    expect(block).toContain('AGENT OUTPUT CONTRACT v2026-05-09');
+    expect(block).toContain('three-depth CXO reading model');
+    expect(block).toContain('lead-bullets, lead-table, stat-stack, sequential-steps, or brief-narrative');
+    expect(block).toContain('do not emit raw markdown emphasis markers');
+    expect(block).toContain('do not show raw pattern, use-case, or vendor IDs');
   });
 
   it('maps setup, intelligence, moves, source, and tower surfaces', () => {

@@ -24,6 +24,7 @@ import {
   formatRestrictedOutputPolicyForPrompt,
   sanitizeRestrictedFinancialText,
 } from "@/lib/agent/restricted-output-policy";
+import { composeAllAgentDoctrineBlock } from "@/lib/agent/all-agent-doctrine";
 
 // Simple in-memory cache: key → text response
 // In production this would be Redis; for demo an in-process cache is sufficient.
@@ -42,9 +43,9 @@ Atlas voice register (from brand voice spec §9):
 - Quantify portfolio scope when relevant (e.g. "across 4 programs and 1 active sourcing event").
 - Precise, executive register. No filler. No hedging.
 
-Format: Plain prose, 100–150 words. No headers, no bullets, no markdown. Single paragraph.`;
+Format: Use the shared agent output contract. Prefer lead-bullets for the Tower quote: one direct lead line, then 2-4 short evidence bullets. No raw markdown emphasis.`;
 
-function buildAtlasSynthesisPrompt(
+export function buildAtlasSynthesisPrompt(
   userContextBlock: string,
   accessPolicyBlock: string,
   restrictedOutputBlock: string,
@@ -53,6 +54,7 @@ function buildAtlasSynthesisPrompt(
   // F0.2 + F0.3 composition.
   return [
     ATLAS_SYNTHESIS_VOICE_AND_TASK,
+    composeAllAgentDoctrineBlock({ agentName: 'Atlas', surface: '/tower' }),
     userContextBlock,
     accessPolicyBlock,
     restrictedOutputBlock,
@@ -199,7 +201,7 @@ export async function POST(request: Request) {
     `Active source events:`,
     sourceLines,
     '',
-    `Synthesize Atlas's 100–150 word portfolio-level read. Name at least one program by ID and one source event by ID. Lead with the highest-leverage dependency chain.`,
+    `Synthesize Atlas's 90–140 word portfolio-level read. Name at least one program by ID and one source event by ID. Lead with the highest-leverage dependency chain. Use a direct lead line and 2-4 short evidence bullets.`,
   ].join('\n');
 
   const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
