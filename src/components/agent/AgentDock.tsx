@@ -42,6 +42,7 @@ import {
 } from 'react';
 import { CANVAS } from '@/components/source/canvas/canvas-tokens';
 import { ResizableSplitter } from '@/components/source/canvas/ResizableSplitter';
+import { shapeAgentResponseForSurface } from '@/lib/agent/response-shape';
 
 // useLayoutEffect warns if executed during SSR. The dock only computes
 // real values in the browser, so fall back to the no-op effect on the
@@ -546,7 +547,9 @@ export function AgentDock(props: AgentDockProps) {
                 {turn.role === 'agent' ? (
                   <div style={AGENT_BYLINE_STYLE}>{agent.name}</div>
                 ) : null}
-                <div style={BUBBLE_STYLE}>{turn.body}</div>
+                <div style={BUBBLE_STYLE}>
+                  {turn.role === 'agent' ? shapeAgentResponseForSurface(surface, turn.body) : turn.body}
+                </div>
               </div>
             ))
           )}
@@ -662,6 +665,7 @@ export function AgentDock(props: AgentDockProps) {
     removeUpload,
     sendDisabled,
     setMode,
+    surface,
     startUploads,
     submit,
     submitting,

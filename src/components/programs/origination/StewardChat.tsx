@@ -26,6 +26,7 @@ import {
   visibleArtifactPendingText,
   type Artifact,
 } from '@/lib/agent/artifacts';
+import { shapeAgentResponseForSurface, shapeStreamingAgentTextForSurface } from '@/lib/agent/response-shape';
 import {
   buildHandoffMarker,
   persistOriginationHandoff,
@@ -259,7 +260,11 @@ export function StewardChat({
           .replace(PROGRAM_CREATED_SENTINEL, '')
           .trimEnd();
         setTurns((prev) =>
-          prev.map((t) => (t.id === assistantTurnId ? { ...t, text: display } : t)),
+          prev.map((t) =>
+            t.id === assistantTurnId
+              ? { ...t, text: shapeStreamingAgentTextForSurface(surface, display) }
+              : t,
+          ),
         );
       }
 
@@ -286,8 +291,9 @@ export function StewardChat({
       const finalDisplay = committedVisible
         .replace(PROGRAM_CREATED_SENTINEL, '')
         .trimEnd();
+      const shapedFinalDisplay = shapeAgentResponseForSurface(surface, finalDisplay);
       setTurns((prev) =>
-        prev.map((t) => (t.id === assistantTurnId ? { ...t, text: finalDisplay } : t)),
+        prev.map((t) => (t.id === assistantTurnId ? { ...t, text: shapedFinalDisplay } : t)),
       );
 
       const allText = committedVisible;
@@ -302,7 +308,7 @@ export function StewardChat({
         // a blank Nexus greeting. The handoff window is intentionally
         // short (90s) to avoid replaying old conversations.
         const finalTurnsForHandoff: ChatTurn[] = turnsRef.current.map((t) =>
-          t.id === assistantTurnId ? { ...t, text: finalDisplay } : t,
+          t.id === assistantTurnId ? { ...t, text: shapedFinalDisplay } : t,
         );
         const handoffTurns = [
           ...toAtlasTurns(finalTurnsForHandoff),

@@ -50,6 +50,7 @@ import {
   readStoredContextMode,
   writeStoredContextMode,
 } from '@/lib/shell/context-mode-storage';
+import { shapeAgentResponseForSurface, shapeStreamingAgentTextForSurface } from '@/lib/agent/response-shape';
 // OV2-FM-TELEMETRY · failure-mode events fire from this dispatch site
 // because the artifact only becomes user-visible AFTER it lands in the
 // reactive panel. Dedupe by failureModeId via firedFlagsRef below
@@ -343,7 +344,12 @@ export function AtlasPageStateProvider({
           // Display the committed visible plus any in-flight buffer
           // (with sentinels still mid-stream); extractArtifacts will
           // re-clean on the next chunk.
-          setCurrentResponse(sanitizeArtifactDebugText(committedVisible) + visibleArtifactPendingText(pendingBuffer));
+          setCurrentResponse(
+            shapeStreamingAgentTextForSurface(
+              surface,
+              sanitizeArtifactDebugText(committedVisible) + visibleArtifactPendingText(pendingBuffer),
+            ),
+          );
         }
 
         // Final flush — any closed artifact whose close arrived in the
@@ -362,7 +368,7 @@ export function AtlasPageStateProvider({
         const agentTurn: ChatTurn = {
           id: `agt-${Date.now()}`,
           role: 'agent',
-          text: sanitizeArtifactDebugText(committedVisible),
+          text: shapeAgentResponseForSurface(surface, sanitizeArtifactDebugText(committedVisible)),
           agentName: resolvedAgentName,
           timestamp: Date.now(),
         };
@@ -394,7 +400,6 @@ export function AtlasPageStateProvider({
         }
       }
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     [
       surface,
       tenantName,

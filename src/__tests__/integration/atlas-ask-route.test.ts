@@ -34,7 +34,7 @@ describe('POST /api/v1/atlas/ask', () => {
       threadId: 'atlas_thread_1',
       routeType: 'llm',
       intent: 'llm',
-      response: 'Atlas can see the pressure stack, but the defensible next step is to inspect the program deliverables behind it.',
+      response: '**Atlas can see the pressure stack**, but the defensible next step is to inspect the program deliverables behind it. Portfolio KPI evidence shows gate slippage, sponsor ambiguity, and value-baseline risk. I recommend opening Programs before treating this as a Tower-only decision.',
       suggestions: [
         { label: 'Open programs', value: 'Open programs', kind: 'link', href: '/engagements' },
       ],
@@ -100,6 +100,9 @@ describe('POST /api/v1/atlas/ask', () => {
 
     expect(json.threadId).toBe('atlas_thread_1');
     expect(json.renderedResponse.response_text).toContain('defensible next step');
+    expect(json.renderedResponse.response_text).not.toContain('**');
+    expect(json.renderedResponse.response_text).toContain('- Evidence:');
+    expect(json.renderedResponse.response_text).toContain('- Next:');
     expect(json.renderedResponse.follow_up_actions[0]).toMatchObject({
       label: 'Open programs',
       kind: 'navigate',
