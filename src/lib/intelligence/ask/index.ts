@@ -115,6 +115,19 @@ export async function* askIntelligence(query: string, opts: AskOptions = {}): As
       }
     }
 
+    // INT-VOICE.STRAT-2026-05-10b — Streaming whitespace bug fix.
+    //
+    // The synthesizer already runs sanitizeAskSynthesis on the full text,
+    // then chunks it via chunkAskText into ~80-char pieces that each end
+    // with the trailing whitespace from `/.{1,80}(?:\s|$)/g`. We used to
+    // call sanitizeAskSynthesis(delta, 500) again here per chunk; that
+    // call's `.trim()` stripped the trailing whitespace from every chunk,
+    // which the SentinelChat client then concatenated together producing
+    // the "ApexRetail" / "demandsensing" / "upstreamconditions" word-fusion
+    // Carlos saw on every test in the 2026-05-10 re-test. The double-
+    // sanitize is also redundant — hollow openers, markdown, and the word
+    // cap are already applied at the synthesizer entry. Pass chunks
+    // through unchanged.
     let answer = '';
     for await (const delta of synthesizeStream({
       query: trimmed,
@@ -123,9 +136,8 @@ export async function* askIntelligence(query: string, opts: AskOptions = {}): As
       userContextBlock: opts.userContextBlock,
       averageConfidence,
     })) {
-      const cleanDelta = sanitizeAskSynthesis(delta, 500);
-      answer += cleanDelta;
-      yield { type: 'delta', text: cleanDelta };
+      answer += delta;
+      yield { type: 'delta', text: delta };
     }
 
     const followups = await generateFollowups({

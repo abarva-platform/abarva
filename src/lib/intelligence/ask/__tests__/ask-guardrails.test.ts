@@ -37,6 +37,48 @@ describe('Ask Intelligence guardrails', () => {
     expect(chunkAskText(text).join('')).toBe(text);
   });
 
+  // INT-VOICE.STRAT-2026-05-10b — Streaming whitespace regression.
+  //
+  // The 2026-05-10 Apex / Carlos re-test captured "ApexRetail" /
+  // "demandsensing" / "upstreamconditions" word-fusion across every test on
+  // every Sentinel surface. Carlos labeled it a frontend bug; root cause was
+  // server-side: askIntelligence used to call sanitizeAskSynthesis(delta,
+  // 500) on each streamed chunk, and that function's trim() stripped the
+  // trailing whitespace from chunks produced by chunkAskText (which depend
+  // on that whitespace as the inter-chunk separator). The client then
+  // concatenated stripped chunks and produced fused words.
+  //
+  // Lock in: a long sentinel-shaped sentence must round-trip through the
+  // chunk → (no trim) → join pipeline byte-for-byte.
+  it('does not fuse words across streamed chunk boundaries (INT-VOICE.STRAT-2026-05-10b)', () => {
+    // Build a sentence longer than the 80-char chunk regex cap so chunkAskText
+    // is forced to produce multiple chunks split on inter-word whitespace.
+    const sentence =
+      'At multi-banner specialty retailers in your size class, four AI bets show up over and over: ' +
+      'demand sensing and assortment optimization on the merchandising side, AI workforce scheduling ' +
+      'and store-labor planning on ops, loyalty next-best-offer on customer, and supplier-collaboration ' +
+      'AI on the supply side.';
+
+    const chunks = chunkAskText(sentence);
+    expect(chunks.length).toBeGreaterThan(1);
+
+    // Pre-fix behaviour we are guarding against: trimming each chunk fuses
+    // the last word of one chunk with the first word of the next, because
+    // the regex `/.{1,80}(?:\s|$)/g` consumes the inter-chunk whitespace as
+    // part of the previous chunk's trailing edge.
+    const fusedFromTrimmedChunks = chunks
+      .map((chunk) => chunk.trim())
+      .join('');
+    expect(fusedFromTrimmedChunks).toMatch(
+      /show upover|merchandisingside|loyaltynext-best-offer/,
+    );
+
+    // Post-fix behaviour: passing chunks through unchanged reconstructs the
+    // original sentence exactly, byte-for-byte. This is what
+    // askIntelligence now does.
+    expect(chunks.join('')).toBe(sentence);
+  });
+
   // INT-VOICE.STRAT-2026-05-10 — Lock in the no-canned-refusal contract for
   // the Ask flow. The previous version short-circuited with retrieval-mechanics
   // framings ("We don't have indexed data...", "That topic isn't yet
@@ -78,6 +120,21 @@ describe('Ask Intelligence guardrails', () => {
       expect(indexCode).toMatch(/for\s+await\s*\(\s*const\s+delta\s+of\s+synthesizeStream\s*\(/);
       expect(indexCode).not.toMatch(
         /if\s*\(\s*sources\.length\s*===\s*0\s*\)\s*\{\s*const\s+msg\s*=\s*emptyStateMessage/,
+      );
+    });
+
+    // INT-VOICE.STRAT-2026-05-10b — streaming whitespace regression guard.
+    // sanitizeAskSynthesis(delta, …) inside the synthesizer-stream loop
+    // strips trailing whitespace from chunks via trim(), which the
+    // SentinelChat client then concatenates into fused words like
+    // "ApexRetail" / "demandsensing". The fix: pass deltas through
+    // unchanged. Guard against re-introduction of the per-chunk sanitize.
+    it('does not re-sanitize each streamed delta (preserves chunk-boundary whitespace)', () => {
+      expect(indexCode).not.toMatch(
+        /for\s+await\s*\(\s*const\s+delta\s+of\s+synthesizeStream[\s\S]*?sanitizeAskSynthesis\s*\(\s*delta/,
+      );
+      expect(indexCode).toMatch(
+        /for\s+await\s*\(\s*const\s+delta\s+of\s+synthesizeStream[\s\S]*?yield\s*\{\s*type:\s*['"]delta['"]\s*,\s*text:\s*delta\s*\}/,
       );
     });
   });
