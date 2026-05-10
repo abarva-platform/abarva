@@ -150,16 +150,23 @@ function VendorMockHero({
             : `Use the ${decisionVendor?.vendor ?? 'next'} renewal to force platform clarity`
         }
         metrics={[
-          ['Spend at risk', decisionVendor?.spendLabel ?? 'TBD'],
+          ['Spend at risk', decisionVendor?.spendLabel ?? 'Not sized'],
           [
             'Renews',
             decisionVendor?.renewsInMonths === null
               ? 'Consumption'
               : decisionVendor?.renewsInMonths
                 ? `${decisionVendor.renewsInMonths} months`
-                : 'TBD',
+                : 'Renewal not set',
           ],
-          ['Linked bets', decisionVendor ? (isAdobe ? '3' : linkedBetsForVendor(decisionVendor).split(',').length.toString()) : 'TBD'],
+          [
+            'Linked bets',
+            decisionVendor
+              ? isAdobe
+                ? '3'
+                : linkedBetsForVendor(decisionVendor).split(',').length.toString()
+              : 'Not mapped',
+          ],
           ['Risk', decisionVendor?.health === 'risk' ? 'High' : 'Watch'],
         ]}
       />
