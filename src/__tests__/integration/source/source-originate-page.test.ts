@@ -56,11 +56,25 @@ describe('SourceOriginatePage (SRC-FLW-INTAKE)', () => {
 
   it('renders agent guidance without generic chatbot copy', () => {
     expect(html).toContain('Agent guidance');
-    expect(html).toContain('Sourcing lead');
-    expect(html).toContain('Intake floor');
+    // Founder feedback 2026-05-10 reshaped Source intake to be chat-driven
+    // (the right pane fills from Sentinel's brief-progress artifacts) so
+    // the guidance labels were rewritten to reflect that posture.
+    expect(html).toContain('Chat-driven brief');
+    expect(html).toContain('Five fields');
     expect(html).toContain('Evidence caution');
-    // Substantive guidance copy from the canonical AGENT_GUIDANCE list.
-    expect(html).toContain('trigger, owner, boundary, value basis, and baseline owner');
+    // Substantive guidance copy: the brief is filled by chatting.
+    expect(html).toContain('the brief on the right fills as you talk');
+  });
+
+  it('augments AppShell with onArtifact wiring + sourceIntakeMode signal', () => {
+    // Without these, Sentinel never emits brief-progress artifacts on
+    // /source/new and the right pane never auto-fills (the bug behind
+    // the founder's 'why have a form when you have agent interface'
+    // feedback). Guard against silent regression.
+    expect(source).toContain('handleArtifact');
+    expect(source).toContain("artifact.type !== 'brief-progress'");
+    expect(source).toContain('sourceIntakeMode: true');
+    expect(source).toContain('onArtifact={handleArtifact}');
   });
 
   it('wires intake submission to persisted Source event creation', () => {

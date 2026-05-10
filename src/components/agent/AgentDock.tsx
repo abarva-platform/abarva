@@ -43,6 +43,7 @@ import {
 import { CANVAS } from '@/components/source/canvas/canvas-tokens';
 import { ResizableSplitter } from '@/components/source/canvas/ResizableSplitter';
 import { shapeAgentResponseForSurface } from '@/lib/agent/response-shape';
+import { useAtlasPageState } from '@/components/shell/AtlasPageStateProvider';
 
 // useLayoutEffect warns if executed during SSR. The dock only computes
 // real values in the browser, so fall back to the no-op effect on the
@@ -209,6 +210,18 @@ export interface AgentDockProps {
   /** Side-rail splitter overrides. */
   minLeftPx?: number;
   defaultLeftPercent?: number;
+  /**
+   * Optional override: when true, AgentDock shows a throbber turn at the
+   * end of the thread even if no agent message is in flight via
+   * AtlasPageState. Most callers can leave this undefined — AgentDock
+   * reads `useAtlasPageState().isStreaming || isAssemblingContextBundle`
+   * automatically when mounted inside the provider tree.
+   *
+   * Founder feedback 2026-05-10: 'while any agent is busy retrieving
+   * info... it will be nice to show a spinning icon... throbber or
+   * similar to show it is busy working.'
+   */
+  isAgentBusy?: boolean;
 }
 
 // ── Storage helpers ───────────────────────────────────────────────────────
@@ -283,7 +296,23 @@ export function AgentDock(props: AgentDockProps) {
     workspace,
     minLeftPx = 320,
     defaultLeftPercent = 38,
+    isAgentBusy: isAgentBusyOverride,
   } = props;
+
+  // Founder feedback 2026-05-10: 'while any agent is busy retrieving info,
+  // it will be nice to show a spinning icon / throbber or similar to show
+  // it is busy working.' AtlasPageStateProvider already exposes the
+  // streaming + context-bundle-assembling flags; we read them here so any
+  // surface mounted inside the provider gets the throbber for free, with
+  // an explicit prop override for callers that wire their own state.
+  const atlasPageState = useAtlasPageState();
+  const isAgentBusy =
+    typeof isAgentBusyOverride === 'boolean'
+      ? isAgentBusyOverride
+      : Boolean(
+          atlasPageState &&
+            (atlasPageState.isStreaming || atlasPageState.isAssemblingContextBundle),
+        );
 
   // Mode state (persisted)
   const [mode, setModeState] = useState<DockMode>(() => {
@@ -553,6 +582,29 @@ export function AgentDock(props: AgentDockProps) {
               </div>
             ))
           )}
+          {/* Throbber: shown whenever the agent is busy and there's no
+              streaming agent turn yet visible. We hide it once an agent
+              turn with body has appeared so we don't double-up the
+              indicator next to the streaming text. */}
+          {isAgentBusy &&
+          (thread.length === 0 ||
+            thread[thread.length - 1].role === 'user' ||
+            (thread[thread.length - 1].role === 'agent' &&
+              thread[thread.length - 1].body.trim().length === 0)) ? (
+            <div
+              data-testid="agent-dock-throbber"
+              aria-live="polite"
+              style={AGENT_TURN_STYLE}
+            >
+              <div style={AGENT_BYLINE_STYLE}>{agent.name}</div>
+              <div style={{ ...BUBBLE_STYLE, display: 'flex', alignItems: 'center', gap: 10 }}>
+                <AgentBusyThrobber />
+                <span style={{ fontStyle: 'italic', opacity: 0.75 }}>
+                  Working — retrieving tenant context and forming a view…
+                </span>
+              </div>
+            </div>
+          ) : null}
           <div ref={threadEndRef} />
         </div>
 
@@ -656,6 +708,7 @@ export function AgentDock(props: AgentDockProps) {
     draft,
     draggingOver,
     initialQuote,
+    isAgentBusy, // throbber visibility flips when this changes
     mode,
     onChangeDraft,
     onComposerKeyDown,
@@ -1443,3 +1496,61 @@ const COLLAPSED_CHIP_INITIALS_STYLE: CSSProperties = {
   fontWeight: 500,
   letterSpacing: '0.02em',
 };
+
+// ── Agent busy throbber ───────────────────────────────────────────────────
+//
+// Three pulsing dots animation rendered via CSS keyframes injected once.
+// Lives inline with the chat bubble so the user gets a clear "working"
+// signal while Sentinel/Nexus/Source retrieve tenant context, embed the
+// query, query Pinecone, run lexical fallback, etc. — the round-trip
+// can be 2-6 seconds and a static empty bubble feels frozen.
+
+const THROBBER_KEYFRAMES_ID = 'agent-dock-throbber-keyframes';
+const THROBBER_KEYFRAMES = `
+@keyframes agent-dock-throbber-bounce {
+  0%, 80%, 100% { transform: scale(0.6); opacity: 0.45; }
+  40% { transform: scale(1); opacity: 1; }
+}
+`;
+
+function ensureThrobberKeyframes(): void {
+  if (typeof document === 'undefined') return;
+  if (document.getElementById(THROBBER_KEYFRAMES_ID)) return;
+  const style = document.createElement('style');
+  style.id = THROBBER_KEYFRAMES_ID;
+  style.textContent = THROBBER_KEYFRAMES;
+  document.head.appendChild(style);
+}
+
+function AgentBusyThrobber() {
+  useEffect(() => {
+    ensureThrobberKeyframes();
+  }, []);
+  return (
+    <span
+      role="status"
+      aria-label="Agent is working"
+      style={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: 4,
+        flexShrink: 0,
+      }}
+    >
+      {[0, 1, 2].map((i) => (
+        <span
+          key={i}
+          style={{
+            display: 'inline-block',
+            width: 7,
+            height: 7,
+            borderRadius: 999,
+            background: CANVAS.INK,
+            animation: `agent-dock-throbber-bounce 1.1s infinite ease-in-out`,
+            animationDelay: `${i * 0.16}s`,
+          }}
+        />
+      ))}
+    </span>
+  );
+}

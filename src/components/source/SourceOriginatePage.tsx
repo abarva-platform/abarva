@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { CSSProperties, ReactNode } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { AppShell } from '@/components/shell/AppShell';
@@ -8,6 +8,7 @@ import { useAtlasPageState } from '@/components/shell/AtlasPageStateProvider';
 import { AgentDock, type AttachmentRef, type ChatMessage } from '@/components/agent/AgentDock';
 import { SourceOnboardingTour } from '@/components/source/onboarding/SourceOnboardingTour';
 import { SHELL } from '@/lib/shell/shell-tokens';
+import type { Artifact, BriefProgressArtifact } from '@/lib/agent/artifacts';
 
 type IntakeFieldId = 'trigger' | 'decisionOwner' | 'scopeBoundary' | 'valueTarget' | 'baselineOwner';
 type SubmitState =
@@ -185,8 +186,8 @@ function GuidanceCard({ agent, label, body }: { agent: string; label: string; bo
 }
 
 const AGENT_GUIDANCE = [
-  { agent: 'Sentinel', label: 'Sourcing lead', body: 'Use tenant context to frame the event, then ask only for trigger, owner, boundary, value basis, and baseline owner.' },
-  { agent: 'Steward', label: 'Intake floor', body: 'Do not stand up the event until trigger, owner, scope, value basis, and baseline owner are named.' },
+  { agent: 'Sentinel', label: 'Chat-driven brief', body: 'Tell Sentinel your sourcing situation in plain language; the brief on the right fills as you talk. Override any field manually if Sentinel got it wrong.' },
+  { agent: 'Sentinel', label: 'Five fields', body: 'Trigger, decision owner, scope boundary, value basis, baseline owner. Trigger is required to open the event; the rest can finish on the canvas.' },
   { agent: 'Sentinel', label: 'Evidence caution', body: 'Loaded or promised data is not usable evidence yet; name the baseline owner and confidence limits.' },
 ];
 
@@ -317,6 +318,43 @@ export function SourceOriginatePage({
     return draft && isIntakeDirty(draft.intake) ? draft.savedAt || 'unknown' : null;
   });
 
+  // Founder feedback 2026-05-10: 'create new source has an ugly form on the
+  // right - why have a form when you have agent interface on left to create?
+  // The experience should be similar to create a Move - right side getting
+  // filled up - also displaying any other relevant info as we start
+  // chatting.' This mirrors the StrategicMoveOriginateClient pattern: the
+  // agent emits brief-progress artifacts on each turn and we patch the
+  // intake state from them. The user can still override any field manually.
+  const [chatFilledFields, setChatFilledFields] = useState<Set<IntakeFieldId>>(() => new Set());
+
+  const handleArtifact = useCallback((artifact: Artifact) => {
+    if (artifact.type !== 'brief-progress') return;
+    const briefProgress = artifact as BriefProgressArtifact;
+    setIntake((current) => {
+      const next: IntakeState = { ...current };
+      const newlyFilled: IntakeFieldId[] = [];
+      for (const f of briefProgress.fields) {
+        const id = f.id as IntakeFieldId;
+        if (!(id in initialIntakeState)) continue;
+        const incoming = typeof f.value === 'string' ? f.value.trim() : '';
+        if (f.status === 'empty' || incoming.length === 0) continue;
+        if (!current[id] || current[id].trim().length === 0 || current[id] !== incoming) {
+          next[id] = incoming;
+          newlyFilled.push(id);
+        }
+      }
+      if (newlyFilled.length > 0) {
+        setChatFilledFields((prev) => {
+          const merged = new Set(prev);
+          for (const id of newlyFilled) merged.add(id);
+          return merged;
+        });
+        setSubmitState({ status: 'idle' });
+      }
+      return next;
+    });
+  }, []);
+
   // Persist intake + category on every change so a tab close doesn't
   // lose progress. Only writes when there's actually content to save —
   // we don't want to overwrite a real draft with an empty default.
@@ -416,7 +454,7 @@ export function SourceOriginatePage({
         <div>
           <div style={EYEBROW}>Step 0 · Sentinel</div>
           <h2 style={HEADING}>Sourcing event intake</h2>
-          <p style={SUBHEAD}>Trigger is required. Category and remaining fields can be refined via Sentinel after the event opens.</p>
+          <p style={SUBHEAD}>Tell Sentinel your sourcing situation in plain language — the brief on the right fills as you talk. Override any field manually if Sentinel got it wrong. Trigger is the only field required to open the event canvas.</p>
           {restoredAt ? (
             <div data-testid="source-originate-draft-restored" style={DRAFT_RESTORED_STYLE}>
               <span>
@@ -495,7 +533,9 @@ export function SourceOriginatePage({
                     borderColor: complete ? SHELL.MINT_LINE : (isRequired ? SHELL.PEACH_LINE : SHELL.CARD_LINE),
                     color: complete ? SHELL.MINT_TEXT : (isRequired ? SHELL.PEACH_TEXT : SHELL.INK_MUTED),
                   }}>
-                    {complete ? 'Captured' : (isRequired ? 'Required' : `${field.agent} needs`)}
+                    {complete
+                      ? (chatFilledFields.has(field.id) ? 'From chat' : 'Captured')
+                      : (isRequired ? 'Required' : `${field.agent} needs`)}
                   </span>
                 </div>
                 <textarea
@@ -558,6 +598,9 @@ export function SourceOriginatePage({
         </div>
       </section>
 
+      {/* Related context — populates from Sentinel responses as the chat unfolds. */}
+      <RelatedContextSection />
+
       {/* Guidance cards */}
       <section style={{ display: 'grid', gap: 6 }}>
         <div style={SECTION_LABEL}>Agent guidance</div>
@@ -570,10 +613,15 @@ export function SourceOriginatePage({
 
   return (
     <AppShell
+      // surface stays 'source' (closed SurfaceId enum). The brief-progress
+      // cadence directive opts in via surfaceContext.sourceIntakeMode so
+      // Sentinel emits brief-progress artifacts on this canvas the same
+      // way Nexus does on /strategic-moves/new. Without sourceIntakeMode
+      // the right pane never auto-fills.
       surface="source"
       surfaceContext={{ sourceIntakeMode: true, clientKey, clientName, context: 'New IT sourcing event intake — Sentinel guided' }}
       topBarProps={{ tenantName: clientName, showLocked: true, context: 'Source · New sourcing event' }}
-      onArtifact={() => undefined}
+      onArtifact={handleArtifact}
     >
       <main data-testid="source-originate-canvas" style={MAIN_STYLE}>
         <SourceOriginateDock
@@ -753,3 +801,206 @@ const FIELD_LABEL: CSSProperties = {
 const FIELD_PROMPT: CSSProperties = {
   marginTop: 2, fontFamily: SHELL.SANS, fontSize: 11, lineHeight: 1.35, color: SHELL.INK_SOFT,
 };
+
+// ── Related context ───────────────────────────────────────────────────────
+//
+// Surfaces tenant entities Sentinel mentions in its responses so the right
+// pane shows 'relevant info as we start chatting' (founder feedback
+// 2026-05-10). This is rendered inside the AppShell tree so
+// useAtlasPageState() returns the live conversation. Parsing is lightweight
+// and lexical — picks up vendor names, system names, person names that
+// appear in agent text. Capped at the most-recent 6 assistant turns so the
+// list stays current rather than accumulating across the whole session.
+
+interface RelatedContextItem {
+  kind: 'vendor' | 'system' | 'person' | 'amount';
+  label: string;
+  context: string;
+}
+
+const VENDOR_PATTERNS = [
+  /\b(FIS Profile|FIS Charlotte|FIS Global|FIS)\b/g,
+  /\b(NICE Actimize|NICE CXone|NICE)\b/g,
+  /\b(Adenza|AxiomSL|Calypso)\b/g,
+  /\b(Wolters Kluwer|OneSumX)\b/g,
+  /\b(Cohere Health|Cohere)\b/g,
+  /\b(Abridge)\b/g,
+  /\b(Paige AI)\b/g,
+  /\b(Arcadia)\b/g,
+  /\b(Snowflake|Databricks|Salesforce|ServiceNow|Workday|Oracle|Microsoft|Anthropic|OpenAI|Bloomberg|Refinitiv|Black Knight|Verafin|LexisNexis|CrowdStrike|Palo Alto|Splunk|Okta|CyberArk|Zscaler|MetricStream|DocuSign|Hyland|OpenText|Coupa|Tableau|Alteryx|Collibra|Volante|TSYS|ACI Worldwide|Fiserv|BNY Pershing|BlackRock|Envestnet|Murex|Equifax|TransUnion|Adobe|Q2|Bottomline|Fenergo)\b/g,
+];
+
+const SYSTEM_HINT_REGEX = /\b(?:Epic\s+(?:Hyperspace|Ambulatory|Cogito|Cosmos|Resolute)|Atlas|HealthEdge|FedNow Gateway|Aladdin Wealth|FIS Profile (?:Core|Loan)|TrustPortal|MX\.3|Calypso Treasury|MyChart|HealtheIntent|Innovaccer|Smartsheet|Zoom|Looker|JupyterHub)\b/g;
+
+const PERSON_PATTERNS: Array<{ name: string; role: string; tenant: string }> = [
+  // Meridian
+  { name: 'Dr. Anita Krishnamurthy', role: 'CDIO', tenant: 'Meridian' },
+  { name: 'David Park', role: 'CFO', tenant: 'Meridian' },
+  { name: "Sarah O'Brien", role: 'COO', tenant: 'Meridian' },
+  { name: 'Dr. Marcus Reid', role: 'CPE', tenant: 'Meridian' },
+  { name: 'Dr. Jennifer Wexler', role: 'CMIO', tenant: 'Meridian' },
+  { name: 'Patricia Okafor', role: 'VP RCM', tenant: 'Meridian' },
+  { name: 'Thomas Hartwell', role: 'Plan President', tenant: 'Meridian' },
+  { name: 'Jordan McKenzie', role: 'VP Data & Analytics', tenant: 'Meridian' },
+  { name: 'Wei Zhang', role: 'VP Infra & Cloud', tenant: 'Meridian' },
+  { name: 'Daniel Reyes', role: 'CISO', tenant: 'Meridian' },
+  // Apex
+  { name: 'Carlos Rivera', role: 'CIO', tenant: 'Apex' },
+  { name: 'Margaret Chen', role: 'CFO', tenant: 'Apex' },
+  { name: 'Lynne Stratham', role: 'CDO', tenant: 'Apex' },
+  { name: 'Sarah Whitfield', role: 'CISO', tenant: 'Apex' },
+  { name: 'Angela Foster', role: 'CMO Merch', tenant: 'Apex' },
+  { name: 'David Okonjo', role: 'COO', tenant: 'Apex' },
+  // First Capital
+  { name: 'Patricia Huang', role: 'CIO', tenant: 'First Capital' },
+  { name: 'James Park', role: 'CRO', tenant: 'First Capital' },
+  { name: 'Michael Torres', role: 'CFO', tenant: 'First Capital' },
+  { name: 'Tobias Aboagye', role: 'CISO', tenant: 'First Capital' },
+  { name: 'Sandra Liu', role: 'CDO', tenant: 'First Capital' },
+  { name: 'Nadia Rahman', role: 'CPO', tenant: 'First Capital' },
+  { name: 'Ferris Adekoya-Park', role: 'VP Model Risk Mgmt', tenant: 'First Capital' },
+];
+
+const AMOUNT_REGEX = /\$\d+(?:\.\d+)?\s*(?:M|B|K|million|billion|thousand)?/g;
+
+function pushItem(seen: Map<string, RelatedContextItem>, item: RelatedContextItem) {
+  const key = `${item.kind}:${item.label.toLowerCase()}`;
+  if (!seen.has(key)) seen.set(key, item);
+}
+
+function snippetAround(text: string, term: string, len = 80): string {
+  const idx = text.toLowerCase().indexOf(term.toLowerCase());
+  if (idx < 0) return '';
+  const start = Math.max(0, idx - 30);
+  const end = Math.min(text.length, idx + term.length + len);
+  return (start > 0 ? '…' : '') + text.slice(start, end).replace(/\s+/g, ' ').trim() + (end < text.length ? '…' : '');
+}
+
+function collectRelated(text: string, seen: Map<string, RelatedContextItem>) {
+  for (const re of VENDOR_PATTERNS) {
+    re.lastIndex = 0;
+    let m: RegExpExecArray | null;
+    while ((m = re.exec(text)) !== null) {
+      const label = m[1] ?? m[0];
+      pushItem(seen, { kind: 'vendor', label, context: snippetAround(text, label) });
+    }
+  }
+  SYSTEM_HINT_REGEX.lastIndex = 0;
+  let sm: RegExpExecArray | null;
+  while ((sm = SYSTEM_HINT_REGEX.exec(text)) !== null) {
+    pushItem(seen, { kind: 'system', label: sm[0], context: snippetAround(text, sm[0]) });
+  }
+  for (const person of PERSON_PATTERNS) {
+    if (text.includes(person.name)) {
+      pushItem(seen, { kind: 'person', label: person.name, context: `${person.role} · ${person.tenant}` });
+    }
+  }
+  AMOUNT_REGEX.lastIndex = 0;
+  let am: RegExpExecArray | null;
+  let amountCount = 0;
+  while ((am = AMOUNT_REGEX.exec(text)) !== null && amountCount < 3) {
+    pushItem(seen, { kind: 'amount', label: am[0], context: snippetAround(text, am[0]) });
+    amountCount += 1;
+  }
+}
+
+function RelatedContextSection() {
+  const pageState = useAtlasPageState();
+
+  const items = useMemo<RelatedContextItem[]>(() => {
+    if (!pageState) return [];
+    const seen = new Map<string, RelatedContextItem>();
+    const recentAssistantTurns = pageState.conversation
+      .filter((t) => t.role === 'agent' && t.text.trim().length > 0)
+      .slice(-6);
+    for (const turn of recentAssistantTurns) {
+      collectRelated(turn.text, seen);
+    }
+    return [...seen.values()].slice(0, 10);
+  }, [pageState]);
+
+  if (items.length === 0) {
+    return (
+      <section
+        aria-label="Related tenant context"
+        style={{ display: 'grid', gap: 6 }}
+      >
+        <div style={SECTION_LABEL}>Related context</div>
+        <div
+          style={{
+            border: `1px dashed ${SHELL.CARD_LINE}`,
+            borderRadius: 10,
+            padding: '14px 14px',
+            fontFamily: SHELL.SANS,
+            fontSize: 11.5,
+            color: SHELL.INK_MUTED,
+            lineHeight: 1.5,
+            background: SHELL.PAPER_SOFT,
+          }}
+        >
+          As Sentinel cites vendors, systems, owners, and dollar amounts during the conversation, they will surface here so you can see the tenant context grounding the brief.
+        </div>
+      </section>
+    );
+  }
+
+  return (
+    <section aria-label="Related tenant context" style={{ display: 'grid', gap: 6 }}>
+      <div style={SECTION_LABEL}>Related context · live</div>
+      <div style={{ display: 'grid', gap: 5 }}>
+        {items.map((item) => {
+          const kindStyle = relatedKindStyle(item.kind);
+          return (
+            <div
+              key={`${item.kind}:${item.label}`}
+              style={{
+                border: `1px solid ${SHELL.CARD_LINE}`,
+                background: SHELL.CARD_WHITE,
+                borderRadius: 8,
+                padding: '8px 11px',
+                display: 'grid',
+                gap: 3,
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span
+                  style={{
+                    ...STATUS_CHIP,
+                    background: kindStyle.bg,
+                    borderColor: kindStyle.line,
+                    color: kindStyle.color,
+                  }}
+                >
+                  {kindStyle.label}
+                </span>
+                <span style={{ fontFamily: SHELL.SANS, fontSize: 12.5, fontWeight: 700, color: SHELL.INK }}>
+                  {item.label}
+                </span>
+              </div>
+              {item.context ? (
+                <div style={{ fontFamily: SHELL.SANS, fontSize: 11, lineHeight: 1.45, color: SHELL.INK_MUTED }}>
+                  {item.context}
+                </div>
+              ) : null}
+            </div>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
+function relatedKindStyle(kind: RelatedContextItem['kind']) {
+  switch (kind) {
+    case 'vendor':
+      // No BLUE_TEXT token; INK_SOFT reads cleanly on BLUE_BG.
+      return { label: 'Vendor', bg: SHELL.BLUE_BG, line: SHELL.BLUE_LINE, color: SHELL.INK_SOFT };
+    case 'system':
+      return { label: 'System', bg: SHELL.MINT_BG, line: SHELL.MINT_LINE, color: SHELL.MINT_TEXT };
+    case 'person':
+      return { label: 'Person', bg: SHELL.PEACH_BG, line: SHELL.PEACH_LINE, color: SHELL.PEACH_TEXT };
+    case 'amount':
+    default:
+      return { label: 'Amount', bg: SHELL.PAPER_SOFT, line: SHELL.CARD_LINE, color: SHELL.INK_MUTED };
+  }
+}

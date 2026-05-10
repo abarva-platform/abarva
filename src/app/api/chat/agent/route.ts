@@ -818,8 +818,15 @@ export async function POST(request: Request) {
 
   // Cadence directive that nudges Steward to emit `brief-progress` on
   // every brief-refining turn. Empty string off origination surfaces.
+  // surfaceContext is forwarded so the Source originate canvas (which
+  // signals via sourceIntakeMode rather than a path surface) also opts in.
   const briefProgressCadenceDirective =
-    composeBriefProgressCadenceDirective(surface);
+    composeBriefProgressCadenceDirective(
+      surface,
+      typeof surfaceContext === 'object' && surfaceContext !== null
+        ? (surfaceContext as Record<string, unknown>)
+        : null,
+    );
 
   // OV2-4c · attachment context block. Resolve the chips on
   // surfaceContext.attachments to AttachmentRecords (so we read the
