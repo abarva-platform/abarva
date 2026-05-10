@@ -90,7 +90,10 @@ export function useClientContext() {
     router.replace(nextQuery ? `${targetPath}?${nextQuery}` : targetPath)
   }, [clientId, email, pathname, pinnedClientId, role, router, searchParams, urlClient])
 
-  const currentClient = ALL_CLIENTS.find(c => c.id === clientId) ?? ALL_CLIENTS[0]
+  const currentClient =
+    ALL_CLIENTS.find(c => c.id === clientId) ??
+    ALL_CLIENTS.find(c => c.id === DEFAULT_CLIENT_KEY) ??
+    ALL_CLIENTS[0]
 
   function switchClient(newId: string) {
     if (!allowedClients.find(c => c.id === newId)) return // silently ignore unauthorized switch

@@ -22,22 +22,19 @@ describe('Source primer · folded into unified /home/learn guide', () => {
     expect(slugs).toContain('source/sentinel');
     expect(slugs).toContain('source/glossary');
 
-    // Case study anchor.
-    expect(slugs).toContain('source/case-study');
+    // Apex Retail case study anchor.
+    expect(slugs).toContain('source/apex-retail-case-study');
 
-    // 11 stage chapters.
+    // Apex Retail stage chapters.
     for (const chapter of [
-      'strategy',
-      'scope',
-      'rfp',
-      'responses',
-      'evaluation',
-      'pricing',
-      'bafo',
-      'decision',
-      'selection',
-      'transition',
-      'value',
+      'apex-strategy',
+      'apex-scope',
+      'apex-rfp',
+      'apex-responses',
+      'apex-evaluation',
+      'apex-pricing',
+      'apex-bafo',
+      'apex-decision',
     ]) {
       expect(slugs).toContain(`source/${chapter}`);
     }
@@ -55,18 +52,18 @@ describe('Source primer · folded into unified /home/learn guide', () => {
 
   it('case-study chapters are flagged for visual indent under the case-study anchor', () => {
     const sourceGroup = LEARN_NAV.find((g) => g.group === 'Source')!;
-    const anchor = sourceGroup.items.find((i) => i.slug === 'source/case-study');
+    const anchor = sourceGroup.items.find((i) => i.slug === 'source/apex-retail-case-study');
     expect(anchor?.kind).toBe('caseStudy');
 
-    const strategy = sourceGroup.items.find((i) => i.slug === 'source/strategy');
+    const strategy = sourceGroup.items.find((i) => i.slug === 'source/apex-strategy');
     expect(strategy?.indent).toBe(true);
     expect(strategy?.stageBadge).toBe('01');
   });
 
   it('findLearnNavItem resolves Source slugs', () => {
     expect(findLearnNavItem('source/welcome')?.label).toMatch(/Welcome/i);
-    expect(findLearnNavItem('source/strategy')?.stageBadge).toBe('01');
-    expect(findLearnNavItem('source/value')?.stageBadge).toBe('11');
+    expect(findLearnNavItem('source/apex-strategy')?.stageBadge).toBe('01');
+    expect(findLearnNavItem('source/apex-decision')?.stageBadge).toBe('08');
   });
 
   it('LearnSideNav renders stageBadge alongside phaseBadge and supports indent', () => {
@@ -87,9 +84,8 @@ describe('Source primer · folded into unified /home/learn guide', () => {
     expect(route).toContain('SourceIntakeSection');
     expect(route).toContain('SourceSentinelSection');
     expect(route).toContain('SourceGlossarySection');
-    // Chapter slugs handled by fallback while case-study PR is in flight.
-    expect(route).toContain('SourceChapterFallback');
-    expect(route).toContain('case-study');
+    expect(route).toContain('ApexRetailCaseStudyIntro');
+    expect(route).toContain('apex-retail-case-study');
   });
 
   it('legacy /source/learn pages redirect into the unified guide', () => {

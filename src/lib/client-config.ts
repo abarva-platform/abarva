@@ -8,35 +8,35 @@ export interface ClientOption {
 
 export const ALL_CLIENTS: ClientOption[] = [
   {
-    id: 'meridian',
-    name: 'Meridian Health System',
-    shortName: 'Meridian Health',
-    color: '#14B8A6',
-    vertical: 'Healthcare',
-  },
-  {
-    id: 'arcturus',
-    name: 'First Capital Financial',
-    shortName: 'First Capital',
-    color: '#818CF8',
-    vertical: 'Financial Services',
-  },
-  {
     id: 'apexretail',
     name: 'Apex Retail Group',
     shortName: 'Apex Retail',
     color: '#F59E0B',
     vertical: 'Retail',
   },
+  {
+    id: 'meridian',
+    name: 'Heliara Health Alliance',
+    shortName: 'Heliara Health',
+    color: '#14B8A6',
+    vertical: 'Healthcare',
+  },
+  {
+    id: 'arcturus',
+    name: 'Brindlemark Financial',
+    shortName: 'Brindlemark',
+    color: '#818CF8',
+    vertical: 'Financial Services',
+  },
 ] as const;
 
 export type ClientKey = (typeof ALL_CLIENTS)[number]['id'];
 
-export const DEFAULT_CLIENT_KEY: ClientKey = 'meridian';
+export const DEFAULT_CLIENT_KEY: ClientKey = 'apexretail';
 
 export const CLIENT_KEY_TO_DB_NAME: Record<ClientKey, string[]> = {
-  meridian: ['Meridian Health', 'Meridian Health System'],
-  arcturus: ['Arcturus Financial', 'Arcturus Financial Group', 'First Capital Financial', 'First Capital'],
+  meridian: ['Heliara Health', 'Heliara Health Alliance', 'Meridian Health', 'Meridian Health System'],
+  arcturus: ['Brindlemark Financial', 'Brindlemark Financial Group', 'Brindlemark', 'Arcturus Financial', 'Arcturus Financial Group', 'First Capital Financial', 'First Capital'],
   apexretail: ['Apex Retail', 'Apex Retail Group'],
 };
 
@@ -67,7 +67,11 @@ export function isClientKey(value: string | null | undefined): value is ClientKe
 }
 
 export function getClientOption(id: string | null | undefined): ClientOption {
-  return ALL_CLIENTS.find((client) => client.id === id) ?? ALL_CLIENTS[0];
+  return (
+    ALL_CLIENTS.find((client) => client.id === id) ??
+    ALL_CLIENTS.find((client) => client.id === DEFAULT_CLIENT_KEY) ??
+    ALL_CLIENTS[0]
+  );
 }
 
 export function canonicalClientDisplayName(args: {
@@ -82,10 +86,15 @@ export function canonicalClientDisplayName(args: {
     key === 'arcturus' ||
     key === 'firstcapital' ||
     key === 'first-capital' ||
+    normalizedName === 'brindlemark financial' ||
+    normalizedName === 'brindlemark financial group' ||
+    normalizedName === 'brindlemark' ||
     normalizedName === 'arcturus financial group' ||
-    normalizedName === 'arcturus financial'
+    normalizedName === 'arcturus financial' ||
+    normalizedName === 'first capital financial' ||
+    normalizedName === 'first capital'
   ) {
-    return 'First Capital Financial';
+    return 'Brindlemark Financial';
   }
 
   if (name) return name;
