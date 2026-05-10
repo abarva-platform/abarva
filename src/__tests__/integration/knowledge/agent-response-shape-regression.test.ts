@@ -117,7 +117,8 @@ describe('all-agent response-shape regression', () => {
 
     expect(doctrine).toContain(`Surface family: ${expectedSurface}.`);
     expect(doctrine).toContain('active tenant/current-state context');
-    expect(doctrine).toContain('Default answer shape: direct answer first');
+    expect(doctrine).toContain('Default reading model');
+    expect(doctrine).toContain('Always lead with a 1-2 sentence answer');
     expect(doctrine).toContain('offer 2-4 options');
     expect(doctrine).toContain('Never invent current-state facts, KPI values, financials, org structure');
     expect(doctrine).toContain('rank opportunities from available tenant KPIs');

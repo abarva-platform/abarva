@@ -9,6 +9,7 @@ interface PromptCase {
   prompt: string;
   rawAnswer: string;
   mustInclude: ReadonlyArray<string>;
+  mustExclude?: ReadonlyArray<string>;
 }
 
 const PROMPT_CASES: PromptCase[] = [
@@ -41,6 +42,48 @@ const PROMPT_CASES: PromptCase[] = [
     rawAnswer:
       '**Use merchandising decisioning patterns before synthesis.** The current evidence points to demand sensing, inventory optimization, markdown governance, human override controls, and SKU-store data quality as the strongest pattern families. I recommend requiring KPI baselines, data lineage, guardrail ownership, and failure-mode mitigation before approval.',
     mustInclude: ['- Evidence:', '- Next:'],
+  },
+  {
+    id: 'atlas-option-comparison-table',
+    surface: '/tower',
+    personaLens: 'Retail CIPO: chooses between competing AI investments with explicit tradeoffs',
+    prompt:
+      'Compare demand forecasting, markdown optimization, and assortment optimization as the next Apex merchandising AI bet.',
+    rawAnswer:
+      'Markdown optimization is the better second Move, but compare the options carefully. Demand Forecasting — Strength: directly attacks MAPE and stockouts. Weakness: already active in P0. Fit: deepen current program. Markdown Optimization — Strength: targets sell-through and margin leakage. Weakness: needs SKU margin data. Fit: originate next. Assortment Optimization — Strength: connects buying to customer relevance. Weakness: needs assortment review data. Fit: later wave.',
+    mustInclude: ['| Option | Strength | Weakness | Fit |', '| Markdown Optimization |'],
+  },
+  {
+    id: 'sentinel-stat-and-stack',
+    surface: '/intelligence',
+    personaLens: 'Retail CIPO: wants the data signal before approving a recommendation',
+    prompt:
+      'What does the Apex merchandising data say?',
+    rawAnswer:
+      'The data says merchandising value is concentrated in forecast quality. MAPE is 28.4% against a 20% target. Inventory turns fell from 4.2x to 3.6x. Markdown rate is 12.8% against an 11% target. Source basis: Apex tenant KPI snapshot and merchandising system inventory.',
+    mustInclude: ['· Inventory turns', '· Markdown rate', 'Source:'],
+  },
+  {
+    id: 'source-sequential-steps',
+    surface: '/source',
+    personaLens: 'Retail CIPO: asks for the implementation path, not a generic recommendation',
+    prompt:
+      'Walk me through how we should structure a merchandising AI pilot from sourcing to mobilization.',
+    rawAnswer:
+      'The path is a three-step operating-model shift. 1. Baseline. Confirm KPI owner, current value, target, and source system. 2. Design. Map planner decisions, model suggestions, and human override points. 3. Mobilize. Run one category pilot and review exception handling weekly. The outcome is a governed merchandising workflow, not a science project.',
+    mustInclude: ['1. Baseline.', '2. Design.', '3. Mobilize.'],
+    mustExclude: ['- Evidence:'],
+  },
+  {
+    id: 'nexus-brief-narrative',
+    surface: '/strategic-moves/new',
+    personaLens: 'Retail CIPO: asks for background before deciding whether to originate a Move',
+    prompt:
+      'What happened in merchandising that makes this a strategic move now?',
+    rawAnswer:
+      'Apex got here through several small merchandising decisions compounding over two seasons. Forecast overrides became normal because planners did not trust category-level signals.\n\nThat made allocation look like the problem, even though the root issue was weak demand sensing. The next conversation should separate model quality from process adherence.',
+    mustInclude: ['\n\n'],
+    mustExclude: ['- Evidence:', '| Option |'],
   },
   {
     id: 'source-product-minded-bafo',
@@ -77,6 +120,9 @@ function validateCase(testCase: PromptCase) {
   if (!shaped.includes('\n')) failures.push('single-block wall of text');
   for (const required of testCase.mustInclude) {
     if (!shaped.includes(required)) failures.push(`missing ${required}`);
+  }
+  for (const excluded of testCase.mustExclude ?? []) {
+    if (shaped.includes(excluded)) failures.push(`unexpected ${excluded}`);
   }
 
   return {
