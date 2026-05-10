@@ -164,16 +164,31 @@ export function composeOverlapBlock(matches: readonly BriefOverlapMatch[]): stri
  */
 export function composeBriefProgressCadenceDirective(
   surface: string | null | undefined,
+  surfaceContext?: Record<string, unknown> | null,
 ): string {
+  // Founder feedback 2026-05-10: 'Create new source has an ugly form on the
+  // right — why have a form when you have agent interface on left to
+  // create? The experience should be similar to create a Move.' The Source
+  // originate canvas now drives a chat-filled brief on the right just like
+  // /strategic-moves/new. Sentinel signals it's on that canvas via
+  // surfaceContext.sourceIntakeMode rather than a path-style surface
+  // because SurfaceId is a closed enum and adding 'source/new' would
+  // require a wide-blast type change.
+  const isSourceIntake =
+    surface === 'source' &&
+    !!surfaceContext &&
+    surfaceContext.sourceIntakeMode === true;
+
   if (
     surface !== '/programs' &&
     surface !== '/programs/new' &&
     surface !== '/demo/programs/new' &&
-    surface !== '/strategic-moves/new'
+    surface !== '/strategic-moves/new' &&
+    !isSourceIntake
   ) {
     return '';
   }
-  return "- After every turn that captures or refines a new-program brief field, emit a `brief-progress` artifact summarizing all 7 field states. The user's right pane only updates when you emit it.";
+  return "- After every turn that captures or refines a new-program brief field, emit a `brief-progress` artifact summarizing the brief's field states. The user's right pane only updates when you emit it.";
 }
 
 /**

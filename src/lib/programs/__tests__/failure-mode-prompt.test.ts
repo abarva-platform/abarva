@@ -308,6 +308,27 @@ describe('composeBriefProgressCadenceDirective', () => {
     expect(composeBriefProgressCadenceDirective(null)).toBe('');
     expect(composeBriefProgressCadenceDirective(undefined)).toBe('');
   });
+
+  it('opts into brief-progress on the Source intake canvas via sourceIntakeMode', () => {
+    // Founder feedback 2026-05-10 reshaped Source originate to mirror
+    // /strategic-moves/new — chat-driven brief on the right. SurfaceId is
+    // a closed enum so the canvas signals via surfaceContext rather than
+    // a path surface. Guard against silent regression.
+    expect(
+      composeBriefProgressCadenceDirective('source', { sourceIntakeMode: true }),
+    ).toContain('brief-progress');
+  });
+
+  it('does NOT emit brief-progress on the Source portfolio surface (no sourceIntakeMode flag)', () => {
+    // Without the intake-mode flag, /source (portfolio) and
+    // /source/events/<id> (canvas) are out of scope — only the originate
+    // canvas opts in.
+    expect(composeBriefProgressCadenceDirective('source')).toBe('');
+    expect(composeBriefProgressCadenceDirective('source', {})).toBe('');
+    expect(
+      composeBriefProgressCadenceDirective('source', { sourceIntakeMode: false }),
+    ).toBe('');
+  });
 });
 
 // ── OV2-4c · attachment context block ───────────────────────────────────────
