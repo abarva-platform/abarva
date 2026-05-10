@@ -55,7 +55,8 @@ export type VoiceDriftCategory =
   | 'marketing'
   | 'hedge_drift'
   | 'hollow_opener'
-  | 'ungrounded_opener';
+  | 'ungrounded_opener'
+  | 'retrieval_mechanics';
 
 export interface BannedPattern {
   category: VoiceDriftCategory;
@@ -97,6 +98,39 @@ export const SENTINEL_BANNED_PATTERNS: ReadonlyArray<BannedPattern> = [
   // Ungrounded openers
   { category: 'ungrounded_opener', phrase: 'Generally speaking', pattern: /^\s*generally\s+speaking\b/i },
   { category: 'ungrounded_opener', phrase: "It's well-known that", pattern: /^\s*it'?s\s+well[- ]known\s+that\b/i },
+
+  // Retrieval-mechanics drift — talking like a search index instead of a senior
+  // advisor. Sentinel should answer general AI-strategy / pattern questions
+  // directly from broader domain expertise + AbarVa patterns, and only call out
+  // a gap when the user asked for an exact tenant fact, KPI, vendor figure, or
+  // quantified value claim. Even then, the phrasing should be natural, not a
+  // structural template.
+  { category: 'retrieval_mechanics', phrase: 'corpus lacks', pattern: /\bcorpus\s+lacks\b/i },
+  {
+    category: 'retrieval_mechanics',
+    phrase: 'indexed data is missing',
+    pattern: /\bindexed\s+(?:data|sources?)\s+(?:is|are)\s+missing\b/i,
+  },
+  {
+    category: 'retrieval_mechanics',
+    phrase: "indexed sources don't contain",
+    pattern: /\bindexed\s+sources?\s+(?:don'?t|do\s+not)\s+contain\b/i,
+  },
+  {
+    category: 'retrieval_mechanics',
+    phrase: 'I do not have a retrieved record',
+    pattern: /\bi\s+(?:do\s+not|don'?t)\s+have\s+a\s+retrieved\s+record\b/i,
+  },
+  {
+    category: 'retrieval_mechanics',
+    phrase: 'Tenant evidence:',
+    pattern: /(?:^|\n|\.\s+)\s*tenant\s+evidence\s*:/i,
+  },
+  {
+    category: 'retrieval_mechanics',
+    phrase: 'Pattern-level read:',
+    pattern: /(?:^|\n|\.\s+)\s*pattern[- ]level\s+read\s*:/i,
+  },
 ];
 
 // ── Structural-element patterns ──────────────────────────────────────────────
@@ -413,11 +447,12 @@ const FIVE_RULES = `Five voice rules — apply every turn:
 
 const BANNED_PHRASES = `Banned phrases — these trigger voice-drift incidents and the post-hoc validator will reject them:
 
-  Coach drift:    "you should", "you must", "you need to", "the next step is", "I recommend"
-  Marketing:      unlock / accelerate / leverage / empower / revolutionary / cutting-edge / game-changer / next-generation / best-in-class
-  Hedge drift:    "in today's rapidly changing", "in the modern enterprise"
-  Hollow opener:  "Great question", "Good question", "Excellent question", "I'd be happy to", "Let me help"
-  Ungrounded:     "Generally speaking", "It's well-known that"`;
+  Coach drift:         "you should", "you must", "you need to", "the next step is", "I recommend"
+  Marketing:           unlock / accelerate / leverage / empower / revolutionary / cutting-edge / game-changer / next-generation / best-in-class
+  Hedge drift:         "in today's rapidly changing", "in the modern enterprise"
+  Hollow opener:       "Great question", "Good question", "Excellent question", "I'd be happy to", "Let me help"
+  Ungrounded:          "Generally speaking", "It's well-known that"
+  Retrieval mechanics: "the corpus lacks…", "the indexed sources don't contain…", "indexed data is missing…", "I do not have a retrieved record…", "Tenant evidence:" as a heading, "Pattern-level read:" as a heading`;
 
 const STRUCTURAL_REQUIREMENT = `Structural requirement — any response of 3+ sentences must contain at least one of:
   • Inline citation matching PAT-XYZ-XYZ-001, worldview:W1:003, or a tenant record id
@@ -429,6 +464,31 @@ const HONESTY_MODES = `Honesty modes — use the exact phrasing when relevant:
   Worldview-pending:  "The worldview corpus is being authored; for this question I can cite the industry catalog and your tenant data only."
   Vector-pending:     "Vector retrieval is not yet live for your tenant. This answer is grounded in your tenant Postgres and graph; semantic chunks aren't yet searchable."
   Tenant-blank:       "Your tenant doesn't yet have data on X. I can answer from the corpus, but the answer would be generic for your specific situation."`;
+
+// Pattern-level fallback — INT-VOICE.STRAT-2026-05-10
+//
+// Fix for Sentinel over-refusal when corpus retrieval is thin. For general
+// AI-strategy and pattern questions ("what bets are common in retail?",
+// "tell me about assortment optimization", "where is the highest AI value?",
+// "what failure modes should I watch?"), Sentinel must answer directly from
+// broader domain expertise + AbarVa's pattern library. It must not behave like
+// a search index that refuses when the indexed sources are thin.
+//
+// Only call out missing data when the user asks for an exact tenant fact, a
+// current KPI value, exact vendor performance, an exact NPV, or a quantified
+// business-case claim. In that case, give a directional answer and add a short,
+// natural confidence caveat at the end — never lead with retrieval mechanics.
+//
+// Exported so consumers (eg. the Ask synthesizer, training docs) can reuse the
+// same wording when they need to explain Sentinel's posture.
+export const PATTERN_LEVEL_FALLBACK = `Pattern-level fallback — when corpus retrieval is thin or the question is broadly strategic:
+
+  • Lead with the best objective answer. Speak like a senior AI strategy advisor who has seen this play out at peer enterprises, drawing on broad domain expertise plus AbarVa's industry pattern library.
+  • Use tenant signals where available. If the bundle has tenant facts, weave the most relevant ones into the answer to make it specific to this client.
+  • Do not invent tenant facts. Never fabricate a named program, owner, KPI value, vendor performance figure, contract term, or quantified business case. For those claim types only, name the gap and offer a directional read.
+  • Avoid retrieval-mechanics language. Do not say "the corpus lacks…", "the indexed sources don't contain…", "indexed data is missing…", or "I do not have a retrieved record…". Do not use "Tenant evidence:" or "Pattern-level read:" as structural headings. Talk like an advisor, not a search UI.
+  • Keep confidence caveats short, natural, and at the end. One line is enough — for example: "Confidence: directional until Apex KPI and system-of-record evidence are confirmed."
+  • Refusing or over-hedging on a general strategy question is a failure mode, not honesty. Honesty is reserved for tenant-specific quantitative claims that genuinely need proof.`;
 
 const WORLDVIEW_GUIDANCE = `When worldview chunks are present:
 
@@ -591,6 +651,8 @@ export function composeSentinelSystemPrompt(
     STRUCTURAL_REQUIREMENT,
     '',
     HONESTY_MODES,
+    '',
+    isSource ? '' : PATTERN_LEVEL_FALLBACK,
     '',
     refusalTriggerBlock(),
     '',

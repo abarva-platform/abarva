@@ -16,6 +16,7 @@ import {
   detectRefusalNeeded,
   getSentinelDoctrineVersionString,
   isSentinelVoiceDoctrineEnabled,
+  PATTERN_LEVEL_FALLBACK,
   REFUSAL_TRIGGERS,
   SENTINEL_BANNED_PATTERNS,
   SENTINEL_DOCTRINE_VERSION,
@@ -31,6 +32,7 @@ describe('SENTINEL_BANNED_PATTERNS — completeness', () => {
     expect(categories.has('hedge_drift')).toBe(true);
     expect(categories.has('hollow_opener')).toBe(true);
     expect(categories.has('ungrounded_opener')).toBe(true);
+    expect(categories.has('retrieval_mechanics')).toBe(true);
   });
 
   it('flags coach drift — "you should"', () => {
@@ -113,6 +115,107 @@ describe('SENTINEL_BANNED_PATTERNS — completeness', () => {
     );
     expect(r.pass).toBe(false);
     expect(r.violations.some((v) => v.category === 'ungrounded_opener')).toBe(true);
+  });
+
+  // INT-VOICE.STRAT-2026-05-10 · Sentinel must answer general AI-strategy /
+  // pattern questions like a senior advisor. Retrieval-mechanics framings
+  // ("the corpus lacks…", "Tenant evidence:" headings, etc.) are over-refusal
+  // surface signatures and must trip the validator.
+  it('flags retrieval-mechanics drift — "the corpus lacks"', () => {
+    const r = checkSentinelVoice(
+      "The corpus lacks data on multi-banner specialty retailers at this exact size. PAT-AI-RET-001.",
+    );
+    expect(r.pass).toBe(false);
+    expect(r.violations.some((v) => v.category === 'retrieval_mechanics')).toBe(true);
+  });
+
+  it('flags retrieval-mechanics drift — "indexed sources don\'t contain"', () => {
+    const r = checkSentinelVoice(
+      "The indexed sources don't contain a record on assortment optimization at Apex's scale. PAT-RET-AO-001.",
+    );
+    expect(r.pass).toBe(false);
+    expect(r.violations.some((v) => v.category === 'retrieval_mechanics')).toBe(true);
+  });
+
+  it('flags retrieval-mechanics drift — "I do not have a retrieved record"', () => {
+    const r = checkSentinelVoice(
+      "I do not have a retrieved record covering AI bets at peer specialty retailers. PAT-AI-RET-001 sketches the shape.",
+    );
+    expect(r.pass).toBe(false);
+    expect(r.violations.some((v) => v.category === 'retrieval_mechanics')).toBe(true);
+  });
+
+  it('flags retrieval-mechanics drift — "Tenant evidence:" structural heading', () => {
+    const r = checkSentinelVoice(
+      "Tenant evidence: none retrieved. Pattern PAT-AI-RET-001 frames the bet space.",
+    );
+    expect(r.pass).toBe(false);
+    expect(r.violations.some((v) => v.category === 'retrieval_mechanics')).toBe(true);
+  });
+
+  it('flags retrieval-mechanics drift — "Pattern-level read:" structural heading', () => {
+    const r = checkSentinelVoice(
+      "Pattern-level read: assortment optimization sits in the merchandising-ops pattern family. PAT-RET-AO-001.",
+    );
+    expect(r.pass).toBe(false);
+    expect(r.violations.some((v) => v.category === 'retrieval_mechanics')).toBe(true);
+  });
+
+  it('does not flag a senior-advisor answer that uses the corpus naturally', () => {
+    const r = checkSentinelVoice(
+      'Three AI bets are common at multi-banner specialty retailers your size: demand forecasting, assortment optimization, and store-labor planning. Pattern PAT-RET-AI-001 captures the shape; the merchandising-ops co-sponsorship binding shows up across most successful programs. Confidence: directional until Apex KPI evidence is loaded.',
+    );
+    expect(r.pass).toBe(true);
+    expect(r.violations).toEqual([]);
+  });
+});
+
+describe('PATTERN_LEVEL_FALLBACK doctrine — INT-VOICE.STRAT-2026-05-10', () => {
+  it('exports the senior-advisor posture for thin-retrieval / general questions', () => {
+    expect(PATTERN_LEVEL_FALLBACK).toMatch(/senior\s+AI\s+strategy\s+advisor/i);
+    expect(PATTERN_LEVEL_FALLBACK).toMatch(/lead\s+with\s+the\s+best\s+objective\s+answer/i);
+  });
+
+  it('tells Sentinel to use tenant signals where available without inventing tenant facts', () => {
+    expect(PATTERN_LEVEL_FALLBACK).toMatch(/use\s+tenant\s+signals\s+where\s+available/i);
+    expect(PATTERN_LEVEL_FALLBACK).toMatch(/do\s+not\s+invent\s+tenant\s+facts/i);
+  });
+
+  it('forbids retrieval-mechanics language and structural headings', () => {
+    expect(PATTERN_LEVEL_FALLBACK).toMatch(/avoid\s+retrieval[- ]mechanics\s+language/i);
+    expect(PATTERN_LEVEL_FALLBACK).toContain('the corpus lacks');
+    expect(PATTERN_LEVEL_FALLBACK).toContain('indexed data is missing');
+    expect(PATTERN_LEVEL_FALLBACK).toContain('I do not have a retrieved record');
+    expect(PATTERN_LEVEL_FALLBACK).toContain('Tenant evidence:');
+    expect(PATTERN_LEVEL_FALLBACK).toContain('Pattern-level read:');
+  });
+
+  it('keeps confidence caveats short, natural, and at the end', () => {
+    expect(PATTERN_LEVEL_FALLBACK).toMatch(/confidence\s+caveats\s+short,\s+natural,?\s+and\s+at\s+the\s+end/i);
+    expect(PATTERN_LEVEL_FALLBACK).toMatch(/Confidence:\s+directional/i);
+  });
+
+  it('is included in the Intelligence-surface system prompt', () => {
+    const prompt = composeSentinelSystemPrompt({
+      mode: 'corpus',
+      tenantKey: 'apex-retail',
+      surface: '/intelligence',
+      vectorIndexPending: false,
+      worldviewPending: false,
+    });
+    expect(prompt).toContain('Pattern-level fallback');
+    expect(prompt).toMatch(/lead\s+with\s+the\s+best\s+objective\s+answer/i);
+  });
+
+  it('is omitted on the Source surface, which keeps its prescriptive gate posture', () => {
+    const prompt = composeSentinelSystemPrompt({
+      mode: 'corpus',
+      tenantKey: 'apex-retail',
+      surface: '/source',
+      vectorIndexPending: false,
+      worldviewPending: false,
+    });
+    expect(prompt).not.toContain('Pattern-level fallback');
   });
 });
 
