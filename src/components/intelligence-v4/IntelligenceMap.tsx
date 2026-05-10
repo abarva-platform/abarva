@@ -146,12 +146,11 @@ function displayValue(node: MapNode): string {
 
 export function IntelligenceMap({ data, activeClient, surfaceContext }: Props) {
   const [selectedId, setSelectedId] = useState<string>(data.defaultSelectedId);
-  // Kanban is the default · the scatter chart has structural label
-  // overlap when many bubbles cluster in the same value/lifecycle
-  // region. Landscape stays available via the view toggle for the
-  // visual-scan use case.
-  const [view, setView] = useState<MapView>('kanban');
+  const [view, setView] = useState<MapView>('landscape');
   const [engagement, setEngagement] = useState<EngagementFilter>('all');
+  const isRetailMap =
+    data.industry.toLowerCase().includes('retail') ||
+    data.tenantName.toLowerCase().includes('apex');
 
   const allNodes = useMemo(
     () => data.nodes.map((node, index) => normalizeMapNode(node, index)),
@@ -207,87 +206,9 @@ export function IntelligenceMap({ data, activeClient, surfaceContext }: Props) {
 
   return (
     <div style={{ background: C.surface, fontFamily: F_BODY, color: C.body, minHeight: '100%' }}>
-      {/* What changed · top 3 only · compact treatment · pinned above the grid */}
-      <div
-        style={{
-          background: C.ink,
-          color: 'rgba(255,255,255,0.88)',
-          padding: '10px 64px',
-          fontFamily: F_BODY,
-          fontSize: 12,
-          display: 'grid',
-          gridTemplateColumns: 'auto 1fr auto',
-          gap: 24,
-          alignItems: 'center',
-        }}
-      >
-        <span
-          style={{
-            fontFamily: F_MONO,
-            fontSize: 9.5,
-            color: 'rgba(255,255,255,0.5)',
-            fontWeight: 700,
-            letterSpacing: '0.18em',
-            textTransform: 'uppercase',
-          }}
-        >
-          ⚡ Last 7 days
-        </span>
-        <ul
-          style={{
-            display: 'flex',
-            gap: 28,
-            margin: 0,
-            padding: 0,
-            listStyle: 'none',
-            overflow: 'hidden',
-          }}
-        >
-          {data.whatChanged.slice(0, 3).map((c, index) => (
-            <li
-              key={`${c.entityId}-${c.entityType}-${index}`}
-              style={{
-                display: 'inline-flex',
-                gap: 8,
-                alignItems: 'baseline',
-                whiteSpace: 'nowrap',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-              }}
-            >
-              <span
-                style={{
-                  fontFamily: F_MONO,
-                  fontSize: 10,
-                  color: '#7BA8FF',
-                  fontWeight: 700,
-                  letterSpacing: '0.04em',
-                }}
-              >
-                {c.entityId}
-              </span>
-              <span style={{ color: '#fff' }}>{c.summary}</span>
-            </li>
-          ))}
-        </ul>
-        {data.whatChanged.length > 3 && (
-          <span
-            style={{
-              fontFamily: F_MONO,
-              fontSize: 9.5,
-              color: 'rgba(255,255,255,0.5)',
-              letterSpacing: '0.1em',
-              textTransform: 'uppercase',
-            }}
-          >
-            +{data.whatChanged.length - 3} more →
-          </span>
-        )}
-      </div>
-
       {/* Body · the Sentinel chat dock owns the splitter; the workspace
           (right pane) hosts the masthead, toolbar, view, and detail. */}
-      <div style={{ height: 'calc(100vh - 112px - 36px)', minHeight: 0 }}>
+      <div style={{ height: 'calc(100vh - 112px)', minHeight: 0 }}>
         <SentinelChat
           scopeLabel={`${data.tenantName} · The Map`}
           opener={mapSentinelOpener(data, selected)}
@@ -295,7 +216,16 @@ export function IntelligenceMap({ data, activeClient, surfaceContext }: Props) {
           surfaceContext={sentinelSurfaceContext}
           workspace={
         <main style={{ padding: '24px 36px 80px', display: 'grid', gap: 18, gridTemplateColumns: '1fr', minWidth: 0, overflowY: 'auto' }}>
-          {/* Compact masthead — eyebrow + 1-line title + pills inline */}
+          <section
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 320px), 1fr))',
+              gap: 34,
+              alignItems: 'start',
+              borderBottom: `1px solid ${C.borderLight}`,
+              paddingBottom: 18,
+            }}
+          >
           <div>
             <div
               style={{
@@ -313,17 +243,22 @@ export function IntelligenceMap({ data, activeClient, surfaceContext }: Props) {
             <h1
               style={{
                 fontFamily: F_DISPLAY,
-                fontSize: 26,
-                fontWeight: 400,
+                fontSize: 'clamp(28px, 3.1vw, 42px)',
+                fontWeight: 520,
                 color: C.ink,
-                letterSpacing: '-0.014em',
-                lineHeight: 1.15,
-                margin: '0 0 10px 0',
-                maxWidth: '52ch',
+                letterSpacing: '-0.012em',
+                lineHeight: 1.04,
+                margin: '7px 0 12px',
+                maxWidth: 860,
               }}
             >
-              The {data.industry === 'healthcare' ? 'healthcare' : data.industry} AI landscape — where {data.tenantName} sits in it.
+              The portfolio is not scattered. It has one readiness constraint running through the best bets.
             </h1>
+            <p style={{ fontSize: 16, lineHeight: 1.45, maxWidth: 880, color: C.body, margin: 0 }}>
+              {isRetailMap
+                ? `The map turns ${data.tenantName}'s ${data.totalUseCases} AI use cases into a decision landscape: what is in flight, what is blocked, and what depends on the same customer, item, and workforce data foundations.`
+                : `The map turns ${data.tenantName}'s ${data.totalUseCases} AI use cases into a decision landscape: what is in flight, what is blocked, and what depends on the same data, workflow, and adoption foundations.`}
+            </p>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
               <Pill bg={`${data.tenantBrandColor}14`} fg={data.tenantBrandColor} border={`${data.tenantBrandColor}33`}>
                 {data.industry === 'healthcare' ? 'Healthcare IDN' : data.industry}
@@ -336,10 +271,29 @@ export function IntelligenceMap({ data, activeClient, surfaceContext }: Props) {
               <Pill>{data.candidateCount} candidate</Pill>
             </div>
           </div>
+          <DecisionCard
+            title={isRetailMap ? 'Resolve the CDP ownership split' : 'Sequence the foundation before scaling'}
+            metrics={
+              isRetailMap
+                ? [
+                    ['Unblocks', '4 bets'],
+                    ['Risk', 'High'],
+                    ['Owners', 'CMO + CIO'],
+                    ['Pattern', 'F200'],
+                  ]
+                : [
+                    ['Unblocks', `${Math.max(3, data.inFlightCount)} bets`],
+                    ['Risk', data.atRiskCount > 0 ? 'High' : 'Medium'],
+                    ['Owners', 'CFO + CIO'],
+                    ['Pattern', selected?.useCase.successPatterns[0]?.patternId ?? 'Portfolio'],
+                  ]
+            }
+          />
+          </section>
         {/* Toolbar · filter chips left · view toggle right */}
         <div
           style={{
-            display: 'flex',
+            display: 'none',
             justifyContent: 'space-between',
             alignItems: 'center',
             gap: 12,
@@ -697,6 +651,61 @@ function readStringArray(value: unknown): string[] {
 function truncate(s: string, n: number): string {
   if (s.length <= n) return s;
   return s.slice(0, n - 1) + '…';
+}
+
+function DecisionCard({
+  title,
+  metrics,
+}: {
+  title: string;
+  metrics: ReadonlyArray<readonly [string, string]>;
+}) {
+  return (
+    <aside
+      aria-label="Decision now"
+      style={{
+        borderLeft: `3px solid ${C.navy}`,
+        padding: '12px 0 12px 18px',
+        alignSelf: 'center',
+      }}
+    >
+      <BlockMini>Decision now</BlockMini>
+      <div
+        style={{
+          fontFamily: F_DISPLAY,
+          fontSize: 21,
+          fontWeight: 520,
+          lineHeight: 1.1,
+          color: C.ink,
+          marginBottom: 12,
+        }}
+      >
+        {title}
+      </div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '10px 18px' }}>
+        {metrics.map(([label, value]) => (
+          <div key={label}>
+            <div
+              style={{
+                fontFamily: F_MONO,
+                fontSize: 9.5,
+                fontWeight: 700,
+                letterSpacing: '0.16em',
+                textTransform: 'uppercase',
+                color: C.faint,
+                marginBottom: 4,
+              }}
+            >
+              {label}
+            </div>
+            <div style={{ fontFamily: F_MONO, fontSize: 12, fontWeight: 800, color: C.ink }}>
+              {value}
+            </div>
+          </div>
+        ))}
+      </div>
+    </aside>
+  );
 }
 
 function DetailCard({ node }: { node: MapNode }) {
