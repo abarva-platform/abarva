@@ -36,6 +36,9 @@ describe('SENTINEL_BANNED_PATTERNS — completeness', () => {
     expect(categories.has('hollow_opener')).toBe(true);
     expect(categories.has('ungrounded_opener')).toBe(true);
     expect(categories.has('retrieval_mechanics')).toBe(true);
+    // INT-VOICE.STRAT-2026-05-10c — consultant-posture pivot.
+    expect(categories.has('academic_disclaimer')).toBe(true);
+    expect(categories.has('fabricated_statistic')).toBe(true);
   });
 
   it('flags coach drift — "you should"', () => {
@@ -227,21 +230,145 @@ describe('SENTINEL_BANNED_PATTERNS — completeness', () => {
     expect(r.pass).toBe(true);
     expect(r.violations).toEqual([]);
   });
+
+  // INT-VOICE.STRAT-2026-05-10c — consultant-posture pivot. Academic /
+  // cover-your-back disclaimers were how Tests 1, 2, and 4 in the 2026-05-10
+  // re-test scored D1=2: Sentinel kept opening with hedges before delivering
+  // the answer.
+  describe('academic_disclaimer — consultant posture (INT-VOICE.STRAT-2026-05-10c)', () => {
+    it('flags "based on the limited data available to me…"', () => {
+      const r = checkSentinelVoice(
+        'Based on the limited data available to me, three AI bets show up at peer specialty retailers. PAT-RET-AI-001.',
+      );
+      expect(r.violations.some((v) => v.category === 'academic_disclaimer')).toBe(true);
+    });
+
+    it('flags "at the general AI industry level, not corpus-grounded for [tenant]…"', () => {
+      const r = checkSentinelVoice(
+        'At the general AI industry level, not corpus-grounded for Apex specifically, four bets show up. PAT-RET-AI-001.',
+      );
+      const academicHits = r.violations.filter((v) => v.category === 'academic_disclaimer');
+      expect(academicHits.length).toBeGreaterThanOrEqual(2);
+    });
+
+    it('flags "From a high level…" / "At a high level…" as a hedge opener', () => {
+      const a = checkSentinelVoice(
+        'From a high level, the assortment-optimization bet is the most-cited pattern. PAT-RET-AI-001.',
+      );
+      expect(a.violations.some((v) => v.category === 'academic_disclaimer')).toBe(true);
+
+      const b = checkSentinelVoice(
+        'At a high level, three things are worth knowing. PAT-RET-AI-001.',
+      );
+      expect(b.violations.some((v) => v.category === 'academic_disclaimer')).toBe(true);
+    });
+
+    it('flags the "On the one hand … on the other hand …" fence-sitting pattern', () => {
+      const r = checkSentinelVoice(
+        'On the one hand, demand sensing is a strong bet. On the other hand, it depends on data readiness. PAT-RET-AI-001.',
+      );
+      expect(r.violations.some((v) => v.category === 'academic_disclaimer')).toBe(true);
+    });
+
+    it('flags "It\'s important to note…" as a hedge before reasoning', () => {
+      const r = checkSentinelVoice(
+        "It's important to note that assortment optimization is data-dependent. The COGS-margin trap is the canonical failure mode. PAT-RET-AI-001.",
+      );
+      expect(r.violations.some((v) => v.category === 'academic_disclaimer')).toBe(true);
+    });
+
+    it('does not flag a consultant-posture answer that uses verbal calibration without disclaimers', () => {
+      const r = checkSentinelVoice(
+        "The biggest failure mode at your scale is the COGS-margin trap, and it's the one I'd want you focused on. Three peer specialty retailers in the corpus saw exactly this in months 4-7 of horizontal rollout. High confidence on this one.",
+      );
+      expect(r.violations.some((v) => v.category === 'academic_disclaimer')).toBe(false);
+    });
+  });
+
+  // INT-VOICE.STRAT-2026-05-10c — the one firm anti-fabrication line.
+  // Senior consultants reason from experience and cite where they have data;
+  // they never invent precise peer-prevalence percentages or vendor market
+  // shares. The validator surfaces the obvious shape of fabrication.
+  describe('fabricated_statistic — anti-fabrication (INT-VOICE.STRAT-2026-05-10c)', () => {
+    it('flags "73% of retailers…" peer-prevalence fabrication', () => {
+      const r = checkSentinelVoice(
+        '73% of retailers in your size class run AI workforce scheduling. The pattern is well-documented.',
+      );
+      expect(r.violations.some((v) => v.category === 'fabricated_statistic')).toBe(true);
+    });
+
+    it('flags "47% of peer specialty retailers…"', () => {
+      const r = checkSentinelVoice(
+        '47% of peer specialty retailers tried this and failed in months 6-9. PAT-RET-AI-001.',
+      );
+      expect(r.violations.some((v) => v.category === 'fabricated_statistic')).toBe(true);
+    });
+
+    it('flags "Algonomy has 89% market share" vendor-share fabrication', () => {
+      const r = checkSentinelVoice(
+        'Algonomy has 89% market share in retail personalization. Their pricing is aggressive.',
+      );
+      expect(r.violations.some((v) => v.category === 'fabricated_statistic')).toBe(true);
+    });
+
+    it('does not flag advisor framings without precise fabricated stats', () => {
+      const r = checkSentinelVoice(
+        'Most retailers in the corpus that tried this saw similar lifts. Three peer specialty retailers in the corpus had this exact issue in months 4-7. High confidence on the pattern shape.',
+      );
+      expect(r.violations.some((v) => v.category === 'fabricated_statistic')).toBe(false);
+    });
+  });
 });
 
-describe('PATTERN_LEVEL_FALLBACK doctrine — INT-VOICE.STRAT-2026-05-10', () => {
-  it('exports the senior-advisor posture for thin-retrieval / general questions', () => {
+// INT-VOICE.STRAT-2026-05-10c · Consultant posture — replaces the earlier
+// "epistemic-honesty librarian with two-tier scoping" framing after the
+// 2026-05-10 Apex / Carlos re-test showed it produced search-with-disclaimers
+// in a senior tone, not consulting. Calibration archetype: a senior AI
+// strategy consultant the user is paying $1.5K-$3K/hour. She forms opinions,
+// calibrates verbally, cites where it strengthens, pushes back when warranted,
+// and refuses exactly one thing — fabricating specific tenant facts or peer
+// statistics.
+describe('PATTERN_LEVEL_FALLBACK consultant posture — INT-VOICE.STRAT-2026-05-10c', () => {
+  it('exports the senior-consultant calibration archetype', () => {
+    expect(PATTERN_LEVEL_FALLBACK).toMatch(/Consultant\s+posture/i);
     expect(PATTERN_LEVEL_FALLBACK).toMatch(/senior\s+AI\s+strategy\s+advisor/i);
-    expect(PATTERN_LEVEL_FALLBACK).toMatch(/lead\s+with\s+the\s+best\s+objective\s+answer/i);
+    expect(PATTERN_LEVEL_FALLBACK).toMatch(/(?:not\s+a|NOT\s+a)\s+corpus\s+search/i);
   });
 
-  it('tells Sentinel to use tenant signals where available without inventing tenant facts', () => {
-    expect(PATTERN_LEVEL_FALLBACK).toMatch(/use\s+tenant\s+signals\s+where\s+available/i);
-    expect(PATTERN_LEVEL_FALLBACK).toMatch(/do\s+not\s+invent\s+tenant\s+facts/i);
+  it('directs Sentinel to form a view, defend it briefly, surface the reasoning', () => {
+    expect(PATTERN_LEVEL_FALLBACK).toMatch(/Form\s+a\s+view,?\s+defend\s+it\s+briefly/i);
+    expect(PATTERN_LEVEL_FALLBACK).toMatch(/My\s+read\s+is\s+X/i);
   });
 
-  it('forbids retrieval-mechanics language and structural headings', () => {
-    expect(PATTERN_LEVEL_FALLBACK).toMatch(/avoid\s+retrieval[- ]mechanics\s+language/i);
+  it('requires verbal confidence calibration, not academic preambles', () => {
+    expect(PATTERN_LEVEL_FALLBACK).toMatch(/Calibrate\s+confidence\s+in\s+plain\s+language/i);
+    expect(PATTERN_LEVEL_FALLBACK).toMatch(/high\s+confidence\s+on\s+this/i);
+    expect(PATTERN_LEVEL_FALLBACK).toMatch(/judgment,?\s+not\s+benchmark\s+data/i);
+    expect(PATTERN_LEVEL_FALLBACK).toMatch(
+      /Calibration\s+belongs\s+in\s+how\s+you\s+phrase\s+the\s+claim,?\s+not\s+in\s+(?:an\s+academic\s+)?preamble/i,
+    );
+  });
+
+  it('directs Sentinel to cite evidence where it strengthens the argument, conversationally', () => {
+    expect(PATTERN_LEVEL_FALLBACK).toMatch(/Cite\s+evidence\s+where\s+it\s+strengthens\s+the\s+argument/i);
+    expect(PATTERN_LEVEL_FALLBACK).toMatch(/not\s+a\s+formal\s+citation\s+requirement/i);
+  });
+
+  it('directs Sentinel to disagree when the evidence supports it', () => {
+    expect(PATTERN_LEVEL_FALLBACK).toMatch(/Disagree\s+when\s+the\s+evidence\s+supports/i);
+    expect(PATTERN_LEVEL_FALLBACK).toMatch(/Neutral\s+presentation\s+of\s+options\s+is\s+not/i);
+  });
+
+  it('codifies the one firm anti-fabrication line — tenant facts and peer statistics', () => {
+    expect(PATTERN_LEVEL_FALLBACK).toMatch(
+      /one\s+firm\s+line[^]*do\s+not\s+fabricate\s+tenant[- ]specific\s+facts\s+or\s+peer\s+statistics/i,
+    );
+    expect(PATTERN_LEVEL_FALLBACK).toContain('73% of retailers');
+    expect(PATTERN_LEVEL_FALLBACK).toMatch(/(?:I\s+don'?t\s+have\s+that\s+in\s+Apex'?s?\s+connected\s+data|connected\s+data)/i);
+  });
+
+  it('forbids retrieval-mechanics framings as banned framings', () => {
+    expect(PATTERN_LEVEL_FALLBACK).toMatch(/Banned\s+framings/i);
     expect(PATTERN_LEVEL_FALLBACK).toContain('the corpus lacks');
     expect(PATTERN_LEVEL_FALLBACK).toContain('indexed data is missing');
     expect(PATTERN_LEVEL_FALLBACK).toContain('I do not have a retrieved record');
@@ -249,53 +376,20 @@ describe('PATTERN_LEVEL_FALLBACK doctrine — INT-VOICE.STRAT-2026-05-10', () =>
     expect(PATTERN_LEVEL_FALLBACK).toContain('Pattern-level read:');
   });
 
-  it('keeps confidence caveats short, natural, and at the end', () => {
-    expect(PATTERN_LEVEL_FALLBACK).toMatch(/confidence\s+caveats\s+short,\s+natural,?\s+and\s+at\s+the\s+end/i);
-    expect(PATTERN_LEVEL_FALLBACK).toMatch(/Confidence:\s+directional/i);
+  it('forbids academic / cover-your-back disclaimer phrasings', () => {
+    expect(PATTERN_LEVEL_FALLBACK).toMatch(/(?:Also\s+banned[^]*academic|Carlos\s+would\s+fire)/i);
+    expect(PATTERN_LEVEL_FALLBACK).toContain('based on the limited data available to me');
+    expect(PATTERN_LEVEL_FALLBACK).toContain('at the general AI industry level');
+    expect(PATTERN_LEVEL_FALLBACK).toContain('On the one hand');
+    expect(PATTERN_LEVEL_FALLBACK).toContain("It's important to note");
   });
 
-  // INT-VOICE.STRAT-2026-05-10b · two-tier epistemic posture introduced
-  // after the 2026-05-10 Apex / Carlos re-test regressed Test 4 from
-  // ship_quality 4.4 to needs_work 3.8. The earlier doctrine version was
-  // honest but suppressed pattern-level intelligence that doesn't actually
-  // require tenant data.
-  describe('two-tier epistemic posture (Tier A vs Tier B)', () => {
-    it('names Tier A and Tier B explicitly', () => {
-      expect(PATTERN_LEVEL_FALLBACK).toMatch(/Tier\s+A/);
-      expect(PATTERN_LEVEL_FALLBACK).toMatch(/Tier\s+B/);
-    });
-
-    it('scopes Tier A to tenant-specific quantitative claims', () => {
-      expect(PATTERN_LEVEL_FALLBACK).toMatch(/Tier\s+A[^]*tenant[- ]specific\s+quantitative\s+claims/i);
-      expect(PATTERN_LEVEL_FALLBACK).toMatch(/KPI\s+values?/i);
-      expect(PATTERN_LEVEL_FALLBACK).toMatch(/exact\s+vendor\s+performance/i);
-      expect(PATTERN_LEVEL_FALLBACK).toMatch(/exact\s+NPV/i);
-    });
-
-    it('scopes Tier B to general industry / pattern-level intelligence', () => {
-      expect(PATTERN_LEVEL_FALLBACK).toMatch(/Tier\s+B[^]*general\s+industry/i);
-      expect(PATTERN_LEVEL_FALLBACK).toMatch(/failure\s+modes/i);
-      expect(PATTERN_LEVEL_FALLBACK).toMatch(/binding\s+patterns/i);
-      expect(PATTERN_LEVEL_FALLBACK).toMatch(/3.{1,4}5\s+failure\s+modes/i);
-      expect(PATTERN_LEVEL_FALLBACK).toMatch(/3.{1,4}6\s+use\s+cases/i);
-    });
-
-    it('directs Tier B to draw freely from broad domain expertise without naming the corpus', () => {
-      expect(PATTERN_LEVEL_FALLBACK).toMatch(/draw\s+freely\s+from\s+broad\s+domain\s+expertise/i);
-      expect(PATTERN_LEVEL_FALLBACK).toMatch(/Do\s+NOT\s+hedge/i);
-      expect(PATTERN_LEVEL_FALLBACK).toMatch(/Do\s+NOT\s+name\s+the\s+corpus/i);
-    });
-
-    it('forbids pivoting to adjacent tenant data as a substitute for the asked content (Test 4 regression mode)', () => {
-      expect(PATTERN_LEVEL_FALLBACK).toMatch(
-        /Do\s+NOT\s+pivot\s+to\s+adjacent\s+tenant\s+data\s+as\s+a\s+substitute/i,
-      );
-    });
-
-    it('names the ~80% no-corpus-hit doctrine line', () => {
-      expect(PATTERN_LEVEL_FALLBACK).toMatch(/80\s*%/);
-      expect(PATTERN_LEVEL_FALLBACK).toMatch(/no\s+direct\s+corpus\s+hit/i);
-    });
+  it('names the ~80% no-corpus-hit doctrine line as the calibration baseline', () => {
+    expect(PATTERN_LEVEL_FALLBACK).toMatch(/80\s*%/);
+    expect(PATTERN_LEVEL_FALLBACK).toMatch(/no\s+direct\s+corpus\s+hit/i);
+    expect(PATTERN_LEVEL_FALLBACK).toMatch(
+      /Refusing\s+or\s+over[- ]hedging\s+on\s+a\s+general\s+strategy\s+question\s+is\s+a\s+failure\s+mode,\s+not\s+honesty/i,
+    );
   });
 
   it('is included in the Intelligence-surface system prompt', () => {
@@ -306,8 +400,8 @@ describe('PATTERN_LEVEL_FALLBACK doctrine — INT-VOICE.STRAT-2026-05-10', () =>
       vectorIndexPending: false,
       worldviewPending: false,
     });
-    expect(prompt).toContain('Pattern-level fallback');
-    expect(prompt).toMatch(/lead\s+with\s+the\s+best\s+objective\s+answer/i);
+    expect(prompt).toMatch(/Consultant\s+posture/i);
+    expect(prompt).toMatch(/Form\s+a\s+view,?\s+defend\s+it\s+briefly/i);
   });
 
   it('is omitted on the Source surface, which keeps its prescriptive gate posture', () => {
@@ -318,49 +412,75 @@ describe('PATTERN_LEVEL_FALLBACK doctrine — INT-VOICE.STRAT-2026-05-10', () =>
       vectorIndexPending: false,
       worldviewPending: false,
     });
-    expect(prompt).not.toContain('Pattern-level fallback');
+    expect(prompt).not.toMatch(/Consultant\s+posture/i);
   });
 });
 
-// INT-VOICE.STRAT-2026-05-10b · MANDATORY ANSWER SHAPES + worked examples
-// landed in src/lib/intelligence/ask/synthesizer.ts. We assert against the
-// raw prompt source since it is not exported as a constant. This guards
-// against the prompt drifting away from the two-tier posture without the
-// regression being noticed at code review.
-describe('Ask synthesizer prompt — MANDATORY ANSWER SHAPES (INT-VOICE.STRAT-2026-05-10b)', () => {
+// INT-VOICE.STRAT-2026-05-10c · The Ask synthesizer prompt is the primary
+// lever for Sentinel's voice on the Intelligence surface. We assert against
+// the raw prompt source since it is not exported as a constant. This guards
+// against the prompt drifting away from the consultant posture.
+describe('Ask synthesizer prompt — consultant posture (INT-VOICE.STRAT-2026-05-10c)', () => {
   const synthesizerSource = readFileSync(
     join(__dirname, '..', '..', '..', 'intelligence', 'ask', 'synthesizer.ts'),
     'utf8',
   );
 
-  it('declares the MANDATORY ANSWER SHAPES section', () => {
-    expect(synthesizerSource).toMatch(/MANDATORY\s+ANSWER\s+SHAPES/);
+  it('opens with the senior-consultant archetype, not librarian / search-index framing', () => {
+    expect(synthesizerSource).toMatch(/senior\s+AI[- ]strategy\s+consultant/i);
+    expect(synthesizerSource).toMatch(/CXO\s+at\s+a\s+\$1B\+/i);
+    expect(synthesizerSource).toMatch(/(?:NOT\s+a\s+corpus\s+search|NOT\s+a\s+librarian|NOT\s+a\s+neutral\s+summary)/);
   });
 
-  it('requires 3–6 use cases for "common bets" question shape', () => {
-    expect(synthesizerSource).toMatch(/3.{1,4}6\s+specific\s+use\s+cases/i);
+  it('mandates the CORE POSTURE — opinions, verbal confidence, conversational citations, disagreement', () => {
+    expect(synthesizerSource).toMatch(/CORE\s+POSTURE/);
+    expect(synthesizerSource).toMatch(/Form\s+a\s+view,?\s+defend\s+it\s+briefly/i);
+    expect(synthesizerSource).toMatch(/Calibrate\s+confidence\s+in\s+plain\s+language/i);
+    expect(synthesizerSource).toMatch(/Cite\s+evidence\s+where\s+it\s+strengthens\s+the\s+argument/i);
+    expect(synthesizerSource).toMatch(/Disagree\s+when\s+the\s+evidence\s+supports\s+disagreement/i);
   });
 
-  it('requires 3–5 failure modes for "what goes wrong" question shape (Test 4 regression fix)', () => {
-    expect(synthesizerSource).toMatch(/3.{1,4}5\s+specific\s+failure\s+modes/i);
-    expect(synthesizerSource).toMatch(/one[- ]line\s+mechanism/i);
+  it('declares the one firm line — anti-fabrication of tenant facts and peer statistics', () => {
+    expect(synthesizerSource).toMatch(
+      /THE\s+ONE\s+FIRM\s+LINE[^]*DO\s+NOT\s+FABRICATE\s+TENANT[- ]SPECIFIC\s+FACTS\s+OR\s+PEER\s+STATISTICS/i,
+    );
+    expect(synthesizerSource).toContain('73% of retailers');
+    expect(synthesizerSource).toContain('Algonomy has 89% market share');
   });
 
-  it('declares the two-tier epistemic posture in the prompt body', () => {
-    expect(synthesizerSource).toMatch(/Tier\s+A.*Tenant[- ]specific/i);
-    expect(synthesizerSource).toMatch(/Tier\s+B.*General\s+industry/i);
+  it('lists banned retrieval-mechanics framings', () => {
+    expect(synthesizerSource).toMatch(/BANNED\s+FRAMINGS/);
+    expect(synthesizerSource).toContain('the sources don\'t contain');
+    expect(synthesizerSource).toContain('what the sources do show');
   });
 
-  it('carries both worked examples — common bets AND failure modes', () => {
+  it('lists banned academic / cover-your-back disclaimer phrasings', () => {
+    expect(synthesizerSource).toMatch(/ALSO\s+BANNED[^]*academic/i);
+    expect(synthesizerSource).toContain('based on the limited data available to me');
+    expect(synthesizerSource).toContain('at the general AI industry level');
+    expect(synthesizerSource).toContain('On the one hand');
+  });
+
+  it('carries both worked examples — common bets AND failure modes — with verbatim BAD anchors', () => {
     expect(synthesizerSource).toMatch(/EXAMPLE\s+1[^]*common\s+AI\s+bets/i);
     expect(synthesizerSource).toMatch(/EXAMPLE\s+2[^]*failure\s+modes/i);
-  });
-
-  it('preserves the verbatim Apex / Carlos 2026-05-10 BAD response as an anti-pattern anchor', () => {
-    // Both worked examples must show the prod over-refusal verbatim so the
-    // model learns the exact shape to avoid.
+    // The verbatim Apex / Carlos 2026-05-10 BAD responses are anchors so
+    // the model learns the exact shape to avoid.
     expect(synthesizerSource).toContain("The sources don't contain indexed benchmark data on AI bet prevalence");
     expect(synthesizerSource).toContain("Assortment optimization failure modes are not well-indexed");
+  });
+
+  it('GOOD examples demonstrate consultant posture — opinions, verbal confidence, push-back / handoff', () => {
+    // Example 1 GOOD: opens with a view, names the binding pattern, ends
+    // with a push-back line ("I'd push back on anyone proposing Loyalty
+    // NBO before the customer-data foundation is real").
+    expect(synthesizerSource).toMatch(/I'?d\s+push\s+back\s+on\s+anyone\s+proposing/i);
+    // Example 2 GOOD: opens with "the biggest failure mode is X — and it's
+    // the one I'd want you focused on", uses verbal confidence ("high
+    // confidence on this one"), ends with a handoff to Source.
+    expect(synthesizerSource).toMatch(/biggest\s+failure\s+mode/i);
+    expect(synthesizerSource).toMatch(/high\s+confidence\s+on\s+this\s+one/i);
+    expect(synthesizerSource).toMatch(/that'?s\s+Source'?s\s+job/i);
   });
 
   it('explicitly bans pivoting to "what the sources do show" as a substitute', () => {
