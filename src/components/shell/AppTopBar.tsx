@@ -30,6 +30,7 @@ import { useClerk, useUser } from "@clerk/nextjs";
 import { clearActiveClientContext } from "@/lib/auth/client-context-storage";
 import { getVisibleNavItems } from "@/components/shell/topbar-nav-items";
 import { useClientContext } from "@/lib/use-client-context";
+import { canonicalClientDisplayName } from "@/lib/client-config";
 
 export interface AppTopBarProps {
   tenantName?: string;
@@ -58,7 +59,11 @@ export function AppTopBar({ tenantName, showProductNav = true }: AppTopBarProps 
   const { signOut } = useClerk();
   const { currentClient } = useClientContext();
   const signedIn = isLoaded && Boolean(user);
-  const resolvedTenantName = tenantName ?? currentClient?.name ?? null;
+  const resolvedTenantName =
+    canonicalClientDisplayName({ key: currentClient?.id, name: tenantName ?? currentClient?.name }) ??
+    tenantName ??
+    currentClient?.name ??
+    null;
   const displayName =
     user?.fullName ||
     user?.emailAddresses?.[0]?.emailAddress?.split("@")?.[0] ||
