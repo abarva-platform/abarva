@@ -35,6 +35,8 @@ async function handleAsk(payload: AskPayload) {
 
   let userContextBlock = '';
   let tenantInventoryKey: string | null = null;
+  let activePersonGraphNodeId: string | null = null;
+  let activePersonDisplayName: string | null = null;
   try {
     const [person, client] = await Promise.all([
       getCurrentPerson(),
@@ -44,6 +46,8 @@ async function handleAsk(payload: AskPayload) {
       ? clientKeyToInventorySubstrateKey(client.key)
       : null;
     if (person) {
+      activePersonGraphNodeId = person.graph_node_id;
+      activePersonDisplayName = person.name;
       userContextBlock = await assembleUserContextBlock({
         personId: person.id,
         displayName: person.name,
@@ -58,7 +62,13 @@ async function handleAsk(payload: AskPayload) {
   const stream = new ReadableStream({
     async start(controller) {
       try {
-        for await (const event of askIntelligence(query, { userContextBlock, tenantInventoryKey, surfaceContext })) {
+        for await (const event of askIntelligence(query, {
+          userContextBlock,
+          tenantInventoryKey,
+          surfaceContext,
+          activePersonGraphNodeId,
+          activePersonDisplayName,
+        })) {
           controller.enqueue(encoder.encode(JSON.stringify(event) + '\n'));
         }
       } catch (err) {
