@@ -13,6 +13,7 @@ import {
   Callout,
   TermGrid,
   Term,
+  InlineAbarvaLogo,
   T,
 } from './primitives';
 
@@ -400,7 +401,7 @@ export function MovesReferenceCard() {
 
         <TermGrid>
           <Term name="Strategic Move">
-            A phase-gated transformation program on the AbarVa platform. Moves run P0 → P5 and hand off to Control Tower at P5.
+            A phase-gated transformation program on the <InlineAbarvaLogo /> platform. Moves run P0 → P5 and hand off to Control Tower at P5.
           </Term>
           <Term name="Archetype">
             The category of the Move: <em>Cost Reduction, Revenue Growth, Risk Mitigation,</em> or <em>Operational Excellence.</em> Classified in P0, confirmed by the user.

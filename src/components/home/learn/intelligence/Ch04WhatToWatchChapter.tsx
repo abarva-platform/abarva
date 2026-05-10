@@ -8,8 +8,8 @@ import {
   SectionTitle,
   Lead,
   BodyP,
-  SubHead,
   Callout,
+  InlineAbarvaLogo,
   T,
 } from '@/components/home/learn/primitives';
 
@@ -376,7 +376,7 @@ export function Ch04WhatToWatchChapter() {
           &ldquo;we&rsquo;re working on AI.&rdquo;
         </BodyP>
         <Callout kind="success" icon="✓" label="What Intelligence makes possible">
-          Every number in that narrative came from the Intelligence substrate. Before AbarVa,
+          Every number in that narrative came from the Intelligence substrate. Before <InlineAbarvaLogo />,
           the CEO team was assembling these numbers from four different reporting systems,
           two weeks after the fact, in a format that couldn&rsquo;t show causal attribution.
           The 240bps decomposition alone — knowing it&rsquo;s 90+80+70, not just 240 — is

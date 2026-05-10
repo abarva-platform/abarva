@@ -1,7 +1,7 @@
 'use client';
 import {
   Section, HeroBand, Eyebrow, SectionTitle, Lead,
-  Callout, StepList, Step, TermGrid, Term, T,
+  Callout, StepList, Step, TermGrid, Term, T, InlineAbarvaLogo,
 } from './primitives';
 
 export function SetupSection() {
@@ -11,7 +11,7 @@ export function SetupSection() {
         <Eyebrow light>Setup · Apex Retail</Eyebrow>
         <SectionTitle light size="xl">Preloaded substrate. Current-state answers. No setup theatre.</SectionTitle>
         <Lead light>
-          For the CXO review, Apex Retail is already loaded. The point is not to watch connectors get configured; it is to prove AbarVa can reason from a believable enterprise baseline before it recommends an AI bet.
+          For the CXO review, Apex Retail is already loaded. The point is not to watch connectors get configured; it is to prove <InlineAbarvaLogo light /> can reason from a believable enterprise baseline before it recommends an AI bet.
         </Lead>
       </HeroBand>
 
@@ -398,7 +398,7 @@ export function SetupSection() {
         <SectionTitle>Key terms in Setup</SectionTitle>
         <TermGrid>
           <Term name="Connector">
-            An integration between AbarVa and an external data system. Connectors strengthen freshness, but they are not the only evidence path. <em>Verified documents, extracts, and persisted tenant records can also ground Intelligence and Moves.</em>
+            An integration between <InlineAbarvaLogo /> and an external data system. Connectors strengthen freshness, but they are not the only evidence path. <em>Verified documents, extracts, and persisted tenant records can also ground Intelligence and Moves.</em>
           </Term>
           <Term name="Substrate">
             The combined data layer that agents query. It includes tenant records, documents, embeddings, graph relationships, program state, sourcing artifacts, and connector data where available. <em>Think of it as the shared evidence base, not a generic memory.</em>

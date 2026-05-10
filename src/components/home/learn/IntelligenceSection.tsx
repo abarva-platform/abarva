@@ -1,7 +1,7 @@
 'use client';
 import {
   Section, HeroBand, Eyebrow, SectionTitle, Lead, BodyP, SubHead,
-  Callout, StepList, Step, TermGrid, Term, IntelCard, PressureCardMock, T,
+  Callout, StepList, Step, TermGrid, Term, IntelCard, PressureCardMock, T, InlineAbarvaLogo,
 } from './primitives';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -49,7 +49,7 @@ export function IntelligenceSection() {
         <Eyebrow>Intelligence · Pattern → Move</Eyebrow>
         <SectionTitle>From pattern to Move</SectionTitle>
         <Lead>
-          The most powerful workflow in AbarVa. Intelligence detects a pattern → you validate it → one click sends it to Strategic Moves as a pre-loaded origination.
+          The most powerful workflow in <InlineAbarvaLogo />. Intelligence detects a pattern → you validate it → one click sends it to Strategic Moves as a pre-loaded origination.
         </Lead>
         <StepList>
           <Step title="Browse Intelligence signals for your business units" path="/intelligence → Pressure Cards → filter by severity">

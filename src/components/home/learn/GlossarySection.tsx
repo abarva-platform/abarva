@@ -1,5 +1,5 @@
 'use client';
-import { Section, Eyebrow, SectionTitle, Lead, SubHead, TermGrid, Term, TipGrid, Tip } from './primitives';
+import { Section, Eyebrow, SectionTitle, Lead, SubHead, TermGrid, Term, TipGrid, Tip, InlineAbarvaLogo } from './primitives';
 
 export function GlossarySection() {
   return (
@@ -67,11 +67,11 @@ export function GlossarySection() {
       <Section>
         <Eyebrow>Reference</Eyebrow>
         <SectionTitle>Glossary</SectionTitle>
-        <Lead>Key terms used across AbarVa, in alphabetical order.</Lead>
+        <Lead>Key terms used across <InlineAbarvaLogo />, in alphabetical order.</Lead>
         <TermGrid>
           <Term name="Archetype">The category of a Move: Cost Reduction, Revenue Growth, Risk Mitigation, or Operational Excellence. Drives template selection and gate criteria.</Term>
           <Term name="Atlas">The Control Tower agent. Monitors portfolio health, execution KPIs, and surfaces execution-phase pressure cards.</Term>
-          <Term name="Connector">An integration between AbarVa and an external data system that populates the intelligence substrate.</Term>
+          <Term name="Connector">An integration between <InlineAbarvaLogo /> and an external data system that populates the intelligence substrate.</Term>
           <Term name="Evidence Hub">The per-Move document store. Contains all generated deliverables, uploaded files, and version history organized by phase.</Term>
           <Term name="Foundation readiness">An assessment of how complete and current your substrate is for a given initiative. Low readiness → higher risk of thin documents.</Term>
           <Term name="Gate artifact">A deliverable required for a phase gate to clear. Blue left border in the Evidence Hub. Must be signed off.</Term>
@@ -85,7 +85,7 @@ export function GlossarySection() {
           <Term name="Signal">An AI-detected pattern in operational or financial data, surfaced automatically by the intelligence substrate.</Term>
           <Term name="Soft criterion">An advisory gate requirement. Gate can clear even if open, but shows as a warning in audit trail.</Term>
           <Term name="Substrate">The combined data layer all agents query: connector data, document embeddings, and tenant context.</Term>
-          <Term name="Tenant">Your organization&rsquo;s isolated AbarVa instance. All data, agents, and Moves are scoped to your tenant.</Term>
+          <Term name="Tenant">Your organization&rsquo;s isolated <InlineAbarvaLogo /> instance. All data, agents, and Moves are scoped to your tenant.</Term>
         </TermGrid>
       </Section>
     </>
