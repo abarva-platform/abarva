@@ -117,8 +117,11 @@ describe('all-agent response-shape regression', () => {
 
     expect(doctrine).toContain(`Surface family: ${expectedSurface}.`);
     expect(doctrine).toContain('active tenant/current-state context');
-    expect(doctrine).toContain('Default reading model');
+    expect(doctrine).toContain('AGENT OUTPUT CONTRACT v2026-05-09');
+    expect(doctrine).toContain('three-depth CXO reading model');
     expect(doctrine).toContain('Always lead with a 1-2 sentence answer');
+    expect(doctrine).toContain('lead-bullets, lead-table, stat-stack, sequential-steps, or brief-narrative');
+    expect(doctrine).toContain('do not emit raw markdown emphasis markers');
     expect(doctrine).toContain('offer 2-4 options');
     expect(doctrine).toContain('Never invent current-state facts, KPI values, financials, org structure');
     expect(doctrine).toContain('rank opportunities from available tenant KPIs');
