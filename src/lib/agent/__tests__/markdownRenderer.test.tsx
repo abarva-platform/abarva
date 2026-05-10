@@ -14,6 +14,7 @@ import {
   PATTERN_ID_REGEX,
   PROGRAM_ID_REGEX,
   SOURCE_ID_REGEX,
+  normalizeAbarvaAgentMarkup,
   replaceBareIds,
   tokenize,
   tokenizeWithoutInline,
@@ -95,6 +96,31 @@ describe('markdownTokens · citation chips precedence', () => {
     expect(html).toContain('href="/programs/APX-CDP-2026"');
     expect(html).toContain('YOU');
     expect(html).toContain('David sponsors this');
+  });
+});
+
+describe('markdownTokens · AbarVa citation tags', () => {
+  it('normalizes custom entity and source tags before markdown rendering', () => {
+    const normalized = normalizeAbarvaAgentMarkup(
+      '<p>Use <abv-pattern id="P-HC-005">CMIO sponsorship pattern</abv-pattern>.</p><abv-sources><abv-source ref="Healthcare pattern pack" reliability="HIGH"/></abv-sources>',
+    );
+
+    expect(normalized).toContain('[abv-pattern:P-HC-005:CMIO sponsorship pattern]');
+    expect(normalized).toContain('Source basis: Healthcare pattern pack (HIGH).');
+    expect(normalized).not.toContain('<abv-pattern');
+  });
+
+  it('renders custom entity tokens as human-readable links with id in hover text only', () => {
+    const html = render(
+      tokenizeWithoutInline(
+        'Use [abv-pattern:P-HC-005:CMIO sponsorship pattern] first.',
+        'abv',
+      ),
+    );
+
+    expect(html).toContain('CMIO sponsorship pattern');
+    expect(html).toContain('title="CMIO sponsorship pattern · P-HC-005"');
+    expect(html).not.toContain('>P-HC-005<');
   });
 });
 
