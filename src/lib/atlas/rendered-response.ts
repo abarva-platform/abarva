@@ -1,4 +1,5 @@
 import type { ConfidenceSignal, FollowUpAction, HandoffAffordance, RenderedResponse } from '@/lib/agent/renderedResponse';
+import { shapeAgentResponseForSurface } from '@/lib/agent/response-shape';
 import type { AtlasSuggestion, AtlasTurnResult } from '@/lib/atlas/types';
 
 interface AtlasRenderedArgs {
@@ -104,7 +105,7 @@ export function buildAtlasRenderedResponse(args: AtlasRenderedArgs): RenderedRes
   const followUps = defaultFollowUps(args.result);
 
   return {
-    response_text: args.result.response.trim(),
+    response_text: shapeAgentResponseForSurface('/tower', args.result.response),
     citations: [],
     confidence_signal: inferConfidenceSignal(args.result),
     sparsity_flag: inferSparsity(args.result),

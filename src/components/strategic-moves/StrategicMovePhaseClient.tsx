@@ -13,6 +13,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { extractArtifacts, visibleArtifactPendingText } from '@/lib/agent/artifacts';
+import { shapeAgentResponseForSurface, shapeStreamingAgentTextForSurface } from '@/lib/agent/response-shape';
 import type { StrategicMove } from '@/lib/programs/types.ui';
 import styles from './StrategicMoves.module.css';
 import { PhaseRail } from './PhaseRail';
@@ -367,7 +368,11 @@ export function StrategicMovePhaseClient({ move, phaseNum }: Props) {
             }
           }
 
-          const display = (committedVisible + visibleArtifactPendingText(pendingBuffer)).trimEnd();
+          const responseSurface = `/strategic-moves/${move.id}/phase/${phaseNum}`;
+          const display = shapeStreamingAgentTextForSurface(
+            responseSurface,
+            committedVisible + visibleArtifactPendingText(pendingBuffer),
+          ).trimEnd();
           updateTurns((prev) =>
             prev.map((t) => (t.id === assistantTurnId ? { ...t, text: display } : t)),
           );
@@ -383,7 +388,15 @@ export function StrategicMovePhaseClient({ move, phaseNum }: Props) {
 
         updateTurns((prev) =>
           prev.map((t) =>
-            t.id === assistantTurnId ? { ...t, text: committedVisible.trimEnd() } : t,
+            t.id === assistantTurnId
+              ? {
+                  ...t,
+                  text: shapeAgentResponseForSurface(
+                    `/strategic-moves/${move.id}/phase/${phaseNum}`,
+                    committedVisible,
+                  ),
+                }
+              : t,
           ),
         );
       } catch (err) {

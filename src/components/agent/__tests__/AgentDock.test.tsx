@@ -361,6 +361,28 @@ describe('AgentDock · thread render', () => {
     expect(turns[0]).toHaveAttribute('data-testid', 'agent-dock-turn-agent');
     expect(turns[1]).toHaveAttribute('data-testid', 'agent-dock-turn-user');
   });
+
+  it('renders compact agent responses without raw markdown markers', () => {
+    render(
+      <AgentDock
+        agent={AGENT}
+        surface="tower"
+        thread={[
+          {
+            id: 'a',
+            role: 'agent',
+            body: '**APX-04 is the highest value-risk item this quarter.** Portfolio KPI evidence shows sponsor ambiguity and value-baseline gaps. I recommend a gate review today.',
+          },
+        ]}
+        onMessage={jest.fn()}
+        workspace={<div data-testid="workspace">workspace</div>}
+      />,
+    );
+
+    expect(screen.getByTestId('agent-dock-turn-agent')).toHaveTextContent('APX-04 is the highest value-risk item this quarter.');
+    expect(screen.getByTestId('agent-dock-turn-agent')).toHaveTextContent('- Evidence:');
+    expect(screen.getByTestId('agent-dock-turn-agent')).not.toHaveTextContent('**');
+  });
 });
 
 describe('AgentDock · viewport-bound side-rail', () => {

@@ -9,6 +9,7 @@ import {
   visibleArtifactPendingText,
   type Artifact,
 } from '@/lib/agent/artifacts';
+import { shapeAgentResponseForSurface, shapeStreamingAgentTextForSurface } from '@/lib/agent/response-shape';
 
 interface UseAgentStreamOptions {
   surface: string; // 'programs' | 'intelligence' | 'tower' | 'source' | 'setup' | 'home'
@@ -78,7 +79,7 @@ export function useAgentStream({
           if (!onArtifact) {
             // Raw passthrough — no artifact parsing.
             committedVisible += chunk;
-            setResponse(committedVisible);
+            setResponse(shapeStreamingAgentTextForSurface(surface, committedVisible));
             continue;
           }
           pending += chunk;
@@ -91,7 +92,12 @@ export function useAgentStream({
             seenArtifacts.add(key);
             onArtifact(a);
           }
-          setResponse(sanitizeArtifactDebugText(committedVisible) + visibleArtifactPendingText(pending));
+          setResponse(
+            shapeStreamingAgentTextForSurface(
+              surface,
+              sanitizeArtifactDebugText(committedVisible) + visibleArtifactPendingText(pending),
+            ),
+          );
         }
 
         // Flush any unclosed artifact tail when streaming ends.
@@ -105,7 +111,9 @@ export function useAgentStream({
             seenArtifacts.add(key);
             onArtifact(a);
           }
-          setResponse(sanitizeArtifactDebugText(committedVisible));
+          setResponse(shapeAgentResponseForSurface(surface, sanitizeArtifactDebugText(committedVisible)));
+        } else {
+          setResponse(shapeAgentResponseForSurface(surface, committedVisible));
         }
       } catch (e) {
         setError(e instanceof Error ? e.message : 'Connection error');

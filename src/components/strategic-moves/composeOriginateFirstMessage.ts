@@ -87,30 +87,30 @@ function detectLastCompletedStep(brief: {
 function composeFromInitiativeMessage(from: FromInitiativeCtx): OriginateFirstMessage {
   const gapLine =
     from.gapUsd !== null && from.gapUsd > 0
-      ? ` with a **$${(from.gapUsd / 1_000_000).toFixed(1)}M gap** between committed and measured value`
+      ? ` with a $${(from.gapUsd / 1_000_000).toFixed(1)}M gap between committed and measured value`
       : '';
 
   const statusNote =
     from.statusFlag === 'VALUE_LAG'
-      ? `This is a **Value Lag** pattern${gapLine}. That's a strong candidate for a value-recovery Move.`
+      ? `This is a Value Lag pattern${gapLine}. That's a strong candidate for a value-recovery Move.`
       : from.statusFlag === 'HEALTHY'
         ? `This initiative is tracking healthy${gapLine} — a good candidate for an expansion or scale-up Move.`
         : from.statusFlag === 'AT_RISK'
-          ? `This initiative is flagged **At Risk**${gapLine}. A corrective Move can address the root cause.`
-          : `This initiative has status **${from.statusFlag}**${gapLine}.`;
+          ? `This initiative is flagged At Risk${gapLine}. A corrective Move can address the root cause.`
+          : `This initiative has status ${from.statusFlag}${gapLine}.`;
 
   const sponsorLine = from.ownerName
-    ? `**${from.ownerName}** is listed as initiative owner — are they the right sponsor for this Move, or is someone else leading the recovery?`
+    ? `${from.ownerName} is listed as initiative owner — are they the right sponsor for this Move, or is someone else leading the recovery?`
     : 'Who should sponsor this Move?';
 
   return {
     role: 'assistant',
     agentName: 'Nexus',
-    text: `You're launching this Move from **${from.displayId} — ${from.name}** (goal: ${from.goalName}).
+    text: `You're launching this Move from ${from.displayId} — ${from.name} (goal: ${from.goalName}).
 
 ${statusNote}
 
-To build the brief, I need four things: your read on **what's causing this**, **who should sponsor** the recovery, **what scope** makes this tractable in one Move, and a **value hypothesis** for what's recoverable.
+To build the brief, I need four things: your read on what's causing this, who should sponsor the recovery, what scope makes this tractable in one Move, and a value hypothesis for what's recoverable.
 
 ${sponsorLine}`,
     id: `originate-open-2d-${from.displayId.toLowerCase().replace(/[^a-z0-9]/g, '-')}`,
@@ -119,22 +119,22 @@ ${sponsorLine}`,
 
 function composeFromIntelligenceMessage(from: FromIntelligenceCtx): OriginateFirstMessage {
   const sourceLine = from.sourceTitle
-    ? `Evidence source: **${from.sourceTitle}**.`
+    ? `Evidence source: ${from.sourceTitle}.`
     : 'Evidence source: use the linked Intelligence source summaries as the evidence family.';
   const contradictionLine = from.contradictionTitle
-    ? `Open tension: **${from.contradictionTitle}**.`
+    ? `Open tension: ${from.contradictionTitle}.`
     : 'Open tension: confirm the sponsor, platform, and data-readiness assumptions before chartering.';
   const failureLine =
     typeof from.failureRatePct === 'number' && Number.isFinite(from.failureRatePct)
-      ? `The linked Genome pattern carries an estimated **${Math.round(from.failureRatePct)}% failure risk without controls**.`
+      ? `The linked Genome pattern carries an estimated ${Math.round(from.failureRatePct)}% failure risk without controls.`
       : 'The linked Genome pattern has a material failure risk without controls.';
 
   return {
     role: 'assistant',
     agentName: 'Nexus',
-    text: `You're shaping a Strategic Move from Intelligence: **${from.useCaseName}**.
+    text: `You're shaping a Strategic Move from Intelligence: ${from.useCaseName}.
 
-Binding pattern: **${from.patternId} — ${from.patternName}**. ${failureLine}
+Binding pattern: ${from.patternId} — ${from.patternName}. ${failureLine}
 
 ${sourceLine}
 ${contradictionLine}
@@ -179,7 +179,7 @@ export async function composeOriginateFirstMessage(
     const nextStep = lastCompleted < 7 ? SCAFFOLD_STEP_DESCRIPTIONS[lastCompleted + 1] : null;
 
     const text = nextStep
-      ? `Welcome back. You left off at **${completedStep.name}** (step ${lastCompleted} of 7). Your next step is **${nextStep.name}** — ${nextStep.description}. Ready to continue, or want to review what's been captured so far?`
+      ? `Welcome back. You left off at ${completedStep.name} (step ${lastCompleted} of 7). Your next step is ${nextStep.name} — ${nextStep.description}. Ready to continue, or want to review what's been captured so far?`
       : `Your brief looks complete. Review the canvas sections and click Promote to P1 Charter when you're ready.`;
 
     return {

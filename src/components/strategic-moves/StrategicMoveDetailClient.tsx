@@ -30,6 +30,7 @@ import {
   type SuggestedAction,
 } from '@/components/agent/AgentDock';
 import { extractArtifacts, visibleArtifactPendingText } from '@/lib/agent/artifacts';
+import { shapeAgentResponseForSurface, shapeStreamingAgentTextForSurface } from '@/lib/agent/response-shape';
 import type { StrategicMove } from '@/lib/programs/types.ui';
 
 interface Props {
@@ -157,7 +158,10 @@ export function StrategicMoveDetailClient({ move, workspace }: Props) {
           committedVisible += visibleText;
           pendingBuffer = remaining;
 
-          const display = (committedVisible + visibleArtifactPendingText(pendingBuffer)).trimEnd();
+          const display = shapeStreamingAgentTextForSurface(
+            'programs-detail',
+            committedVisible + visibleArtifactPendingText(pendingBuffer),
+          ).trimEnd();
           updateThread((prev) =>
             prev.map((t) => (t.id === assistantTurnId ? { ...t, body: display } : t)),
           );
@@ -172,7 +176,9 @@ export function StrategicMoveDetailClient({ move, workspace }: Props) {
 
         updateThread((prev) =>
           prev.map((t) =>
-            t.id === assistantTurnId ? { ...t, body: committedVisible.trimEnd() } : t,
+            t.id === assistantTurnId
+              ? { ...t, body: shapeAgentResponseForSurface('programs-detail', committedVisible) }
+              : t,
           ),
         );
       } catch (err) {

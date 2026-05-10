@@ -19,6 +19,7 @@ import {
 } from '@/lib/tower/atlas-reasoning-trace';
 import { resolveTowerToday } from '@/lib/tower/today-resolution';
 import { selectAtlasPatterns } from '@/lib/tower/atlas-pattern-selectors';
+import { shapeAgentResponseForSurface } from '@/lib/agent/response-shape';
 import type {
   AtlasChatResponse,
   AtlasMetricExplanationRequest,
@@ -373,6 +374,10 @@ export async function runAtlasTurnDetailed(input: {
       groundingDisclosure,
     };
   }
+  response = {
+    ...response,
+    response: shapeAgentResponseForSurface('/tower', response.response),
+  };
 
   const observationId = await createAtlasObservation({
     ctx: input.ctx,
