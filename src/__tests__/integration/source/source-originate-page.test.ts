@@ -1,8 +1,13 @@
+/**
+ * @jest-environment jsdom
+ */
+
 import { readFileSync } from 'fs';
 import { resolve } from 'path';
 import { createElement } from 'react';
 import type { ReactNode } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { SourceOriginatePage } from '@/components/source/SourceOriginatePage';
 
 jest.mock('next/navigation', () => ({
@@ -12,7 +17,52 @@ jest.mock('next/navigation', () => ({
 }));
 
 jest.mock('@/components/shell/AppShell', () => ({
-  AppShell: ({ children }: { children: ReactNode }) => createElement('div', null, children),
+  AppShell: ({ children, onArtifact }: { children: ReactNode; onArtifact?: (artifact: unknown) => void }) => createElement(
+    'div',
+    null,
+    createElement('button', {
+      type: 'button',
+      'data-testid': 'emit-source-brief-progress',
+      onClick: () => onArtifact?.({
+        type: 'brief-progress',
+        fieldsTotal: 5,
+        fieldsFilled: 5,
+        fields: [
+          {
+            id: 'trigger',
+            label: 'Why now / trigger',
+            status: 'filled',
+            value: 'Contract renewal plus 20% cost-reduction target and AI operating model exploration.',
+          },
+          {
+            id: 'decisionOwner',
+            label: 'Decision owner',
+            status: 'filled',
+            value: 'Anita Krishnamurthy as CDIO with Finance and Research Operations as approvers.',
+          },
+          {
+            id: 'scopeBoundary',
+            label: 'Scope boundary',
+            status: 'filled',
+            value: 'In: AMS, cloud operations, Epic integration support. Out: deskside and security operations.',
+          },
+          {
+            id: 'valueTarget',
+            label: 'Value target',
+            status: 'filled',
+            value: '$8M run-rate savings and higher platform reliability.',
+          },
+          {
+            id: 'baselineOwner',
+            label: 'Baseline owner',
+            status: 'filled',
+            value: 'Finance owns spend baseline; ServiceNow owner owns ticket-volume extract.',
+          },
+        ],
+      }),
+    }, 'Emit brief progress'),
+    children,
+  ),
 }));
 
 const SOURCE_FILE = resolve(
@@ -45,8 +95,17 @@ describe('SourceOriginatePage (SRC-FLW-INTAKE)', () => {
     expect(html).toContain('Minimum data / baseline owner');
   });
 
-  it('renders the IT sourcing category picker with five canonical archetypes', () => {
-    expect(html).toContain('IT sourcing category');
+  it('renders capture guidance before the optional sourcing category selector', () => {
+    expect(html).toContain('Capture to move forward');
+    expect(html).toContain('Event facts');
+    expect(html).toContain('Sourcing category');
+    expect(html.indexOf('Capture to move forward')).toBeLessThan(html.indexOf('Event facts'));
+    expect(html.indexOf('Event facts')).toBeLessThan(html.indexOf('Sourcing category'));
+  });
+
+  it('renders the optional category selector with five canonical archetypes', () => {
+    expect(html).toContain('Sourcing category');
+    expect(html).toContain('Sentinel can infer this after the intake facts are clear');
     expect(html).toContain('Application Managed Services');
     expect(html).toContain('Cloud &amp; Infrastructure');
     expect(html).toContain('Data, Analytics &amp; AI');
@@ -75,6 +134,24 @@ describe('SourceOriginatePage (SRC-FLW-INTAKE)', () => {
     expect(source).toContain("artifact.type !== 'brief-progress'");
     expect(source).toContain('sourceIntakeMode: true');
     expect(source).toContain('onArtifact={handleArtifact}');
+  });
+
+  it('binds Sentinel brief-progress artifacts from chat into the right-pane capture fields', () => {
+    render(createElement(SourceOriginatePage, {
+      clientName: 'Meridian Health',
+      clientShortName: 'Meridian Health',
+      clientKey: 'meridian',
+    }));
+
+    fireEvent.click(screen.getByTestId('emit-source-brief-progress'));
+
+    expect(screen.getByDisplayValue('Contract renewal plus 20% cost-reduction target and AI operating model exploration.')).toBeTruthy();
+    expect(screen.getByDisplayValue('Anita Krishnamurthy as CDIO with Finance and Research Operations as approvers.')).toBeTruthy();
+    expect(screen.getByDisplayValue('In: AMS, cloud operations, Epic integration support. Out: deskside and security operations.')).toBeTruthy();
+    expect(screen.getByDisplayValue('$8M run-rate savings and higher platform reliability.')).toBeTruthy();
+    expect(screen.getByDisplayValue('Finance owns spend baseline; ServiceNow owner owns ticket-volume extract.')).toBeTruthy();
+    expect(screen.getAllByText('From chat')).toHaveLength(5);
+    expect(screen.getByText('5 / 5')).toBeTruthy();
   });
 
   it('wires intake submission to persisted Source event creation', () => {
