@@ -1,0 +1,317 @@
+{
+  "generatedAt": "2026-05-11T22:10:15.622Z",
+  "harness": "local Anthropic + deployed Sentinel doctrine",
+  "results": [
+    {
+      "id": "HCAI-16",
+      "question": "How should we negotiate with hyperscalers on AI commitments?",
+      "expected": "Tie commitments to specific workloads and exit ramps; avoid buying credits before data readiness and governance unblock usage.",
+      "domain": "healthcare",
+      "tenant": "Meridian Health",
+      "tenantKey": "meridian-health",
+      "anchors": "Meridian has Epic as the clinical system of record, Snowflake / Epic Cogito / dbt context in analytics, Palantir in the research/analytics estate, legacy Hadoop, research-owned on-prem NVIDIA/private-cloud infrastructure hosting local LLMs, no current enterprise Claude-on-Bedrock/Azure Foundry adoption in research, CIO interest in cloud AI, data privacy/security constraints, and interest in what Stanford/Mayo-style cloud research programs imply.",
+      "answer": "The leverage point most health systems miss is that hyperscalers need your data story as much as you need their compute. Meridian's Epic footprint, Snowflake analytics layer, and research-grade NVIDIA infrastructure give you a credible multi-cloud posture — that's negotiating currency, not just technical inventory.\n\nThree dynamics to press on:\n\n**Committed spend vs. actual consumption.** Hyperscalers push large EDP/MACCs upfront. The move is to negotiate consumption flexibility — ramp schedules tied to program milestones, not calendar quarters — so you're not holding stranded credits when pilots stall.\n\n**Model and inference economics separately.** Training commitments and inference pricing are different cost structures. Meridian's research LLM workloads (on-prem today) and future clinical inference at scale have very different GPU utilization profiles. Negotiate them as separate line items.\n\n**Data residency and BAA terms as a gate, not an afterthought.** Stanford and Mayo both learned that cloud AI contracts without ironclad PHI handling terms create downstream regulatory exposure. Lock those terms before committing spend volume — hyperscalers will concede on data terms more readily before the ink dries on a large commit.\n\nThe honest read: your strongest position is a credible private-cloud alternative. As long as Meridian's on-prem research infrastructure is viable, you have a walk-away option. The moment you signal you're all-in on one cloud, that leverage evaporates.",
+      "audit": {
+        "score": 4,
+        "verdict": "needs_work",
+        "failTerms": [],
+        "crossLeakage": [],
+        "voiceViolations": [
+          "marketing:leverage"
+        ],
+        "expectedKeywordMatches": [
+          "commitments",
+          "workloads",
+          "credits",
+          "before"
+        ],
+        "wordCount": 215
+      },
+      "elapsedMs": 9966
+    },
+    {
+      "id": "HCAI-19",
+      "question": "What should the board hear about private AI infrastructure?",
+      "expected": "It buys control and privacy for sensitive workloads, but can become an expensive island without governance, integration, and utilization discipline.",
+      "domain": "healthcare",
+      "tenant": "Meridian Health",
+      "tenantKey": "meridian-health",
+      "anchors": "Meridian has Epic as the clinical system of record, Snowflake / Epic Cogito / dbt context in analytics, Palantir in the research/analytics estate, legacy Hadoop, research-owned on-prem NVIDIA/private-cloud infrastructure hosting local LLMs, no current enterprise Claude-on-Bedrock/Azure Foundry adoption in research, CIO interest in cloud AI, data privacy/security constraints, and interest in what Stanford/Mayo-style cloud research programs imply.",
+      "answer": "Three things worth putting in front of the board:\n\n**Control is real, but maturity is the risk.** Meridian's on-prem NVIDIA stack gives genuine data-residency and PHI control advantages — that's not marketing, it's a legitimate governance argument. The risk is that private infrastructure becomes an expensive island if model lifecycle management, security patching, utilization monitoring, and enterprise integration stay immature. The board should ask: what's the GPU utilization rate, and who owns the model-ops discipline?\n\n**The cost curve is moving against on-prem at research scale.** Cloud hyperscalers are dropping inference costs faster than on-prem depreciation cycles allow. Stanford and Mayo have moved significant research AI workloads to governed cloud enclaves precisely because the economics and model access shifted. Meridian's Palantir and Snowflake footprint already creates data gravity toward hybrid — that's the realistic architecture, not pure private.\n\n**The strategic question is scope, not binary choice.** Private infrastructure is defensible for steady, sensitive, high-volume inference workloads where PHI never leaves the perimeter. It's a poor fit for frontier model access, rapid experimentation, and elastic research compute. The board framing I'd use: *what workload classes belong on-prem permanently, and what's the governed cloud pathway for the rest?*\n\nThat's the decision the board should be making — not \"cloud vs. private\" but \"which workloads, which controls, which timeline.\"",
+      "audit": {
+        "score": 5,
+        "verdict": "advisor_grade",
+        "failTerms": [],
+        "crossLeakage": [],
+        "voiceViolations": [],
+        "expectedKeywordMatches": [
+          "control",
+          "sensitive",
+          "workloads",
+          "become",
+          "expensive",
+          "island",
+          "governance",
+          "integration",
+          "utilization",
+          "discipline"
+        ],
+        "wordCount": 215
+      },
+      "elapsedMs": 9534
+    },
+    {
+      "id": "HCAI-21",
+      "question": "How do we make AI cloud spend defensible to the CFO?",
+      "expected": "Show workload-level unit economics, value owner, utilization plan, data movement cost, and decommission path for legacy platforms.",
+      "domain": "healthcare",
+      "tenant": "Meridian Health",
+      "tenantKey": "meridian-health",
+      "anchors": "Meridian has Epic as the clinical system of record, Snowflake / Epic Cogito / dbt context in analytics, Palantir in the research/analytics estate, legacy Hadoop, research-owned on-prem NVIDIA/private-cloud infrastructure hosting local LLMs, no current enterprise Claude-on-Bedrock/Azure Foundry adoption in research, CIO interest in cloud AI, data privacy/security constraints, and interest in what Stanford/Mayo-style cloud research programs imply.",
+      "answer": "The CFO question is really three questions collapsed into one: is this spend controlled, is it producing measurable return, and are we not building a cost structure we can't unwind?\n\nFor Meridian specifically, the risk is real. Research already runs on-prem NVIDIA infrastructure with local LLMs — that's a sunk-cost anchor the CFO will use to challenge incremental cloud AI spend. The defensible answer isn't \"cloud is better\"; it's \"these workloads have different economics.\"\n\nThree things make cloud AI spend CFO-proof:\n\n**Utilization gates.** Commit only what on-prem can't absorb — burst inference, foundation model API calls, and elastic training runs. Show the CFO a utilization curve, not a capacity reservation.\n\n**Value tagging at the initiative level.** Every dollar of cloud AI spend should trace to a named initiative — ambient documentation, prior auth, HCC coding — with a measurable output metric attached. Untagged spend loses every budget conversation.\n\n**Exit optionality.** Avoid proprietary vector stores and managed AI services that create egress lock-in. The CFO's real fear is a cost structure that compounds. Snowflake and Epic Cogito already anchor Meridian's data gravity; cloud AI layers should sit above that, not replace it.\n\nMy read: the CFO argument is won on tagged spend and utilization discipline, not ROI projections.",
+      "audit": {
+        "score": 4.1,
+        "verdict": "needs_work",
+        "failTerms": [],
+        "crossLeakage": [],
+        "voiceViolations": [],
+        "expectedKeywordMatches": [
+          "economics",
+          "value",
+          "utilization"
+        ],
+        "wordCount": 207
+      },
+      "elapsedMs": 9066
+    },
+    {
+      "id": "RAI-10",
+      "question": "What is the risk of hyperscaler credits for retail AI?",
+      "expected": "Credits can pull Apex into premature platform commitments before data readiness and operating adoption are solved.",
+      "domain": "retail",
+      "tenant": "Apex Retail",
+      "tenantKey": "apex-retail",
+      "anchors": "Apex has Snowflake as a retail data foundation, Salesforce Commerce, SAP, partial POS and item-location confidence issues, CDP/customer identity as a constraint for loyalty AI, and AI bets across demand sensing, merchandising, supply chain, workforce scheduling, and personalization.",
+      "answer": "The core risk is that credits mask the real unit economics. Retailers burn through AWS, Azure, or GCP credits on experimentation — model training, vector search, inference — and the P&L looks clean until the credits expire. At that point, the workload is embedded, the team is built around the platform, and the negotiating leverage is gone.\n\nThree specific traps worth naming:\n\n**Commitment lock before proof.** Credits often require a minimum committed spend in year two or three. If the AI use case hasn't cleared the value threshold by then, the organization is paying full rack rate for a capability that hasn't earned its keep.\n\n**Inference cost surprise.** Training costs get the attention; inference at retail scale — personalization calls, demand sensing refreshes, pricing updates — is where the real run-rate lands. Credits rarely cover inference proportionally.\n\n**Data egress and gravity.** Apex's Snowflake foundation creates a data gravity question. If the AI workload runs on a different hyperscaler than where the data lives, egress costs compound quickly and often aren't modeled in the credit proposal.\n\nMy read: credits are a legitimate way to fund proof-of-concept, but the governance discipline is to model the post-credit economics *before* accepting them — not after. The funding authority conversation and the cloud economics conversation need to happen in the same room.",
+      "audit": {
+        "score": 4.2,
+        "verdict": "needs_work",
+        "failTerms": [],
+        "crossLeakage": [],
+        "voiceViolations": [
+          "marketing:leverage"
+        ],
+        "expectedKeywordMatches": [
+          "credits",
+          "platform",
+          "before"
+        ],
+        "wordCount": 217
+      },
+      "elapsedMs": 9536
+    },
+    {
+      "id": "RAI-11",
+      "question": "Is Microsoft Copilot enough for retail knowledge work?",
+      "expected": "Good for productivity/M365 workflows; not enough for merchandising, demand sensing, and supply-chain decisions without tenant data and workflow-specific models.",
+      "domain": "retail",
+      "tenant": "Apex Retail",
+      "tenantKey": "apex-retail",
+      "anchors": "Apex has Snowflake as a retail data foundation, Salesforce Commerce, SAP, partial POS and item-location confidence issues, CDP/customer identity as a constraint for loyalty AI, and AI bets across demand sensing, merchandising, supply chain, workforce scheduling, and personalization.",
+      "answer": "Short answer: no, not as a standalone play.\n\nCopilot handles the generic productivity layer well — drafting, summarizing, meeting notes, search across M365. For retail knowledge workers, that's real but thin. The high-value retail knowledge work — assortment decisions, vendor negotiation prep, markdown analysis, store ops exception handling — lives in SAP, Snowflake, and your commerce stack, not in Teams and Outlook.\n\nThe structural gap is data grounding. Copilot's retail value scales with how well it can reach structured operational data. Without tight connectors into your Snowflake foundation and SAP transactional layer, it answers generic questions well and retail-specific questions poorly. That's the failure mode most specialty retailers hit in year one.\n\nThe move I'd make: treat Copilot as the M365 productivity baseline, then layer domain-specific agents — SAP Joule for finance and supply chain workflows, purpose-built copilots grounded in your Snowflake data for merchandising and demand sensing. Copilot Studio can bridge some of this, but it requires real data contract discipline to avoid hallucinated inventory or margin figures.\n\nHigh confidence on the architecture point; less sure how far Apex's SAP-Snowflake integration is today, which is the variable that determines how quickly the domain layer becomes viable.",
+      "audit": {
+        "score": 5,
+        "verdict": "advisor_grade",
+        "failTerms": [],
+        "crossLeakage": [],
+        "voiceViolations": [],
+        "expectedKeywordMatches": [
+          "productivity",
+          "workflows",
+          "merchandising",
+          "demand",
+          "sensing",
+          "decisions"
+        ],
+        "wordCount": 197
+      },
+      "elapsedMs": 9244
+    },
+    {
+      "id": "RAI-14",
+      "question": "How should we negotiate cloud commitments around peak season?",
+      "expected": "Tie commitments to measured workloads, peak elasticity, and downside protection; avoid committing based only on expected AI demand.",
+      "domain": "retail",
+      "tenant": "Apex Retail",
+      "tenantKey": "apex-retail",
+      "anchors": "Apex has Snowflake as a retail data foundation, Salesforce Commerce, SAP, partial POS and item-location confidence issues, CDP/customer identity as a constraint for loyalty AI, and AI bets across demand sensing, merchandising, supply chain, workforce scheduling, and personalization.",
+      "answer": "The core leverage point is timing asymmetry — hyperscalers want committed spend locked before Q4, which is exactly when Apex's negotiating position is strongest.\n\nMy read: don't sign or renew a committed-use contract in Q3. Sign in Q1 or Q2, after peak data is in hand, when actual consumption patterns from holiday are visible and the hyperscaler's quarterly targets create counter-pressure.\n\nThree mechanics worth structuring into any commitment:\n\n**Flex headroom clauses.** Negotiate a burst band — typically 20–30% above committed baseline — at committed pricing, not on-demand rates. Peak inference and data pipeline loads on Snowflake and Salesforce Commerce integrations will spike; you want that covered without penalty.\n\n**Consumption smoothing credits.** If peak utilization runs high but off-peak is thin, push for annual consumption averaging rather than monthly minimums. Retail seasonality makes monthly floors punitive.\n\n**Workload portability as a negotiating signal.** Even if Apex isn't actively multi-cloud, demonstrating that Snowflake workloads or inference endpoints could move creates commercial tension. Hyperscalers discount more when migration friction is visibly low.\n\nOne honest caveat: the right committed-spend level depends on Apex's current cloud run-rate and peak-to-trough ratio — I don't have that figure in your connected data, but your FinOps or infrastructure team will have the trailing 12-month actuals needed to anchor the floor.",
+      "audit": {
+        "score": 4.2,
+        "verdict": "needs_work",
+        "failTerms": [],
+        "crossLeakage": [],
+        "voiceViolations": [
+          "marketing:leverage"
+        ],
+        "expectedKeywordMatches": [
+          "workloads",
+          "demand"
+        ],
+        "wordCount": 211
+      },
+      "elapsedMs": 11027
+    },
+    {
+      "id": "RAI-16",
+      "question": "What data architecture unlocks inventory AI?",
+      "expected": "Governed item-location history, POS, inventory adjustments, product hierarchy, promo calendars, fulfillment/substitution data, and margin attribution.",
+      "domain": "retail",
+      "tenant": "Apex Retail",
+      "tenantKey": "apex-retail",
+      "anchors": "Apex has Snowflake as a retail data foundation, Salesforce Commerce, SAP, partial POS and item-location confidence issues, CDP/customer identity as a constraint for loyalty AI, and AI bets across demand sensing, merchandising, supply chain, workforce scheduling, and personalization.",
+      "answer": "Three layers have to work before inventory AI delivers anything real.\n\n**Item-location confidence first.** If the system doesn't know what's actually on the shelf versus in the back room versus in transit, every demand signal is noise. Apex's partial POS and item-location confidence issues sit directly in this gap — that's the foundational debt that makes downstream AI unreliable, not a model problem.\n\n**A unified inventory position layer second.** Snowflake can serve as the integration point, but only if POS, WMS, and supplier ASN feeds are reconciled into a single, latency-appropriate inventory record. Most retailers who've scaled inventory AI run a near-real-time position table refreshed every 15–30 minutes — batch overnight won't support replenishment or allocation decisions.\n\n**Demand signal enrichment third.** Once position is clean, the AI needs external signals — weather, events, promotional calendars, competitor pricing — joined to item-location history. That's where Snowflake's data sharing and Marketplace capabilities earn their keep.\n\nMy read: Apex's sequencing risk is skipping layer one because it's unglamorous. Retailers who've done that end up with sophisticated models running on bad inputs — the classic garbage-in problem at scale. Fix item-location confidence before funding the demand-sensing model layer, or the AI spend won't hold up to scrutiny.",
+      "audit": {
+        "score": 5,
+        "verdict": "advisor_grade",
+        "failTerms": [],
+        "crossLeakage": [],
+        "voiceViolations": [],
+        "expectedKeywordMatches": [
+          "item-location",
+          "history",
+          "inventory",
+          "promo",
+          "calendars"
+        ],
+        "wordCount": 203
+      },
+      "elapsedMs": 8969
+    },
+    {
+      "id": "RAI-17",
+      "question": "Which startup threat should a retail CIO take seriously first?",
+      "expected": "The ones embedding into the merchant/planner workflow and producing measurable margin/labor decisions, not generic AI copilots.",
+      "domain": "retail",
+      "tenant": "Apex Retail",
+      "tenantKey": "apex-retail",
+      "anchors": "Apex has Snowflake as a retail data foundation, Salesforce Commerce, SAP, partial POS and item-location confidence issues, CDP/customer identity as a constraint for loyalty AI, and AI bets across demand sensing, merchandising, supply chain, workforce scheduling, and personalization.",
+      "answer": "Demand sensing — specifically, startups that sit between your POS feed and your replenishment system and replace the statistical forecasting layer with ML models trained on external signals (weather, events, social velocity, competitor pricing).\n\nThe reason this is the first threat: it attacks the highest-value, most-defensible part of the incumbent vendor stack. Your ERP and planning suite vendors (SAP, Blue Yonder, o9) have slow model-update cycles and weak external-signal ingestion. A focused startup can show a 15–20% forecast error reduction in a 90-day pilot — and that number converts directly to inventory carrying cost and markdown reduction, which a CFO will fund.\n\nFor Apex specifically, the POS and item-location confidence issues are a compounding factor. If your demand signal is already noisy, a startup that cleans and enriches that signal before forecasting has a wedge that's hard to close with an incumbent upgrade cycle.\n\nThe second threat worth watching is AI-native pricing and promotions — same disruption pattern, but the ROI proof point takes longer because promotional lift attribution is messier than forecast accuracy.\n\nMy read: demand sensing is the one where a well-funded startup could have a signed enterprise contract with a peer retailer before your next planning-system RFP closes. That's the urgency test.",
+      "audit": {
+        "score": 4.5,
+        "verdict": "advisor_grade",
+        "failTerms": [],
+        "crossLeakage": [],
+        "voiceViolations": [],
+        "expectedKeywordMatches": [],
+        "wordCount": 205
+      },
+      "elapsedMs": 9189
+    },
+    {
+      "id": "RAI-20",
+      "question": "What should the CFO ask about cloud AI spend?",
+      "expected": "Which workloads create verified value, what unit economics are, what legacy spend retires, and who owns adoption.",
+      "domain": "retail",
+      "tenant": "Apex Retail",
+      "tenantKey": "apex-retail",
+      "anchors": "Apex has Snowflake as a retail data foundation, Salesforce Commerce, SAP, partial POS and item-location confidence issues, CDP/customer identity as a constraint for loyalty AI, and AI bets across demand sensing, merchandising, supply chain, workforce scheduling, and personalization.",
+      "answer": "Three questions cut through the noise:\n\n**1. What's the unit economics — per inference, per decision, per outcome?**\nGPU and inference costs scale fast once pilots go to production. If the team can't show cost-per-prediction tied to a business outcome (margin lift, shrink reduction, forecast accuracy), the spend is unmanaged.\n\n**2. Are we paying for capacity or for results?**\nCommitted cloud spend — reserved instances, platform minimums — often runs ahead of actual utilization. With Apex's Snowflake foundation and multiple AI workloads in flight across demand sensing, merchandising, and personalization, the question is whether those workloads are sharing infrastructure efficiently or spawning duplicate compute environments.\n\n**3. What's the decommission path for the experiments that don't scale?**\nPilot sprawl is the hidden cost. Models that don't graduate to production still carry storage, monitoring, and integration overhead. The CFO should demand a kill criteria standard — not just a funding gate on new initiatives, but an active retirement process for stalled ones.\n\nThe underlying risk at Apex's stage: cloud AI spend tends to look controlled in capex approvals but leak in opex through inference overruns, data egress, and shadow environments. The FinOps discipline — tagging AI workloads by initiative, owner, and business case — is what makes the spend defensible at the board level.",
+      "audit": {
+        "score": 3.4,
+        "verdict": "needs_work",
+        "failTerms": [],
+        "crossLeakage": [],
+        "voiceViolations": [],
+        "expectedKeywordMatches": [
+          "workloads",
+          "economics",
+          "spend"
+        ],
+        "wordCount": 212
+      },
+      "elapsedMs": 9308
+    },
+    {
+      "id": "FAI-10",
+      "question": "Which startup categories should First Capital track?",
+      "expected": "AML/fraud decision support, KYC/account opening, credit memo automation, regulatory change management, advisor copilot, collections intelligence, and model-risk tooling.",
+      "domain": "financial_services",
+      "tenant": "First Capital",
+      "tenantKey": "first-capital",
+      "anchors": "First Capital operates in a regulated financial-services environment where SR 11-7/model risk, OCC-style scrutiny, AML/fraud, digital account opening, credit risk, banker copilots, auditability, explainability, and data lineage matter. Avoid inventing exact assets, findings, vendors, or market-share claims.",
+      "answer": "Four categories warrant active tracking:\n\n**Fraud & AML** — Real-time graph-based transaction monitoring is displacing batch rules engines. The disruption mechanism is latency plus network-effect detection; SR 11-7 compliance is table stakes for any vendor here.\n\n**Credit memo & underwriting automation** — LLM-assisted spreading and memo generation is compressing analyst time materially. The model-risk question (explainability, challenger models, audit trail) is the gating factor for regulated adoption.\n\n**Banker / advisor copilots** — CRM-embedded assistants that surface next-best-action, call prep, and compliance guardrails. Adoption risk is the failure mode, not the technology; bankers reject tools that feel like surveillance.\n\n**KYC / digital onboarding** — Document intelligence and identity orchestration are collapsing onboarding friction. Vendor differentiation is on false-positive rates and OCC/FinCEN audit readiness, not feature lists.\n\nOne category to watch but not yet act on: **regulatory change management** — LLM-assisted policy parsing is early but directionally real for a compliance-heavy institution.\n\nThe screening lens for all five: does the vendor have a credible SR 11-7 / model risk story, or are they selling to fintechs and hoping to cross over? That gap separates trackable from fundable.",
+      "audit": {
+        "score": 5,
+        "verdict": "advisor_grade",
+        "failTerms": [],
+        "crossLeakage": [],
+        "voiceViolations": [],
+        "expectedKeywordMatches": [
+          "fraud",
+          "credit",
+          "automation",
+          "regulatory",
+          "change",
+          "management",
+          "advisor",
+          "copilot",
+          "intelligence",
+          "model-risk"
+        ],
+        "wordCount": 185
+      },
+      "elapsedMs": 9775
+    },
+    {
+      "id": "FAI-22",
+      "question": "How should we price AI business cases in banking?",
+      "expected": "Use risk-adjusted value: cost saved, losses avoided, cycle time reduced, controls improved, and regulatory risk not increased.",
+      "domain": "financial_services",
+      "tenant": "First Capital",
+      "tenantKey": "first-capital",
+      "anchors": "First Capital operates in a regulated financial-services environment where SR 11-7/model risk, OCC-style scrutiny, AML/fraud, digital account opening, credit risk, banker copilots, auditability, explainability, and data lineage matter. Avoid inventing exact assets, findings, vendors, or market-share claims.",
+      "answer": "The failure mode I see most often is treating AI like a capital project — single IRR, single cost estimate, single benefit line. That framing breaks because AI value accrues in layers and the cost structure is non-linear.\n\nThe right pricing architecture has three components:\n\n**Infrastructure and run cost** — GPU/inference spend, platform licensing, data pipeline overhead. These scale with usage in ways traditional software doesn't; model the utilization curve, not just the license fee.\n\n**Model risk and compliance overhead** — SR 11-7 validation, ongoing monitoring, documentation, and audit readiness are real costs that most first-pass business cases omit entirely. In a regulated environment like First Capital's, this is often 20–40% of total program cost once you account for MRM team time and external review.\n\n**Benefit attribution** — the honest discipline here is separating *deflection* (cost avoided), *conversion* (revenue enabled), and *risk reduction* (loss avoided). Each has a different confidence level and a different time horizon. Blend them into one number and the CFO will rightly discount the whole case.\n\nMy read: the cases that survive CFO scrutiny at peer banks are the ones that isolate one benefit type, show a clean counterfactual, and carry a conservative inference-cost assumption. Banker copilot and fraud/AML use cases tend to price most cleanly because the counterfactual — manual review hours or fraud loss rate — is already measured.",
+      "audit": {
+        "score": 4.5,
+        "verdict": "advisor_grade",
+        "failTerms": [],
+        "crossLeakage": [],
+        "voiceViolations": [
+          "word_cap:max 220 words"
+        ],
+        "expectedKeywordMatches": [
+          "value",
+          "avoided"
+        ],
+        "wordCount": 225
+      },
+      "elapsedMs": 10402
+    },
+    {
+      "id": "FAI-24",
+      "question": "How do we avoid AI vendor lock-in?",
+      "expected": "Own data, prompts/evals, logs, retrieval indexes, model-routing policies, and exit rights. Do not let a vendor own both evidence and decision workflow.",
+      "domain": "financial_services",
+      "tenant": "First Capital",
+      "tenantKey": "first-capital",
+      "anchors": "First Capital operates in a regulated financial-services environment where SR 11-7/model risk, OCC-style scrutiny, AML/fraud, digital account opening, credit risk, banker copilots, auditability, explainability, and data lineage matter. Avoid inventing exact assets, findings, vendors, or market-share claims.",
+      "answer": "The real lock-in risk isn't the model — it's the data pipeline and the workflow integration layer sitting on top of it.\n\nThree places where lock-in actually bites in financial services:\n\n**Data gravity.** If your feature store, training data, and inference logs all live inside one vendor's managed environment, migration cost becomes prohibitive fast. The move is to own your data contracts and lineage layer independently — that matters especially given SR 11-7 audit requirements on model inputs.\n\n**Workflow embedding.** Copilot tools wired directly into banker or underwriter workflows create switching costs that dwarf licensing fees. Abstraction layers between the AI capability and the workflow surface are worth the engineering overhead.\n\n**Evaluation and monitoring.** If the vendor owns your model performance benchmarks and drift detection, you can't credibly challenge their outputs — which is a model risk governance problem, not just a commercial one.\n\nThe structural answer: standardize on controls, data contracts, audit logs, and entitlement — let models and vendors vary underneath. Governed plurality beats false uniformity.\n\nOne conditional: if First Capital is deep into a hyperscaler ecosystem (Azure/OpenAI adjacency is common in banking), the commercial leverage from consolidation may outweigh portability risk on non-critical workloads. That's a workload-by-workload call, not a blanket policy.",
+      "audit": {
+        "score": 3.5,
+        "verdict": "needs_work",
+        "failTerms": [],
+        "crossLeakage": [],
+        "voiceViolations": [
+          "marketing:leverage"
+        ],
+        "expectedKeywordMatches": [
+          "vendor",
+          "workflow"
+        ],
+        "wordCount": 205
+      },
+      "elapsedMs": 9586
+    }
+  ]
+}

@@ -1,0 +1,256 @@
+{
+  "generatedAt": "2026-05-11T21:26:19.203Z",
+  "harness": "local Anthropic + deployed Sentinel doctrine",
+  "results": [
+    {
+      "id": "HC-12",
+      "question": "Where does payer-contracting expertise fit?",
+      "expected": "It should shape which HCC and quality gaps matter most by contract; without payer-contracting input, the model optimizes clinical completeness without understanding value-based economics.",
+      "domain": "healthcare",
+      "tenant": "Meridian Health",
+      "tenantKey": "meridian-health",
+      "anchors": "Meridian Health is an integrated delivery network with Epic as the clinical system of record, population health and ambient documentation already in the AI portfolio, HCC suspect capture at 72%, annual HCC completeness near 78%, RAF leakage estimated at 8-12%, Palantir in the research/analytics estate, legacy Hadoop still present, a research-owned on-prem NVIDIA/private-cloud stack hosting local LLMs, cloud AI interest from the CIO, and data privacy/security as a real constraint.",
+      "answer": "Payer-contracting expertise sits at the intersection of three functions, and the ownership question matters more than most organizations admit.\n\n**Outcome ownership** lives in Finance and the CFO's office — contract terms translate directly into net revenue, RAF adjustments, and risk-corridor exposure. At Meridian, with RAF leakage estimated at 8–12%, the financial stakes of contracting decisions are material enough that the CFO needs a direct line to whoever is negotiating risk-based terms.\n\n**Evidence and workflow ownership** belongs to Revenue Cycle and Population Health jointly. Revenue Cycle holds the claims and remittance data that prove or disprove contract performance; Population Health holds the HCC capture rates (Meridian is at 72% suspect capture, 78% completeness) that determine how value-based contracts actually pay out.\n\n**Executive validation** is the CMIO or CMO's role — clinical program design has to be legible to payers, and the physician leadership has to stand behind the quality metrics embedded in the contract.\n\nThe failure mode I see most often: contracting expertise sits in a legal or managed-care silo that doesn't have a live feed from Revenue Cycle analytics or Population Health performance data. The contract gets signed against assumptions that the operational data would immediately contradict. At Meridian's RAF leakage level, that gap is a direct revenue problem, not just a governance one.",
+      "audit": {
+        "score": 4.3,
+        "verdict": "advisor_grade",
+        "failTerms": [],
+        "crossLeakage": [],
+        "voiceViolations": [],
+        "expectedKeywordMatches": [
+          "quality",
+          "matter",
+          "contract",
+          "payer-contracting",
+          "clinical",
+          "completeness",
+          "value-based"
+        ],
+        "wordCount": 214
+      },
+      "elapsedMs": 9258
+    },
+    {
+      "id": "HC-17",
+      "question": "How do we avoid physician backlash?",
+      "expected": "Keep the prompt burden low, show only high-confidence suspects, explain why each suspect matters, and build a fast reject path so clinicians do not feel managed by a black box.",
+      "domain": "healthcare",
+      "tenant": "Meridian Health",
+      "tenantKey": "meridian-health",
+      "anchors": "Meridian Health is an integrated delivery network with Epic as the clinical system of record, population health and ambient documentation already in the AI portfolio, HCC suspect capture at 72%, annual HCC completeness near 78%, RAF leakage estimated at 8-12%, Palantir in the research/analytics estate, legacy Hadoop still present, a research-owned on-prem NVIDIA/private-cloud stack hosting local LLMs, cloud AI interest from the CIO, and data privacy/security as a real constraint.",
+      "answer": "The failure mode is almost always the same: physicians feel surveilled, not supported.\n\nThree design principles that hold across health system AI deployments:\n\n**Reduce burden, don't add it.** If the AI creates a new click, a new review queue, or a new documentation step, it will be rejected regardless of accuracy. Ambient documentation (already in Meridian's portfolio) works because it removes burden. HCC suspect capture only works if the suggestion surfaces inside the existing Epic workflow — not in a separate tool.\n\n**Show only high-confidence prompts.** Flooding physicians with low-confidence suggestions destroys trust fast and permanently. For HCC capture specifically, with suspect rates at 72%, the right posture is surfacing the highest-confidence gaps only, with a one-click accept and a fast reject/feedback loop. Volume discipline matters more than recall at launch.\n\n**Explain the clinical reason, not the business reason.** \"This patient likely has undiagnosed CKD Stage 3 based on lab trends\" lands differently than \"RAF score improvement.\" Physicians respond to clinical logic. The revenue framing belongs in the CFO conversation, not the EHR alert.\n\nThe governance signal that matters: physician champions who co-designed the workflow, not just physician advisors who were consulted. That distinction separates the deployments that scaled from the ones that stalled at pilot.",
+      "audit": {
+        "score": 4.3,
+        "verdict": "advisor_grade",
+        "failTerms": [],
+        "crossLeakage": [],
+        "voiceViolations": [],
+        "expectedKeywordMatches": [
+          "prompt",
+          "burden",
+          "high-confidence",
+          "explain",
+          "suspect",
+          "matters",
+          "reject"
+        ],
+        "wordCount": 206
+      },
+      "elapsedMs": 9512
+    },
+    {
+      "id": "HC-36",
+      "question": "What is the right next step for ambient documentation?",
+      "expected": "Pick two specialties with different complexity, run controlled validation, measure note quality and clinician time saved, and only then expand.",
+      "domain": "healthcare",
+      "tenant": "Meridian Health",
+      "tenantKey": "meridian-health",
+      "anchors": "Meridian Health is an integrated delivery network with Epic as the clinical system of record, population health and ambient documentation already in the AI portfolio, HCC suspect capture at 72%, annual HCC completeness near 78%, RAF leakage estimated at 8-12%, Palantir in the research/analytics estate, legacy Hadoop still present, a research-owned on-prem NVIDIA/private-cloud stack hosting local LLMs, cloud AI interest from the CIO, and data privacy/security as a real constraint.",
+      "answer": "Ambient documentation at Meridian is past the \"does it work?\" question — the real decision now is scale governance.\n\nThe move I would make: shift the conversation from pilot expansion to workflow integration depth. Most health systems that stall here do so because they added more physicians without solving the downstream problem — notes are faster to generate but still require heavy attestation editing, which erodes the time-savings case and physician satisfaction scores.\n\nThree things worth pressure-testing with your team:\n\n**Attestation edit rate** — if physicians are editing more than 30-40% of generated content, the model needs retraining on your Epic note corpus before broader rollout.\n\n**Specialty coverage** — ambient performs unevenly across specialties; surgical and procedural notes lag primary care significantly.\n\n**Downstream data quality** — ambient-generated notes feeding HCC capture is a real opportunity given Meridian's 72% suspect capture rate, but only if structured data extraction from those notes is validated. Unvalidated ambient output flowing into your RAF workflow could widen the leakage gap, not close it.\n\nThe governance question that belongs in your next steering conversation: who owns ambient note quality — Clinical Informatics, the CMO's office, or the AI Platform team? That ownership gap is where scale programs break.\n\nRequest a memo if you want the full scaling framework.",
+      "audit": {
+        "score": 4.5,
+        "verdict": "advisor_grade",
+        "failTerms": [],
+        "crossLeakage": [],
+        "voiceViolations": [],
+        "expectedKeywordMatches": [
+          "specialties",
+          "quality"
+        ],
+        "wordCount": 212
+      },
+      "elapsedMs": 9729
+    },
+    {
+      "id": "HC-40",
+      "question": "How should Meridian govern clinical AI safety?",
+      "expected": "Establish tiered governance: low-risk admin AI, clinician-assist AI, and patient-impacting AI should have different review, monitoring, and escalation rules.",
+      "domain": "healthcare",
+      "tenant": "Meridian Health",
+      "tenantKey": "meridian-health",
+      "anchors": "Meridian Health is an integrated delivery network with Epic as the clinical system of record, population health and ambient documentation already in the AI portfolio, HCC suspect capture at 72%, annual HCC completeness near 78%, RAF leakage estimated at 8-12%, Palantir in the research/analytics estate, legacy Hadoop still present, a research-owned on-prem NVIDIA/private-cloud stack hosting local LLMs, cloud AI interest from the CIO, and data privacy/security as a real constraint.",
+      "answer": "Clinical AI safety governance at Meridian needs three interlocking layers, and the sequencing matters.\n\n**Model Risk Management comes first.** Every clinical model — including the ambient documentation and HCC suspect capture tools already live — needs a pre-deployment validation record: intended use, performance on Meridian's patient population, known failure modes, and a named clinical owner accountable for drift. With HCC completeness at 78% and RAF leakage still estimated at 8–12%, there's already evidence that model performance gaps have financial consequence. That's the business case for rigor.\n\n**A standing AI Safety Review Board is the structural answer.** Composition: CMO or CMIO as chair, CIO, Chief Compliance Officer, and rotating clinical representation. Scope: any model that influences a clinical decision or a risk-adjusted revenue calculation. This board sets the kill criteria — not just the launch criteria.\n\n**Continuous monitoring closes the loop.** Post-deployment, models need performance telemetry tied back to Epic and Palantir analytics. Drift thresholds should trigger automatic escalation to the Review Board, not just a dashboard nobody watches.\n\nThe governance gap I'd flag at Meridian specifically: research-owned models running on the on-prem NVIDIA stack likely sit outside whatever IT governance exists today. That's the shadow-AI risk. The Review Board's authority needs to explicitly cover research-originated models before they touch clinical workflows.",
+      "audit": {
+        "score": 5,
+        "verdict": "advisor_grade",
+        "failTerms": [],
+        "crossLeakage": [],
+        "voiceViolations": [],
+        "expectedKeywordMatches": [
+          "governance",
+          "review",
+          "monitoring",
+          "escalation"
+        ],
+        "wordCount": 211
+      },
+      "elapsedMs": 9269
+    },
+    {
+      "id": "HC-49",
+      "question": "What should Anita ask her team tomorrow?",
+      "expected": "Ask which payer contracts create the largest preventable leakage, which workflows block action, and which data sources are trusted enough to drive a clinical or financial intervention.",
+      "domain": "healthcare",
+      "tenant": "Meridian Health",
+      "tenantKey": "meridian-health",
+      "anchors": "Meridian Health is an integrated delivery network with Epic as the clinical system of record, population health and ambient documentation already in the AI portfolio, HCC suspect capture at 72%, annual HCC completeness near 78%, RAF leakage estimated at 8-12%, Palantir in the research/analytics estate, legacy Hadoop still present, a research-owned on-prem NVIDIA/private-cloud stack hosting local LLMs, cloud AI interest from the CIO, and data privacy/security as a real constraint.",
+      "answer": "Need one more anchor before this lands well: **who is Anita, and what's her role at Meridian Health?** The right three-to-five questions depend entirely on whether she's the CMO pushing HCC completeness, the CIO navigating cloud-vs-on-prem AI architecture, the CFO sizing RAF leakage recovery, or someone else.\n\nThat said, if Anita is the **CIO** — which is the most natural read given the cloud AI interest and the on-prem/Palantir/Hadoop tension in your estate — here's my read on the five questions worth asking tomorrow:\n\n1. **What's the data-readiness state of the HCC suspect pipeline?** 72% capture with 8–12% RAF leakage is a funded problem; the question is whether the data substrate can support a closed-loop model or just a flag-and-review workflow.\n2. **Who owns the NVIDIA stack's model governance?** Research-owned infrastructure hosting production-adjacent LLMs is a risk posture question, not just an architecture one.\n3. **Where does Hadoop sit in the deprecation sequence?** Legacy Hadoop is a drag on every downstream AI initiative — knowing the timeline shapes what's buildable in FY26.\n4. **What's the cloud AI boundary the privacy/security team will actually sign off on?** Interest isn't a policy.\n5. **Which AI initiative has a named clinical sponsor with budget authority?** Sponsorship without budget is theater.\n\nConfirm Anita's role and I'll sharpen these considerably.",
+      "audit": {
+        "score": 4.5,
+        "verdict": "advisor_grade",
+        "failTerms": [],
+        "crossLeakage": [],
+        "voiceViolations": [],
+        "expectedKeywordMatches": [
+          "leakage",
+          "clinical"
+        ],
+        "wordCount": 215
+      },
+      "elapsedMs": 10083
+    },
+    {
+      "id": "RT-17",
+      "question": "Should route optimization be first?",
+      "expected": "Only if transportation spend and service-level failures are the binding constraint; for most retailers, route optimization is downstream of inventory placement and demand accuracy.",
+      "domain": "retail",
+      "tenant": "Apex Retail",
+      "tenantKey": "apex-retail",
+      "anchors": "Apex Retail is a multi-banner retailer with merchandising, supply-chain, store operations, loyalty, and customer identity pressure. Known anchors include Snowflake as an analytics foundation, Salesforce Commerce/SAP footprint, partial POS and item-location confidence issues, CDP/customer identity as a prerequisite for loyalty AI, demand sensing and workforce scheduling as visible bets, and merchandising margin/store productivity/customer growth as value pools.",
+      "answer": "My read: probably not first, but it depends on one thing — whether Apex has clean item-location and inventory position data today.\n\nRoute optimization is a strong value pool in supply chain, but it sits downstream of demand sensing. If demand signals are noisy (and Apex's partial POS and item-location confidence issues suggest they are), optimized routes will move the wrong inventory faster. That's a cost, not a saving.\n\nThe sequencing logic I'd apply: demand sensing → inventory positioning → route optimization. Demand sensing also shares the same Snowflake foundation Apex is already building on, which makes it the lower-friction first bet.\n\nRoute optimization also tends to require clean network-topology data and carrier/DC constraints loaded into the model — that's a 3-6 month data-readiness lift even when the algorithm is ready. Demand sensing can show value in a single banner pilot in roughly half that time.\n\nThe one condition that flips this: if Apex's primary pain is carrier cost or DC utilization (not forecast accuracy), route optimization moves up. Ask the supply chain lead which KPI is bleeding most — that answer determines sequencing more than any framework does.\n\nHigh confidence on the demand sensing → route sequencing as the default. Less sure on Apex's current DC/carrier cost pressure without seeing the supply chain KPI stack.",
+      "audit": {
+        "score": 5,
+        "verdict": "advisor_grade",
+        "failTerms": [],
+        "crossLeakage": [],
+        "voiceViolations": [],
+        "expectedKeywordMatches": [
+          "constraint",
+          "route",
+          "optimization",
+          "downstream",
+          "inventory",
+          "demand",
+          "accuracy"
+        ],
+        "wordCount": 216
+      },
+      "elapsedMs": 9829
+    },
+    {
+      "id": "RT-35",
+      "question": "What should the first executive steering meeting decide?",
+      "expected": "Decide the value pool, sponsor pair, pilot categories, data-readiness threshold, and kill criteria.",
+      "domain": "retail",
+      "tenant": "Apex Retail",
+      "tenantKey": "apex-retail",
+      "anchors": "Apex Retail is a multi-banner retailer with merchandising, supply-chain, store operations, loyalty, and customer identity pressure. Known anchors include Snowflake as an analytics foundation, Salesforce Commerce/SAP footprint, partial POS and item-location confidence issues, CDP/customer identity as a prerequisite for loyalty AI, demand sensing and workforce scheduling as visible bets, and merchandising margin/store productivity/customer growth as value pools.",
+      "answer": "Five decisions that meeting must lock before anyone leaves the room:\n\n**1. Value pool owner.** Merchandising margin, store productivity, or customer growth — pick one as the primary bet. Apex's CDP and customer identity gaps make customer growth the highest-risk starting point; merchandising or workforce scheduling carry cleaner data paths.\n\n**2. Sponsor pair.** One business executive who owns the outcome P&L, one technology executive who owns delivery. Without both named, the initiative drifts into IT project territory.\n\n**3. Pilot scope and kill criteria.** A bounded geography or banner, a 90-day evidence window, and the specific metric that triggers a stop decision. High confidence that pilots without pre-agreed kill criteria never get killed.\n\n**4. Data-readiness threshold.** Given Apex's known item-location confidence issues and partial POS integrity, the steering group needs to agree on the minimum data quality bar before a model goes to production — not after the first bad output surfaces.\n\n**5. Evidence owner.** Who produces the measurement that the next steering meeting evaluates? If that role isn't named today, the second meeting will relitigate the first.\n\nThe sequencing question — demand sensing vs. workforce scheduling vs. loyalty AI — is the one I'd hold for decision two, once the sponsor pair has reviewed the data-readiness picture against each value pool.",
+      "audit": {
+        "score": 5,
+        "verdict": "advisor_grade",
+        "failTerms": [],
+        "crossLeakage": [],
+        "voiceViolations": [],
+        "expectedKeywordMatches": [
+          "value",
+          "sponsor",
+          "pilot",
+          "data-readiness",
+          "threshold",
+          "criteria"
+        ],
+        "wordCount": 211
+      },
+      "elapsedMs": 8805
+    },
+    {
+      "id": "RT-50",
+      "question": "What should Carlos ask his team tomorrow?",
+      "expected": "Ask which value pool is most urgent, which data signals are trusted, who owns adoption, and what decision will change because the AI exists.",
+      "domain": "retail",
+      "tenant": "Apex Retail",
+      "tenantKey": "apex-retail",
+      "anchors": "Apex Retail is a multi-banner retailer with merchandising, supply-chain, store operations, loyalty, and customer identity pressure. Known anchors include Snowflake as an analytics foundation, Salesforce Commerce/SAP footprint, partial POS and item-location confidence issues, CDP/customer identity as a prerequisite for loyalty AI, demand sensing and workforce scheduling as visible bets, and merchandising margin/store productivity/customer growth as value pools.",
+      "answer": "Three questions worth putting on the table:\n\n**1. \"Where is our customer identity confidence today?\"**\nCDP and loyalty AI both collapse without resolved identity. If the team can't give a match-rate number and a data-quality owner, that's the first unblocked dependency to name.\n\n**2. \"Which of our active AI bets has a live feedback loop — and which is running on hope?\"**\nDemand sensing and workforce scheduling are visible bets at Apex. The distinction that matters is whether there's a closed loop between model output and a measurable operational decision. Without that, the initiative is a pilot in permanent adolescence.\n\n**3. \"What does our Snowflake data layer actually cover on item-location confidence?\"**\nMerchandising margin is the highest-value pool, but assortment and allocation AI are only as good as the item-location signal underneath. Partial POS and item-location gaps are a known risk here — the team should be able to say which banners are clean and which aren't.\n\nBonus fourth if Carlos wants to push: **\"Who owns the evidence, not just the model?\"** Every initiative needs a named business owner accountable for the outcome metric, not just an IT owner accountable for deployment. That distinction separates programs that scale from programs that stall.",
+      "audit": {
+        "score": 3.8,
+        "verdict": "needs_work",
+        "failTerms": [],
+        "crossLeakage": [],
+        "voiceViolations": [],
+        "expectedKeywordMatches": [
+          "value",
+          "decision"
+        ],
+        "wordCount": 202
+      },
+      "elapsedMs": 8601
+    },
+    {
+      "id": "FS-49",
+      "question": "What should a skeptical regulator hear?",
+      "expected": "They should hear that AI is human-supervised, documented, validated, monitored, explainable, and constrained by approved policies.",
+      "domain": "financial_services",
+      "tenant": "First Capital",
+      "tenantKey": "first-capital",
+      "anchors": "First Capital is a financial-services tenant where model-risk governance, AML/fraud, digital account opening, payments modernization, credit risk, advisor/banker copilots, auditability, and regulatory controls matter. Use SR 11-7/model validation, OCC-style expectations, KYC/AML, fair lending, explainability, and human review when relevant. Do not invent exact assets, findings, or named executives unless connected data provides them.",
+      "answer": "A skeptical regulator wants three things, and they want them in this order.\n\n**Governance before capability.** Show the model inventory, validation lineage, and SR 11-7 compliance posture before you demo anything. Regulators who see a capability pitch first assume controls are an afterthought — because they usually are.\n\n**Human review is structural, not optional.** Every high-stakes output — credit decisions, AML alerts, fraud flags — has a named human reviewer with documented override authority. Not a checkbox; a workflow with an audit trail.\n\n**Explainability at the decision level.** \"The model said so\" is not acceptable for fair lending or adverse action. The examiner wants to see that the explanation a customer receives maps to the actual model logic, not a post-hoc rationalization.\n\nTwo things that tend to backfire: leading with accuracy metrics (regulators care about failure modes, not average performance), and describing AI as reducing human judgment (frame it as augmenting human review with documented escalation paths).\n\nMy read is that the strongest posture for First Capital is a model risk governance briefing that leads with the validation framework, names the MRM function's independence from the business line, and shows one live example — ideally in credit or AML — where the human-review loop caught something the model missed. That story lands better than any accuracy number.",
+      "audit": {
+        "score": 4.5,
+        "verdict": "advisor_grade",
+        "failTerms": [],
+        "crossLeakage": [],
+        "voiceViolations": [],
+        "expectedKeywordMatches": [
+          "documented"
+        ],
+        "wordCount": 217
+      },
+      "elapsedMs": 8882
+    },
+    {
+      "id": "FS-50",
+      "question": "What should Patricia ask her team tomorrow?",
+      "expected": "Ask which AI use cases touch regulated decisions, where model inventory is incomplete, which data sources are authoritative, and which workflow has measurable value without unacceptable risk.",
+      "domain": "financial_services",
+      "tenant": "First Capital",
+      "tenantKey": "first-capital",
+      "anchors": "First Capital is a financial-services tenant where model-risk governance, AML/fraud, digital account opening, payments modernization, credit risk, advisor/banker copilots, auditability, and regulatory controls matter. Use SR 11-7/model validation, OCC-style expectations, KYC/AML, fair lending, explainability, and human review when relevant. Do not invent exact assets, findings, or named executives unless connected data provides them.",
+      "answer": "Without knowing Patricia's specific role or current priorities in your connected data, I'll frame this for a senior financial-services AI leader — adjust if her scope is narrower.\n\nThree questions worth putting on the table:\n\n**1. Where are we on model validation backlogs?**\nSR 11-7 compliance gaps compound fast. If any production AI models are running without completed validation, that's the first risk to surface.\n\n**2. Which initiatives have a named evidence owner — and which don't?**\nThe most common failure mode isn't technical; it's that no one owns the business outcome metric. High confidence this is true across the active portfolio.\n\n**3. What's our human-review coverage on high-stakes decisions?**\nCredit, AML flags, account opening denials — regulators expect documented human-in-the-loop checkpoints. If the team can't answer this in under five minutes, the governance design needs attention.\n\nBonus fourth if Patricia is on the AI or data side: **Are our explainability outputs actually usable by the bankers and compliance officers receiving them?** Fair lending and OCC exam readiness both hinge on this, and the gap between \"model produces an explanation\" and \"examiner accepts the explanation\" is wider than most teams expect.\n\nI don't have Patricia's org position in your connected data — if you share her role, I can sharpen these considerably.",
+      "audit": {
+        "score": 4.5,
+        "verdict": "advisor_grade",
+        "failTerms": [],
+        "crossLeakage": [],
+        "voiceViolations": [],
+        "expectedKeywordMatches": [
+          "decisions",
+          "model"
+        ],
+        "wordCount": 212
+      },
+      "elapsedMs": 9244
+    }
+  ]
+}

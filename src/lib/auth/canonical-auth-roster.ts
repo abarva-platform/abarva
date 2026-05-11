@@ -13,12 +13,13 @@
 // tenant-roles.ts and signs in through normal Clerk flows, not the
 // demo OTP picker.
 //
-// Persona binding (display name maintained in DemoCodeSignIn.tsx and
-// in the Clerk user metadata seeded by the Wave 2 provisioning script):
+// Persona binding (display name maintained in cxo-personas.ts and
+// in the Clerk user metadata seeded by the CXO provisioning script):
 //
 //   cio@apex-retail.example.com      → Carlos Rivera (CIO · Apex Retail)
 //   cdo@apex-retail.example.com      → Lynne Stratham (CDO · Apex Retail)
 //   cdio@meridian-health.example.com → Dr. Anita Krishnamurthy (CDIO · Meridian)
+//   cdao@meridian-health.example.com → Kiran Rao (CDAO · Meridian)
 //   cio@firstcapital.example.com     → Patricia Huang (CIO · First Capital)
 
 export const CANONICAL_AUTH_EMAILS = [
@@ -28,6 +29,7 @@ export const CANONICAL_AUTH_EMAILS = [
 
   // Meridian Health System
   'cdio@meridian-health.example.com', // Dr. Anita Krishnamurthy · CDIO
+  'cdao@meridian-health.example.com', // Kiran Rao · Chief Data and Analytics Officer
 
   // First Capital
   'cio@firstcapital.example.com', // Patricia Huang · CIO
@@ -37,6 +39,7 @@ export const CANONICAL_CLIENT_ADMIN_EMAILS = [
   'cio@apex-retail.example.com',
   'cdo@apex-retail.example.com',
   'cdio@meridian-health.example.com',
+  'cdao@meridian-health.example.com',
   'cio@firstcapital.example.com',
 ] as const;
 

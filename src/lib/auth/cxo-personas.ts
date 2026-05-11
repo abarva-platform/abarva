@@ -1,4 +1,4 @@
-// Single source of truth for the four canonical CXO demo personas.
+// Single source of truth for the canonical CXO demo personas.
 //
 // Consumed by:
 //   - components/auth/DemoCodeSignIn.tsx (sign-in identity cards)
@@ -25,7 +25,7 @@ export interface CxoPersona {
   personaName: string;
   /** Two-letter monogram (persona initials, ignoring honorifics). */
   monogram: string;
-  /** Short title abbreviation: CIO · CDO · CDIO. */
+  /** Short title abbreviation: CIO · CDO · CDIO · CDAO. */
   titleShort: string;
   /** Full title: "Chief Information Officer" etc. */
   titleFull: string;
@@ -182,6 +182,27 @@ export const CXO_PERSONAS: ReadonlyArray<CxoPersona> = [
       "Sarah runs hospital operations across California and Hawaii (30 hospitals, 280 clinics, ~50,000 clinical staff) and partners with Dr. Marcus Reid (CPE) on the medical group. Her organization carries the bulk of Meridian's operating cost — clinical labor, allied health, surgical services, ED, ambulatory, nursing operations under CNO Robert Chen. FY2026 priorities: nursing turnover from 22% to 14%, traveler-ratio reduction, ED throughput from 4.2hr to 2hr, OR utilization from 68% to 78%. She is partnered closely with David Park on the labor-cost-of-care narrative and with Anita Krishnamurthy on ambient documentation and clinical AI rollout.",
     workspaceTeaser:
       'Your workspace shows the hospital ops dashboard, nursing operations under Goldman-Ekam, the ED/Surgical/Ambulatory function capacity, and the clinical AI use cases under AI Governance Council review (chaired by CMIO Wexler).',
+  },
+  {
+    slug: 'cdao-meridian-health',
+    email: 'cdao@meridian-health.example.com',
+    shortLabel: 'cdao@meridian-health',
+    firstName: 'Kiran',
+    lastName: 'Rao',
+    personaName: 'Kiran Rao',
+    monogram: 'KR',
+    titleShort: 'CDAO',
+    titleFull: 'Chief Data and Analytics Officer',
+    tenant: 'Meridian Health System',
+    clientKey: 'meridian',
+    tenantKey: 'meridian-health',
+    graphNodeId: 'person:meridian:kiran-rao',
+    monogramBg: '#0E8A65',
+    bioShort: 'CDAO. Owns enterprise analytics, data governance, and AI-ready data products.',
+    bioLong:
+      'Kiran is Meridian Health System\'s Chief Data and Analytics Officer. The role owns enterprise analytics, data governance, clinical and plan analytics standards, Snowflake/Epic Cogito/dbt operating maturity, and the data-product foundation behind population health, HCC, ambient documentation, and research AI. Kiran sits at the intersection of Anita Krishnamurthy\'s cloud-AI agenda, Population Health economics, and the research group\'s Palantir / private-GPU estate.',
+    workspaceTeaser:
+      'Your workspace shows Meridian\'s analytics foundation, Snowflake / Epic Cogito / dbt posture, Palantir and research-private-cloud context, HCC / RAF leakage signals, and the data-readiness questions behind Population Health AI and ambient documentation scale-up.',
   },
   {
     slug: 'cio-firstcapital',
