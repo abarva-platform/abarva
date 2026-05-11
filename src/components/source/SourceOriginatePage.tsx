@@ -120,7 +120,7 @@ const SOURCE_CATEGORIES: SourceCategory[] = [
   },
 ];
 
-function CategoryCard({
+function CategoryOption({
   category,
   selected,
   onSelect,
@@ -134,42 +134,77 @@ function CategoryCard({
       type="button"
       onClick={onSelect}
       style={{
-        display: 'flex',
-        flexDirection: 'column',
-        gap: 6,
-        padding: '10px 11px 9px',
+        display: 'grid',
+        gridTemplateColumns: '1fr auto',
+        alignItems: 'center',
+        gap: 8,
+        minHeight: 34,
+        padding: '8px 10px',
         background: selected ? SHELL.INK : SHELL.CARD_WHITE,
-        border: `1.5px solid ${selected ? SHELL.INK : SHELL.CARD_LINE}`,
-        borderRadius: 10,
+        border: `1px solid ${selected ? SHELL.INK : SHELL.CARD_LINE}`,
+        borderRadius: 8,
         cursor: 'pointer',
         textAlign: 'left',
       }}
       aria-pressed={selected}
     >
-      <div style={{ fontFamily: SHELL.SANS, fontSize: 12, fontWeight: 700, color: selected ? SHELL.CARD_WHITE : SHELL.INK, lineHeight: 1.3 }}>
-        {category.label}
+      <div>
+        <div style={{ fontFamily: SHELL.SANS, fontSize: 12, fontWeight: 700, color: selected ? SHELL.CARD_WHITE : SHELL.INK, lineHeight: 1.25 }}>
+          {category.label}
+        </div>
+        <div style={{ fontFamily: SHELL.SANS, fontSize: 10.5, lineHeight: 1.35, color: selected ? 'rgba(255,255,255,0.65)' : SHELL.INK_MUTED }}>
+          {category.artifactPack.length} suggested artifacts
+        </div>
       </div>
-      <div style={{ fontFamily: SHELL.SANS, fontSize: 10.5, lineHeight: 1.45, color: selected ? 'rgba(255,255,255,0.65)' : SHELL.INK_MUTED }}>
-        {category.description}
-      </div>
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 3, marginTop: 2 }}>
-        {category.artifactPack.map((artifact) => (
-          <span
-            key={artifact}
-            style={{
-              fontFamily: SHELL.MONO, fontSize: 7.5, letterSpacing: '0.05em',
-              borderRadius: 3, padding: '2px 4px',
-              background: selected ? 'rgba(255,255,255,0.14)' : SHELL.PAPER_SOFT,
-              border: `1px solid ${selected ? 'rgba(255,255,255,0.22)' : SHELL.CARD_LINE}`,
-              color: selected ? 'rgba(255,255,255,0.8)' : SHELL.INK_MUTED,
-              whiteSpace: 'nowrap',
-            }}
-          >
-            {artifact}
-          </span>
-        ))}
-      </div>
+      <span style={{
+        ...STATUS_CHIP,
+        background: selected ? 'rgba(255,255,255,0.12)' : SHELL.PAPER_SOFT,
+        borderColor: selected ? 'rgba(255,255,255,0.22)' : SHELL.CARD_LINE,
+        color: selected ? 'rgba(255,255,255,0.78)' : SHELL.INK_MUTED,
+      }}>
+        {selected ? 'Selected' : 'Optional'}
+      </span>
     </button>
+  );
+}
+
+function CaptureQueue({ intake }: { intake: IntakeState }) {
+  const nextField = INTAKE_FIELDS.find((field) => intake[field.id].trim().length === 0);
+  return (
+    <section style={CAPTURE_QUEUE_STYLE} aria-label="Capture queue">
+      <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'center' }}>
+        <div>
+          <div style={SECTION_LABEL}>Capture to move forward</div>
+          <div style={{ marginTop: 3, fontFamily: SHELL.SANS, fontSize: 12, lineHeight: 1.35, color: SHELL.INK_SOFT }}>
+            {nextField
+              ? `Next best capture: ${nextField.label}.`
+              : 'All intake facts captured. Open the event canvas when ready.'}
+          </div>
+        </div>
+        <span style={{ ...STATUS_CHIP, background: SHELL.BLUE_BG, borderColor: SHELL.BLUE_LINE, color: SHELL.INK }}>
+          {INTAKE_FIELDS.filter((field) => intake[field.id].trim().length > 0).length} / {INTAKE_FIELDS.length}
+        </span>
+      </div>
+      <div style={CAPTURE_QUEUE_GRID_STYLE}>
+        {INTAKE_FIELDS.map((field) => {
+          const complete = intake[field.id].trim().length > 0;
+          const required = field.id === 'trigger';
+          return (
+            <div
+              key={field.id}
+              style={{
+                ...CAPTURE_QUEUE_ITEM_STYLE,
+                borderColor: complete ? SHELL.MINT_LINE : (required ? SHELL.PEACH_LINE : SHELL.CARD_LINE),
+                background: complete ? SHELL.MINT_BG : SHELL.CARD_WHITE,
+              }}
+            >
+              <span style={{ ...CAPTURE_DOT_STYLE, background: complete ? SHELL.MINT_TEXT : (required ? SHELL.PEACH_TEXT : SHELL.INK_MUTED) }} />
+              <span>{field.label}</span>
+            </div>
+          );
+        })}
+      </div>
+    </section>
   );
 }
 
@@ -479,34 +514,7 @@ export function SourceOriginatePage({
           ) : null}
         </div>
 
-        {/* T02 — Category picker */}
-        <div style={{ display: 'grid', gap: 7 }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
-            <div style={SECTION_LABEL}>IT sourcing category</div>
-            {selectedCategory ? (
-              <span style={{ ...STATUS_CHIP, background: SHELL.MINT_BG, borderColor: SHELL.MINT_LINE, color: SHELL.MINT_TEXT }}>
-                {selectedCategory.label}
-              </span>
-            ) : (
-              <span style={{ ...STATUS_CHIP, background: SHELL.PAPER_SOFT, borderColor: SHELL.CARD_LINE, color: SHELL.INK_MUTED }}>
-                Optional
-              </span>
-            )}
-          </div>
-          <div style={{ display: 'grid', gap: 6 }}>
-            {SOURCE_CATEGORIES.map((category) => (
-              <CategoryCard
-                key={category.id}
-                category={category}
-                selected={selectedCategoryId === category.id}
-                onSelect={() => {
-                  setSelectedCategoryId((prev) => prev === category.id ? null : category.id);
-                  setSubmitState({ status: 'idle' });
-                }}
-              />
-            ))}
-          </div>
-        </div>
+        <CaptureQueue intake={intake} />
 
         {/* Intake fields */}
         <div style={{ display: 'grid', gap: 0 }}>
@@ -555,6 +563,43 @@ export function SourceOriginatePage({
             );
           })}
         </div>
+
+        {/* T02 — Category picker */}
+        <details
+          open={Boolean(selectedCategory)}
+          style={OPTIONAL_CATEGORY_STYLE}
+        >
+          <summary style={OPTIONAL_CATEGORY_SUMMARY_STYLE}>
+            <div>
+              <div style={SECTION_LABEL}>Sourcing category</div>
+              <div style={{ marginTop: 2, fontFamily: SHELL.SANS, fontSize: 11, lineHeight: 1.35, color: SHELL.INK_SOFT }}>
+                Optional. Sentinel can infer this after the intake facts are clear.
+              </div>
+            </div>
+            {selectedCategory ? (
+              <span style={{ ...STATUS_CHIP, background: SHELL.MINT_BG, borderColor: SHELL.MINT_LINE, color: SHELL.MINT_TEXT }}>
+                {selectedCategory.label}
+              </span>
+            ) : (
+              <span style={{ ...STATUS_CHIP, background: SHELL.PAPER_SOFT, borderColor: SHELL.CARD_LINE, color: SHELL.INK_MUTED }}>
+                Optional
+              </span>
+            )}
+          </summary>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(190px, 1fr))', gap: 6, marginTop: 9 }}>
+            {SOURCE_CATEGORIES.map((category) => (
+              <CategoryOption
+                key={category.id}
+                category={category}
+                selected={selectedCategoryId === category.id}
+                onSelect={() => {
+                  setSelectedCategoryId((prev) => prev === category.id ? null : category.id);
+                  setSubmitState({ status: 'idle' });
+                }}
+              />
+            ))}
+          </div>
+        </details>
 
         {/* Submit */}
         <div style={{ display: 'grid', gap: 7 }}>
@@ -786,6 +831,57 @@ const DRAFT_DISCARD_STYLE: CSSProperties = {
 const SECTION_LABEL: CSSProperties = {
   fontFamily: SHELL.MONO, fontSize: 8.5, letterSpacing: '0.12em',
   textTransform: 'uppercase', color: SHELL.INK_MUTED, fontWeight: 700,
+};
+
+const CAPTURE_QUEUE_STYLE: CSSProperties = {
+  border: `1px solid ${SHELL.BLUE_LINE}`,
+  borderRadius: 10,
+  background: SHELL.CARD_WHITE,
+  padding: '10px 11px',
+  display: 'grid',
+  gap: 9,
+};
+
+const CAPTURE_QUEUE_GRID_STYLE: CSSProperties = {
+  display: 'grid',
+  gridTemplateColumns: 'repeat(auto-fit, minmax(148px, 1fr))',
+  gap: 6,
+};
+
+const CAPTURE_QUEUE_ITEM_STYLE: CSSProperties = {
+  display: 'flex',
+  alignItems: 'center',
+  gap: 6,
+  minHeight: 28,
+  border: '1px solid',
+  borderRadius: 7,
+  padding: '5px 7px',
+  fontFamily: SHELL.SANS,
+  fontSize: 11,
+  fontWeight: 700,
+  lineHeight: 1.25,
+  color: SHELL.INK,
+};
+
+const CAPTURE_DOT_STYLE: CSSProperties = {
+  width: 7,
+  height: 7,
+  borderRadius: 999,
+  flex: '0 0 auto',
+};
+
+const OPTIONAL_CATEGORY_STYLE: CSSProperties = {
+  borderTop: `1px solid ${SHELL.CARD_LINE}`,
+  paddingTop: 11,
+};
+
+const OPTIONAL_CATEGORY_SUMMARY_STYLE: CSSProperties = {
+  display: 'flex',
+  justifyContent: 'space-between',
+  alignItems: 'flex-start',
+  gap: 8,
+  cursor: 'pointer',
+  listStyle: 'none',
 };
 
 const STATUS_CHIP: CSSProperties = {
