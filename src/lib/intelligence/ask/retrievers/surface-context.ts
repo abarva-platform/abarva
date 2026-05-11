@@ -3,6 +3,7 @@ import type { AskSource, AskSurfaceContext } from '../types';
 const QUERY_STAGE_HINTS: Record<string, readonly string[]> = {
   brief: ['brief', 'bet', 'above', 'below', 'line', 'priority', 'quarter', 'decision'],
   map: ['map', 'landscape', 'kanban', 'heatmap', 'node', 'use case', 'portfolio'],
+  'enterprise-context': ['enterprise', 'context', 'org', 'cmdb', 'incident', 'problem', 'contract', 'renewal', 'spend', 'policy', 'stewardship'],
   vendors: ['vendor', 'spend', 'renewal', 'risk', 'platform', 'data', 'analytics', 'stack', 'technology'],
   patterns: ['pattern', 'failure', 'genome', 'control', 'success'],
   today: ['today', 'urgent', 'current', 'priority', 'attention', 'risk'],
@@ -95,7 +96,7 @@ export function retrieveSurfaceContextSources(
 }
 
 function tenantMatchesQuery(query: string): boolean {
-  return /\b(current|state|tenant|apex|retail|priority|risk|strategy|vendor|use case|source|evidence|today|data|analytics|landscape)\b/i.test(query);
+  return /\b(current|state|tenant|apex|meridian|retail|priority|risk|strategy|vendor|use case|source|evidence|today|data|analytics|landscape|org|decision|cmdb|incident|problem|change|policy|contract|renewal|spend|stewardship)\b/i.test(query);
 }
 
 function graphMatchesQuery(query: string): boolean {

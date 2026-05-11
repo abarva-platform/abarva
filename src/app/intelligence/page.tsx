@@ -19,6 +19,7 @@ import {
   getMyStrategyData,
 } from '@/lib/intelligence-v3/stages-data';
 import { getActiveClientRow } from '@/lib/active-client';
+import { getEnterpriseContextOverviewForTenant } from '@/lib/enterprise-context/intelligence-read-model';
 import { listInitiativesForClient } from '@/lib/admin/ai-initiatives/queries';
 import {
   loadApexRetailIntelligenceData,
@@ -56,6 +57,7 @@ export default async function IntelligencePage({ searchParams }: IntelligencePag
     myStrategyData,
     initiatives,
     apexRetailData,
+    enterpriseContextOverview,
   ] = await Promise.all([
     buildIntelligenceV3PageData(requestedClient),
     client ? getVendorsForClient(client.id).catch(() => null) : Promise.resolve(null),
@@ -68,6 +70,7 @@ export default async function IntelligencePage({ searchParams }: IntelligencePag
         ? loadApexRetailIntelligenceDataForDemo()
         : loadApexRetailIntelligenceData(client)
     ).catch(() => null),
+    client ? getEnterpriseContextOverviewForTenant(client.key, client.name).catch(() => null) : Promise.resolve(null),
   ]);
 
   return (
@@ -81,6 +84,7 @@ export default async function IntelligencePage({ searchParams }: IntelligencePag
       initiatives={initiatives}
       apexRetailData={apexRetailData}
       clientKey={client?.key ?? requestedClient ?? null}
+      enterpriseContextOverview={enterpriseContextOverview}
     />
   );
 }

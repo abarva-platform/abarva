@@ -32,12 +32,14 @@ import { MyStrategyCxoCanvas } from './MyStrategyCxoCanvas';
 import { SessionsCxoCanvas } from './SessionsCxoCanvas';
 import { SentinelChat } from './SentinelChat';
 import { ArtOfPossibleCanvas } from './ArtOfPossibleCanvas';
+import { EnterpriseContextCanvas } from './EnterpriseContextCanvas';
 import { IntelligenceMap } from '@/components/intelligence-v4/IntelligenceMap';
 import { IntelligenceBrief } from '@/components/intelligence-v4/IntelligenceBrief';
 import { getMeridianMapData, getMeridianBriefData } from '@/lib/knowledge-corpus/fixtures/meridian-healthcare';
 import { getFirstCapitalMapData, getFirstCapitalBriefData } from '@/lib/knowledge-corpus/fixtures/first-capital-finserv';
 import { FIRST_CAPITAL_DEMO, FIRST_CAPITAL_AOP_DEMO, MERIDIAN_AOP_DEMO, APEX_RETAIL_AOP_DEMO } from './demo-data';
 import { buildSentinelIntelContext } from '@/lib/intelligence-v3/sentinel-intel-context';
+import type { EnterpriseContextOverview } from '@/lib/enterprise-context/intelligence-read-model';
 import {
   APEX_RETAIL_BY_FN_OUTCOMES,
   APEX_RETAIL_BY_FN_ROWS,
@@ -72,6 +74,7 @@ interface Props {
   initiatives?: any;
   apexRetailData?: ApexRetailIntelligenceData | null;
   clientKey?: string | null;
+  enterpriseContextOverview?: EnterpriseContextOverview | null;
 }
 
 export function IntelligenceV3Page({
@@ -79,6 +82,7 @@ export function IntelligenceV3Page({
   isLiveBound = false,
   apexRetailData = null,
   clientKey = null,
+  enterpriseContextOverview = null,
 }: Props = {}) {
   const data = dataProp ?? FIRST_CAPITAL_DEMO;
   // PR-K2 · default landing is The Brief — it's the canonical
@@ -93,6 +97,7 @@ export function IntelligenceV3Page({
       const h = window.location.hash.replace('#', '');
       if (
         h === 'map' || h === 'brief' || h === 'art-of-possible' ||
+        h === 'enterprise-context' ||
         h === 'today' || h === 'by-function' ||
         h === 'patterns' || h === 'vendors' || h === 'peer-activity' ||
         h === 'my-strategy' || h === 'sessions'
@@ -133,6 +138,7 @@ export function IntelligenceV3Page({
     : data.sentinelOpener;
   const surfaceContext = buildSentinelIntelContext({
     activeClient: activeTenantName,
+    clientKey,
     stage,
     isApexBound,
     status: apexRetailData?.status ?? null,
@@ -141,6 +147,7 @@ export function IntelligenceV3Page({
     aopBands,
     briefData,
     mapData,
+    enterpriseContext: enterpriseContextOverview,
   });
 
   return (
@@ -221,6 +228,12 @@ export function IntelligenceV3Page({
                 }}
               >
                 {isAopStage && <ArtOfPossibleCanvas data={aopBands} />}
+                {stage === 'enterprise-context' && (
+                  <EnterpriseContextCanvas
+                    overview={enterpriseContextOverview}
+                    tenantName={activeTenantName}
+                  />
+                )}
                 {stage === 'today' && <TodayCxoCanvas items={apexRetailData?.todayItems} />}
                 {stage === 'by-function' && (
                   <ByFunctionCxoCanvas

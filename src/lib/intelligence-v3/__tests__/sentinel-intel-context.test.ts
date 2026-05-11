@@ -49,4 +49,68 @@ describe('buildSentinelIntelContext', () => {
 
     expect((context.facts as string[]).join('\n')).toContain('portfolio relationships');
   });
+
+  it('threads Enterprise Context facts into Sentinel for Meridian current-state questions', () => {
+    const context = buildSentinelIntelContext({
+      activeClient: 'Meridian Health',
+      clientKey: 'meridian',
+      stage: 'enterprise-context',
+      isApexBound: false,
+      status: null,
+      patterns: [],
+      todayItems: [],
+      aopBands: APEX_RETAIL_AOP_DEMO,
+      enterpriseContext: {
+        tenantKey: 'meridian',
+        tenantName: 'Meridian Health',
+        counts: {
+          sources: 11,
+          records: 1030,
+          facts: 11428,
+          relationships: 220,
+          evidence: 1030,
+          qualityIssues: 146,
+          stewardshipTasks: 146,
+          chunkQueue: 1030,
+        },
+        recordTypeCounts: { incidents: 180, cmdb_applications_services: 82 },
+        freshnessCounts: { fresh: 1030 },
+        sourceSystems: ['ServiceNow', 'Workday'],
+        evidenceUsableCount: 966,
+        confidenceAverage: 0.86,
+        qualitySummary: { 'medium:open:low_confidence': 82 },
+        cards: [{
+          key: 'incident-problem-pressure',
+          title: 'Incident and problem pressure',
+          whatWeKnow: '180 incidents and 36 problems are available.',
+          whyItMatters: 'Operational pain can shape sourcing scope.',
+          owner: 'IT Service Management',
+          freshness: '1030/1030 fresh',
+          confidence: '86%',
+          evidenceCount: 216,
+          sourceSystems: ['ServiceNow'],
+          actions: ['Ask Sentinel'],
+        }],
+        sentinelFacts: [
+          'Meridian Health Enterprise Context: 1030 records, 11428 facts, 220 CI relationships, and 1030 evidence rows are loaded from internal context sources.',
+        ],
+      },
+    });
+
+    expect(context).toMatchObject({
+      activeTab: 'enterprise-context',
+      activeClient: 'Meridian Health',
+      clientKey: 'meridian',
+    });
+    expect(context).toEqual(expect.objectContaining({
+      tenantFacts: expect.arrayContaining([
+        expect.stringContaining('Enterprise Context layer loaded from internal client data'),
+        expect.stringContaining('1030 records'),
+      ]),
+      qualityFacts: expect.arrayContaining([
+        expect.stringContaining('146 open quality issues'),
+      ]),
+    }));
+    expect((context.facts as string[]).join('\n')).toContain('Incident and problem pressure');
+  });
 });
