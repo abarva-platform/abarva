@@ -4,41 +4,35 @@
 
 import { fireEvent, render, screen } from '@testing-library/react';
 import { DemoCodeSignIn } from '@/components/auth/DemoCodeSignIn';
-import { CANONICAL_AUTH_EMAILS } from '@/lib/auth/canonical-auth-roster';
 
 describe('DemoCodeSignIn', () => {
-  it('enables continue after entering a canonical client email and reveals the code step', async () => {
+  it('requires email, password, and access code before sign-in', () => {
     render(<DemoCodeSignIn redirectUrl="/auth-redirect" />);
 
-    const email = screen.getByPlaceholderText('Enter your email address');
-    const button = screen.getByRole('button', { name: 'Continue' });
+    const email = screen.getByLabelText('Email');
+    const password = screen.getByLabelText('Password');
+    const code = screen.getByLabelText('Access code');
+    const button = screen.getByRole('button', { name: 'Sign in' });
 
     expect((button as HTMLButtonElement).disabled).toBe(true);
 
-    fireEvent.change(email, { target: { value: 'elena.rivera@meridian-health.example.com' } });
+    fireEvent.change(email, { target: { value: 'cdo@apex-retail.example.com' } });
+    expect((button as HTMLButtonElement).disabled).toBe(true);
 
+    fireEvent.change(password, { target: { value: 'Demo2026!' } });
+    expect((button as HTMLButtonElement).disabled).toBe(true);
+
+    fireEvent.change(code, { target: { value: '424242' } });
     expect((button as HTMLButtonElement).disabled).toBe(false);
-    fireEvent.click(button);
-
-    expect(await screen.findByLabelText('Email verification code')).toBeTruthy();
   });
 
-  it('shows the locked-account guidance for non-canonical emails', () => {
+  it('does not disclose approved client accounts', () => {
     render(<DemoCodeSignIn redirectUrl="/auth-redirect" />);
 
-    fireEvent.change(screen.getByPlaceholderText('Enter your email address'), {
-      target: { value: 'real-user@abarva.com' },
-    });
-    fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
-
-    expect(screen.getByText(/restricted to the approved client test accounts/i)).toBeTruthy();
-  });
-
-  it('renders the exact approved client test accounts', () => {
-    render(<DemoCodeSignIn redirectUrl="/auth-redirect" />);
-
-    for (const email of CANONICAL_AUTH_EMAILS) {
-      expect(screen.getByText(email)).toBeTruthy();
-    }
+    expect(screen.queryByText('cdo@apex-retail.example.com')).toBeNull();
+    expect(screen.queryByText('cdio@meridian-health.example.com')).toBeNull();
+    expect(screen.queryByText('cio@firstcapital.example.com')).toBeNull();
+    expect(screen.queryByText(/approved client accounts/i)).toBeNull();
+    expect(screen.getByText(/private invite/i)).toBeTruthy();
   });
 });

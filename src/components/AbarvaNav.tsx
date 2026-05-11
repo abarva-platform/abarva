@@ -355,7 +355,7 @@ function NavInner({ activePage, compact = false }: NavProps) {
                     onClick={() => {
                       setUserMenuOpen(false)
                       clearActiveClientContext()
-                      signOut(() => router.push('/'))
+                      signOut(() => router.push('/signed-out'))
                     }}
                     className="abarva-menu-item"
                     style={{ width: '100%', textAlign: 'left', padding: '9px 14px', fontSize: '13px', color: DROP_HEAD, background: 'transparent', border: 'none', cursor: 'pointer', fontFamily: SANS, borderRadius: '8px', margin: '0 4px' }}
