@@ -144,7 +144,7 @@ export function ClientChrome({
                 onClick={() => {
                   setMenuOpen(false);
                   clearActiveClientContext();
-                  signOut(() => router.push('/'));
+                  signOut(() => router.push('/signed-out'));
                 }}
                 style={{
                   width: '100%',

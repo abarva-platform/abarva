@@ -1,9 +1,8 @@
 'use client'
 
 import Image from 'next/image'
+import type { FormEvent } from 'react'
 import { useMemo, useState } from 'react'
-import { DEMO_CODE_ALLOWED_EMAILS, DEMO_CODE_VALUE, isDemoCodeEmail } from '@/lib/auth/demo-code'
-import { CXO_PERSONAS } from '@/lib/auth/cxo-personas'
 
 interface Props {
   redirectUrl: string
@@ -33,22 +32,13 @@ interface ClerkWindow extends Window {
   }
 }
 
-// Client identity cards source from the shared CXO_PERSONAS module
-// (lib/auth/cxo-personas.ts). Same persona data also drives the
-// hosted invite route at /invite/<slug> and the static invite HTML
-// generator (scripts/generate-invite-html.ts). Edit personas there.
-const CLIENT_IDENTITIES = CXO_PERSONAS
-
 function describeFailure(err: unknown, alreadySignedIn: boolean): string {
   if (alreadySignedIn) {
     return 'You appear to be signed in already. Click "Sign out" in the top bar, then retry.'
   }
   const message = err instanceof Error ? err.message : String(err ?? 'demo_sign_in_failed')
-  if (message === 'unsupported_demo_account') {
-    return 'That email is not on the approved client list.'
-  }
-  if (message === 'invalid_demo_code') {
-    return `That code was not accepted. Use ${DEMO_CODE_VALUE} for an approved demo account.`
+  if (message === 'invalid_credentials') {
+    return 'We could not verify that email, password, and access code. Check the private invite and try again.'
   }
   if (message === 'demo_user_not_found') {
     return 'The demo user record is missing in Clerk. Ask Anand to re-run /api/admin/seed-clerk-metadata.'
@@ -84,7 +74,6 @@ const BRAND = {
   hair: 'rgba(255,255,255,0.10)',
   card: 'rgba(255,255,255,0.04)',
   cardBorder: 'rgba(255,255,255,0.12)',
-  cardHover: 'rgba(255,255,255,0.07)',
   textStrong: '#F5F7FB',
   textMute: 'rgba(255,255,255,0.72)',
   textFaint: 'rgba(255,255,255,0.55)',
@@ -141,33 +130,16 @@ const BUTTON_PRIMARY = {
 
 export function DemoCodeSignIn({ redirectUrl }: Props) {
   const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
   const [code, setCode] = useState('')
-  const [step, setStep] = useState<'email' | 'code'>('email')
   const [error, setError] = useState<string | null>(null)
   const [pending, setPending] = useState(false)
 
   const normalizedEmail = useMemo(() => email.trim().toLowerCase(), [email])
+  const canSubmit = normalizedEmail.length > 0 && password.length > 0 && code.trim().length > 0
 
-  // Filter identity cards down to those still in the canonical roster,
-  // so removing an email from the roster also removes its card here.
-  const identities = useMemo(
-    () =>
-      CLIENT_IDENTITIES.filter((id) =>
-        DEMO_CODE_ALLOWED_EMAILS.includes(id.email as (typeof DEMO_CODE_ALLOWED_EMAILS)[number]),
-      ),
-    [],
-  )
-
-  async function continueWithCode() {
-    setError(null)
-    if (!isDemoCodeEmail(normalizedEmail)) {
-      setError('This sign-in is restricted to the approved client accounts listed below.')
-      return
-    }
-    setStep('code')
-  }
-
-  async function completeDemoSignIn() {
+  async function completeDemoSignIn(event?: FormEvent<HTMLFormElement>) {
+    event?.preventDefault()
     setPending(true)
     setError(null)
 
@@ -182,7 +154,7 @@ export function DemoCodeSignIn({ redirectUrl }: Props) {
       const response = await fetch('/api/auth/demo-code-sign-in', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: normalizedEmail, code }),
+        body: JSON.stringify({ email: normalizedEmail, password, code }),
       })
 
       const payload = (await response.json().catch(() => null)) as { error?: string; ticket?: string } | null
@@ -271,129 +243,35 @@ export function DemoCodeSignIn({ redirectUrl }: Props) {
           marginBottom: 22,
         }}
       >
-        Choose your client profile or enter your email, then verify with code{' '}
-        <code
-          style={{
-            fontFamily: BRAND.fMono,
-            background: BRAND.card,
-            padding: '2px 7px',
-            borderRadius: 4,
-            color: BRAND.textStrong,
-            fontSize: 12.5,
-          }}
-        >
-          {DEMO_CODE_VALUE}
-        </code>
-        .
+        Enter the credentials from your private invite. Access is restricted to approved client identities.
       </div>
 
-      {/* Identity cards — one per client admin */}
-      {step === 'email' && (
-        <div
-          aria-label="Approved client accounts"
-          style={{ display: 'grid', gap: 8, marginBottom: 22 }}
-        >
-          {identities.map((id) => {
-            const isSelected = normalizedEmail === id.email
-            return (
-              <button
-                key={id.email}
-                type="button"
-                onClick={() => {
-                  setEmail(id.email)
-                  setError(null)
-                }}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 12,
-                  padding: '12px 14px',
-                  borderRadius: 10,
-                  border: `1px solid ${isSelected ? BRAND.signalBlue : BRAND.cardBorder}`,
-                  background: isSelected ? 'rgba(0,102,204,0.10)' : BRAND.card,
-                  color: BRAND.textStrong,
-                  cursor: 'pointer',
-                  textAlign: 'left',
-                  transition: 'border-color 140ms ease, background 140ms ease',
-                  fontFamily: BRAND.fSans,
-                }}
-                onMouseEnter={(e) => {
-                  if (!isSelected) e.currentTarget.style.background = BRAND.cardHover
-                }}
-                onMouseLeave={(e) => {
-                  if (!isSelected) e.currentTarget.style.background = BRAND.card
-                }}
-              >
-                <span
-                  aria-hidden="true"
-                  style={{
-                    flexShrink: 0,
-                    width: 36,
-                    height: 36,
-                    borderRadius: 8,
-                    background: id.monogramBg,
-                    color: '#FFFFFF',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontFamily: BRAND.fSans,
-                    fontWeight: 700,
-                    fontSize: 13,
-                    letterSpacing: '0.02em',
-                  }}
-                >
-                  {id.monogram}
-                </span>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div
-                    style={{
-                      fontFamily: BRAND.fMono,
-                      fontSize: 13,
-                      fontWeight: 600,
-                      color: BRAND.textStrong,
-                      lineHeight: 1.25,
-                      marginBottom: 3,
-                      letterSpacing: '-0.005em',
-                    }}
-                  >
-                    {id.shortLabel}
-                  </div>
-                  <div
-                    title={`${id.personaName} · ${id.titleFull} · ${id.tenant}`}
-                    style={{
-                      fontSize: 12,
-                      color: BRAND.textMute,
-                      lineHeight: 1.3,
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      whiteSpace: 'nowrap',
-                    }}
-                  >
-                    {id.personaName} · {id.titleShort} · {id.tenant}
-                  </div>
-                </div>
-                {isSelected && (
-                  <span
-                    aria-hidden="true"
-                    style={{
-                      flexShrink: 0,
-                      fontFamily: BRAND.fMono,
-                      fontSize: 11,
-                      color: BRAND.signalBlue,
-                      fontWeight: 700,
-                    }}
-                  >
-                    ✓
-                  </span>
-                )}
-              </button>
-            )
-          })}
-        </div>
-      )}
+      <div
+        style={{
+          border: `1px solid ${BRAND.cardBorder}`,
+          background: 'rgba(255,255,255,0.025)',
+          borderRadius: 12,
+          padding: '12px 14px',
+          color: BRAND.textMute,
+          fontFamily: BRAND.fSans,
+          fontSize: 12.5,
+          lineHeight: 1.5,
+          marginBottom: 20,
+        }}
+      >
+        Invite-only workspace. If you need a new client profile, ask Anand to provision the user before sharing credentials.
+      </div>
 
-      {/* Email + code inputs */}
-      <div style={{ display: 'grid', gap: 14 }}>
+      <form onSubmit={completeDemoSignIn} style={{ display: 'grid', gap: 14 }}>
+        <div
+          aria-hidden="true"
+          style={{
+            height: 1,
+            background: BRAND.hair,
+            marginBottom: 2,
+          }}
+        />
+
         <div>
           <label htmlFor="demo-email" style={LABEL}>
             Email
@@ -401,35 +279,53 @@ export function DemoCodeSignIn({ redirectUrl }: Props) {
           <input
             id="demo-email"
             placeholder="name@company.com"
-            autoComplete="email"
+            type="email"
+            autoComplete="username"
             value={email}
             onChange={(event) => setEmail(event.target.value)}
             style={INPUT}
-            disabled={pending || step === 'code'}
+            disabled={pending}
+            required
           />
         </div>
 
-        {step === 'code' && (
-          <div>
-            <label htmlFor="demo-code" style={LABEL}>
-              Verification code
-            </label>
-            <input
-              id="demo-code"
-              placeholder="6-digit code"
-              inputMode="numeric"
-              autoComplete="one-time-code"
-              value={code}
-              onChange={(event) => setCode(event.target.value)}
-              style={INPUT}
-              disabled={pending}
-              autoFocus
-            />
-          </div>
-        )}
+        <div>
+          <label htmlFor="demo-password" style={LABEL}>
+            Password
+          </label>
+          <input
+            id="demo-password"
+            placeholder="Password from invite"
+            type="password"
+            autoComplete="current-password"
+            value={password}
+            onChange={(event) => setPassword(event.target.value)}
+            style={INPUT}
+            disabled={pending}
+            required
+          />
+        </div>
+
+        <div>
+          <label htmlFor="demo-code" style={LABEL}>
+            Access code
+          </label>
+          <input
+            id="demo-code"
+            placeholder="6-digit code"
+            inputMode="numeric"
+            autoComplete="one-time-code"
+            value={code}
+            onChange={(event) => setCode(event.target.value)}
+            style={INPUT}
+            disabled={pending}
+            required
+          />
+        </div>
 
         {error && (
           <div
+            role="alert"
             style={{
               borderRadius: 8,
               border: '1px solid rgba(248, 113, 113, 0.35)',
@@ -445,50 +341,18 @@ export function DemoCodeSignIn({ redirectUrl }: Props) {
           </div>
         )}
 
-        {step === 'code' ? (
-          <div style={{ display: 'grid', gap: 10 }}>
-            <button
-              type="button"
-              style={BUTTON_PRIMARY}
-              onClick={completeDemoSignIn}
-              disabled={pending || code.trim().length === 0}
-            >
-              {pending ? 'Signing in…' : 'Continue'}
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setStep('email')
-                setCode('')
-                setError(null)
-              }}
-              disabled={pending}
-              style={{
-                background: 'transparent',
-                border: 0,
-                color: BRAND.textMute,
-                cursor: 'pointer',
-                padding: 0,
-                justifySelf: 'start',
-                fontSize: 12.5,
-                fontFamily: BRAND.fSans,
-                textDecoration: 'underline',
-              }}
-            >
-              Change email
-            </button>
-          </div>
-        ) : (
-          <button
-            type="button"
-            style={BUTTON_PRIMARY}
-            onClick={continueWithCode}
-            disabled={pending || normalizedEmail.length === 0}
-          >
-            Continue
-          </button>
-        )}
-      </div>
+        <button
+          type="submit"
+          style={{
+            ...BUTTON_PRIMARY,
+            opacity: pending || !canSubmit ? 0.62 : 1,
+            cursor: pending || !canSubmit ? 'not-allowed' : 'pointer',
+          }}
+          disabled={pending || !canSubmit}
+        >
+          {pending ? 'Signing in...' : 'Sign in'}
+        </button>
+      </form>
     </div>
   )
 }

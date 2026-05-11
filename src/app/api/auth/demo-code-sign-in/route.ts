@@ -6,6 +6,7 @@ export const dynamic = 'force-dynamic';
 
 interface DemoCodeRequestBody {
   email?: string;
+  password?: string;
   code?: string;
 }
 
@@ -23,14 +24,20 @@ export async function POST(request: Request) {
   }
 
   const email = body.email?.trim().toLowerCase();
+  const password = body.password ?? '';
   const code = body.code?.trim();
 
   if (!email || !isDemoCodeEmail(email)) {
-    return badRequest('unsupported_demo_account', 403);
+    return badRequest('invalid_credentials', 401);
+  }
+
+  const expectedPassword = process.env.DEMO_LOGIN_PASSWORD ?? 'Demo2026!';
+  if (password !== expectedPassword) {
+    return badRequest('invalid_credentials', 401);
   }
 
   if (code !== DEMO_CODE_VALUE) {
-    return badRequest('invalid_demo_code', 401);
+    return badRequest('invalid_credentials', 401);
   }
 
   const secretKey = process.env.CLERK_SECRET_KEY;

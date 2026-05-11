@@ -56,7 +56,7 @@ export function AppTopBarTwoBar({
 
   function handleSignOut() {
     clearActiveClientContext();
-    void signOut(() => router.push("/"));
+    void signOut(() => router.push("/signed-out"));
   }
 
   return (
