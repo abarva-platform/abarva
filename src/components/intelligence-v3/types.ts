@@ -18,6 +18,7 @@ export const STAGE_KEYS = [
   'brief',
   'map',
   'art-of-possible',
+  'enterprise-context',
   'today',
   'by-function',
   'patterns',
@@ -42,6 +43,7 @@ export const STAGES: ReadonlyArray<StageDef> = [
   { key: 'brief', label: 'The Brief', stage: 1, primary: true },
   { key: 'map', label: 'The Map', stage: 1, primary: true },
   { key: 'art-of-possible', label: 'Art of Possible', stage: 1, primary: true },
+  { key: 'enterprise-context', label: 'Enterprise Context', stage: 1, primary: true },
   { key: 'vendors', label: 'Vendors', stage: 3 },
 ];
 

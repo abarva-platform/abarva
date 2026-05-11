@@ -8,10 +8,12 @@ import {
   type PatternRow,
 } from '@/components/intelligence-v3/cxo-fixtures';
 import type { ArtOfPossibleData, RetailIntelligenceStatus, StageKey } from '@/components/intelligence-v3/types';
+import type { EnterpriseContextOverview } from '@/lib/enterprise-context/intelligence-read-model';
 import type { BriefData, MapData } from '@/lib/knowledge-corpus/types';
 
 export interface BuildSentinelIntelContextArgs {
   activeClient: string;
+  clientKey?: string | null;
   stage: StageKey;
   isApexBound: boolean;
   status: RetailIntelligenceStatus | null;
@@ -20,6 +22,7 @@ export interface BuildSentinelIntelContextArgs {
   aopBands: ArtOfPossibleData;
   briefData?: BriefData | null;
   mapData?: MapData | null;
+  enterpriseContext?: EnterpriseContextOverview | null;
 }
 
 export function buildSentinelIntelContext(args: BuildSentinelIntelContextArgs): Record<string, unknown> {
@@ -42,16 +45,21 @@ export function buildSentinelIntelContext(args: BuildSentinelIntelContextArgs): 
   const riskFacts = args.isApexBound ? apexRiskFacts(args) : [];
   const strategyFacts = args.isApexBound ? apexStrategyFacts(args) : [];
   const sourceFacts = args.isApexBound ? apexSourceFacts(args) : [];
-  const qualityFacts = args.isApexBound ? apexQualityFacts(args) : [];
+  const enterpriseFacts = enterpriseContextFacts(args.enterpriseContext);
+  const qualityFacts = uniqueFacts([
+    ...(args.isApexBound ? apexQualityFacts(args) : []),
+    ...enterpriseQualityFacts(args.enterpriseContext),
+  ]);
+  const combinedTenantFacts = uniqueFacts([...tenantFacts, ...enterpriseFacts]);
 
   return {
     activeTab: args.stage,
     activeClient: args.activeClient,
-    clientKey: args.isApexBound ? 'apexretail' : null,
+    clientKey: args.clientKey ?? (args.isApexBound ? 'apexretail' : null),
     substrate: args.status,
     pageFacts,
     stageFacts,
-    tenantFacts,
+    tenantFacts: combinedTenantFacts,
     vendorFacts,
     useCaseFacts,
     graphFacts,
@@ -62,7 +70,7 @@ export function buildSentinelIntelContext(args: BuildSentinelIntelContextArgs): 
     facts: uniqueFacts([
       ...pageFacts,
       ...stageFacts,
-      ...tenantFacts,
+      ...combinedTenantFacts,
       ...riskFacts,
       ...strategyFacts,
       ...vendorFacts,
@@ -75,6 +83,7 @@ export function buildSentinelIntelContext(args: BuildSentinelIntelContextArgs): 
 }
 
 function stageSurfaceFacts(args: BuildSentinelIntelContextArgs): string[] {
+  if (args.stage === 'enterprise-context') return enterpriseContextFacts(args.enterpriseContext);
   if (!args.isApexBound) return [];
   switch (args.stage) {
     case 'brief':
@@ -122,6 +131,12 @@ function stageSurfaceFacts(args: BuildSentinelIntelContextArgs): string[] {
 }
 
 function tenant360Facts(args: BuildSentinelIntelContextArgs): string[] {
+  if (args.enterpriseContext && !args.isApexBound) {
+    return [
+      `Tenant 360: ${args.activeClient} has an Enterprise Context layer loaded from internal client data. Use this before generic corpus guidance for current-state questions.`,
+      ...enterpriseContextFacts(args.enterpriseContext).slice(0, 8),
+    ];
+  }
   if (!args.isApexBound) return [];
   const facts = [
     'Tenant 360: Apex Retail is the active retail client. Do not use Meridian Healthcare, Epic EHR, IDN, CMIO, HIPAA, or clinical AI facts unless the user explicitly asks for healthcare examples.',
@@ -135,6 +150,24 @@ function tenant360Facts(args: BuildSentinelIntelContextArgs): string[] {
   }
   if (args.briefData?.synthesis) facts.push(`Brief synthesis: ${args.briefData.synthesis}`);
   return facts;
+}
+
+function enterpriseContextFacts(overview: EnterpriseContextOverview | null | undefined): string[] {
+  if (!overview) return [];
+  return [
+    ...overview.sentinelFacts,
+    ...overview.cards.slice(0, 8).map((card) =>
+      `${card.title}: ${card.whatWeKnow} Why it matters: ${card.whyItMatters} Owner: ${card.owner}; freshness ${card.freshness}; confidence ${card.confidence}; sources ${card.sourceSystems.join(', ') || 'internal context'}.`,
+    ),
+  ];
+}
+
+function enterpriseQualityFacts(overview: EnterpriseContextOverview | null | undefined): string[] {
+  if (!overview) return [];
+  return [
+    `Enterprise Context quality: ${overview.counts.qualityIssues} open quality issues and ${overview.counts.stewardshipTasks} stewardship tasks; ${overview.evidenceUsableCount}/${overview.counts.evidence} evidence rows are usable.`,
+    `Enterprise Context freshness: ${overview.freshnessCounts.fresh ?? 0} fresh records, ${overview.freshnessCounts.attention ?? 0} attention records, ${overview.freshnessCounts.stale ?? 0} stale records, ${overview.freshnessCounts.unknown ?? 0} unknown records.`,
+  ];
 }
 
 function briefFacts(data: BriefData | null | undefined): string[] {
