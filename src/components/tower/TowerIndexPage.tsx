@@ -6,7 +6,6 @@ import type { CSSProperties, ReactNode } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { AppShell } from '@/components/shell/AppShell';
 import { MetricProvenance } from '@/components/tower/MetricProvenance';
-import { DeferredMetricsBlock } from '@/components/tower/DeferredMetricsBlock';
 import { AtlasChatPanel, type AtlasMessage } from '@/components/atlas/AtlasChatPanel';
 import type { AttachmentRef } from '@/components/agent/AgentDock';
 import type { AtlasChatResponse, AtlasSuggestion } from '@/lib/atlas/types';
@@ -75,6 +74,8 @@ const T = {
   SANS: 'var(--font-inter), "Inter", system-ui, sans-serif',
   MONO: '"JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace',
 } as const;
+
+const PANEL_SHADOW = '0 18px 42px rgba(15, 23, 42, 0.07)';
 
 // ─── Confidence value (cval) — solid/dashed/dotted underline by confidence ────
 type Confidence = 'high' | 'med' | 'low';
@@ -281,7 +282,9 @@ function SubstrateKpi({
 
 const PORTFOLIO_CANVAS_TABS: Array<{ key: PortfolioCanvasView; label: string }> = [
   { key: 'alignment', label: 'Value Map' },
-  { key: 'pressures', label: 'Pressure List' },
+  { key: 'pressures', label: 'Risk & Pressure' },
+  { key: 'contract', label: 'Renewal Clock' },
+  { key: 'adoption', label: 'Adoption Gaps' },
   { key: 'evidence', label: 'Evidence Map' },
 ];
 
@@ -295,11 +298,11 @@ function CanvasViewTabs({
   return (
     <div
       style={{
-        padding: '18px 32px 16px',
-        borderBottom: `1px solid ${T.RULE}`,
+        padding: '24px 32px 18px',
         display: 'flex',
         alignItems: 'center',
         gap: 12,
+        background: '#fff',
       }}
     >
       <div
@@ -328,10 +331,11 @@ function CanvasViewTabs({
                 borderRadius: 999,
                 background: current ? T.PURPLE : '#fff',
                 color: current ? '#fff' : T.INK_2,
-                padding: '7px 12px',
+                padding: '8px 14px',
                 fontSize: 12,
                 fontWeight: 800,
                 textDecoration: 'none',
+                boxShadow: current ? '0 8px 18px rgba(27, 43, 92, 0.18)' : 'none',
               }}
             >
               {tab.label}
@@ -399,7 +403,7 @@ function SubstratePressure({
 
 // ─── Pressure card ────────────────────────────────────────────────────────────
 type PressureType = 'cost' | 'dupl' | 'vend' | 'adopt' | 'value';
-type PortfolioCanvasView = 'pressures' | 'alignment' | 'evidence';
+type PortfolioCanvasView = 'pressures' | 'alignment' | 'contract' | 'adoption' | 'evidence';
 
 interface PressureProps {
   type: PressureType;
@@ -587,12 +591,6 @@ interface MatrixDot {
   confidenceLevel?: 'HIGH' | 'MED' | 'LOW';
 }
 
-/** T-4: shorten an initiative name for the 2×2 dot label (~22 chars). */
-function truncateName(name: string): string {
-  if (name.length <= 22) return name;
-  return `${name.slice(0, 21)}…`;
-}
-
 function resolveQuadrantDots(
   view: StrategicAlignment2x2View,
   quadrant: AlignmentQuadrant,
@@ -770,33 +768,33 @@ function defaultPortfolioCanvasView(lens: TowerLens): PortfolioCanvasView {
   return lens === 'value' ? 'alignment' : 'pressures';
 }
 
-function portfolioPressureCardsForLens(
+function portfolioPressureCardsForCanvas(
   cards: ReadonlyArray<PressureCardView>,
-  lens: TowerLens,
+  view: PortfolioCanvasView,
 ): ReadonlyArray<PressureCardView> {
-  if (lens === 'contract') return cards.filter((card) => card.type === 'vend');
-  if (lens === 'adopt') return cards.filter((card) => card.type === 'adopt');
-  if (lens === 'risk') return cards.filter((card) => card.type === 'cost' || card.type === 'dupl' || card.type === 'value');
+  if (view === 'contract') return cards.filter((card) => card.type === 'vend');
+  if (view === 'adoption') return cards.filter((card) => card.type === 'adopt');
+  if (view === 'pressures') return cards.filter((card) => card.type === 'cost' || card.type === 'dupl' || card.type === 'value');
   return cards;
 }
 
-function portfolioPressureNarrative(lens: TowerLens, count: number): { eyebrow: string; headline: string; body: string } {
-  if (lens === 'contract') {
+function portfolioCanvasNarrative(view: PortfolioCanvasView, count: number): { eyebrow: string; headline: string; body: string } {
+  if (view === 'contract') {
     return {
       eyebrow: `Renewal clocks · ${count} inside the decision window`,
       headline: count === 1
         ? '1 renewal decision needs a CFO posture.'
         : `${count} renewal decisions need a CFO posture.`,
-      body: 'Only vendor-clock cards are shown here. This lens is for negotiation timing, renewal exposure, and Source follow-through.',
+      body: 'Renewal windows are tied to the owning initiative, contract value, vendor health, and the next executive decision.',
     };
   }
-  if (lens === 'adopt') {
+  if (view === 'adoption') {
     return {
       eyebrow: `Adoption blockers · ${count} active`,
       headline: count === 1
         ? '1 adoption blocker needs an enablement posture.'
         : `${count} adoption blockers need an enablement posture.`,
-      body: 'Only adoption-gap cards are shown here. This lens is for usage, workflow change, training, and operating-model conversion.',
+      body: 'Adoption gaps show where value depends on usage, workflow change, training, and operating-model conversion.',
     };
   }
   return {
@@ -804,8 +802,16 @@ function portfolioPressureNarrative(lens: TowerLens, count: number): { eyebrow: 
     headline: count === 1
       ? '1 risk pressure needs owner intervention.'
       : `${count} risk pressures need owner intervention.`,
-    body: 'Cost, duplication, and value-lag cards are shown here. Renewal clocks move to the Contract lens so this read stays clean.',
+    body: 'Cost, duplication, and value-lag pressures stay together so the CFO can see what needs an owner decision now.',
   };
+}
+
+function workspaceQuestion(activeTab: TowerTabKey): string {
+  if (activeTab === 'scorecards') return 'Which AI initiatives are performing, lagging, or missing decision-grade evidence?';
+  if (activeTab === 'programme_gates') return 'Where are initiatives stuck, and which governance decisions unblock value?';
+  if (activeTab === 'dependencies') return 'Which vendor, platform, and adoption dependencies could change portfolio outcomes?';
+  if (activeTab === 'executive_brief') return 'What should the CFO say, decide, or ask for in the next governance meeting?';
+  return 'Is the AI portfolio creating measurable value, and what needs executive action now?';
 }
 
 function findInitiativeDetail(
@@ -1836,11 +1842,11 @@ function Quadrant({
   detailHrefFor: DetailHrefBuilder;
 }) {
   const styles: CSSProperties = {
-    padding: '14px 16px',
+    padding: '15px 16px',
     position: 'relative',
-    background: T.CREAM_2,
-    border: `1px solid ${T.RULE}`,
-    minHeight: 222,
+    background: '#fdfdfc',
+    border: `1px solid rgba(16, 29, 73, 0.14)`,
+    minHeight: 214,
   };
   if (position === 'tl') {
     styles.gridColumn = 2;
@@ -1912,7 +1918,7 @@ function Quadrant({
             borderRadius: 999,
             cursor: isSubstrate ? 'pointer' : 'default',
             border: isSubstrate ? `2px ${borderStyle} ${T.PURPLE}` : `1px solid ${T.RULE_STRONG}`,
-            boxShadow: '0 5px 14px rgba(17, 24, 39, 0.16)',
+            boxShadow: '0 9px 20px rgba(17, 24, 39, 0.14)',
             textDecoration: 'none',
           };
           const dotBody = (
@@ -1940,22 +1946,6 @@ function Quadrant({
                   ★
                 </span>
               )}
-              <span
-                style={{
-                  position: 'absolute',
-                  left: '50%',
-                  top: 38,
-                  transform: 'translateX(-50%)',
-                  color: T.INK,
-                  fontFamily: T.MONO,
-                  fontSize: 8,
-                  letterSpacing: '0.08em',
-                  whiteSpace: 'nowrap',
-                  fontWeight: 800,
-                }}
-              >
-                {dot.displayId ?? truncateName(dot.name)}
-              </span>
             </>
           );
 
@@ -2071,13 +2061,17 @@ export function TowerIndexPage({
   const activeLens: TowerLens = 'value';
   const rawCanvasView = searchParams?.get('view');
   const activeCanvasView: PortfolioCanvasView =
-    rawCanvasView === 'pressures' || rawCanvasView === 'alignment' || rawCanvasView === 'evidence'
+    rawCanvasView === 'pressures' ||
+    rawCanvasView === 'alignment' ||
+    rawCanvasView === 'contract' ||
+    rawCanvasView === 'adoption' ||
+    rawCanvasView === 'evidence'
       ? rawCanvasView
       : defaultPortfolioCanvasView(activeLens);
   const activeDetailId = searchParams?.get('detail') ?? null;
   const activePressureId = searchParams?.get('pressure') ?? null;
-  const visiblePressureCards = portfolioPressureCardsForLens(pressuresView?.cards ?? [], activeLens);
-  const visiblePressureNarrative = portfolioPressureNarrative(activeLens, visiblePressureCards.length);
+  const visiblePressureCards = portfolioPressureCardsForCanvas(pressuresView?.cards ?? [], activeCanvasView);
+  const visiblePressureNarrative = portfolioCanvasNarrative(activeCanvasView, visiblePressureCards.length);
   const detailInitiative = findInitiativeDetail(initiatives ?? [], activeDetailId);
   const detailPressure =
     activePressureId && pressuresView
@@ -2271,6 +2265,43 @@ export function TowerIndexPage({
     [router, sendToAtlas],
   );
 
+  const kpiBand = (
+    <section
+      data-testid="tower-kpi-band"
+      style={{
+        display: 'grid',
+        gridTemplateColumns: '1.4fr 1fr 1fr 1fr 1fr',
+        padding: '9px 32px',
+        borderBottom: `1px solid ${T.RULE_STRONG}`,
+        gap: 0,
+        alignItems: 'center',
+        minHeight: 66,
+        background: '#fff',
+      }}
+    >
+      {useSubstrateBand && bandMetrics ? (
+        <>
+          {bandMetrics.metrics.map((m, i) => (
+            <SubstrateKpi
+              key={m.key}
+              metric={m}
+              hero={m.hero}
+              isFirst={i === 0}
+              onAskAtlas={handleMetricAsk}
+            />
+          ))}
+        </>
+      ) : (
+        <TowerEmptyState
+          eyebrow="DB substrate required"
+          title="No tenant-bound KPI data is available."
+          body="Tower will not substitute demo KPI values. Load initiatives and vendors for this client before using the executive band."
+          style={{ gridColumn: '1 / -1' }}
+        />
+      )}
+    </section>
+  );
+
   const towerWorkspace: ReactNode = (
     <div
       ref={towerCanvasRef}
@@ -2288,7 +2319,7 @@ export function TowerIndexPage({
           {/* Masthead */}
           <div
             style={{
-              padding: '14px 32px 12px',
+              padding: '18px 32px 14px',
               borderBottom: `1px solid ${T.RULE_STRONG}`,
             }}
           >
@@ -2309,7 +2340,7 @@ export function TowerIndexPage({
               <h1
                 style={{
                   fontFamily: T.SERIF,
-                  fontSize: 36,
+                  fontSize: 38,
                   fontWeight: 900,
                   letterSpacing: '-0.9px',
                   lineHeight: 1,
@@ -2344,49 +2375,23 @@ export function TowerIndexPage({
               >
                 M. Castillo · CFO · {tenantName} · {timestamp} PT
               </div>
+              <div
+                style={{
+                  marginTop: 8,
+                  color: '#2f3848',
+                  fontSize: 15.5,
+                  fontWeight: 760,
+                  lineHeight: 1.35,
+                }}
+              >
+                {workspaceQuestion(activeTab)}
+              </div>
             </div>
           </div>
 
           {activeTab === 'portfolio' ? (
             <>
-          {/* KPI band — T-1 compression: ~80px tall, 2-line tiles, no inline CTAs.
-              Displaced detail (3-line descriptions) lives in hover tooltip;
-              displaced CTAs ("+24% pending baseline →" and "Connect Okta +
-              EntraID →") absorbed by Atlas observations in T-3. */}
-          <section
-            data-testid="tower-kpi-band"
-            style={{
-              display: 'grid',
-              gridTemplateColumns: '1.4fr 1fr 1fr 1fr 1fr',
-              padding: '8px 32px',
-              borderBottom: `1px solid ${T.RULE_STRONG}`,
-              gap: 0,
-              alignItems: 'center',
-              minHeight: 62,
-            }}
-          >
-            {useSubstrateBand && bandMetrics ? (
-              <>
-                {/* T-8: iterate in lens-determined order; hero tile leads. */}
-                {bandMetrics.metrics.map((m, i) => (
-                  <SubstrateKpi
-                    key={m.key}
-                    metric={m}
-                    hero={m.hero}
-                    isFirst={i === 0}
-                    onAskAtlas={handleMetricAsk}
-                  />
-                ))}
-              </>
-            ) : (
-              <TowerEmptyState
-                eyebrow="DB substrate required"
-                title="No tenant-bound KPI data is available."
-                body="Tower will not substitute demo KPI values. Load initiatives and vendors for this client before using the executive band."
-                style={{ gridColumn: '1 / -1' }}
-              />
-            )}
-          </section>
+          {kpiBand}
 
           <CanvasViewTabs
             active={activeCanvasView}
@@ -2404,7 +2409,7 @@ export function TowerIndexPage({
           ) : (
           <>
           {/* Section headline */}
-          {activeCanvasView === 'pressures' && (
+          {(activeCanvasView === 'pressures' || activeCanvasView === 'contract' || activeCanvasView === 'adoption') && (
           <>
           <div style={{ padding: '16px 32px 10px' }}>
             <div
@@ -2464,8 +2469,8 @@ export function TowerIndexPage({
             ) : (
               <TowerEmptyState
                 eyebrow="No pressure cards"
-                title={`No ${lensLabel(activeLens).toLowerCase()} pressure cards are loaded for this tenant.`}
-                body={pressuresView?.emptyHint ?? 'The data is present, but this lens has no matching pressure rows. Switch lenses or load additional source rows.'}
+                title="No matching pressure cards are loaded for this canvas."
+                body={pressuresView?.emptyHint ?? 'The data is present, but this canvas has no matching pressure rows. Switch canvas views or load additional source rows.'}
               />
             )}
           </div>
@@ -2474,14 +2479,18 @@ export function TowerIndexPage({
 
           {/* Strategic alignment matrix */}
           {activeCanvasView === 'alignment' && (
-          <section style={{ padding: '26px 32px 28px' }}>
+          <section style={{ padding: '10px 32px 34px' }}>
             <div
               style={{
                 display: 'grid',
-                gridTemplateColumns: '64px minmax(0, 1fr) minmax(0, 1fr)',
-                gridTemplateRows: 'minmax(222px, auto) minmax(222px, auto) 42px',
+                gridTemplateColumns: '54px minmax(0, 1fr) minmax(0, 1fr)',
+                gridTemplateRows: 'minmax(214px, 1fr) minmax(214px, 1fr) 40px',
                 gap: 0,
                 width: '100%',
+                minHeight: 'min(58vh, 560px)',
+                borderRadius: 10,
+                overflow: 'hidden',
+                boxShadow: PANEL_SHADOW,
               }}
             >
               {/* Y axis */}
@@ -2585,55 +2594,10 @@ export function TowerIndexPage({
           </>
           )}
 
-          {/* T-4: "Coming next" block — deferred metrics roadmap signal,
-              rendered above the doctrine line. Conditionally hides itself
-              when the view has no deferred metrics. */}
-          <div style={{ padding: '12px 0 0' }}>
-            <DeferredMetricsBlock view="tower-cfo" />
-          </div>
-
-          {/* Footer signature */}
-          <div
-            style={{
-              padding: '22px 32px 32px',
-              borderTop: `1px dashed ${T.RULE}`,
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'baseline',
-              gap: 24,
-              flexWrap: 'wrap',
-            }}
-          >
-            <div
-              style={{
-                fontFamily: T.MONO,
-                fontSize: 9.5,
-                letterSpacing: '1.4px',
-                color: T.GRAY_DK,
-                fontWeight: 600,
-                lineHeight: 1.7,
-                maxWidth: '60ch',
-              }}
-            >
-              <strong style={{ color: T.INK }}>Tower is a decision instrument, not a dashboard.</strong> Every number on this page has a confidence level and an underlying calculation that&apos;s queryable. Underlines: solid HIGH · dashed MED · dotted LOW. Missing inputs read as invitations, not errors.<br />
-              Next governance review: <strong style={{ color: T.INK }}>May 19 · 90-min board prep</strong>.
-            </div>
-            <div
-              style={{
-                fontFamily: T.MONO,
-                fontSize: 9,
-                letterSpacing: '1.3px',
-                color: T.GRAY,
-                fontStyle: 'italic',
-                textAlign: 'right',
-              }}
-            >
-              Generated {timestamp} PT · refreshes every 6h<br />
-              v2 confidence bands · substrate v0.9
-            </div>
-          </div>
             </>
           ) : activeDetailId ? (
+            <>
+            {kpiBand}
             <TowerInlineDetailPanel
               detailId={activeDetailId}
               initiative={detailInitiative}
@@ -2641,7 +2605,10 @@ export function TowerIndexPage({
               pressure={detailPressure}
               closeHref={closeDetailHref}
             />
+            </>
           ) : (
+            <>
+            {kpiBand}
             <TowerWorkspaceTabPanel
               activeTab={activeTab}
               activeLens={activeLens}
@@ -2651,6 +2618,7 @@ export function TowerIndexPage({
               substrateCounts={substrateCounts}
               detailHrefFor={detailHrefFor}
             />
+            </>
           )}
         </div>
 
