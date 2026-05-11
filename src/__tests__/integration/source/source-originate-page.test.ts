@@ -170,22 +170,39 @@ describe('SourceOriginatePage (SRC-FLW-INTAKE)', () => {
     expect(meridianHtml).not.toContain('Ready to stand up a new IT sourcing event for Apex Retail');
   });
 
-  it('B6 — autosaves intake to localStorage with a per-tenant key', () => {
-    // Per-tenant key prefix prevents two clients drafting on the same browser
-    // from overwriting each other.
+  it('starts new sourcing events clean and clears legacy autosaved drafts', () => {
+    window.localStorage.setItem('abarva.source.originate.intake.meridian', JSON.stringify({
+      intake: {
+        trigger: 'Contract renewal plus 20% cost-reduction target and AI operating model exploration',
+        decisionOwner: 'Stale owner',
+        scopeBoundary: 'Stale scope',
+        valueTarget: '$8M stale target',
+        baselineOwner: 'Stale baseline owner',
+      },
+      categoryId: 'ams',
+      savedAt: '2026-05-10T00:00:00.000Z',
+    }));
+
+    render(createElement(SourceOriginatePage, {
+      clientName: 'Meridian Health',
+      clientShortName: 'Meridian Health',
+      clientKey: 'meridian',
+    }));
+
+    expect(screen.queryByDisplayValue('Contract renewal plus 20% cost-reduction target and AI operating model exploration')).toBeNull();
+    expect(screen.queryByText('Draft restored from autosave')).toBeNull();
+    expect(screen.getByText('0 / 5')).toBeTruthy();
+    expect(window.localStorage.getItem('abarva.source.originate.intake.meridian')).toBeNull();
+
+    // Keep the legacy key around only as a cleanup target. The page should not
+    // write new drafts or restore old browser residue into a new intake.
     expect(source).toContain("AUTOSAVE_KEY_PREFIX = 'abarva.source.originate.intake'");
     expect(source).toMatch(/autosaveKey\(clientKey\)/);
-    // Read on mount + write on every change + clear on submit.
-    expect(source).toContain('readAutosavedDraft(clientKey)');
-    expect(source).toContain('window.localStorage.setItem');
-    expect(source).toContain('clearAutosavedDraft(clientKey)');
-    // SSR-safe — typeof window guards.
+    expect(source).toContain('clearLegacyAutosavedDraft(clientKey)');
+    expect(source).not.toContain('window.localStorage.setItem');
+    expect(source).not.toContain('readAutosavedDraft(clientKey)');
+    expect(source).not.toContain('source-originate-draft-restored');
     expect(source).toContain("typeof window === 'undefined'");
-    // Visible "Draft restored" hint with discard button.
-    expect(source).toContain('source-originate-draft-restored');
-    expect(source).toContain('source-originate-draft-discard');
-    // Submission clears the draft so the next visit starts clean.
-    expect(source).toMatch(/clearAutosavedDraft\(clientKey\);[\s\S]+router\.push/);
   });
 
   it('uses the resizable splitter shell — full-bleed, no max-width cap, drag handle present', () => {
