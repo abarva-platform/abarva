@@ -3,7 +3,9 @@ import { headers } from 'next/headers'
 import { SHELL } from '@/lib/shell/shell-tokens'
 
 // Production 404 monitoring · §3.5 of page-agent-coherence-work-order.md.
-// Logs every 404 via console.error so Vercel runtime captures it.
+// Logs every production 404 via console.error so Vercel runtime captures it.
+// In local dev, console.error opens the Next.js overlay for expected browser
+// probes, which makes visual QA noisy, so keep local telemetry informational.
 // Alert thresholds (>3 distinct 404s / 10 min) configured in Vercel's
 // observability UI, not here.
 
@@ -15,7 +17,12 @@ export default async function NotFound() {
     const referrer = h.get('referer') ?? 'direct'
     const ua = (h.get('user-agent') ?? 'unknown').slice(0, 80)
     const path = h.get('x-nextjs-route') ?? h.get('x-matched-path') ?? 'unknown'
-    console.error(`[404] path=${path} referrer=${referrer} ua=${ua} ts=${new Date().toISOString()}`)
+    const message = `[404] path=${path} referrer=${referrer} ua=${ua} ts=${new Date().toISOString()}`
+    if (process.env.NODE_ENV === 'production') {
+      console.error(message)
+    } else {
+      console.info(message)
+    }
   } catch {
     // silent if headers() unavailable
   }

@@ -1,21 +1,13 @@
-// ProductMarketingPage · marketing-grade Product surface (PR-PROD).
+// ProductMarketingPage · investor-grade Product surface.
 //
-// Replaces the prior internal-doctrine ProductPage with a pitch-style
-// landing aligned to docs/training/abarva-marketing-page-v3.5.html.
-// Four surfaces + Move lifecycle + substrate + differentiators, each
-// section anchored by its own SVG illustration.
-//
-// SVG art is hand-rolled (deterministic, scalable, theme-tunable)
-// rather than raster AI-generated — same visual register without
-// the bandwidth/auth cost of an external image service.
+// This is the signed-in product story, not the internal product manual. It is
+// intentionally visual and outcome-led: what AbarVa is, why now, where the
+// economic value comes from, and why the product is defensible.
 
 import Image from 'next/image';
 import Link from 'next/link';
 import type { ReactNode } from 'react';
 
-/** Inline AbarVa wordmark — replaces the word "AbarVa" in body copy
- *  so the brand mark is shown rather than the word. Sized to match
- *  surrounding text. `inverse` flips it for dark backgrounds. */
 function AbarvaWordmark({
   height = '0.78em',
   inverse = false,
@@ -41,22 +33,26 @@ function AbarvaWordmark({
   );
 }
 
-const F_SERIF = "'Fraunces', Georgia, serif";
 const F_SANS = "'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif";
+const F_SERIF = "'Fraunces', Georgia, serif";
 const F_MONO = "'JetBrains Mono', 'SFMono-Regular', Menlo, monospace";
 
 const C = {
   ink: '#15151A',
-  inkSoft: '#4A4A52',
-  inkMute: '#8A877E',
-  accent: '#1F3A8A',
-  accentWarm: '#B8651B',
-  accentWarmSoft: '#D89762',
-  cream: '#FAF7F0',
-  creamDeep: '#F2EDE0',
+  inkSoft: '#424550',
+  inkMute: '#70747F',
   surface: '#FFFFFF',
-  border: '#E8E2D2',
-  hair: 'rgba(21,21,26,0.08)',
+  canvas: '#F6F7FA',
+  line: '#DDE3EC',
+  lineSoft: '#EBEFF5',
+  blue: '#0066CC',
+  blueDeep: '#0B3A75',
+  green: '#007A3D',
+  warm: '#B8651B',
+  warmSoft: '#F8EFE8',
+  greenSoft: '#EEF9F2',
+  blueSoft: '#EEF5FF',
+  shadow: '0 24px 80px rgba(11, 31, 61, 0.10)',
 };
 
 interface ProductMarketingSpotlight {
@@ -69,6 +65,57 @@ const DEFAULT_SPOTLIGHT: ProductMarketingSpotlight = {
   clientShortName: 'your client',
 };
 
+const valueLevers = [
+  { label: 'Avoid failed AI spend', value: '$5M-$12M', detail: 'Weak or stalled initiatives redirected before scale.' },
+  { label: 'Improve solution design', value: '$3M-$6M', detail: 'Avoid overbuild, under-design, and late rework.' },
+  { label: 'Optimize sourcing', value: '$2M-$4M', detail: 'Vendor/SI scope, rates, role mix, and terms normalized.' },
+  { label: 'Pull value forward', value: '$3M-$8M', detail: 'Decision cycles compressed from months to weeks.' },
+  { label: 'Lift realized ROI', value: '$5M-$15M', detail: 'Adoption, finance proof, and verified outcomes tracked.' },
+];
+
+const surfaces = [
+  {
+    name: 'Intelligence',
+    agent: 'Sentinel',
+    promise: 'Decide the right AI bets',
+    body: 'Answers executive questions against tenant facts, industry patterns, systems, KPIs, and unresolved ownership tensions.',
+    href: '/intelligence',
+    color: C.blue,
+  },
+  {
+    name: 'Moves',
+    agent: 'Nexus',
+    promise: 'Shape bets into funded journeys',
+    body: 'Turns a promising signal into sponsor, scope, evidence, gates, architecture, business case, and value path.',
+    href: '/strategic-moves',
+    color: C.green,
+  },
+  {
+    name: 'Source',
+    agent: 'Source',
+    promise: 'Select vendors and SIs with discipline',
+    body: 'Guides intake, shortlist, RFP/proposal logic, commercial comparison, and decision records.',
+    href: '/source',
+    color: C.warm,
+  },
+  {
+    name: 'Tower',
+    agent: 'Atlas',
+    promise: 'Run the AI portfolio',
+    body: 'Makes value, risk, readiness, dependencies, and ownership visible before the steering committee.',
+    href: '/tower',
+    color: C.blueDeep,
+  },
+];
+
+const architectureLayers = [
+  ['Experience layer', 'Home, Intelligence, Moves, Source, Tower'],
+  ['Agent layer', 'Sentinel, Nexus, Source, Atlas, Maestro'],
+  ['Knowledge layer', 'Tenant profile, org, budget, systems, KPIs, corpus'],
+  ['Retrieval layer', 'Postgres/Supabase, graph context, Pinecone vectors'],
+  ['Control layer', 'Gates, evidence ledger, provenance, value verification'],
+];
+
 export function ProductMarketingPage({
   spotlight = DEFAULT_SPOTLIGHT,
 }: {
@@ -78,1578 +125,339 @@ export function ProductMarketingPage({
     <div
       data-testid="product-marketing-page"
       style={{
-        background: C.cream,
+        minHeight: '100vh',
+        background: C.canvas,
         color: C.ink,
         fontFamily: F_SANS,
         fontSize: 16,
         lineHeight: 1.6,
-        minHeight: '100vh',
       }}
     >
       <Hero spotlight={spotlight} />
-      <FourSurfaces />
-      <MoveLifecycle />
-      <Substrate spotlight={spotlight} />
-      <Differentiators />
-      <CompositeTenantCaseStudies />
+      <EconomicValue />
+      <OperatingSystem spotlight={spotlight} />
+      <MoveAndSourceJourneys />
+      <Architecture />
+      <WhyNow />
       <Cta spotlight={spotlight} />
     </div>
   );
 }
 
-// ─── Composite Tenant Case Studies ───────────────────────────────────────────
-//
-// Founder directive 2026-05-10: 'Case study and example driven. Sample clients
-// must be 100% accurate. We should orient them on who they are / leadership /
-// vision / data loaded. Emphasize how intelligent our agents are.'
-//
-// Three composite tenants. Numbers reconciled to the live composite seed
-// data (executive_bench.json, function_capacity.csv, fy2026_capital_plan.csv,
-// funding_authority_matrix.csv) committed 2026-05-10.
-
-type TenantCase = {
-  industry: string;
-  industryAccent: string;
-  name: string;
-  scale: { revenue: string; footprint: string; headcount: string; itBudget: string };
-  cxoLogins: { title: string; name: string; email: string }[];
-  whatLoaded: string;
-  agentSampleQ: string;
-  agentSampleA: string;
-  agentName: 'Sentinel' | 'Nexus' | 'Source';
-  agentSurface: 'Intelligence' | 'Strategic Moves' | 'Source';
-};
-
-const TENANT_CASES: TenantCase[] = [
-  {
-    industry: 'Healthcare · Integrated Delivery Network',
-    industryAccent: '#0E8A65',
-    name: 'Meridian Health System',
-    scale: {
-      revenue: '$16.8B',
-      footprint: '30 hospitals · 280 clinics · Plan covers 1.6M members',
-      headcount: '~58k (~14,800 RNs · 7,400 employed MDs)',
-      itBudget: '$384M IT operating · $1.1B FY2026 capital plan',
-    },
-    cxoLogins: [
-      { title: 'CDIO', name: 'Dr. Anita Krishnamurthy', email: 'cdio@meridian-health.example.com' },
-      { title: 'CFO', name: 'David Park', email: 'cfo@meridian-health.example.com' },
-      { title: 'COO', name: "Sarah O'Brien", email: 'coo@meridian-health.example.com' },
-    ],
-    whatLoaded: '106 named persons · 26 sized functions · 18 capital plan lines · 10 funding authority bands · 114 systems · 45 vendor scorecards. AI Governance Council with 23 use cases under review (chaired by CMIO Wexler). Active programs: RCM modernization, ambient documentation, prior authorization (Cohere), AI governance.',
-    agentName: 'Sentinel',
-    agentSurface: 'Intelligence',
-    agentSampleQ: 'How big is our data analytics function vs. industry standard?',
-    agentSampleA: '185 FTE — 152 onshore, 18 offshore, 15 contractor. FY2026 budget $38.5M ($5.5M capex + $33M opex). Owns 14 systems including Snowflake, Epic Cogito, Epic Cosmos, the Atlas custom plan-provider platform, dbt, Tableau, Arcadia, Databricks under evaluation. Reports to VP Jordan McKenzie (CDIO direct). Sized to industry standard for a $16-20B IDN with both provider and plan analytics needs; onshore-heavy mix is typical because clinical data sensitivity makes offshore analytics hard at scale.',
-  },
-  {
-    industry: 'Retail · Mass + Specialty Omnichannel',
-    industryAccent: '#5B21B6',
-    name: 'Apex Retail Group',
-    scale: {
-      revenue: '$108B',
-      footprint: '1,976 stores · 12 DCs · 4 merch categories',
-      headcount: '~250k (largest: store associates ~219k)',
-      itBudget: '$1.62B IT operating · ~$3.5B FY2026 capital plan',
-    },
-    cxoLogins: [
-      { title: 'CIO', name: 'Carlos Rivera', email: 'cio@apex-retail.example.com' },
-      { title: 'CFO', name: 'Margaret Chen', email: 'cfo@apex-retail.example.com' },
-      { title: 'CDO', name: 'Lynne Stratham', email: 'cdo@apex-retail.example.com' },
-    ],
-    whatLoaded: '79 named persons · 30 sized functions · 15 capital plan lines · 9 funding authority bands · 65 systems · 28 vendor scorecards. Active programs: workforce scheduling, demand sensing, loyalty NBO, CDP Activation 2026 (Stratham sponsor), self-checkout deployment + RFID rollout to 1,200 stores.',
-    agentName: 'Nexus',
-    agentSurface: 'Strategic Moves',
-    agentSampleQ: "I want to fund a $4M AI workforce-scheduling pilot. What's the approval path?",
-    agentSampleA: "At $4M you're below the joint CFO+CIO threshold ($25M+) and inside CIO Carlos Rivera's single-decision authority ($5-25M band). But two parallel gates apply regardless of dollar: AI Governance Council attestation (use case design + bias assessment + workforce-data handling) and Internal Audit liaison via Joaquin Mendoza-Levitt. CFO Margaret Chen will still want a 1-page business case and 24-month payback evidence — she's the gating signature on activist-investor narrative even when she isn't a formal approver.",
-  },
-  {
-    industry: 'Banking · Regional Super-Bank',
-    industryAccent: '#1F3A8A',
-    name: 'First Capital Financial',
-    scale: {
-      revenue: '$18.2B revenue · $362B assets · $420B wealth AUM',
-      footprint: '480 branches · 720 ATMs · 4 LOBs (Consumer/Commercial/Wealth/Treasury)',
-      headcount: '~46k (~1,180 in compliance/BSA-AML alone)',
-      itBudget: '$1.67B IT operating (9.2% of revenue · 34% compliance share, highest in peer)',
-    },
-    cxoLogins: [
-      { title: 'CIO', name: 'Patricia Huang', email: 'cio@firstcapital.example.com' },
-      { title: 'CRO', name: 'James Park', email: 'cro@firstcapital.example.com' },
-      { title: 'CFO', name: 'Michael Torres', email: 'cfo@firstcapital.example.com' },
-    ],
-    whatLoaded: "92 named persons · 25 sized functions · 18 capital plan lines · 11 funding authority bands · 84 systems · 51 vendor scorecards. Active programs: FedNow build (cutover 2026), FIS Profile core banking modernization decision, AI program portfolio under SR 11-7 MRM gating (Adekoya-Park reporting to CRO).",
-    agentName: 'Source',
-    agentSurface: 'Source',
-    agentSampleQ: 'Which vendors are on renegotiation flags right now?',
-    agentSampleA: "Three vendor scorecards in renegotiation status. (1) Adenza (Nasdaq) — AxiomSL ControllerView + Calypso treasury at $9.2M annual; renewal Jun 30, 2027; price increase post-Nasdaq acquisition is the flag. (2) NICE Actimize — Fraud + AML platform at $10M annual; renewal Apr 30, 2027; expanding under OCC findings, but VP Quintero is sitting on a Verafin pilot that could shift the leverage. (3) Black Knight — Mortgage Origination + Default at $9.2M annual; renewal Sep 30, 2026; volume in current rate environment makes this a price re-cut conversation. CPO Nadia Rahman owns the bundling logic.",
-  },
-];
-
-function CompositeTenantCaseStudies() {
-  return (
-    <section
-      style={{
-        padding: '96px clamp(32px, 6vw, 96px)',
-        background: C.creamDeep,
-        borderTop: `1px solid ${C.border}`,
-        borderBottom: `1px solid ${C.border}`,
-      }}
-    >
-      <div style={{ maxWidth: 1240, margin: '0 auto' }}>
-        <SectionEyebrow num="05.5">Three composite tenants · Sample case studies</SectionEyebrow>
-        <SectionTitle>The agents are intelligent because the substrate is real.</SectionTitle>
-        <SectionLead>
-          Every recommendation lands in your enterprise truth. Three composite tenants are loaded end-to-end so any executive can pressure-test the agents the moment they sign in. The CXO logins below are pre-provisioned with shared password{' '}
-          <code style={{ fontFamily: F_MONO, fontSize: 14, padding: '2px 6px', background: C.surface, borderRadius: 3, border: `1px solid ${C.border}` }}>Demo2026!</code>
-          {' '}and OTP code{' '}
-          <code style={{ fontFamily: F_MONO, fontSize: 14, padding: '2px 6px', background: C.surface, borderRadius: 3, border: `1px solid ${C.border}` }}>424242</code>
-          .
-        </SectionLead>
-
-        <div style={{ display: 'grid', gap: 28, marginTop: 48 }}>
-          {TENANT_CASES.map((t) => (
-            <article
-              key={t.name}
-              style={{
-                background: C.surface,
-                border: `1px solid ${C.border}`,
-                borderLeft: `5px solid ${t.industryAccent}`,
-                borderRadius: 12,
-                padding: 'clamp(24px, 3vw, 36px)',
-                display: 'grid',
-                gridTemplateColumns: 'minmax(300px, 1fr) minmax(300px, 1.4fr)',
-                gap: 36,
-              }}
-            >
-              {/* LEFT: identity + scale + leadership */}
-              <div>
-                <div
-                  style={{
-                    fontFamily: F_MONO,
-                    fontSize: 11,
-                    fontWeight: 700,
-                    letterSpacing: '0.18em',
-                    textTransform: 'uppercase',
-                    color: t.industryAccent,
-                    marginBottom: 10,
-                  }}
-                >
-                  {t.industry}
-                </div>
-                <h3
-                  style={{
-                    fontFamily: F_SERIF,
-                    fontSize: 32,
-                    fontWeight: 500,
-                    color: C.ink,
-                    letterSpacing: '-0.018em',
-                    margin: '0 0 18px',
-                    lineHeight: 1.15,
-                  }}
-                >
-                  {t.name}
-                </h3>
-                <dl style={{ margin: '0 0 24px', display: 'grid', gap: 10 }}>
-                  {[
-                    ['Revenue', t.scale.revenue],
-                    ['Footprint', t.scale.footprint],
-                    ['Headcount', t.scale.headcount],
-                    ['IT spend', t.scale.itBudget],
-                  ].map(([k, v]) => (
-                    <div key={k} style={{ display: 'grid', gridTemplateColumns: '110px 1fr', gap: 12, alignItems: 'baseline' }}>
-                      <dt style={{ fontFamily: F_MONO, fontSize: 10, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: C.inkMute }}>{k}</dt>
-                      <dd style={{ margin: 0, fontFamily: F_SANS, fontSize: 13, color: C.inkSoft, lineHeight: 1.55 }}>{v}</dd>
-                    </div>
-                  ))}
-                </dl>
-                <div
-                  style={{
-                    fontFamily: F_MONO,
-                    fontSize: 10,
-                    fontWeight: 700,
-                    letterSpacing: '0.14em',
-                    textTransform: 'uppercase',
-                    color: C.inkMute,
-                    marginBottom: 10,
-                  }}
-                >
-                  3 CXO test logins
-                </div>
-                <ul style={{ margin: 0, padding: 0, listStyle: 'none', display: 'grid', gap: 8 }}>
-                  {t.cxoLogins.map((cx) => (
-                    <li
-                      key={cx.email}
-                      style={{
-                        background: C.cream,
-                        border: `1px solid ${C.hair}`,
-                        borderRadius: 6,
-                        padding: '10px 14px',
-                      }}
-                    >
-                      <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, flexWrap: 'wrap' }}>
-                        <span style={{ fontFamily: F_MONO, fontSize: 10, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: t.industryAccent }}>{cx.title}</span>
-                        <span style={{ fontFamily: F_SANS, fontSize: 14, fontWeight: 700, color: C.ink }}>{cx.name}</span>
-                      </div>
-                      <div style={{ fontFamily: F_MONO, fontSize: 11, color: C.inkMute, marginTop: 2 }}>{cx.email}</div>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-
-              {/* RIGHT: what's loaded + agent intelligence sample */}
-              <div>
-                <div
-                  style={{
-                    fontFamily: F_MONO,
-                    fontSize: 10,
-                    fontWeight: 700,
-                    letterSpacing: '0.14em',
-                    textTransform: 'uppercase',
-                    color: C.inkMute,
-                    marginBottom: 10,
-                  }}
-                >
-                  What is loaded
-                </div>
-                <p
-                  style={{
-                    fontFamily: F_SANS,
-                    fontSize: 14,
-                    color: C.inkSoft,
-                    lineHeight: 1.65,
-                    margin: '0 0 28px',
-                  }}
-                >
-                  {t.whatLoaded}
-                </p>
-
-                <div
-                  style={{
-                    background: C.cream,
-                    border: `1px solid ${C.hair}`,
-                    borderRadius: 10,
-                    overflow: 'hidden',
-                  }}
-                >
-                  <div
-                    style={{
-                      padding: '14px 18px',
-                      borderBottom: `1px solid ${C.hair}`,
-                      background: C.surface,
-                      display: 'flex',
-                      alignItems: 'baseline',
-                      gap: 12,
-                      flexWrap: 'wrap',
-                    }}
-                  >
-                    <span style={{ fontFamily: F_MONO, fontSize: 10, fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: t.industryAccent }}>
-                      {t.agentName} · {t.agentSurface}
-                    </span>
-                  </div>
-                  <div style={{ padding: '16px 18px' }}>
-                    <div style={{ fontFamily: F_SANS, fontSize: 13, fontWeight: 700, color: C.ink, marginBottom: 8, fontStyle: 'italic' }}>
-                      {`"${t.agentSampleQ}"`}
-                    </div>
-                    <div style={{ fontFamily: F_SANS, fontSize: 13, color: C.inkSoft, lineHeight: 1.7 }}>
-                      {t.agentSampleA}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </article>
-          ))}
-        </div>
-
-        <p
-          style={{
-            marginTop: 36,
-            fontFamily: F_SANS,
-            fontSize: 14,
-            color: C.inkMute,
-            textAlign: 'center',
-            maxWidth: 720,
-            marginLeft: 'auto',
-            marginRight: 'auto',
-            lineHeight: 1.6,
-          }}
-        >
-          The numbers, leadership, and agent answers above all reconcile to the
-          composite seed data loaded into Supabase. Sign in as any of the nine
-          CXOs and ask the same question yourself — the answer the agent
-          produces should match what you see here.
-        </p>
-      </div>
-    </section>
-  );
-}
-
-// ─── Hero ─────────────────────────────────────────────────────────
-
 function Hero({ spotlight }: { spotlight: ProductMarketingSpotlight }) {
   return (
-    <section
-      style={{
-        padding: '88px 64px 64px',
-        background:
-          `radial-gradient(circle at 80% 20%, ${C.accentWarmSoft}22 0%, transparent 50%), ` +
-          `radial-gradient(circle at 10% 80%, ${C.accent}11 0%, transparent 50%), ` +
-          C.cream,
-        borderBottom: `1px solid ${C.border}`,
-      }}
-    >
+    <section style={{ padding: '72px clamp(24px, 5vw, 72px) 48px', background: C.surface }}>
       <div
         style={{
-          maxWidth: 1280,
+          maxWidth: 1320,
           margin: '0 auto',
           display: 'grid',
-          gridTemplateColumns: 'minmax(0, 1fr) 480px',
-          gap: 64,
+          gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))',
+          gap: 42,
           alignItems: 'center',
         }}
       >
         <div>
-          <div
-            style={{
-              fontFamily: F_MONO,
-              fontSize: 11,
-              fontWeight: 700,
-              letterSpacing: '0.22em',
-              textTransform: 'uppercase',
-              color: C.inkMute,
-              marginBottom: 18,
-            }}
-          >
-            <span style={{ color: C.accent }}>01</span> · The platform
-          </div>
+          <Eyebrow>Seed funding narrative</Eyebrow>
           <h1
             style={{
-              fontFamily: F_SERIF,
-              fontSize: 'clamp(40px, 5vw, 64px)',
-              fontWeight: 400,
-              color: C.ink,
-              letterSpacing: '-0.02em',
-              lineHeight: 1.05,
               margin: '0 0 22px',
-              maxWidth: '20ch',
+              maxWidth: 820,
+              fontFamily: F_SERIF,
+              fontSize: 'clamp(44px, 6vw, 82px)',
+              fontWeight: 520,
+              lineHeight: 0.98,
+              letterSpacing: 0,
             }}
           >
-            AI bets that{' '}
-            <span style={{ fontStyle: 'italic', color: C.accent }}>actually</span>{' '}
-            ship.
+            The AI operating system for C-suite decisions.
           </h1>
-          <p
-            style={{
-              fontSize: 18,
-              lineHeight: 1.55,
-              color: C.inkSoft,
-              maxWidth: '52ch',
-              margin: '0 0 28px',
-            }}
-          >
-            <AbarvaWordmark /> is the operating platform for shaping enterprise AI bets.
-            Pattern-grounded, tenant-overlaid, agent-collaborative — the
-            three things every failed AI program lacked.
+          <p style={{ maxWidth: 760, margin: '0 0 26px', color: C.inkSoft, fontSize: 20, lineHeight: 1.48 }}>
+            <AbarvaWordmark /> helps executives decide which AI bets to fund, shape them into governed Strategic Moves,
+            select the right vendor/SI path, and prove whether value is actually realized.
           </p>
-          <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap' }}>
-            <Link
-              href="/home"
-              style={{
-                background: C.ink,
-                color: C.surface,
-                padding: '14px 24px',
-                borderRadius: 999,
-                fontFamily: F_SANS,
-                fontSize: 14,
-                fontWeight: 600,
-                letterSpacing: '-0.005em',
-                textDecoration: 'none',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 8,
-              }}
-            >
-              See it on {spotlight.clientShortName} →
-            </Link>
-            <Link
-              href="/intelligence#brief"
-              style={{
-                color: C.ink,
-                padding: '14px 24px',
-                borderRadius: 999,
-                fontFamily: F_SANS,
-                fontSize: 14,
-                fontWeight: 600,
-                textDecoration: 'none',
-                border: `1px solid ${C.ink}`,
-              }}
-            >
-              Watch the brief
-            </Link>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12 }}>
+            <PrimaryLink href="/home">See it on {spotlight.clientShortName}</PrimaryLink>
+            <SecondaryLink href="/intelligence">Open Intelligence on {spotlight.clientShortName}</SecondaryLink>
           </div>
         </div>
-        <HeroIllustration />
+        <HeroGraphic />
       </div>
-
-      {/* Reality stat block */}
       <div
         style={{
-          maxWidth: 1280,
-          margin: '64px auto 0',
+          maxWidth: 1320,
+          margin: '46px auto 0',
           display: 'grid',
-          gridTemplateColumns: 'repeat(3, 1fr)',
-          gap: 28,
-          padding: '32px 0 0',
-          borderTop: `1px solid ${C.border}`,
+          gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+          gap: 14,
         }}
       >
-        <Stat
-          eyebrow="The reality"
-          figure="73%"
-          label="of enterprise AI initiatives never reach measurable production"
-          source="Gartner 2025 · IDC 2024"
-        />
-        <Stat
-          eyebrow="The pattern"
-          figure="$2.4M"
-          label="average sunk cost per failed AI bet at IDN scale"
-          source="KLAS 2025-Q4 · n=87"
-        />
-        <Stat
-          eyebrow="The win"
-          figure="3.8×"
-          label="success-rate lift when pattern-grounding is wired in early"
-          source="AbarVa pilot cohort · 2025"
-        />
+        <ProofStat label="Working product" value="Real app" detail="Next.js / React, Node.js runtime, Postgres/Supabase, graph context, Pinecone retrieval." />
+        <ProofStat label="Executive workflow" value="4 surfaces" detail="Intelligence, Moves, Source, Tower tied to one tenant knowledge layer." />
+        <ProofStat label="Value thesis" value="$18M-$45M+" detail="Illustrative annual value on a $100M AI/transformation portfolio." />
       </div>
     </section>
   );
 }
 
-function Stat({
-  eyebrow,
-  figure,
-  label,
-  source,
-}: {
-  eyebrow: string;
-  figure: string;
-  label: string;
-  source: string;
-}) {
+function EconomicValue() {
   return (
-    <div
-      style={{
-        position: 'relative',
-        paddingLeft: 18,
-        borderLeft: `3px solid ${C.accent}`,
-      }}
-    >
-      <div
-        style={{
-          fontFamily: F_MONO,
-          fontSize: 10,
-          fontWeight: 700,
-          letterSpacing: '0.18em',
-          textTransform: 'uppercase',
-          color: C.inkMute,
-          marginBottom: 8,
-        }}
-      >
-        {eyebrow}
-      </div>
-      <div
-        style={{
-          fontFamily: F_SERIF,
-          fontSize: 44,
-          fontWeight: 400,
-          color: C.ink,
-          letterSpacing: '-0.022em',
-          lineHeight: 1,
-          marginBottom: 8,
-        }}
-      >
-        {figure}
-      </div>
-      <div style={{ fontSize: 14, color: C.inkSoft, lineHeight: 1.5, marginBottom: 6, maxWidth: '36ch' }}>
-        {label}
-      </div>
-      <div style={{ fontFamily: F_MONO, fontSize: 10, color: C.inkMute, letterSpacing: '0.06em' }}>
-        {source}
-      </div>
-    </div>
-  );
-}
-
-function HeroIllustration() {
-  // Topo-map landscape · "where the bets sit." Concentric contour
-  // lines, scattered AI-bet nodes (some above the line, some below),
-  // a horizon line marking the cut.
-  return (
-    <svg
-      viewBox="0 0 480 480"
-      width="100%"
-      style={{ display: 'block', maxWidth: 480 }}
-      role="img"
-      aria-label="Topographic landscape showing AI bets above and below the line"
-    >
-      <defs>
-        <radialGradient id="hero-glow" cx="50%" cy="40%" r="60%">
-          <stop offset="0%" stopColor={C.accentWarmSoft} stopOpacity="0.45" />
-          <stop offset="60%" stopColor={C.accent} stopOpacity="0.06" />
-          <stop offset="100%" stopColor={C.cream} stopOpacity="0" />
-        </radialGradient>
-        <linearGradient id="hero-horizon" x1="0%" y1="0%" x2="100%" y2="0%">
-          <stop offset="0%" stopColor={C.accent} stopOpacity="0" />
-          <stop offset="50%" stopColor={C.accent} stopOpacity="0.7" />
-          <stop offset="100%" stopColor={C.accent} stopOpacity="0" />
-        </linearGradient>
-      </defs>
-
-      {/* Background glow */}
-      <rect width="480" height="480" fill="url(#hero-glow)" />
-
-      {/* Contour lines — concentric blobs */}
-      {[0.3, 0.45, 0.6, 0.75, 0.9].map((scale, i) => (
-        <ellipse
-          key={`contour-${i}`}
-          cx={240}
-          cy={210}
-          rx={140 * scale}
-          ry={86 * scale}
-          fill="none"
-          stroke={C.accent}
-          strokeWidth={0.8}
-          strokeOpacity={0.20 + i * 0.05}
-          strokeDasharray={i % 2 === 0 ? '0' : '3 4'}
-        />
-      ))}
-      {[0.4, 0.55, 0.7, 0.85].map((scale, i) => (
-        <ellipse
-          key={`contour-b-${i}`}
-          cx={150}
-          cy={340}
-          rx={70 * scale}
-          ry={42 * scale}
-          fill="none"
-          stroke={C.accentWarm}
-          strokeWidth={0.8}
-          strokeOpacity={0.18 + i * 0.05}
-          strokeDasharray={i % 2 === 0 ? '0' : '3 4'}
-        />
-      ))}
-
-      {/* Horizon line · "above the line" cut */}
-      <line x1="20" y1="240" x2="460" y2="240" stroke="url(#hero-horizon)" strokeWidth={1.5} />
-      <text
-        x="20"
-        y="232"
-        fontFamily={F_MONO}
-        fontSize={9}
-        fill={C.accent}
-        letterSpacing="0.16em"
-        fontWeight={700}
-      >
-        ABOVE THE LINE
-      </text>
-      <text
-        x="20"
-        y="258"
-        fontFamily={F_MONO}
-        fontSize={9}
-        fill={C.inkMute}
-        letterSpacing="0.16em"
-        fontWeight={700}
-      >
-        EVALUATING
-      </text>
-
-      {/* Above-the-line bets (filled, named) */}
-      {[
-        { x: 240, y: 175, r: 14, label: 'Pop Health' },
-        { x: 195, y: 205, r: 11, label: 'Ambient AI' },
-        { x: 295, y: 200, r: 9, label: 'Sepsis' },
-      ].map((n) => (
-        <g key={n.label}>
-          <circle cx={n.x} cy={n.y} r={n.r} fill={C.accent} opacity={0.92} />
-          <circle cx={n.x} cy={n.y} r={n.r + 4} fill="none" stroke={C.accent} strokeWidth={0.6} opacity={0.4} />
-          <text
-            x={n.x}
-            y={n.y - n.r - 8}
-            fontFamily={F_SANS}
-            fontSize={10}
-            fill={C.ink}
-            fontWeight={600}
-            textAnchor="middle"
-          >
-            {n.label}
-          </text>
-        </g>
-      ))}
-
-      {/* Below-the-line bets (lighter) */}
-      {[
-        { x: 130, y: 295, r: 8 },
-        { x: 200, y: 320, r: 6 },
-        { x: 260, y: 305, r: 7 },
-        { x: 330, y: 315, r: 5 },
-        { x: 165, y: 360, r: 6 },
-        { x: 240, y: 380, r: 5 },
-        { x: 325, y: 360, r: 7 },
-        { x: 100, y: 340, r: 5 },
-      ].map((n, i) => (
-        <circle
-          key={`below-${i}`}
-          cx={n.x}
-          cy={n.y}
-          r={n.r}
-          fill="none"
-          stroke={C.accentWarm}
-          strokeWidth={1.2}
-          opacity={0.55}
-        />
-      ))}
-
-      {/* Cluster connection — pattern cascade */}
-      <path
-        d="M 240,175 Q 217,190 195,205"
-        fill="none"
-        stroke={C.accent}
-        strokeWidth={0.8}
-        opacity={0.4}
-        strokeDasharray="2 3"
-      />
-      <path
-        d="M 240,175 Q 268,188 295,200"
-        fill="none"
-        stroke={C.accent}
-        strokeWidth={0.8}
-        opacity={0.4}
-        strokeDasharray="2 3"
-      />
-    </svg>
-  );
-}
-
-// ─── Four surfaces ───────────────────────────────────────────────
-
-interface SurfaceMeta {
-  num: string;
-  name: string;
-  tagline: string;
-  body: string;
-  illustration: ReactNode;
-  href: string;
-  ctaLabel: string;
-}
-
-// Order follows the customer journey: discover the bet (Intelligence)
-// → shape and ship it (Moves) → the agent that stays in the room
-// (Sentinel) → source the vendors and contracts (Source) → see the
-// whole portfolio (Tower).
-const SURFACES: ReadonlyArray<SurfaceMeta> = [
-  {
-    num: '01',
-    name: 'Intelligence',
-    tagline: 'Pattern → Move funnel',
-    body: 'Corpus-grounded patterns scored against your tenant context. The Brief tells you what bets are above the line. The Map shows where you sit in the universe.',
-    illustration: <IntelligenceIllustration />,
-    href: '/intelligence',
-    ctaLabel: 'Open Intelligence →',
-  },
-  {
-    num: '02',
-    name: 'Strategic Moves',
-    tagline: 'Origination → ship → measure',
-    body: 'The lifecycle a Move travels through, end-to-end. Gated approvals, audit trail, value attribution. Failure modes detected before they cost you a quarter.',
-    illustration: <MovesIllustration />,
-    href: '/strategic-moves',
-    ctaLabel: 'Open Moves →',
-  },
-  {
-    num: '03',
-    name: 'Source',
-    tagline: 'Vendor + contract intelligence',
-    body: 'Where the IT spend goes — by category, by vendor, by renewal pressure. Sentinel fronts this surface, surfacing leverage thinness before the negotiation, not during it.',
-    illustration: <SourceIllustration />,
-    href: '/source',
-    ctaLabel: 'Open Source →',
-  },
-  {
-    num: '04',
-    name: 'Tower',
-    tagline: 'AI portfolio command',
-    body: 'Every AI bet your enterprise has placed — measured against committed value. The view a CIO opens before a steering committee, not after.',
-    illustration: <TowerIllustration />,
-    href: '/tower',
-    ctaLabel: 'Open Tower →',
-  },
-];
-
-function FourSurfaces() {
-  return (
-    <section style={{ padding: '96px 64px', borderBottom: `1px solid ${C.border}` }}>
-      <div style={{ maxWidth: 1280, margin: '0 auto' }}>
-        <SectionEyebrow num="02">The four surfaces</SectionEyebrow>
-        <SectionTitle>One platform. Four surfaces. Each one a CXO answer.</SectionTitle>
-        <SectionLead>
-          <AbarvaWordmark /> isn&rsquo;t a dashboard. Each surface answers a different decision —
-          and they&rsquo;re all wired into the same substrate so the answers stay
-          consistent.
-        </SectionLead>
-        <div
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 18,
-            marginTop: 56,
-          }}
-        >
-          {SURFACES.map((s, i) => (
-            <SurfaceCard key={s.name} surface={s} flip={i % 2 === 1} />
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function SurfaceCard({ surface, flip }: { surface: SurfaceMeta; flip: boolean }) {
-  return (
-    <article
-      style={{
-        background: C.surface,
-        border: `1px solid ${C.border}`,
-        borderRadius: 14,
-        padding: 36,
-        display: 'grid',
-        gridTemplateColumns: flip ? '320px minmax(0, 1fr)' : 'minmax(0, 1fr) 320px',
-        gap: 48,
-        alignItems: 'center',
-      }}
-    >
-      <div style={{ order: flip ? 2 : 1 }}>
-        <div
-          style={{
-            fontFamily: F_MONO,
-            fontSize: 11,
-            fontWeight: 700,
-            letterSpacing: '0.18em',
-            color: C.accent,
-            marginBottom: 6,
-          }}
-        >
-          {surface.num} · MODULE
-        </div>
-        <h3
-          style={{
-            fontFamily: F_SERIF,
-            fontSize: 32,
-            fontWeight: 400,
-            color: C.ink,
-            letterSpacing: '-0.018em',
-            lineHeight: 1.1,
-            margin: '0 0 4px',
-          }}
-        >
-          {surface.name}
-        </h3>
-        <div
-          style={{
-            fontFamily: F_SERIF,
-            fontStyle: 'italic',
-            fontSize: 18,
-            color: C.accentWarm,
-            margin: '0 0 16px',
-          }}
-        >
-          {surface.tagline}
-        </div>
-        <p style={{ fontSize: 15, color: C.inkSoft, lineHeight: 1.6, margin: '0 0 22px', maxWidth: '60ch' }}>
-          {surface.body}
+    <section style={{ padding: '72px clamp(24px, 5vw, 72px)', background: C.surface, borderTop: `1px solid ${C.lineSoft}` }}>
+      <div style={{ maxWidth: 1320, margin: '0 auto' }}>
+        <Eyebrow>Economic value</Eyebrow>
+        <SectionTitle>Value comes from removing the reasons enterprise AI fails.</SectionTitle>
+        <p style={{ maxWidth: 820, color: C.inkSoft, fontSize: 18, margin: '0 0 30px' }}>
+          AbarVa does not create value by making AI sound exciting. It creates value by reducing failed spend, improving design,
+          optimizing sourcing, accelerating time-to-value, and increasing realized ROI.
         </p>
-        <Link
-          href={surface.href}
-          style={{
-            fontFamily: F_SANS,
-            fontSize: 13,
-            fontWeight: 700,
-            letterSpacing: '0.04em',
-            color: C.ink,
-            textDecoration: 'none',
-            borderBottom: `1px solid ${C.ink}`,
-            paddingBottom: 2,
-          }}
-        >
-          {surface.ctaLabel}
-        </Link>
-      </div>
-      <div style={{ order: flip ? 1 : 2, display: 'flex', justifyContent: 'center' }}>
-        {surface.illustration}
-      </div>
-    </article>
-  );
-}
-
-// ── Module illustrations · each gets its own visual signature ──
-
-function TowerIllustration() {
-  // Watchtower silhouette · horizontal signal ribbons across the canvas.
-  return (
-    <svg viewBox="0 0 280 220" width="100%" style={{ maxWidth: 280 }} role="img" aria-label="Tower">
-      <defs>
-        <linearGradient id="tower-sky" x1="0%" y1="0%" x2="0%" y2="100%">
-          <stop offset="0%" stopColor={C.accentWarmSoft} stopOpacity="0.18" />
-          <stop offset="100%" stopColor={C.cream} stopOpacity="0" />
-        </linearGradient>
-      </defs>
-      <rect width="280" height="220" fill="url(#tower-sky)" />
-      {/* Signal ribbons */}
-      {[60, 90, 120, 150, 180].map((y, i) => (
-        <line
-          key={y}
-          x1="10"
-          y1={y}
-          x2="270"
-          y2={y}
-          stroke={C.accent}
-          strokeWidth={0.6}
-          strokeOpacity={0.18 + i * 0.04}
-          strokeDasharray="2 6"
-        />
-      ))}
-      {/* Tower */}
-      <rect x="125" y="40" width="30" height="160" fill={C.ink} />
-      <rect x="115" y="32" width="50" height="14" fill={C.ink} />
-      <rect x="120" y="28" width="40" height="6" fill={C.accent} />
-      <line x1="140" y1="20" x2="140" y2="32" stroke={C.ink} strokeWidth={2} />
-      <circle cx="140" cy="18" r="3" fill={C.accentWarm} />
-
-      {/* Pulses radiating */}
-      {[18, 28, 38].map((r, i) => (
-        <circle
-          key={r}
-          cx="140"
-          cy="40"
-          r={r}
-          fill="none"
-          stroke={C.accentWarm}
-          strokeWidth={1}
-          opacity={0.5 - i * 0.15}
-        />
-      ))}
-
-      {/* Bet markers on the signal lines */}
-      {[
-        { x: 50, y: 60 },
-        { x: 220, y: 90 },
-        { x: 80, y: 120 },
-        { x: 200, y: 150 },
-        { x: 60, y: 180 },
-        { x: 230, y: 180 },
-      ].map((m, i) => (
-        <circle
-          key={`marker-${i}`}
-          cx={m.x}
-          cy={m.y}
-          r={3}
-          fill={i % 2 === 0 ? C.accent : C.accentWarm}
-        />
-      ))}
-    </svg>
-  );
-}
-
-function SourceIllustration() {
-  // Converging streams into a single port.
-  return (
-    <svg viewBox="0 0 280 220" width="100%" style={{ maxWidth: 280 }} role="img" aria-label="Source">
-      <defs>
-        <linearGradient id="source-flow" x1="0%" y1="0%" x2="100%" y2="0%">
-          <stop offset="0%" stopColor={C.accentWarm} stopOpacity="0.6" />
-          <stop offset="100%" stopColor={C.accent} stopOpacity="0.9" />
-        </linearGradient>
-      </defs>
-      {/* Streams */}
-      {[
-        { y1: 30, label: 'Hardware' },
-        { y1: 80, label: 'Software' },
-        { y1: 130, label: 'Services' },
-        { y1: 180, label: 'Cloud' },
-      ].map((s, i) => (
-        <g key={i}>
-          <path
-            d={`M 10,${s.y1} Q 140,${s.y1} 250,110`}
-            fill="none"
-            stroke="url(#source-flow)"
-            strokeWidth={2.5}
-            opacity={0.5 + i * 0.1}
-          />
-          <circle cx="10" cy={s.y1} r="4" fill={C.accentWarm} />
-          <text x="20" y={s.y1 + 3} fontFamily={F_MONO} fontSize="9" fill={C.inkSoft} letterSpacing="0.06em">
-            {s.label}
-          </text>
-        </g>
-      ))}
-      {/* Converging port */}
-      <circle cx="250" cy="110" r="14" fill={C.ink} />
-      <circle cx="250" cy="110" r="8" fill={C.accent} />
-      <circle cx="250" cy="110" r="3" fill={C.surface} />
-      <text
-        x="250"
-        y="148"
-        fontFamily={F_MONO}
-        fontSize="9"
-        fill={C.ink}
-        letterSpacing="0.16em"
-        textAnchor="middle"
-        fontWeight={700}
-      >
-        $107M
-      </text>
-    </svg>
-  );
-}
-
-function IntelligenceIllustration() {
-  // Pattern network · nodes connected, one highlighted with a pulse.
-  const nodes = [
-    { x: 60, y: 50, big: false },
-    { x: 140, y: 40, big: true },
-    { x: 220, y: 60, big: false },
-    { x: 90, y: 110, big: false },
-    { x: 175, y: 130, big: false },
-    { x: 240, y: 130, big: false },
-    { x: 60, y: 170, big: false },
-    { x: 140, y: 180, big: false },
-    { x: 215, y: 175, big: false },
-  ];
-  const edges: Array<[number, number]> = [
-    [0, 1],
-    [1, 2],
-    [0, 3],
-    [1, 4],
-    [2, 5],
-    [3, 4],
-    [4, 5],
-    [3, 6],
-    [4, 7],
-    [5, 8],
-    [6, 7],
-    [7, 8],
-  ];
-  return (
-    <svg viewBox="0 0 280 220" width="100%" style={{ maxWidth: 280 }} role="img" aria-label="Intelligence">
-      <defs>
-        <radialGradient id="int-pulse" cx="50%" cy="50%" r="50%">
-          <stop offset="0%" stopColor={C.accentWarm} stopOpacity="0.6" />
-          <stop offset="100%" stopColor={C.accentWarm} stopOpacity="0" />
-        </radialGradient>
-      </defs>
-      {/* Edges */}
-      {edges.map(([a, b], i) => {
-        const na = nodes[a]!;
-        const nb = nodes[b]!;
-        const isPattern = a === 1 || b === 1;
-        return (
-          <line
-            key={i}
-            x1={na.x}
-            y1={na.y}
-            x2={nb.x}
-            y2={nb.y}
-            stroke={isPattern ? C.accent : C.inkMute}
-            strokeWidth={isPattern ? 1.5 : 0.8}
-            opacity={isPattern ? 0.7 : 0.3}
-            strokeDasharray={isPattern ? '0' : '2 3'}
-          />
-        );
-      })}
-      {/* Pulse around big node */}
-      <circle cx="140" cy="40" r="40" fill="url(#int-pulse)" />
-      {/* Nodes */}
-      {nodes.map((n, i) => (
-        <g key={i}>
-          <circle
-            cx={n.x}
-            cy={n.y}
-            r={n.big ? 9 : 5}
-            fill={n.big ? C.accent : C.surface}
-            stroke={n.big ? C.accent : C.ink}
-            strokeWidth={n.big ? 0 : 1.2}
-          />
-          {n.big && <circle cx={n.x} cy={n.y} r={3} fill={C.surface} />}
-        </g>
-      ))}
-      {/* Pattern label */}
-      <text
-        x="140"
-        y="22"
-        fontFamily={F_MONO}
-        fontSize="9"
-        fill={C.accent}
-        letterSpacing="0.16em"
-        textAnchor="middle"
-        fontWeight={700}
-      >
-        P-HC-005
-      </text>
-    </svg>
-  );
-}
-
-function MovesIllustration() {
-  // Phased arches · 6 nested arches representing lifecycle phases.
-  const phases = ['Originate', 'Shape', 'Approve', 'Build', 'Ship', 'Measure'];
-  return (
-    <svg viewBox="0 0 280 220" width="100%" style={{ maxWidth: 280 }} role="img" aria-label="Moves">
-      {phases.map((p, i) => {
-        const r = 18 + i * 16;
-        return (
-          <path
-            key={p}
-            d={`M ${140 - r},190 A ${r},${r} 0 0 1 ${140 + r},190`}
-            fill="none"
-            stroke={i === phases.length - 1 ? C.accentWarm : C.accent}
-            strokeWidth={1.5}
-            opacity={0.4 + i * 0.1}
-          />
-        );
-      })}
-      {/* Pin at center */}
-      <line x1="140" y1="60" x2="140" y2="190" stroke={C.ink} strokeWidth={1.5} strokeDasharray="2 3" />
-      <circle cx="140" cy="60" r="6" fill={C.accentWarm} />
-      <circle cx="140" cy="190" r="4" fill={C.ink} />
-      {/* Phase labels along the bottom */}
-      {phases.map((p, i) => {
-        const r = 18 + i * 16;
-        const x = 140 - r;
-        return (
-          <text
-            key={`l-${p}`}
-            x={x - 4}
-            y={195}
-            fontFamily={F_MONO}
-            fontSize="8"
-            fill={C.inkMute}
-            letterSpacing="0.08em"
-            textAnchor="end"
-          >
-            {p}
-          </text>
-        );
-      })}
-    </svg>
-  );
-}
-
-// ─── Move lifecycle ──────────────────────────────────────────────
-
-function MoveLifecycle() {
-  const phases: ReadonlyArray<{ num: string; label: string; body: string }> = [
-    { num: '01', label: 'Originate', body: 'Pattern-grounded shaping. The ask becomes a Move.' },
-    { num: '02', label: 'Shape', body: 'Tenant overlay. Stakes, owners, dependencies named.' },
-    { num: '03', label: 'Approve', body: 'Gated decision. Steering quorum, audit trail.' },
-    { num: '04', label: 'Build', body: 'Vendor + SI selection · contract sourcing · POC.' },
-    { num: '05', label: 'Ship', body: 'Production landing. KPI commit window opens.' },
-    { num: '06', label: 'Measure', body: 'Measured vs committed. Failure modes flagged early.' },
-  ];
-  return (
-    <section
-      style={{
-        padding: '96px 64px',
-        background: C.creamDeep,
-        borderBottom: `1px solid ${C.border}`,
-      }}
-    >
-      <div style={{ maxWidth: 1280, margin: '0 auto' }}>
-        <SectionEyebrow num="03">How it works</SectionEyebrow>
-        <SectionTitle>The Move lifecycle · originate to measure.</SectionTitle>
-        <SectionLead>
-          Every AI bet <AbarvaWordmark /> shapes travels six phases. Each phase has a
-          gate, an owner, and an audit trail — so failure modes are visible
-          before they cost a quarter.
-        </SectionLead>
         <div
           style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(6, 1fr)',
-            gap: 8,
-            marginTop: 56,
-            position: 'relative',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(190px, 1fr))',
+            gap: 12,
+            alignItems: 'stretch',
           }}
         >
-          {/* Connecting line */}
-          <div
-            aria-hidden="true"
-            style={{
-              position: 'absolute',
-              top: 18,
-              left: 24,
-              right: 24,
-              height: 2,
-              background: `linear-gradient(to right, ${C.accent}, ${C.accentWarm})`,
-              opacity: 0.25,
-            }}
-          />
-          {phases.map((p, i) => (
-            <div key={p.num} style={{ position: 'relative' }}>
-              <div
-                style={{
-                  width: 36,
-                  height: 36,
-                  borderRadius: '50%',
-                  background: i === phases.length - 1 ? C.accentWarm : C.accent,
-                  color: C.surface,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontFamily: F_MONO,
-                  fontSize: 12,
-                  fontWeight: 700,
-                  marginBottom: 14,
-                  border: `3px solid ${C.creamDeep}`,
-                }}
-              >
-                {p.num}
+          {valueLevers.map((lever, index) => (
+            <div
+              key={lever.label}
+              style={{
+                position: 'relative',
+                padding: 18,
+                minHeight: 172,
+                borderRadius: 16,
+                background: index === valueLevers.length - 1 ? C.greenSoft : C.blueSoft,
+                border: `1px solid ${index === valueLevers.length - 1 ? '#BCE7C9' : '#CFE2FF'}`,
+              }}
+            >
+              <div style={{ fontFamily: F_MONO, color: index === valueLevers.length - 1 ? C.green : C.blue, fontSize: 11, fontWeight: 800 }}>
+                {String(index + 1).padStart(2, '0')}
               </div>
-              <div
-                style={{
-                  fontFamily: F_SERIF,
-                  fontSize: 19,
-                  fontWeight: 500,
-                  color: C.ink,
-                  letterSpacing: '-0.012em',
-                  marginBottom: 6,
-                }}
-              >
-                {p.label}
-              </div>
-              <p style={{ fontSize: 13, color: C.inkSoft, lineHeight: 1.5, margin: 0 }}>
-                {p.body}
-              </p>
+              <div style={{ marginTop: 12, color: C.ink, fontSize: 30, fontWeight: 820, lineHeight: 1 }}>{lever.value}</div>
+              <div style={{ marginTop: 8, color: C.ink, fontWeight: 760 }}>{lever.label}</div>
+              <p style={{ margin: '7px 0 0', color: C.inkMute, fontSize: 13, lineHeight: 1.45 }}>{lever.detail}</p>
             </div>
           ))}
         </div>
+        <div
+          style={{
+            marginTop: 18,
+            padding: 22,
+            borderRadius: 18,
+            color: C.surface,
+            background: `linear-gradient(120deg, ${C.blueDeep}, ${C.green})`,
+            display: 'grid',
+            gridTemplateColumns: 'minmax(0, 1fr) auto',
+            gap: 18,
+            alignItems: 'center',
+          }}
+        >
+          <div>
+            <div style={{ fontFamily: F_MONO, fontSize: 11, fontWeight: 800, opacity: 0.72, textTransform: 'uppercase' }}>
+              Illustrative enterprise case
+            </div>
+            <div style={{ fontSize: 18, fontWeight: 680, marginTop: 4 }}>
+              On a $100M AI/transformation portfolio, the target value pool is meaningful enough for board-level attention.
+            </div>
+          </div>
+          <div style={{ fontSize: 38, fontWeight: 860, whiteSpace: 'nowrap' }}>$18M-$45M+</div>
+        </div>
       </div>
     </section>
   );
 }
 
-// ─── Substrate ────────────────────────────────────────────────────
-
-function Substrate({ spotlight }: { spotlight: ProductMarketingSpotlight }) {
+function OperatingSystem({ spotlight }: { spotlight: ProductMarketingSpotlight }) {
   return (
-    <section style={{ padding: '96px 64px', borderBottom: `1px solid ${C.border}` }}>
+    <section style={{ padding: '72px clamp(24px, 5vw, 72px)' }}>
+      <div style={{ maxWidth: 1320, margin: '0 auto' }}>
+        <Eyebrow>The product</Eyebrow>
+        <SectionTitle>One operating model, four executive surfaces.</SectionTitle>
+        <div
+          style={{
+            marginTop: 30,
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
+            gap: 16,
+          }}
+        >
+          {surfaces.map((surface) => (
+            <Link
+              key={surface.name}
+              href={surface.href}
+              style={{
+                display: 'grid',
+                minHeight: 280,
+                padding: 22,
+                borderRadius: 18,
+                background: C.surface,
+                border: `1px solid ${C.line}`,
+                textDecoration: 'none',
+                color: C.ink,
+                boxShadow: '0 14px 42px rgba(11, 31, 61, 0.06)',
+              }}
+            >
+              <SurfaceMark color={surface.color} />
+              <div style={{ alignSelf: 'end' }}>
+                <div style={{ fontFamily: F_MONO, color: surface.color, fontSize: 11, fontWeight: 800, textTransform: 'uppercase' }}>
+                  {surface.agent}
+                </div>
+                <h3 style={{ margin: '8px 0 4px', fontSize: 28, lineHeight: 1.05, letterSpacing: 0 }}>{surface.name}</h3>
+                <div style={{ color: C.ink, fontWeight: 740 }}>{surface.promise}</div>
+                <p style={{ margin: '10px 0 0', color: C.inkMute, fontSize: 14, lineHeight: 1.52 }}>{surface.body}</p>
+              </div>
+            </Link>
+          ))}
+        </div>
+        <p style={{ margin: '18px 0 0', color: C.inkMute, fontSize: 14 }}>
+          The live page is tenant-aware: this session is loaded for <strong>{spotlight.clientName}</strong>.
+        </p>
+      </div>
+    </section>
+  );
+}
+
+function MoveAndSourceJourneys() {
+  return (
+    <section style={{ padding: '72px clamp(24px, 5vw, 72px)', background: C.surface }}>
+      <div style={{ maxWidth: 1320, margin: '0 auto' }}>
+        <Eyebrow>Journey discipline</Eyebrow>
+        <SectionTitle>Ideas become journeys, not forms.</SectionTitle>
+        <div
+          style={{
+            marginTop: 28,
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))',
+            gap: 18,
+          }}
+        >
+          <JourneyCard
+            label="One Move"
+            title="From rough idea to execution-ready investment"
+            body="P0 to P5 forces sponsor clarity, diagnosis, future-state design, business case, and mobilization before the bet becomes another unowned pilot."
+            graphic={<MoveArc />}
+          />
+          <JourneyCard
+            label="One Source event"
+            title="From vendor noise to decision record"
+            body="Source captures context through conversation, normalizes vendor/SI evidence, and produces a defensible selection package for procurement, finance, and legal."
+            graphic={<SourceFlow />}
+          />
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function Architecture() {
+  return (
+    <section style={{ padding: '72px clamp(24px, 5vw, 72px)' }}>
       <div
         style={{
-          maxWidth: 1280,
+          maxWidth: 1320,
           margin: '0 auto',
           display: 'grid',
-          gridTemplateColumns: 'minmax(0, 1fr) 420px',
-          gap: 64,
+          gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))',
+          gap: 34,
           alignItems: 'center',
         }}
       >
+        <DecisionFabric />
         <div>
-          <SectionEyebrow num="04">The substrate</SectionEyebrow>
-          <SectionTitle>
-            What <AbarvaWordmark height="0.7em" /> knows · before it answers.
-          </SectionTitle>
-          <p style={{ fontSize: 15.5, color: C.inkSoft, lineHeight: 1.65, marginBottom: 20, maxWidth: '54ch' }}>
-            Every CXO answer is grounded in three layers of substrate. The
-            tenant layer is what we know about you. The corpus is the cross-
-            tenant pattern library. The industry layer is what&rsquo;s possible at
-            the frontier.
+          <Eyebrow>Architecture and defensibility</Eyebrow>
+          <SectionTitle>AbarVa is a decision fabric, not a chatbot beside documents.</SectionTitle>
+          <p style={{ color: C.inkSoft, fontSize: 17, margin: '0 0 20px' }}>
+            The moat is not one prompt. It is the combination of tenant data, industry corpus, graph and vector retrieval,
+            phase-gated journeys, Source decision artifacts, and value verification.
           </p>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 14, marginTop: 28 }}>
-            <SubstrateRow
-              label="Tenant"
-              detail="23 substrate segments · 1.2k records · live"
-              accent={C.accent}
-              eyebrow="What we know about you"
-            />
-            <SubstrateRow
-              label="Corpus"
-              detail="47 patterns · 28 anti-patterns · 16 regulatory anchors"
-              accent={C.accentWarm}
-              eyebrow="What patterns exist"
-            />
-            <SubstrateRow
-              label="Industry"
-              detail="Healthcare · Retail · Financial Services"
-              accent={C.ink}
-              eyebrow="What is possible"
-            />
+          <div style={{ display: 'grid', gap: 10 }}>
+            {architectureLayers.map(([label, detail]) => (
+              <div
+                key={label}
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: '150px minmax(0, 1fr)',
+                  gap: 14,
+                  padding: 14,
+                  borderRadius: 14,
+                  background: C.surface,
+                  border: `1px solid ${C.line}`,
+                }}
+              >
+                <strong style={{ color: C.ink, fontSize: 14 }}>{label}</strong>
+                <span style={{ color: C.inkMute, fontSize: 14 }}>{detail}</span>
+              </div>
+            ))}
           </div>
         </div>
-        <SubstrateIllustration spotlight={spotlight} />
       </div>
     </section>
   );
 }
 
-function SubstrateRow({
-  label,
-  detail,
-  eyebrow,
-  accent,
-}: {
-  label: string;
-  detail: string;
-  eyebrow: string;
-  accent: string;
-}) {
+function WhyNow() {
   return (
-    <div
-      style={{
-        background: C.surface,
-        border: `1px solid ${C.border}`,
-        borderLeft: `4px solid ${accent}`,
-        borderRadius: 10,
-        padding: '14px 20px',
-      }}
-    >
-      <div
-        style={{
-          fontFamily: F_MONO,
-          fontSize: 10,
-          fontWeight: 700,
-          letterSpacing: '0.16em',
-          textTransform: 'uppercase',
-          color: accent,
-          marginBottom: 4,
-        }}
-      >
-        {eyebrow}
-      </div>
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'baseline',
-          gap: 12,
-          flexWrap: 'wrap',
-        }}
-      >
-        <span style={{ fontFamily: F_SERIF, fontSize: 22, fontWeight: 500, color: C.ink, letterSpacing: '-0.012em' }}>
-          {label}
-        </span>
-        <span style={{ fontSize: 13.5, color: C.inkSoft }}>{detail}</span>
-      </div>
-    </div>
-  );
-}
-
-function SubstrateIllustration({
-  spotlight,
-}: {
-  spotlight: ProductMarketingSpotlight;
-}) {
-  // Three concentric layered rings.
-  return (
-    <svg viewBox="0 0 420 420" width="100%" style={{ maxWidth: 420 }} role="img" aria-label="Substrate">
-      <defs>
-        <radialGradient id="sub-bg" cx="50%" cy="50%" r="50%">
-          <stop offset="0%" stopColor={C.accentWarmSoft} stopOpacity="0.18" />
-          <stop offset="100%" stopColor={C.cream} stopOpacity="0" />
-        </radialGradient>
-      </defs>
-      <circle cx="210" cy="210" r="200" fill="url(#sub-bg)" />
-
-      {/* Outer ring · Industry */}
-      <circle cx="210" cy="210" r="180" fill="none" stroke={C.ink} strokeWidth={1} opacity={0.35} strokeDasharray="3 4" />
-      <text x="210" y="40" fontFamily={F_MONO} fontSize="10" fill={C.ink} letterSpacing="0.18em" textAnchor="middle" fontWeight={700}>
-        INDUSTRY
-      </text>
-
-      {/* Middle ring · Corpus */}
-      <circle cx="210" cy="210" r="130" fill="none" stroke={C.accentWarm} strokeWidth={1.5} opacity={0.55} />
-      <text x="210" y="92" fontFamily={F_MONO} fontSize="10" fill={C.accentWarm} letterSpacing="0.18em" textAnchor="middle" fontWeight={700}>
-        CORPUS
-      </text>
-
-      {/* Inner ring · Tenant */}
-      <circle cx="210" cy="210" r="76" fill={C.surface} stroke={C.accent} strokeWidth={2} />
-      <text x="210" y="200" fontFamily={F_MONO} fontSize="10" fill={C.accent} letterSpacing="0.18em" textAnchor="middle" fontWeight={700}>
-        TENANT
-      </text>
-      <text x="210" y="218" fontFamily={F_SERIF} fontSize="20" fill={C.ink} fontWeight={500} textAnchor="middle">
-        {spotlight.clientShortName}
-      </text>
-      <text x="210" y="234" fontFamily={F_MONO} fontSize="9" fill={C.inkMute} letterSpacing="0.12em" textAnchor="middle">
-        23 / 23 SEGMENTS
-      </text>
-
-      {/* Connecting tendrils */}
-      {[40, 110, 180, 250, 320].map((deg) => {
-        const rad = (deg * Math.PI) / 180;
-        const r1 = 78;
-        const r2 = 128;
-        const x1 = 210 + Math.cos(rad) * r1;
-        const y1 = 210 + Math.sin(rad) * r1;
-        const x2 = 210 + Math.cos(rad) * r2;
-        const y2 = 210 + Math.sin(rad) * r2;
-        return (
-          <line
-            key={deg}
-            x1={x1}
-            y1={y1}
-            x2={x2}
-            y2={y2}
-            stroke={C.accent}
-            strokeWidth={0.8}
-            opacity={0.5}
-            strokeDasharray="2 3"
-          />
-        );
-      })}
-
-      {/* Pattern dots on middle ring */}
-      {[0, 45, 90, 135, 180, 225, 270, 315].map((deg, i) => {
-        const rad = (deg * Math.PI) / 180;
-        const x = 210 + Math.cos(rad) * 130;
-        const y = 210 + Math.sin(rad) * 130;
-        return (
-          <circle
-            key={i}
-            cx={x}
-            cy={y}
-            r={i === 2 ? 5 : 3}
-            fill={i === 2 ? C.accentWarm : C.ink}
-            opacity={i === 2 ? 1 : 0.5}
-          />
-        );
-      })}
-    </svg>
-  );
-}
-
-// ─── Differentiators ─────────────────────────────────────────────
-
-function Differentiators() {
-  const items: ReadonlyArray<{ num: string; title: string; body: ReactNode; mark: ReactNode }> = [
-    {
-      num: '01',
-      title: 'Corpus-grounded',
-      body: 'Patterns aren\'t opinions. Every binding pattern carries a quantified with-vs-without delta and a primary source. Sentinel can\'t guess; it cites.',
-      mark: <DiffMark variant="grounded" />,
-    },
-    {
-      num: '02',
-      title: 'Tenant-overlaid',
-      body: (
-        <>
-          Generic AI advice fails because it ignores your size, segment,
-          regulatory exposure, vendor footprint, and current portfolio.{' '}
-          <AbarvaWordmark /> scores against all of it.
-        </>
-      ),
-      mark: <DiffMark variant="overlay" />,
-    },
-    {
-      num: '03',
-      title: 'Agent-collaborative',
-      body: 'Sentinel pushes back on framing, surfaces the binding pattern, and stays in the room. The agent is a participant in the decision, not a search box.',
-      mark: <DiffMark variant="agent" />,
-    },
-  ];
-  return (
-    <section style={{ padding: '96px 64px', borderBottom: `1px solid ${C.border}` }}>
-      <div style={{ maxWidth: 1280, margin: '0 auto' }}>
-        <SectionEyebrow num="05">Why it works</SectionEyebrow>
-        <SectionTitle>Three things every failed AI program lacked.</SectionTitle>
+    <section style={{ padding: '72px clamp(24px, 5vw, 72px)', background: C.surface }}>
+      <div style={{ maxWidth: 1320, margin: '0 auto' }}>
+        <Eyebrow>Why now</Eyebrow>
+        <SectionTitle>Enterprises are moving from AI experimentation to AI portfolio discipline.</SectionTitle>
         <div
           style={{
+            marginTop: 26,
             display: 'grid',
-            gridTemplateColumns: 'repeat(3, 1fr)',
-            gap: 24,
-            marginTop: 56,
+            gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
+            gap: 14,
           }}
         >
-          {items.map((item) => (
-            <article
-              key={item.num}
-              style={{
-                background: C.surface,
-                border: `1px solid ${C.border}`,
-                borderRadius: 14,
-                padding: 32,
-              }}
-            >
-              {item.mark}
-              <div
-                style={{
-                  fontFamily: F_MONO,
-                  fontSize: 11,
-                  fontWeight: 700,
-                  letterSpacing: '0.18em',
-                  color: C.accent,
-                  margin: '20px 0 6px',
-                }}
-              >
-                {item.num} · DIFFERENTIATOR
-              </div>
-              <h3
-                style={{
-                  fontFamily: F_SERIF,
-                  fontSize: 24,
-                  fontWeight: 500,
-                  color: C.ink,
-                  letterSpacing: '-0.012em',
-                  margin: '0 0 14px',
-                }}
-              >
-                {item.title}
-              </h3>
-              <p style={{ fontSize: 14.5, color: C.inkSoft, lineHeight: 1.6, margin: 0 }}>
-                {item.body}
-              </p>
-            </article>
-          ))}
+          <WhyCard title="The pain changed" body="The question is no longer whether executives can find AI ideas. The question is which ones deserve capital, workflow change, and senior sponsorship." />
+          <WhyCard title="The buyer is exposed" body="CIOs, CFOs, CEOs, and business presidents are being asked to defend AI investments before value is proven." />
+          <WhyCard title="The category is open" body="Dashboards show activity. Chatbots answer questions. AbarVa connects decision, journey, sourcing, and value realization." />
         </div>
       </div>
     </section>
   );
 }
-
-function DiffMark({ variant }: { variant: 'grounded' | 'overlay' | 'agent' }) {
-  return (
-    <svg viewBox="0 0 80 80" width="80" height="80" role="img" aria-hidden="true">
-      {variant === 'grounded' && (
-        <>
-          <rect x="10" y="10" width="60" height="60" fill="none" stroke={C.accent} strokeWidth={1.2} />
-          {[20, 30, 40, 50, 60].map((y) => (
-            <line key={y} x1="14" y1={y} x2="66" y2={y} stroke={C.accent} strokeWidth={0.6} opacity={0.4} />
-          ))}
-          <circle cx="40" cy="40" r="10" fill={C.accent} />
-          <circle cx="40" cy="40" r="4" fill={C.surface} />
-        </>
-      )}
-      {variant === 'overlay' && (
-        <>
-          <circle cx="32" cy="32" r="22" fill="none" stroke={C.accent} strokeWidth={1.4} />
-          <circle cx="48" cy="48" r="22" fill="none" stroke={C.accentWarm} strokeWidth={1.4} />
-          <circle cx="40" cy="40" r="8" fill={C.ink} />
-        </>
-      )}
-      {variant === 'agent' && (
-        <>
-          <circle cx="40" cy="40" r="28" fill="none" stroke={C.accent} strokeWidth={0.6} opacity={0.3} />
-          <circle cx="40" cy="40" r="20" fill="none" stroke={C.accent} strokeWidth={0.8} opacity={0.5} />
-          <circle cx="40" cy="40" r="12" fill={C.accentWarm} />
-          <circle cx="40" cy="40" r="6" fill={C.ink} />
-          <circle cx="40" cy="40" r="2.5" fill={C.surface} />
-        </>
-      )}
-    </svg>
-  );
-}
-
-// ─── CTA ─────────────────────────────────────────────────────────
 
 function Cta({ spotlight }: { spotlight: ProductMarketingSpotlight }) {
   return (
-    <section
-      style={{
-        padding: '96px 64px',
-        background: C.ink,
-        color: C.surface,
-        textAlign: 'center',
-      }}
-    >
-      <div style={{ maxWidth: 720, margin: '0 auto' }}>
-        <div
-          style={{
-            fontFamily: F_MONO,
-            fontSize: 11,
-            fontWeight: 700,
-            letterSpacing: '0.22em',
-            color: C.accentWarmSoft,
-            textTransform: 'uppercase',
-            marginBottom: 18,
-          }}
-        >
-          06 · See it work
-        </div>
-        <h2
-          style={{
-            fontFamily: F_SERIF,
-            fontSize: 'clamp(36px, 4.4vw, 52px)',
-            fontWeight: 400,
-            letterSpacing: '-0.018em',
-            lineHeight: 1.1,
-            margin: '0 0 22px',
-            color: C.surface,
-          }}
-        >
-          Open the brief on a real tenant.
+    <section style={{ padding: '80px clamp(24px, 5vw, 72px)', background: C.ink, color: C.surface }}>
+      <div
+        style={{
+          maxWidth: 980,
+          margin: '0 auto',
+          textAlign: 'center',
+        }}
+      >
+        <Eyebrow light>See it work</Eyebrow>
+        <h2 style={{ margin: '0 0 18px', fontSize: 'clamp(34px, 5vw, 62px)', lineHeight: 1, letterSpacing: 0 }}>
+          Ask Sentinel. Shape a Move. Start Source. Track value.
         </h2>
-        <p
-          style={{
-            fontSize: 17,
-            lineHeight: 1.6,
-            color: 'rgba(255,255,255,0.78)',
-            margin: '0 0 36px',
-          }}
-        >
-          {spotlight.clientName} is loaded as this signed-in workspace. Pop in and see how{' '}
-          <AbarvaWordmark inverse /> shapes their
-          quarterly read.
+        <p style={{ margin: '0 auto 28px', maxWidth: 700, color: 'rgba(255,255,255,0.74)', fontSize: 18 }}>
+          The strongest proof is not a product tour. It is a CXO asking real questions about {spotlight.clientShortName} and watching the system turn answers into governed action.
         </p>
-        <div style={{ display: 'flex', gap: 14, justifyContent: 'center', flexWrap: 'wrap' }}>
-          <Link
-            href="/intelligence"
-            style={{
-              background: C.accentWarm,
-              color: C.surface,
-              padding: '16px 28px',
-              borderRadius: 999,
-              fontFamily: F_SANS,
-              fontSize: 14,
-              fontWeight: 700,
-              letterSpacing: '-0.005em',
-              textDecoration: 'none',
-            }}
-          >
-            Open Intelligence on {spotlight.clientShortName} →
-          </Link>
-          <Link
-            href="/home"
-            style={{
-              color: C.surface,
-              padding: '16px 28px',
-              borderRadius: 999,
-              fontFamily: F_SANS,
-              fontSize: 14,
-              fontWeight: 700,
-              textDecoration: 'none',
-              border: '1px solid rgba(255,255,255,0.30)',
-            }}
-          >
-            Tenant home
-          </Link>
+        <div style={{ display: 'flex', justifyContent: 'center', flexWrap: 'wrap', gap: 12 }}>
+          <PrimaryLink href="/intelligence" inverse>Open Intelligence on {spotlight.clientShortName}</PrimaryLink>
+          <SecondaryLink href="/strategic-moves" inverse>Shape a Move</SecondaryLink>
         </div>
       </div>
     </section>
   );
 }
 
-// ─── Section primitives ──────────────────────────────────────────
-
-function SectionEyebrow({ num, children }: { num: string; children: ReactNode }) {
+function Eyebrow({ children, light = false }: { children: ReactNode; light?: boolean }) {
   return (
     <div
       style={{
+        marginBottom: 12,
+        color: light ? 'rgba(255,255,255,0.68)' : C.blue,
         fontFamily: F_MONO,
         fontSize: 11,
-        fontWeight: 700,
-        letterSpacing: '0.22em',
+        fontWeight: 820,
+        letterSpacing: '0.14em',
         textTransform: 'uppercase',
-        color: C.inkMute,
-        marginBottom: 14,
       }}
     >
-      <span style={{ color: C.accent }}>{num}</span> · {children}
+      {children}
     </div>
   );
 }
@@ -1658,14 +466,12 @@ function SectionTitle({ children }: { children: ReactNode }) {
   return (
     <h2
       style={{
-        fontFamily: F_SERIF,
-        fontSize: 'clamp(32px, 3.4vw, 44px)',
-        fontWeight: 400,
+        maxWidth: 880,
+        margin: 0,
         color: C.ink,
-        letterSpacing: '-0.018em',
-        lineHeight: 1.1,
-        margin: '0 0 14px',
-        maxWidth: '24ch',
+        fontSize: 'clamp(34px, 4.8vw, 58px)',
+        lineHeight: 1.03,
+        letterSpacing: 0,
       }}
     >
       {children}
@@ -1673,18 +479,205 @@ function SectionTitle({ children }: { children: ReactNode }) {
   );
 }
 
-function SectionLead({ children }: { children: ReactNode }) {
+function PrimaryLink({ href, children, inverse = false }: { href: string; children: ReactNode; inverse?: boolean }) {
   return (
-    <p
+    <Link
+      href={href}
       style={{
-        fontSize: 17,
-        color: C.inkSoft,
-        lineHeight: 1.6,
-        margin: 0,
-        maxWidth: '60ch',
+        display: 'inline-flex',
+        alignItems: 'center',
+        minHeight: 46,
+        padding: '12px 20px',
+        borderRadius: 999,
+        background: inverse ? C.surface : C.ink,
+        color: inverse ? C.ink : C.surface,
+        textDecoration: 'none',
+        fontSize: 14,
+        fontWeight: 760,
       }}
     >
       {children}
-    </p>
+    </Link>
+  );
+}
+
+function SecondaryLink({ href, children, inverse = false }: { href: string; children: ReactNode; inverse?: boolean }) {
+  return (
+    <Link
+      href={href}
+      style={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        minHeight: 46,
+        padding: '12px 20px',
+        borderRadius: 999,
+        background: 'transparent',
+        color: inverse ? C.surface : C.ink,
+        border: `1px solid ${inverse ? 'rgba(255,255,255,0.42)' : C.ink}`,
+        textDecoration: 'none',
+        fontSize: 14,
+        fontWeight: 760,
+      }}
+    >
+      {children}
+    </Link>
+  );
+}
+
+function ProofStat({ label, value, detail }: { label: string; value: string; detail: string }) {
+  return (
+    <div style={{ padding: 18, borderRadius: 16, background: C.surface, border: `1px solid ${C.line}`, boxShadow: '0 10px 30px rgba(11, 31, 61, 0.04)' }}>
+      <div style={{ fontFamily: F_MONO, color: C.inkMute, fontSize: 11, fontWeight: 800, textTransform: 'uppercase' }}>{label}</div>
+      <div style={{ marginTop: 8, color: C.ink, fontSize: 28, fontWeight: 860 }}>{value}</div>
+      <p style={{ margin: '6px 0 0', color: C.inkMute, fontSize: 13, lineHeight: 1.45 }}>{detail}</p>
+    </div>
+  );
+}
+
+function JourneyCard({ label, title, body, graphic }: { label: string; title: string; body: string; graphic: ReactNode }) {
+  return (
+    <article style={{ padding: 24, borderRadius: 20, background: C.canvas, border: `1px solid ${C.line}` }}>
+      <div style={{ fontFamily: F_MONO, color: C.blue, fontSize: 11, fontWeight: 820, textTransform: 'uppercase' }}>{label}</div>
+      <h3 style={{ margin: '8px 0 8px', color: C.ink, fontSize: 28, lineHeight: 1.08, letterSpacing: 0 }}>{title}</h3>
+      <p style={{ margin: '0 0 18px', color: C.inkMute, fontSize: 15 }}>{body}</p>
+      {graphic}
+    </article>
+  );
+}
+
+function WhyCard({ title, body }: { title: string; body: string }) {
+  return (
+    <article style={{ minHeight: 184, padding: 22, borderRadius: 18, background: C.canvas, border: `1px solid ${C.line}` }}>
+      <h3 style={{ margin: '0 0 8px', color: C.ink, fontSize: 22, letterSpacing: 0 }}>{title}</h3>
+      <p style={{ margin: 0, color: C.inkMute, fontSize: 15 }}>{body}</p>
+    </article>
+  );
+}
+
+function HeroGraphic() {
+  return (
+    <svg viewBox="0 0 560 440" width="100%" style={{ display: 'block' }} role="img" aria-label="AbarVa turns scattered AI bets into governed decisions">
+      <defs>
+        <radialGradient id="pmHeroGlow" cx="50%" cy="38%" r="70%">
+          <stop offset="0%" stopColor="#D89762" stopOpacity="0.36" />
+          <stop offset="65%" stopColor="#0066CC" stopOpacity="0.08" />
+          <stop offset="100%" stopColor="#FFFFFF" stopOpacity="0" />
+        </radialGradient>
+      </defs>
+      <rect width="560" height="440" rx="32" fill="url(#pmHeroGlow)" />
+      <line x1="54" y1="220" x2="506" y2="220" stroke={C.blue} strokeWidth="2" strokeOpacity="0.42" />
+      <text x="58" y="204" fill={C.blue} fontFamily={F_MONO} fontSize="11" fontWeight="800">ABOVE THE FUNDING LINE</text>
+      <text x="58" y="244" fill={C.inkMute} fontFamily={F_MONO} fontSize="11" fontWeight="800">PILOT NOISE</text>
+      {[
+        [280, 142, 25, C.blue, 'Workforce'],
+        [220, 186, 18, C.green, 'Demand'],
+        [345, 188, 16, C.warm, 'Loyalty'],
+      ].map(([x, y, r, color, label]) => (
+        <g key={label as string}>
+          <circle cx={x as number} cy={y as number} r={r as number} fill={color as string} />
+          <circle cx={x as number} cy={y as number} r={(r as number) + 10} fill="none" stroke={color as string} strokeOpacity="0.26" />
+          <text x={x as number} y={(y as number) - (r as number) - 14} textAnchor="middle" fill={C.ink} fontFamily={F_SANS} fontSize="13" fontWeight="760">{label as string}</text>
+        </g>
+      ))}
+      {[100, 158, 230, 320, 396, 458].map((x, i) => (
+        <circle key={x} cx={x} cy={292 + (i % 2) * 32} r={9} fill="none" stroke={i % 2 ? C.warm : C.inkMute} strokeWidth="2" opacity="0.72" />
+      ))}
+      <path d="M280 142 Q250 164 220 186" fill="none" stroke={C.blue} strokeDasharray="4 6" strokeOpacity="0.46" />
+      <path d="M280 142 Q312 164 345 188" fill="none" stroke={C.blue} strokeDasharray="4 6" strokeOpacity="0.46" />
+      <rect x="156" y="354" width="248" height="48" rx="16" fill={C.ink} />
+      <text x="280" y="383" textAnchor="middle" fill={C.surface} fontFamily={F_SANS} fontSize="15" fontWeight="760">Decide · Shape · Source · Track</text>
+    </svg>
+  );
+}
+
+function SurfaceMark({ color }: { color: string }) {
+  return (
+    <svg viewBox="0 0 220 120" width="100%" height="120" role="img" aria-hidden="true">
+      <circle cx="110" cy="60" r="42" fill="none" stroke={color} strokeWidth="2" strokeOpacity="0.34" />
+      <circle cx="110" cy="60" r="22" fill={color} fillOpacity="0.9" />
+      <circle cx="110" cy="60" r="7" fill={C.surface} />
+      <path d="M30 60 H80 M140 60 H190 M110 15 V38 M110 82 V106" stroke={color} strokeWidth="2" strokeLinecap="round" strokeOpacity="0.58" />
+    </svg>
+  );
+}
+
+function MoveArc() {
+  const phases = ['P0', 'P1', 'P2', 'P3', 'P4', 'P5'];
+  return (
+    <svg viewBox="0 0 640 220" width="100%" role="img" aria-label="P0 to P5 Move journey">
+      <path d="M58 164 C148 40 492 40 582 164" fill="none" stroke={C.line} strokeWidth="18" strokeLinecap="round" />
+      <path d="M58 164 C148 40 492 40 582 164" fill="none" stroke={C.green} strokeWidth="4" strokeLinecap="round" />
+      {phases.map((phase, index) => {
+        const points = [
+          [58, 164],
+          [158, 88],
+          [270, 58],
+          [370, 58],
+          [482, 88],
+          [582, 164],
+        ][index]!;
+        return (
+          <g key={phase}>
+            <circle cx={points[0]} cy={points[1]} r="18" fill={index < 3 ? C.blue : C.green} />
+            <text x={points[0]} y={points[1] + 4} textAnchor="middle" fill={C.surface} fontFamily={F_MONO} fontSize="12" fontWeight="800">{phase}</text>
+          </g>
+        );
+      })}
+      <circle cx="320" cy="96" r="27" fill={C.ink} />
+      <circle cx="320" cy="84" r="8" fill={C.surface} />
+      <path d="M300 114 C308 100 332 100 340 114" fill="none" stroke={C.surface} strokeWidth="3" strokeLinecap="round" />
+      <text x="320" y="142" textAnchor="middle" fill={C.ink} fontSize="14" fontWeight="760">Human Maestro</text>
+    </svg>
+  );
+}
+
+function SourceFlow() {
+  return (
+    <svg viewBox="0 0 640 220" width="100%" role="img" aria-label="Source event streams converging into a decision record">
+      {['Vendor evidence', 'SI model', 'Commercials', 'Tenant constraints'].map((label, index) => {
+        const y = 34 + index * 44;
+        return (
+          <g key={label}>
+            <rect x="20" y={y - 17} width="158" height="34" rx="12" fill={C.surface} stroke={C.line} />
+            <text x="38" y={y + 4} fill={C.ink} fontSize="13" fontWeight="740">{label}</text>
+            <path d={`M190 ${y} C310 ${y} 392 110 480 110`} fill="none" stroke={index % 2 ? C.green : C.blue} strokeWidth="3.5" strokeLinecap="round" strokeOpacity="0.72" />
+          </g>
+        );
+      })}
+      <circle cx="492" cy="110" r="38" fill={C.ink} />
+      <circle cx="492" cy="110" r="22" fill={C.blue} />
+      <circle cx="492" cy="110" r="7" fill={C.surface} />
+      <rect x="548" y="72" width="74" height="76" rx="14" fill={C.surface} stroke={C.line} />
+      <line x1="564" y1="94" x2="606" y2="94" stroke={C.blue} strokeWidth="3" strokeLinecap="round" />
+      <line x1="564" y1="112" x2="596" y2="112" stroke={C.warm} strokeWidth="3" strokeLinecap="round" />
+      <line x1="564" y1="130" x2="604" y2="130" stroke={C.inkMute} strokeWidth="3" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function DecisionFabric() {
+  return (
+    <svg viewBox="0 0 560 420" width="100%" role="img" aria-label="AbarVa layered decision fabric">
+      <rect x="8" y="8" width="544" height="404" rx="28" fill={C.surface} stroke={C.line} />
+      <circle cx="280" cy="210" r="150" fill="none" stroke={C.inkMute} strokeOpacity="0.26" strokeDasharray="5 8" />
+      <circle cx="280" cy="210" r="106" fill="none" stroke={C.warm} strokeOpacity="0.62" />
+      <circle cx="280" cy="210" r="70" fill={C.blueSoft} stroke={C.blue} strokeWidth="2" />
+      <text x="280" y="201" textAnchor="middle" fill={C.blue} fontFamily={F_MONO} fontSize="12" fontWeight="820">TENANT</text>
+      <text x="280" y="226" textAnchor="middle" fill={C.ink} fontSize="22" fontWeight="820">Knowledge layer</text>
+      {[
+        [94, 76, 'Intelligence'],
+        [466, 76, 'Moves'],
+        [94, 344, 'Source'],
+        [466, 344, 'Tower'],
+      ].map(([x, y, label]) => (
+        <g key={label as string}>
+          <rect x={(x as number) - 70} y={(y as number) - 22} width="140" height="44" rx="14" fill={C.surface} stroke={C.line} />
+          <text x={x as number} y={(y as number) + 5} textAnchor="middle" fill={C.ink} fontSize="14" fontWeight="760">{label as string}</text>
+          <path d={`M${x} ${y} C${x} 210 280 210 280 210`} fill="none" stroke={C.blue} strokeOpacity="0.26" strokeDasharray="4 7" />
+        </g>
+      ))}
+      <text x="280" y="40" textAnchor="middle" fill={C.inkMute} fontSize="12">Industry corpus + graph + vector retrieval</text>
+      <text x="280" y="386" textAnchor="middle" fill={C.inkMute} fontSize="12">Phase gates + evidence ledger + verified value</text>
+    </svg>
   );
 }

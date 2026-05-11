@@ -102,6 +102,32 @@ export function AppTopBar({ tenantName, showProductNav = true }: AppTopBarProps 
       <style jsx global>{`
         .app-top-bar__nav-link { transition: color 140ms ease; }
         .app-top-bar__nav-link:hover { color: white !important; }
+        @media (max-width: 860px) {
+          header[data-testid="app-top-bar"] {
+            padding: 0 16px !important;
+            gap: 12px;
+          }
+          .app-top-bar__tagline,
+          .app-top-bar__utility {
+            display: none !important;
+          }
+          .app-top-bar__nav {
+            flex: 1 1 auto;
+            justify-content: flex-end;
+            min-width: 0;
+            overflow-x: auto;
+            scrollbar-width: none;
+          }
+          .app-top-bar__nav::-webkit-scrollbar {
+            display: none;
+          }
+          .app-top-bar__nav-link {
+            flex: 0 0 auto;
+            padding-left: 10px !important;
+            padding-right: 10px !important;
+            font-size: 12.5px !important;
+          }
+        }
       `}</style>
 
       <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0 }}>
@@ -121,6 +147,7 @@ export function AppTopBar({ tenantName, showProductNav = true }: AppTopBarProps 
         </Link>
         <div aria-hidden="true" style={{ width: 1, height: 16, background: BRAND.hair }} />
         <div
+          className="app-top-bar__tagline"
           data-testid="app-top-bar-tagline"
           style={{
             fontFamily: "'Bradley Hand', 'Segoe Print', 'Comic Sans MS', cursive",
@@ -138,7 +165,11 @@ export function AppTopBar({ tenantName, showProductNav = true }: AppTopBarProps 
       </div>
 
       {navItems.length > 0 && (
-        <nav aria-label="Product modules" style={{ display: "flex", alignItems: "center", gap: 4 }}>
+        <nav
+          aria-label="Product modules"
+          className="app-top-bar__nav"
+          style={{ display: "flex", alignItems: "center", gap: 4 }}
+        >
           {signedIn && resolvedTenantName && (
             <>
               <span
@@ -213,7 +244,7 @@ export function AppTopBar({ tenantName, showProductNav = true }: AppTopBarProps 
         </nav>
       )}
 
-      <div style={{ display: "flex", alignItems: "center", gap: 16, flexShrink: 0 }}>
+      <div className="app-top-bar__utility" style={{ display: "flex", alignItems: "center", gap: 16, flexShrink: 0 }}>
         {signedIn && (
           <Link
             href="/home/learn"
