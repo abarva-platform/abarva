@@ -48,6 +48,7 @@ export {
   vectorRetrievalInfoTag,
   worldviewRetrievalInfoTag,
   extractKeywords,
+  allowedPatternIndustriesForTenant,
 } from './broker';
 
 // CB-4 · demo-endpoint request/response contract. Re-exported from

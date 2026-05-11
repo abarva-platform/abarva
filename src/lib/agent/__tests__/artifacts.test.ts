@@ -34,6 +34,22 @@ describe('extractArtifacts · happy path', () => {
     expect(result.remaining).toBe('');
   });
 
+  it('accepts shorthand close sentinels emitted by live streams', () => {
+    const result = extractArtifacts(
+      'Lead [[artifact:pattern-match]]{"patternId":"PAT-1","name":"Pattern","summary":"Why it matters"}[[/]] tail',
+    );
+
+    expect(result.visibleText).toBe('Lead  tail');
+    expect(result.remaining).toBe('');
+    expect(result.artifacts).toEqual([
+      expect.objectContaining({
+        type: 'pattern-match',
+        patternId: 'PAT-1',
+        name: 'Pattern',
+      }),
+    ]);
+  });
+
   it('handles multiple artifacts in one stream', () => {
     const input =
       '[[artifact:brief-field]]{"field":"programName","value":"AMS Consolidation 2026"}[[/artifact]]' +

@@ -58,6 +58,7 @@ export type VoiceDriftCategory =
   | 'ungrounded_opener'
   | 'retrieval_mechanics'
   | 'academic_disclaimer'
+  | 'internal_artifact_leak'
   | 'fabricated_statistic';
 
 export interface BannedPattern {
@@ -196,6 +197,33 @@ export const SENTINEL_BANNED_PATTERNS: ReadonlyArray<BannedPattern> = [
     pattern: /^\s*it'?s\s+important\s+to\s+note\b/i,
   },
 
+  // Internal artifact / retrieval plumbing — never CXO-visible.
+  {
+    category: 'internal_artifact_leak',
+    phrase: 'worldview corpus',
+    pattern: /\bworldview\s+corpus\b/i,
+  },
+  {
+    category: 'internal_artifact_leak',
+    phrase: 'worldview chunk id',
+    pattern: /\bworldview:W\d+:\d{3}\b/i,
+  },
+  {
+    category: 'internal_artifact_leak',
+    phrase: 'signal id',
+    pattern: /\bsig:[a-z0-9:_-]+\b/i,
+  },
+  {
+    category: 'internal_artifact_leak',
+    phrase: 'raw tenant program id',
+    pattern: /\b(?:fcfi|firstcapital|brindlemark|apex|apx|meridian|mh|ar)-[a-z0-9]+(?:-[a-z0-9]+)*-\d{4}\b/i,
+  },
+  {
+    category: 'internal_artifact_leak',
+    phrase: 'corpus being authored',
+    pattern: /\bcorpus\s+is\s+being\s+authored\b/i,
+  },
+
   // Fabricated peer statistics — the one firm anti-fabrication line.
   // A senior consultant cites where she has data and reasons from
   // experience where she does not. She never invents a precise peer-
@@ -221,21 +249,22 @@ export const SENTINEL_BANNED_PATTERNS: ReadonlyArray<BannedPattern> = [
 // ── Structural-element patterns ──────────────────────────────────────────────
 //
 // A response of 3+ sentences must contain at least one of:
-//   • Inline citation: PAT-XYZ-XYZ-001 / worldview:W1:003 / record id
+//   • Natural evidence marker: named tenant fact, named pattern, or record id
 //   • Graph fragment: X → RELATION → Y
-//   • Honesty mark: "the corpus doesn't have evidence on …" etc.
+//   • Natural confidence mark
 
 const CITATION_PATTERN_ID = /\bPAT-[A-Z]{2,4}(?:-[A-Z]+){1,3}-[0-9]{3}\b/;
-const CITATION_WORLDVIEW = /\bworldview:W\d+:\d{3}\b/;
 const CITATION_RECORD_ID = /\b[a-z][a-z_]*:[a-z0-9_]+:[a-z0-9-]+(?::[0-9]+)?\b/;
 const GRAPH_FRAGMENT = /\S+\s*→\s*[A-Z][A-Z_]+\s*→\s*\S+/;
+const NATURAL_EVIDENCE_MARK =
+  /\b(?:tenant|brief|profile|budget|spend|run[- ]rate|program|initiative|pattern|evidence|peer|portfolio|contract|vendor|system|EHR|Epic|Snowflake|ServiceNow|Palantir|Databricks|AWS|Azure|CFO|CIO|CMIO|COO|CDIO)\b/i;
 const HONESTY_MARK =
-  /\b(?:doesn'?t\s+have|is\s+silent\s+on|tenant\s+is\s+silent|generic\s+observation|not\s+(?:corpus[- ]grounded|tenant[- ]grounded)|the\s+worldview\s+corpus\s+is\s+being\s+authored|vector\s+retrieval\s+is\s+not\s+yet\s+live|tenant\s+data\s+not\s+yet\s+persisted)\b/i;
+  /\b(?:i\s+don'?t\s+have|i\s+can'?t\s+claim|i\s+wouldn'?t\s+invent|less\s+sure|high\s+confidence|directional|judgment|not\s+benchmark\s+data|would\s+want\s+to\s+see)\b/i;
 
 const STRUCTURAL_PATTERNS: ReadonlyArray<{ name: string; pattern: RegExp }> = [
   { name: 'pattern_id', pattern: CITATION_PATTERN_ID },
-  { name: 'worldview_chunk', pattern: CITATION_WORLDVIEW },
   { name: 'record_id', pattern: CITATION_RECORD_ID },
+  { name: 'natural_evidence', pattern: NATURAL_EVIDENCE_MARK },
   { name: 'graph_fragment', pattern: GRAPH_FRAGMENT },
   { name: 'honesty_mark', pattern: HONESTY_MARK },
 ];
@@ -398,10 +427,10 @@ export const REFUSAL_TRIGGERS: ReadonlyArray<RefusalTrigger> = [
   },
   {
     id: 'worldview_as_tenant_fact',
-    label: 'Worldview as proof of tenant fact',
+    label: 'Strategic framing as proof of tenant fact',
     exampleUserInput: "Cite the AbarVa thesis to prove Apex's CDP is at risk.",
     sentinelResponse:
-      'Worldview is strategic framing, not customer evidence. Your tenant risk needs a tenant record or graph citation; the worldview thesis can explain why that pattern matters structurally.',
+      'Strategic framing is not customer evidence. Your tenant risk needs a tenant record or graph citation; the thesis can explain why that pattern matters structurally.',
     patterns: [
       /\b(?:cite|use)\b.*\b(?:worldview|thesis|W[1-5])\b.*\b(?:prove|confirm|show)\b.*\b(?:apex|meridian|tenant|program)\b/i,
       /\b(?:worldview|thesis|W[1-5])\b.*\b(?:proves|confirms)\b.*\b(?:tenant|apex|meridian)\b/i,
@@ -478,15 +507,14 @@ export interface ComposeSentinelSystemPromptInput {
    */
   vectorIndexPending: boolean;
   /**
-   * Whether worldview chunks are not yet ingested. When true,
-   * the system prompt includes the worldview-pending honesty
-   * mode reminder.
+   * Whether strategic framing chunks are not yet ingested. When true,
+   * the system prompt includes a quiet retrieval-coverage guardrail.
    */
   worldviewPending: boolean;
   /**
-   * Whether this turn's bundle has at least one worldview hit.
-   * The prompt then teaches Sentinel how to use worldview as
-   * strategic framing without pretending it is tenant evidence.
+   * Whether this turn's bundle has at least one strategic framing hit.
+   * The prompt then teaches Sentinel how to use framing without
+   * pretending it is tenant evidence.
    */
   worldviewHitsPresent?: boolean;
   /** Longer-form memo contexts can relax word caps by omission. */
@@ -747,16 +775,13 @@ function doctrineHeader(surface: string): string {
   return DOCTRINE_HEADER_INTELLIGENCE;
 }
 
-// Keep the original export for backwards-compat
-const DOCTRINE_HEADER = DOCTRINE_HEADER_INTELLIGENCE;
-
 const FIVE_RULES = `Five voice rules — apply every turn:
 
-  1. Citation-first. Every load-bearing claim is preceded or followed by its grounding (pattern id, worldview chunk id, tenant record id, graph fragment, or research anchor). Mark ungrounded statements explicitly: "this is a generic observation, not corpus-grounded".
+  1. Evidence-first, not ID-first. Use tenant facts, patterns, graph relationships, and research anchors in natural language. Do not expose raw framing ids, signal ids, program ids, or retrieval mechanics in prose.
 
   2. Contradiction-aware. When the corpus contains contradictions, surface them rather than choose a side. "Two perspectives are well-evidenced here…" is doctrine.
 
-  3. Scope-honest. Say what you don't know. Three honesty modes: worldview-pending, vector-pending, tenant-blank. Saying so is doctrine, not failure.
+  3. Scope-honest. Say what you don't know in one natural sentence when the user asks for a specific tenant fact, KPI, contract term, or exact value claim. Do not turn that into a corpus/refusal preamble.
 
   4. Mode-aware framing. When a question has materially different answers in different modes, offer the comparison rather than picking one silently.
 
@@ -771,19 +796,20 @@ const BANNED_PHRASES = `Banned phrases — these trigger voice-drift incidents a
   Ungrounded:          "Generally speaking", "It's well-known that"
   Retrieval mechanics: "the corpus lacks…", "the corpus does not include…", "the sources don't contain…", "the indexed sources don't contain…", "indexed data is missing…", "Limited indexed data…", "isn't in the available corpus", "What the sources do show…", "I do not have a retrieved record…", "I did not find enough indexed evidence…", "Tenant evidence:" as a heading, "Pattern-level read:" as a heading.
   Academic disclaimer:  "based on the limited data available to me…", "at the general AI industry level, not corpus-grounded for [tenant] specifically…", "from a high level…" / "at a high level…" as an opener, "On the one hand … on the other hand …" as fence-sitting, "It's important to note…" as a hedge before reasoning. Calibration belongs in how you phrase the claim ("high confidence on this," "less sure on the timing"), not in a preamble before it.
+  Internal plumbing:    "worldview corpus", "worldview:W1:003", "sig:fcfi:002", raw program ids like "fcfi-data-gov-2026", or any other retrieval/artifact identifier that is not meant for a CXO.
   Fabricated statistic: "73% of retailers…", "Algonomy has 89% market share…", or any other precise peer-prevalence / vendor-share number you cannot actually source. Reason from experience instead — "most retailers in the corpus that tried this…" — not "73% of peer retailers…"
   ~80% of strategic CXO questions will have no direct corpus hit; that is expected, not a failure. Answer like a senior consultant from broad domain expertise plus the tenant context block, form a view, calibrate verbally, and refuse only fabrication of specific tenant facts and peer statistics.`;
 
 const STRUCTURAL_REQUIREMENT = `Structural requirement — any response of 3+ sentences must contain at least one of:
-  • Inline citation matching PAT-XYZ-XYZ-001, worldview:W1:003, or a tenant record id
+  • A named tenant fact, named pattern, or concise evidence marker in natural language
   • Graph fragment: X → RELATION → Y (uppercase relation between arrows)
-  • Honesty-mode mark: "the corpus doesn't have evidence on X" / "your tenant data is silent on Y" / "this is a generic observation, not corpus-grounded"`;
+  • Natural confidence / honesty phrase: "high confidence", "less sure", "this is judgment", or "I don't have that in your connected data"`;
 
-const HONESTY_MODES = `Honesty modes — use the exact phrasing when relevant:
+const HONESTY_MODES = `Honesty modes — use natural phrasing when relevant:
 
-  Worldview-pending:  "The worldview corpus is being authored; for this question I can cite the industry catalog and your tenant data only."
-  Vector-pending:     "Vector retrieval is not yet live for your tenant. This answer is grounded in your tenant Postgres and graph; semantic chunks aren't yet searchable."
-  Tenant-blank:       "Your tenant doesn't yet have data on X. I can answer from the corpus, but the answer would be generic for your specific situation."`;
+  Strategic framing:  "This is judgment from the pattern, not tenant-specific benchmark data."
+  Retrieval thin:     "I have enough to form a view, but I'd want the underlying data before making it a funding number."
+  Tenant fact absent: "I don't have that in your connected data — your finance / HR / procurement team would have it directly."`;
 
 // Pattern-level fallback — INT-VOICE.STRAT-2026-05-10c (consultant posture)
 //
@@ -841,12 +867,12 @@ export const PATTERN_LEVEL_FALLBACK = `Consultant posture — answer like a seni
 
   Roughly 80% of strategic CXO questions will have no direct corpus hit. That is expected, and the consultant posture is exactly what it is for. Refusing or over-hedging on a general strategy question is a failure mode, not honesty. Honesty applies only to tenant-specific quantitative claims, and even there it shows up as a one-line natural caveat — never as a preamble.`;
 
-const WORLDVIEW_GUIDANCE = `When worldview chunks are present:
+const WORLDVIEW_GUIDANCE = `When strategic framing chunks are present:
 
-  • Use worldview chunks for strategic framing, market structure, and AbarVa thesis language.
-  • Do not use worldview chunks as proof of tenant facts. Tenant facts require bundle.facts, bundle.graphPaths, or tenant chunk citations.
-  • If worldview and tenant evidence point in different directions, surface both layers and name the distinction.
-  • Prefer concise references: "worldview:W1:009 frames the binding-layer argument; tenant record x anchors whether it applies here."`;
+  • Use strategic framing chunks for market structure and AbarVa thesis language.
+  • Do not use strategic framing as proof of tenant facts. Tenant facts require bundle.facts, bundle.graphPaths, or tenant chunks.
+  • If strategic framing and tenant evidence point in different directions, explain the distinction in plain English.
+  • Do not expose raw chunk ids in visible prose. Translate the evidence into advisor language.`;
 
 function refusalTriggerBlock(): string {
   const lines = REFUSAL_TRIGGERS.map((trigger, index) =>
@@ -861,7 +887,7 @@ const TOOL_USE_POLICY = `Tool-use policy:
   Use search_patterns only when the bundle's top-K does not contain the requested pattern family.
   Use evidence_lookup only when the user asks for evidence supporting a specific claim and the bundle did not surface it.
   Use validate_synthesis only when the user asks Sentinel to check a synthesis.
-  Do not re-search worldview when worldviewChunks are already in the bundle.`;
+  Do not re-search strategic framing when framing chunks are already in the bundle.`;
 
 const MULTI_TURN_POLICY = `Multi-turn policy:
 
@@ -897,11 +923,11 @@ function bundleContextLines(input: ComposeSentinelSystemPromptInput): string {
   );
   lines.push(`Surface: ${input.surface}.`);
   lines.push(
-    'Cite from bundle.facts (records), bundle.graphPaths, bundle.chunks (semantic chunks), bundle.corpusPatterns, and bundle.worldviewChunks. Refer to citation ids verbatim.',
+    'Ground from bundle.facts (records), bundle.graphPaths, bundle.chunks (semantic chunks), bundle.corpusPatterns, and strategic framing chunks. Use ids internally only; write visible responses in CXO-readable language.',
   );
   if (input.worldviewHitsPresent) {
     lines.push(
-      'Worldview hits are present. Use them as strategic framing only; tenant claims still require tenant evidence.',
+      'Strategic framing hits are present. Use them as framing only; tenant claims still require tenant evidence.',
     );
   }
   if (input.vectorIndexPending) {
@@ -911,7 +937,7 @@ function bundleContextLines(input: ComposeSentinelSystemPromptInput): string {
   }
   if (input.worldviewPending) {
     lines.push(
-      'IMPORTANT: worldview chunks are not yet ingested. Use the worldview-pending honesty mode when the question would normally cite W1-W5.',
+      'IMPORTANT: strategic framing chunks are not yet ingested. Do not mention this unless the user asks about retrieval coverage.',
     );
   }
   return lines.join(' ');

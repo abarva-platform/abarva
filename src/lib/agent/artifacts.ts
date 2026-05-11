@@ -590,6 +590,7 @@ export type Artifact =
 
 const OPEN_SENTINEL = /\[\[artifact:([a-z-]+)\]\]/;
 const CLOSE_SENTINEL = '[[/artifact]]';
+const CLOSE_SENTINEL_ALIASES = [CLOSE_SENTINEL, '[[/]]', '[[/]'] as const;
 
 export interface ExtractResult {
   /** Text with artifact tuples removed — what the chat should render. */
@@ -1439,15 +1440,22 @@ export function extractArtifacts(input: string): ExtractResult {
     // Append everything before the open sentinel as visible text.
     visible += input.slice(cursor, openStart);
 
-    // Look for the close sentinel after the open.
-    const closeIndex = input.indexOf(CLOSE_SENTINEL, openEnd);
-    if (closeIndex === -1) {
+    // Look for the close sentinel after the open. The canonical grammar is
+    // `[[/artifact]]`, but live LLM streams occasionally abbreviate the close
+    // marker as `[[/]]` or `[[/]`. Treat those as valid closes so JSON never
+    // leaks into the CXO-visible chat when the model shortens the marker.
+    const closeMatch = CLOSE_SENTINEL_ALIASES
+      .map((sentinel) => ({ index: input.indexOf(sentinel, openEnd), sentinel }))
+      .filter((match) => match.index !== -1)
+      .sort((a, b) => a.index - b.index)[0];
+    if (!closeMatch) {
       // Open without close — partial artifact still streaming. Carry
       // forward unparsed via `remaining` so the next chunk can complete.
       const remaining = input.slice(openStart);
       return { visibleText: visible, artifacts, remaining };
     }
 
+    const closeIndex = closeMatch.index;
     const json = input.slice(openEnd, closeIndex);
     const artifact = tryParseArtifact(type, json);
     if (artifact) {
@@ -1458,7 +1466,7 @@ export function extractArtifacts(input: string): ExtractResult {
       // logs can later catch these via the F0.3 validator.
       visible += `[[artifact:${type} parse-failed]]`;
     }
-    cursor = closeIndex + CLOSE_SENTINEL.length;
+    cursor = closeIndex + closeMatch.sentinel.length;
   }
 
   return { visibleText: visible, artifacts, remaining: '' };

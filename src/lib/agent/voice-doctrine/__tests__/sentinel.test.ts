@@ -38,6 +38,7 @@ describe('SENTINEL_BANNED_PATTERNS — completeness', () => {
     expect(categories.has('retrieval_mechanics')).toBe(true);
     // INT-VOICE.STRAT-2026-05-10c — consultant-posture pivot.
     expect(categories.has('academic_disclaimer')).toBe(true);
+    expect(categories.has('internal_artifact_leak')).toBe(true);
     expect(categories.has('fabricated_statistic')).toBe(true);
   });
 
@@ -609,11 +610,12 @@ describe('checkSentinelVoice — structural element check', () => {
     expect(r.pass).toBe(true);
   });
 
-  it('passes 3+ sentence responses with a worldview chunk citation', () => {
+  it('flags 3+ sentence responses with a raw worldview chunk citation', () => {
     const r = checkSentinelVoice(
       'The AbarVa thesis sits in worldview:W1:003. The argument is structural, not promotional. The chunk cites Anthropic benchmarks.',
     );
-    expect(r.pass).toBe(true);
+    expect(r.pass).toBe(false);
+    expect(r.violations.some((v) => v.category === 'internal_artifact_leak')).toBe(true);
   });
 
   it('passes 3+ sentence responses with a tenant record citation', () => {
@@ -625,7 +627,7 @@ describe('checkSentinelVoice — structural element check', () => {
 
   it('passes 3+ sentence responses with a graph fragment', () => {
     const r = checkSentinelVoice(
-      'The CDP program is sponsored by the CMO. Graph: program:apex-cdp-2026 → SPONSORED_BY → person:apex:jennifer-park. Lead is Priya Iyer.',
+      'The CDP program is sponsored by the CMO. Graph: program:cdp → SPONSORED_BY → person:apex:jennifer-park. Lead is Priya Iyer.',
     );
     expect(r.pass).toBe(true);
   });
@@ -637,11 +639,12 @@ describe('checkSentinelVoice — structural element check', () => {
     expect(r.pass).toBe(true);
   });
 
-  it('passes the worldview-pending honesty mode', () => {
+  it('flags worldview-pending plumbing language', () => {
     const r = checkSentinelVoice(
       'The worldview corpus is being authored. For this question I can cite the industry catalog and your tenant data only. No worldview chunk is yet retrievable.',
     );
-    expect(r.pass).toBe(true);
+    expect(r.pass).toBe(false);
+    expect(r.violations.some((v) => v.category === 'internal_artifact_leak')).toBe(true);
   });
 
   it('passes the vector-pending honesty mode', () => {
@@ -706,7 +709,7 @@ describe('composeSentinelSystemPrompt', () => {
     const prompt = composeSentinelSystemPrompt(defaultInput());
     expect(prompt).toContain('You are Sentinel');
     expect(prompt).toContain('Five voice rules');
-    expect(prompt).toContain('Citation-first');
+    expect(prompt).toContain('Evidence-first');
     expect(prompt).toContain('Contradiction-aware');
     expect(prompt).toContain('Scope-honest');
     expect(prompt).toContain('Mode-aware framing');
@@ -728,11 +731,11 @@ describe('composeSentinelSystemPrompt', () => {
     expect(prompt).toContain('3+ sentences');
   });
 
-  it('includes the three honesty-mode phrasings', () => {
+  it('includes the three natural honesty-mode phrasings', () => {
     const prompt = composeSentinelSystemPrompt(defaultInput());
-    expect(prompt).toContain('Worldview-pending');
-    expect(prompt).toContain('Vector-pending');
-    expect(prompt).toContain('Tenant-blank');
+    expect(prompt).toContain('Strategic framing');
+    expect(prompt).toContain('Retrieval thin');
+    expect(prompt).toContain('Tenant fact absent');
   });
 
   it('includes refusal triggers from the addendum', () => {
@@ -740,19 +743,19 @@ describe('composeSentinelSystemPrompt', () => {
     expect(prompt).toContain('Refusal triggers');
     expect(prompt).toContain('Cross-tenant data');
     expect(prompt).toContain('Legal/compliance advice');
-    expect(prompt).toContain('Worldview is strategic framing, not customer evidence');
+    expect(prompt).toContain('Strategic framing is not customer evidence');
   });
 
-  it('includes worldview guidance only when worldview hits are present', () => {
+  it('includes strategic framing guidance only when framing hits are present', () => {
     const noHits = composeSentinelSystemPrompt(defaultInput());
     const withHits = composeSentinelSystemPrompt({
       ...defaultInput(),
       worldviewPending: false,
       worldviewHitsPresent: true,
     });
-    expect(noHits).not.toContain('When worldview chunks are present');
-    expect(withHits).toContain('When worldview chunks are present');
-    expect(withHits).toContain('Do not use worldview chunks as proof of tenant facts');
+    expect(noHits).not.toContain('When strategic framing chunks are present');
+    expect(withHits).toContain('When strategic framing chunks are present');
+    expect(withHits).toContain('Do not use strategic framing as proof of tenant facts');
   });
 
   it('reports the bundle context — mode, tenant, surface', () => {
@@ -781,9 +784,9 @@ describe('composeSentinelSystemPrompt', () => {
     expect(prompt).toMatch(/IMPORTANT.*chunks.*pending/i);
   });
 
-  it('includes worldview-pending IMPORTANT block when set', () => {
+  it('includes quiet strategic-framing coverage guardrail when set', () => {
     const prompt = composeSentinelSystemPrompt(defaultInput());
-    expect(prompt).toMatch(/IMPORTANT.*worldview/i);
+    expect(prompt).toMatch(/IMPORTANT.*strategic framing chunks/i);
   });
 
   it('routes /intelligence to corpus default', () => {

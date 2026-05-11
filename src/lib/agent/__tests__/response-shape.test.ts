@@ -181,6 +181,32 @@ describe('agent response shape', () => {
       expect(shaped).toContain('Apex Retail');
       expect(shaped).toContain('POS-integration');
     });
+
+    it('scrubs internal retrieval language and ids from visible advisor prose', () => {
+      const raw = [
+        'At the general AI industry level, not corpus-grounded for First Capital specifically, I would treat this as a control-plane issue.',
+        'The worldview corpus is being authored; worldview:W1:003 frames this.',
+        'sig:fcfi:002 and fcfi-data-gov-2026 are relevant.',
+      ].join(' ');
+
+      const shaped = shapeAgentResponseForSurface('/intelligence', raw);
+
+      expect(shaped).not.toMatch(/worldview corpus|worldview:W|sig:fcfi|fcfi-data-gov-2026/i);
+      expect(shaped).not.toMatch(/not corpus-grounded/i);
+      expect(shaped).toContain('control-plane issue');
+      expect(shaped).toContain('data gov program');
+    });
+
+    it('removes malformed shorthand artifact blocks before rendering', () => {
+      const raw =
+        'My read is direct. [[artifact:pattern-match]]{"patternId":"PAT-X","name":"Internal"}[[/]] The visible answer continues.';
+
+      const shaped = shapeStreamingAgentTextForSurface('/intelligence', raw);
+
+      expect(shaped).toBe('My read is direct. The visible answer continues.');
+      expect(shaped).not.toContain('artifact');
+      expect(shaped).not.toContain('patternId');
+    });
   });
 
   it('uses sequential steps when the answer explains a path (Tower surface)', () => {

@@ -38,6 +38,58 @@ function normalizeVisibleWhitespace(text: string): string {
     .trim();
 }
 
+function humanizeInternalProgramId(id: string): string {
+  const words = id
+    .toLowerCase()
+    .replace(/-\d{4}\b/, '')
+    .split(/[-_:]+/)
+    .filter((part) => part && ![
+      'apex',
+      'apx',
+      'ar',
+      'fcfi',
+      'firstcapital',
+      'brindlemark',
+      'meridian',
+      'mh',
+    ].includes(part));
+
+  if (words.length === 0) return 'the referenced program';
+  return `the ${words.join(' ')} program`;
+}
+
+function stripResidualArtifactBlocks(text: string): string {
+  return text
+    .replace(/\[\[artifact:[^\]]+\]\][\s\S]*?(?:\[\[\/artifact\]\]|\[\[\/\]\]|\[\[\/\])/g, ' ')
+    .replace(/\[\[artifact:[^\]]+\]\]/g, ' ');
+}
+
+function scrubInternalAdvisorText(text: string): string {
+  const scrubbed = stripResidualArtifactBlocks(text)
+    .replace(/\bThe\s+worldview\s+corpus\s+is\s+being\s+authored[^\n.]*\.?\s*/gi, '')
+    .replace(/\bworldview\s+corpus\b/gi, 'strategic corpus')
+    .replace(/\bworldview:W\d+:\d{3}\b/gi, 'strategic framing')
+    .replace(/\bsig:[a-z0-9:_-]+\b/gi, 'the cross-program signal')
+    .replace(
+      /\b(?:fcfi|firstcapital|brindlemark|apex|apx|meridian|mh|ar)-[a-z0-9]+(?:-[a-z0-9]+)*-\d{4}\b/gi,
+      (match) => humanizeInternalProgramId(match),
+    )
+    .replace(
+      /\bat\s+the\s+general\s+(?:ai\s+)?(?:industry|pattern|domain)\s+level\s*[,—-]?\s*(?:not\s+corpus[- ]grounded\s+(?:for|to)\s+[^,.;]+[,.;]?\s*)?/gi,
+      '',
+    )
+    .replace(
+      /\bthis\s+is\s+a\s+generic\s+observation\s*,?\s*not\s+corpus[- ]grounded(?:\s+(?:for|to)\s+[^.]+)?\.?/gi,
+      'This is judgment from the pattern, not tenant-specific benchmark data.',
+    )
+    .replace(/\bnot\s+corpus[- ]grounded\s+(?:for|to)\s+[^,.;]+[,.;]?\s*/gi, '')
+    .replace(/\b(?:the\s+)?(?:indexed\s+)?sources?\s+(?:don'?t|do\s+not)\s+contain\b/gi, 'I do not have enough evidence to claim')
+    .replace(/\b(?:the\s+)?corpus\s+(?:does\s+not|doesn'?t)\s+(?:include|contain|cover)\b/gi, 'I do not have enough evidence to claim')
+    .replace(/\bwhat\s+the\s+(?:indexed\s+)?sources?\s+do\s+show\b/gi, 'The strongest evidence I can see');
+
+  return normalizeVisibleWhitespace(scrubbed);
+}
+
 function normalizeCompactLine(text: string): string {
   return text
     .replace(/\s+/g, ' ')
@@ -387,7 +439,8 @@ function shouldCompactSurface(surface: string): boolean {
 }
 
 export function shapeStreamingAgentTextForSurface(_surface: string, text: string): string {
-  return repairAgentOutputContractText(stripChatMarkdownFormatting(normalizeAgentMarkupForPlainText(text))).text;
+  const cleaned = scrubInternalAdvisorText(stripChatMarkdownFormatting(normalizeAgentMarkupForPlainText(text)));
+  return repairAgentOutputContractText(cleaned).text;
 }
 
 export function shapeAgentResponseForSurface(surface: string, text: string): string {
@@ -398,7 +451,7 @@ export function shapeAgentResponseForSurface(surface: string, text: string): str
   // bypass class as compactConsultantChatText (different shape, same Brief
   // violation by construction). Surfaces correctly compacted now flow
   // through the single shouldCompactSurface gate.
-  const cleaned = normalizeVisibleWhitespace(stripChatMarkdownFormatting(normalizeAgentMarkupForPlainText(text)));
+  const cleaned = scrubInternalAdvisorText(stripChatMarkdownFormatting(normalizeAgentMarkupForPlainText(text)));
   const shaped = shouldCompactSurface(surface)
     ? compactConsultantChatText(cleaned, 120)
     : cleaned;
