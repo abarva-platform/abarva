@@ -1,0 +1,21 @@
+{
+  "snapshotKey": "week-0",
+  "label": "Week 0 baseline",
+  "asOfDate": "2026-05-01",
+  "diffFromPrevious": {
+    "newRecords": 0,
+    "changedRecords": 0,
+    "removedRecords": 0,
+    "newFacts": 0,
+    "changedFacts": 0,
+    "supersededFacts": 0,
+    "newRelationships": 0,
+    "changedRelationships": 0,
+    "removedRelationships": 0,
+    "newQualityIssues": 0,
+    "resolvedQualityIssues": 0,
+    "stewardshipTasksCreated": 0,
+    "activeRecords": 1030
+  },
+  "scenarios": []
+}

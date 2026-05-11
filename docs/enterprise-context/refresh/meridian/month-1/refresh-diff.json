@@ -1,0 +1,77 @@
+{
+  "snapshotKey": "month-1",
+  "label": "Month 1 operating refresh",
+  "asOfDate": "2026-06-01",
+  "diffFromPrevious": {
+    "newRecords": 0,
+    "changedRecords": 5,
+    "removedRecords": 0,
+    "newFacts": 0,
+    "changedFacts": 9,
+    "supersededFacts": 9,
+    "newRelationships": 0,
+    "changedRelationships": 0,
+    "removedRelationships": 0,
+    "newQualityIssues": 2,
+    "resolvedQualityIssues": 0,
+    "stewardshipTasksCreated": 7,
+    "activeRecords": 1039
+  },
+  "scenarios": [
+    {
+      "snapshotKey": "month-1",
+      "scenarioKey": "month-1:new-initiative-dependency",
+      "title": "Initiative dependency now includes contact center service, Genesys contract, and updated AI sourcing policy.",
+      "domain": "Initiatives",
+      "recordType": "initiative_portfolio",
+      "sourceRecordId": "INIT-001",
+      "changeType": "changed",
+      "owner": "Enterprise PMO",
+      "stewardshipSignal": "Alert Moves and Tower that this initiative now shares sourcing dependencies."
+    },
+    {
+      "snapshotKey": "month-1",
+      "scenarioKey": "month-1:stale-cmdb-record",
+      "title": "Mirth integration CI became stale and no longer evidence-usable.",
+      "domain": "CMDB",
+      "recordType": "cmdb_applications_services",
+      "sourceRecordId": "CI-INT-MIRTH",
+      "changeType": "stale",
+      "owner": "Integration Operations",
+      "stewardshipSignal": "Open stewardship task before using this CI as cited evidence."
+    },
+    {
+      "snapshotKey": "month-1",
+      "scenarioKey": "month-1:vendor-alias-canonicalization",
+      "title": "MSFT Azure alias canonicalized to Microsoft Azure.",
+      "domain": "Vendors",
+      "recordType": "vendors_contract_inventory",
+      "sourceRecordId": "CON-AZURE-2026",
+      "changeType": "canonicalized",
+      "owner": "Cloud Platform Services",
+      "stewardshipSignal": "Confirm alias map before contract/spend rollups."
+    },
+    {
+      "snapshotKey": "month-1",
+      "scenarioKey": "month-1:spend-baseline-update",
+      "title": "Oracle financials posted updated monthly spend baseline.",
+      "domain": "Spend",
+      "recordType": "spend_baseline",
+      "sourceRecordId": "SPEND-2026-01-EPIC",
+      "changeType": "changed",
+      "owner": "Finance Systems",
+      "stewardshipSignal": "Refresh sourcing value-at-stake assumptions."
+    },
+    {
+      "snapshotKey": "month-1",
+      "scenarioKey": "month-1:sla-breach-worsened",
+      "title": "SLA breach trend worsened for a tier-one service.",
+      "domain": "SLAs",
+      "recordType": "slas",
+      "sourceRecordId": "SLA-001",
+      "changeType": "worsened",
+      "owner": "Service Reliability Office",
+      "stewardshipSignal": "Escalate operational risk before dependent sourcing or Move approval."
+    }
+  ]
+}

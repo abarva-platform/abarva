@@ -1,0 +1,35 @@
+{
+  "totalScenarios": 11,
+  "refreshCadence": "weekly-and-monthly",
+  "preservesHistory": true,
+  "duplicateStrategy": "stable-id-upsert",
+  "snapshots": [
+    {
+      "snapshotKey": "week-0",
+      "label": "Week 0 baseline",
+      "activeRecords": 1030,
+      "changedRecords": 0,
+      "newRecords": 0,
+      "supersededFacts": 0,
+      "stewardshipTasksCreated": 0
+    },
+    {
+      "snapshotKey": "week-1",
+      "label": "Week 1 operational refresh",
+      "activeRecords": 1039,
+      "changedRecords": 4,
+      "newRecords": 9,
+      "supersededFacts": 12,
+      "stewardshipTasksCreated": 6
+    },
+    {
+      "snapshotKey": "month-1",
+      "label": "Month 1 operating refresh",
+      "activeRecords": 1039,
+      "changedRecords": 5,
+      "newRecords": 0,
+      "supersededFacts": 9,
+      "stewardshipTasksCreated": 7
+    }
+  ]
+}

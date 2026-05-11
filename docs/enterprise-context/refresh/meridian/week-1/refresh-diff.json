@@ -1,0 +1,88 @@
+{
+  "snapshotKey": "week-1",
+  "label": "Week 1 operational refresh",
+  "asOfDate": "2026-05-08",
+  "diffFromPrevious": {
+    "newRecords": 9,
+    "changedRecords": 4,
+    "removedRecords": 0,
+    "newFacts": 92,
+    "changedFacts": 12,
+    "supersededFacts": 12,
+    "newRelationships": 0,
+    "changedRelationships": 0,
+    "removedRelationships": 0,
+    "newQualityIssues": 0,
+    "resolvedQualityIssues": 0,
+    "stewardshipTasksCreated": 6,
+    "activeRecords": 1039
+  },
+  "scenarios": [
+    {
+      "snapshotKey": "week-1",
+      "scenarioKey": "week-1:owner-change",
+      "title": "ServiceNow ownership changed after CIO operations review.",
+      "domain": "CMDB",
+      "recordType": "cmdb_applications_services",
+      "sourceRecordId": "CI-APP-SERVICENOW",
+      "changeType": "changed",
+      "owner": "Enterprise Service Management Office",
+      "stewardshipSignal": "Confirm decision rights and update application stewardship."
+    },
+    {
+      "snapshotKey": "week-1",
+      "scenarioKey": "week-1:renewal-date-change",
+      "title": "Genesys renewal moved earlier and now requires sourcing action.",
+      "domain": "Contracts",
+      "recordType": "renewal_calendar",
+      "sourceRecordId": "REN-GENESYS-2027",
+      "changeType": "changed",
+      "owner": "IT Sourcing",
+      "stewardshipSignal": "Create Source event or attach to existing contact center sourcing path."
+    },
+    {
+      "snapshotKey": "week-1",
+      "scenarioKey": "week-1:new-incidents",
+      "title": "Eight new contact-center and integration incidents arrived from ITSM export.",
+      "domain": "Incidents",
+      "recordType": "incidents",
+      "sourceRecordId": "INC-RF-W1-*",
+      "changeType": "new",
+      "owner": "Integration Operations",
+      "stewardshipSignal": "Review incident trend before approving dependent moves."
+    },
+    {
+      "snapshotKey": "week-1",
+      "scenarioKey": "week-1:closed-problem",
+      "title": "First open integration problem closed with workaround validated.",
+      "domain": "Problems",
+      "recordType": "problems",
+      "sourceRecordId": "PRB0001800",
+      "changeType": "closed",
+      "owner": "Integration Operations",
+      "stewardshipSignal": "Supersede open blocker signal and keep closure evidence."
+    },
+    {
+      "snapshotKey": "week-1",
+      "scenarioKey": "week-1:support-group-change",
+      "title": "Contact center service support group changed to platform engineering.",
+      "domain": "CMDB",
+      "recordType": "cmdb_applications_services",
+      "sourceRecordId": "CI-SVC-CONTACT-CENTER",
+      "changeType": "changed",
+      "owner": "Contact Center Platform Engineering",
+      "stewardshipSignal": "Revalidate incident routing and sourcing owner."
+    },
+    {
+      "snapshotKey": "week-1",
+      "scenarioKey": "week-1:new-policy-version",
+      "title": "New third-party risk version added for AI-enabled contact center work.",
+      "domain": "Policies",
+      "recordType": "policies_procedures",
+      "sourceRecordId": "POL-004-V2",
+      "changeType": "new",
+      "owner": "AI Governance Council",
+      "stewardshipSignal": "Require policy citation in Source artifacts and Move gate reviews."
+    }
+  ]
+}
