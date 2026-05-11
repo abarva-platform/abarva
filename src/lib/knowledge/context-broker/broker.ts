@@ -46,6 +46,7 @@ import {
   type CanonicalPatternIndexHit,
   type CanonicalPatternIndexResult,
 } from '@/lib/intelligence/canonical/runtime-pattern-index';
+import type { CanonicalIndustry } from '@/lib/intelligence/canonical/industry-ai-pattern';
 import type { TenantDataAdapter } from '@/lib/knowledge/tenant-data';
 import type {
   ContextChunk,
@@ -141,6 +142,24 @@ const STOPWORDS = new Set([
 
 const KEYWORD_CAP = 10;
 
+const TENANT_INDUSTRY_ALLOWLISTS: ReadonlyArray<{
+  pattern: RegExp;
+  industries: ReadonlySet<CanonicalIndustry>;
+}> = [
+  {
+    pattern: /\b(?:apex|apx|retail)\b/i,
+    industries: new Set<CanonicalIndustry>(['retail', 'cross_industry']),
+  },
+  {
+    pattern: /\b(?:meridian|health|heliara)\b/i,
+    industries: new Set<CanonicalIndustry>(['healthcare', 'cross_industry']),
+  },
+  {
+    pattern: /\b(?:first[-_]?capital|firstcapital|fcfi|brindlemark|arcturus|financial)\b/i,
+    industries: new Set<CanonicalIndustry>(['financial_services', 'cross_industry']),
+  },
+];
+
 /**
  * Graph-id prefix heuristic. If a record_id starts with one of these
  * prefixes, the broker treats it as a graph-node id and walks the
@@ -180,6 +199,47 @@ export function extractKeywords(query: string): string[] {
 
 function isGraphCandidateId(recordId: string): boolean {
   return GRAPH_ID_PREFIXES.some((prefix) => recordId.startsWith(prefix));
+}
+
+export function allowedPatternIndustriesForTenant(
+  tenantKey: string | null,
+): ReadonlySet<CanonicalIndustry> | null {
+  if (!tenantKey) return null;
+  return TENANT_INDUSTRY_ALLOWLISTS.find((entry) => entry.pattern.test(tenantKey))?.industries ?? null;
+}
+
+function patternMatchesTenantIndustry(
+  pattern: CanonicalPatternIndexHit,
+  allowedIndustries: ReadonlySet<CanonicalIndustry>,
+): boolean {
+  return pattern.industry.some((industry) => allowedIndustries.has(industry));
+}
+
+function filterCorpusPatternResultByTenantIndustry(
+  result: CanonicalPatternIndexResult,
+  tenantKey: string | null,
+): CanonicalPatternIndexResult {
+  const allowedIndustries = allowedPatternIndustriesForTenant(tenantKey);
+  if (!allowedIndustries || result.patterns.length === 0) return result;
+
+  const patterns = result.patterns.filter((pattern) =>
+    patternMatchesTenantIndustry(pattern, allowedIndustries));
+
+  if (patterns.length === result.patterns.length) return result;
+
+  return {
+    ...result,
+    status: patterns.length > 0 ? result.status : 'no_match',
+    patterns,
+    total: patterns.length,
+    warnings: patterns.length > 0
+      ? result.warnings
+      : Array.from(new Set([...result.warnings, WARNING_CANONICAL_PATTERN_NO_MATCH])),
+    filters_applied: {
+      ...result.filters_applied,
+      tenant_key: tenantKey ?? result.filters_applied.tenant_key,
+    },
+  };
 }
 
 function sourceClassForTenant(resource: PrivateDataPlaneResource | null): ContextProvenance['sourceClass'] {
@@ -645,7 +705,8 @@ export class DefaultContextBroker implements ContextBroker {
     tenantKey: string | null,
   ): Promise<CanonicalPatternIndexResult> {
     try {
-      return await this.corpusPatternRetriever(input, tenantKey);
+      const result = await this.corpusPatternRetriever(input, tenantKey);
+      return filterCorpusPatternResultByTenantIndustry(result, tenantKey);
     } catch (error) {
       return {
         source: 'persisted_canonical_corpus',

@@ -13,6 +13,7 @@ import {
   WARNING_CORPUS_PENDING,
   WARNING_VECTOR_PENDING,
   WARNING_WORLDVIEW_PENDING,
+  allowedPatternIndustriesForTenant,
   extractKeywords,
   vectorRetrievalInfoTag,
   type ContextBroker,
@@ -81,6 +82,19 @@ const canonicalPatternHit: CanonicalPatternIndexHit = {
   score: 0.82,
   match_reasons: ['query:contact+center+routing'],
 };
+
+function patternHit(
+  canonicalId: string,
+  industry: CanonicalPatternIndexHit['industry'],
+  title = canonicalId,
+): CanonicalPatternIndexHit {
+  return {
+    ...canonicalPatternHit,
+    canonical_id: canonicalId,
+    title,
+    industry,
+  };
+}
 
 function makePatternResult(
   overrides: Partial<CanonicalPatternIndexResult> = {},
@@ -235,6 +249,21 @@ describe('DefaultContextBroker.assemble — generic mode', () => {
 });
 
 describe('DefaultContextBroker.assemble — corpus mode', () => {
+  it('maps tenant keys to the right canonical pattern industry allowlist', () => {
+    expect(Array.from(allowedPatternIndustriesForTenant('apex-retail') ?? [])).toEqual([
+      'retail',
+      'cross_industry',
+    ]);
+    expect(Array.from(allowedPatternIndustriesForTenant('meridian') ?? [])).toEqual([
+      'healthcare',
+      'cross_industry',
+    ]);
+    expect(Array.from(allowedPatternIndustriesForTenant('first-capital') ?? [])).toEqual([
+      'financial_services',
+      'cross_industry',
+    ]);
+  });
+
   it('returns empty bundle with worldview-pending + canonical-corpus empty warnings when indexes have no hits', async () => {
     // INT-WV-2: with no PINECONE_API_KEY in test env, the worldview
     // retriever returns reached=false and the broker tags both the
@@ -594,6 +623,36 @@ describe('DefaultContextBroker.assemble — full mode', () => {
       expect.objectContaining({ mode: 'full' }),
       TENANT,
     );
+  });
+
+  it('filters canonical corpus patterns to the active tenant industry in full mode', async () => {
+    const retail = patternHit('AIP-RETAIL-ASSORTMENT-001', ['retail'], 'Retail assortment');
+    const financial = patternHit('AIP-FINSERV-MODEL-RISK-001', ['financial_services'], 'Model risk controls');
+    const cross = patternHit('AIP-X-AI-GOVERNANCE-001', ['cross_industry'], 'AI governance');
+    const patternRetriever = jest.fn().mockResolvedValue(makePatternResult({
+      status: 'ready',
+      patterns: [retail, financial, cross],
+      total: 3,
+      warnings: [],
+    }));
+    const { broker } = makeBroker({
+      chunksByKeyword: jest.fn().mockResolvedValue([]),
+    }, makeFakeOpenAI(), patternRetriever);
+
+    const bundle = await broker.assemble({
+      query: 'parallel gates for a new ML model',
+      mode: 'full',
+      tenantKey: 'first-capital',
+    });
+
+    expect(bundle.corpusPatterns.map((pattern) => pattern.patternId)).toEqual([
+      'AIP-FINSERV-MODEL-RISK-001',
+      'AIP-X-AI-GOVERNANCE-001',
+    ]);
+    expect(bundle.retrievalTrace?.shared_corpus_ids).toEqual([
+      'AIP-FINSERV-MODEL-RISK-001',
+      'AIP-X-AI-GOVERNANCE-001',
+    ]);
   });
 });
 
