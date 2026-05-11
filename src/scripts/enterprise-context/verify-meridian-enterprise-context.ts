@@ -41,6 +41,27 @@ async function countRows(client: SupabaseClient, table: string): Promise<number>
   return count ?? 0;
 }
 
+async function fetchTenantRows<T extends Record<string, unknown>>(
+  client: SupabaseClient,
+  table: string,
+  columns: string,
+): Promise<T[]> {
+  const rows: T[] = [];
+  const pageSize = 1000;
+  for (let from = 0; ; from += pageSize) {
+    const { data, error } = await client
+      .from(table)
+      .select(columns)
+      .eq('tenant_key', TENANT_KEY)
+      .range(from, from + pageSize - 1);
+    if (error) throw new Error(`${table} page fetch failed: ${error.message}`);
+    const page = (data ?? []) as unknown as T[];
+    rows.push(...page);
+    if (page.length < pageSize) break;
+  }
+  return rows;
+}
+
 async function main() {
   const client = getClient();
   const counts: Record<string, number> = {};
@@ -48,26 +69,24 @@ async function main() {
     counts[table] = await countRows(client, table);
   }
 
-  const { data: recordTypes, error: recordTypeError } = await client
-    .from('enterprise_context_records')
-    .select('record_type')
-    .eq('tenant_key', TENANT_KEY);
-  if (recordTypeError) throw new Error(`record type verification failed: ${recordTypeError.message}`);
-
+  const recordTypes = await fetchTenantRows<{ record_type: string }>(
+    client,
+    'enterprise_context_records',
+    'record_type',
+  );
   const byRecordType: Record<string, number> = {};
-  for (const row of recordTypes ?? []) {
+  for (const row of recordTypes) {
     const key = String(row.record_type);
     byRecordType[key] = (byRecordType[key] ?? 0) + 1;
   }
 
-  const { data: qualityRows, error: qualityError } = await client
-    .from('enterprise_context_quality_issues')
-    .select('issue_type,severity,status')
-    .eq('tenant_key', TENANT_KEY);
-  if (qualityError) throw new Error(`quality verification failed: ${qualityError.message}`);
-
+  const qualityRows = await fetchTenantRows<{ issue_type: string; severity: string; status: string }>(
+    client,
+    'enterprise_context_quality_issues',
+    'issue_type,severity,status',
+  );
   const qualitySummary: Record<string, number> = {};
-  for (const row of qualityRows ?? []) {
+  for (const row of qualityRows) {
     const key = `${row.severity}:${row.status}:${row.issue_type}`;
     qualitySummary[key] = (qualitySummary[key] ?? 0) + 1;
   }
