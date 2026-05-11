@@ -1,8 +1,7 @@
-import { Metadata } from 'next';
-import { RiskLensPage } from '@/components/tower/RiskLensPage';
+import { redirect } from 'next/navigation';
 
-export const metadata: Metadata = { title: 'Risk Lens · Control Tower' };
+export const dynamic = 'force-dynamic';
 
 export default function Page() {
-  return <RiskLensPage />;
+  redirect('/tower?view=pressures');
 }

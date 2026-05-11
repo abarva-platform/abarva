@@ -1,8 +1,7 @@
-import { Metadata } from 'next';
-import { OutcomePage } from '@/components/tower/OutcomePage';
+import { redirect } from 'next/navigation';
 
-export const metadata: Metadata = { title: 'Outcome Realization · Control Tower' };
+export const dynamic = 'force-dynamic';
 
 export default function Page() {
-  return <OutcomePage />;
+  redirect('/tower?view=alignment');
 }

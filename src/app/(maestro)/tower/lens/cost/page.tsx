@@ -1,8 +1,7 @@
-import { Metadata } from 'next';
-import { CostLensPage } from '@/components/tower/CostLensPage';
+import { redirect } from 'next/navigation';
 
-export const metadata: Metadata = { title: 'Cost Lens · Control Tower' };
+export const dynamic = 'force-dynamic';
 
 export default function Page() {
-  return <CostLensPage />;
+  redirect('/tower?view=pressures');
 }
