@@ -57,7 +57,7 @@ export default async function IntelligencePage({ searchParams }: IntelligencePag
     initiatives,
     apexRetailData,
   ] = await Promise.all([
-    buildIntelligenceV3PageData(),
+    buildIntelligenceV3PageData(requestedClient),
     client ? getVendorsForClient(client.id).catch(() => null) : Promise.resolve(null),
     getByFunctionData().catch(() => null),
     getPeerActivityData().catch(() => null),
@@ -80,6 +80,7 @@ export default async function IntelligencePage({ searchParams }: IntelligencePag
       myStrategyData={myStrategyData}
       initiatives={initiatives}
       apexRetailData={apexRetailData}
+      clientKey={client?.key ?? requestedClient ?? null}
     />
   );
 }
