@@ -35,7 +35,8 @@ import { ArtOfPossibleCanvas } from './ArtOfPossibleCanvas';
 import { IntelligenceMap } from '@/components/intelligence-v4/IntelligenceMap';
 import { IntelligenceBrief } from '@/components/intelligence-v4/IntelligenceBrief';
 import { getMeridianMapData, getMeridianBriefData } from '@/lib/knowledge-corpus/fixtures/meridian-healthcare';
-import { FIRST_CAPITAL_DEMO, MERIDIAN_AOP_DEMO, APEX_RETAIL_AOP_DEMO } from './demo-data';
+import { getFirstCapitalMapData, getFirstCapitalBriefData } from '@/lib/knowledge-corpus/fixtures/first-capital-finserv';
+import { FIRST_CAPITAL_DEMO, FIRST_CAPITAL_AOP_DEMO, MERIDIAN_AOP_DEMO, APEX_RETAIL_AOP_DEMO } from './demo-data';
 import { buildSentinelIntelContext } from '@/lib/intelligence-v3/sentinel-intel-context';
 import {
   APEX_RETAIL_BY_FN_OUTCOMES,
@@ -70,12 +71,14 @@ interface Props {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   initiatives?: any;
   apexRetailData?: ApexRetailIntelligenceData | null;
+  clientKey?: string | null;
 }
 
 export function IntelligenceV3Page({
   data: dataProp,
   isLiveBound = false,
   apexRetailData = null,
+  clientKey = null,
 }: Props = {}) {
   const data = dataProp ?? FIRST_CAPITAL_DEMO;
   // PR-K2 · default landing is The Brief — it's the canonical
@@ -112,10 +115,19 @@ export function IntelligenceV3Page({
   const isCorpusStage = stage === 'brief' || stage === 'map';
   const isAopStage = stage === 'art-of-possible';
   const isApexBound = Boolean(apexRetailData);
-  const aopBands = isApexBound ? APEX_RETAIL_AOP_DEMO : data.aopBands ?? MERIDIAN_AOP_DEMO;
-  const activeTenantName = isApexBound ? 'Apex Retail Group' : data.tenantName;
-  const briefData = apexRetailData?.briefData ?? getMeridianBriefData();
-  const mapData = apexRetailData?.mapData ?? getMeridianMapData();
+  const isFirstCapitalBound =
+    clientKey === 'arcturus' ||
+    clientKey === 'firstcapital' ||
+    data.tenantName.toLowerCase().includes('brindlemark') ||
+    data.tenantName.toLowerCase().includes('first capital');
+  const aopBands = isApexBound
+    ? APEX_RETAIL_AOP_DEMO
+    : isFirstCapitalBound
+      ? FIRST_CAPITAL_AOP_DEMO
+      : data.aopBands ?? MERIDIAN_AOP_DEMO;
+  const briefData = apexRetailData?.briefData ?? (isFirstCapitalBound ? getFirstCapitalBriefData() : getMeridianBriefData());
+  const mapData = apexRetailData?.mapData ?? (isFirstCapitalBound ? getFirstCapitalMapData() : getMeridianMapData());
+  const activeTenantName = isApexBound ? 'Apex Retail Group' : isFirstCapitalBound ? briefData.tenantName : data.tenantName;
   const sentinelOpener = isApexBound
     ? `Apex Retail intelligence is ready: ${apexRetailData?.status.patterns} retail patterns, ${apexRetailData?.status.summarizedSources}/${apexRetailData?.status.sources} summarized sources, ${apexRetailData?.status.useCases} use cases, and ${apexRetailData?.status.contradictions} open tensions. Ask me which CXO decision matters first.`
     : data.sentinelOpener;

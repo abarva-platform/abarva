@@ -670,6 +670,8 @@ export const TENANT_HOME_BY_KEY: Record<string, TenantHomeData> = {
   firstcap: FIRSTCAP_HOME,
   firstcapital: FIRSTCAP_HOME,
   'first-capital': FIRSTCAP_HOME,
+  arcturus: FIRSTCAP_HOME,
+  brindlemark: FIRSTCAP_HOME,
 };
 
 export function resolveTenantHome(clientKey: string | null | undefined): TenantHomeData {

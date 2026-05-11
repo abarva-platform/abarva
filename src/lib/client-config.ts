@@ -23,8 +23,8 @@ export const ALL_CLIENTS: ClientOption[] = [
   },
   {
     id: 'arcturus',
-    name: 'Brindlemark Financial',
-    shortName: 'Brindlemark',
+    name: 'First Capital Financial',
+    shortName: 'First Capital',
     color: '#818CF8',
     vertical: 'Financial Services',
   },
@@ -102,7 +102,7 @@ export function canonicalClientDisplayName(args: {
     normalizedName === 'first capital financial' ||
     normalizedName === 'first capital'
   ) {
-    return 'Brindlemark Financial';
+    return 'First Capital Financial';
   }
 
   if (name) return name;

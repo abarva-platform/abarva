@@ -8,6 +8,7 @@ import 'server-only';
 // First Capital fixture when no active client / no initiatives loaded.
 
 import { getActiveClientRow } from '@/lib/active-client';
+import { canonicalClientDisplayName } from '@/lib/client-config';
 import {
   getAIInitiativesPageData,
   STATUS_LABELS,
@@ -339,12 +340,13 @@ export interface BuildResult {
   isLiveBound: boolean;
 }
 
-export async function buildIntelligenceV3PageData(): Promise<BuildResult> {
-  const clientRow = await getActiveClientRow().catch(() => null);
+export async function buildIntelligenceV3PageData(requestedClientId?: string | null): Promise<BuildResult> {
+  const clientRow = await getActiveClientRow(requestedClientId).catch(() => null);
   if (!clientRow) {
     return { data: FIRST_CAPITAL_DEMO, isLiveBound: false };
   }
 
+  const tenantName = canonicalClientDisplayName({ key: clientRow.key, name: clientRow.name }) ?? clientRow.name;
   const page = await getAIInitiativesPageData(clientRow.id).catch(() => null);
   if (!page || page.initiatives.length === 0) {
     // Real tenant context but no initiatives — keep tenant name + industry
@@ -353,9 +355,9 @@ export async function buildIntelligenceV3PageData(): Promise<BuildResult> {
     return {
       data: {
         ...FIRST_CAPITAL_DEMO,
-        tenantName: clientRow.name,
+        tenantName,
         industry: industryLabel(clientRow.industry_code),
-        sentinelOpener: `Substrate is loading for ${clientRow.name}. Once initiatives are bound, what-matters-most surfaces here.`,
+        sentinelOpener: `Substrate is loading for ${tenantName}. Once initiatives are bound, what-matters-most surfaces here.`,
       },
       isLiveBound: false,
     };
@@ -364,7 +366,7 @@ export async function buildIntelligenceV3PageData(): Promise<BuildResult> {
   const industry = industryLabel(clientRow.industry_code);
   return {
     data: {
-      tenantName: clientRow.name,
+      tenantName,
       industry,
       refreshedLabel: 'just now',
       stats: buildStats(page.initiatives),
@@ -374,7 +376,7 @@ export async function buildIntelligenceV3PageData(): Promise<BuildResult> {
       conversationContext: buildConversationContext(page.initiatives),
       artOfThePossible: buildLayers(page.initiatives),
       whatWeCantSee: buildWhatWeCantSee(page.initiatives),
-      sentinelOpener: buildSentinelOpener(clientRow.name, page.initiatives),
+      sentinelOpener: buildSentinelOpener(tenantName, page.initiatives),
       conversation: [],
     },
     isLiveBound: true,

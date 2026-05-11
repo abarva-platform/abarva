@@ -118,6 +118,55 @@ export const APEX_RETAIL_AOP_DEMO: ArtOfPossibleData = {
   ],
 };
 
+export const FIRST_CAPITAL_AOP_DEMO: ArtOfPossibleData = {
+  totalPossibleLabel: '$45-110M possible',
+  totalCapturingLabel: '~$9M (~14%)',
+  cxoFrame:
+    'First Capital is under-capturing the banking AI opportunity. Payments and model-risk controls are the binding moves; digital acquisition and AML automation become safer after the control plane is credible.',
+  bands: [
+    {
+      key: 'payments',
+      label: 'Payments + commercial retention',
+      tone: 'heavy',
+      possibleUsd: '$12-30M',
+      capturingUsd: '$2.4M',
+      segments: { inFlight: 18, candidate: 42, risk: 22, empty: 18 },
+      verdict: 'Highest urgency',
+      blocker: 'Core API layer and payment-ops ownership',
+    },
+    {
+      key: 'risk-controls',
+      label: 'Model risk + compliance',
+      tone: 'foundation',
+      possibleUsd: '$8-24M',
+      capturingUsd: '$1.8M',
+      segments: { inFlight: 32, candidate: 20, risk: 28, empty: 20 },
+      verdict: 'Binding control plane',
+      blocker: 'SR 11-7 evidence and model inventory',
+    },
+    {
+      key: 'digital-growth',
+      label: 'Digital acquisition + service',
+      tone: 'thin',
+      possibleUsd: '$10-26M',
+      capturingUsd: '$2.1M',
+      segments: { inFlight: 24, candidate: 30, risk: 12, empty: 34 },
+      verdict: 'Attractive but sequenced',
+      blocker: 'Identity proofing and application-state data',
+    },
+    {
+      key: 'operations',
+      label: 'AML + back-office productivity',
+      tone: 'gap',
+      possibleUsd: '$15-30M',
+      capturingUsd: '$2.7M',
+      segments: { inFlight: 16, candidate: 34, risk: 18, empty: 32 },
+      verdict: 'Control-dependent',
+      blocker: 'Explainability and exception workflow',
+    },
+  ],
+};
+
 export const FIRST_CAPITAL_DEMO: IntelligenceV3PageData = {
   tenantName: 'First Capital Financial',
   industry: 'Banking',

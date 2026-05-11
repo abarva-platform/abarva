@@ -5,6 +5,7 @@ import { requireTenancy } from '@/lib/auth/tenancy';
 import { loadUserProgramAccessPolicy } from '@/lib/auth/program-access-policy';
 import { loadUserSourceAccessPolicy } from '@/lib/auth/source-access-policy';
 import { getActiveClientRow } from '@/lib/active-client';
+import { canonicalClientDisplayName } from '@/lib/client-config';
 import {
   TOWER_TABS,
   resolveTowerTab,
@@ -349,8 +350,10 @@ async function buildTowerSetupInitiativesFeed(
     const fromPrivate = persisted.status === 'private_db';
     const initiatives = fromPrivate ? [...persisted.initiatives] : [];
 
+    const tenantName = canonicalClientDisplayName({ key: activeClient.key, name: activeClient.name }) ?? activeClient.name;
+
     return {
-      tenantName: activeClient.name,
+      tenantName,
       tenantKey,
       source: fromPrivate ? ('private_db' as const) : ('empty' as const),
       privateSchema: persisted.privateSchema,
