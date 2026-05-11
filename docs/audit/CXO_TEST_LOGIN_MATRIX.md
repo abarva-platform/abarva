@@ -1,8 +1,8 @@
-# CXO Test Login Matrix · 9 personas across 3 composite tenants
+# CXO Test Login Matrix · 10 personas across 3 composite tenants
 
 **Status:** Ready for tester provisioning. Run
 `npx tsx scripts/provision-cxo-personas.ts --apply` once with valid Clerk +
-Supabase service role keys to materialize all nine personas in Clerk and
+Supabase service role keys to materialize all ten personas in Clerk and
 Supabase. After that, hand testers any of the rows below.
 
 **Shared credentials** (per `scripts/provision-cxo-personas.ts`):
@@ -46,6 +46,7 @@ budget (industry-standard 2.3% of revenue), $1.1B FY2026 capital plan.
 | 1 | CDIO | `cdio@meridian-health.example.com` | Dr. Anita Krishnamurthy | Combined CDO+CIO; Epic strategy, plan-provider digital, AI Governance Council | Tests CDIO single-decision authority up to $10M; sponsor of AI Governance Council (chaired by CMIO Wexler). |
 | 2 | CFO | `cfo@meridian-health.example.com` | David Park | Margin recovery, $1.1B capital plan steward, RCM modernization sponsor partner | Tests joint CFO+CDIO authority on $10-25M IT capital; rating agency relations; AI program ROI scrutiny. The right login for "approval path" / "FY26 capex" testing. |
 | 3 | COO | `coo@meridian-health.example.com` | Sarah O'Brien | 30 hospitals + ambulatory + nursing; throughput + workforce | Tests clinical-ops perspective; nursing turnover narrative; ambient documentation Move sponsorship pickup. |
+| 4 | CDAO | `cdao@meridian-health.example.com` | Kiran Rao | Enterprise analytics, data governance, Snowflake / Cogito / dbt, Palantir / research-private-cloud context | Tests data-and-analytics posture for Population Health AI, HCC / RAF leakage, Databricks vs Snowflake, local LLMs, and cloud-AI strategy. |
 
 ---
 
@@ -66,7 +67,7 @@ Consumer / Commercial / Wealth ($420B AUM) / Treasury & Markets.
 
 ## Provisioning workflow
 
-1. Pull latest `main` (or this branch) so `src/lib/auth/cxo-personas.ts` has all 9 entries.
+1. Pull latest `main` (or this branch) so `src/lib/auth/cxo-personas.ts` has all 10 entries.
 
 2. Confirm `.env.local` has:
    - `CLERK_SECRET_KEY`
@@ -83,7 +84,7 @@ Consumer / Commercial / Wealth ($420B AUM) / Treasury & Markets.
    ```
    npx tsx scripts/provision-cxo-personas.ts --apply
    ```
-   Creates / updates the nine Clerk users with password `Demo2026!`,
+   Creates / updates the ten Clerk users with password `Demo2026!`,
    creates Supabase `persons` rows linked to the correct
    `graph_node_id`, and provisions `person_client_memberships`.
 

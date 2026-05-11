@@ -1,6 +1,6 @@
 // scripts/provision-cxo-personas.ts
 //
-// Provisions the four canonical CXO Clerk users AND their Supabase
+// Provisions the canonical CXO Clerk users AND their Supabase
 // person + person_client_memberships rows so the active-client
 // resolver can find them. Disables every other *.example.com demo
 // account.
@@ -274,7 +274,7 @@ async function main() {
   const sb = makeSupabase();
   const clients = await loadClientsByKey(sb);
 
-  // ── Phase 1 · provision the 4 CXO personas ─────────────────────
+  // ── Phase 1 · provision CXO personas ───────────────────────────
   console.log('Phase 1 · Provision CXO personas (Clerk + Supabase)');
   console.log('─'.repeat(70));
   for (const persona of CXO_PERSONAS) {

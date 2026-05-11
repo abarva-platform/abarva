@@ -405,6 +405,41 @@ describe('PATTERN_LEVEL_FALLBACK consultant posture — INT-VOICE.STRAT-2026-05-
     expect(prompt).toMatch(/Form\s+a\s+view,?\s+defend\s+it\s+briefly/i);
   });
 
+  it('keeps strategic operating questions in Sentinel lane instead of over-routing to Atlas / Nexus', () => {
+    const prompt = composeSentinelSystemPrompt({
+      mode: 'corpus',
+      tenantKey: 'meridian-health',
+      surface: '/intelligence',
+      vectorIndexPending: false,
+      worldviewPending: false,
+    });
+    expect(prompt).toMatch(/Operating-advisor discipline/i);
+    expect(prompt).toMatch(/what should I ask my team tomorrow/i);
+    expect(prompt).toMatch(/Where does X expertise fit/i);
+    expect(prompt).toMatch(/How do we avoid backlash/i);
+    expect(prompt).toMatch(/What should the first steering meeting decide/i);
+    expect(prompt).toMatch(/must be answered directly/i);
+    expect(prompt).toMatch(/Do not route away/i);
+  });
+
+  it('includes cloud data AI economics discipline for CIO platform questions', () => {
+    const prompt = composeSentinelSystemPrompt({
+      mode: 'corpus',
+      tenantKey: 'meridian-health',
+      surface: '/intelligence',
+      vectorIndexPending: false,
+      worldviewPending: false,
+    });
+    expect(prompt).toMatch(/Cloud, data, and AI-platform discipline/i);
+    expect(prompt).toMatch(/AWS vs Azure vs GCP vs private cloud/i);
+    expect(prompt).toMatch(/committed spend/i);
+    expect(prompt).toMatch(/data egress/i);
+    expect(prompt).toMatch(/Do not claim secret roadmap knowledge/i);
+    expect(prompt).toMatch(/Epic remains clinical workflow gravity/i);
+    expect(prompt).toMatch(/startup disruption/i);
+    expect(prompt).toMatch(/governed plurality/i);
+  });
+
   it('is omitted on the Source surface, which has its own Brief C role', () => {
     const prompt = composeSentinelSystemPrompt({
       mode: 'corpus',
@@ -416,6 +451,7 @@ describe('PATTERN_LEVEL_FALLBACK consultant posture — INT-VOICE.STRAT-2026-05-
     // Source uses Brief C's verbatim role text — Pattern-level fallback is
     // Intelligence-only.
     expect(prompt).not.toMatch(/Consultant\s+posture/i);
+    expect(prompt).not.toMatch(/Cloud, data, and AI-platform discipline/i);
     expect(prompt).toMatch(/You\s+are\s+Source,?\s+AbarVa'?s\s+vendor\s+selection\s+agent/i);
   });
 });
@@ -713,7 +749,7 @@ describe('composeSentinelSystemPrompt', () => {
     expect(prompt).toContain('Contradiction-aware');
     expect(prompt).toContain('Scope-honest');
     expect(prompt).toContain('Mode-aware framing');
-    expect(prompt).toContain('Not a coach');
+    expect(prompt).toContain('Not a workflow coach');
   });
 
   it('lists all banned phrase categories', () => {
