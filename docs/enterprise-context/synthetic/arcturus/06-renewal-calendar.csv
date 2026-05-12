@@ -8,7 +8,7 @@ REN-SALESFORCE-2027,CON-SALESFORCE-2026,VEN-SALESFORCE,2027-06-28,2026-12-15,Aut
 REN-MUREX-2027,CON-MUREX-2026,VEN-MUREX,2027-07-28,2026-01-15,Negotiated renewal,3900000,false,Cloud Platform Services,Medium,Not Started,Legal CLM,REN-VEN-MUREX,IT Sourcing,2026-05-01,0.83,true,
 REN-SAS-2027,CON-SAS-2026,VEN-SAS,2027-08-28,2026-02-15,Auto-renewal,3300000,false,Cybersecurity Governance,Low,Not Started,Legal CLM,REN-VEN-SAS,IT Sourcing,2026-05-01,0.83,true,
 REN-TERADATA-2027,CON-TERADATA-2026,VEN-TERADATA,2027-09-28,2026-03-15,Competitive sourcing,8400000,true,IT Sourcing,High,Planning,Legal CLM,REN-VEN-TERADATA,IT Sourcing,2026-05-01,0.83,true,
-REN-DATABRICKS-2027,CON-DATABRICKS-2026,VEN-DATABRICKS,2027-10-28,2026-04-15,Negotiated renewal,3100000,false,Finance Technology,Medium,Not Started,Legal CLM,REN-VEN-DATABRICKS,IT Sourcing,2026-05-01,0.83,true,
+REN-NCINO-2027,CON-NCINO-2026,VEN-NCINO,2027-10-28,2026-04-15,Negotiated renewal,3100000,false,Finance Technology,Medium,Not Started,Legal CLM,REN-VEN-NCINO,IT Sourcing,2026-05-01,0.83,true,
 REN-SNOW-2027,CON-SNOW-2026,VEN-SNOW,2027-11-28,2026-05-15,Auto-renewal,6200000,false,Core Banking Platform,Low,Not Started,Legal CLM,REN-VEN-SNOW,IT Sourcing,2026-05-01,0.83,true,
 REN-MICROSOFT-2027,CON-MICROSOFT-2026,VEN-MICROSOFT,2027-12-28,2026-06-15,Auto-renewal,12800000,false,Digital Payments Technology,Low,Not Started,Legal CLM,REN-VEN-MICROSOFT,IT Sourcing,2026-05-01,0.83,true,
 REN-AWS-2027,CON-AWS-2026,VEN-AWS,2027-01-28,2026-07-15,Competitive sourcing,25200000,true,Risk and Compliance Technology,High,Planning,Legal CLM,REN-VEN-AWS,IT Sourcing,2026-05-01,0.83,true,

@@ -86,6 +86,8 @@ describe.each(clientDatasets)('$tenantKey enterprise context dataset', ({ tenant
     expect(plan.summary.evidence).toBe(1029);
     expect(plan.summary.chunkQueue).toBe(1029);
     expect(plan.qualityIssues.some((issue) => issue.issueType === 'unresolved_reference')).toBe(false);
+    expect(new Set(plan.records.map((record) => record.canonicalRecordId)).size).toBe(plan.records.length);
+    expect(new Set(plan.facts.map((fact) => `${fact.canonicalRecordId}:${fact.factKey}:${fact.valueHash}`)).size).toBe(plan.facts.length);
     expect(plan.records.every((record) => record.tenantKey === tenantKey)).toBe(true);
     expect(plan.facts.every((fact) => fact.tenantKey === tenantKey)).toBe(true);
     expect(chunks).toHaveLength(plan.records.length);
