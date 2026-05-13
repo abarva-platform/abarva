@@ -72,8 +72,23 @@ export async function getActiveClientKey(requestedClientId?: string | null): Pro
   if (pinnedClientKey) return pinnedClientKey;
 
   const isLockedRole = role === 'client' || role === 'maestro';
-  if (isLockedRole && isClientKey(requestedClientId)) return requestedClientId;
 
+  // SEC-P1-2 / SEC-P1-6 fix (audit 2026-05-13):
+  //
+  // Locked-role users (client / maestro) MUST resolve from server-trusted
+  // sources only — Clerk metadata pinning, the active-client cookie, or
+  // email inference. They MUST NOT be re-bound by `requestedClientId`
+  // (URL / body input), because that would let a misconfigured demo
+  // account whose Clerk metadata pin is missing get pivoted to another
+  // tenant by anyone who controls the request payload.
+  //
+  // Previously the order was: pinned → (locked + requestedClientId) →
+  // (locked + cookie) → requestedClientId → cookie → metadata → email →
+  // default. That second step honored URL input as authoritative for
+  // locked roles whenever metadata pinning happened to be absent. The
+  // new order, for locked roles, is: pinned → cookie → metadata
+  // (clientId, defaultClientId) → email → default. `requestedClientId`
+  // is ignored entirely.
   if (isLockedRole) {
     try {
       const store = await cookies();
@@ -83,6 +98,11 @@ export async function getActiveClientKey(requestedClientId?: string | null): Pro
       // cookies() fails outside request scope — fall through to the
       // remaining metadata / alias / default resolution.
     }
+    if (isClientKey(session.clientId)) return session.clientId;
+    if (isClientKey(session.defaultClientId)) return session.defaultClientId;
+    const inferred = inferClientKeyFromEmail(session.email);
+    if (inferred) return inferred;
+    return DEFAULT_CLIENT_KEY;
   }
 
   if (isClientKey(requestedClientId)) return requestedClientId;
