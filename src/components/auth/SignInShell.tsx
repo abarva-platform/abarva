@@ -17,7 +17,7 @@ export function SignInShell({ redirectUrl }: Props) {
     <div
       style={{
         minHeight: '100vh',
-        background: '#060A12',
+        background: '#F8F7F4',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -36,7 +36,7 @@ export function SignInShell({ redirectUrl }: Props) {
         <div
           style={{
             maxWidth: 460,
-            color: 'rgba(255,255,255,0.45)',
+            color: '#5D6572',
             fontSize: 11.5,
             lineHeight: 1.55,
             textAlign: 'center',

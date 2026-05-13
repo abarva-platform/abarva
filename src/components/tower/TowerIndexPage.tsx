@@ -810,7 +810,7 @@ function workspaceQuestion(activeTab: TowerTabKey): string {
   if (activeTab === 'scorecards') return 'Which AI initiatives are performing, lagging, or missing decision-grade evidence?';
   if (activeTab === 'programme_gates') return 'Where are initiatives stuck, and which governance decisions unblock value?';
   if (activeTab === 'dependencies') return 'Which vendor, platform, and adoption dependencies could change portfolio outcomes?';
-  if (activeTab === 'executive_brief') return 'What should the CFO say, decide, or ask for in the next governance meeting?';
+  if (activeTab === 'executive_brief') return 'What should the executive sponsor say, decide, or ask for in the next governance meeting?';
   return 'Is the AI portfolio creating measurable value, and what needs executive action now?';
 }
 
@@ -2373,7 +2373,7 @@ export function TowerIndexPage({
                   marginTop: 5,
                 }}
               >
-                M. Castillo · CFO · {tenantName} · {timestamp} PT
+                Atlas · {tenantName} · {timestamp} PT
               </div>
               <div
                 style={{

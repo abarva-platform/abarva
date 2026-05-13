@@ -122,7 +122,7 @@ const SHARED_NAV: ReadonlyArray<NavGroup> = [
     label: 'Operations',
     items: [
       { label: 'Agent Readiness', badge: 'L2', status: 'attn', href: '/home/agent-readiness' },
-      { label: 'Production Readiness', badge: '4 / 6', status: 'attn', href: '/home/production' },
+      { label: 'Prod Readiness', badge: '4 / 6', status: 'attn', href: '/home/production' },
       { label: 'Compliance', badge: 'locked', status: 'locked', href: '#' },
       { label: 'Activity Log', badge: '400', status: 'default', href: '/home/activity' },
     ],

@@ -13,7 +13,7 @@ import { AppShell } from '@/components/shell/AppShell';
 export const dynamic = 'force-dynamic';
 
 export const metadata = {
-  title: 'Originate Strategic Move | AbarVa Nexus',
+  title: 'Originate Strategic Move · AbarVa',
 };
 
 interface PageProps {

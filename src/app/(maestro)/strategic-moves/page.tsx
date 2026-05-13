@@ -9,7 +9,7 @@ import { AppShell } from '@/components/shell/AppShell';
 export const dynamic = 'force-dynamic';
 
 export const metadata = {
-  title: 'Strategic Moves | AbarVa Nexus',
+  title: 'Strategic Moves · AbarVa',
 };
 
 export default async function StrategicMovesPage() {
