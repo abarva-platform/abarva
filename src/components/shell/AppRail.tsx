@@ -2,10 +2,10 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
-import { useUser, useClerk } from '@clerk/nextjs';
+import { usePathname } from 'next/navigation';
+import { useUser } from '@clerk/nextjs';
+import { useSignOut } from '@/lib/auth/use-sign-out';
 import { SHELL } from '@/lib/shell/shell-tokens';
-import { clearActiveClientContext } from '@/lib/auth/client-context-storage';
 import { resolveModuleAccess, type ProductModule } from '@/lib/auth/module-access';
 
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
@@ -35,11 +35,10 @@ function detectSurface(pathname: string | null): SurfaceKey | null {
 
 export function AppRail() {
   const pathname = usePathname();
-  const router = useRouter();
   const active = detectSurface(pathname);
   const [menuOpen, setMenuOpen] = useState(false);
   const { user } = useUser();
-  const { signOut } = useClerk();
+  const signOut = useSignOut();
   const email = user?.primaryEmailAddress?.emailAddress
     ?? user?.emailAddresses?.[0]?.emailAddress
     ?? null;
@@ -211,8 +210,7 @@ export function AppRail() {
             <button
               onClick={() => {
                 setMenuOpen(false);
-                clearActiveClientContext();
-                signOut(() => router.push('/signed-out'));
+                void signOut();
               }}
               style={{ width: '100%', textAlign: 'left', padding: '7px 12px', fontSize: 12, color: SHELL.INK, background: 'transparent', border: 'none', cursor: 'pointer', fontFamily: SHELL.SANS }}
             >

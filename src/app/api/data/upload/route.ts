@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { ingestClientFile } from '@/lib/data/ingest';
+import { requireTenancy, tenancyErrorResponse } from '@/lib/auth/tenancy';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -7,6 +8,13 @@ export const dynamic = 'force-dynamic';
 const MAX_BYTES = 10 * 1024 * 1024; // 10 MB
 
 export async function POST(req: NextRequest) {
+  let ctx;
+  try {
+    ctx = await requireTenancy();
+  } catch (err) {
+    return tenancyErrorResponse(err) as NextResponse;
+  }
+
   try {
     const form = await req.formData();
     const clientId = (form.get('clientId') as string | null)?.trim();
@@ -20,6 +28,10 @@ export async function POST(req: NextRequest) {
     }
     if (file.size > MAX_BYTES) {
       return NextResponse.json({ error: `file exceeds ${MAX_BYTES} bytes` }, { status: 413 });
+    }
+
+    if (clientId !== ctx.clientId) {
+      return NextResponse.json({ error: 'forbidden_cross_tenant' }, { status: 403 });
     }
 
     const bytes = new Uint8Array(await file.arrayBuffer());

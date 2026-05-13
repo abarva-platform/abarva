@@ -1,10 +1,10 @@
 'use client'
 import Link from 'next/link'
 import { useState, Suspense } from 'react'
-import { useUser, useClerk } from '@clerk/nextjs'
-import { useRouter, usePathname } from 'next/navigation'
+import { useUser } from '@clerk/nextjs'
+import { usePathname } from 'next/navigation'
 import { resolveSessionRole } from '@/lib/auth/access-routing'
-import { clearActiveClientContext } from '@/lib/auth/client-context-storage'
+import { useSignOut } from '@/lib/auth/use-sign-out'
 import { resolveModuleAccess, type ProductModule } from '@/lib/auth/module-access'
 import { useClientContext } from '@/lib/use-client-context'
 import { AbarVaLogo } from './abarva/AbarVaLogo'
@@ -36,8 +36,7 @@ function NavInner({ activePage, compact = false }: NavProps) {
   const [userMenuOpen, setUserMenuOpen] = useState(false)
 
   const { isLoaded, user } = useUser()
-  const { signOut } = useClerk()
-  const router = useRouter()
+  const signOut = useSignOut()
   const pathname = usePathname() ?? ''
 
   const { currentClient } = useClientContext()
@@ -354,8 +353,7 @@ function NavInner({ activePage, compact = false }: NavProps) {
                   <button
                     onClick={() => {
                       setUserMenuOpen(false)
-                      clearActiveClientContext()
-                      signOut(() => router.push('/signed-out'))
+                      void signOut()
                     }}
                     className="abarva-menu-item"
                     style={{ width: '100%', textAlign: 'left', padding: '9px 14px', fontSize: '13px', color: DROP_HEAD, background: 'transparent', border: 'none', cursor: 'pointer', fontFamily: SANS, borderRadius: '8px', margin: '0 4px' }}

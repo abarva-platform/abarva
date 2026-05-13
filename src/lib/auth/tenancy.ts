@@ -22,6 +22,7 @@ export async function requireTenancy(): Promise<TenancyCtx> {
   if (!client) throw new TenancyError('no_client');
   return {
     clientId: client.id,
+    clientKey: client.key,
     userId,
     role: person?.role ?? user?.primaryRole ?? undefined,
     email: user?.email ?? person?.email ?? null,

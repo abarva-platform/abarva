@@ -53,6 +53,8 @@ export const PHASE_LABELS: Record<number, string> = {
 
 export interface TenancyCtx {
   clientId: string;
+  /** Tenant key (e.g. 'apexretail', 'meridian', 'arcturus') — string form alongside the UUID clientId. */
+  clientKey?: string;
   userId: string;
   role?: string;
   email?: string | null;

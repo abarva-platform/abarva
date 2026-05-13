@@ -5,8 +5,16 @@ import {
   parseTenantMetricCsv,
 } from "@/lib/intelligence/tenant-metric-upload";
 import { persistTenantMetricUpload } from "@/lib/intelligence/tenant-metric-persistence";
+import { requireTenancy, tenancyErrorResponse } from "@/lib/auth/tenancy";
 
 export async function POST(request: NextRequest) {
+  let ctx;
+  try {
+    ctx = await requireTenancy();
+  } catch (err) {
+    return tenancyErrorResponse(err) as NextResponse;
+  }
+
   let file: File | null = null;
   let clientId = "";
   let documentName = "";
@@ -29,6 +37,10 @@ export async function POST(request: NextRequest) {
       { error: "Missing documentName" },
       { status: 400 },
     );
+
+  if (clientId !== ctx.clientId) {
+    return NextResponse.json({ error: "forbidden_cross_tenant" }, { status: 403 });
+  }
 
   const today = new Date().toISOString().split("T")[0];
   let storageUrl: string | null = null;

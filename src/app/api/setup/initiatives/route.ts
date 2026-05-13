@@ -14,6 +14,7 @@ import {
   summarizeSetupAiInitiatives,
   type SetupAiInitiativeRecord,
 } from "@/lib/setup";
+import { requireTenancy, tenancyErrorResponse } from "@/lib/auth/tenancy";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -22,7 +23,27 @@ function truthy(value: string | null): boolean {
   return value === "true" || value === "1" || value === "yes";
 }
 
+/**
+ * Both `apex-retail` and `apexretail` resolve to the same tenant; normalize
+ * both sides before comparison so the cross-tenant check is dash-insensitive.
+ */
+function tenantKeysMatch(a: string | null | undefined, b: string | null | undefined): boolean {
+  const na = normalizeSetupAiInitiativeTenantKey(a);
+  const nb = normalizeSetupAiInitiativeTenantKey(b);
+  if (!na || !nb) return false;
+  if (na === nb) return true;
+  // Defense-in-depth: also strip dashes so `apex-retail` ↔ `apexretail` always match.
+  return na.replace(/-/g, '') === nb.replace(/-/g, '');
+}
+
 export async function GET(request: NextRequest) {
+  let ctx;
+  try {
+    ctx = await requireTenancy();
+  } catch (err) {
+    return tenancyErrorResponse(err) as NextResponse;
+  }
+
   const url = new URL(request.url);
   const tenantKey = normalizeSetupAiInitiativeTenantKey(
     url.searchParams.get("tenantKey") ?? url.searchParams.get("clientId"),
@@ -32,6 +53,9 @@ export async function GET(request: NextRequest) {
       { error: "Missing tenantKey or clientId" },
       { status: 400 },
     );
+  if (!tenantKeysMatch(tenantKey, ctx.clientKey ?? ctx.clientId)) {
+    return NextResponse.json({ error: "forbidden_cross_tenant" }, { status: 403 });
+  }
   const filters = {
     status: parseSetupAiInitiativeList(
       url.searchParams.get("status"),
@@ -82,6 +106,13 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+  let ctx;
+  try {
+    ctx = await requireTenancy();
+  } catch (err) {
+    return tenancyErrorResponse(err) as NextResponse;
+  }
+
   const url = new URL(request.url);
   const financialVisibility = truthy(
     url.searchParams.get("financialVisibility"),
@@ -162,6 +193,9 @@ export async function POST(request: NextRequest) {
       { error: "Missing tenantKey or clientId" },
       { status: 400 },
     );
+  if (!tenantKeysMatch(tenantKey, ctx.clientKey ?? ctx.clientId)) {
+    return NextResponse.json({ error: "forbidden_cross_tenant" }, { status: 403 });
+  }
   if (initiatives.length === 0 && rejectedRows.length === 0)
     return NextResponse.json(
       { error: "No Setup AI Initiatives rows supplied" },

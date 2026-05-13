@@ -35,7 +35,11 @@ export type ClientKey = (typeof ALL_CLIENTS)[number]['id'];
 export const DEFAULT_CLIENT_KEY: ClientKey = 'apexretail';
 
 export const CLIENT_KEY_TO_DB_NAME: Record<ClientKey, string[]> = {
-  meridian: ['Meridian Health', 'Meridian Health System'],
+  // 'Heliara Health' / 'Heliara Health Alliance' are legacy demo names for
+  // Meridian — they should never surface to a logged-in user but are kept
+  // as recognized aliases so the DB-lookup fallback in active-client.ts
+  // and canonicalClientDisplayName below resolve them to 'Meridian Health'.
+  meridian: ['Meridian Health', 'Meridian Health System', 'Heliara Health', 'Heliara Health Alliance', 'Heliara'],
   arcturus: ['Brindlemark Financial', 'Brindlemark Financial Group', 'Brindlemark', 'Arcturus Financial', 'Arcturus Financial Group', 'First Capital Financial', 'First Capital'],
   apexretail: ['Apex Retail', 'Apex Retail Group'],
 };
@@ -85,7 +89,17 @@ export function canonicalClientDisplayName(args: {
   if (
     key === 'meridian' ||
     normalizedName === 'meridian health' ||
-    normalizedName === 'meridian health system'
+    normalizedName === 'meridian health system' ||
+    // D-021 fix (2026-05-13): "Heliara Health" / "Heliara Health Alliance"
+    // are retired demo names for Meridian. The 2026-05-13 audit found the
+    // Sentinel agent opening "I composed this brief for Heliara Health from
+    // the corpus" because a DB row still carried the old name. Map every
+    // "Heliara*" alias to the canonical 'Meridian Health' so no user ever
+    // sees the retired codename, regardless of where the row originated.
+    normalizedName === 'heliara' ||
+    normalizedName === 'heliara health' ||
+    normalizedName === 'heliara health alliance' ||
+    (normalizedName?.startsWith('heliara ') ?? false)
   ) {
     return 'Meridian Health';
   }
