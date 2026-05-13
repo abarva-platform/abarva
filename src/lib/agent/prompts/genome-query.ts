@@ -1,4 +1,27 @@
-export function assembleGenomeQueryPrompt(userQuery: string): string {
+export interface GenomeQueryPromptContext {
+  tenantKey: string;
+  itemCount: number;
+  warningCount: number;
+  graphNodeCount: number;
+  graphEdgeCount: number;
+}
+
+export function assembleGenomeQueryPrompt(
+  userQuery: string,
+  context?: GenomeQueryPromptContext,
+): string {
+  const brokerContext = context
+    ? `
+BROKER CONTEXT
+The request has already been resolved through AgentContextBroker for tenant "${context.tenantKey}".
+Broker context items: ${context.itemCount}.
+Broker warnings: ${context.warningCount}.
+Broker graph readiness: ${context.graphNodeCount} nodes, ${context.graphEdgeCount} edges.
+
+Use this broker context as grounding only. The executable Cypher still MUST scope tenant-owned graph nodes with $callerClientId, because the database client_id is supplied separately at execution time.
+`
+    : '';
+
   return `You translate natural-language questions about AbarVa's Transformation Genome into Cypher queries against Neo4j.
 
 SCHEMA
@@ -25,6 +48,7 @@ Edges:
 
 USER QUESTION
 "${userQuery}"
+${brokerContext}
 
 TASK
 Write a read-only Cypher query that answers the question. Return ONLY nodes or specific fields — never DELETE, CREATE, MERGE, SET, or any write operation.

@@ -125,9 +125,13 @@ describe('clientKeyToBrokerTenantKey · PR-INT-G Apex tenant key split', () => {
     expect(clientKeyToBrokerTenantKey('apexretail')).toBe('apex-retail');
   });
 
-  it('passes other ClientKeys through unchanged (meridian, arcturus, keystone)', () => {
+  it('maps First Capital legacy keys to the broker tenant key', () => {
+    expect(clientKeyToBrokerTenantKey('arcturus')).toBe('first-capital');
+    expect(clientKeyToBrokerTenantKey('firstcapital')).toBe('first-capital');
+  });
+
+  it('passes broker-aligned ClientKeys through unchanged (meridian, keystone)', () => {
     expect(clientKeyToBrokerTenantKey('meridian')).toBe('meridian');
-    expect(clientKeyToBrokerTenantKey('arcturus')).toBe('arcturus');
     expect(clientKeyToBrokerTenantKey('keystone')).toBe('keystone');
   });
 
@@ -156,6 +160,22 @@ describe('clientKeyToBrokerTenantKey · PR-INT-G Apex tenant key split', () => {
     });
     expect(mapped.items.length).toBeGreaterThan(0);
     expect(mapped.citations.length).toBeGreaterThan(0);
+    expect(
+      mapped.blockedItems.some((entry) => entry.reason === 'unknown_tenant'),
+    ).toBe(false);
+  });
+
+  it('mapped tenant key resolves a non-blocked broker bundle for First Capital', () => {
+    const blocked = buildSentinelContextBundle({ tenantKey: 'arcturus' });
+    expect(blocked.items).toHaveLength(0);
+    expect(blocked.blockedItems).toEqual(
+      expect.arrayContaining([expect.objectContaining({ reason: 'unknown_tenant' })]),
+    );
+
+    const mapped = buildSentinelContextBundle({
+      tenantKey: clientKeyToBrokerTenantKey('arcturus'),
+    });
+    expect(mapped.items.length).toBeGreaterThan(0);
     expect(
       mapped.blockedItems.some((entry) => entry.reason === 'unknown_tenant'),
     ).toBe(false);
