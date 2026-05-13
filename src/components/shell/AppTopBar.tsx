@@ -25,9 +25,9 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
-import { useClerk, useUser } from "@clerk/nextjs";
-import { clearActiveClientContext } from "@/lib/auth/client-context-storage";
+import { usePathname } from "next/navigation";
+import { useUser } from "@clerk/nextjs";
+import { useSignOut } from "@/lib/auth/use-sign-out";
 import { getVisibleNavItems } from "@/components/shell/topbar-nav-items";
 import { useClientContext } from "@/lib/use-client-context";
 import { canonicalClientDisplayName } from "@/lib/client-config";
@@ -54,9 +54,8 @@ const BRAND = {
 
 export function AppTopBar({ tenantName, showProductNav = true }: AppTopBarProps = {}) {
   const pathname = usePathname() ?? "";
-  const router = useRouter();
   const { isLoaded, user } = useUser();
-  const { signOut } = useClerk();
+  const signOut = useSignOut();
   const { currentClient } = useClientContext();
   const signedIn = isLoaded && Boolean(user);
   const resolvedTenantName =
@@ -77,8 +76,7 @@ export function AppTopBar({ tenantName, showProductNav = true }: AppTopBarProps 
   const navItems = showProductNav && signedIn ? getVisibleNavItems(user) : [];
 
   function handleSignOut() {
-    clearActiveClientContext();
-    void signOut(() => router.push("/signed-out"));
+    void signOut();
   }
 
   return (

@@ -7,9 +7,9 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
-import { useClerk, useUser } from "@clerk/nextjs";
-import { clearActiveClientContext } from "@/lib/auth/client-context-storage";
+import { usePathname } from "next/navigation";
+import { useUser } from "@clerk/nextjs";
+import { useSignOut } from "@/lib/auth/use-sign-out";
 import { getVisibleNavItems } from "@/components/shell/topbar-nav-items";
 
 const BRAND = {
@@ -28,9 +28,8 @@ interface Props {
 
 export function AppTopBarEditorial({ tenantName }: Props) {
   const pathname = usePathname() ?? "";
-  const router = useRouter();
   const { isLoaded, user } = useUser();
-  const { signOut } = useClerk();
+  const signOut = useSignOut();
   const signedIn = isLoaded && Boolean(user);
   const displayName =
     user?.fullName ||
@@ -45,8 +44,7 @@ export function AppTopBarEditorial({ tenantName }: Props) {
   const navItems = signedIn ? getVisibleNavItems(user) : [];
 
   function handleSignOut() {
-    clearActiveClientContext();
-    void signOut(() => router.push("/signed-out"));
+    void signOut();
   }
 
   return (
