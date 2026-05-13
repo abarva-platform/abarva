@@ -3,12 +3,22 @@ import { isInt } from 'neo4j-driver';
 import { getAnthropicClient } from '@/lib/agent/stream';
 import { assembleGenomeQueryPrompt } from '@/lib/agent/prompts/genome-query';
 import { getGraphDriver } from '@/lib/graph/driver';
+import { requireTenancy, tenancyErrorResponse } from '@/lib/auth/tenancy';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 export const maxDuration = 30;
 
 const WRITE_OPS = /\b(CREATE|MERGE|SET|DELETE|REMOVE|DROP|DETACH)\b/i;
+
+/**
+ * SEC-P0-8 hardening (2026-05-13): require a tenant filter in every generated
+ * query. Until this route is fully routed through AgentContextBroker, we
+ * reject any Cypher that doesn't reference `$callerClientId` so the caller's
+ * tenant is part of the executed query plan. This is a narrow guard, not a
+ * substitute for the broker migration scheduled in the architecture audit.
+ */
+const TENANT_PARAM_REQUIRED = /\$callerClientId\b/;
 
 function unwrap(val: unknown): unknown {
   if (val == null) return val;
@@ -25,6 +35,13 @@ function unwrap(val: unknown): unknown {
 }
 
 export async function POST(req: NextRequest) {
+  let ctx;
+  try {
+    ctx = await requireTenancy();
+  } catch (err) {
+    return tenancyErrorResponse(err);
+  }
+
   const body = (await req.json().catch(() => ({}))) as { query?: string };
   const query = typeof body.query === 'string' ? body.query.trim() : '';
   if (!query) {
@@ -66,7 +83,7 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  // Safety gate
+  // Safety gate · writes
   if (WRITE_OPS.test(translated.cypher)) {
     console.warn('[genome-query-unsafe]', { cypher: translated.cypher });
     return new Response(
@@ -75,10 +92,27 @@ export async function POST(req: NextRequest) {
     );
   }
 
+  // Safety gate · cross-tenant reads. The prompt is asked to parameterize
+  // tenant scope as `$callerClientId`; if the generated query doesn't
+  // reference it, we refuse rather than execute against the whole graph.
+  if (!TENANT_PARAM_REQUIRED.test(translated.cypher)) {
+    console.warn('[genome-query-unscoped]', { cypher: translated.cypher });
+    return new Response(
+      JSON.stringify({
+        error: 'query missing tenant scope ($callerClientId)',
+        cypher: translated.cypher,
+        explanation:
+          translated.explanation ??
+          'The generated query did not reference $callerClientId. Rephrase to scope by tenant.',
+      }),
+      { status: 400 },
+    );
+  }
+
   const driver = getGraphDriver();
   const session = driver.session({ defaultAccessMode: 'READ' });
   try {
-    const result = await session.run(translated.cypher);
+    const result = await session.run(translated.cypher, { callerClientId: ctx.clientId });
     const rows = result.records.map((r) => {
       const obj: Record<string, unknown> = {};
       for (const key of r.keys) {
