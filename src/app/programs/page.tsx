@@ -16,7 +16,7 @@ import { getLiveProgramDisplayId } from '@/lib/programs/live-program-display';
 import type { ProgramPhaseId, ProgramRow } from '@/lib/programs/programs-types';
 
 export const metadata = {
-  title: 'Programs | AbarVa Nexus',
+  title: 'Programs · AbarVa',
 };
 
 export const dynamic = 'force-dynamic';

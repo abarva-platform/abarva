@@ -70,13 +70,13 @@ function describeFailure(err: unknown, alreadySignedIn: boolean): string {
 // ─── Brand-locked tokens ─────────────────────────────────────────────
 const BRAND = {
   ink: '#000000',
-  signalBlue: '#0066CC',
-  hair: 'rgba(255,255,255,0.10)',
-  card: 'rgba(255,255,255,0.04)',
-  cardBorder: 'rgba(255,255,255,0.12)',
-  textStrong: '#F5F7FB',
-  textMute: 'rgba(255,255,255,0.72)',
-  textFaint: 'rgba(255,255,255,0.55)',
+  signalBlue: '#111318',
+  hair: 'rgba(17,19,24,0.10)',
+  card: '#FFFFFF',
+  cardBorder: '#D9D6CD',
+  textStrong: '#111318',
+  textMute: '#4B5563',
+  textFaint: '#71717A',
   fSans: 'Inter, system-ui, sans-serif',
   fMono: '"JetBrains Mono", ui-monospace, monospace',
   fSerif: 'Fraunces, Georgia, serif',
@@ -86,10 +86,10 @@ const PANEL = {
   width: '100%',
   maxWidth: 460,
   border: `1px solid ${BRAND.cardBorder}`,
-  background: 'rgba(7, 14, 24, 0.92)',
-  borderRadius: 16,
+  background: BRAND.card,
+  borderRadius: 12,
   padding: '32px',
-  boxShadow: '0 24px 70px rgba(0, 0, 0, 0.45)',
+  boxShadow: '0 24px 70px rgba(17, 19, 24, 0.10)',
 } as const
 
 const LABEL = {
@@ -106,7 +106,7 @@ const INPUT = {
   width: '100%',
   borderRadius: 8,
   border: `1px solid ${BRAND.cardBorder}`,
-  background: 'rgba(255, 255, 255, 0.03)',
+  background: '#FBFAF7',
   color: BRAND.textStrong,
   padding: '13px 14px',
   fontSize: 14,
@@ -198,7 +198,7 @@ export function DemoCodeSignIn({ redirectUrl }: Props) {
         }}
       >
         <Image
-          src="/brand/abarva-logo-inverse.svg"
+          src="/brand/abarva-logo.svg"
           alt="AbarVa"
           width={92}
           height={24}
@@ -249,7 +249,7 @@ export function DemoCodeSignIn({ redirectUrl }: Props) {
       <div
         style={{
           border: `1px solid ${BRAND.cardBorder}`,
-          background: 'rgba(255,255,255,0.025)',
+          background: '#FBFAF7',
           borderRadius: 12,
           padding: '12px 14px',
           color: BRAND.textMute,
@@ -329,8 +329,8 @@ export function DemoCodeSignIn({ redirectUrl }: Props) {
             style={{
               borderRadius: 8,
               border: '1px solid rgba(248, 113, 113, 0.35)',
-              background: 'rgba(127, 29, 29, 0.18)',
-              color: '#FECACA',
+              background: '#FFF1F1',
+              color: '#8A1F1F',
               padding: '11px 14px',
               fontSize: 13,
               lineHeight: 1.5,
