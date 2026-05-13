@@ -193,13 +193,21 @@ export async function POST() {
 
         await clerk.users.updateUser(user.id, { publicMetadata })
         results.push({ email: demo.email, status: 'updated', userId: user.id, personId })
-      } catch (err: any) {
-        results.push({ email: demo.email, status: `error: ${err.message}` })
+      } catch (err: unknown) {
+        // Mask raw error messages outside dev so misconfig stacks don't
+        // round-trip to admin tooling. Audit 2026-05-13 Agent C P1.
+        const isDev = process.env.NODE_ENV !== 'production'
+        const detail =
+          isDev && err instanceof Error ? err.message : 'error'
+        results.push({ email: demo.email, status: `error: ${detail}` })
       }
     }
 
     return NextResponse.json({ results })
-  } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 500 })
+  } catch (err: unknown) {
+    const isDev = process.env.NODE_ENV !== 'production'
+    const detail =
+      isDev && err instanceof Error ? err.message : 'internal_error'
+    return NextResponse.json({ error: detail }, { status: 500 })
   }
 }

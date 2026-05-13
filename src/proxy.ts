@@ -70,6 +70,16 @@ export const AUTH_REQUIRED_ROUTE_PATTERNS = [
   '/api/tower/(.*)',
   '/api/turn/(.*)',
   '/api/intelligence/query',
+  // SEC-P1-10 (audit 2026-05-13): 27 `/api/reasoning/*` routes are
+  // currently in-memory demo stubs. Per-handler `requireTenancy()` calls
+  // are TODO when those routes get backed by Supabase persistence. For
+  // now, the explicit pattern entry ensures the middleware auth gate is
+  // recorded in this file rather than implicit through public-fallthrough.
+  '/api/reasoning(.*)',
+  // SEC-P1 belt-and-suspenders: `/api/v1/*` routes are mixed
+  // signed-in/typed accessors. Listed explicitly so anyone adding a new
+  // v1 endpoint knows the auth contract.
+  '/api/v1/(.*)',
   '/maestro(.*)',
   // /home(.*) covers the canonical Home tree (PR-H2 route migration);
   // /admin(.*) stays in the list because it 301-redirects to /home
