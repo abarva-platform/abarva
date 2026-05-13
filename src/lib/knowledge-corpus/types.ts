@@ -434,6 +434,26 @@ export interface BelowTheLineBet {
   hint: string;
 }
 
+/**
+ * One row in the Value-at-stake bar chart on the Intelligence Brief.
+ * Captured / blocked / candidate are percent shares (must sum ≤ 100).
+ */
+export interface ValueAtStakeRow {
+  label: string;
+  value: string;            // e.g. '$8M-$24M annual'
+  captured: number;         // percent
+  blocked: number;          // percent
+  candidate: number;        // percent
+  tone: 'teal' | 'amber' | 'red' | 'navy';
+}
+
+/** One tension card in the "Open tensions Sentinel would raise" panel. */
+export interface OpenTensionRow {
+  title: string;
+  body: string;
+  severity: 'red' | 'amber';
+}
+
 export interface BriefData {
   tenantName: string;
   tenantBrandColor: string;
@@ -441,6 +461,10 @@ export interface BriefData {
   composedAt: string;             // ISO
   /** PR-K2.6: 1-paragraph CXO synthesis read at the top of the brief. */
   synthesis?: string;
+  /** D-012 (2026-05-13): per-tenant Value-at-stake rows. If omitted, falls back to industry default. */
+  valueAtStake?: ValueAtStakeRow[];
+  /** D-012 (2026-05-13): per-tenant open tensions. If omitted, falls back to industry default. */
+  openTensions?: OpenTensionRow[];
   bets: BriefBet[];
   /** Bets below the line · scannable list under the 3 hero cards. */
   belowTheLine?: BelowTheLineBet[];

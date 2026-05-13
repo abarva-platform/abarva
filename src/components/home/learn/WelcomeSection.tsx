@@ -328,7 +328,12 @@ const TENANTS: Record<TenantKey, TenantConfig> = {
       },
     ],
     walkStart: {
-      href: '/source?client=arcturus',
+      // D-014 fix (2026-05-13): the prior href surfaced the legacy
+      // codename `arcturus` in the URL. The internal ClientKey is still
+      // `arcturus` (per active-client.ts), but it should never appear
+      // in user-visible URLs. The proxy resolves the active client from
+      // the session, so `?client=...` is unnecessary here.
+      href: '/source',
       label: 'Source · First Capital Vendor Operations',
       reason: 'Pose the renegotiation question above; the agent should ground in the renewal calendar with named owners.',
     },
