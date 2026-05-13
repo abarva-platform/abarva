@@ -176,8 +176,11 @@ const MERIDIAN_DATASET: DemoTenantDataset = {
 };
 
 const ARCTURUS_DATASET: DemoTenantDataset = {
+  // Internal tenant key remains 'arcturus' (canonical ClientKey per
+  // active-client.ts), but the user-facing display name is the
+  // current 'First Capital Financial'. Audit 2026-05-13 cleanup.
   tenantSlug: 'arcturus',
-  tenantName: 'Arcturus',
+  tenantName: 'First Capital Financial',
   overallTier: 'shell_only',
   surfaces: [
     {
@@ -228,7 +231,7 @@ const ARCTURUS_DATASET: DemoTenantDataset = {
   ],
   sourceProgramLinkage: false,
   knownLinkageFile: null,
-  dataNote: 'Arcturus is a shell-only tenant. Clerk test account only.',
+  dataNote: 'First Capital Financial is a shell-only tenant. Clerk test account only.',
   deterministicSeed: true,
 };
 
