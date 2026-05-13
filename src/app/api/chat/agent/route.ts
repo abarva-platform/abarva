@@ -285,8 +285,20 @@ export async function POST(request: Request) {
     });
   }
 
+  // SEC-P1-7 fix (audit 2026-05-13): the prior `tenantName` was derived
+  // from `body.tenantName` and passed as `tenantKey` into the Sentinel
+  // voice doctrine and into the "Active tenant: …" prompt block. That
+  // gave a caller of one tenant the ability to flip the chat context to
+  // another tenant just by setting the body field. Resolve the active
+  // client server-side here and use the canonical display name instead.
+  // If active-client lookup fails, fall back to the body-derived value
+  // for resilience — but tenantKey-equivalent prompt blocks below use
+  // `activeClientDisplayName`, which prefers the authoritative key.
+  const earlyActiveClient = await getActiveClientRow().catch(() => null);
   const tenantName          =
-    canonicalClientDisplayName({ name: body.tenantName }) ?? "Apex Retail Group";
+    canonicalClientDisplayName({ key: earlyActiveClient?.key, name: earlyActiveClient?.name })
+    ?? canonicalClientDisplayName({ name: body.tenantName })
+    ?? "Apex Retail Group";
   const agentName           = body.agentName  ?? null;
   const stage               = body.stage      ?? null;
   // PR-G surface canonicalization. Two surface-key conventions exist
@@ -385,9 +397,9 @@ export async function POST(request: Request) {
   // prompt for program-detail surfaces. Null when no pack authored yet.
   let phasePackBlock = '';
 
-  // Resolve active client row once here — used for tenant isolation in
-  // getEngagementWithPhaseData calls below AND for the demo context block later.
-  const activeClient = await getActiveClientRow().catch(() => null);
+  // Reuse the earlier active-client lookup (resolved before voice doctrine
+  // wiring so tenantName is authoritative). Aliased for downstream readers.
+  const activeClient = earlyActiveClient;
   const activeClientDisplayName =
     canonicalClientDisplayName({ key: activeClient?.key, name: activeClient?.name }) ?? tenantName;
   const tenancy = await requireTenancy().catch(() => null);

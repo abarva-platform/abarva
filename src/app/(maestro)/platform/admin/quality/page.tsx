@@ -21,7 +21,9 @@ const LINKS = [
   { href: '/platform/admin/context', label: 'Business Context' },
 ]
 
-type TenantKey = 'meridian' | 'firstcapital' | 'apexretail' | 'keystone'
+// 'keystone' retired 2026-05-07 (per project memory). The tenant entry and
+// QUALITY_ACTIONS rows keyed to 'keystone' below were also removed.
+type TenantKey = 'meridian' | 'firstcapital' | 'apexretail'
 type Pillar = 'data' | 'evidence' | 'intelligence' | 'knowledge'
 type Severity = 'critical' | 'high' | 'medium'
 type Readiness = 'Exploratory' | 'Decision-support' | 'Board-ready' | 'Settlement-ready'
@@ -115,19 +117,9 @@ const TENANTS: TenantSeed[] = [
       'Intervention suggestions outrun evidence depth in a few places.',
     ],
   },
-  {
-    key: 'keystone',
-    label: 'Keystone Energy Holdings',
-    shortLabel: 'Keystone',
-    baseData: 58,
-    baseEvidence: 54,
-    baseIntelligence: 57,
-    baseKnowledge: 49,
-    notes: [
-      'Still below decision-support. Too much of the corpus is thin, stale, or ownerless.',
-      'This tenant should be treated as exploratory until provenance and baseline gaps are closed.',
-    ],
-  },
+  // 'keystone' (Keystone Energy Holdings) retired 2026-05-07. Tenant
+  // removed from the quality matrix. If a 4th tenant returns, add a
+  // canonical entry here.
 ]
 
 const QUALITY_ACTIONS: QualityAction[] = [
@@ -230,50 +222,8 @@ const QUALITY_ACTIONS: QualityAction[] = [
     owner: 'Steward',
     cta: 'Open anonymization queue',
   },
-  {
-    id: 'k-baseline',
-    tenant: 'keystone',
-    pillar: 'evidence',
-    severity: 'critical',
-    title: 'Lock an outcome baseline before more strategy output is generated',
-    detail: 'No locked baseline means no credible attribution path, which drags both evidence and readiness.',
-    delta: 9,
-    owner: 'Nexus',
-    cta: 'Create baseline package',
-  },
-  {
-    id: 'k-ownerless-observations',
-    tenant: 'keystone',
-    pillar: 'data',
-    severity: 'high',
-    title: 'Assign owners to 14 ownerless observations',
-    detail: 'The corpus contains claims and notes with no accountable human owner or system source.',
-    delta: 6,
-    owner: 'Steward',
-    cta: 'Assign source owners',
-  },
-  {
-    id: 'k-pattern-synthesis',
-    tenant: 'keystone',
-    pillar: 'intelligence',
-    severity: 'medium',
-    title: 'Add cross-source support for 3 high-importance claims',
-    detail: 'Current briefs rely too heavily on interview notes and need KPI or system corroboration.',
-    delta: 5,
-    owner: 'Atlas',
-    cta: 'Open claim support review',
-  },
-  {
-    id: 'k-promotion-discipline',
-    tenant: 'keystone',
-    pillar: 'knowledge',
-    severity: 'medium',
-    title: 'Stop promoting low-confidence signals into reusable memory',
-    detail: 'Keystone has candidate signals being treated too optimistically for their actual support level.',
-    delta: 6,
-    owner: 'Sentinel',
-    cta: 'Tighten promotion thresholds',
-  },
+  // QUALITY_ACTIONS rows for 'keystone' tenant removed 2026-05-13 alongside
+  // retirement of the Keystone Energy Holdings demo entry above.
 ]
 
 const BACKLOG_ITEMS: BacklogItem[] = [

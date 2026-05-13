@@ -1,9 +1,15 @@
 // GET /api/admin/evidence-quality-export
 //
 // Returns a CSV download of all evidence items across all fixture instances
-// with their quality scores. No auth on this route — the admin layout gates
-// access upstream. Reads only from static fixture data; no I/O or mutation.
+// with their quality scores. Reads only from static fixture data; no I/O
+// or mutation — but the prior comment claimed "the admin layout gates
+// access upstream" which is false: layouts don't apply to API routes.
+// SEC-P1 fix (audit 2026-05-13): require an authenticated session before
+// returning the export. Tenant scope isn't enforced because the data set
+// is cross-tenant fixture content; anyone with an authenticated session
+// in the workspace can read it (matches the original demo intent).
 
+import { requireTenancy, tenancyErrorResponse } from '@/lib/auth/tenancy';
 import { scoreEvidenceItem, type EvidenceLikeItem } from '@/lib/reasoning/evidence-quality';
 import { SOURCE_EVENT_INSTANCES } from '@/lib/source/source-event-instances';
 import { APEX_RETAIL_PROGRAM_INSTANCES } from '@/lib/programs/program-instances';
@@ -72,7 +78,13 @@ function timestampSlug(): string {
   return new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
 }
 
-export function GET(): Response {
+export async function GET(): Promise<Response> {
+  try {
+    await requireTenancy();
+  } catch (err) {
+    return tenancyErrorResponse(err);
+  }
+
   const nowMs = Date.now();
   const rows: CsvRow[] = [];
 

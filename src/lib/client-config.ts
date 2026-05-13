@@ -124,36 +124,72 @@ export function canonicalClientDisplayName(args: {
   return option?.name ?? null;
 }
 
+/**
+ * Email-domain map used by the demo-account inference path. The legacy
+ * implementation matched on `.includes(substring)` anywhere in the
+ * lowercased email — a display name like `attacker+apex@external.com`
+ * would silently infer as Apex. SEC-P1-4 (audit 2026-05-13) flagged
+ * this as a chained vulnerability with `getActiveClientRow(requestedId)`.
+ *
+ * This map is exact-domain-suffix only. New demo email families must
+ * register here explicitly. The `+role@` and substring fallbacks have
+ * been removed; if a real customer email needs routing, do it through
+ * Clerk metadata, not substring inference.
+ */
+const EMAIL_DOMAIN_TO_CLIENT_KEY: ReadonlyArray<readonly [string, ClientKey]> = [
+  // Canonical demo accounts (role-based emails, founder direction 2026-05-08)
+  ['apex-retail.example.com', 'apexretail'],
+  ['meridian-health.example.com', 'meridian'],
+  ['firstcapital.example.com', 'arcturus'],
+  // Founder backdoor (`anand.sundaram@thesundaram.com`) lands on Meridian
+  // by inference. Documented in demo_accounts memory. Anyone uncomfortable
+  // with this should remove the entry and add the email to Clerk metadata
+  // pinning instead.
+  ['thesundaram.com', 'meridian'],
+];
+
+/**
+ * Legacy `<prefix>+<role>@abarva.com` local-part-suffix routes. These
+ * are deprecated (founder direction 2026-05-08) but still recognized
+ * defensively for any seeded `anand+apex@abarva.com` / similar founder
+ * sub-addresses. Suffix matching is anchored to the `@abarva.com`
+ * domain — never substring search on the full email.
+ */
+const LEGACY_LOCALPART_TO_CLIENT_KEY: ReadonlyArray<readonly [string, ClientKey]> = [
+  // Founder sub-address pattern: anand+apex@abarva.com → apexretail
+  ['+apex', 'apexretail'],
+  ['+meridian', 'meridian'],
+  ['+firstcapital', 'arcturus'],
+  // Demo-prefix pattern: demo-apexretail+clerk_test@abarva.com (retired)
+  ['demo-apexretail+', 'apexretail'],
+  ['demo-meridian+', 'meridian'],
+  ['demo-firstcapital+', 'arcturus'],
+  // Legacy short prefixes
+  ['apex+', 'apexretail'],
+  ['mh+', 'meridian'],
+  ['af+', 'arcturus'],
+];
+
 export function inferClientKeyFromEmail(email: string | null | undefined): ClientKey | null {
-  const normalized = email?.toLowerCase() ?? '';
-  if (!normalized) return null;
+  const normalized = email?.toLowerCase().trim() ?? '';
+  if (!normalized || !normalized.includes('@')) return null;
+  const [localPart, domain] = normalized.split('@', 2);
+  if (!localPart || !domain) return null;
 
-  if (
-    normalized.includes('apexretail') ||
-    normalized.includes('apex-retail') ||
-    // Catches demo accounts like anand+apex@abarva.com where the
-    // local-part suffix is "+apex" (no "retail"). The "+" anchor
-    // prevents false matches on domains containing "apex".
-    normalized.includes('+apex@') ||
-    normalized.includes('+apex_')
-  ) {
-    return 'apexretail';
+  for (const [suffix, key] of EMAIL_DOMAIN_TO_CLIENT_KEY) {
+    if (domain === suffix || domain.endsWith(`.${suffix}`)) return key;
   }
 
-  if (
-    normalized.includes('meridian-health') ||
-    normalized.includes('meridian') ||
-    normalized.includes('thesundaram.com')
-  ) {
-    return 'meridian';
-  }
-
-  if (
-    normalized.includes('arcturus') ||
-    normalized.includes('firstcapital') ||
-    normalized.includes('first-capital')
-  ) {
-    return 'arcturus';
+  if (domain === 'abarva.com') {
+    for (const [token, key] of LEGACY_LOCALPART_TO_CLIENT_KEY) {
+      // Tokens starting with `+` match anywhere in the local part (sub-address);
+      // tokens ending with `+` match only at the start (demo-prefix pattern).
+      if (token.startsWith('+')) {
+        if (localPart.includes(token)) return key;
+      } else if (localPart.startsWith(token)) {
+        return key;
+      }
+    }
   }
 
   return null;
