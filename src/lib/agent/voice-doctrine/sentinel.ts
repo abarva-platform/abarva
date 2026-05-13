@@ -20,7 +20,7 @@
 import type { BrokerMode } from '@/lib/knowledge/context-broker/types';
 
 export const SENTINEL_DOCTRINE_VERSION = {
-  voice: '0.draft.2026-05-11a',
+  voice: '0.draft.2026-05-13a',
   worldviewAddendum: 1,
   refusalTriggers: 1,
 } as const;
@@ -59,7 +59,8 @@ export type VoiceDriftCategory =
   | 'retrieval_mechanics'
   | 'academic_disclaimer'
   | 'internal_artifact_leak'
-  | 'fabricated_statistic';
+  | 'fabricated_statistic'
+  | 'internal_consistency';
 
 export interface BannedPattern {
   category: VoiceDriftCategory;
@@ -322,6 +323,11 @@ export function checkSentinelVoice(
     }
   }
 
+  const arithmeticViolation = detectRankedMoneyOrderingContradiction(text);
+  if (arithmeticViolation) {
+    violations.push(arithmeticViolation);
+  }
+
   const sentenceCount = countSentences(text);
   if (sentenceCount >= STRUCTURAL_THRESHOLD_SENTENCES) {
     const hasStructural = STRUCTURAL_PATTERNS.some((p) => p.pattern.test(text));
@@ -357,6 +363,36 @@ function countSentences(text: string): number {
 function countWords(text: string): number {
   const matches = text.trim().match(/\S+/g);
   return matches ? matches.length : 0;
+}
+
+function detectRankedMoneyOrderingContradiction(text: string): VoiceDriftViolation | null {
+  const rankLines = text
+    .split(/\n|(?<=\.)\s+/)
+    .filter((line) => /\b(?:rank|ranking|top|largest|highest|true rank|by spend)\b/i.test(line));
+
+  for (const line of rankLines) {
+    const moneyMatches = [...line.matchAll(/\$\s*([0-9]+(?:\.[0-9]+)?)\s*([BMK])\b/gi)];
+    if (moneyMatches.length < 2) continue;
+
+    const values = moneyMatches.map((match) => {
+      const amount = Number(match[1]);
+      const unit = match[2]?.toUpperCase();
+      const multiplier = unit === 'B' ? 1_000_000_000 : unit === 'M' ? 1_000_000 : 1_000;
+      return amount * multiplier;
+    });
+
+    for (let i = 1; i < values.length; i += 1) {
+      if (values[i]! > values[i - 1]!) {
+        return {
+          category: 'internal_consistency',
+          phrase: 'ranked money values are not in descending order',
+          match: line.trim(),
+        };
+      }
+    }
+  }
+
+  return null;
 }
 
 // ── Refusal trigger contract ─────────────────────────────────────────────────
@@ -831,6 +867,14 @@ const CLOUD_DATA_AI_DISCIPLINE = `Cloud, data, and AI-platform discipline — an
 
   • For platform standardization, prefer governed plurality over false uniformity. Standardize controls, data contracts, routing, evaluation, audit logs, entitlement, and FinOps; let models, clouds, and vendors vary where workflow economics justify it.`;
 
+const ARITHMETIC_REFLECTION_GUARD = `Arithmetic and ranking reflection guard — silently run this check before you answer:
+
+  • If you rank vendors, programs, budgets, contract values, ROI, savings, dates, percentages, or any other numeric facts, verify the order against the numbers you wrote. Do not say "true rank" or "top" unless the listed values are actually sorted by the stated metric.
+
+  • If the ranking and the numbers disagree, fix the ranking before responding. Example failure to avoid: "Adobe $8.8M ranks above AWS $13.6M" when the metric is annual spend.
+
+  • Never explain that you performed this check. The user only sees the corrected answer.`;
+
 const HONESTY_MODES = `Honesty modes — use natural phrasing when relevant:
 
   Strategic framing:  "This is judgment from the pattern, not tenant-specific benchmark data."
@@ -1058,6 +1102,8 @@ export function composeSentinelSystemPrompt(
     isSource ? '' : OPERATING_ADVISOR_DISCIPLINE,
     '',
     isSource ? '' : CLOUD_DATA_AI_DISCIPLINE,
+    '',
+    isSource ? '' : ARITHMETIC_REFLECTION_GUARD,
     '',
     HONESTY_MODES,
     '',

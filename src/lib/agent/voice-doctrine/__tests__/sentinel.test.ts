@@ -319,6 +319,30 @@ describe('SENTINEL_BANNED_PATTERNS — completeness', () => {
       expect(r.violations.some((v) => v.category === 'fabricated_statistic')).toBe(false);
     });
   });
+
+  describe('internal_consistency — arithmetic ranking guard (INT-VOICE.STRAT-2026-05-13a)', () => {
+    it('flags ranked dollar values that are not sorted by the stated metric', () => {
+      const r = checkSentinelVoice(
+        'The true rank by annual spend is Salesforce $14.6M, Adobe $8.8M, AWS $13.6M.',
+      );
+      expect(r.pass).toBe(false);
+      expect(r.violations).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            category: 'internal_consistency',
+            phrase: 'ranked money values are not in descending order',
+          }),
+        ]),
+      );
+    });
+
+    it('does not flag ranked dollar values that are sorted by the stated metric', () => {
+      const r = checkSentinelVoice(
+        'The true rank by annual spend is Salesforce $14.6M, AWS $13.6M, Adobe $8.8M.',
+      );
+      expect(r.violations.some((v) => v.category === 'internal_consistency')).toBe(false);
+    });
+  });
 });
 
 // INT-VOICE.STRAT-2026-05-10c · Consultant posture — replaces the earlier
@@ -440,6 +464,19 @@ describe('PATTERN_LEVEL_FALLBACK consultant posture — INT-VOICE.STRAT-2026-05-
     expect(prompt).toMatch(/governed plurality/i);
   });
 
+  it('includes the arithmetic reflection guard on Intelligence prompts', () => {
+    const prompt = composeSentinelSystemPrompt({
+      mode: 'corpus',
+      tenantKey: 'apex-retail',
+      surface: '/intelligence',
+      vectorIndexPending: false,
+      worldviewPending: false,
+    });
+    expect(prompt).toMatch(/Arithmetic and ranking reflection guard/i);
+    expect(prompt).toMatch(/Adobe \$8\.8M ranks above AWS \$13\.6M/i);
+    expect(prompt).toMatch(/Never explain that you performed this check/i);
+  });
+
   it('is omitted on the Source surface, which has its own Brief C role', () => {
     const prompt = composeSentinelSystemPrompt({
       mode: 'corpus',
@@ -452,6 +489,7 @@ describe('PATTERN_LEVEL_FALLBACK consultant posture — INT-VOICE.STRAT-2026-05-
     // Intelligence-only.
     expect(prompt).not.toMatch(/Consultant\s+posture/i);
     expect(prompt).not.toMatch(/Cloud, data, and AI-platform discipline/i);
+    expect(prompt).not.toMatch(/Arithmetic and ranking reflection guard/i);
     expect(prompt).toMatch(/You\s+are\s+Source,?\s+AbarVa'?s\s+vendor\s+selection\s+agent/i);
   });
 });
@@ -591,6 +629,12 @@ describe('Ask synthesizer prompt — Brief A expert posture (INT-VOICE.STRAT-202
     );
     expect(synthesizerSource).toContain('73% of retailers');
     expect(synthesizerSource).toContain('Algonomy has 89% market share');
+  });
+
+  it('includes the arithmetic reflection guard from Sentinel-A1', () => {
+    expect(synthesizerSource).toMatch(/ARITHMETIC AND RANKING REFLECTION GUARD/);
+    expect(synthesizerSource).toMatch(/Adobe \$8\.8M ranks above AWS \$13\.6M/);
+    expect(synthesizerSource).toMatch(/Never explain that you performed this check/);
   });
 
   it('declares LANE DISCIPLINE — vendor depth → Source, Move-shaping → Nexus', () => {

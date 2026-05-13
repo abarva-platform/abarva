@@ -17,8 +17,9 @@ import {
 //
 // Precedence: cookie → Clerk metadata.clientId → first allowed fallback.
 //
-// Isolation: locked account users are pinned to their clientId regardless
-// of cookie. Admin + investor can switch via the top-nav dropdown.
+// Isolation: locked account users ignore requested client ids and resolve
+// from server-trusted session/cookie fallbacks. Admin + investor can switch
+// via the top-nav dropdown.
 
 export const ACTIVE_CLIENT_COOKIE = 'abarva_active_client';
 
@@ -95,8 +96,7 @@ export async function getActiveClientKey(requestedClientId?: string | null): Pro
       const fromCookie = store.get(ACTIVE_CLIENT_COOKIE)?.value ?? null;
       if (isClientKey(fromCookie)) return fromCookie;
     } catch {
-      // cookies() fails outside request scope — fall through to the
-      // remaining metadata / alias / default resolution.
+      // cookies() fails outside request scope — fall through to default.
     }
     if (isClientKey(session.clientId)) return session.clientId;
     if (isClientKey(session.defaultClientId)) return session.defaultClientId;
