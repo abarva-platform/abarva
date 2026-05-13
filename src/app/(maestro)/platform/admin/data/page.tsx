@@ -102,7 +102,11 @@ const CLIENT_FILES: Record<string, { label: string; confidence: number; files: D
     ],
   },
   arcturus: {
-    label: 'Arcturus Financial Group',
+    // Tenant key remains 'arcturus' (canonical internal ClientKey per
+    // active-client.ts), but the display label is the current user-facing
+    // name 'First Capital Financial'. Audit 2026-05-13 found the previous
+    // label leaked the retired demo codename to the admin UI.
+    label: 'First Capital Financial',
     confidence: 91,
     files: [
       // Business — Financial
@@ -111,7 +115,7 @@ const CLIENT_FILES: Record<string, { label: string; confidence: number; files: D
       { name: 'AUM_Revenue_Breakdown_FY2023.xlsx', owner: 'Finance', date: 'Jan 15', type: 'xlsx', segment: 'Business', category: 'Financial', status: 'approved', confidence: 92 },
       { name: 'Cost_to_Income_Ratio_Analysis_FY2025.xlsx', owner: 'Finance', date: 'Mar 20', type: 'xlsx', segment: 'Business', category: 'Financial', status: 'approved', confidence: 95 },
       { name: 'PnL_by_Business_Unit_FY2025.xlsx', owner: 'Finance', date: 'Mar 18', type: 'xlsx', segment: 'Business', category: 'Financial', status: 'approved', confidence: 94 },
-      { name: 'Arcturus_IT_Financial_Model_FY2025.xlsx', owner: 'Finance', date: 'Apr 5', type: 'xlsx', segment: 'Business', category: 'Financial', status: 'approved', confidence: 91 },
+      { name: 'First_Capital_IT_Financial_Model_FY2025.xlsx', owner: 'Finance', date: 'Apr 5', type: 'xlsx', segment: 'Business', category: 'Financial', status: 'approved', confidence: 91 },
       { name: 'Capital_Allocation_Plan_FY2026.xlsx', owner: 'CFO', date: 'Mar 10', type: 'xlsx', segment: 'Business', category: 'Financial', status: 'approved', confidence: 88 },
       // Business — Vendors / Regulatory
       { name: 'Bloomberg_AIM_Contract_and_Usage_Data.pdf', owner: 'Procurement', date: 'Apr 5', type: 'pdf', segment: 'Business', category: 'Vendors', status: 'approved', confidence: 92 },

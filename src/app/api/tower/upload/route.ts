@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSupabase } from '@/lib/supabase-server';
 import { getCurrentPerson } from '@/lib/auth/maestro';
+import { requireTenancy, tenancyErrorResponse } from '@/lib/auth/tenancy';
 import { classifyUploadContent, type TowerDataType } from '@/lib/tower/classify';
 import { ingestPortfolioCsv } from '@/lib/tower/ingest-portfolio';
 
@@ -12,6 +13,20 @@ const MAX_BYTES = 25 * 1024 * 1024; // 25MB — Tower files can be larger than c
 const TOWER_BUCKET = 'tower-uploads';
 
 export async function POST(req: NextRequest) {
+  // SEC-P1-1 fix (audit 2026-05-13): previously this route required a
+  // signed-in person but never asserted that `form.get('clientId')`
+  // matched the caller's tenant. It passed the raw clientId straight into
+  // `uploaded_files.client_id` and Pinecone via ingestPortfolioCsv — i.e.,
+  // a Meridian user could upload to an Apex tenant just by setting the
+  // form field. Now we require tenancy and enforce match before touching
+  // storage or DB.
+  let ctx;
+  try {
+    ctx = await requireTenancy();
+  } catch (err) {
+    return tenancyErrorResponse(err) as NextResponse;
+  }
+
   const person = await getCurrentPerson();
   if (!person) return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
 
@@ -23,6 +38,10 @@ export async function POST(req: NextRequest) {
   }
   if (file.size > MAX_BYTES) {
     return NextResponse.json({ error: `file exceeds ${MAX_BYTES} bytes` }, { status: 413 });
+  }
+
+  if (clientId !== ctx.clientId) {
+    return NextResponse.json({ error: 'forbidden_cross_tenant' }, { status: 403 });
   }
 
   const sb = getServerSupabase();

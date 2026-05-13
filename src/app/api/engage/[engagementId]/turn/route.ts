@@ -69,20 +69,30 @@ export async function POST(
     return new Response(JSON.stringify({ error: 'engagement not found' }), { status: 404 });
   }
 
-  // Role gate: sponsors can only act on their own engagement; maestros on any.
-  // Signed-out callers pass through (auth is enforced by the proxy/middleware).
+  // SEC-P1-3 fix (audit 2026-05-13): role gate now fails closed.
+  //
+  // Sponsors can only act on their own engagement; maestros on any.
+  // Previously the gate was wrapped in try/catch with a `console.warn`-only
+  // bypass, which meant any error in `getCurrentPerson()` (network blip,
+  // Clerk transient, missing person record) silently dropped the sponsor
+  // check and a caller could write turns to another tenant's engagement.
+  // The signed-out fall-through was also unsafe — middleware *should* gate
+  // /api routes, but this handler shouldn't rely on it; we re-check here.
+  let caller;
   try {
-    const caller = await getCurrentPerson();
-    if (caller) {
-      const isMaestro = caller.role === 'maestro';
-      const isSponsor = engagement.sponsor_person_id === caller.id;
-      const isCoSponsor = engagement.co_sponsor_person_id === caller.id;
-      if (!isMaestro && !isSponsor && !isCoSponsor) {
-        return new Response(JSON.stringify({ error: 'forbidden' }), { status: 403 });
-      }
-    }
+    caller = await getCurrentPerson();
   } catch (err) {
-    console.warn('[engage.turn.role-gate]', err);
+    console.error('[engage.turn.role-gate.unauthenticated]', err);
+    return new Response(JSON.stringify({ error: 'unauthenticated' }), { status: 401 });
+  }
+  if (!caller) {
+    return new Response(JSON.stringify({ error: 'unauthenticated' }), { status: 401 });
+  }
+  const isMaestro = caller.role === 'maestro';
+  const isSponsor = engagement.sponsor_person_id === caller.id;
+  const isCoSponsor = engagement.co_sponsor_person_id === caller.id;
+  if (!isMaestro && !isSponsor && !isCoSponsor) {
+    return new Response(JSON.stringify({ error: 'forbidden' }), { status: 403 });
   }
 
   // Persist user turn first
