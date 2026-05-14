@@ -1,6 +1,16 @@
 import { NextRequest } from "next/server";
 import { POST } from "../route";
 
+jest.mock("@/lib/auth/tenancy", () => ({
+  requireTenancy: jest.fn(async () => ({
+    clientId: "apex-retail-group",
+    userId: "test-user",
+  })),
+  tenancyErrorResponse: jest.fn(
+    () => new Response(JSON.stringify({ error: "unauthorized" }), { status: 401 }),
+  ),
+}));
+
 describe("/api/admin/upload-dataset metric ingestion", () => {
   const originalDatabaseUrl = process.env.DATABASE_URL;
   const originalSupabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;

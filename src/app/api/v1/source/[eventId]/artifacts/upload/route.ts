@@ -31,6 +31,10 @@ import {
 } from '@/lib/source/artifact-registry/text-parser';
 import { getCriterionIdsForArtifactFamily } from '@/lib/source/artifact-gate-map';
 import { addEvidence } from '@/lib/reasoning/evidence-ingestion-store';
+import {
+  evaluateSensitiveUpload,
+  sensitiveUploadRejectedResponse,
+} from '@/lib/security/sensitive-upload-guard';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -189,6 +193,16 @@ export async function POST(request: Request, { params }: SourceUploadRouteContex
   }
 
   const buffer = Buffer.from(await file.arrayBuffer());
+  const dataProtection = evaluateSensitiveUpload({
+    filename,
+    mimeType,
+    bytes: buffer,
+    declaredClassification: formData.get('dataProtectionClassification') ?? formData.get('dataClassification'),
+  });
+  if (dataProtection.decision === 'quarantine') {
+    return sensitiveUploadRejectedResponse(dataProtection);
+  }
+
   const sha256 = createHash('sha256').update(buffer).digest('hex');
   const sb = getServerSupabase();
 
@@ -261,7 +275,12 @@ export async function POST(request: Request, { params }: SourceUploadRouteContex
     }
 
     return Response.json(
-      { ok: true, artifact, ...(parseWarnings.length > 0 ? { parseWarnings } : {}) },
+      {
+        ok: true,
+        artifact,
+        dataProtection,
+        ...(parseWarnings.length > 0 ? { parseWarnings } : {}),
+      },
       { status: 200 },
     );
   } catch (error) {

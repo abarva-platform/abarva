@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { ingestClientFile } from '@/lib/data/ingest';
 import { requireTenancy, tenancyErrorResponse } from '@/lib/auth/tenancy';
+import {
+  evaluateSensitiveUpload,
+  sensitiveUploadRejectedResponse,
+} from '@/lib/security/sensitive-upload-guard';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -35,12 +39,22 @@ export async function POST(req: NextRequest) {
     }
 
     const bytes = new Uint8Array(await file.arrayBuffer());
+    const dataProtection = evaluateSensitiveUpload({
+      filename: file.name,
+      mimeType: file.type,
+      bytes,
+      declaredClassification: form.get('dataClassification'),
+    });
+    if (dataProtection.decision === 'quarantine') {
+      return sensitiveUploadRejectedResponse(dataProtection) as NextResponse;
+    }
+
     const result = await ingestClientFile({
       clientId,
       filename: file.name,
       bytes,
     });
-    return NextResponse.json(result);
+    return NextResponse.json({ ...result, dataProtection });
   } catch (err) {
     console.error('[data/upload] error:', err);
     const msg = err instanceof Error ? err.message : 'unknown error';
