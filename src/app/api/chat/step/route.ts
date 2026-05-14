@@ -1,8 +1,9 @@
 import Anthropic from '@anthropic-ai/sdk'
-import { retrieveContext, verticalFromClientContext } from '@/lib/retrieval'
 import { getUserContextPromptBlock } from '@/lib/agent/userContext'
 import { getRelevantTools, toAnthropicToolDefinition } from '@/lib/agent/tools/registry'
 import { FOUR_LAYER_REASONING_INSTRUCTIONS } from '@/lib/intelligence/synthesis/instructionLayer'
+import { retrieveStrategyStepContext } from '@/lib/agent/strategy-step-context'
+import { requireTenancy, tenancyErrorResponse } from '@/lib/auth/tenancy'
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
@@ -153,10 +154,17 @@ export async function POST(request: Request) {
     return Response.json({ error: 'clientId required' }, { status: 400 })
   }
 
+  const tenancy = await requireTenancy().catch((err) => err)
+  if (tenancy instanceof Error) {
+    return tenancyErrorResponse(tenancy)
+  }
+  if (body.clientId !== tenancy.clientId && body.clientId !== tenancy.clientKey) {
+    return Response.json({ error: 'forbidden', detail: 'clientId does not match active tenant' }, { status: 403 })
+  }
+
   const prompt = buildPrompt({ ...body, customText: sanitizedCustom })
 
   // Build RAG retrieval query from step context + engagement directive
-  const vertical = verticalFromClientContext(body.clientContext?.vertical)
   const step = STEP_CONTEXT[body.stepId]
   const retrievalQuery = [
     body.engagementContext?.directive,
@@ -164,7 +172,11 @@ export async function POST(request: Request) {
     body.isKickoff ? undefined : body.selectedOption !== 'D' ? body.selectedOption : body.customText,
   ].filter(Boolean).join(' ')
 
-  const ragContext = await retrieveContext(retrievalQuery, vertical, 4)
+  const ragContext = await retrieveStrategyStepContext({
+    query: retrievalQuery,
+    clientVertical: body.clientContext?.vertical,
+    topK: 4,
+  })
   // F0.2 Layer 0 — user context, composed AFTER role line and BEFORE RAG/task
   const userContextBlock = await getUserContextPromptBlock()
   const systemPrompt = buildSystemPrompt(ragContext, userContextBlock)
