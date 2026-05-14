@@ -2846,6 +2846,7 @@ function FileUploadOverlay({ programName, programId, onClose }: FileUploadOverla
 
     const form = new FormData();
     form.append('file', file);
+    form.append('dataClassification', 'confidential_business');
     form.append('sessionId', `prog-${Date.now()}`);
 
     try {

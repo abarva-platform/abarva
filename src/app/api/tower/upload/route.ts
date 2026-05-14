@@ -4,6 +4,10 @@ import { getCurrentPerson } from '@/lib/auth/maestro';
 import { requireTenancy, tenancyErrorResponse } from '@/lib/auth/tenancy';
 import { classifyUploadContent, type TowerDataType } from '@/lib/tower/classify';
 import { ingestPortfolioCsv } from '@/lib/tower/ingest-portfolio';
+import {
+  evaluateSensitiveUpload,
+  sensitiveUploadRejectedResponse,
+} from '@/lib/security/sensitive-upload-guard';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -46,8 +50,19 @@ export async function POST(req: NextRequest) {
 
   const sb = getServerSupabase();
 
-  // 1. Store to Supabase Storage (bucket must exist — see migration notes)
+  // 1. Classify data protection posture before storage or ingestion.
   const bytes = new Uint8Array(await file.arrayBuffer());
+  const dataProtection = evaluateSensitiveUpload({
+    filename: file.name,
+    mimeType: file.type,
+    bytes,
+    declaredClassification: form.get('dataClassification'),
+  });
+  if (dataProtection.decision === 'quarantine') {
+    return sensitiveUploadRejectedResponse(dataProtection) as NextResponse;
+  }
+
+  // 2. Store to Supabase Storage (bucket must exist — see migration notes)
   const now = new Date();
   const storagePath = `${clientId}/${now.getUTCFullYear()}/${String(
     now.getUTCMonth() + 1,
@@ -64,7 +79,7 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  // 2. Record file metadata — status: classifying
+  // 3. Record file metadata — status: classifying
   const { data: fileRow, error: insertErr } = await sb
     .from('uploaded_files')
     .insert({
@@ -86,7 +101,7 @@ export async function POST(req: NextRequest) {
   }
   const fileId = (fileRow as { id: string }).id;
 
-  // 3. Classify + parse synchronously (simpler for v1, UI waits for result)
+  // 4. Classify + parse synchronously (simpler for v1, UI waits for result)
   const sampleText = new TextDecoder('utf-8', { fatal: false }).decode(bytes.slice(0, 2048));
   const classifier = await classifyUploadContent({
     filename: file.name,
@@ -149,5 +164,6 @@ export async function POST(req: NextRequest) {
             ? 'Portfolio detected but no rows ingested. Check file format.'
             : `Classified as ${classifier.data_type} (confidence ${classifier.confidence.toFixed(2)}). Parser not yet wired — manual mapping required. See Pack 11.`,
     notes: ingestResult.notes ?? [],
+    dataProtection,
   });
 }

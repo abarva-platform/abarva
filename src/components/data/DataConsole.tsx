@@ -144,6 +144,7 @@ export function DataConsole({ clientId, clientName, industry, industryLabel }: P
       try {
         const form = new FormData();
         form.append('clientId', clientId);
+        form.append('dataClassification', 'confidential_business');
         form.append('file', file);
         const res = await fetch('/api/data/upload', { method: 'POST', body: form });
         const data = await res.json();
@@ -217,6 +218,9 @@ export function DataConsole({ clientId, clientName, industry, industryLabel }: P
         >
           <div style={{ fontSize: 13, color: dragActive ? TEAL : MUTE }}>
             Drop files or click to upload · pdf, docx, md, txt · max 10MB
+          </div>
+          <div style={{ fontSize: 11, color: MUTE, marginTop: 6 }}>
+            Aggregate and confidential business context only. Suspected PHI/PII is blocked before indexing.
           </div>
           <input
             ref={fileInputRef}

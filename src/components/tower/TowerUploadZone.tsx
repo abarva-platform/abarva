@@ -40,6 +40,7 @@ export function TowerUploadZone({ clientId }: Props) {
     try {
       const form = new FormData();
       form.append('clientId', clientId);
+      form.append('dataClassification', 'confidential_business');
       form.append('file', file);
       const res = await fetch('/api/tower/upload', { method: 'POST', body: form });
       const data = (await res.json()) as Record<string, unknown>;
@@ -89,6 +90,9 @@ export function TowerUploadZone({ clientId }: Props) {
         </div>
         <div style={{ fontSize: 12, color: MUTE }}>
           CSV · Excel · JSON · PDF · Cloud billing exports · Vendor usage reports · max 25MB
+        </div>
+        <div style={{ fontSize: 11, color: MUTE, marginTop: 6 }}>
+          Aggregate/confidential business data only. Suspected PHI/PII is quarantined before storage.
         </div>
         <input
           ref={inputRef}

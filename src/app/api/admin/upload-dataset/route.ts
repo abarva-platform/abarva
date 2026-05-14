@@ -6,6 +6,10 @@ import {
 } from "@/lib/intelligence/tenant-metric-upload";
 import { persistTenantMetricUpload } from "@/lib/intelligence/tenant-metric-persistence";
 import { requireTenancy, tenancyErrorResponse } from "@/lib/auth/tenancy";
+import {
+  evaluateSensitiveUpload,
+  sensitiveUploadRejectedResponse,
+} from "@/lib/security/sensitive-upload-guard";
 
 export async function POST(request: NextRequest) {
   let ctx;
@@ -18,9 +22,10 @@ export async function POST(request: NextRequest) {
   let file: File | null = null;
   let clientId = "";
   let documentName = "";
+  let formData: FormData;
 
   try {
-    const formData = await request.formData();
+    formData = await request.formData();
     file = formData.get("file") as File | null;
     clientId = (formData.get("clientId") as string) || "";
     documentName = (formData.get("documentName") as string) || "";
@@ -49,6 +54,15 @@ export async function POST(request: NextRequest) {
     ReturnType<typeof persistTenantMetricUpload>
   > | null = null;
   const bytes = await file.arrayBuffer();
+  const dataProtection = evaluateSensitiveUpload({
+    filename: file.name,
+    mimeType: file.type,
+    bytes,
+    declaredClassification: formData.get("dataClassification"),
+  });
+  if (dataProtection.decision === "quarantine") {
+    return sensitiveUploadRejectedResponse(dataProtection) as NextResponse;
+  }
 
   if (looksLikeTenantMetricUpload(file.name, documentName)) {
     const text = new TextDecoder().decode(bytes);
@@ -131,6 +145,7 @@ export async function POST(request: NextRequest) {
     uploader: "Anand Sundaram · Admin",
     date: today,
     storageUrl,
+    dataProtection,
     metricIngestion: metricIngestion
       ? {
           tenantKey: metricIngestion.tenantKey,
