@@ -1,0 +1,66 @@
+name: Azure L7 agent-quality telemetry smoke
+
+on:
+  workflow_dispatch:
+    inputs:
+      tenant_key:
+        description: Tenant key to insert/query.
+        required: false
+        type: string
+        default: apex-retail
+      other_tenant_key:
+        description: Different tenant key used to prove cross-tenant RLS denial.
+        required: false
+        type: string
+        default: meridian-health
+      commit_fixture:
+        description: Commit one synthetic telemetry row as durable evidence.
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  telemetry-smoke:
+    name: Smoke durable L7 telemetry table
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run telemetry smoke
+        env:
+          AGENT_QUALITY_DATABASE_URL: ${{ secrets.AZURE_LAB_DATABASE_URL }}
+        run: |
+          set -euo pipefail
+
+          args=(
+            --tenant-key "${{ inputs.tenant_key }}"
+            --other-tenant-key "${{ inputs.other_tenant_key }}"
+          )
+
+          if [ "${{ inputs.commit_fixture }}" = "true" ]; then
+            args+=(--commit-fixture)
+          fi
+
+          npm run azure:agent-quality:telemetry-smoke -- "${args[@]}" | tee azure-l7-agent-quality-telemetry-smoke.json
+
+      - name: Upload smoke output
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: azure-l7-agent-quality-telemetry-smoke
+          path: azure-l7-agent-quality-telemetry-smoke.json
+          if-no-files-found: ignore
