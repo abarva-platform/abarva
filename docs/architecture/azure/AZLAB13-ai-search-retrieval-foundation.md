@@ -24,7 +24,7 @@ Postgres remains the metadata, contract, lineage, and audit system. Blob Storage
 | Capability | Resource | Design |
 |---|---|---|
 | Retrieval service | `srch-abarva-context-lab-eastus` | Basic SKU, 1 replica, 1 partition, public access enabled for lab bootstrap. |
-| Future indexes | `tenant-context-*`, `evidence-*`, `source-vendor-*`, `industry-corpus-*`, `signals-*` | Created by ingestion worker once embedding/model dimensions are finalized. |
+| Indexes | `tenant-context-v1`, `evidence-ledger-v1`, `source-vendor-v1`, `industry-corpus-v1`, `signals-v1` | Created by AZLAB24 with 1536-dimension vector fields and tenant/industry scope guards. |
 
 ## Why Indexes Are Contracted Before Created
 
@@ -71,4 +71,8 @@ Verified after deployment:
 - Partition count: `1`
 - Hosting mode: `default`
 - Public network access: `Enabled`
-- Indexes: intentionally not created until embedding contract is approved
+- Indexes: created by AZLAB24 on 2026-05-15
+
+## Update 2026-05-15
+
+AZLAB24 created and verified the five planned indexes. The service remains empty of client data; this is contract readiness, not retrieval backfill. The first Azure AD data-plane apply returned `403`, so the lab bootstrap used a Search admin key retrieved through Azure CLI. Before customer-private lanes, grant the runtime managed identity least-privilege Search data-plane RBAC and remove admin-key dependency from normal operations.
