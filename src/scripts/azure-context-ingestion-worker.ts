@@ -19,6 +19,7 @@ import {
   type BlobDownloader,
   type IngestionPipeline,
 } from '@/lib/ingestion/azure-landing-zone-consumer';
+import { normalizeEventGridBlobCreated } from '@/lib/ingestion/event-grid-normalizer';
 
 const execFileAsync = promisify(execFile);
 
@@ -64,7 +65,7 @@ function getPool(): Pool | null {
   return pool;
 }
 
-function normalizeBody(message: ServiceBusReceivedMessage): unknown {
+function parseBody(message: ServiceBusReceivedMessage): unknown {
   const body = message.body;
   if (typeof body === 'string') {
     return JSON.parse(body);
@@ -73,6 +74,31 @@ function normalizeBody(message: ServiceBusReceivedMessage): unknown {
     return JSON.parse(body.toString('utf-8'));
   }
   return body;
+}
+
+async function normalizeBody(
+  message: ServiceBusReceivedMessage,
+  credential: DefaultAzureCredential,
+): Promise<unknown> {
+  const body = parseBody(message);
+  const normalized = await normalizeEventGridBlobCreated(body, async ({
+    accountName,
+    containerName,
+    blobPath,
+  }) => {
+    const service = new BlobServiceClient(
+      `https://${accountName}.blob.core.windows.net`,
+      credential,
+    );
+    const blob = service.getContainerClient(containerName).getBlobClient(blobPath);
+    const properties = await blob.getProperties();
+    return {
+      metadata: properties.metadata ?? {},
+      contentType: properties.contentType,
+      contentLength: properties.contentLength,
+    };
+  });
+  return normalized ?? body;
 }
 
 function createDownloader(credential: DefaultAzureCredential): BlobDownloader {
@@ -97,7 +123,6 @@ function createAuditWriter(): AuditWriter {
     const idHint = `a2b-${message.tenantClientKey}-${Date.now()}`;
     const db = getPool();
     if (!db) {
-      // eslint-disable-next-line no-console
       console.log(JSON.stringify({
         event: 'ingestion_audit_console_only',
         id: idHint,
@@ -192,14 +217,15 @@ async function processMessage(
   receiver: ReturnType<ServiceBusClient['createReceiver']>,
   rawMessage: ServiceBusReceivedMessage,
   ctx: Parameters<typeof consumeOneMessage>[1],
+  credential: DefaultAzureCredential,
 ): Promise<void> {
   let body: unknown;
   try {
-    body = normalizeBody(rawMessage);
+    body = await normalizeBody(rawMessage, credential);
   } catch (err) {
     await receiver.deadLetterMessage(rawMessage, {
-      deadLetterReason: 'invalid_json_body',
-      deadLetterErrorDescription: err instanceof Error ? err.message : 'invalid_json_body',
+      deadLetterReason: 'ingestion_message_normalization_failed',
+      deadLetterErrorDescription: err instanceof Error ? err.message : 'ingestion_message_normalization_failed',
     });
     return;
   }
@@ -216,7 +242,6 @@ async function processMessage(
     await receiver.abandonMessage(rawMessage);
   }
 
-  // eslint-disable-next-line no-console
   console.log(JSON.stringify({
     event: 'ingestion_message_processed',
     messageId: rawMessage.messageId,
@@ -246,12 +271,11 @@ async function main(): Promise<void> {
   try {
     const messages = await receiver.receiveMessages(maxMessages, { maxWaitTimeInMs });
     if (messages.length === 0) {
-      // eslint-disable-next-line no-console
       console.log(JSON.stringify({ event: 'ingestion_worker_idle', queueName }));
       return;
     }
     for (const message of messages) {
-      await processMessage(receiver, message, ctx);
+      await processMessage(receiver, message, ctx, credential);
     }
   } finally {
     await receiver.close();
@@ -261,7 +285,6 @@ async function main(): Promise<void> {
 }
 
 main().catch((err) => {
-  // eslint-disable-next-line no-console
   console.error(JSON.stringify({
     event: 'ingestion_worker_failed',
     error: err instanceof Error ? err.message : String(err),

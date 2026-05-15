@@ -46,6 +46,10 @@ function smokeRunId(): string {
   return readEnv('INGESTION_SMOKE_RUN_ID');
 }
 
+function sendCanonicalMessages(): boolean {
+  return process.env.INGESTION_SMOKE_SEND_CANONICAL?.trim().toLowerCase() !== 'false';
+}
+
 function credential(): DefaultAzureCredential {
   const managedIdentityClientId = process.env.AZURE_CLIENT_ID?.trim();
   return new DefaultAzureCredential(
@@ -117,6 +121,10 @@ async function produce(): Promise<void> {
           smokeRunId: runId,
           smokeCase: testCase.name,
           tenantClientKey,
+          segmentKey: testCase.segmentKey,
+          declaredClassification: testCase.declaredClassification ?? 'confidential_business',
+          expectedFinalDecision: testCase.expectedFinalDecision,
+          sha256: hash,
         },
       });
 
@@ -141,18 +149,20 @@ async function produce(): Promise<void> {
         },
       };
 
-      await sender.sendMessages({
-        messageId: `${runId}-${testCase.name}`,
-        subject: 'abarva.ingestion.e2e-smoke',
-        contentType: 'application/json',
-        body: message,
-        applicationProperties: {
-          schema: message.schema,
-          smokeRunId: runId,
-          smokeCase: testCase.name,
-          tenantClientKey,
-        },
-      });
+      if (sendCanonicalMessages()) {
+        await sender.sendMessages({
+          messageId: `${runId}-${testCase.name}`,
+          subject: 'abarva.ingestion.e2e-smoke',
+          contentType: 'application/json',
+          body: message,
+          applicationProperties: {
+            schema: message.schema,
+            smokeRunId: runId,
+            smokeCase: testCase.name,
+            tenantClientKey,
+          },
+        });
+      }
     }
   } finally {
     await sender.close();
@@ -163,6 +173,7 @@ async function produce(): Promise<void> {
     event: 'ingestion_smoke_messages_produced',
     smokeRunId: runId,
     tenantClientKey,
+    canonicalMessagesSent: sendCanonicalMessages(),
     cases: smokeCases().map((c) => c.name),
   }));
 }

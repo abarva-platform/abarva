@@ -18,7 +18,7 @@ param containerAppsEnvironmentName = 'cae-abarva-scale-lab-eastus'
 param scaleRuntimeManagedIdentityName = 'id-abarva-scale-runtime-lab-eastus'
 
 param migrationJobName = 'job-abarva-db-migrate-lab-eastus'
-param imageName = 'acrabarvalab001.azurecr.io/abarva/web:lab-ingestion-e2e-smoke-20260515-r1'
+param imageName = 'acrabarvalab001.azurecr.io/abarva/web:lab-eventgrid-normalizer-20260515-r1'
 param registryServer = 'acrabarvalab001.azurecr.io'
 
 param keyVaultSecretRefs = [
