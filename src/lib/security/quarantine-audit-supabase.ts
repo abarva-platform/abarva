@@ -108,7 +108,7 @@ export const supabaseQuarantineAuditDataSource: QuarantineAuditDataSource = {
     // lifecycle row (denormalized; makes the dashboard query cheap).
     const { data: parent, error: lookupErr } = await sb
       .from('sensitive_upload_audit')
-      .select('tenant_client_key, ingestion_tier, filename, mime_type, size_bytes, sha256, storage_path')
+      .select('tenant_client_key, ingestion_tier, filename, mime_type, size_bytes, sha256, purview_reached, purview_labels, storage_path')
       .eq('id', id)
       .maybeSingle();
     if (lookupErr) throw new Error(`quarantine_release_lookup_failed: ${lookupErr.message}`);
@@ -121,6 +121,8 @@ export const supabaseQuarantineAuditDataSource: QuarantineAuditDataSource = {
       mime_type: string | null;
       size_bytes: number | null;
       sha256: string | null;
+      purview_reached: boolean;
+      purview_labels: unknown;
       storage_path: string | null;
     };
 
@@ -133,7 +135,8 @@ export const supabaseQuarantineAuditDataSource: QuarantineAuditDataSource = {
       size_bytes: p.size_bytes,
       sha256: p.sha256,
       pattern_decision: 'allow',
-      purview_reached: false,
+      purview_reached: p.purview_reached,
+      purview_labels: Array.isArray(p.purview_labels) ? p.purview_labels : [],
       final_decision: 'released',
       released_at: new Date().toISOString(),
       released_by: reviewerUserId,
@@ -150,7 +153,7 @@ export const supabaseQuarantineAuditDataSource: QuarantineAuditDataSource = {
     const sb = getServerSupabase();
     const { data: parent, error: lookupErr } = await sb
       .from('sensitive_upload_audit')
-      .select('tenant_client_key, ingestion_tier, filename, mime_type, size_bytes, sha256, storage_path')
+      .select('tenant_client_key, ingestion_tier, filename, mime_type, size_bytes, sha256, purview_reached, purview_labels, storage_path')
       .eq('id', id)
       .maybeSingle();
     if (lookupErr) throw new Error(`quarantine_hard_delete_lookup_failed: ${lookupErr.message}`);
@@ -163,6 +166,8 @@ export const supabaseQuarantineAuditDataSource: QuarantineAuditDataSource = {
       mime_type: string | null;
       size_bytes: number | null;
       sha256: string | null;
+      purview_reached: boolean;
+      purview_labels: unknown;
       storage_path: string | null;
     };
 
@@ -175,7 +180,8 @@ export const supabaseQuarantineAuditDataSource: QuarantineAuditDataSource = {
       size_bytes: p.size_bytes,
       sha256: p.sha256,
       pattern_decision: 'quarantine',
-      purview_reached: false,
+      purview_reached: p.purview_reached,
+      purview_labels: Array.isArray(p.purview_labels) ? p.purview_labels : [],
       final_decision: 'hard_deleted',
       released_at: new Date().toISOString(),
       released_by: reviewerUserId,
