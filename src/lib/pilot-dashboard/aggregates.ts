@@ -10,8 +10,10 @@ import {
   getEnterpriseContextOverviewForTenant,
   type EnterpriseContextOverview,
 } from '@/lib/enterprise-context/intelligence-read-model';
+import { getRecentViolations, type SynthesisViolationEvent } from '@/lib/intelligence/synthesis/violationsRecorder';
 import { stubQuarantineAuditDataSource } from '@/lib/security/quarantine-audit-types';
 import type {
+  AgentQualitySnapshot,
   DashboardBanner,
   EngagementSnapshot,
   HeadlineKpis,
@@ -156,6 +158,7 @@ export async function loadSubstrateSnapshot(
  */
 export async function loadEngagementAndHeadline(args: {
   clientId: string;
+  tenantKey: string;
   /** Existing quarantine-audit data source. Pluggable for tests. */
   quarantineSource?: typeof stubQuarantineAuditDataSource;
 }): Promise<{ headline: HeadlineKpis; engagement: EngagementSnapshot; banners: DashboardBanner[] }> {
@@ -291,9 +294,37 @@ export async function loadEngagementAndHeadline(args: {
     qualitySample,
     avgLatencyMs7d,
     tokens7d,
+    agentQuality: summarizeAgentQuality(getRecentViolations(500), args.tenantKey),
   };
 
   return { headline, engagement, banners };
+}
+
+export function summarizeAgentQuality(
+  events: ReadonlyArray<SynthesisViolationEvent>,
+  tenantKey: string,
+): AgentQualitySnapshot {
+  const scoped = events.filter((event) => event.tenantId === tenantKey);
+  const violationEvents = scoped.filter((event) => event.violationCount > 0);
+  const typeCounts = new Map<string, number>();
+
+  for (const event of violationEvents) {
+    for (const type of event.violationTypes) {
+      typeCounts.set(type, (typeCounts.get(type) ?? 0) + 1);
+    }
+  }
+
+  const byType = [...typeCounts.entries()]
+    .sort((a, b) => (b[1] - a[1]) || a[0].localeCompare(b[0]))
+    .map(([type, count]) => ({ type, count }));
+
+  return {
+    recordedTurns: scoped.length,
+    violationEvents: violationEvents.length,
+    caughtViolationRate: scoped.length > 0 ? violationEvents.length / scoped.length : null,
+    sentinelInternalConsistencyEvents: typeCounts.get('sentinel-internal-consistency') ?? 0,
+    byType,
+  };
 }
 
 /**
