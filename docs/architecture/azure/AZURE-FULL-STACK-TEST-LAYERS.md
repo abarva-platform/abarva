@@ -31,7 +31,7 @@ Current state: the lab has real Azure services live through AZLAB25: Container A
 | L7 Agent quality | Sentinel, Atlas, Nexus, Steward stay grounded, in-voice, internally consistent, and safe under adversarial prompts. | `docs/agent-quality/SENTINEL-CONSISTENCY-GUARD-EXPANSION.md`, existing Sentinel voice tests, audit question batteries in docs | Golden corpus and adversarial corpus per agent, weekly drift watchdog, guard telemetry wired to C5 dashboard. | Design |
 | L8 Performance / load | Postgres pool, Container Apps autoscale, Search retrieval, and agent turns stay under CXO latency targets. | Container Apps runtime live; App Insights live | k6/Artillery scenarios, cold-start test, agent latency budget trace, p95 target gates. | Gap |
 | L9 Resilience / DR | The app degrades gracefully when Postgres, Service Bus, or LLM provider fails. | A2b worker DLQ behavior is designed; PITR available through managed Postgres configuration | Chaos drill scripts, Service Bus malformed-message DLQ test, LLM 529 fallback simulation, monthly restore drill. | Gap |
-| L10 Compliance / audit trail | Sensitive-upload, gate approval, and admin-action evidence is append-only and exportable. | B5c `sensitive_upload_audit` migration/data wiring; `/admin/quarantine`; Purview stub design | Append-only SQL assertion, lifecycle reconstruction test, Purview label persistence test, monthly evidence-pack export. | Partial |
+| L10 Compliance / audit trail | Sensitive-upload, gate approval, and admin-action evidence is append-only and exportable. | B5c `sensitive_upload_audit` migration/data wiring; `/admin/quarantine`; Purview stub design; `src/lib/security/__tests__/quarantine-audit-supabase.test.ts`; AZLAB34 | Live append-only SQL assertion, Purview label persistence test, monthly evidence-pack export. | Partial |
 | L11 Observability / SLO + cost | Regression, latency, errors, agent violations, RLS denials, and spend cannot silently drift. | Log Analytics, App Insights, action group, budget; `scripts/azure/audit-observability.mjs`, `.github/workflows/azure-l11-observability-audit.yml`; `docs/pilot/C5-PILOT-SUCCESS-METRICS-DASHBOARD-SPEC.md` | Run audit through GitHub OIDC, add synthetic availability tests, SLO dashboard queries, cost alerts per RG, end-to-end agent trace coverage. | Partial |
 
 ## L1 - Infrastructure / IaC
@@ -211,7 +211,7 @@ These are synthetic context chunks, not customer data.
 | Purview label persistence | Purview stub + DB assertion | Labels persist in `purview_labels` JSONB and survive release. |
 | Evidence export | New `src/scripts/export-soc2-evidence-pack.ts` | CSV contains sensitive-upload decisions, gate approvals, admin actions, and timestamps. |
 
-**Current state.** B5c introduced the quarantine/audit table and admin page. The export and immutability tests still need to be implemented.
+**Current state.** B5c introduced the quarantine/audit table and admin page. AZLAB34 adds application-level L10 assertions: tenant-scoped parent-row listing, release/hard-delete append lifecycle rows through `parent_id`, RLS enabled, and authenticated public-role SELECT only in the migration contract. Live SQL immutability attempts, Purview label persistence, and the evidence-pack export still need to be implemented.
 
 ## L11 - Observability / SLO + Cost
 
@@ -246,7 +246,7 @@ These are synthetic context chunks, not customer data.
 | 2 | Implement agent golden/adversarial corpus harness. | Makes "super-smart consultant" measurable. |
 | 3 | Implement G1/G2/G6 Sentinel consistency guards. | Highest-value quality lift from the guard expansion design. |
 | 4 | Add k6 or Artillery load scenario for Azure primary surfaces. | Establishes first p95/cold-start baseline before real pilot traffic. |
-| 5 | Add evidence-pack export for sensitive-upload, gate approval, and admin actions. | Makes SOC2/infosec evidence one command away. |
+| 5 | Add live L10 SQL immutability attempts plus evidence-pack export for sensitive-upload, gate approval, and admin actions. | Moves compliance from migration-contract confidence to auditor-ready proof and export. |
 
 ## Fresh Subscription Acceptance Checklist
 

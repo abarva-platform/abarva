@@ -6,7 +6,7 @@ Status: active roadmap as of 2026-05-15
 
 | Order | Service | Why now | Target posture |
 |---:|---|---|---|
-| 1 | Full-stack test gates | Turns the lab from "services exist" into "deployment/pilot readiness is provable." | L1-L11 gate model in `AZURE-FULL-STACK-TEST-LAYERS.md`; L1 resource parity, L2 connectivity, L3 advisory security audit, L4 Azure probe workflow target, L5 schema reset/replay, L5 tenant data parity, L6 primary-surface workflow, and L11 observability audit are live/wired. Next slices are L1 what-if, L4/L6/L11 live Azure runs, PITR restore verification, and deeper workflow E2E. |
+| 1 | Full-stack test gates | Turns the lab from "services exist" into "deployment/pilot readiness is provable." | L1-L11 gate model in `AZURE-FULL-STACK-TEST-LAYERS.md`; L1 resource parity, L2 connectivity, L3 advisory security audit, L4 Azure probe workflow target, L5 schema reset/replay, L5 tenant data parity, L6 primary-surface workflow, L10 sensitive-upload audit assertions, and L11 observability audit are live/wired. Next slices are L1 what-if, L4/L6/L11 live Azure runs, PITR restore verification, deeper workflow E2E, and L10 evidence-pack export. |
 | 2 | Azure Container Registry | Foundational for real Container Apps images. | RBAC-only, admin disabled; private endpoint later. |
 | 3 | Cost Management budgets + alerts | Keeps founder-lab burn visible before more paid services land. | Monthly budget with actual/forecast thresholds. |
 | 4 | Service Bus + Event Grid | Unblocks event-driven context refresh without Data Factory complexity. | Live in AZLAB12. Next: ingestion worker. |
