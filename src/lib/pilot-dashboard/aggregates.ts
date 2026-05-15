@@ -289,15 +289,55 @@ export async function loadEngagementAndHeadline(args: {
     });
   }
 
+  const agentQualityResult = await loadAgentQualitySnapshot(args.tenantKey);
+  if (agentQualityResult.banner) {
+    banners.push(agentQualityResult.banner);
+  }
+
   const engagement: EngagementSnapshot = {
     topQuestions,
     qualitySample,
     avgLatencyMs7d,
     tokens7d,
-    agentQuality: summarizeAgentQuality(getRecentViolations(500), args.tenantKey),
+    agentQuality: agentQualityResult.snapshot,
   };
 
   return { headline, engagement, banners };
+}
+
+export async function loadAgentQualitySnapshot(
+  tenantKey: string,
+): Promise<{ snapshot: AgentQualitySnapshot; banner?: DashboardBanner }> {
+  try {
+    const { canUseSupabaseViolationBackend, listRecentAgentQualityViolationEvents } = await import(
+      '@/lib/intelligence/synthesis/violationsSupabaseBackend'
+    );
+    if (canUseSupabaseViolationBackend()) {
+      const events = await listRecentAgentQualityViolationEvents(tenantKey, 500);
+      return { snapshot: summarizeAgentQuality(events, tenantKey) };
+    }
+  } catch (err) {
+    return {
+      snapshot: summarizeAgentQuality(getRecentViolations(500), tenantKey),
+      banner: {
+        severity: 'warning',
+        key: 'agent-quality-persistent-telemetry-unreachable',
+        message: `Agent-quality telemetry is using the in-memory fallback: ${
+          err instanceof Error ? err.message : 'unknown error'
+        }. Verify agent_quality_violation_events migration and Supabase service-role config.`,
+      },
+    };
+  }
+
+  return {
+    snapshot: summarizeAgentQuality(getRecentViolations(500), tenantKey),
+    banner: {
+      severity: 'info',
+      key: 'agent-quality-in-memory-fallback',
+      message:
+        'Agent-quality telemetry is using the in-memory fallback because Supabase persistence env vars are not configured in this runtime.',
+    },
+  };
 }
 
 export function summarizeAgentQuality(
