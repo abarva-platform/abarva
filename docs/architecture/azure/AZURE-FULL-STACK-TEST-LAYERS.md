@@ -31,7 +31,7 @@ Current state: the lab has real Azure services live through AZLAB25: Container A
 | L7 Agent quality | Sentinel, Atlas, Nexus, Source, and Steward stay grounded, in-voice, internally consistent, and safe under adversarial prompts. | `docs/agent-quality/SENTINEL-CONSISTENCY-GUARD-EXPANSION.md`, existing Sentinel voice tests, `tests/agent-quality/golden/*.jsonl`, `npm run qa:agent-quality:corpus`, `.github/workflows/agent-quality-corpus.yml`; AZLAB37 | Live answer runner/scorer, weekly drift watchdog, guard telemetry wired to C5 dashboard. | Partial |
 | L8 Performance / load | Postgres pool, Container Apps autoscale, Search retrieval, and agent turns stay under CXO latency targets. | Container Apps runtime live; App Insights live; `scripts/load/azure-primary-surfaces.mjs`; `.github/workflows/azure-l8-primary-surface-load.yml`; AZLAB35 | Authenticated Azure run with `AZURE_LAB_L8_COOKIE`, cold-start test, agent latency budget trace, Postgres pool pressure scenario. | Partial |
 | L9 Resilience / DR | The app degrades gracefully when Postgres, Service Bus, or LLM provider fails. | A2b worker DLQ behavior is designed; `npm run azure:servicebus:dlq-drill`; AZLAB40; PITR available through managed Postgres configuration | Mixed good+poison batch drill, LLM 529 fallback simulation, Postgres disruption runbook, monthly restore drill. | Partial |
-| L10 Compliance / audit trail | Sensitive-upload, gate approval, and admin-action evidence is append-only and exportable. | B5c `sensitive_upload_audit` migration/data wiring; `/admin/quarantine`; Purview stub design; `src/lib/security/__tests__/quarantine-audit-supabase.test.ts`; `npm run export:soc2-evidence-pack`; `npm run assert:sensitive-upload-audit-immutability`; AZLAB34; AZLAB38; AZLAB39 | Purview label persistence test and monthly scheduled evidence-pack export. | Partial |
+| L10 Compliance / audit trail | Sensitive-upload, gate approval, and admin-action evidence is append-only and exportable. | B5c `sensitive_upload_audit` migration/data wiring; `/admin/quarantine`; Purview stub design; `src/lib/security/__tests__/quarantine-audit-supabase.test.ts`; `npm run export:soc2-evidence-pack`; `npm run assert:sensitive-upload-audit-immutability`; AZLAB34; AZLAB38; AZLAB39; AZLAB41 | Monthly scheduled evidence-pack export and live Purview fixture. | Partial |
 | L11 Observability / SLO + cost | Regression, latency, errors, agent violations, RLS denials, and spend cannot silently drift. | Log Analytics, App Insights, action group, budget; `scripts/azure/audit-observability.mjs`, `.github/workflows/azure-l11-observability-audit.yml`; `docs/pilot/C5-PILOT-SUCCESS-METRICS-DASHBOARD-SPEC.md` | Run audit through GitHub OIDC, add synthetic availability tests, SLO dashboard queries, cost alerts per RG, end-to-end agent trace coverage. | Partial |
 
 ## L1 - Infrastructure / IaC
@@ -214,10 +214,10 @@ These are synthetic context chunks, not customer data.
 |---|---|---|
 | Sensitive-upload audit immutability | `src/scripts/assert-sensitive-upload-audit-immutability.ts`, `npm run assert:sensitive-upload-audit-immutability` | UPDATE/DELETE is blocked under authenticated observer and tenant-admin claims; release/hard-delete actions append lifecycle child rows. |
 | Lifecycle reconstruction | SQL test fixture | Quarantine -> release -> hard-delete rows reconstruct through `parent_id`. |
-| Purview label persistence | Purview stub + DB assertion | Labels persist in `purview_labels` JSONB and survive release. |
+| Purview label persistence | `src/lib/security/quarantine-audit-supabase.ts` + unit test | Labels persist in `purview_labels` JSONB and survive release/hard-delete lifecycle rows. |
 | Evidence export | `src/scripts/export-soc2-evidence-pack.ts`, `npm run export:soc2-evidence-pack` | CSV/JSON pack contains sensitive-upload decisions, data inventory audit logs, gate evidence, local approval ledgers, and a manifest with row counts/skips. |
 
-**Current state.** B5c introduced the quarantine/audit table and admin page. AZLAB34 adds application-level L10 assertions: tenant-scoped parent-row listing, release/hard-delete append lifecycle rows through `parent_id`, RLS enabled, and authenticated public-role SELECT only in the migration contract. AZLAB38 adds the SOC2 evidence-pack export command with dry-run validation. AZLAB39 adds the live SQL immutability assertion command with dry-run validation. Purview label persistence and a monthly scheduled evidence-pack run still need to be implemented.
+**Current state.** B5c introduced the quarantine/audit table and admin page. AZLAB34 adds application-level L10 assertions: tenant-scoped parent-row listing, release/hard-delete append lifecycle rows through `parent_id`, RLS enabled, and authenticated public-role SELECT only in the migration contract. AZLAB38 adds the SOC2 evidence-pack export command with dry-run validation. AZLAB39 adds the live SQL immutability assertion command with dry-run validation. AZLAB41 preserves Purview labels into release and hard-delete lifecycle rows. A live Purview fixture and monthly scheduled evidence-pack run still need to be implemented.
 
 ## L11 - Observability / SLO + Cost
 
@@ -252,7 +252,7 @@ These are synthetic context chunks, not customer data.
 | 2 | Implement live agent answer runner/scorer over the L7 corpus. | Moves from corpus completeness to measurable answer quality. |
 | 3 | Implement G1/G2/G6 Sentinel consistency guards. | Highest-value quality lift from the guard expansion design. |
 | 4 | Run the L8 primary-surface load smoke against Azure with an authenticated cookie, then add cold-start and agent-turn scenarios. | Establishes first p95/cold-start baseline before real pilot traffic. |
-| 5 | Add Purview label persistence and monthly evidence-pack scheduling. | Moves compliance from ad hoc export/assertion commands to recurring auditor-ready proof. |
+| 5 | Add live Purview fixture and monthly evidence-pack scheduling. | Moves compliance from ad hoc export/assertion commands to recurring auditor-ready proof. |
 
 ## Fresh Subscription Acceptance Checklist
 
