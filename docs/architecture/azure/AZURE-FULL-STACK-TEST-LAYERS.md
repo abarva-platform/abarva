@@ -23,7 +23,7 @@ Current state: the lab has real Azure services live through AZLAB25: Container A
 | Layer | What it proves | Live artifacts today | Missing gate | Status |
 |---|---|---|---|---|
 | L1 Infrastructure / IaC | The three-lane topology deploys cleanly to a fresh subscription/RG. Expected resources exist, no orphans. | `infra/azure/**`, `docs/architecture/azure/AZLAB*.md`, `docs/architecture/azure/CURRENT-STATE.md` | CI job for `bicep what-if` against ephemeral RG plus `az resource list` parity check. | Partial |
-| L2 Connectivity / private endpoint reachability | Container Apps can reach private Postgres, Blob, Service Bus, Key Vault, and Search through intended lanes; public clients cannot reach private data resources. | `/api/health` direct Postgres probe; AZLAB20, AZLAB22, AZLAB23, AZLAB25 live job evidence | New `/api/health/azure-connectivity` route or script with per-resource pass/fail plus negative public-path test. | Partial |
+| L2 Connectivity / private endpoint reachability | Container Apps can reach private Postgres, Blob, Service Bus, Key Vault, and Search through intended lanes; public clients cannot reach private data resources. | `/api/health` direct Postgres probe; AZLAB20, AZLAB22, AZLAB23, AZLAB25 live job evidence; AZLAB26 positive-path smoke across Postgres/Blob/Service Bus/Key Vault/Search | Add negative public-path test to prove private resources fail by network/firewall, not only auth. | Partial |
 | L3 Security: network + identity | Private data resources are not public; managed identities are least-privilege; secrets are Key Vault refs, not literals. | Key Vault env projection in AZLAB16; current state doc; Defender baseline; ACR managed identity pull | Role-assignment audit script, public-network audit, gitleaks workflow, Container App env literal scan, rotation drill. | Partial |
 | L4 Multi-tenant isolation | Tenant A cannot read tenant B via API, RLS, broker, or UI. | `.github/workflows/sec-p0-post-deploy.yml`, `tests/security/sec-p0-cross-tenant-probes.sh`, `tests/e2e/primary-surfaces-smoke.spec.ts` | Wire SEC-P0 workflow to Azure FQDN, add SQL RLS tenant-role tests, add broker response tenant-key assertion. | Partial |
 | L5 Data integrity | Migrations and seeds replay to a fresh DB; drift is visible; backup/restore works. | `.github/workflows/migration-drift-*.yml`, `src/scripts/bootstrap-azure-postgres-compat.ts`, `src/scripts/copy-tenant-context-to-azure.ts`, `src/scripts/verify-azure-postgres-schema.ts` | Reset-and-replay CI against fresh Postgres, expected row-count assertions, weekly PITR restore drill. | Partial |
@@ -63,7 +63,7 @@ Current state: the lab has real Azure services live through AZLAB25: Container A
 | Key Vault | Managed identity reads `azure-connectivity-smoke-secret` | Public client cannot bypass RBAC/network posture. |
 | AI Search | Query `$count=true` on `tenant-context-v1` | Admin-key-free public probe denied. |
 
-**Recommended artifact.** Add `src/scripts/azure-connectivity-smoke.ts` first, then expose a guarded `/api/health/azure-connectivity` route for app-level diagnostics. The script should return stable JSON:
+**Live artifact.** AZLAB26 added `src/scripts/azure-connectivity-smoke.ts` and a guarded `/api/health/azure-connectivity` route. The script returns stable JSON:
 
 ```json
 {
