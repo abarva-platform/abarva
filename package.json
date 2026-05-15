@@ -33,6 +33,7 @@
     "seed:programs-enhancement:plan": "npx tsx src/scripts/seed/programs-enhancement-plan.ts",
     "seed:programs-enhancement": "npx tsx src/scripts/seed/programs-enhancement-seed.ts",
     "db:migrate": "npx tsx src/scripts/run-migrations.ts",
+    "test:rls-regression": "npx tsx scripts/run-rls-regression.ts",
     "db:migrate:dry": "npx tsx src/scripts/run-migrations.ts --dry",
     "db:migrate:mark-applied": "npx tsx src/scripts/run-migrations.ts --mark-all-applied",
     "db:verify:tenant-keys": "npx tsx scripts/verify-tenant-key-canonical.ts",

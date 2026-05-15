@@ -1,0 +1,121 @@
+name: RLS regression (L4 SQL tenant isolation)
+
+# Runs the SQL-level RLS regression suite against the lab Azure Postgres.
+# Complements .github/workflows/sec-p0-post-deploy.yml: that suite probes the
+# HTTP API for cross-tenant leaks; this one probes the database tier directly,
+# under the authenticated role with each tenant's JWT claim.
+#
+# Triggers:
+#   - workflow_dispatch (manual; pick the environment)
+#   - schedule (nightly against the lab Postgres)
+#
+# Required repository secrets (mirrors Codex's
+# scripts/azure/set-postgres-database-url-secrets.mjs pattern):
+#   AZURE_CONTROL_DATABASE_URL   full DSN to abarva_control (Postgres URI)
+#   AZURE_CONTEXT_DATABASE_URL   full DSN to abarva_context
+#   PRODUCTION_DATABASE_URL      production DSN, used when environment=production
+#
+# Exit code:
+#   0 — every tenant × table probe was pass/empty
+#   1 — at least one tenant saw rows that belong to another tenant
+#   2 — connection / config error
+#
+# Operational note:
+#   Read-only. The SQL only creates TEMP tables and runs SELECTs.
+#   Safe to point at production.
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Database to probe"
+        required: true
+        default: "lab-control"
+        type: choice
+        options:
+          - lab-control
+          - lab-context
+          - production
+  schedule:
+    # 03:30 UTC nightly — staggered 30 min after sec-p0-post-deploy so the
+    # two layers don't share a green/red window in the on-call alert path.
+    - cron: "30 3 * * *"
+
+jobs:
+  rls-regression:
+    name: RLS regression (L4)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Resolve target label
+        id: target
+        run: |
+          case "${{ inputs.environment || 'lab-control' }}" in
+            production)   echo "label=production" >> "$GITHUB_OUTPUT" ;;
+            lab-context)  echo "label=azure-lab/abarva_context" >> "$GITHUB_OUTPUT" ;;
+            *)            echo "label=azure-lab/abarva_control" >> "$GITHUB_OUTPUT" ;;
+          esac
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci --no-audit --no-fund
+
+      - name: Run RLS regression
+        env:
+          # All three candidate DSNs are exported; the bash step picks the
+          # right one based on the resolved environment. GitHub Actions
+          # expressions don't support computed secret lookups, so we route
+          # via shell rather than ${{ ... }}.
+          PROD_DSN: ${{ secrets.PRODUCTION_DATABASE_URL }}
+          LAB_CONTROL_DSN: ${{ secrets.AZURE_CONTROL_DATABASE_URL }}
+          LAB_CONTEXT_DSN: ${{ secrets.AZURE_CONTEXT_DATABASE_URL }}
+          TARGET: ${{ inputs.environment || 'lab-control' }}
+          TARGET_LABEL: ${{ steps.target.outputs.label }}
+        run: |
+          case "$TARGET" in
+            production)   export DATABASE_URL="$PROD_DSN" ;;
+            lab-context)  export DATABASE_URL="$LAB_CONTEXT_DSN" ;;
+            *)            export DATABASE_URL="$LAB_CONTROL_DSN" ;;
+          esac
+          if [[ -z "${DATABASE_URL:-}" ]]; then
+            echo "::error::DATABASE_URL secret is empty for ${TARGET_LABEL}. Set the corresponding repo secret." >&2
+            exit 2
+          fi
+          echo "::group::Target"
+          echo "  ${TARGET_LABEL}"
+          echo "::endgroup::"
+          npm run test:rls-regression | tee rls-regression.log
+        shell: bash
+
+      - name: Append summary to GitHub job summary
+        if: always()
+        run: |
+          {
+            echo "## RLS regression (L4)"
+            echo ""
+            echo "**Target:** ${{ steps.target.outputs.label }}"
+            echo "**Trigger:** ${{ github.event_name }}"
+            echo ""
+            echo '```'
+            tail -n 80 rls-regression.log 2>/dev/null || echo "(no log captured)"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload full log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: rls-regression-log
+          path: rls-regression.log
+          retention-days: 14
