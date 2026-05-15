@@ -6,29 +6,31 @@ Status: active roadmap as of 2026-05-15
 
 | Order | Service | Why now | Target posture |
 |---:|---|---|---|
-| 1 | Azure Container Registry | Foundational for real Container Apps images. | RBAC-only, admin disabled; private endpoint later. |
-| 2 | Cost Management budgets + alerts | Keeps founder-lab burn visible before more paid services land. | Monthly budget with actual/forecast thresholds. |
-| 3 | Service Bus + Event Grid | Unblocks event-driven context refresh without Data Factory complexity. | Live in AZLAB12. Next: ingestion worker. |
-| 4 | Azure AI Search | Core retrieval/index layer for context and evidence. | Service live in AZLAB13; index contracts live in AZLAB24; tenant-context backfill live in AZLAB25; query adapter next. |
-| 5 | Key Vault env projection | Required before the real AbarVa image can pass runtime smoke in Azure. | Container Apps secret references through managed identity; no credentials baked into image or IaC. |
-| 6 | Azure-native graph provider | Needed before the context layer is fully Azure-native. | Cosmos DB for Apache Gremlin deployed in AZLAB17; next is app provider boundary and synthetic graph seed. |
-| 7 | Front Door + WAF | Required when Azure hosts a real public app endpoint. | TLS edge, WAF, rate/bot controls. |
-| 8 | API Management | Useful when customer/partner APIs are exposed. | Defer until first signed pilot API boundary. |
-| 9 | Azure AI Foundry / Azure OpenAI | Lets Azure-native enterprises consume model services through their approved cloud lane. | Claude/LLM routing through approved Foundry/provider lane where available. |
-| 10 | Defender for Cloud / Microsoft Sentinel | SOC/SecOps readiness. | Add when budgets and logs are stable. |
-| 11 | Azure Policy | Prevents drift and enforces private-data-lane posture. | Required before first customer VPC/private subscription. |
-| 12 | Data Factory / Fabric | Better for mature Day-2 ingestion than pilot loading. | Defer; Service Bus/Event Grid + worker is enough first. Fabric Graph stays on the watchlist for analytical graph. |
+| 1 | Full-stack test gates | Turns the lab from "services exist" into "deployment/pilot readiness is provable." | L1-L11 gate model in `AZURE-FULL-STACK-TEST-LAYERS.md`; first implementation slices are L2 connectivity, L3 security audit, L4 isolation probes, L5 data replay, L6 workflow E2E. |
+| 2 | Azure Container Registry | Foundational for real Container Apps images. | RBAC-only, admin disabled; private endpoint later. |
+| 3 | Cost Management budgets + alerts | Keeps founder-lab burn visible before more paid services land. | Monthly budget with actual/forecast thresholds. |
+| 4 | Service Bus + Event Grid | Unblocks event-driven context refresh without Data Factory complexity. | Live in AZLAB12. Next: ingestion worker. |
+| 5 | Azure AI Search | Core retrieval/index layer for context and evidence. | Service live in AZLAB13; index contracts live in AZLAB24; tenant-context backfill live in AZLAB25; query adapter next. |
+| 6 | Key Vault env projection | Required before the real AbarVa image can pass runtime smoke in Azure. | Container Apps secret references through managed identity; no credentials baked into image or IaC. |
+| 7 | Azure-native graph provider | Needed before the context layer is fully Azure-native. | Cosmos DB for Apache Gremlin deployed in AZLAB17; next is app provider boundary and synthetic graph seed. |
+| 8 | Front Door + WAF | Required when Azure hosts a real public app endpoint. | TLS edge, WAF, rate/bot controls. |
+| 9 | API Management | Useful when customer/partner APIs are exposed. | Defer until first signed pilot API boundary. |
+| 10 | Azure AI Foundry / Azure OpenAI | Lets Azure-native enterprises consume model services through their approved cloud lane. | Claude/LLM routing through approved Foundry/provider lane where available. |
+| 11 | Defender for Cloud / Microsoft Sentinel | SOC/SecOps readiness. | Add when budgets and logs are stable. |
+| 12 | Azure Policy | Prevents drift and enforces private-data-lane posture. | Required before first customer VPC/private subscription. |
+| 13 | Data Factory / Fabric | Better for mature Day-2 ingestion than pilot loading. | Defer; Service Bus/Event Grid + worker is enough first. Fabric Graph stays on the watchlist for analytical graph. |
 
 ## Architecture Principle
 
 Do the small, high-leverage platform pieces first:
 
-1. Can we safely run images?
-2. Can we see and control cost?
-3. Can we ingest changes incrementally?
-4. Can we retrieve context at enterprise quality?
-5. Can we traverse relationships in an Azure-native graph provider?
-6. Can we route model calls through an enterprise-approved lane?
+1. Can we prove the deployment, private connectivity, security posture, tenant isolation, and pilot workflows with repeatable tests?
+2. Can we safely run images?
+3. Can we see and control cost?
+4. Can we ingest changes incrementally?
+5. Can we retrieve context at enterprise quality?
+6. Can we traverse relationships in an Azure-native graph provider?
+7. Can we route model calls through an enterprise-approved lane?
 
 That sequence is more credible than deploying a large catalog of Azure services before the product needs them.
 
