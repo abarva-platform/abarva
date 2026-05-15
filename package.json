@@ -35,6 +35,7 @@
     "db:migrate": "npx tsx src/scripts/run-migrations.ts",
     "db:migrate:dry": "npx tsx src/scripts/run-migrations.ts --dry",
     "db:migrate:mark-applied": "npx tsx src/scripts/run-migrations.ts --mark-all-applied",
+    "db:verify:tenant-keys": "npx tsx scripts/verify-tenant-key-canonical.ts",
     "audit:planes": "npx tsx src/scripts/audit/audit-tenant-data-planes.ts",
     "audit:financial": "npx tsx src/scripts/audit/audit-financial-kpis.ts",
     "audit:sanity": "npx tsx src/scripts/audit/audit-numbers-sanity.ts",
