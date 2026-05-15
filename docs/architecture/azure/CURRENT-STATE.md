@@ -19,10 +19,12 @@ The current design keeps the app runtime in `eastus` and the first managed Postg
 | Private object store | Storage + Private Endpoint | `stabarvaprivatedplab001`, `pe-stabarvaprivatedplab001-blob` | Stores datasets, evidence manifests, exports, and corpus artifacts without public data-plane access. |
 | Runtime scale lane | Container Apps environment, Container App, managed identity | `cae-abarva-scale-lab-eastus`, `ca-abarva-scale-smoke-lab-eastus`, `id-abarva-scale-runtime-lab-eastus` | Validates HTTP/container autoscale without App Service VM quota. |
 | Image supply chain | Azure Container Registry | `acrabarvalab001` | RBAC-only image registry for app, broker, ingestion, and evaluation worker images. |
-| App image | ACR image | `acrabarvalab001.azurecr.io/abarva/web:lab-ebe449ae-r3` | Proves the real AbarVa Next.js app can build and push through Azure's image lane. |
-| Real-image app runtime shell | Container App | `ca-abarva-web-lab-eastus` | References the real AbarVa image with managed-identity ACR pull; min replicas stay 0 until env wiring. |
+| App image | ACR image | `acrabarvalab001.azurecr.io/abarva/web:lab-keyvault-health-20260515-r1` | Proves the real AbarVa Next.js app can build and push through Azure's image lane with the public health probe. |
+| Real-image app runtime shell | Container App | `ca-abarva-web-lab-eastus` | References the real AbarVa image with managed-identity ACR pull and Key Vault-backed env projection. |
 | Event ingestion | Service Bus, Event Grid, Blob containers | `sb-abarva-lab-eastus`, `q-context-ingestion-events`, `q-agent-work-items`, `context-drops`, `context-processed`, `egsub-context-drop-created` | Creates the Day-2 backbone for incremental context-layer refresh. |
 | Retrieval | Azure AI Search | `srch-abarva-context-lab-eastus` | Azure-native retrieval service for tenant context, evidence, source/vendor artifacts, industry corpus, and signals. |
+| Azure-native graph | Cosmos DB for Apache Gremlin | `cos-abarva-graph-lab-001`, `abarva-context-graph`, `tenant-context` | Operational relationship graph foundation for tenant context; partitioned by `/tenantKey` and reachable through private endpoint/DNS. |
+| Graph compatibility | Neo4j env compatibility path | Current `NEO4J_*` settings projected from Key Vault, but health currently reports `neo4j=false` | Current code has a Neo4j driver, but the lab should not treat Neo4j as the strategic Azure graph provider. |
 | Database lane | Azure Database for PostgreSQL Flexible Server, DB VNet, VNet peering | `pg-abarva-context-lab-001`, `vnet-abarva-database-lab-eastus2` | Azure-native system-of-record candidate for control, context, and audit stores. |
 | Observability | Log Analytics, Application Insights, Action Group, Activity Log Alert | `log-abarva-observability-lab-eastus`, `appi-abarva-observability-lab-eastus`, `ag-abarva-observability-lab-eastus`, `ala-subscription-deployment-failures` | Gives the lab an operational control loop and deployment failure visibility. |
 | Cost guardrails | Cost Management budget | `budget-abarva-lab-monthly` | Keeps lab burn visible before adding paid retrieval/model/security services. |
@@ -34,7 +36,7 @@ The current design keeps the app runtime in `eastus` and the first managed Postg
 |---:|---|---|---|
 | 1 | Search index contracts | Azure AI Search indexes | Create indexes after embedding dimensions/provider and ingestion worker contract are set. |
 | 2 | Model lane | Azure AI Foundry / Azure OpenAI | Governed enterprise model endpoint, including Claude through Azure-native procurement where available. |
-| 3 | Runtime env wiring | Container Apps + Key Vault | Add non-production Clerk/Supabase/Postgres/model settings through Key Vault and validate health. |
+| 3 | Graph-provider code boundary | App broker + Cosmos Gremlin adapter | Replace direct Neo4j reads with a provider boundary and seed a synthetic tenant graph. |
 | 4 | Enterprise ingress | Front Door + WAF | Public Azure entry with TLS, WAF, bot/rate controls, and customer-ready routing. |
 | 5 | Ingestion worker | Container Apps job or worker app | Consume Service Bus events, validate datasets, scan sensitive data, update manifests, and refresh search. |
 
@@ -46,6 +48,7 @@ The current design keeps the app runtime in `eastus` and the first managed Postg
 | Middle | API routes, agent orchestration, context assembly, model gateway, source/move workflows | Container Apps + managed identity + Key Vault + private network + ACR image supply chain. | Split app runtime, broker/API boundary, ingestion worker, evaluation worker, and scheduled jobs as separate images in ACR. |
 | Back | Tenant data, context metadata, evidence, audit, files | Private Postgres + private Blob Storage. | Postgres for metadata/contracts/audit; Blob for raw artifacts/manifests; AI Search for retrieval; optional graph/vector services as tenant requirements dictate. |
 | Model/retrieval | Sentinel/Nexus/Source/Atlas reasoning over tenant context | Not yet live in Azure. | Azure AI Search + Foundry model lane, with sensitivity-aware routing and evaluation telemetry. |
+| Relationship graph | Entity and dependency relationships for tenant context | Cosmos DB for Apache Gremlin is now deployed as the Azure-native operational graph foundation; current code still has a Neo4j compatibility driver. | Provider boundary with Cosmos Gremlin first; Fabric Graph for analytical graph as it matures. |
 | Ops/security | Logs, metrics, secrets, deployment failures | Log Analytics, App Insights, Key Vault, activity log alert. | Azure Policy, Defender, Sentinel, private operator access, budget enforcement, and DLP/sensitive-data controls. |
 
 ## Cost and Latency Notes
@@ -73,8 +76,9 @@ Before scale-up, measure and record:
 
 | Gap | Severity | Close path |
 |---|---|---|
-| Real AbarVa app runtime not yet env-complete | High | Add Key Vault-backed env, then validate health and one authenticated route. |
+| Real AbarVa app runtime health is still blocked by auth middleware until this PR deploys | High | `/api/health` now has a public-probe allowlist; rebuild image and redeploy runtime. |
 | No Azure AI Search indexes yet | High | Create indexes after embedding/model contract is finalized. |
+| No graph-provider app adapter yet | Medium | Add a broker-level graph provider interface and seed Cosmos Gremlin with synthetic tenant context. |
 | No ingestion worker yet | Medium | Add a Container Apps job/worker that consumes the Service Bus event queue. |
 | No Front Door/WAF | Medium | Add when real Azure-hosted app needs enterprise ingress. |
 | No Azure Policy assignments beyond placeholders | Medium | Add guardrails before first customer VPC lane. |

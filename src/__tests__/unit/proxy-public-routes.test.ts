@@ -11,6 +11,12 @@ describe('proxy public route patterns', () => {
     expect(isPublicRoute(request)).toBe(true);
   });
 
+  it('treats the health endpoint as a public platform probe', () => {
+    const request = new NextRequest('https://app.abarva.ai/api/health');
+    expect(isPublicRoute(request)).toBe(true);
+    expect(isAuthRequiredRoute(request)).toBe(false);
+  });
+
   it('does not treat unrelated auth API paths as public', () => {
     const request = new NextRequest('https://app.abarva.ai/api/auth/other');
     expect(isPublicRoute(request)).toBe(false);
