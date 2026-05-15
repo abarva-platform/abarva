@@ -395,7 +395,7 @@ async function verifyGoodAuditRow(options: Options): Promise<Record<string, unkn
           and metadata #>> '{metadata,l9DrillCase}' = 'good'
           and ingestion_tier = 'tier2_blob'
           and parent_id is null
-        order by created_at desc
+        order by evaluated_at desc
         limit 5
       `,
       [options.runId],

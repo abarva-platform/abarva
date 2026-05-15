@@ -120,3 +120,7 @@ The script accepts either:
 ## What Remains
 
 This still does not simulate provider outages or database disruption. Those remain separate L9 drills: LLM overload/fallback, Postgres private endpoint disruption, and PITR restore timing.
+
+## Live Probe Finding
+
+The first Azure verifier run after PR #2005 found a schema mismatch in the verifier query: `sensitive_upload_audit` uses `evaluated_at`, not `created_at`. The verifier was corrected to order by `evaluated_at desc` before rerunning live evidence.
