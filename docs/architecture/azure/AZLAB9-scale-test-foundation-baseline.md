@@ -112,10 +112,10 @@ These services are part of the target architecture but intentionally not deploye
 |---|---|---|
 | Azure AI Search | Needs corpus/index design and embedding provider decision. | Define indexes for tenant context, evidence manifests, source artifacts, and industry corpus. |
 | Azure OpenAI / Foundry | Needs model routing policy and approved region/model availability. | Define low/medium/high sensitivity model lanes. |
-| Azure Container Registry | Needed before running real AbarVa images. | Add private ACR with managed identity pulls. |
+| Azure Container Registry | Needed before running real AbarVa images. | Added in AZLAB11 with RBAC-only push/pull and admin disabled. |
 | Front Door + WAF | Needed for public enterprise-grade app ingress. | Decide whether Azure or Vercel remains primary edge for the lab. |
 | API Management | Useful for enterprise boundary APIs, but not needed for first scale lane. | Add when API products and rate limits are defined. |
-| Budget resources | Cost guardrails are defined in docs; live budget is not yet deployed in this pass. | Add budget/contact parameters and subscription budget deployment. |
+| Budget resources | Cost guardrails were not deployed in this pass. | Added in AZLAB11 as `budget-abarva-lab-monthly`. |
 
 ## Target State Direction
 
@@ -216,7 +216,7 @@ az deployment sub create \
 ## Immediate Next Steps
 
 1. Decide whether the real AbarVa runtime for scale tests runs on Azure Container Apps first, with Vercel retained for production/demo until parity is proven.
-2. Add private Azure Container Registry and image-pull identity.
+2. Build and push the first real AbarVa image to Azure Container Registry.
 3. Define the Supabase/Postgres-to-Azure migration harness and schema cutover model.
 4. Add Azure AI Search and define context-layer index contracts.
 5. Add Azure OpenAI/Foundry and model-routing controls.

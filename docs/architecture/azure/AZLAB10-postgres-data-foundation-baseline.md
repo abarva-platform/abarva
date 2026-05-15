@@ -32,8 +32,11 @@ This is acceptable for the lab because:
 - it avoids public fallback access
 - it validates cross-region private networking
 - it documents the regional constraint explicitly
+- it proves the architecture can survive quota and regional availability constraints without weakening the private data lane
 
 For production, the database and application runtime should be co-located in the final approved region unless resilience or data-residency requirements dictate otherwise.
+
+Before scale-up, measure app-to-Postgres latency and cross-region bandwidth so the same-region decision can be made from real data. The expected lab penalty is small, but the baseline matters: it gives us a factual comparison if `eastus` Postgres availability is later unlocked.
 
 ## Live Resources
 

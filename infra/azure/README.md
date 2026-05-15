@@ -13,8 +13,10 @@ This directory contains the Day-0 Azure foundation starter aligned to:
 - `main.bicep` - subscription-scoped orchestrator
 - `foundation.bicep` - subscription-scoped scale-test foundation that avoids VM/App Service quota
 - `postgres-foundation.bicep` - subscription-scoped private Postgres database lane
+- `registry-cost-foundation.bicep` - subscription-scoped ACR and Cost Management budget lane
 - `control-plane.bicep` - control plane RG baseline
 - `private-dataplane.bicep` - tenant-isolated private dataplane baseline
+- `container-registry.bicep` - ACR and image push/pull RBAC helper
 - `postgres-regional-private.bicep` - regional private Postgres/VNet/DNS module
 - `scale-runtime.bicep` - Container Apps scale-test runtime lane
 - `storage-rbac.bicep` - cross-resource-group storage role assignment helper
@@ -25,6 +27,7 @@ This directory contains the Day-0 Azure foundation starter aligned to:
 - `parameters/lab.bicepparam` - lab parameterization
 - `parameters/foundation.lab.bicepparam` - current lab foundation parameters
 - `parameters/postgres.lab.bicepparam` - current lab Postgres parameters
+- `parameters/registry-cost.lab.bicepparam` - current lab ACR and budget parameters
 
 ## Recommended Deployment Path
 
@@ -88,6 +91,22 @@ export POSTGRES_ADMINISTRATOR_LOGIN_PASSWORD="$(
 )"
 ```
 
+Then deploy the image supply-chain and cost guardrail lane:
+
+```bash
+az deployment sub what-if \
+  --name azfound-registry-cost-whatif \
+  --location eastus \
+  --template-file infra/azure/registry-cost-foundation.bicep \
+  --parameters infra/azure/parameters/registry-cost.lab.bicepparam
+
+az deployment sub create \
+  --name azfound-registry-cost-lab \
+  --location eastus \
+  --template-file infra/azure/registry-cost-foundation.bicep \
+  --parameters infra/azure/parameters/registry-cost.lab.bicepparam
+```
+
 ## Full Control Plane Deployment
 
 ```bash
@@ -110,7 +129,9 @@ The full `main.bicep` path includes the older App Service / API Management contr
 ```bash
 az bicep build --file infra/azure/foundation.bicep
 az bicep build --file infra/azure/postgres-foundation.bicep
+az bicep build --file infra/azure/registry-cost-foundation.bicep
 az bicep build --file infra/azure/main.bicep
+az bicep build --file infra/azure/container-registry.bicep
 az bicep build --file infra/azure/control-plane.bicep
 az bicep build --file infra/azure/private-dataplane.bicep
 az bicep build --file infra/azure/postgres-regional-private.bicep
@@ -134,3 +155,5 @@ az bicep build --file infra/azure/shared-security.bicep
 - Postgres public network access is disabled.
 - Postgres is private DNS/VNet reachable from the database VNet and the peered private data-plane VNet.
 - Postgres administrator login/password metadata is stored in Key Vault secrets, not source.
+- ACR admin user stays disabled; pushes and pulls use Azure RBAC.
+- The lab ACR currently allows public network access for local/Codex image pushes. Production/private-client lanes should disable public access once a private build-agent path exists.
