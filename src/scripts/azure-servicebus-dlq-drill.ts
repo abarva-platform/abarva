@@ -158,13 +158,16 @@ function sha256(bytes: Buffer): string {
   return createHash('sha256').update(bytes).digest('hex');
 }
 
-function goodMixedBody(runId: string, tenantClientKey: string): Buffer {
+function goodMixedBody(_runId: string, tenantClientKey: string): Buffer {
+  // Keep opaque run ids in blob metadata only. Long numeric suffixes can
+  // accidentally satisfy the payment-card Luhn check and turn the "good"
+  // lane into a false quarantine.
   return Buffer.from([
     'AbarVa L9 mixed-batch resilience drill.',
     'This is synthetic confidential business context only.',
     'No PHI, no PII, no direct identifiers.',
     `Tenant: ${tenantClientKey}`,
-    `Run: ${runId}`,
+    'Run label: synthetic mixed batch',
   ].join('\n'), 'utf-8');
 }
 
