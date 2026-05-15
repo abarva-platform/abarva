@@ -12,7 +12,7 @@ This stage adds the first Day-2 automation spine for the AbarVa context layer. I
 1. A client-safe file lands in a private storage drop container.
 2. Azure Event Grid emits a `BlobCreated` event.
 3. The event lands in a Service Bus queue.
-4. A future ingestion worker consumes the message, validates the dataset, scans for sensitive data, updates manifests, and refreshes the context/search layer.
+4. The A2b ingestion worker consumes the message, validates the dataset, scans for sensitive data, writes audit evidence, and prepares the broker/index refresh path.
 
 This avoids overbuilding with Data Factory/Fabric too early while still proving an enterprise-grade event pattern.
 
@@ -49,11 +49,11 @@ Event Grid + Service Bus is the lightest credible implementation of that pattern
 | Runtime auth | Managed identity gets Service Bus sender/receiver roles. |
 | Lab operator auth | `sp-abarva-codex-lab` gets Service Bus data owner role for validation. |
 | Payload posture | Events carry file metadata, not file contents. |
-| Sensitive data | Still prohibited in lab; future worker must scan and quarantine before indexing. |
+| Sensitive data | Still prohibited in lab; the A2b worker scans and quarantines before the broker/index path. |
 
-## Future Worker Contract
+## Worker Contract
 
-The future ingestion worker should treat every event as an untrusted pointer:
+The ingestion worker should treat every event as an untrusted pointer:
 
 1. Validate tenant and dataset manifest.
 2. Scan for PHI/PII/sensitive terms before transformation.
@@ -62,6 +62,8 @@ The future ingestion worker should treat every event as an untrusted pointer:
 5. Update Postgres metadata and Blob evidence receipts.
 6. Refresh Azure AI Search index.
 7. Mark processed or quarantine with reason.
+
+Update 2026-05-15: the deployable worker now exists as Container Apps Job `job-a2b-ingest-lab-eus` and is documented in `AZLAB21-context-ingestion-worker.md`. The smoke proved the worker can boot, pin the user-assigned managed identity, connect to Service Bus, and idle cleanly when `q-context-ingestion-events` has no messages. The remaining proof is a real safe-file and sensitive-file message exercise.
 
 ## Validation Plan
 
