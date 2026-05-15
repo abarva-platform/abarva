@@ -1,0 +1,89 @@
+name: L10 SOC2 evidence pack
+
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: Run the exporter in dry-run mode without requiring a database secret.
+        required: false
+        type: boolean
+        default: false
+      since:
+        description: Optional ISO timestamp lower bound for evidence rows.
+        required: false
+        type: string
+        default: ""
+      max_rows:
+        description: Maximum rows per exported Postgres table.
+        required: false
+        type: string
+        default: "10000"
+  schedule:
+    - cron: "17 10 1 * *"
+
+permissions:
+  contents: read
+
+jobs:
+  export-soc2-evidence:
+    name: Export SOC2 evidence pack
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+
+      - name: Install deps
+        run: npm ci
+
+      - name: Export evidence pack
+        env:
+          SOC2_EVIDENCE_DATABASE_URL: ${{ secrets.SOC2_EVIDENCE_DATABASE_URL }}
+          AZURE_LAB_DATABASE_URL: ${{ secrets.AZURE_LAB_DATABASE_URL }}
+          INPUT_DRY_RUN: ${{ inputs.dry_run || 'false' }}
+          INPUT_SINCE: ${{ inputs.since || '' }}
+          INPUT_MAX_ROWS: ${{ inputs.max_rows || '10000' }}
+        run: |
+          set -euo pipefail
+
+          out_dir="artifacts/soc2-evidence/$(date -u +%Y%m%dT%H%M%SZ)"
+          args=(--out-dir "$out_dir" --max-rows "$INPUT_MAX_ROWS")
+
+          if [ -n "$INPUT_SINCE" ]; then
+            args+=(--since "$INPUT_SINCE")
+          fi
+
+          database_url="${SOC2_EVIDENCE_DATABASE_URL:-$AZURE_LAB_DATABASE_URL}"
+          if [ "$INPUT_DRY_RUN" = "true" ]; then
+            args+=(--dry-run)
+          elif [ -z "$database_url" ]; then
+            echo "Missing SOC2_EVIDENCE_DATABASE_URL or AZURE_LAB_DATABASE_URL secret. Use workflow_dispatch dry_run=true to validate wiring without a database." >&2
+            exit 1
+          else
+            export DATABASE_URL="$database_url"
+          fi
+
+          npm run export:soc2-evidence-pack -- "${args[@]}" | tee soc2-evidence-export.json
+
+      - name: Upload export manifest
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: soc2-evidence-export-result
+          path: soc2-evidence-export.json
+          if-no-files-found: ignore
+
+      - name: Upload evidence pack
+        if: ${{ inputs.dry_run != true }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: soc2-evidence-pack
+          path: artifacts/soc2-evidence/**
+          if-no-files-found: ignore
