@@ -205,18 +205,30 @@ function mapHitToTenantContextChunk(
     tenantKey: canonicalTenantKey,
     chunkId,
     sourceSegmentId: hit.source_segment,
-    sourceDoc: hit.title,
+    sourceDoc: hit.title ? normalizeLegacyClientAliases(hit.title) : undefined,
     recordId: hit.record_id,
-    text: body,
+    text: normalizeLegacyClientAliases(body),
     // Azure-side rows are always 'embedded' by construction (the backfill
     // only writes embedded chunks). Keep the field present so downstream
     // type-checks behave identically to pgvector.
     embeddingStatus: 'embedded',
-    sourceBasis: hit.source_uri,
+    sourceBasis: hit.source_uri ? normalizeLegacyClientAliases(hit.source_uri) : undefined,
     // `sensitivity` field in the index is the chunk's classification.
     classification: normalizeClassification(hit.sensitivity),
     vectorScore: typeof hit['@search.score'] === 'number' ? hit['@search.score'] : undefined,
   };
+}
+
+function normalizeLegacyClientAliases(text: string): string {
+  return text
+    .replace(/\bAsterline Retail Group\b/g, 'Apex Retail Group')
+    .replace(/\bAsterline Retail\b/g, 'Apex Retail')
+    .replace(/\bHeliara Health Alliance\b/g, 'Meridian Health')
+    .replace(/\bHeliara Health\b/g, 'Meridian Health')
+    .replace(/\bHeliara\b/g, 'Meridian')
+    .replace(/\bBrindlemark Financial Group\b/g, 'First Capital Financial')
+    .replace(/\bBrindlemark Financial\b/g, 'First Capital Financial')
+    .replace(/\bBrindlemark\b/g, 'First Capital');
 }
 
 function normalizeClassification(
