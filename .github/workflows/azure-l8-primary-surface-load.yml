@@ -1,0 +1,123 @@
+name: Azure L8 primary-surface load smoke
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Environment to test"
+        required: true
+        default: "azure-lab"
+        type: choice
+        options:
+          - azure-lab
+          - staging
+          - production
+      duration_seconds:
+        description: "Load duration in seconds"
+        required: false
+        default: "60"
+        type: string
+      concurrency:
+        description: "Concurrent workers"
+        required: false
+        default: "5"
+        type: string
+      p95_target_ms:
+        description: "Fail when global p95 exceeds this target"
+        required: false
+        default: "8000"
+        type: string
+      think_time_ms:
+        description: "Delay per worker between requests"
+        required: false
+        default: "50"
+        type: string
+      require_2xx:
+        description: "Require 2xx responses instead of allowing redirects"
+        required: false
+        default: false
+        type: boolean
+
+jobs:
+  primary-surface-load:
+    name: L8 primary-surface load smoke
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+
+      - name: Install deps
+        run: npm ci
+
+      - name: Resolve target
+        id: target
+        run: |
+          set -euo pipefail
+
+          target="${{ inputs.environment }}"
+          case "$target" in
+            production)
+              base_url="${{ secrets.PRODUCTION_BASE_URL }}"
+              cookie="${{ secrets.PRODUCTION_L8_COOKIE }}"
+              ;;
+            staging)
+              base_url="${{ secrets.STAGING_BASE_URL }}"
+              cookie="${{ secrets.STAGING_L8_COOKIE }}"
+              ;;
+            azure-lab)
+              base_url="${{ secrets.AZURE_LAB_BASE_URL }}"
+              cookie="${{ secrets.AZURE_LAB_L8_COOKIE }}"
+              ;;
+            *)
+              echo "Unknown L8 environment: $target" >&2
+              exit 2
+              ;;
+          esac
+
+          if [[ -z "$base_url" ]]; then
+            echo "Missing base URL secret for $target." >&2
+            exit 2
+          fi
+
+          echo "base_url=$base_url" >> "$GITHUB_OUTPUT"
+          {
+            echo "cookie<<EOF"
+            echo "$cookie"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Run L8 load smoke
+        env:
+          AZURE_L8_BASE_URL: ${{ steps.target.outputs.base_url }}
+          AZURE_L8_COOKIE: ${{ steps.target.outputs.cookie }}
+        run: |
+          set -euo pipefail
+
+          args=(
+            --duration-seconds "${{ inputs.duration_seconds }}"
+            --concurrency "${{ inputs.concurrency }}"
+            --think-time-ms "${{ inputs.think_time_ms }}"
+            --p95-target-ms "${{ inputs.p95_target_ms }}"
+          )
+
+          if [ "${{ inputs.require_2xx }}" = "true" ]; then
+            args+=(--require-2xx)
+          fi
+
+          npm run azure:load:primary-surfaces -- "${args[@]}" | tee azure-l8-primary-surface-load.json
+
+      - name: Upload L8 load report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: azure-l8-primary-surface-load
+          path: azure-l8-primary-surface-load.json
+          if-no-files-found: ignore
