@@ -18,7 +18,7 @@ param containerAppsEnvironmentName = 'cae-abarva-scale-lab-eastus'
 param scaleRuntimeManagedIdentityName = 'id-abarva-scale-runtime-lab-eastus'
 
 param webContainerAppName = 'ca-abarva-web-lab-eastus'
-param webImageName = 'acrabarvalab001.azurecr.io/abarva/web:lab-keyvault-health-20260515-r1'
+param webImageName = 'acrabarvalab001.azurecr.io/abarva/web:lab-parallel-run-20260515-r1'
 param registryServer = 'acrabarvalab001.azurecr.io'
 param webMinReplicas = 0
 param webMaxReplicas = 2
@@ -63,8 +63,8 @@ param keyVaultSecretRefs = [
   }
   {
     envName: 'DATABASE_URL'
-    containerAppSecretName: 'database-url'
-    keyVaultSecretUri: 'https://kv-abarva-lab-001.vault.azure.net/secrets/database-url'
+    containerAppSecretName: 'azure-postgres-control-database-url'
+    keyVaultSecretUri: 'https://kv-abarva-lab-001.vault.azure.net/secrets/azure-postgres-control-database-url'
   }
   {
     envName: 'ANTHROPIC_API_KEY'

@@ -17,8 +17,8 @@ This is the right lab and first-pilot pattern. It avoids code churn across every
 | Runtime app | `ca-abarva-web-lab-eastus` | Updated revision with Key Vault-backed secret refs. |
 | Key Vault | `kv-abarva-lab-001` | Holds runtime secrets; RBAC enabled. |
 | Runtime identity | `id-abarva-scale-runtime-lab-eastus` | Granted `Key Vault Secrets User` on the vault. |
-| Image | `acrabarvalab001.azurecr.io/abarva/web:lab-keyvault-health-20260515-r1` | Rebuilt after the public health-probe proxy fix. |
-| Latest revision | `ca-abarva-web-lab-eastus--0000002` | Deployment succeeded after the health-probe image rebuild. |
+| Image | `acrabarvalab001.azurecr.io/abarva/web:lab-parallel-run-20260515-r1` | Rebuilt after adding the direct Azure Postgres health probe. |
+| Latest revision | `ca-abarva-web-lab-eastus--0000004` | Deployment succeeded with Key Vault env projection and public runtime env loaded from the deployment environment. |
 | FQDN | `ca-abarva-web-lab-eastus.agreeableocean-2c1472e6.eastus.azurecontainerapps.io` | Public lab endpoint for smoke only. |
 
 ## Secret Projection Model
@@ -27,7 +27,7 @@ This is the right lab and first-pilot pattern. It avoids code churn across every
 |---|---|---|---|
 | `CLERK_SECRET_KEY` | `clerk-secret-key` | `clerk-secret-key` | Server-side Clerk auth. |
 | `SUPABASE_SERVICE_ROLE_KEY` | `supabase-service-role-key` | `supabase-service-role-key` | Current server-side Supabase access. |
-| `DATABASE_URL` | `database-url` | `database-url` | Current direct Postgres-backed persistence paths. |
+| `DATABASE_URL` | `azure-postgres-control-database-url` | `azure-postgres-control-database-url` | Azure Postgres control database for parallel-run direct Postgres smoke. |
 | `ANTHROPIC_API_KEY` | `anthropic-api-key` | `anthropic-api-key` | Current Claude model calls. |
 | `OPENAI_API_KEY` | `openai-api-key` | `openai-api-key` | Embeddings and fallback calls. |
 | `PINECONE_API_KEY` | `pinecone-api-key` | `pinecone-api-key` | Current vector retrieval compatibility. |
@@ -72,17 +72,28 @@ Completed:
 - Bicep build: `infra/azure/key-vault-rbac.bicep`
 - ACR build: `ca4` → `acrabarvalab001.azurecr.io/abarva/web:lab-keyvault-health-20260515-r1`
 - Image digest: `sha256:2e788fd9b6d67803aca93593ec01d7d7ee631cf836b11ba89ea5707a541380fc`
+- ACR build: `caj` → `acrabarvalab001.azurecr.io/abarva/web:lab-parallel-run-20260515-r1`
+- Image digest: `sha256:9631a180cccd03f6af403d423aa79118ef38de5446376705138067426d7e0065`
 - Key Vault secrets created/updated without printing secret values.
 - Subscription deployment: `azlab16-keyvault-env-projection-20260515024415` → `Succeeded`
 - Container App observed with `20` env vars and `10` Key Vault-backed secrets before image refresh.
 - Runtime managed identity observed with `Key Vault Secrets User` on `kv-abarva-lab-001`.
 - Runtime deployment: `azlab16-health-probe-image-20260515025741` → `Succeeded`
+- Runtime deployment: `azlab20-app-parallel-run-env-20260515121421` → `Succeeded`
 
-Smoke result after image refresh:
+Smoke result after the first health image refresh:
 
 - `GET /api/health` returns JSON without redirecting to Clerk.
 - HTTP status is `503` because `postgres=true` and `neo4j=false`.
 - This confirms the app runtime, Clerk public config, Key Vault projection, and Supabase path are alive enough to execute the health route. It also confirms Neo4j is not a healthy backing service from the Azure runtime.
+
+Smoke result after the parallel-run image refresh:
+
+- `GET /` returns HTTP `200`.
+- `GET /api/health` returns HTTP `503` with `checks.postgres=true`, `checks.direct_postgres=true`, and `checks.neo4j=false`.
+- `direct_postgres=true` proves the Container App can reach Azure Postgres through `DATABASE_URL` projected from Key Vault.
+- `postgres=true` still means the existing Supabase client path is reachable; it is not proof that every app route has moved to Azure Postgres.
+- `neo4j=false` is acceptable for the Azure-native target architecture because Neo4j remains compatibility-only while Cosmos Gremlin is the target operational graph lane.
 
 Follow-up:
 
