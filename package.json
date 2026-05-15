@@ -36,11 +36,19 @@
     "db:migrate:dry": "npx tsx src/scripts/run-migrations.ts --dry",
     "db:migrate:mark-applied": "npx tsx src/scripts/run-migrations.ts --mark-all-applied",
     "db:verify:tenant-keys": "npx tsx scripts/verify-tenant-key-canonical.ts",
+    "db:azure:bootstrap": "npx tsx src/scripts/bootstrap-azure-postgres-compat.ts",
+    "db:azure:verify": "npx tsx src/scripts/verify-azure-postgres-schema.ts",
+    "db:azure:copy-tenant-context": "npx tsx src/scripts/copy-tenant-context-to-azure.ts",
+    "azure:postgres:set-url-secrets": "node scripts/azure/set-postgres-database-url-secrets.mjs",
+    "azure:postgres:set-source-url-secret": "node scripts/azure/set-source-database-url-secret.mjs",
     "audit:planes": "npx tsx src/scripts/audit/audit-tenant-data-planes.ts",
     "audit:financial": "npx tsx src/scripts/audit/audit-financial-kpis.ts",
     "audit:sanity": "npx tsx src/scripts/audit/audit-numbers-sanity.ts",
     "audit:categories": "npx tsx src/scripts/audit/audit-steward-categories.ts",
     "audit:render-snapshot": "npx tsx src/scripts/audit/render-setup-home-snapshot.ts",
+    "tenant:bootstrap": "npx tsx scripts/tenant-bootstrap.ts",
+    "tenant:bootstrap:dry": "npx tsx scripts/tenant-bootstrap.ts --dry-run",
+    "tenant:refresh": "npx tsx scripts/tenant-bootstrap.ts --refresh-only",
     "db:seed": "npx tsx src/scripts/run-seeds.ts",
     "db:seed:all": "npx tsx src/scripts/run-seeds.ts --all",
     "db:seed:list": "npx tsx src/scripts/run-seeds.ts --list",
@@ -115,6 +123,9 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.85.0",
+    "@azure/identity": "^4.13.1",
+    "@azure/service-bus": "^7.9.5",
+    "@azure/storage-blob": "^12.31.0",
     "@clerk/nextjs": "^7.0.11",
     "@pinecone-database/pinecone": "^7.2.0",
     "@react-pdf/renderer": "^4.5.1",
@@ -162,6 +173,7 @@
     "jest-environment-jsdom": "^30.3.0",
     "tailwindcss": "^4",
     "ts-node": "^10.9.2",
+    "tsx": "^4.22.0",
     "typescript": "^5"
   }
 }

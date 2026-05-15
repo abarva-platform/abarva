@@ -1,6 +1,5 @@
 using '../main.bicep'
 
-param subscriptionId = '701a8554-a166-46e9-bf13-743bc50e3b20'
 param location = 'eastus'
 
 param tags = {
@@ -17,7 +16,7 @@ param observabilityResourceGroupName = 'rg-abarva-observability-lab-eastus'
 param sharedSecurityResourceGroupName = 'rg-abarva-shared-security-lab-eastus'
 
 param keyVaultName = 'kv-abarva-lab-001'
-param keyVaultEnablePurgeProtection = false
+param keyVaultEnablePurgeProtection = true
 
 param controlPlaneManagedIdentityName = 'id-abarva-controlplane-lab-eastus'
 param controlPlaneAppServicePlanName = 'asp-abarva-controlplane-lab-eastus'

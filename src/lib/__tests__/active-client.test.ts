@@ -36,6 +36,32 @@ describe('getActiveClientKey', () => {
     await expect(getActiveClientKey()).resolves.toBe('meridian');
   });
 
+  it('does not let locked client roles switch tenants through requested client ids', async () => {
+    currentUserMock.mockResolvedValue({
+      publicMetadata: { role: 'client', clientId: 'meridian' },
+      primaryEmailAddress: { emailAddress: 'external.cdao@example.com' },
+      emailAddresses: [],
+    });
+    cookiesMock.mockResolvedValue({
+      get: () => ({ value: 'apexretail' }),
+    });
+
+    await expect(getActiveClientKey('apexretail')).resolves.toBe('meridian');
+  });
+
+  it('falls back to locked-role metadata before requested client ids when only defaultClientId is present', async () => {
+    currentUserMock.mockResolvedValue({
+      publicMetadata: { role: 'maestro', defaultClientId: 'arcturus' },
+      primaryEmailAddress: { emailAddress: 'firstcapital.demo@example.com' },
+      emailAddresses: [],
+    });
+    cookiesMock.mockResolvedValue({
+      get: () => ({ value: 'apexretail' }),
+    });
+
+    await expect(getActiveClientKey('meridian')).resolves.toBe('arcturus');
+  });
+
   it('resolves data-backed client rows by tenant_key before display-name aliases', async () => {
     currentUserMock.mockResolvedValue({
       publicMetadata: { role: 'client' },

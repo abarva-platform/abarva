@@ -46,11 +46,12 @@ export interface SentinelToolTenantContext {
  * boundary translation instead of duplicating the case statement.
  */
 export function clientKeyToBrokerTenantKey(clientKey: ClientKey | string): string {
-  // Apex is the one tenant where the app and the data-room disagree:
-  // app says `'apexretail'`, data-room says `'apex-retail'`. Without
-  // this mapping, the broker returns the unknown_tenant blocked
-  // bundle for Apex and Sentinel tools go silent on the demo's
-  // primary tenant.
+  // Apex and First Capital are the tenants where the app and the
+  // data-room disagree. The app's canonical ClientKeys are legacy
+  // compatibility keys (`apexretail`, `arcturus`), while the broker
+  // data rooms use public tenant slugs (`apex-retail`,
+  // `first-capital`). Without this mapping, the broker returns an
+  // unknown_tenant blocked bundle and Sentinel tools go silent.
   //
   // NOTE: This function targets the EnterpriseDataRoom in-memory
   // substrate that Sentinel tools read from. Codex's newer
@@ -58,6 +59,7 @@ export function clientKeyToBrokerTenantKey(clientKey: ClientKey | string): strin
   // (`meridian-health`); see `clientKeyToInventorySubstrateKey`
   // for that mapping.
   if (clientKey === 'apexretail') return 'apex-retail';
+  if (clientKey === 'arcturus' || clientKey === 'firstcapital') return 'first-capital';
   return clientKey;
 }
 

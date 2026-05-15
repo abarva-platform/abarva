@@ -214,6 +214,8 @@ export function AtlasDrawer({
     const formData = new FormData();
     formData.set('file', file);
     formData.set('stageKey', sourceUploadContext.stageKey);
+    formData.set('dataClassification', 'Confidential');
+    formData.set('dataProtectionClassification', 'confidential_business');
 
     try {
       const response = await fetch(

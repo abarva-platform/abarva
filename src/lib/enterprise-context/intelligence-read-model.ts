@@ -170,8 +170,12 @@ export function summarizeEnterpriseContextRows(input: {
 
   const cards: EnterpriseContextOverviewCard[] = [
     {
-      key: 'clinical-platform-reliability',
-      title: 'Clinical platform reliability',
+      // L1 fix (2026-05-13): the previous key/title used "clinical" — a
+      // healthcare-specific term that surfaced on Apex Retail and First
+      // Capital Enterprise Context cards. The body is industry-neutral
+      // CMDB/ITSM narrative; rename the card itself to match.
+      key: 'platform-and-service-reliability',
+      title: 'Platform and service reliability',
       whatWeKnow: `${applications.length} systems/services loaded; ${tierOneApps} are Tier 1. ServiceNow contributes ${incidents.length} incidents, ${problems.length} problems, and ${changes.length} changes.`,
       whyItMatters: 'This turns CMDB and ITSM data into a practical dependency map before approving AI, sourcing, or platform work.',
       owner: topOwner([...applications, ...incidents, ...problems]) ?? 'CMDB Stewardship',

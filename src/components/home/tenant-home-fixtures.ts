@@ -122,7 +122,7 @@ const SHARED_NAV: ReadonlyArray<NavGroup> = [
     label: 'Operations',
     items: [
       { label: 'Agent Readiness', badge: 'L2', status: 'attn', href: '/home/agent-readiness' },
-      { label: 'Production Readiness', badge: '4 / 6', status: 'attn', href: '/home/production' },
+      { label: 'Prod Readiness', badge: '4 / 6', status: 'attn', href: '/home/production' },
       { label: 'Compliance', badge: 'locked', status: 'locked', href: '#' },
       { label: 'Activity Log', badge: '400', status: 'default', href: '/home/activity' },
     ],
@@ -545,7 +545,11 @@ export const FIRSTCAP_HOME: TenantHomeData = {
       name: 'Source',
       pct: 70,
       tone: 'amber',
-      note: 'Innovaccer renewal in 8 months. Vendor substrate informed.',
+      // L9 fix (2026-05-13): the prior copy referenced "Innovaccer" — a
+      // healthcare-only data platform that should never appear on a
+      // regional bank's home page. Anchor the Source callout to a
+      // banking-relevant vendor instead.
+      note: 'FIS HORIZON renewal in 8 months. Vendor substrate informed.',
       href: '/source',
     },
     {
@@ -595,7 +599,9 @@ export const FIRSTCAP_HOME: TenantHomeData = {
     },
     {
       num: '02',
-      title: 'Open Innovaccer renewal scan (8 months out)',
+      // L10 fix (2026-05-13): same Innovaccer leak — replace with the
+      // bank's actual core vendor anchor.
+      title: 'Open FIS HORIZON renewal scan (8 months out)',
       meta: 'VENDOR · same factor profile as 2023 platform consolidation',
       time: 'THIS WEEK',
       href: '/source',

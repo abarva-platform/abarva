@@ -5,6 +5,7 @@ param keyVaultName string
 param tags object
 param enablePurgeProtection bool = false
 param keyVaultReaderPrincipalId string = ''
+param keyVaultNetworkBypass string = 'None'
 
 var keyVaultSecretsUserRoleDefinitionId = '4633458b-17de-408a-b874-0445c86b69e6'
 
@@ -28,7 +29,7 @@ resource sharedKeyVault 'Microsoft.KeyVault/vaults@2023-07-01' = {
     softDeleteRetentionInDays: 90
     networkAcls: {
       defaultAction: 'Allow'
-      bypass: 'AzureServices'
+      bypass: keyVaultNetworkBypass
     }
   }
 }

@@ -40,6 +40,10 @@ import { requireTenancy, tenancyErrorResponse } from '@/app/api/v1/programs/_aut
 import { getActiveClientRow } from '@/lib/active-client';
 import { clientKeyToBrokerTenantKey } from '@/lib/agent/tools/intelligence/_shared';
 import { extractAndChunk } from '@/lib/programs/doc-parser';
+import {
+  evaluateSensitiveUpload,
+  sensitiveUploadRejectedResponse,
+} from '@/lib/security/sensitive-upload-guard';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -145,6 +149,19 @@ export async function POST(
   // 4. Read bytes once — shared by SHA-256 computation and storage upload.
   const buffer = Buffer.from(await file.arrayBuffer());
   const sha256 = createHash('sha256').update(buffer).digest('hex');
+
+  // B5a (audit 2026-05-13): scan-before-write — quarantine suspected
+  // PHI/PII/regulated-identifier uploads before they touch storage or
+  // the doc-parser pipeline. Same pattern as data/upload + tower/upload.
+  const dataProtection = evaluateSensitiveUpload({
+    filename: file.name,
+    mimeType,
+    bytes: buffer,
+    declaredClassification: formData.get('dataClassification'),
+  });
+  if (dataProtection.decision === 'quarantine') {
+    return sensitiveUploadRejectedResponse(dataProtection);
+  }
 
   const attachmentId = randomUUID();
   const filename = file.name && file.name.trim().length > 0 ? file.name : 'upload';

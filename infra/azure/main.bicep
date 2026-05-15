@@ -1,8 +1,5 @@
 targetScope = 'subscription'
 
-@description('Subscription ID target for deployment.')
-param subscriptionId string
-
 @description('Primary region for lab deployment.')
 param location string = 'eastus'
 
@@ -209,7 +206,7 @@ module observability './observability.bicep' = {
   name: 'azfound-observability'
   scope: observabilityRg
   params: {
-    subscriptionId: subscriptionId
+    subscriptionId: subscription().subscriptionId
     location: location
     logAnalyticsWorkspaceName: logAnalyticsWorkspaceName
     applicationInsightsName: applicationInsightsName

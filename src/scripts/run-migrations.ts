@@ -18,6 +18,8 @@ loadEnv();
 //   npx tsx src/scripts/run-migrations.ts --dry    # show pending only
 //   npx tsx src/scripts/run-migrations.ts --ci     # non-interactive, machine-readable summary
 //   npx tsx src/scripts/run-migrations.ts --force <name>  # re-apply one
+//   npx tsx src/scripts/run-migrations.ts --ci --allow-destructive
+//       # controlled empty-database bootstrap only (e.g. Azure parallel-run)
 
 const MIGRATIONS_DIR = path.resolve(process.cwd(), 'supabase/migrations');
 
@@ -129,6 +131,7 @@ export type CliFlags = {
   isDry: boolean;
   isCi: boolean;
   markAllApplied: boolean;
+  allowDestructive: boolean;
   forceName: string | null;
 };
 
@@ -136,9 +139,10 @@ export function parseArgs(argv: string[]): CliFlags {
   const isDry = argv.includes('--dry');
   const isCi = argv.includes('--ci');
   const markAllApplied = argv.includes('--mark-all-applied');
+  const allowDestructive = argv.includes('--allow-destructive');
   const forceIdx = argv.indexOf('--force');
   const forceName = forceIdx >= 0 ? argv[forceIdx + 1] ?? null : null;
-  return { isDry, isCi, markAllApplied, forceName };
+  return { isDry, isCi, markAllApplied, allowDestructive, forceName };
 }
 
 async function ensureTrackingTable(client: Client) {
@@ -157,7 +161,7 @@ async function getAppliedMigrations(client: Client): Promise<Set<string>> {
 }
 
 async function main() {
-  const { isDry, isCi, markAllApplied, forceName } = parseArgs(process.argv.slice(2));
+  const { isDry, isCi, markAllApplied, allowDestructive, forceName } = parseArgs(process.argv.slice(2));
 
   const url = process.env.DATABASE_URL;
   if (!url) {
@@ -210,7 +214,7 @@ async function main() {
       const sql = readFileSync(filepath, 'utf-8');
       allFindings.push(...scanForDestructivePatterns(filename, sql));
     }
-    if (allFindings.length > 0) {
+    if (allFindings.length > 0 && !allowDestructive) {
       console.error('\n✗  Destructive migration patterns detected (auto-apply blocked).\n');
       for (const f of allFindings) {
         console.error(`   ${f.filename}:${f.line} — ${f.pattern}`);
@@ -227,6 +231,14 @@ async function main() {
       console.error('   Then re-run. The marker is a deliberate audit signal — only');
       console.error('   add it after a human review of the destructive change.');
       process.exit(1);
+    }
+    if (allFindings.length > 0 && allowDestructive) {
+      console.warn('\n⚠  Destructive migration patterns detected but explicitly allowed for this run.');
+      console.warn('   Use this only for controlled empty-database bootstrap / parallel-run migrations.\n');
+      for (const f of allFindings) {
+        console.warn(`   ${f.filename}:${f.line} — ${f.pattern}`);
+      }
+      console.warn('');
     }
 
     console.log(`\nPending migrations (${pending.length}):`);

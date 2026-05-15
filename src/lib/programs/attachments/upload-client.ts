@@ -52,6 +52,7 @@ export type UploadAttachmentErrorCode =
   | 'forbidden'
   | 'oversize'
   | 'unsupported_mime'
+  | 'sensitive_data_quarantined'
   | 'network'
   | 'unknown';
 
@@ -70,6 +71,7 @@ function statusToCode(status: number): UploadAttachmentErrorCode {
   if (status === 403) return 'forbidden';
   if (status === 413) return 'oversize';
   if (status === 415) return 'unsupported_mime';
+  if (status === 422) return 'sensitive_data_quarantined';
   return 'unknown';
 }
 
@@ -125,6 +127,7 @@ export async function uploadAttachment(
 
   const formData = new FormData();
   formData.append('file', file, file.name);
+  formData.append('dataClassification', 'confidential_business');
   if (phase !== undefined) formData.append('phase', String(phase));
   if (stepId) formData.append('stepId', stepId);
   if (deliverableId) formData.append('deliverableId', deliverableId);
@@ -199,6 +202,7 @@ export async function uploadAttachment(
         if (code === 'forbidden') return 'You do not have access to this program.';
         if (code === 'oversize') return 'File is too large (max 100 MB).';
         if (code === 'unsupported_mime') return 'File type is not supported.';
+        if (code === 'sensitive_data_quarantined') return detail || 'Upload quarantined before storage/indexing because it appears to contain PHI/PII.';
         return detail || 'Upload failed.';
       })();
       resolve({ ok: false, code, message: friendly, status });

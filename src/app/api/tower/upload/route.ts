@@ -1,8 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSupabase } from '@/lib/supabase-server';
 import { getCurrentPerson } from '@/lib/auth/maestro';
+import { requireTenancy, tenancyErrorResponse } from '@/lib/auth/tenancy';
 import { classifyUploadContent, type TowerDataType } from '@/lib/tower/classify';
 import { ingestPortfolioCsv } from '@/lib/tower/ingest-portfolio';
+import {
+  evaluateSensitiveUpload,
+  sensitiveUploadRejectedResponse,
+} from '@/lib/security/sensitive-upload-guard';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -12,6 +17,20 @@ const MAX_BYTES = 25 * 1024 * 1024; // 25MB — Tower files can be larger than c
 const TOWER_BUCKET = 'tower-uploads';
 
 export async function POST(req: NextRequest) {
+  // SEC-P1-1 fix (audit 2026-05-13): previously this route required a
+  // signed-in person but never asserted that `form.get('clientId')`
+  // matched the caller's tenant. It passed the raw clientId straight into
+  // `uploaded_files.client_id` and Pinecone via ingestPortfolioCsv — i.e.,
+  // a Meridian user could upload to an Apex tenant just by setting the
+  // form field. Now we require tenancy and enforce match before touching
+  // storage or DB.
+  let ctx;
+  try {
+    ctx = await requireTenancy();
+  } catch (err) {
+    return tenancyErrorResponse(err) as NextResponse;
+  }
+
   const person = await getCurrentPerson();
   if (!person) return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
 
@@ -25,10 +44,25 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: `file exceeds ${MAX_BYTES} bytes` }, { status: 413 });
   }
 
+  if (clientId !== ctx.clientId) {
+    return NextResponse.json({ error: 'forbidden_cross_tenant' }, { status: 403 });
+  }
+
   const sb = getServerSupabase();
 
-  // 1. Store to Supabase Storage (bucket must exist — see migration notes)
+  // 1. Classify data protection posture before storage or ingestion.
   const bytes = new Uint8Array(await file.arrayBuffer());
+  const dataProtection = evaluateSensitiveUpload({
+    filename: file.name,
+    mimeType: file.type,
+    bytes,
+    declaredClassification: form.get('dataClassification'),
+  });
+  if (dataProtection.decision === 'quarantine') {
+    return sensitiveUploadRejectedResponse(dataProtection) as NextResponse;
+  }
+
+  // 2. Store to Supabase Storage (bucket must exist — see migration notes)
   const now = new Date();
   const storagePath = `${clientId}/${now.getUTCFullYear()}/${String(
     now.getUTCMonth() + 1,
@@ -45,7 +79,7 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  // 2. Record file metadata — status: classifying
+  // 3. Record file metadata — status: classifying
   const { data: fileRow, error: insertErr } = await sb
     .from('uploaded_files')
     .insert({
@@ -67,7 +101,7 @@ export async function POST(req: NextRequest) {
   }
   const fileId = (fileRow as { id: string }).id;
 
-  // 3. Classify + parse synchronously (simpler for v1, UI waits for result)
+  // 4. Classify + parse synchronously (simpler for v1, UI waits for result)
   const sampleText = new TextDecoder('utf-8', { fatal: false }).decode(bytes.slice(0, 2048));
   const classifier = await classifyUploadContent({
     filename: file.name,
@@ -130,5 +164,6 @@ export async function POST(req: NextRequest) {
             ? 'Portfolio detected but no rows ingested. Check file format.'
             : `Classified as ${classifier.data_type} (confidence ${classifier.confidence.toFixed(2)}). Parser not yet wired — manual mapping required. See Pack 11.`,
     notes: ingestResult.notes ?? [],
+    dataProtection,
   });
 }

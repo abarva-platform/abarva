@@ -1,5 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { ingestClientFile } from '@/lib/data/ingest';
+import { requireTenancy, tenancyErrorResponse } from '@/lib/auth/tenancy';
+import {
+  evaluateSensitiveUpload,
+  sensitiveUploadRejectedResponse,
+} from '@/lib/security/sensitive-upload-guard';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -7,6 +12,13 @@ export const dynamic = 'force-dynamic';
 const MAX_BYTES = 10 * 1024 * 1024; // 10 MB
 
 export async function POST(req: NextRequest) {
+  let ctx;
+  try {
+    ctx = await requireTenancy();
+  } catch (err) {
+    return tenancyErrorResponse(err) as NextResponse;
+  }
+
   try {
     const form = await req.formData();
     const clientId = (form.get('clientId') as string | null)?.trim();
@@ -22,13 +34,27 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: `file exceeds ${MAX_BYTES} bytes` }, { status: 413 });
     }
 
+    if (clientId !== ctx.clientId) {
+      return NextResponse.json({ error: 'forbidden_cross_tenant' }, { status: 403 });
+    }
+
     const bytes = new Uint8Array(await file.arrayBuffer());
+    const dataProtection = evaluateSensitiveUpload({
+      filename: file.name,
+      mimeType: file.type,
+      bytes,
+      declaredClassification: form.get('dataClassification'),
+    });
+    if (dataProtection.decision === 'quarantine') {
+      return sensitiveUploadRejectedResponse(dataProtection) as NextResponse;
+    }
+
     const result = await ingestClientFile({
       clientId,
       filename: file.name,
       bytes,
     });
-    return NextResponse.json(result);
+    return NextResponse.json({ ...result, dataProtection });
   } catch (err) {
     console.error('[data/upload] error:', err);
     const msg = err instanceof Error ? err.message : 'unknown error';

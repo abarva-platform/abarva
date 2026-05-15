@@ -49,6 +49,10 @@ import {
   recordProgramEvidence,
 } from '@/lib/programs/evidence-ingestion';
 import { loadUserProgramAccessPolicy } from '@/lib/auth/program-access-policy';
+import {
+  evaluateSensitiveUpload,
+  sensitiveUploadRejectedResponse,
+} from '@/lib/security/sensitive-upload-guard';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -184,13 +188,23 @@ export async function POST(
   const effectivePhase = phase ?? program.currentPhase ?? undefined;
   const stepId = parseOptionalString(formData.get('stepId'));
   const deliverableId = parseOptionalString(formData.get('deliverableId'));
+  const filename = file.name && file.name.trim().length > 0 ? file.name : 'upload';
 
   // Read bytes once → SHA-256 + storage upload share the same buffer.
   const buffer = Buffer.from(await file.arrayBuffer());
+  const dataProtection = evaluateSensitiveUpload({
+    filename,
+    mimeType,
+    bytes: buffer,
+    declaredClassification: formData.get('dataClassification'),
+  });
+  if (dataProtection.decision === 'quarantine') {
+    return sensitiveUploadRejectedResponse(dataProtection);
+  }
+
   const sha256 = createHash('sha256').update(buffer).digest('hex');
 
   const attachmentId = randomUUID();
-  const filename = file.name && file.name.trim().length > 0 ? file.name : 'upload';
   let storagePath: string;
   try {
     storagePath = buildStoragePath({
@@ -303,6 +317,7 @@ export async function POST(
             warnings: evidenceWarnings,
           }
         : { id: null, status: 'not_captured', warning: evidenceWarning },
+      dataProtection,
     },
     { status: 200 },
   );

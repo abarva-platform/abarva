@@ -26,8 +26,8 @@ export function LoggedOutLandingPage({ signedOut = false }: LoggedOutLandingPage
         .logged-out-shell {
           min-height: 100vh;
           background:
-            radial-gradient(circle at 82% 8%, rgba(0, 102, 204, 0.10), transparent 30%),
-            linear-gradient(180deg, #ffffff 0%, #f6f8fb 100%);
+            radial-gradient(circle at 82% 8%, rgba(17, 19, 24, 0.07), transparent 30%),
+            linear-gradient(180deg, #ffffff 0%, #f8f7f4 100%);
           color: #0b1220;
           font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
         }
@@ -84,10 +84,10 @@ export function LoggedOutLandingPage({ signedOut = false }: LoggedOutLandingPage
           gap: 9px;
           width: fit-content;
           margin-bottom: 18px;
-          border: 1px solid rgba(0, 102, 204, 0.18);
+          border: 1px solid rgba(17, 19, 24, 0.14);
           border-radius: 999px;
-          background: rgba(0, 102, 204, 0.07);
-          color: #075fab;
+          background: rgba(17, 19, 24, 0.06);
+          color: #111318;
           padding: 8px 12px;
           font-size: 12px;
           font-weight: 750;
@@ -99,8 +99,8 @@ export function LoggedOutLandingPage({ signedOut = false }: LoggedOutLandingPage
           width: 8px;
           height: 8px;
           border-radius: 50%;
-          background: #0066cc;
-          box-shadow: 0 0 0 5px rgba(0, 102, 204, 0.12);
+          background: #111318;
+          box-shadow: 0 0 0 5px rgba(17, 19, 24, 0.10);
         }
 
         h1 {
@@ -141,7 +141,7 @@ export function LoggedOutLandingPage({ signedOut = false }: LoggedOutLandingPage
         }
 
         .button-primary {
-          background: #0066cc;
+          background: #111318;
           color: #ffffff;
         }
 
@@ -154,7 +154,7 @@ export function LoggedOutLandingPage({ signedOut = false }: LoggedOutLandingPage
         .signed-out-note {
           margin-top: 20px;
           max-width: 620px;
-          border-left: 3px solid #0066cc;
+          border-left: 3px solid #111318;
           background: #ffffff;
           box-shadow: 0 12px 32px rgba(15, 23, 42, 0.06);
           padding: 14px 16px;
@@ -221,7 +221,7 @@ export function LoggedOutLandingPage({ signedOut = false }: LoggedOutLandingPage
         }
 
         .layer strong {
-          color: #0066cc;
+          color: #111318;
           font-size: 11px;
           letter-spacing: 0.1em;
           text-transform: uppercase;
@@ -324,10 +324,10 @@ export function LoggedOutLandingPage({ signedOut = false }: LoggedOutLandingPage
         .mobile-note {
           margin-top: 14px;
           border-radius: 16px;
-          background: #f2f7ff;
-          border: 1px solid rgba(0, 102, 204, 0.14);
+          background: #fbfaf7;
+          border: 1px solid #d9d6cd;
           padding: 16px;
-          color: #2b5c91;
+          color: #4b5563;
           font-size: 13px;
           line-height: 1.55;
         }

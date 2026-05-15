@@ -1,0 +1,105 @@
+// Feature-flag registry · A3 (backlog 2026-05-14)
+//
+// Canonical contract for what ships to all tenants vs what's pinned per
+// client. Avoids the "rolling a feature to one pilot tenant first" branch
+// hell that ad-hoc tenant gates produce.
+//
+// Two flag policies:
+//
+//   - `platform` — default ON for every tenant. The norm. Most features
+//     ship this way. Tenants can be excluded individually via the
+//     `excludeTenants` allowlist for staged rollback.
+//
+//   - `tenant`   — default OFF for every tenant. Opt-in per tenant via
+//     the `includeTenants` allowlist. Use for tenant-bespoke pilots,
+//     beta-tester previews, or staged rollouts that start with one.
+//
+// The flag set is intentionally static (not a remote feature-flag
+// service) for the pilot phase. When we outgrow this — most likely
+// when the second paid pilot needs different on/off configurations —
+// swap the body of `isFeatureEnabled` for a remote lookup against
+// Statsig, LaunchDarkly, or Configcat. The signature stays.
+//
+// References:
+//   - docs/BACKLOG-2026-05-14.md  A3 row
+//   - src/lib/auth/tenancy.ts     TenancyCtx
+//   - src/lib/client-config.ts    ClientKey
+
+import type { ClientKey } from '@/lib/client-config';
+
+/**
+ * Two flag policies. See file-header comment.
+ */
+export type FeatureFlagPolicy = 'platform' | 'tenant';
+
+export interface FeatureFlagDefinition {
+  /** Stable identifier. Snake-case. Used at every call site. */
+  readonly key: FeatureFlagKey;
+  /** Short human-readable summary. Surfaced in any future flag-UI. */
+  readonly summary: string;
+  /** Default-on (platform) or default-off (tenant). See header. */
+  readonly policy: FeatureFlagPolicy;
+  /**
+   * Platform flags: tenants explicitly *excluded* from the rollout. Use to
+   * stage a rollback for one tenant without flipping the global default.
+   */
+  readonly excludeTenants?: ReadonlyArray<ClientKey>;
+  /**
+   * Tenant flags: tenants explicitly *included* in the rollout. The
+   * default for everyone else is off.
+   */
+  readonly includeTenants?: ReadonlyArray<ClientKey>;
+}
+
+/**
+ * Canonical set of feature keys. Extend here when adding a new flag.
+ * Using a literal union (rather than `string`) so every call site is
+ * compile-time-checked.
+ */
+export type FeatureFlagKey =
+  // Reserved for the first real feature gates. Keep at least one
+  // platform-default and one tenant-default entry so the policy
+  // distinction is exercised in tests.
+  | 'intelligence_brief_v4'
+  | 'first_capital_substrate_overlay'
+  | 'retrieval_azure_search';
+
+export const FEATURE_FLAGS: ReadonlyArray<FeatureFlagDefinition> = [
+  {
+    key: 'intelligence_brief_v4',
+    summary:
+      'V4 Intelligence Brief layout with binding patterns, decision actions, and the move-cascade panel. Default-on platform-wide after PRs #1923 + #1932.',
+    policy: 'platform',
+  },
+  {
+    key: 'first_capital_substrate_overlay',
+    summary:
+      'First-Capital-only substrate overlay during pilot tuning. Opt-in per tenant. Default off everywhere else.',
+    policy: 'tenant',
+    includeTenants: ['arcturus'],
+  },
+  {
+    key: 'retrieval_azure_search',
+    summary:
+      'Route AgentContextBroker tenant-context retrieval through Azure AI Search (tenant-context-v1) instead of pgvector. Platform-scope intent — staged via tenant allowlist so production cutover happens tenant-by-tenant. Default off everywhere.',
+    policy: 'tenant',
+    // includeTenants intentionally empty — flip on per tenant during
+    // cutover. When parity is proven across the roster, swap to
+    // `platform` policy with the inverse `excludeTenants` for rollback.
+    includeTenants: [],
+  },
+];
+
+const FEATURE_FLAG_INDEX: ReadonlyMap<FeatureFlagKey, FeatureFlagDefinition> = new Map(
+  FEATURE_FLAGS.map((flag) => [flag.key, flag] as const),
+);
+
+export function getFeatureFlagDefinition(
+  key: FeatureFlagKey,
+): FeatureFlagDefinition | undefined {
+  return FEATURE_FLAG_INDEX.get(key);
+}
+
+export function listFeatureFlags(): ReadonlyArray<FeatureFlagDefinition> {
+  return FEATURE_FLAGS;
+}

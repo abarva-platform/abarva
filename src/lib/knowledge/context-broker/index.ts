@@ -37,7 +37,11 @@ export type {
 
 export { MissingTenantKeyError } from './types';
 
-export type { ContextBroker, CorpusPatternRetriever } from './broker';
+export type {
+  ContextBroker,
+  CorpusPatternRetriever,
+  AzureSearchTenantContextRetriever,
+} from './broker';
 
 export {
   DefaultContextBroker,
@@ -46,6 +50,7 @@ export {
   WARNING_CORPUS_PENDING,
   WARNING_WORLDVIEW_PENDING,
   vectorRetrievalInfoTag,
+  azureSearchRetrievalInfoTag,
   worldviewRetrievalInfoTag,
   extractKeywords,
   allowedPatternIndustriesForTenant,

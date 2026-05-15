@@ -1,10 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { seedDemoData, removeDemoData } from '@/scripts/demo-data/generate';
+import { requireTenancy, tenancyErrorResponse } from '@/lib/auth/tenancy';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 export async function POST(req: NextRequest) {
+  let ctx;
+  try {
+    ctx = await requireTenancy();
+  } catch (err) {
+    return tenancyErrorResponse(err) as NextResponse;
+  }
+
   const body = (await req.json().catch(() => ({}))) as {
     clientId?: string;
     industry?: 'HEALTHCARE_IDN' | 'FINSERV' | 'RETAIL';
@@ -14,6 +22,10 @@ export async function POST(req: NextRequest) {
 
   if (!body.clientId || !body.industry || !body.orgSize || !body.aiMaturity) {
     return NextResponse.json({ error: 'clientId, industry, orgSize, aiMaturity all required' }, { status: 400 });
+  }
+
+  if (body.clientId !== ctx.clientId) {
+    return NextResponse.json({ error: 'forbidden_cross_tenant' }, { status: 403 });
   }
 
   try {
@@ -30,9 +42,21 @@ export async function POST(req: NextRequest) {
 }
 
 export async function DELETE(req: NextRequest) {
+  let ctx;
+  try {
+    ctx = await requireTenancy();
+  } catch (err) {
+    return tenancyErrorResponse(err) as NextResponse;
+  }
+
   const url = new URL(req.url);
   const clientId = url.searchParams.get('clientId');
   if (!clientId) return NextResponse.json({ error: 'clientId required' }, { status: 400 });
+
+  if (clientId !== ctx.clientId) {
+    return NextResponse.json({ error: 'forbidden_cross_tenant' }, { status: 403 });
+  }
+
   try {
     const result = await removeDemoData(clientId);
     return NextResponse.json(result);

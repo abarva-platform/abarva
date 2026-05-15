@@ -198,7 +198,10 @@ export const FIRST_CAPITAL_DEMO: IntelligenceV3PageData = {
     },
     {
       severity: 'WATCH',
-      title: 'Innovaccer renewal',
+      // L13 fix (2026-05-13): Innovaccer is a healthcare-only vendor;
+      // First Capital's renewal watchlist should anchor on the bank's
+      // core platform vendor instead.
+      title: 'FIS HORIZON renewal',
       body: 'Renewal closes in 8 months. Same vendor profile factors as the 2023 platform consolidation.',
     },
   ],
@@ -265,14 +268,21 @@ export const FIRST_CAPITAL_DEMO: IntelligenceV3PageData = {
         {
           id: 'mv-vendor-risk',
           name: 'Vendor risk monitoring',
-          rationale: 'Innovaccer pattern',
+          // L13 fix (2026-05-13): rationale used "Innovaccer" (healthcare
+          // vendor). Anchor to the bank's actual concentration risk.
+          rationale: 'Core-vendor concentration',
         },
       ],
     },
   ],
   whatWeCantSee: ['EBITDA attribution', 'Peer NIM benchmark depth'],
+  // L12 fix (2026-05-13): the opener for First Capital's demo named
+  // "Innovaccer renewal" as one of the three things that matter today —
+  // Innovaccer is a healthcare-only vendor and has no business surfacing
+  // on a bank's Sentinel surface. Anchor to the bank's actual core
+  // platform renewal.
   sentinelOpener:
-    "Three things matter for First Capital today: NIM compression accelerating, CDO–CIO conflict unresolved, Innovaccer renewal in 8 months. Ask me anything you see on this page.",
+    "Three things matter for First Capital today: NIM compression accelerating, CDO–CIO conflict unresolved, FIS HORIZON renewal in 8 months. Ask me anything you see on this page.",
   conversation: [
     {
       role: 'user',

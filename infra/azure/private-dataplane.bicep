@@ -3,19 +3,70 @@ targetScope = 'resourceGroup'
 param location string
 param vnetName string
 param nsgName string
+param appSubnetName string = 'snet-app'
 param dataSubnetName string
 param privateEndpointSubnetName string
 param vnetCidr string
+param appSubnetCidr string = ''
 param dataSubnetCidr string
 param privateEndpointSubnetCidr string
 param storageAccountName string
 param keyVaultResourceId string
 param postgresResourceId string = ''
 param controlPlanePrincipalIds array = []
+param deployContainerAppsSubnet bool = false
 param deployStoragePrivateEndpoint bool = true
+@description('Storage network ACL bypass. Use AzureServices only when Azure-native services such as Event Grid need to configure storage notifications.')
+@allowed([
+  'None'
+  'AzureServices'
+])
+param storageNetworkBypass string = 'None'
 param tags object
 
 var storageBlobDataContributorRoleDefinitionId = 'ba92f5b4-2d11-453d-a403-e96b0029c9fe'
+var blobPrivateDnsZoneName = 'privatelink.blob.${environment().suffixes.storage}'
+var keyVaultPrivateDnsZoneName = 'privatelink.vaultcore.azure.net'
+var postgresPrivateDnsZoneName = 'privatelink.postgres.database.azure.com'
+var appSubnet = deployContainerAppsSubnet ? [
+  {
+    name: appSubnetName
+    properties: {
+      addressPrefix: appSubnetCidr
+      delegations: [
+        {
+          name: 'container-apps-environment'
+          properties: {
+            serviceName: 'Microsoft.App/environments'
+          }
+        }
+      ]
+      privateEndpointNetworkPolicies: 'Enabled'
+      privateLinkServiceNetworkPolicies: 'Enabled'
+    }
+  }
+] : []
+var dataPlaneSubnets = [
+  {
+    name: dataSubnetName
+    properties: {
+      addressPrefix: dataSubnetCidr
+      networkSecurityGroup: {
+        id: dataNsg.id
+      }
+      privateEndpointNetworkPolicies: 'Enabled'
+      privateLinkServiceNetworkPolicies: 'Enabled'
+    }
+  }
+  {
+    name: privateEndpointSubnetName
+    properties: {
+      addressPrefix: privateEndpointSubnetCidr
+      privateEndpointNetworkPolicies: 'Disabled'
+      privateLinkServiceNetworkPolicies: 'Enabled'
+    }
+  }
+]
 
 resource dataNsg 'Microsoft.Network/networkSecurityGroups@2023-11-01' = {
   name: nsgName
@@ -50,33 +101,75 @@ resource dataVnet 'Microsoft.Network/virtualNetworks@2023-11-01' = {
         vnetCidr
       ]
     }
-    subnets: [
-      {
-        name: dataSubnetName
-        properties: {
-          addressPrefix: dataSubnetCidr
-          networkSecurityGroup: {
-            id: dataNsg.id
-          }
-          privateEndpointNetworkPolicies: 'Enabled'
-          privateLinkServiceNetworkPolicies: 'Enabled'
-        }
-      }
-      {
-        name: privateEndpointSubnetName
-        properties: {
-          addressPrefix: privateEndpointSubnetCidr
-          privateEndpointNetworkPolicies: 'Disabled'
-          privateLinkServiceNetworkPolicies: 'Enabled'
-        }
-      }
-    ]
+    subnets: concat(appSubnet, dataPlaneSubnets)
   }
+}
+
+resource appSubnetRef 'Microsoft.Network/virtualNetworks/subnets@2023-11-01' existing = if (deployContainerAppsSubnet) {
+  parent: dataVnet
+  name: appSubnetName
 }
 
 resource privateEndpointSubnetRef 'Microsoft.Network/virtualNetworks/subnets@2023-11-01' existing = {
   parent: dataVnet
   name: privateEndpointSubnetName
+}
+
+resource blobPrivateDnsZone 'Microsoft.Network/privateDnsZones@2020-06-01' = {
+  name: blobPrivateDnsZoneName
+  location: 'global'
+  tags: tags
+}
+
+resource keyVaultPrivateDnsZone 'Microsoft.Network/privateDnsZones@2020-06-01' = {
+  name: keyVaultPrivateDnsZoneName
+  location: 'global'
+  tags: tags
+}
+
+resource postgresPrivateDnsZone 'Microsoft.Network/privateDnsZones@2020-06-01' = if (!empty(postgresResourceId)) {
+  name: postgresPrivateDnsZoneName
+  location: 'global'
+  tags: tags
+}
+
+resource blobPrivateDnsZoneVnetLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2020-06-01' = {
+  parent: blobPrivateDnsZone
+  name: '${vnetName}-blob-link'
+  location: 'global'
+  tags: tags
+  properties: {
+    registrationEnabled: false
+    virtualNetwork: {
+      id: dataVnet.id
+    }
+  }
+}
+
+resource keyVaultPrivateDnsZoneVnetLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2020-06-01' = {
+  parent: keyVaultPrivateDnsZone
+  name: '${vnetName}-vault-link'
+  location: 'global'
+  tags: tags
+  properties: {
+    registrationEnabled: false
+    virtualNetwork: {
+      id: dataVnet.id
+    }
+  }
+}
+
+resource postgresPrivateDnsZoneVnetLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2020-06-01' = if (!empty(postgresResourceId)) {
+  parent: postgresPrivateDnsZone
+  name: '${vnetName}-postgres-link'
+  location: 'global'
+  tags: tags
+  properties: {
+    registrationEnabled: false
+    virtualNetwork: {
+      id: dataVnet.id
+    }
+  }
 }
 
 resource storageAccount 'Microsoft.Storage/storageAccounts@2023-05-01' = {
@@ -110,7 +203,7 @@ resource storageAccount 'Microsoft.Storage/storageAccounts@2023-05-01' = {
     }
     networkAcls: {
       defaultAction: 'Deny'
-      bypass: 'AzureServices'
+      bypass: storageNetworkBypass
     }
   }
 }
@@ -131,6 +224,21 @@ resource storagePrivateEndpoint 'Microsoft.Network/privateEndpoints@2023-11-01' 
           groupIds: [
             'blob'
           ]
+        }
+      }
+    ]
+  }
+}
+
+resource storagePrivateDnsZoneGroup 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2023-11-01' = if (deployStoragePrivateEndpoint) {
+  parent: storagePrivateEndpoint
+  name: 'default'
+  properties: {
+    privateDnsZoneConfigs: [
+      {
+        name: 'blob'
+        properties: {
+          privateDnsZoneId: blobPrivateDnsZone.id
         }
       }
     ]
@@ -159,6 +267,21 @@ resource keyVaultPrivateEndpoint 'Microsoft.Network/privateEndpoints@2023-11-01'
   }
 }
 
+resource keyVaultPrivateDnsZoneGroup 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2023-11-01' = {
+  parent: keyVaultPrivateEndpoint
+  name: 'default'
+  properties: {
+    privateDnsZoneConfigs: [
+      {
+        name: 'vault'
+        properties: {
+          privateDnsZoneId: keyVaultPrivateDnsZone.id
+        }
+      }
+    ]
+  }
+}
+
 resource postgresPrivateEndpoint 'Microsoft.Network/privateEndpoints@2023-11-01' = if (!empty(postgresResourceId)) {
   name: 'pe-postgres-flex'
   location: location
@@ -181,6 +304,21 @@ resource postgresPrivateEndpoint 'Microsoft.Network/privateEndpoints@2023-11-01'
   }
 }
 
+resource postgresPrivateDnsZoneGroup 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2023-11-01' = if (!empty(postgresResourceId)) {
+  parent: postgresPrivateEndpoint
+  name: 'default'
+  properties: {
+    privateDnsZoneConfigs: [
+      {
+        name: 'postgres'
+        properties: {
+          privateDnsZoneId: postgresPrivateDnsZone.id
+        }
+      }
+    ]
+  }
+}
+
 resource storageRoleAssignments 'Microsoft.Authorization/roleAssignments@2022-04-01' = [for principalId in controlPlanePrincipalIds: {
   name: guid(subscription().subscriptionId, storageAccount.id, principalId, storageBlobDataContributorRoleDefinitionId)
   scope: storageAccount
@@ -192,5 +330,6 @@ resource storageRoleAssignments 'Microsoft.Authorization/roleAssignments@2022-04
 }]
 
 output vnetResourceId string = dataVnet.id
+output appSubnetResourceId string = deployContainerAppsSubnet ? appSubnetRef.id : ''
 output storageAccountResourceId string = storageAccount.id
 output keyVaultPrivateEndpointId string = keyVaultPrivateEndpoint.id

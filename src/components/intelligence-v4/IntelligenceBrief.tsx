@@ -99,9 +99,14 @@ export function IntelligenceBrief({ data, activeClient, surfaceContext }: Props)
   const leadBet = data.bets[0];
   const leadDecision = leadBet ? decisionCtaLabel(leadBet) : 'Review first';
   const leadPattern = leadBet?.bindingPatterns[0]?.pattern.id ?? data.patternsTriggered[0]?.pattern.id ?? 'Pattern bound';
-  const heroTitle = data.industry === 'retail'
-    ? 'Apex has three AI bets worth moving now, but one decision blocks the portfolio.'
-    : `Three AI bets are worth moving now for ${data.tenantName}.`;
+  // L11 fix (2026-05-13): hero title now uses the live tenant name on every
+  // tenant. The earlier "Apex has three AI bets…" literal was retail-only
+  // and was paired with the broken Value/Tensions panels — a CDIO at
+  // Meridian or a CIO at First Capital would see retail framing on their
+  // own brief. Hero now always reads "Three bets above the line for
+  // <tenantName> this quarter." so the tenant name is correct by
+  // construction.
+  const heroTitle = `Three bets above the line for ${data.tenantName} this quarter.`;
 
   // Workspace · the surface body that Sentinel chat docks against.
   // Post-AgentDock migration this lives on the RIGHT of the chat lane.
@@ -257,8 +262,8 @@ export function IntelligenceBrief({ data, activeClient, surfaceContext }: Props)
             marginTop: 22,
           }}
         >
-          <ValueAtStakePanel />
-          <OpenTensionsPanel />
+          <ValueAtStakePanel data={data} />
+          <OpenTensionsPanel data={data} />
         </section>
 
         {data.bets
@@ -699,13 +704,45 @@ function PatternCheckRow({ pattern }: { pattern: BriefData['patternsTriggered'][
   );
 }
 
-function ValueAtStakePanel() {
-  const rows = [
-    { label: 'Customer growth', value: '$18-$44M', captured: 38, blocked: 26, candidate: 20, tone: C.teal },
-    { label: 'Merchandising margin', value: '$20-$52M', captured: 22, blocked: 34, candidate: 28, tone: C.amber },
-    { label: 'Store productivity', value: '$16-$38M', captured: 12, blocked: 40, candidate: 30, tone: C.red },
-    { label: 'Data foundation', value: '$6-$16M', captured: 26, blocked: 30, candidate: 24, tone: C.navy },
-  ];
+/**
+ * D-012 fix (2026-05-13): the prior version of this panel had retail
+ * literals hard-coded with no props, so Meridian Health and First Capital
+ * Brief pages rendered "Merchandising margin / Store productivity /
+ * Demand sensing on item-location and promo quality" — pure retail copy.
+ * The panel now takes a `BriefData` payload and renders per-tenant
+ * value-at-stake rows, falling back to an industry-appropriate default
+ * if the brief data didn't supply explicit rows.
+ */
+const TONE_TO_COLOR: Record<NonNullable<BriefData['valueAtStake']>[number]['tone'], string> = {
+  teal: C.teal,
+  amber: C.amber,
+  red: C.red,
+  navy: C.navy,
+};
+
+const VALUE_AT_STAKE_FALLBACK: Record<BriefData['industry'], NonNullable<BriefData['valueAtStake']>> = {
+  retail: [
+    { label: 'Customer growth', value: '$18-$44M', captured: 38, blocked: 26, candidate: 20, tone: 'teal' },
+    { label: 'Merchandising margin', value: '$20-$52M', captured: 22, blocked: 34, candidate: 28, tone: 'amber' },
+    { label: 'Store productivity', value: '$16-$38M', captured: 12, blocked: 40, candidate: 30, tone: 'red' },
+    { label: 'Data foundation', value: '$6-$16M', captured: 26, blocked: 30, candidate: 24, tone: 'navy' },
+  ],
+  healthcare: [
+    { label: 'Quality outcomes', value: '$12-$32M', captured: 30, blocked: 28, candidate: 22, tone: 'teal' },
+    { label: 'Cost-to-serve', value: '$14-$36M', captured: 22, blocked: 36, candidate: 24, tone: 'amber' },
+    { label: 'Workforce reliability', value: '$8-$22M', captured: 14, blocked: 38, candidate: 28, tone: 'red' },
+    { label: 'Data foundation', value: '$6-$16M', captured: 26, blocked: 30, candidate: 24, tone: 'navy' },
+  ],
+  finserv: [
+    { label: 'Deposit retention', value: '$10-$28M', captured: 32, blocked: 24, candidate: 22, tone: 'teal' },
+    { label: 'Net interest margin', value: '$14-$36M', captured: 20, blocked: 38, candidate: 26, tone: 'amber' },
+    { label: 'Loss reduction', value: '$8-$22M', captured: 16, blocked: 36, candidate: 28, tone: 'red' },
+    { label: 'Data foundation', value: '$6-$16M', captured: 26, blocked: 30, candidate: 24, tone: 'navy' },
+  ],
+};
+
+function ValueAtStakePanel({ data }: { data: BriefData }) {
+  const rows = data.valueAtStake ?? VALUE_AT_STAKE_FALLBACK[data.industry];
   return (
     <div
       style={{
@@ -743,7 +780,7 @@ function ValueAtStakePanel() {
                 display: 'flex',
               }}
             >
-              <span style={{ width: `${row.captured}%`, background: row.tone }} />
+              <span style={{ width: `${row.captured}%`, background: TONE_TO_COLOR[row.tone] }} />
               <span style={{ width: `${row.blocked}%`, background: '#d9a39d' }} />
               <span style={{ width: `${row.candidate}%`, background: '#ececec' }} />
             </div>
@@ -755,24 +792,74 @@ function ValueAtStakePanel() {
   );
 }
 
-function OpenTensionsPanel() {
-  const tensions = [
+/**
+ * D-012 fix (2026-05-13): same anti-pattern as ValueAtStakePanel — the
+ * tensions list was hard-coded retail copy ("scale personalization until
+ * CDP accountability is explicit", "demand sensing on item-location and
+ * promo quality"). Now reads from `data.openTensions` with industry
+ * fallbacks for the three demo tenants.
+ */
+const OPEN_TENSIONS_FALLBACK: Record<BriefData['industry'], NonNullable<BriefData['openTensions']>> = {
+  retail: [
     {
       title: 'CMO owns loyalty, IT owns the bottleneck.',
       body: 'Do not scale personalization until CDP accountability is explicit.',
-      color: C.red,
+      severity: 'red',
     },
     {
       title: 'CFO wants cost takeout, CIO is funding platform-first.',
       body: 'The business case needs to separate near-term savings from foundation spend.',
-      color: C.amber,
+      severity: 'amber',
     },
     {
       title: 'AI timeline assumes data readiness not shown.',
       body: 'Demand sensing should wait for evidence on item-location and promo quality.',
-      color: C.red,
+      severity: 'red',
     },
-  ];
+  ],
+  healthcare: [
+    {
+      title: 'Clinical owns outcomes, IT owns the integration.',
+      body: 'Do not scale ambient AI until clinical documentation accountability and Epic interop are explicit.',
+      severity: 'red',
+    },
+    {
+      title: 'CFO wants margin recovery, CIO is funding foundation work.',
+      body: 'The business case needs to separate near-term claims-yield from data foundation spend.',
+      severity: 'amber',
+    },
+    {
+      title: 'AI timeline assumes data readiness not shown.',
+      body: 'Population health AI should wait for evidence on patient registry completeness and SDOH coverage.',
+      severity: 'red',
+    },
+  ],
+  finserv: [
+    {
+      title: 'Front office owns growth, Risk owns the gate.',
+      body: 'Do not scale ML pricing or AML automation until SR 11-7 model-risk governance is explicit.',
+      severity: 'red',
+    },
+    {
+      title: 'CFO wants NIM lift, CIO is funding core modernization.',
+      body: 'The business case needs to separate near-term deposit retention from core API platform spend.',
+      severity: 'amber',
+    },
+    {
+      title: 'AI timeline assumes data readiness not shown.',
+      body: 'Decisioning models should wait for evidence on consent posture and reference-data lineage.',
+      severity: 'red',
+    },
+  ],
+};
+
+const SEVERITY_TO_COLOR: Record<NonNullable<BriefData['openTensions']>[number]['severity'], string> = {
+  red: C.red,
+  amber: C.amber,
+};
+
+function OpenTensionsPanel({ data }: { data: BriefData }) {
+  const tensions = data.openTensions ?? OPEN_TENSIONS_FALLBACK[data.industry];
   return (
     <aside
       style={{
@@ -794,7 +881,7 @@ function OpenTensionsPanel() {
                 width: 8,
                 height: 8,
                 borderRadius: 999,
-                background: tension.color,
+                background: SEVERITY_TO_COLOR[tension.severity],
                 marginTop: 7,
               }}
             />

@@ -234,31 +234,114 @@ export function IntelligenceV3Page({
                     tenantName={activeTenantName}
                   />
                 )}
-                {stage === 'today' && <TodayCxoCanvas items={apexRetailData?.todayItems} />}
-                {stage === 'by-function' && (
-                  <ByFunctionCxoCanvas
-                    rows={isApexBound ? APEX_RETAIL_BY_FN_ROWS : undefined}
-                    outcomes={isApexBound ? APEX_RETAIL_BY_FN_OUTCOMES : undefined}
-                  />
-                )}
-                {stage === 'patterns' && <PatternsCxoCanvas patterns={apexRetailData?.patterns} />}
-                {stage === 'vendors' && <VendorsCxoCanvas spend={isApexBound ? APEX_RETAIL_VENDOR_SPEND : undefined} />}
-                {stage === 'peer-activity' && (
-                  <PeerActivityCxoCanvas
-                    rows={isApexBound ? APEX_RETAIL_PEER_ROWS : undefined}
-                    lead={
+                {/*
+                  L2-L8 fix (2026-05-13): each V3 canvas previously had
+                  `= MERIDIAN_*` as its default prop value and the page only
+                  overrode it when `isApexBound`. Result: First Capital
+                  silently rendered Meridian fixtures across 7 canvases
+                  (Vendors stage showed Epic / Innovaccer / Abridge / Cohere
+                  on a bank, etc.). Until First Capital fixtures are
+                  shipped, pass `[]` / `0` for the First-Capital path so the
+                  canvases render their empty state rather than another
+                  tenant's content. Meridian still falls through to the
+                  Meridian default (`undefined` → `MERIDIAN_*` inside the
+                  canvas), so Meridian's surface is unchanged.
+                */}
+                {stage === 'today' && (
+                  <TodayCxoCanvas
+                    items={
                       isApexBound
-                        ? 'Adoption read across retail cohorts: specialty, big-box, grocery, luxury, and marketplace-first peers. The laggard signal is strongest where customer identity and item-location history are weak.'
-                        : undefined
+                        ? apexRetailData?.todayItems
+                        : isFirstCapitalBound
+                          ? []
+                          : undefined
                     }
                   />
                 )}
-                {stage === 'my-strategy' && <MyStrategyCxoCanvas bullets={isApexBound ? APEX_RETAIL_STRATEGY_BULLETS : undefined} />}
+                {stage === 'by-function' && (
+                  <ByFunctionCxoCanvas
+                    rows={
+                      isApexBound
+                        ? APEX_RETAIL_BY_FN_ROWS
+                        : isFirstCapitalBound
+                          ? []
+                          : undefined
+                    }
+                    outcomes={
+                      isApexBound
+                        ? APEX_RETAIL_BY_FN_OUTCOMES
+                        : isFirstCapitalBound
+                          ? []
+                          : undefined
+                    }
+                  />
+                )}
+                {stage === 'patterns' && (
+                  <PatternsCxoCanvas
+                    patterns={
+                      isApexBound
+                        ? apexRetailData?.patterns
+                        : isFirstCapitalBound
+                          ? []
+                          : undefined
+                    }
+                  />
+                )}
+                {stage === 'vendors' && (
+                  <VendorsCxoCanvas
+                    spend={
+                      isApexBound
+                        ? APEX_RETAIL_VENDOR_SPEND
+                        : isFirstCapitalBound
+                          ? []
+                          : undefined
+                    }
+                  />
+                )}
+                {stage === 'peer-activity' && (
+                  <PeerActivityCxoCanvas
+                    rows={
+                      isApexBound
+                        ? APEX_RETAIL_PEER_ROWS
+                        : isFirstCapitalBound
+                          ? []
+                          : undefined
+                    }
+                    lead={
+                      isApexBound
+                        ? 'Adoption read across retail cohorts: specialty, big-box, grocery, luxury, and marketplace-first peers. The laggard signal is strongest where customer identity and item-location history are weak.'
+                        : isFirstCapitalBound
+                          ? 'First Capital substrate not yet bound · peer cohort view will surface once initiatives are loaded.'
+                          : undefined
+                    }
+                  />
+                )}
+                {stage === 'my-strategy' && (
+                  <MyStrategyCxoCanvas
+                    bullets={
+                      isApexBound
+                        ? APEX_RETAIL_STRATEGY_BULLETS
+                        : isFirstCapitalBound
+                          ? []
+                          : undefined
+                    }
+                  />
+                )}
                 {stage === 'sessions' && (
                   <SessionsCxoCanvas
-                    rows={isApexBound ? APEX_RETAIL_SESSIONS : undefined}
-                    totalConversations={isApexBound ? 18 : undefined}
-                    recentWindowCount={isApexBound ? 6 : undefined}
+                    rows={
+                      isApexBound
+                        ? APEX_RETAIL_SESSIONS
+                        : isFirstCapitalBound
+                          ? []
+                          : undefined
+                    }
+                    totalConversations={
+                      isApexBound ? 18 : isFirstCapitalBound ? 0 : undefined
+                    }
+                    recentWindowCount={
+                      isApexBound ? 6 : isFirstCapitalBound ? 0 : undefined
+                    }
                   />
                 )}
               </main>

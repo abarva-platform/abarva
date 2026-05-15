@@ -6,6 +6,10 @@
 import { NextRequest } from 'next/server';
 import { getServerSupabase } from '@/lib/supabase-server';
 import { requireTenancy, tenancyErrorResponse } from '../../_intel-auth';
+import {
+  evaluateSensitiveUpload,
+  sensitiveUploadRejectedResponse,
+} from '@/lib/security/sensitive-upload-guard';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -29,6 +33,20 @@ export async function POST(req: NextRequest) {
     }
     if (file.type && !ALLOWED.includes(file.type)) {
       return Response.json({ error: 'unsupported_format', detail: `supported: ${ALLOWED.join(', ')}` }, { status: 415 });
+    }
+
+    // B5a (audit 2026-05-13): scan-before-write — quarantine suspected
+    // PHI/PII/regulated-identifier uploads before they touch storage.
+    // Same pattern as the other 5 wired upload routes.
+    const bytes = await file.arrayBuffer();
+    const dataProtection = evaluateSensitiveUpload({
+      filename: file.name,
+      mimeType: file.type,
+      bytes,
+      declaredClassification: form.get('dataClassification'),
+    });
+    if (dataProtection.decision === 'quarantine') {
+      return sensitiveUploadRejectedResponse(dataProtection);
     }
 
     const sb = getServerSupabase();

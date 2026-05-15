@@ -29,9 +29,15 @@ export const PUBLIC_ROUTE_PATTERNS = [
   // Demo code sign-in starts unauthenticated from /sign-in, so the ticket
   // handoff route must stay publicly reachable and perform its own checks.
   '/api/auth/demo-code-sign-in(.*)',
-  // Count-only Tower substrate diagnostic. Returns no secrets or row payloads;
-  // used to verify production DB substrate without exposing tenant data.
-  '/api/debug/tower-substrate(.*)',
+  // Health is intentionally public so platform probes can validate runtime
+  // readiness before a browser session exists. The route masks raw backing
+  // service errors when NODE_ENV=production.
+  '/api/health',
+  // SEC-P1-11 (audit 2026-05-13): `/api/debug/tower-substrate` previously
+  // lived here as "count-only diagnostic" — but it returned per-tenant
+  // initiative counts publicly to anyone who knew the URL. The route is
+  // now an authenticated diagnostic (any signed-in user, count-only is
+  // still acceptable across the workspace). Removed from the public list.
   // INT-V3 (2026-05-07) · /intelligence is the public Explore Layer
   // surface — corpus doctrine, no tenant data leakage. Auth-required
   // sub-paths (author / quality / synthesize / ask / validate) are
@@ -50,8 +56,34 @@ const maestroRoutes = createRouteMatcher([
 // Routes that require any authenticated session. /admin(.*) still listed
 // because redirects run in edge routing but leaving the auth matcher is
 // belt-and-suspenders in case the redirect misses.
+//
+// SEC-P0-9 (2026-05-13): `/api/admin(.*)` is added explicitly. Previously
+// only the page route `/admin(.*)` was matched; API admin endpoints fell
+// through to `auth.protect()` which requires *any* signed-in user, not the
+// admin role. Per-handler `requireAdminAuth()` or `requireTenancy()` calls
+// provide the role/tenant check; this entry just ensures the auth gate fires.
+//
+// Similarly, the high-value write APIs that accept `clientId`/`tenantKey`
+// from the request body are listed explicitly so the auth gate is obvious
+// in this file rather than implicit through the public-route fall-through.
 export const AUTH_REQUIRED_ROUTE_PATTERNS = [
   '/admin(.*)',
+  '/api/admin(.*)',
+  '/api/data(.*)',
+  '/api/setup/(.*)',
+  '/api/tower/(.*)',
+  '/api/turn/(.*)',
+  '/api/intelligence/query',
+  // SEC-P1-10 (audit 2026-05-13): 27 `/api/reasoning/*` routes are
+  // currently in-memory demo stubs. Per-handler `requireTenancy()` calls
+  // are TODO when those routes get backed by Supabase persistence. For
+  // now, the explicit pattern entry ensures the middleware auth gate is
+  // recorded in this file rather than implicit through public-fallthrough.
+  '/api/reasoning(.*)',
+  // SEC-P1 belt-and-suspenders: `/api/v1/*` routes are mixed
+  // signed-in/typed accessors. Listed explicitly so anyone adding a new
+  // v1 endpoint knows the auth contract.
+  '/api/v1/(.*)',
   '/maestro(.*)',
   // /home(.*) covers the canonical Home tree (PR-H2 route migration);
   // /admin(.*) stays in the list because it 301-redirects to /home

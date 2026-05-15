@@ -1,43 +1,24 @@
-import { currentUser } from '@clerk/nextjs/server';
 import { TenancyError, tenancyErrorResponse } from '@/app/api/v1/_intel-auth';
-import { getActiveClientRow } from '@/lib/active-client';
-import { getCurrentUser, userCanAccessClient } from '@/lib/auth/current-user';
-import { getCurrentPerson } from '@/lib/auth/maestro';
+import { requireTenancy } from '@/lib/auth/tenancy';
 import type { AtlasTenancyCtx } from '@/lib/atlas/types';
 
 export async function requireAtlasTenancy(clientId?: string | null): Promise<AtlasTenancyCtx> {
-  const person = await getCurrentPerson();
-  const user = await getCurrentUser();
-  const clerkUser = user ? null : await currentUser().catch(() => null);
-  if (!user && !clerkUser) throw new TenancyError('unauthenticated');
-
-  const deriveUserId = (): string | null =>
-    person?.id
-      ?? user?.personId
-      ?? (user?.clerkUserId ? `clerk:${user.clerkUserId}` : null)
-      ?? (clerkUser?.id ? `clerk:${clerkUser.id}` : null);
-
+  const tenancy = await requireTenancy().catch((err) => {
+    if (err instanceof Error && (err.message === 'unauthenticated' || err.message === 'no_client')) {
+      throw new TenancyError(err.message as 'unauthenticated' | 'no_client');
+    }
+    throw err;
+  });
   const requestedClientId = clientId?.trim() || null;
-  if (requestedClientId) {
-    // Primary check · explicit membership (or maestro) access.
-    if (user && userCanAccessClient(user, requestedClientId)) {
-      return { clientId: requestedClientId, userId: deriveUserId() };
-    }
-    // Fallback · the Clerk session resolves to the same client via metadata
-    // (demo / test users who are scoped via publicMetadata.clientId but have
-    // no rows in `persons` / `person_client_memberships`). We compare against
-    // `getActiveClientRow` which already honors the cookie-then-metadata
-    // precedence, so this is the same source of truth the nav uses.
-    const activeClient = await getActiveClientRow();
-    if (!activeClient || activeClient.id !== requestedClientId) {
-      throw new TenancyError('no_client');
-    }
-    return { clientId: requestedClientId, userId: deriveUserId() };
+  if (
+    requestedClientId &&
+    requestedClientId !== tenancy.clientId &&
+    requestedClientId !== tenancy.clientKey
+  ) {
+    throw new TenancyError('no_client');
   }
 
-  const client = await getActiveClientRow();
-  if (!client) throw new TenancyError('no_client');
-  return { clientId: client.id, userId: deriveUserId() };
+  return { clientId: tenancy.clientId, userId: tenancy.userId };
 }
 
 export { tenancyErrorResponse };

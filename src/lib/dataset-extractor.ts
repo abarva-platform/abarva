@@ -121,7 +121,7 @@ export const ARCTURUS_DELIVERY_PHASE0: Phase0Output = {
     },
     {
       title: 'Portfolio Analytics: the benchmark that proves the rest is fixable.',
-      description: 'Portfolio Analytics delivers at or near industry benchmark — highest velocity, lowest cost per story point, genuine internal capability. This proves the problem is not structural to Arcturus. It is specific to squads with high vendor dependency.',
+      description: 'Portfolio Analytics delivers at or near industry benchmark — highest velocity, lowest cost per story point, genuine internal capability. This proves the problem is not structural to First Capital. It is specific to squads with high vendor dependency.',
       severity: 'positive',
       source_files: ['ARC-C01', 'ARC-C05'],
       genome_pattern: null
@@ -358,7 +358,7 @@ export const ARCTURUS_TECH_PHASE0: Phase0Output = {
       immediate_action: 'Commission API wrapper feasibility study for the 6 portable customisations'
     },
     {
-      title: 'Charles River IMS + Portfolio Analytics: the proof that Arcturus can govern technology.',
+      title: 'Charles River IMS + Portfolio Analytics: the proof that First Capital can govern technology.',
       description: 'Charles River IMS scores 32/100 for technical debt — the best-managed system in the estate. Portfolio Analytics squad delivers at benchmark. These two prove the internal capability exists in pockets. Tech modernisation builds on these, not from zero.',
       severity: 'positive',
       source_files: ['ARC-T02', 'ARC-C01'],
@@ -545,7 +545,7 @@ export const MERIDIAN_TECH_PHASE0: Phase0Output = {
       name: 'Data readiness below threshold',
       failure_rate: 0.68,
       confidence: 'probable',
-      evidence: '14 years of Cerner patient history in proprietary format. Data migration planning not started for Q4 2026 Cerner migration. 2016 Arcturus modernisation failed for same reason — data complexity underestimated.',
+      evidence: '14 years of Cerner patient history in proprietary format. Data migration planning not started for Q4 2026 Cerner migration. 2016 the 2016 modernisation failed for same reason — data complexity underestimated.',
       source_files: ['MER-T02']
     },
     {
@@ -569,7 +569,7 @@ export const MERIDIAN_TECH_PHASE0: Phase0Output = {
     },
     {
       title: 'Cerner migration: Q4 2026 target. Data migration planning not started.',
-      description: '2 hospitals on Cerner. 700 combined beds. 14 years of patient history. Migration target Q4 2026. Data migration planning not started. 2016 Arcturus modernisation failed for identical reason — data complexity underestimated before programme start. This is F003 at 68% failure rate.',
+      description: '2 hospitals on Cerner. 700 combined beds. 14 years of patient history. Migration target Q4 2026. Data migration planning not started. 2016 the 2016 modernisation failed for identical reason — data complexity underestimated before programme start. This is F003 at 68% failure rate.',
       severity: 'critical',
       source_files: ['MER-T02'],
       genome_pattern: 'F003',
@@ -603,7 +603,7 @@ export const MERIDIAN_TECH_PHASE0: Phase0Output = {
 export const ARCTURUS_AI_STRATEGY_PHASE0: Phase0Output = {
   overall_score: 26,
   overall_verdict: 'partial',
-  verdict_summary: 'Arcturus has significant AI investment but near-zero production maturity. The Genome confirms this profile: F008 (91%) — AI spend with zero verified ROI is the defining pattern. 14 models in production, none monitored, none retrained since deployment. CDO vacant 11 months. 28 active initiatives, 0 in production delivering documented value. The data infrastructure foundation is fragile: SQL Server 2017 EOL, Netezza unsupported since 2019, Informatica developer cliff arriving Q3 2026.',
+  verdict_summary: 'First Capital has significant AI investment but near-zero production maturity. The Genome confirms this profile: F008 (91%) — AI spend with zero verified ROI is the defining pattern. 14 models in production, none monitored, none retrained since deployment. CDO vacant 11 months. 28 active initiatives, 0 in production delivering documented value. The data infrastructure foundation is fragile: SQL Server 2017 EOL, Netezza unsupported since 2019, Informatica developer cliff arriving Q3 2026.',
   recommended_action: 'Proceed to AI Strategy engagement. Phase 1 priority: Contradiction Intelligence to surface board reporting gap. Wave 1 deployment: AI-023 via AWS Bedrock (58-day path to first production model). CDO appointment is prerequisite for Phase 2.',
   dimension_scores: {
     data_readiness: {
@@ -721,7 +721,7 @@ export async function extractDatasetSummaries(
   uploadedFiles: string[]
 ): Promise<Record<string, any>> {
 
-  // Arcturus Delivery
+  // First Capital Delivery
   if (clientId === 'arcturus' && solution === 'delivery') {
     return {
       consulting_audit: {

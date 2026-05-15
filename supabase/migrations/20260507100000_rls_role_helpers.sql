@@ -164,6 +164,27 @@ RETURNS BOOLEAN AS $$
   ) AND is_tenant_admin()
 $$ LANGUAGE sql STABLE SECURITY DEFINER;
 
+-- Legacy-text variant: older migrations / seed tables may carry client_id as
+-- TEXT while newer tables use UUID. Resolve either clients.id::text or
+-- clients.tenant_key so downstream RLS policies can call one helper safely.
+CREATE OR REPLACE FUNCTION can_read_tenant_by_id(p_client_id TEXT)
+RETURNS BOOLEAN AS $$
+  SELECT EXISTS (
+    SELECT 1 FROM clients
+    WHERE (id::text = p_client_id OR tenant_key = p_client_id)
+      AND tenant_key = current_tenant_key()
+  ) OR is_maestro()
+$$ LANGUAGE sql STABLE SECURITY DEFINER;
+
+CREATE OR REPLACE FUNCTION can_write_tenant_by_id(p_client_id TEXT)
+RETURNS BOOLEAN AS $$
+  SELECT EXISTS (
+    SELECT 1 FROM clients
+    WHERE (id::text = p_client_id OR tenant_key = p_client_id)
+      AND tenant_key = current_tenant_key()
+  ) AND is_tenant_admin()
+$$ LANGUAGE sql STABLE SECURITY DEFINER;
+
 -- ── Grant helpers to authenticated role ───────────────────────────────────
 -- RLS policies on authenticated connections can call these without
 -- elevation because SECURITY DEFINER handles the privilege.
@@ -177,6 +198,8 @@ GRANT EXECUTE ON FUNCTION can_read_tenant_by_key(TEXT) TO authenticated;
 GRANT EXECUTE ON FUNCTION can_write_tenant_by_key(TEXT) TO authenticated;
 GRANT EXECUTE ON FUNCTION can_read_tenant_by_id(UUID) TO authenticated;
 GRANT EXECUTE ON FUNCTION can_write_tenant_by_id(UUID) TO authenticated;
+GRANT EXECUTE ON FUNCTION can_read_tenant_by_id(TEXT) TO authenticated;
+GRANT EXECUTE ON FUNCTION can_write_tenant_by_id(TEXT) TO authenticated;
 
 NOTIFY pgrst, 'reload schema';
 

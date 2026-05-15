@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AbarVa · Strategic Backlog · 2026-05-14 (rev b)</title>
+<style>
+:root {
+  --bg: #F8F7F4;
+  --ink: #0F1115;
+  --body: #2C2F36;
+  --muted: #5F6470;
+  --hair: #E2DFD8;
+  --hair-strong: #C9C5BD;
+  --teal: #0F766E;
+  --amber: #B45309;
+  --red: #B91C1C;
+  --navy: #0B2545;
+  --serif: Georgia, "Times New Roman", serif;
+  --sans: "DM Sans", -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--body); font-family: var(--sans); font-size: 14px; line-height: 1.5; -webkit-font-smoothing: antialiased; }
+.shell { max-width: 1280px; margin: 0 auto; padding: 56px 32px 96px; }
+header.masthead { border-bottom: 1px solid var(--hair-strong); padding-bottom: 24px; margin-bottom: 36px; }
+.eyebrow { font-family: var(--mono); font-size: 11px; text-transform: uppercase; letter-spacing: 0.18em; color: var(--muted); margin-bottom: 10px; }
+h1 { font-family: var(--serif); font-weight: 400; font-size: 38px; line-height: 1.15; margin: 0 0 14px; color: var(--ink); letter-spacing: -0.005em; }
+.lede { font-size: 15.5px; line-height: 1.55; color: var(--body); max-width: 920px; margin: 0; }
+.lede + .lede { margin-top: 10px; font-size: 13.5px; color: var(--muted); }
+.meta { display: flex; gap: 24px; flex-wrap: wrap; margin-top: 22px; font-family: var(--mono); font-size: 11px; color: var(--muted); }
+.meta span strong { color: var(--ink); font-weight: 600; }
+
+section.workstream { margin-top: 56px; }
+section.workstream > h2 { font-family: var(--serif); font-weight: 400; font-size: 26px; margin: 0 0 6px; color: var(--ink); letter-spacing: -0.003em; }
+section.workstream > .ws-sub { font-size: 13.5px; color: var(--muted); margin: 0 0 22px; max-width: 820px; }
+.ws-id { font-family: var(--mono); font-size: 11px; text-transform: uppercase; letter-spacing: 0.18em; color: var(--muted); display: inline-block; margin-right: 10px; }
+
+table.plan { width: 100%; border-collapse: collapse; background: #FFFFFF; border: 1px solid var(--hair-strong); }
+table.plan th { text-align: left; font-family: var(--mono); font-size: 10px; text-transform: uppercase; letter-spacing: 0.14em; color: var(--muted); font-weight: 600; padding: 12px 14px; background: #FAF8F3; border-bottom: 1px solid var(--hair-strong); vertical-align: top; }
+table.plan td { padding: 16px 14px; vertical-align: top; font-size: 13px; line-height: 1.5; border-bottom: 1px solid var(--hair); color: var(--body); }
+table.plan tr:last-child td { border-bottom: none; }
+table.plan tr.sub td { background: #FBF9F4; }
+table.plan tr.sub td.id { color: var(--muted); padding-left: 22px; font-size: 11px; }
+table.plan tr.sub td.title strong { color: var(--ink); font-weight: 500; font-size: 12.5px; }
+table.plan td.id { width: 64px; font-family: var(--mono); font-size: 11.5px; color: var(--ink); font-weight: 600; }
+table.plan td.title { width: 220px; }
+table.plan td.title strong { display: block; color: var(--ink); font-weight: 600; font-size: 13.5px; margin-bottom: 6px; }
+table.plan td.title .status { display: inline-block; font-family: var(--mono); font-size: 10px; text-transform: uppercase; letter-spacing: 0.14em; padding: 2px 7px; border-radius: 3px; }
+.status.open { background: rgba(180,83,9,0.10); color: var(--amber); }
+.status.partial { background: rgba(15,118,110,0.10); color: var(--teal); }
+.status.flight { background: rgba(11,37,69,0.08); color: var(--navy); }
+.status.gating { background: rgba(185,28,28,0.10); color: var(--red); }
+.status.win { background: rgba(15,118,110,0.10); color: var(--teal); }
+.status.punch { background: rgba(180,83,9,0.10); color: var(--amber); }
+
+table.plan td.scope, table.plan td.assume, table.plan td.solution, table.plan td.outcome { width: 22%; }
+table.plan td.outcome { padding-right: 18px; }
+
+.label { font-family: var(--mono); font-size: 9.5px; text-transform: uppercase; letter-spacing: 0.16em; color: var(--muted); display: block; margin-bottom: 4px; }
+
+.matrix { display: grid; grid-template-columns: repeat(5, 1fr); gap: 14px; margin-top: 22px; }
+.matrix .card { background: #FFFFFF; border: 1px solid var(--hair-strong); padding: 14px 16px; }
+.matrix .card .k { font-family: var(--mono); font-size: 10px; text-transform: uppercase; letter-spacing: 0.16em; color: var(--muted); margin-bottom: 6px; }
+.matrix .card .v { font-family: var(--serif); font-size: 22px; color: var(--ink); line-height: 1.1; margin-bottom: 4px; }
+.matrix .card .h { font-size: 11.5px; color: var(--muted); line-height: 1.4; }
+
+.depgraph { background: #FFFFFF; border: 1px solid var(--hair-strong); padding: 22px 26px; margin-top: 22px; font-family: var(--mono); font-size: 12.5px; color: var(--body); white-space: pre; overflow-x: auto; }
+
+.flight-list { background: #FFFFFF; border: 1px solid var(--hair-strong); padding: 6px 0; margin-top: 22px; }
+.flight-list .row { padding: 14px 22px; border-bottom: 1px solid var(--hair); display: grid; grid-template-columns: 100px 1fr; gap: 14px; align-items: baseline; }
+.flight-list .row:last-child { border-bottom: none; }
+.flight-list .id { font-family: var(--mono); font-size: 11px; color: var(--ink); font-weight: 600; }
+.flight-list .desc { font-size: 13px; line-height: 1.5; }
+.flight-list .desc a { color: var(--navy); text-decoration: none; border-bottom: 1px solid var(--hair-strong); }
+.flight-list .desc a:hover { border-bottom-color: var(--navy); }
+
+table.tier { width: 100%; border-collapse: collapse; background: #FFFFFF; border: 1px solid var(--hair-strong); margin-top: 18px; }
+table.tier th { text-align: left; font-family: var(--mono); font-size: 10px; text-transform: uppercase; letter-spacing: 0.14em; color: var(--muted); font-weight: 600; padding: 12px 14px; background: #FAF8F3; border-bottom: 1px solid var(--hair-strong); }
+table.tier td { padding: 14px 14px; vertical-align: top; font-size: 13px; line-height: 1.5; border-bottom: 1px solid var(--hair); }
+table.tier tr:last-child td { border-bottom: none; }
+table.tier td.tier-name { font-family: var(--mono); font-size: 11.5px; color: var(--ink); font-weight: 600; width: 140px; white-space: nowrap; }
+table.tier td.channel { width: 30%; }
+table.tier td.use { width: 32%; }
+table.tier td.when { width: 22%; color: var(--muted); font-size: 12.5px; }
+
+.section-eyebrow { font-family: var(--mono); font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.18em; color: var(--muted); margin: 0 0 6px; }
+
+.banner { background: #FFFFFF; border: 1px solid var(--hair-strong); border-left: 3px solid var(--teal); padding: 14px 18px; margin-top: 18px; font-size: 13px; color: var(--body); }
+.banner strong { color: var(--ink); }
+
+@media (max-width: 1100px) {
+  table.plan td.title { width: 180px; }
+  .matrix { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 760px) {
+  .shell { padding: 32px 18px 64px; }
+  table.plan, table.tier { display: block; overflow-x: auto; }
+  .matrix { grid-template-columns: 1fr; }
+}
+@media print {
+  body { background: #FFFFFF; }
+  .shell { padding: 24px; max-width: none; }
+  table.plan, table.tier { page-break-inside: auto; }
+  table.plan tr, table.tier tr { page-break-inside: avoid; page-break-after: auto; }
+  section.workstream { page-break-before: always; }
+  section.workstream:first-of-type { page-break-before: avoid; }
+}
+</style>
+</head>
+<body>
+<div class="shell">
+
+<header class="masthead">
+  <div class="eyebrow">Strategic Backlog · 2026-05-14 · rev b</div>
+  <h1>AbarVa — what to build, defend, monetize, and ship next.</h1>
+  <p class="lede">Four parallel workstreams plus one cross-cutting concern (<strong>Data ingestion model</strong>). Each item has explicit <strong>scope</strong>, <strong>assumptions</strong>, <strong>solution shape</strong>, and <strong>desired outcomes</strong> — so a different human can pick up any row without further briefing. Items marked <em>in flight</em> are partially shipped from the 2026-05-13 audit arc and follow-on PRs. No time estimates; the focus is parallelizability and sequencing.</p>
+  <p class="lede"><strong>Rev b changes (2026-05-14):</strong> A2 split into A2a / A2b / A2c to reflect the actual seed → broker → UI pipeline. B5 split into B5a / B5b / B5c and re-statused — the pattern-based sensitive-upload guard is shipped and live on 5 of 7 upload routes; punch-list to wire the remaining 2. New cross-cutting section: <strong>Data ingestion model (four-tier)</strong>.</p>
+  <div class="meta">
+    <span><strong>Workstreams:</strong> A Engineering · B Azure infra · C Pilot ops · D Business / GTM</span>
+    <span><strong>Cross-cutting:</strong> Data ingestion model</span>
+    <span><strong>Owner-types:</strong> founder · engineering · architect · legal / accounting · advisor</span>
+  </div>
+</header>
+
+<section>
+  <div class="matrix">
+    <div class="card"><div class="k">Top-level items</div><div class="v">18</div><div class="h">across 4 lanes</div></div>
+    <div class="card"><div class="k">In flight</div><div class="v">5</div><div class="h">A2 · A3 · B5 · A1-foundation · B-foundation</div></div>
+    <div class="card"><div class="k">Quick wins</div><div class="v">5</div><div class="h">no dependencies</div></div>
+    <div class="card"><div class="k">Gating</div><div class="v">D1</div><div class="h">narrative locks downstream</div></div>
+    <div class="card"><div class="k">Top priority</div><div class="v">A1</div><div class="h">end-to-end testing</div></div>
+  </div>
+</section>
+
+<!-- =============================================================== -->
+<section class="workstream">
+  <span class="ws-id">Workstream A</span>
+  <h2>Engineering</h2>
+  <p class="ws-sub">Highest leverage. A1 (end-to-end testing) is the single largest unlock — every pilot-ops claim downstream depends on it. <strong>A2 is broken out into a/b/c sub-items</strong> to reflect the actual context-layer pipeline: 14 seed segments → broker-processed rows → 15 coverage tiles + 6 synthesized cards rendered on <code>/intelligence#enterprise-context</code>.</p>
+
+  <table class="plan">
+    <thead>
+      <tr><th>ID</th><th>Item</th><th>Scope</th><th>Assumptions</th><th>Solution</th><th>Desired outcomes</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="id">A1</td>
+        <td class="title"><strong>End-to-end testing coverage</strong><span class="status open">Top priority</span></td>
+        <td>Login → Home → Intelligence → Source → Strategic Moves → Tower per tenant. The 8 SEC-P0 cross-tenant probes from the 2026-05-13 audit become a permanent regression suite.</td>
+        <td>Playwright is the runner. Tests run on a prod-like staging environment with seeded fixtures. Cross-tenant curl probes are a separate fast suite that doesn&rsquo;t need a browser.</td>
+        <td>Two suites. Playwright per-tenant smoke for every primary surface, nightly + on-PR. Curl-based SEC-P0 regression asserting 403 forbidden_cross_tenant on the 8 routes. Both land in CI before any pilot conversation.</td>
+        <td>Every primary CXO flow has an automated smoke. Cross-tenant 403s catch regressions before customers see them. A1 is the precondition stated in C1, C2, C3.</td>
+      </tr>
+      <tr>
+        <td class="id">A2</td>
+        <td class="title"><strong>Context layer stand-up + refresh</strong><span class="status partial">Partial · in flight</span></td>
+        <td>The context layer has three rendering layers: <strong>14 seed segments</strong> (folder structure) → <strong>broker-processed rows</strong> → <strong>15 coverage tiles + 6 synthesized cards</strong> on <code>/intelligence#enterprise-context</code>. Bootstrap/refresh must cover all three.</td>
+        <td>The 14-segment shape from the First Capital pack (PR #1929) is canonical. Tenant onboarding is opinionated, not bespoke per customer. The mapping seed → UI is many-to-many.</td>
+        <td>Three sub-items below: A2a (UI ingestion), A2b (Azure landing zone), A2c (bootstrap/refresh scripts that drive the full pipeline through to verified UI render).</td>
+        <td>A 4th tenant can be onboarded in under an hour without engineering hand-holding. Refresh is push-button. All 15 tiles + 6 cards verify-render after the script runs.</td>
+      </tr>
+      <tr class="sub">
+        <td class="id">↳ A2a</td>
+        <td class="title"><strong>Tier-1 ingestion: UI upload + sensitive-upload guard</strong><span class="status partial">Partial · in flight</span></td>
+        <td>Browser file picker in the AbarVa UI. Ad-hoc unstructured documents (policy doc, single vendor contract, exec interview transcript). Sensitive-data scan before write.</td>
+        <td>The pattern-based guard (<code>src/lib/security/sensitive-upload-guard.ts</code>) is the canonical check. Quarantine decisions block storage, indexing, and evidence extraction.</td>
+        <td>5 of 7 upload routes already call <code>evaluateSensitiveUpload</code>. Punch-list (B5a) wires the remaining 2: <code>programs/workspace/[moveId]/upload</code> and <code>v1/nexus/upload</code>.</td>
+        <td>Every UI-uploaded file passes through the sensitive-data gate before any storage or vector indexing happens. No exceptions.</td>
+      </tr>
+      <tr class="sub">
+        <td class="id">↳ A2b</td>
+        <td class="title"><strong>Tier-2 ingestion: Azure landing zone per tenant</strong><span class="status open">Open</span></td>
+        <td>Per-tenant Azure Blob Storage container. Private endpoint. Customer-controlled SAS / service principal access. Scheduled pickup runs the broker pipeline.</td>
+        <td>Recurring structured data (KPI snapshots, financial extracts, contract registry, telemetry) is too bulky and too frequent for UI upload. Customer IT prefers a blob drop they can automate.</td>
+        <td>Bicep module that provisions the per-tenant container + private endpoint. Azure Function (or cron Worker) that picks up new drops, runs the sensitive-data guard, persists to broker substrate, rebuilds tiles + cards.</td>
+        <td>Production-default channel for the 9 segments that refresh weekly/monthly. Customer can wire to their existing ETL once. Same security controls as A2a apply.</td>
+      </tr>
+      <tr class="sub">
+        <td class="id">↳ A2c</td>
+        <td class="title"><strong><code>tenant:bootstrap</code> + <code>tenant:refresh</code> scripts</strong><span class="status open">Open</span></td>
+        <td>Two npm scripts that wrap the full pipeline. Bootstrap = first-time tenant provisioning. Refresh = re-pull corpus while preserving tenant overlays.</td>
+        <td>The mechanical steps already exist in the codebase (Clerk SDK, Supabase migrations, broker rebuild, vector index, graph sync). They&rsquo;re currently chained by tribal knowledge.</td>
+        <td>One script for each operation + a verification step that asserts all 15 coverage tiles and all 6 context cards render on <code>/intelligence#enterprise-context</code>. Single README covers both.</td>
+        <td>Onboarding tenant #4 takes &lt; 1 hour and anyone with repo access can do it. No engineering hand-holding.</td>
+      </tr>
+      <tr>
+        <td class="id">A3</td>
+        <td class="title"><strong>Platform vs tenant feature gating</strong><span class="status partial">Partial · in flight</span></td>
+        <td>Explicit contract for what ships to all tenants vs what is pinned per client. Server-side and client-side enforcement.</td>
+        <td>Most features are platform-wide; tenant-specific is the exception. We won&rsquo;t ship many tenant-only features early.</td>
+        <td>A <code>features.ts</code> registry + <code>useFeature(name)</code> hook + server-side <code>isFeatureEnabled(ctx, name)</code>. Default off for tenant-specific, default on for platform. Reuses the locked-role pinning resolver from PR #1930.</td>
+        <td>A new tenant cannot accidentally see a half-shipped feature. Rolling a feature to one pilot tenant first is one config change, not a code branch.</td>
+      </tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- =============================================================== -->
+<section class="workstream">
+  <span class="ws-id">Workstream B</span>
+  <h2>Azure infrastructure</h2>
+  <p class="ws-sub">Five items, mostly research → design docs. B1 → B2 is the one internal sequence; everything else is independent. <strong>B5 expanded into a/b/c</strong> — pattern-based guard is already shipped; remaining work is wiring the punch-list, adding Purview, and building the quarantine admin UI.</p>
+
+  <table class="plan">
+    <thead>
+      <tr><th>ID</th><th>Item</th><th>Scope</th><th>Assumptions</th><th>Solution</th><th>Desired outcomes</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="id">B1</td>
+        <td class="title"><strong>SaaS architecture decision</strong><span class="status open">Open</span></td>
+        <td>Three-tier segregation: (a) application tier (b) per-client data plane (c) industry corpus / shared substrate. Identity boundary. Network topology.</td>
+        <td>Azure is the primary cloud. <strong>Pin Azure Database for PostgreSQL Flexible Server</strong> as the data-plane SKU. Pinecone / Neo4j stay; pgvector becomes a path to retire Pinecone for tenant-scoped vectors later.</td>
+        <td>6-page design doc with diagrams. App tier on Azure App Service (or Vercel until migration) → broker contract → per-tenant Postgres schema (pilot) or dedicated DB (production) → shared read-only industry corpus. Identity via Entra ID + Clerk passthrough.</td>
+        <td>A customer&rsquo;s security architect reads this doc and says &ldquo;yes, our data is isolated.&rdquo; Document is also the seed for the C4 infosec accelerator.</td>
+      </tr>
+      <tr>
+        <td class="id">B2</td>
+        <td class="title"><strong>Demo private planes (3 tenants)</strong><span class="status open">Open</span></td>
+        <td>Reference deployment of B1 for Apex / Meridian / First Capital.</td>
+        <td>Cost-effective at demo scale (≤ $500/mo total). Tear-down and recreate in &lt; 1 day. No real PHI/PII; dummy data is the proof.</td>
+        <td>Bicep or Terraform modules per tenant. CI deploys all three on demand. URLs published internally with read-only sec-team access.</td>
+        <td>Three live URLs proving segregation. Reusable for every infosec review, every investor demo, every internal architecture conversation.</td>
+      </tr>
+      <tr>
+        <td class="id">B3</td>
+        <td class="title"><strong>SaaS vs corporate Azure setup</strong><span class="status open">Open</span></td>
+        <td>Landing zone yes/no. Subscription model. Network topology. Identity boundary.</td>
+        <td>Azure for Startups gets approved (D5). Building for hundreds of tenants, not thousands today.</td>
+        <td>Single Azure tenant. Subscription-per-environment (dev / staging / prod). Landing zone deferred until first enterprise customer asks for one. ADR documents the deferral.</td>
+        <td>Decision recorded. Not over-engineered. Clear upgrade path when enterprise customer signs.</td>
+      </tr>
+      <tr>
+        <td class="id">B4</td>
+        <td class="title"><strong>Client VPC deployment</strong><span class="status open">Open</span></td>
+        <td>Lift-and-shift of AbarVa stack into customer&rsquo;s Azure subscription. One-time + recurring cost. Control-plane boundary.</td>
+        <td>Customer provides Azure landing zone. We provide Bicep / Terraform. Maintenance shared: customer owns infra, we own application.</td>
+        <td>Opinionated Bicep modules with parameter file per customer. AbarVa retains app-tier control via Entra-ID-federated service principal. Cost model: setup ≤ 5 business days + 4-8 hrs/mo maintenance.</td>
+        <td>A repeatable VPC deployment SKU we can quote on. Biggest infosec unlock per C4. Lowest-friction path for regulated customers.</td>
+      </tr>
+      <tr>
+        <td class="id">B5</td>
+        <td class="title"><strong>Sensitive-data prevention guardrails</strong><span class="status partial">Partial · in flight</span></td>
+        <td>Ingest-time filtering across every channel (UI, Azure blob, future direct integrations). Quarantine + audit dashboard.</td>
+        <td>AbarVa does NOT need PHI / PII / PCI to ground the product. Rejection is the right answer, not redaction. The shared service applies to every ingestion tier.</td>
+        <td>Three sub-items below: B5a (wire to remaining 2 routes), B5b (Purview integration), B5c (quarantine + audit dashboard).</td>
+        <td>Zero PHI/PII in any client context layer by construction. Sec teams accept this as a HIPAA/GDPR-friendly story. Becomes a positive selling point.</td>
+      </tr>
+      <tr class="sub">
+        <td class="id">↳ B5a</td>
+        <td class="title"><strong>Wire guard to remaining 2 upload routes</strong><span class="status win">Punch-list · quick win</span></td>
+        <td><code>programs/workspace/[moveId]/upload</code> and <code>v1/nexus/upload</code> don&rsquo;t call <code>evaluateSensitiveUpload</code>.</td>
+        <td>Same import + call pattern as the other 5 routes. Trivial to apply.</td>
+        <td>Two-line edit per route: import, call, return <code>sensitiveUploadRejectedResponse</code> on quarantine.</td>
+        <td>100% of upload routes pass through the sensitive-data gate. No remaining gaps in the inbound surface.</td>
+      </tr>
+      <tr class="sub">
+        <td class="id">↳ B5b</td>
+        <td class="title"><strong>Microsoft Purview content-scan integration</strong><span class="status open">Open</span></td>
+        <td>Replace / augment pattern-based detection with Purview-driven classification. Richer accuracy, named DLP policies, customer-recognizable enterprise control.</td>
+        <td>Customer sec teams already recognize Purview as a sanctioned Microsoft control. Per-tenant Purview accounts in production; shared in pilot.</td>
+        <td>Add a Purview scan step inside <code>evaluateSensitiveUpload</code>. Map Purview-detected classifications onto the existing 5-level taxonomy. Keep pattern-based as a fast-path fallback.</td>
+        <td>An infosec reviewer sees &ldquo;Microsoft Purview classification on every upload&rdquo; in our docs and stops asking questions. Same shared service powers Tier-1, Tier-2, Tier-3 ingestion.</td>
+      </tr>
+      <tr class="sub">
+        <td class="id">↳ B5c</td>
+        <td class="title"><strong>Quarantine + audit dashboard</strong><span class="status open">Open</span></td>
+        <td>Admin UI listing quarantined uploads. Reason, who tried to upload, manual release / hard-delete actions. Stream to SIEM-friendly audit log.</td>
+        <td>Quarantine decisions are rare but high-attention events. A customer&rsquo;s security analyst needs to see them.</td>
+        <td>One page under <code>/admin</code>. Reads from quarantine container + audit table. Append-only audit; release / delete actions write their own audit rows.</td>
+        <td>A customer&rsquo;s sec analyst can review quarantine queue without engineering access. Closes the SOC2 control loop.</td>
+      </tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- =============================================================== -->
+<section class="workstream">
+  <span class="ws-id">Cross-cutting</span>
+  <h2>☆ Data ingestion model — four tiers</h2>
+  <p class="ws-sub">How a new customer&rsquo;s data actually gets in. Different segments have different sensitivity and refresh cadence, so they get different ingestion paths. Enterprise IT expects a tiered answer, not &ldquo;we have an upload button.&rdquo;</p>
+
+  <table class="tier">
+    <thead>
+      <tr><th>Tier</th><th>Channel</th><th>Use case</th><th>When</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="tier-name">1. App upload</td>
+        <td class="channel">AbarVa UI (browser file picker)</td>
+        <td class="use">Ad-hoc: policy doc, single vendor contract, org chart update, exec interview transcript.</td>
+        <td class="when">Pilot default for low-volume / unstructured / one-off content.</td>
+      </tr>
+      <tr>
+        <td class="tier-name">2. Azure landing zone</td>
+        <td class="channel">Per-tenant Azure Blob container. Customer drops via Azure Storage Explorer / AzCopy / their ETL.</td>
+        <td class="use">Recurring structured data: KPI snapshots, program inventory, IT financials, contract registry, operating telemetry.</td>
+        <td class="when">Production default for the 9 segments that refresh weekly/monthly.</td>
+      </tr>
+      <tr>
+        <td class="tier-name">3. Direct integration</td>
+        <td class="channel">Azure Data Share / Snowflake Data Share / point connector (ServiceNow, Workday, Coupa).</td>
+        <td class="use">Live operational signals: incidents, change tickets, vendor renewals.</td>
+        <td class="when">Enterprise tier, when trust is established.</td>
+      </tr>
+      <tr>
+        <td class="tier-name">4. In-VPC ingestion</td>
+        <td class="channel">AbarVa stack deployed into customer&rsquo;s Azure subscription (B4); data never leaves their tenancy.</td>
+        <td class="use">Regulated industries (healthcare, banking, defense).</td>
+        <td class="when">Required for some accounts before they&rsquo;ll sign.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <p class="section-eyebrow" style="margin-top:28px">Shared controls (apply to every tier)</p>
+  <table class="tier">
+    <thead>
+      <tr><th>Control</th><th>Pilot baseline</th><th>Production target</th></tr>
+    </thead>
+    <tbody>
+      <tr><td class="tier-name">TLS in transit</td><td>TLS 1.2+</td><td>TLS 1.3 + mTLS on Tier 2-4</td></tr>
+      <tr><td class="tier-name">Encryption at rest</td><td>AES-256 default</td><td>Customer-managed keys via Key Vault</td></tr>
+      <tr><td class="tier-name">Authentication</td><td>SAS token with TTL / service principal</td><td>Entra ID federation; no shared keys</td></tr>
+      <tr><td class="tier-name">Audit log</td><td>Every ingest event logged</td><td>Immutable, SIEM-streamable</td></tr>
+      <tr><td class="tier-name">Sensitive-data gate</td><td>Pattern-based <code>sensitive-upload-guard</code> (shipped, B5a)</td><td>+ Microsoft Purview classification (B5b)</td></tr>
+      <tr><td class="tier-name">Retention / deletion</td><td>Customer-deletable via support</td><td>Customer-deletable via UI; auditable retention windows</td></tr>
+      <tr><td class="tier-name">Network isolation</td><td>Public endpoint with TLS for Tier 1</td><td>Private endpoint for Tier 2+; VNet peering for Tier 3</td></tr>
+      <tr><td class="tier-name">Quarantine</td><td>Failed-scan files → quarantine container (B5c)</td><td>Same + auto-delete after retention window</td></tr>
+    </tbody>
+  </table>
+
+  <div class="banner"><strong>Recommended pilot default:</strong> Tier 1 + Tier 2 combo. Tier 1 handles 5 segments that arrive as unstructured docs (<code>enterprise_profile</code>, <code>compliance</code>, <code>industry_context</code>, <code>program_deliverables</code>, ad-hoc evidence). Tier 2 handles the 9 segments that need recurring batch refresh. Both paths feed the same broker pipeline, same sensitive-data scan, same audit log, same per-tenant data plane.</div>
+</section>
+
+<!-- =============================================================== -->
+<section class="workstream">
+  <span class="ws-id">Workstream C</span>
+  <h2>Pilot operations</h2>
+  <p class="ws-sub">Planning can start now; execution depends on the A and B baselines. C4 is the highest-leverage standalone item — it&rsquo;s the unlock for every signed pilot.</p>
+
+  <table class="plan">
+    <thead>
+      <tr><th>ID</th><th>Item</th><th>Scope</th><th>Assumptions</th><th>Solution</th><th>Desired outcomes</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="id">C1</td>
+        <td class="title"><strong>First-pilot deployment runbook</strong><span class="status open">Open · depends on A+B</span></td>
+        <td>Step-by-step from &ldquo;signed SOW&rdquo; to &ldquo;first CXO logged in.&rdquo; Legal, infosec, technical, training.</td>
+        <td>A1 (E2E coverage) and B-cluster baseline are done. Customer either uses the AbarVa SaaS plane or their own Azure subscription per B4.</td>
+        <td>Sequenced checklist with owner + ETA per step. Three swimlanes: legal/contractual, technical/deployment, customer-facing training. Lives in a single Notion / repo doc.</td>
+        <td>Pilot kickoff in ≤ 2 weeks from SOW. Repeatable; customer #2 onboards faster than customer #1.</td>
+      </tr>
+      <tr>
+        <td class="id">C2</td>
+        <td class="title"><strong>Support model</strong><span class="status open">Open</span></td>
+        <td>Minimum viable support shape for a pilot customer. Team, hours, SLA we can commit to without burning out a 1-2 person company.</td>
+        <td>Founder-led. Pilot count &lt; 5. SLAs reasonable (24h response, no 24/7 paging yet).</td>
+        <td>Founder primary on-call. Contracted SRE on retainer for after-hours. Contracted DPA / sec analyst for customer audits as need arises. No full-time hires before second paid pilot.</td>
+        <td>First pilot serviced without hiring a 5-person ops team. Cost of support is predictable and bounded.</td>
+      </tr>
+      <tr>
+        <td class="id">C3</td>
+        <td class="title"><strong>Sustaining pilot</strong><span class="status open">Open</span></td>
+        <td>Pager rotation, escalation policy, post-incident reviews, SLA we publicly commit to.</td>
+        <td>Same as C2 — founder-led, contracted SRE. SOC 2 not yet, but observability and audit log are in place.</td>
+        <td>PagerDuty routing to founder + SRE. Escalation matrix. Documented post-incident review template. SLA: 99.5% availability initially.</td>
+        <td>No customer-visible downtime during pilot. Clear PIRs published to customer within 24h of any P1 incident.</td>
+      </tr>
+      <tr>
+        <td class="id">C4</td>
+        <td class="title"><strong>Infosec approval accelerator</strong><span class="status gating">Gating for any signed pilot</span></td>
+        <td>The single biggest pilot blocker. Output: a checklist of features/controls that unlocks corporate security review. Pre-filled CAIQ / SIG-lite.</td>
+        <td>Client VPC deployment (B4) is the biggest unlock. SOC 2 in roadmap. PHI/PII rejection (B5) is the second-biggest unlock.</td>
+        <td>Two-page exec summary + pre-filled standard CAIQ. Named features: client VPC available (B4), RBAC, audit log, RLS, broker boundary, sensitive-data guard (B5), tenancy isolation (PR #1923).</td>
+        <td>A customer&rsquo;s security architect can review and approve in ≤ 2 weeks. Conversion on signed-LOI → in-production pilot rises sharply.</td>
+      </tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- =============================================================== -->
+<section class="workstream">
+  <span class="ws-id">Workstream D</span>
+  <h2>Business / GTM</h2>
+  <p class="ws-sub">Fully independent of engineering — different humans entirely. D1 (narrative) is the gating dependency for D2 and D6 and informs C4. D5 (startup credits) is the lowest-effort highest-upside item in the whole backlog.</p>
+
+  <table class="plan">
+    <thead>
+      <tr><th>ID</th><th>Item</th><th>Scope</th><th>Assumptions</th><th>Solution</th><th>Desired outcomes</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="id">D1</td>
+        <td class="title"><strong>Product narrative + value proposition</strong><span class="status gating">Gating</span></td>
+        <td>One-pager + 3-slide deck. The phrasing everyone — founder, advisor, sales, investor — uses verbatim.</td>
+        <td>Audience is the business CXO, not tech-only. Positioning: tenant-grounded consultant-grade decision OS for C-suite AI and business bets.</td>
+        <td>Founder + advisor session. Iterate against three real CXO conversations. Lock the language. Bake into every surface.</td>
+        <td>A CXO repeats the value prop back after one read. Team uses identical phrasing everywhere. D2 and D6 inherit cleanly.</td>
+      </tr>
+      <tr>
+        <td class="id">D2</td>
+        <td class="title"><strong>Monetization</strong><span class="status open">Open · depends on D1</span></td>
+        <td>Tier structure + ARR model. Per-tenant vs per-seat vs platform license. Inclusion matrix.</td>
+        <td>Per-tenant licensing given CXO concentration. Pilot pricing distinct from production.</td>
+        <td>Three tiers — <strong>Pilot</strong> ($50–$100k, 6-mo) → <strong>Production</strong> ($250–$500k/yr) → <strong>Enterprise</strong> ($1M+ with VPC deployment). Inclusion matrix per tier.</td>
+        <td>Sales conversations have a price anchor. ARR target line-of-sight for the seed pitch (D6).</td>
+      </tr>
+      <tr>
+        <td class="id">D3</td>
+        <td class="title"><strong>Patent decision</strong><span class="status win">Quick win · decision</span></td>
+        <td>File a provisional, file a defensive publication, or pass. A decision, not a project.</td>
+        <td>Software composition with some unique angles in the broker contract + tenant-grounded reasoning architecture. Provisional ~$3–5k, full ~$15–25k, defensive publication near-free.</td>
+        <td>1-hour call with a patent attorney. ADR records the decision and reasoning.</td>
+        <td>Decision made. Either provisional filed (12-month runway) or moved on.</td>
+      </tr>
+      <tr>
+        <td class="id">D4</td>
+        <td class="title"><strong>Company setup cost</strong><span class="status open">Open</span></td>
+        <td>Foundational registration + legal + insurance + bookkeeping for the first 3–6 months.</td>
+        <td>Delaware C-corp. First pilot in scope. Team of 1–2 founders. Startup-friendly firm.</td>
+        <td>Stripe Atlas / Clerky for formation (~$500–$1k). Founder agreements + IP assignment (~$2–5k). DPA + MSA templates (~$2–5k). E&amp;O + cyber insurance ($3–8k/yr). Bookkeeping ($300–500/mo). <strong>Total 3–6 mo: $10–25k.</strong></td>
+        <td>Cost projected and reserved for in the seed ask. No surprises before first signed pilot.</td>
+      </tr>
+      <tr>
+        <td class="id">D5</td>
+        <td class="title"><strong>Startup credits</strong><span class="status win">Quick win · application</span></td>
+        <td>Azure for Startups + Anthropic Founder Credits. Apply to both.</td>
+        <td>We qualify under standard founder / pre-seed criteria. Azure credit $25k–$150k. Anthropic ~$5k–$25k.</td>
+        <td>Founder fills both applications in one sitting. Existing AbarVa narrative (D1) + this backlog is the supporting material.</td>
+        <td>$30k+ in credits secured. Pilot-phase infra cost goes to near-zero.</td>
+      </tr>
+      <tr>
+        <td class="id">D6</td>
+        <td class="title"><strong>Seed funding plan</strong><span class="status open">Open · depends on D1, D2</span></td>
+        <td>Thesis, ask, use of proceeds, intent. Investor list. Deck + memo.</td>
+        <td>D1 + D2 locked. Pre-seed / seed amount $1–3M. Lead investor with relevant AI / enterprise SaaS thesis.</td>
+        <td>10-slide deck + 1-page memo. Use of proceeds split (people / infra / sales). Targeted outreach to 15–25 investors.</td>
+        <td>Term sheet within 90 days of starting the raise. Sufficient runway for 18 months and a second paid pilot.</td>
+      </tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- =============================================================== -->
+<section class="workstream">
+  <h2>Quick wins · do these first, in parallel</h2>
+  <p class="ws-sub">Five items with no engineering dependency or trivial engineering. Together they unlock everything downstream.</p>
+
+  <div class="flight-list">
+    <div class="row"><div class="id">D3</div><div class="desc">Patent decision — 1-hour attorney call, written ADR, done.</div></div>
+    <div class="row"><div class="id">D5</div><div class="desc">Azure for Startups + Anthropic Founder Credits — 1–2 hours each, $30k+ upside.</div></div>
+    <div class="row"><div class="id">D1</div><div class="desc">Product narrative one-pager — gates D2 and D6 and informs C4.</div></div>
+    <div class="row"><div class="id">B5a</div><div class="desc">Wire sensitive-upload guard to the remaining 2 upload routes — same pattern as the other 5, ~20 min of code.</div></div>
+    <div class="row"><div class="id">C4</div><div class="desc">Infosec approval checklist — gates pilot conversations. Lead with B4 + B5 + tenancy isolation.</div></div>
+  </div>
+</section>
+
+<!-- =============================================================== -->
+<section class="workstream">
+  <h2>Critical dependencies</h2>
+  <p class="ws-sub">Two sequences run through the backlog. Everything else is parallel.</p>
+
+  <div class="depgraph">
+D1 (narrative) ──┬──&gt; D2 (monetization) ──&gt; D6 (seed funding plan)
+                 └──&gt; C4 (infosec story)
+
+B5a (wire guard) ──&gt; B5b (Purview) ──&gt; C4 (infosec accelerator) ──&gt; C1 (pilot runbook)
+B1 (architecture) ──&gt; B2 (demo private planes) ──&gt; C1
+A2b (Azure landing zone) ──&gt; A2c (bootstrap script) ──&gt; C1
+A1 (E2E coverage) ─────────────────────────────────&gt; C1, C2, C3
+  </div>
+</section>
+
+<!-- =============================================================== -->
+<section class="workstream">
+  <h2>Already in flight from the 2026-05-13 audit + follow-on</h2>
+  <p class="ws-sub">Don&rsquo;t restart these — extend them. References are to merged PRs on <code>main</code>.</p>
+
+  <div class="flight-list">
+    <div class="row"><div class="id">A2 partial</div><div class="desc">V4 Brief panels accept tenant-keyed data (PR #1923) · First Capital seed pack complete (PR #1929). Next: A2b Azure landing zone + A2c bootstrap script.</div></div>
+    <div class="row"><div class="id">A3 partial</div><div class="desc">Locked-role tenant resolution closed at the resolver layer (PR #1930) · Sentinel arithmetic guard landed (PR #1932). Next: explicit feature-flag contract.</div></div>
+    <div class="row"><div class="id">B5 partial</div><div class="desc">Sensitive-upload guard shipped at <code>src/lib/security/sensitive-upload-guard.ts</code>. 5/7 upload routes wired. Punch-list (B5a) closes the gap.</div></div>
+    <div class="row"><div class="id">B foundation</div><div class="desc">Azure scale-test foundation landed (PR #1938). Next: pin Flexible Server as the data-plane SKU + write B1 design doc.</div></div>
+    <div class="row"><div class="id">A1 foundation</div><div class="desc">8 SEC-P0 cross-tenant routes are ready to become a curl-based regression suite (PR #1923 + B-agent&rsquo;s pen-test playbook). Next: Playwright surface smokes.</div></div>
+  </div>
+</section>
+
+<!-- =============================================================== -->
+<section class="workstream">
+  <h2>Explicitly out of scope</h2>
+  <p class="ws-sub">Tracked separately so they don&rsquo;t clutter this plan.</p>
+
+  <div class="flight-list">
+    <div class="row"><div class="id">Architecture</div><div class="desc"><code>types.ui.ts</code> / <code>types.db.ts</code> split for 11 modules + full transformer-rule rollout (Agent C, ~15–17 engineer-days, multi-PR).</div></div>
+    <div class="row"><div class="id">Design</div><div class="desc">Full page-by-page visual redesign pass beyond PR #1928&rsquo;s targeted polish.</div></div>
+    <div class="row"><div class="id">Sentinel</div><div class="desc">Further prompt-tuning beyond the arithmetic-guard work in PR #1932.</div></div>
+  </div>
+</section>
+
+<footer class="foot">
+  <div>AbarVa · Strategic Backlog · drafted 2026-05-14 · rev b · pairs with <code>docs/BACKLOG-2026-05-14.md</code></div>
+  <div class="stamp">v1b · post-audit-cycle-5 + ingestion model</div>
+</footer>
+
+</div>
+</body>
+</html>

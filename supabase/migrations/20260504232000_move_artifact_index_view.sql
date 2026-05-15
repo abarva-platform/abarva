@@ -8,7 +8,7 @@
 
 CREATE OR REPLACE VIEW move_artifact_index AS
   SELECT
-    engagement_id,
+    engagement_id::text AS engagement_id,
     'deliverable'::text AS artifact_type,
     id::text AS artifact_id,
     title,
@@ -23,7 +23,7 @@ CREATE OR REPLACE VIEW move_artifact_index AS
   UNION ALL
 
   SELECT
-    engagement_id,
+    engagement_id::text AS engagement_id,
     'legacy_deliverable'::text,
     id::text,
     title,
@@ -39,7 +39,7 @@ CREATE OR REPLACE VIEW move_artifact_index AS
   UNION ALL
 
   SELECT
-    program_id AS engagement_id,
+    program_id::text AS engagement_id,
     'evidence'::text,
     id::text,
     title,
@@ -54,7 +54,7 @@ CREATE OR REPLACE VIEW move_artifact_index AS
   UNION ALL
 
   SELECT
-    program_id AS engagement_id,
+    program_id::text AS engagement_id,
     'attachment'::text,
     id::text,
     original_name AS title,

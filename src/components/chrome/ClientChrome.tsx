@@ -2,10 +2,9 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useUser, useClerk } from '@clerk/nextjs';
-import { useRouter } from 'next/navigation';
+import { useUser } from '@clerk/nextjs';
 import { useState } from 'react';
-import { clearActiveClientContext } from '@/lib/auth/client-context-storage';
+import { useSignOut } from '@/lib/auth/use-sign-out';
 
 const BG = '#0A0A0A';
 const INK = '#F5F5F0';
@@ -54,8 +53,7 @@ export function ClientChrome({
   const pathname = usePathname() ?? '';
   const ITEMS = role === 'observer' ? ITEMS_OBSERVER : ITEMS_CLIENT_VIEWER;
   const { user } = useUser();
-  const { signOut } = useClerk();
-  const router = useRouter();
+  const signOut = useSignOut();
   const [menuOpen, setMenuOpen] = useState(false);
 
   const displayName = user?.fullName || user?.emailAddresses?.[0]?.emailAddress?.split('@')?.[0] || 'User';
@@ -143,8 +141,7 @@ export function ClientChrome({
                 type="button"
                 onClick={() => {
                   setMenuOpen(false);
-                  clearActiveClientContext();
-                  signOut(() => router.push('/signed-out'));
+                  void signOut();
                 }}
                 style={{
                   width: '100%',
