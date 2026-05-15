@@ -1,0 +1,58 @@
+name: Azure L11 observability audit
+
+on:
+  workflow_dispatch:
+    inputs:
+      strict:
+        description: Fail on attention items as well as hard failures.
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  observability-audit:
+    name: Audit observability and cost controls
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Azure login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_LAB_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_LAB_TENANT_ID }}
+          subscription-id: 701a8554-a166-46e9-bf13-743bc50e3b20
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run L11 observability audit
+        run: |
+          set -euo pipefail
+
+          args=()
+          if [ "${{ inputs.strict }}" = "true" ]; then
+            args+=(--strict)
+          fi
+
+          npm run azure:observability:audit -- "${args[@]}" | tee azure-l11-observability-audit.json
+
+      - name: Upload audit report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: azure-l11-observability-audit
+          path: azure-l11-observability-audit.json
+          if-no-files-found: ignore

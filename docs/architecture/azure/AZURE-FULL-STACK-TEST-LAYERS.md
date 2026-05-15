@@ -32,7 +32,7 @@ Current state: the lab has real Azure services live through AZLAB25: Container A
 | L8 Performance / load | Postgres pool, Container Apps autoscale, Search retrieval, and agent turns stay under CXO latency targets. | Container Apps runtime live; App Insights live | k6/Artillery scenarios, cold-start test, agent latency budget trace, p95 target gates. | Gap |
 | L9 Resilience / DR | The app degrades gracefully when Postgres, Service Bus, or LLM provider fails. | A2b worker DLQ behavior is designed; PITR available through managed Postgres configuration | Chaos drill scripts, Service Bus malformed-message DLQ test, LLM 529 fallback simulation, monthly restore drill. | Gap |
 | L10 Compliance / audit trail | Sensitive-upload, gate approval, and admin-action evidence is append-only and exportable. | B5c `sensitive_upload_audit` migration/data wiring; `/admin/quarantine`; Purview stub design | Append-only SQL assertion, lifecycle reconstruction test, Purview label persistence test, monthly evidence-pack export. | Partial |
-| L11 Observability / SLO + cost | Regression, latency, errors, agent violations, RLS denials, and spend cannot silently drift. | Log Analytics, App Insights, action group, budget; `docs/pilot/C5-PILOT-SUCCESS-METRICS-DASHBOARD-SPEC.md` | Synthetic availability tests, SLO dashboard queries, cost alerts per RG, end-to-end agent trace coverage. | Partial |
+| L11 Observability / SLO + cost | Regression, latency, errors, agent violations, RLS denials, and spend cannot silently drift. | Log Analytics, App Insights, action group, budget; `scripts/azure/audit-observability.mjs`, `.github/workflows/azure-l11-observability-audit.yml`; `docs/pilot/C5-PILOT-SUCCESS-METRICS-DASHBOARD-SPEC.md` | Run audit through GitHub OIDC, add synthetic availability tests, SLO dashboard queries, cost alerts per RG, end-to-end agent trace coverage. | Partial |
 
 ## L1 - Infrastructure / IaC
 
@@ -226,7 +226,7 @@ These are synthetic context chunks, not customer data.
 | Cost alerts | Azure Cost Management budgets | Alerts at 80% and forecast breach by RG/service. |
 | Trace coverage | Agent turn trace schema | Every answer has retrieval IDs, model calls, latencies, guard results, and tenant key. |
 
-**Current state.** Log Analytics, App Insights, and budget exist. The C5 dashboard spec defines the product view; the next step is wiring Azure metrics and agent traces into it.
+**Current state.** Log Analytics, App Insights, and budget exist. AZLAB32 adds the first L11 evidence-plane audit for Log Analytics, Application Insights, action group, deployment-failure alert, monthly budget, Container Apps diagnostic wiring, and web-app telemetry binding. The C5 dashboard spec defines the product view; the next step is wiring true SLO availability tests, Azure metrics, and agent traces into it.
 
 ## 48-Hour Execution Queue
 
@@ -260,9 +260,9 @@ Before calling any new Azure environment "stood up":
 6. L4 SEC-P0 cross-tenant probes pass against the deployed app URL.
 7. L5 schema verification and canonical seed row counts pass.
 8. L6 primary-surface Playwright matrix passes for all canonical personas.
-9. L11 budget and deployment-failure alert are enabled.
+9. L11 budget and deployment-failure alert are enabled, and the observability audit is green or intentionally waived.
 10. `docs/architecture/azure/CURRENT-STATE.md` is updated with live resource names, counts, known gaps, and test-layer status.
 
 ## Stand-Up Answer
 
-The Azure lab has the services needed for an enterprise-grade private data lane. What makes it stand-up ready is the test model above: L1-L4 are the deploy gates, L5-L8 are the pilot gates, and L9-L11 are the continuous controls. Today several artifacts already exist and have passed live Azure runs, especially ingestion, Search backfill, Postgres migration/copy, SEC-P0 probes, and primary-surface smoke. The next work is to wire these into CI and add the missing connectivity, security, workflow, load, resilience, audit, and observability gates so the lab can be rebuilt, validated, and defended without relying on founder memory.
+The Azure lab has the services needed for an enterprise-grade private data lane. What makes it stand-up ready is the test model above: L1-L4 are the deploy gates, L5-L8 are the pilot gates, and L9-L11 are the continuous controls. Today several artifacts already exist and have passed live Azure runs, especially ingestion, Search backfill, Postgres migration/copy, SEC-P0 probes, primary-surface smoke, and the first observability evidence-plane audit. The next work is to wire the remaining CI/live runs and add the missing what-if, load, resilience, audit-pack, SLO, and trace gates so the lab can be rebuilt, validated, and defended without relying on founder memory.
