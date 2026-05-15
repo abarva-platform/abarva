@@ -47,8 +47,13 @@ e2e/
 playwright-report/
 test-results/
 
-# Docs (not shipped in the runtime image)
-docs/
+# Docs (not shipped in the runtime image), except design tokens imported by app CSS.
+docs/*
+!docs/design/
+docs/design/*
+!docs/design/strategic-moves/
+docs/design/strategic-moves/*
+!docs/design/strategic-moves/tokens.css
 tower-mockups/
 updates/
 
