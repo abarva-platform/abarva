@@ -38,13 +38,14 @@ The current design keeps the app runtime in `eastus` and the first managed Postg
 
 | Order | Capability | Azure service | Intended state |
 |---:|---|---|---|
-| 1 | Authenticated Azure app smoke | Container Apps + Clerk + Azure Postgres | Run sign-in, tenant home, Intelligence, Source, Moves, Tower, and SEC-P0 isolation probes against the Azure FQDN. |
-| 2 | Data-access adapter migration | App API/data layer | Move routes that still depend on Supabase REST behind an adapter that can target Azure Postgres. |
-| 3 | Search query adapter | Azure AI Search + AgentContextBroker | Tenant-context backfill is live. Next proof is broker retrieval against `tenant-context-v1` and additional backfills for evidence/source/industry/signals. |
-| 4 | Model lane | Azure AI Foundry / Azure OpenAI | Governed enterprise model endpoint, including Claude through Azure-native procurement where available. |
-| 5 | Graph-provider code boundary | App broker + Cosmos Gremlin adapter | Replace direct Neo4j reads with a provider boundary and project tenant edges from Postgres to Cosmos Gremlin. |
-| 6 | Enterprise ingress | Front Door + WAF | Public Azure entry with TLS, WAF, bot/rate controls, and customer-ready routing. |
-| 7 | Event Grid normalizer | Event Grid + Service Bus + Container Apps Job | Complete for metadata-bearing BlobCreated events. AZLAB23 proved Blob upload -> Event Grid -> Service Bus -> worker normalizer -> guard -> audit without direct canonical producer messages. |
+| 1 | Full-stack test gates | CI + scripts + Azure smoke | Formalize L1-L11 deploy/pilot/continuous gates from `AZURE-FULL-STACK-TEST-LAYERS.md`; start with L2 connectivity smoke, L3 network/RBAC audit, and L4 Azure SEC-P0 probes. |
+| 2 | Authenticated Azure app smoke | Container Apps + Clerk + Azure Postgres | Run sign-in, tenant home, Intelligence, Source, Moves, Tower, and SEC-P0 isolation probes against the Azure FQDN. |
+| 3 | Data-access adapter migration | App API/data layer | Move routes that still depend on Supabase REST behind an adapter that can target Azure Postgres. |
+| 4 | Search query adapter | Azure AI Search + AgentContextBroker | Tenant-context backfill is live. Next proof is broker retrieval against `tenant-context-v1` and additional backfills for evidence/source/industry/signals. |
+| 5 | Model lane | Azure AI Foundry / Azure OpenAI | Governed enterprise model endpoint, including Claude through Azure-native procurement where available. |
+| 6 | Graph-provider code boundary | App broker + Cosmos Gremlin adapter | Replace direct Neo4j reads with a provider boundary and project tenant edges from Postgres to Cosmos Gremlin. |
+| 7 | Enterprise ingress | Front Door + WAF | Public Azure entry with TLS, WAF, bot/rate controls, and customer-ready routing. |
+| 8 | Event Grid normalizer | Event Grid + Service Bus + Container Apps Job | Complete for metadata-bearing BlobCreated events. AZLAB23 proved Blob upload -> Event Grid -> Service Bus -> worker normalizer -> guard -> audit without direct canonical producer messages. |
 
 ## Front / Middle / Back Mapping
 
@@ -82,6 +83,7 @@ Before scale-up, measure and record:
 
 | Gap | Severity | Close path |
 |---|---|---|
+| L1-L11 full-stack test gates not wired end-to-end | High | `AZURE-FULL-STACK-TEST-LAYERS.md` defines the deploy, pilot, and continuous gates. Next PRs should add L2 connectivity smoke, L3 Azure security audit, L4 Azure SEC-P0 workflow target, L5 reset-and-replay, and L6 workflow E2E. |
 | Authenticated route-level Azure smoke still needed | High | Core setup/context tables are copied and direct app-to-Azure-Postgres health is green; next proof is browser sign-in plus tenant surface parity and SEC-P0 probes against the Azure FQDN. |
 | Supabase REST paths still exist | High | Add a data-access adapter boundary so routes can target Supabase or Azure Postgres without rewriting product surfaces. |
 | Search broker adapter missing | High | AZLAB25 loaded `tenant-context-v1`; next step is AgentContextBroker query adapter and retrieval quality tests. |
