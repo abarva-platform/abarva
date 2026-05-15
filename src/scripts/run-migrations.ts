@@ -2,6 +2,7 @@ import { Client } from 'pg';
 import { readdirSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import { config as loadEnv } from 'dotenv';
+import { postgresClientOptions } from './postgres-client-options';
 
 loadEnv({ path: path.resolve(process.cwd(), '.env.local') });
 loadEnv();
@@ -171,7 +172,7 @@ async function main() {
     process.exit(1);
   }
 
-  const client = new Client({ connectionString: url, ssl: { rejectUnauthorized: false } });
+  const client = new Client(postgresClientOptions(url, 'run-migrations'));
   await client.connect();
   console.log(`✓  Connected to Postgres`);
 
