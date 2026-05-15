@@ -48,7 +48,11 @@ import { getRelevantTools } from "@/lib/agent/tools/registry";
 import { runToolUseLoop } from "@/lib/agent/streaming/toolUseLoop";
 import { FOUR_LAYER_REASONING_INSTRUCTIONS } from "@/lib/intelligence/synthesis/instructionLayer";
 import { validateSynthesisOutput } from "@/lib/intelligence/synthesis/outputValidator";
-import { recordViolations } from "@/lib/intelligence/synthesis/violationsRecorder";
+import { recordViolations, setViolationsBackend } from "@/lib/intelligence/synthesis/violationsRecorder";
+import {
+  canUseSupabaseViolationBackend,
+  supabaseViolationsBackend,
+} from "@/lib/intelligence/synthesis/violationsSupabaseBackend";
 import { ARTIFACT_CHANNEL_INSTRUCTIONS } from "@/lib/agent/artifacts";
 import {
   composeSentinelSystemPrompt,
@@ -1176,6 +1180,12 @@ export async function POST(request: Request) {
             : [];
           const violations = [...result.violations, ...sentinelVoiceViolations];
           if (violations.length > 0 || bufferedOutput.length > 0) {
+            if (
+              process.env.AGENT_QUALITY_VIOLATIONS_PERSIST !== 'false' &&
+              canUseSupabaseViolationBackend()
+            ) {
+              setViolationsBackend(supabaseViolationsBackend);
+            }
             recordViolations({
               route: '/api/chat/agent',
               surface,

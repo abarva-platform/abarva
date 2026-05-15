@@ -29,7 +29,9 @@ Panel 2 now includes:
 - Sentinel internal-consistency hits
 - violation types ranked by count
 
-The source is the existing in-memory recorder today. That is enough for lab/dev and short-lived pilot smoke sessions. The next production step is backing `ViolationsBackend` with Postgres or Log Analytics so telemetry survives process restarts and can feed monthly evidence packs.
+AZLAB46 follows this slice by backing `ViolationsBackend` with the durable
+`agent_quality_violation_events` Postgres table. The in-memory recorder remains
+the local fallback; Azure parallel run should use the durable table.
 
 ## Validation
 
@@ -41,4 +43,5 @@ npx tsc --noEmit -p tsconfig.json
 
 ## Next Step
 
-Persist the violations backend to Azure Postgres or Log Analytics, then pin a C5 dashboard query for tenant-level guard violation rates.
+Run the live L7 answer-quality baseline against Azure/prod and verify the C5
+dashboard reads persisted tenant-level guard violation rates.
