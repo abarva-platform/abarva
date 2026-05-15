@@ -1,0 +1,94 @@
+name: Agent quality live runner
+
+on:
+  schedule:
+    - cron: "41 11 * * 1"
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "dry-run validates runnable case selection; live executes /api/chat/agent with AGENT_QUALITY_SESSION_COOKIE."
+        required: true
+        default: "dry-run"
+        type: choice
+        options:
+          - dry-run
+          - live
+      base_url:
+        description: "Base URL for live mode."
+        required: false
+        default: "https://app.abarva.ai"
+      agent:
+        description: "Optional agent filter: sentinel, atlas, nexus, source, steward."
+        required: false
+        default: ""
+      tenant:
+        description: "Optional tenant filter: apex-retail, meridian-health, first-capital."
+        required: false
+        default: ""
+      limit:
+        description: "Optional case limit for live mode."
+        required: false
+        default: ""
+
+jobs:
+  agent-quality:
+    name: Agent quality corpus runner
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+
+      - name: Install deps
+        run: npm ci
+
+      - name: Validate corpus contract
+        run: npm run qa:agent-quality:corpus
+
+      - name: Build filters
+        id: filters
+        shell: bash
+        run: |
+          ARGS=""
+          if [ -n "${{ inputs.agent }}" ]; then ARGS="$ARGS --agent ${{ inputs.agent }}"; fi
+          if [ -n "${{ inputs.tenant }}" ]; then ARGS="$ARGS --tenant ${{ inputs.tenant }}"; fi
+          if [ -n "${{ inputs.limit }}" ]; then ARGS="$ARGS --limit ${{ inputs.limit }}"; fi
+          echo "args=$ARGS" >> "$GITHUB_OUTPUT"
+
+      - name: Dry-run case selection
+        if: ${{ github.event_name == 'schedule' || inputs.mode == 'dry-run' }}
+        run: npm run qa:agent-quality:runner -- --mode dry-run ${{ steps.filters.outputs.args }} --out agent-quality-plan.json
+
+      - name: Live agent quality run
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.mode == 'live' }}
+        env:
+          AGENT_QUALITY_SESSION_COOKIE: ${{ secrets.AGENT_QUALITY_SESSION_COOKIE }}
+        run: |
+          npm run qa:agent-quality:runner -- \
+            --mode live \
+            --base-url "${{ inputs.base_url }}" \
+            ${{ steps.filters.outputs.args }} \
+            --out agent-quality-answers.jsonl
+
+      - name: Upload plan
+        if: ${{ always() && hashFiles('agent-quality-plan.json') != '' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: agent-quality-plan
+          path: agent-quality-plan.json
+          retention-days: 14
+
+      - name: Upload answers
+        if: ${{ always() && hashFiles('agent-quality-answers.jsonl') != '' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: agent-quality-answers
+          path: agent-quality-answers.jsonl
+          retention-days: 14
