@@ -47,6 +47,7 @@
     "azure:resource:parity": "node scripts/azure/verify-resource-parity.mjs",
     "azure:security:audit": "node scripts/azure/audit-lab-security.mjs",
     "azure:observability:audit": "node scripts/azure/audit-observability.mjs",
+    "azure:agent-quality:telemetry-smoke": "npx tsx src/scripts/agent-quality-telemetry-smoke.ts",
     "azure:postgres:set-url-secrets": "node scripts/azure/set-postgres-database-url-secrets.mjs",
     "azure:postgres:set-source-url-secret": "node scripts/azure/set-source-database-url-secret.mjs",
     "audit:planes": "npx tsx src/scripts/audit/audit-tenant-data-planes.ts",
