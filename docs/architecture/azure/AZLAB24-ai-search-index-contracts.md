@@ -20,7 +20,7 @@ AZLAB24 creates the first retrieval-plane index contracts so the lab has concret
 | `industry-corpus-v1` | Industry knowledge chunk | `industry` | 1536 | Adds specialized industry expertise without inventing tenant facts. |
 | `signals-v1` | Time-bounded signal | `industry` | 1536 | Holds current vendor, regulatory, market, and competitive signals. |
 
-All indexes use the `text-embedding-3-small` compatible 1536-dimension vector contract. They are empty today; this stage proves schema and deployment, not retrieval quality.
+All indexes use the `text-embedding-3-small` compatible 1536-dimension vector contract. At AZLAB24 completion they were empty; AZLAB25 subsequently loaded `tenant-context-v1` with synthetic context chunks.
 
 ## Repo Artifacts
 
@@ -62,7 +62,7 @@ That is acceptable for lab setup, but not the target posture. Before customer-pr
 
 ## What This Proves
 
-- Azure AI Search is no longer just a provisioned empty service.
+- Azure AI Search is no longer just a provisioned empty service; it has versioned retrieval contracts.
 - The five planned retrieval lanes have concrete, versioned contracts.
 - Each tenant-bearing index has a `tenant_key` filterable field.
 - Industry/signal indexes are separated from tenant facts by `industry` scope.
@@ -70,7 +70,7 @@ That is acceptable for lab setup, but not the target posture. Before customer-pr
 
 ## What Remains
 
-- Backfill synthetic tenant context from Azure Postgres into `tenant-context-v1`.
+- Backfill the remaining evidence, Source/vendor, industry corpus, and signal indexes.
 - Wire the ingestion worker's broker/index path beyond `audit_only`.
 - Add Azure AI Search query adapter behind the AgentContextBroker.
 - Add retrieval quality tests against the Sentinel/Nexus/Source/Atlas question batteries.

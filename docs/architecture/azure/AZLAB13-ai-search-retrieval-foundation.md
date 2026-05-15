@@ -75,4 +75,6 @@ Verified after deployment:
 
 ## Update 2026-05-15
 
-AZLAB24 created and verified the five planned indexes. The service remains empty of client data; this is contract readiness, not retrieval backfill. The first Azure AD data-plane apply returned `403`, so the lab bootstrap used a Search admin key retrieved through Azure CLI. Before customer-private lanes, grant the runtime managed identity least-privilege Search data-plane RBAC and remove admin-key dependency from normal operations.
+AZLAB24 created and verified the five planned indexes. The first Azure AD data-plane apply returned `403`, so the lab bootstrap used a Search admin key retrieved through Azure CLI. Before customer-private lanes, grant the runtime managed identity least-privilege Search data-plane RBAC and remove admin-key dependency from normal operations.
+
+AZLAB25 then backfilled `tenant-context-v1` with 6,567 synthetic context chunks from Azure Postgres, normalized to canonical tenant keys: Apex Retail 2,075, First Capital 2,070, Meridian Health 2,422. The remaining indexes are still empty.
