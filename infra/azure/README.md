@@ -14,9 +14,12 @@ This directory contains the Day-0 Azure foundation starter aligned to:
 - `foundation.bicep` - subscription-scoped scale-test foundation that avoids VM/App Service quota
 - `postgres-foundation.bicep` - subscription-scoped private Postgres database lane
 - `registry-cost-foundation.bicep` - subscription-scoped ACR and Cost Management budget lane
+- `event-ingestion-foundation.bicep` - subscription-scoped Service Bus + Event Grid ingestion lane
 - `control-plane.bicep` - control plane RG baseline
 - `private-dataplane.bicep` - tenant-isolated private dataplane baseline
 - `container-registry.bicep` - ACR and image push/pull RBAC helper
+- `service-bus.bicep` - Service Bus namespace, queues, and data-plane RBAC helper
+- `storage-event-ingestion.bicep` - storage containers and Event Grid subscription helper
 - `postgres-regional-private.bicep` - regional private Postgres/VNet/DNS module
 - `scale-runtime.bicep` - Container Apps scale-test runtime lane
 - `storage-rbac.bicep` - cross-resource-group storage role assignment helper
@@ -28,6 +31,7 @@ This directory contains the Day-0 Azure foundation starter aligned to:
 - `parameters/foundation.lab.bicepparam` - current lab foundation parameters
 - `parameters/postgres.lab.bicepparam` - current lab Postgres parameters
 - `parameters/registry-cost.lab.bicepparam` - current lab ACR and budget parameters
+- `parameters/event-ingestion.lab.bicepparam` - current lab event ingestion parameters
 
 ## Recommended Deployment Path
 
@@ -107,6 +111,22 @@ az deployment sub create \
   --parameters infra/azure/parameters/registry-cost.lab.bicepparam
 ```
 
+Then deploy the event-ingestion backbone:
+
+```bash
+az deployment sub what-if \
+  --name azfound-event-ingestion-whatif \
+  --location eastus \
+  --template-file infra/azure/event-ingestion-foundation.bicep \
+  --parameters infra/azure/parameters/event-ingestion.lab.bicepparam
+
+az deployment sub create \
+  --name azfound-event-ingestion-lab \
+  --location eastus \
+  --template-file infra/azure/event-ingestion-foundation.bicep \
+  --parameters infra/azure/parameters/event-ingestion.lab.bicepparam
+```
+
 ## Full Control Plane Deployment
 
 ```bash
@@ -130,8 +150,11 @@ The full `main.bicep` path includes the older App Service / API Management contr
 az bicep build --file infra/azure/foundation.bicep
 az bicep build --file infra/azure/postgres-foundation.bicep
 az bicep build --file infra/azure/registry-cost-foundation.bicep
+az bicep build --file infra/azure/event-ingestion-foundation.bicep
 az bicep build --file infra/azure/main.bicep
 az bicep build --file infra/azure/container-registry.bicep
+az bicep build --file infra/azure/service-bus.bicep
+az bicep build --file infra/azure/storage-event-ingestion.bicep
 az bicep build --file infra/azure/control-plane.bicep
 az bicep build --file infra/azure/private-dataplane.bicep
 az bicep build --file infra/azure/postgres-regional-private.bicep
@@ -150,10 +173,12 @@ az bicep build --file infra/azure/shared-security.bicep
 - No production secrets.
 - No real model keys.
 - Private data plane storage keeps public network access disabled.
-- Private data plane storage network bypass is `None`.
+- Private data plane storage network bypass is `AzureServices` in the lab so Event Grid can configure blob-created notifications. Public network access remains disabled and default network action remains deny.
 - Key Vault currently keeps public network access enabled for founder-lab manageability, but has RBAC, purge protection, and a private endpoint. Production/private-client lanes should disable public data-plane access once a private operator path exists.
 - Postgres public network access is disabled.
 - Postgres is private DNS/VNet reachable from the database VNet and the peered private data-plane VNet.
 - Postgres administrator login/password metadata is stored in Key Vault secrets, not source.
 - ACR admin user stays disabled; pushes and pulls use Azure RBAC.
 - The lab ACR currently allows public network access for local/Codex image pushes. Production/private-client lanes should disable public access once a private build-agent path exists.
+- Service Bus Standard is used for the lab ingestion backbone. Production/private-client lanes should use Premium + private endpoint if messages carry sensitive metadata or customer policy requires private broker access.
+- Event Grid messages point to blob paths and metadata; file contents are not placed on the event bus.

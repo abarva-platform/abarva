@@ -29,6 +29,7 @@ param privateDataplaneAppSubnetCidr = '10.42.4.0/23'
 param privateDataplaneDataSubnetCidr = '10.42.1.0/24'
 param privateDataplanePeSubnetCidr = '10.42.2.0/24'
 param privateDataplaneStorageAccountName = 'stabarvaprivatedplab001'
+param privateDataplaneStorageNetworkBypass = 'AzureServices'
 param deployStoragePrivateEndpoint = true
 
 param logAnalyticsWorkspaceName = 'log-abarva-observability-lab-eastus'

@@ -54,6 +54,13 @@ param privateDataplanePeSubnetCidr string = '10.42.2.0/24'
 @description('Private dataplane storage account name.')
 param privateDataplaneStorageAccountName string = 'stabarvaprivatedplab001'
 
+@description('Private dataplane storage network ACL bypass. Lab uses AzureServices so Event Grid can configure blob-created notifications while public network access remains disabled.')
+@allowed([
+  'None'
+  'AzureServices'
+])
+param privateDataplaneStorageNetworkBypass string = 'AzureServices'
+
 @description('Set true to deploy storage private endpoint.')
 param deployStoragePrivateEndpoint bool = true
 
@@ -165,6 +172,7 @@ module privateDataplane './private-dataplane.bicep' = {
     dataSubnetCidr: privateDataplaneDataSubnetCidr
     privateEndpointSubnetCidr: privateDataplanePeSubnetCidr
     storageAccountName: privateDataplaneStorageAccountName
+    storageNetworkBypass: privateDataplaneStorageNetworkBypass
     keyVaultResourceId: sharedSecurityBootstrap.outputs.keyVaultResourceId
     postgresResourceId: postgresResourceId
     controlPlanePrincipalIds: []
