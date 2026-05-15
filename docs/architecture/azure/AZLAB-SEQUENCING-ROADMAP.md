@@ -29,6 +29,14 @@ Do the small, high-leverage platform pieces first:
 
 That sequence is more credible than deploying a large catalog of Azure services before the product needs them.
 
+## Image Lane Status
+
+The first real AbarVa web image is now in ACR:
+
+`acrabarvalab001.azurecr.io/abarva/web:lab-ebe449ae-r3`
+
+The next runtime step is Container Apps deployment with Key Vault-backed environment wiring, not another placeholder image.
+
 ## Client-VPC Narrative
 
 Two live constraints are useful proof points:

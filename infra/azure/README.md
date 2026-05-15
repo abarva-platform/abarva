@@ -187,6 +187,19 @@ az bicep build --file infra/azure/observability.bicep
 az bicep build --file infra/azure/shared-security.bicep
 ```
 
+## Build Real App Image
+
+```bash
+az acr build \
+  --registry acrabarvalab001 \
+  --image abarva/web:lab-<git-sha> \
+  --file Dockerfile .
+```
+
+Current verified image:
+
+`acrabarvalab001.azurecr.io/abarva/web:lab-ebe449ae-r3`
+
 ## Safety Constraints
 - Synthetic/demo data only.
 - No client data.
