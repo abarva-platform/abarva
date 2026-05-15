@@ -56,6 +56,11 @@ export interface ParallelRunInvariantPayload {
   };
 }
 
+type CountQueryResult = {
+  count: number | null;
+  error: unknown;
+};
+
 function tokensMatch(presented: string, expected: string): boolean {
   // Pad to equal length so timingSafeEqual does not throw and so we
   // do not leak the expected length through fast-path early exits.
@@ -79,11 +84,10 @@ function extractBearerToken(req: NextRequest): string | null {
 async function countWhereTenant(table: string, tenantKey: string): Promise<number> {
   try {
     const sb = getServerSupabase();
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { count, error } = (await sb
       .from(table)
       .select('*', { count: 'exact', head: true })
-      .eq('tenant_key', tenantKey)) as any;
+      .eq('tenant_key', tenantKey)) as CountQueryResult;
     if (error) return 0;
     return typeof count === 'number' ? count : 0;
   } catch {
@@ -94,13 +98,12 @@ async function countWhereTenant(table: string, tenantKey: string): Promise<numbe
 async function countEngagementsForClient(clientId: string): Promise<number> {
   try {
     const sb = getServerSupabase();
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { count, error } = (await sb
       .from('engagements')
       .select('*', { count: 'exact', head: true })
       .eq('client_id', clientId)
       .is('archived_at', null)
-      .is('deleted_at', null)) as any;
+      .is('deleted_at', null)) as CountQueryResult;
     if (error) return 0;
     return typeof count === 'number' ? count : 0;
   } catch {
