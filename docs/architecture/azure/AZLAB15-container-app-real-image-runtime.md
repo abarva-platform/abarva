@@ -10,6 +10,10 @@ This stage deploys a second Container App that references the real AbarVa image 
 
 `acrabarvalab001.azurecr.io/abarva/web:lab-ebe449ae-r3`
 
+AZLAB16 later rebuilt and deployed:
+
+`acrabarvalab001.azurecr.io/abarva/web:lab-keyvault-health-20260515-r1`
+
 The intent is to prove the runtime lane can pull the real image through managed identity. It is not yet the final live app deployment because production-equivalent app secrets are not wired into Azure.
 
 ## Runtime Design

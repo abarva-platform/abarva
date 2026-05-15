@@ -18,7 +18,7 @@ param imageName string
 @description('ACR login server, e.g. acrabarvalab001.azurecr.io.')
 param registryServer string
 
-@description('Minimum replicas. Keep 0 until real app secrets and health checks are wired.')
+@description('Minimum replicas. Keep 0 for lab cost control; HTTP ingress scales from zero for smoke tests.')
 param minReplicas int = 0
 
 @description('Maximum replicas for the lab app runtime.')
@@ -29,6 +29,36 @@ param cpu string = '0.5'
 
 @description('Memory allocated to the web container.')
 param memory string = '1Gi'
+
+@description('Non-secret runtime environment variables projected directly into the container. Do not put credentials here.')
+param plainRuntimeEnv array = []
+
+@description('Key Vault-backed secret references projected into the container as environment variables. Each object requires envName, containerAppSecretName, and keyVaultSecretUri.')
+param keyVaultSecretRefs array = []
+
+var staticRuntimeEnv = [
+  {
+    name: 'NODE_ENV'
+    value: 'production'
+  }
+  {
+    name: 'NEXT_TELEMETRY_DISABLED'
+    value: '1'
+  }
+  {
+    name: 'PORT'
+    value: '3000'
+  }
+  {
+    name: 'HOSTNAME'
+    value: '0.0.0.0'
+  }
+]
+
+var keyVaultRuntimeEnv = [for secretRef in keyVaultSecretRefs: {
+  name: secretRef.envName
+  secretRef: secretRef.containerAppSecretName
+}]
 
 resource containerAppsEnvironment 'Microsoft.App/managedEnvironments@2024-03-01' existing = {
   name: containerAppsEnvironmentName
@@ -66,30 +96,18 @@ resource webApp 'Microsoft.App/containerApps@2024-03-01' = {
           identity: managedIdentity.id
         }
       ]
+      secrets: [for secretRef in keyVaultSecretRefs: {
+        name: secretRef.containerAppSecretName
+        keyVaultUrl: secretRef.keyVaultSecretUri
+        identity: managedIdentity.id
+      }]
     }
     template: {
       containers: [
         {
           name: 'web'
           image: imageName
-          env: [
-            {
-              name: 'NODE_ENV'
-              value: 'production'
-            }
-            {
-              name: 'NEXT_TELEMETRY_DISABLED'
-              value: '1'
-            }
-            {
-              name: 'PORT'
-              value: '3000'
-            }
-            {
-              name: 'HOSTNAME'
-              value: '0.0.0.0'
-            }
-          ]
+          env: concat(staticRuntimeEnv, plainRuntimeEnv, keyVaultRuntimeEnv)
           resources: {
             cpu: json(cpu)
             memory: memory
