@@ -16,6 +16,12 @@ param postgresResourceId string = ''
 param controlPlanePrincipalIds array = []
 param deployContainerAppsSubnet bool = false
 param deployStoragePrivateEndpoint bool = true
+@description('Storage network ACL bypass. Use AzureServices only when Azure-native services such as Event Grid need to configure storage notifications.')
+@allowed([
+  'None'
+  'AzureServices'
+])
+param storageNetworkBypass string = 'None'
 param tags object
 
 var storageBlobDataContributorRoleDefinitionId = 'ba92f5b4-2d11-453d-a403-e96b0029c9fe'
@@ -197,7 +203,7 @@ resource storageAccount 'Microsoft.Storage/storageAccounts@2023-05-01' = {
     }
     networkAcls: {
       defaultAction: 'Deny'
-      bypass: 'None'
+      bypass: storageNetworkBypass
     }
   }
 }

@@ -8,7 +8,7 @@ Status: active roadmap as of 2026-05-14
 |---:|---|---|---|
 | 1 | Azure Container Registry | Foundational for real Container Apps images. | RBAC-only, admin disabled; private endpoint later. |
 | 2 | Cost Management budgets + alerts | Keeps founder-lab burn visible before more paid services land. | Monthly budget with actual/forecast thresholds. |
-| 3 | Service Bus or Event Grid | Unblocks event-driven context refresh without Data Factory complexity. | Blob drop/change event routes to broker/ingestion worker. |
+| 3 | Service Bus + Event Grid | Unblocks event-driven context refresh without Data Factory complexity. | Live in AZLAB12. Next: ingestion worker. |
 | 4 | Azure AI Search | Core retrieval/index layer for context and evidence. | Tenant context, evidence, source/vendor, industry corpus indexes. |
 | 5 | Front Door + WAF | Required when Azure hosts a real public app endpoint. | TLS edge, WAF, rate/bot controls. |
 | 6 | API Management | Useful when customer/partner APIs are exposed. | Defer until first signed pilot API boundary. |

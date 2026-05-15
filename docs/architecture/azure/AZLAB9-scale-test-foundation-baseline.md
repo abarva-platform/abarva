@@ -68,7 +68,7 @@ This means services inside the VNet can resolve private endpoints without public
 | Storage public network access | Disabled. |
 | Storage blob public access | Disabled. |
 | Storage network default action | Deny. |
-| Storage network bypass | None. |
+| Storage network bypass | `AzureServices` in the lab so Event Grid can configure blob-created notifications; public network access remains disabled and default network action remains deny. |
 | Key Vault authorization | Azure RBAC. |
 | Key Vault purge protection | Enabled. |
 | Key Vault soft delete | Enabled, 90 days. |
