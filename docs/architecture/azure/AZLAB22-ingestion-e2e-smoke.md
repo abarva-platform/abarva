@@ -186,3 +186,5 @@ Close path:
 - Adopt a strict blob path convention that lets the worker derive tenant/segment/classification safely before canonicalization.
 
 Do not treat raw Event Grid events as accepted context updates until that normalizer exists.
+
+Update 2026-05-15: this gap is closed by `AZLAB23-event-grid-normalizer.md` for metadata-bearing BlobCreated events. The producer can now run with `INGESTION_SMOKE_SEND_CANONICAL=false`, upload blobs only, and the worker normalizes Event Grid events from blob metadata before running the same guard/audit path.

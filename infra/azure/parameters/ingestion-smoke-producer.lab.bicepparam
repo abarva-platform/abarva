@@ -18,7 +18,7 @@ param containerAppsEnvironmentName = 'cae-abarva-scale-lab-eastus'
 param scaleRuntimeManagedIdentityName = 'id-abarva-scale-runtime-lab-eastus'
 
 param ingestionWorkerJobName = 'job-a2b-smoke-send-eus'
-param imageName = 'acrabarvalab001.azurecr.io/abarva/web:lab-ingestion-e2e-smoke-20260515-r1'
+param imageName = 'acrabarvalab001.azurecr.io/abarva/web:lab-eventgrid-normalizer-20260515-r1'
 param registryServer = 'acrabarvalab001.azurecr.io'
 param workerCommand = 'npx tsx src/scripts/azure-ingestion-e2e-smoke.ts'
 

@@ -66,7 +66,9 @@ The ingestion worker should treat every event as an untrusted pointer:
 
 Update 2026-05-15: the deployable worker now exists as Container Apps Job `job-a2b-ingest-lab-eus` and is documented in `AZLAB21-context-ingestion-worker.md`. The idle smoke proved the worker can boot, pin the user-assigned managed identity, connect to Service Bus, and idle cleanly when `q-context-ingestion-events` has no messages.
 
-Update 2026-05-15, AZLAB22: the canonical-message smoke passed with synthetic safe and sensitive files. The worker wrote Azure Postgres audit rows with `safe=allow` and `sensitive=quarantine`. The same run confirmed a remaining gap: raw `Microsoft.Storage.BlobCreated` events emitted by the storage subscription are not canonical messages and are rejected by the worker. The lab therefore needs an Event Grid normalizer or a separate raw-event queue before raw BlobCreated events can be treated as production context updates.
+Update 2026-05-15, AZLAB22: the canonical-message smoke passed with synthetic safe and sensitive files. The worker wrote Azure Postgres audit rows with `safe=allow` and `sensitive=quarantine`. The same run confirmed a remaining gap: raw `Microsoft.Storage.BlobCreated` events emitted by the storage subscription are not canonical messages and were rejected by the worker.
+
+Update 2026-05-15, AZLAB23: the raw BlobCreated gap is closed for metadata-bearing uploads. The worker now normalizes BlobCreated events using blob metadata (`tenantClientKey`, `segmentKey`, `declaredClassification`, `sha256`) and then runs the same guard/audit path. Event Grid-only smoke run `azlab23-20260515140157` passed with safe upload = `allow` and fake sensitive sample = `quarantine`.
 
 ## Validation Plan
 
