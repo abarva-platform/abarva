@@ -12,7 +12,8 @@ This stage adds the first Day-2 automation spine for the AbarVa context layer. I
 1. A client-safe file lands in a private storage drop container.
 2. Azure Event Grid emits a `BlobCreated` event.
 3. The event lands in a Service Bus queue.
-4. The A2b ingestion worker consumes the message, validates the dataset, scans for sensitive data, writes audit evidence, and prepares the broker/index refresh path.
+4. A normalizer turns the raw storage event into the canonical `abarva.ingestion.v1` message shape.
+5. The A2b ingestion worker consumes the canonical message, validates the dataset, scans for sensitive data, writes audit evidence, and prepares the broker/index refresh path.
 
 This avoids overbuilding with Data Factory/Fabric too early while still proving an enterprise-grade event pattern.
 
@@ -63,7 +64,9 @@ The ingestion worker should treat every event as an untrusted pointer:
 6. Refresh Azure AI Search index.
 7. Mark processed or quarantine with reason.
 
-Update 2026-05-15: the deployable worker now exists as Container Apps Job `job-a2b-ingest-lab-eus` and is documented in `AZLAB21-context-ingestion-worker.md`. The smoke proved the worker can boot, pin the user-assigned managed identity, connect to Service Bus, and idle cleanly when `q-context-ingestion-events` has no messages. The remaining proof is a real safe-file and sensitive-file message exercise.
+Update 2026-05-15: the deployable worker now exists as Container Apps Job `job-a2b-ingest-lab-eus` and is documented in `AZLAB21-context-ingestion-worker.md`. The idle smoke proved the worker can boot, pin the user-assigned managed identity, connect to Service Bus, and idle cleanly when `q-context-ingestion-events` has no messages.
+
+Update 2026-05-15, AZLAB22: the canonical-message smoke passed with synthetic safe and sensitive files. The worker wrote Azure Postgres audit rows with `safe=allow` and `sensitive=quarantine`. The same run confirmed a remaining gap: raw `Microsoft.Storage.BlobCreated` events emitted by the storage subscription are not canonical messages and are rejected by the worker. The lab therefore needs an Event Grid normalizer or a separate raw-event queue before raw BlobCreated events can be treated as production context updates.
 
 ## Validation Plan
 

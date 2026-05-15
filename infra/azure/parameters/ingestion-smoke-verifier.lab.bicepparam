@@ -1,4 +1,4 @@
-using '../database-migration-foundation.bicep'
+using '../ingestion-worker-foundation.bicep'
 
 param location = 'eastus'
 
@@ -6,8 +6,8 @@ param tags = {
   app: 'AbarVa'
   environment: 'lab'
   owner: 'Anand'
-  dataClassification: 'no-client-data'
-  purpose: 'enterprise-saas-database-migration'
+  dataClassification: 'synthetic-smoke-only'
+  purpose: 'enterprise-saas-scale-test'
   costControl: 'founder-review'
 }
 
@@ -17,9 +17,25 @@ param keyVaultName = 'kv-abarva-lab-001'
 param containerAppsEnvironmentName = 'cae-abarva-scale-lab-eastus'
 param scaleRuntimeManagedIdentityName = 'id-abarva-scale-runtime-lab-eastus'
 
-param migrationJobName = 'job-abarva-db-migrate-lab-eastus'
+param ingestionWorkerJobName = 'job-a2b-smoke-verify-eus'
 param imageName = 'acrabarvalab001.azurecr.io/abarva/web:lab-ingestion-e2e-smoke-20260515-r1'
 param registryServer = 'acrabarvalab001.azurecr.io'
+param workerCommand = 'npx tsx src/scripts/azure-ingestion-e2e-smoke.ts'
+
+param plainRuntimeEnv = [
+  {
+    name: 'INGESTION_SMOKE_MODE'
+    value: 'verify'
+  }
+  {
+    name: 'INGESTION_SMOKE_RUN_ID'
+    value: 'azlab22-replace-before-run'
+  }
+  {
+    name: 'AZURE_CLIENT_ID'
+    value: '3b6e0c9d-2265-499f-af46-965e0ad78b95'
+  }
+]
 
 param keyVaultSecretRefs = [
   {
@@ -28,5 +44,3 @@ param keyVaultSecretRefs = [
     keyVaultSecretUri: 'https://kv-abarva-lab-001.vault.azure.net/secrets/azure-postgres-control-database-url'
   }
 ]
-
-param migrationCommand = 'npx tsx src/scripts/bootstrap-azure-postgres-compat.ts && npx tsx src/scripts/run-migrations.ts --ci --allow-destructive'
