@@ -25,7 +25,7 @@ Current state: the lab has real Azure services live through AZLAB25: Container A
 | L1 Infrastructure / IaC | The three-lane topology deploys cleanly to a fresh subscription/RG. Expected resources exist, no orphans. | `infra/azure/**`, `docs/architecture/azure/AZLAB*.md`, `docs/architecture/azure/CURRENT-STATE.md` | CI job for `bicep what-if` against ephemeral RG plus `az resource list` parity check. | Partial |
 | L2 Connectivity / private endpoint reachability | Container Apps can reach private Postgres, Blob, Service Bus, Key Vault, and Search through intended lanes; public clients cannot reach private data resources. | `/api/health` direct Postgres probe; AZLAB20, AZLAB22, AZLAB23, AZLAB25 live job evidence; AZLAB26 positive-path smoke across Postgres/Blob/Service Bus/Key Vault/Search | Add negative public-path test to prove private resources fail by network/firewall, not only auth. | Partial |
 | L3 Security: network + identity | Private data resources are not public; managed identities are least-privilege; secrets are Key Vault refs, not literals. | Key Vault env projection in AZLAB16; Defender baseline; ACR managed identity pull; `scripts/azure/audit-lab-security.mjs`; AZLAB27 live run: 67 pass, 9 attention, 0 fail | Add gitleaks workflow and rotation drill; close 9 advisory attention items before pilot strict mode. | Partial |
-| L4 Multi-tenant isolation | Tenant A cannot read tenant B via API, RLS, broker, or UI. | `.github/workflows/sec-p0-post-deploy.yml`, `tests/security/sec-p0-cross-tenant-probes.sh`, `tests/e2e/primary-surfaces-smoke.spec.ts` | Wire SEC-P0 workflow to Azure FQDN, add SQL RLS tenant-role tests, add broker response tenant-key assertion. | Partial |
+| L4 Multi-tenant isolation | Tenant A cannot read tenant B via API, RLS, broker, or UI. | `.github/workflows/sec-p0-post-deploy.yml`, `tests/security/sec-p0-cross-tenant-probes.sh`, `tests/e2e/primary-surfaces-smoke.spec.ts`; AZLAB28 adds `azure-lab` workflow target | Load Azure-host session secrets and run SEC-P0 against Azure FQDN; add broker response tenant-key assertion. | Partial |
 | L5 Data integrity | Migrations and seeds replay to a fresh DB; drift is visible; backup/restore works. | `.github/workflows/migration-drift-*.yml`, `src/scripts/bootstrap-azure-postgres-compat.ts`, `src/scripts/copy-tenant-context-to-azure.ts`, `src/scripts/verify-azure-postgres-schema.ts` | Reset-and-replay CI against fresh Postgres, expected row-count assertions, weekly PITR restore drill. | Partial |
 | L6 Functional E2E | Each tenant can sign in, navigate Home/Intelligence/Moves/Source/Tower, complete one workflow, and sign out. | `tests/e2e/primary-surfaces-smoke.spec.ts` | Add workflow-level specs: Origination, Move gate, Source evidence ledger, Tower decision pack, screenshot baselines. | Partial |
 | L7 Agent quality | Sentinel, Atlas, Nexus, Steward stay grounded, in-voice, internally consistent, and safe under adversarial prompts. | `docs/agent-quality/SENTINEL-CONSISTENCY-GUARD-EXPANSION.md`, existing Sentinel voice tests, audit question batteries in docs | Golden corpus and adversarial corpus per agent, weekly drift watchdog, guard telemetry wired to C5 dashboard. | Design |
@@ -101,12 +101,12 @@ Current state: the lab has real Azure services live through AZLAB25: Container A
 
 | Check | Artifact | Pass condition |
 |---|---|---|
-| API cross-tenant probes | `.github/workflows/sec-p0-post-deploy.yml` + `tests/security/sec-p0-cross-tenant-probes.sh` | All known SEC-P0 routes return 403/400/404 for tenant-A -> tenant-B probes. |
+| API cross-tenant probes | `.github/workflows/sec-p0-post-deploy.yml` + `tests/security/sec-p0-cross-tenant-probes.sh` | All known SEC-P0 routes return 403/400/404 for tenant-A -> tenant-B probes. Workflow targets staging, production, and Azure lab. |
 | UI tenant matrix | `tests/e2e/primary-surfaces-smoke.spec.ts` extended across roster | Every primary surface shows expected tenant name/copy and no other tenant vocabulary. |
 | SQL RLS regression | New `tests/security/rls-tenant-isolation.sql` | Tenant role SELECT sees only its tenant rows on every tenant-scoped table. Service-role bypass tested separately. |
 | Broker boundary | New integration test for `/api/intelligence` | Tenant A response contains no tenant-B segment IDs, pattern overlays, source event IDs, or graph node IDs. |
 
-**Immediate next step.** Point the existing SEC-P0 workflow at the Azure Container Apps FQDN once authenticated Azure smoke is available.
+**Immediate next step.** AZLAB28 added the Azure target. The live run now needs `AZURE_LAB_BASE_URL`, `AZURE_LAB_APEX_SESSION`, and `AZURE_LAB_MERIDIAN_CLIENT_ID` repository secrets.
 
 ## L5 - Data Integrity
 

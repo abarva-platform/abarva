@@ -45,8 +45,23 @@ bash tests/security/sec-p0-cross-tenant-probes.sh
 
 ### In CI (recommended)
 
-Wire this as a post-deploy gate. The script exits non-zero on any failure.
-Add to `.github/workflows/post-deploy-sec-probes.yml`:
+The repo workflow is `.github/workflows/sec-p0-post-deploy.yml`. It supports three targets:
+
+| Target | Required secrets |
+|---|---|
+| `staging` | `STAGING_BASE_URL`, `STAGING_APEX_SESSION`, `STAGING_MERIDIAN_CLIENT_ID` |
+| `production` | `PRODUCTION_BASE_URL`, `PRODUCTION_APEX_SESSION`, `PRODUCTION_MERIDIAN_CLIENT_ID` |
+| `azure-lab` | `AZURE_LAB_BASE_URL`, `AZURE_LAB_APEX_SESSION`, `AZURE_LAB_MERIDIAN_CLIENT_ID` |
+
+Each target also supports optional `*_MERIDIAN_CLIENT_KEY` and `*_KNOWN_MERIDIAN_TURN_ID` secrets. The Azure lab session cookie must be minted against the Azure Container Apps host, not copied from `app.abarva.ai`, because browser cookies are host scoped.
+
+The script exits non-zero on any failure. The workflow can be run manually:
+
+```bash
+gh workflow run sec-p0-post-deploy.yml -f environment=azure-lab
+```
+
+Direct workflow step shape:
 
 ```yaml
 - name: SEC-P0 cross-tenant probes

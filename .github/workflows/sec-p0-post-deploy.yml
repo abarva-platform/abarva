@@ -15,6 +15,13 @@ name: SEC-P0 cross-tenant probes (post-deploy)
 #   STAGING_APEX_SESSION       __session cookie value for an Apex CIO
 #   STAGING_MERIDIAN_CLIENT_ID Meridian's client UUID (the "other" tenant)
 #
+# Optional Azure lab secrets:
+#   AZURE_LAB_BASE_URL                 e.g. https://ca-abarva-web-lab-eastus.<region>.azurecontainerapps.io
+#   AZURE_LAB_APEX_SESSION             __session cookie value minted against the Azure lab host
+#   AZURE_LAB_MERIDIAN_CLIENT_ID       Meridian's client UUID in the Azure lab DB
+#   AZURE_LAB_MERIDIAN_CLIENT_KEY      defaults to meridian-health
+#   AZURE_LAB_KNOWN_MERIDIAN_TURN_ID   optional known Meridian turn for SEC-P0-7
+#
 # Exit code:
 #   0  all 8 SEC-P0 probes returned 403/400/404 (success)
 #   1  one or more probes returned anything else (P0 incident → page founder)
@@ -31,6 +38,7 @@ on:
         type: choice
         options:
           - staging
+          - azure-lab
           - production
   schedule:
     # 03:00 UTC nightly against staging
@@ -49,20 +57,54 @@ jobs:
       - name: Resolve environment URLs
         id: env
         run: |
-          if [[ "${{ inputs.environment || 'staging' }}" == "production" ]]; then
-            echo "BASE_URL=${{ secrets.PRODUCTION_BASE_URL }}" >> "$GITHUB_OUTPUT"
-            echo "SESSION=${{ secrets.PRODUCTION_APEX_SESSION }}" >> "$GITHUB_OUTPUT"
-            echo "OTHER_ID=${{ secrets.PRODUCTION_MERIDIAN_CLIENT_ID }}" >> "$GITHUB_OUTPUT"
-          else
-            echo "BASE_URL=${{ secrets.STAGING_BASE_URL }}" >> "$GITHUB_OUTPUT"
-            echo "SESSION=${{ secrets.STAGING_APEX_SESSION }}" >> "$GITHUB_OUTPUT"
-            echo "OTHER_ID=${{ secrets.STAGING_MERIDIAN_CLIENT_ID }}" >> "$GITHUB_OUTPUT"
+          target="${{ inputs.environment || 'staging' }}"
+          case "$target" in
+            production)
+              base_url="${{ secrets.PRODUCTION_BASE_URL }}"
+              session="${{ secrets.PRODUCTION_APEX_SESSION }}"
+              other_id="${{ secrets.PRODUCTION_MERIDIAN_CLIENT_ID }}"
+              other_key="${{ secrets.PRODUCTION_MERIDIAN_CLIENT_KEY }}"
+              known_turn="${{ secrets.PRODUCTION_KNOWN_MERIDIAN_TURN_ID }}"
+              ;;
+            azure-lab)
+              base_url="${{ secrets.AZURE_LAB_BASE_URL }}"
+              session="${{ secrets.AZURE_LAB_APEX_SESSION }}"
+              other_id="${{ secrets.AZURE_LAB_MERIDIAN_CLIENT_ID }}"
+              other_key="${{ secrets.AZURE_LAB_MERIDIAN_CLIENT_KEY }}"
+              known_turn="${{ secrets.AZURE_LAB_KNOWN_MERIDIAN_TURN_ID }}"
+              ;;
+            staging)
+              base_url="${{ secrets.STAGING_BASE_URL }}"
+              session="${{ secrets.STAGING_APEX_SESSION }}"
+              other_id="${{ secrets.STAGING_MERIDIAN_CLIENT_ID }}"
+              other_key="${{ secrets.STAGING_MERIDIAN_CLIENT_KEY }}"
+              known_turn="${{ secrets.STAGING_KNOWN_MERIDIAN_TURN_ID }}"
+              ;;
+            *)
+              echo "Unknown probe environment: $target" >&2
+              exit 2
+              ;;
+          esac
+
+          other_key="${other_key:-meridian-health}"
+
+          if [[ -z "$base_url" || -z "$session" || -z "$other_id" ]]; then
+            echo "Missing SEC-P0 probe secrets for $target. Required: BASE_URL, APEX_SESSION, MERIDIAN_CLIENT_ID." >&2
+            exit 2
           fi
+
+          echo "::add-mask::$session"
+          echo "BASE_URL=$base_url" >> "$GITHUB_OUTPUT"
+          echo "SESSION=$session" >> "$GITHUB_OUTPUT"
+          echo "OTHER_ID=$other_id" >> "$GITHUB_OUTPUT"
+          echo "OTHER_KEY=$other_key" >> "$GITHUB_OUTPUT"
+          echo "KNOWN_TURN=$known_turn" >> "$GITHUB_OUTPUT"
 
       - name: Run SEC-P0 probe suite
         env:
           ABARVA_PROBE_BASE_URL: ${{ steps.env.outputs.BASE_URL }}
           ABARVA_PROBE_SESSION: ${{ steps.env.outputs.SESSION }}
           ABARVA_PROBE_OTHER_TENANT_ID: ${{ steps.env.outputs.OTHER_ID }}
-          ABARVA_PROBE_OTHER_TENANT_KEY: "meridian"
+          ABARVA_PROBE_OTHER_TENANT_KEY: ${{ steps.env.outputs.OTHER_KEY }}
+          ABARVA_PROBE_KNOWN_OTHER_TURN: ${{ steps.env.outputs.KNOWN_TURN }}
         run: bash tests/security/sec-p0-cross-tenant-probes.sh
