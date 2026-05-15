@@ -79,7 +79,7 @@ export default async function PilotDashboardPage({ params }: PageProps): Promise
   const [substrate, engagementResult] = await Promise.all([
     loadSubstrateSnapshot(tenantKey, displayName),
     clientId
-      ? loadEngagementAndHeadline({ clientId })
+      ? loadEngagementAndHeadline({ clientId, tenantKey })
       : Promise.resolve({
           headline: {
             sentinelTurns7d: 0,
@@ -93,6 +93,13 @@ export default async function PilotDashboardPage({ params }: PageProps): Promise
             qualitySample: [],
             avgLatencyMs7d: null,
             tokens7d: null,
+            agentQuality: {
+              recordedTurns: 0,
+              violationEvents: 0,
+              caughtViolationRate: null,
+              sentinelInternalConsistencyEvents: 0,
+              byType: [],
+            },
           },
           banners: [
             {
@@ -307,7 +314,54 @@ function EngagementPanel({ engagement }: { engagement: EngagementSnapshot }): Re
             <Dt label="Output tokens">
               {engagement.tokens7d ? engagement.tokens7d.output.toLocaleString() : '—'}
             </Dt>
+            <Dt label="Guarded turns">
+              {engagement.agentQuality.recordedTurns.toLocaleString()}
+            </Dt>
+            <Dt label="Caught violation rate">
+              {engagement.agentQuality.caughtViolationRate === null
+                ? '—'
+                : `${(engagement.agentQuality.caughtViolationRate * 100).toFixed(1)}%`}
+            </Dt>
+            <Dt label="Sentinel consistency hits">
+              {engagement.agentQuality.sentinelInternalConsistencyEvents.toLocaleString()}
+            </Dt>
           </dl>
+          <div style={{ marginTop: 12 }}>
+            <h4
+              style={{
+                fontFamily: 'Georgia, serif',
+                fontWeight: 400,
+                fontSize: 15,
+                margin: '0 0 8px',
+              }}
+            >
+              Guard telemetry
+            </h4>
+            {engagement.agentQuality.byType.length === 0 ? (
+              <p style={{ fontSize: 12.5, color: '#5F6470', margin: 0 }}>
+                No guard violations recorded in this runtime window.
+              </p>
+            ) : (
+              <ul style={{ margin: 0, padding: 0, listStyle: 'none', display: 'grid', gap: 6 }}>
+                {engagement.agentQuality.byType.map((item) => (
+                  <li
+                    key={item.type}
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      border: '1px solid #E2DFD8',
+                      padding: '6px 8px',
+                      fontFamily: 'JetBrains Mono, monospace',
+                      fontSize: 11,
+                    }}
+                  >
+                    <span>{item.type}</span>
+                    <strong>{item.count}</strong>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
         </div>
         <div>
           <h3 style={{ fontFamily: 'Georgia, serif', fontWeight: 400, fontSize: 18, margin: '0 0 10px' }}>

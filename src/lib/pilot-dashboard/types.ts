@@ -51,6 +51,21 @@ export interface EngagementSnapshot {
   readonly avgLatencyMs7d: number | null;
   /** Total prompt + completion tokens last 7 days. */
   readonly tokens7d: { readonly input: number; readonly output: number } | null;
+  /** Agent-quality guard telemetry from the recent violation recorder. */
+  readonly agentQuality: AgentQualitySnapshot;
+}
+
+export interface AgentQualitySnapshot {
+  /** Recent recorded agent turns in the in-memory telemetry window for this tenant. */
+  readonly recordedTurns: number;
+  /** Turns with at least one synthesis / Sentinel voice / consistency violation. */
+  readonly violationEvents: number;
+  /** Violation events divided by recorded turns. Null when no turns are recorded. */
+  readonly caughtViolationRate: number | null;
+  /** Number of Sentinel internal-consistency guard hits in the telemetry window. */
+  readonly sentinelInternalConsistencyEvents: number;
+  /** Rollup of violation types in the telemetry window. */
+  readonly byType: ReadonlyArray<{ readonly type: string; readonly count: number }>;
 }
 
 export interface TopQuestion {

@@ -17,7 +17,9 @@ export type ViolationType =
   | 'fabricated-number'
   | 'undisclosed-fallback'
   | 'rigid-scope-refusal'
-  | 'malformed-citation-tag';
+  | 'malformed-citation-tag'
+  | 'sentinel-voice-drift'
+  | 'sentinel-internal-consistency';
 
 export interface Violation {
   type: ViolationType;

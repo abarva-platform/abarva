@@ -2,9 +2,11 @@ import { describe, it, expect } from '@jest/globals';
 import {
   normalizeQuestion,
   rollUpTopQuestions,
+  summarizeAgentQuality,
   toSubstrateSnapshot,
 } from '../aggregates';
 import type { EnterpriseContextOverview } from '@/lib/enterprise-context/intelligence-read-model';
+import type { SynthesisViolationEvent } from '@/lib/intelligence/synthesis/violationsRecorder';
 
 describe('C5 · pilot-dashboard aggregates', () => {
   describe('normalizeQuestion', () => {
@@ -127,6 +129,69 @@ describe('C5 · pilot-dashboard aggregates', () => {
       expect(s.contextCards[0].title).toBe('Platform and service reliability');
       expect(s.totalEvidence).toBe(964);
       expect(s.averageConfidence).toBeCloseTo(0.84);
+    });
+  });
+
+  describe('summarizeAgentQuality', () => {
+    it('summarizes guard telemetry for the requested tenant only', () => {
+      const events: SynthesisViolationEvent[] = [
+        {
+          id: 'vlt_1',
+          timestamp: '2026-05-15T00:00:00.000Z',
+          route: '/api/chat/agent',
+          surface: '/intelligence',
+          tenantId: 'apex-retail',
+          userId: null,
+          violationCount: 0,
+          violationTypes: [],
+          violations: [],
+          responseLength: 100,
+        },
+        {
+          id: 'vlt_2',
+          timestamp: '2026-05-15T00:01:00.000Z',
+          route: '/api/chat/agent',
+          surface: '/intelligence',
+          tenantId: 'apex-retail',
+          userId: null,
+          violationCount: 2,
+          violationTypes: ['sentinel-internal-consistency', 'fabricated-number'],
+          violations: [
+            { type: 'sentinel-internal-consistency', detail: 'bad date math' },
+            { type: 'fabricated-number', detail: 'unsupported number' },
+          ],
+          responseLength: 200,
+        },
+        {
+          id: 'vlt_3',
+          timestamp: '2026-05-15T00:02:00.000Z',
+          route: '/api/chat/agent',
+          surface: '/intelligence',
+          tenantId: 'meridian-health',
+          userId: null,
+          violationCount: 1,
+          violationTypes: ['sentinel-voice-drift'],
+          violations: [{ type: 'sentinel-voice-drift', detail: 'marketing phrase' }],
+          responseLength: 120,
+        },
+      ];
+
+      const summary = summarizeAgentQuality(events, 'apex-retail');
+      expect(summary.recordedTurns).toBe(2);
+      expect(summary.violationEvents).toBe(1);
+      expect(summary.caughtViolationRate).toBe(0.5);
+      expect(summary.sentinelInternalConsistencyEvents).toBe(1);
+      expect(summary.byType).toEqual([
+        { type: 'fabricated-number', count: 1 },
+        { type: 'sentinel-internal-consistency', count: 1 },
+      ]);
+    });
+
+    it('returns a null rate when no turns are recorded', () => {
+      const summary = summarizeAgentQuality([], 'apex-retail');
+      expect(summary.recordedTurns).toBe(0);
+      expect(summary.caughtViolationRate).toBeNull();
+      expect(summary.byType).toEqual([]);
     });
   });
 });

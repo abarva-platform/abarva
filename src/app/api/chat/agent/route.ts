@@ -52,6 +52,7 @@ import { recordViolations } from "@/lib/intelligence/synthesis/violationsRecorde
 import { ARTIFACT_CHANNEL_INSTRUCTIONS } from "@/lib/agent/artifacts";
 import {
   composeSentinelSystemPrompt,
+  checkSentinelVoice,
   isSentinelVoiceDoctrineEnabled,
 } from '@/lib/agent/voice-doctrine/sentinel';
 import {
@@ -1165,11 +1166,22 @@ export async function POST(request: Request) {
           const result = validateSynthesisOutput(bufferedOutput, {
             hasRetrieval: Boolean(categoryPlaybook || stagePlaybook),
           });
-          if (result.violations.length > 0 || bufferedOutput.length > 0) {
+          const sentinelVoiceViolations = agentName === 'Sentinel'
+            ? checkSentinelVoice(bufferedOutput, { referenceDate: new Date() }).violations.map((violation) => ({
+                type: violation.category === 'internal_consistency'
+                  ? 'sentinel-internal-consistency' as const
+                  : 'sentinel-voice-drift' as const,
+                detail: `${violation.phrase}${violation.match ? ` · ${violation.match}` : ''}`,
+              }))
+            : [];
+          const violations = [...result.violations, ...sentinelVoiceViolations];
+          if (violations.length > 0 || bufferedOutput.length > 0) {
             recordViolations({
               route: '/api/chat/agent',
               surface,
-              violations: result.violations,
+              tenantId: activeClient?.key ?? undefined,
+              userId: tenancy?.userId ?? null,
+              violations,
               responseLength: bufferedOutput.length,
             });
           }
