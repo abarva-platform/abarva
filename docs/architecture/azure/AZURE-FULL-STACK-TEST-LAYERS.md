@@ -28,7 +28,7 @@ Current state: the lab has real Azure services live through AZLAB25: Container A
 | L4 Multi-tenant isolation | Tenant A cannot read tenant B via API, RLS, broker, or UI. | `.github/workflows/sec-p0-post-deploy.yml`, `tests/security/sec-p0-cross-tenant-probes.sh`, `tests/e2e/primary-surfaces-smoke.spec.ts`; AZLAB28 adds `azure-lab` workflow target | Load Azure-host session secrets and run SEC-P0 against Azure FQDN; add broker response tenant-key assertion. | Partial |
 | L5 Data integrity | Migrations and seeds replay to a fresh DB; drift is visible; backup/restore works. | `.github/workflows/migration-drift-*.yml`, `.github/workflows/azure-l5-reset-replay.yml`, `.github/workflows/azure-l5-data-parity.yml`, `src/scripts/bootstrap-azure-postgres-compat.ts`, `src/scripts/copy-tenant-context-to-azure.ts`, `src/scripts/verify-azure-postgres-schema.ts`, `src/scripts/verify-azure-tenant-data-parity.ts` | Run the data-parity gate live after copy/restore and add weekly PITR restore drill. | Partial |
 | L6 Functional E2E | Each tenant can sign in, navigate Home/Intelligence/Moves/Source/Tower, complete one workflow, and sign out. | `tests/e2e/primary-surfaces-smoke.spec.ts`, `tests/e2e/primary-surfaces-tenant-matrix.spec.ts`, `.github/workflows/azure-l6-primary-surfaces.yml` | Run Azure-host live matrix, then add workflow-level specs: Origination, Move gate, Source evidence ledger, Tower decision pack, screenshot baselines. | Partial |
-| L7 Agent quality | Sentinel, Atlas, Nexus, Steward stay grounded, in-voice, internally consistent, and safe under adversarial prompts. | `docs/agent-quality/SENTINEL-CONSISTENCY-GUARD-EXPANSION.md`, existing Sentinel voice tests, audit question batteries in docs | Golden corpus and adversarial corpus per agent, weekly drift watchdog, guard telemetry wired to C5 dashboard. | Design |
+| L7 Agent quality | Sentinel, Atlas, Nexus, Source, and Steward stay grounded, in-voice, internally consistent, and safe under adversarial prompts. | `docs/agent-quality/SENTINEL-CONSISTENCY-GUARD-EXPANSION.md`, existing Sentinel voice tests, `tests/agent-quality/golden/*.jsonl`, `npm run qa:agent-quality:corpus`, `.github/workflows/agent-quality-corpus.yml`; AZLAB37 | Live answer runner/scorer, weekly drift watchdog, guard telemetry wired to C5 dashboard. | Partial |
 | L8 Performance / load | Postgres pool, Container Apps autoscale, Search retrieval, and agent turns stay under CXO latency targets. | Container Apps runtime live; App Insights live; `scripts/load/azure-primary-surfaces.mjs`; `.github/workflows/azure-l8-primary-surface-load.yml`; AZLAB35 | Authenticated Azure run with `AZURE_LAB_L8_COOKIE`, cold-start test, agent latency budget trace, Postgres pool pressure scenario. | Partial |
 | L9 Resilience / DR | The app degrades gracefully when Postgres, Service Bus, or LLM provider fails. | A2b worker DLQ behavior is designed; PITR available through managed Postgres configuration | Chaos drill scripts, Service Bus malformed-message DLQ test, LLM 529 fallback simulation, monthly restore drill. | Gap |
 | L10 Compliance / audit trail | Sensitive-upload, gate approval, and admin-action evidence is append-only and exportable. | B5c `sensitive_upload_audit` migration/data wiring; `/admin/quarantine`; Purview stub design; `src/lib/security/__tests__/quarantine-audit-supabase.test.ts`; AZLAB34 | Live append-only SQL assertion, Purview label persistence test, monthly evidence-pack export. | Partial |
@@ -160,13 +160,15 @@ These are synthetic context chunks, not customer data.
 
 | Check | Artifact | Pass condition |
 |---|---|---|
-| Golden corpus | New `tests/agent-quality/golden/*.jsonl` | ~50 questions per agent with expected answer shape, not exact text. |
-| Adversarial corpus | New `tests/agent-quality/adversarial/*.jsonl` | Refuses or grounds fallback on unknowable items such as Slack URLs, board meetings, or private HR facts. |
+| Golden corpus | `tests/agent-quality/golden/*.jsonl` | 50 initial prompt contracts across Sentinel, Atlas, Nexus, Source, and Steward with expected answer shape, not exact text. |
+| Adversarial corpus | Included in `tests/agent-quality/golden/*.jsonl` by `category=adversarial` | Refuses or grounds fallback on unknowable items such as Slack URLs, board meetings, or private HR facts. |
 | Voice doctrine | Existing Sentinel voice tests and `validateSentinelVoice` | No banned phrases; contains consultant-style reasoning and confidence calibration. |
 | Consistency guards | `docs/agent-quality/SENTINEL-CONSISTENCY-GUARD-EXPANSION.md` | G1/G2/G6 implemented first; guard telemetry visible. |
 | Continuity | New multi-turn eval | The agent can repeat prior KPI pressures and reconcile Q11/Q14 without contradiction. |
 
 **Telemetry target.** Track caught-violation rate and false-positive rate per guard. Disable any guard above 5% false-positive rate.
+
+**Current state.** AZLAB37 wires the deterministic corpus contract and validation workflow. The corpus has 50 cases today (10 per agent) spanning tenant grounding, strategic business, AI programs, sourcing/vendor, move origination, portfolio risk, data readiness, compliance risk, adversarial prompts, and continuity. The next L7 step is a live runner that executes the corpus against staging/prod agents and scores generated answers.
 
 ## L8 - Performance / Load
 
@@ -245,7 +247,7 @@ These are synthetic context chunks, not customer data.
 | Priority | Work item | Why |
 |---:|---|---|
 | 1 | Implement L6 workflow specs: Move origination, Source event/evidence, Tower decision pack. | Blocks pilot credibility more than another static page smoke. |
-| 2 | Implement agent golden/adversarial corpus harness. | Makes "super-smart consultant" measurable. |
+| 2 | Implement live agent answer runner/scorer over the L7 corpus. | Moves from corpus completeness to measurable answer quality. |
 | 3 | Implement G1/G2/G6 Sentinel consistency guards. | Highest-value quality lift from the guard expansion design. |
 | 4 | Run the L8 primary-surface load smoke against Azure with an authenticated cookie, then add cold-start and agent-turn scenarios. | Establishes first p95/cold-start baseline before real pilot traffic. |
 | 5 | Add live L10 SQL immutability attempts plus evidence-pack export for sensitive-upload, gate approval, and admin actions. | Moves compliance from migration-contract confidence to auditor-ready proof and export. |
