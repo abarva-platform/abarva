@@ -1,0 +1,156 @@
+name: Azure L1 Bicep what-if
+
+on:
+  workflow_dispatch:
+    inputs:
+      module:
+        description: "Module to validate"
+        required: true
+        default: "all"
+        type: choice
+        options:
+          - all
+          - foundation
+          - postgres
+          - registry-cost
+          - event-ingestion
+          - search
+          - app-runtime
+          - graph
+      build_only:
+        description: "Only run az bicep build; skip live what-if"
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  bicep-whatif:
+    name: Build and what-if Azure Bicep
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Azure login
+        if: ${{ inputs.build_only == false }}
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_LAB_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_LAB_TENANT_ID }}
+          subscription-id: 701a8554-a166-46e9-bf13-743bc50e3b20
+
+      - name: Build selected Bicep modules
+        run: |
+          set -euo pipefail
+
+          selected="${{ inputs.module }}"
+          declare -A templates=(
+            [foundation]="infra/azure/foundation.bicep"
+            [postgres]="infra/azure/postgres-foundation.bicep"
+            [registry-cost]="infra/azure/registry-cost-foundation.bicep"
+            [event-ingestion]="infra/azure/event-ingestion-foundation.bicep"
+            [search]="infra/azure/search-foundation.bicep"
+            [app-runtime]="infra/azure/app-runtime-foundation.bicep"
+            [graph]="infra/azure/graph-foundation.bicep"
+          )
+
+          modules=("$selected")
+          if [ "$selected" = "all" ]; then
+            modules=(foundation postgres registry-cost event-ingestion search app-runtime graph)
+          fi
+
+          mkdir -p azure-l1-bicep-build
+          for module in "${modules[@]}"; do
+            template="${templates[$module]}"
+            echo "::group::az bicep build $module"
+            az bicep build \
+              --file "$template" \
+              --outfile "azure-l1-bicep-build/${module}.json"
+            echo "::endgroup::"
+          done
+
+      - name: Run subscription what-if
+        if: ${{ inputs.build_only == false }}
+        env:
+          POSTGRES_ADMINISTRATOR_LOGIN_PASSWORD: ${{ secrets.AZURE_POSTGRES_ADMINISTRATOR_LOGIN_PASSWORD }}
+          NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: ${{ secrets.AZURE_LAB_NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY }}
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.AZURE_LAB_NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.AZURE_LAB_NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          PINECONE_INDEX: ${{ secrets.AZURE_LAB_PINECONE_INDEX }}
+          NEXUS_COMPOSER_MODEL: ${{ secrets.AZURE_LAB_NEXUS_COMPOSER_MODEL }}
+        run: |
+          set -euo pipefail
+
+          selected="${{ inputs.module }}"
+          declare -A templates=(
+            [foundation]="infra/azure/foundation.bicep"
+            [postgres]="infra/azure/postgres-foundation.bicep"
+            [registry-cost]="infra/azure/registry-cost-foundation.bicep"
+            [event-ingestion]="infra/azure/event-ingestion-foundation.bicep"
+            [search]="infra/azure/search-foundation.bicep"
+            [app-runtime]="infra/azure/app-runtime-foundation.bicep"
+            [graph]="infra/azure/graph-foundation.bicep"
+          )
+          declare -A params=(
+            [foundation]="infra/azure/parameters/foundation.lab.bicepparam"
+            [postgres]="infra/azure/parameters/postgres.lab.bicepparam"
+            [registry-cost]="infra/azure/parameters/registry-cost.lab.bicepparam"
+            [event-ingestion]="infra/azure/parameters/event-ingestion.lab.bicepparam"
+            [search]="infra/azure/parameters/search.lab.bicepparam"
+            [app-runtime]="infra/azure/parameters/app-runtime.lab.bicepparam"
+            [graph]="infra/azure/parameters/graph-foundation.lab.bicepparam"
+          )
+          declare -A locations=(
+            [foundation]="eastus"
+            [postgres]="eastus2"
+            [registry-cost]="eastus"
+            [event-ingestion]="eastus"
+            [search]="eastus"
+            [app-runtime]="eastus"
+            [graph]="eastus"
+          )
+
+          modules=("$selected")
+          if [ "$selected" = "all" ]; then
+            modules=(foundation postgres registry-cost event-ingestion search app-runtime graph)
+          fi
+
+          mkdir -p azure-l1-whatif
+          for module in "${modules[@]}"; do
+            if [ "$module" = "postgres" ] && [ -z "${POSTGRES_ADMINISTRATOR_LOGIN_PASSWORD:-}" ]; then
+              echo "AZURE_POSTGRES_ADMINISTRATOR_LOGIN_PASSWORD is required for postgres what-if." >&2
+              exit 2
+            fi
+
+            echo "::group::az deployment sub what-if $module"
+            az deployment sub what-if \
+              --name "l1-${module}-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}" \
+              --location "${locations[$module]}" \
+              --template-file "${templates[$module]}" \
+              --parameters "${params[$module]}" \
+              --no-pretty-print \
+              --output json | tee "azure-l1-whatif/${module}.json"
+            echo "::endgroup::"
+          done
+
+      - name: Upload Bicep build artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: azure-l1-bicep-build
+          path: azure-l1-bicep-build/
+          if-no-files-found: ignore
+
+      - name: Upload what-if reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: azure-l1-bicep-whatif
+          path: azure-l1-whatif/
+          if-no-files-found: ignore

@@ -22,7 +22,7 @@ Current state: the lab has real Azure services live through AZLAB25: Container A
 
 | Layer | What it proves | Live artifacts today | Missing gate | Status |
 |---|---|---|---|---|
-| L1 Infrastructure / IaC | The three-lane topology deploys cleanly to a fresh subscription/RG. Expected resources exist, no orphans. | `infra/azure/**`, `scripts/azure/verify-resource-parity.mjs`, `.github/workflows/azure-l1-resource-parity.yml`, `docs/architecture/azure/AZLAB*.md`, `docs/architecture/azure/CURRENT-STATE.md` | CI job for `bicep what-if` against ephemeral RG; run resource parity through GitHub OIDC. | Partial |
+| L1 Infrastructure / IaC | The three-lane topology deploys cleanly to a fresh subscription/RG. Expected resources exist, no orphans. | `infra/azure/**`, `scripts/azure/verify-resource-parity.mjs`, `.github/workflows/azure-l1-resource-parity.yml`, `.github/workflows/azure-l1-bicep-whatif.yml`, `docs/architecture/azure/AZLAB*.md`, `docs/architecture/azure/CURRENT-STATE.md` | Run parity/what-if through GitHub OIDC, add expected-change parsing, then add ephemeral RG deploy/teardown. | Partial |
 | L2 Connectivity / private endpoint reachability | Container Apps can reach private Postgres, Blob, Service Bus, Key Vault, and Search through intended lanes; public clients cannot reach private data resources. | `/api/health` direct Postgres probe; AZLAB20, AZLAB22, AZLAB23, AZLAB25 live job evidence; AZLAB26 positive-path smoke across Postgres/Blob/Service Bus/Key Vault/Search | Add negative public-path test to prove private resources fail by network/firewall, not only auth. | Partial |
 | L3 Security: network + identity | Private data resources are not public; managed identities are least-privilege; secrets are Key Vault refs, not literals. | Key Vault env projection in AZLAB16; Defender baseline; ACR managed identity pull; `scripts/azure/audit-lab-security.mjs`; AZLAB27 live run: 67 pass, 9 attention, 0 fail | Add gitleaks workflow and rotation drill; close 9 advisory attention items before pilot strict mode. | Partial |
 | L4 Multi-tenant isolation | Tenant A cannot read tenant B via API, RLS, broker, or UI. | `.github/workflows/sec-p0-post-deploy.yml`, `tests/security/sec-p0-cross-tenant-probes.sh`, `tests/e2e/primary-surfaces-smoke.spec.ts`; AZLAB28 adds `azure-lab` workflow target | Load Azure-host session secrets and run SEC-P0 against Azure FQDN; add broker response tenant-key assertion. | Partial |
@@ -43,11 +43,11 @@ Current state: the lab has real Azure services live through AZLAB25: Container A
 | Check | Artifact | Pass condition |
 |---|---|---|
 | Bicep compilation | `az bicep build` or `az deployment group what-if` over `infra/azure/**` | No template errors. |
-| Fresh-RG what-if | New workflow: `.github/workflows/azure-iac-whatif.yml` | What-if completes and reports only expected changes. |
+| Fresh-RG what-if | `.github/workflows/azure-l1-bicep-whatif.yml` | What-if completes for selected modules and uploads JSON reports. |
 | Ephemeral smoke RG | Per-PR or nightly job | Deploys minimal stack, runs smoke, tears down within 1 hour. |
 | Resource parity | New script: `scripts/azure/verify-resource-parity.mjs` | Expected resources present; no unexpected lab orphans. |
 
-**Current state.** The live lab proves the resource sequence manually through AZLAB9-AZLAB32. AZLAB33 adds the live-state resource parity script and manual workflow. The missing L1 piece is Bicep what-if against a clean/ephemeral resource group.
+**Current state.** The live lab proves the resource sequence manually through AZLAB9-AZLAB32. AZLAB33 adds the live-state resource parity script and manual workflow. AZLAB36 adds the Bicep build plus subscription-scope what-if workflow for the deployable foundation modules. The missing L1 piece is expected-change parsing and a clean/ephemeral resource-group deploy/teardown.
 
 ## L2 - Connectivity / Private Endpoint Reachability
 
@@ -254,7 +254,7 @@ These are synthetic context chunks, not customer data.
 
 Before calling any new Azure environment "stood up":
 
-1. L1 resource parity, what-if, and deploy complete against clean RG.
+1. L1 resource parity, Bicep what-if, and deploy complete against clean RG.
 2. L2 connectivity smoke returns pass for all private dependencies from Container Apps.
 3. L2 negative public-path checks fail with network/firewall failure.
 4. L3 private-resource audit shows no accidental public data-plane exposure.
