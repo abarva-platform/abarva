@@ -82,13 +82,13 @@ The verifier must return JSON with:
 
 ## Current Limit
 
-This proves the malformed-message DLQ path. It does not yet run a full mixed batch proving one poison message and one good message in the same queue cycle leaves the good message accepted. That is the next resilience hardening.
+This proves the malformed-message DLQ path. AZLAB50 extends the same script with `produce-mixed` / `verify-mixed` modes to prove a poison message and a good message in the same queue cycle produce the right split outcome: good upload accepted, poison isolated in DLQ.
 
 ## Next L9 Controls
 
 | Next control | Why |
 |---|---|
-| Mixed good+poison batch drill | Proves poison isolation does not delay good uploads. |
+| Mixed good+poison batch drill | Implemented in AZLAB50 through `produce-mixed` / `verify-mixed`. |
 | LLM provider overload simulation | Proves Sentinel/agent UI degrades gracefully on provider 529s. |
 | Postgres disruption runbook | Proves read-only/cached degradation path instead of raw 500s. |
 | PITR restore drill | Measures actual RTO/RPO, not aspirational targets. |
