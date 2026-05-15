@@ -41,6 +41,7 @@
     "db:azure:copy-tenant-context": "npx tsx src/scripts/copy-tenant-context-to-azure.ts",
     "azure:postgres:set-url-secrets": "node scripts/azure/set-postgres-database-url-secrets.mjs",
     "azure:postgres:set-source-url-secret": "node scripts/azure/set-source-database-url-secret.mjs",
+    "azure:connectivity:probe": "node scripts/azure/connectivity-probe.mjs",
     "audit:planes": "npx tsx src/scripts/audit/audit-tenant-data-planes.ts",
     "audit:financial": "npx tsx src/scripts/audit/audit-financial-kpis.ts",
     "audit:sanity": "npx tsx src/scripts/audit/audit-numbers-sanity.ts",
