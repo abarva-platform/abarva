@@ -27,7 +27,7 @@ Current state: the lab has real Azure services live through AZLAB25: Container A
 | L3 Security: network + identity | Private data resources are not public; managed identities are least-privilege; secrets are Key Vault refs, not literals. | Key Vault env projection in AZLAB16; Defender baseline; ACR managed identity pull; `scripts/azure/audit-lab-security.mjs`; AZLAB27 live run: 67 pass, 9 attention, 0 fail | Add gitleaks workflow and rotation drill; close 9 advisory attention items before pilot strict mode. | Partial |
 | L4 Multi-tenant isolation | Tenant A cannot read tenant B via API, RLS, broker, or UI. | `.github/workflows/sec-p0-post-deploy.yml`, `tests/security/sec-p0-cross-tenant-probes.sh`, `tests/e2e/primary-surfaces-smoke.spec.ts`; AZLAB28 adds `azure-lab` workflow target | Load Azure-host session secrets and run SEC-P0 against Azure FQDN; add broker response tenant-key assertion. | Partial |
 | L5 Data integrity | Migrations and seeds replay to a fresh DB; drift is visible; backup/restore works. | `.github/workflows/migration-drift-*.yml`, `.github/workflows/azure-l5-reset-replay.yml`, `src/scripts/bootstrap-azure-postgres-compat.ts`, `src/scripts/copy-tenant-context-to-azure.ts`, `src/scripts/verify-azure-postgres-schema.ts` | Add seed/data-copy replay with expected row-count assertions and weekly PITR restore drill. | Partial |
-| L6 Functional E2E | Each tenant can sign in, navigate Home/Intelligence/Moves/Source/Tower, complete one workflow, and sign out. | `tests/e2e/primary-surfaces-smoke.spec.ts` | Add workflow-level specs: Origination, Move gate, Source evidence ledger, Tower decision pack, screenshot baselines. | Partial |
+| L6 Functional E2E | Each tenant can sign in, navigate Home/Intelligence/Moves/Source/Tower, complete one workflow, and sign out. | `tests/e2e/primary-surfaces-smoke.spec.ts`, `tests/e2e/primary-surfaces-tenant-matrix.spec.ts`, `.github/workflows/azure-l6-primary-surfaces.yml` | Run Azure-host live matrix, then add workflow-level specs: Origination, Move gate, Source evidence ledger, Tower decision pack, screenshot baselines. | Partial |
 | L7 Agent quality | Sentinel, Atlas, Nexus, Steward stay grounded, in-voice, internally consistent, and safe under adversarial prompts. | `docs/agent-quality/SENTINEL-CONSISTENCY-GUARD-EXPANSION.md`, existing Sentinel voice tests, audit question batteries in docs | Golden corpus and adversarial corpus per agent, weekly drift watchdog, guard telemetry wired to C5 dashboard. | Design |
 | L8 Performance / load | Postgres pool, Container Apps autoscale, Search retrieval, and agent turns stay under CXO latency targets. | Container Apps runtime live; App Insights live | k6/Artillery scenarios, cold-start test, agent latency budget trace, p95 target gates. | Gap |
 | L9 Resilience / DR | The app degrades gracefully when Postgres, Service Bus, or LLM provider fails. | A2b worker DLQ behavior is designed; PITR available through managed Postgres configuration | Chaos drill scripts, Service Bus malformed-message DLQ test, LLM 529 fallback simulation, monthly restore drill. | Gap |
@@ -142,11 +142,11 @@ These are synthetic context chunks, not customer data.
 
 | Surface | Existing check | Missing workflow check |
 |---|---|---|
-| Home | Tenant identity and readiness modules in `primary-surfaces-smoke.spec.ts` | Setup-panel click coverage and action queue routing. |
-| Intelligence | Brief page renders | Ask Sentinel tenant-grounded question, verify citation/evidence, navigate Enterprise Context tabs. |
-| Moves | Page renders | Originate new Move, fill required fields, promote to P1. |
-| Source | Page renders | Create sourcing event, attach/evaluate evidence, verify side panel fills from chat. |
-| Tower | Page renders | Generate/open decision pack, traverse value/risk/renewal/adoption/evidence canvases. |
+| Home | Tenant identity and readiness modules in `primary-surfaces-smoke.spec.ts`; tenant matrix in `azure-l6-primary-surfaces.yml` | Setup-panel click coverage and action queue routing. |
+| Intelligence | Brief page renders per tenant | Ask Sentinel tenant-grounded question, verify citation/evidence, navigate Enterprise Context tabs. |
+| Moves | Page renders per tenant | Originate new Move, fill required fields, promote to P1. |
+| Source | Page renders per tenant | Create sourcing event, attach/evaluate evidence, verify side panel fills from chat. |
+| Tower | Page renders per tenant | Generate/open decision pack, traverse value/risk/renewal/adoption/evidence canvases. |
 | Auth | Sign-out check exists | Extend to all rostered personas. |
 
 **Visual gate.** Add screenshot-diff baselines for the locked AbarVa design system: cream background, Georgia headers, DM Sans body, black/ghost CTAs, Snowflake-density subnav, no truncated chat bubbles.
