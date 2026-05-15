@@ -26,7 +26,7 @@ The current design keeps the app runtime in `eastus` and the first managed Postg
 | Event ingestion | Service Bus, Event Grid, Blob containers | `sb-abarva-lab-eastus`, `q-context-ingestion-events`, `q-agent-work-items`, `context-drops`, `context-processed`, `egsub-context-drop-created` | Creates the Day-2 backbone for incremental context-layer refresh. |
 | Context ingestion worker | Container Apps Job | `job-a2b-ingest-lab-eus` | Deployable A2b worker that receives Service Bus events, normalizes raw BlobCreated events when needed, downloads Blob payloads, runs the sensitive-upload guard, writes audit rows, and settles messages. Event Grid-only smoke execution `job-a2b-ingest-lab-eus-cv1q617` succeeded on 2026-05-15. |
 | Ingestion E2E smoke harness | Container Apps Jobs | `job-a2b-smoke-send-eus`, `job-a2b-smoke-verify-eus` | Synthetic producer/verifier jobs for the A2b lane. Passing canonical run `azlab22-20260515133350` and Event Grid-only run `azlab23-20260515140157` verified safe upload = `allow` and sensitive fake PHI/PII sample = `quarantine` in Azure Postgres. |
-| Retrieval | Azure AI Search | `srch-abarva-context-lab-eastus` | Azure-native retrieval service for tenant context, evidence, source/vendor artifacts, industry corpus, and signals. |
+| Retrieval | Azure AI Search | `srch-abarva-context-lab-eastus`; indexes `tenant-context-v1`, `evidence-ledger-v1`, `source-vendor-v1`, `industry-corpus-v1`, `signals-v1` | Azure-native retrieval service for tenant context, evidence, source/vendor artifacts, industry corpus, and signals. Index contracts are live; backfill/query adapter still pending. |
 | Azure-native graph | Cosmos DB for Apache Gremlin | `cos-abarva-graph-lab-001`, `abarva-context-graph`, `tenant-context` | Operational relationship graph foundation for tenant context; partitioned by `/tenantKey` and reachable through private endpoint/DNS. |
 | Graph compatibility | Neo4j env compatibility path | Current `NEO4J_*` settings projected from Key Vault, but health currently reports `neo4j=false` | Current code has a Neo4j driver, but the lab should not treat Neo4j as the strategic Azure graph provider. |
 | Database lane | Azure Database for PostgreSQL Flexible Server, DB VNet, VNet peering | `pg-abarva-context-lab-001`, `vnet-abarva-database-lab-eastus2` | Azure-native system-of-record candidate for control, context, and audit stores. Current `abarva_control` verifier count: 149 migrations, 234 public tables, 3 clients, 48 engagements, 6,567 context chunks, 1,313 graph nodes, 1,568 graph edges, 23 Source events. |
@@ -40,7 +40,7 @@ The current design keeps the app runtime in `eastus` and the first managed Postg
 |---:|---|---|---|
 | 1 | Authenticated Azure app smoke | Container Apps + Clerk + Azure Postgres | Run sign-in, tenant home, Intelligence, Source, Moves, Tower, and SEC-P0 isolation probes against the Azure FQDN. |
 | 2 | Data-access adapter migration | App API/data layer | Move routes that still depend on Supabase REST behind an adapter that can target Azure Postgres. |
-| 3 | Search index contracts | Azure AI Search indexes | Create indexes after embedding dimensions/provider and ingestion worker contract are set. |
+| 3 | Search backfill + query adapter | Azure AI Search indexes | Index contracts are live. Next proof is synthetic context backfill and AgentContextBroker query adapter. |
 | 4 | Model lane | Azure AI Foundry / Azure OpenAI | Governed enterprise model endpoint, including Claude through Azure-native procurement where available. |
 | 5 | Graph-provider code boundary | App broker + Cosmos Gremlin adapter | Replace direct Neo4j reads with a provider boundary and project tenant edges from Postgres to Cosmos Gremlin. |
 | 6 | Enterprise ingress | Front Door + WAF | Public Azure entry with TLS, WAF, bot/rate controls, and customer-ready routing. |
@@ -84,7 +84,7 @@ Before scale-up, measure and record:
 |---|---|---|
 | Authenticated route-level Azure smoke still needed | High | Core setup/context tables are copied and direct app-to-Azure-Postgres health is green; next proof is browser sign-in plus tenant surface parity and SEC-P0 probes against the Azure FQDN. |
 | Supabase REST paths still exist | High | Add a data-access adapter boundary so routes can target Supabase or Azure Postgres without rewriting product surfaces. |
-| No Azure AI Search indexes yet | High | Create indexes after embedding/model contract is finalized. |
+| Azure AI Search indexes are empty | High | AZLAB24 created contracts. Next step is synthetic tenant-context backfill and broker retrieval adapter. |
 | No graph-provider app adapter yet | Medium | Add a broker-level graph provider interface and seed Cosmos Gremlin with synthetic tenant context. |
 | Broker/index path still audit-only | Medium | AZLAB23 closes raw BlobCreated normalization. Next step is enabling broker rebuild/chunk/index work behind the `INGESTION_PIPELINE_MODE` boundary once the data-access adapter is ready. |
 | No Front Door/WAF | Medium | Add when real Azure-hosted app needs enterprise ingress. |

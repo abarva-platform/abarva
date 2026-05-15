@@ -1,6 +1,6 @@
 # AbarVa Azure Lab Sequencing Roadmap
 
-Status: active roadmap as of 2026-05-14
+Status: active roadmap as of 2026-05-15
 
 ## Priority Order
 
@@ -9,7 +9,7 @@ Status: active roadmap as of 2026-05-14
 | 1 | Azure Container Registry | Foundational for real Container Apps images. | RBAC-only, admin disabled; private endpoint later. |
 | 2 | Cost Management budgets + alerts | Keeps founder-lab burn visible before more paid services land. | Monthly budget with actual/forecast thresholds. |
 | 3 | Service Bus + Event Grid | Unblocks event-driven context refresh without Data Factory complexity. | Live in AZLAB12. Next: ingestion worker. |
-| 4 | Azure AI Search | Core retrieval/index layer for context and evidence. | Service live in AZLAB13; index contracts next. |
+| 4 | Azure AI Search | Core retrieval/index layer for context and evidence. | Service live in AZLAB13; index contracts live in AZLAB24; backfill/query adapter next. |
 | 5 | Key Vault env projection | Required before the real AbarVa image can pass runtime smoke in Azure. | Container Apps secret references through managed identity; no credentials baked into image or IaC. |
 | 6 | Azure-native graph provider | Needed before the context layer is fully Azure-native. | Cosmos DB for Apache Gremlin deployed in AZLAB17; next is app provider boundary and synthetic graph seed. |
 | 7 | Front Door + WAF | Required when Azure hosts a real public app endpoint. | TLS edge, WAF, rate/bot controls. |
