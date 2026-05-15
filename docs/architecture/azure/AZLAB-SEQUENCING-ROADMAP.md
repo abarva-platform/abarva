@@ -6,7 +6,7 @@ Status: active roadmap as of 2026-05-15
 
 | Order | Service | Why now | Target posture |
 |---:|---|---|---|
-| 1 | Full-stack test gates | Turns the lab from "services exist" into "deployment/pilot readiness is provable." | L1-L11 gate model in `AZURE-FULL-STACK-TEST-LAYERS.md`; first implementation slices are L2 connectivity, L3 security audit, L4 isolation probes, L5 data replay, L6 workflow E2E. |
+| 1 | Full-stack test gates | Turns the lab from "services exist" into "deployment/pilot readiness is provable." | L1-L11 gate model in `AZURE-FULL-STACK-TEST-LAYERS.md`; L2 connectivity and L3 advisory security audit are live. Next slices are L4 isolation probes, L5 data replay, and L6 workflow E2E. |
 | 2 | Azure Container Registry | Foundational for real Container Apps images. | RBAC-only, admin disabled; private endpoint later. |
 | 3 | Cost Management budgets + alerts | Keeps founder-lab burn visible before more paid services land. | Monthly budget with actual/forecast thresholds. |
 | 4 | Service Bus + Event Grid | Unblocks event-driven context refresh without Data Factory complexity. | Live in AZLAB12. Next: ingestion worker. |
@@ -40,7 +40,7 @@ The first real AbarVa web image is now in ACR:
 
 `acrabarvalab001.azurecr.io/abarva/web:lab-ebe449ae-r3`
 
-The next runtime step is Container Apps deployment with Key Vault-backed environment wiring, not another placeholder image.
+The current runtime step has moved past placeholder images: the real web image runs in Container Apps with Key Vault-backed environment wiring. The next runtime proof is authenticated surface parity plus SEC-P0 isolation probes against the Azure FQDN.
 
 ## Client-VPC Narrative
 

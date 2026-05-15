@@ -27,6 +27,7 @@ The current design keeps the app runtime in `eastus` and the first managed Postg
 | Context ingestion worker | Container Apps Job | `job-a2b-ingest-lab-eus` | Deployable A2b worker that receives Service Bus events, normalizes raw BlobCreated events when needed, downloads Blob payloads, runs the sensitive-upload guard, writes audit rows, and settles messages. Event Grid-only smoke execution `job-a2b-ingest-lab-eus-cv1q617` succeeded on 2026-05-15. |
 | Ingestion E2E smoke harness | Container Apps Jobs | `job-a2b-smoke-send-eus`, `job-a2b-smoke-verify-eus` | Synthetic producer/verifier jobs for the A2b lane. Passing canonical run `azlab22-20260515133350` and Event Grid-only run `azlab23-20260515140157` verified safe upload = `allow` and sensitive fake PHI/PII sample = `quarantine` in Azure Postgres. |
 | Connectivity smoke | Container Apps Job + guarded health route | `job-azure-connectivity-smoke-eus`, `/api/health/azure-connectivity` | L2 positive-path smoke for Postgres, Blob, Service Bus, Key Vault, and Azure AI Search. AZLAB26 execution `job-azure-connectivity-smoke-eus-flqccn6` passed on 2026-05-15; `tenant-context-v1` count observed: 6,567. |
+| Security audit | Azure CLI script | `npm run azure:security:audit`, `scripts/azure/audit-lab-security.mjs` | L3 advisory audit for network posture, local auth, managed-identity role scope, and Container Apps secret projection. AZLAB27 live run returned 67 pass, 9 attention, 0 fail on 2026-05-15. |
 | Retrieval | Azure AI Search | `srch-abarva-context-lab-eastus`; indexes `tenant-context-v1`, `evidence-ledger-v1`, `source-vendor-v1`, `industry-corpus-v1`, `signals-v1` | Azure-native retrieval service for tenant context, evidence, source/vendor artifacts, industry corpus, and signals. `tenant-context-v1` now holds 6,567 synthetic context chunks with canonical tenant filters; remaining indexes and broker query adapter are pending. |
 | Azure-native graph | Cosmos DB for Apache Gremlin | `cos-abarva-graph-lab-001`, `abarva-context-graph`, `tenant-context` | Operational relationship graph foundation for tenant context; partitioned by `/tenantKey` and reachable through private endpoint/DNS. |
 | Graph compatibility | Neo4j env compatibility path | Current `NEO4J_*` settings projected from Key Vault, but health currently reports `neo4j=false` | Current code has a Neo4j driver, but the lab should not treat Neo4j as the strategic Azure graph provider. |
@@ -39,8 +40,8 @@ The current design keeps the app runtime in `eastus` and the first managed Postg
 
 | Order | Capability | Azure service | Intended state |
 |---:|---|---|---|
-| 1 | L3 security audit | Azure CLI + scripts + Defender | L2 positive connectivity is live. Next gate is network/RBAC/secretRef audit: no public data-plane exposure, no broad managed-identity assignments, no literal secrets in Container App env. |
-| 2 | Authenticated Azure app smoke | Container Apps + Clerk + Azure Postgres | Run sign-in, tenant home, Intelligence, Source, Moves, Tower, and SEC-P0 isolation probes against the Azure FQDN. |
+| 1 | L4 Azure isolation probes | Container Apps + Clerk + SEC-P0 workflow | Run sign-in, tenant home, Intelligence, Source, Moves, Tower, and SEC-P0 isolation probes against the Azure FQDN. |
+| 2 | L3 strict pilot hardening | Private Endpoint + RBAC-only posture | AZLAB27 is 0-fail advisory. Before customer private-data-lane pilot, close the 9 attention items: Service Bus/Search public access, Key Vault public manageability, local auth, and over-broad RBAC scopes. |
 | 3 | Data-access adapter migration | App API/data layer | Move routes that still depend on Supabase REST behind an adapter that can target Azure Postgres. |
 | 4 | Search query adapter | Azure AI Search + AgentContextBroker | Tenant-context backfill is live. Next proof is broker retrieval against `tenant-context-v1` and additional backfills for evidence/source/industry/signals. |
 | 5 | Model lane | Azure AI Foundry / Azure OpenAI | Governed enterprise model endpoint, including Claude through Azure-native procurement where available. |
@@ -85,6 +86,7 @@ Before scale-up, measure and record:
 | Gap | Severity | Close path |
 |---|---|---|
 | L1-L11 full-stack test gates not wired end-to-end | High | `AZURE-FULL-STACK-TEST-LAYERS.md` defines the deploy, pilot, and continuous gates. L2 positive-path connectivity smoke is now live in AZLAB26. Next PRs should add L3 Azure security audit, L4 Azure SEC-P0 workflow target, L5 reset-and-replay, and L6 workflow E2E. |
+| L3 security attention items remain advisory | High | AZLAB27 found 0 fail and 9 attention. Close or intentionally waive Service Bus/Search public access, local auth, Key Vault public manageability, Cosmos local auth, and account/namespace-scoped RBAC before a customer private-data-lane pilot. |
 | Authenticated route-level Azure smoke still needed | High | Core setup/context tables are copied and direct app-to-Azure-Postgres health is green; next proof is browser sign-in plus tenant surface parity and SEC-P0 probes against the Azure FQDN. |
 | Supabase REST paths still exist | High | Add a data-access adapter boundary so routes can target Supabase or Azure Postgres without rewriting product surfaces. |
 | Search broker adapter missing | High | AZLAB25 loaded `tenant-context-v1`; next step is AgentContextBroker query adapter and retrieval quality tests. |
@@ -92,4 +94,4 @@ Before scale-up, measure and record:
 | Broker/index path still audit-only | Medium | AZLAB23 closes raw BlobCreated normalization. Next step is enabling broker rebuild/chunk/index work behind the `INGESTION_PIPELINE_MODE` boundary once the data-access adapter is ready. |
 | No Front Door/WAF | Medium | Add when real Azure-hosted app needs enterprise ingress. |
 | No Azure Policy assignments beyond placeholders | Medium | Add guardrails before first customer VPC lane. |
-| Key Vault still public-network reachable for lab manageability | Medium | Close once a private operator path exists. |
+| Key Vault still public-network reachable for lab manageability | Medium | Close once a private operator path exists; tracked by AZLAB27. |

@@ -24,7 +24,7 @@ Current state: the lab has real Azure services live through AZLAB25: Container A
 |---|---|---|---|---|
 | L1 Infrastructure / IaC | The three-lane topology deploys cleanly to a fresh subscription/RG. Expected resources exist, no orphans. | `infra/azure/**`, `docs/architecture/azure/AZLAB*.md`, `docs/architecture/azure/CURRENT-STATE.md` | CI job for `bicep what-if` against ephemeral RG plus `az resource list` parity check. | Partial |
 | L2 Connectivity / private endpoint reachability | Container Apps can reach private Postgres, Blob, Service Bus, Key Vault, and Search through intended lanes; public clients cannot reach private data resources. | `/api/health` direct Postgres probe; AZLAB20, AZLAB22, AZLAB23, AZLAB25 live job evidence; AZLAB26 positive-path smoke across Postgres/Blob/Service Bus/Key Vault/Search | Add negative public-path test to prove private resources fail by network/firewall, not only auth. | Partial |
-| L3 Security: network + identity | Private data resources are not public; managed identities are least-privilege; secrets are Key Vault refs, not literals. | Key Vault env projection in AZLAB16; current state doc; Defender baseline; ACR managed identity pull | Role-assignment audit script, public-network audit, gitleaks workflow, Container App env literal scan, rotation drill. | Partial |
+| L3 Security: network + identity | Private data resources are not public; managed identities are least-privilege; secrets are Key Vault refs, not literals. | Key Vault env projection in AZLAB16; Defender baseline; ACR managed identity pull; `scripts/azure/audit-lab-security.mjs`; AZLAB27 live run: 67 pass, 9 attention, 0 fail | Add gitleaks workflow and rotation drill; close 9 advisory attention items before pilot strict mode. | Partial |
 | L4 Multi-tenant isolation | Tenant A cannot read tenant B via API, RLS, broker, or UI. | `.github/workflows/sec-p0-post-deploy.yml`, `tests/security/sec-p0-cross-tenant-probes.sh`, `tests/e2e/primary-surfaces-smoke.spec.ts` | Wire SEC-P0 workflow to Azure FQDN, add SQL RLS tenant-role tests, add broker response tenant-key assertion. | Partial |
 | L5 Data integrity | Migrations and seeds replay to a fresh DB; drift is visible; backup/restore works. | `.github/workflows/migration-drift-*.yml`, `src/scripts/bootstrap-azure-postgres-compat.ts`, `src/scripts/copy-tenant-context-to-azure.ts`, `src/scripts/verify-azure-postgres-schema.ts` | Reset-and-replay CI against fresh Postgres, expected row-count assertions, weekly PITR restore drill. | Partial |
 | L6 Functional E2E | Each tenant can sign in, navigate Home/Intelligence/Moves/Source/Tower, complete one workflow, and sign out. | `tests/e2e/primary-surfaces-smoke.spec.ts` | Add workflow-level specs: Origination, Move gate, Source evidence ledger, Tower decision pack, screenshot baselines. | Partial |
@@ -85,13 +85,13 @@ Current state: the lab has real Azure services live through AZLAB25: Container A
 
 | Check | Artifact | Pass condition |
 |---|---|---|
-| Public access audit | New script: `scripts/azure/audit-private-resource-networking.mjs` | Postgres, Blob, Service Bus, Search, Cosmos private-data resources do not expose public data-plane access unless explicitly approved. |
-| Role assignment audit | New script: `scripts/azure/audit-managed-identity-rbac.mjs` | Container App MI has resource/container-level permissions, not subscription-wide Owner/Contributor. |
-| Secrets scan | `gitleaks` workflow + `az containerapp show` env audit | No repo secrets; Container Apps use `secretRef`/Key Vault refs, not literal API keys. |
+| Public access audit | `scripts/azure/audit-lab-security.mjs` | Postgres, Blob, Service Bus, Search, Cosmos private-data resources do not expose public data-plane access unless explicitly approved. |
+| Role assignment audit | `scripts/azure/audit-lab-security.mjs` | Container App MI has resource/container-level permissions, not subscription-wide Owner/Contributor. |
+| Secrets scan | `gitleaks` workflow + `scripts/azure/audit-lab-security.mjs` env audit | No repo secrets; Container Apps use `secretRef`/Key Vault refs, not literal API keys. |
 | Rotation drill | Monthly runbook | Rotate a test secret and confirm app picks it up after revision restart or configured TTL. |
 | Defender baseline | Defender for Cloud | Foundational CSPM enabled where cost-appropriate. |
 
-**Current state.** Key Vault projection is live, ACR pull is managed identity, and Defender baseline exists. The least-privilege and literal-env checks need scripts.
+**Current state.** AZLAB27 added the advisory L3 audit script and a live run returned 67 pass, 9 attention, 0 fail. The lab is clean of fail findings, but pilot strict mode requires closing or waiving the attention items: Service Bus/Search public network reachability, Service Bus/Search/Cosmos local auth, Key Vault public manageability, and Storage/Service Bus role scopes that are broader than final tenant-lane posture.
 
 ## L4 - Multi-Tenant Isolation
 
