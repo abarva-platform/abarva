@@ -16,12 +16,14 @@ This directory contains the Day-0 Azure foundation starter aligned to:
 - `registry-cost-foundation.bicep` - subscription-scoped ACR and Cost Management budget lane
 - `event-ingestion-foundation.bicep` - subscription-scoped Service Bus + Event Grid ingestion lane
 - `search-foundation.bicep` - subscription-scoped Azure AI Search retrieval lane
+- `app-runtime-foundation.bicep` - subscription-scoped real AbarVa Container App runtime lane
 - `control-plane.bicep` - control plane RG baseline
 - `private-dataplane.bicep` - tenant-isolated private dataplane baseline
 - `container-registry.bicep` - ACR and image push/pull RBAC helper
 - `service-bus.bicep` - Service Bus namespace, queues, and data-plane RBAC helper
 - `storage-event-ingestion.bicep` - storage containers and Event Grid subscription helper
 - `search-service.bicep` - Azure AI Search service helper
+- `app-runtime.bicep` - Container App helper for real AbarVa image
 - `postgres-regional-private.bicep` - regional private Postgres/VNet/DNS module
 - `scale-runtime.bicep` - Container Apps scale-test runtime lane
 - `storage-rbac.bicep` - cross-resource-group storage role assignment helper
@@ -35,6 +37,7 @@ This directory contains the Day-0 Azure foundation starter aligned to:
 - `parameters/registry-cost.lab.bicepparam` - current lab ACR and budget parameters
 - `parameters/event-ingestion.lab.bicepparam` - current lab event ingestion parameters
 - `parameters/search.lab.bicepparam` - current lab Azure AI Search parameters
+- `parameters/app-runtime.lab.bicepparam` - current lab real app runtime parameters
 
 ## Recommended Deployment Path
 
@@ -146,6 +149,22 @@ az deployment sub create \
   --parameters infra/azure/parameters/search.lab.bicepparam
 ```
 
+Then deploy the real-image Container App runtime shell:
+
+```bash
+az deployment sub what-if \
+  --name azfound-app-runtime-whatif \
+  --location eastus \
+  --template-file infra/azure/app-runtime-foundation.bicep \
+  --parameters infra/azure/parameters/app-runtime.lab.bicepparam
+
+az deployment sub create \
+  --name azfound-app-runtime-lab \
+  --location eastus \
+  --template-file infra/azure/app-runtime-foundation.bicep \
+  --parameters infra/azure/parameters/app-runtime.lab.bicepparam
+```
+
 ## Full Control Plane Deployment
 
 ```bash
@@ -171,11 +190,13 @@ az bicep build --file infra/azure/postgres-foundation.bicep
 az bicep build --file infra/azure/registry-cost-foundation.bicep
 az bicep build --file infra/azure/event-ingestion-foundation.bicep
 az bicep build --file infra/azure/search-foundation.bicep
+az bicep build --file infra/azure/app-runtime-foundation.bicep
 az bicep build --file infra/azure/main.bicep
 az bicep build --file infra/azure/container-registry.bicep
 az bicep build --file infra/azure/service-bus.bicep
 az bicep build --file infra/azure/storage-event-ingestion.bicep
 az bicep build --file infra/azure/search-service.bicep
+az bicep build --file infra/azure/app-runtime.bicep
 az bicep build --file infra/azure/control-plane.bicep
 az bicep build --file infra/azure/private-dataplane.bicep
 az bicep build --file infra/azure/postgres-regional-private.bicep
@@ -217,3 +238,4 @@ Current verified image:
 - Service Bus Standard is used for the lab ingestion backbone. Production/private-client lanes should use Premium + private endpoint if messages carry sensitive metadata or customer policy requires private broker access.
 - Event Grid messages point to blob paths and metadata; file contents are not placed on the event bus.
 - Azure AI Search is deployed with synthetic/no-client-data posture. Indexes should be created only after embedding dimensions, sensitivity fields, and ingestion contracts are approved.
+- The real-image Container App uses min replicas `0` until Key Vault-backed app secrets and health checks are wired.
