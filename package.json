@@ -39,6 +39,7 @@
     "db:verify:tenant-keys": "npx tsx scripts/verify-tenant-key-canonical.ts",
     "db:azure:bootstrap": "npx tsx src/scripts/bootstrap-azure-postgres-compat.ts",
     "db:azure:verify": "npx tsx src/scripts/verify-azure-postgres-schema.ts",
+    "db:azure:verify-data-parity": "npx tsx src/scripts/verify-azure-tenant-data-parity.ts",
     "db:azure:copy-tenant-context": "npx tsx src/scripts/copy-tenant-context-to-azure.ts",
     "azure:connectivity:smoke": "npx tsx src/scripts/azure-connectivity-smoke.ts",
     "azure:security:audit": "node scripts/azure/audit-lab-security.mjs",

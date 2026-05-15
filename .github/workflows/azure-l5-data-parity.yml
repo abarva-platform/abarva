@@ -1,0 +1,59 @@
+name: Azure L5 tenant data parity
+
+on:
+  workflow_dispatch:
+    inputs:
+      tenant:
+        description: "Optional tenant key: apex-retail, meridian-health, or first-capital."
+        required: false
+        default: ''
+      warn_only:
+        description: Report failures without failing the workflow.
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  tenant-data-parity:
+    name: Verify tenant context density
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      DATABASE_URL: ${{ secrets.AZURE_LAB_DATABASE_URL }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Verify Azure tenant data parity
+        run: |
+          set -euo pipefail
+
+          args=(--json)
+          if [ -n "${{ inputs.tenant }}" ]; then
+            args+=(--tenant "${{ inputs.tenant }}")
+          fi
+          if [ "${{ inputs.warn_only }}" = "true" ]; then
+            args+=(--warn-only)
+          fi
+
+          npm run db:azure:verify-data-parity -- "${args[@]}" | tee azure-tenant-data-parity.json
+
+      - name: Upload parity report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: azure-tenant-data-parity
+          path: azure-tenant-data-parity.json
+          if-no-files-found: ignore
