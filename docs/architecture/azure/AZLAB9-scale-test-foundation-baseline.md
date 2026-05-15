@@ -1,6 +1,6 @@
 # AbarVa Azure Lab Scale-Test Foundation Baseline
 
-Status: deployed to `abarva-lab-sub` on 2026-05-14  
+Status: deployed to `abarva-lab-sub` on 2026-05-14; database lane added 2026-05-14  
 Subscription: `701a8554-a166-46e9-bf13-743bc50e3b20`  
 Region: `eastus`  
 Data posture: synthetic/no-client-data only
@@ -26,6 +26,7 @@ It is intentionally not a toy environment. It validates the hard parts that ente
 | Shared security | Key Vault | `kv-abarva-lab-001` |
 | Private data plane | VNet, NSG, Storage, Private Endpoints, Private DNS | `vnet-abarva-private-dataplane-lab-eastus`, `stabarvaprivatedplab001`, `pe-kv-shared`, `pe-stabarvaprivatedplab001-blob` |
 | Runtime scale lane | Container Apps environment, Container App, Managed Identity | `cae-abarva-scale-lab-eastus`, `ca-abarva-scale-smoke-lab-eastus`, `id-abarva-scale-runtime-lab-eastus` |
+| Database lane | Azure Database for PostgreSQL Flexible Server, Database VNet, Private DNS, VNet peering | `pg-abarva-context-lab-001`, `vnet-abarva-database-lab-eastus2`, `privatelink.postgres.database.azure.com` |
 | Observability | Log Analytics, Application Insights, Action Group, Activity Log Alert | `log-abarva-observability-lab-eastus`, `appi-abarva-observability-lab-eastus`, `ag-abarva-observability-lab-eastus`, `ala-subscription-deployment-failures` |
 | Subscription guardrail | Defender pricing baseline | `Free` tier for App Services, Storage Accounts, Key Vaults, Virtual Machines |
 
@@ -39,12 +40,25 @@ The private data plane uses a dedicated VNet:
 | `snet-data` | `10.42.1.0/24` | Future private data services and integration workloads. |
 | `snet-private-endpoints` | `10.42.2.0/24` | Private endpoints for storage, Key Vault, and later Postgres/Search. |
 
+The Postgres lane uses a dedicated database VNet in `eastus2` because this subscription is currently offer-restricted for Azure Database for PostgreSQL Flexible Server in `eastus`.
+
+| Network | CIDR | Purpose |
+|---|---:|---|
+| `vnet-abarva-database-lab-eastus2` | `10.43.0.0/16` | Private database lane. |
+| `snet-postgres` | `10.43.1.0/24` | Delegated subnet for Azure Database for PostgreSQL Flexible Server. |
+
+The `eastus` private data-plane VNet and `eastus2` database VNet are peered both ways:
+
+- `peer-to-vnet-abarva-database-lab-eastus2`
+- `peer-to-vnet-abarva-private-dataplane-lab-eastus`
+
 Private DNS zones are linked to the VNet:
 
 - `privatelink.blob.core.windows.net`
 - `privatelink.vaultcore.azure.net`
+- `privatelink.postgres.database.azure.com`
 
-This means services inside the VNet can resolve private endpoints without public data-plane routing. Postgres private DNS is implemented in IaC and will be activated when the Postgres resource ID is supplied.
+This means services inside the VNet can resolve private endpoints without public data-plane routing. The Postgres private DNS zone is linked to both the database VNet and the peered private data-plane VNet.
 
 ## Security Posture
 
@@ -62,6 +76,10 @@ This means services inside the VNet can resolve private endpoints without public
 | Key Vault public network access | Enabled for founder-lab manageability. Production/private-client lane should disable this once a private operator path exists. |
 | Runtime identity | User-assigned managed identity. |
 | Runtime storage access | Managed identity granted Storage Blob Data Contributor on the private data-plane storage account. |
+| Postgres public network access | Disabled. |
+| Postgres network access | Delegated private subnet + private DNS only. |
+| Postgres diagnostics | `allLogs`, `audit`, and `AllMetrics` sent to Log Analytics. |
+| Postgres admin secret | Stored in Key Vault as `postgres-context-admin-login` and `postgres-context-admin-password`. |
 
 ## Scale-Test Runtime
 
@@ -92,7 +110,6 @@ These services are part of the target architecture but intentionally not deploye
 
 | Service | Why not live yet | Next decision |
 |---|---|---|
-| Azure Database for PostgreSQL Flexible Server | Needs final topology: control-plane DB, private data-plane metadata DB, or both. | Decide SKU, private DNS, backup, HA, and migration path from Supabase/Postgres. |
 | Azure AI Search | Needs corpus/index design and embedding provider decision. | Define indexes for tenant context, evidence manifests, source artifacts, and industry corpus. |
 | Azure OpenAI / Foundry | Needs model routing policy and approved region/model availability. | Define low/medium/high sensitivity model lanes. |
 | Azure Container Registry | Needed before running real AbarVa images. | Add private ACR with managed identity pulls. |
@@ -137,7 +154,7 @@ These services turn the foundation into a complete AbarVa Azure architecture.
 
 | Capability | Azure service | Intended AbarVa use |
 |---|---|---|
-| Application database | Azure Database for PostgreSQL Flexible Server | Azure equivalent of the current Postgres/Supabase data layer for tenants, programs, source events, audit, and context metadata. |
+| Application database | Azure Database for PostgreSQL Flexible Server | Azure equivalent of the current Postgres/Supabase data layer for tenants, programs, source events, audit, and context metadata. Live as `pg-abarva-context-lab-001`. |
 | Context/vector retrieval | Azure AI Search | Tenant context index, evidence index, industry corpus index, source/vendor index, and future real-time signal index. |
 | Governed model lane | Azure OpenAI / Azure AI Foundry | Enterprise-approved model endpoint for high-sensitivity clients and Microsoft-aligned customers. |
 | Private image supply chain | Azure Container Registry | Stores AbarVa app, boundary API, ingestion worker, and evaluation worker images. |
@@ -163,7 +180,7 @@ These services turn the foundation into a complete AbarVa Azure architecture.
 
 1. **Foundation**: current deployed baseline.
 2. **Image lane**: Azure Container Registry + real AbarVa container image.
-3. **Database lane**: private Postgres Flexible Server and migration harness from the current Postgres/Supabase shape.
+3. **Database lane**: private Postgres Flexible Server and migration harness from the current Postgres/Supabase shape. Live as of this baseline.
 4. **Context lane**: Azure AI Search indexes for tenant context, evidence, source, and industry corpus.
 5. **Model lane**: Azure OpenAI/Foundry plus routing controls alongside the existing provider strategy.
 6. **Ingress/API lane**: Front Door/WAF and API Management when the Azure-hosted app or private boundary APIs need external consumption.
@@ -186,13 +203,21 @@ az deployment sub create \
   --location eastus \
   --template-file infra/azure/foundation.bicep \
   --parameters infra/azure/parameters/foundation.lab.bicepparam
+
+export POSTGRES_ADMINISTRATOR_LOGIN_PASSWORD="<secure generated password>"
+
+az deployment sub create \
+  --name azfound-postgres-foundation-lab \
+  --location eastus2 \
+  --template-file infra/azure/postgres-foundation.bicep \
+  --parameters infra/azure/parameters/postgres.lab.bicepparam
 ```
 
 ## Immediate Next Steps
 
 1. Decide whether the real AbarVa runtime for scale tests runs on Azure Container Apps first, with Vercel retained for production/demo until parity is proven.
 2. Add private Azure Container Registry and image-pull identity.
-3. Add Postgres Flexible Server in private mode and decide the Supabase-to-Azure migration model.
+3. Define the Supabase/Postgres-to-Azure migration harness and schema cutover model.
 4. Add Azure AI Search and define context-layer index contracts.
 5. Add Azure OpenAI/Foundry and model-routing controls.
 6. Produce the end-to-end architecture baseline that maps every AbarVa module to front/middle/back/data/model/ops services.

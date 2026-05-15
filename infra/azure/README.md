@@ -12,14 +12,19 @@ This directory contains the Day-0 Azure foundation starter aligned to:
 ## Files
 - `main.bicep` - subscription-scoped orchestrator
 - `foundation.bicep` - subscription-scoped scale-test foundation that avoids VM/App Service quota
+- `postgres-foundation.bicep` - subscription-scoped private Postgres database lane
 - `control-plane.bicep` - control plane RG baseline
 - `private-dataplane.bicep` - tenant-isolated private dataplane baseline
+- `postgres-regional-private.bicep` - regional private Postgres/VNet/DNS module
 - `scale-runtime.bicep` - Container Apps scale-test runtime lane
 - `storage-rbac.bicep` - cross-resource-group storage role assignment helper
+- `vnet-peering.bicep` - cross-region VNet peering helper
+- `keyvault-postgres-secrets.bicep` - Key Vault secret writer for Postgres metadata
 - `observability.bicep` - monitoring workspace/app insights/alerts baseline
 - `shared-security.bicep` - key vault + policy/defender baseline
 - `parameters/lab.bicepparam` - lab parameterization
 - `parameters/foundation.lab.bicepparam` - current lab foundation parameters
+- `parameters/postgres.lab.bicepparam` - current lab Postgres parameters
 
 ## Recommended Deployment Path
 
@@ -51,6 +56,38 @@ az deployment sub create \
   --parameters infra/azure/parameters/foundation.lab.bicepparam
 ```
 
+Then deploy the private Postgres database lane. The lab uses `eastus2` for Postgres because this subscription is offer-restricted for Azure Database for PostgreSQL Flexible Server in `eastus`.
+
+Set the secure password at first deploy time; do not write it to disk:
+
+```bash
+export POSTGRES_ADMINISTRATOR_LOGIN_PASSWORD="<secure generated password>"
+
+az deployment sub what-if \
+  --name azfound-postgres-foundation-whatif \
+  --location eastus2 \
+  --template-file infra/azure/postgres-foundation.bicep \
+  --parameters infra/azure/parameters/postgres.lab.bicepparam
+
+az deployment sub create \
+  --name azfound-postgres-foundation-lab \
+  --location eastus2 \
+  --template-file infra/azure/postgres-foundation.bicep \
+  --parameters infra/azure/parameters/postgres.lab.bicepparam
+```
+
+For a redeploy, reuse the Key Vault secret instead of generating a new password:
+
+```bash
+export POSTGRES_ADMINISTRATOR_LOGIN_PASSWORD="$(
+  az keyvault secret show \
+    --vault-name kv-abarva-lab-001 \
+    --name postgres-context-admin-password \
+    --query value \
+    -o tsv
+)"
+```
+
 ## Full Control Plane Deployment
 
 ```bash
@@ -72,11 +109,15 @@ The full `main.bicep` path includes the older App Service / API Management contr
 
 ```bash
 az bicep build --file infra/azure/foundation.bicep
+az bicep build --file infra/azure/postgres-foundation.bicep
 az bicep build --file infra/azure/main.bicep
 az bicep build --file infra/azure/control-plane.bicep
 az bicep build --file infra/azure/private-dataplane.bicep
+az bicep build --file infra/azure/postgres-regional-private.bicep
 az bicep build --file infra/azure/scale-runtime.bicep
 az bicep build --file infra/azure/storage-rbac.bicep
+az bicep build --file infra/azure/vnet-peering.bicep
+az bicep build --file infra/azure/keyvault-postgres-secrets.bicep
 az bicep build --file infra/azure/observability.bicep
 az bicep build --file infra/azure/shared-security.bicep
 ```
@@ -90,3 +131,6 @@ az bicep build --file infra/azure/shared-security.bicep
 - Private data plane storage keeps public network access disabled.
 - Private data plane storage network bypass is `None`.
 - Key Vault currently keeps public network access enabled for founder-lab manageability, but has RBAC, purge protection, and a private endpoint. Production/private-client lanes should disable public data-plane access once a private operator path exists.
+- Postgres public network access is disabled.
+- Postgres is private DNS/VNet reachable from the database VNet and the peered private data-plane VNet.
+- Postgres administrator login/password metadata is stored in Key Vault secrets, not source.
