@@ -1,54 +1,142 @@
 // scripts/parallel-run-diff.ts
 //
-// Parallel-run diff harness. Hits the same read-only invariant endpoints
-// on two backends (BASE_URL_A, BASE_URL_B) and asserts that the canonical
-// per-tenant aggregates match. Output is a Markdown report at
-// `parallel-run-diff-results.md`. Exits 0 if all invariants match, 1 if
-// any drift is detected.
+// Parallel-run diff harness (Lane D — cutover decision tool).
 //
-// Run:
-//   BASE_URL_A=https://nexus-vert-kappa.vercel.app \
-//   BASE_URL_B=https://ca-abarva-web-lab-eastus.<region>.azurecontainerapps.io \
-//   PARALLEL_RUN_INVARIANT_TOKEN=<shared-secret> \
-//   npm run parallel-run:diff
+// Compares the CURRENT production path (left) against the AZURE LAB path
+// (right) and produces a founder-readable pass / warn / fail / preflight-
+// blocked report so a non-engineer can answer one question:
 //
-// Read-only. Never POSTs. Safe to run during a live parallel-run window.
+//   "Does Azure return the same tenant facts we trust in production?"
+//
+// It is designed to produce a USEFUL report even when some checks cannot
+// run — connectivity invariants always run with no auth; tenant-fact
+// invariants need a bearer token; authenticated-surface checks need a
+// session cookie. Missing credentials yield `preflight-blocked` rows, not
+// a hard abort.
+//
+// Usage:
+//   npx tsx scripts/parallel-run-diff.ts \
+//     --left-base-url  https://nexus-vert-kappa.vercel.app \
+//     --right-base-url https://ca-abarva-web-lab-eastus.<region>.azurecontainerapps.io \
+//     [--tenant apex-retail] [--tenant meridian-health] \
+//     [--invariant-token <shared-secret>] \
+//     [--auth-cookie '__session=...'] \
+//     [--auth-probe-path /intelligence] \
+//     [--json  parallel-run-diff-results.json] \
+//     [--markdown parallel-run-diff-results.md]
+//
+// Env fallbacks (a flag always wins over its env var):
+//   --left-base-url     <- BASE_URL_A
+//   --right-base-url    <- BASE_URL_B
+//   --invariant-token   <- PARALLEL_RUN_INVARIANT_TOKEN
+//   --auth-cookie       <- PARALLEL_RUN_AUTH_COOKIE
+//
+// Exit codes:
+//   0  no failing checks (warn / preflight-blocked are allowed)
+//   1  at least one failing check
+//   2  bad / missing arguments
+//
+// Read-only by construction. Never POSTs. Safe to run during a live demo.
 
 import { writeFileSync } from 'fs';
-import { join } from 'path';
+import { join, isAbsolute } from 'path';
 
 import {
-  buildInvariantReport,
-  type DiffReport,
+  buildParallelRunDiff,
+  type AuthProbe,
+  type BackendHealth,
+  type BackendProbe,
+  type InvariantLine,
   type InvariantPayload,
+  type ParallelRunDiff,
 } from '../src/lib/parallel-run/invariant-diff';
-
-interface FetchResult {
-  url: string;
-  ok: boolean;
-  status: number | null;
-  body: InvariantPayload | null;
-  error: string | null;
-}
 
 const HEALTH_PATH = '/api/health';
 const INVARIANTS_PATH = '/api/admin/parallel-run-invariants';
-const REPORT_PATH = join(process.cwd(), 'parallel-run-diff-results.md');
+const DEFAULT_AUTH_PROBE_PATH = '/intelligence';
 
-async function fetchJson<T>(url: string, token: string | null): Promise<{
+interface CliArgs {
+  leftBaseUrl: string;
+  rightBaseUrl: string;
+  leftLabel: string;
+  rightLabel: string;
+  tenants: string[] | null;
+  invariantToken: string | null;
+  authCookie: string | null;
+  authProbePath: string;
+  jsonPath: string;
+  markdownPath: string;
+}
+
+function parseArgs(argv: string[]): CliArgs | { error: string } {
+  const flags = new Map<string, string[]>();
+  for (let i = 0; i < argv.length; i += 1) {
+    const tok = argv[i];
+    if (!tok.startsWith('--')) continue;
+    const eq = tok.indexOf('=');
+    let key: string;
+    let val: string;
+    if (eq !== -1) {
+      key = tok.slice(2, eq);
+      val = tok.slice(eq + 1);
+    } else {
+      key = tok.slice(2);
+      val = argv[i + 1] && !argv[i + 1].startsWith('--') ? argv[(i += 1)] : '';
+    }
+    const list = flags.get(key) ?? [];
+    list.push(val);
+    flags.set(key, list);
+  }
+  const one = (k: string): string | null => {
+    const v = flags.get(k);
+    return v && v.length > 0 ? v[v.length - 1].trim() : null;
+  };
+
+  const leftBaseUrl = one('left-base-url') || process.env.BASE_URL_A?.trim() || '';
+  const rightBaseUrl = one('right-base-url') || process.env.BASE_URL_B?.trim() || '';
+  if (!leftBaseUrl || !rightBaseUrl) {
+    return {
+      error:
+        'both --left-base-url and --right-base-url are required (or BASE_URL_A / BASE_URL_B env vars)',
+    };
+  }
+
+  // --tenant may be repeated or comma-separated. null => all canonical tenants.
+  const tenantTokens = (flags.get('tenant') ?? []).flatMap((v) =>
+    v.split(',').map((s) => s.trim()).filter(Boolean),
+  );
+  const tenants = tenantTokens.length > 0 ? Array.from(new Set(tenantTokens)) : null;
+
+  const stripTrailingSlash = (u: string) => u.replace(/\/+$/, '');
+
+  return {
+    leftBaseUrl: stripTrailingSlash(leftBaseUrl),
+    rightBaseUrl: stripTrailingSlash(rightBaseUrl),
+    leftLabel: one('left-label') || 'prod',
+    rightLabel: one('right-label') || 'azure-lab',
+    tenants,
+    invariantToken:
+      one('invariant-token') || process.env.PARALLEL_RUN_INVARIANT_TOKEN?.trim() || null,
+    authCookie: one('auth-cookie') || process.env.PARALLEL_RUN_AUTH_COOKIE?.trim() || null,
+    authProbePath: one('auth-probe-path') || DEFAULT_AUTH_PROBE_PATH,
+    jsonPath: one('json') || 'parallel-run-diff-results.json',
+    markdownPath: one('markdown') || 'parallel-run-diff-results.md',
+  };
+}
+
+interface RawFetch<T> {
   ok: boolean;
   status: number | null;
   body: T | null;
   error: string | null;
-}> {
+}
+
+async function fetchJson<T>(
+  url: string,
+  headers: Record<string, string>,
+): Promise<RawFetch<T>> {
   try {
-    const res = await fetch(url, {
-      method: 'GET',
-      headers: token ? { Authorization: `Bearer ${token}` } : {},
-      // Don't follow Clerk redirect interstitials silently — surface them.
-      redirect: 'manual',
-    });
-    const status = res.status;
+    const res = await fetch(url, { method: 'GET', headers, redirect: 'manual' });
     let body: T | null = null;
     let parseError: string | null = null;
     try {
@@ -57,10 +145,10 @@ async function fetchJson<T>(url: string, token: string | null): Promise<{
       parseError = err instanceof Error ? err.message : 'invalid_json';
     }
     return {
-      ok: res.ok,
-      status,
+      ok: res.status >= 200 && res.status < 400,
+      status: res.status,
       body,
-      error: res.ok ? null : parseError ?? `http_${status}`,
+      error: res.status >= 200 && res.status < 400 ? null : parseError ?? `http_${res.status}`,
     };
   } catch (err) {
     return {
@@ -72,161 +160,250 @@ async function fetchJson<T>(url: string, token: string | null): Promise<{
   }
 }
 
-async function probeBackend(
-  baseUrl: string,
-  token: string | null,
-): Promise<FetchResult> {
-  const url = baseUrl.replace(/\/$/, '') + INVARIANTS_PATH;
-  const res = await fetchJson<InvariantPayload>(url, token);
+async function probeHealth(baseUrl: string): Promise<BackendHealth> {
+  const res = await fetchJson<{ checks?: Record<string, unknown>; status?: unknown }>(
+    baseUrl + HEALTH_PATH,
+    {},
+  );
+  const checks = (res.body?.checks ?? {}) as Record<string, unknown>;
+  const pgRaw = checks.postgres ?? checks.direct_postgres ?? null;
   return {
-    url,
-    ok: res.ok,
+    reachable: res.status !== null,
     status: res.status,
-    body: res.body,
+    postgres: pgRaw === null || pgRaw === undefined ? null : String(pgRaw),
     error: res.error,
   };
 }
 
-async function probeHealth(baseUrl: string): Promise<{
-  url: string;
-  status: number | null;
-  postgres: boolean | string | null;
-  directPostgres: boolean | string | null;
-}> {
-  const url = baseUrl.replace(/\/$/, '') + HEALTH_PATH;
-  const res = await fetchJson<{ checks?: Record<string, unknown> }>(url, null);
-  const checks = (res.body?.checks ?? {}) as Record<string, unknown>;
+async function probeInvariants(
+  baseUrl: string,
+  token: string | null,
+): Promise<{ payload: InvariantPayload | null; status: number | null; error: string | null }> {
+  if (!token) return { payload: null, status: null, error: 'no_token' };
+  const res = await fetchJson<InvariantPayload>(baseUrl + INVARIANTS_PATH, {
+    Authorization: `Bearer ${token}`,
+  });
+  return { payload: res.ok ? res.body : null, status: res.status, error: res.error };
+}
+
+async function probeAuthSurface(
+  baseUrl: string,
+  cookie: string | null,
+  path: string,
+): Promise<AuthProbe> {
+  if (!cookie) {
+    return { attempted: false, path: null, status: null, ok: false, error: null };
+  }
+  try {
+    const res = await fetch(baseUrl + path, {
+      method: 'GET',
+      headers: { Cookie: cookie },
+      redirect: 'manual',
+    });
+    // A valid session returns 200. A missing/invalid session returns a
+    // 3xx redirect to the Clerk sign-in interstitial.
+    const ok = res.status === 200;
+    return {
+      attempted: true,
+      path,
+      status: res.status,
+      ok,
+      error: ok ? null : `unexpected_status_${res.status}`,
+    };
+  } catch (err) {
+    return {
+      attempted: true,
+      path,
+      status: null,
+      ok: false,
+      error: err instanceof Error ? err.message : 'fetch_failed',
+    };
+  }
+}
+
+async function gather(
+  label: string,
+  baseUrl: string,
+  args: CliArgs,
+): Promise<BackendProbe> {
+  const [health, invariants, authProbe] = await Promise.all([
+    probeHealth(baseUrl),
+    probeInvariants(baseUrl, args.invariantToken),
+    probeAuthSurface(baseUrl, args.authCookie, args.authProbePath),
+  ]);
   return {
-    url,
-    status: res.status,
-    postgres: (checks.postgres as boolean | string | undefined) ?? null,
-    directPostgres: (checks.direct_postgres as boolean | string | undefined) ?? null,
+    label,
+    baseUrl,
+    health,
+    invariants: invariants.payload,
+    invariantsStatus: invariants.status,
+    invariantsError: invariants.error,
+    authProbe,
   };
 }
 
-function fmtMarkdownReport(
-  report: DiffReport,
-  healthA: Awaited<ReturnType<typeof probeHealth>>,
-  healthB: Awaited<ReturnType<typeof probeHealth>>,
-  fetchA: FetchResult,
-  fetchB: FetchResult,
-  baseUrlA: string,
-  baseUrlB: string,
-): string {
-  const lines: string[] = [];
-  lines.push('# Parallel-Run Diff Report');
-  lines.push('');
-  lines.push(`Generated: ${new Date().toISOString()}`);
-  lines.push('');
-  lines.push(`- Backend A: \`${baseUrlA}\``);
-  lines.push(`- Backend B: \`${baseUrlB}\``);
-  lines.push('');
+const SEVERITY_GLYPH: Record<InvariantLine['severity'], string> = {
+  pass: 'PASS',
+  warn: 'WARN',
+  fail: 'FAIL',
+  'preflight-blocked': 'BLOCKED',
+};
 
-  lines.push('## Connectivity');
-  lines.push('');
-  lines.push('| Backend | /api/health status | postgres | direct_postgres | invariants endpoint |');
-  lines.push('|---|---|---|---|---|');
-  lines.push(
-    `| A | ${healthA.status ?? 'n/a'} | ${String(healthA.postgres)} | ${String(healthA.directPostgres)} | ${fetchA.ok ? 'ok' : `FAIL (${fetchA.error ?? fetchA.status})`} |`,
+function renderMarkdown(diff: ParallelRunDiff, args: CliArgs): string {
+  const v = diff.verdict;
+  const banner =
+    v.overall === 'green' ? 'GREEN' : v.overall === 'yellow' ? 'YELLOW' : 'RED';
+  const out: string[] = [];
+  out.push('# Parallel-Run Diff — Cutover Readiness');
+  out.push('');
+  out.push(`Generated: ${diff.generatedAt}`);
+  out.push('');
+  out.push(`## Verdict: ${banner}`);
+  out.push('');
+  out.push(`> ${v.headline}`);
+  out.push('');
+  out.push(
+    `**${v.pass} pass · ${v.warn} warn · ${v.fail} fail · ${v.preflightBlocked} preflight-blocked**`,
   );
-  lines.push(
-    `| B | ${healthB.status ?? 'n/a'} | ${String(healthB.postgres)} | ${String(healthB.directPostgres)} | ${fetchB.ok ? 'ok' : `FAIL (${fetchB.error ?? fetchB.status})`} |`,
-  );
-  lines.push('');
+  out.push('');
+  out.push(`- Left (current prod): \`${diff.left.label}\` — ${diff.left.baseUrl}`);
+  out.push(`- Right (Azure lab): \`${diff.right.label}\` — ${diff.right.baseUrl}`);
+  if (args.tenants) out.push(`- Tenant filter: ${args.tenants.join(', ')}`);
+  out.push('');
 
-  lines.push(`## Summary: ${report.matched}/${report.total} invariants matched`);
-  lines.push('');
-  if (report.skipped.length > 0) {
-    lines.push(`Skipped: ${report.skipped.length} (one or both backends unreachable for that comparison)`);
-    lines.push('');
+  const sections: Array<[InvariantLine['category'], string]> = [
+    ['connectivity', 'Connectivity (no auth required)'],
+    ['tenant-fact', 'Tenant-Fact Invariants (bearer token required)'],
+    ['authenticated-surface', 'Authenticated Surface (session cookie required)'],
+  ];
+  for (const [cat, title] of sections) {
+    const rows = diff.lines.filter((l) => l.category === cat);
+    if (rows.length === 0) continue;
+    out.push(`## ${title}`);
+    out.push('');
+    out.push('| Check | Tenant | Left | Right | Result | Note |');
+    out.push('|---|---|---|---|---|---|');
+    for (const r of rows) {
+      out.push(
+        `| ${r.label} | ${r.tenantKey ?? '—'} | ${r.left} | ${r.right} | ${SEVERITY_GLYPH[r.severity]} | ${r.note ?? ''} |`,
+      );
+    }
+    out.push('');
   }
 
-  lines.push('## Per-Tenant Results');
-  lines.push('');
-  lines.push('| Tenant | nodes | edges | context_chunks | segments | programs | top-3 KPI | top-3 patterns | source_events |');
-  lines.push('|---|---|---|---|---|---|---|---|---|');
-  for (const row of report.perTenant) {
-    const cell = (key: keyof typeof row.checks) => {
-      const c = row.checks[key];
-      if (!c) return 'n/a';
-      return c.matched ? 'pass' : 'FAIL';
-    };
-    lines.push(
-      `| ${row.tenantKey} | ${cell('nodes')} | ${cell('edges')} | ${cell('contextChunks')} | ${cell('segments')} | ${cell('programs')} | ${cell('topKpiNames')} | ${cell('topPatternIds')} | ${cell('sourceEvents')} |`,
+  out.push('## How To Read This');
+  out.push('');
+  out.push('- **PASS** — both backends agree.');
+  out.push('- **WARN** — small count drift (<=5); likely an in-flight writer. Rerun in 60s.');
+  out.push('- **FAIL** — real divergence. Cutover is blocked until resolved.');
+  out.push(
+    '- **BLOCKED** — the check could not run because a token or cookie was not supplied. Not a failure — supply the credential and rerun.',
+  );
+  out.push('');
+  out.push('## Next Step');
+  out.push('');
+  if (v.fail > 0) {
+    out.push('Investigate the FAIL rows above. Do not "fix forward" by mutating production data — fix the writer / copy job. See `PARALLEL-RUN-DIFF-PROTOCOL.md`.');
+  } else if (v.preflightBlocked > 0) {
+    out.push(
+      'Re-run with the missing credential(s) to complete the proof: `--invariant-token` for tenant-fact invariants, `--auth-cookie` for the authenticated surface check.',
+    );
+  } else {
+    out.push(
+      'This run is clean. The cutover gate requires three consecutive clean runs >=60s apart — see `PARALLEL-RUN-DIFF-PROTOCOL.md`.',
     );
   }
-  lines.push('');
+  out.push('');
+  return out.join('\n');
+}
 
-  // Detailed diff blocks for failures only.
-  const failures = report.perTenant.flatMap((row) =>
-    Object.entries(row.checks)
-      .filter(([, c]) => c && !c.matched)
-      .map(([k, c]) => ({ tenant: row.tenantKey, key: k, check: c! })),
+function renderConsole(diff: ParallelRunDiff): void {
+  const v = diff.verdict;
+  const banner =
+    v.overall === 'green' ? 'GREEN' : v.overall === 'yellow' ? 'YELLOW' : 'RED';
+  console.log('');
+  console.log(`PARALLEL-RUN DIFF — verdict: ${banner}`);
+  console.log(`  ${v.headline}`);
+  console.log(
+    `  ${v.pass} pass | ${v.warn} warn | ${v.fail} fail | ${v.preflightBlocked} preflight-blocked`,
   );
-
-  if (failures.length > 0) {
-    lines.push('## Failing Invariants (detail)');
-    lines.push('');
-    for (const f of failures) {
-      lines.push(`### ${f.tenant} · ${f.key}`);
-      lines.push('');
-      lines.push('```');
-      lines.push(`A: ${JSON.stringify(f.check.a)}`);
-      lines.push(`B: ${JSON.stringify(f.check.b)}`);
-      if (f.check.note) lines.push(`note: ${f.check.note}`);
-      lines.push('```');
-      lines.push('');
-    }
+  console.log('');
+  for (const l of diff.lines) {
+    const tenant = l.tenantKey ? ` [${l.tenantKey}]` : '';
+    console.log(
+      `  ${SEVERITY_GLYPH[l.severity].padEnd(8)} ${l.label}${tenant}: ${l.left} vs ${l.right}`,
+    );
   }
+  console.log('');
+}
 
-  lines.push('## Exit Criteria');
-  lines.push('');
-  lines.push('- All counts (nodes / edges / context_chunks / segments / programs) must match exactly.');
-  lines.push('- Top-3 KPI names and top-3 pattern IDs must match exactly in both content and order.');
-  lines.push('- Latency is NOT compared here (L8 work).');
-  lines.push('- Embedding / vector ordering is NOT compared (non-deterministic by design).');
-  lines.push('');
-
-  return lines.join('\n');
+function resolveOut(p: string): string {
+  return isAbsolute(p) ? p : join(process.cwd(), p);
 }
 
 async function main(): Promise<number> {
-  const baseUrlA = process.env.BASE_URL_A?.trim();
-  const baseUrlB = process.env.BASE_URL_B?.trim();
-  const token = process.env.PARALLEL_RUN_INVARIANT_TOKEN?.trim() ?? null;
-
-  if (!baseUrlA || !baseUrlB) {
-    console.error('[parallel-run-diff] BASE_URL_A and BASE_URL_B are required.');
+  const parsed = parseArgs(process.argv.slice(2));
+  if ('error' in parsed) {
+    console.error(`[parallel-run-diff] ${parsed.error}`);
+    console.error('[parallel-run-diff] run with --help for usage');
     return 2;
   }
-  if (!token) {
-    console.error(
-      '[parallel-run-diff] PARALLEL_RUN_INVARIANT_TOKEN is required (the bearer secret accepted by /api/admin/parallel-run-invariants on both backends).',
-    );
-    return 2;
-  }
+  const args = parsed;
 
-  const [healthA, healthB, fetchA, fetchB] = await Promise.all([
-    probeHealth(baseUrlA),
-    probeHealth(baseUrlB),
-    probeBackend(baseUrlA, token),
-    probeBackend(baseUrlB, token),
+  const [left, right] = await Promise.all([
+    gather(args.leftLabel, args.leftBaseUrl, args),
+    gather(args.rightLabel, args.rightBaseUrl, args),
   ]);
 
-  const report = buildInvariantReport(fetchA.body, fetchB.body);
-  const md = fmtMarkdownReport(report, healthA, healthB, fetchA, fetchB, baseUrlA, baseUrlB);
-  writeFileSync(REPORT_PATH, md, 'utf8');
-  console.log(`[parallel-run-diff] wrote ${REPORT_PATH}`);
-  console.log(`[parallel-run-diff] ${report.matched}/${report.total} invariants matched`);
+  const diff = buildParallelRunDiff({
+    left,
+    right,
+    tenantFilter: args.tenants,
+    invariantTokenSupplied: args.invariantToken !== null,
+    authCookieSupplied: args.authCookie !== null,
+  });
 
-  if (!fetchA.ok || !fetchB.ok) return 1;
-  if (report.matched < report.total) return 1;
-  return 0;
+  const jsonOut = resolveOut(args.jsonPath);
+  const mdOut = resolveOut(args.markdownPath);
+  writeFileSync(jsonOut, JSON.stringify(diff, null, 2) + '\n', 'utf8');
+  writeFileSync(mdOut, renderMarkdown(diff, args), 'utf8');
+
+  renderConsole(diff);
+  console.log(`[parallel-run-diff] JSON     -> ${jsonOut}`);
+  console.log(`[parallel-run-diff] Markdown -> ${mdOut}`);
+
+  return diff.verdict.fail > 0 ? 1 : 0;
 }
 
-main()
-  .then((code) => process.exit(code))
-  .catch((err) => {
-    console.error('[parallel-run-diff] fatal', err);
-    process.exit(1);
-  });
+if (process.argv.includes('--help') || process.argv.includes('-h')) {
+  console.log(
+    [
+      'parallel-run-diff — compare current prod vs Azure lab for tenant-fact parity',
+      '',
+      'Required:',
+      '  --left-base-url   <url>   current prod base URL  (env: BASE_URL_A)',
+      '  --right-base-url  <url>   Azure lab base URL     (env: BASE_URL_B)',
+      '',
+      'Optional:',
+      '  --tenant <key>            restrict to a tenant (repeatable / comma-separated)',
+      '  --invariant-token <tok>   bearer token for /api/admin/parallel-run-invariants',
+      '                            (env: PARALLEL_RUN_INVARIANT_TOKEN)',
+      '  --auth-cookie <cookie>    session cookie for the authenticated-surface probe',
+      '                            (env: PARALLEL_RUN_AUTH_COOKIE)',
+      '  --auth-probe-path <path>  authenticated surface to probe (default /intelligence)',
+      '  --left-label / --right-label   founder-readable labels',
+      '  --json <path>             JSON output  (default parallel-run-diff-results.json)',
+      '  --markdown <path>         Markdown out (default parallel-run-diff-results.md)',
+      '',
+      'Exit: 0 = no failures, 1 = at least one failure, 2 = bad arguments',
+    ].join('\n'),
+  );
+  process.exit(0);
+} else {
+  main()
+    .then((code) => process.exit(code))
+    .catch((err) => {
+      console.error('[parallel-run-diff] fatal', err);
+      process.exit(1);
+    });
+}

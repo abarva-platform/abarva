@@ -71,3 +71,7 @@ supabase/.branches/
 
 # Priority 2 approval ledger (runtime only, not committed)
 .approvals/
+
+# Parallel-run diff harness default output (run artifacts, not committed)
+parallel-run-diff-results.json
+parallel-run-diff-results.md

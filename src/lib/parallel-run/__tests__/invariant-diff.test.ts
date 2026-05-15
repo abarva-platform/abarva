@@ -7,7 +7,9 @@
 
 import {
   buildInvariantReport,
+  buildParallelRunDiff,
   countFailures,
+  type BackendProbe,
   type InvariantPayload,
   type TenantInvariants,
 } from '../invariant-diff';
@@ -115,5 +117,187 @@ describe('buildInvariantReport', () => {
     ]);
     const report = buildInvariantReport(a, b);
     expect(countFailures(report)).toBe(3);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Founder-readable tri-state layer
+// ---------------------------------------------------------------------------
+
+function backend(
+  label: string,
+  overrides: Partial<BackendProbe> & {
+    invariants?: InvariantPayload | null;
+  } = {},
+): BackendProbe {
+  return {
+    label,
+    baseUrl: `https://${label}.example.com`,
+    health: { reachable: true, status: 200, postgres: 'ok', error: null },
+    invariants: overrides.invariants ?? null,
+    invariantsStatus: overrides.invariantsStatus ?? null,
+    invariantsError: overrides.invariantsError ?? null,
+    authProbe: overrides.authProbe ?? {
+      attempted: false,
+      path: null,
+      status: null,
+      ok: false,
+      error: null,
+    },
+    ...overrides,
+  };
+}
+
+describe('buildParallelRunDiff', () => {
+  it('runs the connectivity invariant with no auth and stays yellow when token absent', () => {
+    const diff = buildParallelRunDiff({
+      left: backend('prod'),
+      right: backend('azure-lab'),
+      tenantFilter: null,
+      invariantTokenSupplied: false,
+      authCookieSupplied: false,
+    });
+    // Connectivity always produces concrete pass rows.
+    const connectivityPasses = diff.lines.filter(
+      (l) => l.category === 'connectivity' && l.severity === 'pass',
+    );
+    expect(connectivityPasses.length).toBeGreaterThan(0);
+    // Tenant facts + auth surface are blocked, not failed.
+    expect(diff.verdict.fail).toBe(0);
+    expect(diff.verdict.preflightBlocked).toBeGreaterThan(0);
+    expect(diff.verdict.overall).toBe('yellow');
+  });
+
+  it('marks an unreachable backend health probe as a hard fail (red)', () => {
+    const diff = buildParallelRunDiff({
+      left: backend('prod'),
+      right: backend('azure-lab', {
+        health: { reachable: false, status: null, postgres: null, error: 'ECONNREFUSED' },
+      }),
+      tenantFilter: null,
+      invariantTokenSupplied: false,
+      authCookieSupplied: false,
+    });
+    expect(diff.verdict.fail).toBeGreaterThan(0);
+    expect(diff.verdict.overall).toBe('red');
+  });
+
+  it('treats a 1-5 row count drift as warn, not fail', () => {
+    const a = payload([tenant({ tenantKey: 'apex-retail', nodes: 1313 })]);
+    const b = payload([tenant({ tenantKey: 'apex-retail', nodes: 1316 })]);
+    const diff = buildParallelRunDiff({
+      left: backend('prod', { invariants: a, invariantsStatus: 200 }),
+      right: backend('azure-lab', { invariants: b, invariantsStatus: 200 }),
+      tenantFilter: null,
+      invariantTokenSupplied: true,
+      authCookieSupplied: false,
+    });
+    const nodesLine = diff.lines.find(
+      (l) => l.tenantKey === 'apex-retail' && l.label === 'graph nodes',
+    );
+    expect(nodesLine?.severity).toBe('warn');
+    expect(diff.verdict.fail).toBe(0);
+  });
+
+  it('treats a large row count drift as fail (red)', () => {
+    const a = payload([tenant({ tenantKey: 'apex-retail', nodes: 1313 })]);
+    const b = payload([tenant({ tenantKey: 'apex-retail', nodes: 900 })]);
+    const diff = buildParallelRunDiff({
+      left: backend('prod', { invariants: a, invariantsStatus: 200 }),
+      right: backend('azure-lab', { invariants: b, invariantsStatus: 200 }),
+      tenantFilter: null,
+      invariantTokenSupplied: true,
+      authCookieSupplied: false,
+    });
+    const nodesLine = diff.lines.find(
+      (l) => l.tenantKey === 'apex-retail' && l.label === 'graph nodes',
+    );
+    expect(nodesLine?.severity).toBe('fail');
+    expect(diff.verdict.overall).toBe('red');
+  });
+
+  it('treats a top-3 KPI reorder as fail with no warn tolerance', () => {
+    const a = payload([
+      tenant({ tenantKey: 'apex-retail', topKpiNames: ['A', 'B', 'C'] }),
+    ]);
+    const b = payload([
+      tenant({ tenantKey: 'apex-retail', topKpiNames: ['B', 'A', 'C'] }),
+    ]);
+    const diff = buildParallelRunDiff({
+      left: backend('prod', { invariants: a, invariantsStatus: 200 }),
+      right: backend('azure-lab', { invariants: b, invariantsStatus: 200 }),
+      tenantFilter: null,
+      invariantTokenSupplied: true,
+      authCookieSupplied: false,
+    });
+    const kpiLine = diff.lines.find(
+      (l) => l.tenantKey === 'apex-retail' && l.label === 'top-3 KPI names',
+    );
+    expect(kpiLine?.severity).toBe('fail');
+  });
+
+  it('honours the tenant filter', () => {
+    const tenants = [
+      tenant({ tenantKey: 'apex-retail' }),
+      tenant({ tenantKey: 'meridian-health' }),
+    ];
+    const diff = buildParallelRunDiff({
+      left: backend('prod', { invariants: payload(tenants), invariantsStatus: 200 }),
+      right: backend('azure-lab', { invariants: payload(tenants), invariantsStatus: 200 }),
+      tenantFilter: ['apex-retail'],
+      invariantTokenSupplied: true,
+      authCookieSupplied: false,
+    });
+    const tenantKeys = new Set(
+      diff.lines.filter((l) => l.tenantKey).map((l) => l.tenantKey),
+    );
+    expect(tenantKeys.has('apex-retail')).toBe(true);
+    expect(tenantKeys.has('meridian-health')).toBe(false);
+  });
+
+  it('marks a 403 on the invariants endpoint as preflight-blocked, not fail', () => {
+    const a = payload([tenant({ tenantKey: 'apex-retail' })]);
+    const diff = buildParallelRunDiff({
+      left: backend('prod', { invariants: a, invariantsStatus: 200 }),
+      right: backend('azure-lab', {
+        invariants: null,
+        invariantsStatus: 403,
+        invariantsError: 'http_403',
+      }),
+      tenantFilter: null,
+      invariantTokenSupplied: true,
+      authCookieSupplied: false,
+    });
+    const blocked = diff.lines.find(
+      (l) => l.category === 'tenant-fact' && l.severity === 'preflight-blocked',
+    );
+    expect(blocked).toBeDefined();
+    expect(diff.verdict.fail).toBe(0);
+  });
+
+  it('is green when everything matches and all credentials are supplied', () => {
+    const tenants = [tenant({ tenantKey: 'apex-retail' })];
+    // Distinct backend markers so the same-backend guard does not warn.
+    const leftPayload = { ...payload(tenants), backendMarker: 'prod-backend' };
+    const rightPayload = { ...payload(tenants), backendMarker: 'azure-backend' };
+    const diff = buildParallelRunDiff({
+      left: backend('prod', {
+        invariants: leftPayload,
+        invariantsStatus: 200,
+        authProbe: { attempted: true, path: '/intelligence', status: 200, ok: true, error: null },
+      }),
+      right: backend('azure-lab', {
+        invariants: rightPayload,
+        invariantsStatus: 200,
+        authProbe: { attempted: true, path: '/intelligence', status: 200, ok: true, error: null },
+      }),
+      tenantFilter: null,
+      invariantTokenSupplied: true,
+      authCookieSupplied: true,
+    });
+    expect(diff.verdict.fail).toBe(0);
+    expect(diff.verdict.warn).toBe(0);
+    expect(diff.verdict.preflightBlocked).toBe(0);
+    expect(diff.verdict.overall).toBe('green');
   });
 });
