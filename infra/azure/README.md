@@ -15,11 +15,13 @@ This directory contains the Day-0 Azure foundation starter aligned to:
 - `postgres-foundation.bicep` - subscription-scoped private Postgres database lane
 - `registry-cost-foundation.bicep` - subscription-scoped ACR and Cost Management budget lane
 - `event-ingestion-foundation.bicep` - subscription-scoped Service Bus + Event Grid ingestion lane
+- `search-foundation.bicep` - subscription-scoped Azure AI Search retrieval lane
 - `control-plane.bicep` - control plane RG baseline
 - `private-dataplane.bicep` - tenant-isolated private dataplane baseline
 - `container-registry.bicep` - ACR and image push/pull RBAC helper
 - `service-bus.bicep` - Service Bus namespace, queues, and data-plane RBAC helper
 - `storage-event-ingestion.bicep` - storage containers and Event Grid subscription helper
+- `search-service.bicep` - Azure AI Search service helper
 - `postgres-regional-private.bicep` - regional private Postgres/VNet/DNS module
 - `scale-runtime.bicep` - Container Apps scale-test runtime lane
 - `storage-rbac.bicep` - cross-resource-group storage role assignment helper
@@ -32,6 +34,7 @@ This directory contains the Day-0 Azure foundation starter aligned to:
 - `parameters/postgres.lab.bicepparam` - current lab Postgres parameters
 - `parameters/registry-cost.lab.bicepparam` - current lab ACR and budget parameters
 - `parameters/event-ingestion.lab.bicepparam` - current lab event ingestion parameters
+- `parameters/search.lab.bicepparam` - current lab Azure AI Search parameters
 
 ## Recommended Deployment Path
 
@@ -127,6 +130,22 @@ az deployment sub create \
   --parameters infra/azure/parameters/event-ingestion.lab.bicepparam
 ```
 
+Then deploy the retrieval foundation:
+
+```bash
+az deployment sub what-if \
+  --name azfound-search-whatif \
+  --location eastus \
+  --template-file infra/azure/search-foundation.bicep \
+  --parameters infra/azure/parameters/search.lab.bicepparam
+
+az deployment sub create \
+  --name azfound-search-lab \
+  --location eastus \
+  --template-file infra/azure/search-foundation.bicep \
+  --parameters infra/azure/parameters/search.lab.bicepparam
+```
+
 ## Full Control Plane Deployment
 
 ```bash
@@ -151,10 +170,12 @@ az bicep build --file infra/azure/foundation.bicep
 az bicep build --file infra/azure/postgres-foundation.bicep
 az bicep build --file infra/azure/registry-cost-foundation.bicep
 az bicep build --file infra/azure/event-ingestion-foundation.bicep
+az bicep build --file infra/azure/search-foundation.bicep
 az bicep build --file infra/azure/main.bicep
 az bicep build --file infra/azure/container-registry.bicep
 az bicep build --file infra/azure/service-bus.bicep
 az bicep build --file infra/azure/storage-event-ingestion.bicep
+az bicep build --file infra/azure/search-service.bicep
 az bicep build --file infra/azure/control-plane.bicep
 az bicep build --file infra/azure/private-dataplane.bicep
 az bicep build --file infra/azure/postgres-regional-private.bicep
@@ -182,3 +203,4 @@ az bicep build --file infra/azure/shared-security.bicep
 - The lab ACR currently allows public network access for local/Codex image pushes. Production/private-client lanes should disable public access once a private build-agent path exists.
 - Service Bus Standard is used for the lab ingestion backbone. Production/private-client lanes should use Premium + private endpoint if messages carry sensitive metadata or customer policy requires private broker access.
 - Event Grid messages point to blob paths and metadata; file contents are not placed on the event bus.
+- Azure AI Search is deployed with synthetic/no-client-data posture. Indexes should be created only after embedding dimensions, sensitivity fields, and ingestion contracts are approved.

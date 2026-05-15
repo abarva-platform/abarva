@@ -20,6 +20,7 @@ The current design keeps the app runtime in `eastus` and the first managed Postg
 | Runtime scale lane | Container Apps environment, Container App, managed identity | `cae-abarva-scale-lab-eastus`, `ca-abarva-scale-smoke-lab-eastus`, `id-abarva-scale-runtime-lab-eastus` | Validates HTTP/container autoscale without App Service VM quota. |
 | Image supply chain | Azure Container Registry | `acrabarvalab001` | RBAC-only image registry for app, broker, ingestion, and evaluation worker images. |
 | Event ingestion | Service Bus, Event Grid, Blob containers | `sb-abarva-lab-eastus`, `q-context-ingestion-events`, `q-agent-work-items`, `context-drops`, `context-processed`, `egsub-context-drop-created` | Creates the Day-2 backbone for incremental context-layer refresh. |
+| Retrieval | Azure AI Search | `srch-abarva-context-lab-eastus` | Azure-native retrieval service for tenant context, evidence, source/vendor artifacts, industry corpus, and signals. |
 | Database lane | Azure Database for PostgreSQL Flexible Server, DB VNet, VNet peering | `pg-abarva-context-lab-001`, `vnet-abarva-database-lab-eastus2` | Azure-native system-of-record candidate for control, context, and audit stores. |
 | Observability | Log Analytics, Application Insights, Action Group, Activity Log Alert | `log-abarva-observability-lab-eastus`, `appi-abarva-observability-lab-eastus`, `ag-abarva-observability-lab-eastus`, `ala-subscription-deployment-failures` | Gives the lab an operational control loop and deployment failure visibility. |
 | Cost guardrails | Cost Management budget | `budget-abarva-lab-monthly` | Keeps lab burn visible before adding paid retrieval/model/security services. |
@@ -29,7 +30,7 @@ The current design keeps the app runtime in `eastus` and the first managed Postg
 
 | Order | Capability | Azure service | Intended state |
 |---:|---|---|---|
-| 1 | Retrieval | Azure AI Search | Tenant context, evidence, source/vendor, and industry corpus indexes. |
+| 1 | Search index contracts | Azure AI Search indexes | Create indexes after embedding dimensions/provider and ingestion worker contract are set. |
 | 2 | Model lane | Azure AI Foundry / Azure OpenAI | Governed enterprise model endpoint, including Claude through Azure-native procurement where available. |
 | 3 | Real app runtime | Azure Container Apps + ACR image | Deploy a real AbarVa image with Key Vault-backed env and health checks. |
 | 4 | Enterprise ingress | Front Door + WAF | Public Azure entry with TLS, WAF, bot/rate controls, and customer-ready routing. |
@@ -71,7 +72,7 @@ Before scale-up, measure and record:
 | Gap | Severity | Close path |
 |---|---|---|
 | Real AbarVa app image not yet pushed to Azure | High | Build/push image to ACR, deploy a staging Container App with Key Vault-backed env. |
-| No Azure AI Search indexes yet | High | Define context/evidence/source/index contracts and deploy search. |
+| No Azure AI Search indexes yet | High | Create indexes after embedding/model contract is finalized. |
 | No ingestion worker yet | Medium | Add a Container Apps job/worker that consumes the Service Bus event queue. |
 | No Front Door/WAF | Medium | Add when real Azure-hosted app needs enterprise ingress. |
 | No Azure Policy assignments beyond placeholders | Medium | Add guardrails before first customer VPC lane. |
