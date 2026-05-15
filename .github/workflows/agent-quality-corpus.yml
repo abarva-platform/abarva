@@ -1,0 +1,32 @@
+name: Agent quality corpus
+
+on:
+  pull_request:
+    paths:
+      - "tests/agent-quality/**"
+      - "src/scripts/qa/agent-quality-corpus-validate.ts"
+      - "package.json"
+      - ".github/workflows/agent-quality-corpus.yml"
+  workflow_dispatch:
+
+jobs:
+  validate-corpus:
+    name: Validate agent quality corpus
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+
+      - name: Install deps
+        run: npm ci
+
+      - name: Validate corpus
+        run: npm run qa:agent-quality:corpus
