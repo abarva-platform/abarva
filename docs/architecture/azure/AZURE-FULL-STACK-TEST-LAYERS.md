@@ -29,7 +29,7 @@ Current state: the lab has real Azure services live through AZLAB25: Container A
 | L5 Data integrity | Migrations and seeds replay to a fresh DB; drift is visible; backup/restore works. | `.github/workflows/migration-drift-*.yml`, `.github/workflows/azure-l5-reset-replay.yml`, `.github/workflows/azure-l5-data-parity.yml`, `src/scripts/bootstrap-azure-postgres-compat.ts`, `src/scripts/copy-tenant-context-to-azure.ts`, `src/scripts/verify-azure-postgres-schema.ts`, `src/scripts/verify-azure-tenant-data-parity.ts` | Run the data-parity gate live after copy/restore and add weekly PITR restore drill. | Partial |
 | L6 Functional E2E | Each tenant can sign in, navigate Home/Intelligence/Moves/Source/Tower, complete one workflow, and sign out. | `tests/e2e/primary-surfaces-smoke.spec.ts`, `tests/e2e/primary-surfaces-tenant-matrix.spec.ts`, `.github/workflows/azure-l6-primary-surfaces.yml` | Run Azure-host live matrix, then add workflow-level specs: Origination, Move gate, Source evidence ledger, Tower decision pack, screenshot baselines. | Partial |
 | L7 Agent quality | Sentinel, Atlas, Nexus, Steward stay grounded, in-voice, internally consistent, and safe under adversarial prompts. | `docs/agent-quality/SENTINEL-CONSISTENCY-GUARD-EXPANSION.md`, existing Sentinel voice tests, audit question batteries in docs | Golden corpus and adversarial corpus per agent, weekly drift watchdog, guard telemetry wired to C5 dashboard. | Design |
-| L8 Performance / load | Postgres pool, Container Apps autoscale, Search retrieval, and agent turns stay under CXO latency targets. | Container Apps runtime live; App Insights live | k6/Artillery scenarios, cold-start test, agent latency budget trace, p95 target gates. | Gap |
+| L8 Performance / load | Postgres pool, Container Apps autoscale, Search retrieval, and agent turns stay under CXO latency targets. | Container Apps runtime live; App Insights live; `scripts/load/azure-primary-surfaces.mjs`; `.github/workflows/azure-l8-primary-surface-load.yml`; AZLAB35 | Authenticated Azure run with `AZURE_LAB_L8_COOKIE`, cold-start test, agent latency budget trace, Postgres pool pressure scenario. | Partial |
 | L9 Resilience / DR | The app degrades gracefully when Postgres, Service Bus, or LLM provider fails. | A2b worker DLQ behavior is designed; PITR available through managed Postgres configuration | Chaos drill scripts, Service Bus malformed-message DLQ test, LLM 529 fallback simulation, monthly restore drill. | Gap |
 | L10 Compliance / audit trail | Sensitive-upload, gate approval, and admin-action evidence is append-only and exportable. | B5c `sensitive_upload_audit` migration/data wiring; `/admin/quarantine`; Purview stub design; `src/lib/security/__tests__/quarantine-audit-supabase.test.ts`; AZLAB34 | Live append-only SQL assertion, Purview label persistence test, monthly evidence-pack export. | Partial |
 | L11 Observability / SLO + cost | Regression, latency, errors, agent violations, RLS denials, and spend cannot silently drift. | Log Analytics, App Insights, action group, budget; `scripts/azure/audit-observability.mjs`, `.github/workflows/azure-l11-observability-audit.yml`; `docs/pilot/C5-PILOT-SUCCESS-METRICS-DASHBOARD-SPEC.md` | Run audit through GitHub OIDC, add synthetic availability tests, SLO dashboard queries, cost alerts per RG, end-to-end agent trace coverage. | Partial |
@@ -176,12 +176,14 @@ These are synthetic context chunks, not customer data.
 
 | Check | Artifact | Pass condition |
 |---|---|---|
-| Surface load | New `tests/load/azure-primary-surfaces.k6.ts` or Artillery equivalent | 20 concurrent users for 5 minutes; no 5xx; p95 inside target. |
+| Surface load | `scripts/load/azure-primary-surfaces.mjs`, `.github/workflows/azure-l8-primary-surface-load.yml` | No 5xx, no request errors, global p95 inside target; authenticated mode can require 2xx. |
 | Cold start | New Container Apps scale-to-zero script | Cold-start measured and accepted per surface. |
 | Postgres pool | Load scenario plus DB metrics | No connection exhaustion; pool sizing documented. |
 | Agent latency budget | Trace fields for retrieval/reasoning/synthesis/model calls | p95 answer-with-citations stays below target; slow segment is visible. |
 
 **Initial target.** For CXO-facing answers with citations, use 8 seconds p95 as the first stand-up target. Tune after App Insights has real traces.
+
+**Current state.** AZLAB35 wires a dependency-free Node load smoke with a manual GitHub Actions workflow for Azure, staging, and production. It is intentionally lighter than k6/Artillery so it can run immediately with Node 24. The next L8 step is an authenticated Azure run with `AZURE_LAB_L8_COOKIE` and `--require-2xx`, then deeper workflow and agent-turn load scenarios.
 
 ## L9 - Resilience / DR
 
@@ -245,7 +247,7 @@ These are synthetic context chunks, not customer data.
 | 1 | Implement L6 workflow specs: Move origination, Source event/evidence, Tower decision pack. | Blocks pilot credibility more than another static page smoke. |
 | 2 | Implement agent golden/adversarial corpus harness. | Makes "super-smart consultant" measurable. |
 | 3 | Implement G1/G2/G6 Sentinel consistency guards. | Highest-value quality lift from the guard expansion design. |
-| 4 | Add k6 or Artillery load scenario for Azure primary surfaces. | Establishes first p95/cold-start baseline before real pilot traffic. |
+| 4 | Run the L8 primary-surface load smoke against Azure with an authenticated cookie, then add cold-start and agent-turn scenarios. | Establishes first p95/cold-start baseline before real pilot traffic. |
 | 5 | Add live L10 SQL immutability attempts plus evidence-pack export for sensitive-upload, gate approval, and admin actions. | Moves compliance from migration-contract confidence to auditor-ready proof and export. |
 
 ## Fresh Subscription Acceptance Checklist
