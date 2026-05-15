@@ -1,0 +1,90 @@
+name: Azure L6 primary-surface E2E
+
+# L6 functional E2E gate: sign in through the real DemoCodeSignIn flow and
+# verify the five primary CXO surfaces across the tenant matrix. This is a
+# manual/pilot-readiness workflow because it needs target-host auth to be
+# configured and, for Azure lab, the Container Apps FQDN must be accepted by
+# Clerk.
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Environment to test"
+        required: true
+        default: "azure-lab"
+        type: choice
+        options:
+          - azure-lab
+          - staging
+          - production
+      only_tenant:
+        description: "Optional tenant key: apexretail, meridian, or arcturus"
+        required: false
+        type: string
+
+jobs:
+  primary-surfaces:
+    name: Tenant matrix primary surfaces
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+
+      - name: Install deps
+        run: npm ci
+
+      - name: Install Chromium
+        run: npx playwright install chromium --with-deps
+
+      - name: Resolve target
+        id: target
+        run: |
+          target="${{ inputs.environment }}"
+          case "$target" in
+            production)
+              base_url="${{ secrets.PRODUCTION_BASE_URL }}"
+              ;;
+            staging)
+              base_url="${{ secrets.STAGING_BASE_URL }}"
+              ;;
+            azure-lab)
+              base_url="${{ secrets.AZURE_LAB_BASE_URL }}"
+              ;;
+            *)
+              echo "Unknown E2E environment: $target" >&2
+              exit 2
+              ;;
+          esac
+
+          if [[ -z "$base_url" ]]; then
+            echo "Missing BASE_URL secret for $target." >&2
+            exit 2
+          fi
+
+          echo "BASE_URL=$base_url" >> "$GITHUB_OUTPUT"
+
+      - name: Run primary-surface tenant matrix
+        env:
+          BASE_URL: ${{ steps.target.outputs.BASE_URL }}
+          ONLY_TENANT: ${{ inputs.only_tenant }}
+          E2E_DEMO_PASSWORD: ${{ secrets.E2E_DEMO_PASSWORD || 'Demo2026!' }}
+          E2E_DEMO_ACCESS_CODE: ${{ secrets.E2E_DEMO_ACCESS_CODE || '424242' }}
+        run: npx playwright test tests/e2e/primary-surfaces-tenant-matrix.spec.ts --project=chromium
+
+      - name: Upload Playwright report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: azure-l6-primary-surfaces-report
+          path: playwright-report/
+          if-no-files-found: ignore
+
