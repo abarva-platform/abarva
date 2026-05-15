@@ -35,6 +35,7 @@
     "db:migrate": "npx tsx src/scripts/run-migrations.ts",
     "db:migrate:dry": "npx tsx src/scripts/run-migrations.ts --dry",
     "db:migrate:mark-applied": "npx tsx src/scripts/run-migrations.ts --mark-all-applied",
+    "db:verify:tenant-keys": "npx tsx scripts/verify-tenant-key-canonical.ts",
     "db:azure:bootstrap": "npx tsx src/scripts/bootstrap-azure-postgres-compat.ts",
     "db:azure:verify": "npx tsx src/scripts/verify-azure-postgres-schema.ts",
     "db:azure:copy-tenant-context": "npx tsx src/scripts/copy-tenant-context-to-azure.ts",
