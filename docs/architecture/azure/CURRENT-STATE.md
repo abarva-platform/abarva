@@ -20,6 +20,7 @@ The current design keeps the app runtime in `eastus` and the first managed Postg
 | Runtime scale lane | Container Apps environment, Container App, managed identity | `cae-abarva-scale-lab-eastus`, `ca-abarva-scale-smoke-lab-eastus`, `id-abarva-scale-runtime-lab-eastus` | Validates HTTP/container autoscale without App Service VM quota. |
 | Image supply chain | Azure Container Registry | `acrabarvalab001` | RBAC-only image registry for app, broker, ingestion, and evaluation worker images. |
 | App image | ACR image | `acrabarvalab001.azurecr.io/abarva/web:lab-ebe449ae-r3` | Proves the real AbarVa Next.js app can build and push through Azure's image lane. |
+| Real-image app runtime shell | Container App | `ca-abarva-web-lab-eastus` | References the real AbarVa image with managed-identity ACR pull; min replicas stay 0 until env wiring. |
 | Event ingestion | Service Bus, Event Grid, Blob containers | `sb-abarva-lab-eastus`, `q-context-ingestion-events`, `q-agent-work-items`, `context-drops`, `context-processed`, `egsub-context-drop-created` | Creates the Day-2 backbone for incremental context-layer refresh. |
 | Retrieval | Azure AI Search | `srch-abarva-context-lab-eastus` | Azure-native retrieval service for tenant context, evidence, source/vendor artifacts, industry corpus, and signals. |
 | Database lane | Azure Database for PostgreSQL Flexible Server, DB VNet, VNet peering | `pg-abarva-context-lab-001`, `vnet-abarva-database-lab-eastus2` | Azure-native system-of-record candidate for control, context, and audit stores. |
@@ -33,7 +34,7 @@ The current design keeps the app runtime in `eastus` and the first managed Postg
 |---:|---|---|---|
 | 1 | Search index contracts | Azure AI Search indexes | Create indexes after embedding dimensions/provider and ingestion worker contract are set. |
 | 2 | Model lane | Azure AI Foundry / Azure OpenAI | Governed enterprise model endpoint, including Claude through Azure-native procurement where available. |
-| 3 | Real app runtime | Azure Container Apps + ACR image | Deploy `abarva/web:lab-ebe449ae-r3` with Key Vault-backed env and health checks. |
+| 3 | Runtime env wiring | Container Apps + Key Vault | Add non-production Clerk/Supabase/Postgres/model settings through Key Vault and validate health. |
 | 4 | Enterprise ingress | Front Door + WAF | Public Azure entry with TLS, WAF, bot/rate controls, and customer-ready routing. |
 | 5 | Ingestion worker | Container Apps job or worker app | Consume Service Bus events, validate datasets, scan sensitive data, update manifests, and refresh search. |
 
@@ -72,7 +73,7 @@ Before scale-up, measure and record:
 
 | Gap | Severity | Close path |
 |---|---|---|
-| Real AbarVa app image not yet deployed to Container Apps | High | Deploy the built ACR image with Key Vault-backed env and health checks. |
+| Real AbarVa app runtime not yet env-complete | High | Add Key Vault-backed env, then validate health and one authenticated route. |
 | No Azure AI Search indexes yet | High | Create indexes after embedding/model contract is finalized. |
 | No ingestion worker yet | Medium | Add a Container Apps job/worker that consumes the Service Bus event queue. |
 | No Front Door/WAF | Medium | Add when real Azure-hosted app needs enterprise ingress. |
