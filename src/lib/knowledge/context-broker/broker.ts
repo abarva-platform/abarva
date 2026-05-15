@@ -38,6 +38,8 @@ import {
   isPrivateVectorAvailable,
   type PrivateDataPlaneResource,
 } from '@/lib/knowledge/private-data-plane/registry';
+import { isFeatureEnabled } from '@/lib/features/is-feature-enabled';
+import { queryTenantContext } from '@/lib/azure-search/tenant-context-retriever';
 import {
   searchCanonicalPatternIndex,
   WARNING_CANONICAL_CORPUS_EMPTY,
@@ -79,6 +81,26 @@ export type CorpusPatternRetriever = (
   input: ContextAssembleInput,
   tenantKey: string | null,
 ) => Promise<CanonicalPatternIndexResult>;
+
+/**
+ * Test seam for the Azure AI Search retrieval lane. Production wiring
+ * uses `queryTenantContext` from `@/lib/azure-search/tenant-context-retriever`.
+ * Returning `ContextChunk[]` keeps the shape identical to the pgvector
+ * `chunksByVector` path so the broker dispatches without branching
+ * downstream.
+ */
+export type AzureSearchTenantContextRetriever = (args: {
+  tenantClientKey: string;
+  query: string;
+  topK: number;
+}) => Promise<ContextChunk[]>;
+
+/**
+ * Info-tag emitted when the Azure AI Search retrieval lane runs.
+ */
+export function azureSearchRetrievalInfoTag(topK: number): string {
+  return `Vector retrieval via Azure AI Search (top-K=${topK}).`;
+}
 
 const DEFAULTS = {
   maxFacts: 12,
@@ -458,6 +480,21 @@ export class DefaultContextBroker implements ContextBroker {
     private readonly adapter: TenantDataAdapter = getTenantDataAdapter(),
     private readonly openaiClient?: OpenAIEmbeddingsLike,
     private readonly corpusPatternRetriever: CorpusPatternRetriever = defaultCorpusPatternRetriever,
+    // Azure AI Search retrieval lane. Production default reaches the
+    // `tenant-context-v1` index via `queryTenantContext`. The broker
+    // only invokes it when the `retrieval_azure_search` feature flag
+    // resolves on for the active tenant — see `assemble()`.
+    private readonly azureSearchRetriever: AzureSearchTenantContextRetriever = async (args) => {
+      const hits = await queryTenantContext({
+        tenantClientKey: args.tenantClientKey,
+        query: args.query,
+        topK: args.topK,
+      });
+      // The retriever's `TenantContextChunk` is a structural mirror of
+      // `ContextChunk` — the parity test pins the shape. The map is a
+      // no-op at runtime; the cast is the TS-level narrowing.
+      return hits as ContextChunk[];
+    },
   ) {}
 
   async assemble(input: ContextAssembleInput): Promise<ContextBundle> {
@@ -584,13 +621,43 @@ export class DefaultContextBroker implements ContextBroker {
     // empty-state copy.
     let semanticChunks: SemanticChunkHit[] = [];
     let vectorSucceeded = false;
+    let azureSearchUsed = false;
     const vectorBlocked = Boolean(privateResource && !isPrivateVectorAvailable(privateResource));
+    // Azure AI Search retrieval lane (parallel-run prereq). When the
+    // `retrieval_azure_search` flag is on for this tenant, dispatch to
+    // the Azure index instead of pgvector. Drop-in shape: same
+    // `ContextChunk[]` contract. On failure, fall back to pgvector
+    // (do NOT swallow into keyword-only) so the rollout never regresses
+    // beyond the existing path. The pgvector path stays first-class.
+    const useAzureSearch = !vectorBlocked
+      && isFeatureEnabled({ clientKey: tenantKey }, 'retrieval_azure_search');
+    if (useAzureSearch) {
+      try {
+        const azureChunks = await this.azureSearchRetriever({
+          tenantClientKey: tenantKey,
+          query: input.query,
+          topK: maxChunks,
+        });
+        semanticChunks = azureChunks.map((chunk) => ({
+          chunk,
+          score: chunk.vectorScore ?? 0,
+        }));
+        vectorSucceeded = true;
+        azureSearchUsed = true;
+      } catch {
+        // Fall through to the pgvector path below — keeps the rollout
+        // safe when the Azure index hiccups during cutover.
+        azureSearchUsed = false;
+      }
+    }
     if (vectorBlocked) {
       warnings.push(WARNING_VECTOR_PENDING);
       const fallback: ContextChunk[] = keywords.length > 0
         ? await this.adapter.chunksByKeyword(tenantKey, keywords, maxChunks)
         : [];
       semanticChunks = fallback.map((chunk) => ({ chunk, score: 0 }));
+    } else if (azureSearchUsed) {
+      // Already populated above — nothing to do here.
     } else {
       try {
         // Embed the query once. `embedTexts` throws if OPENAI_API_KEY
@@ -623,7 +690,11 @@ export class DefaultContextBroker implements ContextBroker {
       // CB-10 · vector-retrieval-succeeded is success metadata, not a
       // warning — pushed onto `infoTags` so the panel renders it in a
       // distinct slate-toned strip rather than the amber warnings.
-      infoTags.push(vectorRetrievalInfoTag(maxChunks));
+      infoTags.push(
+        azureSearchUsed
+          ? azureSearchRetrievalInfoTag(maxChunks)
+          : vectorRetrievalInfoTag(maxChunks),
+      );
     }
 
     // ──────────────── Worldview chunks (full mode) ────────────────

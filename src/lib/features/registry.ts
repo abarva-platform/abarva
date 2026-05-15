@@ -61,7 +61,8 @@ export type FeatureFlagKey =
   // platform-default and one tenant-default entry so the policy
   // distinction is exercised in tests.
   | 'intelligence_brief_v4'
-  | 'first_capital_substrate_overlay';
+  | 'first_capital_substrate_overlay'
+  | 'retrieval_azure_search';
 
 export const FEATURE_FLAGS: ReadonlyArray<FeatureFlagDefinition> = [
   {
@@ -76,6 +77,16 @@ export const FEATURE_FLAGS: ReadonlyArray<FeatureFlagDefinition> = [
       'First-Capital-only substrate overlay during pilot tuning. Opt-in per tenant. Default off everywhere else.',
     policy: 'tenant',
     includeTenants: ['arcturus'],
+  },
+  {
+    key: 'retrieval_azure_search',
+    summary:
+      'Route AgentContextBroker tenant-context retrieval through Azure AI Search (tenant-context-v1) instead of pgvector. Platform-scope intent — staged via tenant allowlist so production cutover happens tenant-by-tenant. Default off everywhere.',
+    policy: 'tenant',
+    // includeTenants intentionally empty — flip on per tenant during
+    // cutover. When parity is proven across the roster, swap to
+    // `platform` policy with the inverse `excludeTenants` for rollback.
+    includeTenants: [],
   },
 ];
 
