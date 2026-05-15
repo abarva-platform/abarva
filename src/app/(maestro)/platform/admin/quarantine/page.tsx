@@ -172,8 +172,8 @@ function EmptyState({ tenantClientKey }: { tenantClientKey: string }): React.Rea
       <p style={{ color: '#2C2F36', margin: '0 auto', maxWidth: 520, lineHeight: 1.55 }}>
         Tenant <code>{tenantClientKey}</code> has zero quarantine events
         in the audit log. This is the expected default when the
-        sensitive-data guard isn't flagging anything (or when the data
-        source hasn't been wired — see banner above).
+        sensitive-data guard isn&apos;t flagging anything (or when the data
+        source hasn&apos;t been wired — see banner above).
       </p>
     </div>
   );

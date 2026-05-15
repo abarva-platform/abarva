@@ -1,6 +1,6 @@
 # AbarVa Azure Lab Current State
 
-Status: live lab snapshot as of 2026-05-14  
+Status: live lab snapshot as of 2026-05-15
 Subscription: `abarva-lab-sub` / `701a8554-a166-46e9-bf13-743bc50e3b20`  
 Data posture: synthetic/no-client-data only
 
@@ -21,6 +21,7 @@ The current design keeps the app runtime in `eastus` and the first managed Postg
 | Image supply chain | Azure Container Registry | `acrabarvalab001` | RBAC-only image registry for app, broker, ingestion, and evaluation worker images. |
 | App image | ACR image | `acrabarvalab001.azurecr.io/abarva/web:lab-keyvault-health-20260515-r1` | Proves the real AbarVa Next.js app can build and push through Azure's image lane with the public health probe. |
 | Real-image app runtime shell | Container App | `ca-abarva-web-lab-eastus` | References the real AbarVa image with managed-identity ACR pull and Key Vault-backed env projection. |
+| Database migration job | Container Apps Job | `job-abarva-db-migrate-lab-eastus` | Runs Azure Postgres compatibility bootstrap plus repo SQL migrations inside the private Container Apps environment; verified 149 migrations / 234 public tables on 2026-05-15. |
 | Event ingestion | Service Bus, Event Grid, Blob containers | `sb-abarva-lab-eastus`, `q-context-ingestion-events`, `q-agent-work-items`, `context-drops`, `context-processed`, `egsub-context-drop-created` | Creates the Day-2 backbone for incremental context-layer refresh. |
 | Retrieval | Azure AI Search | `srch-abarva-context-lab-eastus` | Azure-native retrieval service for tenant context, evidence, source/vendor artifacts, industry corpus, and signals. |
 | Azure-native graph | Cosmos DB for Apache Gremlin | `cos-abarva-graph-lab-001`, `abarva-context-graph`, `tenant-context` | Operational relationship graph foundation for tenant context; partitioned by `/tenantKey` and reachable through private endpoint/DNS. |
@@ -34,11 +35,12 @@ The current design keeps the app runtime in `eastus` and the first managed Postg
 
 | Order | Capability | Azure service | Intended state |
 |---:|---|---|---|
-| 1 | Search index contracts | Azure AI Search indexes | Create indexes after embedding dimensions/provider and ingestion worker contract are set. |
-| 2 | Model lane | Azure AI Foundry / Azure OpenAI | Governed enterprise model endpoint, including Claude through Azure-native procurement where available. |
-| 3 | Graph-provider code boundary | App broker + Cosmos Gremlin adapter | Replace direct Neo4j reads with a provider boundary and seed a synthetic tenant graph. |
-| 4 | Enterprise ingress | Front Door + WAF | Public Azure entry with TLS, WAF, bot/rate controls, and customer-ready routing. |
-| 5 | Ingestion worker | Container Apps job or worker app | Consume Service Bus events, validate datasets, scan sensitive data, update manifests, and refresh search. |
+| 1 | Tenant seed/export parity | Azure Postgres + seed harness | Load Apex, Meridian, and First Capital synthetic setup packs into Azure and compare context/graph counts. |
+| 2 | Search index contracts | Azure AI Search indexes | Create indexes after embedding dimensions/provider and ingestion worker contract are set. |
+| 3 | Model lane | Azure AI Foundry / Azure OpenAI | Governed enterprise model endpoint, including Claude through Azure-native procurement where available. |
+| 4 | Graph-provider code boundary | App broker + Cosmos Gremlin adapter | Replace direct Neo4j reads with a provider boundary and project tenant edges from Postgres to Cosmos Gremlin. |
+| 5 | Enterprise ingress | Front Door + WAF | Public Azure entry with TLS, WAF, bot/rate controls, and customer-ready routing. |
+| 6 | Ingestion worker | Container Apps job or worker app | Consume Service Bus events, validate datasets, scan sensitive data, update manifests, and refresh search. |
 
 ## Front / Middle / Back Mapping
 
@@ -69,14 +71,14 @@ Before scale-up, measure and record:
 - No production model keys.
 - No open public database endpoint.
 - No customer VPN/private link yet.
-- No full Supabase-to-Azure cutover yet.
+- No full Supabase-to-Azure cutover yet; AZLAB18 adds the migration job and parallel-run path, not production cutover.
 - No Kubernetes unless the product clearly needs it.
 
 ## Current Gaps
 
 | Gap | Severity | Close path |
 |---|---|---|
-| Real AbarVa app runtime health is still blocked by auth middleware until this PR deploys | High | `/api/health` now has a public-probe allowlist; rebuild image and redeploy runtime. |
+| Azure tenant data seed parity not yet executed | High | Run Day-1 seed/export harness for Apex, Meridian, and First Capital; compare setup-pack, context chunk, and graph counts. |
 | No Azure AI Search indexes yet | High | Create indexes after embedding/model contract is finalized. |
 | No graph-provider app adapter yet | Medium | Add a broker-level graph provider interface and seed Cosmos Gremlin with synthetic tenant context. |
 | No ingestion worker yet | Medium | Add a Container Apps job/worker that consumes the Service Bus event queue. |

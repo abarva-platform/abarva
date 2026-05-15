@@ -97,6 +97,14 @@ COPY --from=build --chown=node:node /app/node_modules ./node_modules
 COPY --from=build --chown=node:node /app/package.json ./package.json
 COPY --from=build --chown=node:node /app/next.config.ts ./next.config.ts
 
+# Operational scripts used by Container Apps Jobs. The web runtime does not
+# need these on the request path, but the Azure migration job reuses this image
+# so schema/bootstrap scripts and SQL migrations must be present.
+COPY --from=build --chown=node:node /app/tsconfig.json ./tsconfig.json
+COPY --from=build --chown=node:node /app/src/scripts ./src/scripts
+COPY --from=build --chown=node:node /app/scripts ./scripts
+COPY --from=build --chown=node:node /app/supabase/migrations ./supabase/migrations
+
 USER node
 
 EXPOSE 3000

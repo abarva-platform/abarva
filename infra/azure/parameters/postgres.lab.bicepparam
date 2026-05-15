@@ -37,6 +37,7 @@ param postgresDatabaseNames = [
   'abarva_context'
   'abarva_audit'
 ]
+param postgresAllowedExtensions = 'PGCRYPTO,UUID-OSSP'
 
 param logAnalyticsWorkspaceName = 'log-abarva-observability-lab-eastus'
 param postgresAdminLoginSecretName = 'postgres-context-admin-login'
