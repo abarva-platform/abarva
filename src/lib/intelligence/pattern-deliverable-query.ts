@@ -5,7 +5,8 @@ import {
   patternIdToSlug,
   patternRouteFor,
 } from '@/lib/intelligence/pattern-manifest';
-import { getGraphDriver } from '@/lib/graph/driver';
+import { getGraphDriverIfEnabled } from '@/lib/graph/driver';
+import { isNeo4jEnabled, logNeo4jSkipped } from '@/lib/graph/neo4j-gate';
 import {
   buildAllProgramsSeedPlan,
   deliverableRouteSegmentFor,
@@ -320,8 +321,13 @@ async function queryGraphDeliverablesForPattern(
   index: SeedCitationIndex,
 ): Promise<DeliverableCitationSummary[] | null> {
   if (!hasGraphConfig()) return null;
+  const driver = await getGraphDriverIfEnabled();
+  if (!driver) {
+    logNeo4jSkipped('queryGraphDeliverablesForPattern');
+    return null;
+  }
 
-  const session = getGraphDriver().session();
+  const session = driver.session();
   try {
     const result = await session.run(
       `
@@ -362,8 +368,13 @@ async function queryGraphPatternsForDeliverable(
   index: SeedCitationIndex,
 ): Promise<PatternCitationSummary[] | null> {
   if (!hasGraphConfig()) return null;
+  const driver = await getGraphDriverIfEnabled();
+  if (!driver) {
+    logNeo4jSkipped('queryGraphPatternsForDeliverable');
+    return null;
+  }
 
-  const session = getGraphDriver().session();
+  const session = driver.session();
   try {
     const result = await session.run(
       `
@@ -466,6 +477,11 @@ function seedCitationSource(detail: string): CitationQuerySource {
 }
 
 function hasGraphConfig(): boolean {
+  // Treat the `graph_neo4j_enabled` flag as part of "is graph available".
+  // When the flag is OFF (the default) we report the seed manifest as the
+  // sole source of citation edges, matching the existing pre-Neo4j
+  // fallback behaviour.
+  if (!isNeo4jEnabled()) return false;
   return Boolean(process.env.NEO4J_URI && process.env.NEO4J_USERNAME && process.env.NEO4J_PASSWORD);
 }
 

@@ -1,6 +1,6 @@
 import { getAnthropicClient } from './stream';
 import { assembleTriggerDetectionPrompt, type TriggerContext } from './prompts/pattern-trigger';
-import { getGraphDriver } from '@/lib/graph/driver';
+import { withGraphSession } from '@/lib/graph/driver';
 
 export interface DetectedTrigger {
   code: string;
@@ -34,17 +34,21 @@ export async function writeTriggerEdge(
   patternCode: string,
   evidence: string,
 ): Promise<void> {
-  const driver = getGraphDriver();
-  const session = driver.session();
-  try {
-    await session.run(
-      `MATCH (e:Engagement {id: $eid}), (p:GenomePattern {code: $code})
-       MERGE (e)-[r:TRIGGERED]->(p)
-       ON CREATE SET r.first_seen_at = datetime(), r.evidence = $evidence, r.evidence_turn_count = 1, r.observed_at = datetime()
-       ON MATCH SET r.last_seen_at = datetime(), r.evidence_turn_count = coalesce(r.evidence_turn_count, 1) + 1`,
-      { eid: engagementGraphNodeId, code: patternCode, evidence },
-    );
-  } finally {
-    await session.close();
-  }
+  // Gated by `graph_neo4j_enabled` — when off, the trigger edge is not
+  // written (Postgres `enterprise_graph_edges` is the system of record;
+  // Neo4j was a denormalized projection). See
+  // `src/lib/graph/neo4j-gate.ts`.
+  await withGraphSession<void>(
+    'writeTriggerEdge',
+    async (session) => {
+      await session.run(
+        `MATCH (e:Engagement {id: $eid}), (p:GenomePattern {code: $code})
+         MERGE (e)-[r:TRIGGERED]->(p)
+         ON CREATE SET r.first_seen_at = datetime(), r.evidence = $evidence, r.evidence_turn_count = 1, r.observed_at = datetime()
+         ON MATCH SET r.last_seen_at = datetime(), r.evidence_turn_count = coalesce(r.evidence_turn_count, 1) + 1`,
+        { eid: engagementGraphNodeId, code: patternCode, evidence },
+      );
+    },
+    undefined,
+  );
 }

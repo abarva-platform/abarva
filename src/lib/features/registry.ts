@@ -62,7 +62,8 @@ export type FeatureFlagKey =
   // distinction is exercised in tests.
   | 'intelligence_brief_v4'
   | 'first_capital_substrate_overlay'
-  | 'retrieval_azure_search';
+  | 'retrieval_azure_search'
+  | 'graph_neo4j_enabled';
 
 export const FEATURE_FLAGS: ReadonlyArray<FeatureFlagDefinition> = [
   {
@@ -86,6 +87,17 @@ export const FEATURE_FLAGS: ReadonlyArray<FeatureFlagDefinition> = [
     // includeTenants intentionally empty — flip on per tenant during
     // cutover. When parity is proven across the roster, swap to
     // `platform` policy with the inverse `excludeTenants` for rollback.
+    includeTenants: [],
+  },
+  {
+    key: 'graph_neo4j_enabled',
+    summary:
+      'Enables Neo4j-backed graph traversal. Default OFF — Postgres enterprise_graph_* tables are the source of truth. Re-enable per the AZLAB Neo4j re-introduction plan if/when that runs.',
+    // Modelled as a `tenant`-policy flag so the global default is OFF.
+    // (Platform policy means default ON; we need the opposite.) Flip on
+    // per tenant via `includeTenants` only when a controlled lab decides
+    // to re-introduce Neo4j; in production the flag stays empty.
+    policy: 'tenant',
     includeTenants: [],
   },
 ];

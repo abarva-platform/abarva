@@ -2,7 +2,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { createClient } from '@supabase/supabase-js';
-import { getGraphDriver, closeGraphDriver } from '@/lib/graph/driver';
+import { getGraphDriverIfEnabled, closeGraphDriver } from '@/lib/graph/driver';
+import { setNeo4jEnabledOverride } from '@/lib/graph/neo4j-gate';
 import { deterministicUuid, resolveClientMap } from './contradiction-engine-lib';
 
 type TenantKey = 'meridian' | 'first_capital' | 'apex';
@@ -924,7 +925,14 @@ async function resolveEngagementRefs(
 }
 
 async function seedPeerDecisions() {
-  const driver = getGraphDriver();
+  // Operator-run seed script — force the gate on for this process so the
+  // Cypher migrations land regardless of the platform default.
+  setNeo4jEnabledOverride(true);
+  const driver = await getGraphDriverIfEnabled();
+  if (!driver) {
+    console.error('graph_neo4j_enabled override did not take effect; aborting.');
+    process.exit(2);
+  }
   const session = driver.session();
   try {
     for (const seed of PEER_DECISION_SEEDS) {

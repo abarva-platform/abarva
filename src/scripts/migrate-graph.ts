@@ -3,12 +3,19 @@ config({ path: '.env.local' });
 
 import { readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
-import { getGraphDriver, closeGraphDriver } from '../lib/graph/driver';
+import { getGraphDriverIfEnabled, closeGraphDriver } from '../lib/graph/driver';
+import { setNeo4jEnabledOverride } from '../lib/graph/neo4j-gate';
 
 async function main() {
   const dir = join(process.cwd(), 'db/graph/migrations');
   const files = readdirSync(dir).filter(f => f.endsWith('.cypher')).sort();
-  const driver = getGraphDriver();
+  // Operator-run migration script — force the gate on for this process.
+  setNeo4jEnabledOverride(true);
+  const driver = await getGraphDriverIfEnabled();
+  if (!driver) {
+    console.error('graph_neo4j_enabled override did not take effect; aborting.');
+    process.exit(2);
+  }
   const session = driver.session();
   try {
     for (const file of files) {
