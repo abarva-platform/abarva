@@ -1,0 +1,71 @@
+name: Azure L5 reset-and-replay
+
+# L5 data-integrity gate: prove the repo migrations can replay into a fresh
+# Postgres database with the Azure/Supabase compatibility shims present.
+#
+# This intentionally uses disposable synthetic CI Postgres, not the Azure lab
+# database. It is the "can we rebuild from zero?" gate. Azure PITR restore and
+# seed/data-copy replay remain separate live-environment drills.
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - ".github/workflows/azure-l5-reset-replay.yml"
+      - "supabase/migrations/**"
+      - "src/scripts/bootstrap-azure-postgres-compat.ts"
+      - "src/scripts/postgres-client-options.ts"
+      - "src/scripts/run-migrations.ts"
+      - "src/scripts/verify-azure-postgres-schema.ts"
+      - "package.json"
+      - "package-lock.json"
+  schedule:
+    # Sunday 04:30 UTC
+    - cron: "30 4 * * 0"
+
+jobs:
+  reset-replay:
+    name: Fresh Postgres migration replay
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: abarva_l5
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_USER: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d abarva_l5"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+
+    env:
+      DATABASE_URL: postgres://postgres:postgres@localhost:5432/abarva_l5?sslmode=disable
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+
+      - name: Install deps
+        run: npm ci
+
+      - name: Bootstrap Supabase compatibility shims
+        run: npm run db:azure:bootstrap
+
+      - name: Replay migrations from zero
+        run: npm run db:migrate -- --ci --allow-destructive
+
+      - name: Verify schema baseline
+        run: npm run db:azure:verify
+

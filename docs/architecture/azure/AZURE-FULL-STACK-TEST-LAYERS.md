@@ -26,7 +26,7 @@ Current state: the lab has real Azure services live through AZLAB25: Container A
 | L2 Connectivity / private endpoint reachability | Container Apps can reach private Postgres, Blob, Service Bus, Key Vault, and Search through intended lanes; public clients cannot reach private data resources. | `/api/health` direct Postgres probe; AZLAB20, AZLAB22, AZLAB23, AZLAB25 live job evidence; AZLAB26 positive-path smoke across Postgres/Blob/Service Bus/Key Vault/Search | Add negative public-path test to prove private resources fail by network/firewall, not only auth. | Partial |
 | L3 Security: network + identity | Private data resources are not public; managed identities are least-privilege; secrets are Key Vault refs, not literals. | Key Vault env projection in AZLAB16; Defender baseline; ACR managed identity pull; `scripts/azure/audit-lab-security.mjs`; AZLAB27 live run: 67 pass, 9 attention, 0 fail | Add gitleaks workflow and rotation drill; close 9 advisory attention items before pilot strict mode. | Partial |
 | L4 Multi-tenant isolation | Tenant A cannot read tenant B via API, RLS, broker, or UI. | `.github/workflows/sec-p0-post-deploy.yml`, `tests/security/sec-p0-cross-tenant-probes.sh`, `tests/e2e/primary-surfaces-smoke.spec.ts`; AZLAB28 adds `azure-lab` workflow target | Load Azure-host session secrets and run SEC-P0 against Azure FQDN; add broker response tenant-key assertion. | Partial |
-| L5 Data integrity | Migrations and seeds replay to a fresh DB; drift is visible; backup/restore works. | `.github/workflows/migration-drift-*.yml`, `src/scripts/bootstrap-azure-postgres-compat.ts`, `src/scripts/copy-tenant-context-to-azure.ts`, `src/scripts/verify-azure-postgres-schema.ts` | Reset-and-replay CI against fresh Postgres, expected row-count assertions, weekly PITR restore drill. | Partial |
+| L5 Data integrity | Migrations and seeds replay to a fresh DB; drift is visible; backup/restore works. | `.github/workflows/migration-drift-*.yml`, `.github/workflows/azure-l5-reset-replay.yml`, `src/scripts/bootstrap-azure-postgres-compat.ts`, `src/scripts/copy-tenant-context-to-azure.ts`, `src/scripts/verify-azure-postgres-schema.ts` | Add seed/data-copy replay with expected row-count assertions and weekly PITR restore drill. | Partial |
 | L6 Functional E2E | Each tenant can sign in, navigate Home/Intelligence/Moves/Source/Tower, complete one workflow, and sign out. | `tests/e2e/primary-surfaces-smoke.spec.ts` | Add workflow-level specs: Origination, Move gate, Source evidence ledger, Tower decision pack, screenshot baselines. | Partial |
 | L7 Agent quality | Sentinel, Atlas, Nexus, Steward stay grounded, in-voice, internally consistent, and safe under adversarial prompts. | `docs/agent-quality/SENTINEL-CONSISTENCY-GUARD-EXPANSION.md`, existing Sentinel voice tests, audit question batteries in docs | Golden corpus and adversarial corpus per agent, weekly drift watchdog, guard telemetry wired to C5 dashboard. | Design |
 | L8 Performance / load | Postgres pool, Container Apps autoscale, Search retrieval, and agent turns stay under CXO latency targets. | Container Apps runtime live; App Insights live | k6/Artillery scenarios, cold-start test, agent latency budget trace, p95 target gates. | Gap |
@@ -117,7 +117,7 @@ Current state: the lab has real Azure services live through AZLAB25: Container A
 | Check | Artifact | Pass condition |
 |---|---|---|
 | Migration drift | `.github/workflows/migration-drift-pr.yml`, `.github/workflows/migration-drift-nightly.yml` | New migrations are visible in PR; nightly drift is green or explicitly waived. |
-| Reset-and-replay | New CI job with fresh Postgres container | All migrations + seed scripts replay; Apex, Meridian, First Capital exist with expected row counts. |
+| Reset-and-replay | `.github/workflows/azure-l5-reset-replay.yml` | Fresh Postgres runs compatibility bootstrap, all migrations replay, and schema verification passes. |
 | Azure schema verification | `src/scripts/verify-azure-postgres-schema.ts` | Reports expected migration/table/context counts. |
 | Backup/restore drill | Monthly Azure Postgres PITR runbook | Restored sandbox passes smoke E2E. |
 
@@ -131,6 +131,8 @@ Current state: the lab has real Azure services live through AZLAB25: Container A
 | Total | 6,567 |
 
 These are synthetic context chunks, not customer data.
+
+**Current state.** AZLAB29 closes the schema replay part of L5. The next step is adding deterministic synthetic data replay and row-count assertions for Apex, Meridian, and First Capital.
 
 ## L6 - Functional E2E
 
