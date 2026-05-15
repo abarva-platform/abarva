@@ -15,7 +15,8 @@
 import { config as loadEnv } from 'dotenv';
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import { Pinecone } from '@pinecone-database/pinecone';
-import neo4j, { type Driver } from 'neo4j-driver';
+import type { Driver } from 'neo4j-driver';
+import { isNeo4jEnabled } from '@/lib/graph/neo4j-gate';
 
 loadEnv({ path: '.env.local' });
 loadEnv();
@@ -218,11 +219,17 @@ async function auditPinecone(t: Tenant) {
 
 // ── Neo4j ──────────────────────────────────────────────────────────────────
 
-function getNeo4j(): Driver | null {
+async function getNeo4j(): Promise<Driver | null> {
+  // Audit script honours `graph_neo4j_enabled`. When the flag is off
+  // (the default) the Neo4j plane is reported as "skipped" rather than
+  // attempting a connection. The `neo4j-driver` module is dynamically
+  // imported so the module is not loaded at all when the flag is off.
+  if (!isNeo4jEnabled()) return null;
   const uri = process.env.NEO4J_URI;
   const user = process.env.NEO4J_USERNAME;
   const pass = process.env.NEO4J_PASSWORD;
   if (!uri || !user || !pass) return null;
+  const { default: neo4j } = await import('neo4j-driver');
   return neo4j.driver(uri, neo4j.auth.basic(user, pass));
 }
 
@@ -281,7 +288,7 @@ async function main() {
     console.error('Missing Supabase creds. Cannot run audit.');
     process.exit(1);
   }
-  const driver = getNeo4j();
+  const driver = await getNeo4j();
 
   const reports: Array<{
     tenant: Tenant;

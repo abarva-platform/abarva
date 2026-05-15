@@ -54,7 +54,6 @@ export function isNeo4jEnabled(
  * Neo4j is off. Keep the message stable; it shows up in production logs.
  */
 export function logNeo4jSkipped(callSite: string): void {
-  // eslint-disable-next-line no-console
   console.info(
     `[neo4j-gate] ${callSite}: graph_neo4j_enabled is OFF; using fallback.`,
   );

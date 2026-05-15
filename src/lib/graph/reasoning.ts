@@ -1,21 +1,35 @@
-import { isInt } from 'neo4j-driver';
-import { getGraphDriver } from './driver';
+// Neo4j-backed reasoning queries. Each entry point runs through the
+// `graph_neo4j_enabled` gate via `withGraphSession()` so that when the
+// flag is OFF (the default) the call returns `null`/`[]` and the
+// `neo4j-driver` module is never loaded. The dynamic import below is
+// only reached inside the gated path.
 
-function unwrap(val: unknown): unknown {
-  if (val == null) return val;
-  if (isInt(val)) return (val as unknown as { toNumber: () => number }).toNumber();
-  if (Array.isArray(val)) return val.map(unwrap);
-  if (typeof val === 'object') {
-    const out: Record<string, unknown> = {};
-    for (const [k, v] of Object.entries(val as Record<string, unknown>)) out[k] = unwrap(v);
-    return out;
-  }
-  return val;
+import { withGraphSession } from './driver';
+
+async function lazyIsInt(): Promise<(v: unknown) => boolean> {
+  const mod = await import('neo4j-driver');
+  return mod.isInt as (v: unknown) => boolean;
 }
 
-function props(node: unknown): Record<string, unknown> {
-  const n = node as { properties?: Record<string, unknown> } | null | undefined;
-  return (unwrap(n?.properties ?? {}) as Record<string, unknown>) ?? {};
+function makeUnwrap(isInt: (v: unknown) => boolean) {
+  return function unwrap(val: unknown): unknown {
+    if (val == null) return val;
+    if (isInt(val)) return (val as unknown as { toNumber: () => number }).toNumber();
+    if (Array.isArray(val)) return val.map(unwrap);
+    if (typeof val === 'object') {
+      const out: Record<string, unknown> = {};
+      for (const [k, v] of Object.entries(val as Record<string, unknown>)) out[k] = unwrap(v);
+      return out;
+    }
+    return val;
+  };
+}
+
+function makeProps(unwrap: (v: unknown) => unknown) {
+  return function props(node: unknown): Record<string, unknown> {
+    const n = node as { properties?: Record<string, unknown> } | null | undefined;
+    return (unwrap(n?.properties ?? {}) as Record<string, unknown>) ?? {};
+  };
 }
 
 // ─── 1 · Use-case reasoning chain ───────────────────────────────────────────
@@ -50,32 +64,36 @@ export async function getUseCaseReasoning(useCaseId: string): Promise<UseCaseRea
       collect(DISTINCT b) AS benchmarks,
       count(DISTINCT peer) AS peer_engagements_same_pattern
   `;
-  const session = getGraphDriver().session();
-  try {
-    const res = await session.run(cypher, { useCaseId });
-    if (res.records.length === 0) return null;
-    const rec = res.records[0];
-    const stackRaw = rec.get('vendor_stack') as Array<{ vendor: unknown; product: unknown; posture: unknown }>;
-    const regsRaw = rec.get('regulations') as Array<{ regulation: unknown; section: unknown }>;
-    const patsRaw = rec.get('patterns') as Array<{ pattern: unknown; violates: unknown }>;
-    const benchRaw = rec.get('benchmarks') as unknown[];
-    return {
-      useCase: props(rec.get('uc')),
-      vendorStack: stackRaw
-        .filter((x) => x.vendor != null)
-        .map((x) => ({ vendor: props(x.vendor), product: props(x.product), posture: props(x.posture) })),
-      regulations: regsRaw
-        .filter((x) => x.regulation != null)
-        .map((x) => ({ regulation: props(x.regulation), section: props(x.section) })),
-      patterns: patsRaw
-        .filter((x) => x.pattern != null)
-        .map((x) => ({ pattern: props(x.pattern), violates: props(x.violates) })),
-      benchmarks: benchRaw.filter((b) => b != null).map((b) => props(b)),
-      peerEngagementsSamePattern: Number(unwrap(rec.get('peer_engagements_same_pattern')) ?? 0),
-    };
-  } finally {
-    await session.close();
-  }
+  return withGraphSession<UseCaseReasoningResult | null>(
+    'getUseCaseReasoning',
+    async (session) => {
+      const isInt = await lazyIsInt();
+      const unwrap = makeUnwrap(isInt);
+      const props = makeProps(unwrap);
+      const res = await session.run(cypher, { useCaseId });
+      if (res.records.length === 0) return null;
+      const rec = res.records[0];
+      const stackRaw = rec.get('vendor_stack') as Array<{ vendor: unknown; product: unknown; posture: unknown }>;
+      const regsRaw = rec.get('regulations') as Array<{ regulation: unknown; section: unknown }>;
+      const patsRaw = rec.get('patterns') as Array<{ pattern: unknown; violates: unknown }>;
+      const benchRaw = rec.get('benchmarks') as unknown[];
+      return {
+        useCase: props(rec.get('uc')),
+        vendorStack: stackRaw
+          .filter((x) => x.vendor != null)
+          .map((x) => ({ vendor: props(x.vendor), product: props(x.product), posture: props(x.posture) })),
+        regulations: regsRaw
+          .filter((x) => x.regulation != null)
+          .map((x) => ({ regulation: props(x.regulation), section: props(x.section) })),
+        patterns: patsRaw
+          .filter((x) => x.pattern != null)
+          .map((x) => ({ pattern: props(x.pattern), violates: props(x.violates) })),
+        benchmarks: benchRaw.filter((b) => b != null).map((b) => props(b)),
+        peerEngagementsSamePattern: Number(unwrap(rec.get('peer_engagements_same_pattern')) ?? 0),
+      };
+    },
+    null,
+  );
 }
 
 // ─── 2 · Vendor risk profile ────────────────────────────────────────────────
@@ -103,22 +121,26 @@ export async function getVendorRiskProfile(
       collect(DISTINCT f.code) AS complies,
       collect(DISTINCT r.code) AS regulations
   `;
-  const session = getGraphDriver().session();
-  try {
-    const res = await session.run(cypher, { vendorName, clientIndustry, dataClasses });
-    if (res.records.length === 0) return null;
-    const rec = res.records[0];
-    return {
-      vendor: props(rec.get('v')),
-      posture: props(rec.get('posture')),
-      compliesWith: ((unwrap(rec.get('complies')) as unknown[]) ?? []).filter((x) => typeof x === 'string') as string[],
-      applicableRegulations: ((unwrap(rec.get('regulations')) as unknown[]) ?? []).filter(
-        (x) => typeof x === 'string',
-      ) as string[],
-    };
-  } finally {
-    await session.close();
-  }
+  return withGraphSession<VendorRiskProfile | null>(
+    'getVendorRiskProfile',
+    async (session) => {
+      const isInt = await lazyIsInt();
+      const unwrap = makeUnwrap(isInt);
+      const props = makeProps(unwrap);
+      const res = await session.run(cypher, { vendorName, clientIndustry, dataClasses });
+      if (res.records.length === 0) return null;
+      const rec = res.records[0];
+      return {
+        vendor: props(rec.get('v')),
+        posture: props(rec.get('posture')),
+        compliesWith: ((unwrap(rec.get('complies')) as unknown[]) ?? []).filter((x) => typeof x === 'string') as string[],
+        applicableRegulations: ((unwrap(rec.get('regulations')) as unknown[]) ?? []).filter(
+          (x) => typeof x === 'string',
+        ) as string[],
+      };
+    },
+    null,
+  );
 }
 
 // ─── 3 · Peer benchmark ─────────────────────────────────────────────────────
@@ -152,15 +174,19 @@ export async function getPeerBenchmark(
     ORDER BY b.as_of_date DESC
     LIMIT 1
   `;
-  const session = getGraphDriver().session();
-  try {
-    const res = await session.run(cypher, { metricName, industry });
-    if (res.records.length === 0) return null;
-    const benchmark = props(res.records[0].get('b'));
-    return { benchmark, clientValue, percentile: computePercentile(clientValue, benchmark) };
-  } finally {
-    await session.close();
-  }
+  return withGraphSession<PeerBenchmarkResult | null>(
+    'getPeerBenchmark',
+    async (session) => {
+      const isInt = await lazyIsInt();
+      const unwrap = makeUnwrap(isInt);
+      const props = makeProps(unwrap);
+      const res = await session.run(cypher, { metricName, industry });
+      if (res.records.length === 0) return null;
+      const benchmark = props(res.records[0].get('b'));
+      return { benchmark, clientValue, percentile: computePercentile(clientValue, benchmark) };
+    },
+    null,
+  );
 }
 
 // ─── 4 · Pattern history ────────────────────────────────────────────────────
@@ -188,22 +214,25 @@ export async function getPatternHistory(
       count(DISTINCT CASE WHEN eng.outcome = 'failed' THEN eng END) AS failed,
       collect(DISTINCT {engagement: eng.id, client: c.name, outcome: eng.outcome})[0..5] AS recent
   `;
-  const session = getGraphDriver().session();
-  try {
-    const res = await session.run(cypher, { patternCode, industry: industry ?? null });
-    if (res.records.length === 0) return null;
-    const rec = res.records[0];
-    const fr = unwrap(rec.get('failure_rate'));
-    return {
-      failureRate: typeof fr === 'number' ? fr : null,
-      totalEngagements: Number(unwrap(rec.get('total')) ?? 0),
-      succeeded: Number(unwrap(rec.get('succeeded')) ?? 0),
-      failed: Number(unwrap(rec.get('failed')) ?? 0),
-      recent: (unwrap(rec.get('recent')) as Array<{ engagement: string; client: string | null; outcome: string | null }>) ?? [],
-    };
-  } finally {
-    await session.close();
-  }
+  return withGraphSession<PatternHistoryResult | null>(
+    'getPatternHistory',
+    async (session) => {
+      const isInt = await lazyIsInt();
+      const unwrap = makeUnwrap(isInt);
+      const res = await session.run(cypher, { patternCode, industry: industry ?? null });
+      if (res.records.length === 0) return null;
+      const rec = res.records[0];
+      const fr = unwrap(rec.get('failure_rate'));
+      return {
+        failureRate: typeof fr === 'number' ? fr : null,
+        totalEngagements: Number(unwrap(rec.get('total')) ?? 0),
+        succeeded: Number(unwrap(rec.get('succeeded')) ?? 0),
+        failed: Number(unwrap(rec.get('failed')) ?? 0),
+        recent: (unwrap(rec.get('recent')) as Array<{ engagement: string; client: string | null; outcome: string | null }>) ?? [],
+      };
+    },
+    null,
+  );
 }
 
 // ─── 5 · Applicable regulations ────────────────────────────────────────────
@@ -234,23 +263,26 @@ export async function getApplicableRegulations(
       r.jurisdiction AS jurisdiction,
       collect(DISTINCT {code: rs.code, title: rs.title}) AS sections
   `;
-  const session = getGraphDriver().session();
-  try {
-    const res = await session.run(cypher, { industryCode, topicKeys: topicKeys ?? [] });
-    return res.records.map((rec) => {
-      const sectionsRaw = (unwrap(rec.get('sections')) as Array<{ code: string | null; title: string | null }>) ?? [];
-      return {
-        code: String(unwrap(rec.get('code')) ?? ''),
-        name: String(unwrap(rec.get('name')) ?? ''),
-        jurisdiction: (unwrap(rec.get('jurisdiction')) as string | null) ?? null,
-        relevantSections: sectionsRaw
-          .filter((s) => s.code)
-          .map((s) => ({ code: s.code ?? '', title: s.title ?? '' })),
-      };
-    });
-  } finally {
-    await session.close();
-  }
+  return withGraphSession<ApplicableRegulation[]>(
+    'getApplicableRegulations',
+    async (session) => {
+      const isInt = await lazyIsInt();
+      const unwrap = makeUnwrap(isInt);
+      const res = await session.run(cypher, { industryCode, topicKeys: topicKeys ?? [] });
+      return res.records.map((rec) => {
+        const sectionsRaw = (unwrap(rec.get('sections')) as Array<{ code: string | null; title: string | null }>) ?? [];
+        return {
+          code: String(unwrap(rec.get('code')) ?? ''),
+          name: String(unwrap(rec.get('name')) ?? ''),
+          jurisdiction: (unwrap(rec.get('jurisdiction')) as string | null) ?? null,
+          relevantSections: sectionsRaw
+            .filter((s) => s.code)
+            .map((s) => ({ code: s.code ?? '', title: s.title ?? '' })),
+        };
+      });
+    },
+    [],
+  );
 }
 
 // ─── 6 · Cross-client learning ─────────────────────────────────────────────
@@ -284,21 +316,24 @@ export async function getCrossClientLearning(
     ORDER BY peerEng.completed_at DESC
     LIMIT 5
   `;
-  const session = getGraphDriver().session();
-  try {
-    const res = await session.run(cypher, { currentEngagementId, patternCode });
-    return res.records.map((rec) => ({
-      engagementId: String(unwrap(rec.get('engagement_id')) ?? ''),
-      outcome: (unwrap(rec.get('outcome')) as string | null) ?? null,
-      lesson: (unwrap(rec.get('lesson')) as string | null) ?? null,
-      coTriggeredPatterns: ((unwrap(rec.get('co_triggered')) as unknown[]) ?? []).filter(
-        (s): s is string => typeof s === 'string' && s.length > 0,
-      ),
-      useCases: ((unwrap(rec.get('use_cases')) as unknown[]) ?? []).filter(
-        (s): s is string => typeof s === 'string' && s.length > 0,
-      ),
-    }));
-  } finally {
-    await session.close();
-  }
+  return withGraphSession<CrossClientLearning[]>(
+    'getCrossClientLearning',
+    async (session) => {
+      const isInt = await lazyIsInt();
+      const unwrap = makeUnwrap(isInt);
+      const res = await session.run(cypher, { currentEngagementId, patternCode });
+      return res.records.map((rec) => ({
+        engagementId: String(unwrap(rec.get('engagement_id')) ?? ''),
+        outcome: (unwrap(rec.get('outcome')) as string | null) ?? null,
+        lesson: (unwrap(rec.get('lesson')) as string | null) ?? null,
+        coTriggeredPatterns: ((unwrap(rec.get('co_triggered')) as unknown[]) ?? []).filter(
+          (s): s is string => typeof s === 'string' && s.length > 0,
+        ),
+        useCases: ((unwrap(rec.get('use_cases')) as unknown[]) ?? []).filter(
+          (s): s is string => typeof s === 'string' && s.length > 0,
+        ),
+      }));
+    },
+    [],
+  );
 }

@@ -1,4 +1,5 @@
 import { runBrokeredGenomeQuery } from '@/lib/intelligence/genome-query-broker';
+import { setNeo4jEnabledOverride } from '@/lib/graph/neo4j-gate';
 
 const createMessageMock = jest.fn();
 const sessionRunMock = jest.fn();
@@ -13,13 +14,24 @@ jest.mock('@/lib/agent/stream', () => ({
 }));
 
 jest.mock('@/lib/graph/driver', () => ({
-  getGraphDriver: () => ({
+  getGraphDriverIfEnabled: async () => ({
     session: () => ({
       run: sessionRunMock,
       close: sessionCloseMock,
     }),
   }),
 }));
+
+beforeAll(() => {
+  // The broker now gates on `graph_neo4j_enabled`. These tests exercise
+  // the "flag on" code path; the gate-off path is covered by
+  // `src/__tests__/features/neo4j-gate.test.ts`.
+  setNeo4jEnabledOverride(true);
+});
+
+afterAll(() => {
+  setNeo4jEnabledOverride(null);
+});
 
 describe('runBrokeredGenomeQuery', () => {
   beforeEach(() => {
