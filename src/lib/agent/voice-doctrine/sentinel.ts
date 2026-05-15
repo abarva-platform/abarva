@@ -20,7 +20,7 @@
 import type { BrokerMode } from '@/lib/knowledge/context-broker/types';
 
 export const SENTINEL_DOCTRINE_VERSION = {
-  voice: '0.draft.2026-05-13a',
+  voice: '0.draft.2026-05-15a',
   worldviewAddendum: 1,
   refusalTriggers: 1,
 } as const;
@@ -295,6 +295,11 @@ export interface CheckSentinelVoiceOptions {
    * this to keep the validator focused on citations + voice drift.
    */
   maxWords?: number;
+  /**
+   * Reference date for date-math consistency checks. Tests pass a
+   * fixed date; runtime callers default to the current date.
+   */
+  referenceDate?: Date | string;
 }
 
 /**
@@ -326,6 +331,10 @@ export function checkSentinelVoice(
   const arithmeticViolation = detectRankedMoneyOrderingContradiction(text);
   if (arithmeticViolation) {
     violations.push(arithmeticViolation);
+  }
+
+  for (const consistencyViolation of detectPhaseOneConsistencyViolations(text, options)) {
+    violations.push(consistencyViolation);
   }
 
   const sentenceCount = countSentences(text);
@@ -393,6 +402,166 @@ function detectRankedMoneyOrderingContradiction(text: string): VoiceDriftViolati
   }
 
   return null;
+}
+
+function detectPhaseOneConsistencyViolations(
+  text: string,
+  options: CheckSentinelVoiceOptions,
+): VoiceDriftViolation[] {
+  return [
+    ...detectMoneySumReconciliationViolations(text),
+    ...detectRelativeDateMathViolations(text, normalizeReferenceDate(options.referenceDate)),
+    ...detectPatternCitationValidityViolations(text),
+  ];
+}
+
+function normalizeReferenceDate(referenceDate: Date | string | undefined): Date {
+  if (referenceDate instanceof Date) return referenceDate;
+  if (typeof referenceDate === 'string') {
+    const parsed = new Date(referenceDate);
+    if (!Number.isNaN(parsed.getTime())) return parsed;
+  }
+  return new Date();
+}
+
+function detectMoneySumReconciliationViolations(text: string): VoiceDriftViolation[] {
+  const violations: VoiceDriftViolation[] = [];
+  const lines = text.split(/\n|(?<=\.)\s+/);
+
+  for (const line of lines) {
+    if (!/\b(?:totaling|total(?:s|ed)?|sum|combined)\b/i.test(line)) continue;
+    const totalTrigger = line.search(/\b(?:totaling|total(?:s|ed)?|sum|combined)\b/i);
+    if (totalTrigger < 0) continue;
+
+    const matches = [...line.matchAll(/\$\s*([0-9]+(?:\.[0-9]+)?)\s*([BMK])\b/gi)]
+      .map((match) => ({
+        raw: match[0],
+        value: moneyToBaseUnits(match[1] ?? '0', match[2] ?? 'M'),
+        index: match.index ?? 0,
+      }));
+    const components = matches.filter((match) => match.index < totalTrigger);
+    const total = matches.find((match) => match.index > totalTrigger);
+    if (components.length < 2 || !total) continue;
+
+    const sum = components.reduce((acc, match) => acc + match.value, 0);
+    const tolerance = Math.max(total.value * 0.05, 100_000);
+    if (Math.abs(sum - total.value) > tolerance) {
+      violations.push({
+        category: 'internal_consistency',
+        phrase: 'money components do not reconcile to stated total',
+        match: line.trim(),
+      });
+    }
+  }
+
+  return violations;
+}
+
+function moneyToBaseUnits(amountText: string, unitText: string): number {
+  const amount = Number(amountText);
+  const unit = unitText.toUpperCase();
+  const multiplier = unit === 'B' ? 1_000_000_000 : unit === 'M' ? 1_000_000 : 1_000;
+  return amount * multiplier;
+}
+
+function detectRelativeDateMathViolations(text: string, referenceDate: Date): VoiceDriftViolation[] {
+  const violations: VoiceDriftViolation[] = [];
+  const monthPattern =
+    /\bin\s+(\d{1,2})\s+months?\b[^.\n]{0,100}\b(Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:tember)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\.?\s+(\d{1,2}),?\s+(\d{4})\b/gi;
+  const dayPattern =
+    /\bin\s+(\d{1,3})\s+days?\b[^.\n]{0,100}\b(Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:tember)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\.?\s+(\d{1,2}),?\s+(\d{4})\b/gi;
+
+  for (const match of text.matchAll(monthPattern)) {
+    const statedMonths = Number(match[1]);
+    const absoluteDate = dateFromParts(match[2] ?? '', match[3] ?? '', match[4] ?? '');
+    if (!absoluteDate) continue;
+    const actualMonths = monthDistance(referenceDate, absoluteDate);
+    if (Math.abs(actualMonths - statedMonths) > 1) {
+      violations.push({
+        category: 'internal_consistency',
+        phrase: 'relative month count conflicts with absolute date',
+        match: match[0],
+      });
+    }
+  }
+
+  for (const match of text.matchAll(dayPattern)) {
+    const statedDays = Number(match[1]);
+    const absoluteDate = dateFromParts(match[2] ?? '', match[3] ?? '', match[4] ?? '');
+    if (!absoluteDate) continue;
+    const actualDays = Math.round((stripTime(absoluteDate).getTime() - stripTime(referenceDate).getTime()) / 86_400_000);
+    if (Math.abs(actualDays - statedDays) > 2) {
+      violations.push({
+        category: 'internal_consistency',
+        phrase: 'relative day count conflicts with absolute date',
+        match: match[0],
+      });
+    }
+  }
+
+  return violations;
+}
+
+function dateFromParts(monthText: string, dayText: string, yearText: string): Date | null {
+  const month = monthIndex(monthText);
+  const day = Number(dayText);
+  const year = Number(yearText);
+  if (month === null || !Number.isInteger(day) || !Number.isInteger(year)) return null;
+  return new Date(Date.UTC(year, month, day));
+}
+
+function monthIndex(monthText: string): number | null {
+  const normalized = monthText.toLowerCase().replace(/\.$/, '').slice(0, 3);
+  const months = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
+  const index = months.indexOf(normalized);
+  return index >= 0 ? index : null;
+}
+
+function stripTime(date: Date): Date {
+  return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
+}
+
+function monthDistance(from: Date, to: Date): number {
+  const fromUtc = stripTime(from);
+  const toUtc = stripTime(to);
+  let months = (toUtc.getUTCFullYear() - fromUtc.getUTCFullYear()) * 12
+    + (toUtc.getUTCMonth() - fromUtc.getUTCMonth());
+  if (toUtc.getUTCDate() < fromUtc.getUTCDate()) months -= 1;
+  return months;
+}
+
+function detectPatternCitationValidityViolations(text: string): VoiceDriftViolation[] {
+  const ids = Array.from(
+    new Set([
+      ...Array.from(text.matchAll(/\bPAT-[A-Z0-9-]{3,}\b/g)).map((match) => match[0]),
+      ...Array.from(text.matchAll(/\bP-[A-Z]{2,3}-\d{3}\b/g)).map((match) => match[0]),
+      ...Array.from(text.matchAll(/\bF\d{3}\b/g)).map((match) => match[0]),
+    ]),
+  );
+
+  return ids
+    .filter((id) => !isKnownPatternCitation(id))
+    .map((id) => ({
+      category: 'internal_consistency' as const,
+      phrase: 'pattern citation is not in known registry',
+      match: id,
+    }));
+}
+
+function isKnownPatternCitation(id: string): boolean {
+  if (/^F2(?:0\d|1\d|2\d|3[0-4])$/.test(id)) return true;
+  if (/^P-(?:HC|FS|RET)-0(?:0[1-9]|1\d|20)$/.test(id)) return true;
+  if (/^PAT-META-M[1-6]$/.test(id)) return true;
+  if (/^PAT-(?:AI|CDP|ARCH)-0(?:0[1-9]|1[0-5])$/.test(id)) return true;
+  if (/^PAT-RET-AI-00[1-9]$/.test(id)) return true;
+  if (/^PAT-(?:COMP|FOW)-00[1-8]$/.test(id)) return true;
+  if (/^PAT-IND-(?:RET|FIN|HC)-00[1-9]$/.test(id)) return true;
+  if (/^PAT-SRC-(?:0(?:0[1-9]|1\d|20)|CAT-[A-Z-]+-00[1-9]|AMS-001|RFP-001|SOLE-001|FRAMEWORK-001|RENEWAL-001|DECOM-001)$/.test(id)) {
+    return true;
+  }
+  if (/^PAT-PRG-[A-Z0-9-]+-00[1-9]$/.test(id)) return true;
+  if (/^PAT-(?:AMS|CCAI|CC-AI|DEMAND|MARGIN|AMBIENT|PRIOR-AUTH|RCM)-00[1-9]$/.test(id)) return true;
+  return false;
 }
 
 // ── Refusal trigger contract ─────────────────────────────────────────────────

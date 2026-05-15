@@ -343,6 +343,92 @@ describe('SENTINEL_BANNED_PATTERNS — completeness', () => {
       expect(r.violations.some((v) => v.category === 'internal_consistency')).toBe(false);
     });
   });
+
+  describe('internal_consistency — phase 1 consistency guards (INT-VOICE.STRAT-2026-05-15a)', () => {
+    it('flags component spend that does not reconcile to the stated total', () => {
+      const r = checkSentinelVoice(
+        'The Q3 exposure is Salesforce $4M, Adobe $3M, and Accenture $2M, totaling $10M. The evidence is in F200.',
+      );
+      expect(r.violations).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            category: 'internal_consistency',
+            phrase: 'money components do not reconcile to stated total',
+          }),
+        ]),
+      );
+    });
+
+    it('does not flag component spend that reconciles within rounding tolerance', () => {
+      const r = checkSentinelVoice(
+        'The Q3 exposure is Salesforce $4M, Adobe $3M, and Accenture $2M, totaling $9M. The evidence is in F200.',
+      );
+      expect(r.violations).not.toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            phrase: 'money components do not reconcile to stated total',
+          }),
+        ]),
+      );
+    });
+
+    it('flags relative month counts that conflict with an absolute date', () => {
+      const r = checkSentinelVoice(
+        'Adobe renewal arrives in 8 months on Sep 30, 2026, so the CIO has room to defer. The evidence is in F200.',
+        { referenceDate: '2026-05-15T00:00:00.000Z' },
+      );
+      expect(r.violations).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            category: 'internal_consistency',
+            phrase: 'relative month count conflicts with absolute date',
+          }),
+        ]),
+      );
+    });
+
+    it('does not flag relative month counts that match an absolute date', () => {
+      const r = checkSentinelVoice(
+        'Adobe renewal arrives in 4 months on Sep 30, 2026, so the CIO has room to defer. The evidence is in F200.',
+        { referenceDate: '2026-05-15T00:00:00.000Z' },
+      );
+      expect(r.violations).not.toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            phrase: 'relative month count conflicts with absolute date',
+          }),
+        ]),
+      );
+    });
+
+    it('flags cited pattern IDs outside the known registry', () => {
+      const r = checkSentinelVoice(
+        'The binding pattern is P-HC-099, and the decision should move now because the evidence says so.',
+      );
+      expect(r.violations).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            category: 'internal_consistency',
+            phrase: 'pattern citation is not in known registry',
+            match: 'P-HC-099',
+          }),
+        ]),
+      );
+    });
+
+    it('does not flag known demo pattern citations', () => {
+      const r = checkSentinelVoice(
+        'The binding evidence is P-HC-014, P-FS-004, PAT-SRC-AMS-001, and F200. This is enough to form a view.',
+      );
+      expect(r.violations).not.toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            phrase: 'pattern citation is not in known registry',
+          }),
+        ]),
+      );
+    });
+  });
 });
 
 // INT-VOICE.STRAT-2026-05-10c · Consultant posture — replaces the earlier
