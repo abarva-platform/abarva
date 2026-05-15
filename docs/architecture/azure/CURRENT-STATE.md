@@ -14,6 +14,7 @@ The current design keeps the app runtime in `eastus` and the first managed Postg
 
 | Layer | Azure services | Live resources | Why it matters |
 |---|---|---|---|
+| Resource parity audit | Azure CLI script + GitHub Actions workflow | `npm run azure:resource:parity`, `.github/workflows/azure-l1-resource-parity.yml` | L1 live-state audit for expected lab resources and unexpected resources in tracked resource groups. AZLAB33 live local run returned 37 pass, 0 attention, 0 fail on 2026-05-15. Complements future Bicep what-if. |
 | Shared security | Key Vault | `kv-abarva-lab-001` | Central custody for secrets and future model/data-plane credentials. |
 | Private network | VNet, NSG, Private DNS | `vnet-abarva-private-dataplane-lab-eastus`, `privatelink.*` zones | Creates the private data lane AbarVa can place inside a customer-controlled Azure boundary. |
 | Private object store | Storage + Private Endpoint | `stabarvaprivatedplab001`, `pe-stabarvaprivatedplab001-blob` | Stores datasets, evidence manifests, exports, and corpus artifacts without public data-plane access. |
@@ -48,14 +49,15 @@ The current design keeps the app runtime in `eastus` and the first managed Postg
 | 1 | L4 Azure isolation probe run | Container Apps + Clerk + SEC-P0 workflow | AZLAB28 wired the workflow target. Next step is minting an Azure-host Clerk session, loading `AZURE_LAB_*` secrets, and running the probe against the Azure FQDN. |
 | 2 | L5 seed/data-copy replay | GitHub Actions + Azure copy scripts | AZLAB29 covers schema reset/replay and AZLAB31 adds row-count assertions. Next L5 step is a live Azure run after each `db:azure:copy-tenant-context`, plus weekly PITR restore verification. |
 | 3 | L6 live primary-surface E2E | Playwright + Clerk + Container Apps | AZLAB30 wired the workflow. Next step is allowing the Azure host in Clerk, then running `azure-lab` against all three demo tenants. |
-| 4 | L11 observability audit run | GitHub Actions + Azure CLI | AZLAB32 wired the evidence-plane audit. Next step is loading `AZURE_LAB_CLIENT_ID`/`AZURE_LAB_TENANT_ID` secrets and running the manual workflow. |
-| 5 | L3 strict pilot hardening | Private Endpoint + RBAC-only posture | AZLAB27 is 0-fail advisory. Before customer private-data-lane pilot, close the 9 attention items: Service Bus/Search public access, Key Vault public manageability, local auth, and over-broad RBAC scopes. |
-| 6 | Data-access adapter migration | App API/data layer | Move routes that still depend on Supabase REST behind an adapter that can target Azure Postgres. |
-| 7 | Search query adapter | Azure AI Search + AgentContextBroker | Tenant-context backfill is live. Next proof is broker retrieval against `tenant-context-v1` and additional backfills for evidence/source/industry/signals. |
-| 8 | Model lane | Azure AI Foundry / Azure OpenAI | Governed enterprise model endpoint, including Claude through Azure-native procurement where available. |
-| 9 | Graph-provider code boundary | App broker + Cosmos Gremlin adapter | Replace direct Neo4j reads with a provider boundary and project tenant edges from Postgres to Cosmos Gremlin. |
-| 10 | Enterprise ingress | Front Door + WAF | Public Azure entry with TLS, WAF, bot/rate controls, and customer-ready routing. |
-| 11 | Event Grid normalizer | Event Grid + Service Bus + Container Apps Job | Complete for metadata-bearing BlobCreated events. AZLAB23 proved Blob upload -> Event Grid -> Service Bus -> worker normalizer -> guard -> audit without direct canonical producer messages. |
+| 4 | L1 resource parity run | GitHub Actions + Azure CLI | AZLAB33 wired the live-state resource parity audit. Next step is running it through GitHub OIDC and adding Bicep what-if. |
+| 5 | L11 observability audit run | GitHub Actions + Azure CLI | AZLAB32 wired the evidence-plane audit. Next step is loading `AZURE_LAB_CLIENT_ID`/`AZURE_LAB_TENANT_ID` secrets and running the manual workflow. |
+| 6 | L3 strict pilot hardening | Private Endpoint + RBAC-only posture | AZLAB27 is 0-fail advisory. Before customer private-data-lane pilot, close the 9 attention items: Service Bus/Search public access, Key Vault public manageability, local auth, and over-broad RBAC scopes. |
+| 7 | Data-access adapter migration | App API/data layer | Move routes that still depend on Supabase REST behind an adapter that can target Azure Postgres. |
+| 8 | Search query adapter | Azure AI Search + AgentContextBroker | Tenant-context backfill is live. Next proof is broker retrieval against `tenant-context-v1` and additional backfills for evidence/source/industry/signals. |
+| 9 | Model lane | Azure AI Foundry / Azure OpenAI | Governed enterprise model endpoint, including Claude through Azure-native procurement where available. |
+| 10 | Graph-provider code boundary | App broker + Cosmos Gremlin adapter | Replace direct Neo4j reads with a provider boundary and project tenant edges from Postgres to Cosmos Gremlin. |
+| 11 | Enterprise ingress | Front Door + WAF | Public Azure entry with TLS, WAF, bot/rate controls, and customer-ready routing. |
+| 12 | Event Grid normalizer | Event Grid + Service Bus + Container Apps Job | Complete for metadata-bearing BlobCreated events. AZLAB23 proved Blob upload -> Event Grid -> Service Bus -> worker normalizer -> guard -> audit without direct canonical producer messages. |
 
 ## Front / Middle / Back Mapping
 
@@ -93,7 +95,7 @@ Before scale-up, measure and record:
 
 | Gap | Severity | Close path |
 |---|---|---|
-| L1-L11 full-stack test gates not wired end-to-end | High | `AZURE-FULL-STACK-TEST-LAYERS.md` defines the deploy, pilot, and continuous gates. L2 positive-path, L3 advisory audit, L4 Azure SEC-P0 target, L5 schema/data parity, L6 primary-surface E2E, and L11 evidence-plane audit are now wired. Remaining gates: L1 what-if/parity, L7 agent quality, L8 load, L9 resilience, L10 audit-pack assertions. |
+| L1-L11 full-stack test gates not wired end-to-end | High | `AZURE-FULL-STACK-TEST-LAYERS.md` defines the deploy, pilot, and continuous gates. L1 resource parity, L2 positive-path, L3 advisory audit, L4 Azure SEC-P0 target, L5 schema/data parity, L6 primary-surface E2E, and L11 evidence-plane audit are now wired. Remaining gates: L1 what-if, L7 agent quality, L8 load, L9 resilience, L10 audit-pack assertions. |
 | L3 security attention items remain advisory | High | AZLAB27 found 0 fail and 9 attention. Close or intentionally waive Service Bus/Search public access, local auth, Key Vault public manageability, Cosmos local auth, and account/namespace-scoped RBAC before a customer private-data-lane pilot. |
 | L11 telemetry attention items remain advisory | Medium | AZLAB32 found 0 fail and 2 attention: App Insights is not workspace-backed, and the web Container App does not yet project the App Insights connection string. Close before using App Insights as the pilot SLO source. |
 | Authenticated route-level Azure smoke still needed | High | Core setup/context tables are copied and direct app-to-Azure-Postgres health is green; AZLAB28 wired SEC-P0 to the Azure target and AZLAB30 wired browser E2E, but both need live Azure-host Clerk/auth runs. |
