@@ -50,3 +50,5 @@ Two live constraints are useful proof points:
 - **Postgres is in `eastus2`** because `eastus` was offer-restricted. The architecture kept Postgres private-only and connected it through private DNS and VNet peering.
 
 This is exactly the kind of resilience enterprise customers need. Client subscriptions often have quotas, region policies, or service restrictions. AbarVa's Azure design should survive those constraints without opening public endpoints or abandoning least-privilege access.
+
+| L7 live Azure baseline | Execute the live agent-quality runner against Azure/prod and store first answer artifact. | L7 | Partial | Dry-run passed; live Azure probe confirmed missing `AGENT_QUALITY_SESSION_COOKIE`; AZLAB49 adds preflight. |

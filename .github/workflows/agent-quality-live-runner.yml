@@ -1,5 +1,8 @@
 name: Agent quality live runner
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+
 on:
   schedule:
     - cron: "41 11 * * 1"
@@ -65,6 +68,25 @@ jobs:
       - name: Dry-run case selection
         if: ${{ github.event_name == 'schedule' || inputs.mode == 'dry-run' }}
         run: npm run qa:agent-quality:runner -- --mode dry-run ${{ steps.filters.outputs.args }} --out agent-quality-plan.json
+
+      - name: Verify live auth secret
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.mode == 'live' }}
+        env:
+          AGENT_QUALITY_SESSION_COOKIE: ${{ secrets.AGENT_QUALITY_SESSION_COOKIE }}
+        shell: bash
+        run: |
+          if [ -z "$AGENT_QUALITY_SESSION_COOKIE" ]; then
+            {
+              echo "### Missing live-run authentication"
+              echo
+              echo "Live agent-quality execution requires repository secret \`AGENT_QUALITY_SESSION_COOKIE\`."
+              echo "Create a short-lived authenticated app session cookie for the selected base URL, store it as the secret, and re-run this workflow."
+              echo
+              echo "Dry-run mode remains available without this secret."
+            } >> "$GITHUB_STEP_SUMMARY"
+            echo "::error title=Missing AGENT_QUALITY_SESSION_COOKIE::Live mode requires repository secret AGENT_QUALITY_SESSION_COOKIE. Re-run in dry-run mode or add a short-lived authenticated session cookie."
+            exit 1
+          fi
 
       - name: Live agent quality run
         if: ${{ github.event_name == 'workflow_dispatch' && inputs.mode == 'live' }}
