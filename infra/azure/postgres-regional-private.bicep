@@ -20,6 +20,7 @@ param backupRetentionDays int = 7
 param geoRedundantBackup string = 'Disabled'
 param databaseNames array = []
 param logAnalyticsWorkspaceResourceId string
+param allowedExtensions string = 'PGCRYPTO,UUID-OSSP'
 
 resource databaseVnet 'Microsoft.Network/virtualNetworks@2023-11-01' = {
   name: vnetName
@@ -138,6 +139,15 @@ resource postgresDatabases 'Microsoft.DBforPostgreSQL/flexibleServers/databases@
     collation: 'en_US.utf8'
   }
 }]
+
+resource postgresAllowedExtensions 'Microsoft.DBforPostgreSQL/flexibleServers/configurations@2023-12-01-preview' = {
+  parent: postgresServer
+  name: 'azure.extensions'
+  properties: {
+    value: allowedExtensions
+    source: 'user-override'
+  }
+}
 
 resource postgresDiagnostics 'Microsoft.Insights/diagnosticSettings@2021-05-01-preview' = {
   name: 'diag-${serverName}'
