@@ -1,11 +1,19 @@
 import 'server-only';
 
-import { isInt } from 'neo4j-driver';
 import { getAnthropicClient } from '@/lib/agent/stream';
 import { assembleGenomeQueryPrompt } from '@/lib/agent/prompts/genome-query';
 import { clientKeyToBrokerTenantKey } from '@/lib/agent/tools/intelligence/_shared';
-import { getGraphDriver } from '@/lib/graph/driver';
+import { getGraphDriverIfEnabled } from '@/lib/graph/driver';
+import { logNeo4jSkipped } from '@/lib/graph/neo4j-gate';
 import { buildSentinelContextBundle } from '@/lib/intelligence/sentinel-broker-adapter';
+
+// `isInt` is dynamically imported inside the gated execution path so the
+// `neo4j-driver` module is not loaded at boot when `graph_neo4j_enabled`
+// is OFF. See `src/lib/graph/neo4j-gate.ts`.
+async function lazyIsInt(): Promise<(v: unknown) => boolean> {
+  const mod = await import('neo4j-driver');
+  return mod.isInt as (v: unknown) => boolean;
+}
 
 const WRITE_OPS = /\b(CREATE|MERGE|SET|DELETE|REMOVE|DROP|DETACH)\b/i;
 const TENANT_PARAM_REQUIRED = /\$callerClientId\b/;
@@ -40,18 +48,20 @@ interface TranslatedGenomeQuery {
   explanation?: string;
 }
 
-function unwrap(val: unknown): unknown {
-  if (val == null) return val;
-  if (isInt(val)) return (val as unknown as { toNumber: () => number }).toNumber();
-  if (Array.isArray(val)) return val.map(unwrap);
-  if (typeof val === 'object' && val !== null) {
-    const obj = val as Record<string, unknown>;
-    if ('properties' in obj) return obj.properties;
-    if ('low' in obj && 'high' in obj && typeof (obj as { toNumber?: unknown }).toNumber === 'function') {
-      return (obj as unknown as { toNumber: () => number }).toNumber();
+function makeUnwrap(isInt: (v: unknown) => boolean) {
+  return function unwrap(val: unknown): unknown {
+    if (val == null) return val;
+    if (isInt(val)) return (val as unknown as { toNumber: () => number }).toNumber();
+    if (Array.isArray(val)) return val.map(unwrap);
+    if (typeof val === 'object' && val !== null) {
+      const obj = val as Record<string, unknown>;
+      if ('properties' in obj) return obj.properties;
+      if ('low' in obj && 'high' in obj && typeof (obj as { toNumber?: unknown }).toNumber === 'function') {
+        return (obj as unknown as { toNumber: () => number }).toNumber();
+      }
     }
-  }
-  return val;
+    return val;
+  };
 }
 
 function brokerSummary(bundle: ReturnType<typeof buildSentinelContextBundle>) {
@@ -161,9 +171,34 @@ export async function runBrokeredGenomeQuery(
     };
   }
 
-  const driver = getGraphDriver();
+  // graph_neo4j_enabled gate: when off, do not execute Cypher.
+  // Postgres enterprise_graph_* tables are the system of record and
+  // the broker tenant-context bundle already includes a graph
+  // neighborhood summary. Return an empty rows[] and surface the
+  // skip in the explanation so the caller knows the Cypher was not run.
+  const driver = await getGraphDriverIfEnabled({
+    clientKey: input.clientKey,
+    clientId: input.clientId,
+  });
+  if (!driver) {
+    logNeo4jSkipped('runBrokeredGenomeQuery');
+    return {
+      status: 200,
+      body: {
+        cypher: translated.cypher,
+        rows: [],
+        explanation:
+          (translated.explanation ?? '') +
+          ' (graph_neo4j_enabled is OFF — Cypher was not executed; broker summary stands in.)',
+        result_shape: translated.result_shape,
+        broker,
+      },
+    };
+  }
   const session = driver.session({ defaultAccessMode: 'READ' });
   try {
+    const isInt = await lazyIsInt();
+    const unwrap = makeUnwrap(isInt);
     const result = await session.run(translated.cypher, { callerClientId: input.clientId });
     const rows = result.records.map((r) => {
       const obj: Record<string, unknown> = {};
