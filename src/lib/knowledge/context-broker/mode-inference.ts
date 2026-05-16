@@ -15,7 +15,8 @@ import 'server-only';
  *                       → 'full'    (Move shaping needs program + tenant + corpus)
  *   /strategic-moves/new
  *                       → 'tenant'  (origination uses tenant context only)
- *   /intelligence      → 'corpus'  (Sentinel pattern catalog dominates)
+ *   /intelligence      → 'full' when tenantKey present, else 'corpus'
+ *                         (Sentinel needs tenant facts plus corpus)
  *   /tower             → 'full'    (cross-program rollup)
  *   /source            → 'full'    (tenant sourcing facts + shared corpus)
  *   /home              → 'tenant' if tenantKey present, else 'generic'
@@ -64,7 +65,8 @@ const HOME_PATTERN = /^\/home(\/.*)?$/;
  *      /strategic-moves/<id> or /phase/<n> (no tenant)   → 'generic'
  *   5. /tower (with tenant)                              → 'full'
  *      /tower (no tenant)                                → 'generic'
- *   6. /intelligence (any auth state)                    → 'corpus'
+ *   6. /intelligence (with tenant)                       → 'full'
+ *      /intelligence (no tenant)                         → 'corpus'
  *   7. /source (with tenant)                             → 'full'
  *      /source (no tenant)                               → 'generic'
  *   8. /home (with tenant) → 'tenant'; /home (no tenant) → 'generic'
@@ -101,7 +103,7 @@ export function inferModeForSurface(input: InferModeInput): BrokerMode {
   }
 
   if (INTELLIGENCE_PATTERN.test(surface)) {
-    return 'corpus';
+    return tenantKey ? 'full' : 'corpus';
   }
 
   if (SOURCE_DETAIL_PATTERN.test(surface)) {
