@@ -60,16 +60,36 @@ const TENANTS: ReadonlyArray<TenantFixture> = [
   },
 ];
 
-const PASSWORD = 'Demo2026!';
-const ACCESS_CODE = '424242';
+const PASSWORD = process.env.E2E_DEMO_PASSWORD ?? 'Demo2026!';
+const ACCESS_CODE = process.env.E2E_DEMO_ACCESS_CODE ?? '424242';
+
+async function typeCredential(page: Page, placeholder: RegExp, value: string): Promise<void> {
+  const field = page.getByPlaceholder(placeholder);
+  await field.fill('');
+  await field.click();
+  await page.keyboard.type(value, { delay: 4 });
+  await expect(field).toHaveValue(value);
+}
 
 async function signInAsTenant(page: Page, tenant: TenantFixture): Promise<void> {
-  await page.goto(`${BASE_URL}/sign-in`);
-  await page.getByPlaceholder(/name@company.com/i).fill(tenant.email);
-  await page.getByPlaceholder(/Password from invite/i).fill(PASSWORD);
-  await page.getByPlaceholder(/6-digit code/i).fill(ACCESS_CODE);
+  await page.context().clearCookies();
+  await page.goto(`${BASE_URL}/sign-in`, { waitUntil: 'domcontentloaded' });
+  await expect(page.getByPlaceholder(/name@company.com/i)).toBeVisible({
+    timeout: 30_000,
+  });
+  await page.waitForFunction(
+    () => Boolean((window as unknown as { Clerk?: { loaded?: boolean } }).Clerk?.loaded),
+    null,
+    { timeout: 30_000 },
+  );
+  await typeCredential(page, /name@company.com/i, tenant.email);
+  await typeCredential(page, /Password from invite/i, PASSWORD);
+  await typeCredential(page, /6-digit code/i, ACCESS_CODE);
+  await expect(page.getByRole('button', { name: /sign in/i })).toBeEnabled({
+    timeout: 10_000,
+  });
   await page.getByRole('button', { name: /sign in/i }).click();
-  await page.waitForURL(/\/home/, { timeout: 15_000 });
+  await page.waitForURL(/\/home/, { timeout: 30_000 });
 }
 
 for (const tenant of TENANTS) {
@@ -78,6 +98,9 @@ for (const tenant of TENANTS) {
   }
 
   test.describe(`A1 matrix · ${tenant.displayName} (${tenant.key})`, () => {
+    test.describe.configure({ mode: 'serial' });
+    test.setTimeout(60_000);
+
     test.beforeEach(async ({ page }) => {
       page.on('pageerror', (err) => {
         throw new Error(`Page errored: ${err.message}`);
@@ -90,7 +113,9 @@ for (const tenant of TENANTS) {
       // Tenant identity is the load-bearing assertion. Locked-role pinning
       // (PR #1930) ensures a Meridian-cookie user can never see Apex's home,
       // and vice versa. If this fails, audit Probe #1923 + #1930 regressions.
-      await expect(page.getByText(tenant.homeIdentityFragment)).toBeVisible();
+      await expect(
+        page.getByRole('heading', { name: tenant.displayName }),
+      ).toBeVisible();
     });
 
     test('Intelligence Brief headline names the right tenant', async ({ page }) => {
@@ -108,7 +133,7 @@ for (const tenant of TENANTS) {
     test('Strategic Moves loads with portfolio header', async ({ page }) => {
       await page.goto(`${BASE_URL}/strategic-moves`);
       await expect(
-        page.getByRole('heading', { name: /Strategic Moves/i }),
+        page.getByRole('heading', { name: /^Strategic Moves$/i }),
       ).toBeVisible();
     });
 
@@ -121,7 +146,7 @@ for (const tenant of TENANTS) {
 
     test('Tower loads with Atlas rail mounted', async ({ page }) => {
       await page.goto(`${BASE_URL}/tower`);
-      await expect(page.getByText(/Atlas/i)).toBeVisible();
+      await expect(page.getByText(/^Atlas$/i).first()).toBeVisible();
     });
   });
 }

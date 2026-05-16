@@ -252,6 +252,31 @@ function remapPatternPack(row: QueryResultRow, clientMap: ClientMap): QueryResul
   return next;
 }
 
+function remapUseCase(row: QueryResultRow, clientMap: ClientMap): QueryResultRow {
+  const next = remapClientId(row, clientMap);
+  // Optional relational affordances are not required for the Azure lab's
+  // Intelligence/Tower read path and may point at rows not copied in the
+  // current tenant slice.
+  for (const column of ['sponsor_person_id', 'owner_person_id', 'source_engagement_id', 'source_file_id']) {
+    if (next[column]) next[column] = null;
+  }
+  return next;
+}
+
+function remapContradiction(row: QueryResultRow, clientMap: ClientMap): QueryResultRow {
+  const next = remapClientId(row, clientMap);
+  for (const column of [
+    'triggered_engagement_id',
+    'reasoning_scope_id',
+    'disclosure_scope_id',
+    'detection_rule_id',
+    'detection_run_id',
+  ]) {
+    if (next[column]) next[column] = null;
+  }
+  return next;
+}
+
 function remapEngagement(row: QueryResultRow, clientMap: ClientMap, personMap: IdMap, teamMap: IdMap): QueryResultRow {
   const next = remapClientId(row, clientMap);
   for (const column of ['sponsor_person_id', 'co_sponsor_person_id', 'maestro_person_id', 'phase_locked_by_user_id']) {
@@ -381,6 +406,8 @@ async function replaceTenantRows(target: Client, tenants: TenantKey[], targetCli
   const deletes: Array<[string, string, unknown[]]> = [
     ['gate_criterion_states', 'gate_criteria_id in (select id from gate_criteria where program_id in (select id from engagements where client_id::text = any($1::text[])))', [targetClientIds]],
     ['gate_criteria', 'program_id in (select id from engagements where client_id::text = any($1::text[]))', [targetClientIds]],
+    ['contradictions', 'client_id::text = any($1::text[])', [targetClientIds]],
+    ['use_cases', 'client_id::text = any($1::text[])', [targetClientIds]],
     ['pattern_packs', 'client_id::text = any($1::text[])', [targetClientIds]],
     ['kpis', 'client_id::text = any($1::text[])', [targetClientIds]],
     ['source_events', 'client_key = any($1::text[])', [aliases]],
@@ -469,6 +496,38 @@ async function main() {
         sourceWhere: 'client_id::text = any($1::text[])',
         sourceParams: [sourceClientIds],
         transform: remapPatternPack,
+      },
+      {
+        table: 'genome_patterns',
+        conflictColumns: ['code'],
+        sourceWhere: "vertical = 'retail' and code >= 'F200' and code <= 'F239' and is_active = true and code is not null",
+        sourceParams: [],
+      },
+      {
+        table: 'knowledge_sources',
+        conflictColumns: ['source_key'],
+        sourceWhere: "pinecone_namespace = 'retail-knowledge-sources' and status = 'active'",
+        sourceParams: [],
+      },
+      {
+        table: 'use_cases',
+        conflictColumns: ['id'],
+        sourceWhere: 'client_id::text = any($1::text[])',
+        sourceParams: [sourceClientIds],
+        transform: remapUseCase,
+      },
+      {
+        table: 'contradictions',
+        conflictColumns: ['id'],
+        sourceWhere: 'client_id::text = any($1::text[]) and resolved_at is null',
+        sourceParams: [sourceClientIds],
+        transform: remapContradiction,
+      },
+      {
+        table: 'intelligence_graph_edges',
+        conflictColumns: ['from_node_type', 'from_node_id', 'edge_type', 'to_node_type', 'to_node_id'],
+        sourceWhere: "vertical = 'retail'",
+        sourceParams: [],
       },
       { table: 'tenant_expected_baselines', conflictColumns: ['tenant_key', 'segment_id'], sourceWhere: 'tenant_key = any($1::text[])', sourceParams: [aliases], transform: remapClientId },
       { table: 'data_inventory_segments', conflictColumns: ['tenant_key', 'segment_id'], sourceWhere: 'tenant_key = any($1::text[])', sourceParams: [aliases], transform: remapClientId },
