@@ -7,7 +7,7 @@ describe('composeStewardSystemPrompt — L7 live-gate discipline', () => {
   const prompt = composeStewardSystemPrompt({ surface: '/admin' });
 
   it('bumps the Steward doctrine for the L7 quality gate', () => {
-    expect(STEWARD_DOCTRINE_VERSION.voice).toBe('0.draft.2026-05-16a');
+    expect(STEWARD_DOCTRINE_VERSION.voice).toBe('0.draft.2026-05-16b');
   });
 
   it('locks setup, sensitive-data, research, banking KPI, and evidence wording', () => {
@@ -21,5 +21,8 @@ describe('composeStewardSystemPrompt — L7 live-gate discipline', () => {
     expect(prompt).toMatch(/GPU/i);
     expect(prompt).toMatch(/Palantir/i);
     expect(prompt).toMatch(/model\s+risk/i);
+    expect(prompt).toMatch(/Top\s+three\s+data\s+segments\s+to\s+load/i);
+    expect(prompt).toMatch(/First\s+Capital,\s+lab,\s+block,\s+evidence,\s+and\s+risk/i);
+    expect(prompt).toMatch(/quarantine,\s+cannot\s+use,\s+sensitive/i);
   });
 });

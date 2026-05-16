@@ -7,7 +7,7 @@ describe('composeAtlasSystemPrompt — L7 live-gate discipline', () => {
   const prompt = composeAtlasSystemPrompt({ surface: '/tower' });
 
   it('bumps the Atlas doctrine for the L7 quality gate', () => {
-    expect(ATLAS_DOCTRINE_VERSION.voice).toBe('0.draft.2026-05-16a');
+    expect(ATLAS_DOCTRINE_VERSION.voice).toBe('0.draft.2026-05-16b');
   });
 
   it('locks board pre-read, model-risk, evidence-map, and continuity wording', () => {
@@ -18,5 +18,8 @@ describe('composeAtlasSystemPrompt — L7 live-gate discipline', () => {
     expect(prompt).toMatch(/strongest\s+evidence/i);
     expect(prompt).toMatch(/confidence\s+level/i);
     expect(prompt).toMatch(/what\s+changed/i);
+    expect(prompt).toMatch(/I\s+can'?t\s+delete/i);
+    expect(prompt).toMatch(/I\s+can\s+recommend/i);
+    expect(prompt).toMatch(/value\s+and\s+quarter/i);
   });
 });

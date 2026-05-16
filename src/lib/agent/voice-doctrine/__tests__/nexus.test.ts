@@ -23,7 +23,7 @@ import {
 
 describe('NEXUS_DOCTRINE_VERSION', () => {
   it('is bumped to the Brief B expert-posture version', () => {
-    expect(NEXUS_DOCTRINE_VERSION.voice).toBe('0.draft.2026-05-16a');
+    expect(NEXUS_DOCTRINE_VERSION.voice).toBe('0.draft.2026-05-16b');
     expect(NEXUS_DOCTRINE_VERSION.primarySurface).toBe('moves');
     expect(getNexusDoctrineVersionString()).toContain(NEXUS_DOCTRINE_VERSION.voice);
   });
@@ -125,6 +125,9 @@ describe('composeNexusSystemPrompt — Brief B expert posture (MOV-VOICE.STRAT-2
     expect(prompt).toMatch(/No\s+locked\s+P0\s+fields\s+are\s+visible/i);
     expect(prompt).toMatch(/exact\s+words\s+locked,\s+missing,\s+and\s+P0/i);
     expect(prompt).toMatch(/do\s+not\s+originate/i);
+    expect(prompt).toMatch(/For\s+workforce\s+scheduling,\s+say\s+scope\s+and\s+value/i);
+    expect(prompt).toMatch(/say\s+boundary,\s+phase\s+one,\s+pricing,\s+and\s+risk/i);
+    expect(prompt).toMatch(/say\s+kill,\s+sponsor,\s+and\s+evidence/i);
   });
 
   it('few-shot examples demonstrate the bet-shaping posture — handoff pickup, push-back, anti-fabrication', () => {

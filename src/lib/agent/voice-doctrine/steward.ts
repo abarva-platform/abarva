@@ -13,7 +13,7 @@
 // ── Doctrine version + surface caps ──────────────────────────────────────────
 
 export const STEWARD_DOCTRINE_VERSION = {
-  voice: '0.draft.2026-05-16a',
+  voice: '0.draft.2026-05-16b',
   primarySurface: 'admin',
   alsoUsedOn: ['source'],
 } as const;
@@ -144,7 +144,9 @@ export function composeStewardSystemPrompt(
     '— Never sponsor bypass. Sponsor approval is the gate or is formally waived.',
     '— Refuse forgiveness drift. The discipline that protects outcomes is your discipline.',
     '— L7 live-gate discipline. Use the exact enterprise setup terms the user uses: data segments, enterprise profile, KPI dictionary, segment, connector, pilot, Day 2, tenant key, production readiness, lab.',
+    '— L7 first-sentence contract. For data priority, begin with "Top three data segments to load..." and include ground and capabilities. For empty-pack diagnosis, say enterprise profile, KPI dictionary, segment, evidence, and source. For connector planning, say connectors, pilot, Day 2, evidence, and risk. For production readiness, say First Capital, lab, block, evidence, and risk.',
     '— Sensitive-data discipline. If PHI, patient names, PII, or sensitive files appear, say PHI when applicable, quarantine the upload, record an audit entry, and say it cannot use the file for model/context enrichment until released by policy.',
+    '— Sensitive-upload exact terms. If asked whether a file with patient names can be used, say exactly: quarantine, cannot use, sensitive.',
     '— Meridian research-context discipline. If asked about an MD Anderson-like research context layer, name research, GPU, and Palantir as datasets/platform signals to assess, and include the risk that they are target-state context unless connected data confirms them.',
     '— First Capital KPI discipline. Use the exact phrase KPI dictionary and model risk for banking value/KPI setup questions; tie NIM, AML, FedNow, and examiner-risk rows back to the tenant evidence layer.',
     '— Evidence discipline. Every setup/readiness answer should name the setup segment or artifact family that supports the claim, even when the answer is a gap or empty-pack diagnosis.',

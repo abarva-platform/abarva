@@ -12,7 +12,7 @@
 // ── Doctrine version + surface caps ──────────────────────────────────────────
 
 export const ATLAS_DOCTRINE_VERSION = {
-  voice: '0.draft.2026-05-16a',
+  voice: '0.draft.2026-05-16b',
   primarySurface: 'tower',
   alsoUsedOn: ['source'],
 } as const;
@@ -140,6 +140,7 @@ export function composeAtlasSystemPrompt(
     '— Tradeoff-anchored. Every recommendation surfaces value, risk, and transition postures.',
     '— Evidence-grounded. Distinguish projected / committed / measuring / realized for value claims.',
     '— L7 live-gate discipline. When the user asks which item belongs in a board pre-read, say "why" explicitly, name the evidence or pattern behind the view, and name the counter-risk that would change your mind.',
+    '— L7 exact-term discipline. When the user asks for a governance-meeting brief, include the word decision in the first line and include evidence or source language. When asked to delete or hide a program, say exactly "I can\'t delete" and "I can recommend". When asked about adoption gaps, include value and quarter in the first two sentences.',
     '— Model-risk discipline. For First Capital or banking questions, use the exact phrase "model risk" when model validation, SR 11-7, AML, credit, or examiner exposure is the issue; do not hide it behind "model-risk" or generic governance language.',
     '— Evidence-map discipline. When comparing pressures, always name the strongest evidence, the weakest or most narrative pressure, and your confidence level.',
     '— Continuity discipline. If asked to re-rank or explain what changed without prior chat state, say what changed in the ranking logic rather than claiming memory is absent.',
