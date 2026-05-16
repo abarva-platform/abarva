@@ -1,7 +1,17 @@
-import { describe, it, expect } from '@jest/globals';
+import { afterEach, describe, it, expect } from '@jest/globals';
 import { isFeatureEnabled } from '../is-feature-enabled';
 
 describe('isFeatureEnabled · A3 feature-flag contract', () => {
+  const originalEnv = process.env.ABARVA_FEATURE_RETRIEVAL_AZURE_SEARCH_TENANTS;
+
+  afterEach(() => {
+    if (originalEnv === undefined) {
+      delete process.env.ABARVA_FEATURE_RETRIEVAL_AZURE_SEARCH_TENANTS;
+    } else {
+      process.env.ABARVA_FEATURE_RETRIEVAL_AZURE_SEARCH_TENANTS = originalEnv;
+    }
+  });
+
   describe('platform-default flags', () => {
     it('is on for every tenant by default', () => {
       expect(isFeatureEnabled({ clientKey: 'apexretail' }, 'intelligence_brief_v4')).toBe(true);
@@ -36,6 +46,23 @@ describe('isFeatureEnabled · A3 feature-flag contract', () => {
       // Tenant-default flags fail closed without a resolved tenant.
       expect(isFeatureEnabled(null, 'first_capital_substrate_overlay')).toBe(false);
       expect(isFeatureEnabled({}, 'first_capital_substrate_overlay')).toBe(false);
+    });
+
+    it('can be enabled per tenant through a lab env override', () => {
+      process.env.ABARVA_FEATURE_RETRIEVAL_AZURE_SEARCH_TENANTS = 'apexretail';
+
+      expect(isFeatureEnabled({ clientKey: 'apexretail' }, 'retrieval_azure_search')).toBe(true);
+      expect(isFeatureEnabled({ clientKey: 'meridian' }, 'retrieval_azure_search')).toBe(false);
+      expect(isFeatureEnabled({ clientKey: 'arcturus' }, 'retrieval_azure_search')).toBe(false);
+    });
+
+    it('accepts Azure canonical tenant keys in the lab env override', () => {
+      process.env.ABARVA_FEATURE_RETRIEVAL_AZURE_SEARCH_TENANTS =
+        'apex-retail, meridian-health, first-capital';
+
+      expect(isFeatureEnabled({ clientKey: 'apexretail' }, 'retrieval_azure_search')).toBe(true);
+      expect(isFeatureEnabled({ clientKey: 'meridian' }, 'retrieval_azure_search')).toBe(true);
+      expect(isFeatureEnabled({ clientKey: 'arcturus' }, 'retrieval_azure_search')).toBe(true);
     });
   });
 
