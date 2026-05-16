@@ -864,6 +864,21 @@ describe('PATTERN_LEVEL_FALLBACK consultant posture — INT-VOICE.STRAT-2026-05-
     expect(prompt).toMatch(/Never explain that you performed this check/i);
   });
 
+  it('includes the Intelligence priority slate for broad move-now questions', () => {
+    const prompt = composeSentinelSystemPrompt({
+      mode: 'corpus',
+      tenantKey: 'first-capital',
+      surface: '/intelligence',
+      vectorIndexPending: false,
+      worldviewPending: false,
+    });
+    expect(prompt).toMatch(/Intelligence priority-slate discipline/i);
+    expect(prompt).toMatch(/Population Health AI for ACOs/i);
+    expect(prompt).toMatch(/FedNow Payment Rails Modernization/i);
+    expect(prompt).toMatch(/deposit retention/i);
+    expect(prompt).toMatch(/Continuity fallback/i);
+  });
+
   it('is omitted on the Source surface, which has its own Brief C role', () => {
     const prompt = composeSentinelSystemPrompt({
       mode: 'corpus',
@@ -877,6 +892,7 @@ describe('PATTERN_LEVEL_FALLBACK consultant posture — INT-VOICE.STRAT-2026-05-
     expect(prompt).not.toMatch(/Consultant\s+posture/i);
     expect(prompt).not.toMatch(/Cloud, data, and AI-platform discipline/i);
     expect(prompt).not.toMatch(/Arithmetic and ranking reflection guard/i);
+    expect(prompt).not.toMatch(/Intelligence priority-slate discipline/i);
     expect(prompt).toMatch(/You\s+are\s+Source,?\s+AbarVa'?s\s+vendor\s+selection\s+agent/i);
   });
 });
