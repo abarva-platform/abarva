@@ -238,6 +238,55 @@ const PROGRAM_AGENT_RESPONSE_MAX_TOKENS = 4096;
 const PROGRAM_DELIVERABLE_SAVE_RE = /\b(save|persist|sign\s*off|signed\s*off|complete|approve|submit)\b/i;
 const PROGRAM_DELIVERABLE_NOUN_RE = /\b(deliverable|artifact|charter|traceability|roadmap|business\s+case|approval\s+(packet|memo)|funding|readiness|change\s+plan|tower\s+handoff|workshop\s+guide|design\s+spec|discovery\s+synthesis)\b/i;
 const PROGRAM_MULTI_DELIVERABLE_RE = /\b(separate\s+signed\s+deliverables|type\s+keys|business_case|funding_approval|sponsor_alignment|readiness_and_change_plan|tower_handoff_plan)\b/i;
+const L9_PROVIDER_OVERLOAD_DRILL_HEADER = 'x-abarva-l9-provider-drill-token';
+
+class AgentProviderOverloadDrillError extends Error {
+  readonly status = 529;
+
+  constructor() {
+    super('Simulated model provider overload for L9 resilience drill.');
+    this.name = 'AgentProviderOverloadDrillError';
+  }
+}
+
+function providerOverloadDrillToken(): string | null {
+  return process.env.L9_PROVIDER_OVERLOAD_DRILL_TOKEN?.trim()
+    || process.env.AZURE_CONNECTIVITY_HEALTH_TOKEN?.trim()
+    || process.env.INTERNAL_HEALTH_TOKEN?.trim()
+    || null;
+}
+
+export function shouldRunProviderOverloadDrill(request: Request): boolean {
+  const expected = providerOverloadDrillToken();
+  if (!expected) return false;
+  const supplied = request.headers.get(L9_PROVIDER_OVERLOAD_DRILL_HEADER)?.trim();
+  return supplied === expected;
+}
+
+export function isProviderOverloadLike(error: unknown): boolean {
+  const status = typeof error === 'object' && error !== null && 'status' in error
+    ? Number((error as { status?: unknown }).status)
+    : NaN;
+  const name = error instanceof Error ? error.name : '';
+  const message = error instanceof Error ? error.message : String(error);
+  return status === 529
+    || name === 'AgentProviderOverloadDrillError'
+    || /\b(529|overload|overloaded|capacity|rate\s*limit|temporarily\s+unavailable)\b/i.test(message);
+}
+
+export function formatProviderOverloadFallback(input: {
+  agentName: string | null;
+  surface: string;
+  tenantName: string;
+}): string {
+  const agent = input.agentName || 'AbarVa';
+  return [
+    '',
+    '',
+    `${agent} is temporarily capacity-limited by the model provider, so I cannot safely complete this turn with fresh reasoning right now.`,
+    `I have not changed tenant data for ${input.tenantName}. Keep this ${input.surface} context open and retry in a moment; I will resume from the same tenant-grounded surface.`,
+  ].join('\n');
+}
 
 export function getAgentResponseTokenBudget(surface: string): number {
   if (
@@ -1123,6 +1172,9 @@ export async function POST(request: Request) {
         // bundle with the failure as a warning, so the panel can
         // distinguish "no retrieval needed" from "retrieval errored."
         controller.enqueue(encoder.encode(contextBundleArtifact));
+        if (shouldRunProviderOverloadDrill(request)) {
+          throw new AgentProviderOverloadDrillError();
+        }
         await runToolUseLoop({
           client: anthropicClient,
           model: "claude-sonnet-4-6",
@@ -1165,6 +1217,15 @@ export async function POST(request: Request) {
           writer,
         });
       } catch (err) {
+        if (isProviderOverloadLike(err)) {
+          writer.write(formatProviderOverloadFallback({
+            agentName,
+            surface,
+            tenantName,
+          }));
+          return;
+        }
+
         // Surface tool/stream errors to the client honestly rather
         // than silently truncating the response.
         const errMessage = err instanceof Error ? err.message : String(err);
