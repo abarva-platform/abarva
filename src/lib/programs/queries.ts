@@ -4,6 +4,10 @@
 
 import { getServerSupabase } from '@/lib/supabase-server';
 import { allowedProgramIdsForUser, canReadProgram } from '@/lib/auth/program-access-policy';
+import {
+  createSupabaseProgramsReadAdapter,
+  selectProgramsReadAdapter,
+} from '@/lib/data-plane/read-adapters/programsReadAdapter';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type {
   FounderApprovalRequestRow,
@@ -119,29 +123,33 @@ function rowToProgram(r: EngagementRow): ProgramCore {
 
 /**
  * Program portfolio for a client — excludes archived + soft-deleted.
+ *
+ * The engagements table read runs behind the data-plane seam
+ * (`src/lib/data-plane/read-adapters/programsReadAdapter.ts`): `supabase` by
+ * default, `azure-postgres` when `ABARVA_DATA_PLANE` opts in. RBAC scoping
+ * (`allowedProgramIdsForUser`) and the `rowToProgram` view-model transform
+ * stay here so access-policy logic is not duplicated across data planes.
+ *
+ * When `opts.supabase` is supplied (server components passing their own
+ * client) the Supabase adapter is used directly, preserving that contract.
  */
 export async function getProgramPortfolio(
   ctx: TenancyCtx,
   opts: { limit?: number; supabase?: SupabaseClient } = {},
 ): Promise<ProgramCore[]> {
   assertTenancy(ctx);
-  const sb = opts.supabase ?? getServerSupabase();
   const limit = opts.limit ?? 100;
   const allowedProgramIds = await allowedProgramIdsForUser(ctx);
   if (allowedProgramIds && allowedProgramIds.length === 0) return [];
-  let query = sb
-    .from('engagements')
-    .select('id, client_id, name, sponsor_person_id, problem_statement, target_outcome, timeline_horizon, value_projected_low_usd, value_projected_high_usd, value_verified_usd, value_verified_status, value_currency, value_assumptions_jsonb, baseline_metrics, program_archetype, origin_source, origin_source_ref, status, lifecycle_state, current_phase, current_module_key, maestro_oversight_level, founder_approval_required, phase_locked_at, phase_locked_by_user_id, data_residency_region, retention_policy_years, archived_at, deleted_at, created_at, updated_at, charter, gates_passed')
-    .eq('client_id', ctx.clientId)
-    .is('archived_at', null)
-    .is('deleted_at', null)
-    .order('created_at', { ascending: false });
-  if (allowedProgramIds) {
-    query = query.in('id', allowedProgramIds);
-  }
-  const { data, error } = await query.limit(limit);
-  if (error) throw error;
-  return ((data as EngagementRow[] | null) ?? []).map(rowToProgram);
+  const adapter = opts.supabase
+    ? createSupabaseProgramsReadAdapter(() => opts.supabase as SupabaseClient)
+    : selectProgramsReadAdapter();
+  const rows = await adapter.getProgramPortfolioRows({
+    clientId: ctx.clientId,
+    allowedProgramIds,
+    limit,
+  });
+  return (rows as unknown as EngagementRow[]).map(rowToProgram);
 }
 
 export async function getProgramById(
