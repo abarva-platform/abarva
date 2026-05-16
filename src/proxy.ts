@@ -33,6 +33,11 @@ export const PUBLIC_ROUTE_PATTERNS = [
   // readiness before a browser session exists. The route masks raw backing
   // service errors when NODE_ENV=production.
   '/api/health',
+  // Connectivity health is also public at the middleware layer, but the
+  // route self-guards with `x-abarva-health-token` and returns JSON 404
+  // without it. Keeping it out of Clerk avoids HTML sign-in redirects in
+  // machine probes.
+  '/api/health/azure-connectivity',
   // SEC-P1-11 (audit 2026-05-13): `/api/debug/tower-substrate` previously
   // lived here as "count-only diagnostic" — but it returned per-tenant
   // initiative counts publicly to anyone who knew the URL. The route is

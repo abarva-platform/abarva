@@ -19,7 +19,7 @@ import { getTenantSystemBlock } from "@/lib/agent/demo-context";
 // the hardcoded fixture when no persisted data is available.
 import { buildTenantContextBlock } from "@/lib/intelligence/persistence";
 import { buildTenantTechnologyContextBlock } from "@/lib/knowledge/tenant-technology-context";
-import { getActiveClientRow } from "@/lib/active-client";
+import { getActiveClientKey, getActiveClientRow } from "@/lib/active-client";
 import {
   detectCrossTenantWriteIntent,
   formatCrossTenantWriteRefusal,
@@ -300,8 +300,10 @@ export async function POST(request: Request) {
   // for resilience — but tenantKey-equivalent prompt blocks below use
   // `activeClientDisplayName`, which prefers the authoritative key.
   const earlyActiveClient = await getActiveClientRow().catch(() => null);
+  const earlyActiveClientKey =
+    earlyActiveClient?.key ?? await getActiveClientKey().catch(() => null);
   const tenantName          =
-    canonicalClientDisplayName({ key: earlyActiveClient?.key, name: earlyActiveClient?.name })
+    canonicalClientDisplayName({ key: earlyActiveClientKey, name: earlyActiveClient?.name })
     ?? canonicalClientDisplayName({ name: body.tenantName })
     ?? "Apex Retail Group";
   const agentName           = body.agentName  ?? null;
@@ -405,8 +407,9 @@ export async function POST(request: Request) {
   // Reuse the earlier active-client lookup (resolved before voice doctrine
   // wiring so tenantName is authoritative). Aliased for downstream readers.
   const activeClient = earlyActiveClient;
+  const activeClientKey = earlyActiveClientKey;
   const activeClientDisplayName =
-    canonicalClientDisplayName({ key: activeClient?.key, name: activeClient?.name }) ?? tenantName;
+    canonicalClientDisplayName({ key: activeClientKey, name: activeClient?.name }) ?? tenantName;
   const tenancy = await requireTenancy().catch(() => null);
   const programAccessPolicy: UserProgramAccessPolicy | null = tenancy
     ? await loadUserProgramAccessPolicy(tenancy, { programId }).catch(() => null)
@@ -608,12 +611,12 @@ export async function POST(request: Request) {
   const sourceClientKey = isSourceSurface(surface)
     ? resolveSourceClientKey(surfaceContext)
     : null;
-  const effectiveClientKey = sourceClientKey ?? activeClient?.key ?? null;
+  const effectiveClientKey = sourceClientKey ?? activeClientKey ?? null;
   const crossTenantWriteIntent =
     isProgramsSurface(surface) || surface === '/home'
       ? detectCrossTenantWriteIntent({
           message,
-          activeClientKey: activeClient?.key ?? null,
+          activeClientKey: activeClientKey ?? null,
           activeClientName: activeClientDisplayName,
         })
       : null;
@@ -736,11 +739,11 @@ export async function POST(request: Request) {
     typeof surface === 'string' &&
     !surface.startsWith('/auth') &&
     !surface.startsWith('/sign-in');
-  if (isTenantCurrentStateSurface && activeClient?.key) {
+  if (isTenantCurrentStateSurface && activeClientKey) {
     try {
       const enterpriseAgentName = normalizeEnterpriseAgentName(agentName);
       const brokerRequest: ProgramsBrokerRequest = {
-        tenantKey: clientKeyToBrokerTenantKey(activeClient.key),
+        tenantKey: clientKeyToBrokerTenantKey(activeClientKey),
         programId: programId ?? undefined,
         agentName: enterpriseAgentName,
         surface: isSourceSurface(surface)
@@ -818,9 +821,9 @@ export async function POST(request: Request) {
   let overlapCandidatesBlock = '';
   const isOriginationSurface =
     surface === '/programs/new' || surface === '/demo/programs/new';
-  if (isOriginationSurface && activeClient?.key) {
+  if (isOriginationSurface && activeClientKey) {
     const overlapInput = buildBriefOverlapInput(
-      clientKeyToBrokerTenantKey(activeClient.key),
+      clientKeyToBrokerTenantKey(activeClientKey),
       surfaceContext,
     );
     if (overlapInput) {
@@ -1128,7 +1131,7 @@ export async function POST(request: Request) {
             request,
             surface,
             surfaceContext: body.surfaceContext,
-            clientKey: activeClient?.key ?? undefined,
+            clientKey: activeClientKey ?? undefined,
             userId: tenancy?.userId,
             accessPolicy: sourceAccessPolicy
               ? {
@@ -1189,7 +1192,7 @@ export async function POST(request: Request) {
             recordViolations({
               route: '/api/chat/agent',
               surface,
-              tenantId: activeClient?.key ?? undefined,
+              tenantId: activeClientKey ?? undefined,
               userId: tenancy?.userId ?? null,
               violations,
               responseLength: bufferedOutput.length,
