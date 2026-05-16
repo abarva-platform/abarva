@@ -530,6 +530,208 @@ describe('SENTINEL_BANNED_PATTERNS — completeness', () => {
   });
 });
 
+// INT-VOICE.STRAT-2026-05-15c · Phase 3 consistency guards — G4 currency
+// units, G7 time-tense, G8 forward-reference integrity. Completes all 8
+// guards from docs/agent-quality/SENTINEL-CONSISTENCY-GUARD-EXPANSION.md.
+describe('internal_consistency — phase 3 consistency guards (INT-VOICE.STRAT-2026-05-15c)', () => {
+  describe('G4 — currency unit consistency', () => {
+    const RED_CORPUS = [
+      "AWS is $13.6M, well above Adobe's $8800K on the renewal, per F200.",
+      'Salesforce spend is $9.2M versus ServiceNow at $4100K, the evidence shows.',
+      "The contact-center program runs $2.4M while the CDP trails at $900K — see P-RET-008.",
+      "Snowflake outspends Databricks: $6M compared to $5500K, per the brief.",
+    ];
+
+    for (const answer of RED_CORPUS) {
+      it(`flags a comparison line mixing $M and $K: "${answer.slice(0, 48)}…"`, () => {
+        const r = checkSentinelVoice(answer);
+        expect(r.violations).toEqual(
+          expect.arrayContaining([
+            expect.objectContaining({
+              category: 'internal_consistency',
+              phrase: 'comparison line mixes currency units ($M with $K)',
+            }),
+          ]),
+        );
+      });
+    }
+
+    const GREEN_CORPUS = [
+      // Same unit on both sides — clean comparison.
+      "AWS is $13.6M, well above Adobe's $8.8M on the renewal, per F200.",
+      // $B alongside $M is an expected scale jump, not a normalisation slip.
+      'Enterprise capex is $1.2B versus the AI envelope at $40M, the evidence shows.',
+      // Two figures, same unit, no mix.
+      'Salesforce at $9.2M and ServiceNow at $4.1M both sit inside the corpus range.',
+      // Mixed units but not a comparison line — a plain list is fine.
+      'The Q3 line items are $4M on tooling and $300K on training, per F201.',
+      // Single money value on the comparison line — nothing to mix.
+      'AWS spend of $13.6M is well above the corpus median, per P-RET-008.',
+    ];
+
+    for (const answer of GREEN_CORPUS) {
+      it(`does not flag a clean currency line: "${answer.slice(0, 48)}…"`, () => {
+        const r = checkSentinelVoice(answer);
+        expect(r.violations).not.toEqual(
+          expect.arrayContaining([
+            expect.objectContaining({
+              phrase: 'comparison line mixes currency units ($M with $K)',
+            }),
+          ]),
+        );
+      });
+    }
+  });
+
+  describe('G7 — time-tense consistency', () => {
+    const RED_CORPUS = [
+      'The migration shipped Q2 and will ship again in 30 days, per F200.',
+      'The Adobe contract closed last month and will close by Q3, the evidence shows.',
+      'The pilot launched in March and will launch next quarter, see P-RET-008.',
+      'The vendor RFP completed in April and will complete in 14 days, per F201.',
+    ];
+
+    for (const answer of RED_CORPUS) {
+      it(`flags a sentence mixing past and future for one event: "${answer.slice(0, 48)}…"`, () => {
+        const r = checkSentinelVoice(answer);
+        expect(r.violations).toEqual(
+          expect.arrayContaining([
+            expect.objectContaining({
+              category: 'internal_consistency',
+              phrase: 'sentence mixes past-tense and future-tense markers for one event',
+            }),
+          ]),
+        );
+      });
+    }
+
+    // G7 is the highest false-positive risk in the suite. This green
+    // corpus is deliberately thorough — every row is a legitimate
+    // sentence that names both a past and a future fact.
+    const GREEN_CORPUS = [
+      // A closed contract that renews is coherent — recurrence vocab.
+      'The Adobe contract closed last quarter and renews next year, per F200.',
+      // Contrast conjunction is the legitimate past+future pairing.
+      'The migration shipped Q2, but the next phase will ship in 30 days.',
+      'The pilot launched in March, though the rollout will complete by Q3.',
+      // Past-only sentence — no future marker at all.
+      'The contract closed last quarter and the CFO signed the renewal, per P-RET-008.',
+      // Future-only sentence — no past marker at all.
+      'The migration will ship in 30 days and the team will brief the gate.',
+      // Past and future facts about *different* events, joined by a
+      // contrast — not a self-contradiction.
+      'The CDP program completed in April, whereas the demand engine will launch next month.',
+      // "extends" is recurrence vocab — a finished deal that extends is fine.
+      'The vendor agreement closed in March and extends through 2027, see F201.',
+      // Contains "and" plus a past verb, but no hard future marker.
+      'The RFP completed in April and the scoring is done, per the brief.',
+      // Future marker plus "and", but no past verb.
+      'The rollout will ship in 30 days and the training plan is ready.',
+      // Recurrence: "continues" — a launched program that continues is coherent.
+      'The contact-center pilot launched in Q1 and continues through year-end.',
+    ];
+
+    for (const answer of GREEN_CORPUS) {
+      it(`does not flag a legitimate past+future sentence: "${answer.slice(0, 48)}…"`, () => {
+        const r = checkSentinelVoice(answer);
+        expect(r.violations).not.toEqual(
+          expect.arrayContaining([
+            expect.objectContaining({
+              phrase: 'sentence mixes past-tense and future-tense markers for one event',
+            }),
+          ]),
+        );
+      });
+    }
+  });
+
+  describe('G8 — forward-reference integrity', () => {
+    it('flags a reference to a list point beyond the declared list', () => {
+      const r = checkSentinelVoice(
+        'The plan has two parts.\n1. Close the gate.\n2. Brief the CFO.\nAs I noted in point 3, the evidence is in F200.',
+      );
+      expect(r.violations).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            category: 'internal_consistency',
+            phrase: 'references a numbered point beyond the declared list',
+            match: 'point 3',
+          }),
+        ]),
+      );
+    });
+
+    it('flags a reference to a numbered point when no list is present', () => {
+      const r = checkSentinelVoice(
+        'As covered in item 4 above, the renewal should move now because the evidence supports it.',
+      );
+      expect(r.violations).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            category: 'internal_consistency',
+            phrase: 'references a numbered point with no numbered list present',
+          }),
+        ]),
+      );
+    });
+
+    it('flags a reference to a footnote beyond the declared set', () => {
+      const r = checkSentinelVoice(
+        'The spend is anchored in the corpus [1] and the renewal date [2]. See footnote 5 for the methodology, per F200.',
+      );
+      expect(r.violations).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            category: 'internal_consistency',
+            phrase: 'references a footnote beyond the declared set',
+          }),
+        ]),
+      );
+    });
+
+    it('flags a footnote reference when no footnotes exist', () => {
+      const r = checkSentinelVoice(
+        'The renewal math holds (see 3), and the CIO has room to defer, per P-RET-008.',
+      );
+      expect(r.violations).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            category: 'internal_consistency',
+            phrase: 'references a footnote with no footnotes present',
+          }),
+        ]),
+      );
+    });
+
+    const GREEN_CORPUS = [
+      // Reference stays within the declared list.
+      'The plan has three steps.\n1. Close the gate.\n2. Brief the CFO.\n3. Sign the renewal.\nAs noted in point 2, the evidence is in F200.',
+      // Footnote reference stays within the declared set.
+      'Spend is anchored in the corpus [1] and the renewal date [2]. See footnote 2 for the methodology, per F201.',
+      // No numbered scaffold and no numbered references — nothing to check.
+      'The Adobe renewal should move now because the corpus evidence supports a deferral, per P-RET-008.',
+      // Years and money figures must not be read as list indices.
+      'The 2026 budget is $4M and the program closed in 2025, per F200.',
+      // "Footnote 1:" declares the scaffold; the reference matches.
+      'The methodology is sound.\nFootnote 1: corpus range is $3-15M.\nAs footnote 1 explains, the comparison holds.',
+    ];
+
+    for (const answer of GREEN_CORPUS) {
+      it(`does not flag a valid forward reference: "${answer.slice(0, 48)}…"`, () => {
+        const r = checkSentinelVoice(answer);
+        expect(r.violations).not.toEqual(
+          expect.arrayContaining([
+            expect.objectContaining({
+              category: 'internal_consistency',
+              phrase: expect.stringMatching(/references a (numbered point|footnote)/),
+            }),
+          ]),
+        );
+      });
+    }
+  });
+});
+
 // INT-VOICE.STRAT-2026-05-10c · Consultant posture — replaces the earlier
 // "epistemic-honesty librarian with two-tier scoping" framing after the
 // 2026-05-10 Apex / Carlos re-test showed it produced search-with-disclaimers
