@@ -17,6 +17,12 @@ describe('proxy public route patterns', () => {
     expect(isAuthRequiredRoute(request)).toBe(false);
   });
 
+  it('lets the guarded Azure connectivity probe return JSON instead of a Clerk redirect', () => {
+    const request = new NextRequest('https://app.abarva.ai/api/health/azure-connectivity');
+    expect(isPublicRoute(request)).toBe(true);
+    expect(isAuthRequiredRoute(request)).toBe(false);
+  });
+
   it('does not treat unrelated auth API paths as public', () => {
     const request = new NextRequest('https://app.abarva.ai/api/auth/other');
     expect(isPublicRoute(request)).toBe(false);

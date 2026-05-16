@@ -64,6 +64,16 @@ describe('isFeatureEnabled · A3 feature-flag contract', () => {
       expect(isFeatureEnabled({ clientKey: 'meridian' }, 'retrieval_azure_search')).toBe(true);
       expect(isFeatureEnabled({ clientKey: 'arcturus' }, 'retrieval_azure_search')).toBe(true);
     });
+
+    it('accepts Azure canonical tenant keys in the caller context', () => {
+      process.env.ABARVA_FEATURE_RETRIEVAL_AZURE_SEARCH_TENANTS = 'apexretail';
+
+      expect(isFeatureEnabled({ clientKey: 'apex-retail' }, 'retrieval_azure_search')).toBe(true);
+      expect(isFeatureEnabled({ clientId: 'apex-retail' }, 'retrieval_azure_search')).toBe(true);
+      expect(isFeatureEnabled({ clientKey: 'meridian-health' }, 'retrieval_azure_search')).toBe(
+        false,
+      );
+    });
   });
 
   describe('unknown keys', () => {

@@ -37,18 +37,23 @@ export interface FeatureFlagContext {
  * happens to be a valid ClientKey. Returns null when the context can't
  * be mapped — in which case every flag falls to its `policy` default.
  */
-function resolveClientKey(ctx: FeatureFlagContext | null | undefined): ClientKey | null {
-  if (!ctx) return null;
-  if (isClientKey(ctx.clientKey ?? null)) return ctx.clientKey as ClientKey;
-  if (isClientKey(ctx.clientId ?? null)) return ctx.clientId as ClientKey;
-  return null;
-}
-
 const ENV_TENANT_ALIASES: Readonly<Record<string, ClientKey>> = {
   'apex-retail': 'apexretail',
   'meridian-health': 'meridian',
   'first-capital': 'arcturus',
 };
+
+function normalizeTenantKey(value: string | null | undefined): ClientKey | null {
+  const normalized = value?.trim().toLowerCase();
+  if (!normalized) return null;
+  if (isClientKey(normalized)) return normalized;
+  return ENV_TENANT_ALIASES[normalized] ?? null;
+}
+
+function resolveClientKey(ctx: FeatureFlagContext | null | undefined): ClientKey | null {
+  if (!ctx) return null;
+  return normalizeTenantKey(ctx.clientKey) ?? normalizeTenantKey(ctx.clientId);
+}
 
 function envTenantListForFlag(key: FeatureFlagKey): ReadonlyArray<ClientKey> {
   const envKey = `ABARVA_FEATURE_${key.toUpperCase()}_TENANTS`;
@@ -57,11 +62,7 @@ function envTenantListForFlag(key: FeatureFlagKey): ReadonlyArray<ClientKey> {
 
   const tenants: ClientKey[] = [];
   for (const part of raw.split(',')) {
-    const normalized = part.trim().toLowerCase();
-    if (!normalized) continue;
-    const clientKey = isClientKey(normalized)
-      ? normalized
-      : ENV_TENANT_ALIASES[normalized];
+    const clientKey = normalizeTenantKey(part);
     if (clientKey && !tenants.includes(clientKey)) tenants.push(clientKey);
   }
   return tenants;

@@ -122,7 +122,7 @@ describe('agent route · CB-6 context-bundle wiring', () => {
   });
 
   it('canonicalizes the active client key before Programs broker lookup', () => {
-    expect(source).toContain('tenantKey: clientKeyToBrokerTenantKey(activeClient.key)');
+    expect(source).toContain('tenantKey: clientKeyToBrokerTenantKey(activeClientKey)');
   });
 
   it('instructs agents to keep new-program setup in the same canvas', () => {
@@ -147,7 +147,7 @@ describe('agent route · CB-6 context-bundle wiring', () => {
     expect(guardIdx).toBeGreaterThan(-1);
     expect(refusalIdx).toBeGreaterThan(guardIdx);
     expect(refusalIdx).toBeLessThan(loopIdx);
-    expect(source).toContain('activeClientKey: activeClient?.key ?? null');
+    expect(source).toContain('activeClientKey: activeClientKey ?? null');
     expect(source).toContain('activeClientName: activeClientDisplayName');
   });
 
@@ -169,9 +169,16 @@ describe('agent route · CB-6 context-bundle wiring', () => {
     expect(source).toContain('Private client facts:');
     expect(source).toContain('Shared AbarVa corpus/worldview chunks:');
     expect(source).toContain('await buildTenantContextBlock(tenantInventoryKey)');
-    expect(source).toContain('if (isTenantCurrentStateSurface && activeClient?.key)');
+    expect(source).toContain('if (isTenantCurrentStateSurface && activeClientKey)');
     expect(source).toContain('await buildProgramsContextBundleAsync(brokerRequest)');
     expect(source).not.toContain('isNexusProgramsSurface && activeClient?.key && !privateDataPlane');
+  });
+
+  it('keeps a server-resolved client key even when the database row is missing', () => {
+    expect(source).toContain('const earlyActiveClientKey =');
+    expect(source).toContain('earlyActiveClient?.key ?? await getActiveClientKey().catch(() => null)');
+    expect(source).toContain('const activeClientKey = earlyActiveClientKey');
+    expect(source).toContain('const effectiveClientKey = sourceClientKey ?? activeClientKey ?? null');
   });
 
   it('treats tenant current state as shared grounding for every canonical agent', () => {
