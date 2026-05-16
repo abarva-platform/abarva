@@ -193,4 +193,29 @@ describe('runBrokeredGenomeQuery', () => {
     expect(result.body.error).toBe('query missing tenant property scope ($callerClientId)');
     expect(sessionRunMock).not.toHaveBeenCalled();
   });
+
+  it('refuses generated queries that gate once then return a disconnected global catalog scan', async () => {
+    createMessageMock.mockResolvedValue({
+      content: [
+        {
+          type: 'text',
+          text: JSON.stringify({
+            cypher:
+              'MATCH (e:Engagement {client_id: $callerClientId})-[:TRIGGERED]->(p:GenomePattern) WITH DISTINCT p MATCH (p2:GenomePattern) RETURN p2.code AS code LIMIT 50',
+            explanation: 'Tenant gate followed by disconnected global scan.',
+          }),
+        },
+      ],
+    });
+
+    const result = await runBrokeredGenomeQuery({
+      query: 'List every GenomePattern',
+      clientId: 'client-apex-uuid',
+      clientKey: 'apexretail',
+    });
+
+    expect(result.status).toBe(400);
+    expect(result.body.error).toBe('query missing tenant scope for global catalog scan');
+    expect(sessionRunMock).not.toHaveBeenCalled();
+  });
 });

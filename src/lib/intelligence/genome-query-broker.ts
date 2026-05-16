@@ -18,6 +18,9 @@ async function lazyIsInt(): Promise<(v: unknown) => boolean> {
 const WRITE_OPS = /\b(CREATE|MERGE|SET|DELETE|REMOVE|DROP|DETACH)\b/i;
 const TENANT_PROPERTY_SCOPE =
   /(?:\{\s*(?:`?client_id`?|`?clientId`?|`?tenant_key`?|`?tenantKey`?|`?client_key`?|`?clientKey`?)\s*:\s*\$callerClientId\b|(?:\.\s*(?:`?client_id`?|`?clientId`?|`?tenant_key`?|`?tenantKey`?|`?client_key`?|`?clientKey`?)\s*=\s*\$callerClientId\b|\$callerClientId\b\s*=\s*[^,\n\r)]*\.\s*(?:`?client_id`?|`?clientId`?|`?tenant_key`?|`?tenantKey`?|`?client_key`?|`?clientKey`?)))/i;
+const MATCH_CLAUSE =
+  /\bMATCH\s+([\s\S]*?)(?=\bOPTIONAL\s+MATCH\b|\bMATCH\b|\bWHERE\b|\bWITH\b|\bRETURN\b|\bORDER\b|\bLIMIT\b|$)/gi;
+const GLOBAL_CATALOG_LABEL = /:\s*(?:`?GenomePattern`?|`?Industry`?|`?Function`?|`?Objective`?)\b/i;
 
 export interface BrokeredGenomeQueryInput {
   query: string;
@@ -75,8 +78,25 @@ function brokerSummary(bundle: ReturnType<typeof buildSentinelContextBundle>) {
   };
 }
 
-function hasRealTenantScope(cypher: string): boolean {
-  return TENANT_PROPERTY_SCOPE.test(cypher);
+function hasDisconnectedGlobalCatalogScan(cypher: string): boolean {
+  for (const match of cypher.matchAll(MATCH_CLAUSE)) {
+    const clause = match[1] ?? '';
+    if (!GLOBAL_CATALOG_LABEL.test(clause)) continue;
+    if (TENANT_PROPERTY_SCOPE.test(clause)) continue;
+    if (clause.includes('-')) continue;
+    return true;
+  }
+  return false;
+}
+
+function tenantScopeError(cypher: string): string | null {
+  if (!TENANT_PROPERTY_SCOPE.test(cypher)) {
+    return 'query missing tenant property scope ($callerClientId)';
+  }
+  if (hasDisconnectedGlobalCatalogScan(cypher)) {
+    return 'query missing tenant scope for global catalog scan';
+  }
+  return null;
 }
 
 async function translateGenomeQuery(
@@ -161,16 +181,17 @@ export async function runBrokeredGenomeQuery(
     };
   }
 
-  if (!hasRealTenantScope(translated.cypher)) {
+  const tenantScopeFailure = tenantScopeError(translated.cypher);
+  if (tenantScopeFailure) {
     console.warn('[genome-query-unscoped]', { cypher: translated.cypher });
     return {
       status: 400,
       body: {
-        error: 'query missing tenant property scope ($callerClientId)',
+        error: tenantScopeFailure,
         cypher: translated.cypher,
         explanation:
           translated.explanation ??
-          'The generated query did not use $callerClientId in a tenant-owned property predicate. Rephrase to scope by tenant.',
+          'The generated query did not keep returned graph data connected to a tenant-owned $callerClientId predicate. Rephrase to scope by tenant.',
         broker,
       },
     };
