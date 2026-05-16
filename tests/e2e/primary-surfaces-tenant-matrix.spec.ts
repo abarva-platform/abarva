@@ -42,7 +42,7 @@ const TENANTS: ReadonlyArray<TenantFixture> = [
     displayName: 'Apex Retail Group',
     email: 'cio@apex-retail.example.com',
     homeIdentityFragment: 'Apex Retail',
-    briefHeadlineFragment: 'Apex Retail Group',
+    briefHeadlineFragment: 'Apex Retail',
   },
   {
     key: 'meridian',
