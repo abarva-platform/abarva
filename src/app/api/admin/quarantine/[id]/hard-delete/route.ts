@@ -13,7 +13,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth, clerkClient } from '@clerk/nextjs/server';
 import { getServerSupabase } from '@/lib/supabase-server';
 import { requireTenancy, tenancyErrorResponse } from '@/lib/auth/tenancy';
-import { supabaseQuarantineAuditDataSource } from '@/lib/security/quarantine-audit-supabase';
+import { dataPlaneQuarantineAuditDataSource } from '@/lib/security/quarantine-audit-data-plane';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -78,7 +78,7 @@ export async function POST(
   const body = (await req.json().catch(() => ({}))) as { note?: string };
 
   try {
-    await supabaseQuarantineAuditDataSource.hardDelete({
+    await dataPlaneQuarantineAuditDataSource.hardDelete({
       id,
       reviewerUserId: adminCheck.userId,
       note: body.note,
