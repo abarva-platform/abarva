@@ -199,10 +199,10 @@ These are synthetic context chunks, not customer data.
 |---|---|---|
 | Postgres private endpoint disruption | Chaos runbook/script | Cached/read-only surfaces degrade gracefully; no raw stack traces. |
 | Service Bus poison message | `src/scripts/azure-servicebus-dlq-drill.ts`, `npm run azure:servicebus:dlq-drill` | Malformed message lands in DLQ with a worker rejection reason, not retry exhaustion. |
-| LLM provider overload | Provider stub/simulation | UI returns fallback or alternate provider response; no agent crash. |
+| LLM provider overload | `npm run azure:agent-provider-overload:smoke` | UI returns fallback or alternate provider response; no agent crash. |
 | PITR restore | Monthly restore runbook | Restored DB passes smoke E2E; actual RTO/RPO documented. |
 
-**Current state.** AZLAB40 adds the first L9 operator drill: produce a malformed ingestion message, run the A2b worker once, then verify the message is in the Service Bus dead-letter subqueue with a non-empty worker rejection reason. AZLAB50 adds the mixed good+poison batch path. AZLAB51 captures the live Azure pass: run `l9-mixed-20260515231810` accepted the good synthetic context upload into `sensitive_upload_audit` and isolated the malformed message into DLQ with `missing_tenantClientKey`. Remaining L9 work is LLM overload/fallback, Postgres disruption, and PITR restore timing.
+**Current state.** AZLAB40 adds the first L9 operator drill: produce a malformed ingestion message, run the A2b worker once, then verify the message is in the Service Bus dead-letter subqueue with a non-empty worker rejection reason. AZLAB50 adds the mixed good+poison batch path. AZLAB51 captures the live Azure pass: run `l9-mixed-20260515231810` accepted the good synthetic context upload into `sensitive_upload_audit` and isolated the malformed message into DLQ with `missing_tenantClientKey`. AZLAB58 captures the live r25 provider-overload pass: `/api/chat/agent` returns HTTP 200 with explicit capacity-limited fallback copy and no raw stream-error leakage. Remaining L9 work is Postgres disruption and PITR restore timing.
 
 **Design choice.** A fallback message is acceptable for first pilot if it is explicit and executive-safe. A crashed chat UI is not.
 

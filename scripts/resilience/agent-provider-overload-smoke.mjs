@@ -177,7 +177,7 @@ async function run(args) {
   const hasFallback = /temporarily capacity-limited/i.test(body)
     && /not changed tenant data/i.test(body)
     && /retry in a moment/i.test(body);
-  const leakedRawError = /\[stream error:|Simulated model provider overload|529/i.test(body);
+  const leakedRawError = /\[stream error:|Simulated model provider overload|AgentProviderOverloadDrillError/i.test(body);
 
   return {
     status: response.ok && hasFallback && !leakedRawError ? 'pass' : 'fail',
