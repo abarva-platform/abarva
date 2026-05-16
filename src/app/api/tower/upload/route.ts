@@ -8,6 +8,7 @@ import {
   evaluateSensitiveUpload,
   sensitiveUploadRejectedResponse,
 } from '@/lib/security/sensitive-upload-guard';
+import { selectUploadsWriteAdapter } from '@/lib/data-plane/write-adapters/uploadsWriteAdapter';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -79,10 +80,13 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  // 3. Record file metadata — status: classifying
-  const { data: fileRow, error: insertErr } = await sb
-    .from('uploaded_files')
-    .insert({
+  // 3. Record file metadata — status: classifying.
+  // The DB-write half is routed through the data-plane write seam (Slice 3c);
+  // the storage upload above stays a route concern. Default plane = Supabase.
+  const uploadsWriter = selectUploadsWriteAdapter();
+  let fileId: string;
+  try {
+    const inserted = await uploadsWriter.insertUploadedFile({
       client_id: clientId,
       uploaded_by_person_id: person.id,
       file_name: file.name,
@@ -90,16 +94,18 @@ export async function POST(req: NextRequest) {
       storage_path: storagePath,
       mime_type: file.type || null,
       ingestion_status: 'classifying',
-    })
-    .select()
-    .single();
-  if (insertErr || !fileRow) {
+    });
+    fileId = inserted.id;
+  } catch (err) {
     return NextResponse.json(
-      { error: `metadata insert failed: ${insertErr?.message ?? 'unknown'}` },
+      {
+        error: `metadata insert failed: ${
+          err instanceof Error ? err.message : 'unknown'
+        }`,
+      },
       { status: 500 },
     );
   }
-  const fileId = (fileRow as { id: string }).id;
 
   // 4. Classify + parse synchronously (simpler for v1, UI waits for result)
   const sampleText = new TextDecoder('utf-8', { fatal: false }).decode(bytes.slice(0, 2048));
@@ -131,22 +137,19 @@ export async function POST(req: NextRequest) {
     ingestResult.notes = [err instanceof Error ? err.message : 'parse failed'];
   }
 
-  await sb
-    .from('uploaded_files')
-    .update({
-      data_type: classifier.data_type,
-      classification_confidence: classifier.confidence,
-      ingestion_status: finalStatus,
-      rows_total: ingestResult.rows_total ?? null,
-      rows_ingested: ingestResult.rows_ingested ?? null,
-      rows_failed: ingestResult.rows_failed ?? null,
-      parser_notes: {
-        classifier,
-        ingest: ingestResult,
-      },
-      parsed_at: finalStatus === 'parsed' ? new Date().toISOString() : null,
-    })
-    .eq('id', fileId);
+  await uploadsWriter.updateUploadedFile(fileId, {
+    data_type: classifier.data_type,
+    classification_confidence: classifier.confidence,
+    ingestion_status: finalStatus,
+    rows_total: ingestResult.rows_total ?? null,
+    rows_ingested: ingestResult.rows_ingested ?? null,
+    rows_failed: ingestResult.rows_failed ?? null,
+    parser_notes: {
+      classifier,
+      ingest: ingestResult,
+    },
+    parsed_at: finalStatus === 'parsed' ? new Date().toISOString() : null,
+  });
 
   return NextResponse.json({
     file_id: fileId,
