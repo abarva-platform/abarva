@@ -9,6 +9,7 @@ import { dataReadinessGateMet } from '@/lib/workflow/dataReadinessLedger';
 import { getServerSupabase } from '@/lib/supabase-server';
 import { getSeedPlan } from '@/lib/deliverables/seed-route-resolver';
 import { writeProgramAuditLogBestEffort } from '@/lib/programs/audit-log';
+import { selectProgramsWriteAdapter } from '@/lib/data-plane/write-adapters/programsWriteAdapter';
 
 // Priority 2 item 2 · phase-gate advancement that moves a program forward.
 //
@@ -208,18 +209,18 @@ export async function POST(request: NextRequest) {
         const existingGates: number[] = Array.isArray(engRow.gates_passed) ? (engRow.gates_passed as number[]) : [];
         const updatedGates = Array.from(new Set([...existingGates, toPhase])).sort((a, b) => a - b);
 
-        // 3. UPDATE engagements.current_phase and gates_passed.
-        const { error: updateErr } = await sb
-          .from('engagements')
-          .update({
-            current_phase: toPhase,
-            gates_passed: updatedGates,
-            updated_at: new Date().toISOString(),
-          })
-          .eq('id', engagementId);
-
-        if (updateErr) {
-          console.error('[phase-gate] supabase update failed', { programCode, engagementId, message: updateErr.message });
+        // 3. UPDATE engagements.current_phase and gates_passed — routed through
+        // the data-plane write seam (Slice 3a). The engagement-row lookup above
+        // is a read and stays direct (transitive per write-path design §4).
+        // Supabase remains the default plane; behavior is byte-identical.
+        const ok = await selectProgramsWriteAdapter().advanceEngagementPhase({
+          engagementId,
+          toPhase,
+          gatesPassed: updatedGates,
+          tenantKey: ownerKey,
+        });
+        if (!ok) {
+          console.error('[phase-gate] engagement phase update failed', { programCode, engagementId });
         }
       } else {
         console.warn('[phase-gate] no engagement row found for graph_node_id', { programCode, graphNodeId });
