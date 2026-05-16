@@ -6,8 +6,14 @@ import 'server-only';
 // tenant. Rolls up by vendor_name (a vendor may appear under multiple
 // initiatives within a tenant) so the UI shows one row per vendor with
 // aggregated risk / contract / adoption / value dimensions.
+//
+// Slice 4 (data-plane seam): the joined row read is delegated to
+// `intelligenceVendorsReadAdapter`, so this server-component helper can
+// parallel-run against Azure Postgres via `ABARVA_DATA_PLANE`. The roll-up,
+// sort and totals logic below is pure and stays here. The helper signature
+// and `VendorsData` return shape are unchanged.
 
-import { getServerSupabase } from '@/lib/supabase-server';
+import { selectIntelligenceVendorsReadAdapter } from '@/lib/data-plane/read-adapters/intelligenceVendorsReadAdapter';
 import type { Stage, StatusFlag } from '@/lib/admin/ai-initiatives/labels';
 import type {
   VendorFinancialHealth,
@@ -71,24 +77,6 @@ function isUpcoming(date: string | null, withinDays = 365): boolean {
   return days >= 0 && days <= withinDays;
 }
 
-interface JoinedRow {
-  vendor_id: string;
-  initiative_id: string;
-  vendor_name: string;
-  contract_value_usd: number | string | null;
-  renewal_date: string | null;
-  financial_health: VendorFinancialHealth | null;
-  notes: string | null;
-  ai_initiatives: {
-    initiative_id: string;
-    display_id: string;
-    name: string;
-    status_flag: StatusFlag;
-    stage: Stage;
-    client_id: string;
-  } | null;
-}
-
 function toNumber(v: number | string | null | undefined): number | null {
   if (v === null || v === undefined) return null;
   const n = typeof v === 'string' ? Number.parseFloat(v) : v;
@@ -96,35 +84,27 @@ function toNumber(v: number | string | null | undefined): number | null {
 }
 
 export async function getVendorsForClient(clientId: string): Promise<VendorsData> {
-  const sb = getServerSupabase();
-  const { data, error } = await sb
-    .from('ai_initiative_vendors')
-    .select(
-      'vendor_id, initiative_id, vendor_name, contract_value_usd, renewal_date, financial_health, notes, ' +
-        'ai_initiatives!inner(initiative_id, display_id, name, status_flag, stage, client_id)',
-    )
-    .eq('ai_initiatives.client_id', clientId);
-  if (error) throw new Error(`getVendorsForClient: ${error.message}`);
-
-  const rows = (data ?? []) as unknown as ReadonlyArray<JoinedRow>;
+  const rows = await selectIntelligenceVendorsReadAdapter().getVendorRowsForClient(
+    clientId,
+  );
 
   // Bucket by vendor_name (case-insensitive trim) so "Microsoft 365 Copilot"
   // and "Microsoft 365 copilot" roll up together. Keep the first-seen
   // display-case rendering of the name.
   const byVendor = new Map<string, { displayName: string; links: VendorInitiativeLink[] }>();
   for (const r of rows) {
-    if (!r.ai_initiatives) continue;
+    if (!r.initiative) continue;
     const key = r.vendor_name.trim().toLowerCase();
     const bucket = byVendor.get(key) ?? { displayName: r.vendor_name.trim(), links: [] };
     bucket.links.push({
-      initiativeId: r.ai_initiatives.initiative_id,
-      initiativeDisplayId: r.ai_initiatives.display_id,
-      initiativeName: r.ai_initiatives.name,
-      initiativeStatusFlag: r.ai_initiatives.status_flag,
-      initiativeStage: r.ai_initiatives.stage,
+      initiativeId: r.initiative.initiative_id,
+      initiativeDisplayId: r.initiative.display_id,
+      initiativeName: r.initiative.name,
+      initiativeStatusFlag: r.initiative.status_flag as StatusFlag,
+      initiativeStage: r.initiative.stage as Stage,
       contractValueUsd: toNumber(r.contract_value_usd),
       renewalDate: r.renewal_date,
-      financialHealth: r.financial_health,
+      financialHealth: r.financial_health as VendorFinancialHealth | null,
       notes: r.notes,
     });
     byVendor.set(key, bucket);
