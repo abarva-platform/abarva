@@ -27,10 +27,14 @@
 --             which compares directly to the JWT `tenant_key` claim.
 --
 --   Shape B — session_messages stores the tenant in `client_id`, which is
---             TEXT (NOT a UUID FK) holding the tenant slug. The TEXT overload
---             can_read_tenant_by_id(TEXT) resolves either clients.id::text or
---             clients.tenant_key, so it works for a slug-bearing column and
---             keeps working if the column is later migrated to a real UUID.
+--             TEXT (NOT a UUID FK) holding the tenant slug — and that slug is
+--             still a LEGACY ALIAS (`meridian`), not canonical. The policy
+--             canonicalizes it via canonical_tenant_key(client_id) and passes
+--             the result to the TEXT overload can_read_tenant_by_id(TEXT),
+--             which resolves clients.id::text or clients.tenant_key. This works
+--             for a slug-bearing column and keeps working if the column is
+--             later migrated to a real UUID (canonical_tenant_key passes
+--             non-aliases through unchanged).
 --
 -- Helpers: supabase/migrations/20260507100000_rls_role_helpers.sql
 --   can_read_tenant_by_key(TEXT) · can_read_tenant_by_id(UUID/TEXT)
@@ -42,13 +46,33 @@
 -- re-declares the TEXT overload idempotently before using it so production
 -- deploys do not depend on editing/replaying an already-applied migration.
 --
--- KEY-FORMAT DEPENDENCY (review before pilot): the data_segment_* tables hold
--- hyphenated keys; clients.tenant_key holds non-hyphenated slugs.
--- can_read_tenant_by_key never touches `clients` — it compares the row key
--- directly to current_tenant_key(). The policy is correct ONLY IF the Clerk
--- `supabase` JWT template emits the hyphenated form. The RLS regression suite
--- seeds the hyphenated keys, so this migration is consistent with it. Confirm
--- the live JWT template, or these reads return zero rows.
+-- KEY-FORMAT — VERIFIED 2026-05-16 (read-only SELECT against production
+-- DATABASE_URL; see docs/security/RLS-COVERAGE-AUDIT-2026-05-16.md §Key-format
+-- verification). The original audit flagged a possible hyphenated-vs-slug
+-- mismatch; investigation resolved it as follows:
+--
+--   * data_segment_* tables  → store the HYPHENATED canonical key
+--                              (apex-retail / meridian-health / first-capital).
+--   * clients.tenant_key     → ALSO hyphenated canonical. The earlier "slug"
+--                              claim was stale: migration
+--                              20260515120000_tenant_key_canonicalization.sql
+--                              rewrote clients.tenant_key apexretail→apex-retail
+--                              etc., and rewrote current_tenant_key() to
+--                              canonicalize the JWT claim ON READ.
+--   * current_tenant_key()   → canonicalizes whatever the Clerk `supabase` JWT
+--                              template emits (legacy alias OR canonical).
+--
+-- ⇒ Shape A is SAFE regardless of the live JWT shape: both the row key and
+--   current_tenant_key() are hyphenated canonical, so the direct compare in
+--   can_read_tenant_by_key() matches.
+--
+-- ⇒ Shape B needed a fix. session_messages.client_id still holds a LEGACY
+--   ALIAS slug (verified: the live rows carry `meridian`, not
+--   `meridian-health`). can_read_tenant_by_id(TEXT) compares client_id against
+--   clients.tenant_key — which is now canonical — so an un-canonicalized
+--   `meridian` would never match `meridian-health`. This migration introduces a
+--   SQL canonicalizer `canonical_tenant_key(TEXT)` and wraps client_id with it
+--   so Shape B compares canonical-to-canonical.
 --
 -- Writes are intentionally NOT granted: the substrate is loaded by
 -- service-role tooling, which bypasses RLS. Add a can_write_tenant_by_key
@@ -85,6 +109,23 @@ RETURNS BOOLEAN AS $$
 $$ LANGUAGE sql STABLE SECURITY DEFINER;
 
 GRANT EXECUTE ON FUNCTION can_read_tenant_by_id(TEXT) TO authenticated;
+
+-- SQL-side tenant-key canonicalizer. Mirrors the alias map in
+-- src/lib/tenant-keys.ts and migration 20260515120000_tenant_key_
+-- canonicalization.sql. Used by Shape B to canonicalize a column that still
+-- holds a legacy alias before comparing it to clients.tenant_key (canonical).
+-- Unknown / NULL values pass through unchanged (forward-compatible).
+CREATE OR REPLACE FUNCTION canonical_tenant_key(p_key TEXT)
+RETURNS TEXT AS $$
+  SELECT CASE p_key
+           WHEN 'apexretail' THEN 'apex-retail'
+           WHEN 'meridian'   THEN 'meridian-health'
+           WHEN 'arcturus'   THEN 'first-capital'
+           ELSE p_key
+         END
+$$ LANGUAGE sql IMMUTABLE;
+
+GRANT EXECUTE ON FUNCTION canonical_tenant_key(TEXT) TO authenticated;
 
 -- ── Shape A · data_segment_* (tenant_key TEXT) ───────────────────────────────
 -- Apply the identical ENABLE RLS + auth_read + GRANT pattern to each table.
@@ -139,11 +180,15 @@ BEGIN
 END
 $shape_a$;
 
--- ── Shape B · session_messages (client_id TEXT, holds tenant slug) ───────────
--- client_id is TEXT and stores the tenant slug, not a clients.id UUID. The
--- TEXT overload of can_read_tenant_by_id resolves clients.id::text OR
--- clients.tenant_key, so it is correct for the current slug-bearing column
--- and stays correct if the column is later migrated to a UUID FK.
+-- ── Shape B · session_messages (client_id TEXT, holds legacy alias slug) ─────
+-- client_id is TEXT and stores the tenant slug, not a clients.id UUID — and
+-- that slug is still a LEGACY ALIAS (verified: live rows carry `meridian`).
+-- clients.tenant_key was canonicalized to `meridian-health` by migration
+-- 20260515120000, so a raw compare would never match. We canonicalize
+-- client_id first, then hand it to the TEXT overload of can_read_tenant_by_id,
+-- which resolves clients.id::text OR clients.tenant_key. canonical_tenant_key
+-- passes non-aliases through unchanged, so this stays correct if client_id is
+-- later migrated to a UUID FK or backfilled to canonical slugs.
 DO $shape_b$
 BEGIN
   IF to_regclass('public.session_messages') IS NULL THEN
@@ -153,7 +198,7 @@ BEGIN
     DROP POLICY IF EXISTS auth_read ON public.session_messages;
     CREATE POLICY auth_read ON public.session_messages
       FOR SELECT TO authenticated
-      USING (can_read_tenant_by_id(client_id));   -- TEXT overload
+      USING (can_read_tenant_by_id(canonical_tenant_key(client_id)));  -- TEXT overload
     GRANT SELECT ON public.session_messages TO authenticated;
   END IF;
 END

@@ -95,37 +95,69 @@ CREATE POLICY auth_read ON data_segment_<name>
 (`20260507100000_rls_role_helpers.sql`) returns true when the row's key equals
 `current_tenant_key()` (the JWT `tenant_key` claim) or the caller `is_maestro()`.
 
-> **Key-format dependency — flagged for review.** The `data_segment_*` tables
-> store **hyphenated** broker keys (`apex-retail`, `meridian-health`,
-> `first-capital`), whereas `clients.tenant_key` stores **non-hyphenated**
-> slugs (`apexretail`, `meridian`). `can_read_tenant_by_key` does a *direct*
-> string compare against `current_tenant_key()` and never touches `clients`,
-> so the policy is correct **iff the Clerk `supabase` JWT template emits the
-> hyphenated form**. The RLS regression suite (`rls-regression.sql`) seeds the
-> hyphenated keys, so this migration is consistent with the regression suite.
-> Confirm the live Clerk JWT template before pilot, or these reads will
-> silently return zero rows. This is the same `apexretail` vs `apex-retail`
-> split tracked in the "Apex tenant key split" project note.
+> **Key-format dependency — VERIFIED 2026-05-16, SAFE.** The original audit
+> flagged a possible hyphenated-vs-slug mismatch. A read-only investigation
+> (SELECT against the production `DATABASE_URL`) resolved it — see
+> [§Key-format verification](#key-format-verification-2026-05-16) below. In
+> short: both `data_segment_*` and `clients.tenant_key` store the **hyphenated
+> canonical** form, and `current_tenant_key()` canonicalizes the JWT claim on
+> read, so Shape A's direct compare matches **regardless of the live Clerk JWT
+> shape**. No JWT-template change is required for Shape A.
 
 ### Shape B — `session_messages.client_id` (1 table)
 
 `session_messages.client_id` is **`TEXT`, not a UUID FK to `clients`**, and it
-stores the tenant *slug* (`"meridian"`), not a `clients.id` UUID. Despite the
-column name, it is not a foreign key. The correct helper is the **TEXT
-overload** `can_read_tenant_by_id(p_client_id TEXT)`, which resolves either
-`clients.id::text` **or** `clients.tenant_key` — so it handles a column that
-holds a slug:
+stores the tenant *slug*, not a `clients.id` UUID. Verified against production:
+the live rows carry `"meridian"` — a **legacy alias**, not the canonical
+`"meridian-health"`. Migration `20260515120000_tenant_key_canonicalization.sql`
+rewrote `clients.tenant_key` to the canonical form but did **not** touch
+`session_messages` (it was outside that migration's scope). So a raw
+`can_read_tenant_by_id(client_id)` would compare `meridian` against
+`clients.tenant_key = meridian-health` and **never match** — a silent
+zero-rows bug.
+
+The corrected policy canonicalizes `client_id` first, then passes it to the
+**TEXT overload** `can_read_tenant_by_id(p_client_id TEXT)`, which resolves
+either `clients.id::text` **or** `clients.tenant_key`:
 
 ```sql
 CREATE POLICY auth_read ON session_messages
   FOR SELECT TO authenticated
-  USING (can_read_tenant_by_id(client_id));   -- TEXT overload
+  USING (can_read_tenant_by_id(canonical_tenant_key(client_id)));  -- TEXT overload
 ```
 
-If `session_messages.client_id` is later migrated to a real UUID FK, the
-policy needs no change — the same TEXT overload still resolves `id::text`. No
-join to `clients` is hand-written here because the helper already encapsulates
-it.
+`canonical_tenant_key(TEXT)` is a small `IMMUTABLE` SQL function added by the
+remediation migration; it mirrors the alias map in `src/lib/tenant-keys.ts`
+and passes non-aliases through unchanged. If `client_id` is later migrated to
+a real UUID FK or backfilled to canonical slugs, the policy needs no change.
+
+### Key-format verification (2026-05-16)
+
+The original audit's Shape-A warning assumed `clients.tenant_key` held
+non-hyphenated slugs and that Shape A depended on the live Clerk JWT shape.
+A read-only `SELECT` investigation against the production `DATABASE_URL`
+disproved both halves of that assumption:
+
+| Object | Stored / observed form | Source |
+|---|---|---|
+| `clients.tenant_key` | `apex-retail`, `meridian-health`, `first-capital`, `keystone` — **hyphenated canonical** | `SELECT tenant_key, count(*) FROM clients GROUP BY 1` |
+| `data_segment_financial_model.tenant_key` | `apex-retail`, `meridian-health`, `first-capital` — **hyphenated canonical** | `SELECT tenant_key, count(*) ... GROUP BY 1` |
+| `data_segment_kpi_history`, `data_segment_org_structure` | same — **hyphenated canonical** | idem |
+| `current_tenant_key()` (live function body) | `CASE` mapping `apexretail→apex-retail`, `meridian→meridian-health`, `arcturus→first-capital` — **canonicalizes the JWT claim on read** | `pg_get_functiondef` |
+| `session_messages.client_id` | `meridian` — **legacy alias, NOT canonical** | `SELECT client_id, count(*) FROM session_messages GROUP BY 1` |
+
+Conclusion:
+
+- **Shape A (23 `data_segment_*` tables) — confirmed correct, no change.**
+  Row keys and `current_tenant_key()` output are both hyphenated canonical;
+  the direct compare in `can_read_tenant_by_key()` matches whether the Clerk
+  `supabase` JWT template emits a legacy alias or the canonical key, because
+  `current_tenant_key()` canonicalizes it. No JWT-template change required.
+- **Shape B (`session_messages`) — corrected.** `client_id` still holds a
+  legacy alias; the policy now wraps it in `canonical_tenant_key()` so it is
+  compared canonical-to-canonical against `clients.tenant_key`.
+
+**Go/no-go: GO.** The migration is safe to apply via `npm run db:migrate`.
 
 ## Excluded tables (intentionally tenant-agnostic)
 
