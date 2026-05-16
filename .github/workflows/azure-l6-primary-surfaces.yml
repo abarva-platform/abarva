@@ -58,6 +58,9 @@ jobs:
               ;;
             azure-lab)
               base_url="${{ secrets.AZURE_LAB_BASE_URL }}"
+              if [[ -z "$base_url" ]]; then
+                base_url="https://ca-abarva-web-lab-eastus.agreeableocean-2c1472e6.eastus.azurecontainerapps.io"
+              fi
               ;;
             *)
               echo "Unknown E2E environment: $target" >&2
@@ -78,7 +81,7 @@ jobs:
           ONLY_TENANT: ${{ inputs.only_tenant }}
           E2E_DEMO_PASSWORD: ${{ secrets.E2E_DEMO_PASSWORD || 'Demo2026!' }}
           E2E_DEMO_ACCESS_CODE: ${{ secrets.E2E_DEMO_ACCESS_CODE || '424242' }}
-        run: npx playwright test tests/e2e/primary-surfaces-tenant-matrix.spec.ts --project=chromium
+        run: npx playwright test tests/e2e/primary-surfaces-tenant-matrix.spec.ts --project=chromium --workers=1
 
       - name: Upload Playwright report
         if: always()
@@ -87,4 +90,3 @@ jobs:
           name: azure-l6-primary-surfaces-report
           path: playwright-report/
           if-no-files-found: ignore
-

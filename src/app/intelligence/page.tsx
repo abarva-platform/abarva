@@ -46,8 +46,9 @@ function firstSearchValue(value: string | string[] | undefined): string | null {
 
 export default async function IntelligencePage({ searchParams }: IntelligencePageProps = {}) {
   const requestedClient = firstSearchValue((await searchParams)?.client);
-  const forceApexRetail = requestedClient === 'apexretail';
   const client = await getActiveClientRow(requestedClient).catch(() => null);
+  const resolvedClientKey = client?.key ?? requestedClient;
+  const forceApexRetail = resolvedClientKey === 'apexretail';
 
   const [
     { data, isLiveBound },
@@ -59,7 +60,7 @@ export default async function IntelligencePage({ searchParams }: IntelligencePag
     apexRetailData,
     enterpriseContextOverview,
   ] = await Promise.all([
-    buildIntelligenceV3PageData(requestedClient),
+    buildIntelligenceV3PageData(resolvedClientKey),
     client ? getVendorsForClient(client.id).catch(() => null) : Promise.resolve(null),
     getByFunctionData().catch(() => null),
     getPeerActivityData().catch(() => null),
