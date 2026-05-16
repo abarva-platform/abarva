@@ -897,6 +897,19 @@ describe('composeSentinelSystemPrompt', () => {
     expect(prompt).toContain('3+ sentences');
   });
 
+  it('requires company-profile answers to name core IT landscape anchors', () => {
+    const prompt = composeSentinelSystemPrompt({
+      mode: 'full',
+      tenantKey: 'apex-retail',
+      surface: '/intelligence',
+      vectorIndexPending: false,
+      worldviewPending: false,
+    });
+    expect(prompt).toContain('Company-profile answer discipline');
+    expect(prompt).toContain('core IT landscape anchors');
+    expect(prompt).toContain('SAP S/4HANA');
+  });
+
   it('includes the three natural honesty-mode phrasings', () => {
     const prompt = composeSentinelSystemPrompt(defaultInput());
     expect(prompt).toContain('Strategic framing');
