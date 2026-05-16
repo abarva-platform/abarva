@@ -163,6 +163,8 @@ const STOPWORDS = new Set([
 ]);
 
 const KEYWORD_CAP = 10;
+const TENANT_PROFILE_QUESTION_RE =
+  /\b(?:what do you know|highest-confidence facts|company profile|enterprise profile|who are we|tell me about (?:our|the) company|business profile|at a glance)\b/i;
 
 const TENANT_INDUSTRY_ALLOWLISTS: ReadonlyArray<{
   pattern: RegExp;
@@ -217,6 +219,10 @@ export function extractKeywords(query: string): string[] {
     if (out.length >= KEYWORD_CAP) break;
   }
   return out;
+}
+
+function shouldIncludeTenantProfileAnchors(query: string): boolean {
+  return TENANT_PROFILE_QUESTION_RE.test(query);
 }
 
 function isGraphCandidateId(recordId: string): boolean {
@@ -579,20 +585,41 @@ export class DefaultContextBroker implements ContextBroker {
     // chunksByKeyword returns keyword-matched chunks; we walk back to
     // their source records via getRecord and dedupe. We over-fetch
     // (`maxFacts * 2`) to compensate for chunks that share a record.
-    const seedChunks = keywords.length > 0
+    const seenRecordIds = new Set<string>();
+    const facts: TenantRecord[] = [];
+
+    const addFact = (record: TenantRecord | null | undefined): void => {
+      if (!record || seenRecordIds.has(record.recordId)) return;
+      seenRecordIds.add(record.recordId);
+      facts.push(record);
+    };
+
+    if (shouldIncludeTenantProfileAnchors(input.query)) {
+      const anchorResults = await Promise.allSettled([
+        this.adapter.listRecords(tenantKey, 'enterprise_profile', { limit: 3 }),
+        this.adapter.listRecords(tenantKey, 'it_landscape', { limit: 6 }),
+      ]);
+      for (const result of anchorResults) {
+        if (result.status !== 'fulfilled') continue;
+        for (const record of result.value) {
+          addFact(record);
+          if (facts.length >= maxFacts) break;
+        }
+        if (facts.length >= maxFacts) break;
+      }
+    }
+
+    const seedChunks = keywords.length > 0 && facts.length < maxFacts
       ? await this.adapter.chunksByKeyword(tenantKey, keywords, maxFacts * 2)
       : [];
 
-    const seenRecordIds = new Set<string>();
-    const facts: TenantRecord[] = [];
     for (const chunk of seedChunks) {
       if (!chunk.recordId) continue;
       if (seenRecordIds.has(chunk.recordId)) continue;
-      seenRecordIds.add(chunk.recordId);
       const record = await this.adapter.getRecord(tenantKey, chunk.recordId);
-      if (record) {
-        facts.push(record);
-        if (facts.length >= maxFacts) break;
+      addFact(record);
+      if (facts.length >= maxFacts) {
+        break;
       }
     }
 

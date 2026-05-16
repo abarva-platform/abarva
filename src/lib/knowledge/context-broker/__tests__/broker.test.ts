@@ -163,6 +163,7 @@ function makeNeighborhood(rootId: string): GraphNeighborhood {
 }
 
 interface AdapterOverrides {
+  listRecords?: TenantDataAdapter['listRecords'];
   chunksByKeyword?: TenantDataAdapter['chunksByKeyword'];
   getRecord?: TenantDataAdapter['getRecord'];
   chunksByVector?: TenantDataAdapter['chunksByVector'];
@@ -172,7 +173,7 @@ interface AdapterOverrides {
 function buildAdapter(overrides: AdapterOverrides = {}): TenantDataAdapter {
   return {
     listSegments: jest.fn().mockResolvedValue([]),
-    listRecords: jest.fn().mockResolvedValue([]),
+    listRecords: overrides.listRecords ?? jest.fn().mockResolvedValue([]),
     getRecord: overrides.getRecord ?? jest.fn().mockResolvedValue(null),
     listGraphNodes: jest.fn().mockResolvedValue([]),
     listGraphEdgesForNode: jest.fn().mockResolvedValue([]),
@@ -367,6 +368,38 @@ describe('DefaultContextBroker.assemble — tenant mode', () => {
     expect(bundle.graphPaths.length).toBe(2);
     expect(bundle.warnings).toContain(WARNING_VECTOR_PENDING);
     expect(bundle.warnings).not.toContain(WARNING_CORPUS_PENDING);
+  });
+
+  it('prepends enterprise profile and system anchors for broad company-facts questions', async () => {
+    const profile = makeRecord('enterprise_profile:apex', 'Apex Retail Group enterprise profile');
+    const sap = {
+      ...makeRecord('it_landscape:sys:apex:sap-s4', 'SAP S/4HANA'),
+      segmentId: 'it_landscape' as const,
+    };
+    const program = makeRecord('program:apex-cdp-2026', 'Apex CDP 2026');
+    const { broker, adapter } = makeBroker({
+      listRecords: jest.fn()
+        .mockResolvedValueOnce([profile])
+        .mockResolvedValueOnce([sap]),
+      chunksByKeyword: jest.fn().mockResolvedValue([
+        makeChunk('chunk:apex:cdp:001', 'program:apex-cdp-2026'),
+      ]),
+      getRecord: jest.fn().mockResolvedValue(program),
+    });
+
+    const bundle = await broker.assemble({
+      query: 'What do you know about Apex Retail? Give me your highest-confidence facts.',
+      mode: 'tenant',
+      tenantKey: TENANT,
+    });
+
+    expect(adapter.listRecords).toHaveBeenCalledWith(TENANT, 'enterprise_profile', { limit: 3 });
+    expect(adapter.listRecords).toHaveBeenCalledWith(TENANT, 'it_landscape', { limit: 6 });
+    expect(bundle.facts.map((fact) => fact.recordId)).toEqual([
+      'enterprise_profile:apex',
+      'it_landscape:sys:apex:sap-s4',
+      'program:apex-cdp-2026',
+    ]);
   });
 
   it('uses Pinecone vector retrieval when chunksByVector succeeds', async () => {

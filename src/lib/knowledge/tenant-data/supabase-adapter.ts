@@ -411,6 +411,19 @@ export class SupabaseTenantDataAdapter implements TenantDataAdapter {
     opts?: { limit?: number; recordKind?: string },
   ): Promise<TenantRecord[]> {
     const limit = Math.min(MAX_RECORD_LIMIT, Math.max(1, opts?.limit ?? DEFAULT_RECORD_LIMIT));
+    const queryPublicRows = async (): Promise<InventoryRecordRow[] | null> => {
+      let fallback = this.client
+        .from('data_inventory_records')
+        .select(RECORD_COLUMNS)
+        .eq('tenant_key', tenantKey)
+        .eq('segment_id', segmentId);
+      if (opts?.recordKind) {
+        fallback = fallback.eq('record_kind', opts.recordKind);
+      }
+      const result = await fallback.limit(limit);
+      if (result.error) return null;
+      return (result.data ?? []) as unknown as InventoryRecordRow[];
+    };
     let query = this.table(tenantKey, 'data_inventory_records')
       .select(RECORD_COLUMNS)
       .eq('tenant_key', tenantKey)
@@ -427,15 +440,20 @@ export class SupabaseTenantDataAdapter implements TenantDataAdapter {
           whereSql.push(`record_kind = $${values.length + 1}`);
           values.push(opts.recordKind);
         }
-        const rows = await queryPrivateRows<InventoryRecordRow>(
-          tenantKey,
-          'data_inventory_records',
-          RECORD_COLUMNS,
-          whereSql,
-          values,
-          limit,
-        );
-        return rows.map(mapRecordRow);
+        try {
+          const rows = await queryPrivateRows<InventoryRecordRow>(
+            tenantKey,
+            'data_inventory_records',
+            RECORD_COLUMNS,
+            whereSql,
+            values,
+            limit,
+          );
+          return rows.map(mapRecordRow);
+        } catch {
+          const publicRows = await queryPublicRows();
+          if (publicRows) return publicRows.map(mapRecordRow);
+        }
       }
       throw new Error(
         `listRecords failed for tenant '${tenantKey}', segment '${segmentId}': ${error.message}`,
