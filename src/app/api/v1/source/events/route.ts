@@ -8,7 +8,7 @@ import { requireTenancy, tenancyErrorResponse } from '@/lib/auth/tenancy';
 import { getActiveClientRow } from '@/lib/active-client';
 import { loadUserSourceAccessPolicy } from '@/lib/auth/source-access-policy';
 import { createSourcingEvent } from '@/lib/source/queries';
-import { getServerSupabase } from '@/lib/supabase-server';
+import { selectSourceWriteAdapter } from '@/lib/data-plane/write-adapters/sourceWriteAdapter';
 
 interface CreateSourceEventBody {
   eventName?: string;
@@ -101,26 +101,18 @@ export async function POST(request: Request) {
     });
 
     if (tenancy.userId) {
-      const { error: participantError } = await getServerSupabase()
-        .from('source_event_participants')
-        .insert({
-          client_key: activeClient.key,
-          source_event_id: event.id,
-          source_event_row_id: event.id,
-          user_id: tenancy.userId,
-          role: 'source creator',
-          approval_authority: 'contributor',
-          source_access_level: 'source_member',
-          can_view_financial: false,
-          can_upload_source_artifacts: true,
-          can_generate_sourcing_artifacts: true,
-          can_publish_sourcing_artifacts: false,
-          can_approve_source_stages: false,
-          can_approve_award: false,
-          notify_on: ['source_event_update', 'approval_needed'],
-        });
-      if (participantError && !/source_event_participants|schema cache|does not exist/i.test(participantError.message)) {
-        throw new Error(`source participant assignment failed: ${participantError.message}`);
+      // DB write routed through the data-plane write seam (Slice 3b). The
+      // adapter tolerates a missing participants table, exactly as before.
+      const participantWrite = await selectSourceWriteAdapter(
+        undefined,
+        activeClient.key,
+      ).insertParticipant({
+        clientKey: activeClient.key,
+        sourceEventId: event.id,
+        userId: tenancy.userId,
+      });
+      if (!participantWrite.ok) {
+        throw new Error(participantWrite.error ?? 'source participant assignment failed');
       }
     }
 

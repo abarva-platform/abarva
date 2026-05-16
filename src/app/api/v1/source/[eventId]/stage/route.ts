@@ -12,6 +12,7 @@ import { getCurrentUser } from '@/lib/auth/current-user';
 import { CANONICAL_CLIENT_ADMIN_EMAILS } from '@/lib/auth/canonical-auth-roster';
 import { loadUserSourceAccessPolicy } from '@/lib/auth/source-access-policy';
 import { getServerSupabase } from '@/lib/supabase-server';
+import { selectSourceWriteAdapter } from '@/lib/data-plane/write-adapters/sourceWriteAdapter';
 import { setStageOverride } from '@/lib/source/stage-overrides';
 import { getSourceEventSeed } from '@/lib/source/mock-seed';
 import { isCanonicalSourceStageKey, SOURCE_STAGE_ORDER } from '@/lib/source/constants';
@@ -101,18 +102,20 @@ export async function PATCH(req: NextRequest, { params }: RouteCtx) {
         return Response.json({ error: 'not_found', detail: `No source event with id ${eventId}` }, { status: 404 });
       }
 
-      const { error: updateError } = await supabase
-        .from('source_events')
-        .update({
-          current_stage_key: stageKey,
-          lifecycle_state: stageKey === 'value' ? 'completed' : 'active',
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', eventId)
-        .eq('client_key', effectiveClientKey);
+      // DB write routed through the data-plane write seam (Slice 3b).
+      const stageWrite = await selectSourceWriteAdapter(
+        undefined,
+        effectiveClientKey,
+      ).updateStage({
+        eventId,
+        clientKey: effectiveClientKey,
+        stageKey,
+        lifecycleState: stageKey === 'value' ? 'completed' : 'active',
+        updatedAtIso: new Date().toISOString(),
+      });
 
-      if (updateError) {
-        return Response.json({ error: 'update_failed', detail: updateError.message }, { status: 500 });
+      if (!stageWrite.ok) {
+        return Response.json({ error: 'update_failed', detail: stageWrite.error }, { status: 500 });
       }
 
       return Response.json({ ok: true, eventId, stageKey, persisted: true });

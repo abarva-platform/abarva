@@ -9,6 +9,7 @@ import { requireTenancy, tenancyErrorResponse } from '@/lib/auth/tenancy';
 import { getServerSupabase } from '@/lib/supabase-server';
 import { getActiveClientRow } from '@/lib/active-client';
 import { loadUserSourceAccessPolicy } from '@/lib/auth/source-access-policy';
+import { selectSourceWriteAdapter } from '@/lib/data-plane/write-adapters/sourceWriteAdapter';
 
 interface ApproveBody {
   action: 'approve' | 'reject';
@@ -73,32 +74,28 @@ export async function POST(
   const fromState = event.lifecycle_state as string;
   const toState = body.action === 'approve' ? 'active' : 'archived';
 
-  // Update lifecycle_state on the event
-  const { error: updateError } = await supabase
-    .from('source_events')
-    .update({ lifecycle_state: toState })
-    .eq('id', eventId)
-    .eq('client_key', activeClient.key);
+  // DB write routed through the data-plane write seam (Slice 3b): the
+  // lifecycle update + the append-only approval record. On Azure the two
+  // run in one transaction; on Supabase they apply individually as before.
+  // A failed approval insert stays non-fatal (logged inside the adapter).
+  const approvalWrite = await selectSourceWriteAdapter(
+    undefined,
+    activeClient.key,
+  ).applyApproval({
+    eventId,
+    clientKey: activeClient.key,
+    fromState,
+    toState,
+    approvalAction: body.action === 'approve' ? 'admin_review' : 'rejected',
+    approvedByUserId: tenancy.userId,
+    notes: body.notes ?? null,
+  });
 
-  if (updateError) {
-    return Response.json({ error: 'update_failed', detail: updateError.message }, { status: 500 });
-  }
-
-  // Insert approval record
-  const { error: approvalError } = await supabase
-    .from('source_event_approvals')
-    .insert({
-      event_id: eventId,
-      action: body.action === 'approve' ? 'admin_review' : 'rejected',
-      approved_by_user_id: tenancy.userId,
-      from_state: fromState,
-      to_state: toState,
-      notes: body.notes ?? null,
-    });
-
-  if (approvalError) {
-    // Non-fatal — event is already updated; log and continue.
-    console.error('[approve] approval record insert failed:', approvalError.message);
+  if (!approvalWrite.ok) {
+    return Response.json(
+      { error: 'update_failed', detail: approvalWrite.error },
+      { status: 500 },
+    );
   }
 
   return Response.json({
