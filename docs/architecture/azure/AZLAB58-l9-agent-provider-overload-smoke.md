@@ -1,6 +1,6 @@
 # AZLAB58 - L9 Agent Provider Overload Smoke
 
-Status: wired; live run pending after deploy  
+Status: wired; live Azure run passed  
 Layer: L9 - Resilience / DR
 
 ## Purpose
@@ -83,12 +83,39 @@ Pass criteria:
 - Response tells the user to retry/resume from the same surface.
 - Response does not include raw stream-error or simulated-provider text.
 
+## Live Azure Evidence
+
+| Item | Value |
+| --- | --- |
+| Date | 2026-05-16 |
+| Container App | `ca-abarva-web-lab-eastus` |
+| Revision | `ca-abarva-web-lab-eastus--r25-l9-provider-overload` |
+| Image | `acrabarvalab001.azurecr.io/abarva/web:lab-l9-provider-overload-20260516-r25` |
+| Image digest | `sha256:2cca9e75f9b92cf4bd2bc7485728a24ea09e06bce02c83a769dada93fa0866e6` |
+| Health | `/api/health` returned `ok=true`, `postgres=true`, `direct_postgres=true`, `neo4j=skipped` |
+| Connectivity | `/api/health/azure-connectivity` returned `pass`, run id `azconn-20260516132142` |
+| Provider overload smoke | `pass`, HTTP `200`, fallback detected, raw stream error not detected |
+| Report artifact | `/tmp/azure-l9-provider-overload-r25.json` |
+
+Live smoke summary:
+
+```json
+{
+  "status": "pass",
+  "response": {
+    "status": 200,
+    "hasFallback": true,
+    "leakedRawError": false
+  }
+}
+```
+
 ## Current L9 State
 
 | Failure mode | Evidence |
 | --- | --- |
 | Service Bus poison message | AZLAB40 dry-run drill. |
 | Service Bus mixed good + poison batch | AZLAB51 live Azure pass. |
-| Model provider overload | This AZLAB58 drill; live evidence to be captured after deploy. |
+| Model provider overload | AZLAB58 live Azure pass on r25. |
 | Postgres disruption | Runbook/drill still pending. |
 | PITR restore timing | Restore drill still pending. |
