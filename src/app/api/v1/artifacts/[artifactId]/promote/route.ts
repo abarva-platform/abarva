@@ -5,7 +5,7 @@
 
 import { NextRequest } from 'next/server';
 import { getArtifact, promoteArtifact } from '@/lib/intelligence/db/artifactRepository';
-import { getServerSupabase } from '@/lib/supabase-server';
+import { selectDeliverableWriteAdapter } from '@/lib/data-plane/write-adapters/deliverableWriteAdapter';
 import { requireTenancy, tenancyErrorResponse } from '../../../_intel-auth';
 
 export const runtime = 'nodejs';
@@ -29,53 +29,24 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ art
       return Response.json({ error: 'already_promoted', promotedTo: artifact.promotedToDeliverableId }, { status: 409 });
     }
 
-    const sb = getServerSupabase();
-
-    // 1 · ensure deliverable_types row for the artifact kind exists
+    // Steps 1-3 (type upsert + deliverable insert + version insert) routed
+    // through the data-plane write seam (Slice 3b). On Azure they run as one
+    // transaction; on Supabase they apply individually as before.
     const typeKey = `artifact_${artifact.kind}`;
-    await sb.from('deliverable_types').upsert(
-      {
-        type_key: typeKey,
-        title: `${artifact.kind} (from Intelligence)`,
-        description: 'Artifact promoted from Intelligence thread',
-        applicable_phases: [],
-        applicable_topics: [],
-        template_structure: {},
-        required_data_inputs: {},
-        quality_rubric: {},
-        generation_prompt_template: '',
-        output_format: 'markdown',
-        maturity: 'production',
-      },
-      { onConflict: 'type_key' },
-    );
-
-    // 2 · create deliverables_v2 row
-    const { data: deliverable, error: dErr } = await sb
-      .from('deliverables_v2')
-      .insert({
-        engagement_id: body.targetProgramId,
-        deliverable_type_key: typeKey,
-        title: artifact.title,
-        status: 'draft',
-        current_version: 1,
-        created_by: ctx.userId,
-      })
-      .select('id')
-      .single();
-    if (dErr) throw dErr;
-
-    // 3 · insert the artifact content as v1
-    const deliverableId = (deliverable as { id: string }).id;
-    await sb.from('deliverable_versions').insert({
-      deliverable_id: deliverableId,
-      version: 1,
-      content: artifact.htmlContent,
-      structured_data: {
-        promoted_from_artifact_id: artifact.id,
-        attachment_metadata: body.attachmentMetadata ?? {},
-      },
+    const promotionWrite = await selectDeliverableWriteAdapter().promoteToDeliverable({
+      typeKey,
+      artifactKind: artifact.kind,
+      engagementId: body.targetProgramId,
+      title: artifact.title,
+      htmlContent: artifact.htmlContent,
+      artifactId: artifact.id,
+      attachmentMetadata: body.attachmentMetadata ?? {},
+      createdByUserId: ctx.userId,
     });
+    if (!promotionWrite.ok || !promotionWrite.deliverableId) {
+      throw new Error(promotionWrite.error ?? 'deliverable promotion write failed');
+    }
+    const deliverableId = promotionWrite.deliverableId;
 
     // 4 · flip artifact governance
     const promoted = await promoteArtifact(ctx, artifactId, deliverableId);

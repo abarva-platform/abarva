@@ -23,6 +23,7 @@ import { getCurrentUser } from '@/lib/auth/current-user';
 import { CANONICAL_CLIENT_ADMIN_EMAILS } from '@/lib/auth/canonical-auth-roster';
 import { loadUserSourceAccessPolicy } from '@/lib/auth/source-access-policy';
 import { getServerSupabase } from '@/lib/supabase-server';
+import { selectSourceWriteAdapter } from '@/lib/data-plane/write-adapters/sourceWriteAdapter';
 import { inferClientKeyFromEmail, isClientKey } from '@/lib/client-config';
 import {
   artifactStateRowToView,
@@ -184,20 +185,25 @@ export async function PATCH(req: NextRequest, { params }: RouteCtx) {
       );
     }
 
-    const { data: updatedRow, error: updateError } = await supabase
-      .from('source_event_artifact_states')
-      .update({ status, updated_at: new Date().toISOString() })
-      .eq('id', artifactRow.id)
-      .select('*')
-      .single<SourceEventArtifactStateRow>();
-    if (updateError) {
+    // DB write routed through the data-plane write seam (Slice 3b).
+    const statusWrite = await selectSourceWriteAdapter(
+      undefined,
+      effectiveClientKey,
+    ).updateArtifactStatus({
+      artifactRowId: artifactRow.id,
+      status,
+      updatedAtIso: new Date().toISOString(),
+    });
+    if (!statusWrite.ok || !statusWrite.data) {
       return Response.json(
-        { error: 'update_failed', detail: updateError.message },
+        { error: 'update_failed', detail: statusWrite.error },
         { status: 500 },
       );
     }
 
-    const view: SourceEventArtifactState = artifactStateRowToView(updatedRow);
+    const view: SourceEventArtifactState = artifactStateRowToView(
+      statusWrite.data as unknown as SourceEventArtifactStateRow,
+    );
     return Response.json({ ok: true, artifact: view });
   } catch (err) {
     console.error(

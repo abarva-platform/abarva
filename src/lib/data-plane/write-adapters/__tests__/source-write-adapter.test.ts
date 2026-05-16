@@ -1,0 +1,421 @@
+// Unit tests for the source/artifact + deliverable domain write adapters
+// (Slice 3b — source / artifact write routes).
+//
+// Pins the contract that matters for the Azure parallel-run cutover:
+//   - default selection stays Supabase (production write unchanged);
+//   - the Azure adapter is selectable explicitly / by env;
+//   - each Supabase write issues the exact pre-seam table + row body;
+//   - each Azure write issues the mirrored SQL inside a transaction;
+//   - the multi-statement writes (approval, deliverable promotion) keep both
+//     statements on Azure so they are atomic;
+//   - best-effort writes (linkAttachments) never throw.
+
+import type { SupabaseClient } from '@supabase/supabase-js';
+import type { TxSessionRunner } from '../../read-adapters/azureSession';
+import {
+  createSupabaseSourceWriteAdapter,
+  createAzureSourceWriteAdapter,
+  selectSourceWriteAdapter,
+} from '../sourceWriteAdapter';
+import {
+  createSupabaseDeliverableWriteAdapter,
+  createAzureDeliverableWriteAdapter,
+  selectDeliverableWriteAdapter,
+} from '../deliverableWriteAdapter';
+
+// --- Supabase client mock ---------------------------------------------------
+
+interface SupabaseCall {
+  table: string;
+  op: 'insert' | 'update' | 'upsert';
+  payload: unknown;
+}
+
+/**
+ * A chainable Supabase client mock. Records every insert/update/upsert and
+ * resolves terminal `.single()` / awaited builders with a scripted row.
+ */
+function fakeSupabase(row: Record<string, unknown> | null = { id: 'row-1' }): {
+  client: SupabaseClient;
+  calls: SupabaseCall[];
+} {
+  const calls: SupabaseCall[] = [];
+  function builder(table: string, op: SupabaseCall['op'], payload: unknown) {
+    calls.push({ table, op, payload });
+    const result = { data: row, error: null };
+    const chain: Record<string, unknown> = {};
+    const passthrough = () => chain;
+    chain.eq = passthrough;
+    chain.in = passthrough;
+    chain.is = passthrough;
+    chain.select = passthrough;
+    chain.single = () => Promise.resolve(result);
+    chain.maybeSingle = () => Promise.resolve(result);
+    // Awaiting the builder directly (update with no .select()) resolves too.
+    chain.then = (resolve: (v: unknown) => unknown) => resolve(result);
+    return chain;
+  }
+  const client = {
+    from(table: string) {
+      return {
+        insert: (payload: unknown) => builder(table, 'insert', payload),
+        update: (payload: unknown) => builder(table, 'update', payload),
+        upsert: (payload: unknown) => builder(table, 'upsert', payload),
+      };
+    },
+  } as unknown as SupabaseClient;
+  return { client, calls };
+}
+
+// --- Azure transaction-session mock ----------------------------------------
+
+function fakeTxSession(
+  handler: (sql: string, params: readonly unknown[]) => unknown[],
+): { session: TxSessionRunner; statements: string[] } {
+  const statements: string[] = [];
+  const session: TxSessionRunner = async (fn) =>
+    fn(async <R>(sql: string, params: unknown[]) => {
+      statements.push(sql);
+      return handler(sql, params) as R[];
+    });
+  return { session, statements };
+}
+
+// --- selection --------------------------------------------------------------
+
+describe('selectSourceWriteAdapter / selectDeliverableWriteAdapter', () => {
+  const original = process.env.ABARVA_DATA_PLANE;
+  afterEach(() => {
+    if (original === undefined) delete process.env.ABARVA_DATA_PLANE;
+    else process.env.ABARVA_DATA_PLANE = original;
+  });
+
+  it('returns the Supabase adapters by default', () => {
+    delete process.env.ABARVA_DATA_PLANE;
+    expect(selectSourceWriteAdapter().name).toBe('supabase');
+    expect(selectDeliverableWriteAdapter().name).toBe('supabase');
+  });
+
+  it('returns the Azure adapters when ABARVA_DATA_PLANE=azure-postgres', () => {
+    process.env.ABARVA_DATA_PLANE = 'azure-postgres';
+    expect(selectSourceWriteAdapter().name).toBe('azure-postgres');
+    expect(selectDeliverableWriteAdapter().name).toBe('azure-postgres');
+  });
+
+  it('honors an explicit plane argument over the env var', () => {
+    process.env.ABARVA_DATA_PLANE = 'azure-postgres';
+    expect(selectSourceWriteAdapter('supabase').name).toBe('supabase');
+  });
+
+  it('canonicalizes a legacy tenant alias without changing selection', () => {
+    delete process.env.ABARVA_DATA_PLANE;
+    expect(selectSourceWriteAdapter(undefined, 'apexretail').name).toBe('supabase');
+  });
+});
+
+// --- Supabase source write adapter -----------------------------------------
+
+describe('supabase source write adapter', () => {
+  it('insertParticipant inserts into source_event_participants', async () => {
+    const { client, calls } = fakeSupabase(null);
+    const adapter = createSupabaseSourceWriteAdapter(() => client);
+    const result = await adapter.insertParticipant({
+      clientKey: 'apex-retail',
+      sourceEventId: 'evt-1',
+      userId: 'user-1',
+    });
+    expect(result.ok).toBe(true);
+    expect(calls[0].table).toBe('source_event_participants');
+    expect(calls[0].op).toBe('insert');
+    expect(calls[0].payload).toMatchObject({
+      client_key: 'apex-retail',
+      source_event_id: 'evt-1',
+      source_event_row_id: 'evt-1',
+      user_id: 'user-1',
+      role: 'source creator',
+    });
+  });
+
+  it('applyApproval updates the event then inserts the approval record', async () => {
+    const { client, calls } = fakeSupabase(null);
+    const adapter = createSupabaseSourceWriteAdapter(() => client);
+    const result = await adapter.applyApproval({
+      eventId: 'evt-1',
+      clientKey: 'apex-retail',
+      fromState: 'pending',
+      toState: 'active',
+      approvalAction: 'admin_review',
+      approvedByUserId: 'admin-1',
+      notes: 'looks good',
+    });
+    expect(result.ok).toBe(true);
+    expect(calls.map((c) => c.table)).toEqual([
+      'source_events',
+      'source_event_approvals',
+    ]);
+    expect(calls[0].op).toBe('update');
+    expect(calls[0].payload).toEqual({ lifecycle_state: 'active' });
+    expect(calls[1].payload).toMatchObject({
+      event_id: 'evt-1',
+      action: 'admin_review',
+      from_state: 'pending',
+      to_state: 'active',
+      notes: 'looks good',
+    });
+  });
+
+  it('updateStage updates source_events with the new stage + lifecycle', async () => {
+    const { client, calls } = fakeSupabase(null);
+    const adapter = createSupabaseSourceWriteAdapter(() => client);
+    const result = await adapter.updateStage({
+      eventId: 'evt-1',
+      clientKey: 'apex-retail',
+      stageKey: 'value',
+      lifecycleState: 'completed',
+      updatedAtIso: '2026-05-15T00:00:00.000Z',
+    });
+    expect(result.ok).toBe(true);
+    expect(calls[0].table).toBe('source_events');
+    expect(calls[0].payload).toEqual({
+      current_stage_key: 'value',
+      lifecycle_state: 'completed',
+      updated_at: '2026-05-15T00:00:00.000Z',
+    });
+  });
+
+  it('updateGateCriterion returns the updated row', async () => {
+    const { client, calls } = fakeSupabase({ id: 'crit-1', state: 'met' });
+    const adapter = createSupabaseSourceWriteAdapter(() => client);
+    const result = await adapter.updateGateCriterion({
+      criterionRowId: 'crit-1',
+      state: 'met',
+      reviewerUserId: 'rev-1',
+      reviewedAtIso: '2026-05-15T00:00:00.000Z',
+      updatedAtIso: '2026-05-15T00:00:00.000Z',
+    });
+    expect(result.ok).toBe(true);
+    expect(result.data).toEqual({ id: 'crit-1', state: 'met' });
+    expect(calls[0].table).toBe('source_event_gate_criterion_states');
+  });
+
+  it('updateArtifactBody persists the column body and returns the row', async () => {
+    const { client, calls } = fakeSupabase({ id: 'art-1', body: 'hello' });
+    const adapter = createSupabaseSourceWriteAdapter(() => client);
+    const result = await adapter.updateArtifactBody({
+      artifactRowId: 'art-1',
+      columns: { body: 'hello', body_format: 'markdown' },
+    });
+    expect(result.ok).toBe(true);
+    expect(result.data).toEqual({ id: 'art-1', body: 'hello' });
+    expect(calls[0].table).toBe('source_event_artifact_states');
+    expect(calls[0].payload).toEqual({ body: 'hello', body_format: 'markdown' });
+  });
+
+  it('updateArtifactStatus flips the status and returns the row', async () => {
+    const { client, calls } = fakeSupabase({ id: 'art-1', status: 'approved' });
+    const adapter = createSupabaseSourceWriteAdapter(() => client);
+    const result = await adapter.updateArtifactStatus({
+      artifactRowId: 'art-1',
+      status: 'approved',
+      updatedAtIso: '2026-05-15T00:00:00.000Z',
+    });
+    expect(result.ok).toBe(true);
+    expect(calls[0].payload).toEqual({
+      status: 'approved',
+      updated_at: '2026-05-15T00:00:00.000Z',
+    });
+  });
+
+  it('linkAttachments is a no-op for an empty attachment list', async () => {
+    const { client, calls } = fakeSupabase(null);
+    const adapter = createSupabaseSourceWriteAdapter(() => client);
+    const result = await adapter.linkAttachments({
+      attachmentIds: [],
+      tenantId: 'tenant-1',
+      eventId: 'evt-1',
+    });
+    expect(result.ok).toBe(true);
+    expect(calls).toHaveLength(0);
+  });
+
+  it('linkAttachments updates agent_attachment for a non-empty list', async () => {
+    const { client, calls } = fakeSupabase(null);
+    const adapter = createSupabaseSourceWriteAdapter(() => client);
+    const result = await adapter.linkAttachments({
+      attachmentIds: ['att-1', 'att-2'],
+      tenantId: 'tenant-1',
+      eventId: 'evt-1',
+    });
+    expect(result.ok).toBe(true);
+    expect(calls[0].table).toBe('agent_attachment');
+    expect(calls[0].payload).toEqual({ linked_event_id: 'evt-1' });
+  });
+});
+
+// --- Azure source write adapter --------------------------------------------
+
+describe('azure source write adapter', () => {
+  it('exposes the data-plane name as azure-postgres', () => {
+    expect(createAzureSourceWriteAdapter().name).toBe('azure-postgres');
+  });
+
+  it('applyApproval issues the event UPDATE and the approval INSERT in one tx', async () => {
+    const { session, statements } = fakeTxSession(() => []);
+    const adapter = createAzureSourceWriteAdapter(session);
+    const result = await adapter.applyApproval({
+      eventId: 'evt-1',
+      clientKey: 'apex-retail',
+      fromState: 'pending',
+      toState: 'active',
+      approvalAction: 'admin_review',
+      approvedByUserId: 'admin-1',
+      notes: null,
+    });
+    expect(result.ok).toBe(true);
+    expect(statements[0]).toContain('UPDATE source_events');
+    expect(statements[1]).toContain('INSERT INTO source_event_approvals');
+  });
+
+  it('updateGateCriterion issues an UPDATE ... RETURNING * and returns the row', async () => {
+    const { session, statements } = fakeTxSession((sql) =>
+      sql.includes('RETURNING') ? [{ id: 'crit-1', state: 'met' }] : [],
+    );
+    const adapter = createAzureSourceWriteAdapter(session);
+    const result = await adapter.updateGateCriterion({
+      criterionRowId: 'crit-1',
+      state: 'met',
+      reviewerUserId: 'rev-1',
+      reviewedAtIso: null,
+      updatedAtIso: '2026-05-15T00:00:00.000Z',
+    });
+    expect(result.ok).toBe(true);
+    expect(result.data).toEqual({ id: 'crit-1', state: 'met' });
+    expect(statements[0]).toContain('source_event_gate_criterion_states');
+    expect(statements[0]).toContain('RETURNING *');
+  });
+
+  it('updateArtifactBody builds a dynamic assignment list from the columns', async () => {
+    const { session, statements } = fakeTxSession((sql) =>
+      sql.includes('RETURNING') ? [{ id: 'art-1' }] : [],
+    );
+    const adapter = createAzureSourceWriteAdapter(session);
+    const result = await adapter.updateArtifactBody({
+      artifactRowId: 'art-1',
+      columns: { body: 'x', body_format: 'markdown' },
+    });
+    expect(result.ok).toBe(true);
+    expect(statements[0]).toContain('body = $1');
+    expect(statements[0]).toContain('body_format = $2');
+    expect(statements[0]).toContain('WHERE id = $3');
+  });
+
+  it('insertParticipant treats a unique-violation as a benign no-op', async () => {
+    const { session } = fakeTxSession((sql) => {
+      if (sql.startsWith('INSERT')) {
+        throw Object.assign(new Error('duplicate key value'), { code: '23505' });
+      }
+      return [];
+    });
+    const adapter = createAzureSourceWriteAdapter(session);
+    const result = await adapter.insertParticipant({
+      clientKey: 'apex-retail',
+      sourceEventId: 'evt-1',
+      userId: 'user-1',
+    });
+    expect(result.ok).toBe(true);
+  });
+
+  it('linkAttachments surfaces a backend fault without throwing', async () => {
+    const { session } = fakeTxSession(() => {
+      throw new Error('connection reset');
+    });
+    const adapter = createAzureSourceWriteAdapter(session);
+    const result = await adapter.linkAttachments({
+      attachmentIds: ['att-1'],
+      tenantId: 'tenant-1',
+      eventId: 'evt-1',
+    });
+    expect(result.ok).toBe(false);
+    expect(result.error).toContain('connection reset');
+  });
+});
+
+// --- deliverable write adapter ---------------------------------------------
+
+describe('supabase deliverable write adapter', () => {
+  it('promoteToDeliverable upserts the type, inserts the deliverable + version', async () => {
+    const { client, calls } = fakeSupabase({ id: 'deliv-1' });
+    const adapter = createSupabaseDeliverableWriteAdapter(() => client);
+    const result = await adapter.promoteToDeliverable({
+      typeKey: 'artifact_brief',
+      artifactKind: 'brief',
+      engagementId: 'prog-1',
+      title: 'Q4 Brief',
+      htmlContent: '<p>hi</p>',
+      artifactId: 'art-1',
+      attachmentMetadata: { source: 'thread' },
+      createdByUserId: 'user-1',
+    });
+    expect(result.ok).toBe(true);
+    expect(result.deliverableId).toBe('deliv-1');
+    expect(calls.map((c) => `${c.table}:${c.op}`)).toEqual([
+      'deliverable_types:upsert',
+      'deliverables_v2:insert',
+      'deliverable_versions:insert',
+    ]);
+    expect(calls[1].payload).toMatchObject({
+      engagement_id: 'prog-1',
+      deliverable_type_key: 'artifact_brief',
+      title: 'Q4 Brief',
+      created_by: 'user-1',
+    });
+    expect(calls[2].payload).toMatchObject({
+      deliverable_id: 'deliv-1',
+      version: 1,
+      content: '<p>hi</p>',
+    });
+  });
+});
+
+describe('azure deliverable write adapter', () => {
+  it('runs the type upsert, deliverable insert and version insert in one tx', async () => {
+    const { session, statements } = fakeTxSession((sql) =>
+      sql.includes('RETURNING id') ? [{ id: 'deliv-1' }] : [],
+    );
+    const adapter = createAzureDeliverableWriteAdapter(session);
+    const result = await adapter.promoteToDeliverable({
+      typeKey: 'artifact_brief',
+      artifactKind: 'brief',
+      engagementId: 'prog-1',
+      title: 'Q4 Brief',
+      htmlContent: '<p>hi</p>',
+      artifactId: 'art-1',
+      attachmentMetadata: {},
+      createdByUserId: 'user-1',
+    });
+    expect(result.ok).toBe(true);
+    expect(result.deliverableId).toBe('deliv-1');
+    expect(statements[0]).toContain('INSERT INTO deliverable_types');
+    expect(statements[1]).toContain('INSERT INTO deliverables_v2');
+    expect(statements[2]).toContain('INSERT INTO deliverable_versions');
+  });
+
+  it('surfaces a backend fault as a non-ok outcome (no throw)', async () => {
+    const { session } = fakeTxSession(() => {
+      throw new Error('connection reset');
+    });
+    const adapter = createAzureDeliverableWriteAdapter(session);
+    const result = await adapter.promoteToDeliverable({
+      typeKey: 'artifact_brief',
+      artifactKind: 'brief',
+      engagementId: 'prog-1',
+      title: 'Q4 Brief',
+      htmlContent: '<p>hi</p>',
+      artifactId: 'art-1',
+      attachmentMetadata: {},
+      createdByUserId: 'user-1',
+    });
+    expect(result.ok).toBe(false);
+    expect(result.error).toContain('connection reset');
+  });
+});

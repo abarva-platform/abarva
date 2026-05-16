@@ -19,6 +19,7 @@ import { getCurrentUser } from '@/lib/auth/current-user';
 import { CANONICAL_CLIENT_ADMIN_EMAILS } from '@/lib/auth/canonical-auth-roster';
 import { loadUserSourceAccessPolicy } from '@/lib/auth/source-access-policy';
 import { getServerSupabase } from '@/lib/supabase-server';
+import { selectSourceWriteAdapter } from '@/lib/data-plane/write-adapters/sourceWriteAdapter';
 import { inferClientKeyFromEmail, isClientKey } from '@/lib/client-config';
 import {
   gateCriterionStateRowToView,
@@ -178,25 +179,27 @@ export async function PATCH(req: NextRequest, { params }: RouteCtx) {
     const reviewedAt =
       state === 'met' || state === 'not_met' ? new Date().toISOString() : null;
 
-    const { data: updatedRow, error: updateError } = await supabase
-      .from('source_event_gate_criterion_states')
-      .update({
-        state,
-        reviewer_user_id: state === 'pending' ? null : reviewerUserId,
-        reviewed_at: reviewedAt,
-        updated_at: new Date().toISOString(),
-      })
-      .eq('id', criterionRow.id)
-      .select('*')
-      .single<SourceEventGateCriterionStateRow>();
-    if (updateError) {
+    // DB write routed through the data-plane write seam (Slice 3b).
+    const criterionWrite = await selectSourceWriteAdapter(
+      undefined,
+      effectiveClientKey,
+    ).updateGateCriterion({
+      criterionRowId: criterionRow.id,
+      state,
+      reviewerUserId: state === 'pending' ? null : reviewerUserId,
+      reviewedAtIso: reviewedAt,
+      updatedAtIso: new Date().toISOString(),
+    });
+    if (!criterionWrite.ok || !criterionWrite.data) {
       return Response.json(
-        { error: 'update_failed', detail: updateError.message },
+        { error: 'update_failed', detail: criterionWrite.error },
         { status: 500 },
       );
     }
 
-    const view: SourceEventGateCriterion = gateCriterionStateRowToView(updatedRow);
+    const view: SourceEventGateCriterion = gateCriterionStateRowToView(
+      criterionWrite.data as unknown as SourceEventGateCriterionStateRow,
+    );
     return Response.json({ ok: true, criterion: view });
   } catch (err) {
     console.error(

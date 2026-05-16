@@ -14,7 +14,7 @@ import {
   type ApexRetailAdapterResult,
 } from '@/lib/source/adapters/apex-retail-adapter';
 import { sourceEventRowToDetail } from '@/lib/source/queries';
-import { getServerSupabase } from '@/lib/supabase-server';
+import { selectSourceWriteAdapter } from '@/lib/data-plane/write-adapters/sourceWriteAdapter';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -167,20 +167,16 @@ async function linkAttachmentsToEvent(args: {
 }): Promise<void> {
   const { attachmentIds, tenantId, eventId } = args;
   if (attachmentIds.length === 0) return;
-  try {
-    const sb = getServerSupabase();
-    await sb
-      .from('agent_attachment')
-      .update({ linked_event_id: eventId })
-      .in('id', attachmentIds)
-      .eq('tenant_id', tenantId)
-      .is('linked_event_id', null);
-  } catch {
-    // Swallow — the agent turn must still respond even if metadata
-    // persistence fails. The attachment row keeps its other context
-    // (surface, agent, surfaceContext) and a retention sweeper can
-    // reconcile from telemetry if needed.
-  }
+  // DB write routed through the data-plane write seam (Slice 3b). The seam's
+  // linkAttachments is best-effort and never throws — the agent turn must
+  // still respond even if attachment metadata persistence fails. The
+  // attachment row keeps its other context and a retention sweeper can
+  // reconcile from telemetry if needed.
+  await selectSourceWriteAdapter().linkAttachments({
+    attachmentIds,
+    tenantId,
+    eventId,
+  });
 }
 
 async function parseSourceNexusRequestBody(

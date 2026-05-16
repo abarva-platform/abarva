@@ -22,6 +22,7 @@ import { getCurrentUser } from '@/lib/auth/current-user';
 import { CANONICAL_CLIENT_ADMIN_EMAILS } from '@/lib/auth/canonical-auth-roster';
 import { loadUserSourceAccessPolicy } from '@/lib/auth/source-access-policy';
 import { getServerSupabase } from '@/lib/supabase-server';
+import { selectSourceWriteAdapter } from '@/lib/data-plane/write-adapters/sourceWriteAdapter';
 import {
   buildSourceGenerationContext,
   collectUpstreamBodies,
@@ -260,20 +261,25 @@ export async function POST(_req: NextRequest, { params }: RouteCtx) {
   };
   if (artifactRow.tier === 'stub') update.tier = 'outline';
 
-  const { data: updatedRow, error: updateError } = await supabase
-    .from('source_event_artifact_states')
-    .update(update)
-    .eq('id', artifactRow.id)
-    .select('*')
-    .single<SourceEventArtifactStateRow>();
-  if (updateError) {
+  // DB write routed through the data-plane write seam (Slice 3b). The
+  // Claude call above stays route-side; the seam owns only the body persist.
+  const bodyWrite = await selectSourceWriteAdapter(
+    undefined,
+    ctx.tenantKey,
+  ).updateArtifactBody({
+    artifactRowId: artifactRow.id,
+    columns: update as Record<string, unknown>,
+  });
+  if (!bodyWrite.ok || !bodyWrite.data) {
     return Response.json(
-      { error: 'update_failed', detail: updateError.message },
+      { error: 'update_failed', detail: bodyWrite.error },
       { status: 500 },
     );
   }
 
-  const view: SourceEventArtifactState = artifactStateRowToView(updatedRow);
+  const view: SourceEventArtifactState = artifactStateRowToView(
+    bodyWrite.data as unknown as SourceEventArtifactStateRow,
+  );
   return Response.json({
     ok: true,
     artifact: view,
