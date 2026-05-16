@@ -429,6 +429,105 @@ describe('SENTINEL_BANNED_PATTERNS — completeness', () => {
       );
     });
   });
+
+  describe('internal_consistency — phase 2 percentage bounds (G3) (INT-VOICE.STRAT-2026-05-15b)', () => {
+    const RED_CORPUS = [
+      'Margin compression is 142% across the portfolio, which is the binding evidence in F200.',
+      'Contact-center utilization is 118% on the current roster, per P-RET-008.',
+      'Adoption rate sits at 167% for the new tooling right now, see F201.',
+      'Specialty market share reached 220% last quarter according to the brief.',
+      'Model accuracy is 134 percent on the demand engine, the evidence shows.',
+    ];
+
+    for (const answer of RED_CORPUS) {
+      it(`flags an incoherent ratio-style percentage: "${answer.slice(0, 48)}…"`, () => {
+        const r = checkSentinelVoice(answer);
+        expect(r.violations).toEqual(
+          expect.arrayContaining([
+            expect.objectContaining({
+              category: 'internal_consistency',
+              phrase: 'ratio-style percentage exceeds 100%',
+            }),
+          ]),
+        );
+      });
+    }
+
+    const GREEN_CORPUS = [
+      // The audit case — exceeding a commitment > 100% is legitimate.
+      'AI initiatives are at 141% of committed value, per the Ambient AI card in F200.',
+      'Run-rate spend is tracking at 115% of the annual target, the evidence shows.',
+      'Year-over-year growth hit 230% on the contact-center program, per P-RET-008.',
+      'The program is delivering 156% of its forecast return, well ahead of plan.',
+      'Adobe spend is at 108% of budget, which the CFO will want to review.',
+      // Bounded ratio nouns that stay in range — no violation.
+      'Margin sits at 38% and utilization is 71%, both within the corpus range.',
+      // No recognisable noun near the value — no false positive.
+      'The score moved to 142 over the period, a directional read only.',
+    ];
+
+    for (const answer of GREEN_CORPUS) {
+      it(`does not flag a coherent percentage: "${answer.slice(0, 48)}…"`, () => {
+        const r = checkSentinelVoice(answer);
+        expect(r.violations).not.toEqual(
+          expect.arrayContaining([
+            expect.objectContaining({
+              phrase: 'ratio-style percentage exceeds 100%',
+            }),
+          ]),
+        );
+      });
+    }
+  });
+
+  describe('internal_consistency — phase 2 named-entity consistency (G5) (INT-VOICE.STRAT-2026-05-15b)', () => {
+    const RED_CORPUS = [
+      'Carlos Rivera owns the renewal. Charlie Rivera should be looped in before the gate, per F200.',
+      'The CFO is Dana Whitmore. As Diana Whitmore noted, the budget is locked — see P-FS-004.',
+      'Sam Patel raised the risk; Samuel Patel later disagreed, and the corpus backs Samuel here.',
+      'Per Maria Gonzalez, the program is on track, though Marie Gonzalez flagged a delay in F201.',
+    ];
+
+    for (const answer of RED_CORPUS) {
+      it(`flags a conflicting first-name spelling: "${answer.slice(0, 48)}…"`, () => {
+        const r = checkSentinelVoice(answer);
+        expect(r.violations).toEqual(
+          expect.arrayContaining([
+            expect.objectContaining({
+              category: 'internal_consistency',
+              phrase: 'same person referred to by conflicting first names',
+            }),
+          ]),
+        );
+      });
+    }
+
+    const GREEN_CORPUS = [
+      // Full name, first name only, and an initial form — all consistent.
+      'Carlos Rivera owns the renewal. Carlos will brief the CFO, and C. Rivera signs the gate. See F200.',
+      // Two genuinely different people — no shared last name.
+      'Carlos Rivera and Dana Whitmore both reviewed the brief, per P-FS-004.',
+      // Honorific does not count as a first name.
+      'Dr. Maria Gonzalez leads the program; Maria Gonzalez will present at the gate.',
+      // Vendor and product capitalised spans must not be read as people.
+      'Salesforce Marketing Cloud and Adobe Experience Manager are the two platforms in scope.',
+      // Two people sharing a surname but with the same first name — consistent.
+      'Sam Patel and Sam Patel are listed twice in the roster, per F201.',
+    ];
+
+    for (const answer of GREEN_CORPUS) {
+      it(`does not flag consistent or distinct names: "${answer.slice(0, 48)}…"`, () => {
+        const r = checkSentinelVoice(answer);
+        expect(r.violations).not.toEqual(
+          expect.arrayContaining([
+            expect.objectContaining({
+              phrase: 'same person referred to by conflicting first names',
+            }),
+          ]),
+        );
+      });
+    }
+  });
 });
 
 // INT-VOICE.STRAT-2026-05-10c · Consultant posture — replaces the earlier

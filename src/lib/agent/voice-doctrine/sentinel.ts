@@ -412,6 +412,8 @@ function detectPhaseOneConsistencyViolations(
     ...detectMoneySumReconciliationViolations(text),
     ...detectRelativeDateMathViolations(text, normalizeReferenceDate(options.referenceDate)),
     ...detectPatternCitationValidityViolations(text),
+    ...detectPercentageBoundsViolations(text),
+    ...detectNamedEntityConsistencyViolations(text),
   ];
 }
 
@@ -562,6 +564,264 @@ function isKnownPatternCitation(id: string): boolean {
   if (/^PAT-PRG-[A-Z0-9-]+-00[1-9]$/.test(id)) return true;
   if (/^PAT-(?:AMS|CCAI|CC-AI|DEMAND|MARGIN|AMBIENT|PRIOR-AUTH|RCM)-00[1-9]$/.test(id)) return true;
   return false;
+}
+
+// ── Phase 2 guard: G3 — percentage bounds ────────────────────────────────────
+
+/**
+ * Nouns where a percentage > 100% is legitimate. Exceeding a commitment,
+ * a run-rate target, a baseline, or a forecast is a real-world coherent
+ * statement ("AI initiatives are at 141% of committed value"). A
+ * percentage modifying one of these nouns is never flagged.
+ *
+ * Ratio-style nouns (margin, utilization, share, completion) are bounded
+ * at 100% — a value above that is incoherent and gets flagged.
+ */
+const CAN_EXCEED_100_PERCENT_NOUNS: ReadonlyArray<string> = [
+  'commitment',
+  'commit',
+  'committed value',
+  'committed spend',
+  'target',
+  'plan',
+  'planned value',
+  'baseline',
+  'budget',
+  'forecast',
+  'projection',
+  'quota',
+  'goal',
+  'run-rate',
+  'run rate',
+  'runrate',
+  'growth',
+  'increase',
+  'uplift',
+  'lift',
+  'gain',
+  'return',
+  'roi',
+  'yield',
+  'expansion',
+  'over-delivery',
+  'overdelivery',
+  'attainment',
+  'capacity',
+  'estimate',
+];
+
+/**
+ * Ratio-style nouns that are bounded at 100%. A percentage above 100%
+ * modifying one of these is incoherent ("margin compression is 142%").
+ */
+const RATIO_BOUNDED_PERCENT_NOUNS: ReadonlyArray<string> = [
+  'margin',
+  'margin compression',
+  'utilization',
+  'utilisation',
+  'adoption',
+  'adoption rate',
+  'completion',
+  'completion rate',
+  'share',
+  'market share',
+  'penetration',
+  'coverage',
+  'accuracy',
+  'precision',
+  'recall',
+  'confidence',
+  'win rate',
+  'win-rate',
+  'hit rate',
+  'success rate',
+  'compliance',
+  'compliance rate',
+  'satisfaction',
+  'occupancy',
+];
+
+/**
+ * G3 — Percentage bounds.
+ *
+ * A numeric value labelled as a percentage that exceeds 100% is flagged
+ * only when the noun it modifies is a ratio-style noun (margin, share,
+ * utilization). Percentages modifying a "can-exceed-100%" noun
+ * (commitment, run-rate, growth) are always allowed — exceeding a
+ * commitment is legitimate. Percentages with no recognisable noun
+ * nearby are left alone (no false positives on unclassifiable text).
+ */
+function detectPercentageBoundsViolations(text: string): VoiceDriftViolation[] {
+  const violations: VoiceDriftViolation[] = [];
+  // Capture a percentage value plus the words immediately before/after it.
+  const percentPattern = /([0-9]+(?:\.[0-9]+)?)\s*(?:%|percent\b)/gi;
+
+  for (const match of text.matchAll(percentPattern)) {
+    const value = Number(match[1]);
+    if (!Number.isFinite(value) || value <= 100) continue;
+
+    const matchStart = match.index ?? 0;
+    const matchEnd = matchStart + match[0].length;
+    // Window of context on either side of the percentage.
+    const before = text.slice(Math.max(0, matchStart - 80), matchStart).toLowerCase();
+    const after = text.slice(matchEnd, matchEnd + 80).toLowerCase();
+    const context = `${before} ${after}`;
+
+    // "of committed value", "of target" style — the noun follows the %.
+    const exceedsAllowed = CAN_EXCEED_100_PERCENT_NOUNS.some((noun) =>
+      context.includes(noun),
+    );
+    if (exceedsAllowed) continue;
+
+    const ratioNoun = RATIO_BOUNDED_PERCENT_NOUNS.find((noun) => context.includes(noun));
+    if (!ratioNoun) continue;
+
+    violations.push({
+      category: 'internal_consistency',
+      phrase: 'ratio-style percentage exceeds 100%',
+      match: match[0].trim(),
+    });
+  }
+
+  return violations;
+}
+
+// ── Phase 2 guard: G5 — named-entity consistency ─────────────────────────────
+
+/**
+ * Capitalised words that begin a multi-word span but are not personal
+ * names — vendors, products, role titles, place names. A span starting
+ * with one of these is not treated as a person.
+ */
+const NON_PERSON_LEADING_WORDS: ReadonlySet<string> = new Set([
+  'The', 'A', 'An', 'This', 'That', 'These', 'Those', 'It', 'We', 'They',
+  'I', 'You', 'He', 'She',
+  // Sentence-leading connectors that can capitalise before a name.
+  'As', 'Per', 'Though', 'And', 'But', 'So', 'If', 'When', 'While', 'After',
+  'Before', 'Since', 'Because', 'Per', 'According', 'Both', 'Either',
+  'Salesforce', 'Adobe', 'Microsoft', 'Google', 'Amazon', 'Oracle', 'SAP',
+  'Snowflake', 'Databricks', 'Palantir', 'ServiceNow', 'Workday', 'AWS',
+  'Azure', 'Epic', 'Cerner', 'Anthropic', 'OpenAI', 'Pinecone', 'Neo4j',
+  'Apex', 'Meridian', 'First', 'Sentinel', 'Atlas', 'Steward', 'Nexus',
+  'Maestro', 'AbarVa',
+  'Chief', 'Vice', 'Senior', 'Director', 'Manager', 'President',
+  'Contact', 'Center', 'Demand', 'Margin', 'Store', 'Customer',
+  'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday',
+  'Sunday', 'January', 'February', 'March', 'April', 'May', 'June',
+  'July', 'August', 'September', 'October', 'November', 'December',
+  'North', 'South', 'East', 'West', 'United', 'New',
+]);
+
+/** Honorifics that may precede a name and are not the first name. */
+const HONORIFICS: ReadonlySet<string> = new Set([
+  'Mr', 'Mrs', 'Ms', 'Miss', 'Dr', 'Prof',
+]);
+
+interface NameSpan {
+  /** First name as written, or '' when the span is initial-only. */
+  firstName: string;
+  /** Lowercased first initial. */
+  firstInitial: string;
+  /** Lowercased last name. */
+  lastName: string;
+  /** Original span text. */
+  raw: string;
+}
+
+/**
+ * Extract candidate person-name spans: two or more capitalised words in
+ * sequence (the last word taken as the surname). A leading honorific or
+ * single-letter initial is handled so "Dr. Carlos Rivera" and
+ * "C. Rivera" both resolve to the Rivera cluster.
+ */
+function extractNameSpans(text: string): NameSpan[] {
+  const spans: NameSpan[] = [];
+  const spanPattern =
+    /\b((?:[A-Z][a-z]+|[A-Z]\.)(?:\s+(?:[A-Z][a-z]+|[A-Z]\.)){1,3})\b/g;
+
+  for (const match of text.matchAll(spanPattern)) {
+    let words = match[0].trim().split(/\s+/).map((w) => w.replace(/\.$/, ''));
+
+    // Drop a leading honorific or sentence connector — it is not the
+    // first name. Strip repeatedly ("As Dr. Maria Gonzalez").
+    while (
+      words.length > 2 &&
+      (HONORIFICS.has(words[0]!) || NON_PERSON_LEADING_WORDS.has(words[0]!))
+    ) {
+      words = words.slice(1);
+    }
+    if (words.length > 0 && HONORIFICS.has(words[0]!)) {
+      words = words.slice(1);
+    }
+    if (words.length < 2) continue;
+
+    const raw = words.join(' ');
+    const leading = words[0]!;
+    // Skip spans that clearly start with a non-person word.
+    if (NON_PERSON_LEADING_WORDS.has(leading)) continue;
+
+    const lastName = words[words.length - 1]!;
+    // Surname must be a real word, not an initial.
+    if (lastName.length < 2) continue;
+    if (NON_PERSON_LEADING_WORDS.has(lastName)) continue;
+
+    const isInitial = leading.length === 1;
+    spans.push({
+      firstName: isInitial ? '' : leading,
+      firstInitial: leading.charAt(0).toLowerCase(),
+      lastName: lastName.toLowerCase(),
+      raw,
+    });
+  }
+
+  return spans;
+}
+
+/**
+ * G5 — Named-entity consistency.
+ *
+ * Within one answer, cluster name spans by (last name + first initial).
+ * A cluster with two or more *distinct full first names* is a fabricated
+ * alternate spelling ("Carlos Rivera" vs "Charlie Rivera"). Initial-only
+ * mentions ("C. Rivera") and bare-surname-with-matching-initial spans
+ * never conflict — they are consistent with any full first name sharing
+ * the initial.
+ */
+function detectNamedEntityConsistencyViolations(text: string): VoiceDriftViolation[] {
+  const spans = extractNameSpans(text);
+  const clusters = new Map<string, NameSpan[]>();
+
+  for (const span of spans) {
+    const key = `${span.lastName}|${span.firstInitial}`;
+    const bucket = clusters.get(key);
+    if (bucket) {
+      bucket.push(span);
+    } else {
+      clusters.set(key, [span]);
+    }
+  }
+
+  const violations: VoiceDriftViolation[] = [];
+  for (const bucket of clusters.values()) {
+    const firstNames = new Set(
+      bucket
+        .map((span) => span.firstName.toLowerCase())
+        .filter((name) => name.length > 0),
+    );
+    if (firstNames.size < 2) continue;
+
+    const conflicting = bucket
+      .filter((span) => span.firstName.length > 0)
+      .map((span) => span.raw);
+
+    violations.push({
+      category: 'internal_consistency',
+      phrase: 'same person referred to by conflicting first names',
+      match: Array.from(new Set(conflicting)).join(' / '),
+    });
+  }
+
+  return violations;
 }
 
 // ── Refusal trigger contract ─────────────────────────────────────────────────
