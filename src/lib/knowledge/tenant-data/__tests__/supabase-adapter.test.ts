@@ -405,6 +405,58 @@ describe('SupabaseTenantDataAdapter.listRecords', () => {
       makeAdapter().listRecords('apex-retail', 'kpi_dictionary'),
     ).rejects.toThrow(/listRecords failed/);
   });
+
+  it('falls back to public records when the lab private schema is not created yet', async () => {
+    process.env.DATABASE_URL = 'postgres://user:pass@example.com:5432/db';
+    stagedResults = [
+      {
+        data: null,
+        error: { message: 'relation "client_apex_retail_private.data_inventory_records" does not exist' },
+      },
+      {
+        data: [
+          {
+            tenant_key: 'apex-retail',
+            segment_id: 'it_landscape',
+            record_id: 'it_landscape:sys:apex:sap-s4',
+            title: 'SAP S/4HANA',
+            record_kind: 'systems_inventory',
+            source_doc: 'systems_inventory.csv',
+            source_path: '03_it_landscape/systems_inventory.csv',
+            source_basis: 'tenant_admin_upload',
+            uploaded_by: 'Apex synthetic dataset import',
+            data_classification: 'Confidential',
+            confidence: 0.9,
+            last_reviewed: '2026-04-20',
+            freshness_state: 'fresh',
+            ingestion_status: 'indexed',
+            indexed_at: '2026-04-30T00:00:00Z',
+            record_text: 'SAP S/4HANA finance and inventory core.',
+            record_payload: { vendor: 'SAP' },
+          },
+        ],
+        error: null,
+      },
+    ];
+    mockPgQuery.mockRejectedValueOnce(
+      new Error('relation "client_apex_retail_private.data_inventory_records" does not exist'),
+    );
+
+    const out = await makeAdapter().listRecords('apex-retail', 'it_landscape', { limit: 6 });
+
+    expect(out[0]).toMatchObject({
+      tenantKey: 'apex-retail',
+      segmentId: 'it_landscape',
+      recordId: 'it_landscape:sys:apex:sap-s4',
+      title: 'SAP S/4HANA',
+    });
+    expect(calls).toHaveLength(2);
+    expect(calls[1].table).toBe('data_inventory_records');
+    expect(calls[1].filters).toEqual([
+      { op: 'eq', column: 'tenant_key', value: 'apex-retail' },
+      { op: 'eq', column: 'segment_id', value: 'it_landscape' },
+    ]);
+  });
 });
 
 // ── getRecord ─────────────────────────────────────────────────────────
