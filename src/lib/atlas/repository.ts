@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { buildTowerViewModel } from '@/lib/tower/aggregate';
-import { getServerSupabase } from '@/lib/supabase-server';
+import { selectAtlasRepositoryReadAdapter } from '@/lib/data-plane/read-adapters/atlasRepositoryReadAdapter';
+import { selectAtlasRepositoryWriteAdapter } from '@/lib/data-plane/write-adapters/atlasRepositoryWriteAdapter';
 import { validateAtlasCitationList, type AtlasCitation } from '@/lib/tower/atlas-citation-validator';
 import type {
   AtlasBenchmark,
@@ -13,6 +14,16 @@ import type {
   AtlasSignalSummary,
   AtlasTenancyCtx,
 } from '@/lib/atlas/types';
+
+// Slice 9: the 15+ physical reads and the thread/trace/observation writes that
+// used to call Supabase directly now route through the data-plane seam — reads
+// via `atlasRepositoryReadAdapter`, writes via `atlasRepositoryWriteAdapter`.
+// This module keeps the orchestration: every row→view-model mapping, the
+// legacy-fallback branching, and the two functions that genuinely interleave a
+// read and a write (`getOrCreateAtlasThread`, `appendAtlasTrace`) stay here and
+// call BOTH adapters. A read adapter never writes; a write adapter never reads.
+// Function signatures and return shapes are byte-identical to the pre-seam
+// repository, so every caller keeps working unchanged.
 
 type JsonObject = Record<string, unknown>;
 
@@ -83,8 +94,8 @@ function stringify(value: unknown): string | null {
 }
 
 async function getClientName(clientId: string): Promise<string> {
-  const { data } = await getServerSupabase().from('clients').select('name').eq('id', clientId).maybeSingle();
-  return (data as { name?: string } | null)?.name ?? 'Active client';
+  const row = await selectAtlasRepositoryReadAdapter().getClientName(clientId);
+  return row?.name ?? 'Active client';
 }
 
 function buildLegacySignal(apps: Array<{ id: string; name: string; vendor: string | null; criticality: string | null; annual_cost_usd: number | null }>): AtlasSignalSummary | null {
@@ -110,43 +121,15 @@ function buildLegacySignal(apps: Array<{ id: string; name: string; vendor: strin
 }
 
 async function listLegacyShadowApps(clientId: string) {
-  const { data } = await getServerSupabase()
-    .from('applications')
-    .select('id, name, vendor, criticality, annual_cost_usd')
-    .eq('client_id', clientId)
-    .eq('business_function', 'Shadow AI')
-    .order('annual_cost_usd', { ascending: false })
-    .limit(6);
-  return ((data as Array<{ id: string; name: string; vendor: string | null; criticality: string | null; annual_cost_usd: number | null }> | null) ?? []);
+  return selectAtlasRepositoryReadAdapter().listLegacyShadowApps(clientId);
 }
 
 export async function getAtlasPortfolioSummary(ctx: AtlasTenancyCtx): Promise<AtlasPortfolioSummary> {
-  const sb = getServerSupabase();
+  const reader = selectAtlasRepositoryReadAdapter();
   const clientName = await getClientName(ctx.clientId);
-  const { data } = await sb
-    .from('portfolio_aggregates')
-    .select('*')
-    .eq('client_id', ctx.clientId)
-    .order('aggregate_date', { ascending: false })
-    .limit(1)
-    .maybeSingle();
+  const row = await reader.getLatestPortfolioAggregate(ctx.clientId);
 
-  if (data) {
-    const row = data as {
-      client_id: string;
-      aggregate_date: string;
-      active_use_case_count: number;
-      critical_signal_count: number;
-      warning_signal_count: number;
-      governed_ai_spend_usd: number;
-      shadow_ai_spend_usd: number;
-      estimated_value_usd: number;
-      realized_value_usd: number;
-      average_trustworthiness_score: number | null;
-      stale_integration_count: number;
-      aggregate_jsonb: JsonObject;
-    };
-
+  if (row) {
     return {
       clientId: row.client_id,
       clientName,
@@ -197,28 +180,9 @@ export async function getAtlasPortfolioSummary(ctx: AtlasTenancyCtx): Promise<At
 }
 
 export async function listAtlasSignals(ctx: AtlasTenancyCtx, limit = 5): Promise<AtlasSignalSummary[]> {
-  const { data } = await getServerSupabase()
-    .from('signal_firings')
-    .select(
-      'id, headline, severity, state, impact_usd, fired_at, evidence_summary_jsonb, cohort_context_jsonb, signal_catalog:signal_catalog_id(key, title, pillar)',
-    )
-    .eq('client_id', ctx.clientId)
-    .in('state', ['new', 'triaged', 'actioned'])
-    .order('impact_usd', { ascending: false, nullsFirst: false })
-    .order('fired_at', { ascending: false })
-    .limit(limit);
+  const rows = await selectAtlasRepositoryReadAdapter().listSignalFirings(ctx.clientId, limit);
 
-  const signals = ((data as Array<{
-    id: string;
-    headline: string;
-    severity: 'critical' | 'warning' | 'info';
-    state: 'new' | 'triaged' | 'actioned' | 'resolved' | 'suppressed';
-    impact_usd: number | null;
-    fired_at: string | null;
-    evidence_summary_jsonb: JsonObject;
-    cohort_context_jsonb: JsonObject;
-    signal_catalog: { key: string; title: string; pillar: AtlasSignalSummary['pillar'] } | null;
-  }> | null) ?? []).map((row) => ({
+  const signals = rows.map((row) => ({
     id: row.id,
     headline: row.headline,
     severity: row.severity,
@@ -227,7 +191,7 @@ export async function listAtlasSignals(ctx: AtlasTenancyCtx, limit = 5): Promise
     firedAt: row.fired_at,
     signalKey: row.signal_catalog?.key ?? 'signal',
     signalTitle: row.signal_catalog?.title ?? row.headline,
-    pillar: row.signal_catalog?.pillar ?? 'cross_pillar',
+    pillar: (row.signal_catalog?.pillar as AtlasSignalSummary['pillar']) ?? 'cross_pillar',
     cohortLabel: stringify(row.cohort_context_jsonb.label),
     percentile: toNumber(row.cohort_context_jsonb.percentile),
     evidenceSummary: row.evidence_summary_jsonb ?? {},
@@ -241,33 +205,12 @@ export async function listAtlasSignals(ctx: AtlasTenancyCtx, limit = 5): Promise
 }
 
 export async function getAtlasBenchmark(ctx: AtlasTenancyCtx, metricName: string): Promise<AtlasBenchmark | null> {
-  const sb = getServerSupabase();
-  const [benchmarkRes, peerRes, portfolio] = await Promise.all([
-    sb
-      .from('cohort_benchmarks')
-      .select('*')
-      .eq('metric_name', metricName)
-      .order('computed_at', { ascending: false })
-      .limit(1)
-      .maybeSingle(),
-    sb.from('cohort_peers').select('display_name, metric_snapshot').eq('active', true).limit(7),
+  const reader = selectAtlasRepositoryReadAdapter();
+  const [benchmarkRow, peerRows, portfolio] = await Promise.all([
+    reader.getCohortBenchmark(metricName),
+    reader.listCohortPeers(),
     getAtlasPortfolioSummary(ctx),
   ]);
-
-  const benchmarkRow = benchmarkRes.data as {
-    pillar: AtlasBenchmark['pillar'];
-    metric_name: string;
-    cohort_definition: JsonObject;
-    sample_size: number;
-    p25: number | null;
-    p50: number | null;
-    p75: number | null;
-    p90: number | null;
-    computation_notes: JsonObject;
-  } | null;
-
-  const peerRows =
-    (peerRes.data as Array<{ display_name: string; metric_snapshot: JsonObject }> | null) ?? [];
 
   const peerPoints = peerRows
     .map((row) => {
@@ -312,7 +255,7 @@ export async function getAtlasBenchmark(ctx: AtlasTenancyCtx, metricName: string
 
   return {
     metricName: benchmarkRow.metric_name,
-    pillar: benchmarkRow.pillar,
+    pillar: benchmarkRow.pillar as AtlasBenchmark['pillar'],
     label: stringify(benchmarkRow.cohort_definition.label),
     sampleSize: benchmarkRow.sample_size,
     p25: toNumber(benchmarkRow.p25),
@@ -355,52 +298,14 @@ export async function getAtlasSignalDetail(ctx: AtlasTenancyCtx, signalId: strin
     };
   }
 
-  const sb = getServerSupabase();
-  const { data } = await sb
-    .from('signal_firings')
-    .select(
-      'id, headline, severity, state, impact_usd, fired_at, narrative_jsonb, evidence_summary_jsonb, cohort_context_jsonb, signal_catalog:signal_catalog_id(key, title, pillar, routing_defaults)',
-    )
-    .eq('client_id', ctx.clientId)
-    .eq('id', signalId)
-    .maybeSingle();
-
-  const row = data as {
-    id: string;
-    headline: string;
-    severity: 'critical' | 'warning' | 'info';
-    state: 'new' | 'triaged' | 'actioned' | 'resolved' | 'suppressed';
-    impact_usd: number | null;
-    fired_at: string | null;
-    narrative_jsonb: JsonObject;
-    evidence_summary_jsonb: JsonObject;
-    cohort_context_jsonb: JsonObject;
-    signal_catalog: { key: string; title: string; pillar: AtlasSignalSummary['pillar']; routing_defaults?: JsonObject } | null;
-  } | null;
+  const reader = selectAtlasRepositoryReadAdapter();
+  const row = await reader.getSignalFiringDetail(ctx.clientId, signalId);
 
   if (!row) return null;
 
-  const evidenceRes = await sb
-    .from('signal_evidence_chains')
-    .select('*')
-    .eq('signal_firing_id', signalId)
-    .order('position', { ascending: true });
+  const evidenceRows = await reader.listSignalEvidence(signalId);
 
-  const evidence = ((evidenceRes.data as Array<{
-    id: string;
-    position: number;
-    evidence_type: string;
-    source_label: string;
-    artifact_ref: string | null;
-    vendor_name: string | null;
-    title: string;
-    summary: string | null;
-    amount_usd: number | null;
-    metric_value: number | null;
-    metric_unit: string | null;
-    confidence: AtlasEvidenceItem['confidence'];
-    metadata_jsonb: JsonObject;
-  }> | null) ?? []).map((item) => ({
+  const evidence = evidenceRows.map((item) => ({
     id: item.id,
     position: item.position,
     evidenceType: item.evidence_type,
@@ -412,7 +317,7 @@ export async function getAtlasSignalDetail(ctx: AtlasTenancyCtx, signalId: strin
     amountUsd: toNumber(item.amount_usd),
     metricValue: toNumber(item.metric_value),
     metricUnit: item.metric_unit,
-    confidence: item.confidence,
+    confidence: item.confidence as AtlasEvidenceItem['confidence'],
     metadata: item.metadata_jsonb ?? {},
   }));
 
@@ -438,7 +343,7 @@ export async function getAtlasSignalDetail(ctx: AtlasTenancyCtx, signalId: strin
     firedAt: row.fired_at,
     signalKey: row.signal_catalog?.key ?? 'signal',
     signalTitle: row.signal_catalog?.title ?? row.headline,
-    pillar: row.signal_catalog?.pillar ?? 'cross_pillar',
+    pillar: (row.signal_catalog?.pillar as AtlasSignalSummary['pillar']) ?? 'cross_pillar',
     cohortLabel: stringify(row.cohort_context_jsonb.label),
     percentile: toNumber(row.cohort_context_jsonb.percentile),
     evidenceSummary: row.evidence_summary_jsonb ?? {},
@@ -451,47 +356,23 @@ export async function getAtlasSignalDetail(ctx: AtlasTenancyCtx, signalId: strin
 }
 
 export async function listAtlasObservations(ctx: AtlasTenancyCtx, limit = 6): Promise<AtlasObservation[]> {
-  const { data } = await getServerSupabase()
-    .from('atlas_observations')
-    .select('id, summary, severity, observation_kind, route_type, details_jsonb, created_at')
-    .eq('client_id', ctx.clientId)
-    .order('created_at', { ascending: false })
-    .limit(limit);
+  const rows = await selectAtlasRepositoryReadAdapter().listObservations(ctx.clientId, limit);
 
-  return ((data as Array<{
-    id: string;
-    summary: string;
-    severity: AtlasObservation['severity'];
-    observation_kind: AtlasObservation['observationKind'];
-    route_type: AtlasObservation['routeType'];
-    details_jsonb: JsonObject;
-    created_at: string;
-  }> | null) ?? []).map((row) => ({
+  return rows.map((row) => ({
     id: row.id,
     summary: row.summary,
-    severity: row.severity,
-    observationKind: row.observation_kind,
-    routeType: row.route_type,
+    severity: row.severity as AtlasObservation['severity'],
+    observationKind: row.observation_kind as AtlasObservation['observationKind'],
+    routeType: row.route_type as AtlasObservation['routeType'],
     details: row.details_jsonb ?? {},
     createdAt: row.created_at,
   }));
 }
 
 export async function listAtlasPrograms(ctx: AtlasTenancyCtx, limit = 6) {
-  const { data } = await getServerSupabase()
-    .from('engagements')
-    .select('id, name, current_phase, status, origin_source')
-    .eq('client_id', ctx.clientId)
-    .order('updated_at', { ascending: false })
-    .limit(limit);
+  const rows = await selectAtlasRepositoryReadAdapter().listEngagements(ctx.clientId, limit);
 
-  return ((data as Array<{
-    id: string;
-    name: string;
-    current_phase: number | null;
-    status: string | null;
-    origin_source: string | null;
-  }> | null) ?? []).map((row) => ({
+  return rows.map((row) => ({
     id: row.id,
     name: row.name,
     currentPhase: row.current_phase,
@@ -501,20 +382,9 @@ export async function listAtlasPrograms(ctx: AtlasTenancyCtx, limit = 6) {
 }
 
 export async function listAtlasUseCases(ctx: AtlasTenancyCtx, limit = 8) {
-  const { data } = await getServerSupabase()
-    .from('use_cases')
-    .select('id, name, stage, business_unit, vendor')
-    .eq('client_id', ctx.clientId)
-    .order('updated_at', { ascending: false })
-    .limit(limit);
+  const rows = await selectAtlasRepositoryReadAdapter().listUseCases(ctx.clientId, limit);
 
-  return ((data as Array<{
-    id: string;
-    name: string;
-    stage: string | null;
-    business_unit: string | null;
-    vendor: string | null;
-  }> | null) ?? []).map((row) => ({
+  return rows.map((row) => ({
     id: row.id,
     name: row.name,
     stage: row.stage,
@@ -527,48 +397,39 @@ export async function getOrCreateAtlasThread(
   ctx: AtlasTenancyCtx,
   input: { threadId?: string | null; title?: string | null; signalId?: string | null },
 ) {
-  const sb = getServerSupabase();
-
+  // Genuine read+write interleave: a thread lookup (read) followed by a
+  // conditional insert (write). The orchestration stays in the repository;
+  // the read adapter performs the lookup and the write adapter the insert.
   if (input.threadId) {
-    const { data } = await sb
-      .from('atlas_threads')
-      .select('id')
-      .eq('id', input.threadId)
-      .eq('client_id', ctx.clientId)
-      .maybeSingle();
-    if (data) return data as { id: string };
+    const existing = await selectAtlasRepositoryReadAdapter().findThreadId(
+      input.threadId,
+      ctx.clientId,
+    );
+    if (existing) return existing;
   }
 
-  const { data, error } = await sb
-    .from('atlas_threads')
-    .insert({
-      client_id: ctx.clientId,
-      person_id: ctx.userId ?? null,
-      title: input.title ?? null,
-      signal_firing_id: input.signalId ?? null,
-      context_scope: input.signalId ? 'signal' : 'portfolio',
-      last_message_at: new Date().toISOString(),
-    })
-    .select('id')
-    .single();
+  const outcome = await selectAtlasRepositoryWriteAdapter().insertThread({
+    clientId: ctx.clientId,
+    personId: ctx.userId ?? null,
+    title: input.title ?? null,
+    signalFiringId: input.signalId ?? null,
+    contextScope: input.signalId ? 'signal' : 'portfolio',
+    lastMessageAtIso: new Date().toISOString(),
+  });
 
-  if (error || !data) throw new Error(error?.message ?? 'Failed to create Atlas thread');
-  return data as { id: string };
+  if (!outcome.ok || !outcome.data) {
+    throw new Error(outcome.error ?? 'Failed to create Atlas thread');
+  }
+  return { id: outcome.data.id };
 }
 
 export async function touchAtlasThread(threadId: string) {
-  await getServerSupabase().from('atlas_threads').update({ last_message_at: new Date().toISOString() }).eq('id', threadId);
+  await selectAtlasRepositoryWriteAdapter().touchThread(threadId, new Date().toISOString());
 }
 
 export async function nextAtlasTurnIndex(threadId: string): Promise<number> {
-  const { data } = await getServerSupabase()
-    .from('atlas_message_traces')
-    .select('turn_index')
-    .eq('atlas_thread_id', threadId)
-    .order('turn_index', { ascending: false })
-    .limit(1)
-    .maybeSingle();
-  return ((data as { turn_index?: number } | null)?.turn_index ?? -1) + 1;
+  const maxIndex = await selectAtlasRepositoryReadAdapter().getMaxTurnIndex(threadId);
+  return (maxIndex ?? -1) + 1;
 }
 
 export async function appendAtlasTrace(input: {
@@ -582,20 +443,22 @@ export async function appendAtlasTrace(input: {
   latencyMs?: number | null;
   observationId?: string | null;
 }) {
+  // Genuine read+write interleave: resolve the next turn index (read), then
+  // insert the trace row at that index (write). Orchestration stays here.
   const turnIndex = await nextAtlasTurnIndex(input.threadId);
-  const { error } = await getServerSupabase().from('atlas_message_traces').insert({
-    atlas_thread_id: input.threadId,
-    atlas_observation_id: input.observationId ?? null,
-    turn_index: turnIndex,
+  const outcome = await selectAtlasRepositoryWriteAdapter().insertMessageTrace({
+    atlasThreadId: input.threadId,
+    atlasObservationId: input.observationId ?? null,
+    turnIndex,
     role: input.role,
-    route_type: input.routeType,
-    content_jsonb: input.content,
-    tools_used: input.toolsUsed ?? [],
-    model_name: input.modelName ?? null,
-    prompt_version: input.promptVersion ?? null,
-    latency_ms: input.latencyMs ?? null,
+    routeType: input.routeType,
+    contentJsonb: input.content,
+    toolsUsed: input.toolsUsed ?? [],
+    modelName: input.modelName ?? null,
+    promptVersion: input.promptVersion ?? null,
+    latencyMs: input.latencyMs ?? null,
   });
-  if (error) throw new Error(error.message);
+  if (!outcome.ok) throw new Error(outcome.error ?? 'Failed to append Atlas trace');
 }
 
 export async function appendAtlasReasoningTrace(input: AtlasReasoningTraceInput) {
@@ -604,29 +467,29 @@ export async function appendAtlasReasoningTrace(input: AtlasReasoningTraceInput)
     throw new Error(`Invalid Atlas reasoning trace citations: ${citationErrors.join('; ')}`);
   }
 
-  const { error } = await getServerSupabase().from('atlas_reasoning_traces').insert({
-    trace_id: `atlas_rt_${randomUUID()}`,
-    thread_id: input.threadId ?? null,
-    tenant_id: input.tenantId,
-    user_id: input.userId ?? null,
+  const outcome = await selectAtlasRepositoryWriteAdapter().insertReasoningTrace({
+    traceId: `atlas_rt_${randomUUID()}`,
+    threadId: input.threadId ?? null,
+    tenantId: input.tenantId,
+    userId: input.userId ?? null,
     trigger: input.trigger,
-    input_summary: input.inputSummary,
-    patterns_fired: input.patternsFired,
-    patterns_skipped: input.patternsSkipped,
-    observations: input.observations,
-    if_you_only_do_one: input.ifYouOnlyDoOneToday ?? null,
-    citations: input.citations,
-    interpretation_confidence: input.interpretationConfidence,
-    fallback_used: input.fallbackUsed,
-    fallback_reason: input.fallbackReason ?? null,
-    latency_ms: input.latencyMs ?? null,
-    prompt_tokens: input.promptTokens ?? null,
-    completion_tokens: input.completionTokens ?? null,
+    inputSummary: input.inputSummary as unknown as JsonObject,
+    patternsFired: input.patternsFired,
+    patternsSkipped: input.patternsSkipped,
+    observations: input.observations as unknown as ReadonlyArray<JsonObject>,
+    ifYouOnlyDoOne: input.ifYouOnlyDoOneToday ?? null,
+    citations: input.citations as unknown as ReadonlyArray<JsonObject>,
+    interpretationConfidence: input.interpretationConfidence,
+    fallbackUsed: input.fallbackUsed,
+    fallbackReason: input.fallbackReason ?? null,
+    latencyMs: input.latencyMs ?? null,
+    promptTokens: input.promptTokens ?? null,
+    completionTokens: input.completionTokens ?? null,
     model: input.model,
-    prompt_version: input.promptVersion,
-    package_version: input.packageVersion,
+    promptVersion: input.promptVersion,
+    packageVersion: input.packageVersion,
   });
-  if (error) throw new Error(error.message);
+  if (!outcome.ok) throw new Error(outcome.error ?? 'Failed to append Atlas reasoning trace');
 }
 
 export async function createAtlasObservation(input: {
@@ -640,21 +503,19 @@ export async function createAtlasObservation(input: {
   details?: JsonObject;
   routeType: AtlasRouteType | 'rule';
 }) {
-  const { data, error } = await getServerSupabase()
-    .from('atlas_observations')
-    .insert({
-      client_id: input.ctx.clientId,
-      atlas_thread_id: input.threadId ?? null,
-      signal_firing_id: input.signalId ?? null,
-      pillar: input.pillar ?? null,
-      observation_kind: input.observationKind,
-      severity: input.severity ?? null,
-      summary: input.summary,
-      details_jsonb: input.details ?? {},
-      route_type: input.routeType,
-    })
-    .select('id')
-    .single();
-  if (error || !data) throw new Error(error?.message ?? 'Failed to create observation');
-  return (data as { id: string }).id;
+  const outcome = await selectAtlasRepositoryWriteAdapter().insertObservation({
+    clientId: input.ctx.clientId,
+    atlasThreadId: input.threadId ?? null,
+    signalFiringId: input.signalId ?? null,
+    pillar: input.pillar ?? null,
+    observationKind: input.observationKind,
+    severity: input.severity ?? null,
+    summary: input.summary,
+    detailsJsonb: input.details ?? {},
+    routeType: input.routeType,
+  });
+  if (!outcome.ok || !outcome.data) {
+    throw new Error(outcome.error ?? 'Failed to create observation');
+  }
+  return outcome.data.id;
 }

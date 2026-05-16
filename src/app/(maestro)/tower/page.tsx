@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { TowerIndexPage, type TowerSubstrateCounts } from '@/components/tower/TowerIndexPage';
-import { getServerSupabase } from '@/lib/supabase-server';
+import { selectTowerPageReadAdapter } from '@/lib/data-plane/read-adapters/towerPageReadAdapter';
 import { requireTenancy } from '@/lib/auth/tenancy';
 import { loadUserProgramAccessPolicy } from '@/lib/auth/program-access-policy';
 import { loadUserSourceAccessPolicy } from '@/lib/auth/source-access-policy';
@@ -52,16 +52,10 @@ type TowerClientRow = NonNullable<Awaited<ReturnType<typeof getActiveClientRow>>
 const TOWER_PILOT_CLIENT_KEYS = ['apexretail', 'meridian', 'arcturus'] as const;
 
 async function clientHasTowerSubstrate(clientId: string): Promise<boolean> {
-  try {
-    const { count, error } = await getServerSupabase()
-      .from('ai_initiatives')
-      .select('initiative_id', { count: 'exact', head: true })
-      .eq('client_id', clientId);
-    if (error) return false;
-    return Number(count ?? 0) > 0;
-  } catch {
-    return false;
-  }
+  // The physical `ai_initiatives` count moved behind the Tower-page read
+  // adapter (Slice 9); the adapter already fails soft to `0`.
+  const count = await selectTowerPageReadAdapter().countClientInitiatives(clientId);
+  return count > 0;
 }
 
 async function resolveTowerClient(requestedClientKey?: string): Promise<TowerClientRow | null> {
@@ -116,17 +110,9 @@ async function countByInitiatives(
   table: string,
   initiativeIds: ReadonlyArray<string>,
 ): Promise<number> {
-  if (initiativeIds.length === 0) return 0;
-  try {
-    const { count, error } = await getServerSupabase()
-      .from(table)
-      .select('initiative_id', { count: 'exact', head: true })
-      .in('initiative_id', [...initiativeIds]);
-    if (error) return 0;
-    return count ?? 0;
-  } catch {
-    return 0;
-  }
+  // The physical substrate-child count moved behind the Tower-page read
+  // adapter (Slice 9); the adapter fails soft to `0` and allowlists `table`.
+  return selectTowerPageReadAdapter().countByInitiatives(table, initiativeIds);
 }
 
 async function buildTowerSubstrateCounts(
@@ -235,34 +221,21 @@ async function buildTowerHandoffPrograms() {
   try {
     const tenancy = await requireTenancy();
     const policy = await loadUserProgramAccessPolicy(tenancy);
+    // Access-policy gating stays in the page: a no-access caller never reaches
+    // the data plane, and an empty allow-list means "deny all" — short-circuit
+    // to [] without a read. Only the physical query moved to the read adapter.
     if (policy.accessLevel === 'no_program_access') return [];
+    if (policy.programIdsAllowed && policy.programIdsAllowed.length === 0) return [];
 
-    let query = getServerSupabase()
-      .from('engagements')
-      .select('id, graph_node_id, name, current_phase, lifecycle_state, updated_at')
-      .eq('client_id', tenancy.clientId)
-      .eq('current_phase', 6)
-      .is('archived_at', null)
-      .is('deleted_at', null)
-      .order('updated_at', { ascending: false })
-      .limit(6);
+    const allowedIds =
+      policy.programIdsAllowed && policy.programIdsAllowed.length > 0
+        ? policy.programIdsAllowed
+        : null;
 
-    if (policy.programIdsAllowed && policy.programIdsAllowed.length > 0) {
-      query = query.in('id', policy.programIdsAllowed);
-    } else if (policy.programIdsAllowed && policy.programIdsAllowed.length === 0) {
-      return [];
-    }
-
-    const { data, error } = await query;
-    if (error || !data) return [];
-    return data as Array<{
-      id: string;
-      graph_node_id: string | null;
-      name: string;
-      current_phase: number | null;
-      lifecycle_state: string | null;
-      updated_at: string | null;
-    }>;
+    return await selectTowerPageReadAdapter().listHandoffPrograms(
+      tenancy.clientId,
+      allowedIds,
+    );
   } catch {
     return [];
   }
@@ -277,33 +250,21 @@ async function buildTowerHandoffSourceEvents() {
     const policy = await loadUserSourceAccessPolicy(tenancy, {
       activeClientKey: activeClient.key,
     });
+    // Access-policy gating stays in the page: a `none`-scope caller never
+    // reaches the data plane, and an empty allow-list means "deny all".
+    // Only the physical query moved to the read adapter.
     if (policy.sourceScope === 'none') return [];
+    if (policy.sourceEventIdsAllowed && policy.sourceEventIdsAllowed.length === 0) return [];
 
-    let query = getServerSupabase()
-      .from('source_events')
-      .select('id, event_code, event_name, current_stage_key, lifecycle_state, linked_program_id, updated_at')
-      .eq('client_key', activeClient.key)
-      .in('current_stage_key', ['transition', 'value', 'contract_mobilization', 'value_realization'])
-      .order('updated_at', { ascending: false })
-      .limit(6);
+    const allowedIds =
+      policy.sourceEventIdsAllowed && policy.sourceEventIdsAllowed.length > 0
+        ? policy.sourceEventIdsAllowed
+        : null;
 
-    if (policy.sourceEventIdsAllowed && policy.sourceEventIdsAllowed.length > 0) {
-      query = query.in('id', policy.sourceEventIdsAllowed);
-    } else if (policy.sourceEventIdsAllowed && policy.sourceEventIdsAllowed.length === 0) {
-      return [];
-    }
-
-    const { data, error } = await query;
-    if (error || !data) return [];
-    return data as Array<{
-      id: string;
-      event_code: string;
-      event_name: string;
-      current_stage_key: string;
-      lifecycle_state: string | null;
-      linked_program_id: string | null;
-      updated_at: string | null;
-    }>;
+    return await selectTowerPageReadAdapter().listHandoffSourceEvents(
+      activeClient.key,
+      allowedIds,
+    );
   } catch {
     return [];
   }
