@@ -23,6 +23,11 @@
 
 import { getServerSupabase } from '@/lib/supabase-server';
 import type { SupabaseClient } from '@supabase/supabase-js';
+import {
+  createSupabaseProgramsWriteAdapter,
+  selectProgramsWriteAdapter,
+} from '@/lib/data-plane/write-adapters/programsWriteAdapter';
+import { resolveDataPlane } from '@/lib/data-plane/read-adapters/resolveDataPlane';
 import type {
   ApprovalAuthority,
   FounderApprovalRequestRow,
@@ -458,27 +463,32 @@ export async function requestFounderApproval(
   opts: { supabase?: SupabaseClient } = {},
 ): Promise<string> {
   assertTenancy(ctx);
-  const sb = opts.supabase ?? getServerSupabase();
   const deadline = input.deadlineHours
     ? new Date(Date.now() + input.deadlineHours * 3_600_000).toISOString()
     : null;
-  const { data, error } = await sb
-    .from('founder_approval_requests')
-    .insert({
-      engagement_id: programId,
-      request_type: input.requestType,
-      status: 'pending',
-      requested_by_user_id: ctx.userId,
-      approver_user_id: input.approverUserId ?? null,
-      approver_role: input.approverRole ?? null,
-      headline: input.headline,
-      context_jsonb: input.context ?? {},
-      deadline_at: deadline,
-    })
-    .select('id')
-    .single();
-  if (error) throw error;
-  const approvalId = (data as { id: string }).id;
+  // Physical insert goes through the programs write seam (Slice 3f). Supabase
+  // stays the default; the route-scoped client (if any) is threaded through so
+  // RLS / auth-mode is unchanged. Azure is opt-in via `ABARVA_DATA_PLANE`.
+  const adapter =
+    resolveDataPlane() === 'azure-postgres'
+      ? selectProgramsWriteAdapter()
+      : opts.supabase
+        ? createSupabaseProgramsWriteAdapter(() => opts.supabase as SupabaseClient)
+        : selectProgramsWriteAdapter('supabase');
+  const written = await adapter.insertFounderApproval({
+    programId,
+    requestedByUserId: ctx.userId,
+    requestType: input.requestType,
+    headline: input.headline,
+    context: input.context ?? {},
+    approverUserId: input.approverUserId ?? null,
+    approverRole: input.approverRole ?? null,
+    deadlineAtIso: deadline,
+  });
+  if (!written.ok || !written.data) {
+    throw new Error(written.error ?? '[requestFounderApproval] write failed');
+  }
+  const approvalId = written.data.approvalId;
   await writeProgramAuditLogBestEffort(ctx, {
     programId,
     engagementId: programId,

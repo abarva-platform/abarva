@@ -21,6 +21,25 @@ import type {
 import type { ArchetypeKey } from './types.ui';
 import { getProgramById } from './queries';
 import { writeProgramAuditLogBestEffort } from './audit-log';
+import {
+  createSupabaseProgramsWriteAdapter,
+  selectProgramsWriteAdapter,
+  type ProgramsWriteAdapter,
+} from '@/lib/data-plane/write-adapters/programsWriteAdapter';
+import { resolveDataPlane } from '@/lib/data-plane/read-adapters/resolveDataPlane';
+
+/**
+ * Resolve the programs write adapter, threading any route-scoped Supabase
+ * client through to the Supabase impl so RLS / auth-mode behavior is exactly
+ * the pre-seam helper's. The Azure path ignores the client (it has its own
+ * transactional session) and is opt-in via `ABARVA_DATA_PLANE`.
+ */
+function programsWriteAdapter(supabase?: SupabaseClient): ProgramsWriteAdapter {
+  if (resolveDataPlane() === 'azure-postgres') return selectProgramsWriteAdapter();
+  return supabase
+    ? createSupabaseProgramsWriteAdapter(() => supabase)
+    : selectProgramsWriteAdapter('supabase');
+}
 
 function assertTenancy(ctx: TenancyCtx): void {
   if (!ctx?.clientId || !ctx?.userId) {
@@ -247,44 +266,24 @@ export async function advancePhase(
   const sb = opts.supabase ?? getServerSupabase();
   await assertProgramTenancy(ctx, input.programId, { supabase: sb });
 
-  // Snapshot current phase
-  const { data: snap, error: snapErr } = await sb
-    .from('phase_snapshots')
-    .insert({
-      engagement_id: input.programId,
-      phase_number: input.fromPhase,
-      snapshot_jsonb: input.snapshot,
-      locked_by_user_id: ctx.userId,
-      locked_at: new Date().toISOString(),
-      approval_status: input.approvedByUserId ? 'approved' : 'pending',
-    })
-    .select('id')
-    .single();
-  if (snapErr) throw snapErr;
-
-  // Advance phase on engagements
-  const { error: eErr } = await sb
-    .from('engagements')
-    .update({
-      current_phase: input.toPhase,
-      phase_locked_at: new Date().toISOString(),
-      phase_locked_by_user_id: ctx.userId,
-    })
-    .eq('id', input.programId)
-    .eq('client_id', ctx.clientId);
-  if (eErr) throw eErr;
-
-  // Log state transition
-  const { error: logErr } = await sb.from('module_state_log').insert({
-    engagement_id: input.programId,
-    module_key: `phase_${input.fromPhase}`,
-    previous_state: 'in_progress',
-    new_state: 'completed',
-    changed_by_user_id: ctx.userId,
-    notes: `Advanced ${input.fromPhase} → ${input.toPhase}`,
-    context_jsonb: { bypass_gate: !!input.bypassGate, approved_by: input.approvedByUserId ?? null },
+  // Physical write goes through the data-plane write seam (Slice 3f): the
+  // snapshot insert + engagement update + state-log insert are one unit —
+  // atomic on Azure, the same three statements on Supabase. A write error is
+  // surfaced as `ok:false` and re-thrown here, exactly as the pre-seam helper.
+  const written = await programsWriteAdapter(opts.supabase).runAdvancePhase({
+    programId: input.programId,
+    clientId: ctx.clientId,
+    userId: ctx.userId,
+    fromPhase: input.fromPhase,
+    toPhase: input.toPhase,
+    snapshot: input.snapshot,
+    approvedByUserId: input.approvedByUserId,
+    bypassGate: input.bypassGate,
   });
-  if (logErr) throw logErr;
+  if (!written.ok || !written.data) {
+    throw new Error(written.error ?? '[advancePhase] write failed');
+  }
+  const snapshotId = written.data.snapshotId;
 
   await writeProgramAuditLogBestEffort(ctx, {
     programId: input.programId,
@@ -293,10 +292,10 @@ export async function advancePhase(
     fromState: `P${input.fromPhase}`,
     toState: `P${input.toPhase}`,
     rationale: input.bypassGate ? 'Phase advanced with gate bypass flag.' : 'Phase advanced after gate evaluation.',
-    evidenceRefs: [(snap as { id: string }).id],
+    evidenceRefs: [snapshotId],
   });
 
-  return { programId: input.programId, newPhase: input.toPhase, snapshotId: (snap as { id: string }).id };
+  return { programId: input.programId, newPhase: input.toPhase, snapshotId };
 }
 
 /**

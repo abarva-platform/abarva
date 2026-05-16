@@ -15,6 +15,7 @@
 import { getServerSupabase } from '@/lib/supabase-server';
 import type { NexusThreadMode, TenancyCtx } from './types.db';
 import { getProgramById, getModuleState } from './queries';
+import { selectProgramsWriteAdapter } from '@/lib/data-plane/write-adapters/programsWriteAdapter';
 
 function assertTenancy(ctx: TenancyCtx): void {
   if (!ctx?.clientId || !ctx?.userId) {
@@ -224,59 +225,24 @@ export async function draftModuleDeliverable(
   assertTenancy(ctx);
   const program = await getProgramById(ctx, input.programId);
   if (!program) throw new Error('[programs/nexus] program not accessible');
-  const sb = getServerSupabase();
 
-  // Upsert deliverables_v2 row in draft state, attributed to Nexus
-  const { data: existing } = await sb
-    .from('deliverables_v2')
-    .select('id, current_version')
-    .eq('engagement_id', input.programId)
-    .eq('deliverable_type_key', input.deliverableTypeKey)
-    .maybeSingle();
-
-  let deliverableId: string;
-  let nextVersion = 1;
-  if (existing) {
-    deliverableId = (existing as { id: string; current_version: number }).id;
-    nextVersion = ((existing as { current_version: number }).current_version ?? 0) + 1;
-    const { error } = await sb
-      .from('deliverables_v2')
-      .update({ current_version: nextVersion, status: 'draft', updated_at: new Date().toISOString() })
-      .eq('id', deliverableId);
-    if (error) throw error;
-  } else {
-    const { data: created, error } = await sb
-      .from('deliverables_v2')
-      .insert({
-        engagement_id: input.programId,
-        deliverable_type_key: input.deliverableTypeKey,
-        title: input.title,
-        status: 'draft',
-        current_version: 1,
-        created_by: 'nexus',
-      })
-      .select('id')
-      .single();
-    if (error) throw error;
-    deliverableId = (created as { id: string }).id;
+  // Physical write goes through the programs write seam (Slice 3f): the
+  // deliverables_v2 upsert + deliverable_versions insert are one unit — atomic
+  // on Azure, the same statements on Supabase. A write error is surfaced as
+  // `ok:false` and re-thrown here, exactly as the pre-seam helper.
+  const written = await selectProgramsWriteAdapter().runDraftModuleDeliverable({
+    programId: input.programId,
+    deliverableTypeKey: input.deliverableTypeKey,
+    title: input.title,
+    draftContent: input.draftContent,
+    structuredData: input.structuredData ?? {},
+    provenanceMap: input.provenanceMap ?? null,
+    contextHash: input.contextHash ?? null,
+  });
+  if (!written.ok || !written.data) {
+    throw new Error(written.error ?? '[draftModuleDeliverable] write failed');
   }
-
-  // Insert new version row
-  const { data: version, error: vErr } = await sb
-    .from('deliverable_versions')
-    .insert({
-      deliverable_id: deliverableId,
-      version: nextVersion,
-      content: input.draftContent,
-      structured_data: input.structuredData ?? {},
-      quality_issues: input.provenanceMap ? { provenance_map: input.provenanceMap } : null,
-      generated_from_context_hash: input.contextHash ?? null,
-    })
-    .select('id')
-    .single();
-  if (vErr) throw vErr;
-
-  return { deliverableId, versionId: (version as { id: string }).id };
+  return written.data;
 }
 
 // ─── Mode C · CXO takeover ─────────────────────────────────────────────

@@ -72,6 +72,59 @@ export interface AdvanceEngagementPhaseInput {
   readonly tenantKey: string;
 }
 
+// --- Slice 3f: shared-helper write shapes -----------------------------------
+//
+// These three ops back the DB writes inside the `src/lib/programs` shared
+// helpers (`advancePhase`, `requestFounderApproval`, `draftModuleDeliverable`).
+// Unlike the seed/advance ops above, the helpers RE-THROW on a DB error and
+// depend on the inserted row ids, so these ops return a `ProgramsWriteOutcome`
+// — `ok:false` carries the error message the helper turns back into a throw,
+// and `data` carries the ids the helper returns to its callers.
+
+/** A write outcome that carries inserted data or an error to re-throw. */
+export interface ProgramsWriteOutcome<T> {
+  readonly ok: boolean;
+  readonly data?: T;
+  readonly error?: string;
+}
+
+/** The full `advancePhase` transaction: snapshot insert + engagement update +
+ *  state-log insert. On Azure this is one `BEGIN`/`COMMIT`; on Supabase the
+ *  same three statements the pre-seam helper issued. */
+export interface AdvancePhaseTxInput {
+  readonly programId: string;
+  readonly clientId: string;
+  readonly userId: string;
+  readonly fromPhase: number;
+  readonly toPhase: number;
+  readonly snapshot: Record<string, unknown>;
+  readonly approvedByUserId?: string;
+  readonly bypassGate?: boolean;
+}
+
+/** The `requestFounderApproval` insert into `founder_approval_requests`. */
+export interface FounderApprovalInsertInput {
+  readonly programId: string;
+  readonly requestedByUserId: string;
+  readonly requestType: string;
+  readonly headline: string;
+  readonly context: Record<string, unknown>;
+  readonly approverUserId: string | null;
+  readonly approverRole: string | null;
+  readonly deadlineAtIso: string | null;
+}
+
+/** The `draftModuleDeliverable` upsert: deliverables_v2 row + version insert. */
+export interface DraftModuleDeliverableTxInput {
+  readonly programId: string;
+  readonly deliverableTypeKey: string;
+  readonly title: string;
+  readonly draftContent: string;
+  readonly structuredData: Record<string, unknown>;
+  readonly provenanceMap: Record<string, unknown> | null;
+  readonly contextHash: string | null;
+}
+
 /**
  * The programs-domain write adapter for one physical data plane. Each method
  * is best-effort at the SAME granularity the pre-seam route used — a single
@@ -98,6 +151,38 @@ export interface ProgramsWriteAdapter {
    * its existing best-effort posture (the filesystem ledger is canonical).
    */
   advanceEngagementPhase(input: AdvanceEngagementPhaseInput): Promise<boolean>;
+
+  // --- Slice 3f shared-helper ops -------------------------------------------
+
+  /**
+   * Run the `advancePhase` write: insert a `phase_snapshots` row, update
+   * `engagements.current_phase`, and insert a `module_state_log` row. On Azure
+   * all three run in ONE transaction; on Supabase they are the same three
+   * statements the helper issued. `data.snapshotId` is the new snapshot row id.
+   * On any DB error returns `ok:false` with the message — the helper re-throws.
+   */
+  runAdvancePhase(
+    input: AdvancePhaseTxInput,
+  ): Promise<ProgramsWriteOutcome<{ snapshotId: string }>>;
+
+  /**
+   * Insert a `founder_approval_requests` row. `data.approvalId` is the new
+   * row id. On a DB error returns `ok:false` — the helper re-throws.
+   */
+  insertFounderApproval(
+    input: FounderApprovalInsertInput,
+  ): Promise<ProgramsWriteOutcome<{ approvalId: string }>>;
+
+  /**
+   * Run the `draftModuleDeliverable` write: upsert the `deliverables_v2` row
+   * (insert if absent, version-bump if present) and insert a
+   * `deliverable_versions` row. On Azure both run in ONE transaction; on
+   * Supabase they are the same statements the helper issued. On a DB error
+   * returns `ok:false` — the helper re-throws.
+   */
+  runDraftModuleDeliverable(
+    input: DraftModuleDeliverableTxInput,
+  ): Promise<ProgramsWriteOutcome<{ deliverableId: string; versionId: string }>>;
 }
 
 // --- Supabase adapter (DEFAULT) --------------------------------------------
@@ -182,6 +267,135 @@ export function createSupabaseProgramsWriteAdapter(
       }
       return true;
     },
+
+    async runAdvancePhase(input) {
+      const sb = getClient();
+      const nowIso = new Date().toISOString();
+      const { data: snap, error: snapErr } = await sb
+        .from('phase_snapshots')
+        .insert({
+          engagement_id: input.programId,
+          phase_number: input.fromPhase,
+          snapshot_jsonb: input.snapshot,
+          locked_by_user_id: input.userId,
+          locked_at: nowIso,
+          approval_status: input.approvedByUserId ? 'approved' : 'pending',
+        })
+        .select('id')
+        .single();
+      if (snapErr) return { ok: false, error: snapErr.message };
+      const snapshotId = (snap as { id: string }).id;
+
+      const { error: eErr } = await sb
+        .from('engagements')
+        .update({
+          current_phase: input.toPhase,
+          phase_locked_at: nowIso,
+          phase_locked_by_user_id: input.userId,
+        })
+        .eq('id', input.programId)
+        .eq('client_id', input.clientId);
+      if (eErr) return { ok: false, error: eErr.message };
+
+      const { error: logErr } = await sb.from('module_state_log').insert({
+        engagement_id: input.programId,
+        module_key: `phase_${input.fromPhase}`,
+        previous_state: 'in_progress',
+        new_state: 'completed',
+        changed_by_user_id: input.userId,
+        notes: `Advanced ${input.fromPhase} → ${input.toPhase}`,
+        context_jsonb: {
+          bypass_gate: !!input.bypassGate,
+          approved_by: input.approvedByUserId ?? null,
+        },
+      });
+      if (logErr) return { ok: false, error: logErr.message };
+      return { ok: true, data: { snapshotId } };
+    },
+
+    async insertFounderApproval(input) {
+      const sb = getClient();
+      const { data, error } = await sb
+        .from('founder_approval_requests')
+        .insert({
+          engagement_id: input.programId,
+          request_type: input.requestType,
+          status: 'pending',
+          requested_by_user_id: input.requestedByUserId,
+          approver_user_id: input.approverUserId,
+          approver_role: input.approverRole,
+          headline: input.headline,
+          context_jsonb: input.context,
+          deadline_at: input.deadlineAtIso,
+        })
+        .select('id')
+        .single();
+      if (error) return { ok: false, error: error.message };
+      return { ok: true, data: { approvalId: (data as { id: string }).id } };
+    },
+
+    async runDraftModuleDeliverable(input) {
+      const sb = getClient();
+      const { data: existing, error: existingErr } = await sb
+        .from('deliverables_v2')
+        .select('id, current_version')
+        .eq('engagement_id', input.programId)
+        .eq('deliverable_type_key', input.deliverableTypeKey)
+        .maybeSingle();
+      if (existingErr) return { ok: false, error: existingErr.message };
+
+      let deliverableId: string;
+      let nextVersion = 1;
+      if (existing) {
+        deliverableId = (existing as { id: string; current_version: number }).id;
+        nextVersion =
+          ((existing as { current_version: number }).current_version ?? 0) + 1;
+        const { error } = await sb
+          .from('deliverables_v2')
+          .update({
+            current_version: nextVersion,
+            status: 'draft',
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', deliverableId);
+        if (error) return { ok: false, error: error.message };
+      } else {
+        const { data: created, error } = await sb
+          .from('deliverables_v2')
+          .insert({
+            engagement_id: input.programId,
+            deliverable_type_key: input.deliverableTypeKey,
+            title: input.title,
+            status: 'draft',
+            current_version: 1,
+            created_by: 'nexus',
+          })
+          .select('id')
+          .single();
+        if (error) return { ok: false, error: error.message };
+        deliverableId = (created as { id: string }).id;
+      }
+
+      const { data: version, error: vErr } = await sb
+        .from('deliverable_versions')
+        .insert({
+          deliverable_id: deliverableId,
+          version: nextVersion,
+          content: input.draftContent,
+          structured_data: input.structuredData,
+          quality_issues: input.provenanceMap
+            ? { provenance_map: input.provenanceMap }
+            : null,
+          generated_from_context_hash: input.contextHash,
+        })
+        .select('id')
+        .single();
+      if (vErr) return { ok: false, error: vErr.message };
+      return {
+        ok: true,
+        data: { deliverableId, versionId: (version as { id: string }).id },
+      };
+    },
   };
 }
 
@@ -260,6 +474,139 @@ export function createAzureProgramsWriteAdapter(
           error: err instanceof Error ? err.message : String(err),
         });
         return false;
+      }
+    },
+
+    async runAdvancePhase(input) {
+      try {
+        // One transaction for snapshot insert + engagement update + state log
+        // — the real atomicity Supabase cannot provide (design doc §2).
+        const snapshotId = await session(async (run) => {
+          const snapRows = await run<{ id: string }>(
+            'INSERT INTO phase_snapshots '
+              + '(engagement_id, phase_number, snapshot_jsonb, locked_by_user_id, '
+              + 'locked_at, approval_status) '
+              + 'VALUES ($1, $2, $3, $4, now(), $5) RETURNING id',
+            [
+              input.programId,
+              input.fromPhase,
+              input.snapshot,
+              input.userId,
+              input.approvedByUserId ? 'approved' : 'pending',
+            ],
+          );
+          await run(
+            'UPDATE engagements '
+              + 'SET current_phase = $1, phase_locked_at = now(), '
+              + 'phase_locked_by_user_id = $2 '
+              + 'WHERE id = $3 AND client_id = $4',
+            [input.toPhase, input.userId, input.programId, input.clientId],
+          );
+          await run(
+            'INSERT INTO module_state_log '
+              + '(engagement_id, module_key, previous_state, new_state, '
+              + 'changed_by_user_id, notes, context_jsonb) '
+              + "VALUES ($1, $2, 'in_progress', 'completed', $3, $4, $5)",
+            [
+              input.programId,
+              `phase_${input.fromPhase}`,
+              input.userId,
+              `Advanced ${input.fromPhase} → ${input.toPhase}`,
+              {
+                bypass_gate: !!input.bypassGate,
+                approved_by: input.approvedByUserId ?? null,
+              },
+            ],
+          );
+          return snapRows[0]?.id ?? '';
+        });
+        if (!snapshotId) return { ok: false, error: 'phase snapshot insert returned no id' };
+        return { ok: true, data: { snapshotId } };
+      } catch (err) {
+        return { ok: false, error: err instanceof Error ? err.message : String(err) };
+      }
+    },
+
+    async insertFounderApproval(input) {
+      try {
+        const rows = await session((run) =>
+          run<{ id: string }>(
+            'INSERT INTO founder_approval_requests '
+              + '(engagement_id, request_type, status, requested_by_user_id, '
+              + 'approver_user_id, approver_role, headline, context_jsonb, deadline_at) '
+              + "VALUES ($1, $2, 'pending', $3, $4, $5, $6, $7, $8) RETURNING id",
+            [
+              input.programId,
+              input.requestType,
+              input.requestedByUserId,
+              input.approverUserId,
+              input.approverRole,
+              input.headline,
+              input.context,
+              input.deadlineAtIso,
+            ],
+          ),
+        );
+        const approvalId = rows[0]?.id;
+        if (!approvalId) return { ok: false, error: 'approval insert returned no id' };
+        return { ok: true, data: { approvalId } };
+      } catch (err) {
+        return { ok: false, error: err instanceof Error ? err.message : String(err) };
+      }
+    },
+
+    async runDraftModuleDeliverable(input) {
+      try {
+        // One transaction: deliverables_v2 upsert + deliverable_versions insert.
+        const result = await session(async (run) => {
+          const existingRows = await run<{ id: string; current_version: number }>(
+            'SELECT id, current_version FROM deliverables_v2 '
+              + 'WHERE engagement_id = $1 AND deliverable_type_key = $2 LIMIT 1',
+            [input.programId, input.deliverableTypeKey],
+          );
+          let deliverableId: string;
+          let nextVersion = 1;
+          if (existingRows[0]) {
+            deliverableId = existingRows[0].id;
+            nextVersion = (existingRows[0].current_version ?? 0) + 1;
+            await run(
+              'UPDATE deliverables_v2 '
+                + "SET current_version = $1, status = 'draft', updated_at = now() "
+                + 'WHERE id = $2',
+              [nextVersion, deliverableId],
+            );
+          } else {
+            const createdRows = await run<{ id: string }>(
+              'INSERT INTO deliverables_v2 '
+                + '(engagement_id, deliverable_type_key, title, status, '
+                + 'current_version, created_by) '
+                + "VALUES ($1, $2, $3, 'draft', 1, 'nexus') RETURNING id",
+              [input.programId, input.deliverableTypeKey, input.title],
+            );
+            deliverableId = createdRows[0]?.id ?? '';
+          }
+          const versionRows = await run<{ id: string }>(
+            'INSERT INTO deliverable_versions '
+              + '(deliverable_id, version, content, structured_data, '
+              + 'quality_issues, generated_from_context_hash) '
+              + 'VALUES ($1, $2, $3, $4, $5, $6) RETURNING id',
+            [
+              deliverableId,
+              nextVersion,
+              input.draftContent,
+              input.structuredData,
+              input.provenanceMap ? { provenance_map: input.provenanceMap } : null,
+              input.contextHash,
+            ],
+          );
+          return { deliverableId, versionId: versionRows[0]?.id ?? '' };
+        });
+        if (!result.deliverableId || !result.versionId) {
+          return { ok: false, error: 'deliverable draft insert returned no id' };
+        }
+        return { ok: true, data: result };
+      } catch (err) {
+        return { ok: false, error: err instanceof Error ? err.message : String(err) };
       }
     },
   };

@@ -1,6 +1,7 @@
 // intelligence_threads CRUD · tenancy-enforced.
 
 import { assertTenancy, getIntelSupabase } from './client';
+import { selectThreadWriteAdapter } from '@/lib/data-plane/write-adapters/threadWriteAdapter';
 import type { IntelligenceThread, TenancyCtx, ThreadState } from '../types';
 
 interface ThreadRow {
@@ -103,14 +104,18 @@ export async function touchThread(ctx: TenancyCtx, threadId: string): Promise<vo
 
 export async function attachThreadToEngagement(ctx: TenancyCtx, threadId: string, engagementId: string): Promise<void> {
   assertTenancy(ctx);
-  const sb = getIntelSupabase();
-  const { error } = await sb
-    .from('intelligence_threads')
-    .update({ attached_engagement_id: engagementId })
-    .eq('id', threadId)
-    .eq('client_id', ctx.clientId)
-    .eq('user_id', ctx.userId);
-  if (error) throw error;
+  // Physical write goes through the data-plane write seam (Slice 3f). Supabase
+  // stays the default; Azure is opt-in via `ABARVA_DATA_PLANE`. The tenancy
+  // assertion and per-user WHERE scope are unchanged.
+  const written = await selectThreadWriteAdapter().attachThreadToEngagement({
+    threadId,
+    engagementId,
+    clientId: ctx.clientId,
+    userId: ctx.userId,
+  });
+  if (!written.ok) {
+    throw new Error(written.error ?? '[intelligence] thread attach failed');
+  }
 }
 
 export async function archiveThread(ctx: TenancyCtx, threadId: string): Promise<void> {
