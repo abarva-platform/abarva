@@ -9,6 +9,11 @@ import {
   classifySourcingEvent,
   type CategoryClassification,
 } from './classifier/category-classifier';
+import {
+  runDeliveryModelGate,
+  type DeliveryModelGateResult,
+  type DeliveryModelSignals,
+} from './delivery-model/delivery-model-gate';
 import type { TenantContextSegment } from './taxonomy/category-taxonomy';
 
 export type SourceAnswerMode =
@@ -52,6 +57,14 @@ export interface SourceAnswerEngineOutput {
    * `null` when there is no sourcing event in the bundle to classify.
    */
   categoryStrategy: CategoryClassification | null;
+  /**
+   * Slice 1.2 — build / buy / partner / SI delivery-model gate. Forces an
+   * explicit delivery-model decision before an RFP package is generated:
+   * the recommended model, the reasoning, the disqualified options + why,
+   * and the open questions blocking the RFP. `null` when there is no
+   * sourcing event to classify (the gate runs off the classification).
+   */
+  deliveryModelGate: DeliveryModelGateResult | null;
 }
 
 interface SourceAnswerEngineInput {
@@ -127,7 +140,31 @@ export function buildSourceAnswerEngine(
     limits,
     evidenceCitations: evidence.map(toAnswerCitation),
     categoryStrategy: classifyEventCategory(input.contextBundle),
+    deliveryModelGate: gateEventDeliveryModel(input.contextBundle),
   };
+}
+
+/**
+ * Slice 1.2 integration seam. Runs the build / buy / partner / SI
+ * delivery-model gate off the Slice 1.1 classification, so an explicit
+ * delivery-model decision is forced before an RFP package is generated.
+ * Returns `null` when there is no event to classify.
+ *
+ * The bundle does not yet carry explicit delivery signals (internal
+ * capability, core-differentiator). The gate is built to degrade gracefully:
+ * with only `loadedSegments` supplied it returns the category-default model
+ * plus a confirmation open-question, which is the correct conservative
+ * posture — it never silently clears an RFP package on thin signals.
+ */
+export function gateEventDeliveryModel(
+  bundle: SourceAgentContextBundle,
+): DeliveryModelGateResult | null {
+  const classification = classifyEventCategory(bundle);
+  if (!classification) return null;
+  const signals: DeliveryModelSignals = {
+    loadedSegments: collectLoadedSegments(bundle.liveTenantContext),
+  };
+  return runDeliveryModelGate(classification, signals);
 }
 
 /**
