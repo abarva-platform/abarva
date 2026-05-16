@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server';
 import type Stripe from 'stripe';
 import { getStripeClient, isStripeConfigured } from '@/lib/billing/stripe';
-import { getServerSupabase } from '@/lib/supabase-server';
+import { webhookWriteDataSource } from '@/lib/data-plane/write-adapters/webhookWriteAdapter';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -26,25 +26,41 @@ export async function POST(req: NextRequest) {
     return new Response('bad signature', { status: 400 });
   }
 
-  const sb = getServerSupabase();
+  // DB writes route through the data-plane write seam (Slice 3e). Signature
+  // verification, event dedup, and which events are handled are unchanged.
+  const writes = webhookWriteDataSource;
 
   try {
     if (event.type === 'invoice.paid') {
       const invoice = event.data.object as Stripe.Invoice;
-      await sb
-        .from('invoices')
-        .update({ status: 'paid', paid_at: new Date().toISOString() })
-        .eq('stripe_invoice_id', invoice.id);
+      await writes.setInvoiceStatus({
+        eventId: event.id,
+        stripeInvoiceId: invoice.id as string,
+        status: 'paid',
+        paidAt: new Date().toISOString(),
+      });
       const engagementId = (invoice.metadata as Record<string, string> | null)?.engagement_id;
       if (engagementId) {
-        await sb.from('engagements').update({ outcome_fee_status: 'paid' }).eq('id', engagementId);
+        await writes.setEngagementOutcomeFeeStatus({
+          eventId: event.id,
+          engagementId,
+          status: 'paid',
+        });
       }
     } else if (event.type === 'invoice.payment_failed') {
       const invoice = event.data.object as Stripe.Invoice;
-      await sb.from('invoices').update({ status: 'overdue' }).eq('stripe_invoice_id', invoice.id);
+      await writes.setInvoiceStatus({
+        eventId: event.id,
+        stripeInvoiceId: invoice.id as string,
+        status: 'overdue',
+      });
     } else if (event.type === 'invoice.finalized') {
       const invoice = event.data.object as Stripe.Invoice;
-      await sb.from('invoices').update({ status: 'sent' }).eq('stripe_invoice_id', invoice.id);
+      await writes.setInvoiceStatus({
+        eventId: event.id,
+        stripeInvoiceId: invoice.id as string,
+        status: 'sent',
+      });
     }
   } catch (err) {
     console.error('[stripe-webhook-handler]', err);
