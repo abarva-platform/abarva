@@ -20,6 +20,14 @@ on:
         description: "Base URL for live mode."
         required: false
         default: "https://app.abarva.ai"
+      auth_mode:
+        description: "Live auth mode. cookie uses AGENT_QUALITY_SESSION_COOKIE; demo-sign-in signs in per case."
+        required: false
+        default: "cookie"
+        type: choice
+        options:
+          - cookie
+          - demo-sign-in
       agent:
         description: "Optional agent filter: sentinel, atlas, nexus, source, steward."
         required: false
@@ -52,6 +60,10 @@ jobs:
       - name: Install deps
         run: npm ci
 
+      - name: Install Chromium
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.mode == 'live' && inputs.auth_mode == 'demo-sign-in' }}
+        run: npx playwright install chromium --with-deps
+
       - name: Validate corpus contract
         run: npm run qa:agent-quality:corpus
 
@@ -70,7 +82,7 @@ jobs:
         run: npm run qa:agent-quality:runner -- --mode dry-run ${{ steps.filters.outputs.args }} --out agent-quality-plan.json
 
       - name: Verify live auth secret
-        if: ${{ github.event_name == 'workflow_dispatch' && inputs.mode == 'live' }}
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.mode == 'live' && inputs.auth_mode == 'cookie' }}
         env:
           AGENT_QUALITY_SESSION_COOKIE: ${{ secrets.AGENT_QUALITY_SESSION_COOKIE }}
         shell: bash
@@ -92,10 +104,13 @@ jobs:
         if: ${{ github.event_name == 'workflow_dispatch' && inputs.mode == 'live' }}
         env:
           AGENT_QUALITY_SESSION_COOKIE: ${{ secrets.AGENT_QUALITY_SESSION_COOKIE }}
+          E2E_DEMO_PASSWORD: ${{ secrets.E2E_DEMO_PASSWORD || 'Demo2026!' }}
+          E2E_DEMO_ACCESS_CODE: ${{ secrets.E2E_DEMO_ACCESS_CODE || '424242' }}
         run: |
           npm run qa:agent-quality:runner -- \
             --mode live \
             --base-url "${{ inputs.base_url }}" \
+            --auth-mode "${{ inputs.auth_mode }}" \
             ${{ steps.filters.outputs.args }} \
             --out agent-quality-answers.jsonl
 

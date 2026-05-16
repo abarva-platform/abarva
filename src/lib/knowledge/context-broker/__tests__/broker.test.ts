@@ -405,6 +405,70 @@ describe('DefaultContextBroker.assemble — tenant mode', () => {
     ]);
   });
 
+  it('prepends vendor spend and renewal anchors for vendor-contract questions', async () => {
+    const salesforce = {
+      ...makeRecord('vendor_contracts:vendor:apex:002', 'Salesforce'),
+      segmentId: 'vendor_contracts' as const,
+      recordKind: 'vendor_scorecards',
+      payload: {
+        vendor_name: 'Salesforce',
+        annual_spend_usd: 3290000,
+        renewal_date: '2026-09-15',
+        notes: 'Sales + Service + Commerce + Tableau; renewal coming with Einstein scope debate',
+      },
+    };
+    const aws = {
+      ...makeRecord('vendor_contracts:vendor:apex:003', 'AWS'),
+      segmentId: 'vendor_contracts' as const,
+      recordKind: 'vendor_scorecards',
+      payload: {
+        vendor_name: 'AWS',
+        annual_spend_usd: 4280000,
+        renewal_date: '2027-06-30',
+        notes: 'EDP commit; phase 2 migration in progress',
+      },
+    };
+    const renewal = {
+      ...makeRecord('it_financials:renewal:apex:010', 'Salesforce Sales + Service renewal'),
+      segmentId: 'it_financials' as const,
+      recordKind: 'renewal_calendar',
+      payload: {
+        vendor: 'Salesforce (Sales + Service)',
+        annual_value_usd: 1240000,
+        renewal_date: '2026-09-15',
+      },
+    };
+    const unrelated = makeRecord('program:apex-cdp-2026', 'Apex CDP 2026');
+    const { broker, adapter } = makeBroker({
+      listRecords: jest.fn()
+        .mockImplementation((_tenant: string, segment: string) => {
+          if (segment === 'vendor_contracts') return Promise.resolve([salesforce, aws]);
+          if (segment === 'it_financials') return Promise.resolve([renewal]);
+          if (segment === 'it_landscape') return Promise.resolve([]);
+          return Promise.resolve([]);
+        }),
+      chunksByKeyword: jest.fn().mockResolvedValue([
+        makeChunk('chunk:apex:cdp:001', 'program:apex-cdp-2026'),
+      ]),
+      getRecord: jest.fn().mockResolvedValue(unrelated),
+    });
+
+    const bundle = await broker.assemble({
+      query: 'Who are our top 5 vendors by annual spend, and which contracts renew in the next 12 months?',
+      mode: 'tenant',
+      tenantKey: TENANT,
+    });
+
+    expect(adapter.listRecords).toHaveBeenCalledWith(TENANT, 'vendor_contracts', { limit: 80 });
+    expect(adapter.listRecords).toHaveBeenCalledWith(TENANT, 'it_financials', { limit: 80 });
+    expect(bundle.facts.map((fact) => fact.recordId)).toEqual([
+      'vendor_contracts:vendor:apex:002',
+      'it_financials:renewal:apex:010',
+      'vendor_contracts:vendor:apex:003',
+      'program:apex-cdp-2026',
+    ]);
+  });
+
   it('uses Pinecone vector retrieval when chunksByVector succeeds', async () => {
     const seedChunks: ContextChunk[] = [
       makeChunk('chunk:apex:cdp:001', 'program:apex-cdp-2026'),
