@@ -1,5 +1,26 @@
 // ACT4 · AI Value / Outcome Ledger Read Model
 //
+// CANONICAL ROLE — value LEDGER / data model.
+//
+// The Tower track maintains two value-confidence modules with a
+// declared, complementary relationship:
+//
+// - THIS FILE is the canonical value LEDGER / data model. It owns the
+//   value-claim record shape (`ValueLedgerEntry`), the canonical
+//   categories / units, the fine-grained 7-state operational readiness
+//   ladder (`VALUE_READINESS_STATES`), and the variance / rollup
+//   builders (`computeVariance`, `buildAiValueOutcomeLedger`).
+// - `src/lib/tower/taxonomy/outcome-taxonomy.ts` is the canonical
+//   outcome CLASSIFICATION + executive-action layer. It owns the coarse
+//   3-rung executive confidence summary (`VALUE_RUNGS`), the outcome
+//   concepts, severities, and `deriveExecutiveAction`.
+//
+// The only concept modelled in both is value confidence, at two
+// deliberate granularities (this file's 7-state ladder vs the
+// taxonomy's 3-rung summary). The single, documented conversion between
+// them lives in `src/lib/tower/taxonomy/value-confidence-bridge.ts` —
+// no consumer should re-derive that rollup ad hoc.
+//
 // Operationalizes the value-and-outcome dimension of the AI Control
 // Tower contract (ACT1). Projects a deterministic, cross-tenant ledger
 // of AI value claims that the Tower can compose into Atlas brief

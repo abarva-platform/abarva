@@ -14,6 +14,7 @@ import type {
   ValueLedgerCategory,
   ValueReadinessState,
 } from '@/lib/tower/ai-value-outcome-ledger';
+import { readinessStateToRung } from '@/lib/tower/taxonomy/value-confidence-bridge';
 import {
   OUTCOME_SUBJECT_KINDS,
   OUTCOME_VALUE_TIERS,
@@ -26,33 +27,20 @@ import {
 } from './types';
 
 /**
- * Map a fine-grained value rung onto a coarse CXO-facing value tier.
+ * Map a fine-grained 7-state value readiness onto the coarse CXO-facing
+ * 3-rung value tier.
  *
- * - `projected` — claimed, nothing measured (`projected_only`).
- * - `tracked`   — a baseline / pilot measurement is in motion.
- * - `verified`  — measured in a pilot or in production.
- *
- * `declined` claims map to `projected`: a declined claim has no
- * defensible measured value, so it must never read as verified.
+ * This delegates to the canonical value-confidence bridge
+ * (`src/lib/tower/taxonomy/value-confidence-bridge.ts`) — the single
+ * place the Tower track converts between the operational
+ * `VALUE_READINESS_STATES` ladder and the executive `VALUE_RUNGS`
+ * summary. `OutcomeValueTier` is structurally the 3-rung set, so the
+ * bridge's `ValueRung` result is the tier directly. See the bridge for
+ * the per-state rationale (including why `declined` rolls up to
+ * `projected`).
  */
 export function rungToValueTier(rung: ValueReadinessState): OutcomeValueTier {
-  switch (rung) {
-    case 'measured_in_pilot':
-    case 'measured_in_production':
-      return 'verified';
-    case 'baseline_pending':
-    case 'baseline_set':
-    case 'in_pilot_measurement':
-      return 'tracked';
-    case 'projected_only':
-    case 'declined':
-      return 'projected';
-    default: {
-      // Exhaustiveness guard — a new rung must be classified explicitly.
-      const _never: never = rung;
-      return _never;
-    }
-  }
+  return readinessStateToRung(rung);
 }
 
 /** True when the entry carries an evidence pointer or ≥ 1 claim id. */
