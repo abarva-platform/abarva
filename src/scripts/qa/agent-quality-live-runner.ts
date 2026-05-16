@@ -224,6 +224,10 @@ function normalizeText(text: string): string {
   return text.replace(/\s+/g, ' ').trim();
 }
 
+function stripAgentArtifacts(answer: string): string {
+  return answer.replace(/\[\[artifact:[^\]]+\]\][\s\S]*?\[\[\/artifact\]\]/g, ' ');
+}
+
 function lower(text: string): string {
   return normalizeText(text).toLocaleLowerCase();
 }
@@ -276,12 +280,13 @@ function gradeFromFailures(failures: string[], forbiddenTermsFound: string[], ha
 
 function scoreCase(testCase: AgentQualityCase, captured: CapturedAnswer | undefined): CaseScore {
   const answer = captured?.answer ?? '';
-  const answerPresent = normalizeText(answer).length > 0;
+  const visibleAnswer = stripAgentArtifacts(answer);
+  const answerPresent = normalizeText(visibleAnswer).length > 0;
   const transportOk = !captured?.error && (captured?.status === undefined || (captured.status >= 200 && captured.status < 300));
-  const missingTerms = missingRequiredTerms(testCase, answer);
-  const forbiddenTerms = foundForbiddenTerms(testCase, answer);
-  const citationOk = !testCase.expected.requiresCitations || hasCitationSignal(answer);
-  const dissentOk = !testCase.expected.requiresDissent || hasDissentSignal(answer);
+  const missingTerms = missingRequiredTerms(testCase, visibleAnswer);
+  const forbiddenTerms = foundForbiddenTerms(testCase, visibleAnswer);
+  const citationOk = !testCase.expected.requiresCitations || hasCitationSignal(visibleAnswer);
+  const dissentOk = !testCase.expected.requiresDissent || hasDissentSignal(visibleAnswer);
   const tenantFactsOk = !testCase.expected.requiresTenantFacts || missingTerms.length === 0;
   const failures: string[] = [];
 
@@ -315,7 +320,7 @@ function scoreCase(testCase: AgentQualityCase, captured: CapturedAnswer | undefi
       transport: transportOk ? 'pass' : 'fail',
     },
     failures,
-    excerpt: normalizeText(answer).slice(0, 320),
+    excerpt: normalizeText(visibleAnswer).slice(0, 320),
   };
 }
 
