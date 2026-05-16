@@ -5,6 +5,11 @@ import type {
   SourceUserRole,
 } from './agent-context';
 import type { SourceAgentBriefingMode } from './multi-agent-types';
+import {
+  classifySourcingEvent,
+  type CategoryClassification,
+} from './classifier/category-classifier';
+import type { TenantContextSegment } from './taxonomy/category-taxonomy';
 
 export type SourceAnswerMode =
   | 'current_state'
@@ -40,6 +45,13 @@ export interface SourceAnswerEngineOutput {
   confidence: 'low' | 'medium' | 'high';
   limits: string[];
   evidenceCitations: SourceAnswerEvidenceCitation[];
+  /**
+   * Slice 1.1 — category strategy classification for the sourcing event.
+   * Maps the event onto the IT sourcing taxonomy: category, buying motion,
+   * risk profile, and the required evidence the tenant context is missing.
+   * `null` when there is no sourcing event in the bundle to classify.
+   */
+  categoryStrategy: CategoryClassification | null;
 }
 
 interface SourceAnswerEngineInput {
@@ -114,7 +126,67 @@ export function buildSourceAnswerEngine(
     confidence,
     limits,
     evidenceCitations: evidence.map(toAnswerCitation),
+    categoryStrategy: classifyEventCategory(input.contextBundle),
   };
+}
+
+/**
+ * Slice 1.1 integration seam. Runs the category strategy classifier over the
+ * bundle's deterministic sourcing-event attributes and loaded tenant-context
+ * segments. Returns `null` when there is no event to classify — the answer
+ * engine stays usable for pure current-state questions.
+ *
+ * This is the single, non-invasive seam where Sentinel picks up the
+ * classification; the surface itself is not rewritten.
+ */
+export function classifyEventCategory(
+  bundle: SourceAgentContextBundle,
+): CategoryClassification | null {
+  const event = bundle.sourcingEvent;
+  if (!event) return null;
+  return classifySourcingEvent(
+    {
+      name: event.name,
+      archetype: bundle.sourcingArchetype ?? event.archetype,
+      patternId: undefined,
+      description: bundle.blockers.join('; ') || undefined,
+    },
+    { loadedSegments: collectLoadedSegments(bundle.liveTenantContext) },
+  );
+}
+
+/**
+ * The taxonomy's `TenantContextSegment` set. The live snapshot reports many
+ * more segment ids (e.g. `org_structure`, `kpi_history`); only the ones the
+ * taxonomy grounds against are relevant to evidence-gap detection.
+ */
+const TAXONOMY_SEGMENTS: readonly TenantContextSegment[] = [
+  'vendor_contracts',
+  'it_landscape',
+  'it_financials',
+  'program_inventory',
+  'operating_telemetry',
+  'industry_context',
+  'compliance',
+];
+
+function collectLoadedSegments(
+  live: SourceLiveTenantContextSnapshot | undefined,
+): TenantContextSegment[] {
+  if (!live) return [];
+  const taxonomy = new Set<string>(TAXONOMY_SEGMENTS);
+  const loaded = new Set<TenantContextSegment>();
+  for (const segment of live.segments) {
+    // A segment counts as loaded only if it actually carries inventory or
+    // context records — an empty segment is not grounded evidence.
+    if (
+      taxonomy.has(segment.segmentId) &&
+      segment.inventoryRecords + segment.contextChunks > 0
+    ) {
+      loaded.add(segment.segmentId as TenantContextSegment);
+    }
+  }
+  return [...loaded];
 }
 
 export function detectSourceAnswerMode(prompt: string): SourceAnswerMode {

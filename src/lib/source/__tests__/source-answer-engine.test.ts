@@ -208,4 +208,21 @@ describe('Source answer engine', () => {
       ]),
     );
   });
+
+  it('attaches a Slice 1.1 category strategy classification (CDP -> data/AI platform)', () => {
+    const answer = buildSourceAnswerEngine({
+      prompt: 'How should the CIO shape the CDP sourcing event?',
+      contextBundle,
+      userRole: 'cio',
+    });
+
+    const strategy = answer?.categoryStrategy;
+    expect(strategy).not.toBeNull();
+    expect(strategy?.categoryId).toBe('data_ai_platform');
+    expect(strategy?.buyingMotion).toBe('competitive_rfp');
+    // it_financials is a required input for data/AI platform and the fixture
+    // live context does not load it — so it must surface as an evidence gap.
+    expect(strategy?.evidenceGaps.map((gap) => gap.segment)).toContain('it_financials');
+    expect(strategy?.classifierVersion).toBe('source-category-classifier/v1');
+  });
 });
