@@ -40,8 +40,8 @@ param plainRuntimeEnv = [
     value: 'sb-abarva-lab-eastus'
   }
   {
-    name: 'SERVICE_BUS_QUEUE_NAME'
-    value: 'q-context-ingestion-events'
+    name: 'AZURE_CONNECTIVITY_SERVICE_BUS_QUEUE_NAME'
+    value: 'q-connectivity-smoke'
   }
   {
     name: 'AZURE_KEY_VAULT_NAME'

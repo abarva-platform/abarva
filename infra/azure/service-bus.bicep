@@ -18,6 +18,7 @@ param skuName string = 'Standard'
 param queueNames array = [
   'q-context-ingestion-events'
   'q-agent-work-items'
+  'q-connectivity-smoke'
 ]
 
 @description('Principal IDs allowed to send messages.')

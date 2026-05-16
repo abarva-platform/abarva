@@ -45,6 +45,10 @@ param plainRuntimeEnv = [
     value: readEnvironmentVariable('PINECONE_INDEX', 'nexus-knowledge')
   }
   {
+    name: 'AZURE_CONNECTIVITY_SERVICE_BUS_QUEUE_NAME'
+    value: 'q-connectivity-smoke'
+  }
+  {
     name: 'NEXUS_COMPOSER_MODEL'
     value: readEnvironmentVariable('NEXUS_COMPOSER_MODEL', 'claude-opus-4-7')
   }
