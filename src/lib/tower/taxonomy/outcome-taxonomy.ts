@@ -1,5 +1,25 @@
 // Slice 0.3 · Tower Outcome Taxonomy — typed contracts + pure builders
 //
+// CANONICAL ROLE — outcome CLASSIFICATION + executive-action layer.
+//
+// The Tower track maintains two value-confidence modules with a
+// declared, complementary relationship:
+//
+// - THIS FILE is the canonical outcome CLASSIFICATION + executive-action
+//   layer. It owns the outcome concepts, severities, the coarse 3-rung
+//   executive confidence summary (`VALUE_RUNGS`), and the
+//   `deriveExecutiveAction` / `classifyOutcomeReading` builders.
+// - `src/lib/tower/ai-value-outcome-ledger.ts` is the canonical value
+//   LEDGER / data model. It owns the value-claim record shape, the
+//   categories / units, the fine-grained 7-state operational readiness
+//   ladder (`VALUE_READINESS_STATES`), and the variance builders.
+//
+// The only concept modelled in both is value confidence, at two
+// deliberate granularities (this file's 3-rung summary vs the ledger's
+// 7-state ladder). The single, documented conversion between them lives
+// in `src/lib/tower/taxonomy/value-confidence-bridge.ts` — no consumer
+// should re-derive that rollup ad hoc.
+//
 // Encodes the taxonomy of portfolio outcome concepts the Tower surface
 // (Atlas-fronted CXO portfolio command room) reasons over. Tower must be
 // able to explain *why a metric matters* and *which executive action it
