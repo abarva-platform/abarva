@@ -1,7 +1,7 @@
 import { currentUser } from '@clerk/nextjs/server';
-import { getServerSupabase } from '@/lib/supabase-server';
 import { loadVipGreetingData } from '@/lib/agent/prompts/_shared/user-context';
 import { getCurrentPerson } from '@/lib/auth/maestro';
+import { selectVipProfileReadAdapter } from '@/lib/data-plane/read-adapters/vipProfileReadAdapter';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -50,38 +50,22 @@ export async function GET() {
     ? { id: person.id, name: person.name, email: person.email, role: person.role }
     : null;
 
-  // ── vip_profiles lookup by person_id (if we have one) and by displayName
-  const sb = getServerSupabase();
+  // ── vip_profiles lookup by person_id, exact name, and fuzzy name.
+  // The three Postgres-backed reads run through the data-plane seam so
+  // this diagnostic can parallel-run against Azure. Clerk identity
+  // resolution above stays in the route — it is not a data-plane concern.
   let vipByPersonId: Record<string, unknown> | null = null;
   let vipByDisplayNameExact: Record<string, unknown> | null = null;
   let vipByFuzzy: Record<string, unknown> | null = null;
 
   if (person) {
-    const { data } = await sb
-      .from('vip_profiles')
-      .select('id, person_id, display_name, demo_tier, current_title, current_company')
-      .eq('person_id', person.id)
-      .maybeSingle();
-    vipByPersonId = (data as Record<string, unknown> | null) ?? null;
-
-    const { data: exactData } = await sb
-      .from('vip_profiles')
-      .select('id, person_id, display_name, demo_tier, current_title, current_company')
-      .ilike('display_name', person.name)
-      .maybeSingle();
-    vipByDisplayNameExact = (exactData as Record<string, unknown> | null) ?? null;
-
-    const tokens = person.name.trim().split(/\s+/).filter((t) => t.length > 0);
-    if (tokens.length >= 2) {
-      const first = tokens[0];
-      const last = tokens[tokens.length - 1];
-      const { data: fuzzyData } = await sb
-        .from('vip_profiles')
-        .select('id, person_id, display_name, demo_tier, current_title, current_company')
-        .ilike('display_name', `${first}%${last}`)
-        .maybeSingle();
-      vipByFuzzy = (fuzzyData as Record<string, unknown> | null) ?? null;
-    }
+    const lookup = await selectVipProfileReadAdapter().getVipProfileLookup(
+      person.id,
+      person.name,
+    );
+    vipByPersonId = lookup.by_person_id as Record<string, unknown> | null;
+    vipByDisplayNameExact = lookup.by_display_name_exact as Record<string, unknown> | null;
+    vipByFuzzy = lookup.by_display_name_fuzzy as Record<string, unknown> | null;
   }
 
   result.vip_lookup = {
