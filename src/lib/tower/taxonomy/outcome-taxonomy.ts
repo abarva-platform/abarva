@@ -87,12 +87,26 @@ export type OutcomeSeverity = (typeof OUTCOME_SEVERITIES)[number];
  * Canonical executive actions Tower can imply. These are the closed set
  * of interventions a CXO is asked to take; the executive action queue
  * (Slice 3.2) ranks instances of these.
+ *
+ * This is the single canonical home for the executive-action trigger
+ * taxonomy. Slice 3.2's executive action queue consumes this set rather
+ * than defining its own.
+ *
+ * `reallocate_spend` and `value_leakage` are two framings of the same
+ * underlying CXO concern (committed spend not backed by value):
+ * `reallocate_spend` is the forward-looking action the outcome-taxonomy
+ * builders derive from a `spend_at_risk` reading, while `value_leakage`
+ * is the trigger the action queue surfaces when a *measured* initiative
+ * is materially under-earning its projection. Both are first-class
+ * members of the closed set; the action queue carries logic and tests
+ * for `value_leakage` specifically.
  */
 export const EXECUTIVE_ACTIONS = [
   'no_action',
   'verify_value_claim',
   'drive_adoption',
   'reallocate_spend',
+  'value_leakage',
   'open_renewal_review',
   'escalate_dependency',
   'sponsor_intervention',
@@ -352,6 +366,8 @@ function actionPhrase(action: ExecutiveAction): string {
       return 'fund an adoption push to recover stranded value';
     case 'reallocate_spend':
       return 'review whether committed spend should be reallocated';
+    case 'value_leakage':
+      return 'commission a value-leakage review of the under-earning initiative';
     case 'open_renewal_review':
       return 'open a renewal review before the contract window closes';
     case 'escalate_dependency':
