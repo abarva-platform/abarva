@@ -1,10 +1,12 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import process from 'node:process';
+import { chromium, expect, type Browser, type Page } from '@playwright/test';
 
 type AgentName = 'sentinel' | 'atlas' | 'nexus' | 'source' | 'steward';
 type DemoGrade = 'A' | 'B' | 'C' | 'D' | 'F';
 type RunnerMode = 'dry-run' | 'score-file' | 'live';
+type AuthMode = 'cookie' | 'demo-sign-in';
 
 interface AgentQualityCase {
   id: string;
@@ -61,6 +63,9 @@ interface RunnerOptions {
   answersPath?: string;
   baseUrl?: string;
   cookie?: string;
+  authMode: AuthMode;
+  demoPassword: string;
+  demoAccessCode: string;
   outPath?: string;
   agent?: AgentName;
   tenant?: string;
@@ -87,16 +92,38 @@ const TENANT_DISPLAY: Record<string, string> = {
   'first-capital': 'First Capital Financial',
 };
 
+const DEMO_EMAILS: Record<string, Partial<Record<string, string>> & { default: string }> = {
+  'apex-retail': {
+    default: 'cio@apex-retail.example.com',
+    cio: 'cio@apex-retail.example.com',
+    cdo: 'cdo@apex-retail.example.com',
+  },
+  'meridian-health': {
+    default: 'cdio@meridian-health.example.com',
+    cdio: 'cdio@meridian-health.example.com',
+    cdao: 'cdao@meridian-health.example.com',
+  },
+  'first-capital': {
+    default: 'cio@firstcapital.example.com',
+    cio: 'cio@firstcapital.example.com',
+  },
+};
+
 function usage(): never {
   console.error(`Usage:
   npm run qa:agent-quality:runner -- --mode dry-run [--agent sentinel] [--tenant apex-retail] [--limit 10]
   npm run qa:agent-quality:score -- --answers /path/to/answers.jsonl [--out /tmp/score.json]
   npm run qa:agent-quality:live -- --base-url https://app.example.com --cookie "$COOKIE" [--out /tmp/answers.jsonl]
+  npm run qa:agent-quality:live -- --base-url https://app.example.com --auth-mode demo-sign-in [--out /tmp/answers.jsonl]
 
 Modes:
   dry-run     Lists the corpus cases that would run.
   score-file  Scores captured answers JSONL. Each row: {"id":"case-id","answer":"...","latencyMs":123}
   live        Executes cases through /api/chat/agent and then scores the captured answers.
+
+Auth:
+  cookie        Uses --cookie or AGENT_QUALITY_SESSION_COOKIE for every case.
+  demo-sign-in  Signs in through /sign-in per case using canonical demo accounts.
 `);
   process.exit(2);
 }
@@ -105,6 +132,9 @@ function parseArgs(argv: string[]): RunnerOptions {
   const options: RunnerOptions = {
     mode: 'dry-run',
     cookie: process.env.AGENT_QUALITY_SESSION_COOKIE,
+    authMode: (process.env.AGENT_QUALITY_AUTH_MODE as AuthMode | undefined) ?? 'cookie',
+    demoPassword: process.env.E2E_DEMO_PASSWORD ?? 'Demo2026!',
+    demoAccessCode: process.env.E2E_DEMO_ACCESS_CODE ?? '424242',
     failOnGrade: DEFAULT_FAIL_ON_GRADE,
   };
 
@@ -130,6 +160,22 @@ function parseArgs(argv: string[]): RunnerOptions {
     }
     if (arg === '--cookie' && next) {
       options.cookie = next;
+      index += 1;
+      continue;
+    }
+    if (arg === '--auth-mode' && next) {
+      if (!['cookie', 'demo-sign-in'].includes(next)) usage();
+      options.authMode = next as AuthMode;
+      index += 1;
+      continue;
+    }
+    if (arg === '--demo-password' && next) {
+      options.demoPassword = next;
+      index += 1;
+      continue;
+    }
+    if (arg === '--demo-access-code' && next) {
+      options.demoAccessCode = next;
       index += 1;
       continue;
     }
@@ -168,7 +214,7 @@ function parseArgs(argv: string[]): RunnerOptions {
 
   if (options.mode === 'score-file' && !options.answersPath) usage();
   if (options.mode === 'live' && !options.baseUrl) usage();
-  if (options.mode === 'live' && !options.cookie) {
+  if (options.mode === 'live' && options.authMode === 'cookie' && !options.cookie) {
     throw new Error('live mode requires --cookie or AGENT_QUALITY_SESSION_COOKIE');
   }
 
@@ -391,13 +437,69 @@ async function readStreamText(response: Response): Promise<{ answer: string; tim
   };
 }
 
-async function runLiveCase(testCase: AgentQualityCase, options: RunnerOptions): Promise<CapturedAnswer> {
+async function typeCredential(page: Page, placeholder: RegExp, value: string): Promise<void> {
+  const field = page.getByPlaceholder(placeholder);
+  await field.fill('');
+  await field.click();
+  await page.keyboard.type(value, { delay: 4 });
+  await expect(field).toHaveValue(value);
+}
+
+function demoEmailForCase(testCase: AgentQualityCase): string {
+  const tenantEmails = DEMO_EMAILS[testCase.tenant];
+  if (!tenantEmails) {
+    throw new Error(`No demo sign-in account configured for tenant ${testCase.tenant}`);
+  }
+  return tenantEmails[testCase.persona] ?? tenantEmails.default;
+}
+
+async function mintDemoCookieHeader(testCase: AgentQualityCase, options: RunnerOptions, browser: Browser): Promise<string> {
+  if (!options.baseUrl) throw new Error('baseUrl is required for demo sign-in auth');
+  const email = demoEmailForCase(testCase);
+  const context = await browser.newContext();
+  const page = await context.newPage();
+
+  try {
+    await page.goto(`${options.baseUrl}/sign-in`, { waitUntil: 'domcontentloaded' });
+    await expect(page.getByPlaceholder(/name@company.com/i)).toBeVisible({ timeout: 30_000 });
+    await page.waitForFunction(() => Boolean((globalThis as { Clerk?: { loaded?: boolean } }).Clerk?.loaded), null, { timeout: 30_000 });
+    await typeCredential(page, /name@company.com/i, email);
+    await typeCredential(page, /Password from invite/i, options.demoPassword);
+    await typeCredential(page, /6-digit code/i, options.demoAccessCode);
+    await expect(page.getByRole('button', { name: /sign in|continue/i })).toBeEnabled({ timeout: 10_000 });
+    await page.getByRole('button', { name: /sign in|continue/i }).click();
+    await page.waitForURL(/\/home/, { timeout: 30_000 });
+    await page.waitForFunction(() => document.cookie.includes('__session='), null, { timeout: 30_000 });
+    const cookies = await context.cookies(options.baseUrl);
+    return cookies.map((cookie) => `${cookie.name}=${cookie.value}`).join('; ');
+  } finally {
+    await context.close();
+  }
+}
+
+function isHtmlFallback(contentType: string, answer: string): boolean {
+  const trimmed = answer.trimStart().slice(0, 200).toLocaleLowerCase();
+  return contentType.toLocaleLowerCase().includes('text/html')
+    || trimmed.startsWith('<!doctype html')
+    || trimmed.startsWith('<html');
+}
+
+async function cookieForCase(testCase: AgentQualityCase, options: RunnerOptions, browser: Browser | null): Promise<string> {
+  if (options.authMode === 'demo-sign-in') {
+    if (!browser) throw new Error('demo-sign-in auth requires a Playwright browser');
+    return mintDemoCookieHeader(testCase, options, browser);
+  }
+  return options.cookie ?? '';
+}
+
+async function runLiveCase(testCase: AgentQualityCase, options: RunnerOptions, browser: Browser | null): Promise<CapturedAnswer> {
   const startedAt = Date.now();
+  const cookie = await cookieForCase(testCase, options, browser);
   const response = await fetch(`${options.baseUrl}/api/chat/agent`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      Cookie: options.cookie ?? '',
+      Cookie: cookie,
     },
     body: JSON.stringify({
       message: testCase.prompt,
@@ -415,29 +517,36 @@ async function runLiveCase(testCase: AgentQualityCase, options: RunnerOptions): 
   });
 
   const { answer, timeToFirstByteMs } = await readStreamText(response);
+  const contentType = response.headers.get('content-type') ?? '';
+  const htmlFallback = isHtmlFallback(contentType, answer);
   return {
     id: testCase.id,
     answer,
     status: response.status,
     latencyMs: Date.now() - startedAt,
     timeToFirstByteMs: timeToFirstByteMs ?? undefined,
-    error: response.ok ? undefined : `HTTP ${response.status}`,
+    error: response.ok && !htmlFallback ? undefined : `HTTP ${response.status}${htmlFallback ? ' HTML response' : ''}`,
   };
 }
 
 async function runLive(cases: AgentQualityCase[], options: RunnerOptions): Promise<CapturedAnswer[]> {
   const answers: CapturedAnswer[] = [];
-  for (const [index, testCase] of cases.entries()) {
-    console.log(`[${index + 1}/${cases.length}] ${testCase.id} · ${testCase.agent} · ${testCase.tenant}`);
-    try {
-      answers.push(await runLiveCase(testCase, options));
-    } catch (error) {
-      answers.push({
-        id: testCase.id,
-        answer: '',
-        error: error instanceof Error ? error.message : String(error),
-      });
+  const browser = options.authMode === 'demo-sign-in' ? await chromium.launch({ headless: true }) : null;
+  try {
+    for (const [index, testCase] of cases.entries()) {
+      console.log(`[${index + 1}/${cases.length}] ${testCase.id} · ${testCase.agent} · ${testCase.tenant}`);
+      try {
+        answers.push(await runLiveCase(testCase, options, browser));
+      } catch (error) {
+        answers.push({
+          id: testCase.id,
+          answer: '',
+          error: error instanceof Error ? error.message : String(error),
+        });
+      }
     }
+  } finally {
+    await browser?.close();
   }
   return answers;
 }

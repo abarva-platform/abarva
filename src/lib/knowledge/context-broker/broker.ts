@@ -165,6 +165,8 @@ const STOPWORDS = new Set([
 const KEYWORD_CAP = 10;
 const TENANT_PROFILE_QUESTION_RE =
   /\b(?:what do you know|highest-confidence facts|company profile|enterprise profile|who are we|tell me about (?:our|the) company|business profile|at a glance)\b/i;
+const VENDOR_SPEND_RENEWAL_QUESTION_RE =
+  /\b(?:top\s+\d+\s+vendors?|vendors?|supplier|contract|renewal|renews?|expiry|expires?|annual\s+spend|spend\s+by\s+vendor|run[-\s]?rate|commercial exposure)\b/i;
 
 const TENANT_INDUSTRY_ALLOWLISTS: ReadonlyArray<{
   pattern: RegExp;
@@ -223,6 +225,102 @@ export function extractKeywords(query: string): string[] {
 
 function shouldIncludeTenantProfileAnchors(query: string): boolean {
   return TENANT_PROFILE_QUESTION_RE.test(query);
+}
+
+function shouldIncludeVendorSpendAnchors(query: string): boolean {
+  return VENDOR_SPEND_RENEWAL_QUESTION_RE.test(query);
+}
+
+function stringifyPayloadValue(value: unknown): string {
+  if (value === null || value === undefined) return '';
+  if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
+    return String(value);
+  }
+  if (Array.isArray(value)) return value.map(stringifyPayloadValue).filter(Boolean).join(' ');
+  if (typeof value === 'object') {
+    return Object.values(value as Record<string, unknown>).map(stringifyPayloadValue).filter(Boolean).join(' ');
+  }
+  return '';
+}
+
+function recordSearchText(record: TenantRecord): string {
+  return [
+    record.segmentId,
+    record.recordKind,
+    record.recordId,
+    record.title,
+    stringifyPayloadValue(record.payload),
+  ].join(' ').toLocaleLowerCase();
+}
+
+function numericPayloadValue(record: TenantRecord, keys: string[]): number | null {
+  for (const key of keys) {
+    const value = record.payload[key];
+    if (typeof value === 'number' && Number.isFinite(value)) return value;
+    if (typeof value === 'string') {
+      const parsed = Number(value.replace(/[$,\s]/g, ''));
+      if (Number.isFinite(parsed)) return parsed;
+    }
+  }
+  return null;
+}
+
+function vendorSpendAnchorScore(record: TenantRecord, query: string): number {
+  const haystack = recordSearchText(record);
+  const normalizedQuery = query.toLocaleLowerCase();
+  let score = 0;
+
+  if (record.segmentId === 'vendor_contracts') score += 20;
+  if (record.segmentId === 'it_financials') score += 16;
+  if (record.segmentId === 'it_landscape') score += 8;
+
+  if (/\bvendor\b/.test(haystack)) score += 12;
+  if (/\b(contract|renewal|expiry|expires|renews?)\b/.test(haystack)) score += 12;
+  if (/\b(spend|annual_spend|annual value|annual_value|fy2026_planned|run-rate|run rate)\b/.test(haystack)) score += 12;
+  if (/\b(scorecard|renewal_calendar|vendor spend top)\b/.test(haystack)) score += 12;
+  if (/\b(salesforce|aws|microsoft|adobe|snowflake|databricks|oracle|sap)\b/.test(haystack)) score += 4;
+
+  for (const term of extractKeywords(normalizedQuery)) {
+    if (haystack.includes(term)) score += term.length > 5 ? 3 : 2;
+  }
+
+  const spend = numericPayloadValue(record, [
+    'annual_spend_usd',
+    'annual_value_usd',
+    'fy2026_planned_usd',
+    'fy2025_actual_usd',
+    'annual_cost_usd',
+  ]);
+  if (spend !== null) {
+    score += Math.min(12, Math.log10(Math.max(spend, 1)));
+  }
+
+  if (/\btop\s+\d+\s+vendors?|annual\s+spend|spend\b/.test(normalizedQuery) && spend !== null) {
+    score += 8;
+  }
+  if (/\brenew|contract|expiry|expires\b/.test(normalizedQuery) && /\brenew|contract|expiry|expires\b/.test(haystack)) {
+    score += 8;
+  }
+
+  return score;
+}
+
+function rankVendorSpendAnchorRecords(records: TenantRecord[], query: string): TenantRecord[] {
+  return records
+    .map((record, index) => ({
+      record,
+      score: vendorSpendAnchorScore(record, query) - index * 0.001,
+      spend: numericPayloadValue(record, [
+        'annual_spend_usd',
+        'annual_value_usd',
+        'fy2026_planned_usd',
+        'fy2025_actual_usd',
+        'annual_cost_usd',
+      ]) ?? 0,
+    }))
+    .filter((entry) => entry.score >= 18)
+    .sort((a, b) => b.score - a.score || b.spend - a.spend || a.record.title.localeCompare(b.record.title))
+    .map((entry) => entry.record);
 }
 
 function isGraphCandidateId(recordId: string): boolean {
@@ -608,6 +706,21 @@ export class DefaultContextBroker implements ContextBroker {
           addFact(record);
           if (facts.length >= maxFacts) break;
         }
+        if (facts.length >= maxFacts) break;
+      }
+    }
+
+    if (shouldIncludeVendorSpendAnchors(input.query) && facts.length < maxFacts) {
+      const anchorResults = await Promise.allSettled([
+        this.adapter.listRecords(tenantKey, 'vendor_contracts', { limit: 80 }),
+        this.adapter.listRecords(tenantKey, 'it_financials', { limit: 80 }),
+        this.adapter.listRecords(tenantKey, 'it_landscape', { limit: 80 }),
+      ]);
+      const records = anchorResults.flatMap((result) =>
+        result.status === 'fulfilled' ? result.value : []);
+      const ranked = rankVendorSpendAnchorRecords(records, input.query);
+      for (const record of ranked) {
+        addFact(record);
         if (facts.length >= maxFacts) break;
       }
     }
