@@ -614,6 +614,7 @@ export default async function TowerPage({
     <TowerIndexPage
       tenantName={towerSetupInitiativesFeed.tenantName}
       context={`Control Tower · ${TOWER_SUBMENU_LABELS[activeTab]} · ${towerSetupInitiativesFeed.summary.total} initiatives observed`}
+      towerToday={towerToday}
       clientId={activeClientId ?? undefined}
       initiatives={towerInitiatives}
       vendors={towerVendors}

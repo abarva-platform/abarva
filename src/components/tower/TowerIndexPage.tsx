@@ -1983,6 +1983,8 @@ function Quadrant({
 interface TowerIndexPageProps {
   tenantName?: string;
   context?: string;
+  /** Deterministic Tower as-of date resolved on the server. */
+  towerToday?: string;
   /**
    * Tenant client id for the active session — wires the AgentDock chat lane
    * to /api/v1/atlas/chat. When omitted the chat composer disables
@@ -2022,6 +2024,18 @@ interface TowerIndexPageProps {
   towerLensSlot?: ReactNode;
 }
 
+function formatTowerDateLabel(todayIso: string): { dayName: string; monthDay: string } {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(todayIso);
+  const date = match
+    ? new Date(Date.UTC(Number(match[1]), Number(match[2]) - 1, Number(match[3])))
+    : new Date(Date.UTC(2026, 4, 12));
+
+  return {
+    dayName: date.toLocaleDateString('en-US', { weekday: 'long', timeZone: 'UTC' }),
+    monthDay: date.toLocaleDateString('en-US', { month: 'long', day: 'numeric', timeZone: 'UTC' }),
+  };
+}
+
 type MetricAskHandler = (request: {
   metricKey: MetricProvenanceKey;
   metricLabel: string;
@@ -2033,6 +2047,7 @@ type MetricAskHandler = (request: {
 export function TowerIndexPage({
   tenantName = 'Active client',
   context = 'Control Tower · Portfolio Index',
+  towerToday = '2026-05-12',
   clientId,
   initiatives,
   vendors,
@@ -2115,11 +2130,11 @@ export function TowerIndexPage({
     towerCanvasRef.current?.scrollTo({ top: 0, behavior: 'auto' });
   }, [activeCanvasView, activeDetailId, activeLens, activeTab]);
 
-  // Date is resolved at runtime so Tower stays aligned with the live pilot week.
-  const today = new Date();
-  const dayName = today.toLocaleDateString('en-US', { weekday: 'long' });
-  const monthDay = today.toLocaleDateString('en-US', { month: 'long', day: 'numeric' });
-  const timestamp = today.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+  // Keep this label deterministic across SSR and hydration. Live wall-clock
+  // rendering causes React text mismatches when the server and browser resolve
+  // the minute or time zone differently.
+  const { dayName, monthDay } = formatTowerDateLabel(towerToday);
+  const timestamp = '12:00 AM';
 
   // ─── Atlas chat state · wired to /api/v1/atlas/chat via the shared
   // <AgentDock> mounted around the workspace below. The dock owns the
