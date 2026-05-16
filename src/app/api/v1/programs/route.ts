@@ -11,6 +11,10 @@ import { logClassifierDecision } from '@/lib/programs/classifier';
 import { raiseMaestroFlag } from '@/lib/programs/governance';
 import { getProgramsRouteSupabase } from '@/lib/programs/programs-auth-mode-server';
 import { getServerSupabase } from '@/lib/supabase-server';
+import {
+  selectProgramsWriteAdapter,
+  type ProgramModuleSeed,
+} from '@/lib/data-plane/write-adapters/programsWriteAdapter';
 import { requireTenancy, tenancyErrorResponse } from './_auth';
 import { loadUserProgramAccessPolicy } from '@/lib/auth/program-access-policy';
 import type {
@@ -115,30 +119,32 @@ export async function POST(req: NextRequest) {
     });
 
     const sb = getServerSupabase();
+    // DB writes route through the data-plane write seam (Slice 3a); reads
+    // (the engagement_topics lookup below) stay direct — transitive per the
+    // write-path design doc §4. Supabase remains the default plane.
+    const writeAdapter = selectProgramsWriteAdapter();
 
     // Seed participants from form. Failures here are non-fatal — the program
     // record exists; we surface a server-side warning but still return success
     // so the user lands on the program page rather than seeing internal_error
     // for what's effectively a soft attribution gap.
     if (form!.sponsorPersonId) {
-      const { error: sponsorErr } = await sb.from('engagement_participants').insert({
-        engagement_id: program.id,
-        user_id: form!.sponsorPersonId,
-        user_name: form!.sponsorPersonId,
+      await writeAdapter.seedParticipant({
+        engagementId: program.id,
+        userId: form!.sponsorPersonId,
+        userName: form!.sponsorPersonId,
         role: 'sponsor',
-        approval_authority: 'sponsor',
+        approvalAuthority: 'sponsor',
       });
-      if (sponsorErr) console.warn('[POST /api/v1/programs] sponsor participant insert failed', { programId: program.id, error: sponsorErr });
     }
     if (form!.leadPersonId && form!.leadPersonId !== form!.sponsorPersonId) {
-      const { error: leadErr } = await sb.from('engagement_participants').insert({
-        engagement_id: program.id,
-        user_id: form!.leadPersonId,
-        user_name: form!.leadPersonId,
+      await writeAdapter.seedParticipant({
+        engagementId: program.id,
+        userId: form!.leadPersonId,
+        userName: form!.leadPersonId,
         role: 'lead',
-        approval_authority: 'approver',
+        approvalAuthority: 'approver',
       });
-      if (leadErr) console.warn('[POST /api/v1/programs] lead participant insert failed', { programId: program.id, error: leadErr });
     }
 
     // Seed program_modules from canonical shape (if pattern accepted)
@@ -163,17 +169,14 @@ export async function POST(req: NextRequest) {
           moduleList.push({ moduleKey: `phase_${p}_work`, name: `Phase ${p} deliverable`, phase: p });
         }
       }
-      let order = 0;
-      for (const m of moduleList) {
-        await sb.from('program_modules').insert({
-          engagement_id: program.id,
-          module_key: m.moduleKey,
-          module_name: m.name,
-          phase_number: m.phase,
-          module_order: order++,
-          status: 'not_started',
-        });
-      }
+      const moduleSeeds: ProgramModuleSeed[] = moduleList.map((m, order) => ({
+        engagementId: program.id,
+        moduleKey: m.moduleKey,
+        moduleName: m.name,
+        phaseNumber: m.phase,
+        moduleOrder: order,
+      }));
+      await writeAdapter.seedModules(moduleSeeds);
     }
 
     // Log classifier decision if a top match was passed
