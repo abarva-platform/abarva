@@ -625,6 +625,50 @@ describe('SupabaseTenantDataAdapter.chunksByKeyword', () => {
     expect(out).toEqual([]);
     expect(calls).toHaveLength(0);
   });
+
+  it('falls back to public chunks when the lab private schema is not created yet', async () => {
+    process.env.DATABASE_URL = 'postgres://user:pass@example.com:5432/db';
+    stagedResults = [
+      {
+        data: null,
+        error: { message: 'relation "client_apex_retail_private.enterprise_context_chunks" does not exist' },
+      },
+      {
+        data: [
+          {
+            tenant_key: 'apex-retail',
+            chunk_id: 'enterprise_profile:apex:chunk:0',
+            source_segment_id: 'enterprise_profile',
+            source_record_id: 'enterprise_profile:apex',
+            source_doc: 'enterprise-profile.csv',
+            source_path: 'setup/enterprise-profile.csv',
+            chunk_index: 0,
+            chunk_text: 'Apex Retail Group operates stores on SAP S/4.',
+            token_count: 9,
+            embedding_status: 'embedded',
+            embedding_model: 'text-embedding-3-large',
+            embedded_at: '2026-05-01T00:00:00Z',
+            provenance: null,
+            chunk_metadata: null,
+          },
+        ],
+        error: null,
+      },
+    ];
+    mockPgQuery.mockRejectedValueOnce(
+      new Error('relation "client_apex_retail_private.enterprise_context_chunks" does not exist'),
+    );
+
+    const out = await makeAdapter().chunksByKeyword('apex-retail', ['SAP S/4'], 10);
+
+    expect(out[0]).toMatchObject({
+      tenantKey: 'apex-retail',
+      chunkId: 'enterprise_profile:apex:chunk:0',
+      text: 'Apex Retail Group operates stores on SAP S/4.',
+    });
+    expect(calls).toHaveLength(2);
+    expect(calls[1].table).toBe('enterprise_context_chunks');
+  });
 });
 
 describe('SupabaseTenantDataAdapter.chunksByVector', () => {
