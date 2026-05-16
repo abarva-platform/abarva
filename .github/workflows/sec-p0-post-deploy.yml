@@ -18,6 +18,7 @@ name: SEC-P0 cross-tenant probes (post-deploy)
 # Optional Azure lab secrets:
 #   AZURE_LAB_BASE_URL                 e.g. https://ca-abarva-web-lab-eastus.<region>.azurecontainerapps.io
 #   AZURE_LAB_APEX_SESSION             __session cookie value minted against the Azure lab host
+#   AZURE_LAB_APEX_COOKIE_HEADER       full browser Cookie header minted against the Azure lab host
 #   AZURE_LAB_MERIDIAN_CLIENT_ID       Meridian's client UUID in the Azure lab DB
 #   AZURE_LAB_MERIDIAN_CLIENT_KEY      defaults to meridian-health
 #   AZURE_LAB_KNOWN_MERIDIAN_TURN_ID   optional known Meridian turn for SEC-P0-7
@@ -62,6 +63,7 @@ jobs:
             production)
               base_url="${{ secrets.PRODUCTION_BASE_URL }}"
               session="${{ secrets.PRODUCTION_APEX_SESSION }}"
+              cookie_header="${{ secrets.PRODUCTION_APEX_COOKIE_HEADER }}"
               other_id="${{ secrets.PRODUCTION_MERIDIAN_CLIENT_ID }}"
               other_key="${{ secrets.PRODUCTION_MERIDIAN_CLIENT_KEY }}"
               known_turn="${{ secrets.PRODUCTION_KNOWN_MERIDIAN_TURN_ID }}"
@@ -69,6 +71,7 @@ jobs:
             azure-lab)
               base_url="${{ secrets.AZURE_LAB_BASE_URL }}"
               session="${{ secrets.AZURE_LAB_APEX_SESSION }}"
+              cookie_header="${{ secrets.AZURE_LAB_APEX_COOKIE_HEADER }}"
               other_id="${{ secrets.AZURE_LAB_MERIDIAN_CLIENT_ID }}"
               other_key="${{ secrets.AZURE_LAB_MERIDIAN_CLIENT_KEY }}"
               known_turn="${{ secrets.AZURE_LAB_KNOWN_MERIDIAN_TURN_ID }}"
@@ -76,6 +79,7 @@ jobs:
             staging)
               base_url="${{ secrets.STAGING_BASE_URL }}"
               session="${{ secrets.STAGING_APEX_SESSION }}"
+              cookie_header="${{ secrets.STAGING_APEX_COOKIE_HEADER }}"
               other_id="${{ secrets.STAGING_MERIDIAN_CLIENT_ID }}"
               other_key="${{ secrets.STAGING_MERIDIAN_CLIENT_KEY }}"
               known_turn="${{ secrets.STAGING_KNOWN_MERIDIAN_TURN_ID }}"
@@ -88,14 +92,16 @@ jobs:
 
           other_key="${other_key:-meridian-health}"
 
-          if [[ -z "$base_url" || -z "$session" || -z "$other_id" ]]; then
-            echo "Missing SEC-P0 probe secrets for $target. Required: BASE_URL, APEX_SESSION, MERIDIAN_CLIENT_ID." >&2
+          if [[ -z "$base_url" || -z "$other_id" || ( -z "$session" && -z "$cookie_header" ) ]]; then
+            echo "Missing SEC-P0 probe secrets for $target. Required: BASE_URL, MERIDIAN_CLIENT_ID, and one of APEX_SESSION or APEX_COOKIE_HEADER." >&2
             exit 2
           fi
 
           echo "::add-mask::$session"
+          echo "::add-mask::$cookie_header"
           echo "BASE_URL=$base_url" >> "$GITHUB_OUTPUT"
           echo "SESSION=$session" >> "$GITHUB_OUTPUT"
+          echo "COOKIE_HEADER=$cookie_header" >> "$GITHUB_OUTPUT"
           echo "OTHER_ID=$other_id" >> "$GITHUB_OUTPUT"
           echo "OTHER_KEY=$other_key" >> "$GITHUB_OUTPUT"
           echo "KNOWN_TURN=$known_turn" >> "$GITHUB_OUTPUT"
@@ -104,6 +110,7 @@ jobs:
         env:
           ABARVA_PROBE_BASE_URL: ${{ steps.env.outputs.BASE_URL }}
           ABARVA_PROBE_SESSION: ${{ steps.env.outputs.SESSION }}
+          ABARVA_PROBE_COOKIE_HEADER: ${{ steps.env.outputs.COOKIE_HEADER }}
           ABARVA_PROBE_OTHER_TENANT_ID: ${{ steps.env.outputs.OTHER_ID }}
           ABARVA_PROBE_OTHER_TENANT_KEY: ${{ steps.env.outputs.OTHER_KEY }}
           ABARVA_PROBE_KNOWN_OTHER_TURN: ${{ steps.env.outputs.KNOWN_TURN }}
