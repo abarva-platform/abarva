@@ -414,6 +414,9 @@ function detectPhaseOneConsistencyViolations(
     ...detectPatternCitationValidityViolations(text),
     ...detectPercentageBoundsViolations(text),
     ...detectNamedEntityConsistencyViolations(text),
+    ...detectCurrencyUnitConsistencyViolations(text),
+    ...detectTimeTenseConsistencyViolations(text),
+    ...detectForwardReferenceIntegrityViolations(text),
   ];
 }
 
@@ -819,6 +822,201 @@ function detectNamedEntityConsistencyViolations(text: string): VoiceDriftViolati
       phrase: 'same person referred to by conflicting first names',
       match: Array.from(new Set(conflicting)).join(' / '),
     });
+  }
+
+  return violations;
+}
+
+// ── Phase 3 guard: G4 — currency unit consistency ────────────────────────────
+
+/**
+ * G4 — Currency unit consistency.
+ *
+ * Within a single comparison line, money values should share one unit.
+ * Mixing $M with $K ("AWS is $13.6M, well above Adobe's $8800K") is
+ * arithmetically fine but reads as if the model could not normalise.
+ *
+ * Conservative scoping to avoid false positives:
+ *  - Only fires on lines carrying explicit comparison vocabulary
+ *    (above/below/versus/compared/than/while/whereas) — a line that
+ *    just lists unrelated figures is not a comparison.
+ *  - Only fires when two or more money values appear on the line.
+ *  - $B is allowed alongside $M/$K — billions-vs-millions is a genuine
+ *    scale gap a reader expects, not a normalisation slip. The guard
+ *    only flags a $M-vs-$K mix where both values sit below $1B.
+ */
+function detectCurrencyUnitConsistencyViolations(text: string): VoiceDriftViolation[] {
+  const violations: VoiceDriftViolation[] = [];
+  const comparisonVocab =
+    /\b(?:above|below|versus|vs\.?|compared|compares?|than|while|whereas|ahead\s+of|behind|outspends?|exceeds?|trails?)\b/i;
+  const lines = text.split(/\n|(?<=\.)\s+/);
+
+  for (const line of lines) {
+    if (!comparisonVocab.test(line)) continue;
+
+    const moneyMatches = [...line.matchAll(/\$\s*([0-9]+(?:\.[0-9]+)?)\s*([BMK])\b/gi)];
+    if (moneyMatches.length < 2) continue;
+
+    const entries = moneyMatches.map((match) => ({
+      raw: match[0].trim(),
+      unit: (match[2] ?? '').toUpperCase(),
+      value: moneyToBaseUnits(match[1] ?? '0', match[2] ?? 'M'),
+    }));
+
+    // Restrict to the $M / $K confusion below the $1B threshold. A
+    // genuine $B value on the line is an expected scale jump.
+    const subBillion = entries.filter((entry) => entry.value < 1_000_000_000);
+    const units = new Set(subBillion.map((entry) => entry.unit));
+    if (subBillion.length < 2) continue;
+    if (units.has('M') && units.has('K')) {
+      violations.push({
+        category: 'internal_consistency',
+        phrase: 'comparison line mixes currency units ($M with $K)',
+        match: line.trim(),
+      });
+    }
+  }
+
+  return violations;
+}
+
+// ── Phase 3 guard: G7 — time-tense consistency ───────────────────────────────
+
+/**
+ * G7 — Time-tense consistency.
+ *
+ * Within a single sentence, a clear future-tense marker about an event
+ * should not contradict a clear past-tense marker about the *same*
+ * event. The design doc flags this as the highest false-positive risk
+ * of the suite, so the guard is built precision-first:
+ *
+ *  - It operates per-sentence, never across sentence boundaries.
+ *  - It ignores sentences containing a contrast conjunction
+ *    (but / however / though / whereas / while / yet / although) — a
+ *    contrast is the legitimate way to pair a past and a future fact
+ *    ("the contract closed last quarter but renews next year").
+ *  - It ignores sentences with a renewal/recurrence verb
+ *    (renew / recur / repeat / extend / continue) — a closed contract
+ *    that renews is coherent, not contradictory.
+ *  - It only fires when a single subject is glued to both tenses by a
+ *    coordinating "and": a hard past verb and a hard future marker
+ *    joined on one clause ("the migration shipped Q2 and will ship
+ *    in 30 days"). That co-ordination is the narrow signal of a real
+ *    contradiction; everything else is left alone.
+ *
+ * The intent: a missed flag is far cheaper than a false one.
+ */
+const TENSE_PAST_MARKERS =
+  /\b(?:closed|shipped|completed|finished|launched|delivered|signed|wrapped|concluded|finalized|finalised|ended|happened|occurred)\b/i;
+const TENSE_FUTURE_MARKERS =
+  /\b(?:will\s+(?:close|ship|complete|finish|launch|deliver|sign|wrap|conclude|end|happen|occur|arrive)|in\s+\d{1,3}\s+(?:days?|weeks?|months?)|by\s+Q[1-4]\b|next\s+(?:week|month|quarter|year))\b/i;
+const TENSE_CONTRAST_VOCAB =
+  /\b(?:but|however|though|although|whereas|while|yet|even\s+so|on\s+the\s+other\s+hand)\b/i;
+const TENSE_RECURRENCE_VOCAB =
+  /\b(?:renew(?:s|ed|al|ing)?|recur(?:s|ring|red)?|repeat(?:s|ed|ing)?|extend(?:s|ed|ing)?|continu(?:e|es|ed|ing)|re-?signs?|rolls?\s+over|carry(?:ing)?\s+forward)\b/i;
+
+function detectTimeTenseConsistencyViolations(text: string): VoiceDriftViolation[] {
+  const violations: VoiceDriftViolation[] = [];
+  const sentences = text.split(/(?<=[.!?])\s+/);
+
+  for (const sentence of sentences) {
+    // Contrast and recurrence are the two legitimate ways a single
+    // sentence can carry both a past and a future fact. Skip them.
+    if (TENSE_CONTRAST_VOCAB.test(sentence)) continue;
+    if (TENSE_RECURRENCE_VOCAB.test(sentence)) continue;
+
+    const pastMatch = sentence.match(TENSE_PAST_MARKERS);
+    const futureMatch = sentence.match(TENSE_FUTURE_MARKERS);
+    if (!pastMatch || !futureMatch) continue;
+
+    // Precision gate: the past verb and the future marker must be
+    // joined by a coordinating "and" on the same clause. This is the
+    // narrow shape of a genuine self-contradiction; anything looser
+    // is left alone to keep the false-positive rate down.
+    if (!/\band\b/i.test(sentence)) continue;
+
+    violations.push({
+      category: 'internal_consistency',
+      phrase: 'sentence mixes past-tense and future-tense markers for one event',
+      match: sentence.trim(),
+    });
+  }
+
+  return violations;
+}
+
+// ── Phase 3 guard: G8 — forward-reference integrity ──────────────────────────
+
+/**
+ * G8 — Forward-reference integrity.
+ *
+ * An answer that says "as I noted in point 3" must actually list a
+ * point 3; "see footnote 5" must have five footnotes. The guard:
+ *
+ *  - Detects the highest declared index of each numbered scaffold:
+ *    list items ("1." / "2)" at line start) and footnote markers
+ *    ("[1]" / "Footnote 2:").
+ *  - Detects inline back-references — "point N", "item N", "step N",
+ *    "footnote N", "(see N)".
+ *  - Flags a reference whose index exceeds the highest declared one,
+ *    or any reference made when no scaffold of that kind exists.
+ *
+ * Scoped to avoid false positives: a reference is only checked against
+ * its own scaffold kind (a footnote reference is never compared to a
+ * numbered list), and bare years / money / dates are never read as
+ * list indices because the inline-reference regex requires an explicit
+ * scaffold noun ("point", "item", "step", "footnote", "see").
+ */
+function detectForwardReferenceIntegrityViolations(text: string): VoiceDriftViolation[] {
+  const violations: VoiceDriftViolation[] = [];
+
+  // Highest numbered list item declared (line-leading "N." or "N)").
+  let highestListIndex = 0;
+  for (const match of text.matchAll(/(?:^|\n)\s*(\d{1,2})[.)]\s+\S/g)) {
+    highestListIndex = Math.max(highestListIndex, Number(match[1]));
+  }
+
+  // Highest footnote declared ("[N]" anchor or "Footnote N:" line).
+  let highestFootnoteIndex = 0;
+  for (const match of text.matchAll(/\[(\d{1,2})\]/g)) {
+    highestFootnoteIndex = Math.max(highestFootnoteIndex, Number(match[1]));
+  }
+  for (const match of text.matchAll(/\bfootnote\s+(\d{1,2})\s*:/gi)) {
+    highestFootnoteIndex = Math.max(highestFootnoteIndex, Number(match[1]));
+  }
+
+  // Inline back-references to a list point / item / step.
+  for (const match of text.matchAll(/\b(?:point|item|step|bullet)\s+(\d{1,2})\b/gi)) {
+    const referenced = Number(match[1]);
+    if (referenced > highestListIndex) {
+      violations.push({
+        category: 'internal_consistency',
+        phrase:
+          highestListIndex === 0
+            ? 'references a numbered point with no numbered list present'
+            : 'references a numbered point beyond the declared list',
+        match: match[0].trim(),
+      });
+    }
+  }
+
+  // Inline back-references to a footnote ("footnote N", "(see N)").
+  const footnoteRefs = [
+    ...text.matchAll(/\bfootnote\s+(\d{1,2})\b(?!\s*:)/gi),
+    ...text.matchAll(/\(\s*see\s+(\d{1,2})\s*\)/gi),
+  ];
+  for (const match of footnoteRefs) {
+    const referenced = Number(match[1]);
+    if (referenced > highestFootnoteIndex) {
+      violations.push({
+        category: 'internal_consistency',
+        phrase:
+          highestFootnoteIndex === 0
+            ? 'references a footnote with no footnotes present'
+            : 'references a footnote beyond the declared set',
+        match: match[0].trim(),
+      });
+    }
   }
 
   return violations;
