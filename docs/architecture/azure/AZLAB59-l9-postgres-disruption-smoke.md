@@ -1,6 +1,6 @@
 # AZLAB59 - L9 Postgres Disruption Smoke
 
-Status: wired; live Azure run pending after next image deploy  
+Status: wired; live Azure run passed  
 Layer: L9 - Resilience / DR
 
 ## Purpose
@@ -109,6 +109,40 @@ Pass criteria:
 - Message includes protected read-only mode and tenant-data-not-changed language.
 - Raw driver/network/secret details are absent.
 
+## Live Azure Evidence
+
+| Item | Value |
+| --- | --- |
+| Date | 2026-05-16 |
+| Container App | `ca-abarva-web-lab-eastus` |
+| Revision | `ca-abarva-web-lab-eastus--r28-postgres-disruption` |
+| Image | `acrabarvalab001.azurecr.io/abarva/web:lab-postgres-disruption-20260516-r28` |
+| Image digest | `sha256:0ae0bf213f8a4e5a2bca7c9e7a3a06ed493ce35a17b0f4bafb84d9e03bc1bac4` |
+| Health | `/api/health` returned `ok=true`, `postgres=true`, `direct_postgres=true`, `neo4j=skipped` |
+| Connectivity | `/api/health/azure-connectivity` returned `pass`, run id `azconn-20260516140756` |
+| Postgres disruption smoke | `pass`, HTTP `503`, protected-read-only message detected, raw error leakage not detected |
+| Report artifact | `/tmp/azure-l9-postgres-disruption-r28.json` |
+
+Live smoke summary:
+
+```json
+{
+  "status": "pass",
+  "checks": [
+    { "name": "http_503_degraded", "pass": true },
+    { "name": "event_contract", "pass": true },
+    { "name": "tenant_data_not_changed", "pass": true },
+    { "name": "protected_read_only_message", "pass": true },
+    { "name": "no_raw_error_leakage", "pass": true }
+  ]
+}
+```
+
+Implementation note: the first r27 live run returned a Clerk redirect because
+the new route had not been added to `PUBLIC_ROUTE_PATTERNS`. PR #2064 added the
+middleware exemption and the proxy unit test; r28 is the first passing live
+revision.
+
 ## Current L9 State
 
 | Failure mode | Evidence |
@@ -116,5 +150,5 @@ Pass criteria:
 | Service Bus poison message | AZLAB40 dry-run drill. |
 | Service Bus mixed good + poison batch | AZLAB51 live Azure pass. |
 | Model provider overload | AZLAB58 live Azure pass on r26. |
-| Postgres disruption | AZLAB59 wired; live Azure run pending after next image deploy. |
+| Postgres disruption | AZLAB59 live Azure pass on r28. |
 | PITR restore timing | Restore drill still pending. |
