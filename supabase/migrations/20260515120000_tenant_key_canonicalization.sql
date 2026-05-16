@@ -14,12 +14,12 @@
 --
 -- This migration:
 --   1. Defines the alias map in a CTE / temp table.
---   2. UPDATEs every affected table to rewrite aliases → canonical.
+--   2. UPDATEs every affected mutable table to rewrite aliases → canonical.
 --   3. Updates the RLS helper `current_tenant_key()` to canonicalize the
 --      JWT claim on read, so existing Clerk metadata (which still carries
 --      old aliases) continues to work without re-seeding users.
 --   4. Verifies (SELECT at the end) that no aliases remain in any affected
---      column. The migration runner aborts the whole transaction if not.
+--      mutable column. The migration runner aborts the whole transaction if not.
 --
 -- Idempotent: every UPDATE is gated by `WHERE col IN (aliases)`, so re-runs
 -- match zero rows.
@@ -30,6 +30,10 @@
 --     old aliases. Adding a CHECK would break those writers. See
 --     docs/architecture/azure/TENANT-KEY-CANONICALIZATION-AUDIT.md
 --     for the follow-up list.
+--   * `program_audit_log` historical rows. This table is intentionally
+--     append-only; rewriting prior audit rows would violate the audit control
+--     installed in 20260430140000_program_audit_log.sql. Reads and future
+--     writes canonicalize tenant keys outside this migration.
 --   * The `keystone → keystone-energy-holdings` mapping. Out of scope:
 --     the brief authorized only three tenants. Filed as follow-up.
 
@@ -88,8 +92,6 @@ UPDATE public.enterprise_context_template_runs SET tenant_key = m.canonical
 UPDATE public.program_approval_requests SET tenant_key = m.canonical
   FROM tenant_key_alias_map m WHERE tenant_key = m.alias;
 UPDATE public.program_attachments SET tenant_key = m.canonical
-  FROM tenant_key_alias_map m WHERE tenant_key = m.alias;
-UPDATE public.program_audit_log SET tenant_key = m.canonical
   FROM tenant_key_alias_map m WHERE tenant_key = m.alias;
 UPDATE public.program_evidence_items SET tenant_key = m.canonical
   FROM tenant_key_alias_map m WHERE tenant_key = m.alias;
@@ -164,7 +166,6 @@ BEGIN
     UNION ALL SELECT 1 FROM public.enterprise_context_template_runs WHERE tenant_key IN ('apexretail','meridian','arcturus')
     UNION ALL SELECT 1 FROM public.program_approval_requests WHERE tenant_key IN ('apexretail','meridian','arcturus')
     UNION ALL SELECT 1 FROM public.program_attachments WHERE tenant_key IN ('apexretail','meridian','arcturus')
-    UNION ALL SELECT 1 FROM public.program_audit_log WHERE tenant_key IN ('apexretail','meridian','arcturus')
     UNION ALL SELECT 1 FROM public.program_evidence_items WHERE tenant_key IN ('apexretail','meridian','arcturus')
     UNION ALL SELECT 1 FROM public.source_artifacts WHERE tenant_key IN ('apexretail','meridian','arcturus')
     UNION ALL SELECT 1 FROM public.source_event_artifact_states WHERE tenant_key IN ('apexretail','meridian','arcturus')

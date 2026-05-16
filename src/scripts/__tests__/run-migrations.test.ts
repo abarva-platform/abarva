@@ -30,6 +30,7 @@ describe('run-migrations · parseArgs', () => {
       isDry: true,
       isCi: false,
       markAllApplied: false,
+      allowDestructive: false,
       forceName: null,
     });
   });
@@ -39,6 +40,7 @@ describe('run-migrations · parseArgs', () => {
       isDry: false,
       isCi: true,
       markAllApplied: false,
+      allowDestructive: false,
       forceName: null,
     });
   });
@@ -48,6 +50,7 @@ describe('run-migrations · parseArgs', () => {
       isDry: false,
       isCi: false,
       markAllApplied: true,
+      allowDestructive: false,
       forceName: null,
     });
   });
@@ -57,7 +60,18 @@ describe('run-migrations · parseArgs', () => {
       isDry: false,
       isCi: false,
       markAllApplied: false,
+      allowDestructive: false,
       forceName: '20260508040000_foo.sql',
+    });
+  });
+
+  it('parses --allow-destructive', () => {
+    expect(parseArgs(['--allow-destructive'])).toEqual({
+      isDry: false,
+      isCi: false,
+      markAllApplied: false,
+      allowDestructive: true,
+      forceName: null,
     });
   });
 
@@ -73,6 +87,7 @@ describe('run-migrations · parseArgs', () => {
       isDry: false,
       isCi: false,
       markAllApplied: false,
+      allowDestructive: false,
       forceName: null,
     });
   });
@@ -82,6 +97,7 @@ describe('run-migrations · parseArgs', () => {
       isDry: false,
       isCi: false,
       markAllApplied: false,
+      allowDestructive: false,
       forceName: null,
     });
   });

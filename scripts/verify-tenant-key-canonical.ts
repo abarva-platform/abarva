@@ -3,8 +3,12 @@
  *
  * Connects to the live Postgres via DATABASE_URL and asserts that no
  * historical aliases (apexretail / meridian / arcturus) remain in any
- * substrate column that was canonicalized in migration
+ * mutable substrate column that was canonicalized in migration
  * `20260515120000_tenant_key_canonicalization.sql`.
+ *
+ * Historical `program_audit_log` rows are intentionally excluded: that table
+ * is append-only, so canonicalization must preserve prior audit entries exactly
+ * as written while future writes/read predicates normalize tenant keys.
  *
  * Usage:
  *   npx tsx scripts/verify-tenant-key-canonical.ts
@@ -50,7 +54,6 @@ const TABLES: readonly TableCheck[] = [
   { schema: 'public', table: 'enterprise_context_template_runs', column: 'tenant_key' },
   { schema: 'public', table: 'program_approval_requests', column: 'tenant_key' },
   { schema: 'public', table: 'program_attachments', column: 'tenant_key' },
-  { schema: 'public', table: 'program_audit_log', column: 'tenant_key' },
   { schema: 'public', table: 'program_evidence_items', column: 'tenant_key' },
   { schema: 'public', table: 'source_artifacts', column: 'tenant_key' },
   { schema: 'public', table: 'source_event_artifact_states', column: 'tenant_key' },
