@@ -44,6 +44,29 @@ function resolveClientKey(ctx: FeatureFlagContext | null | undefined): ClientKey
   return null;
 }
 
+const ENV_TENANT_ALIASES: Readonly<Record<string, ClientKey>> = {
+  'apex-retail': 'apexretail',
+  'meridian-health': 'meridian',
+  'first-capital': 'arcturus',
+};
+
+function envTenantListForFlag(key: FeatureFlagKey): ReadonlyArray<ClientKey> {
+  const envKey = `ABARVA_FEATURE_${key.toUpperCase()}_TENANTS`;
+  const raw = process.env[envKey]?.trim();
+  if (!raw) return [];
+
+  const tenants: ClientKey[] = [];
+  for (const part of raw.split(',')) {
+    const normalized = part.trim().toLowerCase();
+    if (!normalized) continue;
+    const clientKey = isClientKey(normalized)
+      ? normalized
+      : ENV_TENANT_ALIASES[normalized];
+    if (clientKey && !tenants.includes(clientKey)) tenants.push(clientKey);
+  }
+  return tenants;
+}
+
 /**
  * Server-side flag evaluation. Default policies:
  *
@@ -70,5 +93,6 @@ export function isFeatureEnabled(
 
   // policy === 'tenant'
   if (!tenant) return false;
-  return def.includeTenants?.includes(tenant) ?? false;
+  if (def.includeTenants?.includes(tenant)) return true;
+  return envTenantListForFlag(key).includes(tenant);
 }
