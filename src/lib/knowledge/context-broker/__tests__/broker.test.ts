@@ -469,6 +469,98 @@ describe('DefaultContextBroker.assemble — tenant mode', () => {
     ]);
   });
 
+  it('prepends tenant-specific strategic decision anchors for broad AI value questions', async () => {
+    const populationHealth = {
+      ...makeRecord('program_inventory:meridian:population-health-ai', 'Population Health AI for ACOs'),
+      tenantKey: 'meridian-health',
+      segmentId: 'program_inventory' as const,
+      payload: {
+        value_at_stake: '$8M-$24M MSSP shared savings',
+        notes: 'Population health ACO bet with CIO + sponsor ownership.',
+      },
+    };
+    const ambient = {
+      ...makeRecord('program_inventory:meridian:ambient-documentation', 'Ambient AI Clinical Documentation'),
+      tenantKey: 'meridian-health',
+      segmentId: 'program_inventory' as const,
+      payload: { notes: 'Ambient scale-up over-delivering committed value.' },
+    };
+    const priorAuth = {
+      ...makeRecord('program_inventory:meridian:prior-auth', 'Prior Authorization Automation'),
+      tenantKey: 'meridian-health',
+      segmentId: 'program_inventory' as const,
+      payload: { notes: 'P4 build program.' },
+    };
+    const { broker, adapter } = makeBroker({
+      listRecords: jest.fn()
+        .mockImplementation((_tenant: string, segment: string) => {
+          if (segment === 'program_inventory') return Promise.resolve([priorAuth, ambient, populationHealth]);
+          return Promise.resolve([]);
+        }),
+      chunksByKeyword: jest.fn().mockResolvedValue([]),
+    });
+
+    const bundle = await broker.assemble({
+      query: 'Where would AI create the most measurable value for Meridian Health in the next 12 months? Rank the top 5.',
+      mode: 'tenant',
+      tenantKey: 'meridian-health',
+      maxFacts: 3,
+    });
+
+    expect(adapter.listRecords).toHaveBeenCalledWith('meridian-health', 'program_inventory', { limit: 80 });
+    expect(adapter.listRecords).toHaveBeenCalledWith('meridian-health', 'kpi_dictionary', { limit: 80 });
+    expect(bundle.facts.map((fact) => fact.recordId)).toEqual([
+      'program_inventory:meridian:population-health-ai',
+      'program_inventory:meridian:ambient-documentation',
+      'program_inventory:meridian:prior-auth',
+    ]);
+  });
+
+  it('anchors First Capital broad move-now questions on FedNow and model-risk context', async () => {
+    const aml = {
+      ...makeRecord('program_inventory:first:aml', 'AML/KYC Remediation'),
+      tenantKey: 'first-capital',
+      segmentId: 'program_inventory' as const,
+      payload: { notes: 'OCC review and alert triage.' },
+    };
+    const fedNow = {
+      ...makeRecord('program_inventory:first:fednow', 'FedNow Payment Rails Modernization'),
+      tenantKey: 'first-capital',
+      segmentId: 'program_inventory' as const,
+      payload: {
+        notes: 'FedNow deposit retention, payment controls, and model risk gates.',
+      },
+    };
+    const modelRisk = {
+      ...makeRecord('evidence_ledger:first:sr117', 'SR 11-7 model validation finding'),
+      tenantKey: 'first-capital',
+      segmentId: 'evidence_ledger' as const,
+      payload: { notes: 'Model risk and model validation must clear before ML scale.' },
+    };
+    const { broker } = makeBroker({
+      listRecords: jest.fn()
+        .mockImplementation((_tenant: string, segment: string) => {
+          if (segment === 'program_inventory') return Promise.resolve([aml, fedNow]);
+          if (segment === 'evidence_ledger') return Promise.resolve([modelRisk]);
+          return Promise.resolve([]);
+        }),
+      chunksByKeyword: jest.fn().mockResolvedValue([]),
+    });
+
+    const bundle = await broker.assemble({
+      query: 'Which First Capital AI or digital bet should move now and why?',
+      mode: 'tenant',
+      tenantKey: 'first-capital',
+      maxFacts: 3,
+    });
+
+    expect(bundle.facts.map((fact) => fact.recordId)).toEqual([
+      'program_inventory:first:fednow',
+      'evidence_ledger:first:sr117',
+      'program_inventory:first:aml',
+    ]);
+  });
+
   it('uses Pinecone vector retrieval when chunksByVector succeeds', async () => {
     const seedChunks: ContextChunk[] = [
       makeChunk('chunk:apex:cdp:001', 'program:apex-cdp-2026'),

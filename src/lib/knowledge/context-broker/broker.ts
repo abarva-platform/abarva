@@ -167,6 +167,12 @@ const TENANT_PROFILE_QUESTION_RE =
   /\b(?:what do you know|highest-confidence facts|company profile|enterprise profile|who are we|tell me about (?:our|the) company|business profile|at a glance)\b/i;
 const VENDOR_SPEND_RENEWAL_QUESTION_RE =
   /\b(?:top\s+\d+\s+vendors?|vendors?|supplier|contract|renewal|renews?|expiry|expires?|annual\s+spend|spend\s+by\s+vendor|run[-\s]?rate|commercial exposure)\b/i;
+const STRATEGIC_DECISION_QUESTION_RE =
+  /\b(?:which\b[\s\S]{0,40}\b(?:bet|move|initiative|program)\b[\s\S]{0,40}\b(?:move|fund|rank|prioriti[sz]e)|move\s+now|ai\s+create[\s\S]{0,40}\bvalue|digital\s+bet|ai\s+bet|rank\s+(?:the\s+)?top\s+\d+|most\s+measurable\s+value)\b/i;
+const RISK_ADJUSTMENT_QUESTION_RE =
+  /\b(?:hcc|raf|risk\s+adjustment|suspect\s+capture|coding\s+capture)\b/i;
+const MODEL_RISK_QUESTION_RE =
+  /\b(?:sr\s*11-?7|model\s+risk|model\s+validation|parallel\s+gates|new\s+ml\s+model|aml)\b/i;
 
 const TENANT_INDUSTRY_ALLOWLISTS: ReadonlyArray<{
   pattern: RegExp;
@@ -229,6 +235,12 @@ function shouldIncludeTenantProfileAnchors(query: string): boolean {
 
 function shouldIncludeVendorSpendAnchors(query: string): boolean {
   return VENDOR_SPEND_RENEWAL_QUESTION_RE.test(query);
+}
+
+function shouldIncludeStrategicDecisionAnchors(query: string): boolean {
+  return STRATEGIC_DECISION_QUESTION_RE.test(query)
+    || RISK_ADJUSTMENT_QUESTION_RE.test(query)
+    || MODEL_RISK_QUESTION_RE.test(query);
 }
 
 function stringifyPayloadValue(value: unknown): string {
@@ -320,6 +332,98 @@ function rankVendorSpendAnchorRecords(records: TenantRecord[], query: string): T
     }))
     .filter((entry) => entry.score >= 18)
     .sort((a, b) => b.score - a.score || b.spend - a.spend || a.record.title.localeCompare(b.record.title))
+    .map((entry) => entry.record);
+}
+
+function tenantDecisionTerms(tenantKey: string): Array<{ pattern: RegExp; score: number }> {
+  if (/\bmeridian(?:-health)?\b/i.test(tenantKey)) {
+    return [
+      { pattern: /\bpopulation\s+health\b/i, score: 34 },
+      { pattern: /\baco(s)?\b/i, score: 28 },
+      { pattern: /\bmssp\b/i, score: 24 },
+      { pattern: /\bambient\b/i, score: 18 },
+      { pattern: /\bhcc\b/i, score: 18 },
+      { pattern: /\braf\b/i, score: 18 },
+      { pattern: /\bsepsis\b/i, score: 12 },
+      { pattern: /\bprior\s+auth(?:orization)?\b/i, score: 8 },
+    ];
+  }
+  if (/\b(?:first[-_]?capital|firstcapital|arcturus)\b/i.test(tenantKey)) {
+    return [
+      { pattern: /\bfed\s*now\b/i, score: 34 },
+      { pattern: /\bdeposit\b/i, score: 28 },
+      { pattern: /\bpayment(?:s)?\b/i, score: 22 },
+      { pattern: /\bmodel\s+risk\b/i, score: 20 },
+      { pattern: /\bsr\s*11-?7\b/i, score: 20 },
+      { pattern: /\bmodel\s+validation\b/i, score: 20 },
+      { pattern: /\baccount\s+opening\b/i, score: 14 },
+      { pattern: /\baml\b/i, score: 10 },
+    ];
+  }
+  if (/\b(?:apex|retail)\b/i.test(tenantKey)) {
+    return [
+      { pattern: /\bworkforce\s+scheduling\b/i, score: 30 },
+      { pattern: /\blabor\b/i, score: 18 },
+      { pattern: /\bdemand\s+sensing\b/i, score: 18 },
+      { pattern: /\bloyalty\b/i, score: 14 },
+      { pattern: /\bcdp\b/i, score: 14 },
+    ];
+  }
+  return [];
+}
+
+function strategicDecisionAnchorScore(record: TenantRecord, query: string, tenantKey: string): number {
+  const haystack = recordSearchText(record);
+  const normalizedQuery = query.toLocaleLowerCase();
+  let score = 0;
+
+  if (record.segmentId === 'program_inventory') score += 24;
+  if (record.segmentId === 'kpi_dictionary') score += 16;
+  if (record.segmentId === 'cross_program_signals') score += 14;
+  if (record.segmentId === 'evidence_ledger') score += 12;
+
+  if (/\b(?:phase|p[0-5]|status|risk|blocked|gate|value|owner|sponsor|confidence)\b/.test(haystack)) {
+    score += 8;
+  }
+  if (/\b(?:ai|ml|digital|automation|agentic|modernization|clinical|payment|platform)\b/.test(haystack)) {
+    score += 8;
+  }
+
+  for (const term of tenantDecisionTerms(tenantKey)) {
+    if (term.pattern.test(haystack)) score += term.score;
+  }
+
+  if (RISK_ADJUSTMENT_QUESTION_RE.test(normalizedQuery)) {
+    if (/\bhcc\b/i.test(haystack)) score += 26;
+    if (/\braf\b/i.test(haystack)) score += 26;
+    if (/\bworkflow\b/i.test(haystack)) score += 14;
+  }
+  if (MODEL_RISK_QUESTION_RE.test(normalizedQuery)) {
+    if (/\bsr\s*11-?7\b/i.test(haystack)) score += 28;
+    if (/\bmodel\s+validation\b/i.test(haystack)) score += 24;
+    if (/\bparallel\s+gates\b/i.test(haystack)) score += 20;
+    if (/\bmodel\s+risk\b/i.test(haystack)) score += 18;
+  }
+
+  for (const term of extractKeywords(normalizedQuery)) {
+    if (haystack.includes(term)) score += term.length > 5 ? 3 : 2;
+  }
+
+  return score;
+}
+
+function rankStrategicDecisionAnchorRecords(
+  records: TenantRecord[],
+  query: string,
+  tenantKey: string,
+): TenantRecord[] {
+  return records
+    .map((record, index) => ({
+      record,
+      score: strategicDecisionAnchorScore(record, query, tenantKey) - index * 0.001,
+    }))
+    .filter((entry) => entry.score >= 24)
+    .sort((a, b) => b.score - a.score || a.record.title.localeCompare(b.record.title))
     .map((entry) => entry.record);
 }
 
@@ -719,6 +823,22 @@ export class DefaultContextBroker implements ContextBroker {
       const records = anchorResults.flatMap((result) =>
         result.status === 'fulfilled' ? result.value : []);
       const ranked = rankVendorSpendAnchorRecords(records, input.query);
+      for (const record of ranked) {
+        addFact(record);
+        if (facts.length >= maxFacts) break;
+      }
+    }
+
+    if (shouldIncludeStrategicDecisionAnchors(input.query) && facts.length < maxFacts) {
+      const anchorResults = await Promise.allSettled([
+        this.adapter.listRecords(tenantKey, 'program_inventory', { limit: 80 }),
+        this.adapter.listRecords(tenantKey, 'kpi_dictionary', { limit: 80 }),
+        this.adapter.listRecords(tenantKey, 'cross_program_signals', { limit: 80 }),
+        this.adapter.listRecords(tenantKey, 'evidence_ledger', { limit: 80 }),
+      ]);
+      const records = anchorResults.flatMap((result) =>
+        result.status === 'fulfilled' ? result.value : []);
+      const ranked = rankStrategicDecisionAnchorRecords(records, input.query, tenantKey);
       for (const record of ranked) {
         addFact(record);
         if (facts.length >= maxFacts) break;
