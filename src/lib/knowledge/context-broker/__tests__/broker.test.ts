@@ -394,7 +394,10 @@ describe('DefaultContextBroker.assemble — tenant mode', () => {
     });
 
     expect(adapter.listRecords).toHaveBeenCalledWith(TENANT, 'enterprise_profile', { limit: 3 });
-    expect(adapter.listRecords).toHaveBeenCalledWith(TENANT, 'it_landscape', { limit: 6 });
+    expect(adapter.listRecords).toHaveBeenCalledWith(TENANT, 'it_landscape', {
+      limit: 6,
+      recordKind: 'systems_inventory',
+    });
     expect(bundle.facts.map((fact) => fact.recordId)).toEqual([
       'enterprise_profile:apex',
       'it_landscape:sys:apex:sap-s4',

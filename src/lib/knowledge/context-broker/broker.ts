@@ -597,7 +597,10 @@ export class DefaultContextBroker implements ContextBroker {
     if (shouldIncludeTenantProfileAnchors(input.query)) {
       const anchorResults = await Promise.allSettled([
         this.adapter.listRecords(tenantKey, 'enterprise_profile', { limit: 3 }),
-        this.adapter.listRecords(tenantKey, 'it_landscape', { limit: 6 }),
+        this.adapter.listRecords(tenantKey, 'it_landscape', {
+          limit: 6,
+          recordKind: 'systems_inventory',
+        }),
       ]);
       for (const result of anchorResults) {
         if (result.status !== 'fulfilled') continue;
