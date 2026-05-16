@@ -68,6 +68,12 @@ CREATE TEMP TABLE rls_regression_findings (
   status          TEXT NOT NULL         -- 'pass' | 'leak' | 'empty' | 'error:*'
 ) ON COMMIT DROP;
 
+-- The probe loop intentionally switches to SET LOCAL ROLE authenticated to
+-- exercise the same RLS boundary tenant users hit. Temp tables are owned by
+-- the admin connection that launches the suite, so grant the downgraded role
+-- access to the scratchpad before switching roles.
+GRANT INSERT ON rls_regression_findings TO authenticated;
+
 -- ── Canonical tenant list ────────────────────────────────────────────────────
 -- Three tenants seeded in production. Must match the canonical keys produced
 -- by migrations/20260515120000_tenant_key_canonicalization.sql.
@@ -75,6 +81,8 @@ CREATE TEMP TABLE rls_regression_tenants (
   tenant_key TEXT PRIMARY KEY,
   client_id  UUID
 ) ON COMMIT DROP;
+
+GRANT SELECT ON rls_regression_tenants TO authenticated;
 
 INSERT INTO rls_regression_tenants (tenant_key, client_id)
 SELECT t.tenant_key, c.id
@@ -112,6 +120,8 @@ CREATE TEMP TABLE rls_regression_tables (
   rls_enabled BOOLEAN NOT NULL,
   policy_count INTEGER NOT NULL
 ) ON COMMIT DROP;
+
+GRANT SELECT ON rls_regression_tables TO authenticated;
 
 INSERT INTO rls_regression_tables (table_name, tenant_col, rls_enabled, policy_count)
 SELECT
@@ -174,6 +184,7 @@ DECLARE
   v_sql        TEXT;
   v_filter_col TEXT;
   v_other_key  TEXT;
+  v_other_client_id UUID;
   v_status     TEXT;
 BEGIN
   FOR v_tenant IN SELECT tenant_key, client_id FROM rls_regression_tenants LOOP
@@ -198,7 +209,7 @@ BEGIN
       v_filter_col := v_table.tenant_col;
 
       -- Pick an other-tenant key to use for the cross-tenant probe.
-      SELECT tenant_key INTO v_other_key
+      SELECT tenant_key, client_id INTO v_other_key, v_other_client_id
         FROM rls_regression_tenants
        WHERE tenant_key <> v_tenant.tenant_key
        LIMIT 1;
@@ -223,12 +234,20 @@ BEGIN
       -- (2) Count rows in the visible set that belong to OTHER tenants.
       --     This is the leak detector. Three column shapes to handle.
       IF v_filter_col = 'client_id' THEN
-        -- UUID variant: join clients to get the canonical tenant_key per row.
+        -- client_id appears in two historical shapes:
+        --   * UUID FK to clients.id
+        --   * TEXT tenant slug, e.g. session_messages.client_id
+        -- Do not join public.clients here: the probe is running as the
+        -- downgraded authenticated role and tenant users should not need
+        -- broad access to the tenant directory. Compare against the canonical
+        -- UUID/key pair already resolved in the admin-owned temp table.
         v_sql := format(
-          'SELECT COUNT(*) FROM public.%I t
-             LEFT JOIN public.clients c ON c.id = t.client_id
-            WHERE c.tenant_key IS DISTINCT FROM %L',
-          v_table.table_name, v_tenant.tenant_key
+          'SELECT COUNT(*) FROM public.%I
+            WHERE client_id::text IS DISTINCT FROM %L
+              AND client_id::text IS DISTINCT FROM %L',
+          v_table.table_name,
+          v_tenant.client_id::text,
+          v_tenant.tenant_key
         );
       ELSE
         -- TEXT variant (tenant_key or client_key).
@@ -247,10 +266,11 @@ BEGIN
       --     RLS should filter silently. Expectation: zero rows.
       IF v_filter_col = 'client_id' THEN
         v_sql := format(
-          'SELECT COUNT(*) FROM public.%I t
-             LEFT JOIN public.clients c ON c.id = t.client_id
-            WHERE c.tenant_key = %L',
-          v_table.table_name, v_other_key
+          'SELECT COUNT(*) FROM public.%I
+            WHERE client_id::text IN (%L, %L)',
+          v_table.table_name,
+          v_other_client_id::text,
+          v_other_key
         );
       ELSE
         v_sql := format(
