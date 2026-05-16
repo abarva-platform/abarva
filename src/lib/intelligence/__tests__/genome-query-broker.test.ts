@@ -165,7 +165,32 @@ describe('runBrokeredGenomeQuery', () => {
     });
 
     expect(result.status).toBe(400);
-    expect(result.body.error).toBe('query missing tenant scope ($callerClientId)');
+    expect(result.body.error).toBe('query missing tenant property scope ($callerClientId)');
+    expect(sessionRunMock).not.toHaveBeenCalled();
+  });
+
+  it('refuses generated queries that only check callerClientId is present', async () => {
+    createMessageMock.mockResolvedValue({
+      content: [
+        {
+          type: 'text',
+          text: JSON.stringify({
+            cypher:
+              'MATCH (p:GenomePattern) WHERE $callerClientId IS NOT NULL RETURN p.code AS code LIMIT 50',
+            explanation: 'Vacuous tenant parameter check.',
+          }),
+        },
+      ],
+    });
+
+    const result = await runBrokeredGenomeQuery({
+      query: 'List every GenomePattern',
+      clientId: 'client-apex-uuid',
+      clientKey: 'apexretail',
+    });
+
+    expect(result.status).toBe(400);
+    expect(result.body.error).toBe('query missing tenant property scope ($callerClientId)');
     expect(sessionRunMock).not.toHaveBeenCalled();
   });
 });

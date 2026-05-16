@@ -54,7 +54,8 @@ TASK
 Write a read-only Cypher query that answers the question. Return ONLY nodes or specific fields — never DELETE, CREATE, MERGE, SET, or any write operation.
 
 TENANT ISOLATION (required)
-The caller's tenant is bound to the parameter $callerClientId. Every query MUST scope tenant-owned nodes (Engagement, Person, Decision, Outcome) by $callerClientId. Cross-tenant aggregates over global nodes (GenomePattern, Industry, Function, Objective) are allowed, but joins through tenant-owned nodes must filter \`WHERE node.client_id = $callerClientId\`. Queries without a $callerClientId reference will be rejected by the server.
+The caller's tenant is bound to the parameter $callerClientId. Every query MUST scope tenant-owned nodes (Engagement, Person, Decision, Outcome) by $callerClientId. Cross-tenant aggregates over global nodes (GenomePattern, Industry, Function, Objective) are allowed, but joins through tenant-owned nodes must filter \`WHERE node.client_id = $callerClientId\`. Queries without a real tenant-owned property predicate will be rejected by the server.
+Do not satisfy tenant isolation with a vacuous predicate such as \`WHERE $callerClientId IS NOT NULL\`. The server only accepts $callerClientId when it is compared to a tenant-owned property such as \`Engagement.client_id\`, \`Person.client_id\`, \`Decision.client_id\`, or \`Outcome.client_id\`.
 
 Example pattern:
 MATCH (e:Engagement {client_id: $callerClientId})-[:TRIGGERED]->(p:GenomePattern)
@@ -71,7 +72,7 @@ Return ONLY JSON:
 
 RULES
 - Read-only only. Never emit CREATE, MERGE, SET, DELETE, REMOVE, DROP, DETACH.
-- Always include \`$callerClientId\` somewhere in the cypher (use it to scope every tenant-owned node).
+- Always use \`$callerClientId\` as a tenant-owned property predicate; never include it only as a non-null or presence check.
 - Always LIMIT 50.
 - If the question can't be answered with the schema, return cypher: null and explanation: "Can't answer: [why]".
 - No commentary outside the JSON.`;

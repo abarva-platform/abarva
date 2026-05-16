@@ -11,8 +11,12 @@
 #
 # Required env:
 #   ABARVA_PROBE_BASE_URL          e.g. https://staging.abarva.ai
-#   ABARVA_PROBE_SESSION           __session cookie value for tenant A (e.g. Apex CIO)
 #   ABARVA_PROBE_OTHER_TENANT_ID   client UUID for tenant B (the one we expect 403 from)
+#
+# And one of:
+#   ABARVA_PROBE_SESSION           __session cookie value for tenant A (e.g. Apex CIO)
+#   ABARVA_PROBE_COOKIE_HEADER     full browser Cookie header for tenant A
+#                                  (needed for Azure/Clerk host-scoped cookies)
 #
 # Optional env:
 #   ABARVA_PROBE_OTHER_TENANT_KEY  string key for tenant B (default: meridian)
@@ -28,13 +32,14 @@ set -uo pipefail
 
 BASE_URL="${ABARVA_PROBE_BASE_URL:-}"
 SESSION="${ABARVA_PROBE_SESSION:-}"
+COOKIE_HEADER="${ABARVA_PROBE_COOKIE_HEADER:-}"
 OTHER_TENANT_ID="${ABARVA_PROBE_OTHER_TENANT_ID:-}"
 OTHER_TENANT_KEY="${ABARVA_PROBE_OTHER_TENANT_KEY:-meridian}"
 KNOWN_OTHER_TURN="${ABARVA_PROBE_KNOWN_OTHER_TURN:-00000000-0000-0000-0000-000000000000}"
 VERBOSE="${ABARVA_PROBE_VERBOSE:-0}"
 
-if [[ -z "$BASE_URL" || -z "$SESSION" || -z "$OTHER_TENANT_ID" ]]; then
-  echo "❌ Missing required env: ABARVA_PROBE_BASE_URL, ABARVA_PROBE_SESSION, ABARVA_PROBE_OTHER_TENANT_ID" >&2
+if [[ -z "$BASE_URL" || -z "$OTHER_TENANT_ID" || ( -z "$SESSION" && -z "$COOKIE_HEADER" ) ]]; then
+  echo "❌ Missing required env: ABARVA_PROBE_BASE_URL, ABARVA_PROBE_OTHER_TENANT_ID, and one of ABARVA_PROBE_SESSION or ABARVA_PROBE_COOKIE_HEADER" >&2
   exit 2
 fi
 
@@ -53,8 +58,15 @@ run_probe() {
   local tmp_body
   tmp_body=$(mktemp)
   local actual_status
+  local cookie_args=()
+  if [[ -n "$COOKIE_HEADER" ]]; then
+    cookie_args=(-H "Cookie: $COOKIE_HEADER")
+  else
+    cookie_args=(-b "__session=$SESSION")
+  fi
+
   actual_status=$(curl -sS -o "$tmp_body" -w "%{http_code}" \
-    -b "__session=$SESSION" \
+    "${cookie_args[@]}" \
     "$@") || actual_status="000"
 
   local body

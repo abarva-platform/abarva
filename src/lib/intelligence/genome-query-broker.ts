@@ -16,7 +16,8 @@ async function lazyIsInt(): Promise<(v: unknown) => boolean> {
 }
 
 const WRITE_OPS = /\b(CREATE|MERGE|SET|DELETE|REMOVE|DROP|DETACH)\b/i;
-const TENANT_PARAM_REQUIRED = /\$callerClientId\b/;
+const TENANT_PROPERTY_SCOPE =
+  /(?:\{\s*(?:`?client_id`?|`?clientId`?|`?tenant_key`?|`?tenantKey`?|`?client_key`?|`?clientKey`?)\s*:\s*\$callerClientId\b|(?:\.\s*(?:`?client_id`?|`?clientId`?|`?tenant_key`?|`?tenantKey`?|`?client_key`?|`?clientKey`?)\s*=\s*\$callerClientId\b|\$callerClientId\b\s*=\s*[^,\n\r)]*\.\s*(?:`?client_id`?|`?clientId`?|`?tenant_key`?|`?tenantKey`?|`?client_key`?|`?clientKey`?)))/i;
 
 export interface BrokeredGenomeQueryInput {
   query: string;
@@ -72,6 +73,10 @@ function brokerSummary(bundle: ReturnType<typeof buildSentinelContextBundle>) {
     graphNodeCount: bundle.graphNeighborhood.nodeCount,
     graphEdgeCount: bundle.graphNeighborhood.edgeCount,
   };
+}
+
+function hasRealTenantScope(cypher: string): boolean {
+  return TENANT_PROPERTY_SCOPE.test(cypher);
 }
 
 async function translateGenomeQuery(
@@ -156,16 +161,16 @@ export async function runBrokeredGenomeQuery(
     };
   }
 
-  if (!TENANT_PARAM_REQUIRED.test(translated.cypher)) {
+  if (!hasRealTenantScope(translated.cypher)) {
     console.warn('[genome-query-unscoped]', { cypher: translated.cypher });
     return {
       status: 400,
       body: {
-        error: 'query missing tenant scope ($callerClientId)',
+        error: 'query missing tenant property scope ($callerClientId)',
         cypher: translated.cypher,
         explanation:
           translated.explanation ??
-          'The generated query did not reference $callerClientId. Rephrase to scope by tenant.',
+          'The generated query did not use $callerClientId in a tenant-owned property predicate. Rephrase to scope by tenant.',
         broker,
       },
     };
