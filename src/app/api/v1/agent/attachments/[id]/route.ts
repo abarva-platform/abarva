@@ -10,7 +10,7 @@
 import { currentUser } from '@clerk/nextjs/server';
 import { NextRequest } from 'next/server';
 import { getActiveClientRow } from '@/lib/active-client';
-import { getServerSupabase } from '@/lib/supabase-server';
+import { selectAttachmentsWriteAdapter } from '@/lib/data-plane/write-adapters/attachmentsWriteAdapter';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -30,22 +30,27 @@ export async function DELETE(
     return Response.json({ error: 'tenant_not_resolved' }, { status: 404 });
   }
 
-  const sb = getServerSupabase();
-  const { data, error } = await sb
-    .from('agent_attachment')
-    .update({ deleted_at: new Date().toISOString() })
-    .eq('id', id)
-    .eq('tenant_id', activeClient.id)
-    .is('deleted_at', null)
-    .select('id')
-    .maybeSingle();
-
-  if (error) {
-    return Response.json({ error: 'persist_failed', detail: error.message }, { status: 500 });
+  // Soft-delete routed through the data-plane write seam (Slice 3c). The
+  // tenant scoping + already-deleted guard are preserved in the adapter.
+  // Default plane = Supabase — behavior is unchanged.
+  let deleted: { id: string } | null;
+  try {
+    deleted = await selectAttachmentsWriteAdapter().softDeleteAgentAttachment(
+      id,
+      activeClient.id,
+    );
+  } catch (err) {
+    return Response.json(
+      {
+        error: 'persist_failed',
+        detail: err instanceof Error ? err.message : 'unknown',
+      },
+      { status: 500 },
+    );
   }
-  if (!data) {
+  if (!deleted) {
     return Response.json({ error: 'not_found' }, { status: 404 });
   }
 
-  return Response.json({ id: data.id, deleted: true }, { status: 200 });
+  return Response.json({ id: deleted.id, deleted: true }, { status: 200 });
 }

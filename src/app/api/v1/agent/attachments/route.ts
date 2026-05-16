@@ -31,6 +31,7 @@ import {
   safeStorageFileName,
   snipExtractedTextPreview,
 } from '@/lib/agent/attachments';
+import { selectAttachmentsWriteAdapter } from '@/lib/data-plane/write-adapters/attachmentsWriteAdapter';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -118,29 +119,34 @@ export async function POST(req: NextRequest) {
     buffer,
   });
 
-  // Persist metadata row.
-  const { error: insertError } = await sb.from('agent_attachment').insert({
-    id: attachmentId,
-    tenant_id: activeClient.id,
-    surface,
-    agent,
-    user_id: user.id,
-    file_name: file.name,
-    mime: file.type,
-    bytes: file.size,
-    storage_path: storagePath,
-    extracted_text: extractedText || null,
-    linked_move_id: linkedMoveId,
-  });
-
-  if (insertError) {
+  // Persist metadata row. The DB-write half is routed through the data-plane
+  // write seam (Slice 3c); the blob upload above and the rollback below stay
+  // route concerns. Default plane = Supabase — the row is byte-faithful.
+  try {
+    await selectAttachmentsWriteAdapter().insertAgentAttachment({
+      id: attachmentId,
+      tenant_id: activeClient.id,
+      surface,
+      agent,
+      user_id: user.id,
+      file_name: file.name,
+      mime: file.type,
+      bytes: file.size,
+      storage_path: storagePath,
+      extracted_text: extractedText || null,
+      linked_move_id: linkedMoveId,
+    });
+  } catch (insertError) {
     // Roll back the blob — orphan storage objects are toxic to ops.
     await sb.storage
       .from(AGENT_ATTACHMENT_BUCKET)
       .remove([storagePath])
       .catch(() => undefined);
     return Response.json(
-      { error: 'persist_failed', detail: insertError.message },
+      {
+        error: 'persist_failed',
+        detail: insertError instanceof Error ? insertError.message : 'unknown',
+      },
       { status: 500 },
     );
   }

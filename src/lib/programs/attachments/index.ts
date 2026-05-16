@@ -11,6 +11,7 @@
 import 'server-only';
 
 import { getServerSupabase } from '@/lib/supabase-server';
+import { selectAttachmentsWriteAdapter } from '@/lib/data-plane/write-adapters/attachmentsWriteAdapter';
 import {
   ATTACHMENT_MIME_ALLOWLIST,
   isAllowedMimeType,
@@ -142,10 +143,12 @@ export async function recordAttachmentUpload(
   input: CreateAttachmentInput,
 ): Promise<AttachmentRecord> {
   validateInput(input);
-  const sb = getServerSupabase();
-  const { data, error } = await sb
-    .from('program_attachments')
-    .insert({
+  // The metadata-row INSERT is routed through the data-plane write seam
+  // (Slice 3c). Validation stays here; the caller still owns the storage
+  // upload of the file bytes. Default plane = Supabase — the inserted row is
+  // byte-faithful to the pre-seam `.insert()` body.
+  const data = await selectAttachmentsWriteAdapter().insertProgramAttachment(
+    {
       tenant_key: input.tenantKey,
       program_id: input.programId,
       phase: input.phase ?? null,
@@ -163,11 +166,10 @@ export async function recordAttachmentUpload(
             scan_findings: input.scanFindings ?? null,
           }
         : {}),
-    })
-    .select(SELECT_COLUMNS)
-    .single();
-  if (error) throw error;
-  return rowToRecord(data as AttachmentRow);
+    },
+    SELECT_COLUMNS,
+  );
+  return rowToRecord(data as unknown as AttachmentRow);
 }
 
 export async function listAttachmentsForProgram(

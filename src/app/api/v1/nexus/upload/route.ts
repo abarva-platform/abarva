@@ -4,12 +4,12 @@
 // with the current session id; content extraction is a follow-up.
 
 import { NextRequest } from 'next/server';
-import { getServerSupabase } from '@/lib/supabase-server';
 import { requireTenancy, tenancyErrorResponse } from '../../_intel-auth';
 import {
   evaluateSensitiveUpload,
   sensitiveUploadRejectedResponse,
 } from '@/lib/security/sensitive-upload-guard';
+import { selectUploadsWriteAdapter } from '@/lib/data-plane/write-adapters/uploadsWriteAdapter';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -49,25 +49,22 @@ export async function POST(req: NextRequest) {
       return sensitiveUploadRejectedResponse(dataProtection);
     }
 
-    const sb = getServerSupabase();
-    const { data, error } = await sb
-      .from('uploaded_files')
-      .insert({
-        client_id: ctx.clientId,
-        uploaded_by_person_id: ctx.userId,
-        file_name: file.name,
-        file_size_bytes: file.size,
-        mime_type: file.type || 'application/octet-stream',
-        storage_path: `ephemeral/${ctx.clientId}/${sessionId}/${file.name}`,
-        metadata: { session_id: sessionId, ephemeral: true },
-      })
-      .select('id')
-      .single();
-    if (error) throw error;
+    // DB-write half routed through the data-plane write seam (Slice 3c).
+    // This route records ephemeral upload metadata only — no blob storage
+    // operation here — so the seam owns the whole write. Default = Supabase.
+    const inserted = await selectUploadsWriteAdapter().insertUploadedFile({
+      client_id: ctx.clientId,
+      uploaded_by_person_id: ctx.userId,
+      file_name: file.name,
+      file_size_bytes: file.size,
+      mime_type: file.type || 'application/octet-stream',
+      storage_path: `ephemeral/${ctx.clientId}/${sessionId}/${file.name}`,
+      metadata: { session_id: sessionId, ephemeral: true },
+    });
 
     const expiryAt = new Date(Date.now() + 24 * 3_600_000).toISOString();
     return Response.json({
-      fileId: (data as { id: string }).id,
+      fileId: inserted.id,
       ingestionStatus: 'received',
       analyzedLayers: [],
       storageExpiry: expiryAt,
