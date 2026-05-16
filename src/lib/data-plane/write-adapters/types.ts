@@ -44,6 +44,7 @@ export type WriteReason =
   | 'conflict'
   | 'not_found'
   | 'invalid_state'
+  | 'unsupported'
   | 'backend_error';
 
 /**
@@ -133,7 +134,21 @@ export type WriteStatementRunner = <R = Record<string, unknown>>(
  */
 export interface DataPlaneWriteAdapter {
   readonly name: DataPlane;
-  /** Execute a unit of work atomically with idempotency + audit guarantees. */
+  /**
+   * Execute a multi-statement unit of work atomically with idempotency +
+   * audit guarantees.
+   *
+   * `commit()` is the **transactional Azure-plane primitive** — the Azure
+   * adapter runs the unit inside a real `BEGIN`/`COMMIT`. On the **Supabase
+   * plane it is unsupported by design**: the Supabase JS client has no
+   * client-side transaction, and the cutover-flip strategy keeps Supabase as
+   * the unchanged production writer rather than introducing a
+   * `SECURITY DEFINER` SQL-exec RPC (an injection / privilege-escalation
+   * surface). The Supabase adapter therefore returns `ok:false` with
+   * `reason:'unsupported'`. Supabase domains do their writes via
+   * `appendAudit()` or a native per-domain adapter — see
+   * `programsWriteAdapter.ts` for the canonical example.
+   */
   commit<T>(unit: WriteUnit<T>): Promise<WriteResult<T>>;
   /** Append-only audit insert — the SOC2 path; never updates a prior row. */
   appendAudit(entry: AuditEntry): Promise<WriteResult<{ id: string }>>;

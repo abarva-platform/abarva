@@ -5,17 +5,23 @@
 // seam existed.
 //
 // Atomicity asymmetry (design doc §2): the Supabase JS client has no
-// client-side transaction. A `WriteUnit` whose body issues multiple statements
-// must therefore push them into a Postgres RPC (or be restructured to a single
-// statement) — the statement runner here executes each statement against the
-// service-role client and CANNOT roll back a partial multi-statement write.
-// Foundation routes are deliberately append-only single-insert writes (the
-// quarantine lifecycle pattern), which are atomic on Supabase as-is. Slices
-// 3a–3e that need true multi-statement atomicity supply an RPC.
+// client-side transaction. Multi-statement `commit()` is therefore the
+// **Azure-plane-only** primitive (`azurePostgresWriteAdapter.ts`, real
+// `BEGIN`/`COMMIT`). On the Supabase plane `commit()` is **unsupported by
+// design** — it returns `writeRejected('unsupported', ...)`.
+//
+// Why not a generic `data_plane_exec` RPC: a `SECURITY DEFINER` Postgres
+// function that runs arbitrary SQL strings is an injection / privilege-
+// escalation surface and must not ship. The cutover-flip strategy keeps
+// Supabase as the unchanged production writer, so there is no need for it.
+// Supabase domains that need a write do it through `appendAudit()` (the
+// append-only single-insert quarantine lifecycle pattern, atomic as-is) or a
+// native per-domain adapter — see `programsWriteAdapter.ts` for the canonical
+// example.
 //
 // Idempotency: callers requiring replay-safety pass a pre-check inside their
-// `WriteUnit.run` body (the SQL itself uses `ON CONFLICT` / a unique key on
-// `idempotency_key`). The adapter surfaces a unique-violation as
+// per-domain adapter (the SQL itself uses `ON CONFLICT` / a unique key on
+// `idempotency_key`). `appendAudit` surfaces a unique-violation as
 // `reason:'idempotent_replay'` rather than throwing.
 
 import type { SupabaseClient } from '@supabase/supabase-js';
@@ -25,7 +31,6 @@ import type {
   AuditEntry,
   DataPlaneWriteAdapter,
   WriteResult,
-  WriteStatementRunner,
   WriteUnit,
 } from './types';
 import { writeOk, writeRejected } from './types';
@@ -63,37 +68,26 @@ export function createSupabaseWriteAdapter(
   return {
     name: 'supabase',
 
-    async commit<T>(unit: WriteUnit<T>): Promise<WriteResult<T>> {
-      const sb = getClient();
-      // The statement runner executes each statement individually against the
-      // service-role client via the `exec_sql`-style RPC contract. There is no
-      // client-side rollback — foundation units are single-statement.
-      const stmt: WriteStatementRunner = async <R>(
-        sql: string,
-        params: readonly unknown[],
-      ): Promise<R[]> => {
-        const { data, error } = await sb.rpc('data_plane_exec', {
-          stmt_sql: sql,
-          stmt_params: params,
-        });
-        if (error) throw Object.assign(new Error(error.message), { code: error.code });
-        return (data ?? []) as R[];
-      };
-      try {
-        const data = await unit.run(stmt);
-        return writeOk<T>(data);
-      } catch (err) {
-        if (isUniqueViolation(err)) {
-          return writeOk<T>(undefined, 'idempotent_replay');
-        }
-        if (isRlsDenied(err)) {
-          return writeRejected<T>('rls_denied', err instanceof Error ? err.message : undefined);
-        }
-        return writeRejected<T>(
-          'backend_error',
-          err instanceof Error ? err.message : 'unknown',
-        );
-      }
+    async commit<T>(_unit: WriteUnit<T>): Promise<WriteResult<T>> {
+      // Multi-statement `commit()` is unsupported on the Supabase plane by
+      // design. The Supabase JS client has no client-side transaction, and a
+      // generic `SECURITY DEFINER` SQL-exec RPC (`data_plane_exec`) is an
+      // injection / privilege-escalation surface that must not ship. The
+      // cutover-flip strategy keeps Supabase as the unchanged production
+      // writer — `commit()` is the Azure-plane-only transactional primitive.
+      //
+      // This is a stable, expected rejection, not a fault: it returns
+      // `ok:false` rather than throwing. Supabase domains do their writes via
+      // `appendAudit()` or a native per-domain adapter (e.g.
+      // `programsWriteAdapter.ts`).
+      void _unit;
+      return writeRejected<T>(
+        'unsupported',
+        'commit() is the transactional Azure-plane primitive; on the Supabase '
+          + 'plane it is unsupported by design (no client-side transaction, and '
+          + 'no SECURITY DEFINER SQL-exec RPC). Use appendAudit() or a native '
+          + 'per-domain adapter (e.g. programsWriteAdapter.ts) instead.',
+      );
     },
 
     async appendAudit(entry: AuditEntry): Promise<WriteResult<{ id: string }>> {

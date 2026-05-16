@@ -111,6 +111,30 @@ describe('supabaseWriteAdapter', () => {
     expect(createSupabaseWriteAdapter().name).toBe('supabase');
   });
 
+  it('commit() is unsupported on the Supabase plane — ok:false, reason "unsupported"', async () => {
+    // Multi-statement commit() is the Azure-plane-only transactional
+    // primitive. On Supabase it must NOT throw and must NOT silently route
+    // through a phantom `data_plane_exec` RPC — it is an honest rejection.
+    const adapter = createSupabaseWriteAdapter(() => {
+      throw new Error('commit() must not touch the Supabase client');
+    });
+    let unitRan = false;
+    const result = await adapter.commit<string>({
+      idempotencyKey: 'k',
+      tenantKey: 'apex-retail',
+      actorUserId: 'user-1',
+      async run() {
+        unitRan = true;
+        return 'done';
+      },
+    });
+    expect(result.ok).toBe(false);
+    expect(result.reason).toBe('unsupported');
+    expect(result.detail).toMatch(/Azure-plane/);
+    // The unit body is never invoked — there is no statement runner to give it.
+    expect(unitRan).toBe(false);
+  });
+
   it('appendAudit inserts an append-only row with parent_id and returns the id', async () => {
     const { client, inserted, tables } = fakeSupabase({ data: { id: 'new-row' } });
     const adapter = createSupabaseWriteAdapter(() => client);
