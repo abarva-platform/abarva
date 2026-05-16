@@ -21,6 +21,8 @@ const TENANT_PROPERTY_SCOPE =
 const MATCH_CLAUSE =
   /\bMATCH\s+([\s\S]*?)(?=\bOPTIONAL\s+MATCH\b|\bMATCH\b|\bWHERE\b|\bWITH\b|\bRETURN\b|\bORDER\b|\bLIMIT\b|$)/gi;
 const GLOBAL_CATALOG_LABEL = /:\s*(?:`?GenomePattern`?|`?Industry`?|`?Function`?|`?Objective`?)\b/i;
+const GLOBAL_CATALOG_ENUMERATION_REQUEST =
+  /\b(?:list|show|return|give\s+me|display)\s+(?:all|every)\s+(?:genome\s*patterns?|genomepattern|patterns?|industries|functions|objectives)\b/i;
 
 export interface BrokeredGenomeQueryInput {
   query: string;
@@ -99,6 +101,10 @@ function tenantScopeError(cypher: string): string | null {
   return null;
 }
 
+function isGlobalCatalogEnumerationRequest(query: string): boolean {
+  return GLOBAL_CATALOG_ENUMERATION_REQUEST.test(query);
+}
+
 async function translateGenomeQuery(
   query: string,
   broker: ReturnType<typeof brokerSummary>,
@@ -138,6 +144,18 @@ export async function runBrokeredGenomeQuery(
       body: {
         error: 'unknown tenant context',
         explanation: `AgentContextBroker could not resolve tenant '${brokerTenantKey}'.`,
+        broker,
+      },
+    };
+  }
+
+  if (isGlobalCatalogEnumerationRequest(input.query)) {
+    return {
+      status: 400,
+      body: {
+        error: 'query missing tenant scope for global catalog enumeration',
+        explanation:
+          'Global catalog enumeration is not permitted from a tenant session. Ask for tenant-triggered patterns, tenant-linked chains, or a specific pattern code.',
         broker,
       },
     };
