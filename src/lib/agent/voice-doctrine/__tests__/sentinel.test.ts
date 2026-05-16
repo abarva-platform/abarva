@@ -874,9 +874,12 @@ describe('PATTERN_LEVEL_FALLBACK consultant posture — INT-VOICE.STRAT-2026-05-
     });
     expect(prompt).toMatch(/Intelligence priority-slate discipline/i);
     expect(prompt).toMatch(/Population Health AI for ACOs/i);
+    expect(prompt).toMatch(/rank Population Health AI for ACOs as #1/i);
     expect(prompt).toMatch(/FedNow Payment Rails Modernization/i);
     expect(prompt).toMatch(/deposit retention/i);
+    expect(prompt).toMatch(/exact phrase "model risk"/i);
     expect(prompt).toMatch(/Continuity fallback/i);
+    expect(prompt).toMatch(/word "recommendation"/i);
   });
 
   it('is omitted on the Source surface, which has its own Brief C role', () => {
