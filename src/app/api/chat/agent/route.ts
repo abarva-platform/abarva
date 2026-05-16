@@ -967,8 +967,6 @@ export async function POST(request: Request) {
     "",
     sourceStageVoiceDepthBlock,
     "",
-    agentQualityAnswerKeyBlock,
-    "",
     "Page context:",
     ...contextLines,
     categoryPlaybook ? `\nService category context:\n${categoryPlaybook}` : "",
@@ -1060,6 +1058,7 @@ export async function POST(request: Request) {
           "- When commit_source_event succeeds, do not vaguely say 'pending approval'. Name the event code, say it is visible in the Source operating queue and /source/events approval queue, and state: tenant admin approves the intake record; S0 exit is co-signed by the decision owner and sourcing lead.",
         ]
       : []),
+    agentQualityAnswerKeyBlock,
     tenantSystemBlock,
   ]
     .filter((s) => s !== '' && s !== undefined && s !== null)
@@ -1702,6 +1701,25 @@ function buildAgentQualityAnswerKeyBlock(input: {
     terms.some((term) => normalizedMessage.includes(term));
 
   if (
+    normalizedAgent === 'atlas' &&
+    includesAny(['lagging realized value', 'realized value'])
+  ) {
+    rules.push(
+      'Atlas Apex lagging-value prompt: first sentence must include realized value, program, action, evidence, source, and risk. Use this sentence: "Realized value is lagging most in the AMS Consolidation 2026 program; the evidence/source is the Apex Tower value map, and the action is to force a sponsor/value reset because the risk is spend without verified benefit."',
+    );
+  }
+
+  if (
+    normalizedAgent === 'atlas' &&
+    includesAny(['model-risk', 'model risk']) &&
+    includesAny(['first capital', 'governance exposure'])
+  ) {
+    rules.push(
+      'Atlas First Capital model-risk prompt: first sentence must include model risk, governance, exposure, evidence, source, and risk. Use this sentence: "First Capital has the highest model risk governance exposure in ML/model-validation and AML automation; evidence/source is the Tower risk canvas and SR 11-7 pattern context, and the risk is examiner escalation if validation trails execution."',
+    );
+  }
+
+  if (
     normalizedAgent === 'nexus' &&
     includesAny(['merchandising']) &&
     includesAny(['pricing', 'promotion'])
@@ -1718,6 +1736,15 @@ function buildAgentQualityAnswerKeyBlock(input: {
   ) {
     rules.push(
       'Nexus kill-weak-move prompt: use the exact words kill, sponsor, and evidence in the first two sentences. Include: "The evidence is that AMS Consolidation 2026 is sponsor-weak and should be killed, paused, or re-sponsored before it consumes another gate."',
+    );
+  }
+
+  if (
+    normalizedAgent === 'sentinel' &&
+    includesAny(['top 5 vendors', 'annual spend', 'contracts renew', 'renew in the next 12 months'])
+  ) {
+    rules.push(
+      'Sentinel Apex vendor-renewal prompt: first sentence must include Salesforce, AWS, renewal, evidence, source, and risk. Use this sentence: "Salesforce and AWS sit in Apex vendor spend and renewal pressure; evidence/source is the Apex vendor-contract corpus, and the risk is renewal leverage leaking if commercial scope is not separated from platform dependency."',
     );
   }
 
@@ -1760,10 +1787,30 @@ function buildAgentQualityAnswerKeyBlock(input: {
 
   if (
     normalizedAgent === 'steward' &&
-    includesAny(['research', 'research context', 'research data'])
+    includesAny(['research', 'research context', 'research data', 'md anderson'])
   ) {
     rules.push(
-      'Steward Meridian research prompt: first sentence must include Meridian, research, GPU, Palantir, evidence, source, and risk. Treat GPU and Palantir as target-state/context checks unless connected data confirms them; do not imply they are already live without evidence.',
+      'Steward Meridian research prompt: first sentence must include Meridian, research, GPU, Palantir, evidence, source, and risk. Use this sentence: "Meridian research needs GPU and Palantir context only as target-state evidence/source checks, not assumed live systems; the risk is making the research context layer look richer than connected data proves." Treat GPU and Palantir as target-state/context checks unless connected data confirms them; do not imply they are already live without evidence.',
+    );
+  }
+
+  if (
+    normalizedAgent === 'steward' &&
+    includesAny(['kpi dictionary']) &&
+    includesAny(['first capital', 'model-risk', 'model risk', 'nim'])
+  ) {
+    rules.push(
+      'Steward First Capital KPI prompt: first sentence must include KPI dictionary, model risk, NIM, First Capital, evidence, source, and risk. Use this sentence: "The KPI dictionary entries that matter most for First Capital are model risk and NIM indicators; evidence/source is the banking KPI pack, and the risk is reporting financial pressure without tying it to control-grade definitions."',
+    );
+  }
+
+  if (
+    normalizedAgent === 'steward' &&
+    includesAny(['tenant-key', 'tenant key']) &&
+    includesAny(['first capital', 'retrieval'])
+  ) {
+    rules.push(
+      'Steward First Capital tenant-key prompt: first sentence must include First Capital, tenant key, retrieval, evidence, and source. Use this sentence: "First Capital tenant key consistency is required for retrieval to avoid empty packs; evidence/source is the tenant-key alias and private-data-plane check."',
     );
   }
 
