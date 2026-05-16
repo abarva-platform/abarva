@@ -89,13 +89,13 @@ Pass criteria:
 | --- | --- |
 | Date | 2026-05-16 |
 | Container App | `ca-abarva-web-lab-eastus` |
-| Revision | `ca-abarva-web-lab-eastus--r25-l9-provider-overload` |
-| Image | `acrabarvalab001.azurecr.io/abarva/web:lab-l9-provider-overload-20260516-r25` |
-| Image digest | `sha256:2cca9e75f9b92cf4bd2bc7485728a24ea09e06bce02c83a769dada93fa0866e6` |
+| Revision | `ca-abarva-web-lab-eastus--r26-l9-provider-overload` |
+| Image | `acrabarvalab001.azurecr.io/abarva/web:lab-l9-provider-overload-20260516-r26` |
+| Image digest | `sha256:8eddf14005548602770e719d6a28951b1355955428abc5c9caeb2fa8f2749e99` |
 | Health | `/api/health` returned `ok=true`, `postgres=true`, `direct_postgres=true`, `neo4j=skipped` |
-| Connectivity | `/api/health/azure-connectivity` returned `pass`, run id `azconn-20260516132142` |
+| Connectivity | `/api/health/azure-connectivity` returned `pass`, run id `azconn-20260516133433` |
 | Provider overload smoke | `pass`, HTTP `200`, fallback detected, raw stream error not detected |
-| Report artifact | `/tmp/azure-l9-provider-overload-r25.json` |
+| Report artifact | `/tmp/azure-l9-provider-overload-r26.json` |
 
 Live smoke summary:
 
@@ -116,6 +116,6 @@ Live smoke summary:
 | --- | --- |
 | Service Bus poison message | AZLAB40 dry-run drill. |
 | Service Bus mixed good + poison batch | AZLAB51 live Azure pass. |
-| Model provider overload | AZLAB58 live Azure pass on r25. |
+| Model provider overload | AZLAB58 live Azure pass on r26. |
 | Postgres disruption | Runbook/drill still pending. |
 | PITR restore timing | Restore drill still pending. |
