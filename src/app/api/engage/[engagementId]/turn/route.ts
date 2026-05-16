@@ -1,7 +1,8 @@
 import { NextRequest } from 'next/server';
 import { getEngagementByGraphId } from '@/lib/db/engagement';
 import { getPersonById } from '@/lib/db/person';
-import { getRecentTurns, appendTurn } from '@/lib/db/turn';
+import { getRecentTurns } from '@/lib/db/turn';
+import { selectEngageTurnWriteAdapter } from '@/lib/data-plane/write-adapters/engageTurnWriteAdapter';
 import {
   getActivePatterns,
   getPeerDecisionsForPhase,
@@ -95,8 +96,14 @@ export async function POST(
     return new Response(JSON.stringify({ error: 'forbidden' }), { status: 403 });
   }
 
+  // Turn persistence routes through the data-plane write seam (Slice 3d).
+  // Auth, the fail-closed role gate above, the LLM stream orchestration and
+  // every background capture loop stay route-side — the seam owns only the
+  // physical `turns` insert. `supabase` by default.
+  const turnWriter = selectEngageTurnWriteAdapter();
+
   // Persist user turn first
-  const savedUserTurn = await appendTurn({
+  const savedUserTurn = await turnWriter.appendTurn({
     engagementId: engagement.id,
     phase: engagement.current_phase,
     sender: 'user',
@@ -289,7 +296,7 @@ export async function POST(
           );
         }
         // Persist agent turn (text with <choices> stripped) after streaming completes
-        const savedTurn = await appendTurn({
+        const savedTurn = await turnWriter.appendTurn({
           engagementId: engagement.id,
           phase: engagement.current_phase,
           sender: 'agent',
@@ -475,7 +482,7 @@ export async function POST(
             const opener = phaseOpenerFor(updated.current_phase);
             if (opener && updated.current_phase !== gateApproval.phase) {
               try {
-                const openerTurn = await appendTurn({
+                const openerTurn = await turnWriter.appendTurn({
                   engagementId: engagement.id,
                   phase: updated.current_phase,
                   sender: 'agent',
