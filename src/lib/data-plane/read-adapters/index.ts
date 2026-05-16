@@ -10,6 +10,7 @@
 // deployments keep their exact behavior with no env change.
 
 import { azurePostgresReadAdapter } from './azurePostgresReadAdapter';
+import { resolveDataPlane } from './resolveDataPlane';
 import { supabaseReadAdapter } from './supabaseReadAdapter';
 import type {
   DataPlane,
@@ -29,15 +30,7 @@ export {
   createAzurePostgresReadAdapter,
   azurePostgresReadAdapter,
 } from './azurePostgresReadAdapter';
-
-/**
- * Resolve the configured data plane. Defaults to `supabase` for any unset
- * or unrecognized value — production behavior is never changed implicitly.
- */
-export function resolveDataPlane(raw?: string | null): DataPlane {
-  const value = (raw ?? process.env.ABARVA_DATA_PLANE ?? '').trim().toLowerCase();
-  return value === 'azure-postgres' ? 'azure-postgres' : 'supabase';
-}
+export { resolveDataPlane } from './resolveDataPlane';
 
 /**
  * Select the read adapter for the configured (or explicitly passed) plane.

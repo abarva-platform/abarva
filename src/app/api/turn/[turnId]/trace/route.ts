@@ -1,6 +1,13 @@
+// GET /api/turn/[turnId]/trace · tenant-scoped reasoning-trace lookup.
+//
+// The turn_traces read runs behind the data-plane seam
+// (`selectTurnTraceReadAdapter`): `supabase` by default, `azure-postgres`
+// when `ABARVA_DATA_PLANE` opts in. The adapter enforces the tenancy join so
+// a caller can only read traces for turns in their own tenant.
+
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSupabase } from '@/lib/supabase-server';
 import { requireTenancy, tenancyErrorResponse } from '@/lib/auth/tenancy';
+import { selectTurnTraceReadAdapter } from '@/lib/data-plane/read-adapters/turnTraceReadAdapter';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -17,24 +24,13 @@ export async function GET(
   }
 
   const { turnId } = await params;
-  const sb = getServerSupabase();
+  const result = await selectTurnTraceReadAdapter().getTurnTrace(turnId, ctx.clientId);
 
-  // Join through engagements.client_id so callers can only read traces for
-  // turns that belong to their own tenant. Without this join, any caller with
-  // a turn UUID could read another tenant's complete reasoning trace.
-  const { data, error } = await sb
-    .from('turn_traces')
-    .select(
-      'turn_id, engagement_id, model, input_tokens, output_tokens, latency_ms, steps, created_at, engagements!inner(client_id)',
-    )
-    .eq('turn_id', turnId)
-    .eq('engagements.client_id', ctx.clientId)
-    .maybeSingle();
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  if (!data) return NextResponse.json({ trace: null }, { status: 404 });
-  // Strip the join column before returning.
-  const { engagements: _engagements, ...trace } = data as Record<string, unknown> & {
-    engagements?: unknown;
-  };
-  return NextResponse.json({ trace });
+  if (result.kind === 'error') {
+    return NextResponse.json({ error: result.message }, { status: 500 });
+  }
+  if (result.kind === 'not_found') {
+    return NextResponse.json({ trace: null }, { status: 404 });
+  }
+  return NextResponse.json({ trace: result.trace });
 }
