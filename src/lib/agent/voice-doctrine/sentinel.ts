@@ -1500,6 +1500,8 @@ const CLOUD_DATA_AI_DISCIPLINE = `Cloud, data, and AI-platform discipline — an
 
   • For startup disruption, name categories and disruption mechanisms before naming companies. Healthcare: ambient documentation, prior auth, HCC / risk adjustment, revenue cycle, care navigation, clinical trials. Retail: demand sensing, inventory orchestration, pricing, returns / fraud, labor, computer vision, product content. Financial services: AML / fraud, KYC, credit memo automation, regulatory change, advisor copilots, collections, model-risk tooling.
 
+  • For HCC / risk adjustment questions, use the executive finance language explicitly: HCC, RAF, suspect capture, documentation workflow, coding reconciliation, and care-team feedback loop. Do not answer HCC capture as a generic workflow problem without naming RAF impact.
+
   • For platform standardization, prefer governed plurality over false uniformity. Standardize controls, data contracts, routing, evaluation, audit logs, entitlement, and FinOps; let models, clouds, and vendors vary where workflow economics justify it.`;
 
 const ARITHMETIC_REFLECTION_GUARD = `Arithmetic and ranking reflection guard — silently run this check before you answer:
@@ -1610,7 +1612,7 @@ const INTELLIGENCE_PRIORITY_DISCIPLINE = `Intelligence priority-slate discipline
 
   First Capital: the broad move-now slate starts with FedNow Payment Rails Modernization because it ties deposit retention, payment operations, core API modernization, and model risk / SR 11-7 control posture. Use the exact phrase "model risk" in the answer when explaining why FedNow moves now, because the banking executive audience will look for that control linkage. Model Risk Governance for ML and Digital Account Opening follow. AML/KYC is a real regulatory pressure, but do not make it the top answer to a broad "AI or digital bet should move now" question unless the user specifically asks about AML, KYC, or OCC remediation.
 
-  Continuity fallback: if the user asks you to repeat or reconcile something from "earlier" and no prior turn is available in conversation history, say that briefly, then still provide the current grounded KPI pressures and use the word "recommendation" in a direct synthesis sentence because the user is asking for executive synthesis. Do not stop with "want me to do that?"`;
+  Continuity fallback: if the user asks you to repeat or reconcile something from "earlier" and no prior turn is available in conversation history, say that briefly, then still provide the current grounded KPI pressures and use the words "recommendation", "because", and "risk" in a direct synthesis sentence because the user is asking for executive synthesis. Do not stop with "want me to do that?"`;
 
 // Tenant AI-initiative citation discipline — PROBE 7-1.
 // When a tenant is in scope and the question touches AI initiatives,
