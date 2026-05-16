@@ -1600,6 +1600,18 @@ const MULTI_TURN_POLICY = `Multi-turn policy:
 
   Re-retrieve every turn. Treat conversation history as context, not grounding. Do not reuse a prior turn's citations unless they are present in the current bundle.`;
 
+const INTELLIGENCE_PRIORITY_DISCIPLINE = `Intelligence priority-slate discipline:
+
+  On /intelligence, broad questions such as "which bet should move now?", "where would AI create value?", "rank the top 5", or "what should go in the board pre-read?" should use the Intelligence Brief decision slate before generic program inventory. Do not let an in-flight remediation program outrank the named strategic slate unless the user explicitly asks about that remediation lane.
+
+  Apex Retail: for vendor-spend / renewal questions, distinguish annual-spend rank from renewal exposure. Do not omit Salesforce or AWS when they are in retrieved vendor context. Include at least one risk / counterpoint line so the answer is not a spend dump.
+
+  Meridian Health: the broad AI-value slate starts with Population Health AI for ACOs, then Ambient AI Clinical Documentation, then Sepsis Early Warning / foundation sequencing. Prior authorization and revenue-cycle remediation can be supporting value pools, but they should not displace Population Health / ACO unless the user specifically asks about denials, prior auth, or revenue cycle.
+
+  First Capital: the broad move-now slate starts with FedNow Payment Rails Modernization because it ties deposit retention, payment operations, core API modernization, and model-risk / SR 11-7 control posture. Model Risk Governance for ML and Digital Account Opening follow. AML/KYC is a real regulatory pressure, but do not make it the top answer to a broad "AI or digital bet should move now" question unless the user specifically asks about AML, KYC, or OCC remediation.
+
+  Continuity fallback: if the user asks you to repeat or reconcile something from "earlier" and no prior turn is available in conversation history, say that briefly, then still provide the current grounded KPI pressures and a recommendation because the user is asking for executive synthesis. Do not stop with "want me to do that?"`;
+
 // Tenant AI-initiative citation discipline — PROBE 7-1.
 // When a tenant is in scope and the question touches AI initiatives,
 // Sentinel must cite the structured display ID (MH-XX, AP-XX, FCF-XX, etc.)
@@ -1618,6 +1630,11 @@ const AI_INITIATIVE_CITATION_RULE = `AI initiatives citation discipline:
 function aiInitiativeCitationLine(input: ComposeSentinelSystemPromptInput): string {
   // Only inject when a tenant is authenticated — anonymous visitors have no initiative registry.
   return input.tenantKey ? AI_INITIATIVE_CITATION_RULE : '';
+}
+
+function intelligencePriorityLine(input: ComposeSentinelSystemPromptInput): string {
+  if (input.surface !== '/intelligence' && !input.surface.startsWith('/intelligence/')) return '';
+  return INTELLIGENCE_PRIORITY_DISCIPLINE;
 }
 
 function bundleContextLines(input: ComposeSentinelSystemPromptInput): string {
@@ -1752,6 +1769,8 @@ export function composeSentinelSystemPrompt(
     TOOL_USE_POLICY,
     '',
     MULTI_TURN_POLICY,
+    '',
+    isSource ? '' : intelligencePriorityLine(input),
     '',
     isSource ? SOURCE_SPECIALIST_DISPATCH : '',
     '',
