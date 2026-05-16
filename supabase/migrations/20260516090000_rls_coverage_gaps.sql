@@ -33,8 +33,14 @@
 --             keeps working if the column is later migrated to a real UUID.
 --
 -- Helpers: supabase/migrations/20260507100000_rls_role_helpers.sql
---   can_read_tenant_by_key(TEXT) · can_read_tenant_by_id(TEXT)
+--   can_read_tenant_by_key(TEXT) · can_read_tenant_by_id(UUID/TEXT)
 --   current_tenant_key() · is_maestro()
+--
+-- Compatibility note: some live environments applied
+-- 20260507100000_rls_role_helpers.sql before the TEXT overload of
+-- can_read_tenant_by_id() was added to that migration file. This migration
+-- re-declares the TEXT overload idempotently before using it so production
+-- deploys do not depend on editing/replaying an already-applied migration.
 --
 -- KEY-FORMAT DEPENDENCY (review before pilot): the data_segment_* tables hold
 -- hyphenated keys; clients.tenant_key holds non-hyphenated slugs.
@@ -56,16 +62,29 @@ BEGIN;
 -- Guard: the helper functions this migration depends on must exist.
 DO $rls_prereqs$
 BEGIN
-  IF NOT EXISTS (SELECT 1 FROM pg_proc WHERE proname = 'can_read_tenant_by_key') THEN
+  IF to_regprocedure('can_read_tenant_by_key(text)') IS NULL THEN
     RAISE EXCEPTION
       'Helper can_read_tenant_by_key not found. Apply 20260507100000_rls_role_helpers.sql first.';
   END IF;
-  IF NOT EXISTS (SELECT 1 FROM pg_proc WHERE proname = 'can_read_tenant_by_id') THEN
+  IF to_regprocedure('can_read_tenant_by_id(uuid)') IS NULL THEN
     RAISE EXCEPTION
-      'Helper can_read_tenant_by_id not found. Apply 20260507100000_rls_role_helpers.sql first.';
+      'Helper can_read_tenant_by_id(uuid) not found. Apply 20260507100000_rls_role_helpers.sql first.';
   END IF;
 END
 $rls_prereqs$;
+
+-- Live compatibility shim for environments where the base helper migration was
+-- already marked applied before this overload was added.
+CREATE OR REPLACE FUNCTION can_read_tenant_by_id(p_client_id TEXT)
+RETURNS BOOLEAN AS $$
+  SELECT EXISTS (
+    SELECT 1 FROM clients
+    WHERE (id::text = p_client_id OR tenant_key = p_client_id)
+      AND tenant_key = current_tenant_key()
+  ) OR is_maestro()
+$$ LANGUAGE sql STABLE SECURITY DEFINER;
+
+GRANT EXECUTE ON FUNCTION can_read_tenant_by_id(TEXT) TO authenticated;
 
 -- ── Shape A · data_segment_* (tenant_key TEXT) ───────────────────────────────
 -- Apply the identical ENABLE RLS + auth_read + GRANT pattern to each table.
