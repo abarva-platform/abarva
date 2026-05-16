@@ -11,6 +11,10 @@ import type { OriginSource } from '@/lib/programs/types.db';
 import { normalizeProgramArchetype } from '@/lib/programs/archetype-normalization';
 import { buildEngagementGraphNodeId } from '@/lib/programs/mutations';
 import { parseUsdRangeFromText } from '@/lib/programs/value-utils';
+import {
+  assessOriginationBrief,
+  suitabilityCharterFragment,
+} from '@/lib/programs/suitability/origination-suitability';
 
 export interface OriginationTurn {
   role: 'user' | 'assistant';
@@ -277,6 +281,19 @@ function buildOriginationCharter(
           gap_usd: input.fromGapUsd ?? null,
         }
       : null,
+    // Slice 2.1 · agentic suitability assessment. Scores the proposed Move
+    // against the §0.2 archetype spectrum from the brief text alone — no
+    // data-readiness ledger entry exists at P0 yet, so the readiness profile
+    // defaults conservatively. The P1 Evidence & Assessment phase re-runs
+    // this with the real readiness ledger. Logic-only — no surface change.
+    agentic_suitability: suitabilityCharterFragment(
+      assessOriginationBrief({
+        programName: input.programName,
+        problemStatement: input.problemStatement,
+        targetOutcome: input.targetOutcome,
+        classification: input.classification,
+      }),
+    ),
   };
 }
 
