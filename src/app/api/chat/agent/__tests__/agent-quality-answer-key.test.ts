@@ -7,13 +7,17 @@ describe('Agent route prompt — L7 canonical answer key', () => {
     'utf8',
   );
 
-  it('renders a late answer-key block before page context', () => {
+  it('renders a final answer-key block after generic response guidance', () => {
     expect(routeSource).toContain('buildAgentQualityAnswerKeyBlock');
     expect(routeSource).toContain('L7 CANONICAL ANSWER KEY');
     expect(routeSource).toContain('override generic voice doctrine for exact wording');
-    expect(routeSource.indexOf('agentQualityAnswerKeyBlock')).toBeLessThan(
-      routeSource.indexOf('"Page context:"'),
-    );
+    expect(routeSource).toContain('agentQualityAnswerKeyBlock,\n    tenantSystemBlock');
+  });
+
+  it('locks the remaining Atlas and Sentinel exact-term blockers', () => {
+    expect(routeSource).toContain('Realized value is lagging most in the AMS Consolidation 2026 program');
+    expect(routeSource).toContain('First Capital has the highest model risk governance exposure');
+    expect(routeSource).toContain('Salesforce and AWS sit in Apex vendor spend and renewal pressure');
   });
 
   it('locks the remaining Nexus exact-term blockers', () => {
@@ -35,5 +39,8 @@ describe('Agent route prompt — L7 canonical answer key', () => {
     expect(routeSource).toContain('enterprise profile, KPI dictionary, segment');
     expect(routeSource).toContain('connectors, pilot, Day 2');
     expect(routeSource).toContain('GPU, Palantir');
+    expect(routeSource).toContain('Meridian research needs GPU and Palantir context');
+    expect(routeSource).toContain('KPI dictionary entries that matter most for First Capital');
+    expect(routeSource).toContain('First Capital tenant key consistency is required for retrieval');
   });
 });
