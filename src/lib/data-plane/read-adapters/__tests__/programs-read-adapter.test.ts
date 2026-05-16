@@ -230,3 +230,77 @@ describe('azureProgramsReadAdapter', () => {
     expect(rows).toEqual([]);
   });
 });
+
+/**
+ * A Supabase mock whose `.from('engagements')` chain ends in `.maybeSingle()`,
+ * resolving to the configured `{ data, error }`. Used for `getProgramByIdRow`.
+ */
+function fakeSupabaseSingle(result: { data: unknown; error: unknown }): {
+  client: SupabaseClient;
+  calls: { method: string; args: unknown[] }[];
+} {
+  const calls: { method: string; args: unknown[] }[] = [];
+  const builder: Record<string, unknown> = {};
+  for (const method of ['select', 'eq']) {
+    builder[method] = (...args: unknown[]) => {
+      calls.push({ method, args });
+      return builder;
+    };
+  }
+  builder.maybeSingle = (...args: unknown[]) => {
+    calls.push({ method: 'maybeSingle', args });
+    return Promise.resolve(result);
+  };
+  const client = { from: () => builder } as unknown as SupabaseClient;
+  return { client, calls };
+}
+
+describe('supabaseProgramsReadAdapter.getProgramByIdRow', () => {
+  it('returns the single row scoped by id + client', async () => {
+    const { client, calls } = fakeSupabaseSingle({ data: sampleRow(), error: null });
+    const adapter = createSupabaseProgramsReadAdapter(() => client);
+    const row = await adapter.getProgramByIdRow('eng-1', 'client-1');
+    expect(row?.id).toBe('eng-1');
+    expect(calls.some((c) => c.method === 'eq' && c.args[0] === 'id')).toBe(true);
+    expect(calls.some((c) => c.method === 'eq' && c.args[0] === 'client_id')).toBe(true);
+    expect(calls.some((c) => c.method === 'maybeSingle')).toBe(true);
+  });
+
+  it('returns null when no engagement matches', async () => {
+    const { client } = fakeSupabaseSingle({ data: null, error: null });
+    const adapter = createSupabaseProgramsReadAdapter(() => client);
+    expect(await adapter.getProgramByIdRow('ghost', 'client-1')).toBeNull();
+  });
+
+  it('throws on a genuine query error', async () => {
+    const { client } = fakeSupabaseSingle({ data: null, error: { message: 'boom' } });
+    const adapter = createSupabaseProgramsReadAdapter(() => client);
+    await expect(adapter.getProgramByIdRow('eng-1', 'c')).rejects.toEqual({
+      message: 'boom',
+    });
+  });
+});
+
+describe('azureProgramsReadAdapter.getProgramByIdRow', () => {
+  it('reads the row with id + client_id predicates', async () => {
+    let seenSql = '';
+    let seenParams: unknown[] = [];
+    const session = fakeSession((sql, params) => {
+      seenSql = sql;
+      seenParams = params;
+      return [sampleRow()];
+    });
+    const adapter = createAzureProgramsReadAdapter(session);
+    const row = await adapter.getProgramByIdRow('eng-1', 'client-1');
+    expect(row?.id).toBe('eng-1');
+    expect(seenSql).toContain('id = $1');
+    expect(seenSql).toContain('client_id = $2');
+    expect(seenSql).toContain('LIMIT 1');
+    expect(seenParams).toEqual(['eng-1', 'client-1']);
+  });
+
+  it('returns null when the query yields no rows', async () => {
+    const adapter = createAzureProgramsReadAdapter(fakeSession(() => []));
+    expect(await adapter.getProgramByIdRow('ghost', 'client-1')).toBeNull();
+  });
+});

@@ -84,6 +84,15 @@ export interface ProgramsReadAdapter {
    * pre-seam `getProgramPortfolio`.
    */
   getProgramPortfolioRows(query: PortfolioQuery): Promise<EngagementPortfolioRow[]>;
+  /**
+   * Return the single engagement row for `programId` scoped to `clientId`,
+   * or `null` when no such row exists. The pre-seam `getProgramById` used
+   * `.maybeSingle()` (no archived/deleted exclusion — a caller may inspect a
+   * soft-deleted program by id), so this read mirrors that: tenancy filter
+   * only. RBAC (`canReadProgram`) stays caller-side. Throws on a genuine
+   * query error — same failure semantics as the pre-seam helper.
+   */
+  getProgramByIdRow(programId: string, clientId: string): Promise<EngagementPortfolioRow | null>;
 }
 
 /** The engagements column projection — identical to the pre-seam select. */
@@ -129,6 +138,17 @@ export function createSupabaseProgramsReadAdapter(
       if (error) throw error;
       return (data as unknown as EngagementPortfolioRow[] | null) ?? [];
     },
+    async getProgramByIdRow(programId, clientId) {
+      const sb = getClient();
+      const { data, error } = await sb
+        .from('engagements')
+        .select(ENGAGEMENT_COLUMNS)
+        .eq('id', programId)
+        .eq('client_id', clientId)
+        .maybeSingle();
+      if (error) throw error;
+      return (data as unknown as EngagementPortfolioRow | null) ?? null;
+    },
   };
 }
 
@@ -158,6 +178,16 @@ export function createAzureProgramsReadAdapter(
         params.push(limit);
         sql += ` ORDER BY created_at DESC LIMIT $${params.length}`;
         return run<EngagementPortfolioRow>(sql, params);
+      });
+    },
+    async getProgramByIdRow(programId, clientId) {
+      return session(async (run) => {
+        const rows = await run<EngagementPortfolioRow>(
+          `SELECT ${ENGAGEMENT_COLUMNS} FROM engagements `
+          + 'WHERE id = $1 AND client_id = $2 LIMIT 1',
+          [programId, clientId],
+        );
+        return rows[0] ?? null;
       });
     },
   };

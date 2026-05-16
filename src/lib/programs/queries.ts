@@ -152,6 +152,18 @@ export async function getProgramPortfolio(
   return (rows as unknown as EngagementRow[]).map(rowToProgram);
 }
 
+/**
+ * Single program by id — tenancy-scoped, RBAC-gated.
+ *
+ * The engagements-table read runs behind the data-plane seam
+ * (`src/lib/data-plane/read-adapters/programsReadAdapter.ts`): `supabase` by
+ * default, `azure-postgres` when `ABARVA_DATA_PLANE` opts in. RBAC
+ * (`canReadProgram`) and the `rowToProgram` view-model transform stay here so
+ * access-policy logic is not duplicated across data planes.
+ *
+ * When `opts.supabase` is supplied (server components passing their own
+ * client) the Supabase adapter is used directly, preserving that contract.
+ */
 export async function getProgramById(
   ctx: TenancyCtx,
   programId: string,
@@ -159,15 +171,11 @@ export async function getProgramById(
 ): Promise<ProgramCore | null> {
   assertTenancy(ctx);
   if (!(await canReadProgram(ctx, programId))) return null;
-  const sb = opts.supabase ?? getServerSupabase();
-  const { data, error } = await sb
-    .from('engagements')
-    .select('id, client_id, name, sponsor_person_id, problem_statement, target_outcome, timeline_horizon, value_projected_low_usd, value_projected_high_usd, value_verified_usd, value_verified_status, value_currency, value_assumptions_jsonb, baseline_metrics, program_archetype, origin_source, origin_source_ref, status, lifecycle_state, current_phase, current_module_key, maestro_oversight_level, founder_approval_required, phase_locked_at, phase_locked_by_user_id, data_residency_region, retention_policy_years, archived_at, deleted_at, created_at, updated_at, charter, gates_passed')
-    .eq('id', programId)
-    .eq('client_id', ctx.clientId)
-    .maybeSingle();
-  if (error) throw error;
-  return data ? rowToProgram(data as EngagementRow) : null;
+  const adapter = opts.supabase
+    ? createSupabaseProgramsReadAdapter(() => opts.supabase as SupabaseClient)
+    : selectProgramsReadAdapter();
+  const row = await adapter.getProgramByIdRow(programId, ctx.clientId);
+  return row ? rowToProgram(row as unknown as EngagementRow) : null;
 }
 
 async function assertProgramReadable(ctx: TenancyCtx, programId: string): Promise<void> {
