@@ -1,6 +1,12 @@
 import 'server-only';
 
-import { getServerSupabase } from '@/lib/supabase-server';
+import {
+  selectIntelligenceCorpusReadAdapter,
+  type CorpusGenomePatternRow,
+  type CorpusKnowledgeSourceRow,
+  type CorpusUseCaseRow,
+  type CorpusContradictionRow,
+} from '@/lib/data-plane/read-adapters/intelligenceCorpusReadAdapter';
 import type { AttentionItem, PatternRow } from '@/components/intelligence-v3/cxo-fixtures';
 import type { RetailIntelligenceStatus } from '@/components/intelligence-v3/types';
 import type {
@@ -20,57 +26,12 @@ interface ClientRow {
   industry_code: string | null;
 }
 
-interface GenomePatternRow {
-  code: string;
-  name: string;
-  description: string | null;
-  summary: string | null;
-  failure_rate_pct: number | null;
-  office_category: string | null;
-  keywords: string[] | null;
-}
-
-interface KnowledgeSourceRow {
-  source_key: string;
-  title: string;
-  publisher: string;
-  content_type: string;
-  summary: string | null;
-}
-
-interface UseCaseRow {
-  external_id: string | null;
-  name: string;
-  description: string | null;
-  business_unit: string | null;
-  domain: string | null;
-  stage: string;
-  ai_type: string | null;
-  scope: string | null;
-  vendor: string | null;
-  systems: unknown;
-  metadata: { related_patterns?: string[] } | null;
-}
-
-interface ContradictionRow {
-  short_title: string | null;
-  summary: string | null;
-  long_description: string | null;
-  severity: 'high' | 'medium' | 'low';
-  category: string | null;
-  surfacing_priority: number;
-  related_pattern_ids: string[] | null;
-  implicated_initiative_refs: string[] | null;
-}
-
-interface EdgeRow {
-  from_node_type: string;
-  from_node_id: string;
-  edge_type: string;
-  to_node_type: string;
-  to_node_id: string;
-  source_key: string | null;
-}
+// Row shapes are owned by the Intelligence-corpus read adapter (Slice 5);
+// these aliases keep the local names this module already references.
+type GenomePatternRow = CorpusGenomePatternRow;
+type KnowledgeSourceRow = CorpusKnowledgeSourceRow;
+type UseCaseRow = CorpusUseCaseRow;
+type ContradictionRow = CorpusContradictionRow;
 
 export interface ApexRetailIntelligenceData {
   status: RetailIntelligenceStatus;
@@ -99,57 +60,12 @@ export async function loadApexRetailIntelligenceData(
 ): Promise<ApexRetailIntelligenceData | null> {
   if (!client || normalizeIndustry(client.industry_code) !== 'retail') return null;
 
-  const sb = getServerSupabase();
-  const [
-    patternsResult,
-    sourcesResult,
-    useCasesResult,
-    contradictionsResult,
-    edgesResult,
-  ] = await Promise.all([
-    sb
-      .from('genome_patterns')
-      .select('code, name, description, summary, failure_rate_pct, office_category, keywords')
-      .eq('vertical', 'retail')
-      .gte('code', 'F200')
-      .lte('code', 'F239')
-      .eq('is_active', true)
-      .order('code'),
-    sb
-      .from('knowledge_sources')
-      .select('source_key, title, publisher, content_type, summary')
-      .eq('pinecone_namespace', 'retail-knowledge-sources')
-      .eq('status', 'active')
-      .order('source_key'),
-    sb
-      .from('use_cases')
-      .select('external_id, name, description, business_unit, domain, stage, ai_type, scope, vendor, systems, metadata')
-      .eq('client_id', client.id)
-      .like('external_id', 'apex_retail_%')
-      .order('name'),
-    sb
-      .from('contradictions')
-      .select('short_title, summary, long_description, severity, category, surfacing_priority, related_pattern_ids, implicated_initiative_refs')
-      .eq('client_id', client.id)
-      .is('resolved_at', null)
-      .order('surfacing_priority', { ascending: false }),
-    sb
-      .from('intelligence_graph_edges')
-      .select('from_node_type, from_node_id, edge_type, to_node_type, to_node_id, source_key')
-      .eq('vertical', 'retail'),
-  ]);
-
-  if (patternsResult.error) throw patternsResult.error;
-  if (sourcesResult.error) throw sourcesResult.error;
-  if (useCasesResult.error) throw useCasesResult.error;
-  if (contradictionsResult.error) throw contradictionsResult.error;
-  if (edgesResult.error) throw edgesResult.error;
-
-  const patterns = (patternsResult.data ?? []) as GenomePatternRow[];
-  const sources = (sourcesResult.data ?? []) as KnowledgeSourceRow[];
-  const useCases = (useCasesResult.data ?? []) as UseCaseRow[];
-  const allContradictions = (contradictionsResult.data ?? []) as ContradictionRow[];
-  const edges = (edgesResult.data ?? []) as EdgeRow[];
+  const bundle = await selectIntelligenceCorpusReadAdapter().getCorpusBundle(client.id);
+  const patterns = bundle.patterns;
+  const sources = bundle.sources;
+  const useCases = bundle.useCases;
+  const allContradictions = bundle.contradictions;
+  const edges = bundle.edges;
 
   if (patterns.length === 0 || useCases.length === 0) return null;
 
@@ -235,16 +151,8 @@ export async function loadApexRetailIntelligenceData(
 }
 
 export async function loadApexRetailIntelligenceDataForDemo(): Promise<ApexRetailIntelligenceData | null> {
-  const sb = getServerSupabase();
-  const { data, error } = await sb
-    .from('clients')
-    .select('id, name, industry_code')
-    .in('name', ['Apex Retail', 'Apex Retail Group'])
-    .limit(1)
-    .maybeSingle();
-
-  if (error) throw error;
-  return loadApexRetailIntelligenceData(data as ClientRow | null);
+  const client = await selectIntelligenceCorpusReadAdapter().getApexRetailClient();
+  return loadApexRetailIntelligenceData(client);
 }
 
 function toPatternRow(

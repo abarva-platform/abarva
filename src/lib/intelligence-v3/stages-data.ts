@@ -6,8 +6,8 @@ import 'server-only';
 // fails closed (returns null) if the active client / supporting
 // substrate isn't available.
 
-import { getServerSupabase } from '@/lib/supabase-server';
 import { getActiveClientRow } from '@/lib/active-client';
+import { selectIntelligenceStagesReadAdapter } from '@/lib/data-plane/read-adapters/intelligenceStagesReadAdapter';
 import {
   getAIInitiativesPageData,
   type AIInitiative,
@@ -70,16 +70,13 @@ export async function getByFunctionData(): Promise<ByFunctionData | null> {
   const page = await getAIInitiativesPageData(client.id).catch(() => null);
   if (!page || page.initiatives.length === 0) return null;
 
-  const sb = getServerSupabase();
+  const reads = selectIntelligenceStagesReadAdapter();
   const initiativeIds = page.initiatives.map((i) => i.initiativeId);
 
   // Decisions for "Gates" lens
-  const { data: decisionRows } = await sb
-    .from('ai_initiative_decisions')
-    .select('initiative_id, decision_status')
-    .in('initiative_id', initiativeIds);
+  const decisionRows = await reads.getDecisionRowsForInitiatives(initiativeIds);
   const decisionsByInitiative = new Map<string, { pending: number; stalled: number }>();
-  for (const r of (decisionRows ?? []) as Array<{ initiative_id: string; decision_status: string }>) {
+  for (const r of decisionRows) {
     const cur = decisionsByInitiative.get(r.initiative_id) ?? { pending: 0, stalled: 0 };
     if (r.decision_status === 'pending') cur.pending += 1;
     if (r.decision_status === 'stalled') cur.stalled += 1;
@@ -87,20 +84,12 @@ export async function getByFunctionData(): Promise<ByFunctionData | null> {
   }
 
   // Vendors for "Dependencies" lens
-  const { data: vendorRows } = await sb
-    .from('ai_initiative_vendors')
-    .select('initiative_id, renewal_date, vendor_name, financial_health')
-    .in('initiative_id', initiativeIds);
+  const vendorRows = await reads.getVendorRowsForInitiatives(initiativeIds);
   const vendorsByInitiative = new Map<
     string,
     Array<{ vendor_name: string; renewal_date: string | null; financial_health: string | null }>
   >();
-  for (const r of (vendorRows ?? []) as Array<{
-    initiative_id: string;
-    vendor_name: string;
-    renewal_date: string | null;
-    financial_health: string | null;
-  }>) {
+  for (const r of vendorRows) {
     const list = vendorsByInitiative.get(r.initiative_id) ?? [];
     list.push({
       vendor_name: r.vendor_name,
@@ -210,16 +199,10 @@ export async function getPeerActivityData(): Promise<PeerActivityData | null> {
   if (!page || page.initiatives.length === 0) return null;
 
   const initiativeIds = page.initiatives.map((i) => i.initiativeId);
-  const sb = getServerSupabase();
+  const reads = selectIntelligenceStagesReadAdapter();
 
   // Latest KPI per (initiative, kpi_name) where peer_median is set.
-  const { data: kpiRows } = await sb
-    .from('ai_initiative_kpis')
-    .select(
-      'initiative_id, kpi_name, kpi_unit, quarter, kpi_value, target_value, peer_median, confidence_level',
-    )
-    .in('initiative_id', initiativeIds)
-    .not('peer_median', 'is', null);
+  const kpiRows = await reads.getKpiRowsForInitiatives(initiativeIds);
 
   const initiativeById = new Map(page.initiatives.map((i) => [i.initiativeId, i]));
 
@@ -236,15 +219,7 @@ export async function getPeerActivityData(): Promise<PeerActivityData | null> {
       peerMedian: number;
     }
   >();
-  for (const r of (kpiRows ?? []) as Array<{
-    initiative_id: string;
-    kpi_name: string;
-    kpi_unit: string | null;
-    quarter: string;
-    kpi_value: number | string;
-    target_value: number | string | null;
-    peer_median: number | string;
-  }>) {
+  for (const r of kpiRows) {
     const key = `${r.initiative_id}::${r.kpi_name}`;
     const cur = latest.get(key);
     if (!cur || r.quarter > cur.quarter) {

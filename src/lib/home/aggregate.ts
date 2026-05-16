@@ -1,4 +1,4 @@
-import { getServerSupabase } from '@/lib/supabase-server';
+import { selectHomeAttentionReadAdapter } from '@/lib/data-plane/read-adapters/homeAttentionReadAdapter';
 
 // Home page attention aggregator — what the signed-in user should look at
 // today. Spec: alerts needing attention + queue of things awaiting their
@@ -38,31 +38,15 @@ function sevOrder(s: string): number {
 }
 
 export async function loadHomeAttention(limit = 6, clientId?: string | null): Promise<HomeAttention> {
-  const sb = getServerSupabase();
+  const reads = selectHomeAttentionReadAdapter();
 
   // ── Alerts: open contradictions + gate-pending engagements ─────────────
   const alerts: HomeAlert[] = [];
 
   try {
-    let alertsQ = sb
-      .from('contradictions')
-      .select('id, client_id, contradiction_type, severity, description, detected_at, triggered_engagement_id, client:clients(id, name)')
-      .is('resolved_at', null)
-      .order('detected_at', { ascending: false })
-      .limit(limit);
-    if (clientId) alertsQ = alertsQ.eq('client_id', clientId);
-    const { data: contradictions } = await alertsQ;
+    const contradictions = await reads.getOpenContradictions(limit, clientId);
 
-    for (const c of (contradictions as Array<{
-      id: string;
-      client_id: string | null;
-      contradiction_type: string;
-      severity: 'high' | 'medium' | 'low';
-      description: string;
-      detected_at: string;
-      triggered_engagement_id: string | null;
-      client: { id: string; name: string } | null;
-    }> | null) ?? []) {
+    for (const c of contradictions) {
       alerts.push({
         id: c.id,
         kind: 'contradiction',
@@ -87,25 +71,7 @@ export async function loadHomeAttention(limit = 6, clientId?: string | null): Pr
   const queue: HomeQueueItem[] = [];
 
   try {
-    let activesQ = sb
-      .from('engagements')
-      .select('id, graph_node_id, name, current_phase, status, updated_at, gates_passed, client_id')
-      .eq('status', 'active')
-      .order('updated_at', { ascending: false })
-      .limit(30);
-    if (clientId) activesQ = activesQ.eq('client_id', clientId);
-    const { data: actives } = await activesQ;
-
-    const activeRows = (actives as Array<{
-      id: string;
-      graph_node_id: string;
-      name: string;
-      current_phase: number;
-      status: string;
-      updated_at: string;
-      gates_passed: unknown[] | null;
-      client_id: string | null;
-    }> | null) ?? [];
+    const activeRows = await reads.getActiveEngagements(clientId);
 
     // Pending gates
     for (const e of activeRows) {
@@ -136,16 +102,11 @@ export async function loadHomeAttention(limit = 6, clientId?: string | null): Pr
     // hasn't responded yet).
     if (activeRows.length > 0) {
       const ids = activeRows.map((e) => e.id);
-      const { data: lastTurns } = await sb
-        .from('turns')
-        .select('engagement_id, sender, created_at')
-        .in('engagement_id', ids)
-        .order('created_at', { ascending: false })
-        .limit(60);
+      const lastTurns = await reads.getRecentTurns(ids);
 
       const seen = new Set<string>();
       const lastPerEng: Record<string, { sender: string; created_at: string }> = {};
-      for (const t of (lastTurns as Array<{ engagement_id: string; sender: string; created_at: string }> | null) ?? []) {
+      for (const t of lastTurns) {
         if (seen.has(t.engagement_id)) continue;
         seen.add(t.engagement_id);
         lastPerEng[t.engagement_id] = { sender: t.sender, created_at: t.created_at };
