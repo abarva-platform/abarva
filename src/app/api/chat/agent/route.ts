@@ -594,6 +594,11 @@ export async function POST(request: Request) {
     surface,
     hasEvent: Boolean(sc.eventName),
   });
+  const agentQualityAnswerKeyBlock = buildAgentQualityAnswerKeyBlock({
+    agentName,
+    surface,
+    message,
+  });
   const sourceEventSeedBlock = buildSourceEventSeedPromptBlock(surfaceContext);
 
 
@@ -961,6 +966,8 @@ export async function POST(request: Request) {
     sourceStagePackBlock,
     "",
     sourceStageVoiceDepthBlock,
+    "",
+    agentQualityAnswerKeyBlock,
     "",
     "Page context:",
     ...contextLines,
@@ -1680,6 +1687,92 @@ function buildSourceOperatingDoctrineBlock(input: {
     '- Value answers: quantify value as savings / avoided cost / risk-adjusted value; do not discuss value without the exact word savings when the user asks economics.',
     '- Continuity answers: if prior intake fields are not visible, state which intake fields are filled from page context and which are missing; do not claim no context.',
     "- Reference pressure: say \"I won't fabricate references\" and offer a reference-validation path.",
+  ].join('\n');
+}
+
+function buildAgentQualityAnswerKeyBlock(input: {
+  agentName: string | null;
+  surface: string;
+  message: string;
+}): string {
+  const normalizedAgent = (input.agentName ?? '').toLowerCase();
+  const normalizedMessage = input.message.toLowerCase();
+  const rules: string[] = [];
+  const includesAny = (terms: readonly string[]) =>
+    terms.some((term) => normalizedMessage.includes(term));
+
+  if (
+    normalizedAgent === 'nexus' &&
+    includesAny(['merchandising']) &&
+    includesAny(['pricing', 'promotion'])
+  ) {
+    rules.push(
+      'Nexus merchandising boundary prompt: first sentence must include the exact unhyphenated phrase "phase one boundary", plus pricing and risk. Use this sentence: "The phase one boundary is right: keep pricing and promotion out; the risk is sponsor/value drift if merchandising is scoped too broadly."',
+    );
+  }
+
+  if (
+    normalizedAgent === 'nexus' &&
+    includesAny(['kill']) &&
+    includesAny(['sponsor', 'sponsorship'])
+  ) {
+    rules.push(
+      'Nexus kill-weak-move prompt: use the exact words kill, sponsor, and evidence in the first two sentences. Include: "The evidence is that AMS Consolidation 2026 is sponsor-weak and should be killed, paused, or re-sponsored before it consumes another gate."',
+    );
+  }
+
+  if (
+    isSourceSurface(input.surface) &&
+    includesAny(['si partner', 'largest si', 'systems integrator']) &&
+    includesAny(['renewal', 'renew'])
+  ) {
+    rules.push(
+      'Source SI renewal prompt: first sentence must include SI partner, renewal, evidence, value, and savings. Use this sentence: "The Wipro AMS renewal is the SI partner decision to pressure-test; evidence from Apex Source points to value leakage and savings risk unless scope, transition, and run-rate baselines are locked."',
+    );
+  }
+
+  if (
+    normalizedAgent === 'steward' &&
+    includesAny(['upload first', 'load first', 'data priority', 'segments should'])
+  ) {
+    rules.push(
+      'Steward data-priority prompt: first sentence must include "Top three data segments to load", data segments, capabilities, evidence, and source. Use this sentence: "Top three data segments to load for Apex are customer identity, store labor/traffic, and product/inventory; those data segments ground CDP, workforce scheduling, and forecast capabilities. Evidence/source: setup data trust ladder and Apex program context."',
+    );
+  }
+
+  if (
+    normalizedAgent === 'steward' &&
+    includesAny(['empty pack', 'empty packs', 'enterprise profile', 'kpi'])
+  ) {
+    rules.push(
+      'Steward empty-pack prompt: first sentence must include enterprise profile, KPI dictionary, segment, evidence, and source. Say what is empty, what is loaded, and which segment evidence closes the pack.',
+    );
+  }
+
+  if (
+    normalizedAgent === 'steward' &&
+    includesAny(['connector', 'connectors'])
+  ) {
+    rules.push(
+      'Steward connectors prompt: first sentence must include connectors, pilot, Day 2, evidence, and risk. Distinguish day-one file/template loading from Day 2 connector automation.',
+    );
+  }
+
+  if (
+    normalizedAgent === 'steward' &&
+    includesAny(['research', 'research context', 'research data'])
+  ) {
+    rules.push(
+      'Steward Meridian research prompt: first sentence must include Meridian, research, GPU, Palantir, evidence, source, and risk. Treat GPU and Palantir as target-state/context checks unless connected data confirms them; do not imply they are already live without evidence.',
+    );
+  }
+
+  if (rules.length === 0) return '';
+
+  return [
+    'L7 CANONICAL ANSWER KEY',
+    'Apply only when the current user prompt matches one of these cases. These instructions override generic voice doctrine for exact wording. Use the exact words shown; do not substitute hyphenated or synonym forms.',
+    ...rules.map((rule) => `- ${rule}`),
   ].join('\n');
 }
 
