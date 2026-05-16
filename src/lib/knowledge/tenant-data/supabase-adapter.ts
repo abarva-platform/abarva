@@ -280,7 +280,7 @@ const MAX_CHUNK_KEYWORD_LIMIT = 50;
 const DEFAULT_VECTOR_LIMIT = 10;
 const MAX_VECTOR_LIMIT = 50;
 const PRIVATE_SCHEMA_INVALID_RE =
-  /invalid schema|schema .* does not exist|could not find .* schema/i;
+  /invalid schema|schema .* does not exist|could not find .* schema|relation .* does not exist/i;
 const IDENTIFIER_RE = /^[A-Za-z_][A-Za-z0-9_]*$/;
 
 let cachedPrivatePgPool: Pool | null | undefined;
@@ -446,6 +446,16 @@ export class SupabaseTenantDataAdapter implements TenantDataAdapter {
   }
 
   async getRecord(tenantKey: string, recordId: string): Promise<TenantRecord | null> {
+    const queryPublicRow = async (): Promise<InventoryRecordRow | null> => {
+      const fallback = await this.client
+        .from('data_inventory_records')
+        .select(RECORD_COLUMNS)
+        .eq('tenant_key', tenantKey)
+        .eq('record_id', recordId)
+        .maybeSingle();
+      if (fallback.error) return null;
+      return (fallback.data as unknown as InventoryRecordRow | null) ?? null;
+    };
     const { data, error } = await this.table(tenantKey, 'data_inventory_records')
       .select(RECORD_COLUMNS)
       .eq('tenant_key', tenantKey)
@@ -453,15 +463,20 @@ export class SupabaseTenantDataAdapter implements TenantDataAdapter {
       .maybeSingle();
     if (error) {
       if (shouldUsePrivatePgFallback(tenantKey, error.message)) {
-        const rows = await queryPrivateRows<InventoryRecordRow>(
-          tenantKey,
-          'data_inventory_records',
-          RECORD_COLUMNS,
-          ['tenant_key = $1', 'record_id = $2'],
-          [tenantKey, recordId],
-          1,
-        );
-        return rows[0] ? mapRecordRow(rows[0]) : null;
+        try {
+          const rows = await queryPrivateRows<InventoryRecordRow>(
+            tenantKey,
+            'data_inventory_records',
+            RECORD_COLUMNS,
+            ['tenant_key = $1', 'record_id = $2'],
+            [tenantKey, recordId],
+            1,
+          );
+          return rows[0] ? mapRecordRow(rows[0]) : null;
+        } catch {
+          const publicRow = await queryPublicRow();
+          return publicRow ? mapRecordRow(publicRow) : null;
+        }
       }
       throw new Error(`getRecord failed for tenant '${tenantKey}', record '${recordId}': ${error.message}`);
     }
@@ -608,6 +623,16 @@ export class SupabaseTenantDataAdapter implements TenantDataAdapter {
       .filter((clause) => clause.endsWith('%%') === false)
       .join(',');
     if (orClause.length === 0) return [];
+    const queryPublicRows = async (): Promise<ContextChunkRow[] | null> => {
+      const fallback = await this.client
+        .from('enterprise_context_chunks')
+        .select(CHUNK_COLUMNS)
+        .eq('tenant_key', tenantKey)
+        .or(orClause)
+        .limit(cap);
+      if (fallback.error) return null;
+      return (fallback.data ?? []) as unknown as ContextChunkRow[];
+    };
     const { data, error } = await this.table(tenantKey, 'enterprise_context_chunks')
       .select(CHUNK_COLUMNS)
       .eq('tenant_key', tenantKey)
@@ -620,15 +645,20 @@ export class SupabaseTenantDataAdapter implements TenantDataAdapter {
           values.push(ilikePattern(keyword));
           return `chunk_text ilike $${values.length} escape '\\'`;
         });
-        const rows = await queryPrivateRows<ContextChunkRow>(
-          tenantKey,
-          'enterprise_context_chunks',
-          CHUNK_COLUMNS,
-          ['tenant_key = $1', `(${clauses.join(' or ')})`],
-          values,
-          cap,
-        );
-        return rows.map(mapChunkRow);
+        try {
+          const rows = await queryPrivateRows<ContextChunkRow>(
+            tenantKey,
+            'enterprise_context_chunks',
+            CHUNK_COLUMNS,
+            ['tenant_key = $1', `(${clauses.join(' or ')})`],
+            values,
+            cap,
+          );
+          return rows.map(mapChunkRow);
+        } catch {
+          const publicRows = await queryPublicRows();
+          if (publicRows) return publicRows.map(mapChunkRow);
+        }
       }
       throw new Error(`chunksByKeyword failed for tenant '${tenantKey}': ${error.message}`);
     }
