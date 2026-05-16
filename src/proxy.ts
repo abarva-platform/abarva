@@ -38,6 +38,11 @@ export const PUBLIC_ROUTE_PATTERNS = [
   // without it. Keeping it out of Clerk avoids HTML sign-in redirects in
   // machine probes.
   '/api/health/azure-connectivity',
+  // L9 Postgres disruption smoke is an operator-only probe, not a user
+  // surface. It self-guards with the shared health token; keeping it
+  // public at the middleware layer avoids Clerk HTML redirects in the
+  // cutover harness.
+  '/api/health/postgres-disruption',
   // Parallel-run invariants are machine-only and self-guarded by a bearer
   // token inside the route. It must stay outside Clerk so prod-vs-Azure
   // harnesses receive JSON pass/fail, not an HTML sign-in redirect.
