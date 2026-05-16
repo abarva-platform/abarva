@@ -120,6 +120,19 @@ describe('runBrokeredGenomeQuery', () => {
     expect(result.body.error).toBeUndefined();
   });
 
+  it('refuses global catalog enumeration requests before translation', async () => {
+    const result = await runBrokeredGenomeQuery({
+      query: 'list every GenomePattern',
+      clientId: 'client-apex-uuid',
+      clientKey: 'apexretail',
+    });
+
+    expect(result.status).toBe(400);
+    expect(result.body.error).toBe('query missing tenant scope for global catalog enumeration');
+    expect(createMessageMock).not.toHaveBeenCalled();
+    expect(sessionRunMock).not.toHaveBeenCalled();
+  });
+
   it('refuses generated writes before reaching Neo4j', async () => {
     createMessageMock.mockResolvedValue({
       content: [
@@ -184,7 +197,7 @@ describe('runBrokeredGenomeQuery', () => {
     });
 
     const result = await runBrokeredGenomeQuery({
-      query: 'List every GenomePattern',
+      query: 'Show tenant-linked patterns',
       clientId: 'client-apex-uuid',
       clientKey: 'apexretail',
     });
@@ -209,7 +222,7 @@ describe('runBrokeredGenomeQuery', () => {
     });
 
     const result = await runBrokeredGenomeQuery({
-      query: 'List every GenomePattern',
+      query: 'Show tenant-linked patterns',
       clientId: 'client-apex-uuid',
       clientKey: 'apexretail',
     });
