@@ -1,4 +1,5 @@
 import { getServerSupabase } from '@/lib/supabase-server';
+import { selectStrategicMovesPreferencesReadAdapter } from '@/lib/data-plane/read-adapters/strategicMovesPreferencesReadAdapter';
 import type { TenancyCtx } from './types.db';
 
 export type StrategicMovesListView = 'scatter' | 'cards' | 'kanban';
@@ -22,19 +23,24 @@ function isUuid(value: string): boolean {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
 }
 
+/**
+ * Per-user Strategic Moves view preferences.
+ *
+ * The `tower_user_preferences.default_filters` column read runs behind the
+ * data-plane seam
+ * (`src/lib/data-plane/read-adapters/strategicMovesPreferencesReadAdapter.ts`):
+ * `supabase` by default, `azure-postgres` when `ABARVA_DATA_PLANE` opts in.
+ * The shape validation + default fallback stays here so it is not duplicated
+ * across data planes.
+ */
 export async function getStrategicMovesPreferences(
   ctx: TenancyCtx,
 ): Promise<StrategicMovesPreferences> {
   if (!isUuid(ctx.userId)) return DEFAULT_STRATEGIC_MOVES_PREFERENCES;
-  const sb = getServerSupabase();
-  const { data } = await sb
-    .from('tower_user_preferences')
-    .select('default_filters')
-    .eq('person_id', ctx.userId)
-    .eq('client_id', ctx.clientId)
-    .maybeSingle();
-
-  const filters = (data as { default_filters?: unknown } | null)?.default_filters;
+  const filters = await selectStrategicMovesPreferencesReadAdapter().getDefaultFilters(
+    ctx.userId,
+    ctx.clientId,
+  );
   if (!isRecord(filters)) return DEFAULT_STRATEGIC_MOVES_PREFERENCES;
   const strategicMoves = filters.strategic_moves;
   if (!isRecord(strategicMoves)) return DEFAULT_STRATEGIC_MOVES_PREFERENCES;
