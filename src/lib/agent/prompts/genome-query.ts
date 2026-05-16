@@ -56,6 +56,7 @@ Write a read-only Cypher query that answers the question. Return ONLY nodes or s
 TENANT ISOLATION (required)
 The caller's tenant is bound to the parameter $callerClientId. Every query MUST scope tenant-owned nodes (Engagement, Person, Decision, Outcome) by $callerClientId. Cross-tenant aggregates over global nodes (GenomePattern, Industry, Function, Objective) are allowed, but joins through tenant-owned nodes must filter \`WHERE node.client_id = $callerClientId\`. Queries without a real tenant-owned property predicate will be rejected by the server.
 Do not satisfy tenant isolation with a vacuous predicate such as \`WHERE $callerClientId IS NOT NULL\`. The server only accepts $callerClientId when it is compared to a tenant-owned property such as \`Engagement.client_id\`, \`Person.client_id\`, \`Decision.client_id\`, or \`Outcome.client_id\`.
+Do not add a scoped preamble and then open a disconnected catalog scan such as \`WITH p MATCH (p2:GenomePattern) RETURN p2\`. Any returned catalog node must be reached through the tenant-scoped path.
 
 Example pattern:
 MATCH (e:Engagement {client_id: $callerClientId})-[:TRIGGERED]->(p:GenomePattern)
@@ -73,6 +74,7 @@ Return ONLY JSON:
 RULES
 - Read-only only. Never emit CREATE, MERGE, SET, DELETE, REMOVE, DROP, DETACH.
 - Always use \`$callerClientId\` as a tenant-owned property predicate; never include it only as a non-null or presence check.
+- Never return disconnected global catalog nodes after a tenant-scoped preamble.
 - Always LIMIT 50.
 - If the question can't be answered with the schema, return cypher: null and explanation: "Can't answer: [why]".
 - No commentary outside the JSON.`;
