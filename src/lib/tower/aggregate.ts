@@ -1,4 +1,4 @@
-import { getServerSupabase } from '@/lib/supabase-server';
+import { selectTowerAggregateReadAdapter } from '@/lib/data-plane/read-adapters/towerAggregateReadAdapter';
 
 export interface TowerClient {
   id: string;
@@ -92,29 +92,22 @@ function toNum(v: unknown, fallback = 0): number {
 }
 
 export async function listTowerClients(): Promise<TowerClient[]> {
-  const { data, error } = await getServerSupabase()
-    .from('clients')
-    .select('id, name, industry_code')
-    .order('name', { ascending: true });
-  if (error) return [];
-  return (data ?? []) as TowerClient[];
+  // Physical read routed through the data-plane seam (Slice 6). Supabase
+  // remains the default; `ABARVA_DATA_PLANE=azure-postgres` opts into Azure.
+  return selectTowerAggregateReadAdapter().listClients();
 }
 
 export async function buildTowerViewModel(clientId: string): Promise<TowerViewModel | null> {
-  const sb = getServerSupabase();
-
   // Client list for selector
   const clients = await listTowerClients();
   const client = clients.find((c) => c.id === clientId) ?? null;
   if (!client) return null;
 
+  // Tenant-scoped substrate reads routed through the data-plane seam.
+  const bundle = await selectTowerAggregateReadAdapter().getAggregateBundle(clientId);
+
   // Inventory
-  const { data: useCases } = await sb
-    .from('use_cases')
-    .select('id, stage, business_unit, updated_at')
-    .eq('client_id', clientId);
-  const inventoryRows =
-    (useCases as Array<{ id: string; stage: string; business_unit: string | null; updated_at: string }> | null) ?? [];
+  const inventoryRows = bundle.useCases;
 
   const byStage: Record<string, number> = {};
   const byBusinessUnit: Record<string, number> = {};
@@ -124,58 +117,20 @@ export async function buildTowerViewModel(clientId: string): Promise<TowerViewMo
     byBusinessUnit[bu] = (byBusinessUnit[bu] ?? 0) + 1;
   }
 
-  const useCaseIds = inventoryRows.map((r) => r.id);
-
   // Adoption
-  const { data: usageRows } = useCaseIds.length > 0
-    ? await sb
-        .from('use_case_usage_metrics')
-        .select('use_case_id, penetration_pct, dau, wau, drop_off_rate_pct, period_end, created_at')
-        .in('use_case_id', useCaseIds)
-    : { data: [] };
-  const usage = (usageRows as Array<JsonObj> | null) ?? [];
+  const usage = bundle.usage as Array<JsonObj>;
 
   // Value
-  const { data: valueRows } = useCaseIds.length > 0
-    ? await sb
-        .from('use_case_value_metrics')
-        .select('use_case_id, value_driver, baseline, observed, confidence, created_at')
-        .in('use_case_id', useCaseIds)
-    : { data: [] };
-  const valueArr = (valueRows as Array<JsonObj> | null) ?? [];
+  const valueArr = bundle.value as Array<JsonObj>;
 
   // Risk
-  const { data: riskRows } = useCaseIds.length > 0
-    ? await sb
-        .from('use_case_risk')
-        .select(
-          'use_case_id, model_risk_level, governance_approval_status, bias_incidents_count, data_classification, updated_at',
-        )
-        .in('use_case_id', useCaseIds)
-    : { data: [] };
-  const riskArr = (riskRows as Array<JsonObj> | null) ?? [];
+  const riskArr = bundle.risk as Array<JsonObj>;
 
   // Cost
-  const { data: costRows } = useCaseIds.length > 0
-    ? await sb
-        .from('use_case_cost_metrics')
-        .select(
-          'use_case_id, llm_spend_usd, compute_spend_usd, storage_spend_usd, vendor_license_spend_usd, integration_spend_usd, total_spend_usd, projected_6mo_spend_usd, period_end, created_at',
-        )
-        .in('use_case_id', useCaseIds)
-    : { data: [] };
-  const costArr = (costRows as Array<JsonObj> | null) ?? [];
+  const costArr = bundle.cost as Array<JsonObj>;
 
   // Contradictions
-  const { data: contradictionRows } = await sb
-    .from('contradictions')
-    .select(
-      'id, contradiction_type, severity, description, suggested_action, evidence, detected_at, resolved_at, triggered_engagement_id, use_case_id',
-    )
-    .eq('client_id', clientId)
-    .is('resolved_at', null)
-    .order('severity', { ascending: true });
-  const contradictions = (contradictionRows as ContradictionRow[] | null) ?? [];
+  const contradictions = bundle.contradictions as ContradictionRow[];
 
   // Aggregates
   const inProduction = (byStage.execute ?? 0) + (byStage.realize ?? 0);
