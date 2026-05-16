@@ -5,13 +5,12 @@
 // on this week.
 //
 // The queue is a pure function over the AI value / outcome ledger
-// (`ai-value-outcome-ledger.ts`). Slice 0.3 ("Tower outcome taxonomy")
-// is intended to ship a shared `deriveExecutiveAction` builder and a
-// closed executive-action trigger table; until that lands, this module
-// carries its own self-contained, closed trigger taxonomy so 3.2 is not
-// blocked. When 0.3 merges, `EXECUTIVE_ACTION_TRIGGERS` and
-// `deriveExecutiveActions` can be re-pointed at the shared taxonomy
-// without changing the queue's ordering contract.
+// (`ai-value-outcome-ledger.ts`). The closed executive-action trigger
+// taxonomy is owned by Slice 0.3 (`../taxonomy/outcome-taxonomy.ts`);
+// this module consumes that canonical set rather than defining its own.
+// What stays local here is the queue-specific derivation: mapping a
+// `ValueLedgerEntry` to its single most material trigger plus the
+// operator-facing copy and the action-queue severity bucket.
 //
 // Determinism contract (the QA gate depends on this):
 //
@@ -24,29 +23,29 @@ import {
   buildAiValueOutcomeLedger,
   type ValueLedgerEntry,
 } from '@/lib/tower/ai-value-outcome-ledger';
+import {
+  EXECUTIVE_ACTIONS,
+  type ExecutiveAction as ExecutiveActionTriggerType,
+} from '@/lib/tower/taxonomy/outcome-taxonomy';
 
 // ---------------------------------------------------------------------
-// Closed trigger taxonomy
+// Closed trigger taxonomy (canonical — sourced from Slice 0.3)
 // ---------------------------------------------------------------------
 
 /**
  * Closed set of executive-action trigger types. Each maps a portfolio
- * condition to the intervention a CXO should make. Mirrors the six
- * interventions named in the execution plan (Slice 3.2):
- * sponsor gap, vendor risk, adoption gap, value leakage, dependency
- * blocker, renewal risk — plus an explicit `no_action` terminal.
+ * condition to the intervention a CXO should make. This is re-exported
+ * from the canonical Slice 0.3 taxonomy (`EXECUTIVE_ACTIONS`) so the
+ * action queue and the outcome taxonomy never drift; the array's order
+ * is the deterministic tiebreaker for the queue's stable sort.
+ *
+ * The action queue surfaces a subset of these triggers — `reallocate_spend`
+ * is derived by the outcome-taxonomy builders rather than the ledger-driven
+ * queue — but the type is the full canonical superset.
  */
-export const EXECUTIVE_ACTION_TRIGGERS = [
-  'value_leakage',
-  'verify_value_claim',
-  'drive_adoption',
-  'escalate_dependency',
-  'open_renewal_review',
-  'sponsor_intervention',
-  'no_action',
-] as const;
+export const EXECUTIVE_ACTION_TRIGGERS = EXECUTIVE_ACTIONS;
 
-export type ExecutiveActionTrigger = (typeof EXECUTIVE_ACTION_TRIGGERS)[number];
+export type ExecutiveActionTrigger = ExecutiveActionTriggerType;
 
 /**
  * Severity rank — lower number is more urgent and sorts first. The
@@ -119,6 +118,7 @@ const TRIGGER_LABEL: Record<ExecutiveActionTrigger, string> = {
   value_leakage: 'Value leakage',
   verify_value_claim: 'Unverified value claim',
   drive_adoption: 'Adoption gap',
+  reallocate_spend: 'Spend reallocation',
   escalate_dependency: 'Dependency blocker',
   open_renewal_review: 'Renewal risk',
   sponsor_intervention: 'Sponsor gap',
@@ -150,8 +150,11 @@ function fmtPct(value: number): string {
  * wins so each entry yields exactly one verdict. This keeps the queue
  * one-action-per-initiative and the priority order deterministic.
  *
- * When Slice 0.3 lands, this is the function that re-points at the
- * shared `deriveExecutiveAction` builder.
+ * The trigger type returned is a member of the canonical Slice 0.3
+ * `EXECUTIVE_ACTIONS` taxonomy. This is the action queue's own
+ * derivation over a `ValueLedgerEntry`; it is distinct from the
+ * outcome-taxonomy `deriveExecutiveAction`, which classifies an
+ * `OutcomeReading` instead.
  */
 export function deriveExecutiveAction(entry: ValueLedgerEntry): TriggerVerdict {
   const measured =
@@ -267,6 +270,7 @@ function emptyTriggerCounts(): Record<ExecutiveActionTrigger, number> {
     value_leakage: 0,
     verify_value_claim: 0,
     drive_adoption: 0,
+    reallocate_spend: 0,
     escalate_dependency: 0,
     open_renewal_review: 0,
     sponsor_intervention: 0,
