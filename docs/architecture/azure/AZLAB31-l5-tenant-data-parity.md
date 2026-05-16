@@ -30,16 +30,18 @@ This gate adds a read-only verifier for tenant-level data substance after a copy
 | Graph edges | `enterprise_graph_edges` | Traversal substrate exists. |
 | Source events | `source_events` | Source module has live sourcing context. |
 | Engagements | `engagements` | Moves/program surfaces have active work to render. |
+| KPIs | `kpis` | Sentinel/Tower can cite named business pressure metrics. |
+| Pattern packs | `pattern_packs` | Intelligence can rank and cite tenant-specific pattern IDs. |
 
 ## Canonical Synthetic Minimums
 
 These are minimum thresholds, not exact counts. They are intentionally below the current synthetic baseline so the gate catches empty/partial loads without failing on harmless extra rows.
 
-| Tenant | Segments | Records | Chunks | Graph nodes | Graph edges | Source events | Engagements |
-|---|---:|---:|---:|---:|---:|---:|---:|
-| Apex Retail | 14 | 400 | 900 | 250 | 300 | 5 | 3 |
-| Meridian Health | 14 | 700 | 800 | 400 | 600 | 8 | 3 |
-| First Capital | 14 | 300 | 800 | 200 | 200 | 5 | 2 |
+| Tenant | Segments | Records | Chunks | Graph nodes | Graph edges | Source events | Engagements | KPIs | Pattern packs |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| Apex Retail | 14 | 400 | 900 | 250 | 300 | 5 | 3 | 3 | 3 |
+| Meridian Health | 14 | 700 | 800 | 400 | 600 | 8 | 3 | 3 | 3 |
+| First Capital | 14 | 300 | 800 | 200 | 200 | 5 | 2 | 3 | 3 |
 
 ## How To Run
 

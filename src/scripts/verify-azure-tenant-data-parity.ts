@@ -22,7 +22,9 @@ type MetricKey =
   | 'graphNodes'
   | 'graphEdges'
   | 'sourceEvents'
-  | 'engagements';
+  | 'engagements'
+  | 'kpis'
+  | 'patternPacks';
 
 type TenantMetricResult = {
   value: number | null;
@@ -50,6 +52,8 @@ const TENANT_EXPECTATIONS: Record<TenantKey, TenantExpectation> = {
       graphEdges: 300,
       sourceEvents: 5,
       engagements: 3,
+      kpis: 3,
+      patternPacks: 3,
     },
   },
   'meridian-health': {
@@ -64,6 +68,8 @@ const TENANT_EXPECTATIONS: Record<TenantKey, TenantExpectation> = {
       graphEdges: 600,
       sourceEvents: 8,
       engagements: 3,
+      kpis: 3,
+      patternPacks: 3,
     },
   },
   'first-capital': {
@@ -78,6 +84,8 @@ const TENANT_EXPECTATIONS: Record<TenantKey, TenantExpectation> = {
       graphEdges: 200,
       sourceEvents: 5,
       engagements: 2,
+      kpis: 3,
+      patternPacks: 3,
     },
   },
 };
@@ -91,6 +99,8 @@ const METRIC_ORDER: MetricKey[] = [
   'graphEdges',
   'sourceEvents',
   'engagements',
+  'kpis',
+  'patternPacks',
 ];
 
 function parseArgs(): { tenants: TenantKey[]; json: boolean; warnOnly: boolean } {
@@ -152,6 +162,12 @@ async function collectMetrics(client: Client, expectation: TenantExpectation): P
     sourceEvents: await count(client, 'source_events', 'client_key = any($1::text[])', [aliases]),
     engagements: clientIds.length
       ? await count(client, 'engagements', 'client_id::text = any($1::text[])', [clientIds])
+      : 0,
+    kpis: clientIds.length
+      ? await count(client, 'kpis', 'client_id::text = any($1::text[])', [clientIds])
+      : 0,
+    patternPacks: clientIds.length
+      ? await count(client, 'pattern_packs', 'client_id::text = any($1::text[])', [clientIds])
       : 0,
   };
 }

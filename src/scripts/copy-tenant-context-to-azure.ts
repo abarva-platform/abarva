@@ -70,20 +70,6 @@ function makeClient(connectionString: string): Client {
   });
 }
 
-async function getTableColumns(client: Client, table: string): Promise<string[]> {
-  const result = await client.query<{ column_name: string }>(
-    `
-      select column_name
-      from information_schema.columns
-      where table_schema = 'public'
-        and table_name = $1
-      order by ordinal_position
-    `,
-    [table],
-  );
-  return result.rows.map((row) => row.column_name);
-}
-
 async function getTableColumnMeta(client: Client, table: string): Promise<ColumnMeta[]> {
   const result = await client.query<{ column_name: string; udt_name: string }>(
     `
@@ -245,6 +231,27 @@ function remapClientId(row: QueryResultRow, clientMap: ClientMap): QueryResultRo
   return next;
 }
 
+function remapKpi(row: QueryResultRow, clientMap: ClientMap, personMap: IdMap): QueryResultRow {
+  const next = remapClientId(row, clientMap);
+  if (next.owner_person_id) {
+    next.owner_person_id = personMap.get(String(next.owner_person_id)) ?? null;
+  }
+  // These references are optional context affordances. The Azure lab copy is
+  // allowed to omit the referenced dimension rows while preserving the KPI row.
+  for (const column of ['benchmark_peer_cohort_id', 'reasoning_scope_id', 'disclosure_scope_id']) {
+    if (next[column]) next[column] = null;
+  }
+  return next;
+}
+
+function remapPatternPack(row: QueryResultRow, clientMap: ClientMap): QueryResultRow {
+  const next = remapClientId(row, clientMap);
+  for (const column of ['reasoning_scope_id', 'disclosure_scope_id']) {
+    if (next[column]) next[column] = null;
+  }
+  return next;
+}
+
 function remapEngagement(row: QueryResultRow, clientMap: ClientMap, personMap: IdMap, teamMap: IdMap): QueryResultRow {
   const next = remapClientId(row, clientMap);
   for (const column of ['sponsor_person_id', 'co_sponsor_person_id', 'maestro_person_id', 'phase_locked_by_user_id']) {
@@ -374,6 +381,8 @@ async function replaceTenantRows(target: Client, tenants: TenantKey[], targetCli
   const deletes: Array<[string, string, unknown[]]> = [
     ['gate_criterion_states', 'gate_criteria_id in (select id from gate_criteria where program_id in (select id from engagements where client_id::text = any($1::text[])))', [targetClientIds]],
     ['gate_criteria', 'program_id in (select id from engagements where client_id::text = any($1::text[]))', [targetClientIds]],
+    ['pattern_packs', 'client_id::text = any($1::text[])', [targetClientIds]],
+    ['kpis', 'client_id::text = any($1::text[])', [targetClientIds]],
     ['source_events', 'client_key = any($1::text[])', [aliases]],
     ['enterprise_context_chunks', 'tenant_key = any($1::text[])', [aliases]],
     ['enterprise_graph_edges', 'tenant_key = any($1::text[])', [aliases]],
@@ -446,6 +455,20 @@ async function main() {
         sourceParams: [sourceClientIds],
         skipUpdateColumns: ['id'],
         transform: (row, map) => remapEngagement(row, map, personMap, teamMap),
+      },
+      {
+        table: 'kpis',
+        conflictColumns: ['id'],
+        sourceWhere: 'client_id::text = any($1::text[])',
+        sourceParams: [sourceClientIds],
+        transform: (row, map) => remapKpi(row, map, personMap),
+      },
+      {
+        table: 'pattern_packs',
+        conflictColumns: ['id'],
+        sourceWhere: 'client_id::text = any($1::text[])',
+        sourceParams: [sourceClientIds],
+        transform: remapPatternPack,
       },
       { table: 'tenant_expected_baselines', conflictColumns: ['tenant_key', 'segment_id'], sourceWhere: 'tenant_key = any($1::text[])', sourceParams: [aliases], transform: remapClientId },
       { table: 'data_inventory_segments', conflictColumns: ['tenant_key', 'segment_id'], sourceWhere: 'tenant_key = any($1::text[])', sourceParams: [aliases], transform: remapClientId },
