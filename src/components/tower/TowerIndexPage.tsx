@@ -6,6 +6,7 @@ import type { CSSProperties, ReactNode } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { AppShell } from '@/components/shell/AppShell';
 import { MetricProvenance } from '@/components/tower/MetricProvenance';
+import { ExecutiveActionQueuePanel } from '@/components/tower/ExecutiveActionQueuePanel';
 import { AtlasChatPanel, type AtlasMessage } from '@/components/atlas/AtlasChatPanel';
 import type { AttachmentRef } from '@/components/agent/AgentDock';
 import type { AtlasChatResponse, AtlasSuggestion } from '@/lib/atlas/types';
@@ -2596,7 +2597,11 @@ export function TowerIndexPage({
           )}
 
           {activeCanvasView === 'evidence' && (
-            <div style={{ padding: '24px 32px 32px' }}>
+            <div style={{ padding: '24px 0 32px' }}>
+              <div style={{ marginBottom: 24 }}>
+                <ExecutiveActionQueuePanel />
+              </div>
+              <div style={{ padding: '0 32px' }}>
               <TowerDataDesignPanel
                 activeTab={activeTab}
                 activeLens={activeLens}
@@ -2604,6 +2609,7 @@ export function TowerIndexPage({
                 vendors={vendors ?? []}
                 substrateCounts={substrateCounts}
               />
+              </div>
             </div>
           )}
           </>
