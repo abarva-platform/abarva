@@ -138,7 +138,8 @@
     "db:seed:setup-ai-initiatives:dry": "NODE_OPTIONS='--require ./src/scripts/_mock-server-only-preload.cjs' npx tsx src/scripts/setup-data/load-setup-ai-initiative-fixtures.ts",
     "db:seed:setup-ai-initiatives": "NODE_OPTIONS='--require ./src/scripts/_mock-server-only-preload.cjs' npx tsx src/scripts/setup-data/load-setup-ai-initiative-fixtures.ts --no-dry-run",
     "azure:search:retriever-smoke": "npx tsx src/scripts/azure-search-retriever-smoke.ts",
-    "azure:postgres-disruption:smoke": "node scripts/resilience/postgres-disruption-smoke.mjs"
+    "azure:postgres-disruption:smoke": "node scripts/resilience/postgres-disruption-smoke.mjs",
+    "azure:postgres:pitr-drill": "node scripts/azure/postgres-pitr-restore-drill.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.85.0",
