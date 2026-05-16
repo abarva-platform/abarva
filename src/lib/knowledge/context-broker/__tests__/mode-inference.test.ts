@@ -69,10 +69,10 @@ describe('inferModeForSurface · CB-6', () => {
   });
 
   describe('/intelligence', () => {
-    it('returns "corpus" with tenantKey', () => {
+    it('returns "full" with tenantKey so Sentinel gets tenant facts plus corpus', () => {
       expect(
         inferModeForSurface({ surface: '/intelligence', tenantKey: 'apex-retail' }),
-      ).toBe('corpus');
+      ).toBe('full');
     });
 
     it('returns "corpus" without tenantKey', () => {
@@ -81,10 +81,10 @@ describe('inferModeForSurface · CB-6', () => {
       ).toBe('corpus');
     });
 
-    it('returns "corpus" for nested intelligence routes', () => {
+    it('returns "full" for nested intelligence routes when tenantKey is present', () => {
       expect(
         inferModeForSurface({ surface: '/intelligence/patterns/pat-prg-cdp-001', tenantKey: 'x' }),
-      ).toBe('corpus');
+      ).toBe('full');
     });
   });
 
