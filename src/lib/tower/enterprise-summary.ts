@@ -1,4 +1,4 @@
-import { getServerSupabase } from '@/lib/supabase-server';
+import { selectEnterpriseSummaryReadAdapter } from '@/lib/data-plane/read-adapters/enterpriseSummaryReadAdapter';
 
 export interface EnterpriseSummary {
   techStack: {
@@ -43,22 +43,11 @@ interface VolRow {
 }
 
 export async function loadEnterpriseSummary(clientId: string): Promise<EnterpriseSummary> {
-  const sb = getServerSupabase();
+  // Physical reads routed through the data-plane seam (Slice 6). Supabase
+  // remains the default; `ABARVA_DATA_PLANE=azure-postgres` opts into Azure.
+  const bundle = await selectEnterpriseSummaryReadAdapter().getEnterpriseSummaryBundle(clientId);
 
-  const [techRes, projRes, augRes, volRes] = await Promise.all([
-    sb.from('tech_stack_items').select('category, annual_spend_usd, touches_ai').eq('client_id', clientId).eq('is_demo_data', false),
-    sb.from('tech_projects').select('status, touches_ai, total_budget_usd, spent_to_date_usd').eq('client_id', clientId).eq('is_demo_data', false),
-    sb.from('staff_augmentation').select('headcount_fte, annual_spend_usd, touches_ai').eq('client_id', clientId).eq('is_demo_data', false),
-    sb
-      .from('volumetrics_snapshots')
-      .select('snapshot_date, api_calls_millions, tokens_billions, active_models, data_pipelines, storage_tb')
-      .eq('client_id', clientId)
-      .eq('is_demo_data', false)
-      .order('snapshot_date', { ascending: true })
-      .limit(30),
-  ]);
-
-  const techRows = (techRes.data as TechRow[] | null) ?? [];
+  const techRows = bundle.tech as TechRow[];
   const byCategoryMap = new Map<string, { count: number; spend: number }>();
   let techTotalSpend = 0;
   let techAi = 0;
@@ -74,7 +63,7 @@ export async function loadEnterpriseSummary(clientId: string): Promise<Enterpris
     .map(([category, v]) => ({ category, count: v.count, spend: v.spend }))
     .sort((a, b) => b.spend - a.spend);
 
-  const projRows = (projRes.data as ProjectRow[] | null) ?? [];
+  const projRows = bundle.projects as ProjectRow[];
   let projAi = 0;
   let projInFlight = 0;
   let projBudget = 0;
@@ -86,7 +75,7 @@ export async function loadEnterpriseSummary(clientId: string): Promise<Enterpris
     projSpent += Number(p.spent_to_date_usd ?? 0);
   }
 
-  const augRows = (augRes.data as AugRow[] | null) ?? [];
+  const augRows = bundle.staffAug as AugRow[];
   let augFte = 0;
   let augSpend = 0;
   let augAi = 0;
@@ -96,7 +85,7 @@ export async function loadEnterpriseSummary(clientId: string): Promise<Enterpris
     if (a.touches_ai) augAi += 1;
   }
 
-  const volRows = (volRes.data as VolRow[] | null) ?? [];
+  const volRows = bundle.volumetrics as VolRow[];
   const latest = volRows[volRows.length - 1];
   const apiSeries = volRows.map((v) => Number(v.api_calls_millions ?? 0));
 
