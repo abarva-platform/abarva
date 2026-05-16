@@ -163,6 +163,18 @@ describe('agent route · CB-6 context-bundle wiring', () => {
     expect(source).toContain('context_bundle_assembly_failed');
   });
 
+  it('has a guarded L9 provider-overload drill path with graceful fallback copy', () => {
+    expect(source).toContain("const L9_PROVIDER_OVERLOAD_DRILL_HEADER = 'x-abarva-l9-provider-drill-token'");
+    expect(source).toContain('export function shouldRunProviderOverloadDrill(request: Request): boolean');
+    expect(source).toContain('AZURE_CONNECTIVITY_HEALTH_TOKEN');
+    expect(source).toContain('throw new AgentProviderOverloadDrillError()');
+    expect(source).toContain('isProviderOverloadLike(err)');
+    expect(source).toContain('formatProviderOverloadFallback({');
+    expect(source).toContain('temporarily capacity-limited by the model provider');
+    expect(source).toContain('I have not changed tenant data');
+    expect(source).toContain('[stream error: ${errMessage}]');
+  });
+
   it('injects private-plane posture while preserving Nexus current-state grounding', () => {
     expect(source).toContain('PRIVATE DATA PLANE CONTEXT:');
     expect(source).toContain('CONTEXT BROKER RECEIPT:');
