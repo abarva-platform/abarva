@@ -848,6 +848,7 @@ describe('PATTERN_LEVEL_FALLBACK consultant posture — INT-VOICE.STRAT-2026-05-
     expect(prompt).toMatch(/Do not claim secret roadmap knowledge/i);
     expect(prompt).toMatch(/Epic remains clinical workflow gravity/i);
     expect(prompt).toMatch(/startup disruption/i);
+    expect(prompt).toMatch(/RAF impact/i);
     expect(prompt).toMatch(/governed plurality/i);
   });
 
@@ -879,7 +880,7 @@ describe('PATTERN_LEVEL_FALLBACK consultant posture — INT-VOICE.STRAT-2026-05-
     expect(prompt).toMatch(/deposit retention/i);
     expect(prompt).toMatch(/exact phrase "model risk"/i);
     expect(prompt).toMatch(/Continuity fallback/i);
-    expect(prompt).toMatch(/word "recommendation"/i);
+    expect(prompt).toMatch(/words "recommendation", "because", and "risk"/i);
   });
 
   it('is omitted on the Source surface, which has its own Brief C role', () => {
