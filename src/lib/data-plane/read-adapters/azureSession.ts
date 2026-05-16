@@ -72,3 +72,47 @@ export function createDefaultSession(applicationName: string): SessionRunner {
     }
   };
 }
+
+/** Runs `fn` inside a real `BEGIN`/`COMMIT` transaction, rolling back on error. */
+export type TxSessionRunner = <T>(fn: (run: SqlRunner) => Promise<T>) => Promise<T>;
+
+/**
+ * Transaction-capable session runner for the write seam. Opens one `pg`
+ * connection, wraps `fn` in `BEGIN`/`COMMIT`, and `ROLLBACK`s if `fn` throws —
+ * giving Azure the real client-side atomicity Supabase lacks (design doc §2).
+ * The connection is always torn down.
+ */
+export function createTxSession(applicationName: string): TxSessionRunner {
+  return async (fn) => {
+    const url = resolveAzureUrl();
+    if (!url) {
+      throw new Error(
+        'azure_write_adapter_no_connection: set ABARVA_AZURE_DATABASE_URL or DATABASE_URL',
+      );
+    }
+    const config: ClientConfig = {
+      connectionString: url,
+      application_name: applicationName,
+      ssl: disableSsl(url) ? false : { rejectUnauthorized: false },
+    };
+    const client = new Client(config);
+    await client.connect();
+    const run: SqlRunner = async <R>(sql: string, params: unknown[]) =>
+      (await client.query(sql, params)).rows as R[];
+    try {
+      await client.query('BEGIN');
+      const result = await fn(run);
+      await client.query('COMMIT');
+      return result;
+    } catch (err) {
+      try {
+        await client.query('ROLLBACK');
+      } catch {
+        // The connection is being torn down regardless; swallow rollback noise.
+      }
+      throw err;
+    } finally {
+      await client.end();
+    }
+  };
+}
