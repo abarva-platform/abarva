@@ -16,6 +16,11 @@ function parseArgs(argv) {
   const args = {
     baseUrl: process.env.AZURE_L8_BASE_URL ?? process.env.BASE_URL ?? '',
     cookie: process.env.AZURE_L8_COOKIE ?? '',
+    authMode: process.env.AZURE_L8_AUTH_MODE ?? 'cookie',
+    demoEmail: process.env.AZURE_L8_DEMO_EMAIL ?? 'cio@apex-retail.example.com',
+    demoPassword: process.env.E2E_DEMO_PASSWORD ?? 'Demo2026!',
+    demoAccessCode: process.env.E2E_DEMO_ACCESS_CODE ?? '424242',
+    cookieRefreshSeconds: 45,
     durationSeconds: 60,
     concurrency: 5,
     timeoutMs: 15_000,
@@ -40,6 +45,26 @@ function parseArgs(argv) {
         break;
       case '--cookie':
         args.cookie = nextValue;
+        if (consume) index += 1;
+        break;
+      case '--auth-mode':
+        args.authMode = nextValue;
+        if (consume) index += 1;
+        break;
+      case '--demo-email':
+        args.demoEmail = nextValue;
+        if (consume) index += 1;
+        break;
+      case '--demo-password':
+        args.demoPassword = nextValue;
+        if (consume) index += 1;
+        break;
+      case '--demo-access-code':
+        args.demoAccessCode = nextValue;
+        if (consume) index += 1;
+        break;
+      case '--cookie-refresh-seconds':
+        args.cookieRefreshSeconds = Number(nextValue);
         if (consume) index += 1;
         break;
       case '--duration-seconds':
@@ -102,6 +127,7 @@ function assertConfig(args) {
     ['thinkTimeMs', args.thinkTimeMs],
     ['p95TargetMs', args.p95TargetMs],
     ['maxErrorRate', args.maxErrorRate],
+    ['cookieRefreshSeconds', args.cookieRefreshSeconds],
   ]) {
     if (!Number.isFinite(value) || value < 0) {
       throw new Error(`Invalid ${name}: ${value}`);
@@ -114,6 +140,10 @@ function assertConfig(args) {
 
   if (args.paths.length === 0) {
     throw new Error('At least one path is required.');
+  }
+
+  if (!['cookie', 'demo-sign-in'].includes(args.authMode)) {
+    throw new Error(`Invalid auth mode: ${args.authMode}`);
   }
 }
 
@@ -215,6 +245,49 @@ async function requestOnce(args, path) {
   };
 }
 
+async function typeCredential(page, placeholder, value) {
+  const field = page.getByPlaceholder(placeholder);
+  await field.fill('');
+  await field.click();
+  await page.keyboard.type(value, { delay: 4 });
+  const actual = await field.inputValue();
+  if (actual !== value) {
+    throw new Error(`Credential field did not accept expected value for ${placeholder}`);
+  }
+}
+
+async function mintDemoCookieHeader(args) {
+  const { chromium } = await import('@playwright/test');
+  const browser = await chromium.launch({ headless: true });
+  const context = await browser.newContext();
+  const page = await context.newPage();
+
+  try {
+    await page.goto(targetUrl(args.baseUrl, '/sign-in'), { waitUntil: 'domcontentloaded' });
+    await page.getByPlaceholder(/name@company.com/i).waitFor({ state: 'visible', timeout: 30_000 });
+    await page.waitForFunction(
+      () => Boolean(globalThis.Clerk?.loaded),
+      null,
+      { timeout: 30_000 },
+    );
+    await typeCredential(page, /name@company.com/i, args.demoEmail);
+    await typeCredential(page, /Password from invite/i, args.demoPassword);
+    await typeCredential(page, /6-digit code/i, args.demoAccessCode);
+    await page.getByRole('button', { name: /sign in|continue/i }).click();
+    await page.waitForURL(/\/home/, { timeout: 30_000 });
+    await page.waitForFunction(
+      () => document.cookie.includes('__session='),
+      null,
+      { timeout: 30_000 },
+    );
+    const cookies = await context.cookies(args.baseUrl);
+    return cookies.map((cookie) => `${cookie.name}=${cookie.value}`).join('; ');
+  } finally {
+    await context.close();
+    await browser.close();
+  }
+}
+
 async function run(args) {
   assertConfig(args);
 
@@ -224,7 +297,7 @@ async function run(args) {
       dryRun: true,
       target: {
         baseUrl: args.baseUrl,
-        authenticated: Boolean(args.cookie),
+        authenticated: Boolean(args.cookie) || args.authMode === 'demo-sign-in',
         paths: args.paths,
         require2xx: args.require2xx,
       },
@@ -243,12 +316,44 @@ async function run(args) {
   const deadline = performance.now() + args.durationSeconds * 1000;
   const samples = [];
   const errors = [];
+  const authEvents = [];
   let sequence = 0;
+  let refreshPromise = null;
+
+  async function refreshDemoCookie(reason) {
+    const started = performance.now();
+    args.cookie = await mintDemoCookieHeader(args);
+    authEvents.push({
+      reason,
+      at: new Date().toISOString(),
+      durationMs: Number((performance.now() - started).toFixed(1)),
+    });
+  }
+
+  if (args.authMode === 'demo-sign-in') {
+    await refreshDemoCookie('initial');
+  }
 
   const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
+  async function maybeRefreshCookie() {
+    if (args.authMode !== 'demo-sign-in') return;
+    if (args.cookieRefreshSeconds <= 0) return;
+    const last = authEvents.at(-1);
+    const lastAt = last ? Date.parse(last.at) : 0;
+    const ageMs = Date.now() - lastAt;
+    if (ageMs < args.cookieRefreshSeconds * 1000) return;
+    if (!refreshPromise) {
+      refreshPromise = refreshDemoCookie('periodic').finally(() => {
+        refreshPromise = null;
+      });
+    }
+    await refreshPromise;
+  }
+
   async function worker() {
     while (performance.now() < deadline) {
+      await maybeRefreshCookie();
       const path = args.paths[sequence % args.paths.length];
       sequence += 1;
       try {
@@ -266,7 +371,14 @@ async function run(args) {
   }
 
   await Promise.all(Array.from({ length: args.concurrency }, () => worker()));
-  return summarize(args, samples, errors, startedAt, new Date().toISOString());
+  const report = summarize(args, samples, errors, startedAt, new Date().toISOString());
+  report.auth = {
+    mode: args.authMode,
+    demoEmail: args.authMode === 'demo-sign-in' ? args.demoEmail : undefined,
+    refreshSeconds: args.authMode === 'demo-sign-in' ? args.cookieRefreshSeconds : undefined,
+    events: authEvents,
+  };
+  return report;
 }
 
 try {

@@ -48,6 +48,19 @@ AZURE_L8_COOKIE='<clerk-session-cookie>' \
   npm run azure:load:primary-surfaces -- --duration-seconds 60 --concurrency 5 --require-2xx
 ```
 
+Authenticated demo-sign-in smoke with automatic Clerk cookie refresh:
+
+```bash
+npm run azure:load:primary-surfaces -- \
+  --base-url https://ca-abarva-web-lab-eastus.<region>.azurecontainerapps.io \
+  --auth-mode demo-sign-in \
+  --demo-email cio@apex-retail.example.com \
+  --paths /home,/intelligence,/strategic-moves,/source,/tower \
+  --duration-seconds 60 \
+  --concurrency 5 \
+  --require-2xx
+```
+
 GitHub Actions:
 
 ```bash
@@ -90,7 +103,7 @@ This is a load smoke, not the final pilot load test. It does not yet simulate fu
 
 | Next control | Why |
 |---|---|
-| Authenticated Azure run with `AZURE_LAB_L8_COOKIE` and `--require-2xx` | Measures real app-surface latency instead of redirect stability. |
+| Authenticated Azure run with `--auth-mode demo-sign-in` and `--require-2xx` | Measures real app-surface latency instead of redirect stability; refreshes Clerk's short session token during the run. |
 | Agent-turn latency budget | Breaks Sentinel turn time into retrieval, reasoning, model, and synthesis. |
 | Cold-start runbook | Measures Container Apps scale-to-zero recovery. |
 | Postgres pool pressure scenario | Detects connection exhaustion before pilot traffic. |
