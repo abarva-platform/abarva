@@ -1,0 +1,1644 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>AbarVa Target-State Architecture and Solution Design Primer</title>
+  <style>
+    :root {
+      --bg: #f8f7f4;
+      --paper: #ffffff;
+      --ink: #101316;
+      --muted: #5b6472;
+      --line: #d8d4ca;
+      --line-strong: #bdb7aa;
+      --blue: #0b4a91;
+      --blue-soft: #e7f0fb;
+      --green: #26755d;
+      --green-soft: #e6f2ed;
+      --gold: #9f6b00;
+      --gold-soft: #fff4d7;
+      --red: #a73a3a;
+      --red-soft: #fae8e8;
+      --code: #111827;
+      --shadow: 0 18px 50px rgba(16, 19, 22, 0.08);
+      --radius: 8px;
+    }
+
+    * { box-sizing: border-box; }
+
+    html {
+      scroll-behavior: smooth;
+      background: var(--bg);
+    }
+
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: var(--bg);
+      font-family: "DM Sans", Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.5;
+    }
+
+    a { color: var(--blue); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    .shell {
+      min-height: 100vh;
+      display: grid;
+      grid-template-columns: 292px minmax(0, 1fr);
+    }
+
+    nav {
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      padding: 24px 22px;
+      border-right: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.76);
+      backdrop-filter: blur(18px);
+      overflow-y: auto;
+    }
+
+    .logo {
+      display: block;
+      width: 176px;
+      height: auto;
+      margin: 0 0 22px;
+    }
+
+    .nav-kicker {
+      margin: 18px 0 8px;
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .nav-link {
+      display: block;
+      padding: 7px 0;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--ink);
+    }
+
+    main {
+      min-width: 0;
+      padding: 0;
+    }
+
+    .hero {
+      padding: 56px clamp(28px, 5vw, 72px) 36px;
+      border-bottom: 1px solid var(--line);
+      background: linear-gradient(180deg, #ffffff 0%, var(--bg) 100%);
+    }
+
+    .eyebrow {
+      margin: 0 0 14px;
+      font-size: 11px;
+      font-weight: 900;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--blue);
+    }
+
+    h1, h2, h3, h4 {
+      font-family: Georgia, "Times New Roman", serif;
+      font-weight: 400;
+      line-height: 1.06;
+      letter-spacing: 0;
+      color: var(--ink);
+    }
+
+    h1 {
+      max-width: 1120px;
+      margin: 0;
+      font-size: clamp(44px, 6vw, 88px);
+    }
+
+    h2 {
+      margin: 0 0 18px;
+      font-size: clamp(34px, 4vw, 56px);
+    }
+
+    h3 {
+      margin: 0 0 10px;
+      font-size: 26px;
+    }
+
+    h4 {
+      margin: 0 0 8px;
+      font-size: 20px;
+    }
+
+    .hero-copy {
+      max-width: 1040px;
+      margin: 22px 0 0;
+      font-size: 19px;
+      color: #283241;
+    }
+
+    .meta-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 28px;
+      max-width: 1180px;
+    }
+
+    .meta-card {
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--paper);
+      padding: 14px;
+      min-height: 96px;
+    }
+
+    .label {
+      display: block;
+      margin-bottom: 7px;
+      font-size: 10px;
+      font-weight: 900;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .big {
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 30px;
+      line-height: 1;
+    }
+
+    section {
+      padding: 48px clamp(28px, 5vw, 72px);
+      border-bottom: 1px solid var(--line);
+    }
+
+    .section-intro {
+      max-width: 960px;
+      margin: -6px 0 26px;
+      color: #303a49;
+      font-size: 17px;
+    }
+
+    .grid {
+      display: grid;
+      gap: 14px;
+    }
+
+    .grid.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .grid.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .grid.four { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+
+    .card {
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--paper);
+      padding: 18px;
+      box-shadow: none;
+    }
+
+    .card.strong {
+      border-color: var(--line-strong);
+      box-shadow: var(--shadow);
+    }
+
+    .card p, .card ul, .card ol {
+      margin-top: 8px;
+      margin-bottom: 0;
+      color: #334155;
+    }
+
+    ul, ol {
+      padding-left: 18px;
+    }
+
+    li + li { margin-top: 6px; }
+
+    .pill-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin: 14px 0 0;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      min-height: 28px;
+      padding: 5px 10px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: #fff;
+      font-size: 12px;
+      font-weight: 800;
+      color: #1f2937;
+    }
+
+    .pill.blue { background: var(--blue-soft); color: var(--blue); border-color: #bcd3ee; }
+    .pill.green { background: var(--green-soft); color: var(--green); border-color: #b9dccf; }
+    .pill.gold { background: var(--gold-soft); color: var(--gold); border-color: #ecd394; }
+
+    .table-wrap {
+      overflow-x: auto;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--paper);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 860px;
+      background: var(--paper);
+    }
+
+    th, td {
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--line);
+      vertical-align: top;
+      text-align: left;
+      font-size: 13px;
+    }
+
+    th {
+      font-size: 10px;
+      font-weight: 900;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: #4b5563;
+      background: #fbfaf8;
+    }
+
+    tr:last-child td { border-bottom: 0; }
+
+    code, pre {
+      font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+    }
+
+    code {
+      padding: 2px 5px;
+      border-radius: 4px;
+      background: #eef2f7;
+      color: var(--code);
+      font-size: 0.92em;
+    }
+
+    pre {
+      overflow-x: auto;
+      margin: 14px 0 0;
+      padding: 16px;
+      border-radius: var(--radius);
+      background: #0f172a;
+      color: #e5e7eb;
+      font-size: 12px;
+      line-height: 1.55;
+    }
+
+    .diagram {
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: #fff;
+      padding: 18px;
+      overflow-x: auto;
+    }
+
+    .diagram svg {
+      display: block;
+      width: 100%;
+      min-width: 900px;
+      height: auto;
+    }
+
+    .node { fill: #fff; stroke: #c7c2b8; stroke-width: 1.2; }
+    .node-blue { fill: #e7f0fb; stroke: #7ca8d8; stroke-width: 1.2; }
+    .node-green { fill: #e6f2ed; stroke: #84bea9; stroke-width: 1.2; }
+    .node-gold { fill: #fff4d7; stroke: #d8b65a; stroke-width: 1.2; }
+    .node-red { fill: #fae8e8; stroke: #d79b9b; stroke-width: 1.2; }
+    .node-dark { fill: #101316; stroke: #101316; stroke-width: 1.2; }
+    .arrow { stroke: #677084; stroke-width: 1.4; fill: none; marker-end: url(#arrow); }
+    .arrow-strong { stroke: #0b4a91; stroke-width: 2; fill: none; marker-end: url(#arrowBlue); }
+    .svg-title { font: 700 14px "DM Sans", Arial, sans-serif; fill: #111827; }
+    .svg-small { font: 500 11px "DM Sans", Arial, sans-serif; fill: #475569; }
+    .svg-white { fill: #fff; }
+
+    .callout {
+      border-left: 4px solid var(--blue);
+      background: #fff;
+      padding: 16px 18px;
+      border-radius: 0 var(--radius) var(--radius) 0;
+      box-shadow: var(--shadow);
+    }
+
+    .callout.warning { border-color: var(--gold); }
+    .callout.security { border-color: var(--green); }
+
+    .status {
+      display: inline-block;
+      padding: 3px 7px;
+      border-radius: 4px;
+      font-size: 10px;
+      font-weight: 900;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    .status.live { background: var(--green-soft); color: var(--green); }
+    .status.target { background: var(--blue-soft); color: var(--blue); }
+    .status.guard { background: var(--gold-soft); color: var(--gold); }
+
+    .footer {
+      padding: 34px clamp(28px, 5vw, 72px);
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    @media (max-width: 1040px) {
+      .shell { grid-template-columns: 1fr; }
+      nav {
+        position: relative;
+        height: auto;
+        border-right: 0;
+        border-bottom: 1px solid var(--line);
+      }
+      .meta-grid, .grid.two, .grid.three, .grid.four {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media print {
+      nav { display: none; }
+      .shell { display: block; }
+      section, .hero { padding: 28px; }
+      .card, .table-wrap, .diagram { break-inside: avoid; }
+      body { background: #fff; }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <nav aria-label="Document navigation">
+      <img class="logo" src="../brand/abarva-logo-lockup-v2.svg" alt="AbarVa" />
+      <div class="nav-kicker">Primer</div>
+      <a class="nav-link" href="#purpose">Purpose</a>
+      <a class="nav-link" href="#principles">Architecture Principles</a>
+      <a class="nav-link" href="#target">Target-State Map</a>
+      <a class="nav-link" href="#frontend">Frontend</a>
+      <a class="nav-link" href="#page-bindings">Page Bindings</a>
+      <a class="nav-link" href="#middle">Middle Tier</a>
+      <a class="nav-link" href="#code-patterns">Code Patterns</a>
+      <a class="nav-link" href="#backend">Backend and Data</a>
+      <a class="nav-link" href="#data-model">Data Model</a>
+      <a class="nav-link" href="#configuration">Configuration</a>
+      <a class="nav-link" href="#context">Context Layer</a>
+      <a class="nav-link" href="#agents">Agent Runtime</a>
+      <a class="nav-link" href="#azure">Azure Services</a>
+      <a class="nav-link" href="#security">Security and Governance</a>
+      <a class="nav-link" href="#dev">Developer Standards</a>
+      <a class="nav-link" href="#automation">Agentic SDLC</a>
+      <a class="nav-link" href="#tests">Test Gates</a>
+      <a class="nav-link" href="#onboarding">Onboarding</a>
+    </nav>
+
+    <main>
+      <header class="hero" id="purpose">
+        <p class="eyebrow">Internal Product Team Primer · Target-State Architecture</p>
+        <h1>AbarVa is a tenant-grounded decision OS, not a generic AI wrapper.</h1>
+        <p class="hero-copy">
+          This document orients new developers to the full AbarVa architecture: the executive product surfaces,
+          the agent and context-broker spine, the Azure private data lane, the data model, the operating controls,
+          and the engineering standards required to build a leading enterprise SaaS platform without weakening
+          tenant isolation or auditability.
+        </p>
+        <div class="meta-grid">
+          <div class="meta-card">
+            <span class="label">Runtime</span>
+            <div class="big">Next.js + Azure</div>
+            <p>Next.js app served by Container Apps in the Azure lab; Vercel remains a SaaS edge option.</p>
+          </div>
+          <div class="meta-card">
+            <span class="label">Data Plane</span>
+            <div class="big">Postgres</div>
+            <p>Azure Database for PostgreSQL is the target system of record with tenant-scoped rows and RLS.</p>
+          </div>
+          <div class="meta-card">
+            <span class="label">Reasoning</span>
+            <div class="big">Brokered AI</div>
+            <p>Agents do not read raw stores directly. They reason over typed context bundles.</p>
+          </div>
+          <div class="meta-card">
+            <span class="label">Operating Model</span>
+            <div class="big">Auditable</div>
+            <p>Every change moves through PR, tests, live smoke, evidence docs, and cutover gates.</p>
+          </div>
+        </div>
+      </header>
+
+      <section id="principles">
+        <h2>Architecture Principles</h2>
+        <p class="section-intro">
+          These are the rules that matter more than any individual implementation choice. When in doubt, optimize for
+          tenant trust, evidence quality, and operational repeatability.
+        </p>
+        <div class="grid three">
+          <div class="card strong">
+            <h3>1. Tenant context before model reasoning</h3>
+            <p>Agents receive structured context bundles assembled by the broker. The model should never be asked to guess what the tenant data layer could have answered.</p>
+          </div>
+          <div class="card strong">
+            <h3>2. Postgres is canonical</h3>
+            <p>Relational state, audit rows, context metadata, graph nodes, and graph edges are first-class Postgres records. Search and graph services are projections.</p>
+          </div>
+          <div class="card strong">
+            <h3>3. Private by default</h3>
+            <p>Customer data lanes use private endpoints, managed identity, Key Vault, RLS, and customer-approved model routing. Public access is the exception, not the norm.</p>
+          </div>
+          <div class="card">
+            <h3>4. No hidden data paths</h3>
+            <p>Application code must not bypass the data-plane seam, context broker, or route-level tenancy checks. If a helper needs data, it should use an adapter or broker contract.</p>
+          </div>
+          <div class="card">
+            <h3>5. Claims must cite evidence</h3>
+            <p>Executive answers should name the tenant facts, evidence chunks, patterns, programs, contracts, or KPI rows behind the recommendation.</p>
+          </div>
+          <div class="card">
+            <h3>6. Automation must leave a trail</h3>
+            <p>Codex and Claude Code can accelerate delivery, but every automated change still requires branch discipline, tests, PR review, live proof, and architecture-log updates.</p>
+          </div>
+        </div>
+      </section>
+
+      <section id="page-bindings">
+        <h2>Page-by-Page Data Binding Catalog</h2>
+        <p class="section-intro">
+          This section is the practical map for a new developer: where the page lives, which server-side function resolves the tenant, which data loaders bind the page, which component renders the view, and what must never be hard-coded.
+        </p>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Page / Route</th>
+                <th>Source File</th>
+                <th>Data Binding</th>
+                <th>Rendered Component</th>
+                <th>Developer Rule</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Home</strong><br/><code>/home</code></td>
+                <td><code>src/app/(maestro)/home/page.tsx</code></td>
+                <td><code>getActiveClientRow()</code> resolves the current tenant, then <code>resolveTenantHome(activeClient?.key)</code> selects the tenant home fixture/view model.</td>
+                <td><code>AppTopBarBlack</code> + <code>TenantHomePage</code></td>
+                <td>Home is the first truth surface. Do not show generic status or a different tenant's vendor, industry, or readiness copy.</td>
+              </tr>
+              <tr>
+                <td><strong>Intelligence Brief</strong><br/><code>/intelligence</code></td>
+                <td><code>src/app/intelligence/page.tsx</code></td>
+                <td><code>getActiveClientRow(requestedClient)</code>, then parallel loads: <code>buildIntelligenceV3PageData</code>, <code>getVendorsForClient</code>, stage data, initiatives, Apex demo bridge, and <code>getEnterpriseContextOverviewForTenant</code>.</td>
+                <td><code>IntelligenceV3Page</code></td>
+                <td>All panels must be tenant-aware. This is where previous retail/healthcare/banking content leaks were most visible, so new copy must be keyed by tenant and covered by tests.</td>
+              </tr>
+              <tr>
+                <td><strong>Intelligence Pattern Detail</strong><br/><code>/intelligence/[patternId]</code></td>
+                <td><code>src/app/intelligence/[patternId]/page.tsx</code></td>
+                <td>Loads pattern detail, related signals, use cases, contradictions, and evidence for one pattern identifier.</td>
+                <td>Pattern detail page components under <code>src/components/intelligence*</code></td>
+                <td>Pattern pages can use shared catalog facts, but tenant-session recommendations must be scoped through tenant evidence.</td>
+              </tr>
+              <tr>
+                <td><strong>Strategic Moves</strong><br/><code>/strategic-moves</code></td>
+                <td><code>src/app/(maestro)/strategic-moves/page.tsx</code></td>
+                <td><code>requireProductModule('programs')</code>, <code>getStrategicMovesTenancy()</code>, <code>getStrategicMovePortfolio(ctx)</code>, and <code>getStrategicMovesPreferences(ctx)</code>.</td>
+                <td><code>AppShell surface="programs"</code> + <code>StrategicMovesHomeClient</code></td>
+                <td>Moves are governed lifecycle objects. Never create "suggested moves" only in chat text when the user expects a persisted P0/P1 artifact.</td>
+              </tr>
+              <tr>
+                <td><strong>New Move Origination</strong><br/><code>/strategic-moves/new</code></td>
+                <td><code>src/app/(maestro)/strategic-moves/new/page.tsx</code></td>
+                <td>Nexus prompt, stage pack, origination draft API, sponsor/data readiness/stakeholder ledgers, and promote-to-P1 submit path.</td>
+                <td>Nexus origination workspace components under <code>src/components/strategic-moves</code></td>
+                <td>The agent should extract multiple fields per turn, fill the canvas, preserve user edits, and close P0 without dragging through unnecessary one-question turns.</td>
+              </tr>
+              <tr>
+                <td><strong>Source Portfolio</strong><br/><code>/source</code></td>
+                <td><code>src/app/(maestro)/source/page.tsx</code></td>
+                <td><code>listSourcingEvents()</code>, <code>getActiveClientRow()</code>, <code>requireTenancy()</code>, <code>loadUserSourceAccessPolicy()</code>, then tenant display normalization.</td>
+                <td><code>SourcePortfolioPage</code></td>
+                <td>Financial values are permission-gated. Vendor economics must respect the access policy and should not leak into restricted roles.</td>
+              </tr>
+              <tr>
+                <td><strong>New Source Event</strong><br/><code>/source/new</code></td>
+                <td><code>src/app/(maestro)/source/new/page.tsx</code></td>
+                <td>Sentinel sourcing mode produces brief-progress artifacts; the right-side event canvas reads and remains editable.</td>
+                <td>Source origination workspace and AgentDock components</td>
+                <td>Experience should mirror "create a Move": chat on the left, structured right pane filling from the conversation, with lineage chips for agent-filled fields.</td>
+              </tr>
+              <tr>
+                <td><strong>Tower</strong><br/><code>/tower</code></td>
+                <td><code>src/app/(maestro)/tower/page.tsx</code></td>
+                <td><code>requireTenancy()</code>, active client resolution, access policies, <code>selectTowerPageReadAdapter()</code>, initiatives/vendors, band metrics, pressure view, Atlas observations, and reasoning trace append.</td>
+                <td><code>TowerIndexPage</code> and Tower lens components</td>
+                <td>Tower graphs/tables are executive decision canvases. If a visualization does not change what a CFO/CIO does next, simplify or remove it.</td>
+              </tr>
+              <tr>
+                <td><strong>Setup / Data Trust</strong><br/><code>/home/data-trust</code>, <code>/admin/*</code></td>
+                <td><code>src/app/(maestro)/home/*</code>, <code>src/app/(maestro)/admin/*</code></td>
+                <td>Setup panels read segment readiness, upload/quarantine status, connector readiness, user/access state, production readiness, and audit history.</td>
+                <td>Home/admin setup components and Steward surfaces</td>
+                <td>Setup explains what is loaded, what is empty, what is trusted, and what unlocks each agent capability. Empty packs must be explicit, not silently hidden.</td>
+              </tr>
+              <tr>
+                <td><strong>Learn</strong><br/><code>/learn</code>, <code>/home/learn</code></td>
+                <td><code>src/app/(maestro)/learn/page.tsx</code>, <code>src/app/(maestro)/home/learn/page.tsx</code></td>
+                <td>Learn content is mostly curated product education, but it must still obey active-client framing when tenant-specific examples appear.</td>
+                <td>Learn guide components</td>
+                <td>Use Learn for explanation. Do not pollute operational pages with tutorial text that slows down an executive workflow.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="callout warning" style="margin-top: 18px;">
+          <strong>Plain-English binding model:</strong> the browser asks for a page; the server identifies the signed-in user and tenant; page loaders fetch a tenant-scoped view model; the component renders that view model; agents use the broker to retrieve more context; writes go back through typed APIs and adapters with audit evidence.
+        </div>
+      </section>
+
+      <section id="target">
+        <h2>Target-State Architecture Map</h2>
+        <p class="section-intro">
+          The target architecture is a three-lane Azure SaaS pattern: a public application/control lane, a private tenant data lane, and an intelligence/model lane. The same pattern can run as shared SaaS, dedicated tenant, or customer-private data plane.
+        </p>
+        <div class="diagram" role="img" aria-label="AbarVa target-state architecture diagram">
+          <svg viewBox="0 0 1180 650" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+                <path d="M0,0 L0,6 L9,3 z" fill="#677084" />
+              </marker>
+              <marker id="arrowBlue" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+                <path d="M0,0 L0,6 L9,3 z" fill="#0b4a91" />
+              </marker>
+            </defs>
+
+            <rect x="20" y="26" width="1140" height="592" rx="12" fill="#fbfaf8" stroke="#d8d4ca"/>
+            <text x="44" y="58" class="svg-title">AbarVa Target State: Executive App + Brokered Intelligence + Private Data Lane</text>
+
+            <rect x="44" y="92" width="210" height="98" rx="8" class="node-blue"/>
+            <text x="64" y="122" class="svg-title">Executive Browser</text>
+            <text x="64" y="146" class="svg-small">Home · Intelligence · Moves</text>
+            <text x="64" y="164" class="svg-small">Source · Tower · Learn</text>
+
+            <rect x="302" y="82" width="244" height="118" rx="8" class="node-blue"/>
+            <text x="322" y="112" class="svg-title">Azure Front Door + WAF</text>
+            <text x="322" y="136" class="svg-small">TLS · routing · WAF rules</text>
+            <text x="322" y="154" class="svg-small">bot/rate protections</text>
+            <text x="322" y="172" class="svg-small">enterprise domain entry</text>
+
+            <rect x="596" y="70" width="250" height="148" rx="8" class="node"/>
+            <text x="616" y="100" class="svg-title">Container Apps Runtime</text>
+            <text x="616" y="124" class="svg-small">Next.js 16 · React 19</text>
+            <text x="616" y="142" class="svg-small">Server Components + Route Handlers</text>
+            <text x="616" y="160" class="svg-small">Auth adapter · app shell</text>
+            <text x="616" y="178" class="svg-small">AgentDock + product canvases</text>
+            <text x="616" y="196" class="svg-small">Managed identity</text>
+
+            <rect x="896" y="78" width="226" height="132" rx="8" class="node-gold"/>
+            <text x="916" y="108" class="svg-title">Control and Identity</text>
+            <text x="916" y="132" class="svg-small">Clerk for pilot</text>
+            <text x="916" y="150" class="svg-small">Entra External ID target</text>
+            <text x="916" y="168" class="svg-small">tenant registry · roles</text>
+            <text x="916" y="186" class="svg-small">billing · feature flags</text>
+
+            <rect x="118" y="282" width="250" height="168" rx="8" class="node-green"/>
+            <text x="138" y="312" class="svg-title">AgentContextBroker</text>
+            <text x="138" y="336" class="svg-small">tenant-scoped fetch boundary</text>
+            <text x="138" y="354" class="svg-small">context bundle assembly</text>
+            <text x="138" y="372" class="svg-small">warnings + sparsity flags</text>
+            <text x="138" y="390" class="svg-small">retrieval mode selection</text>
+            <text x="138" y="408" class="svg-small">no direct store bypass</text>
+
+            <rect x="420" y="266" width="250" height="200" rx="8" class="node"/>
+            <text x="440" y="296" class="svg-title">Agent Runtime</text>
+            <text x="440" y="320" class="svg-small">Sentinel: Intelligence</text>
+            <text x="440" y="338" class="svg-small">Nexus: Moves and programs</text>
+            <text x="440" y="356" class="svg-small">Atlas: Tower portfolio</text>
+            <text x="440" y="374" class="svg-small">Steward: setup and trust</text>
+            <text x="440" y="392" class="svg-small">Source agent: sourcing canvas</text>
+            <text x="440" y="410" class="svg-small">tool registry + policy gates</text>
+            <text x="440" y="428" class="svg-small">consistency guards G1-G8</text>
+
+            <rect x="718" y="266" width="210" height="200" rx="8" class="node-blue"/>
+            <text x="738" y="296" class="svg-title">Model Gateway</text>
+            <text x="738" y="320" class="svg-small">provider routing</text>
+            <text x="738" y="338" class="svg-small">prompt assembly</text>
+            <text x="738" y="356" class="svg-small">cost and latency budgets</text>
+            <text x="738" y="374" class="svg-small">safety policy</text>
+            <text x="738" y="392" class="svg-small">fallback on overload</text>
+            <text x="738" y="410" class="svg-small">turn traces</text>
+            <text x="738" y="428" class="svg-small">model-call audit</text>
+
+            <rect x="72" y="514" width="180" height="76" rx="8" class="node"/>
+            <text x="92" y="544" class="svg-title">Postgres</text>
+            <text x="92" y="568" class="svg-small">system of record · RLS</text>
+
+            <rect x="278" y="514" width="180" height="76" rx="8" class="node"/>
+            <text x="298" y="544" class="svg-title">Blob Storage</text>
+            <text x="298" y="568" class="svg-small">uploads · evidence · exports</text>
+
+            <rect x="484" y="514" width="180" height="76" rx="8" class="node"/>
+            <text x="504" y="544" class="svg-title">Azure AI Search</text>
+            <text x="504" y="568" class="svg-small">tenant retrieval indexes</text>
+
+            <rect x="690" y="514" width="180" height="76" rx="8" class="node"/>
+            <text x="710" y="544" class="svg-title">Cosmos Gremlin</text>
+            <text x="710" y="568" class="svg-small">projected graph traversal</text>
+
+            <rect x="896" y="514" width="180" height="76" rx="8" class="node"/>
+            <text x="916" y="544" class="svg-title">Key Vault</text>
+            <text x="916" y="568" class="svg-small">secrets · CMK · identity</text>
+
+            <line x1="254" y1="141" x2="302" y2="141" class="arrow-strong"/>
+            <line x1="546" y1="141" x2="596" y2="141" class="arrow-strong"/>
+            <line x1="846" y1="141" x2="896" y2="141" class="arrow"/>
+            <line x1="720" y1="218" x2="545" y2="266" class="arrow"/>
+            <line x1="596" y1="166" x2="368" y2="302" class="arrow-strong"/>
+            <line x1="368" y1="366" x2="420" y2="366" class="arrow-strong"/>
+            <line x1="670" y1="366" x2="718" y2="366" class="arrow"/>
+            <line x1="244" y1="450" x2="162" y2="514" class="arrow"/>
+            <line x1="288" y1="450" x2="368" y2="514" class="arrow"/>
+            <line x1="344" y1="450" x2="574" y2="514" class="arrow"/>
+            <line x1="365" y1="420" x2="780" y2="514" class="arrow"/>
+            <line x1="823" y1="466" x2="986" y2="514" class="arrow"/>
+          </svg>
+        </div>
+      </section>
+
+      <section id="frontend">
+        <h2>Frontend Architecture</h2>
+        <p class="section-intro">
+          The frontend is not a marketing shell around a chat box. It is a set of dense executive workspaces where agents and structured canvases collaborate: the agent gathers, challenges, and reasons; the right side of the product records the decision state.
+        </p>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Surface</th>
+                <th>Primary User Question</th>
+                <th>Agent</th>
+                <th>Core UI Pattern</th>
+                <th>Developer Notes</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Home</strong></td>
+                <td>Where does this tenant stand, and what should I do next?</td>
+                <td>Steward / shell intelligence</td>
+                <td>Readiness cards, action queue, setup panels, loaded/missing substrate signals.</td>
+                <td>Use active-client state. Do not hard-code tenant facts or cross-industry copy.</td>
+              </tr>
+              <tr>
+                <td><strong>Intelligence</strong></td>
+                <td>Which AI or business bet should move now?</td>
+                <td>Sentinel</td>
+                <td>Brief, Map, Art of Possible, Enterprise Context, Vendors, sticky ask bar.</td>
+                <td>Answers must cite context and include dissent or what would change the view for recommendations.</td>
+              </tr>
+              <tr>
+                <td><strong>Moves</strong></td>
+                <td>How do we turn a signal into a governed strategic move?</td>
+                <td>Nexus</td>
+                <td>Phase-gated origination, deliverable canvas, sponsorship, evidence, lifecycle state.</td>
+                <td>Respect P0-P6 lifecycle labels. Persist deliverables through tools, not prose-only summaries.</td>
+              </tr>
+              <tr>
+                <td><strong>Source</strong></td>
+                <td>How should we shape, compare, and govern a sourcing event?</td>
+                <td>Source / Sentinel sourcing mode</td>
+                <td>Chat-driven intake, event canvas, artifacts, vendors, scoring, decision packet.</td>
+                <td>Right pane should fill from conversation. Keep user override fields editable and auditable.</td>
+              </tr>
+              <tr>
+                <td><strong>Tower</strong></td>
+                <td>Is the portfolio creating measurable value?</td>
+                <td>Atlas</td>
+                <td>Portfolio map, scorecards, gates, dependencies, executive brief.</td>
+                <td>Every graph/table needs a decision purpose. Avoid decorative analytics.</td>
+              </tr>
+              <tr>
+                <td><strong>Setup / Admin</strong></td>
+                <td>What context is loaded, trusted, missing, or quarantined?</td>
+                <td>Steward</td>
+                <td>Data trust, connectors, users/access, quarantine, pilot metrics, production readiness.</td>
+                <td>Setup surfaces are control-plane artifacts; expose status, lineage, and next action.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="grid three" style="margin-top: 18px;">
+          <div class="card">
+            <h3>Design Canon</h3>
+            <p>Use white or near-white executive surfaces, Georgia headings, DM Sans body copy, black/ghost CTAs, dense Snowflake-style subnavs, and no chat truncation.</p>
+          </div>
+          <div class="card">
+            <h3>Responsive Posture</h3>
+            <p>Desktop is the primary CXO workflow, but mobile must not break. Use stable grids, predictable scroll, and no overlapping controls.</p>
+          </div>
+          <div class="card">
+            <h3>Agent UX</h3>
+            <p>Agent panels must show retrieval/working state, stream clearly, preserve context, and allow pane resizing where workspaces are split.</p>
+          </div>
+        </div>
+      </section>
+
+      <section id="middle">
+        <h2>Middle Tier Design</h2>
+        <p class="section-intro">
+          The middle tier is where AbarVa earns trust. It enforces tenancy, assembles context, chooses tools, routes model calls, records audit evidence, and normalizes data-plane access.
+        </p>
+        <div class="grid two">
+          <div class="card strong">
+            <h3>API and Route Handlers</h3>
+            <ul>
+              <li>Use Next.js App Router route handlers for server APIs.</li>
+              <li>Routes must fail closed on missing tenant, missing auth, or mismatched role.</li>
+              <li>Machine-only endpoints must self-guard with tokens and avoid Clerk HTML redirects when scripts need JSON.</li>
+              <li>Return view models, not raw database rows.</li>
+            </ul>
+          </div>
+          <div class="card strong">
+            <h3>Data-Plane Seam</h3>
+            <ul>
+              <li><code>ABARVA_DATA_PLANE=supabase</code> preserves current SaaS behavior.</li>
+              <li><code>ABARVA_DATA_PLANE=azure-postgres</code> flips read/write adapters to Azure Postgres.</li>
+              <li>Server components and API routes should call adapters, not store clients directly.</li>
+              <li>New modules need a typed read adapter, optional write adapter, and tests for both planes.</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h3>AgentContextBroker</h3>
+            <p>The broker is the legal fetch boundary for agent context. It resolves tenant keys, chooses retrieval mode, assembles typed context bundles, injects warnings, and prevents app-tier code from pulling raw corpus/vector/graph data directly.</p>
+          </div>
+          <div class="card">
+            <h3>Model Gateway</h3>
+            <p>The target model lane routes Anthropic/OpenAI/Azure-approved providers through a single gateway. The gateway owns cost, latency, fallback, safety policy, trace IDs, and provider audit rows.</p>
+          </div>
+        </div>
+      </section>
+
+      <section id="code-patterns">
+        <h2>Code Patterns Developers Should Copy</h2>
+        <p class="section-intro">
+          These examples are intentionally small. They show how AbarVa should be extended without breaking tenancy, data-plane portability, agent governance, or Azure cutover readiness.
+        </p>
+
+        <div class="grid two">
+          <div class="card">
+            <h3>1. Server Component Page Binding</h3>
+            <p>Resolve tenant server-side, load a view model, render a component. Avoid client-side tenant guessing for protected data.</p>
+<pre><code>// Example based on /home
+import { getActiveClientRow } from '@/lib/active-client';
+import { resolveTenantHome } from '@/components/home/tenant-home-fixtures';
+
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
+export default async function HomePage() {
+  const activeClient = await getActiveClientRow().catch(() =&gt; null);
+  const data = resolveTenantHome(activeClient?.key);
+
+  return &lt;TenantHomePage data={data} /&gt;;
+}</code></pre>
+          </div>
+
+          <div class="card">
+            <h3>2. Route Handler Tenancy</h3>
+            <p>API routes should fail closed, derive tenant from the session, and return JSON contracts instead of raw database rows.</p>
+<pre><code>import { NextResponse } from 'next/server';
+import { requireTenancy } from '@/lib/auth/tenancy';
+import { selectWriteAdapter } from '@/lib/data-plane/write-adapters';
+
+export async function POST(request: Request) {
+  const tenancy = await requireTenancy();
+  const body = await request.json();
+  const writer = selectWriteAdapter();
+
+  const result = await writer.recordAuditEvent({
+    tenantKey: tenancy.clientKey,
+    actorId: tenancy.userId,
+    action: 'source.event.updated',
+    payload: body,
+  });
+
+  return NextResponse.json({ ok: result.ok });
+}</code></pre>
+          </div>
+
+          <div class="card">
+            <h3>3. Data-Plane Adapter Selection</h3>
+            <p>The same app code can run on current Supabase-backed SaaS or Azure Postgres by flipping one environment variable.</p>
+<pre><code>// src/lib/data-plane/read-adapters/resolveDataPlane.ts
+export function resolveDataPlane(raw?: string | null): DataPlane {
+  const value = (raw ?? process.env.ABARVA_DATA_PLANE ?? '')
+    .trim()
+    .toLowerCase();
+
+  return value === 'azure-postgres' ? 'azure-postgres' : 'supabase';
+}</code></pre>
+          </div>
+
+          <div class="card">
+            <h3>4. Agent Retrieval Boundary</h3>
+            <p>Agents should not call search/vector/graph stores directly from UI or API code. The broker assembles the safe context bundle.</p>
+<pre><code>const contextBundle = buildSentinelContextBundle({
+  tenantKey: brokerTenantKey,
+  agentName: 'Sentinel',
+  surface: 'intelligence',
+  includeGraphNeighborhood: true,
+  requestedDomains: [
+    'graph_readiness',
+    'program_lifecycle',
+    'people_org',
+    'evidence_provenance',
+  ],
+});</code></pre>
+          </div>
+
+          <div class="card">
+            <h3>5. Azure AI Search Tenant Filter</h3>
+            <p>Retrieval projections are useful only if every query pins tenant identity at the choke point.</p>
+<pre><code>function buildFilter(tenantKey: string, filters?: TenantContextFilters) {
+  const parts = [`tenant_key eq '${escapeOdataLiteral(tenantKey)}'`];
+
+  if (filters?.minConfidence !== undefined) {
+    parts.push(`confidence ge ${filters.minConfidence}`);
+  }
+
+  return parts.join(' and ');
+}</code></pre>
+          </div>
+
+          <div class="card">
+            <h3>6. Protected Health Endpoint</h3>
+            <p>Machine routes should return JSON and use a token or managed-identity boundary. Do not let Clerk redirect scripts to HTML.</p>
+<pre><code>const token = request.headers.get('x-abarva-health-token');
+if (!token || token !== process.env.AZURE_CONNECTIVITY_HEALTH_TOKEN) {
+  return NextResponse.json({ ok: false, error: 'unauthorized' }, { status: 401 });
+}</code></pre>
+          </div>
+        </div>
+
+        <div class="callout security" style="margin-top: 18px;">
+          <strong>Copy rule:</strong> when adding a feature, find the closest existing page/adapter/route/test pair and copy the boundary shape. Do not introduce a new one-off data path unless the architecture document is updated and tests prove the new boundary.
+        </div>
+      </section>
+
+      <section id="backend">
+        <h2>Backend and Data Architecture</h2>
+        <p class="section-intro">
+          AbarVa's backend is a context system, not just application persistence. It stores tenant setup, evidence, programs, sourcing artifacts, portfolio telemetry, graph relationships, and audit events in a way that agents can reason over safely.
+        </p>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Store</th>
+                <th>Purpose</th>
+                <th>Current / Lab State</th>
+                <th>Target Rule</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Azure Postgres</strong></td>
+                <td>System of record for tenants, programs, source events, evidence metadata, graph nodes/edges, audit rows, and agent telemetry.</td>
+                <td>Private Flexible Server live; 152 migrations, 234 public tables, 3 clients, 6,567 context chunks, 1,313 graph nodes, 1,568 graph edges.</td>
+                <td>Every tenant-scoped table carries tenant key and RLS. No cross-tenant read/write path is accepted.</td>
+              </tr>
+              <tr>
+                <td><strong>Blob Storage</strong></td>
+                <td>Raw uploads, generated artifacts, evidence manifests, exports, and context-drop payloads.</td>
+                <td>Private object store live with ingestion containers and Event Grid path.</td>
+                <td>No public blob access. Use managed identity, soft delete, versioning, lifecycle policies, and sensitive-upload guard.</td>
+              </tr>
+              <tr>
+                <td><strong>Azure AI Search</strong></td>
+                <td>Hybrid search and vector retrieval over tenant context, evidence, source/vendor artifacts, industry corpus, and signals.</td>
+                <td><code>tenant-context-v1</code> has 6,567 synthetic chunks; broker adapter path exists.</td>
+                <td>Search is a projection. Postgres remains canonical. Every query includes tenant namespace/filter.</td>
+              </tr>
+              <tr>
+                <td><strong>Cosmos Gremlin</strong></td>
+                <td>Operational graph traversal for relationships between people, vendors, systems, programs, policies, KPIs, and evidence.</td>
+                <td>Azure-native graph foundation exists; Neo4j is compatibility-gated off by default.</td>
+                <td>Project graph from Postgres <code>enterprise_graph_nodes</code> and <code>enterprise_graph_edges</code>; do not make graph store canonical.</td>
+              </tr>
+              <tr>
+                <td><strong>Service Bus + Event Grid</strong></td>
+                <td>Day-2 ingestion, context refresh, async broker rebuild, work items, and resilience drills.</td>
+                <td>Queues and ingestion worker live; mixed good/poison batch drill passed.</td>
+                <td>All ingestion events are schema-versioned, tenant-scoped, idempotent, and DLQ-safe.</td>
+              </tr>
+              <tr>
+                <td><strong>Key Vault</strong></td>
+                <td>Secrets, connection strings, model keys, future CMK material, and managed-identity based retrieval.</td>
+                <td>Container App projects secrets from Key Vault; runtime managed identity has Key Vault Secrets User.</td>
+                <td>Secrets never live in images, source, or logs. Rotate via Key Vault and restart/reload by policy.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="data-model">
+        <h2>Database Model and Data Lifecycle</h2>
+        <p class="section-intro">
+          The database is organized around business objects, evidence, lifecycle state, and retrieval projections. Non-technical readers can think of it as the filing system that lets AbarVa say: "I know this client, I know where this fact came from, I know who owns the decision, and I know whether the answer is safe to use."
+        </p>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Domain</th>
+                <th>Representative Tables / Migrations</th>
+                <th>What They Store</th>
+                <th>How Agents Use It</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Tenant and identity</strong></td>
+                <td><code>clients</code>, user/access policies, Clerk metadata pins, role visibility rules</td>
+                <td>Which organization the user belongs to, canonical tenant key, display name, industry code, and allowed modules.</td>
+                <td>Every route and broker request starts here. If tenant resolution fails, the app should render an empty/locked state, not another tenant's data.</td>
+              </tr>
+              <tr>
+                <td><strong>Enterprise context layer</strong></td>
+                <td><code>enterprise_context_sources</code>, <code>source_files</code>, <code>records</code>, <code>facts</code>, <code>relationships</code>, <code>evidence</code>, <code>quality_issues</code>, <code>stewardship_tasks</code>, <code>snapshots</code>, <code>chunk_queue</code></td>
+                <td>Day-1 and Day-2 context: enterprise profile, org, systems, spend, vendors, policies, incidents, KPIs, evidence lineage, and quality gaps.</td>
+                <td>Sentinel and Steward answer "what do we know?", "what is missing?", "what is trusted?", and "what should be loaded next?"</td>
+              </tr>
+              <tr>
+                <td><strong>Retrieval chunks</strong></td>
+                <td><code>enterprise_context_chunks</code>, embedding status fields, Azure AI Search <code>tenant-context-v1</code></td>
+                <td>Chunked text with source metadata, classification, tenant key, record ID, embedding status, confidence, and retrieval score.</td>
+                <td>AgentContextBroker turns user questions into ranked tenant context. Azure AI Search is the target projection; Postgres keeps source-of-truth rows.</td>
+              </tr>
+              <tr>
+                <td><strong>Graph</strong></td>
+                <td><code>enterprise_graph_nodes</code>, <code>enterprise_graph_edges</code>, <code>enterprise_context_relationships</code>, historical <code>intelligence_graph_edges</code></td>
+                <td>Relationships between people, systems, vendors, KPIs, evidence, policies, programs, and blockers.</td>
+                <td>Atlas/Sentinel can explain dependency chains, sponsor/blocker paths, vendor concentration, policy gates, and program impact relationships.</td>
+              </tr>
+              <tr>
+                <td><strong>Intelligence</strong></td>
+                <td>patterns, use cases, contradictions, signals, topics, industry pattern migrations</td>
+                <td>Reusable business/AI patterns plus tenant-linked signals and contradictions.</td>
+                <td>Sentinel ranks decisions, cites patterns, surfaces dissent, and suggests which bet should become a Move.</td>
+              </tr>
+              <tr>
+                <td><strong>Moves / Programs</strong></td>
+                <td><code>engagements</code>, deliverables, phase gates, <code>program_evidence_items</code>, <code>gate_criteria</code>, <code>gate_criterion_states</code></td>
+                <td>Strategic Move lifecycle state, sponsors, scope, artifacts, evidence, gates, approvals, and value logic.</td>
+                <td>Nexus creates and advances governed Moves. Tower reads the same state to assess portfolio health.</td>
+              </tr>
+              <tr>
+                <td><strong>Source</strong></td>
+                <td><code>source_events</code>, <code>source_event_artifact_states</code>, <code>source_event_gate_criterion_states</code>, <code>source_event_evidence_states</code>, pricing submissions, value lines, approvals</td>
+                <td>Vendor/sourcing events, stages, artifacts, evidence, pricing, risk, approvals, and decision packet state.</td>
+                <td>Source Agent structures intake, compares vendors, and produces governed sourcing recommendations with lineage.</td>
+              </tr>
+              <tr>
+                <td><strong>Tower</strong></td>
+                <td><code>use_cases</code>, usage/value/risk/cost metric tables, AI initiatives, initiative vendors, Atlas traces</td>
+                <td>Portfolio telemetry: ROI, adoption, renewal clocks, spend at risk, pressure, dependencies, and executive briefs.</td>
+                <td>Atlas translates portfolio telemetry into CFO/CIO action: defend, scale, sunset, rationalize, or watch.</td>
+              </tr>
+              <tr>
+                <td><strong>Audit and operations</strong></td>
+                <td><code>turn_traces</code>, <code>reasoning_telemetry_events</code>, sensitive upload audit rows, admin audit logs, quarantine lifecycle rows</td>
+                <td>Who asked, what context was used, which model/tool ran, what was quarantined, what was approved, and what changed.</td>
+                <td>Gives support, security, and auditors a reconstruction trail. Also feeds product quality dashboards.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="grid two" style="margin-top: 18px;">
+          <div class="card strong">
+            <h3>Day-1 Dataset Load Flow</h3>
+            <ol>
+              <li>Client provides approved templates or extracts: org, systems, spend, vendors, KPIs, policies, programs, incidents.</li>
+              <li>Upload enters Blob or controlled admin upload endpoint.</li>
+              <li>Sensitive-upload guard classifies the file and quarantines if needed.</li>
+              <li>Parser normalizes rows into tenant-scoped canonical records.</li>
+              <li>Chunker creates retrieval chunks with source/evidence metadata.</li>
+              <li>Backfill projects chunks to Azure AI Search and graph relationships to the graph projection.</li>
+              <li>Steward/Data Trust shows loaded counts, trust rungs, empty packs, and next best load.</li>
+            </ol>
+          </div>
+          <div class="card strong">
+            <h3>Day-2 Incremental Refresh Flow</h3>
+            <ol>
+              <li>Connector or file drop emits Event Grid / Service Bus message with tenant, source, schema version, idempotency key.</li>
+              <li>Ingestion worker validates schema, checks sensitivity, and writes canonical deltas.</li>
+              <li>Broker rebuild updates context bundles, search indexes, graph projections, and quality issues.</li>
+              <li>Audit rows capture who/what/when/source and any quarantine/release decision.</li>
+              <li>Parallel-run and parity scripts compare row counts, top facts, pattern IDs, and tenant invariants.</li>
+            </ol>
+          </div>
+        </div>
+
+        <div class="callout security" style="margin-top: 18px;">
+          <strong>Important data posture:</strong> PHI and PII are not required for today's product value. The preferred enterprise setup loads business context, metadata, KPIs, policies, vendor economics, and operational telemetry. If PHI/PII appears, it is treated as an exception path: classify, quarantine, audit, and require explicit disposition.
+        </div>
+      </section>
+
+      <section id="configuration">
+        <h2>Configuration and Source-of-Truth Map</h2>
+        <p class="section-intro">
+          AbarVa is configuration-heavy by design: tenants, routes, feature flags, Azure service names, data-plane selection, product modules, prompts, and demo accounts must be discoverable. A new developer should know where to look before changing behavior.
+        </p>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Concern</th>
+                <th>Where It Lives</th>
+                <th>What It Controls</th>
+                <th>Change Standard</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Repo rules</strong></td>
+                <td><code>AGENTS.md</code></td>
+                <td>Next.js version warning, Node version, test commands, Clerk/Supabase env requirements, and agent operating rules.</td>
+                <td>Read before coding. Do not assume older Next.js conventions.</td>
+              </tr>
+              <tr>
+                <td><strong>Tenant identity</strong></td>
+                <td><code>src/lib/client-config.ts</code>, <code>src/lib/active-client.ts</code>, <code>src/lib/auth/access-routing.ts</code></td>
+                <td>Client keys, aliases, display names, session pinning, locked-role behavior, active-client cookie rules.</td>
+                <td>Every tenant-key alias change needs tests and parallel-run parity checks.</td>
+              </tr>
+              <tr>
+                <td><strong>Authentication roster</strong></td>
+                <td><code>src/lib/auth/canonical-auth-roster.ts</code></td>
+                <td>Demo personas, assigned tenant, role, and expected login surface.</td>
+                <td>Keep credentials out of docs unless explicitly intended for demo handoff. Production customers move to enterprise federation.</td>
+              </tr>
+              <tr>
+                <td><strong>Navigation and module access</strong></td>
+                <td><code>src/lib/home/top-nav-items.ts</code>, <code>src/lib/auth/server-module-access.ts</code>, role policy files</td>
+                <td>Which surfaces appear and which product modules a user can access.</td>
+                <td>Access changes must be tested per role and per tenant; nav visibility is not authorization.</td>
+              </tr>
+              <tr>
+                <td><strong>Data-plane flip</strong></td>
+                <td><code>ABARVA_DATA_PLANE</code>, <code>src/lib/data-plane/read-adapters/*</code>, <code>src/lib/data-plane/write-adapters/*</code></td>
+                <td>Whether app reads/writes use current Supabase path or Azure Postgres path.</td>
+                <td>Default remains <code>supabase</code>. Azure flip is explicit and validated by parallel-run diff.</td>
+              </tr>
+              <tr>
+                <td><strong>Azure services</strong></td>
+                <td><code>docs/architecture/azure/CURRENT-STATE.md</code>, AZLAB docs, Bicep/scripts under <code>infra</code> or <code>scripts/azure</code></td>
+                <td>Resource groups, Container Apps, Postgres, Search, Service Bus, Storage, Key Vault, smoke scripts, drill results.</td>
+                <td>Every lab change gets an evidence doc with resource IDs, command, result, and follow-up risk.</td>
+              </tr>
+              <tr>
+                <td><strong>Secrets</strong></td>
+                <td>Azure Key Vault, Container App secret refs, local <code>.env.local</code> for development only</td>
+                <td>Clerk, database, model, search, storage, Service Bus, and health/drill tokens.</td>
+                <td>No secrets in source, screenshots, logs, PR bodies, or generated HTML. Use redacted evidence.</td>
+              </tr>
+              <tr>
+                <td><strong>Agent doctrine</strong></td>
+                <td><code>src/lib/agent/voice-doctrine/*</code>, prompt builders, behavior tests</td>
+                <td>Agent voice, cadence, refusal/fallback posture, and answer standards.</td>
+                <td>Every doctrine edit needs a regression test proving the required directive is present.</td>
+              </tr>
+              <tr>
+                <td><strong>Consistency guards</strong></td>
+                <td><code>src/lib/agent/quality/*</code> and Sentinel tests</td>
+                <td>Arithmetic checks, date math, pattern citation validity, stale/forward tense, unsupported absolute language.</td>
+                <td>Track false positives and caught violations. Disable or tune guards with evidence, not anecdotes.</td>
+              </tr>
+              <tr>
+                <td><strong>Public/static docs</strong></td>
+                <td><code>public/architecture/*</code>, <code>docs/architecture/*</code></td>
+                <td>Shareable primers and internal architecture records.</td>
+                <td>HTML artifacts should be self-contained, use approved brand assets, and avoid live secrets or real customer data.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="grid two" style="margin-top: 18px;">
+          <div class="card">
+            <h3>Environment Variable Families</h3>
+            <ul>
+              <li><code>CLERK_*</code> and <code>NEXT_PUBLIC_CLERK_*</code>: authentication and session verification.</li>
+              <li><code>DATABASE_URL</code>, <code>NEXT_PUBLIC_SUPABASE_URL</code>, <code>SUPABASE_SERVICE_ROLE_KEY</code>: current and migration data paths.</li>
+              <li><code>ANTHROPIC_API_KEY</code>, <code>OPENAI_API_KEY</code>: model and embedding providers.</li>
+              <li><code>AZURE_SEARCH_*</code>, <code>SERVICE_BUS_*</code>, <code>AZURE_CLIENT_ID</code>: Azure retrieval and ingestion lanes.</li>
+              <li><code>ABARVA_DATA_PLANE</code>: cutover seam; <code>supabase</code> by default, <code>azure-postgres</code> for Azure lab.</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h3>Non-Technical Mental Model</h3>
+            <p>Configuration is the control panel. It decides who the user is, which client they belong to, which database is active, which model is allowed, which Azure service is reachable, and which features are visible. AbarVa treats those switches as governed product behavior, not hidden engineering trivia.</p>
+          </div>
+        </div>
+      </section>
+
+      <section id="context">
+        <h2>The Context Layer</h2>
+        <p class="section-intro">
+          The context layer is AbarVa's durable advantage. It turns a general-purpose model into a reasoning system that knows the client, the portfolio, the evidence trail, and the decision constraints.
+        </p>
+        <div class="diagram" role="img" aria-label="AbarVa context layer diagram">
+          <svg viewBox="0 0 1160 520" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <marker id="arrow2" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+                <path d="M0,0 L0,6 L9,3 z" fill="#677084" />
+              </marker>
+            </defs>
+            <rect x="20" y="20" width="1120" height="480" rx="12" fill="#fbfaf8" stroke="#d8d4ca"/>
+            <text x="44" y="54" class="svg-title">Context Layer: Day-1 Load + Day-2 Incremental Refresh + Reasoning Projection</text>
+
+            <rect x="54" y="96" width="170" height="58" rx="8" class="node-blue"/>
+            <text x="72" y="127" class="svg-title">Enterprise Profile</text>
+            <text x="72" y="144" class="svg-small">entity · strategy · footprint</text>
+
+            <rect x="244" y="96" width="170" height="58" rx="8" class="node-blue"/>
+            <text x="262" y="127" class="svg-title">Org Structure</text>
+            <text x="262" y="144" class="svg-small">leaders · spans · roles</text>
+
+            <rect x="434" y="96" width="170" height="58" rx="8" class="node-blue"/>
+            <text x="452" y="127" class="svg-title">IT Landscape</text>
+            <text x="452" y="144" class="svg-small">apps · systems · CMDB</text>
+
+            <rect x="624" y="96" width="170" height="58" rx="8" class="node-blue"/>
+            <text x="642" y="127" class="svg-title">IT Financials</text>
+            <text x="642" y="144" class="svg-small">run/change/transform</text>
+
+            <rect x="814" y="96" width="170" height="58" rx="8" class="node-blue"/>
+            <text x="832" y="127" class="svg-title">KPI Dictionary</text>
+            <text x="832" y="144" class="svg-small">metrics · owners · pressure</text>
+
+            <rect x="54" y="184" width="170" height="58" rx="8" class="node-green"/>
+            <text x="72" y="215" class="svg-title">Programs</text>
+            <text x="72" y="232" class="svg-small">moves · phases · gates</text>
+
+            <rect x="244" y="184" width="170" height="58" rx="8" class="node-green"/>
+            <text x="262" y="215" class="svg-title">Sourcing</text>
+            <text x="262" y="232" class="svg-small">events · vendors · RFPs</text>
+
+            <rect x="434" y="184" width="170" height="58" rx="8" class="node-green"/>
+            <text x="452" y="215" class="svg-title">Evidence Ledger</text>
+            <text x="452" y="232" class="svg-small">chunks · citations · trust</text>
+
+            <rect x="624" y="184" width="170" height="58" rx="8" class="node-green"/>
+            <text x="642" y="215" class="svg-title">Vendors</text>
+            <text x="642" y="232" class="svg-small">contracts · renewals · spend</text>
+
+            <rect x="814" y="184" width="170" height="58" rx="8" class="node-green"/>
+            <text x="832" y="215" class="svg-title">Policies</text>
+            <text x="832" y="232" class="svg-small">risk · controls · regulatory</text>
+
+            <rect x="188" y="318" width="244" height="92" rx="8" class="node"/>
+            <text x="210" y="350" class="svg-title">Canonical Postgres Rows</text>
+            <text x="210" y="374" class="svg-small">tenant-scoped records · RLS</text>
+            <text x="210" y="392" class="svg-small">schema migrations · auditability</text>
+
+            <rect x="458" y="318" width="244" height="92" rx="8" class="node"/>
+            <text x="480" y="350" class="svg-title">Retrieval Projections</text>
+            <text x="480" y="374" class="svg-small">chunks · embeddings · search indexes</text>
+            <text x="480" y="392" class="svg-small">tenant filters · evidence scores</text>
+
+            <rect x="728" y="318" width="244" height="92" rx="8" class="node"/>
+            <text x="750" y="350" class="svg-title">Graph Projections</text>
+            <text x="750" y="374" class="svg-small">nodes · edges · dependencies</text>
+            <text x="750" y="392" class="svg-small">Postgres canonical · Cosmos traversal</text>
+
+            <rect x="420" y="448" width="320" height="44" rx="8" class="node-dark"/>
+            <text x="446" y="476" class="svg-title svg-white">Typed Context Bundle to Agents</text>
+
+            <line x1="139" y1="154" x2="280" y2="318" class="arrow"/>
+            <line x1="329" y1="154" x2="310" y2="318" class="arrow"/>
+            <line x1="519" y1="154" x2="560" y2="318" class="arrow"/>
+            <line x1="709" y1="154" x2="580" y2="318" class="arrow"/>
+            <line x1="899" y1="154" x2="850" y2="318" class="arrow"/>
+            <line x1="139" y1="242" x2="310" y2="318" class="arrow"/>
+            <line x1="329" y1="242" x2="560" y2="318" class="arrow"/>
+            <line x1="519" y1="242" x2="580" y2="318" class="arrow"/>
+            <line x1="709" y1="242" x2="850" y2="318" class="arrow"/>
+            <line x1="899" y1="242" x2="850" y2="318" class="arrow"/>
+            <line x1="310" y1="410" x2="500" y2="448" class="arrow"/>
+            <line x1="580" y1="410" x2="580" y2="448" class="arrow"/>
+            <line x1="850" y1="410" x2="660" y2="448" class="arrow"/>
+          </svg>
+        </div>
+
+        <div class="grid two" style="margin-top: 18px;">
+          <div class="card">
+            <h3>Day-1 Load</h3>
+            <p>Client onboarding loads enterprise profile, org, systems, financials, KPI dictionary, programs, vendors/contracts, policies, and evidence. The goal is immediate consultant-grade grounding before live connectors are approved.</p>
+          </div>
+          <div class="card">
+            <h3>Day-2 Automation</h3>
+            <p>Incremental refresh flows through Blob, Event Grid, Service Bus, ingestion workers, sensitive-upload guard, broker rebuild, search index updates, graph projection, and parity checks.</p>
+          </div>
+        </div>
+      </section>
+
+      <section id="agents">
+        <h2>Agent Runtime and Reasoning Contracts</h2>
+        <p class="section-intro">
+          AbarVa agents are product-specific executive operators, not interchangeable chat personas. Each agent has a voice doctrine, tool boundary, context mode, and quality guard.
+        </p>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Agent</th>
+                <th>Surface</th>
+                <th>Primary Job</th>
+                <th>What Good Looks Like</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Sentinel</strong></td>
+                <td>Intelligence</td>
+                <td>Find patterns, rank bets, raise dissent, and convert signal into Move candidates.</td>
+                <td>Answers are tenant-grounded, cite patterns/evidence, include confidence, and name what would change the recommendation.</td>
+              </tr>
+              <tr>
+                <td><strong>Nexus</strong></td>
+                <td>Moves</td>
+                <td>Originate and progress strategic moves through P0-P6 with sponsors, gates, deliverables, and value logic.</td>
+                <td>Few-turn origination, exact baseline preservation, tool-backed persistence, clear lifecycle labels.</td>
+              </tr>
+              <tr>
+                <td><strong>Atlas</strong></td>
+                <td>Tower</td>
+                <td>Read portfolio health, risk, spend, dependencies, adoption, and executive action requirements.</td>
+                <td>Turns graph/table telemetry into action, not decorative analytics.</td>
+              </tr>
+              <tr>
+                <td><strong>Steward</strong></td>
+                <td>Setup / Admin</td>
+                <td>Explain what is loaded, trusted, missing, quarantined, or blocking production readiness.</td>
+                <td>Shows data trust, classification, tenant readiness, and next setup action without inventing missing data.</td>
+              </tr>
+              <tr>
+                <td><strong>Source Agent</strong></td>
+                <td>Source</td>
+                <td>Shape sourcing events, compare vendors, structure evidence, and generate decision artifacts.</td>
+                <td>Fills the event canvas from chat, compares vendors economically, and preserves artifact lineage.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="callout security" style="margin-top: 18px;">
+          <strong>Consistency guard principle:</strong> post-generation guards catch ranked-money errors, date math issues, pattern-citation validity, unsupported absolutes, stale/forward-looking tense drift, and other internal contradictions before a CXO sees an answer.
+        </div>
+      </section>
+
+      <section id="azure">
+        <h2>Azure Services and Deployment Lanes</h2>
+        <p class="section-intro">
+          The Azure lab is the reference architecture proving AbarVa can run as an enterprise-grade SaaS with a private data lane. The production target is not “lift Vercel into Azure”; it is a controlled platform with private networking, auditable identity, isolated data, and repeatable runbooks.
+        </p>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Lane</th>
+                <th>Azure Services</th>
+                <th>Purpose</th>
+                <th>Target Standard</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Ingress</strong></td>
+                <td>Azure Front Door, WAF, DNS, certificates</td>
+                <td>Enterprise public entry with TLS, WAF policies, rate controls, and customer domains.</td>
+                <td>No direct public access to private resources; all browser traffic enters through governed ingress.</td>
+              </tr>
+              <tr>
+                <td><strong>Runtime</strong></td>
+                <td>Container Apps, ACR, managed identity, Container Apps Jobs</td>
+                <td>Serve the Next.js app, run migration/copy jobs, ingestion workers, smoke jobs, and future evaluation workers.</td>
+                <td>Separate images/jobs for app, broker, ingestion, migration, and evaluation as the platform scales.</td>
+              </tr>
+              <tr>
+                <td><strong>Private Data</strong></td>
+                <td>Azure Postgres, Blob Storage, Private Endpoint, Private DNS, VNet peering</td>
+                <td>Store tenant data, context chunks, evidence, artifacts, audit rows, and graph system-of-record rows.</td>
+                <td>Public access disabled, RLS enabled, private DNS working, PITR restore runbook proven.</td>
+              </tr>
+              <tr>
+                <td><strong>Intelligence</strong></td>
+                <td>Azure AI Search, model gateway, Azure-approved provider endpoints, Cosmos Gremlin</td>
+                <td>Retrieve tenant context, reason over it, and traverse relationships without making projections canonical.</td>
+                <td>Tenant-filtered retrieval, prompt/content audit, controlled model egress, graph provider boundary.</td>
+              </tr>
+              <tr>
+                <td><strong>Security</strong></td>
+                <td>Key Vault, Defender, Azure Policy, Sentinel, Purview, managed identities</td>
+                <td>Protect secrets, enforce posture, classify sensitive uploads, govern access, and support enterprise review.</td>
+                <td>Least privilege, no standing secrets in code, policy-as-code, classification-to-quarantine workflow.</td>
+              </tr>
+              <tr>
+                <td><strong>Observability</strong></td>
+                <td>Log Analytics, Application Insights, alerts, budgets</td>
+                <td>Track app health, agent latency, guard violations, RLS denials, cost, and deployment failure.</td>
+                <td>SLO dashboards and evidence packs are production features, not afterthoughts.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="security">
+        <h2>Security, Privacy, and Governance</h2>
+        <p class="section-intro">
+          AbarVa's current functional scope does not require PHI or PII. The platform should default to business context, portfolio, vendor, policy, KPI, and operational data. If sensitive data is uploaded, the system must detect, quarantine, audit, and give admins a governed disposition path.
+        </p>
+        <div class="grid three">
+          <div class="card strong">
+            <span class="status live">Live Pattern</span>
+            <h3>Tenant Isolation</h3>
+            <p>Tenant key at the route boundary, adapter boundary, broker boundary, database row, search namespace, graph partition, and audit row.</p>
+          </div>
+          <div class="card strong">
+            <span class="status live">Live Pattern</span>
+            <h3>Sensitive Upload Guard</h3>
+            <p>Uploads pass through classification. Safe context is allowed; suspected PHI/PII or sensitive payloads are quarantined with audit rows.</p>
+          </div>
+          <div class="card strong">
+            <span class="status target">Target</span>
+            <h3>Customer Private Lane</h3>
+            <p>For enterprise tenants, data stores and evidence payloads can live in the customer's Azure boundary with customer-managed keys and private endpoints.</p>
+          </div>
+        </div>
+        <div class="table-wrap" style="margin-top: 18px;">
+          <table>
+            <thead>
+              <tr>
+                <th>Control</th>
+                <th>Implementation</th>
+                <th>Evidence</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Authentication</td>
+                <td>Clerk for pilot; auth adapter should support Entra External ID / enterprise federation as the post-pilot target.</td>
+                <td>Route tests, sign-in E2E, locked-role pinning, demo roster governance.</td>
+              </tr>
+              <tr>
+                <td>Authorization</td>
+                <td>Role and tenant checks in routes, data adapters, RLS, and tools.</td>
+                <td>SEC-P0 probes, RLS regression SQL, route unit tests.</td>
+              </tr>
+              <tr>
+                <td>Secrets</td>
+                <td>Key Vault projection now; managed-identity runtime fetch where rotation cadence justifies it.</td>
+                <td>Key Vault health, Container App secret projection audit, no literals in images/source.</td>
+              </tr>
+              <tr>
+                <td>Audit</td>
+                <td>Append-only sensitive-upload lifecycle rows, gate approvals, admin actions, model turn traces, and evidence exports.</td>
+                <td>SOC2 evidence pack, immutability assertions, quarantine dashboard.</td>
+              </tr>
+              <tr>
+                <td>Resilience</td>
+                <td>Service Bus DLQ, provider-overload fallback, Postgres protected-read-only degradation, PITR restore drill.</td>
+                <td>AZLAB51, AZLAB58, AZLAB59, AZLAB60.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="dev">
+        <h2>Developer Standards</h2>
+        <p class="section-intro">
+          New developers should treat AbarVa as an enterprise product with a strict architectural seam. The fastest way to create a security incident is to add a convenient direct data path, a hard-coded tenant story, or an untested agent prompt change.
+        </p>
+        <div class="grid two">
+          <div class="card">
+            <h3>Code Boundaries</h3>
+            <ul>
+              <li>Use data-plane read/write adapters for app data access.</li>
+              <li>Use <code>AgentContextBroker</code> for agent context.</li>
+              <li>Return view models from routes; transform DB rows at the boundary.</li>
+              <li>Keep tenant-key canonicalization explicit and tested.</li>
+              <li>Do not import vector, graph, or data-room internals from app UI code.</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h3>UI Standards</h3>
+            <ul>
+              <li>Use the existing shell, nav, typography, and component density.</li>
+              <li>Every table/graph must answer a business question.</li>
+              <li>Agent chat should be resizable where it shares a workspace with a canvas.</li>
+              <li>No cross-tenant or cross-industry placeholder copy.</li>
+              <li>No visible feature-explainer text inside the app unless it belongs to Learn.</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h3>Data Standards</h3>
+            <ul>
+              <li>Every tenant-scoped row needs tenant identity.</li>
+              <li>Every import needs source, timestamp, confidence, and lineage where applicable.</li>
+              <li>Use structured parsers for CSV/XLSX/YAML/JSON ingestion.</li>
+              <li>Quarantine suspected sensitive data; do not silently index it.</li>
+              <li>Graph edges are projections from canonical records, not free-floating facts.</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h3>Agent Standards</h3>
+            <ul>
+              <li>Voice doctrine changes require behavior tests.</li>
+              <li>Answers must be calibrated when context is sparse.</li>
+              <li>Recommendations should include dissent or what would change the view.</li>
+              <li>Tool calls must preserve tenant, actor, and surface context.</li>
+              <li>Consistency guards should log caught violations for telemetry.</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <section id="automation">
+        <h2>Agentic SDLC: Codex and Claude Code</h2>
+        <p class="section-intro">
+          AbarVa uses AI development agents as an engineering accelerator, but the operating model must remain more disciplined than a normal manual team, not less. The rule is simple: agents can move fast only when every change is bounded, tested, merged through PR, and recorded as evidence.
+        </p>
+        <div class="diagram" role="img" aria-label="Agentic software delivery lifecycle">
+          <svg viewBox="0 0 1080 360" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <marker id="arrow3" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+                <path d="M0,0 L0,6 L9,3 z" fill="#0b4a91" />
+              </marker>
+            </defs>
+            <rect x="20" y="20" width="1040" height="320" rx="12" fill="#fbfaf8" stroke="#d8d4ca"/>
+            <text x="44" y="54" class="svg-title">Automated Development With Governance</text>
+
+            <rect x="54" y="112" width="142" height="88" rx="8" class="node-blue"/>
+            <text x="74" y="144" class="svg-title">Task Intake</text>
+            <text x="74" y="166" class="svg-small">scope · owner · risk</text>
+
+            <rect x="226" y="112" width="142" height="88" rx="8" class="node"/>
+            <text x="246" y="144" class="svg-title">Branch Slice</text>
+            <text x="246" y="166" class="svg-small">one PR · one concern</text>
+
+            <rect x="398" y="112" width="142" height="88" rx="8" class="node"/>
+            <text x="418" y="144" class="svg-title">Implement</text>
+            <text x="418" y="166" class="svg-small">code · docs · tests</text>
+
+            <rect x="570" y="112" width="142" height="88" rx="8" class="node-green"/>
+            <text x="590" y="144" class="svg-title">Validate</text>
+            <text x="590" y="166" class="svg-small">TS · lint · unit · E2E</text>
+
+            <rect x="742" y="112" width="142" height="88" rx="8" class="node-gold"/>
+            <text x="762" y="144" class="svg-title">Evidence</text>
+            <text x="762" y="166" class="svg-small">AZLAB · screenshots · logs</text>
+
+            <rect x="914" y="112" width="112" height="88" rx="8" class="node-dark"/>
+            <text x="934" y="144" class="svg-title svg-white">Merge</text>
+            <text x="934" y="166" class="svg-white" style="font: 500 11px 'DM Sans', Arial;">deploy if needed</text>
+
+            <line x1="196" y1="156" x2="226" y2="156" class="arrow-strong"/>
+            <line x1="368" y1="156" x2="398" y2="156" class="arrow-strong"/>
+            <line x1="540" y1="156" x2="570" y2="156" class="arrow-strong"/>
+            <line x1="712" y1="156" x2="742" y2="156" class="arrow-strong"/>
+            <line x1="884" y1="156" x2="914" y2="156" class="arrow-strong"/>
+
+            <text x="74" y="256" class="svg-small">Codex: local code, infra, deploy, validation, evidence capture.</text>
+            <text x="74" y="278" class="svg-small">Claude Code: parallel product slices, agent-quality work, UI/behavior improvements.</text>
+            <text x="74" y="300" class="svg-small">Founder: approves scope, reviews evidence, controls sensitive production/client actions.</text>
+          </svg>
+        </div>
+        <div class="table-wrap" style="margin-top: 18px;">
+          <table>
+            <thead>
+              <tr>
+                <th>Agent Work Type</th>
+                <th>Allowed</th>
+                <th>Required Governance</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Code slice</td>
+                <td>Implement scoped route/component/adapter/test changes.</td>
+                <td>Fresh branch, focused diff, targeted tests, TypeScript, lint, PR, merge log.</td>
+              </tr>
+              <tr>
+                <td>Azure lab work</td>
+                <td>Provision, deploy, smoke, record evidence for lab resources.</td>
+                <td>Use synthetic data only, avoid printing secrets, document resource IDs, capture pass/fail artifacts.</td>
+              </tr>
+              <tr>
+                <td>Browser audit</td>
+                <td>Drive live app, capture functional/design/agent quality issues.</td>
+                <td>Report exact tenant/persona, URL, screenshot, console/network errors, and answer transcripts.</td>
+              </tr>
+              <tr>
+                <td>Agent prompt work</td>
+                <td>Adjust voice doctrine, cadence, fallback, and consistency checks.</td>
+                <td>Behavior tests plus live or recorded examples. No untested doctrine edits.</td>
+              </tr>
+              <tr>
+                <td>Database and security</td>
+                <td>Migrations, RLS, tenant isolation probes, seeded synthetic data.</td>
+                <td>Dry-run, SQL regression, rollback/restore path, no real client data mutation without explicit human window.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="tests">
+        <h2>Full-Stack Test Gates</h2>
+        <p class="section-intro">
+          AbarVa's cutover readiness is measured by eleven gates. A feature is not production-ready because it works once; it is production-ready when it survives these layers with evidence.
+        </p>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Layer</th>
+                <th>Question</th>
+                <th>Representative Artifact</th>
+                <th>Current Posture</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>L1 Infrastructure</td><td>Does IaC deploy and match live resources?</td><td><code>azure:resource:parity</code>, Bicep what-if</td><td><span class="status live">Wired</span></td></tr>
+              <tr><td>L2 Connectivity</td><td>Can runtime reach private dependencies?</td><td><code>/api/health/azure-connectivity</code></td><td><span class="status live">Live green</span></td></tr>
+              <tr><td>L3 Security</td><td>Are network and identity controls least-privilege?</td><td><code>azure:security:audit</code></td><td><span class="status guard">Advisory attention</span></td></tr>
+              <tr><td>L4 Tenant Isolation</td><td>Can one tenant see another tenant?</td><td>SEC-P0 curl probes, RLS SQL</td><td><span class="status live">Live green</span></td></tr>
+              <tr><td>L5 Data Integrity</td><td>Can schema/data replay and restore?</td><td>reset/replay, parity, PITR</td><td><span class="status live">PITR proven</span></td></tr>
+              <tr><td>L6 Functional E2E</td><td>Do primary surfaces work per tenant?</td><td>Playwright tenant matrix</td><td><span class="status live">Primary green</span></td></tr>
+              <tr><td>L7 Agent Quality</td><td>Are answers grounded and consistent?</td><td>golden corpus, guard telemetry</td><td><span class="status live">Runner wired</span></td></tr>
+              <tr><td>L8 Performance</td><td>Does the app hold under CXO load?</td><td>primary-surface load smoke</td><td><span class="status guard">Expand load</span></td></tr>
+              <tr><td>L9 Resilience</td><td>Do dependencies fail safely?</td><td>DLQ, provider overload, Postgres disruption, PITR</td><td><span class="status live">Core drills green</span></td></tr>
+              <tr><td>L10 Compliance</td><td>Can we export audit evidence?</td><td>SOC2 pack, quarantine audit</td><td><span class="status live">Wired</span></td></tr>
+              <tr><td>L11 Observability</td><td>Can regressions stay visible?</td><td>App Insights, Log Analytics, alerts, budget</td><td><span class="status guard">Advisory attention</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="onboarding">
+        <h2>New Developer Onboarding Checklist</h2>
+        <p class="section-intro">
+          A new engineer should be productive only after they understand the product surfaces, data-plane seam, context broker, and test gates. This checklist prevents the common failure mode: shipping a local UI fix that quietly violates tenant trust.
+        </p>
+        <div class="grid two">
+          <div class="card">
+            <h3>Read First</h3>
+            <ol>
+              <li><code>AGENTS.md</code> for repo operating rules and Next.js version warning.</li>
+              <li><code>docs/architecture/azure/CURRENT-STATE.md</code> for live Azure lab state.</li>
+              <li><code>docs/architecture/ABARVA_PRIVATE_DATA_PLANE_MODEL.md</code> for private lane principles.</li>
+              <li><code>docs/architecture/ABARVA_AGENT_MISSION_RUNTIME.md</code> for agent roles.</li>
+              <li><code>docs/product/page-workflow-catalog/</code> for page-by-page workflow intent.</li>
+            </ol>
+          </div>
+          <div class="card">
+            <h3>Before First PR</h3>
+            <ol>
+              <li>Run the relevant tests locally.</li>
+              <li>Confirm no direct store import violates the adapter/broker boundary.</li>
+              <li>Confirm active tenant copy is not hard-coded.</li>
+              <li>Document any new Azure/runtime behavior in an AZLAB or architecture note.</li>
+              <li>Provide exact validation output in the PR body.</li>
+            </ol>
+          </div>
+        </div>
+        <div class="callout warning" style="margin-top: 18px;">
+          <strong>Cutover mindset:</strong> every feature must be able to run in parallel on current SaaS and Azure lab until the invariant diff, E2E, agent-quality, isolation, and resilience gates are green. AbarVa cuts over by evidence, not optimism.
+        </div>
+      </section>
+
+      <footer class="footer">
+        <strong>AbarVa Target-State Architecture and Solution Design Primer.</strong>
+        Internal product-team document. Data posture for current Azure lab: synthetic/no-client-data only.
+        Last updated 2026-05-16.
+      </footer>
+    </main>
+  </div>
+</body>
+</html>
