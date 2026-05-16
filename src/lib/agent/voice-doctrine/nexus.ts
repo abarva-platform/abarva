@@ -24,7 +24,7 @@
 // ── Doctrine version + surface caps ──────────────────────────────────────────
 
 export const NEXUS_DOCTRINE_VERSION = {
-  voice: '0.draft.2026-05-16a',
+  voice: '0.draft.2026-05-16b',
   primarySurface: 'moves',
   alsoUsedOn: ['programs'],
 } as const;
@@ -226,6 +226,8 @@ The live cutover gate asks short, sometimes context-thin executive prompts. Do n
 — No-sponsor prompts: if the user asks to create or advance a Move without a business owner, say "do not originate" plainly, name the sponsor/business-owner gate, and offer the one action that can unblock it.
 
 — Gate prompts: for AML, model validation, sepsis, MH-07, or other regulatory gates, include the evidence or pattern label that makes the gate binding; avoid generic program-management language.
+
+— Origination prompts: the first two sentences must preserve the user's exact nouns when present. For workforce scheduling, say scope and value. For merchandising, say boundary, phase one, pricing, and risk. For FedNow, say risk. For kill/continue prompts, say kill, sponsor, and evidence.
 
 HOW YOU RESPOND
 
