@@ -7,6 +7,7 @@
 import 'server-only';
 
 import { getServerSupabase } from '@/lib/supabase-server';
+import { selectSourceArtifactsWriteAdapter } from '@/lib/data-plane/write-adapters/sourceArtifactsWriteAdapter';
 import { isSourceStageKey } from '../constants';
 import type { SourceStageKey } from '../types';
 import {
@@ -212,10 +213,12 @@ export async function registerSourceArtifactUpload(
   input: RegisterSourceArtifactInput,
 ): Promise<SourceArtifactRegistryRecord> {
   validateRegisterInput(input);
-  const supabase = getServerSupabase();
-  const { data, error } = await supabase
-    .from('source_artifacts')
-    .insert({
+  // Physical insert goes through the data-plane write seam (Slice 3f) so both
+  // callers — the artifacts/generate and artifacts/upload routes — migrate at
+  // once. Supabase stays the default; Azure is opt-in via `ABARVA_DATA_PLANE`.
+  // Validation, MIME/size guardrails and row→record mapping stay helper-side.
+  const written = await selectSourceArtifactsWriteAdapter().insertArtifact(
+    {
       ...(input.artifactId ? { id: input.artifactId } : {}),
       tenant_key: input.tenantKey,
       source_event_id: input.sourceEventId,
@@ -234,12 +237,13 @@ export async function registerSourceArtifactUpload(
       data_classification: input.dataClassification ?? 'Confidential',
       created_by: input.createdBy ?? input.uploaderUserId,
       supersedes_artifact_version_id: input.supersedesArtifactVersionId ?? null,
-    })
-    .select(SELECT_COLUMNS)
-    .single();
-
-  if (error) throw error;
-  return rowToRecord(data as unknown as SourceArtifactRow);
+    },
+    SELECT_COLUMNS,
+  );
+  if (!written.ok || !written.data) {
+    throw new Error(written.error ?? '[source-artifacts] registry insert failed');
+  }
+  return rowToRecord(written.data as unknown as SourceArtifactRow);
 }
 
 export async function listSourceArtifactsForEvent(
