@@ -1,6 +1,6 @@
 # AZLAB60 - L9 Azure Postgres PITR Restore Drill
 
-Status: wired; live restore run pending  
+Status: wired; live restore run passed  
 Layer: L9 - Resilience / DR; L5 - Data integrity
 
 ## Purpose
@@ -90,6 +90,39 @@ Pass criteria:
 - Temporary restored server is deleted when `--delete-after` is set.
 - Report JSON is written to `/tmp/abarva-pitr-restore-<target>.json`.
 
+## Live Azure Evidence
+
+| Item | Value |
+| --- | --- |
+| Date | 2026-05-16 |
+| Source server | `pg-abarva-context-lab-001` |
+| Target server | `pg-abarva-pitr-20260516t141` |
+| Restore point | `2026-05-16T13:59:25Z` |
+| Elapsed restore time | `393` seconds |
+| Restored state | `Ready` |
+| Restored public network access | `Disabled` |
+| Cleanup | Temporary restored server deleted |
+| Report artifact | `/tmp/abarva-pitr-restore-pg-abarva-pitr-20260516t141.json` |
+
+Live smoke summary:
+
+```json
+{
+  "status": "pass",
+  "restore": {
+    "elapsedSeconds": 393,
+    "state": "Ready",
+    "publicNetworkAccess": "Disabled",
+    "deleted": true
+  },
+  "checks": [
+    { "name": "restore_reached_ready", "pass": true },
+    { "name": "restored_server_private", "pass": true },
+    { "name": "cleanup_completed", "pass": true }
+  ]
+}
+```
+
 ## Current L9 State
 
 | Failure mode | Evidence |
@@ -98,4 +131,4 @@ Pass criteria:
 | Service Bus mixed good + poison batch | AZLAB51 live Azure pass. |
 | Model provider overload | AZLAB58 live Azure pass on r26. |
 | Postgres disruption | AZLAB59 live Azure pass on r28. |
-| PITR restore timing | AZLAB60 wired; live restore run pending. |
+| PITR restore timing | AZLAB60 live Azure pass; restored private target in 393 seconds and deleted it. |
