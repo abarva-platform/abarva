@@ -38,6 +38,10 @@ export const PUBLIC_ROUTE_PATTERNS = [
   // without it. Keeping it out of Clerk avoids HTML sign-in redirects in
   // machine probes.
   '/api/health/azure-connectivity',
+  // Parallel-run invariants are machine-only and self-guarded by a bearer
+  // token inside the route. It must stay outside Clerk so prod-vs-Azure
+  // harnesses receive JSON pass/fail, not an HTML sign-in redirect.
+  '/api/admin/parallel-run-invariants',
   // SEC-P1-11 (audit 2026-05-13): `/api/debug/tower-substrate` previously
   // lived here as "count-only diagnostic" — but it returned per-tenant
   // initiative counts publicly to anyone who knew the URL. The route is
@@ -52,6 +56,9 @@ export const PUBLIC_ROUTE_PATTERNS = [
 ] as const
 
 const isPublicRoute = createRouteMatcher([...PUBLIC_ROUTE_PATTERNS])
+const isTokenGuardedPublicOpsRoute = createRouteMatcher([
+  '/api/admin/parallel-run-invariants',
+])
 
 // Maestro workspace — requires any authenticated Maestro/Admin/Investor session
 const maestroRoutes = createRouteMatcher([
@@ -190,8 +197,10 @@ export default clerkMiddleware(async (auth, request: NextRequest) => {
     return withProductionReadinessNoStoreHeaders(request, NextResponse.redirect(new URL(target + request.nextUrl.search, request.url), 301))
   }
 
+  const requiresAuth = authRequiredRoutes(request) && !isTokenGuardedPublicOpsRoute(request)
+
   if (
-    authRequiredRoutes(request)
+    requiresAuth
     && shouldStripUnauthorizedClientParam(
       role,
       {
@@ -222,11 +231,11 @@ export default clerkMiddleware(async (auth, request: NextRequest) => {
   }
 
   // Auth-required routes (any role)
-  if (authRequiredRoutes(request) && !userId) {
+  if (requiresAuth && !userId) {
     return createSignInRedirect(request)
   }
 
-  if (authRequiredRoutes(request) && isExternalOnlyRole(role)) {
+  if (requiresAuth && isExternalOnlyRole(role)) {
     return withProductionReadinessNoStoreHeaders(request, NextResponse.redirect(new URL('/', request.url)))
   }
 
