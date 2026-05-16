@@ -6,6 +6,8 @@ import { loadUserProgramAccessPolicy } from '@/lib/auth/program-access-policy';
 import { getServerSupabase } from '@/lib/supabase-server';
 import { writeProgramAuditLogBestEffort } from '@/lib/programs/audit-log';
 import { getActiveClientRow } from '@/lib/active-client';
+import { selectAdminWriteAdapter } from '@/lib/data-plane/write-adapters/adminWriteAdapter';
+import type { AdminWriteAdapter } from '@/lib/data-plane/write-adapters/adminWriteAdapter';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -28,6 +30,7 @@ interface ProvisionUserBody {
 
 interface ProgramAssignmentInput {
   sb: ReturnType<typeof getServerSupabase>;
+  writeAdapter: AdminWriteAdapter;
   clientId: string;
   programId: string;
   personId: string;
@@ -115,13 +118,16 @@ async function assignProgramParticipant(input: ProgramAssignmentInput): Promise<
   const existingId = existing && typeof existing === 'object' && 'id' in existing
     ? String((existing as { id: unknown }).id)
     : null;
-  const { error } = existingId
-    ? await sb.from('engagement_participants').update(participantPayload).eq('id', existingId)
-    : await sb.from('engagement_participants').insert(participantPayload);
+  // The participant lookups above are reads (transitive — stay on Supabase);
+  // the insert/update routes through the data-plane write seam (Slice 3d).
+  const written = await input.writeAdapter.upsertParticipant({
+    existingId,
+    payload: participantPayload,
+  });
 
-  return error
-    ? { programId, status: 'failed', detail: error.message }
-    : { programId, status: 'assigned' };
+  return written.ok
+    ? { programId, status: 'assigned' }
+    : { programId, status: 'failed', detail: written.detail };
 }
 
 export async function POST(req: NextRequest) {
@@ -166,48 +172,38 @@ export async function POST(req: NextRequest) {
   const sendInvite = boolValue(body.sendInvite, false);
 
   const sb = getServerSupabase();
+  // DB writes route through the data-plane write seam (Slice 3d); auth, RBAC,
+  // body validation and Clerk calls stay route-side. `supabase` by default.
+  const writeAdapter = selectAdminWriteAdapter();
 
   const graphNodeId = `person:${ctx.clientId}:${email}`;
-  const { data: person, error: personError } = await sb
-    .from('persons')
-    .upsert(
-      {
-        graph_node_id: graphNodeId,
-        email,
-        name,
-        role: accessLevel,
-        organization: ctx.clientId,
-      },
-      { onConflict: 'email' },
-    )
-    .select('id')
-    .single();
-  if (personError || !person) {
+  const personWrite = await writeAdapter.upsertPerson({
+    graphNodeId,
+    email,
+    name,
+    role: accessLevel,
+    organization: ctx.clientId,
+  });
+  if (!personWrite.ok) {
     return NextResponse.json(
-      { error: 'person_upsert_failed', detail: personError?.message ?? 'No person row returned.' },
+      { error: 'person_upsert_failed', detail: personWrite.detail },
       { status: 500 },
     );
   }
-  const personId = (person as { id: string }).id;
+  const personId = personWrite.data.id;
 
-  const { error: membershipError } = await sb
-    .from('person_client_memberships')
-    .upsert(
-      {
-        person_id: personId,
-        client_id: ctx.clientId,
-        role: 'client_viewer',
-        access_level: accessLevel,
-        financial_visibility: financialVisibility,
-        can_admin_users: canAdminUsers,
-        can_create_programs: canCreatePrograms,
-        can_approve_gates: canApproveGates,
-      },
-      { onConflict: 'person_id,client_id' },
-    );
-  if (membershipError) {
+  const membershipWrite = await writeAdapter.upsertMembership({
+    personId,
+    clientId: ctx.clientId,
+    accessLevel,
+    financialVisibility,
+    canAdminUsers,
+    canCreatePrograms,
+    canApproveGates,
+  });
+  if (!membershipWrite.ok) {
     return NextResponse.json(
-      { error: 'membership_upsert_failed', detail: membershipError.message },
+      { error: 'membership_upsert_failed', detail: membershipWrite.detail },
       { status: 500 },
     );
   }
@@ -216,6 +212,7 @@ export async function POST(req: NextRequest) {
   for (const programId of programIds) {
     participantResults.push(await assignProgramParticipant({
       sb,
+      writeAdapter,
       clientId: ctx.clientId,
       programId,
       personId,
