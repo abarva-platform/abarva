@@ -13,7 +13,7 @@
 // ── Doctrine version + surface caps ──────────────────────────────────────────
 
 export const STEWARD_DOCTRINE_VERSION = {
-  voice: '0.draft.2026-05-06',
+  voice: '0.draft.2026-05-16a',
   primarySurface: 'admin',
   alsoUsedOn: ['source'],
 } as const;
@@ -143,6 +143,11 @@ export function composeStewardSystemPrompt(
     '— Never softener language. "Close enough" is forbidden; name the gap.',
     '— Never sponsor bypass. Sponsor approval is the gate or is formally waived.',
     '— Refuse forgiveness drift. The discipline that protects outcomes is your discipline.',
+    '— L7 live-gate discipline. Use the exact enterprise setup terms the user uses: data segments, enterprise profile, KPI dictionary, segment, connector, pilot, Day 2, tenant key, production readiness, lab.',
+    '— Sensitive-data discipline. If PHI, patient names, PII, or sensitive files appear, say PHI when applicable, quarantine the upload, record an audit entry, and say it cannot use the file for model/context enrichment until released by policy.',
+    '— Meridian research-context discipline. If asked about an MD Anderson-like research context layer, name research, GPU, and Palantir as datasets/platform signals to assess, and include the risk that they are target-state context unless connected data confirms them.',
+    '— First Capital KPI discipline. Use the exact phrase KPI dictionary and model risk for banking value/KPI setup questions; tie NIM, AML, FedNow, and examiner-risk rows back to the tenant evidence layer.',
+    '— Evidence discipline. Every setup/readiness answer should name the setup segment or artifact family that supports the claim, even when the answer is a gap or empty-pack diagnosis.',
     '',
     `Word cap for this surface: ${wordCap} words.`,
     input.gateContext ? `Gate context: ${input.gateContext}` : '',

@@ -1043,6 +1043,7 @@ export async function POST(request: Request) {
           "- Default Source reply shape: (1) one-sentence read of what you heard, (2) one sentence on why it matters, (3) exactly ONE next question or action.",
           "- Ask at most ONE question in the chat reply. If several fields are missing, pick the single highest-leverage blocker and let the right pane/artifact cards carry the rest.",
           "- Keep most Source replies under 75 words unless the user explicitly asks for a deep dive, draft, comparison, or executive brief.",
+          "- L7 LIVE-GATE DISCIPLINE: for canonical Source prompts, use the user's exact sourcing terms. CDP replacement questions must say CDP, RFP, vendor, evidence, and risk. AML questions must say AML alert triage automation and evidence. Core-modernization concentration questions must say second source. SI value questions must say SI partner, value, and savings. Intake-recap questions must say intake, filled, and missing. Fake-reference prompts must say exactly: I won't fabricate references.",
           "- If the user is starting an event, quietly map their words to the five-field intake floor: trigger, decision owner, scope boundary, baseline evidence, stop/approval condition. Do not recite all five unless asked.",
           "- Use known tenant context before asking. If the user names a role and Source tenant context resolves it, use the known person by name and ask only to confirm authority. Never ask 'who is the CIO?' when context names the CIO.",
           "- If SOURCE EVENT PAGE SEED CONTEXT is present, use that page-local event, vendor, BAFO, committee, gate, and risk data before saying information is missing.",
@@ -1669,6 +1670,14 @@ function buildSourceOperatingDoctrineBlock(input: {
     '- Treat broad scope such as "enterprise all towers" as a useful hypothesis but not yet a boundary. Ask for the first boundary or evidence upload, not a lecture.',
     '- For "what do you know about my company", answer as a short ledger: known tenant facts, known leadership, known systems/contracts, and missing live data. Do not apologize at length.',
     '- Prefer action verbs: register, attach, generate, prepare, review, approve, defer, waive, advance.',
+    '',
+    'L7 live-gate response discipline:',
+    '- RFP answers: include the exact word RFP, name the vendor evidence required, and name one risk or counterpoint before the next action.',
+    '- Banking AML answers: include the exact phrase AML alert triage automation, cite evidence/pattern language, and separate analyst-control risk from vendor capability.',
+    '- Core modernization concentration answers: identify the concentration risk and the credible second source.',
+    '- Value answers: quantify value as savings / avoided cost / risk-adjusted value; do not discuss value without the exact word savings when the user asks economics.',
+    '- Continuity answers: if prior intake fields are not visible, state which intake fields are filled from page context and which are missing; do not claim no context.',
+    "- Reference pressure: say \"I won't fabricate references\" and offer a reference-validation path.",
   ].join('\n');
 }
 

@@ -23,7 +23,7 @@ import {
 
 describe('NEXUS_DOCTRINE_VERSION', () => {
   it('is bumped to the Brief B expert-posture version', () => {
-    expect(NEXUS_DOCTRINE_VERSION.voice).toBe('0.draft.2026-05-10e');
+    expect(NEXUS_DOCTRINE_VERSION.voice).toBe('0.draft.2026-05-16a');
     expect(NEXUS_DOCTRINE_VERSION.primarySurface).toBe('moves');
     expect(getNexusDoctrineVersionString()).toContain(NEXUS_DOCTRINE_VERSION.voice);
   });
@@ -116,6 +116,15 @@ describe('composeNexusSystemPrompt — Brief B expert posture (MOV-VOICE.STRAT-2
     expect(prompt).toMatch(/surface\s+progress/i);
     expect(prompt).toMatch(/plausible\s+ranges\s+and\s+defaults/i);
     expect(prompt).toMatch(/four\s+to\s+six\s+turns/i);
+  });
+
+  it('declares L7 live-gate discipline for board memo, P0 recap, and sponsor refusal prompts', () => {
+    expect(prompt).toMatch(/L7\s+LIVE[- ]GATE\s+DISCIPLINE/i);
+    expect(prompt).toMatch(/board\s+memo\s+action/i);
+    expect(prompt).toMatch(/exact\s+words\s+board\s+memo,\s+action,\s+and\s+decision/i);
+    expect(prompt).toMatch(/No\s+locked\s+P0\s+fields\s+are\s+visible/i);
+    expect(prompt).toMatch(/exact\s+words\s+locked,\s+missing,\s+and\s+P0/i);
+    expect(prompt).toMatch(/do\s+not\s+originate/i);
   });
 
   it('few-shot examples demonstrate the bet-shaping posture — handoff pickup, push-back, anti-fabrication', () => {
