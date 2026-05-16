@@ -8,17 +8,14 @@
 // tenant predicates manually. Authentication context is handled by the
 // supabase client returned by getServerSupabase().
 
-import { getServerSupabase } from '@/lib/supabase-server';
+import { selectSourceCanvasSubstrateReadAdapter } from '@/lib/data-plane/read-adapters/sourceCanvasSubstrateReadAdapter';
 import {
   artifactStateRowToView,
   evidenceStateRowToView,
   gateCriterionStateRowToView,
   type SourceEventArtifactState,
-  type SourceEventArtifactStateRow,
   type SourceEventEvidence,
-  type SourceEventEvidenceStateRow,
   type SourceEventGateCriterion,
-  type SourceEventGateCriterionStateRow,
 } from './types';
 
 // ── Read helpers ────────────────────────────────────────────────────────────
@@ -26,75 +23,64 @@ import {
 export async function listArtifactStatesForEvent(
   sourceEventId: string,
 ): Promise<SourceEventArtifactState[]> {
-  let supabase: ReturnType<typeof getServerSupabase>;
   try {
-    supabase = getServerSupabase();
-  } catch {
-    // Env not configured (tests, local dev without DB) — return empty so
-    // the canvas renders graceful empty state instead of crashing.
+    // Physical read goes through the data-plane seam (Supabase default,
+    // Azure Postgres opt-in via ABARVA_DATA_PLANE).
+    const rows = await selectSourceCanvasSubstrateReadAdapter().listArtifactStateRows(
+      sourceEventId,
+    );
+    return rows.map(artifactStateRowToView);
+  } catch (error) {
+    // An unconfigured env (tests, local dev without DB) or a query error —
+    // return empty so the canvas renders graceful empty state.
+    console.error(
+      '[listArtifactStatesForEvent]',
+      error instanceof Error ? error.message : error,
+    );
     return [];
   }
-  const { data, error } = await supabase
-    .from('source_event_artifact_states')
-    .select('*')
-    .eq('source_event_id', sourceEventId)
-    .order('artifact_code', { ascending: true });
-
-  if (error) {
-    console.error('[listArtifactStatesForEvent]', error.message);
-    return [];
-  }
-  return ((data as SourceEventArtifactStateRow[] | null) ?? []).map(artifactStateRowToView);
 }
 
 export async function listGateCriterionStatesForEvent(
   sourceEventId: string,
 ): Promise<SourceEventGateCriterion[]> {
-  let supabase: ReturnType<typeof getServerSupabase>;
   try {
-    supabase = getServerSupabase();
-  } catch {
-    // Env not configured (tests, local dev without DB) — return empty so
-    // the canvas renders graceful empty state instead of crashing.
+    // Physical read goes through the data-plane seam (Supabase default,
+    // Azure Postgres opt-in via ABARVA_DATA_PLANE).
+    const rows = await selectSourceCanvasSubstrateReadAdapter().listGateCriterionStateRows(
+      sourceEventId,
+    );
+    return rows.map(gateCriterionStateRowToView);
+  } catch (error) {
+    // An unconfigured env (tests, local dev without DB) or a query error —
+    // return empty so the canvas renders graceful empty state.
+    console.error(
+      '[listGateCriterionStatesForEvent]',
+      error instanceof Error ? error.message : error,
+    );
     return [];
   }
-  const { data, error } = await supabase
-    .from('source_event_gate_criterion_states')
-    .select('*')
-    .eq('source_event_id', sourceEventId)
-    .order('criterion_id', { ascending: true });
-
-  if (error) {
-    console.error('[listGateCriterionStatesForEvent]', error.message);
-    return [];
-  }
-  return ((data as SourceEventGateCriterionStateRow[] | null) ?? []).map(
-    gateCriterionStateRowToView,
-  );
 }
 
 export async function listEvidenceStatesForEvent(
   sourceEventId: string,
 ): Promise<SourceEventEvidence[]> {
-  let supabase: ReturnType<typeof getServerSupabase>;
   try {
-    supabase = getServerSupabase();
-  } catch {
-    // Env not configured (tests, local dev without DB) — return empty so
-    // the canvas renders graceful empty state instead of crashing.
+    // Physical read goes through the data-plane seam (Supabase default,
+    // Azure Postgres opt-in via ABARVA_DATA_PLANE).
+    const rows = await selectSourceCanvasSubstrateReadAdapter().listEvidenceStateRows(
+      sourceEventId,
+    );
+    return rows.map(evidenceStateRowToView);
+  } catch (error) {
+    // An unconfigured env (tests, local dev without DB) or a query error —
+    // return empty so the canvas renders graceful empty state.
+    console.error(
+      '[listEvidenceStatesForEvent]',
+      error instanceof Error ? error.message : error,
+    );
     return [];
   }
-  const { data, error } = await supabase
-    .from('source_event_evidence_states')
-    .select('*')
-    .eq('source_event_id', sourceEventId)
-    .order('requirement_id', { ascending: true });
-
-  if (error) {
-    console.error('[listEvidenceStatesForEvent]', error.message);
-    return [];
-  }
-  return ((data as SourceEventEvidenceStateRow[] | null) ?? []).map(evidenceStateRowToView);
 }
 
 // ── Composite read · everything for a stage ─────────────────────────────────

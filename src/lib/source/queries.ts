@@ -38,6 +38,7 @@ import {
   type SourceArtifactRegistryRecord,
 } from './artifact-registry';
 import { buildEventScaffold } from './canvas-substrate';
+import { selectSourceEventsReadAdapter } from '@/lib/data-plane/read-adapters/sourceEventsReadAdapter';
 
 // ── DB row type for source_events ─────────────────────────────────────────────
 
@@ -83,19 +84,12 @@ export async function getPendingSourceEvents(clientKey: string): Promise<SourceE
   const allowedIds = tenancy ? await allowedSourceEventIdsForUser(tenancy, clientKey).catch(() => []) : [];
   if (allowedIds !== null && allowedIds.length === 0) return [];
 
-  const supabase = getServerSupabase();
-  const { data, error } = await supabase
-    .from('source_events')
-    .select('*')
-    .eq('client_key', clientKey)
-    .eq('lifecycle_state', 'waiting_on_client')
-    .order('created_at', { ascending: false });
-
-  if (error) {
-    console.error('[getPendingSourceEvents]', error.message);
-    return [];
-  }
-  const rows = (data ?? []) as SourceEventRow[];
+  // Physical read goes through the data-plane seam (Supabase default,
+  // Azure Postgres opt-in via ABARVA_DATA_PLANE). RBAC scoping below is
+  // unchanged and stays lib-side.
+  const rows = (await selectSourceEventsReadAdapter().getPendingEventsForClient(
+    clientKey,
+  )) as SourceEventRow[];
   return allowedIds === null ? rows : rows.filter((event) => allowedIds.includes(event.id));
 }
 
@@ -207,20 +201,12 @@ export async function listSourcingEvents(): Promise<SourcingEventSummary[]> {
   const tenancy = await requireTenancy().catch(() => null);
   const allowedIds = tenancy ? await allowedSourceEventIdsForUser(tenancy, activeClient.key).catch(() => []) : null;
 
-  const supabase = getServerSupabase();
-  const { data, error } = await supabase
-    .from('source_events')
-    .select('*')
-    .eq('client_key', activeClient.key)
-    .neq('lifecycle_state', 'archived')
-    .order('created_at', { ascending: false });
-
-  if (error) {
-    console.error('[listSourcingEvents] source_events overlay failed', error.message);
-    return activeClientSeedEvents;
-  }
-
-  const persistedRows = ((data as SourceEventRow[] | null) ?? []);
+  // Physical read goes through the data-plane seam. The adapter logs and
+  // returns [] on a read failure; the seed-overlay merge below then yields
+  // exactly the pre-seam error fallback (`activeClientSeedEvents`).
+  const persistedRows = (await selectSourceEventsReadAdapter().getActiveEventsForClient(
+    activeClient.key,
+  )) as SourceEventRow[];
   const scopedPersistedRows = allowedIds === null
     ? persistedRows
     : persistedRows.filter((row) => allowedIds.includes(row.id));
@@ -323,43 +309,23 @@ function isUuid(value: string): boolean {
 }
 
 async function getPersistedSourceEventRow(eventId: string, clientKey: string): Promise<SourceEventRow | null> {
-  const supabase = getServerSupabase();
+  // Physical reads go through the data-plane seam (Supabase default,
+  // Azure Postgres opt-in). The UUID-vs-event_code routing stays here.
+  const adapter = selectSourceEventsReadAdapter();
   // Try by primary key first when the slug looks like a UUID — fast
   // path for existing links + most internal navigation.
   if (isUuid(eventId)) {
-    const { data, error } = await supabase
-      .from('source_events')
-      .select('*')
-      .eq('id', eventId)
-      .eq('client_key', clientKey)
-      .maybeSingle();
-    if (error) {
-      console.error('[getPersistedSourceEventRow:id]', error.message);
-      return null;
-    }
-    if (data) return data as SourceEventRow;
+    const byId = (await adapter.getEventByIdForClient(eventId, clientKey)) as SourceEventRow | null;
+    if (byId) return byId;
     // Fall through — UUID didn't match; try event_code in case it's a
     // UUID-shaped code (very rare but cheap to attempt).
   }
 
   // The substrate has known duplicate event_codes (the portfolio
-  // renderer ships a defensive `dedupeByEventCode`). `.maybeSingle()`
-  // errors when more than one row matches, so we order + limit + take
-  // the most-recently-updated row. This makes the by-code path
-  // resilient regardless of whether the duplicates ever get cleaned.
-  const { data, error } = await supabase
-    .from('source_events')
-    .select('*')
-    .eq('event_code', eventId)
-    .eq('client_key', clientKey)
-    .order('updated_at', { ascending: false })
-    .limit(1);
-  if (error) {
-    console.error('[getPersistedSourceEventRow:code]', error.message);
-    return null;
-  }
-  const rows = (data as SourceEventRow[] | null) ?? [];
-  return rows[0] ?? null;
+  // renderer ships a defensive `dedupeByEventCode`). The adapter orders
+  // by updated_at + limits to one, so the by-code path is resilient
+  // regardless of whether the duplicates ever get cleaned.
+  return (await adapter.getEventByCodeForClient(eventId, clientKey)) as SourceEventRow | null;
 }
 
 async function getCanonicalAdminClientFallback(): Promise<{ key: ClientKey; name: string } | null> {
