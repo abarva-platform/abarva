@@ -167,6 +167,34 @@ export interface SourceDecisionBundle {
   valueAtStakeUsd: number | null;
   /** ISO timestamp the bundle was assembled. */
   surfacedAt: string;
+  /**
+   * Owner + SLA accountability projected from the contract's persisted
+   * sourcing work items. `null` when no work item exists yet (the pure
+   * assembler always leaves this null — the loader enriches it from the
+   * data plane). The usability test asked a VP to see accountability
+   * directly on the card.
+   */
+  accountability: BundleAccountability | null;
+}
+
+/**
+ * The owner + SLA summary surfaced on a Decision Queue card, projected from
+ * the persisted `sourcing_work_items` on the bundle's contract. Mirrors
+ * `WorkItemAccountability` in `@/lib/source/work-items/types`; kept as a
+ * decision-queue-owned shape so the pure queue types do not depend on the
+ * work-item module.
+ */
+export interface BundleAccountability {
+  /** The owning work item's owner, when one is assigned. */
+  owner: string | null;
+  /** The soonest SLA / due date across the contract's open work items. */
+  dueDate: string | null;
+  /** Count of open / in-progress work items on the contract. */
+  openCount: number;
+  /** True when an open serve-notice work item exists. */
+  hasOpenNotice: boolean;
+  /** True when a Tower watch work item exists. */
+  hasTowerWatch: boolean;
 }
 
 /**

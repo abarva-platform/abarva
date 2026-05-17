@@ -196,6 +196,9 @@ export function bundleDecisionItems(
       evidenceRefs,
       valueAtStakeUsd,
       surfacedAt,
+      // The pure assembler has no data plane — accountability is enriched
+      // from persisted `sourcing_work_items` by the loader. Always null here.
+      accountability: null,
     });
   }
   return bundles;

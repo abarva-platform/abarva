@@ -19,6 +19,7 @@ import { SHELL } from '@/lib/shell/shell-tokens';
 import {
   BAND_ORDER,
   URGENCY_LABEL,
+  type BundleAccountability,
   type DecisionPosture,
   type DecisionTriggerKind,
   type DecisionUrgency,
@@ -167,6 +168,76 @@ function SubIssueRow({
   );
 }
 
+/**
+ * Owner + SLA accountability row — surfaces who owns the renewal and when it
+ * is due directly on the card, so a VP sees accountability without opening
+ * the cockpit. Projected from persisted `sourcing_work_items`.
+ */
+function AccountabilityRow({
+  accountability,
+}: {
+  accountability: BundleAccountability;
+}) {
+  const { owner, dueDate, openCount, hasOpenNotice, hasTowerWatch } =
+    accountability;
+  return (
+    <div
+      style={{
+        display: 'flex',
+        gap: 8,
+        flexWrap: 'wrap',
+        alignItems: 'center',
+        padding: '6px 0 2px',
+      }}
+    >
+      <span
+        style={{
+          fontFamily: SHELL.MONO,
+          fontSize: 9,
+          textTransform: 'uppercase',
+          letterSpacing: '0.08em',
+          color: SHELL.INK_MUTED,
+        }}
+      >
+        Accountability
+      </span>
+      <Pill
+        text={owner ? `Owner: ${owner}` : 'Owner: unassigned'}
+        bg={owner ? SHELL.BLUE_BG : SHELL.PAPER_DEEP}
+        line={SHELL.CARD_LINE}
+        color={owner ? SHELL.INK_MID : SHELL.INK_MUTED}
+      />
+      <Pill
+        text={dueDate ? `SLA: ${dueDate}` : 'SLA: not set'}
+        bg={dueDate ? SHELL.PEACH_BG : SHELL.PAPER_DEEP}
+        line={dueDate ? SHELL.PEACH_LINE : SHELL.CARD_LINE}
+        color={dueDate ? SHELL.PEACH_TEXT : SHELL.INK_MUTED}
+      />
+      {hasOpenNotice ? (
+        <Pill
+          text="Notice in flight"
+          bg={SHELL.RUST_BG}
+          line={SHELL.PEACH_LINE}
+          color={SHELL.RUST_TEXT}
+        />
+      ) : null}
+      {hasTowerWatch ? (
+        <Pill
+          text="Tower watch"
+          bg={SHELL.MINT_BG}
+          line={SHELL.MINT_LINE}
+          color={SHELL.MINT_TEXT}
+        />
+      ) : null}
+      {openCount > 0 ? (
+        <span style={{ fontFamily: SHELL.SANS, fontSize: 11, color: SHELL.INK_MUTED }}>
+          {openCount} open work item{openCount === 1 ? '' : 's'}
+        </span>
+      ) : null}
+    </div>
+  );
+}
+
 function DecisionBundleCard({
   bundle,
   evidenceContext,
@@ -214,6 +285,10 @@ function DecisionBundleCard({
       <p style={{ fontFamily: SHELL.SANS, fontSize: 13, color: SHELL.INK_SOFT, margin: 0, lineHeight: 1.5 }}>
         {bundle.summary}
       </p>
+
+      {bundle.accountability ? (
+        <AccountabilityRow accountability={bundle.accountability} />
+      ) : null}
 
       {bundle.subIssues.length > 0 ? (
         <details style={{ marginTop: 2 }}>

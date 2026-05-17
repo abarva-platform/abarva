@@ -7,24 +7,29 @@
 // cockpit, not just read.
 //
 // Honesty rule (the spec's hard constraint): every action is wired to a real
-// capability OR initiates an honest, clearly-labelled affordance. No button
-// shows a fake success and none does nothing:
+// capability. No button shows a fake success and none does nothing:
 //
 //   - Start rebid / Create Source event  → POST /api/v1/source/events (real)
 //   - Open negotiation brief             → renders the real composed brief
 //   - Draft vendor email                 → renders the real generated draft
-//   - Serve notice                       → confirm step → honest "pending"
-//                                          record; no notice-clock backend
-//                                          exists yet, so it never claims the
-//                                          notice was served.
-//   - Assign owner                       → input + confirm → honest "drafted,
-//                                          pending" assignment; no owner
-//                                          table is wired yet.
-//   - Create Tower watch item            → confirm step → an honest pending
-//                                          watch-item record; no Tower watch
-//                                          write-path is wired yet, so it
-//                                          never claims the item is live in
-//                                          the portfolio.
+//   - Serve notice                       → POST /api/v1/source/work-items
+//                                          creates a real `serve_notice`
+//                                          sourcing work item with a due
+//                                          date + legal/procurement status.
+//                                          AbarVa still does not issue the
+//                                          formal legal notice — it persists
+//                                          the task that drives that hand-off.
+//   - Assign owner                       → POST /api/v1/source/work-items
+//                                          creates a real `owner_assignment`
+//                                          work item with the named owner.
+//   - Create Tower watch item            → POST /api/v1/source/work-items
+//                                          creates a real `tower_watch` work
+//                                          item, readable by the Tower
+//                                          portfolio.
+//
+// The work item carries an owner, a due date (SLA), a status, and an audit
+// trail (created_by / created_at) — the action layer the VP usability test
+// said the console needed to be relied on as an operating system.
 //
 // Locked design system: cream surface, Fraunces serif, Inter sans, JetBrains
 // mono labels, black primary / ghost secondary buttons.
@@ -121,14 +126,27 @@ interface EventResult {
   eventUrl?: string;
 }
 
+/** A persisted-work-item kind the cockpit can create. */
+type WorkItemKind = 'serve_notice' | 'owner_assignment' | 'tower_watch';
+
+interface WorkItemResult {
+  ok: boolean;
+  message: string;
+}
+
 export function RenewalCockpitActionBar({ cockpit }: { cockpit: RenewalCockpit }) {
   const [active, setActive] = useState<ActivePanel>(null);
 
-  // Honest-stub local state — these never claim a backend write happened.
-  const [noticeConfirmed, setNoticeConfirmed] = useState(false);
+  // Owner-assignment input.
   const [ownerName, setOwnerName] = useState('');
-  const [ownerAssigned, setOwnerAssigned] = useState<string | null>(null);
-  const [towerWatchConfirmed, setTowerWatchConfirmed] = useState(false);
+
+  // Persisted work-item state — keyed by kind. Each result reflects a real
+  // POST /api/v1/source/work-items round-trip; no fake success.
+  const [workItemBusy, setWorkItemBusy] = useState<WorkItemKind | null>(null);
+  const [noticeResult, setNoticeResult] = useState<WorkItemResult | null>(null);
+  const [ownerResult, setOwnerResult] = useState<WorkItemResult | null>(null);
+  const [towerWatchResult, setTowerWatchResult] =
+    useState<WorkItemResult | null>(null);
 
   // Real source-event creation state.
   const [eventBusy, setEventBusy] = useState(false);
@@ -138,6 +156,79 @@ export function RenewalCockpitActionBar({ cockpit }: { cockpit: RenewalCockpit }
   function toggle(panel: ActivePanel) {
     setActive((current) => (current === panel ? null : panel));
   }
+
+  /**
+   * Create a persisted sourcing work item for this renewal. The subject is
+   * always the cockpit's contract; the server stamps the tenant + acting
+   * user. Returns a real result — the panels never claim success without it.
+   */
+  async function createWorkItem(
+    kind: WorkItemKind,
+    fields: {
+      title: string;
+      owner?: string;
+      dueDate?: string;
+      legalStatus?: string;
+      procurementStatus?: string;
+      note?: string;
+    },
+  ): Promise<void> {
+    setWorkItemBusy(kind);
+    const setter =
+      kind === 'serve_notice'
+        ? setNoticeResult
+        : kind === 'owner_assignment'
+          ? setOwnerResult
+          : setTowerWatchResult;
+    try {
+      const res = await fetch('/api/v1/source/work-items', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          kind,
+          subjectKind: 'contract',
+          subjectRef: cockpit.contractId,
+          subjectLabel: `${cockpit.vendorName} — ${cockpit.product}`,
+          ...fields,
+        }),
+      });
+      const data = (await res.json()) as { ok?: boolean; detail?: string; error?: string };
+      if (res.ok && data.ok) {
+        setter({
+          ok: true,
+          message:
+            kind === 'serve_notice'
+              ? 'Serve-notice work item created. It is persisted with its due date and legal / procurement status, and shows on the Decision Queue card with its owner and SLA.'
+              : kind === 'owner_assignment'
+                ? 'Owner assignment persisted. The owner and SLA now surface on the Decision Queue card for this contract.'
+                : 'Tower watch item created. It is persisted and readable by the Tower portfolio.',
+        });
+      } else {
+        setter({
+          ok: false,
+          message:
+            data.detail ??
+            data.error ??
+            'Could not create the work item. Try again.',
+        });
+      }
+    } catch {
+      setter({
+        ok: false,
+        message: 'Network error creating the work item. Try again.',
+      });
+    } finally {
+      setWorkItemBusy(null);
+    }
+  }
+
+  // The notice SLA — the last date to serve notice, derived from the cockpit
+  // timing (term end minus the notice period). Persisted as the work item's
+  // `due_date`. Falls back to the term-end date when no notice period is set.
+  const noticeDueDate = computeNoticeDueDate(
+    cockpit.timing.termEndDate,
+    cockpit.timing.noticePeriodDays,
+  );
 
   async function createSourceEvent(
     intent: 'rebid' | 'handoff',
@@ -262,44 +353,57 @@ export function RenewalCockpitActionBar({ cockpit }: { cockpit: RenewalCockpit }
         </button>
       </div>
 
-      {/* ── Serve notice — honest stub: confirm → pending record ── */}
+      {/* ── Serve notice — persisted serve_notice work item ── */}
       {active === 'serve_notice' ? (
         <div style={PANEL}>
           <span style={LABEL}>Serve notice · decline auto-renewal</span>
-          {noticeConfirmed ? (
+          {noticeResult ? (
             <>
-              <h3 style={HEADING}>Notice intent recorded — pending</h3>
-              <p style={BODY}>
-                A notice-to-decline intent has been drafted for{' '}
-                <strong>
-                  {cockpit.vendorName} — {cockpit.product}
-                </strong>
-                . The notice clock is <strong>not</strong> a wired capability
-                yet, so this is a pending intent only — it does not legally
-                serve notice. Route it to legal / procurement ops to issue the
-                formal notice before the deadline
-                {cockpit.timing.daysToNoticeDeadline !== null
-                  ? ` (${cockpit.timing.daysToNoticeDeadline} day(s) away)`
-                  : ''}
-                .
-              </p>
+              <h3 style={HEADING}>
+                {noticeResult.ok
+                  ? 'Serve-notice work item created'
+                  : 'Work item not created'}
+              </h3>
+              <p style={BODY}>{noticeResult.message}</p>
             </>
           ) : (
             <>
               <h3 style={HEADING}>Decline the auto-renewal?</h3>
               <p style={BODY}>
-                This records an intent to serve notice and decline the
-                auto-renewal. AbarVa cannot issue the formal legal notice — it
-                will create a clearly-labelled pending record for procurement
-                ops to action. Confirm to proceed.
+                This creates a persisted <strong>serve-notice</strong> work
+                item for{' '}
+                <strong>
+                  {cockpit.vendorName} — {cockpit.product}
+                </strong>
+                {noticeDueDate ? (
+                  <>
+                    {' '}
+                    with a notice deadline of <strong>{noticeDueDate}</strong>
+                  </>
+                ) : null}
+                . It tracks the legal / procurement hand-off — AbarVa records
+                the task and its SLA; it does not itself issue the formal
+                legal notice. The item shows on the Decision Queue card with
+                its owner and due date.
               </p>
               <div style={{ display: 'flex', gap: 8 }}>
                 <button
                   type="button"
                   style={BLACK_BTN}
-                  onClick={() => setNoticeConfirmed(true)}
+                  disabled={workItemBusy === 'serve_notice'}
+                  onClick={() =>
+                    createWorkItem('serve_notice', {
+                      title: `Serve notice — ${cockpit.vendorName} ${cockpit.product}`,
+                      dueDate: noticeDueDate ?? undefined,
+                      legalStatus: 'not_started',
+                      procurementStatus: 'not_started',
+                      note: `Decline the auto-renewal on contract ${cockpit.contractId}. ${cockpit.timing.summary}`,
+                    })
+                  }
                 >
-                  Confirm — record notice intent
+                  {workItemBusy === 'serve_notice'
+                    ? 'Creating…'
+                    : 'Create serve-notice work item'}
                 </button>
                 <button
                   type="button"
@@ -381,31 +485,30 @@ export function RenewalCockpitActionBar({ cockpit }: { cockpit: RenewalCockpit }
         </div>
       ) : null}
 
-      {/* ── Assign owner — honest stub: input → pending assignment ── */}
+      {/* ── Assign owner — persisted owner_assignment work item ── */}
       {active === 'assign' ? (
         <div style={PANEL}>
           <span style={LABEL}>Assign owner</span>
-          {ownerAssigned ? (
+          {ownerResult ? (
             <>
-              <h3 style={HEADING}>Owner assignment drafted — pending</h3>
-              <p style={BODY}>
-                <strong>{ownerAssigned}</strong> is drafted as the renewal
-                owner for{' '}
-                <strong>
-                  {cockpit.vendorName} — {cockpit.product}
-                </strong>
-                . A persistent renewal-ownership record is not wired yet, so
-                this is a pending assignment — confirm it through Source admin
-                once that capability ships.
-              </p>
+              <h3 style={HEADING}>
+                {ownerResult.ok
+                  ? 'Owner assignment persisted'
+                  : 'Assignment not created'}
+              </h3>
+              <p style={BODY}>{ownerResult.message}</p>
             </>
           ) : (
             <>
               <h3 style={HEADING}>Who owns this renewal?</h3>
               <p style={BODY}>
-                Name the accountable owner. This records a pending assignment
-                only — there is no owner table wired yet, so it will not appear
-                in reporting until that ships.
+                Name the accountable owner. This persists an{' '}
+                <strong>owner-assignment</strong> work item — the owner and
+                SLA then surface on the Decision Queue card for{' '}
+                <strong>
+                  {cockpit.vendorName} — {cockpit.product}
+                </strong>
+                .
               </p>
               <input
                 type="text"
@@ -424,11 +527,30 @@ export function RenewalCockpitActionBar({ cockpit }: { cockpit: RenewalCockpit }
               <div style={{ display: 'flex', gap: 8 }}>
                 <button
                   type="button"
-                  style={ownerName.trim() ? BLACK_BTN : DISABLED_BTN}
-                  disabled={!ownerName.trim()}
-                  onClick={() => setOwnerAssigned(ownerName.trim())}
+                  style={
+                    ownerName.trim() && workItemBusy !== 'owner_assignment'
+                      ? BLACK_BTN
+                      : DISABLED_BTN
+                  }
+                  disabled={
+                    !ownerName.trim() || workItemBusy === 'owner_assignment'
+                  }
+                  onClick={() =>
+                    createWorkItem('owner_assignment', {
+                      title: `Renewal owner — ${cockpit.vendorName} ${cockpit.product}`,
+                      owner: ownerName.trim(),
+                      dueDate:
+                        computeNoticeDueDate(
+                          cockpit.timing.termEndDate,
+                          cockpit.timing.noticePeriodDays,
+                        ) ?? undefined,
+                      note: `Accountable owner for the ${cockpit.vendorName} ${cockpit.product} renewal (contract ${cockpit.contractId}).`,
+                    })
+                  }
                 >
-                  Record assignment
+                  {workItemBusy === 'owner_assignment'
+                    ? 'Saving…'
+                    : 'Persist assignment'}
                 </button>
                 <button
                   type="button"
@@ -522,40 +644,47 @@ export function RenewalCockpitActionBar({ cockpit }: { cockpit: RenewalCockpit }
         </div>
       ) : null}
 
-      {/* ── Tower watch item — honest stub: confirm → pending record ── */}
+      {/* ── Tower watch item — persisted tower_watch work item ── */}
       {active === 'tower_watch' ? (
         <div style={PANEL}>
           <span style={LABEL}>Create Tower watch item</span>
-          {towerWatchConfirmed ? (
+          {towerWatchResult ? (
             <>
-              <h3 style={HEADING}>Watch item drafted — pending</h3>
-              <p style={BODY}>
-                A watch item for{' '}
-                <strong>
-                  {cockpit.vendorName} — {cockpit.product}
-                </strong>{' '}
-                has been drafted for the Tower portfolio. A Tower watch-item
-                write-path is not wired yet, so this is a pending record only —
-                it will not appear in the Tower portfolio until that capability
-                ships. The cockpit will not claim otherwise.
-              </p>
+              <h3 style={HEADING}>
+                {towerWatchResult.ok
+                  ? 'Tower watch item created'
+                  : 'Watch item not created'}
+              </h3>
+              <p style={BODY}>{towerWatchResult.message}</p>
             </>
           ) : (
             <>
               <h3 style={HEADING}>Surface this renewal in Tower?</h3>
               <p style={BODY}>
-                This drafts a watch item so the renewal is visible in the Tower
-                portfolio view. There is no Tower watch-item write-path wired
-                yet — this records a clearly-labelled pending item rather than
-                writing to the portfolio. Confirm to proceed.
+                This persists a <strong>Tower watch</strong> work item for{' '}
+                <strong>
+                  {cockpit.vendorName} — {cockpit.product}
+                </strong>
+                . It is a real, tenant-scoped record — the Tower portfolio
+                reads <code>tower_watch</code> work items, so the renewal
+                becomes visible there.
               </p>
               <div style={{ display: 'flex', gap: 8 }}>
                 <button
                   type="button"
                   style={BLACK_BTN}
-                  onClick={() => setTowerWatchConfirmed(true)}
+                  disabled={workItemBusy === 'tower_watch'}
+                  onClick={() =>
+                    createWorkItem('tower_watch', {
+                      title: `Tower watch — ${cockpit.vendorName} ${cockpit.product} renewal`,
+                      dueDate: cockpit.timing.termEndDate ?? undefined,
+                      note: `Renewal watched in the Tower portfolio. Recommended posture: ${cockpit.postureLabel}. Contract ${cockpit.contractId}.`,
+                    })
+                  }
                 >
-                  Confirm — draft watch item
+                  {workItemBusy === 'tower_watch'
+                    ? 'Creating…'
+                    : 'Create watch item'}
                 </button>
                 <button
                   type="button"
@@ -571,6 +700,23 @@ export function RenewalCockpitActionBar({ cockpit }: { cockpit: RenewalCockpit }
       ) : null}
     </section>
   );
+}
+
+/**
+ * The last date to serve notice — the term-end date pulled back by the
+ * notice period. Returns `null` when no term-end date is known; falls back to
+ * the term-end date itself when no notice period is set.
+ */
+function computeNoticeDueDate(
+  termEndDate: string | null,
+  noticePeriodDays: number | null,
+): string | null {
+  if (!termEndDate) return null;
+  if (noticePeriodDays === null || noticePeriodDays <= 0) return termEndDate;
+  const end = new Date(`${termEndDate}T00:00:00Z`);
+  if (Number.isNaN(end.getTime())) return termEndDate;
+  end.setUTCDate(end.getUTCDate() - noticePeriodDays);
+  return end.toISOString().slice(0, 10);
 }
 
 function BriefBlock({

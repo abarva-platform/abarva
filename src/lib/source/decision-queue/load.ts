@@ -20,6 +20,8 @@ import {
   type RenewalCockpit,
 } from '@/lib/source/renewal-cockpit/cockpit';
 import type { EvidenceResolutionContext } from '@/lib/source/evidence-trace/evidence-trace';
+import { accountabilityForContracts } from '@/lib/source/work-items/service';
+import type { WorkItemAccountability } from '@/lib/source/work-items/types';
 
 /**
  * Load and assemble the Source Decision Queue for a tenant.
@@ -54,8 +56,20 @@ export async function loadSourceDecisionQueueWithEvidence(
     segmentFreshness: raw.segmentFreshness,
     asOf,
   };
+  const queue = buildSourceDecisionQueue(input);
+
+  // Enrich each contract-anchored bundle with owner + SLA accountability,
+  // projected from the persisted `sourcing_work_items` for the tenant. The
+  // pure assembler leaves `accountability` null — it has no data plane.
+  // Fail-soft: a missing work-items table degrades to no accountability,
+  // leaving the queue exactly as the pure assembler produced it.
+  const enrichedQueue: SourceDecisionQueue = {
+    ...queue,
+    bundles: await enrichBundlesWithAccountability(clientKey, queue.bundles),
+  };
+
   return {
-    queue: buildSourceDecisionQueue(input),
+    queue: enrichedQueue,
     evidenceContext: {
       contracts,
       financials,
@@ -63,6 +77,47 @@ export async function loadSourceDecisionQueueWithEvidence(
       asOf,
     },
   };
+}
+
+/**
+ * Project owner + SLA accountability onto each contract-anchored bundle from
+ * the tenant's persisted sourcing work items. Non-contract (gap) bundles and
+ * bundles with no work items keep `accountability: null`.
+ */
+async function enrichBundlesWithAccountability(
+  clientKey: string,
+  bundles: SourceDecisionQueue['bundles'],
+): Promise<SourceDecisionQueue['bundles']> {
+  const contractIds = bundles
+    .map((b) => b.contractId)
+    .filter((id): id is string => id !== null);
+  if (contractIds.length === 0) return bundles;
+
+  let byContract: Map<string, WorkItemAccountability>;
+  try {
+    byContract = await accountabilityForContracts(clientKey, contractIds);
+  } catch {
+    // Fail-soft — the work-items migration may not be applied yet.
+    return bundles;
+  }
+
+  return bundles.map((bundle) => {
+    if (!bundle.contractId) return bundle;
+    const a = byContract.get(bundle.contractId);
+    // Only attach when there is at least one work item — an empty summary
+    // is indistinguishable from "no work item", so we keep null.
+    if (!a || (a.openCount === 0 && !a.hasTowerWatch)) return bundle;
+    return {
+      ...bundle,
+      accountability: {
+        owner: a.owner,
+        dueDate: a.dueDate,
+        openCount: a.openCount,
+        hasOpenNotice: a.hasOpenNotice,
+        hasTowerWatch: a.hasTowerWatch,
+      },
+    };
+  });
 }
 
 /**
