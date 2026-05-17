@@ -9,8 +9,11 @@ import { AgentDock, type AttachmentRef, type ChatMessage } from '@/components/ag
 import { SourceOnboardingTour } from '@/components/source/onboarding/SourceOnboardingTour';
 import { SHELL } from '@/lib/shell/shell-tokens';
 import type { Artifact, BriefProgressArtifact } from '@/lib/agent/artifacts';
-
-type IntakeFieldId = 'trigger' | 'decisionOwner' | 'scopeBoundary' | 'valueTarget' | 'baselineOwner';
+import {
+  resolveSourceIntakeShape,
+  type IntakeFieldId,
+  type SourceIntakeShape,
+} from '@/lib/source/intake-intent';
 type SubmitState =
   | { status: 'idle' }
   | { status: 'submitting' }
@@ -21,7 +24,8 @@ interface IntakeFieldDefinition {
   label: string;
   prompt: string;
   placeholder: string;
-  agent: 'Steward' | 'Sentinel' | 'Atlas';
+  /** Optional — only the generic intake assigns a guiding agent per field. */
+  agent?: 'Steward' | 'Sentinel' | 'Atlas';
 }
 
 type IntakeState = Record<IntakeFieldId, string>;
@@ -168,8 +172,8 @@ function CategoryOption({
   );
 }
 
-function CaptureQueue({ intake }: { intake: IntakeState }) {
-  const nextField = INTAKE_FIELDS.find((field) => intake[field.id].trim().length === 0);
+function CaptureQueue({ intake, fields }: { intake: IntakeState; fields: IntakeFieldDefinition[] }) {
+  const nextField = fields.find((field) => intake[field.id].trim().length === 0);
   return (
     <section style={CAPTURE_QUEUE_STYLE} aria-label="Capture queue">
       <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'center' }}>
@@ -182,11 +186,11 @@ function CaptureQueue({ intake }: { intake: IntakeState }) {
           </div>
         </div>
         <span style={{ ...STATUS_CHIP, background: SHELL.BLUE_BG, borderColor: SHELL.BLUE_LINE, color: SHELL.INK }}>
-          {INTAKE_FIELDS.filter((field) => intake[field.id].trim().length > 0).length} / {INTAKE_FIELDS.length}
+          {fields.filter((field) => intake[field.id].trim().length > 0).length} / {fields.length}
         </span>
       </div>
       <div style={CAPTURE_QUEUE_GRID_STYLE}>
-        {INTAKE_FIELDS.map((field) => {
+        {fields.map((field) => {
           const complete = intake[field.id].trim().length > 0;
           const required = field.id === 'trigger';
           return (
@@ -297,6 +301,18 @@ export function SourceOriginatePage({
   const router = useRouter();
   const searchParams = useSearchParams();
   const tourActive = searchParams?.get('tour') === '1';
+
+  // Iteration-2 punch-list: `/source/new?intent=...` must reshape the intake.
+  // When a known intent is present we swap in a tailored field set, a
+  // prefilled prompt, a re-worded header, and a downstream routing hint.
+  // With no intent (or an unknown one) the generic origination experience is
+  // preserved unchanged — fully backward compatible.
+  const intakeShape: SourceIntakeShape | null = useMemo(
+    () => resolveSourceIntakeShape(searchParams?.get('intent')),
+    [searchParams],
+  );
+  const intakeFields: IntakeFieldDefinition[] = intakeShape?.fields ?? INTAKE_FIELDS;
+
   const [intake, setIntake] = useState<IntakeState>(initialIntakeState);
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
   const [submitState, setSubmitState] = useState<SubmitState>({ status: 'idle' });
@@ -344,8 +360,8 @@ export function SourceOriginatePage({
 
   const selectedCategory = SOURCE_CATEGORIES.find((c) => c.id === selectedCategoryId) ?? null;
   const completedCount = useMemo(
-    () => INTAKE_FIELDS.filter((field) => intake[field.id].trim().length > 0).length,
-    [intake]
+    () => intakeFields.filter((field) => intake[field.id].trim().length > 0).length,
+    [intake, intakeFields]
   );
   const canCreate = intake.trigger.trim().length > 0 && submitState.status !== 'submitting';
 
@@ -407,24 +423,47 @@ export function SourceOriginatePage({
         <div style={CONTEXT_STRIP}>
           <span style={STRIP_TOKEN}>{clientName.length > 26 ? clientName.slice(0, 24) + '…' : clientName}</span>
           <span style={STRIP_DOT}>·</span>
-          <span style={STRIP_TOKEN}>New sourcing event</span>
+          <span style={STRIP_TOKEN}>{intakeShape ? intakeShape.eyebrow : 'New sourcing event'}</span>
           <span style={STRIP_DOT}>·</span>
-          <span style={STRIP_TOKEN}>{completedCount} of {INTAKE_FIELDS.length} captured</span>
+          <span style={STRIP_TOKEN}>{completedCount} of {intakeFields.length} captured</span>
         </div>
 
-        {/* Header */}
+        {/* Header — re-worded when an intent reshapes the intake. */}
         <div>
-          <div style={EYEBROW}>Step 0 · Sentinel</div>
-          <h2 style={HEADING}>Sourcing event intake</h2>
-          <p style={SUBHEAD}>Tell Sentinel your sourcing situation in plain language — the brief on the right fills as you talk. Override any field manually if Sentinel got it wrong. Trigger is the only field required to open the event canvas.</p>
+          <div style={EYEBROW}>
+            {intakeShape ? `Step 0 · Sentinel · ${intakeShape.eyebrow}` : 'Step 0 · Sentinel'}
+          </div>
+          <h2 style={HEADING}>{intakeShape ? intakeShape.heading : 'Sourcing event intake'}</h2>
+          <p style={SUBHEAD}>
+            {intakeShape
+              ? intakeShape.subhead
+              : 'Tell Sentinel your sourcing situation in plain language — the brief on the right fills as you talk. Override any field manually if Sentinel got it wrong. Trigger is the only field required to open the event canvas.'}
+          </p>
         </div>
 
-        <CaptureQueue intake={intake} />
+        {/* Routing hint — only when an intent steers the intake downstream. */}
+        {intakeShape && (
+          <div style={ROUTING_HINT_STYLE} aria-label="Where this intake is heading">
+            <span style={{ ...STATUS_CHIP, background: SHELL.MINT_BG, borderColor: SHELL.MINT_LINE, color: SHELL.MINT_TEXT }}>
+              Routes to
+            </span>
+            <div style={{ display: 'grid', gap: 2 }}>
+              <div style={{ fontFamily: SHELL.SANS, fontSize: 12, fontWeight: 700, color: SHELL.INK }}>
+                {intakeShape.routingHint.label}
+              </div>
+              <div style={{ fontFamily: SHELL.SANS, fontSize: 11, lineHeight: 1.4, color: SHELL.INK_MUTED }}>
+                {intakeShape.routingHint.description}
+              </div>
+            </div>
+          </div>
+        )}
+
+        <CaptureQueue intake={intake} fields={intakeFields} />
 
         {/* Intake fields */}
         <div style={{ display: 'grid', gap: 0 }}>
           <div style={{ ...SECTION_LABEL, marginBottom: 4 }}>Event facts</div>
-          {INTAKE_FIELDS.map((field) => {
+          {intakeFields.map((field) => {
             const value = intake[field.id];
             const complete = value.trim().length > 0;
             const isRequired = field.id === 'trigger';
@@ -448,7 +487,7 @@ export function SourceOriginatePage({
                   }}>
                     {complete
                       ? (chatFilledFields.has(field.id) ? 'From chat' : 'Captured')
-                      : (isRequired ? 'Required' : `${field.agent} needs`)}
+                      : (isRequired ? 'Required' : (field.agent ? `${field.agent} needs` : 'Needed'))}
                   </span>
                 </div>
                 <textarea
@@ -569,8 +608,22 @@ export function SourceOriginatePage({
       // way Nexus does on /strategic-moves/new. Without sourceIntakeMode
       // the right pane never auto-fills.
       surface="source"
-      surfaceContext={{ sourceIntakeMode: true, clientKey, clientName, context: 'New IT sourcing event intake — Sentinel guided' }}
-      topBarProps={{ tenantName: clientName, showLocked: true, context: 'Source · New sourcing event' }}
+      surfaceContext={{
+        sourceIntakeMode: true,
+        clientKey,
+        clientName,
+        sourceIntent: intakeShape?.intent,
+        context: intakeShape
+          ? `New IT sourcing event intake — ${intakeShape.eyebrow} (Sentinel guided)`
+          : 'New IT sourcing event intake — Sentinel guided',
+      }}
+      topBarProps={{
+        tenantName: clientName,
+        showLocked: true,
+        context: intakeShape
+          ? `Source · New sourcing event · ${intakeShape.eyebrow}`
+          : 'Source · New sourcing event',
+      }}
       onArtifact={handleArtifact}
     >
       <main data-testid="source-originate-canvas" style={MAIN_STYLE}>
@@ -578,6 +631,7 @@ export function SourceOriginatePage({
           clientName={clientName}
           clientKey={clientKey}
           workspace={intakeWorkspace}
+          intakeShape={intakeShape}
         />
         <SourceOnboardingTour
           active={tourActive}
@@ -611,10 +665,12 @@ function SourceOriginateDock({
   clientName,
   clientKey,
   workspace,
+  intakeShape,
 }: {
   clientName: string;
   clientKey: string;
   workspace: ReactNode;
+  intakeShape: SourceIntakeShape | null;
 }) {
   const pageState = useAtlasPageState();
 
@@ -640,6 +696,31 @@ function SourceOriginateDock({
     pageState.ask((trimmed + fileNote).trim());
   };
 
+  // Intent-shaped intake: the conversation starts already pointed at the
+  // intent. The prefilled prompt is offered as a one-click starter chip
+  // (above the workspace) rather than silently stuffed into the composer, so
+  // the practitioner stays in control of the opening turn.
+  const intakeWorkspace: ReactNode = intakeShape ? (
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', minHeight: 0 }}>
+      <div style={STARTER_PROMPT_BAR}>
+        <span style={{ ...STATUS_CHIP, background: SHELL.BLUE_BG, borderColor: SHELL.BLUE_LINE, color: SHELL.INK }}>
+          {intakeShape.eyebrow}
+        </span>
+        <button
+          type="button"
+          onClick={() => pageState?.ask(intakeShape.prefilledPrompt)}
+          disabled={!pageState}
+          style={STARTER_PROMPT_BUTTON}
+        >
+          {intakeShape.prefilledPrompt} →
+        </button>
+      </div>
+      <div style={{ flex: 1, minHeight: 0, overflow: 'hidden' }}>{workspace}</div>
+    </div>
+  ) : (
+    workspace
+  );
+
   return (
     <AgentDock
       agent={SENTINEL_INTAKE_AGENT}
@@ -647,11 +728,15 @@ function SourceOriginateDock({
       defaultMode="side-rail"
       defaultLeftPercent={45}
       minLeftPx={340}
-      surfaceContext={{ sourceIntakeMode: true, clientKey, clientName }}
-      initialQuote={`Ready to stand up a new IT sourcing event for ${clientName}. Tell me the trigger and I'll help you scope and open the event on the canvas.`}
+      surfaceContext={{ sourceIntakeMode: true, clientKey, clientName, sourceIntent: intakeShape?.intent }}
+      initialQuote={
+        intakeShape
+          ? intakeShape.initialQuote
+          : `Ready to stand up a new IT sourcing event for ${clientName}. Tell me the trigger and I'll help you scope and open the event on the canvas.`
+      }
       thread={thread}
       onMessage={onMessage}
-      workspace={workspace}
+      workspace={intakeWorkspace}
     />
   );
 }
@@ -691,6 +776,28 @@ const INTAKE_PANEL: CSSProperties = {
 const CONTEXT_STRIP: CSSProperties = {
   display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 5,
   paddingBottom: 10, borderBottom: `1px solid ${SHELL.CARD_LINE}`,
+};
+
+// Intent-shaped intake: downstream routing hint shown under the header.
+const ROUTING_HINT_STYLE: CSSProperties = {
+  display: 'flex', alignItems: 'flex-start', gap: 9,
+  border: `1px solid ${SHELL.MINT_LINE}`, borderRadius: 10,
+  background: SHELL.MINT_BG, padding: '9px 11px',
+};
+
+// Intent-shaped intake: one-click starter-prompt bar above the workspace.
+const STARTER_PROMPT_BAR: CSSProperties = {
+  display: 'flex', alignItems: 'center', gap: 9, flexWrap: 'wrap',
+  padding: '8px 16px', borderBottom: `1px solid ${SHELL.CARD_LINE}`,
+  background: SHELL.PAPER_SOFT, flex: '0 0 auto',
+};
+
+const STARTER_PROMPT_BUTTON: CSSProperties = {
+  flex: 1, minWidth: 200, textAlign: 'left',
+  border: `1px solid ${SHELL.CARD_LINE}`, borderRadius: 8,
+  background: SHELL.CARD_WHITE, color: SHELL.INK,
+  fontFamily: SHELL.SANS, fontSize: 11.5, lineHeight: 1.35,
+  padding: '7px 10px', cursor: 'pointer',
 };
 
 const STRIP_TOKEN: CSSProperties = {
