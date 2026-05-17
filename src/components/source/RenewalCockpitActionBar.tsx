@@ -20,9 +20,11 @@
 //   - Assign owner                       → input + confirm → honest "drafted,
 //                                          pending" assignment; no owner
 //                                          table is wired yet.
-//   - Create Tower watch item            → "coming soon" — no Tower watch
-//                                          write-path exists; the button is
-//                                          visibly disabled rather than dead.
+//   - Create Tower watch item            → confirm step → an honest pending
+//                                          watch-item record; no Tower watch
+//                                          write-path is wired yet, so it
+//                                          never claims the item is live in
+//                                          the portfolio.
 //
 // Locked design system: cream surface, Fraunces serif, Inter sans, JetBrains
 // mono labels, black primary / ghost secondary buttons.
@@ -110,7 +112,8 @@ type ActivePanel =
   | 'rebid'
   | 'assign'
   | 'email'
-  | 'handoff';
+  | 'handoff'
+  | 'tower_watch';
 
 interface EventResult {
   ok: boolean;
@@ -125,6 +128,7 @@ export function RenewalCockpitActionBar({ cockpit }: { cockpit: RenewalCockpit }
   const [noticeConfirmed, setNoticeConfirmed] = useState(false);
   const [ownerName, setOwnerName] = useState('');
   const [ownerAssigned, setOwnerAssigned] = useState<string | null>(null);
+  const [towerWatchConfirmed, setTowerWatchConfirmed] = useState(false);
 
   // Real source-event creation state.
   const [eventBusy, setEventBusy] = useState(false);
@@ -251,11 +255,10 @@ export function RenewalCockpitActionBar({ cockpit }: { cockpit: RenewalCockpit }
         </button>
         <button
           type="button"
-          style={DISABLED_BTN}
-          disabled
-          title="A Tower watch-item write-path is not wired yet — coming soon."
+          style={active === 'tower_watch' ? BLACK_BTN : GHOST_BTN}
+          onClick={() => toggle('tower_watch')}
         >
-          Create Tower watch item · coming soon
+          Create Tower watch item
         </button>
       </div>
 
@@ -505,6 +508,54 @@ export function RenewalCockpitActionBar({ cockpit }: { cockpit: RenewalCockpit }
                   onClick={() => createSourceEvent('handoff')}
                 >
                   {eventBusy ? 'Creating…' : 'Create Source event'}
+                </button>
+                <button
+                  type="button"
+                  style={GHOST_BTN}
+                  onClick={() => setActive(null)}
+                >
+                  Cancel
+                </button>
+              </div>
+            </>
+          )}
+        </div>
+      ) : null}
+
+      {/* ── Tower watch item — honest stub: confirm → pending record ── */}
+      {active === 'tower_watch' ? (
+        <div style={PANEL}>
+          <span style={LABEL}>Create Tower watch item</span>
+          {towerWatchConfirmed ? (
+            <>
+              <h3 style={HEADING}>Watch item drafted — pending</h3>
+              <p style={BODY}>
+                A watch item for{' '}
+                <strong>
+                  {cockpit.vendorName} — {cockpit.product}
+                </strong>{' '}
+                has been drafted for the Tower portfolio. A Tower watch-item
+                write-path is not wired yet, so this is a pending record only —
+                it will not appear in the Tower portfolio until that capability
+                ships. The cockpit will not claim otherwise.
+              </p>
+            </>
+          ) : (
+            <>
+              <h3 style={HEADING}>Surface this renewal in Tower?</h3>
+              <p style={BODY}>
+                This drafts a watch item so the renewal is visible in the Tower
+                portfolio view. There is no Tower watch-item write-path wired
+                yet — this records a clearly-labelled pending item rather than
+                writing to the portfolio. Confirm to proceed.
+              </p>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button
+                  type="button"
+                  style={BLACK_BTN}
+                  onClick={() => setTowerWatchConfirmed(true)}
+                >
+                  Confirm — draft watch item
                 </button>
                 <button
                   type="button"
