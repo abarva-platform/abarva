@@ -32,6 +32,7 @@
     "seed:programs-demo": "npx tsx src/scripts/seed/programs-demo-apex.ts",
     "seed:programs-enhancement:plan": "npx tsx src/scripts/seed/programs-enhancement-plan.ts",
     "seed:programs-enhancement": "npx tsx src/scripts/seed/programs-enhancement-seed.ts",
+    "seed:source-renewals": "npx tsx src/scripts/seed/seed-apex-source-renewals.ts",
     "db:migrate": "npx tsx src/scripts/run-migrations.ts",
     "test:rls-regression": "npx tsx scripts/run-rls-regression.ts",
     "db:migrate:dry": "npx tsx src/scripts/run-migrations.ts --dry",
