@@ -106,6 +106,8 @@ export interface RenewalCockpit {
   vendorName: string;
   product: string;
   generatedAt: string;
+  /** Free-text owner reference from the vendor-contract substrate, if loaded. */
+  ownerRef?: string;
   /** Current annual spend in USD; null when unpriced. */
   currentAnnualSpendUsd: number | null;
   timing: RenewalTiming;
@@ -445,6 +447,7 @@ export function buildRenewalCockpit(
     vendorName: input.contract.vendorName,
     product: input.contract.product,
     generatedAt: input.asOf.toISOString(),
+    ownerRef: input.contract.ownerRef,
     currentAnnualSpendUsd: input.contract.annualSpendUsd,
     timing,
     usage,
