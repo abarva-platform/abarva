@@ -45,6 +45,12 @@ export interface SourceArtifactInsertColumns {
   readonly size_bytes: number;
   readonly sha256: string;
   readonly data_classification: string;
+  /**
+   * GAP-9 · serialized disclosure-classification flag (a value object) or
+   * `null` when the artifact carries no disclosure marking. Persisted to the
+   * `source_artifacts.disclosure_classification` JSONB column.
+   */
+  readonly disclosure_classification: Record<string, unknown> | null;
   readonly created_by: string;
   readonly supersedes_artifact_version_id: string | null;
 }

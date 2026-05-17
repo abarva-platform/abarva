@@ -307,6 +307,7 @@ const ARTIFACT_COLS: SourceArtifactInsertColumns = {
   size_bytes: 1024,
   sha256: 'abc',
   data_classification: 'Confidential',
+  disclosure_classification: null,
   created_by: 'user-1',
   supersedes_artifact_version_id: null,
 };

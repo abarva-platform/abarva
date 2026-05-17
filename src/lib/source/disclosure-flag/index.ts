@@ -24,3 +24,8 @@ export {
   type DisclosureFlagSource,
   type DisclosureHandlingRequirements,
 } from './types';
+export {
+  parseDisclosureFlag,
+  serializeDisclosureFlag,
+  type DisclosureFlagJson,
+} from './serde';

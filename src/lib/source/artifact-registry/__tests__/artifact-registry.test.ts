@@ -31,6 +31,7 @@ type Row = {
   graph_status: 'pending' | 'projected';
   classification_status: 'pending' | 'classified';
   data_classification: 'Confidential';
+  disclosure_classification?: unknown;
   evidence_state: 'unparsed' | 'parsed_uncited';
   approval_state: 'draft' | 'approved';
   version: number | string;
@@ -141,6 +142,10 @@ import {
   softDeleteSourceArtifact,
   updateSourceArtifactProcessingState,
 } from '../index';
+import {
+  makeDisclosureFlag,
+  serializeDisclosureFlag,
+} from '../../disclosure-flag';
 
 const baseInput: RegisterSourceArtifactInput = {
   tenantKey: 'apex-retail',
@@ -271,6 +276,34 @@ describe('registerSourceArtifactUpload', () => {
     expect(rec.sizeBytes).toBe(8192);
     expect(rec.version).toBe(2);
   });
+
+  it('persists no disclosure column when no flag is supplied (GAP-9)', async () => {
+    nextSingle = async () => ({ data: baseRow, error: null });
+    const rec = await registerSourceArtifactUpload(baseInput);
+    expect(insertCaptures[0].payload.disclosure_classification).toBeNull();
+    expect(rec.disclosureFlag).toBeUndefined();
+  });
+
+  it('persists and round-trips a privileged disclosure flag (GAP-9)', async () => {
+    const flag = makeDisclosureFlag({
+      classification: 'attorney_client',
+      privilegeHolder: 'General Counsel',
+      basis: 'Consent-order remediation prepared at direction of counsel.',
+    });
+    const persisted = serializeDisclosureFlag(flag);
+    nextSingle = async () => ({
+      data: { ...baseRow, disclosure_classification: persisted },
+      error: null,
+    });
+
+    const rec = await registerSourceArtifactUpload({
+      ...baseInput,
+      disclosureFlag: flag,
+    });
+
+    expect(insertCaptures[0].payload.disclosure_classification).toEqual(persisted);
+    expect(rec.disclosureFlag).toEqual(flag);
+  });
 });
 
 describe('source artifact queries', () => {
@@ -358,6 +391,44 @@ describe('updateSourceArtifactProcessingState', () => {
     await expect(updateSourceArtifactProcessingState({ artifactId: baseRow.id })).rejects.toThrow(
       /at least one/,
     );
+  });
+
+  it('updates the disclosure flag and round-trips it back (GAP-9)', async () => {
+    const flag = makeDisclosureFlag({
+      classification: 'work_product',
+      privilegeHolder: 'Litigation Counsel',
+      basis: 'Litigation-hold analysis.',
+    });
+    const persisted = serializeDisclosureFlag(flag);
+    nextSingle = async () => ({
+      data: { ...baseRow, disclosure_classification: persisted },
+      error: null,
+    });
+
+    const rec = await updateSourceArtifactProcessingState({
+      artifactId: baseRow.id,
+      disclosureFlag: flag,
+    });
+
+    expect(updateCaptures[0].payload).toEqual({
+      disclosure_classification: persisted,
+    });
+    expect(rec.disclosureFlag).toEqual(flag);
+  });
+
+  it('clears the disclosure flag when passed null (GAP-9)', async () => {
+    nextSingle = async () => ({
+      data: { ...baseRow, disclosure_classification: null },
+      error: null,
+    });
+
+    const rec = await updateSourceArtifactProcessingState({
+      artifactId: baseRow.id,
+      disclosureFlag: null,
+    });
+
+    expect(updateCaptures[0].payload).toEqual({ disclosure_classification: null });
+    expect(rec.disclosureFlag).toBeUndefined();
   });
 });
 
