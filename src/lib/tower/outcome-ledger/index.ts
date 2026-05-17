@@ -7,12 +7,15 @@
 // `readOutcomeLedger` routes through the data-plane read-adapter seam
 // (`selectOutcomeLedgerReadAdapter`) so it is Azure-cutover-safe, then
 // projects the rows with `buildOutcomeLedgerView`. The queue UI lands
-// in Slice 3.2; outcome-feedback into the pattern graph in Slice 3.6.
+// in Slice 3.2; the adoption + value-realization read model is Slice
+// 3.4; outcome-feedback into the pattern graph is Slice 3.6.
 
 import { selectOutcomeLedgerReadAdapter } from '@/lib/data-plane/read-adapters/outcomeLedgerReadAdapter';
 import type { DataPlane } from '@/lib/data-plane/read-adapters/types';
 import { buildOutcomeLedgerView } from './view-model';
+import { buildTowerAdoptionRealizationView } from './adoption-realization-view';
 import type { OutcomeLedgerView } from './types';
+import type { TowerAdoptionRealizationView } from './adoption-realization-view';
 
 export type {
   OutcomeLedgerEntryView,
@@ -29,6 +32,16 @@ export {
   summarizeOutcomeLedger,
   toOutcomeLedgerEntryView,
 } from './view-model';
+export {
+  buildTowerAdoptionRealizationView,
+  buildTowerAdoptionSignal,
+  buildTowerValueRealizationSignal,
+  composeEarningSummary,
+  type AdoptionSignalState,
+  type TowerAdoptionRealizationView,
+  type TowerAdoptionSignal,
+  type TowerValueRealizationSignal,
+} from './adoption-realization-view';
 export {
   selectOutcomeLedgerReadAdapter,
   type OutcomeLedgerReadAdapter,
@@ -53,4 +66,21 @@ export async function readOutcomeLedger(
   const adapter = selectOutcomeLedgerReadAdapter(plane);
   const rows = await adapter.getCurrentEntries(tenantClientKey);
   return buildOutcomeLedgerView(tenantClientKey, rows);
+}
+
+/**
+ * Read the Slice 3.4 adoption + value-realization view model for one
+ * tenant. Reads the outcome ledger once (via `readOutcomeLedger`) and
+ * re-projects it into the adoption + benefit-realization read model —
+ * no extra data-plane round trip.
+ *
+ * @param tenantClientKey canonical tenant slug (e.g. `apexretail`).
+ * @param plane optional data-plane override (defaults to env config).
+ */
+export async function readTowerAdoptionRealization(
+  tenantClientKey: string,
+  plane?: DataPlane,
+): Promise<TowerAdoptionRealizationView> {
+  const ledger = await readOutcomeLedger(tenantClientKey, plane);
+  return buildTowerAdoptionRealizationView(ledger);
 }

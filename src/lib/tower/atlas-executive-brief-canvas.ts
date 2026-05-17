@@ -1,4 +1,28 @@
+import type { TowerAdoptionRealizationView } from '@/lib/tower/outcome-ledger/adoption-realization-view';
+
 export type AtlasSignalType = 'value' | 'risk' | 'adoption' | 'cost' | 'productivity' | 'readiness';
+
+/**
+ * Slice 3.4 — adoption & value-realization instrumentation, projected
+ * onto the executive brief. Optional: the brief still renders without
+ * it (the hardcoded deterministic-seed brief predates the outcome
+ * ledger). When present, it carries the ledger-sourced answer to "is
+ * this program actually earning?".
+ */
+export interface AtlasBriefValueRealization {
+  /** "is this earning?" line composed from the outcome ledger. */
+  readonly earningSummary: string;
+  /** Realized verified-and-evidenced value as 0..1, or null. */
+  readonly realizationRatio: number | null;
+  /** Realization severity band — `on_track` … `critical`. */
+  readonly realizationSeverity: TowerAdoptionRealizationView['valueRealization']['severity'];
+  /** Adoption posture; `unknown` until adoption telemetry is bound. */
+  readonly adoptionState: TowerAdoptionRealizationView['adoption']['state'];
+  /** Adoption headline — surfaces the instrumentation gap honestly. */
+  readonly adoptionHeadline: string;
+  /** True when adoption telemetry is not yet wired. */
+  readonly adoptionInstrumentationGap: boolean;
+}
 
 export interface AtlasSignalItem {
   signalType: AtlasSignalType;
@@ -26,11 +50,42 @@ export interface AtlasExecutiveBriefView {
   missingData: string[];
   recommendedExecutiveAction: string;
   commercialSignalNote: string | null;
+  /**
+   * Slice 3.4 — adoption & value-realization instrumentation sourced
+   * from the outcome ledger. `null` when no ledger view was supplied,
+   * so the brief degrades to its deterministic-seed form.
+   */
+  valueRealization: AtlasBriefValueRealization | null;
   deterministicSeedCaveat: string;
   deterministicSeed: true;
 }
 
-export function buildAtlasExecutiveBriefView(tenantSlug: string): AtlasExecutiveBriefView {
+/** Project a Slice 3.4 adoption-realization view onto the brief field. */
+export function toAtlasBriefValueRealization(
+  view: TowerAdoptionRealizationView,
+): AtlasBriefValueRealization {
+  return {
+    earningSummary: view.earningSummary,
+    realizationRatio: view.valueRealization.realizationRatio,
+    realizationSeverity: view.valueRealization.severity,
+    adoptionState: view.adoption.state,
+    adoptionHeadline: view.adoption.headline,
+    adoptionInstrumentationGap: view.adoption.instrumentationGap,
+  };
+}
+
+/**
+ * Build the Atlas executive brief view.
+ *
+ * @param tenantSlug canonical tenant slug.
+ * @param adoptionRealization optional Slice 3.4 adoption + value-
+ *   realization view; when supplied, the brief gains the ledger-sourced
+ *   "is this earning?" instrumentation.
+ */
+export function buildAtlasExecutiveBriefView(
+  tenantSlug: string,
+  adoptionRealization?: TowerAdoptionRealizationView,
+): AtlasExecutiveBriefView {
   const isRich = tenantSlug === 'apex-retail';
   return {
     tenantSlug,
@@ -93,6 +148,9 @@ export function buildAtlasExecutiveBriefView(tenantSlug: string): AtlasExecutive
       : 'Pilot Apex Retail for full Atlas executive experience.',
     commercialSignalNote: isRich
       ? 'AMS vendor consolidation (apex-retail-ams-outsourcing-2026) is the active commercial event linked to this programme. BAFO outcome is the critical commercial path item.'
+      : null,
+    valueRealization: adoptionRealization
+      ? toAtlasBriefValueRealization(adoptionRealization)
       : null,
     deterministicSeedCaveat: 'All signals are deterministic seed data. No live AI programme monitoring. No live financial data. All values are illustrative.',
     deterministicSeed: true,
