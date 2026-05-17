@@ -14,6 +14,17 @@ import {
   type DeliveryModelGateResult,
   type DeliveryModelSignals,
 } from './delivery-model/delivery-model-gate';
+import {
+  buildShouldCostEstimate,
+  type RoleMixEntry,
+  type RoleRateCard,
+  type ShouldCostEstimate,
+} from './should-cost/should-cost-model';
+import { buildProposalNormalizationMatrix } from './proposal-normalization/proposal-normalization';
+import type {
+  ProposalNormalizationMatrix,
+  RawVendorProposal,
+} from './proposal-normalization/proposal-normalization-types';
 import type { TenantContextSegment } from './taxonomy/category-taxonomy';
 
 export type SourceAnswerMode =
@@ -65,6 +76,26 @@ export interface SourceAnswerEngineOutput {
    * sourcing event to classify (the gate runs off the classification).
    */
   deliveryModelGate: DeliveryModelGateResult | null;
+  /**
+   * Slice 1.3 — deterministic should-cost estimate for the event. Models the
+   * full TCO iceberg (visible license layer plus the seven hidden layers) and
+   * returns a cost range with the should-cost-vs-quote headline. The bundle
+   * does not yet carry an explicit delivery role mix or rate card, so the seam
+   * derives a conservative default scaffold off the event's `valueAtStakeUsd`;
+   * the estimate is a should-cost framing aid, not a costed proposal. `null`
+   * when there is no sourcing event with a value-at-stake figure to model.
+   */
+  shouldCostEstimate: ShouldCostEstimate | null;
+  /**
+   * Slice 1.4 — proposal-normalization matrix across the eight proposal
+   * dimensions (scope exceptions, assumptions, rates, accelerators, IP terms,
+   * security posture, transition approach, SLAs/XLAs). The bundle does not yet
+   * carry structured raw vendor proposals, so the seam runs the matrix over an
+   * empty proposal set — which correctly returns the "collect vendor responses
+   * first" posture rather than fabricating comparison data. `null` when there
+   * is no sourcing event to attach the matrix to.
+   */
+  proposalNormalization: ProposalNormalizationMatrix | null;
 }
 
 interface SourceAnswerEngineInput {
@@ -141,6 +172,8 @@ export function buildSourceAnswerEngine(
     evidenceCitations: evidence.map(toAnswerCitation),
     categoryStrategy: classifyEventCategory(input.contextBundle),
     deliveryModelGate: gateEventDeliveryModel(input.contextBundle),
+    shouldCostEstimate: estimateEventShouldCost(input.contextBundle),
+    proposalNormalization: normalizeEventProposals(input.contextBundle),
   };
 }
 
@@ -165,6 +198,89 @@ export function gateEventDeliveryModel(
     loadedSegments: collectLoadedSegments(bundle.liveTenantContext),
   };
   return runDeliveryModelGate(classification, signals);
+}
+
+/**
+ * Slice 1.3 integration seam. Builds a deterministic should-cost estimate for
+ * the sourcing event, modelling the full TCO iceberg rather than echoing a
+ * single vendor number. Returns `null` when there is no event with a
+ * value-at-stake figure to anchor the estimate.
+ *
+ * The bundle does not yet carry an explicit delivery role mix, rate card, or
+ * consumption run-rate. Mirroring the Slice 1.2 graceful-degradation posture,
+ * this seam derives a conservative default scaffold off the event's
+ * `valueAtStakeUsd` (treated as the visible quoted layer) so the iceberg
+ * framing is available; it never fabricates a precise costed proposal. When
+ * those structured inputs are added to the bundle they replace the scaffold.
+ */
+export function estimateEventShouldCost(
+  bundle: SourceAgentContextBundle,
+): ShouldCostEstimate | null {
+  const event = bundle.sourcingEvent;
+  if (!event) return null;
+  const vendorQuotedCost = event.valueAtStakeUsd ?? event.projectedValueUsd ?? 0;
+  if (vendorQuotedCost <= 0) return null;
+
+  // Conservative default delivery scaffold. The blended labour base is sized
+  // off the quoted figure so the iceberg shape is plausible without inventing
+  // a specific role plan; the hidden-layer drivers keep their §5 defaults.
+  const durationMonths = 12;
+  const annualLabourBudget = vendorQuotedCost * 0.6;
+  const rateCard: RoleRateCard[] = [
+    { role: 'engagement_lead', onshoreAnnualRate: 320_000, offshoreAnnualRate: 150_000 },
+    { role: 'solution_architect', onshoreAnnualRate: 280_000, offshoreAnnualRate: 130_000 },
+    { role: 'senior_engineer', onshoreAnnualRate: 220_000, offshoreAnnualRate: 95_000 },
+    { role: 'engineer', onshoreAnnualRate: 170_000, offshoreAnnualRate: 70_000 },
+    { role: 'project_manager', onshoreAnnualRate: 200_000, offshoreAnnualRate: 90_000 },
+  ];
+  const roleMix: RoleMixEntry[] = [
+    { role: 'engagement_lead', headcount: 0.5 },
+    { role: 'solution_architect', headcount: 1 },
+    { role: 'senior_engineer', headcount: 2 },
+    { role: 'engineer', headcount: 3 },
+    { role: 'project_manager', headcount: 1 },
+  ];
+
+  return buildShouldCostEstimate({
+    estimateLabel: event.name,
+    vendorQuotedCost,
+    vendorMarginRatio: 0.3,
+    roleMix,
+    rateCard,
+    durationMonths,
+    offshoreRatio: 0.4,
+    transitionCost: vendorQuotedCost * 0.05,
+    consumption: {
+      monthlyCloudCost: annualLabourBudget * 0.02,
+      monthlyModelCost: 0,
+    },
+  });
+}
+
+/**
+ * Slice 1.4 integration seam. Normalizes the event's vendor proposals into one
+ * decision-grade comparison matrix across the eight proposal dimensions.
+ * Returns `null` when there is no sourcing event to attach the matrix to.
+ *
+ * The bundle does not yet carry structured raw vendor proposals. Mirroring the
+ * Slice 1.2 posture, this seam runs the matrix over the proposals it can
+ * collect (currently an empty set) — the normalizer then returns the correct
+ * "collect vendor responses first" next action rather than a fabricated
+ * comparison. When a structured vendor-proposal channel lands on the bundle,
+ * `proposals` is the single field to wire it into without a signature change.
+ */
+export function normalizeEventProposals(
+  bundle: SourceAgentContextBundle,
+): ProposalNormalizationMatrix | null {
+  const event = bundle.sourcingEvent;
+  if (!event) return null;
+  const proposals: RawVendorProposal[] = [];
+  return buildProposalNormalizationMatrix({
+    eventId: event.id,
+    eventName: event.name,
+    stage: event.currentStageKey,
+    proposals,
+  });
 }
 
 /**
