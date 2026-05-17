@@ -225,4 +225,44 @@ describe('Source answer engine', () => {
     expect(strategy?.evidenceGaps.map((gap) => gap.segment)).toContain('it_financials');
     expect(strategy?.classifierVersion).toBe('source-category-classifier/v1');
   });
+
+  it('attaches a Slice 1.3 should-cost estimate modelling the full TCO iceberg', () => {
+    const answer = buildSourceAnswerEngine({
+      prompt: 'How should the CIO shape the CDP sourcing event?',
+      contextBundle,
+      userRole: 'cio',
+    });
+
+    const estimate = answer?.shouldCostEstimate;
+    expect(estimate).not.toBeNull();
+    expect(estimate?.modelVersion).toBe('1.0');
+    expect(estimate?.estimateLabel).toBe('CDP Vendor Selection');
+    // The visible quoted layer is anchored to the event value-at-stake.
+    expect(estimate?.vendorQuotedCost).toBe(2_400_000);
+    // The iceberg surfaces the visible layer plus seven hidden layers.
+    expect(estimate?.icebergLayers.length).toBe(8);
+    // Should-cost must exceed the quote once the hidden layers are modelled.
+    expect(estimate?.totalHigh ?? 0).toBeGreaterThan(2_400_000);
+    expect(estimate?.headline).toContain('should-cost');
+  });
+
+  it('attaches a Slice 1.4 proposal-normalization matrix scoped to the event', () => {
+    const answer = buildSourceAnswerEngine({
+      prompt: 'How should the CIO shape the CDP sourcing event?',
+      contextBundle,
+      userRole: 'cio',
+    });
+
+    const matrix = answer?.proposalNormalization;
+    expect(matrix).not.toBeNull();
+    expect(matrix?.eventId).toBe('apx-src-cdp-2026');
+    expect(matrix?.eventName).toBe('CDP Vendor Selection');
+    // The matrix covers all eight proposal dimensions.
+    expect(matrix?.summary.totalDimensions).toBe(8);
+    expect(matrix?.rows.length).toBe(8);
+    // No structured vendor proposals on the bundle yet — the normalizer must
+    // return the conservative "collect responses first" posture.
+    expect(matrix?.summary.totalVendors).toBe(0);
+    expect(matrix?.recommendedNextAction).toContain('Collect responses');
+  });
 });
