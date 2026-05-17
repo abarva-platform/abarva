@@ -72,9 +72,88 @@ export function SegmentDetailPage({
           <NotLoadedNotice reference={reference} />
         )}
 
+        <GroundsIntelligenceLink reference={reference} />
+
         <RecordTable records={records} reference={reference} />
       </div>
     </EditorialCanvas>
+  );
+}
+
+/**
+ * Context→Intelligence hand-off (loop wiring · GAP-1). The data
+ * substrate loaded into this segment is what Sentinel grounds its
+ * reasoning on in the Intelligence Explore layer. This deep link
+ * makes that hand-off navigable — from the Setup/Context segment view
+ * straight into the Intelligence enterprise-context stage it grounds.
+ */
+function GroundsIntelligenceLink({ reference }: { reference: SegmentReference }) {
+  return (
+    <section
+      data-testid="admin-segment-grounds-intelligence"
+      style={{
+        background: SHELL.CARD_WHITE,
+        border: `1px solid ${SHELL.CARD_LINE_SOFT}`,
+        borderRadius: RADIUS.lg,
+        padding: SPACING.lg,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        gap: SPACING.lg,
+        flexWrap: 'wrap',
+      }}
+    >
+      <div style={{ maxWidth: '52ch' }}>
+        <p
+          style={{
+            margin: 0,
+            fontFamily: SHELL.SANS,
+            fontSize: 11,
+            letterSpacing: '0.1em',
+            textTransform: 'uppercase',
+            color: SHELL.INK_MUTED,
+            fontWeight: 600,
+          }}
+        >
+          Grounds Intelligence
+        </p>
+        <p
+          style={{
+            margin: `${SPACING.xs} 0 0`,
+            fontFamily: SHELL.SANS,
+            fontSize: 13,
+            color: SHELL.INK_SOFT,
+            lineHeight: 1.5,
+          }}
+        >
+          Sentinel reasons on this segment when it surfaces patterns and
+          pressure-tests bets. See how the {reference.displayName} substrate
+          shows up in the Intelligence Explore layer.
+        </p>
+      </div>
+      <Link
+        href="/intelligence#enterprise-context"
+        data-testid="admin-segment-intelligence-link"
+        style={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: 6,
+          minHeight: 36,
+          padding: '0 16px',
+          borderRadius: RADIUS.md,
+          background: COLORS.navy,
+          color: SHELL.CARD_WHITE,
+          textDecoration: 'none',
+          fontFamily: SHELL.SANS,
+          fontSize: 12.5,
+          fontWeight: 700,
+          whiteSpace: 'nowrap',
+        }}
+      >
+        Open in Intelligence
+        <span aria-hidden style={{ fontFamily: SHELL.MONO }}>→</span>
+      </Link>
+    </section>
   );
 }
 

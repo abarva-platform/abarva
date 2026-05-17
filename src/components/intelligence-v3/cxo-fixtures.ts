@@ -559,6 +559,18 @@ export interface StrategyBullet {
   title: string;
   body: string;
   evidence: string;
+  /**
+   * Optional Intelligence→Move linkage (loop wiring · GAP-2). When
+   * present, the bet-brief bullet renders a "Shape into Move" CTA that
+   * deep-links into `/strategic-moves/new` carrying the binding
+   * pattern. The originated Move then joins back to Intelligence in
+   * the cross-module trace viewer (`/strategic-moves/[moveId]/trace`).
+   */
+  betLink?: {
+    patternId: string;
+    patternName: string;
+    useCaseName?: string;
+  };
 }
 
 export const MERIDIAN_STRATEGY_BULLETS: ReadonlyArray<StrategyBullet> = [
@@ -592,6 +604,11 @@ export const APEX_RETAIL_STRATEGY_BULLETS: ReadonlyArray<StrategyBullet> = [
     body:
       'Apex has enough customer data to shape the loyalty and personalization moves, but the operating model is split: CMO owns the outcome while IT owns the platform. The first move is a decision-rights reset, not another model pilot.',
     evidence: 'F200, F203, F207 · identity and consent controls drive retail AI failure-rate reduction',
+    betLink: {
+      patternId: 'P-RT-002',
+      patternName: 'Identity & consent controls precede loyalty AI scale',
+      useCaseName: 'CDP ownership reset',
+    },
   },
   {
     number: '02',
@@ -599,6 +616,11 @@ export const APEX_RETAIL_STRATEGY_BULLETS: ReadonlyArray<StrategyBullet> = [
     body:
       'Demand sensing can move margin, inventory turns, and service levels, but only if SKU, location, promo, and substitution history are clean enough to trust. Sentinel should keep this as an evidence-gated move until the data audit is green.',
     evidence: 'F215, F217, F231 · 12 Apex use cases tied to portfolio dependencies',
+    betLink: {
+      patternId: 'P-RT-005',
+      patternName: 'Item-location data readiness gates demand sensing',
+      useCaseName: 'Demand sensing',
+    },
   },
   {
     number: '03',
@@ -606,6 +628,11 @@ export const APEX_RETAIL_STRATEGY_BULLETS: ReadonlyArray<StrategyBullet> = [
     body:
       'Adobe, Salesforce, and Accenture are all implicitly claiming the same integration layer. Apex should make one architecture decision before renewals, or the AI portfolio will inherit overlapping contracts and unclear accountability.',
     evidence: 'Open contradiction · integration hub claims across AEP, Salesforce, and SI scope',
+    betLink: {
+      patternId: 'P-RT-009',
+      patternName: 'Single integration-hub decision precedes AI portfolio scale',
+      useCaseName: 'Integration-hub architecture decision',
+    },
   },
 ];
 
