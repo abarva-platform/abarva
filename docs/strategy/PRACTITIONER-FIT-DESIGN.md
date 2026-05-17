@@ -1,148 +1,160 @@
-# Practitioner-Fit Design — turning the workflow OS into a triggered decision OS
+# Practitioner-Fit Design — the VP Sourcing Operating Console
 
 **Date:** 2026-05-17
-**Status:** design spec — proposal for review by a design-partner IT sourcing VP before build.
-**Pairs with:** `ABARVA_PRODUCT_ENHANCEMENT_EXECUTION_PLAN.md` (the capability program), `SOURCE-SOURCING-METHODOLOGY.md`.
+**Status:** concrete design spec. v2 — incorporates design-partner review by an IT sourcing VP.
+**Pairs with:** `ABARVA_PRODUCT_ENHANCEMENT_EXECUTION_PLAN.md`, `SOURCE-SOURCING-METHODOLOGY.md`, `VP-SOURCING-USABILITY-TEST-SCRIPT.md`.
 
 ---
 
-## 1. Why this exists
+## 0. The one-line target
 
-The product enhancement program built genuine expert capability across Source, Moves, and Tower. But it was verified *structurally* (tests, CI, wired hand-offs) — never tested for **usability** or **fit with how a practitioner's day actually runs**, and never validated by a real IT sourcing VP.
+> Source should become the **VP Sourcing operating console**: what needs attention, what is the recommended move, what evidence supports it, and how do I act before the window closes.
 
-The honest gap: AbarVa is a **linear workflow OS** (originate → shape → source → track). An IT sourcing VP's reality is **interrupt-driven and mid-stream** — a renewal bearing down, a stakeholder fast-track request, a vendor escalation, a CFO spend question, an RFP response due. They rarely originate a clean greenfield event; they get *triggered*, enter *mid-stream*, and work *time-boxed*.
+Source must not feel like an RFP tool. It must feel like a **sourcing command center**. A VP of IT sourcing lives in renewals, vendor risk, spend pressure, stakeholder urgency, and negotiation leverage — and their day starts with *"what needs my decision today?"*, never *"let me originate a sourcing event."*
 
-This spec proposes the **practitioner-fit layer**: the same engine, re-fronted around how the role actually works. The keystone insight — **most of it is an aggregation/re-presentation over modules that already shipped**, not net-new capability.
+**Design-partner note (IT sourcing VP):** the expert *logic* built across the enhancement program is enough. Do **not** add more abstract sourcing methodology. The next layer is **practitioner usability** — queues, triggers, decision briefs, real-time operating cadence.
 
-**This is a proposal.** It must be reviewed by a design-partner IT sourcing VP before build. The build then runs as one thin vertical slice put in front of that partner — validate-then-build, not validate-after.
-
----
-
-## 2. The reframe
-
-| Today — workflow OS | Proposed — triggered decision OS |
-|---|---|
-| Four surfaces you navigate | A queue that tells you what to decide today |
-| You originate a clean event | You enter mid-stream on an existing vendor/contract/RFP |
-| Depth-first output | Answer-first, depth on demand |
-| You visit the tool | The tool runs your sourcing function |
+Most of what follows is **re-fronting capability that already shipped** (Source classifier 1.1, delivery-model gate 1.2, should-cost 1.3, proposal normalization 1.4, negotiation posture 1.5, source-risk lens, freshness model) around how the role actually operates.
 
 ---
 
-## 3. The keystone — the Decision Queue
+## 1. Source Decision Queue — the front door
 
-A new home surface. Replaces "start a workflow" with **"here is what needs your decision."** Each item is a typed card that opens the right existing workflow with context pre-loaded.
+Replaces "start a workflow" with **"here is what needs your decision."** This turns AbarVa from "a system I visit" into "the system that runs my day."
 
-### 3.1 Trigger model
+### Queue items
+- Renewals inside **90 / 60 / 30 days**
+- **Notice windows** about to close (auto-renewal risk)
+- **RFP responses due**
+- **Vendor risk escalations**
+- **Stakeholder requests** waiting on sourcing
+- **Savings opportunities**
+- **Contract overlap / shelfware**
+- **Decisions blocked by missing evidence**
 
-Each queue item is a `DecisionTrigger` produced by a detector. Detectors are pure functions over already-shipped data/modules:
-
-| Trigger | Detector source (already built) | Phase |
-|---|---|---|
-| `renewal_approaching` | `vendor_contracts` end dates + date math | 1 — data exists |
-| `auto_renewal_trap` | contract auto-renew clauses + notice-window math | 1 |
-| `gate_approval_pending` | the gate-criteria model | 1 |
-| `overlapping_spend` / `shelfware` | `it_financials` + `vendor_contracts` (Source demand-challenge logic) | 1 |
-| `context_stale_blocking` | the freshness/trust model (Slice 4.1) | 1 |
-| `rfp_response_due` | Source event stage machine | 1 |
-| `outcome_remeasurement_due` | the outcome ledger (Slice 3.1) | 1 |
-| `vendor_delivery_escalation` | external — needs a connector | 2 — live data |
-| `stakeholder_fast_track_request` | external — inbound channel | 2 |
-
-**Phase 1 is buildable now** — seven of nine triggers are pure computations over existing substrate. Phase 2 triggers arrive with the connector roadmap.
-
-### 3.2 Card contract
-
+### Card contract
 ```ts
-interface DecisionTrigger {
+interface SourceDecisionItem {
   id: string;
   tenantClientKey: string;
-  kind: DecisionTriggerKind;        // the table above
-  urgency: 'today' | 'this_week' | 'this_month' | 'watch';
-  headline: string;                 // "Adobe contract auto-renews in 11 days"
-  whyItMatters: string;             // one line of expert framing
-  recommendedAction: string;        // "Open the renewal decision" / "Decline auto-renewal"
-  deepLink: string;                 // into the relevant Source/Moves/Tower workflow, pre-loaded
-  evidenceRefs: string[];           // contract id, segment id, ledger entry id
-  surfacedAt: string;
+  kind: 'renewal' | 'notice_window' | 'rfp_response_due' | 'vendor_risk'
+      | 'stakeholder_request' | 'savings_opportunity' | 'overlap_shelfware'
+      | 'blocked_missing_evidence';
+  urgency: 'today' | 'window_30' | 'window_60' | 'window_90' | 'watch';
+  headline: string;             // "Adobe ELA — notice window closes in 9 days"
+  recommendedMove: string;      // "Renegotiate — usage is 61% of entitlement"
+  financialImpact: string;      // "$8.8M annual; ~$1.6M at risk"
+  keyRisk: string;
+  deepLink: string;             // pre-loaded Renewal Cockpit / Comparator / Negotiation Room
+  evidenceRefs: string[];
 }
 ```
 
-### 3.3 Queue behavior
+### Detector sources (already-shipped substrate)
+| Item | Computed from |
+|---|---|
+| renewal / notice_window | `vendor_contracts` end + notice dates, date math |
+| rfp_response_due | Source event stage machine |
+| vendor_risk | the source-risk lens + MRM screen |
+| savings / overlap_shelfware | `it_financials` + `vendor_contracts` (demand-challenge logic) |
+| blocked_missing_evidence | the freshness/trust model (Slice 4.1) |
+| stakeholder_request | external — inbound channel (later, with connectors) |
 
-- **Sorted by urgency**, then by value-at-stake. Deterministic order (the QA discipline from the execution plan).
-- **Never empty-and-silent** — if nothing is urgent, it says so plainly rather than showing a blank.
-- **Each card deep-links into the pre-loaded workflow** — no re-originating. The card *is* the mid-stream entry (§4).
-- **No fabrication** — a trigger only appears when its detector has real grounding; absent data = no card, never a guessed one.
-
-### 3.4 Why it's high-leverage
-
-The Decision Queue is mostly an **aggregation layer** over `vendor_contracts`, the freshness model, the gate model, the outcome ledger, and Source event stages. Small build, but it changes what AbarVa *is* — from "a tool you visit" to "the operating surface of the sourcing function."
-
----
-
-## 4. Mid-stream entry
-
-A VP rarely originates greenfield. Today origination assumes it. Proposed: an alternate entry point — **"I have this vendor / contract / RFP"** — that:
-
-1. Takes an existing object (a `vendor_contracts` row, a Source event, a Move).
-2. Skips origination; pre-loads the object into the relevant machinery — the Source classifier, delivery-model gate, should-cost estimator, proposal normalization all already operate on a populated event.
-3. Drops the VP straight at the decision, not at a blank form.
-
-Every Decision Queue card (§3) is itself a mid-stream entry — the card carries the object reference and deep-links in pre-loaded. Mid-stream entry is a new *door*, not a new engine.
+Sorted by urgency then value-at-stake; deterministic; never empty-and-silent; never a fabricated card.
 
 ---
 
-## 5. Fast-answer mode
+## 2. Renewal Cockpit — where a VP sees value first
 
-The Source/Moves/Tower modules already produce structured output. A VP often needs the 30-second version, not the decision pack.
+For each renewal, one screen:
 
-Proposed: a **progressive-disclosure** presentation pattern applied across the expert surfaces —
-- **Tier 1 (always first):** the headline answer + the single recommended action + a confidence/freshness tag.
-- **Tier 2 (on demand):** the reasoning — should-cost iceberg, normalization matrix, negotiation levers.
-- **Tier 3 (on demand):** the full evidence trail (the cross-module trace viewer).
+| Section | Content | Source |
+|---|---|---|
+| Current spend | annual + total contract value | `vendor_contracts` |
+| Term & timing | term, notice date, **auto-renewal risk** | `vendor_contracts` + notice-window math |
+| Usage / adoption | usage vs entitlement, **shelfware** flag | `operating_telemetry` + `it_financials` |
+| Benchmark | should-cost range vs current | should-cost model (1.3) |
+| Incumbent leverage | switching cost vs competitive tension | negotiation posture (1.5) |
+| Alternatives | viable alternative vendors / paths | category classifier (1.1) + market context |
+| **Recommended posture** | **renew · renegotiate · rebid · consolidate · exit** — with rationale | composed |
 
-No new analysis — a re-layering of output the modules already generate. Measure success as **time-to-defensible-answer**: target under one minute, or it loses to a spreadsheet.
-
----
-
-## 6. Supporting layer (later phases)
-
-- **Live freshness / connectors** — contract repository first (it powers `renewal_approaching`, `auto_renewal_trap`, and mid-stream entry). The one genuinely new build; integration work, Codex-lane. Without it "real-time" is hollow.
-- **Collaboration** — sourcing is a team sport (legal, finance, the sponsor). Assignable decision items, comments, a shared decision record.
-- **Notification / mobile surface** — a digest + urgency alerts; VPs act between meetings, from a phone.
+The recommended posture is the headline; everything else is the evidence behind it. This is the screen a VP will immediately believe.
 
 ---
 
-## 7. Build discipline — validate, then build
+## 3. RFP / Proposal Comparator
 
-The capability program was blind-built (~65 PRs) before any practitioner saw it. The practitioner-fit layer must not repeat that.
-
-1. **This spec** is reviewed by a design-partner IT sourcing VP (and, for the Moves equivalent, an agentic-delivery lead). Their redlines change this document before any code.
-2. **Build the Decision Queue as one thin vertical slice** — Phase-1 triggers only, demoable in ~a week, computed from existing modules — and put it in front of that VP.
-3. **Iterate from observed behavior** — watch them use it; do not assume.
-4. **Then** fan out mid-stream entry, fast-answer, connectors.
-
-Validate-then-build, on a thin slice. Not validate-after.
-
----
-
-## 8. Definition of done
-
-The practitioner-fit layer succeeds when a real IT sourcing VP, watched, can:
-
-1. Open AbarVa and see — without navigating — what needs their decision today.
-2. Act on a renewal/escalation/spend trigger by clicking the card straight into a pre-loaded workflow.
-3. Get a defensible headline answer in under a minute, with depth available but not forced.
-4. Never be blindsided by an auto-renewal the product could have flagged.
-5. Say, unprompted, "this is how my job actually works."
-
-Point 5 is the only one that matters, and only the design partner can confirm it.
+Not proposal *scoring* — proposal *interrogation*. Re-fronts the Slice 1.4 normalization matrix as a practitioner surface:
+- Apples-to-apples normalization across vendors
+- **Hidden cost callouts**
+- **Missing contractual protections**
+- Pricing inconsistencies
+- Risk by clause
+- Implementation realism
+- **"Vendor says X — evidence suggests Y"**
 
 ---
 
-## 9. What this spec does NOT cover
+## 4. Negotiation Room
 
-- The connector engineering (contract repo, ServiceNow) — separate infra track.
-- The Moves-side practitioner fit (an agentic-delivery lead's day) — a sibling spec, same shape, validated by a different practitioner.
-- Pricing/packaging of a "decision OS" vs a "workflow tool" — GTM, not product.
+Where Source becomes expert advisor, not workflow software. Re-fronts the Slice 1.5 negotiation posture generator as a negotiation brief:
+- Walk-away position
+- Must-have terms
+- Give / get concessions
+- BATNA
+- Stakeholder alignment gaps
+- Legal / privacy / security clause risks
+- **Draft email / meeting-prep text**
+
+---
+
+## 5. Mid-Stream Entry
+
+A VP rarely originates greenfield. Entry points — each routes into the right analysis:
+
+| "I have…" | Routes to |
+|---|---|
+| a vendor | vendor profile → Renewal Cockpit / source-risk |
+| a contract | Renewal Cockpit |
+| an RFP response | RFP Comparator |
+| a renewal | Renewal Cockpit |
+| a business request | category classifier → delivery-model gate |
+| "I need to cut spend" | savings / overlap-shelfware analysis |
+
+Every Decision Queue card is itself a mid-stream entry.
+
+---
+
+## 6. Fast Answer Pattern
+
+Every Source answer leads with, before any depth:
+1. **Recommended action**
+2. **Confidence**
+3. **Financial impact**
+4. **Key risk**
+5. **Next step**
+
+Then the VP drills down. The depth is valuable — but only after the headline is useful. Target: defensible headline in under a minute.
+
+---
+
+## 7. Out of scope (deliberately)
+
+- More abstract sourcing methodology — enough expert logic is built (design-partner directive).
+- Connector engineering (contract repo, ServiceNow) — separate infra track; `stakeholder_request` and live escalations wait on it.
+- The Moves-side practitioner console — sibling spec, validated by an agentic-delivery lead.
+
+---
+
+## 8. Build sequencing
+
+1. This spec — reviewed by the design-partner VP (done; redlines incorporated in v2).
+2. **Thin vertical slice — Decision Queue + Renewal Cockpit.** The most believable VP-sourcing value demo: the inbox that shows what needs a decision, and the cockpit that answers the highest-frequency one (renewals). Built from already-shipped modules.
+3. Run the `VP-SOURCING-USABILITY-TEST-SCRIPT.md` against the slice with a real VP; iterate from observed behavior.
+4. Then: RFP Comparator, Negotiation Room, full Mid-Stream Entry, Fast Answer rollout.
+
+---
+
+## 9. Definition of done
+
+A real IT sourcing VP, watched, can: open AbarVa and see what needs a decision today without navigating; click a renewal card straight into a pre-loaded cockpit; read a recommended posture with the evidence behind it; act before the notice window closes; and say, unprompted, *"this is how my job actually works."* Point five is the only one that counts.
