@@ -1047,6 +1047,68 @@ async function ensureRisks(sb: SupabaseClient, mode: ApplyMode, programId: strin
   }
 }
 
+// Move→Source hand-off seed (GAP-3). Seeds the contact-centre Source event
+// the loop scenario's Step 3 expects, linked back to the Move via
+// `linked_program_id` so the cross-module trace viewer can join the
+// hand-off. The Apex tenant key in `source_events.client_key` is
+// `apexretail` (no dash) — see the Apex tenant-key-split memo.
+const SOURCE_EVENT_CLIENT_KEY = 'apexretail';
+const SOURCE_EVENT_CODE = 'APX-CCAI-ROUTING-2026';
+
+async function ensureSourceEvent(sb: SupabaseClient, mode: ApplyMode, programId: string): Promise<void> {
+  if (mode === 'dry-run' || programId.startsWith('<')) {
+    logPlan(mode, `would ensure source event · ${SOURCE_EVENT_CODE}`);
+    return;
+  }
+
+  const scopeDescription = [
+    'What to source: a commercial AI intent-classification capability that fronts Genesys voice/chat routing for Apex care queues.',
+    'Category hint: Data & AI platform / packaged product — confirm against the Source Slice 1.1 classifier.',
+    '',
+    'External lane scope:',
+    '• Deliver the AI classifier and the canonical cross-channel intent model the P3 design shapes.',
+    '• Complete the integration to Genesys and the CRM systems of record named in the mobilization plan.',
+    '',
+    'Retained by the tenant squad:',
+    '• Accountability for the Move stays with the CIO sponsor — it is never sourced out.',
+    '• Controls, the P3 readiness gates, and the eval corpus stay tenant-owned.',
+    '• The change / adoption story and the human fallback path stay with the tenant squad.',
+  ].join('\n');
+
+  const payload = {
+    client_key: SOURCE_EVENT_CLIENT_KEY,
+    event_code: SOURCE_EVENT_CODE,
+    event_name: `${MOVE_NAME} — sourcing`,
+    event_type: 'software',
+    current_stage_key: 'intake',
+    lifecycle_state: 'active',
+    linked_program_id: programId,
+    estimated_value_usd: 2500000,
+    trigger_description:
+      `Handed off from the Move "${MOVE_NAME}". The Move's mobilization lean is "buy" — delivery needs an external commercial product / SaaS for AI intent routing.`,
+    scope_description: scopeDescription,
+    decision_owner: 'Carlos Rivera',
+  };
+
+  const { data: existing, error } = await sb
+    .from('source_events')
+    .select('id')
+    .eq('client_key', SOURCE_EVENT_CLIENT_KEY)
+    .eq('event_code', SOURCE_EVENT_CODE)
+    .limit(1);
+  if (error) throw error;
+
+  const existingId = (existing as Array<{ id: string }> | null)?.[0]?.id;
+  if (existingId) {
+    const { error: updateError } = await sb.from('source_events').update(payload).eq('id', existingId);
+    if (updateError) throw updateError;
+  } else {
+    const { error: insertError } = await sb.from('source_events').insert(payload);
+    if (insertError) throw insertError;
+  }
+  logPlan(mode, `ensured source event · ${SOURCE_EVENT_CODE} linked to ${programId}`);
+}
+
 async function ensureOpenP3GateFlag(sb: SupabaseClient, mode: ApplyMode, programId: string): Promise<void> {
   const headline = 'P3 Design gate open - architecture and operating-model decisions pending';
   if (mode === 'dry-run' || programId.startsWith('<')) {
@@ -1113,6 +1175,7 @@ async function main(): Promise<void> {
   await ensureMilestones(sb, mode, programId);
   await ensureWorkItems(sb, mode, programId);
   await ensureRisks(sb, mode, programId);
+  await ensureSourceEvent(sb, mode, programId);
   await ensureOpenP3GateFlag(sb, mode, programId);
 
   console.log(`done · ${MOVE_NAME} is ready at P3 Design${mode === 'dry-run' ? ' (planned)' : ''}.`);

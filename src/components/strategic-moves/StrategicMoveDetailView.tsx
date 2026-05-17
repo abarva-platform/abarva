@@ -6,13 +6,26 @@ import { MoveArtifactUpload } from './MoveArtifactUpload';
 import { NexusCurrentStateBriefingPanel } from './NexusCurrentStateBriefingPanel';
 import { StrategicMoveDetailClient } from './StrategicMoveDetailClient';
 import { PhaseDocumentsPanel } from './PhaseDocumentsPanel';
+import { MoveToSourceHandoffCta } from './MoveToSourceHandoffCta';
 import type { StrategicMove } from '@/lib/programs/types.ui';
+import type { MoveToSourceHandoffResult } from '@/lib/programs/source-trigger/move-to-source-handoff';
 
 type Tab = 'overview' | 'documents' | 'activity';
+
+/** A Source event already linked back to this Move, when one exists. */
+export interface LinkedSourceEvent {
+  id: string;
+  code: string;
+  name: string;
+}
 
 interface Props {
   move: StrategicMove;
   activeTab?: Tab;
+  /** Move→Source hand-off, computed when the Move carries a sourcing deliverable. */
+  handoff?: MoveToSourceHandoffResult | null;
+  /** A Source event already linked to this Move. */
+  linkedSourceEvent?: LinkedSourceEvent | null;
 }
 
 function formatRole(role: string): string {
@@ -86,7 +99,15 @@ function TabBar({ moveId, active }: { moveId: string; active: Tab }) {
 
 // ── Overview tab content ───────────────────────────────────────────────────────
 
-function OverviewContent({ move }: { move: StrategicMove }) {
+function OverviewContent({
+  move,
+  handoff,
+  linkedSourceEvent,
+}: {
+  move: StrategicMove;
+  handoff?: MoveToSourceHandoffResult | null;
+  linkedSourceEvent?: LinkedSourceEvent | null;
+}) {
   return (
     <div className={styles.detailBody}>
       <div
@@ -124,6 +145,13 @@ function OverviewContent({ move }: { move: StrategicMove }) {
           ))}
         </ul>
       </section>
+
+      {handoff && (
+        <MoveToSourceHandoffCta
+          handoff={handoff}
+          existingEvent={linkedSourceEvent ?? null}
+        />
+      )}
 
       <div className={styles.sectionGrid}>
         <section className={styles.detailSection}>
@@ -252,7 +280,17 @@ function DocumentsContent({ move }: { move: StrategicMove }) {
 
 // ── Right pane (workspace) ────────────────────────────────────────────────────
 
-function RightPane({ move, activeTab }: { move: StrategicMove; activeTab: Tab }) {
+function RightPane({
+  move,
+  activeTab,
+  handoff,
+  linkedSourceEvent,
+}: {
+  move: StrategicMove;
+  activeTab: Tab;
+  handoff?: MoveToSourceHandoffResult | null;
+  linkedSourceEvent?: LinkedSourceEvent | null;
+}) {
   const primary = primaryAction(move);
   const secondary = secondaryAction(move);
 
@@ -293,7 +331,13 @@ function RightPane({ move, activeTab }: { move: StrategicMove; activeTab: Tab })
         <TabBar moveId={move.id} active={activeTab} />
       </div>
 
-      {activeTab === 'overview'  && <OverviewContent move={move} />}
+      {activeTab === 'overview'  && (
+        <OverviewContent
+          move={move}
+          handoff={handoff}
+          linkedSourceEvent={linkedSourceEvent}
+        />
+      )}
       {activeTab === 'documents' && <DocumentsContent move={move} />}
       {activeTab === 'activity'  && <ActivityContent move={move} />}
     </article>
@@ -302,7 +346,12 @@ function RightPane({ move, activeTab }: { move: StrategicMove; activeTab: Tab })
 
 // ── Main view ─────────────────────────────────────────────────────────────────
 
-export function StrategicMoveDetailView({ move, activeTab = 'overview' }: Props) {
+export function StrategicMoveDetailView({
+  move,
+  activeTab = 'overview',
+  handoff = null,
+  linkedSourceEvent = null,
+}: Props) {
   return (
     <div className={styles.page}>
       <div
@@ -316,7 +365,14 @@ export function StrategicMoveDetailView({ move, activeTab = 'overview' }: Props)
       >
         <StrategicMoveDetailClient
           move={move}
-          workspace={<RightPane move={move} activeTab={activeTab} />}
+          workspace={
+            <RightPane
+              move={move}
+              activeTab={activeTab}
+              handoff={handoff}
+              linkedSourceEvent={linkedSourceEvent}
+            />
+          }
         />
       </div>
     </div>
