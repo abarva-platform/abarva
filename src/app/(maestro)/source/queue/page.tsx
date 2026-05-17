@@ -3,7 +3,7 @@ import { SourceWorkingPane } from '@/components/source/SourceWorkingPane';
 import { SourceDecisionQueueView } from '@/components/source/SourceDecisionQueueView';
 import { getActiveClientRow } from '@/lib/active-client';
 import { canonicalClientDisplayName } from '@/lib/client-config';
-import { loadSourceDecisionQueue } from '@/lib/source/decision-queue/load';
+import { loadSourceDecisionQueueWithEvidence } from '@/lib/source/decision-queue/load';
 
 export const metadata = { title: 'Source · Decision Queue · AbarVa' };
 export const dynamic = 'force-dynamic';
@@ -19,7 +19,8 @@ export default async function SourceDecisionQueuePage() {
   const activeClientDisplayName =
     canonicalClientDisplayName({ key: activeClient?.key, name: activeClient?.name }) ??
     'AbarVa Client';
-  const queue = await loadSourceDecisionQueue(clientKey);
+  const { queue, evidenceContext } =
+    await loadSourceDecisionQueueWithEvidence(clientKey);
 
   return (
     <AppShell
@@ -31,7 +32,7 @@ export default async function SourceDecisionQueuePage() {
       }}
     >
       <SourceWorkingPane>
-        <SourceDecisionQueueView queue={queue} />
+        <SourceDecisionQueueView queue={queue} evidenceContext={evidenceContext} />
       </SourceWorkingPane>
     </AppShell>
   );

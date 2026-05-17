@@ -5,7 +5,7 @@ import { RenewalCockpitView } from '@/components/source/RenewalCockpitView';
 import { getActiveClientRow } from '@/lib/active-client';
 import { canonicalClientDisplayName } from '@/lib/client-config';
 import { SHELL } from '@/lib/shell/shell-tokens';
-import { loadRenewalCockpit } from '@/lib/source/decision-queue/load';
+import { loadRenewalCockpitWithEvidence } from '@/lib/source/decision-queue/load';
 
 export const metadata = { title: 'Source · Renewal Cockpit · AbarVa' };
 export const dynamic = 'force-dynamic';
@@ -26,7 +26,10 @@ export default async function RenewalCockpitPage({
   const activeClientDisplayName =
     canonicalClientDisplayName({ key: activeClient?.key, name: activeClient?.name }) ??
     'AbarVa Client';
-  const cockpit = await loadRenewalCockpit(clientKey, decodeURIComponent(contractId));
+  const { cockpit, evidenceContext } = await loadRenewalCockpitWithEvidence(
+    clientKey,
+    decodeURIComponent(contractId),
+  );
 
   return (
     <AppShell
@@ -39,7 +42,7 @@ export default async function RenewalCockpitPage({
     >
       <SourceWorkingPane>
         {cockpit ? (
-          <RenewalCockpitView cockpit={cockpit} />
+          <RenewalCockpitView cockpit={cockpit} evidenceContext={evidenceContext} />
         ) : (
           <div style={{ maxWidth: 640, display: 'flex', flexDirection: 'column', gap: 10 }}>
             <h1
