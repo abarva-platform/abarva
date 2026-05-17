@@ -34,6 +34,8 @@ export {
 } from './artifact-registry/mime';
 export * from './chat-types';
 export * from './constants';
+export * from './disclosure-flag';
+export * from './mrm-screen';
 export * from './context-builder';
 export * from './context-quality';
 export * from './lifecycle';
