@@ -1,5 +1,11 @@
 import Link from 'next/link';
 import { TowerIndexPage, type TowerSubstrateCounts } from '@/components/tower/TowerIndexPage';
+import { MovePortfolioCardPanel } from '@/components/tower/MovePortfolioCardPanel';
+import {
+  APEX_TENANT_KEY,
+  buildApexPortfolioCards,
+} from '@/lib/tower/apex-contact-center-portfolio-fixture';
+import type { MovePortfolioCard } from '@/lib/tower/move-portfolio-card';
 import { selectTowerPageReadAdapter } from '@/lib/data-plane/read-adapters/towerPageReadAdapter';
 import { requireTenancy } from '@/lib/auth/tenancy';
 import { loadUserProgramAccessPolicy } from '@/lib/auth/program-access-policy';
@@ -513,6 +519,11 @@ export default async function TowerPage({
   const activeClientId = activeClient?.id ?? null;
   const towerHandoffPrograms = await buildTowerHandoffPrograms();
   const towerHandoffSourceEvents = await buildTowerHandoffSourceEvents();
+  // GAP-4 — render loop-completed Moves as first-class Tower portfolio
+  // cards. Currently the Apex `Contact Center AI Routing` Move; the
+  // panel renders nothing for tenants without a loop-completed Move.
+  const movePortfolioCards: readonly MovePortfolioCard[] =
+    activeClient?.key === APEX_TENANT_KEY ? buildApexPortfolioCards() : [];
   const towerSetupInitiativesFeed = await buildTowerSetupInitiativesFeed(activeClient);
   const towerInitiatives = await buildTowerInitiatives(activeClientId);
   const towerVendors = await buildTowerVendors(activeClientId);
@@ -587,6 +598,7 @@ export default async function TowerPage({
       towerSubmenuSlot={<TowerMainSubmenuStrip activeTab={activeTab} />}
       towerHandoffSlot={
         <>
+          <MovePortfolioCardPanel cards={movePortfolioCards} />
           <TowerSetupInitiativesPanel feed={towerSetupInitiativesFeed} />
           <TowerHandoffProgramsPanel programs={towerHandoffPrograms} />
           <TowerHandoffSourceEventsPanel events={towerHandoffSourceEvents} />
