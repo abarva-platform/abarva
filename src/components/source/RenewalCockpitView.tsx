@@ -13,6 +13,7 @@ import type {
   RenewalCockpit,
   RenewalPosture,
 } from '@/lib/source/renewal-cockpit/cockpit';
+import { RenewalCockpitActionBar } from './RenewalCockpitActionBar';
 
 const CARD: CSSProperties = {
   background: SHELL.CARD_WHITE,
@@ -146,6 +147,9 @@ export function RenewalCockpitView({ cockpit }: { cockpit: RenewalCockpit }) {
           {cockpit.postureRationale}
         </p>
       </section>
+
+      {/* THE ACTION BAR — let the VP act, not just read (Practitioner-Fit §2) */}
+      <RenewalCockpitActionBar cockpit={cockpit} />
 
       {/* Evidence behind the posture */}
       <EvidenceCard
