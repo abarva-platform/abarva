@@ -67,6 +67,22 @@
       margin: 0 0 22px;
     }
 
+    .logo-svg {
+      display: block;
+      width: 188px;
+      height: auto;
+      margin: 0 0 22px;
+    }
+
+    .logo-word {
+      font-family: Georgia, "Times New Roman", serif;
+      font-weight: 700;
+      letter-spacing: -0.04em;
+    }
+
+    .logo-word-regular { font-weight: 400; }
+    .logo-blue { fill: var(--blue); }
+
     .nav-kicker {
       margin: 18px 0 8px;
       font-size: 10px;
@@ -192,6 +208,52 @@
     .grid.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .grid.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
     .grid.four { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    .grid.five { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+
+    .stack-row {
+      display: grid;
+      grid-template-columns: 180px minmax(0, 1fr);
+      gap: 18px;
+      padding: 16px 0;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .stack-row:last-child { border-bottom: 0; }
+
+    .stack-label {
+      font-size: 11px;
+      font-weight: 900;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--blue);
+    }
+
+    .design-token-grid {
+      display: grid;
+      grid-template-columns: repeat(6, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 16px;
+    }
+
+    .swatch {
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      overflow: hidden;
+      background: #fff;
+      min-height: 96px;
+    }
+
+    .swatch-chip {
+      display: block;
+      height: 42px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .swatch-body {
+      padding: 10px;
+      font-size: 11px;
+      color: var(--muted);
+    }
 
     .card {
       border: 1px solid var(--line);
@@ -364,7 +426,7 @@
         border-right: 0;
         border-bottom: 1px solid var(--line);
       }
-      .meta-grid, .grid.two, .grid.three, .grid.four {
+      .meta-grid, .grid.two, .grid.three, .grid.four, .grid.five, .design-token-grid, .stack-row {
         grid-template-columns: 1fr;
       }
     }
@@ -381,12 +443,34 @@
 <body>
   <div class="shell">
     <nav aria-label="Document navigation">
-      <img class="logo" src="../brand/abarva-logo-lockup-v2.svg" alt="AbarVa" />
+      <svg class="logo-svg" viewBox="0 0 620 190" role="img" aria-labelledby="abarvaLogoTitle">
+        <title id="abarvaLogoTitle">AbarVa</title>
+        <g transform="translate(8 30)" fill="none" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M54 0 L60 15 L75 21 L60 27 L54 42 L48 27 L33 21 L48 15 Z" fill="#0b4a91" stroke="none"/>
+          <path d="M3 94 H29" stroke="#070707" stroke-width="5"/>
+          <path d="M119 94 H145" stroke="#070707" stroke-width="5"/>
+          <circle cx="156" cy="94" r="10" stroke="#070707" stroke-width="5" fill="#fffdf7"/>
+          <path d="M31 96 C29 55 61 28 103 35" stroke="#070707" stroke-width="7"/>
+          <path d="M125 60 C147 98 122 142 79 149" stroke="#070707" stroke-width="7"/>
+          <path d="M40 136 C20 105 29 65 61 46" stroke="#070707" stroke-width="4"/>
+          <path d="M113 41 C143 60 155 98 138 129" stroke="#070707" stroke-width="4"/>
+          <circle cx="80" cy="94" r="51" stroke="#070707" stroke-width="7"/>
+          <circle cx="80" cy="94" r="31" stroke="#070707" stroke-width="7"/>
+          <circle cx="80" cy="94" r="13" fill="#0b4a91" stroke="none"/>
+        </g>
+        <text class="logo-word" x="190" y="118" font-size="72" fill="#070707">A</text>
+        <text class="logo-word logo-word-regular" x="234" y="118" font-size="72" fill="#070707">bar</text>
+        <text class="logo-word logo-blue" x="328" y="118" font-size="72">V</text>
+        <text class="logo-word logo-word-regular logo-blue" x="372" y="118" font-size="72">a</text>
+      </svg>
       <div class="nav-kicker">Primer</div>
       <a class="nav-link" href="#purpose">Purpose</a>
       <a class="nav-link" href="#principles">Architecture Principles</a>
       <a class="nav-link" href="#target">Target-State Map</a>
       <a class="nav-link" href="#frontend">Frontend</a>
+      <a class="nav-link" href="#next-react">Next.js + React</a>
+      <a class="nav-link" href="#scale">Why This Scales</a>
+      <a class="nav-link" href="#design-system">Design System</a>
       <a class="nav-link" href="#page-bindings">Page Bindings</a>
       <a class="nav-link" href="#middle">Middle Tier</a>
       <a class="nav-link" href="#code-patterns">Code Patterns</a>
@@ -751,6 +835,336 @@
           <div class="card">
             <h3>Agent UX</h3>
             <p>Agent panels must show retrieval/working state, stream clearly, preserve context, and allow pane resizing where workspaces are split.</p>
+          </div>
+        </div>
+      </section>
+
+      <section id="next-react">
+        <h2>Next.js + React Fundamentals</h2>
+        <p class="section-intro">
+          AbarVa is a Next.js App Router application built on React. In plain English: Next.js decides how pages, layouts, server APIs, streaming, and deployment work; React decides how the user interface is composed. The core engineering rule is simple: keep tenant data and secrets on the server, and ship client-side JavaScript only for the interactions a CXO can touch.
+        </p>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Concept</th>
+                <th>What It Means</th>
+                <th>AbarVa Use</th>
+                <th>Developer Rule</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>App Router</strong></td>
+                <td>Routes are mapped by folders and files under <code>src/app</code>.</td>
+                <td><code>/home</code>, <code>/intelligence</code>, <code>/source</code>, <code>/tower</code>, and <code>/strategic-moves</code> are product workspaces, not client-side route hacks.</td>
+                <td>Create a <code>page.tsx</code> for a page and a <code>route.ts</code> for an API. Do not put both in the same route segment.</td>
+              </tr>
+              <tr>
+                <td><strong>Layouts</strong></td>
+                <td><code>layout.tsx</code> wraps child routes and persists across navigation.</td>
+                <td>The app shell, product navigation, auth boundary, and workspace chrome are stable while pages change underneath.</td>
+                <td>Put shared navigation and shell concerns in layouts. Keep page-specific data loading in pages.</td>
+              </tr>
+              <tr>
+                <td><strong>Server Components</strong></td>
+                <td>In the App Router, pages and layouts are server-rendered by default.</td>
+                <td>Tenant lookup, role checks, Postgres reads, Azure Search context assembly, and seeded view-model loading happen server-side.</td>
+                <td>Default to Server Components. They keep secrets off the browser and reduce client bundle size.</td>
+              </tr>
+              <tr>
+                <td><strong>Client Components</strong></td>
+                <td>A file with <code>'use client'</code> becomes an interactive browser bundle boundary.</td>
+                <td>Chat inputs, resizable agent panes, filters, tabs, sliders, editable canvases, and streaming response controls.</td>
+                <td>Use client components surgically. Do not mark a whole page as client just because one button needs state.</td>
+              </tr>
+              <tr>
+                <td><strong>Route Handlers</strong></td>
+                <td><code>route.ts</code> files implement server APIs using Web <code>Request</code> and <code>Response</code>.</td>
+                <td>Agent turns, sensitive-upload evaluation, parallel-run invariants, ingestion consumers, and admin actions.</td>
+                <td>Every protected route starts with tenancy/auth and returns a typed view-model contract.</td>
+              </tr>
+              <tr>
+                <td><strong>Streaming and Loading</strong></td>
+                <td>Server rendering can stream data-heavy UI progressively.</td>
+                <td>Agent workspaces should show retrieval, thinking, and synthesis state instead of freezing while the model runs.</td>
+                <td>Use Suspense/loading states for slow substrate or model work. Never leave a blank executive page.</td>
+              </tr>
+              <tr>
+                <td><strong>Compiler and Turbopack</strong></td>
+                <td>Next.js uses the Rust/SWC compiler and Turbopack for fast iteration.</td>
+                <td>Large product surfaces can remain modular without making local development unusable.</td>
+                <td>Keep modules typed and bounded so the compiler can help catch bad imports before preview or production.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="grid three" style="margin-top: 18px;">
+          <div class="card">
+            <h3>Server Page Pattern</h3>
+            <p>Protected pages resolve tenancy and load view-model data before rendering. This is why CXO data does not have to be fetched from the browser.</p>
+<pre><code>export const dynamic = 'force-dynamic';
+
+export default async function TowerPage() {
+  const tenancy = await requireTenancy();
+  const client = await getActiveClientRow();
+  const data = await selectTowerPageReadAdapter()
+    .loadPortfolio({ tenantKey: tenancy.clientKey, clientId: client.id });
+
+  return &lt;TowerIndexPage data={data} /&gt;;
+}</code></pre>
+          </div>
+
+          <div class="card">
+            <h3>Client Interaction Pattern</h3>
+            <p>Only the interactive part becomes client-side. The surrounding page can stay server-rendered and small.</p>
+<pre><code>'use client';
+
+export function AgentPane({ initialPrompt }: { initialPrompt: string }) {
+  const [draft, setDraft] = useState(initialPrompt);
+
+  return (
+    &lt;textarea
+      value={draft}
+      onChange={(event) =&gt; setDraft(event.target.value)}
+    /&gt;
+  );
+}</code></pre>
+          </div>
+
+          <div class="card">
+            <h3>API Route Pattern</h3>
+            <p>Routes are server-side policy gates. They must derive tenant from auth, not from user-controlled form fields.</p>
+<pre><code>export async function POST(request: Request) {
+  const tenancy = await requireTenancy();
+  const body = await request.json();
+
+  const result = await runAgentTurn({
+    tenantKey: tenancy.clientKey,
+    actorId: tenancy.userId,
+    body,
+  });
+
+  return NextResponse.json(result);
+}</code></pre>
+          </div>
+        </div>
+
+        <div class="callout">
+          <strong>New-developer mental model:</strong> a page is not "React fetching everything from the browser." AbarVa pages are server-first workspaces. The server decides who you are, which tenant you can see, what trusted data is available, and which view-model reaches the browser. React then makes that view-model usable.
+        </div>
+      </section>
+
+      <section id="scale">
+        <h2>Why This Architecture Scales</h2>
+        <p class="section-intro">
+          AbarVa can start as one Next.js product and still scale into an enterprise SaaS platform because the architecture separates user experience, tenant data, retrieval, agent reasoning, and operations into explicit planes. The first pilot does not need twenty microservices. It needs boundaries that let the system split safely when load, security, or customer-private deployment pressure justifies it.
+        </p>
+
+        <div class="grid five">
+          <div class="card strong">
+            <h3>1. UI Scale</h3>
+            <p>App Router route groups, Server Components, and small Client Component islands keep large executive workspaces from becoming one client-heavy bundle.</p>
+          </div>
+          <div class="card strong">
+            <h3>2. Data Scale</h3>
+            <p>Postgres remains the system of record. Read/write adapters make Supabase today and Azure Postgres tomorrow a deployment choice, not a product rewrite.</p>
+          </div>
+          <div class="card strong">
+            <h3>3. Retrieval Scale</h3>
+            <p>Tenant-filtered Azure AI Search projections let the same context layer support more chunks, more domains, and more industry corpora without changing page code.</p>
+          </div>
+          <div class="card strong">
+            <h3>4. Agent Scale</h3>
+            <p>AgentContextBroker, model gateway, tool registry, and G1-G8 consistency guards keep agent reasoning governed as more agents and tools are added.</p>
+          </div>
+          <div class="card strong">
+            <h3>5. Ops Scale</h3>
+            <p>Container Apps, ACR, Key Vault, managed identity, Service Bus, Event Grid, Purview, and observability give the lab a credible path to customer-private lanes.</p>
+          </div>
+        </div>
+
+        <div class="table-wrap" style="margin-top: 18px;">
+          <table>
+            <thead>
+              <tr>
+                <th>What Grows</th>
+                <th>How It Grows</th>
+                <th>Why It Does Not Force a Rewrite</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Tenants</strong></td>
+                <td>Add tenant rows, role metadata, RLS policies, seed packs, and client-private lanes when required.</td>
+                <td>Tenancy is resolved at the route and broker boundary, not guessed in page components.</td>
+              </tr>
+              <tr>
+                <td><strong>Context chunks</strong></td>
+                <td>Backfill more documents, evidence records, graph edges, and search projections.</td>
+                <td>Pages call broker/read adapters. They do not know which index or storage engine supplied the context.</td>
+              </tr>
+              <tr>
+                <td><strong>Modules</strong></td>
+                <td>Add new surfaces such as pilot-success, data trust, or industry corpora on the same shell and adapter pattern.</td>
+                <td>Modules own their view-models and tests while sharing auth, broker, audit, and design rules.</td>
+              </tr>
+              <tr>
+                <td><strong>Agents</strong></td>
+                <td>Add specialized modes for sourcing, architecture, value assurance, stewardship, or industry strategy.</td>
+                <td>Agents share broker context assembly, model gateway policy, tool audit, and consistency guard telemetry.</td>
+              </tr>
+              <tr>
+                <td><strong>Providers</strong></td>
+                <td>Run Anthropic/OpenAI now; route through Azure AI Foundry or customer-approved providers later.</td>
+                <td>Provider choice lives behind the model gateway. Product pages consume agent contracts.</td>
+              </tr>
+              <tr>
+                <td><strong>Ingestion jobs</strong></td>
+                <td>Start with uploads and queue consumers; mature into ServiceNow, Workday, cloud-cost, CMDB, ERP, and contract connectors.</td>
+                <td>The context layer stores normalized facts, evidence, and freshness metadata independent of connector source.</td>
+              </tr>
+              <tr>
+                <td><strong>Customer-private lanes</strong></td>
+                <td>Deploy per-customer private data resources, private endpoints, Key Vaults, and managed identities.</td>
+                <td>The app already treats data-plane and retrieval-plane access as swappable infrastructure.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="grid two" style="margin-top: 18px;">
+          <div class="card">
+            <h3>Why This Is Not a Fragile Monolith</h3>
+            <p>The current product can run as a single deployable application, but it is not one giant blob. It has seams: route handlers for APIs, data-plane adapters for storage, AgentContextBroker for retrieval, model gateway for providers, queue consumers for ingestion, and test gates for tenant isolation. If scale demands separation, those seams become services without changing the executive workflows.</p>
+          </div>
+          <div class="card">
+            <h3>Scale Risks We Test</h3>
+            <p>Scale confidence is not a slogan. The stand-up model uses infrastructure what-if, Azure connectivity probes, network/identity checks, cross-tenant probes, migration replay, Playwright tenant matrices, golden-agent question sets, load tests, chaos drills, audit exports, and SLO/cost dashboards.</p>
+          </div>
+        </div>
+
+        <div class="callout">
+          <strong>Enterprise answer:</strong> AbarVa scales because data trust, tenant isolation, retrieval, agent reasoning, and UI rendering are not tangled together. Each can be hardened or replaced without asking the product team to rebuild every page.
+        </div>
+      </section>
+
+      <section id="design-system">
+        <h2>Design System and Product UI Standards</h2>
+        <p class="section-intro">
+          The visual standard is executive-grade operating software: dense, calm, high-trust, and useful under meeting pressure. AbarVa should not feel like a generic SaaS landing page or a toy chat app. The UI should help a CIO, CFO, CDAO, or sourcing leader defend a decision.
+        </p>
+
+        <div class="design-token-grid">
+          <div class="swatch">
+            <span class="swatch-chip" style="background:#F8F7F4;"></span>
+            <div class="swatch-body"><strong>#F8F7F4</strong><br />App background</div>
+          </div>
+          <div class="swatch">
+            <span class="swatch-chip" style="background:#FFFFFF;"></span>
+            <div class="swatch-body"><strong>#FFFFFF</strong><br />Paper / panels</div>
+          </div>
+          <div class="swatch">
+            <span class="swatch-chip" style="background:#101316;"></span>
+            <div class="swatch-body"><strong>#101316</strong><br />Primary ink</div>
+          </div>
+          <div class="swatch">
+            <span class="swatch-chip" style="background:#0B4A91;"></span>
+            <div class="swatch-body"><strong>#0B4A91</strong><br />AbarVa blue</div>
+          </div>
+          <div class="swatch">
+            <span class="swatch-chip" style="background:#26755D;"></span>
+            <div class="swatch-body"><strong>#26755D</strong><br />Trust green</div>
+          </div>
+          <div class="swatch">
+            <span class="swatch-chip" style="background:#9F6B00;"></span>
+            <div class="swatch-body"><strong>#9F6B00</strong><br />Warning gold</div>
+          </div>
+        </div>
+
+        <div class="table-wrap" style="margin-top: 18px;">
+          <table>
+            <thead>
+              <tr>
+                <th>Design Area</th>
+                <th>Standard</th>
+                <th>Why It Matters</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Typography</strong></td>
+                <td>Georgia for page-level editorial headings; DM Sans/system sans for body, tables, controls, and dense metadata.</td>
+                <td>Serif headings create boardroom authority; sans body text keeps operational surfaces readable.</td>
+              </tr>
+              <tr>
+                <td><strong>Color</strong></td>
+                <td>Near-white backgrounds, black/ghost buttons, restrained tenant accents, clear status colors.</td>
+                <td>The product should feel serious and inspectable, not decorative or palette-heavy.</td>
+              </tr>
+              <tr>
+                <td><strong>Density</strong></td>
+                <td>Snowflake/Datadog-inspired density: compact tables, clear section dividers, stable cards, no oversized marketing hero on app surfaces.</td>
+                <td>CXOs and operators scan, compare, and decide. Spacious marketing composition wastes their time.</td>
+              </tr>
+              <tr>
+                <td><strong>Sub-navigation</strong></td>
+                <td>Sticky, light subnav under the main shell; section name left, tabs/actions right.</td>
+                <td>Users need orientation across Brief, Map, Enterprise Context, Vendors, Portfolio, Scorecards, Gates, and Dependencies.</td>
+              </tr>
+              <tr>
+                <td><strong>Cards</strong></td>
+                <td>Use cards for repeated items, modals, and framed tools only. Radius stays restrained, generally 8px or less.</td>
+                <td>Nested cards and decorative card sections make the product feel like a template instead of a workbench.</td>
+              </tr>
+              <tr>
+                <td><strong>Tables</strong></td>
+                <td>Tables must expose comparison, rank, owner, confidence, date, risk, and next action. Avoid bare data dumps.</td>
+                <td>The table is a decision instrument, not a spreadsheet pasted into the app.</td>
+              </tr>
+              <tr>
+                <td><strong>Graphs</strong></td>
+                <td>Every graph needs a business question: value vs alignment, risk vs evidence, renewal timing, adoption gap, dependency health.</td>
+                <td>Executives should know what to do after reading the graph.</td>
+              </tr>
+              <tr>
+                <td><strong>Agent panes</strong></td>
+                <td>Sticky input, no bubble truncation, visible retrieval/working state, resizable split panes when paired with a canvas.</td>
+                <td>The agent must feel like a consulting partner inside the workflow, not a disconnected chatbot.</td>
+              </tr>
+              <tr>
+                <td><strong>Forms and CTAs</strong></td>
+                <td>Use inputs, selects, toggles, sliders, and icon buttons appropriately. Primary actions are black; secondary actions are ghost.</td>
+                <td>Controls should communicate operational purpose immediately and avoid visual noise.</td>
+              </tr>
+              <tr>
+                <td><strong>Empty states</strong></td>
+                <td>Say what is missing, why it matters, what unlocks, and the next safe action.</td>
+                <td>Enterprise data will be incomplete. The product earns trust by naming that clearly.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="grid two" style="margin-top: 18px;">
+          <div class="card strong">
+            <h3>Design QA Checklist</h3>
+            <ul>
+              <li>Logo renders in production, preview, and local file copies.</li>
+              <li>No text overlap on desktop or mobile widths.</li>
+              <li>No tenant or industry copy leaks across clients.</li>
+              <li>No default blue CTAs on primary app surfaces.</li>
+              <li>All tables and graphs have a visible decision purpose.</li>
+              <li>Focus rings and hover states are visible.</li>
+              <li>Agent input is sticky, grows when needed, and never truncates core answer text.</li>
+            </ul>
+          </div>
+          <div class="card strong">
+            <h3>Design Principle</h3>
+            <p>Every screen should answer: "What decision does this help an executive make, what evidence backs it, what is uncertain, and what action should happen next?" If a UI element cannot answer one of those, it is probably decoration or noise.</p>
           </div>
         </div>
       </section>
