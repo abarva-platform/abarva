@@ -19,6 +19,7 @@ import {
   buildRenewalCockpit,
   type RenewalCockpit,
 } from '@/lib/source/renewal-cockpit/cockpit';
+import type { EvidenceResolutionContext } from '@/lib/source/evidence-trace/evidence-trace';
 
 /**
  * Load and assemble the Source Decision Queue for a tenant.
@@ -30,15 +31,38 @@ export async function loadSourceDecisionQueue(
   clientKey: string,
   asOf: Date = new Date(),
 ): Promise<SourceDecisionQueue> {
+  return (await loadSourceDecisionQueueWithEvidence(clientKey, asOf)).queue;
+}
+
+/**
+ * Load the Decision Queue together with the evidence-resolution context the
+ * evidence-trace drawer needs. The context carries the same projected
+ * substrate the queue was built from, so a `evidenceRef` on any bundle
+ * resolves against exactly the data that produced the card.
+ */
+export async function loadSourceDecisionQueueWithEvidence(
+  clientKey: string,
+  asOf: Date = new Date(),
+): Promise<{ queue: SourceDecisionQueue; evidenceContext: EvidenceResolutionContext }> {
   const raw = await readSourceDecisionQueueData(clientKey);
+  const contracts = projectVendorContracts(raw.vendorContractRecords);
+  const financials = projectFinancialLines(raw.financialRecords);
   const input: DecisionQueueInput = {
     clientKey,
-    contracts: projectVendorContracts(raw.vendorContractRecords),
-    financials: projectFinancialLines(raw.financialRecords),
+    contracts,
+    financials,
     segmentFreshness: raw.segmentFreshness,
     asOf,
   };
-  return buildSourceDecisionQueue(input);
+  return {
+    queue: buildSourceDecisionQueue(input),
+    evidenceContext: {
+      contracts,
+      financials,
+      segmentFreshness: raw.segmentFreshness,
+      asOf,
+    },
+  };
 }
 
 /**
@@ -51,16 +75,39 @@ export async function loadRenewalCockpit(
   contractId: string,
   asOf: Date = new Date(),
 ): Promise<RenewalCockpit | null> {
+  return (await loadRenewalCockpitWithEvidence(clientKey, contractId, asOf)).cockpit;
+}
+
+/**
+ * Load the Renewal Cockpit together with the evidence-resolution context the
+ * evidence-trace drawer needs. `cockpit` is `null` when the contract id is
+ * not found; `evidenceContext` is still returned so the not-found surface
+ * stays consistent.
+ */
+export async function loadRenewalCockpitWithEvidence(
+  clientKey: string,
+  contractId: string,
+  asOf: Date = new Date(),
+): Promise<{
+  cockpit: RenewalCockpit | null;
+  evidenceContext: EvidenceResolutionContext;
+}> {
   const raw = await readSourceDecisionQueueData(clientKey);
   const contracts = projectVendorContracts(raw.vendorContractRecords);
+  const financialsAll = projectFinancialLines(raw.financialRecords);
+  const evidenceContext: EvidenceResolutionContext = {
+    contracts,
+    financials: financialsAll,
+    segmentFreshness: raw.segmentFreshness,
+    asOf,
+  };
   const contract = contracts.find((c) => c.contractId === contractId);
-  if (!contract) return null;
+  if (!contract) return { cockpit: null, evidenceContext };
 
-  const financials = projectFinancialLines(raw.financialRecords);
   // Lowest benchmark for the contract's category — the most demanding target.
   const categoryKey = contract.category.trim().toLowerCase();
   let categoryBenchmarkUsd: number | null = null;
-  for (const f of financials) {
+  for (const f of financialsAll) {
     if (f.category.trim().toLowerCase() !== categoryKey) continue;
     if (f.benchmarkUsd === null) continue;
     if (categoryBenchmarkUsd === null || f.benchmarkUsd < categoryBenchmarkUsd) {
@@ -83,11 +130,12 @@ export async function loadRenewalCockpit(
       switchingNote: `Already under contract for ${c.category} capability — a consolidation rather than a net-new onboarding.`,
     }));
 
-  return buildRenewalCockpit({
+  const cockpit = buildRenewalCockpit({
     clientKey,
     contract,
     categoryBenchmarkUsd,
     alternatives,
     asOf,
   });
+  return { cockpit, evidenceContext };
 }

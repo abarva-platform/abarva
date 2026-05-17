@@ -25,6 +25,11 @@ import {
   type SourceDecisionBundle,
   type SourceDecisionQueue,
 } from '@/lib/source/decision-queue/types';
+import {
+  resolveEvidenceTraces,
+  type EvidenceResolutionContext,
+} from '@/lib/source/evidence-trace/evidence-trace';
+import { EvidenceTraceTrigger } from './EvidenceTraceDrawer';
 
 const CARD: CSSProperties = {
   background: SHELL.CARD_WHITE,
@@ -112,10 +117,14 @@ function SubIssueRow({
   label,
   detail,
   valueAtStakeUsd,
+  evidenceContext,
+  evidenceRefs,
 }: {
   label: string;
   detail: string;
   valueAtStakeUsd: number | null;
+  evidenceContext?: EvidenceResolutionContext;
+  evidenceRefs: string[];
 }) {
   return (
     <li
@@ -143,6 +152,13 @@ function SubIssueRow({
             {formatUsd(valueAtStakeUsd)}
           </span>
         ) : null}
+        {evidenceContext ? (
+          <EvidenceTraceTrigger
+            variant="chip"
+            claimLabel={label}
+            traces={resolveEvidenceTraces(evidenceRefs, evidenceContext)}
+          />
+        ) : null}
       </div>
       <span style={{ fontFamily: SHELL.SANS, fontSize: 12, color: SHELL.INK_SOFT, lineHeight: 1.5 }}>
         {detail}
@@ -151,7 +167,13 @@ function SubIssueRow({
   );
 }
 
-function DecisionBundleCard({ bundle }: { bundle: SourceDecisionBundle }) {
+function DecisionBundleCard({
+  bundle,
+  evidenceContext,
+}: {
+  bundle: SourceDecisionBundle;
+  evidenceContext?: EvidenceResolutionContext;
+}) {
   const urgency = URGENCY_META[bundle.urgency];
   return (
     <article style={CARD}>
@@ -214,6 +236,8 @@ function DecisionBundleCard({ bundle }: { bundle: SourceDecisionBundle }) {
                 label={`${KIND_LABEL[sub.kind]} — ${sub.label}`}
                 detail={sub.detail}
                 valueAtStakeUsd={sub.valueAtStakeUsd}
+                evidenceContext={evidenceContext}
+                evidenceRefs={sub.evidenceRefs}
               />
             ))}
           </ul>
@@ -251,9 +275,17 @@ function DecisionBundleCard({ bundle }: { bundle: SourceDecisionBundle }) {
           Open decision →
         </Link>
       </div>
-      <span style={{ fontFamily: SHELL.MONO, fontSize: 9, color: SHELL.INK_MUTED }}>
-        Evidence: {bundle.evidenceRefs.join(' · ')}
-      </span>
+      <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+        <span style={{ fontFamily: SHELL.MONO, fontSize: 9, color: SHELL.INK_MUTED }}>
+          Evidence: {bundle.evidenceRefs.join(' · ')}
+        </span>
+        {evidenceContext ? (
+          <EvidenceTraceTrigger
+            claimLabel={`${bundle.vendorName} — decision evidence`}
+            traces={resolveEvidenceTraces(bundle.evidenceRefs, evidenceContext)}
+          />
+        ) : null}
+      </div>
     </article>
   );
 }
@@ -305,7 +337,14 @@ function EntryRail() {
   );
 }
 
-export function SourceDecisionQueueView({ queue }: { queue: SourceDecisionQueue }) {
+export function SourceDecisionQueueView({
+  queue,
+  evidenceContext,
+}: {
+  queue: SourceDecisionQueue;
+  /** Substrate for resolving the evidence-trace drawer; omit to hide triggers. */
+  evidenceContext?: EvidenceResolutionContext;
+}) {
   const total = queue.bundles.length;
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 20, maxWidth: 860 }}>
@@ -374,7 +413,11 @@ export function SourceDecisionQueueView({ queue }: { queue: SourceDecisionQueue 
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           {queue.bundles.map((bundle) => (
-            <DecisionBundleCard key={bundle.bundleId} bundle={bundle} />
+            <DecisionBundleCard
+              key={bundle.bundleId}
+              bundle={bundle}
+              evidenceContext={evidenceContext}
+            />
           ))}
         </div>
       )}

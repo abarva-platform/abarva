@@ -13,7 +13,12 @@ import type {
   RenewalCockpit,
   RenewalPosture,
 } from '@/lib/source/renewal-cockpit/cockpit';
+import {
+  resolveEvidenceTraces,
+  type EvidenceResolutionContext,
+} from '@/lib/source/evidence-trace/evidence-trace';
 import { RenewalCockpitActionBar } from './RenewalCockpitActionBar';
+import { EvidenceTraceTrigger } from './EvidenceTraceDrawer';
 
 const CARD: CSSProperties = {
   background: SHELL.CARD_WHITE,
@@ -62,15 +67,21 @@ function EvidenceCard({
   headline,
   body,
   children,
+  traceTrigger,
 }: {
   label: string;
   headline: string;
   body: string;
   children?: ReactNode;
+  /** Optional evidence-trace affordance, rendered beside the section label. */
+  traceTrigger?: ReactNode;
 }) {
   return (
     <section style={CARD}>
-      <SectionLabel>{label}</SectionLabel>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10 }}>
+        <SectionLabel>{label}</SectionLabel>
+        {traceTrigger}
+      </div>
       <h3
         style={{
           fontFamily: SHELL.SERIF,
@@ -90,9 +101,26 @@ function EvidenceCard({
   );
 }
 
-export function RenewalCockpitView({ cockpit }: { cockpit: RenewalCockpit }) {
+export function RenewalCockpitView({
+  cockpit,
+  evidenceContext,
+}: {
+  cockpit: RenewalCockpit;
+  /** Substrate for resolving the evidence-trace drawer; omit to hide triggers. */
+  evidenceContext?: EvidenceResolutionContext;
+}) {
   const posture = POSTURE_META[cockpit.recommendedPosture];
   const sc = cockpit.shouldCost;
+  // Evidence refs mirror the detector convention: the contract row plus the
+  // backing context segments. Should-cost additionally leans on it_financials.
+  const contractRefs = [cockpit.contractId, 'vendor_contracts'];
+  const shouldCostRefs = [cockpit.contractId, 'vendor_contracts', 'it_financials'];
+  const contractTraces = evidenceContext
+    ? resolveEvidenceTraces(contractRefs, evidenceContext)
+    : [];
+  const shouldCostTraces = evidenceContext
+    ? resolveEvidenceTraces(shouldCostRefs, evidenceContext)
+    : [];
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16, maxWidth: 860 }}>
       <header style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
@@ -116,8 +144,25 @@ export function RenewalCockpitView({ cockpit }: { cockpit: RenewalCockpit }) {
         <h1 style={{ fontFamily: SHELL.SERIF, fontWeight: 'normal', fontSize: 26, color: SHELL.INK, margin: 0 }}>
           {cockpit.vendorName} — {cockpit.product}
         </h1>
-        <p style={{ fontFamily: SHELL.SANS, fontSize: 13, color: SHELL.INK_SOFT, margin: 0 }}>
-          Current annual spend {formatUsd(cockpit.currentAnnualSpendUsd)}.
+        <p
+          style={{
+            fontFamily: SHELL.SANS,
+            fontSize: 13,
+            color: SHELL.INK_SOFT,
+            margin: 0,
+            display: 'flex',
+            gap: 8,
+            alignItems: 'baseline',
+            flexWrap: 'wrap',
+          }}
+        >
+          <span>Current annual spend {formatUsd(cockpit.currentAnnualSpendUsd)}.</span>
+          {evidenceContext ? (
+            <EvidenceTraceTrigger
+              claimLabel={`Current annual spend — ${formatUsd(cockpit.currentAnnualSpendUsd)}`}
+              traces={contractTraces}
+            />
+          ) : null}
         </p>
       </header>
 
@@ -162,6 +207,15 @@ export function RenewalCockpitView({ cockpit }: { cockpit: RenewalCockpit }) {
               : 'Standard renewal'
         }
         body={cockpit.timing.summary}
+        traceTrigger={
+          evidenceContext ? (
+            <EvidenceTraceTrigger
+              variant="chip"
+              claimLabel="Term & timing — contract calendar"
+              traces={contractTraces}
+            />
+          ) : undefined
+        }
       >
         <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', marginTop: 4 }}>
           <Metric label="Term end" value={cockpit.timing.termEndDate ?? '—'} />
@@ -189,6 +243,15 @@ export function RenewalCockpitView({ cockpit }: { cockpit: RenewalCockpit }) {
             : `${Math.round(cockpit.usage.utilizationRate * 100)}% utilized`
         }
         body={cockpit.usage.summary}
+        traceTrigger={
+          evidenceContext ? (
+            <EvidenceTraceTrigger
+              variant="chip"
+              claimLabel="Usage / adoption read"
+              traces={contractTraces}
+            />
+          ) : undefined
+        }
       />
 
       <EvidenceCard
@@ -199,6 +262,19 @@ export function RenewalCockpitView({ cockpit }: { cockpit: RenewalCockpit }) {
             : 'Should-cost iceberg framing'
         }
         body={sc.summary}
+        traceTrigger={
+          evidenceContext ? (
+            <EvidenceTraceTrigger
+              variant="chip"
+              claimLabel={
+                sc.benchmarkUsd !== null
+                  ? `Should-cost benchmark — ${formatUsd(sc.benchmarkUsd)}/yr`
+                  : 'Should-cost framing'
+              }
+              traces={shouldCostTraces}
+            />
+          ) : undefined
+        }
       >
         <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', marginTop: 4 }}>
           <Metric label="Should-cost low" value={formatUsd(sc.estimate.totalLow)} />
