@@ -2,8 +2,16 @@ import { notFound, redirect } from 'next/navigation';
 import { requireProductModule } from '@/lib/auth/server-module-access';
 import { getStrategicMoveById } from '@/lib/programs/queries';
 import { getStrategicMovesTenancy } from '@/lib/programs/strategic-moves-context';
-import { StrategicMoveDetailView } from '@/components/strategic-moves/StrategicMoveDetailView';
+import {
+  StrategicMoveDetailView,
+  type LinkedSourceEvent,
+} from '@/components/strategic-moves/StrategicMoveDetailView';
 import { AppShell } from '@/components/shell/AppShell';
+import { runMoveToSourceHandoff } from '@/lib/programs/source-trigger/move-to-source-handoff';
+import { getActiveClientRow } from '@/lib/active-client';
+import { selectSourceEventsReadAdapter } from '@/lib/data-plane/read-adapters/sourceEventsReadAdapter';
+import type { MoveToSourceHandoffResult } from '@/lib/programs/source-trigger/move-to-source-handoff';
+import type { StrategicMove } from '@/lib/programs/types.ui';
 
 export const dynamic = 'force-dynamic';
 
@@ -19,6 +27,49 @@ function resolveTab(raw: string | undefined): Tab {
   return 'overview';
 }
 
+/** True when the Move carries a P3 sourcing-strategy deliverable. */
+function hasSourcingDeliverable(move: StrategicMove): boolean {
+  return move.deliverables.some((d) => d.typeKey === 'sourcing_strategy');
+}
+
+/**
+ * Resolve the Move→Source hand-off and any Source event already linked back
+ * to this Move. The hand-off is computed only when the Move carries a
+ * sourcing-strategy deliverable — that is the deliverable the loop scenario
+ * says "triggers the hand-off to Source" (GAP-2). The linked-event lookup
+ * scopes Source events to the active tenant and degrades to `null` when the
+ * Source substrate is absent.
+ */
+async function resolveHandoff(move: StrategicMove): Promise<{
+  handoff: MoveToSourceHandoffResult | null;
+  linkedSourceEvent: LinkedSourceEvent | null;
+}> {
+  if (!hasSourcingDeliverable(move)) {
+    return { handoff: null, linkedSourceEvent: null };
+  }
+
+  const handoff = runMoveToSourceHandoff(move);
+
+  let linkedSourceEvent: LinkedSourceEvent | null = null;
+  const activeClient = await getActiveClientRow().catch(() => null);
+  if (activeClient?.key) {
+    const adapter = selectSourceEventsReadAdapter();
+    const events = await adapter
+      .getActiveEventsForClient(activeClient.key)
+      .catch(() => []);
+    const linked = events.find((row) => row.linked_program_id === move.id);
+    if (linked) {
+      linkedSourceEvent = {
+        id: linked.id,
+        code: linked.event_code,
+        name: linked.event_name,
+      };
+    }
+  }
+
+  return { handoff, linkedSourceEvent };
+}
+
 export default async function StrategicMoveDetailPage({ params, searchParams }: Props) {
   await requireProductModule('programs');
   const ctx = await getStrategicMovesTenancy();
@@ -30,9 +81,16 @@ export default async function StrategicMoveDetailPage({ params, searchParams }: 
   const move = await getStrategicMoveById(ctx, moveId);
   if (!move) notFound();
 
+  const { handoff, linkedSourceEvent } = await resolveHandoff(move);
+
   return (
     <AppShell surface="programs-detail">
-      <StrategicMoveDetailView move={move} activeTab={activeTab} />
+      <StrategicMoveDetailView
+        move={move}
+        activeTab={activeTab}
+        handoff={handoff}
+        linkedSourceEvent={linkedSourceEvent}
+      />
     </AppShell>
   );
 }
