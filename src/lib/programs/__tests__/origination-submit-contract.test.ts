@@ -36,6 +36,27 @@ describe('origination submit insert contract', () => {
     expect(source).toContain('initiative_context: input.fromInitiativeId');
   });
 
+  it('wires the Wave 2 modules into the origination charter (Slices 2.2 / 2.3 / 2.5)', () => {
+    // Adapter composed from the single Slice 2.1 suitability result.
+    expect(source).toContain('originationCharterExtensions');
+    expect(source).toContain('const suitabilityResult = assessOriginationBrief(');
+    expect(source).toContain(
+      'const charterExtensions = originationCharterExtensions(suitabilityResult)',
+    );
+    // Suitability fragment still wired from the same shared result.
+    expect(source).toContain('suitabilityCharterFragment(suitabilityResult)');
+    // All three additive Wave 2 charter JSONB fields.
+    expect(source).toContain(
+      'workflow_decomposition: charterExtensions.workflow_decomposition',
+    );
+    expect(source).toContain(
+      'solution_architecture: charterExtensions.solution_architecture',
+    );
+    expect(source).toContain(
+      'control_eval_matrix: charterExtensions.control_eval_matrix',
+    );
+  });
+
   it('accepts and persists origination chat turns to turns table', () => {
     // Input type must include turns
     expect(source).toContain('originationTurns?: OriginationTurn[] | null');
