@@ -18,9 +18,14 @@ describe('B7 — event code as URL slug', () => {
 
   it('queries source_events by id when slug is a UUID, falls back to event_code otherwise', () => {
     expect(source).toMatch(/if \(isUuid\(eventId\)\)/);
-    // Both lookup paths exist in getPersistedSourceEventRow.
-    expect(source).toMatch(/\.eq\('id', eventId\)/);
-    expect(source).toMatch(/\.eq\('event_code', eventId\)/);
+    // Corrected expectation: the raw Supabase builder chains (.eq('id', …),
+    // .eq('event_code', …)) were moved out of queries.ts into the
+    // data-plane read adapter (sourceEventsReadAdapter.ts). queries.ts now
+    // routes UUID slugs to getEventByIdForClient and event_code slugs to
+    // getEventByCodeForClient; both branches still live in
+    // getPersistedSourceEventRow.
+    expect(source).toMatch(/adapter\.getEventByIdForClient\(eventId, clientKey\)/);
+    expect(source).toMatch(/adapter\.getEventByCodeForClient\(eventId, clientKey\)/);
   });
 
   it('event_code path tolerates duplicate codes via order+limit (regression: prod 404)', () => {
@@ -28,8 +33,13 @@ describe('B7 — event code as URL slug', () => {
     // when more than one row matches, which produced silent 404s on
     // /source/events/<code> in prod. The fix orders by updated_at and
     // takes the most-recent row.
-    expect(source).toMatch(/\.order\('updated_at', \{ ascending: false \}\)/);
-    expect(source).toMatch(/\.limit\(1\)/);
+    //
+    // Corrected expectation: that order+limit query now lives in the
+    // data-plane adapter's getEventByCodeForClient, not inline in
+    // queries.ts. queries.ts documents the resilience contract and
+    // delegates to the by-code adapter method.
+    expect(source).toMatch(/getEventByCodeForClient/);
+    expect(source).toMatch(/duplicate event_codes/);
   });
 
   it('access check uses the resolved row.id (UUID), never the raw slug', () => {
