@@ -11,6 +11,47 @@ interface Props {
   bullets?: ReadonlyArray<StrategyBullet>;
 }
 
+/**
+ * Intelligence→Move hand-off (loop wiring · GAP-2). Deep-links the
+ * pressure-tested bet brief into the Strategic Moves originate flow,
+ * carrying the binding pattern via the `fromIntelligence` query
+ * contract that `/strategic-moves/new` already parses. The originated
+ * Move then joins back to Intelligence in the cross-module trace
+ * viewer at `/strategic-moves/[moveId]/trace`.
+ */
+function ShapeIntoMoveCta({ betLink }: { betLink: NonNullable<StrategyBullet['betLink']> }) {
+  const params = new URLSearchParams({
+    fromIntelligence: '1',
+    patternId: betLink.patternId,
+    patternName: betLink.patternName,
+    useCaseName: betLink.useCaseName ?? betLink.patternName,
+  });
+  return (
+    <a
+      data-testid="my-strategy-shape-into-move"
+      href={`/strategic-moves/new?${params.toString()}`}
+      style={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: 6,
+        marginTop: SPACING.sm,
+        minHeight: 32,
+        padding: '0 14px',
+        borderRadius: 6,
+        background: COLORS.ink,
+        color: COLORS.card,
+        textDecoration: 'none',
+        fontFamily: FONT.body,
+        fontSize: 12.5,
+        fontWeight: 700,
+      }}
+    >
+      Shape into Move
+      <span aria-hidden style={{ fontFamily: FONT.mono }}>→</span>
+    </a>
+  );
+}
+
 export function MyStrategyCxoCanvas({ bullets = MERIDIAN_STRATEGY_BULLETS }: Props) {
   return (
     <section data-canvas="my-strategy">
@@ -98,6 +139,7 @@ export function MyStrategyCxoCanvas({ bullets = MERIDIAN_STRATEGY_BULLETS }: Pro
               >
                 evidence · {b.evidence}
               </div>
+              {b.betLink ? <ShapeIntoMoveCta betLink={b.betLink} /> : null}
             </div>
           </div>
         ))}

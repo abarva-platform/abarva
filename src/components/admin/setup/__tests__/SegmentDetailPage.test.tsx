@@ -109,4 +109,14 @@ describe('SegmentDetailPage', () => {
     const breadcrumb = screen.getByTestId('admin-segment-breadcrumb');
     expect(breadcrumb).toHaveAttribute('href', '/admin');
   });
+
+  // Context→Intelligence hand-off (loop wiring · GAP-1).
+  it('deep-links the Context segment into the Intelligence enterprise-context stage', () => {
+    const ref = resolveSegmentRef('01')!;
+    render(<SegmentDetailPage reference={ref} rollup={null} records={[]} />);
+    const section = screen.getByTestId('admin-segment-grounds-intelligence');
+    expect(section).toBeInTheDocument();
+    const link = screen.getByTestId('admin-segment-intelligence-link');
+    expect(link).toHaveAttribute('href', '/intelligence#enterprise-context');
+  });
 });
