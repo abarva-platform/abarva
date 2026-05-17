@@ -122,7 +122,6 @@ function classifyStance(raw: RawProposalDimension | undefined): ProposalDimensio
     'no remedy',
     'vendor may use',
     'to be determined',
-    'tbd',
     'pending certification',
   ];
 
@@ -132,10 +131,13 @@ function classifyStance(raw: RawProposalDimension | undefined): ProposalDimensio
   // "vendor retains" is unfavorable unless negated ("retains no ... rights").
   const hasVendorRetention =
     /vendor retains/.test(text) && !/retains no/.test(text);
+  // An unresolved-term abbreviation, matched as a whole word.
+  const hasUnresolvedAbbrev = /\bt\.?b\.?d\.?\b/.test(text);
   const hasUnfavorable =
     unfavorableSignals.some((s) => text.includes(s)) ||
     hasEscalation ||
-    hasVendorRetention;
+    hasVendorRetention ||
+    hasUnresolvedAbbrev;
 
   if (exposure > 0 || hasUnfavorable || caveats >= 2) {
     if (hasFavorable && exposure === 0 && !hasUnfavorable) {
