@@ -15,6 +15,7 @@ import {
   assessOriginationBrief,
   suitabilityCharterFragment,
 } from '@/lib/programs/suitability/origination-suitability';
+import { originationCharterExtensions } from '@/lib/programs/origination-charter-extensions';
 
 export interface OriginationTurn {
   role: 'user' | 'assistant';
@@ -258,6 +259,21 @@ function buildOriginationCharter(
   sponsor: ResolvedPerson,
   programArchetype: string | null,
 ): Record<string, unknown> {
+  // Slice 2.1 · agentic suitability assessment. Run once at P0 from the brief
+  // text alone — no data-readiness ledger entry exists yet, so the readiness
+  // profile defaults conservatively. The single result is reused below to
+  // derive the Wave 2 charter extensions (2.2 / 2.3 / 2.5) so all four
+  // fragments are coherent with one another.
+  const suitabilityResult = assessOriginationBrief({
+    programName: input.programName,
+    problemStatement: input.problemStatement,
+    targetOutcome: input.targetOutcome,
+    classification: input.classification,
+  });
+  // Slices 2.2 / 2.3 / 2.5 · workflow decomposition, solution-architecture
+  // options, and the control & eval matrix. Pure builders composed from the
+  // 2.1 result above — additive charter JSONB fields, no surface change.
+  const charterExtensions = originationCharterExtensions(suitabilityResult);
   return {
     version: 1,
     captured_at: new Date().toISOString(),
@@ -282,18 +298,19 @@ function buildOriginationCharter(
         }
       : null,
     // Slice 2.1 · agentic suitability assessment. Scores the proposed Move
-    // against the §0.2 archetype spectrum from the brief text alone — no
-    // data-readiness ledger entry exists at P0 yet, so the readiness profile
-    // defaults conservatively. The P1 Evidence & Assessment phase re-runs
-    // this with the real readiness ledger. Logic-only — no surface change.
-    agentic_suitability: suitabilityCharterFragment(
-      assessOriginationBrief({
-        programName: input.programName,
-        problemStatement: input.problemStatement,
-        targetOutcome: input.targetOutcome,
-        classification: input.classification,
-      }),
-    ),
+    // against the §0.2 archetype spectrum from the brief text alone. The P1
+    // Evidence & Assessment phase re-runs this with the real readiness
+    // ledger. Logic-only — no surface change.
+    agentic_suitability: suitabilityCharterFragment(suitabilityResult),
+    // Slice 2.2 · implementable workflow decomposition for the recommended
+    // archetype — the node canvas plus blocked-control roll-up.
+    workflow_decomposition: charterExtensions.workflow_decomposition,
+    // Slice 2.3 · scored solution-architecture option set against the §4
+    // reference architecture, with the recommended option flagged.
+    solution_architecture: charterExtensions.solution_architecture,
+    // Slice 2.5 · control & eval matrix — the controls, verification
+    // checklist, and §5 readiness-gate coverage for the phase gate.
+    control_eval_matrix: charterExtensions.control_eval_matrix,
   };
 }
 
