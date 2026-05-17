@@ -10,8 +10,10 @@ import {
   detectOverlapShelfware,
   detectRenewals,
   detectSavingsOpportunities,
+  urgencyFromDays,
 } from '../detectors';
-import { buildSourceDecisionQueue, compareDecisionItems } from '../queue';
+import { bundleDecisionItems } from '../bundle';
+import { buildSourceDecisionQueue, compareDecisionBundles } from '../queue';
 
 // Fixed clock so every test is deterministic.
 const AS_OF = new Date('2026-05-17T00:00:00Z');
@@ -49,6 +51,33 @@ function input(overrides: Partial<DecisionQueueInput> = {}): DecisionQueueInput 
   };
 }
 
+describe('urgencyFromDays — truthful, calendar-anchored bands (FIX 3)', () => {
+  it('maps overdue / due-today to due_now', () => {
+    expect(urgencyFromDays(-5)).toBe('due_now');
+    expect(urgencyFromDays(0)).toBe('due_now');
+  });
+
+  it('maps 1..14 days to next_14_days', () => {
+    expect(urgencyFromDays(1)).toBe('next_14_days');
+    expect(urgencyFromDays(14)).toBe('next_14_days');
+  });
+
+  it('a 26-day renewal lands in next_45_days — never the misleading "this week"', () => {
+    expect(urgencyFromDays(26)).toBe('next_45_days');
+    expect(urgencyFromDays(45)).toBe('next_45_days');
+  });
+
+  it('maps 46..90 days to next_90_days', () => {
+    expect(urgencyFromDays(46)).toBe('next_90_days');
+    expect(urgencyFromDays(90)).toBe('next_90_days');
+  });
+
+  it('maps beyond 90 days to watch', () => {
+    expect(urgencyFromDays(91)).toBe('watch');
+    expect(urgencyFromDays(250)).toBe('watch');
+  });
+});
+
 describe('detectRenewals', () => {
   it('surfaces a renewal within the horizon', () => {
     const items = detectRenewals(
@@ -56,7 +85,7 @@ describe('detectRenewals', () => {
     );
     expect(items).toHaveLength(1);
     expect(items[0].kind).toBe('renewal');
-    expect(items[0].urgency).toBe('today');
+    expect(items[0].urgency).toBe('next_14_days');
     expect(items[0].deepLink).toBe('/source/renewal/vc%3Aa');
   });
 
@@ -91,8 +120,8 @@ describe('detectNoticeWindows', () => {
     );
     expect(items).toHaveLength(1);
     expect(items[0].kind).toBe('notice_window');
-    // 70 - 60 = 10 days to deadline -> today band.
-    expect(items[0].urgency).toBe('today');
+    // 70 - 60 = 10 days to deadline -> next_14_days band.
+    expect(items[0].urgency).toBe('next_14_days');
   });
 
   it('emits no card when the contract does not auto-renew (no fabrication)', () => {
@@ -212,6 +241,98 @@ describe('detectBlockedEvidence', () => {
   });
 });
 
+describe('bundleDecisionItems — one card per contract (FIX 2)', () => {
+  it('folds renewal + notice-window + savings on the same contract into ONE bundle', () => {
+    // A contract that is simultaneously: auto-renewing with a closing notice
+    // window, near term-end, and over benchmark — three detector hits.
+    const c = contract({
+      contractId: 'vc:servicenow',
+      vendorName: 'ServiceNow',
+      product: 'ITSM',
+      category: 'itsm',
+      annualSpendUsd: 690_000,
+      termEndDate: isoOffset(40),
+      autoRenew: true,
+      noticePeriodDays: 27, // 40 - 27 = 13 days to notice deadline
+    });
+    const fin: FinancialLineInput = {
+      recordId: 'fin:itsm',
+      category: 'itsm',
+      annualBudgetUsd: 500_000,
+      benchmarkUsd: 500_000,
+    };
+    const queue = buildSourceDecisionQueue(
+      input({ contracts: [c], financials: [fin] }),
+    );
+    expect(queue.bundles).toHaveLength(1);
+    const bundle = queue.bundles[0];
+    expect(bundle.contractId).toBe('vc:servicenow');
+    expect(bundle.vendorName).toBe('ServiceNow');
+    // All three detector hits live inside the one bundle as sub-issues.
+    const kinds = bundle.subIssues.map((s) => s.kind).sort();
+    expect(kinds).toEqual(['notice_window', 'renewal', 'savings_opportunity']);
+    // Headline carries the posture chip.
+    expect(bundle.headline).toContain('posture: renegotiate');
+  });
+
+  it('keeps separate contracts in separate bundles', () => {
+    const queue = buildSourceDecisionQueue(
+      input({
+        contracts: [
+          contract({ contractId: 'vc:a', category: 'cat_a', termEndDate: isoOffset(10) }),
+          contract({ contractId: 'vc:b', category: 'cat_b', termEndDate: isoOffset(20) }),
+        ],
+      }),
+    );
+    expect(queue.bundles).toHaveLength(2);
+    expect(queue.bundles.map((b) => b.bundleId).sort()).toEqual([
+      'bundle:vc:a',
+      'bundle:vc:b',
+    ]);
+  });
+
+  it('bundle urgency is the most-urgent band across its sub-issues', () => {
+    // Renewal far out (next_45_days) but a closing notice window (next_14_days).
+    const c = contract({
+      contractId: 'vc:mix',
+      termEndDate: isoOffset(40),
+      autoRenew: true,
+      noticePeriodDays: 30, // 40 - 30 = 10 days -> next_14_days
+    });
+    const bundles = bundleDecisionItems(
+      'apexretail',
+      [
+        ...detectRenewals(input({ contracts: [c] })),
+        ...detectNoticeWindows(input({ contracts: [c] })),
+      ],
+      AS_OF.toISOString(),
+    );
+    expect(bundles).toHaveLength(1);
+    expect(bundles[0].urgency).toBe('next_14_days');
+  });
+
+  it('value at stake is the max quantified sub-issue, not a double-counted sum', () => {
+    const c = contract({
+      contractId: 'vc:val',
+      category: 'crm',
+      annualSpendUsd: 600_000,
+      termEndDate: isoOffset(40),
+    });
+    const fin: FinancialLineInput = {
+      recordId: 'fin:crm',
+      category: 'crm',
+      annualBudgetUsd: 400_000,
+      benchmarkUsd: 400_000,
+    };
+    const queue = buildSourceDecisionQueue(
+      input({ contracts: [c], financials: [fin] }),
+    );
+    expect(queue.bundles).toHaveLength(1);
+    // renewal ACV = 600K, savings overspend = 200K -> max is 600K, not 800K.
+    expect(queue.bundles[0].valueAtStakeUsd).toBe(600_000);
+  });
+});
+
 describe('buildSourceDecisionQueue ordering & determinism', () => {
   it('sorts by urgency then value-at-stake, deterministically', () => {
     const queue = buildSourceDecisionQueue(
@@ -219,16 +340,16 @@ describe('buildSourceDecisionQueue ordering & determinism', () => {
         contracts: [
           contract({ contractId: 'vc:soon-small', category: 'cat_a', termEndDate: isoOffset(10), annualSpendUsd: 100_000 }),
           contract({ contractId: 'vc:soon-big', category: 'cat_b', termEndDate: isoOffset(12), annualSpendUsd: 900_000 }),
-          contract({ contractId: 'vc:later', category: 'cat_c', termEndDate: isoOffset(100), annualSpendUsd: 500_000 }),
+          contract({ contractId: 'vc:later', category: 'cat_c', termEndDate: isoOffset(60), annualSpendUsd: 500_000 }),
         ],
       }),
     );
-    const ids = queue.items.map((i) => i.itemId);
-    // Both 'today' band items first, bigger value first; then the 'this_month'.
+    const ids = queue.bundles.map((b) => b.bundleId);
+    // Both 'next_14_days' bundles first, bigger value first; then 'next_90_days'.
     expect(ids).toEqual([
-      'renewal:vc:soon-big',
-      'renewal:vc:soon-small',
-      'renewal:vc:later',
+      'bundle:vc:soon-big',
+      'bundle:vc:soon-small',
+      'bundle:vc:later',
     ]);
   });
 
@@ -237,8 +358,8 @@ describe('buildSourceDecisionQueue ordering & determinism', () => {
       buildSourceDecisionQueue(
         input({
           contracts: [
-            contract({ contractId: 'vc:a', termEndDate: isoOffset(10) }),
-            contract({ contractId: 'vc:b', termEndDate: isoOffset(20) }),
+            contract({ contractId: 'vc:a', category: 'cat_a', termEndDate: isoOffset(10) }),
+            contract({ contractId: 'vc:b', category: 'cat_b', termEndDate: isoOffset(20) }),
           ],
         }),
       );
@@ -247,23 +368,23 @@ describe('buildSourceDecisionQueue ordering & determinism', () => {
 
   it('is never empty-and-silent — empty queue carries an emptyState line', () => {
     const queue = buildSourceDecisionQueue(input({ contracts: [] }));
-    expect(queue.items).toHaveLength(0);
+    expect(queue.bundles).toHaveLength(0);
     expect(queue.emptyState).toBeTruthy();
     expect(typeof queue.emptyState).toBe('string');
   });
 
-  it('reports band counts that match the items', () => {
+  it('reports band counts that match the bundles', () => {
     const queue = buildSourceDecisionQueue(
       input({ contracts: [contract({ contractId: 'vc:x', termEndDate: isoOffset(8) })] }),
     );
     const total = Object.values(queue.bandCounts).reduce((s, n) => s + n, 0);
-    expect(total).toBe(queue.items.length);
+    expect(total).toBe(queue.bundles.length);
   });
 
-  it('comparator gives a stable total order via itemId tie-break', () => {
-    const a = { itemId: 'a', urgency: 'today', valueAtStakeUsd: null } as never;
-    const b = { itemId: 'b', urgency: 'today', valueAtStakeUsd: null } as never;
-    expect(compareDecisionItems(a, b)).toBeLessThan(0);
-    expect(compareDecisionItems(b, a)).toBeGreaterThan(0);
+  it('comparator gives a stable total order via bundleId tie-break', () => {
+    const a = { bundleId: 'a', urgency: 'due_now', valueAtStakeUsd: null } as never;
+    const b = { bundleId: 'b', urgency: 'due_now', valueAtStakeUsd: null } as never;
+    expect(compareDecisionBundles(a, b)).toBeLessThan(0);
+    expect(compareDecisionBundles(b, a)).toBeGreaterThan(0);
   });
 });
