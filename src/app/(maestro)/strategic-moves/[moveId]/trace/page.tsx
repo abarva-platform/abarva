@@ -22,6 +22,12 @@ import {
   buildCrossModuleTrace,
   type TraceSourceEvent,
 } from '@/lib/programs/cross-module-trace-view';
+import { buildControlEvalMatrix } from '@/lib/programs/controls/control-eval-matrix';
+import { getSolutionArchetype } from '@/lib/programs/taxonomy/solution-archetype-taxonomy';
+import {
+  isSr117RegulatedTenant,
+  resolveSolutionArchetypeForMove,
+} from '@/lib/programs/regulatory/sr-11-7-control-deliverable';
 import { selectSourceEventsReadAdapter } from '@/lib/data-plane/read-adapters/sourceEventsReadAdapter';
 import { selectOutcomeLedgerReadAdapter } from '@/lib/data-plane/read-adapters/outcomeLedgerReadAdapter';
 import { CrossModuleTraceView } from '@/components/strategic-moves/CrossModuleTraceView';
@@ -97,7 +103,26 @@ export default async function StrategicMoveTracePage({ params }: Props) {
     outcomeEntries = ledger;
   }
 
-  const trace = buildCrossModuleTrace({ move, sourceEvents, outcomeEntries });
+  // For a regulated tenant (financial services), shape the Slice 2.5
+  // control & eval matrix so the trace can surface the SR 11-7 model-risk
+  // control deliverable (model validation, ongoing monitoring, governance)
+  // as an explicit, traceable artifact on the Move phase trace. The Move
+  // touches a regulated decision, so the matrix is built with the
+  // sensitive-data and high-stakes framing flags set — this is the
+  // model-risk-conservative reading SR 11-7 expects.
+  const controlMatrix = isSr117RegulatedTenant(move.tenant.industryCode)
+    ? buildControlEvalMatrix(
+        getSolutionArchetype(resolveSolutionArchetypeForMove(move.archetype)),
+        { handlesSensitiveData: true, highStakesDecision: true },
+      )
+    : undefined;
+
+  const trace = buildCrossModuleTrace({
+    move,
+    sourceEvents,
+    outcomeEntries,
+    controlMatrix,
+  });
 
   return (
     <AppShell surface="programs-detail">

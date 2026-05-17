@@ -17,6 +17,8 @@ import {
 } from '../cross-module-trace-view';
 import type { StrategicMove } from '../types.ui';
 import type { OutcomeLedgerRow } from '@/lib/tower/outcome-ledger/types';
+import { buildControlEvalMatrix } from '../controls/control-eval-matrix';
+import { getSolutionArchetype } from '../taxonomy/solution-archetype-taxonomy';
 
 function makeMove(overrides: Partial<StrategicMove> = {}): StrategicMove {
   return {
@@ -219,5 +221,76 @@ describe('buildCrossModuleTrace', () => {
       outcomeEntries: [],
     });
     expect(trace.coherence).toBe('partial');
+  });
+});
+
+describe('buildCrossModuleTrace — SR 11-7 regulatory deliverable (GAP-3)', () => {
+  const regulatedMatrix = buildControlEvalMatrix(
+    getSolutionArchetype('human_in_loop_agent'),
+    { handlesSensitiveData: true, highStakesDecision: true },
+  );
+
+  it('surfaces the SR 11-7 control deliverable on the Move step for a regulated tenant', () => {
+    const trace = buildCrossModuleTrace({
+      move: makeMove({
+        tenant: { id: 't1', name: 'First Capital', industryCode: 'FINSERV' },
+      }),
+      sourceEvents: [],
+      outcomeEntries: [],
+      controlMatrix: regulatedMatrix,
+    });
+    const moveStep = trace.steps.find((s) => s.module === 'move')!;
+    expect(moveStep.regulatoryDeliverable).not.toBeNull();
+    expect(moveStep.regulatoryDeliverable!.typeKey).toBe(
+      'sr_11_7_control_matrix',
+    );
+    expect(moveStep.regulatoryDeliverable!.lines.map((l) => l.key)).toEqual([
+      'model_validation',
+      'ongoing_monitoring',
+      'governance',
+    ]);
+    // The deliverable readiness is echoed into the Move step detail.
+    expect(moveStep.detail).toContain('SR 11-7');
+  });
+
+  it('does not surface the deliverable for a non-regulated tenant even when a matrix is supplied', () => {
+    const trace = buildCrossModuleTrace({
+      move: makeMove({
+        tenant: { id: 't1', name: 'Apex Retail', industryCode: 'RETAIL' },
+      }),
+      sourceEvents: [],
+      outcomeEntries: [],
+      controlMatrix: regulatedMatrix,
+    });
+    const moveStep = trace.steps.find((s) => s.module === 'move')!;
+    expect(moveStep.regulatoryDeliverable).toBeNull();
+    expect(moveStep.detail).not.toContain('SR 11-7');
+  });
+
+  it('does not surface the deliverable for a regulated tenant when no matrix is supplied', () => {
+    const trace = buildCrossModuleTrace({
+      move: makeMove({
+        tenant: { id: 't1', name: 'First Capital', industryCode: 'FINSERV' },
+      }),
+      sourceEvents: [],
+      outcomeEntries: [],
+    });
+    const moveStep = trace.steps.find((s) => s.module === 'move')!;
+    expect(moveStep.regulatoryDeliverable).toBeNull();
+  });
+
+  it('leaves every non-Move step with a null regulatory deliverable', () => {
+    const trace = buildCrossModuleTrace({
+      move: makeMove({
+        tenant: { id: 't1', name: 'First Capital', industryCode: 'FINSERV' },
+      }),
+      sourceEvents: [],
+      outcomeEntries: [],
+      controlMatrix: regulatedMatrix,
+    });
+    for (const step of trace.steps) {
+      if (step.module === 'move') continue;
+      expect(step.regulatoryDeliverable).toBeNull();
+    }
   });
 });

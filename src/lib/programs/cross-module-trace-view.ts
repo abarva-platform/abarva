@@ -19,6 +19,12 @@
 
 import type { StrategicMove } from './types.ui';
 import type { OutcomeLedgerRow } from '@/lib/tower/outcome-ledger/types';
+import type { ControlEvalMatrix } from '@/lib/programs/controls/control-eval-matrix';
+import {
+  buildSr117ControlDeliverable,
+  isSr117RegulatedTenant,
+  type Sr117ControlDeliverable,
+} from '@/lib/programs/regulatory/sr-11-7-control-deliverable';
 
 /**
  * The minimal Source-event shape the trace ID-joins on. A projection
@@ -76,6 +82,15 @@ export interface TraceStep {
   readonly href: string | null;
   /** When unlinked, the gap ticket id (e.g. "GAP-1") this traces to. */
   readonly gapRef: string | null;
+  /**
+   * The SR 11-7 model-risk control deliverable, present on the Move step
+   * only when the tenant is under model-risk supervision (financial
+   * services). For regulated tenants this surfaces model validation,
+   * ongoing monitoring, and governance controls as an explicit, traceable
+   * deliverable in the phase trace (closes FIRSTCAPITAL GAP-3). `null` for
+   * non-regulated tenants and on every non-Move step.
+   */
+  readonly regulatoryDeliverable: Sr117ControlDeliverable | null;
 }
 
 /** The full joined trace for one Move. */
@@ -130,6 +145,14 @@ export interface CrossModuleTraceInput {
    * `subjectKind === 'move' && subjectRef === move.id`.
    */
   readonly outcomeEntries: readonly OutcomeLedgerRow[];
+  /**
+   * The Move's Slice 2.5 control & eval matrix, when the route has shaped
+   * it. Supplied for regulated tenants so the Move step can surface the
+   * SR 11-7 model-risk control deliverable in the phase trace. Optional —
+   * a non-regulated tenant, or a Move not yet shaped, leaves it undefined
+   * and the SR 11-7 deliverable simply does not appear.
+   */
+  readonly controlMatrix?: ControlEvalMatrix;
 }
 
 function intelligenceStep(move: StrategicMove): TraceStep {
@@ -151,6 +174,7 @@ function intelligenceStep(move: StrategicMove): TraceStep {
       joinId: betEvidence.id,
       href: betEvidence.url || null,
       gapRef: null,
+      regulatoryDeliverable: null,
     };
   }
   return {
@@ -164,10 +188,31 @@ function intelligenceStep(move: StrategicMove): TraceStep {
     joinId: null,
     href: null,
     gapRef: 'GAP-1',
+    regulatoryDeliverable: null,
   };
 }
 
-function moveStep(move: StrategicMove): TraceStep {
+/**
+ * Resolve the SR 11-7 model-risk control deliverable for the Move step.
+ *
+ * The deliverable is surfaced only when (a) the tenant is under model-risk
+ * supervision — financial services — and (b) the route has shaped the
+ * Move's Slice 2.5 control matrix. For a regulated tenant this projects
+ * model validation, ongoing monitoring, and governance controls into an
+ * explicit, traceable deliverable on the phase trace (closes GAP-3). For
+ * a non-regulated tenant, or an unshaped Move, it returns `null` and the
+ * deliverable does not appear.
+ */
+function resolveRegulatoryDeliverable(
+  input: CrossModuleTraceInput,
+): Sr117ControlDeliverable | null {
+  if (!isSr117RegulatedTenant(input.move.tenant.industryCode)) return null;
+  if (!input.controlMatrix) return null;
+  return buildSr117ControlDeliverable(input.controlMatrix);
+}
+
+function moveStep(input: CrossModuleTraceInput): TraceStep {
+  const { move } = input;
   // The Move itself is always linked — it is the trace anchor. The
   // detail enumerates the shaping artifacts present on the Move.
   const shaping = move.deliverables.filter((d) =>
@@ -179,16 +224,26 @@ function moveStep(move: StrategicMove): TraceStep {
           .map((d) => d.title)
           .join(', ')}`
       : 'No suitability / decomposition / architecture / controls / mobilization artifact is present yet.';
+
+  const regulatoryDeliverable = resolveRegulatoryDeliverable(input);
+  // For a regulated tenant, the SR 11-7 control matrix is a first-class
+  // deliverable in the phase trace — append its readiness to the detail
+  // so the model-risk gap is legible without opening the deliverable.
+  const regulatoryLabel = regulatoryDeliverable
+    ? ` ${regulatoryDeliverable.title}: ${regulatoryDeliverable.satisfiedCount}/${regulatoryDeliverable.lines.length} SR 11-7 expectations satisfied (${regulatoryDeliverable.readiness}).`
+    : '';
+
   return {
     module: 'move',
     moduleLabel: MODULE_LABELS.move,
     artifactKind: "Move & shaping artifacts",
     linkState: 'linked',
     title: `${move.displayCode} · ${move.name}`,
-    detail: `${move.phaseLabel} · ${move.status.text}. ${shapingLabel}`,
+    detail: `${move.phaseLabel} · ${move.status.text}. ${shapingLabel}${regulatoryLabel}`,
     joinId: move.id,
     href: `/strategic-moves/${move.id}`,
     gapRef: null,
+    regulatoryDeliverable,
   };
 }
 
@@ -210,6 +265,7 @@ function sourceStep(input: CrossModuleTraceInput): TraceStep {
       joinId: linked.id,
       href: `/source/events/${linked.id}`,
       gapRef: null,
+      regulatoryDeliverable: null,
     };
   }
   return {
@@ -223,6 +279,7 @@ function sourceStep(input: CrossModuleTraceInput): TraceStep {
     joinId: null,
     href: null,
     gapRef: 'GAP-2 / GAP-3',
+    regulatoryDeliverable: null,
   };
 }
 
@@ -244,6 +301,7 @@ function towerStep(input: CrossModuleTraceInput): TraceStep {
       joinId: ledger.id,
       href: '/tower/outcomes',
       gapRef: null,
+      regulatoryDeliverable: null,
     };
   }
   return {
@@ -257,6 +315,7 @@ function towerStep(input: CrossModuleTraceInput): TraceStep {
     joinId: null,
     href: null,
     gapRef: 'GAP-4 / GAP-5',
+    regulatoryDeliverable: null,
   };
 }
 
@@ -270,7 +329,7 @@ export function buildCrossModuleTrace(
   const { move } = input;
   const steps: TraceStep[] = [
     intelligenceStep(move),
-    moveStep(move),
+    moveStep(input),
     sourceStep(input),
     towerStep(input),
   ];

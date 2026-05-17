@@ -11,6 +11,10 @@
 
 import Link from 'next/link';
 import type { CrossModuleTrace, TraceStep } from '@/lib/programs/cross-module-trace-view';
+import type {
+  Sr117ControlDeliverable,
+  Sr117CoverageState,
+} from '@/lib/programs/regulatory/sr-11-7-control-deliverable';
 
 interface Props {
   trace: CrossModuleTrace;
@@ -23,6 +27,127 @@ const COHERENCE_COPY: Record<CrossModuleTrace['coherence'], string> = {
   unwired:
     'None of the cross-module hand-offs are wired yet — the decision is coherent surface-by-surface only.',
 };
+
+const SR117_COVERAGE_COPY: Record<Sr117CoverageState, string> = {
+  satisfied: 'Satisfied',
+  partial: 'Partial',
+  uncovered: 'Uncovered',
+};
+
+/**
+ * The SR 11-7 model-risk control deliverable, surfaced inline on the Move
+ * step for regulated tenants. Renders model validation, ongoing monitoring,
+ * and governance as explicit, traceable deliverable lines (closes GAP-3).
+ */
+function RegulatoryDeliverablePanel({
+  deliverable,
+}: {
+  deliverable: Sr117ControlDeliverable;
+}) {
+  return (
+    <div
+      style={{
+        marginTop: 12,
+        padding: '12px 14px',
+        border: '1px solid var(--canon-border, #e5e5e5)',
+        borderRadius: 4,
+        background: 'var(--canon-bg-surface, #fff)',
+      }}
+    >
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'baseline',
+          gap: 10,
+          flexWrap: 'wrap',
+        }}
+      >
+        <span
+          style={{
+            fontFamily: 'var(--abarva-serif, Georgia, serif)',
+            fontSize: 14,
+            color: 'var(--abarva-ink-black, #1a1a1a)',
+          }}
+        >
+          {deliverable.title}
+        </span>
+        <span
+          style={{
+            fontFamily: 'var(--font-mono, ui-monospace, monospace)',
+            fontSize: 10,
+            letterSpacing: '0.06em',
+            textTransform: 'uppercase',
+            padding: '2px 8px',
+            borderRadius: 3,
+            background:
+              deliverable.readiness === 'blocked'
+                ? 'rgba(163,45,45,0.06)'
+                : 'rgba(26,26,26,0.06)',
+            color:
+              deliverable.readiness === 'blocked'
+                ? 'var(--canon-red, #a32d2d)'
+                : 'var(--abarva-ink-black, #1a1a1a)',
+          }}
+        >
+          {deliverable.readiness} · {deliverable.satisfiedCount}/
+          {deliverable.lines.length}
+        </span>
+      </div>
+      <p
+        style={{
+          margin: '4px 0 8px',
+          fontSize: 12,
+          color: 'var(--abarva-stone, #6b6b6b)',
+        }}
+      >
+        {deliverable.framework}
+      </p>
+      <ul style={{ listStyle: 'none', margin: 0, padding: 0 }}>
+        {deliverable.lines.map((line) => (
+          <li
+            key={line.key}
+            style={{
+              fontSize: 13,
+              lineHeight: 1.5,
+              color: 'var(--canon-gray-900, #333)',
+              padding: '4px 0',
+            }}
+          >
+            <span
+              style={{
+                fontFamily: 'var(--font-mono, ui-monospace, monospace)',
+                fontSize: 10,
+                letterSpacing: '0.06em',
+                textTransform: 'uppercase',
+                color:
+                  line.coverage === 'uncovered'
+                    ? 'var(--canon-red, #a32d2d)'
+                    : 'var(--abarva-stone, #6b6b6b)',
+              }}
+            >
+              {SR117_COVERAGE_COPY[line.coverage]}
+            </span>{' '}
+            <strong
+              style={{ fontFamily: 'var(--abarva-serif, Georgia, serif)', fontWeight: 'normal' }}
+            >
+              {line.name}
+            </strong>
+          </li>
+        ))}
+      </ul>
+      <p
+        style={{
+          margin: '8px 0 0',
+          fontSize: 11,
+          lineHeight: 1.55,
+          color: 'var(--abarva-stone, #6b6b6b)',
+        }}
+      >
+        {deliverable.caveat}
+      </p>
+    </div>
+  );
+}
 
 function StepCard({ step, index }: { step: TraceStep; index: number }) {
   const linked = step.linkState === 'linked';
@@ -155,6 +280,11 @@ function StepCard({ step, index }: { step: TraceStep; index: number }) {
             </Link>
           ) : null}
         </div>
+        {step.regulatoryDeliverable ? (
+          <RegulatoryDeliverablePanel
+            deliverable={step.regulatoryDeliverable}
+          />
+        ) : null}
       </div>
     </li>
   );
