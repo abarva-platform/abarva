@@ -8,6 +8,11 @@ import 'server-only';
 
 import { getServerSupabase } from '@/lib/supabase-server';
 import { selectSourceArtifactsWriteAdapter } from '@/lib/data-plane/write-adapters/sourceArtifactsWriteAdapter';
+import {
+  parseDisclosureFlag,
+  serializeDisclosureFlag,
+  type ArtifactDisclosureFlag,
+} from '../disclosure-flag';
 import { isSourceStageKey } from '../constants';
 import type { SourceStageKey } from '../types';
 import {
@@ -69,6 +74,12 @@ export interface RegisterSourceArtifactInput {
   sizeBytes: number;
   sha256: string;
   dataClassification?: SourceDataClassification;
+  /**
+   * GAP-9 · optional disclosure-classification flag persisted alongside the
+   * registry row. Omit (or pass the default flag) and the
+   * `disclosure_classification` column stays NULL.
+   */
+  disclosureFlag?: ArtifactDisclosureFlag;
   createdBy?: string;
   supersedesArtifactVersionId?: string;
 }
@@ -82,6 +93,12 @@ export interface UpdateSourceArtifactProcessingStateInput {
   evidenceState?: SourceArtifactEvidenceState;
   approvalState?: SourceArtifactApprovalState;
   validatedBy?: string | null;
+  /**
+   * GAP-9 · update the disclosure flag — e.g. counsel marks an artifact
+   * privileged, or an inheritance rule propagates a classification. Pass
+   * `null` to clear the flag back to NULL (unmarked).
+   */
+  disclosureFlag?: ArtifactDisclosureFlag | null;
 }
 
 interface SourceArtifactRow {
@@ -105,6 +122,7 @@ interface SourceArtifactRow {
   graph_status: SourceGraphStatus;
   classification_status: SourceClassificationStatus;
   data_classification: SourceDataClassification;
+  disclosure_classification: unknown;
   evidence_state: SourceArtifactEvidenceState;
   approval_state: SourceArtifactApprovalState;
   version: number | string;
@@ -137,6 +155,7 @@ const SELECT_COLUMNS = [
   'graph_status',
   'classification_status',
   'data_classification',
+  'disclosure_classification',
   'evidence_state',
   'approval_state',
   'version',
@@ -170,6 +189,9 @@ function rowToRecord(row: SourceArtifactRow): SourceArtifactRegistryRecord {
     graphStatus: row.graph_status,
     classificationStatus: row.classification_status,
     dataClassification: row.data_classification,
+    ...(parseDisclosureFlag(row.disclosure_classification)
+      ? { disclosureFlag: parseDisclosureFlag(row.disclosure_classification) }
+      : {}),
     evidenceState: row.evidence_state,
     approvalState: row.approval_state,
     version: typeof row.version === 'string' ? Number(row.version) : row.version,
@@ -235,6 +257,7 @@ export async function registerSourceArtifactUpload(
       size_bytes: input.sizeBytes,
       sha256: input.sha256,
       data_classification: input.dataClassification ?? 'Confidential',
+      disclosure_classification: serializeDisclosureFlag(input.disclosureFlag),
       created_by: input.createdBy ?? input.uploaderUserId,
       supersedes_artifact_version_id: input.supersedesArtifactVersionId ?? null,
     },
@@ -322,7 +345,7 @@ export async function updateSourceArtifactProcessingState(
   input: UpdateSourceArtifactProcessingStateInput,
 ): Promise<SourceArtifactRegistryRecord> {
   if (!input.artifactId) throw new Error('[source-artifacts] artifactId is required');
-  const patch: Record<string, string | null> = {};
+  const patch: Record<string, unknown> = {};
   if (input.parseStatus) patch.parse_status = input.parseStatus;
   if (input.embeddingStatus) patch.embedding_status = input.embeddingStatus;
   if (input.graphStatus) patch.graph_status = input.graphStatus;
@@ -330,6 +353,13 @@ export async function updateSourceArtifactProcessingState(
   if (input.evidenceState) patch.evidence_state = input.evidenceState;
   if (input.approvalState) patch.approval_state = input.approvalState;
   if ('validatedBy' in input) patch.validated_by = input.validatedBy ?? null;
+  // GAP-9 · disclosure flag round-trip. `null` clears the column; a flag is
+  // serialized (a default flag also serializes to NULL — see serde.ts).
+  if ('disclosureFlag' in input) {
+    patch.disclosure_classification = serializeDisclosureFlag(
+      input.disclosureFlag ?? undefined,
+    );
+  }
   if (Object.keys(patch).length === 0) {
     throw new Error('[source-artifacts] at least one processing state must be provided');
   }
