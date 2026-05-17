@@ -5,6 +5,7 @@
 // rows that feed later parser, chunking, vector, graph, and agent-context
 // jobs without importing server-only code into UI/test surfaces.
 
+import type { ArtifactDisclosureFlag } from '../disclosure-flag';
 import type { SourceStageKey } from '../types';
 
 // Mirrors the artifact_family CHECK constraint in
@@ -93,6 +94,15 @@ export interface SourceArtifactRegistryRecord {
   dataClassification: SourceDataClassification;
   evidenceState: SourceArtifactEvidenceState;
   approvalState: SourceArtifactApprovalState;
+  /**
+   * GAP-9 · artifact-level disclosure-classification flag. Distinct from
+   * `dataClassification` (a sensitivity axis): this marks whether the
+   * content is legal-privileged and carries that marking as the artifact
+   * moves through the loop. Optional and app-tier for now — persistence
+   * (a `disclosure_classification` column with RLS) is a documented
+   * follow-up; until then this is derived/attached in app state.
+   */
+  disclosureFlag?: ArtifactDisclosureFlag;
   version: number;
   supersedesArtifactVersionId: string | null;
   createdBy: string;
