@@ -58,6 +58,47 @@ export function AtlasExecutiveBriefCanvas({ view }: AtlasExecutiveBriefCanvasPro
         </div>
       )}
 
+      {/* Slice 3.4 — adoption & value-realization instrumentation */}
+      {view.valueRealization && (
+        <div
+          data-testid="atlas-brief-value-realization"
+          style={{
+            padding: '12px 14px',
+            backgroundColor: '#F8F7F4',
+            border: '1px solid #E8E6E1',
+            borderRadius: '4px',
+            marginBottom: '12px',
+          }}
+        >
+          <div style={{ fontSize: '10px', fontWeight: 600, color: '#525866', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '6px' }}>
+            Value realization
+          </div>
+          <div style={{ fontSize: '12px', color: '#0A0C12', lineHeight: '1.5', marginBottom: '6px' }}>
+            {view.valueRealization.earningSummary}
+          </div>
+          <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', fontSize: '10px', color: '#525866' }}>
+            <span>
+              Realization:{' '}
+              <strong style={{ color: '#0A0C12' }}>
+                {view.valueRealization.realizationRatio === null
+                  ? 'not computable'
+                  : `${Math.round(view.valueRealization.realizationRatio * 100)}%`}
+              </strong>{' '}
+              · {view.valueRealization.realizationSeverity.replace('_', ' ')}
+            </span>
+            <span>
+              Adoption:{' '}
+              <strong style={{ color: '#0A0C12' }}>{view.valueRealization.adoptionState.replace('_', ' ')}</strong>
+            </span>
+          </div>
+          {view.valueRealization.adoptionInstrumentationGap && (
+            <div style={{ fontSize: '10px', color: '#92400E', marginTop: '6px' }}>
+              {view.valueRealization.adoptionHeadline}
+            </div>
+          )}
+        </div>
+      )}
+
       <div style={{ padding: '10px 14px', backgroundColor: '#F0F2F7', borderRadius: '4px', marginBottom: '12px' }}>
         <span style={{ fontSize: '11px', fontWeight: 600, color: '#1B2B5C' }}>Atlas recommends: </span>
         <span style={{ fontSize: '11px', color: '#0A0C12' }}>{view.recommendedExecutiveAction}</span>
