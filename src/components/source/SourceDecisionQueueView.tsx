@@ -1,18 +1,29 @@
 // Source Decision Queue surface — the triggered-decision inbox for Source.
 //
 // Renders the assembled `SourceDecisionQueue`: a deterministically ordered
-// list of typed decision cards, grouped by urgency band, each deep-linking
-// into a pre-loaded workflow. Never empty-and-silent — an empty queue renders
-// the `emptyState` line. Locked design system (cream paper, serif headings).
+// list of BUNDLED decision cards — one card per contract/vendor decision
+// (Practitioner-Fit FIX 2) — grouped by urgency band, each deep-linking into
+// a pre-loaded workflow. The sub-issues (renewal, notice window, benchmark,
+// shelfware flags) live inside the card, not as competing rows.
+//
+// Also carries the mid-stream entry rail (FIX 4): a VP who already knows what
+// they have — a vendor, a renewal, an RFP response — jumps straight in rather
+// than waiting for a detector to surface it.
+//
+// Never empty-and-silent — an empty queue renders the `emptyState` line.
+// Locked design system (cream paper, serif headings, black/ghost buttons).
 
 import Link from 'next/link';
 import type { CSSProperties } from 'react';
 import { SHELL } from '@/lib/shell/shell-tokens';
-import type {
-  DecisionTriggerKind,
-  DecisionUrgency,
-  SourceDecisionItem,
-  SourceDecisionQueue,
+import {
+  BAND_ORDER,
+  URGENCY_LABEL,
+  type DecisionPosture,
+  type DecisionTriggerKind,
+  type DecisionUrgency,
+  type SourceDecisionBundle,
+  type SourceDecisionQueue,
 } from '@/lib/source/decision-queue/types';
 
 const CARD: CSSProperties = {
@@ -27,12 +38,13 @@ const CARD: CSSProperties = {
 
 const URGENCY_META: Record<
   DecisionUrgency,
-  { label: string; bg: string; line: string; text: string }
+  { bg: string; line: string; text: string }
 > = {
-  today: { label: 'Today', bg: SHELL.RUST_BG, line: SHELL.PEACH_LINE, text: SHELL.RUST_TEXT },
-  this_week: { label: 'This week', bg: SHELL.PEACH_BG, line: SHELL.PEACH_LINE, text: SHELL.PEACH_TEXT },
-  this_month: { label: 'This month', bg: SHELL.BLUE_BG, line: SHELL.BLUE_LINE, text: SHELL.INK_MID },
-  watch: { label: 'Watch', bg: SHELL.GRAY_BG, line: SHELL.GRAY_LINE, text: SHELL.GRAY_TEXT },
+  due_now: { bg: SHELL.RUST_BG, line: SHELL.PEACH_LINE, text: SHELL.RUST_TEXT },
+  next_14_days: { bg: SHELL.PEACH_BG, line: SHELL.PEACH_LINE, text: SHELL.PEACH_TEXT },
+  next_45_days: { bg: SHELL.BLUE_BG, line: SHELL.BLUE_LINE, text: SHELL.INK_MID },
+  next_90_days: { bg: SHELL.GRAY_BG, line: SHELL.GRAY_LINE, text: SHELL.INK_SOFT },
+  watch: { bg: SHELL.GRAY_BG, line: SHELL.GRAY_LINE, text: SHELL.GRAY_TEXT },
 };
 
 const KIND_LABEL: Record<DecisionTriggerKind, string> = {
@@ -43,7 +55,23 @@ const KIND_LABEL: Record<DecisionTriggerKind, string> = {
   blocked_missing_evidence: 'Blocked — context gap',
 };
 
-const BAND_ORDER: DecisionUrgency[] = ['today', 'this_week', 'this_month', 'watch'];
+const POSTURE_LABEL: Record<DecisionPosture, string> = {
+  renegotiate: 'Renegotiate',
+  consolidate: 'Consolidate',
+  right_size: 'Right-size',
+  review: 'Review',
+  unblock: 'Unblock',
+};
+
+/** The mid-stream entry points (FIX 4) — "I already have …". */
+const ENTRY_POINTS: { label: string; href: string }[] = [
+  { label: 'I have a vendor', href: '/source/new?intent=vendor' },
+  { label: 'I have a renewal', href: '/source/new?intent=renewal' },
+  { label: 'I have an RFP response', href: '/source/new?intent=rfp-response' },
+  { label: 'I have a business request', href: '/source/new?intent=business-request' },
+  { label: 'I need to cut spend', href: '/source/new?intent=cut-spend' },
+  { label: 'I need to compare vendors', href: '/source/new?intent=compare-vendors' },
+];
 
 function formatUsd(value: number): string {
   return `$${Math.round(value).toLocaleString('en-US')}`;
@@ -80,16 +108,69 @@ function Pill({
   );
 }
 
-function DecisionCard({ item }: { item: SourceDecisionItem }) {
-  const urgency = URGENCY_META[item.urgency];
+function SubIssueRow({
+  label,
+  detail,
+  valueAtStakeUsd,
+}: {
+  label: string;
+  detail: string;
+  valueAtStakeUsd: number | null;
+}) {
+  return (
+    <li
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 2,
+        padding: '7px 0',
+        borderTop: '1px solid ' + SHELL.CARD_LINE_SOFT,
+      }}
+    >
+      <div style={{ display: 'flex', gap: 8, alignItems: 'baseline', flexWrap: 'wrap' }}>
+        <span
+          style={{
+            fontFamily: SHELL.SANS,
+            fontSize: 12,
+            fontWeight: 600,
+            color: SHELL.INK_MID,
+          }}
+        >
+          {label}
+        </span>
+        {valueAtStakeUsd !== null ? (
+          <span style={{ fontFamily: SHELL.MONO, fontSize: 10, color: SHELL.MINT_TEXT }}>
+            {formatUsd(valueAtStakeUsd)}
+          </span>
+        ) : null}
+      </div>
+      <span style={{ fontFamily: SHELL.SANS, fontSize: 12, color: SHELL.INK_SOFT, lineHeight: 1.5 }}>
+        {detail}
+      </span>
+    </li>
+  );
+}
+
+function DecisionBundleCard({ bundle }: { bundle: SourceDecisionBundle }) {
+  const urgency = URGENCY_META[bundle.urgency];
   return (
     <article style={CARD}>
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
-        <Pill text={KIND_LABEL[item.kind]} bg={SHELL.PAPER_DEEP} line={SHELL.CARD_LINE} color={SHELL.INK_SOFT} />
-        <Pill text={urgency.label} bg={urgency.bg} line={urgency.line} color={urgency.text} />
-        {item.valueAtStakeUsd !== null ? (
+        <Pill
+          text={URGENCY_LABEL[bundle.urgency]}
+          bg={urgency.bg}
+          line={urgency.line}
+          color={urgency.text}
+        />
+        <Pill
+          text={`Posture: ${POSTURE_LABEL[bundle.posture]}`}
+          bg={SHELL.PAPER_DEEP}
+          line={SHELL.CARD_LINE}
+          color={SHELL.INK_SOFT}
+        />
+        {bundle.valueAtStakeUsd !== null ? (
           <Pill
-            text={`${formatUsd(item.valueAtStakeUsd)} at stake`}
+            text={`${formatUsd(bundle.valueAtStakeUsd)} at stake`}
             bg={SHELL.MINT_BG}
             line={SHELL.MINT_LINE}
             color={SHELL.MINT_TEXT}
@@ -106,11 +187,39 @@ function DecisionCard({ item }: { item: SourceDecisionItem }) {
           lineHeight: 1.3,
         }}
       >
-        {item.headline}
+        {bundle.headline}
       </h3>
       <p style={{ fontFamily: SHELL.SANS, fontSize: 13, color: SHELL.INK_SOFT, margin: 0, lineHeight: 1.5 }}>
-        {item.whyItMatters}
+        {bundle.summary}
       </p>
+
+      {bundle.subIssues.length > 0 ? (
+        <details style={{ marginTop: 2 }}>
+          <summary
+            style={{
+              fontFamily: SHELL.MONO,
+              fontSize: 10,
+              textTransform: 'uppercase',
+              letterSpacing: '0.07em',
+              color: SHELL.INK_MUTED,
+              cursor: 'pointer',
+            }}
+          >
+            {bundle.subIssues.length} signal{bundle.subIssues.length === 1 ? '' : 's'} on this contract
+          </summary>
+          <ul style={{ listStyle: 'none', margin: '6px 0 0', padding: 0 }}>
+            {bundle.subIssues.map((sub, idx) => (
+              <SubIssueRow
+                key={`${sub.kind}:${idx}`}
+                label={`${KIND_LABEL[sub.kind]} — ${sub.label}`}
+                detail={sub.detail}
+                valueAtStakeUsd={sub.valueAtStakeUsd}
+              />
+            ))}
+          </ul>
+        </details>
+      ) : null}
+
       <div
         style={{
           display: 'flex',
@@ -122,10 +231,10 @@ function DecisionCard({ item }: { item: SourceDecisionItem }) {
         }}
       >
         <span style={{ fontFamily: SHELL.SANS, fontSize: 12, color: SHELL.INK_MUTED }}>
-          {item.recommendedAction}
+          {bundle.recommendedAction}
         </span>
         <Link
-          href={item.deepLink}
+          href={bundle.deepLink}
           style={{
             fontFamily: SHELL.SANS,
             fontSize: 12,
@@ -143,14 +252,61 @@ function DecisionCard({ item }: { item: SourceDecisionItem }) {
         </Link>
       </div>
       <span style={{ fontFamily: SHELL.MONO, fontSize: 9, color: SHELL.INK_MUTED }}>
-        Evidence: {item.evidenceRefs.join(' · ')}
+        Evidence: {bundle.evidenceRefs.join(' · ')}
       </span>
     </article>
   );
 }
 
+/** The mid-stream entry rail — "I already have …" jump-in buttons (FIX 4). */
+function EntryRail() {
+  return (
+    <section
+      style={{
+        ...CARD,
+        background: SHELL.PAPER_SOFT,
+        gap: 10,
+      }}
+    >
+      <span
+        style={{
+          fontFamily: SHELL.MONO,
+          fontSize: 10,
+          textTransform: 'uppercase',
+          letterSpacing: '0.07em',
+          color: SHELL.INK_MUTED,
+        }}
+      >
+        Already mid-stream? Jump straight in
+      </span>
+      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+        {ENTRY_POINTS.map((entry) => (
+          <Link
+            key={entry.href}
+            href={entry.href}
+            style={{
+              fontFamily: SHELL.SANS,
+              fontSize: 12,
+              fontWeight: 600,
+              color: SHELL.INK,
+              background: SHELL.PAPER,
+              border: '1px solid ' + SHELL.CARD_LINE,
+              borderRadius: 6,
+              padding: '7px 12px',
+              textDecoration: 'none',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            {entry.label}
+          </Link>
+        ))}
+      </div>
+    </section>
+  );
+}
+
 export function SourceDecisionQueueView({ queue }: { queue: SourceDecisionQueue }) {
-  const total = queue.items.length;
+  const total = queue.bundles.length;
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 20, maxWidth: 860 }}>
       <header style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
@@ -179,8 +335,9 @@ export function SourceDecisionQueueView({ queue }: { queue: SourceDecisionQueue 
             : 'Nothing needs a decision today'}
         </h1>
         <p style={{ fontFamily: SHELL.SANS, fontSize: 13, color: SHELL.INK_SOFT, margin: 0 }}>
-          What the sourcing function should decide today — renewals, auto-renewal traps,
-          overlapping spend and should-cost gaps, sorted by urgency then value at stake.
+          What the sourcing function should decide today — one card per contract,
+          bundling its renewal, auto-renewal trap, overlap and should-cost signals,
+          sorted by urgency then value at stake.
         </p>
         {total > 0 ? (
           <div style={{ display: 'flex', gap: 8, marginTop: 6, flexWrap: 'wrap' }}>
@@ -189,7 +346,7 @@ export function SourceDecisionQueueView({ queue }: { queue: SourceDecisionQueue 
               return (
                 <Pill
                   key={band}
-                  text={`${meta.label}: ${queue.bandCounts[band]}`}
+                  text={`${URGENCY_LABEL[band]}: ${queue.bandCounts[band]}`}
                   bg={meta.bg}
                   line={meta.line}
                   color={meta.text}
@@ -199,6 +356,8 @@ export function SourceDecisionQueueView({ queue }: { queue: SourceDecisionQueue 
           </div>
         ) : null}
       </header>
+
+      <EntryRail />
 
       {queue.emptyState ? (
         <div
@@ -214,8 +373,8 @@ export function SourceDecisionQueueView({ queue }: { queue: SourceDecisionQueue 
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-          {queue.items.map((item) => (
-            <DecisionCard key={item.itemId} item={item} />
+          {queue.bundles.map((bundle) => (
+            <DecisionBundleCard key={bundle.bundleId} bundle={bundle} />
           ))}
         </div>
       )}

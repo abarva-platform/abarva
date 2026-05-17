@@ -37,11 +37,22 @@ function formatUsd(value: number): string {
   return `$${Math.round(value).toLocaleString('en-US')}`;
 }
 
-/** Map a day-count to an urgency band. */
-function urgencyFromDays(days: number): DecisionUrgency {
-  if (days <= 14) return 'today';
-  if (days <= 45) return 'this_week';
-  if (days <= 120) return 'this_month';
+/**
+ * Map a day-count to an urgency band. Truthful, calendar-anchored thresholds
+ * (Practitioner-Fit FIX 3) — the labels in `URGENCY_LABEL` match these exactly,
+ * so a 26-day-out renewal lands in `next_45_days` ("Next 45 days"), never the
+ * misleading "this week".
+ *   <= 0  -> due_now       (overdue or due today)
+ *   <= 14 -> next_14_days
+ *   <= 45 -> next_45_days
+ *   <= 90 -> next_90_days
+ *   else  -> watch
+ */
+export function urgencyFromDays(days: number): DecisionUrgency {
+  if (days <= 0) return 'due_now';
+  if (days <= 14) return 'next_14_days';
+  if (days <= 45) return 'next_45_days';
+  if (days <= 90) return 'next_90_days';
   return 'watch';
 }
 
@@ -121,12 +132,7 @@ export function detectNoticeWindows(
     // flagging so the VP knows).
     if (daysToNoticeDeadline > 90 || daysToNoticeDeadline < -14) continue;
 
-    const urgency: DecisionUrgency =
-      daysToNoticeDeadline <= 14
-        ? 'today'
-        : daysToNoticeDeadline <= 45
-          ? 'this_week'
-          : 'this_month';
+    const urgency = urgencyFromDays(daysToNoticeDeadline);
     const value = c.annualSpendUsd;
     const window =
       daysToNoticeDeadline < 0
@@ -202,7 +208,7 @@ export function detectOverlapShelfware(
       itemId: `overlap_shelfware:category:${category}`,
       clientKey: input.clientKey,
       kind: 'overlap_shelfware',
-      urgency: 'this_month',
+      urgency: 'next_90_days',
       headline: `${sorted.length} contracts cover overlapping ${category} capability`,
       whyItMatters:
         `${sorted.map((c) => c.vendorName).join(', ')} all fund ${category} capability` +
@@ -236,7 +242,7 @@ export function detectOverlapShelfware(
       itemId: `overlap_shelfware:shelfware:${c.contractId}`,
       clientKey: input.clientKey,
       kind: 'overlap_shelfware',
-      urgency: 'this_month',
+      urgency: 'next_90_days',
       headline: `${c.vendorName} — ${c.product} is ${pct}% utilized`,
       whyItMatters:
         `Measured utilization is ${pct}% of entitlement.` +
@@ -294,7 +300,7 @@ export function detectSavingsOpportunities(
       itemId: `savings_opportunity:${c.contractId}`,
       clientKey: input.clientKey,
       kind: 'savings_opportunity',
-      urgency: 'this_month',
+      urgency: 'next_90_days',
       headline: `${c.vendorName} — ${c.product} runs ${pct}% above benchmark`,
       whyItMatters:
         `Annual spend of ${formatUsd(c.annualSpendUsd)} exceeds the ${formatUsd(benchmark)} ` +
@@ -344,7 +350,7 @@ export function detectBlockedEvidence(
       itemId: 'blocked_missing_evidence:vendor_contracts',
       clientKey: input.clientKey,
       kind: 'blocked_missing_evidence',
-      urgency: verdict.confidence === 'insufficient' ? 'this_week' : 'this_month',
+      urgency: verdict.confidence === 'insufficient' ? 'next_14_days' : 'next_45_days',
       headline: `Renewal decisions are weakly grounded — ${weak.join(', ')} need a refresh`,
       whyItMatters: verdict.summary,
       recommendedAction:

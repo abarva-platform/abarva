@@ -718,26 +718,53 @@ export function SourceIndexPage() {
           </span>
         </div>
 
-        {/* Action queue placeholder */}
-        <div
+        {/* Decision Queue front door (Practitioner-Fit FIX 1) — landing on
+            Source surfaces "what needs a sourcing decision today" as a real,
+            discoverable entry, not a placeholder. */}
+        <Link
+          href="/source/queue"
           style={{
-            background: SHELL.GRAY_BG,
+            display: 'block',
+            background: SHELL.CARD_WHITE,
             border: `1px solid ${SHELL.CARD_LINE}`,
             borderRadius: 8,
             padding: 16,
+            textDecoration: 'none',
           }}
         >
           <span
             style={{
               fontFamily: SHELL.MONO,
               fontSize: 10,
+              textTransform: 'uppercase',
+              letterSpacing: '0.07em',
               color: SHELL.INK_MUTED,
-              fontStyle: 'italic',
             }}
           >
-            Source action queue — cross-vendor next moves · P15
+            Source · Decision Queue
           </span>
-        </div>
+          <div
+            style={{
+              fontFamily: SHELL.SERIF,
+              fontWeight: 'normal',
+              fontSize: 17,
+              color: SHELL.INK,
+              margin: '4px 0 2px',
+            }}
+          >
+            What needs a sourcing decision today →
+          </div>
+          <span
+            style={{
+              fontFamily: SHELL.SANS,
+              fontSize: 13,
+              color: SHELL.INK_SOFT,
+            }}
+          >
+            Renewals, auto-renewal traps, overlapping spend and should-cost gaps —
+            one bundled card per contract, sorted by urgency.
+          </span>
+        </Link>
 
         {/* Originate new event link */}
         <div style={{ marginTop: 24, paddingTop: 16, borderTop: `1px solid ${SHELL.CARD_LINE}` }}>
