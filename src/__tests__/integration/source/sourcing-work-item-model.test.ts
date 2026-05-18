@@ -52,6 +52,7 @@ function item(overrides: Partial<SourcingWorkItem> = {}): SourcingWorkItem {
     legalStatus: null,
     procurementStatus: null,
     note: null,
+    metadata: {},
     createdBy: 'user-1',
     createdAt: '2026-05-17T10:00:00Z',
     updatedBy: 'user-1',

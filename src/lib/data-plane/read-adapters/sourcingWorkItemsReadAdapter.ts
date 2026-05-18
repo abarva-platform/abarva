@@ -21,6 +21,7 @@ import type {
   SourcingWorkItem,
   WorkItemKind,
   WorkItemLegalStatus,
+  WorkItemMetadata,
   WorkItemProcurementStatus,
   WorkItemStatus,
   WorkItemSubjectKind,
@@ -49,6 +50,7 @@ const WORK_ITEM_COLUMNS = [
   'legal_status',
   'procurement_status',
   'note',
+  'metadata',
   'created_by',
   'created_at',
   'updated_by',
@@ -70,6 +72,7 @@ interface WorkItemRow {
   legal_status: string | null;
   procurement_status: string | null;
   note: string | null;
+  metadata: Record<string, unknown> | null;
   created_by: string | null;
   created_at: string;
   updated_by: string | null;
@@ -103,6 +106,16 @@ function asProcurementStatus(value: string | null): WorkItemProcurementStatus | 
     ? (value as WorkItemProcurementStatus)
     : null;
 }
+/** Coerce a raw JSONB metadata value into the string-map view-model shape. */
+function asMetadata(value: Record<string, unknown> | null): WorkItemMetadata {
+  const out: WorkItemMetadata = {};
+  if (value && typeof value === 'object') {
+    for (const [k, v] of Object.entries(value)) {
+      if (typeof v === 'string') out[k] = v;
+    }
+  }
+  return out;
+}
 
 /** Map one persisted row onto the `SourcingWorkItem` view-model shape. */
 function mapRow(row: WorkItemRow): SourcingWorkItem {
@@ -120,6 +133,7 @@ function mapRow(row: WorkItemRow): SourcingWorkItem {
     legalStatus: asLegalStatus(row.legal_status),
     procurementStatus: asProcurementStatus(row.procurement_status),
     note: row.note,
+    metadata: asMetadata(row.metadata),
     createdBy: row.created_by,
     createdAt: row.created_at,
     updatedBy: row.updated_by,

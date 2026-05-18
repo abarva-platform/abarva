@@ -6,7 +6,7 @@ import { getActiveClientRow } from '@/lib/active-client';
 import { canonicalClientDisplayName } from '@/lib/client-config';
 import { SHELL } from '@/lib/shell/shell-tokens';
 import { loadRenewalCockpitWithEvidence } from '@/lib/source/decision-queue/load';
-import { buildExecutionRoom } from '@/lib/source/execution-room/execution-room';
+import { loadExecutionRoom } from '@/lib/source/execution-room/load';
 
 export const metadata = { title: 'Source · Execution Room · AbarVa' };
 export const dynamic = 'force-dynamic';
@@ -34,6 +34,11 @@ export default async function SourceExecutionRoomRoute({
     decodeURIComponent(contractId),
   );
 
+  // Build the Execution Room and reconcile it against the persisted
+  // `sourcing_work_items` rows — owner, SLA and status come from the durable
+  // work-item layer, not just the deterministic composer baseline.
+  const room = cockpit ? await loadExecutionRoom(cockpit) : null;
+
   return (
     <AppShell
       surface="source"
@@ -44,9 +49,9 @@ export default async function SourceExecutionRoomRoute({
       }}
     >
       <SourceWorkingPane>
-        {cockpit ? (
+        {room ? (
           <SourceExecutionRoomPage
-            room={buildExecutionRoom(cockpit)}
+            room={room}
             evidenceContext={evidenceContext}
           />
         ) : (

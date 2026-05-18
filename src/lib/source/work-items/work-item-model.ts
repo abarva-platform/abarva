@@ -132,4 +132,6 @@ export const WORK_ITEM_KIND_LABEL: Record<WorkItemKind, string> = {
   serve_notice: 'Serve notice',
   owner_assignment: 'Owner assignment',
   tower_watch: 'Tower watch',
+  workplan_item: 'Workplan item',
+  stakeholder_approval: 'Stakeholder approval',
 };
