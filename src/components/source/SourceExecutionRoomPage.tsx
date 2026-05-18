@@ -20,6 +20,11 @@ import {
   resolveEvidenceTraces,
   type EvidenceResolutionContext,
 } from '@/lib/source/evidence-trace/evidence-trace';
+import {
+  buildSourceExecutionRoomNotifications,
+  routeNotification,
+  type NotificationEvent,
+} from '@/lib/notifications';
 import { EvidenceTraceTrigger } from './EvidenceTraceDrawer';
 
 const PAGE: CSSProperties = {
@@ -169,6 +174,13 @@ function statusTone(status: ExecutionActionStatus): 'neutral' | 'green' | 'amber
   return 'neutral';
 }
 
+function severityTone(severity: NotificationEvent['severity']): 'neutral' | 'green' | 'amber' | 'rust' | 'blue' {
+  if (severity === 'critical') return 'rust';
+  if (severity === 'urgent') return 'amber';
+  if (severity === 'attention') return 'blue';
+  return 'neutral';
+}
+
 function CriticalPath({ milestones }: { milestones: ExecutionMilestone[] }) {
   return (
     <section style={PANEL}>
@@ -308,6 +320,56 @@ function ActionWorkplan({ actions }: { actions: ExecutionAction[] }) {
             ))}
           </tbody>
         </table>
+      </div>
+    </section>
+  );
+}
+
+function SignalRoutingPanel({ room }: { room: ExecutionRoom }) {
+  const notifications = buildSourceExecutionRoomNotifications(room);
+  return (
+    <section style={PANEL}>
+      <SectionTitle
+        label="Signal routing"
+        title="Alerts this room will raise"
+      >
+        <p style={BODY}>
+          These are platform notification events, not cosmetic badges. Urgent
+          and critical signals can route to in-app plus email; lower-priority
+          signals stay in the digest to avoid alert fatigue.
+        </p>
+      </SectionTitle>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 10 }}>
+        {notifications.map((event) => {
+          const policy = routeNotification(event);
+          return (
+            <article
+              key={event.id}
+              style={{
+                border: '1px solid ' + SHELL.CARD_LINE_SOFT,
+                borderRadius: 8,
+                padding: 12,
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 7,
+              }}
+            >
+              <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8 }}>
+                <Pill tone={severityTone(event.severity)}>{event.severity}</Pill>
+                <span style={{ ...BODY, fontSize: 12 }}>
+                  {event.dueAt ? `Due ${event.dueAt}` : 'Due date not recorded'}
+                </span>
+              </div>
+              <h3 style={{ fontFamily: SHELL.SANS, fontSize: 14, color: SHELL.INK, margin: 0 }}>
+                {event.title}
+              </h3>
+              <p style={BODY}>{event.body}</p>
+              <span style={{ ...LABEL, color: SHELL.INK_MID }}>
+                Channels · {policy.channels.join(' + ')}
+              </span>
+            </article>
+          );
+        })}
       </div>
     </section>
   );
@@ -576,6 +638,7 @@ export function SourceExecutionRoomPage({
       </header>
 
       <CriticalPath milestones={room.criticalPath} />
+      <SignalRoutingPanel room={room} />
       <ActionWorkplan actions={room.actions} />
 
       <div
