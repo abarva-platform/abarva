@@ -7,19 +7,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
-
-interface Notification {
-  id: string;
-  kind: 'task-assigned' | 'task-done' | 'approval' | 'phase-gate';
-  actorName: string | null;
-  actorEmail: string | null;
-  subject: string;
-  programCode: string | null;
-  deliverableCode: string | null;
-  timestamp: string;
-  href: string;
-  forCaller: boolean;
-}
+import type { NotificationBellItem } from '@/lib/notifications';
 
 const READ_KEY = 'abarva.notifications.lastRead';
 
@@ -34,7 +22,7 @@ function setLastRead(iso: string): void {
 }
 
 export function NotificationBell() {
-  const [items, setItems] = useState<Notification[]>([]);
+  const [items, setItems] = useState<NotificationBellItem[]>([]);
   const [open, setOpen] = useState(false);
   const [lastRead, setLastReadState] = useState<string>(() => getLastRead());
   const pollRef = useRef<number | null>(null);
@@ -107,9 +95,11 @@ export function NotificationBell() {
                         <strong>{n.subject}</strong>
                         <span className="nb-meta">
                           {n.actorName ? `${n.actorName} · ` : ''}
+                          {n.module ? `${n.module} · ` : ''}
                           {n.programCode ? `${n.programCode} · ` : ''}
                           {timeAgo(n.timestamp)}
                         </span>
+                        {n.body ? <span className="nb-body">{n.body}</span> : null}
                       </div>
                     </Link>
                   </li>
@@ -192,9 +182,16 @@ const bellCss = `
 .nb-dot.task-done { background: #3FB27F; }
 .nb-dot.approval { background: #0e9f8c; }
 .nb-dot.phase-gate { background: #9B6DFF; }
+.nb-dot.source-alert { background: #CE5A3B; }
+.nb-dot.moves-alert { background: #0066CC; }
+.nb-dot.tower-alert { background: #7C5C2E; }
+.nb-dot.intelligence-alert { background: #111111; }
+.nb-dot.context-alert { background: #3FB27F; }
+.nb-dot.admin-alert, .nb-dot.platform-alert { background: #8A3E22; }
 .nb-item-body { display: flex; flex-direction: column; gap: 2px; flex: 1; min-width: 0; }
 .nb-item-body strong { font-size: 13px; color: #1a1612; }
 .nb-meta { font-size: 11px; color: #8a7e72; }
+.nb-body { font-size: 12px; color: #5b6c8a; line-height: 1.35; }
 .nb-panel-foot {
   border-top: 1px solid rgba(26,22,18,0.08); padding: 10px 14px;
   text-align: right;

@@ -2,11 +2,19 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth, clerkClient } from '@clerk/nextjs/server';
 import { existsSync, readFileSync } from 'fs';
 import { join } from 'path';
+import { getActiveClientKey } from '@/lib/active-client';
+import { loadSourceDecisionQueue } from '@/lib/source/decision-queue/load';
+import {
+  buildSourceDecisionQueueNotifications,
+  toBellItem,
+  type NotificationBellItem,
+} from '@/lib/notifications';
 
 // Priority 2 item 4 · notifications feed.
 //
 // GET /api/notifications?since=ISO · returns events relevant to the
-// calling user, unified across the 3 ledgers. Each notification carries
+// calling user, unified across the legacy ledgers plus platform signals.
+// Each notification carries
 // kind + actor + subject + timestamp + href so the UI can render a badge
 // + feed + deep-link.
 //
@@ -16,20 +24,6 @@ import { join } from 'path';
 //   - PHASE-GATES I advanced (for audit feed; not as "new" alerts)
 //
 // No stored read-state yet; client passes `since` to fetch fresh-only.
-
-interface Notification {
-  id: string;
-  kind: 'task-assigned' | 'task-done' | 'approval' | 'phase-gate';
-  actorName: string | null;
-  actorEmail: string | null;
-  subject: string;
-  programCode: string | null;
-  deliverableCode: string | null;
-  timestamp: string;
-  href: string;
-  // "unread relative to the caller" · false for events authored by caller
-  forCaller: boolean;
-}
 
 interface TaskEntry {
   id: string;
@@ -42,6 +36,12 @@ interface TaskEntry {
   assignedAt: string;
   done: boolean;
   doneAt: string | null;
+}
+
+function stableNotificationClock(): Date {
+  const d = new Date();
+  d.setUTCHours(0, 0, 0, 0);
+  return d;
 }
 
 interface ApprovalEntry {
@@ -88,7 +88,7 @@ export async function GET(request: NextRequest) {
   const approvals = readJson<{ entries: ApprovalEntry[] }>(join(process.cwd(), '.approvals/ledger.json'))?.entries ?? [];
   const gates = readJson<{ entries: PhaseGateEntry[] }>(join(process.cwd(), '.approvals/phase-gates.json'))?.entries ?? [];
 
-  const out: Notification[] = [];
+  const out: NotificationBellItem[] = [];
 
   for (const t of tasks) {
     const assignedToMe = t.assigneeEmail.toLowerCase() === myEmail;
@@ -161,6 +161,20 @@ export async function GET(request: NextRequest) {
       href: '/home/queue',
       forCaller: fromMe,
     });
+  }
+
+  try {
+    const clientKey = await getActiveClientKey();
+    const queue = await loadSourceDecisionQueue(clientKey, stableNotificationClock());
+    const sourceEvents = buildSourceDecisionQueueNotifications(queue.bundles);
+    for (const event of sourceEvents) {
+      const producedAt = Date.parse(event.producedAt);
+      if (!Number.isNaN(producedAt) && producedAt <= sinceMs) continue;
+      out.push(toBellItem(event, myEmail));
+    }
+  } catch {
+    // Notification feed stays fail-soft. Source surfaces still render even if
+    // the data plane or active-client lookup is unavailable.
   }
 
   out.sort((a, b) => (a.timestamp < b.timestamp ? 1 : -1));

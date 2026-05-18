@@ -191,6 +191,23 @@ export function RenewalCockpitView({
         <p style={{ fontFamily: SHELL.SANS, fontSize: 14, color: SHELL.INK_MID, margin: 0, lineHeight: 1.55 }}>
           {cockpit.postureRationale}
         </p>
+        <Link
+          href={`/source/renewal/${encodeURIComponent(cockpit.contractId)}/execution`}
+          style={{
+            alignSelf: 'flex-start',
+            fontFamily: SHELL.SANS,
+            fontSize: 13,
+            fontWeight: 700,
+            color: '#ffffff',
+            background: SHELL.INK,
+            border: '1px solid ' + SHELL.INK,
+            borderRadius: 7,
+            padding: '8px 12px',
+            textDecoration: 'none',
+          }}
+        >
+          Open execution room
+        </Link>
       </section>
 
       {/* THE ACTION BAR — let the VP act, not just read (Practitioner-Fit §2) */}
