@@ -35,6 +35,14 @@ describe('proxy public route patterns', () => {
     expect(isAuthRequiredRoute(request)).toBe(true);
   });
 
+  it('lets notification APIs return JSON auth or token responses instead of Clerk HTML rewrites', () => {
+    for (const path of ['/api/notifications', '/api/notifications/dispatch']) {
+      const request = new NextRequest(`https://app.abarva.ai${path}`);
+      expect(isPublicRoute(request)).toBe(true);
+      expect(isAuthRequiredRoute(request)).toBe(false);
+    }
+  });
+
   it('does not treat unrelated auth API paths as public', () => {
     const request = new NextRequest('https://app.abarva.ai/api/auth/other');
     expect(isPublicRoute(request)).toBe(false);
