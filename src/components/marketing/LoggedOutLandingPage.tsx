@@ -3,6 +3,8 @@
 import Image from 'next/image'
 import Link from 'next/link'
 
+import { MarketingNav } from './MarketingNav'
+
 type LoggedOutLandingPageProps = {
   signedOut?: boolean
 }
@@ -44,30 +46,6 @@ export function LoggedOutLandingPage({ signedOut = false }: LoggedOutLandingPage
           justify-content: space-between;
           gap: 18px;
           min-height: 58px;
-        }
-
-        .nav-links {
-          display: flex;
-          align-items: center;
-          gap: 18px;
-          font-size: 13px;
-          font-weight: 650;
-        }
-
-        .nav-links a {
-          color: #344054;
-          text-decoration: none;
-        }
-
-        .sign-in {
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          min-height: 38px;
-          padding: 0 15px;
-          border-radius: 999px;
-          background: #07111f;
-          color: #ffffff !important;
         }
 
         .hero {
@@ -348,14 +326,6 @@ export function LoggedOutLandingPage({ signedOut = false }: LoggedOutLandingPage
             padding: 18px 16px 30px;
           }
 
-          .nav {
-            align-items: flex-start;
-          }
-
-          .nav-links a:not(.sign-in) {
-            display: none;
-          }
-
           h1 {
             font-size: clamp(40px, 13vw, 58px);
             letter-spacing: -0.03em;
@@ -400,7 +370,7 @@ export function LoggedOutLandingPage({ signedOut = false }: LoggedOutLandingPage
       `}</style>
 
       <div className="frame">
-        <nav className="nav" aria-label="Logged out navigation">
+        <header className="nav">
           <Link href="/" aria-label="AbarVa home">
             <Image
               src="/brand/abarva-logo-lockup-v2.svg"
@@ -411,12 +381,8 @@ export function LoggedOutLandingPage({ signedOut = false }: LoggedOutLandingPage
               style={{ display: 'block' }}
             />
           </Link>
-          <div className="nav-links">
-            <Link href="/product">Product</Link>
-            <a href="mailto:partners@abarva.ai?subject=AbarVa%20preview">Contact</a>
-            <Link href="/sign-in" className="sign-in">Sign in</Link>
-          </div>
-        </nav>
+          <MarketingNav ctaHref="/sign-in" ctaLabel="Request demo" />
+        </header>
 
         <section className="hero">
           <div>

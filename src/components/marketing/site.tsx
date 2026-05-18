@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import type { CSSProperties, ReactNode } from 'react'
+import { MarketingNav } from './MarketingNav'
 
 export const CREAM = '#F8F7F4'
 export const INK = '#0C0C0C'
@@ -437,13 +438,6 @@ export function MarketingHeader({
   ctaHref?: string
   ctaLabel?: string
 }) {
-  const navItems = [
-    { href: '/#products', label: 'Product' },
-    { href: '/#architecture', label: 'Architecture' },
-    { href: '/#customers', label: 'Customers' },
-    { href: 'mailto:partners@abarva.ai?subject=AbarVa%20careers', label: 'Careers' },
-  ]
-
   return (
     <header className="marketing-header">
       <div className="marketing-container marketing-header__inner">
@@ -451,28 +445,7 @@ export function MarketingHeader({
           <span className="marketing-wordmark__abar">Abar</span>
           <span className="marketing-wordmark__va">Va</span>
         </Link>
-        <nav className="marketing-nav" aria-label="Primary">
-          {navItems.map((item) => (
-            item.href.startsWith('mailto:') ? (
-              <a key={item.label} href={item.href} className="marketing-nav__link">
-                {item.label}
-              </a>
-            ) : (
-              <Link key={item.label} href={item.href} className="marketing-nav__link">
-                {item.label}
-              </Link>
-            )
-          ))}
-          {ctaHref.startsWith('mailto:') ? (
-            <a href={ctaHref} className="marketing-nav__cta">
-              {ctaLabel}
-            </a>
-          ) : (
-            <Link href={ctaHref} className="marketing-nav__cta">
-              {ctaLabel}
-            </Link>
-          )}
-        </nav>
+        <MarketingNav ctaHref={ctaHref} ctaLabel={ctaLabel} />
       </div>
     </header>
   )
