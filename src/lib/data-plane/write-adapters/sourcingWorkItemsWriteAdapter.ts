@@ -62,6 +62,7 @@ function toInsertColumns(input: NewSourcingWorkItem): Record<string, unknown> {
     legal_status: input.legalStatus,
     procurement_status: input.procurementStatus,
     note: input.note,
+    metadata: input.metadata ?? {},
     created_by: input.createdBy,
     updated_by: input.createdBy,
   };
@@ -84,6 +85,16 @@ function mapRow(row: Record<string, unknown>): SourcingWorkItem {
     procurementStatus:
       (row.procurement_status as SourcingWorkItem['procurementStatus']) ?? null,
     note: (row.note as string | null) ?? null,
+    metadata: ((): SourcingWorkItem['metadata'] => {
+      const raw = row.metadata;
+      const out: SourcingWorkItem['metadata'] = {};
+      if (raw && typeof raw === 'object') {
+        for (const [k, v] of Object.entries(raw as Record<string, unknown>)) {
+          if (typeof v === 'string') out[k] = v;
+        }
+      }
+      return out;
+    })(),
     createdBy: (row.created_by as string | null) ?? null,
     createdAt: String(row.created_at ?? ''),
     updatedBy: (row.updated_by as string | null) ?? null,

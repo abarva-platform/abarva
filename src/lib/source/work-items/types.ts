@@ -12,10 +12,25 @@
 export type WorkItemSubjectKind = 'contract' | 'source_event' | 'vendor';
 
 /**
- * The work-item flavor. The three kinds correspond one-to-one to the three
- * Renewal Cockpit action-bar actions this slice makes real.
+ * The work-item flavor.
+ *
+ * The first three kinds correspond one-to-one to the three Renewal Cockpit
+ * action-bar actions this slice originally made real (serve notice, assign
+ * owner, Tower watch).
+ *
+ * `workplan_item` and `stakeholder_approval` were added additively when the
+ * Source Execution Room converged onto this table as its single persistence
+ * backbone (migration 20260517210000): the Execution Room's action workplan
+ * persists as `workplan_item` rows, and its finance / legal / security /
+ * sponsor / IT approvals persist as `stakeholder_approval` rows. One model,
+ * wired across the cockpit action bar AND the Execution Room.
  */
-export type WorkItemKind = 'serve_notice' | 'owner_assignment' | 'tower_watch';
+export type WorkItemKind =
+  | 'serve_notice'
+  | 'owner_assignment'
+  | 'tower_watch'
+  | 'workplan_item'
+  | 'stakeholder_approval';
 
 /** Lifecycle status of a work item. */
 export type WorkItemStatus = 'open' | 'in_progress' | 'done' | 'cancelled';
@@ -42,6 +57,8 @@ export const WORK_ITEM_KINDS: readonly WorkItemKind[] = [
   'serve_notice',
   'owner_assignment',
   'tower_watch',
+  'workplan_item',
+  'stakeholder_approval',
 ];
 
 export const WORK_ITEM_SUBJECT_KINDS: readonly WorkItemSubjectKind[] = [
@@ -56,6 +73,25 @@ export const WORK_ITEM_STATUSES: readonly WorkItemStatus[] = [
   'done',
   'cancelled',
 ];
+
+/**
+ * The discriminator a converged Execution Room row carries inside `metadata`.
+ *
+ * A `workplan_item` row stores the Execution Room `ExecutionActionKind` it
+ * persists (`serve_notice`, `finance_approval`, …) under `metadata.subKind`;
+ * a `stakeholder_approval` row stores the `ExecutionApprovalRole`. This lets
+ * the room reconcile its deterministic composer output against persisted
+ * rows without a parallel table — the work-item `kind` stays coarse, the
+ * `subKind` carries the room-specific slot id.
+ */
+export type WorkItemMetadata = {
+  /**
+   * The Execution Room slot this work item persists — an `ExecutionActionKind`
+   * for a `workplan_item`, an `ExecutionApprovalRole` for a
+   * `stakeholder_approval`. Absent on cockpit action-bar rows.
+   */
+  subKind?: string;
+} & Record<string, string>;
 
 /** A persisted sourcing work item — the row shape, view-model side. */
 export interface SourcingWorkItem {
@@ -76,6 +112,11 @@ export interface SourcingWorkItem {
   legalStatus: WorkItemLegalStatus | null;
   procurementStatus: WorkItemProcurementStatus | null;
   note: string | null;
+  /**
+   * Free-form string map persisted in the `metadata` JSONB column. Carries
+   * `subKind` for converged Execution Room rows; `{}` otherwise.
+   */
+  metadata: WorkItemMetadata;
   createdBy: string | null;
   createdAt: string;
   updatedBy: string | null;
@@ -99,6 +140,8 @@ export interface NewSourcingWorkItem {
   legalStatus: WorkItemLegalStatus | null;
   procurementStatus: WorkItemProcurementStatus | null;
   note: string | null;
+  /** Optional string map persisted to the `metadata` JSONB column. */
+  metadata?: WorkItemMetadata;
   createdBy: string | null;
 }
 
