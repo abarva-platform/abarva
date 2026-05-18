@@ -59,6 +59,25 @@ It emits operating signals for:
 Long-horizon Source queue items stay in the Source queue and digest. They do
 not enter the alert feed, because alert fatigue is a product failure.
 
+## Cross-Module Producers
+
+`src/lib/notifications/module-producers.ts` adds pure producer functions for
+the rest of the operating loop:
+
+| Producer | Emits when | Deep link |
+|---|---|---|
+| `buildMovesDecisionNotifications` | A Move gate, mobilization plan, sourcing need, control gap, or architecture gap changes the next decision. | `/strategic-moves/[id]` |
+| `buildTowerExecutiveActionNotifications` | The executive action queue surfaces critical, high, or elevated portfolio action. Watch-only items stay out of the alert feed. | `/tower` |
+| `buildTowerRegulatoryRiskNotifications` | The Tower regulatory lens finds a non-low regulatory exposure such as SR 11-7, BSA/AML, fair lending, consent-order, or privacy risk. | `/tower` |
+| `buildSentinelGroundingNotifications` | Sentinel has a non-info canonical grounding gap for an answer. | `/intelligence` |
+| `buildSentinelConsistencyNotifications` | A Sentinel internal-consistency guard catches a material issue. | `/intelligence` |
+| `buildContextTrustNotifications` | A context segment is stale or missing. Fresh and sourced segments do not create alerts. | `/home` setup context |
+
+These producers are intentionally pure. They do not read databases, send email,
+or create side effects. Callers project their module view models into the
+producer inputs, persist the returned `NotificationEvent` rows if needed, and
+let `routeNotification()` decide delivery.
+
 ## Email
 
 `src/lib/notifications/email.ts` converts any `NotificationEvent` into a
@@ -88,3 +107,5 @@ VP can see which alerts the room would raise and through which channels.
 - Every notification must carry evidence refs or explicitly say the evidence is
   missing.
 - Every notification must be tenant scoped.
+- Producers should stay pure and side-effect free. Persistence, email, Slack,
+  Teams, and webhook delivery belong to platform workers after policy routing.
