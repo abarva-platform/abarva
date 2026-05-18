@@ -3,9 +3,12 @@ import { auth, clerkClient } from '@clerk/nextjs/server';
 import { existsSync, readFileSync } from 'fs';
 import { join } from 'path';
 import { getActiveClientKey } from '@/lib/active-client';
+import { requireTenancy, tenancyErrorResponse } from '@/lib/auth/tenancy';
 import { loadSourceDecisionQueue } from '@/lib/source/decision-queue/load';
 import {
   buildSourceDecisionQueueNotifications,
+  parseNotificationEventsPayload,
+  selectNotificationStoreAdapter,
   toBellItem,
   type NotificationBellItem,
 } from '@/lib/notifications';
@@ -165,6 +168,17 @@ export async function GET(request: NextRequest) {
 
   try {
     const clientKey = await getActiveClientKey();
+    const persisted = await selectNotificationStoreAdapter().listEvents({
+      tenantKey: clientKey,
+      sinceMs,
+      limit: 50,
+    });
+    if (persisted.ok && persisted.data) {
+      for (const event of persisted.data) {
+        out.push(toBellItem(event, myEmail));
+      }
+    }
+
     const queue = await loadSourceDecisionQueue(clientKey, stableNotificationClock());
     const sourceEvents = buildSourceDecisionQueueNotifications(queue.bundles);
     for (const event of sourceEvents) {
@@ -179,4 +193,43 @@ export async function GET(request: NextRequest) {
 
   out.sort((a, b) => (a.timestamp < b.timestamp ? 1 : -1));
   return NextResponse.json({ ok: true, notifications: out.slice(0, 50) });
+}
+
+export async function POST(request: NextRequest) {
+  let ctx: Awaited<ReturnType<typeof requireTenancy>>;
+  try {
+    ctx = await requireTenancy();
+  } catch (err) {
+    return tenancyErrorResponse(err);
+  }
+
+  let body: unknown;
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ error: 'invalid_json' }, { status: 400 });
+  }
+
+  const parsed = parseNotificationEventsPayload(body);
+  if (!parsed.ok || !parsed.data) {
+    return NextResponse.json({ error: parsed.error ?? 'invalid_payload' }, { status: 400 });
+  }
+
+  const adapter = selectNotificationStoreAdapter();
+  const persisted = await adapter.persistEvents({
+    tenantKey: ctx.clientKey ?? ctx.clientId,
+    events: parsed.data,
+  });
+
+  if (!persisted.ok) {
+    const status = persisted.error?.includes('tenant mismatch') ? 403 : 500;
+    return NextResponse.json({ error: persisted.error ?? 'notification_persist_failed' }, { status });
+  }
+
+  return NextResponse.json({
+    ok: true,
+    plane: adapter.name,
+    persisted: persisted.data?.length ?? 0,
+    notifications: (persisted.data ?? []).map((event) => toBellItem(event, ctx.email)),
+  });
 }
