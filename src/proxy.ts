@@ -47,6 +47,10 @@ export const PUBLIC_ROUTE_PATTERNS = [
   // token inside the route. It must stay outside Clerk so prod-vs-Azure
   // harnesses receive JSON pass/fail, not an HTML sign-in redirect.
   '/api/admin/parallel-run-invariants',
+  // Notification APIs must return JSON auth/token responses rather than
+  // Clerk HTML rewrites. Feed routes self-gate with Clerk/tenancy, and
+  // dispatch self-guards with NOTIFICATION_DISPATCH_TOKEN/CRON_SECRET.
+  '/api/notifications(.*)',
   // SEC-P1-11 (audit 2026-05-13): `/api/debug/tower-substrate` previously
   // lived here as "count-only diagnostic" — but it returned per-tenant
   // initiative counts publicly to anyone who knew the URL. The route is
