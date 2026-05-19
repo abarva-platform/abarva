@@ -34,9 +34,19 @@ const DEFAULT_FORMAT: Record<DeliverableKind, DeliverableFormat> = {
   'workshop-facilitator-guide': 'docx',
 };
 
-/** Allowed formats per kind for caller overrides. */
+/**
+ * Allowed formats per kind for caller overrides.
+ *
+ * HTML is advertised for every kind the HTML renderer
+ * (renderers/html.ts) covers; PDF for the kinds where a print-/archive-/
+ * signature-ready document makes sense and the PDF renderer
+ * (renderers/pdf.tsx) covers — `program-charter`, `outcome-report`,
+ * `roadmap`. `archetype-primer` keeps its own dedicated primer-html
+ * route and is not routed through the generic export pipeline for any
+ * other format.
+ */
 const ALLOWED_FORMATS: Record<DeliverableKind, ReadonlyArray<DeliverableFormat>> = {
-  'program-charter': ['docx', 'html'],
+  'program-charter': ['docx', 'html', 'pdf'],
   'discovery-report': ['docx'],
   'okr-baseline': ['xlsx'],
   'stakeholder-map': ['xlsx', 'html'],
@@ -44,11 +54,11 @@ const ALLOWED_FORMATS: Record<DeliverableKind, ReadonlyArray<DeliverableFormat>>
   'architecture-sketch': ['html'],
   'execution-plan': ['xlsx'],
   'pilot-result-report': ['docx'],
-  'outcome-report': ['docx', 'html'],
+  'outcome-report': ['docx', 'html', 'pdf'],
   'bafo-scoreboard': ['xlsx'],
   'meeting-notes': ['docx'],
   'decision-log': ['docx', 'xlsx'],
-  'roadmap': ['html', 'xlsx'],
+  'roadmap': ['html', 'xlsx', 'pdf'],
   'financial-baseline': ['xlsx'],
   'archetype-primer': ['html'],
   'workshop-facilitator-guide': ['docx'],

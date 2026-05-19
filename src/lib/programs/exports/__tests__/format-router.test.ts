@@ -72,8 +72,19 @@ describe('routeFormat', () => {
     );
   });
 
-  it('rejects pdf for every kind in EXPORT-1 (deferred to EXPORT-5)', () => {
+  it('routes pdf for the print-ready kinds and rejects it elsewhere', () => {
+    // EXPORT-5 wires PDF for program-charter, outcome-report, roadmap.
+    expect(routeFormat('program-charter', 'pdf')).toBe('pdf');
+    expect(routeFormat('outcome-report', 'pdf')).toBe('pdf');
+    expect(routeFormat('roadmap', 'pdf')).toBe('pdf');
+    // Every other kind still rejects pdf.
+    const pdfKinds = new Set<DeliverableKind>([
+      'program-charter',
+      'outcome-report',
+      'roadmap',
+    ]);
     for (const kind of ALL_KINDS) {
+      if (pdfKinds.has(kind)) continue;
       expect(() => routeFormat(kind, 'pdf')).toThrow(/not allowed/);
     }
   });
@@ -91,9 +102,10 @@ describe('isFormatAllowed', () => {
 
   it('returns false for kind+format pairs known to be rejected', () => {
     expect(isFormatAllowed('program-charter', 'xlsx')).toBe(false);
-    expect(isFormatAllowed('program-charter', 'pdf')).toBe(false);
+    expect(isFormatAllowed('discovery-report', 'pdf')).toBe(false);
     expect(isFormatAllowed('okr-baseline', 'docx')).toBe(false);
     expect(isFormatAllowed('architecture-sketch', 'docx')).toBe(false);
+    expect(isFormatAllowed('architecture-sketch', 'pdf')).toBe(false);
     expect(isFormatAllowed('archetype-primer', 'xlsx')).toBe(false);
   });
 
@@ -153,9 +165,15 @@ describe('referential integrity', () => {
     }
   });
 
-  it('no kind allows pdf in EXPORT-1', () => {
+  it('pdf is allowed only for the print-ready kinds', () => {
+    const pdfKinds = new Set<DeliverableKind>([
+      'program-charter',
+      'outcome-report',
+      'roadmap',
+    ]);
     for (const kind of ALL_KINDS) {
-      expect(listAllowedFormats(kind)).not.toContain<DeliverableFormat>('pdf');
+      const allowsPdf = listAllowedFormats(kind).includes('pdf');
+      expect(allowsPdf).toBe(pdfKinds.has(kind));
     }
   });
 });
