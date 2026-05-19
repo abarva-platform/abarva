@@ -11,8 +11,10 @@ import {
 } from '@/lib/source/should-cost/should-cost-model';
 import {
   buildDemoRateCardPack,
+  buildTieredDemoRateCatalog,
   coveredEnterpriseDomains,
   DEMO_RATE_CARD_PACKS,
+  industryProfileForPack,
   REQUIRED_ENTERPRISE_RATE_CARD_DOMAINS,
   type DemoRateCardPackId,
 } from '../demo-rate-card-packs';
@@ -49,6 +51,40 @@ describe('demo comprehensive rate-card packs', () => {
     }
   });
 
+  it('contains enterprise application, ERP, Epic, and legacy disciplines', () => {
+    const apex = DEMO_RATE_CARD_PACKS['apex-contact-center'];
+    for (const role of [
+      'frontend_engineer',
+      'backend_engineer',
+      'full_stack_engineer',
+      'mobile_engineer',
+      'erp_functional_consultant',
+      'erp_technical_consultant',
+      'sap_abap_developer',
+      'oracle_erp_consultant',
+      'epic_clarity_analyst',
+      'epic_integration_engineer',
+      'legacy_mainframe_engineer',
+    ]) {
+      expect(apex.rows.some((row) => row.role === role)).toBe(true);
+    }
+  });
+
+  it('has tiered rates, so data engineering is not one flat rate', () => {
+    const catalog = buildTieredDemoRateCatalog('apex-contact-center');
+    const dataEngineerTiers = catalog
+      .filter((row) => row.role === 'data_engineer' && row.deliveryLocation === 'onshore')
+      .map((row) => row.seniority)
+      .sort();
+    expect(dataEngineerTiers).toEqual(['junior', 'lead', 'mid', 'senior']);
+
+    const fullStackRows = catalog.filter(
+      (row) => row.role === 'full_stack_engineer',
+    );
+    expect(fullStackRows.length).toBeGreaterThanOrEqual(8); // 4 tiers x 2 lanes
+    expect(catalog.length).toBeGreaterThan(250);
+  });
+
   it('covers the enterprise domains, not only a delivery squad', () => {
     expect(REQUIRED_ENTERPRISE_RATE_CARD_DOMAINS).toEqual(
       ENTERPRISE_RATE_CARD_DOMAINS,
@@ -58,6 +94,61 @@ describe('demo comprehensive rate-card packs', () => {
         [...ENTERPRISE_RATE_CARD_DOMAINS].sort(),
       );
     }
+  });
+
+  it('selects the right must-price categories for each tenant industry and stack', () => {
+    const apex = industryProfileForPack('apex-contact-center');
+    expect(apex.industry).toContain('Retail');
+    expect(apex.techStackSignals).toEqual(
+      expect.arrayContaining([
+        'CRM / customer profile',
+        'E-commerce and order management',
+        'Warehouse and fulfillment integration',
+      ]),
+    );
+    expect(apex.mustPriceRoles).toEqual(
+      expect.arrayContaining([
+        'frontend_engineer',
+        'backend_engineer',
+        'full_stack_engineer',
+        'integration_engineer',
+      ]),
+    );
+
+    const meridian = industryProfileForPack('meridian-ambient-clinical');
+    expect(meridian.techStackSignals).toEqual(
+      expect.arrayContaining([
+        'Epic EHR',
+        'Epic Clarity / Caboodle analytics',
+        'HL7 / FHIR integration',
+      ]),
+    );
+    expect(meridian.mustPriceRoles).toEqual(
+      expect.arrayContaining([
+        'epic_clarity_analyst',
+        'epic_integration_engineer',
+        'security_architect',
+        'training_lead',
+      ]),
+    );
+
+    const firstCapital = industryProfileForPack('firstcapital-fraud-detection');
+    expect(firstCapital.techStackSignals).toEqual(
+      expect.arrayContaining([
+        'Core banking',
+        'AML case management',
+        'Mainframe / legacy integration',
+        'Model risk management',
+      ]),
+    );
+    expect(firstCapital.mustPriceRoles).toEqual(
+      expect.arrayContaining([
+        'legacy_mainframe_engineer',
+        'middleware_engineer',
+        'governance_risk_lead',
+        'security_architect',
+      ]),
+    );
   });
 
   it('build in strict mode without benchmark fallback', () => {

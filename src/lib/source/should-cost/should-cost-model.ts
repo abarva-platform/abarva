@@ -32,10 +32,24 @@ export type ShouldCostRole =
   | 'ai_ml_lead'
   | 'governance_risk_lead'
   | 'domain_sme'
+  | 'ux_ui_designer'
+  | 'frontend_engineer'
+  | 'backend_engineer'
+  | 'full_stack_engineer'
+  | 'mobile_engineer'
   | 'senior_engineer'
   | 'engineer'
   | 'data_engineer'
+  | 'database_administrator'
   | 'integration_engineer'
+  | 'middleware_engineer'
+  | 'erp_functional_consultant'
+  | 'erp_technical_consultant'
+  | 'sap_abap_developer'
+  | 'oracle_erp_consultant'
+  | 'epic_clarity_analyst'
+  | 'epic_integration_engineer'
+  | 'legacy_mainframe_engineer'
   | 'qa_eval_lead'
   | 'business_analyst'
   | 'process_lead'
@@ -58,10 +72,24 @@ export const SHOULD_COST_ROLES: ShouldCostRole[] = [
   'ai_ml_lead',
   'governance_risk_lead',
   'domain_sme',
+  'ux_ui_designer',
+  'frontend_engineer',
+  'backend_engineer',
+  'full_stack_engineer',
+  'mobile_engineer',
   'senior_engineer',
   'engineer',
   'data_engineer',
+  'database_administrator',
   'integration_engineer',
+  'middleware_engineer',
+  'erp_functional_consultant',
+  'erp_technical_consultant',
+  'sap_abap_developer',
+  'oracle_erp_consultant',
+  'epic_clarity_analyst',
+  'epic_integration_engineer',
+  'legacy_mainframe_engineer',
   'qa_eval_lead',
   'business_analyst',
   'process_lead',
@@ -83,8 +111,13 @@ export type EnterpriseRateCardDomain =
   | 'ai_ml'
   | 'governance_compliance'
   | 'domain_sme'
+  | 'digital_experience'
   | 'application_engineering'
   | 'integration'
+  | 'database_administration'
+  | 'erp_platforms'
+  | 'clinical_platforms'
+  | 'legacy_modernization'
   | 'qa_evaluation'
   | 'business_analysis'
   | 'process_redesign'
@@ -105,8 +138,13 @@ export const ENTERPRISE_RATE_CARD_DOMAINS: EnterpriseRateCardDomain[] = [
   'ai_ml',
   'governance_compliance',
   'domain_sme',
+  'digital_experience',
   'application_engineering',
   'integration',
+  'database_administration',
+  'erp_platforms',
+  'clinical_platforms',
+  'legacy_modernization',
   'qa_evaluation',
   'business_analysis',
   'process_redesign',
@@ -133,10 +171,24 @@ export const ROLE_TO_ENTERPRISE_DOMAIN: Record<
   ai_ml_lead: 'ai_ml',
   governance_risk_lead: 'governance_compliance',
   domain_sme: 'domain_sme',
+  ux_ui_designer: 'digital_experience',
+  frontend_engineer: 'digital_experience',
+  backend_engineer: 'application_engineering',
+  full_stack_engineer: 'application_engineering',
+  mobile_engineer: 'digital_experience',
   senior_engineer: 'application_engineering',
   engineer: 'application_engineering',
   data_engineer: 'data_engineering',
+  database_administrator: 'database_administration',
   integration_engineer: 'integration',
+  middleware_engineer: 'integration',
+  erp_functional_consultant: 'erp_platforms',
+  erp_technical_consultant: 'erp_platforms',
+  sap_abap_developer: 'erp_platforms',
+  oracle_erp_consultant: 'erp_platforms',
+  epic_clarity_analyst: 'clinical_platforms',
+  epic_integration_engineer: 'clinical_platforms',
+  legacy_mainframe_engineer: 'legacy_modernization',
   qa_eval_lead: 'qa_evaluation',
   business_analyst: 'business_analysis',
   process_lead: 'process_redesign',

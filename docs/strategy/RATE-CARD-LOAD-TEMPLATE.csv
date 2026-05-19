@@ -2,5 +2,9 @@ source_kind,source_name,role,domain,specialization,delivery_location,seniority,r
 client_rate_card,Client approved delivery card,security_architect,security_risk,solution_architecture,onshore,senior,,310000,,USD,2026-05-19,Procurement Ops,high,Approved client-specific fully-loaded rate
 vendor_quote,Vendor BAFO rate sheet,integration_engineer,integration,integration,offshore,mid,72,,,USD,2026-05-19,Sourcing VP,medium,Quoted offshore integration rate from current proposal
 internal_team_cost,Internal build cost model,data_engineer,data_engineering,data_engineering,onshore,mid,,195000,,USD,2026-05-19,Finance,medium,Fully-loaded internal cost including benefits and allocation
+client_rate_card,Digital product card,full_stack_engineer,application_engineering,integration,onshore,senior,,245000,,USD,2026-05-19,Digital Delivery,medium,Full-stack digital product engineering rate
+client_rate_card,ERP transformation card,erp_functional_consultant,erp_platforms,process_redesign,onshore,lead,,310000,,USD,2026-05-19,ERP COE,medium,ERP functional lead for SAP Oracle or Workday workstreams
+vendor_quote,Clinical analytics BAFO,epic_clarity_analyst,clinical_platforms,data_engineering,offshore,senior,88,,,USD,2026-05-19,Clinical IT Sourcing,medium,Epic Clarity analyst rate from vendor proposal
+vendor_quote,Legacy modernization quote,legacy_mainframe_engineer,legacy_modernization,integration,onshore,principal,,335000,,USD,2026-05-19,Enterprise Apps,medium,Specialized legacy or mainframe modernization role
 benchmark_market,Market benchmark override,enterprise_architect,enterprise_architecture,solution_architecture,onshore,blended,265,,,USD,2026-05-19,AbarVa benchmark,medium,Only use when the researched benchmark module lacks the required cell
 committed_budget,Approved phase-1 envelope,,,,,,,,1800000,USD,2026-05-19,Transformation Finance,high,Approved spend ceiling; not a rate

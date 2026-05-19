@@ -23,8 +23,9 @@ The comprehensive rate-card fabric reconciles those signals into the
 owner, date, confidence and warnings.
 
 Important distinction: the CSV is a **load template**, not a comprehensive
-rate card. A comprehensive estimator-ready pack has at least 49 rows today:
-24 enterprise roles x two delivery lanes, plus a committed-budget row. The
+rate card. A comprehensive estimator-ready pack has at least 77 blended rows
+today: 38 enterprise roles x two delivery lanes, plus a committed-budget row.
+The tiered catalog view expands each pack to 268 role/tier/location rows. The
 three demo packs in code meet that bar for Apex, Meridian and First Capital.
 
 ## Source Types
@@ -101,9 +102,9 @@ The shipped demo packs are deliberately larger than the template:
 
 | Pack | Rows | Coverage | Budget |
 |---|---:|---|---:|
-| Apex Contact Center AI Routing | 49 | 24 roles x onshore/offshore | $5.2M |
-| Meridian Ambient Clinical | 49 | 24 roles x onshore/offshore | $7.5M |
-| First Capital Fraud Detection | 49 | 24 roles x onshore/offshore | $1.8M |
+| Apex Contact Center AI Routing | 77 blended / 268 tiered | 38 roles x onshore/offshore; tiered catalog by role | $5.2M |
+| Meridian Ambient Clinical | 77 blended / 268 tiered | 38 roles x onshore/offshore; tiered catalog by role | $7.5M |
+| First Capital Fraud Detection | 77 blended / 268 tiered | 38 roles x onshore/offshore; tiered catalog by role | $1.8M |
 
 They are demo packs, not real client rate sheets. Their job is to let the Moves
 Expert Kernel showcase the comprehensive-rate-card behavior without falling
@@ -114,6 +115,28 @@ back to the market benchmark by accident.
 The role catalog is intentionally broader than one delivery squad. It covers:
 strategy/advisory, PMO, product management, enterprise architecture, solution
 architecture, security/risk, cloud/platform, data architecture, data
-engineering, AI/ML, governance/compliance, business/domain SME, application
-engineering, integration, QA/evaluation, business analysis, process redesign,
-change management, training/enablement, and run operations.
+engineering, AI/ML, governance/compliance, business/domain SME, digital
+experience, application engineering, integration, database administration, ERP
+platforms, clinical platforms such as Epic/Clarity, legacy modernization,
+QA/evaluation, business analysis, process redesign, change management,
+training/enablement, and run operations.
+
+The estimator still consumes a blended role lane because that is the current
+Source should-cost contract. The procurement-grade catalog is tiered: lead,
+senior, mid and junior where that makes sense; principal/director/manager tiers
+for advisory, PMO, governance and architecture roles.
+
+## Tenant-Specific Category Selection
+
+The enterprise catalog is broad, but the product should highlight the right
+categories for each client based on industry and tech stack:
+
+| Tenant case | Must-price categories |
+|---|---|
+| Apex Retail contact-center AI | Retail/domain SME, product, UX/UI, frontend, backend, full-stack, integration, data engineering, AI/ML, QA/evaluation, change |
+| Meridian ambient clinical AI | Clinical SME, Epic Clarity, Epic integration, data architecture, data engineering, HL7/FHIR integration, security, governance, AI/ML, process, training, change |
+| First Capital fraud detection | Banking/domain SME, model-risk/governance, security, legacy/mainframe, middleware, integration, data architecture, data engineering, AI/ML, QA/evaluation, process, change |
+
+So the catalog stays enterprise-comprehensive, but the showcased business case
+does not present a generic soup of roles. It points the reviewer to the
+disciplines the tenant's stack actually requires.

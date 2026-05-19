@@ -18,6 +18,7 @@ import type { KernelRateCard } from '../effort-estimator';
 import {
   buildComprehensiveRateCard,
   type ComprehensiveRateCardBuild,
+  type RateCardSeniority,
   type RateCardTemplateRow,
 } from './comprehensive-rate-card';
 import { ROLE_TO_SPECIALIZATION } from './derived-planning-rate-card';
@@ -31,6 +32,29 @@ interface RoleLaneRates {
   onshore: number;
   offshore: number;
 }
+
+export const ENTERPRISE_RATE_CARD_TIERS = [
+  'principal',
+  'director',
+  'manager',
+  'lead',
+  'senior',
+  'mid',
+  'junior',
+] as const satisfies readonly RateCardSeniority[];
+
+export type EnterpriseRateCardTier =
+  (typeof ENTERPRISE_RATE_CARD_TIERS)[number];
+
+const TIER_MULTIPLIERS: Record<EnterpriseRateCardTier, number> = {
+  principal: 1.28,
+  director: 1.18,
+  manager: 1.08,
+  lead: 1,
+  senior: 0.9,
+  mid: 0.76,
+  junior: 0.58,
+};
 
 interface DemoPackSpec {
   id: DemoRateCardPackId;
@@ -49,6 +73,147 @@ interface DemoPackSpec {
   budgetNote: string;
 }
 
+export interface IndustryRateCardProfile {
+  packId: DemoRateCardPackId;
+  industry: string;
+  techStackSignals: string[];
+  mustPriceRoles: ShouldCostRole[];
+  mustPriceDomains: EnterpriseRateCardDomain[];
+  rationale: string[];
+}
+
+export const INDUSTRY_RATE_CARD_PROFILES: Record<
+  DemoRateCardPackId,
+  IndustryRateCardProfile
+> = {
+  'apex-contact-center': {
+    packId: 'apex-contact-center',
+    industry: 'Retail / consumer commerce',
+    techStackSignals: [
+      'Contact-center platform',
+      'CRM / customer profile',
+      'E-commerce and order management',
+      'MarTech / loyalty',
+      'Warehouse and fulfillment integration',
+      'Digital web and mobile channels',
+    ],
+    mustPriceRoles: [
+      'domain_sme',
+      'product_owner',
+      'ux_ui_designer',
+      'frontend_engineer',
+      'backend_engineer',
+      'full_stack_engineer',
+      'integration_engineer',
+      'data_engineer',
+      'ai_ml_lead',
+      'qa_eval_lead',
+      'change_lead',
+    ],
+    mustPriceDomains: [
+      'domain_sme',
+      'product_management',
+      'digital_experience',
+      'application_engineering',
+      'integration',
+      'data_engineering',
+      'ai_ml',
+      'qa_evaluation',
+      'change_management',
+    ],
+    rationale: [
+      'Retail contact-center AI touches digital channels, CRM, order flows, fulfillment, and agent adoption.',
+      'The rate card must price both product/digital build and the integration work around customer/order systems.',
+    ],
+  },
+  'meridian-ambient-clinical': {
+    packId: 'meridian-ambient-clinical',
+    industry: 'Healthcare provider',
+    techStackSignals: [
+      'Epic EHR',
+      'Epic Clarity / Caboodle analytics',
+      'HL7 / FHIR integration',
+      'Clinical documentation workflow',
+      'HIPAA / privacy controls',
+      'Provider adoption and training',
+    ],
+    mustPriceRoles: [
+      'domain_sme',
+      'epic_clarity_analyst',
+      'epic_integration_engineer',
+      'data_architect',
+      'data_engineer',
+      'integration_engineer',
+      'security_architect',
+      'governance_risk_lead',
+      'ai_ml_lead',
+      'process_lead',
+      'training_lead',
+      'change_lead',
+    ],
+    mustPriceDomains: [
+      'domain_sme',
+      'clinical_platforms',
+      'data_architecture',
+      'data_engineering',
+      'integration',
+      'security_risk',
+      'governance_compliance',
+      'ai_ml',
+      'process_redesign',
+      'training_enablement',
+      'change_management',
+    ],
+    rationale: [
+      'A healthcare AI case without Epic/Clarity, HL7/FHIR, privacy, and clinical workflow pricing is not credible.',
+      'Provider adoption and training must be priced as first-class work, not buried under generic change management.',
+    ],
+  },
+  'firstcapital-fraud-detection': {
+    packId: 'firstcapital-fraud-detection',
+    industry: 'Regulated financial services',
+    techStackSignals: [
+      'Core banking',
+      'Card / payments fraud platform',
+      'AML case management',
+      'Mainframe / legacy integration',
+      'Model risk management',
+      'Regulatory controls and audit evidence',
+    ],
+    mustPriceRoles: [
+      'domain_sme',
+      'governance_risk_lead',
+      'security_architect',
+      'legacy_mainframe_engineer',
+      'integration_engineer',
+      'middleware_engineer',
+      'data_architect',
+      'data_engineer',
+      'ai_ml_lead',
+      'qa_eval_lead',
+      'process_lead',
+      'change_lead',
+    ],
+    mustPriceDomains: [
+      'domain_sme',
+      'governance_compliance',
+      'security_risk',
+      'legacy_modernization',
+      'integration',
+      'data_architecture',
+      'data_engineering',
+      'ai_ml',
+      'qa_evaluation',
+      'process_redesign',
+      'change_management',
+    ],
+    rationale: [
+      'Bank fraud AI must price model-risk, security, auditability, payments/core integration, and legacy constraints.',
+      'Legacy and middleware skills are not optional in a regulated-bank modernization path.',
+    ],
+  },
+};
+
 const ROLE_RATE_MULTIPLIERS: Record<ShouldCostRole, number> = {
   engagement_partner: 1.32,
   engagement_lead: 1.14,
@@ -64,16 +229,71 @@ const ROLE_RATE_MULTIPLIERS: Record<ShouldCostRole, number> = {
   ai_ml_lead: 1.06,
   governance_risk_lead: 0.94,
   domain_sme: 0.88,
+  ux_ui_designer: 0.7,
+  frontend_engineer: 0.68,
+  backend_engineer: 0.72,
+  full_stack_engineer: 0.76,
+  mobile_engineer: 0.78,
   senior_engineer: 0.84,
   engineer: 0.68,
   data_engineer: 0.7,
+  database_administrator: 0.7,
   integration_engineer: 0.66,
+  middleware_engineer: 0.7,
+  erp_functional_consultant: 0.86,
+  erp_technical_consultant: 0.82,
+  sap_abap_developer: 0.78,
+  oracle_erp_consultant: 0.78,
+  epic_clarity_analyst: 0.82,
+  epic_integration_engineer: 0.84,
+  legacy_mainframe_engineer: 0.86,
   qa_eval_lead: 0.72,
   business_analyst: 0.58,
   process_lead: 0.74,
   change_lead: 0.72,
   training_lead: 0.56,
   analyst: 0.54,
+};
+
+const ROLE_TIERS: Record<ShouldCostRole, EnterpriseRateCardTier[]> = {
+  engagement_partner: ['principal', 'director'],
+  engagement_lead: ['principal', 'director', 'manager'],
+  program_manager: ['director', 'manager', 'lead', 'senior'],
+  project_manager: ['manager', 'lead', 'senior', 'mid'],
+  product_owner: ['director', 'manager', 'lead', 'senior'],
+  solution_architect: ['principal', 'lead', 'senior'],
+  enterprise_architect: ['principal', 'lead', 'senior'],
+  security_architect: ['principal', 'lead', 'senior'],
+  cloud_platform_architect: ['principal', 'lead', 'senior'],
+  devops_sre_lead: ['lead', 'senior', 'mid'],
+  data_architect: ['principal', 'lead', 'senior'],
+  ai_ml_lead: ['principal', 'lead', 'senior'],
+  governance_risk_lead: ['director', 'manager', 'lead', 'senior'],
+  domain_sme: ['principal', 'lead', 'senior'],
+  ux_ui_designer: ['lead', 'senior', 'mid', 'junior'],
+  frontend_engineer: ['lead', 'senior', 'mid', 'junior'],
+  backend_engineer: ['lead', 'senior', 'mid', 'junior'],
+  full_stack_engineer: ['lead', 'senior', 'mid', 'junior'],
+  mobile_engineer: ['lead', 'senior', 'mid', 'junior'],
+  senior_engineer: ['lead', 'senior', 'mid'],
+  engineer: ['senior', 'mid', 'junior'],
+  data_engineer: ['lead', 'senior', 'mid', 'junior'],
+  database_administrator: ['lead', 'senior', 'mid'],
+  integration_engineer: ['lead', 'senior', 'mid', 'junior'],
+  middleware_engineer: ['lead', 'senior', 'mid'],
+  erp_functional_consultant: ['principal', 'lead', 'senior', 'mid'],
+  erp_technical_consultant: ['lead', 'senior', 'mid', 'junior'],
+  sap_abap_developer: ['lead', 'senior', 'mid', 'junior'],
+  oracle_erp_consultant: ['lead', 'senior', 'mid', 'junior'],
+  epic_clarity_analyst: ['lead', 'senior', 'mid', 'junior'],
+  epic_integration_engineer: ['lead', 'senior', 'mid', 'junior'],
+  legacy_mainframe_engineer: ['principal', 'lead', 'senior', 'mid'],
+  qa_eval_lead: ['lead', 'senior', 'mid'],
+  business_analyst: ['lead', 'senior', 'mid', 'junior'],
+  process_lead: ['director', 'manager', 'lead', 'senior'],
+  change_lead: ['director', 'manager', 'lead', 'senior'],
+  training_lead: ['lead', 'senior', 'mid'],
+  analyst: ['senior', 'mid', 'junior'],
 };
 
 function roleRates(
@@ -210,6 +430,15 @@ export interface DemoRateCardPack {
   rows: RateCardTemplateRow[];
 }
 
+export interface EnterpriseTieredRateCatalogRow
+  extends Omit<RateCardTemplateRow, 'role' | 'domain' | 'deliveryLocation' | 'seniority' | 'annualRateUsd'> {
+  role: ShouldCostRole;
+  domain: EnterpriseRateCardDomain;
+  deliveryLocation: 'onshore' | 'offshore';
+  seniority: EnterpriseRateCardTier;
+  annualRateUsd: number;
+}
+
 export const DEMO_RATE_CARD_PACKS: Record<
   DemoRateCardPackId,
   DemoRateCardPack
@@ -241,6 +470,45 @@ export function demoKernelRateCard(id: DemoRateCardPackId): KernelRateCard {
   return buildDemoRateCardPack(id).kernelRateCard;
 }
 
+export function buildTieredDemoRateCatalog(
+  id: DemoRateCardPackId,
+): EnterpriseTieredRateCatalogRow[] {
+  const pack = DEMO_RATE_CARD_PACKS[id];
+  return pack.rows.flatMap((row) => {
+    const role = row.role;
+    const domain = row.domain;
+    const deliveryLocation = row.deliveryLocation;
+    const annualRateUsd = row.annualRateUsd;
+    if (
+      row.sourceKind === 'committed_budget' ||
+      !role ||
+      !domain ||
+      !deliveryLocation ||
+      deliveryLocation === 'nearshore' ||
+      !annualRateUsd
+    ) {
+      return [];
+    }
+
+    return ROLE_TIERS[role].map((tier) => ({
+      sourceKind: row.sourceKind,
+      sourceName: row.sourceName,
+      role,
+      domain,
+      specialization: row.specialization,
+      deliveryLocation,
+      seniority: tier,
+      annualRateUsd: Math.round(annualRateUsd * TIER_MULTIPLIERS[tier]),
+      currency: row.currency,
+      asOf: row.asOf,
+      owner: row.owner,
+      confidence: row.confidence,
+      note:
+        `${row.note ?? 'Demo tiered rate-card row.'} Tier multiplier: ${tier}.`,
+    }));
+  });
+}
+
 export function coveredEnterpriseDomains(
   pack: DemoRateCardPack,
 ): EnterpriseRateCardDomain[] {
@@ -256,3 +524,9 @@ export function coveredEnterpriseDomains(
 
 export const REQUIRED_ENTERPRISE_RATE_CARD_DOMAINS =
   ENTERPRISE_RATE_CARD_DOMAINS;
+
+export function industryProfileForPack(
+  id: DemoRateCardPackId,
+): IndustryRateCardProfile {
+  return INDUSTRY_RATE_CARD_PROFILES[id];
+}
