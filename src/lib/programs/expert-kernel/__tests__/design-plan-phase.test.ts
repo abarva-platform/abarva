@@ -23,6 +23,8 @@ import { buildBaselineModel } from '../baseline-model';
 import { buildAssumptionLedger } from '../assumption-ledger';
 import { buildValueForecast } from '../value-forecast';
 import { DESIGN_PLAN_PLAYBOOK, killTrigger } from '../phase-playbooks/design-plan';
+import { MOBILIZE_PLAYBOOK } from '../phase-playbooks/mobilize';
+import type { PhaseTrap, KillTrigger } from '../phase-playbooks/shared-types';
 import { buildApexContactCenterFullCase } from '../apex-contact-center-case';
 import { rangeOf } from '../types';
 
@@ -98,8 +100,46 @@ describe('effort-estimator — rate-card abstraction', () => {
 
   it('the estimate carries the resolved rate card and its provenance', () => {
     const e = effort();
-    expect(e.rateCard.provenance).toBe('planning_default');
+    // The kernel default is the researched 3-D SI benchmark, projected onto
+    // the should-cost roles — a planning benchmark, still NOT a quote.
+    expect(e.rateCard.provenance).toBe('researched_benchmark');
     expect(e.rateCard.label).toContain('NOT a quote');
+    expect(e.rateCard.label.toLowerCase()).toContain('benchmark');
+    // Every derived role band is a positive fully-loaded annual rate.
+    for (const r of e.rateCard.rates) {
+      expect(r.onshoreAnnualRate).toBeGreaterThan(0);
+      expect(r.offshoreAnnualRate).toBeGreaterThan(0);
+      // Offshore delivery is cheaper than onshore in every cell.
+      expect(r.offshoreAnnualRate).toBeLessThan(r.onshoreAnnualRate);
+    }
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Shared phase-playbook types
+// ---------------------------------------------------------------------------
+
+describe('phase playbooks — shared PhaseTrap / KillTrigger', () => {
+  it('Design & Plan and Mobilize traps share one structural shape', () => {
+    // A trap from each phase is assignable to the shared `PhaseTrap` — the
+    // compiler proves the unification; this asserts the runtime shape too.
+    const dpTrap: PhaseTrap = DESIGN_PLAN_PLAYBOOK.traps[0];
+    const mobTrap: PhaseTrap = MOBILIZE_PLAYBOOK.traps[0];
+    for (const t of [dpTrap, mobTrap]) {
+      expect(typeof t.key).toBe('string');
+      expect(typeof t.trap).toBe('string');
+      expect(typeof t.guard).toBe('string');
+    }
+  });
+
+  it('Design & Plan and Mobilize kill triggers share one structural shape', () => {
+    const dpKill: KillTrigger = DESIGN_PLAN_PLAYBOOK.killTriggers[0];
+    const mobKill: KillTrigger = MOBILIZE_PLAYBOOK.killTriggers[0];
+    for (const k of [dpKill, mobKill]) {
+      expect(typeof k.code).toBe('string');
+      expect(typeof k.condition).toBe('string');
+      expect(typeof k.fixCondition).toBe('string');
+    }
   });
 });
 

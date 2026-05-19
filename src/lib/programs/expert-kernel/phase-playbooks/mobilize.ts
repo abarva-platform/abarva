@@ -16,6 +16,11 @@
 // per the kernel collision rules — it never touches discover.ts / design-plan.ts.
 
 import type { Confidence } from '../types';
+// The trap / kill-trigger shapes are shared verbatim with the Design & Plan
+// phase playbook; they live in `shared-types`. Earlier this file carried
+// `Mobilize`-prefixed copies only to dodge a barrel-export name collision —
+// the barrel now exports the shared types once, so the prefixes are gone.
+import type { PhaseTrap, KillTrigger } from './shared-types';
 
 /** The four Moves phases. Mobilize is the last. */
 export type MovesPhase = 'discover' | 'charter' | 'design_plan' | 'mobilize';
@@ -49,29 +54,6 @@ export interface MobilizeRequiredEvidence {
   ifAbsent: string;
 }
 
-/** A trap — a plausible-looking answer that is quietly wrong. */
-export interface MobilizePhaseTrap {
-  key: string;
-  /** The mistake. */
-  trap: string;
-  /** How an expert avoids it. */
-  guard: string;
-}
-
-/**
- * A kill trigger — a condition that, if true at the gate, stops the Move.
- * Distinct from a business-case kill criterion: a trigger is about Move
- * READINESS, not economics. A Move can have a positive business case and
- * still fire a Mobilize kill trigger (e.g. no named operating-model owner).
- */
-export interface MobilizeKillTrigger {
-  code: string;
-  /** The condition that fires the trigger. */
-  condition: string;
-  /** The fix-condition — "revisit when X is true". Trust comes from saying no. */
-  fixCondition: string;
-}
-
 /** A complete phase playbook. */
 export interface MobilizePhasePlaybook {
   phase: MovesPhase;
@@ -79,8 +61,8 @@ export interface MobilizePhasePlaybook {
   intent: string;
   questions: MobilizePlaybookQuestion[];
   requiredEvidence: MobilizeRequiredEvidence[];
-  traps: MobilizePhaseTrap[];
-  killTriggers: MobilizeKillTrigger[];
+  traps: PhaseTrap[];
+  killTriggers: KillTrigger[];
 }
 
 /**
@@ -311,7 +293,7 @@ export function mobilizeQuestion(key: string): MobilizePlaybookQuestion | null {
 }
 
 /** Look up a Mobilize kill trigger by code. */
-export function mobilizeKillTrigger(code: string): MobilizeKillTrigger | null {
+export function mobilizeKillTrigger(code: string): KillTrigger | null {
   return MOBILIZE_PLAYBOOK.killTriggers.find((t) => t.code === code) ?? null;
 }
 

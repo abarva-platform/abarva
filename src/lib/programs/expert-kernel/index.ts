@@ -15,6 +15,9 @@ export * from './business-case-compiler';
 export * from './qa-rubric';
 export * from './roadmap';
 export * from './raci';
+// Shared phase-playbook types (`PhaseTrap`, `KillTrigger`) — exported once,
+// from one place, so Design & Plan and Mobilize do not each re-export them.
+export * from './phase-playbooks/shared-types';
 export * from './phase-playbooks/design-plan';
 // Mobilize & Handoff phase — playbook, adoption approach, Tower measurement
 // handoff, go-decision pack.
