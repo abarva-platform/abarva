@@ -28,8 +28,36 @@ before we put it in front of a real CXO / VP Sourcing / delivery leader.
 | Tenant | Use case | Overall | Kernel recommendation | Next best action |
 |---|---|---:|---|---|
 | Apex Retail | Contact Center AI Routing | 8.1 / 10 | shape | Provide cost per contact or confirm owner |
-| Meridian Health System | Ambient Clinical Value Chain Activation | 8.1 / 10 | shape | Provide cost per clinician hour or confirm owner |
-| First Capital Financial | Fraud Detection Enhancement | 8.1 / 10 | shape | Provide false-positive operational cost or confirm owner |
+| Meridian Health System | Ambient Clinical Value Chain Activation | 8.2 / 10 | shape | Provide cost per clinician hour or confirm owner |
+| First Capital Financial | Fraud Detection Enhancement | 8.2 / 10 | shape | Provide false-positive operational cost or confirm owner |
+
+## Increment 1 — Watched-Session Mode
+
+The next increment adds a deterministic watched-session mode. A transcript-like
+session object now carries participant roles and observed signals. The kernel
+extracts proposed updates, routes them into baseline / assumption / rate-card /
+workshop lanes, rejects unmapped content, and produces a regeneration diff that
+names the affected artifacts before anything changes.
+
+This is still a proxy watched session, not an external practitioner session.
+The important improvement is the process capability: the product can now show
+what would change, why, and which artifacts must regenerate.
+
+| Tenant | Baseline score | Watched-session mode | Improvement |
+|---|---:|---:|---:|
+| Apex Retail | 8.1 / 10 | 8.4 / 10 | +0.3 |
+| Meridian Health System | 8.2 / 10 | 8.4 / 10 | +0.2 |
+| First Capital Financial | 8.2 / 10 | 8.4 / 10 | +0.2 |
+
+Watched-session mode lifts the two weakest areas:
+
+- Intelligence idea and bet framing improves because the case now receives
+  observed session signals rather than only a static update packet.
+- Workshop and advisory support improves because the session produces a
+  regeneration diff, not just a list of accepted inputs.
+
+The remaining gap is explicit: replace the proxy transcript with a real
+practitioner-observed session.
 
 ## Artifact Scorecard
 
@@ -63,6 +91,15 @@ The expected behavior is strict:
 - rate-card overrides are accepted as estimate-impacting inputs,
 - workshop notes must include an action or decision,
 - unmapped content is rejected and never silently changes the business case.
+
+Watched-session mode adds a regeneration diff:
+
+- recommendation before,
+- recommendation after state (`requires_regeneration`),
+- accepted changes with before / after values where known,
+- rejected changes with reasons,
+- affected artifacts such as Discover brief, business case pack, financial
+  model, CFO pack, and Mobilize packet.
 
 ## What This Proves
 
