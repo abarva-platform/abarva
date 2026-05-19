@@ -36,3 +36,4 @@ export * from './firstcapital-fraud-detection-case';
 export * from './expert-review-cases';
 export * from './phase-playbooks/discover';
 export * from './phase-playbooks/apex-discover-case';
+export * from './rate-card/comprehensive-rate-card';
