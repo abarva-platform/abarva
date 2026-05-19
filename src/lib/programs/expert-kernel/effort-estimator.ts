@@ -16,6 +16,7 @@ import {
   type RoleMixEntry,
   type RoleRateCard,
 } from '@/lib/source/should-cost/should-cost-model';
+import { RESEARCHED_PLANNING_RATES } from './rate-card/derived-planning-rate-card';
 import { rangeOf, round2, sumRanges, type Range } from './types';
 
 /** The eight standard Move workstreams. */
@@ -137,13 +138,15 @@ const DEFAULT_UPSIDE = 0.85;
 // ---------------------------------------------------------------------------
 //
 // The effort-estimator consumes a rate card through a labelled abstraction so
-// the researched, client-specific card (a separate workstream) drops in later
-// without touching this module. Until then `DEFAULT_PLANNING_RATE_CARD` is
-// used — a clearly-labelled planning range, NEVER a quote (spec §5.4).
+// a client-specific card always replaces the default cleanly. The default,
+// `DEFAULT_PLANNING_RATE_CARD`, is the RESEARCHED benchmark card projected
+// onto the six should-cost roles (see `rate-card/derived-planning-rate-card`).
+// It is still a planning range, NEVER a quote (spec §5.4) — every band is a
+// market-derived benchmark and is always client-overridable.
 
 /** Provenance of a rate card — drives how it is labelled in the UI. */
 export type RateCardProvenance =
-  | 'planning_default' // kernel placeholder — a planning range, not a quote
+  | 'planning_default' // bare role rates with no recorded provenance
   | 'researched_benchmark' // 3-D researched benchmark (SI × location × spec)
   | 'client_specific'; // overrides everything — the client's own rate card
 
@@ -156,23 +159,19 @@ export interface KernelRateCard {
 }
 
 /**
- * The kernel's default planning rate card. Fully-loaded annual cost per FTE.
- * These are deliberately generic planning ranges — when the researched card
- * lands it drops in here with `provenance: 'researched_benchmark'`.
+ * The kernel's default planning rate card. Fully-loaded annual cost per FTE,
+ * derived from the researched 3-D SI benchmark card
+ * (`rate-card/benchmark-rate-card.ts`) projected onto the six should-cost
+ * roles. It is a researched planning benchmark — market-derived bands, NOT a
+ * quote — and is always overridable by a client-specific card.
  */
 export const DEFAULT_PLANNING_RATE_CARD: KernelRateCard = {
-  provenance: 'planning_default',
+  provenance: 'researched_benchmark',
   label:
-    'Planning default rate card — generic fully-loaded ranges, NOT a quote. ' +
-    'Override with a client-specific card before any commitment.',
-  rates: [
-    { role: 'engagement_lead', onshoreAnnualRate: 280_000, offshoreAnnualRate: 150_000 },
-    { role: 'solution_architect', onshoreAnnualRate: 240_000, offshoreAnnualRate: 130_000 },
-    { role: 'senior_engineer', onshoreAnnualRate: 200_000, offshoreAnnualRate: 95_000 },
-    { role: 'engineer', onshoreAnnualRate: 150_000, offshoreAnnualRate: 70_000 },
-    { role: 'analyst', onshoreAnnualRate: 120_000, offshoreAnnualRate: 60_000 },
-    { role: 'project_manager', onshoreAnnualRate: 170_000, offshoreAnnualRate: 90_000 },
-  ],
+    'Researched benchmark rate card — fully-loaded annual rates derived from ' +
+    'the 3-D SI benchmark (US Tier-1 archetype), a market planning range and ' +
+    'NOT a quote. Override with a client-specific card before any commitment.',
+  rates: RESEARCHED_PLANNING_RATES,
 };
 
 /**
@@ -187,7 +186,9 @@ export function resolveRateCard(
   if (Array.isArray(input)) {
     return {
       provenance: 'planning_default',
-      label: DEFAULT_PLANNING_RATE_CARD.label,
+      label:
+        'Planning rate card — bare role rates with no recorded provenance, ' +
+        'NOT a quote. Override with a client-specific card before commitment.',
       rates: input,
     };
   }

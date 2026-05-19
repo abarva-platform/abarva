@@ -39,9 +39,10 @@ import { rangeOf } from './types';
 const TENANT = 'apex-retail';
 const MOVE = 'Contact Center AI Routing';
 
-// The kernel default planning rate card — clearly labelled "not a quote". The
-// researched, client-specific rate card drops in here when that workstream
-// lands; nothing else in this case has to change.
+// The kernel's default planning rate card — the researched 3-D SI benchmark
+// projected onto the should-cost roles, clearly labelled a market planning
+// range and "not a quote". A client-specific Apex rate card would override
+// this; until one exists the researched benchmark is the honest default.
 const RATE_CARD = DEFAULT_PLANNING_RATE_CARD;
 
 export interface ApexCaseResult {

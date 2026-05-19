@@ -10,6 +10,11 @@
 // Pure module: deterministic, no I/O. It encodes expert priors as data — the
 // agent reads this playbook, it does not free-form the phase.
 
+// `PhaseTrap` and `KillTrigger` are shared verbatim with the Mobilize phase
+// playbook; they live in `shared-types`. The kernel barrel (`index.ts`)
+// exports them once from there — this file only imports them.
+import type { PhaseTrap, KillTrigger } from './shared-types';
+
 /** A node in the Design & Plan diagnostic question tree. */
 export interface PlaybookQuestion {
   /** Stable key. */
@@ -35,24 +40,6 @@ export interface RequiredEvidence {
   usedFor: string;
   /** True when its absence should block, not merely caveat, the case. */
   blocking: boolean;
-}
-
-/** A phase trap — a way Design & Plan routinely goes wrong. */
-export interface PhaseTrap {
-  key: string;
-  /** The trap, named. */
-  trap: string;
-  /** How the kernel guards against it. */
-  guard: string;
-}
-
-/** A named kill trigger — a condition under which Moves says "do not fund". */
-export interface KillTrigger {
-  code: string;
-  /** The condition that fires the kill. */
-  condition: string;
-  /** The fix-condition — "revisit when X is true" (spec §5.2). */
-  fixCondition: string;
 }
 
 export interface DesignPlanPlaybook {
