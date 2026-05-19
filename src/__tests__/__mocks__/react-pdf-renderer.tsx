@@ -14,6 +14,7 @@
 // ESM layout engine. Pixel-accurate layout is validated via prod
 // download, consistent with how the docx renderers are covered.
 
+import { Readable } from 'node:stream';
 import type { ReactElement, ReactNode } from 'react';
 
 // ── Primitive components ───────────────────────────────────────────────────
@@ -62,7 +63,11 @@ export type DocumentProps = NodeProps;
 // ── A minimal but structurally valid single-page PDF ───────────────────────
 // Enough bytes for tests to assert the %PDF- magic + a non-trivial size.
 
-const MINIMAL_PDF = [
+// The PDF body (header + objects + xref) — everything up to but NOT
+// including the `%%EOF` trailer. `renderPdfBuffer` appends the document
+// content and the trailer, so the emitted buffer is structurally honest:
+// it starts with `%PDF-` and ends with `%%EOF`, exactly like a real PDF.
+const MINIMAL_PDF_BODY = [
   '%PDF-1.4',
   '1 0 obj<</Type/Catalog/Pages 2 0 R>>endobj',
   '2 0 obj<</Type/Pages/Kids[3 0 R]/Count 1>>endobj',
@@ -73,10 +78,6 @@ const MINIMAL_PDF = [
   'trailer<</Size 4/Root 1 0 R>>',
   'startxref',
   '0',
-  '%%EOF',
-  // Pad so the buffer comfortably clears the test size thresholds and
-  // approximates a real document's payload.
-  '%'.repeat(2048),
 ].join('\n');
 
 /**
@@ -97,19 +98,27 @@ function collectText(node: ReactNode): string {
 
 function renderPdfBuffer(element: ReactElement): Buffer {
   const text = collectText(element);
-  const body = `${MINIMAL_PDF}\n% content-bytes:${text.length}\n${text}`;
+  // Embed the collected document text as a PDF comment so content
+  // assertions can find it, pad so the buffer clears size thresholds,
+  // then close with the `%%EOF` trailer — which therefore lands within
+  // the last bytes of the buffer, where PDF validators expect it.
+  const body = [
+    MINIMAL_PDF_BODY,
+    `% content-bytes:${text.length}`,
+    `% ${text.replace(/[\r\n]+/g, ' ')}`,
+    '%'.repeat(2048),
+    '%%EOF',
+  ].join('\n');
   return Buffer.from(body, 'latin1');
 }
 
 export function pdf(element: ReactElement) {
   return {
     async toBuffer(): Promise<NodeJS.ReadableStream> {
-      const buffer = renderPdfBuffer(element);
-      // Return an async-iterable so callers' `for await` loops work.
-      async function* gen(): AsyncGenerator<Buffer> {
-        yield buffer;
-      }
-      return gen() as unknown as NodeJS.ReadableStream;
+      // A real Node Readable — matches @react-pdf's PDFDocument stream,
+      // which supports BOTH the `.on('data'|'end')` event API and
+      // `for await`. An async generator only satisfies the latter.
+      return Readable.from([renderPdfBuffer(element)]);
     },
   };
 }
