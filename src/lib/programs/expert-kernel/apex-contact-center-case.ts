@@ -16,7 +16,7 @@ import { buildBaselineModel } from './baseline-model';
 import { buildAssumptionLedger } from './assumption-ledger';
 import { buildEffortEstimate } from './effort-estimator';
 import { demoKernelRateCard } from './rate-card/demo-rate-card-packs';
-import { buildValueForecast } from './value-forecast';
+import { buildValueForecast, type ValueForecast } from './value-forecast';
 import {
   compileBusinessCase,
   compileFullBusinessCase,
@@ -64,6 +64,37 @@ export interface ApexFullCaseResult {
   roadmap: Roadmap;
   raci: RaciMatrix;
   rubric: RubricResult;
+}
+
+/**
+ * Build the Apex Contact Center value forecast — gross value plus the
+ * mandatory six-factor haircut. Gross value rests on the cost-per-contact
+ * proxy (a seed gap), so `grossValueIsProxy` forces `monetisationBlocked`; the
+ * gross figure is an illustrative ceiling, NOT a claimed return. Exported so
+ * the financial-model export can render the haircut detail off one source.
+ */
+export function buildApexContactCenterValueForecast(): ValueForecast {
+  return buildValueForecast({
+    moveName: MOVE,
+    grossAnnualValue: rangeOf(7_800_000, 13_500_000),
+    horizonYears: 3,
+    adoptionCurve: [0.3, 0.7, 0.85],
+    grossValueIsProxy: true,
+    haircutScores: {
+      // Agent-assist preferred by WFM lead, but adoption not yet proven.
+      adoptionRisk: 0.6,
+      // CDP consolidation gap — intent/transcript data not yet unified.
+      dataReadiness: 0.45,
+      // Value depends on the routing process redesign landing.
+      processDependency: 0.55,
+      // NICE CXone aging; Salesforce/AWS connectors well understood.
+      integrationComplexity: 0.6,
+      // Customer-facing inference + transcript privacy review pending.
+      controlBurden: 0.5,
+      // CIO + CDO + VP Customer Care all named sponsors — strong.
+      sponsorStrength: 0.8,
+    },
+  });
 }
 
 /**
@@ -344,30 +375,7 @@ export function buildApexContactCenterCase(): ApexCaseResult {
   });
 
   // --- 4. Value forecast — gross value + mandatory haircut -----------------
-  // Gross value rests on the cost-per-contact proxy (a seed gap), so
-  // grossValueIsProxy = true forces monetisationBlocked. The number below is
-  // an illustrative ceiling, NOT a claimed return.
-  const value = buildValueForecast({
-    moveName: MOVE,
-    grossAnnualValue: rangeOf(7_800_000, 13_500_000),
-    horizonYears: 3,
-    adoptionCurve: [0.3, 0.7, 0.85],
-    grossValueIsProxy: true,
-    haircutScores: {
-      // Agent-assist preferred by WFM lead, but adoption not yet proven.
-      adoptionRisk: 0.6,
-      // CDP consolidation gap — intent/transcript data not yet unified.
-      dataReadiness: 0.45,
-      // Value depends on the routing process redesign landing.
-      processDependency: 0.55,
-      // NICE CXone aging; Salesforce/AWS connectors well understood.
-      integrationComplexity: 0.6,
-      // Customer-facing inference + transcript privacy review pending.
-      controlBurden: 0.5,
-      // CIO + CDO + VP Customer Care all named sponsors — strong.
-      sponsorStrength: 0.8,
-    },
-  });
+  const value = buildApexContactCenterValueForecast();
 
   // --- 5. Compile -> skeleton (runs the critic) ----------------------------
   const skeleton = compileBusinessCase({

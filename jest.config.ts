@@ -38,36 +38,49 @@ const config: Config = {
   },
 }
 
-// next/jest owns `transformIgnorePatterns` (it skips all of
-// node_modules). `@react-pdf/renderer` — used by the programs + Source
-// PDF renderers — and a chunk of its dependency tree ship pure ESM, so
-// those packages must be transpiled rather than ignored. We resolve
-// next/jest's generated config and rewrite the pattern to whitelist the
-// `@react-pdf/*` packages plus their known ESM transitive dependencies,
-// while still ignoring the rest of node_modules.
-const REACT_PDF_ESM_PACKAGES = [
+// next/jest generates its own `transformIgnorePatterns` that ignores all of
+// node_modules except a small allow-list. @react-pdf/renderer and its
+// dependency tree ship pure ESM, so renderer-level and route-level tests that
+// serialize a PDF need it transpiled. We post-process the generated config to
+// widen next/jest's first pattern with the PDF renderer ecosystem — appending
+// a new pattern does not work, because a file stays ignored if it matches ANY
+// pattern, and next/jest's first pattern already matches the @react-pdf path.
+// @react-pdf/renderer plus the ESM packages in its transitive dependency tree.
+const PDF_ESM_PACKAGES = [
   '@react-pdf',
-  'fontkit',
+  'react-pdf',
   'yoga-layout',
-  'restructure',
-  'unicode-properties',
-  'unicode-trie',
+  'color',
   'color-string',
   'color-name',
+  'color-convert',
+  'colord',
+  'is-arrayish',
+  'simple-swizzle',
+  'parse-css-color',
+  'hyphen',
+  'queue',
+  'restructure',
+  'media-engine',
+  'cross-fetch',
+  'fontkit',
+  'unicode-properties',
+  'unicode-trie',
+  'dfa',
+  'tiny-inflate',
+  'pako',
+  'brotli',
+  'clone',
   'png-js',
   'jay-peg',
-  'dfa',
-  'clone',
-  'brotli',
-].join('|')
+].join('|');
 
-export default async function jestConfig(): Promise<Config> {
-  const resolved = await createJestConfig(config)()
-  return {
-    ...resolved,
-    transformIgnorePatterns: [
-      `/node_modules/(?!(\\.pnpm/)?(${REACT_PDF_ESM_PACKAGES})/)`,
-      '^.+\\.module\\.(css|sass|scss)$',
-    ],
-  }
+export default async function jestConfig() {
+  const generated = await createJestConfig(config)();
+  const patterns = (generated.transformIgnorePatterns ?? []).map((p) =>
+    p.includes('node_modules/(?!') && !p.includes('@react-pdf')
+      ? p.replace('node_modules/(?!', `node_modules/(?!(${PDF_ESM_PACKAGES})/)(?!`)
+      : p,
+  );
+  return { ...generated, transformIgnorePatterns: patterns };
 }

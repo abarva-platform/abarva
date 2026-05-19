@@ -16,19 +16,32 @@
 //
 // Pure module: deterministic, no I/O.
 
-import type { BusinessCaseSkeleton } from './business-case-compiler';
+import type { BusinessCaseSkeleton, FullBusinessCase } from './business-case-compiler';
+import type { AdoptionApproach } from './adoption-approach';
+import type { MeasurementHandoff } from './measurement-handoff';
+import type { GoDecisionPack } from './go-decision-pack';
+import type { ValueForecast } from './value-forecast';
 import {
   buildApexContactCenterCase,
+  buildApexContactCenterFullCase,
+  buildApexContactCenterValueForecast,
+  buildApexMobilizeCase,
   APEX_CONTACT_CENTER_MOVE_REF,
   APEX_CONTACT_CENTER_TENANT_KEY,
 } from './apex-contact-center-case';
 import {
   buildMeridianAmbientClinicalCase,
+  buildMeridianAmbientClinicalFullCase,
+  buildMeridianAmbientValueForecast,
+  buildMeridianMobilizeCase,
   MERIDIAN_AMBIENT_MOVE_REF,
   MERIDIAN_AMBIENT_TENANT_KEY,
 } from './meridian-ambient-clinical-case';
 import {
   buildFirstCapitalFraudDetectionCase,
+  buildFirstCapitalFraudDetectionFullCase,
+  buildFirstCapitalFraudValueForecast,
+  buildFirstCapitalMobilizeCase,
   FIRSTCAPITAL_FRAUD_MOVE_REF,
   FIRSTCAPITAL_FRAUD_TENANT_KEY,
 } from './firstcapital-fraud-detection-case';
@@ -50,6 +63,26 @@ export interface ExpertReviewCaseEntry {
   moveRef: string;
   /** Runs the kernel and returns the grounded business-case skeleton. */
   buildCase: () => { skeleton: BusinessCaseSkeleton };
+  /**
+   * Runs the kernel to the Design & Plan depth — the full costed business
+   * case (skeleton → roadmap → RACI → three-scenario sensitivity).
+   */
+  buildFullCase: () => { fullCase: FullBusinessCase };
+  /**
+   * Runs the kernel to the Mobilize & Handoff depth — adoption approach,
+   * Tower measurement handoff, and the go-decision pack.
+   */
+  buildMobilize: () => {
+    adoption: AdoptionApproach;
+    measurement: MeasurementHandoff;
+    goPack: GoDecisionPack;
+  };
+  /**
+   * The value forecast — gross value plus the six-factor haircut. The
+   * skeleton folds this into a Range; the financial-model export needs the
+   * full forecast to render the haircut detail.
+   */
+  buildValueForecast: () => ValueForecast;
 }
 
 /** The case registry — three anchors, keyed by case id. */
@@ -63,6 +96,9 @@ export const EXPERT_REVIEW_CASES: Readonly<
     tenantKey: APEX_CONTACT_CENTER_TENANT_KEY,
     moveRef: APEX_CONTACT_CENTER_MOVE_REF,
     buildCase: buildApexContactCenterCase,
+    buildFullCase: buildApexContactCenterFullCase,
+    buildMobilize: buildApexMobilizeCase,
+    buildValueForecast: buildApexContactCenterValueForecast,
   },
   meridian: {
     id: 'meridian',
@@ -71,6 +107,9 @@ export const EXPERT_REVIEW_CASES: Readonly<
     tenantKey: MERIDIAN_AMBIENT_TENANT_KEY,
     moveRef: MERIDIAN_AMBIENT_MOVE_REF,
     buildCase: buildMeridianAmbientClinicalCase,
+    buildFullCase: buildMeridianAmbientClinicalFullCase,
+    buildMobilize: buildMeridianMobilizeCase,
+    buildValueForecast: buildMeridianAmbientValueForecast,
   },
   arcturus: {
     id: 'arcturus',
@@ -79,6 +118,9 @@ export const EXPERT_REVIEW_CASES: Readonly<
     tenantKey: FIRSTCAPITAL_FRAUD_TENANT_KEY,
     moveRef: FIRSTCAPITAL_FRAUD_MOVE_REF,
     buildCase: buildFirstCapitalFraudDetectionCase,
+    buildFullCase: buildFirstCapitalFraudDetectionFullCase,
+    buildMobilize: buildFirstCapitalMobilizeCase,
+    buildValueForecast: buildFirstCapitalFraudValueForecast,
   },
 });
 
