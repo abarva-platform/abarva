@@ -134,7 +134,7 @@ export function pdf(element?: ReactNode) {
       return renderElementToBuffer(current);
     },
     async toBlob(): Promise<Blob> {
-      return new Blob([renderElementToBuffer(current)], {
+      return new Blob([new Uint8Array(renderElementToBuffer(current))], {
         type: 'application/pdf',
       });
     },
