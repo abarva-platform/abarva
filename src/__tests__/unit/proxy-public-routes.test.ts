@@ -49,10 +49,16 @@ describe('proxy public route patterns', () => {
   });
 
   it('keeps product workspaces auth-gated instead of public', () => {
-    for (const path of ['/admin', '/home', '/programs', '/source', '/tower', '/product']) {
+    for (const path of ['/admin', '/home', '/programs', '/source', '/tower']) {
       const request = new NextRequest(`https://app.abarva.ai${path}`);
       expect(isAuthRequiredRoute(request)).toBe(true);
       expect(isPublicRoute(request)).toBe(false);
     }
+  });
+
+  it('exposes /product as the public Product overview page', () => {
+    const request = new NextRequest('https://app.abarva.ai/product');
+    expect(isPublicRoute(request)).toBe(true);
+    expect(isAuthRequiredRoute(request)).toBe(false);
   });
 });

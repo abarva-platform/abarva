@@ -62,6 +62,11 @@ export const PUBLIC_ROUTE_PATTERNS = [
   // still gated by AUTH_REQUIRED_ROUTE_PATTERNS, which is checked
   // before the public-route fall-through.
   '/intelligence(.*)',
+  // `/product` is the public Product overview — the marketing nav's
+  // "Platform → Product" link. It explains the four surfaces
+  // (Intelligence / Moves / Source / Tower) for logged-out visitors
+  // who need to see what the product is before signing in.
+  '/product(.*)',
 ] as const
 
 const isPublicRoute = createRouteMatcher([...PUBLIC_ROUTE_PATTERNS])
@@ -132,7 +137,6 @@ export const AUTH_REQUIRED_ROUTE_PATTERNS = [
   '/intelligence/ask(.*)',
   '/intelligence/validate(.*)',
   '/source(.*)',
-  '/product(.*)',
 ] as const
 
 const authRequiredRoutes = createRouteMatcher([...AUTH_REQUIRED_ROUTE_PATTERNS])
