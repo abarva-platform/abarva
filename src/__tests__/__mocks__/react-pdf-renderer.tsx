@@ -95,12 +95,16 @@ function collectText(node: ReactNode): string {
   return '';
 }
 
+function renderPdfBuffer(element: ReactElement): Buffer {
+  const text = collectText(element);
+  const body = `${MINIMAL_PDF}\n% content-bytes:${text.length}\n${text}`;
+  return Buffer.from(body, 'latin1');
+}
+
 export function pdf(element: ReactElement) {
   return {
     async toBuffer(): Promise<NodeJS.ReadableStream> {
-      const text = collectText(element);
-      const body = `${MINIMAL_PDF}\n% content-bytes:${text.length}\n${text}`;
-      const buffer = Buffer.from(body, 'latin1');
+      const buffer = renderPdfBuffer(element);
       // Return an async-iterable so callers' `for await` loops work.
       async function* gen(): AsyncGenerator<Buffer> {
         yield buffer;
@@ -108,4 +112,10 @@ export function pdf(element: ReactElement) {
       return gen() as unknown as NodeJS.ReadableStream;
     },
   };
+}
+
+// `@react-pdf/renderer`'s top-level `renderToBuffer` — resolves directly to a
+// Buffer (unlike `pdf().toBuffer()`, which resolves to a readable stream).
+export async function renderToBuffer(element: ReactElement): Promise<Buffer> {
+  return renderPdfBuffer(element);
 }

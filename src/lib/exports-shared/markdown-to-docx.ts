@@ -352,12 +352,28 @@ function extractPlain(node: Content): string {
 }
 
 function textOf(child: ParagraphChild): string {
-  // ParagraphChild can be TextRun (with options.text) or other shapes.
-  // Use a defensive read since TextRun doesn't expose a .text property
-  // publicly — but we only feed our own bodyRun-produced runs through
-  // here, so we know they were built from a string.
+  // ParagraphChild is most often a docx TextRun. docx does not expose
+  // the run text publicly, and its internal shape has shifted across
+  // versions: older builds kept an `.options.text`, current builds
+  // (docx 9.x) nest the string as `run.root[1].root[1]` — a `Text`
+  // element whose `root` is `[<attr>, "<the string>"]`. We read both
+  // shapes defensively, plus walk `root` for any nested string leaf,
+  // so heading / table-cell text round-trips correctly.
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const opts = (child as any).options;
+  const anyChild = child as any;
+  const opts = anyChild?.options;
   if (opts && typeof opts.text === 'string') return opts.text;
-  return '';
+
+  const collect = (node: unknown, depth: number): string => {
+    if (depth > 6 || node == null) return '';
+    if (typeof node === 'string') return node;
+    if (Array.isArray(node)) {
+      return node.map((n) => collect(n, depth + 1)).join('');
+    }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const root = (node as any).root;
+    if (root !== undefined) return collect(root, depth + 1);
+    return '';
+  };
+  return collect(anyChild?.root, 0);
 }
