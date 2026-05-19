@@ -2023,6 +2023,11 @@ interface TowerIndexPageProps {
   towerHandoffSlot?: ReactNode;
   towerSubmenuSlot?: ReactNode;
   towerLensSlot?: ReactNode;
+  /**
+   * G8: server-rendered download control for the Tower outcome /
+   * measurement report. Rendered in the masthead. Omitted = no button.
+   */
+  reportDownloadSlot?: ReactNode;
 }
 
 function formatTowerDateLabel(todayIso: string): { dayName: string; monthDay: string } {
@@ -2063,6 +2068,7 @@ export function TowerIndexPage({
   towerHandoffSlot: _p4,
   towerSubmenuSlot,
   towerLensSlot: _p6,
+  reportDownloadSlot,
 }: TowerIndexPageProps = {}) {
   void _p1; void _p2; void _p3; void _p4; void _p6;
   const alignment2x2View = buildStrategicAlignment2x2View(initiatives ?? []);
@@ -2339,7 +2345,15 @@ export function TowerIndexPage({
               borderBottom: `1px solid ${T.RULE_STRONG}`,
             }}
           >
-            <div>
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'flex-start',
+                justifyContent: 'space-between',
+                gap: 20,
+              }}
+            >
+            <div style={{ minWidth: 0 }}>
               <div
                 style={{
                   fontFamily: T.MONO,
@@ -2402,6 +2416,10 @@ export function TowerIndexPage({
               >
                 {workspaceQuestion(activeTab)}
               </div>
+            </div>
+            {reportDownloadSlot ? (
+              <div style={{ flex: '0 0 auto' }}>{reportDownloadSlot}</div>
+            ) : null}
             </div>
           </div>
 

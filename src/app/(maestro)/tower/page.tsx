@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { TowerIndexPage, type TowerSubstrateCounts } from '@/components/tower/TowerIndexPage';
 import { MovePortfolioCardPanel } from '@/components/tower/MovePortfolioCardPanel';
+import { TowerOutcomeReportDownload } from '@/components/tower/TowerOutcomeReportDownload';
 import {
   APEX_TENANT_KEY,
   buildApexPortfolioCards,
@@ -596,6 +597,11 @@ export default async function TowerPage({
       substrateCounts={towerSubstrateCounts}
       activeTab={activeTab}
       towerSubmenuSlot={<TowerMainSubmenuStrip activeTab={activeTab} />}
+      reportDownloadSlot={
+        activeClient ? (
+          <TowerOutcomeReportDownload clientKey={activeClient.key} />
+        ) : undefined
+      }
       towerHandoffSlot={
         <>
           <MovePortfolioCardPanel cards={movePortfolioCards} />
