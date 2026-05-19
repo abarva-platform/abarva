@@ -35,8 +35,7 @@ import { ArtOfPossibleCanvas } from './ArtOfPossibleCanvas';
 import { EnterpriseContextCanvas } from './EnterpriseContextCanvas';
 import { IntelligenceMap } from '@/components/intelligence-v4/IntelligenceMap';
 import { IntelligenceBrief } from '@/components/intelligence-v4/IntelligenceBrief';
-import { getMeridianMapData, getMeridianBriefData } from '@/lib/knowledge-corpus/fixtures/meridian-healthcare';
-import { getFirstCapitalMapData, getFirstCapitalBriefData } from '@/lib/knowledge-corpus/fixtures/first-capital-finserv';
+import { CorpusNotSeededState } from '@/components/intelligence-v4/CorpusNotSeededState';
 import { FIRST_CAPITAL_DEMO, FIRST_CAPITAL_AOP_DEMO, MERIDIAN_AOP_DEMO, APEX_RETAIL_AOP_DEMO } from './demo-data';
 import { buildSentinelIntelContext } from '@/lib/intelligence-v3/sentinel-intel-context';
 import type { EnterpriseContextOverview } from '@/lib/enterprise-context/intelligence-read-model';
@@ -130,9 +129,19 @@ export function IntelligenceV3Page({
     : isFirstCapitalBound
       ? FIRST_CAPITAL_AOP_DEMO
       : data.aopBands ?? MERIDIAN_AOP_DEMO;
-  const briefData = apexRetailData?.briefData ?? (isFirstCapitalBound ? getFirstCapitalBriefData() : getMeridianBriefData());
-  const mapData = apexRetailData?.mapData ?? (isFirstCapitalBound ? getFirstCapitalMapData() : getMeridianMapData());
-  const activeTenantName = isApexBound ? 'Apex Retail Group' : isFirstCapitalBound ? briefData.tenantName : data.tenantName;
+  // Corpus surfaces (Brief / Map) are grounded ONLY by a real loaded
+  // corpus. Apex Retail has `loadApexRetailIntelligenceData`; Meridian
+  // and First Capital have none. No-fabrication rule: rather than fall
+  // back to hand-authored fixture Briefs/Maps with figures that trace
+  // to no seeded substrate, the corpus stages render an honest
+  // "not yet seeded" state for those tenants (see corpusStageNode below).
+  const briefData = apexRetailData?.briefData ?? null;
+  const mapData = apexRetailData?.mapData ?? null;
+  const activeTenantName = isApexBound
+    ? 'Apex Retail Group'
+    : isFirstCapitalBound
+      ? 'First Capital Financial'
+      : data.tenantName;
   const sentinelOpener = isApexBound
     ? `Apex Retail intelligence is ready: ${apexRetailData?.status.patterns} retail patterns, ${apexRetailData?.status.summarizedSources}/${apexRetailData?.status.sources} summarized sources, ${apexRetailData?.status.useCases} use cases, and ${apexRetailData?.status.contradictions} open tensions. Ask me which CXO decision matters first.`
     : data.sentinelOpener;
@@ -202,9 +211,19 @@ export function IntelligenceV3Page({
         // their own masthead + right rail; embedding inside the v3
         // grid would squeeze them). Sentinel chat is integrated into
         // each component's left-rail design (post-AgentDock migration).
+        //
+        // No-fabrication rule: Brief/Map only render when a real corpus
+        // is loaded (`briefData`/`mapData` non-null — Apex only). For
+        // Meridian and First Capital there is no seeded corpus, so the
+        // honest "not yet seeded" state renders instead of a fabricated
+        // fixture Brief/Map.
         stage === 'brief'
-          ? <IntelligenceBrief data={briefData} activeClient={activeTenantName} surfaceContext={surfaceContext} />
-          : <IntelligenceMap data={mapData} activeClient={activeTenantName} surfaceContext={surfaceContext} />
+          ? briefData
+            ? <IntelligenceBrief data={briefData} activeClient={activeTenantName} surfaceContext={surfaceContext} />
+            : <CorpusNotSeededState stage="brief" tenantName={activeTenantName} />
+          : mapData
+            ? <IntelligenceMap data={mapData} activeClient={activeTenantName} surfaceContext={surfaceContext} />
+            : <CorpusNotSeededState stage="map" tenantName={activeTenantName} />
       ) : (
         // Non-corpus stages render through SentinelChat's <AgentDock>
         // layout · chat LEFT, workspace RIGHT, resizable splitter,

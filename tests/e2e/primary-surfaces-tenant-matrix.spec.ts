@@ -122,10 +122,17 @@ for (const tenant of TENANTS) {
       await page.goto(`${BASE_URL}/intelligence`);
       // L11 fix (PR #1923): V4 Brief headline is tenant-keyed. Confirms
       // we don't ship "Heliara Health" on the Meridian Brief (D-021 regression).
+      //
+      // No-fabrication fix: only Apex has a seeded Intelligence corpus, so
+      // only Apex renders the V4 Brief. Meridian + First Capital render the
+      // honest "corpus not yet seeded" state — whose <h1> still names the
+      // tenant ("<tenant>'s Intelligence corpus is not yet seeded."), so
+      // this tenant-identity assertion holds for all three tenants.
       const heading = page.getByRole('heading', { level: 1 });
       await expect(heading).toBeVisible();
-      // The headline may include "for <tenant>" or "<tenant> this quarter";
-      // accept either, but the tenant name must be in it.
+      // The headline may include "for <tenant>", "<tenant> this quarter",
+      // or "<tenant>'s Intelligence corpus is not yet seeded"; accept any,
+      // but the tenant name must be in it.
       const text = (await heading.textContent()) ?? '';
       expect(text).toContain(tenant.briefHeadlineFragment);
     });
