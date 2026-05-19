@@ -16,6 +16,12 @@ export * from './qa-rubric';
 export * from './roadmap';
 export * from './raci';
 export * from './phase-playbooks/design-plan';
+// Mobilize & Handoff phase — playbook, adoption approach, Tower measurement
+// handoff, go-decision pack.
+export * from './phase-playbooks/mobilize';
+export * from './adoption-approach';
+export * from './measurement-handoff';
+export * from './go-decision-pack';
 export * from './apex-contact-center-case';
 export * from './phase-playbooks/discover';
 export * from './phase-playbooks/apex-discover-case';
