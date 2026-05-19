@@ -14,31 +14,36 @@
 
 import { buildBaselineModel } from './baseline-model';
 import { buildAssumptionLedger } from './assumption-ledger';
-import { buildEffortEstimate } from './effort-estimator';
+import { buildEffortEstimate, DEFAULT_PLANNING_RATE_CARD } from './effort-estimator';
 import { buildValueForecast } from './value-forecast';
 import {
   compileBusinessCase,
+  compileFullBusinessCase,
   type BusinessCaseSkeleton,
+  type FullBusinessCase,
 } from './business-case-compiler';
+import { buildRoadmap, type Roadmap } from './roadmap';
+import { buildRaciMatrix, type RaciMatrix } from './raci';
 import { evaluateRubric, type RubricResult } from './qa-rubric';
 import { rangeOf } from './types';
-import type { RoleRateCard } from '@/lib/source/should-cost/should-cost-model';
 
 const TENANT = 'apex-retail';
 const MOVE = 'Contact Center AI Routing';
 
-// Fully-loaded annual rate card — benchmark figures, treated as an assumption.
-const RATE_CARD: RoleRateCard[] = [
-  { role: 'engagement_lead', onshoreAnnualRate: 280_000, offshoreAnnualRate: 150_000 },
-  { role: 'solution_architect', onshoreAnnualRate: 240_000, offshoreAnnualRate: 130_000 },
-  { role: 'senior_engineer', onshoreAnnualRate: 200_000, offshoreAnnualRate: 95_000 },
-  { role: 'engineer', onshoreAnnualRate: 150_000, offshoreAnnualRate: 70_000 },
-  { role: 'analyst', onshoreAnnualRate: 120_000, offshoreAnnualRate: 60_000 },
-  { role: 'project_manager', onshoreAnnualRate: 170_000, offshoreAnnualRate: 90_000 },
-];
+// The kernel default planning rate card — clearly labelled "not a quote". The
+// researched, client-specific rate card drops in here when that workstream
+// lands; nothing else in this case has to change.
+const RATE_CARD = DEFAULT_PLANNING_RATE_CARD;
 
 export interface ApexCaseResult {
   skeleton: BusinessCaseSkeleton;
+  rubric: RubricResult;
+}
+
+export interface ApexFullCaseResult {
+  fullCase: FullBusinessCase;
+  roadmap: Roadmap;
+  raci: RaciMatrix;
   rubric: RubricResult;
 }
 
@@ -398,4 +403,185 @@ export function buildApexContactCenterCase(): ApexCaseResult {
   });
 
   return { skeleton, rubric: evaluateRubric(skeleton) };
+}
+
+// ===========================================================================
+// Design & Plan phase — the full costed business case for Apex.
+//
+// This extends the skeleton above into the depth deliverable: a phased costed
+// roadmap, a human+agent RACI, and the full three-scenario business case.
+// Every input remains grounded in the audited Apex substrate; no fabrication.
+// ===========================================================================
+
+/**
+ * Build the FULL Design & Plan business case for Apex Contact Center AI
+ * Routing — skeleton → roadmap → RACI → full costed case. Deterministic.
+ */
+export function buildApexContactCenterFullCase(): ApexFullCaseResult {
+  const { skeleton } = buildApexContactCenterCase();
+
+  // --- Roadmap — 4 phases, foundational phase 0 -----------------------------
+  // Steady-state annual value: the post-haircut year-3 net value, the most
+  // honest "steady-state" figure the value forecast produces.
+  const steadyState =
+    skeleton.effort.workstreams.length > 0
+      ? skeleton.valueRange.point / 3
+      : skeleton.valueRange.point;
+
+  const roadmap = buildRoadmap({
+    moveName: MOVE,
+    effort: skeleton.effort,
+    steadyStateAnnualValue: steadyState,
+    phases: [
+      {
+        id: 'p0_foundation',
+        label: 'Phase 0 — Data & platform foundation',
+        order: 0,
+        durationMonths: 5,
+        workstreamIds: ['foundational', 'data'],
+        dependsOn: [],
+        isFoundational: true,
+        valueMilestone: {
+          statement:
+            'Intent / transcript data unified and a model gateway stood up — ' +
+            'no customer-facing value yet; this is the precondition.',
+          metricKey: null,
+          valueShare: 0,
+        },
+      },
+      {
+        id: 'p1_pilot',
+        label: 'Phase 1 — Routing pilot on Customer Care queues',
+        order: 1,
+        durationMonths: 7,
+        workstreamIds: ['ai_build', 'integration', 'data_governance'],
+        dependsOn: ['p0_foundation'],
+        isFoundational: false,
+        valueMilestone: {
+          statement:
+            'AI routing live on pilot queues — containment +4 pts, AHT down ' +
+            '~0.3 min on piloted contacts.',
+          metricKey: 'containment_pct',
+          valueShare: 0.25,
+        },
+      },
+      {
+        id: 'p2_scale',
+        label: 'Phase 2 — Scale-out + process redesign',
+        order: 2,
+        durationMonths: 6,
+        workstreamIds: ['process_redesign'],
+        dependsOn: ['p1_pilot'],
+        isFoundational: false,
+        valueMilestone: {
+          statement:
+            'Routing scaled across Customer Care; agent-assist workflow ' +
+            'redesigned — containment toward the 40% target.',
+          metricKey: 'containment_pct',
+          valueShare: 0.45,
+        },
+      },
+      {
+        id: 'p3_adopt_run',
+        label: 'Phase 3 — Adoption + run',
+        order: 3,
+        durationMonths: 12,
+        workstreamIds: ['change_adoption', 'run'],
+        dependsOn: ['p2_scale'],
+        isFoundational: false,
+        valueMilestone: {
+          statement:
+            'Steady-state adoption (~70%) reached; hypercare complete and ' +
+            'the routing model in sustained operation.',
+          metricKey: 'csat',
+          valueShare: 0.3,
+        },
+      },
+    ],
+  });
+
+  // --- RACI — human + agent decision-rights matrix --------------------------
+  const raci = buildRaciMatrix({
+    moveName: MOVE,
+    parties: [
+      { id: 'sponsor_cio', name: 'CIO (Executive Sponsor)', kind: 'human' },
+      { id: 'sponsor_cdo', name: 'CDO (Data Sponsor)', kind: 'human' },
+      { id: 'vp_care', name: 'VP Customer Care', kind: 'human' },
+      { id: 'program_lead', name: 'Priya Iyer (Program Lead)', kind: 'human' },
+      { id: 'wfm_lead', name: 'Mariana Rojas (WFM Lead)', kind: 'human' },
+      { id: 'ai_gov', name: 'Elena Fischer (AI Governance)', kind: 'human' },
+      { id: 'solution_arch', name: 'Solution Architect', kind: 'human' },
+      { id: 'agent_designer', name: 'Solution-Design Agent', kind: 'agent' },
+      { id: 'agent_builder', name: 'Build Agent', kind: 'agent' },
+    ],
+    decisions: [
+      {
+        key: 'd_fund_move',
+        decision: 'Approve funding for the Move',
+        kind: 'governance',
+        assignments: [
+          { partyId: 'sponsor_cio', role: 'accountable' },
+          { partyId: 'program_lead', role: 'responsible' },
+          { partyId: 'sponsor_cdo', role: 'consulted' },
+          { partyId: 'vp_care', role: 'consulted' },
+        ],
+      },
+      {
+        key: 'd_architecture',
+        decision: 'Select the solution architecture',
+        kind: 'design',
+        assignments: [
+          { partyId: 'solution_arch', role: 'accountable' },
+          { partyId: 'agent_designer', role: 'responsible' },
+          { partyId: 'program_lead', role: 'consulted' },
+        ],
+        agentAutonomy: 'recommend',
+      },
+      {
+        key: 'd_privacy_gate',
+        decision: 'Clear the transcript-use privacy review',
+        kind: 'governance',
+        assignments: [
+          { partyId: 'ai_gov', role: 'accountable' },
+          { partyId: 'program_lead', role: 'responsible' },
+          { partyId: 'sponsor_cdo', role: 'consulted' },
+        ],
+      },
+      {
+        key: 'd_build_execution',
+        decision: 'Execute the AI routing build',
+        kind: 'delivery',
+        assignments: [
+          { partyId: 'program_lead', role: 'accountable' },
+          { partyId: 'agent_builder', role: 'responsible' },
+          { partyId: 'solution_arch', role: 'consulted' },
+        ],
+        agentAutonomy: 'act_with_approval',
+      },
+      {
+        key: 'd_go_live',
+        decision: 'Approve pilot go-live on Customer Care queues',
+        kind: 'governance',
+        assignments: [
+          { partyId: 'vp_care', role: 'accountable' },
+          { partyId: 'program_lead', role: 'responsible' },
+          { partyId: 'wfm_lead', role: 'consulted' },
+          { partyId: 'ai_gov', role: 'consulted' },
+        ],
+      },
+      {
+        key: 'd_adoption_plan',
+        decision: 'Own the agent adoption and change plan',
+        kind: 'delivery',
+        assignments: [
+          { partyId: 'wfm_lead', role: 'accountable' },
+          { partyId: 'program_lead', role: 'responsible' },
+          { partyId: 'vp_care', role: 'informed' },
+        ],
+      },
+    ],
+  });
+
+  const fullCase = compileFullBusinessCase({ skeleton, roadmap, raci });
+  return { fullCase, roadmap, raci, rubric: evaluateRubric(skeleton) };
 }

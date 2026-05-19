@@ -59,12 +59,26 @@ export interface WorkstreamInput {
 
 export interface EffortEstimatorInput {
   moveName: string;
-  /** Shared fully-loaded rate card for every role used across workstreams. */
-  rateCard: RoleRateCard[];
+  /**
+   * Shared fully-loaded rate card. Either a bare `RoleRateCard[]` (treated as
+   * a planning default) or a labelled `KernelRateCard` carrying provenance.
+   */
+  rateCard: RoleRateCard[] | KernelRateCard;
   /** Engagement-level default offshore fraction (0..1). */
   offshoreRatio: number;
   workstreams: WorkstreamInput[];
 }
+
+/**
+ * Workstreams classified as "business change" rather than "AI build". The
+ * spec (§2, §5.3) requires Moves to surface the build-vs-change effort split
+ * explicitly — change is routinely the larger, under-budgeted half.
+ */
+export const BUSINESS_CHANGE_WORKSTREAMS: ReadonlySet<WorkstreamId> = new Set([
+  'process_redesign',
+  'change_adoption',
+  'data_governance',
+]);
 
 export interface WorkstreamEstimate {
   id: WorkstreamId;
@@ -82,6 +96,22 @@ export interface WorkstreamEstimate {
   durationMonths: number;
 }
 
+/**
+ * The AI-build vs. business-change effort split — surfaced explicitly because
+ * a Move that under-budgets the change half is the single most common way an
+ * AI business case fails on contact (spec §2, §5.3).
+ */
+export interface BuildVsChangeSplit {
+  /** Base cost of AI-build-side workstreams (ai_build, integration, data, foundational, run). */
+  aiBuildCost: number;
+  /** Base cost of business-change workstreams (process redesign, change & adoption, data governance). */
+  businessChangeCost: number;
+  /** Fraction (0..1) of total base effort that is business change. */
+  businessChangeFraction: number;
+  /** A plain-language read of whether the split looks credible. */
+  note: string;
+}
+
 export interface EffortEstimate {
   moveName: string;
   workstreams: WorkstreamEstimate[];
@@ -93,10 +123,76 @@ export interface EffortEstimate {
   totalAgentCost: number;
   /** Fraction (0..1) of base effort delivered by AI agents. */
   effectiveAgentSplit: number;
+  /** AI-build vs. business-change effort split. */
+  buildVsChange: BuildVsChangeSplit;
+  /** The resolved, provenance-labelled rate card the estimate was built on. */
+  rateCard: KernelRateCard;
 }
 
 const DEFAULT_CONSERVATIVE = 1.4;
 const DEFAULT_UPSIDE = 0.85;
+
+// ---------------------------------------------------------------------------
+// Rate-card abstraction
+// ---------------------------------------------------------------------------
+//
+// The effort-estimator consumes a rate card through a labelled abstraction so
+// the researched, client-specific card (a separate workstream) drops in later
+// without touching this module. Until then `DEFAULT_PLANNING_RATE_CARD` is
+// used — a clearly-labelled planning range, NEVER a quote (spec §5.4).
+
+/** Provenance of a rate card — drives how it is labelled in the UI. */
+export type RateCardProvenance =
+  | 'planning_default' // kernel placeholder — a planning range, not a quote
+  | 'researched_benchmark' // 3-D researched benchmark (SI × location × spec)
+  | 'client_specific'; // overrides everything — the client's own rate card
+
+/** A rate card plus its provenance. The estimator consumes this, not raw rows. */
+export interface KernelRateCard {
+  provenance: RateCardProvenance;
+  /** Human label surfaced in the UI, e.g. "Planning default — not a quote". */
+  label: string;
+  rates: RoleRateCard[];
+}
+
+/**
+ * The kernel's default planning rate card. Fully-loaded annual cost per FTE.
+ * These are deliberately generic planning ranges — when the researched card
+ * lands it drops in here with `provenance: 'researched_benchmark'`.
+ */
+export const DEFAULT_PLANNING_RATE_CARD: KernelRateCard = {
+  provenance: 'planning_default',
+  label:
+    'Planning default rate card — generic fully-loaded ranges, NOT a quote. ' +
+    'Override with a client-specific card before any commitment.',
+  rates: [
+    { role: 'engagement_lead', onshoreAnnualRate: 280_000, offshoreAnnualRate: 150_000 },
+    { role: 'solution_architect', onshoreAnnualRate: 240_000, offshoreAnnualRate: 130_000 },
+    { role: 'senior_engineer', onshoreAnnualRate: 200_000, offshoreAnnualRate: 95_000 },
+    { role: 'engineer', onshoreAnnualRate: 150_000, offshoreAnnualRate: 70_000 },
+    { role: 'analyst', onshoreAnnualRate: 120_000, offshoreAnnualRate: 60_000 },
+    { role: 'project_manager', onshoreAnnualRate: 170_000, offshoreAnnualRate: 90_000 },
+  ],
+};
+
+/**
+ * Resolve a rate card for the estimator. Accepts either a bare `RoleRateCard[]`
+ * (treated as planning-default) or a labelled `KernelRateCard`. Always returns
+ * a labelled card so the provenance is never lost downstream.
+ */
+export function resolveRateCard(
+  input: RoleRateCard[] | KernelRateCard | undefined,
+): KernelRateCard {
+  if (!input) return DEFAULT_PLANNING_RATE_CARD;
+  if (Array.isArray(input)) {
+    return {
+      provenance: 'planning_default',
+      label: DEFAULT_PLANNING_RATE_CARD.label,
+      rates: input,
+    };
+  }
+  return input;
+}
 
 /**
  * Build an effort estimate. The per-workstream base cost is the should-cost
@@ -109,6 +205,8 @@ export function buildEffortEstimate(
   if (input.workstreams.length === 0) {
     throw new Error('Effort estimate needs at least one workstream.');
   }
+
+  const rateCard = resolveRateCard(input.rateCard);
 
   const workstreams: WorkstreamEstimate[] = input.workstreams.map((ws) => {
     if (ws.agentSplit < 0 || ws.agentSplit > 1) {
@@ -135,7 +233,7 @@ export function buildEffortEstimate(
       vendorQuotedCost: 0,
       vendorMarginRatio: 0,
       roleMix: ws.roleMix,
-      rateCard: input.rateCard,
+      rateCard: rateCard.rates,
       durationMonths: ws.durationMonths,
       offshoreRatio: input.offshoreRatio,
       transitionCost: 0,
@@ -181,6 +279,22 @@ export function buildEffortEstimate(
   // Re-anchor the total point on the summed base, not the midpoint of the sum.
   totalCost.point = totalBase;
 
+  // AI-build vs. business-change split.
+  const businessChangeCost = round2(
+    workstreams
+      .filter((w) => BUSINESS_CHANGE_WORKSTREAMS.has(w.id))
+      .reduce((s, w) => s + w.baseCost, 0),
+  );
+  const aiBuildCost = round2(totalBase - businessChangeCost);
+  const businessChangeFraction =
+    totalBase > 0 ? round2(businessChangeCost / totalBase) : 0;
+  const buildVsChange: BuildVsChangeSplit = {
+    aiBuildCost,
+    businessChangeCost,
+    businessChangeFraction,
+    note: buildSplitNote(businessChangeFraction),
+  };
+
   return {
     moveName: input.moveName,
     workstreams,
@@ -189,5 +303,32 @@ export function buildEffortEstimate(
     totalAgentCost,
     effectiveAgentSplit:
       totalBase > 0 ? round2(totalAgentCost / totalBase) : 0,
+    buildVsChange,
+    rateCard,
   };
+}
+
+/** Plain-language credibility read on the build-vs-change split. */
+function buildSplitNote(changeFraction: number): string {
+  const pct = Math.round(changeFraction * 100);
+  if (changeFraction < 0.2) {
+    return (
+      `Business change is only ${pct}% of effort — this is the classic ` +
+      'under-budgeting trap. AI value lands through changed work, not code; ' +
+      'pressure-test whether process redesign, adoption and governance are ' +
+      'realistically estimated.'
+    );
+  }
+  if (changeFraction > 0.55) {
+    return (
+      `Business change is ${pct}% of effort — change-heavy. This is honest ` +
+      'for a deep operating-model shift, but confirm the AI build is not ' +
+      'being under-scoped to flatter the ratio.'
+    );
+  }
+  return (
+    `Business change is ${pct}% of effort — a credible build-vs-change ` +
+    'balance for an AI Move where value depends on people changing how ' +
+    'they work.'
+  );
 }
