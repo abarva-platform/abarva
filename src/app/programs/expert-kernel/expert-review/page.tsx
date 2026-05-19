@@ -412,7 +412,7 @@ export default async function ExpertReviewConsolePage({
                     {a.formats.map((fmt) => (
                       <a
                         key={fmt}
-                        href={`export?case=${reviewCase.id}&artifact=${a.id}&format=${fmt}`}
+                        href={`/api/programs/expert-kernel/export?case=${reviewCase.id}&artifact=${a.id}&format=${fmt}`}
                         style={{
                           fontFamily: TYPOGRAPHY.mono,
                           fontSize: 10,
