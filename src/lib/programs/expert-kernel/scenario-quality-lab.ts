@@ -24,15 +24,20 @@ import {
   type KernelArtifactId,
 } from './exports/artifact-catalog';
 import { buildNextBestAdvisoryTurn } from './advisory-session';
-import {
-  buildExpertReviewConsole,
-  validateReviewSubmission,
-} from './expert-review-console';
-import type {
-  ExpertReviewInput,
-  ExpertReviewerRole,
-} from './expert-review-calibration';
+import { buildExpertReviewConsole } from './expert-review-console';
 import type { BusinessCaseSkeleton } from './business-case-compiler';
+import {
+  assessScenarioUpdates,
+  type ScenarioUpdateAssessment,
+  type ScenarioUpdateInput,
+} from './scenario-updates';
+import {
+  buildDefaultWatchedSessionTranscript,
+  buildRegenerationDiff,
+  extractUpdatesFromWatchedSession,
+  type RegenerationDiff,
+  type WatchedSessionTranscript,
+} from './watched-session-mode';
 
 export type ScenarioArtifactId =
   | 'intelligence_idea'
@@ -57,42 +62,22 @@ export interface ScenarioArtifactScore {
   criteria: ScenarioQualityCriterion[];
 }
 
-export type UpdateInputKind =
-  | 'baseline_metric'
-  | 'assumption_review'
-  | 'rate_card_override'
-  | 'workshop_note';
-
-export interface ScenarioUpdateInput {
-  kind: UpdateInputKind;
-  key: string;
-  label: string;
-  value?: number | string;
-  source: string;
-  owner: string;
-  reviewerRole?: ExpertReviewerRole;
-  requiredAction?: string;
-}
-
-export interface ScenarioUpdateAssessment {
-  accepted: ScenarioUpdateInput[];
-  rejected: Array<{
-    input: ScenarioUpdateInput;
-    reason: string;
-  }>;
-  reviewValidationErrors: string[];
-  regenerationRequired: boolean;
-  regenerationReasons: string[];
-}
-
 export interface ScenarioQualityLabResult {
   caseId: ExpertReviewCaseId;
   tenantLabel: string;
   moveLabel: string;
+  mode: 'simulated_update_packet' | 'watched_session';
   overallScore: number;
   recommendation: BusinessCaseSkeleton['recommendation'];
   scorecard: ScenarioArtifactScore[];
   updateAssessment: ScenarioUpdateAssessment;
+  regenerationDiff: RegenerationDiff;
+  watchedSession?: {
+    sessionId: string;
+    sessionLabel: string;
+    participantCount: number;
+    proposedUpdateCount: number;
+  };
   nextBestAction: string;
   summary: string;
   nextClientCaseId: ExpertReviewCaseId | null;
@@ -248,23 +233,60 @@ export function runMovesScenarioQualityLab(
   caseId: ExpertReviewCaseId,
   updates: ScenarioUpdateInput[] = DEFAULT_UPDATES[caseId],
 ): ScenarioQualityLabResult {
+  return runScenarioQualityLabInternal(caseId, updates, null);
+}
+
+export function runMovesScenarioQualityLabWithWatchedSession(
+  caseId: ExpertReviewCaseId,
+  transcript: WatchedSessionTranscript = buildDefaultWatchedSessionTranscript(caseId),
+): ScenarioQualityLabResult {
+  const extraction = extractUpdatesFromWatchedSession(transcript);
+  return runScenarioQualityLabInternal(
+    caseId,
+    extraction.proposedUpdates,
+    transcript,
+  );
+}
+
+export function runAllMovesScenarioQualityLabs(): ScenarioQualityLabResult[] {
+  return EXPERT_REVIEW_CASE_IDS.map((caseId) => runMovesScenarioQualityLab(caseId));
+}
+
+export function runAllMovesScenarioQualityLabsWithWatchedSessions(): ScenarioQualityLabResult[] {
+  return EXPERT_REVIEW_CASE_IDS.map((caseId) =>
+    runMovesScenarioQualityLabWithWatchedSession(caseId),
+  );
+}
+
+function runScenarioQualityLabInternal(
+  caseId: ExpertReviewCaseId,
+  updates: ScenarioUpdateInput[],
+  watchedSession: WatchedSessionTranscript | null,
+): ScenarioQualityLabResult {
   const entry = EXPERT_REVIEW_CASES[caseId];
   const { skeleton } = entry.buildCase();
   const { fullCase } = entry.buildFullCase();
   const mobilize = entry.buildMobilize();
   const advisory = buildNextBestAdvisoryTurn(skeleton);
   const updateAssessment = assessScenarioUpdates(skeleton, updates);
+  const regenerationDiff = buildRegenerationDiff(skeleton, updateAssessment);
 
   const scorecard: ScenarioArtifactScore[] = [
-    scoreIntelligenceIdea(caseId, skeleton),
+    scoreIntelligenceIdea(caseId, skeleton, watchedSession),
     scoreDiscoverBrief(skeleton, advisory.actions.length),
     scoreCharterCase(skeleton),
     scoreBusinessCasePack(skeleton, fullCase.flags.length),
     scoreFinancialModel(skeleton),
     scoreCfoPack(skeleton),
     scoreMobilizePack(mobilize.measurement.wiringCoverage, mobilize.goPack.decision),
-    scoreWorkshopSupport(skeleton, advisory.actions.length, updateAssessment),
-    scoreUpdateAcceptance(updateAssessment),
+    scoreWorkshopSupport(
+      skeleton,
+      advisory.actions.length,
+      updateAssessment,
+      watchedSession,
+      regenerationDiff,
+    ),
+    scoreUpdateAcceptance(updateAssessment, regenerationDiff),
     scoreTraceAndGovernance(skeleton),
   ];
 
@@ -276,98 +298,30 @@ export function runMovesScenarioQualityLab(
     caseId,
     tenantLabel: entry.tenantLabel,
     moveLabel: entry.moveLabel,
+    mode: watchedSession ? 'watched_session' : 'simulated_update_packet',
     overallScore,
     recommendation: skeleton.recommendation,
     scorecard,
     updateAssessment,
+    regenerationDiff,
+    watchedSession: watchedSession
+      ? {
+          sessionId: watchedSession.sessionId,
+          sessionLabel: watchedSession.sessionLabel,
+          participantCount: watchedSession.participants.length,
+          proposedUpdateCount: updates.length,
+        }
+      : undefined,
     nextBestAction: advisory.recommendedAction.prompt,
     summary: summarizeLab(entry.tenantLabel, entry.moveLabel, overallScore, skeleton),
     nextClientCaseId: nextCaseId(caseId),
   };
 }
 
-export function runAllMovesScenarioQualityLabs(): ScenarioQualityLabResult[] {
-  return EXPERT_REVIEW_CASE_IDS.map((caseId) => runMovesScenarioQualityLab(caseId));
-}
-
-export function assessScenarioUpdates(
-  skeleton: BusinessCaseSkeleton,
-  updates: ScenarioUpdateInput[],
-): ScenarioUpdateAssessment {
-  const knownBaselineKeys = new Set(skeleton.baseline.metrics.map((m) => m.key));
-  const knownAssumptionKeys = new Set(skeleton.assumptions.assumptions.map((a) => a.key));
-  const accepted: ScenarioUpdateInput[] = [];
-  const rejected: ScenarioUpdateAssessment['rejected'] = [];
-  const reviewValidationErrors: string[] = [];
-  const regenerationReasons = new Set<string>();
-
-  for (const input of updates) {
-    if (input.kind === 'baseline_metric') {
-      if (!knownBaselineKeys.has(input.key)) {
-        rejected.push({
-          input,
-          reason:
-            'No matching baseline key in the current Moves case. The agent must not accept this into the business case silently.',
-        });
-        continue;
-      }
-      accepted.push(input);
-      regenerationReasons.add(`Baseline metric updated: ${input.key}.`);
-      continue;
-    }
-
-    if (input.kind === 'assumption_review') {
-      const review: ExpertReviewInput = {
-        reviewerId: `${input.reviewerRole ?? 'reviewer'}:${input.owner}`,
-        role: input.reviewerRole ?? 'delivery_lead',
-        verdict: 'credible_with_conditions',
-        note: `${input.label}: ${input.source}`,
-        assumptionKeys: [input.key],
-        requiredActions: input.requiredAction ? [input.requiredAction] : [],
-      };
-      const validation = validateReviewSubmission(review, knownAssumptionKeys);
-      if (!validation.ok) {
-        rejected.push({ input, reason: validation.error ?? 'Invalid expert review.' });
-        reviewValidationErrors.push(validation.error ?? 'Invalid expert review.');
-        continue;
-      }
-      accepted.push(input);
-      regenerationReasons.add(`Assumption challenged: ${input.key}.`);
-      continue;
-    }
-
-    if (input.kind === 'rate_card_override') {
-      accepted.push(input);
-      regenerationReasons.add('Rate card / budget override provided.');
-      continue;
-    }
-
-    if (input.kind === 'workshop_note') {
-      if (!input.requiredAction?.trim()) {
-        rejected.push({
-          input,
-          reason:
-            'Workshop notes must carry an action or decision; raw observations alone are not enough to alter deliverables.',
-        });
-        continue;
-      }
-      accepted.push(input);
-      regenerationReasons.add(`Workshop action captured: ${input.key}.`);
-    }
-  }
-
-  return {
-    accepted,
-    rejected,
-    reviewValidationErrors,
-    regenerationRequired: regenerationReasons.size > 0,
-    regenerationReasons: [...regenerationReasons].sort(),
-  };
-}
-
 function scoreIntelligenceIdea(
   caseId: ExpertReviewCaseId,
   skeleton: BusinessCaseSkeleton,
+  watchedSession: WatchedSessionTranscript | null,
 ): ScenarioArtifactScore {
   return artifact('intelligence_idea', [
     criterion(
@@ -385,9 +339,13 @@ function scoreIntelligenceIdea(
     criterion(
       'live_dialogue_gap',
       'Live Intelligence dialogue has been human-tested',
-      5,
-      'Current test is deterministic; a human-observed Intelligence conversation is still needed.',
-      'Run a watched CXO/VP prompt session and score the conversation transcript.',
+      watchedSession ? 8 : 5,
+      watchedSession
+        ? `${watchedSession.sessionLabel} supplied ${watchedSession.signals.length} observed signal(s) for scoring.`
+        : 'Current test is deterministic; a human-observed Intelligence conversation is still needed.',
+      watchedSession
+        ? 'Replace the proxy watched transcript with an external practitioner session.'
+        : 'Run a watched CXO/VP prompt session and score the conversation transcript.',
     ),
   ]);
 }
@@ -545,6 +503,8 @@ function scoreWorkshopSupport(
   skeleton: BusinessCaseSkeleton,
   advisoryActionCount: number,
   updates: ScenarioUpdateAssessment,
+  watchedSession: WatchedSessionTranscript | null,
+  regenerationDiff: RegenerationDiff,
 ): ScenarioArtifactScore {
   return artifact('workshop_session_support', [
     criterion(
@@ -562,15 +522,20 @@ function scoreWorkshopSupport(
     criterion(
       'human_observed_gap',
       'Observed human facilitation has been completed',
-      5,
-      'This lab simulates a workshop update packet; it does not replace a watched practitioner session.',
-      'Run the same lab with a live VP/CXO providing the update packet.',
+      watchedSession ? 8.5 : 5,
+      watchedSession
+        ? `Watched-session mode captured ${watchedSession.participants.length} participant role(s) and produced ${regenerationDiff.acceptedChanges.length} accepted regeneration input(s).`
+        : 'This lab simulates a workshop update packet; it does not replace a watched practitioner session.',
+      watchedSession
+        ? 'Next: source the transcript from a real practitioner instead of a proxy session.'
+        : 'Run the same lab with a live VP/CXO providing the update packet.',
     ),
   ]);
 }
 
 function scoreUpdateAcceptance(
   updates: ScenarioUpdateAssessment,
+  regenerationDiff: RegenerationDiff,
 ): ScenarioArtifactScore {
   const acceptedRatio =
     updates.accepted.length + updates.rejected.length === 0
@@ -592,8 +557,10 @@ function scoreUpdateAcceptance(
     criterion(
       'regeneration_signal',
       'Material updates trigger a regeneration decision',
-      updates.regenerationRequired ? 8.5 : 4,
-      updates.regenerationReasons.join(' '),
+      updates.regenerationRequired && regenerationDiff.affectedArtifacts.length > 0
+        ? 9
+        : 4,
+      `${updates.regenerationReasons.join(' ')} Affected artifacts: ${regenerationDiff.affectedArtifacts.join(', ')}.`,
     ),
   ]);
 }

@@ -30,6 +30,8 @@ export * from './expert-review-console';
 export * from './use-case-archetype-playbooks';
 export * from './advisory-session';
 export * from './outcome-calibration';
+export * from './scenario-updates';
+export * from './watched-session-mode';
 export * from './scenario-quality-lab';
 export * from './apex-contact-center-case';
 export * from './meridian-ambient-clinical-case';
