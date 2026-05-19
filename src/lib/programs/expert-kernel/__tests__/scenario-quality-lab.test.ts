@@ -136,6 +136,15 @@ describe('Moves scenario quality lab', () => {
     expect(watched.regenerationPreview.fullRecomputeReasons).toContain(
       "Baseline metric 'cost_per_contact_usd' changed.",
     );
+    expect(watched.regenerationSignoff.verdict).toBe('ready_for_full_recompute');
+    expect(watched.regenerationSignoff.rolesCovered).toEqual([
+      'cfo',
+      'delivery_lead',
+      'domain_operator',
+    ]);
+    expect(watched.regenerationSignoff.approvedChangeKeys).toEqual(
+      expect.arrayContaining(['cost_per_contact_usd', 'manager_adoption']),
+    );
   });
 
   it('runs watched-session mode across all tenant anchors', () => {
@@ -147,6 +156,8 @@ describe('Moves scenario quality lab', () => {
       expect(lab.overallScore).toBeGreaterThanOrEqual(8.3);
       expect(lab.regenerationDiff.acceptedChanges.length).toBeGreaterThanOrEqual(4);
       expect(lab.regenerationPreview.appliedChanges.length).toBeGreaterThanOrEqual(4);
+      expect(lab.regenerationSignoff.verdict).toBe('ready_for_full_recompute');
+      expect(lab.regenerationSignoff.unapprovedChangeKeys).toHaveLength(0);
       expect(lab.regenerationDiff.rejectedChanges.length).toBe(1);
     }
   });

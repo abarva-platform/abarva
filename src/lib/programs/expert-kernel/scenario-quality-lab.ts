@@ -42,6 +42,10 @@ import {
   buildScenarioRegenerationPreview,
   type ScenarioRegenerationPreview,
 } from './scenario-regeneration-preview';
+import {
+  buildDefaultRegenerationSignoff,
+  type ScenarioRegenerationSignoff,
+} from './scenario-regeneration-signoff';
 
 export type ScenarioArtifactId =
   | 'intelligence_idea'
@@ -77,6 +81,7 @@ export interface ScenarioQualityLabResult {
   updateAssessment: ScenarioUpdateAssessment;
   regenerationDiff: RegenerationDiff;
   regenerationPreview: ScenarioRegenerationPreview;
+  regenerationSignoff: ScenarioRegenerationSignoff;
   watchedSession?: {
     sessionId: string;
     sessionLabel: string;
@@ -280,6 +285,10 @@ function runScenarioQualityLabInternal(
     updateAssessment,
     regenerationDiff,
   );
+  const regenerationSignoff = buildDefaultRegenerationSignoff(
+    skeleton,
+    regenerationPreview,
+  );
 
   const scorecard: ScenarioArtifactScore[] = [
     scoreIntelligenceIdea(caseId, skeleton, watchedSession),
@@ -297,8 +306,13 @@ function runScenarioQualityLabInternal(
       regenerationDiff,
       regenerationPreview,
     ),
-    scoreUpdateAcceptance(updateAssessment, regenerationDiff, regenerationPreview),
-    scoreTraceAndGovernance(skeleton),
+    scoreUpdateAcceptance(
+      updateAssessment,
+      regenerationDiff,
+      regenerationPreview,
+      regenerationSignoff,
+    ),
+    scoreTraceAndGovernance(skeleton, regenerationSignoff),
   ];
 
   const overallScore = round1(
@@ -316,6 +330,7 @@ function runScenarioQualityLabInternal(
     updateAssessment,
     regenerationDiff,
     regenerationPreview,
+    regenerationSignoff,
     watchedSession: watchedSession
       ? {
           sessionId: watchedSession.sessionId,
@@ -555,6 +570,7 @@ function scoreUpdateAcceptance(
   updates: ScenarioUpdateAssessment,
   regenerationDiff: RegenerationDiff,
   regenerationPreview: ScenarioRegenerationPreview,
+  regenerationSignoff: ScenarioRegenerationSignoff,
 ): ScenarioArtifactScore {
   const acceptedRatio =
     updates.accepted.length + updates.rejected.length === 0
@@ -595,16 +611,36 @@ function scoreUpdateAcceptance(
         ? 'One or more accepted changes could not be preview-applied.'
         : undefined,
     ),
+    criterion(
+      'reviewer_signoff_gate',
+      'Preview changes require expert sign-off before recompute',
+      regenerationSignoff.verdict === 'ready_for_full_recompute' ? 9.5 : 5,
+      regenerationSignoff.auditSummary,
+      regenerationSignoff.verdict === 'ready_for_full_recompute'
+        ? undefined
+        : 'Regeneration preview is not signed off for recompute.',
+    ),
   ]);
 }
 
-function scoreTraceAndGovernance(skeleton: BusinessCaseSkeleton): ScenarioArtifactScore {
-  const consoleView = buildExpertReviewConsole(skeleton, []);
+function scoreTraceAndGovernance(
+  skeleton: BusinessCaseSkeleton,
+  regenerationSignoff: ScenarioRegenerationSignoff,
+): ScenarioArtifactScore {
+  const consoleView = buildExpertReviewConsole(
+    skeleton,
+    regenerationSignoff.reviews,
+  );
   return artifact('trace_and_governance', [
     criterion(
       'review_gate',
       'Expert-review gate blocks promotion until required roles review',
-      consoleView.calibration.verdict === 'not_ready' ? 8.5 : 6,
+      consoleView.calibration.verdict === 'conditional' &&
+        regenerationSignoff.verdict === 'ready_for_full_recompute'
+        ? 9
+        : consoleView.calibration.verdict === 'not_ready'
+          ? 8.5
+          : 6,
       consoleView.calibration.findings.map((f) => f.message).join(' '),
     ),
     criterion(

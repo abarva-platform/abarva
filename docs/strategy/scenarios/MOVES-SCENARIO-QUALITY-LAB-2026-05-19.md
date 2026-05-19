@@ -28,8 +28,8 @@ before we put it in front of a real CXO / VP Sourcing / delivery leader.
 | Tenant | Use case | Overall | Kernel recommendation | Next best action |
 |---|---|---:|---|---|
 | Apex Retail | Contact Center AI Routing | 8.2 / 10 | shape | Provide cost per contact or confirm owner |
-| Meridian Health System | Ambient Clinical Value Chain Activation | 8.2 / 10 | shape | Provide cost per clinician hour or confirm owner |
-| First Capital Financial | Fraud Detection Enhancement | 8.2 / 10 | shape | Provide false-positive operational cost or confirm owner |
+| Meridian Health System | Ambient Clinical Value Chain Activation | 8.3 / 10 | shape | Provide cost per clinician hour or confirm owner |
+| First Capital Financial | Fraud Detection Enhancement | 8.3 / 10 | shape | Provide false-positive operational cost or confirm owner |
 
 ## Increment 1 — Watched-Session Mode
 
@@ -88,6 +88,33 @@ which artifacts would change before promotion. The remaining gap is the same
 honest one: the transcript is still proxy-authored, not external-practitioner
 observed.
 
+## Increment 3 — Reviewer Sign-Off Gate
+
+The third increment adds a deterministic sign-off gate over the regeneration
+preview. The preview cannot promote itself. The lab now creates a reviewer
+packet with three lenses:
+
+- CFO / Finance signs off that financial changes must flow through the full
+  estimator before promotion;
+- Delivery Lead signs off that workshop actions and challenged assumptions are
+  suitable for regeneration, not final approval;
+- Domain Operator signs off that updated baseline facts are stated evidence
+  requiring verification before the gate.
+
+The state after sign-off is `ready_for_full_recompute`, not `approved`. This is
+the important control: the case can move to recomputation, but it still cannot
+claim final economics until the affected artifacts regenerate.
+
+| Tenant | Watched + preview | Watched + preview + sign-off | Promotion state |
+|---|---:|---:|---|
+| Apex Retail | 8.5 / 10 | 8.5 / 10 | ready for full recompute |
+| Meridian Health System | 8.5 / 10 | 8.5 / 10 | ready for full recompute |
+| First Capital Financial | 8.5 / 10 | 8.5 / 10 | ready for full recompute |
+
+This increment does not inflate the headline score; it closes the governance
+gap underneath it. The next score lift requires a real practitioner-observed
+session or the full recompute engine.
+
 ## Artifact Scorecard
 
 | Artifact / process area | Apex | Meridian | First Capital | Read |
@@ -140,6 +167,14 @@ case, never to the promoted case:
 - Mobilize actions added,
 - blocked changes and rejected changes kept visible.
 
+Reviewer sign-off adds the promotion control:
+
+- approved change keys,
+- unapproved change keys,
+- required actions from each reviewer lens,
+- roles covered,
+- promotion state (`ready_for_full_recompute` or `blocked`).
+
 ## What This Proves
 
 The Moves kernel is now meaningfully expert-grade for deterministic artifacts:
@@ -164,14 +199,14 @@ The remaining gap is not artifact generation. It is live professional behavior:
 ## Next Fix
 
 The next product increment should replace the proxy transcript with a real
-observed practitioner session and then add reviewer sign-off:
+observed practitioner session and then run the full recompute:
 
 1. Capture the live prompt / workshop transcript from a real CXO / VP Sourcing
    / delivery leader.
 2. Convert observations into proposed baseline, assumption, rate-card, and
    action updates.
 3. Show the diff and deterministic preview.
-4. Let the reviewer accept / reject each update.
+4. Let the reviewer accept / reject each update through the sign-off gate.
 5. Run the full recompute for affected artifacts.
 6. Record the before / after score and audit trail.
 
