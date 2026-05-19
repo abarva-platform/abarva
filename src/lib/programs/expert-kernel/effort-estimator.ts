@@ -148,7 +148,8 @@ const DEFAULT_UPSIDE = 0.85;
 export type RateCardProvenance =
   | 'planning_default' // bare role rates with no recorded provenance
   | 'researched_benchmark' // 3-D researched benchmark (SI × location × spec)
-  | 'client_specific'; // overrides everything — the client's own rate card
+  | 'client_specific' // overrides everything — the client's own rate card
+  | 'comprehensive'; // governed blend of client/vendor/internal rows + fallback
 
 /** A rate card plus its provenance. The estimator consumes this, not raw rows. */
 export interface KernelRateCard {
