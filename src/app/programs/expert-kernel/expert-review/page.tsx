@@ -33,6 +33,11 @@ import {
   EXPERT_REVIEW_CASES,
   resolveExpertReviewCase,
 } from '@/lib/programs/expert-kernel';
+import {
+  KERNEL_ARTIFACTS,
+  MOVES_PHASE_LABEL,
+  MOVES_PHASE_ORDER,
+} from '@/lib/programs/expert-kernel/exports';
 import { selectExpertReviewsReadAdapter } from '@/lib/data-plane/read-adapters/expertReviewsReadAdapter';
 import { ExpertReviewForm } from '@/components/programs/ExpertReviewForm';
 import { recordExpertReviewAction } from './actions';
@@ -364,6 +369,72 @@ export default async function ExpertReviewConsolePage({
             </div>
           </div>
         </div>
+      </Section>
+
+      {/* D — downloadable kernel artifacts, grouped by Moves phase */}
+      <Section n="D" title="Download — business-case packs & deliverables">
+        <p style={{ ...BODY, marginBottom: SPACING.sm }}>
+          The kernel’s deliverables for{' '}
+          <strong>{reviewCase.tenantLabel}</strong>, exportable as files. Every
+          figure is grounded in the tenant’s audited substrate; seed gaps,{' '}
+          <code style={{ fontFamily: TYPOGRAPHY.mono }}>kill</code> verdicts and
+          a null payback render honestly, never blank or invented.
+        </p>
+        {MOVES_PHASE_ORDER.map((phase) => {
+          const artifacts = KERNEL_ARTIFACTS.filter((a) => a.phase === phase);
+          if (artifacts.length === 0) return null;
+          return (
+            <div key={phase} style={CARD}>
+              <div style={{ ...META, marginBottom: SPACING.sm }}>
+                {MOVES_PHASE_LABEL[phase].toUpperCase()}
+              </div>
+              {artifacts.map((a) => (
+                <div
+                  key={a.id}
+                  style={{
+                    marginBottom: SPACING.sm,
+                    paddingBottom: SPACING.sm,
+                    borderBottom: `1px solid ${COLORS.ink}14`,
+                  }}
+                >
+                  <div style={{ ...BODY, fontWeight: 700 }}>{a.label}</div>
+                  <p style={{ ...BODY, fontSize: 12, marginTop: 2 }}>
+                    {a.description}
+                  </p>
+                  <div
+                    style={{
+                      display: 'flex',
+                      gap: SPACING.xs,
+                      flexWrap: 'wrap',
+                      marginTop: SPACING.xs,
+                    }}
+                  >
+                    {a.formats.map((fmt) => (
+                      <a
+                        key={fmt}
+                        href={`export?case=${reviewCase.id}&artifact=${a.id}&format=${fmt}`}
+                        style={{
+                          fontFamily: TYPOGRAPHY.mono,
+                          fontSize: 10,
+                          fontWeight: 700,
+                          letterSpacing: '0.06em',
+                          textDecoration: 'none',
+                          padding: `${SPACING.xs} ${SPACING.sm}`,
+                          borderRadius: RADIUS.sm,
+                          border: `1px solid ${COLORS.ink}`,
+                          background: COLORS.ink,
+                          color: COLORS.white,
+                        }}
+                      >
+                        DOWNLOAD {fmt.toUpperCase()}
+                      </a>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          );
+        })}
       </Section>
 
       {/* 2 — missing evidence */}

@@ -20,7 +20,7 @@
 import { buildBaselineModel } from './baseline-model';
 import { buildAssumptionLedger } from './assumption-ledger';
 import { buildEffortEstimate, DEFAULT_PLANNING_RATE_CARD } from './effort-estimator';
-import { buildValueForecast } from './value-forecast';
+import { buildValueForecast, type ValueForecast } from './value-forecast';
 import {
   compileBusinessCase,
   compileFullBusinessCase,
@@ -30,6 +30,12 @@ import {
 import { buildRoadmap, type Roadmap } from './roadmap';
 import { buildRaciMatrix, type RaciMatrix } from './raci';
 import { evaluateRubric, type RubricResult } from './qa-rubric';
+import { buildAdoptionApproach, type AdoptionApproach } from './adoption-approach';
+import {
+  buildMeasurementHandoff,
+  type MeasurementHandoff,
+} from './measurement-handoff';
+import { buildGoDecisionPack, type GoDecisionPack } from './go-decision-pack';
 import { rangeOf } from './types';
 
 const TENANT = 'meridian-health';
@@ -60,6 +66,38 @@ export interface MeridianFullCaseResult {
   roadmap: Roadmap;
   raci: RaciMatrix;
   rubric: RubricResult;
+}
+
+/**
+ * Build the Meridian Ambient Clinical value forecast — gross value plus the
+ * mandatory six-factor haircut. Steady-state value-at-stake is $8–14M/yr
+ * (E9/E49), but it rests on three modeled conversion coefficients that are
+ * declared seed gaps, so `grossValueIsProxy` forces `monetisationBlocked`; the
+ * range is an illustrative ceiling, NOT a claimed return. Exported so the
+ * financial-model export renders the haircut detail off one source.
+ */
+export function buildMeridianAmbientValueForecast(): ValueForecast {
+  return buildValueForecast({
+    moveName: MOVE,
+    grossAnnualValue: rangeOf(8_000_000, 14_000_000),
+    horizonYears: 3,
+    adoptionCurve: [0.25, 0.7, 0.9],
+    grossValueIsProxy: true,
+    haircutScores: {
+      // Three parallel ambient vendors + clinician-transition exposure (E52/E55).
+      adoptionRisk: 0.5,
+      // Reporting closes on T+21, telemetry fragmented across 3 vendors (E26).
+      dataReadiness: 0.4,
+      // Value rests on the CDI / template-governance redesign landing (E22).
+      processDependency: 0.5,
+      // Three separate Epic connectors, no integration-surface tests (E26).
+      integrationComplexity: 0.45,
+      // HIPAA BAA re-audit, 42 CFR Part 2, Info Blocking review pending (E58).
+      controlBurden: 0.5,
+      // CIO + CMO + VP Revenue Cycle + CMIO all named sponsors — strong (E16).
+      sponsorStrength: 0.8,
+    },
+  });
 }
 
 /**
@@ -396,31 +434,7 @@ export function buildMeridianAmbientClinicalCase(): MeridianCaseResult {
   });
 
   // --- 4. Value forecast — gross value + mandatory haircut -----------------
-  // Steady-state value-at-stake is $8–14M/yr (E9/E49). But that figure rests
-  // on three modeled conversion coefficients that are declared seed gaps, so
-  // grossValueIsProxy = true forces monetisationBlocked. The range below is an
-  // illustrative ceiling, NOT a claimed return.
-  const value = buildValueForecast({
-    moveName: MOVE,
-    grossAnnualValue: rangeOf(8_000_000, 14_000_000),
-    horizonYears: 3,
-    adoptionCurve: [0.25, 0.7, 0.9],
-    grossValueIsProxy: true,
-    haircutScores: {
-      // Three parallel ambient vendors + clinician-transition exposure (E52/E55).
-      adoptionRisk: 0.5,
-      // Reporting closes on T+21, telemetry fragmented across 3 vendors (E26).
-      dataReadiness: 0.4,
-      // Value rests on the CDI / template-governance redesign landing (E22).
-      processDependency: 0.5,
-      // Three separate Epic connectors, no integration-surface tests (E26).
-      integrationComplexity: 0.45,
-      // HIPAA BAA re-audit, 42 CFR Part 2, Info Blocking review pending (E58).
-      controlBurden: 0.5,
-      // CIO + CMO + VP Revenue Cycle + CMIO all named sponsors — strong (E16).
-      sponsorStrength: 0.8,
-    },
-  });
+  const value = buildMeridianAmbientValueForecast();
 
   // --- 5. Compile -> skeleton (runs the critic) ----------------------------
   const skeleton = compileBusinessCase({
@@ -661,4 +675,194 @@ export function buildMeridianAmbientClinicalFullCase(): MeridianFullCaseResult {
 
   const fullCase = compileFullBusinessCase({ skeleton, roadmap, raci });
   return { fullCase, roadmap, raci, rubric: evaluateRubric(skeleton) };
+}
+
+// ===========================================================================
+// Mobilize & Handoff — the final phase, grounded on the same Meridian
+// substrate. The three RAF/clinician-hour/locum coefficients are Discover
+// seed gaps, so the cognitive-load and HCC value metrics carry an UNWIRED
+// measurement and the go-decision lands honestly at no_go.
+// ===========================================================================
+
+export interface MeridianMobilizeResult {
+  /** The Design & Plan business case the Mobilize phase builds on. */
+  case: MeridianCaseResult;
+  adoption: AdoptionApproach;
+  measurement: MeasurementHandoff;
+  goPack: GoDecisionPack;
+}
+
+/**
+ * Build the Mobilize & Handoff deliverables for the real Meridian Ambient
+ * Clinical Value Chain Activation Move: the adoption & change approach, the
+ * value-measurement → Tower handoff, and the go-decision pack. Grounded on the
+ * same audited Meridian substrate as `buildMeridianAmbientClinicalCase`.
+ * Deterministic.
+ */
+export function buildMeridianMobilizeCase(): MeridianMobilizeResult {
+  const caseResult = buildMeridianAmbientClinicalCase();
+  const { skeleton } = caseResult;
+
+  const adoption = buildAdoptionApproach({
+    moveName: MOVE,
+    operatingModelOwner: 'Dr. Morales (CMIO, Clinical Informatics)',
+    hypercareWeeks: 8,
+    impactedRoles: [
+      {
+        role: 'Primary-care clinician',
+        headcount: null,
+        changeMagnitude: 'high',
+        whatChanges:
+          'Clinicians move from manual after-hours documentation to ambient-' +
+          'captured notes reviewed and signed in-visit.',
+        headcountIsProxy: true,
+      },
+      {
+        role: 'CDI specialist',
+        headcount: 42,
+        changeMagnitude: 'high',
+        whatChanges:
+          'CDI specialists work an ambient-routed HCC query queue rather than ' +
+          'a starved, manually-built one.',
+      },
+      {
+        role: 'Clinic operations manager',
+        headcount: null,
+        changeMagnitude: 'moderate',
+        whatChanges:
+          'Managers coach to the new documentation pattern and the recovered-' +
+          'capacity visit targets.',
+        headcountIsProxy: true,
+      },
+    ],
+    dimensions: [
+      {
+        dimension: 'impacted_roles',
+        magnitude: 'high',
+        recommendation:
+          'Three roles change; the clinician role changes most. Stage the ' +
+          'rollout by specialty, leading with primary care where pajama time ' +
+          'is highest.',
+        ownerRole: 'CMIO',
+        confidence: 'medium',
+        restsOnSeedGap: true,
+      },
+      {
+        dimension: 'process_variance',
+        magnitude: 'high',
+        recommendation:
+          'Specialty template governance varies documentation materially; ' +
+          'the process-redesign workstream must land before the change ' +
+          'rollout (it is budgeted in the Design & Plan estimate).',
+        ownerRole: 'Program Lead',
+        confidence: 'medium',
+      },
+      {
+        dimension: 'training_load',
+        magnitude: 'moderate',
+        recommendation:
+          'Role-based training: ambient-tooling curriculum for clinicians, ' +
+          'a queue-triage curriculum for CDI specialists.',
+        ownerRole: 'Enablement Lead',
+        confidence: 'medium',
+        restsOnSeedGap: true,
+      },
+      {
+        dimension: 'incentive_change',
+        magnitude: 'moderate',
+        recommendation:
+          'Re-point clinician scorecards away from raw note volume toward ' +
+          'documentation quality and recovered capacity.',
+        ownerRole: 'CMO',
+        confidence: 'medium',
+      },
+      {
+        dimension: 'manager_adoption',
+        magnitude: 'high',
+        recommendation:
+          'Manager reinforcement is the highest-risk layer. A dedicated ' +
+          'clinic-manager enablement track with explicit reinforcement in ' +
+          'the hypercare window.',
+        ownerRole: 'CMIO',
+        confidence: 'medium',
+      },
+      {
+        dimension: 'communications',
+        magnitude: 'moderate',
+        recommendation:
+          'Address the clinician narrative directly — ambient documentation ' +
+          'recovers cognitive load and after-hours time; it is not a ' +
+          'surveillance layer.',
+        ownerRole: 'Program Lead',
+        confidence: 'medium',
+      },
+      {
+        dimension: 'hypercare',
+        magnitude: 'moderate',
+        recommendation:
+          'An 8-week hypercare window with elevated informatics support and ' +
+          'a weekly documentation-quality review; exit when pajama time and ' +
+          'CDI volume hold for two consecutive weeks.',
+        ownerRole: 'CMIO',
+        confidence: 'medium',
+      },
+    ],
+  });
+
+  const measurement = buildMeasurementHandoff({
+    moveName: MOVE,
+    tenantClientKey: TENANT,
+    baseline: skeleton.baseline,
+    subjectKind: 'move',
+    subjectRef: MERIDIAN_AMBIENT_MOVE_REF,
+    metrics: [
+      {
+        baselineMetricKey: 'pajama_time_minutes',
+        label: 'Primary-care pajama time',
+        targetValue: 100,
+        valueCategory: 'productivity',
+        measurementUnit: 'percent',
+        cadence: 'monthly',
+        measurementOwnerRole: 'CMIO',
+      },
+      {
+        baselineMetricKey: 'cdi_query_volume_weekly',
+        label: 'CDI HCC-relevant query volume',
+        targetValue: 160,
+        valueCategory: 'productivity',
+        measurementUnit: 'percent',
+        cadence: 'weekly',
+        measurementOwnerRole: 'CDI Director',
+      },
+      {
+        baselineMetricKey: 'hcc_capture_pct',
+        label: 'HCC capture on the MA panel',
+        targetValue: 63,
+        valueCategory: 'revenue_lift',
+        measurementUnit: 'percent',
+        cadence: 'quarterly',
+        measurementOwnerRole: 'VP Revenue Cycle',
+      },
+      {
+        baselineMetricKey: 'cost_per_clinician_hour_usd',
+        label: 'Cost-per-clinician-hour conversion coefficient',
+        targetValue: null,
+        valueCategory: 'cost_avoidance',
+        measurementUnit: 'usd_seed',
+        cadence: 'quarterly',
+        measurementOwnerRole: 'VP Revenue Cycle',
+        baselineCapturePlan:
+          'Meridian Finance attestation of a fully-loaded clinician-hour ' +
+          'cost — pending; no dated commitment seeded.',
+      },
+    ],
+  });
+
+  const goPack = buildGoDecisionPack({
+    businessCase: skeleton,
+    adoption,
+    measurement,
+  });
+
+  return { case: caseResult, adoption, measurement, goPack };
 }

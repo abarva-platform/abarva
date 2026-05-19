@@ -17,7 +17,7 @@
 import { buildBaselineModel } from './baseline-model';
 import { buildAssumptionLedger } from './assumption-ledger';
 import { buildEffortEstimate, DEFAULT_PLANNING_RATE_CARD } from './effort-estimator';
-import { buildValueForecast } from './value-forecast';
+import { buildValueForecast, type ValueForecast } from './value-forecast';
 import {
   compileBusinessCase,
   compileFullBusinessCase,
@@ -27,6 +27,12 @@ import {
 import { buildRoadmap, type Roadmap } from './roadmap';
 import { buildRaciMatrix, type RaciMatrix } from './raci';
 import { evaluateRubric, type RubricResult } from './qa-rubric';
+import { buildAdoptionApproach, type AdoptionApproach } from './adoption-approach';
+import {
+  buildMeasurementHandoff,
+  type MeasurementHandoff,
+} from './measurement-handoff';
+import { buildGoDecisionPack, type GoDecisionPack } from './go-decision-pack';
 import { rangeOf } from './types';
 
 const TENANT = 'first-capital';
@@ -57,6 +63,39 @@ export interface FirstCapitalFullCaseResult {
   roadmap: Roadmap;
   raci: RaciMatrix;
   rubric: RubricResult;
+}
+
+/**
+ * Build the First Capital fraud-detection value forecast — gross value plus
+ * the mandatory six-factor haircut. Card fraud loss-avoidance has a HARD
+ * ceiling ($2.1M → $1.2M = $0.9M/yr); the larger surface and the manual-
+ * review-cost lever rest on seed gaps, so `grossValueIsProxy` forces
+ * `monetisationBlocked`; the range is an illustrative ceiling, NOT a claimed
+ * return. Exported so the financial-model export renders the haircut detail
+ * off one source.
+ */
+export function buildFirstCapitalFraudValueForecast(): ValueForecast {
+  return buildValueForecast({
+    moveName: MOVE,
+    grossAnnualValue: rangeOf(900_000, 3_400_000),
+    horizonYears: 3,
+    adoptionCurve: [0.5, 0.85, 1.0],
+    grossValueIsProxy: true,
+    haircutScores: {
+      // P4 Value Tracking, on-track — the program is already live and adopted.
+      adoptionRisk: 0.8,
+      // SQL Server warehouse at 84% utilization; data platform under strain.
+      dataReadiness: 0.5,
+      // Manual-review takeout depends on a disposition process redesign.
+      processDependency: 0.55,
+      // 22-year-old core; real-time payment fraud needs FedNow rails first.
+      integrationComplexity: 0.45,
+      // OCC MRA exposure (MRA-2 findings) — heavy regulatory control burden.
+      controlBurden: 0.45,
+      // CRO is executive sponsor with a named program manager — strong.
+      sponsorStrength: 0.8,
+    },
+  });
 }
 
 /**
@@ -367,32 +406,7 @@ export function buildFirstCapitalFraudDetectionCase(): FirstCapitalCaseResult {
   });
 
   // --- 4. Value forecast — gross value + mandatory haircut -----------------
-  // Card fraud loss-avoidance has a HARD ceiling: $2.1M → $1.2M is $0.9M/yr.
-  // Beyond that, the larger fraud surface ($7M total losses) and the manual-
-  // review-cost lever both rest on seed gaps (FTE cost, alert volume), so
-  // grossValueIsProxy = true forces monetisationBlocked. The range below is an
-  // illustrative ceiling, NOT a claimed return.
-  const value = buildValueForecast({
-    moveName: MOVE,
-    grossAnnualValue: rangeOf(900_000, 3_400_000),
-    horizonYears: 3,
-    adoptionCurve: [0.5, 0.85, 1.0],
-    grossValueIsProxy: true,
-    haircutScores: {
-      // P4 Value Tracking, on-track — the program is already live and adopted.
-      adoptionRisk: 0.8,
-      // SQL Server warehouse at 84% utilization; data platform under strain.
-      dataReadiness: 0.5,
-      // Manual-review takeout depends on a disposition process redesign.
-      processDependency: 0.55,
-      // 22-year-old core; real-time payment fraud needs FedNow rails first.
-      integrationComplexity: 0.45,
-      // OCC MRA exposure (MRA-2 findings) — heavy regulatory control burden.
-      controlBurden: 0.45,
-      // CRO is executive sponsor with a named program manager — strong.
-      sponsorStrength: 0.8,
-    },
-  });
+  const value = buildFirstCapitalFraudValueForecast();
 
   // --- 5. Compile -> skeleton (runs the critic) ----------------------------
   const skeleton = compileBusinessCase({
@@ -630,4 +644,195 @@ export function buildFirstCapitalFraudDetectionFullCase(): FirstCapitalFullCaseR
 
   const fullCase = compileFullBusinessCase({ skeleton, roadmap, raci });
   return { fullCase, roadmap, raci, rubric: evaluateRubric(skeleton) };
+}
+
+// ===========================================================================
+// Mobilize & Handoff — the final phase, grounded on the same First Capital
+// substrate. The fraud-analyst FTE cost is a Discover seed gap, so the manual-
+// review-cost measurement carries an UNWIRED metric and the go-decision lands
+// honestly at no_go.
+// ===========================================================================
+
+export interface FirstCapitalMobilizeResult {
+  /** The Design & Plan business case the Mobilize phase builds on. */
+  case: FirstCapitalCaseResult;
+  adoption: AdoptionApproach;
+  measurement: MeasurementHandoff;
+  goPack: GoDecisionPack;
+}
+
+/**
+ * Build the Mobilize & Handoff deliverables for the real First Capital "Fraud
+ * Detection Enhancement" Move: the adoption & change approach, the value-
+ * measurement → Tower handoff, and the go-decision pack. Grounded on the same
+ * audited First Capital substrate as `buildFirstCapitalFraudDetectionCase`.
+ * Deterministic.
+ */
+export function buildFirstCapitalMobilizeCase(): FirstCapitalMobilizeResult {
+  const caseResult = buildFirstCapitalFraudDetectionCase();
+  const { skeleton } = caseResult;
+
+  const adoption = buildAdoptionApproach({
+    moveName: MOVE,
+    operatingModelOwner: 'David Chen (Risk Technology, Program Manager)',
+    hypercareWeeks: 6,
+    impactedRoles: [
+      {
+        role: 'Fraud analyst',
+        headcount: null,
+        changeMagnitude: 'high',
+        whatChanges:
+          'Analysts move from manually dispositioning a high-false-positive ' +
+          'alert queue to reviewing model-prioritised, auto-dispositioned ' +
+          'cases.',
+        headcountIsProxy: true,
+      },
+      {
+        role: 'Fraud operations manager',
+        headcount: null,
+        changeMagnitude: 'moderate',
+        whatChanges:
+          'Managers coach to the new disposition-automation metrics and ' +
+          'monitor the model-decision queue.',
+        headcountIsProxy: true,
+      },
+      {
+        role: 'BSA / AML compliance officer',
+        headcount: null,
+        changeMagnitude: 'moderate',
+        whatChanges:
+          'SAR filing workflow re-baselined around the faster, model-' +
+          'prioritised case flow under continued OCC MRA scrutiny.',
+        headcountIsProxy: true,
+      },
+    ],
+    dimensions: [
+      {
+        dimension: 'impacted_roles',
+        magnitude: 'high',
+        recommendation:
+          'Three roles change; the fraud-analyst role changes most. Stage ' +
+          'the rollout by alert segment, leading with card fraud.',
+        ownerRole: 'Program Manager',
+        confidence: 'medium',
+        restsOnSeedGap: true,
+      },
+      {
+        dimension: 'process_variance',
+        magnitude: 'high',
+        recommendation:
+          'Disposition logic varies case handling materially; the process-' +
+          'redesign workstream must land before the change rollout (it is ' +
+          'budgeted in the Design & Plan estimate).',
+        ownerRole: 'Program Manager',
+        confidence: 'medium',
+      },
+      {
+        dimension: 'training_load',
+        magnitude: 'moderate',
+        recommendation:
+          'Role-based training: a model-output-interpretation curriculum ' +
+          'for analysts, a lighter curriculum for managers and BSA staff.',
+        ownerRole: 'Enablement Lead',
+        confidence: 'medium',
+        restsOnSeedGap: true,
+      },
+      {
+        dimension: 'incentive_change',
+        magnitude: 'moderate',
+        recommendation:
+          'Re-point analyst performance metrics away from raw case throughput ' +
+          'toward disposition accuracy and confirmed-fraud catch rate.',
+        ownerRole: 'Fraud Operations',
+        confidence: 'medium',
+      },
+      {
+        dimension: 'manager_adoption',
+        magnitude: 'high',
+        recommendation:
+          'Manager reinforcement is the highest-risk layer. A dedicated ' +
+          'manager-enablement track with explicit reinforcement in the ' +
+          'hypercare window.',
+        ownerRole: 'Fraud Operations',
+        confidence: 'medium',
+      },
+      {
+        dimension: 'communications',
+        magnitude: 'moderate',
+        recommendation:
+          'Address the analyst narrative directly — the model triages and ' +
+          'prioritises; it augments analyst judgement under model-risk ' +
+          'governance, it does not replace the analyst.',
+        ownerRole: 'Program Manager',
+        confidence: 'medium',
+      },
+      {
+        dimension: 'hypercare',
+        magnitude: 'moderate',
+        recommendation:
+          'A 6-week hypercare window with elevated model-monitoring support ' +
+          'and a daily disposition-quality review; exit when the automated ' +
+          'disposition rate and catch rate hold for two consecutive weeks.',
+        ownerRole: 'Program Manager',
+        confidence: 'medium',
+      },
+    ],
+  });
+
+  const measurement = buildMeasurementHandoff({
+    moveName: MOVE,
+    tenantClientKey: TENANT,
+    baseline: skeleton.baseline,
+    subjectKind: 'move',
+    subjectRef: FIRSTCAPITAL_FRAUD_MOVE_REF,
+    metrics: [
+      {
+        baselineMetricKey: 'card_fraud_losses_usd',
+        label: 'Card fraud annualized losses',
+        targetValue: 1_200_000,
+        valueCategory: 'risk_reduction',
+        measurementUnit: 'usd_seed',
+        cadence: 'monthly',
+        measurementOwnerRole: 'CRO',
+      },
+      {
+        baselineMetricKey: 'automated_disposition_pct',
+        label: 'AML automated disposition rate',
+        targetValue: 60,
+        valueCategory: 'productivity',
+        measurementUnit: 'percent',
+        cadence: 'monthly',
+        measurementOwnerRole: 'Fraud Operations',
+      },
+      {
+        baselineMetricKey: 'sar_past_deadline_pct',
+        label: 'SAR filings past deadline',
+        targetValue: 0,
+        valueCategory: 'compliance',
+        measurementUnit: 'percent',
+        cadence: 'monthly',
+        measurementOwnerRole: 'BSA Officer',
+      },
+      {
+        baselineMetricKey: 'fraud_analyst_fte_cost_usd',
+        label: 'Fraud-analyst FTE cost basis',
+        targetValue: null,
+        valueCategory: 'cost_avoidance',
+        measurementUnit: 'usd_seed',
+        cadence: 'quarterly',
+        measurementOwnerRole: 'CFO',
+        baselineCapturePlan:
+          'First Capital Finance attestation of a fully-loaded fraud-analyst ' +
+          'FTE cost — pending; no dated commitment seeded.',
+      },
+    ],
+  });
+
+  const goPack = buildGoDecisionPack({
+    businessCase: skeleton,
+    adoption,
+    measurement,
+  });
+
+  return { case: caseResult, adoption, measurement, goPack };
 }
