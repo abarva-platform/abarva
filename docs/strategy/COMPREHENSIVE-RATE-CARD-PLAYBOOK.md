@@ -3,7 +3,8 @@
 **Status:** implementation companion
 **Owner:** Moves Expert Kernel
 **Code:** `src/lib/programs/expert-kernel/rate-card/comprehensive-rate-card.ts`
-**Template:** `docs/strategy/RATE-CARD-LOAD-TEMPLATE.csv`
+**Template only:** `docs/strategy/RATE-CARD-LOAD-TEMPLATE.csv`
+**Demo packs:** `src/lib/programs/expert-kernel/rate-card/demo-rate-card-packs.ts`
 
 ## Why This Exists
 
@@ -20,6 +21,11 @@ commercial record in front of it:
 The comprehensive rate-card fabric reconciles those signals into the
 `KernelRateCard` used by the Moves effort estimator while preserving source,
 owner, date, confidence and warnings.
+
+Important distinction: the CSV is a **load template**, not a comprehensive
+rate card. A comprehensive estimator-ready pack has at least 13 rows today:
+six roles x two delivery lanes, plus a committed-budget row. The three demo
+packs in code meet that bar for Apex, Meridian and First Capital.
 
 ## Source Types
 
@@ -76,8 +82,10 @@ single blended number.
 
 ## Load Template
 
-Use `RATE-CARD-LOAD-TEMPLATE.csv` as the ingestion contract. Column names are
-stable and match the TypeScript template row semantics:
+Use `RATE-CARD-LOAD-TEMPLATE.csv` as the ingestion contract. It intentionally
+contains only example rows to show the shape of each source kind; it is not a
+loaded client card. Column names are stable and match the TypeScript template
+row semantics:
 
 `source_kind, source_name, role, specialization, delivery_location, seniority,
 rate_usd_per_hour, annual_rate_usd, committed_budget_usd, currency, as_of,
@@ -86,3 +94,17 @@ owner, confidence, note`.
 The initial implementation is file/module-level, not database-backed. A future
 DB-backed version should preserve this contract, add RLS by tenant, and keep the
 same provenance fields.
+
+## Demo Pack Coverage
+
+The shipped demo packs are deliberately larger than the template:
+
+| Pack | Rows | Coverage | Budget |
+|---|---:|---|---:|
+| Apex Contact Center AI Routing | 13 | 6 roles x onshore/offshore | $5.2M |
+| Meridian Ambient Clinical | 13 | 6 roles x onshore/offshore | $7.5M |
+| First Capital Fraud Detection | 13 | 6 roles x onshore/offshore | $1.8M |
+
+They are demo packs, not real client rate sheets. Their job is to let the Moves
+Expert Kernel showcase the comprehensive-rate-card behavior without falling
+back to the market benchmark by accident.

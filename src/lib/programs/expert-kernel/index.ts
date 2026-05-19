@@ -37,3 +37,4 @@ export * from './expert-review-cases';
 export * from './phase-playbooks/discover';
 export * from './phase-playbooks/apex-discover-case';
 export * from './rate-card/comprehensive-rate-card';
+export * from './rate-card/demo-rate-card-packs';
