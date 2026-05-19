@@ -8,10 +8,9 @@
 //   { format?: DeliverableFormat, specId: string }
 //
 // Resolves the format via the format router (kind-aware), dispatches
-// to the right renderer (xlsx/docx; html via the existing primer route
-// for archetype-primer), audits the attempt to `program_export_log`,
-// and returns the binary with the right `Content-Type` +
-// `Content-Disposition` headers.
+// to the right renderer (xlsx / docx / html / pdf), audits the attempt
+// to `program_export_log`, and returns the binary with the right
+// `Content-Type` + `Content-Disposition` headers.
 //
 // Auth + tenant gating mirror OV2-4b (attachments/upload):
 //   - 401 unauthenticated (requireTenancy throws TenancyError)
@@ -45,6 +44,8 @@ import type {
 } from '@/lib/programs/exports';
 import { renderDeliverableAsXlsx } from '@/lib/programs/exports/renderers/xlsx';
 import { renderDeliverableAsDocx } from '@/lib/programs/exports/renderers/docx';
+import { renderDeliverableAsHtml } from '@/lib/programs/exports/renderers/html';
+import { renderDeliverableAsPdf } from '@/lib/programs/exports/renderers/pdf';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -155,18 +156,17 @@ async function dispatchRenderer(
     case 'docx':
       return renderDeliverableAsDocx(spec);
     case 'html':
-      // EXPORT-4 wires xlsx + docx; the only HTML deliverable
-      // currently shipped is `archetype-primer` and that has its
-      // own dedicated route at /api/programs/[id]/primer-html
-      // (OV2-3c). Routing it through the generic export shape
-      // is tracked as OV2-EXPORT-4-EXTEND.
-      throw new Error(
-        `HTML renderer for kind ${spec.kind} via the generic export route is a follow-on slice (OV2-EXPORT-4-EXTEND). Use /api/programs/[id]/primer-html for archetype-primer today.`,
-      );
+      // EXPORT-4-EXTEND wires the HTML renderer for every kind the
+      // format router advertises HTML for (program-charter,
+      // outcome-report, stakeholder-map, synthesis-options-table,
+      // architecture-sketch, roadmap). `archetype-primer` keeps its
+      // own dedicated route at /api/programs/[id]/primer-html and is
+      // not advertised for HTML through this generic route.
+      return renderDeliverableAsHtml(spec);
     case 'pdf':
-      throw new Error(
-        'PDF renderer is deferred to EXPORT-5; HTML→PDF pipeline lands later.',
-      );
+      // EXPORT-5 wires the PDF renderer for the print-/archive-ready
+      // kinds (program-charter, outcome-report, roadmap).
+      return renderDeliverableAsPdf(spec);
   }
 }
 
@@ -277,9 +277,9 @@ export async function POST(
     } catch (auditErr) {
       console.error('[POST /api/programs/:id/deliverables/:kind/export] audit_failed_on_render_error', auditErr);
     }
-    // 501 specifically when we've punted on PDF — caller can branch.
-    const status = format === 'pdf' ? 501 : 500;
-    return jsonError(status, 'render_failed', message);
+    // Every advertised format now has a working renderer; a failure
+    // here is a genuine 500 (malformed payload, layout-engine throw).
+    return jsonError(500, 'render_failed', message);
   }
 
   // Success audit — records the byte length, filename, format. Do

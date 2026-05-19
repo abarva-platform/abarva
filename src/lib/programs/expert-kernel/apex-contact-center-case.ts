@@ -14,7 +14,8 @@
 
 import { buildBaselineModel } from './baseline-model';
 import { buildAssumptionLedger } from './assumption-ledger';
-import { buildEffortEstimate, DEFAULT_PLANNING_RATE_CARD } from './effort-estimator';
+import { buildEffortEstimate } from './effort-estimator';
+import { demoKernelRateCard } from './rate-card/demo-rate-card-packs';
 import { buildValueForecast, type ValueForecast } from './value-forecast';
 import {
   compileBusinessCase,
@@ -48,11 +49,10 @@ const MOVE = 'Contact Center AI Routing';
 export const APEX_CONTACT_CENTER_TENANT_KEY = TENANT;
 export const APEX_CONTACT_CENTER_MOVE_REF = 'apex:move:contact-center-ai-routing';
 
-// The kernel's default planning rate card — the researched 3-D SI benchmark
-// projected onto the should-cost roles, clearly labelled a market planning
-// range and "not a quote". A client-specific Apex rate card would override
-// this; until one exists the researched benchmark is the honest default.
-const RATE_CARD = DEFAULT_PLANNING_RATE_CARD;
+// Demo comprehensive rate card for the Apex anchor — full onshore/offshore
+// role-lane coverage plus a committed budget envelope. Still a demo pack, not
+// a production client rate card.
+const RATE_CARD = demoKernelRateCard('apex-contact-center');
 
 export interface ApexCaseResult {
   skeleton: BusinessCaseSkeleton;

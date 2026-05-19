@@ -24,12 +24,33 @@ describe('Source format router (Slice 8.1 foundations)', () => {
   });
 
   it('throws when the requested format is not in the kind\'s allowed set', () => {
-    expect(() => routeFormat('app-inventory', 'pdf')).toThrow(
-      /Format "pdf" is not allowed for kind "app-inventory"/,
+    // Structured artifacts do not have an HTML surface — HTML is a
+    // long-form narrative share format, not a structured-grid one.
+    expect(() => routeFormat('app-inventory', 'html')).toThrow(
+      /Format "html" is not allowed for kind "app-inventory"/,
     );
-    expect(() => routeFormat('pricing-template', 'docx')).toThrow(
-      /Allowed formats: xlsx/,
+    // Narrative artifacts have no xlsx surface.
+    expect(() => routeFormat('scope-memo', 'xlsx')).toThrow(
+      /Format "xlsx" is not allowed for kind "scope-memo"/,
     );
+  });
+
+  it('every structured artifact allows xlsx + docx + pdf (G7 parity)', () => {
+    const structured: SourceDeliverableKind[] = [
+      'app-inventory',
+      'response-checklist',
+      'scorecard',
+      'pricing-template',
+      'pricing-comparison',
+      'trap-log',
+      'bafo-question-pack',
+    ];
+    for (const kind of structured) {
+      const allowed = getAllowedFormats(kind);
+      expect(allowed).toContain('xlsx');
+      expect(allowed).toContain('docx');
+      expect(allowed).toContain('pdf');
+    }
   });
 
   it('lists every Source kind', () => {

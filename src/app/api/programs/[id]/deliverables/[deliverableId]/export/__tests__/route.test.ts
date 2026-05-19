@@ -64,11 +64,21 @@ jest.mock('@/lib/programs/exports', () => ({
 
 const renderXlsxMock = jest.fn();
 const renderDocxMock = jest.fn();
+const renderHtmlMock = jest.fn();
+const renderPdfMock = jest.fn();
 jest.mock('@/lib/programs/exports/renderers/xlsx', () => ({
   renderDeliverableAsXlsx: (spec: unknown) => renderXlsxMock(spec),
 }));
 jest.mock('@/lib/programs/exports/renderers/docx', () => ({
   renderDeliverableAsDocx: (spec: unknown) => renderDocxMock(spec),
+}));
+// HTML + PDF renderer modules are mocked so the route test stays unit-
+// scoped — the renderers themselves have their own dedicated suites.
+jest.mock('@/lib/programs/exports/renderers/html', () => ({
+  renderDeliverableAsHtml: (spec: unknown) => renderHtmlMock(spec),
+}));
+jest.mock('@/lib/programs/exports/renderers/pdf', () => ({
+  renderDeliverableAsPdf: (spec: unknown) => renderPdfMock(spec),
 }));
 
 // `clientKeyToBrokerTenantKey` lives under lib/agent/tools/intelligence
@@ -161,6 +171,20 @@ beforeEach(() => {
     contentType:
       'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
     sizeBytes: 15,
+  });
+  renderHtmlMock.mockResolvedValue({
+    format: 'html',
+    buffer: Buffer.from('<!DOCTYPE html><html></html>'),
+    filename: 'apex-program-charter-20260429.html',
+    contentType: 'text/html; charset=utf-8',
+    sizeBytes: 28,
+  });
+  renderPdfMock.mockResolvedValue({
+    format: 'pdf',
+    buffer: Buffer.from('%PDF-FAKE'),
+    filename: 'apex-program-charter-20260429.pdf',
+    contentType: 'application/pdf',
+    sizeBytes: 9,
   });
 });
 
@@ -343,13 +367,45 @@ describe('POST /api/programs/[id]/deliverables/[deliverableId]/export', () => {
     expect(auditPayload.sizeBytes).toBe(0);
   });
 
-  it('returns 501 + audits outcome=error when format is pdf (deferred)', async () => {
+  it('renders + audits an HTML export via the HTML renderer', async () => {
+    routeFormatMock.mockReturnValue('html');
+    const res = await POST(
+      makeRequest({ format: 'html', spec: charterSpec }),
+      PARAMS_CHARTER,
+    );
+    expect(res.status).toBe(200);
+    expect(res.headers.get('Content-Type')).toBe('text/html; charset=utf-8');
+    expect(renderHtmlMock).toHaveBeenCalledTimes(1);
+    expect(renderDocxMock).not.toHaveBeenCalled();
+    expect(recordExportAuditMock).toHaveBeenCalledTimes(1);
+    const auditPayload = recordExportAuditMock.mock.calls[0][0];
+    expect(auditPayload.format).toBe('html');
+    expect(auditPayload.outcome).toBe('success');
+  });
+
+  it('renders + audits a PDF export via the PDF renderer', async () => {
     routeFormatMock.mockReturnValue('pdf');
     const res = await POST(
       makeRequest({ format: 'pdf', spec: charterSpec }),
       PARAMS_CHARTER,
     );
-    expect(res.status).toBe(501);
+    expect(res.status).toBe(200);
+    expect(res.headers.get('Content-Type')).toBe('application/pdf');
+    expect(renderPdfMock).toHaveBeenCalledTimes(1);
+    expect(recordExportAuditMock).toHaveBeenCalledTimes(1);
+    const auditPayload = recordExportAuditMock.mock.calls[0][0];
+    expect(auditPayload.format).toBe('pdf');
+    expect(auditPayload.outcome).toBe('success');
+  });
+
+  it('returns 500 + audits outcome=error when the PDF renderer throws', async () => {
+    routeFormatMock.mockReturnValue('pdf');
+    renderPdfMock.mockRejectedValue(new Error('pdf layout overflow'));
+    const res = await POST(
+      makeRequest({ format: 'pdf', spec: charterSpec }),
+      PARAMS_CHARTER,
+    );
+    expect(res.status).toBe(500);
     const body = (await res.json()) as { error: string };
     expect(body.error).toBe('render_failed');
     expect(recordExportAuditMock).toHaveBeenCalledTimes(1);

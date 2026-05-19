@@ -125,63 +125,151 @@ describe('renderSourceDeliverable · structured-data kinds (xlsx + docx)', () =>
   });
 });
 
-describe('renderSourceDeliverable · xlsx-only kinds', () => {
-  it('pricing-template renders xlsx', async () => {
-    const payload = {
-      tenantName: 'Meridian',
-      eventCode: 'MERI-CLOUD-2026',
-      eventName: 'Meridian Health Cloud',
-      generatedAt: COMMON_BASE.generatedAt,
-      assumptions: [{ key: 'Term', value: '3 years' }],
-      lineItems: [{ id: 'L-CMP-01', category: 'Platform', description: 'Compute', unit: 'unit-month', annualQuantity: 280 }],
-      tcoYears: 3,
-      escalator: 0.04,
-    };
-    const result = await renderSourceDeliverable(makeSpec('pricing-template', payload));
-    expect(result.format).toBe('xlsx');
-    expect(result.buffer[0]).toBe(0x50);
+// ── G7 parity: d19 / d20 / d22 now render xlsx + docx + pdf ────────────────
+//
+// Each renders the artifact's actual content into a non-empty, valid
+// buffer for every newly-supported format. ZIP magic (0x50 0x4B) for
+// xlsx + docx; PDF magic (%PDF) for pdf.
+
+const PRICING_TEMPLATE_PAYLOAD = {
+  tenantName: 'Meridian',
+  eventCode: 'MERI-CLOUD-2026',
+  eventName: 'Meridian Health Cloud',
+  generatedAt: COMMON_BASE.generatedAt,
+  assumptions: [{ key: 'Term', value: '3 years', rationale: 'Standard buyer commit.' }],
+  lineItems: [
+    { id: 'L-CMP-01', category: 'Platform', description: 'Compute', unit: 'unit-month', annualQuantity: 280 },
+  ],
+  tcoYears: 3,
+  escalator: 0.04,
+};
+
+const PRICING_COMPARISON_PAYLOAD = {
+  tenantName: 'Meridian',
+  eventCode: 'MERI-CLOUD-2026',
+  eventName: 'Meridian Health Cloud',
+  generatedAt: COMMON_BASE.generatedAt,
+  lineItems: [
+    { id: 'L-CMP-01', category: 'Platform', description: 'Compute', unit: 'unit-month', annualQuantity: 280 },
+  ],
+  assumptions: [{ key: 'Term', value: '3 years' }],
+  escalator: 0.04,
+  tcoYears: 3,
+  submissions: [
+    {
+      vendorName: 'Acme',
+      submittedAt: COMMON_BASE.generatedAt,
+      unitPricesById: { 'L-CMP-01': 120 },
+      pricingNotes: 'Volume discount available beyond 400 units.',
+      assumptionDeviations: [
+        { assumptionKey: 'Term', proposedAlternative: '5 years', severity: 'medium' as const },
+      ],
+    },
+  ],
+};
+
+const TRAP_LOG_PAYLOAD = {
+  tenantName: 'Meridian',
+  eventCode: 'MERI-CLOUD-2026',
+  eventName: 'Meridian Health Cloud',
+  generatedAt: COMMON_BASE.generatedAt,
+  severityDefinitions: [{ severity: 'P0' as const, label: 'Deal-shaping', rubric: 'Material.' }],
+  rows: [
+    { id: 'T-EGR-01', severity: 'P0' as const, category: 'Egress', description: 'Egress overage.', surfacedFor: 'all', surfacedBy: 'Sentinel' },
+  ],
+};
+
+const BAFO_PAYLOAD = {
+  tenantName: 'Meridian',
+  eventCode: 'MERI-CLOUD-2026',
+  eventName: 'Meridian Health Cloud',
+  generatedAt: COMMON_BASE.generatedAt,
+  roundLabel: 'BAFO Round 1',
+  vendors: ['Acme'],
+  trapQuestions: [{ id: 'TQ-01', source: 'T-EGR-01', severity: 'P0' as const, question: 'Resolve egress?', responseFormat: 'y/n' }],
+  valueQuestions: [{ id: 'VQ-01', source: 'Innovation', severity: 'n/a' as const, question: 'Roadmap?', responseFormat: 'milestones' }],
+};
+
+function expectZip(buffer: Buffer): void {
+  expect(buffer.byteLength).toBeGreaterThan(1000);
+  expect(buffer[0]).toBe(0x50);
+  expect(buffer[1]).toBe(0x4b);
+}
+
+function expectPdf(buffer: Buffer): void {
+  expect(buffer.byteLength).toBeGreaterThan(1000);
+  expect(buffer.toString('latin1', 0, 5)).toBe('%PDF-');
+}
+
+describe('renderSourceDeliverable · structured artifacts render every format (G7)', () => {
+  const cases: ReadonlyArray<{
+    kind: 'pricing-template' | 'pricing-comparison' | 'trap-log' | 'bafo-question-pack';
+    payload: Record<string, unknown>;
+  }> = [
+    { kind: 'pricing-template', payload: PRICING_TEMPLATE_PAYLOAD },
+    { kind: 'pricing-comparison', payload: PRICING_COMPARISON_PAYLOAD },
+    { kind: 'trap-log', payload: TRAP_LOG_PAYLOAD },
+    { kind: 'bafo-question-pack', payload: BAFO_PAYLOAD },
+  ];
+
+  for (const { kind, payload } of cases) {
+    describe(kind, () => {
+      it('renders xlsx by default with valid ZIP magic', async () => {
+        const result = await renderSourceDeliverable(makeSpec(kind, payload));
+        expect(result.format).toBe('xlsx');
+        expectZip(result.buffer);
+      });
+
+      it('renders a non-empty docx when requested', async () => {
+        const result = await renderSourceDeliverable(makeSpec(kind, payload), 'docx');
+        expect(result.format).toBe('docx');
+        expect(result.contentType).toContain('wordprocessing');
+        expectZip(result.buffer);
+      });
+
+      it('renders a non-empty pdf when requested', async () => {
+        const result = await renderSourceDeliverable(makeSpec(kind, payload), 'pdf');
+        expect(result.format).toBe('pdf');
+        expect(result.contentType).toBe('application/pdf');
+        expectPdf(result.buffer);
+      });
+    });
+  }
+
+  it('app-inventory / response-checklist / scorecard also render pdf', async () => {
+    const appInv = await renderSourceDeliverable(
+      makeSpec('app-inventory', {
+        tenantName: 'Meridian',
+        eventCode: 'MERI-CLOUD-2026',
+        eventName: 'Meridian Health Cloud',
+        generatedAt: COMMON_BASE.generatedAt,
+        tierDefinitions: [{ tier: 1, label: 'M', criterion: 'x', recoveryObjective: 'y', examples: 'z' }],
+        rows: [{ id: 'A-01', name: 'Epic', tier: 1, owner: 'K', techStack: 'T', hostingToday: 'H', annualWorkloadCount: 100, inScope: true }],
+      }),
+      'pdf',
+    );
+    expect(appInv.format).toBe('pdf');
+    expectPdf(appInv.buffer);
   });
 
-  it('trap-log renders xlsx', async () => {
-    const payload = {
-      tenantName: 'Meridian',
-      eventCode: 'MERI-CLOUD-2026',
-      eventName: 'Meridian Health Cloud',
-      generatedAt: COMMON_BASE.generatedAt,
-      severityDefinitions: [{ severity: 'P0' as const, label: 'Deal-shaping', rubric: 'Material.' }],
-      rows: [{ id: 'T-EGR-01', severity: 'P0' as const, category: 'Egress', description: 'x', surfacedFor: 'all', surfacedBy: 'Sentinel' }],
+  it('renders an explicit empty state — never invents rows — when payload sections are empty', async () => {
+    // trap-log with zero rows: the docx + pdf must still produce a
+    // valid document carrying the empty-state copy, not fabricated traps.
+    const emptyTrapLog = {
+      ...TRAP_LOG_PAYLOAD,
+      rows: [] as ReadonlyArray<never>,
     };
-    const result = await renderSourceDeliverable(makeSpec('trap-log', payload));
-    expect(result.format).toBe('xlsx');
+    const docx = await renderSourceDeliverable(makeSpec('trap-log', emptyTrapLog), 'docx');
+    expect(docx.format).toBe('docx');
+    expectZip(docx.buffer);
+    const pdf = await renderSourceDeliverable(makeSpec('trap-log', emptyTrapLog), 'pdf');
+    expect(pdf.format).toBe('pdf');
+    expectPdf(pdf.buffer);
   });
 
-  it('bafo-question-pack renders xlsx', async () => {
-    const payload = {
-      tenantName: 'Meridian',
-      eventCode: 'MERI-CLOUD-2026',
-      eventName: 'Meridian Health Cloud',
-      generatedAt: COMMON_BASE.generatedAt,
-      vendors: ['Acme'],
-      trapQuestions: [{ id: 'TQ-01', source: 'T-EGR-01', severity: 'P0' as const, question: 'q', responseFormat: 'y/n' }],
-      valueQuestions: [],
-    };
-    const result = await renderSourceDeliverable(makeSpec('bafo-question-pack', payload));
-    expect(result.format).toBe('xlsx');
-  });
-
-  it('throws on docx for xlsx-only kinds', async () => {
-    const payload = {
-      tenantName: 'Meridian',
-      eventCode: 'MERI-CLOUD-2026',
-      eventName: 'Meridian Health Cloud',
-      generatedAt: COMMON_BASE.generatedAt,
-      assumptions: [],
-      lineItems: [],
-      tcoYears: 3,
-      escalator: 0.04,
-    };
+  it('still rejects html for structured kinds (no narrative HTML surface)', async () => {
     await expect(
-      renderSourceDeliverable(makeSpec('pricing-template', payload), 'docx'),
-    ).rejects.toThrow(/Format "docx" is not allowed/);
+      renderSourceDeliverable(makeSpec('pricing-template', PRICING_TEMPLATE_PAYLOAD), 'html'),
+    ).rejects.toThrow(/Format "html" is not allowed/);
   });
 });

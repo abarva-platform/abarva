@@ -16,7 +16,8 @@
 
 import { buildBaselineModel } from './baseline-model';
 import { buildAssumptionLedger } from './assumption-ledger';
-import { buildEffortEstimate, DEFAULT_PLANNING_RATE_CARD } from './effort-estimator';
+import { buildEffortEstimate } from './effort-estimator';
+import { demoKernelRateCard } from './rate-card/demo-rate-card-packs';
 import { buildValueForecast, type ValueForecast } from './value-forecast';
 import {
   compileBusinessCase,
@@ -46,12 +47,10 @@ const MOVE = 'Fraud Detection Enhancement';
 export const FIRSTCAPITAL_FRAUD_TENANT_KEY = TENANT;
 export const FIRSTCAPITAL_FRAUD_MOVE_REF = 'first-capital:move:FC-FRAUD-2026';
 
-// The kernel's default planning rate card — the researched 3-D SI benchmark
-// projected onto the should-cost roles, clearly labelled a market planning
-// range and "not a quote". A client-specific First Capital rate card would
-// override this; until one exists the researched benchmark is the honest
-// default.
-const RATE_CARD = DEFAULT_PLANNING_RATE_CARD;
+// Demo comprehensive rate card for the First Capital anchor — full
+// onshore/offshore role-lane coverage plus the seeded $1.8M committed budget
+// envelope. Still a demo pack, not a production client rate card.
+const RATE_CARD = demoKernelRateCard('firstcapital-fraud-detection');
 
 export interface FirstCapitalCaseResult {
   skeleton: BusinessCaseSkeleton;

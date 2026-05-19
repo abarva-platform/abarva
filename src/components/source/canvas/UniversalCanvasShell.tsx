@@ -24,30 +24,43 @@ const XLSX_COMPARISON_CODES_CLIENT: ReadonlySet<string> = new Set([
   'd19_pricing_workbook',
 ]);
 // Codes for which Source has a docx renderer. Slice 3.x shipped
-// narrative artifacts; Slice 5 adds the structured-data artifacts
-// (d04 app inventory, d11 response checklist, d16 scorecard).
+// narrative artifacts; Slice 5 added the structured-data artifacts
+// (d04/d11/d16); Slice G7 closes the parity gap so every structured
+// artifact (d19 pricing, d20 trap log, d22 BAFO) has a readable docx
+// alongside its xlsx working surface.
 const DOCX_GENERATABLE_CODES_CLIENT: ReadonlySet<string> = new Set([
   'd04_app_inv',
   'd05_scope_memo',
   'd09_rfp_pack',
   'd11_response_checklist',
   'd16_scorecard',
+  'd19_pricing_workbook',
+  'd20_trap_log',
+  'd22_bafo_question_pack',
   'd24_decision_brief',
   'd27_selection_memo',
 ]);
-// Codes for which Source has an HTML renderer. Slice 4.1 — same
-// narrative artifacts as docx so the buyer can share a viewable link.
+// Codes for which Source has an HTML renderer. Slice 4.1 — narrative
+// artifacts only; HTML is a long-form share surface, not a structured-
+// grid surface (structured artifacts use xlsx / docx / pdf).
 const HTML_GENERATABLE_CODES_CLIENT: ReadonlySet<string> = new Set([
   'd05_scope_memo',
   'd09_rfp_pack',
   'd24_decision_brief',
   'd27_selection_memo',
 ]);
-// Codes for which Source has a PDF renderer. Slice 4.2 — programmatic
-// PDF for archives + signatures (HTML's print-to-PDF still works too).
+// Codes for which Source has a PDF renderer. Slice 4.2 shipped the
+// narrative artifacts; Slice G7 adds every structured artifact so a
+// board pack never has to embed a spreadsheet.
 const PDF_GENERATABLE_CODES_CLIENT: ReadonlySet<string> = new Set([
+  'd04_app_inv',
   'd05_scope_memo',
   'd09_rfp_pack',
+  'd11_response_checklist',
+  'd16_scorecard',
+  'd19_pricing_workbook',
+  'd20_trap_log',
+  'd22_bafo_question_pack',
   'd24_decision_brief',
   'd27_selection_memo',
 ]);
