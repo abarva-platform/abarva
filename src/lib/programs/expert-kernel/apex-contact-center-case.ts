@@ -25,6 +25,15 @@ import {
 import { buildRoadmap, type Roadmap } from './roadmap';
 import { buildRaciMatrix, type RaciMatrix } from './raci';
 import { evaluateRubric, type RubricResult } from './qa-rubric';
+import { buildAdoptionApproach, type AdoptionApproach } from './adoption-approach';
+import {
+  buildMeasurementHandoff,
+  type MeasurementHandoff,
+} from './measurement-handoff';
+import {
+  buildGoDecisionPack,
+  type GoDecisionPack,
+} from './go-decision-pack';
 import { rangeOf } from './types';
 
 const TENANT = 'apex-retail';
@@ -584,4 +593,207 @@ export function buildApexContactCenterFullCase(): ApexFullCaseResult {
 
   const fullCase = compileFullBusinessCase({ skeleton, roadmap, raci });
   return { fullCase, roadmap, raci, rubric: evaluateRubric(skeleton) };
+}
+
+// ===========================================================================
+// Mobilize & Handoff — the final phase, grounded on the same Apex substrate.
+// ===========================================================================
+
+export interface ApexMobilizeResult {
+  /** The Design & Plan business case the Mobilize phase builds on. */
+  case: ApexCaseResult;
+  adoption: AdoptionApproach;
+  measurement: MeasurementHandoff;
+  goPack: GoDecisionPack;
+}
+
+/**
+ * Build the Mobilize & Handoff deliverables for the real Apex Contact Center
+ * AI Routing Move: the adoption & change approach, the value-measurement →
+ * Tower handoff (wired to the Discover baseline), and the go-decision pack.
+ *
+ * Grounded on the same audited Apex substrate as `buildApexContactCenterCase`.
+ * No fabrication — the cost-per-contact metric is a Discover seed gap, so its
+ * measurement metric is honestly carried as UNWIRED and the go-decision lands
+ * at `no_go` (the open monetisation blocker fires a kill trigger), not a fake
+ * `go`.
+ *
+ * Deterministic.
+ */
+export function buildApexMobilizeCase(): ApexMobilizeResult {
+  const caseResult = buildApexContactCenterCase();
+  const { skeleton } = caseResult;
+
+  // --- Adoption & change approach — decision-brief depth, NOT a design -----
+  const adoption = buildAdoptionApproach({
+    moveName: MOVE,
+    // Operating-model owner — distinct from the executive sponsor. The WFM
+    // lead in Customer Care Operations is on record accepting run accountability.
+    operatingModelOwner: 'Mariana Rojas (WFM Lead, Customer Care Operations)',
+    hypercareWeeks: 6,
+    impactedRoles: [
+      {
+        role: 'Customer Care agent',
+        // Headcount not seeded for Apex — honest proxy, flagged.
+        headcount: null,
+        changeMagnitude: 'high',
+        whatChanges:
+          'Agents move from manual call handling to AI-routed, ' +
+          'assist-augmented handling; harder calls now reach them.',
+        headcountIsProxy: true,
+      },
+      {
+        role: 'Customer Care team manager',
+        headcount: null,
+        changeMagnitude: 'moderate',
+        whatChanges:
+          'Managers coach to new routing/assist metrics and reinforce the ' +
+          'changed handling pattern daily.',
+        headcountIsProxy: true,
+      },
+      {
+        role: 'Workforce-management analyst',
+        headcount: null,
+        changeMagnitude: 'moderate',
+        whatChanges:
+          'Capacity planning re-baselined around the new containment and ' +
+          'AHT mix.',
+        headcountIsProxy: true,
+      },
+    ],
+    dimensions: [
+      {
+        dimension: 'impacted_roles',
+        magnitude: 'high',
+        recommendation:
+          'Three roles change; the agent role changes most. Stage the ' +
+          'rollout by team rather than flipping the floor at once.',
+        ownerRole: 'WFM Lead',
+        confidence: 'medium',
+        restsOnSeedGap: true,
+      },
+      {
+        dimension: 'process_variance',
+        magnitude: 'high',
+        recommendation:
+          'Routing logic varies handling materially; recommend a process ' +
+          'redesign workstream lands before the change rollout (it is ' +
+          'budgeted in the Design & Plan estimate).',
+        ownerRole: 'Program Lead',
+        confidence: 'medium',
+      },
+      {
+        dimension: 'training_load',
+        magnitude: 'moderate',
+        recommendation:
+          'Role-based training: a heavier curriculum for agents (assist ' +
+          'tooling), a lighter one for managers and WFM analysts.',
+        ownerRole: 'Enablement Lead',
+        confidence: 'medium',
+        restsOnSeedGap: true,
+      },
+      {
+        dimension: 'incentive_change',
+        magnitude: 'moderate',
+        recommendation:
+          'Re-point agent performance incentives away from raw handle ' +
+          'time toward resolution quality, so the new routing is not ' +
+          'fought by the old scorecard.',
+        ownerRole: 'Customer Care Operations',
+        confidence: 'medium',
+      },
+      {
+        dimension: 'manager_adoption',
+        magnitude: 'high',
+        recommendation:
+          'Manager reinforcement is the highest-risk layer. Recommend a ' +
+          'dedicated manager-enablement track and explicit reinforcement ' +
+          'in the hypercare window.',
+        ownerRole: 'WFM Lead',
+        confidence: 'medium',
+      },
+      {
+        dimension: 'communications',
+        magnitude: 'moderate',
+        recommendation:
+          'Address the agent narrative directly — AI routing augments ' +
+          'agents, it does not replace them; the WFM lead is on record ' +
+          'preferring agent-assist over IVR replacement.',
+        ownerRole: 'Program Lead',
+        confidence: 'medium',
+      },
+      {
+        dimension: 'hypercare',
+        magnitude: 'moderate',
+        recommendation:
+          'A 6-week hypercare window with elevated floor support and a ' +
+          'daily routing-quality review; exit when adoption and CSAT hold ' +
+          'for two consecutive weeks.',
+        ownerRole: 'WFM Lead',
+        confidence: 'medium',
+      },
+    ],
+  });
+
+  // --- Value-measurement model -> Tower handoff ---------------------------
+  // Each metric is wired to a real Discover baseline value. cost_per_contact
+  // is a seed gap, so it is carried UNWIRED with a dated capture plan — never
+  // dropped, never faked.
+  const measurement = buildMeasurementHandoff({
+    moveName: MOVE,
+    tenantClientKey: TENANT,
+    baseline: skeleton.baseline,
+    subjectKind: 'move',
+    subjectRef: 'apex:move:contact-center-ai-routing',
+    metrics: [
+      {
+        baselineMetricKey: 'containment_pct',
+        label: 'Contact Center Containment',
+        targetValue: 40,
+        valueCategory: 'productivity',
+        measurementUnit: 'percent',
+        cadence: 'monthly',
+        measurementOwnerRole: 'WFM Lead',
+      },
+      {
+        baselineMetricKey: 'aht_minutes',
+        label: 'Average Handle Time',
+        targetValue: 6.5,
+        valueCategory: 'productivity',
+        measurementUnit: 'percent',
+        cadence: 'monthly',
+        measurementOwnerRole: 'WFM Lead',
+      },
+      {
+        baselineMetricKey: 'csat',
+        label: 'CSAT (post-interaction)',
+        targetValue: 4.4,
+        valueCategory: 'customer_experience',
+        measurementUnit: 'nps_delta',
+        cadence: 'quarterly',
+        measurementOwnerRole: 'Customer Care Operations',
+      },
+      {
+        baselineMetricKey: 'cost_per_contact_usd',
+        label: 'Cost per contact (labour)',
+        targetValue: null,
+        valueCategory: 'cost_avoidance',
+        measurementUnit: 'usd_seed',
+        cadence: 'monthly',
+        measurementOwnerRole: 'CS Ops',
+        baselineCapturePlan:
+          'Tenant action item "Capture cost-per-contact baseline" ' +
+          '(owner Brendan Fox) due 2026-05-15.',
+      },
+    ],
+  });
+
+  // --- Go-decision pack ----------------------------------------------------
+  const goPack = buildGoDecisionPack({
+    businessCase: skeleton,
+    adoption,
+    measurement,
+  });
+
+  return { case: caseResult, adoption, measurement, goPack };
 }
