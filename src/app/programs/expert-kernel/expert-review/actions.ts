@@ -6,17 +6,19 @@
 // append-only `expert_reviews` row, through the data-plane write seam. The
 // console re-reads the accumulated reviews and re-runs the calibration engine
 // on the next render.
+//
+// The action is CASE-AWARE: the form carries a `caseId`, resolved through the
+// `expert-review-cases` registry, so the review persists against whichever of
+// the three kernel-anchored tenants (Apex / Meridian / First Capital) was
+// reviewed. The `expert_reviews` table is already keyed on
+// `tenant_client_key` + `move_ref`, so no migration change is needed.
 
 import { revalidatePath } from 'next/cache';
-import {
-  APEX_CONTACT_CENTER_MOVE_REF,
-  APEX_CONTACT_CENTER_TENANT_KEY,
-} from '@/lib/programs/expert-kernel';
 import type {
   ExpertReviewerRole,
   ExpertReviewVerdict,
 } from '@/lib/programs/expert-kernel';
-import { buildApexContactCenterCase } from '@/lib/programs/expert-kernel';
+import { resolveExpertReviewCase } from '@/lib/programs/expert-kernel';
 import { validateReviewSubmission } from '@/lib/programs/expert-kernel';
 import { selectExpertReviewsWriteAdapter } from '@/lib/data-plane/write-adapters/expertReviewsWriteAdapter';
 import { getCurrentUser } from '@/lib/auth/current-user';
@@ -49,9 +51,11 @@ function parseList(raw: string): string[] {
 }
 
 /**
- * Persist one expert review of the Apex Contact Center AI Routing business
- * case. Validates against the kernel's known assumption keys before the write
- * so a reviewer cannot orphan a note onto an unknown assumption.
+ * Persist one expert review of a kernel-anchored business case. The `caseId`
+ * field selects which of the three tenants (Apex / Meridian / First Capital)
+ * the review belongs to; an unknown id falls back to the default Apex case.
+ * Validates against that case's known assumption keys before the write so a
+ * reviewer cannot orphan a note onto an unknown assumption.
  */
 export async function recordExpertReviewAction(formData: FormData): Promise<void> {
   const reviewerId = String(formData.get('reviewerId') ?? '').trim();
@@ -60,6 +64,7 @@ export async function recordExpertReviewAction(formData: FormData): Promise<void
   const note = String(formData.get('note') ?? '').trim();
   const assumptionKeys = parseList(String(formData.get('assumptionKeys') ?? ''));
   const requiredActions = parseList(String(formData.get('requiredActions') ?? ''));
+  const caseId = String(formData.get('caseId') ?? '');
 
   const role = ROLES.includes(roleRaw as ExpertReviewerRole)
     ? (roleRaw as ExpertReviewerRole)
@@ -69,8 +74,9 @@ export async function recordExpertReviewAction(formData: FormData): Promise<void
     : null;
   if (!role || !verdict) return;
 
-  // Validate against the live kernel assumption keys.
-  const { skeleton } = buildApexContactCenterCase();
+  // Resolve the tenant case and validate against ITS live assumption keys.
+  const reviewCase = resolveExpertReviewCase(caseId);
+  const { skeleton } = reviewCase.buildCase();
   const knownKeys = new Set(skeleton.assumptions.assumptions.map((a) => a.key));
   const review = { reviewerId, role, verdict, note, assumptionKeys, requiredActions };
   const validation = validateReviewSubmission(review, knownKeys);
@@ -79,8 +85,8 @@ export async function recordExpertReviewAction(formData: FormData): Promise<void
   const user = await getCurrentUser();
   await selectExpertReviewsWriteAdapter().recordReview({
     ...review,
-    tenantClientKey: APEX_CONTACT_CENTER_TENANT_KEY,
-    moveRef: APEX_CONTACT_CENTER_MOVE_REF,
+    tenantClientKey: reviewCase.tenantKey,
+    moveRef: reviewCase.moveRef,
     moveName: skeleton.moveName,
     createdBy: user?.personId ?? user?.clerkUserId ?? null,
   });

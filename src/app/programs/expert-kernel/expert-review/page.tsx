@@ -3,7 +3,12 @@
 // A design-partner reviewer's directive: do not build more broad surfaces —
 // build the console where real finance / delivery / sourcing / domain experts
 // read the kernel's generated business case and calibrate it. This page is
-// that console, rendered for Apex's real "Contact Center AI Routing" Move.
+// that console.
+//
+// The kernel is now proven on THREE tenant anchors — Apex Retail, Meridian
+// Health System, First Capital Financial. The console is tenant-switchable: a
+// `?case=` searchParam (defaulting to Apex) selects which grounded case the
+// kernel renders, resolved through the `expert-review-cases` registry.
 //
 // It surfaces, per the spec:
 //   1 the generated business case (kernel skeleton)
@@ -16,15 +21,17 @@
 //
 // The kernel does the analysis; this server component reads the persisted
 // reviews through the data-plane seam, runs the pure console view-model, and
-// renders. No fabrication — every figure is the audited Apex substrate.
+// renders. No fabrication — every figure is the selected tenant's audited
+// substrate.
 
+import Link from 'next/link';
 import { COLORS, TYPOGRAPHY, SPACING, RADIUS } from '@/lib/design/design-tokens';
 import {
-  buildApexContactCenterCase,
   buildExpertReviewConsole,
   EXPERT_REVIEW_VERDICTS,
-  APEX_CONTACT_CENTER_MOVE_REF,
-  APEX_CONTACT_CENTER_TENANT_KEY,
+  EXPERT_REVIEW_CASE_IDS,
+  EXPERT_REVIEW_CASES,
+  resolveExpertReviewCase,
 } from '@/lib/programs/expert-kernel';
 import { selectExpertReviewsReadAdapter } from '@/lib/data-plane/read-adapters/expertReviewsReadAdapter';
 import { ExpertReviewForm } from '@/components/programs/ExpertReviewForm';
@@ -33,7 +40,7 @@ import { recordExpertReviewAction } from './actions';
 export const dynamic = 'force-dynamic';
 
 export const metadata = {
-  title: 'Expert Review Console · Apex Contact Center · AbarVa',
+  title: 'Expert Review Console · Moves Expert Kernel · AbarVa',
 };
 
 const usd = (n: number): string => `$${Math.round(n).toLocaleString('en-US')}`;
@@ -132,14 +139,22 @@ const VERDICT_LABEL: Record<string, string> = Object.fromEntries(
   EXPERT_REVIEW_VERDICTS.map((v) => [v.verdict, v.label]),
 );
 
-export default async function ExpertReviewConsolePage() {
-  // 1 — the generated business case.
-  const { skeleton } = buildApexContactCenterCase();
+export default async function ExpertReviewConsolePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ case?: string }>;
+}) {
+  // Resolve the tenant case from the `?case=` selector (defaults to Apex).
+  const { case: caseParam } = await searchParams;
+  const reviewCase = resolveExpertReviewCase(caseParam);
+
+  // 1 — the generated business case for the selected tenant.
+  const { skeleton } = reviewCase.buildCase();
 
   // Persisted reviews — read through the data-plane seam, fail-soft to [].
   const reviews = await selectExpertReviewsReadAdapter().listForMove(
-    APEX_CONTACT_CENTER_TENANT_KEY,
-    APEX_CONTACT_CENTER_MOVE_REF,
+    reviewCase.tenantKey,
+    reviewCase.moveRef,
   );
 
   // The pure console view-model: annotation + calibration in one pass.
@@ -195,9 +210,44 @@ export default async function ExpertReviewConsolePage() {
         >
           {view.moveName}
         </h1>
-        <div style={META}>
-          {view.tenantKey} · {APEX_CONTACT_CENTER_MOVE_REF} · the kernel generated
-          this case; experts calibrate it below.
+        <div style={{ ...META, marginBottom: SPACING.sm }}>
+          {reviewCase.tenantLabel} · {view.tenantKey} · {reviewCase.moveRef} · the
+          kernel generated this case; experts calibrate it below.
+        </div>
+        {/* Tenant switcher — three kernel-anchored cases, locked design. */}
+        <div
+          style={{
+            display: 'flex',
+            gap: SPACING.xs,
+            flexWrap: 'wrap',
+            alignItems: 'center',
+          }}
+        >
+          <span style={{ ...META, marginRight: 4 }}>TENANT CASE</span>
+          {EXPERT_REVIEW_CASE_IDS.map((id) => {
+            const entry = EXPERT_REVIEW_CASES[id];
+            const active = id === reviewCase.id;
+            return (
+              <Link
+                key={id}
+                href={`?case=${id}`}
+                style={{
+                  fontFamily: TYPOGRAPHY.sans,
+                  fontSize: 11,
+                  fontWeight: 700,
+                  letterSpacing: '0.04em',
+                  textDecoration: 'none',
+                  padding: `${SPACING.xs} ${SPACING.sm}`,
+                  borderRadius: RADIUS.sm,
+                  border: `1px solid ${active ? COLORS.ink : `${COLORS.ink}55`}`,
+                  background: active ? COLORS.ink : 'transparent',
+                  color: active ? COLORS.white : COLORS.ink,
+                }}
+              >
+                {entry.tenantLabel}
+              </Link>
+            );
+          })}
         </div>
       </header>
 
@@ -467,6 +517,7 @@ export default async function ExpertReviewConsolePage() {
             statement: assumption.statement,
           }))}
           action={recordExpertReviewAction}
+          caseId={reviewCase.id}
         />
       </Section>
 
