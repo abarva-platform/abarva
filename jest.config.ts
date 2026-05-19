@@ -28,6 +28,13 @@ const config: Config = {
       '<rootDir>/src/__tests__/__mocks__/mdast-util-gfm.ts',
     '^micromark-extension-gfm$':
       '<rootDir>/src/__tests__/__mocks__/micromark-extension-gfm.ts',
+    // @react-pdf/renderer is pure ESM (bare `import` of
+    // @react-pdf/primitives) that next/jest won't transpile. The mock
+    // substitutes the primitives with plain elements and stubs
+    // pdf().toBuffer() with a minimal valid PDF stream, so the Source
+    // PDF renderers can be exercised for non-empty, well-formed output.
+    '^@react-pdf/renderer$':
+      '<rootDir>/src/__tests__/__mocks__/react-pdf-renderer.tsx',
   },
 }
 
