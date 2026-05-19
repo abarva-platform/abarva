@@ -13,4 +13,7 @@ export * from './value-forecast';
 export * from './critic';
 export * from './business-case-compiler';
 export * from './qa-rubric';
+export * from './roadmap';
+export * from './raci';
+export * from './phase-playbooks/design-plan';
 export * from './apex-contact-center-case';
