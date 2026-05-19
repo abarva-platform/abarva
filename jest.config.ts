@@ -28,14 +28,46 @@ const config: Config = {
       '<rootDir>/src/__tests__/__mocks__/mdast-util-gfm.ts',
     '^micromark-extension-gfm$':
       '<rootDir>/src/__tests__/__mocks__/micromark-extension-gfm.ts',
-    // @react-pdf/renderer is pure ESM ("type": "module") and next/jest's
-    // prepended transformIgnorePatterns keep it un-transpiled. This mock
-    // executes the real PDF renderer logic and emits a structurally-
-    // valid minimal PDF so the Intelligence brief PDF renderer can be
-    // tested for valid output + content grounding.
+    // @react-pdf/renderer is pure ESM (bare `import` of
+    // @react-pdf/primitives) that next/jest won't transpile. The mock
+    // substitutes the primitives with plain elements and stubs
+    // pdf().toBuffer() with a minimal valid PDF stream, so the Source
+    // PDF renderers can be exercised for non-empty, well-formed output.
     '^@react-pdf/renderer$':
       '<rootDir>/src/__tests__/__mocks__/react-pdf-renderer.tsx',
   },
 }
 
-export default createJestConfig(config)
+// next/jest owns `transformIgnorePatterns` (it skips all of
+// node_modules). `@react-pdf/renderer` — used by the programs + Source
+// PDF renderers — and a chunk of its dependency tree ship pure ESM, so
+// those packages must be transpiled rather than ignored. We resolve
+// next/jest's generated config and rewrite the pattern to whitelist the
+// `@react-pdf/*` packages plus their known ESM transitive dependencies,
+// while still ignoring the rest of node_modules.
+const REACT_PDF_ESM_PACKAGES = [
+  '@react-pdf',
+  'fontkit',
+  'yoga-layout',
+  'restructure',
+  'unicode-properties',
+  'unicode-trie',
+  'color-string',
+  'color-name',
+  'png-js',
+  'jay-peg',
+  'dfa',
+  'clone',
+  'brotli',
+].join('|')
+
+export default async function jestConfig(): Promise<Config> {
+  const resolved = await createJestConfig(config)()
+  return {
+    ...resolved,
+    transformIgnorePatterns: [
+      `/node_modules/(?!(\\.pnpm/)?(${REACT_PDF_ESM_PACKAGES})/)`,
+      '^.+\\.module\\.(css|sass|scss)$',
+    ],
+  }
+}

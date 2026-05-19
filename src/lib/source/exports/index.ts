@@ -25,6 +25,9 @@ import {
 import { buildAppInventoryDocx } from './renderers/app-inventory-docx';
 import { buildResponseChecklistDocx } from './renderers/response-checklist-docx';
 import { buildScorecardDocx } from './renderers/scorecard-docx';
+import { buildPricingTemplateDocx } from './renderers/pricing-template-docx';
+import { buildTrapLogDocx } from './renderers/trap-log-docx';
+import { buildBafoQuestionPackDocx } from './renderers/bafo-question-pack-docx';
 // Re-export the scope-memo type alias for backwards compat — the
 // payload shape is identical to NarrativeDocxPayload.
 import type { ScopeMemoDocxPayload } from './renderers/scope-memo-docx';
@@ -46,6 +49,12 @@ import {
   type NarrativePdfConfig,
   type NarrativePdfPayload,
 } from './renderers/narrative-pdf';
+import { buildAppInventoryPdf } from './renderers/app-inventory-pdf';
+import { buildResponseChecklistPdf } from './renderers/response-checklist-pdf';
+import { buildScorecardPdf } from './renderers/scorecard-pdf';
+import { buildPricingTemplatePdf } from './renderers/pricing-template-pdf';
+import { buildTrapLogPdf } from './renderers/trap-log-pdf';
+import { buildBafoQuestionPackPdf } from './renderers/bafo-question-pack-pdf';
 import {
   buildPricingComparisonWorkbook,
   type PricingComparisonPayload,
@@ -100,9 +109,10 @@ export const XLSX_COMPARISON_CODES = new Set(['d19_pricing_workbook']);
 /**
  * Codes for which Source has a docx renderer. Surfaces a "Download
  * docx" anchor on the artifact card. Slice 3.x shipped narrative
- * artifacts (d05/d09/d24/d27); Slice 5 adds the structured-data
- * artifacts (d04/d11/d16) — same payload binders as their xlsx
- * counterparts; renderers translate to docx tables + sections.
+ * artifacts (d05/d09/d24/d27); Slice 5 added the structured-data
+ * artifacts (d04/d11/d16). Slice G7 closes the parity gap — d19
+ * (pricing), d20 (trap log) and d22 (BAFO) now ship a readable docx
+ * rendering alongside their canonical xlsx working surface.
  */
 export const DOCX_GENERATABLE_CODES = new Set([
   'd04_app_inv',
@@ -110,6 +120,9 @@ export const DOCX_GENERATABLE_CODES = new Set([
   'd09_rfp_pack',
   'd11_response_checklist',
   'd16_scorecard',
+  'd19_pricing_workbook',
+  'd20_trap_log',
+  'd22_bafo_question_pack',
   'd24_decision_brief',
   'd27_selection_memo',
 ]);
@@ -127,13 +140,21 @@ export const HTML_GENERATABLE_CODES = new Set([
 ]);
 
 /**
- * Codes for which Source has a PDF renderer. Slice 4.2 covers the same
- * narrative artifacts so every long-form deliverable has a print-ready
- * PDF available for sharing / archiving.
+ * Codes for which Source has a PDF renderer. Slice 4.2 shipped the
+ * narrative artifacts (d05/d09/d24/d27). Slice G7 closes the parity
+ * gap — every structured artifact (d04/d11/d16/d19/d20/d22) now ships
+ * a print-ready PDF rendering of the same content its xlsx carries,
+ * so a board pack never has to embed a spreadsheet.
  */
 export const PDF_GENERATABLE_CODES = new Set([
+  'd04_app_inv',
   'd05_scope_memo',
   'd09_rfp_pack',
+  'd11_response_checklist',
+  'd16_scorecard',
+  'd19_pricing_workbook',
+  'd20_trap_log',
+  'd22_bafo_question_pack',
   'd24_decision_brief',
   'd27_selection_memo',
 ]);
@@ -242,6 +263,12 @@ export async function renderArtifactDocx(
       return buildResponseChecklistDocx(args.payload as ResponseChecklistPayload);
     case 'd16_scorecard':
       return buildScorecardDocx(args.payload as ScorecardPayload);
+    case 'd19_pricing_workbook':
+      return buildPricingTemplateDocx(args.payload as PricingTemplatePayload);
+    case 'd20_trap_log':
+      return buildTrapLogDocx(args.payload as TrapLogPayload);
+    case 'd22_bafo_question_pack':
+      return buildBafoQuestionPackDocx(args.payload as BafoQuestionPackPayload);
     default:
       throw new Error(
         `No docx generator wired for ${args.artifactCode}. ` +
@@ -289,16 +316,30 @@ export interface RenderPdfArgs {
  * Pure: returns a React element, no I/O.
  */
 export function renderArtifactPdf(args: RenderPdfArgs): import('react').ReactElement<import('@react-pdf/renderer').DocumentProps> {
-  const payload = args.payload as NarrativePdfPayload;
   switch (args.artifactCode) {
+    // Narrative artifacts — markdown body → react-pdf via the walker.
     case 'd05_scope_memo':
-      return buildNarrativePdf(payload, SCOPE_MEMO_PDF_CONFIG);
+      return buildNarrativePdf(args.payload as NarrativePdfPayload, SCOPE_MEMO_PDF_CONFIG);
     case 'd09_rfp_pack':
-      return buildNarrativePdf(payload, RFP_PACK_PDF_CONFIG);
+      return buildNarrativePdf(args.payload as NarrativePdfPayload, RFP_PACK_PDF_CONFIG);
     case 'd24_decision_brief':
-      return buildNarrativePdf(payload, DECISION_BRIEF_PDF_CONFIG);
+      return buildNarrativePdf(args.payload as NarrativePdfPayload, DECISION_BRIEF_PDF_CONFIG);
     case 'd27_selection_memo':
-      return buildNarrativePdf(payload, SELECTION_MEMO_PDF_CONFIG);
+      return buildNarrativePdf(args.payload as NarrativePdfPayload, SELECTION_MEMO_PDF_CONFIG);
+    // Structured-data artifacts — typed payload (same as xlsx) →
+    // react-pdf via per-artifact section/table renderers.
+    case 'd04_app_inv':
+      return buildAppInventoryPdf(args.payload as AppInventoryPayload);
+    case 'd11_response_checklist':
+      return buildResponseChecklistPdf(args.payload as ResponseChecklistPayload);
+    case 'd16_scorecard':
+      return buildScorecardPdf(args.payload as ScorecardPayload);
+    case 'd19_pricing_workbook':
+      return buildPricingTemplatePdf(args.payload as PricingTemplatePayload);
+    case 'd20_trap_log':
+      return buildTrapLogPdf(args.payload as TrapLogPayload);
+    case 'd22_bafo_question_pack':
+      return buildBafoQuestionPackPdf(args.payload as BafoQuestionPackPayload);
     default:
       throw new Error(
         `No PDF generator wired for ${args.artifactCode}. ` +

@@ -4,14 +4,18 @@
 // SourceDeliverableSpec envelope (matching the Programs pattern) while
 // reusing the existing renderer + payload code from Slices 2-7.
 //
-// Slice 8.3 extends the dispatcher to all 11 SourceDeliverableKinds:
+// The dispatcher covers all 11 SourceDeliverableKinds:
 //
-//   Narrative kinds (4)        × format: docx | html | pdf
+//   Narrative kinds (4)         × format: docx | html | pdf
 //     scope-memo / rfp-package / decision-brief / selection-memo
-//   Structured-data kinds (3)  × format: xlsx | docx
-//     app-inventory / response-checklist / scorecard
-//   Structured xlsx-only (4)
-//     pricing-template / pricing-comparison / trap-log / bafo-question-pack
+//   Structured-data kinds (7)   × format: xlsx | docx | pdf
+//     app-inventory / response-checklist / scorecard /
+//     pricing-template / pricing-comparison / trap-log /
+//     bafo-question-pack
+//
+// Slice G7 closed the format-parity gap: every structured artifact
+// now renders a readable docx + pdf alongside its xlsx working
+// surface, so a board pack never has to embed a spreadsheet.
 //
 // Returns a `SourceDeliverableRenderResult` matching the Programs
 // `DeliverableRenderResult` shape so the unified route in Slice 8.4
@@ -61,18 +65,22 @@ import {
   buildPricingTemplateWorkbook,
   type PricingTemplatePayload,
 } from './renderers/pricing-template';
+import { buildPricingTemplateDocx } from './renderers/pricing-template-docx';
 import {
   buildPricingComparisonWorkbook,
   type PricingComparisonPayload,
 } from './renderers/pricing-comparison';
+import { buildPricingComparisonDocx } from './renderers/pricing-comparison-docx';
 import {
   buildTrapLogWorkbook,
   type TrapLogPayload,
 } from './renderers/trap-log';
+import { buildTrapLogDocx } from './renderers/trap-log-docx';
 import {
   buildBafoQuestionPackWorkbook,
   type BafoQuestionPackPayload,
 } from './renderers/bafo-question-pack';
+import { buildBafoQuestionPackDocx } from './renderers/bafo-question-pack-docx';
 
 import { DOCX_CONTENT_TYPE } from '@/lib/exports-shared/docx-base';
 import { HTML_CONTENT_TYPE } from './renderers/narrative-html';
@@ -193,39 +201,22 @@ export async function renderSourceDeliverable(
     case 'selection-memo':
       return renderNarrative(spec, SELECTION_MEMO_DOCX_CONFIG, format, filename, generatedAt);
 
-    // Structured-data kinds — xlsx + docx (where docx exists)
+    // Structured-data kinds — xlsx (canonical data surface) + docx + pdf
+    // (readable renderings of the same content).
     case 'app-inventory':
       return renderAppInventory(spec as unknown as AppInventorySpec, format, filename);
     case 'response-checklist':
       return renderResponseChecklist(spec as unknown as ResponseChecklistSpec, format, filename);
     case 'scorecard':
       return renderScorecard(spec as unknown as ScorecardSpec, format, filename);
-
-    // xlsx-only kinds
     case 'pricing-template':
-      return renderXlsxOnly(
-        await buildPricingTemplateWorkbook(spec.payload as unknown as PricingTemplatePayload),
-        format,
-        filename,
-      );
+      return renderPricingTemplate(spec as unknown as PricingTemplateSpec, format, filename);
     case 'pricing-comparison':
-      return renderXlsxOnly(
-        await buildPricingComparisonWorkbook(spec.payload as unknown as PricingComparisonPayload),
-        format,
-        filename,
-      );
+      return renderPricingComparison(spec as unknown as PricingComparisonSpec, format, filename);
     case 'trap-log':
-      return renderXlsxOnly(
-        await buildTrapLogWorkbook(spec.payload as unknown as TrapLogPayload),
-        format,
-        filename,
-      );
+      return renderTrapLog(spec as unknown as TrapLogSpec, format, filename);
     case 'bafo-question-pack':
-      return renderXlsxOnly(
-        await buildBafoQuestionPackWorkbook(spec.payload as unknown as BafoQuestionPackPayload),
-        format,
-        filename,
-      );
+      return renderBafoQuestionPack(spec as unknown as BafoQuestionPackSpec, format, filename);
 
     default: {
       const _exhaustive: never = spec.kind;
@@ -283,7 +274,7 @@ async function renderNarrative(
   }
 }
 
-// ── Structured-data renderers (xlsx + docx) ────────────────────────────────
+// ── Structured-data renderers (xlsx + docx + pdf) ──────────────────────────
 
 async function renderAppInventory(
   spec: AppInventorySpec,
@@ -294,9 +285,11 @@ async function renderAppInventory(
     return renderXlsxOnly(buildAppInventoryWorkbook(spec.payload), format, filename);
   }
   if (format === 'docx') {
-    const doc = buildAppInventoryDocx(spec.payload);
-    const buffer = (await Packer.toBuffer(doc)) as unknown as Buffer;
-    return makeResult('docx', buffer, filename, DOCX_CONTENT_TYPE);
+    return docxResult(buildAppInventoryDocx(spec.payload), filename);
+  }
+  if (format === 'pdf') {
+    const { buildAppInventoryPdf } = await import('./renderers/app-inventory-pdf');
+    return pdfResult(buildAppInventoryPdf(spec.payload), filename);
   }
   throw new Error(`app-inventory does not support format "${format}"`);
 }
@@ -310,9 +303,11 @@ async function renderResponseChecklist(
     return renderXlsxOnly(buildResponseChecklistWorkbook(spec.payload), format, filename);
   }
   if (format === 'docx') {
-    const doc = buildResponseChecklistDocx(spec.payload);
-    const buffer = (await Packer.toBuffer(doc)) as unknown as Buffer;
-    return makeResult('docx', buffer, filename, DOCX_CONTENT_TYPE);
+    return docxResult(buildResponseChecklistDocx(spec.payload), filename);
+  }
+  if (format === 'pdf') {
+    const { buildResponseChecklistPdf } = await import('./renderers/response-checklist-pdf');
+    return pdfResult(buildResponseChecklistPdf(spec.payload), filename);
   }
   throw new Error(`response-checklist does not support format "${format}"`);
 }
@@ -326,11 +321,113 @@ async function renderScorecard(
     return renderXlsxOnly(buildScorecardWorkbook(spec.payload), format, filename);
   }
   if (format === 'docx') {
-    const doc = buildScorecardDocx(spec.payload);
-    const buffer = (await Packer.toBuffer(doc)) as unknown as Buffer;
-    return makeResult('docx', buffer, filename, DOCX_CONTENT_TYPE);
+    return docxResult(buildScorecardDocx(spec.payload), filename);
+  }
+  if (format === 'pdf') {
+    const { buildScorecardPdf } = await import('./renderers/scorecard-pdf');
+    return pdfResult(buildScorecardPdf(spec.payload), filename);
   }
   throw new Error(`scorecard does not support format "${format}"`);
+}
+
+async function renderPricingTemplate(
+  spec: PricingTemplateSpec,
+  format: DeliverableFormat,
+  filename: string,
+): Promise<SourceDeliverableRenderResult> {
+  if (format === 'xlsx') {
+    return renderXlsxOnly(buildPricingTemplateWorkbook(spec.payload), format, filename);
+  }
+  if (format === 'docx') {
+    return docxResult(buildPricingTemplateDocx(spec.payload), filename);
+  }
+  if (format === 'pdf') {
+    const { buildPricingTemplatePdf } = await import('./renderers/pricing-template-pdf');
+    return pdfResult(buildPricingTemplatePdf(spec.payload), filename);
+  }
+  throw new Error(`pricing-template does not support format "${format}"`);
+}
+
+async function renderPricingComparison(
+  spec: PricingComparisonSpec,
+  format: DeliverableFormat,
+  filename: string,
+): Promise<SourceDeliverableRenderResult> {
+  if (format === 'xlsx') {
+    return renderXlsxOnly(buildPricingComparisonWorkbook(spec.payload), format, filename);
+  }
+  if (format === 'docx') {
+    return docxResult(buildPricingComparisonDocx(spec.payload), filename);
+  }
+  if (format === 'pdf') {
+    const { buildPricingComparisonPdf } = await import('./renderers/pricing-comparison-pdf');
+    return pdfResult(buildPricingComparisonPdf(spec.payload), filename);
+  }
+  throw new Error(`pricing-comparison does not support format "${format}"`);
+}
+
+async function renderTrapLog(
+  spec: TrapLogSpec,
+  format: DeliverableFormat,
+  filename: string,
+): Promise<SourceDeliverableRenderResult> {
+  if (format === 'xlsx') {
+    return renderXlsxOnly(buildTrapLogWorkbook(spec.payload), format, filename);
+  }
+  if (format === 'docx') {
+    return docxResult(buildTrapLogDocx(spec.payload), filename);
+  }
+  if (format === 'pdf') {
+    const { buildTrapLogPdf } = await import('./renderers/trap-log-pdf');
+    return pdfResult(buildTrapLogPdf(spec.payload), filename);
+  }
+  throw new Error(`trap-log does not support format "${format}"`);
+}
+
+async function renderBafoQuestionPack(
+  spec: BafoQuestionPackSpec,
+  format: DeliverableFormat,
+  filename: string,
+): Promise<SourceDeliverableRenderResult> {
+  if (format === 'xlsx') {
+    return renderXlsxOnly(buildBafoQuestionPackWorkbook(spec.payload), format, filename);
+  }
+  if (format === 'docx') {
+    return docxResult(buildBafoQuestionPackDocx(spec.payload), filename);
+  }
+  if (format === 'pdf') {
+    const { buildBafoQuestionPackPdf } = await import('./renderers/bafo-question-pack-pdf');
+    return pdfResult(buildBafoQuestionPackPdf(spec.payload), filename);
+  }
+  throw new Error(`bafo-question-pack does not support format "${format}"`);
+}
+
+// ── docx + pdf serialization helpers ───────────────────────────────────────
+
+async function docxResult(
+  doc: import('docx').Document,
+  filename: string,
+): Promise<SourceDeliverableRenderResult> {
+  const buffer = (await Packer.toBuffer(doc)) as unknown as Buffer;
+  return makeResult('docx', buffer, filename, DOCX_CONTENT_TYPE);
+}
+
+/**
+ * Serialize a react-pdf element to bytes. @react-pdf/renderer is pure
+ * ESM; we dynamic-import it here so the dispatcher's static import
+ * graph stays CJS-loadable under jest.
+ */
+async function pdfResult(
+  element: import('react').ReactElement<import('@react-pdf/renderer').DocumentProps>,
+  filename: string,
+): Promise<SourceDeliverableRenderResult> {
+  const { pdf: reactPdf } = await import('@react-pdf/renderer');
+  const stream = await reactPdf(element).toBuffer();
+  const chunks: Buffer[] = [];
+  for await (const chunk of stream as AsyncIterable<Buffer | string>) {
+    chunks.push(typeof chunk === 'string' ? Buffer.from(chunk) : chunk);
+  }
+  return makeResult('pdf', Buffer.concat(chunks), filename, PDF_CONTENT_TYPE);
 }
 
 // ── xlsx common path ──────────────────────────────────────────────────────

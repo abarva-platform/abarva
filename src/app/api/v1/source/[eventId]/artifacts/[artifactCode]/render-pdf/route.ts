@@ -26,6 +26,12 @@ import {
   renderArtifactPdf,
 } from '@/lib/source/exports';
 import { buildNarrativeDocxPayloadFromContext } from '@/lib/source/exports/payloads/narrative-docx-payload';
+import { buildAppInventoryPayloadFromContext } from '@/lib/source/exports/payloads/app-inventory-payload';
+import { buildResponseChecklistPayloadFromContext } from '@/lib/source/exports/payloads/response-checklist-payload';
+import { buildScorecardPayloadFromContext } from '@/lib/source/exports/payloads/scorecard-payload';
+import { buildPricingTemplatePayloadFromContext } from '@/lib/source/exports/payloads/pricing-template-payload';
+import { buildTrapLogPayloadFromContext } from '@/lib/source/exports/payloads/trap-log-payload';
+import { buildBafoQuestionPackPayloadFromContext } from '@/lib/source/exports/payloads/bafo-question-pack-payload';
 import {
   DECISION_BRIEF_PDF_CONFIG,
   RFP_PACK_PDF_CONFIG,
@@ -33,6 +39,40 @@ import {
   SELECTION_MEMO_PDF_CONFIG,
   buildNarrativePdf,
 } from '@/lib/source/exports/renderers/narrative-pdf';
+
+const NARRATIVE_CODES = new Set([
+  'd05_scope_memo',
+  'd09_rfp_pack',
+  'd24_decision_brief',
+  'd27_selection_memo',
+]);
+
+/** Build the payload for the given artifact code from substrate. */
+function buildPdfPayload(
+  ctx: Awaited<ReturnType<typeof buildSourceGenerationContext>> & object,
+  artifactCode: string,
+  generatedAt: string,
+): unknown {
+  if (NARRATIVE_CODES.has(artifactCode)) {
+    return buildNarrativeDocxPayloadFromContext(ctx, artifactCode, generatedAt);
+  }
+  switch (artifactCode) {
+    case 'd04_app_inv':
+      return buildAppInventoryPayloadFromContext(ctx, generatedAt);
+    case 'd11_response_checklist':
+      return buildResponseChecklistPayloadFromContext(ctx, generatedAt);
+    case 'd16_scorecard':
+      return buildScorecardPayloadFromContext(ctx, generatedAt);
+    case 'd19_pricing_workbook':
+      return buildPricingTemplatePayloadFromContext(ctx, generatedAt);
+    case 'd20_trap_log':
+      return buildTrapLogPayloadFromContext(ctx, generatedAt);
+    case 'd22_bafo_question_pack':
+      return buildBafoQuestionPackPayloadFromContext(ctx, generatedAt);
+    default:
+      throw new Error(`No PDF payload binder for ${artifactCode}`);
+  }
+}
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -106,20 +146,33 @@ export async function GET(_req: NextRequest, { params }: RouteCtx) {
   }
 
   const generatedAt = new Date().toISOString();
-  const payload = buildNarrativeDocxPayloadFromContext(
-    ctx,
-    artifactCode,
-    generatedAt,
-  );
+  let payload: unknown;
+  try {
+    payload = buildPdfPayload(ctx, artifactCode, generatedAt);
+  } catch (err) {
+    return Response.json(
+      {
+        error: 'render_failed',
+        detail: err instanceof Error ? err.message : 'PDF payload binder failed',
+      },
+      { status: 500 },
+    );
+  }
+  const isNarrative = NARRATIVE_CODES.has(artifactCode);
 
-  // Strategy: try the full body render first. If @react-pdf throws —
-  // typically pdfkit's "unsupported number" float-overflow on long /
-  // structurally-complex bodies — fall back to a degraded cover-only
-  // render with a notice pointing the user at docx + html for the full
-  // content. The buyer always gets a PDF; quality degrades gracefully.
+  // Strategy: try the full render first. For narrative artifacts, if
+  // @react-pdf throws — typically pdfkit's "unsupported number" float-
+  // overflow on long / structurally-complex bodies — fall back to a
+  // degraded cover-only render with a notice pointing the user at docx
+  // + html for the full content. Structured artifacts render from
+  // bounded tables and have no degraded mode.
   const renderToBuffer = async (degraded: boolean): Promise<Buffer> => {
     const element = degraded
-      ? buildNarrativePdf(payload, configForCode(artifactCode), { degraded: true })
+      ? buildNarrativePdf(
+          payload as Parameters<typeof buildNarrativePdf>[0],
+          configForCode(artifactCode),
+          { degraded: true },
+        )
       : renderArtifactPdf({ artifactCode, payload });
     const stream = await pdf(element).toBuffer();
     const chunks: Buffer[] = [];
@@ -134,6 +187,16 @@ export async function GET(_req: NextRequest, { params }: RouteCtx) {
   try {
     buffer = await renderToBuffer(false);
   } catch (err) {
+    if (!isNarrative) {
+      console.error('[render-pdf] structured artifact PDF render threw', err);
+      return Response.json(
+        {
+          error: 'render_failed',
+          detail: err instanceof Error ? err.message : 'PDF renderer failed',
+        },
+        { status: 500 },
+      );
+    }
     console.warn(
       '[render-pdf] full-body render threw; falling back to degraded cover-only',
       { artifactCode, error: err instanceof Error ? err.message : String(err) },

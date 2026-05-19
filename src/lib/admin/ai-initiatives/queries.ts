@@ -300,3 +300,69 @@ export async function listVendorsForClient(
     };
   });
 }
+
+// ---------------------------------------------------------------------
+// G8: tenant-level KPI list (all KPI quarters across all initiatives).
+// Used by the Tower outcome-report export to assemble the measurement
+// model without N per-initiative detail queries.
+// ---------------------------------------------------------------------
+
+export interface AIInitiativeKpiRow {
+  initiativeId: string;
+  initiativeDisplayId: string;
+  initiativeName: string;
+  kpiName: string;
+  kpiUnit: string | null;
+  quarter: string;
+  kpiValue: number;
+  targetValue: number | null;
+  peerMedian: number | null;
+  confidenceLevel: ConfidenceLevel;
+}
+
+interface KpiRow {
+  initiative_id: string;
+  kpi_name: string;
+  kpi_unit: string | null;
+  quarter: string;
+  kpi_value: number | string | null;
+  target_value: number | string | null;
+  peer_median: number | string | null;
+  confidence_level: ConfidenceLevel;
+}
+
+export async function listKpisForClient(
+  clientId: string,
+): Promise<ReadonlyArray<AIInitiativeKpiRow>> {
+  const sb = getServerSupabase();
+  const initiatives = await listInitiativesForClient(clientId);
+  if (initiatives.length === 0) return [];
+  const initiativeIds = initiatives.map((i) => i.initiativeId);
+  const initiativeById = new Map(initiatives.map((i) => [i.initiativeId, i] as const));
+
+  const { data, error } = await sb
+    .from('ai_initiative_kpis')
+    .select(
+      'initiative_id, kpi_name, kpi_unit, quarter, kpi_value, target_value, peer_median, confidence_level',
+    )
+    .in('initiative_id', initiativeIds)
+    .order('quarter', { ascending: true });
+  if (error) throw new Error(`listKpisForClient: ${error.message}`);
+  const rows = (data ?? []) as ReadonlyArray<KpiRow>;
+
+  return rows.map((r) => {
+    const initiative = initiativeById.get(r.initiative_id);
+    return {
+      initiativeId: r.initiative_id,
+      initiativeDisplayId: initiative?.displayId ?? r.initiative_id,
+      initiativeName: initiative?.name ?? r.initiative_id,
+      kpiName: r.kpi_name,
+      kpiUnit: r.kpi_unit,
+      quarter: r.quarter,
+      kpiValue: toNumber(r.kpi_value) ?? 0,
+      targetValue: toNumber(r.target_value),
+      peerMedian: toNumber(r.peer_median),
+      confidenceLevel: r.confidence_level,
+    };
+  });
+}
