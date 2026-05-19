@@ -39,6 +39,9 @@ export type RateCardSourceKind =
 
 export type RateCardSeniority =
   | 'principal'
+  | 'director'
+  | 'manager'
+  | 'lead'
   | 'senior'
   | 'mid'
   | 'junior'
