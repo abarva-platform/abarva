@@ -13,25 +13,17 @@ import {
   deriveRoleRateCard,
 } from '../derived-planning-rate-card';
 import { BENCHMARK_RATE_CARD, lookupBenchmarkRate } from '../benchmark-rate-card';
-import type { ShouldCostRole } from '@/lib/source/should-cost/should-cost-model';
-
-const ALL_ROLES: ShouldCostRole[] = [
-  'engagement_lead',
-  'solution_architect',
-  'senior_engineer',
-  'engineer',
-  'analyst',
-  'project_manager',
-];
+import { SHOULD_COST_ROLES } from '@/lib/source/should-cost/should-cost-model';
 
 describe('derived planning rate card — coverage', () => {
   it('covers every should-cost role exactly once', () => {
     const roles = RESEARCHED_PLANNING_RATES.map((r) => r.role).sort();
-    expect(roles).toEqual([...ALL_ROLES].sort());
+    expect(roles).toEqual([...SHOULD_COST_ROLES].sort());
+    expect(roles.length).toBeGreaterThanOrEqual(20);
   });
 
   it('maps every should-cost role to a benchmark specialization', () => {
-    for (const role of ALL_ROLES) {
+    for (const role of SHOULD_COST_ROLES) {
       expect(ROLE_TO_SPECIALIZATION[role]).toBeTruthy();
     }
   });

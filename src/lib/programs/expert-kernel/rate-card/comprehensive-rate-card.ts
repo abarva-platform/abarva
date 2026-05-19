@@ -10,8 +10,13 @@
 // Pure module: deterministic, no I/O, no database access.
 
 import type {
+  EnterpriseRateCardDomain,
   RoleRateCard,
   ShouldCostRole,
+} from '@/lib/source/should-cost/should-cost-model';
+import {
+  ROLE_TO_ENTERPRISE_DOMAIN,
+  SHOULD_COST_ROLES,
 } from '@/lib/source/should-cost/should-cost-model';
 import type { KernelRateCard } from '../effort-estimator';
 import type { Confidence } from '../types';
@@ -43,6 +48,7 @@ export const RATE_CARD_TEMPLATE_COLUMNS = [
   'source_kind',
   'source_name',
   'role',
+  'domain',
   'specialization',
   'delivery_location',
   'seniority',
@@ -62,6 +68,7 @@ export interface RateCardTemplateRow {
   sourceName: string;
   /** Required for rate rows; optional for committed-budget rows. */
   role?: ShouldCostRole;
+  domain?: EnterpriseRateCardDomain;
   specialization?: WorkSpecialization;
   deliveryLocation?: DeliveryLocation;
   seniority?: RateCardSeniority;
@@ -129,15 +136,6 @@ export interface BudgetFit {
   variancePct?: number;
   note: string;
 }
-
-const ALL_ROLES: ShouldCostRole[] = [
-  'engagement_lead',
-  'solution_architect',
-  'senior_engineer',
-  'engineer',
-  'analyst',
-  'project_manager',
-];
 
 const SOURCE_PRECEDENCE: Record<
   Exclude<RateCardSourceKind, 'committed_budget'>,
@@ -215,6 +213,12 @@ export function validateRateCardRows(
 
     if (isRateRow(row)) {
       if (!row.role) errors.push(`${id}: role is required for rate rows.`);
+      if (row.role && row.domain && row.domain !== ROLE_TO_ENTERPRISE_DOMAIN[row.role]) {
+        errors.push(
+          `${id}: domain '${row.domain}' does not match role '${row.role}' ` +
+            `(${ROLE_TO_ENTERPRISE_DOMAIN[row.role]}).`,
+        );
+      }
       if (!row.deliveryLocation) {
         errors.push(`${id}: deliveryLocation is required for rate rows.`);
       }
@@ -272,7 +276,7 @@ export function buildComprehensiveRateCard(
     }));
 
   const appliedRates: AppliedRateSource[] = [];
-  const rates: RoleRateCard[] = ALL_ROLES.map((role) => {
+  const rates: RoleRateCard[] = SHOULD_COST_ROLES.map((role) => {
     const roleRate: RoleRateCard = {
       role,
       onshoreAnnualRate: 0,

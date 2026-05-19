@@ -23,9 +23,9 @@ The comprehensive rate-card fabric reconciles those signals into the
 owner, date, confidence and warnings.
 
 Important distinction: the CSV is a **load template**, not a comprehensive
-rate card. A comprehensive estimator-ready pack has at least 13 rows today:
-six roles x two delivery lanes, plus a committed-budget row. The three demo
-packs in code meet that bar for Apex, Meridian and First Capital.
+rate card. A comprehensive estimator-ready pack has at least 49 rows today:
+24 enterprise roles x two delivery lanes, plus a committed-budget row. The
+three demo packs in code meet that bar for Apex, Meridian and First Capital.
 
 ## Source Types
 
@@ -87,9 +87,9 @@ contains only example rows to show the shape of each source kind; it is not a
 loaded client card. Column names are stable and match the TypeScript template
 row semantics:
 
-`source_kind, source_name, role, specialization, delivery_location, seniority,
-rate_usd_per_hour, annual_rate_usd, committed_budget_usd, currency, as_of,
-owner, confidence, note`.
+`source_kind, source_name, role, domain, specialization, delivery_location,
+seniority, rate_usd_per_hour, annual_rate_usd, committed_budget_usd, currency,
+as_of, owner, confidence, note`.
 
 The initial implementation is file/module-level, not database-backed. A future
 DB-backed version should preserve this contract, add RLS by tenant, and keep the
@@ -101,10 +101,19 @@ The shipped demo packs are deliberately larger than the template:
 
 | Pack | Rows | Coverage | Budget |
 |---|---:|---|---:|
-| Apex Contact Center AI Routing | 13 | 6 roles x onshore/offshore | $5.2M |
-| Meridian Ambient Clinical | 13 | 6 roles x onshore/offshore | $7.5M |
-| First Capital Fraud Detection | 13 | 6 roles x onshore/offshore | $1.8M |
+| Apex Contact Center AI Routing | 49 | 24 roles x onshore/offshore | $5.2M |
+| Meridian Ambient Clinical | 49 | 24 roles x onshore/offshore | $7.5M |
+| First Capital Fraud Detection | 49 | 24 roles x onshore/offshore | $1.8M |
 
 They are demo packs, not real client rate sheets. Their job is to let the Moves
 Expert Kernel showcase the comprehensive-rate-card behavior without falling
 back to the market benchmark by accident.
+
+## Enterprise Domains Covered
+
+The role catalog is intentionally broader than one delivery squad. It covers:
+strategy/advisory, PMO, product management, enterprise architecture, solution
+architecture, security/risk, cloud/platform, data architecture, data
+engineering, AI/ML, governance/compliance, business/domain SME, application
+engineering, integration, QA/evaluation, business analysis, process redesign,
+change management, training/enablement, and run operations.

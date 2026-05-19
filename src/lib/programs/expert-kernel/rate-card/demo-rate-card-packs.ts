@@ -8,6 +8,12 @@
 // economics without falling back to the benchmark by accident.
 
 import type { ShouldCostRole } from '@/lib/source/should-cost/should-cost-model';
+import {
+  ENTERPRISE_RATE_CARD_DOMAINS,
+  type EnterpriseRateCardDomain,
+  ROLE_TO_ENTERPRISE_DOMAIN,
+  SHOULD_COST_ROLES,
+} from '@/lib/source/should-cost/should-cost-model';
 import type { KernelRateCard } from '../effort-estimator';
 import {
   buildComprehensiveRateCard,
@@ -43,14 +49,50 @@ interface DemoPackSpec {
   budgetNote: string;
 }
 
-const ROLES: ShouldCostRole[] = [
-  'engagement_lead',
-  'solution_architect',
-  'senior_engineer',
-  'engineer',
-  'analyst',
-  'project_manager',
-];
+const ROLE_RATE_MULTIPLIERS: Record<ShouldCostRole, number> = {
+  engagement_partner: 1.32,
+  engagement_lead: 1.14,
+  program_manager: 0.92,
+  project_manager: 0.76,
+  product_owner: 0.82,
+  solution_architect: 1,
+  enterprise_architect: 1.08,
+  security_architect: 1.03,
+  cloud_platform_architect: 0.96,
+  devops_sre_lead: 0.82,
+  data_architect: 0.98,
+  ai_ml_lead: 1.06,
+  governance_risk_lead: 0.94,
+  domain_sme: 0.88,
+  senior_engineer: 0.84,
+  engineer: 0.68,
+  data_engineer: 0.7,
+  integration_engineer: 0.66,
+  qa_eval_lead: 0.72,
+  business_analyst: 0.58,
+  process_lead: 0.74,
+  change_lead: 0.72,
+  training_lead: 0.56,
+  analyst: 0.54,
+};
+
+function roleRates(
+  solutionArchitectOnshore: number,
+  solutionArchitectOffshore: number,
+): Record<ShouldCostRole, RoleLaneRates> {
+  return Object.fromEntries(
+    SHOULD_COST_ROLES.map((role) => {
+      const multiplier = ROLE_RATE_MULTIPLIERS[role];
+      return [
+        role,
+        {
+          onshore: Math.round(solutionArchitectOnshore * multiplier),
+          offshore: Math.round(solutionArchitectOffshore * multiplier),
+        },
+      ];
+    }),
+  ) as Record<ShouldCostRole, RoleLaneRates>;
+}
 
 const PACK_SPECS: Record<DemoRateCardPackId, DemoPackSpec> = {
   'apex-contact-center': {
@@ -65,14 +107,7 @@ const PACK_SPECS: Record<DemoRateCardPackId, DemoPackSpec> = {
     asOf: '2026-05-19',
     onshoreKind: 'client_rate_card',
     offshoreKind: 'vendor_quote',
-    rates: {
-      engagement_lead: { onshore: 390_000, offshore: 170_000 },
-      solution_architect: { onshore: 340_000, offshore: 150_000 },
-      senior_engineer: { onshore: 285_000, offshore: 132_000 },
-      engineer: { onshore: 230_000, offshore: 115_000 },
-      analyst: { onshore: 185_000, offshore: 88_000 },
-      project_manager: { onshore: 250_000, offshore: 125_000 },
-    },
+    rates: roleRates(340_000, 150_000),
     committedBudgetUsd: 5_200_000,
     budgetNote:
       'Demo planning envelope for the Apex contact-center AI routing Move.',
@@ -89,14 +124,7 @@ const PACK_SPECS: Record<DemoRateCardPackId, DemoPackSpec> = {
     asOf: '2026-05-19',
     onshoreKind: 'client_rate_card',
     offshoreKind: 'vendor_quote',
-    rates: {
-      engagement_lead: { onshore: 430_000, offshore: 188_000 },
-      solution_architect: { onshore: 365_000, offshore: 165_000 },
-      senior_engineer: { onshore: 310_000, offshore: 145_000 },
-      engineer: { onshore: 250_000, offshore: 125_000 },
-      analyst: { onshore: 205_000, offshore: 96_000 },
-      project_manager: { onshore: 280_000, offshore: 136_000 },
-    },
+    rates: roleRates(365_000, 165_000),
     committedBudgetUsd: 7_500_000,
     budgetNote:
       'Demo planning envelope for the Meridian ambulatory clinical AI Move.',
@@ -113,14 +141,7 @@ const PACK_SPECS: Record<DemoRateCardPackId, DemoPackSpec> = {
     asOf: '2026-05-19',
     onshoreKind: 'internal_team_cost',
     offshoreKind: 'vendor_quote',
-    rates: {
-      engagement_lead: { onshore: 340_000, offshore: 142_000 },
-      solution_architect: { onshore: 295_000, offshore: 128_000 },
-      senior_engineer: { onshore: 245_000, offshore: 110_000 },
-      engineer: { onshore: 198_000, offshore: 92_000 },
-      analyst: { onshore: 165_000, offshore: 78_000 },
-      project_manager: { onshore: 218_000, offshore: 100_000 },
-    },
+    rates: roleRates(295_000, 128_000),
     committedBudgetUsd: 1_800_000,
     budgetNote:
       'Seeded program inventory says FC-FRAUD-2026 has a committed $1.8M budget.',
@@ -128,7 +149,7 @@ const PACK_SPECS: Record<DemoRateCardPackId, DemoPackSpec> = {
 };
 
 function rowsForSpec(spec: DemoPackSpec): RateCardTemplateRow[] {
-  const rows: RateCardTemplateRow[] = ROLES.flatMap((role) => {
+  const rows: RateCardTemplateRow[] = SHOULD_COST_ROLES.flatMap((role) => {
     const specialization = ROLE_TO_SPECIALIZATION[role];
     const rates = spec.rates[role];
     return [
@@ -136,6 +157,7 @@ function rowsForSpec(spec: DemoPackSpec): RateCardTemplateRow[] {
         sourceKind: spec.onshoreKind,
         sourceName: spec.onshoreSourceName,
         role,
+        domain: ROLE_TO_ENTERPRISE_DOMAIN[role],
         specialization,
         deliveryLocation: 'onshore',
         seniority: 'blended',
@@ -151,6 +173,7 @@ function rowsForSpec(spec: DemoPackSpec): RateCardTemplateRow[] {
         sourceKind: spec.offshoreKind,
         sourceName: spec.offshoreSourceName,
         role,
+        domain: ROLE_TO_ENTERPRISE_DOMAIN[role],
         specialization,
         deliveryLocation: 'offshore',
         seniority: 'blended',
@@ -217,3 +240,19 @@ export function buildDemoRateCardPack(
 export function demoKernelRateCard(id: DemoRateCardPackId): KernelRateCard {
   return buildDemoRateCardPack(id).kernelRateCard;
 }
+
+export function coveredEnterpriseDomains(
+  pack: DemoRateCardPack,
+): EnterpriseRateCardDomain[] {
+  return Array.from(
+    new Set(
+      pack.rows
+        .filter((row) => row.sourceKind !== 'committed_budget')
+        .map((row) => row.domain)
+        .filter((domain): domain is EnterpriseRateCardDomain => !!domain),
+    ),
+  ).sort();
+}
+
+export const REQUIRED_ENTERPRISE_RATE_CARD_DOMAINS =
+  ENTERPRISE_RATE_CARD_DOMAINS;
