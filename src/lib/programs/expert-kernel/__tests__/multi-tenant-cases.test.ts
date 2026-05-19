@@ -106,13 +106,15 @@ describe('First Capital Fraud Detection anchor — grounded render', () => {
     ]);
   });
 
-  it('comes back kill — the should-cost effort exceeds the haircut value', () => {
-    // Card fraud loss-avoidance has a hard $0.9M/yr ceiling ($2.1M → $1.2M).
-    // The kernel's should-cost effort exceeds the haircut net value, so the
-    // base-case net return is negative — the kernel honestly says kill.
+  it('comes back shape — client-specific economics fix the benchmark-only kill, but evidence gaps remain', () => {
+    // With the demo comprehensive rate card, the committed First Capital
+    // economics no longer force a benchmark-only kill. The kernel still refuses
+    // to fund because operating cost bases are seed gaps, so payback cannot be
+    // asserted.
     expect(skeleton.economics.monetisable).toBe(false);
-    expect(skeleton.economics.netReturn.point).toBeLessThan(0);
-    expect(skeleton.recommendation).toBe('kill');
+    expect(skeleton.economics.netReturn.point).toBeGreaterThan(0);
+    expect(skeleton.recommendation).toBe('shape');
+    expect(skeleton.effort.rateCard.provenance).toBe('comprehensive');
   });
 });
 
