@@ -28,6 +28,13 @@ const config: Config = {
       '<rootDir>/src/__tests__/__mocks__/mdast-util-gfm.ts',
     '^micromark-extension-gfm$':
       '<rootDir>/src/__tests__/__mocks__/micromark-extension-gfm.ts',
+    // @react-pdf/renderer is pure ESM ("type": "module") and next/jest's
+    // prepended transformIgnorePatterns keep it un-transpiled. This mock
+    // executes the real PDF renderer logic and emits a structurally-
+    // valid minimal PDF so the Intelligence brief PDF renderer can be
+    // tested for valid output + content grounding.
+    '^@react-pdf/renderer$':
+      '<rootDir>/src/__tests__/__mocks__/react-pdf-renderer.tsx',
   },
 }
 

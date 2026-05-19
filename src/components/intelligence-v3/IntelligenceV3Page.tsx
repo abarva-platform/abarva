@@ -23,6 +23,7 @@ import { useEffect, useState } from 'react';
 import { COLORS, FONT, SPACING } from '@/lib/design/abarva-theme';
 import { IntelligenceV3TopNav } from './IntelligenceV3TopNav';
 import { IntelligenceV3StageTabs } from './IntelligenceV3StageTabs';
+import { IntelligenceBriefDownload } from './IntelligenceBriefDownload';
 import { TodayCxoCanvas } from './TodayCxoCanvas';
 import { ByFunctionCxoCanvas } from './ByFunctionCxoCanvas';
 import { PatternsCxoCanvas } from './PatternsCxoCanvas';
@@ -193,6 +194,11 @@ export function IntelligenceV3Page({
           sticky offset against a known stack. */}
       <div
         style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: SPACING.lg,
+          flexWrap: 'wrap',
           background: COLORS.surface,
           borderBottom: `1px solid ${COLORS.border}`,
           padding: `${SPACING.sm}px clamp(${SPACING.lg}px, 4vw, ${SPACING.xxxl}px)`,
@@ -202,6 +208,11 @@ export function IntelligenceV3Page({
         }}
       >
         <IntelligenceV3StageTabs active={stage} onChange={handleStageChange} />
+        {/* G9: every Intelligence surface produces a downloadable CXO
+            brief. Present for all 3 tenants — for Meridian / First
+            Capital the brief is honestly partly-sparse (no seeded
+            corpus), which is correct, not a bug. */}
+        <IntelligenceBriefDownload clientKey={clientKey} />
       </div>
 
       {apexRetailData && <ApexReadinessStrip status={apexRetailData.status} />}
