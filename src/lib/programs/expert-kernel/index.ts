@@ -26,6 +26,7 @@ export * from './adoption-approach';
 export * from './measurement-handoff';
 export * from './go-decision-pack';
 export * from './expert-review-calibration';
+export * from './expert-review-console';
 export * from './use-case-archetype-playbooks';
 export * from './advisory-session';
 export * from './outcome-calibration';

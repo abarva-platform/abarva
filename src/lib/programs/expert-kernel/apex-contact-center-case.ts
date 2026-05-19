@@ -39,6 +39,15 @@ import { rangeOf } from './types';
 const TENANT = 'apex-retail';
 const MOVE = 'Contact Center AI Routing';
 
+/**
+ * Stable tenant key and Move ref for the first proven case — used by the
+ * Expert Review Console to scope persisted `expert_reviews` rows. Exported so
+ * the route and the data-plane seam reference one canonical pair, never a
+ * re-typed string literal.
+ */
+export const APEX_CONTACT_CENTER_TENANT_KEY = TENANT;
+export const APEX_CONTACT_CENTER_MOVE_REF = 'apex:move:contact-center-ai-routing';
+
 // The kernel's default planning rate card — the researched 3-D SI benchmark
 // projected onto the should-cost roles, clearly labelled a market planning
 // range and "not a quote". A client-specific Apex rate card would override
