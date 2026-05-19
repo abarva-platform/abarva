@@ -14,3 +14,5 @@ export * from './critic';
 export * from './business-case-compiler';
 export * from './qa-rubric';
 export * from './apex-contact-center-case';
+export * from './phase-playbooks/discover';
+export * from './phase-playbooks/apex-discover-case';
