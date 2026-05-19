@@ -45,9 +45,12 @@ const FIELD: React.CSSProperties = {
 export function ExpertReviewForm({
   assumptions,
   action,
+  caseId,
 }: {
   assumptions: ExpertReviewFormAssumption[];
   action: (formData: FormData) => void;
+  /** The tenant case id — persisted so the action scopes the review row. */
+  caseId: string;
 }) {
   const [touchedKeys, setTouchedKeys] = useState<Set<string>>(new Set());
 
@@ -73,6 +76,9 @@ export function ExpertReviewForm({
         gap: SPACING.md,
       }}
     >
+      {/* The tenant case the review is scoped to — set by the server. */}
+      <input type="hidden" name="caseId" value={caseId} />
+
       <div style={{ display: 'flex', gap: SPACING.md, flexWrap: 'wrap' }}>
         <div style={{ flex: '1 1 200px' }}>
           <label htmlFor="reviewerId" style={LABEL}>

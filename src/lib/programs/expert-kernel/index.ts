@@ -31,5 +31,8 @@ export * from './use-case-archetype-playbooks';
 export * from './advisory-session';
 export * from './outcome-calibration';
 export * from './apex-contact-center-case';
+export * from './meridian-ambient-clinical-case';
+export * from './firstcapital-fraud-detection-case';
+export * from './expert-review-cases';
 export * from './phase-playbooks/discover';
 export * from './phase-playbooks/apex-discover-case';
