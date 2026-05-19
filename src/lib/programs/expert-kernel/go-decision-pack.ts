@@ -306,9 +306,9 @@ export function buildGoDecisionPack(
           (m) =>
             `- ${m.label}: baseline ${
               m.baselineValue ?? 'SEED GAP'
-            } → target ${m.targetValue ?? 'TBD'} (${m.cadence}, owner ${
-              m.measurementOwnerRole
-            })`,
+            } → target ${m.targetValue ?? 'not yet committed'} (${
+              m.cadence
+            }, owner ${m.measurementOwnerRole})`,
         ),
       ],
     },
