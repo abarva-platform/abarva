@@ -18,12 +18,132 @@
 
 /** Standard delivery roles used for the role-mix blended-rate calculation. */
 export type ShouldCostRole =
+  | 'engagement_partner'
   | 'engagement_lead'
+  | 'program_manager'
+  | 'project_manager'
+  | 'product_owner'
   | 'solution_architect'
+  | 'enterprise_architect'
+  | 'security_architect'
+  | 'cloud_platform_architect'
+  | 'devops_sre_lead'
+  | 'data_architect'
+  | 'ai_ml_lead'
+  | 'governance_risk_lead'
+  | 'domain_sme'
   | 'senior_engineer'
   | 'engineer'
-  | 'analyst'
-  | 'project_manager';
+  | 'data_engineer'
+  | 'integration_engineer'
+  | 'qa_eval_lead'
+  | 'business_analyst'
+  | 'process_lead'
+  | 'change_lead'
+  | 'training_lead'
+  | 'analyst';
+
+export const SHOULD_COST_ROLES: ShouldCostRole[] = [
+  'engagement_partner',
+  'engagement_lead',
+  'program_manager',
+  'project_manager',
+  'product_owner',
+  'solution_architect',
+  'enterprise_architect',
+  'security_architect',
+  'cloud_platform_architect',
+  'devops_sre_lead',
+  'data_architect',
+  'ai_ml_lead',
+  'governance_risk_lead',
+  'domain_sme',
+  'senior_engineer',
+  'engineer',
+  'data_engineer',
+  'integration_engineer',
+  'qa_eval_lead',
+  'business_analyst',
+  'process_lead',
+  'change_lead',
+  'training_lead',
+  'analyst',
+];
+
+export type EnterpriseRateCardDomain =
+  | 'strategy_advisory'
+  | 'program_pmo'
+  | 'product_management'
+  | 'enterprise_architecture'
+  | 'solution_architecture'
+  | 'security_risk'
+  | 'cloud_platform'
+  | 'data_architecture'
+  | 'data_engineering'
+  | 'ai_ml'
+  | 'governance_compliance'
+  | 'domain_sme'
+  | 'application_engineering'
+  | 'integration'
+  | 'qa_evaluation'
+  | 'business_analysis'
+  | 'process_redesign'
+  | 'change_management'
+  | 'training_enablement'
+  | 'run_operations';
+
+export const ENTERPRISE_RATE_CARD_DOMAINS: EnterpriseRateCardDomain[] = [
+  'strategy_advisory',
+  'program_pmo',
+  'product_management',
+  'enterprise_architecture',
+  'solution_architecture',
+  'security_risk',
+  'cloud_platform',
+  'data_architecture',
+  'data_engineering',
+  'ai_ml',
+  'governance_compliance',
+  'domain_sme',
+  'application_engineering',
+  'integration',
+  'qa_evaluation',
+  'business_analysis',
+  'process_redesign',
+  'change_management',
+  'training_enablement',
+  'run_operations',
+];
+
+export const ROLE_TO_ENTERPRISE_DOMAIN: Record<
+  ShouldCostRole,
+  EnterpriseRateCardDomain
+> = {
+  engagement_partner: 'strategy_advisory',
+  engagement_lead: 'strategy_advisory',
+  program_manager: 'program_pmo',
+  project_manager: 'program_pmo',
+  product_owner: 'product_management',
+  solution_architect: 'solution_architecture',
+  enterprise_architect: 'enterprise_architecture',
+  security_architect: 'security_risk',
+  cloud_platform_architect: 'cloud_platform',
+  devops_sre_lead: 'cloud_platform',
+  data_architect: 'data_architecture',
+  ai_ml_lead: 'ai_ml',
+  governance_risk_lead: 'governance_compliance',
+  domain_sme: 'domain_sme',
+  senior_engineer: 'application_engineering',
+  engineer: 'application_engineering',
+  data_engineer: 'data_engineering',
+  integration_engineer: 'integration',
+  qa_eval_lead: 'qa_evaluation',
+  business_analyst: 'business_analysis',
+  process_lead: 'process_redesign',
+  change_lead: 'change_management',
+  training_lead: 'training_enablement',
+  analyst: 'run_operations',
+};
 
 /** A single role line in the proposed delivery role mix. */
 export interface RoleMixEntry {

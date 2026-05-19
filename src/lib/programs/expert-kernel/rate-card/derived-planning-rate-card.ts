@@ -6,7 +6,7 @@
 // The researched benchmark card (`benchmark-rate-card.ts`) is, instead,
 // blended HOURLY USD bands across 3 dimensions (archetype × location ×
 // specialization). This module is the single, documented bridge between the
-// two: it projects the benchmark card onto the six should-cost roles so the
+// two: it projects the benchmark card onto the enterprise should-cost roles so the
 // estimator's effort/cost numbers rest on researched market bands rather than
 // a hand-set placeholder.
 //
@@ -28,6 +28,7 @@ import type {
   RoleRateCard,
   ShouldCostRole,
 } from '@/lib/source/should-cost/should-cost-model';
+import { SHOULD_COST_ROLES } from '@/lib/source/should-cost/should-cost-model';
 import {
   BENCHMARK_RATE_CARD,
   lookupBenchmarkRate,
@@ -53,12 +54,30 @@ export const PLANNING_ARCHETYPE: SiArchetype = 'us_tier1';
  * craft — this is the deliberate, reviewable bridge between the two.
  */
 export const ROLE_TO_SPECIALIZATION: Record<ShouldCostRole, WorkSpecialization> = {
+  engagement_partner: 'strategy_advisory',
   engagement_lead: 'program_management',
+  program_manager: 'program_management',
+  project_manager: 'program_management',
+  product_owner: 'strategy_advisory',
   solution_architect: 'solution_architecture',
+  enterprise_architect: 'solution_architecture',
+  security_architect: 'solution_architecture',
+  cloud_platform_architect: 'solution_architecture',
+  devops_sre_lead: 'run_ams',
+  data_architect: 'data_engineering',
+  ai_ml_lead: 'ai_ml_engineering',
+  governance_risk_lead: 'strategy_advisory',
+  domain_sme: 'strategy_advisory',
   senior_engineer: 'ai_ml_engineering',
   engineer: 'integration',
+  data_engineer: 'data_engineering',
+  integration_engineer: 'integration',
+  qa_eval_lead: 'program_management',
+  business_analyst: 'process_redesign',
+  process_lead: 'process_redesign',
+  change_lead: 'change_management',
+  training_lead: 'change_management',
   analyst: 'data_engineering',
-  project_manager: 'program_management',
 };
 
 /**
@@ -74,6 +93,13 @@ const OFFSHORE_SPECIALIZATION_FALLBACK: Partial<
   // No offshore program-management line — proxy to the offshore architecture
   // cell (a comparably senior GDN role).
   program_management: 'solution_architecture',
+  // Advisory, process and change leadership usually stay onshore; for a
+  // planning fallback we use offshore architecture / run cells only as a
+  // disclosed proxy, never as a claim that those domains are commodity
+  // offshore lanes.
+  strategy_advisory: 'solution_architecture',
+  process_redesign: 'solution_architecture',
+  change_management: 'run_ams',
 };
 
 /** Round to whole dollars — annual rates are never quoted to the cent. */
@@ -91,9 +117,7 @@ export function deriveRoleRateCard(
   card: RateCard = BENCHMARK_RATE_CARD,
   archetype: SiArchetype = PLANNING_ARCHETYPE,
 ): RoleRateCard[] {
-  const roles = Object.keys(ROLE_TO_SPECIALIZATION) as ShouldCostRole[];
-
-  return roles.map((role) => {
+  return SHOULD_COST_ROLES.map((role) => {
     const specialization = ROLE_TO_SPECIALIZATION[role];
 
     const onshore = lookupBenchmarkRate(
