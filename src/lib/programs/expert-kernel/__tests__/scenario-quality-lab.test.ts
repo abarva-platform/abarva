@@ -31,6 +31,9 @@ describe('Moves scenario quality lab', () => {
     ]);
     expect(lab.overallScore).toBeGreaterThanOrEqual(7);
     expect(lab.regenerationDiff.affectedArtifacts).toContain('financial_model');
+    expect(lab.regenerationPreview.baselineAfter.coverage).toBeGreaterThanOrEqual(
+      lab.regenerationPreview.baselineBefore.coverage,
+    );
     expect(lab.nextBestAction).toMatch(/Cost per contact|Annual contact volume|cost-per-contact/i);
   });
 
@@ -125,6 +128,14 @@ describe('Moves scenario quality lab', () => {
     expect(watched.regenerationDiff.rejectedChanges.map((c) => c.updateKey)).toContain(
       'unmapped_sentiment_score',
     );
+    expect(watched.regenerationPreview.state).toBe('preview_with_recompute_required');
+    expect(watched.regenerationPreview.baselineAfter.resolvedSeedGaps).toEqual([
+      'contact_volume_annual',
+      'cost_per_contact_usd',
+    ]);
+    expect(watched.regenerationPreview.fullRecomputeReasons).toContain(
+      "Baseline metric 'cost_per_contact_usd' changed.",
+    );
   });
 
   it('runs watched-session mode across all tenant anchors', () => {
@@ -135,6 +146,7 @@ describe('Moves scenario quality lab', () => {
       expect(lab.mode).toBe('watched_session');
       expect(lab.overallScore).toBeGreaterThanOrEqual(8.3);
       expect(lab.regenerationDiff.acceptedChanges.length).toBeGreaterThanOrEqual(4);
+      expect(lab.regenerationPreview.appliedChanges.length).toBeGreaterThanOrEqual(4);
       expect(lab.regenerationDiff.rejectedChanges.length).toBe(1);
     }
   });

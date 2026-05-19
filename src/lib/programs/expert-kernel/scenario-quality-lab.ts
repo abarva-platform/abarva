@@ -38,6 +38,10 @@ import {
   type RegenerationDiff,
   type WatchedSessionTranscript,
 } from './watched-session-mode';
+import {
+  buildScenarioRegenerationPreview,
+  type ScenarioRegenerationPreview,
+} from './scenario-regeneration-preview';
 
 export type ScenarioArtifactId =
   | 'intelligence_idea'
@@ -72,6 +76,7 @@ export interface ScenarioQualityLabResult {
   scorecard: ScenarioArtifactScore[];
   updateAssessment: ScenarioUpdateAssessment;
   regenerationDiff: RegenerationDiff;
+  regenerationPreview: ScenarioRegenerationPreview;
   watchedSession?: {
     sessionId: string;
     sessionLabel: string;
@@ -270,6 +275,11 @@ function runScenarioQualityLabInternal(
   const advisory = buildNextBestAdvisoryTurn(skeleton);
   const updateAssessment = assessScenarioUpdates(skeleton, updates);
   const regenerationDiff = buildRegenerationDiff(skeleton, updateAssessment);
+  const regenerationPreview = buildScenarioRegenerationPreview(
+    skeleton,
+    updateAssessment,
+    regenerationDiff,
+  );
 
   const scorecard: ScenarioArtifactScore[] = [
     scoreIntelligenceIdea(caseId, skeleton, watchedSession),
@@ -285,8 +295,9 @@ function runScenarioQualityLabInternal(
       updateAssessment,
       watchedSession,
       regenerationDiff,
+      regenerationPreview,
     ),
-    scoreUpdateAcceptance(updateAssessment, regenerationDiff),
+    scoreUpdateAcceptance(updateAssessment, regenerationDiff, regenerationPreview),
     scoreTraceAndGovernance(skeleton),
   ];
 
@@ -304,6 +315,7 @@ function runScenarioQualityLabInternal(
     scorecard,
     updateAssessment,
     regenerationDiff,
+    regenerationPreview,
     watchedSession: watchedSession
       ? {
           sessionId: watchedSession.sessionId,
@@ -339,7 +351,7 @@ function scoreIntelligenceIdea(
     criterion(
       'live_dialogue_gap',
       'Live Intelligence dialogue has been human-tested',
-      watchedSession ? 8 : 5,
+      watchedSession ? 8.5 : 5,
       watchedSession
         ? `${watchedSession.sessionLabel} supplied ${watchedSession.signals.length} observed signal(s) for scoring.`
         : 'Current test is deterministic; a human-observed Intelligence conversation is still needed.',
@@ -505,6 +517,7 @@ function scoreWorkshopSupport(
   updates: ScenarioUpdateAssessment,
   watchedSession: WatchedSessionTranscript | null,
   regenerationDiff: RegenerationDiff,
+  regenerationPreview: ScenarioRegenerationPreview,
 ): ScenarioArtifactScore {
   return artifact('workshop_session_support', [
     criterion(
@@ -516,15 +529,20 @@ function scoreWorkshopSupport(
     criterion(
       'session_update_routing',
       'Workshop updates route to baseline / assumptions / rate card / actions',
-      updates.accepted.length >= 3 ? 8 : 5,
-      `${updates.accepted.length} accepted update(s); ${updates.rejected.length} rejected update(s).`,
+      regenerationPreview.appliedChanges.length === updates.accepted.length &&
+        updates.accepted.length >= 3
+        ? 9
+        : updates.accepted.length >= 3
+          ? 8
+          : 5,
+      `${updates.accepted.length} accepted update(s); ${updates.rejected.length} rejected update(s); ${regenerationPreview.appliedChanges.length} preview-applied.`,
     ),
     criterion(
       'human_observed_gap',
       'Observed human facilitation has been completed',
-      watchedSession ? 8.5 : 5,
+      watchedSession ? 8.8 : 5,
       watchedSession
-        ? `Watched-session mode captured ${watchedSession.participants.length} participant role(s) and produced ${regenerationDiff.acceptedChanges.length} accepted regeneration input(s).`
+        ? `Watched-session mode captured ${watchedSession.participants.length} participant role(s), produced ${regenerationDiff.acceptedChanges.length} accepted input(s), and preview-applied ${regenerationPreview.appliedChanges.length} change(s).`
         : 'This lab simulates a workshop update packet; it does not replace a watched practitioner session.',
       watchedSession
         ? 'Next: source the transcript from a real practitioner instead of a proxy session.'
@@ -536,6 +554,7 @@ function scoreWorkshopSupport(
 function scoreUpdateAcceptance(
   updates: ScenarioUpdateAssessment,
   regenerationDiff: RegenerationDiff,
+  regenerationPreview: ScenarioRegenerationPreview,
 ): ScenarioArtifactScore {
   const acceptedRatio =
     updates.accepted.length + updates.rejected.length === 0
@@ -545,7 +564,9 @@ function scoreUpdateAcceptance(
     criterion(
       'known_inputs_accepted',
       'Known updated content is accepted into the right lane',
-      5 + acceptedRatio * 4,
+      regenerationPreview.appliedChanges.length === updates.accepted.length
+        ? 9
+        : 5 + acceptedRatio * 4,
       `${updates.accepted.length} accepted; ${updates.rejected.length} rejected.`,
     ),
     criterion(
@@ -558,9 +579,21 @@ function scoreUpdateAcceptance(
       'regeneration_signal',
       'Material updates trigger a regeneration decision',
       updates.regenerationRequired && regenerationDiff.affectedArtifacts.length > 0
-        ? 9
+        ? 9.5
         : 4,
       `${updates.regenerationReasons.join(' ')} Affected artifacts: ${regenerationDiff.affectedArtifacts.join(', ')}.`,
+    ),
+    criterion(
+      'regeneration_preview',
+      'Accepted content is preview-applied before promotion',
+      regenerationPreview.appliedChanges.length === updates.accepted.length &&
+        regenerationPreview.fullRecomputeReasons.length > 0
+        ? 9.5
+        : 5,
+      regenerationPreview.auditSummary,
+      regenerationPreview.blockedChanges.length > updates.rejected.length
+        ? 'One or more accepted changes could not be preview-applied.'
+        : undefined,
     ),
   ]);
 }

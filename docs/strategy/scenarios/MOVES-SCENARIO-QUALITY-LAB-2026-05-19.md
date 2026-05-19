@@ -27,7 +27,7 @@ before we put it in front of a real CXO / VP Sourcing / delivery leader.
 
 | Tenant | Use case | Overall | Kernel recommendation | Next best action |
 |---|---|---:|---|---|
-| Apex Retail | Contact Center AI Routing | 8.1 / 10 | shape | Provide cost per contact or confirm owner |
+| Apex Retail | Contact Center AI Routing | 8.2 / 10 | shape | Provide cost per contact or confirm owner |
 | Meridian Health System | Ambient Clinical Value Chain Activation | 8.2 / 10 | shape | Provide cost per clinician hour or confirm owner |
 | First Capital Financial | Fraud Detection Enhancement | 8.2 / 10 | shape | Provide false-positive operational cost or confirm owner |
 
@@ -45,7 +45,7 @@ what would change, why, and which artifacts must regenerate.
 
 | Tenant | Baseline score | Watched-session mode | Improvement |
 |---|---:|---:|---:|
-| Apex Retail | 8.1 / 10 | 8.4 / 10 | +0.3 |
+| Apex Retail | 8.2 / 10 | 8.4 / 10 | +0.2 |
 | Meridian Health System | 8.2 / 10 | 8.4 / 10 | +0.2 |
 | First Capital Financial | 8.2 / 10 | 8.4 / 10 | +0.2 |
 
@@ -59,19 +59,48 @@ Watched-session mode lifts the two weakest areas:
 The remaining gap is explicit: replace the proxy transcript with a real
 practitioner-observed session.
 
+## Increment 2 — Regeneration Preview
+
+The second increment takes the watched-session output one step further. Accepted
+updates are no longer only marked as `requires_regeneration`; they are
+preview-applied into a deterministic case preview:
+
+- baseline updates resolve seed gaps in the preview and recompute baseline
+  coverage;
+- assumption challenges lower confidence and carry the required reviewer action;
+- rate-card overrides are accepted but explicitly require a full effort-estimator
+  recompute;
+- workshop decisions become Mobilize actions;
+- unmapped content remains rejected.
+
+This is still not a silent case mutation. It is a controlled before / after
+preview for the reviewer.
+
+| Tenant | Static/update-packet mode | Watched + preview mode | Improvement |
+|---|---:|---:|---:|
+| Apex Retail | 8.2 / 10 | 8.5 / 10 | +0.3 |
+| Meridian Health System | 8.2 / 10 | 8.5 / 10 | +0.3 |
+| First Capital Financial | 8.2 / 10 | 8.5 / 10 | +0.3 |
+
+The score moves because the two process gaps are now partly closed: workshop
+signals are routed into a visible preview, and the updated-content loop can show
+which artifacts would change before promotion. The remaining gap is the same
+honest one: the transcript is still proxy-authored, not external-practitioner
+observed.
+
 ## Artifact Scorecard
 
 | Artifact / process area | Apex | Meridian | First Capital | Read |
 |---|---:|---:|---:|---|
-| Intelligence idea and bet framing | 7.0 | 7.0 | 7.0 | Good structure, but still needs watched live-dialogue testing. |
+| Intelligence idea and bet framing | 8.2 | 8.2 | 8.2 | Proxy watched-session signals improve framing; external live-dialogue testing remains open. |
 | Discover brief | 8.5 | 8.8 | 8.7 | Strong baseline honesty; seed gaps explicit. |
 | Charter business-case skeleton | 8.5 | 8.5 | 8.5 | Strong value / effort / assumptions / kill logic. |
 | Costed business-case pack | 8.2 | 8.2 | 8.2 | Good CFO structure; critique and flags visible. |
 | Financial model | 8.5 | 8.5 | 8.5 | Strong range / rate-card / payback honesty. |
 | CFO business-case pack | 8.3 | 8.3 | 8.3 | Good executive actionability; blockers not buried. |
 | Mobilize and go-decision packet | 8.3 | 8.3 | 8.3 | Good Tower handoff and no-go discipline. |
-| Workshop and advisory support | 7.0 | 7.0 | 7.0 | Useful simulated advisory; real human facilitation still unproven. |
-| Updated-content acceptance loop | 8.6 | 8.6 | 8.6 | Known inputs accepted; unmapped inputs rejected. |
+| Workshop and advisory support | 8.6 | 8.6 | 8.6 | Session updates route into preview-applied changes; real human facilitation still unproven. |
+| Updated-content acceptance loop | 9.3 | 9.3 | 9.3 | Known inputs accepted, preview-applied, and unmapped inputs rejected. |
 | Trace, governance and auditability | 8.3 | 8.3 | 8.3 | Strong review gate, assumptions, critic, and export catalog. |
 
 ## Updated Content Test
@@ -101,6 +130,16 @@ Watched-session mode adds a regeneration diff:
 - affected artifacts such as Discover brief, business case pack, financial
   model, CFO pack, and Mobilize packet.
 
+Regeneration preview then applies the accepted changes to a preview copy of the
+case, never to the promoted case:
+
+- baseline coverage before / after,
+- seed gaps resolved in preview,
+- assumptions challenged,
+- rate-card overrides requiring estimator recompute,
+- Mobilize actions added,
+- blocked changes and rejected changes kept visible.
+
 ## What This Proves
 
 The Moves kernel is now meaningfully expert-grade for deterministic artifacts:
@@ -124,14 +163,16 @@ The remaining gap is not artifact generation. It is live professional behavior:
 
 ## Next Fix
 
-The next product increment should be a watched-session mode:
+The next product increment should replace the proxy transcript with a real
+observed practitioner session and then add reviewer sign-off:
 
-1. Capture the live prompt / workshop transcript.
+1. Capture the live prompt / workshop transcript from a real CXO / VP Sourcing
+   / delivery leader.
 2. Convert observations into proposed baseline, assumption, rate-card, and
    action updates.
-3. Show a diff before the case changes.
+3. Show the diff and deterministic preview.
 4. Let the reviewer accept / reject each update.
-5. Regenerate the affected artifacts.
+5. Run the full recompute for affected artifacts.
 6. Record the before / after score and audit trail.
 
 That is the step from "excellent deterministic artifacts" to "expert consultant
