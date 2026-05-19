@@ -26,14 +26,14 @@
 import type { BusinessCaseSkeleton } from './business-case-compiler';
 import type { AdoptionApproach } from './adoption-approach';
 import type { MeasurementHandoff } from './measurement-handoff';
-import { MOBILIZE_PLAYBOOK, type KillTrigger } from './phase-playbooks/mobilize';
+import { MOBILIZE_PLAYBOOK, type MobilizeKillTrigger } from './phase-playbooks/mobilize';
 
 /** The Mobilize go-decision verdict. */
 export type GoDecision = 'go' | 'conditional_go' | 'no_go';
 
 /** A kill trigger that fired, with the observation that fired it. */
 export interface FiredKillTrigger {
-  trigger: KillTrigger;
+  trigger: MobilizeKillTrigger;
   /** The concrete observation in this Move that fired it. */
   observation: string;
 }
@@ -88,7 +88,7 @@ function evaluateKillTriggers(
   input: GoDecisionPackInput,
 ): FiredKillTrigger[] {
   const fired: FiredKillTrigger[] = [];
-  const trigger = (code: string): KillTrigger => {
+  const trigger = (code: string): MobilizeKillTrigger => {
     const t = MOBILIZE_PLAYBOOK.killTriggers.find((k) => k.code === code);
     if (!t) throw new Error(`Unknown Mobilize kill trigger: ${code}`);
     return t;

@@ -21,7 +21,7 @@ import type { Confidence } from '../types';
 export type MovesPhase = 'discover' | 'charter' | 'design_plan' | 'mobilize';
 
 /** Where a piece of phase evidence is expected to come from. */
-export type EvidenceSourceKind =
+export type MobilizeEvidenceSourceKind =
   | 'tenant_substrate' // a seeded KPI / record / telemetry item
   | 'move_deliverable' // produced by an earlier Moves phase
   | 'named_owner' // asserted by an accountable human
@@ -29,7 +29,7 @@ export type EvidenceSourceKind =
   | 'tower_contract'; // the Tower outcome-ledger handoff
 
 /** One node in the phase's diagnostic question tree. */
-export interface PlaybookQuestion {
+export interface MobilizePlaybookQuestion {
   /** Stable key, e.g. 'operating_model_owner'. */
   key: string;
   /** The diagnostic question an expert asks at this node. */
@@ -41,16 +41,16 @@ export interface PlaybookQuestion {
 }
 
 /** A piece of evidence the phase cannot be closed without. */
-export interface RequiredEvidence {
+export interface MobilizeRequiredEvidence {
   key: string;
   label: string;
-  sourceKind: EvidenceSourceKind;
+  sourceKind: MobilizeEvidenceSourceKind;
   /** What the phase does when the evidence is absent. */
   ifAbsent: string;
 }
 
 /** A trap — a plausible-looking answer that is quietly wrong. */
-export interface PhaseTrap {
+export interface MobilizePhaseTrap {
   key: string;
   /** The mistake. */
   trap: string;
@@ -64,7 +64,7 @@ export interface PhaseTrap {
  * READINESS, not economics. A Move can have a positive business case and
  * still fire a Mobilize kill trigger (e.g. no named operating-model owner).
  */
-export interface KillTrigger {
+export interface MobilizeKillTrigger {
   code: string;
   /** The condition that fires the trigger. */
   condition: string;
@@ -73,14 +73,14 @@ export interface KillTrigger {
 }
 
 /** A complete phase playbook. */
-export interface PhasePlaybook {
+export interface MobilizePhasePlaybook {
   phase: MovesPhase;
   /** One-line statement of what the phase is for. */
   intent: string;
-  questions: PlaybookQuestion[];
-  requiredEvidence: RequiredEvidence[];
-  traps: PhaseTrap[];
-  killTriggers: KillTrigger[];
+  questions: MobilizePlaybookQuestion[];
+  requiredEvidence: MobilizeRequiredEvidence[];
+  traps: MobilizePhaseTrap[];
+  killTriggers: MobilizeKillTrigger[];
 }
 
 /**
@@ -91,7 +91,7 @@ export interface PhasePlaybook {
  * hand off a Move that has no named human accountable for running it. A Move
  * with no operating-model owner is not ready, regardless of its ROI.
  */
-export const MOBILIZE_PLAYBOOK: PhasePlaybook = {
+export const MOBILIZE_PLAYBOOK: MobilizePhasePlaybook = {
   phase: 'mobilize',
   intent:
     'Confirm the costed Move is genuinely ready to leave Moves — owned, ' +
@@ -306,12 +306,12 @@ export const MOBILIZE_PLAYBOOK: PhasePlaybook = {
 };
 
 /** Look up a playbook question by key. */
-export function mobilizeQuestion(key: string): PlaybookQuestion | null {
+export function mobilizeQuestion(key: string): MobilizePlaybookQuestion | null {
   return MOBILIZE_PLAYBOOK.questions.find((q) => q.key === key) ?? null;
 }
 
 /** Look up a Mobilize kill trigger by code. */
-export function mobilizeKillTrigger(code: string): KillTrigger | null {
+export function mobilizeKillTrigger(code: string): MobilizeKillTrigger | null {
   return MOBILIZE_PLAYBOOK.killTriggers.find((t) => t.code === code) ?? null;
 }
 
