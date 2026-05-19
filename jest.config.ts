@@ -31,4 +31,36 @@ const config: Config = {
   },
 }
 
-export default createJestConfig(config)
+// next/jest owns `transformIgnorePatterns` (it skips all of
+// node_modules). `@react-pdf/renderer` — used by the programs + Source
+// PDF renderers — and a chunk of its dependency tree ship pure ESM, so
+// those packages must be transpiled rather than ignored. We resolve
+// next/jest's generated config and rewrite the pattern to whitelist the
+// `@react-pdf/*` packages plus their known ESM transitive dependencies,
+// while still ignoring the rest of node_modules.
+const REACT_PDF_ESM_PACKAGES = [
+  '@react-pdf',
+  'fontkit',
+  'yoga-layout',
+  'restructure',
+  'unicode-properties',
+  'unicode-trie',
+  'color-string',
+  'color-name',
+  'png-js',
+  'jay-peg',
+  'dfa',
+  'clone',
+  'brotli',
+].join('|')
+
+export default async function jestConfig(): Promise<Config> {
+  const resolved = await createJestConfig(config)()
+  return {
+    ...resolved,
+    transformIgnorePatterns: [
+      `/node_modules/(?!(\\.pnpm/)?(${REACT_PDF_ESM_PACKAGES})/)`,
+      '^.+\\.module\\.(css|sass|scss)$',
+    ],
+  }
+}

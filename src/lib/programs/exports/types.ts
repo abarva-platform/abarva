@@ -13,7 +13,7 @@
 // EXPORT-1 land-able without forcing 16 unfinished payload types into
 // `main`.
 
-/** Canonical formats supported by the export pipeline. PDF is deferred to EXPORT-5. */
+/** Canonical formats supported by the export pipeline. */
 export type DeliverableFormat = 'html' | 'xlsx' | 'docx' | 'pdf';
 
 /** The 16 deliverable kinds the platform recognizes (per design Section 2). */
