@@ -38,11 +38,16 @@ const DEFAULT_FORMAT: Record<SourceDeliverableKind, DeliverableFormat> = {
 
 /**
  * Allowed formats per kind for caller overrides. Reflects the actual
- * coverage matrix shipped through Slices 2-7:
- *   - Narrative artifacts have all 4 formats
- *   - Structured-data artifacts have xlsx + docx (where d04/d11/d16
- *     shipped docx in Slice 5; d20/d22 are xlsx-only as of Slice 6)
- *   - d19 pricing has xlsx (template + comparison) only
+ * coverage matrix:
+ *   - Narrative artifacts have docx + html + pdf.
+ *   - Structured-data artifacts have xlsx (the canonical data working
+ *     surface) plus docx + pdf (readable renderings of the same
+ *     content — a CFO won't open a spreadsheet in a board pack).
+ *
+ * Slice G7 closes the parity gap: d19 (pricing template + comparison),
+ * d20 (trap log) and d22 (BAFO) — previously xlsx-only — now ship docx
+ * and pdf alongside their xlsx. Every Source artifact now downloads in
+ * every format appropriate to its content type.
  */
 const ALLOWED_FORMATS: Record<
   SourceDeliverableKind,
@@ -52,13 +57,13 @@ const ALLOWED_FORMATS: Record<
   'rfp-package': ['docx', 'html', 'pdf'],
   'decision-brief': ['docx', 'html', 'pdf'],
   'selection-memo': ['docx', 'html', 'pdf'],
-  'app-inventory': ['xlsx', 'docx'],
-  'response-checklist': ['xlsx', 'docx'],
-  'scorecard': ['xlsx', 'docx'],
-  'pricing-template': ['xlsx'],
-  'pricing-comparison': ['xlsx'],
-  'trap-log': ['xlsx'],
-  'bafo-question-pack': ['xlsx'],
+  'app-inventory': ['xlsx', 'docx', 'pdf'],
+  'response-checklist': ['xlsx', 'docx', 'pdf'],
+  'scorecard': ['xlsx', 'docx', 'pdf'],
+  'pricing-template': ['xlsx', 'docx', 'pdf'],
+  'pricing-comparison': ['xlsx', 'docx', 'pdf'],
+  'trap-log': ['xlsx', 'docx', 'pdf'],
+  'bafo-question-pack': ['xlsx', 'docx', 'pdf'],
 };
 
 /**

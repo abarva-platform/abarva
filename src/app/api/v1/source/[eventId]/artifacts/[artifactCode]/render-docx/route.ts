@@ -29,6 +29,9 @@ import { buildNarrativeDocxPayloadFromContext } from '@/lib/source/exports/paylo
 import { buildAppInventoryPayloadFromContext } from '@/lib/source/exports/payloads/app-inventory-payload';
 import { buildResponseChecklistPayloadFromContext } from '@/lib/source/exports/payloads/response-checklist-payload';
 import { buildScorecardPayloadFromContext } from '@/lib/source/exports/payloads/scorecard-payload';
+import { buildPricingTemplatePayloadFromContext } from '@/lib/source/exports/payloads/pricing-template-payload';
+import { buildTrapLogPayloadFromContext } from '@/lib/source/exports/payloads/trap-log-payload';
+import { buildBafoQuestionPackPayloadFromContext } from '@/lib/source/exports/payloads/bafo-question-pack-payload';
 
 const NARRATIVE_CODES = new Set([
   'd05_scope_memo',
@@ -124,6 +127,12 @@ export async function GET(_req: NextRequest, { params }: RouteCtx) {
       payload = buildResponseChecklistPayloadFromContext(ctx, generatedAt);
     } else if (artifactCode === 'd16_scorecard') {
       payload = buildScorecardPayloadFromContext(ctx, generatedAt);
+    } else if (artifactCode === 'd19_pricing_workbook') {
+      payload = buildPricingTemplatePayloadFromContext(ctx, generatedAt);
+    } else if (artifactCode === 'd20_trap_log') {
+      payload = buildTrapLogPayloadFromContext(ctx, generatedAt);
+    } else if (artifactCode === 'd22_bafo_question_pack') {
+      payload = buildBafoQuestionPackPayloadFromContext(ctx, generatedAt);
     } else {
       // Defensive — isDocxGeneratable should have caught this.
       return Response.json(
