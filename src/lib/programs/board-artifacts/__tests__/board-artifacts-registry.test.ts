@@ -38,12 +38,14 @@ function makeMove(overrides: Partial<StrategicMove> = {}): StrategicMove {
 describe('boardArtifactsForMove — Apex Contact Center AI Routing', () => {
   it('resolves to the 5 board-grade decks', () => {
     const artifacts = boardArtifactsForMove(makeMove());
-    expect(artifacts).toHaveLength(5);
+    expect(artifacts).toHaveLength(7);
     expect(artifacts.map((a) => a.id).sort()).toEqual([
       'cfo-pack',
       'charter-skeleton',
       'costed-business-case',
       'discover-brief',
+      'estimate-model',
+      'mobilize-packet',
       'solution-architecture',
     ]);
   });
@@ -92,15 +94,15 @@ describe('boardArtifactsForMove — Apex Contact Center AI Routing', () => {
   });
 
   it('matches case- and whitespace-insensitively on the Move name', () => {
-    expect(boardArtifactsForMove(makeMove({ name: 'contact center ai routing' }))).toHaveLength(5);
-    expect(boardArtifactsForMove(makeMove({ name: '  Contact Center AI Routing  ' }))).toHaveLength(5);
-    expect(boardArtifactsForMove(makeMove({ name: 'Contact   Center  AI   Routing' }))).toHaveLength(5);
+    expect(boardArtifactsForMove(makeMove({ name: 'contact center ai routing' }))).toHaveLength(7);
+    expect(boardArtifactsForMove(makeMove({ name: '  Contact Center AI Routing  ' }))).toHaveLength(7);
+    expect(boardArtifactsForMove(makeMove({ name: 'Contact   Center  AI   Routing' }))).toHaveLength(7);
   });
 
   it('matches the tenant by display-name fold (Apex Retail / Apex Retail Group)', () => {
     expect(
       boardArtifactsForMove(makeMove({ tenant: { id: 't', name: 'Apex Retail', industryCode: 'retail' } })),
-    ).toHaveLength(5);
+    ).toHaveLength(7);
   });
 });
 
@@ -130,7 +132,7 @@ describe('boardArtifactsForMove — return value is a fresh array', () => {
   it('does not leak the internal registry array (mutation-safe)', () => {
     const first = boardArtifactsForMove(makeMove());
     first.pop();
-    expect(boardArtifactsForMove(makeMove())).toHaveLength(5);
+    expect(boardArtifactsForMove(makeMove())).toHaveLength(7);
   });
 });
 

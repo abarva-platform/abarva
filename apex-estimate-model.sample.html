@@ -1,0 +1,526 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/><title>Contact Center AI Routing — Estimate &amp; Financial Model — Apex Retail</title><style>
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; height: 100%; }
+body {
+  background: #e7e3da;
+  color: #070707;
+  font-family: "DM Sans","Inter",system-ui,-apple-system,sans-serif;
+  font-size: 14px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+}
+h1, h2, h3 {
+  font-family: "Newsreader","Cormorant Garamond","Georgia",serif;
+  font-weight: 500; letter-spacing: -0.01em; margin: 0;
+}
+
+/* === Deck shell — fixed left menu, scrolling right stage. === */
+.deck {
+  display: grid;
+  grid-template-columns: 264px minmax(0,1fr);
+  height: 100vh;
+}
+
+/* --- Left menu rail --- */
+.menu {
+  background: #11100e; color: #e7e3da;
+  height: 100vh; position: sticky; top: 0;
+  display: flex; flex-direction: column;
+  border-right: 1px solid #2a2824;
+}
+.menu-head {
+  padding: 22px 22px 16px; border-bottom: 1px solid #2a2824;
+}
+.menu-brand {
+  font-family: "JetBrains Mono",ui-monospace,monospace;
+  font-size: 10px; font-weight: 800; letter-spacing: 0.2em;
+  text-transform: uppercase; color: #6ea2dd;
+}
+.menu-title {
+  font-family: "Newsreader","Georgia",serif; font-size: 19px;
+  color: #f8f7f4; margin-top: 8px; line-height: 1.2;
+}
+.menu-tenant {
+  font-family: "JetBrains Mono",ui-monospace,monospace;
+  font-size: 10.5px; font-weight: 600; color: #a39d8e; margin-top: 5px;
+}
+.menu-list {
+  flex: 1; overflow-y: auto; padding: 8px 0;
+}
+.menu-item {
+  display: flex; gap: 11px; align-items: flex-start; width: 100%;
+  background: transparent; border: 0; cursor: pointer;
+  padding: 9px 18px 9px 16px; text-align: left;
+  border-left: 3px solid transparent; color: #cdc8bc;
+  font-family: inherit;
+}
+.menu-item:hover { background: #1b1a17; color: #f8f7f4; }
+.menu-item[aria-current="true"] {
+  background: #1f1e1a; border-left-color: #6ea2dd; color: #f8f7f4;
+}
+.menu-num {
+  font-family: "JetBrains Mono",ui-monospace,monospace;
+  font-size: 10px; font-weight: 800; color: #75706320; color: #888273;
+  padding-top: 2px; min-width: 18px;
+}
+.menu-item[aria-current="true"] .menu-num { color: #6ea2dd; }
+.menu-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.menu-label {
+  font-size: 12.5px; font-weight: 800; letter-spacing: -0.005em;
+}
+.menu-sub {
+  font-size: 10.5px; line-height: 1.4; color: #8b8678;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.menu-item[aria-current="true"] .menu-sub { color: #b4ae9f; }
+.menu-foot {
+  padding: 14px 18px; border-top: 1px solid #2a2824;
+  display: flex; flex-direction: column; gap: 3px;
+}
+.menu-foot-verdict {
+  font-family: "JetBrains Mono",ui-monospace,monospace;
+  font-size: 10px; font-weight: 800; letter-spacing: 0.08em;
+  text-transform: uppercase; color: #d8b65a;
+}
+.menu-foot-sub { font-size: 10px; color: #8b8678; }
+
+/* --- Right stage --- */
+.stage {
+  height: 100vh; overflow-y: auto;
+  display: flex; flex-direction: column;
+  padding: 30px 38px 96px;
+}
+
+/* --- Slide — one composed screen. --- */
+.slide { display: none; }
+.slide.is-active { display: block; }
+.slide-inner {
+  background: #fbfaf7; border: 1px solid #d8d3c6; border-radius: 8px;
+  max-width: 1080px; margin: 0 auto; width: 100%;
+  min-height: calc(100vh - 130px);
+  padding: 38px 52px 34px;
+  display: flex; flex-direction: column;
+}
+
+/* Slide chrome — slim header rule. */
+.slide-rule {
+  display: flex; justify-content: space-between; align-items: baseline;
+  font-family: "JetBrains Mono",ui-monospace,monospace;
+  font-size: 9.5px; font-weight: 700; letter-spacing: 0.04em;
+  text-transform: uppercase; color: #8b8678;
+  padding-bottom: 11px; border-bottom: 1px solid #e6e1d5;
+}
+.slide-rule-l { display: flex; gap: 7px; }
+.slide-brand { color: #0b4a91; font-weight: 800; }
+.slide-sep { color: #c9c3b3; }
+.slide-rule-r { color: #8b8678; }
+
+.slide-eyebrow {
+  font-size: 10px; font-weight: 800; letter-spacing: 0.1em;
+  text-transform: uppercase; color: #0b4a91; margin: 22px 0 9px;
+}
+.slide-headline {
+  font-size: 30px; line-height: 1.18; max-width: 880px;
+  margin-bottom: 6px; color: #070707;
+}
+
+.slide-stage {
+  flex: 1; padding: 16px 0 6px;
+}
+.slide-lede {
+  font-size: 14.5px; line-height: 1.6; color: #2c2a26;
+  max-width: 720px; margin: 4px 0 20px;
+}
+
+/* --- Hero exhibit — one dominant exhibit per slide. --- */
+.hero { margin: 0 0 6px; }
+.hero-caption {
+  font-size: 10.5px; font-weight: 800; letter-spacing: 0.05em;
+  text-transform: uppercase; color: #070707; margin-bottom: 9px;
+}
+.hero-frame {
+  background: #ffffff; border: 1px solid #e0dbcd; border-radius: 5px;
+  padding: 20px 22px;
+}
+.hero-note {
+  font-size: 11.5px; color: #5b5852; line-height: 1.5;
+  margin: 9px 2px 0; max-width: 760px;
+}
+
+/* --- Quiet footer strip — facts compressed to one thin row. --- */
+.slide-foot {
+  display: grid; grid-template-columns: 1.6fr 1fr 1fr; gap: 0;
+  border-top: 1px solid #e6e1d5; margin-top: 18px; padding-top: 14px;
+}
+.foot-cell {
+  padding: 0 16px 6px 0; border-right: 1px solid #ece7da;
+  display: flex; flex-direction: column; gap: 3px;
+}
+.foot-cell:last-child { border-right: 0; }
+.foot-implication { grid-row: span 1; }
+.foot-key {
+  font-size: 8.5px; font-weight: 800; letter-spacing: 0.07em;
+  text-transform: uppercase; color: #8b8678;
+}
+.foot-val { font-size: 10.5px; line-height: 1.45; color: #2c2a26; }
+.foot-implication .foot-val { color: #1c1a17; font-weight: 600; }
+
+/* --- Collapsible detail strip — dense tables one click away. --- */
+.slide-detail {
+  margin-top: 16px; border: 1px solid #e0dbcd; border-radius: 5px;
+  background: #f3f0e9;
+}
+.slide-detail-summary {
+  cursor: pointer; list-style: none;
+  display: flex; gap: 9px; align-items: center;
+  padding: 11px 15px; font-size: 11px; font-weight: 800;
+  letter-spacing: 0.03em; text-transform: uppercase; color: #5b5852;
+}
+.slide-detail-summary::-webkit-details-marker { display: none; }
+.detail-chevron {
+  width: 0; height: 0; border-left: 5px solid #8b8678;
+  border-top: 4px solid transparent; border-bottom: 4px solid transparent;
+  transition: transform 0.12s ease;
+}
+.slide-detail[open] .detail-chevron { transform: rotate(90deg); }
+.slide-detail-summary:hover { color: #0b4a91; }
+.slide-detail-body { padding: 4px 16px 16px; }
+
+/* --- Cover slide --- */
+.slide-cover .slide-inner { justify-content: center; }
+.cover-inner { padding: 56px 60px; }
+.cover-brand {
+  font-family: "JetBrains Mono",ui-monospace,monospace;
+  font-size: 11px; font-weight: 800; letter-spacing: 0.22em;
+  text-transform: uppercase; color: #0b4a91;
+}
+.cover-eyebrow {
+  font-size: 11px; font-weight: 700; letter-spacing: 0.06em;
+  text-transform: uppercase; color: #5b5852; margin-top: 16px;
+}
+.cover-title {
+  font-size: 54px; line-height: 1.04; margin: 10px 0 14px; max-width: 760px;
+}
+.cover-tenant {
+  font-family: "JetBrains Mono",ui-monospace,monospace;
+  font-size: 12px; font-weight: 700; color: #070707;
+}
+.cover-lede {
+  max-width: 620px; margin: 22px 0 30px; font-size: 15px;
+  color: #2c2a26; line-height: 1.62;
+}
+.cover-meta {
+  display: flex; gap: 44px; border-top: 1px solid #d8d3c6;
+  padding-top: 20px;
+}
+.cover-meta-label {
+  display: block; font-size: 10px; font-weight: 800; letter-spacing: 0.08em;
+  text-transform: uppercase; color: #8b8678;
+}
+.cover-meta-val {
+  display: block; font-family: "JetBrains Mono",ui-monospace,monospace;
+  font-size: 16px; font-weight: 800; margin-top: 4px;
+}
+.cover-hint {
+  margin-top: 26px; font-size: 11px; color: #8b8678;
+  font-style: italic;
+}
+
+/* --- Chips --- */
+.chip {
+  display: inline-block; font-family: "JetBrains Mono",ui-monospace,monospace;
+  font-size: 9px; font-weight: 800; letter-spacing: 0.03em;
+  text-transform: uppercase; padding: 3px 7px; border-radius: 999px;
+  border: 1px solid;
+}
+.chip-good { background: #e2efe2; color: #1B5E20; border-color: #1B5E20; }
+.chip-warn { background: #f7ecd6; color: #7A4F01; border-color: #7A4F01; }
+.chip-bad { background: #f4ddd6; color: #8B1F0F; border-color: #8B1F0F; }
+
+/* --- Board card --- */
+.board-card {
+  border-radius: 6px; padding: 20px 24px; margin: 0 0 20px;
+  border: 1px solid;
+}
+.verdict-shape { background: #f7ecd6; border-color: #7A4F01; }
+.verdict-fund { background: #e2efe2; border-color: #1B5E20; }
+.verdict-kill { background: #f4ddd6; border-color: #8B1F0F; }
+.board-card-tag {
+  font-size: 9.5px; font-weight: 800; letter-spacing: 0.1em;
+  text-transform: uppercase; color: #7A4F01; margin-bottom: 7px;
+}
+.verdict-fund .board-card-tag { color: #1B5E20; }
+.verdict-kill .board-card-tag { color: #8B1F0F; }
+.board-verdict {
+  font-family: "Newsreader","Georgia",serif; font-size: 23px;
+  line-height: 1.26; color: #070707;
+}
+.board-detail { margin: 9px 0 0; font-size: 12.5px; color: #2c2a26; }
+
+/* --- Board-answer split --- */
+.answer-split {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 16px;
+  margin: 16px 0 16px;
+}
+.answer-col {
+  border: 1px solid #e0dbcd; border-radius: 5px; padding: 14px 16px;
+  background: #fff;
+}
+.answer-head {
+  font-size: 10.5px; font-weight: 800; letter-spacing: 0.05em;
+  text-transform: uppercase; margin-bottom: 8px;
+}
+.answer-col ul { margin: 0; padding-left: 17px; }
+.answer-col li { font-size: 11.5px; line-height: 1.5; margin-bottom: 5px; }
+.answer-fund { border-left: 3px solid #1B5E20; }
+.answer-fund .answer-head { color: #1B5E20; }
+.answer-hold { border-left: 3px solid #8B1F0F; }
+.answer-hold .answer-head { color: #8B1F0F; }
+
+/* --- Ask + payback lines --- */
+.ask-line, .payback-line {
+  display: flex; gap: 12px; align-items: flex-start;
+  padding: 12px 16px; border-radius: 5px; font-size: 12.5px;
+  line-height: 1.5; margin: 0 0 16px;
+}
+.ask-line { background: #e8f0fa; color: #2c2a26; }
+.payback-line { background: #f7ecd6; color: #2c2a26; }
+.ask-line-tag, .payback-line-tag {
+  font-size: 9.5px; font-weight: 800; letter-spacing: 0.07em;
+  text-transform: uppercase; white-space: nowrap; padding-top: 2px;
+}
+.ask-line-tag { color: #0b4a91; }
+.payback-line-tag { color: #7A4F01; }
+
+/* --- Context diagram --- */
+.context-diagram { display: flex; flex-direction: column; gap: 9px; }
+.context-band {
+  display: grid; grid-template-columns: 128px 1fr; gap: 12px;
+  align-items: center;
+}
+.context-band-label {
+  font-size: 9.5px; font-weight: 800; letter-spacing: 0.06em;
+  text-transform: uppercase; color: #8b8678; text-align: right;
+}
+.context-nodes { display: flex; gap: 8px; flex-wrap: wrap; }
+.context-node {
+  flex: 1; min-width: 160px; background: #fff;
+  border: 1px solid #cfc9b9; border-radius: 4px; padding: 9px 11px;
+}
+.context-node-gap { background: #f7ecd6; border-color: #7A4F01; }
+.context-node-title { font-size: 12px; font-weight: 800; }
+.context-node-detail {
+  font-size: 10.5px; color: #5b5852; margin-top: 3px; line-height: 1.42;
+}
+.gap-flag {
+  font-family: "JetBrains Mono",ui-monospace,monospace;
+  font-size: 8px; font-weight: 800; color: #7A4F01;
+  background: #fff; border: 1px solid #7A4F01; border-radius: 999px;
+  padding: 1px 5px; text-transform: uppercase;
+}
+
+/* --- Scope triplet --- */
+.scope-triplet {
+  display: grid; grid-template-columns: repeat(3,1fr); gap: 14px;
+  margin: 16px 0 4px;
+}
+.scope-col {
+  border: 1px solid #e0dbcd; border-radius: 5px; padding: 13px 15px;
+  background: #fff;
+}
+.scope-head {
+  font-size: 10.5px; font-weight: 800; letter-spacing: 0.05em;
+  text-transform: uppercase; margin-bottom: 8px;
+}
+.scope-col ul { margin: 0; padding-left: 16px; }
+.scope-col li { font-size: 11px; line-height: 1.5; margin-bottom: 6px; }
+.scope-in { border-left: 3px solid #1B5E20; }
+.scope-in .scope-head { color: #1B5E20; }
+.scope-out { border-left: 3px solid #8B1F0F; }
+.scope-out .scope-head { color: #8B1F0F; }
+.scope-retain { border-left: 3px solid #0b4a91; }
+.scope-retain .scope-head { color: #0b4a91; }
+
+/* --- Tables --- */
+.data-table {
+  width: 100%; border-collapse: collapse; margin: 10px 0 14px;
+  background: #fff; border: 1px solid #e0dbcd; font-size: 11.5px;
+}
+.data-table th {
+  text-align: left; background: #070707; color: #fbfaf7;
+  font-family: "JetBrains Mono",ui-monospace,monospace;
+  font-size: 9px; font-weight: 700; letter-spacing: 0.05em;
+  text-transform: uppercase; padding: 9px 11px;
+}
+.data-table td {
+  padding: 8px 11px; border-top: 1px solid #ece7da;
+  vertical-align: top; line-height: 1.45;
+}
+.data-table tbody tr:nth-child(even) { background: #f7f5ef; }
+.data-table .num {
+  text-align: right; white-space: nowrap;
+  font-family: "JetBrains Mono",ui-monospace,monospace;
+}
+.data-table th.num { text-align: right; }
+.data-table tfoot td {
+  background: #ece7da; font-weight: 800; border-top: 2px solid #070707;
+}
+.data-table-ledger td:nth-child(2) { width: 36%; }
+.row-proxy { background: #fdf6e8 !important; }
+.blocked-cell { color: #8B1F0F; font-weight: 800; }
+
+/* --- Assumption cards --- */
+.assume-cards { display: flex; flex-direction: column; gap: 10px; }
+.assume-card {
+  display: grid; grid-template-columns: 52px 1fr; gap: 14px;
+  border: 1px solid #e0dbcd; border-radius: 5px; padding: 14px 16px;
+  background: #fff; border-left: 3px solid #0b4a91;
+}
+.assume-proxy { border-left-color: #7A4F01; background: #fdf6e8; }
+.assume-rank {
+  font-family: "Newsreader","Georgia",serif; font-size: 26px;
+  color: #0b4a91; font-weight: 500;
+}
+.assume-proxy .assume-rank { color: #7A4F01; }
+.assume-statement { font-size: 13px; font-weight: 600; color: #1c1a17;
+  line-height: 1.45; }
+.assume-meta {
+  display: flex; gap: 7px; align-items: center; flex-wrap: wrap;
+  margin-top: 7px; font-size: 11px; color: #5b5852;
+}
+.assume-dot { color: #c9c3b3; }
+
+/* --- Coverage tiles --- */
+.coverage-tiles {
+  display: grid; grid-template-columns: repeat(3,1fr); gap: 12px;
+}
+.coverage-tile {
+  border: 1px solid #e0dbcd; border-radius: 5px; padding: 22px 20px;
+  background: #fff; border-top: 3px solid #5b5852;
+}
+.coverage-good { border-top-color: #1B5E20; }
+.coverage-gap { border-top-color: #8B1F0F; }
+.coverage-neutral { border-top-color: #0b4a91; }
+.coverage-num {
+  font-family: "Newsreader","Georgia",serif; font-size: 44px;
+  line-height: 1; color: #070707;
+}
+.coverage-good .coverage-num { color: #1B5E20; }
+.coverage-gap .coverage-num { color: #8B1F0F; }
+.coverage-neutral .coverage-num { color: #0b4a91; }
+.coverage-label {
+  font-size: 11.5px; font-weight: 800; letter-spacing: 0.03em;
+  text-transform: uppercase; margin-top: 10px;
+}
+.coverage-sub { font-size: 10.5px; color: #5b5852; margin-top: 3px; }
+
+/* --- Checklist --- */
+.checklist { display: flex; flex-direction: column; gap: 8px; }
+.check-row {
+  display: grid; grid-template-columns: 120px 1fr; gap: 16px;
+  border: 1px solid #e0dbcd; border-radius: 5px; padding: 12px 15px;
+  background: #fff; align-items: start;
+}
+.check-approve { border-left: 3px solid #1B5E20; }
+.check-hold { border-left: 3px solid #8B1F0F; }
+.check-condition { border-left: 3px solid #7A4F01; }
+.check-label { font-weight: 800; font-size: 12.5px; }
+.check-detail {
+  font-size: 11px; color: #5b5852; margin-top: 3px; line-height: 1.5;
+}
+
+/* --- Mini split (detail strip prose) --- */
+.mini-split {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 16px;
+  margin: 12px 0 4px;
+}
+.mini-key {
+  font-size: 9.5px; font-weight: 800; letter-spacing: 0.06em;
+  text-transform: uppercase; color: #0b4a91;
+}
+.mini-key-block { display: block; margin: 14px 0 2px; }
+.mini-key-block:first-child { margin-top: 4px; }
+.mini-key-gap { color: #8B1F0F; }
+.mini-split p { margin: 5px 0 0; font-size: 11.5px; color: #2c2a26;
+  line-height: 1.55; }
+.mini-list { margin: 6px 0 0; padding-left: 16px; }
+.mini-list li { font-size: 11px; line-height: 1.5; margin-bottom: 4px; }
+
+/* --- Deck controls --- */
+.deck-controls {
+  position: fixed; bottom: 22px; right: 30px; z-index: 20;
+  display: flex; gap: 8px; align-items: center;
+  background: #fbfaf7; border: 1px solid #d8d3c6; border-radius: 999px;
+  padding: 6px 8px; box-shadow: 0 6px 22px rgba(7,7,7,0.16);
+}
+.deck-btn {
+  background: #11100e; color: #f8f7f4; border: 0; cursor: pointer;
+  font-family: inherit; font-size: 11px; font-weight: 700;
+  padding: 7px 13px; border-radius: 999px;
+}
+.deck-btn:hover { background: #2a2824; }
+.deck-counter {
+  font-family: "JetBrains Mono",ui-monospace,monospace;
+  font-size: 11px; font-weight: 800; color: #5b5852; padding: 0 4px;
+}
+
+/* --- Narrow screens — menu collapses to the top. --- */
+@media (max-width: 880px) {
+  .deck { grid-template-columns: 1fr; height: auto; }
+  .menu { height: auto; position: static; }
+  .menu-list { max-height: 220px; }
+  .stage { height: auto; padding: 20px; }
+  .slide-inner { min-height: 0; padding: 26px 22px; }
+  .slide-foot, .answer-split, .scope-triplet, .coverage-tiles,
+  .mini-split, .context-band, .check-row, .assume-card {
+    grid-template-columns: 1fr;
+  }
+  .slide-headline { font-size: 24px; }
+  .cover-title { font-size: 38px; }
+}
+
+/* === Print / PDF — expand EVERY slide, stacked, one page each. === */
+@media print {
+  @page { size: A4 landscape; margin: 12mm; }
+  body { background: #fff; }
+  .deck { display: block; height: auto; }
+  .menu, .deck-controls { display: none !important; }
+  .stage { display: block; height: auto; overflow: visible; padding: 0; }
+  .slide {
+    display: block !important; page-break-after: always;
+    break-after: page;
+  }
+  .slide:last-child { page-break-after: auto; break-after: auto; }
+  .slide[hidden] { display: block !important; }
+  .slide-inner {
+    min-height: 0; border-radius: 0; border: 0;
+    box-shadow: none; padding: 8mm 4mm; max-width: 100%;
+  }
+  /* Print shows the full document — detail strips expanded. */
+  .slide-detail { background: #fff; border-color: #d8d3c6; }
+  .slide-detail-body { display: block !important; }
+  .slide-detail summary { color: #070707; }
+  .detail-chevron { display: none; }
+  .hero-frame, .data-table, .board-card, .answer-col, .scope-col,
+  .context-node, .assume-card, .coverage-tile, .check-row {
+    page-break-inside: avoid;
+  }
+}
+
+/* --- Estimate model — business-change row tint. --- */
+.data-table tr.row-change td { background: #fdf6e8; }
+.gap-impact {
+  font-size: 11px; color: #7A4F01; background: #fdf6e8 !important;
+  line-height: 1.5;
+}
+/* --- Per-phase blocks in the role-mix detail strip. --- */
+.phase-block { margin-bottom: 14px; }
+.phase-block-head {
+  font-size: 11px; font-weight: 800; color: #1c1a17;
+  padding: 8px 0 2px; letter-spacing: 0.01em;
+}
+.mini-para {
+  margin: 5px 0 0; font-size: 11.5px; color: #2c2a26; line-height: 1.55;
+}
+</style></head><body><div class="deck"><nav class="menu" aria-label="Deck navigation"><div class="menu-head"><div class="menu-brand">AbarVa · Moves</div><div class="menu-title">Estimate &amp; Financial Model</div><div class="menu-tenant">Apex Retail</div></div><div class="menu-list"><button class="menu-item" type="button" data-goto="1" aria-current="true"><span class="menu-num">00</span><span class="menu-text"><span class="menu-label">Cover</span><span class="menu-sub">Estimate &amp; Financial Model</span></span></button><button class="menu-item" type="button" data-goto="2"><span class="menu-num">01</span><span class="menu-text"><span class="menu-label">Executive summary</span><span class="menu-sub">The estimate is planning-grade credible — eight costed workstreams on a client rate card — but payback cannot be stated until the cost-per-contact gap closes.</span></span></button><button class="menu-item" type="button" data-goto="3"><span class="menu-num">02</span><span class="menu-text"><span class="menu-label">Baseline &amp; seed gaps</span><span class="menu-sub">Six recorded KPIs ground the estimate — four declared seed gaps are the honest limits of what the model can claim today.</span></span></button><button class="menu-item" type="button" data-goto="4"><span class="menu-num">03</span><span class="menu-text"><span class="menu-label">Workstream estimate</span><span class="menu-sub">All eight workstreams are costed individually — the estimate is never collapsed into a generic six-role model.</span></span></button><button class="menu-item" type="button" data-goto="5"><span class="menu-num">04</span><span class="menu-text"><span class="menu-label">Role mix by phase</span><span class="menu-sub">Effort is phased, not lumped — each phase carries its own workstream-bearing role mix and duration.</span></span></button><button class="menu-item" type="button" data-goto="6"><span class="menu-num">05</span><span class="menu-text"><span class="menu-label">Rate card &amp; overrides</span><span class="menu-sub">Every rate traces to a named source — the estimate runs on an Apex client rate-card pack, not a hidden benchmark.</span></span></button><button class="menu-item" type="button" data-goto="7"><span class="menu-num">06</span><span class="menu-text"><span class="menu-label">Value forecast</span><span class="menu-sub">Gross value is never claimed — a mandatory six-factor haircut discounts 43% of it before the net is shown.</span></span></button><button class="menu-item" type="button" data-goto="8"><span class="menu-num">07</span><span class="menu-text"><span class="menu-label">Sensitivity</span><span class="menu-sub">The case is shown as three scenarios, never one point — and the one thing that breaks it is named.</span></span></button><button class="menu-item" type="button" data-goto="9"><span class="menu-num">08</span><span class="menu-text"><span class="menu-label">Roadmap cash flow</span><span class="menu-sub">Phase cost lands before phase value — and because monetization is blocked, the curve is a net-value model, not a payback claim.</span></span></button></div><div class="menu-foot"><span class="menu-foot-verdict">Verdict · SHAPE</span><span class="menu-foot-sub">Payback blocked — cost-per-contact seed gap</span></div></nav><main class="stage" id="stage"><section class="slide slide-cover" id="cover" data-slide="1" aria-label="Cover"><div class="slide-inner cover-inner"><div class="cover-brand">AbarVa · Moves</div><div class="cover-eyebrow">Estimate &amp; Financial Model · Board-grade artifact</div><h1 class="cover-title">Contact Center AI Routing</h1><div class="cover-tenant">Apex Retail · apex-retail</div><p class="cover-lede">The HTML summary of the Estimate &amp; Financial Model workbook, in 9 slides. Every figure is produced by the Moves Expert Kernel from Apex's audited substrate and a client rate card. Payback is <strong>blocked</strong> — the cost-per-contact baseline is a declared seed gap, so the honest verdict is shape, not fund.</p><div class="cover-meta"><div><span class="cover-meta-label">Recommendation</span><span class="cover-meta-val">SHAPE</span></div><div><span class="cover-meta-label">Payback</span><span class="cover-meta-val">Blocked — seed gap</span></div><div><span class="cover-meta-label">Slides</span><span class="cover-meta-val">9</span></div><div><span class="cover-meta-label">Generated</span><span class="cover-meta-val">2026-05-20</span></div></div><div class="cover-hint">Use the menu, the arrows, or ← → keys to move through the deck.</div></div></section><section class="slide" id="executive-summary" data-slide="2" aria-label="Executive summary"><div class="slide-inner"><div class="slide-rule"><div class="slide-rule-l"><span class="slide-brand">Contact Center AI Routing</span><span class="slide-sep">·</span><span>Executive summary</span></div><div class="slide-rule-r">Slide 2 / 9</div></div><div class="slide-eyebrow">Section 1 · Executive summary</div><h2 class="slide-headline">The estimate is planning-grade credible — eight costed workstreams on a client rate card — but payback cannot be stated until the cost-per-contact gap closes.</h2><div class="slide-stage"><div class="board-card verdict-shape"><div class="board-card-tag">Estimate verdict</div><div class="board-verdict">SHAPE — the estimate is credible, but the case is not yet fundable as-is</div><p class="board-detail">The critic raised 1 blocker(s) — fund only after they are resolved (see critic findings). Re-shape the Move to close them, do not fund as-is.</p></div><figure class="hero"><figcaption class="hero-caption">Exhibit 1 — Estimate economics at a glance</figcaption><div class="hero-frame"><svg viewBox="0 0 720 96" width="100%" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Headline economics" xmlns="http://www.w3.org/2000/svg" font-family='"DM Sans","Inter",system-ui,-apple-system,sans-serif'><title>Headline economics</title><rect x="0" y="0" width="137.6" height="96" fill="#f3f0e9" rx="3"/><rect x="0" y="0" width="3" height="96" fill="#7A4F01"/><text x="14" y="22" font-size="8" font-weight="800" fill="#5b5852" text-anchor="start" letter-spacing="0.6">RECOMMENDATION</text><text x="14" y="52" font-size="19" font-weight="800" fill="#7A4F01" text-anchor="start">SHAPE</text><text x="14" y="76" font-size="7.4" font-weight="600" fill="#5b5852" text-anchor="start">Credible estimate · not fundable as-is</text><rect x="145.6" y="0" width="137.6" height="96" fill="#f3f0e9" rx="3"/><rect x="145.6" y="0" width="3" height="96" fill="#070707"/><text x="159.6" y="22" font-size="8" font-weight="800" fill="#5b5852" text-anchor="start" letter-spacing="0.6">INVESTMENT RANGE</text><text x="159.6" y="52" font-size="19" font-weight="800" fill="#070707" text-anchor="start">$2.20M</text><text x="159.6" y="76" font-size="7.4" font-weight="600" fill="#5b5852" text-anchor="start">$1.87M–$3.09M · base/upside/cons.</text><rect x="291.2" y="0" width="137.6" height="96" fill="#f3f0e9" rx="3"/><rect x="291.2" y="0" width="3" height="96" fill="#070707"/><text x="305.2" y="22" font-size="8" font-weight="800" fill="#5b5852" text-anchor="start" letter-spacing="0.6">NET VALUE (3-YR)</text><text x="305.2" y="52" font-size="19" font-weight="800" fill="#070707" text-anchor="start">$11.31M</text><text x="305.2" y="76" font-size="7.4" font-weight="600" fill="#5b5852" text-anchor="start">$8.28M–$14.34M · post-haircut</text><rect x="436.79999999999995" y="0" width="137.6" height="96" fill="#f3f0e9" rx="3"/><rect x="436.79999999999995" y="0" width="3" height="96" fill="#8B1F0F"/><text x="450.79999999999995" y="22" font-size="8" font-weight="800" fill="#5b5852" text-anchor="start" letter-spacing="0.6">PAYBACK</text><text x="450.79999999999995" y="52" font-size="19" font-weight="800" fill="#8B1F0F" text-anchor="start">Blocked</text><text x="450.79999999999995" y="76" font-size="7.4" font-weight="600" fill="#5b5852" text-anchor="start">Cost-per-contact seed gap</text><rect x="582.4" y="0" width="137.6" height="96" fill="#f3f0e9" rx="3"/><rect x="582.4" y="0" width="3" height="96" fill="#070707"/><text x="596.4" y="22" font-size="8" font-weight="800" fill="#5b5852" text-anchor="start" letter-spacing="0.6">RATE-CARD BASIS</text><text x="596.4" y="52" font-size="19" font-weight="800" fill="#070707" text-anchor="start">Client</text><text x="596.4" y="76" font-size="8.2" font-weight="600" fill="#5b5852" text-anchor="start">Apex comprehensive pack</text></svg></div></figure><div class="ask-line"><span class="ask-line-tag">Rate-card basis</span><span>Rates are CLIENT-SPECIFIC — an Apex comprehensive rate-card pack, not a generic benchmark. The provenance is shown in §5.</span></div></div><div class="slide-foot"><div class="foot-cell foot-implication"><span class="foot-key">So what</span><span class="foot-val">The cost side is plannable now; the return side stays a proxy until the cost-per-contact baseline lands.</span></div><div class="foot-cell"><span class="foot-key">Decision role</span><span class="foot-val">Decide whether the estimate is credible enough to plan against.</span></div><div class="foot-cell"><span class="foot-key">Owner</span><span class="foot-val">Transformation Finance (with CS Ops on the cost-per-contact gap)</span></div><div class="foot-cell"><span class="foot-key">Evidence</span><span class="foot-val">2 sources · as of 2026-05-20 · confidence Medium · 4 open gaps</span></div><div class="foot-cell"><span class="foot-key">Next gate</span><span class="foot-val">Design &amp; Plan funding gate — conditional on the seed gaps</span></div></div></div></section><section class="slide" id="baseline-inputs" data-slide="3" aria-label="Baseline &amp; seed gaps"><div class="slide-inner"><div class="slide-rule"><div class="slide-rule-l"><span class="slide-brand">Contact Center AI Routing</span><span class="slide-sep">·</span><span>Baseline &amp; seed gaps</span></div><div class="slide-rule-r">Slide 3 / 9</div></div><div class="slide-eyebrow">Section 2 · Baseline &amp; seed gaps</div><h2 class="slide-headline">Six recorded KPIs ground the estimate — four declared seed gaps are the honest limits of what the model can claim today.</h2><div class="slide-stage"><p class="slide-lede">The financial model is built on 6 recorded KPIs and 4 declared seed gaps. Every recorded input carries a source, an as-of date and a confidence; every missing input is declared a seed gap with its decision impact spelled out — never left blank, never guessed.</p><figure class="hero"><figcaption class="hero-caption">Exhibit 2 — Model inputs: recorded KPIs and declared seed gaps</figcaption><div class="hero-frame"><table class="data-table"><thead><tr><th>Input metric</th><th class="num">Value</th><th>Source</th><th class="num">As of</th><th class="num">Confidence</th></tr></thead><tbody><tr><td>Average Handle Time</td><td class="num">7.2 minutes</td><td>KPI kpi:apex:019 (NICE CXone)</td><td class="num">2026-04-30</td><td class="num"><span class="chip chip-good">high</span></td></tr><tr><td>Contact Center Containment</td><td class="num">28 percent</td><td>KPI kpi:apex:018 (NICE CXone)</td><td class="num">2026-04-30</td><td class="num"><span class="chip chip-warn">medium</span></td></tr><tr><td>First Call Resolution</td><td class="num">68 percent</td><td>KPI kpi:apex:020 (NICE CXone)</td><td class="num">2026-04-30</td><td class="num"><span class="chip chip-warn">medium</span></td></tr><tr><td>Agent Utilization</td><td class="num">84 percent</td><td>KPI kpi:apex:021 (NICE CXone)</td><td class="num">2026-04-30</td><td class="num"><span class="chip chip-good">high</span></td></tr><tr><td>CSAT (post-interaction)</td><td class="num">4.1 score_out_of_5</td><td>KPI kpi:apex:012 (Zendesk survey)</td><td class="num">2026-04-30</td><td class="num"><span class="chip chip-warn">medium</span></td></tr><tr><td>Repeat transfer rate</td><td class="num">18.4 percent</td><td>Move P2 baseline deliverable (Genesys routing export)</td><td class="num">2026-05-03</td><td class="num"><span class="chip chip-warn">medium</span></td></tr><tr class="row-proxy"><td>Cost per contact (labour) <span class="chip chip-bad">Seed gap</span></td><td class="num">Not recorded</td><td colspan="2">Not recorded. Tenant action item &quot;Capture cost-per-contact baseline&quot; (owner Brendan Fox) is due 2026-05-15 — see operating telemetry.</td><td class="num"><span class="chip chip-bad">none</span></td></tr><tr class="row-proxy"><td colspan="5" class="gap-impact"><strong>Decision impact —</strong> Blocks monetization — without it the value forecast rests on a benchmark proxy and payback cannot be computed.</td></tr><tr class="row-proxy"><td>Annual contact volume <span class="chip chip-bad">Seed gap</span></td><td class="num">Not recorded</td><td colspan="2">Not recorded in the KPI dictionary, telemetry, or the Move baseline. Needed to convert AHT/containment deltas into FTE-hours and dollars.</td><td class="num"><span class="chip chip-bad">none</span></td></tr><tr class="row-proxy"><td colspan="5" class="gap-impact"><strong>Decision impact —</strong> Caps how AHT / containment deltas convert into FTE-hours and dollars — value stays a proxy until it lands.</td></tr><tr class="row-proxy"><td>Channel mix (voice/chat/IVR split) <span class="chip chip-bad">Seed gap</span></td><td class="num">Not recorded</td><td colspan="2">Containment note references &quot;IVR + chatbot&quot; but no structured split is seeded.</td><td class="num"><span class="chip chip-bad">none</span></td></tr><tr class="row-proxy"><td colspan="5" class="gap-impact"><strong>Decision impact —</strong> Routing value differs by channel; the voice/chat/IVR split bounds how the pilot scope is sized.</td></tr><tr class="row-proxy"><td>QA error rate <span class="chip chip-bad">Seed gap</span></td><td class="num">Not recorded</td><td colspan="2">No contact-centre quality-defect metric is seeded for Apex.</td><td class="num"><span class="chip chip-bad">none</span></td></tr><tr class="row-proxy"><td colspan="5" class="gap-impact"><strong>Decision impact —</strong> No quality-defect baseline — a secondary value lever cannot be modelled.</td></tr></tbody></table></div><p class="hero-note">Six recorded KPIs ground the cost and value model. Four seed gaps are declared in-line — the honest limits of what the estimate can claim.</p></figure></div><div class="slide-foot"><div class="foot-cell foot-implication"><span class="foot-key">So what</span><span class="foot-val">The recorded KPIs are decision-grade; the four seed gaps are the declared inputs the financial model cannot yet source.</span></div><div class="foot-cell"><span class="foot-key">Decision role</span><span class="foot-val">Confirm the model is built on real inputs, with the gaps named.</span></div><div class="foot-cell"><span class="foot-key">Owner</span><span class="foot-val">James Wright (CX Analytics)</span></div><div class="foot-cell"><span class="foot-key">Evidence</span><span class="foot-val">2 sources · as of 2026-04-30 · confidence Medium · 4 open gaps</span></div><div class="foot-cell"><span class="foot-key">Next gate</span><span class="foot-val">Cost-per-contact baseline capture (due 2026-05-15)</span></div></div></div></section><section class="slide" id="workstream-estimate" data-slide="4" aria-label="Workstream estimate"><div class="slide-inner"><div class="slide-rule"><div class="slide-rule-l"><span class="slide-brand">Contact Center AI Routing</span><span class="slide-sep">·</span><span>Workstream estimate</span></div><div class="slide-rule-r">Slide 4 / 9</div></div><div class="slide-eyebrow">Section 3 · Workstream estimate</div><h2 class="slide-headline">All eight workstreams are costed individually — the estimate is never collapsed into a generic six-role model.</h2><div class="slide-stage"><p class="slide-lede">The estimate decomposes into all eight Move workstreams — AI build, integration, data, foundational, data governance, process redesign, change &amp; adoption and run. Each is costed on its own role mix; none is collapsed into a generic six-role model.</p><figure class="hero"><figcaption class="hero-caption">Exhibit 3 — Workstream cost stack: human and AI-agent effort, by stream</figcaption><div class="hero-frame"><svg viewBox="0 0 760 332" width="100%" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Workstream cost stack" xmlns="http://www.w3.org/2000/svg" font-family='"DM Sans","Inter",system-ui,-apple-system,sans-serif'><title>Workstream cost stack</title><rect x="0" y="0" width="760" height="332" fill="#ffffff"/><line x1="58" y1="254" x2="640" y2="254" stroke="#dedacf" stroke-width="1"/><text x="50" y="257" font-size="9" font-weight="500" fill="#5b5852" text-anchor="end" font-family='"JetBrains Mono",ui-monospace,monospace'>$0</text><line x1="58" y1="198" x2="640" y2="198" stroke="#dedacf" stroke-width="1"/><text x="50" y="201" font-size="9" font-weight="500" fill="#5b5852" text-anchor="end" font-family='"JetBrains Mono",ui-monospace,monospace'>$224K</text><line x1="58" y1="142" x2="640" y2="142" stroke="#dedacf" stroke-width="1"/><text x="50" y="145" font-size="9" font-weight="500" fill="#5b5852" text-anchor="end" font-family='"JetBrains Mono",ui-monospace,monospace'>$448K</text><line x1="58" y1="86.00000000000003" x2="640" y2="86.00000000000003" stroke="#dedacf" stroke-width="1"/><text x="50" y="89.00000000000003" font-size="9" font-weight="500" fill="#5b5852" text-anchor="end" font-family='"JetBrains Mono",ui-monospace,monospace'>$672K</text><line x1="58" y1="30" x2="640" y2="30" stroke="#dedacf" stroke-width="1"/><text x="50" y="33" font-size="9" font-weight="500" fill="#5b5852" text-anchor="end" font-family='"JetBrains Mono",ui-monospace,monospace'>$896K</text><rect x="70.3675" y="124" width="48.015" height="130" fill="#0b4a91"/><rect x="70.3675" y="54.00000000000003" width="48.015" height="69.99999999999997" fill="#dbe6f3"/><text x="94.375" y="48.00000000000003" font-size="9" font-weight="800" fill="#070707" text-anchor="middle" font-family='"JetBrains Mono",ui-monospace,monospace'>$800K</text><text x="94.375" y="270" font-size="9" font-weight="600" fill="#5b5852" text-anchor="middle">AI build</text><rect x="143.1175" y="195.91419141914193" width="48.015" height="58.08580858085807" fill="#0b4a91"/><rect x="143.1175" y="181.39273927392742" width="48.015" height="14.52145214521451" fill="#dbe6f3"/><text x="167.125" y="175.39273927392742" font-size="9" font-weight="800" fill="#070707" text-anchor="middle" font-family='"JetBrains Mono",ui-monospace,monospace'>$290K</text><text x="167.125" y="270" font-size="9" font-weight="600" fill="#5b5852" text-anchor="middle">Integration</text><rect x="215.8675" y="220.11661166116613" width="48.015" height="33.88338833883387" fill="#0b4a91"/><rect x="215.8675" y="205.5951595159516" width="48.015" height="14.521452145214539" fill="#dbe6f3"/><text x="239.875" y="199.5951595159516" font-size="9" font-weight="800" fill="#070707" text-anchor="middle" font-family='"JetBrains Mono",ui-monospace,monospace'>$194K</text><text x="239.875" y="270" font-size="9" font-weight="600" fill="#5b5852" text-anchor="middle">Data</text><rect x="288.6175" y="235.2981298129813" width="48.015" height="18.7018701870187" fill="#0b4a91"/><rect x="288.6175" y="231.997799779978" width="48.015" height="3.3003300330032914" fill="#dbe6f3"/><text x="312.625" y="225.997799779978" font-size="9" font-weight="800" fill="#070707" text-anchor="middle" font-family='"JetBrains Mono",ui-monospace,monospace'>$88K</text><text x="312.625" y="270" font-size="9" font-weight="600" fill="#5b5852" text-anchor="middle">Foundational</text><rect x="361.3675" y="226.67326732673268" width="48.015" height="27.326732673267315" fill="#0b4a91"/><rect x="361.3675" y="223.63696369636963" width="48.015" height="3.036303630363051" fill="#dbe6f3"/><rect x="361.3675" y="223.63696369636963" width="48.015" height="30.363036303630366" fill="none" stroke="#7A4F01" stroke-width="2" stroke-dasharray="3 2"/><text x="385.375" y="217.63696369636963" font-size="9" font-weight="800" fill="#070707" text-anchor="middle" font-family='"JetBrains Mono",ui-monospace,monospace'>$121K</text><text x="385.375" y="270" font-size="9" font-weight="800" fill="#7A4F01" text-anchor="middle">Data governance</text><rect x="434.1175" y="224.54455445544556" width="48.015" height="29.455445544554436" fill="#0b4a91"/><rect x="434.1175" y="221.27172717271728" width="48.015" height="3.2728272827282865" fill="#dbe6f3"/><rect x="434.1175" y="221.27172717271728" width="48.015" height="32.72827282728272" fill="none" stroke="#7A4F01" stroke-width="2" stroke-dasharray="3 2"/><text x="458.125" y="215.27172717271728" font-size="9" font-weight="800" fill="#070707" text-anchor="middle" font-family='"JetBrains Mono",ui-monospace,monospace'>$131K</text><text x="458.125" y="270" font-size="9" font-weight="800" fill="#7A4F01" text-anchor="middle">Process redesign</text><rect x="506.8675" y="192.86138613861385" width="48.015" height="61.13861386138615" fill="#0b4a91"/><rect x="506.8675" y="189.64356435643566" width="48.015" height="3.2178217821781914" fill="#dbe6f3"/><rect x="506.8675" y="189.64356435643566" width="48.015" height="64.35643564356434" fill="none" stroke="#7A4F01" stroke-width="2" stroke-dasharray="3 2"/><text x="530.875" y="183.64356435643566" font-size="9" font-weight="800" fill="#070707" text-anchor="middle" font-family='"JetBrains Mono",ui-monospace,monospace'>$257K</text><text x="530.875" y="270" font-size="9" font-weight="800" fill="#7A4F01" text-anchor="middle">Change &amp;</text><text x="530.875" y="281" font-size="9" font-weight="800" fill="#7A4F01" text-anchor="middle">adoption</text><rect x="579.6175" y="205.6831683168317" width="48.015" height="48.31683168316829" fill="#0b4a91"/><rect x="579.6175" y="173.4719471947195" width="48.015" height="32.21122112211222" fill="#dbe6f3"/><text x="603.625" y="167.4719471947195" font-size="9" font-weight="800" fill="#070707" text-anchor="middle" font-family='"JetBrains Mono",ui-monospace,monospace'>$322K</text><text x="603.625" y="270" font-size="9" font-weight="600" fill="#5b5852" text-anchor="middle">Run (year-1</text><text x="603.625" y="281" font-size="9" font-weight="600" fill="#5b5852" text-anchor="middle">operations)</text><rect x="652" y="34" width="11" height="11" fill="#0b4a91"/><text x="668" y="43" font-size="9" font-weight="700" fill="#070707" text-anchor="start">Human effort</text><rect x="652" y="54" width="11" height="11" fill="#dbe6f3"/><text x="668" y="63" font-size="9" font-weight="700" fill="#070707" text-anchor="start">AI-agent effort</text><rect x="652" y="74" width="11" height="11" fill="none" stroke="#7A4F01" stroke-width="2" stroke-dasharray="3 2"/><text x="668" y="83" font-size="9" font-weight="700" fill="#7A4F01" text-anchor="start">Business change</text><line x1="58" y1="254" x2="640" y2="254" stroke="#070707" stroke-width="1.5"/></svg></div><p class="hero-note">Business change is 23% of base effort — the outlined bars. The §8 hard fail is omitting it; here it is a first-class, costed lane.</p></figure><div class="payback-line"><span class="payback-line-tag">Build vs change</span><span>Business change is 23% of effort — a credible build-vs-change balance for an AI Move where value depends on people changing how they work.</span></div><details class="slide-detail"><summary class="slide-detail-summary"><span class="detail-chevron" aria-hidden="true"></span><span>Per-workstream estimate — base / conservative / upside, human vs agent</span></summary><div class="slide-detail-body"><table class="data-table"><thead><tr><th>Workstream</th><th class="num">Upside</th><th class="num">Base</th><th class="num">Conservative</th><th class="num">Human</th><th class="num">AI agent</th><th class="num">FTEs</th><th class="num">Duration</th></tr></thead><tbody><tr><td>AI build</td><td class="num">$680K</td><td class="num">$800K</td><td class="num">$1.12M</td><td class="num">$520K</td><td class="num">$280K</td><td class="num">5</td><td class="num">9 mo</td></tr><tr><td>Integration</td><td class="num">$247K</td><td class="num">$290K</td><td class="num">$407K</td><td class="num">$232K</td><td class="num">$58K</td><td class="num">3</td><td class="num">6 mo</td></tr><tr><td>Data</td><td class="num">$165K</td><td class="num">$194K</td><td class="num">$271K</td><td class="num">$136K</td><td class="num">$58K</td><td class="num">3</td><td class="num">5 mo</td></tr><tr><td>Foundational</td><td class="num">$75K</td><td class="num">$88K</td><td class="num">$123K</td><td class="num">$75K</td><td class="num">$13K</td><td class="num">1</td><td class="num">4 mo</td></tr><tr class="row-change"><td>Data governance <span class="chip chip-warn">Business change</span></td><td class="num">$103K</td><td class="num">$121K</td><td class="num">$170K</td><td class="num">$109K</td><td class="num">$12K</td><td class="num">1.5</td><td class="num">6 mo</td></tr><tr class="row-change"><td>Process redesign <span class="chip chip-warn">Business change</span></td><td class="num">$111K</td><td class="num">$131K</td><td class="num">$183K</td><td class="num">$118K</td><td class="num">$13K</td><td class="num">2</td><td class="num">5 mo</td></tr><tr class="row-change"><td>Change &amp; adoption <span class="chip chip-warn">Business change</span></td><td class="num">$219K</td><td class="num">$257K</td><td class="num">$360K</td><td class="num">$245K</td><td class="num">$13K</td><td class="num">2</td><td class="num">9 mo</td></tr><tr><td>Run (year-1 operations)</td><td class="num">$274K</td><td class="num">$322K</td><td class="num">$451K</td><td class="num">$193K</td><td class="num">$129K</td><td class="num">2</td><td class="num">12 mo</td></tr></tbody><tfoot><tr><td><strong>Total — eight workstreams</strong></td><td class="num"><strong>$1.87M</strong></td><td class="num"><strong>$2.20M</strong></td><td class="num"><strong>$3.09M</strong></td><td class="num" colspan="3"></td><td class="num"></td></tr></tfoot></table></div></details></div><div class="slide-foot"><div class="foot-cell foot-implication"><span class="foot-key">So what</span><span class="foot-val">Business change is 23% of effort — surfaced, not buried under AI build.</span></div><div class="foot-cell"><span class="foot-key">Decision role</span><span class="foot-val">Challenge the workstream decomposition and the cost per stream.</span></div><div class="foot-cell"><span class="foot-key">Owner</span><span class="foot-val">Delivery Lead</span></div><div class="foot-cell"><span class="foot-key">Evidence</span><span class="foot-val">1 source · as of 2026-05-20 · confidence Medium · No open gaps</span></div><div class="foot-cell"><span class="foot-key">Next gate</span><span class="foot-val">Design &amp; Plan estimate review</span></div></div></div></section><section class="slide" id="role-mix-by-phase" data-slide="5" aria-label="Role mix by phase"><div class="slide-inner"><div class="slide-rule"><div class="slide-rule-l"><span class="slide-brand">Contact Center AI Routing</span><span class="slide-sep">·</span><span>Role mix by phase</span></div><div class="slide-rule-r">Slide 5 / 9</div></div><div class="slide-eyebrow">Section 4 · Role mix by phase</div><h2 class="slide-headline">Effort is phased, not lumped — each phase carries its own workstream-bearing role mix and duration.</h2><div class="slide-stage"><p class="slide-lede">The estimate phases its effort — a foundational data-and-platform phase, a routing pilot, scale-out with process redesign, then adoption and run. Each phase carries its own workstream-bearing role mix, so the role-bearing effort is never lumped into one row.</p><figure class="hero"><figcaption class="hero-caption">Exhibit 4 — Role mix by phase: workstream effort across the roadmap</figcaption><div class="hero-frame"><svg viewBox="0 0 760 290" width="100%" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Role mix by phase" xmlns="http://www.w3.org/2000/svg" font-family='"DM Sans","Inter",system-ui,-apple-system,sans-serif'><title>Role mix by phase</title><rect x="0" y="0" width="760" height="290" fill="#ffffff"/><text x="150" y="24" font-size="9" font-weight="800" fill="#5b5852" text-anchor="start" letter-spacing="0.4">PHASE EFFORT BY WORKSTREAM</text><text x="664" y="24" font-size="9" font-weight="800" fill="#0b4a91" text-anchor="end" letter-spacing="0.4">BASE COST</text><text x="138" y="72" font-size="10" font-weight="700" fill="#070707" text-anchor="end">Data &amp; platform foundation</text><rect x="150" y="54" width="37.32752360203341" height="28" fill="#0b4a91"/><rect x="187.3275236020334" y="54" width="82.1205519244735" height="28" fill="#3f6fae"/><line x1="187.3275236020334" y1="54" x2="187.3275236020334" y2="82" stroke="#ffffff" stroke-width="1.5"/><text x="277.4480755265069" y="72" font-size="9.5" font-weight="800" fill="#0b4a91" text-anchor="start" font-family='"JetBrains Mono",ui-monospace,monospace'>$282K</text><text x="138" y="128" font-size="10" font-weight="700" fill="#070707" text-anchor="end">Routing pilot on Customer Care queues</text><rect x="150" y="110" width="339.3071895424836" height="28" fill="#0b4a91"/><rect x="489.3071895424836" y="110" width="123.18082788671023" height="28" fill="#3f6fae"/><line x1="489.3071895424836" y1="110" x2="489.3071895424836" y2="138" stroke="#ffffff" stroke-width="1.5"/><rect x="612.4880174291939" y="110" width="51.5119825708061" height="28" fill="#6d93c4"/><line x1="612.4880174291939" y1="110" x2="612.4880174291939" y2="138" stroke="#ffffff" stroke-width="1.5"/><text x="672" y="128" font-size="9.5" font-weight="800" fill="#0b4a91" text-anchor="start" font-family='"JetBrains Mono",ui-monospace,monospace'>$1.21M</text><text x="138" y="184" font-size="10" font-weight="700" fill="#070707" text-anchor="end">Scale-out + process redesign</text><rect x="150" y="166" width="55.52469135802469" height="28" fill="#0b4a91"/><text x="213.52469135802468" y="184" font-size="9.5" font-weight="800" fill="#0b4a91" text-anchor="start" font-family='"JetBrains Mono",ui-monospace,monospace'>$131K</text><text x="138" y="240" font-size="10" font-weight="700" fill="#070707" text-anchor="end">Adoption + run</text><rect x="150" y="222" width="109.18300653594771" height="28" fill="#0b4a91"/><rect x="259.1830065359477" y="222" width="136.61873638344227" height="28" fill="#3f6fae"/><line x1="259.1830065359477" y1="222" x2="259.1830065359477" y2="250" stroke="#ffffff" stroke-width="1.5"/><text x="403.80174291939" y="240" font-size="9.5" font-weight="800" fill="#0b4a91" text-anchor="start" font-family='"JetBrains Mono",ui-monospace,monospace'>$579K</text></svg></div><p class="hero-note">The foundational phase carries cost ahead of value — honest sequencing. Phase effort is shown by workstream, not blended.</p></figure><details class="slide-detail"><summary class="slide-detail-summary"><span class="detail-chevron" aria-hidden="true"></span><span>Per-phase workstream detail — headcount, duration, agent split</span></summary><div class="slide-detail-body"><div class="phase-block"><div class="phase-block-head">Phase 0 — Data &amp; platform foundation · 5 mo · $282K · <span class="chip chip-warn">Foundational</span></div><table class="data-table"><thead><tr><th>Workstream</th><th class="num">Base cost</th><th class="num">FTEs</th><th class="num">Duration</th><th class="num">Agent split</th></tr></thead><tbody><tr><td>Foundational</td><td class="num">$88K</td><td class="num">1</td><td class="num">4 mo</td><td class="num">15%</td></tr><tr><td>Data</td><td class="num">$194K</td><td class="num">3</td><td class="num">5 mo</td><td class="num">30%</td></tr></tbody></table></div><div class="phase-block"><div class="phase-block-head">Phase 1 — Routing pilot on Customer Care queues · 7 mo · $1.21M</div><table class="data-table"><thead><tr><th>Workstream</th><th class="num">Base cost</th><th class="num">FTEs</th><th class="num">Duration</th><th class="num">Agent split</th></tr></thead><tbody><tr><td>AI build</td><td class="num">$800K</td><td class="num">5</td><td class="num">9 mo</td><td class="num">35%</td></tr><tr><td>Integration</td><td class="num">$290K</td><td class="num">3</td><td class="num">6 mo</td><td class="num">20%</td></tr><tr class="row-change"><td>Data governance</td><td class="num">$121K</td><td class="num">1.5</td><td class="num">6 mo</td><td class="num">10%</td></tr></tbody></table></div><div class="phase-block"><div class="phase-block-head">Phase 2 — Scale-out + process redesign · 6 mo · $131K</div><table class="data-table"><thead><tr><th>Workstream</th><th class="num">Base cost</th><th class="num">FTEs</th><th class="num">Duration</th><th class="num">Agent split</th></tr></thead><tbody><tr class="row-change"><td>Process redesign</td><td class="num">$131K</td><td class="num">2</td><td class="num">5 mo</td><td class="num">10%</td></tr></tbody></table></div><div class="phase-block"><div class="phase-block-head">Phase 3 — Adoption + run · 12 mo · $579K</div><table class="data-table"><thead><tr><th>Workstream</th><th class="num">Base cost</th><th class="num">FTEs</th><th class="num">Duration</th><th class="num">Agent split</th></tr></thead><tbody><tr class="row-change"><td>Change &amp; adoption</td><td class="num">$257K</td><td class="num">2</td><td class="num">9 mo</td><td class="num">5%</td></tr><tr><td>Run (year-1 operations)</td><td class="num">$322K</td><td class="num">2</td><td class="num">12 mo</td><td class="num">40%</td></tr></tbody></table></div></div></details></div><div class="slide-foot"><div class="foot-cell foot-implication"><span class="foot-key">So what</span><span class="foot-val">The foundational phase carries cost before any value — that is honest sequencing, not a hidden overrun.</span></div><div class="foot-cell"><span class="foot-key">Decision role</span><span class="foot-val">Challenge how the role-bearing effort lands across the four phases.</span></div><div class="foot-cell"><span class="foot-key">Owner</span><span class="foot-val">Delivery Lead</span></div><div class="foot-cell"><span class="foot-key">Evidence</span><span class="foot-val">1 source · as of 2026-05-20 · confidence Medium · No open gaps</span></div><div class="foot-cell"><span class="foot-key">Next gate</span><span class="foot-val">Design &amp; Plan phase plan review</span></div></div></div></section><section class="slide" id="rate-card" data-slide="6" aria-label="Rate card &amp; overrides"><div class="slide-inner"><div class="slide-rule"><div class="slide-rule-l"><span class="slide-brand">Contact Center AI Routing</span><span class="slide-sep">·</span><span>Rate card &amp; overrides</span></div><div class="slide-rule-r">Slide 6 / 9</div></div><div class="slide-eyebrow">Section 5 · Rate card &amp; overrides</div><h2 class="slide-headline">Every rate traces to a named source — the estimate runs on an Apex client rate-card pack, not a hidden benchmark.</h2><div class="slide-stage"><p class="slide-lede">Every rate in this estimate traces to a named source. The model runs on an Apex comprehensive rate-card pack — a client_rate_card onshore lane and a vendor_quote offshore lane — not a hidden benchmark. The rate-card source is shown, and the override path is explicit.</p><figure class="hero"><figcaption class="hero-caption">Exhibit 5 — Rate-card coverage: role-family lanes and their source</figcaption><div class="hero-frame"><svg viewBox="0 0 760 458" width="100%" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Rate-card coverage matrix" xmlns="http://www.w3.org/2000/svg" font-family='"DM Sans","Inter",system-ui,-apple-system,sans-serif'><title>Rate-card coverage matrix</title><rect x="0" y="0" width="760" height="458" fill="#ffffff"/><defs><pattern id="ratehatch" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="6" height="6" fill="#f4ddd6"/><line x1="0" y1="0" x2="0" y2="6" stroke="#8B1F0F" stroke-width="1.5"/></pattern></defs><rect x="0" y="0" width="760" height="42" fill="#f3f0e9" rx="3"/><rect x="0" y="0" width="3" height="42" fill="#0b4a91"/><text x="14" y="18" font-size="8.5" font-weight="800" fill="#5b5852" text-anchor="start" letter-spacing="0.6">RATE-CARD SOURCE</text><text x="14" y="33" font-size="10" font-weight="700" fill="#070707" text-anchor="start">Apex comprehensive client rate-card pack</text><text x="326.5" y="68" font-size="9" font-weight="800" fill="#070707" text-anchor="middle" letter-spacing="0.5">ONSHORE</text><text x="603.5" y="68" font-size="9" font-weight="800" fill="#070707" text-anchor="middle" letter-spacing="0.5">OFFSHORE</text><rect x="0" y="78" width="760" height="30" fill="#f3f0e9" opacity="0.5"/><text x="176" y="97" font-size="9.5" font-weight="700" fill="#070707" text-anchor="end">AI / ML</text><rect x="192" y="82" width="269" height="22" fill="#e2efe2" stroke="#1B5E20" stroke-width="1" rx="2"/><text x="326.5" y="97" font-size="9" font-weight="800" fill="#1B5E20" text-anchor="middle" font-family='"JetBrains Mono",ui-monospace,monospace'>$360K / FTE-yr</text><rect x="469" y="82" width="269" height="22" fill="#e2efe2" stroke="#1B5E20" stroke-width="1" rx="2"/><text x="603.5" y="97" font-size="9" font-weight="800" fill="#1B5E20" text-anchor="middle" font-family='"JetBrains Mono",ui-monospace,monospace'>$159K / FTE-yr</text><text x="176" y="127" font-size="9.5" font-weight="700" fill="#070707" text-anchor="end">Data engineering</text><rect x="192" y="112" width="269" height="22" fill="#e2efe2" stroke="#1B5E20" stroke-width="1" rx="2"/><text x="326.5" y="127" font-size="9" font-weight="800" fill="#1B5E20" text-anchor="middle" font-family='"JetBrains Mono",ui-monospace,monospace'>$238K / FTE-yr</text><rect x="469" y="112" width="269" height="22" fill="#e2efe2" stroke="#1B5E20" stroke-width="1" rx="2"/><text x="603.5" y="127" font-size="9" font-weight="800" fill="#1B5E20" text-anchor="middle" font-family='"JetBrains Mono",ui-monospace,monospace'>$105K / FTE-yr</text><rect x="0" y="138" width="760" height="30" fill="#f3f0e9" opacity="0.5"/><text x="176" y="157" font-size="9.5" font-weight="700" fill="#070707" text-anchor="end">Integration</text><rect x="192" y="142" width="269" height="22" fill="#e2efe2" stroke="#1B5E20" stroke-width="1" rx="2"/><text x="326.5" y="157" font-size="9" font-weight="800" fill="#1B5E20" text-anchor="middle" font-family='"JetBrains Mono",ui-monospace,monospace'>$224K / FTE-yr</text><rect x="469" y="142" width="269" height="22" fill="#e2efe2" stroke="#1B5E20" stroke-width="1" rx="2"/><text x="603.5" y="157" font-size="9" font-weight="800" fill="#1B5E20" text-anchor="middle" font-family='"JetBrains Mono",ui-monospace,monospace'>$99K / FTE-yr</text><text x="176" y="187" font-size="9.5" font-weight="700" fill="#070707" text-anchor="end">Solution architecture</text><rect x="192" y="172" width="269" height="22" fill="#e2efe2" stroke="#1B5E20" stroke-width="1" rx="2"/><text x="326.5" y="187" font-size="9" font-weight="800" fill="#1B5E20" text-anchor="middle" font-family='"JetBrains Mono",ui-monospace,monospace'>$340K / FTE-yr</text><rect x="469" y="172" width="269" height="22" fill="#e2efe2" stroke="#1B5E20" stroke-width="1" rx="2"/><text x="603.5" y="187" font-size="9" font-weight="800" fill="#1B5E20" text-anchor="middle" font-family='"JetBrains Mono",ui-monospace,monospace'>$150K / FTE-yr</text><rect x="0" y="198" width="760" height="30" fill="#f3f0e9" opacity="0.5"/><text x="176" y="217" font-size="9.5" font-weight="700" fill="#070707" text-anchor="end">Application engineering</text><rect x="192" y="202" width="269" height="22" fill="#e2efe2" stroke="#1B5E20" stroke-width="1" rx="2"/><text x="326.5" y="217" font-size="9" font-weight="800" fill="#1B5E20" text-anchor="middle" font-family='"JetBrains Mono",ui-monospace,monospace'>$258K / FTE-yr</text><rect x="469" y="202" width="269" height="22" fill="#e2efe2" stroke="#1B5E20" stroke-width="1" rx="2"/><text x="603.5" y="217" font-size="9" font-weight="800" fill="#1B5E20" text-anchor="middle" font-family='"JetBrains Mono",ui-monospace,monospace'>$114K / FTE-yr</text><text x="176" y="247" font-size="9.5" font-weight="700" fill="#070707" text-anchor="end">Governance &amp; compliance</text><rect x="192" y="232" width="269" height="22" fill="#e2efe2" stroke="#1B5E20" stroke-width="1" rx="2"/><text x="326.5" y="247" font-size="9" font-weight="800" fill="#1B5E20" text-anchor="middle" font-family='"JetBrains Mono",ui-monospace,monospace'>$320K / FTE-yr</text><rect x="469" y="232" width="269" height="22" fill="#e2efe2" stroke="#1B5E20" stroke-width="1" rx="2"/><text x="603.5" y="247" font-size="9" font-weight="800" fill="#1B5E20" text-anchor="middle" font-family='"JetBrains Mono",ui-monospace,monospace'>$141K / FTE-yr</text><rect x="0" y="258" width="760" height="30" fill="#f3f0e9" opacity="0.5"/><text x="176" y="277" font-size="9.5" font-weight="700" fill="#070707" text-anchor="end">Process redesign</text><rect x="192" y="262" width="269" height="22" fill="#e2efe2" stroke="#1B5E20" stroke-width="1" rx="2"/><text x="326.5" y="277" font-size="9" font-weight="800" fill="#1B5E20" text-anchor="middle" font-family='"JetBrains Mono",ui-monospace,monospace'>$252K / FTE-yr</text><rect x="469" y="262" width="269" height="22" fill="#e2efe2" stroke="#1B5E20" stroke-width="1" rx="2"/><text x="603.5" y="277" font-size="9" font-weight="800" fill="#1B5E20" text-anchor="middle" font-family='"JetBrains Mono",ui-monospace,monospace'>$111K / FTE-yr</text><text x="176" y="307" font-size="9.5" font-weight="700" fill="#070707" text-anchor="end">Change &amp; adoption</text><rect x="192" y="292" width="269" height="22" fill="#e2efe2" stroke="#1B5E20" stroke-width="1" rx="2"/><text x="326.5" y="307" font-size="9" font-weight="800" fill="#1B5E20" text-anchor="middle" font-family='"JetBrains Mono",ui-monospace,monospace'>$245K / FTE-yr</text><rect x="469" y="292" width="269" height="22" fill="#e2efe2" stroke="#1B5E20" stroke-width="1" rx="2"/><text x="603.5" y="307" font-size="9" font-weight="800" fill="#1B5E20" text-anchor="middle" font-family='"JetBrains Mono",ui-monospace,monospace'>$108K / FTE-yr</text><rect x="0" y="318" width="760" height="30" fill="#f3f0e9" opacity="0.5"/><text x="176" y="337" font-size="9.5" font-weight="700" fill="#070707" text-anchor="end">Business analysis</text><rect x="192" y="322" width="269" height="22" fill="#e2efe2" stroke="#1B5E20" stroke-width="1" rx="2"/><text x="326.5" y="337" font-size="9" font-weight="800" fill="#1B5E20" text-anchor="middle" font-family='"JetBrains Mono",ui-monospace,monospace'>$184K / FTE-yr</text><rect x="469" y="322" width="269" height="22" fill="#e2efe2" stroke="#1B5E20" stroke-width="1" rx="2"/><text x="603.5" y="337" font-size="9" font-weight="800" fill="#1B5E20" text-anchor="middle" font-family='"JetBrains Mono",ui-monospace,monospace'>$81K / FTE-yr</text><text x="176" y="367" font-size="9.5" font-weight="700" fill="#070707" text-anchor="end">Program / PMO</text><rect x="192" y="352" width="269" height="22" fill="#e2efe2" stroke="#1B5E20" stroke-width="1" rx="2"/><text x="326.5" y="367" font-size="9" font-weight="800" fill="#1B5E20" text-anchor="middle" font-family='"JetBrains Mono",ui-monospace,monospace'>$258K / FTE-yr</text><rect x="469" y="352" width="269" height="22" fill="#e2efe2" stroke="#1B5E20" stroke-width="1" rx="2"/><text x="603.5" y="367" font-size="9" font-weight="800" fill="#1B5E20" text-anchor="middle" font-family='"JetBrains Mono",ui-monospace,monospace'>$114K / FTE-yr</text><rect x="0" y="378" width="760" height="30" fill="#f3f0e9" opacity="0.5"/><text x="176" y="397" font-size="9.5" font-weight="700" fill="#070707" text-anchor="end">QA / evaluation</text><rect x="192" y="382" width="269" height="22" fill="#e2efe2" stroke="#1B5E20" stroke-width="1" rx="2"/><text x="326.5" y="397" font-size="9" font-weight="800" fill="#1B5E20" text-anchor="middle" font-family='"JetBrains Mono",ui-monospace,monospace'>$245K / FTE-yr</text><rect x="469" y="382" width="269" height="22" fill="#e2efe2" stroke="#1B5E20" stroke-width="1" rx="2"/><text x="603.5" y="397" font-size="9" font-weight="800" fill="#1B5E20" text-anchor="middle" font-family='"JetBrains Mono",ui-monospace,monospace'>$108K / FTE-yr</text><text x="176" y="427" font-size="9.5" font-weight="700" fill="#070707" text-anchor="end">Security &amp; risk</text><rect x="192" y="412" width="269" height="22" fill="#e2efe2" stroke="#1B5E20" stroke-width="1" rx="2"/><text x="326.5" y="427" font-size="9" font-weight="800" fill="#1B5E20" text-anchor="middle" font-family='"JetBrains Mono",ui-monospace,monospace'>$350K / FTE-yr</text><rect x="469" y="412" width="269" height="22" fill="#e2efe2" stroke="#1B5E20" stroke-width="1" rx="2"/><text x="603.5" y="427" font-size="9" font-weight="800" fill="#1B5E20" text-anchor="middle" font-family='"JetBrains Mono",ui-monospace,monospace'>$155K / FTE-yr</text></svg></div><p class="hero-note">Each role family keeps its onshore and offshore lane distinct — domain, location and seniority are not collapsed into one blended rate. A priced lane shows its rate; an unpriced lane would be hatched.</p></figure><div class="ask-line"><span class="ask-line-tag">Override path</span><span>The effort estimator consumes a rate card through a labelled abstraction — a client-specific card always replaces the researched benchmark cleanly. This estimate already runs on the Apex comprehensive pack (a client_rate_card onshore lane, a vendor_quote offshore lane). Replace the demo pack with the executed Apex card before any commitment.</span></div><details class="slide-detail"><summary class="slide-detail-summary"><span class="detail-chevron" aria-hidden="true"></span><span>Rate-card provenance — the full source label carried by the kernel</span></summary><div class="slide-detail-body"><table class="data-table"><thead><tr><th>Attribute</th><th>Value</th></tr></thead><tbody><tr><td>Provenance</td><td>comprehensive</td></tr><tr><td>Client override in effect</td><td>Yes — a client / comprehensive pack</td></tr><tr><td>Source label</td><td>Apex Contact Center AI Routing comprehensive demo rate card — comprehensive rate card. Precedence: client rate card &gt; vendor quote &gt; internal team cost &gt; loaded benchmark row &gt; researched benchmark fallback. Planning input, not a quote.</td></tr></tbody></table></div></details></div><div class="slide-foot"><div class="foot-cell foot-implication"><span class="foot-key">So what</span><span class="foot-val">A client-specific rate card already overrides the benchmark — the estimate is not built on generic rates.</span></div><div class="foot-cell"><span class="foot-key">Decision role</span><span class="foot-val">Audit the rate-card source and confirm the override path is real.</span></div><div class="foot-cell"><span class="foot-key">Owner</span><span class="foot-val">Apex Procurement</span></div><div class="foot-cell"><span class="foot-key">Evidence</span><span class="foot-val">2 sources · as of 2026-05-19 · confidence Medium · No open gaps</span></div><div class="foot-cell"><span class="foot-key">Next gate</span><span class="foot-val">Replace demo pack with the executed client rate card</span></div></div></div></section><section class="slide" id="value-forecast" data-slide="7" aria-label="Value forecast"><div class="slide-inner"><div class="slide-rule"><div class="slide-rule-l"><span class="slide-brand">Contact Center AI Routing</span><span class="slide-sep">·</span><span>Value forecast</span></div><div class="slide-rule-r">Slide 7 / 9</div></div><div class="slide-eyebrow">Section 6 · Value forecast</div><h2 class="slide-headline">Gross value is never claimed — a mandatory six-factor haircut discounts 43% of it before the net is shown.</h2><div class="slide-stage"><p class="slide-lede">Gross value is never claimed. A mandatory six-factor haircut discounts 43% of the gross before any net is shown — only 57% is retained. And the gross itself rests on a benchmark cost-per-contact proxy, so the net is a proxy net, honestly flagged.</p><figure class="hero"><figcaption class="hero-caption">Exhibit 6 — Gross-to-net value bridge: the mandatory haircut</figcaption><div class="hero-frame"><svg viewBox="0 0 720 340" width="100%" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Gross-to-net value bridge" xmlns="http://www.w3.org/2000/svg" font-family='"DM Sans","Inter",system-ui,-apple-system,sans-serif'><title>Gross-to-net value bridge</title><rect x="0" y="0" width="720" height="340" fill="#ffffff"/><line x1="56" y1="256" x2="696" y2="256" stroke="#dedacf" stroke-width="1"/><text x="48" y="259" font-size="9" font-weight="500" fill="#5b5852" text-anchor="end" font-family='"JetBrains Mono",ui-monospace,monospace'>$0</text><line x1="56" y1="199" x2="696" y2="199" stroke="#dedacf" stroke-width="1"/><text x="48" y="202" font-size="9" font-weight="500" fill="#5b5852" text-anchor="end" font-family='"JetBrains Mono",ui-monospace,monospace'>$6.62M</text><line x1="56" y1="142" x2="696" y2="142" stroke="#dedacf" stroke-width="1"/><text x="48" y="145" font-size="9" font-weight="500" fill="#5b5852" text-anchor="end" font-family='"JetBrains Mono",ui-monospace,monospace'>$13.2M</text><line x1="56" y1="85" x2="696" y2="85" stroke="#dedacf" stroke-width="1"/><text x="48" y="88" font-size="9" font-weight="500" fill="#5b5852" text-anchor="end" font-family='"JetBrains Mono",ui-monospace,monospace'>$19.9M</text><line x1="56" y1="28" x2="696" y2="28" stroke="#dedacf" stroke-width="1"/><text x="48" y="31" font-size="9" font-weight="500" fill="#5b5852" text-anchor="end" font-family='"JetBrains Mono",ui-monospace,monospace'>$26.5M</text><rect x="72" y="40.90566037735849" width="48" height="215.0943396226415" fill="#070707" rx="1.5"/><text x="96" y="34.90566037735849" font-size="10" font-weight="800" fill="#070707" text-anchor="middle" font-family='"JetBrains Mono",ui-monospace,monospace'>$25.0M</text><text x="96" y="272" font-size="9" font-weight="800" fill="#070707" text-anchor="middle">Gross value</text><text x="96" y="283" font-size="9" font-weight="800" fill="#070707" text-anchor="middle">(3-yr)</text><rect x="152" y="40.90566037735849" width="48" height="24.09056603773584" fill="#a8533a" rx="1.5"/><line x1="120" y1="40.90566037735849" x2="152" y2="40.90566037735849" stroke="#5b5852" stroke-width="1" stroke-dasharray="2 2"/><text x="176" y="34.90566037735849" font-size="9" font-weight="700" fill="#a8533a" text-anchor="middle" font-family='"JetBrains Mono",ui-monospace,monospace'>-$2.80M</text><text x="176" y="272" font-size="9" font-weight="600" fill="#5b5852" text-anchor="middle">Adoption risk</text><rect x="232" y="64.99622641509433" width="48" height="23.660377358490592" fill="#a8533a" rx="1.5"/><line x1="200" y1="64.99622641509433" x2="232" y2="64.99622641509433" stroke="#5b5852" stroke-width="1" stroke-dasharray="2 2"/><text x="256" y="58.99622641509433" font-size="9" font-weight="700" fill="#a8533a" text-anchor="middle" font-family='"JetBrains Mono",ui-monospace,monospace'>-$2.75M</text><text x="256" y="272" font-size="9" font-weight="600" fill="#5b5852" text-anchor="middle">Data readiness</text><rect x="312" y="88.65660377358492" width="48" height="15.486792452830173" fill="#a8533a" rx="1.5"/><line x1="280" y1="88.65660377358492" x2="312" y2="88.65660377358492" stroke="#5b5852" stroke-width="1" stroke-dasharray="2 2"/><text x="336" y="82.65660377358492" font-size="9" font-weight="700" fill="#a8533a" text-anchor="middle" font-family='"JetBrains Mono",ui-monospace,monospace'>-$1.80M</text><text x="336" y="272" font-size="9" font-weight="600" fill="#5b5852" text-anchor="middle">Process</text><text x="336" y="283" font-size="9" font-weight="600" fill="#5b5852" text-anchor="middle">dependency</text><rect x="392" y="104.14339622641509" width="48" height="10.3245283018868" fill="#a8533a" rx="1.5"/><line x1="360" y1="104.14339622641509" x2="392" y2="104.14339622641509" stroke="#5b5852" stroke-width="1" stroke-dasharray="2 2"/><text x="416" y="98.14339622641509" font-size="9" font-weight="700" fill="#a8533a" text-anchor="middle" font-family='"JetBrains Mono",ui-monospace,monospace'>-$1.20M</text><text x="416" y="272" font-size="9" font-weight="600" fill="#5b5852" text-anchor="middle">Integration</text><text x="416" y="283" font-size="9" font-weight="600" fill="#5b5852" text-anchor="middle">complexity</text><rect x="472" y="114.4679245283019" width="48" height="12.905660377358487" fill="#a8533a" rx="1.5"/><line x1="440" y1="114.4679245283019" x2="472" y2="114.4679245283019" stroke="#5b5852" stroke-width="1" stroke-dasharray="2 2"/><text x="496" y="108.4679245283019" font-size="9" font-weight="700" fill="#a8533a" text-anchor="middle" font-family='"JetBrains Mono",ui-monospace,monospace'>-$1.50M</text><text x="496" y="272" font-size="9" font-weight="600" fill="#5b5852" text-anchor="middle">Control burden</text><rect x="552" y="127.37358490566038" width="48" height="5.1622641509434" fill="#a8533a" rx="1.5"/><line x1="520" y1="127.37358490566038" x2="552" y2="127.37358490566038" stroke="#5b5852" stroke-width="1" stroke-dasharray="2 2"/><text x="576" y="121.37358490566038" font-size="9" font-weight="700" fill="#a8533a" text-anchor="middle" font-family='"JetBrains Mono",ui-monospace,monospace'>-$600K</text><text x="576" y="272" font-size="9" font-weight="600" fill="#5b5852" text-anchor="middle">Sponsor strength</text><rect x="632" y="132.5231052766742" width="48" height="123.47689472332581" fill="#0b4a91" rx="1.5"/><line x1="600" y1="132.5231052766742" x2="632" y2="132.5231052766742" stroke="#5b5852" stroke-width="1" stroke-dasharray="2 2"/><text x="656" y="126.52310527667419" font-size="10" font-weight="800" fill="#0b4a91" text-anchor="middle" font-family='"JetBrains Mono",ui-monospace,monospace'>$14.3M</text><text x="656" y="272" font-size="9" font-weight="800" fill="#0b4a91" text-anchor="middle">Net value (3-yr)</text><line x1="56" y1="256" x2="696" y2="256" stroke="#070707" stroke-width="1.5"/></svg></div><p class="hero-note">Gross 3-yr value $14.43M – $24.98M → net $8.28M – $14.34M after the six-factor haircut. The gross rests on a seed-gap proxy — the net is directional, not a verified return.</p></figure><details class="slide-detail"><summary class="slide-detail-summary"><span class="detail-chevron" aria-hidden="true"></span><span>Haircut factors and the per-year net-value curve</span></summary><div class="slide-detail-body"><table class="data-table"><thead><tr><th>Haircut factor</th><th class="num">Confidence score</th><th class="num">Discount of gross</th></tr></thead><tbody><tr><td>Adoption risk</td><td class="num">0.60</td><td class="num">11.2%</td></tr><tr><td>Data readiness</td><td class="num">0.45</td><td class="num">11.0%</td></tr><tr><td>Process dependency</td><td class="num">0.55</td><td class="num">7.2%</td></tr><tr><td>Integration complexity</td><td class="num">0.60</td><td class="num">4.8%</td></tr><tr><td>Control burden</td><td class="num">0.50</td><td class="num">6.0%</td></tr><tr><td>Sponsor strength</td><td class="num">0.80</td><td class="num">2.4%</td></tr><tr><td><strong>Total haircut</strong></td><td class="num"></td><td class="num"><strong>43%</strong></td></tr></tbody></table><div class="mini-key mini-key-block">Per-year net value (post-haircut)</div><table class="data-table"><thead><tr><th>Year</th><th class="num">Adoption</th><th class="num">Net value</th></tr></thead><tbody><tr><td>Year 1</td><td class="num">30%</td><td class="num">$1.83M</td></tr><tr><td>Year 2</td><td class="num">70%</td><td class="num">$4.28M</td></tr><tr><td>Year 3</td><td class="num">85%</td><td class="num">$5.20M</td></tr></tbody></table></div></details></div><div class="slide-foot"><div class="foot-cell foot-implication"><span class="foot-key">So what</span><span class="foot-val">The net value is honest, but it is a proxy net — the gross figure rests on the cost-per-contact seed gap.</span></div><div class="foot-cell"><span class="foot-key">Decision role</span><span class="foot-val">Confirm the value is discounted, not optimistic — and that the gross figure rests on a proxy.</span></div><div class="foot-cell"><span class="foot-key">Owner</span><span class="foot-val">Transformation Finance</span></div><div class="foot-cell"><span class="foot-key">Evidence</span><span class="foot-val">1 source · as of 2026-05-20 · confidence Low · 1 open gap</span></div><div class="foot-cell"><span class="foot-key">Next gate</span><span class="foot-val">Re-run the forecast once cost-per-contact is captured</span></div></div></div></section><section class="slide" id="sensitivity" data-slide="8" aria-label="Sensitivity"><div class="slide-inner"><div class="slide-rule"><div class="slide-rule-l"><span class="slide-brand">Contact Center AI Routing</span><span class="slide-sep">·</span><span>Sensitivity</span></div><div class="slide-rule-r">Slide 8 / 9</div></div><div class="slide-eyebrow">Section 7 · Sensitivity</div><h2 class="slide-headline">The case is shown as three scenarios, never one point — and the one thing that breaks it is named.</h2><div class="slide-stage"><p class="slide-lede">A single ROI number would hide the real shape of the case. This estimate is shown as three scenarios — conservative, base, upside — and the assumptions that move it most are ranked. The one thing that breaks the case is named, not buried.</p><figure class="hero"><figcaption class="hero-caption">Exhibit 7a — Net return: conservative, base and upside</figcaption><div class="hero-frame"><svg viewBox="0 0 760 224" width="100%" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Scenario range" xmlns="http://www.w3.org/2000/svg" font-family='"DM Sans","Inter",system-ui,-apple-system,sans-serif'><title>Scenario range</title><rect x="0" y="0" width="760" height="224" fill="#ffffff"/><text x="132" y="20" font-size="9" font-weight="700" fill="#5b5852" text-anchor="start">Net return — three scenarios, never one point</text><line x1="132" y1="30" x2="132" y2="202" stroke="#070707" stroke-width="1.5"/><text x="132" y="216" font-size="8.5" font-weight="700" fill="#5b5852" text-anchor="middle">Break-even</text><rect x="132" y="48" width="211.8659029978886" height="28" fill="#a8533a" rx="2"/><text x="120" y="66" font-size="10" font-weight="800" fill="#070707" text-anchor="end">Conservative</text><text x="351.8659029978886" y="66" font-size="10" font-weight="800" fill="#a8533a" text-anchor="start" font-family='"JetBrains Mono",ui-monospace,monospace'>$5.20M</text><rect x="132" y="104" width="371.161662883709" height="28" fill="#0b4a91" rx="2"/><text x="120" y="122" font-size="10" font-weight="800" fill="#070707" text-anchor="end">Base</text><text x="511.161662883709" y="122" font-size="10" font-weight="800" fill="#0b4a91" text-anchor="start" font-family='"JetBrains Mono",ui-monospace,monospace'>$9.11M</text><rect x="132" y="160" width="508" height="28" fill="#1B5E20" rx="2"/><text x="120" y="178" font-size="10" font-weight="800" fill="#070707" text-anchor="end">Upside</text><text x="648" y="178" font-size="10" font-weight="800" fill="#1B5E20" text-anchor="start" font-family='"JetBrains Mono",ui-monospace,monospace'>$12.5M</text></svg></div></figure><figure class="hero"><figcaption class="hero-caption">Exhibit 7b — Sensitivity tornado: the assumptions that move the case</figcaption><div class="hero-frame"><svg viewBox="0 0 720 294" width="100%" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Sensitivity tornado" xmlns="http://www.w3.org/2000/svg" font-family='"DM Sans","Inter",system-ui,-apple-system,sans-serif'><title>Sensitivity tornado</title><rect x="0" y="0" width="720" height="294" fill="#ffffff"/><defs><pattern id="proxyhatch" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="6" height="6" fill="#f7ecd6"/><line x1="0" y1="0" x2="0" y2="6" stroke="#7A4F01" stroke-width="2"/></pattern></defs><line x1="180" y1="32" x2="180" y2="270" stroke="#070707" stroke-width="1.5"/><text x="180" y="24" font-size="9" font-weight="700" fill="#5b5852" text-anchor="middle" letter-spacing="0.5">BASE CASE</text><text x="572" y="24" font-size="9" font-weight="600" fill="#5b5852" text-anchor="end">Wider = moves the case more</text><rect x="180" y="52" width="392" height="22" fill="url(#proxyhatch)" rx="1.5"/><rect x="180" y="52" width="392" height="22" fill="none" stroke="#7A4F01" stroke-width="1" rx="1.5"/><text x="168" y="60" font-size="10" font-weight="700" fill="#070707" text-anchor="end">Annual</text><text x="168" y="71" font-size="10" font-weight="700" fill="#070707" text-anchor="end">agent-handled</text><text x="168" y="82" font-size="10" font-weight="700" fill="#070707" text-anchor="end">contact volume</text><text x="580" y="67" font-size="8" font-weight="800" fill="#7A4F01" text-anchor="start" letter-spacing="0.4">SEED-GAP PROXY</text><rect x="180" y="98" width="392" height="22" fill="url(#proxyhatch)" rx="1.5"/><rect x="180" y="98" width="392" height="22" fill="none" stroke="#7A4F01" stroke-width="1" rx="1.5"/><text x="168" y="106" font-size="10" font-weight="700" fill="#070707" text-anchor="end">Fully-loaded</text><text x="168" y="117" font-size="10" font-weight="700" fill="#070707" text-anchor="end">cost per contact</text><text x="168" y="128" font-size="10" font-weight="700" fill="#070707" text-anchor="end">is ~$6.50</text><text x="580" y="113" font-size="8" font-weight="800" fill="#7A4F01" text-anchor="start" letter-spacing="0.4">SEED-GAP PROXY</text><rect x="180" y="144" width="392" height="22" fill="#0b4a91" rx="1.5"/><text x="168" y="152" font-size="10" font-weight="700" fill="#070707" text-anchor="end">AI routing lifts</text><text x="168" y="163" font-size="10" font-weight="700" fill="#070707" text-anchor="end">containment ~12</text><text x="168" y="174" font-size="10" font-weight="700" fill="#070707" text-anchor="end">points</text><text x="580" y="159" font-size="8" font-weight="800" fill="#1f6f43" text-anchor="start" letter-spacing="0.4">GROUNDED</text><rect x="180" y="190" width="215.60000000000002" height="22" fill="#0b4a91" rx="1.5"/><text x="168" y="198" font-size="10" font-weight="700" fill="#070707" text-anchor="end">Customer Care</text><text x="168" y="209" font-size="10" font-weight="700" fill="#070707" text-anchor="end">agents reach 70%</text><text x="168" y="220" font-size="10" font-weight="700" fill="#070707" text-anchor="end">steady-state</text><text x="403.6" y="205" font-size="8" font-weight="800" fill="#1f6f43" text-anchor="start" letter-spacing="0.4">GROUNDED</text><rect x="180" y="236" width="215.60000000000002" height="22" fill="#0b4a91" rx="1.5"/><text x="168" y="244" font-size="10" font-weight="700" fill="#070707" text-anchor="end">The</text><text x="168" y="255" font-size="10" font-weight="700" fill="#070707" text-anchor="end">transcript-use</text><text x="168" y="266" font-size="10" font-weight="700" fill="#070707" text-anchor="end">privacy review</text><text x="403.6" y="251" font-size="8" font-weight="800" fill="#1f6f43" text-anchor="start" letter-spacing="0.4">GROUNDED</text></svg></div><p class="hero-note">A hatched bar is a seed-gap proxy — an assumption that rests on a gap, not recorded data. It is the widest mover for a reason.</p></figure><div class="payback-line"><span class="payback-line-tag">What breaks the case</span><span>The case breaks if the baseline seed gap is not closed — without the missing unit economics the value range is a proxy, not a forecast.</span></div><details class="slide-detail"><summary class="slide-detail-summary"><span class="detail-chevron" aria-hidden="true"></span><span>The downside read — is the floor survivable?</span></summary><div class="slide-detail-body"><p class="mini-para">The conservative case cannot be expressed in hard dollars — the value rests on a seed-gap proxy. Close the baseline gap before reading the downside as a number.</p></div></details></div><div class="slide-foot"><div class="foot-cell foot-implication"><span class="foot-key">So what</span><span class="foot-val">The downside cannot be expressed in hard dollars — it rests on the cost-per-contact seed-gap proxy.</span></div><div class="foot-cell"><span class="foot-key">Decision role</span><span class="foot-val">Stress the estimate — find the downside and what would break it.</span></div><div class="foot-cell"><span class="foot-key">Owner</span><span class="foot-val">Transformation Finance</span></div><div class="foot-cell"><span class="foot-key">Evidence</span><span class="foot-val">2 sources · as of 2026-05-20 · confidence Medium · No open gaps</span></div><div class="foot-cell"><span class="foot-key">Next gate</span><span class="foot-val">Close the monetization gap before reading the downside</span></div></div></div></section><section class="slide" id="roadmap-cash-flow" data-slide="9" aria-label="Roadmap cash flow"><div class="slide-inner"><div class="slide-rule"><div class="slide-rule-l"><span class="slide-brand">Contact Center AI Routing</span><span class="slide-sep">·</span><span>Roadmap cash flow</span></div><div class="slide-rule-r">Slide 9 / 9</div></div><div class="slide-eyebrow">Section 8 · Roadmap cash flow</div><h2 class="slide-headline">Phase cost lands before phase value — and because monetization is blocked, the curve is a net-value model, not a payback claim.</h2><div class="slide-stage"><p class="slide-lede">Phase cost lands before phase value — the foundational phase is pure cost, value unlocks from the pilot onward. Because monetization is blocked by the cost-per-contact seed gap, the curve models discounted net value, not verified cash: no payback month is claimed.</p><figure class="hero"><figcaption class="hero-caption">Exhibit 8 — Cash-flow shape: phase cost against unlocked value</figcaption><div class="hero-frame"><svg viewBox="0 0 720 320" width="100%" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Payback range cash-flow" xmlns="http://www.w3.org/2000/svg" font-family='"DM Sans","Inter",system-ui,-apple-system,sans-serif'><title>Payback range cash-flow</title><rect x="0" y="0" width="720" height="320" fill="#ffffff"/><line x1="60" y1="268" x2="590" y2="268" stroke="#dedacf" stroke-width="1"/><text x="52" y="271" font-size="9" font-weight="500" fill="#5b5852" text-anchor="end" font-family='"JetBrains Mono",ui-monospace,monospace'>-$1.43M</text><line x1="60" y1="208" x2="590" y2="208" stroke="#dedacf" stroke-width="1"/><text x="52" y="211" font-size="9" font-weight="500" fill="#5b5852" text-anchor="end" font-family='"JetBrains Mono",ui-monospace,monospace'>-$363K</text><line x1="60" y1="148" x2="590" y2="148" stroke="#dedacf" stroke-width="1"/><text x="52" y="151" font-size="9" font-weight="500" fill="#5b5852" text-anchor="end" font-family='"JetBrains Mono",ui-monospace,monospace'>$704K</text><line x1="60" y1="88" x2="590" y2="88" stroke="#dedacf" stroke-width="1"/><text x="52" y="91" font-size="9" font-weight="500" fill="#5b5852" text-anchor="end" font-family='"JetBrains Mono",ui-monospace,monospace'>$1.77M</text><line x1="60" y1="28" x2="590" y2="28" stroke="#dedacf" stroke-width="1"/><text x="52" y="31" font-size="9" font-weight="500" fill="#5b5852" text-anchor="end" font-family='"JetBrains Mono",ui-monospace,monospace'>$2.84M</text><line x1="60" y1="187.56916169340474" x2="590" y2="187.56916169340474" stroke="#070707" stroke-width="1.5"/><text x="596" y="190.56916169340474" font-size="9" font-weight="800" fill="#070707" text-anchor="start">Break-even</text><text x="60" y="286" font-size="9" font-weight="600" fill="#5b5852" text-anchor="middle">Start</text><text x="192.5" y="286" font-size="9" font-weight="600" fill="#5b5852" text-anchor="middle">P0</text><text x="325" y="286" font-size="9" font-weight="600" fill="#5b5852" text-anchor="middle">P1</text><text x="457.5" y="286" font-size="9" font-weight="600" fill="#5b5852" text-anchor="middle">P2</text><text x="590" y="286" font-size="9" font-weight="600" fill="#5b5852" text-anchor="middle">P3</text><polyline points="60,187.56916169340474 192.5,203.39679264712117 325,218.53443781394898 457.5,130.54461298721006 590,99.55016591331011" fill="none" stroke="#0b4a91" stroke-width="2.5"/><circle cx="60" cy="187.56916169340474" r="3" fill="#0b4a91"/><circle cx="192.5" cy="203.39679264712117" r="3" fill="#0b4a91"/><circle cx="325" cy="218.53443781394898" r="3" fill="#0b4a91"/><circle cx="457.5" cy="130.54461298721006" r="3" fill="#0b4a91"/><circle cx="590" cy="99.55016591331011" r="3" fill="#0b4a91"/><text x="598" y="102.55016591331011" font-size="9" font-weight="800" fill="#0b4a91" text-anchor="start">Base</text><polyline points="60,187.56916169340474 192.5,209.72784502860773 325,268 457.5,211.55729659079705 590,212.66039703503583" fill="none" stroke="#a8533a" stroke-width="2.5" stroke-dasharray="5 4"/><circle cx="60" cy="187.56916169340474" r="3" fill="#a8533a"/><circle cx="192.5" cy="209.72784502860773" r="3" fill="#a8533a"/><circle cx="325" cy="268" r="3" fill="#a8533a"/><circle cx="457.5" cy="211.55729659079705" r="3" fill="#a8533a"/><circle cx="590" cy="212.66039703503583" r="3" fill="#a8533a"/><text x="598" y="215.66039703503583" font-size="9" font-weight="800" fill="#a8533a" text-anchor="start">Conservative</text><polyline points="60,187.56916169340474 192.5,201.02264800406368 325,192.70139468351414 457.5,79.77119162267175 590,28" fill="none" stroke="#1B5E20" stroke-width="2.5" stroke-dasharray="5 4"/><circle cx="60" cy="187.56916169340474" r="3" fill="#1B5E20"/><circle cx="192.5" cy="201.02264800406368" r="3" fill="#1B5E20"/><circle cx="325" cy="192.70139468351414" r="3" fill="#1B5E20"/><circle cx="457.5" cy="79.77119162267175" r="3" fill="#1B5E20"/><circle cx="590" cy="28" r="3" fill="#1B5E20"/><text x="598" y="31" font-size="9" font-weight="800" fill="#1B5E20" text-anchor="start">Upside</text><rect x="74" y="42" width="320" height="50" fill="#f7ecd6" stroke="#7A4F01" stroke-width="1" rx="3"/><text x="86" y="62" font-size="11" font-weight="800" fill="#7A4F01" text-anchor="start">Payback not computable</text><text x="86" y="79" font-size="9" font-weight="600" fill="#7A4F01" text-anchor="start">Monetisation blocked — lines model net value, not cash.</text></svg></div><p class="hero-note">The lines are cumulative discounted net value, not cash — payback is not computable while the cost-per-contact baseline is a seed gap.</p></figure><div class="payback-line"><span class="payback-line-tag">Payback status</span><span>Payback is not computable — the gross value the cash-flow rests on uses a benchmark cost-per-contact proxy (a declared seed gap). The curve models discounted net value, not verified cash.</span></div><details class="slide-detail"><summary class="slide-detail-summary"><span class="detail-chevron" aria-hidden="true"></span><span>Per-phase cash flow — investment, cumulative cost, value unlocked</span></summary><div class="slide-detail-body"><table class="data-table"><thead><tr><th>Phase</th><th class="num">Investment</th><th class="num">Cumulative</th><th class="num">Annual value unlocked</th><th class="num">Duration</th></tr></thead><tbody><tr class="row-change"><td>Phase 0 — Data &amp; platform foundation <span class="chip chip-warn">Foundational</span></td><td class="num">$282K</td><td class="num">$282K</td><td class="num">$0</td><td class="num">5 mo</td></tr><tr><td>Phase 1 — Routing pilot on Customer Care queues</td><td class="num">$1.21M</td><td class="num">$1.49M</td><td class="num">$942K</td><td class="num">7 mo</td></tr><tr><td>Phase 2 — Scale-out + process redesign</td><td class="num">$131K</td><td class="num">$1.62M</td><td class="num">$1.70M</td><td class="num">6 mo</td></tr><tr><td>Phase 3 — Adoption + run</td><td class="num">$579K</td><td class="num">$2.20M</td><td class="num">$1.13M</td><td class="num">12 mo</td></tr></tbody></table></div></details></div><div class="slide-foot"><div class="foot-cell foot-implication"><span class="foot-key">So what</span><span class="foot-val">No payback month is claimed — the §8 hard fail &quot;payback shown when monetization blocked&quot; is avoided by design.</span></div><div class="foot-cell"><span class="foot-key">Decision role</span><span class="foot-val">See the cash-flow shape and the honest payback status.</span></div><div class="foot-cell"><span class="foot-key">Owner</span><span class="foot-val">Transformation Finance</span></div><div class="foot-cell"><span class="foot-key">Evidence</span><span class="foot-val">1 source · as of 2026-05-20 · confidence Blocked · 1 open gap</span></div><div class="foot-cell"><span class="foot-key">Next gate</span><span class="foot-val">Compute payback after cost-per-contact lands</span></div></div></div></section></main></div><div class="deck-controls" aria-hidden="false"><button class="deck-btn" type="button" id="deck-prev" aria-label="Previous slide">‹ Prev</button><span class="deck-counter" id="deck-counter">1 / 9</span><button class="deck-btn" type="button" id="deck-next" aria-label="Next slide">Next ›</button></div><script>(function(){var total=9;var stage=document.getElementById('stage');var slides=Array.prototype.slice.call(document.querySelectorAll('.slide'));var items=Array.prototype.slice.call(document.querySelectorAll('.menu-item'));var cur=1;function show(n){if(n<1)n=1;if(n>total)n=total;cur=n;slides.forEach(function(s){var sn=parseInt(s.getAttribute('data-slide'),10);var on=sn===n;s.classList.toggle('is-active',on);if(on){s.removeAttribute('hidden');}else{s.setAttribute('hidden','');}});items.forEach(function(it){var gn=parseInt(it.getAttribute('data-goto'),10);if(gn===n){it.setAttribute('aria-current','true');}else{it.removeAttribute('aria-current');}});var active=items[n-1];if(active&&active.scrollIntoView){active.scrollIntoView({block:'nearest'});}if(stage){stage.scrollTop=0;}window.scrollTo(0,0);var c=document.getElementById('deck-counter');if(c){c.textContent=n+' / '+total;}}items.forEach(function(it){it.addEventListener('click',function(){show(parseInt(it.getAttribute('data-goto'),10));});});var prev=document.getElementById('deck-prev');var next=document.getElementById('deck-next');if(prev){prev.addEventListener('click',function(){show(cur-1);});}if(next){next.addEventListener('click',function(){show(cur+1);});}document.addEventListener('keydown',function(e){var t=e.target;if(t&&(t.tagName==='INPUT'||t.tagName==='TEXTAREA'))return;if(e.key==='ArrowRight'||e.key==='PageDown'){show(cur+1);e.preventDefault();}else if(e.key==='ArrowLeft'||e.key==='PageUp'){show(cur-1);e.preventDefault();}else if(e.key==='Home'){show(1);e.preventDefault();}else if(e.key==='End'){show(total);e.preventDefault();}});show(1);})();</script></body></html>
