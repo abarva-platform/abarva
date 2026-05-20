@@ -44,10 +44,20 @@ export function EventIdStrip({ event }: EventIdStripProps) {
           <span>Owner: {event.owner}</span>
         </div>
       </div>
-      <span style={STATUS_STYLE}>
-        <span aria-hidden style={{ ...STATUS_DOT_STYLE, background: dotColor }} />
-        <span style={STATUS_LABEL_STYLE}>{event.statusLabel}</span>
-      </span>
+      <div style={RIGHT_STYLE}>
+        <a
+          data-testid="source-canvas-deal-pack-download"
+          href={`/api/v1/source/${encodeURIComponent(event.id)}/deal-pack?format=html`}
+          style={DEAL_PACK_LINK_STYLE}
+          title="Download a single-file HTML Deal Pack bundling every artifact across stages 0–7"
+        >
+          Download Deal Pack
+        </a>
+        <span style={STATUS_STYLE}>
+          <span aria-hidden style={{ ...STATUS_DOT_STYLE, background: dotColor }} />
+          <span style={STATUS_LABEL_STYLE}>{event.statusLabel}</span>
+        </span>
+      </div>
     </header>
   );
 }
@@ -146,5 +156,29 @@ const STATUS_LABEL_STYLE: CSSProperties = {
   letterSpacing: '0.10em',
   textTransform: 'uppercase',
   color: CANVAS.INK,
+  fontWeight: 600,
+};
+
+const RIGHT_STYLE: CSSProperties = {
+  display: 'inline-flex',
+  alignItems: 'center',
+  gap: 12,
+  alignSelf: 'center',
+  flexShrink: 0,
+};
+
+const DEAL_PACK_LINK_STYLE: CSSProperties = {
+  display: 'inline-flex',
+  alignItems: 'center',
+  padding: '6px 12px',
+  border: `1px solid ${CANVAS.HAIRLINE}`,
+  borderRadius: 4,
+  background: CANVAS.INK,
+  color: '#F4F2EC',
+  fontFamily: CANVAS.MONO,
+  fontSize: CANVAS.T_MICRO,
+  letterSpacing: '0.08em',
+  textTransform: 'uppercase',
+  textDecoration: 'none',
   fontWeight: 600,
 };
