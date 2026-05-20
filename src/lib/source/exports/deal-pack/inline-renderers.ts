@@ -486,6 +486,42 @@ export function renderRenewalDecisionHtml(p: RenewalDecisionPayload): string {
               `<tr><td>${escapeHtml(c.vendor)}</td><td>${escapeHtml(c.scope)}</td><td class="is-num">${fmtUsd(c.annualSpendUsd)}</td><td>${escapeHtml(c.renewalDate)}</td><td class="is-num">${c.daysUntilRenewal === 0 ? '—' : c.daysUntilRenewal}</td><td><strong>${escapeHtml(c.posture)}</strong></td><td>${escapeHtml(c.rationale)}</td><td>${escapeHtml(fmtMissing(c.finalDecision))}</td></tr>`,
           )
           .join('');
+  const timing =
+    p.candidates.length === 0
+      ? emptyRow(7)
+      : p.candidates
+          .map(
+            (c) =>
+              `<tr><td>${escapeHtml(c.vendor)}</td><td>${escapeHtml(c.renewalDate)}</td><td class="is-num">${c.daysUntilRenewal === 0 ? '—' : c.daysUntilRenewal}</td><td>${escapeHtml(fmtBool(c.autoRenew))}</td><td>${escapeHtml(fmtMissing(c.noticePeriodDays == null ? null : String(c.noticePeriodDays)))}</td><td>${escapeHtml(fmtMissing(c.daysToNoticeDeadline == null ? null : String(c.daysToNoticeDeadline)))}</td><td>${escapeHtml(buildTimingRead(c))}</td></tr>`,
+          )
+          .join('');
+  const usage =
+    p.candidates.length === 0
+      ? emptyRow(5)
+      : p.candidates
+          .map(
+            (c) =>
+              `<tr><td>${escapeHtml(c.vendor)}</td><td>${escapeHtml(c.scope)}</td><td>${escapeHtml(fmtPct(c.utilizationRate))}</td><td class="is-num">${escapeHtml(fmtOptionalUsd(c.estimatedShelfwareUsd))}</td><td>${escapeHtml(buildUsageRead(c))}</td></tr>`,
+          )
+          .join('');
+  const spend =
+    p.candidates.length === 0
+      ? emptyRow(5)
+      : p.candidates
+          .map(
+            (c) =>
+              `<tr><td>${escapeHtml(c.vendor)}</td><td class="is-num">${fmtUsd(c.annualSpendUsd)}</td><td class="is-num">${escapeHtml(fmtOptionalUsd(c.benchmarkUsd))}</td><td class="is-num">${escapeHtml(fmtOptionalUsd(c.overspendVsBenchmarkUsd))}</td><td>${escapeHtml(buildSpendRead(c))}</td></tr>`,
+          )
+          .join('');
+  const negotiation =
+    p.candidates.length === 0
+      ? emptyRow(5)
+      : p.candidates
+          .map(
+            (c) =>
+              `<tr><td>${escapeHtml(c.vendor)}</td><td><strong>${escapeHtml(c.posture)}</strong></td><td>${escapeHtml(c.negotiationPosture ?? SEED_GAP_LINE)}</td><td>${escapeHtml(c.topAlternative)}</td><td>${escapeHtml(c.srmAction ?? SEED_GAP_LINE)}</td></tr>`,
+          )
+          .join('');
   const signals =
     p.signals.length === 0
       ? emptyRow(4)
@@ -505,9 +541,26 @@ export function renderRenewalDecisionHtml(p: RenewalDecisionPayload): string {
           )
           .join('');
   return `
+    <p class="dp-stage__intent"><strong>Executive answer:</strong> ${escapeHtml(buildExecutiveAnswer(p))}</p>
     <table class="dp-table"><caption>Renewal candidates — recommended posture</caption>
       <thead><tr><th>Vendor</th><th>Scope</th><th>Annual</th><th>Renews</th><th>Days</th><th>Posture</th><th>Rationale</th><th>Final decision</th></tr></thead>
       <tbody>${candidates}</tbody>
+    </table>
+    <table class="dp-table"><caption>Timing and leverage</caption>
+      <thead><tr><th>Vendor</th><th>Renewal</th><th>Days</th><th>Auto?</th><th>Notice period</th><th>Notice deadline</th><th>Leverage read</th></tr></thead>
+      <tbody>${timing}</tbody>
+    </table>
+    <table class="dp-table"><caption>Usage and value leakage</caption>
+      <thead><tr><th>Vendor</th><th>Scope</th><th>Utilization</th><th>Shelfware</th><th>Usage/value read</th></tr></thead>
+      <tbody>${usage}</tbody>
+    </table>
+    <table class="dp-table"><caption>Spend and uplift bridge</caption>
+      <thead><tr><th>Vendor</th><th>Annual</th><th>Benchmark</th><th>Uplift/overspend</th><th>Spend read</th></tr></thead>
+      <tbody>${spend}</tbody>
+    </table>
+    <table class="dp-table"><caption>Negotiation posture and SRM handoff</caption>
+      <thead><tr><th>Vendor</th><th>Posture</th><th>Stance</th><th>BATNA</th><th>SRM / Tower action</th></tr></thead>
+      <tbody>${negotiation}</tbody>
     </table>
     <table class="dp-table"><caption>Operating telemetry signals</caption>
       <thead><tr><th>Metric</th><th>Value</th><th>Source</th><th>Posture impact</th></tr></thead>
@@ -518,4 +571,45 @@ export function renderRenewalDecisionHtml(p: RenewalDecisionPayload): string {
       <tbody>${triggers}</tbody>
     </table>
   `;
+}
+
+function fmtOptionalUsd(n: number | null | undefined): string {
+  if (n == null) return SEED_GAP_LINE;
+  return fmtUsd(n);
+}
+
+function fmtPct(n: number | null | undefined): string {
+  if (n == null) return SEED_GAP_LINE;
+  return `${Math.round(n * 100)}%`;
+}
+
+function fmtBool(v: boolean | null | undefined): string {
+  if (v == null) return SEED_GAP_LINE;
+  return v ? 'Yes' : 'No';
+}
+
+function buildExecutiveAnswer(p: RenewalDecisionPayload): string {
+  const priority = p.candidates.find((c) => c.posture !== 'renew_as_is') ?? p.candidates[0];
+  if (!priority) return 'No renewal candidates recorded; load vendor_contracts before presenting a decision.';
+  return `${priority.vendor}: ${priority.posture}. ${priority.rationale}`;
+}
+
+function buildTimingRead(c: RenewalDecisionPayload['candidates'][number]): string {
+  const notice = c.daysToNoticeDeadline == null ? 'notice deadline not recorded' : `${c.daysToNoticeDeadline} days to notice deadline`;
+  const auto = c.autoRenew == null ? 'auto-renewal term not recorded' : c.autoRenew ? 'auto-renewal applies' : 'no auto-renewal recorded';
+  return `${c.daysUntilRenewal || 'Unknown'} days to renewal; ${auto}; ${notice}.`;
+}
+
+function buildUsageRead(c: RenewalDecisionPayload['candidates'][number]): string {
+  if (c.utilizationRate == null && c.estimatedShelfwareUsd == null) {
+    return 'Usage telemetry not recorded. Cannot quantify shelfware or adoption leakage.';
+  }
+  return `Utilization ${fmtPct(c.utilizationRate)}; estimated avoidable spend ${fmtOptionalUsd(c.estimatedShelfwareUsd)}.`;
+}
+
+function buildSpendRead(c: RenewalDecisionPayload['candidates'][number]): string {
+  if (c.benchmarkUsd == null && c.overspendVsBenchmarkUsd == null) {
+    return 'Benchmark not recorded. Use Source should-cost or client rate card before approving renewal economics.';
+  }
+  return `Annual spend ${fmtUsd(c.annualSpendUsd)} versus benchmark ${fmtOptionalUsd(c.benchmarkUsd)}; uplift / overspend ${fmtOptionalUsd(c.overspendVsBenchmarkUsd)}.`;
 }
