@@ -27,6 +27,13 @@ import { buildPricingTemplatePayloadFromContext } from './payloads/pricing-templ
 import { buildPricingComparisonPayloadFromContext } from './payloads/pricing-comparison-payload';
 import { buildTrapLogPayloadFromContext } from './payloads/trap-log-payload';
 import { buildBafoQuestionPackPayloadFromContext } from './payloads/bafo-question-pack-payload';
+import { buildDemandChallengePayloadFromContext } from './payloads/demand-challenge-payload';
+import { buildSourcingApproachPayloadFromContext } from './payloads/sourcing-approach-payload';
+import { buildVendorRiskPackPayloadFromContext } from './payloads/vendor-risk-pack-payload';
+import { buildMarketScanPayloadFromContext } from './payloads/market-scan-payload';
+import { buildTcoIcebergPayloadFromContext } from './payloads/tco-iceberg-payload';
+import { buildAiClauseGapPayloadFromContext } from './payloads/ai-clause-gap-payload';
+import { buildRenewalDecisionPayloadFromContext } from './payloads/renewal-decision-payload';
 
 const KIND_TO_ARTIFACT_CODE: Record<SourceDeliverableKind, string> = {
   'scope-memo': 'd05_scope_memo',
@@ -40,14 +47,35 @@ const KIND_TO_ARTIFACT_CODE: Record<SourceDeliverableKind, string> = {
   'pricing-comparison': 'd19_pricing_workbook',
   'trap-log': 'd20_trap_log',
   'bafo-question-pack': 'd22_bafo_question_pack',
+  'demand-challenge': 'dx0_demand_challenge',
+  'sourcing-approach': 'dx1_sourcing_approach',
+  'market-scan': 'dx2_market_scan',
+  'tco-iceberg': 'dx4_tco_iceberg',
+  'ai-clause-gap': 'dx6a_ai_clause_gap',
+  'vendor-risk-pack': 'dx6b_vendor_risk_pack',
+  'renewal-decision': 'dx7_renewal_decision',
 };
 
+// Narrative kinds use the shared NarrativeDocxPayload shape. The
+// lifecycle wave (demand-challenge / sourcing-approach / vendor-risk-
+// pack) reuses the same shape but with substrate-grounded scaffold
+// builders, so it gets its own list of async narrative binders below
+// rather than going through buildNarrativeDocxPayloadFromContext.
 const NARRATIVE_KINDS = new Set<SourceDeliverableKind>([
   'scope-memo',
   'rfp-package',
   'decision-brief',
   'selection-memo',
 ]);
+
+const LIFECYCLE_NARRATIVE_KINDS: Record<
+  string,
+  (ctx: SourceGenerationContext, at: string) => Promise<unknown>
+> = {
+  'demand-challenge': buildDemandChallengePayloadFromContext,
+  'sourcing-approach': buildSourcingApproachPayloadFromContext,
+  'vendor-risk-pack': buildVendorRiskPackPayloadFromContext,
+};
 
 /**
  * Build a SourceDeliverableSpec by pulling from substrate via the
@@ -123,6 +151,53 @@ export async function buildSourceDeliverableSpec(
         ...base,
         kind,
         payload: buildBafoQuestionPackPayloadFromContext(ctx, generatedAt) as unknown as Record<string, unknown>,
+      };
+    case 'demand-challenge':
+    case 'sourcing-approach':
+    case 'vendor-risk-pack': {
+      const builder = LIFECYCLE_NARRATIVE_KINDS[kind]!;
+      const payload = (await builder(ctx, generatedAt)) as {
+        eventCode: string;
+        eventName: string;
+        issuedBy?: string;
+        body: string;
+        bodyIsAuthored: boolean;
+      };
+      return {
+        ...base,
+        kind,
+        payload: {
+          eventCode: payload.eventCode,
+          eventName: payload.eventName,
+          issuedBy: payload.issuedBy,
+          body: payload.body,
+          bodyIsAuthored: payload.bodyIsAuthored,
+        } as unknown as Record<string, unknown>,
+      };
+    }
+    case 'market-scan':
+      return {
+        ...base,
+        kind,
+        payload: (await buildMarketScanPayloadFromContext(ctx, generatedAt)) as unknown as Record<string, unknown>,
+      };
+    case 'tco-iceberg':
+      return {
+        ...base,
+        kind,
+        payload: buildTcoIcebergPayloadFromContext(ctx, generatedAt) as unknown as Record<string, unknown>,
+      };
+    case 'ai-clause-gap':
+      return {
+        ...base,
+        kind,
+        payload: buildAiClauseGapPayloadFromContext(ctx, generatedAt) as unknown as Record<string, unknown>,
+      };
+    case 'renewal-decision':
+      return {
+        ...base,
+        kind,
+        payload: (await buildRenewalDecisionPayloadFromContext(ctx, generatedAt)) as unknown as Record<string, unknown>,
       };
     default:
       throw new Error(`spec-builder does not know kind "${kind}"`);

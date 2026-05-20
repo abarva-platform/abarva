@@ -38,10 +38,34 @@ import {
   RFP_PACK_DOCX_CONFIG,
   DECISION_BRIEF_DOCX_CONFIG,
   SELECTION_MEMO_DOCX_CONFIG,
+  DEMAND_CHALLENGE_DOCX_CONFIG,
+  SOURCING_APPROACH_DOCX_CONFIG,
+  VENDOR_RISK_PACK_DOCX_CONFIG,
   type NarrativeDocxConfig,
   type NarrativeDocxPayload,
 } from './renderers/narrative-docx';
 import { buildNarrativeHtml } from './renderers/narrative-html';
+import {
+  buildMarketScanWorkbook,
+  type MarketScanPayload,
+} from './renderers/market-scan';
+import { buildMarketScanDocx } from './renderers/market-scan-docx';
+import {
+  buildTcoIcebergWorkbook,
+  type TcoIcebergPayload,
+} from './renderers/tco-iceberg';
+import { buildTcoIcebergDocx } from './renderers/tco-iceberg-docx';
+import {
+  buildAiClauseGapWorkbook,
+  type AiClauseGapPayload,
+} from './renderers/ai-clause-gap';
+import { buildAiClauseGapDocx } from './renderers/ai-clause-gap-docx';
+import { buildAiClauseGapHtml } from './renderers/ai-clause-gap-html';
+import {
+  buildRenewalDecisionWorkbook,
+  type RenewalDecisionPayload,
+} from './renderers/renewal-decision';
+import { buildRenewalDecisionDocx } from './renderers/renewal-decision-docx';
 
 import {
   buildAppInventoryWorkbook,
@@ -164,6 +188,34 @@ export interface BafoQuestionPackSpec extends BaseSourceSpec {
   kind: 'bafo-question-pack';
   payload: BafoQuestionPackPayload;
 }
+export interface DemandChallengeSpec extends BaseSourceSpec {
+  kind: 'demand-challenge';
+  payload: NarrativeBasePayload;
+}
+export interface SourcingApproachSpec extends BaseSourceSpec {
+  kind: 'sourcing-approach';
+  payload: NarrativeBasePayload;
+}
+export interface VendorRiskPackSpec extends BaseSourceSpec {
+  kind: 'vendor-risk-pack';
+  payload: NarrativeBasePayload;
+}
+export interface MarketScanSpec extends BaseSourceSpec {
+  kind: 'market-scan';
+  payload: MarketScanPayload;
+}
+export interface TcoIcebergSpec extends BaseSourceSpec {
+  kind: 'tco-iceberg';
+  payload: TcoIcebergPayload;
+}
+export interface AiClauseGapSpec extends BaseSourceSpec {
+  kind: 'ai-clause-gap';
+  payload: AiClauseGapPayload;
+}
+export interface RenewalDecisionSpec extends BaseSourceSpec {
+  kind: 'renewal-decision';
+  payload: RenewalDecisionPayload;
+}
 
 interface BaseSourceSpec {
   tenantKey: string;
@@ -217,6 +269,23 @@ export async function renderSourceDeliverable(
       return renderTrapLog(spec as unknown as TrapLogSpec, format, filename);
     case 'bafo-question-pack':
       return renderBafoQuestionPack(spec as unknown as BafoQuestionPackSpec, format, filename);
+
+    // Lifecycle-coverage wave — narrative kinds reuse the narrative
+    // renderer set; the 4 structured kinds get their own dispatch.
+    case 'demand-challenge':
+      return renderNarrative(spec, DEMAND_CHALLENGE_DOCX_CONFIG, format, filename, generatedAt);
+    case 'sourcing-approach':
+      return renderNarrative(spec, SOURCING_APPROACH_DOCX_CONFIG, format, filename, generatedAt);
+    case 'vendor-risk-pack':
+      return renderNarrative(spec, VENDOR_RISK_PACK_DOCX_CONFIG, format, filename, generatedAt);
+    case 'market-scan':
+      return renderMarketScan(spec as unknown as MarketScanSpec, format, filename);
+    case 'tco-iceberg':
+      return renderTcoIceberg(spec as unknown as TcoIcebergSpec, format, filename);
+    case 'ai-clause-gap':
+      return renderAiClauseGap(spec as unknown as AiClauseGapSpec, format, filename);
+    case 'renewal-decision':
+      return renderRenewalDecision(spec as unknown as RenewalDecisionSpec, format, filename);
 
     default: {
       const _exhaustive: never = spec.kind;
@@ -402,6 +471,83 @@ async function renderBafoQuestionPack(
   throw new Error(`bafo-question-pack does not support format "${format}"`);
 }
 
+async function renderMarketScan(
+  spec: MarketScanSpec,
+  format: DeliverableFormat,
+  filename: string,
+): Promise<SourceDeliverableRenderResult> {
+  if (format === 'xlsx') {
+    return renderXlsxOnly(buildMarketScanWorkbook(spec.payload), format, filename);
+  }
+  if (format === 'docx') {
+    return docxResult(buildMarketScanDocx(spec.payload), filename);
+  }
+  if (format === 'pdf') {
+    const { buildMarketScanPdf } = await import('./renderers/market-scan-pdf');
+    return pdfResult(buildMarketScanPdf(spec.payload), filename);
+  }
+  throw new Error(`market-scan does not support format "${format}"`);
+}
+
+async function renderTcoIceberg(
+  spec: TcoIcebergSpec,
+  format: DeliverableFormat,
+  filename: string,
+): Promise<SourceDeliverableRenderResult> {
+  if (format === 'xlsx') {
+    return renderXlsxOnly(buildTcoIcebergWorkbook(spec.payload), format, filename);
+  }
+  if (format === 'docx') {
+    return docxResult(buildTcoIcebergDocx(spec.payload), filename);
+  }
+  if (format === 'pdf') {
+    const { buildTcoIcebergPdf } = await import('./renderers/tco-iceberg-pdf');
+    return pdfResult(buildTcoIcebergPdf(spec.payload), filename);
+  }
+  throw new Error(`tco-iceberg does not support format "${format}"`);
+}
+
+async function renderAiClauseGap(
+  spec: AiClauseGapSpec,
+  format: DeliverableFormat,
+  filename: string,
+): Promise<SourceDeliverableRenderResult> {
+  if (format === 'xlsx') {
+    return renderXlsxOnly(buildAiClauseGapWorkbook(spec.payload), format, filename);
+  }
+  if (format === 'docx') {
+    return docxResult(buildAiClauseGapDocx(spec.payload), filename);
+  }
+  if (format === 'html') {
+    const html = buildAiClauseGapHtml(spec.payload);
+    const buffer = Buffer.from(html, 'utf8');
+    return makeResult('html', buffer, filename, HTML_CONTENT_TYPE);
+  }
+  if (format === 'pdf') {
+    const { buildAiClauseGapPdf } = await import('./renderers/ai-clause-gap-pdf');
+    return pdfResult(buildAiClauseGapPdf(spec.payload), filename);
+  }
+  throw new Error(`ai-clause-gap does not support format "${format}"`);
+}
+
+async function renderRenewalDecision(
+  spec: RenewalDecisionSpec,
+  format: DeliverableFormat,
+  filename: string,
+): Promise<SourceDeliverableRenderResult> {
+  if (format === 'xlsx') {
+    return renderXlsxOnly(buildRenewalDecisionWorkbook(spec.payload), format, filename);
+  }
+  if (format === 'docx') {
+    return docxResult(buildRenewalDecisionDocx(spec.payload), filename);
+  }
+  if (format === 'pdf') {
+    const { buildRenewalDecisionPdf } = await import('./renderers/renewal-decision-pdf');
+    return pdfResult(buildRenewalDecisionPdf(spec.payload), filename);
+  }
+  throw new Error(`renewal-decision does not support format "${format}"`);
+}
+
 // ── docx + pdf serialization helpers ───────────────────────────────────────
 
 async function docxResult(
@@ -469,6 +615,13 @@ function artifactCodeForKind(kind: SourceDeliverableKind): string {
     case 'pricing-comparison': return 'd19_pricing_comparison';
     case 'trap-log': return 'd20_trap_log';
     case 'bafo-question-pack': return 'd22_bafo_question_pack';
+    case 'demand-challenge': return 'dx0_demand_challenge';
+    case 'sourcing-approach': return 'dx1_sourcing_approach';
+    case 'market-scan': return 'dx2_market_scan';
+    case 'tco-iceberg': return 'dx4_tco_iceberg';
+    case 'ai-clause-gap': return 'dx6a_ai_clause_gap';
+    case 'vendor-risk-pack': return 'dx6b_vendor_risk_pack';
+    case 'renewal-decision': return 'dx7_renewal_decision';
   }
 }
 

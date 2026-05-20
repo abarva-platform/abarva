@@ -32,13 +32,35 @@ import { buildScorecardPayloadFromContext } from '@/lib/source/exports/payloads/
 import { buildPricingTemplatePayloadFromContext } from '@/lib/source/exports/payloads/pricing-template-payload';
 import { buildTrapLogPayloadFromContext } from '@/lib/source/exports/payloads/trap-log-payload';
 import { buildBafoQuestionPackPayloadFromContext } from '@/lib/source/exports/payloads/bafo-question-pack-payload';
+import { buildMarketScanPayloadFromContext } from '@/lib/source/exports/payloads/market-scan-payload';
+import { buildTcoIcebergPayloadFromContext } from '@/lib/source/exports/payloads/tco-iceberg-payload';
+import { buildAiClauseGapPayloadFromContext } from '@/lib/source/exports/payloads/ai-clause-gap-payload';
+import { buildRenewalDecisionPayloadFromContext } from '@/lib/source/exports/payloads/renewal-decision-payload';
+import { buildDemandChallengePayloadFromContext } from '@/lib/source/exports/payloads/demand-challenge-payload';
+import { buildSourcingApproachPayloadFromContext } from '@/lib/source/exports/payloads/sourcing-approach-payload';
+import { buildVendorRiskPackPayloadFromContext } from '@/lib/source/exports/payloads/vendor-risk-pack-payload';
 
 const NARRATIVE_CODES = new Set([
   'd05_scope_memo',
   'd09_rfp_pack',
   'd24_decision_brief',
   'd27_selection_memo',
+  'dx0_demand_challenge',
+  'dx1_sourcing_approach',
+  'dx6b_vendor_risk_pack',
 ]);
+
+// Lifecycle-coverage narrative payloads — same NarrativeDocxPayload
+// shape as d05/d09/d24/d27 but with substrate-grounded scaffold
+// builders bound asynchronously.
+const LIFECYCLE_NARRATIVE_BUILDERS: Record<
+  string,
+  (ctx: Awaited<ReturnType<typeof buildSourceGenerationContext>> & object, at: string) => Promise<unknown>
+> = {
+  dx0_demand_challenge: buildDemandChallengePayloadFromContext,
+  dx1_sourcing_approach: buildSourcingApproachPayloadFromContext,
+  dx6b_vendor_risk_pack: buildVendorRiskPackPayloadFromContext,
+};
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -119,7 +141,9 @@ export async function GET(_req: NextRequest, { params }: RouteCtx) {
   let document;
   try {
     let payload: unknown;
-    if (NARRATIVE_CODES.has(artifactCode)) {
+    if (LIFECYCLE_NARRATIVE_BUILDERS[artifactCode]) {
+      payload = await LIFECYCLE_NARRATIVE_BUILDERS[artifactCode]!(ctx, generatedAt);
+    } else if (NARRATIVE_CODES.has(artifactCode)) {
       payload = buildNarrativeDocxPayloadFromContext(ctx, artifactCode, generatedAt);
     } else if (artifactCode === 'd04_app_inv') {
       payload = buildAppInventoryPayloadFromContext(ctx, generatedAt);
@@ -133,6 +157,14 @@ export async function GET(_req: NextRequest, { params }: RouteCtx) {
       payload = buildTrapLogPayloadFromContext(ctx, generatedAt);
     } else if (artifactCode === 'd22_bafo_question_pack') {
       payload = buildBafoQuestionPackPayloadFromContext(ctx, generatedAt);
+    } else if (artifactCode === 'dx2_market_scan') {
+      payload = await buildMarketScanPayloadFromContext(ctx, generatedAt);
+    } else if (artifactCode === 'dx4_tco_iceberg') {
+      payload = buildTcoIcebergPayloadFromContext(ctx, generatedAt);
+    } else if (artifactCode === 'dx6a_ai_clause_gap') {
+      payload = buildAiClauseGapPayloadFromContext(ctx, generatedAt);
+    } else if (artifactCode === 'dx7_renewal_decision') {
+      payload = await buildRenewalDecisionPayloadFromContext(ctx, generatedAt);
     } else {
       // Defensive — isDocxGeneratable should have caught this.
       return Response.json(

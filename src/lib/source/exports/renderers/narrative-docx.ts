@@ -196,3 +196,34 @@ export const SELECTION_MEMO_DOCX_CONFIG: NarrativeDocxConfig = {
   confidentialityNote:
     'Confidential — final selection memo; release after sponsor sign-off only',
 };
+
+// ── Lifecycle-coverage wave configs ────────────────────────────────────────
+// Stage 0 — demand challenge (the "should we even source this?" verdict)
+export const DEMAND_CHALLENGE_DOCX_CONFIG: NarrativeDocxConfig = {
+  artifactCode: 'dx0_demand_challenge',
+  headerLabel: 'Demand Challenge',
+  eyebrowFor: (tenant) => `Stage 0 · Demand Challenge · ${tenant}`,
+  documentTitle: 'Demand Challenge',
+  confidentialityNote:
+    'Confidential — internal demand-challenge verdict; precedes any vendor engagement',
+};
+
+// Stage 1 — sourcing approach (RFI vs RFP, commercial model, SI lane)
+export const SOURCING_APPROACH_DOCX_CONFIG: NarrativeDocxConfig = {
+  artifactCode: 'dx1_sourcing_approach',
+  headerLabel: 'Sourcing Approach',
+  eyebrowFor: (tenant) => `Stage 1 · Sourcing Approach · ${tenant}`,
+  documentTitle: 'Sourcing Approach',
+  confidentialityNote:
+    'Confidential — sourcing-approach recommendation; share with sponsor + procurement panel only',
+};
+
+// Stage 6 — vendor risk pack (security / financial / concentration / 4P)
+export const VENDOR_RISK_PACK_DOCX_CONFIG: NarrativeDocxConfig = {
+  artifactCode: 'dx6b_vendor_risk_pack',
+  headerLabel: 'Vendor Risk Pack',
+  eyebrowFor: (tenant) => `Stage 6 · Vendor Risk Pack · ${tenant}`,
+  documentTitle: 'Vendor Risk Pack',
+  confidentialityNote:
+    'Confidential — vendor risk pack; distribute to risk + compliance + sponsor only',
+};

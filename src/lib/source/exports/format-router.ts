@@ -34,6 +34,17 @@ const DEFAULT_FORMAT: Record<SourceDeliverableKind, DeliverableFormat> = {
   'pricing-comparison': 'xlsx',
   'trap-log': 'xlsx',
   'bafo-question-pack': 'xlsx',
+  // Lifecycle-coverage wave. Narrative kinds default to docx; the
+  // structured ones (market-scan, TCO iceberg, ai-clause-gap, renewal-
+  // decision) default to xlsx because their canonical working surface
+  // is a workbook.
+  'demand-challenge': 'docx',
+  'sourcing-approach': 'docx',
+  'market-scan': 'xlsx',
+  'tco-iceberg': 'xlsx',
+  'ai-clause-gap': 'xlsx',
+  'vendor-risk-pack': 'docx',
+  'renewal-decision': 'xlsx',
 };
 
 /**
@@ -64,6 +75,20 @@ const ALLOWED_FORMATS: Record<
   'pricing-comparison': ['xlsx', 'docx', 'pdf'],
   'trap-log': ['xlsx', 'docx', 'pdf'],
   'bafo-question-pack': ['xlsx', 'docx', 'pdf'],
+  // Lifecycle-coverage wave. Matches the per-stage content:
+  // Demand Challenge, Sourcing Approach, Vendor Risk Pack = narrative
+  //   (docx + pdf — no xlsx working grid)
+  // Market Scan, TCO Iceberg, AI Clause Gap, Renewal Decision =
+  //   structured (xlsx canonical) + docx + pdf
+  // The AI Clause Gap also has html because it ships as a sharable
+  // checklist link the panel can review without a download.
+  'demand-challenge': ['docx', 'pdf'],
+  'sourcing-approach': ['docx', 'pdf'],
+  'market-scan': ['xlsx', 'docx', 'pdf'],
+  'tco-iceberg': ['xlsx', 'docx', 'pdf'],
+  'ai-clause-gap': ['xlsx', 'docx', 'pdf', 'html'],
+  'vendor-risk-pack': ['docx', 'pdf'],
+  'renewal-decision': ['xlsx', 'docx', 'pdf'],
 };
 
 /**

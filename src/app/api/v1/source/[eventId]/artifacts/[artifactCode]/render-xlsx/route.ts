@@ -32,6 +32,10 @@ import { buildResponseChecklistPayloadFromContext } from '@/lib/source/exports/p
 import { buildScorecardPayloadFromContext } from '@/lib/source/exports/payloads/scorecard-payload';
 import { buildTrapLogPayloadFromContext } from '@/lib/source/exports/payloads/trap-log-payload';
 import { buildBafoQuestionPackPayloadFromContext } from '@/lib/source/exports/payloads/bafo-question-pack-payload';
+import { buildMarketScanPayloadFromContext } from '@/lib/source/exports/payloads/market-scan-payload';
+import { buildTcoIcebergPayloadFromContext } from '@/lib/source/exports/payloads/tco-iceberg-payload';
+import { buildAiClauseGapPayloadFromContext } from '@/lib/source/exports/payloads/ai-clause-gap-payload';
+import { buildRenewalDecisionPayloadFromContext } from '@/lib/source/exports/payloads/renewal-decision-payload';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -127,6 +131,18 @@ export async function GET(_req: NextRequest, { params }: RouteCtx) {
         break;
       case 'd22_bafo_question_pack':
         payload = buildBafoQuestionPackPayloadFromContext(ctx, generatedAt);
+        break;
+      case 'dx2_market_scan':
+        payload = await buildMarketScanPayloadFromContext(ctx, generatedAt);
+        break;
+      case 'dx4_tco_iceberg':
+        payload = buildTcoIcebergPayloadFromContext(ctx, generatedAt);
+        break;
+      case 'dx6a_ai_clause_gap':
+        payload = buildAiClauseGapPayloadFromContext(ctx, generatedAt);
+        break;
+      case 'dx7_renewal_decision':
+        payload = await buildRenewalDecisionPayloadFromContext(ctx, generatedAt);
         break;
       default:
         // Defensive — isXlsxGeneratable should have caught this above.

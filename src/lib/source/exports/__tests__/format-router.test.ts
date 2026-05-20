@@ -55,11 +55,17 @@ describe('Source format router (Slice 8.1 foundations)', () => {
 
   it('lists every Source kind', () => {
     const kinds = listAllKinds();
-    expect(kinds).toHaveLength(11);
+    // Original 11 kinds (Slices 2-8) plus 7 lifecycle-coverage kinds
+    // (demand-challenge, sourcing-approach, market-scan, tco-iceberg,
+    // ai-clause-gap, vendor-risk-pack, renewal-decision).
+    expect(kinds).toHaveLength(18);
     expect(kinds).toContain('scope-memo');
     expect(kinds).toContain('pricing-template');
     expect(kinds).toContain('pricing-comparison');
     expect(kinds).toContain('bafo-question-pack');
+    expect(kinds).toContain('demand-challenge');
+    expect(kinds).toContain('market-scan');
+    expect(kinds).toContain('renewal-decision');
   });
 
   it('every kind has a default format and an allowed-formats list', () => {

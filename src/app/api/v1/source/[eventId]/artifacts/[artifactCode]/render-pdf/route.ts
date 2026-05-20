@@ -32,11 +32,21 @@ import { buildScorecardPayloadFromContext } from '@/lib/source/exports/payloads/
 import { buildPricingTemplatePayloadFromContext } from '@/lib/source/exports/payloads/pricing-template-payload';
 import { buildTrapLogPayloadFromContext } from '@/lib/source/exports/payloads/trap-log-payload';
 import { buildBafoQuestionPackPayloadFromContext } from '@/lib/source/exports/payloads/bafo-question-pack-payload';
+import { buildMarketScanPayloadFromContext } from '@/lib/source/exports/payloads/market-scan-payload';
+import { buildTcoIcebergPayloadFromContext } from '@/lib/source/exports/payloads/tco-iceberg-payload';
+import { buildAiClauseGapPayloadFromContext } from '@/lib/source/exports/payloads/ai-clause-gap-payload';
+import { buildRenewalDecisionPayloadFromContext } from '@/lib/source/exports/payloads/renewal-decision-payload';
+import { buildDemandChallengePayloadFromContext } from '@/lib/source/exports/payloads/demand-challenge-payload';
+import { buildSourcingApproachPayloadFromContext } from '@/lib/source/exports/payloads/sourcing-approach-payload';
+import { buildVendorRiskPackPayloadFromContext } from '@/lib/source/exports/payloads/vendor-risk-pack-payload';
 import {
   DECISION_BRIEF_PDF_CONFIG,
+  DEMAND_CHALLENGE_PDF_CONFIG,
   RFP_PACK_PDF_CONFIG,
   SCOPE_MEMO_PDF_CONFIG,
   SELECTION_MEMO_PDF_CONFIG,
+  SOURCING_APPROACH_PDF_CONFIG,
+  VENDOR_RISK_PACK_PDF_CONFIG,
   buildNarrativePdf,
 } from '@/lib/source/exports/renderers/narrative-pdf';
 
@@ -45,14 +55,32 @@ const NARRATIVE_CODES = new Set([
   'd09_rfp_pack',
   'd24_decision_brief',
   'd27_selection_memo',
+  'dx0_demand_challenge',
+  'dx1_sourcing_approach',
+  'dx6b_vendor_risk_pack',
 ]);
 
-/** Build the payload for the given artifact code from substrate. */
-function buildPdfPayload(
+/** Build the payload for the given artifact code from substrate.
+ *
+ *  Returns a Promise — some lifecycle binders are async (broker-backed).
+ *  Existing narrative + structured binders that are synchronous resolve
+ *  immediately. */
+async function buildPdfPayload(
   ctx: Awaited<ReturnType<typeof buildSourceGenerationContext>> & object,
   artifactCode: string,
   generatedAt: string,
-): unknown {
+): Promise<unknown> {
+  // Lifecycle-wave narrative artifacts use the same NarrativeDocxPayload
+  // shape as d05/d09/d24/d27 but bind asynchronously via the broker.
+  if (artifactCode === 'dx0_demand_challenge') {
+    return buildDemandChallengePayloadFromContext(ctx, generatedAt);
+  }
+  if (artifactCode === 'dx1_sourcing_approach') {
+    return buildSourcingApproachPayloadFromContext(ctx, generatedAt);
+  }
+  if (artifactCode === 'dx6b_vendor_risk_pack') {
+    return buildVendorRiskPackPayloadFromContext(ctx, generatedAt);
+  }
   if (NARRATIVE_CODES.has(artifactCode)) {
     return buildNarrativeDocxPayloadFromContext(ctx, artifactCode, generatedAt);
   }
@@ -69,6 +97,14 @@ function buildPdfPayload(
       return buildTrapLogPayloadFromContext(ctx, generatedAt);
     case 'd22_bafo_question_pack':
       return buildBafoQuestionPackPayloadFromContext(ctx, generatedAt);
+    case 'dx2_market_scan':
+      return buildMarketScanPayloadFromContext(ctx, generatedAt);
+    case 'dx4_tco_iceberg':
+      return buildTcoIcebergPayloadFromContext(ctx, generatedAt);
+    case 'dx6a_ai_clause_gap':
+      return buildAiClauseGapPayloadFromContext(ctx, generatedAt);
+    case 'dx7_renewal_decision':
+      return buildRenewalDecisionPayloadFromContext(ctx, generatedAt);
     default:
       throw new Error(`No PDF payload binder for ${artifactCode}`);
   }
@@ -148,7 +184,7 @@ export async function GET(_req: NextRequest, { params }: RouteCtx) {
   const generatedAt = new Date().toISOString();
   let payload: unknown;
   try {
-    payload = buildPdfPayload(ctx, artifactCode, generatedAt);
+    payload = await buildPdfPayload(ctx, artifactCode, generatedAt);
   } catch (err) {
     return Response.json(
       {
@@ -252,6 +288,12 @@ function configForCode(artifactCode: string) {
       return DECISION_BRIEF_PDF_CONFIG;
     case 'd27_selection_memo':
       return SELECTION_MEMO_PDF_CONFIG;
+    case 'dx0_demand_challenge':
+      return DEMAND_CHALLENGE_PDF_CONFIG;
+    case 'dx1_sourcing_approach':
+      return SOURCING_APPROACH_PDF_CONFIG;
+    case 'dx6b_vendor_risk_pack':
+      return VENDOR_RISK_PACK_PDF_CONFIG;
     default:
       throw new Error(`No PDF config for ${artifactCode}`);
   }
