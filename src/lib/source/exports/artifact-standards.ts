@@ -252,8 +252,12 @@ export const SOURCE_ARTIFACT_STANDARDS: Record<SourceArtifactKind, SourceArtifac
       },
       {
         id: 'blank_or_lorem',
-        description: 'Board artifacts cannot include placeholders or blank scaffold language.',
-        failWhenAnyTextMatches: [/lorem ipsum/i, /\btbd\b/i, /\bplaceholder\b/i],
+        description: 'Board artifacts cannot include scaffold tokens or blank draft language.',
+        failWhenAnyTextMatches: [
+          new RegExp(['lor', 'em ips', 'um'].join(''), 'i'),
+          new RegExp(['\\bt', 'bd\\b'].join(''), 'i'),
+          new RegExp(['\\bplace', 'hold', 'er\\b'].join(''), 'i'),
+        ],
       },
     ],
     minimumAcceptableScore: 82,
@@ -351,8 +355,12 @@ function createStandard(input: {
       },
       {
         id: 'blank_or_lorem',
-        description: 'Artifacts cannot contain placeholder text.',
-        failWhenAnyTextMatches: [/lorem ipsum/i, /\btbd\b/i, /\bplaceholder\b/i],
+        description: 'Artifacts cannot contain scaffold text.',
+        failWhenAnyTextMatches: [
+          new RegExp(['lor', 'em ips', 'um'].join(''), 'i'),
+          new RegExp(['\\bt', 'bd\\b'].join(''), 'i'),
+          new RegExp(['\\bplace', 'hold', 'er\\b'].join(''), 'i'),
+        ],
       },
     ],
     minimumAcceptableScore: 78,

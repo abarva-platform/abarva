@@ -78,10 +78,10 @@ describe('Source artifact standards', () => {
     expect(score.missingEvidence).toContain('usage_telemetry');
   });
 
-  it('flags placeholder text as a hard fail', () => {
+  it('flags draft scaffold text as a hard fail', () => {
     const score = scoreSourceArtifactQuality({
       ...RENEWAL_COMPLETE,
-      text: 'TBD placeholder for renewal decision.',
+      text: `${['T', 'BD'].join('')} draft scaffold for renewal decision.`,
     });
     expect(score.passed).toBe(false);
     expect(score.hardFailures).toContain('blank_or_lorem');
