@@ -1010,8 +1010,12 @@ export function economicsStrip(tiles: EconomicsTile[]): string {
       fill: toneInk(tile.tone),
     });
     if (tile.sub) {
+      // Adaptive size so a long sub-line (e.g. "$8.28M–$14.3M · post-haircut")
+      // stays inside the tile rather than clipping into the next one.
+      const subSize =
+        tile.sub.length > 24 ? 7.4 : tile.sub.length > 20 ? 8.2 : 9;
       svg += txt(x + 14, 76, tile.sub, {
-        size: 9,
+        size: subSize,
         weight: 600,
         fill: CHART.inkSoft,
       });
