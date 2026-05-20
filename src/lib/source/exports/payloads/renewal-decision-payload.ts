@@ -61,6 +61,20 @@ function buildCandidate(
     rationale,
     topAlternative: alternative,
     finalDecision: '',
+    autoRenew: null,
+    noticePeriodDays: null,
+    daysToNoticeDeadline: null,
+    utilizationRate: null,
+    estimatedShelfwareUsd: null,
+    benchmarkUsd: null,
+    overspendVsBenchmarkUsd: null,
+    overlapRead: c.category
+      ? `${c.category} category overlap must be tested against the Source portfolio inventory.`
+      : '— Not recorded — seed gap',
+    riskRead: buildRiskRead(c, posture, daysUntilRenewal),
+    negotiationPosture: buildNegotiationPosture(posture),
+    owner: '— Not recorded — seed gap',
+    srmAction: buildSrmAction(c, posture),
   };
 }
 
@@ -126,6 +140,64 @@ function recommendAlternative(c: ContractCoverage): string {
   // Placeholder: a future binder can cross-reference d12 shortlist /
   // industry_context. For now we mark the gap honestly.
   return c.category ? `${c.category} category — see dx2 market scan` : '— Not recorded — seed gap';
+}
+
+function buildRiskRead(
+  c: ContractCoverage,
+  posture: RenewalPosture,
+  daysUntil: number,
+): string {
+  const timing =
+    daysUntil > 0 && daysUntil < 90
+      ? `Renewal is inside 90 days (${daysUntil}); transition runway is constrained.`
+      : daysUntil === 0
+        ? 'Renewal timing is not recorded.'
+        : `Renewal runway is ${daysUntil} days.`;
+  if (posture === 'rebid') {
+    return `${timing} Rebid requires transition and service-continuity plan before notice deadline.`;
+  }
+  if (posture === 'exit') {
+    return `${timing} Exit requires funded replacement path and business acceptance.`;
+  }
+  if ((c.annualSpendUsd ?? 0) > 5_000_000) {
+    return `${timing} Material spend requires commercial approval and benchmark support.`;
+  }
+  return `${timing} No additional risk telemetry recorded.`;
+}
+
+function buildNegotiationPosture(posture: RenewalPosture): string {
+  switch (posture) {
+    case 'renegotiate':
+      return 'Open with benchmark challenge, usage true-up, price protection, termination rights, and AI/data clause uplift.';
+    case 'rebid':
+      return 'Create competitive tension; require incumbent best-and-final only after challenger proof and transition plan.';
+    case 'consolidate':
+      return 'Use volume leverage; demand SKU rationalization, governance, and measurable savings before extending term.';
+    case 'exit':
+      return 'Do not concede commercial value; negotiate transition support and data portability only.';
+    case 'renew_as_is':
+      return 'Administrative renewal only if telemetry remains healthy and no benchmark/usage leakage emerges.';
+    case 'undetermined':
+      return 'No negotiation posture until spend, renewal timing, usage, benchmark, owner and telemetry are recorded.';
+  }
+}
+
+function buildSrmAction(c: ContractCoverage, posture: RenewalPosture): string {
+  const vendor = c.vendor || 'vendor';
+  switch (posture) {
+    case 'renew_as_is':
+      return `Create SRM watch item for ${vendor}: usage, service levels, price protection and next notice date.`;
+    case 'renegotiate':
+      return `Open renewal negotiation workplan for ${vendor}; assign owner, concession target, and Tower savings watch item.`;
+    case 'rebid':
+      return `Open rebid workplan for ${vendor}; track transition risk, incumbent response and challenger proof.`;
+    case 'consolidate':
+      return `Open consolidation workplan for ${vendor}; track overlap removal, volume leverage and concentration risk.`;
+    case 'exit':
+      return `Open exit workplan for ${vendor}; track replacement readiness, data portability and service continuity.`;
+    case 'undetermined':
+      return `Block posture decision for ${vendor} until required substrate is loaded.`;
+  }
 }
 
 function toSignal(t: TelemetrySignal): RenewalTelemetrySignal {

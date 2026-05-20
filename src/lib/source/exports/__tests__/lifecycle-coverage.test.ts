@@ -278,6 +278,18 @@ const RENEWAL: RenewalDecisionPayload = {
       rationale: 'Material spend; benchmark suggests 12% leverage on multi-year extend.',
       topAlternative: 'Atlassian Jira Service Management',
       finalDecision: '',
+      autoRenew: true,
+      noticePeriodDays: 90,
+      daysToNoticeDeadline: -2,
+      utilizationRate: 0.64,
+      estimatedShelfwareUsd: 320_000,
+      benchmarkUsd: 2_050_000,
+      overspendVsBenchmarkUsd: 350_000,
+      overlapRead: 'Workflow overlap with Jira Service Management; rationalization candidate.',
+      riskRead: 'ITSM dependency is high; rebid needs transition runway and service desk acceptance.',
+      negotiationPosture: 'Renegotiate price protection, shelfware true-up and AI/data terms.',
+      owner: 'Maya Chen',
+      srmAction: 'Open Tower watch item for realized savings and renewal terms.',
     },
   ],
   signals: [
@@ -295,7 +307,14 @@ const RENEWAL: RenewalDecisionPayload = {
 
 describe('lifecycle · Renewal Decision', () => {
   it('builds a valid xlsx', async () => {
-    expectZip(await packXlsx(buildRenewalDecisionWorkbook(RENEWAL)));
+    const wb = buildRenewalDecisionWorkbook(RENEWAL);
+    expectZip(await packXlsx(wb));
+    expect(wb.getWorksheet('Executive Answer')).toBeDefined();
+    expect(wb.getWorksheet('Timing & Leverage')).toBeDefined();
+    expect(wb.getWorksheet('Usage & Value')).toBeDefined();
+    expect(wb.getWorksheet('Spend & Uplift')).toBeDefined();
+    expect(wb.getWorksheet('Negotiation Posture')).toBeDefined();
+    expect(wb.getWorksheet('SRM Tower Handoff')).toBeDefined();
   });
   it('builds a valid docx', async () => {
     expectZip(await packDocx(buildRenewalDecisionDocx(RENEWAL)));
