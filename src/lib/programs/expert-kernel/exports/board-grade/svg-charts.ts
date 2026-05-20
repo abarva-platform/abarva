@@ -1464,3 +1464,519 @@ export function gapClosureQueue(rows: GapQueueRow[]): string {
   svg += `</svg>`;
   return svg;
 }
+
+// ===========================================================================
+// 14. Workstream cost stack (Estimate §3) — vertical bars, one per workstream,
+//     each split into a human-effort and an AI-agent-effort segment. This is
+//     the honest answer to the §8 hard fail "complex estimate collapsed to a
+//     generic six-role model": every one of the eight workstreams is its own
+//     bar, never blended away.
+// ===========================================================================
+
+export interface WorkstreamCostBar {
+  /** Workstream label, e.g. "AI build". */
+  label: string;
+  /** Base human-effort cost. */
+  humanCost: number;
+  /** Base AI-agent-effort cost. */
+  agentCost: number;
+  /** True when the workstream is business-change (not AI build). */
+  isBusinessChange: boolean;
+}
+
+/**
+ * Vertical stacked-bar cost chart — one bar per workstream, each split into
+ * human and agent effort. Business-change workstreams are outlined so the
+ * build-vs-change balance is visible at a glance.
+ */
+export function workstreamCostStack(bars: WorkstreamCostBar[]): string {
+  const W = 760;
+  const H = 332;
+  const padL = 58;
+  const padR = 120;
+  const padT = 30;
+  const padB = 78;
+  const plotW = W - padL - padR;
+  const plotH = H - padT - padB;
+  const totals = bars.map((b) => b.humanCost + b.agentCost);
+  const max = Math.max(...totals, 1) * 1.12;
+  const y = (v: number): number => padT + plotH - (v / max) * plotH;
+  const slot = plotW / bars.length;
+  const barW = Math.min(56, slot * 0.66);
+
+  let svg = open({ width: W, height: H, title: 'Workstream cost stack' });
+  svg += `<rect x="0" y="0" width="${W}" height="${H}" fill="${CHART.paper}"/>`;
+
+  for (let i = 0; i <= 4; i++) {
+    const v = (max / 4) * i;
+    const gy = y(v);
+    svg += `<line x1="${padL}" y1="${gy}" x2="${W - padR}" y2="${gy}" stroke="${CHART.grid}" stroke-width="1"/>`;
+    svg += txt(padL - 8, gy + 3, compactUsd(v), {
+      size: 9,
+      anchor: 'end',
+      fill: CHART.inkSoft,
+      mono: true,
+    });
+  }
+
+  bars.forEach((b, i) => {
+    const cx = padL + slot * i + slot / 2;
+    const x = cx - barW / 2;
+    const total = b.humanCost + b.agentCost;
+    const topAll = y(total);
+    const humanTop = y(b.humanCost);
+    // Human segment — from baseline up.
+    svg += `<rect x="${x}" y="${humanTop}" width="${barW}" height="${y(0) - humanTop}" fill="${CHART.accent}"/>`;
+    // Agent segment — stacked on top.
+    svg += `<rect x="${x}" y="${topAll}" width="${barW}" height="${humanTop - topAll}" fill="${CHART.accentSoft}"/>`;
+    // Business-change outline.
+    if (b.isBusinessChange) {
+      svg += `<rect x="${x}" y="${topAll}" width="${barW}" height="${y(0) - topAll}" fill="none" stroke="${CHART.warn}" stroke-width="2" stroke-dasharray="3 2"/>`;
+    }
+    svg += txt(cx, topAll - 6, compactUsd(total), {
+      size: 9,
+      anchor: 'middle',
+      weight: 800,
+      mono: true,
+    });
+    wrapLabel(b.label, cx, padT + plotH + 16, 11).forEach((line) => {
+      svg += txt(cx, line.y, line.text, {
+        size: 9,
+        anchor: 'middle',
+        fill: b.isBusinessChange ? CHART.warn : CHART.inkSoft,
+        weight: b.isBusinessChange ? 800 : 600,
+      });
+    });
+  });
+
+  // Legend, right gutter.
+  const lx = W - padR + 12;
+  svg += `<rect x="${lx}" y="${padT + 4}" width="11" height="11" fill="${CHART.accent}"/>`;
+  svg += txt(lx + 16, padT + 13, 'Human effort', { size: 9, weight: 700 });
+  svg += `<rect x="${lx}" y="${padT + 24}" width="11" height="11" fill="${CHART.accentSoft}"/>`;
+  svg += txt(lx + 16, padT + 33, 'AI-agent effort', { size: 9, weight: 700 });
+  svg += `<rect x="${lx}" y="${padT + 44}" width="11" height="11" fill="none" stroke="${CHART.warn}" stroke-width="2" stroke-dasharray="3 2"/>`;
+  svg += txt(lx + 16, padT + 53, 'Business change', {
+    size: 9,
+    weight: 700,
+    fill: CHART.warn,
+  });
+
+  svg += `<line x1="${padL}" y1="${y(0)}" x2="${W - padR}" y2="${y(0)}" stroke="${CHART.ink}" stroke-width="1.5"/>`;
+  svg += `</svg>`;
+  return svg;
+}
+
+// ===========================================================================
+// 15. Role-mix by phase (Estimate §4) — a stacked horizontal bar per phase,
+//     segmented by workstream so the role-bearing effort is never collapsed
+//     into one blended row.
+// ===========================================================================
+
+export interface RoleMixPhaseRow {
+  /** Phase label, e.g. "Phase 1 — Pilot". */
+  label: string;
+  /** Per-workstream effort segments in this phase. */
+  segments: Array<{ label: string; cost: number; color: string }>;
+}
+
+/** Stacked horizontal bars — one per phase, segmented by workstream effort. */
+export function roleMixByPhase(rows: RoleMixPhaseRow[]): string {
+  const W = 760;
+  const rowH = 56;
+  const padL = 150;
+  const padR = 96;
+  const padT = 40;
+  const padB = 26;
+  const H = padT + rows.length * rowH + padB;
+  const plotW = W - padL - padR;
+  const max = Math.max(
+    ...rows.map((r) => r.segments.reduce((s, x) => s + x.cost, 0)),
+    1,
+  );
+
+  let svg = open({ width: W, height: H, title: 'Role mix by phase' });
+  svg += `<rect x="0" y="0" width="${W}" height="${H}" fill="${CHART.paper}"/>`;
+
+  svg += txt(padL, padT - 16, 'Phase effort by workstream', {
+    size: 9,
+    weight: 800,
+    upper: true,
+    spacing: 0.4,
+    fill: CHART.inkSoft,
+  });
+  svg += txt(W - padR, padT - 16, 'Base cost', {
+    size: 9,
+    weight: 800,
+    upper: true,
+    spacing: 0.4,
+    anchor: 'end',
+    fill: CHART.accent,
+  });
+
+  rows.forEach((row, i) => {
+    const cy = padT + i * rowH + rowH / 2;
+    let x = padL;
+    const total = row.segments.reduce((s, seg) => s + seg.cost, 0);
+    svg += txt(
+      padL - 12,
+      cy + 4,
+      row.label.split('—').pop()?.trim() ?? row.label,
+      { size: 10, anchor: 'end', weight: 700 },
+    );
+    row.segments.forEach((seg, si) => {
+      const w = (seg.cost / max) * plotW;
+      svg += `<rect x="${x}" y="${cy - 14}" width="${w}" height="28" fill="${seg.color}"/>`;
+      if (si > 0) {
+        svg += `<line x1="${x}" y1="${cy - 14}" x2="${x}" y2="${cy + 14}" stroke="${CHART.paper}" stroke-width="1.5"/>`;
+      }
+      x += w;
+    });
+    svg += txt(x + 8, cy + 4, compactUsd(total), {
+      size: 9.5,
+      weight: 800,
+      mono: true,
+      fill: CHART.accent,
+    });
+  });
+
+  svg += `</svg>`;
+  return svg;
+}
+
+// ===========================================================================
+// 16. Rate-card coverage matrix (Estimate §5) — a role-family × delivery-
+//     location grid showing which lanes the rate card prices, with the
+//     rate-card provenance called out so the §8 hard fail "rate-card source
+//     not shown" never occurs.
+// ===========================================================================
+
+export interface RateCardCoverageCell {
+  /** The rate-card domain / role family. */
+  domain: string;
+  /** Onshore fully-loaded rate, or null when the lane is not priced. */
+  onshore: number | null;
+  /** Offshore fully-loaded rate, or null when the lane is not priced. */
+  offshore: number | null;
+}
+
+/**
+ * A coverage matrix — one row per role family, an onshore and an offshore
+ * column. A priced lane shows its rate; an unpriced lane is hatched. The
+ * provenance banner is mandatory.
+ */
+export function rateCardCoverageMatrix(
+  cells: RateCardCoverageCell[],
+  provenanceLabel: string,
+): string {
+  const W = 760;
+  const rowH = 30;
+  const padL = 188;
+  const padR = 18;
+  const padT = 78;
+  const padB = 20;
+  const H = padT + cells.length * rowH + padB;
+  const colW = (W - padL - padR) / 2;
+
+  let svg = open({ width: W, height: H, title: 'Rate-card coverage matrix' });
+  svg += `<rect x="0" y="0" width="${W}" height="${H}" fill="${CHART.paper}"/>`;
+
+  // Hatch for an unpriced lane.
+  svg +=
+    `<defs><pattern id="ratehatch" width="6" height="6" ` +
+    `patternUnits="userSpaceOnUse" patternTransform="rotate(45)">` +
+    `<rect width="6" height="6" fill="${CHART.badSoft}"/>` +
+    `<line x1="0" y1="0" x2="0" y2="6" stroke="${CHART.bad}" stroke-width="1.5"/>` +
+    `</pattern></defs>`;
+
+  // Provenance banner — the rate-card source, never hidden.
+  svg += `<rect x="0" y="0" width="${W}" height="42" fill="${CHART.cream}" rx="3"/>`;
+  svg += `<rect x="0" y="0" width="3" height="42" fill="${CHART.accent}"/>`;
+  svg += txt(14, 18, 'RATE-CARD SOURCE', {
+    size: 8.5,
+    weight: 800,
+    spacing: 0.6,
+    fill: CHART.inkSoft,
+  });
+  svg += txt(14, 33, provenanceLabel, { size: 10, weight: 700 });
+
+  // Column heads.
+  svg += txt(padL + colW / 2, padT - 10, 'ONSHORE', {
+    size: 9,
+    weight: 800,
+    anchor: 'middle',
+    spacing: 0.5,
+    fill: CHART.ink,
+  });
+  svg += txt(padL + colW + colW / 2, padT - 10, 'OFFSHORE', {
+    size: 9,
+    weight: 800,
+    anchor: 'middle',
+    spacing: 0.5,
+    fill: CHART.ink,
+  });
+
+  cells.forEach((cell, i) => {
+    const cy = padT + i * rowH;
+    if (i % 2 === 0) {
+      svg += `<rect x="0" y="${cy}" width="${W}" height="${rowH}" fill="${CHART.cream}" opacity="0.5"/>`;
+    }
+    svg += txt(padL - 12, cy + rowH / 2 + 4, cell.domain, {
+      size: 9.5,
+      anchor: 'end',
+      weight: 700,
+    });
+    const lane = (x: number, rate: number | null): void => {
+      if (rate === null) {
+        svg += `<rect x="${x + 4}" y="${cy + 4}" width="${colW - 8}" height="${rowH - 8}" fill="url(#ratehatch)" stroke="${CHART.bad}" stroke-width="1" rx="2"/>`;
+        svg += txt(x + colW / 2, cy + rowH / 2 + 4, 'Not priced', {
+          size: 8.5,
+          anchor: 'middle',
+          weight: 700,
+          fill: CHART.bad,
+        });
+      } else {
+        svg += `<rect x="${x + 4}" y="${cy + 4}" width="${colW - 8}" height="${rowH - 8}" fill="${CHART.goodSoft}" stroke="${CHART.good}" stroke-width="1" rx="2"/>`;
+        svg += txt(
+          x + colW / 2,
+          cy + rowH / 2 + 4,
+          `${compactUsd(rate)} / FTE-yr`,
+          { size: 9, anchor: 'middle', weight: 800, mono: true, fill: CHART.good },
+        );
+      }
+    };
+    lane(padL, cell.onshore);
+    lane(padL + colW, cell.offshore);
+  });
+
+  svg += `</svg>`;
+  return svg;
+}
+
+// ===========================================================================
+// 17. Scenario range chart (Estimate §1 / §7) — base / conservative / upside
+//     net-return bars on one signed axis. Three bars, never a single point
+//     estimate (blueprint §2 hard rule).
+// ===========================================================================
+
+export interface ScenarioRangeBar {
+  /** Scenario label, e.g. "Conservative". */
+  label: string;
+  /** Net-return value for the scenario (can be negative). */
+  value: number;
+  /** Tone — drives the bar colour. */
+  tone: 'base' | 'low' | 'high';
+}
+
+/** Three horizontal bars — conservative / base / upside on one signed axis. */
+export function scenarioRangeChart(bars: ScenarioRangeBar[]): string {
+  const W = 760;
+  const rowH = 56;
+  const padL = 132;
+  const padR = 120;
+  const padT = 34;
+  const padB = 22;
+  const H = padT + bars.length * rowH + padB;
+  const plotW = W - padL - padR;
+  const vals = bars.map((b) => b.value);
+  const max = Math.max(...vals, 0);
+  const min = Math.min(...vals, 0);
+  const span = max - min || 1;
+  const zeroX = padL + ((0 - min) / span) * plotW;
+  const x = (v: number): number => padL + ((v - min) / span) * plotW;
+
+  const fillFor = (t: ScenarioRangeBar['tone']): string =>
+    t === 'base' ? CHART.accent : t === 'high' ? CHART.good : CHART.negative;
+
+  let svg = open({ width: W, height: H, title: 'Scenario range' });
+  svg += `<rect x="0" y="0" width="${W}" height="${H}" fill="${CHART.paper}"/>`;
+
+  svg += txt(padL, padT - 14, 'Net return — three scenarios, never one point', {
+    size: 9,
+    weight: 700,
+    fill: CHART.inkSoft,
+  });
+
+  // Zero axis.
+  svg += `<line x1="${zeroX}" y1="${padT - 4}" x2="${zeroX}" y2="${H - padB}" stroke="${CHART.ink}" stroke-width="1.5"/>`;
+  svg += txt(zeroX, H - padB + 14, 'Break-even', {
+    size: 8.5,
+    anchor: 'middle',
+    weight: 700,
+    fill: CHART.inkSoft,
+  });
+
+  bars.forEach((b, i) => {
+    const cy = padT + i * rowH + rowH / 2;
+    const bx = b.value >= 0 ? zeroX : x(b.value);
+    const bw = Math.abs(x(b.value) - zeroX);
+    svg += `<rect x="${bx}" y="${cy - 14}" width="${Math.max(2, bw)}" height="28" fill="${fillFor(b.tone)}" rx="2"/>`;
+    svg += txt(padL - 12, cy + 4, b.label, {
+      size: 10,
+      anchor: 'end',
+      weight: 800,
+    });
+    const labelX = b.value >= 0 ? x(b.value) + 8 : x(b.value) - 8;
+    svg += txt(labelX, cy + 4, compactUsd(b.value), {
+      size: 10,
+      anchor: b.value >= 0 ? 'start' : 'end',
+      weight: 800,
+      mono: true,
+      fill: fillFor(b.tone),
+    });
+  });
+
+  svg += `</svg>`;
+  return svg;
+}
+
+// ===========================================================================
+// 18. 30/60/90 mobilization swimlane (Mobilize §2) — three time bands, each
+//     band carrying its milestones.
+// ===========================================================================
+
+export interface MobilizeBand {
+  /** Band label, e.g. "Days 0–30". */
+  label: string;
+  /** Milestone captions inside the band. */
+  milestones: string[];
+}
+
+/** A three-band 30/60/90 swimlane — each band is a column of milestones. */
+export function mobilizeSwimlane(bands: MobilizeBand[]): string {
+  const W = 760;
+  const padL = 14;
+  const padR = 14;
+  const padT = 18;
+  const colGap = 12;
+  const colW = (W - padL - padR - colGap * (bands.length - 1)) / bands.length;
+  const maxMilestones = Math.max(...bands.map((b) => b.milestones.length), 1);
+  const headH = 34;
+  const mH = 56;
+  const H = padT + headH + 10 + maxMilestones * (mH + 8) + 12;
+
+  let svg = open({ width: W, height: H, title: '30/60/90 mobilization plan' });
+  svg += `<rect x="0" y="0" width="${W}" height="${H}" fill="${CHART.paper}"/>`;
+
+  bands.forEach((band, i) => {
+    const x = padL + i * (colW + colGap);
+    // Band header.
+    svg += `<rect x="${x}" y="${padT}" width="${colW}" height="${headH}" fill="${CHART.accent}" rx="3"/>`;
+    svg += txt(x + colW / 2, padT + headH / 2 + 4, band.label, {
+      size: 11,
+      anchor: 'middle',
+      weight: 800,
+      fill: CHART.paper,
+    });
+    // Connector arrow to the next band.
+    if (i < bands.length - 1) {
+      const ax = x + colW + 2;
+      const ay = padT + headH / 2;
+      svg += `<path d="M ${ax} ${ay - 5} L ${ax + colGap - 4} ${ay} L ${ax} ${ay + 5} Z" fill="${CHART.ink}"/>`;
+    }
+    // Milestone cards.
+    band.milestones.forEach((m, mi) => {
+      const my = padT + headH + 10 + mi * (mH + 8);
+      svg += `<rect x="${x}" y="${my}" width="${colW}" height="${mH}" fill="${CHART.cream}" stroke="${CHART.grid}" stroke-width="1" rx="3"/>`;
+      svg += `<rect x="${x}" y="${my}" width="3" height="${mH}" fill="${CHART.accent}"/>`;
+      wrapText(m, x + 12, my + 18, colW - 22, 12, 10).forEach((line) => {
+        svg += txt(line.x, line.y, line.text, {
+          size: 9.5,
+          weight: 600,
+          fill: CHART.ink,
+        });
+      });
+    });
+  });
+
+  svg += `</svg>`;
+  return svg;
+}
+
+/** Word-wrap a string to a pixel width, returning positioned text lines. */
+function wrapText(
+  s: string,
+  x: number,
+  y0: number,
+  maxW: number,
+  lineH: number,
+  charPx: number,
+): Array<{ text: string; x: number; y: number }> {
+  const maxChars = Math.max(8, Math.floor(maxW / (charPx * 0.56)));
+  const words = s.split(' ');
+  const lines: string[] = [];
+  let cur = '';
+  for (const w of words) {
+    if ((cur + ' ' + w).trim().length > maxChars && cur) {
+      lines.push(cur);
+      cur = w;
+    } else {
+      cur = (cur + ' ' + w).trim();
+    }
+  }
+  if (cur) lines.push(cur);
+  return lines
+    .slice(0, 3)
+    .map((text, i) => ({ text, x, y: y0 + i * lineH }));
+}
+
+// ===========================================================================
+// 19. Readiness heatmap (Mobilize §5) — control / readiness dimensions scored
+//     ready / partial / blocked.
+// ===========================================================================
+
+export interface ReadinessRow {
+  /** The readiness dimension, e.g. "Privacy review". */
+  label: string;
+  /** State — ready / partial / blocked. */
+  state: 'ready' | 'partial' | 'blocked';
+  /** Short status note. */
+  note: string;
+}
+
+/** A vertical list of readiness rows, each a coloured state tile + note. */
+export function readinessHeatmap(rows: ReadinessRow[]): string {
+  const W = 760;
+  const rowH = 42;
+  const padL = 14;
+  const padT = 14;
+  const H = padT + rows.length * rowH + 12;
+  const stateW = 110;
+
+  const toneFor = (s: ReadinessRow['state']): { bg: string; ink: string } =>
+    s === 'ready'
+      ? { bg: CHART.goodSoft, ink: CHART.good }
+      : s === 'partial'
+        ? { bg: CHART.warnSoft, ink: CHART.warn }
+        : { bg: CHART.badSoft, ink: CHART.bad };
+
+  let svg = open({ width: W, height: H, title: 'Readiness heatmap' });
+  svg += `<rect x="0" y="0" width="${W}" height="${H}" fill="${CHART.paper}"/>`;
+
+  rows.forEach((row, i) => {
+    const cy = padT + i * rowH;
+    const tone = toneFor(row.state);
+    // State tile.
+    svg += `<rect x="${padL}" y="${cy + 4}" width="${stateW}" height="${rowH - 8}" fill="${tone.bg}" stroke="${tone.ink}" stroke-width="1" rx="3"/>`;
+    svg += txt(padL + stateW / 2, cy + rowH / 2 + 4, row.state.toUpperCase(), {
+      size: 9,
+      anchor: 'middle',
+      weight: 800,
+      spacing: 0.4,
+      fill: tone.ink,
+    });
+    // Label + note.
+    svg += txt(padL + stateW + 14, cy + rowH / 2 - 3, row.label, {
+      size: 10.5,
+      weight: 800,
+    });
+    svg += txt(padL + stateW + 14, cy + rowH / 2 + 12, row.note, {
+      size: 9,
+      weight: 500,
+      fill: CHART.inkSoft,
+    });
+  });
+
+  svg += `</svg>`;
+  return svg;
+}

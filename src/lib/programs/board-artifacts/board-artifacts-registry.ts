@@ -127,6 +127,22 @@ const APEX_CONTACT_CENTER_ARTIFACTS: readonly BoardArtifact[] = [
       'The board-grade solution architecture — target-state design, integration patterns, and the build approach.',
     htmlHref: '/api/v1/moves/board-grade-solution-architecture',
   },
+  {
+    id: 'estimate-model',
+    label: 'Estimate & Financial Model',
+    phase: 'Design & Plan',
+    blurb:
+      'The board-grade estimate — workstream cost, role mix, rate card, value forecast, sensitivity, and roadmap cash flow.',
+    htmlHref: '/api/v1/moves/board-grade-estimate-model',
+  },
+  {
+    id: 'mobilize-packet',
+    label: 'Mobilize & Go-Decision Packet',
+    phase: 'Mobilize',
+    blurb:
+      'The board-grade Mobilize packet — 30/60/90 plan, RACI, adoption approach, Tower handoff, and the go-decision verdict.',
+    htmlHref: '/api/v1/moves/board-grade-mobilize-packet',
+  },
 ];
 
 /**
