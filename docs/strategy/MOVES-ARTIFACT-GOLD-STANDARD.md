@@ -6,6 +6,7 @@
 **Status:** v1 design standard — artifact architecture and renderer quality bar.  
 **Pairs with:** `MOVES-DELIVERABLE-AND-BUSINESS-CASE-SPEC.md`,
 `MOVES-AGENTIC-SHAPING-METHODOLOGY.md`,
+`CXO-ARTIFACT-EXCELLENCE-FRAMEWORK.md`,
 `MOVES-SCENARIO-QUALITY-LAB-2026-05-19.md`,
 `MOVES-BOARD-GRADE-ARTIFACT-BLUEPRINT.md`.
 
@@ -30,6 +31,11 @@ For page-by-page board-artifact outlines, consulting-style exhibit anatomy,
 mandatory visuals and the top-tier quality benchmark, use
 `MOVES-BOARD-GRADE-ARTIFACT-BLUEPRINT.md` as the implementation gate. Renderer
 work should not proceed until that blueprint is accepted or revised.
+
+For cross-module quality scoring, hard fails, circulation thresholds and the
+"better than a top-tier consulting deck" definition, use
+`CXO-ARTIFACT-EXCELLENCE-FRAMEWORK.md` as the parent standard. Moves-specific
+standards may be stricter, but they should not be weaker.
 
 ## 2. Design Principles
 

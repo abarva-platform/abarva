@@ -46,6 +46,25 @@ export function EventIdStrip({ event }: EventIdStripProps) {
       </div>
       <div style={RIGHT_STYLE}>
         <a
+          data-testid="source-canvas-cxo-report-html"
+          href={`/api/v1/source/${encodeURIComponent(event.id)}/cxo-report?format=html`}
+          style={REPORT_LINK_STYLE}
+          title="Open the governed CXO narrative report in the browser"
+          target="_blank"
+          rel="noreferrer"
+        >
+          CXO Report
+        </a>
+        <a
+          data-testid="source-canvas-cxo-report-pptx"
+          href={`/api/v1/source/${encodeURIComponent(event.id)}/cxo-report?format=pptx`}
+          style={REPORT_LINK_STYLE}
+          title="Download an editable PowerPoint CXO narrative deck"
+          download
+        >
+          PPTX
+        </a>
+        <a
           data-testid="source-canvas-deal-pack-download"
           href={`/api/v1/source/${encodeURIComponent(event.id)}/deal-pack?format=html`}
           style={DEAL_PACK_LINK_STYLE}
@@ -181,4 +200,10 @@ const DEAL_PACK_LINK_STYLE: CSSProperties = {
   textTransform: 'uppercase',
   textDecoration: 'none',
   fontWeight: 600,
+};
+
+const REPORT_LINK_STYLE: CSSProperties = {
+  ...DEAL_PACK_LINK_STYLE,
+  background: '#F4F2EC',
+  color: CANVAS.INK,
 };

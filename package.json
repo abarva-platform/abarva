@@ -168,6 +168,7 @@
     "pdf-parse": "^2.4.5",
     "pg": "^8.20.0",
     "posthog-js": "^1.368.0",
+    "pptxgenjs": "^4.0.1",
     "react": "19.2.4",
     "react-dom": "19.2.4",
     "react-markdown": "^10.1.0",
