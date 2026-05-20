@@ -6,7 +6,8 @@
 **Status:** v1 design standard — artifact architecture and renderer quality bar.  
 **Pairs with:** `MOVES-DELIVERABLE-AND-BUSINESS-CASE-SPEC.md`,
 `MOVES-AGENTIC-SHAPING-METHODOLOGY.md`,
-`MOVES-SCENARIO-QUALITY-LAB-2026-05-19.md`.
+`MOVES-SCENARIO-QUALITY-LAB-2026-05-19.md`,
+`MOVES-BOARD-GRADE-ARTIFACT-BLUEPRINT.md`.
 
 ## 1. Purpose
 
@@ -24,6 +25,11 @@ The standard has one product goal:
 > recommendation.
 
 This document defines the start-to-finish artifact system.
+
+For page-by-page board-artifact outlines, consulting-style exhibit anatomy,
+mandatory visuals and the top-tier quality benchmark, use
+`MOVES-BOARD-GRADE-ARTIFACT-BLUEPRINT.md` as the implementation gate. Renderer
+work should not proceed until that blueprint is accepted or revised.
 
 ## 2. Design Principles
 
