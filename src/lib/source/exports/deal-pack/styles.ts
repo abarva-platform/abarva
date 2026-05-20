@@ -199,6 +199,24 @@ details.dp-toc__details[open] > summary::before { content: '\\25BE \\00A0'; }
   font-size: 13.5px;
   margin: 12px 0 0;
 }
+/* Kernel-hold headline: the Source expert-judgment kernel holds the
+   award. The pack must read unmistakably as a hold, not a go. */
+.dp-headline--hold {
+  border-left: 4px solid #B5450C;
+}
+.dp-headline__blockers {
+  margin-top: 16px;
+  border-top: 1px solid var(--rule);
+  padding-top: 12px;
+}
+.dp-headline__blockers ul {
+  margin: 4px 0 12px;
+  padding-left: 18px;
+  font-size: 13px;
+}
+.dp-headline__blockers li {
+  margin-bottom: 5px;
+}
 
 /* Stage section */
 .dp-stage {

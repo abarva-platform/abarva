@@ -3,6 +3,7 @@ import type {
   SourceJudgmentBlocker,
   SourceJudgmentEvidenceRow,
   SourceJudgmentGateCriterion,
+  SourceJudgmentVerdict,
 } from './source-judgment-types';
 
 const HELD_SELECTION_PATTERNS = [
@@ -91,4 +92,47 @@ export function gateBlockers(gates: ReadonlyArray<SourceJudgmentGateCriterion>):
 
 export function evidenceLabel(row: SourceJudgmentEvidenceRow): string {
   return row.sourceArtifactId || row.requirementId;
+}
+
+/**
+ * Verdicts that are NOT an approval to award / proceed. Any of these must
+ * override positive vendor scoring, cheapest price, or renewal urgency in
+ * every Source artifact — the artifact must not present "Award / proceed".
+ */
+const HOLD_VERDICTS: ReadonlySet<SourceJudgmentVerdict> = new Set<SourceJudgmentVerdict>([
+  'do_not_award_yet',
+  'proceed_to_bafo',
+  'renegotiate',
+  'rebid_required',
+  'pause_for_evidence',
+  'kill_or_reframe',
+]);
+
+/** True when the kernel verdict holds the award (anything other than award_ready). */
+export function isHoldVerdict(verdict: SourceJudgmentVerdict): boolean {
+  return HOLD_VERDICTS.has(verdict);
+}
+
+/**
+ * Canonical CXO-facing label for a kernel verdict. Shared by every Source
+ * artifact so the Deal Pack, CXO report, HTML, PPTX, scorecard and pricing
+ * comparison all render the SAME verdict string from the one kernel.
+ */
+export function sourceJudgmentVerdictLabel(verdict: SourceJudgmentVerdict): string {
+  switch (verdict) {
+    case 'award_ready':
+      return 'Award / proceed';
+    case 'do_not_award_yet':
+      return 'Do not award yet';
+    case 'proceed_to_bafo':
+      return 'Proceed to targeted BAFO';
+    case 'renegotiate':
+      return 'Renegotiate';
+    case 'rebid_required':
+      return 'Rebid required';
+    case 'pause_for_evidence':
+      return 'Pause for evidence';
+    case 'kill_or_reframe':
+      return 'Kill or reframe';
+  }
 }

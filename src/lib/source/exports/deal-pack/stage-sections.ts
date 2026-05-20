@@ -16,6 +16,12 @@ import type {
   SourceEventGateCriterion,
 } from '@/lib/source/canvas-substrate/types';
 import type { SourceStageKey } from '@/lib/source/types';
+import { buildSourceJudgmentFromDealPack } from '../../expert-judgment/source-judgment-kernel';
+import {
+  isHoldVerdict,
+  sourceJudgmentVerdictLabel,
+} from '../../expert-judgment/source-judgment-rules';
+import type { SourceJudgment } from '../../expert-judgment/source-judgment-types';
 import type { AppInventoryPayload } from '../renderers/app-inventory';
 import type { ResponseChecklistPayload } from '../renderers/response-checklist';
 import type { ScorecardPayload } from '../renderers/scorecard';
@@ -105,9 +111,18 @@ export interface DealPackInput {
 
 export function assembleDealPackHtml(input: DealPackInput): string {
   const docTitle = `${input.tenantName} · ${input.eventName} · Deal Pack`;
-  const headlineHtml = renderHeadline(input);
+  // The Deal Pack headline verdict, blockers, evidence gaps and next
+  // actions are sourced from the one Source expert-judgment kernel — the
+  // SAME kernel the CXO narrative report consumes. The Deal Pack does NOT
+  // synthesize its own conclusion: a kernel hold verdict must override any
+  // positive decision artifact, so no part of the pack can read "Award /
+  // proceed" while the kernel holds the award.
+  const judgment = buildSourceJudgmentFromDealPack(input);
+  const headlineHtml = renderHeadline(input, judgment);
   const tocHtml = renderToc(input);
-  const stagesHtml = input.stages.map((s) => renderStageSection(s)).join('\n');
+  const stagesHtml = input.stages
+    .map((s) => renderStageSection(s, judgment))
+    .join('\n');
   const evidenceHtml = renderEvidenceLedger(input);
   const decisionsHtml = renderDecisionHistory(input);
   const glossaryHtml = renderGlossary();
@@ -189,9 +204,33 @@ export function assembleDealPackHtml(input: DealPackInput): string {
 
 // ── Headline (Fast Answer) ────────────────────────────────────────────────
 
-function renderHeadline(input: DealPackInput): string {
-  const synth = synthesizeHeadline(input);
+function renderHeadline(input: DealPackInput, judgment: SourceJudgment): string {
+  const synth = synthesizeHeadline(input, judgment);
   const eyebrow = `${escapeHtml(input.tenantName)} · ${escapeHtml(input.eventCode)} · ${escapeHtml(input.eventStatus)}`;
+  const blockersBlock = renderHeadlineBlockers(judgment);
+  if (synth.kind === 'hold') {
+    // Kernel holds the award. The Deal Pack must NOT render "Award /
+    // proceed" anywhere — it shows the hold verdict, the blockers, the
+    // evidence gaps and the kernel next action verbatim.
+    return `
+    <section class="dp-headline dp-headline--hold" id="headline" aria-labelledby="headline-title">
+      <div class="dp-headline__eyebrow">Headline · Fast Answer</div>
+      <h1 class="dp-headline__title" id="headline-title">${escapeHtml(input.eventName)}</h1>
+      <p class="dp-headline__subtitle">${eyebrow}</p>
+      <div class="dp-headline__pending">
+        <strong>${escapeHtml(synth.verdictLabel)} — Source expert-judgment kernel.</strong> ${escapeHtml(synth.executiveSummary)}
+      </div>
+      <dl class="dp-headline__rows">
+        <dt>Verdict</dt><dd><strong>${escapeHtml(synth.verdictLabel)}</strong></dd>
+        <dt>Confidence</dt><dd>${escapeHtml(synth.confidence)}</dd>
+        <dt>Financial impact</dt><dd>${escapeHtml(synth.financialImpact)}</dd>
+        <dt>Next action</dt><dd>${escapeHtml(synth.nextStep)}</dd>
+        <dt>What would change the verdict</dt><dd>${escapeHtml(synth.changeTrigger)}</dd>
+      </dl>
+      ${blockersBlock}
+    </section>
+  `;
+  }
   if (synth.kind === 'pending') {
     return `
     <section class="dp-headline" id="headline" aria-labelledby="headline-title">
@@ -202,6 +241,7 @@ function renderHeadline(input: DealPackInput): string {
         <strong>Recommendation pending — Stage ${synth.stageNumber} (${escapeHtml(synth.stageLabel)}).</strong> ${escapeHtml(synth.nextStep)}
       </div>
       ${renderHeadlineRows(input, synth.facts)}
+      ${blockersBlock}
     </section>
   `;
   }
@@ -217,8 +257,39 @@ function renderHeadline(input: DealPackInput): string {
         <dt>Key risk</dt><dd>${escapeHtml(synth.keyRisk)}</dd>
         <dt>Next step</dt><dd>${escapeHtml(synth.nextStep)}</dd>
       </dl>
+      ${blockersBlock}
     </section>
   `;
+}
+
+/**
+ * Render the kernel's blockers + evidence gaps as a visible block. Every
+ * Deal Pack — hold or not — surfaces the blockers and gaps the kernel
+ * found so a recommendation is never shown without them.
+ */
+function renderHeadlineBlockers(judgment: SourceJudgment): string {
+  if (judgment.blockers.length === 0 && judgment.evidenceGaps.length === 0) {
+    return '';
+  }
+  const blockerRows = judgment.blockers
+    .map(
+      (b) =>
+        `<li><strong>[${escapeHtml(b.severity)} · ${escapeHtml(b.domain)}]</strong> ${escapeHtml(b.description)} <em>${escapeHtml(b.requiredResolution)}</em></li>`,
+    )
+    .join('');
+  const gapRows = judgment.evidenceGaps
+    .map(
+      (g) =>
+        `<li><strong>Evidence gap:</strong> ${escapeHtml(g.gap)} <em>${escapeHtml(g.whyItMatters)}</em></li>`,
+    )
+    .join('');
+  const blockers = blockerRows
+    ? `<p class="dp-stage__intent">Open blockers (Source expert-judgment kernel)</p><ul class="dp-body">${blockerRows}</ul>`
+    : '';
+  const gaps = gapRows
+    ? `<p class="dp-stage__intent">Evidence gaps</p><ul class="dp-body">${gapRows}</ul>`
+    : '';
+  return `<div class="dp-headline__blockers">${blockers}${gaps}</div>`;
 }
 
 interface HeadlineFacts {
@@ -241,6 +312,15 @@ function renderHeadlineRows(input: DealPackInput, facts: HeadlineFacts): string 
 
 type HeadlineSynthesis =
   | {
+      kind: 'hold';
+      verdictLabel: string;
+      executiveSummary: string;
+      confidence: string;
+      financialImpact: string;
+      nextStep: string;
+      changeTrigger: string;
+    }
+  | {
       kind: 'decided';
       action: string;
       confidence: string;
@@ -256,7 +336,7 @@ type HeadlineSynthesis =
       facts: HeadlineFacts;
     };
 
-function synthesizeHeadline(input: DealPackInput): HeadlineSynthesis {
+function synthesizeHeadline(input: DealPackInput, judgment: SourceJudgment): HeadlineSynthesis {
   const valueLabel = input.estimatedValueUsd
     ? fmtUsd(input.estimatedValueUsd)
     : '— not recorded';
@@ -271,6 +351,23 @@ function synthesizeHeadline(input: DealPackInput): HeadlineSynthesis {
     owner,
     stage: `Stage ${stageNumber} · ${stageLabel}`,
   };
+
+  // The kernel verdict is authoritative. When it holds the award, the
+  // headline shows the hold verdict — it cannot be overridden by an
+  // optimistic selection memo, decision brief or renewal posture.
+  if (isHoldVerdict(judgment.verdict)) {
+    return {
+      kind: 'hold',
+      verdictLabel: sourceJudgmentVerdictLabel(judgment.verdict),
+      executiveSummary: judgment.executiveSummary,
+      confidence: `${capitalizeFirst(judgment.confidence)} — Source expert-judgment kernel`,
+      financialImpact: `${valueLabel} — do not treat as approved value until blockers close`,
+      nextStep:
+        judgment.nextActions[0]?.action
+        ?? 'Close the named blockers and evidence gaps before supplier commitment.',
+      changeTrigger: judgment.whatWouldChangeTheVerdict.join(' '),
+    };
+  }
 
   // Prefer authored decision artifacts in priority order — Selection
   // Memo (post-decision) > Renewal Decision (renewal track) > Decision
@@ -349,6 +446,10 @@ function synthesizeHeadline(input: DealPackInput): HeadlineSynthesis {
   };
 }
 
+function capitalizeFirst(value: string): string {
+  return value.charAt(0).toUpperCase() + value.slice(1);
+}
+
 // ── TOC ───────────────────────────────────────────────────────────────────
 
 function renderToc(input: DealPackInput): string {
@@ -377,8 +478,10 @@ function renderToc(input: DealPackInput): string {
 
 // ── Stage section ─────────────────────────────────────────────────────────
 
-function renderStageSection(stage: DealPackStage): string {
-  const artifactsHtml = stage.artifacts.map((a) => renderArtifact(a)).join('\n');
+function renderStageSection(stage: DealPackStage, judgment: SourceJudgment): string {
+  const artifactsHtml = stage.artifacts
+    .map((a) => renderArtifact(a, judgment))
+    .join('\n');
   const emptyState =
     stage.artifacts.length === 0
       ? `<div class="dp-stage__empty"><strong>Not yet produced</strong> — this stage has no artifacts wired yet.</div>`
@@ -396,7 +499,7 @@ function renderStageSection(stage: DealPackStage): string {
   `;
 }
 
-function renderArtifact(a: DealPackArtifact): string {
+function renderArtifact(a: DealPackArtifact, judgment: SourceJudgment): string {
   const statusBadge = a.kind === 'missing'
     ? '<span class="dp-artifact__status">Not yet produced</span>'
     : a.bodyIsAuthored
@@ -430,7 +533,7 @@ function renderArtifact(a: DealPackArtifact): string {
     `;
   }
   // Structured.
-  const inner = a.structured ? renderStructured(a.structured) : '';
+  const inner = a.structured ? renderStructured(a.structured, judgment) : '';
   return `
     <div class="dp-artifact">
       ${head}
@@ -439,18 +542,18 @@ function renderArtifact(a: DealPackArtifact): string {
   `;
 }
 
-function renderStructured(c: DealPackStructuredCarrier): string {
+function renderStructured(c: DealPackStructuredCarrier, judgment: SourceJudgment): string {
   switch (c.kind) {
     case 'app-inventory':
       return renderAppInventoryHtml(c.payload);
     case 'response-checklist':
       return renderResponseChecklistHtml(c.payload);
     case 'scorecard':
-      return renderScorecardHtml(c.payload);
+      return renderScorecardHtml(c.payload, judgment);
     case 'pricing-template':
       return renderPricingTemplateHtml(c.payload);
     case 'pricing-comparison':
-      return renderPricingComparisonHtml(c.payload);
+      return renderPricingComparisonHtml(c.payload, judgment);
     case 'trap-log':
       return renderTrapLogHtml(c.payload);
     case 'bafo-question-pack':

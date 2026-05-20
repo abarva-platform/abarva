@@ -337,3 +337,51 @@ describe('Source Deal Pack · assemble-deal-pack', () => {
     expect(html).toContain('id="stage-7"');
   });
 });
+
+describe('Source Deal Pack · kernel verdict drives the headline', () => {
+  // A held event: the selection memo holds the award and the evaluation
+  // gate is open. The Deal Pack headline must show the kernel hold
+  // verdict and must NOT render an "Award / proceed" recommendation —
+  // even though a selection-memo decision artifact is authored.
+  function heldEventCtx(): SourceGenerationContext {
+    const heldSelectionMemo = [
+      '# Selection Memo',
+      '',
+      'Selection status: pending. TaskFlow AI is provisional leader, not selected.',
+      'Do not award yet until P0 legal clauses and telemetry evidence close.',
+    ].join('\n');
+    return {
+      tenantKey: 'apex-retail',
+      tenantName: 'Apex Retail',
+      event: {
+        id: 'evt-apex-cc',
+        code: 'APX-CC-2026',
+        name: 'Apex Retail Contact Center AI',
+        archetype: 'contact_center_ai',
+        rigor: 'strategic',
+        currentStageKey: 'selection',
+        statusLabel: 'Active',
+        owner: 'Maya Chen, VP Customer Ops',
+        triggerDescription: null,
+        scopeDescription: null,
+        estimatedValueUsd: 4_200_000,
+      },
+      artifactStates: [
+        makeArtifactState('d27_selection_memo', heldSelectionMemo, { stage: 'selection' }),
+      ],
+      gateCriteria: [makeGateCriterion('selection-ready', 'not_met')],
+      evidence: [makeEvidence('selection-001', 'Available')],
+    };
+  }
+
+  it('shows the kernel hold verdict and never renders Award / proceed', async () => {
+    const { html } = await assembleDealPack(heldEventCtx(), GENERATED_AT);
+    expect(html).toContain('dp-headline--hold');
+    expect(html).toMatch(/Do not award yet/);
+    expect(html).not.toContain('Award / proceed');
+    expect(html).not.toMatch(/award-ready/i);
+    // The headline surfaces the kernel blockers + what would change it.
+    expect(html).toContain('Open blockers');
+    expect(html).toContain('What would change the verdict');
+  });
+});

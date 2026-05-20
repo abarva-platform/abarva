@@ -23,6 +23,11 @@
 // The intent is intentionally faithful to the canonical payload: every
 // field rendered, every seed-gap line preserved.
 
+import {
+  isHoldVerdict,
+  sourceJudgmentVerdictLabel,
+} from '../../expert-judgment/source-judgment-rules';
+import type { SourceJudgment } from '../../expert-judgment/source-judgment-types';
 import type { AppInventoryPayload } from '../renderers/app-inventory';
 import type { ResponseChecklistPayload } from '../renderers/response-checklist';
 import type { ScorecardPayload } from '../renderers/scorecard';
@@ -66,6 +71,33 @@ function pillFor(kind: string, value: string): string {
 
 function emptyRow(cols: number, message: string = SEED_GAP_LINE): string {
   return `<tr><td colspan="${cols}" style="color: var(--muted); font-style: italic;">${escapeHtml(message)}</td></tr>`;
+}
+
+/**
+ * Render the kernel verdict banner an artifact must carry. When the
+ * kernel holds the award, this is shown so the artifact's own positive
+ * numbers (top-scoring vendor, cheapest price) cannot read as "go".
+ * `domains` scopes which blockers are surfaced on this artifact.
+ */
+function renderKernelVerdictBanner(
+  judgment: SourceJudgment,
+  domains: ReadonlyArray<SourceJudgment['blockers'][number]['domain']>,
+): string {
+  const hold = isHoldVerdict(judgment.verdict);
+  const label = sourceJudgmentVerdictLabel(judgment.verdict);
+  const relevantBlockers = judgment.blockers.filter((b) => domains.includes(b.domain));
+  const blockerList = relevantBlockers.length
+    ? `<ul class="dp-body">${relevantBlockers
+        .map(
+          (b) =>
+            `<li><strong>[${escapeHtml(b.severity)} · ${escapeHtml(b.domain)}]</strong> ${escapeHtml(b.description)}</li>`,
+        )
+        .join('')}</ul>`
+    : '';
+  if (hold) {
+    return `<div class="dp-stage__empty" style="margin-bottom:12px;"><strong>Kernel verdict: ${escapeHtml(label)}.</strong> The Source expert-judgment kernel holds the award — this artifact is not decision-ready and must not be read as a recommendation to award or proceed.${blockerList}</div>`;
+  }
+  return `<p class="dp-stage__intent" style="margin-bottom:8px;">Kernel verdict: ${escapeHtml(label)} — Source expert-judgment kernel.</p>`;
 }
 
 // ── d04 · App Inventory ────────────────────────────────────────────────────
@@ -153,7 +185,17 @@ export function renderResponseChecklistHtml(p: ResponseChecklistPayload): string
 
 // ── d16 · Scorecard ────────────────────────────────────────────────────────
 
-export function renderScorecardHtml(p: ScorecardPayload): string {
+export function renderScorecardHtml(p: ScorecardPayload, judgment: SourceJudgment): string {
+  // A high score is not an award. The kernel verdict is surfaced above
+  // the criteria/weights so a top-scoring vendor cannot read as
+  // award-ready while the kernel holds the award.
+  const verdictBanner = renderKernelVerdictBanner(judgment, [
+    'governance',
+    'legal',
+    'ai_data_rights',
+    'security',
+    'evidence',
+  ]);
   const criteria =
     p.criteria.length === 0
       ? emptyRow(4)
@@ -180,6 +222,7 @@ export function renderScorecardHtml(p: ScorecardPayload): string {
     ? `<p class="dp-stage__intent">Round: ${escapeHtml(p.roundLabel)}</p>`
     : '';
   return `
+    ${verdictBanner}
     ${round}
     ${vendors}
     <table class="dp-table"><caption>Criteria + weights</caption>
@@ -229,13 +272,42 @@ export function renderPricingTemplateHtml(p: PricingTemplatePayload): string {
 
 // ── d19c · Pricing Comparison ──────────────────────────────────────────────
 
-export function renderPricingComparisonHtml(p: PricingComparisonPayload): string {
+export function renderPricingComparisonHtml(
+  p: PricingComparisonPayload,
+  judgment: SourceJudgment,
+): string {
   if (p.submissions.length === 0) {
     return `<p style="color: var(--muted); font-style: italic;">${SEED_GAP_LINE} — no vendor pricing submissions recorded yet.</p>`;
   }
   const demoBanner = p.demoMode
     ? '<div class="dp-stage__empty" style="margin-bottom: 12px;"><strong>Demo mode</strong> — synthetic vendor submissions. Replace with uploaded responses before sharing externally.</div>'
     : '';
+  // Pricing that is incomplete or non-comparable must NEVER be silently
+  // normalized as apples-to-apples. Detect missing line-item prices and
+  // label them; if pricing incompleteness is a kernel blocker, the whole
+  // comparison is explicitly flagged as not decision-ready.
+  const lineCount = p.lineItems.length;
+  const incompleteVendors = p.submissions.filter((s) => {
+    if (lineCount === 0) return false;
+    const filled = p.lineItems.filter((l) => {
+      const v = s.unitPricesById[l.id];
+      return typeof v === 'number' && v > 0;
+    }).length;
+    return filled < lineCount;
+  });
+  const pricingIsIncomplete = incompleteVendors.length > 0;
+  const pricingBlocker = judgment.blockers.find((b) => b.domain === 'pricing');
+  const verdictBanner = renderKernelVerdictBanner(judgment, ['pricing', 'commercial']);
+  const incompleteBanner =
+    pricingIsIncomplete || pricingBlocker
+      ? `<div class="dp-stage__empty" style="margin-bottom:12px;"><strong>Pricing is incomplete / not comparable — this comparison is not decision-ready.</strong> ${
+          pricingIsIncomplete
+            ? `${escapeHtml(
+                incompleteVendors.map((s) => s.vendorName).join(', '),
+              )} did not price every locked line item. Missing prices are shown as an evidence gap, not normalized to zero or inferred.`
+            : 'The Source expert-judgment kernel flags pricing as incomplete or non-comparable.'
+        } Do not present these figures as an apples-to-apples commercial view until missing pricing is closed or the non-comparable scope is explicitly excluded.</div>`
+      : '';
   const head = `<tr><th>Line</th><th>Description</th>${p.submissions.map((s) => `<th>${escapeHtml(s.vendorName)}</th>`).join('')}</tr>`;
   const rows =
     p.lineItems.length === 0
@@ -245,7 +317,7 @@ export function renderPricingComparisonHtml(p: PricingComparisonPayload): string
             const cells = p.submissions
               .map((s) => {
                 const unit = s.unitPricesById[l.id];
-                return `<td class="is-num">${unit == null ? SEED_GAP_LINE : fmtUsd(unit * l.annualQuantity)}</td>`;
+                return `<td class="is-num">${unit == null ? `${SEED_GAP_LINE} — pricing not recorded` : fmtUsd(unit * l.annualQuantity)}</td>`;
               })
               .join('');
             return `<tr><td>${escapeHtml(l.id)}</td><td>${escapeHtml(l.description)}</td>${cells}</tr>`;
@@ -268,7 +340,9 @@ export function renderPricingComparisonHtml(p: PricingComparisonPayload): string
     ? `<p class="dp-stage__intent" style="margin-top:12px;">Vendor assumption deviations</p><ul class="dp-body">${deviations}</ul>`
     : '';
   return `
+    ${verdictBanner}
     ${demoBanner}
+    ${incompleteBanner}
     <table class="dp-table"><caption>Per-line annualized comparison (qty × unit price)</caption>
       <thead>${head}</thead>
       <tbody>${rows}</tbody>
