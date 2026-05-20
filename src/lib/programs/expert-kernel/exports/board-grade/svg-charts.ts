@@ -569,7 +569,9 @@ export function sensitivityTornado(bars: TornadoBar[]): string {
   const W = 720;
   const rowH = 46;
   const padL = 180;
-  const padR = 80;
+  // Right gutter holds the end tag ("SEED-GAP PROXY" is the widest). The
+  // previous 80px clipped it; 148px keeps the whole tag inside the frame.
+  const padR = 148;
   const padT = 40;
   const padB = 24;
   const H = padT + bars.length * rowH + padB;
@@ -826,16 +828,27 @@ export function roadmapSwimlane(
       fill: CHART.inkSoft,
       mono: true,
     });
-    // In-bar value or enablement tag.
+    // In-bar value or enablement tag. A foundational phase is short, so its
+    // "Enablement · no value yet" caption would collide with the gate diamond
+    // that sits at the bar end — render that caption ABOVE the bar instead.
     const inBar = ph.foundational
       ? 'Enablement · no value yet'
       : `Unlocks ~${compactUsd(ph.valueUnlocked)}/yr`;
-    svg += txt(x + w / 2, cy + 3, inBar, {
-      size: 9,
-      anchor: 'middle',
-      weight: 700,
-      fill: ph.foundational ? CHART.inkSoft : CHART.accent,
-    });
+    if (ph.foundational) {
+      svg += txt(x + w / 2, cy - 21, inBar, {
+        size: 9,
+        anchor: 'middle',
+        weight: 700,
+        fill: CHART.inkSoft,
+      });
+    } else {
+      svg += txt(x + w / 2, cy + 3, inBar, {
+        size: 9,
+        anchor: 'middle',
+        weight: 700,
+        fill: CHART.accent,
+      });
+    }
     // Gate diamond at phase end.
     const gx = x + w;
     svg += `<path d="M ${gx} ${cy - 9} L ${gx + 8} ${cy} L ${gx} ${cy + 9} L ${gx - 8} ${cy} Z" fill="${CHART.ink}"/>`;
