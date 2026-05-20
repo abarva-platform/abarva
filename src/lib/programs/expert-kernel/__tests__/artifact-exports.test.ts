@@ -158,6 +158,12 @@ for (const caseId of EXPERT_REVIEW_CASE_IDS) {
         expect(text).toContain('seed gap');
         // Grounding 3 — the move name is present, no placeholder text.
         expect(text).toContain(caseEntry.tenantKey);
+        if (artifact.id === 'business_case_pack') {
+          expect(text).toContain('Board-grade visual exhibits');
+          expect(text).toContain('Investment to return waterfall');
+          expect(text).toContain('Sensitivity tornado');
+          expect(text).toContain('Architecture context diagram');
+        }
       });
     }
 
@@ -181,6 +187,10 @@ for (const caseId of EXPERT_REVIEW_CASE_IDS) {
       expect(text.toLowerCase()).toContain('effort estimate');
       expect(text.toLowerCase()).toContain('value forecast');
       expect(text.toLowerCase()).toContain('costed roadmap');
+      expect(text.toLowerCase()).toContain('board-grade visual exhibit spine');
+      expect(text).toContain('Investment to return waterfall');
+      expect(text).toContain('Sensitivity tornado');
+      expect(text).toContain('Payback range curve');
     });
 
     it('XLSX value forecast reconciles with the skeleton value range', async () => {
