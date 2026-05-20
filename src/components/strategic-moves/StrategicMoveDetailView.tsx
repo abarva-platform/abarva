@@ -6,6 +6,7 @@ import { MoveArtifactUpload } from './MoveArtifactUpload';
 import { NexusCurrentStateBriefingPanel } from './NexusCurrentStateBriefingPanel';
 import { StrategicMoveDetailClient } from './StrategicMoveDetailClient';
 import { PhaseDocumentsPanel } from './PhaseDocumentsPanel';
+import { BoardArtifactsPanel } from './BoardArtifactsPanel';
 import { MoveToSourceHandoffCta } from './MoveToSourceHandoffCta';
 import type { StrategicMove } from '@/lib/programs/types.ui';
 import type { MoveToSourceHandoffResult } from '@/lib/programs/source-trigger/move-to-source-handoff';
@@ -263,6 +264,9 @@ function ActivityContent({ move }: { move: StrategicMove }) {
 function DocumentsContent({ move }: { move: StrategicMove }) {
   return (
     <div style={{ padding: '0 4px' }}>
+      {/* Board-grade artifact decks anchored to this Move, when any exist.
+          Renders nothing for a Move with no anchored decks. */}
+      <BoardArtifactsPanel move={move} />
       <Suspense fallback={
         <div style={{ padding: '32px 0', textAlign: 'center', fontSize: 12, color: '#9AA3B2' }}>
           Loading documents…
