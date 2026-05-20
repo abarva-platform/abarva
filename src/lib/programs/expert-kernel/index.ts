@@ -37,6 +37,7 @@ export * from './scenario-regeneration-signoff';
 export * from './scenario-quality-lab';
 export * from './artifact-standards';
 export * from './artifact-quality-rubric';
+export * from './master-move-dossier';
 export * from './apex-contact-center-case';
 export * from './meridian-ambient-clinical-case';
 export * from './firstcapital-fraud-detection-case';
