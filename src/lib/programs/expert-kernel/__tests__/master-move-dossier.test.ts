@@ -4,6 +4,7 @@ import {
 } from '../master-move-dossier';
 import { EXPERT_REVIEW_CASE_IDS } from '../expert-review-cases';
 import { KERNEL_ARTIFACTS } from '../exports/artifact-catalog';
+import { listRequiredVisualIdsForArtifact } from '../artifact-visual-exhibits';
 
 const ALL_ARTIFACT_IDS = KERNEL_ARTIFACTS.map((artifact) => artifact.id);
 
@@ -54,6 +55,9 @@ describe('Master Move dossier view model', () => {
     for (const artifactId of ALL_ARTIFACT_IDS) {
       expect(linkedIds.has(artifactId)).toBe(true);
     }
+    expect(dossier.sectionNavigation.map((section) => section.id)).toContain(
+      'visual_exhibits',
+    );
   });
 
   it('carries Increment 1 quality scores into every download card', () => {
@@ -72,7 +76,12 @@ describe('Master Move dossier view model', () => {
       dossier.downloadsSection.find(
         (card) => card.artifactId === 'business_case_pack',
       )?.hardFailureCount,
-    ).toBeGreaterThan(0);
+    ).toBe(0);
+    expect(
+      dossier.visualExhibits.find(
+        (exhibit) => exhibit.id === 'architecture_context_diagram',
+      )?.status,
+    ).toBe('gap');
   });
 
   it('renders missing evidence as explicit gaps, never blanks', () => {
@@ -110,5 +119,32 @@ describe('Master Move dossier view model', () => {
     expect(
       dossier.reviewSignoffSection.filter((row) => row.requiredForGate).length,
     ).toBeGreaterThanOrEqual(4);
+  });
+
+  it('includes consulting-grade visual exhibits and keeps gap-state visuals explicit', () => {
+    const dossier = buildMasterMoveDossier('apexretail');
+    const exhibitIds = new Set(dossier.visualExhibits.map((exhibit) => exhibit.id));
+
+    for (const artifactId of ALL_ARTIFACT_IDS) {
+      for (const visualId of listRequiredVisualIdsForArtifact(artifactId)) {
+        expect(exhibitIds.has(visualId)).toBe(true);
+      }
+    }
+
+    expect(
+      dossier.visualExhibits.find(
+        (exhibit) => exhibit.id === 'investment_vs_return_waterfall',
+      )?.data.length,
+    ).toBeGreaterThanOrEqual(3);
+    expect(
+      dossier.visualExhibits.find(
+        (exhibit) => exhibit.id === 'sensitivity_tornado',
+      )?.data.length,
+    ).toBeGreaterThanOrEqual(1);
+    expect(
+      dossier.visualExhibits.find(
+        (exhibit) => exhibit.id === 'architecture_context_diagram',
+      )?.status,
+    ).toBe('gap');
   });
 });

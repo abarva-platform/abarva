@@ -26,10 +26,15 @@ import type { BusinessCaseSkeleton, Recommendation } from './business-case-compi
 import type { FullBusinessCase } from './business-case-compiler';
 import type { GoDecisionPack } from './go-decision-pack';
 import type { MeasurementMetric } from './measurement-handoff';
+import {
+  buildArtifactVisualExhibits,
+  type VisualExhibit,
+} from './artifact-visual-exhibits';
 
 export type DossierSectionId =
   | 'executive_summary'
   | 'decision_timeline'
+  | 'visual_exhibits'
   | 'discover'
   | 'charter'
   | 'solution_architecture'
@@ -144,6 +149,7 @@ export interface MasterMoveDossier {
   downloadsSection: readonly DossierDownloadCard[];
   reviewSignoffSection: readonly DossierSignoffRow[];
   artifactQuality: readonly DossierArtifactReference[];
+  visualExhibits: readonly VisualExhibit[];
 }
 
 function moneyRange(range: { low: number; point: number; high: number }): string {
@@ -340,6 +346,7 @@ function buildSectionNavigation(): DossierNavigationItem[] {
   return [
     { id: 'executive_summary', label: 'Executive Summary', artifactIds: KERNEL_ARTIFACTS.map((a) => a.id) },
     { id: 'decision_timeline', label: 'Decision Timeline', artifactIds: ['discover_brief', 'charter_case', 'business_case_pack', 'mobilize_pack'] },
+    { id: 'visual_exhibits', label: 'Visual Exhibits', artifactIds: KERNEL_ARTIFACTS.map((a) => a.id) },
     { id: 'discover', label: 'Discover', artifactIds: ['discover_brief'] },
     { id: 'charter', label: 'Charter', artifactIds: ['charter_case'] },
     { id: 'solution_architecture', label: 'Solution Architecture', artifactIds: ['business_case_pack'] },
@@ -416,6 +423,7 @@ export function buildMasterMoveDossier(
   const { fullCase } = caseEntry.buildFullCase();
   const { measurement, goPack } = caseEntry.buildMobilize();
   const quality = buildArtifactQuality();
+  const visualExhibits = buildArtifactVisualExhibits(caseId);
   const gaps = buildEvidenceGaps(skeleton);
   const confidence = confidenceFromSkeleton(skeleton);
   const openKillCriteria = skeleton.killCriteria.length + goPack.firedKillTriggers.length;
@@ -510,6 +518,7 @@ export function buildMasterMoveDossier(
     downloadsSection: buildDownloads(quality),
     reviewSignoffSection: buildSignoffSection(skeleton, goPack),
     artifactQuality: quality,
+    visualExhibits,
   };
 }
 
