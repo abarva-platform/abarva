@@ -8,6 +8,7 @@ import {
 import {
   buildSourceJudgmentFromDealPack,
 } from '../../expert-judgment/source-judgment-kernel';
+import { sourceJudgmentVerdictLabel } from '../../expert-judgment/source-judgment-rules';
 import type { SourceJudgment } from '../../expert-judgment/source-judgment-types';
 
 export type SourceCxoSlideKind =
@@ -400,25 +401,6 @@ function synthesizeDecision(input: DealPackInput, judgment: SourceJudgment): {
     changeTrigger: 'Authoring a demand challenge, decision brief, selection memo or renewal decision.',
     status: 'bad',
   };
-}
-
-function sourceJudgmentVerdictLabel(verdict: SourceJudgment['verdict']): string {
-  switch (verdict) {
-    case 'award_ready':
-      return 'Award / proceed';
-    case 'do_not_award_yet':
-      return 'Do not award yet';
-    case 'proceed_to_bafo':
-      return 'Proceed to targeted BAFO';
-    case 'renegotiate':
-      return 'Renegotiate';
-    case 'rebid_required':
-      return 'Rebid required';
-    case 'pause_for_evidence':
-      return 'Pause for evidence';
-    case 'kill_or_reframe':
-      return 'Kill or reframe';
-  }
 }
 
 function capitalize(value: string): string {

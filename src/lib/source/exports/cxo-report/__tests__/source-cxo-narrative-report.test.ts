@@ -1,7 +1,10 @@
 jest.mock('server-only', () => ({}));
 
+import JSZip from 'jszip';
+
 import type { DealPackInput, DealPackStage } from '../../deal-pack/stage-sections';
 import { renderSourceCxoNarrativeHtml } from '../source-cxo-narrative-html';
+import { renderSourceCxoNarrativePptx } from '../source-cxo-narrative-pptx';
 import { buildSourceCxoNarrativeReport } from '../source-cxo-narrative-report';
 
 const GENERATED_AT = '2026-05-20T12:00:00.000Z';
@@ -84,7 +87,58 @@ describe('Source CXO narrative report', () => {
     expect(html).not.toMatch(/<link[^>]+href=["']https?:/i);
     expect(html).not.toContain('Lorem ipsum');
   });
+
+  it('PINS the CXO HTML verdict to the report verdict (kernel hold)', () => {
+    const input = makeDealPackInput({
+      selectionMemoBody:
+        '# Selection Memo\n\nSelection status: pending. TaskFlow AI is provisional leader, not selected. Do not award yet until P0 legal clauses and telemetry evidence close.',
+      gateState: 'not_met',
+    });
+    const report = buildSourceCxoNarrativeReport(input);
+    const html = renderSourceCxoNarrativeHtml(report);
+
+    expect(report.verdict).toBe('Do not award yet');
+    // The HTML deck renders FROM the report object — it inherits the
+    // kernel verdict and never re-synthesizes its own conclusion.
+    expect(html).toContain(report.verdict);
+    expect(html).not.toContain('Award / proceed');
+  });
+
+  it('PINS the CXO PPTX verdict to the report verdict (kernel hold)', async () => {
+    const input = makeDealPackInput({
+      selectionMemoBody:
+        '# Selection Memo\n\nSelection status: pending. TaskFlow AI is provisional leader, not selected. Do not award yet until P0 legal clauses and telemetry evidence close.',
+      gateState: 'not_met',
+    });
+    const report = buildSourceCxoNarrativeReport(input);
+    const buffer = await renderSourceCxoNarrativePptx(report);
+    const text = await extractPptxText(buffer);
+
+    expect(report.verdict).toBe('Do not award yet');
+    // The cover slide renders report.verdict.toUpperCase() — the PPTX
+    // inherits the kernel verdict, it does not re-synthesize.
+    expect(text).toContain(report.verdict.toUpperCase());
+    expect(text).not.toContain('AWARD / PROCEED');
+  });
+
+  it('PINS the CXO PPTX verdict to the report verdict (award-ready)', async () => {
+    const report = buildSourceCxoNarrativeReport(makeDealPackInput());
+    const buffer = await renderSourceCxoNarrativePptx(report);
+    const text = await extractPptxText(buffer);
+
+    expect(report.verdict).toBe('Award / proceed');
+    expect(text).toContain(report.verdict.toUpperCase());
+  });
 });
+
+async function extractPptxText(buffer: Buffer): Promise<string> {
+  const zip = await JSZip.loadAsync(buffer);
+  const slideFiles = Object.keys(zip.files).filter((name) =>
+    /^ppt\/slides\/slide\d+\.xml$/.test(name),
+  );
+  const parts = await Promise.all(slideFiles.map((name) => zip.files[name]!.async('string')));
+  return parts.join('\n');
+}
 
 function makeDealPackInput(
   overrides: { selectionMemoBody?: string | null; eventOwner?: string | null; gateState?: 'met' | 'not_met' } = {},
