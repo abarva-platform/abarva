@@ -76,6 +76,22 @@ This document is the single source of truth for any future module (Moves, Tower,
 
 The artifact-code ↔ kind mapping is bidirectional; URLs use codes, the dispatcher uses kinds.
 
+### Event-level CXO narrative report
+
+Each Source event also emits a CXO narrative report that sits above the individual artifact pipeline:
+
+```
+GET /api/v1/source/:eventId/cxo-report?format=html
+GET /api/v1/source/:eventId/cxo-report?format=pptx
+```
+
+This is not a replacement for the Source Deal Pack. The Deal Pack remains the audit appendix and full lifecycle record. The CXO narrative report is the executive story built from the same `DealPackInput`: decision answer, timing, path, economics, vendor field, commercial risk, renewal posture, evidence gaps and asks.
+
+- `format=html` is the governed in-app readout: current, traceable, and easy to inspect in the browser.
+- `format=pptx` is the editable board deck: same deterministic content, emitted as a PowerPoint file so sourcing leaders can tailor it for ELT and board circulation.
+- Missing artifacts remain visible as gaps. The report never converts scaffold or missing lifecycle evidence into claimed savings, award posture or risk closure.
+- Quality bar is governed by `docs/strategy/CXO-ARTIFACT-EXCELLENCE-FRAMEWORK.md` plus the Source-specific artifact standards in `artifact-standards.ts`.
+
 ---
 
 ## 3 · The 10 patterns

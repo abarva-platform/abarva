@@ -2,6 +2,9 @@
 
 # Source Board-Grade Deliverable Blueprint
 
+> Parent standard: `CXO-ARTIFACT-EXCELLENCE-FRAMEWORK.md`. This Source blueprint
+> specializes the cross-module CXO artifact bar for IT sourcing deliverables.
+
 **Date:** 2026-05-20  
 **Status:** v1 alignment blueprint - deliverable content standard before renderer
 uplift.  
@@ -508,4 +511,3 @@ Recommended implementation sequence:
 The path forward is not more artifact count. It is fewer, sharper artifacts
 that are decision-grade, commercially literate, and brutally clear about what
 should not proceed.
-
