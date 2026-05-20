@@ -127,6 +127,22 @@ const APEX_CONTACT_CENTER_ARTIFACTS: readonly BoardArtifact[] = [
       'The board-grade solution architecture — target-state design, integration patterns, and the build approach.',
     htmlHref: '/api/v1/moves/board-grade-solution-architecture',
   },
+  {
+    id: 'charter-skeleton',
+    label: 'Charter Business-Case Skeleton',
+    phase: 'Charter',
+    blurb:
+      'The board-grade Charter skeleton — the shaping verdict, falsifiable value hypothesis, early cost/effort range, owned assumptions, and the evidence asks before funding.',
+    htmlHref: '/api/v1/moves/board-grade-charter-skeleton',
+  },
+  {
+    id: 'cfo-pack',
+    label: 'CFO Pack',
+    phase: 'Design & Plan',
+    blurb:
+      'The board-grade CFO Pack — a financial challenge: the funding ask, the downside, the do-not-fund holdbacks, what Tower will measure, and the evidence/gap audit.',
+    htmlHref: '/api/v1/moves/board-grade-cfo-pack',
+  },
 ];
 
 /**

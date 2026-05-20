@@ -1464,3 +1464,233 @@ export function gapClosureQueue(rows: GapQueueRow[]): string {
   svg += `</svg>`;
   return svg;
 }
+
+// ===========================================================================
+// 14. Value vs effort summary (Charter §3) — the early investment envelope
+//     read against the value band. BOTH are drawn as low–high ranges with a
+//     base marker; a single-point cost or ROI is never shown (blueprint §6
+//     hard fail). When monetisation is blocked the panel says so plainly.
+// ===========================================================================
+
+export interface ValueEffortInput {
+  /** Effort / investment range. */
+  effortLow: number;
+  effortPoint: number;
+  effortHigh: number;
+  /** Value range — net, post-haircut. */
+  valueLow: number;
+  valuePoint: number;
+  valueHigh: number;
+  /** True when value rests on a seed-gap proxy — payback cannot be claimed. */
+  monetisationBlocked: boolean;
+}
+
+/**
+ * Two stacked range bars — investment over value — on one shared dollar axis,
+ * each with a base-case diamond. The honest read: when `monetisationBlocked`
+ * is set the value bar is hatched and the panel notes the value is a proxy
+ * ceiling, not a return.
+ */
+export function valueVsEffortSummary(input: ValueEffortInput): string {
+  const W = 720;
+  const H = 240;
+  const padL = 96;
+  const padR = 110;
+  const padT = 44;
+  const rowGap = 30;
+  const barH = 40;
+  const plotW = W - padL - padR;
+  const max = Math.max(input.valueHigh, input.effortHigh) * 1.08 || 1;
+  const x = (v: number): number => padL + (v / max) * plotW;
+
+  let svg = open({ width: W, height: H, title: 'Value vs effort summary' });
+  svg += `<rect x="0" y="0" width="${W}" height="${H}" fill="${CHART.paper}"/>`;
+
+  svg +=
+    `<defs><pattern id="vehatch" width="7" height="7" ` +
+    `patternUnits="userSpaceOnUse" patternTransform="rotate(45)">` +
+    `<rect width="7" height="7" fill="${CHART.warnSoft}"/>` +
+    `<line x1="0" y1="0" x2="0" y2="7" stroke="${CHART.warn}" ` +
+    `stroke-width="2.2"/></pattern></defs>`;
+
+  // Dollar grid.
+  for (let i = 0; i <= 4; i++) {
+    const v = (max / 4) * i;
+    const gx = x(v);
+    svg += `<line x1="${gx}" y1="${padT - 10}" x2="${gx}" y2="${padT + barH * 2 + rowGap + 10}" stroke="${CHART.grid}" stroke-width="1"/>`;
+    svg += txt(gx, padT - 16, compactUsd(v), {
+      size: 8.5,
+      anchor: 'middle',
+      fill: CHART.inkSoft,
+      mono: true,
+    });
+  }
+
+  const rangeRow = (
+    rowY: number,
+    label: string,
+    low: number,
+    point: number,
+    high: number,
+    fill: string,
+    hatched: boolean,
+  ): void => {
+    const xLow = x(low);
+    const xHigh = x(high);
+    svg += txt(padL - 12, rowY + barH / 2 + 4, label, {
+      size: 10,
+      anchor: 'end',
+      weight: 800,
+    });
+    svg +=
+      `<rect x="${xLow}" y="${rowY}" width="${Math.max(2, xHigh - xLow)}" ` +
+      `height="${barH}" fill="${hatched ? 'url(#vehatch)' : fill}" ` +
+      `stroke="${hatched ? CHART.warn : fill}" stroke-width="1.25" rx="3"/>`;
+    // Base diamond.
+    const xb = x(point);
+    svg += `<path d="M ${xb} ${rowY - 3} L ${xb + 8} ${rowY + barH / 2} L ${xb} ${rowY + barH + 3} L ${xb - 8} ${rowY + barH / 2} Z" fill="${CHART.ink}"/>`;
+    // End labels.
+    svg += txt(xLow - 6, rowY + barH / 2 + 4, compactUsd(low), {
+      size: 8.5,
+      anchor: 'end',
+      weight: 700,
+      mono: true,
+      fill: CHART.inkSoft,
+    });
+    svg += txt(xHigh + 8, rowY + barH / 2 + 4, compactUsd(high), {
+      size: 9.5,
+      weight: 800,
+      mono: true,
+      fill: hatched ? CHART.warn : CHART.ink,
+    });
+    svg += txt(xb, rowY - 9, compactUsd(point), {
+      size: 8.5,
+      anchor: 'middle',
+      weight: 800,
+      mono: true,
+      fill: CHART.ink,
+    });
+  };
+
+  const effortY = padT;
+  const valueY = padT + barH + rowGap;
+  rangeRow(
+    effortY,
+    'Investment',
+    input.effortLow,
+    input.effortPoint,
+    input.effortHigh,
+    CHART.accent,
+    false,
+  );
+  rangeRow(
+    valueY,
+    'Value (3-yr net)',
+    input.valueLow,
+    input.valuePoint,
+    input.valueHigh,
+    CHART.positive,
+    input.monetisationBlocked,
+  );
+
+  // Honest read panel.
+  const py = valueY + barH + 22;
+  const panelText = input.monetisationBlocked
+    ? 'Value is a proxy ceiling — cost-per-contact is a seed gap, so no ' +
+      'payback or ROI is claimed. Both bars are ranges, never single points.'
+    : 'Both investment and value are shown as low–high ranges with a base ' +
+      'marker — a CFO funds the band, not a single number.';
+  svg += `<rect x="${padL - 84}" y="${py - 14}" width="${W - (padL - 84) - 24}" height="36" fill="${input.monetisationBlocked ? CHART.warnSoft : CHART.cream}" stroke="${input.monetisationBlocked ? CHART.warn : CHART.grid}" stroke-width="1" rx="3"/>`;
+  svg += txt(padL - 72, py + 8, panelText, {
+    size: 9,
+    weight: 700,
+    fill: input.monetisationBlocked ? CHART.warn : CHART.inkSoft,
+  });
+
+  svg += `</svg>`;
+  return svg;
+}
+
+// ===========================================================================
+// 15. Evidence / gap matrix (Charter §6 detail, CFO §7) — recorded facts and
+//     declared seed gaps in one grid so a reviewer can audit the case. Seed
+//     gaps are explicit rows, never blank (blueprint hard fail).
+// ===========================================================================
+
+export interface EvidenceMatrixRow {
+  /** The metric / evidence item. */
+  label: string;
+  /** True when this is a recorded, sourced fact; false = a declared gap. */
+  recorded: boolean;
+  /** Source name, or the seed-gap reason when not recorded. */
+  detail: string;
+}
+
+/**
+ * A two-column evidence grid — recorded facts on the left, declared seed gaps
+ * on the right — so the recorded/missing split is visible at a glance. Each
+ * gap is an explicit cell; nothing is left blank.
+ */
+export function evidenceGapMatrix(rows: EvidenceMatrixRow[]): string {
+  const recorded = rows.filter((r) => r.recorded);
+  const gaps = rows.filter((r) => !r.recorded);
+  const colCount = Math.max(recorded.length, gaps.length);
+  const W = 720;
+  const cellH = 52;
+  const padT = 56;
+  const padB = 16;
+  const H = padT + colCount * cellH + padB;
+  const colW = (W - 36) / 2;
+
+  let svg = open({ width: W, height: H, title: 'Evidence and gap matrix' });
+  svg += `<rect x="0" y="0" width="${W}" height="${H}" fill="${CHART.paper}"/>`;
+
+  // Column headers.
+  svg += `<rect x="12" y="14" width="${colW - 6}" height="30" fill="${CHART.goodSoft}" rx="3"/>`;
+  svg += txt(24, 33, `RECORDED — ${recorded.length} sourced facts`, {
+    size: 10,
+    weight: 800,
+    spacing: 0.4,
+    fill: CHART.good,
+  });
+  svg += `<rect x="${24 + colW}" y="14" width="${colW - 6}" height="30" fill="${CHART.badSoft}" rx="3"/>`;
+  svg += txt(36 + colW, 33, `SEED GAPS — ${gaps.length} declared, not blank`, {
+    size: 10,
+    weight: 800,
+    spacing: 0.4,
+    fill: CHART.bad,
+  });
+
+  const cell = (
+    cx: number,
+    cy: number,
+    row: EvidenceMatrixRow,
+  ): void => {
+    const tone = row.recorded ? CHART.good : CHART.bad;
+    const bg = row.recorded ? CHART.paper : CHART.warnSoft;
+    svg += `<rect x="${cx}" y="${cy}" width="${colW - 6}" height="${cellH - 8}" fill="${bg}" stroke="${CHART.grid}" stroke-width="1" rx="3"/>`;
+    svg += `<rect x="${cx}" y="${cy}" width="3" height="${cellH - 8}" fill="${tone}"/>`;
+    svg += txt(cx + 14, cy + 17, row.label, {
+      size: 10.5,
+      weight: 800,
+      fill: CHART.ink,
+    });
+    // Detail — clamp to one line.
+    const detail =
+      row.detail.length > 78 ? `${row.detail.slice(0, 75)}…` : row.detail;
+    svg += txt(cx + 14, cy + 33, detail, {
+      size: 8.5,
+      weight: 600,
+      fill: CHART.inkSoft,
+    });
+  };
+
+  for (let i = 0; i < colCount; i++) {
+    const cy = padT + i * cellH;
+    if (recorded[i]) cell(12, cy, recorded[i]);
+    if (gaps[i]) cell(24 + colW, cy, gaps[i]);
+  }
+
+  svg += `</svg>`;
+  return svg;
+}
