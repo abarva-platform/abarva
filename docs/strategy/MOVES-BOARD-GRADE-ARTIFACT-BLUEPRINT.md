@@ -342,3 +342,165 @@ Recommended first reference:
   pages follow the outline above, and every chart is grounded in the kernel
   data or explicitly marked as a seed gap.
 
+## Appendix A — Deliverable Tables Of Contents
+
+This appendix is the builder checklist. It turns the outline above into a
+required table of contents for every deliverable. Renderers may change layout,
+but they may not remove required content without changing the standard.
+
+### A.1 Discover Brief — Required Table Of Contents
+
+Purpose: decide whether the idea is worth shaping.
+
+| Order | Section | Must contain | Graph / table guidance | Hard omission |
+|---:|---|---|---|---|
+| 1 | Decision Snapshot | One-sentence shape/stop/gather-evidence verdict, confidence, owner, next gate. | Decision card with verdict, confidence, and blocker count. | Missing verdict. |
+| 2 | Problem And Trigger | Business problem, why now, who is affected, triggering event. | Small trigger timeline or problem-pressure strip. | Generic problem statement with no tenant trigger. |
+| 3 | Current-State Baseline | Metrics, values, unit, source, as-of date, confidence, owner. | Baseline coverage meter plus metric source table. | Metrics without source/confidence. |
+| 4 | Evidence Quality | Recorded facts vs seed gaps, source quality, stale data. | Evidence/gap matrix grouped by source type. | Missing data left blank. |
+| 5 | Opportunity Sizing | Low/base/high value-at-stake, calculation logic, caveats. | Opportunity range bar; show "directional only" if monetization is blocked. | Point estimate only. |
+| 6 | First Kill Tests | Conditions that would stop or reshape the idea. | Kill checklist with pass/shape/stop states. | No explicit stop logic. |
+| 7 | Evidence Requests | Missing inputs, owner, due date, gate impact. | Gap closure queue sorted by decision impact. | No owner for missing evidence. |
+| 8 | Source Appendix | Source ledger and assumption notes. | Compact table only; appendix detail is allowed here. | Financial number has no trace. |
+
+Minimum standard: can be read in 5 minutes; must make clear whether the
+initiative is ready for Charter or blocked by evidence gaps.
+
+### A.2 Charter Business-Case Skeleton — Required Table Of Contents
+
+Purpose: decide whether to approve deeper shaping spend.
+
+| Order | Section | Must contain | Graph / table guidance | Hard omission |
+|---:|---|---|---|---|
+| 1 | Charter Answer | Shape/fund-shaping/stop verdict, sponsor, confidence, next gate. | Decision card with funding ask for shaping only. | Verdict is buried after analysis. |
+| 2 | Value Hypothesis | Falsifiable value claim, target metric, baseline, value mechanism. | Value hypothesis card: baseline -> target -> mechanism. | Value claim cannot be falsified. |
+| 3 | Initial Scope | Included scope, excluded scope, not-yet-funded scope. | Scope boundary table with included/excluded/deferred lanes. | Full build implied before evidence is closed. |
+| 4 | Initial Cost And Effort | Early range, role families, build/run/change split, rate-card basis. | Value vs effort summary; stacked effort split. | Single-point cost. |
+| 5 | Top Assumptions | Top five assumptions, owner, confidence, sensitivity impact. | Assumption sensitivity stack ranked by impact. | Assumptions lack owners. |
+| 6 | Stop / Kill Criteria | Kill triggers, reshape triggers, evidence thresholds. | Kill criteria checklist with threshold and owner. | Recommendation says fund while blockers remain. |
+| 7 | Sponsor Accountability | Accountable sponsor, finance owner, delivery owner, risk owner. | Owner matrix. | No named accountable sponsor. |
+| 8 | Evidence Ask Before Design | Missing evidence required before Design & Plan. | Evidence request queue. | Evidence gaps not tied to next gate. |
+
+Minimum standard: the CFO can see what is being approved now, what is not being
+approved yet, and what evidence is required before full funding.
+
+### A.3 Solution Architecture Pack — Required Table Of Contents
+
+Purpose: select a feasible architecture option and delivery boundary.
+
+| Order | Section | Must contain | Graph / table guidance | Hard omission |
+|---:|---|---|---|---|
+| 1 | Architecture Decision | Selected architecture, rejected alternatives, rationale. | Option scorecard with selected option highlighted. | No selected option. |
+| 2 | Enterprise Context | Business users, systems of record, agent surfaces, context layer, Tower. | Architecture context diagram. | Diagram lacks systems of record. |
+| 3 | Logical Architecture | Components, responsibilities, ownership, critical dependencies. | Logical architecture diagram with component ownership. | Components are generic boxes only. |
+| 4 | Data Flow | Data sources, ingestion, retrieval, prompts, outputs, logs, feedback. | Data-flow diagram with control points. | Data/control path is invisible. |
+| 5 | Integration Map | APIs/events/files, readiness, owner, gap status. | Integration readiness map. | Integration gaps omitted. |
+| 6 | Build / Buy / Partner Boundary | What to build, buy, partner for, retain internally. | Boundary lane map by capability. | Boundary unclear. |
+| 7 | Human Accountability | Human-in-loop points, decision rights, exceptions, approvals. | Human/agent accountability map. | Full autonomy implied without accountability. |
+| 8 | Security / Privacy / Risk Controls | Privacy review, model risk, evals, monitoring, data handling. | Control overlay and risk heatmap. | Sensitive workflow lacks controls. |
+| 9 | Open Architecture Decisions | Unresolved decisions, owner, due date, gate impact. | Open-decision queue. | Open decisions hidden in prose. |
+
+Minimum standard: an enterprise architect can understand what is being built,
+what is being bought, where data flows, where controls sit, and where humans
+remain accountable.
+
+### A.4 Estimate And Financial Model — Required Table Of Contents
+
+Purpose: decide whether the estimate is credible enough for planning.
+
+| Order | Section / Workbook Tab | Must contain | Graph / table guidance | Hard omission |
+|---:|---|---|---|---|
+| 1 | Executive Summary | Investment range, value range, payback status, confidence, rate-card basis. | Executive economics card. | No statement that rates are benchmark vs client-specific. |
+| 2 | Baseline Inputs | Metrics, values, source, as-of, confidence, seed gaps. | Baseline table; gaps flagged in-line. | Missing metric blank instead of seed gap. |
+| 3 | Workstream Estimate | AI build, integration, data, foundational, governance, process, change, run. | Workstream cost stack. | Business change omitted. |
+| 4 | Role Mix By Phase | Role, domain, specialization, tier, location, headcount, months. | Role mix by phase table and stacked chart. | Generic six-role model for complex enterprise work. |
+| 5 | Rate Card And Overrides | Domain, specialization, seniority, provider tier, location, rate, source, confidence, override flag. | Rate-card coverage matrix. | Rate source hidden. |
+| 6 | Value Forecast | Gross value, haircut factors, retained value, adoption curve. | Gross-to-net bridge and adoption curve. | Gross value shown as net value. |
+| 7 | Sensitivity | Base/conservative/upside, top drivers, breakpoints. | Sensitivity tornado and scenario range chart. | Downside case missing. |
+| 8 | Roadmap Cash Flow | Phase cost, cumulative cost, value unlock, cash-flow shape. | Payback/cash-flow curve. | Payback shown when monetization blocked. |
+| 9 | Assumption Ledger | Assumption, owner, source, confidence, sensitivity impact. | Ranked assumption table. | Assumptions unowned. |
+| 10 | Evidence Notes | Source ledger, refresh date, gaps, audit notes. | Evidence/source table. | Financial number cannot be traced. |
+
+Minimum standard: a sourcing VP or CFO can challenge role mix, rate basis,
+delivery location, domain specialization, and sensitivity without asking where
+the numbers came from.
+
+### A.5 Costed Business-Case Pack — Required Table Of Contents
+
+Purpose: decide whether to fund, reshape, kill, or approve only the next gate.
+
+| Order | Section | Must contain | Graph / table guidance | Hard omission |
+|---:|---|---|---|---|
+| 1 | Board Answer | Fund/shape/kill, investment, value, payback status, blocker, next ask. | Board decision card plus headline economics strip. | First page does not answer the decision. |
+| 2 | Why Now | Trigger, pain, baseline, urgency, sponsor. | Baseline impact chart. | Generic "AI opportunity" framing. |
+| 3 | What We Are Funding | Scope, solution, architecture summary, operating change, excluded scope. | Solution context diagram. | Scope boundary missing. |
+| 4 | Investment Case | Investment range, workstreams, run cost, build/run/change split. | Investment waterfall and cost stack. | Single investment number only. |
+| 5 | Value Case | Gross value, haircut model, net value, adoption curve. | Gross-to-net bridge; adoption curve. | Haircut hidden. |
+| 6 | Payback And Sensitivity | Base/conservative/upside, payback, top assumptions, what breaks the case. | Tornado and payback range curve. | Downside case missing. |
+| 7 | Roadmap And Gates | Phases, dependencies, value milestones, kill gates. | Phased roadmap swimlane. | No gate where case can be killed. |
+| 8 | Risk And Control View | Top risks, controls, mitigations, owners. | Risk/control heatmap. | Risk view disconnected from funding decision. |
+| 9 | Assumption Ledger | Top assumptions, owners, confidence, source, sensitivity. | Assumption table. | Assumptions buried in appendix only. |
+| 10 | Evidence Appendix | Sources, dates, confidence, seed gaps, reviewer notes. | Evidence/gap matrix. | Missing source for any material claim. |
+| 11 | Recommendation And Asks | Decision request, conditions, owner, next gate, requested spend. | Decision checklist. | No explicit "what not to fund yet." |
+
+Minimum standard: a board member can read pages 1-2 and know the decision, then
+use pages 3-11 to challenge the case.
+
+### A.6 CFO Pack — Required Table Of Contents
+
+Purpose: approve shaping spend, approve capital, reject, or request evidence.
+
+| Order | Section | Must contain | Graph / table guidance | Hard omission |
+|---:|---|---|---|---|
+| 1 | The Answer | Finance decision, amount, confidence, blocker, gate. | Executive economics card. | Funding ask unclear. |
+| 2 | The Case | Investment, net value, payback status, value source. | Value vs investment chart. | Product advocacy language. |
+| 3 | The Five Assumptions | Assumption, owner, confidence, sensitivity, evidence. | Sensitivity stack. | Assumptions unowned. |
+| 4 | What Would Make It Wrong | Downside case, breakpoints, monetization gaps. | Tornado chart. | No "what breaks the case." |
+| 5 | What Not To Fund Yet | Blocked scope, unfunded autonomy, missing evidence, stop conditions. | Do-not-fund checklist. | No holdback logic. |
+| 6 | What Tower Will Measure | Metric, baseline, target, cadence, owner. | Tower measurement table. | Metrics not tied to baseline. |
+| 7 | Evidence Used And Missing | Source ledger, seed gaps, confidence, reviewer notes. | Evidence/gap matrix. | CFO cannot audit numbers. |
+
+Minimum standard: finance can identify the funding ask, the downside, the
+holdbacks, and the next gate in under one minute.
+
+### A.7 Mobilize And Go-Decision Packet — Required Table Of Contents
+
+Purpose: decide whether to proceed to execution, reshape, or no-go.
+
+| Order | Section | Must contain | Graph / table guidance | Hard omission |
+|---:|---|---|---|---|
+| 1 | Go / No-Go Answer | Proceed/reshape/no-go, conditions, launch owner, next gate. | Go-decision card. | Says go while kill triggers remain. |
+| 2 | 30/60/90 Mobilization Plan | Milestones, workstreams, dependencies, decision gates. | 30/60/90 swimlane. | Milestones are generic. |
+| 3 | Owners And Decision Rights | RACI, escalation path, retained accountabilities. | RACI matrix. | No accountable owner. |
+| 4 | Adoption And Change | Impacted roles, training, comms, incentives, hypercare. | Adoption readiness table. | Change plan is a paragraph. |
+| 5 | Controls And Readiness | Security, privacy, evals, data readiness, operations. | Readiness heatmap. | Control gates omitted. |
+| 6 | Tower Measurement Handoff | Metric, baseline, target, cadence, owner, forecast link. | Measurement handoff table. | Tower metric not tied to baseline. |
+| 7 | Open Action Queue | Action, owner, due date, gate impact. | Action queue. | Gate blockers have no owner. |
+| 8 | Signoff | Sponsor, finance, risk, delivery, Tower, open objections. | Signoff matrix. | Signoff confused with final approval. |
+
+Minimum standard: execution teams can see what is ready, what is blocked, and
+what Tower will measure without rereading prior documents.
+
+### A.8 Master Move Dossier — Required Table Of Contents
+
+Purpose: serve as the single navigable record of the Move.
+
+| Order | Section | Must contain | Graph / table guidance | Hard omission |
+|---:|---|---|---|---|
+| 1 | Executive Answer | Recommendation, confidence, investment, value, blocker, next gate. | Decision card; value/investment strip. | Decision below the fold. |
+| 2 | Board Memo | 90-second narrative: why now, what to do, what not to fund yet. | Callout metrics only; no dense table. | Memo reads like a system summary. |
+| 3 | Decision Timeline | Phase states, revisions, signoffs, changed assumptions. | Timeline with revision markers. | No history of changes. |
+| 4 | Discover Chapter | Problem, baseline, gaps, opportunity, go/no-go. | Baseline meter and gap queue. | Missing facts hidden. |
+| 5 | Charter Chapter | Value hypothesis, assumptions, sponsor, kill criteria. | Assumption stack and kill checklist. | No sponsor or stop logic. |
+| 6 | Architecture Chapter | Selected option, diagrams, integration, control posture. | Context/logical/data-flow/control diagrams. | No diagrammatic architecture. |
+| 7 | Economics Chapter | Investment, value, sensitivity, payback, rate basis. | Waterfall, tornado, payback curve. | Table-only financials. |
+| 8 | Roadmap Chapter | Phases, dependencies, RACI, adoption, actions. | Swimlane, RACI, action queue. | Roadmap lacks owners. |
+| 9 | Tower Chapter | Metrics, baselines, targets, cadence, owners. | Measurement handoff table. | No forecast-to-actual bridge. |
+| 10 | Evidence And Gaps | Source ledger, seed gaps, evidence quality. | Evidence/gap matrix. | Claims not traceable. |
+| 11 | Downloads | Artifact list, formats, quality scores, hard fails. | Artifact health grid. | Downloads lack quality state. |
+| 12 | Review And Signoff | Reviewer verdicts, required actions, open objections. | Signoff matrix. | Signoff implies approval when actions remain. |
+
+Minimum standard: the dossier can replace a live walkthrough. A reviewer can
+navigate from the answer to evidence, architecture, economics, roadmap and
+Tower handoff without asking where to look.
+
