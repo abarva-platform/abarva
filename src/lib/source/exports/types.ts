@@ -43,7 +43,17 @@ export type SourceDeliverableKind =
   | 'pricing-template'
   | 'pricing-comparison'
   | 'trap-log'
-  | 'bafo-question-pack';
+  | 'bafo-question-pack'
+  // Lifecycle-coverage wave — Stage 0 / 1 / 2 / 4 / 6 / 7 expansion to
+  // close the methodology gap (only 4 of the 8 IT-sourcing lifecycle
+  // stages had artifacts before this wave).
+  | 'demand-challenge'
+  | 'sourcing-approach'
+  | 'market-scan'
+  | 'tco-iceberg'
+  | 'ai-clause-gap'
+  | 'vendor-risk-pack'
+  | 'renewal-decision';
 
 /**
  * Source's deliverable spec — extends the Programs envelope with a
@@ -74,6 +84,17 @@ export const ARTIFACT_CODE_TO_KIND: Record<string, SourceDeliverableKind> = {
   d16_scorecard: 'scorecard',
   d20_trap_log: 'trap-log',
   d22_bafo_question_pack: 'bafo-question-pack',
+  // Lifecycle-coverage wave — 7 new artifacts. Each gets its own
+  // canonical artifact code that does not collide with the existing
+  // d01–d33 catalog; the codes carry the stage hint as a numeric
+  // prefix (dx0 = stage 0, dx1 = stage 1, etc.).
+  dx0_demand_challenge: 'demand-challenge',
+  dx1_sourcing_approach: 'sourcing-approach',
+  dx2_market_scan: 'market-scan',
+  dx4_tco_iceberg: 'tco-iceberg',
+  dx6a_ai_clause_gap: 'ai-clause-gap',
+  dx6b_vendor_risk_pack: 'vendor-risk-pack',
+  dx7_renewal_decision: 'renewal-decision',
   // d19 has two kinds depending on variant — handled in the route
   // handler not here (both map to the same artifact code).
 };
@@ -91,4 +112,11 @@ export const KIND_TO_ARTIFACT_CODE: Record<SourceDeliverableKind, string> = {
   'pricing-comparison': 'd19_pricing_workbook',
   'trap-log': 'd20_trap_log',
   'bafo-question-pack': 'd22_bafo_question_pack',
+  'demand-challenge': 'dx0_demand_challenge',
+  'sourcing-approach': 'dx1_sourcing_approach',
+  'market-scan': 'dx2_market_scan',
+  'tco-iceberg': 'dx4_tco_iceberg',
+  'ai-clause-gap': 'dx6a_ai_clause_gap',
+  'vendor-risk-pack': 'dx6b_vendor_risk_pack',
+  'renewal-decision': 'dx7_renewal_decision',
 };

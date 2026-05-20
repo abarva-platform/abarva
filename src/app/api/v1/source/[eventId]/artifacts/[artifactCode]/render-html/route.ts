@@ -25,6 +25,7 @@ import {
   renderArtifactHtml,
 } from '@/lib/source/exports';
 import { buildNarrativeDocxPayloadFromContext } from '@/lib/source/exports/payloads/narrative-docx-payload';
+import { buildAiClauseGapPayloadFromContext } from '@/lib/source/exports/payloads/ai-clause-gap-payload';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -100,11 +101,10 @@ export async function GET(_req: NextRequest, { params }: RouteCtx) {
   const generatedAt = new Date().toISOString();
   let html: string;
   try {
-    const payload = buildNarrativeDocxPayloadFromContext(
-      ctx,
-      artifactCode,
-      generatedAt,
-    );
+    const payload =
+      artifactCode === 'dx6a_ai_clause_gap'
+        ? buildAiClauseGapPayloadFromContext(ctx, generatedAt)
+        : buildNarrativeDocxPayloadFromContext(ctx, artifactCode, generatedAt);
     html = renderArtifactHtml({ artifactCode, payload });
   } catch (err) {
     console.error(

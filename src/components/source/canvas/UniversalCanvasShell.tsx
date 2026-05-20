@@ -17,6 +17,12 @@ const XLSX_GENERATABLE_CODES_CLIENT: ReadonlySet<string> = new Set([
   'd19_pricing_workbook',
   'd20_trap_log',
   'd22_bafo_question_pack',
+  // Lifecycle-coverage wave — 4 structured artifacts with xlsx working
+  // surface (mirrors the server-side XLSX_GENERATABLE_CODES set).
+  'dx2_market_scan',
+  'dx4_tco_iceberg',
+  'dx6a_ai_clause_gap',
+  'dx7_renewal_decision',
 ]);
 // Comparison-mode codes — show a second "Download comparison xlsx"
 // anchor alongside the standard template. Today only d19 (pricing).
@@ -39,6 +45,14 @@ const DOCX_GENERATABLE_CODES_CLIENT: ReadonlySet<string> = new Set([
   'd22_bafo_question_pack',
   'd24_decision_brief',
   'd27_selection_memo',
+  // Lifecycle-coverage wave — all 7 new artifacts produce docx.
+  'dx0_demand_challenge',
+  'dx1_sourcing_approach',
+  'dx2_market_scan',
+  'dx4_tco_iceberg',
+  'dx6a_ai_clause_gap',
+  'dx6b_vendor_risk_pack',
+  'dx7_renewal_decision',
 ]);
 // Codes for which Source has an HTML renderer. Slice 4.1 — narrative
 // artifacts only; HTML is a long-form share surface, not a structured-
@@ -48,6 +62,9 @@ const HTML_GENERATABLE_CODES_CLIENT: ReadonlySet<string> = new Set([
   'd09_rfp_pack',
   'd24_decision_brief',
   'd27_selection_memo',
+  // Lifecycle-coverage wave — AI Clause Gap also has an HTML render
+  // for shareable legal-counsel review.
+  'dx6a_ai_clause_gap',
 ]);
 // Codes for which Source has a PDF renderer. Slice 4.2 shipped the
 // narrative artifacts; Slice G7 adds every structured artifact so a
@@ -63,6 +80,14 @@ const PDF_GENERATABLE_CODES_CLIENT: ReadonlySet<string> = new Set([
   'd22_bafo_question_pack',
   'd24_decision_brief',
   'd27_selection_memo',
+  // Lifecycle-coverage wave — every new artifact has a PDF surface.
+  'dx0_demand_challenge',
+  'dx1_sourcing_approach',
+  'dx2_market_scan',
+  'dx4_tco_iceberg',
+  'dx6a_ai_clause_gap',
+  'dx6b_vendor_risk_pack',
+  'dx7_renewal_decision',
 ]);
 import type {
   SourceEventArtifactState,

@@ -16,9 +16,12 @@ import {
 } from './renderers/pricing-template';
 import {
   DECISION_BRIEF_DOCX_CONFIG,
+  DEMAND_CHALLENGE_DOCX_CONFIG,
   RFP_PACK_DOCX_CONFIG,
   SCOPE_MEMO_DOCX_CONFIG,
   SELECTION_MEMO_DOCX_CONFIG,
+  SOURCING_APPROACH_DOCX_CONFIG,
+  VENDOR_RISK_PACK_DOCX_CONFIG,
   buildNarrativeDocx,
   type NarrativeDocxPayload,
 } from './renderers/narrative-docx';
@@ -42,9 +45,12 @@ import {
 } from './renderers/narrative-html';
 import {
   DECISION_BRIEF_PDF_CONFIG,
+  DEMAND_CHALLENGE_PDF_CONFIG,
   RFP_PACK_PDF_CONFIG,
   SCOPE_MEMO_PDF_CONFIG,
   SELECTION_MEMO_PDF_CONFIG,
+  SOURCING_APPROACH_PDF_CONFIG,
+  VENDOR_RISK_PACK_PDF_CONFIG,
   buildNarrativePdf,
   type NarrativePdfConfig,
   type NarrativePdfPayload,
@@ -79,6 +85,31 @@ import {
   buildBafoQuestionPackWorkbook,
   type BafoQuestionPackPayload,
 } from './renderers/bafo-question-pack';
+import {
+  buildMarketScanWorkbook,
+  type MarketScanPayload,
+} from './renderers/market-scan';
+import { buildMarketScanDocx } from './renderers/market-scan-docx';
+import { buildMarketScanPdf } from './renderers/market-scan-pdf';
+import {
+  buildTcoIcebergWorkbook,
+  type TcoIcebergPayload,
+} from './renderers/tco-iceberg';
+import { buildTcoIcebergDocx } from './renderers/tco-iceberg-docx';
+import { buildTcoIcebergPdf } from './renderers/tco-iceberg-pdf';
+import {
+  buildAiClauseGapWorkbook,
+  type AiClauseGapPayload,
+} from './renderers/ai-clause-gap';
+import { buildAiClauseGapDocx } from './renderers/ai-clause-gap-docx';
+import { buildAiClauseGapPdf } from './renderers/ai-clause-gap-pdf';
+import { buildAiClauseGapHtml } from './renderers/ai-clause-gap-html';
+import {
+  buildRenewalDecisionWorkbook,
+  type RenewalDecisionPayload,
+} from './renderers/renewal-decision';
+import { buildRenewalDecisionDocx } from './renderers/renewal-decision-docx';
+import { buildRenewalDecisionPdf } from './renderers/renewal-decision-pdf';
 
 export { XLSX_CONTENT_TYPE } from '@/lib/exports-shared/xlsx-base';
 export { DOCX_CONTENT_TYPE } from '@/lib/exports-shared/docx-base';
@@ -96,6 +127,12 @@ export const XLSX_GENERATABLE_CODES = new Set([
   'd19_pricing_workbook',
   'd20_trap_log',
   'd22_bafo_question_pack',
+  // Lifecycle-coverage wave — 4 structured artifacts with xlsx as their
+  // canonical working surface.
+  'dx2_market_scan',
+  'dx4_tco_iceberg',
+  'dx6a_ai_clause_gap',
+  'dx7_renewal_decision',
 ]);
 
 /**
@@ -125,6 +162,14 @@ export const DOCX_GENERATABLE_CODES = new Set([
   'd22_bafo_question_pack',
   'd24_decision_brief',
   'd27_selection_memo',
+  // Lifecycle-coverage wave — all 7 new artifacts produce docx.
+  'dx0_demand_challenge',
+  'dx1_sourcing_approach',
+  'dx2_market_scan',
+  'dx4_tco_iceberg',
+  'dx6a_ai_clause_gap',
+  'dx6b_vendor_risk_pack',
+  'dx7_renewal_decision',
 ]);
 
 /**
@@ -137,6 +182,10 @@ export const HTML_GENERATABLE_CODES = new Set([
   'd09_rfp_pack',
   'd24_decision_brief',
   'd27_selection_memo',
+  // Lifecycle-coverage wave — only the AI Clause Gap ships as a
+  // shareable HTML link; the other lifecycle artifacts have no HTML
+  // share use case yet.
+  'dx6a_ai_clause_gap',
 ]);
 
 /**
@@ -157,6 +206,14 @@ export const PDF_GENERATABLE_CODES = new Set([
   'd22_bafo_question_pack',
   'd24_decision_brief',
   'd27_selection_memo',
+  // Lifecycle-coverage wave — every new artifact has a PDF surface.
+  'dx0_demand_challenge',
+  'dx1_sourcing_approach',
+  'dx2_market_scan',
+  'dx4_tco_iceberg',
+  'dx6a_ai_clause_gap',
+  'dx6b_vendor_risk_pack',
+  'dx7_renewal_decision',
 ]);
 
 export function isXlsxGeneratable(artifactCode: string): boolean {
@@ -225,6 +282,14 @@ export async function renderArtifactXlsx(
       return buildTrapLogWorkbook(args.payload as TrapLogPayload);
     case 'd22_bafo_question_pack':
       return buildBafoQuestionPackWorkbook(args.payload as BafoQuestionPackPayload);
+    case 'dx2_market_scan':
+      return buildMarketScanWorkbook(args.payload as MarketScanPayload);
+    case 'dx4_tco_iceberg':
+      return buildTcoIcebergWorkbook(args.payload as TcoIcebergPayload);
+    case 'dx6a_ai_clause_gap':
+      return buildAiClauseGapWorkbook(args.payload as AiClauseGapPayload);
+    case 'dx7_renewal_decision':
+      return buildRenewalDecisionWorkbook(args.payload as RenewalDecisionPayload);
     default:
       throw new Error(
         `No xlsx generator wired for ${args.artifactCode}. ` +
@@ -255,6 +320,12 @@ export async function renderArtifactDocx(
       return buildNarrativeDocx(args.payload as NarrativeDocxPayload, DECISION_BRIEF_DOCX_CONFIG);
     case 'd27_selection_memo':
       return buildNarrativeDocx(args.payload as NarrativeDocxPayload, SELECTION_MEMO_DOCX_CONFIG);
+    case 'dx0_demand_challenge':
+      return buildNarrativeDocx(args.payload as NarrativeDocxPayload, DEMAND_CHALLENGE_DOCX_CONFIG);
+    case 'dx1_sourcing_approach':
+      return buildNarrativeDocx(args.payload as NarrativeDocxPayload, SOURCING_APPROACH_DOCX_CONFIG);
+    case 'dx6b_vendor_risk_pack':
+      return buildNarrativeDocx(args.payload as NarrativeDocxPayload, VENDOR_RISK_PACK_DOCX_CONFIG);
     // Structured-data artifacts — typed payload (same as xlsx) →
     // docx via per-artifact section/table renderers.
     case 'd04_app_inv':
@@ -269,6 +340,14 @@ export async function renderArtifactDocx(
       return buildTrapLogDocx(args.payload as TrapLogPayload);
     case 'd22_bafo_question_pack':
       return buildBafoQuestionPackDocx(args.payload as BafoQuestionPackPayload);
+    case 'dx2_market_scan':
+      return buildMarketScanDocx(args.payload as MarketScanPayload);
+    case 'dx4_tco_iceberg':
+      return buildTcoIcebergDocx(args.payload as TcoIcebergPayload);
+    case 'dx6a_ai_clause_gap':
+      return buildAiClauseGapDocx(args.payload as AiClauseGapPayload);
+    case 'dx7_renewal_decision':
+      return buildRenewalDecisionDocx(args.payload as RenewalDecisionPayload);
     default:
       throw new Error(
         `No docx generator wired for ${args.artifactCode}. ` +
@@ -297,6 +376,10 @@ export function renderArtifactHtml(args: RenderHtmlArgs): string {
       return buildNarrativeHtml(payload, DECISION_BRIEF_HTML_CONFIG);
     case 'd27_selection_memo':
       return buildNarrativeHtml(payload, SELECTION_MEMO_HTML_CONFIG);
+    case 'dx6a_ai_clause_gap':
+      // AI Clause Gap is structured but ships an HTML rendering too —
+      // share-link friendly for legal-counsel review without xlsx.
+      return buildAiClauseGapHtml(args.payload as AiClauseGapPayload);
     default:
       throw new Error(
         `No HTML generator wired for ${args.artifactCode}. ` +
@@ -326,6 +409,12 @@ export function renderArtifactPdf(args: RenderPdfArgs): import('react').ReactEle
       return buildNarrativePdf(args.payload as NarrativePdfPayload, DECISION_BRIEF_PDF_CONFIG);
     case 'd27_selection_memo':
       return buildNarrativePdf(args.payload as NarrativePdfPayload, SELECTION_MEMO_PDF_CONFIG);
+    case 'dx0_demand_challenge':
+      return buildNarrativePdf(args.payload as NarrativePdfPayload, DEMAND_CHALLENGE_PDF_CONFIG);
+    case 'dx1_sourcing_approach':
+      return buildNarrativePdf(args.payload as NarrativePdfPayload, SOURCING_APPROACH_PDF_CONFIG);
+    case 'dx6b_vendor_risk_pack':
+      return buildNarrativePdf(args.payload as NarrativePdfPayload, VENDOR_RISK_PACK_PDF_CONFIG);
     // Structured-data artifacts — typed payload (same as xlsx) →
     // react-pdf via per-artifact section/table renderers.
     case 'd04_app_inv':
@@ -340,6 +429,14 @@ export function renderArtifactPdf(args: RenderPdfArgs): import('react').ReactEle
       return buildTrapLogPdf(args.payload as TrapLogPayload);
     case 'd22_bafo_question_pack':
       return buildBafoQuestionPackPdf(args.payload as BafoQuestionPackPayload);
+    case 'dx2_market_scan':
+      return buildMarketScanPdf(args.payload as MarketScanPayload);
+    case 'dx4_tco_iceberg':
+      return buildTcoIcebergPdf(args.payload as TcoIcebergPayload);
+    case 'dx6a_ai_clause_gap':
+      return buildAiClauseGapPdf(args.payload as AiClauseGapPayload);
+    case 'dx7_renewal_decision':
+      return buildRenewalDecisionPdf(args.payload as RenewalDecisionPayload);
     default:
       throw new Error(
         `No PDF generator wired for ${args.artifactCode}. ` +
@@ -349,16 +446,20 @@ export function renderArtifactPdf(args: RenderPdfArgs): import('react').ReactEle
 }
 
 export type {
+  AiClauseGapPayload,
   AppInventoryPayload,
   BafoQuestionPackPayload,
+  MarketScanPayload,
   NarrativeHtmlConfig,
   NarrativeHtmlPayload,
   NarrativePdfConfig,
   NarrativePdfPayload,
   PricingComparisonPayload,
   PricingTemplatePayload,
+  RenewalDecisionPayload,
   ResponseChecklistPayload,
   ScopeMemoDocxPayload,
   ScorecardPayload,
+  TcoIcebergPayload,
   TrapLogPayload,
 };
