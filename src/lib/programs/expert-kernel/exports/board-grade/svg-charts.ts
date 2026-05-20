@@ -1124,3 +1124,343 @@ export function baselineImpact(bars: BaselineBar[]): string {
   svg += `</svg>`;
   return svg;
 }
+
+// ===========================================================================
+// 11. Baseline coverage meter (Discover §3) — a donut gauge of the fraction
+//     of the metrics a Move needs that are actually recorded, with the
+//     recorded / seed-gap split called out alongside it.
+// ===========================================================================
+
+export interface CoverageMeterInput {
+  /** Count of metrics with a recorded, sourced value. */
+  recorded: number;
+  /** Count of metrics that are declared seed gaps. */
+  seedGaps: number;
+  /** Confidence read across the recorded metrics. */
+  weakestConfidence: 'high' | 'medium' | 'low' | null;
+}
+
+/**
+ * A donut gauge — the recorded arc against the seed-gap arc — with the count
+ * split and a coverage verdict to its right. The arc is the honest readiness
+ * signal: a half-filled ring reads as "half the case is still a gap".
+ */
+export function baselineCoverageMeter(input: CoverageMeterInput): string {
+  const W = 720;
+  const H = 240;
+  const total = input.recorded + input.seedGaps;
+  const coverage = total > 0 ? input.recorded / total : 0;
+  const pct = Math.round(coverage * 100);
+
+  // Donut geometry — centred in the left third of the frame.
+  const cx = 150;
+  const cy = H / 2;
+  const r = 78;
+  const ringW = 24;
+  const circ = 2 * Math.PI * r;
+  const recordedLen = circ * coverage;
+
+  let svg = open({ width: W, height: H, title: 'Baseline coverage meter' });
+  svg += `<rect x="0" y="0" width="${W}" height="${H}" fill="${CHART.paper}"/>`;
+
+  // Seed-gap track — the full ring, in the gap tone.
+  svg +=
+    `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" ` +
+    `stroke="${CHART.badSoft}" stroke-width="${ringW}"/>`;
+  // Recorded arc — drawn from the top, clockwise, as a dash segment.
+  svg +=
+    `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" ` +
+    `stroke="${CHART.accent}" stroke-width="${ringW}" stroke-linecap="butt" ` +
+    `stroke-dasharray="${recordedLen.toFixed(2)} ${(circ - recordedLen).toFixed(2)}" ` +
+    `transform="rotate(-90 ${cx} ${cy})"/>`;
+  // Centre read — the coverage percentage and a quiet caption.
+  svg += txt(cx, cy - 2, `${pct}%`, {
+    size: 38,
+    anchor: 'middle',
+    weight: 800,
+    fill: CHART.ink,
+  });
+  svg += txt(cx, cy + 20, 'baseline coverage', {
+    size: 9,
+    anchor: 'middle',
+    weight: 700,
+    upper: true,
+    spacing: 0.5,
+    fill: CHART.inkSoft,
+  });
+
+  // Split legend + verdict, right of the donut.
+  const lx = 300;
+  svg += txt(lx, 56, 'Of the metrics this Move needs', {
+    size: 9,
+    weight: 800,
+    upper: true,
+    spacing: 0.5,
+    fill: CHART.inkSoft,
+  });
+  // Recorded row.
+  svg += `<rect x="${lx}" y="74" width="13" height="13" fill="${CHART.accent}" rx="2"/>`;
+  svg += txt(lx + 22, 85, `${input.recorded} recorded`, {
+    size: 14,
+    weight: 800,
+    fill: CHART.ink,
+  });
+  svg += txt(lx + 22, 101, 'Measured · sourced · dated', {
+    size: 10,
+    weight: 600,
+    fill: CHART.inkSoft,
+  });
+  // Seed-gap row.
+  svg += `<rect x="${lx}" y="120" width="13" height="13" fill="${CHART.bad}" rx="2"/>`;
+  svg += txt(lx + 22, 131, `${input.seedGaps} declared seed gaps`, {
+    size: 14,
+    weight: 800,
+    fill: CHART.bad,
+  });
+  svg += txt(lx + 22, 147, 'Never blank · never invented', {
+    size: 10,
+    weight: 600,
+    fill: CHART.inkSoft,
+  });
+  // Confidence verdict chip.
+  const conf = input.weakestConfidence;
+  const confTone =
+    conf === 'high' ? CHART.good : conf === 'low' ? CHART.bad : CHART.warn;
+  const confText =
+    conf === null
+      ? 'No recorded metric'
+      : `Weakest recorded confidence — ${conf}`;
+  svg += `<rect x="${lx}" y="168" width="${W - lx - 24}" height="34" fill="${CHART.cream}" rx="3"/>`;
+  svg += `<rect x="${lx}" y="168" width="3" height="34" fill="${confTone}"/>`;
+  svg += txt(lx + 14, 189, confText, {
+    size: 11,
+    weight: 800,
+    fill: confTone,
+  });
+
+  svg += `</svg>`;
+  return svg;
+}
+
+// ===========================================================================
+// 12. Opportunity range bar (Discover §3) — a low/base/high value-at-stake
+//     band. When a monetization input is missing the range is rendered as a
+//     DIRECTIONAL band: hatched, with no dollar axis and an explicit caveat.
+//     A point estimate is never drawn.
+// ===========================================================================
+
+export interface OpportunityRangeInput {
+  /** Low / base / high markers on a 0..1 directional scale. */
+  low: number;
+  base: number;
+  high: number;
+  /** Marker captions, e.g. "Conservative", "Base", "Upside". */
+  lowLabel: string;
+  baseLabel: string;
+  highLabel: string;
+  /**
+   * True when a monetization input is a seed gap — the band is rendered
+   * directional (hatched, no dollar axis) and the caveat is mandatory.
+   */
+  directionalOnly: boolean;
+  /** The mandatory caveat shown under the band. */
+  caveat: string;
+}
+
+/**
+ * A horizontal low–high opportunity band with base marker. When
+ * `directionalOnly` is set the band is hatched and carries no dollar scale —
+ * the honest read when monetization is blocked. The caveat is always shown.
+ */
+export function opportunityRangeBar(input: OpportunityRangeInput): string {
+  const W = 720;
+  const H = 210;
+  const padL = 28;
+  const padR = 28;
+  const barY = 78;
+  const barH = 40;
+  const plotW = W - padL - padR;
+  const x = (v: number): number => padL + Math.max(0, Math.min(1, v)) * plotW;
+
+  let svg = open({ width: W, height: H, title: 'Opportunity range' });
+  svg += `<rect x="0" y="0" width="${W}" height="${H}" fill="${CHART.paper}"/>`;
+
+  // Directional hatch — used when monetization is blocked.
+  svg +=
+    `<defs><pattern id="dirhatch" width="7" height="7" ` +
+    `patternUnits="userSpaceOnUse" patternTransform="rotate(45)">` +
+    `<rect width="7" height="7" fill="${CHART.warnSoft}"/>` +
+    `<line x1="0" y1="0" x2="0" y2="7" stroke="${CHART.warn}" ` +
+    `stroke-width="2.4"/></pattern></defs>`;
+
+  // Caption row.
+  svg += txt(padL, 34, 'Value at stake — low to high', {
+    size: 10,
+    weight: 800,
+    upper: true,
+    spacing: 0.5,
+    fill: CHART.inkSoft,
+  });
+  svg += txt(W - padR, 34, input.directionalOnly ? 'Directional only' : 'Sized', {
+    size: 10,
+    weight: 800,
+    anchor: 'end',
+    upper: true,
+    spacing: 0.4,
+    fill: input.directionalOnly ? CHART.warn : CHART.good,
+  });
+
+  // The low–high band.
+  const xLow = x(input.low);
+  const xHigh = x(input.high);
+  const bandFill = input.directionalOnly ? 'url(#dirhatch)' : CHART.accentSoft;
+  svg +=
+    `<rect x="${xLow}" y="${barY}" width="${xHigh - xLow}" height="${barH}" ` +
+    `fill="${bandFill}" stroke="${input.directionalOnly ? CHART.warn : CHART.accent}" ` +
+    `stroke-width="1.25" rx="3"/>`;
+
+  // End caps — low and high.
+  const cap = (cx: number, label: string): void => {
+    svg += `<line x1="${cx}" y1="${barY - 8}" x2="${cx}" y2="${barY + barH + 8}" stroke="${CHART.ink}" stroke-width="1.5"/>`;
+    svg += txt(cx, barY + barH + 24, label, {
+      size: 10,
+      anchor: 'middle',
+      weight: 800,
+      fill: CHART.ink,
+    });
+  };
+  cap(xLow, input.lowLabel);
+  cap(xHigh, input.highLabel);
+
+  // Base marker — a diamond on the band.
+  const xBase = x(input.base);
+  svg += `<path d="M ${xBase} ${barY - 4} L ${xBase + 9} ${barY + barH / 2} L ${xBase} ${barY + barH + 4} L ${xBase - 9} ${barY + barH / 2} Z" fill="${CHART.ink}"/>`;
+  svg += txt(xBase, barY - 12, input.baseLabel, {
+    size: 10,
+    anchor: 'middle',
+    weight: 800,
+    fill: CHART.ink,
+  });
+
+  // The mandatory caveat — never optional.
+  const cy = H - 30;
+  svg += `<rect x="${padL}" y="${cy - 16}" width="${plotW}" height="34" fill="${CHART.warnSoft}" stroke="${CHART.warn}" stroke-width="1" rx="3"/>`;
+  svg += txt(padL + 12, cy + 5, `Caveat — ${input.caveat}`, {
+    size: 10,
+    weight: 700,
+    fill: CHART.warn,
+  });
+
+  svg += `</svg>`;
+  return svg;
+}
+
+// ===========================================================================
+// 13. Gap-closure queue (Discover §4) — the open evidence gaps drawn as a
+//     priority queue, sorted by decision impact, each with an owner and a
+//     due date. The widest impact bar sits at the top — it is the next ask.
+// ===========================================================================
+
+export interface GapQueueRow {
+  /** The missing metric / evidence item. */
+  label: string;
+  /** Owner accountable for closing the gap. */
+  owner: string;
+  /** Due date for the evidence. */
+  due: string;
+  /** Decision-impact weight — drives bar width and ordering. */
+  impact: number;
+  /** True when this gap blocks honest sizing of the case. */
+  blocksSizing: boolean;
+}
+
+/**
+ * A horizontal priority queue — one row per open gap, ordered by decision
+ * impact (widest at the top). A sizing-blocking gap is drawn solid; a
+ * non-blocking gap is drawn lighter. Each row carries its owner and due date.
+ */
+export function gapClosureQueue(rows: GapQueueRow[]): string {
+  const W = 860;
+  const rowH = 66;
+  const padL = 250;
+  // The right gutter carries the tag and the owner/due line at the bar end.
+  const padR = 246;
+  const padT = 42;
+  const padB = 18;
+  // The rank chip sits in its own gutter, left of the wrapped gap label.
+  const chipX = 26;
+  const labelRight = padL - 12;
+  const H = padT + rows.length * rowH + padB;
+  const plotW = W - padL - padR;
+  const ordered = rows.slice().sort((a, b) => b.impact - a.impact);
+  const max = Math.max(...ordered.map((r) => r.impact), 1);
+
+  let svg = open({ width: W, height: H, title: 'Gap closure queue' });
+  svg += `<rect x="0" y="0" width="${W}" height="${H}" fill="${CHART.paper}"/>`;
+
+  // Header captions.
+  svg += txt(labelRight, padT - 18, 'Open evidence gap', {
+    size: 9,
+    anchor: 'end',
+    weight: 800,
+    upper: true,
+    spacing: 0.4,
+    fill: CHART.inkSoft,
+  });
+  svg += txt(padL, padT - 18, 'Decision impact — widest is the next ask', {
+    size: 9,
+    weight: 600,
+    fill: CHART.inkSoft,
+  });
+
+  // Queue axis.
+  svg += `<line x1="${padL}" y1="${padT - 10}" x2="${padL}" y2="${H - padB}" stroke="${CHART.ink}" stroke-width="1.5"/>`;
+
+  ordered.forEach((row, i) => {
+    const cy = padT + i * rowH + rowH / 2;
+    const w = (row.impact / max) * plotW;
+    const fill = row.blocksSizing ? CHART.bad : CHART.warn;
+    const tone = row.blocksSizing ? CHART.badSoft : CHART.warnSoft;
+    // Rank chip — in its own left gutter, clear of the wrapped label.
+    svg += `<circle cx="${chipX}" cy="${cy}" r="13" fill="${CHART.ink}"/>`;
+    svg += txt(chipX, cy + 4, String(i + 1), {
+      size: 11,
+      anchor: 'middle',
+      weight: 800,
+      fill: CHART.paper,
+    });
+    // Gap label — wrapped, right-anchored against the axis, centred in the
+    // row so the rank chip and the label read as one unit.
+    const labelLines = wrapLabel(row.label, labelRight, cy, 11);
+    const labelOffset =
+      labelLines.length === 1 ? 4 : -(labelLines.length - 1) * 5.5;
+    labelLines.forEach((line) => {
+      svg += txt(labelRight, line.y + labelOffset, line.text, {
+        size: 10,
+        anchor: 'end',
+        weight: 700,
+      });
+    });
+    // Impact bar.
+    svg += `<rect x="${padL}" y="${cy - 13}" width="${w}" height="26" fill="${tone}" rx="2"/>`;
+    svg += `<rect x="${padL}" y="${cy - 13}" width="${w}" height="26" fill="none" stroke="${fill}" stroke-width="1.25" rx="2"/>`;
+    // End tag — blocks-sizing vs informs-sizing — above the owner line.
+    svg += txt(padL + w + 8, cy - 2, row.blocksSizing ? 'BLOCKS SIZING' : 'INFORMS SIZING', {
+      size: 8,
+      weight: 800,
+      upper: true,
+      spacing: 0.3,
+      fill: fill,
+    });
+    // Owner + due — at the bar end, under the tag, clear of the chip.
+    svg += txt(padL + w + 8, cy + 11, `${row.owner} · due ${row.due}`, {
+      size: 8.5,
+      weight: 600,
+      fill: CHART.inkSoft,
+      mono: true,
+    });
+  });
+
+  svg += `</svg>`;
+  return svg;
+}
