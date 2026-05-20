@@ -41,7 +41,11 @@ import {
 
 import type { BusinessCaseSkeleton } from '../business-case-compiler';
 import type { ExpertReviewCaseEntry } from '../expert-review-cases';
-import type { KernelArtifactEntry } from './artifact-catalog';
+import {
+  buildArtifactVisualExhibits,
+  type VisualExhibit,
+} from '../artifact-visual-exhibits';
+import type { KernelArtifactEntry, KernelArtifactId } from './artifact-catalog';
 import {
   HONESTY_FOOTER,
   SEED_GAP_MARKER,
@@ -346,6 +350,50 @@ function towerHandoffSection(skeleton: BusinessCaseSkeleton): DocChild[] {
   return out;
 }
 
+function visualExhibitsSection(
+  caseEntry: ExpertReviewCaseEntry,
+  artifactId: KernelArtifactId,
+): DocChild[] {
+  const exhibits = buildArtifactVisualExhibits(
+    caseEntry.id as Parameters<typeof buildArtifactVisualExhibits>[0],
+  ).filter((exhibit) => exhibit.artifactIds.includes(artifactId));
+  if (exhibits.length === 0) return [];
+
+  const rows = exhibits.map((exhibit: VisualExhibit) => ({
+    title: exhibit.title,
+    status: exhibit.status,
+    read: exhibit.cSuiteUse,
+    data: exhibit.data
+      .slice(0, 4)
+      .map((datum) => `${datum.label}: ${datum.value}${datum.unit ? ` ${datum.unit}` : ''}`)
+      .join('; '),
+    notes: exhibit.notes.slice(0, 2).join(' '),
+  }));
+
+  return [
+    heading2('Board-grade visual exhibits'),
+    bodyParagraph([
+      bodyRun(
+        'These are the exhibit contracts used by the master dossier and ' +
+          'mirrored here so the downloaded artifact does not collapse into prose.',
+      ),
+    ]),
+    ...wrapTable(
+      buildMultiColumnTable({
+        columns: [
+          { header: 'Exhibit', widthPercent: 20, extract: (row) => row.title },
+          { header: 'Status', widthPercent: 10, extract: (row) => row.status },
+          { header: 'C-suite read', widthPercent: 28, extract: (row) => row.read },
+          { header: 'Figure / data', widthPercent: 24, extract: (row) => row.data },
+          { header: 'Notes', widthPercent: 18, extract: (row) => row.notes },
+        ],
+        rows,
+        rowStyle: (row) => (row.status === 'gap' ? 'warning' : undefined),
+      }),
+    ),
+  ];
+}
+
 function honestyFooter(): DocChild[] {
   return [
     new Paragraph({ children: [], spacing: { before: 200 } }),
@@ -425,6 +473,7 @@ function businessCasePackBody(caseEntry: ExpertReviewCaseEntry): DocChild[] {
       ],
     }),
     bodyParagraph([bodyRun(fullCase.recommendationRationale)]),
+    ...visualExhibitsSection(caseEntry, 'business_case_pack'),
     heading2('Investment & return'),
     ...wrapTable(
       buildKeyValueTable({

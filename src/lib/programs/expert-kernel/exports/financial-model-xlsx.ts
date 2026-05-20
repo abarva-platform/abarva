@@ -26,6 +26,7 @@ import {
 } from '@/lib/exports-shared/xlsx-base';
 
 import type { ExpertReviewCaseEntry } from '../expert-review-cases';
+import { buildArtifactVisualExhibits } from '../artifact-visual-exhibits';
 import type { ValueForecast } from '../value-forecast';
 import {
   HONESTY_FOOTER,
@@ -101,6 +102,7 @@ export function buildKernelFinancialModelXlsx(
   buildValueForecastSheet(workbook, value);
   buildSensitivitySheet(workbook, skeleton, fullCase);
   buildRoadmapSheet(workbook, fullCase);
+  buildExecutiveVisualsSheet(workbook, caseEntry);
 
   return workbook;
 }
@@ -162,6 +164,69 @@ function buildBaselineSheet(
   ]);
   cov.getCell(1).font = { bold: true };
   cov.getCell(2).numFmt = '0%';
+}
+
+function buildExecutiveVisualsSheet(
+  workbook: ExcelJS.Workbook,
+  caseEntry: ExpertReviewCaseEntry,
+): void {
+  const sheet = workbook.addWorksheet('Executive visuals', {
+    views: [{ showGridLines: false }],
+  });
+  titleRow(sheet, 'Board-grade visual exhibit spine');
+  sheet.columns = [
+    { key: 'artifact', width: 22 },
+    { key: 'exhibit', width: 34 },
+    { key: 'status', width: 12 },
+    { key: 'cSuiteUse', width: 56 },
+    { key: 'data', width: 64 },
+    { key: 'notes', width: 64 },
+  ];
+  const header = sheet.addRow([
+    'Artifact',
+    'Exhibit',
+    'Status',
+    'C-suite use',
+    'Figure / data',
+    'Notes',
+  ]);
+  applyHeaderRow(header);
+
+  const exhibits = buildArtifactVisualExhibits(
+    caseEntry.id as Parameters<typeof buildArtifactVisualExhibits>[0],
+  ).filter((exhibit) =>
+    exhibit.artifactIds.some((artifactId) =>
+      ['business_case_pack', 'financial_model', 'cfo_pack'].includes(artifactId),
+    ),
+  );
+
+  for (const exhibit of exhibits) {
+    const row = sheet.addRow([
+      exhibit.artifactIds.join(', '),
+      safeCell(exhibit.title),
+      exhibit.status,
+      safeCell(exhibit.cSuiteUse),
+      safeCell(
+        exhibit.data
+          .slice(0, 5)
+          .map((datum) => `${datum.label}: ${datum.value}${datum.unit ? ` ${datum.unit}` : ''}`)
+          .join('; '),
+      ),
+      safeCell(exhibit.notes.slice(0, 3).join(' ')),
+    ]);
+    row.getCell(4).alignment = { wrapText: true, vertical: 'top' };
+    row.getCell(5).alignment = { wrapText: true, vertical: 'top' };
+    row.getCell(6).alignment = { wrapText: true, vertical: 'top' };
+    if (exhibit.status === 'gap') {
+      row.eachCell((cell) => {
+        cell.fill = {
+          type: 'pattern',
+          pattern: 'solid',
+          fgColor: { argb: SOURCE_XLSX.WARNING_FILL },
+        };
+      });
+    }
+  }
 }
 
 // ── Effort sheet ───────────────────────────────────────────────────────────

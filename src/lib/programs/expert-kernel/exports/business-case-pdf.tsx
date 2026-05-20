@@ -35,7 +35,8 @@ import { PDF_COLORS, PDF_STYLES } from '@/lib/exports-shared/pdf-base';
 
 import type { BusinessCaseSkeleton } from '../business-case-compiler';
 import type { ExpertReviewCaseEntry } from '../expert-review-cases';
-import type { KernelArtifactEntry } from './artifact-catalog';
+import { buildArtifactVisualExhibits } from '../artifact-visual-exhibits';
+import type { KernelArtifactEntry, KernelArtifactId } from './artifact-catalog';
 import {
   HONESTY_FOOTER,
   SEED_GAP_MARKER,
@@ -175,6 +176,46 @@ function VerdictBadge({ text, good }: { text: string; good: boolean }) {
   );
 }
 
+function ExhibitTable({
+  caseEntry,
+  artifactId,
+}: {
+  caseEntry: ExpertReviewCaseEntry;
+  artifactId: KernelArtifactId;
+}) {
+  const exhibits = buildArtifactVisualExhibits(
+    caseEntry.id as Parameters<typeof buildArtifactVisualExhibits>[0],
+  ).filter((exhibit) => exhibit.artifactIds.includes(artifactId));
+
+  return (
+    <View>
+      <H2>Board-grade visual exhibits</H2>
+      <Body>
+        These exhibit contracts mirror the master dossier so the exported pack
+        keeps the C-suite visual spine: waterfall, sensitivity, payback,
+        roadmap, architecture and evidence gaps.
+      </Body>
+      <Table
+        columns={[
+          { header: 'Exhibit', flex: 1.6, extract: (e) => e.title },
+          { header: 'Status', flex: 0.7, extract: (e) => e.status },
+          {
+            header: 'Figure / data',
+            flex: 2.4,
+            extract: (e) =>
+              e.data
+                .slice(0, 3)
+                .map((d) => `${d.label}: ${d.value}${d.unit ? ` ${d.unit}` : ''}`)
+                .join('; '),
+          },
+          { header: 'C-suite use', flex: 2.2, extract: (e) => e.cSuiteUse },
+        ]}
+        rows={exhibits}
+      />
+    </View>
+  );
+}
+
 // ── Cover page ─────────────────────────────────────────────────────────────
 
 function CoverPage({ input }: { input: KernelPdfInput }) {
@@ -307,6 +348,7 @@ function CfoPackPages({ input }: { input: KernelPdfInput }) {
         />
         <View style={{ marginTop: 6 }} />
         <Body>Downside read: {fullCase.sensitivity.downsideRead}</Body>
+        <ExhibitTable caseEntry={caseEntry} artifactId="cfo_pack" />
       </Page>
 
       <Page size="LETTER" style={PDF_STYLES.page}>
@@ -532,6 +574,7 @@ function BusinessCasePackPages({ input }: { input: KernelPdfInput }) {
           good={fullCase.recommendation === 'fund'}
         />
         <Body>{fullCase.recommendationRationale}</Body>
+        <ExhibitTable caseEntry={input.caseEntry} artifactId="business_case_pack" />
         <H2>Investment & return</H2>
         <KeyVal label="Investment (costed roadmap)" value={usdRange(fullCase.investment)} />
         <KeyVal label="Net return" value={usdRange(fullCase.netReturn)} />
