@@ -30,6 +30,10 @@ import {
   buildArtifactVisualExhibits,
   type VisualExhibit,
 } from './artifact-visual-exhibits';
+import {
+  buildSolutionArchitecturePack,
+  type SolutionArchitecturePack,
+} from './solution-architecture-pack';
 
 export type DossierSectionId =
   | 'executive_summary'
@@ -150,6 +154,7 @@ export interface MasterMoveDossier {
   reviewSignoffSection: readonly DossierSignoffRow[];
   artifactQuality: readonly DossierArtifactReference[];
   visualExhibits: readonly VisualExhibit[];
+  solutionArchitecture: SolutionArchitecturePack;
 }
 
 function moneyRange(range: { low: number; point: number; high: number }): string {
@@ -256,10 +261,11 @@ function buildPhaseSections(args: {
   skeleton: BusinessCaseSkeleton;
   fullCase: FullBusinessCase;
   goPack: GoDecisionPack;
+  solutionArchitecture: SolutionArchitecturePack;
   quality: readonly DossierArtifactReference[];
   gaps: readonly DossierEvidenceGap[];
 }): DossierPhaseSection[] {
-  const { skeleton, fullCase, goPack, quality, gaps } = args;
+  const { skeleton, fullCase, goPack, solutionArchitecture, quality, gaps } = args;
   const section = (
     id: DossierPhaseSection['id'],
     phase: DossierPhaseSection['phase'],
@@ -300,7 +306,7 @@ function buildPhaseSections(args: {
       'solution_architecture',
       'Solution Architecture',
       'Which architecture and delivery boundary should be selected?',
-      'Architecture is currently represented through the Design & Plan pack; the dossier exposes missing diagram requirements until the dedicated architecture view lands.',
+      `${solutionArchitecture.selectedOption.name} selected; ${solutionArchitecture.diagrams.length} grounded diagram view(s), ${solutionArchitecture.integrations.filter((integration) => integration.status === 'gap').length} integration gap(s), ${solutionArchitecture.architectureRisks.filter((risk) => risk.severity === 'blocker').length} blocker(s).`,
       ['business_case_pack'],
     ),
     section(
@@ -423,6 +429,7 @@ export function buildMasterMoveDossier(
   const { fullCase } = caseEntry.buildFullCase();
   const { measurement, goPack } = caseEntry.buildMobilize();
   const quality = buildArtifactQuality();
+  const solutionArchitecture = buildSolutionArchitecturePack(caseId);
   const visualExhibits = buildArtifactVisualExhibits(caseId);
   const gaps = buildEvidenceGaps(skeleton);
   const confidence = confidenceFromSkeleton(skeleton);
@@ -502,6 +509,7 @@ export function buildMasterMoveDossier(
       skeleton,
       fullCase,
       goPack,
+      solutionArchitecture,
       quality,
       gaps,
     }),
@@ -519,6 +527,7 @@ export function buildMasterMoveDossier(
     reviewSignoffSection: buildSignoffSection(skeleton, goPack),
     artifactQuality: quality,
     visualExhibits,
+    solutionArchitecture,
   };
 }
 

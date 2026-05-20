@@ -81,7 +81,8 @@ describe('Master Move dossier view model', () => {
       dossier.visualExhibits.find(
         (exhibit) => exhibit.id === 'architecture_context_diagram',
       )?.status,
-    ).toBe('gap');
+    ).toBe('ready');
+    expect(dossier.solutionArchitecture.diagrams).toHaveLength(6);
   });
 
   it('renders missing evidence as explicit gaps, never blanks', () => {
@@ -145,6 +146,11 @@ describe('Master Move dossier view model', () => {
       dossier.visualExhibits.find(
         (exhibit) => exhibit.id === 'architecture_context_diagram',
       )?.status,
-    ).toBe('gap');
+    ).toBe('ready');
+    expect(
+      dossier.visualExhibits.find(
+        (exhibit) => exhibit.id === 'logical_architecture_diagram',
+      )?.data.length,
+    ).toBeGreaterThanOrEqual(5);
   });
 });
