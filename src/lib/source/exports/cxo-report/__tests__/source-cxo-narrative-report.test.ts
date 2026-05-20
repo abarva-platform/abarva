@@ -49,6 +49,21 @@ describe('Source CXO narrative report', () => {
     });
   });
 
+  it('does not convert a pending selection memo into award / proceed', () => {
+    const input = makeDealPackInput({
+      selectionMemoBody:
+        '# Selection Memo\n\nSelection status: pending. TaskFlow AI is provisional leader, not selected. Do not award yet until P0 legal clauses and telemetry evidence close.',
+      gateState: 'not_met',
+    });
+    const report = buildSourceCxoNarrativeReport(input);
+    const answer = report.slides.find((slide) => slide.kind === 'answer');
+
+    expect(report.verdict).toBe('Do not award yet');
+    expect(answer?.metrics.find((metric) => metric.label === 'Verdict')?.value).toBe('Do not award yet');
+    expect(answer?.message).toMatch(/pending|not selected|do not award/i);
+    expect(JSON.stringify(report)).not.toContain('Award / proceed');
+  });
+
   it('does not invent an award recommendation when no decision artifact is authored', () => {
     const input = makeDealPackInput({ selectionMemoBody: null, eventOwner: null });
     const report = buildSourceCxoNarrativeReport(input);
@@ -72,7 +87,7 @@ describe('Source CXO narrative report', () => {
 });
 
 function makeDealPackInput(
-  overrides: { selectionMemoBody?: string | null; eventOwner?: string | null } = {},
+  overrides: { selectionMemoBody?: string | null; eventOwner?: string | null; gateState?: 'met' | 'not_met' } = {},
 ): DealPackInput {
   const selectionMemoBody =
     overrides.selectionMemoBody === undefined
@@ -126,7 +141,7 @@ function makeDealPackInput(
         ]
       : [],
     gateCriteria: [
-      { criterionId: 'selection-ready', state: 'met' } as DealPackInput['gateCriteria'][number],
+      { criterionId: 'selection-ready', state: overrides.gateState ?? 'met' } as DealPackInput['gateCriteria'][number],
     ],
     evidence: [
       {

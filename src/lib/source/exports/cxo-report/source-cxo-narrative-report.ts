@@ -323,9 +323,29 @@ function synthesizeDecision(input: DealPackInput): {
   const decision = findAuthoredBody(input, 'd24_decision_brief');
   const demand = findAuthoredBody(input, 'dx0_demand_challenge');
   if (selection) {
+    const blockingGateCount = input.gateCriteria.filter((criterion) =>
+      criterion.state === 'not_met' || criterion.state === 'deferred',
+    ).length;
+    if (selectionSignalsAwardHold(selection) || blockingGateCount > 0) {
+      return {
+        verdict: 'Do not award yet',
+        answer: firstDecisionSentence(
+          selection,
+          'Do not award yet — close BAFO, legal, pricing and evidence blockers before supplier commitment.',
+        ),
+        detail:
+          blockingGateCount > 0
+            ? `Selection memo is authored, but ${blockingGateCount} gate blocker(s) remain open; the CXO report must not convert that into an award recommendation.`
+            : 'Selection memo is authored but explicitly holds award / selection readiness; the report preserves that constraint.',
+        confidence: 'High — selection memo / gate state blocks award',
+        nextStep: 'Run targeted BAFO and close P0 legal, pricing, evidence and transition blockers before award.',
+        changeTrigger: 'All P0 legal/data/audit gaps close and selection gates move to met or formally waived.',
+        status: 'warn',
+      };
+    }
     return {
       verdict: 'Award / proceed',
-      answer: firstHeading(selection, 'Selection memo is authored; proceed with controlled award path.'),
+      answer: firstDecisionSentence(selection, 'Selection memo is authored; proceed with controlled award path.'),
       detail: 'Selection memo is the strongest decision artifact in the Source lifecycle.',
       confidence: 'High — selection memo authored',
       nextStep: 'Mobilize transition, contract controls and SRM commitments.',
@@ -375,6 +395,32 @@ function synthesizeDecision(input: DealPackInput): {
     changeTrigger: 'Authoring a demand challenge, decision brief, selection memo or renewal decision.',
     status: 'bad',
   };
+}
+
+
+function selectionSignalsAwardHold(markdown: string): boolean {
+  const text = markdown.toLowerCase();
+  return [
+    /do not\s+(award|proceed|sign|select)/,
+    /no\s+(award|signed contract|selection)/,
+    /not\s+(selected|awardable|ready)/,
+    /selection status\s*:\s*pending/,
+    /pending\s+(award|selection|legal|bafo|closure)/,
+    /provisional leader,?\s+not selected/,
+    /p0\s+(legal|ai|data|audit|clause)/,
+    /unresolved\s+p0/,
+  ].some((pattern) => pattern.test(text));
+}
+
+function firstDecisionSentence(markdown: string, fallback: string): string {
+  const normalized = markdown
+    .replace(/^#{1,6}\s+.+$/gm, '')
+    .split('\n')
+    .map((line) => line.replace(/^[-*]\s+/, '').trim())
+    .filter(Boolean)
+    .join(' ');
+  const sentence = normalized.match(/[^.!?]+[.!?]/)?.[0]?.trim();
+  return sentence || firstHeading(markdown, fallback);
 }
 
 function findAuthoredBody(input: DealPackInput, code: string): string | null {
