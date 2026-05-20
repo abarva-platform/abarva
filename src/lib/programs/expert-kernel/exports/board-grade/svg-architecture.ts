@@ -766,7 +766,7 @@ export function layeredFlow(input: LayeredFlowInput): string {
       const sideRoute = boxX - 38;
       const y0 = stageTop(e.from) + stageH / 2;
       const y1 = stageTop(e.to) + stageH / 2;
-      let d = `M ${boxX} ${y0} L ${sideRoute} ${y0} L ${sideRoute} ${y1} L ${boxX} ${y1}`;
+      const d = `M ${boxX} ${y0} L ${sideRoute} ${y0} L ${sideRoute} ${y1} L ${boxX} ${y1}`;
       svg += `<path d="${d}" fill="none" stroke="${FLOW_COLOR[e.kind]}" stroke-width="1.6"${e.kind === 'control' ? ' stroke-dasharray="6 3"' : ''} marker-end="url(#ah-${e.kind})"/>`;
       const lw = e.label.length * 5.1 + 10;
       svg += `<rect x="${sideRoute - lw / 2}" y="${(y0 + y1) / 2 - 8}" width="${lw}" height="15" rx="3" fill="${ARCH.paper}" stroke="${ARCH.hair}" stroke-width="0.75"/>`;
