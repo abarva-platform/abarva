@@ -5,6 +5,10 @@ import {
   getSourceArtifactStandard,
   type SourceArtifactKind,
 } from '../artifact-standards';
+import {
+  buildSourceJudgmentFromDealPack,
+} from '../../expert-judgment/source-judgment-kernel';
+import type { SourceJudgment } from '../../expert-judgment/source-judgment-types';
 
 export type SourceCxoSlideKind =
   | 'cover'
@@ -69,7 +73,8 @@ export function buildSourceCxoNarrativeReport(input: DealPackInput): SourceCxoNa
   const coverage = input.stages.flatMap((stage) =>
     stage.artifacts.map((artifact) => artifactCoverage(stage.stage, stage.title, artifact)),
   );
-  const decision = synthesizeDecision(input);
+  const judgment = buildSourceJudgmentFromDealPack(input);
+  const decision = synthesizeDecision(input, judgment);
   const authoredCount = coverage.filter((a) => a.status === 'authored').length;
   const missingCount = coverage.filter((a) => a.status === 'missing').length;
   const scaffoldCount = coverage.filter((a) => a.status === 'scaffold').length;
@@ -309,7 +314,7 @@ function findStructured(input: DealPackInput, kind: string): DealPackArtifact | 
   );
 }
 
-function synthesizeDecision(input: DealPackInput): {
+function synthesizeDecision(input: DealPackInput, judgment: SourceJudgment): {
   verdict: string;
   answer: string;
   detail: string;
@@ -322,27 +327,27 @@ function synthesizeDecision(input: DealPackInput): {
   const renewal = findAuthoredBody(input, 'dx7_renewal_decision');
   const decision = findAuthoredBody(input, 'd24_decision_brief');
   const demand = findAuthoredBody(input, 'dx0_demand_challenge');
+  if (judgment.verdict !== 'award_ready') {
+    const answer = judgment.executiveSummary;
+    const nextStep = judgment.nextActions[0]?.action
+      ?? 'Close blockers and evidence gaps before supplier commitment.';
+    const changeTrigger = judgment.whatWouldChangeTheVerdict.join(' ');
+    return {
+      verdict: sourceJudgmentVerdictLabel(judgment.verdict),
+      answer,
+      detail: [
+        judgment.rationale.join(' '),
+        judgment.blockers.length > 0
+          ? `Open blockers: ${judgment.blockers.map((blocker) => blocker.description).join(' ')}`
+          : '',
+      ].filter(Boolean).join(' '),
+      confidence: `${capitalize(judgment.confidence)} — Source expert judgment kernel`,
+      nextStep,
+      changeTrigger,
+      status: judgment.verdict === 'do_not_award_yet' ? 'bad' : 'warn',
+    };
+  }
   if (selection) {
-    const blockingGateCount = input.gateCriteria.filter((criterion) =>
-      criterion.state === 'not_met' || criterion.state === 'deferred',
-    ).length;
-    if (selectionSignalsAwardHold(selection) || blockingGateCount > 0) {
-      return {
-        verdict: 'Do not award yet',
-        answer: firstDecisionSentence(
-          selection,
-          'Do not award yet — close BAFO, legal, pricing and evidence blockers before supplier commitment.',
-        ),
-        detail:
-          blockingGateCount > 0
-            ? `Selection memo is authored, but ${blockingGateCount} gate blocker(s) remain open; the CXO report must not convert that into an award recommendation.`
-            : 'Selection memo is authored but explicitly holds award / selection readiness; the report preserves that constraint.',
-        confidence: 'High — selection memo / gate state blocks award',
-        nextStep: 'Run targeted BAFO and close P0 legal, pricing, evidence and transition blockers before award.',
-        changeTrigger: 'All P0 legal/data/audit gaps close and selection gates move to met or formally waived.',
-        status: 'warn',
-      };
-    }
     return {
       verdict: 'Award / proceed',
       answer: firstDecisionSentence(selection, 'Selection memo is authored; proceed with controlled award path.'),
@@ -397,19 +402,27 @@ function synthesizeDecision(input: DealPackInput): {
   };
 }
 
+function sourceJudgmentVerdictLabel(verdict: SourceJudgment['verdict']): string {
+  switch (verdict) {
+    case 'award_ready':
+      return 'Award / proceed';
+    case 'do_not_award_yet':
+      return 'Do not award yet';
+    case 'proceed_to_bafo':
+      return 'Proceed to targeted BAFO';
+    case 'renegotiate':
+      return 'Renegotiate';
+    case 'rebid_required':
+      return 'Rebid required';
+    case 'pause_for_evidence':
+      return 'Pause for evidence';
+    case 'kill_or_reframe':
+      return 'Kill or reframe';
+  }
+}
 
-function selectionSignalsAwardHold(markdown: string): boolean {
-  const text = markdown.toLowerCase();
-  return [
-    /do not\s+(award|proceed|sign|select)/,
-    /no\s+(award|signed contract|selection)/,
-    /not\s+(selected|awardable|ready)/,
-    /selection status\s*:\s*pending/,
-    /pending\s+(award|selection|legal|bafo|closure)/,
-    /provisional leader,?\s+not selected/,
-    /p0\s+(legal|ai|data|audit|clause)/,
-    /unresolved\s+p0/,
-  ].some((pattern) => pattern.test(text));
+function capitalize(value: string): string {
+  return value.charAt(0).toUpperCase() + value.slice(1);
 }
 
 function firstDecisionSentence(markdown: string, fallback: string): string {
