@@ -1,6 +1,5 @@
 import Link from 'next/link';
 import { AppShell } from '@/components/shell/AppShell';
-import { StageTrackerStrip } from '@/components/shell/StageTrackerStrip';
 import { SourceSubNav } from '@/components/source/SourceSubNav';
 import { SourceEventsAgentDockView } from '@/components/source/SourceEventsAgentDockView';
 import { SourceWorkingPane } from '@/components/source/SourceWorkingPane';
@@ -10,7 +9,6 @@ import { AdminSourceEventApprovalQueue } from '@/components/source/AdminSourceEv
 import { SHELL } from '@/lib/shell/shell-tokens';
 import { buildLinkedProgramBadgeView } from '@/lib/source/linked-program-badge-view';
 import { listSourcingEvents, getPendingSourceEvents } from '@/lib/source/queries';
-import { AMS_SOURCE_EVENT } from '@/lib/source/shell-source-fixture';
 import type { SourcingEventSummary } from '@/lib/source/types';
 import { getActiveClientRow } from '@/lib/active-client';
 import { requireTenancy } from '@/lib/auth/tenancy';
@@ -51,14 +49,6 @@ export default async function SourceEventsPage({
         context: 'Source · Events portfolio',
       }}
       subNav={<SourceSubNav />}
-      middleStrip={
-        <StageTrackerStrip
-          stages={AMS_SOURCE_EVENT.stages}
-          activeStage={stage ?? AMS_SOURCE_EVENT.activeStage}
-          variant="journey"
-          personaLabel="Sourcing lead"
-        />
-      }
     >
       {events.length === 0 ? (
         <SourceEmptyState />

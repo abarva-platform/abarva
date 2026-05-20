@@ -1,90 +1,159 @@
-import { AgentColumn } from '@/components/shell/AgentColumn';
 import { SourceWorkingPane } from '@/components/source/SourceWorkingPane';
 import { SHELL } from '@/lib/shell/shell-tokens';
 
+// The Source events portfolio empty state.
+//
+// Renders as a single full-width centered panel inside the working pane.
+// (The earlier version dropped a fixed-width AgentColumn — built for a ROW
+// layout — into AppShell's COLUMN flexbox, which collapsed the working pane
+// to zero height and left the right ~70% of the screen blank white.)
+
+const NEXT_STEPS: ReadonlyArray<{ label: string; detail: string; href: string }> = [
+  {
+    label: 'Review setup connectors',
+    detail: 'Confirm contract, spend, and telemetry connectors are configured before sourcing.',
+    href: '/setup',
+  },
+  {
+    label: 'Portfolio guide',
+    detail: 'How the 10-stage sourcing lifecycle tracker works, end to end.',
+    href: '/source/learn',
+  },
+];
+
 export function SourceEmptyState() {
   return (
-    <>
-      <AgentColumn
-        agent={{ initials: 'SS', name: 'Sentinel Source', role: 'Source Orchestrator' }}
-        quote="No source events have been created yet for this tenant. Start by creating your first sourcing event."
-        agentContext="Sentinel Source · Source · No events"
-        actions={[
-          { letter: 'A', text: 'Create first event', detail: 'Open the intake wizard to originate a new sourcing event' },
-          { letter: 'B', text: 'Review setup connectors', detail: 'Ensure data connectors are configured before sourcing' },
-          { letter: 'C', text: 'View portfolio guide', detail: 'How to use the 10-stage tracker for sourcing events' },
-        ]}
-        surface="source"
-      />
-      <SourceWorkingPane>
+    <SourceWorkingPane>
+      <div
+        data-testid="source-events-empty-state"
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          minHeight: '72vh',
+          textAlign: 'center',
+        }}
+      >
         <div
           style={{
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
-            justifyContent: 'center',
-            minHeight: '60vh',
-            gap: 16,
-            textAlign: 'center',
+            gap: 14,
+            maxWidth: 560,
           }}
         >
-          <h2
-            style={{
-              fontFamily: SHELL.SERIF,
-              fontSize: 28,
-              color: SHELL.INK,
-              fontWeight: 'normal',
-              margin: 0,
-              lineHeight: 1.25,
-            }}
-          >
-            No sourcing events yet
-          </h2>
-          <p
-            style={{
-              fontFamily: SHELL.SANS,
-              fontSize: 14,
-              color: SHELL.INK_SOFT,
-              margin: 0,
-              maxWidth: 480,
-              lineHeight: 1.6,
-            }}
-          >
-            Create your first sourcing event to begin tracking vendor selection, BAFO, and commercial readiness.
-          </p>
-          <a
-            href="/source/new"
-            style={{
-              display: 'inline-block',
-              marginTop: 8,
-              padding: '10px 20px',
-              backgroundColor: SHELL.PAPER_DEEP,
-              border: `1px solid ${SHELL.CARD_LINE}`,
-              borderRadius: 6,
-              color: SHELL.INK,
-              textDecoration: 'none',
-              fontFamily: SHELL.MONO,
-              fontSize: 12,
-              letterSpacing: '0.06em',
-              textTransform: 'uppercase',
-            }}
-          >
-            Originate new event
-          </a>
           <span
             style={{
               fontFamily: SHELL.MONO,
               fontSize: 9,
-              color: SHELL.INK_MUTED,
+              letterSpacing: '0.16em',
               textTransform: 'uppercase',
-              letterSpacing: '0.12em',
-              marginTop: 4,
+              color: SHELL.INK_MUTED,
+              fontWeight: 800,
             }}
           >
-            Sentinel Source monitors events once created
+            Source · Events portfolio
           </span>
+          <h1
+            style={{
+              margin: 0,
+              fontFamily: SHELL.SERIF,
+              fontSize: 30,
+              lineHeight: 1.18,
+              color: SHELL.INK,
+              fontWeight: 'normal',
+            }}
+          >
+            No sourcing events yet
+          </h1>
+          <p
+            style={{
+              margin: 0,
+              fontFamily: SHELL.SANS,
+              fontSize: 14,
+              lineHeight: 1.6,
+              color: SHELL.INK_SOFT,
+            }}
+          >
+            Create your first sourcing event to start tracking vendor selection,
+            evaluation, BAFO, and commercial readiness across the 10-stage
+            sourcing lifecycle.
+          </p>
+          <a
+            href="/source/new"
+            data-testid="source-empty-start-event"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              marginTop: 6,
+              borderRadius: 999,
+              background: SHELL.INK,
+              color: SHELL.PAPER,
+              padding: '11px 20px',
+              fontFamily: SHELL.MONO,
+              fontSize: 10.5,
+              fontWeight: 800,
+              letterSpacing: '0.08em',
+              textTransform: 'uppercase',
+              textDecoration: 'none',
+            }}
+          >
+            Start IT sourcing event
+          </a>
         </div>
-      </SourceWorkingPane>
-    </>
+
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
+            gap: 12,
+            maxWidth: 560,
+            width: '100%',
+            marginTop: 30,
+            textAlign: 'left',
+          }}
+        >
+          {NEXT_STEPS.map((step) => (
+            <a
+              key={step.label}
+              href={step.href}
+              style={{
+                display: 'grid',
+                gap: 5,
+                border: `1px solid ${SHELL.CARD_LINE}`,
+                borderRadius: 12,
+                background: SHELL.CARD_WHITE,
+                padding: '13px 15px',
+                textDecoration: 'none',
+              }}
+            >
+              <span
+                style={{
+                  fontFamily: SHELL.SANS,
+                  fontSize: 13,
+                  fontWeight: 700,
+                  color: SHELL.INK,
+                }}
+              >
+                {step.label}
+              </span>
+              <span
+                style={{
+                  fontFamily: SHELL.SANS,
+                  fontSize: 12,
+                  lineHeight: 1.4,
+                  color: SHELL.INK_MUTED,
+                }}
+              >
+                {step.detail}
+              </span>
+            </a>
+          ))}
+        </div>
+      </div>
+    </SourceWorkingPane>
   );
 }
