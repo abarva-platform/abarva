@@ -1,11 +1,17 @@
-// Board-grade Costed Business-Case Pack — public surface.
+// Board-grade Moves artifacts — public surface.
 //
-// The reference implementation called for by blueprint §9 / §13: a board-grade
-// dossier for the Apex "Contact Center AI Routing" Move. Two renderers share
-// one PURE view-model and introduce no new numbers:
-//   • `renderApexCostedBusinessCaseHtml` — a self-contained HTML deck to READ.
-//   • `renderApexCostedBusinessCasePptx` — an editable PowerPoint to EDIT,
-//     hybrid fidelity (native text objects + rasterised exhibits).
+// The reference implementations called for by the Moves Board-Grade Artifact
+// Blueprint: board-grade dossiers for the Apex "Contact Center AI Routing"
+// Move. Renderers share PURE view-models and introduce no new numbers:
+//   • `renderApexCostedBusinessCaseHtml` — the Costed Business-Case Pack as a
+//     self-contained HTML deck to READ.
+//   • `renderApexCostedBusinessCasePptx` — the same pack as an editable
+//     PowerPoint to EDIT (hybrid: native text objects + rasterised exhibits).
+//   • `renderApexDiscoverBriefHtml` — the Discover Brief as an HTML deck.
+//
+// The deck CHROME — the menu rail, the stage, the slide scaffold, the inline
+// slide-switch script, the print expansion and the locked design-system CSS —
+// is the shared `deck-shell` module, so every artifact deck is consistent.
 
 export { renderApexCostedBusinessCaseHtml } from './html-renderer';
 export { renderApexCostedBusinessCasePptx } from './pptx-renderer';
@@ -14,3 +20,10 @@ export {
   type CostedBusinessCasePack,
   type PackSections,
 } from './pack-model';
+
+export { renderApexDiscoverBriefHtml } from './discover-brief-renderer';
+export {
+  buildApexDiscoverBrief,
+  type DiscoverBrief,
+  type BriefSections,
+} from './discover-brief-model';
