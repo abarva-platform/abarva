@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { CSSProperties, ReactNode } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { AppShell } from '@/components/shell/AppShell';
+import { SourceSubNav } from '@/components/source/SourceSubNav';
 import { useAtlasPageState } from '@/components/shell/AtlasPageStateProvider';
 import { AgentDock, type AttachmentRef, type ChatMessage } from '@/components/agent/AgentDock';
 import { SourceOnboardingTour } from '@/components/source/onboarding/SourceOnboardingTour';
@@ -624,6 +625,7 @@ export function SourceOriginatePage({
           ? `Source · New sourcing event · ${intakeShape.eyebrow}`
           : 'Source · New sourcing event',
       }}
+      subNav={<SourceSubNav />}
       onArtifact={handleArtifact}
     >
       <main data-testid="source-originate-canvas" style={MAIN_STYLE}>

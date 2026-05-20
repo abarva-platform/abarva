@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation';
 import { AppShell } from '@/components/shell/AppShell';
 import { StageTrackerStrip } from '@/components/shell/StageTrackerStrip';
+import { SourceSubNav } from '@/components/source/SourceSubNav';
 import { SentinelAgentColumn } from '@/components/source/SentinelAgentColumn';
 import { SourceWorkingPane } from '@/components/source/SourceWorkingPane';
 import { ScorecardGovernancePanel } from '@/components/source/ScorecardGovernancePanel';
@@ -34,6 +35,7 @@ export default async function SourceEventScorecardPage({
         showLocked: true,
         context: `Source · ${event.name} · Scorecard governance`,
       }}
+      subNav={<SourceSubNav />}
       middleStrip={
         <StageTrackerStrip
           stages={AMS_SOURCE_EVENT.stages}

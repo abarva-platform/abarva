@@ -1,4 +1,5 @@
 import { AppShell } from '@/components/shell/AppShell';
+import { SourceSubNav } from '@/components/source/SourceSubNav';
 import { SourceWorkingPane } from '@/components/source/SourceWorkingPane';
 import { SourceDecisionQueueView } from '@/components/source/SourceDecisionQueueView';
 import { getActiveClientRow } from '@/lib/active-client';
@@ -30,6 +31,7 @@ export default async function SourceDecisionQueuePage() {
         showLocked: true,
         context: 'Source · Decision Queue',
       }}
+      subNav={<SourceSubNav />}
     >
       <SourceWorkingPane>
         <SourceDecisionQueueView queue={queue} evidenceContext={evidenceContext} />

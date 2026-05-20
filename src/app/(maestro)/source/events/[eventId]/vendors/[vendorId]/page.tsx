@@ -11,6 +11,7 @@ import { getSourcingEvent } from '@/lib/source/queries';
 import { getVendorDetail } from '@/lib/source/vendor-detail';
 import { VendorDetailPage } from '@/components/source/VendorDetailPage';
 import { AppShell } from '@/components/shell/AppShell';
+import { SourceSubNav } from '@/components/source/SourceSubNav';
 import { getActiveClientRow } from '@/lib/active-client';
 
 export const dynamic = 'force-dynamic';
@@ -45,6 +46,7 @@ export default async function VendorDetailRoute({ params }: PageProps) {
     <AppShell
       surface="source"
       topBarProps={{ tenantName, showLocked: false, context: 'Source' }}
+      subNav={<SourceSubNav />}
     >
       <VendorDetailPage
         vendor={vendor}
