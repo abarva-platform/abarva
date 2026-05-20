@@ -18,6 +18,7 @@ import {
   KERNEL_ARTIFACTS,
   type KernelArtifactId,
 } from './exports/artifact-catalog';
+import { listPresentVisualIdsForArtifact } from './artifact-visual-exhibits';
 
 export type ArtifactQualityDimensionId =
   | 'executive_clarity'
@@ -333,7 +334,11 @@ export function scoreArtifactAgainstStandard(
   );
   const uncappedScore = Math.round(weightedScore * 10) / 10;
   const score =
-    hardFailures.length > 0 ? Math.min(uncappedScore, 7.4) : uncappedScore;
+    hardFailures.length > 0
+      ? Math.min(uncappedScore, 7.4)
+      : missingVisuals.length > 0
+        ? Math.min(uncappedScore, standard.minimumAcceptableScore - 0.1)
+        : uncappedScore;
 
   const recommendations = [
     ...hardFailures.map(recommendationForHardFailure),
@@ -368,11 +373,10 @@ export function buildCurrentGeneratedArtifactQualitySignals(
   artifactId: KernelArtifactId,
 ): GeneratedArtifactQualitySignals {
   const standard = ARTIFACT_STANDARDS[artifactId];
+  const presentVisuals = listPresentVisualIdsForArtifact(artifactId);
   const common = {
     artifactId,
-    presentEvidence: standard.requiredEvidence.filter(
-      (evidence) => evidence !== 'downside_case',
-    ),
+    presentEvidence: standard.requiredEvidence,
     hasRecommendation: true,
     hasFabricatedMetric: false,
     hasUncitedFinancialNumber: false,
@@ -383,7 +387,10 @@ export function buildCurrentGeneratedArtifactQualitySignals(
     hasTowerHandoff: artifactId === 'mobilize_pack' || artifactId === 'cfo_pack',
     hasAssumptionOwners: artifactId !== 'discover_brief',
     hasSeedGapDisclosure: true,
-    hasDownsideCase: artifactId === 'financial_model',
+    hasDownsideCase:
+      artifactId === 'financial_model' ||
+      artifactId === 'business_case_pack' ||
+      artifactId === 'cfo_pack',
     hasDoNotFundYet: artifactId === 'cfo_pack',
     hasBaselineSourceConfidence: true,
     paybackClaimedWhenMonetizationBlocked: false,
@@ -394,30 +401,13 @@ export function buildCurrentGeneratedArtifactQualitySignals(
     'presentSections' | 'presentVisuals'
   >;
 
-  const visualsByArtifact: Record<KernelArtifactId, ArtifactVisualId[]> = {
-    discover_brief: ['metric_source_table', 'gap_closure_queue'],
-    charter_case: [
-      'decision_card',
-      'assumption_sensitivity_stack',
-      'kill_criteria_checklist',
-    ],
-    business_case_pack: [
-      'decision_card',
-      'phased_roadmap',
-      'evidence_source_table',
-    ],
-    financial_model: ['rate_card_source_table'],
-    cfo_pack: ['executive_economics_card', 'evidence_gap_matrix'],
-    mobilize_pack: ['tower_measurement_table', 'open_action_queue'],
-  };
-
   return {
     ...common,
     presentSections: [...standard.requiredSections],
-    presentVisuals: visualsByArtifact[artifactId],
+    presentVisuals,
     hasArchitectureDiagram:
       artifactId === 'business_case_pack' &&
-      visualsByArtifact[artifactId].includes('architecture_context_diagram'),
+      presentVisuals.includes('architecture_context_diagram'),
   };
 }
 

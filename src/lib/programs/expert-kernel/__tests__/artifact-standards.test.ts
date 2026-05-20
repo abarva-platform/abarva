@@ -9,6 +9,10 @@ import {
   scoreArtifactAgainstStandard,
   scoreCurrentGeneratedArtifacts,
 } from '../artifact-quality-rubric';
+import {
+  buildArtifactVisualCoverage,
+  listRequiredVisualIdsForArtifact,
+} from '../artifact-visual-exhibits';
 import { KERNEL_ARTIFACTS } from '../exports/artifact-catalog';
 
 describe('Moves artifact gold-standard catalog', () => {
@@ -40,11 +44,14 @@ describe('Moves artifact gold-standard catalog', () => {
       KERNEL_ARTIFACTS.map((artifact) => artifact.id),
     );
     expect(scores.every((score) => Number.isFinite(score.score))).toBe(true);
-    expect(scores.some((score) => score.missingVisuals.length > 0)).toBe(true);
+    expect(scores.every((score) => score.missingVisuals.length === 0)).toBe(true);
     expect(
       scores.find((score) => score.artifactId === 'business_case_pack')
         ?.hardFailures.map((failure) => failure.ruleId),
-    ).toContain('missing_architecture_diagram');
+    ).not.toContain('missing_architecture_diagram');
+    expect(
+      scores.find((score) => score.artifactId === 'business_case_pack')?.score,
+    ).toBeGreaterThanOrEqual(8.5);
   });
 
   it('requires consulting-grade financial exhibits for C-suite artifacts', () => {
@@ -72,6 +79,21 @@ describe('Moves artifact gold-standard catalog', () => {
         'payback_range_curve',
       ]),
     );
+  });
+
+  it('covers every required visual with deterministic exhibit models', () => {
+    const coverage = buildArtifactVisualCoverage('apexretail');
+
+    expect(coverage.map((item) => item.artifactId)).toEqual(
+      KERNEL_ARTIFACTS.map((artifact) => artifact.id),
+    );
+    for (const item of coverage) {
+      expect(item.requiredVisualIds).toEqual(
+        listRequiredVisualIdsForArtifact(item.artifactId),
+      );
+      expect(item.coverage).toBe(1);
+      expect(item.missingVisualIds).toEqual([]);
+    }
   });
 });
 
@@ -116,6 +138,31 @@ describe('Moves artifact quality rubric', () => {
     );
     expect(score.improvementRecommendations).toContain(
       'Add base/conservative/upside sensitivity and the assumptions that move each case.',
+    );
+  });
+
+  it('exposes missing C-suite visuals instead of awarding a board-grade score', () => {
+    const signals = buildCurrentGeneratedArtifactQualitySignals('business_case_pack');
+    const score = scoreArtifactAgainstStandard({
+      ...signals,
+      presentVisuals: signals.presentVisuals.filter(
+        (visual) =>
+          visual !== 'investment_vs_return_waterfall' &&
+          visual !== 'sensitivity_tornado' &&
+          visual !== 'payback_range_curve',
+      ),
+    });
+
+    expect(score.missingVisuals).toEqual(
+      expect.arrayContaining([
+        'investment_vs_return_waterfall',
+        'sensitivity_tornado',
+        'payback_range_curve',
+      ]),
+    );
+    expect(score.dimensionScores.visual_usefulness).toBeLessThan(8);
+    expect(score.score).toBeLessThan(
+      ARTIFACT_STANDARDS.business_case_pack.boardReadyScore,
     );
   });
 

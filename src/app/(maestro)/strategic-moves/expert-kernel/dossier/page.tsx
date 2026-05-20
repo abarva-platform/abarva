@@ -83,6 +83,24 @@ function QualityChip({ score }: { score: number }) {
   );
 }
 
+function numericMagnitude(value: number | string): number | null {
+  if (typeof value === 'number') return Math.abs(value);
+  const match = value.match(/-?\$?([0-9]+(?:\.[0-9]+)?)([MK])?/i);
+  if (!match) return null;
+  const base = Number(match[1]);
+  if (!Number.isFinite(base)) return null;
+  const multiplier = match[2]?.toUpperCase() === 'M'
+    ? 1_000_000
+    : match[2]?.toUpperCase() === 'K'
+      ? 1_000
+      : 1;
+  return Math.abs(base * multiplier);
+}
+
+function shouldRenderChart(kind: string): boolean {
+  return ['bar', 'curve', 'meter', 'stack', 'waterfall'].includes(kind);
+}
+
 export default async function MasterMoveDossierPage({
   searchParams,
 }: {
@@ -214,6 +232,7 @@ export default async function MasterMoveDossierPage({
         }
         .summary-grid,
         .phase-grid,
+        .exhibit-grid,
         .download-grid,
         .signoff-grid {
           display: grid;
@@ -224,6 +243,9 @@ export default async function MasterMoveDossierPage({
         }
         .phase-grid {
           grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+        .exhibit-grid {
+          grid-template-columns: repeat(3, minmax(0, 1fr));
         }
         .download-grid {
           grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -335,6 +357,89 @@ export default async function MasterMoveDossierPage({
           height: 100%;
           background: ${COLORS.navy};
         }
+        .exhibit-card {
+          min-height: 190px;
+        }
+        .exhibit-meta {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 10px;
+          margin-bottom: 8px;
+        }
+        .exhibit-status {
+          border: 1px solid ${COLORS.ink}33;
+          border-radius: ${RADIUS.pill};
+          padding: 4px 7px;
+          font-family: ${TYPOGRAPHY.mono};
+          font-size: 10px;
+          font-weight: 800;
+          text-transform: uppercase;
+        }
+        .exhibit-status.gap {
+          background: ${COLORS.amberSoft};
+          border-color: ${COLORS.amberInk};
+          color: ${COLORS.amberInk};
+        }
+        .exhibit-status.ready {
+          background: ${COLORS.mintSoft};
+          border-color: ${COLORS.mintInk};
+          color: ${COLORS.mintInk};
+        }
+        .exhibit-data {
+          display: grid;
+          gap: 6px;
+          margin: 10px 0;
+        }
+        .exhibit-data-row {
+          display: grid;
+          grid-template-columns: minmax(0, 1fr) auto;
+          gap: 10px;
+          border-top: 1px solid ${COLORS.ink}12;
+          padding-top: 6px;
+          font-size: 12px;
+        }
+        .exhibit-value {
+          font-weight: 900;
+          white-space: nowrap;
+        }
+        .exhibit-note {
+          color: ${COLORS.ink};
+          font-size: 12px;
+          line-height: 1.35;
+          opacity: 0.75;
+        }
+        .exhibit-chart {
+          display: grid;
+          gap: 6px;
+          margin: 12px 0;
+        }
+        .exhibit-chart-row {
+          display: grid;
+          grid-template-columns: 90px minmax(0, 1fr);
+          gap: 8px;
+          align-items: center;
+        }
+        .exhibit-chart-label {
+          font-size: 10px;
+          font-weight: 800;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+        .exhibit-chart-track {
+          height: 12px;
+          background: ${COLORS.ink}10;
+          border-radius: ${RADIUS.pill};
+          overflow: hidden;
+        }
+        .exhibit-chart-fill {
+          display: block;
+          height: 100%;
+          min-width: 3px;
+          background: ${COLORS.navy};
+          border-radius: ${RADIUS.pill};
+        }
         @media (max-width: 980px) {
           .dossier-layout {
             grid-template-columns: 1fr;
@@ -353,6 +458,7 @@ export default async function MasterMoveDossierPage({
           .status-rail,
           .summary-grid,
           .phase-grid,
+          .exhibit-grid,
           .download-grid,
           .signoff-grid {
             grid-template-columns: 1fr;
@@ -448,6 +554,87 @@ export default async function MasterMoveDossierPage({
                   <p>{section.summary}</p>
                 </div>
               ))}
+            </div>
+          </Section>
+
+          <Section
+            id="visual_exhibits"
+            eyebrow="Board visuals"
+            title="Visual Exhibits"
+          >
+            <div className="exhibit-grid">
+              {dossier.visualExhibits.map((exhibit) => {
+                const chartData = exhibit.data
+                  .map((datum) => ({
+                    ...datum,
+                    magnitude: numericMagnitude(datum.value),
+                  }))
+                  .filter((datum) => datum.magnitude !== null)
+                  .slice(0, 5);
+                const maxMagnitude = Math.max(
+                  1,
+                  ...chartData.map((datum) => datum.magnitude ?? 0),
+                );
+                return (
+                  <div className="panel exhibit-card" key={exhibit.id}>
+                        <div className="exhibit-meta">
+                          <div className="metric-label">{exhibit.kind}</div>
+                          <span className={`exhibit-status ${exhibit.status}`}>
+                            {exhibit.status}
+                          </span>
+                        </div>
+                        <h3>{exhibit.title}</h3>
+                        <p>{exhibit.subtitle}</p>
+                        {shouldRenderChart(exhibit.kind) && chartData.length > 0 ? (
+                          <div
+                            className="exhibit-chart"
+                            aria-label={`${exhibit.title} mini chart`}
+                          >
+                            {chartData.map((datum) => (
+                              <div
+                                className="exhibit-chart-row"
+                                key={`${exhibit.id}:chart:${datum.label}`}
+                              >
+                                <span className="exhibit-chart-label">
+                                  {datum.label}
+                                </span>
+                                <span className="exhibit-chart-track">
+                                  <span
+                                    className="exhibit-chart-fill"
+                                    style={{
+                                      width: `${Math.max(
+                                        6,
+                                        Math.round(
+                                          ((datum.magnitude ?? 0) /
+                                            maxMagnitude) *
+                                            100,
+                                        ),
+                                      )}%`,
+                                    }}
+                                  />
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        ) : null}
+                        <div className="exhibit-data">
+                          {exhibit.data.slice(0, 3).map((datum) => (
+                            <div
+                              className="exhibit-data-row"
+                              key={`${exhibit.id}:${datum.label}`}
+                            >
+                              <span>{datum.label}</span>
+                              <span className="exhibit-value">
+                                {datum.value}
+                                {datum.unit ? ` ${datum.unit}` : ''}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                        <div className="exhibit-note">{exhibit.cSuiteUse}</div>
+                  </div>
+                );
+              })}
             </div>
           </Section>
 
