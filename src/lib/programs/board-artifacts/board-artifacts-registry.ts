@@ -159,6 +159,14 @@ const APEX_CONTACT_CENTER_ARTIFACTS: readonly BoardArtifact[] = [
       'The board-grade CFO Pack — a financial challenge: the funding ask, the downside, the do-not-fund holdbacks, what Tower will measure, and the evidence/gap audit.',
     htmlHref: '/api/v1/moves/board-grade-cfo-pack',
   },
+  {
+    id: 'master-dossier',
+    label: 'Master Move Dossier',
+    phase: 'All phases',
+    blurb:
+      'The board-grade Master Move Dossier — the assembled book: the whole Move pulled into one CEO/CFO/CIO read, with the executive answer, decision timeline, economics, roadmap, Tower handoff, and links to every other artifact deck.',
+    htmlHref: '/api/v1/moves/board-grade-master-dossier',
+  },
 ];
 
 /**

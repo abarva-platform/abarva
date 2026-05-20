@@ -1,7 +1,7 @@
 // board-artifacts-registry — unit tests.
 //
 // Covers the stable identity match: the Apex "Contact Center AI Routing" Move
-// resolves to its 5 board-grade decks (the Costed pack carrying a pptxHref);
+// resolves to its 8 board-grade decks (the Costed pack carrying a pptxHref);
 // any unrelated Move resolves to `[]`.
 
 import {
@@ -36,18 +36,31 @@ function makeMove(overrides: Partial<StrategicMove> = {}): StrategicMove {
 }
 
 describe('boardArtifactsForMove — Apex Contact Center AI Routing', () => {
-  it('resolves to the 5 board-grade decks', () => {
+  it('resolves to the 8 board-grade decks', () => {
     const artifacts = boardArtifactsForMove(makeMove());
-    expect(artifacts).toHaveLength(7);
+    expect(artifacts).toHaveLength(8);
     expect(artifacts.map((a) => a.id).sort()).toEqual([
       'cfo-pack',
       'charter-skeleton',
       'costed-business-case',
       'discover-brief',
       'estimate-model',
+      'master-dossier',
       'mobilize-packet',
       'solution-architecture',
     ]);
+  });
+
+  it('surfaces the Master Move Dossier deck', () => {
+    const dossier = boardArtifactsForMove(makeMove()).find(
+      (a) => a.id === 'master-dossier',
+    );
+    expect(dossier?.label).toBe('Master Move Dossier');
+    expect(dossier?.phase).toBe('All phases');
+    expect(dossier?.htmlHref).toBe(
+      '/api/v1/moves/board-grade-master-dossier',
+    );
+    expect(dossier?.pptxHref).toBeUndefined();
   });
 
   it('surfaces the Charter Skeleton and CFO Pack decks', () => {
@@ -94,15 +107,15 @@ describe('boardArtifactsForMove — Apex Contact Center AI Routing', () => {
   });
 
   it('matches case- and whitespace-insensitively on the Move name', () => {
-    expect(boardArtifactsForMove(makeMove({ name: 'contact center ai routing' }))).toHaveLength(7);
-    expect(boardArtifactsForMove(makeMove({ name: '  Contact Center AI Routing  ' }))).toHaveLength(7);
-    expect(boardArtifactsForMove(makeMove({ name: 'Contact   Center  AI   Routing' }))).toHaveLength(7);
+    expect(boardArtifactsForMove(makeMove({ name: 'contact center ai routing' }))).toHaveLength(8);
+    expect(boardArtifactsForMove(makeMove({ name: '  Contact Center AI Routing  ' }))).toHaveLength(8);
+    expect(boardArtifactsForMove(makeMove({ name: 'Contact   Center  AI   Routing' }))).toHaveLength(8);
   });
 
   it('matches the tenant by display-name fold (Apex Retail / Apex Retail Group)', () => {
     expect(
       boardArtifactsForMove(makeMove({ tenant: { id: 't', name: 'Apex Retail', industryCode: 'retail' } })),
-    ).toHaveLength(7);
+    ).toHaveLength(8);
   });
 });
 
@@ -132,7 +145,7 @@ describe('boardArtifactsForMove — return value is a fresh array', () => {
   it('does not leak the internal registry array (mutation-safe)', () => {
     const first = boardArtifactsForMove(makeMove());
     first.pop();
-    expect(boardArtifactsForMove(makeMove())).toHaveLength(7);
+    expect(boardArtifactsForMove(makeMove())).toHaveLength(8);
   });
 });
 
