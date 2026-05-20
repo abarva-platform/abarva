@@ -1,0 +1,445 @@
+<!-- markdownlint-disable MD013 MD060 -->
+
+# Moves Artifact Gold Standard
+
+**Date:** 2026-05-19  
+**Status:** v1 design standard — artifact architecture and renderer quality bar.  
+**Pairs with:** `MOVES-DELIVERABLE-AND-BUSINESS-CASE-SPEC.md`,
+`MOVES-AGENTIC-SHAPING-METHODOLOGY.md`,
+`MOVES-SCENARIO-QUALITY-LAB-2026-05-19.md`.
+
+## 1. Purpose
+
+Moves now has an expert kernel that can generate grounded business-case,
+financial-model, mobilization and governance artifacts. The next maturity layer is
+not more artifact count. It is a **gold standard for artifact quality**: every
+document must have the right audience, decision, content outline, visuals,
+formatting and quality gate before it is exportable.
+
+The standard has one product goal:
+
+> A CXO should be able to open one master artifact, understand the full Move from
+> idea to go/no-go, navigate into the supporting documents, and see exactly what
+> evidence, assumptions, estimates, architecture choices and open gaps drive the
+> recommendation.
+
+This document defines the start-to-finish artifact system.
+
+## 2. Design Principles
+
+1. **One spine, many artifacts.** The artifacts are not separate reports. They are
+   snapshots of one evolving decision spine: baseline → value hypothesis → solution
+   design → costed roadmap → go decision → Tower measurement handoff.
+2. **Every document has a decision job.** If an artifact does not help someone make
+   a decision, challenge an assumption, approve a gate or execute a next action, it
+   should not exist.
+3. **No naked numbers.** Every number must carry source, date, confidence, owner or
+   an explicit seed gap.
+4. **Visuals are mandatory, not decoration.** The minimum viable visual set is part
+   of the artifact contract.
+5. **Readable under pressure.** Board and CXO artifacts must be scannable in 3
+   minutes and defensible in 30.
+6. **HTML is the master artifact.** DOCX/PDF/XLSX are exports. The canonical
+   experience is an interactive HTML dossier with navigation, status, evidence and
+   links to generated files.
+
+## 3. Artifact System From Start To Finish
+
+The artifact set evolves through the four Moves phases. Each later artifact reuses,
+updates and challenges earlier content instead of restarting from scratch.
+
+| Phase | Primary user question | Artifact state | What changes from prior phase |
+|---|---|---|---|
+| Discover | Is this a real problem worth shaping? | Problem and baseline dossier | Captures current state, gaps, first opportunity sizing and kill-capable go/no-go. |
+| Charter | Should we spend time shaping this bet? | Business-case skeleton | Adds quantified value hypothesis, top assumptions, stop/kill criteria and sponsor accountability. |
+| Design & Plan | What exactly are we funding, and what will it cost? | Full solution and business case | Adds architecture options, delivery model, RACI, costed roadmap, effort estimate, rate-card basis and CFO sensitivity. |
+| Mobilize & Handoff | Are we ready to execute, and how will value be measured? | Go-decision and measurement packet | Adds adoption/change approach, handoff owners, Tower measurement model and go/no-go decision. |
+| Master artifact | What is the whole decision record? | Interactive Move dossier | Brings all documents, visuals, gaps, updates, sign-offs and downloads together. |
+
+## 4. Master HTML Artifact — Move Dossier
+
+The master artifact is an HTML dossier, generated for each Move.
+
+### 4.1 Required Navigation
+
+Left navigation:
+
+1. Executive Summary
+2. Decision Timeline
+3. Discover
+4. Charter
+5. Solution Architecture
+6. Estimate and Financial Model
+7. Roadmap and Mobilization
+8. Risks, Controls and Assumptions
+9. Evidence and Gaps
+10. Tower Measurement Handoff
+11. Downloads
+12. Review and Sign-Off
+
+Top status rail:
+
+- Current recommendation: fund / shape / kill / no-go
+- Confidence: high / medium / low
+- Case state: draft / preview / ready for recompute / reviewer signed / ready for gate
+- Missing evidence count
+- Open kill criteria count
+- Last generated date
+- Owner
+
+### 4.2 Required Master Views
+
+| View | Minimum content | Minimum visuals |
+|---|---|---|
+| Executive Summary | Answer, recommendation, investment, value, payback, confidence, next gate. | Decision card, value vs investment bar, top 3 assumptions. |
+| Decision Timeline | How the idea moved through phases, including updated content and sign-offs. | Phase timeline with state badges. |
+| Discover | Problem, baseline, seed gaps, opportunity, go/no-go read. | Baseline coverage meter, current-state metric table. |
+| Charter | Value hypothesis, sponsor, assumptions, kill criteria. | Assumption sensitivity stack, kill-criteria checklist. |
+| Solution Architecture | Option set, selected option, build/buy/orchestrate decision, control posture. | Architecture context diagram, data flow, integration map, control overlay. |
+| Estimate and Financial Model | Effort range, role mix, rate card, run cost, value curve, sensitivity. | Workstream cost breakdown, role-mix by phase, base/conservative/upside chart, payback view. |
+| Roadmap and Mobilization | 30/60/90, phases, dependencies, adoption/change plan, RACI. | Roadmap swimlane, RACI matrix, dependency map. |
+| Risks, Controls and Assumptions | Top risks, controls, assumptions, owners, confidence, what breaks the case. | Risk/control heatmap, assumptions table. |
+| Evidence and Gaps | Every source and missing item. | Evidence ledger, gap closure queue. |
+| Tower Measurement Handoff | Metrics, baseline, target, cadence, owner. | Measurement table, forecast-to-actual placeholder. |
+| Downloads | Exported DOCX/PDF/XLSX. | Download cards with artifact health. |
+| Review and Sign-Off | Reviewer roles, verdicts, required actions. | Sign-off matrix. |
+
+### 4.3 Master Artifact Acceptance Bar
+
+The master artifact is not acceptable unless:
+
+- every section has at least one grounded data object or a visible seed-gap state;
+- every number links to an evidence row or assumption row;
+- the recommendation and go/no-go state are visible above the fold;
+- the user can navigate from summary → source evidence in two clicks;
+- downloads are grouped by phase and state;
+- reviewer sign-off state is visible and cannot be confused with final approval.
+
+## 5. Artifact Contracts
+
+### 5.1 Discover Brief
+
+Audience: CXO sponsor, transformation lead, domain owner.  
+Decision: shape / stop / gather evidence.
+
+Required outline:
+
+1. Problem statement
+2. Current-state baseline
+3. Seed gaps and evidence gaps
+4. Opportunity sizing range
+5. First no-go / reshape criteria
+6. Next evidence requests
+
+Minimum visuals:
+
+- Baseline coverage meter
+- Metric table with source, as-of, confidence
+- Opportunity range bar
+- Gap closure queue
+
+Quality bar:
+
+- Fails if baseline metrics do not show source and confidence.
+- Fails if a missing metric is blank instead of marked seed gap.
+- Fails if the opportunity sizing has no caveat when key economics are missing.
+
+### 5.2 Charter Business-Case Skeleton
+
+Audience: CIO/CFO sponsor group.  
+Decision: approve deeper shaping or stop.
+
+Required outline:
+
+1. Decision recommendation
+2. Quantified value hypothesis
+3. Cost/effort first range
+4. Top five assumptions
+5. Sponsor and owner
+6. Stop/kill criteria
+7. What must be true before funding
+
+Minimum visuals:
+
+- Fund/shape/kill decision card
+- Value vs effort summary
+- Assumption sensitivity stack
+- Kill-criteria checklist
+
+Quality bar:
+
+- Fails if it has a single-point ROI without range.
+- Fails if assumptions lack owner or sensitivity.
+- Fails if the recommendation is "fund" while critic blockers remain.
+
+### 5.3 Solution Architecture Pack
+
+Audience: CIO, enterprise architect, delivery lead, security/risk.  
+Decision: select architecture option and delivery boundary.
+
+Required outline:
+
+1. Architecture decision summary
+2. Option set: build / buy / orchestrate / partner
+3. Selected option and rationale
+4. Logical architecture
+5. Data and integration flow
+6. Security, privacy and control view
+7. Human-in-the-loop and accountability model
+8. Architecture risks and unresolved decisions
+
+Minimum visuals:
+
+- Context diagram
+- Logical architecture diagram
+- Data flow diagram
+- Integration map
+- Control overlay
+- Build/buy/vendor boundary view
+
+Quality bar:
+
+- Fails if there is no diagram.
+- Fails if data sources and control points are not visible.
+- Fails if the build/buy/orchestrate boundary is unclear.
+- Fails if security/privacy review is absent for sensitive workflows.
+
+### 5.4 Solution Estimate and Financial Model
+
+Audience: CFO, sourcing VP, transformation finance, delivery lead.  
+Decision: whether the estimate is planning-grade credible.
+
+Required outline:
+
+1. Estimate summary
+2. Workstream breakdown
+3. Role mix by phase
+4. Rate-card basis and overrides
+5. Build/run/change split
+6. Base/conservative/upside ranges
+7. Sensitivity drivers
+8. What would break the estimate
+
+Minimum visuals:
+
+- Workstream cost bar
+- Role mix by phase
+- Rate-card source table
+- Base/conservative/upside range chart
+- Top sensitivity drivers
+
+Quality bar:
+
+- Fails if rate card source is not shown.
+- Fails if only one generic "data engineer" or "developer" role appears for a
+  complex enterprise build.
+- Fails if delivery location, seniority/tier and specialization are collapsed.
+- Fails if business-change effort is missing.
+
+### 5.5 Costed Business-Case Pack
+
+Audience: CXO, CFO, board/ELT.  
+Decision: fund / shape / kill.
+
+Required outline:
+
+1. One-page board summary
+2. Decision and recommendation
+3. Baseline and pain
+4. Value case
+5. Investment case
+6. Payback and sensitivity
+7. Roadmap and dependencies
+8. Risk/control view
+9. Assumption ledger
+10. Evidence and gap appendix
+
+Minimum visuals:
+
+- Decision card
+- Value vs investment chart
+- Sensitivity / tornado chart
+- Phased roadmap
+- Risk/control heatmap
+- Evidence/source table
+
+Quality bar:
+
+- Fails if the first page does not answer fund/shape/kill.
+- Fails if payback is shown when monetization is blocked.
+- Fails if downside case is missing.
+- Fails if the board summary buries blockers.
+
+### 5.6 Mobilize and Go-Decision Packet
+
+Audience: executive sponsor, delivery lead, PMO, Tower owner.  
+Decision: proceed to execution, reshape, or no-go.
+
+Required outline:
+
+1. Go/no-go recommendation
+2. Conditions to proceed
+3. 30/60/90 plan
+4. Workstream owners
+5. Adoption and change approach
+6. Hypercare and readiness
+7. Tower measurement handoff
+8. Open risks and decision log
+
+Minimum visuals:
+
+- 30/60/90 swimlane
+- RACI
+- Adoption readiness table
+- Tower measurement handoff table
+- Open action queue
+
+Quality bar:
+
+- Fails if it says "go" while kill triggers remain.
+- Fails if Tower measurement metrics are not tied to the Discover baseline.
+- Fails if adoption/change is a placeholder paragraph.
+
+### 5.7 CFO Pack
+
+Audience: CFO and board finance committee.  
+Decision: approve capital, approve shaping spend, or reject.
+
+Required outline:
+
+1. The answer
+2. The case
+3. The five assumptions driving it
+4. What would make the case wrong
+5. What not to fund yet
+6. What Tower will measure
+7. Evidence used and evidence missing
+
+Minimum visuals:
+
+- Executive economics card
+- Base/conservative/upside chart
+- Top assumption sensitivity
+- Evidence/gap matrix
+
+Quality bar:
+
+- Fails if it reads like product advocacy instead of financial challenge.
+- Fails if it has no "do not fund yet" section.
+- Fails if a CFO cannot see the next gate in under one minute.
+
+## 6. Formatting Standard
+
+All DOCX/PDF/HTML artifacts must follow the same formatting discipline:
+
+- Page 1 always contains decision, confidence, owner and next gate.
+- Use short sections with visible labels; no wall-of-text pages.
+- Tables must have no more than 6 columns unless exported to XLSX.
+- Every table with financial data must include source/confidence columns.
+- Use consistent number formatting: `$M`, `$K`, `%`, months.
+- Use ranges for estimates; never show false precision.
+- Use "Not recorded — seed gap" consistently.
+- Use color sparingly:
+  - green = evidence supports proceed,
+  - amber = condition / shape,
+  - red = blocker / no-go,
+  - gray = not recorded.
+- PDF must be board-circulation clean.
+- DOCX must be editable by advisors.
+- XLSX must expose assumptions, not hide formulas behind a locked file.
+
+## 7. Quality Scoring Model
+
+Each artifact receives a score out of 10.
+
+| Dimension | Weight | What it checks |
+|---|---:|---|
+| Executive clarity | 15% | Decision, next action and owner are obvious. |
+| Evidence grounding | 15% | Numbers tie to source, confidence and gaps. |
+| Financial defensibility | 15% | Ranges, rate card, sensitivity, payback honesty. |
+| Expert challenge | 15% | Critic findings, kill logic, what breaks the case. |
+| Visual usefulness | 10% | Required visuals exist and clarify the decision. |
+| Actionability | 10% | Clear next steps, owners, gate conditions. |
+| Formatting/readability | 10% | Scannable, board-grade, no messy exports. |
+| Auditability | 10% | Assumptions, reviews, version and evidence trail. |
+
+Quality thresholds:
+
+- **Below 7.5:** internal draft only.
+- **7.5-8.4:** good working artifact, not board-ready.
+- **8.5-8.9:** executive-review ready.
+- **9.0+:** board/advisor quality.
+
+Hard fails override the score:
+
+- fabricated metric;
+- uncited financial number;
+- missing recommendation;
+- business case without sensitivity;
+- solution architecture without diagram;
+- estimate without rate-card basis;
+- go packet that ignores kill triggers.
+
+## 8. Renderer Enforcement
+
+The standard must be enforced in code, not just documentation.
+
+Required build objects:
+
+1. `artifact-standard-catalog.ts` — typed contract per artifact.
+2. `artifact-quality-rubric.ts` — scoring dimensions and hard-fail rules.
+3. `master-move-dossier.ts` — view model for the HTML dossier.
+4. `master-move-dossier.html.tsx` or route renderer — master artifact UI.
+5. Artifact export tests:
+   - required section exists,
+   - required visual placeholder/data exists,
+   - required source/confidence exists,
+   - hard-fail rules are enforced,
+   - generated sample artifacts score at least 8.5.
+
+## 9. Build Sequencing
+
+Increment 1 — standards layer:
+
+- typed artifact standard catalog;
+- rubric and hard-fail rules;
+- score current artifacts against the standard;
+- report gaps.
+
+Increment 2 — master HTML artifact:
+
+- generate Move dossier for Apex first;
+- left navigation and top status rail;
+- summary cards and phase sections;
+- download links to existing exports.
+
+Increment 3 — visual uplift:
+
+- add minimum viable visuals to business case, architecture, estimate and
+  mobilization sections;
+- add tests that fail if visuals are missing.
+
+Increment 4 — format uplift:
+
+- improve DOCX/PDF/XLSX layouts to match the gold standard;
+- regenerate public samples.
+
+Increment 5 — practitioner review:
+
+- put the master dossier and exports in front of a CXO / CFO / VP Sourcing /
+  solution architect;
+- score usability and trust;
+- iterate from observed gaps.
+
+## 10. Definition Of Done
+
+The Moves artifact system is gold-standard when:
+
+1. A single HTML dossier lets a CXO navigate the entire Move from idea to
+   go-decision.
+2. Every artifact has a typed standard and quality score.
+3. Business-case, solution architecture and estimate artifacts have mandatory
+   visuals and no hard-fail gaps.
+4. Static exports and in-app HTML are consistent.
+5. A real practitioner can understand the case, challenge the assumptions and
+   identify the next decision without a walkthrough.
