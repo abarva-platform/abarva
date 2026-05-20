@@ -26,6 +26,10 @@ import {
   renderApexCostedBusinessCaseHtml,
   renderApexCostedBusinessCasePptx,
 } from '@/lib/programs/expert-kernel/exports/board-grade';
+import {
+  cachedRender,
+  cachedRenderAsync,
+} from '@/lib/programs/expert-kernel/exports/board-grade/render-cache';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -49,7 +53,13 @@ export async function GET(req: NextRequest): Promise<Response> {
   if (params.get('format') === 'pptx') {
     let pptx: Buffer;
     try {
-      pptx = await renderApexCostedBusinessCasePptx(generatedOn);
+      // Pure, date-keyed renderer — memoised per day. The cache key includes
+      // the artifact id, the `pptx` format, and `generatedOn`, so a date
+      // rollover produces a fresh entry. Only a successful render is cached.
+      pptx = await cachedRenderAsync(
+        `costed-business-case:pptx:${generatedOn}`,
+        () => renderApexCostedBusinessCasePptx(generatedOn),
+      );
     } catch (err) {
       console.error(
         '[GET /api/v1/moves/board-grade-business-case] pptx render error',
@@ -81,9 +91,12 @@ export async function GET(req: NextRequest): Promise<Response> {
   }
 
   // The HTML renderer is pure; a throw here would be a genuine renderer bug.
+  // Memoised per day via the date-keyed in-process cache.
   let html: string;
   try {
-    html = renderApexCostedBusinessCaseHtml(generatedOn);
+    html = cachedRender(`costed-business-case:html:${generatedOn}`, () =>
+      renderApexCostedBusinessCaseHtml(generatedOn),
+    );
   } catch (err) {
     console.error(
       '[GET /api/v1/moves/board-grade-business-case] render error',
