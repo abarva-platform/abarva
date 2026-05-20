@@ -62,3 +62,10 @@ export {
   type CfoPack,
   type CfoSections,
 } from './cfo-pack-model';
+
+export { renderApexMasterDossierHtml } from './master-dossier-renderer';
+export {
+  buildApexMasterMoveDossier,
+  type MasterMoveDossier,
+  type DossierSections,
+} from './master-dossier-model';
