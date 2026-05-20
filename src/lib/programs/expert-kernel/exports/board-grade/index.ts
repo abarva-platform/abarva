@@ -27,3 +27,11 @@ export {
   type DiscoverBrief,
   type BriefSections,
 } from './discover-brief-model';
+
+export { renderApexSolutionArchitectureHtml } from './solution-architecture-renderer';
+export {
+  buildApexSolutionArchitecture,
+  type SolutionArchitecture,
+  type ArchSections,
+  type TargetPattern,
+} from './solution-architecture-model';
