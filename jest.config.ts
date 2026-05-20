@@ -39,14 +39,18 @@ const config: Config = {
 }
 
 // next/jest generates its own `transformIgnorePatterns` that ignores all of
-// node_modules except a small allow-list. @react-pdf/renderer and its
-// dependency tree ship pure ESM, so renderer-level and route-level tests that
-// serialize a PDF need it transpiled. We post-process the generated config to
-// widen next/jest's first pattern with the PDF renderer ecosystem — appending
-// a new pattern does not work, because a file stays ignored if it matches ANY
-// pattern, and next/jest's first pattern already matches the @react-pdf path.
-// @react-pdf/renderer plus the ESM packages in its transitive dependency tree.
-const PDF_ESM_PACKAGES = [
+// node_modules except a small allow-list. Two export pipelines need packages
+// transpiled to run under Jest's CommonJS VM:
+//   • @react-pdf/renderer and its tree ship pure ESM (bare `import`s).
+//   • pptxgenjs ships CJS but lazy-loads Node built-ins via a dynamic
+//     `import('node:fs')`, which Jest's VM rejects without
+//     `--experimental-vm-modules`. Routing it through next/babel rewrites the
+//     dynamic import to a `require()`, which works in the CJS VM.
+// We post-process the generated config to widen next/jest's first pattern with
+// these packages — appending a new pattern does not work, because a file stays
+// ignored if it matches ANY pattern, and next/jest's first pattern already
+// matches the relevant node_modules paths.
+const TRANSPILED_NODE_MODULES = [
   '@react-pdf',
   'react-pdf',
   'yoga-layout',
@@ -73,13 +77,19 @@ const PDF_ESM_PACKAGES = [
   'clone',
   'png-js',
   'jay-peg',
+  // pptxgenjs — the Costed Business-Case Pack PowerPoint export. Transpiled so
+  // its dynamic `import('node:fs')` becomes a `require()` under Jest.
+  'pptxgenjs',
 ].join('|');
 
 export default async function jestConfig() {
   const generated = await createJestConfig(config)();
   const patterns = (generated.transformIgnorePatterns ?? []).map((p) =>
     p.includes('node_modules/(?!') && !p.includes('@react-pdf')
-      ? p.replace('node_modules/(?!', `node_modules/(?!(${PDF_ESM_PACKAGES})/)(?!`)
+      ? p.replace(
+          'node_modules/(?!',
+          `node_modules/(?!(${TRANSPILED_NODE_MODULES})/)(?!`,
+        )
       : p,
   );
   return { ...generated, transformIgnorePatterns: patterns };
