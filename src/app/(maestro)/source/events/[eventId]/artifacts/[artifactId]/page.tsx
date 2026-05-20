@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation';
 import { AppShell } from '@/components/shell/AppShell';
 import { StageTrackerStrip } from '@/components/shell/StageTrackerStrip';
+import { SourceSubNav } from '@/components/source/SourceSubNav';
 import { SentinelAgentColumn } from '@/components/source/SentinelAgentColumn';
 import { SourceWorkingPane } from '@/components/source/SourceWorkingPane';
 import { SourceArtifactDrawer } from '@/components/source/SourceArtifactDrawer';
@@ -40,6 +41,7 @@ export default async function SourceArtifactPage({
         showLocked: true,
         context: `Source · ${event.name} · ${artifact.title}`,
       }}
+      subNav={<SourceSubNav />}
       middleStrip={
         <StageTrackerStrip
           stages={journeyStages}

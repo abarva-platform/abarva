@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { AppShell } from '@/components/shell/AppShell';
+import { SourceSubNav } from '@/components/source/SourceSubNav';
 import { SourceWorkingPane } from '@/components/source/SourceWorkingPane';
 import { RenewalCockpitView } from '@/components/source/RenewalCockpitView';
 import { getActiveClientRow } from '@/lib/active-client';
@@ -39,6 +40,7 @@ export default async function RenewalCockpitPage({
         showLocked: true,
         context: 'Source · Renewal Cockpit',
       }}
+      subNav={<SourceSubNav />}
     >
       <SourceWorkingPane>
         {cockpit ? (

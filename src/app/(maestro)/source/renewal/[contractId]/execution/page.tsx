@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { AppShell } from '@/components/shell/AppShell';
+import { SourceSubNav } from '@/components/source/SourceSubNav';
 import { SourceExecutionRoomPage } from '@/components/source/SourceExecutionRoomPage';
 import { SourceWorkingPane } from '@/components/source/SourceWorkingPane';
 import { getActiveClientRow } from '@/lib/active-client';
@@ -47,6 +48,7 @@ export default async function SourceExecutionRoomRoute({
         showLocked: true,
         context: 'Source · Execution Room',
       }}
+      subNav={<SourceSubNav />}
     >
       <SourceWorkingPane>
         {room ? (

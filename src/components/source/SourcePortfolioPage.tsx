@@ -3,6 +3,7 @@
 import React, { useMemo, useState, type CSSProperties } from 'react';
 import Link from 'next/link';
 import { AppShell } from '@/components/shell/AppShell';
+import { SourceSubNav } from '@/components/source/SourceSubNav';
 import {
   PortfolioFilterSidebar,
   EMPTY_FILTER_STATE,
@@ -83,6 +84,7 @@ export function SourcePortfolioPage({
         showLocked: true,
         context: `Source · ${visibleEvents.length} events`,
       }}
+      subNav={<SourceSubNav />}
     >
       <main
         data-testid="source-portfolio-page"

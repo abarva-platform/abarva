@@ -19,6 +19,8 @@
 // Design: AbarVa palette (SHELL tokens), Georgia/DM Sans typography.
 
 import Link from 'next/link';
+import { AppShell } from '@/components/shell/AppShell';
+import { SourceSubNav } from '@/components/source/SourceSubNav';
 import { SOURCE_EVENT_INSTANCES } from '@/lib/source/source-event-instances';
 import { findLifecyclePattern } from '@/lib/reasoning/lifecycle-pattern-lookup';
 import { buildSourceSynthesisContext } from '@/lib/reasoning/synthesis-context-builder';
@@ -158,15 +160,21 @@ export default async function SourceCompareEventsPage({
   const bErr = bId !== undefined && bInstance === null;
 
   return (
-    <main
-      style={{
-        background: SHELL.PAPER,
-        minHeight: '100vh',
-        padding: '32px clamp(20px, 4vw, 48px)',
-        fontFamily: SHELL.SANS,
-        color: SHELL.INK,
-      }}
+    <AppShell
+      surface="source"
+      topBarProps={{ showLocked: true, context: 'Source · Compare events' }}
+      subNav={<SourceSubNav />}
     >
+      <main
+        style={{
+          background: SHELL.PAPER,
+          flex: 1,
+          overflowY: 'auto',
+          padding: '32px clamp(20px, 4vw, 48px)',
+          fontFamily: SHELL.SANS,
+          color: SHELL.INK,
+        }}
+      >
       {/* ── Page header ── */}
       <header style={{ marginBottom: 28, maxWidth: 1280 }}>
         <div
@@ -224,7 +232,8 @@ export default async function SourceCompareEventsPage({
           right={buildSide(bInstance)}
         />
       )}
-    </main>
+      </main>
+    </AppShell>
   );
 }
 

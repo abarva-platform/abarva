@@ -8,6 +8,8 @@
  */
 
 import Link from 'next/link';
+import { AppShell } from '@/components/shell/AppShell';
+import { SourceSubNav } from '@/components/source/SourceSubNav';
 import type { LifecyclePatternSeed } from '@/lib/intelligence/seed-types';
 import { getAllLifecyclePatterns } from '@/lib/reasoning/lifecycle-pattern-lookup';
 import {
@@ -57,15 +59,21 @@ export default async function SourcePatternIndexPage({
   const totalCount = all.length;
 
   return (
-    <main
-      style={{
-        background: SHELL.PAPER,
-        minHeight: '100vh',
-        padding: '40px 24px 80px',
-        fontFamily: SHELL.SANS,
-        color: SHELL.INK,
-      }}
+    <AppShell
+      surface="source"
+      topBarProps={{ showLocked: true, context: 'Source · Pattern catalogue' }}
+      subNav={<SourceSubNav />}
     >
+      <main
+        style={{
+          background: SHELL.PAPER,
+          flex: 1,
+          overflowY: 'auto',
+          padding: '40px 24px 80px',
+          fontFamily: SHELL.SANS,
+          color: SHELL.INK,
+        }}
+      >
       <div
         style={{
           maxWidth: 1040,
@@ -102,7 +110,8 @@ export default async function SourcePatternIndexPage({
         ) : null}
         {summaries.length === 0 ? <EmptyState /> : null}
       </div>
-    </main>
+      </main>
+    </AppShell>
   );
 }
 

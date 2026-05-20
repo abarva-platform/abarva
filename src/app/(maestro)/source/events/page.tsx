@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { AppShell } from '@/components/shell/AppShell';
 import { StageTrackerStrip } from '@/components/shell/StageTrackerStrip';
+import { SourceSubNav } from '@/components/source/SourceSubNav';
 import { SourceEventsAgentDockView } from '@/components/source/SourceEventsAgentDockView';
 import { SourceWorkingPane } from '@/components/source/SourceWorkingPane';
 import { SourceEventsPortfolio } from '@/components/source/SourceEventsPortfolio';
@@ -49,6 +50,7 @@ export default async function SourceEventsPage({
         showLocked: true,
         context: 'Source · Events portfolio',
       }}
+      subNav={<SourceSubNav />}
       middleStrip={
         <StageTrackerStrip
           stages={AMS_SOURCE_EVENT.stages}

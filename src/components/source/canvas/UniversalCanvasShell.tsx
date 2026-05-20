@@ -3,6 +3,7 @@
 import { useMemo, useState, type CSSProperties, type ReactNode } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { AppShell } from '@/components/shell/AppShell';
+import { SourceSubNav } from '@/components/source/SourceSubNav';
 import { SourceOnboardingTour } from '@/components/source/onboarding/SourceOnboardingTour';
 import { listSupportedGenerationCodes } from '@/lib/source/agent-generation';
 
@@ -604,6 +605,7 @@ export function UniversalCanvasShell({
         showLocked: true,
         context: `${event.code} · ${event.name}`,
       }}
+      subNav={<SourceSubNav />}
     >
       <main data-testid="source-event-canvas" style={MAIN_STYLE}>
         <div style={CONTAINER_STYLE}>

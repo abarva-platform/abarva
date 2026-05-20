@@ -53,6 +53,13 @@ interface AppShellProps {
   showProductNav?: boolean;
   showAppRail?: boolean;
   /**
+   * Secondary navigation strip rendered directly below the top bar — a
+   * Snowflake-style sticky sub-nav for surface-level sections. Optional;
+   * defaults to nothing so surfaces that do not opt in are unaffected.
+   * Source uses this to keep Queue / Events / Portfolio one click apart.
+   */
+  subNav?: ReactNode;
+  /**
    * PR-L · structured-artifact dispatcher passed through to
    * AtlasPageStateProvider. Pages on /programs/<id> wire this to
    * update the reactive panel and trigger router.refresh() when the
@@ -72,6 +79,7 @@ export function AppShell({
   middleStrip,
   showProductNav = true,
   showAppRail = false,
+  subNav,
   onArtifact,
   children,
 }: AppShellProps) {
@@ -105,6 +113,8 @@ export function AppShell({
           timeString={topBarProps?.timeString}
           showProductNav={showProductNav}
         />
+
+        {subNav}
 
         {middleStrip && <AppMiddleStrip>{middleStrip}</AppMiddleStrip>}
 

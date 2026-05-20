@@ -1,4 +1,5 @@
 import { AppShell } from '@/components/shell/AppShell';
+import { SourceSubNav } from '@/components/source/SourceSubNav';
 import { SentinelAgentColumn } from '@/components/source/SentinelAgentColumn';
 import { SourceWorkingPane } from '@/components/source/SourceWorkingPane';
 import { SourceValueLedger } from '@/components/source/SourceValueLedger';
@@ -37,6 +38,7 @@ export default async function SourceValuePage() {
         showLocked: true,
         context: 'Source · Value ledger',
       }}
+      subNav={<SourceSubNav />}
     >
       <SentinelAgentColumn
         quote={quote}
