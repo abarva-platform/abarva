@@ -18,6 +18,7 @@ import type { BusinessCaseSkeleton, FullBusinessCase } from './business-case-com
 import type { GoDecisionPack } from './go-decision-pack';
 import type { MeasurementHandoff } from './measurement-handoff';
 import { KERNEL_ARTIFACTS } from './exports/artifact-catalog';
+import { buildSolutionArchitecturePack } from './solution-architecture-pack';
 
 export type VisualExhibitKind =
   | 'architecture'
@@ -147,12 +148,23 @@ function blockerTone(count: number): VisualExhibitDatum['tone'] {
 }
 
 function buildExhibits(args: {
+  caseId: ExpertReviewCaseId;
   skeleton: BusinessCaseSkeleton;
   fullCase: FullBusinessCase;
   goPack: GoDecisionPack;
   measurement: MeasurementHandoff;
 }): VisualExhibit[] {
-  const { skeleton, fullCase, goPack, measurement } = args;
+  const { caseId, skeleton, fullCase, goPack, measurement } = args;
+  const architecturePack = buildSolutionArchitecturePack(caseId);
+  const diagramById = new Map(
+    architecturePack.diagrams.map((diagram) => [diagram.id, diagram]),
+  );
+  const architectureContext = diagramById.get('architecture_context_diagram');
+  const logicalArchitecture = diagramById.get('logical_architecture_diagram');
+  const dataFlow = diagramById.get('data_flow_diagram');
+  const integrationMap = diagramById.get('integration_map');
+  const controlOverlay = diagramById.get('control_overlay');
+  const buildBuyBoundary = diagramById.get('build_buy_boundary_view');
   const evidenceGapCount =
     skeleton.baseline.seedGaps.length + skeleton.critic.blockers.length;
   const topRiskCount =
@@ -417,19 +429,110 @@ function buildExhibits(args: {
     exhibit({
       id: 'architecture_context_diagram',
       title: 'Architecture context diagram',
-      subtitle: 'Current grounded placeholder until the dedicated architecture artifact lands.',
+      subtitle: architecturePack.decisionSummary,
       kind: 'architecture',
-      status: 'gap',
+      status: architecturePack.diagrams.length > 0 ? 'ready' : 'gap',
       artifactIds: ['business_case_pack'],
-      cSuiteUse: 'Shows the minimum architecture context required before a board-grade funding artifact is complete.',
-      data: [
-        datum('Tenant context', skeleton.tenantKey),
-        datum('Move', skeleton.moveName),
-        datum('Architecture artifact', 'Not yet dedicated', 'Represented through Design & Plan pack today.', 'warn'),
-      ],
-      notes: [
-        'This is a grounded placeholder: it tells reviewers the diagram requirement is open rather than pretending a full architecture diagram exists.',
-      ],
+      cSuiteUse: 'Shows the executive-level system boundary, human checkpoint and measurement trace for the funded Move.',
+      data:
+        architectureContext?.nodes.slice(0, 5).map((architectureNode) =>
+          datum(
+            architectureNode.label,
+            architectureNode.status,
+            architectureNode.evidence,
+            architectureNode.status === 'gap' ? 'warn' : 'neutral',
+          ),
+        ) ?? [],
+      notes: architectureContext?.notes ?? [],
+    }),
+    exhibit({
+      id: 'logical_architecture_diagram',
+      title: 'Logical architecture diagram',
+      subtitle: 'Reference flow from evidence to broker to model gateway to human checkpoint.',
+      kind: 'architecture',
+      status: 'ready',
+      artifactIds: ['business_case_pack'],
+      cSuiteUse: 'Gives CIO/CTO reviewers a product-shaped architecture rather than a generic AI idea.',
+      data:
+        logicalArchitecture?.nodes.map((architectureNode) =>
+          datum(architectureNode.label, architectureNode.kind, architectureNode.evidence),
+        ) ?? [],
+      notes: logicalArchitecture?.notes ?? [],
+    }),
+    exhibit({
+      id: 'data_flow_diagram',
+      title: 'Data-flow diagram',
+      subtitle: 'Read-first data flow with action only after human approval.',
+      kind: 'architecture',
+      status: dataFlow?.nodes.some((architectureNode) => architectureNode.status === 'gap')
+        ? 'gap'
+        : 'ready',
+      artifactIds: ['business_case_pack'],
+      cSuiteUse: 'Shows where data is read, where decisions are made, and where operational writes are controlled.',
+      data:
+        dataFlow?.edges.slice(0, 6).map((architectureEdge) =>
+          datum(
+            `${architectureEdge.from} → ${architectureEdge.to}`,
+            architectureEdge.label,
+            architectureEdge.control,
+          ),
+        ) ?? [],
+      notes: dataFlow?.notes ?? [],
+    }),
+    exhibit({
+      id: 'integration_map',
+      title: 'Integration map',
+      subtitle: 'Grounded system integrations and explicit gaps.',
+      kind: 'architecture',
+      status: architecturePack.integrations.some((integration) => integration.status === 'gap')
+        ? 'gap'
+        : 'ready',
+      artifactIds: ['business_case_pack'],
+      cSuiteUse: 'Prevents the funding pack from hiding the systems work that will make or break execution.',
+      data: architecturePack.integrations.map((integration) =>
+        datum(
+          integration.system,
+          integration.status,
+          `${integration.role} · ${integration.owner}`,
+          integration.status === 'gap' ? 'warn' : 'neutral',
+        ),
+      ),
+      notes: integrationMap?.notes ?? [],
+    }),
+    exhibit({
+      id: 'control_overlay',
+      title: 'Control overlay',
+      subtitle: 'Eight §4 reference-architecture components with native/partial status.',
+      kind: 'heatmap',
+      status: architecturePack.optionSet.openComponentGaps.length > 0 ? 'gap' : 'ready',
+      artifactIds: ['business_case_pack'],
+      cSuiteUse: 'Shows whether the architecture is production-shaped or still a POC with governance debt.',
+      data: architecturePack.controlCoverage.map((coverage) =>
+        datum(
+          coverage.component,
+          coverage.coverage,
+          coverage.note,
+          coverage.coverage === 'native'
+            ? 'good'
+            : coverage.coverage === 'partial'
+              ? 'warn'
+              : 'bad',
+        ),
+      ),
+      notes: controlOverlay?.notes ?? [],
+    }),
+    exhibit({
+      id: 'build_buy_boundary_view',
+      title: 'Build / buy / partner boundary',
+      subtitle: 'Which work is bought, partnered, built, or retained internally.',
+      kind: 'matrix',
+      status: 'ready',
+      artifactIds: ['business_case_pack'],
+      cSuiteUse: 'Aligns the architecture with Source so the solution design does not become one over-scoped SI RFP.',
+      data: architecturePack.buildBuyBoundary.map((lane) =>
+        datum(lane.lane, lane.disposition, `${lane.rationale} · ${lane.owner}`),
+      ),
+      notes: buildBuyBoundary?.notes ?? [],
     }),
     exhibit({
       id: 'workstream_cost_stack',
@@ -606,7 +709,7 @@ export function buildArtifactVisualExhibits(
   const { skeleton } = caseEntry.buildCase();
   const { fullCase } = caseEntry.buildFullCase();
   const { measurement, goPack } = caseEntry.buildMobilize();
-  return buildExhibits({ skeleton, fullCase, goPack, measurement });
+  return buildExhibits({ caseId, skeleton, fullCase, goPack, measurement });
 }
 
 export function listPresentVisualIdsForArtifact(

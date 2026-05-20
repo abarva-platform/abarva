@@ -347,6 +347,55 @@ export default async function MasterMoveDossierPage({
           gap: 8px;
           margin-top: ${SPACING.sm};
         }
+        .architecture-panel {
+          margin-top: ${SPACING.sm};
+          display: grid;
+          gap: ${SPACING.sm};
+        }
+        .architecture-options {
+          display: grid;
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+          gap: ${SPACING.sm};
+        }
+        .architecture-option {
+          border: 1px solid ${COLORS.ink}18;
+          border-radius: ${RADIUS.sm};
+          padding: 10px;
+          background: ${COLORS.cream};
+        }
+        .architecture-option.selected {
+          border-color: ${COLORS.navy};
+          background: ${COLORS.mintSoft};
+        }
+        .architecture-flow {
+          display: grid;
+          grid-template-columns: repeat(6, minmax(0, 1fr));
+          gap: 8px;
+        }
+        .architecture-node {
+          min-height: 82px;
+          border: 1px solid ${COLORS.ink}22;
+          border-radius: ${RADIUS.sm};
+          padding: 9px;
+          background: ${COLORS.white};
+          font-size: 12px;
+          line-height: 1.3;
+        }
+        .architecture-node.gap {
+          background: ${COLORS.amberSoft};
+          border-color: ${COLORS.amberInk};
+        }
+        .boundary-grid {
+          display: grid;
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+          gap: 8px;
+        }
+        .boundary-card {
+          border-top: 1px solid ${COLORS.ink}14;
+          padding-top: 8px;
+          font-size: 12px;
+          line-height: 1.42;
+        }
         .bar-track {
           height: 10px;
           background: ${COLORS.ink}12;
@@ -458,6 +507,9 @@ export default async function MasterMoveDossierPage({
           .status-rail,
           .summary-grid,
           .phase-grid,
+          .architecture-options,
+          .architecture-flow,
+          .boundary-grid,
           .exhibit-grid,
           .download-grid,
           .signoff-grid {
@@ -667,6 +719,73 @@ export default async function MasterMoveDossierPage({
                 ) : (
                   <p>No open evidence gaps recorded for this section.</p>
                 )}
+                {section.id === 'solution_architecture' ? (
+                  <div className="architecture-panel">
+                    <div>
+                      <div className="metric-label">Selected Architecture</div>
+                      <h3>{dossier.solutionArchitecture.selectedOption.name}</h3>
+                      <p>{dossier.solutionArchitecture.selectedOption.summary}</p>
+                    </div>
+                    <div className="architecture-options">
+                      {dossier.solutionArchitecture.optionSet.options.map((option) => (
+                        <div
+                          className={`architecture-option ${
+                            option.id ===
+                            dossier.solutionArchitecture.optionSet
+                              .recommendedOptionId
+                              ? 'selected'
+                              : ''
+                          }`}
+                          key={option.id}
+                        >
+                          <div className="metric-label">{option.shape}</div>
+                          <h3>{option.name}</h3>
+                          <p>
+                            Reference score {option.referenceScore};{' '}
+                            {option.productionShaped
+                              ? 'production-shaped'
+                              : 'open component gaps'}.
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                    <div>
+                      <div className="metric-label">Logical Architecture</div>
+                      <div className="architecture-flow">
+                        {dossier.solutionArchitecture.diagrams
+                          .find(
+                            (diagram) =>
+                              diagram.id === 'logical_architecture_diagram',
+                          )
+                          ?.nodes.map((architectureNode) => (
+                            <div
+                              className={`architecture-node ${architectureNode.status}`}
+                              key={architectureNode.id}
+                            >
+                              <strong>{architectureNode.label}</strong>
+                              <br />
+                              {architectureNode.evidence}
+                            </div>
+                          ))}
+                      </div>
+                    </div>
+                    <div>
+                      <div className="metric-label">Build / Buy / Partner Boundary</div>
+                      <div className="boundary-grid">
+                        {dossier.solutionArchitecture.buildBuyBoundary.map(
+                          (lane) => (
+                            <div className="boundary-card" key={lane.lane}>
+                              <strong>{lane.disposition.toUpperCase()}</strong>{' '}
+                              · {lane.lane}
+                              <br />
+                              {lane.rationale}
+                            </div>
+                          ),
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ) : null}
               </div>
             </Section>
           ))}
