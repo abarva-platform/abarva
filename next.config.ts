@@ -10,7 +10,19 @@ const nextConfig: NextConfig = {
   //   (~400KB) and must never appear in client bundles; keeping it in
   //   `serverExternalPackages` guarantees Next.js externalises it on the
   //   server and leaves it out of any client chunk.
-  serverExternalPackages: ['@anthropic-ai/sdk', 'docx'],
+  // - `pptxgenjs` is the PowerPoint renderer for the board-grade Costed
+  //   Business-Case Pack PPTX export. It lazy-`require`s Node built-ins,
+  //   which the bundler cannot statically resolve — externalising it keeps
+  //   `npm run build` from failing on those dynamic requires.
+  // - `@resvg/resvg-js` ships a prebuilt native `.node` binary used to
+  //   rasterise the SVG exhibits for the PPTX. Native addons must be
+  //   externalised — the bundler cannot inline a `.node` file.
+  serverExternalPackages: [
+    '@anthropic-ai/sdk',
+    'docx',
+    'pptxgenjs',
+    '@resvg/resvg-js',
+  ],
 
   // Enables `forbidden()` and `unauthorized()` from `next/navigation`.
   // Used by `src/lib/auth/tenant-access.ts` to render the /forbidden.tsx

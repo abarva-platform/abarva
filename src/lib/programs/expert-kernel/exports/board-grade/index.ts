@@ -1,16 +1,20 @@
 // Board-grade Moves artifacts — public surface.
 //
 // The reference implementations called for by the Moves Board-Grade Artifact
-// Blueprint: board-grade HTML decks for the Apex "Contact Center AI Routing"
-// Move. Every renderer is a PURE function — it produces one self-contained
-// HTML string from the existing Expert Kernel, introducing no new numbers.
-// The routes stream the strings.
+// Blueprint: board-grade dossiers for the Apex "Contact Center AI Routing"
+// Move. Renderers share PURE view-models and introduce no new numbers:
+//   • `renderApexCostedBusinessCaseHtml` — the Costed Business-Case Pack as a
+//     self-contained HTML deck to READ.
+//   • `renderApexCostedBusinessCasePptx` — the same pack as an editable
+//     PowerPoint to EDIT (hybrid: native text objects + rasterised exhibits).
+//   • `renderApexDiscoverBriefHtml` — the Discover Brief as an HTML deck.
 //
 // The deck CHROME — the menu rail, the stage, the slide scaffold, the inline
 // slide-switch script, the print expansion and the locked design-system CSS —
 // is the shared `deck-shell` module, so every artifact deck is consistent.
 
 export { renderApexCostedBusinessCaseHtml } from './html-renderer';
+export { renderApexCostedBusinessCasePptx } from './pptx-renderer';
 export {
   buildApexCostedBusinessCasePack,
   type CostedBusinessCasePack,
