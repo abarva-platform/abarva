@@ -89,6 +89,10 @@ export function AppTopBar({ tenantName, showProductNav = true }: AppTopBarProps 
         display: "flex",
         alignItems: "center",
         justifyContent: "space-between",
+        // Minimum spacing between the three groups (brand · module nav ·
+        // right rail) so they can never overlap under width pressure — the
+        // collision that ran the tenant name into the old tagline.
+        gap: 24,
         padding: "0 32px",
         borderBottom: `1px solid ${BRAND.hair}`,
         position: "sticky",
@@ -102,7 +106,7 @@ export function AppTopBar({ tenantName, showProductNav = true }: AppTopBarProps 
         .app-top-bar__nav-link:hover { color: white !important; }
       `}</style>
 
-      <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0, flexShrink: 0 }}>
         <Link
           href="/home"
           aria-label="AbarVa Home"
@@ -117,22 +121,6 @@ export function AppTopBar({ tenantName, showProductNav = true }: AppTopBarProps 
             priority
           />
         </Link>
-        <div aria-hidden="true" style={{ width: 1, height: 16, background: BRAND.hair }} />
-        <div
-          data-testid="app-top-bar-tagline"
-          style={{
-            fontFamily: "'Bradley Hand', 'Segoe Print', 'Comic Sans MS', cursive",
-            fontSize: 12,
-            fontWeight: 500,
-            color: "rgba(255,255,255,0.76)",
-            letterSpacing: "0.01em",
-            lineHeight: 1,
-            whiteSpace: "nowrap",
-            transform: "translateY(1px)",
-          }}
-        >
-          <span style={{ fontWeight: 600 }}>AI</span> Success Platform
-        </div>
       </div>
 
       {navItems.length > 0 && (

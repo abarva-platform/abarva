@@ -13,23 +13,23 @@ describe('SourceEmptyState (SRC-EMP-NO-EVENTS)', () => {
     expect(html).toContain('No sourcing events yet');
   });
 
-  it('renders the originate CTA link', () => {
-    expect(html).toContain('Originate new event');
+  it('renders the primary "start event" CTA', () => {
+    expect(html).toContain('Start IT sourcing event');
   });
 
-  it('renders Steward agent name', () => {
-    expect(html).toContain('Steward');
+  it('links the primary CTA to /source/new', () => {
+    expect(html).toContain('href="/source/new"');
   });
 
-  it('renders the Steward quote', () => {
-    expect(html).toContain('No source events have been created yet');
+  it('renders as a single full-width panel (no orphaned agent column)', () => {
+    // The earlier version dropped a fixed-width AgentColumn into AppShell's
+    // column flexbox, collapsing the working pane and leaving the right of
+    // the screen blank. The empty state is now one centered panel.
+    expect(html).toContain('source-events-empty-state');
   });
 
-  it('links to /source/new', () => {
-    expect(html).toContain('/source/new');
-  });
-
-  it('renders the Sentinel caveat', () => {
-    expect(html).toContain('Sentinel monitors events once created');
+  it('renders the next-step cards', () => {
+    expect(html).toContain('Review setup connectors');
+    expect(html).toContain('Portfolio guide');
   });
 });
