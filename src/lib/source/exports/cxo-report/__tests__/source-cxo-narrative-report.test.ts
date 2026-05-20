@@ -69,7 +69,7 @@ describe('Source CXO narrative report', () => {
     const report = buildSourceCxoNarrativeReport(input);
     const answer = report.slides.find((slide) => slide.kind === 'answer');
 
-    expect(report.verdict).toBe('Demand challenged');
+    expect(report.verdict).toBe('Pause for evidence');
     expect(answer?.message).not.toContain('Award');
     expect(JSON.stringify(report)).toContain('Not recorded');
   });
@@ -91,7 +91,7 @@ function makeDealPackInput(
 ): DealPackInput {
   const selectionMemoBody =
     overrides.selectionMemoBody === undefined
-      ? '# Award Acme with commercial guardrails\n\nProceed only after AI clause redlines close.'
+      ? '# Award Acme with commercial guardrails\n\nContract controls are closed; proceed with signature controls.'
       : overrides.selectionMemoBody;
   return {
     tenantName: 'Apex Retail',

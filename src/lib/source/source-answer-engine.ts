@@ -26,6 +26,7 @@ import type {
   RawVendorProposal,
 } from './proposal-normalization/proposal-normalization-types';
 import type { TenantContextSegment } from './taxonomy/category-taxonomy';
+import { answerHardSourceQuestion } from './expert-judgment/source-hard-question-answer';
 
 export type SourceAnswerMode =
   | 'current_state'
@@ -125,6 +126,15 @@ export function buildSourceAnswerEngine(
   const mode = detectSourceAnswerMode(input.prompt);
   const playbook = selectSourceExpertPlaybook(input.contextBundle, input.prompt);
   const evidence = rankAnswerEvidence(live, mode).slice(0, 8);
+  const hardQuestionAnswer = answerHardSourceQuestion(
+    input.prompt,
+    [
+      ...evidence.map((item) => item.excerpt),
+      ...input.contextBundle.blockers,
+      ...input.contextBundle.missingInputs,
+      ...live.warnings,
+    ].join('\n'),
+  );
   const currentStateFindings = toCurrentStateFindings(evidence, live);
   const sourcingImplications = selectByMode(mode, playbook.eventShaping, [
     `Shape ${eventName(input.contextBundle)} around the strongest current-state evidence first, then treat uncited assumptions as open diligence.`,
@@ -149,7 +159,7 @@ export function buildSourceAnswerEngine(
     engineVersion: 'source-answer-engine/v1',
     mode,
     title: `${playbook.label} answer`,
-    answerText: formatAnswerText({
+    answerText: hardQuestionAnswer?.answerText ?? formatAnswerText({
       mode,
       currentStateFindings,
       sourcingImplications,
@@ -162,11 +172,17 @@ export function buildSourceAnswerEngine(
     }),
     currentStateFindings,
     sourcingImplications,
-    cxoGuidance,
+    cxoGuidance: hardQuestionAnswer
+      ? [
+          hardQuestionAnswer.directAnswer,
+          hardQuestionAnswer.sourcingJudgment,
+          hardQuestionAnswer.whatWouldChangeTheAnswer,
+        ]
+      : cxoGuidance,
     expertLens: playbook.expertLens,
     riskTraps,
     missingData,
-    recommendedNextAction: playbook.nextAction,
+    recommendedNextAction: hardQuestionAnswer?.recommendedNextAction ?? playbook.nextAction,
     confidence,
     limits,
     evidenceCitations: evidence.map(toAnswerCitation),
