@@ -23,6 +23,7 @@ import type { NextRequest } from 'next/server';
 
 import { getCurrentUser } from '@/lib/auth/current-user';
 import { renderApexSolutionArchitectureHtml } from '@/lib/programs/expert-kernel/exports/board-grade';
+import { cachedRender } from '@/lib/programs/expert-kernel/exports/board-grade/render-cache';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -41,9 +42,12 @@ export async function GET(req: NextRequest): Promise<Response> {
   const generatedOn = new Date().toISOString().slice(0, 10);
 
   // The renderer is pure; a throw here would be a genuine renderer bug.
+  // Memoised per day via the date-keyed in-process cache.
   let html: string;
   try {
-    html = renderApexSolutionArchitectureHtml(generatedOn);
+    html = cachedRender(`solution-architecture:html:${generatedOn}`, () =>
+      renderApexSolutionArchitectureHtml(generatedOn),
+    );
   } catch (err) {
     console.error(
       '[GET /api/v1/moves/board-grade-solution-architecture] render error',

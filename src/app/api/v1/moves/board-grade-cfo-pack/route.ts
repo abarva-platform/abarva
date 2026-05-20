@@ -20,6 +20,7 @@ import type { NextRequest } from 'next/server';
 
 import { getCurrentUser } from '@/lib/auth/current-user';
 import { renderApexCfoPackHtml } from '@/lib/programs/expert-kernel/exports/board-grade';
+import { cachedRender } from '@/lib/programs/expert-kernel/exports/board-grade/render-cache';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -38,9 +39,12 @@ export async function GET(req: NextRequest): Promise<Response> {
   const generatedOn = new Date().toISOString().slice(0, 10);
 
   // The renderer is pure; a throw here would be a genuine renderer bug.
+  // Memoised per day via the date-keyed in-process cache.
   let html: string;
   try {
-    html = renderApexCfoPackHtml(generatedOn);
+    html = cachedRender(`cfo-pack:html:${generatedOn}`, () =>
+      renderApexCfoPackHtml(generatedOn),
+    );
   } catch (err) {
     console.error(
       '[GET /api/v1/moves/board-grade-cfo-pack] render error',
