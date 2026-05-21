@@ -15,8 +15,9 @@
 //     value-based-care spine, clinical operations & documentation, patient
 //     access / engagement / experience, research & clinical trials, the
 //     revenue cycle, quality / safety / regulatory, health information
-//     management / data & interoperability, payer / claims operations, and
-//     pharmacy — the complete provider-function taxonomy.
+//     management / data & interoperability, the clinical supply chain,
+//     clinical workforce & staffing, payer / claims operations, and pharmacy
+//     — the complete provider-function taxonomy.
 
 export * from './function-pack-types';
 export * from './function-pack-registry';
@@ -29,5 +30,7 @@ export { qualitySafetyRegulatoryPack } from './healthcare/quality-safety-regulat
 export { healthInformationInteroperabilityPack } from './healthcare/health-information-interoperability';
 export { researchClinicalTrialsPack } from './healthcare/research-clinical-trials';
 export { revenueCyclePack } from './healthcare/revenue-cycle';
+export { clinicalSupplyChainPack } from './healthcare/clinical-supply-chain';
+export { clinicalWorkforceStaffingPack } from './healthcare/clinical-workforce-staffing';
 export { payerClaimsOperationsPack } from './healthcare/payer-claims-operations';
 export { pharmacyPack } from './healthcare/pharmacy';

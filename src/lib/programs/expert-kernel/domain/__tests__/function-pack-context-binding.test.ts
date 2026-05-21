@@ -147,11 +147,12 @@ describe('bindFunctionPackForArtifact — honest fallback', () => {
   });
 
   it('falls back honestly for an unknown function in a known industry', () => {
-    // clinical_supply_chain has no pack yet — a genuinely uncatalogued
-    // healthcare function (payer/claims and pharmacy are now catalogued).
+    // The twelve-function healthcare taxonomy is fully catalogued; a
+    // healthcare function outside that set (telehealth & virtual care) has
+    // no pack yet — a genuinely uncatalogued function, never a faked bind.
     const binding = bindFunctionPackForArtifact(
       'healthcare-provider',
-      'clinical_supply_chain',
+      'telehealth_virtual_care',
       'discover_brief',
       [],
     );

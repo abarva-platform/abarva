@@ -21,6 +21,8 @@ import { qualitySafetyRegulatoryPack } from '../healthcare/quality-safety-regula
 import { healthInformationInteroperabilityPack } from '../healthcare/health-information-interoperability';
 import { researchClinicalTrialsPack } from '../healthcare/research-clinical-trials';
 import { revenueCyclePack } from '../healthcare/revenue-cycle';
+import { clinicalSupplyChainPack } from '../healthcare/clinical-supply-chain';
+import { clinicalWorkforceStaffingPack } from '../healthcare/clinical-workforce-staffing';
 import { payerClaimsOperationsPack } from '../healthcare/payer-claims-operations';
 import { pharmacyPack } from '../healthcare/pharmacy';
 
@@ -39,6 +41,8 @@ const PACKS: ReadonlyArray<readonly [string, FunctionPack]> = [
   ],
   ['research_clinical_trials', researchClinicalTrialsPack],
   ['revenue_cycle', revenueCyclePack],
+  ['clinical_supply_chain', clinicalSupplyChainPack],
+  ['clinical_workforce_staffing', clinicalWorkforceStaffingPack],
   ['payer_claims_operations', payerClaimsOperationsPack],
   ['pharmacy', pharmacyPack],
 ];

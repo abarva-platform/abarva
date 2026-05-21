@@ -101,6 +101,28 @@ describe('resolveFunctionPack', () => {
     expect(pack?.functionLabel).toBe('Revenue cycle');
   });
 
+  it('resolves the clinical-supply-chain pack', () => {
+    const pack = resolveFunctionPack(
+      'healthcare-provider',
+      'clinical_supply_chain',
+    );
+    expect(pack).not.toBeNull();
+    expect(pack?.functionKey).toBe('clinical_supply_chain');
+    expect(pack?.industryKey).toBe('healthcare-provider');
+    expect(pack?.functionLabel).toBe('Clinical supply chain');
+  });
+
+  it('resolves the clinical-workforce & staffing pack', () => {
+    const pack = resolveFunctionPack(
+      'healthcare-provider',
+      'clinical_workforce_staffing',
+    );
+    expect(pack).not.toBeNull();
+    expect(pack?.functionKey).toBe('clinical_workforce_staffing');
+    expect(pack?.industryKey).toBe('healthcare-provider');
+    expect(pack?.functionLabel).toBe('Clinical workforce & staffing');
+  });
+
   it('resolves the payer & claims-operations pack', () => {
     const pack = resolveFunctionPack(
       'healthcare-provider',
@@ -121,12 +143,11 @@ describe('resolveFunctionPack', () => {
   });
 
   it('returns null for an unknown function in a known industry', () => {
-    // clinical_supply_chain has no pack yet — a known gap, never a faked
-    // pack. (With payer/claims and pharmacy now catalogued, the healthcare
-    // taxonomy is complete at twelve functions except clinical_supply_chain
-    // and clinical_workforce_staffing.)
+    // The healthcare provider taxonomy is complete at twelve catalogued
+    // functions; a healthcare function outside that set (e.g. telehealth &
+    // virtual care) has no pack yet — a known gap, never a faked pack.
     expect(
-      resolveFunctionPack('healthcare-provider', 'clinical_supply_chain'),
+      resolveFunctionPack('healthcare-provider', 'telehealth_virtual_care'),
     ).toBeNull();
   });
 
@@ -152,13 +173,15 @@ describe('resolveFunctionPack', () => {
 });
 
 describe('listFunctionPackCoverage', () => {
-  it('lists exactly the ten catalogued healthcare packs', () => {
+  it('lists exactly the twelve catalogued healthcare packs', () => {
     const coverage = listFunctionPackCoverage();
-    expect(coverage).toHaveLength(10);
+    expect(coverage).toHaveLength(12);
     const keys = coverage.map((c) => c.functionKey).sort();
     expect(keys).toEqual([
       'care_delivery_care_management',
       'clinical_operations_documentation',
+      'clinical_supply_chain',
+      'clinical_workforce_staffing',
       'health_information_interoperability',
       'patient_access_engagement_experience',
       'payer_claims_operations',
