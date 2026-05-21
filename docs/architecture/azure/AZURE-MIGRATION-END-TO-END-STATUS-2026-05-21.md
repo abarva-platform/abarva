@@ -15,10 +15,17 @@ surfaces pass, observability is green, connectivity smoke has logs, core
 Moves/Source artifacts generate successfully, and the 50-case L7 multi-agent
 live quality gate passes with no C/D/F blockers.
 
+Final QA update: Event Grid ingestion, runtime persistence, schema verification,
+Service Bus queue hygiene, and all-tenant data parity have also passed inside
+Azure Container Apps. First Capital's Azure Source-event substrate was below
+the cutover threshold (2/5) and has been fixed with an additive synthetic seed;
+the current parity gate now passes for Apex, Meridian, First Capital, and
+Northstar.
+
 This is not yet a customer cutover. The remaining work is security posture,
 Northstar workflow substrate if the demo requires full Source/Moves/Tower
-flows, notification/email smoke if alerts are part of the pilot, and a
-rehearsed cutover/rollback run.
+flows, real email-provider configuration if application-level outbound email
+is part of the pilot, and a rehearsed cutover/rollback run.
 
 ## Current Readiness by Area
 
@@ -39,7 +46,8 @@ rehearsed cutover/rollback run.
 | Source/Moves/Intelligence/Tower functional parity | Mostly done for existing demo tenants; not done for Northstar full workflow | Azure runtime surfaces passed for Apex/Meridian/First Capital; Northstar currently has context-layer substrate only | Add Northstar Source/Moves/Tower rows if Northstar must demo the full journey. |
 | Artifact generation parity | Done for core seeded artifacts | Moves board-grade decks and Source AMS artifacts returned 200; PPTX byte magic validated | Northstar-specific artifacts require Northstar workflow substrate. |
 | Agent/model path parity | Strict C gate green; B-level polish remains | Source targeted rerun passed 10/10 A; final full 50-case live baseline on Azure revision `0000042` passed `--fail-on-grade C` with grades A:40, B:10, C:0, D:0, F:0 | Harden the 10 B-level citation/evidence/dissent polish rows only if the next bar is A-only. |
-| Notifications/email parity | Not done | No Resend/notification delivery smoke against Azure runtime yet | Needed if alerts are part of pilot experience. |
+| Runtime notification persistence | Done | `azure-cutover-runtime-smoke` transaction-tested `platform_notification_events` and `platform_notification_deliveries` in Azure Postgres | Application-level outbound email still needs a Resend/provider secret if email alerts are in scope. |
+| Event Grid ingestion parity | Done | `cutover-eventgrid-20260521144452` passed produce/ingest/verify; exact runtime smoke confirmed one `safe=allow` and one `sensitive=quarantine` audit row | None for lab. |
 | Rollback and freeze plan | Authored, not rehearsed | `AZURE-CUSTOMER-CUTOVER-RUNBOOK-2026-05-21.md` | Rehearse before switching customer traffic. |
 
 ## Latest Verified Azure Evidence
@@ -116,6 +124,29 @@ Interpretation: Azure Postgres now includes the latest app schema for the
 recent Moves, Source, Tower, notifications, execution-room, and expert-review
 work. The `gate_criteria` and `ai_initiatives_registry` counts should be
 treated as data-model follow-ups only if the pilot scenario depends on them.
+
+### Final Cutover QA Evidence
+
+| Gate | Result | Evidence |
+|---|---|---|
+| Azure health | Pass | `/api/health`: `ok=true`, `postgres=true`, `direct_postgres=true`, `neo4j=skipped` on revision `ca-abarva-web-lab-eastus--0000042`. |
+| Resource parity | Pass | `npm run azure:resource:parity`: 37 pass, 0 attention, 0 fail. |
+| Observability | Pass | `npm run azure:observability:audit`: 13 pass, 0 attention, 0 fail; App Insights workspace-backed and web app env-bound. |
+| Security audit | Attention | `npm run azure:security:audit`: 86 pass, 9 attention, 0 fail. See `AZURE-SECURITY-HARDENING-BACKLOG-2026-05-21.md`. |
+| Unauthenticated load smoke | Pass | 95 attempts, 0 request errors, 0 5xx, p95 586.3ms; authenticated routes correctly redirect. |
+| VNet connectivity smoke | Pass | `job-azure-connectivity-smoke-eus-gpvpb6z` succeeded from Container Apps. |
+| Event Grid ingestion | Pass | Run `cutover-eventgrid-20260521144452`; producer `job-a2b-smoke-send-eus-5opibrf`, worker `job-a2b-ingest-lab-eus-k61nztw`, verifier `job-a2b-smoke-verify-eus-i4ltqew`. |
+| Runtime persistence | Pass | `job-a2b-smoke-verify-eus-ssdvdgq` on image `cutover-runtime-smoke-exact-20260521144932`: 10 pass, 0 fail; transaction rolled back. |
+| Service Bus queue hygiene | Pass | `q-context-ingestion-events`: active 0, dead-letter 0 after purging 47 stale lab smoke/drill messages. |
+| Schema verifier | Pass | `job-a2b-smoke-verify-eus-t6mjxqz`: 164 migrations, 242 public tables, 4 clients, 23 source events before First Capital fix. |
+| Tenant data parity | Pass | `job-a2b-smoke-verify-eus-z9p9rtz`: Apex, Meridian, First Capital, and Northstar all pass. First Capital source events now 5/min 5 after seed `job-a2b-smoke-verify-eus-l2aweep`. |
+
+New repeatable QA commands added in this pass:
+
+```bash
+npm run azure:cutover:runtime-smoke
+npm run seed:source-events:first-capital -- --dry-run
+```
 
 ## Critical Architecture Finding
 

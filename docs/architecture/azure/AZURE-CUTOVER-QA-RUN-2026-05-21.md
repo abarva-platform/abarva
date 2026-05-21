@@ -15,6 +15,15 @@ deterministic agent path, SEC-P0 cross-tenant probes, resource parity,
 observability, connectivity smoke, protected-surface load smoke, and the L7
 50-case multi-agent live quality gate are green.
 
+Final cutover QA update, 2026-05-21 15:26 Central: the remaining data-plane
+checks have now been run from inside Azure Container Apps. Event Grid ingestion
+passed end-to-end with exactly one safe allow row and one sensitive quarantine
+row, runtime persistence passed for `expert_reviews`, `sourcing_work_items`,
+`platform_notification_events`, and `platform_notification_deliveries`, the
+Service Bus active and dead-letter queues are clean, Azure schema verification
+passed, and all four tenant data-parity profiles now pass after adding the
+missing First Capital Source-event substrate.
+
 This is still a lab cutover candidate, not a final customer cutover. The
 remaining blockers are customer-pilot hardening items: security attention items
 around public/local-auth posture for Service Bus/Search/Key Vault/Cosmos and
@@ -42,7 +51,90 @@ against a real customer cutover window.
 | Source artifact generation | Pass | 100% for seeded Apex AMS event | CXO HTML, CXO PPTX, Deal Pack all returned status 200; PPTX magic `504b0304`. | Store Ops hard event not available in Azure copied set; AMS event is the live Azure seed. |
 | Multi-agent live QA | Pass | 100% at strict C gate | Full 50-case live `/api/chat/agent` baseline after revision `0000042`: 50 pass, 0 fail, grades A:40, B:10, C:0, D:0, F:0, 0 blocking failures at `--fail-on-grade C`. Source targeted rerun passed 10/10 A. | B-level citation/evidence polish remains before A-only board demos. |
 | Connectivity smoke | Pass | 100% with logs | `job-azure-connectivity-smoke-eus-vyhijgl` succeeded; logs show Postgres, Blob, Service Bus, Key Vault, and Azure AI Search all passed. | None for lab. |
+| Event Grid ingestion smoke | Pass | 100% | Fresh run `cutover-eventgrid-20260521144452`; send `job-a2b-smoke-send-eus-5opibrf`, ingest `job-a2b-ingest-lab-eus-k61nztw`, verify `job-a2b-smoke-verify-eus-i4ltqew`; active queue=0, DLQ=0 after stale lab-message purge. | None for lab; keep DLQ monitor enabled. |
+| Runtime persistence smoke | Pass | 100% | `job-a2b-smoke-verify-eus-ssdvdgq` on image `cutover-runtime-smoke-exact-20260521144932`: 10 pass, 0 fail; transaction-tested expert reviews, Source work items, notification events/deliveries, and exact ingestion audit rows. | Promote the new smoke script into main so this remains repeatable. |
+| Tenant data parity | Pass | 100% | `job-a2b-smoke-verify-eus-z9p9rtz`: Apex, Meridian, First Capital, Northstar all pass. First Capital fixed from 2/5 to 5/5 Source events with seed run `job-a2b-smoke-verify-eus-l2aweep`. | None for lab. |
 | Final cutover runbook | Pass | 100% authored / 0% rehearsed | `AZURE-CUSTOMER-CUTOVER-RUNBOOK-2026-05-21.md` defines freeze, final delta, go/no-go, rollback, owners, and evidence gates. | Rehearse before customer traffic switch. |
+
+## Final QA Addendum — 2026-05-21
+
+### Runtime Persistence Smoke
+
+Command path:
+
+```bash
+npm run azure:cutover:runtime-smoke -- --ingestion-smoke-run-id cutover-eventgrid-20260521144452
+```
+
+Azure execution:
+
+```text
+Image: acrabarvalab001.azurecr.io/abarva/web:cutover-runtime-smoke-exact-20260521144932
+Digest: sha256:9f413d91bd0dc114abbb270d7ad6a1e10dd14d1e36a108024ac727abc286ad22
+Execution: job-a2b-smoke-verify-eus-ssdvdgq
+Result: pass
+Checks: 10 pass, 0 fail
+Committed synthetic rows: false
+```
+
+Validated:
+
+- `expert_reviews` table exists and supports append-only insert/read.
+- `sourcing_work_items` table exists and supports Source action-layer insert/read.
+- `platform_notification_events` table exists and supports operating-signal insert/read.
+- `platform_notification_deliveries` table exists and supports delivery audit insert/read.
+- `sensitive_upload_audit` table exists.
+- Ingestion run `cutover-eventgrid-20260521144452` has exactly one `safe=allow`
+  row and exactly one `sensitive=quarantine` row.
+
+### Event Grid Ingestion Smoke
+
+Fresh run:
+
+```text
+Run id: cutover-eventgrid-20260521144452
+Producer: job-a2b-smoke-send-eus-5opibrf
+Ingest worker: job-a2b-ingest-lab-eus-k61nztw
+Verifier: job-a2b-smoke-verify-eus-i4ltqew
+Result: pass
+```
+
+The correct mode for this smoke is `INGESTION_SMOKE_SEND_CANONICAL=false`.
+Blob upload triggers Event Grid into Service Bus. Turning canonical sends on
+also sends duplicate Service Bus messages and correctly fails the strict
+one-row-per-case verifier.
+
+Service Bus queue hygiene after stale lab-message purge:
+
+```json
+{
+  "active": 0,
+  "deadletter": 0
+}
+```
+
+### Data Parity
+
+First Capital initially failed the data-parity gate because Azure had only two
+persisted `source_events` for the tenant while the cutover threshold is five.
+The fix was additive and synthetic-only:
+
+```text
+Script: npm run seed:source-events:first-capital
+Azure execution: job-a2b-smoke-verify-eus-l2aweep
+Inserted/upserted: 3 First Capital source events
+Total First Capital source_events: 5
+```
+
+Rerun result:
+
+```text
+Execution: job-a2b-smoke-verify-eus-z9p9rtz
+Apex Retail: pass
+Meridian Health: pass
+First Capital: pass, sourceEvents 5 / min 5
+Northstar MedTech: pass
+```
 
 ## Commands / Evidence
 
