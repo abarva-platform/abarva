@@ -28,16 +28,16 @@ cutover/rollback run.
 | Key Vault DB secrets | Done | `kv-abarva-lab-001` has Azure Postgres URLs plus `source-postgres-database-url` | Jobs can read source and target DSNs without printing secrets. |
 | Local env wiring | Done | `.env.local` contains `SOURCE_DATABASE_URL`, `TARGET_DATABASE_URL`, `AZURE_LAB_DATABASE_URL`, `ABARVA_AZURE_DATABASE_URL` | Local scripts know source vs target, but local machine cannot resolve private DB DNS. |
 | GitHub workflow secrets | Done | Repo secrets present: `DATABASE_URL`, `TARGET_DATABASE_URL`, `AZURE_LAB_DATABASE_URL` | Workflows are configured, but public GitHub runners still cannot reach the private DB. |
-| Fresh app/job image | Done | `acrabarvalab001.azurecr.io/abarva/web:lab-northstar-copy-20260521-r1` | Azure jobs can run current repo scripts. |
+| Fresh app/job image | Done | `acrabarvalab001.azurecr.io/abarva/web:lab-steward-readiness-20260521-r1` | Azure app is running the post-Steward-readiness-fix image; digest `sha256:084e0ccfcc93937774e61dcfbee482c826ad7197fc629efc49b5b6352456691a`. |
 | Schema/migration gate | Done | Container Apps job `job-abarva-db-migrate-lab-eastus-fzlu85n` succeeded | Azure schema is current enough for app/data validation. |
 | Northstar tenant source seed | Done | PR `#2196`, source DB verifier passed | Synthetic medtech tenant exists in source DB. |
 | Northstar tenant Azure copy dry-run | Done | `job-abarva-db-copy-lab-eastus-6rv486i` succeeded | Copy plan was clean before write. |
 | Northstar tenant Azure real copy + parity | Done | `job-abarva-db-copy-lab-eastus-0twobtq` succeeded | Northstar tenant rows are in Azure and parity passed. |
 | CI/workflow automation | Mostly done | PR `#2197` added copy/parity workflows | Useful for orchestration, but private DNS requires VNet-connected execution for live Azure DB. |
-| Authenticated app-surface parity | Done for existing demo tenants | Playwright matrix passed 15/15 against Azure revision `ca-abarva-web-lab-eastus--0000036` | Primary surfaces are validated for Apex, Meridian, and First Capital. |
+| Authenticated app-surface parity | Done for existing demo tenants | Playwright matrix passed 15/15 against Azure revision `ca-abarva-web-lab-eastus--0000036`; health passed again on revision `0000037` after Steward fix deploy | Primary surfaces are validated for Apex, Meridian, and First Capital. |
 | Source/Moves/Intelligence/Tower functional parity | Mostly done for existing demo tenants; not done for Northstar full workflow | Azure runtime surfaces passed for Apex/Meridian/First Capital; Northstar currently has context-layer substrate only | Add Northstar Source/Moves/Tower rows if Northstar must demo the full journey. |
 | Artifact generation parity | Done for core seeded artifacts | Moves board-grade decks and Source AMS artifacts returned 200; PPTX byte magic validated | Northstar-specific artifacts require Northstar workflow substrate. |
-| Agent/model path parity | Live baseline complete; hardening needed | Source deterministic fallback route returned evidence-aware blocked answer; live Source baseline passed with no D/F; full 50-case live baseline passed F threshold after Atlas sign-in retry with grades A:31, B:10, C:8, D:1, F:0 | Fix Steward production-readiness D and harden evidence/citation, tenant-fact, dissent, and required-term signals before pilot-green. |
+| Agent/model path parity | D/F gate green; A/B-only hardening remains | Source deterministic fallback route returned evidence-aware blocked answer; live Source baseline passed with no D/F; final full 50-case live baseline on Azure revision `0000037` passed `--fail-on-grade D` with grades A:37, B:11, C:2, D:0, F:0 | Fix the two remaining C cases and harden B-level evidence/citation signals before A/B-only board demos. |
 | Notifications/email parity | Not done | No Resend/notification delivery smoke against Azure runtime yet | Needed if alerts are part of pilot experience. |
 | Rollback and freeze plan | Authored, not rehearsed | `AZURE-CUSTOMER-CUTOVER-RUNBOOK-2026-05-21.md` | Rehearse before switching customer traffic. |
 
@@ -169,7 +169,7 @@ VNet, or a private operator host.
 
 | Task | Status | Evidence / next action |
 |---|---|---|
-| Build current image with scripts/migrations | Done | `lab-northstar-copy-20260521-r1`. |
+| Build current image with scripts/migrations | Done | Current app image `lab-steward-readiness-20260521-r1`; migration/copy jobs used `lab-northstar-copy-20260521-r1`. |
 | Run Azure compatibility bootstrap | Done | Included in migration job. |
 | Apply pending migrations | Done | 9 pending migrations applied on 2026-05-21. |
 | Run schema verifier | Done | 164 migrations, 242 public tables. |
@@ -192,7 +192,7 @@ VNet, or a private operator host.
 
 | Task | Status | Evidence / next action |
 |---|---|---|
-| Confirm active Azure app image is current | Done for lab candidate | Revision `ca-abarva-web-lab-eastus--0000036`; image `lab-northstar-copy-20260521-r1`. |
+| Confirm active Azure app image is current | Done for lab candidate | Revision `ca-abarva-web-lab-eastus--0000037`; image `lab-steward-readiness-20260521-r1`. |
 | Confirm Azure app uses Azure DB | Done | `ABARVA_DATA_PLANE=azure-postgres`; `DATABASE_URL` secretRef is the Azure Postgres control DB secret. |
 | `/api/health` against Azure app | Done | `postgres=true`, `direct_postgres=true`, `neo4j=skipped`. |
 | Authenticated Clerk/demo sign-in against Azure app | Done for demo sign-in harness | Load smoke and Playwright matrix authenticate through demo sign-in. |
@@ -318,6 +318,6 @@ Northstar parity are green.
 
 The migration has not crossed the product-cutover threshold. The Azure app and
 DB lane are proven, but the remaining critical path is to close the nine
-security attention items, fix the one D-grade live agent-quality case, improve
-evidence/citation discipline across B/C rows, and rehearse the final
-cutover/rollback run.
+security attention items, fix the two remaining C-grade live agent-quality
+cases, improve evidence/citation discipline across B rows, and rehearse the
+final cutover/rollback run.
