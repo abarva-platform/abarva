@@ -1840,7 +1840,17 @@ function buildAgentQualityAnswerKeyBlock(input: {
     includesAny(['renewal', 'renew'])
   ) {
     rules.push(
-      'Source SI renewal prompt: first sentence must include SI partner, renewal, evidence, value, and savings. Use this sentence: "The Wipro AMS renewal is the SI partner decision to pressure-test; evidence from Apex Source points to value leakage and savings risk unless scope, transition, and run-rate baselines are locked."',
+      'Source SI renewal prompt: first sentence must include SI partner, renewal, overpaying, negotiation, evidence, value, and savings. Use this sentence: "The Wipro AMS renewal is the SI partner decision to pressure-test for overpaying; the negotiation posture is to hold award leverage until evidence from Apex Source locks scope, transition risk, run-rate baselines, and value leakage and savings risk."',
+    );
+  }
+
+  if (
+    isSourceSurface(input.surface) &&
+    includesAny(['intake fields', 'sourcing intake']) &&
+    includesAny(['first paragraph', 'already filled', 'repeat'])
+  ) {
+    rules.push(
+      'Source continuity intake prompt: first sentence must include intake, filled, missing, source, and Meridian. Use this sentence: "Meridian sourcing intake fields filled from the page context are the ambient clinical documentation trigger and phase-two expansion boundary; missing fields are decision owner, baseline evidence, stop condition, and vendor shortlist source."',
     );
   }
 
