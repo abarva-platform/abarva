@@ -36,6 +36,8 @@ import { merchandisingAssortmentPack } from './retail/merchandising-assortment';
 import { pricingPromotionsPack } from './retail/pricing-promotions';
 import { demandInventoryPlanningPack } from './retail/demand-inventory-planning';
 import { supplyChainFulfillmentPack } from './retail/supply-chain-fulfillment';
+import { digitalCommercePack } from './retail/digital-commerce';
+import { marketingRetailMediaPack } from './retail/marketing-retail-media';
 import { storeOperationsPack } from './retail/store-operations';
 import { customerLoyaltyPersonalizationPack } from './retail/customer-loyalty-personalization';
 
@@ -71,6 +73,8 @@ const FUNCTION_PACK_ENTRIES: readonly FunctionPack[] = [
   pricingPromotionsPack,
   demandInventoryPlanningPack,
   supplyChainFulfillmentPack,
+  digitalCommercePack,
+  marketingRetailMediaPack,
   storeOperationsPack,
   customerLoyaltyPersonalizationPack,
 ] as const;

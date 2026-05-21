@@ -42,5 +42,7 @@ export { merchandisingAssortmentPack } from './retail/merchandising-assortment';
 export { pricingPromotionsPack } from './retail/pricing-promotions';
 export { demandInventoryPlanningPack } from './retail/demand-inventory-planning';
 export { supplyChainFulfillmentPack } from './retail/supply-chain-fulfillment';
+export { digitalCommercePack } from './retail/digital-commerce';
+export { marketingRetailMediaPack } from './retail/marketing-retail-media';
 export { storeOperationsPack } from './retail/store-operations';
 export { customerLoyaltyPersonalizationPack } from './retail/customer-loyalty-personalization';
