@@ -422,10 +422,10 @@ export function buildMeridianVbcDecisionHome(
   const headline: DecisionHomeHeadline = {
     eyebrow: 'Population health & value-based care',
     statement:
-      'Meridian’s value-based-care result turns on RAF capture: at 58% on ' +
-      'the MA panel — below the 85–100% the function expects and below its ' +
-      'own 62% cohort median — the population is being measured as healthier ' +
-      'than it is, which caps the benchmark and every downstream dollar.',
+      'Meridian’s value-based-care result turns on one number — RAF capture ' +
+      'at 58%, well below the 85–100% the function expects. The population ' +
+      'is being measured as healthier than it is, and that caps the ' +
+      'benchmark and every downstream dollar.',
     honestyClause:
       'This is the one truth Meridian’s audited substrate can assert today. ' +
       'The contract-settlement economics that decide shared savings vs. loss ' +
