@@ -42,6 +42,8 @@ const RETAIL_FUNCTIONS_CATALOGUED_SO_FAR: readonly string[] = [
   'pricing_promotions',
   'demand_inventory_planning',
   'supply_chain_fulfillment',
+  'digital_commerce',
+  'marketing_retail_media',
 ];
 
 describe('resolveFunctionPack', () => {
@@ -207,6 +209,22 @@ describe('resolveFunctionPack', () => {
     expect(pack?.functionKey).toBe('supply_chain_fulfillment');
     expect(pack?.industryKey).toBe('retail');
     expect(pack?.functionLabel).toBe('Supply chain & fulfillment');
+  });
+
+  it('resolves the retail digital-commerce pack', () => {
+    const pack = resolveFunctionPack('retail', 'digital_commerce');
+    expect(pack).not.toBeNull();
+    expect(pack?.functionKey).toBe('digital_commerce');
+    expect(pack?.industryKey).toBe('retail');
+    expect(pack?.functionLabel).toBe('Digital commerce');
+  });
+
+  it('resolves the retail marketing & retail-media pack', () => {
+    const pack = resolveFunctionPack('retail', 'marketing_retail_media');
+    expect(pack).not.toBeNull();
+    expect(pack?.functionKey).toBe('marketing_retail_media');
+    expect(pack?.industryKey).toBe('retail');
+    expect(pack?.functionLabel).toBe('Marketing & retail media');
   });
 
   it('returns null for an unknown function in a known industry', () => {
