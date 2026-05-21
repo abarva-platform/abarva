@@ -52,3 +52,5 @@ export { returnsReverseLogisticsPack } from './retail/returns-reverse-logistics'
 export { lossPreventionPack } from './retail/loss-prevention';
 export { capitalMarketsTradingPack } from './financial-services/capital-markets-trading';
 export { commercialCorporateBankingPack } from './financial-services/commercial-corporate-banking';
+export { paymentsMoneyMovementPack } from './financial-services/payments-money-movement';
+export { wealthAssetManagementPack } from './financial-services/wealth-asset-management';

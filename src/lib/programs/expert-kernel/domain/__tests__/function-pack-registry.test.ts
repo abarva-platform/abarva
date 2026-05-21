@@ -59,6 +59,8 @@ const RETAIL_FUNCTIONS_CATALOGUED_SO_FAR: readonly string[] = [
 const FINANCIAL_SERVICES_FUNCTIONS_CATALOGUED_SO_FAR: readonly string[] = [
   'capital_markets_trading',
   'commercial_corporate_banking',
+  'payments_money_movement',
+  'wealth_asset_management',
 ];
 
 describe('resolveFunctionPack', () => {
@@ -310,6 +312,28 @@ describe('resolveFunctionPack', () => {
     expect(pack?.functionKey).toBe('commercial_corporate_banking');
     expect(pack?.industryKey).toBe('financial-services');
     expect(pack?.functionLabel).toBe('Commercial & corporate banking');
+  });
+
+  it('resolves the financial-services payments & money-movement pack', () => {
+    const pack = resolveFunctionPack(
+      'financial-services',
+      'payments_money_movement',
+    );
+    expect(pack).not.toBeNull();
+    expect(pack?.functionKey).toBe('payments_money_movement');
+    expect(pack?.industryKey).toBe('financial-services');
+    expect(pack?.functionLabel).toBe('Payments & money movement');
+  });
+
+  it('resolves the financial-services wealth & asset-management pack', () => {
+    const pack = resolveFunctionPack(
+      'financial-services',
+      'wealth_asset_management',
+    );
+    expect(pack).not.toBeNull();
+    expect(pack?.functionKey).toBe('wealth_asset_management');
+    expect(pack?.industryKey).toBe('financial-services');
+    expect(pack?.functionLabel).toBe('Wealth & asset management');
   });
 
   it('returns null for an unknown function in a known industry', () => {
