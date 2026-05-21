@@ -36,7 +36,7 @@ requires full Source/Moves/Tower flows, and a rehearsed cutover/rollback run.
 | Authenticated app-surface parity | Done for existing demo tenants | Playwright matrix passed 15/15 against Azure revision `ca-abarva-web-lab-eastus--0000036` | Primary surfaces are validated for Apex, Meridian, and First Capital. |
 | Source/Moves/Intelligence/Tower functional parity | Mostly done for existing demo tenants; not done for Northstar full workflow | Azure runtime surfaces passed for Apex/Meridian/First Capital; Northstar currently has context-layer substrate only | Add Northstar Source/Moves/Tower rows if Northstar must demo the full journey. |
 | Artifact generation parity | Done for core seeded artifacts | Moves board-grade decks and Source AMS artifacts returned 200; PPTX byte magic validated | Northstar-specific artifacts require Northstar workflow substrate. |
-| Agent/model path parity | Partial | Source deterministic fallback route returned evidence-aware blocked answer; `noModel=true` | Live model-enabled agent quality run remains. |
+| Agent/model path parity | Partial but live Source baseline complete | Source deterministic fallback route returned evidence-aware blocked answer; live Source `/api/chat/agent` baseline ran 10 cases with 4 A, 5 B, 1 C, 0 D/F blockers | Run full 50-case live multi-agent baseline and harden Source citation/evidence signals. |
 | Notifications/email parity | Not done | No Resend/notification delivery smoke against Azure runtime yet | Needed if alerts are part of pilot experience. |
 | Rollback and freeze plan | Authored, not rehearsed | `AZURE-CUSTOMER-CUTOVER-RUNBOOK-2026-05-21.md` | Rehearse before switching customer traffic. |
 
@@ -212,8 +212,8 @@ VNet, or a private operator host.
 | Source execution-room persistence | Schema ready | `sourcing_work_items` migrations applied; need runtime test. |
 | Notification event persistence | Schema ready | Notification migrations applied; need runtime test. |
 | Email/notification delivery | Not done | Requires Resend/provider route smoke and policy decision. |
-| Agent hard-question run | Partial | Source Nexus ask route returned evidence-aware deterministic blocked answer; model-enabled path still not proven. |
-| No-fabrication assertions | Partial | Artifact and Source deterministic response preserve explicit blockers/gaps; live model path still needs evaluation. |
+| Agent hard-question run | Partial | Source Nexus ask route returned evidence-aware deterministic blocked answer; Source live model baseline ran 10 cases through `/api/chat/agent`. |
+| No-fabrication assertions | Partial | Artifact and deterministic response preserve explicit blockers/gaps; Source live baseline passed the fake-reference adversarial case. Full multi-agent no-fabrication baseline still needed. |
 
 ### Phase 7 — Security, Isolation, and Compliance
 

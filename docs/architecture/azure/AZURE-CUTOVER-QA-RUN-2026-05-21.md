@@ -39,7 +39,7 @@ against a real customer cutover window.
 | SEC-P0 cross-tenant isolation | Pass | 100% | 8/8 probes passed against Azure app with Apex session probing Meridian. | Store durable Azure cookie secret or automated cookie mint for scheduled workflow. |
 | Moves artifact generation | Pass | 100% for Apex board-grade artifacts | 8/8 board-grade HTML decks returned status 200 with deck content; business-case PPTX returned status 200 and ZIP/PPTX magic `504b0304`. | Northstar-specific artifacts require Northstar Moves case substrate. |
 | Source artifact generation | Pass | 100% for seeded Apex AMS event | CXO HTML, CXO PPTX, Deal Pack all returned status 200; PPTX magic `504b0304`. | Store Ops hard event not available in Azure copied set; AMS event is the live Azure seed. |
-| Source agent route | Pass | 80% | `/api/v1/source/apex-retail-ams-outsourcing-2026/nexus/ask` returned 200 and evidence-aware deterministic response. | Response is `noModel=true`; live Claude/provider path still needs separate model-enabled run. |
+| Source agent route | Pass | 90% | Deterministic Source Nexus route returned 200 and evidence-aware blocked response; live `/api/chat/agent` Source baseline ran 10 cases with 4 A, 5 B, 1 C, 0 D/F blockers. | Improve citation/evidence discipline; run full 50-case multi-agent baseline before pilot AI-agent demos. |
 | Connectivity smoke | Pass | 100% with logs | `job-azure-connectivity-smoke-eus-vyhijgl` succeeded; logs show Postgres, Blob, Service Bus, Key Vault, and Azure AI Search all passed. | None for lab. |
 | Final cutover runbook | Pass | 100% authored / 0% rehearsed | `AZURE-CUSTOMER-CUTOVER-RUNBOOK-2026-05-21.md` defines freeze, final delta, go/no-go, rollback, owners, and evidence gates. | Rehearse before customer traffic switch. |
 
@@ -259,6 +259,32 @@ missing inputs named:
 - Award recommendation approved
 ```
 
+Live Source agent-quality baseline:
+
+```bash
+npm run qa:agent-quality:live -- \
+  --base-url https://ca-abarva-web-lab-eastus.agreeableocean-2c1472e6.eastus.azurecontainerapps.io \
+  --auth-mode demo-sign-in \
+  --agent source \
+  --out /tmp/azure-source-agent-quality-live-10.jsonl \
+  --fail-on-grade D
+```
+
+Result:
+
+```text
+total=10
+pass=9
+fail=1
+blockingFailures=0
+grades=A:4,B:5,C:1,D:0,F:0
+```
+
+Interpretation: the live Source model path works through `/api/chat/agent` and
+has no D/F blockers. It is not yet A-grade across the board: several answers
+need stronger explicit evidence/citation signals, and the Apex SI renewal case
+missed the required "overpaying" term.
+
 ## Fix Made During QA
 
 The product now correctly uses Source Decision Queue as the `/source` front
@@ -276,7 +302,8 @@ This is a QA contract correction, not a product change.
 1. Close or explicitly waive the 9 security attention items.
 2. Add a durable Azure authenticated cookie workflow or automated cookie mint
    for scheduled SEC-P0 and agent-quality jobs.
-3. Run live model-enabled agent quality, not only deterministic fallback.
+3. Run the full 50-case live multi-agent quality baseline; the Source-only
+   10-case baseline is now complete.
 4. Add Northstar full-workflow substrate if it must be a real client demo:
    Source event, Moves case, Tower outcomes, artifacts, notifications.
 5. Rehearse the final cutover runbook:
