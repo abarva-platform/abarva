@@ -40,6 +40,14 @@ import { returnsReverseLogisticsPack } from '../retail/returns-reverse-logistics
 import { lossPreventionPack } from '../retail/loss-prevention';
 import { riskManagementPack } from '../financial-services/risk-management';
 import { fraudFinancialCrimePack } from '../financial-services/fraud-financial-crime';
+import { regulatoryCompliancePack } from '../financial-services/regulatory-compliance';
+import { financeTreasuryAlmPack } from '../financial-services/finance-treasury-alm';
+import { retailBankingDepositsPack } from '../financial-services/retail-banking-deposits';
+import { lendingCreditUnderwritingPack } from '../financial-services/lending-credit-underwriting';
+import { capitalMarketsTradingPack } from '../financial-services/capital-markets-trading';
+import { commercialCorporateBankingPack } from '../financial-services/commercial-corporate-banking';
+import { paymentsMoneyMovementPack } from '../financial-services/payments-money-movement';
+import { wealthAssetManagementPack } from '../financial-services/wealth-asset-management';
 
 const PACKS: ReadonlyArray<readonly [string, FunctionPack]> = [
   ['care_delivery_care_management', careDeliveryCareManagementPack],
@@ -74,6 +82,14 @@ const PACKS: ReadonlyArray<readonly [string, FunctionPack]> = [
   ['loss_prevention', lossPreventionPack],
   ['risk_management', riskManagementPack],
   ['fraud_financial_crime', fraudFinancialCrimePack],
+  ['regulatory_compliance', regulatoryCompliancePack],
+  ['finance_treasury_alm', financeTreasuryAlmPack],
+  ['retail_banking_deposits', retailBankingDepositsPack],
+  ['lending_credit_underwriting', lendingCreditUnderwritingPack],
+  ['capital_markets_trading', capitalMarketsTradingPack],
+  ['commercial_corporate_banking', commercialCorporateBankingPack],
+  ['payments_money_movement', paymentsMoneyMovementPack],
+  ['wealth_asset_management', wealthAssetManagementPack],
 ];
 
 describe.each(PACKS)('Function Pack §6 depth bar — %s', (_key, pack) => {
