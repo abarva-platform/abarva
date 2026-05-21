@@ -32,6 +32,8 @@ import { clinicalSupplyChainPack } from './healthcare/clinical-supply-chain';
 import { clinicalWorkforceStaffingPack } from './healthcare/clinical-workforce-staffing';
 import { payerClaimsOperationsPack } from './healthcare/payer-claims-operations';
 import { pharmacyPack } from './healthcare/pharmacy';
+import { merchandisingAssortmentPack } from './retail/merchandising-assortment';
+import { pricingPromotionsPack } from './retail/pricing-promotions';
 import { demandInventoryPlanningPack } from './retail/demand-inventory-planning';
 import { supplyChainFulfillmentPack } from './retail/supply-chain-fulfillment';
 
@@ -44,10 +46,11 @@ import { supplyChainFulfillmentPack } from './retail/supply-chain-fulfillment';
  * clinical trials, the revenue cycle, quality / safety / regulatory, health
  * information / interoperability, the clinical supply chain, clinical
  * workforce & staffing, payer / claims operations, and pharmacy — plus the
- * opening retail packs: demand & inventory planning and supply chain &
- * fulfillment. A future pack is added as ONE additional entry; the resolver
- * and every consumer need no change. Keyed off the pack's own `industryKey`
- * / `functionKey` so an entry can never disagree with its pack.
+ * opening retail packs: merchandising & assortment, pricing & promotions,
+ * demand & inventory planning, and supply chain & fulfillment. A future pack
+ * is added as ONE additional entry; the resolver and every consumer need no
+ * change. Keyed off the pack's own `industryKey` / `functionKey` so an entry
+ * can never disagree with its pack.
  */
 const FUNCTION_PACK_ENTRIES: readonly FunctionPack[] = [
   careDeliveryCareManagementPack,
@@ -62,6 +65,8 @@ const FUNCTION_PACK_ENTRIES: readonly FunctionPack[] = [
   clinicalWorkforceStaffingPack,
   payerClaimsOperationsPack,
   pharmacyPack,
+  merchandisingAssortmentPack,
+  pricingPromotionsPack,
   demandInventoryPlanningPack,
   supplyChainFulfillmentPack,
 ] as const;

@@ -5,7 +5,7 @@ Target: `https://ca-abarva-web-lab-eastus.agreeableocean-2c1472e6.eastus.azureco
 Runner: `npm run qa:agent-quality:live`
 Auth mode: `demo-sign-in`
 Corpus: 50 live cases across Sentinel, Atlas, Nexus, Source, and Steward
-Status: live baseline complete; D/F gate green after Steward readiness fix
+Status: live baseline complete; strict C gate green after Source/Nexus/Steward hardening
 
 ## Commands
 
@@ -126,7 +126,7 @@ By tenant:
 | Meridian Health | 15 | 11 | 4 |
 | First Capital | 14 | 12 | 2 |
 
-## Steward Readiness Fix and Final Rerun
+## Steward Readiness Fix and D/F-Gate Rerun
 
 The only D in the combined baseline was `steward-production-readiness`.
 Root cause: Steward's voice doctrine was active for `/admin` surfaces but not
@@ -209,20 +209,20 @@ dissent: pass
 transport: pass
 ```
 
-## Remaining Quality Gaps
+## D/F-Gate Quality Gaps Before Final Hardening
 
-The current baseline is good enough to pass the D/F pilot-safety gate. It is
-not yet A/B-only. The remaining misses are quality polish gaps, not
-infrastructure outages or no-fabrication blockers.
+At the D/F-gate checkpoint, the baseline was safe from D/F blockers but still
+had two C-grade rows. These were closed in the final strict-C hardening wave
+documented below.
 
-### Remaining C cases
+### C cases closed later
 
 | Case | Agent | Tenant | Grade | Finding |
 |---|---|---|---:|---|
 | `nexus-apex-workforce-origination` | Nexus | Apex Retail | C | Good origination capture, but missed explicit `scope` wording and tenant-fact signal. |
 | `steward-continuity-segment-plan` | Steward | Apex Retail | C | Correct top-three segment recap, but missed exact `why` term and tenant-fact signal. |
 
-### Non-blocking but important B-level gaps
+### B-level gaps at this checkpoint
 
 Common failure modes across B/C rows:
 
@@ -253,14 +253,14 @@ The live runner was hardened after the Atlas timeout finding:
 This reduces false F rows caused by transient auth-page load failures and makes
 the score artifact durable.
 
-## Interpretation
+## D/F-Gate Interpretation
 
 This run proves live authenticated model execution on Azure across all five
 agents and all three existing demo tenants. The model path is real, not only a
 deterministic fallback.
 
-The result is now a D/F-green lab baseline, not yet an A/B-only board-demo
-green light:
+At this checkpoint, the result was a D/F-green lab baseline, not yet an
+A/B-only board-demo green light:
 
 - infrastructure and auth path: proven after retry;
 - model answer generation: proven for 50 cases;
@@ -270,14 +270,102 @@ green light:
 - B/C polish gaps remain: evidence/citation and exact compliance with
   corpus-required terms need tightening.
 
+## Final Strict C Gate Rerun
+
+After the Steward readiness fix, the remaining C-grade cases were hardened in
+small PRs and deployed through Azure revisions `0000038` through `0000042`.
+The final candidate is:
+
+```text
+revision=ca-abarva-web-lab-eastus--0000042
+image=acrabarvalab001.azurecr.io/abarva/web:lab-l7-clear-c-20260521-r5
+digest=sha256:572a2d0d1bb48d4959e4dec6129537c258e8ad8bf97d39957bae51598a101d3a
+health.postgres=true
+health.direct_postgres=true
+```
+
+Targeted Source rerun:
+
+```bash
+npm run qa:agent-quality:live -- \
+  --base-url https://ca-abarva-web-lab-eastus.agreeableocean-2c1472e6.eastus.azurecontainerapps.io \
+  --auth-mode demo-sign-in \
+  --agent source \
+  --out /tmp/azure-agent-quality-live-source-after-core-final-fix.jsonl \
+  --fail-on-grade C
+```
+
+```text
+total=10
+pass=10
+fail=0
+grades=A:10,B:0,C:0,D:0,F:0
+blockingFailures=0
+```
+
+Final full 50-case rerun:
+
+```bash
+npm run qa:agent-quality:live -- \
+  --base-url https://ca-abarva-web-lab-eastus.agreeableocean-2c1472e6.eastus.azurecontainerapps.io \
+  --auth-mode demo-sign-in \
+  --out /tmp/azure-agent-quality-live-50-final-no-c-after-source-core-fix.jsonl \
+  --fail-on-grade C
+```
+
+Score-file command:
+
+```bash
+npm run qa:agent-quality:score -- \
+  --answers /tmp/azure-agent-quality-live-50-final-no-c-after-source-core-fix.jsonl \
+  --out /tmp/azure-agent-quality-live-50-final-no-c-after-source-core-fix-score.json \
+  --fail-on-grade C
+```
+
+Final result:
+
+| Metric | Result |
+|---|---:|
+| Total cases | 50 |
+| Pass | 50 |
+| Fail | 0 |
+| Grade A | 40 |
+| Grade B | 10 |
+| Grade C | 0 |
+| Grade D | 0 |
+| Grade F | 0 |
+| Blocking failures at C threshold | 0 |
+
+By agent:
+
+| Agent | Total | Pass | Fail | A | B | C | D | F |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|
+| Atlas | 10 | 10 | 0 | 9 | 1 | 0 | 0 | 0 |
+| Nexus | 10 | 10 | 0 | 9 | 1 | 0 | 0 | 0 |
+| Sentinel | 10 | 10 | 0 | 5 | 5 | 0 | 0 | 0 |
+| Source | 10 | 10 | 0 | 8 | 2 | 0 | 0 | 0 |
+| Steward | 10 | 10 | 0 | 9 | 1 | 0 | 0 | 0 |
+
+By tenant:
+
+| Tenant | Total | Pass | Fail |
+|---|---:|---:|---:|
+| Apex Retail | 21 | 21 | 0 |
+| Meridian Health | 15 | 15 | 0 |
+| First Capital | 14 | 14 | 0 |
+
+Remaining quality polish is now B-level only. The 10 B rows are mainly
+citation/evidence-signal strictness and one Nexus dissent/risk signal; they do
+not block the current pilot-safety gate, but they are the next improvement set
+if the board-demo bar becomes A-only.
+
 ## Required Follow-Up
 
-1. Add a shared answer contract requiring an explicit evidence/source sentence
-   when the corpus requires citations.
-2. Harden continuity/adversarial templates so they preserve exact required
-   refusal and gap language without becoming robotic.
-3. Tighten `nexus-apex-workforce-origination` and
-   `steward-continuity-segment-plan` to clear the two remaining C cases.
+1. Decide whether the next threshold is A-only or whether A/B is acceptable for
+   pilot readiness.
+2. If A-only is required, harden the 10 remaining B rows around explicit
+   evidence/source phrasing and dissent/risk language.
+3. Keep the strict C gate as a required post-deploy check for the Azure lab.
 4. Move toward A/B-only for board demos.
 5. Store scored JSON artifacts from scheduled runs now that `--out` works for
    score-file mode.
