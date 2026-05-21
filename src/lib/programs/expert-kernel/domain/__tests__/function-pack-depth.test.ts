@@ -17,6 +17,8 @@ import { careDeliveryCareManagementPack } from '../healthcare/care-delivery-care
 import { clinicalOperationsDocumentationPack } from '../healthcare/clinical-operations-documentation';
 import { patientAccessEngagementExperiencePack } from '../healthcare/patient-access-engagement-experience';
 import { populationHealthValueBasedCarePack } from '../healthcare/population-health-value-based-care';
+import { qualitySafetyRegulatoryPack } from '../healthcare/quality-safety-regulatory';
+import { healthInformationInteroperabilityPack } from '../healthcare/health-information-interoperability';
 import { researchClinicalTrialsPack } from '../healthcare/research-clinical-trials';
 import { revenueCyclePack } from '../healthcare/revenue-cycle';
 
@@ -27,6 +29,11 @@ const PACKS: ReadonlyArray<readonly [string, FunctionPack]> = [
   [
     'patient_access_engagement_experience',
     patientAccessEngagementExperiencePack,
+  ],
+  ['quality_safety_regulatory', qualitySafetyRegulatoryPack],
+  [
+    'health_information_interoperability',
+    healthInformationInteroperabilityPack,
   ],
   ['research_clinical_trials', researchClinicalTrialsPack],
   ['revenue_cycle', revenueCyclePack],

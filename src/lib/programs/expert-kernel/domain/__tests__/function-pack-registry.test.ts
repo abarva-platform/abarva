@@ -56,6 +56,32 @@ describe('resolveFunctionPack', () => {
     );
   });
 
+  it('resolves the quality, safety & regulatory pack', () => {
+    const pack = resolveFunctionPack(
+      'healthcare-provider',
+      'quality_safety_regulatory',
+    );
+    expect(pack).not.toBeNull();
+    expect(pack?.functionKey).toBe('quality_safety_regulatory');
+    expect(pack?.industryKey).toBe('healthcare-provider');
+    expect(pack?.functionLabel).toBe(
+      'Clinical quality, patient safety & regulatory compliance',
+    );
+  });
+
+  it('resolves the health information & interoperability pack', () => {
+    const pack = resolveFunctionPack(
+      'healthcare-provider',
+      'health_information_interoperability',
+    );
+    expect(pack).not.toBeNull();
+    expect(pack?.functionKey).toBe('health_information_interoperability');
+    expect(pack?.industryKey).toBe('healthcare-provider');
+    expect(pack?.functionLabel).toBe(
+      'Health information management, data & interoperability',
+    );
+  });
+
   it('resolves the research & clinical-trials pack', () => {
     const pack = resolveFunctionPack(
       'healthcare-provider',
@@ -102,15 +128,17 @@ describe('resolveFunctionPack', () => {
 });
 
 describe('listFunctionPackCoverage', () => {
-  it('lists exactly the six catalogued healthcare packs', () => {
+  it('lists exactly the eight catalogued healthcare packs', () => {
     const coverage = listFunctionPackCoverage();
-    expect(coverage).toHaveLength(6);
+    expect(coverage).toHaveLength(8);
     const keys = coverage.map((c) => c.functionKey).sort();
     expect(keys).toEqual([
       'care_delivery_care_management',
       'clinical_operations_documentation',
+      'health_information_interoperability',
       'patient_access_engagement_experience',
       'population_health_value_based_care',
+      'quality_safety_regulatory',
       'research_clinical_trials',
       'revenue_cycle',
     ]);
