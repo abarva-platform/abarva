@@ -46,3 +46,5 @@ export { digitalCommercePack } from './retail/digital-commerce';
 export { marketingRetailMediaPack } from './retail/marketing-retail-media';
 export { storeOperationsPack } from './retail/store-operations';
 export { customerLoyaltyPersonalizationPack } from './retail/customer-loyalty-personalization';
+export { returnsReverseLogisticsPack } from './retail/returns-reverse-logistics';
+export { lossPreventionPack } from './retail/loss-prevention';

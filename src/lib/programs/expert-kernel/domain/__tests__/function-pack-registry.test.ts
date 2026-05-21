@@ -46,6 +46,8 @@ const RETAIL_FUNCTIONS_CATALOGUED_SO_FAR: readonly string[] = [
   'marketing_retail_media',
   'store_operations',
   'customer_loyalty_personalization',
+  'returns_reverse_logistics',
+  'loss_prevention',
 ];
 
 describe('resolveFunctionPack', () => {
@@ -245,6 +247,22 @@ describe('resolveFunctionPack', () => {
     expect(pack?.functionLabel).toBe('Customer loyalty & personalization');
   });
 
+  it('resolves the retail returns & reverse-logistics pack', () => {
+    const pack = resolveFunctionPack('retail', 'returns_reverse_logistics');
+    expect(pack).not.toBeNull();
+    expect(pack?.functionKey).toBe('returns_reverse_logistics');
+    expect(pack?.industryKey).toBe('retail');
+    expect(pack?.functionLabel).toBe('Returns & reverse logistics');
+  });
+
+  it('resolves the retail loss-prevention pack', () => {
+    const pack = resolveFunctionPack('retail', 'loss_prevention');
+    expect(pack).not.toBeNull();
+    expect(pack?.functionKey).toBe('loss_prevention');
+    expect(pack?.industryKey).toBe('retail');
+    expect(pack?.functionLabel).toBe('Loss prevention & shrink management');
+  });
+
   it('returns null for an unknown function in a known industry', () => {
     // The healthcare provider taxonomy is complete at twelve catalogued
     // functions; a healthcare function outside that set (e.g. telehealth &
@@ -256,9 +274,9 @@ describe('resolveFunctionPack', () => {
 
   it('returns null for a retail function not yet catalogued', () => {
     // The retail vertical is still being built out; a retail function
-    // outside the catalogued set (e.g. loss prevention) has no pack yet —
-    // a known gap, never a faked pack.
-    expect(resolveFunctionPack('retail', 'loss_prevention')).toBeNull();
+    // outside the catalogued set (e.g. visual merchandising) has no pack
+    // yet — a known gap, never a faked pack.
+    expect(resolveFunctionPack('retail', 'visual_merchandising')).toBeNull();
   });
 
   it('returns null when the function key is entirely unrecognised', () => {
