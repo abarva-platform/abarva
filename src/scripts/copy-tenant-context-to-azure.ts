@@ -5,7 +5,7 @@ import { config as loadEnv } from 'dotenv';
 loadEnv({ path: path.resolve(process.cwd(), '.env.local') });
 loadEnv();
 
-type TenantKey = 'apex-retail' | 'meridian-health' | 'first-capital';
+type TenantKey = 'apex-retail' | 'meridian-health' | 'first-capital' | 'northstar-medtech';
 
 type ClientMap = Map<string, string>;
 type IdMap = Map<string, string>;
@@ -24,12 +24,13 @@ type ColumnMeta = {
   udtName: string;
 };
 
-const DEFAULT_TENANTS: TenantKey[] = ['apex-retail', 'meridian-health', 'first-capital'];
+const DEFAULT_TENANTS: TenantKey[] = ['apex-retail', 'meridian-health', 'first-capital', 'northstar-medtech'];
 
 const TENANT_ALIASES: Record<TenantKey, string[]> = {
   'apex-retail': ['apex-retail', 'apexretail'],
   'meridian-health': ['meridian-health', 'meridian'],
   'first-capital': ['first-capital', 'firstcapital', 'arcturus', 'brindlemark'],
+  'northstar-medtech': ['northstar-medtech', 'northstar'],
 };
 
 function parseArgs() {
@@ -441,7 +442,7 @@ async function copySpec(source: Client, target: Client, spec: CopySpec, clientMa
 async function main() {
   const { tenants, dryRun, replace } = parseArgs();
   const sourceUrl = getUrl('SOURCE_DATABASE_URL', ['DATABASE_URL']);
-  const targetUrl = getUrl('TARGET_DATABASE_URL', ['DATABASE_URL']);
+  const targetUrl = getUrl('TARGET_DATABASE_URL', ['ABARVA_AZURE_DATABASE_URL', 'AZURE_LAB_DATABASE_URL', 'DATABASE_URL']);
   const source = makeClient(sourceUrl);
   const target = makeClient(targetUrl);
   await source.connect();
@@ -474,6 +475,29 @@ async function main() {
       await replaceTenantRows(target, tenants, targetClientIds);
     }
 
+    const retailKnowledgeSpecs: CopySpec[] = tenants.includes('apex-retail')
+      ? [
+          {
+            table: 'genome_patterns',
+            conflictColumns: ['code'],
+            sourceWhere: "vertical = 'retail' and code >= 'F200' and code <= 'F239' and is_active = true and code is not null",
+            sourceParams: [],
+          },
+          {
+            table: 'knowledge_sources',
+            conflictColumns: ['source_key'],
+            sourceWhere: "pinecone_namespace = 'retail-knowledge-sources' and status = 'active'",
+            sourceParams: [],
+          },
+          {
+            table: 'intelligence_graph_edges',
+            conflictColumns: ['from_node_type', 'from_node_id', 'edge_type', 'to_node_type', 'to_node_id'],
+            sourceWhere: "vertical = 'retail'",
+            sourceParams: [],
+          },
+        ]
+      : [];
+
     const specs: CopySpec[] = [
       {
         table: 'engagements',
@@ -498,18 +522,6 @@ async function main() {
         transform: remapPatternPack,
       },
       {
-        table: 'genome_patterns',
-        conflictColumns: ['code'],
-        sourceWhere: "vertical = 'retail' and code >= 'F200' and code <= 'F239' and is_active = true and code is not null",
-        sourceParams: [],
-      },
-      {
-        table: 'knowledge_sources',
-        conflictColumns: ['source_key'],
-        sourceWhere: "pinecone_namespace = 'retail-knowledge-sources' and status = 'active'",
-        sourceParams: [],
-      },
-      {
         table: 'use_cases',
         conflictColumns: ['id'],
         sourceWhere: 'client_id::text = any($1::text[])',
@@ -523,12 +535,7 @@ async function main() {
         sourceParams: [sourceClientIds],
         transform: remapContradiction,
       },
-      {
-        table: 'intelligence_graph_edges',
-        conflictColumns: ['from_node_type', 'from_node_id', 'edge_type', 'to_node_type', 'to_node_id'],
-        sourceWhere: "vertical = 'retail'",
-        sourceParams: [],
-      },
+      ...retailKnowledgeSpecs,
       { table: 'tenant_expected_baselines', conflictColumns: ['tenant_key', 'segment_id'], sourceWhere: 'tenant_key = any($1::text[])', sourceParams: [aliases], transform: remapClientId },
       { table: 'data_inventory_segments', conflictColumns: ['tenant_key', 'segment_id'], sourceWhere: 'tenant_key = any($1::text[])', sourceParams: [aliases], transform: remapClientId },
       { table: 'data_inventory_records', conflictColumns: ['tenant_key', 'segment_id', 'record_id'], sourceWhere: 'tenant_key = any($1::text[])', sourceParams: [aliases], transform: remapClientId },
