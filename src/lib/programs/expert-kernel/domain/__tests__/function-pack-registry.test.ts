@@ -57,6 +57,12 @@ const RETAIL_FUNCTIONS_CATALOGUED_SO_FAR: readonly string[] = [
 // (spec §3); this list grows as later batches land, and the coverage test
 // asserts it as a subset, never an exact total.
 const FINANCIAL_SERVICES_FUNCTIONS_CATALOGUED_SO_FAR: readonly string[] = [
+  'capital_markets_trading',
+  'commercial_corporate_banking',
+  'payments_money_movement',
+  'wealth_asset_management',
+  'retail_banking_deposits',
+  'lending_credit_underwriting',
   'regulatory_compliance',
   'finance_treasury_alm',
 ];
@@ -310,6 +316,72 @@ describe('resolveFunctionPack', () => {
     expect(pack?.functionKey).toBe('finance_treasury_alm');
     expect(pack?.industryKey).toBe('financial-services');
     expect(pack?.functionLabel).toBe('Finance, treasury & ALM');
+  });
+
+  it('resolves the financial-services retail banking & deposits pack', () => {
+    const pack = resolveFunctionPack(
+      'financial-services',
+      'retail_banking_deposits',
+    );
+    expect(pack).not.toBeNull();
+    expect(pack?.functionKey).toBe('retail_banking_deposits');
+    expect(pack?.industryKey).toBe('financial-services');
+    expect(pack?.functionLabel).toBe('Retail banking & deposits');
+  });
+
+  it('resolves the financial-services lending, credit & underwriting pack', () => {
+    const pack = resolveFunctionPack(
+      'financial-services',
+      'lending_credit_underwriting',
+    );
+    expect(pack).not.toBeNull();
+    expect(pack?.functionKey).toBe('lending_credit_underwriting');
+    expect(pack?.industryKey).toBe('financial-services');
+    expect(pack?.functionLabel).toBe('Lending, credit & underwriting');
+  });
+
+  it('resolves the capital-markets & trading pack', () => {
+    const pack = resolveFunctionPack(
+      'financial-services',
+      'capital_markets_trading',
+    );
+    expect(pack).not.toBeNull();
+    expect(pack?.functionKey).toBe('capital_markets_trading');
+    expect(pack?.industryKey).toBe('financial-services');
+    expect(pack?.functionLabel).toBe('Capital markets & trading');
+  });
+
+  it('resolves the commercial & corporate-banking pack', () => {
+    const pack = resolveFunctionPack(
+      'financial-services',
+      'commercial_corporate_banking',
+    );
+    expect(pack).not.toBeNull();
+    expect(pack?.functionKey).toBe('commercial_corporate_banking');
+    expect(pack?.industryKey).toBe('financial-services');
+    expect(pack?.functionLabel).toBe('Commercial & corporate banking');
+  });
+
+  it('resolves the financial-services payments & money-movement pack', () => {
+    const pack = resolveFunctionPack(
+      'financial-services',
+      'payments_money_movement',
+    );
+    expect(pack).not.toBeNull();
+    expect(pack?.functionKey).toBe('payments_money_movement');
+    expect(pack?.industryKey).toBe('financial-services');
+    expect(pack?.functionLabel).toBe('Payments & money movement');
+  });
+
+  it('resolves the financial-services wealth & asset-management pack', () => {
+    const pack = resolveFunctionPack(
+      'financial-services',
+      'wealth_asset_management',
+    );
+    expect(pack).not.toBeNull();
+    expect(pack?.functionKey).toBe('wealth_asset_management');
+    expect(pack?.industryKey).toBe('financial-services');
+    expect(pack?.functionLabel).toBe('Wealth & asset management');
   });
 
   it('returns null for an unknown function in a known industry', () => {
