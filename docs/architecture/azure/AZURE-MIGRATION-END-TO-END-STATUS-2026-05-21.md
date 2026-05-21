@@ -15,8 +15,9 @@ surfaces pass, observability is green, connectivity smoke has logs, and core
 Moves/Source artifacts generate successfully.
 
 This is not yet a customer cutover. The remaining work is security posture,
-model-enabled agent-quality proof, Northstar workflow substrate if the demo
-requires full Source/Moves/Tower flows, and a rehearsed cutover/rollback run.
+agent-quality hardening from the first full live baseline, Northstar workflow
+substrate if the demo requires full Source/Moves/Tower flows, and a rehearsed
+cutover/rollback run.
 
 ## Current Readiness by Area
 
@@ -36,7 +37,7 @@ requires full Source/Moves/Tower flows, and a rehearsed cutover/rollback run.
 | Authenticated app-surface parity | Done for existing demo tenants | Playwright matrix passed 15/15 against Azure revision `ca-abarva-web-lab-eastus--0000036` | Primary surfaces are validated for Apex, Meridian, and First Capital. |
 | Source/Moves/Intelligence/Tower functional parity | Mostly done for existing demo tenants; not done for Northstar full workflow | Azure runtime surfaces passed for Apex/Meridian/First Capital; Northstar currently has context-layer substrate only | Add Northstar Source/Moves/Tower rows if Northstar must demo the full journey. |
 | Artifact generation parity | Done for core seeded artifacts | Moves board-grade decks and Source AMS artifacts returned 200; PPTX byte magic validated | Northstar-specific artifacts require Northstar workflow substrate. |
-| Agent/model path parity | Partial but live Source baseline complete | Source deterministic fallback route returned evidence-aware blocked answer; live Source `/api/chat/agent` baseline ran 10 cases with 4 A, 5 B, 1 C, 0 D/F blockers | Run full 50-case live multi-agent baseline and harden Source citation/evidence signals. |
+| Agent/model path parity | Live baseline complete; hardening needed | Source deterministic fallback route returned evidence-aware blocked answer; live Source baseline passed with no D/F; full 50-case live baseline passed F threshold after Atlas sign-in retry with grades A:31, B:10, C:8, D:1, F:0 | Fix Steward production-readiness D and harden evidence/citation, tenant-fact, dissent, and required-term signals before pilot-green. |
 | Notifications/email parity | Not done | No Resend/notification delivery smoke against Azure runtime yet | Needed if alerts are part of pilot experience. |
 | Rollback and freeze plan | Authored, not rehearsed | `AZURE-CUSTOMER-CUTOVER-RUNBOOK-2026-05-21.md` | Rehearse before switching customer traffic. |
 
@@ -212,8 +213,8 @@ VNet, or a private operator host.
 | Source execution-room persistence | Schema ready | `sourcing_work_items` migrations applied; need runtime test. |
 | Notification event persistence | Schema ready | Notification migrations applied; need runtime test. |
 | Email/notification delivery | Not done | Requires Resend/provider route smoke and policy decision. |
-| Agent hard-question run | Partial | Source Nexus ask route returned evidence-aware deterministic blocked answer; Source live model baseline ran 10 cases through `/api/chat/agent`. |
-| No-fabrication assertions | Partial | Artifact and deterministic response preserve explicit blockers/gaps; Source live baseline passed the fake-reference adversarial case. Full multi-agent no-fabrication baseline still needed. |
+| Agent hard-question run | Live baseline complete; hardening needed | Source Nexus ask route returned evidence-aware deterministic blocked answer; Source live model baseline ran 10 cases; full 50-case live multi-agent baseline ran across Sentinel, Atlas, Nexus, Source, and Steward. |
+| No-fabrication assertions | Mostly done | Artifact and deterministic response preserve explicit blockers/gaps; Source live baseline passed the fake-reference adversarial case; full multi-agent baseline has 0 F blockers after Atlas rerun. Remaining misses are quality/scorer discipline, not fabrication blockers. |
 
 ### Phase 7 — Security, Isolation, and Compliance
 
@@ -273,10 +274,11 @@ VNet, or a private operator host.
    - If yes: add Northstar Moves use case, Source event, vendor/contracts, Tower outcomes, and notifications.
    - If no: keep Northstar as a context-layer migration proof only.
 
-5. **Run artifact and agent verification**
-   - Moves dossier/decks if a Northstar Move exists.
-   - Source CXO/deal pack if a Northstar Source event exists.
-   - Hard questions and no-fabrication checks.
+5. **Close the full-agent quality hardening loop**
+   - Fix `steward-production-readiness` D.
+   - Add shared citation/evidence sentence discipline where corpus requires it.
+   - Tighten continuity/adversarial required-term handling.
+   - Rerun the 50-case baseline with `--fail-on-grade D`.
 
 6. **Run fresh isolation/performance gates**
    - SEC-P0 cross-tenant probes.
@@ -300,7 +302,8 @@ A cutover should not be called ready until all of these are true:
 - Tenant data parity passes for every pilot tenant.
 - Authenticated browser parity passes for every primary surface.
 - Source/Moves/Tower artifacts generate successfully on Azure runtime.
-- Agent answers are grounded and no-fabrication checks pass.
+- Agent answers are grounded and no-fabrication checks pass, with the 50-case
+  live baseline at 0 D/F before customer-facing demos.
 - Cross-tenant isolation probes pass.
 - Performance/load smoke meets demo/pilot thresholds.
 - Notification/email behavior is either verified or explicitly disabled.
@@ -313,7 +316,8 @@ The Azure migration has crossed the database-readiness threshold. Schema,
 migrations, secrets, image supply chain, VNet execution, Northstar copy, and
 Northstar parity are green.
 
-The migration has not crossed the product-cutover threshold. The remaining
-work is to prove the application and user workflows against Azure with real
-authenticated sessions and artifact/agent outputs. That is the next critical
-path.
+The migration has not crossed the product-cutover threshold. The Azure app and
+DB lane are proven, but the remaining critical path is to close the nine
+security attention items, fix the one D-grade live agent-quality case, improve
+evidence/citation discipline across B/C rows, and rehearse the final
+cutover/rollback run.
