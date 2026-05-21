@@ -285,6 +285,47 @@ has no D/F blockers. It is not yet A-grade across the board: several answers
 need stronger explicit evidence/citation signals, and the Apex SI renewal case
 missed the required "overpaying" term.
 
+### Full Multi-Agent Agent Quality Baseline
+
+Full 50-case run:
+
+```bash
+npm run qa:agent-quality:live -- \
+  --base-url https://ca-abarva-web-lab-eastus.agreeableocean-2c1472e6.eastus.azurecontainerapps.io \
+  --auth-mode demo-sign-in \
+  --out /tmp/azure-agent-quality-live-50.jsonl \
+  --fail-on-grade F
+```
+
+Initial result had three F rows, all from Atlas/Apex `/sign-in`
+`domcontentloaded` timeouts with empty answers. The Atlas slice was rerun after
+the app was warm:
+
+```bash
+npm run qa:agent-quality:live -- \
+  --base-url https://ca-abarva-web-lab-eastus.agreeableocean-2c1472e6.eastus.azurecontainerapps.io \
+  --auth-mode demo-sign-in \
+  --agent atlas \
+  --out /tmp/azure-agent-quality-live-atlas-rerun.jsonl \
+  --fail-on-grade F
+```
+
+Combined baseline after replacing the transport-timeout rows:
+
+```text
+total=50
+pass=41
+fail=9
+blockingFailures=0
+grades=A:31,B:10,C:8,D:1,F:0
+```
+
+Interpretation: live model execution is proven across Sentinel, Atlas, Nexus,
+Source, and Steward. This is not yet pilot-green: one Steward case remains D,
+and several B/C rows need stronger evidence/citation, tenant-fact, dissent, or
+required-term discipline. Full detail is recorded in
+`AZURE-L7-MULTI-AGENT-QUALITY-LIVE-BASELINE-2026-05-21.md`.
+
 ## Fix Made During QA
 
 The product now correctly uses Source Decision Queue as the `/source` front
@@ -302,8 +343,9 @@ This is a QA contract correction, not a product change.
 1. Close or explicitly waive the 9 security attention items.
 2. Add a durable Azure authenticated cookie workflow or automated cookie mint
    for scheduled SEC-P0 and agent-quality jobs.
-3. Run the full 50-case live multi-agent quality baseline; the Source-only
-   10-case baseline is now complete.
+3. Fix the remaining full 50-case live agent-quality gaps: one Steward D
+   (`steward-production-readiness`) plus B/C citation, tenant-fact, dissent,
+   and required-term misses.
 4. Add Northstar full-workflow substrate if it must be a real client demo:
    Source event, Moves case, Tower outcomes, artifacts, notifications.
 5. Rehearse the final cutover runbook:
