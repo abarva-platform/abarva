@@ -65,6 +65,8 @@ const FINANCIAL_SERVICES_FUNCTIONS_CATALOGUED_SO_FAR: readonly string[] = [
   'lending_credit_underwriting',
   'regulatory_compliance',
   'finance_treasury_alm',
+  'risk_management',
+  'fraud_financial_crime',
 ];
 
 describe('resolveFunctionPack', () => {
@@ -294,6 +296,25 @@ describe('resolveFunctionPack', () => {
     expect(pack?.functionKey).toBe('loss_prevention');
     expect(pack?.industryKey).toBe('retail');
     expect(pack?.functionLabel).toBe('Loss prevention & shrink management');
+  });
+
+  it('resolves the financial-services enterprise-risk-management pack', () => {
+    const pack = resolveFunctionPack('financial-services', 'risk_management');
+    expect(pack).not.toBeNull();
+    expect(pack?.functionKey).toBe('risk_management');
+    expect(pack?.industryKey).toBe('financial-services');
+    expect(pack?.functionLabel).toBe('Enterprise risk management');
+  });
+
+  it('resolves the financial-services fraud & financial-crime pack', () => {
+    const pack = resolveFunctionPack(
+      'financial-services',
+      'fraud_financial_crime',
+    );
+    expect(pack).not.toBeNull();
+    expect(pack?.functionKey).toBe('fraud_financial_crime');
+    expect(pack?.industryKey).toBe('financial-services');
+    expect(pack?.functionLabel).toBe('Fraud & financial crime');
   });
 
   it('resolves the financial-services regulatory-compliance pack', () => {

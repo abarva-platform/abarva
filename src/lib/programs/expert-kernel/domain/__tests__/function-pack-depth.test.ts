@@ -38,6 +38,8 @@ import { customerCarePack } from '../retail/customer-care';
 import { workforceLaborPack } from '../retail/workforce-labor';
 import { returnsReverseLogisticsPack } from '../retail/returns-reverse-logistics';
 import { lossPreventionPack } from '../retail/loss-prevention';
+import { riskManagementPack } from '../financial-services/risk-management';
+import { fraudFinancialCrimePack } from '../financial-services/fraud-financial-crime';
 import { regulatoryCompliancePack } from '../financial-services/regulatory-compliance';
 import { financeTreasuryAlmPack } from '../financial-services/finance-treasury-alm';
 import { retailBankingDepositsPack } from '../financial-services/retail-banking-deposits';
@@ -78,6 +80,8 @@ const PACKS: ReadonlyArray<readonly [string, FunctionPack]> = [
   ['workforce_labor', workforceLaborPack],
   ['returns_reverse_logistics', returnsReverseLogisticsPack],
   ['loss_prevention', lossPreventionPack],
+  ['risk_management', riskManagementPack],
+  ['fraud_financial_crime', fraudFinancialCrimePack],
   ['regulatory_compliance', regulatoryCompliancePack],
   ['finance_treasury_alm', financeTreasuryAlmPack],
   ['retail_banking_deposits', retailBankingDepositsPack],
