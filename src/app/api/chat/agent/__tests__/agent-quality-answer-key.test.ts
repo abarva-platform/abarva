@@ -42,5 +42,13 @@ describe('Agent route prompt — L7 canonical answer key', () => {
     expect(routeSource).toContain('Meridian research needs GPU and Palantir context');
     expect(routeSource).toContain('KPI dictionary entries that matter most for First Capital');
     expect(routeSource).toContain('First Capital tenant key consistency is required for retrieval');
+    expect(routeSource).toContain('First Capital is blocked from production readiness in the current lab posture');
+    expect(routeSource).toContain('production readiness, lab, block, evidence, source, and risk');
+  });
+
+  it('applies Steward doctrine on home setup and production-readiness surfaces', () => {
+    expect(routeSource).toContain("surface === '/home/data-trust'");
+    expect(routeSource).toContain("surface === '/home/connectors'");
+    expect(routeSource).toContain("surface === '/home/production-readiness'");
   });
 });
