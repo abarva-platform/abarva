@@ -144,10 +144,10 @@ for (const tenant of TENANTS) {
       ).toBeVisible();
     });
 
-    test('Source loads with sourcing portfolio header', async ({ page }) => {
+    test('Source loads with decision queue front door', async ({ page }) => {
       await page.goto(`${BASE_URL}/source`);
       await expect(
-        page.getByRole('heading', { name: 'Sourcing events', level: 1 }),
+        page.getByRole('heading', { name: /decisions need your attention/i, level: 1 }),
       ).toBeVisible();
     });
 
