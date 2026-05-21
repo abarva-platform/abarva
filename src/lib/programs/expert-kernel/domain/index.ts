@@ -50,3 +50,5 @@ export { customerCarePack } from './retail/customer-care';
 export { workforceLaborPack } from './retail/workforce-labor';
 export { returnsReverseLogisticsPack } from './retail/returns-reverse-logistics';
 export { lossPreventionPack } from './retail/loss-prevention';
+export { retailBankingDepositsPack } from './financial-services/retail-banking-deposits';
+export { lendingCreditUnderwritingPack } from './financial-services/lending-credit-underwriting';
