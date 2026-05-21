@@ -38,6 +38,8 @@ import { customerCarePack } from '../retail/customer-care';
 import { workforceLaborPack } from '../retail/workforce-labor';
 import { returnsReverseLogisticsPack } from '../retail/returns-reverse-logistics';
 import { lossPreventionPack } from '../retail/loss-prevention';
+import { retailBankingDepositsPack } from '../financial-services/retail-banking-deposits';
+import { lendingCreditUnderwritingPack } from '../financial-services/lending-credit-underwriting';
 import { capitalMarketsTradingPack } from '../financial-services/capital-markets-trading';
 import { commercialCorporateBankingPack } from '../financial-services/commercial-corporate-banking';
 import { paymentsMoneyMovementPack } from '../financial-services/payments-money-movement';
@@ -74,6 +76,8 @@ const PACKS: ReadonlyArray<readonly [string, FunctionPack]> = [
   ['workforce_labor', workforceLaborPack],
   ['returns_reverse_logistics', returnsReverseLogisticsPack],
   ['loss_prevention', lossPreventionPack],
+  ['retail_banking_deposits', retailBankingDepositsPack],
+  ['lending_credit_underwriting', lendingCreditUnderwritingPack],
   ['capital_markets_trading', capitalMarketsTradingPack],
   ['commercial_corporate_banking', commercialCorporateBankingPack],
   ['payments_money_movement', paymentsMoneyMovementPack],

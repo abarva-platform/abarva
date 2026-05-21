@@ -61,6 +61,8 @@ const FINANCIAL_SERVICES_FUNCTIONS_CATALOGUED_SO_FAR: readonly string[] = [
   'commercial_corporate_banking',
   'payments_money_movement',
   'wealth_asset_management',
+  'retail_banking_deposits',
+  'lending_credit_underwriting',
 ];
 
 describe('resolveFunctionPack', () => {
@@ -290,6 +292,28 @@ describe('resolveFunctionPack', () => {
     expect(pack?.functionKey).toBe('loss_prevention');
     expect(pack?.industryKey).toBe('retail');
     expect(pack?.functionLabel).toBe('Loss prevention & shrink management');
+  });
+
+  it('resolves the financial-services retail banking & deposits pack', () => {
+    const pack = resolveFunctionPack(
+      'financial-services',
+      'retail_banking_deposits',
+    );
+    expect(pack).not.toBeNull();
+    expect(pack?.functionKey).toBe('retail_banking_deposits');
+    expect(pack?.industryKey).toBe('financial-services');
+    expect(pack?.functionLabel).toBe('Retail banking & deposits');
+  });
+
+  it('resolves the financial-services lending, credit & underwriting pack', () => {
+    const pack = resolveFunctionPack(
+      'financial-services',
+      'lending_credit_underwriting',
+    );
+    expect(pack).not.toBeNull();
+    expect(pack?.functionKey).toBe('lending_credit_underwriting');
+    expect(pack?.industryKey).toBe('financial-services');
+    expect(pack?.functionLabel).toBe('Lending, credit & underwriting');
   });
 
   it('resolves the capital-markets & trading pack', () => {
