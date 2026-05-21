@@ -1,6 +1,6 @@
 // function-pack-registry — unit tests.
 //
-// Covers the resolver contract (spec §5): all four healthcare reference packs
+// Covers the resolver contract (spec §5): all six healthcare reference packs
 // resolve; an unknown industry-function returns `null`, never a faked pack;
 // the coverage list reflects exactly the catalogued packs.
 
@@ -56,10 +56,28 @@ describe('resolveFunctionPack', () => {
     );
   });
 
+  it('resolves the research & clinical-trials pack', () => {
+    const pack = resolveFunctionPack(
+      'healthcare-provider',
+      'research_clinical_trials',
+    );
+    expect(pack).not.toBeNull();
+    expect(pack?.functionKey).toBe('research_clinical_trials');
+    expect(pack?.industryKey).toBe('healthcare-provider');
+    expect(pack?.functionLabel).toBe('Research & clinical trials');
+  });
+
+  it('resolves the revenue-cycle pack', () => {
+    const pack = resolveFunctionPack('healthcare-provider', 'revenue_cycle');
+    expect(pack).not.toBeNull();
+    expect(pack?.functionKey).toBe('revenue_cycle');
+    expect(pack?.industryKey).toBe('healthcare-provider');
+    expect(pack?.functionLabel).toBe('Revenue cycle');
+  });
+
   it('returns null for an unknown function in a known industry', () => {
-    expect(
-      resolveFunctionPack('healthcare-provider', 'revenue_cycle'),
-    ).toBeNull();
+    // pharmacy has no pack yet — a known gap, never a faked pack.
+    expect(resolveFunctionPack('healthcare-provider', 'pharmacy')).toBeNull();
   });
 
   it('returns null for an unknown industry', () => {
@@ -84,15 +102,17 @@ describe('resolveFunctionPack', () => {
 });
 
 describe('listFunctionPackCoverage', () => {
-  it('lists exactly the four catalogued healthcare packs', () => {
+  it('lists exactly the six catalogued healthcare packs', () => {
     const coverage = listFunctionPackCoverage();
-    expect(coverage).toHaveLength(4);
+    expect(coverage).toHaveLength(6);
     const keys = coverage.map((c) => c.functionKey).sort();
     expect(keys).toEqual([
       'care_delivery_care_management',
       'clinical_operations_documentation',
       'patient_access_engagement_experience',
       'population_health_value_based_care',
+      'research_clinical_trials',
+      'revenue_cycle',
     ]);
     expect(coverage.every((c) => c.industryKey === 'healthcare-provider')).toBe(
       true,
