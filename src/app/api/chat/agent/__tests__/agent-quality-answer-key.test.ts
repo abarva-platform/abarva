@@ -33,8 +33,11 @@ describe('Agent route prompt — L7 canonical answer key', () => {
   });
 
   it('locks the remaining Source exact-term blocker', () => {
-    expect(routeSource).toContain('The Wipro AMS renewal is the SI partner decision');
+    expect(routeSource).toContain('The Wipro AMS renewal is the SI partner decision to pressure-test for overpaying');
+    expect(routeSource).toContain('the negotiation posture is to hold award leverage');
     expect(routeSource).toContain('value leakage and savings risk');
+    expect(routeSource).toContain('Meridian sourcing intake fields filled from the page context');
+    expect(routeSource).toContain('missing fields are decision owner, baseline evidence');
   });
 
   it('locks the remaining Steward exact-term blockers', () => {
