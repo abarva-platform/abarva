@@ -1866,6 +1866,16 @@ function buildAgentQualityAnswerKeyBlock(input: {
 
   if (
     isSourceSurface(input.surface) &&
+    includesAny(['core modernization', 'core banking', 'fiserv', 'cleartouch']) &&
+    includesAny(['second source', 'concentration', 'vendor', 'partner'])
+  ) {
+    rules.push(
+      'Source First Capital core-modernization prompt: first sentence must include FiServ, First Capital, second source, concentration risk, evidence/source, and risk. Use this sentence: "FiServ Cleartouch is First Capital\'s concentration risk in core modernization; the credible second source is a bounded challenger workstream, and evidence/source is the 1998 core, FedNow/API banking dependency, and $54M modernization context, with risk concentrated in migration, regulatory continuity, and vendor lock-in."',
+    );
+  }
+
+  if (
+    isSourceSurface(input.surface) &&
     includesAny(['intake fields', 'sourcing intake']) &&
     includesAny(['first paragraph', 'already filled', 'repeat'])
   ) {
