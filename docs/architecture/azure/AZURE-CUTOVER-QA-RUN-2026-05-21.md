@@ -2,8 +2,8 @@
 
 Date: 2026-05-21
 Target: `https://ca-abarva-web-lab-eastus.agreeableocean-2c1472e6.eastus.azurecontainerapps.io`
-Revision: `ca-abarva-web-lab-eastus--0000036`
-Image: `acrabarvalab001.azurecr.io/abarva/web:lab-northstar-copy-20260521-r1`
+Revision: `ca-abarva-web-lab-eastus--0000037`
+Image: `acrabarvalab001.azurecr.io/abarva/web:lab-steward-readiness-20260521-r1`
 Data plane: `ABARVA_DATA_PLANE=azure-postgres`
 
 ## Executive Status
@@ -26,7 +26,7 @@ against a real customer cutover window.
 
 | Category | Status | Percent | Evidence | Remaining |
 |---|---:|---:|---|---|
-| Azure app deploy | Pass | 100% | Active revision `ca-abarva-web-lab-eastus--0000036`; image `lab-northstar-copy-20260521-r1` | None for lab. |
+| Azure app deploy | Pass | 100% | Active revision `ca-abarva-web-lab-eastus--0000037`; image `lab-steward-readiness-20260521-r1` | None for lab. |
 | Runtime DB wiring | Pass | 100% | `/api/health` returned `postgres=true`, `direct_postgres=true`; `DATABASE_URL` secretRef is `azure-postgres-control-database-url` | None for lab. |
 | Schema migration | Pass | 100% | Migration job `job-abarva-db-migrate-lab-eastus-fzlu85n` succeeded; 9 pending migrations applied; verifier showed 164 migrations and 242 public tables | None for lab. |
 | Northstar tenant data | Pass | 100% for context layer | Copy job `job-abarva-db-copy-lab-eastus-0twobtq` succeeded; parity pass with 14 segments, 55 records, 55 chunks, 34 graph nodes, 29 edges | Add Source/Moves/Tower workflow rows only if Northstar must demo full journey. |
@@ -39,7 +39,7 @@ against a real customer cutover window.
 | SEC-P0 cross-tenant isolation | Pass | 100% | 8/8 probes passed against Azure app with Apex session probing Meridian. | Store durable Azure cookie secret or automated cookie mint for scheduled workflow. |
 | Moves artifact generation | Pass | 100% for Apex board-grade artifacts | 8/8 board-grade HTML decks returned status 200 with deck content; business-case PPTX returned status 200 and ZIP/PPTX magic `504b0304`. | Northstar-specific artifacts require Northstar Moves case substrate. |
 | Source artifact generation | Pass | 100% for seeded Apex AMS event | CXO HTML, CXO PPTX, Deal Pack all returned status 200; PPTX magic `504b0304`. | Store Ops hard event not available in Azure copied set; AMS event is the live Azure seed. |
-| Source agent route | Pass | 90% | Deterministic Source Nexus route returned 200 and evidence-aware blocked response; live `/api/chat/agent` Source baseline ran 10 cases with 4 A, 5 B, 1 C, 0 D/F blockers. | Improve citation/evidence discipline; run full 50-case multi-agent baseline before pilot AI-agent demos. |
+| Multi-agent live QA | Pass | 96% at D/F gate | Full 50-case live `/api/chat/agent` baseline after revision `0000037`: 48 pass, 2 fail, grades A:37, B:11, C:2, D:0, F:0, 0 blocking failures at `--fail-on-grade D`. | Improve the two C cases and B-level citation/evidence discipline before A/B-only board demos. |
 | Connectivity smoke | Pass | 100% with logs | `job-azure-connectivity-smoke-eus-vyhijgl` succeeded; logs show Postgres, Blob, Service Bus, Key Vault, and Azure AI Search all passed. | None for lab. |
 | Final cutover runbook | Pass | 100% authored / 0% rehearsed | `AZURE-CUSTOMER-CUTOVER-RUNBOOK-2026-05-21.md` defines freeze, final delta, go/no-go, rollback, owners, and evidence gates. | Rehearse before customer traffic switch. |
 
@@ -51,13 +51,15 @@ against a real customer cutover window.
 az containerapp update \
   -g rg-abarva-controlplane-lab-eastus \
   -n ca-abarva-web-lab-eastus \
-  --image acrabarvalab001.azurecr.io/abarva/web:lab-northstar-copy-20260521-r1
+  --image acrabarvalab001.azurecr.io/abarva/web:lab-steward-readiness-20260521-r1
 ```
 
 Result:
 
 ```text
-latestRevision = ca-abarva-web-lab-eastus--0000035
+latestRevision = ca-abarva-web-lab-eastus--0000037
+latestReadyRevision = ca-abarva-web-lab-eastus--0000037
+image digest = sha256:084e0ccfcc93937774e61dcfbee482c826ad7197fc629efc49b5b6352456691a
 traffic = 100%
 ```
 
