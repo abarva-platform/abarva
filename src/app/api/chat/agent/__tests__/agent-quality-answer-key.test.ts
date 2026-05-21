@@ -36,6 +36,10 @@ describe('Agent route prompt — L7 canonical answer key', () => {
     expect(routeSource).toContain('The Wipro AMS renewal is the SI partner decision to pressure-test for overpaying');
     expect(routeSource).toContain('the negotiation posture is to hold award leverage');
     expect(routeSource).toContain('value leakage and savings risk');
+    expect(routeSource).toContain('Ambient clinical documentation phase-two sourcing should not start as a vendor beauty contest');
+    expect(routeSource).toContain('evidence/source is Meridian program inventory showing Abridge, Suki, and DAX Copilot in play');
+    expect(routeSource).toContain('AML alert triage automation is a vendor decision only after evidence/source');
+    expect(routeSource).toContain('analyst-control gaps are reconciled');
     expect(routeSource).toContain('Meridian sourcing intake fields filled from the page context');
     expect(routeSource).toContain('missing fields are decision owner, baseline evidence');
   });
