@@ -1,0 +1,81 @@
+name: Azure L5 tenant context copy
+
+on:
+  workflow_dispatch:
+    inputs:
+      tenant:
+        description: "Tenant key to copy: apex-retail, meridian-health, first-capital, or northstar-medtech."
+        required: true
+        default: northstar-medtech
+      replace:
+        description: "Replace existing tenant rows in the Azure target before copy."
+        required: false
+        type: boolean
+        default: false
+      dry_run:
+        description: "Plan the copy without writing to the Azure target."
+        required: false
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+jobs:
+  copy-tenant-context:
+    name: Copy tenant context to Azure
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      SOURCE_DATABASE_URL: ${{ secrets.SOURCE_DATABASE_URL || secrets.DATABASE_URL }}
+      TARGET_DATABASE_URL: ${{ secrets.TARGET_DATABASE_URL || secrets.AZURE_LAB_DATABASE_URL }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Verify source and target DSNs are configured
+        run: |
+          set -euo pipefail
+          if [ -z "${SOURCE_DATABASE_URL:-}" ]; then
+            echo "Missing SOURCE_DATABASE_URL or DATABASE_URL repository secret." >&2
+            exit 1
+          fi
+          if [ -z "${TARGET_DATABASE_URL:-}" ]; then
+            echo "Missing TARGET_DATABASE_URL or AZURE_LAB_DATABASE_URL repository secret." >&2
+            exit 1
+          fi
+          if [ "${SOURCE_DATABASE_URL}" = "${TARGET_DATABASE_URL}" ]; then
+            echo "Source and target database URLs are identical; refusing to treat this as an Azure migration." >&2
+            exit 1
+          fi
+
+      - name: Copy tenant context
+        run: |
+          set -euo pipefail
+          args=(--tenant "${{ inputs.tenant }}")
+          if [ "${{ inputs.replace }}" = "true" ]; then
+            args+=(--replace)
+          fi
+          if [ "${{ inputs.dry_run }}" = "true" ]; then
+            args+=(--dry-run)
+          fi
+
+          npm run db:azure:copy-tenant-context -- "${args[@]}" | tee azure-tenant-context-copy.json
+
+      - name: Upload copy report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: azure-tenant-context-copy
+          path: azure-tenant-context-copy.json
+          if-no-files-found: ignore
+

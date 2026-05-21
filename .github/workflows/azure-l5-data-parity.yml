@@ -22,7 +22,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
-      DATABASE_URL: ${{ secrets.AZURE_LAB_DATABASE_URL }}
+      DATABASE_URL: ${{ secrets.TARGET_DATABASE_URL || secrets.AZURE_LAB_DATABASE_URL }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -35,6 +35,14 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
+
+      - name: Verify Azure parity DSN is configured
+        run: |
+          set -euo pipefail
+          if [ -z "${DATABASE_URL:-}" ]; then
+            echo "Missing TARGET_DATABASE_URL or AZURE_LAB_DATABASE_URL repository secret." >&2
+            exit 1
+          fi
 
       - name: Verify Azure tenant data parity
         run: |
