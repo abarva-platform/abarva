@@ -67,6 +67,8 @@ const FINANCIAL_SERVICES_FUNCTIONS_CATALOGUED_SO_FAR: readonly string[] = [
   'finance_treasury_alm',
   'risk_management',
   'fraud_financial_crime',
+  'customer_servicing_contact_center',
+  'collections_recovery',
 ];
 
 describe('resolveFunctionPack', () => {
@@ -296,6 +298,28 @@ describe('resolveFunctionPack', () => {
     expect(pack?.functionKey).toBe('loss_prevention');
     expect(pack?.industryKey).toBe('retail');
     expect(pack?.functionLabel).toBe('Loss prevention & shrink management');
+  });
+
+  it('resolves the financial-services customer-servicing & contact-center pack', () => {
+    const pack = resolveFunctionPack(
+      'financial-services',
+      'customer_servicing_contact_center',
+    );
+    expect(pack).not.toBeNull();
+    expect(pack?.functionKey).toBe('customer_servicing_contact_center');
+    expect(pack?.industryKey).toBe('financial-services');
+    expect(pack?.functionLabel).toBe('Customer servicing & contact center');
+  });
+
+  it('resolves the financial-services collections & recovery pack', () => {
+    const pack = resolveFunctionPack(
+      'financial-services',
+      'collections_recovery',
+    );
+    expect(pack).not.toBeNull();
+    expect(pack?.functionKey).toBe('collections_recovery');
+    expect(pack?.industryKey).toBe('financial-services');
+    expect(pack?.functionLabel).toBe('Collections & recovery');
   });
 
   it('resolves the financial-services enterprise-risk-management pack', () => {

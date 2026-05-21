@@ -44,6 +44,8 @@ import { customerCarePack } from './retail/customer-care';
 import { workforceLaborPack } from './retail/workforce-labor';
 import { returnsReverseLogisticsPack } from './retail/returns-reverse-logistics';
 import { lossPreventionPack } from './retail/loss-prevention';
+import { customerServicingContactCenterPack } from './financial-services/customer-servicing-contact-center';
+import { collectionsRecoveryPack } from './financial-services/collections-recovery';
 import { riskManagementPack } from './financial-services/risk-management';
 import { fraudFinancialCrimePack } from './financial-services/fraud-financial-crime';
 import { regulatoryCompliancePack } from './financial-services/regulatory-compliance';
@@ -95,6 +97,8 @@ const FUNCTION_PACK_ENTRIES: readonly FunctionPack[] = [
   workforceLaborPack,
   returnsReverseLogisticsPack,
   lossPreventionPack,
+  customerServicingContactCenterPack,
+  collectionsRecoveryPack,
   riskManagementPack,
   fraudFinancialCrimePack,
   regulatoryCompliancePack,
