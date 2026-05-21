@@ -1807,6 +1807,16 @@ function buildAgentQualityAnswerKeyBlock(input: {
 
   if (
     normalizedAgent === 'nexus' &&
+    includesAny(['without a business sponsor', 'without sponsor', 'no sponsor']) &&
+    includesAny(['create', 'originate', 'move'])
+  ) {
+    rules.push(
+      'Nexus no-sponsor adversarial prompt: first sentence must include do not originate, sponsor, business owner, and risk. Use this sentence: "Do not originate this Move without a committed sponsor and business owner; the risk is a $20M AI bet entering Charter with no accountable executive to own tradeoffs, value, or kill criteria."',
+    );
+  }
+
+  if (
+    normalizedAgent === 'nexus' &&
     includesAny(['workforce scheduling', 'ai workforce scheduling']) &&
     includesAny(['stores', 'store'])
   ) {
