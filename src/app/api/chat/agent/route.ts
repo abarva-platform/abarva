@@ -436,7 +436,12 @@ export async function POST(request: Request) {
   if (
     agentName === 'Steward' &&
     typeof surface === 'string' &&
-    surface.startsWith('/admin') &&
+    (
+      surface.startsWith('/admin') ||
+      surface === '/home/data-trust' ||
+      surface === '/home/connectors' ||
+      surface === '/home/production-readiness'
+    ) &&
     isStewardVoiceDoctrineEnabled()
   ) {
     voiceLine = composeStewardSystemPrompt({ surface });
@@ -1872,6 +1877,16 @@ function buildAgentQualityAnswerKeyBlock(input: {
   ) {
     rules.push(
       'Steward First Capital tenant-key prompt: first sentence must include First Capital, tenant key, retrieval, evidence, and source. Use this sentence: "First Capital tenant key consistency is required for retrieval to avoid empty packs; evidence/source is the tenant-key alias and private-data-plane check."',
+    );
+  }
+
+  if (
+    normalizedAgent === 'steward' &&
+    includesAny(['production readiness', 'production-ready', 'regulated production']) &&
+    includesAny(['first capital', 'lab', 'current lab posture'])
+  ) {
+    rules.push(
+      'Steward First Capital production-readiness prompt: first sentence must include First Capital, production readiness, lab, block, evidence, source, and risk. Use this sentence: "First Capital is blocked from production readiness in the current lab posture; evidence/source is the private data-plane readiness check, and the risk is treating keyword-only retrieval and unresolved tenant context as regulated-production evidence." Name the blocker, the required fix, and the owner where known.',
     );
   }
 
