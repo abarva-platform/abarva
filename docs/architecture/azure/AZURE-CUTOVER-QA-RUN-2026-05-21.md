@@ -2,8 +2,8 @@
 
 Date: 2026-05-21
 Target: `https://ca-abarva-web-lab-eastus.agreeableocean-2c1472e6.eastus.azurecontainerapps.io`
-Revision: `ca-abarva-web-lab-eastus--0000037`
-Image: `acrabarvalab001.azurecr.io/abarva/web:lab-steward-readiness-20260521-r1`
+Revision: `ca-abarva-web-lab-eastus--0000042`
+Image: `acrabarvalab001.azurecr.io/abarva/web:lab-l7-clear-c-20260521-r5`
 Data plane: `ABARVA_DATA_PLANE=azure-postgres`
 
 ## Executive Status
@@ -12,7 +12,8 @@ The Azure lab app is deployed on the current migration image and is reading
 from Azure Postgres. The database, schema, Northstar tenant copy, primary
 authenticated surfaces, core Moves artifacts, Source artifacts, Source
 deterministic agent path, SEC-P0 cross-tenant probes, resource parity,
-observability, connectivity smoke, and protected-surface load smoke are green.
+observability, connectivity smoke, protected-surface load smoke, and the L7
+50-case multi-agent live quality gate are green.
 
 This is still a lab cutover candidate, not a final customer cutover. The
 remaining blockers are customer-pilot hardening items: security attention items
@@ -26,7 +27,7 @@ against a real customer cutover window.
 
 | Category | Status | Percent | Evidence | Remaining |
 |---|---:|---:|---|---|
-| Azure app deploy | Pass | 100% | Active revision `ca-abarva-web-lab-eastus--0000037`; image `lab-steward-readiness-20260521-r1` | None for lab. |
+| Azure app deploy | Pass | 100% | Active revision `ca-abarva-web-lab-eastus--0000042`; image `lab-l7-clear-c-20260521-r5`; digest `sha256:572a2d0d1bb48d4959e4dec6129537c258e8ad8bf97d39957bae51598a101d3a` | None for lab. |
 | Runtime DB wiring | Pass | 100% | `/api/health` returned `postgres=true`, `direct_postgres=true`; `DATABASE_URL` secretRef is `azure-postgres-control-database-url` | None for lab. |
 | Schema migration | Pass | 100% | Migration job `job-abarva-db-migrate-lab-eastus-fzlu85n` succeeded; 9 pending migrations applied; verifier showed 164 migrations and 242 public tables | None for lab. |
 | Northstar tenant data | Pass | 100% for context layer | Copy job `job-abarva-db-copy-lab-eastus-0twobtq` succeeded; parity pass with 14 segments, 55 records, 55 chunks, 34 graph nodes, 29 edges | Add Source/Moves/Tower workflow rows only if Northstar must demo full journey. |
@@ -39,7 +40,7 @@ against a real customer cutover window.
 | SEC-P0 cross-tenant isolation | Pass | 100% | 8/8 probes passed against Azure app with Apex session probing Meridian. | Store durable Azure cookie secret or automated cookie mint for scheduled workflow. |
 | Moves artifact generation | Pass | 100% for Apex board-grade artifacts | 8/8 board-grade HTML decks returned status 200 with deck content; business-case PPTX returned status 200 and ZIP/PPTX magic `504b0304`. | Northstar-specific artifacts require Northstar Moves case substrate. |
 | Source artifact generation | Pass | 100% for seeded Apex AMS event | CXO HTML, CXO PPTX, Deal Pack all returned status 200; PPTX magic `504b0304`. | Store Ops hard event not available in Azure copied set; AMS event is the live Azure seed. |
-| Multi-agent live QA | Pass | 96% at D/F gate | Full 50-case live `/api/chat/agent` baseline after revision `0000037`: 48 pass, 2 fail, grades A:37, B:11, C:2, D:0, F:0, 0 blocking failures at `--fail-on-grade D`. | Improve the two C cases and B-level citation/evidence discipline before A/B-only board demos. |
+| Multi-agent live QA | Pass | 100% at strict C gate | Full 50-case live `/api/chat/agent` baseline after revision `0000042`: 50 pass, 0 fail, grades A:40, B:10, C:0, D:0, F:0, 0 blocking failures at `--fail-on-grade C`. Source targeted rerun passed 10/10 A. | B-level citation/evidence polish remains before A-only board demos. |
 | Connectivity smoke | Pass | 100% with logs | `job-azure-connectivity-smoke-eus-vyhijgl` succeeded; logs show Postgres, Blob, Service Bus, Key Vault, and Azure AI Search all passed. | None for lab. |
 | Final cutover runbook | Pass | 100% authored / 0% rehearsed | `AZURE-CUSTOMER-CUTOVER-RUNBOOK-2026-05-21.md` defines freeze, final delta, go/no-go, rollback, owners, and evidence gates. | Rehearse before customer traffic switch. |
 
@@ -51,15 +52,15 @@ against a real customer cutover window.
 az containerapp update \
   -g rg-abarva-controlplane-lab-eastus \
   -n ca-abarva-web-lab-eastus \
-  --image acrabarvalab001.azurecr.io/abarva/web:lab-steward-readiness-20260521-r1
+  --image acrabarvalab001.azurecr.io/abarva/web:lab-l7-clear-c-20260521-r5
 ```
 
 Result:
 
 ```text
-latestRevision = ca-abarva-web-lab-eastus--0000037
-latestReadyRevision = ca-abarva-web-lab-eastus--0000037
-image digest = sha256:084e0ccfcc93937774e61dcfbee482c826ad7197fc629efc49b5b6352456691a
+latestRevision = ca-abarva-web-lab-eastus--0000042
+latestReadyRevision = ca-abarva-web-lab-eastus--0000042
+image digest = sha256:572a2d0d1bb48d4959e4dec6129537c258e8ad8bf97d39957bae51598a101d3a
 traffic = 100%
 ```
 
@@ -261,71 +262,64 @@ missing inputs named:
 - Award recommendation approved
 ```
 
-Live Source agent-quality baseline:
+Final live Source agent-quality baseline:
 
 ```bash
 npm run qa:agent-quality:live -- \
   --base-url https://ca-abarva-web-lab-eastus.agreeableocean-2c1472e6.eastus.azurecontainerapps.io \
   --auth-mode demo-sign-in \
   --agent source \
-  --out /tmp/azure-source-agent-quality-live-10.jsonl \
-  --fail-on-grade D
+  --out /tmp/azure-agent-quality-live-source-after-core-final-fix.jsonl \
+  --fail-on-grade C
 ```
 
 Result:
 
 ```text
 total=10
-pass=9
-fail=1
+pass=10
+fail=0
 blockingFailures=0
-grades=A:4,B:5,C:1,D:0,F:0
+grades=A:10,B:0,C:0,D:0,F:0
 ```
 
 Interpretation: the live Source model path works through `/api/chat/agent` and
-has no D/F blockers. It is not yet A-grade across the board: several answers
-need stronger explicit evidence/citation signals, and the Apex SI renewal case
-missed the required "overpaying" term.
+all Source cases are now A-grade under the strict C gate.
 
-### Full Multi-Agent Agent Quality Baseline
+### Final Full Multi-Agent Agent Quality Baseline
 
-Full 50-case run:
+Final full 50-case run:
 
 ```bash
 npm run qa:agent-quality:live -- \
   --base-url https://ca-abarva-web-lab-eastus.agreeableocean-2c1472e6.eastus.azurecontainerapps.io \
   --auth-mode demo-sign-in \
-  --out /tmp/azure-agent-quality-live-50.jsonl \
-  --fail-on-grade F
+  --out /tmp/azure-agent-quality-live-50-final-no-c-after-source-core-fix.jsonl \
+  --fail-on-grade C
 ```
-
-Initial result had three F rows, all from Atlas/Apex `/sign-in`
-`domcontentloaded` timeouts with empty answers. The Atlas slice was rerun after
-the app was warm:
-
-```bash
-npm run qa:agent-quality:live -- \
-  --base-url https://ca-abarva-web-lab-eastus.agreeableocean-2c1472e6.eastus.azurecontainerapps.io \
-  --auth-mode demo-sign-in \
-  --agent atlas \
-  --out /tmp/azure-agent-quality-live-atlas-rerun.jsonl \
-  --fail-on-grade F
-```
-
-Combined baseline after replacing the transport-timeout rows:
 
 ```text
 total=50
-pass=41
-fail=9
+pass=50
+fail=0
 blockingFailures=0
-grades=A:31,B:10,C:8,D:1,F:0
+grades=A:40,B:10,C:0,D:0,F:0
 ```
 
+By agent:
+
+| Agent | Total | Pass | Fail | A | B | C | D | F |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|
+| Atlas | 10 | 10 | 0 | 9 | 1 | 0 | 0 | 0 |
+| Nexus | 10 | 10 | 0 | 9 | 1 | 0 | 0 | 0 |
+| Sentinel | 10 | 10 | 0 | 5 | 5 | 0 | 0 | 0 |
+| Source | 10 | 10 | 0 | 8 | 2 | 0 | 0 | 0 |
+| Steward | 10 | 10 | 0 | 9 | 1 | 0 | 0 | 0 |
+
 Interpretation: live model execution is proven across Sentinel, Atlas, Nexus,
-Source, and Steward. This is not yet pilot-green: one Steward case remains D,
-and several B/C rows need stronger evidence/citation, tenant-fact, dissent, or
-required-term discipline. Full detail is recorded in
+Source, and Steward with no C/D/F blockers under the strict C gate. B-level
+citation/evidence polish remains, but the lab agent path is pilot-safe for the
+current L7 threshold. Full detail is recorded in
 `AZURE-L7-MULTI-AGENT-QUALITY-LIVE-BASELINE-2026-05-21.md`.
 
 ## Fix Made During QA
@@ -345,9 +339,9 @@ This is a QA contract correction, not a product change.
 1. Close or explicitly waive the 9 security attention items.
 2. Add a durable Azure authenticated cookie workflow or automated cookie mint
    for scheduled SEC-P0 and agent-quality jobs.
-3. Fix the remaining full 50-case live agent-quality gaps: one Steward D
-   (`steward-production-readiness`) plus B/C citation, tenant-fact, dissent,
-   and required-term misses.
+3. Improve the 10 remaining B-level live agent-quality rows if the next bar is
+   A-only board-demo quality; there are no C/D/F blockers left under the current
+   strict C gate.
 4. Add Northstar full-workflow substrate if it must be a real client demo:
    Source event, Moves case, Tower outcomes, artifacts, notifications.
 5. Rehearse the final cutover runbook:
