@@ -30,18 +30,21 @@ import { researchClinicalTrialsPack } from './healthcare/research-clinical-trial
 import { revenueCyclePack } from './healthcare/revenue-cycle';
 import { clinicalSupplyChainPack } from './healthcare/clinical-supply-chain';
 import { clinicalWorkforceStaffingPack } from './healthcare/clinical-workforce-staffing';
+import { payerClaimsOperationsPack } from './healthcare/payer-claims-operations';
+import { pharmacyPack } from './healthcare/pharmacy';
 
 /**
  * The Function Pack catalog — one entry per `(industryKey, functionKey)`.
  *
- * TODAY this holds ten healthcare reference packs: the two value-based-care
+ * TODAY this holds the complete healthcare reference library — all twelve
+ * functions of the provider taxonomy (spec §3): the two value-based-care
  * spine packs (spec §6), clinical documentation, patient access, research &
  * clinical trials, the revenue cycle, quality / safety / regulatory, health
- * information / interoperability, the clinical supply chain, and the clinical
- * workforce & staffing function. A future pack is added as ONE additional
- * entry; the resolver and every consumer need no change. Keyed off the pack's
- * own `industryKey` / `functionKey` so an entry can never disagree with its
- * pack.
+ * information / interoperability, the clinical supply chain, clinical
+ * workforce & staffing, payer / claims operations, and pharmacy. A future
+ * pack is added as ONE additional entry; the resolver and every consumer
+ * need no change. Keyed off the pack's own `industryKey` / `functionKey` so
+ * an entry can never disagree with its pack.
  */
 const FUNCTION_PACK_ENTRIES: readonly FunctionPack[] = [
   careDeliveryCareManagementPack,
@@ -54,6 +57,8 @@ const FUNCTION_PACK_ENTRIES: readonly FunctionPack[] = [
   revenueCyclePack,
   clinicalSupplyChainPack,
   clinicalWorkforceStaffingPack,
+  payerClaimsOperationsPack,
+  pharmacyPack,
 ] as const;
 
 /**

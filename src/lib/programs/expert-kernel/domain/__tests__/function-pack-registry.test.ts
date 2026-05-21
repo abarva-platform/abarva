@@ -1,8 +1,8 @@
 // function-pack-registry — unit tests.
 //
-// Covers the resolver contract (spec §5): all ten healthcare reference packs
-// resolve; an unknown industry-function returns `null`, never a faked pack;
-// the coverage list reflects exactly the catalogued packs.
+// Covers the resolver contract (spec §5): all twelve healthcare reference
+// packs resolve; an unknown industry-function returns `null`, never a faked
+// pack; the coverage list reflects exactly the catalogued packs.
 
 import {
   listFunctionPackCoverage,
@@ -123,9 +123,32 @@ describe('resolveFunctionPack', () => {
     expect(pack?.functionLabel).toBe('Clinical workforce & staffing');
   });
 
+  it('resolves the payer & claims-operations pack', () => {
+    const pack = resolveFunctionPack(
+      'healthcare-provider',
+      'payer_claims_operations',
+    );
+    expect(pack).not.toBeNull();
+    expect(pack?.functionKey).toBe('payer_claims_operations');
+    expect(pack?.industryKey).toBe('healthcare-provider');
+    expect(pack?.functionLabel).toBe('Payer & claims operations');
+  });
+
+  it('resolves the pharmacy pack', () => {
+    const pack = resolveFunctionPack('healthcare-provider', 'pharmacy');
+    expect(pack).not.toBeNull();
+    expect(pack?.functionKey).toBe('pharmacy');
+    expect(pack?.industryKey).toBe('healthcare-provider');
+    expect(pack?.functionLabel).toBe('Pharmacy');
+  });
+
   it('returns null for an unknown function in a known industry', () => {
-    // pharmacy has no pack yet — a known gap, never a faked pack.
-    expect(resolveFunctionPack('healthcare-provider', 'pharmacy')).toBeNull();
+    // The healthcare provider taxonomy is complete at twelve catalogued
+    // functions; a healthcare function outside that set (e.g. telehealth &
+    // virtual care) has no pack yet — a known gap, never a faked pack.
+    expect(
+      resolveFunctionPack('healthcare-provider', 'telehealth_virtual_care'),
+    ).toBeNull();
   });
 
   it('returns null for an unknown industry', () => {
@@ -150,9 +173,9 @@ describe('resolveFunctionPack', () => {
 });
 
 describe('listFunctionPackCoverage', () => {
-  it('lists exactly the ten catalogued healthcare packs', () => {
+  it('lists exactly the twelve catalogued healthcare packs', () => {
     const coverage = listFunctionPackCoverage();
-    expect(coverage).toHaveLength(10);
+    expect(coverage).toHaveLength(12);
     const keys = coverage.map((c) => c.functionKey).sort();
     expect(keys).toEqual([
       'care_delivery_care_management',
@@ -161,6 +184,8 @@ describe('listFunctionPackCoverage', () => {
       'clinical_workforce_staffing',
       'health_information_interoperability',
       'patient_access_engagement_experience',
+      'payer_claims_operations',
+      'pharmacy',
       'population_health_value_based_care',
       'quality_safety_regulatory',
       'research_clinical_trials',
