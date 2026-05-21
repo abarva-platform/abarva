@@ -453,14 +453,14 @@ function demoEmailForCase(testCase: AgentQualityCase): string {
   return tenantEmails[testCase.persona] ?? tenantEmails.default;
 }
 
-async function mintDemoCookieHeader(testCase: AgentQualityCase, options: RunnerOptions, browser: Browser): Promise<string> {
+async function mintDemoCookieHeaderOnce(testCase: AgentQualityCase, options: RunnerOptions, browser: Browser): Promise<string> {
   if (!options.baseUrl) throw new Error('baseUrl is required for demo sign-in auth');
   const email = demoEmailForCase(testCase);
   const context = await browser.newContext();
   const page = await context.newPage();
 
   try {
-    await page.goto(`${options.baseUrl}/sign-in`, { waitUntil: 'domcontentloaded' });
+    await page.goto(`${options.baseUrl}/sign-in`, { waitUntil: 'domcontentloaded', timeout: 45_000 });
     await expect(page.getByPlaceholder(/name@company.com/i)).toBeVisible({ timeout: 30_000 });
     await page.waitForFunction(() => Boolean((globalThis as { Clerk?: { loaded?: boolean } }).Clerk?.loaded), null, { timeout: 30_000 });
     await typeCredential(page, /name@company.com/i, email);
@@ -475,6 +475,24 @@ async function mintDemoCookieHeader(testCase: AgentQualityCase, options: RunnerO
   } finally {
     await context.close();
   }
+}
+
+async function mintDemoCookieHeader(testCase: AgentQualityCase, options: RunnerOptions, browser: Browser): Promise<string> {
+  const attempts = 2;
+  let lastError: unknown;
+
+  for (let attempt = 1; attempt <= attempts; attempt += 1) {
+    try {
+      return await mintDemoCookieHeaderOnce(testCase, options, browser);
+    } catch (error) {
+      lastError = error;
+      if (attempt < attempts) {
+        console.warn(`Demo sign-in failed for ${testCase.id}; retrying (${attempt}/${attempts})`);
+      }
+    }
+  }
+
+  throw lastError instanceof Error ? lastError : new Error(String(lastError));
 }
 
 function isHtmlFallback(contentType: string, answer: string): boolean {
@@ -609,6 +627,9 @@ async function main(): Promise<void> {
 
   const result = scoreAnswers(cases, answers, options.failOnGrade ?? DEFAULT_FAIL_ON_GRADE);
   console.log(JSON.stringify(result, null, 2));
+  if (options.mode === 'score-file' && options.outPath) {
+    fs.writeFileSync(options.outPath, `${JSON.stringify(result, null, 2)}\n`);
+  }
 
   const blockingFailures = result.scores.filter((score) =>
     GRADE_ORDER[score.grade] <= GRADE_ORDER[options.failOnGrade ?? DEFAULT_FAIL_ON_GRADE],
