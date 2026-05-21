@@ -57,6 +57,8 @@ const RETAIL_FUNCTIONS_CATALOGUED_SO_FAR: readonly string[] = [
 // (spec §3); this list grows as later batches land, and the coverage test
 // asserts it as a subset, never an exact total.
 const FINANCIAL_SERVICES_FUNCTIONS_CATALOGUED_SO_FAR: readonly string[] = [
+  'capital_markets_trading',
+  'commercial_corporate_banking',
   'payments_money_movement',
   'wealth_asset_management',
 ];
@@ -288,6 +290,28 @@ describe('resolveFunctionPack', () => {
     expect(pack?.functionKey).toBe('loss_prevention');
     expect(pack?.industryKey).toBe('retail');
     expect(pack?.functionLabel).toBe('Loss prevention & shrink management');
+  });
+
+  it('resolves the capital-markets & trading pack', () => {
+    const pack = resolveFunctionPack(
+      'financial-services',
+      'capital_markets_trading',
+    );
+    expect(pack).not.toBeNull();
+    expect(pack?.functionKey).toBe('capital_markets_trading');
+    expect(pack?.industryKey).toBe('financial-services');
+    expect(pack?.functionLabel).toBe('Capital markets & trading');
+  });
+
+  it('resolves the commercial & corporate-banking pack', () => {
+    const pack = resolveFunctionPack(
+      'financial-services',
+      'commercial_corporate_banking',
+    );
+    expect(pack).not.toBeNull();
+    expect(pack?.functionKey).toBe('commercial_corporate_banking');
+    expect(pack?.industryKey).toBe('financial-services');
+    expect(pack?.functionLabel).toBe('Commercial & corporate banking');
   });
 
   it('resolves the financial-services payments & money-movement pack', () => {
