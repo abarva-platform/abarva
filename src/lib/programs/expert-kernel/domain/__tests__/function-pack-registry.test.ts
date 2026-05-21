@@ -63,6 +63,8 @@ const FINANCIAL_SERVICES_FUNCTIONS_CATALOGUED_SO_FAR: readonly string[] = [
   'wealth_asset_management',
   'retail_banking_deposits',
   'lending_credit_underwriting',
+  'regulatory_compliance',
+  'finance_treasury_alm',
 ];
 
 describe('resolveFunctionPack', () => {
@@ -292,6 +294,28 @@ describe('resolveFunctionPack', () => {
     expect(pack?.functionKey).toBe('loss_prevention');
     expect(pack?.industryKey).toBe('retail');
     expect(pack?.functionLabel).toBe('Loss prevention & shrink management');
+  });
+
+  it('resolves the financial-services regulatory-compliance pack', () => {
+    const pack = resolveFunctionPack(
+      'financial-services',
+      'regulatory_compliance',
+    );
+    expect(pack).not.toBeNull();
+    expect(pack?.functionKey).toBe('regulatory_compliance');
+    expect(pack?.industryKey).toBe('financial-services');
+    expect(pack?.functionLabel).toBe('Regulatory compliance');
+  });
+
+  it('resolves the financial-services finance, treasury & ALM pack', () => {
+    const pack = resolveFunctionPack(
+      'financial-services',
+      'finance_treasury_alm',
+    );
+    expect(pack).not.toBeNull();
+    expect(pack?.functionKey).toBe('finance_treasury_alm');
+    expect(pack?.industryKey).toBe('financial-services');
+    expect(pack?.functionLabel).toBe('Finance, treasury & ALM');
   });
 
   it('resolves the financial-services retail banking & deposits pack', () => {
