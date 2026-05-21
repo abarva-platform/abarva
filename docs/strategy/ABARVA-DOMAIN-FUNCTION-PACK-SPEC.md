@@ -87,9 +87,27 @@ two functions a merchant's economics turn on: `merchandising_assortment` (what
 to carry and how productive it is) and `pricing_promotions` (how that
 assortment is priced and promoted). Together they are the
 **margin-and-mix spine** of retail — the retail counterpart of the
-value-based-care spine that proved the schema in healthcare. The remaining ten
-retail functions are catalogued here as known gaps and are deepened in later
-batches.
+value-based-care spine that proved the schema in healthcare. The retail
+vertical is now complete at twelve catalogued functions.
+
+**Financial services — the function taxonomy:**
+
+`retail_banking_deposits` · `lending_credit_underwriting` ·
+`payments_money_movement` · `wealth_asset_management` ·
+`capital_markets_trading` · `commercial_corporate_banking` ·
+`risk_management` · `fraud_financial_crime` · `regulatory_compliance` ·
+`finance_treasury_alm` · `customer_servicing_contact_center` ·
+`collections_recovery`.
+
+The financial-services vertical follows the same eight-layer schema — again
+breadth, not new architecture. It spans the front office (deposits, lending,
+payments, wealth, markets, commercial banking), the control functions
+(enterprise risk, fraud & financial crime, regulatory compliance), the
+corporate spine (finance, treasury & asset-liability management), and the
+servicing operations (customer servicing & contact centre, collections &
+recovery). It is the diversified-institution taxonomy a tenant such as a
+universal bank operates against. The depth bar (§6) is identical for every
+function in every vertical.
 
 ## 4. The Function Pack schema
 

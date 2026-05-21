@@ -20,11 +20,15 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
- * The industry vertical a Function Pack belongs to. v1 ships healthcare only;
- * retail follows the same schema later (spec §8). Kept as a string-literal
+ * The industry vertical a Function Pack belongs to. The library spans three
+ * verticals — healthcare provider, retail, and financial services — each
+ * built on the same eight-layer schema (spec §3). Kept as a string-literal
  * union so the registry can be exhaustively type-checked.
  */
-export type FunctionPackIndustryKey = 'healthcare-provider' | 'retail';
+export type FunctionPackIndustryKey =
+  | 'healthcare-provider'
+  | 'retail'
+  | 'financial-services';
 
 /**
  * The healthcare (provider) function taxonomy — the ~12 functions of the
@@ -46,8 +50,54 @@ export type HealthcareFunctionKey =
   | 'payer_claims_operations'
   | 'pharmacy';
 
-/** Any function key — widens as retail functions are added. */
-export type FunctionPackFunctionKey = HealthcareFunctionKey | string;
+/**
+ * The retail function taxonomy — the twelve functions of the retail vertical
+ * (spec §3). A Function Pack is keyed by `(industryKey, functionKey)`.
+ */
+export type RetailFunctionKey =
+  | 'merchandising_assortment'
+  | 'pricing_promotions'
+  | 'demand_inventory_planning'
+  | 'supply_chain_fulfillment'
+  | 'store_operations'
+  | 'customer_loyalty_personalization'
+  | 'digital_commerce'
+  | 'marketing_retail_media'
+  | 'customer_care'
+  | 'workforce_labor'
+  | 'returns_reverse_logistics'
+  | 'loss_prevention';
+
+/**
+ * The financial-services function taxonomy — the twelve functions of the
+ * diversified-institution vertical (spec §3): the front office, the control
+ * functions, the corporate spine, and the servicing operations.
+ */
+export type FinancialServicesFunctionKey =
+  | 'retail_banking_deposits'
+  | 'lending_credit_underwriting'
+  | 'payments_money_movement'
+  | 'wealth_asset_management'
+  | 'capital_markets_trading'
+  | 'commercial_corporate_banking'
+  | 'risk_management'
+  | 'fraud_financial_crime'
+  | 'regulatory_compliance'
+  | 'finance_treasury_alm'
+  | 'customer_servicing_contact_center'
+  | 'collections_recovery';
+
+/**
+ * Any function key across the three verticals. The named unions document each
+ * taxonomy; the `string` widening keeps the registry resolver tolerant of a
+ * function not yet catalogued (it returns `null` honestly rather than failing
+ * to type-check).
+ */
+export type FunctionPackFunctionKey =
+  | HealthcareFunctionKey
+  | RetailFunctionKey
+  | FinancialServicesFunctionKey
+  | string;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Layer 1 — Operating metrics
