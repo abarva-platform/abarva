@@ -26,6 +26,8 @@ describe('Agent route prompt — L7 canonical answer key', () => {
     expect(routeSource).toContain('risk is sponsor/value drift');
     expect(routeSource).toContain('The evidence is that AMS Consolidation 2026');
     expect(routeSource).toContain('kill, sponsor, and evidence');
+    expect(routeSource).toContain('For Apex, the AI workforce scheduling Move can be originated');
+    expect(routeSource).toContain('explicit scope around store labor scheduling');
   });
 
   it('locks the remaining Source exact-term blocker', () => {
@@ -35,7 +37,8 @@ describe('Agent route prompt — L7 canonical answer key', () => {
 
   it('locks the remaining Steward exact-term blockers', () => {
     expect(routeSource).toContain('Top three data segments to load for Apex');
-    expect(routeSource).toContain('data segments ground CDP, workforce scheduling, and forecast capabilities');
+    expect(routeSource).toContain('why: those data segments ground CDP, workforce scheduling, and forecast capabilities');
+    expect(routeSource).toContain('why: they ground CDP activation, workforce scheduling, and forecast capabilities');
     expect(routeSource).toContain('enterprise profile, KPI dictionary, segment');
     expect(routeSource).toContain('connectors, pilot, Day 2');
     expect(routeSource).toContain('GPU, Palantir');
