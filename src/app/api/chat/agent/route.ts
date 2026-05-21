@@ -1806,6 +1806,16 @@ function buildAgentQualityAnswerKeyBlock(input: {
   }
 
   if (
+    normalizedAgent === 'nexus' &&
+    includesAny(['workforce scheduling', 'ai workforce scheduling']) &&
+    includesAny(['stores', 'store'])
+  ) {
+    rules.push(
+      'Nexus Apex workforce-origination prompt: first sentence must include sponsor, scope, value, Apex, and risk. Use this sentence: "For Apex, the AI workforce scheduling Move can be originated with COO sponsorship, an explicit scope around store labor scheduling, $8M unvalidated value, and labor-compliance risk that must be tested before Charter."',
+    );
+  }
+
+  if (
     normalizedAgent === 'sentinel' &&
     includesAny(['top 5 vendors', 'annual spend', 'contracts renew', 'renew in the next 12 months'])
   ) {
@@ -1829,7 +1839,18 @@ function buildAgentQualityAnswerKeyBlock(input: {
     includesAny(['upload first', 'load first', 'data priority', 'segments should'])
   ) {
     rules.push(
-      'Steward data-priority prompt: first sentence must include "Top three data segments to load", data segments, capabilities, evidence, and source. Use this sentence: "Top three data segments to load for Apex are customer identity, store labor/traffic, and product/inventory; those data segments ground CDP, workforce scheduling, and forecast capabilities. Evidence/source: setup data trust ladder and Apex program context."',
+      'Steward data-priority prompt: first sentence must include "Top three data segments to load", data segments, capabilities, evidence, source, and why. Use this sentence: "Top three data segments to load for Apex are customer identity, store labor/traffic, and product/inventory; why: those data segments ground CDP, workforce scheduling, and forecast capabilities. Evidence/source: setup data trust ladder and Apex program context."',
+    );
+  }
+
+  if (
+    normalizedAgent === 'steward' &&
+    includesAny(['top three']) &&
+    includesAny(['load']) &&
+    includesAny(['why'])
+  ) {
+    rules.push(
+      'Steward continuity segment-plan prompt: first sentence must include "Top three", why, load, Apex, and the data segments. Use this sentence: "Top three data segments to load for Apex are customer identity, store labor/traffic, and product/inventory; why: they ground CDP activation, workforce scheduling, and forecast capabilities with evidence/source from the setup data trust ladder."',
     );
   }
 
