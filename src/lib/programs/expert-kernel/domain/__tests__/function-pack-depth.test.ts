@@ -32,6 +32,8 @@ import { demandInventoryPlanningPack } from '../retail/demand-inventory-planning
 import { supplyChainFulfillmentPack } from '../retail/supply-chain-fulfillment';
 import { digitalCommercePack } from '../retail/digital-commerce';
 import { marketingRetailMediaPack } from '../retail/marketing-retail-media';
+import { storeOperationsPack } from '../retail/store-operations';
+import { customerLoyaltyPersonalizationPack } from '../retail/customer-loyalty-personalization';
 
 const PACKS: ReadonlyArray<readonly [string, FunctionPack]> = [
   ['care_delivery_care_management', careDeliveryCareManagementPack],
@@ -58,6 +60,8 @@ const PACKS: ReadonlyArray<readonly [string, FunctionPack]> = [
   ['supply_chain_fulfillment', supplyChainFulfillmentPack],
   ['digital_commerce', digitalCommercePack],
   ['marketing_retail_media', marketingRetailMediaPack],
+  ['store_operations', storeOperationsPack],
+  ['customer_loyalty_personalization', customerLoyaltyPersonalizationPack],
 ];
 
 describe.each(PACKS)('Function Pack §6 depth bar — %s', (_key, pack) => {

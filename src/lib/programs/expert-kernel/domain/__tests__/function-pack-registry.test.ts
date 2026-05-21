@@ -44,6 +44,8 @@ const RETAIL_FUNCTIONS_CATALOGUED_SO_FAR: readonly string[] = [
   'supply_chain_fulfillment',
   'digital_commerce',
   'marketing_retail_media',
+  'store_operations',
+  'customer_loyalty_personalization',
 ];
 
 describe('resolveFunctionPack', () => {
@@ -225,6 +227,22 @@ describe('resolveFunctionPack', () => {
     expect(pack?.functionKey).toBe('marketing_retail_media');
     expect(pack?.industryKey).toBe('retail');
     expect(pack?.functionLabel).toBe('Marketing & retail media');
+  });
+
+  it('resolves the retail store-operations pack', () => {
+    const pack = resolveFunctionPack('retail', 'store_operations');
+    expect(pack).not.toBeNull();
+    expect(pack?.functionKey).toBe('store_operations');
+    expect(pack?.industryKey).toBe('retail');
+    expect(pack?.functionLabel).toBe('Store operations');
+  });
+
+  it('resolves the retail customer-loyalty & personalization pack', () => {
+    const pack = resolveFunctionPack('retail', 'customer_loyalty_personalization');
+    expect(pack).not.toBeNull();
+    expect(pack?.functionKey).toBe('customer_loyalty_personalization');
+    expect(pack?.industryKey).toBe('retail');
+    expect(pack?.functionLabel).toBe('Customer loyalty & personalization');
   });
 
   it('returns null for an unknown function in a known industry', () => {
