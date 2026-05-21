@@ -44,6 +44,8 @@ import { customerCarePack } from './retail/customer-care';
 import { workforceLaborPack } from './retail/workforce-labor';
 import { returnsReverseLogisticsPack } from './retail/returns-reverse-logistics';
 import { lossPreventionPack } from './retail/loss-prevention';
+import { regulatoryCompliancePack } from './financial-services/regulatory-compliance';
+import { financeTreasuryAlmPack } from './financial-services/finance-treasury-alm';
 
 /**
  * The Function Pack catalog — one entry per `(industryKey, functionKey)`.
@@ -85,6 +87,8 @@ const FUNCTION_PACK_ENTRIES: readonly FunctionPack[] = [
   workforceLaborPack,
   returnsReverseLogisticsPack,
   lossPreventionPack,
+  regulatoryCompliancePack,
+  financeTreasuryAlmPack,
 ] as const;
 
 /**
