@@ -42,6 +42,8 @@ const RETAIL_FUNCTIONS_CATALOGUED_SO_FAR: readonly string[] = [
   'pricing_promotions',
   'demand_inventory_planning',
   'supply_chain_fulfillment',
+  'store_operations',
+  'customer_loyalty_personalization',
 ];
 
 describe('resolveFunctionPack', () => {

@@ -36,6 +36,8 @@ import { merchandisingAssortmentPack } from './retail/merchandising-assortment';
 import { pricingPromotionsPack } from './retail/pricing-promotions';
 import { demandInventoryPlanningPack } from './retail/demand-inventory-planning';
 import { supplyChainFulfillmentPack } from './retail/supply-chain-fulfillment';
+import { storeOperationsPack } from './retail/store-operations';
+import { customerLoyaltyPersonalizationPack } from './retail/customer-loyalty-personalization';
 
 /**
  * The Function Pack catalog — one entry per `(industryKey, functionKey)`.
@@ -69,6 +71,8 @@ const FUNCTION_PACK_ENTRIES: readonly FunctionPack[] = [
   pricingPromotionsPack,
   demandInventoryPlanningPack,
   supplyChainFulfillmentPack,
+  storeOperationsPack,
+  customerLoyaltyPersonalizationPack,
 ] as const;
 
 /**
