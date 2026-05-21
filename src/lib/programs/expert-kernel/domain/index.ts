@@ -5,8 +5,8 @@
 // (spec: docs/strategy/ABARVA-DOMAIN-FUNCTION-PACK-SPEC.md).
 //
 // v1 ships the eight-layer schema, the extensible registry, the complete
-// twelve-function healthcare reference library, and one concrete
-// context-binding consumer.
+// twelve-function healthcare reference library, the first two retail packs,
+// and one concrete context-binding consumer.
 //
 //   • function-pack-types        — the typed eight-layer FunctionPack schema.
 //   • function-pack-registry     — resolveFunctionPack + the §6 depth check.
@@ -18,6 +18,10 @@
 //     management / data & interoperability, the clinical supply chain,
 //     clinical workforce & staffing, payer / claims operations, and pharmacy
 //     — the complete provider-function taxonomy.
+//   • retail/*                   — the retail vertical, opened with its
+//     margin-and-mix spine: merchandising & assortment and pricing &
+//     promotions. The remaining ten retail functions are deepened in later
+//     batches.
 
 export * from './function-pack-types';
 export * from './function-pack-registry';
@@ -34,3 +38,5 @@ export { clinicalSupplyChainPack } from './healthcare/clinical-supply-chain';
 export { clinicalWorkforceStaffingPack } from './healthcare/clinical-workforce-staffing';
 export { payerClaimsOperationsPack } from './healthcare/payer-claims-operations';
 export { pharmacyPack } from './healthcare/pharmacy';
+export { merchandisingAssortmentPack } from './retail/merchandising-assortment';
+export { pricingPromotionsPack } from './retail/pricing-promotions';

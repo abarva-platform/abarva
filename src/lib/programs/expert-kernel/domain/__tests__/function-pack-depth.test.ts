@@ -1,11 +1,12 @@
 // function-pack depth-bar tests.
 //
-// Asserts all twelve reference packs meet the §6 depth bar: the minimum layer
-// counts, the four required deliverable outlines, and the structural hard
-// fails (no metric without a definition+benchmark, no archetype without a
-// value mechanism, no deliverable outline that is a label list rather than a
-// real TOC). The floors come from FUNCTION_PACK_DEPTH_MINIMUMS so the bar
-// lives in exactly one place.
+// Asserts every reference pack — the twelve healthcare packs and the two
+// retail packs that open the retail vertical — meets the §6 depth bar: the
+// minimum layer counts, the four required deliverable outlines, and the
+// structural hard fails (no metric without a definition+benchmark, no
+// archetype without a value mechanism, no deliverable outline that is a label
+// list rather than a real TOC). The floors come from
+// FUNCTION_PACK_DEPTH_MINIMUMS so the bar lives in exactly one place.
 
 import {
   FUNCTION_PACK_DEPTH_MINIMUMS,
@@ -25,6 +26,8 @@ import { clinicalSupplyChainPack } from '../healthcare/clinical-supply-chain';
 import { clinicalWorkforceStaffingPack } from '../healthcare/clinical-workforce-staffing';
 import { payerClaimsOperationsPack } from '../healthcare/payer-claims-operations';
 import { pharmacyPack } from '../healthcare/pharmacy';
+import { merchandisingAssortmentPack } from '../retail/merchandising-assortment';
+import { pricingPromotionsPack } from '../retail/pricing-promotions';
 
 const PACKS: ReadonlyArray<readonly [string, FunctionPack]> = [
   ['care_delivery_care_management', careDeliveryCareManagementPack],
@@ -45,6 +48,8 @@ const PACKS: ReadonlyArray<readonly [string, FunctionPack]> = [
   ['clinical_workforce_staffing', clinicalWorkforceStaffingPack],
   ['payer_claims_operations', payerClaimsOperationsPack],
   ['pharmacy', pharmacyPack],
+  ['merchandising_assortment', merchandisingAssortmentPack],
+  ['pricing_promotions', pricingPromotionsPack],
 ];
 
 describe.each(PACKS)('Function Pack §6 depth bar — %s', (_key, pack) => {

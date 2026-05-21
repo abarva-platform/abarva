@@ -1,13 +1,46 @@
 // function-pack-registry — unit tests.
 //
-// Covers the resolver contract (spec §5): all twelve healthcare reference
-// packs resolve; an unknown industry-function returns `null`, never a faked
-// pack; the coverage list reflects exactly the catalogued packs.
+// Covers the resolver contract (spec §5): every catalogued reference pack
+// resolves; an unknown industry-function returns `null`, never a faked pack;
+// the coverage list reflects exactly the catalogued packs.
+//
+// The coverage assertions are INDUSTRY-AWARE and extensible: healthcare is a
+// completed taxonomy and is asserted as an exact set of twelve functions;
+// retail is a vertical still being built out, so its coverage is asserted as a
+// growing subset — the functions catalogued SO FAR must all be present, and
+// new retail batches add packs without this test's structure needing to
+// change.
 
 import {
   listFunctionPackCoverage,
   resolveFunctionPack,
 } from '../function-pack-registry';
+
+// The complete healthcare provider taxonomy — twelve functions (spec §3).
+// Healthcare is finished, so this is asserted as an exact set.
+const HEALTHCARE_FUNCTIONS: readonly string[] = [
+  'care_delivery_care_management',
+  'clinical_operations_documentation',
+  'clinical_supply_chain',
+  'clinical_workforce_staffing',
+  'health_information_interoperability',
+  'patient_access_engagement_experience',
+  'payer_claims_operations',
+  'pharmacy',
+  'population_health_value_based_care',
+  'quality_safety_regulatory',
+  'research_clinical_trials',
+  'revenue_cycle',
+];
+
+// The retail functions catalogued SO FAR — the margin-and-mix spine. The
+// retail vertical is still being built out toward its full twelve-function
+// taxonomy (spec §3); this list grows as later batches land, and the coverage
+// test asserts it as a subset, never an exact total.
+const RETAIL_FUNCTIONS_CATALOGUED_SO_FAR: readonly string[] = [
+  'merchandising_assortment',
+  'pricing_promotions',
+];
 
 describe('resolveFunctionPack', () => {
   it('resolves the care-delivery & care-management pack', () => {
@@ -142,6 +175,22 @@ describe('resolveFunctionPack', () => {
     expect(pack?.functionLabel).toBe('Pharmacy');
   });
 
+  it('resolves the retail merchandising & assortment pack', () => {
+    const pack = resolveFunctionPack('retail', 'merchandising_assortment');
+    expect(pack).not.toBeNull();
+    expect(pack?.functionKey).toBe('merchandising_assortment');
+    expect(pack?.industryKey).toBe('retail');
+    expect(pack?.functionLabel).toBe('Merchandising & assortment');
+  });
+
+  it('resolves the retail pricing & promotions pack', () => {
+    const pack = resolveFunctionPack('retail', 'pricing_promotions');
+    expect(pack).not.toBeNull();
+    expect(pack?.functionKey).toBe('pricing_promotions');
+    expect(pack?.industryKey).toBe('retail');
+    expect(pack?.functionLabel).toBe('Pricing & promotions');
+  });
+
   it('returns null for an unknown function in a known industry', () => {
     // The healthcare provider taxonomy is complete at twelve catalogued
     // functions; a healthcare function outside that set (e.g. telehealth &
@@ -151,11 +200,11 @@ describe('resolveFunctionPack', () => {
     ).toBeNull();
   });
 
-  it('returns null for an unknown industry', () => {
-    // retail has no packs yet — a known gap, never a faked pack.
-    expect(
-      resolveFunctionPack('retail', 'care_delivery_care_management'),
-    ).toBeNull();
+  it('returns null for a retail function not yet catalogued', () => {
+    // The retail vertical is still being built out; a retail function
+    // outside the catalogued spine (e.g. loss prevention) has no pack yet —
+    // a known gap, never a faked pack.
+    expect(resolveFunctionPack('retail', 'loss_prevention')).toBeNull();
   });
 
   it('returns null when the function key is entirely unrecognised', () => {
@@ -165,34 +214,68 @@ describe('resolveFunctionPack', () => {
   });
 
   it('does not cross-resolve a function key to the wrong industry', () => {
-    // The healthcare functions must not resolve under the retail industry.
+    // A healthcare function must not resolve under the retail industry.
     expect(
       resolveFunctionPack('retail', 'population_health_value_based_care'),
+    ).toBeNull();
+    // And a retail function must not resolve under healthcare.
+    expect(
+      resolveFunctionPack('healthcare-provider', 'merchandising_assortment'),
     ).toBeNull();
   });
 });
 
 describe('listFunctionPackCoverage', () => {
-  it('lists exactly the twelve catalogued healthcare packs', () => {
-    const coverage = listFunctionPackCoverage();
-    expect(coverage).toHaveLength(12);
-    const keys = coverage.map((c) => c.functionKey).sort();
-    expect(keys).toEqual([
-      'care_delivery_care_management',
-      'clinical_operations_documentation',
-      'clinical_supply_chain',
-      'clinical_workforce_staffing',
-      'health_information_interoperability',
-      'patient_access_engagement_experience',
-      'payer_claims_operations',
-      'pharmacy',
-      'population_health_value_based_care',
-      'quality_safety_regulatory',
-      'research_clinical_trials',
-      'revenue_cycle',
-    ]);
-    expect(coverage.every((c) => c.industryKey === 'healthcare-provider')).toBe(
-      true,
+  // Industry-aware coverage assertions. Healthcare is a completed taxonomy,
+  // asserted as an EXACT set; retail is a growing vertical, asserted as a
+  // SUBSET so later retail batches add packs without touching this test's
+  // structure.
+
+  const coverageFor = (industryKey: string): string[] =>
+    listFunctionPackCoverage()
+      .filter((c) => c.industryKey === industryKey)
+      .map((c) => c.functionKey)
+      .sort();
+
+  it('covers exactly the twelve healthcare provider functions', () => {
+    // Healthcare is finished — its coverage is an exact set.
+    expect(coverageFor('healthcare-provider')).toEqual(
+      [...HEALTHCARE_FUNCTIONS].sort(),
     );
+  });
+
+  it('covers at least the retail functions catalogued so far', () => {
+    // Retail is still being built out toward its full taxonomy: assert the
+    // catalogued functions are a subset of the live retail coverage, never
+    // an exact total — a later batch adds packs without changing this test.
+    const retailCoverage = new Set(coverageFor('retail'));
+    for (const fn of RETAIL_FUNCTIONS_CATALOGUED_SO_FAR) {
+      expect(retailCoverage.has(fn)).toBe(true);
+    }
+    expect(retailCoverage.size).toBeGreaterThanOrEqual(
+      RETAIL_FUNCTIONS_CATALOGUED_SO_FAR.length,
+    );
+  });
+
+  it('every catalogued pack carries a non-empty function label', () => {
+    for (const entry of listFunctionPackCoverage()) {
+      expect(entry.functionLabel.trim().length).toBeGreaterThan(0);
+    }
+  });
+
+  it('catalogues no duplicate (industry, function) pairs', () => {
+    const pairs = listFunctionPackCoverage().map(
+      (c) => `${c.industryKey}::${c.functionKey}`,
+    );
+    expect(new Set(pairs).size).toBe(pairs.length);
+  });
+
+  it('only catalogues the known industry verticals', () => {
+    const industries = new Set(
+      listFunctionPackCoverage().map((c) => c.industryKey),
+    );
+    for (const industry of industries) {
+      expect(['healthcare-provider', 'retail']).toContain(industry);
+    }
   });
 });

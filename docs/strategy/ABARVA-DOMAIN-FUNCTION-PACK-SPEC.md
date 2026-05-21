@@ -73,10 +73,23 @@ A Domain Function Pack is keyed by `(industryKey, functionKey)`.
 `clinical_supply_chain` · `health_information_interoperability` ·
 `clinical_workforce_staffing` · `payer_claims_operations` · `pharmacy`.
 
-(Retail follows the same schema later — merchandising, pricing, demand &
-inventory, supply chain & fulfillment, store operations, customer/loyalty,
-digital commerce, marketing & retail media, customer care, workforce, returns,
-loss prevention.)
+**Retail — the function taxonomy:**
+
+`merchandising_assortment` · `pricing_promotions` ·
+`demand_inventory_planning` · `supply_chain_fulfillment` ·
+`store_operations` · `customer_loyalty_personalization` ·
+`digital_commerce` · `marketing_retail_media` · `customer_care` ·
+`workforce_labor` · `returns_reverse_logistics` · `loss_prevention`.
+
+The retail vertical follows the same eight-layer schema as healthcare — it is
+breadth, not new architecture. v1 of the retail vertical opens it with the
+two functions a merchant's economics turn on: `merchandising_assortment` (what
+to carry and how productive it is) and `pricing_promotions` (how that
+assortment is priced and promoted). Together they are the
+**margin-and-mix spine** of retail — the retail counterpart of the
+value-based-care spine that proved the schema in healthcare. The remaining ten
+retail functions are catalogued here as known gaps and are deepened in later
+batches.
 
 ## 4. The Function Pack schema
 
