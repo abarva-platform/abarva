@@ -19,6 +19,8 @@ import { patientAccessEngagementExperiencePack } from '../healthcare/patient-acc
 import { populationHealthValueBasedCarePack } from '../healthcare/population-health-value-based-care';
 import { qualitySafetyRegulatoryPack } from '../healthcare/quality-safety-regulatory';
 import { healthInformationInteroperabilityPack } from '../healthcare/health-information-interoperability';
+import { researchClinicalTrialsPack } from '../healthcare/research-clinical-trials';
+import { revenueCyclePack } from '../healthcare/revenue-cycle';
 
 const PACKS: ReadonlyArray<readonly [string, FunctionPack]> = [
   ['care_delivery_care_management', careDeliveryCareManagementPack],
@@ -33,6 +35,8 @@ const PACKS: ReadonlyArray<readonly [string, FunctionPack]> = [
     'health_information_interoperability',
     healthInformationInteroperabilityPack,
   ],
+  ['research_clinical_trials', researchClinicalTrialsPack],
+  ['revenue_cycle', revenueCyclePack],
 ];
 
 describe.each(PACKS)('Function Pack §6 depth bar — %s', (_key, pack) => {

@@ -10,10 +10,11 @@
 //   • function-pack-types        — the typed eight-layer FunctionPack schema.
 //   • function-pack-registry     — resolveFunctionPack + the §6 depth check.
 //   • function-pack-context-binding — bindFunctionPackForArtifact (the §5 proof).
-//   • healthcare/*               — the six healthcare reference packs: the
+//   • healthcare/*               — the eight healthcare reference packs: the
 //     value-based-care spine, clinical operations & documentation, patient
-//     access, engagement & experience, clinical quality / safety / regulatory,
-//     and health information management / data & interoperability.
+//     access / engagement / experience, research & clinical trials, the
+//     revenue cycle, quality / safety / regulatory, and health information
+//     management / data & interoperability.
 
 export * from './function-pack-types';
 export * from './function-pack-registry';
@@ -24,3 +25,5 @@ export { clinicalOperationsDocumentationPack } from './healthcare/clinical-opera
 export { patientAccessEngagementExperiencePack } from './healthcare/patient-access-engagement-experience';
 export { qualitySafetyRegulatoryPack } from './healthcare/quality-safety-regulatory';
 export { healthInformationInteroperabilityPack } from './healthcare/health-information-interoperability';
+export { researchClinicalTrialsPack } from './healthcare/research-clinical-trials';
+export { revenueCyclePack } from './healthcare/revenue-cycle';
