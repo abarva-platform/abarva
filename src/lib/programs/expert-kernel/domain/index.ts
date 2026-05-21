@@ -18,6 +18,8 @@
 //     management / data & interoperability, the clinical supply chain,
 //     clinical workforce & staffing, payer / claims operations, and pharmacy
 //     — the complete provider-function taxonomy.
+//   • retail/*                   — the opening retail reference packs: demand
+//     & inventory planning and supply chain & fulfillment.
 
 export * from './function-pack-types';
 export * from './function-pack-registry';
@@ -34,3 +36,5 @@ export { clinicalSupplyChainPack } from './healthcare/clinical-supply-chain';
 export { clinicalWorkforceStaffingPack } from './healthcare/clinical-workforce-staffing';
 export { payerClaimsOperationsPack } from './healthcare/payer-claims-operations';
 export { pharmacyPack } from './healthcare/pharmacy';
+export { demandInventoryPlanningPack } from './retail/demand-inventory-planning';
+export { supplyChainFulfillmentPack } from './retail/supply-chain-fulfillment';

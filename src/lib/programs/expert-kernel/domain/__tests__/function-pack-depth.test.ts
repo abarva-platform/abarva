@@ -25,6 +25,8 @@ import { clinicalSupplyChainPack } from '../healthcare/clinical-supply-chain';
 import { clinicalWorkforceStaffingPack } from '../healthcare/clinical-workforce-staffing';
 import { payerClaimsOperationsPack } from '../healthcare/payer-claims-operations';
 import { pharmacyPack } from '../healthcare/pharmacy';
+import { demandInventoryPlanningPack } from '../retail/demand-inventory-planning';
+import { supplyChainFulfillmentPack } from '../retail/supply-chain-fulfillment';
 
 const PACKS: ReadonlyArray<readonly [string, FunctionPack]> = [
   ['care_delivery_care_management', careDeliveryCareManagementPack],
@@ -45,6 +47,8 @@ const PACKS: ReadonlyArray<readonly [string, FunctionPack]> = [
   ['clinical_workforce_staffing', clinicalWorkforceStaffingPack],
   ['payer_claims_operations', payerClaimsOperationsPack],
   ['pharmacy', pharmacyPack],
+  ['demand_inventory_planning', demandInventoryPlanningPack],
+  ['supply_chain_fulfillment', supplyChainFulfillmentPack],
 ];
 
 describe.each(PACKS)('Function Pack §6 depth bar — %s', (_key, pack) => {

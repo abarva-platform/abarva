@@ -142,6 +142,22 @@ describe('resolveFunctionPack', () => {
     expect(pack?.functionLabel).toBe('Pharmacy');
   });
 
+  it('resolves the retail demand & inventory-planning pack', () => {
+    const pack = resolveFunctionPack('retail', 'demand_inventory_planning');
+    expect(pack).not.toBeNull();
+    expect(pack?.functionKey).toBe('demand_inventory_planning');
+    expect(pack?.industryKey).toBe('retail');
+    expect(pack?.functionLabel).toBe('Demand & inventory planning');
+  });
+
+  it('resolves the retail supply-chain & fulfillment pack', () => {
+    const pack = resolveFunctionPack('retail', 'supply_chain_fulfillment');
+    expect(pack).not.toBeNull();
+    expect(pack?.functionKey).toBe('supply_chain_fulfillment');
+    expect(pack?.industryKey).toBe('retail');
+    expect(pack?.functionLabel).toBe('Supply chain & fulfillment');
+  });
+
   it('returns null for an unknown function in a known industry', () => {
     // The healthcare provider taxonomy is complete at twelve catalogued
     // functions; a healthcare function outside that set (e.g. telehealth &
@@ -151,10 +167,12 @@ describe('resolveFunctionPack', () => {
     ).toBeNull();
   });
 
-  it('returns null for an unknown industry', () => {
-    // retail has no packs yet — a known gap, never a faked pack.
+  it('returns null for an unknown function in the retail industry', () => {
+    // The retail vertical has opened with two functions; a retail function
+    // outside that set (e.g. merchandising & assortment) has no pack yet —
+    // a known gap, never a faked pack.
     expect(
-      resolveFunctionPack('retail', 'care_delivery_care_management'),
+      resolveFunctionPack('retail', 'merchandising_assortment'),
     ).toBeNull();
   });
 
@@ -173,11 +191,13 @@ describe('resolveFunctionPack', () => {
 });
 
 describe('listFunctionPackCoverage', () => {
-  it('lists exactly the twelve catalogued healthcare packs', () => {
+  it('lists the twelve catalogued healthcare packs', () => {
     const coverage = listFunctionPackCoverage();
-    expect(coverage).toHaveLength(12);
-    const keys = coverage.map((c) => c.functionKey).sort();
-    expect(keys).toEqual([
+    const healthcareKeys = coverage
+      .filter((c) => c.industryKey === 'healthcare-provider')
+      .map((c) => c.functionKey)
+      .sort();
+    expect(healthcareKeys).toEqual([
       'care_delivery_care_management',
       'clinical_operations_documentation',
       'clinical_supply_chain',
@@ -191,8 +211,28 @@ describe('listFunctionPackCoverage', () => {
       'research_clinical_trials',
       'revenue_cycle',
     ]);
-    expect(coverage.every((c) => c.industryKey === 'healthcare-provider')).toBe(
-      true,
-    );
+  });
+
+  it('lists the catalogued retail packs', () => {
+    const coverage = listFunctionPackCoverage();
+    const retailKeys = coverage
+      .filter((c) => c.industryKey === 'retail')
+      .map((c) => c.functionKey)
+      .sort();
+    expect(retailKeys).toEqual([
+      'demand_inventory_planning',
+      'supply_chain_fulfillment',
+    ]);
+  });
+
+  it('covers only the known industry verticals', () => {
+    const coverage = listFunctionPackCoverage();
+    expect(
+      coverage.every(
+        (c) =>
+          c.industryKey === 'healthcare-provider' ||
+          c.industryKey === 'retail',
+      ),
+    ).toBe(true);
   });
 });

@@ -32,6 +32,8 @@ import { clinicalSupplyChainPack } from './healthcare/clinical-supply-chain';
 import { clinicalWorkforceStaffingPack } from './healthcare/clinical-workforce-staffing';
 import { payerClaimsOperationsPack } from './healthcare/payer-claims-operations';
 import { pharmacyPack } from './healthcare/pharmacy';
+import { demandInventoryPlanningPack } from './retail/demand-inventory-planning';
+import { supplyChainFulfillmentPack } from './retail/supply-chain-fulfillment';
 
 /**
  * The Function Pack catalog — one entry per `(industryKey, functionKey)`.
@@ -41,10 +43,11 @@ import { pharmacyPack } from './healthcare/pharmacy';
  * spine packs (spec §6), clinical documentation, patient access, research &
  * clinical trials, the revenue cycle, quality / safety / regulatory, health
  * information / interoperability, the clinical supply chain, clinical
- * workforce & staffing, payer / claims operations, and pharmacy. A future
- * pack is added as ONE additional entry; the resolver and every consumer
- * need no change. Keyed off the pack's own `industryKey` / `functionKey` so
- * an entry can never disagree with its pack.
+ * workforce & staffing, payer / claims operations, and pharmacy — plus the
+ * opening retail packs: demand & inventory planning and supply chain &
+ * fulfillment. A future pack is added as ONE additional entry; the resolver
+ * and every consumer need no change. Keyed off the pack's own `industryKey`
+ * / `functionKey` so an entry can never disagree with its pack.
  */
 const FUNCTION_PACK_ENTRIES: readonly FunctionPack[] = [
   careDeliveryCareManagementPack,
@@ -59,6 +62,8 @@ const FUNCTION_PACK_ENTRIES: readonly FunctionPack[] = [
   clinicalWorkforceStaffingPack,
   payerClaimsOperationsPack,
   pharmacyPack,
+  demandInventoryPlanningPack,
+  supplyChainFulfillmentPack,
 ] as const;
 
 /**
