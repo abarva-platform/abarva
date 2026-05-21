@@ -97,7 +97,7 @@ function auditAppInsights() {
     'monitor', 'app-insights', 'component', 'show',
     '-g', LAB.observabilityRg,
     '-a', LAB.resources.appInsights,
-    '--query', '{name:name,provisioningState:provisioningState,workspaceResourceId:WorkspaceResourceId,appId:appId,kind:kind}',
+    '--query', '{name:name,provisioningState:provisioningState,workspaceResourceId:workspaceResourceId,appId:appId,kind:kind}',
     '-o', 'json',
   ]);
   if (!app.ok) {

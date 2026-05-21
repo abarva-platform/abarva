@@ -1,21 +1,22 @@
 # Azure Migration End-to-End Task and Status
 
 Date: 2026-05-21
-Status: Azure database/schema/data lane advanced; full app cutover not yet complete
+Status: Azure lab app/data lane validated; customer cutover hardening remains
 Data posture: synthetic/no-client-data only
 Synthetic tenant added in this pass: Northstar MedTech (`northstar-medtech`)
 
 ## Executive Status
 
-AbarVa now has a working Azure private database lane for the lab: the Azure
-Postgres schema is current, pending migrations have been applied inside the
-Azure VNet, Northstar MedTech setup/context data has been copied into Azure,
-and tenant data parity passes for Northstar.
+AbarVa now has a working Azure lab lane: the Azure Postgres schema is current,
+pending migrations have been applied inside the Azure VNet, Northstar MedTech
+setup/context data has been copied into Azure, tenant data parity passes for
+Northstar, the Azure web app is reading Azure Postgres, primary authenticated
+surfaces pass, observability is green, connectivity smoke has logs, and core
+Moves/Source artifacts generate successfully.
 
-This is not yet a production cutover. The remaining work is app-runtime parity:
-prove that authenticated user flows, all four product surfaces, generated
-artifacts, agent answers, notifications, and rollback behavior work against
-Azure as the active data plane.
+This is not yet a customer cutover. The remaining work is security posture,
+model-enabled agent-quality proof, Northstar workflow substrate if the demo
+requires full Source/Moves/Tower flows, and a rehearsed cutover/rollback run.
 
 ## Current Readiness by Area
 
@@ -32,12 +33,12 @@ Azure as the active data plane.
 | Northstar tenant Azure copy dry-run | Done | `job-abarva-db-copy-lab-eastus-6rv486i` succeeded | Copy plan was clean before write. |
 | Northstar tenant Azure real copy + parity | Done | `job-abarva-db-copy-lab-eastus-0twobtq` succeeded | Northstar tenant rows are in Azure and parity passed. |
 | CI/workflow automation | Mostly done | PR `#2197` added copy/parity workflows | Useful for orchestration, but private DNS requires VNet-connected execution for live Azure DB. |
-| Authenticated app-surface parity | Not done | No authenticated browser/session run against Azure DB in this pass | Primary remaining cutover blocker. |
-| Source/Moves/Intelligence/Tower functional parity | Not done for Northstar | Database rows copied; surfaces not yet crawled against Azure runtime | Need browser and API proof before cutover. |
-| Artifact generation parity | Not done | No Azure-runtime export/deck generation pass yet | Needed because artifacts are core value proof. |
-| Agent/model path parity | Not done | No Azure-runtime hard-question or agent-quality run for Northstar yet | Needed before saying CXO/VP workflows are ready. |
+| Authenticated app-surface parity | Done for existing demo tenants | Playwright matrix passed 15/15 against Azure revision `ca-abarva-web-lab-eastus--0000036` | Primary surfaces are validated for Apex, Meridian, and First Capital. |
+| Source/Moves/Intelligence/Tower functional parity | Mostly done for existing demo tenants; not done for Northstar full workflow | Azure runtime surfaces passed for Apex/Meridian/First Capital; Northstar currently has context-layer substrate only | Add Northstar Source/Moves/Tower rows if Northstar must demo the full journey. |
+| Artifact generation parity | Done for core seeded artifacts | Moves board-grade decks and Source AMS artifacts returned 200; PPTX byte magic validated | Northstar-specific artifacts require Northstar workflow substrate. |
+| Agent/model path parity | Partial | Source deterministic fallback route returned evidence-aware blocked answer; `noModel=true` | Live model-enabled agent quality run remains. |
 | Notifications/email parity | Not done | No Resend/notification delivery smoke against Azure runtime yet | Needed if alerts are part of pilot experience. |
-| Rollback and freeze plan | Not done | No written cutover runbook with stop/go/rollback windows yet | Needed before switching traffic or customer demos to Azure data plane. |
+| Rollback and freeze plan | Authored, not rehearsed | `AZURE-CUSTOMER-CUTOVER-RUNBOOK-2026-05-21.md` | Rehearse before switching customer traffic. |
 
 ## Latest Verified Azure Evidence
 
@@ -150,7 +151,7 @@ VNet, or a private operator host.
 | Container Apps jobs | Done | Migration/copy jobs exist and run. |
 | Private Postgres | Done | `pg-abarva-context-lab-001`, private network. |
 | Private DNS/VNet path | Done | Container Apps jobs can reach DB; local/public runners cannot. |
-| Observability baseline | Existing lab capability | Needs fresh post-Northstar app-run evidence. |
+| Observability baseline | Done | `npm run azure:observability:audit`: 13 pass, 0 attention, 0 fail. |
 
 ### Phase 2 — Secrets and Environment Wiring
 
@@ -160,7 +161,7 @@ VNet, or a private operator host.
 | Azure Postgres URL secrets in Key Vault | Done | Control/context/audit URL secrets set. |
 | Local `.env.local` source/target variables | Done | `SOURCE_DATABASE_URL`, `TARGET_DATABASE_URL`, `AZURE_LAB_DATABASE_URL`, `ABARVA_AZURE_DATABASE_URL`. |
 | GitHub Actions target DB secrets | Done | `TARGET_DATABASE_URL`, `AZURE_LAB_DATABASE_URL`. |
-| Runtime app secret projection | Needs verification | Confirm `ca-abarva-web-lab-eastus` is using the intended Azure DB secret for the candidate revision. |
+| Runtime app secret projection | Done | `DATABASE_URL` uses `azure-postgres-control-database-url`; `APPLICATIONINSIGHTS_CONNECTION_STRING` uses `appinsights-connection-string`. |
 | Secret rotation policy | Not done | Needed before customer/private-data pilot. |
 
 ### Phase 3 — Schema Migration
@@ -190,29 +191,29 @@ VNet, or a private operator host.
 
 | Task | Status | Evidence / next action |
 |---|---|---|
-| Confirm active Azure app image is current | Not done | Need compare `ca-abarva-web-lab-eastus` image digest to `main`. |
-| Confirm Azure app uses Azure DB | Not done | Verify runtime env secret reference. |
-| `/api/health` against Azure app | Not done in this pass | Run once candidate revision is confirmed. |
-| Authenticated Clerk/demo sign-in against Azure app | Not done | Requires valid session/demo auth flow. |
+| Confirm active Azure app image is current | Done for lab candidate | Revision `ca-abarva-web-lab-eastus--0000036`; image `lab-northstar-copy-20260521-r1`. |
+| Confirm Azure app uses Azure DB | Done | `ABARVA_DATA_PLANE=azure-postgres`; `DATABASE_URL` secretRef is the Azure Postgres control DB secret. |
+| `/api/health` against Azure app | Done | `postgres=true`, `direct_postgres=true`, `neo4j=skipped`. |
+| Authenticated Clerk/demo sign-in against Azure app | Done for demo sign-in harness | Load smoke and Playwright matrix authenticate through demo sign-in. |
 | Northstar tenant route/session resolution | Not done | Must verify active tenant selector and tenant scoping. |
-| Surface crawl: Home | Not done | Must verify no missing/fabricated tenant content. |
-| Surface crawl: Intelligence | Not done | Must verify grounded context or honest gaps. |
-| Surface crawl: Moves | Not done | Must verify kernel/dossier behavior if Northstar use case exists. |
-| Surface crawl: Source | Not done | Needs Source substrate if source queue/deal-room is expected. |
-| Surface crawl: Tower | Not done | Needs outcomes/watch items if Tower value view is expected. |
+| Surface crawl: Home | Done for existing demo tenants | Playwright matrix passed. |
+| Surface crawl: Intelligence | Done for existing demo tenants | Playwright matrix passed. |
+| Surface crawl: Moves | Done for existing demo tenants | Playwright matrix passed. |
+| Surface crawl: Source | Done for existing demo tenants | Playwright matrix passed against Decision Queue front door. |
+| Surface crawl: Tower | Done for existing demo tenants | Playwright matrix passed. |
 
 ### Phase 6 — Artifact and Agent Parity
 
 | Task | Status | Evidence / next action |
 |---|---|---|
-| Moves artifact generation on Azure runtime | Not done | Generate/open all relevant decks/documents against Azure. |
-| Source artifact generation on Azure runtime | Not done | Generate CXO report, deal pack, PPTX where Source event exists. |
+| Moves artifact generation on Azure runtime | Done for Apex board-grade artifacts | 8 HTML decks returned 200; business-case PPTX returned ZIP/PPTX magic. |
+| Source artifact generation on Azure runtime | Done for Apex AMS event | CXO HTML, CXO PPTX, and Deal Pack returned 200; PPTX magic validated. |
 | Expert review persistence | Schema ready | `expert_reviews` migration applied; need runtime test. |
 | Source execution-room persistence | Schema ready | `sourcing_work_items` migrations applied; need runtime test. |
 | Notification event persistence | Schema ready | Notification migrations applied; need runtime test. |
 | Email/notification delivery | Not done | Requires Resend/provider route smoke and policy decision. |
-| Agent hard-question run | Not done | Run Source/Moves adversarial prompts against Azure runtime. |
-| No-fabrication assertions | Not done for Azure runtime | Need browser/API evidence. |
+| Agent hard-question run | Partial | Source Nexus ask route returned evidence-aware deterministic blocked answer; model-enabled path still not proven. |
+| No-fabrication assertions | Partial | Artifact and Source deterministic response preserve explicit blockers/gaps; live model path still needs evaluation. |
 
 ### Phase 7 — Security, Isolation, and Compliance
 
@@ -220,7 +221,7 @@ VNet, or a private operator host.
 |---|---|---|
 | DB private access | Done | Private DNS/VNet only. |
 | RLS migration coverage | Existing lab capability | Need fresh run after latest migrations. |
-| Cross-tenant API probes | Not done in this pass | Run SEC-P0 suite against Azure candidate revision. |
+| Cross-tenant API probes | Done | SEC-P0 probes passed 8/8 with Apex session probing Meridian. |
 | Key Vault public manageability | Existing lab attention item | Close or waive before customer pilot. |
 | Search/Service Bus public access posture | Existing lab attention item | Close or waive before customer pilot. |
 | Secrets are not printed in logs | Mostly done | Scripts avoid printing DSNs; continue log audit. |
@@ -231,8 +232,8 @@ VNet, or a private operator host.
 | Task | Status | Evidence / next action |
 |---|---|---|
 | App-to-Postgres latency baseline | Not done in this pass | Measure p50/p95 from Container Apps. |
-| Primary surface load smoke | Existing lab capability | Needs fresh run on current candidate image/data. |
-| Artifact route performance | App-side memo cache exists | Need Azure runtime timing for board-grade routes. |
+| Primary surface load smoke | Done | 117 requests, 0 errors, p95 1016.6ms across protected surfaces. |
+| Artifact route performance | Done for availability/byte validity | Moves/Source artifact routes returned 200; deeper timing benchmark can be run before scale. |
 | Postgres disruption drill | Existing lab capability | Repeat after current data/schema state. |
 | Service Bus DLQ/mixed batch drill | Existing lab capability | Repeat only if event ingestion is in pilot scope. |
 | Monthly cost baseline | Existing lab cost docs | Refresh after current resources/jobs/images. |
@@ -241,12 +242,12 @@ VNet, or a private operator host.
 
 | Task | Status | Evidence / next action |
 |---|---|---|
-| Define cutover target | Not done | Decide: Azure lab only, pilot-only, or production data-plane switch. |
-| Freeze window | Not done | Needed before final data sync. |
+| Define cutover target | Partially done | Current target is Azure lab cutover candidate, not customer traffic switch. |
+| Freeze window | Runbook-authored | Needed before final data sync. |
 | Final source-to-target delta sync | Not done | Must run immediately before cutover. |
 | Three consecutive parity runs | Not done | Required: authenticated and tenant-surface parity. |
-| Rollback plan | Not done | Define DNS/env rollback, DB source-of-truth rollback, and data writes during rollback. |
-| Founder/customer go/no-go checklist | Not done | Needed before any live pilot/customer-facing cutover. |
+| Rollback plan | Authored, not rehearsed | See `AZURE-CUSTOMER-CUTOVER-RUNBOOK-2026-05-21.md`. |
+| Founder/customer go/no-go checklist | Authored, not signed | See runbook go/no-go gates. |
 
 ## Practical Next Steps
 
