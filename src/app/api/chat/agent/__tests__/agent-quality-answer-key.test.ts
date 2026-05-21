@@ -26,6 +26,8 @@ describe('Agent route prompt — L7 canonical answer key', () => {
     expect(routeSource).toContain('risk is sponsor/value drift');
     expect(routeSource).toContain('The evidence is that AMS Consolidation 2026');
     expect(routeSource).toContain('kill, sponsor, and evidence');
+    expect(routeSource).toContain('Do not originate this Move without a committed sponsor and business owner');
+    expect(routeSource).toContain('risk is a $20M AI bet entering Charter');
     expect(routeSource).toContain('For Apex, the AI workforce scheduling Move can be originated');
     expect(routeSource).toContain('explicit scope around store labor scheduling');
   });
