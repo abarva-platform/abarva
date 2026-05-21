@@ -40,6 +40,9 @@ describe('Agent route prompt — L7 canonical answer key', () => {
     expect(routeSource).toContain('evidence/source is Meridian program inventory showing Abridge, Suki, and DAX Copilot in play');
     expect(routeSource).toContain('AML alert triage automation is a vendor decision only after evidence/source');
     expect(routeSource).toContain('analyst-control gaps are reconciled');
+    expect(routeSource).toContain("FiServ Cleartouch is First Capital\\'s concentration risk in core modernization");
+    expect(routeSource).toContain('the credible second source is a bounded challenger workstream');
+    expect(routeSource).toContain('$54M modernization context');
     expect(routeSource).toContain('Meridian sourcing intake fields filled from the page context');
     expect(routeSource).toContain('missing fields are decision owner, baseline evidence');
   });
