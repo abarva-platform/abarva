@@ -52,12 +52,15 @@ const RETAIL_FUNCTIONS_CATALOGUED_SO_FAR: readonly string[] = [
   'loss_prevention',
 ];
 
-// The financial-services functions catalogued SO FAR — the opening packs of
-// the diversified-institution vertical. Financial services is still being
-// built out toward its full twelve-function taxonomy (spec §3); this list
-// grows as later batches land, and the coverage test asserts it as a subset,
-// never an exact total.
+// The financial-services functions catalogued SO FAR. The financial-services
+// vertical is still being built out toward its full twelve-function taxonomy
+// (spec §3); this list grows as later batches land, and the coverage test
+// asserts it as a subset, never an exact total.
 const FINANCIAL_SERVICES_FUNCTIONS_CATALOGUED_SO_FAR: readonly string[] = [
+  'capital_markets_trading',
+  'commercial_corporate_banking',
+  'payments_money_movement',
+  'wealth_asset_management',
   'retail_banking_deposits',
   'lending_credit_underwriting',
 ];
@@ -313,6 +316,50 @@ describe('resolveFunctionPack', () => {
     expect(pack?.functionLabel).toBe('Lending, credit & underwriting');
   });
 
+  it('resolves the capital-markets & trading pack', () => {
+    const pack = resolveFunctionPack(
+      'financial-services',
+      'capital_markets_trading',
+    );
+    expect(pack).not.toBeNull();
+    expect(pack?.functionKey).toBe('capital_markets_trading');
+    expect(pack?.industryKey).toBe('financial-services');
+    expect(pack?.functionLabel).toBe('Capital markets & trading');
+  });
+
+  it('resolves the commercial & corporate-banking pack', () => {
+    const pack = resolveFunctionPack(
+      'financial-services',
+      'commercial_corporate_banking',
+    );
+    expect(pack).not.toBeNull();
+    expect(pack?.functionKey).toBe('commercial_corporate_banking');
+    expect(pack?.industryKey).toBe('financial-services');
+    expect(pack?.functionLabel).toBe('Commercial & corporate banking');
+  });
+
+  it('resolves the financial-services payments & money-movement pack', () => {
+    const pack = resolveFunctionPack(
+      'financial-services',
+      'payments_money_movement',
+    );
+    expect(pack).not.toBeNull();
+    expect(pack?.functionKey).toBe('payments_money_movement');
+    expect(pack?.industryKey).toBe('financial-services');
+    expect(pack?.functionLabel).toBe('Payments & money movement');
+  });
+
+  it('resolves the financial-services wealth & asset-management pack', () => {
+    const pack = resolveFunctionPack(
+      'financial-services',
+      'wealth_asset_management',
+    );
+    expect(pack).not.toBeNull();
+    expect(pack?.functionKey).toBe('wealth_asset_management');
+    expect(pack?.industryKey).toBe('financial-services');
+    expect(pack?.functionLabel).toBe('Wealth & asset management');
+  });
+
   it('returns null for an unknown function in a known industry', () => {
     // The healthcare provider taxonomy is complete at twelve catalogued
     // functions; a healthcare function outside that set (e.g. telehealth &
@@ -384,13 +431,11 @@ describe('listFunctionPackCoverage', () => {
     // taxonomy: assert the catalogued functions are a subset of the live
     // financial-services coverage, never an exact total — a later batch
     // adds packs without changing this test.
-    const financialServicesCoverage = new Set(
-      coverageFor('financial-services'),
-    );
+    const fsCoverage = new Set(coverageFor('financial-services'));
     for (const fn of FINANCIAL_SERVICES_FUNCTIONS_CATALOGUED_SO_FAR) {
-      expect(financialServicesCoverage.has(fn)).toBe(true);
+      expect(fsCoverage.has(fn)).toBe(true);
     }
-    expect(financialServicesCoverage.size).toBeGreaterThanOrEqual(
+    expect(fsCoverage.size).toBeGreaterThanOrEqual(
       FINANCIAL_SERVICES_FUNCTIONS_CATALOGUED_SO_FAR.length,
     );
   });

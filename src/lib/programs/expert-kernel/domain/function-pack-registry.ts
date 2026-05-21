@@ -46,6 +46,10 @@ import { returnsReverseLogisticsPack } from './retail/returns-reverse-logistics'
 import { lossPreventionPack } from './retail/loss-prevention';
 import { retailBankingDepositsPack } from './financial-services/retail-banking-deposits';
 import { lendingCreditUnderwritingPack } from './financial-services/lending-credit-underwriting';
+import { capitalMarketsTradingPack } from './financial-services/capital-markets-trading';
+import { commercialCorporateBankingPack } from './financial-services/commercial-corporate-banking';
+import { paymentsMoneyMovementPack } from './financial-services/payments-money-movement';
+import { wealthAssetManagementPack } from './financial-services/wealth-asset-management';
 
 /**
  * The Function Pack catalog — one entry per `(industryKey, functionKey)`.
@@ -89,6 +93,10 @@ const FUNCTION_PACK_ENTRIES: readonly FunctionPack[] = [
   lossPreventionPack,
   retailBankingDepositsPack,
   lendingCreditUnderwritingPack,
+  capitalMarketsTradingPack,
+  commercialCorporateBankingPack,
+  paymentsMoneyMovementPack,
+  wealthAssetManagementPack,
 ] as const;
 
 /**
