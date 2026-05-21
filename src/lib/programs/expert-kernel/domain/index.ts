@@ -4,17 +4,18 @@
 // an agent binds into context BEFORE it reaches for general intelligence
 // (spec: docs/strategy/ABARVA-DOMAIN-FUNCTION-PACK-SPEC.md).
 //
-// v1 ships the eight-layer schema, the extensible registry, six healthcare
+// v1 ships the eight-layer schema, the extensible registry, ten healthcare
 // reference packs, and one concrete context-binding consumer.
 //
 //   • function-pack-types        — the typed eight-layer FunctionPack schema.
 //   • function-pack-registry     — resolveFunctionPack + the §6 depth check.
 //   • function-pack-context-binding — bindFunctionPackForArtifact (the §5 proof).
-//   • healthcare/*               — the eight healthcare reference packs: the
+//   • healthcare/*               — the ten healthcare reference packs: the
 //     value-based-care spine, clinical operations & documentation, patient
 //     access / engagement / experience, research & clinical trials, the
-//     revenue cycle, quality / safety / regulatory, and health information
-//     management / data & interoperability.
+//     revenue cycle, quality / safety / regulatory, health information
+//     management / data & interoperability, the clinical supply chain, and
+//     clinical workforce & staffing.
 
 export * from './function-pack-types';
 export * from './function-pack-registry';
@@ -27,3 +28,5 @@ export { qualitySafetyRegulatoryPack } from './healthcare/quality-safety-regulat
 export { healthInformationInteroperabilityPack } from './healthcare/health-information-interoperability';
 export { researchClinicalTrialsPack } from './healthcare/research-clinical-trials';
 export { revenueCyclePack } from './healthcare/revenue-cycle';
+export { clinicalSupplyChainPack } from './healthcare/clinical-supply-chain';
+export { clinicalWorkforceStaffingPack } from './healthcare/clinical-workforce-staffing';

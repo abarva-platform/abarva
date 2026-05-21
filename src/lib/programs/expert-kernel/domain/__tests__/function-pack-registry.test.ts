@@ -1,6 +1,6 @@
 // function-pack-registry — unit tests.
 //
-// Covers the resolver contract (spec §5): all six healthcare reference packs
+// Covers the resolver contract (spec §5): all ten healthcare reference packs
 // resolve; an unknown industry-function returns `null`, never a faked pack;
 // the coverage list reflects exactly the catalogued packs.
 
@@ -101,6 +101,28 @@ describe('resolveFunctionPack', () => {
     expect(pack?.functionLabel).toBe('Revenue cycle');
   });
 
+  it('resolves the clinical-supply-chain pack', () => {
+    const pack = resolveFunctionPack(
+      'healthcare-provider',
+      'clinical_supply_chain',
+    );
+    expect(pack).not.toBeNull();
+    expect(pack?.functionKey).toBe('clinical_supply_chain');
+    expect(pack?.industryKey).toBe('healthcare-provider');
+    expect(pack?.functionLabel).toBe('Clinical supply chain');
+  });
+
+  it('resolves the clinical-workforce & staffing pack', () => {
+    const pack = resolveFunctionPack(
+      'healthcare-provider',
+      'clinical_workforce_staffing',
+    );
+    expect(pack).not.toBeNull();
+    expect(pack?.functionKey).toBe('clinical_workforce_staffing');
+    expect(pack?.industryKey).toBe('healthcare-provider');
+    expect(pack?.functionLabel).toBe('Clinical workforce & staffing');
+  });
+
   it('returns null for an unknown function in a known industry', () => {
     // pharmacy has no pack yet — a known gap, never a faked pack.
     expect(resolveFunctionPack('healthcare-provider', 'pharmacy')).toBeNull();
@@ -128,13 +150,15 @@ describe('resolveFunctionPack', () => {
 });
 
 describe('listFunctionPackCoverage', () => {
-  it('lists exactly the eight catalogued healthcare packs', () => {
+  it('lists exactly the ten catalogued healthcare packs', () => {
     const coverage = listFunctionPackCoverage();
-    expect(coverage).toHaveLength(8);
+    expect(coverage).toHaveLength(10);
     const keys = coverage.map((c) => c.functionKey).sort();
     expect(keys).toEqual([
       'care_delivery_care_management',
       'clinical_operations_documentation',
+      'clinical_supply_chain',
+      'clinical_workforce_staffing',
       'health_information_interoperability',
       'patient_access_engagement_experience',
       'population_health_value_based_care',
