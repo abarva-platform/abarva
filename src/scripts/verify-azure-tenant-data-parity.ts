@@ -6,7 +6,7 @@ import { postgresClientOptions } from './postgres-client-options';
 loadEnv({ path: path.resolve(process.cwd(), '.env.local') });
 loadEnv();
 
-type TenantKey = 'apex-retail' | 'meridian-health' | 'first-capital';
+type TenantKey = 'apex-retail' | 'meridian-health' | 'first-capital' | 'northstar-medtech';
 
 type TenantExpectation = {
   displayName: string;
@@ -86,6 +86,22 @@ const TENANT_EXPECTATIONS: Record<TenantKey, TenantExpectation> = {
       engagements: 2,
       kpis: 3,
       patternPacks: 3,
+    },
+  },
+  'northstar-medtech': {
+    displayName: 'Northstar MedTech',
+    aliases: ['northstar-medtech', 'northstar'],
+    minimums: {
+      clients: 1,
+      dataInventorySegments: 14,
+      dataInventoryRecords: 50,
+      contextChunks: 50,
+      graphNodes: 20,
+      graphEdges: 10,
+      sourceEvents: 0,
+      engagements: 0,
+      kpis: 0,
+      patternPacks: 0,
     },
   },
 };
