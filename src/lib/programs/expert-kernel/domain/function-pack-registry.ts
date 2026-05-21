@@ -24,21 +24,26 @@ import { careDeliveryCareManagementPack } from './healthcare/care-delivery-care-
 import { clinicalOperationsDocumentationPack } from './healthcare/clinical-operations-documentation';
 import { patientAccessEngagementExperiencePack } from './healthcare/patient-access-engagement-experience';
 import { populationHealthValueBasedCarePack } from './healthcare/population-health-value-based-care';
+import { qualitySafetyRegulatoryPack } from './healthcare/quality-safety-regulatory';
+import { healthInformationInteroperabilityPack } from './healthcare/health-information-interoperability';
 
 /**
  * The Function Pack catalog — one entry per `(industryKey, functionKey)`.
  *
- * TODAY this holds four healthcare reference packs: the two value-based-care
- * spine packs (spec §6) plus the clinical-documentation and patient-access
- * functions. A future pack is added as ONE additional entry; the resolver and
- * every consumer need no change. Keyed off the pack's own `industryKey` /
- * `functionKey` so an entry can never disagree with its pack.
+ * TODAY this holds six healthcare reference packs: the two value-based-care
+ * spine packs (spec §6), the clinical-documentation and patient-access
+ * functions, and the quality-safety-regulatory and health-information /
+ * interoperability functions. A future pack is added as ONE additional entry;
+ * the resolver and every consumer need no change. Keyed off the pack's own
+ * `industryKey` / `functionKey` so an entry can never disagree with its pack.
  */
 const FUNCTION_PACK_ENTRIES: readonly FunctionPack[] = [
   careDeliveryCareManagementPack,
   populationHealthValueBasedCarePack,
   clinicalOperationsDocumentationPack,
   patientAccessEngagementExperiencePack,
+  qualitySafetyRegulatoryPack,
+  healthInformationInteroperabilityPack,
 ] as const;
 
 /**
