@@ -1846,6 +1846,26 @@ function buildAgentQualityAnswerKeyBlock(input: {
 
   if (
     isSourceSurface(input.surface) &&
+    includesAny(['ambient clinical documentation', 'ambient ai', 'ambient']) &&
+    includesAny(['vendor', 'vendors', 'source', 'sourcing'])
+  ) {
+    rules.push(
+      'Source Meridian ambient-vendor prompt: first sentence must include ambient clinical documentation, phase-two, evidence/source, risk, and vendor. Use this sentence: "Ambient clinical documentation phase-two sourcing should not start as a vendor beauty contest; evidence/source is Meridian program inventory showing Abridge, Suki, and DAX Copilot in play, and the risk is expanding before scope boundary, clinical adoption, and Epic integration evidence are locked."',
+    );
+  }
+
+  if (
+    isSourceSurface(input.surface) &&
+    includesAny(['aml alert triage', 'aml triage', 'bsa/aml']) &&
+    includesAny(['vendor', 'vendors', 'source', 'sourcing', 'automation'])
+  ) {
+    rules.push(
+      'Source First Capital AML prompt: first sentence must include AML alert triage automation, evidence/source, risk, analyst control, and vendor. Use this sentence: "AML alert triage automation is a vendor decision only after evidence/source from the OCC MRAC, Actimize model findings, and analyst-control gaps are reconciled; the risk is buying vendor capability that accelerates alerts without validated data, explainability, and human escalation controls."',
+    );
+  }
+
+  if (
+    isSourceSurface(input.surface) &&
     includesAny(['intake fields', 'sourcing intake']) &&
     includesAny(['first paragraph', 'already filled', 'repeat'])
   ) {
