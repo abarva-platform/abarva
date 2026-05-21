@@ -34,6 +34,8 @@ import { digitalCommercePack } from '../retail/digital-commerce';
 import { marketingRetailMediaPack } from '../retail/marketing-retail-media';
 import { storeOperationsPack } from '../retail/store-operations';
 import { customerLoyaltyPersonalizationPack } from '../retail/customer-loyalty-personalization';
+import { customerCarePack } from '../retail/customer-care';
+import { workforceLaborPack } from '../retail/workforce-labor';
 
 const PACKS: ReadonlyArray<readonly [string, FunctionPack]> = [
   ['care_delivery_care_management', careDeliveryCareManagementPack],
@@ -62,6 +64,8 @@ const PACKS: ReadonlyArray<readonly [string, FunctionPack]> = [
   ['marketing_retail_media', marketingRetailMediaPack],
   ['store_operations', storeOperationsPack],
   ['customer_loyalty_personalization', customerLoyaltyPersonalizationPack],
+  ['customer_care', customerCarePack],
+  ['workforce_labor', workforceLaborPack],
 ];
 
 describe.each(PACKS)('Function Pack §6 depth bar — %s', (_key, pack) => {

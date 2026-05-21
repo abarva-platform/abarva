@@ -40,6 +40,8 @@ import { digitalCommercePack } from './retail/digital-commerce';
 import { marketingRetailMediaPack } from './retail/marketing-retail-media';
 import { storeOperationsPack } from './retail/store-operations';
 import { customerLoyaltyPersonalizationPack } from './retail/customer-loyalty-personalization';
+import { customerCarePack } from './retail/customer-care';
+import { workforceLaborPack } from './retail/workforce-labor';
 
 /**
  * The Function Pack catalog — one entry per `(industryKey, functionKey)`.
@@ -77,6 +79,8 @@ const FUNCTION_PACK_ENTRIES: readonly FunctionPack[] = [
   marketingRetailMediaPack,
   storeOperationsPack,
   customerLoyaltyPersonalizationPack,
+  customerCarePack,
+  workforceLaborPack,
 ] as const;
 
 /**
