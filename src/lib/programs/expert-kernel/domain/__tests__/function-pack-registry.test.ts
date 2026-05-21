@@ -40,6 +40,8 @@ const HEALTHCARE_FUNCTIONS: readonly string[] = [
 const RETAIL_FUNCTIONS_CATALOGUED_SO_FAR: readonly string[] = [
   'merchandising_assortment',
   'pricing_promotions',
+  'demand_inventory_planning',
+  'supply_chain_fulfillment',
 ];
 
 describe('resolveFunctionPack', () => {
@@ -191,6 +193,22 @@ describe('resolveFunctionPack', () => {
     expect(pack?.functionLabel).toBe('Pricing & promotions');
   });
 
+  it('resolves the retail demand & inventory-planning pack', () => {
+    const pack = resolveFunctionPack('retail', 'demand_inventory_planning');
+    expect(pack).not.toBeNull();
+    expect(pack?.functionKey).toBe('demand_inventory_planning');
+    expect(pack?.industryKey).toBe('retail');
+    expect(pack?.functionLabel).toBe('Demand & inventory planning');
+  });
+
+  it('resolves the retail supply-chain & fulfillment pack', () => {
+    const pack = resolveFunctionPack('retail', 'supply_chain_fulfillment');
+    expect(pack).not.toBeNull();
+    expect(pack?.functionKey).toBe('supply_chain_fulfillment');
+    expect(pack?.industryKey).toBe('retail');
+    expect(pack?.functionLabel).toBe('Supply chain & fulfillment');
+  });
+
   it('returns null for an unknown function in a known industry', () => {
     // The healthcare provider taxonomy is complete at twelve catalogued
     // functions; a healthcare function outside that set (e.g. telehealth &
@@ -202,7 +220,7 @@ describe('resolveFunctionPack', () => {
 
   it('returns null for a retail function not yet catalogued', () => {
     // The retail vertical is still being built out; a retail function
-    // outside the catalogued spine (e.g. loss prevention) has no pack yet —
+    // outside the catalogued set (e.g. loss prevention) has no pack yet —
     // a known gap, never a faked pack.
     expect(resolveFunctionPack('retail', 'loss_prevention')).toBeNull();
   });

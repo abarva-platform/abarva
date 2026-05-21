@@ -18,10 +18,10 @@
 //     management / data & interoperability, the clinical supply chain,
 //     clinical workforce & staffing, payer / claims operations, and pharmacy
 //     — the complete provider-function taxonomy.
-//   • retail/*                   — the retail vertical, opened with its
-//     margin-and-mix spine: merchandising & assortment and pricing &
-//     promotions. The remaining ten retail functions are deepened in later
-//     batches.
+//   • retail/*                   — the retail vertical: merchandising &
+//     assortment, pricing & promotions, demand & inventory planning, and
+//     supply chain & fulfillment. The remaining eight retail functions are
+//     deepened in later batches.
 
 export * from './function-pack-types';
 export * from './function-pack-registry';
@@ -40,3 +40,5 @@ export { payerClaimsOperationsPack } from './healthcare/payer-claims-operations'
 export { pharmacyPack } from './healthcare/pharmacy';
 export { merchandisingAssortmentPack } from './retail/merchandising-assortment';
 export { pricingPromotionsPack } from './retail/pricing-promotions';
+export { demandInventoryPlanningPack } from './retail/demand-inventory-planning';
+export { supplyChainFulfillmentPack } from './retail/supply-chain-fulfillment';
