@@ -1,6 +1,6 @@
 // function-pack depth-bar tests.
 //
-// Asserts both reference packs meet the §6 depth bar: the minimum layer
+// Asserts all four reference packs meet the §6 depth bar: the minimum layer
 // counts, the four required deliverable outlines, and the structural hard
 // fails (no metric without a definition+benchmark, no archetype without a
 // value mechanism, no deliverable outline that is a label list rather than a
@@ -14,11 +14,18 @@ import {
 } from '../function-pack-types';
 import { checkFunctionPackDepth } from '../function-pack-registry';
 import { careDeliveryCareManagementPack } from '../healthcare/care-delivery-care-management';
+import { clinicalOperationsDocumentationPack } from '../healthcare/clinical-operations-documentation';
+import { patientAccessEngagementExperiencePack } from '../healthcare/patient-access-engagement-experience';
 import { populationHealthValueBasedCarePack } from '../healthcare/population-health-value-based-care';
 
 const PACKS: ReadonlyArray<readonly [string, FunctionPack]> = [
   ['care_delivery_care_management', careDeliveryCareManagementPack],
   ['population_health_value_based_care', populationHealthValueBasedCarePack],
+  ['clinical_operations_documentation', clinicalOperationsDocumentationPack],
+  [
+    'patient_access_engagement_experience',
+    patientAccessEngagementExperiencePack,
+  ],
 ];
 
 describe.each(PACKS)('Function Pack §6 depth bar — %s', (_key, pack) => {
