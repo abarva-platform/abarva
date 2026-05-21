@@ -3,11 +3,17 @@
 // LivingMoveView — the living Move (experience spec §6, "the model alive
 // under your finger").
 //
-// The board-grade Costed Business-Case Pack is a STATIC render of the Apex
-// "Contact Center AI Routing" case. This surface is the SAME case made
-// interactive: a CXO touches the highest-leverage assumptions and the kernel
-// recompiles live — verdict, investment, net value, payback and the three
-// board-grade exhibits all move.
+// The board-grade Costed Business-Case Pack is a STATIC render of a tenant
+// case. This surface is the SAME case made interactive: a CXO touches the
+// highest-leverage assumptions and the kernel recompiles live — verdict,
+// investment, net value, payback and the three board-grade exhibits all move.
+//
+// The kernel is anchored on three real tenant cases — Apex Retail, Meridian
+// Health System, First Capital Financial. The surface is case-switchable: a
+// quiet switcher (and the route's `?case=` searchParam) selects which grounded
+// case the kernel renders, resolved through the `living-move-cases` registry.
+// The chrome is NOT forked — it is parameterised by the resolved case entry,
+// which carries each tenant's own six highest-leverage control definitions.
 //
 // The recompute runs CLIENT-SIDE. Every module on the kernel compile path
 // (`buildBaselineModel → buildEffortEstimate → buildValueForecast →
@@ -17,10 +23,11 @@
 // every control change — instant, no round-trip.
 //
 // The recompute is the REAL kernel, not a reimplementation. The honesty
-// discipline holds under every setting: with the cost-per-contact seed gap
+// discipline holds for every case under every setting: with the seed gap
 // unfilled the value forecast is proxy-anchored and payback is BLOCKED; the
-// critic's blocker downgrades the verdict to "shape". Supplying the seed-gap
-// input un-blocks payback live; clearing it reverts to blocked.
+// critic's blocker downgrades the verdict to "shape"; a negative net return
+// downgrades it to "kill". Supplying the seed-gap input un-blocks payback
+// live; clearing it reverts to blocked.
 //
 // Answer-first: the verdict + headline economics sit at the top and visibly
 // move. Locked design system — calm, restrained; the case is the hero, the
@@ -30,10 +37,18 @@ import { useMemo, useState } from 'react';
 import { SHELL } from '@/lib/shell/shell-tokens';
 import {
   buildLivingMoveCase,
-  LIVING_MOVE_DEFAULTS,
-  type LivingMoveControls,
+  defaultsFor,
+  type LivingControlDef,
   type LivingMoveCase,
-} from '@/lib/programs/expert-kernel/apex-living-move';
+  type LivingMoveCaseEntry,
+  type LivingMoveControls,
+} from '@/lib/programs/expert-kernel/living-move';
+import {
+  LIVING_MOVE_CASE_IDS,
+  LIVING_MOVE_CASES,
+  resolveLivingMoveCase,
+  type LivingMoveCaseId,
+} from '@/lib/programs/expert-kernel/living-move-cases';
 import {
   investmentWaterfall,
   valueBridge,
@@ -131,6 +146,103 @@ function SectionHeading({ title, sub }: { title: string; sub: string }) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Value formatting — drives both the control read-out and the seed-gap input
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Format a dollar figure — `compactUsd` for figures >= $1,000, the precise
+ * value (with cents where needed) for small unit-economics figures like a
+ * cost-per-contact baseline.
+ */
+function formatUsd(value: number): string {
+  if (Math.abs(value) >= 1_000) return compactUsd(value);
+  const rounded = Math.round(value * 100) / 100;
+  return `$${Number.isInteger(rounded) ? rounded : rounded.toFixed(2)}`;
+}
+
+/** Format a control value for its read-out, per the control's `format`. */
+function formatControlValue(def: LivingControlDef, value: number): string {
+  switch (def.format) {
+    case 'percent':
+      return `${Math.round(value * 100)}%`;
+    case 'points':
+      return `+${value}${def.unitSuffix ?? ' pts'}`;
+    case 'usd':
+      return formatUsd(value);
+    case 'plain':
+    default:
+      return `${value}${def.unitSuffix ?? ''}`;
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// The case switcher — three kernel-anchored cases. Quiet, locked tokens.
+// ─────────────────────────────────────────────────────────────────────────────
+
+function CaseSwitcher({
+  activeId,
+  onSelect,
+}: {
+  activeId: LivingMoveCaseId;
+  onSelect: (id: LivingMoveCaseId) => void;
+}) {
+  return (
+    <div
+      data-testid="living-move-case-switcher"
+      role="tablist"
+      aria-label="Tenant case"
+      style={{
+        display: 'flex',
+        flexWrap: 'wrap',
+        gap: 6,
+        alignItems: 'center',
+      }}
+    >
+      <span
+        style={{
+          fontFamily: SHELL.MONO,
+          fontSize: 9,
+          textTransform: 'uppercase',
+          letterSpacing: '0.09em',
+          color: SHELL.INK_MUTED,
+          marginRight: 2,
+        }}
+      >
+        Tenant case
+      </span>
+      {LIVING_MOVE_CASE_IDS.map((id) => {
+        const entry = LIVING_MOVE_CASES[id];
+        const active = id === activeId;
+        return (
+          <button
+            key={id}
+            type="button"
+            role="tab"
+            aria-selected={active}
+            onClick={() => onSelect(id)}
+            style={{
+              fontFamily: SHELL.SANS,
+              fontSize: 11,
+              fontWeight: 600,
+              letterSpacing: '0.02em',
+              padding: '5px 11px',
+              borderRadius: 6,
+              border: `1px solid ${active ? SHELL.INK : SHELL.CARD_LINE}`,
+              background: active ? SHELL.INK : SHELL.CARD_WHITE,
+              color: active ? SHELL.PAPER : SHELL.INK_MID,
+              cursor: 'pointer',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            {entry.tenantLabel}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // The answer — verdict + headline economics. Always at the top; moves live.
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -193,7 +305,13 @@ function EconomicFigure({
   );
 }
 
-function TheAnswer({ live }: { live: LivingMoveCase }) {
+function TheAnswer({
+  live,
+  seedGapLabel,
+}: {
+  live: LivingMoveCase;
+  seedGapLabel: string;
+}) {
   const { skeleton } = live;
   const verdict = VERDICT_META[skeleton.recommendation];
   const econ = skeleton.economics;
@@ -290,8 +408,8 @@ function TheAnswer({ live }: { live: LivingMoveCase }) {
           tone={econ.paybackMonths !== null ? 'ink' : 'muted'}
           sub={
             econ.paybackMonths !== null
-              ? 'Cost-per-contact baseline supplied'
-              : 'Seed gap — supply cost-per-contact to compute'
+              ? `${seedGapLabel} supplied`
+              : `Seed gap — supply ${seedGapLabel.toLowerCase()} to compute`
           }
         />
       </div>
@@ -326,10 +444,10 @@ function TheAnswer({ live }: { live: LivingMoveCase }) {
           }}
         >
           {live.seedGapFilled
-            ? 'You supplied the cost-per-contact baseline. The value forecast ' +
-              'is no longer proxy-anchored, monetisation is un-blocked, and ' +
-              'payback is a live number. Clear the input to return the case ' +
-              'to its honest seed-gap state.'
+            ? `You supplied the ${seedGapLabel.toLowerCase()}. The value ` +
+              'forecast is no longer proxy-anchored, monetisation is ' +
+              'un-blocked, and payback is a live number. Clear the input to ' +
+              'return the case to its honest seed-gap state.'
             : skeleton.sensitivity.whatBreaksTheCase}
         </p>
       </div>
@@ -342,23 +460,13 @@ function TheAnswer({ live }: { live: LivingMoveCase }) {
 // ─────────────────────────────────────────────────────────────────────────────
 
 function ScoreControl({
-  label,
-  hint,
+  def,
   value,
   onChange,
-  format,
-  min,
-  max,
-  step,
 }: {
-  label: string;
-  hint: string;
+  def: LivingControlDef;
   value: number;
   onChange: (n: number) => void;
-  format: (n: number) => string;
-  min: number;
-  max: number;
-  step: number;
 }) {
   return (
     <div
@@ -388,7 +496,7 @@ function ScoreControl({
             color: SHELL.INK,
           }}
         >
-          {label}
+          {def.label}
         </span>
         <span
           style={{
@@ -398,15 +506,15 @@ function ScoreControl({
             color: SHELL.INK,
           }}
         >
-          {format(value)}
+          {formatControlValue(def, value)}
         </span>
       </div>
       <input
         type="range"
-        aria-label={label}
-        min={min}
-        max={max}
-        step={step}
+        aria-label={def.label}
+        min={def.min}
+        max={def.max}
+        step={def.step}
         value={value}
         onChange={(e) => onChange(Number(e.target.value))}
         style={{
@@ -423,20 +531,23 @@ function ScoreControl({
           color: SHELL.INK_SOFT,
         }}
       >
-        {hint}
+        {def.hint}
       </span>
     </div>
   );
 }
 
 function SeedGapControl({
+  def,
   value,
   onChange,
 }: {
+  def: LivingControlDef;
   value: number | null;
   onChange: (n: number | null) => void;
 }) {
   const filled = value !== null;
+  const benchmark = def.seedGapBenchmark ?? 0;
   return (
     <div
       data-testid="living-move-seed-gap-control"
@@ -465,7 +576,7 @@ function SeedGapControl({
             color: SHELL.INK,
           }}
         >
-          Cost per contact (labour)
+          {def.seedGapMetricLabel ?? def.label}
         </span>
       </div>
       <p
@@ -477,11 +588,7 @@ function SeedGapControl({
           color: SHELL.INK_SOFT,
         }}
       >
-        Apex has not recorded this — it is a declared seed gap (tenant action
-        item, owner Brendan Fox, due 2026-05-15). Until it is supplied the
-        value forecast is proxy-anchored and payback is{' '}
-        <strong>blocked</strong>. Supply it here to see what closing the gap
-        would do — the surface never fabricates it by default.
+        {def.seedGapNote}
       </p>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
         <span
@@ -496,10 +603,10 @@ function SeedGapControl({
         <input
           type="number"
           inputMode="decimal"
-          aria-label="Cost per contact (USD)"
+          aria-label={`${def.label} (USD)`}
           placeholder="not supplied"
           min={0}
-          step={0.5}
+          step={def.step}
           value={value ?? ''}
           onChange={(e) => {
             const raw = e.target.value.trim();
@@ -523,7 +630,7 @@ function SeedGapControl({
         />
         <button
           type="button"
-          onClick={() => onChange(filled ? null : 6.5)}
+          onClick={() => onChange(filled ? null : benchmark)}
           style={{
             fontFamily: SHELL.SANS,
             fontSize: 11.5,
@@ -537,7 +644,9 @@ function SeedGapControl({
             whiteSpace: 'nowrap',
           }}
         >
-          {filled ? 'Clear — restore seed gap' : 'Use benchmark $6.50'}
+          {filled
+            ? 'Clear — restore seed gap'
+            : `Use benchmark ${formatUsd(benchmark)}`}
         </button>
       </div>
     </div>
@@ -545,20 +654,21 @@ function SeedGapControl({
 }
 
 function Controls({
+  entry,
   controls,
   setControls,
   onReset,
 }: {
+  entry: LivingMoveCaseEntry;
   controls: LivingMoveControls;
   setControls: (next: LivingMoveControls) => void;
   onReset: () => void;
 }) {
-  const set = <K extends keyof LivingMoveControls>(
-    key: K,
-    val: LivingMoveControls[K],
-  ): void => setControls({ ...controls, [key]: val });
+  const set = (key: string, val: number | null): void =>
+    setControls({ ...controls, [key]: val });
 
-  const pct = (n: number): string => `${Math.round(n * 100)}%`;
+  const sliderDefs = entry.controls.filter((c) => c.kind !== 'seed-gap');
+  const seedGapDef = entry.controls.find((c) => c.kind === 'seed-gap');
 
   return (
     <section
@@ -576,7 +686,7 @@ function Controls({
       >
         <SectionHeading
           title="The assumptions you can touch"
-          sub="The six highest-leverage inputs in the case. Move one and the kernel recompiles — verdict, economics and every exhibit follow."
+          sub="The six highest-leverage inputs in this case. Move one and the kernel recompiles — verdict, economics and every exhibit follow."
         />
         <button
           type="button"
@@ -606,62 +716,31 @@ function Controls({
           gap: 12,
         }}
       >
-        <ScoreControl
-          label="Adoption confidence"
-          hint="How confident are we that Customer Care agents adopt AI routing? The single largest haircut driver."
-          value={controls.adoptionRisk}
-          onChange={(n) => set('adoptionRisk', n)}
-          format={pct}
-          min={0.1}
-          max={1}
-          step={0.05}
-        />
-        <ScoreControl
-          label="Data readiness"
-          hint="Is the intent / transcript data unified and instrumented? The CDP consolidation gap sits here."
-          value={controls.dataReadiness}
-          onChange={(n) => set('dataReadiness', n)}
-          format={pct}
-          min={0.1}
-          max={1}
-          step={0.05}
-        />
-        <ScoreControl
-          label="Process independence"
-          hint="How much of the value lands without the routing process redesign? Higher = less dependent."
-          value={controls.processDependency}
-          onChange={(n) => set('processDependency', n)}
-          format={pct}
-          min={0.1}
-          max={1}
-          step={0.05}
-        />
-        <ScoreControl
-          label="Containment uplift"
-          hint="Modelled lift in contact-centre containment. KPI kpi:apex:018 states a 12-point target (28% → 40%)."
-          value={controls.containmentUpliftPts}
-          onChange={(n) => set('containmentUpliftPts', n)}
-          format={(n) => `+${n} pts`}
-          min={4}
-          max={20}
-          step={1}
-        />
-        <ScoreControl
-          label="Offshore delivery mix"
-          hint="Share of delivery labour run offshore. A real cost driver — a higher mix lowers the blended rate."
-          value={controls.offshoreRatio}
-          onChange={(n) => set('offshoreRatio', n)}
-          format={pct}
-          min={0}
-          max={0.8}
-          step={0.05}
-        />
-        <div style={{ gridColumn: '1 / -1' }}>
-          <SeedGapControl
-            value={controls.costPerContactUsd}
-            onChange={(n) => set('costPerContactUsd', n)}
+        {sliderDefs.map((def) => (
+          <ScoreControl
+            key={def.id}
+            def={def}
+            value={
+              typeof controls[def.id] === 'number'
+                ? (controls[def.id] as number)
+                : (def.defaultValue ?? def.min)
+            }
+            onChange={(n) => set(def.id, n)}
           />
-        </div>
+        ))}
+        {seedGapDef ? (
+          <div style={{ gridColumn: '1 / -1' }}>
+            <SeedGapControl
+              def={seedGapDef}
+              value={
+                typeof controls[seedGapDef.id] === 'number'
+                  ? (controls[seedGapDef.id] as number)
+                  : null
+              }
+              onChange={(n) => set(seedGapDef.id, n)}
+            />
+          </div>
+        ) : null}
       </div>
     </section>
   );
@@ -770,13 +849,34 @@ function Exhibits({ live }: { live: LivingMoveCase }) {
 // The surface
 // ─────────────────────────────────────────────────────────────────────────────
 
-export function LivingMoveView() {
-  const [controls, setControls] = useState<LivingMoveControls>(
-    LIVING_MOVE_DEFAULTS,
+export function LivingMoveView({
+  caseId = 'apexretail',
+}: {
+  /** The kernel-anchored case to open on. Defaults to the proven Apex case. */
+  caseId?: LivingMoveCaseId;
+}) {
+  const [activeId, setActiveId] = useState<LivingMoveCaseId>(caseId);
+  const entry = resolveLivingMoveCase(activeId);
+
+  // The control state is per-case — switching cases resets to that case's
+  // audited defaults, so the surface always opens honest.
+  const [controls, setControls] = useState<LivingMoveControls>(() =>
+    defaultsFor(entry),
   );
 
+  const selectCase = (id: LivingMoveCaseId): void => {
+    setActiveId(id);
+    setControls(defaultsFor(resolveLivingMoveCase(id)));
+  };
+
   // The kernel recompute — runs client-side on every control change.
-  const live = useMemo(() => buildLivingMoveCase(controls), [controls]);
+  const live = useMemo(
+    () => buildLivingMoveCase(entry, controls),
+    [entry, controls],
+  );
+
+  const seedGapDef = entry.controls.find((c) => c.kind === 'seed-gap');
+  const seedGapLabel = seedGapDef?.label ?? 'the seed-gap baseline';
 
   return (
     <div
@@ -789,42 +889,53 @@ export function LivingMoveView() {
         paddingBottom: 56,
       }}
     >
-      {/* Provenance — the case being manipulated, named. Quiet, above the answer. */}
+      {/* Provenance + the case switcher — the case being manipulated, named. */}
       <div
         style={{
           display: 'flex',
           flexWrap: 'wrap',
-          gap: 8,
+          gap: 12,
           alignItems: 'center',
+          justifyContent: 'space-between',
           paddingTop: 4,
         }}
       >
-        <Pill
-          text="Living Move"
-          bg={SHELL.BLUE_BG}
-          line={SHELL.BLUE_LINE}
-          color={SHELL.INK_MID}
-        />
-        <span
+        <div
           style={{
-            fontFamily: SHELL.MONO,
-            fontSize: 10,
-            color: SHELL.INK_MUTED,
+            display: 'flex',
+            flexWrap: 'wrap',
+            gap: 8,
+            alignItems: 'center',
           }}
         >
-          Apex Retail · Contact Center AI Routing · costed business case ·
-          recompiled by the Expert Kernel
-        </span>
+          <Pill
+            text="Living Move"
+            bg={SHELL.BLUE_BG}
+            line={SHELL.BLUE_LINE}
+            color={SHELL.INK_MID}
+          />
+          <span
+            style={{
+              fontFamily: SHELL.MONO,
+              fontSize: 10,
+              color: SHELL.INK_MUTED,
+            }}
+          >
+            {entry.provenance}
+          </span>
+        </div>
+        <CaseSwitcher activeId={activeId} onSelect={selectCase} />
       </div>
 
       {/* The answer — first, and it moves. */}
-      <TheAnswer live={live} />
+      <TheAnswer live={live} seedGapLabel={seedGapLabel} />
 
       {/* The controls — the heart of the interaction. */}
       <Controls
+        entry={entry}
         controls={controls}
         setControls={setControls}
-        onReset={() => setControls(LIVING_MOVE_DEFAULTS)}
+        onReset={() => setControls(defaultsFor(entry))}
       />
 
       {/* The exhibits — re-rendered on each recompute. */}

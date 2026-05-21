@@ -44,6 +44,10 @@ export * from './apex-contact-center-case';
 export * from './meridian-ambient-clinical-case';
 export * from './firstcapital-fraud-detection-case';
 export * from './expert-review-cases';
+// The living Move — the tenant-agnostic parametrised costed business case and
+// its three-anchor case registry.
+export * from './living-move';
+export * from './living-move-cases';
 export * from './phase-playbooks/discover';
 export * from './phase-playbooks/apex-discover-case';
 export * from './rate-card/comprehensive-rate-card';
