@@ -52,6 +52,15 @@ const RETAIL_FUNCTIONS_CATALOGUED_SO_FAR: readonly string[] = [
   'loss_prevention',
 ];
 
+// The financial-services functions catalogued SO FAR — the control-function
+// spine. The financial-services vertical is still being built out toward its
+// full twelve-function taxonomy (spec §3); this list grows as later batches
+// land, and the coverage test asserts it as a subset, never an exact total.
+const FINANCIAL_SERVICES_FUNCTIONS_CATALOGUED_SO_FAR: readonly string[] = [
+  'risk_management',
+  'fraud_financial_crime',
+];
+
 describe('resolveFunctionPack', () => {
   it('resolves the care-delivery & care-management pack', () => {
     const pack = resolveFunctionPack(
@@ -281,6 +290,25 @@ describe('resolveFunctionPack', () => {
     expect(pack?.functionLabel).toBe('Loss prevention & shrink management');
   });
 
+  it('resolves the financial-services enterprise-risk-management pack', () => {
+    const pack = resolveFunctionPack('financial-services', 'risk_management');
+    expect(pack).not.toBeNull();
+    expect(pack?.functionKey).toBe('risk_management');
+    expect(pack?.industryKey).toBe('financial-services');
+    expect(pack?.functionLabel).toBe('Enterprise risk management');
+  });
+
+  it('resolves the financial-services fraud & financial-crime pack', () => {
+    const pack = resolveFunctionPack(
+      'financial-services',
+      'fraud_financial_crime',
+    );
+    expect(pack).not.toBeNull();
+    expect(pack?.functionKey).toBe('fraud_financial_crime');
+    expect(pack?.industryKey).toBe('financial-services');
+    expect(pack?.functionLabel).toBe('Fraud & financial crime');
+  });
+
   it('returns null for an unknown function in a known industry', () => {
     // The healthcare provider taxonomy is complete at twelve catalogued
     // functions; a healthcare function outside that set (e.g. telehealth &
@@ -344,6 +372,20 @@ describe('listFunctionPackCoverage', () => {
     }
     expect(retailCoverage.size).toBeGreaterThanOrEqual(
       RETAIL_FUNCTIONS_CATALOGUED_SO_FAR.length,
+    );
+  });
+
+  it('covers at least the financial-services functions catalogued so far', () => {
+    // Financial services is still being built out toward its full
+    // taxonomy: assert the catalogued functions are a subset of the live
+    // financial-services coverage, never an exact total — a later batch
+    // adds packs without changing this test.
+    const fsCoverage = new Set(coverageFor('financial-services'));
+    for (const fn of FINANCIAL_SERVICES_FUNCTIONS_CATALOGUED_SO_FAR) {
+      expect(fsCoverage.has(fn)).toBe(true);
+    }
+    expect(fsCoverage.size).toBeGreaterThanOrEqual(
+      FINANCIAL_SERVICES_FUNCTIONS_CATALOGUED_SO_FAR.length,
     );
   });
 
