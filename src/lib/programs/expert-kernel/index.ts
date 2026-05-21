@@ -48,3 +48,6 @@ export * from './phase-playbooks/discover';
 export * from './phase-playbooks/apex-discover-case';
 export * from './rate-card/comprehensive-rate-card';
 export * from './rate-card/demo-rate-card-packs';
+// Domain Function Packs — the curated, function-indexed industry-depth layer
+// bound into context before the agent reaches for general intelligence.
+export * from './domain';
