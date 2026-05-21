@@ -365,7 +365,11 @@ describe('listFunctionPackCoverage', () => {
       listFunctionPackCoverage().map((c) => c.industryKey),
     );
     for (const industry of industries) {
-      expect(['healthcare-provider', 'retail']).toContain(industry);
+      expect([
+        'healthcare-provider',
+        'retail',
+        'financial-services',
+      ]).toContain(industry);
     }
   });
 });
