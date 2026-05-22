@@ -5,7 +5,8 @@
 //      hand-authored board-grade decks (the Costed pack carrying a pptxHref).
 //   2. The KEY-DRIVEN path — any other Move with a resolvable
 //      `(industryKey, functionKey)` Function-Pack identity → the generic,
-//      kernel-derived Costed Business-Case deck with a `?moveId=` link.
+//      kernel-derived board-grade decks (the Costed Business-Case deck and the
+//      Solution Architecture deck), each with a `?moveId=` link.
 //   A Move with no resolvable function resolves to `[]` — an honest gap.
 
 import {
@@ -82,7 +83,7 @@ describe('boardArtifactsForMove — Apex Contact Center AI Routing (reference)',
 });
 
 describe('boardArtifactsForMove — key-driven path (real Moves, 3 verticals)', () => {
-  it('a retail Move with a resolvable function gets the generic Costed deck', () => {
+  it('a retail Move with a resolvable function gets the generic decks', () => {
     const move = makeMove({
       id: 'retail-move-1',
       name: 'Cut repeat transfers in the contact centre',
@@ -90,16 +91,24 @@ describe('boardArtifactsForMove — key-driven path (real Moves, 3 verticals)', 
       charter: { functionPackKey: 'customer_care' },
     });
     const artifacts = boardArtifactsForMove(move);
-    expect(artifacts).toHaveLength(1);
-    expect(artifacts[0].id).toBe('costed-business-case');
-    expect(artifacts[0].htmlHref).toBe(
+    expect(artifacts.map((a) => a.id).sort()).toEqual([
+      'costed-business-case',
+      'solution-architecture',
+    ]);
+    const costed = artifacts.find((a) => a.id === 'costed-business-case');
+    expect(costed?.htmlHref).toBe(
       '/api/v1/moves/board-grade-business-case?moveId=retail-move-1',
     );
-    // The generic deck does not carry a PowerPoint export.
-    expect(artifacts[0].pptxHref).toBeUndefined();
+    // The generic decks do not carry a PowerPoint export.
+    expect(costed?.pptxHref).toBeUndefined();
+    const arch = artifacts.find((a) => a.id === 'solution-architecture');
+    expect(arch?.htmlHref).toBe(
+      '/api/v1/moves/board-grade-solution-architecture?moveId=retail-move-1',
+    );
+    expect(arch?.pptxHref).toBeUndefined();
   });
 
-  it('a healthcare Move with a resolvable function gets the generic Costed deck', () => {
+  it('a healthcare Move with a resolvable function gets the generic decks', () => {
     const move = makeMove({
       id: 'health-move-1',
       name: 'Reduce clinical documentation burden',
@@ -107,14 +116,18 @@ describe('boardArtifactsForMove — key-driven path (real Moves, 3 verticals)', 
       charter: { functionPackKey: 'clinical_operations_documentation' },
     });
     const artifacts = boardArtifactsForMove(move);
-    expect(artifacts).toHaveLength(1);
-    expect(artifacts[0].id).toBe('costed-business-case');
-    expect(artifacts[0].htmlHref).toBe(
-      '/api/v1/moves/board-grade-business-case?moveId=health-move-1',
+    expect(artifacts.map((a) => a.id).sort()).toEqual([
+      'costed-business-case',
+      'solution-architecture',
+    ]);
+    expect(
+      artifacts.find((a) => a.id === 'solution-architecture')?.htmlHref,
+    ).toBe(
+      '/api/v1/moves/board-grade-solution-architecture?moveId=health-move-1',
     );
   });
 
-  it('a financial-services Move with a resolvable function gets the generic Costed deck', () => {
+  it('a financial-services Move with a resolvable function gets the generic decks', () => {
     const move = makeMove({
       id: 'fs-move-1',
       name: 'Strengthen fraud detection',
@@ -122,10 +135,14 @@ describe('boardArtifactsForMove — key-driven path (real Moves, 3 verticals)', 
       charter: { functionPackKey: 'fraud_financial_crime' },
     });
     const artifacts = boardArtifactsForMove(move);
-    expect(artifacts).toHaveLength(1);
-    expect(artifacts[0].id).toBe('costed-business-case');
-    expect(artifacts[0].htmlHref).toBe(
-      '/api/v1/moves/board-grade-business-case?moveId=fs-move-1',
+    expect(artifacts.map((a) => a.id).sort()).toEqual([
+      'costed-business-case',
+      'solution-architecture',
+    ]);
+    expect(
+      artifacts.find((a) => a.id === 'solution-architecture')?.htmlHref,
+    ).toBe(
+      '/api/v1/moves/board-grade-solution-architecture?moveId=fs-move-1',
     );
   });
 
@@ -139,20 +156,27 @@ describe('boardArtifactsForMove — key-driven path (real Moves, 3 verticals)', 
       charter: { functionPackKey: 'customer_care' },
     });
     const artifacts = boardArtifactsForMove(move);
-    expect(artifacts).toHaveLength(1);
-    expect(artifacts[0].htmlHref).toContain('moveId=oddly-named-move');
+    expect(artifacts.length).toBeGreaterThan(0);
+    for (const a of artifacts) {
+      expect(a.htmlHref).toContain('moveId=oddly-named-move');
+    }
   });
 
-  it('encodes the moveId in the href', () => {
+  it('encodes the moveId in the href of every generic deck', () => {
     const move = makeMove({
       id: 'move with spaces/&',
       tenant: { id: 't-r', name: 'Northwind Retail', industryCode: 'retail' },
       charter: { functionPackKey: 'customer_care' },
     });
     const artifacts = boardArtifactsForMove(move);
-    expect(artifacts[0].htmlHref).toBe(
-      '/api/v1/moves/board-grade-business-case?moveId=' +
-        encodeURIComponent('move with spaces/&'),
+    const encoded = encodeURIComponent('move with spaces/&');
+    expect(
+      artifacts.find((a) => a.id === 'costed-business-case')?.htmlHref,
+    ).toBe(`/api/v1/moves/board-grade-business-case?moveId=${encoded}`);
+    expect(
+      artifacts.find((a) => a.id === 'solution-architecture')?.htmlHref,
+    ).toBe(
+      `/api/v1/moves/board-grade-solution-architecture?moveId=${encoded}`,
     );
   });
 });

@@ -47,6 +47,18 @@ export {
   type TargetPattern,
 } from './solution-architecture-model';
 
+// The generic, kernel-derived sibling of the Apex reference renderer — the
+// board-grade Solution Architecture Pack for a REAL, originated Move.
+export { renderMoveSolutionArchitectureHtml } from './move-solution-architecture-renderer';
+export {
+  buildMoveSolutionArchitecture,
+  type MoveSolutionArchitecture,
+  type MoveArchUnboundResult,
+  type MoveSolutionArchitectureResult,
+  type MoveArchSections,
+  type MoveTargetPattern,
+} from './move-solution-architecture-model';
+
 export { renderApexEstimateModelHtml } from './estimate-model-renderer';
 export {
   buildApexEstimateModel,
