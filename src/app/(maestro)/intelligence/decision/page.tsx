@@ -5,30 +5,37 @@
 // it does not retrofit the existing complex IntelligenceV3Page; it is a clean
 // reference surface to judge, exactly as /home/decision was for the home.
 //
-// For a Meridian Health population-health user it answers one question —
-// "which value-based-care AI bet should we make first?" — function-aware from
-// the first second. It binds the Population-Health / Value-Based-Care Domain
-// Function Pack and renders, top to bottom, the three §3 blocks: the answer ·
-// the ranked bets · what gates the ranking.
+// It answers one question for the ACTIVE tenant — "which AI bet should we make
+// first?" — function-aware from the first second. It resolves the active
+// tenant's industry, binds that industry's spine Domain Function Pack, and
+// renders, top to bottom, the three §3 blocks: the answer · the ranked bets ·
+// what gates the ranking.
 //
-// The candidate bets ARE the Function Pack's Layer 3 AI use-case archetypes,
-// ranked by what the function plus Meridian's audited substrate make most
-// fundable now. Where a bet's feasibility depends on data Meridian has not
-// seeded, it renders as an explicit seed gap — never a fabricated bet.
+// The candidate bets ARE the bound Function Pack's Layer 3 AI use-case
+// archetypes, ranked by what the function plus any audited tenant substrate
+// make most fundable now. Where a bet's feasibility depends on data the tenant
+// has not seeded, it renders as an explicit seed gap — never a fabricated bet.
 //
-// Pure server-rendered read — the Function Pack is the frame, Meridian's
-// audited substrate fills it, and seed gaps render honestly. No kernel logic
-// changes here.
+// HONESTY (audit 2026-05-22): the route must NEVER show a non-healthcare tenant
+// Meridian's healthcare metrics as their own. It binds the active tenant's own
+// industry pack. If the active tenant's industry cannot be resolved at all, it
+// falls back to the Meridian reference binding — but labels it honestly as a
+// reference example, not the tenant's own analysis.
+//
+// Pure server-rendered read — the Function Pack is the frame, audited tenant
+// substrate fills it, and seed gaps render honestly. No kernel logic changes.
 
 import type { Metadata } from 'next';
 import { AppShell } from '@/components/shell/AppShell';
 import { BetSelectionView } from '@/components/intelligence/decision/BetSelectionView';
 import {
-  buildMeridianVbcBetSelection,
-  MERIDIAN_TENANT_KEY,
+  buildVbcBetSelection,
+  MERIDIAN_FUNCTION_KEY,
+  MERIDIAN_INDUSTRY_KEY,
 } from '@/lib/programs/expert-kernel/domain/meridian-vbc-bet-selection';
+import { industryKeyForCode } from '@/lib/programs/function-identity';
+import type { FunctionPackIndustryKey } from '@/lib/programs/expert-kernel/domain/function-pack-types';
 import { getActiveClientRow } from '@/lib/active-client';
-import { canonicalClientDisplayName } from '@/lib/client-config';
 
 export const metadata: Metadata = {
   title: 'Which bet first · Intelligence · AbarVa',
@@ -36,30 +43,75 @@ export const metadata: Metadata = {
 export const dynamic = 'force-dynamic';
 
 /**
- * The function-aware Intelligence bet-selection surface for a Meridian
- * population-health user.
+ * The documented per-industry "spine" default function key. The bet-selection
+ * surface needs exactly one function to bind for a tenant whose Moves have not
+ * (yet) classified a function key; this is the function that best represents
+ * "which AI bet first" for the vertical:
  *
- * Binds the VBC Function Pack and Meridian's substrate server-side, then hands
- * the assembled three-block data to the pure view. The surface is function-
- * correct from the tenant + the bound pack alone — zero configuration (§3).
+ *  - healthcare-provider → `population_health_value_based_care` — the VBC spine,
+ *    the original reference binding.
+ *  - retail              → `pricing_promotions` — the margin spine of retail.
+ *  - financial-services  → `lending_credit_underwriting` — the credit spine of
+ *    a diversified institution.
+ *
+ * Each key is a catalogued Function Pack (`function-pack-registry.ts`).
+ */
+const INDUSTRY_SPINE_FUNCTION_KEY: Record<FunctionPackIndustryKey, string> = {
+  'healthcare-provider': MERIDIAN_FUNCTION_KEY,
+  retail: 'pricing_promotions',
+  'financial-services': 'lending_credit_underwriting',
+};
+
+/**
+ * The function-aware Intelligence bet-selection surface for the active tenant.
+ *
+ * Resolves the active tenant's industry from its `industry_code`, binds that
+ * industry's spine Function Pack, and hands the assembled three-block data to
+ * the pure view. The surface is function-correct from the tenant + the bound
+ * pack alone — zero configuration (§3).
  */
 export default async function IntelligenceDecisionPage() {
   const activeClient = await getActiveClientRow().catch(() => null);
 
-  // The reference surface is bound to the Meridian × Population-Health / VBC
-  // tenant-function. The display name resolves from the active client where it
-  // is the Meridian tenant; otherwise the canonical Meridian name is used so
-  // the reference surface is always judgeable.
-  const isMeridian = activeClient?.key === MERIDIAN_TENANT_KEY;
-  const tenantName =
-    (isMeridian
-      ? canonicalClientDisplayName({
-          key: activeClient?.key,
-          name: activeClient?.name,
-        })
-      : null) ?? 'Meridian Health';
+  // Resolve the active tenant's industry from its `industry_code`. This is the
+  // audit fix: a retail or financial-services tenant must bind its OWN
+  // industry's pack, never Meridian's healthcare pack.
+  const industryKey = industryKeyForCode(activeClient?.industry_code);
 
-  const selection = buildMeridianVbcBetSelection(tenantName);
+  // The display name resolves from the active client row (already canonicalised
+  // by `getActiveClientRow`).
+  const activeTenantName = activeClient?.name?.trim() || null;
+
+  let selection: ReturnType<typeof buildVbcBetSelection>;
+
+  if (industryKey) {
+    // The active tenant's industry resolved — bind its own spine Function Pack
+    // and render that industry's bet selection. No Meridian content leaks.
+    const functionKey = INDUSTRY_SPINE_FUNCTION_KEY[industryKey];
+    selection = buildVbcBetSelection(
+      industryKey,
+      functionKey,
+      activeTenantName ?? 'Your organisation',
+    );
+  } else {
+    // The active tenant's industry could not be resolved (no row, or an
+    // unknown industry code). Fall back to the Meridian reference binding —
+    // but mark it honestly as a reference EXAMPLE so no tenant ever reads
+    // Meridian's healthcare metrics as their own analysis.
+    const reference = buildVbcBetSelection(
+      MERIDIAN_INDUSTRY_KEY,
+      MERIDIAN_FUNCTION_KEY,
+      'Meridian Health',
+    );
+    selection = reference
+      ? { ...reference, isReferenceExample: true }
+      : reference;
+  }
+
+  // The chrome's tenant label is the active tenant where one resolved; the
+  // reference fallback shows the Meridian reference name honestly.
+  const tenantName =
+    selection?.tenantName ?? activeTenantName ?? 'Your organisation';
 
   return (
     <AppShell
@@ -67,7 +119,9 @@ export default async function IntelligenceDecisionPage() {
       topBarProps={{
         tenantName,
         showLocked: true,
-        context: 'Intelligence · Which VBC AI bet to make first',
+        context: selection?.isReferenceExample
+          ? 'Intelligence · Which AI bet to make first (reference example)'
+          : 'Intelligence · Which AI bet to make first',
       }}
       hasTenantKey={Boolean(activeClient?.key)}
     >

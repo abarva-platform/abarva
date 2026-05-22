@@ -461,12 +461,13 @@ function TheRankedBets({ selection }: { selection: MeridianVbcBetSelection }) {
       <SectionHeading
         title="The ranked bets"
         sub={
-          `The value-based-care function’s ${selection.totalBetCount} AI ` +
-          `use-case archetypes, ranked as candidate bets by what the function ` +
-          `and Meridian’s audited substrate make most fundable now. ` +
+          `The ${selection.functionLabel.toLowerCase()} function’s ` +
+          `${selection.totalBetCount} AI use-case archetypes, ranked as ` +
+          `candidate bets by what the function and ${selection.tenantName}’s ` +
+          `audited substrate make most fundable now. ` +
           `${selection.groundedBetCount} of ${selection.totalBetCount} can be ` +
-          `grounded against Meridian’s substrate today; the rest are held for ` +
-          `evidence — honestly, not silently dropped.`
+          `grounded against ${selection.tenantName}’s substrate today; the ` +
+          `rest are held for evidence — honestly, not silently dropped.`
         }
       />
       <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -634,6 +635,32 @@ export function BetSelectionView({ selection }: BetSelectionViewProps) {
           {selection.packProvenance}
         </span>
       </div>
+
+      {/* Honest reference-example banner — the active tenant's industry could
+          not be resolved, so the surface is showing the Meridian reference
+          binding. It is labelled plainly so no tenant reads Meridian's
+          metrics as their own analysis. */}
+      {selection.isReferenceExample ? (
+        <div
+          data-testid="bet-selection-reference-banner"
+          style={{
+            border: `1px solid ${SHELL.PEACH_LINE}`,
+            background: SHELL.PEACH_BG,
+            borderRadius: 8,
+            padding: '12px 14px',
+            fontFamily: SHELL.SANS,
+            fontSize: 12.5,
+            lineHeight: 1.55,
+            color: SHELL.PEACH_TEXT,
+          }}
+        >
+          <strong style={{ color: SHELL.INK }}>Reference example.</strong>{' '}
+          This is the {selection.tenantName} bet selection, shown as a worked
+          reference — not your organisation’s own analysis. Your tenant’s
+          industry could not be resolved, so its own Function Pack could not be
+          bound. The numbers below are {selection.tenantName}’s, not yours.
+        </div>
+      ) : null}
 
       {/* 1 — The answer. The recommended bet, first. */}
       <TheAnswer selection={selection} />
