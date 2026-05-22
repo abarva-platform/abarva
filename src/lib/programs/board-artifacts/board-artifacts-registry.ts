@@ -1,37 +1,36 @@
 // Board-artifacts registry — maps a Move to its board-grade artifact decks.
 //
 // AbarVa generates board-grade artifact decks (costed business case, discover
-// brief, solution architecture) for specific Moves. Those decks are produced
-// by the Moves Expert Kernel and served from raw `/api/v1/moves/*` routes. The
-// product UI needs a single, stable place that answers "which board-grade
-// decks exist for THIS Move?" — this registry is that switchboard.
+// brief, solution architecture, …) for Moves. Those decks are produced by the
+// Moves Expert Kernel and served from `/api/v1/moves/*` routes. The product UI
+// needs a single, stable place that answers "which board-grade decks exist for
+// THIS Move?" — this registry is that switchboard.
 //
-// The registry keys off a STABLE Move identity: the tenant + a canonical Move
-// key. This mirrors the Expert Review Console case registry
-// (`expert-kernel/expert-review-cases.ts`), which maps a tenant key + a Move
-// ref → a kernel case. The two stay consistent: this registry reuses the same
-// canonical short tenant keys (`apexretail`, `meridian`, `arcturus`) and a
-// canonical Move name as the join.
+// TWO resolution paths, in priority order:
 //
-// Identity matching — a careful, honest choice. A `StrategicMove` does NOT
-// carry a stable opaque Move key on its type; its `tenant` field exposes only
-// `id`, `name`, and `industryCode`. So we match on the pair we CAN read
-// reliably:
-//   • tenant — the Move's `tenant.name` normalised to a canonical short key
-//     (e.g. "Apex Retail Group" → `apexretail`).
-//   • move — the Move's `name` compared case- and whitespace-insensitively to
-//     a canonical Move name (e.g. "Contact Center AI Routing").
-// Both must match. This is deliberately strict: an unrelated Move on the same
-// tenant, or a same-named Move on a different tenant, resolves to `[]`.
+//   1. The Apex REFERENCE entry — the hand-authored Apex "Contact Center AI
+//      Routing" Move carries eight fully-authored reference decks (the costed
+//      pack, discover brief, solution architecture, estimate model, mobilize
+//      packet, charter skeleton, CFO pack, master dossier). It is matched on
+//      the stable tenant + Move-name identity, and is kept exactly as the
+//      shipped reference artifact set.
 //
-// EXTENSIBILITY — adding a future Move's board-grade decks is exactly ONE new
-// entry in `BOARD_ARTIFACT_ENTRIES`. No other file changes. The panel and the
-// Move detail page know nothing about any specific tenant — only this data
-// module does.
+//   2. The KEY-DRIVEN path — for EVERY OTHER Move, the registry resolves the
+//      Move's `(industryKey, functionKey)` Function-Pack identity (via
+//      `resolveMoveFunctionIdentity`). When that resolves, the Move gets the
+//      generic, kernel-derived board-grade Costed Business-Case deck — its
+//      `htmlHref` carries `?moveId=<id>` so the route renders THAT Move's
+//      kernel-derived deck. The hardcoded Apex Move-name match is no longer
+//      the gate: any Move with a resolvable function gets the artifact.
+//
+// HONESTY: a Move with no resolvable `(industryKey, functionKey)` identity —
+// no industry code, or no `functionPackKey` in its charter — gets NO artifact.
+// That is the honest signal (surfaced as a gap), never a fabricated deck.
 //
 // Pure module: deterministic, no I/O.
 
 import type { StrategicMove } from '../types.ui';
+import { resolveMoveFunctionIdentity } from '../function-identity';
 
 /** One board-grade artifact deck available for a Move. */
 export interface BoardArtifact {
@@ -50,10 +49,10 @@ export interface BoardArtifact {
 }
 
 /**
- * One registry entry — the board-grade artifacts anchored to a single Move,
- * keyed by a stable tenant + Move identity.
- *
- * To add a future Move's decks: append ONE entry here. Nothing else changes.
+ * One reference registry entry — the board-grade artifacts anchored to a
+ * single, hand-authored reference Move, keyed by a stable tenant + Move
+ * identity. This is the curated reference path; the key-driven path covers
+ * every other Move.
  */
 interface BoardArtifactEntry {
   /** Canonical short tenant key — see `EXPERT_REVIEW_CASES` ids. */
@@ -94,12 +93,12 @@ function normalizeMoveName(name: string): string {
   return name.trim().toLowerCase().replace(/\s+/g, ' ');
 }
 
-// ── Artifact data ──────────────────────────────────────────────────────────
+// ── Reference-artifact data ─────────────────────────────────────────────────
 //
-// The Apex "Contact Center AI Routing" Move is the first — and today the only
-// — Move with board-grade decks. Its three decks are served from the
-// `/api/v1/moves/board-grade-*` routes; the Costed pack additionally serves an
-// editable PowerPoint via `?format=pptx`.
+// The Apex "Contact Center AI Routing" Move is the hand-authored reference:
+// its eight board-grade decks are served from the `/api/v1/moves/board-grade-*`
+// routes; the Costed pack additionally serves an editable PowerPoint via
+// `?format=pptx`.
 
 const APEX_CONTACT_CENTER_ARTIFACTS: readonly BoardArtifact[] = [
   {
@@ -170,10 +169,8 @@ const APEX_CONTACT_CENTER_ARTIFACTS: readonly BoardArtifact[] = [
 ];
 
 /**
- * The board-artifacts registry — one entry per Move with board-grade decks.
- *
- * TODAY this holds exactly one entry (the Apex "Contact Center AI Routing"
- * Move). A future Move's decks are added as ONE additional entry.
+ * The reference registry — hand-authored Moves with a full board-grade deck
+ * set. Today this holds exactly the Apex "Contact Center AI Routing" Move.
  */
 const BOARD_ARTIFACT_ENTRIES: readonly BoardArtifactEntry[] = [
   {
@@ -184,21 +181,65 @@ const BOARD_ARTIFACT_ENTRIES: readonly BoardArtifactEntry[] = [
 ];
 
 /**
+ * Build the generic, kernel-derived board-grade Costed Business-Case artifact
+ * for a Move whose `(industryKey, functionKey)` identity resolved. The
+ * `htmlHref` carries `?moveId=<id>` so the route renders THAT Move's
+ * kernel-derived deck via `buildMoveCostedBusinessCasePack`.
+ */
+function genericCostedBusinessCaseArtifact(moveId: string): BoardArtifact {
+  const q = `?moveId=${encodeURIComponent(moveId)}`;
+  return {
+    id: 'costed-business-case',
+    label: 'Costed Business-Case Pack',
+    phase: 'Design & Plan',
+    blurb:
+      'The board-grade costed business case — kernel-derived for this Move, ' +
+      'with the curated Function-Pack outline, value forecast, costed ' +
+      'investment range, and the kernel verdict.',
+    htmlHref: `/api/v1/moves/board-grade-business-case${q}`,
+  };
+}
+
+/**
  * The board-grade artifacts available for a Move.
  *
- * Matches on a stable identity — the Move's canonical tenant key AND its
- * canonical name (case/whitespace-tolerant). Both must match. A Move with no
- * anchored decks — any unrelated Move — returns `[]`, never a fabricated set.
+ * Resolution, in priority order:
+ *  1. The Apex reference entry — matched on the stable tenant + Move-name
+ *     identity. When it matches, the Move gets the full eight-deck reference
+ *     set.
+ *  2. The key-driven path — for every other Move, the Move's
+ *     `(industryKey, functionKey)` Function-Pack identity is resolved from its
+ *     `tenant.industryCode` + `charter`. When it resolves, the Move gets the
+ *     generic, kernel-derived Costed Business-Case deck (its `htmlHref`
+ *     carrying `?moveId=`).
+ *
+ * A Move that matches neither — no reference entry and no resolvable function
+ * identity — returns `[]`. That is the honest signal (a gap), never a
+ * fabricated deck.
  */
 export function boardArtifactsForMove(move: StrategicMove): BoardArtifact[] {
+  // (1) The Apex reference entry — the curated, hand-authored deck set.
   const tenantKey = canonicalTenantKey(move.tenant.name);
   const moveName = normalizeMoveName(move.name);
-
-  const entry = BOARD_ARTIFACT_ENTRIES.find(
+  const referenceEntry = BOARD_ARTIFACT_ENTRIES.find(
     (candidate) =>
       candidate.tenantKey === tenantKey &&
       normalizeMoveName(candidate.moveName) === moveName,
   );
+  if (referenceEntry) {
+    return [...referenceEntry.artifacts];
+  }
 
-  return entry ? [...entry.artifacts] : [];
+  // (2) The key-driven path — any Move with a resolvable Function-Pack
+  // identity gets the generic, kernel-derived Costed Business-Case deck.
+  const identity = resolveMoveFunctionIdentity({
+    industryCode: move.tenant.industryCode,
+    charter: move.charter,
+  });
+  if (identity) {
+    return [genericCostedBusinessCaseArtifact(move.id)];
+  }
+
+  // No reference entry, no resolvable function — honestly, no artifact.
+  return [];
 }

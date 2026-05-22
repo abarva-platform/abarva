@@ -1,0 +1,78 @@
+// Load a Move's `MoveBusinessCaseInput` — the route-side loader for the
+// generic board-grade Costed Business-Case deck.
+//
+// The board-grade business-case route, given a `?moveId=`, must render that
+// Move's kernel-derived deck. `buildMoveBusinessCase` / the generic renderer
+// need a `MoveBusinessCaseInput` — the Move's industry code, charter, name and
+// recorded baseline metrics. This module assembles that input for a real
+// `engagements` row, tenancy-scoped.
+//
+// TENANCY: the Move is resolved through `getProgramById` — the tenancy-scoped,
+// RBAC-gated single-program query. A caller can only load a Move on their own
+// tenant; an out-of-tenant or inaccessible `moveId` resolves to `null`. The
+// industry code (`clients.industry_code`) and the recorded baseline metrics
+// (`engagements.baseline_metrics`) are then read with the same server client,
+// scoped to the program that already passed the tenancy check.
+//
+// Returns `null` honestly when the Move is not accessible — the route falls
+// back to its reference deck rather than rendering a wrong-tenant Move.
+
+import { getServerSupabase } from '@/lib/supabase-server';
+import { requireTenancy } from '@/lib/auth/tenancy';
+import { getProgramById } from '../queries';
+import type { MoveBusinessCaseInput } from '../move-business-case';
+
+/**
+ * Load the `MoveBusinessCaseInput` for a Move by id, tenancy-scoped.
+ *
+ * Resolves the Move through `getProgramById` (RBAC-gated, tenant-scoped), then
+ * reads the tenant's industry code and the Move's recorded baseline metrics.
+ * Returns `null` when the Move does not exist or is not accessible to the
+ * caller — the route then falls back honestly.
+ */
+export async function loadMoveBusinessCaseInput(
+  moveId: string,
+): Promise<MoveBusinessCaseInput | null> {
+  if (!moveId.trim()) return null;
+
+  const ctx = await requireTenancy();
+  const program = await getProgramById(ctx, moveId);
+  if (!program) return null;
+  if (program.archivedAt || program.deletedAt) return null;
+
+  const sb = getServerSupabase();
+
+  // Industry code — from the program's client. The program already passed the
+  // tenancy check, so its client is the caller's tenant.
+  const { data: clientRow } = await sb
+    .from('clients')
+    .select('industry_code')
+    .eq('id', program.clientId)
+    .maybeSingle();
+  const industryCode =
+    typeof (clientRow as { industry_code?: unknown } | null)?.industry_code ===
+    'string'
+      ? ((clientRow as { industry_code: string }).industry_code)
+      : null;
+
+  // Recorded baseline metrics — the `engagements.baseline_metrics` JSONB
+  // array. Defensively narrowed: the column is untyped JSONB, so a non-array
+  // value is treated as absent rather than trusted.
+  const { data: engagementRow } = await sb
+    .from('engagements')
+    .select('baseline_metrics')
+    .eq('id', moveId)
+    .maybeSingle();
+  const rawBaseline = (engagementRow as { baseline_metrics?: unknown } | null)
+    ?.baseline_metrics;
+  const baselineMetrics = Array.isArray(rawBaseline)
+    ? (rawBaseline as MoveBusinessCaseInput['baseline_metrics'])
+    : null;
+
+  return {
+    industry_code: industryCode,
+    name: program.name,
+    charter: program.charter,
+    baseline_metrics: baselineMetrics,
+  };
+}

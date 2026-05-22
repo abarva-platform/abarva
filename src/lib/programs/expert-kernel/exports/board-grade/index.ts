@@ -21,6 +21,17 @@ export {
   type PackSections,
 } from './pack-model';
 
+// The generic, kernel-derived sibling of the Apex reference renderer — the
+// board-grade Costed Business-Case Pack for a REAL, originated Move.
+export { renderMoveCostedBusinessCaseHtml } from './move-html-renderer';
+export {
+  buildMoveCostedBusinessCasePack,
+  type MoveCostedBusinessCasePack,
+  type MoveUnboundResult,
+  type MoveCostedBusinessCaseResult,
+  type MovePackSections,
+} from './move-pack-model';
+
 export { renderApexDiscoverBriefHtml } from './discover-brief-renderer';
 export {
   buildApexDiscoverBrief,

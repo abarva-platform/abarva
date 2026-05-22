@@ -6,10 +6,11 @@
 //
 // Covers:
 //   - Renders the "Board artifacts" panel listing each deck when the Move has
-//     anchored board-grade artifacts.
-//   - The Costed pack shows both a View link and a Download PowerPoint link;
-//     decks without a pptxHref show only View.
-//   - Renders nothing for a Move with no anchored decks.
+//     anchored board-grade artifacts (the Apex reference Move → 8 decks).
+//   - A real, non-reference Move with a resolvable Function-Pack identity
+//     surfaces the generic, kernel-derived Costed Business-Case deck with a
+//     `?moveId=` link.
+//   - Renders nothing for a Move with no resolvable function (honest gap).
 
 import '@testing-library/jest-dom';
 import { render, screen } from '@testing-library/react';
@@ -23,6 +24,7 @@ function makeMove(overrides: Partial<StrategicMove> = {}): StrategicMove {
     displayCode: 'APX-CC-2026',
     name: 'Contact Center AI Routing',
     tenant: { id: 'tenant-apex', name: 'Apex Retail Group', industryCode: 'retail' },
+    charter: null,
     archetype: 'AI Product Enablement',
     currentPhase: 3,
     phaseLabel: 'Design & Plan',
@@ -42,30 +44,17 @@ function makeMove(overrides: Partial<StrategicMove> = {}): StrategicMove {
   return { ...base, ...overrides };
 }
 
-describe('BoardArtifactsPanel — Move with anchored decks', () => {
-  it('renders the "Board artifacts" panel listing each deck', () => {
+describe('BoardArtifactsPanel — Apex reference Move', () => {
+  it('renders the "Board artifacts" panel listing the reference decks', () => {
     render(<BoardArtifactsPanel move={makeMove()} />);
 
     expect(screen.getByTestId('board-artifacts-panel')).toBeInTheDocument();
     expect(screen.getByText('Board artifacts')).toBeInTheDocument();
-    expect(screen.getAllByTestId('board-artifact-row')).toHaveLength(3);
+    expect(screen.getAllByTestId('board-artifact-row')).toHaveLength(8);
 
     expect(screen.getByText('Costed Business-Case Pack')).toBeInTheDocument();
     expect(screen.getByText('Discover Brief')).toBeInTheDocument();
     expect(screen.getByText('Solution Architecture Pack')).toBeInTheDocument();
-  });
-
-  it('every deck exposes a View link to the HTML deck', () => {
-    render(<BoardArtifactsPanel move={makeMove()} />);
-    const viewLinks = screen.getAllByRole('link', { name: /View/ });
-    expect(viewLinks).toHaveLength(3);
-    expect(viewLinks.map((a) => a.getAttribute('href'))).toEqual(
-      expect.arrayContaining([
-        '/api/v1/moves/board-grade-business-case',
-        '/api/v1/moves/board-grade-discover-brief',
-        '/api/v1/moves/board-grade-solution-architecture',
-      ]),
-    );
   });
 
   it('shows a Download PowerPoint link only for the Costed pack', () => {
@@ -79,20 +68,47 @@ describe('BoardArtifactsPanel — Move with anchored decks', () => {
   });
 });
 
-describe('BoardArtifactsPanel — Move with no anchored decks', () => {
-  it('renders nothing for an unrelated Move', () => {
+describe('BoardArtifactsPanel — real Move via the key-driven path', () => {
+  it('surfaces the generic Costed Business-Case deck with a ?moveId= link', () => {
+    const move = makeMove({
+      id: 'real-move-42',
+      name: 'Reduce contact-centre handle time',
+      tenant: { id: 't-apex', name: 'Apex Retail Group', industryCode: 'retail' },
+      charter: { functionPackKey: 'customer_care' },
+    });
+    render(<BoardArtifactsPanel move={move} />);
+
+    expect(screen.getByTestId('board-artifacts-panel')).toBeInTheDocument();
+    const rows = screen.getAllByTestId('board-artifact-row');
+    expect(rows).toHaveLength(1);
+    expect(screen.getByText('Costed Business-Case Pack')).toBeInTheDocument();
+
+    const view = screen.getByRole('link', { name: /View/ });
+    expect(view).toHaveAttribute(
+      'href',
+      '/api/v1/moves/board-grade-business-case?moveId=real-move-42',
+    );
+  });
+});
+
+describe('BoardArtifactsPanel — Move with no resolvable function', () => {
+  it('renders nothing for a Move whose charter carries no function key', () => {
     const { container } = render(
-      <BoardArtifactsPanel move={makeMove({ name: 'Customer Data Platform' })} />,
+      <BoardArtifactsPanel
+        move={makeMove({ name: 'Customer Data Platform', charter: null })}
+      />,
     );
     expect(container).toBeEmptyDOMElement();
     expect(screen.queryByTestId('board-artifacts-panel')).not.toBeInTheDocument();
   });
 
-  it('renders nothing for a same-named Move on a different tenant', () => {
+  it('renders nothing for a Move whose industry code does not resolve', () => {
     const { container } = render(
       <BoardArtifactsPanel
         move={makeMove({
-          tenant: { id: 't-mer', name: 'Meridian Health System', industryCode: 'healthcare' },
+          name: 'Some unrelated Move',
+          tenant: { id: 't-x', name: 'Some Other Company', industryCode: null },
+          charter: { functionPackKey: 'customer_care' },
         })}
       />,
     );

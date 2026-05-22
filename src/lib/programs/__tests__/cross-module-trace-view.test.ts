@@ -26,6 +26,7 @@ function makeMove(overrides: Partial<StrategicMove> = {}): StrategicMove {
     displayCode: 'APX-CC-2026',
     name: 'Contact Center AI Routing',
     tenant: { id: 't1', name: 'Apex Retail', industryCode: 'retail' },
+    charter: null,
     archetype: 'process_automation',
     currentPhase: 3,
     phaseLabel: 'P3 Design',
