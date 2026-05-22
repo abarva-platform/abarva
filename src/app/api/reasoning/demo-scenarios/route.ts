@@ -8,9 +8,15 @@
 //   red-alert   — set AMS event back to RFI stage, activate 3+ contradictions
 //   mid-review  — set AMS event to RFP stage, waive 2 gates, leave 2 unmet
 
-import { clearWaivers } from '@/app/api/reasoning/gate-waiver/route';
+import { clearWaivers, recordWaiverInternal } from '@/app/api/reasoning/gate-waiver/route';
 import { clearResolved, markResolved } from '@/lib/reasoning/contradiction-resolution-state';
 import { setStageOverride } from '@/lib/source/stage-overrides';
+import {
+  requireReasoningTenancy,
+  tenancyErrorResponse,
+  requireGateApprovalRole,
+  reasoningTenantId,
+} from '@/app/api/reasoning/_auth';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -86,30 +92,15 @@ const SCENARIOS: readonly ScenarioDescriptor[] = [
 
 // ─── Scenario executors ───────────────────────────────────────────────────────
 
-// In-memory waiver store mutated directly to avoid a round-trip HTTP call.
-// We re-use the same Map that the gate-waiver route manages, by calling the
-// exported POST-equivalent logic inline.
-//
-// Because we can't import the private Map, we call the public POST handler
-// by constructing a synthetic Request object.
-async function applyWaiver(criterionId: string): Promise<void> {
-  const body = JSON.stringify({
-    type: 'gate_waiver',
-    criterionId,
-    instanceId: AMS_EVENT_ID,
-    reason: 'Demo scenario preset',
-  });
-  const req = new Request('https://internal.abarva.invalid/api/reasoning/gate-waiver', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body,
-  });
-  // Import inline to avoid a circular dependency at module scope.
-  const { POST } = await import('@/app/api/reasoning/gate-waiver/route');
-  await POST(req);
+// Waivers are written directly through the gate-waiver module's
+// `recordWaiverInternal` export. The route already enforced auth + the
+// gate-approval role before calling these runners, so a trusted internal
+// write (no synthetic Request, no re-auth) is correct here.
+function applyWaiver(tenantId: string, criterionId: string): void {
+  recordWaiverInternal(tenantId, AMS_EVENT_ID, criterionId, 'Demo scenario preset');
 }
 
-async function runGreenPath(): Promise<void> {
+function runGreenPath(tenantId: string): void {
   // 1. Reset state to a clean slate first.
   clearWaivers();
   clearResolved();
@@ -119,7 +110,7 @@ async function runGreenPath(): Promise<void> {
 
   // 3. Waive all BAFO gate criteria.
   for (const gateId of BAFO_GATE_IDS) {
-    await applyWaiver(gateId);
+    applyWaiver(tenantId, gateId);
   }
 
   // 4. Resolve every AMS contradiction template.
@@ -128,7 +119,7 @@ async function runGreenPath(): Promise<void> {
   }
 }
 
-async function runRedAlert(): Promise<void> {
+function runRedAlert(): void {
   // 1. Clear all waivers and resolved contradictions so the bad state is visible.
   clearWaivers();
   clearResolved();
@@ -148,7 +139,7 @@ async function runRedAlert(): Promise<void> {
   }
 }
 
-async function runMidReview(): Promise<void> {
+function runMidReview(tenantId: string): void {
   // 1. Reset waivers and resolutions for a deterministic baseline.
   clearWaivers();
   clearResolved();
@@ -159,7 +150,7 @@ async function runMidReview(): Promise<void> {
 
   // 3. Waive two RFP-prerequisite gates.
   for (const gateId of RFP_GATE_IDS_WAIVED) {
-    await applyWaiver(gateId);
+    applyWaiver(tenantId, gateId);
   }
 
   // 4. Leave GATE-AMS-SHL-03 and GATE-AMS-RFI-03 unwaived (unmet) — no action needed.
@@ -182,11 +173,40 @@ function jsonResponse(body: unknown, status: number): Response {
 
 /** GET — returns the scenario catalog (no side effects). */
 export async function GET(): Promise<Response> {
+  try {
+    await requireReasoningTenancy();
+  } catch (err) {
+    try { return tenancyErrorResponse(err); } catch {}
+    return jsonResponse({ error: 'internal_error' }, 500);
+  }
   return jsonResponse({ scenarios: SCENARIOS }, 200);
 }
 
 /** POST — executes the requested scenario. */
 export async function POST(request: Request): Promise<Response> {
+  let ctx;
+  try {
+    ctx = await requireReasoningTenancy();
+  } catch (err) {
+    try { return tenancyErrorResponse(err); } catch {}
+    return jsonResponse({ error: 'internal_error' }, 500);
+  }
+
+  // Demo scenarios mutate gate/waiver state — gate-approval role required.
+  const roleDenied = requireGateApprovalRole(ctx);
+  if (roleDenied) return roleDenied;
+
+  // The scenario fixtures describe Apex Retail's AMS event. Restrict
+  // execution to the Apex tenant so it can never mutate another tenant's
+  // reasoning state.
+  const tenantId = reasoningTenantId(ctx);
+  if (tenantId !== 'apex-retail') {
+    return jsonResponse(
+      { error: 'forbidden', detail: 'Demo scenarios are only available for the Apex Retail tenant.' },
+      403,
+    );
+  }
+
   let body: unknown;
   try {
     body = await request.json();
@@ -207,13 +227,13 @@ export async function POST(request: Request): Promise<Response> {
   try {
     switch (scenarioId) {
       case 'green-path':
-        await runGreenPath();
+        runGreenPath(tenantId);
         break;
       case 'red-alert':
-        await runRedAlert();
+        runRedAlert();
         break;
       case 'mid-review':
-        await runMidReview();
+        runMidReview(tenantId);
         break;
       default:
         return jsonResponse(

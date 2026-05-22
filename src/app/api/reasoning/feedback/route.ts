@@ -3,9 +3,14 @@
 // Attaches a thumbs-up/down signal to a previously recorded synthesis
 // telemetry event.
 
+// SECURITY (audit 2026-05-22, P0-1): requires an authenticated session.
 import { recordFeedback } from "@/lib/reasoning/synthesis-telemetry";
+import { guardReasoning } from "@/app/api/reasoning/_auth";
 
 export async function POST(request: Request) {
+  const guard = await guardReasoning();
+  if (guard.response) return guard.response;
+
   let body: unknown;
   try {
     body = await request.json();

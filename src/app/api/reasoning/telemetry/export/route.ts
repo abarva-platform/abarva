@@ -3,13 +3,16 @@
 // Streams the most-recent synthesis telemetry events as a downloadable CSV
 // or JSON file. Operators use this to feed telemetry into spreadsheets or
 // to grab a one-off snapshot for offline analysis. Reads only the in-memory
-// ring buffer — no mutation, no auth (admin-only surface gates upstream).
+// ring buffer — no mutation.
+//
+// SECURITY (audit 2026-05-22, P0-1): requires an authenticated session.
 
 import { getRecentSynthesisEvents } from '@/lib/reasoning/synthesis-telemetry';
 import {
   eventsToCsv,
   eventsToJson,
 } from '@/lib/reasoning/synthesis-telemetry-export';
+import { guardReasoning } from '@/app/api/reasoning/_auth';
 // Side-effect import: shares backend init with the read endpoint.
 import '@/lib/reasoning/telemetry-init';
 
@@ -42,6 +45,9 @@ function timestampSlug(): string {
 }
 
 export async function GET(request: Request) {
+  const guard = await guardReasoning();
+  if (guard.response) return guard.response;
+
   const url = new URL(request.url);
   const format = url.searchParams.get('format');
   const limit = parseLimit(url.searchParams.get('limit'));

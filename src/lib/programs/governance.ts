@@ -36,6 +36,10 @@ import type {
 } from './types.db';
 import { getProgramById } from './queries';
 import { writeProgramAuditLogBestEffort } from './audit-log';
+import {
+  isGateApprovalStrictMode,
+  isStrictModeApprovalRole,
+} from '@/lib/auth/gate-approval-strict-mode';
 
 function assertTenancy(ctx: TenancyCtx): void {
   if (!ctx?.clientId || !ctx?.userId) {
@@ -501,6 +505,20 @@ export async function requestFounderApproval(
   return approvalId;
 }
 
+export class ApprovalSeparationOfDutiesError extends Error {
+  constructor() {
+    super('separation_of_duties');
+    this.name = 'ApprovalSeparationOfDutiesError';
+  }
+}
+
+export class ApprovalStrictModeRoleError extends Error {
+  constructor() {
+    super('strict_mode_role_required');
+    this.name = 'ApprovalStrictModeRoleError';
+  }
+}
+
 export async function decideApproval(
   ctx: TenancyCtx,
   programId: string,
@@ -511,6 +529,31 @@ export async function decideApproval(
 ): Promise<boolean> {
   assertTenancy(ctx);
   const sb = opts.supabase ?? getServerSupabase();
+
+  // SECURITY (audit 2026-05-22, P1-3 / P1-4): before consuming the
+  // approval, load the pending row so we can enforce separation of
+  // duties. Under GATE_APPROVAL_STRICT_MODE the approver must (a) hold an
+  // admin/maestro role and (b) differ from the original requester. In
+  // pilot (flag off) self-approval remains allowed per the documented
+  // Gate self-approval model.
+  if (decision === 'approved' && isGateApprovalStrictMode()) {
+    if (!isStrictModeApprovalRole(ctx.role)) {
+      throw new ApprovalStrictModeRoleError();
+    }
+    const { data: pendingRow } = await sb
+      .from('founder_approval_requests')
+      .select('id, requested_by_user_id')
+      .eq('engagement_id', programId)
+      .eq('id', approvalId)
+      .eq('status', 'pending')
+      .maybeSingle();
+    const requestedBy = (pendingRow as { requested_by_user_id?: string | null } | null)
+      ?.requested_by_user_id;
+    if (requestedBy && requestedBy === ctx.userId) {
+      throw new ApprovalSeparationOfDutiesError();
+    }
+  }
+
   const { data, error } = await sb
     .from('founder_approval_requests')
     .update({

@@ -175,6 +175,23 @@ export const completeDeliverableTool: AgentTool<CompleteDeliverableToolInput> = 
       throw err;
     }
 
+    // SECURITY (audit 2026-05-22, P0-2b): this tool defaults signOff:true
+    // and persists a `signed_off` deliverable that hard gates read as gate
+    // evidence. Per the tool-registry contract, a write that needs a
+    // capability MUST fail closed when that capability is false. Signing
+    // off a deliverable requires canPublishDeliverables; never let an
+    // unauthorized session sign off via the agent.
+    const wantsSignOff = input.sign_off !== false;
+    if (wantsSignOff && ctx.accessPolicy && ctx.accessPolicy.canPublishDeliverables !== true) {
+      return {
+        success: false,
+        error: 'forbidden:can_publish_deliverables_required',
+        recovery:
+          'Your Programs access does not allow signing off deliverables. I can save this as a draft ' +
+          '(sign_off:false) instead, or ask a sponsor / client admin with publish rights to sign it off.',
+      };
+    }
+
     try {
       const contentFromOutline =
         !input.content && input.content_outline && input.content_outline.length > 0

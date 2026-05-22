@@ -52,11 +52,12 @@ interface AdvancePhaseInput {
    * if the gate is hard-failing — bypass doesn't override hard fails.
    */
   bypass_gate?: boolean;
-  /**
-   * Test/admin flow only: when true, a caller with gate-approval rights can
-   * satisfy the sponsor approval requirement and advance in one write.
-   */
-  self_approve_if_authorized?: boolean;
+  // SECURITY (audit 2026-05-22, P2-8): `self_approve_if_authorized` was
+  // removed. The agent must never SATISFY a gate approval — it may only
+  // CREATE an approval request. Self-approval requires a deterministic UI
+  // confirmation and runs through POST /api/v1/programs/:id/advance, not
+  // the LLM tool loop. Driving self-approval from prose intent parsing is
+  // an LLM-mediated gate bypass and is no longer accepted here.
 }
 
 function formatAdvanceError(err: unknown): string {
@@ -77,7 +78,10 @@ export const advancePhaseTool: AgentTool<AdvancePhaseInput> = {
     'each unmet criterion to the user via gate-evaluation artifacts; do NOT announce success or ' +
     'pretend the advance happened. Only call this when the user has explicitly asked to advance ' +
     '(e.g. "move to Execution Roadmap", "advance the phase"). Default bypass_gate to false; only set true ' +
-    'when the user explicitly invokes a sponsor override and provides a rationale.',
+    'when the user explicitly invokes a sponsor override and provides a rationale. ' +
+    'This tool never SATISFIES a gate approval — when a gate requires approval it CREATES a pending ' +
+    'approval request and tells the user it is pending. Self-approval is a deterministic UI action; ' +
+    'do not attempt to approve a gate on the user\'s behalf from chat.',
   surfaces: ['/programs/:id'],
   input_schema: {
     type: 'object',
@@ -99,13 +103,6 @@ export const advancePhaseTool: AgentTool<AdvancePhaseInput> = {
         description:
           'Default false. Only set true when the user explicitly invokes a sponsor override; ' +
           'soft-fail bypass routes through founder approval if needed. Hard fails always block.',
-      },
-      self_approve_if_authorized: {
-        type: 'boolean',
-        description:
-          'Default false. Set true only when the signed-in user explicitly asks to self-approve ' +
-          'and has phase-gate approval rights. This is for admin/test approval flows; otherwise ' +
-          'the tool creates a sponsor approval request instead of advancing.',
       },
     },
     required: ['program_id', 'to_phase'],
@@ -188,14 +185,14 @@ export const advancePhaseTool: AgentTool<AdvancePhaseInput> = {
     const accessPolicy = ctx.accessPolicy ?? await loadUserProgramAccessPolicy(tenancy, {
       programId: input.program_id,
     });
-    const canSelfApproveGate =
-      input.self_approve_if_authorized === true &&
-      (accessPolicy.canApproveGates === true || tenancy.role === 'founder');
 
-    const requestedApprovalOverride =
-      input.bypass_gate === true || input.self_approve_if_authorized === true;
+    // SECURITY (audit 2026-05-22, P2-8): a bypass_gate request still
+    // requires gate-approval rights, but the agent NEVER self-satisfies a
+    // gate approval. When a gate requires approval the tool always
+    // creates a pending request and reports it — self-approval is a
+    // deterministic UI action on /api/v1/programs/:id/advance.
     if (
-      requestedApprovalOverride &&
+      input.bypass_gate === true &&
       accessPolicy.canApproveGates !== true &&
       tenancy.role !== 'founder'
     ) {
@@ -207,10 +204,11 @@ export const advancePhaseTool: AgentTool<AdvancePhaseInput> = {
       };
     }
 
-    if (gate.requiresApproval && !input.bypass_gate && !canSelfApproveGate) {
+    if (gate.requiresApproval && !input.bypass_gate) {
       // Create a sponsor-approval request via the existing flow rather
       // than silently advancing. The agent should communicate this
-      // pending state to the user.
+      // pending state to the user. The agent never satisfies the
+      // approval itself — that is a deterministic UI confirmation.
       try {
         await requestFounderApproval(tenancy, input.program_id, {
           requestType: 'phase_gate',
@@ -230,8 +228,9 @@ export const advancePhaseTool: AgentTool<AdvancePhaseInput> = {
         success: false,
         error: 'approval_required',
         recovery:
-          `Phase advance requires sponsor approval. I've queued a request — once it's approved, ` +
-          `we can advance phase ${fromPhase} → ${input.to_phase}. Tell the user the request is pending.`,
+          `Phase advance requires sponsor approval. I've queued a request — once it's approved in the ` +
+          `Programs UI, the phase ${fromPhase} → ${input.to_phase} advance can proceed. Tell the user ` +
+          `the request is pending and that an authorized approver must confirm it in the app.`,
       };
     }
 
@@ -244,13 +243,17 @@ export const advancePhaseTool: AgentTool<AdvancePhaseInput> = {
           ? {
               rationale: input.rationale,
               advancedAt: new Date().toISOString(),
-              self_approved: canSelfApproveGate,
+              self_approved: false,
             }
           : {
               advancedAt: new Date().toISOString(),
-              self_approved: canSelfApproveGate,
+              self_approved: false,
             },
-        approvedByUserId: canSelfApproveGate ? tenancy.userId : undefined,
+        // The agent never records itself as the gate approver. When a
+        // gate required approval the code path above already returned
+        // 'approval_required'; reaching here means either no approval was
+        // required or a sponsor bypass was explicitly invoked.
+        approvedByUserId: undefined,
         bypassGate: !!input.bypass_gate,
       });
 

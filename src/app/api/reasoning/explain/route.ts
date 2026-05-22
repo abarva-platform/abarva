@@ -33,6 +33,9 @@ import {
 } from '@/lib/reasoning/explanation-serializer';
 import type { LifecyclePatternSeed } from '@/lib/intelligence/seed-types';
 import type { GateEvaluation } from '@/lib/reasoning/types';
+// SECURITY (audit 2026-05-22, P0-1): requires an authenticated session
+// and scopes the instanceId to the session tenant.
+import { guardReasoning, isInstanceInTenant } from '@/app/api/reasoning/_auth';
 
 type Surface = 'source' | 'programs' | 'tower';
 
@@ -99,6 +102,10 @@ function resolveProgramPattern(patternId: string): LifecyclePatternSeed | undefi
 }
 
 export async function GET(request: Request) {
+  const guard = await guardReasoning();
+  if (guard.response) return guard.response;
+  const ctx = guard.ctx;
+
   const url = new URL(request.url);
   const surface = url.searchParams.get('surface') as Surface | null;
   const instanceId = url.searchParams.get('instanceId');
@@ -108,6 +115,12 @@ export async function GET(request: Request) {
   }
   if (!instanceId) {
     return jsonError(400, 'instanceId is required');
+  }
+
+  // Cross-tenant scoping — 'tower' aggregates the caller's own portfolio,
+  // so the check only bites for resolvable program/source instances.
+  if (surface !== 'tower' && !isInstanceInTenant(ctx, instanceId)) {
+    return jsonError(404, `${surface}-event ${instanceId} not found`);
   }
 
   if (surface === 'source') {

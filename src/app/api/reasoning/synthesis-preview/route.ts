@@ -25,6 +25,9 @@ import {
   buildEvidenceMap,
 } from '@/lib/source/source-event-instance';
 import { buildProgramEvidenceMapWithIngestions } from '@/lib/programs/program-instance';
+// SECURITY (audit 2026-05-22, P0-1): requires an authenticated session
+// and scopes the instanceId to the session tenant.
+import { guardReasoning, isInstanceInTenant } from '@/app/api/reasoning/_auth';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
@@ -232,11 +235,18 @@ function buildNarrative(data: Omit<SynthesisPreviewResponse, 'narrative'>): stri
 // ─── Route handler ─────────────────────────────────────────────────────────────
 
 export async function GET(request: Request) {
+  const guard = await guardReasoning();
+  if (guard.response) return guard.response;
+
   const { searchParams } = new URL(request.url);
   const instanceId = searchParams.get('instanceId');
 
   if (!instanceId) {
     return Response.json({ error: 'instanceId is required' }, { status: 400 });
+  }
+
+  if (!isInstanceInTenant(guard.ctx, instanceId)) {
+    return Response.json({ error: `Instance not found: ${instanceId}` }, { status: 404 });
   }
 
   // Try source events first

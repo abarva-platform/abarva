@@ -23,8 +23,14 @@ import {
   getEvidenceFor,
   getEvidenceTimestampsFor,
 } from "@/lib/reasoning/evidence-ingestion-store";
+// SECURITY (audit 2026-05-22, P0-1): requires an authenticated session
+// and scopes the instanceId to the session tenant.
+import { guardReasoning, isInstanceInTenant } from "@/app/api/reasoning/_auth";
 
 export async function POST(request: Request) {
+  const guard = await guardReasoning();
+  if (guard.response) return guard.response;
+
   let body: unknown;
   try {
     body = await request.json();
@@ -51,6 +57,13 @@ export async function POST(request: Request) {
     );
   }
 
+  if (!isInstanceInTenant(guard.ctx, instanceId)) {
+    return new Response(
+      JSON.stringify({ error: "not_found", detail: `instance ${instanceId} not found` }),
+      { status: 404, headers: { "Content-Type": "application/json" } },
+    );
+  }
+
   if (!item || typeof item !== "object" || Array.isArray(item)) {
     return new Response(
       JSON.stringify({ error: "item is required and must be an object" }),
@@ -68,6 +81,9 @@ export async function POST(request: Request) {
 }
 
 export async function GET(request: Request) {
+  const guard = await guardReasoning();
+  if (guard.response) return guard.response;
+
   const url = new URL(request.url);
   const instanceId = url.searchParams.get("instanceId") ?? "";
 
@@ -75,6 +91,13 @@ export async function GET(request: Request) {
     return new Response(
       JSON.stringify({ error: "instanceId query param is required" }),
       { status: 400, headers: { "Content-Type": "application/json" } },
+    );
+  }
+
+  if (!isInstanceInTenant(guard.ctx, instanceId)) {
+    return new Response(
+      JSON.stringify({ error: "not_found", detail: `instance ${instanceId} not found` }),
+      { status: 404, headers: { "Content-Type": "application/json" } },
     );
   }
 

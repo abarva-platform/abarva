@@ -5,10 +5,16 @@
 // reasoning-layer context (synthesis events, gate state, health checks).
 // For now it echoes the question back so the UI wiring can be verified.
 
+// SECURITY (audit 2026-05-22, P0-1): requires an authenticated session.
+import { guardReasoning } from '@/app/api/reasoning/_auth';
+
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 export async function POST(req: Request) {
+  const guard = await guardReasoning();
+  if (guard.response) return guard.response;
+
   const body = await req.json() as { question?: string };
   const q = body?.question ?? '';
 

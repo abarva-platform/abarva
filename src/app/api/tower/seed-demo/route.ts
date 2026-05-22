@@ -1,8 +1,27 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { seedDemoData, removeDemoData } from '@/scripts/demo-data/generate';
 import { requireTenancy, tenancyErrorResponse } from '@/lib/auth/tenancy';
+import { loadUserProgramAccessPolicy } from '@/lib/auth/program-access-policy';
+import type { TenancyCtx } from '@/lib/programs/types.db';
 
 export const runtime = 'nodejs';
+
+// SECURITY (audit 2026-05-22, P2-7): seeding / removing Tower demo data
+// is a bulk write+delete across the tenant. The route previously
+// enforced tenant membership but no role. Require client-admin rights.
+async function requireTowerAdmin(ctx: TenancyCtx): Promise<NextResponse | null> {
+  const policy = await loadUserProgramAccessPolicy(ctx).catch(() => null);
+  if (policy?.accessLevel === 'client_admin' || policy?.canAdminUsers === true) {
+    return null;
+  }
+  return NextResponse.json(
+    {
+      error: 'forbidden',
+      detail: 'Seeding or removing Tower demo data requires client-admin rights.',
+    },
+    { status: 403 },
+  );
+}
 export const dynamic = 'force-dynamic';
 
 export async function POST(req: NextRequest) {
@@ -12,6 +31,9 @@ export async function POST(req: NextRequest) {
   } catch (err) {
     return tenancyErrorResponse(err) as NextResponse;
   }
+
+  const roleDenied = await requireTowerAdmin(ctx);
+  if (roleDenied) return roleDenied;
 
   const body = (await req.json().catch(() => ({}))) as {
     clientId?: string;
@@ -48,6 +70,9 @@ export async function DELETE(req: NextRequest) {
   } catch (err) {
     return tenancyErrorResponse(err) as NextResponse;
   }
+
+  const roleDenied = await requireTowerAdmin(ctx);
+  if (roleDenied) return roleDenied;
 
   const url = new URL(req.url);
   const clientId = url.searchParams.get('clientId');

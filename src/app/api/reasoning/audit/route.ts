@@ -9,6 +9,13 @@
 
 import { getResolvedEntries } from '@/lib/reasoning/contradiction-resolution-state';
 import { getRecentSynthesisEvents } from '@/lib/reasoning/synthesis-telemetry';
+import {
+  requireReasoningTenancy,
+  tenancyErrorResponse,
+  reasoningTenantId,
+  isInstanceInTenant,
+} from '@/app/api/reasoning/_auth';
+import type { TenancyCtx } from '@/lib/programs/types.db';
 
 export const dynamic = 'force-dynamic';
 
@@ -27,6 +34,8 @@ export const dynamic = 'force-dynamic';
 // here AND the pre-seed below.
 
 interface WaiverRecord {
+  /** Substrate tenant slug — the cross-tenant filter key for the audit view. */
+  tenantId: string;
   instanceId: string;
   criterionId: string;
   reason: string;
@@ -50,11 +59,15 @@ export function clearWaiverAuditBuffer(): void {
 // `recordApproval`; the GET handler reads them alongside the waiver buffer.
 
 interface ApprovalAuditRecord {
+  /** Substrate tenant slug — the cross-tenant filter key for the audit view. */
+  tenantId: string;
   instanceId: string;
   criterionId: string;
   action: 'approve' | 'reject';
   justification: string;
   actedAt: string;
+  /** User id of the approver/rejecter, for audit attribution. */
+  actorId?: string;
 }
 
 export const approvalAuditBuffer: ApprovalAuditRecord[] = [];
@@ -163,11 +176,13 @@ const DEMO_ENTRIES: AuditEntry[] = [
 
 // ─── Aggregation ──────────────────────────────────────────────────────────────
 
-function buildLiveEntries(): AuditEntry[] {
+function buildLiveEntries(ctx: TenancyCtx): AuditEntry[] {
   const entries: AuditEntry[] = [];
+  const tenantId = reasoningTenantId(ctx);
 
-  // 1. Gate waivers from the live buffer
+  // 1. Gate waivers from the live buffer (tenant-scoped)
   for (const w of waiverAuditBuffer) {
+    if (w.tenantId !== tenantId) continue;
     entries.push({
       id: `waiver::${w.instanceId}::${w.criterionId}`,
       type: 'gate_waiver',
@@ -178,24 +193,28 @@ function buildLiveEntries(): AuditEntry[] {
     });
   }
 
-  // 2. Gate approvals / rejections from the live buffer
+  // 2. Gate approvals / rejections from the live buffer (tenant-scoped)
   for (const record of approvalAuditBuffer) {
+    if (record.tenantId !== tenantId) continue;
     entries.push({
       id: `approval_${record.instanceId}_${record.criterionId}_${record.action}`,
       type: record.action === 'approve' ? 'gate_approval' : 'gate_reject',
-      actor: 'demo-user',
+      actor: record.actorId ?? 'demo-user',
       instanceId: record.instanceId,
       detail: `Gate criterion "${record.criterionId}" ${record.action === 'approve' ? 'approved' : 'rejected'} — ${record.justification}`,
       timestamp: record.actedAt,
     });
   }
 
-  // 3. Contradiction resolutions
+  // 3. Contradiction resolutions (tenant-scoped by resolved instanceId)
   for (const r of getResolvedEntries()) {
     // Convention: id is `{instanceId}::{templateId}` or bare templateId
     const parts = r.id.split('::');
     const instanceId = parts.length >= 2 ? parts[0] : 'unknown';
     const templateId = parts.length >= 2 ? parts.slice(1).join('::') : r.id;
+    // Drop entries whose instance belongs to another tenant. Bare/unknown
+    // ids carry no instance and pass through (auth already gated the route).
+    if (parts.length >= 2 && !isInstanceInTenant(ctx, instanceId)) continue;
     entries.push({
       id: `resolved::${r.id}`,
       type: 'contradiction_resolved',
@@ -206,9 +225,9 @@ function buildLiveEntries(): AuditEntry[] {
     });
   }
 
-  // 4. Synthesis feedback signals
+  // 4. Synthesis feedback signals (tenant-scoped by event instanceId)
   const feedbackEvents = getRecentSynthesisEvents(500).filter(
-    (e) => e.feedback !== undefined,
+    (e) => e.feedback !== undefined && isInstanceInTenant(ctx, e.instanceId),
   );
   for (const e of feedbackEvents) {
     entries.push({
@@ -228,9 +247,15 @@ function idSet(entries: AuditEntry[]): Set<string> {
   return new Set(entries.map((e) => e.id));
 }
 
-function mergeWithDemo(live: AuditEntry[]): AuditEntry[] {
+function mergeWithDemo(live: AuditEntry[], ctx: TenancyCtx): AuditEntry[] {
   const liveIds = idSet(live);
-  const demo = DEMO_ENTRIES.filter((d) => !liveIds.has(d.id));
+  // The demo pre-seed describes Apex Retail programs; only surface it to
+  // the Apex tenant so other tenants never see another tenant's sample
+  // audit trail.
+  const demo =
+    reasoningTenantId(ctx) === 'apex-retail'
+      ? DEMO_ENTRIES.filter((d) => !liveIds.has(d.id))
+      : [];
   return [...live, ...demo].sort(
     (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime(),
   );
@@ -246,7 +271,14 @@ function jsonResponse(body: unknown, status = 200): Response {
 }
 
 export async function GET(): Promise<Response> {
-  const live = buildLiveEntries();
-  const merged = mergeWithDemo(live);
+  let ctx;
+  try {
+    ctx = await requireReasoningTenancy();
+  } catch (err) {
+    try { return tenancyErrorResponse(err); } catch {}
+    return jsonResponse({ error: 'internal_error' }, 500);
+  }
+  const live = buildLiveEntries(ctx);
+  const merged = mergeWithDemo(live, ctx);
   return jsonResponse(merged);
 }

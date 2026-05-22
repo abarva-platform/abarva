@@ -3,13 +3,19 @@ import { auth, clerkClient } from '@clerk/nextjs/server';
 import { mkdirSync, readFileSync, writeFileSync, existsSync } from 'fs';
 import { join } from 'path';
 import { checkTenantAccessByKey, tenantKeyForProgramCode } from '@/lib/auth/tenant-access';
+import { requireTenancy } from '@/lib/auth/tenancy';
 import { getLatestSponsorCommitment } from '@/lib/workflow/sponsorCommitmentLedger';
 import { getProgramTensionRecords, getStakeholderSuccessRecords } from '@/lib/workflow/stakeholderSuccessLedger';
 import { dataReadinessGateMet } from '@/lib/workflow/dataReadinessLedger';
 import { getServerSupabase } from '@/lib/supabase-server';
 import { getSeedPlan } from '@/lib/deliverables/seed-route-resolver';
-import { writeProgramAuditLogBestEffort } from '@/lib/programs/audit-log';
+import { writeProgramAuditLog } from '@/lib/programs/audit-log';
 import { selectProgramsWriteAdapter } from '@/lib/data-plane/write-adapters/programsWriteAdapter';
+import { loadUserProgramAccessPolicy } from '@/lib/auth/program-access-policy';
+import {
+  isGateApprovalStrictMode,
+  isStrictModeApprovalRole,
+} from '@/lib/auth/gate-approval-strict-mode';
 
 // Priority 2 item 2 · phase-gate advancement that moves a program forward.
 //
@@ -90,6 +96,48 @@ export async function POST(request: NextRequest) {
   if (!access.ok) {
     const status = access.reason === 'unauthenticated' ? 401 : 403;
     return NextResponse.json({ error: access.reason }, { status });
+  }
+
+  // SECURITY (audit 2026-05-22, P0-2a): a phase-gate advance is a
+  // gate-feeding write. The route previously checked tenant membership
+  // but never a role — any tenant member could advance any program
+  // across a phase gate. Require the gate-approval capability from the
+  // server-computed UserProgramAccessPolicy.
+  let advancerRole: string | null = null;
+  try {
+    const policyCtx = await requireTenancy();
+    const accessPolicy = await loadUserProgramAccessPolicy(policyCtx);
+    advancerRole = policyCtx.role ?? null;
+    if (!accessPolicy.canApproveGates) {
+      return NextResponse.json(
+        {
+          error: 'forbidden',
+          detail:
+            'Advancing a program across a phase gate requires gate-approval permission. Ask a sponsor or client admin to advance, or to grant can_approve_gates.',
+        },
+        { status: 403 },
+      );
+    }
+    // P1-4 · GATE_APPROVAL_STRICT_MODE — when on, the gate advance
+    // additionally requires an admin / maestro role.
+    if (isGateApprovalStrictMode() && !isStrictModeApprovalRole(advancerRole)) {
+      return NextResponse.json(
+        {
+          error: 'forbidden',
+          detail:
+            'GATE_APPROVAL_STRICT_MODE is enabled — phase-gate advance requires an admin or maestro role.',
+        },
+        { status: 403 },
+      );
+    }
+  } catch (err) {
+    // requireTenancy throwing here means the session/client could not be
+    // resolved even though the tenant-key check passed — fail closed.
+    console.error('[phase-gate] access-policy resolution failed', err);
+    return NextResponse.json(
+      { error: 'forbidden', detail: 'Could not verify gate-approval permission.' },
+      { status: 403 },
+    );
   }
 
   // FM-03 · Phase 1 → 2 gate requires a sponsor commitment record. Other
@@ -173,13 +221,13 @@ export async function POST(request: NextRequest) {
     timestamp: new Date().toISOString(),
   };
 
-  const ledger = readLedger();
-  ledger.entries.push(entry);
-  writeLedger(ledger);
-
-  // Supabase writes — additive to the filesystem ledger. Failures are logged
-  // but never surface as HTTP errors; the ledger remains the source of truth
-  // until the Supabase layer is fully promoted.
+  // SECURITY (audit 2026-05-22, P1-6): the filesystem ledger at
+  // `.approvals/phase-gates.json` is NOT durable — it is lost on redeploy
+  // and inconsistent across serverless instances. The authoritative
+  // record of a phase-gate advance is the Supabase `program_audit_log`
+  // write below. The filesystem write is kept only as a best-effort
+  // local cache for the assigned-to-me queue and never gates the
+  // response; a filesystem failure must not block a successful advance.
   let engagementId: string | null = null;
   try {
     // Resolve the engagement UUID from the programCode via the seed plan's
@@ -232,19 +280,49 @@ export async function POST(request: NextRequest) {
     console.error('[phase-gate] supabase write threw', { programCode, message: err instanceof Error ? err.message : String(err) });
   }
 
-  // 4. Audit log — best-effort; never blocks the response.
-  await writeProgramAuditLogBestEffort(
-    { clientId: ownerKey, userId: session.userId, role: role ?? undefined },
-    {
-      tenantKey: ownerKey,
-      programId: programCode,
-      engagementId: engagementId ?? undefined,
-      action: 'PHASE_GATE_ADVANCED',
-      fromState: `P${fromPhase}`,
-      toState: `P${toPhase}`,
-      rationale: gateCriterion,
-    },
-  );
+  // 4. AUTHORITATIVE audit-log write. This is the durable record of the
+  // phase-gate advance. If it fails, the request fails — we do NOT report
+  // success on an advance that left no audit trail.
+  try {
+    await writeProgramAuditLog(
+      { clientId: ownerKey, userId: session.userId, role: role ?? advancerRole ?? undefined },
+      {
+        tenantKey: ownerKey,
+        programId: programCode,
+        engagementId: engagementId ?? undefined,
+        action: 'PHASE_GATE_ADVANCED',
+        fromState: `P${fromPhase}`,
+        toState: `P${toPhase}`,
+        rationale: gateCriterion,
+      },
+    );
+  } catch (err) {
+    console.error('[phase-gate] authoritative audit-log write failed', {
+      programCode,
+      message: err instanceof Error ? err.message : String(err),
+    });
+    return NextResponse.json(
+      {
+        error: 'audit_log_write_failed',
+        detail:
+          'The phase-gate advance could not be recorded to the durable audit log. The advance was not committed as confirmed — retry.',
+      },
+      { status: 500 },
+    );
+  }
+
+  // 5. Best-effort filesystem cache — non-authoritative. A failure here is
+  // logged and swallowed; the durable record already landed above.
+  try {
+    const ledger = readLedger();
+    ledger.entries.push(entry);
+    writeLedger(ledger);
+  } catch (err) {
+    console.warn('[phase-gate] non-authoritative filesystem ledger write failed (ignored)', {
+      programCode,
+      message: err instanceof Error ? err.message : String(err),
+    });
+  }
 
   return NextResponse.json({ ok: true, entry });
 }

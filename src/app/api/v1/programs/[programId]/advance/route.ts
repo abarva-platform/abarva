@@ -10,6 +10,10 @@ import { evaluateGate, requestFounderApproval } from '@/lib/programs/governance'
 import { requireTenancy, tenancyErrorResponse } from '../../_auth';
 import { loadUserProgramAccessPolicy } from '@/lib/auth/program-access-policy';
 import { getProgramsRouteSupabase } from '@/lib/programs/programs-auth-mode-server';
+import {
+  isGateApprovalStrictMode,
+  isStrictModeApprovalRole,
+} from '@/lib/auth/gate-approval-strict-mode';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -58,8 +62,15 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ pro
       );
     }
 
+    // SECURITY (audit 2026-05-22, P1-4): under GATE_APPROVAL_STRICT_MODE
+    // gate approval / self-approval / bypass requires an admin/maestro
+    // role. In pilot (flag off) the canApproveGates capability suffices.
+    const strictMode = isGateApprovalStrictMode();
+    const strictRoleOk = !strictMode || isStrictModeApprovalRole(ctx.role);
+
     const canSelfApproveGate =
       body.selfApproveIfAuthorized === true &&
+      strictRoleOk &&
       (accessPolicy.canApproveGates || ctx.role === 'founder');
 
     if (gate.requiresApproval && !body.approvalId && !canSelfApproveGate) {
@@ -83,11 +94,21 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ pro
         { status: 403 },
       );
     }
+    // Under strict mode, bypassing a gate also requires an admin/maestro role.
+    if ((body.bypassGate || body.selfApproveIfAuthorized) && strictMode && !strictRoleOk) {
+      return Response.json(
+        {
+          error: 'forbidden',
+          detail: 'GATE_APPROVAL_STRICT_MODE is enabled — bypassing or self-approving a gate requires an admin or maestro role.',
+        },
+        { status: 403 },
+      );
+    }
 
     if (gate.requiresApproval && body.approvalId) {
       const { data: approval, error: approvalError } = await supabase
         .from('founder_approval_requests')
-        .select('id, status, engagement_id')
+        .select('id, status, engagement_id, request_type, context_jsonb')
         .eq('id', body.approvalId)
         .eq('engagement_id', programId)
         .maybeSingle();
@@ -96,6 +117,38 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ pro
           {
             error: 'approval_not_cleared',
             detail: 'Phase gate approval must be approved before the phase can advance',
+          },
+          { status: 409 },
+        );
+      }
+      // SECURITY (audit 2026-05-22, P1-3): bind the consumed approval to
+      // THIS specific transition. Previously any approved approvalId on
+      // the program was accepted, so a stale or unrelated approval (a
+      // budget_change, or a phase_gate for a different transition) could
+      // be replayed to advance a gate it never authorized.
+      const approvalRow = approval as {
+        request_type?: string | null;
+        context_jsonb?: Record<string, unknown> | null;
+      };
+      if (approvalRow.request_type !== 'phase_gate') {
+        return Response.json(
+          {
+            error: 'approval_type_mismatch',
+            detail: 'The supplied approval is not a phase_gate approval and cannot authorize a phase advance.',
+          },
+          { status: 409 },
+        );
+      }
+      const approvalCtx = approvalRow.context_jsonb ?? {};
+      const approvedFromPhase = approvalCtx.from_phase;
+      const approvedToPhase = approvalCtx.to_phase;
+      if (approvedFromPhase !== fromPhase || approvedToPhase !== body.toPhase) {
+        return Response.json(
+          {
+            error: 'approval_transition_mismatch',
+            detail:
+              `The supplied approval authorizes phase ${approvedFromPhase} → ${approvedToPhase}, ` +
+              `not ${fromPhase} → ${body.toPhase}. Request a fresh approval for this transition.`,
           },
           { status: 409 },
         );

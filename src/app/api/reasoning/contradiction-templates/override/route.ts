@@ -16,6 +16,8 @@ import {
   setTemplateOverride,
 } from '@/lib/reasoning/contradiction-template-overrides';
 import { findLifecyclePattern } from '@/lib/reasoning/lifecycle-pattern-lookup';
+// SECURITY (audit 2026-05-22, P0-1): requires an authenticated session.
+import { guardReasoning } from '@/app/api/reasoning/_auth';
 
 function jsonResponse(body: unknown, status: number): Response {
   return new Response(JSON.stringify(body), {
@@ -39,6 +41,9 @@ function isContradictionTemplate(value: unknown): value is ContradictionTemplate
 }
 
 export async function POST(request: Request): Promise<Response> {
+  const guard = await guardReasoning();
+  if (guard.response) return guard.response;
+
   let body: unknown;
   try {
     body = await request.json();
@@ -84,6 +89,9 @@ export async function POST(request: Request): Promise<Response> {
 }
 
 export async function DELETE(request: Request): Promise<Response> {
+  const guard = await guardReasoning();
+  if (guard.response) return guard.response;
+
   let body: unknown;
   try {
     body = await request.json();
@@ -112,6 +120,9 @@ export async function DELETE(request: Request): Promise<Response> {
 }
 
 export async function GET(request: Request): Promise<Response> {
+  const guard = await guardReasoning();
+  if (guard.response) return guard.response;
+
   const url = new URL(request.url);
   const patternId = url.searchParams.get('patternId');
   if (!patternId) {
