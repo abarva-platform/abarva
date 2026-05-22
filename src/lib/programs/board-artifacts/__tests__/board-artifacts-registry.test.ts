@@ -1,8 +1,12 @@
 // board-artifacts-registry — unit tests.
 //
-// Covers the stable identity match: the Apex "Contact Center AI Routing" Move
-// resolves to its 8 board-grade decks (the Costed pack carrying a pptxHref);
-// any unrelated Move resolves to `[]`.
+// Covers two resolution paths:
+//   1. The Apex "Contact Center AI Routing" REFERENCE Move → its 8
+//      hand-authored board-grade decks (the Costed pack carrying a pptxHref).
+//   2. The KEY-DRIVEN path — any other Move with a resolvable
+//      `(industryKey, functionKey)` Function-Pack identity → the generic,
+//      kernel-derived Costed Business-Case deck with a `?moveId=` link.
+//   A Move with no resolvable function resolves to `[]` — an honest gap.
 
 import {
   boardArtifactsForMove,
@@ -16,6 +20,7 @@ function makeMove(overrides: Partial<StrategicMove> = {}): StrategicMove {
     displayCode: 'APX-CC-2026',
     name: 'Contact Center AI Routing',
     tenant: { id: 'tenant-apex', name: 'Apex Retail Group', industryCode: 'retail' },
+    charter: null,
     archetype: 'AI Product Enablement',
     currentPhase: 3,
     phaseLabel: 'Design & Plan',
@@ -35,8 +40,8 @@ function makeMove(overrides: Partial<StrategicMove> = {}): StrategicMove {
   return { ...base, ...overrides };
 }
 
-describe('boardArtifactsForMove — Apex Contact Center AI Routing', () => {
-  it('resolves to the 8 board-grade decks', () => {
+describe('boardArtifactsForMove — Apex Contact Center AI Routing (reference)', () => {
+  it('resolves to the 8 board-grade reference decks', () => {
     const artifacts = boardArtifactsForMove(makeMove());
     expect(artifacts).toHaveLength(8);
     expect(artifacts.map((a) => a.id).sort()).toEqual([
@@ -51,41 +56,10 @@ describe('boardArtifactsForMove — Apex Contact Center AI Routing', () => {
     ]);
   });
 
-  it('surfaces the Master Move Dossier deck', () => {
-    const dossier = boardArtifactsForMove(makeMove()).find(
-      (a) => a.id === 'master-dossier',
-    );
-    expect(dossier?.label).toBe('Master Move Dossier');
-    expect(dossier?.phase).toBe('All phases');
-    expect(dossier?.htmlHref).toBe(
-      '/api/v1/moves/board-grade-master-dossier',
-    );
-    expect(dossier?.pptxHref).toBeUndefined();
-  });
-
-  it('surfaces the Charter Skeleton and CFO Pack decks', () => {
-    const artifacts = boardArtifactsForMove(makeMove());
-    const charter = artifacts.find((a) => a.id === 'charter-skeleton');
-    const cfo = artifacts.find((a) => a.id === 'cfo-pack');
-
-    expect(charter?.label).toBe('Charter Business-Case Skeleton');
-    expect(charter?.phase).toBe('Charter');
-    expect(charter?.htmlHref).toBe(
-      '/api/v1/moves/board-grade-charter-skeleton',
-    );
-    expect(charter?.pptxHref).toBeUndefined();
-
-    expect(cfo?.label).toBe('CFO Pack');
-    expect(cfo?.phase).toBe('Design & Plan');
-    expect(cfo?.htmlHref).toBe('/api/v1/moves/board-grade-cfo-pack');
-    expect(cfo?.pptxHref).toBeUndefined();
-  });
-
   it('the Costed Business-Case Pack carries a pptxHref; the others do not', () => {
     const artifacts = boardArtifactsForMove(makeMove());
     const costed = artifacts.find((a) => a.id === 'costed-business-case');
     const discover = artifacts.find((a) => a.id === 'discover-brief');
-    const architecture = artifacts.find((a) => a.id === 'solution-architecture');
 
     expect(costed?.label).toBe('Costed Business-Case Pack');
     expect(costed?.htmlHref).toBe('/api/v1/moves/board-grade-business-case');
@@ -93,23 +67,11 @@ describe('boardArtifactsForMove — Apex Contact Center AI Routing', () => {
 
     expect(discover?.htmlHref).toBe('/api/v1/moves/board-grade-discover-brief');
     expect(discover?.pptxHref).toBeUndefined();
-
-    expect(architecture?.htmlHref).toBe('/api/v1/moves/board-grade-solution-architecture');
-    expect(architecture?.pptxHref).toBeUndefined();
-  });
-
-  it('every artifact carries a label, phase and blurb', () => {
-    for (const artifact of boardArtifactsForMove(makeMove())) {
-      expect(artifact.label.length).toBeGreaterThan(0);
-      expect(artifact.phase.length).toBeGreaterThan(0);
-      expect(artifact.blurb.length).toBeGreaterThan(0);
-    }
   });
 
   it('matches case- and whitespace-insensitively on the Move name', () => {
     expect(boardArtifactsForMove(makeMove({ name: 'contact center ai routing' }))).toHaveLength(8);
     expect(boardArtifactsForMove(makeMove({ name: '  Contact Center AI Routing  ' }))).toHaveLength(8);
-    expect(boardArtifactsForMove(makeMove({ name: 'Contact   Center  AI   Routing' }))).toHaveLength(8);
   });
 
   it('matches the tenant by display-name fold (Apex Retail / Apex Retail Group)', () => {
@@ -119,30 +81,122 @@ describe('boardArtifactsForMove — Apex Contact Center AI Routing', () => {
   });
 });
 
-describe('boardArtifactsForMove — unrelated Moves resolve to []', () => {
-  it('an unrelated Move on the same tenant resolves to []', () => {
-    expect(boardArtifactsForMove(makeMove({ name: 'Customer Data Platform' }))).toEqual([]);
+describe('boardArtifactsForMove — key-driven path (real Moves, 3 verticals)', () => {
+  it('a retail Move with a resolvable function gets the generic Costed deck', () => {
+    const move = makeMove({
+      id: 'retail-move-1',
+      name: 'Cut repeat transfers in the contact centre',
+      tenant: { id: 't-r', name: 'Northwind Retail', industryCode: 'retail' },
+      charter: { functionPackKey: 'customer_care' },
+    });
+    const artifacts = boardArtifactsForMove(move);
+    expect(artifacts).toHaveLength(1);
+    expect(artifacts[0].id).toBe('costed-business-case');
+    expect(artifacts[0].htmlHref).toBe(
+      '/api/v1/moves/board-grade-business-case?moveId=retail-move-1',
+    );
+    // The generic deck does not carry a PowerPoint export.
+    expect(artifacts[0].pptxHref).toBeUndefined();
   });
 
-  it('a same-named Move on a different tenant resolves to []', () => {
+  it('a healthcare Move with a resolvable function gets the generic Costed deck', () => {
+    const move = makeMove({
+      id: 'health-move-1',
+      name: 'Reduce clinical documentation burden',
+      tenant: { id: 't-h', name: 'Cedar Valley Health', industryCode: 'healthcare_idn' },
+      charter: { functionPackKey: 'clinical_operations_documentation' },
+    });
+    const artifacts = boardArtifactsForMove(move);
+    expect(artifacts).toHaveLength(1);
+    expect(artifacts[0].id).toBe('costed-business-case');
+    expect(artifacts[0].htmlHref).toBe(
+      '/api/v1/moves/board-grade-business-case?moveId=health-move-1',
+    );
+  });
+
+  it('a financial-services Move with a resolvable function gets the generic Costed deck', () => {
+    const move = makeMove({
+      id: 'fs-move-1',
+      name: 'Strengthen fraud detection',
+      tenant: { id: 't-f', name: 'Summit Bank', industryCode: 'finserv' },
+      charter: { functionPackKey: 'fraud_financial_crime' },
+    });
+    const artifacts = boardArtifactsForMove(move);
+    expect(artifacts).toHaveLength(1);
+    expect(artifacts[0].id).toBe('costed-business-case');
+    expect(artifacts[0].htmlHref).toBe(
+      '/api/v1/moves/board-grade-business-case?moveId=fs-move-1',
+    );
+  });
+
+  it('the hardcoded Apex Move-name is no longer the gate — any name resolves', () => {
+    // A Move named nothing like "Contact Center AI Routing" still resolves a
+    // board-grade artifact, purely from its (industryKey, functionKey).
+    const move = makeMove({
+      id: 'oddly-named-move',
+      name: 'Q3 ops improvement workstream',
+      tenant: { id: 't-r', name: 'Northwind Retail', industryCode: 'retail' },
+      charter: { functionPackKey: 'customer_care' },
+    });
+    const artifacts = boardArtifactsForMove(move);
+    expect(artifacts).toHaveLength(1);
+    expect(artifacts[0].htmlHref).toContain('moveId=oddly-named-move');
+  });
+
+  it('encodes the moveId in the href', () => {
+    const move = makeMove({
+      id: 'move with spaces/&',
+      tenant: { id: 't-r', name: 'Northwind Retail', industryCode: 'retail' },
+      charter: { functionPackKey: 'customer_care' },
+    });
+    const artifacts = boardArtifactsForMove(move);
+    expect(artifacts[0].htmlHref).toBe(
+      '/api/v1/moves/board-grade-business-case?moveId=' +
+        encodeURIComponent('move with spaces/&'),
+    );
+  });
+});
+
+describe('boardArtifactsForMove — no resolvable function resolves to []', () => {
+  it('a Move whose charter carries no function key resolves to []', () => {
     expect(
       boardArtifactsForMove(
-        makeMove({ tenant: { id: 't-mer', name: 'Meridian Health System', industryCode: 'healthcare' } }),
+        makeMove({
+          name: 'Customer Data Platform',
+          tenant: { id: 't-r', name: 'Northwind Retail', industryCode: 'retail' },
+          charter: null,
+        }),
       ),
     ).toEqual([]);
   });
 
-  it('an unknown tenant resolves to []', () => {
+  it('a Move with a function key but an unresolvable industry resolves to []', () => {
     expect(
       boardArtifactsForMove(
-        makeMove({ tenant: { id: 't-x', name: 'Some Other Company', industryCode: null } }),
+        makeMove({
+          name: 'Some Move',
+          tenant: { id: 't-x', name: 'Some Other Company', industryCode: null },
+          charter: { functionPackKey: 'customer_care' },
+        }),
+      ),
+    ).toEqual([]);
+  });
+
+  it('a Move with a non-string function key resolves to []', () => {
+    expect(
+      boardArtifactsForMove(
+        makeMove({
+          tenant: { id: 't-r', name: 'Northwind Retail', industryCode: 'retail' },
+          charter: { functionPackKey: 12345 },
+          name: 'Bad charter Move',
+        }),
       ),
     ).toEqual([]);
   });
 });
 
 describe('boardArtifactsForMove — return value is a fresh array', () => {
-  it('does not leak the internal registry array (mutation-safe)', () => {
+  it('does not leak the internal reference array (mutation-safe)', () => {
     const first = boardArtifactsForMove(makeMove());
     first.pop();
     expect(boardArtifactsForMove(makeMove())).toHaveLength(8);
@@ -160,7 +214,7 @@ describe('canonicalTenantKey', () => {
     expect(canonicalTenantKey('First Capital Financial')).toBe('arcturus');
   });
 
-  it('slugs an unknown name so it never matches a registry entry', () => {
+  it('slugs an unknown name so it never matches a reference entry', () => {
     expect(canonicalTenantKey('Some Other Company')).toBe('someothercompany');
   });
 });

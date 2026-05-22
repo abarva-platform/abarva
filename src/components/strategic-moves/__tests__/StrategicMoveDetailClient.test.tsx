@@ -43,6 +43,7 @@ function makeMove(overrides: Partial<StrategicMove> = {}): StrategicMove {
     name: 'Customer Data Platform',
     archetype: 'PROGRAM_CDP',
     tenant: { id: 'tenant-uuid-apex', name: 'Apex Retail', industryCode: 'retail' },
+    charter: null,
     currentPhase: 2,
     phaseLabel: 'P2 Discover & Diagnose',
     status: {

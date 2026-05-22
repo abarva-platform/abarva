@@ -1,23 +1,37 @@
 // GET /api/v1/moves/board-grade-business-case
 //
-// Streams the board-grade Costed Business-Case Pack for the Apex "Contact
-// Center AI Routing" Move — the reference artifact called for by the Moves
-// Board-Grade Artifact Blueprint (§9 / §13).
+// Streams the board-grade Costed Business-Case Pack.
 //
-// Two representations of the SAME pack are served from one route:
+// TWO modes, selected by the `?moveId=` query parameter:
+//
+//   • `?moveId=<id>` — the GENERIC, kernel-derived deck for a REAL,
+//     originated Move. The route loads that Move's recorded data (industry
+//     code, charter, baseline metrics), runs the Moves Expert Kernel via
+//     `renderMoveCostedBusinessCaseHtml`, and renders the kernel-derived deck.
+//     When the Move binds a curated Domain Function Pack the deck is the full
+//     bound business case; when it does not, the renderer produces the honest
+//     UNBOUND deck — never a fabricated business case.
+//
+//   • no `moveId` — the Apex "Contact Center AI Routing" REFERENCE deck, the
+//     hand-authored reference artifact called for by the Moves Board-Grade
+//     Artifact Blueprint (§9 / §13). This is the honest fallback for a
+//     missing `moveId`: a real, complete reference deck rather than an empty
+//     state. The reference deck also serves an editable PowerPoint via
+//     `?format=pptx`.
+//
+// Two HTML representations are served from one route:
 //   • Default — a single self-contained HTML deck: all CSS inlined, every
-//     exhibit an inline SVG, no external assets. Opens offline, prints clean.
-//     `?download=1` serves it as a file attachment.
-//   • `?format=pptx` — an editable 16:9 PowerPoint. The words are native,
-//     editable PowerPoint objects; the bespoke exhibits embed as high-res
-//     images. Always served as a `.pptx` file attachment.
+//     exhibit an inline SVG, no external assets. `?download=1` serves it as a
+//     file attachment.
+//   • `?format=pptx` — an editable 16:9 PowerPoint, REFERENCE deck only.
 //
-// Auth: a valid Clerk session, consistent with the other Moves Expert Kernel
-// export routes. The content is the fixed Apex demo substrate — no per-tenant
-// customer data — so a session is the gate.
+// Auth: a valid Clerk session. For a `moveId` request, the Move is loaded
+// behind `getProgramById` — tenancy-scoped and RBAC-gated — so a caller can
+// only render a Move on their own tenant. The reference deck is additionally
+// scoped to the Apex tenant by `assertBoardGradeTenancy`.
 //
-// The renderers are deterministic and pure. Apex's honest verdict is `shape`
-// with a blocked payback; that is a valid rendered outcome, never an error.
+// The renderers are deterministic and pure. An honest `shape` / `kill`
+// verdict, or an unbound Move, is a valid rendered outcome, never an error.
 
 import type { NextRequest } from 'next/server';
 
@@ -25,12 +39,14 @@ import { getCurrentUser } from '@/lib/auth/current-user';
 import {
   renderApexCostedBusinessCaseHtml,
   renderApexCostedBusinessCasePptx,
+  renderMoveCostedBusinessCaseHtml,
 } from '@/lib/programs/expert-kernel/exports/board-grade';
 import {
   cachedRender,
   cachedRenderAsync,
 } from '@/lib/programs/expert-kernel/exports/board-grade/render-cache';
 import { assertBoardGradeTenancy } from '@/lib/programs/board-artifacts/board-grade-route-guard';
+import { loadMoveBusinessCaseInput } from '@/lib/programs/board-artifacts/load-move-business-case-input';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -46,23 +62,88 @@ export async function GET(req: NextRequest): Promise<Response> {
     );
   }
 
-  // --- Tenancy — the artifact is Apex-owned; block cross-tenant access. ---
+  const generatedOn = new Date().toISOString().slice(0, 10);
+  const params = new URL(req.url).searchParams;
+  const moveId = params.get('moveId')?.trim() || '';
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // GENERIC MODE — `?moveId=` present. Render that Move's kernel-derived deck.
+  // ─────────────────────────────────────────────────────────────────────────
+  if (moveId) {
+    // The Move is loaded behind a tenancy-scoped, RBAC-gated query — a caller
+    // can only render a Move on their own tenant. `null` means the Move does
+    // not exist or is not accessible: fall back honestly to the reference.
+    let moveInput: Awaited<ReturnType<typeof loadMoveBusinessCaseInput>>;
+    try {
+      moveInput = await loadMoveBusinessCaseInput(moveId);
+    } catch (err) {
+      console.error(
+        '[GET /api/v1/moves/board-grade-business-case] move load error',
+        { err, moveId },
+      );
+      moveInput = null;
+    }
+
+    if (moveInput) {
+      // The generic renderer is pure; a throw here would be a renderer bug.
+      // Memoised per day, keyed by the move id so two Moves never collide.
+      let html: string;
+      try {
+        html = cachedRender(
+          `move-costed-business-case:html:${moveId}:${generatedOn}`,
+          () => renderMoveCostedBusinessCaseHtml(moveInput!, generatedOn),
+        );
+      } catch (err) {
+        console.error(
+          '[GET /api/v1/moves/board-grade-business-case] move render error',
+          { err, moveId },
+        );
+        return Response.json(
+          {
+            error: 'render_failed',
+            detail:
+              err instanceof Error
+                ? err.message
+                : 'Move board-grade business-case render failed.',
+          },
+          { status: 500 },
+        );
+      }
+
+      const download = params.get('download') === '1';
+      const filename = `costed-business-case-pack-${moveId}-${generatedOn}.html`;
+      return new Response(html, {
+        status: 200,
+        headers: {
+          'content-type': 'text/html; charset=utf-8',
+          'cache-control': 'no-store',
+          'x-kernel-move': `move:${moveId}`,
+          ...(download
+            ? { 'content-disposition': `attachment; filename="${filename}"` }
+            : {}),
+        },
+      });
+    }
+    // moveInput is null — the Move is not accessible. Fall through to the
+    // honest reference fallback below.
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // REFERENCE MODE — no `moveId` (or an inaccessible one). The Apex
+  // "Contact Center AI Routing" reference deck.
+  // ─────────────────────────────────────────────────────────────────────────
+
+  // --- Tenancy — the reference artifact is Apex-owned. -------------------
   const tenancyDenied = await assertBoardGradeTenancy(
     'GET /api/v1/moves/board-grade-business-case',
   );
   if (tenancyDenied) return tenancyDenied;
 
-  const generatedOn = new Date().toISOString().slice(0, 10);
-  const params = new URL(req.url).searchParams;
-
-  // `?format=pptx` serves the editable PowerPoint; anything else is the HTML
-  // deck. The PowerPoint renderer is async (it rasterises the SVG exhibits).
+  // `?format=pptx` serves the editable PowerPoint of the reference deck; the
+  // PowerPoint renderer is async (it rasterises the SVG exhibits).
   if (params.get('format') === 'pptx') {
     let pptx: Buffer;
     try {
-      // Pure, date-keyed renderer — memoised per day. The cache key includes
-      // the artifact id, the `pptx` format, and `generatedOn`, so a date
-      // rollover produces a fresh entry. Only a successful render is cached.
       pptx = await cachedRenderAsync(
         `costed-business-case:pptx:${generatedOn}`,
         () => renderApexCostedBusinessCasePptx(generatedOn),

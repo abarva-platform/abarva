@@ -1169,6 +1169,7 @@ function apexContactCenterMoveStub(): StrategicMove {
       name: 'Apex Retail Group',
       industryCode: 'retail',
     },
+    charter: null,
     archetype: 'AI Product Enablement',
     currentPhase: 3,
     phaseLabel: 'Design & Plan',
