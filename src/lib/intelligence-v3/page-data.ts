@@ -245,8 +245,24 @@ function buildSentinelOpener(
 // What we can't yet see (substrate gaps)
 // ---------------------------------------------------------------------
 
+// Per-industry peer-benchmark gap. Audit 2026-05-22: this previously
+// always named "Peer NIM / cost-to-serve benchmarks" — a banking metric —
+// even for retail and healthcare tenants. Each industry names its own
+// peer-benchmark gap; unmapped industries get a generic line.
+const PEER_BENCHMARK_GAP_BY_INDUSTRY: Record<string, string> = {
+  Banking: 'Peer NIM / cost-to-serve benchmarks',
+  Retail: 'Peer comparable-sales / cost-to-serve benchmarks',
+  Healthcare: 'Peer cost-per-case / throughput benchmarks',
+  Energy: 'Peer asset-uptime / cost-per-MWh benchmarks',
+};
+
+function peerBenchmarkGapFor(industry: string): string {
+  return PEER_BENCHMARK_GAP_BY_INDUSTRY[industry] ?? 'Peer cohort benchmarks';
+}
+
 function buildWhatWeCantSee(
   initiatives: ReadonlyArray<AIInitiative>,
+  industry: string,
 ): ReadonlyArray<string> {
   // Stand-in: name the gaps honestly when we have no peer benchmarks
   // or scenario-library coverage attached. When real coverage data is
@@ -255,7 +271,7 @@ function buildWhatWeCantSee(
   if (initiatives.every((i) => !i.measuredValueUsd)) {
     gaps.push('Realized value attribution');
   }
-  gaps.push('Peer NIM / cost-to-serve benchmarks');
+  gaps.push(peerBenchmarkGapFor(industry));
   gaps.push('Quarterly KPI variance depth');
   return gaps.slice(0, 3);
 }
@@ -268,17 +284,17 @@ function buildThreeSubstrates(
   initiatives: ReadonlyArray<AIInitiative>,
   goals: ReadonlyArray<AIBusinessGoal>,
 ): IntelligenceV3PageData['substrate'] {
-  // tenantLoaded = a rough fraction-of-23-segments proxy. Until the
-  // segment 15-23 substrate is fully wired, we count the substrate
-  // types that *do* have rows for this tenant. Initiatives + goals +
-  // (KPIs / notes / decisions / vendors / scenarios computed in a
-  // future pass when we add a coverage query). For now: cap at goals
-  // + initiative-derived presence.
-  const tenantLoaded = Math.min(
-    23,
-    (initiatives.length > 0 ? 7 : 0) + // initiatives, KPIs, notes, decisions, vendors, scenarios, business goals
-      (goals.length > 0 ? 0 : 0), // already counted above
-  );
+  // tenantLoaded = the count of substrate types that actually have rows
+  // for this tenant. Audit 2026-05-22: this previously hardcoded `7` for
+  // any tenant with ≥1 initiative and presented "7 of 23 segments" as a
+  // real measurement — a fabricated count. We now count only what is
+  // genuinely observable from the data this builder loads:
+  //   1 · AI Initiatives  2 · AI Business Goals
+  // KPIs / vendors / notes / decisions / scenarios / segments 15-23 are
+  // not loaded here, so they are NOT counted. When a real coverage query
+  // is wired through the broker, the remaining types get added honestly.
+  const tenantLoaded =
+    (initiatives.length > 0 ? 1 : 0) + (goals.length > 0 ? 1 : 0);
   return {
     tenantLoaded,
     tenantTotal: 23,
@@ -331,6 +347,40 @@ function layerLabel(key: LayerKey): string {
 }
 
 // ---------------------------------------------------------------------
+// Honest empty state — spec §7.1
+// ---------------------------------------------------------------------
+//
+// A real tenant with zero loaded initiatives gets a true empty state, NOT
+// another tenant's hardcoded content with a name swap. Every collection is
+// empty; the only tenant-specific copy is the name, industry, and an
+// industry-aware AI trajectory. The page chrome (CorpusNotSeededState on
+// the Brief/Map stages, empty-state canvases elsewhere) handles the rest.
+
+function buildEmptyState(
+  tenantName: string,
+  industry: string,
+): IntelligenceV3PageData {
+  return {
+    tenantName,
+    industry,
+    refreshedLabel: 'just now',
+    stats: { patterns: 0, contradictions: 0, syntheses: 0 },
+    substrate: {
+      tenantLoaded: 0,
+      tenantTotal: 23,
+      corpus: { failureModes: 10, patternRecords: 17, researchAnchors: 30 },
+    },
+    aiTrajectory: aiTrajectoryFor(industry),
+    pressureCards: [],
+    conversationContext: { activeThread: 'Portfolio review', layerFocus: 'Decision Layer' },
+    artOfThePossible: LAYER_DEFS.map((def) => ({ ...def, moves: [] })),
+    whatWeCantSee: buildWhatWeCantSee([], industry),
+    sentinelOpener: `${tenantName}'s Intelligence corpus is not yet seeded. Once core substrate is loaded, what-matters-most surfaces here. Ask me anything you see on this page.`,
+    conversation: [],
+  };
+}
+
+// ---------------------------------------------------------------------
 // Top-level builder
 // ---------------------------------------------------------------------
 
@@ -349,16 +399,14 @@ export async function buildIntelligenceV3PageData(requestedClientId?: string | n
   const tenantName = canonicalClientDisplayName({ key: clientRow.key, name: clientRow.name }) ?? clientRow.name;
   const page = await getAIInitiativesPageData(clientRow.id).catch(() => null);
   if (!page || page.initiatives.length === 0) {
-    // Real tenant context but no initiatives — keep tenant name + industry
-    // honest while reusing the demo content for the rest. This avoids
-    // showing a blank page and matches the "pre-load" experience.
+    // Real tenant context but no initiatives — render a TRUE empty state
+    // (spec §7.1). Audit 2026-05-22: this path previously spread
+    // FIRST_CAPITAL_DEMO, so a real tenant with no data saw First
+    // Capital's hardcoded "NIM compression / FIS HORIZON renewal" facts
+    // under their own name. Never show another tenant's content; show
+    // honest emptiness instead.
     return {
-      data: {
-        ...FIRST_CAPITAL_DEMO,
-        tenantName,
-        industry: industryLabel(clientRow.industry_code),
-        sentinelOpener: `Substrate is loading for ${tenantName}. Once initiatives are bound, what-matters-most surfaces here.`,
-      },
+      data: buildEmptyState(tenantName, industryLabel(clientRow.industry_code)),
       isLiveBound: false,
     };
   }
@@ -375,7 +423,7 @@ export async function buildIntelligenceV3PageData(requestedClientId?: string | n
       pressureCards: buildPressureCards(page.initiatives),
       conversationContext: buildConversationContext(page.initiatives),
       artOfThePossible: buildLayers(page.initiatives),
-      whatWeCantSee: buildWhatWeCantSee(page.initiatives),
+      whatWeCantSee: buildWhatWeCantSee(page.initiatives, industry),
       sentinelOpener: buildSentinelOpener(tenantName, page.initiatives),
       conversation: [],
     },

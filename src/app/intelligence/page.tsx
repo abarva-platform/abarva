@@ -18,7 +18,7 @@ import {
   getPeerActivityData,
   getMyStrategyData,
 } from '@/lib/intelligence-v3/stages-data';
-import { getActiveClientRow } from '@/lib/active-client';
+import { getActiveClientRow, hasLockedTenantSession } from '@/lib/active-client';
 import { getEnterpriseContextOverviewForTenant } from '@/lib/enterprise-context/intelligence-read-model';
 import { listInitiativesForClient } from '@/lib/admin/ai-initiatives/queries';
 import {
@@ -45,7 +45,17 @@ function firstSearchValue(value: string | string[] | undefined): string | null {
 }
 
 export default async function IntelligencePage({ searchParams }: IntelligencePageProps = {}) {
-  const requestedClient = firstSearchValue((await searchParams)?.client);
+  // SEC-P0 (audit 2026-05-22): `/intelligence` is a PUBLIC route. A
+  // `?client=` URL param must never resolve tenant-scoped data unless the
+  // request carries an authenticated session pinned to exactly one tenant.
+  // For unauthenticated (or non-tenant-locked) visitors the param is
+  // ignored entirely — the page resolves the active client only from
+  // server-trusted sources (session pin / cookie / email) and renders the
+  // generic/corpus-only public state. Honoring the param here previously
+  // let an anonymous visitor read any tenant's real AI portfolio via
+  // `/intelligence?client=apexretail`.
+  const rawRequestedClient = firstSearchValue((await searchParams)?.client);
+  const requestedClient = (await hasLockedTenantSession()) ? rawRequestedClient : null;
   const client = await getActiveClientRow(requestedClient).catch(() => null);
   const resolvedClientKey = client?.key ?? requestedClient;
   const forceApexRetail = resolvedClientKey === 'apexretail';

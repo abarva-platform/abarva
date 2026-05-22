@@ -1,6 +1,6 @@
 import { cookies } from 'next/headers';
 import { currentUser } from '@clerk/nextjs/server';
-import { resolvePinnedSessionClientKey, resolveSessionRole } from '@/lib/auth/access-routing';
+import { isLockedTenantRole, resolvePinnedSessionClientKey, resolveSessionRole } from '@/lib/auth/access-routing';
 import {
   CLIENT_KEY_TO_INDUSTRY_CODE,
   CLIENT_KEY_TO_DB_NAME,
@@ -124,6 +124,21 @@ export async function getActiveClientKey(requestedClientId?: string | null): Pro
 
   // 3 · fallback
   return DEFAULT_CLIENT_KEY;
+}
+
+/**
+ * True only when the request carries an authenticated session that is
+ * pinned to exactly one tenant (a "locked" client / maestro persona).
+ *
+ * SEC-P0 (audit 2026-05-22): the public `/intelligence` route must never
+ * resolve tenant-scoped data from a `?client=` URL param supplied by an
+ * unauthenticated (or non-tenant-locked) visitor. Public callers gate on
+ * this before passing any requested client key into `getActiveClientRow`.
+ */
+export async function hasLockedTenantSession(): Promise<boolean> {
+  const session = await getSessionClientContext();
+  if (!session.role && !session.email) return false;
+  return isLockedTenantRole(session.role, session.email);
 }
 
 /**
