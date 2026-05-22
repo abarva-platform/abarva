@@ -122,6 +122,18 @@ export {
   type CfoSections,
 } from './cfo-pack-model';
 
+// The generic, kernel-derived sibling of the Apex reference CFO Pack — the
+// board-grade CFO Pack for a REAL, originated Move.
+export { renderMoveCfoPackHtml } from './move-cfo-pack-renderer';
+export {
+  buildMoveCfoPack,
+  type MoveCfoPack,
+  type MoveCfoUnboundResult,
+  type MoveCfoPackResult,
+  type MoveCfoSections,
+  type MoveCfoVerdict,
+} from './move-cfo-pack-model';
+
 export { renderApexMasterDossierHtml } from './master-dossier-renderer';
 export {
   buildApexMasterMoveDossier,

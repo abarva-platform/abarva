@@ -187,10 +187,10 @@ const BOARD_ARTIFACT_ENTRIES: readonly BoardArtifactEntry[] = [
  * `(industryKey, functionKey)` identity resolved. Each artifact's `htmlHref`
  * carries `?moveId=<id>` so the route renders THAT Move's kernel-derived deck.
  *
- * The key-driven path serves the five generic kernel-derived decks: the
+ * The key-driven path serves the six generic kernel-derived decks: the
  * Discover Brief, the Charter Business-Case Skeleton, the Costed
- * Business-Case Pack, the Solution Architecture Pack, and the Mobilize &
- * Go-Decision Packet.
+ * Business-Case Pack, the Solution Architecture Pack, the Mobilize &
+ * Go-Decision Packet, and the CFO Pack.
  */
 function genericBoardArtifacts(moveId: string): BoardArtifact[] {
   const q = `?moveId=${encodeURIComponent(moveId)}`;
@@ -230,7 +230,31 @@ function genericBoardArtifacts(moveId: string): BoardArtifact[] {
     },
     genericSolutionArchitectureArtifact(moveId),
     genericMobilizePacketArtifact(moveId),
+    genericCfoPackArtifact(moveId),
   ];
+}
+
+/**
+ * Build the generic, kernel-derived board-grade CFO Pack for a Move whose
+ * `(industryKey, functionKey)` identity resolved. The `htmlHref` carries
+ * `?moveId=<id>` so the route renders THAT Move's kernel-derived deck via
+ * `renderMoveCfoPackHtml` — the financial-challenge deck with the funding ask,
+ * the downside, the do-not-fund holdbacks, the Tower measurement, and the
+ * evidence/gap audit; the verdict is the kernel's real recommendation.
+ */
+function genericCfoPackArtifact(moveId: string): BoardArtifact {
+  const q = `?moveId=${encodeURIComponent(moveId)}`;
+  return {
+    id: 'cfo-pack',
+    label: 'CFO Pack',
+    phase: 'Design & Plan',
+    blurb:
+      'The board-grade CFO Pack — kernel-derived for this Move, a financial ' +
+      'challenge: the funding ask, the downside, the do-not-fund holdbacks, ' +
+      'what Tower will measure, and the evidence/gap audit. The verdict is ' +
+      'the kernel’s real recommendation.',
+    htmlHref: `/api/v1/moves/board-grade-cfo-pack${q}`,
+  };
 }
 
 /**
@@ -287,10 +311,10 @@ function genericMobilizePacketArtifact(moveId: string): BoardArtifact {
  *  2. The key-driven path — for every other Move, the Move's
  *     `(industryKey, functionKey)` Function-Pack identity is resolved from its
  *     `tenant.industryCode` + `charter`. When it resolves, the Move gets the
- *     five generic, kernel-derived board-grade decks (the Discover Brief, the
+ *     six generic, kernel-derived board-grade decks (the Discover Brief, the
  *     Charter Business-Case Skeleton, the Costed Business-Case Pack, the
- *     Solution Architecture Pack, and the Mobilize & Go-Decision Packet), each
- *     `htmlHref` carrying `?moveId=`.
+ *     Solution Architecture Pack, the Mobilize & Go-Decision Packet, and the
+ *     CFO Pack), each `htmlHref` carrying `?moveId=`.
  *
  * A Move that matches neither — no reference entry and no resolvable function
  * identity — returns `[]`. That is the honest signal (a gap), never a
