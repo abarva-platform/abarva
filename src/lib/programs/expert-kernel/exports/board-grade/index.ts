@@ -60,6 +60,19 @@ export {
   type MobilizePacket,
   type MobilizeSections,
 } from './mobilize-packet-model';
+
+// The generic, kernel-derived sibling of the Apex reference Mobilize renderer
+// — the board-grade Mobilize & Go-Decision Packet for a REAL, originated Move.
+export { renderMoveMobilizePacketHtml } from './move-mobilize-renderer';
+export {
+  buildMoveMobilizePacket,
+  goVerdictWord,
+  type MoveMobilizePacket,
+  type MoveMobilizeUnbound,
+  type MoveMobilizeResult,
+  type MoveMobilizeSections,
+  type MoveGoVerdict,
+} from './move-mobilize-model';
 export { renderApexCharterSkeletonHtml } from './charter-skeleton-renderer';
 export {
   buildApexCharterSkeleton,
