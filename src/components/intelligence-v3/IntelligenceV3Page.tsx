@@ -20,6 +20,7 @@
 //   - Shape-into-Move click → Strategic Moves originate flow
 
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { COLORS, FONT, SPACING } from '@/lib/design/abarva-theme';
 import { IntelligenceV3TopNav } from './IntelligenceV3TopNav';
 import { IntelligenceV3StageTabs } from './IntelligenceV3StageTabs';
@@ -208,11 +209,43 @@ export function IntelligenceV3Page({
         }}
       >
         <IntelligenceV3StageTabs active={stage} onChange={handleStageChange} />
-        {/* G9: every Intelligence surface produces a downloadable CXO
-            brief. Present for all 3 tenants — for Meridian / First
-            Capital the brief is honestly partly-sparse (no seeded
-            corpus), which is correct, not a bug. */}
-        <IntelligenceBriefDownload clientKey={clientKey} />
+        <div
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: SPACING.md,
+          }}
+        >
+          {/* Audit 2026-05-22: the bet-selection facet at
+              /intelligence/decision ("which bet first") was built and
+              tested but had no inbound nav link — unreachable. Wire it
+              into the Intelligence stage strip as a first-class
+              destination so users can reach it. */}
+          <Link
+            href="/intelligence/decision"
+            prefetch={false}
+            data-testid="intelligence-decision-link"
+            style={{
+              fontFamily: FONT.body,
+              fontSize: 12,
+              fontWeight: 700,
+              color: COLORS.surface,
+              background: COLORS.navy,
+              border: `1px solid ${COLORS.navy}`,
+              borderRadius: 6,
+              padding: `${SPACING.xs}px ${SPACING.sm}px`,
+              textDecoration: 'none',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            Which bet first →
+          </Link>
+          {/* G9: every Intelligence surface produces a downloadable CXO
+              brief. Present for all 3 tenants — for Meridian / First
+              Capital the brief is honestly partly-sparse (no seeded
+              corpus), which is correct, not a bug. */}
+          <IntelligenceBriefDownload clientKey={clientKey} />
+        </div>
       </div>
 
       {apexRetailData && <ApexReadinessStrip status={apexRetailData.status} />}

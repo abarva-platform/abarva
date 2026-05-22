@@ -43,6 +43,61 @@ export interface ApexRetailIntelligenceData {
 
 const BRAND = '#0E8C7E';
 
+// ---------------------------------------------------------------------
+// Substrate-derived fundability score
+// ---------------------------------------------------------------------
+//
+// Audit 2026-05-22: the loader previously assigned scores as positional
+// integers (`78 - index`, `88 - index * 5`, `72 - index * 4`) — the
+// ranking was just list order dressed up as analysis. Score is now
+// computed from real substrate signals for each use case:
+//   · stage maturity      — further-along stages are more fundable now
+//   · bound failure patterns — each governed pattern raises confidence
+//   · open contradiction  — an unresolved tension is a fundability drag
+// The result is clamped to a 0-100 band. It is a deterministic readiness
+// proxy, not a forecast — when a real scoring model lands it replaces this.
+
+const STAGE_SCORE: Record<string, number> = {
+  realize: 86,
+  execute: 80,
+  evidence: 72,
+  design: 64,
+  discovery: 52,
+};
+
+function fundabilityScore(
+  stage: string,
+  boundPatternCount: number,
+  hasOpenContradiction: boolean,
+): number {
+  const base = STAGE_SCORE[stage.toLowerCase()] ?? 50;
+  const patternBonus = Math.min(12, boundPatternCount * 4);
+  const contradictionPenalty = hasOpenContradiction ? 9 : 0;
+  return Math.max(5, Math.min(100, base + patternBonus - contradictionPenalty));
+}
+
+function useCaseHasContradiction(
+  useCase: UseCaseRow,
+  contradictions: ContradictionRow[],
+): boolean {
+  return contradictions.some((row) =>
+    (row.implicated_initiative_refs ?? []).includes(useCase.external_id ?? ''),
+  );
+}
+
+function boundPatternCount(useCase: UseCaseRow): number {
+  return (useCase.metadata?.related_patterns ?? []).length;
+}
+
+// Audit 2026-05-22: Apex Retail has no per-use-case value estimate seeded
+// in substrate. The loader previously presented hardcoded dollar ranges
+// (`$3M-$12M`, `$15M+`, `$3M-$20M annual value`) as if they were tenant
+// analysis. They are an illustrative industry band, not an estimate for
+// any specific Apex use case — every surface that shows them labels them
+// "(illustrative)" so a CXO is never misled. When real value modelling is
+// seeded these are replaced with computed per-use-case figures.
+const VALUE_BAND_ILLUSTRATIVE = '$3M-$12M';
+
 const PROVENANCE: Provenance = {
   primarySources: [
     {
@@ -133,6 +188,10 @@ export async function loadApexRetailIntelligenceData(
     ),
   );
 
+  // Derived once from the tenant's seeded regulation/framework sources —
+  // no longer a hardcoded retail regulatory list (audit 2026-05-22).
+  const regulatoryNames = regulatoryNamesFromSources(sources);
+
   return {
     status: {
       patterns: patterns.length,
@@ -145,8 +204,8 @@ export async function loadApexRetailIntelligenceData(
     },
     patterns: patternRows,
     todayItems: contradictions.slice(0, 3).map(toAttentionItem),
-    mapData: buildMapData(client, useCases, contradictions),
-    briefData: buildBriefData(client, useCases, patterns, sources, contradictions),
+    mapData: buildMapData(client, useCases, contradictions, regulatoryNames),
+    briefData: buildBriefData(client, useCases, patterns, sources, contradictions, regulatoryNames),
   };
 }
 
@@ -201,9 +260,10 @@ function buildMapData(
   client: ClientRow,
   useCases: UseCaseRow[],
   contradictions: ContradictionRow[],
+  regulatoryNames: string[],
 ): MapData {
   const nodes = useCases.map((row, index) => {
-    const useCase = toUseCase(row, index);
+    const useCase = toUseCase(row, index, regulatoryNames);
     const engagementState = stageToEngagement(row.stage, contradictions, row.external_id);
     return {
       useCase,
@@ -212,7 +272,11 @@ function buildMapData(
       r: engagementState === 'at_risk' ? 18 : engagementState === 'in_flight' ? 16 : 13,
       engagementState,
       initiativeDisplayId: row.external_id?.replace('apex_retail_', 'AR-').toUpperCase(),
-      score: 78 - index,
+      score: fundabilityScore(
+        row.stage,
+        boundPatternCount(row),
+        useCaseHasContradiction(row, contradictions),
+      ),
     };
   });
 
@@ -247,6 +311,7 @@ function buildBriefData(
   patterns: GenomePatternRow[],
   sources: KnowledgeSourceRow[],
   contradictions: ContradictionRow[],
+  regulatoryNames: string[],
 ): BriefData {
   const patternByCode = new Map(patterns.map((pattern) => [pattern.code, pattern]));
   const topUseCases = useCases.slice(0, 3);
@@ -267,15 +332,25 @@ function buildBriefData(
         .map((code) => patternByCode.get(code))
         .filter((value): value is GenomePatternRow => Boolean(value))
         .slice(0, 3);
+      // Score + score factors are both computed from the same real
+      // substrate signals (audit 2026-05-22) — stage maturity, bound
+      // failure patterns, open-contradiction exposure — so the factor
+      // deltas actually reconcile to the headline score.
+      const hasContradiction = useCaseHasContradiction(useCase, contradictions);
+      const stageDelta = STAGE_SCORE[useCase.stage.toLowerCase()] ?? 50;
+      const patternDelta = Math.min(12, bindingPatterns.length * 4);
+      const contradictionDelta = hasContradiction ? -9 : 0;
+      const score = Math.max(5, Math.min(100, stageDelta + patternDelta + contradictionDelta));
       return {
         rank: index + 1,
-        useCase: toUseCase(useCase, index),
-        score: 88 - index * 5,
+        useCase: toUseCase(useCase, index, regulatoryNames),
+        score,
         scoreFactors: [
-          { name: 'Apex use case seeded', delta: 18 },
-          { name: 'Retail failure pattern bound', delta: bindingPatterns.length * 7 },
-          { name: 'Open contradiction exposure', delta: index === 0 ? -6 : -3, isWarning: true },
-          { name: 'Summarized retail source coverage', delta: 16 },
+          { name: `Use-case stage · ${useCase.stage}`, delta: stageDelta },
+          { name: `Retail failure patterns bound (${bindingPatterns.length})`, delta: patternDelta },
+          ...(hasContradiction
+            ? [{ name: 'Open contradiction exposure', delta: contradictionDelta, isWarning: true }]
+            : []),
         ],
         engagementState: stageToEngagement(useCase.stage, contradictions, useCase.external_id),
         initiativeDisplayId: useCase.external_id?.replace('apex_retail_', 'AR-').toUpperCase(),
@@ -302,11 +377,17 @@ function buildBriefData(
       rank: index + 4,
       useCaseId: toUseCaseId(useCase, index + 4),
       useCaseName: useCase.name,
-      score: 72 - index * 4,
+      score: fundabilityScore(
+        useCase.stage,
+        boundPatternCount(useCase),
+        useCaseHasContradiction(useCase, contradictions),
+      ),
       state: useCase.stage === 'evidence' || useCase.stage === 'design' ? 'in_portfolio' : 'candidate',
       initiativeDisplayId: useCase.external_id?.replace('apex_retail_', 'AR-').toUpperCase(),
-      valueLabel: '$3M-$12M',
-      ttvLabel: '6-12 mo',
+      // Illustrative band — not a tenant-specific estimate. See VALUE_BAND
+      // note: no per-use-case value is seeded for Apex Retail yet.
+      valueLabel: `${VALUE_BAND_ILLUSTRATIVE} (illustrative)`,
+      ttvLabel: '6-12 mo (illustrative)',
       hint: useCase.domain ?? 'Retail AI candidate',
     })),
     patternsTriggered: topPatterns.map((pattern) => ({
@@ -327,7 +408,21 @@ function buildBriefData(
   };
 }
 
-function toUseCase(row: UseCaseRow, index: number): UseCase {
+// Regulatory context for a use case. Audit 2026-05-22: the loader
+// previously hardcoded `['CCPA', 'PCI DSS v4.0', 'FTC dark patterns
+// guidance']` on every Apex use case regardless of what was seeded.
+// We now derive the applicable list from the tenant's seeded regulation /
+// framework knowledge sources; only when none are seeded do we fall back
+// to a clearly-generic retail-baseline list.
+function regulatoryNamesFromSources(sources: KnowledgeSourceRow[]): string[] {
+  const seeded = sources
+    .filter((s) => s.content_type === 'regulation' || s.content_type === 'framework')
+    .map((s) => s.title);
+  if (seeded.length > 0) return seeded.slice(0, 5);
+  return ['Retail data-privacy baseline (illustrative)'];
+}
+
+function toUseCase(row: UseCaseRow, index: number, regulatoryNames: string[]): UseCase {
   const office = officeFor(row);
   return {
     id: toUseCaseId(row, index),
@@ -338,11 +433,14 @@ function toUseCase(row: UseCaseRow, index: number): UseCase {
     domainTags: [row.domain ?? 'retail_ai', row.business_unit ?? 'Apex Retail'],
     problemStatement: row.description ?? row.scope ?? row.name,
     artOfPossibleFraming: row.scope ?? row.description ?? row.name,
+    // Illustrative bands — no per-use-case value is seeded for Apex Retail
+    // (audit 2026-05-22). Labelled so they read as a reference band, not a
+    // tenant-specific estimate.
     businessValueRanges: {
-      perCompanySize: { veryLarge: '$3M-$20M annual value' },
+      perCompanySize: { veryLarge: `${VALUE_BAND_ILLUSTRATIVE} annual value (illustrative)` },
       timeToValueMonths: '6-12',
       paybackMonths: '9-15',
-      confidenceBand: 'MED',
+      confidenceBand: 'LOW',
     },
     lifecycleStage: row.stage === 'execute' || row.stage === 'realize' ? 'scaling' : 'emerging',
     lifecycleBasis: 'Apex Retail use-case portfolio',
@@ -353,9 +451,9 @@ function toUseCase(row: UseCaseRow, index: number): UseCase {
       emerging: [],
     },
     siLandscape: { crediblePractice: ['AbarVa'], emergingPractice: [] },
-    regulatoryContext: { applicable: ['CCPA', 'PCI DSS v4.0', 'FTC dark patterns guidance'] },
+    regulatoryContext: { applicable: regulatoryNames },
     benchmarkMetrics: {
-      primary: [{ kpi: row.domain ?? 'Retail value', industryMedian: '$3M-$12M', topQuartile: '$15M+' }],
+      primary: [{ kpi: row.domain ?? 'Retail value', industryMedian: `${VALUE_BAND_ILLUSTRATIVE} (illustrative)`, topQuartile: '$15M+ (illustrative)' }],
     },
     provenance: PROVENANCE,
     lastRefreshed: '2026-05-09',
