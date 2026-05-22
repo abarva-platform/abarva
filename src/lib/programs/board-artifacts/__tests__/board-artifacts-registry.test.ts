@@ -5,7 +5,8 @@
 //      hand-authored board-grade decks (the Costed pack carrying a pptxHref).
 //   2. The KEY-DRIVEN path — any other Move with a resolvable
 //      `(industryKey, functionKey)` Function-Pack identity → the generic,
-//      kernel-derived Costed Business-Case deck with a `?moveId=` link.
+//      kernel-derived board-grade decks (the Costed Business-Case deck and the
+//      Solution Architecture deck), each with a `?moveId=` link.
 //   A Move with no resolvable function resolves to `[]` — an honest gap.
 
 import {
@@ -90,22 +91,30 @@ describe('boardArtifactsForMove — key-driven path (real Moves, 3 verticals)', 
       charter: { functionPackKey: 'customer_care' },
     });
     const artifacts = boardArtifactsForMove(move);
-    // The key-driven path resolves the generic Costed Business-Case Pack and
-    // the generic Mobilize & Go-Decision Packet — each carrying `?moveId=`.
-    expect(artifacts).toHaveLength(2);
-    expect(artifacts.map((a) => a.id)).toEqual([
+    // The key-driven path resolves the three generic kernel-derived decks —
+    // Costed Business Case, Solution Architecture, Mobilize & Go-Decision —
+    // each carrying `?moveId=`.
+    expect(artifacts.map((a) => a.id).sort()).toEqual([
       'costed-business-case',
       'mobilize-packet',
+      'solution-architecture',
     ]);
-    expect(artifacts[0].htmlHref).toBe(
+    const costed = artifacts.find((a) => a.id === 'costed-business-case');
+    expect(costed?.htmlHref).toBe(
       '/api/v1/moves/board-grade-business-case?moveId=retail-move-1',
     );
-    expect(artifacts[1].htmlHref).toBe(
+    // The generic decks do not carry a PowerPoint export.
+    expect(costed?.pptxHref).toBeUndefined();
+    const arch = artifacts.find((a) => a.id === 'solution-architecture');
+    expect(arch?.htmlHref).toBe(
+      '/api/v1/moves/board-grade-solution-architecture?moveId=retail-move-1',
+    );
+    expect(arch?.pptxHref).toBeUndefined();
+    const mobilize = artifacts.find((a) => a.id === 'mobilize-packet');
+    expect(mobilize?.htmlHref).toBe(
       '/api/v1/moves/board-grade-mobilize-packet?moveId=retail-move-1',
     );
-    // The generic decks do not carry a PowerPoint export.
-    expect(artifacts[0].pptxHref).toBeUndefined();
-    expect(artifacts[1].pptxHref).toBeUndefined();
+    expect(mobilize?.pptxHref).toBeUndefined();
   });
 
   it('a healthcare Move with a resolvable function gets the generic decks', () => {
@@ -116,13 +125,20 @@ describe('boardArtifactsForMove — key-driven path (real Moves, 3 verticals)', 
       charter: { functionPackKey: 'clinical_operations_documentation' },
     });
     const artifacts = boardArtifactsForMove(move);
-    expect(artifacts).toHaveLength(2);
-    expect(artifacts.map((a) => a.id)).toEqual([
+    expect(artifacts.map((a) => a.id).sort()).toEqual([
       'costed-business-case',
       'mobilize-packet',
+      'solution-architecture',
     ]);
-    expect(artifacts[1].htmlHref).toBe(
+    expect(
+      artifacts.find((a) => a.id === 'mobilize-packet')?.htmlHref,
+    ).toBe(
       '/api/v1/moves/board-grade-mobilize-packet?moveId=health-move-1',
+    );
+    expect(
+      artifacts.find((a) => a.id === 'solution-architecture')?.htmlHref,
+    ).toBe(
+      '/api/v1/moves/board-grade-solution-architecture?moveId=health-move-1',
     );
   });
 
@@ -134,13 +150,20 @@ describe('boardArtifactsForMove — key-driven path (real Moves, 3 verticals)', 
       charter: { functionPackKey: 'fraud_financial_crime' },
     });
     const artifacts = boardArtifactsForMove(move);
-    expect(artifacts).toHaveLength(2);
-    expect(artifacts.map((a) => a.id)).toEqual([
+    expect(artifacts.map((a) => a.id).sort()).toEqual([
       'costed-business-case',
       'mobilize-packet',
+      'solution-architecture',
     ]);
-    expect(artifacts[1].htmlHref).toBe(
+    expect(
+      artifacts.find((a) => a.id === 'mobilize-packet')?.htmlHref,
+    ).toBe(
       '/api/v1/moves/board-grade-mobilize-packet?moveId=fs-move-1',
+    );
+    expect(
+      artifacts.find((a) => a.id === 'solution-architecture')?.htmlHref,
+    ).toBe(
+      '/api/v1/moves/board-grade-solution-architecture?moveId=fs-move-1',
     );
   });
 
@@ -154,22 +177,27 @@ describe('boardArtifactsForMove — key-driven path (real Moves, 3 verticals)', 
       charter: { functionPackKey: 'customer_care' },
     });
     const artifacts = boardArtifactsForMove(move);
-    expect(artifacts).toHaveLength(2);
+    expect(artifacts).toHaveLength(3);
     for (const artifact of artifacts) {
       expect(artifact.htmlHref).toContain('moveId=oddly-named-move');
     }
   });
 
-  it('encodes the moveId in the href', () => {
+  it('encodes the moveId in the href of every generic deck', () => {
     const move = makeMove({
       id: 'move with spaces/&',
       tenant: { id: 't-r', name: 'Northwind Retail', industryCode: 'retail' },
       charter: { functionPackKey: 'customer_care' },
     });
     const artifacts = boardArtifactsForMove(move);
-    expect(artifacts[0].htmlHref).toBe(
-      '/api/v1/moves/board-grade-business-case?moveId=' +
-        encodeURIComponent('move with spaces/&'),
+    const encoded = encodeURIComponent('move with spaces/&');
+    expect(
+      artifacts.find((a) => a.id === 'costed-business-case')?.htmlHref,
+    ).toBe(`/api/v1/moves/board-grade-business-case?moveId=${encoded}`);
+    expect(
+      artifacts.find((a) => a.id === 'solution-architecture')?.htmlHref,
+    ).toBe(
+      `/api/v1/moves/board-grade-solution-architecture?moveId=${encoded}`,
     );
   });
 });
