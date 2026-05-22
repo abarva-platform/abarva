@@ -16,6 +16,12 @@ import {
   suitabilityCharterFragment,
 } from '@/lib/programs/suitability/origination-suitability';
 import { originationCharterExtensions } from '@/lib/programs/origination-charter-extensions';
+import {
+  CHARTER_FUNCTION_PACK_CONFIDENCE_KEY,
+  CHARTER_FUNCTION_PACK_KEY,
+  classifyFunctionKey,
+  industryKeyForCode,
+} from '@/lib/programs/function-identity';
 
 export interface OriginationTurn {
   role: 'user' | 'assistant';
@@ -252,12 +258,45 @@ async function insertParticipant(input: {
   if (error) throw error;
 }
 
+/**
+ * Resolve the Domain Function Pack key for a Move from its brief text and
+ * industry code. Additive — runs alongside the legacy `classifyBrief` /
+ * `function_code` office bucket, never replaces it. Returns `null` honestly
+ * when the industry does not resolve or no pack clears the confidence floor.
+ */
+function deriveFunctionPackIdentity(
+  input: SubmitOriginationBriefInput,
+  industryCode: string,
+): { functionPackKey: string; functionPackConfidence: number } | null {
+  const industryKey = industryKeyForCode(industryCode);
+  if (!industryKey) return null;
+
+  // The Move's brief text — title / objective / topic / brief — the same
+  // signal `classifyBrief` reads, concatenated for the function classifier.
+  const briefText = [
+    input.programName,
+    input.problemStatement,
+    input.targetOutcome ?? '',
+    input.classification ?? '',
+  ]
+    .filter((part) => part.trim().length > 0)
+    .join(' ');
+
+  const classified = classifyFunctionKey(industryKey, briefText);
+  if (!classified) return null;
+  return {
+    functionPackKey: classified.functionKey,
+    functionPackConfidence: classified.confidence,
+  };
+}
+
 /** Build the charter JSONB written to engagements.charter at P0 origination. */
 function buildOriginationCharter(
   input: SubmitOriginationBriefInput,
   derived: Classification,
   sponsor: ResolvedPerson,
   programArchetype: string | null,
+  industryCode: string,
 ): Record<string, unknown> {
   // Slice 2.1 · agentic suitability assessment. Run once at P0 from the brief
   // text alone — no data-readiness ledger entry exists yet, so the readiness
@@ -274,9 +313,22 @@ function buildOriginationCharter(
   // options, and the control & eval matrix. Pure builders composed from the
   // 2.1 result above — additive charter JSONB fields, no surface change.
   const charterExtensions = originationCharterExtensions(suitabilityResult);
+  // Function-identity spine · resolve the Move to a Domain Function Pack key
+  // from its brief text + industry code. Persisted into the charter so a
+  // surface can later call resolveMoveFunctionIdentity → resolveFunctionPack
+  // and bind curated industry depth. Honest `null` when no pack matches —
+  // additive, never blocks origination, never overrides `function_code`.
+  const functionPackIdentity = deriveFunctionPackIdentity(input, industryCode);
   return {
     version: 1,
     captured_at: new Date().toISOString(),
+    ...(functionPackIdentity
+      ? {
+          [CHARTER_FUNCTION_PACK_KEY]: functionPackIdentity.functionPackKey,
+          [CHARTER_FUNCTION_PACK_CONFIDENCE_KEY]:
+            functionPackIdentity.functionPackConfidence,
+        }
+      : {}),
     scaffold: {
       problem_statement: input.problemStatement,
       archetype: programArchetype,
@@ -454,7 +506,13 @@ export async function submitOriginationBrief(
   // context at the moment the brief is promoted. Written once; amended later
   // by the P1 Evidence & Assessment phase when the brief is upgraded to a
   // full charter document.
-  const charter = buildOriginationCharter(input, derived, sponsor, programArchetype);
+  const charter = buildOriginationCharter(
+    input,
+    derived,
+    sponsor,
+    programArchetype,
+    industryCode,
+  );
 
   const { data: inserted, error: insertError } = await sb
     .from('engagements')
