@@ -52,7 +52,15 @@ function makeMove(overrides: Partial<StrategicMove> = {}): StrategicMove {
         url: '#',
       },
     ],
-    gateCriteria: [{ id: 'g1', label: 'Architecture review', completed: false }],
+    gateCriteria: [
+      {
+        id: 'design_approved',
+        label: 'Architecture review',
+        completed: false,
+        severity: 'hard',
+        verified: true,
+      },
+    ],
     recentActivity: [],
     linkedEvidence: [],
     mapLabel: 'P3',

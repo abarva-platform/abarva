@@ -14,7 +14,7 @@
 //   6. Economics              — investment, value, sensitivity, what breaks it.
 //   7. Roadmap & mobilization — 30/60/90, workstreams, RACI, open actions.
 //   8. Tower measurement      — baseline, target, cadence, forecast handoff.
-//   9. Downloads and signoff  — every sibling artifact, scores, reviewer verdicts.
+//   9. Downloads and readiness — every sibling artifact + readiness self-assessment.
 //
 // The dossier is the "assembled book" (blueprint §3 / §4): §9 lists and links
 // EVERY other board-grade artifact deck for this Move, with working View links
@@ -678,7 +678,6 @@ function renderDownloadsSignoff(dossier: MasterMoveDossier): string {
           `<div class="artifact-card">` +
           `<div class="artifact-head">` +
           `<span class="artifact-label">${esc(a.label)}</span>` +
-          `<span class="artifact-score">${a.qualityScore}/10</span>` +
           `</div>` +
           `<div class="artifact-phase">${esc(a.phase)}</div>` +
           `<div class="artifact-blurb">${esc(a.blurb)}</div>` +
@@ -695,27 +694,27 @@ function renderDownloadsSignoff(dossier: MasterMoveDossier): string {
       .join('') +
     `</div>`;
 
-  const statusChip = (st: 'cleared' | 'conditional' | 'blocked'): string => {
-    if (st === 'cleared') return '<span class="chip chip-good">Cleared</span>';
+  const statusChip = (st: 'ready' | 'conditional' | 'blocked'): string => {
+    if (st === 'ready') return '<span class="chip chip-good">Ready</span>';
     if (st === 'blocked') return '<span class="chip chip-bad">Blocked</span>';
     return '<span class="chip chip-warn">Conditional</span>';
   };
-  const rowClass = (st: 'cleared' | 'conditional' | 'blocked'): string =>
-    st === 'cleared'
+  const rowClass = (st: 'ready' | 'conditional' | 'blocked'): string =>
+    st === 'ready'
       ? 'check-approve'
       : st === 'blocked'
         ? 'check-hold'
         : 'check-condition';
 
-  const signoff =
+  const readiness =
     `<div class="checklist">` +
-    s.signoff
+    s.readinessAssessment
       .map(
         (r) =>
           `<div class="check-row ${rowClass(r.status)}">` +
           `<div class="check-mark">${statusChip(r.status)}</div>` +
           `<div class="check-body">` +
-          `<div class="check-label">${esc(r.role)} — ${esc(r.reviewer)}</div>` +
+          `<div class="check-label">${esc(r.lens)}</div>` +
           `<div class="check-detail">${esc(r.note)}</div>` +
           `</div></div>`,
       )
@@ -726,20 +725,23 @@ function renderDownloadsSignoff(dossier: MasterMoveDossier): string {
     lede(
       `This dossier is the assembled book — and ${s.artifacts.length} ` +
         'other board-grade decks are its chapters. Every one is linked ' +
-        'below with a working View link; signoff is a readiness record, ' +
-        'not a final approval — two reviewers are blocked, which is ' +
-        'precisely why the Move is not yet fundable.',
+        'below with a working View link. The readiness matrix is a ' +
+        'self-assessment, not a governance signoff — two review lenses are ' +
+        'blocked, which is precisely why the Move is not yet fundable.',
     ) +
     heroExhibitHtml(
       `Exhibit 9 — Artifact health grid: the ${s.artifacts.length} sibling ` +
         'board-grade decks for this Move',
       artifactGrid,
-      'Each card links straight to the deck it scores. The Costed ' +
-        'Business-Case Pack additionally offers an editable PowerPoint.',
+      'Each card links straight to its deck. The Costed Business-Case Pack ' +
+        'additionally offers an editable PowerPoint.',
     ) +
     heroExhibitHtml(
-      'Exhibit 9b — Signoff matrix: what each reviewer has cleared',
-      signoff,
+      'Exhibit 9b — Readiness self-assessment: a working readiness record, ' +
+        'not a final approval and not a governance signoff. No named ' +
+        'reviewer has attested; each row is the kernel’s gap-aware ' +
+        'readiness call against a review lens.',
+      readiness,
     ) +
     detail(
       'Open actions still required before approval',

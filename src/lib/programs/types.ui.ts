@@ -446,7 +446,19 @@ export interface StrategicMove {
     preview: string;
     url: string;
   }>;
-  gateCriteria: Array<{ id: string; label: string; completed: boolean }>;
+  // Gate criteria for the move's current → next phase transition. Each
+  // criterion is evaluated against real program state via
+  // `governance.evaluateGate` — `completed` is never fabricated. `verified`
+  // is true when the criterion was actually evaluated (false only when no
+  // gate rule exists, e.g. the terminal phase, in which case the criterion
+  // is rendered explicitly as not-yet-verified rather than guessed).
+  gateCriteria: Array<{
+    id: string;
+    label: string;
+    completed: boolean;
+    severity: 'hard' | 'soft';
+    verified: boolean;
+  }>;
   recentActivity: Array<{ at: string; actor: string; action: string; summary: string }>;
   linkedEvidence: Array<{ id: string; anchor: string; summary: string; url: string }>;
   mapLabel: string;

@@ -15,6 +15,7 @@
 // logic changes here.
 
 import type { Metadata } from 'next';
+import { notFound } from 'next/navigation';
 import { AppShell } from '@/components/shell/AppShell';
 import { DecisionHomeView } from '@/components/home/decision/DecisionHomeView';
 import {
@@ -39,18 +40,21 @@ export const dynamic = 'force-dynamic';
 export default async function DecisionHomePage() {
   const activeClient = await getActiveClientRow().catch(() => null);
 
-  // The reference surface is bound to the Meridian × Population-Health / VBC
-  // tenant-function. The display name resolves from the active client where
-  // it is the Meridian tenant; otherwise the canonical Meridian name is used
-  // so the reference surface is always judgeable.
+  // This surface renders Meridian Health's population-health / value-based-care
+  // substrate — its named healthcare metrics are tenant-confidential. It is
+  // bound to the Meridian tenant ONLY: an Apex Retail or First Capital user
+  // must never see another tenant's content. Anything but the Meridian active
+  // tenant is a 404 — the route does not exist for them.
   const isMeridian = activeClient?.key === MERIDIAN_TENANT_KEY;
+  if (!isMeridian) {
+    notFound();
+  }
+
   const tenantName =
-    (isMeridian
-      ? canonicalClientDisplayName({
-          key: activeClient?.key,
-          name: activeClient?.name,
-        })
-      : null) ?? 'Meridian Health';
+    canonicalClientDisplayName({
+      key: activeClient?.key,
+      name: activeClient?.name,
+    }) ?? 'Meridian Health';
 
   const home = buildMeridianVbcDecisionHome(tenantName);
 

@@ -24,6 +24,7 @@ import type { NextRequest } from 'next/server';
 import { getCurrentUser } from '@/lib/auth/current-user';
 import { renderApexSolutionArchitectureHtml } from '@/lib/programs/expert-kernel/exports/board-grade';
 import { cachedRender } from '@/lib/programs/expert-kernel/exports/board-grade/render-cache';
+import { assertBoardGradeTenancy } from '@/lib/programs/board-artifacts/board-grade-route-guard';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -38,6 +39,12 @@ export async function GET(req: NextRequest): Promise<Response> {
       { status: 401 },
     );
   }
+
+  // --- Tenancy — the artifact is Apex-owned; block cross-tenant access. ---
+  const tenancyDenied = await assertBoardGradeTenancy(
+    'GET /api/v1/moves/board-grade-solution-architecture',
+  );
+  if (tenancyDenied) return tenancyDenied;
 
   const generatedOn = new Date().toISOString().slice(0, 10);
 

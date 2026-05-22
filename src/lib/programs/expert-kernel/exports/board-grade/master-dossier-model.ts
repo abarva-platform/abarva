@@ -23,7 +23,7 @@
 //   6. Economics              — investment, value, sensitivity, what breaks it.
 //   7. Roadmap & mobilization — 30/60/90, workstreams, RACI, open actions.
 //   8. Tower measurement      — baseline, target, cadence, forecast handoff.
-//   9. Downloads and signoff  — every sibling artifact, scores, reviewer verdicts.
+//   9. Downloads and readiness — every sibling artifact + readiness self-assessment.
 //
 // Blueprint §4 acceptance bar honoured here:
 //   - the executive answer is the FIRST section and answers fund/shape/kill;
@@ -318,9 +318,7 @@ export interface DossierArtifactCard {
   htmlHref: string;
   /** The route that downloads the PowerPoint, when one exists. */
   pptxHref: string | null;
-  /** Quality score 0..10 — the board-grade rubric (blueprint §12). */
-  qualityScore: number;
-  /** Reviewer verdict on the artifact. */
+  /** Gap-aware verdict on the artifact — derived from the kernel's facts. */
   verdict: string;
 }
 
@@ -328,11 +326,17 @@ export interface DownloadsSignoffSection {
   anatomy: DossierSectionAnatomy;
   /** Every sibling board-grade artifact for this Move — the assembled book. */
   artifacts: DossierArtifactCard[];
-  /** The reviewer signoff matrix. */
-  signoff: Array<{
-    role: string;
-    reviewer: string;
-    status: 'cleared' | 'conditional' | 'blocked';
+  /**
+   * The readiness self-assessment, one row per review lens. This is NOT a
+   * governance signoff: AbarVa holds no real review-of-record data source,
+   * so these rows are the kernel's own gap-aware readiness call against each
+   * lens — never an attestation by a named reviewer. The status reflects how
+   * far the lens is from clearing, and the note states why.
+   */
+  readinessAssessment: Array<{
+    /** The review lens — finance, domain, delivery, risk, Tower. */
+    lens: string;
+    status: 'ready' | 'conditional' | 'blocked';
     note: string;
   }>;
   /** Open actions still required before approval. */
@@ -1019,25 +1023,29 @@ export function buildApexMasterMoveDossier(
     anatomy: {
       page: 9,
       id: 'downloads-signoff',
-      navLabel: 'Downloads and signoff',
+      navLabel: 'Downloads and readiness',
       takeaway:
         'This dossier is the assembled book — every chapter is a ' +
-        'board-grade deck of its own, and none is signed off as approved ' +
-        'while blockers remain.',
+        'board-grade deck of its own. The readiness self-assessment is the ' +
+        'kernel’s own gap-aware call, not a governance signoff.',
       decisionRole:
         'Show artifact health and how far the case is from approval.',
       evidence: {
         sources: [
           'Board-artifacts registry — the Move’s artifact set',
-          'Artifact quality rubric (blueprint §12)',
+          'Kernel readiness self-assessment per review lens',
         ],
         asOf: generatedOn,
         confidence: 'medium',
-        gaps: ['Two reviewer signoffs blocked; payback evidence open'],
+        gaps: [
+          'Two review lenses assessed blocked; payback evidence open',
+          'No review-of-record data source — readiness is self-assessed',
+        ],
       },
       implication:
-        'A reviewer can open any chapter deck from here and see that ' +
-        'signoff is a readiness record, not a final approval.',
+        'A reviewer can open any chapter deck from here. The readiness ' +
+        'matrix is a self-assessment — it is not an attestation by a ' +
+        'named reviewer and confers no approval.',
       owner: 'Priya Iyer (Program Lead)',
       nextGate: 'Approval gate — opens only when every blocker clears',
     },
@@ -1048,37 +1056,36 @@ export function buildApexMasterMoveDossier(
       blurb: a.blurb,
       htmlHref: a.htmlHref,
       pptxHref: a.pptxHref ?? null,
-      qualityScore: artifactQualityScore(a),
       verdict: artifactVerdict(a),
     })),
-    signoff: [
+    // Readiness self-assessment — NOT a governance signoff. Each row is the
+    // kernel's own gap-aware readiness call against a review lens, derived
+    // from the declared facts (the seed gaps, the open critic blocker, the
+    // pending privacy milestone). No named reviewer has attested anything;
+    // these are not review records.
+    readinessAssessment: [
       {
-        role: 'CFO / Finance',
-        reviewer: 'Finance committee',
+        lens: 'Finance',
         status: 'blocked',
         note: 'Payback is not claimable while cost-per-contact is a seed gap.',
       },
       {
-        role: 'Domain operator',
-        reviewer: 'VP Customer Care',
+        lens: 'Domain operations',
         status: 'conditional',
         note: 'Baseline metrics validated; awaits the containment reconciliation.',
       },
       {
-        role: 'Delivery lead',
-        reviewer: 'Priya Iyer (Program Lead)',
+        lens: 'Delivery',
         status: 'conditional',
         note: 'Effort and roadmap reviewed; pilot gated on the seed gap.',
       },
       {
-        role: 'Risk & compliance',
-        reviewer: 'Elena Fischer (AI Governance)',
+        lens: 'Risk & compliance',
         status: 'conditional',
         note: 'Transcript-use privacy review pending the 2026-05-17 milestone.',
       },
       {
-        role: 'Tower owner',
-        reviewer: 'Mariana Rojas (WFM Lead)',
+        lens: 'Tower / measurement',
         status: 'blocked',
         note: 'The measurement loop does not close — cost-per-contact is unwired.',
       },
@@ -1207,18 +1214,7 @@ function haircutFactorLabel(raw: string): string {
   return map[raw] ?? raw;
 }
 
-/**
- * Quality score for a sibling artifact — the board-grade rubric read
- * (blueprint §12). The seven shipped Apex artifacts all clear the 9+ board
- * bar; the dossier itself is the assembled book and scores the same.
- */
-function artifactQualityScore(artifact: BoardArtifact): number {
-  // Every shipped Apex board-grade deck is a 9+ reference implementation.
-  void artifact;
-  return 9;
-}
-
-/** Reviewer verdict on a sibling artifact — honest, gap-aware. */
+/** Gap-aware verdict on a sibling artifact — derived from declared facts. */
 function artifactVerdict(artifact: BoardArtifact): string {
   switch (artifact.id) {
     case 'costed-business-case':

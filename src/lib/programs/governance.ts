@@ -132,6 +132,29 @@ export function findGateRule(fromPhase: number, toPhase: number): GateRule | nul
   return GATE_RULES.find((g) => g.fromPhase === fromPhase && g.toPhase === toPhase) ?? null;
 }
 
+/** A single gate criterion, identified by its canonical governance key. */
+export interface GateRuleCriterion {
+  /** Canonical key — the SAME id `evaluateGate` reports in `failedChecks`. */
+  key: string;
+  /** Reviewer-facing description of the criterion. */
+  describe: string;
+  severity: 'hard' | 'soft';
+}
+
+/**
+ * The canonical gate criteria for the transition OUT of `fromPhase`
+ * (`fromPhase` → `fromPhase + 1`). Returns `null` when no gate rule exists
+ * — e.g. the terminal phase, where there is nothing left to gate. This is
+ * the single source of truth for gate-criterion ids; every surface that
+ * renders gate progress must read these keys so the detail page and the
+ * phase workspace can never diverge.
+ */
+export function gateCriteriaForPhase(fromPhase: number): GateRuleCriterion[] | null {
+  const rule = GATE_RULES.find((g) => g.fromPhase === fromPhase);
+  if (!rule) return null;
+  return rule.checks.map((c) => ({ key: c.key, describe: c.describe, severity: c.severity }));
+}
+
 async function hasProgramEvidence(programId: string, phase: number, sb: SupabaseClient): Promise<boolean> {
   const { data } = await sb
     .from('program_evidence_items')
