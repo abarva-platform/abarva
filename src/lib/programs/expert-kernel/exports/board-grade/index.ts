@@ -77,6 +77,17 @@ export {
   type EstimateSections,
 } from './estimate-model-model';
 
+// The generic, kernel-derived sibling of the Apex reference Estimate Model —
+// the board-grade Estimate & Financial Model for a REAL, originated Move.
+export { renderMoveEstimateModelHtml } from './move-estimate-renderer';
+export {
+  buildMoveEstimateModel,
+  type MoveEstimateModel,
+  type MoveEstimateUnbound,
+  type MoveEstimateModelResult,
+  type MoveEstimateSections,
+} from './move-estimate-model';
+
 export { renderApexMobilizePacketHtml } from './mobilize-packet-renderer';
 export {
   buildApexMobilizePacket,
