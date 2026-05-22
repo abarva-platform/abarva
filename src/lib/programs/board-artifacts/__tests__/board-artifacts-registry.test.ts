@@ -296,6 +296,45 @@ describe('boardArtifactsForMove — key-driven path (real Moves, 3 verticals)', 
   });
 });
 
+describe('boardArtifactsForMove — gammaHref is REFERENCE-only (egress gate)', () => {
+  // The Gamma integration is gated to synthetic reference decks. The
+  // hand-authored Apex artifacts carry `gammaHref`; the generic
+  // `?moveId=`-bound artifacts must NOT carry it. This is enforced at the
+  // route layer too, but the registry is the surface the UI reads — if
+  // `gammaHref` ever leaks onto a generic deck, real-tenant data could be
+  // posted to Gamma before the security review closes.
+
+  it('every Apex reference artifact carries a gammaHref', () => {
+    const artifacts = boardArtifactsForMove(makeMove());
+    for (const a of artifacts) {
+      expect(a.gammaHref).toBeDefined();
+      expect(a.gammaHref).toMatch(
+        /^\/api\/v1\/moves\/board-grade-[a-z-]+\/gamma$/,
+      );
+      // No moveId encoded into the gamma route — reference decks are global.
+      expect(a.gammaHref).not.toContain('moveId=');
+    }
+  });
+
+  it('no key-driven (real-Move) artifact carries a gammaHref', () => {
+    const move = makeMove({
+      id: 'real-move-123',
+      name: 'Modernize fraud detection',
+      tenant: {
+        id: 't-f',
+        name: 'Summit Bank',
+        industryCode: 'finserv',
+      },
+      charter: { functionPackKey: 'fraud_financial_crime' },
+    });
+    const artifacts = boardArtifactsForMove(move);
+    expect(artifacts.length).toBeGreaterThan(0);
+    for (const a of artifacts) {
+      expect(a.gammaHref).toBeUndefined();
+    }
+  });
+});
+
 describe('boardArtifactsForMove — no resolvable function resolves to []', () => {
   it('a Move whose charter carries no function key resolves to []', () => {
     expect(

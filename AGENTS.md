@@ -37,7 +37,7 @@ Required for data-backed pages:
 - `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`
 - `DATABASE_URL`
 
-Optional (features degrade gracefully): `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `PINECONE_API_KEY`, `NEO4J_URI`/`NEO4J_USERNAME`/`NEO4J_PASSWORD`, `STRIPE_SECRET_KEY`, `RESEND_API_KEY`.
+Optional (features degrade gracefully): `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `PINECONE_API_KEY`, `NEO4J_URI`/`NEO4J_USERNAME`/`NEO4J_PASSWORD`, `STRIPE_SECRET_KEY`, `RESEND_API_KEY`, `GAMMA_API_KEY` (server-only; enables the "Polish via Gamma" action on the board-grade Apex reference decks — when absent, the action returns a 503).
 
 ### Node.js version
 The Dockerfile uses `node:24-bookworm-slim`. Use Node.js 24.x for consistency.

@@ -50,6 +50,14 @@ export interface BoardArtifact {
   htmlHref: string;
   /** The route that downloads the editable PowerPoint, when one exists. */
   pptxHref?: string;
+  /**
+   * POST endpoint that generates a polished Gamma-rendered deck (a Gamma-
+   * hosted URL + a signed `.pptx` export URL) for the artifact. Present ONLY
+   * on synthetic REFERENCE artifacts; the generic `?moveId=` deck variants
+   * never carry this — the Gamma integration is gated to reference content
+   * until the data-egress / security review closes.
+   */
+  gammaHref?: string;
 }
 
 /**
@@ -113,6 +121,7 @@ const APEX_CONTACT_CENTER_ARTIFACTS: readonly BoardArtifact[] = [
       'The board-grade costed business case — baseline, value forecast, costed roadmap, and the go-decision verdict.',
     htmlHref: '/api/v1/moves/board-grade-business-case',
     pptxHref: '/api/v1/moves/board-grade-business-case?format=pptx',
+    gammaHref: '/api/v1/moves/board-grade-business-case/gamma',
   },
   {
     id: 'discover-brief',
@@ -121,6 +130,7 @@ const APEX_CONTACT_CENTER_ARTIFACTS: readonly BoardArtifact[] = [
     blurb:
       'The board-grade Discover brief — the diagnosed problem, baseline evidence, and the framed opportunity.',
     htmlHref: '/api/v1/moves/board-grade-discover-brief',
+    gammaHref: '/api/v1/moves/board-grade-discover-brief/gamma',
   },
   {
     id: 'solution-architecture',
@@ -129,6 +139,7 @@ const APEX_CONTACT_CENTER_ARTIFACTS: readonly BoardArtifact[] = [
     blurb:
       'The board-grade solution architecture — target-state design, integration patterns, and the build approach.',
     htmlHref: '/api/v1/moves/board-grade-solution-architecture',
+    gammaHref: '/api/v1/moves/board-grade-solution-architecture/gamma',
   },
   {
     id: 'estimate-model',
@@ -137,6 +148,7 @@ const APEX_CONTACT_CENTER_ARTIFACTS: readonly BoardArtifact[] = [
     blurb:
       'The board-grade estimate — workstream cost, role mix, rate card, value forecast, sensitivity, and roadmap cash flow.',
     htmlHref: '/api/v1/moves/board-grade-estimate-model',
+    gammaHref: '/api/v1/moves/board-grade-estimate-model/gamma',
   },
   {
     id: 'mobilize-packet',
@@ -145,6 +157,7 @@ const APEX_CONTACT_CENTER_ARTIFACTS: readonly BoardArtifact[] = [
     blurb:
       'The board-grade Mobilize packet — 30/60/90 plan, RACI, adoption approach, Tower handoff, and the go-decision verdict.',
     htmlHref: '/api/v1/moves/board-grade-mobilize-packet',
+    gammaHref: '/api/v1/moves/board-grade-mobilize-packet/gamma',
   },
   {
     id: 'charter-skeleton',
@@ -153,6 +166,7 @@ const APEX_CONTACT_CENTER_ARTIFACTS: readonly BoardArtifact[] = [
     blurb:
       'The board-grade Charter skeleton — the shaping verdict, falsifiable value hypothesis, early cost/effort range, owned assumptions, and the evidence asks before funding.',
     htmlHref: '/api/v1/moves/board-grade-charter-skeleton',
+    gammaHref: '/api/v1/moves/board-grade-charter-skeleton/gamma',
   },
   {
     id: 'cfo-pack',
@@ -161,6 +175,7 @@ const APEX_CONTACT_CENTER_ARTIFACTS: readonly BoardArtifact[] = [
     blurb:
       'The board-grade CFO Pack — a financial challenge: the funding ask, the downside, the do-not-fund holdbacks, what Tower will measure, and the evidence/gap audit.',
     htmlHref: '/api/v1/moves/board-grade-cfo-pack',
+    gammaHref: '/api/v1/moves/board-grade-cfo-pack/gamma',
   },
   {
     id: 'master-dossier',
@@ -169,6 +184,7 @@ const APEX_CONTACT_CENTER_ARTIFACTS: readonly BoardArtifact[] = [
     blurb:
       'The board-grade Master Move Dossier — the assembled book: the whole Move pulled into one CEO/CFO/CIO read, with the executive answer, decision timeline, economics, roadmap, Tower handoff, and links to every other artifact deck.',
     htmlHref: '/api/v1/moves/board-grade-master-dossier',
+    gammaHref: '/api/v1/moves/board-grade-master-dossier/gamma',
   },
 ];
 

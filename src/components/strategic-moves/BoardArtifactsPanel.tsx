@@ -24,6 +24,7 @@ import {
   type BoardArtifact,
 } from '@/lib/programs/board-artifacts/board-artifacts-registry';
 import type { StrategicMove } from '@/lib/programs/types.ui';
+import { GammaExportAction } from './GammaExportAction';
 
 interface Props {
   move: StrategicMove;
@@ -98,6 +99,12 @@ function ArtifactRow({ artifact }: { artifact: BoardArtifact }) {
           <a href={artifact.pptxHref} style={linkStyle('ghost')}>
             ↓ PowerPoint
           </a>
+        )}
+        {artifact.gammaHref && (
+          <GammaExportAction
+            endpoint={artifact.gammaHref}
+            artifactLabel={artifact.label}
+          />
         )}
       </div>
     </div>
