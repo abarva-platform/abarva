@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server';
-import { getGenomePatternDetail } from '@/lib/graph/retrieval';
+import { getGenomePatternDetail } from '@/lib/knowledge/graph-access';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';

@@ -7,8 +7,7 @@ import {
   getEngagementByGraphId,
 } from '@/lib/db/engagement';
 import { createPerson, getAllPersons } from '@/lib/db/person';
-import { syncEngagementToGraph } from '@/lib/graph/engagement-sync';
-import { syncPersonToGraph } from '@/lib/graph/mutations';
+import { syncEngagementToGraph, syncPersonToGraph } from '@/lib/knowledge/graph-access';
 import { getCurrentMaestro } from '@/lib/auth/maestro';
 import { logAudit } from '@/lib/audit/log';
 import { assignTopic } from '@/lib/topics/db';

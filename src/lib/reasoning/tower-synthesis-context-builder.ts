@@ -23,7 +23,10 @@ import type {
 
 /**
  * Builds a portfolio-level SynthesisContext from every active program +
- * source-event instance in the tenant. Used by /api/tower/synthesis.
+ * source-event instance in the tenant. Consumed by the reasoning-explain
+ * route and the Tower provenance ribbon. (The standalone
+ * /api/tower/synthesis route was removed in the 2026-05 audit pass — it
+ * was hardcoded to Apex Retail and had only an orphaned caller.)
  */
 export function buildTowerSynthesisContext(
   programInstances: ProgramInstance[],

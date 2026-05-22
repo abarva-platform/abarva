@@ -9,7 +9,7 @@ import {
   getActivePatterns,
   getPeerDecisionsForPhase,
   getChainedPatterns,
-} from '@/lib/graph/retrieval';
+} from '@/lib/knowledge/graph-access';
 import { EngagementConsole } from '@/components/engagement/EngagementConsole';
 import { EngagementMetaStrip } from '@/components/engagement/EngagementMetaStrip';
 import { getCurrentPerson } from '@/lib/auth/maestro';

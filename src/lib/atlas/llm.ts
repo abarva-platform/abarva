@@ -159,48 +159,60 @@ export async function runAtlasLlm(
   const valueGroundingContext = renderAtlasValueGrounding(valueGrounding);
   const payload = JSON.stringify(sanitizeForTenantPrompt(toolResults), null, 2);
 
-  const result = await client.messages.create({
-    model: 'claude-opus-4-7',
-    max_tokens: 500,
-    system,
-    messages: [
-      {
-        role: 'user',
-        content: [
-          {
-            type: 'text',
-            text: [
-              `User question: ${message}`,
-              '',
-              'Answer from the current Tower state first. Then use retrieved corpus / industry context when present. For financial or value advice, keep projected, tracked, and verified value separate and ground recommendations in the canonical pattern confidence, KPIs, baseline requirements, and measurement method. If any baseline, measurement, or provenance field is missing, say so instead of quantifying an outcome. If the ask is strategic, explain the implications but route the actual choice to Sentinel or a Program charter.',
-              '',
-              towerContext,
-              '',
-              `ATLAS VALUE GROUNDING\n${valueGroundingContext}`,
-              '',
-              retrievedContext || 'RETRIEVED CONTEXT\nNo corpus, industry, or client vector chunks were retrieved for this turn.',
-              '',
-              CITATION_INSTRUCTION,
-              '',
-              'Raw tool context follows for exact IDs and auditability. Do not surface raw JSON unless asked.',
-              payload,
-            ].join('\n'),
-          },
-        ],
-      },
-    ],
-  });
+  let response: string;
+  let modelName: string | null = 'claude-opus-4-7';
+  try {
+    const result = await client.messages.create({
+      model: 'claude-opus-4-7',
+      max_tokens: 500,
+      system,
+      messages: [
+        {
+          role: 'user',
+          content: [
+            {
+              type: 'text',
+              text: [
+                `User question: ${message}`,
+                '',
+                'Answer from the current Tower state first. Then use retrieved corpus / industry context when present. For financial or value advice, keep projected, tracked, and verified value separate and ground recommendations in the canonical pattern confidence, KPIs, baseline requirements, and measurement method. If any baseline, measurement, or provenance field is missing, say so instead of quantifying an outcome. If the ask is strategic, explain the implications but route the actual choice to Sentinel or a Program charter.',
+                '',
+                towerContext,
+                '',
+                `ATLAS VALUE GROUNDING\n${valueGroundingContext}`,
+                '',
+                retrievedContext || 'RETRIEVED CONTEXT\nNo corpus, industry, or client vector chunks were retrieved for this turn.',
+                '',
+                CITATION_INSTRUCTION,
+                '',
+                'Raw tool context follows for exact IDs and auditability. Do not surface raw JSON unless asked.',
+                payload,
+              ].join('\n'),
+            },
+          ],
+        },
+      ],
+    });
 
-  const responseParts: string[] = [];
-  for (const item of result.content) {
-    if (item.type === 'text') {
-      responseParts.push(item.text);
+    const responseParts: string[] = [];
+    for (const item of result.content) {
+      if (item.type === 'text') {
+        responseParts.push(item.text);
+      }
     }
+    response = responseParts.join('\n').trim() || buildFallback(toolResults);
+  } catch (err) {
+    // Degraded model service (timeout / 429 / 5xx) must not surface as a
+    // raw 500 on the Atlas chat surface. Fall back to the deterministic
+    // tool-grounded read and disclose that the model was unavailable, so
+    // the caller still gets a substrate-grounded answer.
+    console.error('[atlas.llm] model call failed — serving deterministic fallback:', err);
+    response = `Model unavailable — deterministic read. ${buildFallback(toolResults)}`;
+    modelName = null;
   }
-  const response = responseParts.join('\n').trim();
 
   return {
-    response: response || buildFallback(toolResults),
+    response,
     toolsUsed,
     suggestions: [
       { label: 'Peer context', value: 'How do we compare to peers?', kind: 'message' },
@@ -208,7 +220,7 @@ export async function runAtlasLlm(
       topSignal ? { label: 'Open top signal', value: `signal:${topSignal.id}`, kind: 'signal' } : { label: 'Programs', value: 'Show active programs', kind: 'message' },
     ],
     toolResults,
-    modelName: 'claude-opus-4-7',
+    modelName,
     promptVersion: ATLAS_PROMPT_VERSION,
   };
 }
