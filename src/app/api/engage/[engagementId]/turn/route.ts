@@ -7,11 +7,13 @@ import {
   getActivePatterns,
   getPeerDecisionsForPhase,
   getChainedPatterns,
-} from '@/lib/graph/retrieval';
+  getAllGenomePatterns,
+  assembleCrossClientContext,
+  formatCrossClientBlock,
+} from '@/lib/knowledge/graph-access';
 import { assembleEngagementSystemPrompt } from '@/lib/agent/prompts/engagement';
 import { assembleRetrievalContext } from '@/lib/agent/retrieval';
 import { formatRetrievedContext } from '@/lib/agent/retrieval-format';
-import { assembleCrossClientContext, formatCrossClientBlock } from '@/lib/graph/cross-client';
 import { getServerSupabase } from '@/lib/supabase-server';
 import { streamAgentTurn } from '@/lib/agent/stream';
 import { TurnTrace } from '@/lib/agent/trace';
@@ -39,7 +41,6 @@ import { syncPhaseOneArtifactsFromTurns } from '@/lib/deliverables/live-sync';
 import { phaseOpenerFor } from '@/lib/nexus/gateLifecycle';
 import { checkGuardrail } from '@/lib/agent/guardrail';
 import { detectPatternTriggers, writeTriggerEdge } from '@/lib/agent/pattern-trigger';
-import { getAllGenomePatterns } from '@/lib/graph/retrieval';
 import { getCurrentPerson } from '@/lib/auth/maestro';
 import { createOutcomeFeeInvoice, isStripeConfigured } from '@/lib/billing/stripe';
 import { logAudit } from '@/lib/audit/log';

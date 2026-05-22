@@ -521,8 +521,10 @@ export default async function TowerPage({
   const towerHandoffPrograms = await buildTowerHandoffPrograms();
   const towerHandoffSourceEvents = await buildTowerHandoffSourceEvents();
   // GAP-4 — render loop-completed Moves as first-class Tower portfolio
-  // cards. Currently the Apex `Contact Center AI Routing` Move; the
-  // panel renders nothing for tenants without a loop-completed Move.
+  // cards. Currently the Apex `Contact Center AI Routing` Move. Tenants
+  // without a loop-completed Move pass an empty array; the panel renders
+  // its honest empty state ("no loop-completed Moves yet") rather than a
+  // blank region.
   const movePortfolioCards: readonly MovePortfolioCard[] =
     activeClient?.key === APEX_TENANT_KEY ? buildApexPortfolioCards() : [];
   const towerSetupInitiativesFeed = await buildTowerSetupInitiativesFeed(activeClient);

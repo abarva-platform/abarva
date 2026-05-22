@@ -152,15 +152,43 @@ function PortfolioCard({ card }: { card: MovePortfolioCard }) {
 
 /**
  * The Tower portfolio panel for loop-completed Moves. Renders one
- * `PortfolioCard` per Move; renders nothing when the portfolio carries
- * no loop-completed Moves (so it is safe to mount unconditionally).
+ * `PortfolioCard` per Move.
+ *
+ * When the portfolio carries no loop-completed Moves the panel renders
+ * an explicit empty state rather than disappearing — a blank region
+ * with no explanation reads as a broken surface. The empty state is
+ * honest framing: it tells the reader the panel populates once a Move
+ * has run the end-to-end loop. Safe to mount unconditionally.
  */
 export function MovePortfolioCardPanel({
   cards,
 }: {
   cards: readonly MovePortfolioCard[];
 }) {
-  if (cards.length === 0) return null;
+  if (cards.length === 0) {
+    return (
+      <section
+        data-testid="tower-move-portfolio-panel"
+        data-portfolio-empty="true"
+        aria-label="Move portfolio"
+        style={{
+          border: `1px solid ${RULE}`,
+          borderRadius: 10,
+          background: CARD_BG,
+          padding: '14px 16px',
+        }}
+      >
+        <div style={LABEL}>Move portfolio · loop-completed</div>
+        <div style={{ marginTop: 6, fontSize: 13, color: INK_SOFT, lineHeight: 1.45 }}>
+          No loop-completed Moves yet. Once a Move has flowed through the
+          end-to-end loop — Source decision, Program execution, and outcome
+          tracking — it surfaces here as a portfolio card with its
+          outcome-ledger status, Source-risk posture, and a link into the
+          Move and its cross-module decision trace.
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section

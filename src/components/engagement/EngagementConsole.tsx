@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import type { EngagementRow } from '@/lib/db/engagement';
 import type { PersonRow } from '@/lib/db/person';
 import type { TurnRow } from '@/lib/db/turn';
-import type { ActivePattern, PeerDecisionSummary, ChainedPattern } from '@/lib/graph/types';
+import type { ActivePattern, PeerDecisionSummary, ChainedPattern } from '@/lib/knowledge/graph-access-types';
 import type { VipGreetingData } from '@/lib/agent/prompts/_shared/user-context';
 import { ChoiceChips, type Choice } from './ChoiceChips';
 import { renderWithCitations } from './renderWithCitations';

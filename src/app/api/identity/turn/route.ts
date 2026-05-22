@@ -6,7 +6,7 @@ import { parseChoicesFromText } from '@/lib/agent/parse-choices';
 import { assembleMaestroContextBlock } from '@/lib/agent/prompts/_shared/maestro-context';
 import { updateMaestroProfile } from '@/lib/agent/maestro-extractor';
 import { createPerson } from '@/lib/db/person';
-import { syncPersonToGraph } from '@/lib/graph/mutations';
+import { syncPersonToGraph } from '@/lib/knowledge/graph-access';
 import { getCurrentMaestro } from '@/lib/auth/maestro';
 import { clerkClient } from '@clerk/nextjs/server';
 import { logAudit } from '@/lib/audit/log';
