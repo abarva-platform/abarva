@@ -44,6 +44,8 @@ const program: ProgramCore = {
   createdAt: '2026-05-01T00:00:00.000Z',
   updatedAt: '2026-05-09T00:00:00.000Z',
   charter: null,
+  functionPackKey: null,
+  functionPackConfidence: null,
   gatesPassed: [],
 };
 

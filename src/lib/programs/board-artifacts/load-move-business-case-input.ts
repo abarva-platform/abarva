@@ -72,6 +72,10 @@ export async function loadMoveBusinessCaseInput(
   return {
     industry_code: industryCode,
     name: program.name,
+    // The first-class `engagements.function_pack_key` column (via
+    // `getProgramById` → `rowToProgram`). The resolver prefers it; `charter`
+    // remains the fallback for a row the column-backfill missed.
+    function_pack_key: program.functionPackKey,
     charter: program.charter,
     baseline_metrics: baselineMetrics,
   };

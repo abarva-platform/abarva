@@ -5,13 +5,15 @@
 //   1. `industryKeyForCode`         — industry_code → FunctionPackIndustryKey.
 //   2. `classifyFunctionKey`        — deterministic brief → function key, with
 //                                     an honest `null` for an ambiguous brief.
-//   3. `resolveMoveFunctionIdentity` — charter round-trip.
+//   3. `resolveMoveFunctionIdentity` — function-key resolution, column-first
+//      with a `charter.functionPackKey` fallback.
 
 import {
   CHARTER_FUNCTION_PACK_KEY,
   classifyFunctionKey,
   FUNCTION_CLASSIFY_CONFIDENCE_FLOOR,
   industryKeyForCode,
+  resolveFunctionPackKey,
   resolveMoveFunctionIdentity,
 } from '../function-identity';
 import {
@@ -220,6 +222,96 @@ describe('resolveMoveFunctionIdentity', () => {
         charter: { [CHARTER_FUNCTION_PACK_KEY]: '   ' },
       }),
     ).toBeNull();
+  });
+});
+
+describe('resolveMoveFunctionIdentity — function_pack_key column promotion', () => {
+  it('resolves from the first-class function_pack_key column', () => {
+    // The post-migration shape: the column carries the key, charter is absent.
+    const identity = resolveMoveFunctionIdentity({
+      industryCode: 'RETAIL',
+      functionPackKey: 'pricing_promotions',
+      charter: null,
+    });
+    expect(identity).toEqual({
+      industryKey: 'retail',
+      functionKey: 'pricing_promotions',
+    });
+  });
+
+  it('falls back to charter.functionPackKey when the column is null/absent', () => {
+    // The deploy-window / missed-backfill shape: column null, charter carries it.
+    const fromNullColumn = resolveMoveFunctionIdentity({
+      industryCode: 'RETAIL',
+      functionPackKey: null,
+      charter: { [CHARTER_FUNCTION_PACK_KEY]: 'pricing_promotions' },
+    });
+    expect(fromNullColumn).toEqual({
+      industryKey: 'retail',
+      functionKey: 'pricing_promotions',
+    });
+
+    // A caller that omits the column entirely (e.g. a pre-column row read)
+    // still resolves via the charter fallback.
+    const fromAbsentColumn = resolveMoveFunctionIdentity({
+      industryCode: 'RETAIL',
+      charter: { [CHARTER_FUNCTION_PACK_KEY]: 'pricing_promotions' },
+    });
+    expect(fromAbsentColumn).toEqual({
+      industryKey: 'retail',
+      functionKey: 'pricing_promotions',
+    });
+  });
+
+  it('prefers the column over a divergent charter value', () => {
+    // Defensive: the two are kept coherent by the dual-write, but if they ever
+    // diverge the column is the source of truth.
+    const identity = resolveMoveFunctionIdentity({
+      industryCode: 'RETAIL',
+      functionPackKey: 'pricing_promotions',
+      charter: { [CHARTER_FUNCTION_PACK_KEY]: 'customer_care' },
+    });
+    expect(identity!.functionKey).toBe('pricing_promotions');
+  });
+
+  it('returns null when neither the column nor the charter carries a key', () => {
+    expect(
+      resolveMoveFunctionIdentity({
+        industryCode: 'RETAIL',
+        functionPackKey: null,
+        charter: {},
+      }),
+    ).toBeNull();
+    // A blank column value is treated as absent — the charter fallback applies.
+    expect(
+      resolveMoveFunctionIdentity({
+        industryCode: 'RETAIL',
+        functionPackKey: '   ',
+        charter: { [CHARTER_FUNCTION_PACK_KEY]: 'pricing_promotions' },
+      })!.functionKey,
+    ).toBe('pricing_promotions');
+  });
+});
+
+describe('resolveFunctionPackKey — column-first key resolution', () => {
+  it('returns the column value when present', () => {
+    expect(
+      resolveFunctionPackKey({ functionPackKey: 'customer_care', charter: null }),
+    ).toBe('customer_care');
+  });
+
+  it('falls back to charter.functionPackKey', () => {
+    expect(
+      resolveFunctionPackKey({
+        functionPackKey: null,
+        charter: { [CHARTER_FUNCTION_PACK_KEY]: 'customer_care' },
+      }),
+    ).toBe('customer_care');
+  });
+
+  it('returns null when neither source carries a key', () => {
+    expect(resolveFunctionPackKey({ functionPackKey: null, charter: {} })).toBeNull();
+    expect(resolveFunctionPackKey({})).toBeNull();
   });
 });
 

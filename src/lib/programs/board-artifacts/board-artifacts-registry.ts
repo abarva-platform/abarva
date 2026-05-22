@@ -390,6 +390,7 @@ export function boardArtifactsForMove(move: StrategicMove): BoardArtifact[] {
   // carrying `?moveId=` so its route renders THAT Move's kernel-derived deck.
   const identity = resolveMoveFunctionIdentity({
     industryCode: move.tenant.industryCode,
+    functionPackKey: move.functionPackKey,
     charter: move.charter,
   });
   if (identity) {

@@ -290,6 +290,19 @@ function deriveFunctionPackIdentity(
   };
 }
 
+/** The charter JSONB plus the function-pack identity promoted out of it. */
+interface OriginationCharterResult {
+  /** The full charter JSONB written to `engagements.charter`. */
+  charter: Record<string, unknown>;
+  /**
+   * The classified function-pack identity, or `null` when no pack matched.
+   * Dual-written: the keys also live inside `charter` for rollback safety, but
+   * the caller sets the first-class `engagements.function_pack_key` /
+   * `function_pack_confidence` columns from this.
+   */
+  functionPackIdentity: { functionPackKey: string; functionPackConfidence: number } | null;
+}
+
 /** Build the charter JSONB written to engagements.charter at P0 origination. */
 function buildOriginationCharter(
   input: SubmitOriginationBriefInput,
@@ -297,7 +310,7 @@ function buildOriginationCharter(
   sponsor: ResolvedPerson,
   programArchetype: string | null,
   industryCode: string,
-): Record<string, unknown> {
+): OriginationCharterResult {
   // Slice 2.1 · agentic suitability assessment. Run once at P0 from the brief
   // text alone — no data-readiness ledger entry exists yet, so the readiness
   // profile defaults conservatively. The single result is reused below to
@@ -319,7 +332,7 @@ function buildOriginationCharter(
   // and bind curated industry depth. Honest `null` when no pack matches —
   // additive, never blocks origination, never overrides `function_code`.
   const functionPackIdentity = deriveFunctionPackIdentity(input, industryCode);
-  return {
+  const charter: Record<string, unknown> = {
     version: 1,
     captured_at: new Date().toISOString(),
     ...(functionPackIdentity
@@ -364,6 +377,7 @@ function buildOriginationCharter(
     // checklist, and §5 readiness-gate coverage for the phase gate.
     control_eval_matrix: charterExtensions.control_eval_matrix,
   };
+  return { charter, functionPackIdentity };
 }
 
 /** Persist origination chat turns to the turns table (phase 0, best-effort). */
@@ -505,8 +519,10 @@ export async function submitOriginationBrief(
   // Charter JSONB: persists all 7 scaffold fields + classification + initiative
   // context at the moment the brief is promoted. Written once; amended later
   // by the P1 Evidence & Assessment phase when the brief is upgraded to a
-  // full charter document.
-  const charter = buildOriginationCharter(
+  // full charter document. `functionPackIdentity` is the classified function
+  // key — DUAL-WRITTEN below: into the `function_pack_key` column AND kept
+  // inside `charter` (so a rollback to the pre-column code is harmless).
+  const { charter, functionPackIdentity } = buildOriginationCharter(
     input,
     derived,
     sponsor,
@@ -546,6 +562,13 @@ export async function submitOriginationBrief(
       data_residency_region: null,
       retention_policy_years: 7,
       charter,
+      // Function-identity spine · first-class column. Dual-written with
+      // `charter.functionPackKey` (above) — the column is the queryable,
+      // indexable source of truth; the charter copy keeps a rollback to the
+      // pre-column code harmless. `null` when no pack cleared the floor.
+      function_pack_key: functionPackIdentity?.functionPackKey ?? null,
+      function_pack_confidence:
+        functionPackIdentity?.functionPackConfidence ?? null,
     })
     .select('id, name')
     .single();

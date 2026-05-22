@@ -57,6 +57,33 @@ describe('origination submit insert contract', () => {
     );
   });
 
+  it('dual-writes the function pack key — the column AND charter.functionPackKey', () => {
+    // The first-class column promotion (function_pack_key). Origination must
+    // DUAL-WRITE: the new `engagements.function_pack_key` /
+    // `function_pack_confidence` columns AND keep the legacy
+    // `charter.functionPackKey` so a rollback to the pre-column code is safe.
+
+    // (1) The classified identity is promoted out of the charter builder.
+    expect(source).toContain('functionPackIdentity');
+    expect(source).toContain(
+      'const { charter, functionPackIdentity } = buildOriginationCharter(',
+    );
+
+    // (2) The new columns are set on the engagements insert from that identity.
+    expect(source).toContain(
+      'function_pack_key: functionPackIdentity?.functionPackKey ?? null',
+    );
+    expect(source).toContain(
+      'function_pack_confidence:',
+    );
+    expect(source).toContain('functionPackIdentity?.functionPackConfidence ?? null');
+
+    // (3) The legacy charter key is STILL written — the rollback safety net.
+    expect(source).toContain('CHARTER_FUNCTION_PACK_KEY');
+    expect(source).toContain('CHARTER_FUNCTION_PACK_CONFIDENCE_KEY');
+    expect(source).toContain('[CHARTER_FUNCTION_PACK_KEY]: functionPackIdentity.functionPackKey');
+  });
+
   it('accepts and persists origination chat turns to turns table', () => {
     // Input type must include turns
     expect(source).toContain('originationTurns?: OriginationTurn[] | null');

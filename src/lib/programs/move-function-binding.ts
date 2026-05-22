@@ -51,7 +51,19 @@ export interface MoveFunctionBindingInput {
   industry_code?: string | null;
   /** The `industryCode` alias (camelCase view-model form). */
   industryCode?: string | null;
-  /** The `engagements.charter` JSONB — origination writes the function key here. */
+  /**
+   * The `engagements.function_pack_key` column — the preferred function-key
+   * source. Both the snake_case DB-row form and the `functionPackKey`
+   * camelCase view-model alias are accepted. Omit for a row read before the
+   * column existed; the `charter` fallback then resolves the key.
+   */
+  function_pack_key?: string | null;
+  /** The `functionPackKey` alias (camelCase view-model form). */
+  functionPackKey?: string | null;
+  /**
+   * The `engagements.charter` JSONB — the fallback function-key source
+   * (`charter.functionPackKey`), still dual-written by origination.
+   */
   charter?: unknown;
   /** The `engagements.baseline_metrics` JSONB array — the v1 metric source. */
   baseline_metrics?: readonly BaselineMetricEntry[] | null;
@@ -60,8 +72,9 @@ export interface MoveFunctionBindingInput {
 /**
  * The honest unbound result — `bound: false` with the fallback note the agent
  * must surface. Produced when the Move cannot resolve a function identity at
- * all (no industry code, or no `functionPackKey` in the charter), so there is
- * no `(industryKey, functionKey)` to even attempt a pack bind with.
+ * all (no industry code, or no function key on either the `function_pack_key`
+ * column or `charter.functionPackKey`), so there is no `(industryKey,
+ * functionKey)` to even attempt a pack bind with.
  */
 function unboundForUnresolvedIdentity(): FunctionPackBinding {
   return {
@@ -108,6 +121,7 @@ export function bindMoveFunctionPack(
   // rather than fabricating one.
   const identity = resolveMoveFunctionIdentity({
     industryCode: move.industry_code ?? move.industryCode,
+    functionPackKey: move.function_pack_key ?? move.functionPackKey,
     charter: move.charter,
   });
   if (!identity) {

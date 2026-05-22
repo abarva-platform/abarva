@@ -312,6 +312,8 @@ export function buildMoveSolutionArchitecture(
     {
       industry_code: move.industry_code,
       industryCode: move.industryCode,
+      function_pack_key: move.function_pack_key,
+      functionPackKey: move.functionPackKey,
       charter: move.charter,
       baseline_metrics: move.baseline_metrics ?? undefined,
     },
@@ -337,6 +339,7 @@ export function buildMoveSolutionArchitecture(
   // both resolved; resolve again rather than asserting.
   const identity = resolveMoveFunctionIdentity({
     industryCode: move.industry_code ?? move.industryCode,
+    functionPackKey: move.function_pack_key ?? move.functionPackKey,
     charter: move.charter,
   });
   const pack =
