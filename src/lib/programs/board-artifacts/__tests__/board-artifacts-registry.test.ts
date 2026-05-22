@@ -91,8 +91,12 @@ describe('boardArtifactsForMove — key-driven path (real Moves, 3 verticals)', 
       charter: { functionPackKey: 'customer_care' },
     });
     const artifacts = boardArtifactsForMove(move);
+    // The key-driven path resolves the three generic kernel-derived decks —
+    // Costed Business Case, Solution Architecture, Mobilize & Go-Decision —
+    // each carrying `?moveId=`.
     expect(artifacts.map((a) => a.id).sort()).toEqual([
       'costed-business-case',
+      'mobilize-packet',
       'solution-architecture',
     ]);
     const costed = artifacts.find((a) => a.id === 'costed-business-case');
@@ -106,6 +110,11 @@ describe('boardArtifactsForMove — key-driven path (real Moves, 3 verticals)', 
       '/api/v1/moves/board-grade-solution-architecture?moveId=retail-move-1',
     );
     expect(arch?.pptxHref).toBeUndefined();
+    const mobilize = artifacts.find((a) => a.id === 'mobilize-packet');
+    expect(mobilize?.htmlHref).toBe(
+      '/api/v1/moves/board-grade-mobilize-packet?moveId=retail-move-1',
+    );
+    expect(mobilize?.pptxHref).toBeUndefined();
   });
 
   it('a healthcare Move with a resolvable function gets the generic decks', () => {
@@ -118,8 +127,14 @@ describe('boardArtifactsForMove — key-driven path (real Moves, 3 verticals)', 
     const artifacts = boardArtifactsForMove(move);
     expect(artifacts.map((a) => a.id).sort()).toEqual([
       'costed-business-case',
+      'mobilize-packet',
       'solution-architecture',
     ]);
+    expect(
+      artifacts.find((a) => a.id === 'mobilize-packet')?.htmlHref,
+    ).toBe(
+      '/api/v1/moves/board-grade-mobilize-packet?moveId=health-move-1',
+    );
     expect(
       artifacts.find((a) => a.id === 'solution-architecture')?.htmlHref,
     ).toBe(
@@ -137,8 +152,14 @@ describe('boardArtifactsForMove — key-driven path (real Moves, 3 verticals)', 
     const artifacts = boardArtifactsForMove(move);
     expect(artifacts.map((a) => a.id).sort()).toEqual([
       'costed-business-case',
+      'mobilize-packet',
       'solution-architecture',
     ]);
+    expect(
+      artifacts.find((a) => a.id === 'mobilize-packet')?.htmlHref,
+    ).toBe(
+      '/api/v1/moves/board-grade-mobilize-packet?moveId=fs-move-1',
+    );
     expect(
       artifacts.find((a) => a.id === 'solution-architecture')?.htmlHref,
     ).toBe(
@@ -147,8 +168,8 @@ describe('boardArtifactsForMove — key-driven path (real Moves, 3 verticals)', 
   });
 
   it('the hardcoded Apex Move-name is no longer the gate — any name resolves', () => {
-    // A Move named nothing like "Contact Center AI Routing" still resolves a
-    // board-grade artifact, purely from its (industryKey, functionKey).
+    // A Move named nothing like "Contact Center AI Routing" still resolves the
+    // board-grade artifacts, purely from its (industryKey, functionKey).
     const move = makeMove({
       id: 'oddly-named-move',
       name: 'Q3 ops improvement workstream',
@@ -156,9 +177,9 @@ describe('boardArtifactsForMove — key-driven path (real Moves, 3 verticals)', 
       charter: { functionPackKey: 'customer_care' },
     });
     const artifacts = boardArtifactsForMove(move);
-    expect(artifacts.length).toBeGreaterThan(0);
-    for (const a of artifacts) {
-      expect(a.htmlHref).toContain('moveId=oddly-named-move');
+    expect(artifacts).toHaveLength(3);
+    for (const artifact of artifacts) {
+      expect(artifact.htmlHref).toContain('moveId=oddly-named-move');
     }
   });
 
