@@ -1,13 +1,18 @@
 import type { DealPackInput } from '../exports/deal-pack/stage-sections';
 
+/**
+ * The verdicts the Source expert-judgment kernel can actually emit. The
+ * kernel (`source-judgment-kernel.ts`) reaches exactly these four — the only
+ * non-`award_ready` outcomes are `do_not_award_yet`, `proceed_to_bafo` and
+ * `pause_for_evidence`. Previously-declared `renegotiate` / `rebid_required`
+ * / `kill_or_reframe` were never reachable and have been removed; renewal
+ * postures live on their own type in `renewal-cockpit/cockpit.ts`.
+ */
 export type SourceJudgmentVerdict =
   | 'award_ready'
   | 'do_not_award_yet'
   | 'proceed_to_bafo'
-  | 'renegotiate'
-  | 'rebid_required'
-  | 'pause_for_evidence'
-  | 'kill_or_reframe';
+  | 'pause_for_evidence';
 
 export type SourceJudgmentConfidence = 'high' | 'medium' | 'low';
 

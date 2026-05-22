@@ -102,7 +102,7 @@ describe('Source artifact verdict consistency · kernel hold', () => {
 
   it('the kernel itself returns a hold verdict for the held event', () => {
     expect(judgment.verdict).not.toBe('award_ready');
-    expect(['do_not_award_yet', 'proceed_to_bafo', 'pause_for_evidence', 'rebid_required']).toContain(
+    expect(['do_not_award_yet', 'proceed_to_bafo', 'pause_for_evidence']).toContain(
       judgment.verdict,
     );
     expect(judgment.blockers.length).toBeGreaterThan(0);

@@ -8,7 +8,7 @@ import { createHash, randomUUID } from 'node:crypto';
 
 import { requireTenancy, tenancyErrorResponse } from '@/app/api/v1/_intel-auth';
 import { getActiveClientRow } from '@/lib/active-client';
-import { clientKeyToBrokerTenantKey } from '@/lib/agent/tools/intelligence/_shared';
+import { clientKeyToInventorySubstrateKey } from '@/lib/agent/tools/intelligence/_shared';
 import { getServerSupabase } from '@/lib/supabase-server';
 import { normalizeSourceStageKey, SOURCE_STAGE_ORDER } from '@/lib/source/constants';
 import { getSourcingEvent, type SourceEventRow } from '@/lib/source/queries';
@@ -141,7 +141,7 @@ export async function POST(request: Request, { params }: SourceUploadRouteContex
 
   const client = await getActiveClientRow();
   if (!client || client.id !== tenancy.clientId) return jsonError(403, 'no_active_client');
-  const tenantKey = clientKeyToBrokerTenantKey(client.key);
+  const tenantKey = clientKeyToInventorySubstrateKey(client.key);
 
   let formData: FormData;
   try {

@@ -4,6 +4,12 @@
 // telemetry signal list from operating_telemetry, and the locked
 // decision-trigger rubric. Posture is recommended honestly: when the
 // substrate is empty we return "undetermined" not "renew_as_is".
+//
+// Posture is NOT decided here — it is delegated to the Renewal Cockpit's
+// `derivePosture` (via `buildRenewalCockpit`), which is the single source of
+// truth for renewal posture. This binder only adapts the substrate row into
+// the cockpit's input shape and bridges the cockpit's `renew` onto the
+// renderer's `renew_as_is`.
 
 import 'server-only';
 
@@ -20,6 +26,12 @@ import {
   type ContractCoverage,
   type TelemetrySignal,
 } from './lifecycle-substrate';
+import {
+  buildRenewalCockpit,
+  type RenewalAlternative,
+  type RenewalPosture as CockpitPosture,
+} from '@/lib/source/renewal-cockpit/cockpit';
+import type { VendorContractInput } from '@/lib/source/decision-queue/detector-inputs';
 
 export async function buildRenewalDecisionPayloadFromContext(
   ctx: SourceGenerationContext,
@@ -29,13 +41,16 @@ export async function buildRenewalDecisionPayloadFromContext(
   const contracts = substrate?.contracts ?? [];
   const telemetry = substrate?.telemetry ?? [];
 
+  const asOf = new Date(generatedAt);
   return {
     tenantName: ctx.tenantName,
     eventCode: ctx.event.code,
     eventName: ctx.event.name,
     issuedBy: ctx.event.owner ?? undefined,
     generatedAt,
-    candidates: contracts.map((c, i) => buildCandidate(c, i, telemetry)),
+    candidates: contracts.map((c, i) =>
+      buildCandidate(c, i, telemetry, ctx.tenantKey, asOf),
+    ),
     signals: telemetry.map(toSignal),
     triggers: lockedTriggers(),
   };
@@ -45,9 +60,11 @@ function buildCandidate(
   c: ContractCoverage,
   i: number,
   telemetry: ReadonlyArray<TelemetrySignal>,
+  clientKey: string,
+  asOf: Date,
 ): RenewalCandidate {
   const daysUntilRenewal = calcDaysUntil(c.renewalDate);
-  const posture = recommendPosture(c, daysUntilRenewal, telemetry);
+  const posture = recommendPosture(c, telemetry, clientKey, asOf);
   const rationale = recommendRationale(c, posture, daysUntilRenewal, telemetry);
   const alternative = recommendAlternative(c);
   return {
@@ -87,30 +104,85 @@ function calcDaysUntil(renewalDate: string | null): number {
   return Math.round((t - now) / (1000 * 60 * 60 * 24));
 }
 
+/**
+ * Recommend a renewal posture. Single source of truth: the Renewal Cockpit's
+ * `derivePosture`, reached here via `buildRenewalCockpit`. This binder used to
+ * carry its own spend-bucket heuristic that diverged from the cockpit — the
+ * audit closed that gap. The only posture the cockpit cannot express is
+ * `undetermined` (a substrate-gap state), so that guard stays local; for
+ * everything else the cockpit decides, and `renew` is mapped onto the
+ * renderer's `renew_as_is` label.
+ */
 function recommendPosture(
   c: ContractCoverage,
-  daysUntil: number,
   telemetry: ReadonlyArray<TelemetrySignal>,
+  clientKey: string,
+  asOf: Date,
 ): RenewalPosture {
-  // Honest defaults: any missing critical signal → undetermined.
+  // Honest default: any missing critical signal → undetermined. The cockpit
+  // always produces a concrete posture, so this gap must be caught here.
   if (!c.annualSpendUsd && !c.renewalDate) return 'undetermined';
-  // Adverse telemetry on this vendor → push toward rebid/exit.
-  const adverse = telemetry.some((s) =>
-    (s.surface ?? '').toLowerCase().includes(c.vendor.toLowerCase()) &&
-    /low|poor|degraded|outage|incident|miss/i.test(s.value ?? ''),
+
+  const cockpit = buildRenewalCockpit({
+    clientKey,
+    contract: toVendorContractInput(c),
+    categoryBenchmarkUsd: null,
+    alternatives: deriveAlternatives(c, telemetry),
+    asOf,
+  });
+  return cockpitPostureToRenderer(cockpit.recommendedPosture);
+}
+
+/** Map a `ContractCoverage` substrate row onto the cockpit's contract input. */
+function toVendorContractInput(c: ContractCoverage): VendorContractInput {
+  return {
+    contractId: c.vendor,
+    vendorName: c.vendor,
+    product: c.scope ?? c.category ?? c.vendor,
+    category: c.category ?? 'uncategorized',
+    annualSpendUsd: c.annualSpendUsd ?? null,
+    termEndDate: c.renewalDate,
+    autoRenew: false,
+    noticePeriodDays: null,
+    // The renewal substrate carries no utilization figure — leave it
+    // unmeasured rather than fabricating a shelfware read.
+    utilizationRate: null,
+    criticality: 'medium',
+  };
+}
+
+/**
+ * Treat sustained adverse telemetry on this vendor as a credible reason to
+ * shop the market — it gives the cockpit an alternative to weigh. We do not
+ * invent a named alternative vendor (there is none in the substrate); the
+ * cockpit only needs to know one exists.
+ */
+function deriveAlternatives(
+  c: ContractCoverage,
+  telemetry: ReadonlyArray<TelemetrySignal>,
+): RenewalAlternative[] {
+  const adverse = telemetry.some(
+    (s) =>
+      (s.surface ?? '').toLowerCase().includes(c.vendor.toLowerCase()) &&
+      /low|poor|degraded|outage|incident|miss/i.test(s.value ?? ''),
   );
-  if (adverse) {
-    if ((c.annualSpendUsd ?? 0) > 1_000_000) return 'rebid';
-    return 'renegotiate';
-  }
-  // Spend > $5M with no adverse signal → renegotiate (always pursue
-  // leverage on six-figure or larger contracts; never silently renew).
-  if ((c.annualSpendUsd ?? 0) > 5_000_000) return 'renegotiate';
-  // Otherwise default to renew_as_is when imminent + small + healthy.
-  if (daysUntil > 0 && daysUntil < 90 && (c.annualSpendUsd ?? 0) < 250_000) {
-    return 'renew_as_is';
-  }
-  return 'renegotiate';
+  return adverse
+    ? [
+        {
+          vendorName: 'Market alternative',
+          indicativeAnnualUsd: null,
+          switchingNote:
+            'Adverse operating telemetry on the incumbent — scout a competitive alternative.',
+        },
+      ]
+    : [];
+}
+
+/** Bridge the cockpit's 5-posture enum onto the renderer's posture set. */
+function cockpitPostureToRenderer(posture: CockpitPosture): RenewalPosture {
+  // The cockpit uses `renew`; the renderer's portable artifact uses
+  // `renew_as_is`. Every other posture name is shared.
+  return posture === 'renew' ? 'renew_as_is' : posture;
 }
 
 function recommendRationale(

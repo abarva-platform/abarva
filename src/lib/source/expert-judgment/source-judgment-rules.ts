@@ -102,10 +102,7 @@ export function evidenceLabel(row: SourceJudgmentEvidenceRow): string {
 const HOLD_VERDICTS: ReadonlySet<SourceJudgmentVerdict> = new Set<SourceJudgmentVerdict>([
   'do_not_award_yet',
   'proceed_to_bafo',
-  'renegotiate',
-  'rebid_required',
   'pause_for_evidence',
-  'kill_or_reframe',
 ]);
 
 /** True when the kernel verdict holds the award (anything other than award_ready). */
@@ -126,13 +123,7 @@ export function sourceJudgmentVerdictLabel(verdict: SourceJudgmentVerdict): stri
       return 'Do not award yet';
     case 'proceed_to_bafo':
       return 'Proceed to targeted BAFO';
-    case 'renegotiate':
-      return 'Renegotiate';
-    case 'rebid_required':
-      return 'Rebid required';
     case 'pause_for_evidence':
       return 'Pause for evidence';
-    case 'kill_or_reframe':
-      return 'Kill or reframe';
   }
 }

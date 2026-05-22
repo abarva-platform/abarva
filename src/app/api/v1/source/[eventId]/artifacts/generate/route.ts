@@ -10,7 +10,7 @@ import { createHash, randomUUID } from 'node:crypto';
 import { requireTenancy, tenancyErrorResponse } from '@/app/api/v1/_intel-auth';
 import { getActiveClientRow } from '@/lib/active-client';
 import { loadUserSourceAccessPolicy } from '@/lib/auth/source-access-policy';
-import { clientKeyToBrokerTenantKey } from '@/lib/agent/tools/intelligence/_shared';
+import { clientKeyToInventorySubstrateKey } from '@/lib/agent/tools/intelligence/_shared';
 import { getServerSupabase } from '@/lib/supabase-server';
 import { normalizeSourceStageKey, SOURCE_STAGE_ORDER } from '@/lib/source/constants';
 import { getSourcingEvent, type SourceEventRow } from '@/lib/source/queries';
@@ -211,7 +211,7 @@ export async function POST(request: Request, { params }: GenerateRouteContext) {
   let blobUri: string;
   try {
     blobUri = buildSourceArtifactBlobPath({
-      tenantKey: clientKeyToBrokerTenantKey(activeClient.key),
+      tenantKey: clientKeyToInventorySubstrateKey(activeClient.key),
       sourceEventId: scope.eventId,
       artifactId,
       filename,
@@ -248,7 +248,7 @@ export async function POST(request: Request, { params }: GenerateRouteContext) {
   try {
     const artifact = await registerSourceArtifactUpload({
       artifactId,
-      tenantKey: clientKeyToBrokerTenantKey(activeClient.key),
+      tenantKey: clientKeyToInventorySubstrateKey(activeClient.key),
       sourceEventId: scope.eventId,
       sourceEventRowId: scope.sourceEventRowId,
       stageKey: scope.stageKey,
