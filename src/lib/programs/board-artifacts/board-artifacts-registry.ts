@@ -20,10 +20,11 @@
 //      `resolveMoveFunctionIdentity`). When that resolves, the Move gets the
 //      generic, kernel-derived board-grade decks — the Discover Brief, the
 //      Charter Business-Case Skeleton, the Costed Business-Case deck, the
-//      Solution Architecture deck and the Mobilize Packet — each `htmlHref`
-//      carrying `?moveId=<id>` so the route renders THAT Move's deck.
-//      The hardcoded Apex Move-name match is no longer the gate: any Move with
-//      a resolvable function gets the artifacts.
+//      Solution Architecture deck, the Estimate & Financial Model, the
+//      Mobilize & Go-Decision Packet, and the CFO Pack — each `htmlHref`
+//      carrying `?moveId=<id>` so the route renders THAT Move's kernel-derived
+//      deck. The hardcoded Apex Move-name match is no longer the gate: any
+//      Move with a resolvable function gets the artifacts.
 //
 // HONESTY: a Move with no resolvable `(industryKey, functionKey)` identity —
 // no industry code, or no `functionPackKey` in its charter — gets NO artifact.
@@ -187,10 +188,10 @@ const BOARD_ARTIFACT_ENTRIES: readonly BoardArtifactEntry[] = [
  * `(industryKey, functionKey)` identity resolved. Each artifact's `htmlHref`
  * carries `?moveId=<id>` so the route renders THAT Move's kernel-derived deck.
  *
- * The key-driven path serves the six generic kernel-derived decks: the
+ * The key-driven path serves the seven generic kernel-derived decks: the
  * Discover Brief, the Charter Business-Case Skeleton, the Costed
- * Business-Case Pack, the Solution Architecture Pack, the Mobilize &
- * Go-Decision Packet, and the CFO Pack.
+ * Business-Case Pack, the Solution Architecture Pack, the Estimate &
+ * Financial Model, the Mobilize & Go-Decision Packet, and the CFO Pack.
  */
 function genericBoardArtifacts(moveId: string): BoardArtifact[] {
   const q = `?moveId=${encodeURIComponent(moveId)}`;
@@ -229,9 +230,33 @@ function genericBoardArtifacts(moveId: string): BoardArtifact[] {
       htmlHref: `/api/v1/moves/board-grade-business-case${q}`,
     },
     genericSolutionArchitectureArtifact(moveId),
+    genericEstimateModelArtifact(moveId),
     genericMobilizePacketArtifact(moveId),
     genericCfoPackArtifact(moveId),
   ];
+}
+
+/**
+ * Build the generic, kernel-derived board-grade Estimate & Financial Model for
+ * a Move whose `(industryKey, functionKey)` identity resolved. The `htmlHref`
+ * carries `?moveId=<id>` so the route renders THAT Move's kernel-derived deck
+ * via `buildMoveEstimateModel` — the effort decomposition, role-mix cost
+ * build-up, rate card, value forecast and haircuts, every figure a labelled
+ * planning estimate or range, never a quote.
+ */
+function genericEstimateModelArtifact(moveId: string): BoardArtifact {
+  const q = `?moveId=${encodeURIComponent(moveId)}`;
+  return {
+    id: 'estimate-model',
+    label: 'Estimate & Financial Model',
+    phase: 'Design & Plan',
+    blurb:
+      'The board-grade estimate — kernel-derived for this Move, with the ' +
+      'workstream cost build-up, role-mix lanes, rate card, value forecast, ' +
+      'sensitivity, and the staged cash-flow shape. Every figure is a ' +
+      'labelled planning estimate or range, never a quote.',
+    htmlHref: `/api/v1/moves/board-grade-estimate-model${q}`,
+  };
 }
 
 /**
@@ -311,10 +336,11 @@ function genericMobilizePacketArtifact(moveId: string): BoardArtifact {
  *  2. The key-driven path — for every other Move, the Move's
  *     `(industryKey, functionKey)` Function-Pack identity is resolved from its
  *     `tenant.industryCode` + `charter`. When it resolves, the Move gets the
- *     six generic, kernel-derived board-grade decks (the Discover Brief, the
+ *     seven generic, kernel-derived board-grade decks (the Discover Brief, the
  *     Charter Business-Case Skeleton, the Costed Business-Case Pack, the
- *     Solution Architecture Pack, the Mobilize & Go-Decision Packet, and the
- *     CFO Pack), each `htmlHref` carrying `?moveId=`.
+ *     Solution Architecture Pack, the Estimate & Financial Model, the Mobilize
+ *     & Go-Decision Packet, and the CFO Pack), each `htmlHref` carrying
+ *     `?moveId=`.
  *
  * A Move that matches neither — no reference entry and no resolvable function
  * identity — returns `[]`. That is the honest signal (a gap), never a
