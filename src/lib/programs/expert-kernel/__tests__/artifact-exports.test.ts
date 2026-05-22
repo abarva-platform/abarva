@@ -228,10 +228,11 @@ for (const caseId of EXPERT_REVIEW_CASE_IDS) {
       const { fullCase } = caseEntry.buildFullCase();
       const { goPack } = caseEntry.buildMobilize();
       if (caseId === 'arcturus') {
-        // First Capital — the case does not pay back; it lands at kill.
-        // (The skeleton recommendation is kill OR shape; the route never
-        // 500s on either. We assert the honest, non-flattering outcome.)
-        expect(['kill', 'shape']).toContain(skeleton.recommendation);
+        // First Capital — the kernel's honest skeleton verdict is `shape`:
+        // the case needs reframing before it can be funded. `kill` is only
+        // reachable as a pressure-test outcome, never the live skeleton
+        // recommendation — so we pin the exact verdict here.
+        expect(skeleton.recommendation).toBe('shape');
       }
       // No tenant fabricates a payback while monetisation is blocked.
       if (!skeleton.economics.monetisable) {

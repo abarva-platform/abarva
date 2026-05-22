@@ -121,12 +121,21 @@ export function buildPricingComparisonWorkbook(
     generatedAt: payload.generatedAt,
     instructions,
   });
-  // Vendor list on the Cover sheet (after instructions).
+  // Vendor list on the Cover sheet (after instructions). When no
+  // submissions have landed yet, state that honestly — the comparison is
+  // never populated with synthetic vendors.
   const cover = workbook.getWorksheet('Cover');
   if (cover) {
     cover.addRow([]);
     const header = cover.addRow(['Vendors compared', '']);
     header.getCell(1).font = { bold: true, color: { argb: SOURCE_XLSX.HEADER_FILL } };
+    if (payload.submissions.length === 0) {
+      const r = cover.addRow([
+        '',
+        'No vendor submissions received yet — upload completed pricing templates to populate this comparison.',
+      ]);
+      r.getCell(2).alignment = { wrapText: true, vertical: 'top' };
+    }
     for (const sub of payload.submissions) {
       const r = cover.addRow(['', `• ${safeCell(sub.vendorName)} · submitted ${safeCell(sub.submittedAt.slice(0, 10))}`]);
       r.getCell(2).alignment = { wrapText: true, vertical: 'top' };

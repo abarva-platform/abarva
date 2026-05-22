@@ -21,7 +21,10 @@ import {
   isHoldVerdict,
   sourceJudgmentVerdictLabel,
 } from '../../expert-judgment/source-judgment-rules';
-import type { SourceJudgment } from '../../expert-judgment/source-judgment-types';
+import type {
+  SourceJudgment,
+  SourceJudgmentBlocker,
+} from '../../expert-judgment/source-judgment-types';
 import type { AppInventoryPayload } from '../renderers/app-inventory';
 import type { ResponseChecklistPayload } from '../renderers/response-checklist';
 import type { ScorecardPayload } from '../renderers/scorecard';
@@ -383,13 +386,19 @@ function synthesizeHeadline(input: DealPackInput, judgment: SourceJudgment): Hea
   const decisionBrief = findAuthored('d24_decision_brief');
   const demandChallenge = findAuthored('dx0_demand_challenge');
 
+  // Confidence and key risk come from the kernel — not a hardcoded label.
+  // The kernel verdict here is `award_ready` (the hold branch returned
+  // above), so its `confidence` and any residual blockers are authoritative.
+  const kernelConfidence = `${capitalizeFirst(judgment.confidence)} — Source expert-judgment kernel`;
+  const kernelKeyRisk = deriveKeyRisk(judgment);
+
   if (selectionMemo) {
     return {
       kind: 'decided',
       action: extractFirstHeading(selectionMemo, 'Selection finalized — see Stage 5'),
-      confidence: 'High — selection memo signed off',
+      confidence: kernelConfidence,
       financialImpact: valueLabel,
-      keyRisk: 'Transition / runbook delivery',
+      keyRisk: kernelKeyRisk ?? 'Transition / runbook delivery',
       nextStep: 'Mobilize transition plan; track Stage 7 (SRM) commitments.',
     };
   }
@@ -397,9 +406,9 @@ function synthesizeHeadline(input: DealPackInput, judgment: SourceJudgment): Hea
     return {
       kind: 'decided',
       action: extractFirstHeading(renewalDecision, 'Renewal posture recorded — see Stage 7'),
-      confidence: 'Medium-High — renewal posture authored',
+      confidence: kernelConfidence,
       financialImpact: valueLabel,
-      keyRisk: 'Auto-renewal trap if posture not enacted before lock date',
+      keyRisk: kernelKeyRisk ?? 'Auto-renewal trap if posture not enacted before lock date',
       nextStep: 'Enact posture per Stage 7 candidate row; flip Final Decision once panel signs.',
     };
   }
@@ -407,9 +416,9 @@ function synthesizeHeadline(input: DealPackInput, judgment: SourceJudgment): Hea
     return {
       kind: 'decided',
       action: extractFirstHeading(decisionBrief, 'Recommendation drafted — see Stage 5'),
-      confidence: 'Medium — pre-sponsor review',
+      confidence: kernelConfidence,
       financialImpact: valueLabel,
-      keyRisk: 'Open traps in Stage 5 trap log',
+      keyRisk: kernelKeyRisk ?? 'Open traps in Stage 5 trap log',
       nextStep: 'Run BAFO question pack; close P0 traps before sponsor review.',
     };
   }
@@ -417,9 +426,9 @@ function synthesizeHeadline(input: DealPackInput, judgment: SourceJudgment): Hea
     return {
       kind: 'decided',
       action: extractFirstHeading(demandChallenge, 'Demand challenged — see Stage 0'),
-      confidence: 'Low-Medium — demand stage verdict only',
+      confidence: kernelConfidence,
       financialImpact: valueLabel,
-      keyRisk: 'Sourcing without demand-challenge sign-off',
+      keyRisk: kernelKeyRisk ?? 'Sourcing without demand-challenge sign-off',
       nextStep: 'Confirm sourcing approach in Stage 1 before issuing solicitation.',
     };
   }
@@ -448,6 +457,30 @@ function synthesizeHeadline(input: DealPackInput, judgment: SourceJudgment): Hea
 
 function capitalizeFirst(value: string): string {
   return value.charAt(0).toUpperCase() + value.slice(1);
+}
+
+/**
+ * Derive the headline "key risk" from the kernel, not a hardcoded string.
+ * Prefers the highest-severity residual blocker; falls back to the first
+ * decision-blocking evidence gap. Returns `null` when the kernel found
+ * neither — callers then use a stage-appropriate default.
+ */
+function deriveKeyRisk(judgment: SourceJudgment): string | null {
+  const severityRank: Record<SourceJudgmentBlocker['severity'], number> = {
+    P0: 0,
+    P1: 1,
+    P2: 2,
+  };
+  const topBlocker = [...judgment.blockers].sort(
+    (a, b) => severityRank[a.severity] - severityRank[b.severity],
+  )[0];
+  if (topBlocker) {
+    return `[${topBlocker.severity} · ${topBlocker.domain}] ${topBlocker.description}`;
+  }
+  const blockingGap =
+    judgment.evidenceGaps.find((g) => g.blocksDecision) ?? judgment.evidenceGaps[0];
+  if (blockingGap) return `Evidence gap: ${blockingGap.gap}`;
+  return null;
 }
 
 // ── TOC ───────────────────────────────────────────────────────────────────

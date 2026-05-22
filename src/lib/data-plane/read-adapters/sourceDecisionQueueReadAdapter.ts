@@ -14,22 +14,19 @@
 // projection, never a throw, so the surface always renders (and the queue's
 // own `emptyState` covers the no-data case).
 //
-// Tenant-key note: the app uses the `apexretail` client key; the tenant-data
-// substrate keys rows as `apex-retail`. `brokerTenantKey` maps between them.
+// Tenant-key note: the app uses legacy client keys (`apexretail`,
+// `meridian`, `arcturus`) while the tenant-data substrate keys rows under
+// the canonical slugs (`apex-retail`, `meridian-health`, `first-capital`).
+// `canonicalTenantKey` from `@/lib/tenant-keys` is the single source of
+// truth for that map — every tenant must be canonicalized before a read or
+// the queries split between the alias and canonical key and return empty.
 
 import 'server-only';
 import { getServerSupabase } from '@/lib/supabase-server';
+import { canonicalTenantKey } from '@/lib/tenant-keys';
 import type { ContextSourceType } from '@/lib/context-trust/freshness-model';
 import type { RawTenantRecord } from '@/lib/source/decision-queue/projection';
 import type { SegmentFreshnessInput } from '@/lib/source/decision-queue/detector-inputs';
-
-/** Map an app client key to the tenant-data substrate tenant key. */
-export function brokerTenantKey(clientKey: string): string {
-  // The Apex tenant is keyed `apexretail` in the app, `apex-retail` in the
-  // tenant-data substrate. Other tenants use the same key on both sides.
-  if (clientKey === 'apexretail') return 'apex-retail';
-  return clientKey;
-}
 
 interface InventoryRecordRow {
   record_id: string;
@@ -72,7 +69,7 @@ export interface SourceDecisionQueueRawData {
 export async function readSourceDecisionQueueData(
   clientKey: string,
 ): Promise<SourceDecisionQueueRawData> {
-  const tenantKey = brokerTenantKey(clientKey);
+  const tenantKey = canonicalTenantKey(clientKey);
   let vendorContractRecords: RawTenantRecord[] = [];
   let financialRecords: RawTenantRecord[] = [];
   const freshnessBySegment = new Map<string, string | null>();
