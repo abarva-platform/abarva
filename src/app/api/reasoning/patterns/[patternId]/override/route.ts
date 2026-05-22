@@ -14,6 +14,8 @@ import {
   hasPatternBodyOverride,
   clearPatternBodyOverride,
 } from '@/lib/reasoning/pattern-body-overrides';
+// SECURITY (audit 2026-05-22, P0-1): requires an authenticated session.
+import { guardReasoning } from '@/app/api/reasoning/_auth';
 
 const MAX_BODY_CHARS = 2000;
 
@@ -28,6 +30,9 @@ export async function GET(
   _request: Request,
   { params }: { params: Promise<{ patternId: string }> },
 ): Promise<Response> {
+  const guard = await guardReasoning();
+  if (guard.response) return guard.response;
+
   const { patternId } = await params;
   if (!patternId) {
     return jsonResponse({ error: 'patternId is required' }, 400);
@@ -43,6 +48,9 @@ export async function POST(
   request: Request,
   { params }: { params: Promise<{ patternId: string }> },
 ): Promise<Response> {
+  const guard = await guardReasoning();
+  if (guard.response) return guard.response;
+
   const { patternId } = await params;
   if (!patternId) {
     return jsonResponse({ error: 'patternId is required' }, 400);
@@ -79,6 +87,9 @@ export async function DELETE(
   _request: Request,
   { params }: { params: Promise<{ patternId: string }> },
 ): Promise<Response> {
+  const guard = await guardReasoning();
+  if (guard.response) return guard.response;
+
   const { patternId } = await params;
   if (!patternId) {
     return jsonResponse({ error: 'patternId is required' }, 400);

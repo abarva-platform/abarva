@@ -3,9 +3,14 @@
 // Marks the supplied contradiction id as resolved in the local in-memory
 // ring buffer. Persistence is out of scope for this iteration.
 
+// SECURITY (audit 2026-05-22, P0-1): requires an authenticated session.
 import { markResolved } from '@/lib/reasoning/contradiction-resolution-state';
+import { guardReasoning } from '@/app/api/reasoning/_auth';
 
 export async function POST(request: Request) {
+  const guard = await guardReasoning();
+  if (guard.response) return guard.response;
+
   let body: unknown;
   try {
     body = await request.json();

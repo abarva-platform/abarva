@@ -18,6 +18,10 @@ import { getActiveClientRow } from '@/lib/active-client';
 import { getCurrentUser } from '@/lib/auth/current-user';
 import { CANONICAL_CLIENT_ADMIN_EMAILS } from '@/lib/auth/canonical-auth-roster';
 import { loadUserSourceAccessPolicy } from '@/lib/auth/source-access-policy';
+import {
+  isGateApprovalStrictMode,
+  isStrictModeApprovalRole,
+} from '@/lib/auth/gate-approval-strict-mode';
 import { getServerSupabase } from '@/lib/supabase-server';
 import { selectSourceWriteAdapter } from '@/lib/data-plane/write-adapters/sourceWriteAdapter';
 import { inferClientKeyFromEmail, isClientKey } from '@/lib/client-config';
@@ -148,6 +152,21 @@ export async function PATCH(req: NextRequest, { params }: RouteCtx) {
         {
           error: 'forbidden',
           detail: 'Source stage-approval rights are required to update gate criteria.',
+        },
+        { status: 403 },
+      );
+    }
+
+    // SECURITY (audit 2026-05-22, P1-4): GATE_APPROVAL_STRICT_MODE. Per
+    // Memory · Gate self-approval model, production hardens criterion
+    // mutation to admin/maestro through this flag. In pilot (flag off)
+    // any stage-approver may mark a criterion met.
+    if (isGateApprovalStrictMode() && !isStrictModeApprovalRole(tenancy?.role)) {
+      return Response.json(
+        {
+          error: 'forbidden',
+          detail:
+            'GATE_APPROVAL_STRICT_MODE is enabled — updating gate criteria requires an admin or maestro role.',
         },
         { status: 403 },
       );

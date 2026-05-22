@@ -1,5 +1,7 @@
 // GET /api/reasoning/health-snapshot
+// SECURITY (audit 2026-05-22, P0-1): requires an authenticated session.
 import { buildHealthBoardRows } from '@/lib/reasoning/health-board';
+import { guardReasoning } from '@/app/api/reasoning/_auth';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
@@ -13,6 +15,9 @@ function computeScore(gatesMet: number, gatesTotal: number, activeContradictions
 }
 
 export async function GET() {
+  const guard = await guardReasoning();
+  if (guard.response) return guard.response;
+
   const rows = buildHealthBoardRows();
   const total = rows.length;
   const healthy = rows.filter((r) => r.healthLabel === 'healthy').length;

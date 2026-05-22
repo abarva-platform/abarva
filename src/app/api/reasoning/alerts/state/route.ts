@@ -6,11 +6,13 @@
 // in-memory only — restarts wipe the store, mirroring the
 // contradiction-resolution and mission-state paths.
 
+// SECURITY (audit 2026-05-22, P0-1): requires an authenticated session.
 import {
   setAlertState,
   type AlertStatus,
 } from '@/lib/reasoning/alert-acknowledgment-state';
 import '@/lib/reasoning/alert-acknowledgment-init';
+import { guardReasoning } from '@/app/api/reasoning/_auth';
 
 function jsonResponse(body: unknown, status: number): Response {
   return new Response(JSON.stringify(body), {
@@ -20,6 +22,9 @@ function jsonResponse(body: unknown, status: number): Response {
 }
 
 export async function POST(request: Request) {
+  const guard = await guardReasoning();
+  if (guard.response) return guard.response;
+
   let body: unknown;
   try {
     body = await request.json();

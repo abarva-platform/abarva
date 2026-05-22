@@ -142,6 +142,9 @@ import {
   detectBriefOverlap,
   type BriefOverlapInput,
 } from "@/lib/programs/origination-overlap";
+// SECURITY (audit 2026-05-22, P1-5): prompt-injection hardening for
+// untrusted uploaded / retrieved content.
+import { wrapUntrustedContent } from "@/lib/agent/untrusted-content";
 // OV2-4c · attachment ingestion. The chat composer threads recent
 // attachment chips through `surfaceContext.attachments`. We resolve the
 // referenced records via `getAttachment`, run text extraction on known
@@ -921,23 +924,30 @@ export async function POST(request: Request) {
 
   // Wave 1 · inline files block. Client extracted text via FileReader
   // and passed it in the request body. No DB lookup needed.
+  //
+  // SECURITY (audit 2026-05-22, P1-5): uploaded document text is
+  // untrusted — it can carry prompt-injection payloads aimed at the
+  // registered write tools. Each file's content is sanitized (control /
+  // bidi chars stripped) and the whole block is fenced via
+  // `wrapUntrustedContent` with an explicit data-only preamble.
   const inlineFilesBlock = (() => {
     const files = body.inlineFiles;
     if (!files || files.length === 0) return '';
-    const lines: string[] = ['--- INLINE ATTACHMENTS ---'];
+    const sections: Array<{ label: string; body: string }> = [];
     for (const f of files) {
-      lines.push(`FILE: ${f.name}${f.sizeBytes != null ? ` (${Math.round(f.sizeBytes / 1024)}KB)` : ''}`);
+      const label = `FILE: ${f.name}${f.sizeBytes != null ? ` (${Math.round(f.sizeBytes / 1024)}KB)` : ''}`;
       if (f.content) {
         // Cap at 8000 chars to protect context budget.
         const preview = f.content.length > 8000 ? f.content.slice(0, 8000) + '\n[...truncated]' : f.content;
-        lines.push(preview);
+        sections.push({ label, body: preview });
       } else {
-        lines.push('[Binary file — content not text-extractable client-side. Acknowledge by name and ask user to describe key points.]');
+        sections.push({
+          label,
+          body: '[Binary file — content not text-extractable client-side. Acknowledge by name and ask user to describe key points.]',
+        });
       }
-      lines.push('');
     }
-    lines.push('--- END INLINE ATTACHMENTS ---');
-    return lines.join('\n');
+    return wrapUntrustedContent(sections);
   })();
 
   const systemPrompt = [
@@ -1043,7 +1053,7 @@ export async function POST(request: Request) {
           "- If the user misspells a role or name, correct lightly and continue. Do not make the typo the center of the reply.",
           "- Do not mention UUIDs, database IDs, person IDs, or internal lookup mechanics in user-facing prose. Say 'I'll confirm Sarah Chen and Rick Stewart in Meridian's people records' rather than 'I'll get their UUIDs'.",
           "- ORIGINATION PEOPLE RULES: a program submission needs at least one sponsor resolved in the active tenant's people records. The signed-in user can be the program owner/lead when appropriate because they are already registered. If the user names a new sponsor or lead who is not yet registered, offer to register that person as a placeholder inside the active tenant only; explain that tenant admin approval will review the placeholder before the program becomes active.",
-          "- PHASE ADVANCE APPROVALS: if the user explicitly says a sponsor/admin approves a phase gate and USER ACCESS POLICY says 'Can approve gates: yes', call advance_phase with self_approve_if_authorized=true. If the policy does not grant approval rights, do not self-approve; create/request approval and say which approver must act.",
+          "- PHASE ADVANCE APPROVALS: when a phase gate requires approval, call advance_phase to CREATE the approval request and tell the user it is pending. NEVER approve a gate on the user's behalf from chat — gate approval is a deterministic confirmation the authorized approver performs in the Programs UI, not something you satisfy by parsing the user's words. Name which role must approve, and direct the user to the approval action in the app.",
           "- LIFECYCLE LABEL DISCIPLINE: never call P4 'Build', P5 'Activate', or P6 'Operate'. The locked labels are P4 Execution Roadmap, P5 Approval & Mobilization, and P6 Tower Handoff. If you need to mention external execution, say execution happens outside AbarVa and P4 builds the executable roadmap only.",
           "- DELIVERABLE PERSISTENCE DISCIPLINE: for phase deliverables, do not generate a huge hidden complete_deliverable payload. Save bounded executive-grade content: either a concise markdown artifact under 6,000 characters or the tool's content_outline array with the key sections, decisions, gate proofs, risks, and follow-ups. Then summarize what was saved in chat. Never spend a turn silently composing a full consulting deck inside tool JSON.",
           "- DELIVERABLE FAILURE HONESTY: if complete_deliverable or complete_deliverables fails, do not say 'nothing is lost' unless a durable draft row was actually persisted. Say the draft remains visible in this conversation but is not saved yet, name the platform error if available, and offer one retry after the platform fix.",
@@ -1501,6 +1511,22 @@ function formatContextBundleReceiptForPrompt(
   const worldviewLines = bundle.worldviewChunks.slice(0, 4).map((hit) => {
     return `  - ${hit.chunkId}: ${hit.thesisTitle ?? hit.thesisId}${hit.chunkTitle ? ` / ${hit.chunkTitle}` : ''}`;
   });
+  // SECURITY (audit 2026-05-22, P1-5): the fact / chunk / worldview lines
+  // carry retrieved tenant document text verbatim — untrusted input that
+  // could carry prompt-injection payloads aimed at the registered write
+  // tools. The structured receipt metadata (ids, schema, warnings) stays
+  // as trusted prompt text; the retrieved content is fenced as data-only.
+  const retrievedContentBlock = wrapUntrustedContent([
+    factLines.length > 0
+      ? { label: 'Private client facts', body: factLines.join('\n') }
+      : { label: '', body: '' },
+    chunkLines.length > 0
+      ? { label: 'Private client evidence chunks', body: chunkLines.join('\n') }
+      : { label: '', body: '' },
+    worldviewLines.length > 0
+      ? { label: 'Shared AbarVa corpus/worldview chunks', body: worldviewLines.join('\n') }
+      : { label: '', body: '' },
+  ]);
   return [
     'CONTEXT BROKER RECEIPT:',
     `- Mode: ${bundle.mode}`,
@@ -1511,12 +1537,7 @@ function formatContextBundleReceiptForPrompt(
     `- Private records/chunks retrieved: ${privateIds.length > 0 ? privateIds.join(', ') : 'none'}`,
     `- Shared corpus chunks retrieved: ${sharedIds.length > 0 ? sharedIds.join(', ') : 'none'}`,
     `- Warnings: ${bundle.warnings.length > 0 ? bundle.warnings.join(' | ') : 'none'}`,
-    factLines.length > 0 ? 'Private client facts:' : '',
-    ...factLines,
-    chunkLines.length > 0 ? 'Private client evidence chunks:' : '',
-    ...chunkLines,
-    worldviewLines.length > 0 ? 'Shared AbarVa corpus/worldview chunks:' : '',
-    ...worldviewLines,
+    retrievedContentBlock,
     'Use this receipt to ground the answer. Do not invent private facts not present in retrieved private ids or prompt context.',
   ].filter(Boolean).join('\n');
 }

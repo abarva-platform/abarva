@@ -23,6 +23,9 @@ import { buildStageSynthesisPrompt } from '@/lib/reasoning/stage-synthesis-promp
 import { AGENT_DEMO_SYSTEM_BLOCK } from '@/lib/agent/demo-context';
 import { getUserContextPromptBlock } from '@/lib/agent/userContext';
 import { FOUR_LAYER_REASONING_INSTRUCTIONS } from '@/lib/intelligence/synthesis/instructionLayer';
+// SECURITY (audit 2026-05-22, P0-1): requires an authenticated session
+// and scopes the instanceId to the session tenant.
+import { guardReasoning, isInstanceInTenant } from '@/app/api/reasoning/_auth';
 
 // Process-local cache: key → text response. Fine for the demo; production
 // would use Redis. Keyed by `${instanceId}:${stageId}:${stateHash}`.
@@ -71,6 +74,9 @@ function resolveInstance(instanceId: string): ResolvedInstance | null {
 }
 
 export async function POST(request: Request) {
+  const guard = await guardReasoning();
+  if (guard.response) return guard.response;
+
   const body = (await request.json()) as {
     instanceId?: string;
     stageId?: string;
@@ -86,6 +92,13 @@ export async function POST(request: Request) {
         headers: { 'Content-Type': 'application/json' },
       },
     );
+  }
+
+  if (!isInstanceInTenant(guard.ctx, instanceId)) {
+    return new Response(JSON.stringify({ error: 'instance not found' }), {
+      status: 404,
+      headers: { 'Content-Type': 'application/json' },
+    });
   }
 
   const resolved = resolveInstance(instanceId);

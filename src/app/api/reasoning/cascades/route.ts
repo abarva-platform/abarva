@@ -10,11 +10,16 @@
 // reflect the current process — exactly the same lifetime story as the
 // sibling synthesis-telemetry buffer.
 
+// SECURITY (audit 2026-05-22, P0-1): requires an authenticated session.
 import { getRecentCascadeEvents } from '@/lib/reasoning/cascade-telemetry';
+import { guardReasoning } from '@/app/api/reasoning/_auth';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
+  const guard = await guardReasoning();
+  if (guard.response) return guard.response;
+
   const events = getRecentCascadeEvents(200);
 
   return new Response(JSON.stringify({ events }), {

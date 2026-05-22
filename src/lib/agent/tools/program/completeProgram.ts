@@ -12,6 +12,7 @@ import { registerTool } from '../registry';
 import { requireTenancy, TenancyError } from '@/app/api/v1/programs/_auth';
 import { getServerSupabase } from '@/lib/supabase-server';
 import { writeProgramAuditLogBestEffort } from '@/lib/programs/audit-log';
+import { loadUserProgramAccessPolicy } from '@/lib/auth/program-access-policy';
 
 interface CompleteProgramInput {
   program_id: string;
@@ -49,6 +50,24 @@ export const completeProgramTool: AgentTool<CompleteProgramInput> = {
         };
       }
       throw err;
+    }
+
+    // SECURITY (audit 2026-05-22, P0-2b): closing a program is a
+    // terminal, gate-equivalent state change (lifecycle_state=completed,
+    // phase=6). Per the tool-registry fail-closed contract it must check
+    // a capability — require gate-approval rights before the write.
+    const completeProgramPolicy =
+      ctx.accessPolicy ?? (await loadUserProgramAccessPolicy(tenancy, {
+        programId: input.program_id,
+      }).catch(() => null));
+    if (!completeProgramPolicy || completeProgramPolicy.canApproveGates !== true) {
+      return {
+        success: false,
+        error: 'forbidden:can_approve_gates_required',
+        recovery:
+          'Closing a program is a gate-level action that needs gate-approval rights. Ask a sponsor ' +
+          'or client admin to complete the P6 handoff, or to grant can_approve_gates.',
+      };
     }
 
     const sb = getServerSupabase();

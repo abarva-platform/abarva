@@ -11,6 +11,9 @@ import { SOURCE_EVENT_INSTANCES } from '@/lib/source/source-event-instances';
 import { buildEvidenceMap } from '@/lib/source/source-event-instance';
 import { SOURCE_LIFECYCLE_PATTERNS } from '@/lib/intelligence/source-lifecycle-patterns';
 import { createGateEvaluator } from '@/lib/reasoning/gate-evaluator';
+// SECURITY (audit 2026-05-22, P0-1): requires an authenticated session
+// and scopes the instanceId to the session tenant.
+import { guardReasoning, isInstanceInTenant } from '@/app/api/reasoning/_auth';
 
 export const dynamic = 'force-dynamic';
 
@@ -41,6 +44,9 @@ function json(body: unknown, status = 200): Response {
 }
 
 export async function POST(req: Request): Promise<Response> {
+  const guard = await guardReasoning();
+  if (guard.response) return guard.response;
+
   let body: { instanceId?: string };
   try {
     body = (await req.json()) as { instanceId?: string };
@@ -51,6 +57,10 @@ export async function POST(req: Request): Promise<Response> {
   const { instanceId } = body;
   if (!instanceId) {
     return json({ error: 'instanceId is required' }, 400);
+  }
+
+  if (!isInstanceInTenant(guard.ctx, instanceId)) {
+    return json({ error: `Instance not found: ${instanceId}` }, 404);
   }
 
   const instance = SOURCE_EVENT_INSTANCES.find((i) => i.id === instanceId);

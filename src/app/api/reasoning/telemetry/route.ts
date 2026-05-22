@@ -4,8 +4,10 @@
 // future Postgres exporter, etc.). No mutation; reads only the in-memory
 // ring buffer exposed by the telemetry module.
 
+// SECURITY (audit 2026-05-22, P0-1): requires an authenticated session.
 import { getRecentSynthesisEvents } from '@/lib/reasoning/synthesis-telemetry';
 import { summarizeTelemetry } from '@/lib/reasoning/synthesis-telemetry-stats';
+import { guardReasoning } from '@/app/api/reasoning/_auth';
 // Side-effect import: installs the in-memory-extended backend once per
 // server boot. Stub today; real persistence backend will replace this file.
 import '@/lib/reasoning/telemetry-init';
@@ -13,6 +15,9 @@ import '@/lib/reasoning/telemetry-init';
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
+  const guard = await guardReasoning();
+  if (guard.response) return guard.response;
+
   const events = getRecentSynthesisEvents(200);
   const summary = summarizeTelemetry(events);
 

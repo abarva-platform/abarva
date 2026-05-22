@@ -10,11 +10,16 @@
 // health check, not a critical path, and a non-200 here would force callers
 // to treat the endpoint itself as a failure mode rather than a diagnostic.
 
+// SECURITY (audit 2026-05-22, P0-1): requires an authenticated session.
 import { runAllHealthChecks } from '@/lib/reasoning/health-checks';
+import { guardReasoning } from '@/app/api/reasoning/_auth';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
+  const guard = await guardReasoning();
+  if (guard.response) return guard.response;
+
   const report = runAllHealthChecks();
   return new Response(JSON.stringify(report), {
     status: 200,

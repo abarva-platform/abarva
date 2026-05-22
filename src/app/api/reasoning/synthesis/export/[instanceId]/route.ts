@@ -8,6 +8,9 @@ import { SOURCE_LIFECYCLE_PATTERNS } from '@/lib/intelligence/source-lifecycle-p
 import { PROGRAM_LIFECYCLE_PATTERNS } from '@/lib/intelligence/program-lifecycle-patterns';
 import { buildSourceSynthesisContext } from '@/lib/reasoning/synthesis-context-builder';
 import { buildProgramSynthesisContext } from '@/lib/reasoning/program-synthesis-context-builder';
+// SECURITY (audit 2026-05-22, P0-1): requires an authenticated session
+// and scopes the instanceId to the session tenant.
+import { guardReasoning, isInstanceInTenant } from '@/app/api/reasoning/_auth';
 
 function jsonError(message: string, status: number): Response {
   return new Response(JSON.stringify({ error: message }), {
@@ -20,7 +23,14 @@ export async function GET(
   _req: Request,
   { params }: { params: Promise<{ instanceId: string }> },
 ): Promise<Response> {
+  const guard = await guardReasoning();
+  if (guard.response) return guard.response;
+
   const { instanceId } = await params;
+
+  if (!isInstanceInTenant(guard.ctx, instanceId)) {
+    return jsonError(`Instance "${instanceId}" not found`, 404);
+  }
 
   // Try source event instances first.
   const sourceInstance = SOURCE_EVENT_INSTANCES.find((i) => i.id === instanceId);

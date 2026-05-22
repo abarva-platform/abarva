@@ -1,9 +1,22 @@
 // POST /api/reasoning/gate-approval
 // Body: { instanceId: string; criterionId: string; justification: string; action: 'approve' | 'reject' }
-// Demo-only endpoint — records a gate-criterion approval or rejection in an in-memory store.
+// Records a gate-criterion approval or rejection in an in-memory store.
 // No persistence: resets on server restart (matches gate-waiver and missions/state patterns).
+//
+// SECURITY (audit 2026-05-22, P0-1 / P2-8): requires an authenticated
+// session + active client, scopes the instanceId to the session tenant,
+// and enforces a gate-approval role before recording the decision. The
+// in-memory store key is namespaced by tenant so a process-level Map
+// can never be read cross-tenant by instanceId.
 
 import { recordApproval } from '@/app/api/reasoning/audit/route';
+import {
+  requireReasoningTenancy,
+  tenancyErrorResponse,
+  assertInstanceInTenant,
+  requireGateApprovalRole,
+  reasoningTenantId,
+} from '@/app/api/reasoning/_auth';
 
 interface GateApprovalBody {
   instanceId: string;
@@ -25,19 +38,26 @@ function jsonResponse(body: unknown, status: number): Response {
   });
 }
 
-// In-memory store — keyed by `${instanceId}::${criterionId}`.
+// In-memory store — keyed by `${tenantId}::${instanceId}::${criterionId}`.
+// The tenant prefix is the security boundary: a reader for one tenant can
+// never enumerate another tenant's records by guessing instanceIds.
 const approvalStore = new Map<string, ApprovalRecord>();
 
-/** Retrieve the approval/rejection record for a given instance+criterion pair. */
-export function getApproval(instanceId: string, criterionId: string): ApprovalRecord | undefined {
-  return approvalStore.get(`${instanceId}::${criterionId}`);
+/** Retrieve the approval/rejection record for a given tenant+instance+criterion. */
+export function getApproval(
+  tenantId: string,
+  instanceId: string,
+  criterionId: string,
+): ApprovalRecord | undefined {
+  return approvalStore.get(`${tenantId}::${instanceId}::${criterionId}`);
 }
 
-/** Retrieve all approval/rejection records for a given instanceId. */
+/** Retrieve all approval/rejection records for a given tenant + instanceId. */
 export function getApprovalsForInstance(
+  tenantId: string,
   instanceId: string,
 ): Array<{ criterionId: string; record: ApprovalRecord }> {
-  const prefix = `${instanceId}::`;
+  const prefix = `${tenantId}::${instanceId}::`;
   const results: Array<{ criterionId: string; record: ApprovalRecord }> = [];
   for (const [key, record] of approvalStore.entries()) {
     if (key.startsWith(prefix)) {
@@ -53,6 +73,18 @@ export function clearApprovals(): void {
 }
 
 export async function POST(request: Request): Promise<Response> {
+  let ctx;
+  try {
+    ctx = await requireReasoningTenancy();
+  } catch (err) {
+    try { return tenancyErrorResponse(err); } catch {}
+    return jsonResponse({ error: 'internal_error' }, 500);
+  }
+
+  // Approve / reject is a privileged write — enforce role before anything else.
+  const roleDenied = requireGateApprovalRole(ctx);
+  if (roleDenied) return roleDenied;
+
   let body: unknown;
   try {
     body = await request.json();
@@ -86,16 +118,24 @@ export async function POST(request: Request): Promise<Response> {
     return jsonResponse({ error: "action must be 'approve' or 'reject'" }, 400);
   }
 
-  const key = `${instanceId}::${criterionId}`;
+  // Cross-tenant scoping: a caller may only act on instances owned by
+  // their active client.
+  const scopeDenied = assertInstanceInTenant(ctx, instanceId);
+  if (scopeDenied) return scopeDenied;
+
+  const tenantId = reasoningTenantId(ctx);
+  const key = `${tenantId}::${instanceId}::${criterionId}`;
   const record: ApprovalRecord = { action, justification, timestamp: new Date().toISOString() };
   approvalStore.set(key, record);
 
   recordApproval({
+    tenantId,
     instanceId,
     criterionId,
     action,
     justification,
     actedAt: record.timestamp,
+    actorId: ctx.userId,
   });
 
   return jsonResponse({ ok: true, action, timestamp: record.timestamp }, 200);

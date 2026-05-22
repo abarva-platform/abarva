@@ -4,6 +4,7 @@ import { getCurrentPerson } from '@/lib/auth/maestro';
 import { requireTenancy, tenancyErrorResponse } from '@/lib/auth/tenancy';
 import { classifyUploadContent, type TowerDataType } from '@/lib/tower/classify';
 import { ingestPortfolioCsv } from '@/lib/tower/ingest-portfolio';
+import { loadUserProgramAccessPolicy } from '@/lib/auth/program-access-policy';
 import {
   evaluateSensitiveUpload,
   sensitiveUploadRejectedResponse,
@@ -47,6 +48,21 @@ export async function POST(req: NextRequest) {
 
   if (clientId !== ctx.clientId) {
     return NextResponse.json({ error: 'forbidden_cross_tenant' }, { status: 403 });
+  }
+
+  // SECURITY (audit 2026-05-22, P2-7): the route previously enforced
+  // tenant membership but no role — any tenant member could ingest Tower
+  // data. Require an upload-capable (editor/admin) role.
+  const accessPolicy = await loadUserProgramAccessPolicy(ctx).catch(() => null);
+  if (!accessPolicy?.canUploadArtifacts) {
+    return NextResponse.json(
+      {
+        error: 'forbidden',
+        detail:
+          'Uploading Tower data requires editor or admin rights. Ask a client admin to upload, or to grant upload permission.',
+      },
+      { status: 403 },
+    );
   }
 
   const sb = getServerSupabase();
