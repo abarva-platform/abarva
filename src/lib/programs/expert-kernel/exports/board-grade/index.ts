@@ -151,3 +151,16 @@ export {
   type MasterMoveDossier,
   type DossierSections,
 } from './master-dossier-model';
+
+// The generic, kernel-derived sibling of the Apex reference Master Move
+// Dossier — the assembled-book board-grade deck for a REAL, originated Move,
+// linking every other generic board-grade deck for that Move.
+export { renderMoveMasterDossierHtml } from './move-master-dossier-renderer';
+export {
+  buildMoveMasterDossier,
+  type MoveMasterDossier,
+  type MoveDossierUnboundResult,
+  type MoveMasterDossierResult,
+  type MoveDossierSections,
+  type MoveDossierVerdict,
+} from './move-master-dossier-model';
