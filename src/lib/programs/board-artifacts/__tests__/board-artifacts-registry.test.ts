@@ -5,9 +5,10 @@
 //      hand-authored board-grade decks (the Costed pack carrying a pptxHref).
 //   2. The KEY-DRIVEN path — any other Move with a resolvable
 //      `(industryKey, functionKey)` Function-Pack identity → the generic,
-//      four kernel-derived board-grade decks (Discover Brief, Costed
-//      Business-Case Pack, Solution Architecture Pack, Mobilize & Go-Decision
-//      Packet), each carrying a `?moveId=` link.
+//      five kernel-derived board-grade decks (Discover Brief, Charter
+//      Business-Case Skeleton, Costed Business-Case Pack, Solution
+//      Architecture Pack, Mobilize & Go-Decision Packet), each carrying a
+//      `?moveId=` link.
 //   A Move with no resolvable function resolves to `[]` — an honest gap.
 
 import {
@@ -92,8 +93,10 @@ describe('boardArtifactsForMove — key-driven path (real Moves, 3 verticals)', 
       charter: { functionPackKey: 'customer_care' },
     });
     const artifacts = boardArtifactsForMove(move);
-    // The key-driven path resolves the five generic kernel-derived decks.
+    // The key-driven path resolves the seven generic kernel-derived decks.
     expect(artifacts.map((a) => a.id).sort()).toEqual([
+      'cfo-pack',
+      'charter-skeleton',
       'costed-business-case',
       'discover-brief',
       'estimate-model',
@@ -110,6 +113,11 @@ describe('boardArtifactsForMove — key-driven path (real Moves, 3 verticals)', 
       '/api/v1/moves/board-grade-discover-brief?moveId=retail-move-1',
     );
     expect(discover?.phase).toBe('Discover');
+    const charter = artifacts.find((a) => a.id === 'charter-skeleton');
+    expect(charter?.htmlHref).toBe(
+      '/api/v1/moves/board-grade-charter-skeleton?moveId=retail-move-1',
+    );
+    expect(charter?.phase).toBe('Charter');
     const arch = artifacts.find((a) => a.id === 'solution-architecture');
     expect(arch?.htmlHref).toBe(
       '/api/v1/moves/board-grade-solution-architecture?moveId=retail-move-1',
@@ -123,6 +131,11 @@ describe('boardArtifactsForMove — key-driven path (real Moves, 3 verticals)', 
       '/api/v1/moves/board-grade-estimate-model?moveId=retail-move-1',
     );
     expect(estimate?.phase).toBe('Design & Plan');
+    const cfo = artifacts.find((a) => a.id === 'cfo-pack');
+    expect(cfo?.htmlHref).toBe(
+      '/api/v1/moves/board-grade-cfo-pack?moveId=retail-move-1',
+    );
+    expect(cfo?.phase).toBe('Design & Plan');
   });
 
   it('a healthcare Move with a resolvable function gets the generic decks', () => {
@@ -134,6 +147,8 @@ describe('boardArtifactsForMove — key-driven path (real Moves, 3 verticals)', 
     });
     const artifacts = boardArtifactsForMove(move);
     expect(artifacts.map((a) => a.id).sort()).toEqual([
+      'cfo-pack',
+      'charter-skeleton',
       'costed-business-case',
       'discover-brief',
       'estimate-model',
@@ -143,6 +158,11 @@ describe('boardArtifactsForMove — key-driven path (real Moves, 3 verticals)', 
     expect(
       artifacts.find((a) => a.id === 'discover-brief')?.htmlHref,
     ).toBe('/api/v1/moves/board-grade-discover-brief?moveId=health-move-1');
+    expect(
+      artifacts.find((a) => a.id === 'charter-skeleton')?.htmlHref,
+    ).toBe(
+      '/api/v1/moves/board-grade-charter-skeleton?moveId=health-move-1',
+    );
     expect(
       artifacts.find((a) => a.id === 'mobilize-packet')?.htmlHref,
     ).toBe(
@@ -169,6 +189,8 @@ describe('boardArtifactsForMove — key-driven path (real Moves, 3 verticals)', 
     });
     const artifacts = boardArtifactsForMove(move);
     expect(artifacts.map((a) => a.id).sort()).toEqual([
+      'cfo-pack',
+      'charter-skeleton',
       'costed-business-case',
       'discover-brief',
       'estimate-model',
@@ -178,6 +200,11 @@ describe('boardArtifactsForMove — key-driven path (real Moves, 3 verticals)', 
     expect(
       artifacts.find((a) => a.id === 'discover-brief')?.htmlHref,
     ).toBe('/api/v1/moves/board-grade-discover-brief?moveId=fs-move-1');
+    expect(
+      artifacts.find((a) => a.id === 'charter-skeleton')?.htmlHref,
+    ).toBe(
+      '/api/v1/moves/board-grade-charter-skeleton?moveId=fs-move-1',
+    );
     expect(
       artifacts.find((a) => a.id === 'mobilize-packet')?.htmlHref,
     ).toBe(
@@ -205,7 +232,7 @@ describe('boardArtifactsForMove — key-driven path (real Moves, 3 verticals)', 
       charter: { functionPackKey: 'customer_care' },
     });
     const artifacts = boardArtifactsForMove(move);
-    expect(artifacts).toHaveLength(5);
+    expect(artifacts).toHaveLength(7);
     for (const artifact of artifacts) {
       expect(artifact.htmlHref).toContain('moveId=oddly-named-move');
     }
@@ -226,6 +253,9 @@ describe('boardArtifactsForMove — key-driven path (real Moves, 3 verticals)', 
       artifacts.find((a) => a.id === 'discover-brief')?.htmlHref,
     ).toBe(`/api/v1/moves/board-grade-discover-brief?moveId=${encoded}`);
     expect(
+      artifacts.find((a) => a.id === 'charter-skeleton')?.htmlHref,
+    ).toBe(`/api/v1/moves/board-grade-charter-skeleton?moveId=${encoded}`);
+    expect(
       artifacts.find((a) => a.id === 'solution-architecture')?.htmlHref,
     ).toBe(
       `/api/v1/moves/board-grade-solution-architecture?moveId=${encoded}`,
@@ -236,6 +266,9 @@ describe('boardArtifactsForMove — key-driven path (real Moves, 3 verticals)', 
     expect(
       artifacts.find((a) => a.id === 'estimate-model')?.htmlHref,
     ).toBe(`/api/v1/moves/board-grade-estimate-model?moveId=${encoded}`);
+    expect(
+      artifacts.find((a) => a.id === 'cfo-pack')?.htmlHref,
+    ).toBe(`/api/v1/moves/board-grade-cfo-pack?moveId=${encoded}`);
   });
 });
 

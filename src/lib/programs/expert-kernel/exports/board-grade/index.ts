@@ -114,12 +114,36 @@ export {
   type CharterSections,
 } from './charter-skeleton-model';
 
+// The generic, kernel-derived sibling of the Apex reference Charter Skeleton —
+// the board-grade Charter Business-Case Skeleton for a REAL, originated Move.
+export { renderMoveCharterSkeletonHtml } from './move-charter-skeleton-renderer';
+export {
+  buildMoveCharterSkeleton,
+  type MoveCharterSkeleton,
+  type MoveCharterUnboundResult,
+  type MoveCharterSkeletonResult,
+  type MoveCharterSections,
+  type MoveCharterVerdict,
+} from './move-charter-skeleton-model';
+
 export { renderApexCfoPackHtml } from './cfo-pack-renderer';
 export {
   buildApexCfoPack,
   type CfoPack,
   type CfoSections,
 } from './cfo-pack-model';
+
+// The generic, kernel-derived sibling of the Apex reference CFO Pack — the
+// board-grade CFO Pack for a REAL, originated Move.
+export { renderMoveCfoPackHtml } from './move-cfo-pack-renderer';
+export {
+  buildMoveCfoPack,
+  type MoveCfoPack,
+  type MoveCfoUnboundResult,
+  type MoveCfoPackResult,
+  type MoveCfoSections,
+  type MoveCfoVerdict,
+} from './move-cfo-pack-model';
 
 export { renderApexMasterDossierHtml } from './master-dossier-renderer';
 export {
