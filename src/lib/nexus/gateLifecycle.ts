@@ -96,6 +96,12 @@ const MOVES_PHASE_ARTIFACTS: readonly MovesPhaseArtifact[] = [
 export interface MovePackContextInput {
   industry_code?: string | null;
   name?: string | null;
+  /**
+   * The `engagements.function_pack_key` column — the preferred function-key
+   * source. Omit for a row read before the column existed; the `charter`
+   * fallback (`charter.functionPackKey`) then resolves the key.
+   */
+  function_pack_key?: string | null;
   charter?: unknown;
   baseline_metrics?: unknown;
 }
@@ -111,7 +117,8 @@ export interface MovePackContext {
  * artifact, and run the expert kernel when a pack binds. Pure and
  * deterministic — no I/O — so the phase-entry deliverable generation can be
  * exercised against any Move slice without a database. When the Move resolves
- * no pack (no industry key or no `charter.functionPackKey`), every binding is
+ * no pack (no industry key, or no function key on either the
+ * `function_pack_key` column or `charter.functionPackKey`), every binding is
  * the honest unbound result and `businessCase` is `null`.
  */
 export function resolveMovePackContext(
@@ -122,6 +129,7 @@ export function resolveMovePackContext(
     : undefined;
   const moveSlice = {
     industry_code: move.industry_code ?? null,
+    function_pack_key: move.function_pack_key ?? null,
     charter: move.charter,
     baseline_metrics: baselineMetrics,
   };
@@ -141,6 +149,7 @@ export function resolveMovePackContext(
     businessCase = buildMoveBusinessCase({
       industry_code: move.industry_code,
       name: move.name,
+      function_pack_key: move.function_pack_key,
       charter: move.charter,
       baseline_metrics: baselineMetrics,
     });
@@ -154,7 +163,7 @@ async function loadPhaseEntryContext(engagementId: string): Promise<PhaseEntryCo
   const { data: engagement } = await sb
     .from('engagements')
     .select(
-      'id, name, industry_code, function_code, objective_code, charter, baseline_metrics, sponsor_person_id, co_sponsor_person_id',
+      'id, name, industry_code, function_code, objective_code, function_pack_key, charter, baseline_metrics, sponsor_person_id, co_sponsor_person_id',
     )
     .eq('id', engagementId)
     .maybeSingle();
@@ -165,6 +174,7 @@ async function loadPhaseEntryContext(engagementId: string): Promise<PhaseEntryCo
     industry_code: string | null;
     function_code: string | null;
     objective_code: string | null;
+    function_pack_key: string | null;
     charter: unknown;
     baseline_metrics: unknown;
     sponsor_person_id: string | null;
@@ -189,12 +199,14 @@ async function loadPhaseEntryContext(engagementId: string): Promise<PhaseEntryCo
 
   // Resolve the Move's curated Domain Function Pack for every Moves-phase
   // artifact, and run the expert kernel when a pack binds. When the Move
-  // resolves no pack — no industry key or no `charter.functionPackKey` —
+  // resolves no pack — no industry key, or no function key on the
+  // `function_pack_key` column or the `charter.functionPackKey` fallback —
   // every binding is the honest unbound result and the deliverables fall
   // back to the current template behaviour.
   const { packBindings, businessCase } = resolveMovePackContext({
     industry_code: row.industry_code,
     name: row.name,
+    function_pack_key: row.function_pack_key,
     charter: row.charter,
     baseline_metrics: row.baseline_metrics,
   });

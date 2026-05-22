@@ -56,6 +56,8 @@ export interface EngagementPortfolioRow {
   created_at: string;
   updated_at: string | null;
   charter: Record<string, unknown> | null;
+  function_pack_key: string | null;
+  function_pack_confidence: number | null;
   gates_passed: unknown[] | null;
 }
 
@@ -105,7 +107,7 @@ const ENGAGEMENT_COLUMNS =
   + 'current_module_key, maestro_oversight_level, founder_approval_required, '
   + 'phase_locked_at, phase_locked_by_user_id, data_residency_region, '
   + 'retention_policy_years, archived_at, deleted_at, created_at, updated_at, '
-  + 'charter, gates_passed';
+  + 'charter, function_pack_key, function_pack_confidence, gates_passed';
 
 // --- Supabase adapter (DEFAULT) --------------------------------------------
 

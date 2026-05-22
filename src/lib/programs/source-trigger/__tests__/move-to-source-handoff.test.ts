@@ -18,6 +18,7 @@ function makeMove(overrides: Partial<StrategicMove> = {}): StrategicMove {
     name: 'Contact Center AI Routing',
     tenant: { id: 't1', name: 'Apex Retail Group', industryCode: 'RETAIL' },
     charter: null,
+    functionPackKey: null,
     archetype: 'ai_product_enablement',
     currentPhase: 3,
     phaseLabel: 'P3 Design',

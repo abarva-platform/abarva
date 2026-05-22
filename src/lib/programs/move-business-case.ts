@@ -128,7 +128,19 @@ export interface MoveBusinessCaseInput {
   industryCode?: string | null;
   /** The Move's name — surfaced on the skeleton. */
   name?: string | null;
-  /** The `engagements.charter` JSONB — origination writes the function key here. */
+  /**
+   * The `engagements.function_pack_key` column — the preferred function-key
+   * source. Both the snake_case DB-row form and the `functionPackKey`
+   * camelCase alias are accepted. Omit for a row read before the column
+   * existed; the `charter` fallback then resolves the key.
+   */
+  function_pack_key?: string | null;
+  /** The `functionPackKey` alias (camelCase view-model form). */
+  functionPackKey?: string | null;
+  /**
+   * The `engagements.charter` JSONB — the fallback function-key source
+   * (`charter.functionPackKey`), still dual-written by origination.
+   */
   charter?: unknown;
   /** The `engagements.baseline_metrics` JSONB array — the recorded-metric source. */
   baseline_metrics?: readonly MoveBaselineMetricEntry[] | null;
@@ -205,6 +217,8 @@ export function buildMoveBusinessCase(
     {
       industry_code: move.industry_code,
       industryCode: move.industryCode,
+      function_pack_key: move.function_pack_key,
+      functionPackKey: move.functionPackKey,
       charter: move.charter,
       baseline_metrics: move.baseline_metrics ?? undefined,
     },
@@ -229,6 +243,7 @@ export function buildMoveBusinessCase(
   // pack both resolved — but resolve again defensively rather than asserting.
   const identity = resolveMoveFunctionIdentity({
     industryCode: move.industry_code ?? move.industryCode,
+    functionPackKey: move.function_pack_key ?? move.functionPackKey,
     charter: move.charter,
   });
   const pack =

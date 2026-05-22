@@ -51,6 +51,8 @@ function sampleRow(overrides: Partial<EngagementPortfolioRow> = {}): EngagementP
     created_at: '2026-05-01T00:00:00Z',
     updated_at: null,
     charter: null,
+    function_pack_key: null,
+    function_pack_confidence: null,
     gates_passed: null,
     ...overrides,
   };

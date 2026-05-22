@@ -95,6 +95,16 @@ export interface ProgramCore {
   // scaffold fields + classification + initiative_context. null for legacy
   // engagements created before the charter write was introduced.
   charter: Record<string, unknown> | null;
+  // The Domain Function Pack function key the Move resolves to — the
+  // first-class `engagements.function_pack_key` column. Classified at
+  // origination from the brief text + industry code. `null` when no pack
+  // cleared the confidence floor, or for a row read before the column
+  // existed (the read path then falls back to `charter.functionPackKey`).
+  functionPackKey: string | null;
+  // The 0-1 deterministic confidence of the `functionPackKey` classification —
+  // the `engagements.function_pack_confidence` column. `null` when
+  // `functionPackKey` is `null`.
+  functionPackConfidence: number | null;
   // Formal gate-pass array updated by advance_phase. Each entry is a phase
   // number that has passed its gate. Used for gate criteria display and
   // hard-gate enforcement.

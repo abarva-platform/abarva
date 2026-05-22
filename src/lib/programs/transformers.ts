@@ -1030,9 +1030,13 @@ export async function buildStrategicMove(
       name: client.name,
       industryCode: client.industry_code,
     },
-    // The origination charter — carries the classified `functionPackKey` the
-    // board-artifacts registry resolves the Move's Function-Pack identity from.
+    // The origination charter — still carries `functionPackKey` as a
+    // dual-written fallback; `functionPackKey` below is the first-class source
+    // the board-artifacts registry resolves the Move's identity from.
     charter: move.charter,
+    // The first-class `engagements.function_pack_key` column — preferred over
+    // `charter.functionPackKey` by the function-identity resolver.
+    functionPackKey: move.functionPackKey,
     archetype: formatArchetype(move.archetype),
     currentPhase: phase,
     phaseLabel: getPhaseLabel(phase),

@@ -422,12 +422,19 @@ export interface StrategicMove {
     industryCode: string | null;
   };
   // The origination charter JSONB (`engagements.charter`) — the structured
-  // brief written at origination. It carries `functionPackKey`, the classified
-  // Domain Function Pack function the Move resolves to. Surfaced on the view
-  // model so the board-artifacts registry can resolve a Move to its
-  // `(industryKey, functionKey)` identity without a second DB read. `null` for
-  // legacy Moves created before the charter write was introduced.
+  // brief written at origination. It still carries `functionPackKey` (the
+  // classified Domain Function Pack function) as a dual-written fallback, but
+  // `functionPackKey` below is now the first-class source. Surfaced so the
+  // board-artifacts registry can resolve a Move's `(industryKey, functionKey)`
+  // identity without a second DB read. `null` for legacy Moves created before
+  // the charter write was introduced.
   charter: Record<string, unknown> | null;
+  // The Domain Function Pack function key the Move resolves to — the
+  // first-class `engagements.function_pack_key` column. The board-artifacts
+  // registry and the function-identity resolver prefer this over
+  // `charter.functionPackKey`. `null` when no pack cleared the confidence
+  // floor, or for a row read before the column existed.
+  functionPackKey: string | null;
   archetype: string;
   currentPhase: number;
   phaseLabel: string;

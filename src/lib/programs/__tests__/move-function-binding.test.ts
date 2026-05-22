@@ -229,6 +229,45 @@ describe('bindMoveFunctionPack — a Move that resolves to a real pack', () => {
     );
     expect(binding.bound).toBe(true);
   });
+
+  it('binds from the first-class function_pack_key column (charter absent)', () => {
+    // The post-migration shape: the key lives on the column, not in charter.
+    const binding = bindMoveFunctionPack(
+      {
+        industry_code: 'HEALTHCARE_IDN',
+        function_pack_key: FUNCTION_KEY,
+        baseline_metrics: [],
+      },
+      'business_case',
+    );
+    expect(binding.bound).toBe(true);
+  });
+
+  it('accepts the camelCase functionPackKey alias', () => {
+    const binding = bindMoveFunctionPack(
+      {
+        industryCode: 'HEALTHCARE_IDN',
+        functionPackKey: FUNCTION_KEY,
+        baseline_metrics: [],
+      },
+      'business_case',
+    );
+    expect(binding.bound).toBe(true);
+  });
+
+  it('falls back to charter.functionPackKey when the column is null', () => {
+    // The deploy-window / missed-backfill shape: column null, charter carries it.
+    const binding = bindMoveFunctionPack(
+      {
+        industry_code: 'HEALTHCARE_IDN',
+        function_pack_key: null,
+        charter: { [CHARTER_FUNCTION_PACK_KEY]: FUNCTION_KEY },
+        baseline_metrics: [],
+      },
+      'business_case',
+    );
+    expect(binding.bound).toBe(true);
+  });
 });
 
 describe('bindMoveFunctionPack — honest unbound results, never a throw', () => {

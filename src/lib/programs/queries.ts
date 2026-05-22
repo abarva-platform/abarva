@@ -69,6 +69,11 @@ interface EngagementRow {
   // Origination charter: all 7 scaffold fields + classification + initiative context.
   // Written by submitOriginationBrief at P0 promote; null for legacy engagements.
   charter: Record<string, unknown> | null;
+  // First-class function-identity columns — the Domain Function Pack key the
+  // Move resolves to and its classification confidence. Promoted out of
+  // `charter.functionPackKey`; `null` when no pack matched.
+  function_pack_key: string | null;
+  function_pack_confidence: number | null;
   // Formal gate-pass ledger updated by advance_phase. Used for gate completion
   // display and hard-gate enforcement.
   gates_passed: unknown[] | null;
@@ -117,6 +122,8 @@ function rowToProgram(r: EngagementRow): ProgramCore {
     createdAt: r.created_at,
     updatedAt: r.updated_at,
     charter: r.charter ?? null,
+    functionPackKey: r.function_pack_key ?? null,
+    functionPackConfidence: r.function_pack_confidence ?? null,
     gatesPassed: Array.isArray(r.gates_passed) ? r.gates_passed : [],
   };
 }

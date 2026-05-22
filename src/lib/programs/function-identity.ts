@@ -269,43 +269,90 @@ export interface MoveFunctionIdentity {
 /**
  * The key the origination path writes the classified function key under inside
  * `engagements.charter`. One source of truth for the writer and the reader.
+ *
+ * As of the `function_pack_key` column promotion this is the FALLBACK source —
+ * the first-class `engagements.function_pack_key` column is preferred. The
+ * charter key is still dual-written by origination so a rollback to the
+ * pre-column code is harmless; retiring it is a separate future cleanup.
  */
 export const CHARTER_FUNCTION_PACK_KEY = 'functionPackKey';
 
 /**
  * The key the classifier confidence is stored under inside `engagements.charter`.
+ * Like `CHARTER_FUNCTION_PACK_KEY`, this is the fallback source — the
+ * first-class `engagements.function_pack_confidence` column is preferred.
  */
 export const CHARTER_FUNCTION_PACK_CONFIDENCE_KEY = 'functionPackConfidence';
 
-/** Narrow an unknown charter value to a plain object with a string field. */
-function readCharterString(charter: unknown, field: string): string | null {
-  if (!charter || typeof charter !== 'object') return null;
-  const value = (charter as Record<string, unknown>)[field];
+/** Narrow an unknown value to a non-empty trimmed string, or `null`. */
+function readNonEmptyString(value: unknown): string | null {
   if (typeof value !== 'string') return null;
   const trimmed = value.trim();
   return trimmed.length > 0 ? trimmed : null;
 }
 
+/** Narrow an unknown charter value to a plain object with a string field. */
+function readCharterString(charter: unknown, field: string): string | null {
+  if (!charter || typeof charter !== 'object') return null;
+  return readNonEmptyString((charter as Record<string, unknown>)[field]);
+}
+
+/**
+ * Resolve the function-pack key for a stored Move, preferring the first-class
+ * `engagements.function_pack_key` column and falling back to the legacy
+ * `charter.functionPackKey` JSONB value.
+ *
+ * The column is the source of truth post-migration; the charter fallback keeps
+ * the read path correct (a) in the deploy window before the backfill migration
+ * is applied and (b) for any row the backfill missed. The two are kept
+ * coherent — origination dual-writes both — so the precedence is a safety net,
+ * not a divergence.
+ *
+ * Exported so a loader that only has one of the two sources can resolve a key
+ * the same way the identity resolver does.
+ */
+export function resolveFunctionPackKey(input: {
+  functionPackKey?: string | null | undefined;
+  charter?: unknown;
+}): string | null {
+  return (
+    readNonEmptyString(input.functionPackKey) ??
+    readCharterString(input.charter, CHARTER_FUNCTION_PACK_KEY)
+  );
+}
+
 /**
  * Resolve a stored Move to its full `(industryKey, functionKey)` identity.
  *
- * `industryCode` is the `engagements.industry_code` column; `charter` is the
- * `engagements.charter` JSONB (unknown shape — narrowed defensively). The
- * function key is read from `charter.functionPackKey`, the value the
- * origination path persists.
+ * `industryCode` is the `engagements.industry_code` column. The function key is
+ * sourced with column-first precedence: the first-class
+ * `engagements.function_pack_key` column when present, otherwise the legacy
+ * `charter.functionPackKey` JSONB value the origination path dual-writes. A
+ * caller holding only the charter (e.g. a row read before the column existed)
+ * still resolves via the fallback.
  *
- * Returns `null` when either the industry code does not resolve or the charter
- * carries no function key — the honest signal that this Move cannot bind a
- * Function Pack and the caller should fall back to general reasoning.
+ * Returns `null` when either the industry code does not resolve or neither
+ * source carries a function key — the honest signal that this Move cannot bind
+ * a Function Pack and the caller should fall back to general reasoning.
  */
 export function resolveMoveFunctionIdentity(input: {
   industryCode: string | null | undefined;
+  /**
+   * The `engagements.function_pack_key` column — the preferred source. Omit or
+   * pass `null` for a row read before the column existed; the charter fallback
+   * then resolves the key.
+   */
+  functionPackKey?: string | null | undefined;
+  /** The `engagements.charter` JSONB — the fallback function-key source. */
   charter: unknown;
 }): MoveFunctionIdentity | null {
   const industryKey = industryKeyForCode(input.industryCode);
   if (!industryKey) return null;
 
-  const functionKey = readCharterString(input.charter, CHARTER_FUNCTION_PACK_KEY);
+  const functionKey = resolveFunctionPackKey({
+    functionPackKey: input.functionPackKey,
+    charter: input.charter,
+  });
   if (!functionKey) return null;
 
   return { industryKey, functionKey };

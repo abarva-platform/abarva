@@ -1170,6 +1170,7 @@ function apexContactCenterMoveStub(): StrategicMove {
       industryCode: 'retail',
     },
     charter: null,
+    functionPackKey: 'customer_care',
     archetype: 'AI Product Enablement',
     currentPhase: 3,
     phaseLabel: 'Design & Plan',
