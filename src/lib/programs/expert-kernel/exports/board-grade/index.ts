@@ -58,6 +58,18 @@ export {
   type TargetPattern,
 } from './solution-architecture-model';
 
+// The generic, kernel-derived sibling of the Apex reference renderer — the
+// board-grade Solution Architecture Pack for a REAL, originated Move.
+export { renderMoveSolutionArchitectureHtml } from './move-solution-architecture-renderer';
+export {
+  buildMoveSolutionArchitecture,
+  type MoveSolutionArchitecture,
+  type MoveArchUnboundResult,
+  type MoveSolutionArchitectureResult,
+  type MoveArchSections,
+  type MoveTargetPattern,
+} from './move-solution-architecture-model';
+
 export { renderApexEstimateModelHtml } from './estimate-model-renderer';
 export {
   buildApexEstimateModel,
@@ -71,6 +83,19 @@ export {
   type MobilizePacket,
   type MobilizeSections,
 } from './mobilize-packet-model';
+
+// The generic, kernel-derived sibling of the Apex reference Mobilize renderer
+// — the board-grade Mobilize & Go-Decision Packet for a REAL, originated Move.
+export { renderMoveMobilizePacketHtml } from './move-mobilize-renderer';
+export {
+  buildMoveMobilizePacket,
+  goVerdictWord,
+  type MoveMobilizePacket,
+  type MoveMobilizeUnbound,
+  type MoveMobilizeResult,
+  type MoveMobilizeSections,
+  type MoveGoVerdict,
+} from './move-mobilize-model';
 export { renderApexCharterSkeletonHtml } from './charter-skeleton-renderer';
 export {
   buildApexCharterSkeleton,

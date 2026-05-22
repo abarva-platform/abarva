@@ -18,10 +18,11 @@
 //   2. The KEY-DRIVEN path — for EVERY OTHER Move, the registry resolves the
 //      Move's `(industryKey, functionKey)` Function-Pack identity (via
 //      `resolveMoveFunctionIdentity`). When that resolves, the Move gets the
-//      generic, kernel-derived board-grade Costed Business-Case deck — its
-//      `htmlHref` carries `?moveId=<id>` so the route renders THAT Move's
-//      kernel-derived deck. The hardcoded Apex Move-name match is no longer
-//      the gate: any Move with a resolvable function gets the artifact.
+//      generic, kernel-derived board-grade decks — the Costed Business-Case
+//      deck and the Solution Architecture deck — each `htmlHref` carrying
+//      `?moveId=<id>` so the route renders THAT Move's kernel-derived deck.
+//      The hardcoded Apex Move-name match is no longer the gate: any Move with
+//      a resolvable function gets the artifacts.
 //
 // HONESTY: a Move with no resolvable `(industryKey, functionKey)` identity —
 // no industry code, or no `functionPackKey` in its charter — gets NO artifact.
@@ -185,11 +186,9 @@ const BOARD_ARTIFACT_ENTRIES: readonly BoardArtifactEntry[] = [
  * `(industryKey, functionKey)` identity resolved. Each artifact's `htmlHref`
  * carries `?moveId=<id>` so the route renders THAT Move's kernel-derived deck.
  *
- * Today the key-driven path serves two decks:
- *  - the Discover Brief — projected from `buildMoveDiscoverBrief`, the curated
- *    Discover outline inherited as the section spine;
- *  - the Costed Business-Case Pack — projected from
- *    `buildMoveCostedBusinessCasePack`.
+ * The key-driven path serves the four generic kernel-derived decks: the
+ * Discover Brief, the Costed Business-Case Pack, the Solution Architecture
+ * Pack, and the Mobilize & Go-Decision Packet.
  */
 function genericBoardArtifacts(moveId: string): BoardArtifact[] {
   const q = `?moveId=${encodeURIComponent(moveId)}`;
@@ -215,7 +214,53 @@ function genericBoardArtifacts(moveId: string): BoardArtifact[] {
         'costed investment range, and the kernel verdict.',
       htmlHref: `/api/v1/moves/board-grade-business-case${q}`,
     },
+    genericSolutionArchitectureArtifact(moveId),
+    genericMobilizePacketArtifact(moveId),
   ];
+}
+
+/**
+ * Build the generic, kernel-derived board-grade Solution Architecture artifact
+ * for a Move whose `(industryKey, functionKey)` identity resolved. The
+ * `htmlHref` carries `?moveId=<id>` so the route renders THAT Move's
+ * pack-bound, kernel-derived target-state architecture deck via
+ * `buildMoveSolutionArchitecture`.
+ */
+function genericSolutionArchitectureArtifact(moveId: string): BoardArtifact {
+  const q = `?moveId=${encodeURIComponent(moveId)}`;
+  return {
+    id: 'solution-architecture',
+    label: 'Solution Architecture Pack',
+    phase: 'Design & Plan',
+    blurb:
+      'The board-grade solution architecture — pack-bound for this Move, ' +
+      'with the curated Function-Pack outline, the curated reference ' +
+      'solution patterns, the AI use-case archetypes, and the control ' +
+      'posture.',
+    htmlHref: `/api/v1/moves/board-grade-solution-architecture${q}`,
+  };
+}
+
+/**
+ * Build the generic, kernel-derived board-grade Mobilize & Go-Decision Packet
+ * for a Move whose `(industryKey, functionKey)` identity resolved. The
+ * `htmlHref` carries `?moveId=<id>` so the route renders THAT Move's
+ * kernel-derived packet via `buildMoveMobilizePacket` — the mobilization-plan
+ * structure inherited from the curated Function Pack, the go-decision the
+ * kernel's real verdict.
+ */
+function genericMobilizePacketArtifact(moveId: string): BoardArtifact {
+  const q = `?moveId=${encodeURIComponent(moveId)}`;
+  return {
+    id: 'mobilize-packet',
+    label: 'Mobilize & Go-Decision Packet',
+    phase: 'Mobilize',
+    blurb:
+      'The board-grade Mobilize packet — kernel-derived for this Move, with ' +
+      'the curated Function-Pack mobilization outline, readiness gates, ' +
+      'Tower handoff, and the kernel’s real go-decision verdict.',
+    htmlHref: `/api/v1/moves/board-grade-mobilize-packet${q}`,
+  };
 }
 
 /**
@@ -228,8 +273,9 @@ function genericBoardArtifacts(moveId: string): BoardArtifact[] {
  *  2. The key-driven path — for every other Move, the Move's
  *     `(industryKey, functionKey)` Function-Pack identity is resolved from its
  *     `tenant.industryCode` + `charter`. When it resolves, the Move gets the
- *     generic, kernel-derived board-grade decks (the Discover Brief and the
- *     Costed Business-Case Pack), each `htmlHref` carrying `?moveId=`.
+ *     four generic, kernel-derived board-grade decks (the Discover Brief, the
+ *     Costed Business-Case Pack, the Solution Architecture Pack, and the
+ *     Mobilize & Go-Decision Packet), each `htmlHref` carrying `?moveId=`.
  *
  * A Move that matches neither — no reference entry and no resolvable function
  * identity — returns `[]`. That is the honest signal (a gap), never a
@@ -249,7 +295,8 @@ export function boardArtifactsForMove(move: StrategicMove): BoardArtifact[] {
   }
 
   // (2) The key-driven path — any Move with a resolvable Function-Pack
-  // identity gets the generic, kernel-derived board-grade decks.
+  // identity gets the four generic, kernel-derived board-grade decks, each
+  // carrying `?moveId=` so its route renders THAT Move's kernel-derived deck.
   const identity = resolveMoveFunctionIdentity({
     industryCode: move.tenant.industryCode,
     charter: move.charter,
