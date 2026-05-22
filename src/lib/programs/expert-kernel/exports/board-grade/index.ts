@@ -39,6 +39,17 @@ export {
   type BriefSections,
 } from './discover-brief-model';
 
+// The generic, kernel-derived sibling of the Apex reference Discover Brief —
+// the board-grade Discover Brief for a REAL, originated Move.
+export { renderMoveDiscoverBriefHtml } from './move-discover-brief-renderer';
+export {
+  buildMoveDiscoverBrief,
+  type MoveDiscoverBrief,
+  type MoveBriefUnboundResult,
+  type MoveDiscoverBriefResult,
+  type MoveBriefSections,
+} from './move-discover-brief-model';
+
 export { renderApexSolutionArchitectureHtml } from './solution-architecture-renderer';
 export {
   buildApexSolutionArchitecture,

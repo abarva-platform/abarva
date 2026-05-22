@@ -181,23 +181,41 @@ const BOARD_ARTIFACT_ENTRIES: readonly BoardArtifactEntry[] = [
 ];
 
 /**
- * Build the generic, kernel-derived board-grade Costed Business-Case artifact
- * for a Move whose `(industryKey, functionKey)` identity resolved. The
- * `htmlHref` carries `?moveId=<id>` so the route renders THAT Move's
- * kernel-derived deck via `buildMoveCostedBusinessCasePack`.
+ * Build the generic, kernel-derived board-grade artifacts for a Move whose
+ * `(industryKey, functionKey)` identity resolved. Each artifact's `htmlHref`
+ * carries `?moveId=<id>` so the route renders THAT Move's kernel-derived deck.
+ *
+ * Today the key-driven path serves two decks:
+ *  - the Discover Brief — projected from `buildMoveDiscoverBrief`, the curated
+ *    Discover outline inherited as the section spine;
+ *  - the Costed Business-Case Pack — projected from
+ *    `buildMoveCostedBusinessCasePack`.
  */
-function genericCostedBusinessCaseArtifact(moveId: string): BoardArtifact {
+function genericBoardArtifacts(moveId: string): BoardArtifact[] {
   const q = `?moveId=${encodeURIComponent(moveId)}`;
-  return {
-    id: 'costed-business-case',
-    label: 'Costed Business-Case Pack',
-    phase: 'Design & Plan',
-    blurb:
-      'The board-grade costed business case — kernel-derived for this Move, ' +
-      'with the curated Function-Pack outline, value forecast, costed ' +
-      'investment range, and the kernel verdict.',
-    htmlHref: `/api/v1/moves/board-grade-business-case${q}`,
-  };
+  return [
+    {
+      id: 'discover-brief',
+      label: 'Discover Brief',
+      phase: 'Discover',
+      blurb:
+        'The board-grade Discover Brief — kernel-derived for this Move, with ' +
+        'the curated Function-Pack Discover outline, the recorded baseline, ' +
+        'the framed opportunity, the named seed gaps, and the go/no-go ' +
+        'verdict.',
+      htmlHref: `/api/v1/moves/board-grade-discover-brief${q}`,
+    },
+    {
+      id: 'costed-business-case',
+      label: 'Costed Business-Case Pack',
+      phase: 'Design & Plan',
+      blurb:
+        'The board-grade costed business case — kernel-derived for this ' +
+        'Move, with the curated Function-Pack outline, value forecast, ' +
+        'costed investment range, and the kernel verdict.',
+      htmlHref: `/api/v1/moves/board-grade-business-case${q}`,
+    },
+  ];
 }
 
 /**
@@ -210,8 +228,8 @@ function genericCostedBusinessCaseArtifact(moveId: string): BoardArtifact {
  *  2. The key-driven path — for every other Move, the Move's
  *     `(industryKey, functionKey)` Function-Pack identity is resolved from its
  *     `tenant.industryCode` + `charter`. When it resolves, the Move gets the
- *     generic, kernel-derived Costed Business-Case deck (its `htmlHref`
- *     carrying `?moveId=`).
+ *     generic, kernel-derived board-grade decks (the Discover Brief and the
+ *     Costed Business-Case Pack), each `htmlHref` carrying `?moveId=`.
  *
  * A Move that matches neither — no reference entry and no resolvable function
  * identity — returns `[]`. That is the honest signal (a gap), never a
@@ -231,13 +249,13 @@ export function boardArtifactsForMove(move: StrategicMove): BoardArtifact[] {
   }
 
   // (2) The key-driven path — any Move with a resolvable Function-Pack
-  // identity gets the generic, kernel-derived Costed Business-Case deck.
+  // identity gets the generic, kernel-derived board-grade decks.
   const identity = resolveMoveFunctionIdentity({
     industryCode: move.tenant.industryCode,
     charter: move.charter,
   });
   if (identity) {
-    return [genericCostedBusinessCaseArtifact(move.id)];
+    return genericBoardArtifacts(move.id);
   }
 
   // No reference entry, no resolvable function — honestly, no artifact.

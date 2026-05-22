@@ -5,7 +5,8 @@
 //      hand-authored board-grade decks (the Costed pack carrying a pptxHref).
 //   2. The KEY-DRIVEN path — any other Move with a resolvable
 //      `(industryKey, functionKey)` Function-Pack identity → the generic,
-//      kernel-derived Costed Business-Case deck with a `?moveId=` link.
+//      kernel-derived board-grade decks (the Discover Brief and the Costed
+//      Business-Case Pack), each carrying a `?moveId=` link.
 //   A Move with no resolvable function resolves to `[]` — an honest gap.
 
 import {
@@ -82,7 +83,7 @@ describe('boardArtifactsForMove — Apex Contact Center AI Routing (reference)',
 });
 
 describe('boardArtifactsForMove — key-driven path (real Moves, 3 verticals)', () => {
-  it('a retail Move with a resolvable function gets the generic Costed deck', () => {
+  it('a retail Move with a resolvable function gets the generic decks', () => {
     const move = makeMove({
       id: 'retail-move-1',
       name: 'Cut repeat transfers in the contact centre',
@@ -90,16 +91,26 @@ describe('boardArtifactsForMove — key-driven path (real Moves, 3 verticals)', 
       charter: { functionPackKey: 'customer_care' },
     });
     const artifacts = boardArtifactsForMove(move);
-    expect(artifacts).toHaveLength(1);
-    expect(artifacts[0].id).toBe('costed-business-case');
-    expect(artifacts[0].htmlHref).toBe(
+    // The key-driven path serves the Discover Brief and the Costed deck.
+    expect(artifacts.map((a) => a.id).sort()).toEqual([
+      'costed-business-case',
+      'discover-brief',
+    ]);
+    const costed = artifacts.find((a) => a.id === 'costed-business-case');
+    const discover = artifacts.find((a) => a.id === 'discover-brief');
+    expect(costed?.htmlHref).toBe(
       '/api/v1/moves/board-grade-business-case?moveId=retail-move-1',
     );
-    // The generic deck does not carry a PowerPoint export.
-    expect(artifacts[0].pptxHref).toBeUndefined();
+    expect(discover?.htmlHref).toBe(
+      '/api/v1/moves/board-grade-discover-brief?moveId=retail-move-1',
+    );
+    expect(discover?.phase).toBe('Discover');
+    // Neither generic deck carries a PowerPoint export.
+    expect(costed?.pptxHref).toBeUndefined();
+    expect(discover?.pptxHref).toBeUndefined();
   });
 
-  it('a healthcare Move with a resolvable function gets the generic Costed deck', () => {
+  it('a healthcare Move with a resolvable function gets the generic decks', () => {
     const move = makeMove({
       id: 'health-move-1',
       name: 'Reduce clinical documentation burden',
@@ -107,14 +118,16 @@ describe('boardArtifactsForMove — key-driven path (real Moves, 3 verticals)', 
       charter: { functionPackKey: 'clinical_operations_documentation' },
     });
     const artifacts = boardArtifactsForMove(move);
-    expect(artifacts).toHaveLength(1);
-    expect(artifacts[0].id).toBe('costed-business-case');
-    expect(artifacts[0].htmlHref).toBe(
-      '/api/v1/moves/board-grade-business-case?moveId=health-move-1',
-    );
+    expect(artifacts.map((a) => a.id).sort()).toEqual([
+      'costed-business-case',
+      'discover-brief',
+    ]);
+    expect(
+      artifacts.find((a) => a.id === 'discover-brief')?.htmlHref,
+    ).toBe('/api/v1/moves/board-grade-discover-brief?moveId=health-move-1');
   });
 
-  it('a financial-services Move with a resolvable function gets the generic Costed deck', () => {
+  it('a financial-services Move with a resolvable function gets the generic decks', () => {
     const move = makeMove({
       id: 'fs-move-1',
       name: 'Strengthen fraud detection',
@@ -122,16 +135,18 @@ describe('boardArtifactsForMove — key-driven path (real Moves, 3 verticals)', 
       charter: { functionPackKey: 'fraud_financial_crime' },
     });
     const artifacts = boardArtifactsForMove(move);
-    expect(artifacts).toHaveLength(1);
-    expect(artifacts[0].id).toBe('costed-business-case');
-    expect(artifacts[0].htmlHref).toBe(
-      '/api/v1/moves/board-grade-business-case?moveId=fs-move-1',
-    );
+    expect(artifacts.map((a) => a.id).sort()).toEqual([
+      'costed-business-case',
+      'discover-brief',
+    ]);
+    expect(
+      artifacts.find((a) => a.id === 'discover-brief')?.htmlHref,
+    ).toBe('/api/v1/moves/board-grade-discover-brief?moveId=fs-move-1');
   });
 
   it('the hardcoded Apex Move-name is no longer the gate — any name resolves', () => {
-    // A Move named nothing like "Contact Center AI Routing" still resolves a
-    // board-grade artifact, purely from its (industryKey, functionKey).
+    // A Move named nothing like "Contact Center AI Routing" still resolves
+    // board-grade artifacts, purely from its (industryKey, functionKey).
     const move = makeMove({
       id: 'oddly-named-move',
       name: 'Q3 ops improvement workstream',
@@ -139,21 +154,26 @@ describe('boardArtifactsForMove — key-driven path (real Moves, 3 verticals)', 
       charter: { functionPackKey: 'customer_care' },
     });
     const artifacts = boardArtifactsForMove(move);
-    expect(artifacts).toHaveLength(1);
-    expect(artifacts[0].htmlHref).toContain('moveId=oddly-named-move');
+    expect(artifacts).toHaveLength(2);
+    for (const artifact of artifacts) {
+      expect(artifact.htmlHref).toContain('moveId=oddly-named-move');
+    }
   });
 
-  it('encodes the moveId in the href', () => {
+  it('encodes the moveId in every generic href', () => {
     const move = makeMove({
       id: 'move with spaces/&',
       tenant: { id: 't-r', name: 'Northwind Retail', industryCode: 'retail' },
       charter: { functionPackKey: 'customer_care' },
     });
     const artifacts = boardArtifactsForMove(move);
-    expect(artifacts[0].htmlHref).toBe(
-      '/api/v1/moves/board-grade-business-case?moveId=' +
-        encodeURIComponent('move with spaces/&'),
-    );
+    const encoded = encodeURIComponent('move with spaces/&');
+    expect(
+      artifacts.find((a) => a.id === 'costed-business-case')?.htmlHref,
+    ).toBe(`/api/v1/moves/board-grade-business-case?moveId=${encoded}`);
+    expect(
+      artifacts.find((a) => a.id === 'discover-brief')?.htmlHref,
+    ).toBe(`/api/v1/moves/board-grade-discover-brief?moveId=${encoded}`);
   });
 });
 
