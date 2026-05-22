@@ -18,6 +18,7 @@
 import { renderToStaticMarkup } from 'react-dom/server';
 import {
   buildMeridianVbcBetSelection,
+  buildVbcBetSelection,
   MERIDIAN_FUNCTION_KEY,
   MERIDIAN_INDUSTRY_KEY,
 } from '../meridian-vbc-bet-selection';
@@ -143,5 +144,148 @@ describe('BetSelectionView — the §3 experience bar', () => {
     const html = renderToStaticMarkup(<BetSelectionView selection={null} />);
     expect(html).toContain('No curated');
     expect(html).toContain('will not fabricate');
+  });
+});
+
+describe('buildVbcBetSelection — generic over (industryKey, functionKey)', () => {
+  it('produces a correct ranked bet selection for a RETAIL pack', () => {
+    const pack = resolveFunctionPack('retail', 'pricing_promotions')!;
+    expect(pack).not.toBeNull();
+
+    const selection = buildVbcBetSelection(
+      'retail',
+      'pricing_promotions',
+      'Apex Retail',
+    );
+    expect(selection).not.toBeNull();
+
+    // The frame is the retail pack — never Meridian's healthcare pack.
+    expect(selection!.functionLabel).toBe(pack.functionLabel);
+    expect(selection!.tenantName).toBe('Apex Retail');
+
+    // Every candidate bet is one of the retail pack's AI use-case archetypes,
+    // and the ranking is a strict 1..N order.
+    const archetypeKeys = new Set(pack.aiUseCaseArchetypes.map((a) => a.key));
+    expect(selection!.bets.length).toBe(pack.aiUseCaseArchetypes.length);
+    for (const bet of selection!.bets) {
+      expect(archetypeKeys.has(bet.key)).toBe(true);
+      expect(bet.valueMechanism.length).toBeGreaterThan(0);
+      expect(['fund_first', 'shape', 'hold_for_evidence']).toContain(bet.read);
+    }
+    expect(selection!.bets.map((b) => b.rank)).toEqual(
+      Array.from({ length: selection!.bets.length }, (_, i) => i + 1),
+    );
+
+    // Apex has no audited substrate for this pack — so the ranking is honest:
+    // every bet is held for evidence, never fabricated as fundable, and the
+    // copy names Apex (never Meridian) and the retail function.
+    expect(selection!.groundedBetCount).toBe(0);
+    for (const bet of selection!.bets) {
+      expect(bet.read).toBe('hold_for_evidence');
+      expect(bet.restsOnSeedGap).toBe(true);
+    }
+    expect(selection!.headline.honestyClause).toContain('Apex Retail');
+    expect(selection!.headline.honestyClause).not.toContain('Meridian');
+    expect(selection!.headline.honestyClause).not.toMatch(/RAF|MLR/);
+    expect(selection!.gates.length).toBeGreaterThan(0);
+    expect(selection!.isReferenceExample).toBe(false);
+  });
+
+  it('produces a correct ranked bet selection for a FINANCIAL-SERVICES pack', () => {
+    const pack = resolveFunctionPack(
+      'financial-services',
+      'lending_credit_underwriting',
+    )!;
+    expect(pack).not.toBeNull();
+
+    const selection = buildVbcBetSelection(
+      'financial-services',
+      'lending_credit_underwriting',
+      'First Capital Financial',
+    );
+    expect(selection).not.toBeNull();
+
+    expect(selection!.functionLabel).toBe(pack.functionLabel);
+    expect(selection!.tenantName).toBe('First Capital Financial');
+
+    const archetypeKeys = new Set(pack.aiUseCaseArchetypes.map((a) => a.key));
+    expect(selection!.bets.length).toBe(pack.aiUseCaseArchetypes.length);
+    for (const bet of selection!.bets) {
+      expect(archetypeKeys.has(bet.key)).toBe(true);
+    }
+    expect(selection!.bets.map((b) => b.rank)).toEqual(
+      Array.from({ length: selection!.bets.length }, (_, i) => i + 1),
+    );
+
+    // No financial-services substrate — every bet is honestly held for
+    // evidence, and the copy is the tenant's, never Meridian's healthcare.
+    expect(selection!.groundedBetCount).toBe(0);
+    for (const bet of selection!.bets) {
+      expect(bet.read).toBe('hold_for_evidence');
+      expect(bet.evidenceOrGate.toLowerCase()).toContain('seed gap');
+      expect(bet.evidenceOrGate).toContain('First Capital Financial');
+    }
+    expect(selection!.headline.question).toContain('First Capital Financial');
+    expect(selection!.headline.question).not.toContain('Meridian');
+  });
+
+  it('orders the ungrounded retail bets by adoption maturity', () => {
+    const pack = resolveFunctionPack('retail', 'pricing_promotions')!;
+    const selection = buildVbcBetSelection(
+      'retail',
+      'pricing_promotions',
+      'Apex Retail',
+    )!;
+
+    // With no substrate, every score collapses to the adoption tie-breaker —
+    // the ranked order must be non-increasing in adoption weight.
+    const adoptionWeight: Record<string, number> = {
+      mainstream: 3,
+      emerging: 2,
+      experimenting: 1,
+      early: 0,
+    };
+    const byKey = new Map(pack.aiUseCaseArchetypes.map((a) => [a.key, a]));
+    const weights = selection.bets.map(
+      (b) => adoptionWeight[byKey.get(b.key)!.adoptionProfile],
+    );
+    for (let i = 1; i < weights.length; i += 1) {
+      expect(weights[i]).toBeLessThanOrEqual(weights[i - 1]);
+    }
+  });
+
+  it('the Meridian shim returns exactly what the old function did', () => {
+    // The shim calls buildVbcBetSelection with the Meridian constants — its
+    // result must be deep-equal to the generic builder on that binding.
+    const viaShim = buildMeridianVbcBetSelection('Meridian Health');
+    const viaGeneric = buildVbcBetSelection(
+      MERIDIAN_INDUSTRY_KEY,
+      MERIDIAN_FUNCTION_KEY,
+      'Meridian Health',
+    );
+    expect(viaShim).toEqual(viaGeneric);
+
+    // And it is still the grounded Meridian ranking — RAF-capture funds first.
+    expect(viaShim).not.toBeNull();
+    expect(viaShim!.bets[0].key).toBe('hcc_coding_intelligence');
+    expect(viaShim!.bets[0].read).toBe('fund_first');
+    expect(viaShim!.groundedBetCount).toBeGreaterThan(0);
+    expect(viaShim!.groundedBetCount).toBeLessThan(viaShim!.totalBetCount);
+    expect(viaShim!.isReferenceExample).toBe(false);
+  });
+
+  it('returns null honestly when no pack is catalogued for the binding', () => {
+    // An industry/function pair with no curated pack — the builder must return
+    // null, never a fabricated frame.
+    expect(
+      buildVbcBetSelection('retail', 'no_such_function', 'Apex Retail'),
+    ).toBeNull();
+    expect(
+      buildVbcBetSelection(
+        'financial-services',
+        'not_a_real_function',
+        'First Capital Financial',
+      ),
+    ).toBeNull();
   });
 });

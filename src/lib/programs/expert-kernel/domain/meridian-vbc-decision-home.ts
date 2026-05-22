@@ -21,11 +21,12 @@ import {
 } from './function-pack-registry';
 import type {
   FunctionPack,
+  FunctionPackIndustryKey,
   OperatingMetric,
 } from './function-pack-types';
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Keys — the one binding the decision home resolves
+// Keys — the Meridian reference binding the decision home ships as its example
 // ─────────────────────────────────────────────────────────────────────────────
 
 /** The industry of the Meridian tenant — a healthcare provider / IDN. */
@@ -148,6 +149,36 @@ const MERIDIAN_GROUNDED_METRIC_KEYS: ReadonlySet<string> = new Set(
     (o) => o.metricKey,
   ),
 );
+
+/**
+ * An audited tenant substrate — the observations a binding grounds its vitals
+ * against. The Meridian × VBC binding is the one binding that carries one
+ * today; any other `(industryKey, functionKey)` binding resolves to the empty
+ * substrate, so every Function-Pack metric renders as an honest seed gap.
+ */
+type TenantSubstrate = readonly MeridianMetricObservation[];
+
+/** The empty substrate — used for every binding without audited tenant data. */
+const EMPTY_SUBSTRATE: TenantSubstrate = [] as const;
+
+/**
+ * Resolve the audited substrate for a binding. Only the Meridian healthcare-
+ * provider × population-health / VBC binding has audited tenant data; every
+ * other binding gets the empty substrate, so the decision home never borrows
+ * Meridian's measured values for another tenant.
+ */
+function substrateFor(
+  industryKey: FunctionPackIndustryKey,
+  functionKey: string,
+): TenantSubstrate {
+  if (
+    industryKey === MERIDIAN_INDUSTRY_KEY &&
+    functionKey === MERIDIAN_FUNCTION_KEY
+  ) {
+    return MERIDIAN_VBC_OBSERVATIONS;
+  }
+  return EMPTY_SUBSTRATE;
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Block 1 — the one thing
@@ -281,13 +312,19 @@ export interface CadenceBlock {
  * The complete data for the function-aware decision home. The route renders
  * exactly these four blocks, in this order — the §4 structure.
  */
-export interface MeridianVbcDecisionHome {
+export interface VbcDecisionHome {
   /** The bound Function Pack — the frame. */
   functionLabel: string;
   /** The pack version + last-reviewed date — provenance for the frame. */
   packProvenance: string;
   /** The tenant display name. */
   tenantName: string;
+  /**
+   * True when the home is showing the Meridian reference binding rather than
+   * the active tenant's own analysis — surfaced so a non-Meridian tenant never
+   * reads Meridian's metrics as their own.
+   */
+  isReferenceExample: boolean;
   /** Block 1 — the one thing. */
   headline: DecisionHomeHeadline;
   /** Block 2 — decisions that need you, urgency-ordered. */
@@ -307,8 +344,14 @@ export interface MeridianVbcDecisionHome {
   cadence: CadenceBlock;
 }
 
+/**
+ * Back-compat type alias — the original name for the assembled decision home.
+ * Existing consumers (the `DecisionHomeView`, its tests) import this name.
+ */
+export type MeridianVbcDecisionHome = VbcDecisionHome;
+
 // ─────────────────────────────────────────────────────────────────────────────
-// The binding — the FRAME (Function Pack) filled with the SUBSTRATE (Meridian)
+// The binding — the FRAME (Function Pack) filled with the SUBSTRATE (tenant)
 // ─────────────────────────────────────────────────────────────────────────────
 
 const URGENCY_RANK: Record<DecisionUrgency, number> = {
@@ -317,18 +360,26 @@ const URGENCY_RANK: Record<DecisionUrgency, number> = {
   before_settlement: 2,
 };
 
-/** Look up Meridian's observation for a Function-Pack metric, if any. */
-function observationFor(metricKey: string): MeridianMetricObservation | undefined {
-  return MERIDIAN_VBC_OBSERVATIONS.find((o) => o.metricKey === metricKey);
+/** Look up a substrate's observation for a Function-Pack metric, if any. */
+function observationFor(
+  substrate: TenantSubstrate,
+  metricKey: string,
+): MeridianMetricObservation | undefined {
+  return substrate.find((o) => o.metricKey === metricKey);
 }
 
 /**
  * Decide a vital's state. A grounded value is `off` when it sits outside the
  * Function-Pack planning band in the wrong direction, `in_range` otherwise.
- * A metric Meridian has not measured is a `seed_gap` — never silently "ok".
+ * A metric the tenant has not measured is a `seed_gap` — never silently "ok".
  */
-function vitalFor(metric: OperatingMetric): FunctionVital {
-  const obs = observationFor(metric.key);
+function vitalFor(
+  substrate: TenantSubstrate,
+  metric: OperatingMetric,
+  functionLabel: string,
+  tenantName: string,
+): FunctionVital {
+  const obs = observationFor(substrate, metric.key);
   const { low, high, basis } = metric.benchmarkRange;
 
   if (!obs || obs.value === null) {
@@ -345,11 +396,13 @@ function vitalFor(metric: OperatingMetric): FunctionVital {
       state: 'seed_gap',
       read:
         obs?.seedGapReason ??
-        `The Population-Health / VBC function expects "${metric.name}", ` +
-          `sourced from ${metric.dataSource}. Meridian has no audited value ` +
-          `for it — a seed gap, not a number. Its absence blocks the ` +
+        `The ${functionLabel} function expects "${metric.name}", ` +
+          `sourced from ${metric.dataSource}. ${tenantName} has no audited ` +
+          `value for it — a seed gap, not a number. Its absence blocks the ` +
           `baseline and the value forecast for this metric.`,
-      source: obs?.source ?? 'seed gap — not in Meridian’s audited substrate.',
+      source:
+        obs?.source ??
+        `seed gap — not in ${tenantName}’s audited substrate.`,
     };
   }
 
@@ -387,31 +440,190 @@ function vitalFor(metric: OperatingMetric): FunctionVital {
 }
 
 /**
- * Build the four §4 blocks of the function-aware decision home for the
- * Meridian × Population-Health / Value-Based-Care binding.
- *
- * Returns `null` only if the VBC Function Pack is not catalogued — the same
- * honest "no curated pack" signal the registry uses. The route surfaces that
- * rather than fabricating a frame.
- *
- * @param tenantName The resolved tenant display name (e.g. "Meridian Health").
+ * Build the honest blocks for a binding with NO audited tenant substrate. Every
+ * Function-Pack metric is a seed gap, so the decision home says so plainly
+ * rather than fabricating a measured headline or a costed decision.
  */
-export function buildMeridianVbcDecisionHome(
+function ungroundedBlocks(
+  pack: FunctionPack,
   tenantName: string,
-): MeridianVbcDecisionHome | null {
+): {
+  headline: DecisionHomeHeadline;
+  decisions: DecisionCard[];
+  cadence: CadenceBlock;
+} {
+  const sampleMetrics = pack.operatingMetrics
+    .slice(0, 3)
+    .map((m) => m.name.toLowerCase())
+    .join(', ');
+  const frame = pack.vocabulary.regulatoryFrames[0];
+
+  const headline: DecisionHomeHeadline = {
+    eyebrow: pack.functionLabel,
+    statement:
+      `${tenantName}’s ${pack.functionLabel.toLowerCase()} decision home is ` +
+      `bound to a curated Function Pack — the frame is real — but ` +
+      `${tenantName} has not yet seeded an audited operating-metric ` +
+      `substrate for this function. The home can show what the function ` +
+      `expects; it cannot yet show ${tenantName}’s own numbers.`,
+    honestyClause:
+      `This is honest by construction. All ${pack.operatingMetrics.length} ` +
+      `of the function’s operating metrics render below as seed gaps, not as ` +
+      `fabricated values. Seeding them from ${tenantName}’s systems of ` +
+      `record is the work that turns this frame into ${tenantName}’s own ` +
+      `decision home.`,
+    cadenceAnchor:
+      `The ${frame?.name ?? pack.functionLabel} cadence sets when this ` +
+      `function’s work must land.`,
+  };
+
+  const decisions: DecisionCard[] = [
+    {
+      key: 'seed_operating_metric_substrate',
+      urgency: 'decide_now',
+      recommendedAction:
+        `Commission the ${pack.functionLabel.toLowerCase()} operating-metric ` +
+        `baseline — ${sampleMetrics}, and the rest — from ${tenantName}’s ` +
+        `systems of record before any value forecast for this function is ` +
+        `underwritten.`,
+      stake:
+        `Without an audited substrate the decision home can show the frame ` +
+        `of the ${pack.functionLabel.toLowerCase()} function but not ` +
+        `${tenantName}’s standing in it. A forecast built on the frame alone ` +
+        `would be fabricated, not measured.`,
+      evidence:
+        `The ${pack.functionLabel} Function Pack expects ` +
+        `${pack.operatingMetrics.length} operating metrics, each sourced ` +
+        `from a named system of record; ${tenantName}’s audited substrate ` +
+        `carries none of them yet — a precise, named seed gap.`,
+      evidenceRestsOnSeedGap: true,
+      gestureLabel: 'Review the operating-metric seed gaps',
+      gestureHref: '/home/data-trust',
+    },
+    {
+      key: 'review_function_frame',
+      urgency: 'this_cycle',
+      recommendedAction:
+        `Review the ${pack.functionLabel.toLowerCase()} Function Pack’s ` +
+        `value model and AI use-case archetypes to scope which bets are ` +
+        `worth seeding substrate for first.`,
+      stake:
+        `The function offers ${pack.aiUseCaseArchetypes.length} curated AI ` +
+        `use-case archetypes. Choosing which to ground first is the ` +
+        `highest-leverage decision available before substrate exists.`,
+      evidence:
+        `The Function Pack’s value model and archetypes are curated and ` +
+        `audited; they are a real frame to plan against even before ` +
+        `${tenantName}’s own metrics are seeded.`,
+      evidenceRestsOnSeedGap: true,
+      gestureLabel: 'Open the bet-selection surface',
+      gestureHref: '/intelligence/decision',
+    },
+  ];
+
+  const cadence: CadenceBlock = {
+    frameName: frame?.name ?? `${pack.functionLabel} operating cadence`,
+    framing:
+      frame?.relevance ??
+      `The ${pack.functionLabel.toLowerCase()} function runs on a recurring ` +
+        `operating cadence — its rhythm sets when the work must land.`,
+    stages: [
+      {
+        key: 'frame_bound',
+        label: 'Function Pack bound — the frame is real',
+        demands:
+          `The curated ${pack.functionLabel} Function Pack is bound: the ` +
+          `operating metrics, value model, and archetypes are in place.`,
+        isCurrent: false,
+      },
+      {
+        key: 'substrate_seeding',
+        label: 'Substrate seeding — the audited baseline',
+        demands:
+          `This is where ${tenantName} sits: the function’s operating ` +
+          `metrics must be seeded from the systems of record before the ` +
+          `home can show ${tenantName}’s own numbers.`,
+        isCurrent: true,
+      },
+      {
+        key: 'decision_ready',
+        label: 'Decision-ready — the home is grounded',
+        demands:
+          `Once the substrate is audited, the decision home surfaces the ` +
+          `off-benchmark metrics and the costed decisions they drive.`,
+        isCurrent: false,
+      },
+    ],
+    currentDemand:
+      `${tenantName} is in substrate seeding — the operating-metric baseline ` +
+      `for this function must be audited before the decision home can show ` +
+      `measured standing rather than the function frame alone.`,
+  };
+
+  return { headline, decisions, cadence };
+}
+
+/**
+ * Build the four §4 blocks of the function-aware decision home for any
+ * `(industryKey, functionKey)` binding.
+ *
+ * The builder is GENERIC over the Function Pack: the pack's operating metrics
+ * are the vitals frame, scored against `substrateFor(...)`. The Meridian × VBC
+ * binding carries audited tenant data; every other binding gets the empty
+ * substrate, so its vitals render as honest seed gaps and its blocks say so
+ * plainly rather than fabricating measured copy.
+ *
+ * Returns `null` only if no Function Pack is catalogued for the binding — the
+ * same honest "no curated pack" signal the registry uses.
+ *
+ * @param industryKey The Function Pack industry — e.g. `'retail'`.
+ * @param functionKey The Function Pack function — e.g. `'pricing_promotions'`.
+ * @param tenantName  The resolved tenant display name (e.g. "Apex Retail").
+ */
+export function buildVbcDecisionHome(
+  industryKey: FunctionPackIndustryKey,
+  functionKey: string,
+  tenantName: string,
+): VbcDecisionHome | null {
   const pack: FunctionPack | null = resolveFunctionPack(
-    MERIDIAN_INDUSTRY_KEY,
-    MERIDIAN_FUNCTION_KEY,
+    industryKey,
+    functionKey,
   );
   if (!pack) return null;
 
+  const substrate = substrateFor(industryKey, functionKey);
+  const isGroundedBinding = substrate.length > 0;
+
   // ── Block 3 — vitals (built first; the headline reads off them) ──────────
-  const allVitals = pack.operatingMetrics.map(vitalFor);
+  const allVitals = pack.operatingMetrics.map((m) =>
+    vitalFor(substrate, m, pack.functionLabel, tenantName),
+  );
   const off = allVitals.filter((v) => v.state === 'off');
   const rest = allVitals.filter((v) => v.state !== 'off');
   const groundedCount = allVitals.filter(
     (v) => v.meridianValue !== null,
   ).length;
+
+  // For a binding with no audited substrate, every block is the honest
+  // unseeded form — the frame is real, the tenant's numbers are not yet.
+  if (!isGroundedBinding) {
+    const blocks = ungroundedBlocks(pack, tenantName);
+    return {
+      functionLabel: pack.functionLabel,
+      packProvenance: `Function Pack v${pack.version} · reviewed ${pack.lastReviewed}`,
+      tenantName,
+      isReferenceExample: false,
+      headline: blocks.headline,
+      decisions: blocks.decisions,
+      vitals: {
+        off,
+        rest,
+        groundedCount,
+        expectedCount: pack.operatingMetrics.length,
+      },
+      cadence: blocks.cadence,
+    };
+  }
 
   // ── Block 1 — the one thing ──────────────────────────────────────────────
   // The headline asserts only audited truth: RAF under-capture is the single
@@ -564,6 +776,7 @@ export function buildMeridianVbcDecisionHome(
     functionLabel: pack.functionLabel,
     packProvenance: `Function Pack v${pack.version} · reviewed ${pack.lastReviewed}`,
     tenantName,
+    isReferenceExample: false,
     headline,
     decisions,
     vitals: {
@@ -574,6 +787,26 @@ export function buildMeridianVbcDecisionHome(
     },
     cadence,
   };
+}
+
+/**
+ * Build the decision home for the Meridian × Population-Health / VBC binding —
+ * the original reference binding.
+ *
+ * A thin back-compat shim over the generic `buildVbcDecisionHome`: existing
+ * callers and tests that imported `buildMeridianVbcDecisionHome` keep working
+ * unchanged, and the result is identical to what the old function produced.
+ *
+ * @param tenantName The resolved tenant display name (e.g. "Meridian Health").
+ */
+export function buildMeridianVbcDecisionHome(
+  tenantName: string,
+): VbcDecisionHome | null {
+  return buildVbcDecisionHome(
+    MERIDIAN_INDUSTRY_KEY,
+    MERIDIAN_FUNCTION_KEY,
+    tenantName,
+  );
 }
 
 /** Exported for tests — the metric keys Meridian has grounded with substrate. */
