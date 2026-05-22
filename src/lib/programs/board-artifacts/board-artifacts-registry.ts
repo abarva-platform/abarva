@@ -201,6 +201,28 @@ function genericCostedBusinessCaseArtifact(moveId: string): BoardArtifact {
 }
 
 /**
+ * Build the generic, kernel-derived board-grade Mobilize & Go-Decision Packet
+ * for a Move whose `(industryKey, functionKey)` identity resolved. The
+ * `htmlHref` carries `?moveId=<id>` so the route renders THAT Move's
+ * kernel-derived packet via `buildMoveMobilizePacket` — the mobilization-plan
+ * structure inherited from the curated Function Pack, the go-decision the
+ * kernel's real verdict.
+ */
+function genericMobilizePacketArtifact(moveId: string): BoardArtifact {
+  const q = `?moveId=${encodeURIComponent(moveId)}`;
+  return {
+    id: 'mobilize-packet',
+    label: 'Mobilize & Go-Decision Packet',
+    phase: 'Mobilize',
+    blurb:
+      'The board-grade Mobilize packet — kernel-derived for this Move, with ' +
+      'the curated Function-Pack mobilization outline, readiness gates, ' +
+      'Tower handoff, and the kernel’s real go-decision verdict.',
+    htmlHref: `/api/v1/moves/board-grade-mobilize-packet${q}`,
+  };
+}
+
+/**
  * The board-grade artifacts available for a Move.
  *
  * Resolution, in priority order:
@@ -231,13 +253,18 @@ export function boardArtifactsForMove(move: StrategicMove): BoardArtifact[] {
   }
 
   // (2) The key-driven path — any Move with a resolvable Function-Pack
-  // identity gets the generic, kernel-derived Costed Business-Case deck.
+  // identity gets the generic, kernel-derived board-grade decks: the Costed
+  // Business-Case Pack and the Mobilize & Go-Decision Packet, each carrying
+  // `?moveId=` so its route renders THAT Move's kernel-derived deck.
   const identity = resolveMoveFunctionIdentity({
     industryCode: move.tenant.industryCode,
     charter: move.charter,
   });
   if (identity) {
-    return [genericCostedBusinessCaseArtifact(move.id)];
+    return [
+      genericCostedBusinessCaseArtifact(move.id),
+      genericMobilizePacketArtifact(move.id),
+    ];
   }
 
   // No reference entry, no resolvable function — honestly, no artifact.

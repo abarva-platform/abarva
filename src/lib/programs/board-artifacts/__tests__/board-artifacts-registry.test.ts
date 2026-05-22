@@ -82,7 +82,7 @@ describe('boardArtifactsForMove — Apex Contact Center AI Routing (reference)',
 });
 
 describe('boardArtifactsForMove — key-driven path (real Moves, 3 verticals)', () => {
-  it('a retail Move with a resolvable function gets the generic Costed deck', () => {
+  it('a retail Move with a resolvable function gets the generic decks', () => {
     const move = makeMove({
       id: 'retail-move-1',
       name: 'Cut repeat transfers in the contact centre',
@@ -90,16 +90,25 @@ describe('boardArtifactsForMove — key-driven path (real Moves, 3 verticals)', 
       charter: { functionPackKey: 'customer_care' },
     });
     const artifacts = boardArtifactsForMove(move);
-    expect(artifacts).toHaveLength(1);
-    expect(artifacts[0].id).toBe('costed-business-case');
+    // The key-driven path resolves the generic Costed Business-Case Pack and
+    // the generic Mobilize & Go-Decision Packet — each carrying `?moveId=`.
+    expect(artifacts).toHaveLength(2);
+    expect(artifacts.map((a) => a.id)).toEqual([
+      'costed-business-case',
+      'mobilize-packet',
+    ]);
     expect(artifacts[0].htmlHref).toBe(
       '/api/v1/moves/board-grade-business-case?moveId=retail-move-1',
     );
-    // The generic deck does not carry a PowerPoint export.
+    expect(artifacts[1].htmlHref).toBe(
+      '/api/v1/moves/board-grade-mobilize-packet?moveId=retail-move-1',
+    );
+    // The generic decks do not carry a PowerPoint export.
     expect(artifacts[0].pptxHref).toBeUndefined();
+    expect(artifacts[1].pptxHref).toBeUndefined();
   });
 
-  it('a healthcare Move with a resolvable function gets the generic Costed deck', () => {
+  it('a healthcare Move with a resolvable function gets the generic decks', () => {
     const move = makeMove({
       id: 'health-move-1',
       name: 'Reduce clinical documentation burden',
@@ -107,14 +116,17 @@ describe('boardArtifactsForMove — key-driven path (real Moves, 3 verticals)', 
       charter: { functionPackKey: 'clinical_operations_documentation' },
     });
     const artifacts = boardArtifactsForMove(move);
-    expect(artifacts).toHaveLength(1);
-    expect(artifacts[0].id).toBe('costed-business-case');
-    expect(artifacts[0].htmlHref).toBe(
-      '/api/v1/moves/board-grade-business-case?moveId=health-move-1',
+    expect(artifacts).toHaveLength(2);
+    expect(artifacts.map((a) => a.id)).toEqual([
+      'costed-business-case',
+      'mobilize-packet',
+    ]);
+    expect(artifacts[1].htmlHref).toBe(
+      '/api/v1/moves/board-grade-mobilize-packet?moveId=health-move-1',
     );
   });
 
-  it('a financial-services Move with a resolvable function gets the generic Costed deck', () => {
+  it('a financial-services Move with a resolvable function gets the generic decks', () => {
     const move = makeMove({
       id: 'fs-move-1',
       name: 'Strengthen fraud detection',
@@ -122,16 +134,19 @@ describe('boardArtifactsForMove — key-driven path (real Moves, 3 verticals)', 
       charter: { functionPackKey: 'fraud_financial_crime' },
     });
     const artifacts = boardArtifactsForMove(move);
-    expect(artifacts).toHaveLength(1);
-    expect(artifacts[0].id).toBe('costed-business-case');
-    expect(artifacts[0].htmlHref).toBe(
-      '/api/v1/moves/board-grade-business-case?moveId=fs-move-1',
+    expect(artifacts).toHaveLength(2);
+    expect(artifacts.map((a) => a.id)).toEqual([
+      'costed-business-case',
+      'mobilize-packet',
+    ]);
+    expect(artifacts[1].htmlHref).toBe(
+      '/api/v1/moves/board-grade-mobilize-packet?moveId=fs-move-1',
     );
   });
 
   it('the hardcoded Apex Move-name is no longer the gate — any name resolves', () => {
-    // A Move named nothing like "Contact Center AI Routing" still resolves a
-    // board-grade artifact, purely from its (industryKey, functionKey).
+    // A Move named nothing like "Contact Center AI Routing" still resolves the
+    // board-grade artifacts, purely from its (industryKey, functionKey).
     const move = makeMove({
       id: 'oddly-named-move',
       name: 'Q3 ops improvement workstream',
@@ -139,8 +154,10 @@ describe('boardArtifactsForMove — key-driven path (real Moves, 3 verticals)', 
       charter: { functionPackKey: 'customer_care' },
     });
     const artifacts = boardArtifactsForMove(move);
-    expect(artifacts).toHaveLength(1);
-    expect(artifacts[0].htmlHref).toContain('moveId=oddly-named-move');
+    expect(artifacts).toHaveLength(2);
+    for (const artifact of artifacts) {
+      expect(artifact.htmlHref).toContain('moveId=oddly-named-move');
+    }
   });
 
   it('encodes the moveId in the href', () => {
