@@ -94,6 +94,7 @@ describe('boardArtifactsForMove — key-driven path (real Moves, 3 verticals)', 
     const artifacts = boardArtifactsForMove(move);
     // The key-driven path resolves the four generic kernel-derived decks.
     expect(artifacts.map((a) => a.id).sort()).toEqual([
+      'cfo-pack',
       'costed-business-case',
       'discover-brief',
       'mobilize-packet',
@@ -117,6 +118,11 @@ describe('boardArtifactsForMove — key-driven path (real Moves, 3 verticals)', 
     expect(mobilize?.htmlHref).toBe(
       '/api/v1/moves/board-grade-mobilize-packet?moveId=retail-move-1',
     );
+    const cfo = artifacts.find((a) => a.id === 'cfo-pack');
+    expect(cfo?.htmlHref).toBe(
+      '/api/v1/moves/board-grade-cfo-pack?moveId=retail-move-1',
+    );
+    expect(cfo?.phase).toBe('Design & Plan');
   });
 
   it('a healthcare Move with a resolvable function gets the generic decks', () => {
@@ -128,6 +134,7 @@ describe('boardArtifactsForMove — key-driven path (real Moves, 3 verticals)', 
     });
     const artifacts = boardArtifactsForMove(move);
     expect(artifacts.map((a) => a.id).sort()).toEqual([
+      'cfo-pack',
       'costed-business-case',
       'discover-brief',
       'mobilize-packet',
@@ -157,6 +164,7 @@ describe('boardArtifactsForMove — key-driven path (real Moves, 3 verticals)', 
     });
     const artifacts = boardArtifactsForMove(move);
     expect(artifacts.map((a) => a.id).sort()).toEqual([
+      'cfo-pack',
       'costed-business-case',
       'discover-brief',
       'mobilize-packet',
@@ -187,7 +195,7 @@ describe('boardArtifactsForMove — key-driven path (real Moves, 3 verticals)', 
       charter: { functionPackKey: 'customer_care' },
     });
     const artifacts = boardArtifactsForMove(move);
-    expect(artifacts).toHaveLength(4);
+    expect(artifacts).toHaveLength(5);
     for (const artifact of artifacts) {
       expect(artifact.htmlHref).toContain('moveId=oddly-named-move');
     }
@@ -215,6 +223,9 @@ describe('boardArtifactsForMove — key-driven path (real Moves, 3 verticals)', 
     expect(
       artifacts.find((a) => a.id === 'mobilize-packet')?.htmlHref,
     ).toBe(`/api/v1/moves/board-grade-mobilize-packet?moveId=${encoded}`);
+    expect(
+      artifacts.find((a) => a.id === 'cfo-pack')?.htmlHref,
+    ).toBe(`/api/v1/moves/board-grade-cfo-pack?moveId=${encoded}`);
   });
 });
 
