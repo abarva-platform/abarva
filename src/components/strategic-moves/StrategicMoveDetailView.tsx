@@ -132,19 +132,42 @@ function OverviewContent({
         <div className={styles.detailSectionTitle}>
           {move.phaseLabel.toUpperCase()} &middot; Gate criteria
         </div>
-        <ul className={styles.critList}>
-          {move.gateCriteria.map((criterion) => (
-            <li key={criterion.id}>
-              <span
-                className={`${styles.critCheck} ${criterion.completed ? styles.critCheckDone : ''}`}
-                aria-hidden
-              >
-                {criterion.completed ? '✓' : ''}
-              </span>
-              <span>{criterion.label}</span>
-            </li>
-          ))}
-        </ul>
+        {move.gateCriteria.length === 0 ? (
+          <p style={{ fontSize: 13, color: 'var(--abarva-stone)', margin: 0 }}>
+            No outgoing gate for this phase — there are no further gate
+            criteria to evaluate.
+          </p>
+        ) : (
+          <ul className={styles.critList}>
+            {move.gateCriteria.map((criterion) => (
+              <li key={criterion.id}>
+                <span
+                  className={`${styles.critCheck} ${criterion.completed ? styles.critCheckDone : ''}`}
+                  aria-hidden
+                >
+                  {criterion.completed ? '✓' : ''}
+                </span>
+                <span style={{ flex: 1 }}>{criterion.label}</span>
+                {!criterion.verified && (
+                  <span
+                    style={{
+                      fontSize: 9,
+                      fontFamily: 'var(--abarva-mono)',
+                      letterSpacing: '0.12em',
+                      textTransform: 'uppercase',
+                      fontWeight: 700,
+                      color: 'var(--abarva-stone)',
+                      flexShrink: 0,
+                      marginLeft: 8,
+                    }}
+                  >
+                    Not yet verified
+                  </span>
+                )}
+              </li>
+            ))}
+          </ul>
+        )}
       </section>
 
       {handoff && (

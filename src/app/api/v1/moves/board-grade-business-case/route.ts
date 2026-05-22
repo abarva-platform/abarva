@@ -30,6 +30,7 @@ import {
   cachedRender,
   cachedRenderAsync,
 } from '@/lib/programs/expert-kernel/exports/board-grade/render-cache';
+import { assertBoardGradeTenancy } from '@/lib/programs/board-artifacts/board-grade-route-guard';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -44,6 +45,12 @@ export async function GET(req: NextRequest): Promise<Response> {
       { status: 401 },
     );
   }
+
+  // --- Tenancy — the artifact is Apex-owned; block cross-tenant access. ---
+  const tenancyDenied = await assertBoardGradeTenancy(
+    'GET /api/v1/moves/board-grade-business-case',
+  );
+  if (tenancyDenied) return tenancyDenied;
 
   const generatedOn = new Date().toISOString().slice(0, 10);
   const params = new URL(req.url).searchParams;

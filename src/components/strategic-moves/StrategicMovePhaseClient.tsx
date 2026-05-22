@@ -150,55 +150,6 @@ const PHASE_CANVAS_SECTIONS: Record<number, CanvasSection[]> = {
   ],
 };
 
-// ── Gate criteria per phase (labels from anatomy specs) ──────────────────────
-
-interface GateItem {
-  id: string;
-  label: string;
-  severity: 'hard' | 'soft';
-}
-
-const PHASE_GATE_ITEMS: Record<number, GateItem[]> = {
-  1: [
-    { id: 'charter_signed_off', label: 'Charter signed off by sponsor', severity: 'hard' },
-    { id: 'sponsor_assigned', label: 'Sponsor committed and decision rights named', severity: 'hard' },
-    { id: 'baseline_captured', label: 'Initial value range and success metrics ratified', severity: 'soft' },
-  ],
-  2: [
-    { id: 'discovery_report_signed_off', label: 'Discovery synthesis report signed off', severity: 'hard' },
-    { id: 'discovery_notes_ingested', label: 'Discovery notes or workshop logs ingested', severity: 'hard' },
-    { id: 'discovery_baseline_attested', label: 'Baseline metrics captured and attested', severity: 'hard' },
-    { id: 'discovery_stakeholders_named', label: 'Stakeholder map names required human owners', severity: 'hard' },
-    { id: 'p2_readiness_cleared', label: 'Diagnosis clears P2 without unresolved hard gaps', severity: 'hard' },
-  ],
-  3: [
-    { id: 'design_approved', label: 'Future-state design and operating-model shift signed off', severity: 'hard' },
-    { id: 'requirements_design_outcome_trace', label: 'Requirements-to-design-to-outcomes traceability captured', severity: 'hard' },
-    { id: 'phase_3_findings_written', label: 'Risks and tradeoffs named with mitigations', severity: 'soft' },
-    { id: 'cxo_interview_complete', label: 'Operating-model owners interviewed', severity: 'soft' },
-  ],
-  4: [
-    { id: 'execution_roadmap_drafted', label: 'Roadmap drafted', severity: 'hard' },
-    { id: 'business_case_approved', label: 'Business case approved', severity: 'hard' },
-    { id: 'execution_milestones_defined', label: 'Execution milestones defined', severity: 'hard' },
-    { id: 'execution_success_criteria_defined', label: 'Success criteria defined', severity: 'hard' },
-    { id: 'readiness_and_change_plan_signed_off', label: 'Change readiness and adoption plan signed off', severity: 'hard' },
-    { id: 'funding_approval_recorded', label: 'Funding approval recorded', severity: 'soft' },
-    { id: 'sponsor_alignment_confirmed', label: 'Sponsor alignment confirmed', severity: 'soft' },
-    { id: 'delivery_raci_named', label: 'Delivery RACI named', severity: 'soft' },
-    { id: 'vendor_selection_approved', label: 'Vendor selection approved (if applicable)', severity: 'soft' },
-    { id: 'tower_metric_plan_drafted', label: 'Tower metric plan drafted', severity: 'soft' },
-    { id: 'tower_handoff_plan_accepted', label: 'Tower handoff plan drafted', severity: 'soft' },
-  ],
-  5: [
-    { id: 'tower_handoff_package_accepted', label: 'Tower handoff package complete and accepted', severity: 'hard' },
-    { id: 'execution_team_confirmed', label: 'Execution team confirmed readiness', severity: 'hard' },
-    { id: 'monitoring_plan_active', label: 'Monitoring plan active', severity: 'hard' },
-    { id: 'raci_signed_off', label: 'RACI signed off with named owners', severity: 'hard' },
-    { id: 'value_framework_handed_off', label: 'Value realization framework handed to Tower', severity: 'hard' },
-  ],
-};
-
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 function generateTurnId(): string {
@@ -215,13 +166,15 @@ interface Props {
 export function StrategicMovePhaseClient({ move, phaseNum }: Props) {
   const config = PHASE_CONFIGS[phaseNum];
   const canvasSections = PHASE_CANVAS_SECTIONS[phaseNum] ?? [];
-  const gateItems = PHASE_GATE_ITEMS[phaseNum] ?? [];
 
-  // Match gate criteria from move.gateCriteria to our phase gate items
-  const gateItemsWithStatus = gateItems.map((item) => {
-    const criterion = move.gateCriteria.find((c) => c.id === item.id);
-    return { ...item, completed: criterion?.completed ?? false };
-  });
+  // Gate criteria come straight from `move.gateCriteria` — the SINGLE
+  // criterion-id scheme and evaluator (`governance.evaluateGate`, surfaced
+  // via `transformers.buildGateCriteria`). The detail page renders the same
+  // list, so the two surfaces can never show divergent gate progress. The
+  // workspace shows the gate for the move's current phase; when the viewed
+  // phase is not the current one, there is no active gate to render.
+  const isCurrentPhase = move.currentPhase === phaseNum;
+  const gateItemsWithStatus = isCurrentPhase ? move.gateCriteria : [];
 
   const [turns, setTurns] = useState<ChatTurn[]>(() => [
     {
@@ -591,38 +544,64 @@ export function StrategicMovePhaseClient({ move, phaseNum }: Props) {
             >
               <div className={styles.detailSectionTitle}>
                 {config.label.toUpperCase()} &middot; Gate criteria
-                <span style={{ marginLeft: 8, fontWeight: 400, textTransform: 'none' }}>
-                  &mdash; {totalGateDone} of {gateItemsWithStatus.length} met
-                  ({hardGateDone} of {hardGateCount} hard)
-                </span>
+                {gateItemsWithStatus.length > 0 && (
+                  <span style={{ marginLeft: 8, fontWeight: 400, textTransform: 'none' }}>
+                    &mdash; {totalGateDone} of {gateItemsWithStatus.length} met
+                    ({hardGateDone} of {hardGateCount} hard)
+                  </span>
+                )}
               </div>
-              <ul id={`ws-canvas-p${phaseNum}-gate-list`} className={styles.critList}>
-                {gateItemsWithStatus.map((item) => (
-                  <li key={item.id} id={`ws-canvas-p${phaseNum}-gate-item-${item.id}`}>
-                    <span
-                      className={`${styles.critCheck} ${item.completed ? styles.critCheckDone : ''}`}
-                      aria-hidden
-                    >
-                      {item.completed ? '✓' : ''}
-                    </span>
-                    <span style={{ flex: 1 }}>{item.label}</span>
-                    <span
-                      style={{
-                        fontSize: 9,
-                        fontFamily: 'var(--abarva-mono)',
-                        letterSpacing: '0.12em',
-                        textTransform: 'uppercase',
-                        fontWeight: 700,
-                        color: item.severity === 'hard' ? 'var(--canon-red)' : 'var(--abarva-stone)',
-                        flexShrink: 0,
-                        marginLeft: 8,
-                      }}
-                    >
-                      {item.severity}
-                    </span>
-                  </li>
-                ))}
-              </ul>
+              {gateItemsWithStatus.length === 0 ? (
+                <p style={{ fontSize: 13, color: 'var(--abarva-stone)', margin: 0 }}>
+                  {isCurrentPhase
+                    ? 'No outgoing gate for this phase — there are no further gate criteria to evaluate.'
+                    : 'Gate criteria are shown on the phase the Move is currently in.'}
+                </p>
+              ) : (
+                <ul id={`ws-canvas-p${phaseNum}-gate-list`} className={styles.critList}>
+                  {gateItemsWithStatus.map((item) => (
+                    <li key={item.id} id={`ws-canvas-p${phaseNum}-gate-item-${item.id}`}>
+                      <span
+                        className={`${styles.critCheck} ${item.completed ? styles.critCheckDone : ''}`}
+                        aria-hidden
+                      >
+                        {item.completed ? '✓' : ''}
+                      </span>
+                      <span style={{ flex: 1 }}>{item.label}</span>
+                      {!item.verified && (
+                        <span
+                          style={{
+                            fontSize: 9,
+                            fontFamily: 'var(--abarva-mono)',
+                            letterSpacing: '0.12em',
+                            textTransform: 'uppercase',
+                            fontWeight: 700,
+                            color: 'var(--abarva-stone)',
+                            flexShrink: 0,
+                            marginLeft: 8,
+                          }}
+                        >
+                          Not yet verified
+                        </span>
+                      )}
+                      <span
+                        style={{
+                          fontSize: 9,
+                          fontFamily: 'var(--abarva-mono)',
+                          letterSpacing: '0.12em',
+                          textTransform: 'uppercase',
+                          fontWeight: 700,
+                          color: item.severity === 'hard' ? 'var(--canon-red)' : 'var(--abarva-stone)',
+                          flexShrink: 0,
+                          marginLeft: 8,
+                        }}
+                      >
+                        {item.severity}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              )}
             </section>
 
             {/* Phase canvas sections */}
