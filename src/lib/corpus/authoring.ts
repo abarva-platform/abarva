@@ -374,7 +374,7 @@ export async function approvePattern(
     const pattern = await fetchPattern(client, idOrSlug);
     const lint = await lintCorpusPatternDepth(pattern);
     if (!lint.pass || lint.score < 8) {
-      await writeTelemetry(client, 'corpus_pattern_depth_blocked', context, pattern.id, lint);
+      await writeTelemetry(client, 'corpus_pattern_depth_blocked', context, pattern.id, { ...lint });
       throw new Error(`depth_lint_blocked:${lint.score}`);
     }
     await client.query(
@@ -407,7 +407,7 @@ export async function publishPattern(
     const current = await fetchPattern(client, idOrSlug);
     const lint = await lintCorpusPatternDepth(current);
     if (!lint.pass || lint.score < 8) {
-      await writeTelemetry(client, 'corpus_pattern_depth_blocked', context, current.id, lint);
+      await writeTelemetry(client, 'corpus_pattern_depth_blocked', context, current.id, { ...lint });
       throw new Error(`depth_lint_blocked:${lint.score}`);
     }
     await client.query(

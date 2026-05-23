@@ -3,6 +3,8 @@
 import { useMemo, useState } from 'react';
 import type { CSSProperties } from 'react';
 import type { CorpusPatternRecord } from '@/lib/corpus/types';
+import { COLORS } from '@/lib/design/design-tokens';
+import { SHELL } from '@/lib/shell/shell-tokens';
 
 type Tab = 'list' | 'editor' | 'review' | 'diff' | 'graph';
 
@@ -117,13 +119,26 @@ export function CorpusAdminClient({ initialPatterns }: Props) {
   }
 
   return (
-    <section className="corpus-admin">
+    <section
+      className="corpus-admin"
+      style={{
+        '--corpus-ink': SHELL.INK,
+        '--corpus-paper': COLORS.cream,
+        '--corpus-action': COLORS.ink,
+        '--corpus-action-text': COLORS.cream,
+        '--corpus-accent': COLORS.mintInk,
+        '--corpus-muted': SHELL.INK_SOFT,
+        '--corpus-soft': SHELL.INK_MUTED,
+        '--corpus-field': COLORS.white,
+        '--corpus-gauge': SHELL.CARD_LINE,
+      } as CSSProperties}
+    >
       <style jsx>{`
         .corpus-admin {
           display: flex;
           flex-direction: column;
           gap: 18px;
-          color: #1f2320;
+          color: var(--corpus-ink);
           font-family: "DM Sans", ui-sans-serif, system-ui, sans-serif;
         }
         .tabs, .actions {
@@ -132,9 +147,9 @@ export function CorpusAdminClient({ initialPatterns }: Props) {
           gap: 8px;
         }
         button {
-          border: 1px solid #1f2320;
-          background: #1f2320;
-          color: #f8f7f4;
+          border: 1px solid var(--corpus-action);
+          background: var(--corpus-action);
+          color: var(--corpus-action-text);
           border-radius: 4px;
           padding: 8px 12px;
           font: inherit;
@@ -142,11 +157,11 @@ export function CorpusAdminClient({ initialPatterns }: Props) {
         }
         button.secondary {
           background: transparent;
-          color: #1f2320;
+          color: var(--corpus-action);
         }
         button[aria-pressed="true"] {
-          background: #5b7d4f;
-          border-color: #5b7d4f;
+          background: var(--corpus-accent);
+          border-color: var(--corpus-accent);
         }
         .workspace {
           display: grid;
@@ -167,7 +182,7 @@ export function CorpusAdminClient({ initialPatterns }: Props) {
           border: 0;
           border-bottom: 1px solid rgba(31, 35, 32, 0.12);
           background: transparent;
-          color: #1f2320;
+          color: var(--corpus-ink);
           text-align: left;
           border-radius: 0;
           padding: 12px 0;
@@ -177,7 +192,7 @@ export function CorpusAdminClient({ initialPatterns }: Props) {
           font-weight: 400;
         }
         .meta {
-          color: #666c62;
+          color: var(--corpus-muted);
           font-size: 12px;
         }
         .status {
@@ -197,14 +212,14 @@ export function CorpusAdminClient({ initialPatterns }: Props) {
           flex-direction: column;
           gap: 6px;
           font-size: 12px;
-          color: #4b5149;
+          color: var(--corpus-muted);
         }
         input, textarea {
           border: 1px solid rgba(31, 35, 32, 0.22);
           border-radius: 6px;
           padding: 10px;
-          background: #fffdfa;
-          color: #1f2320;
+          background: var(--corpus-field);
+          color: var(--corpus-ink);
           font: inherit;
         }
         textarea {
@@ -223,13 +238,13 @@ export function CorpusAdminClient({ initialPatterns }: Props) {
         .gauge {
           height: 10px;
           border-radius: 999px;
-          background: #dedbd2;
+          background: var(--corpus-gauge);
           overflow: hidden;
         }
         .fill {
           height: 100%;
           width: var(--depth-width);
-          background: #5b7d4f;
+          background: var(--corpus-accent);
         }
         .diff {
           display: grid;
@@ -240,7 +255,7 @@ export function CorpusAdminClient({ initialPatterns }: Props) {
           white-space: pre-wrap;
           font-size: 12px;
           line-height: 1.45;
-          background: #fffdfa;
+          background: var(--corpus-field);
           border: 1px solid rgba(31, 35, 32, 0.12);
           border-radius: 6px;
           padding: 12px;
