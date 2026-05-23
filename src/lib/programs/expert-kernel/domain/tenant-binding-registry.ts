@@ -84,6 +84,17 @@ export interface DecisionHomeBinding {
   readonly functionKey: string;
   /** A short, stable name for tooling / logs — e.g. `'meridian-vbc'`. */
   readonly tenantBindingKey: string;
+  /**
+   * The canonical `ClientKey` (e.g. `'apexretail'`, `'meridian'`, `'arcturus'`)
+   * the binding's audited substrate and grounded blocks belong to. The route
+   * MUST only render this binding for the matching tenant; rendering it for a
+   * different tenant in the same industry (e.g. Northwind in retail) would
+   * leak Apex-named content into Northwind's analysis. The route compares
+   * the active tenant's ClientKey against this and falls back to an honest
+   * empty state when they don't match. Optional only for back-compat with
+   * existing bindings; new bindings MUST set this.
+   */
+  readonly expectedClientKey?: string;
   readonly substrate: TenantSubstrate;
   /**
    * Build the grounded prose blocks. Called only when the binding's substrate
@@ -153,6 +164,12 @@ export interface BetSelectionBinding {
   readonly functionKey: string;
   /** A short, stable name for tooling / logs — e.g. `'apex-customer-care'`. */
   readonly tenantBindingKey: string;
+  /**
+   * The canonical `ClientKey` the binding's audited substrate belongs to.
+   * See `DecisionHomeBinding.expectedClientKey` for the full rationale —
+   * the route MUST only render this binding for the matching tenant.
+   */
+  readonly expectedClientKey?: string;
   readonly substrate: TenantSubstrate;
   buildBlocks(ctx: BetSelectionBindingContext): BetSelectionGroundedBlocks;
 }

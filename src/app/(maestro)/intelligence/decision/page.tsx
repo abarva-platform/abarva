@@ -28,6 +28,7 @@
 import type { Metadata } from 'next';
 import { AppShell } from '@/components/shell/AppShell';
 import { BetSelectionView } from '@/components/intelligence/decision/BetSelectionView';
+import { IntelligenceEmptyState } from '@/components/intelligence/decision/IntelligenceEmptyState';
 import {
   buildVbcBetSelection,
   MERIDIAN_FUNCTION_KEY,
@@ -41,6 +42,7 @@ import '@/lib/programs/expert-kernel/domain/tenant-bindings-bootstrap';
 import { industryKeyForCode } from '@/lib/programs/function-identity';
 import type { FunctionPackIndustryKey } from '@/lib/programs/expert-kernel/domain/function-pack-types';
 import { getActiveClientRow } from '@/lib/active-client';
+import { resolveBetSelectionBinding } from '@/lib/programs/expert-kernel/domain/tenant-binding-registry';
 
 export const metadata: Metadata = {
   title: 'Which bet first · Intelligence · AbarVa',
@@ -92,19 +94,45 @@ export default async function IntelligenceDecisionPage() {
   // The display name resolves from the active client row (already canonicalised
   // by `getActiveClientRow`).
   const activeTenantName = activeClient?.name?.trim() || null;
+  const activeClientKey = activeClient?.key ?? null;
 
-  let selection: ReturnType<typeof buildVbcBetSelection>;
-
+  // P1-1 (synthetic pilot rehearsal, 2026-05-22): a brand-new tenant in a
+  // recognised industry (Northwind in retail) resolves an `industryKey` and a
+  // spine `functionKey`, and the registry returns the binding registered for
+  // that `(industry, function)` pair — but that binding belongs to a
+  // DIFFERENT tenant (Apex, Meridian, First Capital). Rendering its substrate
+  // labelled with Northwind's name is a cross-tenant content leak.
+  //
+  // The honest path: when the active tenant is not the binding's
+  // `expectedClientKey`, render the empty state instead. The substrate stays
+  // bound to its owning tenant; the new tenant gets a real onboarding
+  // signpost.
+  let intelligenceEmptyForTenant = false;
   if (industryKey) {
-    // The active tenant's industry resolved — bind its own spine Function Pack
-    // and render that industry's bet selection. No Meridian content leaks.
+    const candidateFunctionKey = INDUSTRY_SPINE_FUNCTION_KEY[industryKey];
+    const binding = resolveBetSelectionBinding(industryKey, candidateFunctionKey);
+    if (
+      binding?.expectedClientKey &&
+      activeClientKey &&
+      binding.expectedClientKey !== activeClientKey
+    ) {
+      intelligenceEmptyForTenant = true;
+    }
+  }
+
+  let selection: ReturnType<typeof buildVbcBetSelection> = null;
+
+  if (industryKey && !intelligenceEmptyForTenant) {
+    // The active tenant's industry resolved AND the binding's
+    // `expectedClientKey` matches — bind the tenant's own spine Function Pack
+    // and render that industry's bet selection. No cross-tenant leak.
     const functionKey = INDUSTRY_SPINE_FUNCTION_KEY[industryKey];
     selection = buildVbcBetSelection(
       industryKey,
       functionKey,
       activeTenantName ?? 'Your organisation',
     );
-  } else {
+  } else if (!industryKey) {
     // The active tenant's industry could not be resolved (no row, or an
     // unknown industry code). Fall back to the Meridian reference binding —
     // but mark it honestly as a reference EXAMPLE so no tenant ever reads
@@ -118,6 +146,8 @@ export default async function IntelligenceDecisionPage() {
       ? { ...reference, isReferenceExample: true }
       : reference;
   }
+  // else: `intelligenceEmptyForTenant === true` — selection stays `null` and
+  // the route renders the honest IntelligenceEmptyState below.
 
   // The chrome's tenant label is the active tenant where one resolved; the
   // reference fallback shows the Meridian reference name honestly.
@@ -130,9 +160,11 @@ export default async function IntelligenceDecisionPage() {
       topBarProps={{
         tenantName,
         showLocked: true,
-        context: selection?.isReferenceExample
-          ? 'Intelligence · Which AI bet to make first (reference example)'
-          : 'Intelligence · Which AI bet to make first',
+        context: intelligenceEmptyForTenant
+          ? `Intelligence · ${tenantName} substrate not yet populated`
+          : selection?.isReferenceExample
+            ? 'Intelligence · Which AI bet to make first (reference example)'
+            : 'Intelligence · Which AI bet to make first',
       }}
       hasTenantKey={Boolean(activeClient?.key)}
     >
@@ -147,7 +179,14 @@ export default async function IntelligenceDecisionPage() {
           padding: '32px 40px',
         }}
       >
-        <BetSelectionView selection={selection} />
+        {intelligenceEmptyForTenant ? (
+          <IntelligenceEmptyState
+            tenantName={activeTenantName ?? 'this tenant'}
+            industryLabel={industryKey}
+          />
+        ) : (
+          <BetSelectionView selection={selection} />
+        )}
       </div>
     </AppShell>
   );

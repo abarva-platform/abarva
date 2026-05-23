@@ -162,10 +162,20 @@ function PortfolioCard({ card }: { card: MovePortfolioCard }) {
  */
 export function MovePortfolioCardPanel({
   cards,
+  tenantName,
 }: {
   cards: readonly MovePortfolioCard[];
+  /**
+   * P1-2 (synthetic pilot rehearsal): the active tenant's display name. The
+   * empty state names the tenant explicitly so a brand-new tenant (Northwind)
+   * sees "Tower portfolio for Northwind Retail is empty" with a link to the
+   * onboarding runbook, instead of an anonymous empty panel that reads as a
+   * broken surface.
+   */
+  tenantName?: string;
 }) {
   if (cards.length === 0) {
+    const displayName = tenantName?.trim() || 'this tenant';
     return (
       <section
         data-testid="tower-move-portfolio-panel"
@@ -180,11 +190,22 @@ export function MovePortfolioCardPanel({
       >
         <div style={LABEL}>Move portfolio · loop-completed</div>
         <div style={{ marginTop: 6, fontSize: 13, color: INK_SOFT, lineHeight: 1.45 }}>
-          No loop-completed Moves yet. Once a Move has flowed through the
-          end-to-end loop — Source decision, Program execution, and outcome
-          tracking — it surfaces here as a portfolio card with its
-          outcome-ledger status, Source-risk posture, and a link into the
-          Move and its cross-module decision trace.
+          Tower portfolio for {displayName} is empty. Programs that complete
+          the end-to-end loop — Mobilize phase, Source decision, and outcome
+          tracking — surface here as portfolio cards with their outcome-ledger
+          status, Source-risk posture, and a link into the cross-module
+          decision trace.
+        </div>
+        <div style={{ marginTop: 8, fontSize: 12, color: INK_SOFT, lineHeight: 1.45 }}>
+          New tenant?{' '}
+          <a
+            href="/docs/pilot/ONBOARDING-NEW-TENANT.md"
+            style={{ color: INK, textDecoration: 'underline' }}
+            data-testid="tower-empty-runbook-link"
+          >
+            See the new-tenant onboarding runbook
+          </a>{' '}
+          for how to wire your first Move through to Tower.
         </div>
       </section>
     );

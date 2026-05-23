@@ -42,17 +42,28 @@ export async function loadMoveBusinessCaseInput(
 
   const sb = getServerSupabase();
 
-  // Industry code — from the program's client. The program already passed the
-  // tenancy check, so its client is the caller's tenant.
+  // Industry code, tenant key, and tenant display name — all from the program's
+  // client. The program already passed the tenancy check, so its client is the
+  // caller's tenant. Tenant key/name are threaded so the board-grade renderer
+  // can label the deck with the canonical tenant display name (P1-3) instead
+  // of the industry slug ("retail").
   const { data: clientRow } = await sb
     .from('clients')
-    .select('industry_code')
+    .select('key, name, industry_code')
     .eq('id', program.clientId)
     .maybeSingle();
   const industryCode =
     typeof (clientRow as { industry_code?: unknown } | null)?.industry_code ===
     'string'
       ? ((clientRow as { industry_code: string }).industry_code)
+      : null;
+  const tenantKey =
+    typeof (clientRow as { key?: unknown } | null)?.key === 'string'
+      ? ((clientRow as { key: string }).key)
+      : null;
+  const tenantName =
+    typeof (clientRow as { name?: unknown } | null)?.name === 'string'
+      ? ((clientRow as { name: string }).name)
       : null;
 
   // Recorded baseline metrics — the `engagements.baseline_metrics` JSONB
@@ -78,5 +89,7 @@ export async function loadMoveBusinessCaseInput(
     function_pack_key: program.functionPackKey,
     charter: program.charter,
     baseline_metrics: baselineMetrics,
+    tenant_key: tenantKey,
+    tenant_name: tenantName,
   };
 }

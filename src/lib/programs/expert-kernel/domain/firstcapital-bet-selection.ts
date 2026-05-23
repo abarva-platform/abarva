@@ -175,6 +175,7 @@ export const FIRSTCAPITAL_BET_SELECTION_BINDING: BetSelectionBinding = {
   industryKey: FIRSTCAPITAL_INDUSTRY_KEY,
   functionKey: FIRSTCAPITAL_FUNCTION_KEY,
   tenantBindingKey: 'firstcapital-fraud',
+  expectedClientKey: 'arcturus',
   substrate: FIRSTCAPITAL_FRAUD_OBSERVATIONS,
   buildBlocks(ctx: BetSelectionBindingContext): BetSelectionGroundedBlocks {
     const { topBetName, topBetRead, totalBets, heldBetCount } = ctx;

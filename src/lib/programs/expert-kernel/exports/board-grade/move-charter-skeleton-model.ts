@@ -41,6 +41,7 @@ import type {
 } from '../../business-case-compiler';
 import type { Assumption } from '../../assumption-ledger';
 import type { FunctionPackBinding } from '../../domain/function-pack-context-binding';
+import { resolveBoardGradeTenantLabel } from './tenant-label-resolver';
 
 // ---------------------------------------------------------------------------
 // Section anatomy — mirrors the Apex Charter's `CharterSectionAnatomy` so the
@@ -363,10 +364,14 @@ export function buildMoveCharterSkeleton(
     evidenceAsks.anatomy,
   ];
 
+  const { tenantLabel, tenantKey } = resolveBoardGradeTenantLabel(
+    move,
+    skeleton.tenantKey,
+  );
   return {
     bound: true,
-    tenantLabel: skeleton.tenantKey,
-    tenantKey: skeleton.tenantKey,
+    tenantLabel,
+    tenantKey,
     moveLabel,
     artifactLabel: ARTIFACT_LABEL,
     functionLabel,

@@ -144,6 +144,25 @@ export interface MoveBusinessCaseInput {
   charter?: unknown;
   /** The `engagements.baseline_metrics` JSONB array — the recorded-metric source. */
   baseline_metrics?: readonly MoveBaselineMetricEntry[] | null;
+  /**
+   * The tenant's canonical ClientKey (snake_case DB-row form) — e.g.
+   * `'apexretail'`. Threaded from `loadMoveBusinessCaseInput` so the
+   * board-grade renderers can label the deck with the canonical tenant
+   * display name (P1-3: 'Apex Retail') instead of the industry slug
+   * ('retail'). Optional; the renderer falls back to an honest "Tenant"
+   * placeholder when neither key nor name resolves.
+   */
+  tenant_key?: string | null;
+  /** The `tenantKey` alias (camelCase view-model form). */
+  tenantKey?: string | null;
+  /**
+   * The tenant's display name from `clients.name`. Used by the
+   * board-grade renderers as the secondary fallback after the canonical
+   * client lookup. Optional.
+   */
+  tenant_name?: string | null;
+  /** The `tenantName` alias (camelCase view-model form). */
+  tenantName?: string | null;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

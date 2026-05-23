@@ -51,7 +51,7 @@ export default async function SourceEventsPage({
       subNav={<SourceSubNav />}
     >
       {events.length === 0 ? (
-        <SourceEmptyState />
+        <SourceEmptyState tenantName={activeClientDisplayName} />
       ) : (
         <SourceEventsAgentDockView
           filterStage={stage ?? null}

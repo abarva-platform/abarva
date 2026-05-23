@@ -641,6 +641,7 @@ export const MERIDIAN_DECISION_HOME_BINDING: DecisionHomeBinding = {
   industryKey: MERIDIAN_INDUSTRY_KEY,
   functionKey: MERIDIAN_FUNCTION_KEY,
   tenantBindingKey: 'meridian-vbc',
+  expectedClientKey: 'meridian',
   substrate: MERIDIAN_VBC_OBSERVATIONS,
   buildBlocks(): DecisionHomeGroundedBlocks {
     // Block 1 — the one thing. The headline asserts only audited truth: RAF
