@@ -11,6 +11,7 @@ export type AiProvider =
 
 export type AiRoute =
   | 'anthropic-direct'
+  | 'openai-direct'
   | 'gamma-api'
   | 'azure-foundry-private'
   | 'bedrock-claude'

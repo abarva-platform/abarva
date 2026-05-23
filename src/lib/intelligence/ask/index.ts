@@ -90,7 +90,7 @@ export async function* askIntelligence(query: string, opts: AskOptions = {}): As
       }),
       retrieveTenantTechnologySources(opts.tenantInventoryKey, trimmed),
       route(classification.intent, classification.entities),
-      retrieveWorldview(trimmed),
+      retrieveWorldview(trimmed, 3, { tenantId: opts.tenantId, userId: opts.userId }),
     ]);
     const sources: AskSource[] = [
       ...surfaceContext,

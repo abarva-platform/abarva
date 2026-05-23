@@ -1,16 +1,7 @@
-import OpenAI from 'openai';
 import { Pinecone } from '@pinecone-database/pinecone';
+import { preflightOpenAIDirectClient } from '@/lib/integrations/ai-egress';
 
-let _openai: OpenAI | null = null;
 let _pinecone: Pinecone | null = null;
-
-function getOpenAI(): OpenAI {
-  if (_openai) return _openai;
-  const key = process.env.OPENAI_API_KEY;
-  if (!key) throw new Error('OPENAI_API_KEY required for embeddings');
-  _openai = new OpenAI({ apiKey: key });
-  return _openai;
-}
 
 function getPinecone(): Pinecone {
   if (_pinecone) return _pinecone;
@@ -26,10 +17,20 @@ const BATCH = 64;
 
 export async function embedBatch(texts: string[]): Promise<number[][]> {
   const vectors: number[][] = [];
-  const openai = getOpenAI();
+  const tenantId = process.env.AI_EGRESS_PLATFORM_TENANT_ID;
+  if (!tenantId) throw new Error('AI_EGRESS_PLATFORM_TENANT_ID required for platform embedding audit');
   for (let i = 0; i < texts.length; i += BATCH) {
     const batch = texts.slice(i, i + BATCH);
-    const response = await openai.embeddings.create({
+    const preflight = await preflightOpenAIDirectClient({
+      tenantId,
+      workflow: 'script-knowledge-embedding-batch',
+      model: EMBED_MODEL,
+      prompt: batch.join('\n\n---\n\n'),
+      dataClass: 'internal',
+      metadata: { batchSize: batch.length, dimensions: EMBED_DIMS },
+    });
+    if (!preflight.ok) throw new Error(preflight.reason);
+    const response = await preflight.client.embeddings.create({
       model: EMBED_MODEL,
       input: batch,
       dimensions: EMBED_DIMS,

@@ -8,8 +8,8 @@
 // Spec calls for Voyage-3 embeddings; repo uses OpenAI
 // text-embedding-3-large. Flagged as follow-up.
 
-import OpenAI from 'openai';
 import { getAuditedAnthropicClient } from '@/lib/agent/stream';
+import { preflightOpenAIDirectClient } from '@/lib/integrations/ai-egress';
 import { Pinecone } from '@pinecone-database/pinecone';
 import { getServerSupabase } from '@/lib/supabase-server';
 import type {
@@ -36,16 +36,8 @@ const THRESHOLD = 0.4;
 const BAND_HIGH = 0.75;
 const BAND_MEDIUM = 0.5;
 
-let _openai: OpenAI | null = null;
 let _pinecone: Pinecone | null = null;
 
-function getOpenAI(): OpenAI | null {
-  if (_openai) return _openai;
-  const key = process.env.OPENAI_API_KEY;
-  if (!key) return null;
-  _openai = new OpenAI({ apiKey: key });
-  return _openai;
-}
 function getPinecone(): Pinecone | null {
   if (_pinecone) return _pinecone;
   const key = process.env.PINECONE_API_KEY;
@@ -148,11 +140,20 @@ function metadataStringArray(value: unknown): string[] {
   return Array.isArray(value) ? value.filter((item): item is string => typeof item === 'string' && item.length > 0) : [];
 }
 
-async function embed(text: string): Promise<number[] | null> {
-  const oai = getOpenAI();
-  if (!oai) return null;
+async function embed(text: string, input: ClassifierInput): Promise<number[] | null> {
+  if (!process.env.OPENAI_API_KEY) return null;
   try {
-    const res = await oai.embeddings.create({ model: EMBED_MODEL, input: text, dimensions: EMBED_DIMS });
+    const preflight = await preflightOpenAIDirectClient({
+      tenantId: input.tenancy.clientId,
+      userId: input.tenancy.userId,
+      workflow: 'programs-classifier-vector-embedding',
+      model: EMBED_MODEL,
+      prompt: text,
+      dataClass: 'confidential',
+      metadata: { clientKey: input.tenancy.clientKey, dimensions: EMBED_DIMS },
+    });
+    if (!preflight.ok) return null;
+    const res = await preflight.client.embeddings.create({ model: EMBED_MODEL, input: text, dimensions: EMBED_DIMS });
     return res.data[0]?.embedding ?? null;
   } catch {
     return null;
@@ -162,7 +163,7 @@ async function embed(text: string): Promise<number[] | null> {
 async function vectorMatch(input: ClassifierInput, stage1: Stage1Result, topK = 10): Promise<VectorMatchRaw[]> {
   const pc = getPinecone();
   if (!pc) return [];
-  const queryEmbed = await embed(`${input.useCase} ${stage1.entities.join(' ')} ${stage1.objectives.join(' ')}`.trim());
+  const queryEmbed = await embed(`${input.useCase} ${stage1.entities.join(' ')} ${stage1.objectives.join(' ')}`.trim(), input);
   if (!queryEmbed) return [];
   try {
     const index = pc.index(INDEX_NAME);

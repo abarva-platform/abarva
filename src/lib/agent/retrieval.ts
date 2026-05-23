@@ -1,6 +1,6 @@
-import OpenAI from 'openai';
 import { Pinecone } from '@pinecone-database/pinecone';
 import { getServerSupabase } from '@/lib/supabase-server';
+import { preflightOpenAIDirectClient } from '@/lib/integrations/ai-egress';
 import {
   clientVectorMetadataFilter,
   clientVectorNamespace,
@@ -48,16 +48,7 @@ const EMBED_MODEL = 'text-embedding-3-large';
 const EMBED_DIMS = 3072;
 const INDEX_NAME = process.env.PINECONE_INDEX ?? 'nexus-knowledge';
 
-let _openai: OpenAI | null = null;
 let _pinecone: Pinecone | null = null;
-
-function getOpenAI(): OpenAI | null {
-  if (_openai) return _openai;
-  const key = process.env.OPENAI_API_KEY;
-  if (!key) return null;
-  _openai = new OpenAI({ apiKey: key });
-  return _openai;
-}
 
 function getPinecone(): Pinecone | null {
   if (_pinecone) return _pinecone;
@@ -88,10 +79,18 @@ function composeEmbeddingQuery(userQuery: string, history?: Array<{ role: string
   return recent ? `${recent}\n${userQuery}`.slice(-4000) : userQuery.slice(-4000);
 }
 
-async function embed(text: string): Promise<number[] | null> {
-  const openai = getOpenAI();
-  if (!openai) return null;
-  const res = await openai.embeddings.create({
+async function embed(text: string, clientId?: string | null): Promise<number[] | null> {
+  if (!clientId || !process.env.OPENAI_API_KEY) return null;
+  const preflight = await preflightOpenAIDirectClient({
+    tenantId: clientId,
+    workflow: 'agent-retrieval-embedding',
+    model: EMBED_MODEL,
+    prompt: text,
+    dataClass: 'confidential',
+    metadata: { dimensions: EMBED_DIMS },
+  });
+  if (!preflight.ok) return null;
+  const res = await preflight.client.embeddings.create({
     model: EMBED_MODEL,
     input: text,
     dimensions: EMBED_DIMS,
@@ -265,7 +264,7 @@ export async function assembleRetrievalContext(args: AssembleRetrievalArgs): Pro
     topicChunks: [],
   };
 
-  const vector = await embed(composeEmbeddingQuery(args.userQuery, args.turnHistory));
+  const vector = await embed(composeEmbeddingQuery(args.userQuery, args.turnHistory), clientId);
   if (!vector) {
     const fallback = await queryPostgresContextChunks({
       clientId,
