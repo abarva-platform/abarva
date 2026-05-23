@@ -9,10 +9,7 @@
 // text-embedding-3-large. Flagged as follow-up.
 
 import OpenAI from 'openai';
-import {
-  getAnthropicDirectClient,
-  type AnthropicDirectClient,
-} from '@/lib/integrations/ai-egress';
+import { getAuditedAnthropicClient } from '@/lib/agent/stream';
 import { Pinecone } from '@pinecone-database/pinecone';
 import { getServerSupabase } from '@/lib/supabase-server';
 import type {
@@ -41,7 +38,6 @@ const BAND_MEDIUM = 0.5;
 
 let _openai: OpenAI | null = null;
 let _pinecone: Pinecone | null = null;
-let _anthropic: AnthropicDirectClient | null = null;
 
 function getOpenAI(): OpenAI | null {
   if (_openai) return _openai;
@@ -57,14 +53,6 @@ function getPinecone(): Pinecone | null {
   _pinecone = new Pinecone({ apiKey: key });
   return _pinecone;
 }
-function getAnthropic(): AnthropicDirectClient | null {
-  if (_anthropic) return _anthropic;
-  const key = process.env.ANTHROPIC_API_KEY;
-  if (!key) return null;
-  _anthropic = getAnthropicDirectClient();
-  return _anthropic;
-}
-
 function bandOf(confidence: number): PatternClassifierMatch['band'] {
   if (confidence >= BAND_HIGH) return 'high';
   if (confidence >= BAND_MEDIUM) return 'medium';
@@ -99,21 +87,31 @@ function normalizeIndustry(value: string | null | undefined): string | null {
 }
 
 async function extractIntent(input: ClassifierInput): Promise<Stage1Result> {
-  const anthropic = getAnthropic();
-  if (!anthropic) {
+  if (!process.env.ANTHROPIC_API_KEY) {
     return { archetype: input.archetypeHint ?? null, industry: input.industry ?? null, entities: input.entities ?? [], objectives: [] };
   }
   try {
+    const system =
+      'Extract program classification signals from a transformation use case. Return strict JSON only. Schema: {archetype: "strategic_transformation"|"workflow_automation"|"platform_modernization"|"ai_product_enablement"|"operational_optimization"|null, industry: string|null, entities: string[], objectives: string[]}.';
+    const userContent = `Use case: ${input.useCase}${input.industry ? `\nIndustry hint: ${input.industry}` : ''}${input.sponsor ? `\nSponsor: ${input.sponsor}` : ''}${input.scale ? `\nScale: ${input.scale}` : ''}`;
+    const { client: anthropic } = await getAuditedAnthropicClient({
+      tenantId: input.tenancy.clientId,
+      userId: input.tenancy.userId,
+      workflow: 'programs-origination-classifier',
+      model: CLASSIFIER_MODEL,
+      prompt: [system, userContent].join('\n\n'),
+      dataClass: 'confidential',
+      metadata: { clientKey: input.tenancy.clientKey },
+    });
     const result = await anthropic.messages.create({
       model: CLASSIFIER_MODEL,
       max_tokens: 512,
       temperature: 0,
-      system:
-        'Extract program classification signals from a transformation use case. Return strict JSON only. Schema: {archetype: "strategic_transformation"|"workflow_automation"|"platform_modernization"|"ai_product_enablement"|"operational_optimization"|null, industry: string|null, entities: string[], objectives: string[]}.',
+      system,
       messages: [
         {
           role: 'user',
-          content: `Use case: ${input.useCase}${input.industry ? `\nIndustry hint: ${input.industry}` : ''}${input.sponsor ? `\nSponsor: ${input.sponsor}` : ''}${input.scale ? `\nScale: ${input.scale}` : ''}`,
+          content: userContent,
         },
       ],
     });

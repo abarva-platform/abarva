@@ -1,4 +1,4 @@
-import { getAnthropicClient } from '@/lib/agent/stream';
+import { getAuditedAnthropicClient } from '@/lib/agent/stream';
 
 export type TowerDataType =
   | 'portfolio'
@@ -30,6 +30,8 @@ const ALLOWED: TowerDataType[] = [
 ];
 
 export async function classifyUploadContent(args: {
+  tenantId: string;
+  userId?: string | null;
   filename: string;
   mimeType: string | null;
   sample: string;
@@ -62,7 +64,16 @@ Return ONLY JSON:
 }`;
 
   try {
-    const response = await getAnthropicClient().messages.create({
+    const { client } = await getAuditedAnthropicClient({
+      tenantId: args.tenantId,
+      userId: args.userId ?? undefined,
+      workflow: 'tower-upload-classifier',
+      model: 'claude-haiku-4-5-20251001',
+      prompt,
+      dataClass: 'confidential',
+      metadata: { filename: args.filename, mimeType: args.mimeType },
+    });
+    const response = await client.messages.create({
       model: 'claude-haiku-4-5-20251001',
       max_tokens: 512,
       messages: [{ role: 'user', content: prompt }],
