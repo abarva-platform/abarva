@@ -8,7 +8,8 @@
 // explanation. Cache key includes the stageId so each stage is cached
 // independently. Mirrors the ETag + 304 pattern from PR #760.
 
-import { getAnthropicDirectClient } from '@/lib/integrations/ai-egress';
+import { preflightAnthropicDirectClient } from '@/lib/integrations/ai-egress';
+import { getActiveClientRow } from '@/lib/active-client';
 
 import { SOURCE_EVENT_INSTANCES } from '@/lib/source/source-event-instances';
 import { buildEvidenceMapWithIngestions } from '@/lib/source/source-event-instance';
@@ -169,7 +170,6 @@ export async function POST(request: Request) {
     surface: resolved.surface,
   });
 
-  const client = getAnthropicDirectClient();
   // F0.2 Layer 0 — composed AFTER role/voice (prompt.system) and BEFORE
   // demo/knowledge block.
   const userContextBlock = await getUserContextPromptBlock();
@@ -181,6 +181,25 @@ export async function POST(request: Request) {
   ]
     .filter((s) => s && s.trim().length > 0)
     .join('\n\n');
+  const activeClient = await getActiveClientRow();
+  if (!activeClient) {
+    return Response.json({ error: 'no_client', detail: 'No active client for AI egress policy.' }, { status: 403 });
+  }
+  const preflight = await preflightAnthropicDirectClient({
+    tenantId: activeClient.id,
+    workflow: 'stage-synthesis',
+    model: 'claude-sonnet-4-6',
+    prompt: [composedSystem, prompt.user].join('\n\n'),
+    dataClass: 'confidential',
+    metadata: { instanceId: resolved.instanceId, stageId, surface: resolved.surface },
+  });
+  if (!preflight.ok) {
+    return new Response(preflight.reason, {
+      status: 403,
+      headers: { 'Content-Type': 'text/plain; charset=utf-8' },
+    });
+  }
+  const client = preflight.client;
   const stream = await client.messages.stream({
     model: 'claude-sonnet-4-6',
     max_tokens: 200,

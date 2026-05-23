@@ -2,7 +2,7 @@
 // Body: (none — Tower context is the whole portfolio)
 // Response: streaming plain text — Atlas's portfolio-level synthesis quote
 
-import { getAnthropicDirectClient } from "@/lib/integrations/ai-egress";
+import { preflightAnthropicDirectClient } from "@/lib/integrations/ai-egress";
 import { APEX_RETAIL_PROGRAM_INSTANCES } from "@/lib/programs/program-instances";
 import { SOURCE_EVENT_INSTANCES } from "@/lib/source/source-event-instances";
 import {
@@ -90,8 +90,9 @@ export async function POST(request: Request) {
   // read the request to honour the If-None-Match header for ETag short-circuit.
   const startedAt = Date.now();
   let accessPolicy;
+  let tenancy;
   try {
-    const tenancy = await requireTenancy();
+    tenancy = await requireTenancy();
     accessPolicy = await loadUserProgramAccessPolicy(tenancy);
   } catch (err) {
     return tenancyErrorResponse(err);
@@ -204,23 +205,38 @@ export async function POST(request: Request) {
     `Synthesize Atlas's 90–140 word portfolio-level read. Name at least one program by ID and one source event by ID. Lead with the highest-leverage dependency chain. Use a direct lead line and 2-4 short evidence bullets.`,
   ].join('\n');
 
-  const client = getAnthropicDirectClient();
-
   // F0.2 Layer 0
   const userContextBlock = await getUserContextPromptBlock();
   const accessPolicyBlock = formatUserProgramAccessPolicyForPrompt(accessPolicy);
   const restrictedOutputBlock = formatRestrictedOutputPolicyForPrompt(accessPolicy);
   const demoContextBlock = sanitizeRestrictedFinancialText(AGENT_DEMO_SYSTEM_BLOCK, accessPolicy);
+  const systemPrompt = buildAtlasSynthesisPrompt(
+    userContextBlock,
+    accessPolicyBlock,
+    restrictedOutputBlock,
+    demoContextBlock,
+  );
+  const preflight = await preflightAnthropicDirectClient({
+    tenantId: tenancy.clientId,
+    userId: tenancy.userId,
+    workflow: 'tower-synthesis',
+    model: 'claude-sonnet-4-6',
+    prompt: [systemPrompt, userMessage].join('\n\n'),
+    dataClass: accessPolicy.outputPolicy.exactFinancialValues ? 'confidential' : 'internal',
+    metadata: { surface: 'tower' },
+  });
+  if (!preflight.ok) {
+    return new Response(preflight.reason, {
+      status: 403,
+      headers: { 'Content-Type': 'text/plain; charset=utf-8' },
+    });
+  }
+  const client = preflight.client;
 
   const stream = await client.messages.stream({
     model: "claude-sonnet-4-6",
     max_tokens: 350,
-    system: buildAtlasSynthesisPrompt(
-      userContextBlock,
-      accessPolicyBlock,
-      restrictedOutputBlock,
-      demoContextBlock,
-    ),
+    system: systemPrompt,
     messages: [{ role: "user", content: userMessage }],
   });
 

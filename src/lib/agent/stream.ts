@@ -1,14 +1,38 @@
 import {
   getAnthropicDirectClient,
+  preflightAnthropicDirectClient,
   type AnthropicDirectClient,
   type AnthropicTool,
 } from '@/lib/integrations/ai-egress';
+import type { AiDataClass } from '@/lib/integrations/ai-egress';
 
 let client: AnthropicDirectClient | null = null;
 export function getAnthropicClient(): AnthropicDirectClient {
   if (client) return client;
   client = getAnthropicDirectClient();
   return client;
+}
+
+export async function getAuditedAnthropicClient(args: {
+  tenantId: string;
+  userId?: string;
+  workflow: string;
+  prompt: string;
+  model: string;
+  dataClass?: AiDataClass;
+  artifactId?: string;
+  artifactType?: string;
+  metadata?: Record<string, unknown>;
+}): Promise<{ client: AnthropicDirectClient; auditId: string; dataClass: AiDataClass }> {
+  const preflight = await preflightAnthropicDirectClient(args);
+  if (!preflight.ok) {
+    throw new Error(preflight.reason);
+  }
+  return {
+    client: preflight.client,
+    auditId: preflight.auditId,
+    dataClass: preflight.dataClass,
+  };
 }
 
 export interface StreamTurnArgs {

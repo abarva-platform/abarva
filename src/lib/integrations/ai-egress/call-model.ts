@@ -6,6 +6,7 @@ import type {
   AiEgressAuditSink,
   AiEgressRequest,
   AiModelAdapter,
+  AiPreflightResult,
   AiPolicyDecision,
 } from './types';
 
@@ -124,4 +125,47 @@ export async function callModel(
     });
     throw error;
   }
+}
+
+export async function preflightModelEgress<TClient>(
+  request: AiEgressRequest & {
+    auditSink: AiEgressAuditSink;
+    clientFactory: () => TClient;
+  },
+): Promise<AiPreflightResult<TClient>> {
+  const evaluation = evaluateAiEgressPolicy(request);
+  const promptHash = sha256(request.prompt);
+
+  const audit = await request.auditSink.write({
+    tenantId: request.tenantId,
+    userId: request.userId,
+    workflow: request.workflow,
+    artifactId: request.artifactId,
+    artifactType: request.artifactType,
+    provider: request.provider,
+    model: request.model,
+    route: request.route,
+    dataClass: evaluation.dataClass,
+    policyDecision: evaluation.decision,
+    decisionReason: evaluation.reason,
+    promptHash,
+    requestMetadata: request.metadata ?? {},
+  });
+
+  if (evaluation.decision !== 'allow') {
+    return {
+      ok: false,
+      reason: `AI egress denied by tenant policy: ${evaluation.reason} (audit id: ${audit.id})`,
+      auditId: audit.id,
+      dataClass: evaluation.dataClass,
+      policyDecision: auditDecisionToResultDecision(evaluation.decision),
+    };
+  }
+
+  return {
+    ok: true,
+    client: request.clientFactory(),
+    auditId: audit.id,
+    dataClass: evaluation.dataClass,
+  };
 }

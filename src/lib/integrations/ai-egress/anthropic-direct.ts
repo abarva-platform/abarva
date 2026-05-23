@@ -9,6 +9,10 @@ import type {
 } from '@anthropic-ai/sdk/resources/messages';
 
 import type { AiModelAdapter } from './types';
+import { preflightModelEgress } from './call-model';
+import { createSupabaseAiEgressAuditSink } from './supabase-audit';
+import { loadTenantAiPolicyRecord } from './tenant-policy';
+import type { AiDataClass, AiPreflightResult } from './types';
 
 let anthropicClient: Anthropic | null = null;
 
@@ -55,4 +59,34 @@ export function createAnthropicDirectTextAdapter(args: {
       .join('\n');
     return { response: text, model: response.model };
   };
+}
+
+export async function preflightAnthropicDirectClient(args: {
+  tenantId: string;
+  userId?: string;
+  workflow: string;
+  prompt: string;
+  model: string;
+  dataClass?: AiDataClass;
+  artifactId?: string;
+  artifactType?: string;
+  metadata?: Record<string, unknown>;
+}): Promise<AiPreflightResult<AnthropicDirectClient>> {
+  const { tenantId, policy } = await loadTenantAiPolicyRecord(args.tenantId);
+  return preflightModelEgress({
+    tenantId,
+    userId: args.userId,
+    workflow: args.workflow,
+    provider: 'anthropic',
+    route: 'anthropic-direct',
+    model: args.model,
+    prompt: args.prompt,
+    dataClass: args.dataClass,
+    artifactId: args.artifactId,
+    artifactType: args.artifactType,
+    metadata: args.metadata,
+    policy,
+    auditSink: createSupabaseAiEgressAuditSink(),
+    clientFactory: getAnthropicDirectClient,
+  });
 }

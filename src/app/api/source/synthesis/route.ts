@@ -2,7 +2,8 @@
 // Body: { instanceId: string; patternId: string }
 // Response: streaming plain text — Sentinel's synthesis of the instance state
 
-import { getAnthropicDirectClient } from "@/lib/integrations/ai-egress";
+import { preflightAnthropicDirectClient } from "@/lib/integrations/ai-egress";
+import { getActiveClientRow } from "@/lib/active-client";
 import { SOURCE_EVENT_INSTANCES } from "@/lib/source/source-event-instances";
 import { PAT_SRC_AMS_001 } from "@/lib/intelligence/source-lifecycle-patterns";
 import { buildSourceSynthesisContext, instanceStateHash } from "@/lib/reasoning/synthesis-context-builder";
@@ -124,15 +125,33 @@ export async function POST(request: Request) {
   // Build the structured prompt from synthesis context
   const userMessage = buildSynthesisUserMessage(ctx);
 
-  const client = getAnthropicDirectClient();
-
   // F0.2 Layer 0
   const userContextBlock = await getUserContextPromptBlock();
+  const activeClient = await getActiveClientRow();
+  if (!activeClient) {
+    return Response.json({ error: 'no_client', detail: 'No active client for AI egress policy.' }, { status: 403 });
+  }
+  const systemPrompt = buildSentinelSynthesisPrompt(userContextBlock);
+  const preflight = await preflightAnthropicDirectClient({
+    tenantId: activeClient.id,
+    workflow: 'source-synthesis',
+    model: 'claude-sonnet-4-6',
+    prompt: [systemPrompt, userMessage].join('\n\n'),
+    dataClass: 'confidential',
+    metadata: { sourceInstanceId: instance.id, surface: 'source' },
+  });
+  if (!preflight.ok) {
+    return new Response(preflight.reason, {
+      status: 403,
+      headers: { 'Content-Type': 'text/plain; charset=utf-8' },
+    });
+  }
+  const client = preflight.client;
 
   const stream = await client.messages.stream({
     model: "claude-sonnet-4-6",
     max_tokens: 150,
-    system: buildSentinelSynthesisPrompt(userContextBlock),
+    system: systemPrompt,
     messages: [{ role: "user", content: userMessage }],
   });
 

@@ -2,7 +2,8 @@
 // Body: { programId: string }
 // Response: streaming plain text — Nexus's synthesis of the program state
 
-import { getAnthropicDirectClient } from "@/lib/integrations/ai-egress";
+import { preflightAnthropicDirectClient } from "@/lib/integrations/ai-egress";
+import { getActiveClientRow } from "@/lib/active-client";
 import { APEX_RETAIL_PROGRAM_INSTANCES, APX_CDP_2026_INSTANCE } from "@/lib/programs/program-instances";
 import {
   buildProgramSynthesisContext,
@@ -147,10 +148,27 @@ export async function POST(request: Request) {
     .filter(Boolean)
     .join('\n');
 
-  const client = getAnthropicDirectClient();
-
   // F0.2 Layer 0
   const userContextBlock = await getUserContextPromptBlock();
+  const activeClient = await getActiveClientRow();
+  if (!activeClient) {
+    return Response.json({ error: 'no_client', detail: 'No active client for AI egress policy.' }, { status: 403 });
+  }
+  const preflight = await preflightAnthropicDirectClient({
+    tenantId: activeClient.id,
+    workflow: 'programs-synthesis',
+    model: 'claude-sonnet-4-6',
+    prompt: [buildNexusSynthesisPrompt(userContextBlock), userMessage].join('\n\n'),
+    dataClass: 'confidential',
+    metadata: { programId: instance.id, surface: 'programs' },
+  });
+  if (!preflight.ok) {
+    return new Response(preflight.reason, {
+      status: 403,
+      headers: { 'Content-Type': 'text/plain; charset=utf-8' },
+    });
+  }
+  const client = preflight.client;
 
   const stream = await client.messages.stream({
     model: "claude-sonnet-4-6",
