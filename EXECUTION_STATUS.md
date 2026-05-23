@@ -21,3 +21,4 @@
 - 2026-05-23 05:39 CDT validation - post-rebase `npm run lint` exits 0 with existing warnings only; `npm run build` exits 0. `npm run seed:apex-it-productivity` remains idempotent after the P0 refresh.
 - 2026-05-23 05:45 CDT PR opened - pushed `feat/p2-client-data` and opened PR #2268. Not merging/deploying: CI is not green; `Supabase Preview` is failing immediately while other checks remain pending.
 - 2026-05-23 05:55 CDT CI green - PR #2268 checks are clean: required GitHub Actions pass, both Vercel preview contexts pass, Supabase Preview is skipped. Preparing final status-only push before merge.
+- 2026-05-23 06:05 CDT DONE - P2 deliverables complete and PR #2268 is CI-green; proceeding through approved merge/deploy policy. `db:types` is recorded unavailable in repo tooling by coordinator decision.
