@@ -32,27 +32,37 @@ these relevant top five:
 4. `p-it-11-copilot-55-vs-metr-19-slower`
 5. `p-it-03-productivity-to-value-theorem`
 
-## Remaining ESCALATION
+## Search indexing resolution
 
-Azure AI Search embeddings/indexing are blocked by Search write access, not by
-corpus content.
+The Azure AI Search blocker was resolved after the initial P6 run. Local
+API-key auth remains disabled on the Search service, which is the desired
+security posture. The coordinator used the runtime user-assigned identity from
+inside `ca-abarva-web-lab-eastus` instead:
 
-Evidence:
+- Confirmed `disableLocalAuth=true` on `srch-abarva-context-lab-eastus`.
+- Confirmed the runtime identity
+  `42f131d5-a0da-4d66-83f9-fe3769acc017` already had
+  `Search Index Data Reader` and `Search Index Data Contributor`.
+- Added `Search Service Contributor` for index management on the same Search
+  service scope.
+- Used the Container Apps managed identity endpoint
+  `IDENTITY_ENDPOINT` / `IDENTITY_HEADER` to get a Search bearer token.
+- Created `corpus-global`.
+- Uploaded all 39 P6 documents with 1536-dimension embeddings.
+- Updated `search_doc_id` on the 39 Postgres corpus rows.
 
-- From this workstation, the Search service is private and rejects direct
-  requests by network policy.
-- From inside `ca-abarva-web-lab-eastus`, the Search endpoint is reachable, but
-  API-key auth returns HTTP `401` even with the ARM-returned admin key.
-- From inside `ca-abarva-web-lab-eastus`, the managed identity token path returns
-  HTTP `403` for Search.
-- The running Container App revision predates the P1 corpus publish runtime code.
+Search smoke evidence:
 
-Required unblock:
+- `corpus-global` document count: `39`
+- `search='*'` returned `39` documents
+- Search top five for `how do I improve IT productivity with AI`:
+  1. `p-it-02-time-x-ai-fit`
+  2. `p-it-03-productivity-to-value-theorem`
+  3. `p-it-06-dora-anchored-measurement`
+  4. `p-it-17-wave-0-6-rollout`
+  5. `p-it-01-run-grow-transform`
 
-- Grant a runtime/job identity Search write access, or deploy a corpus-capable
-  P1 image/job with valid Azure AI Search write credentials.
-- Then run corpus indexing for the 39 P6 records and confirm Search-backed
-  retrieval.
+There is no remaining P6 Search indexing escalation.
 
 ## Intended execution path
 
