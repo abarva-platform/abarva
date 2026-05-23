@@ -10,6 +10,8 @@
 - 2026-05-23 07:21 CDT commit created — local commit `49d465c46` contains P5 implementation. Preparing push and PR; merge remains blocked until CI is green.
 - 2026-05-23 07:24 CDT PR opened — https://github.com/anandsundaram-hash/abarva/pull/2275. Waiting for CI; no merge/deploy until checks are green.
 - 2026-05-23 07:31 CDT integrity fix — replaced workshop render tenant markers from `{{...}}` to linter-safe `[[...]]` tokens after PR #2275 Integrity failure. Focused P5 ESLint passed, focused workshop Jest passed, and `npm run integrity:dom` passed with `violations=0`.
+- 2026-05-23 06:24 CDT CI update — PR #2275 rerun after merge-refresh has Integrity / Routes and disclaimers green, plus Fresh Postgres migration replay, migration drift, production readiness, reasoning-layer, and both Vercel contexts green. Still waiting on `Run hygiene_gate.sh` and ESLint before merge.
+- 2026-05-23 06:26 CDT CI green before status push — PR #2275 checks are green on commit `ffd2d1808`: Fresh Postgres migration replay, hygiene gate, Integrity / Routes and disclaimers, ESLint, migration drift, production readiness, reasoning-layer, and both Vercel contexts. Preparing required status-only push; will wait for the final rerun before merge.
 
 ## P4 — Discovery instrument data layer · @codex · branch: feat/p4-instrument-data-layer
 - 2026-05-23 06:40 CDT START - read execution kit sections 0-5, confirmed P4 ownership zone and branch/worktree. `node_modules/next/dist/docs` is absent in this worktree, so local Next 16 docs could not be read before implementation.
