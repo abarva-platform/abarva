@@ -94,14 +94,33 @@ describe('demo-dataset-registry', () => {
   // getDemoRouteRecommendation
   // ---------------------------------------------------------------------------
   describe('getDemoRouteRecommendation', () => {
-    it('apex-retail programs contains /tenant/apex-retail/programs', () => {
-      const route = getDemoRouteRecommendation('apex-retail', 'programs');
-      expect(route).toContain('/tenant/apex-retail/programs');
+    let errorSpy: jest.SpyInstance;
+    beforeEach(() => {
+      errorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+    });
+    afterEach(() => {
+      errorSpy.mockRestore();
     });
 
-    it('arcturus programs falls back to safe route', () => {
+    it('apex-retail programs returns the apex programs route', () => {
+      const route = getDemoRouteRecommendation('apex-retail', 'programs');
+      expect(route).toBe('/tenant/apex-retail/programs');
+    });
+
+    // P0-2 (synthetic pilot rehearsal 2026-05-22): an unseeded tenant
+    // surface MUST return null, not a cross-tenant URL.
+    it('P0-2: arcturus programs returns null (no cross-tenant fallback)', () => {
       const route = getDemoRouteRecommendation('arcturus', 'programs');
-      expect(route).toContain('/tenant/apex-retail/programs');
+      expect(route).toBeNull();
+    });
+
+    it('P0-2: unknown tenant returns null and logs server-side', () => {
+      const route = getDemoRouteRecommendation('northwind', 'programs');
+      expect(route).toBeNull();
+      expect(errorSpy).toHaveBeenCalledWith(
+        '[demo-routing] getDemoRouteRecommendation called for unknown tenant',
+        expect.stringContaining('"tenantSlug":"northwind"'),
+      );
     });
   });
 

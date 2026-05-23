@@ -268,19 +268,35 @@ export function getSurfaceDataAvailability(
 }
 
 /**
- * Returns the recommended demo route for a given tenant + surface.
- * Falls back to '/tenant/apex-retail/programs' with a note appended when
- * no routeHint is available.
+ * Returns the recommended demo route for a given tenant + surface, or
+ * null when no route is available.
+ *
+ * P0-2 fix (rehearsal 2026-05-22): previously this returned a string that
+ * began with `/tenant/apex-retail/programs` (with a note appended) as the
+ * "safe fallback" for any unseeded tenant/surface. A caller that consumed
+ * the prefix via `route.startsWith('/tenant/')` would route to Apex —
+ * cross-tenant leak class. Honest empty (null) is the right answer.
  */
 export function getDemoRouteRecommendation(
   tenantSlug: string,
   surface: DemoSurfaceKey,
-): string {
+): string | null {
   const surfaceData = getSurfaceDataAvailability(tenantSlug, surface);
   if (surfaceData?.routeHint) {
     return surfaceData.routeHint;
   }
-  return '/tenant/apex-retail/programs (safe fallback — no route available for this tenant/surface)';
+  if (!getDemoDatasetForTenant(tenantSlug)) {
+    console.error(
+      '[demo-routing] getDemoRouteRecommendation called for unknown tenant',
+      JSON.stringify({
+        tenantSlug,
+        surface,
+        reason: 'unknown_tenant',
+        safeFallback: null,
+      }),
+    );
+  }
+  return null;
 }
 
 /** Returns an aggregate coverage summary across all demo tenants. */
