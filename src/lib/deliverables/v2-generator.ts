@@ -1,4 +1,4 @@
-import { getAnthropicClient } from '@/lib/agent/stream';
+import { getAuditedAnthropicClient } from '@/lib/agent/stream';
 import type { ContentBlock, TextBlock } from '@/lib/integrations/ai-egress';
 import { getServerSupabase } from '@/lib/supabase-server';
 import { getEngagementById } from '@/lib/db/engagement';
@@ -91,6 +91,14 @@ export interface GenerateResult {
   quality: QualityReview;
   issues: string[];
   persisted: { deliverable_id: string; version: number } | null;
+}
+
+interface DeliverableAiEgressContext {
+  tenantId: string;
+  workflow: string;
+  artifactId?: string;
+  artifactType?: string;
+  metadata?: Record<string, unknown>;
 }
 
 function isTextBlock(block: ContentBlock): block is TextBlock {
@@ -375,8 +383,20 @@ function renderRubricCriteria(rubric: Record<string, unknown> | Array<Record<str
 
 // ── Step 5 · Generate draft ──────────────────────────────────────────────
 
-export async function generateDraft(prompt: string): Promise<string> {
-  const client = getAnthropicClient();
+export async function generateDraft(
+  prompt: string,
+  aiContext: DeliverableAiEgressContext,
+): Promise<string> {
+  const { client } = await getAuditedAnthropicClient({
+    tenantId: aiContext.tenantId,
+    workflow: aiContext.workflow,
+    model: 'claude-opus-4-7',
+    prompt,
+    dataClass: 'confidential',
+    artifactId: aiContext.artifactId,
+    artifactType: aiContext.artifactType,
+    metadata: aiContext.metadata,
+  });
   const resp = await client.messages.create({
     model: 'claude-opus-4-7',
     max_tokens: 8000,
@@ -397,8 +417,8 @@ const RUBRIC_REVIEW_SYSTEM = `You are reviewing a deliverable against a quality 
 export async function reviewAgainstRubric(args: {
   content: string;
   rubric: Record<string, unknown> | Array<Record<string, unknown>>;
+  aiContext: DeliverableAiEgressContext;
 }): Promise<QualityReview> {
-  const client = getAnthropicClient();
   const prompt = `DELIVERABLE CONTENT
 ${args.content}
 
@@ -424,6 +444,16 @@ Return JSON only with schema:
 }`;
 
   try {
+    const { client } = await getAuditedAnthropicClient({
+      tenantId: args.aiContext.tenantId,
+      workflow: `${args.aiContext.workflow}:rubric-review`,
+      model: 'claude-opus-4-7',
+      prompt: [RUBRIC_REVIEW_SYSTEM, prompt].join('\n\n'),
+      dataClass: 'confidential',
+      artifactId: args.aiContext.artifactId,
+      artifactType: args.aiContext.artifactType,
+      metadata: args.aiContext.metadata,
+    });
     const resp = await client.messages.create({
       model: 'claude-opus-4-7',
       max_tokens: 3000,
@@ -461,6 +491,7 @@ export async function reviseIfBelowThreshold(args: {
   draft: string;
   review: QualityReview;
   spec: DeliverableTypeRow;
+  aiContext: DeliverableAiEgressContext;
   threshold?: number;
 }): Promise<string> {
   const threshold = args.threshold ?? 70;
@@ -468,7 +499,6 @@ export async function reviseIfBelowThreshold(args: {
     return args.draft;
   }
 
-  const client = getAnthropicClient();
   const issueSummary = [
     ...args.review.critical_issues.map((c) => `CRITICAL: ${c}`),
     ...args.review.remaining_issues,
@@ -495,6 +525,15 @@ Revise the deliverable to address these issues. Keep the sections that scored we
 Rubric (for reference):
 ${renderRubricCriteria(args.spec.quality_rubric)}`;
 
+  const { client } = await getAuditedAnthropicClient({
+    tenantId: args.aiContext.tenantId,
+    workflow: `${args.aiContext.workflow}:revision`,
+    model: 'claude-opus-4-7',
+    prompt,
+    dataClass: 'confidential',
+    artifactType: args.aiContext.artifactType,
+    metadata: args.aiContext.metadata,
+  });
   const resp = await client.messages.create({
     model: 'claude-opus-4-7',
     max_tokens: 8000,
@@ -605,20 +644,33 @@ export async function generateDeliverable(args: {
   }
 
   const ctx = await assembleGenerationContext(args.engagementId, args.preferredTopicKey);
+  if (!ctx.client?.id) {
+    throw new Error(`cannot generate · engagement ${args.engagementId} has no client id for AI egress policy`);
+  }
+  const aiContext: DeliverableAiEgressContext = {
+    tenantId: ctx.client.id,
+    workflow: `deliverable:${args.deliverableTypeKey}`,
+    artifactType: 'deliverable_v2',
+    metadata: {
+      engagementId: args.engagementId,
+      deliverableTypeKey: args.deliverableTypeKey,
+      clientName: ctx.client.name,
+    },
+  };
 
   if (!spec.generation_prompt_template) {
     throw new Error(`deliverable_type ${args.deliverableTypeKey} has no generation_prompt_template`);
   }
   const prompt = interpolateTemplate(spec.generation_prompt_template, ctx, spec);
 
-  const draft = await generateDraft(prompt);
-  const review = await reviewAgainstRubric({ content: draft, rubric: spec.quality_rubric });
-  const finalContent = await reviseIfBelowThreshold({ draft, review, spec });
+  const draft = await generateDraft(prompt, aiContext);
+  const review = await reviewAgainstRubric({ content: draft, rubric: spec.quality_rubric, aiContext });
+  const finalContent = await reviseIfBelowThreshold({ draft, review, spec, aiContext });
 
   // Re-review if we revised
   const finalReview = finalContent === draft
     ? review
-    : await reviewAgainstRubric({ content: finalContent, rubric: spec.quality_rubric });
+    : await reviewAgainstRubric({ content: finalContent, rubric: spec.quality_rubric, aiContext });
   const structuredData = buildStructuredDeliverableData({
     content: finalContent,
     deliverableTypeKey: args.deliverableTypeKey,
