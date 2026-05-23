@@ -1,4 +1,4 @@
-import { getAnthropicClient } from '@/lib/agent/stream';
+import { getAuditedAnthropicClient } from '@/lib/agent/stream';
 import type {
   PatternApplicableProgram,
   PatternManifestEntry,
@@ -217,7 +217,6 @@ async function synthesizeWithClaude(args: {
 }): Promise<string | null> {
   if (!process.env.ANTHROPIC_API_KEY || args.rankedPatterns.length === 0) return null;
 
-  const client = getAnthropicClient();
   const context = args.rankedPatterns.map(({ pattern, applicablePrograms }) => ({
     name: pattern.name,
     slug: pattern.slug,
@@ -238,33 +237,45 @@ async function synthesizeWithClaude(args: {
     })),
   }));
 
+  const userPayload = JSON.stringify(
+    {
+      tenant: args.ctx.clientName,
+      question: args.message,
+      retrievedPatterns: context,
+    },
+    null,
+    2,
+  );
+  const system = [
+    'You are Sentinel, the AbarVa intelligence librarian.',
+    'Your role: validate, curate, and advise on AI patterns in the Intelligence library.',
+    'Use only the provided context. Do not invent evidence.',
+    'Name the most relevant pattern or patterns explicitly — use the T-code IDs (T3-H01, T3-H03, etc.) from the demo context when relevant.',
+    'Say when evidence is thin or authored from industry knowledge rather than measured customer outcomes.',
+    'Write in plain English. No bullet lists. Two short paragraphs max.',
+    AGENT_DEMO_SYSTEM_BLOCK,
+  ].join('\n');
+  const { client } = await getAuditedAnthropicClient({
+    tenantId: args.ctx.clientKey,
+    userId: args.ctx.userId ?? undefined,
+    workflow: 'sentinel-orchestrator',
+    model: 'claude-sonnet-4-6',
+    prompt: [system, userPayload].join('\n\n'),
+    dataClass: 'confidential',
+    metadata: { clientKey: args.ctx.clientKey },
+  });
+
   const result = await client.messages.create({
     model: 'claude-sonnet-4-6',
     max_tokens: 420,
-    system: [
-      'You are Sentinel, the AbarVa intelligence librarian.',
-      'Your role: validate, curate, and advise on AI patterns in the Intelligence library.',
-      'Use only the provided context. Do not invent evidence.',
-      'Name the most relevant pattern or patterns explicitly — use the T-code IDs (T3-H01, T3-H03, etc.) from the demo context when relevant.',
-      'Say when evidence is thin or authored from industry knowledge rather than measured customer outcomes.',
-      'Write in plain English. No bullet lists. Two short paragraphs max.',
-      AGENT_DEMO_SYSTEM_BLOCK,
-    ].join('\n'),
+    system,
     messages: [
       {
         role: 'user',
         content: [
           {
             type: 'text',
-            text: JSON.stringify(
-              {
-                tenant: args.ctx.clientName,
-                question: args.message,
-                retrievedPatterns: context,
-              },
-              null,
-              2,
-            ),
+            text: userPayload,
           },
         ],
       },

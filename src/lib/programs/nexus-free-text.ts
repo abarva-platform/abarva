@@ -1,4 +1,4 @@
-import { getAnthropicClient } from '@/lib/agent/stream';
+import { getAuditedAnthropicClient } from '@/lib/agent/stream';
 import {
   buildAgentGroundingDisclosure,
   formatUnsupportedClaimFlag,
@@ -660,54 +660,64 @@ async function synthesizeWithClaude(args: {
     return null;
   }
 
-  const client = getAnthropicClient();
+  const userPayload = JSON.stringify(
+    {
+      tenant: args.ctx.clientName,
+      program: args.context.program,
+      modules: args.context.modules,
+      deliverables: args.context.deliverables,
+      flags: args.context.flags,
+      sparseEvidence: args.sparseEvidence,
+      canonicalPatternEvidence: args.patternEvidence,
+      question: args.message,
+      citationRegistry: args.citations.map((citation) => ({
+        label: citation.label,
+        markdown: renderCitation(citation),
+        evidenceCount: citation.evidenceCount,
+        observationCount: citation.observationCount,
+        matchReason: citation.matchReason,
+        sourceKind: citation.sourceKind,
+        sourceBasis: citation.sourceBasis,
+        confidenceLevel: citation.canonicalConfidenceLevel,
+        missingRequiredFields: citation.missingRequiredFields,
+        missingProvenance: citation.missingProvenance,
+        unsupportedClaimFlags: citation.unsupportedClaimFlags,
+      })),
+    },
+    null,
+    2,
+  );
+  const system = [
+    'You are Nexus, the Programs-zone orchestration agent for the AbarVa platform.',
+    'Use only the provided composition and context. Do not invent program state, evidence, or gate decisions.',
+    'Stay direct, structured, and specific. Never flatter the user.',
+    'Use the provided markdown citations verbatim.',
+    'If sparseEvidence is true, say "Evidence is thin" in the first sentence.',
+    'If canonicalPatternEvidence.noMatch or missingEvidence is true, surface that limitation explicitly and do not fill gaps with invented pattern evidence.',
+    'Be explicit that most support here is authored/composite unless the composition says otherwise.',
+    'Close with one concrete next step.',
+    AGENT_DEMO_SYSTEM_BLOCK,
+  ].join('\n');
+  const { client } = await getAuditedAnthropicClient({
+    tenantId: args.ctx.clientKey,
+    userId: args.ctx.userId ?? undefined,
+    workflow: 'programs-nexus-free-text',
+    model: process.env.NEXUS_COMPOSER_MODEL ?? 'claude-opus-4-7',
+    prompt: [system, userPayload].join('\n\n'),
+    dataClass: 'confidential',
+    metadata: { clientKey: args.ctx.clientKey },
+  });
   const result = await client.messages.create({
     model: process.env.NEXUS_COMPOSER_MODEL ?? 'claude-opus-4-7',
     max_tokens: 380,
-    system: [
-      'You are Nexus, the Programs-zone orchestration agent for the AbarVa platform.',
-      'Use only the provided composition and context. Do not invent program state, evidence, or gate decisions.',
-      'Stay direct, structured, and specific. Never flatter the user.',
-      'Use the provided markdown citations verbatim.',
-      'If sparseEvidence is true, say "Evidence is thin" in the first sentence.',
-      'If canonicalPatternEvidence.noMatch or missingEvidence is true, surface that limitation explicitly and do not fill gaps with invented pattern evidence.',
-      'Be explicit that most support here is authored/composite unless the composition says otherwise.',
-      'Close with one concrete next step.',
-      AGENT_DEMO_SYSTEM_BLOCK,
-    ].join('\n'),
+    system,
     messages: [
       {
         role: 'user',
         content: [
           {
             type: 'text',
-            text: JSON.stringify(
-              {
-                tenant: args.ctx.clientName,
-                program: args.context.program,
-                modules: args.context.modules,
-                deliverables: args.context.deliverables,
-                flags: args.context.flags,
-                sparseEvidence: args.sparseEvidence,
-                canonicalPatternEvidence: args.patternEvidence,
-                question: args.message,
-                citationRegistry: args.citations.map((citation) => ({
-                  label: citation.label,
-                  markdown: renderCitation(citation),
-                  evidenceCount: citation.evidenceCount,
-                  observationCount: citation.observationCount,
-                  matchReason: citation.matchReason,
-                  sourceKind: citation.sourceKind,
-                  sourceBasis: citation.sourceBasis,
-                  confidenceLevel: citation.canonicalConfidenceLevel,
-                  missingRequiredFields: citation.missingRequiredFields,
-                  missingProvenance: citation.missingProvenance,
-                  unsupportedClaimFlags: citation.unsupportedClaimFlags,
-                })),
-              },
-              null,
-              2,
-            ),
+            text: userPayload,
           },
         ],
       },
