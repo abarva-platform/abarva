@@ -7,6 +7,7 @@
 - 2026-05-23 07:35 CDT PR opened - pushed `feat/p4-instrument-data-layer` and opened PR #2273: https://github.com/anandsundaram-hash/abarva/pull/2273. Waiting for CI before merge/deploy.
 - 2026-05-23 07:55 CDT CI fix - `Routes and disclaimers` failed on `integrity:dom` unresolved_template in the admin instrument sample text. Replaced sample `{{...}}` tokens with bracket-safe tokens and kept render support for bracket interpolation.
 - 2026-05-23 08:05 CDT validation - `npm run integrity:dom` passes with 0 violations; focused P4 Jest, focused P4 ESLint, and full TypeScript pass after the token fix. Pushed fix commit to PR #2273.
+- 2026-05-23 06:25 CDT DONE - PR #2273 merged to `main` as `19e3ad92178a6b8ee4750143abc055ee3b02a3c7`. Production deployments are Ready for `nexus` (`https://app.abarva.ai`) and `abarva` (`https://abarva.ai`); `/admin/instruments` on production redirects to Clerk sign-in as expected when signed out.
 
 ## P3 — Move + Source template data layer · @codex · branch: feat/p3-template-data-layer
 - 2026-05-23 05:43 CDT START — read execution kit §0-§5, confirmed P3 ownership zone and branch/worktree, and began schema/API/admin/programs inventory. AGENTS.md requested `node_modules/next/dist/docs/`, but this worktree has no `node_modules/next`; proceeding with installed-repo patterns and local verification.
