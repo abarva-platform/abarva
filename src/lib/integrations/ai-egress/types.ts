@@ -106,3 +106,18 @@ export type AiCallResult =
       dataClass: AiDataClass;
       policyDecision: AiPolicyDecision;
     };
+
+export type AiPreflightResult<TClient> =
+  | {
+      ok: true;
+      client: TClient;
+      auditId: string;
+      dataClass: AiDataClass;
+    }
+  | {
+      ok: false;
+      reason: string;
+      auditId: string;
+      dataClass: AiDataClass;
+      policyDecision: AiPolicyDecision;
+    };

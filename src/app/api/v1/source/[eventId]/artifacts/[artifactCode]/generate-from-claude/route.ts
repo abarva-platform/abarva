@@ -14,7 +14,7 @@
 // simplicity in this slice; streaming arrives when the canvas surfaces
 // a progress UI.
 
-import { getAnthropicDirectClient } from '@/lib/integrations/ai-egress';
+import { preflightAnthropicDirectClient } from '@/lib/integrations/ai-egress';
 import type { NextRequest } from 'next/server';
 import { requireTenancy, tenancyErrorResponse } from '@/lib/auth/tenancy';
 import { getActiveClientRow } from '@/lib/active-client';
@@ -189,12 +189,32 @@ export async function POST(_req: NextRequest, { params }: RouteCtx) {
   // arrives in 1–3s, full body in 30–60s, and we can detect mid-stream
   // failures cleanly.
   const startedAt = Date.now();
-  const client = getAnthropicDirectClient();
   let body = '';
   let stopReason: string | null = null;
   let tokensIn: number | null = null;
   let tokensOut: number | null = null;
   try {
+    if (!tenancy) {
+      return tenancyErrorResponse(tenancyError);
+    }
+    const preflight = await preflightAnthropicDirectClient({
+      tenantId: tenancy.clientId,
+      userId: tenancy.userId,
+      workflow: 'source-artifact-generate',
+      artifactId: eventId,
+      artifactType: artifactCode,
+      model: template.model,
+      prompt: [template.systemPrompt, userMessage].join('\n\n'),
+      dataClass: 'confidential',
+      metadata: { eventId, artifactCode },
+    });
+    if (!preflight.ok) {
+      return Response.json(
+        { error: 'ai_egress_denied', detail: preflight.reason, auditId: preflight.auditId },
+        { status: 403 },
+      );
+    }
+    const client = preflight.client;
     const stream = client.messages.stream({
       model: template.model,
       max_tokens: template.maxTokens,

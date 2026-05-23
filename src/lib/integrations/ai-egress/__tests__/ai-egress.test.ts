@@ -4,6 +4,8 @@ import {
   classifyAiPayload,
   createMemoryAiEgressAuditSink,
   evaluateAiEgressPolicy,
+  getAnthropicDirectClient,
+  preflightModelEgress,
   type TenantAiPolicy,
 } from '@/lib/integrations/ai-egress';
 
@@ -117,6 +119,53 @@ describe('AI egress control plane Layer 1', () => {
     expect(auditSink.records[0]).toMatchObject({
       provider: 'kernel-only',
       policyDecision: 'allow',
+    });
+  });
+
+  it('preflights streaming calls with a synchronous allow audit before returning a client', async () => {
+    const auditSink = createMemoryAiEgressAuditSink();
+    const client = { messages: { stream: jest.fn() } };
+    const result = await preflightModelEgress({
+      tenantId: '00000000-0000-0000-0000-000000000005',
+      workflow: 'streaming-synthesis',
+      provider: 'anthropic',
+      route: 'anthropic-direct',
+      model: 'claude-sonnet-4-6',
+      prompt: 'stream me a careful answer',
+      dataClass: 'internal',
+      policy: permissiveClaudePolicy,
+      auditSink,
+      clientFactory: () => client,
+    });
+
+    expect(result).toMatchObject({ ok: true, client });
+    expect(auditSink.records).toHaveLength(1);
+    expect(auditSink.records[0]).toMatchObject({
+      policyDecision: 'allow',
+      workflow: 'streaming-synthesis',
+    });
+  });
+
+  it('preflight denial returns a structured refusal and never creates a client', async () => {
+    const auditSink = createMemoryAiEgressAuditSink();
+    const clientFactory = jest.fn(getAnthropicDirectClient);
+    const result = await preflightModelEgress({
+      tenantId: '00000000-0000-0000-0000-000000000006',
+      workflow: 'streaming-synthesis',
+      provider: 'anthropic',
+      route: 'anthropic-direct',
+      model: 'claude-sonnet-4-6',
+      prompt: 'confidential prompt',
+      policy: CONSERVATIVE_TENANT_AI_POLICY,
+      auditSink,
+      clientFactory,
+    });
+
+    expect(result.ok).toBe(false);
+    expect(clientFactory).not.toHaveBeenCalled();
+    expect(auditSink.records[0]).toMatchObject({
+      policyDecision: 'deny',
+      dataClass: 'confidential',
     });
   });
 });
