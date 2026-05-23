@@ -398,9 +398,21 @@ const SIBLING_DECKS: ReadonlyArray<{
  */
 export function buildMoveMasterDossier(
   move: MoveBusinessCaseInput,
-  moveId: string,
-  generatedOn: string,
+  moveIdOrGeneratedOn: string,
+  generatedOnArg?: string,
 ): MoveMasterDossierResult {
+  // Signature harmonisation (P2-2): the other 7 board-grade renderers take
+  // `(move, generatedOn)`. The Master Dossier still accepts the legacy
+  // 3-arg form for back-compat, but the modern call is `(move, generatedOn)`
+  // — `moveId` is read from the Move itself (`move.id` / `move_id`).
+  const usingLegacyShape = typeof generatedOnArg === 'string';
+  const moveId = usingLegacyShape
+    ? moveIdOrGeneratedOn
+    : (move.id ?? move.move_id ?? move.moveId ?? 'unknown-move');
+  const generatedOn = usingLegacyShape
+    ? (generatedOnArg as string)
+    : moveIdOrGeneratedOn;
+
   const result = buildMoveBusinessCase(move);
   const moveLabel = readMoveLabel(move, result.binding);
 
