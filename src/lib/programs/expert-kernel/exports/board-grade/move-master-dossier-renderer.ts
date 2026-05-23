@@ -829,14 +829,16 @@ function dossierStyles(): string {
  */
 export function renderMoveMasterDossierHtml(
   move: MoveBusinessCaseInput,
-  moveId: string,
-  generatedOn: string,
+  moveIdOrGeneratedOn: string,
+  generatedOn?: string,
 ): string {
-  const result: MoveMasterDossierResult = buildMoveMasterDossier(
-    move,
-    moveId,
-    generatedOn,
-  );
+  // Signature harmonisation (P2-2): callers should prefer the 2-arg form
+  // `renderMoveMasterDossierHtml(move, generatedOn)` and put the moveId on
+  // the Move (`move.id`). The legacy 3-arg form still works for back-compat.
+  const result: MoveMasterDossierResult =
+    typeof generatedOn === 'string'
+      ? buildMoveMasterDossier(move, moveIdOrGeneratedOn, generatedOn)
+      : buildMoveMasterDossier(move, moveIdOrGeneratedOn);
 
   if (!result.bound) {
     return renderUnboundDocument(

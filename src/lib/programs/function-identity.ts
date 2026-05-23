@@ -156,7 +156,13 @@ function tokenize(text: string): Map<string, number> {
  * repeated to weight them above the looser prose of the summary.
  */
 function packSignalText(pack: FunctionPack): string {
-  const labelSignal = `${pack.functionLabel} ${pack.functionLabel}`;
+  // P2-4: weight functionLabel 4x. The function label is the operator's
+  // strongest single signal of intent — a brief that says "customer care"
+  // almost always means the customer-care function. Weighting it more
+  // heavily pushes obvious matches further above the confidence floor and
+  // reduces the runner-up margin failures the synthetic pilot rehearsal
+  // surfaced (Northwind brief scored 0.279, just above the 0.18 floor).
+  const labelSignal = `${pack.functionLabel} ${pack.functionLabel} ${pack.functionLabel} ${pack.functionLabel}`;
   const termSignal = pack.vocabulary.canonicalTerms
     .map((t) => `${t.term} ${t.term}`)
     .join(' ');
@@ -336,21 +342,29 @@ export function resolveFunctionPackKey(input: {
  * a Function Pack and the caller should fall back to general reasoning.
  */
 export function resolveMoveFunctionIdentity(input: {
-  industryCode: string | null | undefined;
+  /**
+   * The Move's industry code — accepted in either camelCase (`industryCode`)
+   * or snake_case (`industry_code`). Other call sites in the codebase use
+   * either shape (see `MoveBusinessCaseInput`); this resolver tolerates both.
+   */
+  industryCode?: string | null | undefined;
+  industry_code?: string | null | undefined;
   /**
    * The `engagements.function_pack_key` column — the preferred source. Omit or
    * pass `null` for a row read before the column existed; the charter fallback
-   * then resolves the key.
+   * then resolves the key. Accepted in either camelCase or snake_case.
    */
   functionPackKey?: string | null | undefined;
+  function_pack_key?: string | null | undefined;
   /** The `engagements.charter` JSONB — the fallback function-key source. */
   charter: unknown;
 }): MoveFunctionIdentity | null {
-  const industryKey = industryKeyForCode(input.industryCode);
+  const industryCode = input.industryCode ?? input.industry_code;
+  const industryKey = industryKeyForCode(industryCode);
   if (!industryKey) return null;
 
   const functionKey = resolveFunctionPackKey({
-    functionPackKey: input.functionPackKey,
+    functionPackKey: input.functionPackKey ?? input.function_pack_key,
     charter: input.charter,
   });
   if (!functionKey) return null;

@@ -163,6 +163,16 @@ export interface MoveBusinessCaseInput {
   tenant_name?: string | null;
   /** The `tenantName` alias (camelCase view-model form). */
   tenantName?: string | null;
+  /**
+   * The Move's id — the `engagements.id` column or the `StrategicMove.id`.
+   * Used by renderers that emit cross-deck `?moveId=` links (e.g. the
+   * Master Move Dossier assembled-book). Both snake_case `id` and the
+   * `move_id`/`moveId` aliases are accepted. Optional; renderers fall back
+   * to a deterministic placeholder when neither is provided.
+   */
+  id?: string | null;
+  move_id?: string | null;
+  moveId?: string | null;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
