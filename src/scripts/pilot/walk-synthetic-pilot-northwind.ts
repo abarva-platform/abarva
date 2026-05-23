@@ -127,9 +127,11 @@ function htmlExcerpt(html: string): string {
   const fallback = tiers.getTenantRouteFallback('northwind', 'admin');
   const detail = [
     `getDemoTenantDataTier('northwind') → ${t ? 'found' : 'NULL'}`,
-    `getTenantRouteFallback('northwind','admin') → ${fallback}`,
-    `Setup currently does not know Northwind exists; admin route falls back to '/tenant/apex-retail/programs'.`,
-    `Fallback hardcoding to apex-retail is a known coverage gap for any new tenant.`,
+    `getTenantRouteFallback('northwind','admin') → ${fallback === null ? 'null' : fallback}`,
+    fallback === null
+      ? `Setup honestly reports Northwind is not configured (P0-2 fix landed): no cross-tenant fallback.`
+      : `Setup falls back to '${fallback}'.`,
+    `Northwind still needs a demo-tenant-data-tiers entry to render a Northwind-specific empty/seeded state.`,
   ].join('\n');
   record({
     step: 2,
@@ -417,10 +419,10 @@ for (const a of ARTIFACTS) {
     detail: [
       `getDemoTenantDataTier('northwind') → ${t ? 'found' : 'NULL'}`,
       `No demo-tenant-data-tiers entry means Source and Tower routes have ` +
-        `no caveat / availability bound to Northwind; surfaces fall back to ` +
-        `apex-retail or show a generic empty state.`,
-      `Risk: a real Northwind user would see Apex-tenant Source events ` +
-        `via the getTenantRouteFallback default. Cross-tenant leak class.`,
+        `no caveat / availability bound to Northwind; surfaces now return ` +
+        `null (honest empty) after the P0-2 fix instead of routing to apex-retail.`,
+      `Cross-tenant leak class closed at the routing-fallback layer. ` +
+        `Northwind still needs a tier entry to show a Northwind-specific empty state.`,
     ].join('\n'),
   });
 }

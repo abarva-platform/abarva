@@ -189,8 +189,50 @@ export function getSurfaceAvailability(
   return tenant.surfaces.find((s) => s.surface === surface) ?? null;
 }
 
-export function getTenantRouteFallback(tenantSlug: string, surface: DemoSurface): string {
-  const state = getSurfaceAvailability(tenantSlug, surface);
+// ---------------------------------------------------------------------------
+// P0-2 fix (rehearsal 2026-05-22): cross-tenant routing fallback.
+//
+// Previously `getTenantRouteFallback` returned `/tenant/apex-retail/programs`
+// for any unknown tenant or unseeded surface. That meant a user whose Clerk
+// metadata pinned them to (say) Northwind would be silently routed into the
+// Apex Retail surface — Apex's program list, Apex's source events, Apex's
+// intelligence — because the router had no entry for Northwind.
+//
+// This is the same class of bug fix #2236 cleaned up at the Intelligence
+// route level, leaking back in at the routing-fallback layer. The honest
+// behavior is: unknown tenant → return null, callers render an empty /
+// "tenant not configured" state. NEVER serve another tenant's URL as a
+// default.
+//
+// `getTenantRouteFallback` now returns `string | null`. Existing callers
+// (only the synthetic pilot script) treat null as "not configured".
+// ---------------------------------------------------------------------------
+
+export function getTenantRouteFallback(
+  tenantSlug: string,
+  surface: DemoSurface,
+): string | null {
+  const tenant = getDemoTenantDataTier(tenantSlug);
+  if (!tenant) {
+    // Unknown tenant. Do not return another tenant's route. Log structured
+    // context server-side so cross-tenant probes show up in deploy logs.
+    console.error(
+      '[tenant-routing] getTenantRouteFallback called for unknown tenant',
+      JSON.stringify({
+        tenantSlug,
+        surface,
+        reason: 'unknown_tenant',
+        safeFallback: null,
+      }),
+    );
+    return null;
+  }
+
+  const state = tenant.surfaces.find((s) => s.surface === surface) ?? null;
   if (state?.routeHint) return state.routeHint;
-  return '/tenant/apex-retail/programs';
+
+  // Known tenant but this surface has no seeded route. Return null so the
+  // caller can render an empty / "not seeded" state for THIS tenant rather
+  // than silently routing to a different tenant.
+  return null;
 }
