@@ -19,14 +19,15 @@
 // "Registered ✅ but DB write failed" impossible — the agent's
 // confirmation text is generated AFTER the tool result is known.
 
-import type Anthropic from '@anthropic-ai/sdk';
 import type {
+  AnthropicDirectClient,
+  AnthropicMessageStreamParams,
   ContentBlock,
   ContentBlockParam,
   MessageParam,
   ToolResultBlockParam,
   ToolUseBlock,
-} from '@anthropic-ai/sdk/resources/messages';
+} from '@/lib/integrations/ai-egress';
 import type { AgentTool, ToolContext, ToolResult } from '../tools/registry';
 import { executeTool, toAnthropicToolDefinition } from '../tools/registry';
 
@@ -48,13 +49,13 @@ export interface StreamWriter {
 }
 
 export interface ToolUseLoopArgs {
-  client: Anthropic;
+  client: AnthropicDirectClient;
   model: string;
   maxTokens: number;
   system: string;
   messages: ReadonlyArray<MessageParam>;
   tools: ReadonlyArray<AgentTool>;
-  initialToolChoice?: Anthropic.MessageStreamParams['tool_choice'];
+  initialToolChoice?: AnthropicMessageStreamParams['tool_choice'];
   toolContext: ToolContext;
   writer: StreamWriter;
 }
@@ -99,7 +100,7 @@ export async function runToolUseLoop(args: ToolUseLoopArgs): Promise<ToolUseLoop
   const toolInvocations: ToolUseLoopResult['toolInvocations'] = [];
 
   for (let turn = 1; turn <= MAX_TOOL_TURNS; turn++) {
-    const streamArgs: Anthropic.MessageStreamParams = {
+    const streamArgs: AnthropicMessageStreamParams = {
       model,
       max_tokens: maxTokens,
       system,

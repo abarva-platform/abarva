@@ -14,7 +14,7 @@
 // simplicity in this slice; streaming arrives when the canvas surfaces
 // a progress UI.
 
-import Anthropic from '@anthropic-ai/sdk';
+import { getAnthropicDirectClient } from '@/lib/integrations/ai-egress';
 import type { NextRequest } from 'next/server';
 import { requireTenancy, tenancyErrorResponse } from '@/lib/auth/tenancy';
 import { getActiveClientRow } from '@/lib/active-client';
@@ -189,7 +189,7 @@ export async function POST(_req: NextRequest, { params }: RouteCtx) {
   // arrives in 1–3s, full body in 30–60s, and we can detect mid-stream
   // failures cleanly.
   const startedAt = Date.now();
-  const client = new Anthropic({ apiKey });
+  const client = getAnthropicDirectClient();
   let body = '';
   let stopReason: string | null = null;
   let tokensIn: number | null = null;

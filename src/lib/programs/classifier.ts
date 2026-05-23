@@ -9,7 +9,10 @@
 // text-embedding-3-large. Flagged as follow-up.
 
 import OpenAI from 'openai';
-import Anthropic from '@anthropic-ai/sdk';
+import {
+  getAnthropicDirectClient,
+  type AnthropicDirectClient,
+} from '@/lib/integrations/ai-egress';
 import { Pinecone } from '@pinecone-database/pinecone';
 import { getServerSupabase } from '@/lib/supabase-server';
 import type {
@@ -38,7 +41,7 @@ const BAND_MEDIUM = 0.5;
 
 let _openai: OpenAI | null = null;
 let _pinecone: Pinecone | null = null;
-let _anthropic: Anthropic | null = null;
+let _anthropic: AnthropicDirectClient | null = null;
 
 function getOpenAI(): OpenAI | null {
   if (_openai) return _openai;
@@ -54,11 +57,11 @@ function getPinecone(): Pinecone | null {
   _pinecone = new Pinecone({ apiKey: key });
   return _pinecone;
 }
-function getAnthropic(): Anthropic | null {
+function getAnthropic(): AnthropicDirectClient | null {
   if (_anthropic) return _anthropic;
   const key = process.env.ANTHROPIC_API_KEY;
   if (!key) return null;
-  _anthropic = new Anthropic({ apiKey: key });
+  _anthropic = getAnthropicDirectClient();
   return _anthropic;
 }
 

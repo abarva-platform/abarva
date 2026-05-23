@@ -1,11 +1,11 @@
-import Anthropic from '@anthropic-ai/sdk'
+import { getAnthropicDirectClient } from '@/lib/integrations/ai-egress'
 import { getUserContextPromptBlock } from '@/lib/agent/userContext'
 import { getRelevantTools, toAnthropicToolDefinition } from '@/lib/agent/tools/registry'
 import { FOUR_LAYER_REASONING_INSTRUCTIONS } from '@/lib/intelligence/synthesis/instructionLayer'
 import { retrieveStrategyStepContext } from '@/lib/agent/strategy-step-context'
 import { requireTenancy, tenancyErrorResponse } from '@/lib/auth/tenancy'
 
-const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
+const client = getAnthropicDirectClient()
 
 // ── Guardrails ────────────────────────────────────────────────────────────────
 const VALID_OPTIONS = new Set(['A', 'B', 'C', 'D'])

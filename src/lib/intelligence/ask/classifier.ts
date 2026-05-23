@@ -1,4 +1,7 @@
-import Anthropic from '@anthropic-ai/sdk';
+import {
+  getAnthropicDirectClient,
+  type AnthropicDirectClient,
+} from '@/lib/integrations/ai-egress';
 import type { IntentClassification, AskIntent } from './types';
 
 const CATEGORIES: AskIntent[] = [
@@ -32,12 +35,12 @@ Heuristics:
 
 Query: ${q}`;
 
-let _client: Anthropic | null = null;
-function getClient(): Anthropic | null {
+let _client: AnthropicDirectClient | null = null;
+function getClient(): AnthropicDirectClient | null {
   if (_client) return _client;
   const key = process.env.ANTHROPIC_API_KEY;
   if (!key) return null;
-  _client = new Anthropic({ apiKey: key });
+  _client = getAnthropicDirectClient();
   return _client;
 }
 

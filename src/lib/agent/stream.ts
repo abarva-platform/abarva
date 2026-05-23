@@ -1,11 +1,13 @@
-import Anthropic from '@anthropic-ai/sdk';
+import {
+  getAnthropicDirectClient,
+  type AnthropicDirectClient,
+  type AnthropicTool,
+} from '@/lib/integrations/ai-egress';
 
-let client: Anthropic | null = null;
-export function getAnthropicClient(): Anthropic {
+let client: AnthropicDirectClient | null = null;
+export function getAnthropicClient(): AnthropicDirectClient {
   if (client) return client;
-  const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) throw new Error('Missing ANTHROPIC_API_KEY');
-  client = new Anthropic({ apiKey });
+  client = getAnthropicDirectClient();
   return client;
 }
 
@@ -20,7 +22,7 @@ export interface StreamTurnArgs {
    * that need full multi-turn tool execution, use `runToolUseLoop`
    * from `streaming/toolUseLoop.ts` instead — this util is text-only.
    */
-  tools?: Anthropic.Tool[];
+  tools?: AnthropicTool[];
 }
 
 export async function* streamAgentTurn(args: StreamTurnArgs): AsyncGenerator<string, string, unknown> {

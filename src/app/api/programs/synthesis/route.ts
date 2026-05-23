@@ -2,7 +2,7 @@
 // Body: { programId: string }
 // Response: streaming plain text — Nexus's synthesis of the program state
 
-import Anthropic from "@anthropic-ai/sdk";
+import { getAnthropicDirectClient } from "@/lib/integrations/ai-egress";
 import { APEX_RETAIL_PROGRAM_INSTANCES, APX_CDP_2026_INSTANCE } from "@/lib/programs/program-instances";
 import {
   buildProgramSynthesisContext,
@@ -147,7 +147,7 @@ export async function POST(request: Request) {
     .filter(Boolean)
     .join('\n');
 
-  const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+  const client = getAnthropicDirectClient();
 
   // F0.2 Layer 0
   const userContextBlock = await getUserContextPromptBlock();

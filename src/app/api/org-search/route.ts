@@ -1,23 +1,47 @@
-import Anthropic from "@anthropic-ai/sdk";
+import {
+  CONSERVATIVE_TENANT_AI_POLICY,
+  callModel,
+  createAnthropicDirectTextAdapter,
+  createMemoryAiEgressAuditSink,
+  type AnthropicTool,
+  type TenantAiPolicy,
+} from "@/lib/integrations/ai-egress";
 
-const client = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY,
-});
+const PUBLIC_ORG_SEARCH_POLICY: TenantAiPolicy = {
+  ...CONSERVATIVE_TENANT_AI_POLICY,
+  allowExternalAI: true,
+  kernelOnlyMode: false,
+  allowClaude: true,
+  maxDataClass: 'public',
+  requireRedaction: false,
+  promptResponseRetentionDays: 7,
+};
 
 export async function POST(request: Request) {
   const { orgName } = await request.json();
 
   try {
-    const response = await client.messages.create({
-      model: "claude-sonnet-4-6",
-      max_tokens: 4096,
-      tools: [
-        {
-          type: "web_search_20250305",
-          name: "web_search",
-        } as any,
-      ],
-      system: `You are AbarVa's intelligence gathering engine. When given an organization name, search for and synthesize all publicly available information relevant to enterprise transformation.
+    const prompt = `Gather complete transformation intelligence on: ${orgName}`;
+    const result = await callModel({
+      tenantId: '00000000-0000-0000-0000-000000000000',
+      workflow: 'public-org-search',
+      provider: 'anthropic',
+      route: 'anthropic-direct',
+      model: 'claude-sonnet-4-6',
+      prompt,
+      dataClass: 'public',
+      policy: PUBLIC_ORG_SEARCH_POLICY,
+      auditSink: createMemoryAiEgressAuditSink(),
+      adapter: createAnthropicDirectTextAdapter({
+        model: 'claude-sonnet-4-6',
+        maxTokens: 4096,
+        tools: [
+          {
+            type: "web_search_20250305",
+            name: "web_search",
+          } as unknown as AnthropicTool,
+        ],
+        system: `You are AbarVa's intelligence gathering engine. When given an organization name, search for and synthesize all publicly available information relevant to enterprise transformation.
 
 Search for and extract:
 1. Financial performance — revenue, margins, growth, key metrics
@@ -52,20 +76,14 @@ Score out of 100 and what is missing
 
 ## RECOMMENDED DATA LOADS
 What internal data would most improve this analysis, in priority order`,
-      messages: [
-        {
-          role: "user",
-          content: `Gather complete transformation intelligence on: ${orgName}`,
-        },
-      ],
+      }),
     });
 
-    const text = response.content
-      .filter((block: any) => block.type === "text")
-      .map((block: any) => block.text)
-      .join("\n");
+    if (!result.ok) {
+      return Response.json({ brief: result.reason }, { status: 403 });
+    }
 
-    return Response.json({ brief: text });
+    return Response.json({ brief: result.response });
 
   } catch (error) {
     console.error("Org search error:", error);

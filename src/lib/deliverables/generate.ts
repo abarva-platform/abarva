@@ -1,5 +1,5 @@
 import { getAnthropicClient } from '@/lib/agent/stream';
-import type { ContentBlock, TextBlock } from '@anthropic-ai/sdk/resources/messages/messages';
+import type { ContentBlock, TextBlock } from '@/lib/integrations/ai-egress';
 import {
   getEngagementById,
   type EngagementRow,

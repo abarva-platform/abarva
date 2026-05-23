@@ -1,4 +1,4 @@
-import Anthropic from "@anthropic-ai/sdk";
+import { getAnthropicDirectClient } from "@/lib/integrations/ai-egress";
 import { meridianHealth } from "@/data/meridian";
 import { getUserContextPromptBlock } from "@/lib/agent/userContext";
 import { getRelevantTools } from "@/lib/agent/tools/registry";
@@ -38,7 +38,7 @@ LEADERSHIP INSIGHTS:
 `
     : "";
 
-  const anthropicClient = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+  const anthropicClient = getAnthropicDirectClient();
 
   // F0.4: Meridian diagnostic surface has no actionable tools today —
   // it's a one-shot diagnostic generator. Routing through the loop
