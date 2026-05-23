@@ -9,7 +9,7 @@
 // The "Atlas doesn't know Apex Retail" bug is guarded by active-client
 // tenant resolution plus broker/context-bundle fallbacks.
 
-import { getAnthropicDirectClient } from "@/lib/integrations/ai-egress";
+import { preflightAnthropicDirectClient } from "@/lib/integrations/ai-egress";
 import { requireTenancy } from "@/app/api/v1/programs/_auth";
 import { getEngagementWithPhaseData } from "@/lib/programs/db-phase-queries";
 import { PHASE_LABEL_MAP } from "@/lib/programs/programs-fixture";
@@ -1125,11 +1125,30 @@ export async function POST(request: Request) {
   // /programs/new the agent gets `commit_program`; other surfaces get
   // an empty tool list and the loop degenerates to a single text turn.
 
-  const anthropicClient = getAnthropicDirectClient();
   const tools = getRelevantTools(surface);
   const toolNames = new Set(tools.map((tool) => tool.name));
   const selectedInitialToolChoice = selectInitialDeliverableToolChoice(surface, message, toolNames);
   const initialToolChoice = selectedInitialToolChoice || undefined;
+  if (!activeClient) {
+    return Response.json({ error: 'no_client', detail: 'No active client for AI egress policy.' }, { status: 403 });
+  }
+  const preflight = await preflightAnthropicDirectClient({
+    tenantId: activeClient.id,
+    userId: tenancy?.userId,
+    workflow: 'agent-chat',
+    model: 'claude-sonnet-4-6',
+    prompt: [
+      systemPrompt,
+      ...conversationHistory.slice(-10).map((turn) => `${turn.role}: ${turn.content}`),
+      `user: ${message}`,
+    ].join('\n\n'),
+    dataClass: 'confidential',
+    metadata: { surface, programId, agentName },
+  });
+  if (!preflight.ok) {
+    return Response.json({ error: 'ai_egress_denied', detail: preflight.reason, auditId: preflight.auditId }, { status: 403 });
+  }
+  const anthropicClient = preflight.client;
 
   // ── CB-6 · context-bundle assembly ──────────────────────────────────────────
   //
