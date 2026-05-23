@@ -1,5 +1,13 @@
 # Execution Status
 
+## P5 — Workshop template data layer · @codex · branch: feat/p5-workshop-data-layer
+- 2026-05-23 06:45 CDT START — read execution kit §0-§5 and Packet 5 prompt, confirmed branch/worktree clean and P5 ownership zone; inspecting migrations, depth/client patterns, and Next.js route conventions before edits.
+- 2026-05-23 06:45 CDT COORDINATION NEEDED — Packet 5 deliverable includes `src/app/(maestro)/programs/[id]/workshops/page.tsx`, but §5.3 P5 ownership zone only lists workshop migrations, `src/lib/workshops/**`, `src/app/(maestro)/admin/workshops/**`, and `src/app/api/workshops/**`. Need OK before creating/editing the per-Move Programs route.
+- 2026-05-23 06:58 CDT OK PROCEED — coordinator approved `src/app/(maestro)/programs/[id]/workshops/page.tsx` because it is an explicit Packet 5 deliverable. Keep the edit narrowly scoped to workshop route integration for a Move; no unrelated Programs surface refactor.
+- 2026-05-23 07:08 CDT implementation drafted — added workshop migration/RLS, authoring + render libraries, REST routes, admin authoring UI, coordinator-approved per-Move workshop route, and focused workshop render/depth tests. Installed local `node_modules` with `npm ci --ignore-scripts` because the worktree initially had none; then read Next App Router route-handler and server/client component docs from `node_modules/next/dist/docs`.
+- 2026-05-23 07:11 CDT focused validation — targeted ESLint for P5 paths passed, focused workshop Jest passed, `npx tsc --noEmit --pretty false` passed, and `npm run lint:depth -- --all` passed. `npm run db:migrate:dry` is gated by missing `DATABASE_URL` in this worktree.
+- 2026-05-23 07:18 CDT validation update — `npm run build` passed and lists `/admin/workshops`, `/programs/[id]/workshops`, and `/api/workshops/*`. `npm run lint` passed with 185 pre-existing warnings. `npm run test -- --runInBand` failed on pre-existing unrelated repo-wide suites (Playwright specs picked up by Jest, admin visual-lock hex literals in Atlas traces, build-wave fixture drift, canonical tenant fixture count, shell/topbar source assertions, setup initiatives auth expectations); focused P5 tests remain green.
+
 ## P0 - Depth Standard + lint enforcement - @codex - branch: feat/p0-depth-standard
 - 2026-05-23 04:45 START - read kit sections 0-5, confirmed P0 zone and branch, package.json is shared/read-only.
 - 2026-05-23 04:50 COORDINATION NEEDED - minimal package.json change requested: add `"lint:depth": "npx tsx scripts/lint/depth-lint.ts"` under `scripts` so `npm run lint:depth -- --all` works. Continuing with fallback `npx tsx scripts/lint/depth-lint.ts -- --all`.
