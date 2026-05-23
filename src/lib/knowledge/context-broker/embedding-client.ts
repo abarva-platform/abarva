@@ -21,7 +21,7 @@ import 'server-only';
  * Pinecone is not in scope for this module — it only produces vectors.
  */
 
-import OpenAI from 'openai';
+import { preflightOpenAIDirectClient } from '@/lib/integrations/ai-egress';
 
 // ── Model registry ────────────────────────────────────────────────────
 
@@ -101,6 +101,14 @@ export interface EmbeddingClientOptions {
   maxRetries?: number;
   /** Initial backoff delay (ms) for 429 retries; doubles each retry. */
   initialRetryDelayMs?: number;
+  /** Tenant policy/audit context required when using the real OpenAI client. */
+  aiEgress?: {
+    tenantId: string;
+    userId?: string;
+    workflow: string;
+    dataClass?: 'public' | 'internal' | 'confidential' | 'restricted';
+    metadata?: Record<string, unknown>;
+  };
 }
 
 /** Subset of the OpenAI client we depend on; lets tests inject a mock. */
@@ -114,18 +122,6 @@ export interface OpenAIEmbeddingsLike {
       usage: { prompt_tokens: number; total_tokens: number };
     }>;
   };
-}
-
-let _openai: OpenAI | null = null;
-
-function defaultOpenAI(): OpenAI {
-  if (_openai) return _openai;
-  const apiKey = process.env.OPENAI_API_KEY;
-  if (!apiKey) {
-    throw new Error('OPENAI_API_KEY is required to call OpenAI embeddings.');
-  }
-  _openai = new OpenAI({ apiKey });
-  return _openai;
 }
 
 function isRateLimitError(error: unknown): boolean {
@@ -165,7 +161,7 @@ function chunkArray<T>(input: T[], size: number): T[][] {
 export async function embedTexts(
   texts: string[],
   options: EmbeddingClientOptions = {},
-  client: OpenAIEmbeddingsLike = defaultOpenAI(),
+  client?: OpenAIEmbeddingsLike,
 ): Promise<EmbedTextsResult> {
   const modelConfig = options.modelConfig ?? EMBEDDING_MODEL_TENANT;
   const batchInputCap = Math.min(
@@ -202,7 +198,12 @@ export async function embedTexts(
     // Retry loop scoped to a single batch. Bounded by `maxRetries`.
     for (;;) {
       try {
-        response = await client.embeddings.create({
+        const activeClient = client ?? await getAuditedEmbeddingClient({
+          batch,
+          model: modelConfig.model,
+          options,
+        });
+        response = await activeClient.embeddings.create({
           model: modelConfig.model,
           input: batch,
         });
@@ -279,6 +280,34 @@ export async function embedTexts(
       estimatedCostUsd: estimateCostUsd(totalTokens, modelConfig),
     },
   };
+}
+
+async function getAuditedEmbeddingClient(args: {
+  batch: string[];
+  model: string;
+  options: EmbeddingClientOptions;
+}): Promise<OpenAIEmbeddingsLike> {
+  const egress = args.options.aiEgress;
+  if (!egress?.tenantId) {
+    throw new Error('embedTexts: aiEgress.tenantId is required when using the real OpenAI client.');
+  }
+  const preflight = await preflightOpenAIDirectClient({
+    tenantId: egress.tenantId,
+    userId: egress.userId,
+    workflow: egress.workflow,
+    model: args.model,
+    prompt: args.batch.join('\n\n---\n\n'),
+    dataClass: egress.dataClass ?? 'confidential',
+    metadata: {
+      ...(egress.metadata ?? {}),
+      inputCount: args.batch.length,
+      model: args.model,
+    },
+  });
+  if (!preflight.ok) {
+    throw new Error(preflight.reason);
+  }
+  return preflight.client;
 }
 
 /**

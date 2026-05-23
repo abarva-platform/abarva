@@ -13,9 +13,9 @@
 
 import { createClient } from '@supabase/supabase-js';
 import { Pinecone } from '@pinecone-database/pinecone';
-import OpenAI from 'openai';
 import fs from 'node:fs';
 import path from 'node:path';
+import { preflightOpenAIDirectClient, type OpenAIDirectClient } from '@/lib/integrations/ai-egress';
 
 // Load .env.local
 try {
@@ -30,6 +30,7 @@ const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const PINECONE_KEY = process.env.PINECONE_API_KEY;
 const OPENAI_KEY = process.env.OPENAI_API_KEY;
+const PLATFORM_TENANT_ID = process.env.AI_EGRESS_PLATFORM_TENANT_ID;
 const INDEX_NAME = process.env.PINECONE_INDEX ?? 'nexus-knowledge';
 const NAMESPACE = 'public-patterns';
 const EMBED_MODEL = 'text-embedding-3-large';
@@ -40,10 +41,11 @@ if (!SUPABASE_URL || !SUPABASE_KEY) {
 }
 if (!PINECONE_KEY) { console.error('Missing PINECONE_API_KEY'); process.exit(1); }
 if (!OPENAI_KEY) { console.error('Missing OPENAI_API_KEY'); process.exit(1); }
+if (!PLATFORM_TENANT_ID) { console.error('Missing AI_EGRESS_PLATFORM_TENANT_ID'); process.exit(1); }
+const PLATFORM_TENANT_ID_REQUIRED = PLATFORM_TENANT_ID;
 
 const sb = createClient(SUPABASE_URL, SUPABASE_KEY, { auth: { persistSession: false, autoRefreshToken: false } });
 const pc = new Pinecone({ apiKey: PINECONE_KEY });
-const openai = new OpenAI({ apiKey: OPENAI_KEY });
 
 interface TopicRow {
   topic_key: string;
@@ -460,7 +462,7 @@ function toPatternRecords(rows: TopicRow[]): PatternRecord[] {
   return [...deduped.values()];
 }
 
-async function embed(text: string): Promise<number[]> {
+async function embed(openai: OpenAIDirectClient, text: string): Promise<number[]> {
   const res = await openai.embeddings.create({ model: EMBED_MODEL, input: text, dimensions: EMBED_DIMS });
   return res.data[0]!.embedding;
 }
@@ -482,7 +484,16 @@ async function main() {
 
   for (const row of records) {
     const text = row.text;
-    const values = await embed(text);
+    const preflight = await preflightOpenAIDirectClient({
+      tenantId: PLATFORM_TENANT_ID_REQUIRED,
+      workflow: 'script-populate-public-patterns',
+      model: EMBED_MODEL,
+      prompt: text,
+      dataClass: 'internal',
+      metadata: { namespace: NAMESPACE, patternKey: row.pattern_key },
+    });
+    if (!preflight.ok) throw new Error(preflight.reason);
+    const values = await embed(preflight.client, text);
     vectors.push({
       id: row.pattern_key,
       values,
@@ -499,7 +510,6 @@ async function main() {
   // where each record is { id, values, metadata }.
   for (let i = 0; i < vectors.length; i += 50) {
     const batch = vectors.slice(i, i + 50);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     await (index as any).upsert({ records: batch });
     console.log(`  batch ${Math.floor(i / 50) + 1} · ${batch.length} vectors`);
   }

@@ -81,6 +81,31 @@ describe('AI egress control plane Layer 1', () => {
     expect(auditSink.records[1].requestMetadata).toMatchObject({ preCallAuditId: auditSink.records[0].id });
   });
 
+  it('allows approved OpenAI embedding egress through the same policy gate', async () => {
+    const auditSink = createMemoryAiEgressAuditSink();
+    const client = { embeddings: { create: jest.fn() } };
+    const result = await preflightModelEgress({
+      tenantId: '00000000-0000-0000-0000-000000000007',
+      workflow: 'embedding-test',
+      provider: 'openai',
+      route: 'openai-direct',
+      model: 'text-embedding-3-large',
+      prompt: 'embed this tenant query',
+      dataClass: 'internal',
+      policy: permissiveClaudePolicy,
+      auditSink,
+      clientFactory: () => client,
+    });
+
+    expect(result).toMatchObject({ ok: true, client });
+    expect(auditSink.records[0]).toMatchObject({
+      provider: 'openai',
+      route: 'openai-direct',
+      policyDecision: 'allow',
+      workflow: 'embedding-test',
+    });
+  });
+
   it('blocks Gamma for confidential data until the Layer 2 redaction path exists', async () => {
     const decision = evaluateAiEgressPolicy({
       tenantId: '00000000-0000-0000-0000-000000000003',

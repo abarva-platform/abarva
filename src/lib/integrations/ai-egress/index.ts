@@ -1,4 +1,5 @@
 export * from './anthropic-direct';
+export * from './openai-direct';
 export * from './audit';
 export * from './call-model';
 export * from './policy';

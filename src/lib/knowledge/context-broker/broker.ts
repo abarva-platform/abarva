@@ -597,15 +597,16 @@ function buildRetrievalTrace(args: {
 async function embedQueryForWorldview(
   query: string,
   openaiClient: OpenAIEmbeddingsLike | undefined,
+  tenantKey: string | null,
 ): Promise<number[] | null> {
-  if (!openaiClient && !process.env.OPENAI_API_KEY) return null;
+  if (!openaiClient && (!tenantKey || !process.env.OPENAI_API_KEY)) return null;
   try {
-    const client =
-      openaiClient ??
-      (await (async () => {
-        const { default: OpenAI } = await import('openai');
-        return new OpenAI({ apiKey: process.env.OPENAI_API_KEY?.trim() }) as unknown as OpenAIEmbeddingsLike;
-      })());
+    const client = openaiClient ?? (await getAuditedOpenAIEmbeddingClient({
+      tenantKey,
+      query,
+      workflow: 'context-broker-worldview-embedding',
+      model: 'text-embedding-3-large',
+    }));
     const res = await client.embeddings.create({
       model: 'text-embedding-3-large',
       input: [query],
@@ -616,6 +617,26 @@ async function embedQueryForWorldview(
   } catch {
     return null;
   }
+}
+
+async function getAuditedOpenAIEmbeddingClient(args: {
+  tenantKey: string | null;
+  query: string;
+  workflow: string;
+  model: string;
+}): Promise<OpenAIEmbeddingsLike> {
+  if (!args.tenantKey) throw new Error('worldview embedding requires tenant context');
+  const { preflightOpenAIDirectClient } = await import('@/lib/integrations/ai-egress');
+  const preflight = await preflightOpenAIDirectClient({
+    tenantId: args.tenantKey,
+    workflow: args.workflow,
+    model: args.model,
+    prompt: args.query,
+    dataClass: 'internal',
+    metadata: { tenantKey: args.tenantKey },
+  });
+  if (!preflight.ok) throw new Error(preflight.reason);
+  return preflight.client as unknown as OpenAIEmbeddingsLike;
 }
 
 function provenanceForWorldviewChunk(hit: WorldviewChunkHit): ContextProvenance {
@@ -723,7 +744,7 @@ export class DefaultContextBroker implements ContextBroker {
       // reachable we surface the worldview hits and skip the
       // pattern-catalog warning since the user IS getting corpus
       // content. When worldview itself is unreachable we tag both.
-      const worldviewResult = await this.queryWorldviewSafe(input.query);
+      const worldviewResult = await this.queryWorldviewSafe(input.query, null);
       const corpusPatternResult = await this.queryCorpusPatternsSafe(input, null);
       const corpusPatterns = corpusPatternResult.patterns.map(patternHitFromCanonical);
       const corpusWarnings: string[] = [];
@@ -926,7 +947,18 @@ export class DefaultContextBroker implements ContextBroker {
         // Embed the query once. `embedTexts` throws if OPENAI_API_KEY
         // is missing — which we catch below and fall back as if
         // Pinecone weren't configured.
-        const embedResult = await embedTexts([input.query], undefined, this.openaiClient);
+        const embedResult = await embedTexts(
+          [input.query],
+          {
+            aiEgress: {
+              tenantId: tenantKey,
+              workflow: 'context-broker-query-embedding',
+              dataClass: 'confidential',
+              metadata: { tenantKey },
+            },
+          },
+          this.openaiClient,
+        );
         const queryVector = embedResult.results[0]?.embedding ?? [];
         if (queryVector.length === 0) {
           throw new Error('embedTexts returned an empty embedding for the query.');
@@ -969,7 +1001,7 @@ export class DefaultContextBroker implements ContextBroker {
     let worldviewChunks: WorldviewChunkHit[] = [];
     let corpusPatterns: CorpusPatternHit[] = [];
     if (input.mode === 'full') {
-      const worldviewResult = await this.queryWorldviewSafe(input.query);
+      const worldviewResult = await this.queryWorldviewSafe(input.query, tenantKey);
       const corpusPatternResult = await this.queryCorpusPatternsSafe(input, tenantKey);
       corpusPatterns = corpusPatternResult.patterns.map(patternHitFromCanonical);
       worldviewChunks = worldviewResult.hits;
@@ -1028,8 +1060,9 @@ export class DefaultContextBroker implements ContextBroker {
    */
   private async queryWorldviewSafe(
     query: string,
+    tenantKey: string | null,
   ): Promise<{ hits: WorldviewChunkHit[]; reached: boolean }> {
-    const queryVector = await embedQueryForWorldview(query, this.openaiClient);
+    const queryVector = await embedQueryForWorldview(query, this.openaiClient, tenantKey);
     if (!queryVector) return { hits: [], reached: false };
     return callWorldviewRetriever({ queryVector });
   }

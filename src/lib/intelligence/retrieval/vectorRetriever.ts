@@ -3,9 +3,9 @@
 // currently uses OpenAI text-embedding-3-large at 1024 dims (matches
 // nexus-knowledge Pinecone index). Voyage-3 migration remains a follow-up.
 
-import OpenAI from 'openai';
 import { Pinecone } from '@pinecone-database/pinecone';
 import type { RetrievalResult, Source, TenancyCtx } from '../types';
+import { preflightOpenAIDirectClient } from '@/lib/integrations/ai-egress';
 import {
   clientVectorMetadataFilter,
   isClientVectorNamespace,
@@ -15,16 +15,7 @@ const EMBED_MODEL = 'text-embedding-3-large';
 const EMBED_DIMS = 1024;
 const INDEX_NAME = process.env.PINECONE_INDEX ?? 'nexus-knowledge';
 
-let _openai: OpenAI | null = null;
 let _pinecone: Pinecone | null = null;
-
-function getOpenAI(): OpenAI | null {
-  if (_openai) return _openai;
-  const key = process.env.OPENAI_API_KEY;
-  if (!key) return null;
-  _openai = new OpenAI({ apiKey: key });
-  return _openai;
-}
 
 function getPinecone(): Pinecone | null {
   if (_pinecone) return _pinecone;
@@ -34,11 +25,20 @@ function getPinecone(): Pinecone | null {
   return _pinecone;
 }
 
-async function embed(query: string): Promise<number[] | null> {
-  const oai = getOpenAI();
-  if (!oai) return null;
+async function embed(query: string, tenancy: TenancyCtx): Promise<number[] | null> {
+  if (!process.env.OPENAI_API_KEY) return null;
   try {
-    const res = await oai.embeddings.create({
+    const preflight = await preflightOpenAIDirectClient({
+      tenantId: tenancy.clientId,
+      userId: tenancy.userId,
+      workflow: 'intelligence-vector-retrieval-embedding',
+      model: EMBED_MODEL,
+      prompt: query,
+      dataClass: 'confidential',
+      metadata: { dimensions: EMBED_DIMS },
+    });
+    if (!preflight.ok) return null;
+    const res = await preflight.client.embeddings.create({
       model: EMBED_MODEL,
       input: query,
       dimensions: EMBED_DIMS,
@@ -70,7 +70,7 @@ export async function vectorSearch(args: VectorSearchArgs): Promise<RetrievalRes
     return { dimension: 'vector', claims: [], latencyMs: Date.now() - started, partial: true, error: 'Pinecone not configured' };
   }
 
-  const vector = await embed(args.query);
+  const vector = await embed(args.query, args.tenancy);
   if (!vector) {
     return { dimension: 'vector', claims: [], latencyMs: Date.now() - started, partial: true, error: 'Embedding failed' };
   }

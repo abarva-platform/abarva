@@ -30,9 +30,9 @@
 import { readFile, readdir } from 'node:fs/promises';
 import path from 'node:path';
 
-import OpenAI from 'openai';
 import { Pinecone } from '@pinecone-database/pinecone';
 import { config as loadEnv } from 'dotenv';
+import { preflightOpenAIDirectClient, type OpenAIDirectClient } from '@/lib/integrations/ai-egress';
 
 loadEnv({ path: path.resolve(process.cwd(), '.env.local') });
 // Worktrees don't have their own .env.local; fall back to the parent
@@ -139,7 +139,7 @@ async function loadBundle(file: string): Promise<WorldviewBundleFile> {
 // ── Embedding ─────────────────────────────────────────────────────────────────
 
 async function embedBatch(
-  openai: OpenAI,
+  openai: OpenAIDirectClient,
   texts: string[],
 ): Promise<number[][]> {
   const res = await openai.embeddings.create({
@@ -239,8 +239,9 @@ async function main(): Promise<RunResult> {
   }
 
   // Init clients.
-  const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY?.trim() });
   if (!process.env.OPENAI_API_KEY) throw new Error('OPENAI_API_KEY is required.');
+  const platformTenantId = process.env.AI_EGRESS_PLATFORM_TENANT_ID?.trim();
+  if (!platformTenantId) throw new Error('AI_EGRESS_PLATFORM_TENANT_ID is required for worldview embedding audit.');
   const pinecone = new Pinecone({
     apiKey: process.env.PINECONE_API_KEY?.trim() ?? '',
   });
@@ -257,7 +258,16 @@ async function main(): Promise<RunResult> {
     const batch = allChunks.slice(i, i + batchSize);
     const texts = batch.map((c) => c.chunk_text);
     try {
-      const vectors = await embedBatch(openai, texts);
+      const preflight = await preflightOpenAIDirectClient({
+        tenantId: platformTenantId,
+        workflow: 'script-ingest-worldview-chunks',
+        model: EMBEDDING_MODEL,
+        prompt: texts.join('\n\n---\n\n'),
+        dataClass: 'internal',
+        metadata: { chunkCount: texts.length, indexName },
+      });
+      if (!preflight.ok) throw new Error(preflight.reason);
+      const vectors = await embedBatch(preflight.client, texts);
       if (vectors.length !== batch.length) {
         throw new Error(`OpenAI returned ${vectors.length} vectors for ${batch.length} chunks`);
       }

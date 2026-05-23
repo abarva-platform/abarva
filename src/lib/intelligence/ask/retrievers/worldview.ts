@@ -13,13 +13,27 @@ import type { RetrievalResult, AskSource } from '../types';
  * chunk_text lives in Pinecone metadata but is not in the typed interface —
  * we cast to Record<string,unknown> to access it.
  */
-export async function retrieveWorldview(query: string, topK = 3): Promise<RetrievalResult> {
+export async function retrieveWorldview(
+  query: string,
+  topK = 3,
+  aiContext: { tenantId?: string | null; userId?: string | null } = {},
+): Promise<RetrievalResult> {
   const client = getWorldviewPineconeClient();
   if (!client) return { sources: [], averageConfidence: 0 };
 
   let vector: number[];
   try {
-    const result = await embedTexts([query], { modelConfig: EMBEDDING_MODEL_WORLDVIEW });
+    const result = await embedTexts([query], {
+      modelConfig: EMBEDDING_MODEL_WORLDVIEW,
+      aiEgress: aiContext.tenantId
+        ? {
+            tenantId: aiContext.tenantId,
+            userId: aiContext.userId ?? undefined,
+            workflow: 'intelligence-ask-worldview-embedding',
+            dataClass: 'internal',
+          }
+        : undefined,
+    });
     vector = result.results[0]?.embedding ?? [];
     if (vector.length === 0) return { sources: [], averageConfidence: 0 };
   } catch {

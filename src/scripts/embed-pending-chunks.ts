@@ -280,9 +280,27 @@ export async function runEmbedJob(
 
     let batchResults: Awaited<ReturnType<typeof embedTexts>>;
     try {
+      const batchTenantKeys = Array.from(new Set(rows.map((row) => row.tenant_key).filter(Boolean)));
+      if (!options.openaiClient && !options.embeddingOptions?.aiEgress && batchTenantKeys.length !== 1) {
+        throw new Error('embedding egress audit requires a single tenant per batch; rerun with --tenant <tenant_key>');
+      }
+      const egressTenantKey = options.tenantKey ?? batchTenantKeys[0] ?? null;
       batchResults = await embedTexts(
         rows.map((r) => r.chunk_text),
-        options.embeddingOptions,
+        {
+          ...(options.embeddingOptions ?? {}),
+          aiEgress: egressTenantKey
+            ? {
+                tenantId: egressTenantKey,
+                workflow: 'embed-pending-enterprise-context-chunks',
+                dataClass: 'confidential',
+                metadata: {
+                  tenantKey: egressTenantKey,
+                  chunkCount: rows.length,
+                },
+              }
+            : options.embeddingOptions?.aiEgress,
+        },
         options.openaiClient,
       );
     } catch (error) {
