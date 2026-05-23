@@ -1,5 +1,6 @@
 import { NextRequest } from 'next/server';
 import { askIntelligence } from '@/lib/intelligence/ask';
+import { classifySentinelIntent, runSentinelReasoning } from '@/lib/agents/sentinel-reasoning';
 import { getCurrentPerson } from '@/lib/auth/maestro';
 import { getActiveClientRow } from '@/lib/active-client';
 import { assembleUserContextBlock } from '@/lib/agent/prompts/_shared/user-context';
@@ -37,6 +38,7 @@ async function handleAsk(payload: AskPayload) {
   let tenantId: string | null = null;
   let userId: string | null = null;
   let tenantInventoryKey: string | null = null;
+  let sentinelClientId: string = requestedClient ?? 'apexretail';
   let activePersonGraphNodeId: string | null = null;
   let activePersonDisplayName: string | null = null;
   try {
@@ -48,6 +50,7 @@ async function handleAsk(payload: AskPayload) {
       ? clientKeyToInventorySubstrateKey(client.key)
       : null;
     tenantId = client?.id ?? null;
+    sentinelClientId = client?.id ?? tenantInventoryKey ?? requestedClient ?? sentinelClientId;
     if (person) {
       userId = person.id;
       activePersonGraphNodeId = person.graph_node_id;
@@ -66,6 +69,33 @@ async function handleAsk(payload: AskPayload) {
   const stream = new ReadableStream({
     async start(controller) {
       try {
+        const sentinelIntent = await classifySentinelIntent({
+          query,
+          clientId: sentinelClientId,
+          userId,
+        });
+        if (sentinelIntent.intent === 'it_productivity') {
+          controller.enqueue(encoder.encode(JSON.stringify({
+            type: 'classified',
+            classification: {
+              intent: 'it_productivity',
+              entities: sentinelIntent.entities,
+              confidence: sentinelIntent.confidence,
+              matchedPatternSlugs: sentinelIntent.matchedPatternSlugs,
+              reason: sentinelIntent.reason,
+            },
+          }) + '\n'));
+          for await (const stage of runSentinelReasoning({
+            query,
+            clientId: sentinelClientId,
+            userId,
+            surfaceContext,
+          })) {
+            controller.enqueue(encoder.encode(JSON.stringify({ type: 'sentinel-stage', stage }) + '\n'));
+          }
+          controller.enqueue(encoder.encode(JSON.stringify({ type: 'done' }) + '\n'));
+          return;
+        }
         for await (const event of askIntelligence(query, {
           userContextBlock,
           tenantId,

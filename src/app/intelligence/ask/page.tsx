@@ -14,13 +14,8 @@
 import Link from 'next/link';
 import { AppShell } from '@/components/shell/AppShell';
 import { SHELL } from '@/lib/shell/shell-tokens';
-import { IntelligenceAgentCanvas } from '@/components/intelligence/IntelligenceAgentCanvas';
 import { IntelligenceReasoningModeStrip } from '@/components/intelligence/IntelligenceReasoningModeStrip';
-
-const SENTINEL_QUOTE =
-  'I am Sentinel Intel — AbarVa\'s knowledge librarian. Ask me about the corpus, ' +
-  'cite evidence against a claim, or ask me to vet a synthesis. Cards on the ' +
-  'right materialize as I retrieve.';
+import { SentinelReasoningCards } from '@/app/(maestro)/intelligence/ask/SentinelReasoningCards';
 
 export const metadata = {
   title: 'Sentinel Intel · Ask | AbarVa',
@@ -124,8 +119,7 @@ export default async function IntelligenceAskPage({
           {/* INT-5 · Reasoning mode strip — frames Sentinel's answer scope */}
           <IntelligenceReasoningModeStrip searchParams={params} />
 
-          {/* The agent canvas — chat dominant + reactive knowledge pane */}
-          <IntelligenceAgentCanvas quote={SENTINEL_QUOTE} />
+          <SentinelReasoningCards initialClient="apexretail" />
         </div>
       </div>
     </AppShell>
