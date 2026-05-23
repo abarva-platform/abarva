@@ -8,7 +8,7 @@ describe('toolUseLoop initial tool choice wiring', () => {
   );
 
   it('passes an explicit initial tool choice only on the first model turn', () => {
-    expect(source).toContain("initialToolChoice?: Anthropic.MessageStreamParams['tool_choice']");
+    expect(source).toContain("initialToolChoice?: AnthropicMessageStreamParams['tool_choice']");
     expect(source).toContain("turn === 1 && args.initialToolChoice ? { tool_choice: args.initialToolChoice } : {}");
   });
 });

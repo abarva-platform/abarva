@@ -1,8 +1,7 @@
 const mockAnthropicStream = jest.fn();
 
-jest.mock('@anthropic-ai/sdk', () => ({
-  __esModule: true,
-  default: jest.fn().mockImplementation(() => ({
+jest.mock('@/lib/integrations/ai-egress', () => ({
+  getAnthropicDirectClient: jest.fn(() => ({
     messages: { stream: mockAnthropicStream },
   })),
 }));

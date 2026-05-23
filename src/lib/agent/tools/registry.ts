@@ -11,7 +11,7 @@
 // Per kickoff §4 F0.4: scope is interactive routes only. Synthesis
 // routes do not register tools.
 
-import type Anthropic from '@anthropic-ai/sdk';
+import type { AnthropicTool } from '@/lib/integrations/ai-egress';
 
 /**
  * Result returned by a tool handler. Loop wraps this into a
@@ -136,11 +136,11 @@ export function getRelevantTools(surface: string): AgentTool[] {
  * Convert a typed AgentTool into the shape Anthropic's messages API
  * expects under `tools: []`.
  */
-export function toAnthropicToolDefinition(tool: AgentTool): Anthropic.Tool {
+export function toAnthropicToolDefinition(tool: AgentTool): AnthropicTool {
   return {
     name: tool.name,
     description: tool.description,
-    input_schema: tool.input_schema as Anthropic.Tool['input_schema'],
+    input_schema: tool.input_schema as AnthropicTool['input_schema'],
   };
 }
 

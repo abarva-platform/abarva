@@ -2,7 +2,7 @@
 // Body: { instanceId: string; patternId: string }
 // Response: streaming plain text — Sentinel's synthesis of the instance state
 
-import Anthropic from "@anthropic-ai/sdk";
+import { getAnthropicDirectClient } from "@/lib/integrations/ai-egress";
 import { SOURCE_EVENT_INSTANCES } from "@/lib/source/source-event-instances";
 import { PAT_SRC_AMS_001 } from "@/lib/intelligence/source-lifecycle-patterns";
 import { buildSourceSynthesisContext, instanceStateHash } from "@/lib/reasoning/synthesis-context-builder";
@@ -124,7 +124,7 @@ export async function POST(request: Request) {
   // Build the structured prompt from synthesis context
   const userMessage = buildSynthesisUserMessage(ctx);
 
-  const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+  const client = getAnthropicDirectClient();
 
   // F0.2 Layer 0
   const userContextBlock = await getUserContextPromptBlock();

@@ -1,5 +1,5 @@
 import { getAnthropicClient } from '@/lib/agent/stream';
-import type { ContentBlock, TextBlock } from '@anthropic-ai/sdk/resources/messages/messages';
+import type { ContentBlock, TextBlock } from '@/lib/integrations/ai-egress';
 import { getServerSupabase } from '@/lib/supabase-server';
 import { getEngagementById } from '@/lib/db/engagement';
 import { getActivePatterns, getPeerDecisionsForPhase } from '@/lib/graph/retrieval';

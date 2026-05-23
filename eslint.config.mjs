@@ -92,7 +92,7 @@ const eslintConfig = defineConfig([
   // allowed. See feedback_broker_boundary and TENANT_DATA_INTEGRATION_DESIGN §6.
   {
     files: ["src/**/*.{ts,tsx}"],
-    ignores: ["src/lib/knowledge/**"],
+    ignores: ["src/lib/knowledge/**", "src/lib/integrations/ai-egress/**"],
     rules: {
       "no-restricted-imports": ["error", {
         patterns: [
@@ -102,9 +102,11 @@ const eslintConfig = defineConfig([
               "@/lib/knowledge/tenant-data/*",
               "*/lib/knowledge/tenant-data",
               "*/lib/knowledge/tenant-data/*",
+              "@anthropic-ai/sdk",
+              "@anthropic-ai/sdk/*",
             ],
             message:
-              "App-tier code must go through AgentContextBroker, not tenant-data directly (TENANT-DATA-DESIGN §6).",
+              "App-tier code must go through AgentContextBroker for tenant data and src/lib/integrations/ai-egress for provider SDKs.",
           },
         ],
       }],
