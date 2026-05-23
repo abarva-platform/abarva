@@ -61,4 +61,16 @@ describe('proxy public route patterns', () => {
     expect(isPublicRoute(request)).toBe(true);
     expect(isAuthRequiredRoute(request)).toBe(false);
   });
+
+  it('exposes the public How it works demo pages without Clerk protection', () => {
+    for (const path of [
+      '/how-it-works',
+      '/how-it-works/it-productivity-comparison',
+      '/how-it-works/frameworks/ai-it-productivity',
+    ]) {
+      const request = new NextRequest(`https://www.abarva.ai${path}`);
+      expect(isPublicRoute(request)).toBe(true);
+      expect(isAuthRequiredRoute(request)).toBe(false);
+    }
+  });
 });
