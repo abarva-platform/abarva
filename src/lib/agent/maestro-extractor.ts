@@ -1,7 +1,9 @@
-import { getAnthropicClient } from './stream';
+import { getAuditedAnthropicClient } from './stream';
 import { getServerSupabase } from '@/lib/supabase-server';
 
 export interface MaestroTurnContext {
+  tenantId?: string | null;
+  userId?: string | null;
   maestroPersonId: string;
   turnId: string;
   turnText: string;
@@ -62,10 +64,23 @@ export async function updateMaestroProfile(ctx: MaestroTurnContext): Promise<voi
 
   let update: Record<string, unknown> = {};
   try {
-    const response = await getAnthropicClient().messages.create({
+    if (!process.env.ANTHROPIC_API_KEY || !ctx.tenantId) return;
+    const prompt = extractionPrompt(currentProfile, ctx.turnText, ctx.engagementIndustry);
+    const { client } = await getAuditedAnthropicClient({
+      tenantId: ctx.tenantId,
+      userId: ctx.userId ?? undefined,
+      workflow: 'agent-maestro-profile-extraction',
+      model: 'claude-haiku-4-5-20251001',
+      prompt,
+      dataClass: 'confidential',
+      artifactId: ctx.turnId,
+      artifactType: 'turn',
+      metadata: { maestroPersonId: ctx.maestroPersonId, engagementId: ctx.engagementId },
+    });
+    const response = await client.messages.create({
       model: 'claude-haiku-4-5-20251001',
       max_tokens: 512,
-      messages: [{ role: 'user', content: extractionPrompt(currentProfile, ctx.turnText, ctx.engagementIndustry) }],
+      messages: [{ role: 'user', content: prompt }],
     });
     const text = response.content
       .filter((b) => b.type === 'text')

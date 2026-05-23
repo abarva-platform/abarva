@@ -1,4 +1,4 @@
-import { getAnthropicClient } from './stream';
+import { getAuditedAnthropicClient } from './stream';
 import { assembleTriggerDetectionPrompt, type TriggerContext } from './prompts/pattern-trigger';
 import { withGraphSession } from '@/lib/graph/driver';
 
@@ -9,10 +9,22 @@ export interface DetectedTrigger {
 
 export async function detectPatternTriggers(ctx: TriggerContext): Promise<DetectedTrigger[]> {
   try {
-    const response = await getAnthropicClient().messages.create({
+    if (!process.env.ANTHROPIC_API_KEY || !ctx.tenantId) return [];
+    const prompt = assembleTriggerDetectionPrompt(ctx);
+    const { client } = await getAuditedAnthropicClient({
+      tenantId: ctx.tenantId,
+      userId: ctx.userId ?? undefined,
+      workflow: 'agent-pattern-trigger-detection',
+      model: 'claude-haiku-4-5-20251001',
+      prompt,
+      dataClass: 'confidential',
+      artifactId: ctx.turnId ?? undefined,
+      artifactType: 'turn',
+    });
+    const response = await client.messages.create({
       model: 'claude-haiku-4-5-20251001',
       max_tokens: 512,
-      messages: [{ role: 'user', content: assembleTriggerDetectionPrompt(ctx) }],
+      messages: [{ role: 'user', content: prompt }],
     });
     const text = response.content
       .filter((b) => b.type === 'text')

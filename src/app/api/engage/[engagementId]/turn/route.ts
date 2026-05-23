@@ -7,13 +7,11 @@ import {
   getActivePatterns,
   getPeerDecisionsForPhase,
   getChainedPatterns,
-  getAllGenomePatterns,
-  assembleCrossClientContext,
-  formatCrossClientBlock,
-} from '@/lib/knowledge/graph-access';
+} from '@/lib/graph/retrieval';
 import { assembleEngagementSystemPrompt } from '@/lib/agent/prompts/engagement';
 import { assembleRetrievalContext } from '@/lib/agent/retrieval';
 import { formatRetrievedContext } from '@/lib/agent/retrieval-format';
+import { assembleCrossClientContext, formatCrossClientBlock } from '@/lib/graph/cross-client';
 import { getServerSupabase } from '@/lib/supabase-server';
 import { streamAgentTurn } from '@/lib/agent/stream';
 import { TurnTrace } from '@/lib/agent/trace';
@@ -41,6 +39,7 @@ import { syncPhaseOneArtifactsFromTurns } from '@/lib/deliverables/live-sync';
 import { phaseOpenerFor } from '@/lib/nexus/gateLifecycle';
 import { checkGuardrail } from '@/lib/agent/guardrail';
 import { detectPatternTriggers, writeTriggerEdge } from '@/lib/agent/pattern-trigger';
+import { getAllGenomePatterns } from '@/lib/graph/retrieval';
 import { getCurrentPerson } from '@/lib/auth/maestro';
 import { createOutcomeFeeInvoice, isStripeConfigured } from '@/lib/billing/stripe';
 import { logAudit } from '@/lib/audit/log';
@@ -211,6 +210,7 @@ export async function POST(
   // doesn't expose client_id yet). Empty-safe — if no partnerships / shared vendors,
   // formatCrossClientBlock returns '' and the prompt assembler filters it.
   let crossClientBlock = '';
+  let engagementClientId: string | null = null;
   try {
     const sb = getServerSupabase();
     const { data: engRow } = await sb
@@ -218,7 +218,9 @@ export async function POST(
       .select('client_id, client:clients(id, name)')
       .eq('id', engagement.id)
       .maybeSingle();
-    const client = (engRow as { client: { id: string; name: string } | null } | null)?.client;
+    const row = engRow as { client_id?: string | null; client: { id: string; name: string } | null } | null;
+    engagementClientId = row?.client_id ?? row?.client?.id ?? null;
+    const client = row?.client ?? null;
     if (client) {
       const ccCtx = await assembleCrossClientContext(client.id, client.name);
       crossClientBlock = formatCrossClientBlock(ccCtx);
@@ -322,6 +324,8 @@ export async function POST(
           void (async () => {
             try {
               await updateMaestroProfile({
+                tenantId: engagementClientId,
+                userId: caller.id,
                 maestroPersonId: maestro.id,
                 turnId: savedUserTurn.id,
                 turnText: userMessage,
@@ -337,6 +341,9 @@ export async function POST(
         void (async () => {
           try {
             const check = await checkGuardrail({
+              tenantId: engagementClientId,
+              userId: caller.id,
+              turnId: savedTurn.id,
               draftResponse: agentFullText,
               knownContext: {
                 personName: sponsor?.name ?? 'unknown',
@@ -530,6 +537,9 @@ export async function POST(
               const allPatterns = await getAllGenomePatterns();
               const alreadyTriggered = activePatterns.map((p) => p.code);
               const triggers = await detectPatternTriggers({
+                tenantId: engagementClientId,
+                userId: caller.id,
+                turnId: savedUserTurn.id,
                 userText: userMessage,
                 engagementName: engagement.name,
                 engagementIndustry: engagement.industry_code,
@@ -553,6 +563,9 @@ export async function POST(
             try {
               const existing = await getActivePersonalThreads(sponsor.id);
               const notes = await captureRelationshipNotes({
+                tenantId: engagementClientId,
+                userId: caller.id,
+                turnId: savedUserTurn.id,
                 personName: sponsor.name,
                 existingThreads: existing,
                 userText: userMessage,

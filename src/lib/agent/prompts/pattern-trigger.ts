@@ -1,4 +1,7 @@
 export interface TriggerContext {
+  tenantId?: string | null;
+  userId?: string | null;
+  turnId?: string | null;
   userText: string;
   engagementName: string;
   engagementIndustry: string;
