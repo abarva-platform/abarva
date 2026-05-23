@@ -218,7 +218,7 @@ export function patchClientConfig(
   // Idempotency: if `id: '<key>'` already appears in ALL_CLIENTS we treat
   // client-config as already registered.
   const allClientsToken = `id: '${input.key}'`;
-  let alreadyAllClients = source.includes(allClientsToken);
+  const alreadyAllClients = source.includes(allClientsToken);
 
   let content = source;
   let anyChange = false;
