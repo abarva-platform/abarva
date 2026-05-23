@@ -1,4 +1,3 @@
-import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { SourceEmptyState } from '@/components/source/SourceEmptyState';
 
@@ -6,11 +5,24 @@ describe('SourceEmptyState (SRC-EMP-NO-EVENTS)', () => {
   let html: string;
 
   beforeAll(() => {
-    html = renderToStaticMarkup(createElement(SourceEmptyState));
+    html = renderToStaticMarkup(<SourceEmptyState />);
   });
 
-  it('renders the empty state heading', () => {
-    expect(html).toContain('No sourcing events yet');
+  it('renders the empty state heading (P1-2: tenant-named, with generic fallback)', () => {
+    // Default (no tenantName prop) uses the generic-tenant fallback copy.
+    expect(html).toContain('No source events for this tenant yet');
+  });
+
+  it('names the active tenant when one is provided', () => {
+    const tenantHtml = renderToStaticMarkup(
+      <SourceEmptyState tenantName="Northwind Retail" />,
+    );
+    expect(tenantHtml).toContain('No source events for Northwind Retail yet');
+  });
+
+  it('links the new-tenant onboarding runbook', () => {
+    expect(html).toContain('/docs/pilot/ONBOARDING-NEW-TENANT.md');
+    expect(html).toContain('New-tenant onboarding runbook');
   });
 
   it('renders the primary "start event" CTA', () => {

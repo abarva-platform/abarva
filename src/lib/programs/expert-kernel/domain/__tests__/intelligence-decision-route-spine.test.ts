@@ -31,6 +31,20 @@ const ROUTE_INDUSTRY_SPINE_FUNCTION_KEY: Record<
   'financial-services': 'fraud_financial_crime',
 };
 
+// P1-1 (synthetic pilot rehearsal, 2026-05-22): each spine binding belongs to
+// EXACTLY ONE tenant. The route MUST use `binding.expectedClientKey` to detect
+// a tenant-mismatch (e.g. Northwind landing on Apex's `(retail,
+// customer_care)` binding) and render the empty state instead of the leaked
+// binding. This map pins the expected-client-key for each spine binding.
+const EXPECTED_CLIENT_KEY_FOR_SPINE: Record<
+  FunctionPackIndustryKey,
+  string
+> = {
+  'healthcare-provider': 'meridian',
+  retail: 'apexretail',
+  'financial-services': 'arcturus',
+};
+
 describe('Intelligence /decision route — spine-function coverage', () => {
   for (const [industryKey, functionKey] of Object.entries(
     ROUTE_INDUSTRY_SPINE_FUNCTION_KEY,
@@ -60,6 +74,20 @@ describe('Intelligence /decision route — spine-function coverage', () => {
         expect(binding!.industryKey).toBe(industryKey);
         expect(binding!.functionKey).toBe(functionKey);
         expect(binding!.substrate.length).toBeGreaterThan(0);
+      });
+
+      it('carries an expectedClientKey on both bindings (P1-1)', () => {
+        // The route uses `binding.expectedClientKey` to detect a
+        // tenant-mismatch and render the empty state instead of leaking the
+        // bound tenant's substrate to a different tenant in the same industry.
+        const decisionHome = resolveDecisionHomeBinding(industryKey, functionKey);
+        const betSelection = resolveBetSelectionBinding(industryKey, functionKey);
+        expect(decisionHome?.expectedClientKey).toBe(
+          EXPECTED_CLIENT_KEY_FOR_SPINE[industryKey],
+        );
+        expect(betSelection?.expectedClientKey).toBe(
+          EXPECTED_CLIENT_KEY_FOR_SPINE[industryKey],
+        );
       });
     });
   }

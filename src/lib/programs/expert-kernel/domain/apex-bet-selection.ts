@@ -173,6 +173,7 @@ export const APEX_BET_SELECTION_BINDING: BetSelectionBinding = {
   industryKey: APEX_INDUSTRY_KEY,
   functionKey: APEX_FUNCTION_KEY,
   tenantBindingKey: 'apex-customer-care',
+  expectedClientKey: 'apexretail',
   substrate: APEX_CUSTOMER_CARE_OBSERVATIONS,
   buildBlocks(ctx: BetSelectionBindingContext): BetSelectionGroundedBlocks {
     const { topBetName, topBetRead, totalBets, heldBetCount } = ctx;

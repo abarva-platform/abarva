@@ -752,6 +752,7 @@ export const MERIDIAN_BET_SELECTION_BINDING: BetSelectionBinding = {
   industryKey: MERIDIAN_INDUSTRY_KEY,
   functionKey: MERIDIAN_FUNCTION_KEY,
   tenantBindingKey: 'meridian-vbc',
+  expectedClientKey: 'meridian',
   substrate: MERIDIAN_VBC_OBSERVATIONS,
   buildBlocks(ctx: BetSelectionBindingContext): BetSelectionGroundedBlocks {
     const { topBetName, topBetRead, totalBets, heldBetCount } = ctx;

@@ -269,6 +269,7 @@ export const FIRSTCAPITAL_DECISION_HOME_BINDING: DecisionHomeBinding = {
   industryKey: FIRSTCAPITAL_INDUSTRY_KEY,
   functionKey: FIRSTCAPITAL_FUNCTION_KEY,
   tenantBindingKey: 'firstcapital-fraud',
+  expectedClientKey: 'arcturus',
   substrate: FIRSTCAPITAL_FRAUD_OBSERVATIONS,
   buildBlocks(): DecisionHomeGroundedBlocks {
     // Block 1 — the one thing. First Capital's audited substrate carries two

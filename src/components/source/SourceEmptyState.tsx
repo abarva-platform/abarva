@@ -7,6 +7,12 @@ import { SHELL } from '@/lib/shell/shell-tokens';
 // (The earlier version dropped a fixed-width AgentColumn — built for a ROW
 // layout — into AppShell's COLUMN flexbox, which collapsed the working pane
 // to zero height and left the right ~70% of the screen blank white.)
+//
+// P1-2 (synthetic pilot rehearsal, 2026-05-22): tenant-named — a brand-new
+// tenant lands here with zero source events. The empty state names the tenant
+// explicitly and points at the onboarding runbook, so a Northwind user sees
+// "No source events for Northwind Retail yet — see runbook" instead of an
+// anonymous "no events" panel that could read as a broken surface.
 
 const NEXT_STEPS: ReadonlyArray<{ label: string; detail: string; href: string }> = [
   {
@@ -19,9 +25,20 @@ const NEXT_STEPS: ReadonlyArray<{ label: string; detail: string; href: string }>
     detail: 'How the 10-stage sourcing lifecycle tracker works, end to end.',
     href: '/source/learn',
   },
+  {
+    label: 'New-tenant onboarding runbook',
+    detail: 'How a brand-new tenant wires the ingest pipeline so source events appear here.',
+    href: '/docs/pilot/ONBOARDING-NEW-TENANT.md',
+  },
 ];
 
-export function SourceEmptyState() {
+interface SourceEmptyStateProps {
+  /** Active tenant display name — used to make the empty-state copy honest and tenant-named. */
+  tenantName?: string;
+}
+
+export function SourceEmptyState({ tenantName }: SourceEmptyStateProps = {}) {
+  const displayName = tenantName?.trim() || 'this tenant';
   return (
     <SourceWorkingPane>
       <div
@@ -66,7 +83,7 @@ export function SourceEmptyState() {
               fontWeight: 'normal',
             }}
           >
-            No sourcing events yet
+            No source events for {displayName} yet
           </h1>
           <p
             style={{
@@ -77,9 +94,9 @@ export function SourceEmptyState() {
               color: SHELL.INK_SOFT,
             }}
           >
-            Create your first sourcing event to start tracking vendor selection,
-            evaluation, BAFO, and commercial readiness across the 10-stage
-            sourcing lifecycle.
+            Source events arrive via the ingest pipeline. Create your first
+            sourcing event below, or see the new-tenant onboarding runbook for
+            how to wire the ingest pipeline that populates this queue.
           </p>
           <a
             href="/source/new"
@@ -108,7 +125,7 @@ export function SourceEmptyState() {
         <div
           style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
             gap: 12,
             maxWidth: 560,
             width: '100%',

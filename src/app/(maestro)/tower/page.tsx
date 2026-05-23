@@ -606,7 +606,10 @@ export default async function TowerPage({
       }
       towerHandoffSlot={
         <>
-          <MovePortfolioCardPanel cards={movePortfolioCards} />
+          <MovePortfolioCardPanel
+            cards={movePortfolioCards}
+            tenantName={towerSetupInitiativesFeed.tenantName}
+          />
           <TowerSetupInitiativesPanel feed={towerSetupInitiativesFeed} />
           <TowerHandoffProgramsPanel programs={towerHandoffPrograms} />
           <TowerHandoffSourceEventsPanel events={towerHandoffSourceEvents} />

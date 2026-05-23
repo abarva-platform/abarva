@@ -263,6 +263,7 @@ export const APEX_DECISION_HOME_BINDING: DecisionHomeBinding = {
   industryKey: APEX_INDUSTRY_KEY,
   functionKey: APEX_FUNCTION_KEY,
   tenantBindingKey: 'apex-customer-care',
+  expectedClientKey: 'apexretail',
   substrate: APEX_CUSTOMER_CARE_OBSERVATIONS,
   buildBlocks(): DecisionHomeGroundedBlocks {
     // Block 1 — the one thing. The headline asserts only audited truth:

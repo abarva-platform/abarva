@@ -51,6 +51,7 @@ import type {
 } from '../../domain/function-pack-types';
 import type { FunctionPackBinding } from '../../domain/function-pack-context-binding';
 import type { BusinessCaseSkeleton } from '../../business-case-compiler';
+import { resolveBoardGradeTenantLabel } from './tenant-label-resolver';
 
 // ---------------------------------------------------------------------------
 // Section anatomy — mirrors the Apex pack's `ArchSectionAnatomy` so the generic
@@ -412,10 +413,11 @@ export function buildMoveSolutionArchitecture(
     openDecisions.anatomy,
   ];
 
+  const resolvedTenant = resolveBoardGradeTenantLabel(move, tenantKey);
   return {
     bound: true,
-    tenantLabel: tenantKey,
-    tenantKey,
+    tenantLabel: resolvedTenant.tenantLabel,
+    tenantKey: resolvedTenant.tenantKey,
     moveLabel,
     artifactLabel: ARTIFACT_LABEL,
     functionLabel,

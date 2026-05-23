@@ -45,6 +45,7 @@ import type {
   Recommendation,
 } from '../../business-case-compiler';
 import type { FunctionPackBinding } from '../../domain/function-pack-context-binding';
+import { resolveBoardGradeTenantLabel } from './tenant-label-resolver';
 
 // ---------------------------------------------------------------------------
 // Section anatomy — mirrors the Apex dossier's `DossierSectionAnatomy` so the
@@ -460,10 +461,14 @@ export function buildMoveMasterDossier(
     recommendation.anatomy,
   ];
 
+  const { tenantLabel, tenantKey } = resolveBoardGradeTenantLabel(
+    move,
+    skeleton.tenantKey,
+  );
   return {
     bound: true,
-    tenantLabel: skeleton.tenantKey,
-    tenantKey: skeleton.tenantKey,
+    tenantLabel,
+    tenantKey,
     moveLabel,
     moveId,
     artifactLabel: ARTIFACT_LABEL,
