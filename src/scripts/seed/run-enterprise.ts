@@ -5,6 +5,7 @@ import { getSeedClient, seedClient } from './_shared/upsert';
 import { MERIDIAN_ENTERPRISE } from './meridian-enterprise';
 import { FIRSTCAPITAL_ENTERPRISE } from './firstcapital-enterprise';
 import { APEX_ENTERPRISE } from './apex-enterprise';
+import { NORTHWIND_ENTERPRISE } from './northwind-enterprise';
 import type { ClientSeed } from './_shared/types';
 
 loadEnv({ path: path.resolve(process.cwd(), '.env.local') });
@@ -14,6 +15,7 @@ const ALL: Record<string, ClientSeed> = {
   meridian: MERIDIAN_ENTERPRISE,
   firstcapital: FIRSTCAPITAL_ENTERPRISE,
   apex: APEX_ENTERPRISE,
+  northwind: NORTHWIND_ENTERPRISE,
 };
 
 export function parseClients(argv: string[]): string[] {
