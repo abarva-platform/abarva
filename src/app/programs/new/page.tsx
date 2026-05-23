@@ -6,9 +6,12 @@
 // composes the cold-open Steward greeting, hydrates it as the first
 // turn in the workspace.
 
+import { redirect } from 'next/navigation';
 import { ProgramOriginationWorkspace } from '@/components/programs/origination/ProgramOriginationWorkspace';
 import { composeColdOpen } from '@/components/programs/origination/composeColdOpen';
 import { getUserContext } from '@/lib/agent/userContext';
+import { requireTenancy } from '@/app/api/v1/programs/_auth';
+import { instantiateTemplate } from '@/lib/templates/registry';
 
 export const metadata = {
   title: 'New Program · AbarVa',
@@ -16,7 +19,28 @@ export const metadata = {
 
 export const dynamic = 'force-dynamic';
 
-export default async function ProgramsNewPage() {
+export default async function ProgramsNewPage({
+  searchParams,
+}: {
+  searchParams?: Promise<{ template?: string; version?: string }>;
+}) {
+  const params = await searchParams;
+  if (params?.template) {
+    const ctx = await requireTenancy();
+    const parsedVersion = params.version ? Number(params.version) : undefined;
+    const instance = await instantiateTemplate(
+      params.template,
+      Number.isFinite(parsedVersion) ? parsedVersion : undefined,
+      ctx.clientId,
+      {
+        origin: '/programs/new',
+        createProgramShell: true,
+      },
+      { userId: ctx.userId, clientId: ctx.clientId },
+    );
+    redirect(`/programs/${instance.engagementId ?? instance.instanceId}`);
+  }
+
   const user = await getUserContext();
   const greeting = composeColdOpen({ user, variant: 'production' });
 

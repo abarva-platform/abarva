@@ -27,6 +27,7 @@ import type {
 import type { ArchetypeKey } from './types.ui';
 import type { StrategicMove, StrategicMovePortfolio } from './types.ui';
 import { extractProjectedValueFromLegacyBaseline } from './value-utils';
+import { attachTemplateInstancesToPrograms } from '@/lib/templates/program-adapter';
 
 function assertTenancy(ctx: TenancyCtx): void {
   if (!ctx?.clientId || !ctx?.userId) {
@@ -156,7 +157,8 @@ export async function getProgramPortfolio(
     allowedProgramIds,
     limit,
   });
-  return (rows as unknown as EngagementRow[]).map(rowToProgram);
+  const programs = (rows as unknown as EngagementRow[]).map(rowToProgram);
+  return attachTemplateInstancesToPrograms(ctx, programs);
 }
 
 /**
@@ -182,7 +184,9 @@ export async function getProgramById(
     ? createSupabaseProgramsReadAdapter(() => opts.supabase as SupabaseClient)
     : selectProgramsReadAdapter();
   const row = await adapter.getProgramByIdRow(programId, ctx.clientId);
-  return row ? rowToProgram(row as unknown as EngagementRow) : null;
+  if (!row) return null;
+  const [program] = await attachTemplateInstancesToPrograms(ctx, [rowToProgram(row as unknown as EngagementRow)]);
+  return program ?? null;
 }
 
 async function assertProgramReadable(ctx: TenancyCtx, programId: string): Promise<void> {
