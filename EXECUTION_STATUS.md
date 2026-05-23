@@ -1,5 +1,94 @@
 # Execution Status
 
+## Legacy content-as-code sweep — clean cutover · @codex · branch: feat/legacy-content-sweep
+- 2026-05-23 07:34 CDT START — created fresh worktree from `origin/main` after Wave 2 merged (`e8ba76126`). Addendum requires this one PR after P1 and before P6. Initial audit found residual content-as-code in `intelligence/seeds/**`, `src/data/knowledge/**`, tenant benchmark files, `src/lib/knowledge/synthetic-datasets.ts`, and Function Pack files under `src/lib/programs/expert-kernel/domain/**`. Worker agent assigned to migrate/delete with no shims/coexistence or write an `ESCALATION` if the required cutover must be decomposed.
+- 2026-05-23 08:10 CDT ESCALATION — cannot safely complete this as one follow-up sweep without breaking broad runtime surfaces. Exact blocker: P1 created `corpus_patterns`, `corpus_overlays`, and `client_private_patterns`, but no `framework_overlays` table/API exists; current Function Pack consumers are synchronous and compute live board-grade outputs from in-code packs. A clean cutover requires a schema + import layer first, then an async DB-backed resolver migration across production renderers/tests. Doing all of that plus deleting benchmark/intelligence seed sources in one PR would either leave prohibited dual paths or remove live functionality.
+
+  Exact residual source files audited:
+  - `intelligence/seeds/archetype-phase-deliverable-matrix.json`
+  - `intelligence/seeds/tenant-portfolios/apexretail.json`
+  - `intelligence/seeds/tenant-portfolios/arcturus.json`
+  - `intelligence/seeds/tenant-portfolios/meridian.json`
+  - `src/data/knowledge/contract-benchmarks.ts`
+  - `src/data/knowledge/crossIndustry.ts`
+  - `src/data/knowledge/failure-patterns.ts`
+  - `src/data/knowledge/finserv.ts`
+  - `src/data/knowledge/genome-patterns.ts`
+  - `src/data/knowledge/industry-benchmarks.ts`
+  - `src/data/knowledge/peer-outcomes.ts`
+  - `src/data/knowledge/regulatory.ts`
+  - `src/data/knowledge/retail.ts`
+  - `src/data/knowledge/scoring.ts`
+  - `src/data/knowledge/vendor-outcomes.ts`
+  - `src/lib/knowledge/synthetic-datasets.ts`
+  - `src/data/apexretail/benchmarks.ts`
+  - `src/data/arcturus/industry.ts`
+  - `src/data/firstcapital/benchmarks.ts`
+  - `src/data/meridian/benchmarks.ts`
+  - `src/lib/programs/expert-kernel/domain/financial-services/capital-markets-trading.ts`
+  - `src/lib/programs/expert-kernel/domain/financial-services/collections-recovery.ts`
+  - `src/lib/programs/expert-kernel/domain/financial-services/commercial-corporate-banking.ts`
+  - `src/lib/programs/expert-kernel/domain/financial-services/customer-servicing-contact-center.ts`
+  - `src/lib/programs/expert-kernel/domain/financial-services/finance-treasury-alm.ts`
+  - `src/lib/programs/expert-kernel/domain/financial-services/fraud-financial-crime.ts`
+  - `src/lib/programs/expert-kernel/domain/financial-services/lending-credit-underwriting.ts`
+  - `src/lib/programs/expert-kernel/domain/financial-services/payments-money-movement.ts`
+  - `src/lib/programs/expert-kernel/domain/financial-services/regulatory-compliance.ts`
+  - `src/lib/programs/expert-kernel/domain/financial-services/retail-banking-deposits.ts`
+  - `src/lib/programs/expert-kernel/domain/financial-services/risk-management.ts`
+  - `src/lib/programs/expert-kernel/domain/financial-services/wealth-asset-management.ts`
+  - `src/lib/programs/expert-kernel/domain/healthcare/care-delivery-care-management.ts`
+  - `src/lib/programs/expert-kernel/domain/healthcare/clinical-operations-documentation.ts`
+  - `src/lib/programs/expert-kernel/domain/healthcare/clinical-supply-chain.ts`
+  - `src/lib/programs/expert-kernel/domain/healthcare/clinical-workforce-staffing.ts`
+  - `src/lib/programs/expert-kernel/domain/healthcare/health-information-interoperability.ts`
+  - `src/lib/programs/expert-kernel/domain/healthcare/patient-access-engagement-experience.ts`
+  - `src/lib/programs/expert-kernel/domain/healthcare/payer-claims-operations.ts`
+  - `src/lib/programs/expert-kernel/domain/healthcare/pharmacy.ts`
+  - `src/lib/programs/expert-kernel/domain/healthcare/population-health-value-based-care.ts`
+  - `src/lib/programs/expert-kernel/domain/healthcare/quality-safety-regulatory.ts`
+  - `src/lib/programs/expert-kernel/domain/healthcare/research-clinical-trials.ts`
+  - `src/lib/programs/expert-kernel/domain/healthcare/revenue-cycle.ts`
+  - `src/lib/programs/expert-kernel/domain/retail/customer-care.ts`
+  - `src/lib/programs/expert-kernel/domain/retail/customer-loyalty-personalization.ts`
+  - `src/lib/programs/expert-kernel/domain/retail/demand-inventory-planning.ts`
+  - `src/lib/programs/expert-kernel/domain/retail/digital-commerce.ts`
+  - `src/lib/programs/expert-kernel/domain/retail/loss-prevention.ts`
+  - `src/lib/programs/expert-kernel/domain/retail/marketing-retail-media.ts`
+  - `src/lib/programs/expert-kernel/domain/retail/merchandising-assortment.ts`
+  - `src/lib/programs/expert-kernel/domain/retail/pricing-promotions.ts`
+  - `src/lib/programs/expert-kernel/domain/retail/returns-reverse-logistics.ts`
+  - `src/lib/programs/expert-kernel/domain/retail/store-operations.ts`
+  - `src/lib/programs/expert-kernel/domain/retail/supply-chain-fulfillment.ts`
+  - `src/lib/programs/expert-kernel/domain/retail/workforce-labor.ts`
+  - Type/registry/context helpers that become part of the cutover boundary: `src/lib/programs/expert-kernel/domain/function-pack-types.ts`, `src/lib/programs/expert-kernel/domain/function-pack-registry.ts`, `src/lib/programs/expert-kernel/domain/function-pack-context-binding.ts`.
+
+  Exact runtime consumers that would need coordinated migration instead of deletion:
+  - `src/lib/programs/move-function-binding.ts`
+  - `src/lib/programs/function-identity.ts`
+  - `src/lib/programs/move-business-case.ts`
+  - `src/lib/programs/expert-kernel/exports/board-grade/move-solution-architecture-model.ts`
+  - `src/lib/programs/expert-kernel/exports/board-grade/move-discover-brief-model.ts`
+  - `src/lib/programs/expert-kernel/exports/board-grade/move-charter-skeleton-model.ts`
+  - `src/lib/programs/expert-kernel/exports/board-grade/move-cfo-pack-model.ts`
+  - `src/lib/programs/expert-kernel/exports/board-grade/move-estimate-model.ts`
+  - `src/lib/programs/expert-kernel/exports/board-grade/move-master-dossier-model.ts`
+  - `src/lib/programs/expert-kernel/exports/board-grade/move-mobilize-model.ts`
+  - `src/lib/programs/expert-kernel/exports/board-grade/move-pack-model.ts`
+  - `src/lib/nexus/gateLifecycle.ts`
+  - `src/app/(maestro)/intelligence/decision/page.tsx`
+  - `src/scripts/pilot/walk-synthetic-pilot-northwind.ts`
+  - `src/lib/knowledge/enterprise-data-room.ts`
+  - `src/lib/programs/enhancement-spec.ts`
+
+  Smallest proposed decomposition:
+  1. `framework-overlays-schema-import` — add `framework_overlays` migration with `clients`/`client_id` convention, RLS, versioning, and an import script that serializes all existing Function Pack records into `framework_overlays`; add regulatory overlays for `P-IT-37`, `P-IT-38`, `P-IT-39` and create those seed `corpus_patterns` if missing. No runtime deletion yet.
+  2. `function-pack-db-resolver-cutover` — replace `resolveFunctionPack`/`listFunctionPackCoverage` and binding consumers with DB-backed async overlay access; update board-grade models, `gateLifecycle`, `move-business-case`, decision page, pilot scripts, and focused tests. No static pack fallback/shim.
+  3. `knowledge-benchmark-corpus-cutover` — migrate `src/data/knowledge/**`, `src/lib/knowledge/synthetic-datasets.ts`, and tenant benchmark/industry files into `corpus_patterns` category `industry-benchmark`, `corpus_overlays`, or `client_private_patterns`; delete the old TS sources and update `enterprise-data-room` plus any remaining imports.
+  4. `program-enhancement-seed-cutover` — move `intelligence/seeds/**` out of runtime imports into the DB seed/import path or delete demo-only content; update `src/lib/programs/enhancement-spec.ts` to read seeded records or remove the dependent demo path.
+
+  Additional blocker: this worktree has no `node_modules`, and `/Users/anand/Projects/nexus/node_modules` is empty, so the mandatory local `node_modules/next/dist/docs/` read and build/typecheck/test commands cannot run until dependencies are installed or a shared dependency tree is made available. `git fetch origin main` also failed with GitHub HTTPS auth (`Invalid username or token`), so I could not re-verify current `origin/main` or open/push a PR from this environment.
+
 ## P5 — Workshop template data layer · @codex · branch: feat/p5-workshop-data-layer
 - 2026-05-23 06:45 CDT START — read execution kit §0-§5 and Packet 5 prompt, confirmed branch/worktree clean and P5 ownership zone; inspecting migrations, depth/client patterns, and Next.js route conventions before edits.
 - 2026-05-23 06:45 CDT COORDINATION NEEDED — Packet 5 deliverable includes `src/app/(maestro)/programs/[id]/workshops/page.tsx`, but §5.3 P5 ownership zone only lists workshop migrations, `src/lib/workshops/**`, `src/app/(maestro)/admin/workshops/**`, and `src/app/api/workshops/**`. Need OK before creating/editing the per-Move Programs route.
