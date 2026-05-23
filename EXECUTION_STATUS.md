@@ -10,6 +10,7 @@
 - 2026-05-23 07:21 CDT commit created — local commit `49d465c46` contains P5 implementation. Preparing push and PR; merge remains blocked until CI is green.
 - 2026-05-23 07:24 CDT PR opened — https://github.com/anandsundaram-hash/abarva/pull/2275. Waiting for CI; no merge/deploy until checks are green.
 - 2026-05-23 07:31 CDT integrity fix — replaced workshop render tenant markers from `{{...}}` to linter-safe `[[...]]` tokens after PR #2275 Integrity failure. Focused P5 ESLint passed, focused workshop Jest passed, and `npm run integrity:dom` passed with `violations=0`.
+- 2026-05-23 06:28 CDT DONE — PR #2275 merged at `e8ba76126`; Integrity / Routes and disclaimers is green on the token fix, all required PR checks were green, and both post-merge Vercel contexts for `main` succeeded. Production auto-deploy is complete; live DB/auth smoke remains environment-gated.
 
 ## P4 — Discovery instrument data layer · @codex · branch: feat/p4-instrument-data-layer
 - 2026-05-23 06:40 CDT START - read execution kit sections 0-5, confirmed P4 ownership zone and branch/worktree. `node_modules/next/dist/docs` is absent in this worktree, so local Next 16 docs could not be read before implementation.
