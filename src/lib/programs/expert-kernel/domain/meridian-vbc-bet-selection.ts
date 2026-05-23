@@ -46,6 +46,17 @@ import type {
   FunctionPackIndustryKey,
   OperatingMetric,
 } from './function-pack-types';
+import type {
+  TenantMetricObservation,
+  TenantSubstrate,
+} from './tenant-substrate';
+import {
+  type BetSelectionBinding,
+  type BetSelectionBindingContext,
+  type BetSelectionGroundedBlocks,
+  registerBetSelectionBinding,
+  resolveBetSelectionBinding,
+} from './tenant-binding-registry';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Keys — the Meridian reference binding the surface ships as its example
@@ -74,16 +85,11 @@ export const MERIDIAN_TENANT_KEY = 'meridian' as const;
  * as `meridian-vbc-decision-home.ts`; the bet-selection facet must agree with
  * the decision home, not invent a second, divergent picture of Meridian.
  */
-interface MeridianMetricObservation {
-  /** The Function-Pack operating-metric key this observation grounds. */
-  metricKey: string;
-  /** The audited Meridian value — `null` when the metric is a seed gap. */
-  value: number | null;
-  /** The substrate citation, or the seed-gap statement. */
-  source: string;
-  /** Set when `value` is `null` — why the metric is a seed gap. */
-  seedGapReason?: string;
-}
+// The bet-selection facet uses the shared `TenantMetricObservation` shape from
+// `tenant-substrate.ts` so Meridian, Apex, and First Capital all express their
+// audited substrates in the same vocabulary. Aliased locally so the existing
+// Meridian-named call sites read unchanged.
+type MeridianMetricObservation = TenantMetricObservation;
 
 /**
  * Meridian's audited substrate, expressed against the VBC Function Pack's
@@ -173,35 +179,10 @@ const MERIDIAN_VBC_OBSERVATIONS: readonly MeridianMetricObservation[] = [
   },
 ] as const;
 
-/**
- * An audited tenant substrate — the set of observations a binding can ground
- * its ranking against. The Meridian × VBC binding is the one binding that
- * carries one today; any other `(industryKey, functionKey)` binding resolves to
- * the empty substrate, and every bet is then honestly held for evidence.
- */
-type TenantSubstrate = readonly MeridianMetricObservation[];
-
-/** The empty substrate — used for every binding without audited tenant data. */
-const EMPTY_SUBSTRATE: TenantSubstrate = [] as const;
-
-/**
- * Resolve the audited substrate for a binding. Only the Meridian healthcare-
- * provider × population-health / VBC binding has audited tenant data; every
- * other binding gets the empty substrate, so the ranking is honest by
- * construction — it never borrows Meridian's metrics for another tenant.
- */
-function substrateFor(
-  industryKey: FunctionPackIndustryKey,
-  functionKey: string,
-): TenantSubstrate {
-  if (
-    industryKey === MERIDIAN_INDUSTRY_KEY &&
-    functionKey === MERIDIAN_FUNCTION_KEY
-  ) {
-    return MERIDIAN_VBC_OBSERVATIONS;
-  }
-  return EMPTY_SUBSTRATE;
-}
+// The shared `TenantSubstrate` type from `tenant-substrate.ts` — every tenant
+// binding (Meridian × VBC, Apex × customer care, First Capital × fraud) uses
+// the same vocabulary, and the substrate for an `(industry, function)` is
+// resolved through `tenant-binding-registry.ts`.
 
 /** Look up a substrate's observation for a Function-Pack metric, if any. */
 function observationFor(
@@ -599,9 +580,12 @@ export function buildVbcBetSelection(
   );
   if (!pack) return null;
 
-  // The audited tenant substrate, if this binding has one. Only the Meridian ×
-  // VBC binding does today; every other binding gets the empty substrate.
-  const substrate = substrateFor(industryKey, functionKey);
+  // Consult the tenant-binding registry — Meridian × VBC, Apex × customer
+  // care, First Capital × fraud each register an audited substrate plus a
+  // grounded-blocks builder. An unknown `(industry, function)` resolves to
+  // `null` and the surface renders honestly as unseeded.
+  const binding = resolveBetSelectionBinding(industryKey, functionKey);
+  const substrate: TenantSubstrate = binding?.substrate ?? [];
   const isGroundedBinding = substrate.length > 0;
 
   const metricsByKey = new Map(
@@ -658,124 +642,54 @@ export function buildVbcBetSelection(
   ).length;
 
   // ── Block 1 — the answer ──────────────────────────────────────────────────
-  // The top-ranked bet is the answer. For the grounded Meridian binding the
-  // headline asserts audited truth — the top bet earned its rank on a measured,
-  // off-benchmark metric — and the honesty clause names the structural gap. For
-  // any other binding there is no audited substrate, so the headline says so
-  // plainly: every bet is held for evidence, ordered by adoption maturity, never
-  // fabricated as fundable.
+  // The top-ranked bet is the answer. For a grounded tenant binding the
+  // headline asserts audited truth — the top bet earned its rank on a
+  // measured, off-benchmark metric — and the honesty clause names the
+  // structural gap. For any other binding there is no audited substrate, so
+  // the headline says so plainly: every bet is held for evidence, ordered by
+  // adoption maturity, never fabricated as fundable.
   const topBet = bets[0];
   const heldBets = bets.filter((b) => b.read === 'hold_for_evidence');
-  const headline: BetSelectionHeadline = isGroundedBinding
-    ? {
-        // The grounded binding is the Meridian × VBC binding — its copy is the
-        // audited Meridian reference text, kept verbatim so the Meridian shim
-        // returns the same result the original function did.
-        eyebrow: 'Population health & value-based care · the bet to make first',
-        question:
-          'Which value-based-care AI bet should Meridian make first?',
-        answer:
-          topBet.read === 'fund_first'
-            ? `Make the ${topBet.name} bet first.`
-            : `The most fundable bet today is ${topBet.name} — but shape it before funding.`,
-        rationale:
-          `Of the value-based-care function’s ${bets.length} AI use-case ` +
-          `archetypes, ${topBet.name} is the one Meridian’s audited substrate ` +
-          `makes fundable now: it moves a metric Meridian has measured and ` +
-          `that is sitting below the function’s planning band — RAF capture ` +
-          `at 58% against an 85–100% band. That is risk-adjusted revenue ` +
-          `visibly on the table, and accurate (never inflated) capture is ` +
-          `the lever that lifts it. It is also a mainstream bet — the ` +
-          `lower-risk first move.`,
-        honestyClause:
-          `This ranking is honest about its own limits. ${heldBets.length} ` +
-          `of the ${bets.length} bets — the contract-simulation and ` +
-          `network-leakage archetypes — move only metrics Meridian has not ` +
-          `seeded (the shared-savings settlement, PMPM trend, attribution ` +
-          `stability, network leakage). They are held for evidence, not ` +
-          `ranked on a fabricated number. The gates that would re-order this ` +
-          `list are named in full below.`,
-      }
-    : {
-        eyebrow: `${pack.functionLabel} · the bet to make first`,
-        question: `Which ${pack.functionLabel.toLowerCase()} AI bet should ${tenantName} make first?`,
-        answer:
-          `The strongest candidate today is ${topBet.name} — but ${tenantName} ` +
-          `has not yet seeded the substrate to fund it on measured value.`,
-        rationale:
-          `The ${pack.functionLabel.toLowerCase()} function offers ` +
-          `${bets.length} AI use-case archetypes. ${topBet.name} leads the ` +
-          `order on adoption maturity — it is the most-proven bet in the ` +
-          `function. But the order is provisional: ${tenantName} has not ` +
-          `seeded an audited operating-metric substrate, so no bet can yet ` +
-          `be shown moving a metric that is visibly off-benchmark.`,
-        honestyClause: ungroundedHonestyClause(tenantName, bets.length),
-      };
 
   // ── Block 3 — what gates the ranking ──────────────────────────────────────
-  // The seed gaps that, if closed, would move the order. For the grounded
-  // Meridian binding these are the named VBC metrics Meridian has not seeded;
-  // for any other binding the gate is the function's whole operating-metric
-  // substrate, which the tenant has not seeded — each gate is real, never
-  // invented.
-  const gates: RankingGate[] = isGroundedBinding
-    ? [
-        {
-          key: 'gate_settlement_economics',
-          title: 'The contract-settlement economics are unseeded',
-          description:
-            'The VBC Function Pack expects the medical loss ratio, the ' +
-            'shared-savings achievement rate, and risk-adjusted PMPM trend — ' +
-            'all sourced from the CMS / payer benchmark-and-settlement report ' +
-            'and the claims feed. Meridian’s audited program is a clinical-' +
-            'operations program and carries none of them.',
-          whatItWouldMove:
-            'Seeding the settlement and claims feeds would let the VBC ' +
-            'contract-performance-simulation bet be ranked on real downside ' +
-            'rather than held for evidence — it could rise into a fundable ' +
-            'position.',
-        },
-        {
-          key: 'gate_attribution_feed',
-          title: 'The attribution feed is unseeded',
-          description:
-            'Attribution stability — the share of the population retained ' +
-            'period over period — is sourced from payer attribution files. ' +
-            'Meridian has not seeded that feed, so no bet can be credited for ' +
-            'value on a population whose churn is unknown.',
-          whatItWouldMove:
-            'A seeded attribution feed would sharpen the value haircut on ' +
-            'every grounded bet and is a precondition for trusting any ' +
-            'contract-economics forecast.',
-        },
-        {
-          key: 'gate_network_claims',
-          title: 'Network-classified claims are unseeded',
-          description:
-            'In-network (leakage) utilisation and high-value specialist ' +
-            'referral rates are sourced from the claims feed classified ' +
-            'against the network directory. Meridian’s audited substrate ' +
-            'carries no network-classified claims.',
-          whatItWouldMove:
-            'Seeding network-classified claims would move the network-leakage ' +
-            'and referral-steering bet out of hold-for-evidence and let it be ' +
-            'ranked on a measured leakage baseline.',
-        },
-        {
-          key: 'gate_awv_baseline',
-          title: 'The annual-wellness-visit baseline is unseeded',
-          description:
-            'The AWV completion rate is the structured opportunity that the ' +
-            'top two bets — coding-gap intelligence and quality-measure ' +
-            'intelligence — both lean on. Meridian measures ambulatory visit ' +
-            'volume (E19) but not AWV completion.',
-          whatItWouldMove:
-            'A seeded AWV baseline would tighten the value case for the ' +
-            'top-ranked bet — it would not change its rank, but it would ' +
-            'raise the confidence behind its forecast.',
-        },
-      ]
-    : ungroundedGates(pack, tenantName);
+  // The seed gaps that, if closed, would move the order. For a grounded
+  // tenant binding the gates are the named function-specific metrics the
+  // tenant has not seeded; for any other binding the gate is the function's
+  // whole operating-metric substrate. Each gate is real, never invented.
+  let headline: BetSelectionHeadline;
+  let gates: RankingGate[];
+
+  if (isGroundedBinding && binding) {
+    const ctx: BetSelectionBindingContext = {
+      pack,
+      tenantName,
+      substrate,
+      topBetName: topBet.name,
+      topBetRead: topBet.read,
+      totalBets: bets.length,
+      heldBetCount: heldBets.length,
+    };
+    const grounded = binding.buildBlocks(ctx);
+    headline = grounded.headline;
+    gates = [...grounded.gates];
+  } else {
+    headline = {
+      eyebrow: `${pack.functionLabel} · the bet to make first`,
+      question: `Which ${pack.functionLabel.toLowerCase()} AI bet should ${tenantName} make first?`,
+      answer:
+        `The strongest candidate today is ${topBet.name} — but ${tenantName} ` +
+        `has not yet seeded the substrate to fund it on measured value.`,
+      rationale:
+        `The ${pack.functionLabel.toLowerCase()} function offers ` +
+        `${bets.length} AI use-case archetypes. ${topBet.name} leads the ` +
+        `order on adoption maturity — it is the most-proven bet in the ` +
+        `function. But the order is provisional: ${tenantName} has not ` +
+        `seeded an audited operating-metric substrate, so no bet can yet ` +
+        `be shown moving a metric that is visibly off-benchmark.`,
+      honestyClause: ungroundedHonestyClause(tenantName, bets.length),
+    };
+    gates = ungroundedGates(pack, tenantName);
+  }
 
   return {
     functionLabel: pack.functionLabel,
@@ -818,3 +732,117 @@ export const MERIDIAN_GROUNDED_VBC_BET_METRIC_KEYS: ReadonlySet<string> =
       (o) => o.metricKey,
     ),
   );
+
+// ─────────────────────────────────────────────────────────────────────────────
+// The Meridian × VBC bet-selection binding — the original reference binding.
+//
+// The grounded headline + gates Meridian has shipped from day one, now
+// expressed as a registered `BetSelectionBinding` so the generic builder
+// treats Meridian as one tenant among several — Apex, First Capital, and any
+// future grounded binding follow the same shape.
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * The Meridian × VBC bet-selection binding. Carries the audited substrate
+ * (`MERIDIAN_VBC_OBSERVATIONS`) and the tenant-named operator copy for the VBC
+ * bet-selection surface. Exported for test inspection and so a future tenant
+ * binding has a canonical example to mirror.
+ */
+export const MERIDIAN_BET_SELECTION_BINDING: BetSelectionBinding = {
+  industryKey: MERIDIAN_INDUSTRY_KEY,
+  functionKey: MERIDIAN_FUNCTION_KEY,
+  tenantBindingKey: 'meridian-vbc',
+  substrate: MERIDIAN_VBC_OBSERVATIONS,
+  buildBlocks(ctx: BetSelectionBindingContext): BetSelectionGroundedBlocks {
+    const { topBetName, topBetRead, totalBets, heldBetCount } = ctx;
+
+    const headline: BetSelectionHeadline = {
+      eyebrow: 'Population health & value-based care · the bet to make first',
+      question: 'Which value-based-care AI bet should Meridian make first?',
+      answer:
+        topBetRead === 'fund_first'
+          ? `Make the ${topBetName} bet first.`
+          : `The most fundable bet today is ${topBetName} — but shape it before funding.`,
+      rationale:
+        `Of the value-based-care function’s ${totalBets} AI use-case ` +
+        `archetypes, ${topBetName} is the one Meridian’s audited substrate ` +
+        `makes fundable now: it moves a metric Meridian has measured and ` +
+        `that is sitting below the function’s planning band — RAF capture ` +
+        `at 58% against an 85–100% band. That is risk-adjusted revenue ` +
+        `visibly on the table, and accurate (never inflated) capture is ` +
+        `the lever that lifts it. It is also a mainstream bet — the ` +
+        `lower-risk first move.`,
+      honestyClause:
+        `This ranking is honest about its own limits. ${heldBetCount} ` +
+        `of the ${totalBets} bets — the contract-simulation and ` +
+        `network-leakage archetypes — move only metrics Meridian has not ` +
+        `seeded (the shared-savings settlement, PMPM trend, attribution ` +
+        `stability, network leakage). They are held for evidence, not ` +
+        `ranked on a fabricated number. The gates that would re-order this ` +
+        `list are named in full below.`,
+    };
+
+    const gates: RankingGate[] = [
+      {
+        key: 'gate_settlement_economics',
+        title: 'The contract-settlement economics are unseeded',
+        description:
+          'The VBC Function Pack expects the medical loss ratio, the ' +
+          'shared-savings achievement rate, and risk-adjusted PMPM trend — ' +
+          'all sourced from the CMS / payer benchmark-and-settlement report ' +
+          'and the claims feed. Meridian’s audited program is a clinical-' +
+          'operations program and carries none of them.',
+        whatItWouldMove:
+          'Seeding the settlement and claims feeds would let the VBC ' +
+          'contract-performance-simulation bet be ranked on real downside ' +
+          'rather than held for evidence — it could rise into a fundable ' +
+          'position.',
+      },
+      {
+        key: 'gate_attribution_feed',
+        title: 'The attribution feed is unseeded',
+        description:
+          'Attribution stability — the share of the population retained ' +
+          'period over period — is sourced from payer attribution files. ' +
+          'Meridian has not seeded that feed, so no bet can be credited for ' +
+          'value on a population whose churn is unknown.',
+        whatItWouldMove:
+          'A seeded attribution feed would sharpen the value haircut on ' +
+          'every grounded bet and is a precondition for trusting any ' +
+          'contract-economics forecast.',
+      },
+      {
+        key: 'gate_network_claims',
+        title: 'Network-classified claims are unseeded',
+        description:
+          'In-network (leakage) utilisation and high-value specialist ' +
+          'referral rates are sourced from the claims feed classified ' +
+          'against the network directory. Meridian’s audited substrate ' +
+          'carries no network-classified claims.',
+        whatItWouldMove:
+          'Seeding network-classified claims would move the network-leakage ' +
+          'and referral-steering bet out of hold-for-evidence and let it be ' +
+          'ranked on a measured leakage baseline.',
+      },
+      {
+        key: 'gate_awv_baseline',
+        title: 'The annual-wellness-visit baseline is unseeded',
+        description:
+          'The AWV completion rate is the structured opportunity that the ' +
+          'top two bets — coding-gap intelligence and quality-measure ' +
+          'intelligence — both lean on. Meridian measures ambulatory visit ' +
+          'volume (E19) but not AWV completion.',
+        whatItWouldMove:
+          'A seeded AWV baseline would tighten the value case for the ' +
+          'top-ranked bet — it would not change its rank, but it would ' +
+          'raise the confidence behind its forecast.',
+      },
+    ];
+
+    return { headline, gates };
+  },
+};
+
+// Register the Meridian binding eagerly on module load. The generic builder
+// consults the registry; Meridian is one tenant among several.
+registerBetSelectionBinding(MERIDIAN_BET_SELECTION_BINDING);

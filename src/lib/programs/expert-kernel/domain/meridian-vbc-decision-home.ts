@@ -24,6 +24,16 @@ import type {
   FunctionPackIndustryKey,
   OperatingMetric,
 } from './function-pack-types';
+import type {
+  TenantMetricObservation,
+  TenantSubstrate,
+} from './tenant-substrate';
+import {
+  type DecisionHomeBinding,
+  type DecisionHomeGroundedBlocks,
+  registerDecisionHomeBinding,
+  resolveDecisionHomeBinding,
+} from './tenant-binding-registry';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Keys — the Meridian reference binding the decision home ships as its example
@@ -48,27 +58,7 @@ export const MERIDIAN_TENANT_KEY = 'meridian' as const;
  * honest "the function expects this, Meridian has not measured it" state —
  * the spec's no-fabrication discipline made visible (§3).
  */
-interface MeridianMetricObservation {
-  /** The Function-Pack operating-metric key this observation grounds. */
-  metricKey: string;
-  /**
-   * The audited Meridian value, in the metric's own unit — or `null` when the
-   * metric is a declared seed gap (Meridian has no attested value).
-   */
-  value: number | null;
-  /**
-   * Where the value comes from — a citation into Meridian's audited substrate
-   * (the program evidence base), or the seed-gap reason.
-   */
-  source: string;
-  /** A short read of what the value means against the Function-Pack benchmark. */
-  read?: string;
-  /**
-   * Set when `value` is `null`: why the metric is a seed gap and what its
-   * absence blocks. Rendered verbatim — an honest gap, never papered over.
-   */
-  seedGapReason?: string;
-}
+type MeridianMetricObservation = TenantMetricObservation;
 
 /**
  * Meridian's audited substrate, expressed against the VBC Function Pack's
@@ -150,35 +140,9 @@ const MERIDIAN_GROUNDED_METRIC_KEYS: ReadonlySet<string> = new Set(
   ),
 );
 
-/**
- * An audited tenant substrate — the observations a binding grounds its vitals
- * against. The Meridian × VBC binding is the one binding that carries one
- * today; any other `(industryKey, functionKey)` binding resolves to the empty
- * substrate, so every Function-Pack metric renders as an honest seed gap.
- */
-type TenantSubstrate = readonly MeridianMetricObservation[];
-
-/** The empty substrate — used for every binding without audited tenant data. */
-const EMPTY_SUBSTRATE: TenantSubstrate = [] as const;
-
-/**
- * Resolve the audited substrate for a binding. Only the Meridian healthcare-
- * provider × population-health / VBC binding has audited tenant data; every
- * other binding gets the empty substrate, so the decision home never borrows
- * Meridian's measured values for another tenant.
- */
-function substrateFor(
-  industryKey: FunctionPackIndustryKey,
-  functionKey: string,
-): TenantSubstrate {
-  if (
-    industryKey === MERIDIAN_INDUSTRY_KEY &&
-    functionKey === MERIDIAN_FUNCTION_KEY
-  ) {
-    return MERIDIAN_VBC_OBSERVATIONS;
-  }
-  return EMPTY_SUBSTRATE;
-}
+// The shared `TenantSubstrate` type — Meridian, Apex, and First Capital all
+// describe their audited observations in the same vocabulary so the generic
+// builder never has to know which tenant it is binding.
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Block 1 — the one thing
@@ -591,7 +555,12 @@ export function buildVbcDecisionHome(
   );
   if (!pack) return null;
 
-  const substrate = substrateFor(industryKey, functionKey);
+  // Consult the tenant-binding registry — Meridian × VBC, Apex × customer
+  // care, First Capital × fraud each register an audited substrate plus a
+  // grounded-blocks builder. An unknown `(industry, function)` resolves to
+  // `null` and the surface renders honestly as unseeded.
+  const binding = resolveDecisionHomeBinding(industryKey, functionKey);
+  const substrate: TenantSubstrate = binding?.substrate ?? [];
   const isGroundedBinding = substrate.length > 0;
 
   // ── Block 3 — vitals (built first; the headline reads off them) ──────────
@@ -604,9 +573,10 @@ export function buildVbcDecisionHome(
     (v) => v.meridianValue !== null,
   ).length;
 
-  // For a binding with no audited substrate, every block is the honest
-  // unseeded form — the frame is real, the tenant's numbers are not yet.
-  if (!isGroundedBinding) {
+  // For a binding with no audited substrate (or one registered but explicitly
+  // empty), every block is the honest unseeded form — the frame is real, the
+  // tenant's numbers are not yet.
+  if (!isGroundedBinding || !binding) {
     const blocks = ungroundedBlocks(pack, tenantName);
     return {
       functionLabel: pack.functionLabel,
@@ -625,159 +595,22 @@ export function buildVbcDecisionHome(
     };
   }
 
-  // ── Block 1 — the one thing ──────────────────────────────────────────────
-  // The headline asserts only audited truth: RAF under-capture is the single
-  // metric Meridian has measured that decides shared savings vs. loss. The
-  // honesty clause names, in the same breath, the structural gap — Meridian
-  // has not seeded the contract-settlement economics — so the headline is
-  // confident without being fabricated.
-  const headline: DecisionHomeHeadline = {
-    eyebrow: 'Population health & value-based care',
-    statement:
-      'Meridian’s value-based-care result turns on one number — RAF capture ' +
-      'at 58%, well below the 85–100% the function expects. The population ' +
-      'is being measured as healthier than it is, and that caps the ' +
-      'benchmark and every downstream dollar.',
-    honestyClause:
-      'This is the one truth Meridian’s audited substrate can assert today. ' +
-      'The contract-settlement economics that decide shared savings vs. loss ' +
-      'outright — medical loss ratio, the shared-savings rate, PMPM trend, ' +
-      'attribution stability — are not yet seeded for Meridian; they render ' +
-      'below as explicit gaps, not as numbers.',
-    cadenceAnchor:
-      'Performance-year close and the risk-adjustment submission are the ' +
-      'deadlines this depends on.',
-  };
-
-  // ── Block 2 — decisions that need you ────────────────────────────────────
-  // Each card is answer-first and grounded: action, stake, one evidence line,
-  // one gesture deeper. Sorted by the VBC cadence's sense of what matters now.
-  const decisionCards: DecisionCard[] = [
-    {
-      key: 'close_raf_capture_gap',
-      urgency: 'decide_now',
-      recommendedAction:
-        'Fund the HCC / RAF coding-gap intelligence Move — surface ' +
-        'clinically-evident, uncoded conditions to clinicians at the point ' +
-        'of care before the risk-adjustment submission closes.',
-      stake:
-        'RAF capture at 58% vs. a 62% cohort median understates population ' +
-        'acuity. The function values accurate RAF capture at a 2–8% ' +
-        'risk-adjusted revenue uplift — a labelled planning range — and ' +
-        'every percent of benchmark depends on it.',
-      evidence:
-        'Meridian evidence base E28: HCC capture 58% on the MA panel, ' +
-        'fourth-quartile against the cohort. The gap to documented clinical ' +
-        'truth is real and measured.',
-      evidenceRestsOnSeedGap: false,
-      gestureLabel: 'Open the costed RAF-capture case',
-      gestureHref: '/moves',
-    },
-    {
-      key: 'protect_quality_gate',
-      urgency: 'this_cycle',
-      recommendedAction:
-        'Stand up the quality-revenue protection loop — project performance ' +
-        'on every revenue-gating measure and route the closeable gaps to ' +
-        'care management ranked by revenue impact.',
-      stake:
-        'Quality-measure capture is at 34%, far below the 70–90 the function ' +
-        'expects. Quality is a gate, not a dial: a genuine cost result is ' +
-        'forfeited if the composite misses the program threshold.',
-      evidence:
-        'Meridian evidence base E47: HEDIS + Stars documentation capture ' +
-        '34%, with Lever 2 targeting a 55–65% band.',
-      evidenceRestsOnSeedGap: false,
-      gestureLabel: 'Open the quality-gate decision',
-      gestureHref: '/moves',
-    },
-    {
-      key: 'seed_settlement_economics',
-      urgency: 'before_settlement',
-      recommendedAction:
-        'Commission the contract-settlement baseline — medical loss ratio, ' +
-        'the shared-savings rate, risk-adjusted PMPM trend, attribution ' +
-        'stability — from the payer settlement and benchmark feed before any ' +
-        'VBC value forecast is underwritten.',
-      stake:
-        'Without these, the decision home can show the clinical inputs to ' +
-        'the VBC result but not the result itself. A value forecast built ' +
-        'on them now would be fabricated, not measured.',
-      evidence:
-        'The VBC Function Pack expects all four metrics from the CMS / payer ' +
-        'benchmark-and-settlement report; Meridian’s audited substrate does ' +
-        'not yet carry them — a precise, named seed gap.',
-      evidenceRestsOnSeedGap: true,
-      gestureLabel: 'Review the settlement-data seed gaps',
-      gestureHref: '/home/data-trust',
-    },
-  ];
-  const decisions: DecisionCard[] = [...decisionCards].sort(
+  // Hand the grounded copy build to the registered binding. The binding owns
+  // its own tenant-named operator language — Meridian speaks the VBC clinical
+  // economics, Apex speaks the retail care-operations economics, First
+  // Capital speaks the banking fraud / financial-crime economics — and the
+  // generic builder never has to know which.
+  const grounded = binding.buildBlocks({ pack, tenantName, substrate });
+  const decisions: DecisionCard[] = [...grounded.decisions].sort(
     (a, b) => URGENCY_RANK[a.urgency] - URGENCY_RANK[b.urgency],
   );
-
-  // ── Block 4 — where you are in the cadence ───────────────────────────────
-  // The MSSP performance-year rhythm, carried by the Function Pack's
-  // regulatory frame. The current stage is the back half of the performance
-  // year — coding and quality capture still open, settlement ahead.
-  const msspFrame = pack.vocabulary.regulatoryFrames.find((f) =>
-    f.name.includes('MSSP'),
-  );
-  const cadence: CadenceBlock = {
-    frameName: msspFrame?.name ?? 'Medicare Shared Savings Program (MSSP)',
-    framing:
-      msspFrame?.relevance ??
-      'The dominant Medicare ACO program — its performance-year rhythm sets ' +
-        'when coding, quality, and settlement work must land.',
-    stages: [
-      {
-        key: 'py_open',
-        label: 'Performance year — open',
-        demands:
-          'Care-gap closure and HCC coding run continuously; the population ' +
-          'baseline and risk model are validated against realised cost.',
-        isCurrent: false,
-      },
-      {
-        key: 'py_capture_window',
-        label: 'Capture window — coding & quality still open',
-        demands:
-          'The last window to lift RAF capture and close revenue-gating ' +
-          'quality measures before the year locks. This is where Meridian ' +
-          'sits: RAF at 58% and quality capture at 34% are both still moveable.',
-        isCurrent: true,
-      },
-      {
-        key: 'py_close_submission',
-        label: 'Year close & risk-adjustment submission',
-        demands:
-          'The performance year locks; the annual risk-adjustment submission ' +
-          'is filed. Coding accuracy is now fixed — RADV-defensible or not.',
-        isCurrent: false,
-      },
-      {
-        key: 'settlement',
-        label: 'Settlement & shared-savings reconciliation',
-        demands:
-          'The CMS benchmark-and-settlement report lands six to twelve ' +
-          'months after year close and decides savings vs. loss. The cash ' +
-          'result is lagged — the forecast must say when it actually arrives.',
-        isCurrent: false,
-      },
-    ],
-    currentDemand:
-      'Meridian is in the capture window — the last stretch where RAF ' +
-      'capture and quality-measure capture can still be moved before the ' +
-      'performance year locks. Both Meridian metrics that are off are ' +
-      'addressable from here; after year close they are fixed.',
-  };
 
   return {
     functionLabel: pack.functionLabel,
     packProvenance: `Function Pack v${pack.version} · reviewed ${pack.lastReviewed}`,
     tenantName,
     isReferenceExample: false,
-    headline,
+    headline: grounded.headline,
     decisions,
     vitals: {
       off,
@@ -785,9 +618,176 @@ export function buildVbcDecisionHome(
       groundedCount,
       expectedCount: pack.operatingMetrics.length,
     },
-    cadence,
+    cadence: grounded.cadence,
   };
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// The Meridian × VBC tenant binding — the original reference binding.
+//
+// The grounded headline / decisions / cadence Meridian has shipped from day
+// one, now expressed as a registered `DecisionHomeBinding` so the generic
+// builder treats Meridian as one tenant among several — Apex, First Capital,
+// and any future grounded binding follow the same shape.
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * The Meridian × VBC decision-home binding. Carries the audited substrate
+ * (`MERIDIAN_VBC_OBSERVATIONS`) and the tenant-named operator copy for
+ * Meridian's VBC decision home. Exported for test inspection and so a future
+ * tenant binding has a canonical example to mirror.
+ */
+export const MERIDIAN_DECISION_HOME_BINDING: DecisionHomeBinding = {
+  industryKey: MERIDIAN_INDUSTRY_KEY,
+  functionKey: MERIDIAN_FUNCTION_KEY,
+  tenantBindingKey: 'meridian-vbc',
+  substrate: MERIDIAN_VBC_OBSERVATIONS,
+  buildBlocks(): DecisionHomeGroundedBlocks {
+    // Block 1 — the one thing. The headline asserts only audited truth: RAF
+    // under-capture is the one metric Meridian has measured that decides
+    // shared savings vs. loss. The honesty clause names, in the same breath,
+    // the structural gap — Meridian has not seeded the contract-settlement
+    // economics — so the headline is confident without being fabricated.
+    const headline: DecisionHomeHeadline = {
+      eyebrow: 'Population health & value-based care',
+      statement:
+        'Meridian’s value-based-care result turns on one number — RAF capture ' +
+        'at 58%, well below the 85–100% the function expects. The population ' +
+        'is being measured as healthier than it is, and that caps the ' +
+        'benchmark and every downstream dollar.',
+      honestyClause:
+        'This is the one truth Meridian’s audited substrate can assert today. ' +
+        'The contract-settlement economics that decide shared savings vs. loss ' +
+        'outright — medical loss ratio, the shared-savings rate, PMPM trend, ' +
+        'attribution stability — are not yet seeded for Meridian; they render ' +
+        'below as explicit gaps, not as numbers.',
+      cadenceAnchor:
+        'Performance-year close and the risk-adjustment submission are the ' +
+        'deadlines this depends on.',
+    };
+
+    // Block 2 — decisions that need you. Each card is answer-first and
+    // grounded: action, stake, one evidence line, one gesture deeper.
+    const decisions: DecisionCard[] = [
+      {
+        key: 'close_raf_capture_gap',
+        urgency: 'decide_now',
+        recommendedAction:
+          'Fund the HCC / RAF coding-gap intelligence Move — surface ' +
+          'clinically-evident, uncoded conditions to clinicians at the point ' +
+          'of care before the risk-adjustment submission closes.',
+        stake:
+          'RAF capture at 58% vs. a 62% cohort median understates population ' +
+          'acuity. The function values accurate RAF capture at a 2–8% ' +
+          'risk-adjusted revenue uplift — a labelled planning range — and ' +
+          'every percent of benchmark depends on it.',
+        evidence:
+          'Meridian evidence base E28: HCC capture 58% on the MA panel, ' +
+          'fourth-quartile against the cohort. The gap to documented clinical ' +
+          'truth is real and measured.',
+        evidenceRestsOnSeedGap: false,
+        gestureLabel: 'Open the costed RAF-capture case',
+        gestureHref: '/moves',
+      },
+      {
+        key: 'protect_quality_gate',
+        urgency: 'this_cycle',
+        recommendedAction:
+          'Stand up the quality-revenue protection loop — project performance ' +
+          'on every revenue-gating measure and route the closeable gaps to ' +
+          'care management ranked by revenue impact.',
+        stake:
+          'Quality-measure capture is at 34%, far below the 70–90 the function ' +
+          'expects. Quality is a gate, not a dial: a genuine cost result is ' +
+          'forfeited if the composite misses the program threshold.',
+        evidence:
+          'Meridian evidence base E47: HEDIS + Stars documentation capture ' +
+          '34%, with Lever 2 targeting a 55–65% band.',
+        evidenceRestsOnSeedGap: false,
+        gestureLabel: 'Open the quality-gate decision',
+        gestureHref: '/moves',
+      },
+      {
+        key: 'seed_settlement_economics',
+        urgency: 'before_settlement',
+        recommendedAction:
+          'Commission the contract-settlement baseline — medical loss ratio, ' +
+          'the shared-savings rate, risk-adjusted PMPM trend, attribution ' +
+          'stability — from the payer settlement and benchmark feed before any ' +
+          'VBC value forecast is underwritten.',
+        stake:
+          'Without these, the decision home can show the clinical inputs to ' +
+          'the VBC result but not the result itself. A value forecast built ' +
+          'on them now would be fabricated, not measured.',
+        evidence:
+          'The VBC Function Pack expects all four metrics from the CMS / payer ' +
+          'benchmark-and-settlement report; Meridian’s audited substrate does ' +
+          'not yet carry them — a precise, named seed gap.',
+        evidenceRestsOnSeedGap: true,
+        gestureLabel: 'Review the settlement-data seed gaps',
+        gestureHref: '/home/data-trust',
+      },
+    ];
+
+    // Block 4 — where you are in the cadence. The MSSP performance-year
+    // rhythm, anchored on the Function Pack's regulatory frame. Meridian sits
+    // in the capture window — coding and quality capture still open,
+    // settlement ahead.
+    const cadence: CadenceBlock = {
+      frameName: 'Medicare Shared Savings Program (MSSP)',
+      framing:
+        'The dominant Medicare ACO program — its performance-year rhythm sets ' +
+        'when coding, quality, and settlement work must land.',
+      stages: [
+        {
+          key: 'py_open',
+          label: 'Performance year — open',
+          demands:
+            'Care-gap closure and HCC coding run continuously; the population ' +
+            'baseline and risk model are validated against realised cost.',
+          isCurrent: false,
+        },
+        {
+          key: 'py_capture_window',
+          label: 'Capture window — coding & quality still open',
+          demands:
+            'The last window to lift RAF capture and close revenue-gating ' +
+            'quality measures before the year locks. This is where Meridian ' +
+            'sits: RAF at 58% and quality capture at 34% are both still moveable.',
+          isCurrent: true,
+        },
+        {
+          key: 'py_close_submission',
+          label: 'Year close & risk-adjustment submission',
+          demands:
+            'The performance year locks; the annual risk-adjustment submission ' +
+            'is filed. Coding accuracy is now fixed — RADV-defensible or not.',
+          isCurrent: false,
+        },
+        {
+          key: 'settlement',
+          label: 'Settlement & shared-savings reconciliation',
+          demands:
+            'The CMS benchmark-and-settlement report lands six to twelve ' +
+            'months after year close and decides savings vs. loss. The cash ' +
+            'result is lagged — the forecast must say when it actually arrives.',
+          isCurrent: false,
+        },
+      ],
+      currentDemand:
+        'Meridian is in the capture window — the last stretch where RAF ' +
+        'capture and quality-measure capture can still be moved before the ' +
+        'performance year locks. Both Meridian metrics that are off are ' +
+        'addressable from here; after year close they are fixed.',
+    };
+
+    return { headline, decisions, cadence };
+  },
+};
+
+// Register the Meridian binding eagerly on module load. The generic builder
+// consults the registry; Meridian is one tenant among several.
+registerDecisionHomeBinding(MERIDIAN_DECISION_HOME_BINDING);
 
 /**
  * Build the decision home for the Meridian × Population-Health / VBC binding —

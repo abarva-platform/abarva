@@ -33,6 +33,11 @@ import {
   MERIDIAN_FUNCTION_KEY,
   MERIDIAN_INDUSTRY_KEY,
 } from '@/lib/programs/expert-kernel/domain/meridian-vbc-bet-selection';
+// Side-effect import — registers every catalogued tenant binding (Meridian ×
+// VBC, Apex × customer care, First Capital × fraud) with the generic builder
+// before this route reads from it. Without this import the generic builder
+// would only see the Meridian binding it ships inline.
+import '@/lib/programs/expert-kernel/domain/tenant-bindings-bootstrap';
 import { industryKeyForCode } from '@/lib/programs/function-identity';
 import type { FunctionPackIndustryKey } from '@/lib/programs/expert-kernel/domain/function-pack-types';
 import { getActiveClientRow } from '@/lib/active-client';
@@ -46,20 +51,26 @@ export const dynamic = 'force-dynamic';
  * The documented per-industry "spine" default function key. The bet-selection
  * surface needs exactly one function to bind for a tenant whose Moves have not
  * (yet) classified a function key; this is the function that best represents
- * "which AI bet first" for the vertical:
+ * "which AI bet first" for the vertical AND the function for which the tenant
+ * has audited substrate registered with the binding registry:
  *
- *  - healthcare-provider → `population_health_value_based_care` — the VBC spine,
- *    the original reference binding.
- *  - retail              → `pricing_promotions` — the margin spine of retail.
- *  - financial-services  → `lending_credit_underwriting` — the credit spine of
- *    a diversified institution.
+ *  - healthcare-provider → `population_health_value_based_care` — the VBC
+ *    spine, Meridian × VBC reference binding.
+ *  - retail              → `customer_care` — Apex × customer-care binding,
+ *    grounded in Apex's KPI dictionary (NICE CXone + Zendesk + the Move P2
+ *    Genesys baseline) and the live Contact Center AI Routing Move.
+ *  - financial-services  → `fraud_financial_crime` — First Capital × fraud
+ *    binding, grounded in First Capital's KPI dictionary (fc-kpi-*), the OCC
+ *    MRA-2 findings, and the Fraud Detection Enhancement program baseline.
  *
- * Each key is a catalogued Function Pack (`function-pack-registry.ts`).
+ * Each key is a catalogued Function Pack (`function-pack-registry.ts`) AND a
+ * registered tenant binding (`tenant-bindings-bootstrap.ts`); the spine map
+ * and the substrate map agree by construction.
  */
 const INDUSTRY_SPINE_FUNCTION_KEY: Record<FunctionPackIndustryKey, string> = {
   'healthcare-provider': MERIDIAN_FUNCTION_KEY,
-  retail: 'pricing_promotions',
-  'financial-services': 'lending_credit_underwriting',
+  retail: 'customer_care',
+  'financial-services': 'fraud_financial_crime',
 };
 
 /**
