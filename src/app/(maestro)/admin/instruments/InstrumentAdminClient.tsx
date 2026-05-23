@@ -28,7 +28,7 @@ const EMPTY_DRAFT = {
     dataCleaningChecklist: Array.from({ length: 15 }, (_item, index) => `Cleaning step ${index + 1}`),
     missingDataSensitivity: { rule: 'Flag rows with missing owner or system of record.' },
   }, null, 2),
-  contentTemplateText: 'Client: {{clientId}}\nInstrument: {{instrumentName}}\nApplication hints: {{applicationColumnHints}}\nTeam hints: {{teamColumnHints}}',
+  contentTemplateText: 'Client: [client_id]\nInstrument: [instrument_name]\nApplication hints: [application_column_hints]\nTeam hints: [team_column_hints]',
   sampleSizeMathJson: JSON.stringify({ confidence: '95%', minimum_n: 30, method: 'stratified by team/app criticality' }, null, 2),
   biasControlsJson: JSON.stringify({ response: 'follow-up non-response', selection: 'stratify by app tier', social_desirability: 'anonymous capture' }, null, 2),
   privacyBlock: 'Privacy and consent: anonymization-at-source is required for person-level data before upload.',

@@ -109,21 +109,31 @@ function interpolateTemplate(
 ): string {
   const replacements: Record<string, string> = {
     clientId: hints.clientId,
+    client_id: hints.clientId,
     instrumentId: template.id,
+    instrument_id: template.id,
     instrumentSlug: template.slug,
+    instrument_slug: template.slug,
     instrumentName: template.name,
+    instrument_name: template.name,
     version: String(template.version),
     format,
     ownerRole: template.ownerRole,
+    owner_role: template.ownerRole,
     refreshCadence: template.refreshCadence,
+    refresh_cadence: template.refreshCadence,
     applicationColumnHints: hints.applicationColumns.join(', '),
+    application_column_hints: hints.applicationColumns.join(', '),
     teamColumnHints: hints.teamColumns.join(', '),
+    team_column_hints: hints.teamColumns.join(', '),
     sampleApplications: hints.sampleApplications.join('; '),
+    sample_applications: hints.sampleApplications.join('; '),
     sampleTeams: hints.sampleTeams.join('; '),
+    sample_teams: hints.sampleTeams.join('; '),
   };
-  return template.contentTemplateText.replace(/\{\{\s*([a-zA-Z0-9_]+)\s*\}\}/g, (_match, token: string) => {
-    return replacements[token] ?? '';
-  });
+  return template.contentTemplateText
+    .replace(/\{\{\s*([a-zA-Z0-9_]+)\s*\}\}/g, (_match, token: string) => replacements[token] ?? '')
+    .replace(/\[([a-zA-Z0-9_]+)\]/g, (_match, token: string) => replacements[token] ?? '');
 }
 
 function renderCsv(template: InstrumentTemplateRecord, hints: ClientColumnHints): string {

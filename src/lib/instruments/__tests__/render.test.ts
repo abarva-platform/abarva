@@ -29,7 +29,7 @@ const template: InstrumentTemplateRecord = {
     },
     required: ['app_id', 'repository_url'],
   },
-  contentTemplateText: 'Instrument {{instrumentSlug}} for {{clientId}} using {{applicationColumnHints}}.',
+  contentTemplateText: 'Instrument [instrument_slug] for [client_id] using [application_column_hints].',
   contentBlobRef: null,
   sampleSizeMath: { confidence: '95%', minimum_n: 30 },
   biasControls: { selection: 'stratified' },
