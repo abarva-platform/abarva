@@ -29,7 +29,7 @@ const RELATION_COLORS: Record<string, string> = {
 };
 
 function dollars(value: number | null): string {
-  if (value === null) return 'value TBD';
+  if (value === null) return 'No impact estimate';
   if (Math.abs(value) >= 1_000_000) return `$${(value / 1_000_000).toFixed(1)}M`;
   return `$${Math.round(value / 1_000)}K`;
 }
@@ -228,7 +228,7 @@ export function PortfolioDagClient({ clientName, initialDag }: Props) {
                       {node.templateName.length > 25 ? `${node.templateName.slice(0, 23)}...` : node.templateName}
                     </text>
                     <text x={node.x - 72} y={node.y + 26} style={{ font: '11px DM Sans, sans-serif', fill: selected?.id === node.id ? '#D1D5DB' : '#6B7280' }}>
-                      {node.sponsor ?? 'Sponsor TBD'} · {dollars(node.dollarImpactUsd)}
+                      {node.sponsor ?? 'Unassigned sponsor'} · {dollars(node.dollarImpactUsd)}
                     </text>
                   </g>
                 ))}
@@ -248,9 +248,9 @@ export function PortfolioDagClient({ clientName, initialDag }: Props) {
                 <dl style={{ display: 'grid', gap: 10, margin: 0 }}>
                   <Detail label="Type" value={selected.templateKind === 'SourceWorkflow' ? 'Source workflow instance' : 'Move instance'} />
                   <Detail label="Status" value={selected.status} />
-                  <Detail label="Sponsor" value={selected.sponsor ?? 'TBD'} />
+                  <Detail label="Sponsor" value={selected.sponsor ?? 'Unassigned sponsor'} />
                   <Detail label="Dollar impact" value={dollars(selected.dollarImpactUsd)} />
-                  <Detail label="Current gate" value={selected.currentGate ?? 'TBD'} />
+                  <Detail label="Current gate" value={selected.currentGate ?? 'Gate not started'} />
                 </dl>
                 {nodeHref(selected) ? (
                   <a href={nodeHref(selected) ?? '#'} style={buttonStyle}>Open program</a>
