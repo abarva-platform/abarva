@@ -18,3 +18,4 @@
 - 2026-05-23 05:25 CDT refresh - rebased `feat/p2-client-data` onto `origin/main` after P0 PR #2266; preserved P0 `lint:depth` script and P2 `seed:apex-it-productivity` script.
 - 2026-05-23 05:30 CDT COORDINATION NEEDED - acceptance asks for `npm run db:types`, but no `db:types` script or generated database types target exists in `package.json`/repo search. P2 only has approval for the seed script package change; leaving type generation blocked until coordinator approves a script/tooling target.
 - 2026-05-23 05:39 CDT validation - post-rebase `npm run lint` exits 0 with existing warnings only; `npm run build` exits 0. `npm run seed:apex-it-productivity` remains idempotent after the P0 refresh.
+- 2026-05-23 05:45 CDT PR opened - pushed `feat/p2-client-data` and opened PR #2268. Not merging/deploying: CI is not green; `Supabase Preview` is failing immediately while other checks remain pending.
