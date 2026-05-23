@@ -1,4 +1,4 @@
-import { getAnthropicClient } from '@/lib/agent/stream';
+import { getAuditedAnthropicClient } from '@/lib/agent/stream';
 import { buildAtlasSystemPrompt, ATLAS_PROMPT_VERSION } from '@/lib/atlas/prompt';
 import {
   query_cohort_benchmarks,
@@ -152,12 +152,36 @@ export async function runAtlasLlm(
     };
   }
 
-  const client = getAnthropicClient();
   const system = buildAtlasSystemPrompt(towerState.client.clientName);
   const towerContext = formatTowerCurrentStateForPrompt(towerState);
   const retrievedContext = formatRetrievedContext(retrievalContext);
   const valueGroundingContext = renderAtlasValueGrounding(valueGrounding);
   const payload = JSON.stringify(sanitizeForTenantPrompt(toolResults), null, 2);
+  const userText = [
+    `User question: ${message}`,
+    '',
+    'Answer from the current Tower state first. Then use retrieved corpus / industry context when present. For financial or value advice, keep projected, tracked, and verified value separate and ground recommendations in the canonical pattern confidence, KPIs, baseline requirements, and measurement method. If any baseline, measurement, or provenance field is missing, say so instead of quantifying an outcome. If the ask is strategic, explain the implications but route the actual choice to Sentinel or a Program charter.',
+    '',
+    towerContext,
+    '',
+    `ATLAS VALUE GROUNDING\n${valueGroundingContext}`,
+    '',
+    retrievedContext || 'RETRIEVED CONTEXT\nNo corpus, industry, or client vector chunks were retrieved for this turn.',
+    '',
+    CITATION_INSTRUCTION,
+    '',
+    'Raw tool context follows for exact IDs and auditability. Do not surface raw JSON unless asked.',
+    payload,
+  ].join('\n');
+  const { client } = await getAuditedAnthropicClient({
+    tenantId: ctx.clientId,
+    userId: ctx.userId ?? undefined,
+    workflow: 'atlas-llm',
+    model: 'claude-opus-4-7',
+    prompt: [system, userText].join('\n\n'),
+    dataClass: 'confidential',
+    metadata: { surface: 'tower' },
+  });
 
   let response: string;
   let modelName: string | null = 'claude-opus-4-7';
@@ -172,22 +196,7 @@ export async function runAtlasLlm(
           content: [
             {
               type: 'text',
-              text: [
-                `User question: ${message}`,
-                '',
-                'Answer from the current Tower state first. Then use retrieved corpus / industry context when present. For financial or value advice, keep projected, tracked, and verified value separate and ground recommendations in the canonical pattern confidence, KPIs, baseline requirements, and measurement method. If any baseline, measurement, or provenance field is missing, say so instead of quantifying an outcome. If the ask is strategic, explain the implications but route the actual choice to Sentinel or a Program charter.',
-                '',
-                towerContext,
-                '',
-                `ATLAS VALUE GROUNDING\n${valueGroundingContext}`,
-                '',
-                retrievedContext || 'RETRIEVED CONTEXT\nNo corpus, industry, or client vector chunks were retrieved for this turn.',
-                '',
-                CITATION_INSTRUCTION,
-                '',
-                'Raw tool context follows for exact IDs and auditability. Do not surface raw JSON unless asked.',
-                payload,
-              ].join('\n'),
+              text: userText,
             },
           ],
         },
