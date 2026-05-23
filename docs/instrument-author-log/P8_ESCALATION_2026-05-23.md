@@ -2,6 +2,8 @@
 
 Date: 2026-05-23 10:52 CDT
 
+Resolution update: 2026-05-23 11:00 CDT. Coordinator applied the missing P2/P3/P4/P5 runtime migrations from inside `ca-abarva-web-lab-eastus` at 10:56 CDT and verified `instrument_templates`, `instrument_template_versions`, `instrument_template_review_state`, `instrument_template_audit`, and `discovery_instruments` now exist. This note remains as historical blocker evidence; P8 authoring resumed content-only after the unblock.
+
 ## Summary
 
 P8 is blocked before content authoring. The target Azure Postgres runtime database reachable from the Container Apps environment does not have the P4 instrument schema or the P2 `discovery_instruments` assignment table.
