@@ -6,6 +6,7 @@
 - 2026-05-23 06:58 CDT OK PROCEED — coordinator approved the minimal `/programs/new?template=<slug>&version=<v>` and existing `/programs`/`/strategic-moves` read-path edits required by Packet 3 acceptance only. Keep changes tightly scoped to template selection/read integration; no unrelated Programs UI refactor or broader navigation changes.
 - 2026-05-23 07:05 CDT implementation pass — added P3 template migration/RLS, template registry + authoring depth checks, REST routes, admin authoring UI, instance creation with engagement shell/program module seeding, and narrow Programs read/origination integration under coordinator OK.
 - 2026-05-23 07:21 CDT validation — focused P3 ESLint clean, `npx tsc --noEmit --pretty false` clean, full `npm run lint` clean with existing warnings only, `npm run lint:depth -- --all` pass, `test:nav` pass, `test:behaviors` pass, `npm run build` pass. `db:migrate:dry` blocked by missing `DATABASE_URL`; live template smoke remains DB/auth gated.
+- 2026-05-23 07:24 CDT PR opened — pushed `feat/p3-template-data-layer` and opened PR #2274. Waiting for CI before merge; production deploy remains smoke-gated because this touches Programs.
 
 ## P0 - Depth Standard + lint enforcement - @codex - branch: feat/p0-depth-standard
 - 2026-05-23 04:45 START - read kit sections 0-5, confirmed P0 zone and branch, package.json is shared/read-only.
