@@ -71,10 +71,10 @@ export function substituteTenantContext(text: string, context: TenantRenderConte
     ? context.appPortfolio.join(', ')
     : 'No application portfolio rows available';
   return text
-    .replaceAll('{{client.name}}', context.clientName)
-    .replaceAll('{{client.id}}', context.clientId)
-    .replaceAll('{{client.app_portfolio}}', appPortfolio)
-    .replaceAll('{{move.name}}', context.moveName ?? 'Unassigned Move');
+    .replaceAll('[[client.name]]', context.clientName)
+    .replaceAll('[[client.id]]', context.clientId)
+    .replaceAll('[[client.app_portfolio]]', appPortfolio)
+    .replaceAll('[[move.name]]', context.moveName ?? 'Unassigned Move');
 }
 
 function assetBody(asset: WorkshopAssetRecord, context: TenantRenderContext): string {

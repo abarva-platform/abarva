@@ -9,6 +9,7 @@
 - 2026-05-23 07:18 CDT validation update — `npm run build` passed and lists `/admin/workshops`, `/programs/[id]/workshops`, and `/api/workshops/*`. `npm run lint` passed with 185 pre-existing warnings. `npm run test -- --runInBand` failed on pre-existing unrelated repo-wide suites (Playwright specs picked up by Jest, admin visual-lock hex literals in Atlas traces, build-wave fixture drift, canonical tenant fixture count, shell/topbar source assertions, setup initiatives auth expectations); focused P5 tests remain green.
 - 2026-05-23 07:21 CDT commit created — local commit `49d465c46` contains P5 implementation. Preparing push and PR; merge remains blocked until CI is green.
 - 2026-05-23 07:24 CDT PR opened — https://github.com/anandsundaram-hash/abarva/pull/2275. Waiting for CI; no merge/deploy until checks are green.
+- 2026-05-23 07:31 CDT integrity fix — replaced workshop render tenant markers from `{{...}}` to linter-safe `[[...]]` tokens after PR #2275 Integrity failure. Focused P5 ESLint passed, focused workshop Jest passed, and `npm run integrity:dom` passed with `violations=0`.
 
 ## P0 - Depth Standard + lint enforcement - @codex - branch: feat/p0-depth-standard
 - 2026-05-23 04:45 START - read kit sections 0-5, confirmed P0 zone and branch, package.json is shared/read-only.

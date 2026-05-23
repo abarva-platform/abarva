@@ -42,7 +42,7 @@ function sampleWorkshop(): WorkshopTemplateRecord {
         sequenceIndex: 0,
         name: 'Pre-read',
         format: 'markdown',
-        contentText: 'Pre-read: 15-30 min briefing with glossary and {{client.app_portfolio}} context.',
+        contentText: 'Pre-read: 15-30 min briefing with glossary and [[client.app_portfolio]] context.',
         contentBlobRef: null,
         schema: {},
         timeBoxMinutes: 20,
@@ -181,7 +181,7 @@ describe('workshop data layer', () => {
       moveName: 'AI-enabled IT productivity',
       appPortfolio: ['Order Hub', 'Store Labor Planner'],
     };
-    expect(substituteTenantContext('Apps: {{client.app_portfolio}}', context)).toContain('Order Hub');
+    expect(substituteTenantContext('Apps: [[client.app_portfolio]]', context)).toContain('Order Hub');
 
     const pdf = buildWorkshopPdfBytes(workshop, context);
     expect(pdf.subarray(0, 5).toString('utf-8')).toBe('%PDF-');
