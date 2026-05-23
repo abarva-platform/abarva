@@ -1,4 +1,7 @@
 export interface GuardrailContext {
+  tenantId?: string | null;
+  userId?: string | null;
+  turnId?: string | null;
   draftResponse: string;
   knownContext: {
     personName: string;

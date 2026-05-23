@@ -1,4 +1,4 @@
-import { getAnthropicClient } from './stream';
+import { getAuditedAnthropicClient } from './stream';
 import { assembleGuardrailPrompt, type GuardrailContext } from './prompts/guardrail';
 
 export interface GuardrailResult {
@@ -8,10 +8,24 @@ export interface GuardrailResult {
 
 export async function checkGuardrail(ctx: GuardrailContext): Promise<GuardrailResult> {
   try {
-    const response = await getAnthropicClient().messages.create({
+    if (!process.env.ANTHROPIC_API_KEY || !ctx.tenantId) {
+      return { violation: false, reason: '' };
+    }
+    const prompt = assembleGuardrailPrompt(ctx);
+    const { client } = await getAuditedAnthropicClient({
+      tenantId: ctx.tenantId,
+      userId: ctx.userId ?? undefined,
+      workflow: 'agent-guardrail-check',
+      model: 'claude-haiku-4-5-20251001',
+      prompt,
+      dataClass: 'confidential',
+      artifactId: ctx.turnId ?? undefined,
+      artifactType: 'turn',
+    });
+    const response = await client.messages.create({
       model: 'claude-haiku-4-5-20251001',
       max_tokens: 256,
-      messages: [{ role: 'user', content: assembleGuardrailPrompt(ctx) }],
+      messages: [{ role: 'user', content: prompt }],
     });
     const text = response.content
       .filter((b) => b.type === 'text')

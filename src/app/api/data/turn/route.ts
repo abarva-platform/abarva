@@ -85,6 +85,8 @@ export async function POST(req: NextRequest) {
           void (async () => {
             try {
               await updateMaestroProfile({
+                tenantId: body.clientId ?? null,
+                userId: maestro.id,
                 maestroPersonId: maestro.id,
                 turnId: `data-${Date.now()}`,
                 turnText: lastUserText,

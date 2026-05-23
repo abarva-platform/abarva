@@ -1,4 +1,7 @@
 export interface CaptureContext {
+  tenantId?: string | null;
+  userId?: string | null;
+  turnId?: string | null;
   personName: string;
   existingThreads: string[];
   userText: string;

@@ -1,4 +1,4 @@
-import { getAnthropicClient } from './stream';
+import { getAuditedAnthropicClient } from './stream';
 import { assembleCapturePrompt, type CaptureContext } from './prompts/relationship-capture';
 
 export interface CapturedNote {
@@ -15,8 +15,18 @@ const ALLOWED_CATEGORIES: CapturedNote['category'][] = [
 ];
 
 export async function captureRelationshipNotes(ctx: CaptureContext): Promise<CapturedNote[]> {
-  const client = getAnthropicClient();
+  if (!process.env.ANTHROPIC_API_KEY || !ctx.tenantId) return [];
   const prompt = assembleCapturePrompt(ctx);
+  const { client } = await getAuditedAnthropicClient({
+    tenantId: ctx.tenantId,
+    userId: ctx.userId ?? undefined,
+    workflow: 'agent-relationship-capture',
+    model: 'claude-haiku-4-5-20251001',
+    prompt,
+    dataClass: 'confidential',
+    artifactId: ctx.turnId ?? undefined,
+    artifactType: 'turn',
+  });
 
   const response = await client.messages.create({
     model: 'claude-haiku-4-5-20251001',
