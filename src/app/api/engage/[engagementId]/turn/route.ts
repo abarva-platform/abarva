@@ -279,7 +279,20 @@ export async function POST(
         // surface-relevant tools when they exist; today no tool opts in
         // to '/engagements/turn' so this resolves to an empty array.
         const engageTools = getRelevantTools('/engagements/turn').map(toAnthropicToolDefinition);
-        const gen = streamAgentTurn({ system, messages, tools: engageTools });
+        const gen = streamAgentTurn({
+          system,
+          messages,
+          tools: engageTools,
+          aiEgress: {
+            tenantId: engagementClientId,
+            userId: caller.id,
+            workflow: 'engagement-turn-stream',
+            dataClass: 'confidential',
+            artifactId: savedUserTurn.id,
+            artifactType: 'turn',
+            metadata: { engagementId: engagement.id, engagementGraphId: engagementId },
+          },
+        });
         for await (const delta of gen) {
           agentFullText += delta;
           controller.enqueue(encoder.encode(JSON.stringify({ type: 'delta', text: delta }) + '\n'));

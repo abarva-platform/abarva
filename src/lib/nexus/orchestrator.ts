@@ -309,6 +309,10 @@ export async function runPipeline(input: OrchestratorInput): Promise<Orchestrato
     format,
     capability: input.capability,
     sessionContextBlock: session ? renderSessionContextBlock(session) : undefined,
+    aiEgress: {
+      tenantId: input.tenancy.clientId,
+      userId: input.tenancy.userId,
+    },
     onTextDelta: input.onTextDelta,
   });
   const composeMs = Date.now() - t5;

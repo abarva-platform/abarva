@@ -6,8 +6,9 @@ import { parseChoicesFromText } from '@/lib/agent/parse-choices';
 import { assembleMaestroContextBlock } from '@/lib/agent/prompts/_shared/maestro-context';
 import { updateMaestroProfile } from '@/lib/agent/maestro-extractor';
 import { createPerson } from '@/lib/db/person';
-import { syncPersonToGraph } from '@/lib/knowledge/graph-access';
+import { syncPersonToGraph } from '@/lib/graph/mutations';
 import { getCurrentMaestro } from '@/lib/auth/maestro';
+import { getActiveClientRow } from '@/lib/active-client';
 import { clerkClient } from '@clerk/nextjs/server';
 import { logAudit } from '@/lib/audit/log';
 
@@ -21,7 +22,10 @@ export async function POST(req: NextRequest) {
     return new Response(JSON.stringify({ error: 'messages array required' }), { status: 400 });
   }
 
-  const maestro = await getCurrentMaestro();
+  const [maestro, activeClient] = await Promise.all([
+    getCurrentMaestro(),
+    getActiveClientRow().catch(() => null),
+  ]);
   const actorMaestro = maestro;
 
   const maestroContextBlock = maestro
@@ -38,7 +42,17 @@ export async function POST(req: NextRequest) {
     async start(controller) {
       try {
         let full = '';
-        for await (const delta of streamAgentTurn({ system, messages })) {
+        for await (const delta of streamAgentTurn({
+          system,
+          messages,
+          aiEgress: {
+            tenantId: activeClient?.key ?? activeClient?.id ?? null,
+            userId: maestro?.id ?? null,
+            workflow: 'identity-turn-stream',
+            dataClass: 'confidential',
+            metadata: { activeClientName: activeClient?.name ?? null },
+          },
+        })) {
           full += delta;
           controller.enqueue(encoder.encode(JSON.stringify({ type: 'delta', text: delta }) + '\n'));
         }

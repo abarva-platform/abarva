@@ -374,6 +374,15 @@ export async function POST(
     for await (const chunk of streamAgentTurn({
       system: 'You are a senior transformation consultant generating a complete consulting deliverable. Be specific, substantive, and comprehensive. Do not truncate.',
       messages: [{ role: 'user', content: generationPrompt }],
+      aiEgress: {
+        tenantId: ctx.clientKey ?? ctx.clientId,
+        userId: ctx.userId,
+        workflow: 'programs-deliverable-generate-stream',
+        dataClass: 'confidential',
+        artifactId: programId,
+        artifactType: 'program',
+        metadata: { targetPhase, deliverableTypeKey },
+      },
     })) {
       content += chunk;
     }
