@@ -51,6 +51,7 @@ import {
   valueBridge,
   paybackRangeCurve,
 } from './svg-charts';
+import { renderVerdictExplainerChip } from './verdict-explainer';
 
 // The bound deck has a fixed slide count — the cover plus the six sections.
 const SLIDE_COUNT = 7;
@@ -146,6 +147,7 @@ function renderExecutiveSummary(model: MoveEstimateModel): string {
     `<div class="board-card-tag">Estimate verdict</div>` +
     `<div class="board-verdict">${esc(s.verdictHeadline)}</div>` +
     `<p class="board-detail">${esc(s.verdictDetail)}</p>` +
+    renderVerdictExplainerChip(model.verdictExplainerChip) +
     `</div>` +
     heroExhibit(
       'Exhibit 1 — Estimate economics, from the kernel',

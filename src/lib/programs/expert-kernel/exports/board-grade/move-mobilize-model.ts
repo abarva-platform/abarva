@@ -37,6 +37,10 @@ import {
 import type { BusinessCaseSkeleton } from '../../business-case-compiler';
 import type { FunctionPackBinding } from '../../domain/function-pack-context-binding';
 import { resolveBoardGradeTenantLabel } from './tenant-label-resolver';
+import {
+  dominantVerdictCause,
+  type VerdictExplainerChip,
+} from './verdict-explainer';
 
 // ---------------------------------------------------------------------------
 // The go-decision verdict — the same union the Apex reference packet uses.
@@ -106,6 +110,12 @@ export interface MoveMobilizePacket {
   verdictRationale: string;
   /** True when the kernel cannot monetise the value. */
   monetisationBlocked: boolean;
+  /**
+   * Pilot rehearsal P2-3 — the explainer chip surfaced on a non-`go`
+   * go-verdict. `null` when the verdict is `go`. Pulled from the kernel's
+   * structured fields by `dominantVerdictCause`.
+   */
+  verdictExplainerChip: VerdictExplainerChip | null;
   /** The deck sections, page-ordered. */
   sections: MoveMobilizeSections;
   /** Navigation entries for the sticky TOC. */
@@ -334,6 +344,7 @@ export function buildMoveMobilizePacket(
     verdict,
     verdictRationale: skeleton.recommendationRationale,
     monetisationBlocked,
+    verdictExplainerChip: dominantVerdictCause(skeleton, binding, verdict),
     sections,
     toc: ordered.map((a) => ({
       page: a.page,

@@ -46,6 +46,10 @@ import type {
 } from '../../business-case-compiler';
 import type { FunctionPackBinding } from '../../domain/function-pack-context-binding';
 import { resolveBoardGradeTenantLabel } from './tenant-label-resolver';
+import {
+  dominantVerdictCause,
+  type VerdictExplainerChip,
+} from './verdict-explainer';
 
 // ---------------------------------------------------------------------------
 // Section anatomy — mirrors the Apex dossier's `DossierSectionAnatomy` so the
@@ -110,6 +114,12 @@ export interface MoveMasterDossier {
   verdict: MoveDossierVerdict;
   /** True when value rests on a seed-gap proxy — payback cannot be claimed. */
   monetisationBlocked: boolean;
+  /**
+   * Pilot rehearsal P2-3 — the explainer chip surfaced on a non-`fund`
+   * verdict. `null` when the verdict is `fund`. Pulled from the kernel's
+   * structured fields by `dominantVerdictCause`.
+   */
+  verdictExplainerChip: VerdictExplainerChip | null;
   /** The seven sections, page-ordered. */
   sections: MoveDossierSections;
   /** Navigation entries for the deck menu rail. */
@@ -488,6 +498,7 @@ export function buildMoveMasterDossier(
     generatedOn,
     verdict,
     monetisationBlocked,
+    verdictExplainerChip: dominantVerdictCause(skeleton, binding),
     sections,
     toc: ordered.map((a) => ({
       page: a.page,

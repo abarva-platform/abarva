@@ -48,6 +48,10 @@ import {
 } from '../../effort-estimator';
 import type { FunctionPackBinding } from '../../domain/function-pack-context-binding';
 import { resolveBoardGradeTenantLabel } from './tenant-label-resolver';
+import {
+  dominantVerdictCause,
+  type VerdictExplainerChip,
+} from './verdict-explainer';
 
 // ---------------------------------------------------------------------------
 // Section anatomy — mirrors the Apex Estimate Model's `EstimateSectionAnatomy`
@@ -109,6 +113,12 @@ export interface MoveEstimateModel {
   recommendation: 'fund' | 'shape' | 'kill';
   /** True when payback cannot be computed — a monetisation seed gap. */
   paybackBlocked: boolean;
+  /**
+   * Pilot rehearsal P2-3 — the explainer chip surfaced on a non-`fund`
+   * verdict. `null` when the verdict is `fund`. Pulled from the kernel's
+   * structured fields by `dominantVerdictCause`.
+   */
+  verdictExplainerChip: VerdictExplainerChip | null;
   /** The deck sections, page-ordered. */
   sections: MoveEstimateSections;
   /** Navigation entries for the deck menu rail. */
@@ -360,6 +370,7 @@ export function buildMoveEstimateModel(
     generatedOn,
     recommendation: skeleton.recommendation,
     paybackBlocked,
+    verdictExplainerChip: dominantVerdictCause(skeleton, binding),
     sections,
     toc: ordered.map((a) => ({
       page: a.page,

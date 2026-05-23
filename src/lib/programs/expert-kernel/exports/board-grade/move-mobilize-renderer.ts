@@ -46,6 +46,7 @@ import {
   gapClosureQueue,
   compactUsd,
 } from './svg-charts';
+import { renderVerdictExplainerChip } from './verdict-explainer';
 
 // The bound deck has a fixed slide count — the cover plus the 6 sections.
 const SLIDE_COUNT = 7;
@@ -166,6 +167,7 @@ function renderGoDecision(pack: MoveMobilizePacket): string {
     `<div class="board-card-tag">Go-decision · kernel verdict</div>` +
     `<div class="board-verdict">${esc(s.verdictHeadline)}</div>` +
     `<p class="board-detail">${esc(s.verdictDetail)}</p>` +
+    renderVerdictExplainerChip(pack.verdictExplainerChip) +
     `</div>` +
     heroExhibit(
       'Exhibit 1 — Mobilize readiness at a glance',

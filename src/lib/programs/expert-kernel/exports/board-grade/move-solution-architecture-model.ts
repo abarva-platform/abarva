@@ -52,6 +52,10 @@ import type {
 import type { FunctionPackBinding } from '../../domain/function-pack-context-binding';
 import type { BusinessCaseSkeleton } from '../../business-case-compiler';
 import { resolveBoardGradeTenantLabel } from './tenant-label-resolver';
+import {
+  dominantVerdictCause,
+  type VerdictExplainerChip,
+} from './verdict-explainer';
 
 // ---------------------------------------------------------------------------
 // Section anatomy — mirrors the Apex pack's `ArchSectionAnatomy` so the generic
@@ -115,6 +119,13 @@ export interface MoveSolutionArchitecture {
   verdict: MoveArchVerdict;
   /** A short verdict sub-line. */
   verdictSub: string;
+  /**
+   * Pilot rehearsal P2-3 — the explainer chip surfaced on the non-`shape`
+   * architecture verdict, when the kernel skeleton supplied the cause.
+   * `null` when no kernel skeleton is available (the deck still renders the
+   * verdict sub-line in that case).
+   */
+  verdictExplainerChip: VerdictExplainerChip | null;
   /** The named target-state architecture pattern. */
   targetPattern: MoveTargetPattern;
   /** The deck sections, page-ordered. */
@@ -424,6 +435,9 @@ export function buildMoveSolutionArchitecture(
     generatedOn,
     verdict,
     verdictSub,
+    verdictExplainerChip: skeleton
+      ? dominantVerdictCause(skeleton, binding, verdict)
+      : null,
     targetPattern,
     sections,
     toc: ordered.map((a) => ({
