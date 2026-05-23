@@ -45,6 +45,7 @@ import {
   openDecisionQueue,
   optionScorecard,
 } from './svg-architecture';
+import { renderVerdictExplainerChip } from './verdict-explainer';
 
 // The bound deck has a fixed slide count — the cover plus the 7 sections.
 const SLIDE_COUNT = 8;
@@ -146,6 +147,7 @@ function renderArchitectureDecision(
     `<div class="board-card-tag">Target-state architecture pattern</div>` +
     `<div class="board-verdict">${esc(tp.name)}</div>` +
     `<p class="board-detail">${esc(tp.oneLine)}</p>` +
+    renderVerdictExplainerChip(arch.verdictExplainerChip) +
     `</div>` +
     heroExhibit(
       'Exhibit 1 — Curated reference-pattern scorecard: selected against alternatives',

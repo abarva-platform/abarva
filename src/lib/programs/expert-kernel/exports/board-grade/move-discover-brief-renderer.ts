@@ -46,6 +46,7 @@ import {
   gapClosureQueue,
   opportunityRangeBar,
 } from './svg-charts';
+import { renderVerdictExplainerChip } from './verdict-explainer';
 
 // The bound deck has a fixed slide count — the cover plus the 6 sections.
 const SLIDE_COUNT = 7;
@@ -143,6 +144,7 @@ function renderDecisionSnapshot(brief: MoveDiscoverBrief): string {
     `<div class="board-card-tag">Discover verdict</div>` +
     `<div class="board-verdict">${esc(s.verdictHeadline)}</div>` +
     `<p class="board-detail">${esc(s.verdictDetail)}</p>` +
+    renderVerdictExplainerChip(brief.verdictExplainerChip) +
     `</div>` +
     heroExhibit(
       'Exhibit 1 — Discover decision at a glance',
@@ -454,6 +456,7 @@ function renderGoNoGoGate(brief: MoveDiscoverBrief): string {
     `<div class="board-card-tag">Go/no-go verdict</div>` +
     `<div class="board-verdict">${esc(s.verdictHeadline)}</div>` +
     `<p class="board-detail">${esc(s.rationale)}</p>` +
+    renderVerdictExplainerChip(brief.verdictExplainerChip) +
     `</div>` +
     heroExhibitHtml(
       'Exhibit 6 — Kill checklist: the kernel kill criteria',

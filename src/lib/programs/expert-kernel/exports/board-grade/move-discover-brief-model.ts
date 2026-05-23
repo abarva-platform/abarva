@@ -37,6 +37,10 @@ import { bindMoveFunctionPack } from '../../../move-function-binding';
 import type { BusinessCaseSkeleton } from '../../business-case-compiler';
 import type { FunctionPackBinding } from '../../domain/function-pack-context-binding';
 import { resolveBoardGradeTenantLabel } from './tenant-label-resolver';
+import {
+  dominantVerdictCause,
+  type VerdictExplainerChip,
+} from './verdict-explainer';
 
 // ---------------------------------------------------------------------------
 // Section anatomy — mirrors the Apex brief's `BriefSectionAnatomy` so the
@@ -100,6 +104,12 @@ export interface MoveDiscoverBrief {
   verdict: MoveBriefVerdict;
   /** True when the opportunity cannot be monetised — a monetisation seed gap. */
   monetisationBlocked: boolean;
+  /**
+   * Pilot rehearsal P2-3 — the explainer chip surfaced on a non-`go` verdict.
+   * `null` when the verdict is `go`. Pulled from the kernel's structured
+   * fields by `dominantVerdictCause`.
+   */
+  verdictExplainerChip: VerdictExplainerChip | null;
   /** The deck sections, page-ordered. */
   sections: MoveBriefSections;
   /** Navigation entries for the deck menu rail. */
@@ -348,6 +358,7 @@ export function buildMoveDiscoverBrief(
     generatedOn,
     verdict,
     monetisationBlocked,
+    verdictExplainerChip: dominantVerdictCause(skeleton, briefBinding, verdict),
     sections,
     toc: ordered.map((a) => ({
       page: a.page,

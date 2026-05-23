@@ -48,6 +48,7 @@ import {
   sensitivityTornado,
   gapClosureQueue,
 } from './svg-charts';
+import { renderVerdictExplainerChip } from './verdict-explainer';
 
 // The bound deck has a fixed slide count — the cover plus the 7 sections.
 const SLIDE_COUNT = 8;
@@ -159,6 +160,7 @@ function renderCharterAnswer(charter: MoveCharterSkeleton): string {
     `<div class="board-card-tag">Charter verdict</div>` +
     `<div class="board-verdict">${esc(s.verdictHeadline)}</div>` +
     `<p class="board-detail">${esc(s.verdictDetail)}</p>` +
+    renderVerdictExplainerChip(charter.verdictExplainerChip) +
     `</div>` +
     heroExhibit(
       'Exhibit 1 — Charter decision at a glance, from the kernel',

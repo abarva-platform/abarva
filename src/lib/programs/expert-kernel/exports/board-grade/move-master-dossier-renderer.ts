@@ -52,6 +52,7 @@ import {
   sensitivityTornado,
   compactUsd,
 } from './svg-charts';
+import { renderVerdictExplainerChip } from './verdict-explainer';
 
 // The bound deck has a fixed slide count — the cover plus the 7 sections.
 const SLIDE_COUNT = 8;
@@ -199,6 +200,7 @@ function renderExecutiveAnswer(dossier: MoveMasterDossier): string {
     `<div class="board-card-tag">Move verdict</div>` +
     `<div class="board-verdict">${esc(s.verdictHeadline)}</div>` +
     `<p class="board-detail">${esc(s.verdictDetail)}</p>` +
+    renderVerdictExplainerChip(dossier.verdictExplainerChip) +
     `</div>` +
     heroExhibit(
       'Exhibit 1 — The decision at a glance, from the kernel',
@@ -529,6 +531,7 @@ function renderRecommendation(dossier: MoveMasterDossier): string {
     `<div class="board-card-tag">Recommendation</div>` +
     `<div class="board-verdict">${esc(s.verdictHeadline)}</div>` +
     `<p class="board-detail">${esc(s.verdictDetail)}</p>` +
+    renderVerdictExplainerChip(dossier.verdictExplainerChip) +
     `</div>` +
     heroExhibitHtml(
       'Exhibit 7 — The conditions that gate a funding decision',

@@ -40,6 +40,7 @@ import {
   renderDeckDocument,
   slideShell,
 } from './deck-shell';
+import { renderVerdictExplainerChip } from './verdict-explainer';
 import {
   investmentWaterfall,
   costStack,
@@ -146,6 +147,7 @@ function renderBoardAnswer(pack: MoveCostedBusinessCasePack): string {
     `<div class="board-card-tag">Kernel verdict</div>` +
     `<div class="board-verdict">${esc(s.verdictHeadline)}</div>` +
     `<p class="board-detail">${esc(s.verdictDetail)}</p>` +
+    renderVerdictExplainerChip(pack.verdictExplainerChip) +
     `</div>` +
     heroExhibit(
       'Exhibit 1 — Headline economics, from the kernel',
@@ -495,6 +497,7 @@ function renderRecommendation(pack: MoveCostedBusinessCasePack): string {
     `<div class="board-card-tag">Recommendation</div>` +
     `<div class="board-verdict">${esc(s.verdictHeadline)}</div>` +
     `<p class="board-detail">${esc(s.verdictDetail)}</p>` +
+    renderVerdictExplainerChip(pack.verdictExplainerChip) +
     `</div>` +
     heroExhibitHtml(
       'Exhibit 7 — Kill triggers: when to stop or re-shape',
