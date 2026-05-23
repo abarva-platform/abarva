@@ -1,6 +1,6 @@
 import 'server-only';
 
-import { getAnthropicClient } from '@/lib/agent/stream';
+import { getAuditedAnthropicClient } from '@/lib/agent/stream';
 import { assembleGenomeQueryPrompt } from '@/lib/agent/prompts/genome-query';
 import { clientKeyToBrokerTenantKey } from '@/lib/agent/tools/intelligence/_shared';
 import { getGraphDriverIfEnabled } from '@/lib/graph/driver';
@@ -107,12 +107,23 @@ function isGlobalCatalogEnumerationRequest(query: string): boolean {
 
 async function translateGenomeQuery(
   query: string,
+  clientId: string,
+  clientKey: string,
   broker: ReturnType<typeof brokerSummary>,
 ): Promise<TranslatedGenomeQuery> {
-  const translation = await getAnthropicClient().messages.create({
+  const prompt = assembleGenomeQueryPrompt(query, broker);
+  const { client } = await getAuditedAnthropicClient({
+    tenantId: clientId,
+    workflow: 'intelligence-genome-query-translation',
+    model: 'claude-opus-4-7',
+    prompt,
+    dataClass: 'confidential',
+    metadata: { clientKey, brokerTenantKey: broker.tenantKey },
+  });
+  const translation = await client.messages.create({
     model: 'claude-opus-4-7',
     max_tokens: 1024,
-    messages: [{ role: 'user', content: assembleGenomeQueryPrompt(query, broker) }],
+    messages: [{ role: 'user', content: prompt }],
   });
   const text = translation.content
     .filter((b) => b.type === 'text')
@@ -163,7 +174,7 @@ export async function runBrokeredGenomeQuery(
 
   let translated: TranslatedGenomeQuery;
   try {
-    translated = await translateGenomeQuery(input.query, broker);
+    translated = await translateGenomeQuery(input.query, input.clientId, input.clientKey, broker);
   } catch (err) {
     console.error('[genome-query-translate]', err);
     return {

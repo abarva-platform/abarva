@@ -1,24 +1,13 @@
-import {
-  getAnthropicDirectClient,
-  type AnthropicDirectClient,
-} from '@/lib/integrations/ai-egress';
-
-let _client: AnthropicDirectClient | null = null;
-function getClient(): AnthropicDirectClient | null {
-  if (_client) return _client;
-  const key = process.env.ANTHROPIC_API_KEY;
-  if (!key) return null;
-  _client = getAnthropicDirectClient();
-  return _client;
-}
+import { getAuditedAnthropicClient } from '@/lib/agent/stream';
 
 export async function generateFollowups(args: {
   query: string;
   answer: string;
   entities: string[];
+  tenantId?: string | null;
+  userId?: string | null;
 }): Promise<string[]> {
-  const client = getClient();
-  if (!client) return [];
+  if (!process.env.ANTHROPIC_API_KEY || !args.tenantId) return [];
 
   const prompt = `Given the question and the answer, propose 3 follow-up questions the user is
 likely to ask next. Each should drill deeper OR pivot to an adjacent concern.
@@ -29,6 +18,14 @@ Answer: ${args.answer.slice(0, 2000)}
 Available next-step contexts: ${args.entities.join(', ')}`;
 
   try {
+    const { client } = await getAuditedAnthropicClient({
+      tenantId: args.tenantId,
+      userId: args.userId ?? undefined,
+      workflow: 'intelligence-ask-followups',
+      model: 'claude-haiku-4-5-20251001',
+      prompt,
+      dataClass: 'confidential',
+    });
     const res = await client.messages.create({
       model: 'claude-haiku-4-5-20251001',
       max_tokens: 256,

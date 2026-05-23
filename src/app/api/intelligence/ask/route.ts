@@ -34,6 +34,8 @@ async function handleAsk(payload: AskPayload) {
   }
 
   let userContextBlock = '';
+  let tenantId: string | null = null;
+  let userId: string | null = null;
   let tenantInventoryKey: string | null = null;
   let activePersonGraphNodeId: string | null = null;
   let activePersonDisplayName: string | null = null;
@@ -45,7 +47,9 @@ async function handleAsk(payload: AskPayload) {
     tenantInventoryKey = client?.key
       ? clientKeyToInventorySubstrateKey(client.key)
       : null;
+    tenantId = client?.id ?? null;
     if (person) {
+      userId = person.id;
       activePersonGraphNodeId = person.graph_node_id;
       activePersonDisplayName = person.name;
       userContextBlock = await assembleUserContextBlock({
@@ -64,6 +68,8 @@ async function handleAsk(payload: AskPayload) {
       try {
         for await (const event of askIntelligence(query, {
           userContextBlock,
+          tenantId,
+          userId,
           tenantInventoryKey,
           surfaceContext,
           activePersonGraphNodeId,
