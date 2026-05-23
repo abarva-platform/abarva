@@ -27,6 +27,8 @@ export interface AskEvent {
 
 export interface AskOptions {
   userContextBlock?: string;
+  tenantId?: string | null;
+  userId?: string | null;
   tenantInventoryKey?: string | null;
   surfaceContext?: AskSurfaceContext | null;
   activePersonGraphNodeId?: string | null;
@@ -73,7 +75,10 @@ export async function* askIntelligence(query: string, opts: AskOptions = {}): As
   }
 
   try {
-    const classification = await classifyIntent(trimmed);
+    const classification = await classifyIntent(trimmed, {
+      tenantId: opts.tenantId,
+      userId: opts.userId,
+    });
     yield { type: 'classified', classification };
 
     const surfaceContext = retrieveSurfaceContextSources(opts.surfaceContext, trimmed);
@@ -142,6 +147,8 @@ export async function* askIntelligence(query: string, opts: AskOptions = {}): As
       query: trimmed,
       sources,
       intent: classification.intent,
+      tenantId: opts.tenantId,
+      userId: opts.userId,
       userContextBlock: opts.userContextBlock,
       averageConfidence,
     })) {
@@ -153,6 +160,8 @@ export async function* askIntelligence(query: string, opts: AskOptions = {}): As
       query: trimmed,
       answer,
       entities: classification.entities,
+      tenantId: opts.tenantId,
+      userId: opts.userId,
     });
     yield { type: 'followups', followups };
     yield { type: 'done' };

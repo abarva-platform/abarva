@@ -1,20 +1,8 @@
-import {
-  getAnthropicDirectClient,
-  type AnthropicDirectClient,
-} from '@/lib/integrations/ai-egress';
+import { getAuditedAnthropicClient } from '@/lib/agent/stream';
 import type { AskSource, AskIntent } from './types';
 import { chunkAskText, sanitizeAskSynthesis } from './response-policy';
 
 export { chunkAskText, sanitizeAskSynthesis } from './response-policy';
-
-let _client: AnthropicDirectClient | null = null;
-function getClient(): AnthropicDirectClient | null {
-  if (_client) return _client;
-  const key = process.env.ANTHROPIC_API_KEY;
-  if (!key) return null;
-  _client = getAnthropicDirectClient();
-  return _client;
-}
 
 // SYSTEM_PROMPT · Sentinel Ask Intelligence · INT-VOICE.STRAT-2026-05-10d
 //
@@ -247,6 +235,8 @@ export async function* synthesizeStream(args: {
   query: string;
   sources: AskSource[];
   intent: AskIntent;
+  tenantId?: string | null;
+  userId?: string | null;
   userContextBlock?: string;
   /**
    * Average source confidence. The synthesizer used to lead with a "Limited
@@ -258,8 +248,7 @@ export async function* synthesizeStream(args: {
    */
   averageConfidence?: number;
 }): AsyncGenerator<string> {
-  const client = getClient();
-  if (!client) {
+  if (!process.env.ANTHROPIC_API_KEY || !args.tenantId) {
     yield 'Sentinel synthesis is not configured in this environment. Set ANTHROPIC_API_KEY to enable advisor-quality answers.';
     return;
   }
@@ -274,8 +263,18 @@ export async function* synthesizeStream(args: {
   const prompt = `SOURCES PROVIDED:\n${formatSourcesBlock(args.sources)}\n\nUSER QUESTION:\n${args.query}\n\nRespond with your synthesis.`;
 
   try {
+    const model = chooseModel(args.intent);
+    const { client } = await getAuditedAnthropicClient({
+      tenantId: args.tenantId,
+      userId: args.userId ?? undefined,
+      workflow: 'intelligence-ask-synthesis',
+      model,
+      prompt: [system, prompt].join('\n\n'),
+      dataClass: 'confidential',
+      metadata: { intent: args.intent },
+    });
     const stream = await client.messages.create({
-      model: chooseModel(args.intent),
+      model,
       // Bumped 400 → 600 alongside the 200-word budget for multi-item answer
       // shapes (3–6 use cases, 3–5 failure modes). 400 was hitting the cap
       // mid-list on the new MANDATORY ANSWER SHAPES.

@@ -1,7 +1,4 @@
-import {
-  getAnthropicDirectClient,
-  type AnthropicDirectClient,
-} from '@/lib/integrations/ai-egress';
+import { getAuditedAnthropicClient } from '@/lib/agent/stream';
 import type { IntentClassification, AskIntent } from './types';
 
 const CATEGORIES: AskIntent[] = [
@@ -35,25 +32,27 @@ Heuristics:
 
 Query: ${q}`;
 
-let _client: AnthropicDirectClient | null = null;
-function getClient(): AnthropicDirectClient | null {
-  if (_client) return _client;
-  const key = process.env.ANTHROPIC_API_KEY;
-  if (!key) return null;
-  _client = getAnthropicDirectClient();
-  return _client;
-}
-
-export async function classifyIntent(query: string): Promise<IntentClassification> {
-  const client = getClient();
-  if (!client) {
+export async function classifyIntent(
+  query: string,
+  aiContext: { tenantId?: string | null; userId?: string | null } = {},
+): Promise<IntentClassification> {
+  if (!process.env.ANTHROPIC_API_KEY || !aiContext.tenantId) {
     return { intent: 'general_synthesis', entities: extractEntitiesHeuristic(query), confidence: 40 };
   }
   try {
+    const prompt = CLASSIFIER_PROMPT(query);
+    const { client } = await getAuditedAnthropicClient({
+      tenantId: aiContext.tenantId,
+      userId: aiContext.userId ?? undefined,
+      workflow: 'intelligence-ask-intent-classifier',
+      model: 'claude-haiku-4-5-20251001',
+      prompt,
+      dataClass: 'confidential',
+    });
     const res = await client.messages.create({
       model: 'claude-haiku-4-5-20251001',
       max_tokens: 256,
-      messages: [{ role: 'user', content: CLASSIFIER_PROMPT(query) }],
+      messages: [{ role: 'user', content: prompt }],
     });
     const text = res.content.filter((b) => b.type === 'text').map((b) => (b as { text: string }).text).join('');
     const match = text.match(/\{[\s\S]*\}/);
