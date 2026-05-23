@@ -7,7 +7,8 @@ import {
   getEngagementByGraphId,
 } from '@/lib/db/engagement';
 import { createPerson, getAllPersons } from '@/lib/db/person';
-import { syncEngagementToGraph, syncPersonToGraph } from '@/lib/knowledge/graph-access';
+import { syncEngagementToGraph } from '@/lib/graph/engagement-sync';
+import { syncPersonToGraph } from '@/lib/graph/mutations';
 import { getCurrentMaestro } from '@/lib/auth/maestro';
 import { logAudit } from '@/lib/audit/log';
 import { assignTopic } from '@/lib/topics/db';
@@ -100,7 +101,17 @@ export async function POST(req: NextRequest) {
           activeClientName: activeClientDisplayName,
         });
         let full = '';
-        for await (const delta of streamAgentTurn({ system, messages: body.messages! })) {
+        for await (const delta of streamAgentTurn({
+          system,
+          messages: body.messages!,
+          aiEgress: {
+            tenantId: activeClient?.key ?? activeClient?.id ?? null,
+            userId: maestro?.id ?? null,
+            workflow: 'engagement-create-turn-stream',
+            dataClass: 'confidential',
+            metadata: { activeClientName: activeClientDisplayName },
+          },
+        })) {
           full += delta;
           controller.enqueue(encoder.encode(JSON.stringify({ type: 'delta', text: delta }) + '\n'));
         }

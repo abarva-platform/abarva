@@ -71,7 +71,17 @@ export async function POST(req: NextRequest) {
     async start(controller) {
       try {
         let full = '';
-        for await (const delta of streamAgentTurn({ system, messages })) {
+        for await (const delta of streamAgentTurn({
+          system,
+          messages,
+          aiEgress: {
+            tenantId: body.clientId ?? clientName,
+            userId: maestro?.id ?? null,
+            workflow: 'data-turn-stream',
+            dataClass: 'confidential',
+            metadata: { clientName, industry },
+          },
+        })) {
           full += delta;
           controller.enqueue(encoder.encode(JSON.stringify({ type: 'delta', text: delta }) + '\n'));
         }

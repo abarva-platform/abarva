@@ -60,6 +60,15 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ pro
       messages: [{ role: 'user', content: body.prompt }],
       model: plan.model,
       maxTokens: 4096,
+      aiEgress: {
+        tenantId: ctx.clientKey ?? ctx.clientId,
+        userId: ctx.userId,
+        workflow: 'programs-nexus-draft-stream',
+        dataClass: 'confidential',
+        artifactId: programId,
+        artifactType: 'program',
+        metadata: { moduleKey: body.moduleKey, deliverableTypeKey: body.deliverableTypeKey },
+      },
     })) {
       content += chunk;
     }

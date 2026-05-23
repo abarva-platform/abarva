@@ -123,6 +123,15 @@ export async function POST(
       messages: [{ role: 'user', content: body.prompt }],
       model: process.env.NEXUS_COMPOSER_MODEL ?? 'claude-opus-4-7',
       maxTokens: 4096,
+      aiEgress: {
+        tenantId: ctx.clientKey ?? ctx.clientId,
+        userId: ctx.userId,
+        workflow: 'programs-workspace-artifact-stream',
+        dataClass: 'confidential',
+        artifactId: moveId,
+        artifactType: 'program',
+        metadata: { phase, deliverableKey: body.deliverableKey },
+      },
     })) {
       content += chunk;
     }

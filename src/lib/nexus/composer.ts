@@ -20,6 +20,10 @@ export interface ComposerInput {
    * engagements without being asked.
    */
   sessionContextBlock?: string;
+  aiEgress: {
+    tenantId: string;
+    userId?: string | null;
+  };
   onTextDelta?: (delta: string) => void;
 }
 
@@ -87,6 +91,18 @@ export async function compose(input: ComposerInput): Promise<ComposerOutput> {
     messages: [{ role: 'user', content: context }],
     model: process.env.NEXUS_COMPOSER_MODEL ?? 'claude-opus-4-7',
     maxTokens: 4096,
+    aiEgress: {
+      tenantId: input.aiEgress.tenantId,
+      userId: input.aiEgress.userId ?? undefined,
+      workflow: 'nexus-composer-stream',
+      dataClass: 'confidential',
+      metadata: {
+        format: input.format,
+        mode: input.bundle.mode,
+        evidenceCount: input.bundle.evidence.length,
+        sourceCount: input.bundle.sources.length,
+      },
+    },
   });
   for await (const chunk of gen) {
     rawText += chunk;

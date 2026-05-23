@@ -40,6 +40,15 @@ export interface StreamTurnArgs {
   messages: Array<{ role: 'user' | 'assistant'; content: string }>;
   model?: string;
   maxTokens?: number;
+  aiEgress: {
+    tenantId?: string | null;
+    userId?: string | null;
+    workflow: string;
+    dataClass?: AiDataClass;
+    artifactId?: string | null;
+    artifactType?: string;
+    metadata?: Record<string, unknown>;
+  };
   /**
    * F0.4: Optional tool list passed through to the Anthropic stream.
    * When omitted the call shape is unchanged (text-only). For routes
@@ -49,10 +58,37 @@ export interface StreamTurnArgs {
   tools?: AnthropicTool[];
 }
 
+function buildStreamAuditPrompt(args: StreamTurnArgs): string {
+  const turns = args.messages
+    .map((message) => `${message.role.toUpperCase()}: ${message.content}`)
+    .join('\n\n');
+  return [args.system, turns].filter(Boolean).join('\n\n');
+}
+
 export async function* streamAgentTurn(args: StreamTurnArgs): AsyncGenerator<string, string, unknown> {
-  const client = getAnthropicClient();
+  const model = args.model ?? 'claude-opus-4-7';
+  const tenantId = args.aiEgress.tenantId?.trim();
+  if (!tenantId) {
+    throw new Error('AI egress denied: streamAgentTurn requires a tenantId');
+  }
+  const { client } = await getAuditedAnthropicClient({
+    tenantId,
+    userId: args.aiEgress.userId?.trim() || undefined,
+    workflow: args.aiEgress.workflow,
+    prompt: buildStreamAuditPrompt(args),
+    model,
+    dataClass: args.aiEgress.dataClass ?? 'confidential',
+    artifactId: args.aiEgress.artifactId ?? undefined,
+    artifactType: args.aiEgress.artifactType,
+    metadata: {
+      ...(args.aiEgress.metadata ?? {}),
+      messageCount: args.messages.length,
+      toolCount: args.tools?.length ?? 0,
+      streaming: true,
+    },
+  });
   const stream = await client.messages.stream({
-    model: args.model ?? 'claude-opus-4-7',
+    model,
     max_tokens: args.maxTokens ?? 1024,
     system: args.system,
     messages: args.messages,
