@@ -61,3 +61,43 @@ Resume P9 after the target Azure runtime DB has:
 
 Once present, P9 can load the 15 published workshop templates, verify Rubric W
 depth evidence, and run three client-context render-pack smokes.
+
+## 2026-05-23 11:00 CDT Resume Evidence
+
+Coordinator unblocked the runtime DB by applying the already-merged dependency
+migrations from inside `ca-abarva-web-lab-eastus`, including the P5 workshop
+migration `supabase/migrations/20260523104500_workshops_data_layer.sql`.
+
+After the unblock, P9 stayed content-only and loaded the workshop templates
+through the P5 workshop schema. No schema or runtime code was changed.
+
+Live authoring summary:
+
+```json
+{
+  "loaded": 15,
+  "published": 15,
+  "min_depth": 10,
+  "depth_pass": 15,
+  "min_asset_rows": 8,
+  "max_asset_rows": 8,
+  "rubric_field_pass": 15
+}
+```
+
+Rubric W representation:
+
+- P5 asset rows: `pre_read`, `facilitator_brief`, `agenda`, `worksheet`,
+  `decision_capture`, `pre_mortem`, `stakeholder_map`, `post_read`
+- P5 first-class fields: `hypothesis_to_test`,
+  `facilitator_tactics_jsonb`
+
+Render-pack smoke evidence with Apex Retail client-context substitution:
+
+| Workshop | Byte length | SHA-256 |
+|---|---:|---|
+| `wave-0-alignment-it-productivity` | 2923 | `256aa35cdc62cbb90e6f398638f71009be3ef8ba864d282e32920dc4a3e84cfe` |
+| `time-wardley-team-topologies-portfolio-diagnostic` | 3135 | `9722a49c13b34de27ee4927f959974315a5046e492c744df20205ecf3bd177bd` |
+| `quarterly-value-verification-ceremony` | 2630 | `67f21d4d14b95dfa2a33c2f7e56e86776b716ff2cf61f230a46fcc8f5448094e` |
+
+Final live state: P9 acceptance is complete in the target Azure runtime DB.
