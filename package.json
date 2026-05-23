@@ -33,6 +33,7 @@
     "seed:programs-demo": "npx tsx src/scripts/seed/programs-demo-apex.ts",
     "seed:programs-enhancement:plan": "npx tsx src/scripts/seed/programs-enhancement-plan.ts",
     "seed:programs-enhancement": "npx tsx src/scripts/seed/programs-enhancement-seed.ts",
+    "seed:apex-it-productivity": "npx tsx scripts/seed/apex-it-productivity.ts",
     "seed:source-renewals": "npx tsx src/scripts/seed/seed-apex-source-renewals.ts",
     "seed:source-renewals:meridian": "npx tsx src/scripts/seed/seed-meridian-source-renewals.ts",
     "seed:source-renewals:first-capital": "npx tsx src/scripts/seed/seed-first-capital-source-renewals.ts",
