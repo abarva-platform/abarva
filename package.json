@@ -108,6 +108,7 @@
     "db:verify:foundational-patterns": "npx tsx src/scripts/seed/verify-foundational-patterns.ts",
     "db:seed:briefings": "npx tsx src/scripts/seed/seed-briefings.ts",
     "db:verify:briefings": "npx tsx src/scripts/seed/verify-briefings.ts",
+    "corpus:import": "npx tsx scripts/corpus-import/migrate-worldview.ts",
     "intel:patterns:generate": "npx tsx src/scripts/intelligence/generate-pattern-manifest.ts",
     "intel:canonical-corpus:preview": "npx tsx src/scripts/intelligence/preview-canonical-corpus-backfill.ts",
     "intel:canonical-corpus:backfill:dry": "npx tsx src/scripts/intelligence/backfill-canonical-corpus.ts",

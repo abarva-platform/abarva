@@ -22,3 +22,21 @@
 - 2026-05-23 05:45 CDT PR opened - pushed `feat/p2-client-data` and opened PR #2268. Not merging/deploying: CI is not green; `Supabase Preview` is failing immediately while other checks remain pending.
 - 2026-05-23 05:55 CDT CI green - PR #2268 checks are clean: required GitHub Actions pass, both Vercel preview contexts pass, Supabase Preview is skipped. Preparing final status-only push before merge.
 - 2026-05-23 06:05 CDT DONE - P2 deliverables complete and PR #2268 is CI-green; proceeding through approved merge/deploy policy. `db:types` is recorded unavailable in repo tooling by coordinator decision.
+
+## P1 — Corpus data layer · @codex · branch: feat/p1-corpus-data-layer
+- 2026-05-23 04:48 START — read execution kit §0-§5, confirmed P1 ownership zone, clean worktree, beginning corpus/data-layer inventory
+- 2026-05-23 04:50 COORDINATION NEEDED — `package.json` is shared read-only in §5.3, but P1 acceptance requires `npm run corpus:import`; need OK for a one-line script mapping to `npx tsx scripts/corpus-import/migrate-worldview.ts`
+- 2026-05-23 05:01 OK PROCEED — coordinator approved the minimal `package.json` script addition for P1 only.
+- 2026-05-23 05:02 schema/services/routes/admin/import/Bicep drafted; `worldview/` moved to `.archive/worldview/` with archive warning; importer reads archived source for clean cutover
+- 2026-05-23 05:02 COORDINATION NEEDED — no-coexist addendum requires deleting/migrating cross-zone content consumers in `src/lib/knowledge/**`, `src/data/knowledge/**`, `src/data/*/benchmarks.ts`, `src/data/*/industry.ts`, `intelligence/**`, and function-pack code referenced by `docs/strategy/ABARVA-DOMAIN-FUNCTION-PACK-SPEC.md`; P1 has not edited these because they are outside the P1 ownership zone
+- 2026-05-23 05:02 COORDINATION NEEDED — addendum requests `/docs/corpus-author-log/legacy-cutover.md`, but `docs/corpus-author-log/**` is assigned to P6; need OK before creating that cross-zone audit artifact
+- 2026-05-23 05:49 OK PROCEED — coordinator approved `/docs/corpus-author-log/legacy-cutover.md` for P1 because the user addendum makes it part of the clean-cutover contract.
+- 2026-05-23 05:49 COORDINATION DECISION — do not broaden this P1 PR into all listed cross-zone consumer deletions. Ship P1 schema/import/archive/admin/retrieval plus legacy-cutover log; leave the addendum's mandatory residual content-as-code sweep for the follow-up sweep PR before P6 starts.
+- 2026-05-23 05:04 P0 merged on main as PR #2266 (`e75c356e17e6aceba37b10955fb44b97da4d97da`); rebasing P1 on origin/main and preserving `lint:depth` plus `corpus:import`
+- 2026-05-23 05:06 rebase complete on origin/main; package.json contains both `lint:depth` and `corpus:import`; corpus approve/publish now calls P0 `scoreArtifact('pattern', ...)` when no external depth endpoint is configured
+- 2026-05-23 05:53 P0 follow-up PR #2267 is merged on main (`b797d2d97344fde645ec51800ee0ffa5cc5db6b1`); rebasing P1 again before opening PR
+- 2026-05-23 06:18 validation pass after PR #2267 rebase: `npm run build`, `npm run lint` (0 errors, 185 pre-existing warnings), `npx tsc --noEmit --pretty false`, focused P1 ESLint, corpus migration Jest, `npm run corpus:import -- --dry-run`, `npm run lint:depth -- --all`, `test:nav`, and `test:behaviors` passed. `npm run db:migrate:dry` is gated by missing `DATABASE_URL`; P1 Playwright smoke skipped because live base URL/auth cookie are not configured locally.
+- 2026-05-23 06:18 known non-P1 validation issue: `npm run test -- admin7-visual-lock --runInBand` still fails on existing non-canonical hex literals in `src/app/(maestro)/admin/atlas/traces/page.tsx`; P1 corpus admin file has no raw hex literals and was not broadened into Atlas.
+- 2026-05-23 06:20 P2 merged on main as PR #2268 (`aea507ac7cd08e157d19c2987e39032369cd1348`); rebasing P1 onto latest origin/main before opening PR and preserving `lint:depth`, `seed:apex-it-productivity`, and `corpus:import`
+- 2026-05-23 06:22 PR opened: #2270. Production deploy remains gated on CI plus smoke with real DB/auth/search configuration.
+- 2026-05-23 06:33 rebase conflict from P2 status-only PR #2271 resolved in `EXECUTION_STATUS.md`; preserving P2 DONE and P1 history.
