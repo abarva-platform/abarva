@@ -1,9 +1,10 @@
-import { getAnthropicDirectClient } from "@/lib/integrations/ai-egress";
+import { preflightAnthropicDirectClient } from "@/lib/integrations/ai-egress";
 import { meridianHealth } from "@/data/meridian";
 import { getUserContextPromptBlock } from "@/lib/agent/userContext";
 import { getRelevantTools } from "@/lib/agent/tools/registry";
 import { runToolUseLoop } from "@/lib/agent/streaming/toolUseLoop";
 import { FOUR_LAYER_REASONING_INSTRUCTIONS } from "@/lib/intelligence/synthesis/instructionLayer";
+import { getActiveClientRow } from "@/lib/active-client";
 
 export async function POST(request: Request) {
   const { orgName, orgSize, vertical, challenge } = await request.json();
@@ -37,8 +38,6 @@ LEADERSHIP INSIGHTS:
 - CMIO: "${meridianHealth.interviewInsights.cmio}"
 `
     : "";
-
-  const anthropicClient = getAnthropicDirectClient();
 
   // F0.4: Meridian diagnostic surface has no actionable tools today —
   // it's a one-shot diagnostic generator. Routing through the loop
@@ -84,6 +83,22 @@ Industry: ${vertical}
 Primary Challenge: ${challenge}
 
 Provide a specific diagnosis using their actual data.`;
+  const activeClient = await getActiveClientRow();
+  if (!activeClient) {
+    return Response.json({ error: 'no_client', detail: 'No active client for AI egress policy.' }, { status: 403 });
+  }
+  const preflight = await preflightAnthropicDirectClient({
+    tenantId: activeClient.id,
+    workflow: 'chat-diagnostic',
+    model: 'claude-sonnet-4-6',
+    prompt: [systemPrompt, userMessage].join('\n\n'),
+    dataClass: isMeridian ? 'confidential' : 'internal',
+    metadata: { surface: '/diagnostic', orgName, vertical },
+  });
+  if (!preflight.ok) {
+    return Response.json({ error: 'ai_egress_denied', detail: preflight.reason, auditId: preflight.auditId }, { status: 403 });
+  }
+  const anthropicClient = preflight.client;
 
   const encoder = new TextEncoder();
   const readable = new ReadableStream({

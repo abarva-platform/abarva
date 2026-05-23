@@ -1,11 +1,9 @@
-import { getAnthropicDirectClient } from '@/lib/integrations/ai-egress'
+import { preflightAnthropicDirectClient } from '@/lib/integrations/ai-egress'
 import { getUserContextPromptBlock } from '@/lib/agent/userContext'
 import { getRelevantTools, toAnthropicToolDefinition } from '@/lib/agent/tools/registry'
 import { FOUR_LAYER_REASONING_INSTRUCTIONS } from '@/lib/intelligence/synthesis/instructionLayer'
 import { retrieveStrategyStepContext } from '@/lib/agent/strategy-step-context'
 import { requireTenancy, tenancyErrorResponse } from '@/lib/auth/tenancy'
-
-const client = getAnthropicDirectClient()
 
 // ── Guardrails ────────────────────────────────────────────────────────────────
 const VALID_OPTIONS = new Set(['A', 'B', 'C', 'D'])
@@ -180,6 +178,19 @@ export async function POST(request: Request) {
   // F0.2 Layer 0 — user context, composed AFTER role line and BEFORE RAG/task
   const userContextBlock = await getUserContextPromptBlock()
   const systemPrompt = buildSystemPrompt(ragContext, userContextBlock)
+  const preflight = await preflightAnthropicDirectClient({
+    tenantId: tenancy.clientId,
+    userId: tenancy.userId,
+    workflow: 'chat-step',
+    model: 'claude-sonnet-4-6',
+    prompt: [systemPrompt, prompt].join('\n\n'),
+    dataClass: 'confidential',
+    metadata: { stepId: body.stepId, clientId: body.clientId },
+  })
+  if (!preflight.ok) {
+    return Response.json({ error: 'ai_egress_denied', detail: preflight.reason, auditId: preflight.auditId }, { status: 403 })
+  }
+  const client = preflight.client
 
   // F0.4 — surface for tool registration. The structured-strategy
   // session emits options-as-text + a JSON `done` event; it has no
