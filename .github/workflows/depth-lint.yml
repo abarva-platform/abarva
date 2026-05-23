@@ -45,7 +45,7 @@ jobs:
         shell: bash
         run: |
           set +e
-          npm run lint:depth -- --all > depth-lint-results.json
+          npm run --silent lint:depth -- --all > depth-lint-results.json
           rc=$?
           cat depth-lint-results.json
           {
