@@ -1,5 +1,10 @@
 # Execution Status
 
+## P4 — Discovery instrument data layer · @codex · branch: feat/p4-instrument-data-layer
+- 2026-05-23 06:40 CDT START - read execution kit sections 0-5, confirmed P4 ownership zone and branch/worktree. `node_modules/next/dist/docs` is absent in this worktree, so local Next 16 docs could not be read before implementation.
+- 2026-05-23 07:10 CDT implementation pass - added P4 migration/RLS, Azure Blob instruments Bicep, instrument authoring/depth workflow, six-format render service, REST/download routes, admin authoring UI, per-Move discovery kit surface, and focused migration/render tests.
+- 2026-05-23 07:25 CDT validation - read Next 16 local docs from the P1 worktree dependency tree because this worktree had no local `node_modules`; created an untracked validation-only `node_modules` symlink. Focused P4 Jest passed (5 tests), focused P4 ESLint clean, full TypeScript clean, `npm run build` clean, `npm run lint:depth -- --all` clean, `test:nav` and `test:behaviors` clean, full `npm run lint` exits 0 with 185 pre-existing warnings. `npm run db:migrate:dry` blocked by missing `DATABASE_URL`.
+
 ## P0 - Depth Standard + lint enforcement - @codex - branch: feat/p0-depth-standard
 - 2026-05-23 04:45 START - read kit sections 0-5, confirmed P0 zone and branch, package.json is shared/read-only.
 - 2026-05-23 04:50 COORDINATION NEEDED - minimal package.json change requested: add `"lint:depth": "npx tsx scripts/lint/depth-lint.ts"` under `scripts` so `npm run lint:depth -- --all` works. Continuing with fallback `npx tsx scripts/lint/depth-lint.ts -- --all`.
