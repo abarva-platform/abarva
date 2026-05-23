@@ -1,4 +1,4 @@
-import { getAnthropicClient } from '@/lib/agent/stream';
+import { getAuditedAnthropicClient } from '@/lib/agent/stream';
 import type { ContentBlock, TextBlock } from '@/lib/integrations/ai-egress';
 import {
   getEngagementById,
@@ -348,12 +348,36 @@ function parseJsonFromResponse(text: string): Record<string, unknown> | null {
   }
 }
 
-async function runHaiku(prompt: string): Promise<Record<string, unknown> | null> {
-  const client = getAnthropicClient();
+async function loadEngagementClientId(engagementId: string): Promise<string | null> {
+  const { data, error } = await getServerSupabase()
+    .from('engagements')
+    .select('client_id')
+    .eq('id', engagementId)
+    .maybeSingle();
+  if (error) throw error;
+  return (data as { client_id?: string | null } | null)?.client_id ?? null;
+}
+
+async function runHaiku(args: {
+  prompt: string;
+  tenantId: string;
+  workflow: string;
+  artifactType: string;
+  metadata?: Record<string, unknown>;
+}): Promise<Record<string, unknown> | null> {
+  const { client } = await getAuditedAnthropicClient({
+    tenantId: args.tenantId,
+    workflow: args.workflow,
+    model: 'claude-haiku-4-5-20251001',
+    prompt: args.prompt,
+    dataClass: 'confidential',
+    artifactType: args.artifactType,
+    metadata: args.metadata,
+  });
   const response = await client.messages.create({
     model: 'claude-haiku-4-5-20251001',
     max_tokens: 2048,
-    messages: [{ role: 'user', content: prompt }],
+    messages: [{ role: 'user', content: args.prompt }],
   });
   const text = response.content
     .filter(isTextBlock)
@@ -368,13 +392,23 @@ async function generateLegacyDeliverableForPhase(engagementId: string, phase: nu
 
   const turns = await getRecentTurns(engagementId, 50);
   const turnHistory = turns.map((t) => `[${t.sender.toUpperCase()}]: ${t.text}`).join('\n\n');
+  const clientId = await loadEngagementClientId(engagementId);
+  if (!clientId) {
+    throw new Error(`cannot generate legacy deliverable · engagement ${engagementId} has no client id for AI egress policy`);
+  }
 
   let deliverable: Record<string, unknown> | null = null;
   let deliverableType: string;
 
   if (phase === 0) {
     deliverableType = 'engagement_charter';
-    deliverable = await runHaiku(assembleCharterPrompt(engagement.name, turnHistory));
+    deliverable = await runHaiku({
+      prompt: assembleCharterPrompt(engagement.name, turnHistory),
+      tenantId: clientId,
+      workflow: 'legacy-deliverable:engagement_charter',
+      artifactType: 'legacy_deliverable',
+      metadata: { engagementId, phase, deliverableType: 'engagement_charter' },
+    });
     if (deliverable) {
       await getServerSupabase()
         .from('engagements')
@@ -384,8 +418,8 @@ async function generateLegacyDeliverableForPhase(engagementId: string, phase: nu
   } else if (phase === 1) {
     deliverableType = 'diagnostic_charter';
     const activePatterns = await getActivePatterns(engagement.graph_node_id);
-    deliverable = await runHaiku(
-      assembleDiagnosticPrompt({
+    deliverable = await runHaiku({
+      prompt: assembleDiagnosticPrompt({
         engagementName: engagement.name,
         charterSummary: engagement.charter
           ? JSON.stringify(engagement.charter).slice(0, 500)
@@ -397,14 +431,18 @@ async function generateLegacyDeliverableForPhase(engagementId: string, phase: nu
           failure_rate: p.failure_rate,
         })),
       }),
-    );
+      tenantId: clientId,
+      workflow: 'legacy-deliverable:diagnostic_charter',
+      artifactType: 'legacy_deliverable',
+      metadata: { engagementId, phase, deliverableType: 'diagnostic_charter' },
+    });
   } else if (phase === 2) {
     deliverableType = 'solution_design';
     const deliverables = ((engagement.deliverables as Array<Record<string, unknown>> | null) ?? []);
     const diagnostic = deliverables.find((d) => d.type === 'diagnostic_charter');
     const peerDecisions = await getPeerDecisionsForPhase(engagement.graph_node_id, 2);
-    deliverable = await runHaiku(
-      assembleSolutionDesignPrompt({
+    deliverable = await runHaiku({
+      prompt: assembleSolutionDesignPrompt({
         engagementName: engagement.name,
         diagnosticSummary: diagnostic ? JSON.stringify(diagnostic.content).slice(0, 1500) : 'No diagnostic available',
         turnHistory,
@@ -414,7 +452,11 @@ async function generateLegacyDeliverableForPhase(engagementId: string, phase: nu
           avg_outcome_usd: d.avg_outcome_usd,
         })),
       }),
-    );
+      tenantId: clientId,
+      workflow: 'legacy-deliverable:solution_design',
+      artifactType: 'legacy_deliverable',
+      metadata: { engagementId, phase, deliverableType: 'solution_design' },
+    });
     // Also mirror baseline_metrics_proposed into engagements.baseline_metrics
     if (deliverable && Array.isArray((deliverable as { baseline_metrics_proposed?: unknown[] }).baseline_metrics_proposed)) {
       const items = (deliverable as { baseline_metrics_proposed: Array<Record<string, unknown>> }).baseline_metrics_proposed;
@@ -431,14 +473,18 @@ async function generateLegacyDeliverableForPhase(engagementId: string, phase: nu
       ? JSON.stringify((design.content as { roadmap?: unknown }).roadmap ?? []).slice(0, 1500)
       : 'No roadmap available';
     const decisions = (engagement.decisions as unknown[] | null) ?? [];
-    deliverable = await runHaiku(
-      assembleExecutionPrompt({
+    deliverable = await runHaiku({
+      prompt: assembleExecutionPrompt({
         engagementName: engagement.name,
         roadmap,
         turnHistory,
         decisionsCount: decisions.length,
       }),
-    );
+      tenantId: clientId,
+      workflow: 'legacy-deliverable:execution_dashboard',
+      artifactType: 'legacy_deliverable',
+      metadata: { engagementId, phase, deliverableType: 'execution_dashboard' },
+    });
   } else if (phase === 4) {
     deliverableType = 'outcome_verification';
     const baseline = (engagement.baseline_metrics as { items?: Array<Record<string, unknown>> } | null)?.items ?? [];
@@ -449,8 +495,8 @@ async function generateLegacyDeliverableForPhase(engagementId: string, phase: nu
       : 'No fee proposed yet';
     const startedAt = engagement.phase_0_started_at ? new Date(engagement.phase_0_started_at) : new Date(engagement.created_at);
     const durationDays = Math.max(1, Math.floor((Date.now() - startedAt.getTime()) / 86_400_000));
-    deliverable = await runHaiku(
-      assembleVerificationPrompt({
+    deliverable = await runHaiku({
+      prompt: assembleVerificationPrompt({
         engagementName: engagement.name,
         baselineItems: baseline.map((m) => `- ${m.metric}: ${m.baseline_value}`).join('\n') || '- none',
         actualItems: actual.map((m) => `- ${m.metric}: ${m.actual_value}`).join('\n') || '- none',
@@ -458,7 +504,11 @@ async function generateLegacyDeliverableForPhase(engagementId: string, phase: nu
         turnHistory,
         durationDays,
       }),
-    );
+      tenantId: clientId,
+      workflow: 'legacy-deliverable:outcome_verification',
+      artifactType: 'legacy_deliverable',
+      metadata: { engagementId, phase, deliverableType: 'outcome_verification' },
+    });
     // On successful generation, transition to completed + fee approved
     if (deliverable) {
       await getServerSupabase()

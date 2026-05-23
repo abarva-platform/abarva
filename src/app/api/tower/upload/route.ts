@@ -126,6 +126,8 @@ export async function POST(req: NextRequest) {
   // 4. Classify + parse synchronously (simpler for v1, UI waits for result)
   const sampleText = new TextDecoder('utf-8', { fatal: false }).decode(bytes.slice(0, 2048));
   const classifier = await classifyUploadContent({
+    tenantId: clientId,
+    userId: person.id,
     filename: file.name,
     mimeType: file.type || null,
     sample: sampleText,
