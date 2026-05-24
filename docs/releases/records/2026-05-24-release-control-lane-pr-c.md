@@ -6,7 +6,7 @@
 
 ## Status
 
-`candidate`
+`released`
 
 ## Plain-English Summary
 
@@ -46,7 +46,11 @@ Revert this PR to remove the Node 24 action-runtime opt-in. Rollback affects onl
 
 ## Audit Evidence
 
+- PR #2306: `https://github.com/anandsundaram-hash/abarva/pull/2306`.
+- Merge commit: `9b15f7f1f4e46886b212058aa122b24c38e9936b`.
+- CI checks passed on PR #2306.
 - Manual workflow dispatch run `26349013184` passed before this change and produced the Node 20 deprecation warning.
+- Manual workflow dispatch run `26349136937` passed after this change and confirmed actions were forced to Node 24.
 - Local validation output for `npm run release:check -- --base origin/main --head HEAD`.
 
 ## Known Gaps
