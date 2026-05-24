@@ -93,12 +93,14 @@ export async function createIsolatedPersonaContext(
 }
 
 export async function signInPersona(page: Page, persona: CrawlPersona, options: PersonaContextOptions): Promise<void> {
-  const password = process.env[`CRAWL_${envKey(persona.key)}_PASSWORD`]
-    ?? options.password
-    ?? process.env.CRAWL_DEMO_PASSWORD
-    ?? 'Demo2026!';
-  const email = process.env[`CRAWL_${envKey(persona.key)}_EMAIL`] ?? persona.email;
-  const code = process.env.CRAWL_DEMO_CODE ?? '424242';
+  const password = firstPresent(
+    process.env[`CRAWL_${envKey(persona.key)}_PASSWORD`],
+    options.password,
+    process.env.CRAWL_DEMO_PASSWORD,
+    'Demo2026!',
+  );
+  const email = firstPresent(process.env[`CRAWL_${envKey(persona.key)}_EMAIL`], persona.email);
+  const code = firstPresent(process.env.CRAWL_DEMO_CODE, '424242');
 
   await page.goto('/sign-in', { waitUntil: 'domcontentloaded', timeout: 45_000 });
   await page.getByPlaceholder(/name@company\.com|enter your email address/i).fill(email);
@@ -143,4 +145,10 @@ function persona(key: string, slug: string): CrawlPersona {
 
 function envKey(value: string): string {
   return value.toUpperCase().replace(/[^A-Z0-9]+/g, '_');
+}
+
+function firstPresent(...values: Array<string | undefined>): string {
+  const found = values.find((value) => value?.trim());
+  if (!found) throw new Error('Missing crawl credential');
+  return found.trim();
 }
