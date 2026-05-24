@@ -140,6 +140,27 @@ describe('createSourcingEvent scaffolding', () => {
     expect(String(insertedRow.event_code)).not.toContain('APEX-APEX');
   });
 
+  it('strips short tenant aliases before generating event codes', async () => {
+    const calls = setupMockSupabase({
+      id: 'evt-new-5',
+      client_key: 'meridian',
+      event_code: 'MERI-GENAI-WORKLOAD-2026',
+    });
+
+    await createSourcingEvent({
+      clientKey: 'meridian',
+      eventName: 'Meridian GenAI Workload Platform HIPAA RFP',
+      eventType: 'infrastructure',
+      triggerDescription: 'HIPAA platform sourcing event.',
+    });
+
+    const eventInsert = calls.find((c) => c.table === 'source_events')!;
+    const insertedRow = eventInsert.rows as Record<string, unknown>;
+    expect(insertedRow.event_code).toBe(`MERI-GENAI-WORKLOAD-PLATFORM-${new Date().getFullYear()}`);
+    expect(String(insertedRow.event_code)).not.toContain('MERI-MERIDIAN');
+    expect(String(insertedRow.event_code)).not.toContain('MERIDIAN-MERIDIAN');
+  });
+
   it('does not abort event creation if scaffolding fails', async () => {
     const single = jest.fn().mockResolvedValue({
       data: {
