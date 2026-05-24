@@ -98,11 +98,13 @@ export async function signInPersona(page: Page, persona: CrawlPersona, options: 
     ?? process.env.CRAWL_DEMO_PASSWORD
     ?? 'Demo2026!';
   const email = process.env[`CRAWL_${envKey(persona.key)}_EMAIL`] ?? persona.email;
+  const code = process.env.CRAWL_DEMO_CODE ?? '424242';
 
   await page.goto('/sign-in', { waitUntil: 'domcontentloaded', timeout: 45_000 });
-  await page.getByPlaceholder('Enter your email address').fill(email);
-  await page.getByPlaceholder('Enter your password').fill(password);
-  await page.getByRole('button', { name: /continue/i }).click();
+  await page.getByPlaceholder(/name@company\.com|enter your email address/i).fill(email);
+  await page.getByPlaceholder(/password from invite|enter your password/i).fill(password);
+  await page.getByPlaceholder(/6-digit code|access code/i).fill(code);
+  await page.getByRole('button', { name: /sign in|continue/i }).click();
   await page.waitForFunction(() => document.cookie.includes('__session='), null, { timeout: 20_000 });
   await page.context().addCookies([{
     name: 'abarva_active_client',
