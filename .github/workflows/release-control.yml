@@ -1,0 +1,29 @@
+name: Release Control Gate
+
+on:
+  pull_request:
+    branches:
+      - main
+    types: [opened, synchronize, reopened]
+
+  workflow_dispatch:
+
+jobs:
+  release-control:
+    name: Release record and impact note
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
+      - name: Check release record
+        run: npm run release:check -- --base origin/${{ github.base_ref }} --head HEAD

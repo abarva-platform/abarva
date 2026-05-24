@@ -39,15 +39,46 @@ npm run build
 
 <!-- Include route paths, screenshot IDs, or state "not applicable". -->
 
-## 8. Risks / Known Gaps
+## 8. Release Control
+
+<!-- Required for release-relevant PRs. Link the release record under docs/releases/records/. -->
+
+Release record:
+
+Release lane:
+- [ ] global-control-lane
+- [ ] client-data-lane
+- [ ] internal-admin
+- [ ] public-demo
+- [ ] experimental
+
+Layer impact:
+<!-- Explain what layer changed: app-control-lane, client-data-lane, corpus-knowledge-lane, ai-egress-lane, source-workflow-lane, tower-portfolio-lane, demo-public-lane, ops-release-lane. -->
+
+Client applicability:
+<!-- All clients, specific clients, internal only, public/demo only, feature-flagged, or not applicable. -->
+
+QA / validation summary:
+<!-- Plain-English explanation of what was verified, not only command names. -->
+
+Rollout plan:
+<!-- Merge/deploy/migration/feature-flag/manual runbook. -->
+
+Rollback plan:
+<!-- Fastest safe revert/rollback path. -->
+
+Audit evidence:
+<!-- PR, CI, deployment, smoke, eval, screenshots, logs, migration replay, release record. -->
+
+## 9. Risks / Known Gaps
 
 <!-- What remains risky, partial, or not verified? -->
 
-## 9. Rollback Notes
+## 10. Rollback Notes
 
 <!-- How should this PR be reverted safely if needed? Include migration rollback only if migrations were explicitly approved. -->
 
-## 10. Founder Verification Checklist
+## 11. Founder Verification Checklist
 
 - [ ] Scope matches the approved slice.
 - [ ] Allowed files only.

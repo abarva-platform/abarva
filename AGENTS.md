@@ -41,3 +41,16 @@ Optional (features degrade gracefully): `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `
 
 ### Node.js version
 The Dockerfile uses `node:24-bookworm-slim`. Use Node.js 24.x for consistency.
+
+## Release control discipline
+
+Every non-trivial change must be traceable as a controlled release candidate, not just as a PR. Before opening or updating a PR, classify the release lane, explain the layer impact, identify client applicability, record QA/validation, and describe rollout plus rollback.
+
+Use these lanes consistently:
+- `global-control-lane`: shared app/control-plane behavior for all clients unless feature-gated.
+- `client-data-lane`: client-scoped schema, RLS, seed, ingestion, retrieval, or private data-plane changes.
+- `internal-admin`: AbarVa-only operations/admin capability.
+- `public-demo`: public route, demo path, investor/founder-facing artifact.
+- `experimental`: feature-flagged or non-default capability.
+
+If a PR changes release-relevant files, add or update a release record under `docs/releases/records/` using `docs/releases/templates/release-record-template.md`. The record must explain, in plain English, what changed, what layer changed, which clients are affected, what QA/validation was done, how it rolls out, how it rolls back, and what audit evidence exists. `npm run release:check` enforces this in CI; do not bypass it without explicit Anand approval.
