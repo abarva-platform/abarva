@@ -467,7 +467,7 @@ export async function commitOnboardingSession(client: OnboardingSupabaseClient, 
       sourceFiles: sourceFileCount,
       chunks: chunkCount,
       runKey: RUN_KEY,
-      embeddingStatus: 'pending',
+      embeddingStatus: 'preserved_existing_or_pending_new',
     };
     const { error } = await client
       .from('onboarding_upload_sessions')
