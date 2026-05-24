@@ -132,6 +132,7 @@
     "qa:agent-quality:score": "npx tsx src/scripts/qa/agent-quality-live-runner.ts --mode score-file",
     "qa:agent-quality:live": "npx tsx src/scripts/qa/agent-quality-live-runner.ts --mode live",
     "export:soc2-evidence-pack": "npx tsx src/scripts/export-soc2-evidence-pack.ts",
+    "release:check": "node scripts/release-control/check-release-record.mjs",
     "assert:sensitive-upload-audit-immutability": "npx tsx src/scripts/assert-sensitive-upload-audit-immutability.ts",
     "integrity:seed-report": "REPORT_TIMESTAMP=ci-seed-integrity npx tsx src/scripts/seed/programs-enhancement-seed.ts --json >/tmp/abarva-seed-integrity.json && jest src/__tests__/integration/seed-integrity-report.test.ts",
     "test:findings-harness": "jest src/__tests__/integration/findings-harness.test.ts",
