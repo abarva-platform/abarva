@@ -6,7 +6,7 @@
 
 ## Status
 
-`candidate`
+`released`
 
 ## Plain-English Summary
 
@@ -48,7 +48,7 @@ This release adds a live admin page for the release ledger so Anand can review c
 
 ## Rollout Plan
 
-Merge this PR to `main`. Vercel production deployment follows the existing Git integration. The page becomes available at `/admin/releases`; old `/platform/admin/releases` bookmarks redirect to the canonical route.
+Released through PR #2313. Vercel production deployment followed the existing Git integration. The page is available at `/admin/releases`; old `/platform/admin/releases` bookmarks redirect to the canonical route.
 
 ## Rollback Plan
 
@@ -56,11 +56,13 @@ Revert this PR. No database migration, data mutation, or production release reco
 
 ## Audit Evidence
 
-- PR for this release-ledger page slice.
-- Local release-control validation output.
-- GitHub CI checks for the PR.
-- Vercel preview for `/admin/releases`.
+- PR #2313 merged to `main` at `2026-05-24T03:09:02Z`.
+- Merge commit: `74093052f890603704b4a67fdcf6aa8f34024e19`.
+- PR checks passed: ESLint, Production readiness gate, Release record and impact note, Routes and disclaimers, hygiene gate, Typecheck + reasoning-layer tests.
+- Vercel production contexts passed for `abarva` and `nexus` on merge commit `74093052f890603704b4a67fdcf6aa8f34024e19`.
+- Production smoke: unauthenticated `curl -I https://app.abarva.ai/admin/releases` returned `307` to `/sign-in?redirect=%2Fadmin%2Freleases`, confirming the protected admin route is reachable behind Clerk.
+- Production smoke: unauthenticated `curl -I https://app.abarva.ai/platform/admin/releases` returned `307` to `/sign-in?redirect=%2Fplatform%2Fadmin%2Freleases`, confirming the protected legacy path is reachable behind Clerk.
 
 ## Known Gaps
 
-This is a markdown-backed viewer. It refreshes for every recorded change present in the deployed repo, but it does not infer unrecorded code changes or live deployment state. A database-backed release ledger with write workflow, deployment telemetry, and signed audit export remains a future slice.
+This is a markdown-backed viewer. It refreshes for every recorded change present in the deployed repo, but it does not infer unrecorded code changes or live deployment state. A database-backed release ledger with write workflow, deployment telemetry, signed audit export, and authenticated visual smoke capture remains a future slice.
