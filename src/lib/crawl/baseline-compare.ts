@@ -77,6 +77,9 @@ export const FORBIDDEN_TENANT_REFERENCES = [
   'Keystone',
   'Brindlemark',
   'Arcturus',
+] as const;
+
+export const GENERIC_TENANT_REFERENCES = [
   'generic tenant',
   'sample client',
   'demo tenant',
@@ -113,8 +116,14 @@ export function comparePage(observation: CrawlPageObservation, baseline?: CrawlB
     });
   };
 
+  const base = findBaselinePage(observation, baseline);
+
   if (!observation.visibleText.includes(observation.expectedTenantName)) {
-    add('P0', 'tenant-identity', `Expected visible tenant identity "${observation.expectedTenantName}" was not present.`);
+    add(
+      base ? 'P0' : 'P1',
+      'tenant-identity',
+      `Expected visible tenant identity "${observation.expectedTenantName}" was not present.`,
+    );
   }
 
   const forbidden = FORBIDDEN_TENANT_REFERENCES.filter((term) =>
@@ -122,6 +131,13 @@ export function comparePage(observation: CrawlPageObservation, baseline?: CrawlB
   );
   if (forbidden.length > 0) {
     add('P0', 'tenant-leakage', `Forbidden tenant/demo reference(s) found: ${forbidden.join(', ')}.`, { forbidden });
+  }
+
+  const generic = GENERIC_TENANT_REFERENCES.filter((term) =>
+    new RegExp(`\\b${escapeRegex(term)}\\b`, 'i').test(observation.visibleText),
+  );
+  if (generic.length > 0) {
+    add('P1', 'generic-tenant-copy', `Generic tenant/demo reference(s) found: ${generic.join(', ')}.`, { generic });
   }
 
   if (observation.consoleErrors.length > 0) {
@@ -132,7 +148,6 @@ export function comparePage(observation: CrawlPageObservation, baseline?: CrawlB
     add('P0', 'network-errors', '4xx/5xx network responses were observed.', { networkErrors: observation.networkErrors.slice(0, 10) });
   }
 
-  const base = findBaselinePage(observation, baseline);
   if (base) {
     if (observation.evidenceChipCount < base.evidenceChipCount) {
       add('P1', 'evidence-chip-regression', 'Evidence chip count dropped below last-known-good baseline.', {

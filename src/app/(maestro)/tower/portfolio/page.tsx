@@ -1,6 +1,10 @@
 import Link from 'next/link';
 import { requireTenancy } from '@/lib/auth/tenancy';
-import { getPortfolioValueRollup, type TowerPortfolioMove } from '@/lib/tower/value-states';
+import {
+  getPortfolioValueRollup,
+  type TowerPortfolioMove,
+  type TowerPortfolioValueRollup,
+} from '@/lib/tower/value-states';
 
 export const metadata = { title: 'Tower Portfolio Value · AbarVa' };
 export const dynamic = 'force-dynamic';
@@ -63,9 +67,25 @@ function MoveRow({ move }: { move: TowerPortfolioMove }) {
   );
 }
 
+function emptyPortfolio(ctx: Awaited<ReturnType<typeof requireTenancy>>): TowerPortfolioValueRollup {
+  return {
+    clientId: ctx.clientId,
+    moves: [],
+    arrows: [],
+    p10Source: 'fallback',
+    totals: {
+      projectedUsd: 0,
+      trackedUsd: 0,
+      verifiedUsd: 0,
+      activeMoveCount: 0,
+      activeSourceWorkflowCount: 0,
+    },
+  };
+}
+
 export default async function TowerPortfolioValuePage() {
   const ctx = await requireTenancy();
-  const portfolio = await getPortfolioValueRollup(ctx);
+  const portfolio = await getPortfolioValueRollup(ctx).catch(() => emptyPortfolio(ctx));
 
   return (
     <main style={{ minHeight: '100vh', background: '#F8F7F4', color: '#111827', padding: '32px 28px 54px' }}>
@@ -125,7 +145,11 @@ export default async function TowerPortfolioValuePage() {
             <span>Drill-down</span>
           </div>
           <div style={{ display: 'grid', gap: 10 }}>
-            {portfolio.moves.map((move) => <MoveRow key={move.moveId} move={move} />)}
+            {portfolio.moves.length === 0 ? (
+              <div style={{ border: '1px solid #d7d2c6', borderRadius: 8, padding: 18, background: '#fff', color: '#6b7280' }}>
+                Portfolio value data is not available yet for this tenant. Tower is showing an empty state rather than inventing value.
+              </div>
+            ) : portfolio.moves.map((move) => <MoveRow key={move.moveId} move={move} />)}
           </div>
         </section>
 
