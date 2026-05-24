@@ -6,7 +6,7 @@
 
 ## Status
 
-`candidate`
+`released`
 
 ## Plain-English Summary
 
@@ -50,8 +50,11 @@ Revert this PR to remove the release-control gate, PR template additions, and po
 
 ## Audit Evidence
 
-- PR for this release-control slice.
-- CI run for `Release Control Gate`.
+- PR #2303: `https://github.com/anandsundaram-hash/abarva/pull/2303`.
+- Merge commit: `9931d878d4e97b1f2808392f3855593134547acd`.
+- CI run for `Release record and impact note` passed.
+- PR checks passed: ESLint, Fresh Postgres migration replay, New migration drift surface, Production readiness gate, Routes and disclaimers, Run hygiene gate, Score depth exemplars, Typecheck plus reasoning-layer tests, Validate agent quality corpus.
+- Vercel PR contexts passed for `abarva` and `nexus`.
 - Local validation output for `npm run release:check -- --base origin/main --head HEAD`.
 - The policy document: `docs/releases/RELEASE_CONTROL_POLICY.md`.
 
