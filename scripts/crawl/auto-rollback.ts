@@ -1,0 +1,57 @@
+import fs from 'node:fs/promises';
+import { spawn } from 'node:child_process';
+import { hasP0, type CrawlComparison } from '../../src/lib/crawl/baseline-compare';
+
+interface Payload {
+  comparison: CrawlComparison;
+}
+
+async function main() {
+  const args = process.argv.slice(2);
+  const file = valueAfter(args, '--result') ?? 'audit-artifacts/post-deploy-crawl/latest.json';
+  const execute = args.includes('--execute') || process.env.CRAWL_ENABLE_AUTO_ROLLBACK === 'true';
+  const target = valueAfter(args, '--target') ?? process.env.VERCEL_ROLLBACK_TARGET;
+  const payload = JSON.parse(await fs.readFile(file, 'utf8')) as Payload;
+
+  if (!hasP0(payload.comparison)) {
+    console.log('No P0 findings. Rollback skipped.');
+    return;
+  }
+
+  const alert = {
+    severity: 'P0',
+    action: execute ? 'rollback_execute' : 'rollback_dry_run',
+    target: target ?? 'previous-production',
+    findings: payload.comparison.findings.filter((finding) => finding.severity === 'P0'),
+  };
+  console.log(JSON.stringify(alert, null, 2));
+
+  if (!execute) {
+    console.log('Dry-run only. Set CRAWL_ENABLE_AUTO_ROLLBACK=true or pass --execute in the controlled deploy workflow.');
+    process.exitCode = 2;
+    return;
+  }
+
+  const rollbackArgs = ['rollback'];
+  if (target) rollbackArgs.push(target);
+  rollbackArgs.push('--yes');
+  await run('vercel', rollbackArgs);
+}
+
+function valueAfter(args: string[], flag: string): string | undefined {
+  const index = args.indexOf(flag);
+  return index >= 0 ? args[index + 1] : undefined;
+}
+
+function run(command: string, args: string[]): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const child = spawn(command, args, { stdio: 'inherit', env: process.env });
+    child.on('exit', (code) => code === 0 ? resolve() : reject(new Error(`${command} exited ${code}`)));
+    child.on('error', reject);
+  });
+}
+
+void main().catch((error) => {
+  console.error(error);
+  process.exit(1);
+});

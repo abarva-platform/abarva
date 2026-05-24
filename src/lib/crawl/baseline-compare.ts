@@ -1,0 +1,195 @@
+export type CrawlSeverity = 'P0' | 'P1' | 'P2';
+
+export interface CrawlFinding {
+  severity: CrawlSeverity;
+  tenantKey: string;
+  personaKey: string;
+  surfaceId: string;
+  dimension: string;
+  message: string;
+  evidence?: Record<string, unknown>;
+}
+
+export interface CrawlPageObservation {
+  tenantKey: string;
+  expectedTenantName: string;
+  personaKey: string;
+  surfaceId: string;
+  path: string;
+  url: string;
+  title?: string;
+  visibleText: string;
+  screenshotPath?: string;
+  htmlPath?: string;
+  consoleErrors: string[];
+  networkErrors: Array<{ url: string; status: number }>;
+  evidenceChipCount: number;
+  proofPointCount: number;
+  citationDensity: number;
+  hardQuestionExactFieldCitations: number;
+  watchlistTopEntries: string[];
+  visualCanon: {
+    backgroundOk: boolean;
+    headersOk: boolean;
+    bodyOk: boolean;
+    buttonsOk: boolean;
+  };
+  metrics?: {
+    lcpMs?: number;
+    cls?: number;
+  };
+}
+
+export interface CrawlRun {
+  runId: string;
+  baseUrl: string;
+  commitSha?: string;
+  createdAt: string;
+  observations: CrawlPageObservation[];
+}
+
+export interface CrawlBaselinePage {
+  tenantKey: string;
+  personaKey: string;
+  surfaceId: string;
+  evidenceChipCount: number;
+  proofPointCount: number;
+  citationDensity: number;
+  screenshotPath?: string;
+}
+
+export interface CrawlBaseline {
+  baselineId: string;
+  createdAt: string;
+  pages: CrawlBaselinePage[];
+}
+
+export interface CrawlComparison {
+  runId: string;
+  p0: number;
+  p1: number;
+  p2: number;
+  findings: CrawlFinding[];
+}
+
+export const FORBIDDEN_TENANT_REFERENCES = [
+  'Heliara',
+  'Keystone',
+  'Brindlemark',
+  'Arcturus',
+  'generic tenant',
+  'sample client',
+  'demo tenant',
+] as const;
+
+export const SEEDED_APEX_KILL_CANDIDATES = [
+  'Punchh',
+  'Mainframe Modernization',
+  'AS-400',
+] as const;
+
+export function compareCrawlToBaseline(run: CrawlRun, baseline?: CrawlBaseline | null): CrawlComparison {
+  const findings = run.observations.flatMap((observation) => comparePage(observation, baseline));
+  return {
+    runId: run.runId,
+    p0: findings.filter((finding) => finding.severity === 'P0').length,
+    p1: findings.filter((finding) => finding.severity === 'P1').length,
+    p2: findings.filter((finding) => finding.severity === 'P2').length,
+    findings,
+  };
+}
+
+export function comparePage(observation: CrawlPageObservation, baseline?: CrawlBaseline | null): CrawlFinding[] {
+  const findings: CrawlFinding[] = [];
+  const add = (severity: CrawlSeverity, dimension: string, message: string, evidence?: Record<string, unknown>) => {
+    findings.push({
+      severity,
+      tenantKey: observation.tenantKey,
+      personaKey: observation.personaKey,
+      surfaceId: observation.surfaceId,
+      dimension,
+      message,
+      evidence,
+    });
+  };
+
+  if (!observation.visibleText.includes(observation.expectedTenantName)) {
+    add('P0', 'tenant-identity', `Expected visible tenant identity "${observation.expectedTenantName}" was not present.`);
+  }
+
+  const forbidden = FORBIDDEN_TENANT_REFERENCES.filter((term) =>
+    new RegExp(`\\b${escapeRegex(term)}\\b`, 'i').test(observation.visibleText),
+  );
+  if (forbidden.length > 0) {
+    add('P0', 'tenant-leakage', `Forbidden tenant/demo reference(s) found: ${forbidden.join(', ')}.`, { forbidden });
+  }
+
+  if (observation.consoleErrors.length > 0) {
+    add('P0', 'console-errors', 'Console errors were emitted on the page.', { consoleErrors: observation.consoleErrors.slice(0, 10) });
+  }
+
+  if (observation.networkErrors.length > 0) {
+    add('P0', 'network-errors', '4xx/5xx network responses were observed.', { networkErrors: observation.networkErrors.slice(0, 10) });
+  }
+
+  const base = findBaselinePage(observation, baseline);
+  if (base) {
+    if (observation.evidenceChipCount < base.evidenceChipCount) {
+      add('P1', 'evidence-chip-regression', 'Evidence chip count dropped below last-known-good baseline.', {
+        baseline: base.evidenceChipCount,
+        actual: observation.evidenceChipCount,
+      });
+    }
+    if (observation.proofPointCount < base.proofPointCount) {
+      add('P1', 'proof-point-regression', 'Proof-point count dropped below last-known-good baseline.', {
+        baseline: base.proofPointCount,
+        actual: observation.proofPointCount,
+      });
+    }
+    if (observation.citationDensity + 0.0001 < base.citationDensity) {
+      add('P1', 'citation-density-regression', 'Citation density dropped below last-known-good baseline.', {
+        baseline: base.citationDensity,
+        actual: observation.citationDensity,
+      });
+    }
+  }
+
+  if (!observation.visualCanon.backgroundOk || !observation.visualCanon.headersOk || !observation.visualCanon.bodyOk || !observation.visualCanon.buttonsOk) {
+    add('P2', 'visual-canon', 'Visual canon check failed for one or more style dimensions.', observation.visualCanon);
+  }
+
+  if (/watchlist/i.test(observation.surfaceId)) {
+    const topText = observation.watchlistTopEntries.join(' ');
+    const missing = SEEDED_APEX_KILL_CANDIDATES.filter((candidate) => !topText.toLowerCase().includes(candidate.toLowerCase()));
+    if (observation.tenantKey === 'apexretail' && missing.length > 0) {
+      add('P1', 'watchlist-kill-candidates', 'Apex watchlist did not surface all seeded kill candidates in top entries.', { missing });
+    }
+  }
+
+  if (/ask|source.*event|agent|sentinel/i.test(observation.surfaceId) && observation.hardQuestionExactFieldCitations < 2) {
+    add('P1', 'hard-question-citation-depth', 'Hard-question answers did not cite at least two exact intake/evidence fields.');
+  }
+
+  return findings;
+}
+
+export function hasP0(comparison: CrawlComparison): boolean {
+  return comparison.p0 > 0;
+}
+
+export function summarizeComparison(comparison: CrawlComparison): string {
+  return `${comparison.p0} P0 · ${comparison.p1} P1 · ${comparison.p2} P2 findings`;
+}
+
+function findBaselinePage(observation: CrawlPageObservation, baseline?: CrawlBaseline | null): CrawlBaselinePage | null {
+  if (!baseline) return null;
+  return baseline.pages.find((page) =>
+    page.tenantKey === observation.tenantKey
+    && page.personaKey === observation.personaKey
+    && page.surfaceId === observation.surfaceId,
+  ) ?? null;
+}
+
+function escapeRegex(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}

@@ -1,0 +1,41 @@
+name: Post-deploy crawl
+
+on:
+  workflow_dispatch:
+    inputs:
+      base_url:
+        description: Production URL to crawl
+        default: https://app.abarva.ai
+        required: true
+  push:
+    branches: [main]
+
+jobs:
+  crawl:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      CRAWL_BASE_URL: ${{ inputs.base_url || vars.PRODUCTION_URL || 'https://app.abarva.ai' }}
+      CRAWL_DEMO_PASSWORD: ${{ secrets.CRAWL_DEMO_PASSWORD }}
+      CRAWL_ENABLE_AUTO_ROLLBACK: ${{ vars.CRAWL_ENABLE_AUTO_ROLLBACK || 'false' }}
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install chromium --with-deps
+      - name: Wait briefly for production alias
+        run: sleep 60
+      - name: Run authenticated crawl
+        run: npm run crawl:post-deploy -- --base-url "$CRAWL_BASE_URL" --output-dir audit-artifacts/post-deploy-crawl
+      - name: Upload crawl artifacts
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: post-deploy-crawl
+          path: audit-artifacts/post-deploy-crawl
+      - name: Roll back on P0 when explicitly enabled
+        if: failure()
+        run: npm run crawl:auto-rollback -- --result audit-artifacts/post-deploy-crawl/latest.json
