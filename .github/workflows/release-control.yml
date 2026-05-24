@@ -26,4 +26,6 @@ jobs:
           node-version: '24'
 
       - name: Check release record
-        run: npm run release:check -- --base origin/${{ github.base_ref }} --head HEAD
+        env:
+          BASE_REF: ${{ github.base_ref || 'main' }}
+        run: npm run release:check -- --base origin/${BASE_REF} --head HEAD
