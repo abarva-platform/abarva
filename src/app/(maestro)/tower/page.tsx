@@ -600,9 +600,26 @@ export default async function TowerPage({
       activeTab={activeTab}
       towerSubmenuSlot={<TowerMainSubmenuStrip activeTab={activeTab} />}
       reportDownloadSlot={
-        activeClient ? (
-          <TowerOutcomeReportDownload clientKey={activeClient.key} />
-        ) : undefined
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+          <Link
+            href="/admin/dossiers"
+            style={{
+              border: '1px solid #d0d5dd',
+              borderRadius: 6,
+              background: '#fff',
+              color: '#344054',
+              padding: '9px 11px',
+              fontSize: 12,
+              fontWeight: 800,
+              textDecoration: 'none',
+            }}
+          >
+            View in Dossier
+          </Link>
+          {activeClient ? (
+            <TowerOutcomeReportDownload clientKey={activeClient.key} />
+          ) : null}
+        </div>
       }
       towerHandoffSlot={
         <>

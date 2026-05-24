@@ -2,6 +2,7 @@
 
 import { useMemo, useState, type CSSProperties, type ReactNode } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import Link from 'next/link';
 import { AppShell } from '@/components/shell/AppShell';
 import { SourceSubNav } from '@/components/source/SourceSubNav';
 import { SourceOnboardingTour } from '@/components/source/onboarding/SourceOnboardingTour';
@@ -133,6 +134,7 @@ interface UniversalCanvasShellProps {
   /** Activity log entries (most recent first). */
   activityEntries: ActivityEntry[];
   tenantName: string;
+  decisionThreadId?: string | null;
 }
 
 /**
@@ -163,6 +165,7 @@ export function UniversalCanvasShell({
   templateByCode,
   activityEntries,
   tenantName,
+  decisionThreadId = null,
 }: UniversalCanvasShellProps) {
   const router = useRouter();
   const [thread, setThread] = useState<ChatMessage[]>([]);
@@ -609,6 +612,13 @@ export function UniversalCanvasShell({
     >
       <main data-testid="source-event-canvas" style={MAIN_STYLE}>
         <div style={CONTAINER_STYLE}>
+          {decisionThreadId ? (
+            <div style={DOSSIER_LINK_WRAP_STYLE}>
+              <Link href={`/dossier/${decisionThreadId}`} style={DOSSIER_LINK_STYLE}>
+                View in Dossier
+              </Link>
+            </div>
+          ) : null}
           <EventIdStrip event={event} />
           <EventStepRail
             eventId={event.id}
@@ -774,6 +784,26 @@ const MAIN_STYLE: CSSProperties = {
 const CONTAINER_STYLE: CSSProperties = {
   padding: `0 ${CANVAS.S_PAGE}px`,
   flexShrink: 0,
+};
+
+const DOSSIER_LINK_WRAP_STYLE: CSSProperties = {
+  display: 'flex',
+  justifyContent: 'flex-end',
+  paddingTop: 10,
+};
+
+const DOSSIER_LINK_STYLE: CSSProperties = {
+  border: `1px solid ${CANVAS.HAIRLINE}`,
+  borderRadius: 6,
+  background: '#fff',
+  color: CANVAS.INK,
+  fontFamily: CANVAS.MONO,
+  fontSize: 10,
+  fontWeight: 800,
+  letterSpacing: '0.08em',
+  padding: '7px 10px',
+  textDecoration: 'none',
+  textTransform: 'uppercase',
 };
 
 const SPLITTER_WRAPPER_STYLE: CSSProperties = {

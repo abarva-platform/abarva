@@ -27,6 +27,8 @@ interface Props {
   handoff?: MoveToSourceHandoffResult | null;
   /** A Source event already linked to this Move. */
   linkedSourceEvent?: LinkedSourceEvent | null;
+  /** Unified Decision Dossier id that binds this Move to upstream/downstream surfaces. */
+  decisionThreadId?: string | null;
 }
 
 function formatRole(role: string): string {
@@ -312,11 +314,13 @@ function RightPane({
   activeTab,
   handoff,
   linkedSourceEvent,
+  decisionThreadId,
 }: {
   move: StrategicMove;
   activeTab: Tab;
   handoff?: MoveToSourceHandoffResult | null;
   linkedSourceEvent?: LinkedSourceEvent | null;
+  decisionThreadId?: string | null;
 }) {
   const primary = primaryAction(move);
   const secondary = secondaryAction(move);
@@ -341,6 +345,11 @@ function RightPane({
             </div>
           </div>
           <div className={styles.detailHeadActions}>
+            {decisionThreadId && (
+              <Link className={styles.btnGhost} href={`/dossier/${decisionThreadId}`}>
+                View in Dossier
+              </Link>
+            )}
             {secondary && (
               <Link className={styles.btnGhost} href={secondary.href}>
                 {secondary.label}
@@ -378,6 +387,7 @@ export function StrategicMoveDetailView({
   activeTab = 'overview',
   handoff = null,
   linkedSourceEvent = null,
+  decisionThreadId = null,
 }: Props) {
   return (
     <div className={styles.page}>
@@ -398,6 +408,7 @@ export function StrategicMoveDetailView({
               activeTab={activeTab}
               handoff={handoff}
               linkedSourceEvent={linkedSourceEvent}
+              decisionThreadId={decisionThreadId}
             />
           }
         />
