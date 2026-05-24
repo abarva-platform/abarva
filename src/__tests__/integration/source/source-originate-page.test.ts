@@ -8,7 +8,7 @@ import { createElement } from 'react';
 import type { ReactNode } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { fireEvent, render, screen } from '@testing-library/react';
-import { SourceOriginatePage } from '@/components/source/SourceOriginatePage';
+import { SourceOriginatePage, buildEventName } from '@/components/source/SourceOriginatePage';
 
 jest.mock('next/navigation', () => ({
   usePathname: () => '/source/new',
@@ -157,6 +157,18 @@ describe('SourceOriginatePage (SRC-FLW-INTAKE)', () => {
   it('wires intake submission to persisted Source event creation', () => {
     expect(source).toContain("fetch('/api/v1/source/events'");
     expect(html).toContain('Open sourcing event');
+  });
+
+  it('names integration-fabric events as a clean commercial-control event instead of echoing the scope clause', () => {
+    expect(
+      buildEventName('Apex Retail', {
+        trigger: 'Renewal pressure is mounting across Adobe, Salesforce, and Accenture.',
+        decisionOwner: 'Carlos Rivera',
+        scopeBoundary: 'In scope: integration fabric platform and SI layer touching Five9, Sterling Commerce, Snowflake, Adobe, Salesforce, Accenture.',
+        valueTarget: 'Avoid duplicate integration build and prevent renewal lock-in; no base-case savings yet.',
+        baselineOwner: 'Nathan Kohl owns the commercial baseline.',
+      }),
+    ).toBe('Apex Retail Integration Fabric Commercial Control Event');
   });
 
   it('threads the tenant name into the page header without hard-coding Apex', () => {

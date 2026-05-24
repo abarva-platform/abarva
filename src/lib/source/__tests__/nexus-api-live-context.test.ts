@@ -122,4 +122,67 @@ describe('Source Nexus API live context', () => {
       ]),
     );
   });
+
+  it('answers RFI or BAFO pressure from persisted event intake without a generic unavailable-context response', () => {
+    const response = createSourceNexusApiStubResponse({
+      eventId: 'APX-INTEGRATION-FABRIC-2026',
+      prompt: 'Should I issue an RFI or invite Adobe, Salesforce, and Accenture to BAFO now given renewal pressure?',
+      tenant: {
+        tenantId: 'apex-retail',
+        tenantKey: 'apexretail',
+        tenantName: 'Apex Retail Group',
+        activeClientId: 'apexretail',
+        activeClientName: 'Apex Retail Group',
+      },
+      user: { id: 'user-apex-cio' },
+      userRole: 'cio',
+      liveEventDetail: sourceEventRowToDetail({
+        ...liveEventRow,
+        id: 'apx-integration-fabric-2026',
+        event_code: 'APX-INTEGRATION-FABRIC-2026',
+        event_name: 'Apex Retail Integration Fabric Commercial Control Event',
+        event_type: 'other',
+        estimated_value_usd: null,
+        trigger_description: 'Renewal pressure across Adobe, Salesforce, Accenture and integration platforms risks locking Apex into the wrong topology.',
+        scope_description: 'Scope boundary: customer-data integration contracts and hub-decision architecture. Value basis: no base-case savings until commercial baseline is confirmed. Baseline owner: Nathan Kohl.',
+        decision_owner: 'Carlos Rivera; Linda Mwangi owns buyer architecture boundary; Nathan Kohl owns commercial baseline.',
+      }, 'Apex Retail Group'),
+      liveTenantContext: {
+        ...liveTenantContext,
+        retrievedEvidence: [
+          {
+            id: 'source-event:trigger',
+            segmentId: 'sourcing_artifacts',
+            recordId: 'trigger',
+            title: 'Source intake trigger',
+            sourceType: 'contextChunk',
+            sourceDoc: 'source_events',
+            excerpt: 'Trigger: Renewal pressure across Adobe, Salesforce, Accenture and integration platforms risks locking Apex into the wrong topology.',
+            confidence: 'high',
+            score: 20,
+          },
+          {
+            id: 'source-event:scope',
+            segmentId: 'sourcing_artifacts',
+            recordId: 'scope',
+            title: 'Source intake scope',
+            sourceType: 'contextChunk',
+            sourceDoc: 'source_events',
+            excerpt: 'Scope boundary: customer-data integration contracts and hub-decision architecture. Value basis: no base-case savings until commercial baseline is confirmed. Baseline owner: Nathan Kohl.',
+            confidence: 'high',
+            score: 19,
+          },
+        ],
+        evidenceBasis: ['Persisted Source intake: trigger, scope, value basis, decision owner and gate criteria from source_events.'],
+        warnings: [],
+      },
+    });
+
+    expect(response.ok).toBe(true);
+    expect(response.sourceAnswer?.answerText).toMatch(/do not issue an RFI/i);
+    expect(response.sourceAnswer?.answerText).toMatch(/buyer architecture and commercial baseline first/i);
+    expect(response.sourceAnswer?.answerText).toMatch(/Nathan Kohl|commercial baseline|hub-decision architecture/i);
+    expect(response.sourceAnswer?.answerText).not.toMatch(/current-state inventory records are unavailable/i);
+    expect(response.sourceAnswer?.answerText).not.toMatch(/^Workflow gates contain blockers/m);
+  });
 });

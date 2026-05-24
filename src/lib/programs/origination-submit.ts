@@ -79,6 +79,14 @@ interface Classification {
   topicCode: string;
 }
 
+interface PersonRow {
+  id: string;
+  name: string;
+  role: string | null;
+  organization: string | null;
+  email: string | null;
+}
+
 function requiredText(value: unknown, field: string): string {
   if (typeof value !== 'string' || value.trim().length === 0) {
     throw new OriginationSubmitError('missing_field', `${field} is required`);
@@ -123,6 +131,36 @@ function personTokens(value: string): string[] {
     .split(' ')
     .filter((token) => token.length >= 2 && !stop.has(token))
     .slice(0, 4);
+}
+
+function scorePersonLabelMatch(row: PersonRow, label: string): number {
+  const labelNorm = normalizeLabel(label);
+  const nameNorm = normalizeLabel(row.name);
+  if (!nameNorm) return 0;
+
+  let score = 0;
+  const nameIndex = labelNorm.indexOf(nameNorm);
+  if (nameIndex >= 0) {
+    score += 100 + Math.max(0, 40 - nameIndex);
+    if (nameIndex === 0) score += 30;
+
+    const window = labelNorm.slice(
+      Math.max(0, nameIndex - 24),
+      Math.min(labelNorm.length, nameIndex + nameNorm.length + 48),
+    );
+    if (/\b(consulted|informed|not co sponsor|not sponsor|not accountable|not responsible)\b/.test(window)) {
+      score -= 120;
+    }
+  }
+
+  for (const token of nameNorm.split(' ').filter((part) => part.length >= 2)) {
+    if (labelNorm.includes(token)) score += 8;
+  }
+
+  const roleNorm = normalizeLabel(row.role ?? '');
+  if (roleNorm && labelNorm.includes(roleNorm)) score += 12;
+
+  return score;
 }
 
 function slugifyTopicCode(value: string): string {
@@ -194,14 +232,6 @@ async function resolvePersonByLabel(input: {
     throw new OriginationSubmitError('person_lookup_failed', error.message, 500);
   }
 
-  type PersonRow = {
-    id: string;
-    name: string;
-    role: string | null;
-    organization: string | null;
-    email: string | null;
-  };
-
   const labelNorm = normalizeLabel(input.label);
   const clientNorm = normalizeLabel(input.clientName);
   const rows = ((data ?? []) as PersonRow[]).filter((row) => {
@@ -210,7 +240,10 @@ async function resolvePersonByLabel(input: {
   });
 
   const exact = rows.find((row) => normalizeLabel(row.name) === labelNorm);
-  const contains = exact ?? rows.find((row) => labelNorm.includes(normalizeLabel(row.name)) || normalizeLabel(row.name).includes(labelNorm));
+  const scored = rows
+    .map((row) => ({ row, score: scorePersonLabelMatch(row, input.label) }))
+    .sort((a, b) => b.score - a.score);
+  const contains = exact ?? (scored[0]?.score > 0 ? scored[0].row : undefined);
   const currentUser = rows.find((row) => fallbackLooksLikeUuid && row.id === input.fallbackUserId);
   const picked = contains ?? currentUser ?? rows[0];
 

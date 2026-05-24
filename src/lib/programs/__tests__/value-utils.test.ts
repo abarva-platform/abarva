@@ -8,6 +8,13 @@ describe('value-utils', () => {
     });
   });
 
+  it('applies a shared suffix to compact narrative ranges', () => {
+    expect(parseUsdRangeFromText('Unvalidated planning range: $2–4.8M if the hub ambiguity is removed')).toEqual({
+      low: 2_000_000,
+      high: 4_800_000,
+    });
+  });
+
   it('parses single USD numbers as low/high equal', () => {
     expect(parseUsdRangeFromText('Target value $24M')).toEqual({
       low: 24_000_000,
@@ -26,4 +33,3 @@ describe('value-utils', () => {
     });
   });
 });
-
