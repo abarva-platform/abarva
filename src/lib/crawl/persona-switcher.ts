@@ -107,7 +107,15 @@ export async function signInPersona(page: Page, persona: CrawlPersona, options: 
   await page.getByPlaceholder(/password from invite|enter your password/i).fill(password);
   await page.getByPlaceholder(/6-digit code|access code/i).fill(code);
   await page.getByRole('button', { name: /sign in|continue/i }).click();
-  await page.waitForFunction(() => document.cookie.includes('__session='), null, { timeout: 20_000 });
+
+  const outcome = await waitForSignInOutcome(page);
+  if (outcome.type === 'alert') {
+    throw new Error(`crawl_sign_in_failed: ${outcome.text}`);
+  }
+  if (outcome.type === 'timeout') {
+    throw new Error('crawl_sign_in_timeout_no_redirect_or_session');
+  }
+
   await page.context().addCookies([{
     name: 'abarva_active_client',
     value: persona.tenantKey,
@@ -151,4 +159,35 @@ function firstPresent(...values: Array<string | undefined>): string {
   const found = values.find((value) => value?.trim());
   if (!found) throw new Error('Missing crawl credential');
   return found.trim();
+}
+
+async function waitForSignInOutcome(page: Page): Promise<
+  | { type: 'redirect' }
+  | { type: 'session' }
+  | { type: 'alert'; text: string }
+  | { type: 'timeout' }
+> {
+  const redirect = page.waitForURL((url) => !url.pathname.startsWith('/sign-in'), { timeout: 25_000 })
+    .then(() => ({ type: 'redirect' as const }))
+    .catch(() => null);
+  const session = page.waitForFunction(() => {
+    const clerk = (window as unknown as {
+      Clerk?: { session?: { id?: string } | null; user?: { id?: string } | null };
+    }).Clerk;
+    return Boolean(clerk?.session?.id || clerk?.user?.id || document.cookie.includes('__session='));
+  }, null, { timeout: 25_000 })
+    .then(() => ({ type: 'session' as const }))
+    .catch(() => null);
+  const alert = page.getByRole('alert').waitFor({ state: 'visible', timeout: 25_000 })
+    .then(async () => ({
+      type: 'alert' as const,
+      text: (await page.getByRole('alert').innerText().catch(() => 'unknown sign-in error')).trim(),
+    }))
+    .catch(() => null);
+  const timeout = new Promise<{ type: 'timeout' }>((resolve) => {
+    setTimeout(() => resolve({ type: 'timeout' }), 26_000);
+  });
+
+  const outcome = await Promise.race([redirect, session, alert, timeout]);
+  return outcome ?? { type: 'timeout' };
 }
