@@ -12,7 +12,12 @@
   "change_records": 180,
   "expected_sentinel_questions": 12,
   "seeded_scenarios": 7,
-  "min_pack_files": 54,
+  "min_pack_files": 140,
   "total_vendor_spend_usd": 198900000,
-  "active_commitments_usd": 98890000
+  "active_commitments_usd": 98890000,
+  "enterprise_context_source_files": 42,
+  "enterprise_context_chunks": 280,
+  "contract_pdfs": 30,
+  "charter_pdfs": 10,
+  "xlsx_files": 2
 }
