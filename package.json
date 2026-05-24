@@ -23,6 +23,7 @@
     "access:check:live": "node scripts/check-access.mjs --live",
     "release:check": "node scripts/release-check.mjs",
     "verify:apex-data-pack": "node scripts/verify/apex-data-pack-scaffold.mjs",
+    "verify:apex-sentinel-canonical": "node scripts/verify/apex-sentinel-canonical.mjs",
     "seed": "node scripts/seed-datasets.js",
     "seed:setup": "node scripts/seed-datasets.js --setup",
     "generate-demo-audio": "npx tsx scripts/generate-demo-audio.ts",
