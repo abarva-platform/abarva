@@ -18,6 +18,7 @@
 // Pure module: deterministic, no I/O.
 
 import {
+  type FunctionPack,
   type FunctionPackFunctionKey,
   type FunctionPackIndustryKey,
   type MovesPhaseArtifact,
@@ -131,6 +132,26 @@ export function bindFunctionPackForArtifact(
     };
   }
 
+  return bindResolvedFunctionPackForArtifact(
+    pack,
+    artifact,
+    tenantMetricKeys,
+  );
+}
+
+/**
+ * Bind an already-resolved Function Pack for a specific Moves phase artifact.
+ *
+ * The synchronous registry path still uses `bindFunctionPackForArtifact`.
+ * This helper is the async-runtime handoff point for DB-backed framework
+ * overlays: callers can load a Function Pack from `framework_overlays` and
+ * then bind it without falling back to the in-code registry.
+ */
+export function bindResolvedFunctionPackForArtifact(
+  pack: FunctionPack,
+  artifact: MovesPhaseArtifact,
+  tenantMetricKeys: readonly string[],
+): FunctionPackBinding {
   const outline = pack.deliverableOutlines.find((o) => o.artifact === artifact);
 
   // A pack with no outline for the requested artifact is a depth gap of that
@@ -143,7 +164,7 @@ export function bindFunctionPackForArtifact(
       expectedMetrics: pack.operatingMetrics,
       seedGaps: [],
       fallbackNote:
-        `The Function Pack for (${industryKey}, ${functionKey}) does not yet ` +
+        `The Function Pack for (${pack.industryKey}, ${pack.functionKey}) does not yet ` +
         `carry a deliverable outline for "${artifact}". The agent inherits ` +
         `the operating metrics but must structure this artifact by general ` +
         `reasoning — a known pack gap.`,

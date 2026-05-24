@@ -44,6 +44,10 @@ P1 establishes the new corpus data layer as the source of truth. This log record
 
 The import uses Azure PG-generated UUIDs for `corpus_patterns.id`; the deterministic idempotency key is `corpus_patterns.slug`. A successful non-dry-run import resolves each row by the slug listed above, writes version 1 snapshots, generates embeddings through `callModel`, and uploads the published records to Azure AI Search.
 
+## Legacy Clean Cutover Merge Train
+
+PR A (`codex/legacy-cutover-runtime`) adds `framework_overlays`, the DB-backed home for migrated Domain Function Packs and future executable framework overlays. This is not a coexistence mode: the new async resolver deliberately returns an unbound migration-gap result when a published DB overlay is missing, instead of falling back to in-code Function Pack content. The follow-on PR can now migrate Function Pack records into `framework_overlays` and delete the in-code pack files without blocking on the previous synchronous-runtime gap.
+
 ## Deferred Sweep Decisions
 
 Coordinator decision on 2026-05-23: do not broaden the P1 PR into every cross-zone deletion/rewrite. The files below remain content-as-code after P1 and must be migrated or deleted in the follow-up sweep PR before P6 starts.
