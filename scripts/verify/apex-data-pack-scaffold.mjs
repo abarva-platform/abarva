@@ -48,6 +48,29 @@ function countFiles(directory) {
   }, 0);
 }
 
+function assertFileMagic(relativePath, expectedPrefix, expectedSuffix) {
+  const buffer = fs.readFileSync(path.join(packRoot, relativePath));
+  const prefix = buffer.subarray(0, expectedPrefix.length).toString('utf8');
+  if (prefix !== expectedPrefix) {
+    fail(`${relativePath} expected prefix ${expectedPrefix}, found ${prefix}`);
+  }
+  if (expectedSuffix) {
+    const suffix = buffer.subarray(Math.max(0, buffer.length - expectedSuffix.length - 64)).toString('utf8');
+    if (!suffix.includes(expectedSuffix)) {
+      fail(`${relativePath} expected suffix marker ${expectedSuffix}`);
+    }
+  }
+}
+
+function assertDirectoryFileCount(relativePath, extension, expectedCount) {
+  const absolute = path.join(packRoot, relativePath);
+  const files = fs.readdirSync(absolute).filter((file) => file.endsWith(extension));
+  if (files.length !== expectedCount) {
+    fail(`${relativePath} expected ${expectedCount} ${extension} files, found ${files.length}`);
+  }
+  return files;
+}
+
 const apps = readCsv('01-portfolio/application-portfolio.csv');
 const appIds = new Set(apps.map((app) => app.app_id));
 
@@ -122,6 +145,48 @@ assertRowCount('10-incidents-changes/major-incidents-2025.csv', rowCounts.major_
 assertRowCount('10-incidents-changes/problem-records.csv', rowCounts.problem_records);
 assertRowCount('10-incidents-changes/change-management-feed-6mo.csv', rowCounts.change_records);
 
+const sourceFileRows = assertRowCount('13-context/enterprise-context-source-files.csv', rowCounts.enterprise_context_source_files);
+const sourceFileIds = new Set(sourceFileRows.map((row) => row.source_file_id));
+const sourceFiles = assertDirectoryFileCount('13-context/source-files', '.md', rowCounts.enterprise_context_source_files);
+if (sourceFiles.length !== sourceFileIds.size) {
+  fail('13-context/source-files count must match unique enterprise context source_file_id count');
+}
+
+const contractPdfs = assertDirectoryFileCount('04-vendors/contract-pdfs', '.pdf', rowCounts.contract_pdfs);
+const charterPdfs = assertDirectoryFileCount('09-charters/charter-pdfs', '.pdf', rowCounts.charter_pdfs);
+for (const file of [...contractPdfs.slice(0, 3), ...charterPdfs.slice(0, 3)]) {
+  const relativePath = contractPdfs.includes(file)
+    ? `04-vendors/contract-pdfs/${file}`
+    : `09-charters/charter-pdfs/${file}`;
+  assertFileMagic(relativePath, '%PDF', '%%EOF');
+}
+assertFileMagic('02-financial/financial-workbook.xlsx', 'PK');
+assertFileMagic('02-financial/initiative-commitments.xlsx', 'PK');
+
+const corpusLines = fs.readFileSync(path.join(packRoot, '13-context/client-data-corpus.jsonl'), 'utf8').trim().split(/\r?\n/);
+if (corpusLines.length !== rowCounts.enterprise_context_chunks) {
+  fail(`client-data-corpus.jsonl expected ${rowCounts.enterprise_context_chunks} chunks, found ${corpusLines.length}`);
+}
+for (const [index, line] of corpusLines.entries()) {
+  const chunk = JSON.parse(line);
+  if (!chunk.chunk_id || !chunk.source_file_id || !chunk.content || !chunk.evidence_pointer) {
+    fail(`client-data-corpus.jsonl line ${index + 1} is missing required fields`);
+  }
+  if (!sourceFileIds.has(chunk.source_file_id)) {
+    fail(`client-data-corpus.jsonl line ${index + 1} references unknown source_file_id ${chunk.source_file_id}`);
+  }
+}
+
+const corpusLoad = readJson('99-verification/expected-corpus-load.json');
+if (
+  corpusLoad.enterprise_context_source_files !== rowCounts.enterprise_context_source_files ||
+  corpusLoad.enterprise_context_chunks !== rowCounts.enterprise_context_chunks ||
+  corpusLoad.contract_pdfs !== rowCounts.contract_pdfs ||
+  corpusLoad.charter_pdfs !== rowCounts.charter_pdfs
+) {
+  fail('expected-corpus-load.json does not match expected-row-counts.json');
+}
+
 const packFileCount = countFiles(packRoot);
 if (packFileCount < rowCounts.min_pack_files) {
   fail(`Expected at least ${rowCounts.min_pack_files} pack files, found ${packFileCount}`);
@@ -170,6 +235,10 @@ console.log(JSON.stringify({
   vendorSpendUsd: vendorSpend,
   activeInitiatives: activeInitiatives.length,
   activeCommitmentsUsd: activeCommitments,
+  sourceFiles: sourceFileRows.length,
+  corpusChunks: corpusLines.length,
+  contractPdfs: contractPdfs.length,
+  charterPdfs: charterPdfs.length,
   sentinelQuestions: expectedAnswers.questions.length,
   seededScenarioIds: [...requiredScenarioMarkers.keys()],
 }, null, 2));

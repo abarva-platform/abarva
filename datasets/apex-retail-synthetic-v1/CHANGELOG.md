@@ -1,5 +1,12 @@
 # Changelog
 
+## v1.2.0
+
+- Added valid Excel workbooks for financial consolidation and initiative commitments.
+- Added 30 synthetic contract PDFs and 10 synthetic charter PDFs with the Apex fixture watermark.
+- Added 42 Discovery Kit source-file registry rows and 280 tenant-grounded corpus chunks.
+- Added corpus/document verification contracts for future onboarding and retrieval tests.
+
 ## v1.1.0
 
 - Added core structured asset families: financial, vendor, org, DORA, DevEx, AI tooling, sponsor signal, incidents/changes, regulatory, benchmarks, and Watchlist/financial verification targets.
