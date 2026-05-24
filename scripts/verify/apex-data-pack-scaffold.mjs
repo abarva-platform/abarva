@@ -32,6 +32,22 @@ function fail(message) {
   throw new Error(message);
 }
 
+function assertRowCount(relativePath, expected) {
+  const rows = readCsv(relativePath);
+  if (rows.length !== expected) {
+    fail(`${relativePath} expected ${expected} rows, found ${rows.length}`);
+  }
+  return rows;
+}
+
+function countFiles(directory) {
+  return fs.readdirSync(directory, { withFileTypes: true }).reduce((count, entry) => {
+    const absolutePath = path.join(directory, entry.name);
+    if (entry.isDirectory()) return count + countFiles(absolutePath);
+    return entry.isFile() ? count + 1 : count;
+  }, 0);
+}
+
 const apps = readCsv('01-portfolio/application-portfolio.csv');
 const appIds = new Set(apps.map((app) => app.app_id));
 
@@ -96,10 +112,64 @@ if (rowCounts.application_portfolio !== 120 || rowCounts.integration_edges !== 3
   fail('expected-row-counts.json does not match scaffold counts');
 }
 
+const vendorContracts = assertRowCount('04-vendors/vendor-contracts.csv', rowCounts.vendor_contracts);
+assertRowCount('04-vendors/infra-ms-contracts.csv', rowCounts.infra_ms_contracts);
+const activeInitiatives = assertRowCount('01-portfolio/initiatives-active.csv', rowCounts.initiatives_active);
+assertRowCount('01-portfolio/initiatives-closed.csv', rowCounts.initiatives_closed);
+assertRowCount('03-org/roles-inventory.csv', rowCounts.roles_inventory);
+assertRowCount('05-dora/dora-baseline-consolidated.csv', rowCounts.dora_baselines);
+assertRowCount('10-incidents-changes/major-incidents-2025.csv', rowCounts.major_incidents);
+assertRowCount('10-incidents-changes/problem-records.csv', rowCounts.problem_records);
+assertRowCount('10-incidents-changes/change-management-feed-6mo.csv', rowCounts.change_records);
+
+const packFileCount = countFiles(packRoot);
+if (packFileCount < rowCounts.min_pack_files) {
+  fail(`Expected at least ${rowCounts.min_pack_files} pack files, found ${packFileCount}`);
+}
+
+const vendorSpend = vendorContracts.reduce(
+  (sum, row) => sum + Number(row.annual_usd || 0),
+  0,
+);
+if (vendorSpend !== rowCounts.total_vendor_spend_usd) {
+  fail(`vendor spend expected ${rowCounts.total_vendor_spend_usd}, found ${vendorSpend}`);
+}
+
+const activeCommitments = activeInitiatives.reduce(
+  (sum, row) => sum + Number(row.committed_usd || 0),
+  0,
+);
+if (activeCommitments !== rowCounts.active_commitments_usd) {
+  fail(`active commitments expected ${rowCounts.active_commitments_usd}, found ${activeCommitments}`);
+}
+
+const expectedWatchlist = readJson('99-verification/expected-watchlist-entries.json');
+if (expectedWatchlist.seeded_expectations?.length !== 7) {
+  fail('expected-watchlist-entries.json must contain the 7 seeded watchlist expectations');
+}
+
+const regulatory = readJson('11-regulatory/regulatory-scope.json');
+for (const [scope, expected] of Object.entries({
+  pci: 22,
+  sox: 14,
+  ccpa: 28,
+  ada: 6,
+  employee: 4,
+  customs: 3,
+})) {
+  const actual = regulatory.scopes?.[scope]?.length;
+  if (actual !== expected) fail(`regulatory ${scope} expected ${expected}, found ${actual}`);
+}
+
 console.log(JSON.stringify({
   ok: true,
   applicationPortfolioRows: apps.length,
   integrationEdges: topology.edges.length,
+  packFiles: packFileCount,
+  vendorContracts: vendorContracts.length,
+  vendorSpendUsd: vendorSpend,
+  activeInitiatives: activeInitiatives.length,
+  activeCommitmentsUsd: activeCommitments,
   sentinelQuestions: expectedAnswers.questions.length,
   seededScenarioIds: [...requiredScenarioMarkers.keys()],
 }, null, 2));
