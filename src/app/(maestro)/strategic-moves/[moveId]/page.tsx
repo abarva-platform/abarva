@@ -12,6 +12,7 @@ import { getActiveClientRow } from '@/lib/active-client';
 import { selectSourceEventsReadAdapter } from '@/lib/data-plane/read-adapters/sourceEventsReadAdapter';
 import type { MoveToSourceHandoffResult } from '@/lib/programs/source-trigger/move-to-source-handoff';
 import type { StrategicMove } from '@/lib/programs/types.ui';
+import { ensureThreadForMove } from '@/lib/decisions/auto-linker';
 
 export const dynamic = 'force-dynamic';
 
@@ -82,6 +83,20 @@ export default async function StrategicMoveDetailPage({ params, searchParams }: 
   if (!move) notFound();
 
   const { handoff, linkedSourceEvent } = await resolveHandoff(move);
+  const activeClient = await getActiveClientRow().catch(() => null);
+  const decisionThread = await ensureThreadForMove({
+    clientId: activeClient?.key ?? move.tenant.id,
+    moveId: move.id,
+    title: move.name,
+    ownerRole: move.sponsor?.role ?? 'CIO',
+    linkedBy: ctx.userId,
+  }).catch((error) => {
+    console.error(
+      '[StrategicMoveDetailPage] decision dossier auto-link failed',
+      error instanceof Error ? error.message : String(error),
+    );
+    return null;
+  });
 
   return (
     <AppShell surface="programs-detail">
@@ -90,6 +105,7 @@ export default async function StrategicMoveDetailPage({ params, searchParams }: 
         activeTab={activeTab}
         handoff={handoff}
         linkedSourceEvent={linkedSourceEvent}
+        decisionThreadId={decisionThread?.id ?? null}
       />
     </AppShell>
   );

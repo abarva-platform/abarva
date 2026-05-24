@@ -26,6 +26,7 @@
     "verify:apex-sentinel-canonical": "node scripts/verify/apex-sentinel-canonical.mjs",
   "smoke:p19-evidence-ledger": "NODE_OPTIONS='--require ./src/scripts/_mock-server-only-preload.cjs' npx tsx scripts/smoke/p19-evidence-ledger.spec.ts",
   "smoke:p20-board-pack-generator": "NODE_OPTIONS='--require ./src/scripts/_mock-server-only-preload.cjs' npx tsx scripts/smoke/p20-board-pack-generator.spec.ts",
+  "smoke:p22-decision-dossier": "NODE_OPTIONS='--require ./src/scripts/_mock-server-only-preload.cjs' npx tsx scripts/smoke/p22-decision-dossier.spec.ts",
   "crawl:post-deploy": "npx tsx scripts/crawl/post-deploy-harness.ts",
     "crawl:persona": "npx tsx scripts/crawl/post-deploy-harness.ts --persona",
     "crawl:auto-rollback": "npx tsx scripts/crawl/auto-rollback.ts",

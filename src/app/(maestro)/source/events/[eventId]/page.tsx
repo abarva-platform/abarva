@@ -14,6 +14,7 @@ import { SOURCE_ARTIFACT_SPECS } from '@/lib/source/canonical-specs';
 import { SOURCE_STAGE_ORDER, normalizeSourceStageKey } from '@/lib/source/constants';
 import type { SourceStageKey } from '@/lib/source/types';
 import type { ActivityEntry } from '@/components/source/canvas/workspace-tabs/LogTab';
+import { ensureThreadForSourceEvent } from '@/lib/decisions/auto-linker';
 
 export const dynamic = 'force-dynamic';
 
@@ -70,6 +71,21 @@ export default async function SourceEventDetailPage({
   const tenantName =
     canonicalClientDisplayName({ key: activeClient?.key, name: activeClient?.name }) ??
     event.accountName;
+  const decisionThread = activeClient?.key
+    ? await ensureThreadForSourceEvent({
+        clientId: activeClient.key,
+        sourceEventId: event.id,
+        title: event.name,
+        ownerRole: event.owner,
+        linkedBy: 'auto',
+      }).catch((error) => {
+        console.error(
+          '[SourceEventDetailPage] decision dossier auto-link failed',
+          error instanceof Error ? error.message : String(error),
+        );
+        return null;
+      })
+    : null;
 
   // Wave 1 activity log: synthesize from event metadata until a real audit
   // table is wired. Wave 2 will read from a source_event_activity table.
@@ -91,6 +107,7 @@ export default async function SourceEventDetailPage({
       templateByCode={templateByCode}
       activityEntries={activityEntries}
       tenantName={tenantName}
+      decisionThreadId={decisionThread?.id ?? null}
     />
   );
 }
