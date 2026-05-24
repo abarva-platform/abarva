@@ -89,6 +89,28 @@ function canonicalProgramClientName(args: {
   return 'Apex Retail Group';
 }
 
+function sanitizeRetiredTenantText(value: string, clientName?: ProgramSummary['clientName'] | null): string {
+  const firstCapitalReplacement = clientName === 'First Capital Financial' ? 'First Capital' : 'First Capital';
+  const meridianReplacement = clientName === 'Meridian Health System' ? 'Meridian' : 'Meridian';
+  return value
+    .replace(/\bBrindlemark Financial Group\b/g, 'First Capital Financial')
+    .replace(/\bBrindlemark Financial\b/g, 'First Capital Financial')
+    .replace(/\bBRINDLEMARK\b/g, 'FIRSTCAP')
+    .replace(/\bBrindlemark\b/g, firstCapitalReplacement)
+    .replace(/\bHeliara Health Alliance\b/g, 'Meridian Health System')
+    .replace(/\bHeliara Health\b/g, 'Meridian Health')
+    .replace(/\bHELIARA\b/g, 'MERIDIAN')
+    .replace(/\bHeliara\b/g, meridianReplacement);
+}
+
+function sanitizePersonRef<T extends PersonRef | ParticipantRef>(person: T, clientName?: ProgramSummary['clientName'] | null): T {
+  return {
+    ...person,
+    name: sanitizeRetiredTenantText(person.name, clientName),
+    title: sanitizeRetiredTenantText(person.title, clientName),
+  };
+}
+
 async function resolveClientName(clientId: string): Promise<ProgramSummary['clientName']> {
   const sb = getServerSupabase();
   const { data } = await sb.from('clients').select('name').eq('id', clientId).maybeSingle();
@@ -403,7 +425,10 @@ export async function buildProgramSummary(program: ProgramCore): Promise<Program
   }
 
   const charterData = charterRow.data as { title: string; status: string } | null;
-  const charterSummary = charterData?.title ?? `${program.name} charter in draft`;
+  const charterSummary = sanitizeRetiredTenantText(
+    charterData?.title ?? `${program.name} charter in draft`,
+    clientName,
+  );
 
   const shape: ProgramSummary['shape'] = patternKey ? 'pattern' : program.archetype ? 'custom' : 'template';
 
@@ -425,15 +450,15 @@ export async function buildProgramSummary(program: ProgramCore): Promise<Program
 
   return {
     id: program.id,
-    name: program.name,
+    name: sanitizeRetiredTenantText(program.name, clientName),
     archetype: (program.archetype as ArchetypeKey) ?? 'strategic_transformation',
     patternKey,
     patternName,
     charterSummary,
     currentPhase: program.currentPhase ?? 0,
     phaseStatus,
-    sponsorPerson: sponsor,
-    leadPerson: lead,
+    sponsorPerson: sponsor ? sanitizePersonRef(sponsor, clientName) : sponsor,
+    leadPerson: lead ? sanitizePersonRef(lead, clientName) : lead,
     lastActivityAt: new Date(lastActivityAt),
     attentionBadge,
     shape,
@@ -471,7 +496,13 @@ export async function buildProgramFullState(ctx: TenancyCtx, program: ProgramCor
 
   const shape: ProgramFullState['shape'] = patternKey ? 'pattern' : program.archetype ? 'custom' : 'template';
 
-  const charter: CharterSummary = await buildCharterSummary(program.id, program.name);
+  const charterRaw: CharterSummary = await buildCharterSummary(program.id, program.name);
+  const charter: CharterSummary = {
+    headline: sanitizeRetiredTenantText(charterRaw.headline, clientName),
+    bullets: charterRaw.bullets.map((bullet) => sanitizeRetiredTenantText(bullet, clientName)),
+    sponsorDecision: sanitizeRetiredTenantText(charterRaw.sponsorDecision, clientName),
+    baselineNeed: sanitizeRetiredTenantText(charterRaw.baselineNeed, clientName),
+  };
 
   const activity = await buildActivity(program.id);
   const deliverableSummaries: DeliverableSummary[] = await Promise.all(
@@ -479,7 +510,7 @@ export async function buildProgramFullState(ctx: TenancyCtx, program: ProgramCor
       const owner = d.created_by === 'nexus' ? placeholderNexus() : await resolvePerson(d.created_by ?? null);
       return {
         id: d.id,
-        title: d.title,
+        title: sanitizeRetiredTenantText(d.title, clientName),
         moduleKey: d.module_key ?? 'unknown',
         version: d.current_version,
         status: (d.status === 'draft' || d.status === 'in_review' || d.status === 'signed_off') ? d.status : 'draft',
@@ -493,7 +524,7 @@ export async function buildProgramFullState(ctx: TenancyCtx, program: ProgramCor
   const threads: ThreadRef[] = ((threadRows.data as Array<{ id: string; title: string | null; metadata_jsonb: Record<string, unknown> | null; last_turn_at: string | null }> | null) ?? [])
     .map((t) => ({
       id: t.id,
-      title: t.title ?? '—',
+      title: sanitizeRetiredTenantText(t.title ?? '—', clientName),
       source: 'manual' as const,
       lastTouchedAt: new Date(t.last_turn_at ?? program.createdAt),
     }));
@@ -510,30 +541,30 @@ export async function buildProgramFullState(ctx: TenancyCtx, program: ProgramCor
 
   return {
     id: program.id,
-    name: program.name,
+    name: sanitizeRetiredTenantText(program.name, clientName),
     charter,
     currentPhase: program.currentPhase ?? 0,
     shape,
     patternKey,
     phases,
     modules,
-    team,
+    team: team.map((member) => sanitizePersonRef(member, clientName)),
     activity,
     linkedIntelligenceThreads: threads,
     archetype: (program.archetype as ArchetypeKey) ?? 'strategic_transformation',
     clientName,
-    sponsorPerson: sponsor,
-    leadPerson: lead,
+    sponsorPerson: sponsor ? sanitizePersonRef(sponsor, clientName) : sponsor,
+    leadPerson: lead ? sanitizePersonRef(lead, clientName) : lead,
     phaseStatus,
-    patternName,
+    patternName: patternName ? sanitizeRetiredTenantText(patternName, clientName) : patternName,
     gateSummary,
     gateStatus,
     deliverables: deliverableSummaries,
     metrics: buildMetrics(milestones, workItems, risks),
     sponsorDashboard: {
-      openDecisions,
-      milestones: milestoneBullets,
-      keyFindings,
+      openDecisions: openDecisions.map((item) => sanitizeRetiredTenantText(item, clientName)),
+      milestones: milestoneBullets.map((item) => sanitizeRetiredTenantText(item, clientName)),
+      keyFindings: keyFindings.map((item) => sanitizeRetiredTenantText(item, clientName)),
       outcomeSignal:
         phaseStatus === 'complete' ? 'Program complete' : 'In flight',
     },
@@ -1049,8 +1080,11 @@ export async function buildStrategicMove(
 
   return {
     id: move.id,
-    displayCode: deriveDisplayCode(move, { industryCode: client.industry_code, slug: client.slug }),
-    name: move.name,
+    displayCode: sanitizeRetiredTenantText(
+      deriveDisplayCode(move, { industryCode: client.industry_code, slug: client.slug }),
+      clientName,
+    ),
+    name: sanitizeRetiredTenantText(move.name, clientName),
     tenant: {
       id: client.id,
       name: clientName,
@@ -1073,9 +1107,17 @@ export async function buildStrategicMove(
     },
     statusColor: moveStatus.statusColor,
     sponsor: sponsorPersonId && sponsorPerson
-      ? { id: sponsorPersonId, name: sponsorPerson.name, role: sponsorPerson.role }
+      ? {
+          id: sponsorPersonId,
+          name: sanitizeRetiredTenantText(sponsorPerson.name, clientName),
+          role: sanitizeRetiredTenantText(sponsorPerson.role, clientName),
+        }
       : null,
-    participants,
+    participants: participants.map((participant) => ({
+      ...participant,
+      name: sanitizeRetiredTenantText(participant.name, clientName),
+      role: sanitizeRetiredTenantText(participant.role, clientName),
+    })),
     valueAtStake: {
       projected:
         move.valueProjectedLowUsd !== null && move.valueProjectedHighUsd !== null
@@ -1094,9 +1136,18 @@ export async function buildStrategicMove(
           : null,
       assumptions: move.valueAssumptions,
     },
-    deliverables,
+    deliverables: deliverables.map((deliverable) => ({
+      ...deliverable,
+      title: sanitizeRetiredTenantText(deliverable.title, clientName),
+      preview: sanitizeRetiredTenantText(deliverable.preview, clientName),
+    })),
     gateCriteria,
-    recentActivity,
+    recentActivity: recentActivity.map((activity) => ({
+      ...activity,
+      actor: sanitizeRetiredTenantText(activity.actor, clientName),
+      action: sanitizeRetiredTenantText(activity.action, clientName),
+      summary: sanitizeRetiredTenantText(activity.summary, clientName),
+    })),
     linkedEvidence,
     mapLabel: deriveMapLabel(move),
     createdAt: move.createdAt,
