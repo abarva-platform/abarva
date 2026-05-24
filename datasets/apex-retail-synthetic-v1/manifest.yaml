@@ -1,0 +1,21 @@
+version: 1.0.0
+tenant: apex-retail
+files:
+  - path: 01-portfolio/application-portfolio.csv
+    target_table: tech_stack_items
+    feature: portfolio_reasoning
+    row_count: 120
+  - path: 01-portfolio/application-portfolio.schema.json
+    target_table: validation_schema
+    feature: onboarding_validation
+  - path: 01-portfolio/integration-topology.json
+    target_table: enterprise_graph_edges
+    feature: dependency_reasoning
+    edge_count: 320
+  - path: 99-verification/expected-sentinel-answers.json
+    target_table: verification_contract
+    feature: sentinel_canonical_eval
+    question_count: 12
+  - path: 99-verification/expected-row-counts.json
+    target_table: verification_contract
+    feature: pack_integrity
