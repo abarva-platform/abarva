@@ -6,7 +6,7 @@
 
 ## Status
 
-`candidate`
+`released`
 
 ## Plain-English Summary
 
@@ -55,11 +55,15 @@ Revert this PR to return the release-control workflow to the prior action versio
 
 ## Audit Evidence
 
+- PR #2307: `https://github.com/anandsundaram-hash/abarva/pull/2307`.
+- Merge commit: `90f5ac696621d60bd8b9c067edd4343ce8163af2`.
+- CI checks passed on PR #2307, including `Release record and impact note`.
 - Official GitHub API release checks for `actions/checkout` and `actions/setup-node`.
 - Manual workflow dispatch run `26349136937` passed but still produced the forced-runtime annotation before this upgrade.
+- Manual workflow dispatch run `26349312616` passed after merge with no Node 20 target annotation.
 - Local validation output for `npm run release:check -- --base origin/main --head HEAD`.
 - Local validation output for direct strict checker execution.
 
 ## Known Gaps
 
-The final proof is a post-merge manual dispatch on `main`; this PR should not be considered fully released until that workflow run passes without the Node 20 target annotation.
+No known gap for the release-control gate itself. A DB-backed release ledger UI remains a separate future slice.
