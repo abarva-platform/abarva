@@ -4,6 +4,10 @@ const TENANT_KEY = 'apex-retail';
 const RUN_KEY = 'p18-apex-synthetic-v1-2';
 
 type CountResult = { count?: number | null; error?: { message: string } | null };
+type CountQuery = PromiseLike<CountResult> & {
+  eq: (column: string, value: unknown) => CountQuery;
+  like: (column: string, value: string) => CountQuery;
+};
 
 async function main() {
   const { config: loadEnv } = await import('dotenv');
@@ -16,12 +20,7 @@ async function main() {
   const supabaseModule = await import('@supabase/supabase-js') as unknown as {
     createClient: (url: string, key: string, options: Record<string, unknown>) => {
       from: (table: string) => {
-        select: (...args: unknown[]) => {
-          eq: (column: string, value: unknown) => {
-            eq: (column: string, value: unknown) => Promise<CountResult>;
-            like: (column: string, value: string) => Promise<CountResult>;
-          };
-        };
+        select: (...args: unknown[]) => CountQuery;
       };
     };
   };
@@ -41,6 +40,14 @@ async function main() {
     .like('chunk_id', 'APX-P18-CHUNK-%');
   if (chunkResult.error) throw new Error(`enterprise_context_chunks count failed: ${chunkResult.error.message}`);
 
+  const embeddedChunkResult: CountResult = await client
+    .from('enterprise_context_chunks')
+    .select('*', { count: 'exact', head: true })
+    .eq('tenant_key', TENANT_KEY)
+    .eq('embedding_status', 'embedded')
+    .like('chunk_id', 'APX-P18-CHUNK-%');
+  if (embeddedChunkResult.error) throw new Error(`enterprise_context_chunks embedded count failed: ${embeddedChunkResult.error.message}`);
+
   const templateRunResult: CountResult = await client
     .from('enterprise_context_template_runs')
     .select('*', { count: 'exact', head: true })
@@ -50,17 +57,20 @@ async function main() {
 
   const sourceFiles = sourceFileResult.count ?? 0;
   const chunks = chunkResult.count ?? 0;
+  const embeddedChunks = embeddedChunkResult.count ?? 0;
   const templateRuns = templateRunResult.count ?? 0;
 
   const report = {
-    ok: sourceFiles === 42 && chunks === 280 && templateRuns === 1,
+    ok: sourceFiles === 42 && chunks === 280 && embeddedChunks === 280 && templateRuns === 1,
     tenantKey: TENANT_KEY,
     sourceFiles,
     chunks,
+    embeddedChunks,
     templateRuns,
     expected: {
       sourceFiles: 42,
       chunks: 280,
+      embeddedChunks: 280,
       templateRuns: 1,
     },
   };
