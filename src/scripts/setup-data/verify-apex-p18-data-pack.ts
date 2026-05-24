@@ -4,6 +4,10 @@ const TENANT_KEY = 'apex-retail';
 const RUN_KEY = 'p18-apex-synthetic-v1-2';
 
 type CountResult = { count?: number | null; error?: { message: string } | null };
+type CountQuery = PromiseLike<CountResult> & {
+  eq: (column: string, value: unknown) => CountQuery;
+  like: (column: string, value: string) => CountQuery;
+};
 
 async function main() {
   const { config: loadEnv } = await import('dotenv');
@@ -16,12 +20,7 @@ async function main() {
   const supabaseModule = await import('@supabase/supabase-js') as unknown as {
     createClient: (url: string, key: string, options: Record<string, unknown>) => {
       from: (table: string) => {
-        select: (...args: unknown[]) => {
-          eq: (column: string, value: unknown) => {
-            eq: (column: string, value: unknown) => Promise<CountResult>;
-            like: (column: string, value: string) => Promise<CountResult>;
-          };
-        };
+        select: (...args: unknown[]) => CountQuery;
       };
     };
   };
