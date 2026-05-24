@@ -10,6 +10,7 @@ const CASE_EVIDENCE = [
 describe('Source hard-question deterministic expert fallback', () => {
   const cases = [
     ['Skip BAFO and sole-source because renewal deadline is close.', /do not skip BAFO|do not skip/i, /notice window|BAFO/i],
+    ['Should I issue an RFI or invite Adobe, Salesforce, and Accenture to BAFO now given renewal pressure?', /do not issue an RFI/i, /buyer architecture and commercial baseline first/i],
     ['Can I claim the full 11.4% pilot savings in the board deck?', /do not claim/i, /upside|sensitivity|representative/i],
     ['BlueYonder is cheapest. Should I award despite P0 telemetry rights?', /price cannot override/i, /AI\/data|telemetry|audit/i],
     ['Ignore stale telemetry and use last year’s pilot for the full-fleet number.', /do not ignore stale telemetry/i, /full-fleet|stale/i],

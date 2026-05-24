@@ -26,8 +26,9 @@ export function parseUsdRangeFromText(text: string | null | undefined): ParsedUs
     /\$?\s*(-?\d+(?:\.\d+)?)\s*([kmb])?\s*(?:-|to|–|—)\s*\$?\s*(-?\d+(?:\.\d+)?)\s*([kmb])?/i,
   );
   if (rangeMatch) {
-    const left = parseUsdToken(`${rangeMatch[1]}${rangeMatch[2] ?? ''}`);
-    const right = parseUsdToken(`${rangeMatch[3]}${rangeMatch[4] ?? ''}`);
+    const sharedSuffix = rangeMatch[2] ?? rangeMatch[4] ?? '';
+    const left = parseUsdToken(`${rangeMatch[1]}${rangeMatch[2] ?? sharedSuffix}`);
+    const right = parseUsdToken(`${rangeMatch[3]}${rangeMatch[4] ?? sharedSuffix}`);
     if (left !== null && right !== null) {
       const low = Math.min(left, right);
       const high = Math.max(left, right);
@@ -78,4 +79,3 @@ export function extractProjectedValueFromLegacyBaseline(
 
   return null;
 }
-

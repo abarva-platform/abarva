@@ -11,14 +11,14 @@ export interface SourceHardQuestionAnswer {
 export function answerHardSourceQuestion(prompt: string, evidenceText = ''): SourceHardQuestionAnswer | null {
   const promptOnly = prompt.toLowerCase();
 
-  if (/skip\s+bafo|sole[-\s]?source|renewal deadline|deadline is close/.test(promptOnly)) {
+  if (/skip\s+bafo|sole[-\s]?source|renewal deadline|deadline is close|issue.*rfi|invite.*bafo|bafo now|rfi now/.test(promptOnly)) {
     return makeAnswer({
-      directAnswer: 'No — do not skip BAFO or sole-source only because the renewal deadline is close.',
-      sourcingJudgment: 'Renewal urgency raises action priority, but it does not erase sourcing governance or P0 legal/data-rights blockers.',
+      directAnswer: 'No — do not issue an RFI, invite BAFO, skip BAFO, or sole-source only because the renewal deadline is close; do not skip BAFO governance.',
+      sourcingJudgment: 'Renewal urgency raises action priority, but it does not erase sourcing governance, buyer-owned scope, pricing comparability, or P0 legal/data-rights blockers.',
       evidenceReference: evidenceOrDefault(evidenceText, 'Renewal notice / incumbent contract evidence plus open blocker state.'),
-      blockerOrGap: 'Open BAFO, pricing, legal or transition blockers must be closed or explicitly risk-accepted before award.',
-      recommendedNextAction: 'Protect the notice window, issue targeted BAFO asks, and keep award held until blockers close.',
-      whatWouldChangeTheAnswer: 'A documented executive risk acceptance plus closed P0 legal/data-rights and comparable pricing evidence.',
+      blockerOrGap: 'Buyer-owned scope, baseline economics, comparable pricing, legal, or transition blockers must be closed or explicitly risk-accepted before a vendor-facing event advances.',
+      recommendedNextAction: 'Protect the notice window, lock the buyer architecture and commercial baseline first, then issue targeted RFI/BAFO asks only against the confirmed scope.',
+      whatWouldChangeTheAnswer: 'A signed buyer-owned scope boundary, named baseline owner with current economics, and closed P0 legal/data-rights plus comparable pricing evidence.',
     });
   }
 

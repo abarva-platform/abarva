@@ -280,16 +280,31 @@ function extractEstimatedValue(valueTarget: string): number | undefined {
   return Math.round(raw);
 }
 
-function buildEventName(clientShortName: string, intake: IntakeState, selectedCategory?: SourceCategory | null): string {
+export function buildEventName(clientShortName: string, intake: IntakeState, selectedCategory?: SourceCategory | null): string {
   if (selectedCategory) return `${clientShortName} ${selectedCategory.label} Sourcing Event`.slice(0, 120);
   const scope = intake.scopeBoundary.trim();
+  const combined = `${scope} ${intake.trigger} ${intake.valueTarget}`.toLowerCase();
+  if (/integration fabric|integration[-\s]?hub|hub ambiguity|data[-\s]?contract/.test(combined)) {
+    return `${clientShortName} Integration Fabric Commercial Control Event`;
+  }
+  if (/adobe/.test(combined) && /salesforce/.test(combined) && /accenture/.test(combined)) {
+    return `${clientShortName} Integration Fabric Commercial Control Event`;
+  }
   if (/\bams\b|managed service|outsourcing/i.test(scope)) return `${clientShortName} AMS Sourcing Event`;
   if (/prior.?authorization|prior auth/i.test(scope)) return `${clientShortName} Prior Authorization Automation Sourcing`;
   if (/fraud/i.test(scope)) return `${clientShortName} Fraud Detection AI Sourcing`;
-  const firstClause = scope.split(/[.;\n]/)[0]?.trim();
+  const firstClause = sanitizeEventNameClause(scope.split(/[.;\n]/)[0]?.trim());
   if (firstClause) return `${clientShortName} ${firstClause} Sourcing Event`.slice(0, 120);
-  const triggerClause = intake.trigger.split(/[.;\n]/)[0]?.trim();
+  const triggerClause = sanitizeEventNameClause(intake.trigger.split(/[.;\n]/)[0]?.trim());
   return `${clientShortName} ${triggerClause || 'Technology'} Sourcing Event`.slice(0, 120);
+}
+
+function sanitizeEventNameClause(value: string | undefined): string {
+  return (value ?? '')
+    .replace(/^(scope boundary|scope|in scope|out of scope|value basis|baseline owner|trigger)\s*:\s*/i, '')
+    .replace(/\b(in scope|out of scope)\b\s*:\s*/gi, '')
+    .replace(/\s+/g, ' ')
+    .trim();
 }
 
 const SENTINEL_INTAKE_AGENT = { initials: 'SS', name: 'Sentinel Source', role: 'Source Orchestrator' } as const;

@@ -13,7 +13,9 @@ import {
   toApexRetailLiveTenantContextSnapshot,
   type ApexRetailAdapterResult,
 } from '@/lib/source/adapters/apex-retail-adapter';
-import { sourceEventRowToDetail } from '@/lib/source/queries';
+import type { SourceLiveTenantContextSnapshot } from '@/lib/source/agent-context';
+import type { SourcingEventDetail } from '@/lib/source/types';
+import { getSourcingEvent, sourceEventRowToDetail } from '@/lib/source/queries';
 import { selectSourceWriteAdapter } from '@/lib/data-plane/write-adapters/sourceWriteAdapter';
 
 export const runtime = 'nodejs';
@@ -46,12 +48,24 @@ export async function POST(
       clientId: tenancy.clientId,
       clientKey: activeClient?.key,
     });
-    const liveEventDetail = apexContext?.liveContext.sourceEvent
+    const apexLiveEventDetail = apexContext?.liveContext.sourceEvent
       ? sourceEventRowToDetail(apexContext.liveContext.sourceEvent, 'Apex Retail Group')
       : undefined;
-    const liveTenantContext = apexContext
+    const apexLiveTenantContext = apexContext
       ? toApexRetailLiveTenantContextSnapshot(apexContext.liveContext)
       : undefined;
+    const fallbackLiveEventDetail = apexLiveEventDetail || !eventId
+      ? undefined
+      : await getSourcingEvent(eventId).catch(() => null);
+    const liveEventDetail = apexLiveEventDetail ?? fallbackLiveEventDetail ?? undefined;
+    const liveTenantContext = apexLiveTenantContext
+      ?? (fallbackLiveEventDetail
+        ? buildEventIntakeTenantContextSnapshot({
+            activeClientKey: activeClient?.key,
+            activeClientName: activeClient?.name,
+            event: fallbackLiveEventDetail,
+          })
+        : undefined);
 
     // Source canvas migration · before invoking the (unchanged) deterministic
     // runtime, link any attachments from this turn to the source event so the
@@ -103,6 +117,78 @@ export async function POST(
       );
     }
   }
+}
+
+function buildEventIntakeTenantContextSnapshot(args: {
+  activeClientKey?: string;
+  activeClientName?: string;
+  event: SourcingEventDetail;
+}): SourceLiveTenantContextSnapshot {
+  const clientKey = args.activeClientKey ?? 'unknown';
+  const brokerTenantKey = clientKey === APEX_RETAIL_BROKER_TENANT_KEY
+    ? APEX_RETAIL_BROKER_TENANT_KEY
+    : clientKey;
+  const evidence = [
+    {
+      recordId: 'trigger',
+      title: 'Source intake trigger',
+      excerpt: `Trigger: ${args.event.problemStatement}`,
+      score: 16,
+    },
+    {
+      recordId: 'scope',
+      title: 'Source intake scope and value basis',
+      excerpt: `Scope and value basis: ${args.event.synopsis}`,
+      score: 15,
+    },
+    {
+      recordId: 'decision-owner',
+      title: 'Source intake decision owner',
+      excerpt: `Decision owner: ${args.event.scorecard.decisionOwner || args.event.owner}`,
+      score: 14,
+    },
+    ...args.event.scorecard.criteria.map((criterion, index) => ({
+      recordId: criterion.id,
+      title: criterion.label,
+      excerpt: `${criterion.label}: ${criterion.note ?? criterion.status}`,
+      score: 12 - index,
+    })),
+  ].filter((item) => item.excerpt.trim().length > 0);
+
+  return {
+    clientKey,
+    brokerTenantKey,
+    inventoryRecordCount: 0,
+    contextChunkCount: evidence.length,
+    embeddedContextChunkCount: 0,
+    sourceEventFound: true,
+    segments: [
+      {
+        segmentId: 'sourcing_artifacts',
+        inventoryRecords: 0,
+        contextChunks: evidence.length,
+        embeddedChunks: 0,
+      },
+    ],
+    currentStateAreas: ['Sourcing Artifacts'],
+    evidenceBasis: [
+      `${args.activeClientName ?? clientKey} persisted Source event: trigger, scope, value basis, decision owner and gate criteria from source_events.`,
+    ],
+    retrievedEvidence: evidence.map((item) => ({
+      id: `source-event:${args.event.id}:${item.recordId}`,
+      segmentId: 'sourcing_artifacts',
+      recordId: item.recordId,
+      title: item.title,
+      sourceType: 'contextChunk',
+      sourceDoc: 'source_events',
+      excerpt: item.excerpt,
+      confidence: 'high',
+      score: item.score,
+    })),
+    warnings: [
+      'Using persisted Source intake facts for this newly-created event; deeper tenant corpus retrieval is not required to answer event-gate questions.',
+    ],
+  };
 }
 
 async function loadApexRetailSourceIntelligence(args: {
