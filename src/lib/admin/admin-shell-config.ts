@@ -7,6 +7,7 @@ export type AdminSubSectionId =
   | "users-access"
   | "agent-readiness"
   | "production-readiness"
+  | "releases"
   | "training";
 
 export interface AdminSubSection {
@@ -52,6 +53,12 @@ export const ADMIN_SUB_SECTIONS: ReadonlyArray<AdminSubSection> = [
     label: "Production Readiness",
     subtitle: "Demo / pilot / production",
     href: "/admin/production-readiness",
+  },
+  {
+    id: "releases",
+    label: "Releases",
+    subtitle: "Change ledger",
+    href: "/admin/releases",
   },
   {
     id: "training",
