@@ -26,6 +26,7 @@
 export * from './function-pack-types';
 export * from './function-pack-registry';
 export * from './function-pack-context-binding';
+export * from './framework-overlay-function-pack';
 export { careDeliveryCareManagementPack } from './healthcare/care-delivery-care-management';
 export { populationHealthValueBasedCarePack } from './healthcare/population-health-value-based-care';
 export { clinicalOperationsDocumentationPack } from './healthcare/clinical-operations-documentation';
