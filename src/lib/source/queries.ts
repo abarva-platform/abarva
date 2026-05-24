@@ -75,7 +75,7 @@ export interface CreateSourcingEventInput {
 function generateEventCode(clientKey: string, eventName: string): string {
   const prefix = clientKey.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 4);
   const clientOption = isClientKey(clientKey) ? getClientOption(clientKey) : null;
-  const clientPrefixes = [clientOption?.name, clientOption?.shortName].filter(Boolean) as string[];
+  const clientPrefixes = buildClientEventNamePrefixes(clientOption?.name, clientOption?.shortName);
   const eventNameWithoutClient = clientPrefixes.reduce((name, clientPrefix) => {
     const pattern = new RegExp(`^${escapeRegExp(clientPrefix)}\\s+`, 'i');
     return name.replace(pattern, '');
@@ -89,6 +89,18 @@ function generateEventCode(clientKey: string, eventName: string): string {
   const nameSlug = nameParts.length > 0 ? nameParts.join('-') : 'EVENT';
   const year = new Date().getFullYear();
   return `${prefix}-${nameSlug}-${year}`;
+}
+
+function buildClientEventNamePrefixes(...values: Array<string | null | undefined>): string[] {
+  const aliases = new Set<string>();
+  for (const value of values) {
+    const normalized = value?.trim();
+    if (!normalized) continue;
+    aliases.add(normalized);
+    const firstToken = normalized.split(/\s+/).find(Boolean);
+    if (firstToken && firstToken.length >= 3) aliases.add(firstToken);
+  }
+  return [...aliases].sort((a, b) => b.length - a.length);
 }
 
 function escapeRegExp(value: string): string {
