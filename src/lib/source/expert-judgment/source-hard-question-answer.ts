@@ -99,9 +99,16 @@ function evidenceOrDefault(evidenceText: string, fallback: string): string {
     .split('\n')
     .map((line) => line.trim())
     .filter((line) => line.length > 40);
+  const exactField = lines.find((line) => hasExactEvidenceField(line));
+  if (exactField) return exactField;
   const buyerOwnedEvidence = lines.find((line) =>
     /baseline|scope boundary|buyer architecture|decision owner|trigger|adobe|salesforce|accenture|pricing|commercial/i.test(line),
   );
   const first = buyerOwnedEvidence ?? lines[0];
   return first ?? fallback;
+}
+
+function hasExactEvidenceField(line: string): boolean {
+  return /\b(?:intake|source_events|vendor_pricing|pricing_submissions|selection_memo|legal_review|contract_terms|telemetry)\.[a-z0-9_[\].-]+/i.test(line)
+    || /\b[a-z_]+\[[a-z0-9_-]+\]\.[a-z0-9_[\].-]+/i.test(line);
 }

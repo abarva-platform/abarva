@@ -3,6 +3,11 @@ import { searchCorpus } from '@/lib/corpus/retrieval';
 import type { CorpusSearchHit } from '@/lib/corpus/types';
 import { callSentinelModel } from './model';
 import { persistReasoningStage, readVersionPins, safeRows } from './db';
+import {
+  makeNoEvidenceInput,
+  recordEvidence,
+  type EvidenceSourceType,
+} from '@/lib/evidence/ledger';
 import type {
   SentinelCitation,
   SentinelMoveProposal,
@@ -368,7 +373,59 @@ async function materializeStage(stage: SentinelReasoningStage, input: SentinelRe
     }
   }
   await persistReasoningStage(stage);
+  await recordStageEvidence(stage, input);
   return stage;
+}
+
+async function recordStageEvidence(stage: SentinelReasoningStage, input: SentinelReasoningInput): Promise<void> {
+  const citation = stage.citations[0];
+  try {
+    if (!citation) {
+      await recordEvidence(makeNoEvidenceInput({
+        clientId: input.clientId,
+        surface: 'intelligence',
+        artifactType: 'claim',
+        artifactRef: stage.traceId,
+        claimText: `${stage.name}: ${stage.content.slice(0, 500)}`,
+        freshnessAt: new Date(),
+        createdBy: 'sentinel-reasoning',
+        reason: `Sentinel stage ${stage.id} emitted no citation.`,
+      }));
+      return;
+    }
+
+    await recordEvidence({
+      clientId: input.clientId,
+      surface: 'intelligence',
+      artifactType: stage.id === 'sibling_move_portfolio' ? 'recommendation' : 'claim',
+      artifactRef: stage.traceId,
+      claimText: `${stage.name}: ${stage.content.slice(0, 500)}`,
+      sourceType: citationSourceType(citation),
+      sourceRef: {
+        citation_id: citation.id,
+        label: citation.label,
+        url: citation.url,
+        version: citation.version,
+        stage_id: stage.id,
+      },
+      freshnessAt: new Date(),
+      confidence: stage.confidence,
+      confidenceBasis: `${citation.sourceType} citation emitted by Sentinel ${stage.name} stage`,
+      ownerRole: 'CIO',
+      createdBy: 'sentinel-reasoning',
+    });
+  } catch {
+    // Evidence Ledger should never make Sentinel unusable. The database table is
+    // the durable path in deployed environments; local demos without Supabase
+    // credentials still need deterministic reasoning output.
+  }
+}
+
+function citationSourceType(citation: SentinelCitation): EvidenceSourceType {
+  if (citation.sourceType === 'corpus_pattern') return 'corpus_pattern';
+  if (citation.sourceType === 'client_data') return 'tenant_record';
+  if (citation.sourceType === 'move_template') return 'derived';
+  return 'derived';
 }
 
 export async function* runSentinelReasoning(input: SentinelReasoningInput): AsyncGenerator<SentinelReasoningStage> {

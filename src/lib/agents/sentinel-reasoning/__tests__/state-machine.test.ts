@@ -1,3 +1,5 @@
+jest.mock('server-only', () => ({}));
+
 import { classifySentinelIntent, runSentinelReasoning } from '../index';
 
 describe('P11 Sentinel reasoning loop', () => {
