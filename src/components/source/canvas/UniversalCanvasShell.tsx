@@ -612,13 +612,16 @@ export function UniversalCanvasShell({
     >
       <main data-testid="source-event-canvas" style={MAIN_STYLE}>
         <div style={CONTAINER_STYLE}>
-          {decisionThreadId ? (
-            <div style={DOSSIER_LINK_WRAP_STYLE}>
+          <div style={DOSSIER_LINK_WRAP_STYLE}>
+            <Link href={`/source/events/${event.id}/value`} style={DOSSIER_LINK_STYLE}>
+              Value Proof
+            </Link>
+            {decisionThreadId ? (
               <Link href={`/dossier/${decisionThreadId}`} style={DOSSIER_LINK_STYLE}>
                 View in Dossier
               </Link>
-            </div>
-          ) : null}
+            ) : null}
+          </div>
           <EventIdStrip event={event} />
           <EventStepRail
             eventId={event.id}
