@@ -17,10 +17,10 @@ export interface CrawlSurface {
 }
 
 export const CRAWL_PERSONAS: CrawlPersona[] = [
-  persona('apex-cfo', 'cfo-apex'),
   persona('apex-cio', 'cio-apex'),
   persona('apex-cdo', 'cdo-apex'),
   persona('meridian-cdio', 'cdio-meridian-health'),
+  persona('meridian-cdao', 'cdao-meridian-health'),
   persona('firstcapital-cio', 'cio-firstcapital'),
 ];
 
@@ -103,9 +103,12 @@ export async function signInPersona(page: Page, persona: CrawlPersona, options: 
   const code = firstPresent(process.env.CRAWL_DEMO_CODE, '424242');
 
   await page.goto('/sign-in', { waitUntil: 'domcontentloaded', timeout: 45_000 });
-  await page.getByPlaceholder(/name@company\.com|enter your email address/i).fill(email);
-  await page.getByPlaceholder(/password from invite|enter your password/i).fill(password);
-  await page.getByPlaceholder(/6-digit code|access code/i).fill(code);
+  await page.waitForFunction(() => {
+    return Boolean((window as unknown as { Clerk?: { loaded?: boolean } }).Clerk?.loaded);
+  }, null, { timeout: 30_000 });
+  await typeCredential(page, /name@company\.com|enter your email address/i, email);
+  await typeCredential(page, /password from invite|enter your password/i, password);
+  await typeCredential(page, /6-digit code|access code/i, code);
   await page.getByRole('button', { name: /sign in|continue/i }).click();
 
   const outcome = await waitForSignInOutcome(page);
@@ -161,6 +164,13 @@ function firstPresent(...values: Array<string | undefined>): string {
   return found.trim();
 }
 
+async function typeCredential(page: Page, placeholder: RegExp, value: string): Promise<void> {
+  const field = page.getByPlaceholder(placeholder);
+  await field.fill('');
+  await field.click();
+  await page.keyboard.type(value, { delay: 4 });
+}
+
 async function waitForSignInOutcome(page: Page): Promise<
   | { type: 'redirect' }
   | { type: 'session' }
@@ -178,7 +188,11 @@ async function waitForSignInOutcome(page: Page): Promise<
   }, null, { timeout: 25_000 })
     .then(() => ({ type: 'session' as const }))
     .catch(() => null);
-  const alert = page.getByRole('alert').waitFor({ state: 'visible', timeout: 25_000 })
+  const alert = page.waitForFunction(() => {
+    return Array.from(document.querySelectorAll('[role="alert"]')).some((element) => {
+      return (element.textContent ?? '').trim().length > 0;
+    });
+  }, null, { timeout: 25_000 })
     .then(async () => ({
       type: 'alert' as const,
       text: (await page.getByRole('alert').innerText().catch(() => 'unknown sign-in error')).trim(),

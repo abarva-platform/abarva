@@ -111,20 +111,20 @@ const SHARED_NAV: ReadonlyArray<NavGroup> = [
     items: [
       { label: 'Data Trust', badge: '23', status: 'attn', href: '/home/data-trust' },
       { label: 'Connectors', badge: 'live', status: 'attn', href: '/home/connectors' },
-      { label: 'AI Initiatives', badge: '7', status: 'attn', href: '/home/initiatives' },
+      { label: 'AI Initiatives', badge: '7', status: 'attn', href: '/home/ai-initiatives' },
     ],
   },
   {
     label: 'Access',
-    items: [{ label: 'Users & Access', badge: 'RLS', status: 'default', href: '/home/users' }],
+    items: [{ label: 'Users & Access', badge: 'RLS', status: 'default', href: '/admin/users-access' }],
   },
   {
     label: 'Operations',
     items: [
       { label: 'Agent Readiness', badge: 'L2', status: 'attn', href: '/home/agent-readiness' },
-      { label: 'Prod Readiness', badge: '4 / 6', status: 'attn', href: '/home/production' },
+      { label: 'Prod Readiness', badge: '4 / 6', status: 'attn', href: '/admin/production-readiness' },
       { label: 'Compliance', badge: 'locked', status: 'locked', href: '#' },
-      { label: 'Activity Log', badge: '400', status: 'default', href: '/home/activity' },
+      { label: 'Activity Log', badge: '400', status: 'default', href: '/tower/activity' },
     ],
   },
 ];
@@ -144,7 +144,7 @@ const SHARED_PANELS: ReadonlyArray<PanelCard> = [
     name: 'AI Initiatives',
     desc: 'Registry of every AI bet — stage, owner, confidence, value posture.',
     foot: '7 initiatives · 1 at risk',
-    href: '/home/initiatives',
+    href: '/home/ai-initiatives',
   },
   {
     num: '03',
@@ -160,7 +160,7 @@ const SHARED_PANELS: ReadonlyArray<PanelCard> = [
     name: 'Users & Access',
     desc: 'RLS posture, role coverage, scope ownership across roles.',
     foot: 'pilot: any user · production: admin/maestro',
-    href: '/home/users',
+    href: '/admin/users-access',
   },
   {
     num: '05',
@@ -176,7 +176,7 @@ const SHARED_PANELS: ReadonlyArray<PanelCard> = [
     name: 'Production Readiness',
     desc: 'Six gates — substrate, agents, ops, audit, RLS, escalation.',
     foot: '4 of 6 cleared',
-    href: '/home/production',
+    href: '/admin/production-readiness',
   },
   {
     num: '07',
@@ -192,7 +192,7 @@ const SHARED_PANELS: ReadonlyArray<PanelCard> = [
     name: 'Activity Log',
     desc: 'Tenant audit log · last 400 events with full provenance.',
     foot: '400 most recent · live tail',
-    href: '/home/activity',
+    href: '/tower/activity',
   },
 ];
 
