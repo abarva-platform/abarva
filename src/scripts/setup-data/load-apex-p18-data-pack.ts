@@ -37,8 +37,10 @@ type DbRow = Record<string, unknown>;
 type MaybeSingleResult = Promise<{ data?: { id?: unknown } | null; error?: { message: string } | null }>;
 type QueryBuilder = {
   eq: (column: string, value: unknown) => QueryBuilder;
+  in: (column: string, values: unknown[]) => QueryBuilder;
   limit: (count: number) => QueryBuilder;
   maybeSingle: () => MaybeSingleResult;
+  then: PromiseLike<{ data?: unknown; error?: { message: string } | null }>['then'];
 };
 type SupabaseClient = {
   from: (table: string) => {
@@ -173,7 +175,7 @@ function buildSourceFileRows(rows: SourceFileRow[], clientId: string, now: strin
   }));
 }
 
-function buildChunkRows(chunks: CorpusChunk[], sourceFilesById: Map<string, SourceFileRow>, clientId: string, now: string): DbRow[] {
+function buildChunkRows(chunks: CorpusChunk[], sourceFilesById: Map<string, SourceFileRow>, clientId: string, now: string, existingEmbeddingStatuses: Map<string, string>): DbRow[] {
   return chunks.map((chunk, index) => {
     const source = sourceFilesById.get(chunk.source_file_id);
     if (!source) throw new Error(`Chunk ${chunk.chunk_id} references unknown source_file_id ${chunk.source_file_id}`);
@@ -188,7 +190,7 @@ function buildChunkRows(chunks: CorpusChunk[], sourceFilesById: Map<string, Sour
       chunk_index: index,
       chunk_text: chunk.content,
       token_count: tokenCount(chunk.content),
-      embedding_status: 'pending',
+      embedding_status: existingEmbeddingStatuses.get(chunk.chunk_id) ?? 'pending',
       embedding_model: null,
       embedded_at: null,
       provenance: {
@@ -243,6 +245,24 @@ function buildRunRow(clientId: string, now: string, counts: { sourceFiles: numbe
   };
 }
 
+async function fetchExistingEmbeddingStatuses(client: SupabaseClient, chunkIds: string[]): Promise<Map<string, string>> {
+  const existing = new Map<string, string>();
+  const batchSize = 250;
+  for (let index = 0; index < chunkIds.length; index += batchSize) {
+    const batch = chunkIds.slice(index, index + batchSize);
+    const { data, error } = await client
+      .from('enterprise_context_chunks')
+      .select('chunk_id,embedding_status')
+      .eq('tenant_key', TENANT_KEY)
+      .in('chunk_id', batch) as { data?: { chunk_id?: unknown; embedding_status?: unknown }[] | null; error?: { message: string } | null };
+    if (error) throw new Error(`enterprise_context_chunks status lookup failed: ${error.message}`);
+    for (const row of data ?? []) {
+      if (row.chunk_id && row.embedding_status) existing.set(String(row.chunk_id), String(row.embedding_status));
+    }
+  }
+  return existing;
+}
+
 async function main() {
   const args = parseArgs();
   const sourceFilePath = path.join(args.packRoot, '13-context/enterprise-context-source-files.csv');
@@ -287,7 +307,8 @@ async function main() {
   const clientId = await ensureApexClientId(client);
   const now = new Date().toISOString();
   const sourceRows = buildSourceFileRows(sourceFiles, clientId, now);
-  const chunkRows = buildChunkRows(chunks, sourceFilesById, clientId, now);
+  const existingEmbeddingStatuses = await fetchExistingEmbeddingStatuses(client, chunks.map((chunk) => chunk.chunk_id));
+  const chunkRows = buildChunkRows(chunks, sourceFilesById, clientId, now, existingEmbeddingStatuses);
   const runRow = buildRunRow(clientId, now, { sourceFiles: sourceRows.length, chunks: chunkRows.length });
 
   const sourceFileCount = await upsertBatch(client, 'enterprise_context_source_files', sourceRows, 'tenant_key,source_file_id');

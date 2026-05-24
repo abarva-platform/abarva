@@ -31,9 +31,11 @@ type DbRow = Record<string, unknown>;
 type SupabaseResult<T = unknown> = Promise<{ data?: T | null; error?: { message: string } | null }>;
 type QueryBuilder<T = unknown> = {
   eq: (column: string, value: unknown) => QueryBuilder<T>;
+  in: (column: string, values: unknown[]) => QueryBuilder<T>;
   limit: (count: number) => QueryBuilder<T>;
   maybeSingle: () => SupabaseResult<T>;
   single: () => SupabaseResult<T>;
+  then: PromiseLike<{ data?: T | null; error?: { message: string } | null }>['then'];
 };
 export type OnboardingSupabaseClient = {
   from: (table: string) => {
@@ -358,9 +360,6 @@ function buildChunkRows(chunks: CorpusChunk[], sourceFilesById: Map<string, Sour
       chunk_index: index,
       chunk_text: chunk.content,
       token_count: tokenCount(chunk.content),
-      embedding_status: 'pending',
-      embedding_model: null,
-      embedded_at: null,
       provenance: {
         run_key: RUN_KEY,
         source_file_id: chunk.source_file_id,
@@ -377,6 +376,24 @@ function buildChunkRows(chunks: CorpusChunk[], sourceFilesById: Map<string, Sour
       updated_at: now,
     };
   });
+}
+
+async function fetchExistingEmbeddingStatuses(client: OnboardingSupabaseClient, chunkIds: string[]): Promise<Map<string, string>> {
+  const existing = new Map<string, string>();
+  const batchSize = 250;
+  for (let index = 0; index < chunkIds.length; index += batchSize) {
+    const batch = chunkIds.slice(index, index + batchSize);
+    const { data, error } = await client
+      .from('enterprise_context_chunks')
+      .select('chunk_id,embedding_status')
+      .eq('tenant_key', TENANT_KEY)
+      .in('chunk_id', batch);
+    if (error) throw new Error(`enterprise_context_chunks status lookup failed: ${error.message}`);
+    for (const row of (data as { chunk_id?: unknown; embedding_status?: unknown }[] | null) ?? []) {
+      if (row.chunk_id && row.embedding_status) existing.set(String(row.chunk_id), String(row.embedding_status));
+    }
+  }
+  return existing;
 }
 
 function buildRunRow(clientId: string, now: string, counts: { sourceFiles: number; chunks: number }): DbRow {
@@ -435,7 +452,11 @@ export async function commitOnboardingSession(client: OnboardingSupabaseClient, 
     const now = new Date().toISOString();
     const sourceFilesById = new Map(sourceFiles.map((row) => [row.source_file_id, row]));
     const sourceRows = buildSourceFileRows(sourceFiles, clientId, now);
-    const chunkRows = buildChunkRows(chunks, sourceFilesById, clientId, now);
+    const existingEmbeddingStatuses = await fetchExistingEmbeddingStatuses(client, chunks.map((chunk) => chunk.chunk_id));
+    const chunkRows = buildChunkRows(chunks, sourceFilesById, clientId, now).map((row) => ({
+      ...row,
+      embedding_status: existingEmbeddingStatuses.get(String(row.chunk_id)) ?? 'pending',
+    }));
     const runRow = buildRunRow(clientId, now, { sourceFiles: sourceRows.length, chunks: chunkRows.length });
 
     const sourceFileCount = await upsertBatch(client, 'enterprise_context_source_files', sourceRows, 'tenant_key,source_file_id');
