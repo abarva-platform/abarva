@@ -29,4 +29,17 @@ describe('Source hard-question deterministic expert fallback', () => {
     expect(answer?.answerText).toMatch(/What would change the answer:/);
     expect(answer?.answerText).not.toMatch(/^Workflow gates contain blockers/m);
   });
+
+  it('prefers buyer scope and baseline evidence over generic gate text for RFI/BAFO pressure', () => {
+    const answer = answerHardSourceQuestion(
+      'Should I issue an RFI or invite Adobe, Salesforce, and Accenture to BAFO now given renewal pressure?',
+      [
+        'Tenant admin approval required before stage exit; S0 exit needs co-sign.',
+        'Scope boundary: customer-data integration contracts and hub-decision architecture. Value basis: no base-case savings until commercial baseline is confirmed. Baseline owner: Nathan Kohl.',
+      ].join('\n'),
+    );
+
+    expect(answer?.evidenceReference).toContain('Nathan Kohl');
+    expect(answer?.evidenceReference).toContain('commercial baseline');
+  });
 });

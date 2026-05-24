@@ -95,9 +95,13 @@ function makeAnswer(args: Omit<SourceHardQuestionAnswer, 'answerText'>): SourceH
 }
 
 function evidenceOrDefault(evidenceText: string, fallback: string): string {
-  const first = evidenceText
+  const lines = evidenceText
     .split('\n')
     .map((line) => line.trim())
-    .find((line) => line.length > 40);
+    .filter((line) => line.length > 40);
+  const buyerOwnedEvidence = lines.find((line) =>
+    /baseline|scope boundary|buyer architecture|decision owner|trigger|adobe|salesforce|accenture|pricing|commercial/i.test(line),
+  );
+  const first = buyerOwnedEvidence ?? lines[0];
   return first ?? fallback;
 }

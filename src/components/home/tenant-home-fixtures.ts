@@ -363,7 +363,7 @@ export const APEX_HOME: TenantHomeData = {
   monogram: 'AR',
   title: 'Apex Retail Group',
   tagline:
-    '$18B omnichannel retailer · 72,000 employees (retail-heavy) · 480 stores + 12 DCs + e-commerce · national US footprint · Shopify Plus + Salesforce Commerce + SAP S/4',
+    '$24.8B specialty retailer · 96,000 employees · 480 stores across 42 states · $4.6B e-commerce · SAP ECC 6.0 + Salesforce Commerce Cloud + IBM Sterling OMS',
   theme: {
     tenant: '#C2410C',
     tenantSoft: 'rgba(194,65,12,0.08)',

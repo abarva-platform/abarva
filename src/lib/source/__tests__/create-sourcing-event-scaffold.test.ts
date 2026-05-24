@@ -120,6 +120,26 @@ describe('createSourcingEvent scaffolding', () => {
     expect(insertedRow.current_stage_key).toBe('strategy');
   });
 
+  it('does not duplicate the client name in generated event codes', async () => {
+    const calls = setupMockSupabase({
+      id: 'evt-new-4',
+      client_key: 'apexretail',
+      event_code: 'APEX-INTEGRATION-FABRIC-2026',
+    });
+
+    await createSourcingEvent({
+      clientKey: 'apexretail',
+      eventName: 'Apex Retail Integration Fabric Commercial Control Event',
+      eventType: 'other',
+      triggerDescription: 'Renewal pressure requires commercial control.',
+    });
+
+    const eventInsert = calls.find((c) => c.table === 'source_events')!;
+    const insertedRow = eventInsert.rows as Record<string, unknown>;
+    expect(insertedRow.event_code).toBe(`APEX-INTEGRATION-FABRIC-COMMERCIAL-${new Date().getFullYear()}`);
+    expect(String(insertedRow.event_code)).not.toContain('APEX-APEX');
+  });
+
   it('does not abort event creation if scaffolding fails', async () => {
     const single = jest.fn().mockResolvedValue({
       data: {

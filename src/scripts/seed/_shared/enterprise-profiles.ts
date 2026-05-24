@@ -35,12 +35,12 @@ export const CLIENT_PROFILES: ClientFinancialProfile[] = [
   {
     clientName: 'Apex Retail',
     industryCode: 'RETAIL',
-    annualRevenueUsd: 18_000_000_000,
-    itBudgetUsd: 540_000_000,
+    annualRevenueUsd: 24_800_000_000,
+    itBudgetUsd: 545_000_000,
     aiBudgetUsd: 58_000_000,
-    employeeCount: 72_000,
+    employeeCount: 96_000,
     operationalUnits: 480, // 480 stores (12 DCs tracked separately)
     businessDescription:
-      '$18B omnichannel retailer · 72,000 employees (retail-heavy) · 480 stores + 12 DCs + e-commerce · national US footprint · Shopify Plus + Salesforce Commerce + SAP S/4',
+      '$24.8B specialty retailer · 96,000 employees · 480 stores across 42 states · $4.6B e-commerce · SAP ECC 6.0 + Salesforce Commerce Cloud + IBM Sterling OMS',
   },
 ];

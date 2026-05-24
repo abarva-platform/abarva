@@ -74,9 +74,25 @@ export interface CreateSourcingEventInput {
 
 function generateEventCode(clientKey: string, eventName: string): string {
   const prefix = clientKey.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 4);
-  const nameSlug = eventName.toUpperCase().replace(/[^A-Z0-9 ]/g, '').split(' ').slice(0, 3).join('-');
+  const clientOption = isClientKey(clientKey) ? getClientOption(clientKey) : null;
+  const clientPrefixes = [clientOption?.name, clientOption?.shortName].filter(Boolean) as string[];
+  const eventNameWithoutClient = clientPrefixes.reduce((name, clientPrefix) => {
+    const pattern = new RegExp(`^${escapeRegExp(clientPrefix)}\\s+`, 'i');
+    return name.replace(pattern, '');
+  }, eventName.trim());
+  const nameParts = eventNameWithoutClient
+    .toUpperCase()
+    .replace(/[^A-Z0-9 ]/g, '')
+    .split(' ')
+    .filter(Boolean)
+    .slice(0, 3);
+  const nameSlug = nameParts.length > 0 ? nameParts.join('-') : 'EVENT';
   const year = new Date().getFullYear();
   return `${prefix}-${nameSlug}-${year}`;
+}
+
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
 export async function getPendingSourceEvents(clientKey: string): Promise<SourceEventRow[]> {
