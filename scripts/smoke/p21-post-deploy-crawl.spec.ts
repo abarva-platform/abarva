@@ -14,7 +14,7 @@ import {
 assert.equal(CRAWL_PERSONAS.length, 5);
 assert.ok(PRIMARY_CRAWL_SURFACES.length >= 24);
 assert.equal(POST_DEPLOY_HARD_QUESTIONS.length, 10);
-assert.deepEqual(resolveCrawlPersonas('apex-cfo').map((persona) => persona.key), ['apex-cfo']);
+assert.deepEqual(resolveCrawlPersonas('apex-cio').map((persona) => persona.key), ['apex-cio']);
 
 const run: CrawlRun = {
   runId: 'smoke',
