@@ -50,25 +50,50 @@ import {
 import { evaluateGate, gateCriteriaForPhase } from './governance';
 import { PHASE_LABELS } from './types.db';
 import { getPhaseLabel } from './phase-labels';
+import { canonicalClientDisplayName } from '@/lib/client-config';
 
 // ── Client name mapping ────────────────────────────────────────────────
 const KNOWN_CLIENT_NAMES = new Map<string, ProgramSummary['clientName']>([
   ['meridian health', 'Meridian Health System'],
   ['meridian health system', 'Meridian Health System'],
+  ['heliara', 'Meridian Health System'],
+  ['heliara health', 'Meridian Health System'],
+  ['heliara health alliance', 'Meridian Health System'],
   ['first capital', 'First Capital Financial'],
   ['first capital financial', 'First Capital Financial'],
   ['first capital financial group', 'First Capital Financial'],
+  ['brindlemark', 'First Capital Financial'],
+  ['brindlemark financial', 'First Capital Financial'],
+  ['brindlemark financial group', 'First Capital Financial'],
   ['arcturus financial', 'First Capital Financial'],
+  ['arcturus financial group', 'First Capital Financial'],
   ['apex retail', 'Apex Retail Group'],
   ['apex retail group', 'Apex Retail Group'],
 ]);
+
+function canonicalProgramClientName(args: {
+  clientId?: string | null;
+  name?: string | null;
+}): ProgramSummary['clientName'] {
+  const key = args.name?.trim().toLowerCase() ?? '';
+  const mapped = KNOWN_CLIENT_NAMES.get(key);
+  if (mapped) return mapped;
+
+  const canonical = canonicalClientDisplayName({
+    key: args.clientId,
+    name: args.name,
+  });
+  if (canonical === 'Meridian Health') return 'Meridian Health System';
+  if (canonical === 'First Capital Financial') return 'First Capital Financial';
+  if (canonical === 'Apex Retail Group') return 'Apex Retail Group';
+  return 'Apex Retail Group';
+}
 
 async function resolveClientName(clientId: string): Promise<ProgramSummary['clientName']> {
   const sb = getServerSupabase();
   const { data } = await sb.from('clients').select('name').eq('id', clientId).maybeSingle();
   const raw = (data as { name: string } | null)?.name ?? '';
-  const key = raw.trim().toLowerCase();
-  return KNOWN_CLIENT_NAMES.get(key) ?? 'Apex Retail Group';
+  return canonicalProgramClientName({ clientId, name: raw });
 }
 
 // ── Person → PersonRef ─────────────────────────────────────────────────
@@ -1020,6 +1045,7 @@ export async function buildStrategicMove(
     industry_code: null,
     slug: null,
   };
+  const clientName = canonicalProgramClientName({ clientId: client.id, name: client.name });
 
   return {
     id: move.id,
@@ -1027,7 +1053,7 @@ export async function buildStrategicMove(
     name: move.name,
     tenant: {
       id: client.id,
-      name: client.name,
+      name: clientName,
       industryCode: client.industry_code,
     },
     // The origination charter — still carries `functionPackKey` as a
