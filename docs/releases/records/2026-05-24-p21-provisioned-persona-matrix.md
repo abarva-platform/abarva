@@ -33,6 +33,7 @@ Aligns the default post-deploy crawl matrix to the five CXO demo personas curren
 - Legacy `/home/source` now redirects to `/source` so stale prefetched links do not emit 404s.
 - The baseline comparator now treats missing tenant identity as P1 on first crawl without a last-known-good baseline, while still treating wrong tenant names and network/server failures as P0.
 - Programs/Moves tenant labels now canonicalize retired First Capital/Meridian demo names before rendering.
+- Programs/Moves titles, display codes, participants, activity, and deliverable titles now sanitize retired tenant names before rendering.
 - Tower Portfolio now renders an honest empty state if portfolio value reads are unavailable instead of throwing a server-render error.
 
 ## QA / Validation
