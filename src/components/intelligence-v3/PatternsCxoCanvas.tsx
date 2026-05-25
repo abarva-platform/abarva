@@ -244,6 +244,9 @@ function PatternGraphNeighborhood({ pattern }: { pattern: PatternRow | null }) {
     sourceTitle: pattern.sourceTitles?.[0] ?? '',
     contradictionTitle: pattern.contradictionTitles?.[0] ?? '',
     failureRatePct: String(pattern.failureRatePct ?? pattern.withoutPct),
+    intelligenceSessionId: `patterns:${pattern.id}:${pattern.useCaseNames?.[0] ?? pattern.bindsTo}`
+      .toLowerCase()
+      .replace(/[^a-z0-9:.-]+/g, '-'),
   });
 
   return (

@@ -58,6 +58,7 @@ interface LinkMoveInput {
   ownerRole?: string | null;
   intelligenceSessionId?: string | null;
   linkedBy?: string;
+  linkReason?: string | null;
 }
 
 interface LinkSourceInput {
@@ -102,6 +103,13 @@ export function buildDecisionThreadSlug(clientId: string, title: string): string
   return `${client}-${subject}`;
 }
 
+function uuidOrNull(value: string | null | undefined): string | null {
+  if (!value) return null;
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value)
+    ? value
+    : null;
+}
+
 async function touchThread(threadId: string): Promise<void> {
   const { error } = await getServerSupabase()
     .from('decision_threads')
@@ -118,7 +126,7 @@ export async function ensureDecisionThread(input: EnsureDecisionThreadInput): Pr
     client_id: clientId,
     thread_slug: slug,
     title: input.title.trim(),
-    originating_intelligence_session: input.originatingIntelligenceSession ?? null,
+    originating_intelligence_session: uuidOrNull(input.originatingIntelligenceSession),
     primary_owner_role: (input.primaryOwnerRole || 'CIO').trim(),
     status,
     last_activity_at: new Date().toISOString(),
@@ -194,7 +202,7 @@ export async function ensureThreadForMove(input: LinkMoveInput): Promise<Decisio
     surface: 'moves',
     artifactRef: input.moveId,
     linkedBy: input.linkedBy ?? 'auto',
-    linkReason: 'Move opened inside the unified decision dossier spine',
+    linkReason: input.linkReason ?? 'Move opened inside the unified decision dossier spine',
   });
   if (input.intelligenceSessionId) {
     await linkDecisionArtifact({

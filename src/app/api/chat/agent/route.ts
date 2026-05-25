@@ -551,6 +551,25 @@ export async function POST(request: Request) {
     }
   }
 
+  const decisionThreadId =
+    typeof surfaceContext.decisionThreadId === 'string' && surfaceContext.decisionThreadId.trim()
+      ? surfaceContext.decisionThreadId.trim()
+      : null;
+  if (decisionThreadId && programId) {
+    const moveTitle =
+      typeof surfaceContext.moveTitle === 'string' && surfaceContext.moveTitle.trim()
+        ? surfaceContext.moveTitle.trim()
+        : 'the active Strategic Move';
+    const moveCode =
+      typeof surfaceContext.moveCode === 'string' && surfaceContext.moveCode.trim()
+        ? surfaceContext.moveCode.trim()
+        : programId;
+    contextLines.push(
+      `Decision thread: ${decisionThreadId}. This page is inside the unified Decision Dossier thread for ${moveCode} — ${moveTitle}.`,
+      `Pronoun resolution: when the user says "this Move", "the Move we just created", "it", or "the recommendation" on this surface, resolve it to ${moveCode} — ${moveTitle} in decision thread ${decisionThreadId}. Do not ask which Move unless the user names a conflicting Move.`,
+    );
+  }
+
   // Strategic-moves surfaces — load phase pack by surface + phase context.
   // /strategic-moves/new always loads P0 (origination).
   // /strategic-moves/:id loads the pack for surfaceContext.phase (P1–P5).

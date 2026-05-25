@@ -92,12 +92,13 @@ describe('StrategicMoveDetailClient', () => {
     render(
       <StrategicMoveDetailClient
         move={makeMove()}
+        decisionThreadId="thread-apx-cdp"
         workspace={<div />}
       />,
     );
     const turns = screen.getAllByTestId('agent-dock-turn-agent');
     expect(turns.length).toBeGreaterThanOrEqual(2);
-    expect(turns[0].textContent).toMatch(/APX-CDP-2026/);
+    expect(turns[0].textContent).toMatch(/Customer Data Platform/);
     expect(turns[0].textContent).toMatch(/P2 Discover/);
   });
 
@@ -105,6 +106,7 @@ describe('StrategicMoveDetailClient', () => {
     render(
       <StrategicMoveDetailClient
         move={makeMove()}
+        decisionThreadId="thread-apx-cdp"
         workspace={<div />}
       />,
     );
@@ -123,6 +125,7 @@ describe('StrategicMoveDetailClient', () => {
     render(
       <StrategicMoveDetailClient
         move={makeMove()}
+        decisionThreadId="thread-apx-cdp"
         workspace={<div />}
       />,
     );
@@ -147,6 +150,7 @@ describe('StrategicMoveDetailClient', () => {
     render(
       <StrategicMoveDetailClient
         move={makeMove()}
+        decisionThreadId="thread-apx-cdp"
         workspace={<div />}
       />,
     );
@@ -183,6 +187,7 @@ describe('StrategicMoveDetailClient', () => {
     expect(body.surfaceContext.programId).toBe('apx-cdp-2026');
     expect(body.surfaceContext.moveId).toBe('apx-cdp-2026');
     expect(body.surfaceContext.moveCode).toBe('APX-CDP-2026');
+    expect(body.surfaceContext.decisionThreadId).toBe('thread-apx-cdp');
     expect(body.surfaceContext.currentPhase).toBe(2);
   });
 

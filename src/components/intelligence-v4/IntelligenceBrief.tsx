@@ -99,6 +99,16 @@ export function IntelligenceBrief({ data, activeClient, surfaceContext }: Props)
   const leadBet = data.bets[0];
   const leadDecision = leadBet ? decisionCtaLabel(leadBet) : 'Review first';
   const leadPattern = leadBet?.bindingPatterns[0]?.pattern.id ?? data.patternsTriggered[0]?.pattern.id ?? 'Pattern bound';
+  const leadPatternName = leadBet?.bindingPatterns[0]?.pattern.name ?? data.patternsTriggered[0]?.pattern.name ?? leadPattern;
+  const shapeMoveHref = leadBet
+    ? `/strategic-moves/new?${new URLSearchParams({
+        fromIntelligence: '1',
+        patternId: leadPattern,
+        patternName: leadPatternName,
+        useCaseName: leadBet.useCase.name,
+        intelligenceSessionId: `intelligence-brief:${leadPattern}:${leadBet.useCase.name}`.toLowerCase().replace(/[^a-z0-9:.-]+/g, '-'),
+      }).toString()}`
+    : '/strategic-moves/new';
   // L11 fix (2026-05-13): hero title now uses the live tenant name on every
   // tenant. The earlier "Apex has three AI bets…" literal was retail-only
   // and was paired with the broken Value/Tensions panels — a CDIO at
@@ -204,7 +214,7 @@ export function IntelligenceBrief({ data, activeClient, surfaceContext }: Props)
               <MiniMetric label="Time" value={leadBet?.useCase.businessValueRanges.timeToValueMonths ? `${leadBet.useCase.businessValueRanges.timeToValueMonths} months` : '-'} />
             </div>
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 14 }}>
-              <Cta href="/strategic-moves/new" primary>Shape as move</Cta>
+              <Cta href={shapeMoveHref} primary>Shape as move</Cta>
               <Cta href="/intelligence#map">Show evidence</Cta>
             </div>
           </aside>

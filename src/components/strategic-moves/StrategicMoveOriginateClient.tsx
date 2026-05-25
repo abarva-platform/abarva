@@ -90,9 +90,14 @@ function applyBriefProgressArtifact(
 interface Props {
   tenantName: string;
   initialTurns?: ChatTurn[];
+  originatingIntelligenceSessionId?: string | null;
 }
 
-export function StrategicMoveOriginateClient({ tenantName, initialTurns }: Props) {
+export function StrategicMoveOriginateClient({
+  tenantName,
+  initialTurns,
+  originatingIntelligenceSessionId = null,
+}: Props) {
   const router = useRouter();
   const [turns, setTurns] = useState<ChatTurn[]>(
     initialTurns ?? [
@@ -342,11 +347,17 @@ export function StrategicMoveOriginateClient({ tenantName, initialTurns }: Props
             evidenceFamily: brief.fields['evidence-family'] || null,
             // Origination chat transcript → persisted to turns table
             originationTurns,
+            // Packet 22: bind Intelligence -> Move handoff into a Decision Dossier.
+            originatingIntelligenceSessionId,
+            decisionThreadTitle: finalName,
+            decisionThreadOwnerRole: brief.fields['sponsor-candidate'] || null,
           }),
         });
         const payload = (await res.json()) as {
           ok?: boolean;
           engagementId?: string;
+          decisionThreadId?: string | null;
+          dossierUrl?: string | null;
           message?: string;
           error?: string;
         };

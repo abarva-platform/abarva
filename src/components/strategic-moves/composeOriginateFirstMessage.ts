@@ -36,6 +36,7 @@ export interface FromIntelligenceCtx {
   patternId: string;
   patternName: string;
   useCaseName: string;
+  sessionId?: string | null;
   sourceTitle?: string | null;
   contradictionTitle?: string | null;
   failureRatePct?: number | null;
