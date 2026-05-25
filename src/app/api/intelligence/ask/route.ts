@@ -45,6 +45,7 @@ async function handleAsk(payload: AskPayload) {
   let tenantId: string | null = null;
   let userId: string | null = null;
   let tenantInventoryKey: string | null = null;
+  let tenantClientKey: string | null = null;
   const requestedOrSurfaceClient =
     requestedClient ??
     surfaceContext?.clientKey ??
@@ -65,6 +66,7 @@ async function handleAsk(payload: AskPayload) {
     tenantInventoryKey = resolvedClient?.key
       ? clientKeyToInventorySubstrateKey(resolvedClient.key)
       : null;
+    tenantClientKey = resolvedClient?.key ?? null;
     tenantId = resolvedClient?.id ?? null;
     sentinelClientId = resolvedClient?.id ?? tenantInventoryKey ?? requestedOrSurfaceClient ?? 'unknown-active-tenant';
     if (person) {
@@ -156,6 +158,7 @@ async function handleAsk(payload: AskPayload) {
         for await (const event of askIntelligence(query, {
           userContextBlock,
           tenantId,
+          tenantClientKey,
           userId,
           tenantInventoryKey,
           surfaceContext,

@@ -239,6 +239,7 @@ export async function* synthesizeStream(args: {
   sources: AskSource[];
   intent: AskIntent;
   tenantId?: string | null;
+  tenantClientKey?: string | null;
   userId?: string | null;
   userContextBlock?: string;
   conversationContextBlock?: string;
@@ -263,12 +264,12 @@ export async function* synthesizeStream(args: {
       : '';
 
   // STRESS-P0-001 fix (2026-05-24): authoritative tenant-identity pin built
-  // dynamically from args.tenantId. Replaces the prior hardcoded
+  // dynamically from args.tenantClientKey. Replaces the prior hardcoded
   // "active tenant is Apex Retail" line in SYSTEM_PROMPT, which caused
   // Meridian-authenticated CDIO sessions to receive responses asserting
   // "you're Apex Retail." The pin block is prepended FIRST (above any other
   // context block) so the model treats it as highest-priority.
-  const tenantIdentityPin = buildTenantIdentityPin(args.tenantId ?? null);
+  const tenantIdentityPin = buildTenantIdentityPin(args.tenantClientKey ?? args.tenantId ?? null);
 
   const contextBlocks = [
     tenantIdentityPin,
@@ -319,7 +320,7 @@ export async function* synthesizeStream(args: {
     // with a structured refusal that surfaces the issue. The original text
     // is preserved in the audit trail via callModel's ai_egress_audit row.
     const leakCheck = detectCrossTenantIdentityLeak({
-      clientKey: args.tenantId ?? null,
+      clientKey: args.tenantClientKey ?? args.tenantId ?? null,
       response: text,
     });
     if (leakCheck.leaked) {
