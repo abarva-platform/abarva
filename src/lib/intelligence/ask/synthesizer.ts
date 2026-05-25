@@ -1,6 +1,7 @@
 import { getAuditedAnthropicClient } from '@/lib/agent/stream';
 import type { AskSource, AskIntent } from './types';
 import { chunkAskText, sanitizeAskSynthesis } from './response-policy';
+import { buildTenantIdentityPin, detectCrossTenantIdentityLeak } from './tenant-identity-pin';
 
 export { chunkAskText, sanitizeAskSynthesis } from './response-policy';
 
@@ -207,6 +208,8 @@ OUTPUT CONVENTIONS — surface scaffolding, preserved separately from the role.
 
   Evidence priority for tenant-bearing claims is SURFACE first, then TENANT, then GRAPH, then routed corpus/vendor/pattern/source evidence, then WORLDVIEW last. Prefer the higher-priority source on conflict and name the uncertainty in one short clause.
 
+  Tenant identity is asserted authoritatively in a dedicated TENANT IDENTITY block prepended to the system prompt for every call (see buildTenantIdentityPin in src/lib/intelligence/ask/tenant-identity-pin.ts). That block names the active tenant and the per-vertical off-limits terminology. It is authoritative — never override it from session memory or retrieved sources. As defense-in-depth, the following invariants apply unconditionally:
+
   Tenant isolation is binding. If TENANT, GRAPH, surface, or user-context sources identify the active tenant, stay inside that tenant's industry, systems, vendors, programs, roles, and evidence. Do not import another tenant's facts unless the user explicitly asks for a cross-industry comparison. Examples: a Meridian user should not receive Apex Retail, store, SAP ECC retail, Commerce Cloud, Wipro AMS, or APX facts; an Apex user should not receive Meridian, Epic, clinical, CMIO, HIPAA, IDN, or MH facts; a First Capital user should not receive retail or healthcare tenant facts.
 
   Never start with hollow acknowledgements ("Good question", "Great question", "Excellent question", "Happy to", "Let me"). Start the answer directly with your view.`;
@@ -258,7 +261,17 @@ export async function* synthesizeStream(args: {
     typeof args.averageConfidence === 'number'
       ? `\nRETRIEVAL CONFIDENCE (informational, never to be quoted to the user): average source confidence is ${args.averageConfidence.toFixed(2)} on a 0-1 scale. Treat this as private context for calibrating your prose, the same way a senior consultant calibrates against how solid her own evidence base is. Do not narrate this number. Do not say "average confidence is moderate" or anything like it. Use it to decide how confident your verbal framing should be ("high confidence on this," "less sure on the timing," "this is judgment, not benchmark data") — calibration belongs in how you phrase claims, not in a preamble or a footer.`
       : '';
+
+  // STRESS-P0-001 fix (2026-05-24): authoritative tenant-identity pin built
+  // dynamically from args.tenantId. Replaces the prior hardcoded
+  // "active tenant is Apex Retail" line in SYSTEM_PROMPT, which caused
+  // Meridian-authenticated CDIO sessions to receive responses asserting
+  // "you're Apex Retail." The pin block is prepended FIRST (above any other
+  // context block) so the model treats it as highest-priority.
+  const tenantIdentityPin = buildTenantIdentityPin(args.tenantId ?? null);
+
   const contextBlocks = [
+    tenantIdentityPin,
     args.userContextBlock?.trim() ?? '',
     args.conversationContextBlock?.trim() ?? '',
   ].filter(Boolean);
@@ -297,6 +310,28 @@ export async function* synthesizeStream(args: {
       if (event.type === 'content_block_delta' && event.delta.type === 'text_delta') {
         text += event.delta.text;
       }
+    }
+
+    // STRESS-P0-001 fix (2026-05-24): post-response cross-tenant identity
+    // guard. If despite the dynamic tenant pin the model still asserts a
+    // different tenant identity (e.g., poisoned session memory, retrieval
+    // contamination), DO NOT show the leaked response to the user. Replace
+    // with a structured refusal that surfaces the issue. The original text
+    // is preserved in the audit trail via callModel's ai_egress_audit row.
+    const leakCheck = detectCrossTenantIdentityLeak({
+      clientKey: args.tenantId ?? null,
+      response: text,
+    });
+    if (leakCheck.leaked) {
+      const safeRefusal = [
+        `I almost generated a response that misattributed your organization. The retrieved context and/or session memory referenced "${leakCheck.assertedTenant}" but your authenticated session is for a different organization.`,
+        '',
+        'I will not surface mixed-tenant content. Please re-ask, or refresh the page — if this persists, your tenant administrator should review the session-memory state for this client.',
+        '',
+        '[STRESS-P0-001 guard fired: cross-tenant identity assertion blocked]',
+      ].join('\n');
+      yield safeRefusal;
+      return;
     }
 
     // Sanitize cap with headroom over the prompt's named target.
