@@ -6,6 +6,10 @@ describe('AI egress migration contract', () => {
     path.join(process.cwd(), 'supabase/migrations/20260522170000_ai_egress_control_plane.sql'),
     'utf8',
   );
+  const clerkUserMigration = fs.readFileSync(
+    path.join(process.cwd(), 'supabase/migrations/20260525020500_ai_egress_audit_user_id_text.sql'),
+    'utf8',
+  );
 
   it('adds policy to the real tenant table and creates both audit ledgers', () => {
     expect(migration).toContain('ALTER TABLE public.clients');
@@ -22,5 +26,11 @@ describe('AI egress migration contract', () => {
     expect(migration).toContain("'meridian'");
     expect(migration).toContain("'first-capital'");
     expect(migration).toContain('"allowGamma": false');
+  });
+
+  it('stores Clerk user ids as text in the egress audit ledger', () => {
+    expect(clerkUserMigration).toContain('ALTER TABLE public.ai_egress_audit');
+    expect(clerkUserMigration).toContain('ALTER COLUMN user_id TYPE TEXT');
+    expect(clerkUserMigration).toContain('USING user_id::TEXT');
   });
 });
