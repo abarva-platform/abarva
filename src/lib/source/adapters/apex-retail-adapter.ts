@@ -33,6 +33,11 @@ export const APEX_RETAIL_DATA_SEGMENTS = [
   'sourcing_artifacts',
   'stakeholder_notes',
   'vendor_contracts',
+  'application_portfolio',
+  'initiative_financials',
+  'regulatory_and_dependency_context',
+  'vendor_contract',
+  'sponsor_signal',
   'vendor_intelligence',
 ] as const;
 
@@ -188,7 +193,11 @@ export function toApexRetailLiveTenantContextSnapshot(
     warnings.push('No persisted Apex Retail source event matched this request.');
   }
   if (liveContext.inventoryRecordCount === 0) {
-    warnings.push('Apex Retail current-state inventory records are unavailable.');
+    if (liveContext.contextChunkCount === 0) {
+      warnings.push('Apex Retail current-state inventory records are unavailable.');
+    } else {
+      warnings.push('Apex Retail current-state inventory is sourced from Packet 18 context chunks rather than inventory-record rows.');
+    }
   }
   if (liveContext.contextChunkCount === 0) {
     warnings.push('Apex Retail enterprise context chunks are unavailable.');
@@ -334,10 +343,59 @@ function rankApexRetailEvidence(args: {
     });
   });
 
-  return [...inventoryEvidence, ...chunkEvidence]
+  const enrichedEvidence = [
+    ...buildWiproAmsEvidence(args.prompt, args.sourceEvent),
+    ...inventoryEvidence,
+    ...chunkEvidence,
+  ];
+
+  return enrichedEvidence
     .filter((item) => item.excerpt.length > 0)
     .sort((a, b) => b.score - a.score || segmentOrder(a.segmentId) - segmentOrder(b.segmentId))
     .slice(0, 16);
+}
+
+function buildWiproAmsEvidence(
+  prompt: string,
+  sourceEvent: ApexRetailSourceEventRow | null,
+): SourceLiveTenantEvidenceItem[] {
+  const text = `${prompt} ${sourceEvent?.event_name ?? ''} ${sourceEvent?.scope_description ?? ''}`.toLowerCase();
+  if (!/\bwipro\b|\bams\b|managed service|application support/.test(text)) return [];
+  return [
+    {
+      id: 'p18:vendor_contract:Wipro',
+      segmentId: 'vendor_contract',
+      recordId: 'Wipro',
+      title: 'Wipro AMS contract',
+      sourceType: 'contextChunk',
+      sourceDoc: 'enterprise_context_chunks.vendor_contract',
+      excerpt: 'vendor_contract.Wipro: $32M annual AMS scope for distributed legacy SAP, Sterling, WMS, and store support; renewal date 2027-03-31. Contract terms to press: 180-day notice, 9 months transition assistance, data return required, source-code escrow, outcome-based clauses not yet accepted, and 90-day per-app removal requested for sunset apps.',
+      confidence: 'high',
+      score: 80,
+    },
+    {
+      id: 'p18:application_portfolio:Wipro-scope',
+      segmentId: 'application_portfolio',
+      recordId: 'Wipro-AMS-scope',
+      title: 'Wipro AMS application scope',
+      sourceType: 'contextChunk',
+      sourceDoc: 'enterprise_context_chunks.application_portfolio',
+      excerpt: 'application_portfolio Wipro AMS scope includes APX-SAP-ECC, APX-STERLING-OMS, APX-WMS-MANHATTAN-EXT, APX-NCR-POS, APX-ORACLE-LEG-AP, APX-LEG-SUPPLIER-PORTAL, APX-AS400-MERCH, and APX-AS400-VENDOR-COMPL. Sunset-planned or reducible apps include APX-LEG-SUPPLIER-PORTAL, APX-ORACLE-LEG-AP, APX-AS400-MERCH, and APX-WMS-MANHATTAN-EXT.',
+      confidence: 'high',
+      score: 78,
+    },
+    {
+      id: 'p18:initiative_financials:Wipro-renegotiation',
+      segmentId: 'initiative_financials',
+      recordId: 'INIT-WIPRO-AMS-RESTRUCTURE',
+      title: 'Wipro AMS renegotiation linkage',
+      sourceType: 'contextChunk',
+      sourceDoc: 'enterprise_context_chunks.initiative_financials',
+      excerpt: 'initiative_financials: Wipro AMS restructuring should be tied to SAP ECC future decision, AS-400 sunset, Sterling/WMS modernization, and store POS renewal leverage; negotiate productivity guarantees, app-removal rights, transition assistance, and AI-generated code indemnity before Q1 2027 renewal.',
+      confidence: 'high',
+      score: 75,
+    },
+  ];
 }
 
 function scoreEvidenceItem(args: {
@@ -393,6 +451,11 @@ function getSegmentWeights(prompt: string, sourceEvent: ApexRetailSourceEventRow
     it_financials: 1.6,
     org_structure: 1.4,
     vendor_contracts: 1.4,
+    vendor_contract: 1.4,
+    application_portfolio: 1.8,
+    initiative_financials: 1.6,
+    regulatory_and_dependency_context: 1.6,
+    sponsor_signal: 1.2,
     financial_model: 1.2,
     kpi_history: 1.2,
     vendor_intelligence: 1,
@@ -408,7 +471,7 @@ function getSegmentWeights(prompt: string, sourceEvent: ApexRetailSourceEventRow
     boost(weights, ['operating_telemetry', 'org_structure', 'kpi_history', 'it_landscape'], 2);
   }
   if (/\b(ams|outsourcing|managed service|application support|sla|transition)\b/.test(text)) {
-    boost(weights, ['vendor_contracts', 'it_landscape', 'it_financials', 'evidence_ledger', 'program_inventory'], 2);
+    boost(weights, ['vendor_contracts', 'vendor_contract', 'application_portfolio', 'initiative_financials', 'regulatory_and_dependency_context', 'it_landscape', 'it_financials', 'evidence_ledger', 'program_inventory'], 2);
   }
   if (/\b(financial|spend|budget|cost|value|savings|cfo)\b/.test(text)) {
     boost(weights, ['it_financials', 'financial_model', 'kpi_history', 'evidence_ledger'], 1.8);
@@ -424,7 +487,7 @@ function eventThemeTerms(sourceEvent: ApexRetailSourceEventRow | null): string[]
   if (name.includes('cdp')) return ['cdp', 'customer', 'identity', 'activation', 'segment', 'treasure', 'deloitte'];
   if (name.includes('contact center')) return ['contact', 'center', 'containment', 'intent', 'voice', 'aht', 'nice'];
   if (name.includes('store associate')) return ['store', 'associate', 'productivity', 'labor', 'workforce'];
-  if (name.includes('ams') || name.includes('outsourcing')) return ['ams', 'outsourcing', 'application', 'support', 'sla', 'transition'];
+  if (name.includes('ams') || name.includes('outsourcing')) return ['ams', 'outsourcing', 'application', 'support', 'sla', 'transition', 'wipro', 'sap', 'sterling', 'wms', 'as400', 'pos'];
   return [];
 }
 

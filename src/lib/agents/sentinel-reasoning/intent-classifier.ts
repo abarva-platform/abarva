@@ -22,6 +22,19 @@ const IT_PRODUCTIVITY_TERMS = [
   'platform team',
   'tooling governance',
   'sibling move',
+  'initiative',
+  'initiatives',
+  'kill list',
+  'kill candidate',
+  'what blocks',
+  'as-400',
+  'as400',
+  'application portfolio',
+  'integration topology',
+  'mainframe modernization',
+  'loyalty replacement',
+  'punchh',
+  'wipro ams',
 ];
 
 function corpusCitation(hit: CorpusSearchHit): SentinelCitation {
