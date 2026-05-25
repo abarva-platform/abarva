@@ -358,7 +358,7 @@ export async function POST(request: Request) {
   const tenantName          =
     canonicalClientDisplayName({ key: earlyActiveClientKey, name: earlyActiveClient?.name })
     ?? canonicalClientDisplayName({ name: body.tenantName })
-    ?? "Apex Retail Group";
+    ?? "Unknown active tenant";
   const agentName           = body.agentName  ?? null;
   const stage               = body.stage      ?? null;
   // PR-G surface canonicalization. Two surface-key conventions exist
@@ -2055,6 +2055,9 @@ function buildSourceEventSeedPromptBlock(surfaceContext: Record<string, unknown>
   const eventId = typeof surfaceContext.eventId === 'string' ? surfaceContext.eventId : '';
   if (eventId !== AMS_OUTSOURCING_2026_EVENT_ID) return '';
 
+  const accountLabel = typeof surfaceContext.accountName === 'string' && surfaceContext.accountName.trim()
+    ? surfaceContext.accountName.trim()
+    : 'the linked tenant account';
   const storyline = buildAmsVendorStoryline();
   const bafo = buildAmsBafoView();
 
@@ -2078,7 +2081,7 @@ function buildSourceEventSeedPromptBlock(surfaceContext: Record<string, unknown>
 
   return [
     'SOURCE EVENT PAGE SEED CONTEXT (current canvas; deterministic demo seed):',
-    `Event: ${storyline.eventName}. Account: Apex Retail. Event ID: ${storyline.eventId}. Linked program: ${storyline.linkedProgramCode}. Current stage: S5 Orals/BAFO.`,
+    `Event: ${storyline.eventName}. Account: ${accountLabel}. Event ID: ${storyline.eventId}. Linked program: ${storyline.linkedProgramCode}. Current stage: S5 Orals/BAFO.`,
     'Use this page-local context before saying vendor, BAFO, committee, risk, or gate data is missing.',
     'Vendor proposals rendered on the current canvas:',
     ...vendorLines,
