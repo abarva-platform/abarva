@@ -21,8 +21,13 @@ const sessionMemory = read('src/lib/intelligence/ask/session-memory.ts');
 assert.match(sessionMemory, /prepareAskSessionMemory/);
 assert.match(sessionMemory, /appendAskSessionTurn/);
 assert.match(sessionMemory, /RECENT_TURN_LIMIT = 10/);
+assert.match(sessionMemory, /\[middle omitted\]/);
 assert.match(sessionMemory, /linkAskSessionToMove/);
 assert.match(sessionMemory, /getAskSessionForMove/);
+
+const synthesizer = read('src/lib/intelligence/ask/synthesizer.ts');
+assert.match(synthesizer, /SESSION CONTINUITY RULE/);
+assert.match(synthesizer, /repeat, recap, continue/);
 
 const askRoute = read('src/app/api/intelligence/ask/route.ts');
 assert.match(askRoute, /prepareAskSessionMemory/);

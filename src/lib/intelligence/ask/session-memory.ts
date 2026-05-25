@@ -33,7 +33,11 @@ interface AskTurnRow {
 }
 
 function cleanText(value: string, max = MAX_TURN_CHARS): string {
-  return value.replace(/\s+/g, ' ').trim().slice(0, max);
+  const normalized = value.replace(/\s+/g, ' ').trim();
+  if (normalized.length <= max) return normalized;
+  const headLength = Math.floor(max * 0.55);
+  const tailLength = Math.max(240, max - headLength - 32);
+  return `${normalized.slice(0, headLength)} ... [middle omitted] ... ${normalized.slice(-tailLength)}`;
 }
 
 function titleFromQuery(query: string): string {
