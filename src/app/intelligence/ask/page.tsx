@@ -17,6 +17,8 @@ import { SHELL } from '@/lib/shell/shell-tokens';
 import { IntelligenceReasoningModeStrip } from '@/components/intelligence/IntelligenceReasoningModeStrip';
 import { SentinelReasoningCards } from '@/app/(maestro)/intelligence/ask/SentinelReasoningCards';
 import { IntelligenceAskTabCookie } from './IntelligenceAskTabCookie';
+import { getActiveClientRow } from '@/lib/active-client';
+import { DEFAULT_CLIENT_KEY, getClientOption } from '@/lib/client-config';
 
 export const metadata = {
   title: 'Sentinel Intel · Ask | AbarVa',
@@ -31,11 +33,23 @@ export default async function IntelligenceAskPage({
   searchParams: Promise<{ mode?: string }>;
 }) {
   const params = await searchParams;
+
+  // STRESS-P0-002 fix: resolve the active tenant from the authenticated session
+  // instead of hardcoding "Apex Retail Group" / "apexretail" in the topbar and
+  // in the SentinelReasoningCards initialClient prop. The 2026-05-24 full-
+  // module stress test on Meridian Health found that the page was hardcoded
+  // and therefore drove Sentinel's responses to assert "you're Apex Retail"
+  // regardless of which tenant the user authenticated as.
+  const activeClient = await getActiveClientRow(null).catch(() => null);
+  const activeClientKey = activeClient?.key ?? DEFAULT_CLIENT_KEY;
+  const activeClientDisplayName =
+    activeClient?.name ?? getClientOption(activeClientKey).name;
+
   return (
     <AppShell
       surface="intelligence"
       topBarProps={{
-        tenantName: 'Apex Retail Group',
+        tenantName: activeClientDisplayName,
         showLocked: true,
         context: 'Intelligence · Ask Sentinel Intel',
       }}
@@ -121,7 +135,10 @@ export default async function IntelligenceAskPage({
           {/* INT-5 · Reasoning mode strip — frames Sentinel's answer scope */}
           <IntelligenceReasoningModeStrip searchParams={params} />
 
-          <SentinelReasoningCards initialClient="apexretail" />
+          <SentinelReasoningCards
+            initialClient={activeClientKey}
+            initialClientDisplayName={activeClientDisplayName}
+          />
         </div>
       </div>
     </AppShell>
