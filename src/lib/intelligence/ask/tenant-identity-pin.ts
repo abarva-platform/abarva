@@ -36,7 +36,7 @@
  * structurally enforced honesty discipline.
  */
 
-import { getClientOption } from '@/lib/client-config';
+import { getClientOption, isClientKey, type ClientKey } from '@/lib/client-config';
 
 interface VerticalProfile {
   /** Human-readable vertical name used in the pin prose */
@@ -109,7 +109,8 @@ const VERTICAL_PROFILES: Record<string, VerticalProfile> = {
  *                    tenant context is available.
  */
 export function buildTenantIdentityPin(clientKey: string | null | undefined): string {
-  if (!clientKey) {
+  const normalizedClientKey = normalizeTenantPinClientKey(clientKey);
+  if (!normalizedClientKey) {
     return [
       'TENANT IDENTITY (authoritative): No active tenant has been resolved for this session.',
       'Rules:',
@@ -119,7 +120,7 @@ export function buildTenantIdentityPin(clientKey: string | null | undefined): st
     ].join('\n');
   }
 
-  const client = getClientOption(clientKey);
+  const client = getClientOption(normalizedClientKey);
   const profile = VERTICAL_PROFILES[client.vertical] ?? null;
 
   const offLimitsTermLine = profile && profile.offLimitsTerms.length > 0
@@ -162,7 +163,10 @@ export function detectCrossTenantIdentityLeak(args: {
 }): { leaked: true; assertedTenant: string } | { leaked: false } {
   if (!args.clientKey || !args.response) return { leaked: false };
 
-  const client = getClientOption(args.clientKey);
+  const normalizedClientKey = normalizeTenantPinClientKey(args.clientKey);
+  if (!normalizedClientKey) return { leaked: false };
+
+  const client = getClientOption(normalizedClientKey);
   const profile = VERTICAL_PROFILES[client.vertical];
   if (!profile) return { leaked: false };
 
@@ -199,4 +203,14 @@ export function detectCrossTenantIdentityLeak(args: {
   }
 
   return { leaked: false };
+}
+
+function normalizeTenantPinClientKey(value: string | null | undefined): ClientKey | null {
+  const normalized = value?.trim().toLowerCase();
+  if (!normalized) return null;
+  if (isClientKey(normalized)) return normalized;
+  if (normalized === 'apex-retail') return 'apexretail';
+  if (normalized === 'meridian-health') return 'meridian';
+  if (normalized === 'firstcapital' || normalized === 'first-capital' || normalized === 'first-capital-financial') return 'arcturus';
+  return null;
 }

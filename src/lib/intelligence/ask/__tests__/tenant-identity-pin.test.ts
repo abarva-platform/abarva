@@ -91,6 +91,12 @@ describe('buildTenantIdentityPin', () => {
       const pin = buildTenantIdentityPin('');
       expect(pin).toContain('No active tenant');
     });
+
+    it('does not fall back to Apex when passed a database UUID instead of a client key', () => {
+      const pin = buildTenantIdentityPin('3f4a6d85-0ed0-4f6c-9d7a-9b6ad1e88c11');
+      expect(pin).toContain('No active tenant');
+      expect(pin).not.toMatch(/active\s+tenant.*Apex Retail/i);
+    });
   });
 
   describe('STRESS-P0-001 regression — the exact failing case', () => {

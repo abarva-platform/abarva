@@ -29,6 +29,7 @@ export interface AskOptions {
   userContextBlock?: string;
   conversationContextBlock?: string;
   tenantId?: string | null;
+  tenantClientKey?: string | null;
   userId?: string | null;
   tenantInventoryKey?: string | null;
   surfaceContext?: AskSurfaceContext | null;
@@ -149,6 +150,7 @@ export async function* askIntelligence(query: string, opts: AskOptions = {}): As
       sources,
       intent: classification.intent,
       tenantId: opts.tenantId,
+      tenantClientKey: opts.tenantClientKey,
       userId: opts.userId,
       userContextBlock: opts.userContextBlock,
       conversationContextBlock: opts.conversationContextBlock,

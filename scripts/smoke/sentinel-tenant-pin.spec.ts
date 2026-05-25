@@ -39,6 +39,12 @@ assert.match(
 
 assert.match(
   synthesizer,
+  /tenantClientKey/,
+  'Ask Intelligence synthesizer must build the tenant identity pin from a tenant client key, not a database UUID.',
+);
+
+assert.match(
+  synthesizer,
   /a Meridian user should not receive Apex Retail/,
   'Ask Intelligence system prompt should explicitly guard Meridian from Apex leakage.',
 );
@@ -77,6 +83,12 @@ assert.match(
   intelligenceAskRoute,
   /unknown-active-tenant/,
   'Intelligence ask route should use a neutral unknown-tenant Sentinel fallback.',
+);
+
+assert.match(
+  intelligenceAskRoute,
+  /tenantClientKey/,
+  'Intelligence ask route must pass the resolved client key into ask synthesis.',
 );
 
 assert.equal(
