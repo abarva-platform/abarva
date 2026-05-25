@@ -29,6 +29,8 @@ interface Props {
   linkedSourceEvent?: LinkedSourceEvent | null;
   /** Unified Decision Dossier id that binds this Move to upstream/downstream surfaces. */
   decisionThreadId?: string | null;
+  /** Intelligence Ask session that originated this Move, when one exists. */
+  originatingIntelligenceSessionId?: string | null;
 }
 
 function formatRole(role: string): string {
@@ -388,6 +390,7 @@ export function StrategicMoveDetailView({
   handoff = null,
   linkedSourceEvent = null,
   decisionThreadId = null,
+  originatingIntelligenceSessionId = null,
 }: Props) {
   return (
     <div className={styles.page}>
@@ -403,6 +406,7 @@ export function StrategicMoveDetailView({
         <StrategicMoveDetailClient
           move={move}
           decisionThreadId={decisionThreadId}
+          originatingIntelligenceSessionId={originatingIntelligenceSessionId}
           workspace={
             <RightPane
               move={move}

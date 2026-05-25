@@ -83,6 +83,7 @@ type InstanceRow = {
   artifact_completion_jsonb: unknown;
   gate_skeleton_jsonb: unknown;
   options_jsonb: unknown;
+  originating_intelligence_session_id: string | null;
   created_by_id: string | null;
   created_at: string;
   updated_at: string;
@@ -182,6 +183,7 @@ function mapInstance(row: InstanceRow): MoveInstanceRecord {
     artifactCompletion: toJsonRecord(row.artifact_completion_jsonb),
     gateSkeleton: toJsonArray(row.gate_skeleton_jsonb),
     options: toJsonRecord(row.options_jsonb),
+    originatingIntelligenceSessionId: row.originating_intelligence_session_id,
     createdById: row.created_by_id,
     createdAt: String(row.created_at),
     updatedAt: String(row.updated_at),
@@ -775,9 +777,9 @@ export async function instantiateTemplate(
         INSERT INTO public.move_instances(
           template_id, template_version_pinned, client_id, engagement_id,
           sponsor_assignments_jsonb, current_gate, status, artifact_completion_jsonb,
-          gate_skeleton_jsonb, options_jsonb, created_by_id
+          gate_skeleton_jsonb, options_jsonb, originating_intelligence_session_id, created_by_id
         )
-        VALUES ($1, $2, $3, $4, $5::jsonb, $6, $7, $8::jsonb, $9::jsonb, $10::jsonb, $11)
+        VALUES ($1, $2, $3, $4, $5::jsonb, $6, $7, $8::jsonb, $9::jsonb, $10::jsonb, $11, $12)
         RETURNING *
       `,
       [
@@ -791,6 +793,7 @@ export async function instantiateTemplate(
         JSON.stringify(artifactCompletion),
         JSON.stringify(gateSkeleton),
         JSON.stringify(options),
+        options.originatingIntelligenceSessionId ?? null,
         context.userId,
       ],
     );

@@ -13,6 +13,7 @@ import { selectSourceEventsReadAdapter } from '@/lib/data-plane/read-adapters/so
 import type { MoveToSourceHandoffResult } from '@/lib/programs/source-trigger/move-to-source-handoff';
 import type { StrategicMove } from '@/lib/programs/types.ui';
 import { ensureThreadForMove } from '@/lib/decisions/auto-linker';
+import { getAskSessionForMove } from '@/lib/intelligence/ask/session-memory';
 
 export const dynamic = 'force-dynamic';
 
@@ -84,6 +85,16 @@ export default async function StrategicMoveDetailPage({ params, searchParams }: 
 
   const { handoff, linkedSourceEvent } = await resolveHandoff(move);
   const activeClient = await getActiveClientRow().catch(() => null);
+  const originatingAskSession = await getAskSessionForMove({
+    tenantId: ctx.clientId,
+    moveId: move.id,
+  }).catch((error) => {
+    console.error(
+      '[StrategicMoveDetailPage] originating Intelligence ask session lookup failed',
+      error instanceof Error ? error.message : String(error),
+    );
+    return null;
+  });
   const decisionThread = await ensureThreadForMove({
     clientId: activeClient?.key ?? move.tenant.id,
     moveId: move.id,
@@ -106,6 +117,7 @@ export default async function StrategicMoveDetailPage({ params, searchParams }: 
         handoff={handoff}
         linkedSourceEvent={linkedSourceEvent}
         decisionThreadId={decisionThread?.id ?? null}
+        originatingIntelligenceSessionId={originatingAskSession?.sessionId ?? null}
       />
     </AppShell>
   );

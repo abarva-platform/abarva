@@ -40,6 +40,7 @@ export interface SentinelOneClickAction {
     acceptAll?: boolean;
     includeSourceWorkflows?: boolean;
   } & Record<string, unknown>;
+  href?: string;
 }
 
 export interface SentinelReasoningStage {
@@ -72,4 +73,6 @@ export interface SentinelReasoningInput {
   clientId: string;
   userId?: string | null;
   surfaceContext?: unknown;
+  conversationContextBlock?: string;
+  intelligenceSessionId?: string | null;
 }

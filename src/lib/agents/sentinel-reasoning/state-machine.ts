@@ -564,9 +564,10 @@ async function materializeStage(stage: SentinelReasoningStage, input: SentinelRe
       `Write the final ${stage.name} card for Sentinel's IT-productivity reasoning loop.`,
       'Keep the deterministic facts, citations, confidence, and version pins unchanged.',
       `Question: ${input.query}`,
+      input.conversationContextBlock ? `Prior Intelligence Ask context:\n${input.conversationContextBlock}` : '',
       `Draft: ${stage.content}`,
       `Citations: ${stage.citations.map((citation) => `${citation.id}@v${citation.version ?? 'na'}`).join(', ')}`,
-    ].join('\n'),
+    ].filter(Boolean).join('\n'),
     fallbackResponse,
     metadata: {
       traceId: stage.traceId,
@@ -783,6 +784,9 @@ export async function* runSentinelReasoning(input: SentinelReasoningInput): Asyn
   const parentMoveInstanceId = readParentMoveInstanceId(input.surfaceContext);
   const killInitiatives = initiatives.filter((initiative) => initiative.posture === 'KILL');
   const restructureInitiatives = initiatives.filter((initiative) => initiative.posture === 'RESTRUCTURE');
+  const shapeMoveHref = input.intelligenceSessionId
+    ? `/programs/new?fromIntelligence=1&intelligenceSessionId=${encodeURIComponent(input.intelligenceSessionId)}&sourceTitle=${encodeURIComponent('Sentinel Intelligence Ask')}`
+    : '/programs/new?fromIntelligence=1&sourceTitle=Sentinel%20Intelligence%20Ask';
   const finalStage = stageBase({
     id: 'sibling_move_portfolio',
     sequence: 6,
@@ -813,9 +817,11 @@ export async function* runSentinelReasoning(input: SentinelReasoningInput): Asyn
       label: 'Shape Move',
       endpoint: '/api/dependencies/siblings/accept',
       method: 'POST',
+      href: shapeMoveHref,
       payload: {
         traceId,
         clientId: input.clientId,
+        intelligenceSessionId: input.intelligenceSessionId ?? null,
         parentMoveInstanceId,
         acceptAll: true,
         includeSourceWorkflows: true,

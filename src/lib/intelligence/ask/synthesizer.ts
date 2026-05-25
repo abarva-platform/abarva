@@ -238,6 +238,7 @@ export async function* synthesizeStream(args: {
   tenantId?: string | null;
   userId?: string | null;
   userContextBlock?: string;
+  conversationContextBlock?: string;
   /**
    * Average source confidence. The synthesizer used to lead with a "Limited
    * indexed data — confidence is moderate" prefix when this dropped below
@@ -257,8 +258,12 @@ export async function* synthesizeStream(args: {
     typeof args.averageConfidence === 'number'
       ? `\nRETRIEVAL CONFIDENCE (informational, never to be quoted to the user): average source confidence is ${args.averageConfidence.toFixed(2)} on a 0-1 scale. Treat this as private context for calibrating your prose, the same way a senior consultant calibrates against how solid her own evidence base is. Do not narrate this number. Do not say "average confidence is moderate" or anything like it. Use it to decide how confident your verbal framing should be ("high confidence on this," "less sure on the timing," "this is judgment, not benchmark data") — calibration belongs in how you phrase claims, not in a preamble or a footer.`
       : '';
-  const system = args.userContextBlock && args.userContextBlock.trim().length > 0
-    ? `${args.userContextBlock}\n\n${SYSTEM_PROMPT}${confidenceHint}`
+  const contextBlocks = [
+    args.userContextBlock?.trim() ?? '',
+    args.conversationContextBlock?.trim() ?? '',
+  ].filter(Boolean);
+  const system = contextBlocks.length > 0
+    ? `${contextBlocks.join('\n\n')}\n\n${SYSTEM_PROMPT}${confidenceHint}`
     : `${SYSTEM_PROMPT}${confidenceHint}`;
   const prompt = `SOURCES PROVIDED:\n${formatSourcesBlock(args.sources)}\n\nUSER QUESTION:\n${args.query}\n\nRespond with your synthesis.`;
 

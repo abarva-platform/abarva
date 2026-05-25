@@ -16,6 +16,7 @@ import { AppShell } from '@/components/shell/AppShell';
 import { SHELL } from '@/lib/shell/shell-tokens';
 import { IntelligenceReasoningModeStrip } from '@/components/intelligence/IntelligenceReasoningModeStrip';
 import { SentinelReasoningCards } from '@/app/(maestro)/intelligence/ask/SentinelReasoningCards';
+import { IntelligenceAskTabCookie } from './IntelligenceAskTabCookie';
 
 export const metadata = {
   title: 'Sentinel Intel · Ask | AbarVa',
@@ -39,6 +40,7 @@ export default async function IntelligenceAskPage({
         context: 'Intelligence · Ask Sentinel Intel',
       }}
     >
+      <IntelligenceAskTabCookie />
       <style>{`
         @media (max-width: 640px) {
           [data-testid="intelligence-ask-page"] {

@@ -1,4 +1,5 @@
 import { NextRequest } from 'next/server';
+import { currentUser } from '@clerk/nextjs/server';
 import { askIntelligence } from '@/lib/intelligence/ask';
 import { classifySentinelIntent, runSentinelReasoning } from '@/lib/agents/sentinel-reasoning';
 import { getCurrentPerson } from '@/lib/auth/maestro';
@@ -6,6 +7,11 @@ import { getActiveClientRow } from '@/lib/active-client';
 import { assembleUserContextBlock } from '@/lib/agent/prompts/_shared/user-context';
 import { clientKeyToInventorySubstrateKey } from '@/lib/agent/tools/intelligence/_shared';
 import type { AskSurfaceContext } from '@/lib/intelligence/ask';
+import {
+  appendAskSessionTurn,
+  normalizeAskTabId,
+  prepareAskSessionMemory,
+} from '@/lib/intelligence/ask/session-memory';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -23,6 +29,7 @@ interface AskPayload {
   query: string;
   requestedClient: string | null;
   surfaceContext: AskSurfaceContext | null;
+  tabId: string | null;
 }
 
 async function handleAsk(payload: AskPayload) {
@@ -39,13 +46,16 @@ async function handleAsk(payload: AskPayload) {
   let userId: string | null = null;
   let tenantInventoryKey: string | null = null;
   let sentinelClientId: string = requestedClient ?? 'apexretail';
+  let sessionUserId: string | null = null;
   let activePersonGraphNodeId: string | null = null;
   let activePersonDisplayName: string | null = null;
   try {
-    const [person, client] = await Promise.all([
+    const [person, clerkUser, client] = await Promise.all([
       getCurrentPerson(),
+      currentUser().catch(() => null),
       getActiveClientRow(requestedClient).catch(() => null),
     ]);
+    sessionUserId = clerkUser?.id ?? null;
     tenantInventoryKey = client?.key
       ? clientKeyToInventorySubstrateKey(client.key)
       : null;
@@ -61,19 +71,57 @@ async function handleAsk(payload: AskPayload) {
         activeTenantDisplayName: client?.name ?? null,
       });
     }
+    userId = sessionUserId ?? userId;
   } catch (err) {
     console.warn('[ask.user-context]', err);
   }
 
+  const memory = await prepareAskSessionMemory({
+    tenantId,
+    userId,
+    tabId: tenantId && userId ? normalizeAskTabId(payload.tabId, userId, tenantId) : payload.tabId,
+    query,
+  }).catch((err) => {
+    console.warn('[ask.session-memory.prepare]', err);
+    return null;
+  });
+  await appendAskSessionTurn({
+    sessionId: memory?.sessionId,
+    tenantId,
+    userId,
+    role: 'user',
+    content: query,
+    metadata: {
+      client: requestedClient,
+      tabId: memory?.tabId ?? payload.tabId,
+      surfaceContext,
+    },
+  }).catch((err) => console.warn('[ask.session-memory.user-turn]', err));
+
   const encoder = new TextEncoder();
   const stream = new ReadableStream({
     async start(controller) {
+      let assistantText = '';
+      let classificationForMemory: unknown = null;
       try {
+        if (memory?.sessionId) {
+          controller.enqueue(encoder.encode(JSON.stringify({
+            type: 'session',
+            sessionId: memory.sessionId,
+            tabId: memory.tabId,
+            priorTurnCount: memory.priorTurnCount,
+          }) + '\n'));
+        }
         const sentinelIntent = await classifySentinelIntent({
           query,
           clientId: sentinelClientId,
           userId,
         });
+        classificationForMemory = {
+          intent: sentinelIntent.intent,
+          confidence: sentinelIntent.confidence,
+          matchedPatternSlugs: sentinelIntent.matchedPatternSlugs,
+        };
         if (sentinelIntent.intent === 'it_productivity') {
           controller.enqueue(encoder.encode(JSON.stringify({
             type: 'classified',
@@ -90,7 +138,10 @@ async function handleAsk(payload: AskPayload) {
             clientId: sentinelClientId,
             userId,
             surfaceContext,
+            conversationContextBlock: memory?.contextBlock,
+            intelligenceSessionId: memory?.sessionId ?? null,
           })) {
+            assistantText += `${stage.name}: ${stage.content}\n`;
             controller.enqueue(encoder.encode(JSON.stringify({ type: 'sentinel-stage', stage }) + '\n'));
           }
           controller.enqueue(encoder.encode(JSON.stringify({ type: 'done' }) + '\n'));
@@ -102,9 +153,12 @@ async function handleAsk(payload: AskPayload) {
           userId,
           tenantInventoryKey,
           surfaceContext,
+          conversationContextBlock: memory?.contextBlock,
           activePersonGraphNodeId,
           activePersonDisplayName,
         })) {
+          if (event.type === 'classified') classificationForMemory = event.classification ?? classificationForMemory;
+          if (event.type === 'delta' && event.text) assistantText += event.text;
           controller.enqueue(encoder.encode(JSON.stringify(event) + '\n'));
         }
       } catch (err) {
@@ -112,6 +166,17 @@ async function handleAsk(payload: AskPayload) {
           encoder.encode(JSON.stringify({ type: 'error', error: err instanceof Error ? err.message : 'unknown' }) + '\n'),
         );
       } finally {
+        await appendAskSessionTurn({
+          sessionId: memory?.sessionId,
+          tenantId,
+          userId,
+          role: 'assistant',
+          content: assistantText,
+          metadata: {
+            client: requestedClient,
+            classification: classificationForMemory,
+          },
+        }).catch((err) => console.warn('[ask.session-memory.assistant-turn]', err));
         controller.close();
       }
     },
@@ -131,6 +196,7 @@ async function parseGetPayload(req: NextRequest): Promise<AskPayload> {
     query: url.searchParams.get('q') ?? '',
     requestedClient: url.searchParams.get('client'),
     surfaceContext: parseSurfaceContext(url.searchParams.get('surfaceContext')),
+    tabId: url.searchParams.get('tabId') ?? req.cookies.get('ai-ask-tab-id')?.value ?? null,
   };
 }
 
@@ -147,6 +213,7 @@ async function parsePostPayload(req: NextRequest): Promise<AskPayload> {
     query: readString(payload.q) ?? readString(payload.query) ?? '',
     requestedClient: readString(payload.client),
     surfaceContext: normalizeSurfaceContext(payload.surfaceContext),
+    tabId: readString(payload.tabId) ?? req.cookies.get('ai-ask-tab-id')?.value ?? null,
   };
 }
 

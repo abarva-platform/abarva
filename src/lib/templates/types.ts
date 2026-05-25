@@ -111,6 +111,7 @@ export interface InstantiateTemplateOptions {
   createdById?: string;
   origin?: string;
   createProgramShell?: boolean;
+  originatingIntelligenceSessionId?: string | null;
 }
 
 export interface MoveInstanceRecord {
@@ -125,6 +126,7 @@ export interface MoveInstanceRecord {
   artifactCompletion: Record<string, unknown>;
   gateSkeleton: unknown[];
   options: Record<string, unknown>;
+  originatingIntelligenceSessionId: string | null;
   createdById: string | null;
   createdAt: string;
   updatedAt: string;

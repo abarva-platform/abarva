@@ -162,6 +162,10 @@ import {
   clientKeyToBrokerTenantKey,
   clientKeyToInventorySubstrateKey,
 } from "@/lib/agent/tools/intelligence/_shared";
+import {
+  getAskSessionContextById,
+  getAskSessionForMove,
+} from "@/lib/intelligence/ask/session-memory";
 // F0.4: import the commit_program tool module so it self-registers
 // at startup. Routes that don't surface this tool will simply not
 // expose it in `tools`, but the registration must happen for the
@@ -568,6 +572,29 @@ export async function POST(request: Request) {
       `Decision thread: ${decisionThreadId}. This page is inside the unified Decision Dossier thread for ${moveCode} — ${moveTitle}.`,
       `Pronoun resolution: when the user says "this Move", "the Move we just created", "it", or "the recommendation" on this surface, resolve it to ${moveCode} — ${moveTitle} in decision thread ${decisionThreadId}. Do not ask which Move unless the user names a conflicting Move.`,
     );
+  }
+
+  const originatingIntelligenceSessionId =
+    typeof surfaceContext.originatingIntelligenceSessionId === 'string' && surfaceContext.originatingIntelligenceSessionId.trim()
+      ? surfaceContext.originatingIntelligenceSessionId.trim()
+      : null;
+  if (programId && activeClient?.id) {
+    const originatingSession = originatingIntelligenceSessionId
+      ? await getAskSessionContextById({
+          tenantId: activeClient.id,
+          sessionId: originatingIntelligenceSessionId,
+        }).catch(() => null)
+      : await getAskSessionForMove({
+          tenantId: activeClient.id,
+          moveId: programId,
+        }).catch(() => null);
+    if (originatingSession?.contextBlock) {
+      contextLines.push(
+        `Originating Intelligence Ask session: ${originatingSession.sessionId}.`,
+        'Move-detail pronoun rule: for pre-mortem, failure-mode, rationale, and "this Move" questions, use the originating Intelligence session below as the source rationale before asking the user to restate context.',
+        originatingSession.contextBlock,
+      );
+    }
   }
 
   // Strategic-moves surfaces — load phase pack by surface + phase context.

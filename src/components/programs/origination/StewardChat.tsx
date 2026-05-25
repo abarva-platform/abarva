@@ -80,6 +80,7 @@ export interface StewardChatProps {
    * collapse to undefined so detection only fires on real signals.
    */
   briefSnapshot?: BriefSnapshot;
+  originatingIntelligenceSessionId?: string | null;
 }
 
 const STEWARD_ACCENT = BrandColors.signalBlue;
@@ -133,6 +134,7 @@ export function StewardChat({
   onArtifact,
   programName,
   briefSnapshot,
+  originatingIntelligenceSessionId = null,
 }: StewardChatProps) {
   // OV2-WIRE-CLIENT — mirror briefSnapshot into a ref so an in-flight
   // stream's send() closure always reads the latest snapshot the user
@@ -218,6 +220,7 @@ export function StewardChat({
           conversationHistory,
           surfaceContext: {
             briefSnapshot: snapshot ?? {},
+            originatingIntelligenceSessionId,
           },
         }),
       });
@@ -339,7 +342,7 @@ export function StewardChat({
       // Refocus the input so the user can keep typing without clicking.
       inputRef.current?.focus();
     }
-  }, [draft, streaming, surface, tenantName, router, onArtifact, setTurns, programName]);
+  }, [draft, streaming, surface, tenantName, router, onArtifact, setTurns, programName, originatingIntelligenceSessionId]);
 
   return (
     <section

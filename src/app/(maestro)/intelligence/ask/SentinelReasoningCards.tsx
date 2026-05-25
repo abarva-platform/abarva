@@ -3,8 +3,10 @@
 import { useMemo, useState } from 'react';
 import { SHELL } from '@/lib/shell/shell-tokens';
 import type { SentinelReasoningStage } from '@/lib/agents/sentinel-reasoning';
+import { ensureIntelligenceAskTabId } from '@/app/intelligence/ask/IntelligenceAskTabCookie';
 
 type StreamEvent =
+  | { type: 'session'; sessionId?: string; tabId?: string; priorTurnCount?: number }
   | { type: 'classified'; classification?: { intent?: string; confidence?: number; reason?: string } }
   | { type: 'sentinel-stage'; stage?: SentinelReasoningStage }
   | { type: 'delta'; text?: string }
@@ -29,6 +31,7 @@ export function SentinelReasoningCards({ initialClient = 'apexretail' }: { initi
   const [status, setStatus] = useState<'idle' | 'streaming' | 'done' | 'error'>('idle');
   const [error, setError] = useState<string | null>(null);
   const [actionState, setActionState] = useState<string | null>(null);
+  const [sessionId, setSessionId] = useState<string | null>(null);
 
   const finalAction = useMemo(
     () => cards.find((card) => card.oneClickAction)?.oneClickAction ?? null,
@@ -45,6 +48,7 @@ export function SentinelReasoningCards({ initialClient = 'apexretail' }: { initi
     setStatus('streaming');
 
     try {
+      const tabId = ensureIntelligenceAskTabId();
       const response = await fetch('/api/intelligence/ask', {
         method: 'POST',
         headers: {
@@ -54,6 +58,7 @@ export function SentinelReasoningCards({ initialClient = 'apexretail' }: { initi
         body: JSON.stringify({
           q: trimmed,
           client: initialClient,
+          tabId,
           surfaceContext: {
             clientKey: initialClient,
             activeClient: 'Apex Retail Group',
@@ -77,7 +82,9 @@ export function SentinelReasoningCards({ initialClient = 'apexretail' }: { initi
           if (!line.trim()) continue;
           const event = eventFromLine(line);
           if (!event) continue;
-          if (event.type === 'sentinel-stage' && event.stage) {
+          if (event.type === 'session' && event.sessionId) {
+            setSessionId(event.sessionId);
+          } else if (event.type === 'sentinel-stage' && event.stage) {
             setCards((prev) => [...prev.filter((card) => card.id !== event.stage?.id), event.stage as SentinelReasoningStage]);
           } else if (event.type === 'delta' && event.text) {
             setFallbackText((prev) => prev + event.text);
@@ -95,7 +102,16 @@ export function SentinelReasoningCards({ initialClient = 'apexretail' }: { initi
 
   async function shapeMoves() {
     if (!finalAction) return;
+    const href = finalAction.href ?? (
+      sessionId
+        ? `/programs/new?fromIntelligence=1&intelligenceSessionId=${encodeURIComponent(sessionId)}&sourceTitle=${encodeURIComponent('Sentinel Intelligence Ask')}`
+        : null
+    );
     if (!finalAction.payload.parentMoveInstanceId) {
+      if (href) {
+        window.location.assign(href);
+        return;
+      }
       setActionState('Open this from a parent Move to instantiate in the DAG; proposals are staged here.');
       return;
     }

@@ -182,6 +182,7 @@ export interface ProgramOriginationWorkspaceProps {
   surface: '/programs/new' | '/demo/programs/new';
   tenantName: string;
   initialTurns: ChatTurn[];
+  originatingIntelligenceSessionId?: string | null;
 }
 
 const DRAFT_SESSION_STORAGE_PREFIX = 'abarva.program_origination.session';
@@ -362,6 +363,7 @@ export function ProgramOriginationWorkspace({
   surface,
   tenantName,
   initialTurns,
+  originatingIntelligenceSessionId = null,
 }: ProgramOriginationWorkspaceProps) {
   const router = useRouter();
   const [briefState, setBriefState] = useState<OriginationBriefState>(EMPTY_BRIEF_STATE);
@@ -489,6 +491,9 @@ export function ProgramOriginationWorkspace({
           matchedPatternId: brief.matchedPatternId,
           sponsor: brief.sponsor,
           lead: brief.lead,
+          originatingIntelligenceSessionId,
+          decisionThreadTitle: brief.programName || brief.problemStatement || null,
+          decisionThreadOwnerRole: brief.sponsor || null,
         }),
       });
       const body = (await res.json().catch(() => ({}))) as {
@@ -530,7 +535,7 @@ export function ProgramOriginationWorkspace({
     } finally {
       setSubmitting(false);
     }
-  }, [briefState.brief, router, surface]);
+  }, [briefState.brief, originatingIntelligenceSessionId, router, surface]);
 
   const operatorChecklist = buildOperatorChecklist({ tenantName, turns, briefState });
 
@@ -649,6 +654,7 @@ export function ProgramOriginationWorkspace({
           // OV2-WIRE-CLIENT · project the live brief into the snapshot
           // shape /api/chat/agent expects on `surfaceContext.briefSnapshot`.
           briefSnapshot={buildBriefSnapshot(briefState.brief)}
+          originatingIntelligenceSessionId={originatingIntelligenceSessionId}
         />
         {/* OV2-1c · No `patternMatch` prop on /programs/new (founder feedback). */}
         {/* OV2-1b · Brief Progress + Overlap Alerts surface as cards above field rows. */}
