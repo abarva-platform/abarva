@@ -22,6 +22,7 @@ import {
   classifyFunctionKey,
   industryKeyForCode,
 } from '@/lib/programs/function-identity';
+import { ensureThreadForMove } from '@/lib/decisions/auto-linker';
 
 export interface OriginationTurn {
   role: 'user' | 'assistant';
@@ -46,6 +47,10 @@ export interface SubmitOriginationBriefInput {
   fromGapUsd?: number | null;
   // Origination chat turns for persistence to turns table
   originationTurns?: OriginationTurn[] | null;
+  // Packet 22 acceleration: Intelligence -> Move continuity.
+  originatingIntelligenceSessionId?: string | null;
+  decisionThreadTitle?: string | null;
+  decisionThreadOwnerRole?: string | null;
 }
 
 export interface SubmitOriginationBriefResult {
@@ -54,6 +59,8 @@ export interface SubmitOriginationBriefResult {
   programName: string;
   lifecycleState: 'submitted_for_approval';
   redirectTo: string;
+  decisionThreadId?: string | null;
+  dossierUrl?: string | null;
 }
 
 export class OriginationSubmitError extends Error {
@@ -466,6 +473,9 @@ export async function submitOriginationBrief(
     fromInitiativeId: optionalText(rawInput.fromInitiativeId),
     fromGapUsd: typeof rawInput.fromGapUsd === 'number' ? rawInput.fromGapUsd : null,
     originationTurns: Array.isArray(rawInput.originationTurns) ? rawInput.originationTurns : null,
+    originatingIntelligenceSessionId: optionalText(rawInput.originatingIntelligenceSessionId),
+    decisionThreadTitle: optionalText(rawInput.decisionThreadTitle),
+    decisionThreadOwnerRole: optionalText(rawInput.decisionThreadOwnerRole),
   };
 
   let tenancy;
@@ -527,12 +537,31 @@ export async function submitOriginationBrief(
       .order('requested_at', { ascending: false })
       .limit(1)
       .maybeSingle();
+    const decisionThread = await ensureThreadForMove({
+      clientId: activeClient.key,
+      moveId: row.id,
+      title: input.decisionThreadTitle ?? row.name,
+      ownerRole: input.decisionThreadOwnerRole ?? sponsor.role ?? 'CIO',
+      intelligenceSessionId: input.originatingIntelligenceSessionId ?? undefined,
+      linkedBy: tenancy.userId,
+      linkReason: input.originatingIntelligenceSessionId
+        ? 'Move reused from Intelligence Shape Move handoff'
+        : 'Move reused from origination submit',
+    }).catch((err) => {
+      console.error('[origination-submit] decision thread link failed for existing move', {
+        programId: row.id,
+        err: err instanceof Error ? err.message : String(err),
+      });
+      return null;
+    });
     return {
       engagementId: row.id,
       approvalRequestId: (approval as { id: string } | null)?.id ?? '',
       programName: row.name,
       lifecycleState: 'submitted_for_approval',
       redirectTo: `/programs/${row.id}`,
+      decisionThreadId: decisionThread?.id ?? null,
+      dossierUrl: decisionThread ? `/dossier/${decisionThread.id}` : null,
     };
   }
 
@@ -663,12 +692,26 @@ export async function submitOriginationBrief(
       await persistOriginationTurns(programId, input.originationTurns);
     }
 
+    const decisionThread = await ensureThreadForMove({
+      clientId: activeClient.key,
+      moveId: programId,
+      title: input.decisionThreadTitle ?? programName,
+      ownerRole: input.decisionThreadOwnerRole ?? sponsor.role ?? 'CIO',
+      intelligenceSessionId: input.originatingIntelligenceSessionId ?? undefined,
+      linkedBy: tenancy.userId,
+      linkReason: input.originatingIntelligenceSessionId
+        ? 'Move created from Intelligence Shape Move handoff'
+        : 'Move created from origination submit',
+    });
+
     return {
       engagementId: programId,
       approvalRequestId: approval.id,
       programName,
       lifecycleState: 'submitted_for_approval',
       redirectTo: `/programs/${programId}`,
+      decisionThreadId: decisionThread.id,
+      dossierUrl: `/dossier/${decisionThread.id}`,
     };
   } catch (err) {
     await rollbackEngagement(programId);

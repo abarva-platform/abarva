@@ -57,6 +57,7 @@ function parseFromIntelligence(
     patternId,
     patternName,
     useCaseName: raw('useCaseName') ?? patternName,
+    sessionId: raw('intelligenceSessionId') ?? raw('sessionId') ?? raw('originatingSessionId') ?? null,
     sourceTitle: raw('sourceTitle') ?? null,
     contradictionTitle: raw('contradictionTitle') ?? null,
     failureRatePct: failureRateRaw ? Number(failureRateRaw) : null,
@@ -93,6 +94,7 @@ export default async function StrategicMoveOriginatePage({ searchParams }: PageP
       <StrategicMoveOriginateClient
         tenantName={activeClient.name}
         initialTurns={firstMessage ? [firstMessage] : undefined}
+        originatingIntelligenceSessionId={fromIntelligence?.sessionId ?? null}
       />
     </AppShell>
   );

@@ -24,6 +24,14 @@ assert.match(autoLinker, /ensureThreadForTower/);
 assert.match(autoLinker, /linkGeneratedArtifactToDecisionThread/);
 assert.match(autoLinker, /getDecisionThreadDossier/);
 
+const originationSubmit = fs.readFileSync(
+  path.join(root, 'src/lib/programs/origination-submit.ts'),
+  'utf8',
+);
+assert.match(originationSubmit, /originatingIntelligenceSessionId/);
+assert.match(originationSubmit, /ensureThreadForMove/);
+assert.match(originationSubmit, /Move created from Intelligence Shape Move handoff/);
+
 const dossierPage = fs.readFileSync(
   path.join(root, 'src/app/(maestro)/dossier/[threadId]/page.tsx'),
   'utf8',
@@ -55,6 +63,20 @@ const moveDetail = fs.readFileSync(
   'utf8',
 );
 assert.match(moveDetail, /View in Dossier/);
+
+const moveDetailClient = fs.readFileSync(
+  path.join(root, 'src/components/strategic-moves/StrategicMoveDetailClient.tsx'),
+  'utf8',
+);
+assert.match(moveDetailClient, /decisionThreadId/);
+assert.match(moveDetailClient, /pronouns like "this Move"/);
+
+const agentRoute = fs.readFileSync(
+  path.join(root, 'src/app/api/chat/agent/route.ts'),
+  'utf8',
+);
+assert.match(agentRoute, /Pronoun resolution/);
+assert.match(agentRoute, /the Move we just created/);
 
 const sourceCanvas = fs.readFileSync(
   path.join(root, 'src/components/source/canvas/UniversalCanvasShell.tsx'),

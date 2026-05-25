@@ -36,6 +36,7 @@ import type { StrategicMove } from '@/lib/programs/types.ui';
 interface Props {
   move: StrategicMove;
   workspace: ReactNode;
+  decisionThreadId?: string | null;
 }
 
 function generateTurnId(): string {
@@ -55,7 +56,7 @@ const SUGGESTED_ACTIONS: SuggestedAction[] = [
   },
 ];
 
-export function StrategicMoveDetailClient({ move, workspace }: Props) {
+export function StrategicMoveDetailClient({ move, workspace, decisionThreadId = null }: Props) {
   const initialThread: ChatMessage[] = [
     {
       id: 'nexus-open-detail',
@@ -65,7 +66,7 @@ export function StrategicMoveDetailClient({ move, workspace }: Props) {
     {
       id: 'nexus-open-detail-2',
       role: 'agent',
-      body: `${move.status.description}. Want me to walk through what's needed to advance?`,
+      body: `${move.status.description}. ${decisionThreadId ? `This Move is bound to Decision Dossier ${decisionThreadId}; pronouns like "this Move" refer to ${move.displayCode}. ` : ''}Want me to walk through what's needed to advance?`,
     },
   ];
 
@@ -126,6 +127,7 @@ export function StrategicMoveDetailClient({ move, workspace }: Props) {
               moveId: move.id,
               moveCode: move.displayCode,
               moveTitle: move.name,
+              decisionThreadId,
               currentPhase: move.currentPhase,
               phaseLabel: move.phaseLabel,
               sponsorName: move.sponsor?.name ?? null,
@@ -192,7 +194,7 @@ export function StrategicMoveDetailClient({ move, workspace }: Props) {
         );
       }
     },
-    [move, updateThread],
+    [decisionThreadId, move, updateThread],
   );
 
   return (
@@ -210,6 +212,7 @@ export function StrategicMoveDetailClient({ move, workspace }: Props) {
         moveId: move.id,
         moveCode: move.displayCode,
         moveTitle: move.name,
+        decisionThreadId,
         currentPhase: move.currentPhase,
         phaseLabel: move.phaseLabel,
         sponsorName: move.sponsor?.name ?? null,

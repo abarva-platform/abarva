@@ -402,6 +402,7 @@ export function StrategicMoveDetailView({
       >
         <StrategicMoveDetailClient
           move={move}
+          decisionThreadId={decisionThreadId}
           workspace={
             <RightPane
               move={move}

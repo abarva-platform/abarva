@@ -25,6 +25,9 @@ function ShapeIntoMoveCta({ betLink }: { betLink: NonNullable<StrategyBullet['be
     patternId: betLink.patternId,
     patternName: betLink.patternName,
     useCaseName: betLink.useCaseName ?? betLink.patternName,
+    intelligenceSessionId: `my-strategy:${betLink.patternId}:${betLink.useCaseName ?? betLink.patternName}`
+      .toLowerCase()
+      .replace(/[^a-z0-9:.-]+/g, '-'),
   });
   return (
     <a

@@ -94,6 +94,19 @@ describe('origination submit insert contract', () => {
     expect(source).toContain('phase: 0');
   });
 
+  it('creates the Packet 22 decision thread during Intelligence-originated Move submit', () => {
+    expect(source).toContain("import { ensureThreadForMove } from '@/lib/decisions/auto-linker'");
+    expect(source).toContain('originatingIntelligenceSessionId?: string | null');
+    expect(source).toContain('decisionThreadTitle?: string | null');
+    expect(source).toContain('decisionThreadOwnerRole?: string | null');
+    expect(source).toContain('originatingIntelligenceSessionId: optionalText(rawInput.originatingIntelligenceSessionId)');
+    expect(source).toContain('const decisionThread = await ensureThreadForMove({');
+    expect(source).toContain('intelligenceSessionId: input.originatingIntelligenceSessionId ?? undefined');
+    expect(source).toContain("linkReason: input.originatingIntelligenceSessionId");
+    expect(source).toContain('decisionThreadId: decisionThread.id');
+    expect(source).toContain('dossierUrl: `/dossier/${decisionThread.id}`');
+  });
+
   it('accepts extended scaffold fields scopeBoundary and evidenceFamily', () => {
     expect(source).toContain('scopeBoundary?: string | null');
     expect(source).toContain('evidenceFamily?: string | null');
