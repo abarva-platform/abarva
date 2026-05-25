@@ -3,38 +3,31 @@ import type { CorpusSearchHit } from '@/lib/corpus/types';
 import { callSentinelModel } from './model';
 import type { SentinelCitation, SentinelIntentClassification } from './types';
 
+// Terms that strongly indicate the question belongs to the Sentinel six-stage
+// IT-productivity reasoning workflow. Keep this list narrow: generic words like
+// "initiative", "kill list", "application portfolio" matched too broadly during
+// the 2026-05-25 Meridian stress test and caused Q3/Q4/Q5 to all collapse to
+// identical canned-template responses scored 10/10. Tenant-specific tokens
+// (Apex SAP/AS-400/Punchh/Wipro) were also removed — they do not belong in a
+// generic classifier and a tenant-tagged term should never tip routing.
 const IT_PRODUCTIVITY_TERMS = [
   'it productivity',
   'developer productivity',
   'engineering productivity',
   'ai productivity',
-  'copilot',
-  'dora',
+  'github copilot',
+  'dora metrics',
   'devex',
-  'application portfolio',
   'application rationalization',
   'run grow transform',
   'time matrix',
-  'ai fit',
-  'ams',
-  'operating model',
-  'tom',
+  'ai fit score',
+  'application managed services',
+  'target operating model',
   'platform team',
   'tooling governance',
   'sibling move',
-  'initiative',
-  'initiatives',
-  'kill list',
-  'kill candidate',
-  'what blocks',
-  'as-400',
-  'as400',
-  'application portfolio',
   'integration topology',
-  'mainframe modernization',
-  'loyalty replacement',
-  'punchh',
-  'wipro ams',
 ];
 
 function corpusCitation(hit: CorpusSearchHit): SentinelCitation {
@@ -120,12 +113,28 @@ export async function classifySentinelIntent(args: {
     ? Math.max(0, Math.min(100, parsed.confidence))
     : Math.round(Math.max(keywordConfidence, semanticConfidence, 0.35) * 100);
   const modelIntent = parsed.intent === 'it_productivity' ? 'it_productivity' : 'general';
-  const deterministicIntent = keywordConfidence > 0.25 || semanticConfidence > 0 ? 'it_productivity' : 'general';
+  // Deterministic gate tightened 2026-05-25 after Meridian stress test.
+  // Previously: `keywordConfidence > 0.25 || semanticConfidence > 0` and the
+  // final routing OR'd model with deterministic — meaning a single keyword
+  // OR a single corpus hit OR an over-eager model would all push the question
+  // into the six-stage IT-productivity workflow, producing identical
+  // canned-template answers for Q3/Q4/Q5. Two changes:
+  // (1) tightened the IT_PRODUCTIVITY_TERMS list (above) to drop generic
+  //     tokens ('initiative', 'kill list', 'application portfolio') and
+  //     tenant-specific Apex tokens that don't belong in a generic classifier;
+  // (2) require BOTH model AND deterministic agreement (not OR) before
+  //     routing into the six-stage workflow.
+  const deterministicIntent = keywordConfidence > 0 || semanticConfidence > 0
+    ? 'it_productivity'
+    : 'general';
+
+  const finalIntent: 'it_productivity' | 'general' =
+    modelIntent === 'it_productivity' && deterministicIntent === 'it_productivity'
+      ? 'it_productivity'
+      : 'general';
 
   return {
-    intent: modelIntent === 'it_productivity' || deterministicIntent === 'it_productivity'
-      ? 'it_productivity'
-      : 'general',
+    intent: finalIntent,
     confidence,
     entities: extractEntities(query),
     matchedPatternSlugs: corpusHits.map((hit) => hit.slug),
