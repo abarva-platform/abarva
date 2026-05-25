@@ -266,6 +266,9 @@ export async function* synthesizeStream(args: {
     ? `${contextBlocks.join('\n\n')}\n\n${SYSTEM_PROMPT}${confidenceHint}`
     : `${SYSTEM_PROMPT}${confidenceHint}`;
   const prompt = `SOURCES PROVIDED:\n${formatSourcesBlock(args.sources)}\n\nUSER QUESTION:\n${args.query}\n\nRespond with your synthesis.`;
+  const continuityInstruction = args.conversationContextBlock?.trim()
+    ? '\n\nSESSION CONTINUITY RULE: If the user asks you to repeat, recap, continue, or refer to something you just named, answer from INTELLIGENCE ASK SESSION MEMORY first. Do not switch to unrelated retrieved sources. Do not say you lack prior context when session memory is present.'
+    : '';
 
   try {
     const model = chooseModel(args.intent);
@@ -284,7 +287,7 @@ export async function* synthesizeStream(args: {
       // shapes (3–6 use cases, 3–5 failure modes). 400 was hitting the cap
       // mid-list on the new MANDATORY ANSWER SHAPES.
       max_tokens: 600,
-      system,
+      system: `${system}${continuityInstruction}`,
       messages: [{ role: 'user', content: prompt }],
       stream: true,
     });
