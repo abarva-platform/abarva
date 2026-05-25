@@ -23,6 +23,7 @@ import {
   industryKeyForCode,
 } from '@/lib/programs/function-identity';
 import { ensureThreadForMove } from '@/lib/decisions/auto-linker';
+import { linkAskSessionToMove } from '@/lib/intelligence/ask/session-memory';
 
 export interface OriginationTurn {
   role: 'user' | 'assistant';
@@ -554,6 +555,16 @@ export async function submitOriginationBrief(
       });
       return null;
     });
+    await linkAskSessionToMove({
+      sessionId: input.originatingIntelligenceSessionId,
+      tenantId: tenancy.clientId,
+      moveId: row.id,
+    }).catch((err) => {
+      console.error('[origination-submit] Intelligence ask session link failed for existing move', {
+        programId: row.id,
+        err: err instanceof Error ? err.message : String(err),
+      });
+    });
     return {
       engagementId: row.id,
       approvalRequestId: (approval as { id: string } | null)?.id ?? '',
@@ -702,6 +713,16 @@ export async function submitOriginationBrief(
       linkReason: input.originatingIntelligenceSessionId
         ? 'Move created from Intelligence Shape Move handoff'
         : 'Move created from origination submit',
+    });
+    await linkAskSessionToMove({
+      sessionId: input.originatingIntelligenceSessionId,
+      tenantId: tenancy.clientId,
+      moveId: programId,
+    }).catch((err) => {
+      console.error('[origination-submit] Intelligence ask session link failed', {
+        programId,
+        err: err instanceof Error ? err.message : String(err),
+      });
     });
 
     return {

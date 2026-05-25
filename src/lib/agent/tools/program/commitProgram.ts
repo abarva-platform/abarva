@@ -71,11 +71,17 @@ import { markDraftCommitted } from '@/lib/programs/origination-drafts';
 import { loadUserProgramAccessPolicy } from '@/lib/auth/program-access-policy';
 import { normalizeProgramArchetype } from '@/lib/programs/archetype-normalization';
 import { buildEngagementGraphNodeId } from '@/lib/programs/mutations';
+import { linkAskSessionToMove } from '@/lib/intelligence/ask/session-memory';
 
 // Postgres UUID v4 format (also matches v1/v3/v5 — sufficient for input
 // validation before we attempt an `engagements.insert` that would
 // otherwise throw an opaque uuid-cast error.
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+function originatingIntelligenceSessionIdFromContext(ctx: { surfaceContext?: Record<string, unknown> }): string | null {
+  const raw = ctx.surfaceContext?.originatingIntelligenceSessionId;
+  return typeof raw === 'string' && UUID_RE.test(raw.trim()) ? raw.trim() : null;
+}
 
 interface CommitProgramInput {
   program_name: string;
@@ -453,6 +459,16 @@ export const commitProgramTool: AgentTool<CommitProgramInput> = {
         } catch {
           // ignore
         }
+        await linkAskSessionToMove({
+          sessionId: originatingIntelligenceSessionIdFromContext(ctx),
+          tenantId: tenancy.clientId,
+          moveId: row.id,
+        }).catch((err) => {
+          console.error('[commit_program] Intelligence ask session link failed for existing move', {
+            programId: row.id,
+            err: err instanceof Error ? err.message : String(err),
+          });
+        });
         // Use the existing `program-created` sentinel — the client's
         // StewardChat component watches for it specifically and
         // navigates to /programs/<id>. The wording is a hint to the
@@ -683,6 +699,16 @@ export const commitProgramTool: AgentTool<CommitProgramInput> = {
     } catch {
       // ignore
     }
+    await linkAskSessionToMove({
+      sessionId: originatingIntelligenceSessionIdFromContext(ctx),
+      tenantId: tenancy.clientId,
+      moveId: programId,
+    }).catch((err) => {
+      console.error('[commit_program] Intelligence ask session link failed', {
+        programId,
+        err: err instanceof Error ? err.message : String(err),
+      });
+    });
 
     // Surface 1 navigation sentinel: tell the client the program is
     // ready to be navigated to. Reuses the existing `program-created`

@@ -22,9 +22,20 @@ export const dynamic = 'force-dynamic';
 export default async function ProgramsNewPage({
   searchParams,
 }: {
-  searchParams?: Promise<{ template?: string; version?: string }>;
+  searchParams?: Promise<{
+    template?: string;
+    version?: string;
+    fromIntelligence?: string;
+    intelligenceSessionId?: string;
+    sessionId?: string;
+    originatingSessionId?: string;
+  }>;
 }) {
   const params = await searchParams;
+  const originatingIntelligenceSessionId =
+    params?.fromIntelligence === '1'
+      ? params.intelligenceSessionId ?? params.sessionId ?? params.originatingSessionId ?? null
+      : null;
   if (params?.template) {
     const ctx = await requireTenancy();
     const parsedVersion = params.version ? Number(params.version) : undefined;
@@ -35,6 +46,7 @@ export default async function ProgramsNewPage({
       {
         origin: '/programs/new',
         createProgramShell: true,
+        originatingIntelligenceSessionId,
       },
       { userId: ctx.userId, clientId: ctx.clientId },
     );
@@ -53,9 +65,12 @@ export default async function ProgramsNewPage({
           id: greeting.id,
           role: 'assistant',
           agentName: 'Steward',
-          text: greeting.text,
+          text: originatingIntelligenceSessionId
+            ? `${greeting.text}\n\nI also have the originating Intelligence session attached, so the brief can preserve the rationale behind this Move.`
+            : greeting.text,
         },
       ]}
+      originatingIntelligenceSessionId={originatingIntelligenceSessionId}
     />
   );
 }

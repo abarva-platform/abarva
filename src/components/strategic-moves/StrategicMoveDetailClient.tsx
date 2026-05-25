@@ -37,6 +37,7 @@ interface Props {
   move: StrategicMove;
   workspace: ReactNode;
   decisionThreadId?: string | null;
+  originatingIntelligenceSessionId?: string | null;
 }
 
 function generateTurnId(): string {
@@ -56,7 +57,12 @@ const SUGGESTED_ACTIONS: SuggestedAction[] = [
   },
 ];
 
-export function StrategicMoveDetailClient({ move, workspace, decisionThreadId = null }: Props) {
+export function StrategicMoveDetailClient({
+  move,
+  workspace,
+  decisionThreadId = null,
+  originatingIntelligenceSessionId = null,
+}: Props) {
   const initialThread: ChatMessage[] = [
     {
       id: 'nexus-open-detail',
@@ -69,6 +75,13 @@ export function StrategicMoveDetailClient({ move, workspace, decisionThreadId = 
       body: `${move.status.description}. ${decisionThreadId ? `This Move is bound to Decision Dossier ${decisionThreadId}; pronouns like "this Move" refer to ${move.displayCode}. ` : ''}Want me to walk through what's needed to advance?`,
     },
   ];
+  if (originatingIntelligenceSessionId) {
+    initialThread.push({
+      id: 'nexus-open-detail-intelligence-origin',
+      role: 'agent',
+      body: 'I also have the originating Intelligence Ask session attached, so pre-mortem and pronoun questions inherit the rationale that shaped this Move.',
+    });
+  }
 
   const [thread, setThread] = useState<ChatMessage[]>(initialThread);
   const threadRef = useRef<ChatMessage[]>(initialThread);
@@ -128,6 +141,7 @@ export function StrategicMoveDetailClient({ move, workspace, decisionThreadId = 
               moveCode: move.displayCode,
               moveTitle: move.name,
               decisionThreadId,
+              originatingIntelligenceSessionId,
               currentPhase: move.currentPhase,
               phaseLabel: move.phaseLabel,
               sponsorName: move.sponsor?.name ?? null,
@@ -194,7 +208,7 @@ export function StrategicMoveDetailClient({ move, workspace, decisionThreadId = 
         );
       }
     },
-    [decisionThreadId, move, updateThread],
+    [decisionThreadId, move, originatingIntelligenceSessionId, updateThread],
   );
 
   return (
@@ -213,6 +227,7 @@ export function StrategicMoveDetailClient({ move, workspace, decisionThreadId = 
         moveCode: move.displayCode,
         moveTitle: move.name,
         decisionThreadId,
+        originatingIntelligenceSessionId,
         currentPhase: move.currentPhase,
         phaseLabel: move.phaseLabel,
         sponsorName: move.sponsor?.name ?? null,

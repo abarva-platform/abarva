@@ -27,6 +27,7 @@ export interface AskEvent {
 
 export interface AskOptions {
   userContextBlock?: string;
+  conversationContextBlock?: string;
   tenantId?: string | null;
   userId?: string | null;
   tenantInventoryKey?: string | null;
@@ -150,6 +151,7 @@ export async function* askIntelligence(query: string, opts: AskOptions = {}): As
       tenantId: opts.tenantId,
       userId: opts.userId,
       userContextBlock: opts.userContextBlock,
+      conversationContextBlock: opts.conversationContextBlock,
       averageConfidence,
     })) {
       answer += delta;
