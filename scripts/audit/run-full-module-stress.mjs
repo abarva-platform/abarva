@@ -137,7 +137,6 @@ function escapeHtml(input) {
 }
 
 function scoreResponse(text) {
-  const lower = text.toLowerCase();
   let score = 10;
   const flags = [];
   if (!text.trim()) { score = 0; flags.push('empty_response'); }
