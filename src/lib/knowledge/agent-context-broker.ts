@@ -57,9 +57,11 @@ import {
 import { mapTenantRecordsToContextItems } from '@/lib/knowledge/tenant-data/mapper';
 import {
   getTenantDataAdapter,
+  type ContextChunk,
   type SegmentId,
   type TenantDataAdapter,
 } from '@/lib/knowledge/tenant-data';
+import { normalizePrivateTenantKey } from '@/lib/knowledge/private-data-plane/registry';
 
 export type EnterpriseAgentName = 'Nexus' | 'Sentinel' | 'Atlas' | 'Steward';
 
@@ -221,33 +223,37 @@ export function buildEnterpriseAgentContextBundle(
 export async function buildEnterpriseAgentContextBundleAsync(
   request: EnterpriseAgentContextRequest,
 ): Promise<EnterpriseAgentContextBundle> {
-  const room = getEnterpriseDataRoom(request.tenantKey);
+  const dataTenantKey = normalizeEnterpriseTenantKey(request.tenantKey);
+  const normalizedRequest = dataTenantKey === request.tenantKey
+    ? request
+    : { ...request, tenantKey: dataTenantKey };
+  const room = getEnterpriseDataRoom(dataTenantKey) ?? getEnterpriseDataRoom(request.tenantKey);
   if (!room) {
     return buildUnknownTenantBundle(request);
   }
 
   const validation = validateEnterpriseDataRoom(room);
-  const blockedItems = buildBlockedItems(request, room);
+  const blockedItems = buildBlockedItems(normalizedRequest, room);
   const citations = room.evidence.slice(0, 12).map(toCitation);
 
   const adapter = getTenantDataAdapter();
-  const persisted = await adapter.hasPersistedData(request.tenantKey);
+  const persisted = await adapter.hasPersistedData(dataTenantKey);
 
   let items: EnterpriseAgentContextItem[];
   let extraWarnings: string[];
   if (persisted) {
     items = [
       buildTenantSummaryItem(room, citations),
-      ...(await selectPersistedContextItems(adapter, request)),
+      ...(await selectPersistedContextItems(adapter, normalizedRequest)),
     ];
     extraWarnings = [TENANT_DATA_PERSISTED_WARNING];
   } else {
-    items = selectContextItems(room, request, citations);
+    items = selectContextItems(room, normalizedRequest, citations);
     extraWarnings = [TENANT_DATA_FIXTURE_WARNING];
   }
 
   return {
-    tenantKey: request.tenantKey,
+    tenantKey: dataTenantKey,
     agentName: request.agentName,
     surface: request.surface,
     generatedFrom: BROKER_VERSION,
@@ -265,6 +271,10 @@ export async function buildEnterpriseAgentContextBundleAsync(
       ...extraWarnings,
     ],
   };
+}
+
+function normalizeEnterpriseTenantKey(tenantKey: string): string {
+  return normalizePrivateTenantKey(tenantKey) ?? tenantKey;
 }
 
 function buildUnknownTenantBundle(request: EnterpriseAgentContextRequest): EnterpriseAgentContextBundle {
@@ -650,6 +660,13 @@ async function selectPersistedContextItems(
         .then((records) => mapTenantRecordsToContextItems(records)),
     );
   };
+  const fetchChunks = (segmentIds: SegmentId[], limit: number): void => {
+    fetches.push(
+      adapter
+        .listContextChunks(tenantKey, { segmentIds, limit })
+        .then((chunks) => chunks.map(chunkToContextItem)),
+    );
+  };
 
   switch (request.agentName) {
     case 'Nexus':
@@ -682,6 +699,16 @@ async function selectPersistedContextItems(
       fetch('evidence_ledger', 8);
       fetch('kpi_dictionary', 24);
       fetch('it_landscape', request.surface === 'intelligence' ? 8 : 6);
+      fetchChunks(
+        [
+          'application_portfolio',
+          'initiative_financials',
+          'regulatory_and_dependency_context',
+          'vendor_contract',
+          'sponsor_signal',
+        ],
+        request.surface === 'intelligence' ? 300 : 120,
+      );
       if (request.requestedDomains?.includes('vendor_contracts')) {
         fetch('vendor_contracts', 6);
       }
@@ -718,6 +745,32 @@ async function selectPersistedContextItems(
 
   const settled = await Promise.all(fetches);
   return settled.flat();
+}
+
+function chunkToContextItem(chunk: ContextChunk): EnterpriseAgentContextItem {
+  const segment = chunk.sourceSegmentId ?? 'enterprise_context_chunks';
+  const recordId = chunk.recordId ?? chunk.chunkId;
+  return {
+    id: `ctx:${segment}:${recordId}:${chunk.chunkId}`,
+    kind: chunkKind(segment),
+    title: `${segment}.${recordId}`,
+    summary: chunk.text,
+    tenantKey: chunk.tenantKey,
+    sourceBasis: chunk.sourceBasis ?? 'tenant_admin_upload',
+    dataClassification: chunk.classification ?? 'internal',
+    sensitivity: 'structured',
+    provenanceIds: [recordId, chunk.chunkId, segment],
+    linkedEvidence: [],
+  };
+}
+
+function chunkKind(segmentId: string): EnterpriseContextItemKind {
+  if (segmentId === 'application_portfolio') return 'system';
+  if (segmentId === 'initiative_financials') return 'program';
+  if (segmentId === 'vendor_contract') return 'vendor_contract';
+  if (segmentId === 'sponsor_signal') return 'person';
+  if (segmentId === 'regulatory_and_dependency_context') return 'graph_candidate';
+  return 'evidence';
 }
 
 function buildTenantSummaryItem(

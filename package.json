@@ -25,6 +25,7 @@
     "verify:apex-data-pack": "node scripts/verify/apex-data-pack-scaffold.mjs",
     "verify:apex-sentinel-canonical": "node scripts/verify/apex-sentinel-canonical.mjs",
   "smoke:p19-evidence-ledger": "NODE_OPTIONS='--require ./src/scripts/_mock-server-only-preload.cjs' npx tsx scripts/smoke/p19-evidence-ledger.spec.ts",
+  "smoke:foundation-fix-1-retrieval-wiring": "NODE_OPTIONS='--require ./src/scripts/_mock-server-only-preload.cjs' npx tsx scripts/smoke/foundation-fix-1-retrieval-wiring.spec.ts",
   "smoke:p20-board-pack-generator": "NODE_OPTIONS='--require ./src/scripts/_mock-server-only-preload.cjs' npx tsx scripts/smoke/p20-board-pack-generator.spec.ts",
   "smoke:p22-decision-dossier": "NODE_OPTIONS='--require ./src/scripts/_mock-server-only-preload.cjs' npx tsx scripts/smoke/p22-decision-dossier.spec.ts",
   "smoke:p23-source-value-proof": "NODE_OPTIONS='--require ./src/scripts/_mock-server-only-preload.cjs' npx tsx scripts/smoke/p23-source-value-proof.spec.ts",

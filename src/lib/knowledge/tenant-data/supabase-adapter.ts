@@ -276,9 +276,17 @@ const PINECONE_NOT_CONFIGURED = 'Pinecone not configured. Set PINECONE_API_KEY.'
 const DEFAULT_RECORD_LIMIT = 50;
 const MAX_RECORD_LIMIT = 200;
 const DEFAULT_CHUNK_LIMIT = 50;
+const MAX_CHUNK_LIST_LIMIT = 300;
 const MAX_CHUNK_KEYWORD_LIMIT = 50;
 const DEFAULT_VECTOR_LIMIT = 10;
 const MAX_VECTOR_LIMIT = 50;
+const PUBLIC_PACKET18_SEGMENTS = new Set([
+  'application_portfolio',
+  'initiative_financials',
+  'regulatory_and_dependency_context',
+  'vendor_contract',
+  'sponsor_signal',
+]);
 const PRIVATE_SCHEMA_INVALID_RE =
   /invalid schema|schema .* does not exist|could not find .* schema|relation .* does not exist/i;
 const IDENTIFIER_RE = /^[A-Za-z_][A-Za-z0-9_]*$/;
@@ -352,6 +360,7 @@ function defaultPineconeClientForTenant(tenantKey?: string): PineconeClient | nu
 export class SupabaseTenantDataAdapter implements TenantDataAdapter {
   private readonly graphTraversal: GraphTraversal;
   private readonly pineconeClientFactory: (tenantKey?: string) => PineconeClient | null;
+  private publicFallbackClient: SupabaseClient | null | undefined;
 
   constructor(
     private readonly client: SupabaseClient,
@@ -382,6 +391,19 @@ export class SupabaseTenantDataAdapter implements TenantDataAdapter {
           )
         : this.client;
     return schemaClient.from(tableName);
+  }
+
+  private publicTable(tableName: string) {
+    if (this.publicFallbackClient === undefined) {
+      const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+      const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+      this.publicFallbackClient = url && key
+        ? createClient(url, key, {
+            auth: { persistSession: false, autoRefreshToken: false },
+          })
+        : null;
+    }
+    return (this.publicFallbackClient ?? this.client).from(tableName);
   }
 
   async listSegments(tenantKey: string): Promise<SegmentRollup[]> {
@@ -541,12 +563,11 @@ export class SupabaseTenantDataAdapter implements TenantDataAdapter {
     },
   ): Promise<ContextChunk[]> {
     const limit = Math.min(
-      MAX_CHUNK_KEYWORD_LIMIT,
+      MAX_CHUNK_LIST_LIMIT,
       Math.max(1, opts?.limit ?? DEFAULT_CHUNK_LIMIT),
     );
     const queryPublicRows = async (): Promise<ContextChunkRow[] | null> => {
-      let fallbackQuery = this.client
-        .from('enterprise_context_chunks')
+      let fallbackQuery = this.publicTable('enterprise_context_chunks')
         .select(CHUNK_COLUMNS)
         .eq('tenant_key', tenantKey);
       if (opts?.recordIds && opts.recordIds.length > 0) {
@@ -562,6 +583,10 @@ export class SupabaseTenantDataAdapter implements TenantDataAdapter {
       if (fallback.error) return null;
       return (fallback.data ?? []) as unknown as ContextChunkRow[];
     };
+    if (opts?.segmentIds?.some((segmentId) => PUBLIC_PACKET18_SEGMENTS.has(segmentId))) {
+      const publicRows = await queryPublicRows();
+      if (publicRows) return publicRows.map(mapChunkRow);
+    }
     let query = this.table(tenantKey, 'enterprise_context_chunks')
       .select(CHUNK_COLUMNS)
       .eq('tenant_key', tenantKey);
@@ -609,7 +634,7 @@ export class SupabaseTenantDataAdapter implements TenantDataAdapter {
       throw new Error(`listContextChunks failed for tenant '${tenantKey}': ${error.message}`);
     }
     let rows = (data ?? []) as unknown as ContextChunkRow[];
-    if (rows.length === 0 && privateSchemaForTenant(tenantKey)) {
+    if (rows.length === 0) {
       rows = (await queryPublicRows()) ?? rows;
     }
     return rows.map(mapChunkRow);
@@ -799,7 +824,27 @@ export class SupabaseTenantDataAdapter implements TenantDataAdapter {
       }
       throw new Error(`hasPersistedData failed for tenant '${tenantKey}': ${error.message}`);
     }
-    return (data?.length ?? 0) > 0;
+    if ((data?.length ?? 0) > 0) return true;
+
+    const chunks = await this.table(tenantKey, 'enterprise_context_chunks')
+      .select('chunk_id')
+      .eq('tenant_key', tenantKey)
+      .limit(1);
+    if (chunks.error) {
+      if (shouldUsePrivatePgFallback(tenantKey, chunks.error.message)) {
+        const rows = await queryPrivateRows<{ chunk_id: string }>(
+          tenantKey,
+          'enterprise_context_chunks',
+          'chunk_id',
+          ['tenant_key = $1'],
+          [tenantKey],
+          1,
+        );
+        return rows.length > 0;
+      }
+      throw new Error(`hasPersistedData chunk check failed for tenant '${tenantKey}': ${chunks.error.message}`);
+    }
+    return (chunks.data?.length ?? 0) > 0;
   }
 }
 

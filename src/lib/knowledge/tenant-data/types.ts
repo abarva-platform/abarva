@@ -32,7 +32,14 @@ export type SegmentId =
   | 'data_estate'          // provisional
   | 'workflow_inventory'   // provisional
   | 'capability_map'       // provisional
-  | 'org_change_signals';  // provisional
+  | 'org_change_signals'   // provisional
+  // Packet 18 Apex synthetic pack segments. These arrive as
+  // enterprise_context_chunks even when data_inventory_records are empty.
+  | 'application_portfolio'
+  | 'initiative_financials'
+  | 'regulatory_and_dependency_context'
+  | 'vendor_contract'
+  | 'sponsor_signal';
 
 /** Coverage / health status per segment, from segment rollups. See design doc §2. */
 export interface SegmentRollup {
