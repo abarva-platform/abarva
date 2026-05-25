@@ -192,6 +192,29 @@ function canonicalTenantKey(value: string): string {
   return value;
 }
 
+function tenantPortfolioLabel(context: ClientContext): string {
+  const tenant = context.tenantKey.trim().toLowerCase();
+  if (tenant === 'apex-retail' || tenant === 'apexretail') return 'Apex Retail application portfolio';
+  if (tenant === 'meridian' || tenant === 'meridian-health') return 'Meridian Health application portfolio';
+  if (tenant === 'arcturus' || tenant === 'first-capital' || tenant === 'firstcapital') return 'First Capital application portfolio';
+  return 'the active tenant application portfolio';
+}
+
+function tenantPortfolioUnavailableText(context: ClientContext): string {
+  return `Portfolio rows unavailable for ${context.tenantKey}; use connected application_portfolio data before making exact counts.`;
+}
+
+function integrationBlockerLabel(context: ClientContext): string {
+  const tenant = context.tenantKey.trim().toLowerCase();
+  if (tenant === 'apex-retail' || tenant === 'apexretail') return 'APX-AS400-MERCH blocker chain';
+  return 'Integration blocker chain';
+}
+
+function isApexTenant(context: ClientContext): boolean {
+  const tenant = context.tenantKey.trim().toLowerCase();
+  return tenant === 'apex-retail' || tenant === 'apexretail';
+}
+
 function patternCitation(hit: CorpusSearchHit): SentinelCitation {
   return {
     id: hit.slug,
@@ -450,6 +473,7 @@ async function loadInitiatives(context: ClientContext): Promise<InitiativeRow[]>
 }
 
 async function loadIntegrationEdges(context: ClientContext): Promise<IntegrationEdgeRow[]> {
+  if (!isApexTenant(context)) return [];
   const chunks = await loadP18Chunks(context.tenantKey, ['regulatory_and_dependency_context'], 100);
   const as400Chunk = chunks.find((row) => row.source_record_id === 'APX-AS400-MERCH');
   if (as400Chunk) {
@@ -671,7 +695,7 @@ export async function* runSentinelReasoning(input: SentinelReasoningInput): Asyn
     content: [
       'Decision frame: treat the question as an IT-productivity portfolio decision, not a generic AI adoption question.',
       'Primary KPI should be value-backed engineering throughput: DORA delta, hours saved, hours reallocated, license dollars, and realized value.',
-      `Scope should start with Apex application portfolio (${portfolio.p18AppCount || portfolio.apps.length} P18 app records visible), developer workflow, AI tooling, and operating-model accountability over a 90-day pilot horizon.`,
+      `Scope should start with ${tenantPortfolioLabel(clientContext)} (${portfolio.p18AppCount || portfolio.apps.length} P18 app records visible), developer workflow, AI tooling, and operating-model accountability over a 90-day pilot horizon.`,
     ].join(' '),
     citations: [
       ...coreCitations,
@@ -708,7 +732,7 @@ export async function* runSentinelReasoning(input: SentinelReasoningInput): Asyn
     ? portfolio.matrix.map((row) =>
         `${row.time_classification}: ${row.app_count} apps, ${money(num(row.run_cost))} run cost, ${pct(num(row.avg_ai_fit))} avg AI fit`,
       ).join('; ')
-    : 'Portfolio rows unavailable locally; use seeded application_portfolio on preview/runtime for exact counts.';
+    : tenantPortfolioUnavailableText(clientContext);
   const portfolioStage = stageBase({
     id: 'portfolio_segmentation',
     sequence: 3,
@@ -720,7 +744,7 @@ export async function* runSentinelReasoning(input: SentinelReasoningInput): Asyn
       `TIME x AI-fit read: ${matrixText}.`,
       `Top critical apps consulted: ${portfolio.apps.slice(0, 10).map((app) => `${app.app_id} (${app.time_classification}, criticality ${app.criticality_tier ?? 'n/a'}, AI fit ${pct(num(app.ai_fit_score))})`).join('; ') || 'pending runtime data'}.`,
       integrationEdges.length
-        ? `APX-AS400-MERCH blocker chain: ${integrationEdges.map((edge) => `${edge.id} ${edge.from}->${edge.to} (${edge.pattern})`).join('; ')}.`
+        ? `${integrationBlockerLabel(clientContext)}: ${integrationEdges.map((edge) => `${edge.id} ${edge.from}->${edge.to} (${edge.pattern})`).join('; ')}.`
         : '',
       `Confidence interval from P-IT-18/19 pattern family: start with 8-14% productivity lift on high-fit invest/migrate slices and 3-7% run-cost release on tolerate/eliminate slices; current visible run-cost basis is ${money(totalRunCost)}.`,
     ].filter(Boolean).join(' '),
