@@ -13,8 +13,11 @@ type StreamEvent =
   | { type: 'done' }
   | { type: 'error'; error?: string };
 
+// STRESS-P0-002 fix: tenant-agnostic placeholder question that doesn't
+// presume the user's industry. The previous placeholder ("As Apex CTO...")
+// implicitly invited Apex-flavored responses regardless of session tenant.
 const DEFAULT_QUESTION =
-  'As Apex CTO, where should I use AI to improve IT productivity without just buying more tools?';
+  'What are the top three AI investments I should be sequencing for the next four quarters, and what evidence do you have to back them?';
 
 function eventFromLine(line: string): StreamEvent | null {
   try {
@@ -24,7 +27,30 @@ function eventFromLine(line: string): StreamEvent | null {
   }
 }
 
-export function SentinelReasoningCards({ initialClient = 'apexretail' }: { initialClient?: string }) {
+interface SentinelReasoningCardsProps {
+  /**
+   * Active tenant client key resolved from the authenticated session by the
+   * server component (e.g., 'apexretail', 'meridian', 'arcturus').
+   *
+   * STRESS-P0-002 fix (2026-05-25): the prior default of 'apexretail' caused
+   * every Sentinel ask call to be tagged as Apex regardless of the actual
+   * authenticated tenant, producing cross-tenant identity leakage in the
+   * agent's response. The prop is now required from the server component.
+   */
+  initialClient: string;
+  /**
+   * Human-readable display name for the active tenant ("Apex Retail Group",
+   * "Meridian Health System", etc.). Used in the surfaceContext sent to the
+   * API so downstream consumers don't need a second lookup. Server component
+   * derives this from getActiveClientRow().name.
+   */
+  initialClientDisplayName: string;
+}
+
+export function SentinelReasoningCards({
+  initialClient,
+  initialClientDisplayName,
+}: SentinelReasoningCardsProps) {
   const [question, setQuestion] = useState(DEFAULT_QUESTION);
   const [cards, setCards] = useState<SentinelReasoningStage[]>([]);
   const [fallbackText, setFallbackText] = useState('');
@@ -61,7 +87,10 @@ export function SentinelReasoningCards({ initialClient = 'apexretail' }: { initi
           tabId,
           surfaceContext: {
             clientKey: initialClient,
-            activeClient: 'Apex Retail Group',
+            // STRESS-P0-002 fix: derive activeClient display name from the
+            // server-resolved tenant prop. Previously hardcoded 'Apex Retail
+            // Group' regardless of authenticated session.
+            activeClient: initialClientDisplayName,
             activeTab: 'sentinel-reasoning',
           },
         }),
