@@ -980,7 +980,7 @@ describe('Source surface — Brief C expert posture (SRC-VOICE.STRAT-2026-05-10)
   it('few-shot examples demonstrate the vendor-advisor posture — opinion-led shortlist, push-back, no fabrication', () => {
     expect(sourcePrompt).toMatch(/Three\s+credible\s+vendors\s+for\s+your\s+specific\s+situation/i);
     expect(sourcePrompt).toMatch(/I'?d\s+push\s+back\s+on\s+locking\s+in\s+here/i);
-    expect(sourcePrompt).toMatch(/I\s+don'?t\s+have\s+visibility\s+into\s+Apex'?s\s+current/i);
+    expect(sourcePrompt).toMatch(/I\s+don'?t\s+have\s+visibility\s+into\s+your\s+current/i);
     expect(sourcePrompt).toMatch(/That'?s\s+outside\s+what\s+I\s+do/i);
   });
 
@@ -1228,7 +1228,8 @@ describe('composeSentinelSystemPrompt', () => {
     });
     expect(prompt).toContain('Company-profile answer discipline');
     expect(prompt).toContain('core IT landscape anchors');
-    expect(prompt).toContain('SAP S/4HANA');
+    expect(prompt).toContain('For retail tenants, name the ERP visible in the facts');
+    expect(prompt).toContain('for healthcare tenants, name the EHR visible in the facts');
   });
 
   it('includes the three natural honesty-mode phrasings', () => {
