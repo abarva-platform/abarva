@@ -45,7 +45,12 @@ async function handleAsk(payload: AskPayload) {
   let tenantId: string | null = null;
   let userId: string | null = null;
   let tenantInventoryKey: string | null = null;
-  let sentinelClientId: string = requestedClient ?? 'apexretail';
+  const requestedOrSurfaceClient =
+    requestedClient ??
+    surfaceContext?.clientKey ??
+    surfaceContext?.activeClient ??
+    null;
+  let sentinelClientId: string = requestedOrSurfaceClient ?? 'unknown-active-tenant';
   let sessionUserId: string | null = null;
   let activePersonGraphNodeId: string | null = null;
   let activePersonDisplayName: string | null = null;
@@ -53,14 +58,15 @@ async function handleAsk(payload: AskPayload) {
     const [person, clerkUser, client] = await Promise.all([
       getCurrentPerson(),
       currentUser().catch(() => null),
-      getActiveClientRow(requestedClient).catch(() => null),
+      getActiveClientRow(requestedOrSurfaceClient).catch(() => null),
     ]);
     sessionUserId = clerkUser?.id ?? null;
-    tenantInventoryKey = client?.key
-      ? clientKeyToInventorySubstrateKey(client.key)
+    const resolvedClient = requestedOrSurfaceClient || clerkUser || person ? client : null;
+    tenantInventoryKey = resolvedClient?.key
+      ? clientKeyToInventorySubstrateKey(resolvedClient.key)
       : null;
-    tenantId = client?.id ?? null;
-    sentinelClientId = client?.id ?? tenantInventoryKey ?? requestedClient ?? sentinelClientId;
+    tenantId = resolvedClient?.id ?? null;
+    sentinelClientId = resolvedClient?.id ?? tenantInventoryKey ?? requestedOrSurfaceClient ?? 'unknown-active-tenant';
     if (person) {
       userId = person.id;
       activePersonGraphNodeId = person.graph_node_id;
@@ -68,7 +74,7 @@ async function handleAsk(payload: AskPayload) {
       userContextBlock = await assembleUserContextBlock({
         personId: person.id,
         displayName: person.name,
-        activeTenantDisplayName: client?.name ?? null,
+        activeTenantDisplayName: resolvedClient?.name ?? null,
       });
     }
     userId = sessionUserId ?? userId;
@@ -92,7 +98,7 @@ async function handleAsk(payload: AskPayload) {
     role: 'user',
     content: query,
     metadata: {
-      client: requestedClient,
+      client: requestedOrSurfaceClient,
       tabId: memory?.tabId ?? payload.tabId,
       surfaceContext,
     },
@@ -173,7 +179,7 @@ async function handleAsk(payload: AskPayload) {
           role: 'assistant',
           content: assistantText,
           metadata: {
-            client: requestedClient,
+            client: requestedOrSurfaceClient,
             classification: classificationForMemory,
           },
         }).catch((err) => console.warn('[ask.session-memory.assistant-turn]', err));

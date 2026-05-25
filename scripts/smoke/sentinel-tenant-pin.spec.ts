@@ -10,6 +10,8 @@ function readRepoFile(relativePath: string): string {
 
 const synthesizer = readRepoFile('src/lib/intelligence/ask/synthesizer.ts');
 const chatAgentRoute = readRepoFile('src/app/api/chat/agent/route.ts');
+const intelligenceAskRoute = readRepoFile('src/app/api/intelligence/ask/route.ts');
+const sentinelStateMachine = readRepoFile('src/lib/agents/sentinel-reasoning/state-machine.ts');
 
 assert.equal(
   synthesizer.includes('If TENANT or GRAPH sources say the active tenant is Apex Retail'),
@@ -63,6 +65,36 @@ assert.match(
   chatAgentRoute,
   /Unknown active tenant/,
   'Generic chat agent route should use a neutral unknown-tenant fallback.',
+);
+
+assert.equal(
+  intelligenceAskRoute.includes("requestedClient ?? 'apexretail'"),
+  false,
+  'Intelligence ask route must not initialize Sentinel routing with an Apex fallback.',
+);
+
+assert.match(
+  intelligenceAskRoute,
+  /unknown-active-tenant/,
+  'Intelligence ask route should use a neutral unknown-tenant Sentinel fallback.',
+);
+
+assert.equal(
+  sentinelStateMachine.includes('Scope should start with Apex application portfolio'),
+  false,
+  'Sentinel reasoning stages must not emit Apex portfolio wording for every tenant.',
+);
+
+assert.equal(
+  sentinelStateMachine.includes('? `APX-AS400-MERCH blocker chain:'),
+  false,
+  'Sentinel reasoning stages must not hardcode an Apex blocker-chain label for every tenant.',
+);
+
+assert.match(
+  sentinelStateMachine,
+  /tenantPortfolioLabel/,
+  'Sentinel reasoning stages should choose tenant-aware portfolio labels.',
 );
 
 const sentinelDoctrine = readRepoFile('src/lib/agent/voice-doctrine/sentinel.ts');
