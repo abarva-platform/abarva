@@ -180,6 +180,7 @@ const TENANTS: Record<string, TenantConfig> = {
 const args = process.argv.slice(2);
 const DRY_RUN = args.includes('--dry-run');
 const ONLY_CHUNKS = args.includes('--only-chunks');
+const SKIP_CHUNKS = args.includes('--skip-chunks');
 const SKIP_TABLES = args.includes('--skip-tables');
 const CONCURRENCY = Number(args.find((a) => a.startsWith('--concurrency='))?.split('=')[1] ?? 6);
 
@@ -514,11 +515,13 @@ async function phase3Applications(): Promise<{ inserted: number; errors: number 
   console.log(`  Found ${parsed.data.length} apps`);
 
   function mapCriticality(raw: string | undefined): string {
+    // applications.criticality CHECK accepts tier1/tier2/tier3 only — NOT tier4
+    // (probed empirically 2026-05-26). Map low/p3 down to tier3.
     const norm = (raw ?? '').toLowerCase().trim();
     if (['p0', 'critical', 'tier1', 'tier 1', 'tier-1'].includes(norm)) return 'tier1';
     if (['p1', 'high', 'tier2', 'tier 2', 'tier-2'].includes(norm)) return 'tier2';
     if (['p2', 'medium', 'tier3', 'tier 3', 'tier-3'].includes(norm)) return 'tier3';
-    if (['p3', 'low', 'tier4', 'tier 4', 'tier-4'].includes(norm)) return 'tier4';
+    if (['p3', 'low', 'tier4', 'tier 4', 'tier-4'].includes(norm)) return 'tier3';
     return 'tier3';
   }
 
@@ -570,8 +573,16 @@ async function phase3Applications(): Promise<{ inserted: number; errors: number 
     const batch = rows.slice(i, i + 100);
     const { error, data } = await sb.from('applications').insert(batch).select('id');
     if (error) {
-      console.log(`  [ERR] applications batch ${i}: ${error.message}`);
-      errors += batch.length;
+      console.log(`  [ERR] applications batch ${i}: ${error.message.substring(0, 100)} — falling back to per-row`);
+      let perRowOk = 0;
+      for (const row of batch) {
+        const single = await sb.from('applications').insert(row).select('id').single();
+        if (single.error) {
+          console.log(`    [SKIP] ${row.name}: crit=${row.criticality} dep=${row.deployment_model} status=${row.status} — ${single.error.message.substring(0, 60)}`);
+          errors++;
+        } else { perRowOk++; }
+      }
+      inserted += perRowOk;
     } else {
       inserted += data?.length ?? batch.length;
     }
@@ -593,7 +604,10 @@ async function main() {
   console.log(`  skip-tables: ${SKIP_TABLES}`);
 
   const p1 = await phase1SourceFiles();
-  const p2 = await phase2ChunksAndEmbeddings();
+  const p2 = SKIP_CHUNKS
+    ? { rows: 0, embedded: 0, failed: 0 }
+    : await phase2ChunksAndEmbeddings();
+  if (SKIP_CHUNKS) console.log('\n━━ PHASE 2 SKIPPED (--skip-chunks) ━━');
   let p3: { inserted: number; errors: number } | null = null;
   if (!ONLY_CHUNKS && !SKIP_TABLES) {
     p3 = await phase3Applications();
