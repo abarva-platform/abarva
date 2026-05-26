@@ -21,7 +21,7 @@ export type TenantStructuredSource = TenantEnterpriseSource & {
 };
 
 const ENTERPRISE_QUERY_RE =
-  /\b(profile|company|enterprise|tenant|organization|organisation|org|structure|leadership|leaders?|executive|executives|business|function\s+leads?|c[-\s]?level|cxo|cio|cdio|cto|cmio|cmo|cno|coo|ceo|cfo|svp|vp|director|direct\s+reports?|reports?|reports?\s+to|owner|sponsor|budget|spend|financials?|capex|opex|capital|funding|approval|approver|authority|fy\s*26|fy2026|current\s+state|what\s+do\s+you\s+know|application|applications|apps?|systems?|portfolio|criticality|vendor|vendors?|supplier|suppliers?|contract|contracts?|renewal|renewals?|initiative|initiatives?|moves?|kill|replatform|dependency|dependencies|blocks?|blocked|blockers?)\b/i;
+  /\b(profile|company|enterprise|tenant|organization|organisation|org|structure|leadership|leaders?|executive|executives|business|function\s+leads?|c[-\s]?level|cxo|cio|cdio|cto|cmio|cmo|cno|coo|ceo|cfo|svp|vp|director|direct\s+reports?|reports?|reports?\s+to|owner|sponsor|budget|spend|financials?|capex|opex|capital|funding|approval|approver|authority|fy\s*26|fy2026|current\s+state|what\s+do\s+you\s+know|application|applications|apps?|systems?|portfolio|criticality|vendor|vendors?|supplier|suppliers?|contract|contracts?|renewal|renewals?|initiative|initiatives?|moves?|kill|accelerate|hold|restructure|replatform|dependency|dependencies|blocks?|blocked|blockers?|regulatory|regulation|fda|eu\s+ai\s+act|annex|mdr|ivdr|sbom|gxp|iso\s*13485|sap|s\/4|s4|wave)\b/i;
 
 const OFF_DOMAIN_GENERAL_KNOWLEDGE_RE =
   /^\s*(?:what|where)\s+(?:is|are)\s+the\s+capital\s+of\b/i;
@@ -83,7 +83,7 @@ export function selectTenantEnterpriseSegments(query: string): SegmentId[] {
   const normalized = query.toLowerCase();
   const segments: SegmentId[] = [];
 
-  if (/\b(profile|company|enterprise|tenant|organization|organisation|who are we|what do you know)\b/.test(normalized)) {
+  if (/\b(profile|company|enterprise|tenant|organization|organisation|who are we|what do you know|regulatory|regulation|fda|eu\s+ai\s+act|annex|mdr|ivdr|sbom|gxp|iso\s*13485)\b/.test(normalized)) {
     segments.push('enterprise_profile');
   }
   if (/\b(org|organization|organisation|structure|leadership|leaders?|executive|executives|business|function\s+leads?|c[-\s]?level|team|cxo|cio|cdio|cto|cmio|cmo|cno|coo|ceo|cfo|svp|vp|director|reports?\s+to|owner|sponsor|who)\b/.test(normalized)) {
@@ -92,10 +92,10 @@ export function selectTenantEnterpriseSegments(query: string): SegmentId[] {
   if (/\b(budget|spend|financials?|capex|opex|capital|funding|approval|approver|authority|fy\s*26|fy2026|run|change|transform)\b/.test(normalized)) {
     segments.push('it_financials');
   }
-  if (/\b(technology|tech|system|systems|platform|cloud|data|analytics|warehouse|lakehouse|bi|ml|ai|vendor|vendors?|supplier|suppliers?|contract|contracts?|renewal|renewals?|application|applications|apps?|criticality|portfolio)\b/.test(normalized)) {
+  if (/\b(technology|tech|system|systems|platform|cloud|data|analytics|warehouse|lakehouse|bi|ml|ai|vendor|vendors?|supplier|suppliers?|contract|contracts?|renewal|renewals?|application|applications|apps?|criticality|portfolio|sap|s\/4|s4|erp)\b/.test(normalized)) {
     segments.push('it_landscape');
   }
-  if (/\b(program|initiative|initiatives|move|moves|in[-\s]?flight|portfolio|roadmap|kill|fund|pause|accelerate|restructure)\b/.test(normalized)) {
+  if (/\b(program|initiative|initiatives|move|moves|in[-\s]?flight|portfolio|roadmap|kill|fund|pause|hold|accelerate|restructure|sap|s\/4|s4|wave)\b/.test(normalized)) {
     segments.push('program_inventory');
   }
 
@@ -230,7 +230,7 @@ async function retrieveStructuredTenantSources(
   const wantsProfile = /\b(profile|company|enterprise|tenant|what\s+do\s+you\s+know|who\s+are\s+we|budget|spend|financials?|revenue|employees?)\b/.test(normalized);
   const wantsApps = /\b(application|applications|apps?|systems?|portfolio|criticality|replatform|legacy|erp|sap|as\/?400|mainframe)\b/.test(normalized);
   const wantsVendors = /\b(vendor|vendors?|supplier|suppliers?|contract|contracts?|renewal|renewals?|ams|bafo|rfi|rfp|sourcing|source)\b/.test(normalized);
-  const wantsInitiatives = /\b(initiative|initiatives|move|moves|program|programs|kill|fund|pause|accelerate|restructure|roadmap)\b/.test(normalized);
+  const wantsInitiatives = /\b(initiative|initiatives|move|moves|program|programs|kill|fund|pause|hold|accelerate|restructure|roadmap|sap|s\/4|s4|wave)\b/.test(normalized);
   if (!wantsProfile && !wantsApps && !wantsVendors && !wantsInitiatives) return [];
 
   try {
@@ -259,7 +259,7 @@ export async function retrieveTenantStructuredFacts(
   const wantsRetiringApps = /(?:which\s+)?(?:applications?|apps?).*(?:retiring|retire|decommission|sunset)/.test(normalized);
   const wantsTopVendors = /(?:top|biggest|largest)\s+vendors?|vendor.*\b(?:spend|cost|annual)\b/.test(normalized);
   const wantsVendorRenewals = /vendor\s+renewal|renewing|renewals?\s+(?:window|date)|renewals?.*(?:next|6\s+months|six\s+months|exposed)/.test(normalized);
-  const wantsActiveInitiatives = /active\s+initiatives?|in[-\s]?flight\s+initiatives?|biggest\s+in[-\s]?flight\s+initiative/.test(normalized);
+  const wantsActiveInitiatives = /active\s+initiatives?|in[-\s]?flight\s+initiatives?|biggest\s+in[-\s]?flight\s+initiative|\b(?:sap|s\/4|s4)\b.*\bwave\b|\bwave\s*0\b/.test(normalized);
   const wantsInitiativesByStage = /initiatives?\s+by\s+(?:stage|phase)/.test(normalized);
   const wantsKillInitiatives = /(?:which\s+)?(?:initiatives?|moves?).*(?:kill|stop|pause|cut)/.test(normalized);
 
