@@ -1,6 +1,6 @@
 // scripts/provision-cxo-personas.ts
 //
-// Provisions the canonical CXO Clerk users AND their Supabase
+// Provisions the four canonical CXO Clerk users AND their Supabase
 // person + person_client_memberships rows so the active-client
 // resolver can find them. Disables every other *.example.com demo
 // account.
@@ -72,7 +72,7 @@ async function loadClientsByKey(sb: SupabaseClient): Promise<Map<string, ClientR
   const byKey = new Map<string, ClientRow>();
   for (const row of (data as ClientRow[] | null) ?? []) {
     if (/Meridian/i.test(row.name)) byKey.set('meridian', row);
-    if (/Arcturus|First Capital|Brindlemark/i.test(row.name)) byKey.set('arcturus', row);
+    if (/Arcturus|First Capital/i.test(row.name)) byKey.set('arcturus', row);
     if (/Apex Retail/i.test(row.name)) byKey.set('apexretail', row);
     if (/Northstar/i.test(row.name)) byKey.set('northstar', row);
   }
@@ -275,7 +275,7 @@ async function main() {
   const sb = makeSupabase();
   const clients = await loadClientsByKey(sb);
 
-  // ── Phase 1 · provision CXO personas ───────────────────────────
+  // ── Phase 1 · provision the 4 CXO personas ─────────────────────
   console.log('Phase 1 · Provision CXO personas (Clerk + Supabase)');
   console.log('─'.repeat(70));
   for (const persona of CXO_PERSONAS) {

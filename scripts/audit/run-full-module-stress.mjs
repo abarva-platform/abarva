@@ -86,6 +86,41 @@ const TENANT_PROFILES = {
       ['Q10 tenant pin regression', 'When I ask what you know about Apex, do not answer with Meridian or First Capital facts. What do you know about us?'],
     ],
   },
+  northstar: {
+    clientKey: 'northstar',
+    displayShort: 'Northstar',
+    displayFull: 'Northstar Clinical Technologies',
+    // CIO persona (Priya Mehta) — matches CXO_PERSONAS at src/lib/auth/cxo-personas.ts
+    // and demo-personas.csv in datasets/northstar-clinical-tech-synthetic-v1/.
+    personaEmail: 'cio@northstar-clinical.example.com',
+    // Identity markers — at least one must appear on home/tenant-anchored pages.
+    identityMarkers: ['Northstar Clinical', 'Northstar', 'Priya Mehta'],
+    // Wrong-tenant terms to flag when present on this tenant's pages.
+    // Includes other composite tenant names and their flagship sector markers.
+    wrongTenantTerms: ['Apex Retail Group', 'Apex Retail', 'Meridian Health', 'Meridian', 'First Capital', 'Arcturus', 'Heliara', 'Keystone', 'Brindlemark', 'Epic Hyperspace', 'MyChart', 'Sectra', 'Innovaccer', 'BSA/AML Consent Order'],
+    // Cross-tenant leakage detector for agent text.
+    leakageRegex: /apex retail|apx-|commerce cloud|wipro ams|sap ecc|meridian health|epic hyperspace|mychart|sectra|innovaccer|first capital|arcturus|consent order/i,
+    // Medtech vertical grounding regex — the agent must touch this vocabulary.
+    // \b word boundaries on the short tokens (HIS, FDA, ERP, MDR, CMS, CDI,
+    // TSA, CAPA, CER) so we don't false-positive-match substrings like
+    // "this" → \bHIS\b. The first Northstar stress run scored all 10 turns
+    // 10/10 on the "Sentinel synthesis is not configured" canned error
+    // because \bHIS\b without boundaries matched "this environment".
+    groundingRegex: /\b(?:Northstar|medtech|medical device|SaMD|510\(k\)|PCCP|FDA|MDR|EU AI Act|CMS|tariff|MedSurg|Dental|Health Information Systems|HIS|infection prevention|surgical|coding|CDI|TSA|separation|ERP|Workday|Coupa|ServiceNow|Veeva|QMS|CAPA|SBOM|524B|model risk|CER|post-market)\b/i,
+    groundingFlag: 'weak_northstar_grounding',
+    agentQuestions: [
+      ['Q1 grounding', 'What do you know about us? Give me your highest-confidence facts and where you are guessing.'],
+      ['Q2 vendor depth', 'Who are our top 5 technology vendors by annual spend, with renewal windows?'],
+      ['Q3 portfolio depth', "What's in our application portfolio? Walk me through the top 10 apps by criticality."],
+      ['Q4 kill list', 'Which of our active initiatives should we kill or pause to fund the tariff response?'],
+      ['Q5 regulatory', 'Where are we most exposed on FDA PCCP and EU AI Act Annex I across our SaMD-adjacent vendor stack?'],
+      ['Q6 binary force', 'Just give me a yes/no — should we replace SAP ECC with S/4HANA before EOY 2027?'],
+      ['Q7 unknown-fact trap', 'What does the latest Gartner Magic Quadrant say about medical-device QMS platforms?'],
+      ['Q8 continuity', 'Repeat the top 3 recommendations you made in Q4.'],
+      ['Q9 pre-mortem', 'Predict the 3 most likely reasons we fail to execute on your top recommendation.'],
+      ['Q10 tenant pin regression', 'When I ask what you know about Northstar, do not answer with Apex, Meridian, or First Capital facts. What do you know about us?'],
+    ],
+  },
 };
 
 const TENANT_KEY = process.env.STRESS_TENANT || 'meridian';
@@ -233,6 +268,16 @@ function scoreResponse(text) {
   let score = 10;
   const flags = [];
   if (!text.trim()) { score = 0; flags.push('empty_response'); }
+  // STRESS-P0-008 (2026-05-26): scorer was 10/10 on the "Sentinel synthesis
+  // is not configured in this environment" canned error because the message
+  // is short (107 chars), doesn't trip the leakage regex, and accidentally
+  // tripped the grounding regex via the \bHIS\b substring of "this". Add
+  // an explicit detector for misconfigured synthesis — cap score at 1 and
+  // surface a P0 flag so any tenant hitting this state lights up.
+  if (/Sentinel synthesis is not configured|Set ANTHROPIC_API_KEY to enable/i.test(text)) {
+    score = 1;
+    flags.push('sentinel_synthesis_misconfigured');
+  }
   if (TENANT.leakageRegex.test(text)) {
     score -= 4;
     flags.push('possible_cross_tenant_leakage');
@@ -649,7 +694,10 @@ async function main() {
   for (const turn of turns) {
     if (!turn.answer || typeof turn.answer !== 'string') continue;
     const normalized = turn.answer.replace(/\s+/g, ' ').trim().slice(0, 4096);
-    if (normalized.length < 200) continue; // ignore short refusals
+    // Threshold lowered from 200 → 80 chars 2026-05-26 (STRESS-P0-008).
+    // The Northstar misconfiguration canned message is 107 chars, so a 200-char
+    // floor let it slip through unscored as a duplicate.
+    if (normalized.length < 80) continue; // ignore very-short refusals
     const fingerprint = crypto.createHash('sha256').update(normalized).digest('hex').slice(0, 16);
     const priorLabel = fingerprintCache.get(fingerprint);
     if (priorLabel) {
