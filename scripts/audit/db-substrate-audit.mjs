@@ -2,7 +2,7 @@
 /**
  * Database substrate audit.
  *
- * Reports what's actually in Supabase for each tenant, by table. Compares
+ * Reports what's actually in Postgres for each tenant, by table. Compares
  * against the disk-side spec (Packet 18 Apex / Packet 19 Meridian / Packet
  * 20 First Capital / Packet 21 Northstar). Surfaces the gap.
  *
@@ -16,13 +16,36 @@
 
 import dotenv from 'dotenv';
 import path from 'node:path';
-import { createClient } from '@supabase/supabase-js';
+import fs from 'node:fs';
+import pg from 'pg';
 import { fileURLToPath } from 'node:url';
 
 const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
-dotenv.config({ path: path.join(REPO_ROOT, '.env.local') });
+const localEnv = path.join(REPO_ROOT, '.env.local');
+const fallbackEnv = '/Users/anand/Projects/nexus/.env.local';
+dotenv.config({ path: fs.existsSync(localEnv) ? localEnv : fallbackEnv });
 
-const sb = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
+const databaseUrl = process.env.ABARVA_AZURE_DATABASE_URL || process.env.DATABASE_URL;
+if (!databaseUrl) {
+  console.error('Missing ABARVA_AZURE_DATABASE_URL or DATABASE_URL');
+  process.exit(2);
+}
+
+function disableSsl(connectionString) {
+  try {
+    const url = new URL(connectionString);
+    if (url.searchParams.get('sslmode')?.toLowerCase() === 'disable') return true;
+    return ['localhost', '127.0.0.1', '::1'].includes(url.hostname);
+  } catch {
+    return false;
+  }
+}
+
+const db = new pg.Client({
+  connectionString: databaseUrl,
+  application_name: 'db-substrate-audit',
+  ssl: disableSsl(databaseUrl) ? false : { rejectUnauthorized: false },
+});
 
 const TENANTS = {
   apex:       { id: 'bb8ed961-a049-4d0c-a38f-f8912138fceb', name: 'Apex Retail',          spec: { applications: 120, ai_initiatives: 30, vendor_contracts: 45, enterprise_context_source_files: 42, enterprise_context_chunks: 280, teams: 14 } },
@@ -42,12 +65,22 @@ const TABLES = [
 ];
 
 async function countByClient(table, clientId) {
-  const { count, error } = await sb.from(table).select('*', { count: 'exact', head: true }).eq('client_id', clientId);
-  if (error) return { count: null, error: error.message };
-  return { count, error: null };
+  try {
+    const { rows } = await db.query(`SELECT count(*)::int AS count FROM ${table} WHERE client_id = $1`, [clientId]);
+    return { count: rows[0]?.count ?? 0, error: null };
+  } catch (error) {
+    return { count: null, error: error instanceof Error ? error.message : String(error) };
+  }
 }
 
 async function main() {
+  try {
+    await db.connect();
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    console.error(`Postgres connection failed: ${message}`);
+    process.exit(2);
+  }
   console.log('────────────────────────────────────────────────────────────────────────────');
   console.log('Database substrate audit · 2026-05-26');
   console.log('────────────────────────────────────────────────────────────────────────────');
@@ -106,4 +139,6 @@ async function main() {
   console.log();
 }
 
-main().catch((err) => { console.error(err); process.exit(1); });
+main()
+  .catch((err) => { console.error(err); process.exit(1); })
+  .finally(() => db.end().catch(() => undefined));

@@ -1,7 +1,7 @@
 // Packet 24 — Multi-tenant substrate loader.
 //
 // Loads a synthetic tenant's `datasets/<tenant>-synthetic-v1/` files into
-// Supabase. The 2026-05-26 substrate audit (PACKET_23) found 2,741 rows
+// Postgres. The 2026-05-26 substrate audit (PACKET_23) found 2,741 rows
 // missing across the four composite tenants; this is the fix.
 //
 // Run:
@@ -32,7 +32,7 @@ const DEFAULT_ENV = '/Users/anand/Projects/nexus/.env.local';
 loadEnv({ path: fs.existsSync(LOCAL_ENV) ? LOCAL_ENV : DEFAULT_ENV });
 
 import crypto from 'node:crypto';
-import { createClient, type SupabaseClient } from '@supabase/supabase-js';
+import { Client, type QueryResultRow } from 'pg';
 import Papa from 'papaparse';
 
 // ─── Self-contained embedding helper ───────────────────────────────────────
@@ -92,7 +92,7 @@ async function embedText(text: string): Promise<EmbeddingResult> {
 
 // ─── Audit row writer (for AI Egress Control Plane provenance) ──────────────
 
-async function writeAuditRow(sb: SupabaseClient, args: {
+async function writeAuditRow(args: {
   tenantId: string;
   workflow: string;
   artifactId?: string;
@@ -122,9 +122,12 @@ async function writeAuditRow(sb: SupabaseClient, args: {
     request_metadata: args.metadata ?? {},
     error_message: args.errorMessage ?? null,
   };
-  const { data, error } = await sb.from('ai_egress_audit').insert(row).select('id').single();
-  if (error) return null;
-  return (data as { id: string }).id;
+  try {
+    const rows = await db.insertRows<{ id: string }>('ai_egress_audit', [row], 'id');
+    return rows[0]?.id ?? null;
+  } catch {
+    return null;
+  }
 }
 
 // ─── Tenant registry ────────────────────────────────────────────────────────
@@ -244,16 +247,136 @@ if (!TENANT_KEY) throw new Error('TENANT_KEY env var required (e.g. TENANT_KEY=n
 const TENANT = TENANTS[TENANT_KEY];
 if (!TENANT) throw new Error(`Unknown TENANT_KEY=${TENANT_KEY}. Known: ${Object.keys(TENANTS).join(', ')}`);
 
-// ─── Supabase client ────────────────────────────────────────────────────────
+// ─── Postgres client ────────────────────────────────────────────────────────
 
-function makeSupabase(): SupabaseClient {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!url || !key) throw new Error('Missing NEXT_PUBLIC_SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY');
-  return createClient(url, key);
+function disableSsl(connectionString: string): boolean {
+  try {
+    const url = new URL(connectionString);
+    if (url.searchParams.get('sslmode')?.toLowerCase() === 'disable') return true;
+    return ['localhost', '127.0.0.1', '::1'].includes(url.hostname);
+  } catch {
+    return false;
+  }
 }
 
-const sb = makeSupabase();
+function resolveDatabaseUrl(): string {
+  const url = process.env.ABARVA_AZURE_DATABASE_URL || process.env.DATABASE_URL;
+  if (!url) throw new Error('Missing ABARVA_AZURE_DATABASE_URL or DATABASE_URL');
+  return url;
+}
+
+function quoteIdent(identifier: string): string {
+  if (!/^[a-z_][a-z0-9_]*$/i.test(identifier)) throw new Error(`Unsafe SQL identifier: ${identifier}`);
+  return `"${identifier}"`;
+}
+
+class PostgresDb {
+  private readonly client: Client;
+  private connected = false;
+
+  constructor() {
+    const url = resolveDatabaseUrl();
+    this.client = new Client({
+      connectionString: url,
+      application_name: 'tenant-substrate-loader',
+      ssl: disableSsl(url) ? false : { rejectUnauthorized: false },
+    });
+  }
+
+  async connect(): Promise<void> {
+    await this.client.connect();
+    this.connected = true;
+  }
+
+  async end(): Promise<void> {
+    if (!this.connected) return;
+    await this.client.end();
+    this.connected = false;
+  }
+
+  async query<R extends QueryResultRow = QueryResultRow>(sql: string, params: unknown[] = []): Promise<R[]> {
+    return (await this.client.query<R>(sql, params)).rows;
+  }
+
+  async updateEq(table: string, patch: Record<string, unknown>, where: Record<string, unknown>): Promise<number> {
+    const setEntries = Object.entries(patch);
+    const whereEntries = Object.entries(where);
+    const params = [...setEntries.map(([, value]) => value), ...whereEntries.map(([, value]) => value)];
+    const setSql = setEntries.map(([column], index) => `${quoteIdent(column)} = $${index + 1}`).join(', ');
+    const whereSql = whereEntries
+      .map(([column], index) => `${quoteIdent(column)} = $${setEntries.length + index + 1}`)
+      .join(' AND ');
+    const result = await this.client.query(
+      `UPDATE ${quoteIdent(table)} SET ${setSql} WHERE ${whereSql}`,
+      params,
+    );
+    return result.rowCount ?? 0;
+  }
+
+  async deleteEq(table: string, where: Record<string, unknown>): Promise<number> {
+    const entries = Object.entries(where);
+    const whereSql = entries.map(([column], index) => `${quoteIdent(column)} = $${index + 1}`).join(' AND ');
+    const result = await this.client.query(
+      `DELETE FROM ${quoteIdent(table)} WHERE ${whereSql}`,
+      entries.map(([, value]) => value),
+    );
+    return result.rowCount ?? 0;
+  }
+
+  async insertRows<R extends QueryResultRow = QueryResultRow>(
+    table: string,
+    rows: object[],
+    returning?: string,
+  ): Promise<R[]> {
+    if (rows.length === 0) return [];
+    const records = rows as Array<Record<string, unknown>>;
+    const columns = Object.keys(records[0]!);
+    const params: unknown[] = [];
+    const valuesSql = records.map((row, rowIndex) => {
+      const placeholders = columns.map((column, columnIndex) => {
+        params.push(row[column]);
+        return `$${rowIndex * columns.length + columnIndex + 1}`;
+      });
+      return `(${placeholders.join(', ')})`;
+    });
+    const returningSql = returning ? ` RETURNING ${quoteIdent(returning)}` : '';
+    return this.query<R>(
+      `INSERT INTO ${quoteIdent(table)} (${columns.map(quoteIdent).join(', ')}) VALUES ${valuesSql.join(', ')}${returningSql}`,
+      params,
+    );
+  }
+
+  async upsertRows<R extends QueryResultRow = QueryResultRow>(
+    table: string,
+    rows: object[],
+    conflictColumn: string,
+    returning?: string,
+  ): Promise<R[]> {
+    if (rows.length === 0) return [];
+    const records = rows as Array<Record<string, unknown>>;
+    const columns = Object.keys(records[0]!);
+    const updateColumns = columns.filter((column) => column !== conflictColumn);
+    const params: unknown[] = [];
+    const valuesSql = records.map((row, rowIndex) => {
+      const placeholders = columns.map((column, columnIndex) => {
+        params.push(row[column]);
+        return `$${rowIndex * columns.length + columnIndex + 1}`;
+      });
+      return `(${placeholders.join(', ')})`;
+    });
+    const updateSql = updateColumns
+      .map((column) => `${quoteIdent(column)} = EXCLUDED.${quoteIdent(column)}`)
+      .join(', ');
+    const returningSql = returning ? ` RETURNING ${quoteIdent(returning)}` : '';
+    return this.query<R>(
+      `INSERT INTO ${quoteIdent(table)} (${columns.map(quoteIdent).join(', ')}) VALUES ${valuesSql.join(', ')}
+       ON CONFLICT (${quoteIdent(conflictColumn)}) DO UPDATE SET ${updateSql}${returningSql}`,
+      params,
+    );
+  }
+}
+
+const db = new PostgresDb();
 
 // ─── PHASE 0 — clients profile reconciliation ──────────────────────────────
 
@@ -322,9 +445,11 @@ async function phase0ClientProfile(): Promise<{ updated: number; errors: number 
     return { updated: 1, errors: 0 };
   }
 
-  const { error } = await sb.from('clients').update(patch).eq('id', TENANT.clientId);
-  if (error) {
-    console.log(`  [ERR] clients profile update: ${error.message}`);
+  try {
+    await db.updateEq('clients', patch, { id: TENANT.clientId });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    console.log(`  [ERR] clients profile update: ${message}`);
     return { updated: 0, errors: 1 };
   }
   console.log(`  Updated clients profile for ${TENANT.clientId}`);
@@ -538,25 +663,22 @@ async function phase2ChunksAndEmbeddings(): Promise<{ rows: number; embedded: nu
 
   // PHASE 2a — Delete existing chunks for this tenant (idempotency), then INSERT
   console.log('  Deleting existing chunks for tenant (idempotent re-run)...');
-  const { error: delErr } = await sb
-    .from('enterprise_context_chunks')
-    .delete()
-    .eq('client_id', TENANT.clientId);
-  if (delErr) {
-    console.log(`  [ERR] delete existing: ${delErr.message}`);
+  try {
+    await db.deleteEq('enterprise_context_chunks', { client_id: TENANT.clientId });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    console.log(`  [ERR] delete existing: ${message}`);
   }
   console.log('  Inserting chunk rows...');
   let inserted = 0;
   for (let i = 0; i < rows.length; i += 100) {
     const batch = rows.slice(i, i + 100);
-    const { error, data } = await sb
-      .from('enterprise_context_chunks')
-      .insert(batch)
-      .select('id');
-    if (error) {
-      console.log(`  [ERR] chunk insert batch ${i}: ${error.message}`);
-    } else {
-      inserted += data?.length ?? batch.length;
+    try {
+      const data = await db.insertRows<{ id: string }>('enterprise_context_chunks', batch, 'id');
+      inserted += data.length || batch.length;
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      console.log(`  [ERR] chunk insert batch ${i}: ${message}`);
     }
   }
   console.log(`  Inserted ${inserted}/${rows.length} chunk rows`);
@@ -564,16 +686,21 @@ async function phase2ChunksAndEmbeddings(): Promise<{ rows: number; embedded: nu
   // PHASE 2b — Embed pending chunks via AI Egress, concurrency=N
   console.log(`  Embedding ${rows.length} chunks (concurrency=${CONCURRENCY})...`);
   // Re-query to find which rows actually need embedding (pending OR null embedding)
-  const { data: pendingRows, error: queryErr } = await sb
-    .from('enterprise_context_chunks')
-    .select('id, chunk_id, chunk_text, embedding_status')
-    .eq('client_id', TENANT.clientId)
-    .or('embedding_status.eq.pending,embedding_status.is.null,embedding.is.null');
-  if (queryErr) {
-    console.log(`  [ERR] query pending chunks: ${queryErr.message}`);
+  let pendingRows: Array<{ id: string; chunk_id: string; chunk_text: string }> = [];
+  try {
+    pendingRows = await db.query<{ id: string; chunk_id: string; chunk_text: string }>(
+      `SELECT id, chunk_id, chunk_text
+         FROM enterprise_context_chunks
+        WHERE client_id = $1
+          AND (embedding_status = 'pending' OR embedding_status IS NULL OR embedding IS NULL)`,
+      [TENANT.clientId],
+    );
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    console.log(`  [ERR] query pending chunks: ${message}`);
     return { rows: inserted, embedded: 0, failed: rows.length };
   }
-  const pending = (pendingRows ?? []) as Array<{ id: string; chunk_id: string; chunk_text: string }>;
+  const pending = pendingRows;
   console.log(`  ${pending.length} chunks need embedding`);
 
   let embedded = 0;
@@ -584,7 +711,7 @@ async function phase2ChunksAndEmbeddings(): Promise<{ rows: number; embedded: nu
     try {
       const { embedding, model, raw_provider } = await embedText(row.chunk_text);
       // Write ai_egress_audit row for provenance (best-effort, non-blocking on failure)
-      await writeAuditRow(sb, {
+      await writeAuditRow({
         tenantId: TENANT.clientId,
         workflow: 'substrate-loader-embed',
         artifactId: row.chunk_id,
@@ -597,33 +724,21 @@ async function phase2ChunksAndEmbeddings(): Promise<{ rows: number; embedded: nu
         metadata: { dimensions: embedding.length, chunk_id: row.chunk_id, loader: 'packet-24' },
       }).catch(() => null);
 
-      const { error } = await sb
-        .from('enterprise_context_chunks')
-        .update({
-          embedding: embedding as unknown as string, // pgvector accepts array
-          embedding_dim: embedding.length,
-          embedding_model: model,
-          embedded_at: new Date().toISOString(),
-          embedding_status: 'embedded',
-          embedding_error: null,
-        })
-        .eq('id', row.id);
-      if (error) {
-        await sb
-          .from('enterprise_context_chunks')
-          .update({ embedding_status: 'failed', embedding_error: error.message })
-          .eq('id', row.id);
-        failed++;
-        console.log(`  [ERR] update ${row.chunk_id}: ${error.message}`);
-      } else {
-        embedded++;
-      }
+      await db.query(
+        `UPDATE enterprise_context_chunks
+            SET embedding = $1::vector,
+                embedding_dim = $2,
+                embedding_model = $3,
+                embedded_at = $4,
+                embedding_status = 'embedded',
+                embedding_error = NULL
+          WHERE id = $5`,
+        [`[${embedding.join(',')}]`, embedding.length, model, new Date().toISOString(), row.id],
+      );
+      embedded++;
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
-      await sb
-        .from('enterprise_context_chunks')
-        .update({ embedding_status: 'failed', embedding_error: msg.slice(0, 500) })
-        .eq('id', row.id);
+      await db.updateEq('enterprise_context_chunks', { embedding_status: 'failed', embedding_error: msg.slice(0, 500) }, { id: row.id });
       failed++;
       console.log(`  [ERR] embed ${row.chunk_id}: ${msg.slice(0, 100)}`);
     }
@@ -719,18 +834,19 @@ async function phase3Applications(): Promise<{ inserted: number; errors: number 
 
   // Delete existing for this tenant (idempotency) — applications are demo data
   console.log('  Deleting existing tenant apps (idempotent re-run)...');
-  await sb.from('applications').delete().eq('client_id', TENANT.clientId).eq('is_demo_data', true);
+  await db.deleteEq('applications', { client_id: TENANT.clientId, is_demo_data: true });
 
   let inserted = 0;
   let errors = 0;
   for (let i = 0; i < rows.length; i += 100) {
     const batch = rows.slice(i, i + 100);
-    const { error, data } = await sb.from('applications').insert(batch).select('id');
-    if (error) {
-      console.log(`  [ERR] applications batch ${i}: ${error.message}`);
+    try {
+      const data = await db.insertRows<{ id: string }>('applications', batch, 'id');
+      inserted += data.length || batch.length;
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      console.log(`  [ERR] applications batch ${i}: ${message}`);
       errors += batch.length;
-    } else {
-      inserted += data?.length ?? batch.length;
     }
   }
   console.log(`  Inserted ${inserted}; errors ${errors}`);
@@ -800,17 +916,18 @@ async function phase4Initiatives(): Promise<{ inserted: number; errors: number }
     return { inserted: rows.length, errors: 0 };
   }
 
-  await sb.from('ai_initiatives').delete().eq('client_id', TENANT.clientId).eq('loaded_via_template', `${TENANT.key}-substrate-v1`);
+  await db.deleteEq('ai_initiatives', { client_id: TENANT.clientId, loaded_via_template: `${TENANT.key}-substrate-v1` });
   let inserted = 0;
   let errors = 0;
   for (let i = 0; i < rows.length; i += 100) {
     const batch = rows.slice(i, i + 100);
-    const { error, data } = await sb.from('ai_initiatives').insert(batch).select('initiative_id');
-    if (error) {
-      console.log(`  [ERR] initiatives batch ${i}: ${error.message}`);
+    try {
+      const data = await db.insertRows<{ initiative_id: string }>('ai_initiatives', batch, 'initiative_id');
+      inserted += data.length || batch.length;
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      console.log(`  [ERR] initiatives batch ${i}: ${message}`);
       errors += batch.length;
-    } else {
-      inserted += data?.length ?? batch.length;
     }
   }
   console.log(`  Inserted ${inserted}; errors ${errors}`);
@@ -886,11 +1003,11 @@ async function ensureBusinessGoals(): Promise<{ value: string; governance: strin
 
   if (DRY_RUN) return goals;
 
-  const { error } = await sb
-    .from('ai_business_goals')
-    .upsert(rows, { onConflict: 'goal_id' });
-  if (error) {
-    console.log(`  [WARN] business goals upsert failed: ${error.message}`);
+  try {
+    await db.upsertRows('ai_business_goals', rows, 'goal_id');
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    console.log(`  [WARN] business goals upsert failed: ${message}`);
   }
   return goals;
 }
@@ -950,17 +1067,18 @@ async function phase5VendorContracts(): Promise<{ inserted: number; errors: numb
     return { inserted: rows.length, errors: 0 };
   }
 
-  await sb.from('vendor_contracts').delete().eq('client_id', TENANT.clientId).eq('created_by', 'substrate-loader');
+  await db.deleteEq('vendor_contracts', { client_id: TENANT.clientId, created_by: 'substrate-loader' });
   let inserted = 0;
   let errors = 0;
   for (let i = 0; i < rows.length; i += 100) {
     const batch = rows.slice(i, i + 100);
-    const { error, data } = await sb.from('vendor_contracts').insert(batch).select('id');
-    if (error) {
-      console.log(`  [ERR] vendor contracts batch ${i}: ${error.message}`);
+    try {
+      const data = await db.insertRows<{ id: string }>('vendor_contracts', batch, 'id');
+      inserted += data.length || batch.length;
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      console.log(`  [ERR] vendor contracts batch ${i}: ${message}`);
       errors += batch.length;
-    } else {
-      inserted += data?.length ?? batch.length;
     }
   }
   console.log(`  Inserted ${inserted}; errors ${errors}`);
@@ -970,6 +1088,7 @@ async function phase5VendorContracts(): Promise<{ inserted: number; errors: numb
 // ─── MAIN ───────────────────────────────────────────────────────────────────
 
 async function main() {
+  if (!DRY_RUN) await db.connect();
   console.log('═══════════════════════════════════════════════════════════════');
   console.log(`Packet 24 Substrate Loader · tenant=${TENANT.key} · ${DRY_RUN ? 'DRY-RUN' : 'APPLY'}`);
   console.log('═══════════════════════════════════════════════════════════════');
@@ -1004,7 +1123,9 @@ async function main() {
   console.log('\nDone. Re-run `node scripts/audit/db-substrate-audit.mjs` to verify.');
 
   const hardErrors = p1.errors + p2.failed + (p3?.errors ?? 0) + (p4?.errors ?? 0) + (p5?.errors ?? 0);
-  process.exit(hardErrors > 50 ? 1 : 0);
+  process.exitCode = hardErrors > 50 ? 1 : 0;
 }
 
-main().catch((err) => { console.error(err); process.exit(1); });
+main()
+  .catch((err) => { console.error(err); process.exit(1); })
+  .finally(() => db.end().catch(() => undefined));
