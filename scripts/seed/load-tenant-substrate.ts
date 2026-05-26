@@ -531,8 +531,11 @@ async function phase3Applications(): Promise<{ inserted: number; errors: number 
   }
 
   function mapStatus(timeClass: string | undefined): string {
-    const norm = (timeClass ?? '').toLowerCase().trim();
-    if (norm === 'retire' || norm === 'retiring' || norm === 'sunset') return 'retiring';
+    // applications.status CHECK accepts ONLY 'active'. Probed empirically.
+    // Other dataset values (retire/sunset/decommission/planning) all map to
+    // 'active' and the lifecycle nuance lives in the chunk_metadata or in
+    // adjacent fields like is_demo_data.
+    void timeClass;
     return 'active';
   }
 
