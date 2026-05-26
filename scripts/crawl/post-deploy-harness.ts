@@ -11,6 +11,7 @@ import {
 import {
   compareCrawlToBaseline,
   type CrawlBaseline,
+  type CrawlComparison,
   type CrawlPageObservation,
   type CrawlRun,
 } from '../../src/lib/crawl/baseline-compare';
@@ -36,6 +37,7 @@ async function main() {
 
   const browser = await chromium.launch({ headless: true });
   const observations: CrawlPageObservation[] = [];
+  let fatalError: unknown = null;
   try {
     for (const persona of resolveCrawlPersonas(args.persona)) {
       const surfaces = resolveCrawlSurfaces(args.surface);
@@ -50,6 +52,8 @@ async function main() {
         await personaContext.context.close().catch(() => undefined);
       }
     }
+  } catch (error) {
+    fatalError = error;
   } finally {
     await browser.close();
   }
@@ -61,11 +65,29 @@ async function main() {
     createdAt: new Date().toISOString(),
     observations,
   };
+
+  if (fatalError) {
+    const comparison: CrawlComparison = {
+      runId,
+      p0: 1,
+      p1: 0,
+      p2: 0,
+      findings: [{
+        severity: 'P0',
+        tenantKey: 'unknown',
+        personaKey: 'crawl-harness',
+        surfaceId: 'sign-in-or-crawl-bootstrap',
+        dimension: 'crawl-execution',
+        message: fatalError instanceof Error ? fatalError.message : String(fatalError),
+      }],
+    };
+    await writeCrawlArtifacts(args.outputDir, out, run, comparison);
+    throw fatalError;
+  }
+
   const baseline = args.baseline ? await readBaseline(args.baseline) : null;
   const comparison = compareCrawlToBaseline(run, baseline);
-  await fs.writeFile(path.join(out, 'crawl-run.json'), JSON.stringify(run, null, 2));
-  await fs.writeFile(path.join(out, 'comparison.json'), JSON.stringify(comparison, null, 2));
-  await fs.writeFile(path.resolve(args.outputDir, 'latest.json'), JSON.stringify({ run, comparison }, null, 2));
+  await writeCrawlArtifacts(args.outputDir, out, run, comparison);
 
   console.log(`Post-deploy crawl complete: ${comparison.p0} P0, ${comparison.p1} P1, ${comparison.p2} P2`);
   console.log(`Artifacts: ${out}`);
@@ -76,6 +98,18 @@ async function main() {
       console.error('P0 findings detected. Run scripts/crawl/auto-rollback.ts with --execute only from the controlled deploy workflow.');
     }
   }
+}
+
+async function writeCrawlArtifacts(
+  outputDir: string,
+  runDir: string,
+  run: CrawlRun,
+  comparison: CrawlComparison,
+): Promise<void> {
+  await fs.mkdir(outputDir, { recursive: true });
+  await fs.writeFile(path.join(runDir, 'crawl-run.json'), JSON.stringify(run, null, 2));
+  await fs.writeFile(path.join(runDir, 'comparison.json'), JSON.stringify(comparison, null, 2));
+  await fs.writeFile(path.resolve(outputDir, 'latest.json'), JSON.stringify({ run, comparison }, null, 2));
 }
 
 async function createNoAuthPersonaContext(
