@@ -113,4 +113,48 @@ describe('buildSentinelIntelContext', () => {
     }));
     expect((context.facts as string[]).join('\n')).toContain('Incident and problem pressure');
   });
+
+  it('does not inject Apex as the active tenant for a non-Apex Sentinel call', () => {
+    const context = buildSentinelIntelContext({
+      activeClient: 'Northstar Clinical Technologies',
+      clientKey: 'northstar-medtech',
+      stage: 'brief',
+      isApexBound: false,
+      status: null,
+      patterns: [],
+      todayItems: [],
+      aopBands: APEX_RETAIL_AOP_DEMO,
+      enterpriseContext: {
+        tenantKey: 'northstar-medtech',
+        tenantName: 'Northstar Clinical Technologies',
+        counts: {
+          sources: 96,
+          records: 0,
+          facts: 728,
+          relationships: 0,
+          evidence: 728,
+          qualityIssues: 0,
+          stewardshipTasks: 0,
+          chunkQueue: 728,
+        },
+        recordTypeCounts: {},
+        freshnessCounts: { fresh: 728 },
+        sourceSystems: ['Northstar synthetic substrate'],
+        evidenceUsableCount: 728,
+        confidenceAverage: 0.9,
+        qualitySummary: {},
+        cards: [],
+        sentinelFacts: [
+          'Northstar Clinical Technologies Enterprise Context: named executives, application portfolio, vendor contracts, and initiatives are loaded.',
+        ],
+      },
+    });
+    const facts = (context.facts as string[]).join('\n');
+
+    expect(facts).toContain('This is the Northstar Clinical Technologies Intelligence layer');
+    expect(facts).toContain('Northstar Clinical Technologies Enterprise Context');
+    expect(facts).not.toContain('Apex Retail is the active');
+    expect(facts).not.toContain('This is the Apex Retail Intelligence layer');
+    expect(context).toMatchObject({ clientKey: 'northstar-medtech' });
+  });
 });

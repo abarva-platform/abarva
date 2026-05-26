@@ -34,7 +34,7 @@ export function buildSentinelIntelContext(args: BuildSentinelIntelContextArgs): 
       : null,
     args.isApexBound
       ? 'This is the Apex Retail Intelligence layer. Keep answers scoped to retail strategy, CXO ownership, value capture, vendor leverage, and readiness.'
-      : 'This page may be using fallback sample content.',
+      : `This is the ${args.activeClient} Intelligence layer. Keep answers scoped to the active tenant, its Enterprise Context, and the evidence surfaced on this page.`,
   ].filter((fact): fact is string => Boolean(fact));
 
   const stageFacts = stageSurfaceFacts(args);

@@ -14,6 +14,23 @@ import type {
 } from '@/lib/knowledge/tenant-data';
 
 let fakeAdapter: TenantDataAdapter;
+type MockSupabaseClient = {
+  from: (table: string) => {
+    select: () => MockSupabaseQuery;
+  };
+};
+
+type MockSupabaseQuery = {
+  select: () => MockSupabaseQuery;
+  eq: () => MockSupabaseQuery;
+  or: () => MockSupabaseQuery;
+  order: () => MockSupabaseQuery;
+  limit: (limit: number) => MockSupabaseQuery;
+  maybeSingle: () => Promise<{ data: unknown | null; error: null }>;
+  then: (resolve: (value: { data: unknown[]; error: null }) => void) => void;
+};
+
+let fakeSupabase: MockSupabaseClient | null = null;
 
 jest.mock('@/lib/knowledge/tenant-data', () => {
   const actual = jest.requireActual('@/lib/knowledge/tenant-data');
@@ -22,6 +39,13 @@ jest.mock('@/lib/knowledge/tenant-data', () => {
     getTenantDataAdapter: (): TenantDataAdapter => fakeAdapter,
   };
 });
+
+jest.mock('@/lib/supabase-server', () => ({
+  getServerSupabase: () => {
+    if (!fakeSupabase) throw new Error('Supabase test client not configured');
+    return fakeSupabase;
+  },
+}));
 
 function makeEmptyAdapter(): TenantDataAdapter {
   return {
@@ -66,6 +90,30 @@ function person(nodeId: string, title: string, payload: Record<string, unknown> 
   };
 }
 
+function mockSupabaseTables(tables: Record<string, unknown[]>): MockSupabaseClient {
+  return {
+    from: (table: string) => {
+      const rows = tables[table] ?? (table === 'clients' ? [{ id: 'northstar-client' }] : []);
+      let cap = rows.length;
+      const builder: MockSupabaseQuery = {
+        select: () => builder,
+        eq: () => builder,
+        or: () => builder,
+        order: () => builder,
+        limit: (limit: number) => {
+          cap = limit;
+          return builder;
+        },
+        maybeSingle: () => Promise.resolve({ data: rows[0] ?? null, error: null }),
+        then: (resolve: (value: { data: unknown[]; error: null }) => void) => {
+          resolve({ data: rows.slice(0, cap), error: null });
+        },
+      };
+      return builder;
+    },
+  };
+}
+
 function reportsTo(fromNodeId: string, toNodeId: string): GraphEdge {
   return {
     tenantKey: 'meridian-health',
@@ -78,6 +126,7 @@ function reportsTo(fromNodeId: string, toNodeId: string): GraphEdge {
 
 describe('tenant enterprise context retrieval', () => {
   beforeEach(() => {
+    fakeSupabase = null;
     const chunks = [
       chunk(
         'enterprise_profile',
@@ -302,5 +351,102 @@ describe('tenant enterprise context retrieval', () => {
     expect(detail).toContain('First Capital Financial');
     expect(detail).not.toContain('Heliara');
     expect(detail).not.toContain('Brindlemark');
+  });
+
+  it('adds Northstar structured application rows before Sentinel reaches for industry-typical clinical systems', async () => {
+    fakeSupabase = mockSupabaseTables({
+      applications: [
+        {
+          id: 'app-row-234',
+          name: 'Java legacy Capability 234',
+          vendor: 'SAP',
+          business_function: 'BU-AWC',
+          deployment_model: 'on_prem',
+          criticality: 'tier1',
+          status: 'active',
+          annual_cost_usd: 17298000,
+        },
+        {
+          id: 'app-row-225',
+          name: 'Modern microservice Capability 225',
+          vendor: 'Infosys',
+          business_function: 'BU-STERILE',
+          deployment_model: 'hybrid',
+          criticality: 'tier1',
+          status: 'active',
+          annual_cost_usd: 16650000,
+        },
+      ],
+    });
+
+    const sources = await retrieveTenantEnterpriseSources(
+      'northstar-medtech',
+      "What's our application portfolio? Walk me through the top apps by criticality.",
+    );
+    const detail = sources.map((source) => source.detail).join('\n');
+
+    expect(detail).toContain('NST-APP-234 Java legacy Capability 234');
+    expect(detail).toContain('NST-APP-225 Modern microservice Capability 225');
+    expect(detail).toContain('Answer app-portfolio and criticality questions from these rows');
+    expect(detail).not.toContain('Epic EHR');
+    expect(detail).not.toContain('Meditech');
+  });
+
+  it('adds Northstar structured vendor contract rows with renewal and exit terms', async () => {
+    fakeSupabase = mockSupabaseTables({
+      vendor_contracts: [
+        {
+          vendor_id: 'NST-VEND-090',
+          vendor_name: 'SAP Program 90',
+          contract_category: 'PLM',
+          annual_contract_value_usd: 31200000,
+          renewal_date: '2026-07-15T05:00:00.000Z',
+          exit_terms_jsonb: { summary: 'annual renewal window' },
+          ai_usage_clauses: true,
+          indemnity_provided: true,
+          concentration_pct: 2.1,
+        },
+      ],
+    });
+
+    const sources = await retrieveTenantEnterpriseSources(
+      'northstar-medtech',
+      'Name 3 most-exposed vendor renewals.',
+    );
+    const detail = sources.map((source) => source.detail).join('\n');
+
+    expect(detail).toContain('NST-VEND-090 SAP Program 90');
+    expect(detail).toContain('annual_value $31.2M');
+    expect(detail).toContain('renewal 2026-07-15');
+    expect(detail).toContain('exit_terms "annual renewal window"');
+  });
+
+  it('adds Northstar structured initiative rows for kill-list questions', async () => {
+    fakeSupabase = mockSupabaseTables({
+      ai_initiatives: [
+        {
+          initiative_id: 'NST-INIT-AS400-REBATES',
+          display_id: 'NST-AS400-REBATES',
+          name: 'AS/400 Distributor Rebates Retirement',
+          stage: 'pilot',
+          status_flag: 'stalled',
+          committed_total_usd: 7200000,
+          measured_value_usd: 21600000,
+          status_summary: 'kill',
+          metadata: { sentinel_posture: 'kill' },
+        },
+      ],
+    });
+
+    const sources = await retrieveTenantEnterpriseSources(
+      'northstar-medtech',
+      'Which active initiatives should we kill?',
+    );
+    const detail = sources.map((source) => source.detail).join('\n');
+
+    expect(detail).toContain('NST-INIT-AS400-REBATES');
+    expect(detail).toContain('AS/400 Distributor Rebates Retirement');
+    expect(detail).toContain('Sentinel posture kill');
+    expect(detail).toContain('committed $7.2M');
   });
 });
