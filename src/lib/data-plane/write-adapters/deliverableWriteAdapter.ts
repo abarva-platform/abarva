@@ -20,7 +20,7 @@
 // that repository's own callers. Migrating it is a follow-up so a
 // shared-helper change does not collide with parallel slices.
 
-import type { SupabaseClient } from '@supabase/supabase-js';
+import type { PostgresCompatClient as SupabaseClient } from '@/lib/supabase-server';
 import { getServerSupabase } from '@/lib/supabase-server';
 import { createTxSession, type TxSessionRunner } from '../read-adapters/azureSession';
 import { resolveDataPlane } from '../read-adapters/resolveDataPlane';

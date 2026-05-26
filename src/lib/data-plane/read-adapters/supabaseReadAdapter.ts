@@ -6,7 +6,7 @@
 // response shape and edge-case handling (errors -> zeros, never throw) are
 // unchanged.
 
-import type { SupabaseClient } from '@supabase/supabase-js';
+import type { PostgresCompatClient as SupabaseClient } from '@/lib/supabase-server';
 import { getServerSupabase } from '@/lib/supabase-server';
 import { canonicalTenantKey } from '@/lib/tenant-keys';
 import {

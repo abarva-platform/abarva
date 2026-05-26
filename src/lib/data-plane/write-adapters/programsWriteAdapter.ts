@@ -28,7 +28,7 @@
 // lacks (design doc §2). On Supabase the writes are the same per-row inserts
 // the pre-seam route issued; behavior is byte-identical.
 
-import type { SupabaseClient } from '@supabase/supabase-js';
+import type { PostgresCompatClient as SupabaseClient } from '@/lib/supabase-server';
 import { getServerSupabase } from '@/lib/supabase-server';
 import { canonicalTenantKey } from '@/lib/tenant-keys';
 import { createTxSession, type TxSessionRunner } from '../read-adapters/azureSession';

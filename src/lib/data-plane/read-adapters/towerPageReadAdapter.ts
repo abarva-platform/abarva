@@ -28,7 +28,7 @@
 //   ABARVA_DATA_PLANE=supabase        -> Supabase PostgREST reads (DEFAULT)
 //   ABARVA_DATA_PLANE=azure-postgres  -> Azure Postgres SQL reads (opt-in)
 
-import type { SupabaseClient } from '@supabase/supabase-js';
+import type { PostgresCompatClient as SupabaseClient } from '@/lib/supabase-server';
 import { getServerSupabase } from '@/lib/supabase-server';
 import { createDefaultSession, type SessionRunner } from './azureSession';
 import { resolveDataPlane } from './resolveDataPlane';

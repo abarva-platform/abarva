@@ -1,4 +1,4 @@
-import type { SupabaseClient } from '@supabase/supabase-js';
+import type { PostgresCompatClient as SupabaseClient } from '@/lib/supabase-server';
 import { createTxSession, type TxSessionRunner } from '@/lib/data-plane/read-adapters/azureSession';
 import { resolveDataPlane } from '@/lib/data-plane/read-adapters/resolveDataPlane';
 import type { DataPlane } from '@/lib/data-plane/write-adapters/types';

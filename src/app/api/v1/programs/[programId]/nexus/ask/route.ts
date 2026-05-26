@@ -18,7 +18,8 @@ import { requireTenancy, TenancyError } from '../../../_auth';
 import { getProgramById } from '@/lib/programs/queries';
 import { getProgramsRouteSupabase } from '@/lib/programs/programs-auth-mode-server';
 import { searchCanonicalPatternIndex } from '@/lib/intelligence/canonical/runtime-pattern-index';
-import type { SupabaseClient } from '@supabase/supabase-js';
+
+type ProgramDbClient = ReturnType<typeof import('@/lib/supabase-server').getServerSupabase>;
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -47,7 +48,7 @@ async function validateThreadOwnership(args: {
   threadId: string;
   programId: string;
   userId: string;
-  supabase: SupabaseClient;
+  supabase: ProgramDbClient;
 }): Promise<boolean> {
   const { data, error } = await args.supabase
     .from('program_threads')

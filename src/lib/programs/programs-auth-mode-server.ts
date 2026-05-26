@@ -1,7 +1,5 @@
 import 'server-only';
 
-import { auth } from '@clerk/nextjs/server';
-import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import { getServerSupabase } from '@/lib/supabase-server';
 
 export type ProgramsAuthMode = 'service_role' | 'authenticated';
@@ -35,29 +33,9 @@ export function resolveProgramsAuthMode(routeFamily: ProgramsAuthRouteFamily): P
   return defaultMode;
 }
 
-async function createAuthenticatedSupabase(): Promise<SupabaseClient> {
-  const { getToken } = await auth();
-  const token = await getToken({ template: 'supabase' });
-  if (!token) throw new Error('Missing Clerk Supabase token for authenticated DB mode');
-
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  if (!url || !anonKey) {
-    throw new Error('Missing NEXT_PUBLIC_SUPABASE_URL / NEXT_PUBLIC_SUPABASE_ANON_KEY');
-  }
-
-  return createClient(url, anonKey, {
-    global: { headers: { Authorization: `Bearer ${token}` } },
-    auth: { persistSession: false, autoRefreshToken: false },
-  });
-}
-
 export async function getProgramsRouteSupabase(
   routeFamily: ProgramsAuthRouteFamily,
-): Promise<{ mode: ProgramsAuthMode; supabase: SupabaseClient }> {
+): Promise<{ mode: ProgramsAuthMode; supabase: ReturnType<typeof getServerSupabase> }> {
   const mode = resolveProgramsAuthMode(routeFamily);
-  if (mode === 'authenticated') {
-    return { mode, supabase: await createAuthenticatedSupabase() };
-  }
   return { mode, supabase: getServerSupabase() };
 }

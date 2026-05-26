@@ -35,7 +35,7 @@
 // underlying writes are themselves idempotent — they set a target state by a
 // stable key, so a replay re-applies the same state.
 
-import type { SupabaseClient } from '@supabase/supabase-js';
+import type { PostgresCompatClient as SupabaseClient } from '@/lib/supabase-server';
 import { getServerSupabase } from '@/lib/supabase-server';
 import { selectWriteAdapter } from './index';
 import type { DataPlaneWriteAdapter, WriteStatementRunner } from './types';

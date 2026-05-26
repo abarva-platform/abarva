@@ -22,7 +22,7 @@
 // execution team acceptance, not just Strategic Moves team signoff.
 
 import { getServerSupabase } from '@/lib/supabase-server';
-import type { SupabaseClient } from '@supabase/supabase-js';
+import type { PostgresCompatClient as SupabaseClient } from '@/lib/supabase-server';
 import {
   createSupabaseProgramsWriteAdapter,
   selectProgramsWriteAdapter,

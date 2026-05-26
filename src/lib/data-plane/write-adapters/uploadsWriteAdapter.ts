@@ -23,7 +23,7 @@
 // the inserted/updated rows are byte-faithful to the pre-seam `.insert()` /
 // `.update()` calls lifted verbatim from the routes.
 
-import type { SupabaseClient } from '@supabase/supabase-js';
+import type { PostgresCompatClient as SupabaseClient } from '@/lib/supabase-server';
 import { getServerSupabase } from '@/lib/supabase-server';
 import { createTxSession, type TxSessionRunner } from '../read-adapters/azureSession';
 import { resolveDataPlane } from '../read-adapters/resolveDataPlane';

@@ -17,7 +17,7 @@
 // `apex-retail-live.ts` consumed pre-seam, so helper signatures and the
 // `ApexRetailIntelligenceData` return shape are byte-identical.
 
-import type { SupabaseClient } from '@supabase/supabase-js';
+import type { PostgresCompatClient as SupabaseClient } from '@/lib/supabase-server';
 import { getServerSupabase } from '@/lib/supabase-server';
 import { createDefaultSession, type SessionRunner } from './azureSession';
 import { resolveDataPlane } from './resolveDataPlane';

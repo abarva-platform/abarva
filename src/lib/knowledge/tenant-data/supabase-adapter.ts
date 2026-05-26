@@ -1,6 +1,6 @@
 import 'server-only';
 import { Pool, type QueryResultRow } from 'pg';
-import { createClient, type SupabaseClient } from '@supabase/supabase-js';
+import { getServerSupabase, type PostgresCompatClient } from '@/lib/supabase-server';
 import {
   getPineconeClient,
   privateTenantPineconeIndexConfig,
@@ -25,6 +25,10 @@ import type {
   SegmentRollup,
   TenantRecord,
 } from './types';
+
+type SupabaseClient = PostgresCompatClient & {
+  schema?: (schemaName: string) => SupabaseClient;
+};
 
 /**
  * Supabase-backed TenantDataAdapter (TD-2).
@@ -395,13 +399,7 @@ export class SupabaseTenantDataAdapter implements TenantDataAdapter {
 
   private publicTable(tableName: string) {
     if (this.publicFallbackClient === undefined) {
-      const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-      const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
-      this.publicFallbackClient = url && key
-        ? createClient(url, key, {
-            auth: { persistSession: false, autoRefreshToken: false },
-          })
-        : null;
+      this.publicFallbackClient = getServerSupabase() as SupabaseClient;
     }
     return (this.publicFallbackClient ?? this.client).from(tableName);
   }
@@ -855,12 +853,7 @@ let cachedAdapter: SupabaseTenantDataAdapter | null = null;
 
 export function getSupabaseTenantDataClient(): SupabaseClient | null {
   if (cachedClient) return cachedClient;
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!url || !key) return null;
-  cachedClient = createClient(url, key, {
-    auth: { persistSession: false, autoRefreshToken: false },
-  });
+  cachedClient = getServerSupabase() as SupabaseClient;
   return cachedClient;
 }
 

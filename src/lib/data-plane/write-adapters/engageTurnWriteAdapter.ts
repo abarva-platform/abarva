@@ -18,7 +18,7 @@
 // shape returned. Default behavior is unchanged — `ABARVA_DATA_PLANE` selects
 // the plane, `supabase` unless explicitly opted out.
 
-import type { SupabaseClient } from '@supabase/supabase-js';
+import type { PostgresCompatClient as SupabaseClient } from '@/lib/supabase-server';
 import { getServerSupabase } from '@/lib/supabase-server';
 import { createTxSession, type TxSessionRunner } from '../read-adapters/azureSession';
 import { resolveDataPlane } from '../read-adapters/resolveDataPlane';

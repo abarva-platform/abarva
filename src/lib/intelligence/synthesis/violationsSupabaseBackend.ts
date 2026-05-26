@@ -46,7 +46,7 @@ function rowToEvent(row: DbViolationEventRow): SynthesisViolationEvent {
 }
 
 export function canUseSupabaseViolationBackend(): boolean {
-  return Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY);
+  return Boolean(process.env.ABARVA_AZURE_DATABASE_URL || process.env.DATABASE_URL);
 }
 
 export const supabaseViolationsBackend: ViolationsBackend = {

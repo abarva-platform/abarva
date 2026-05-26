@@ -6,7 +6,7 @@
 // false positives on honest documentation strings. The goal is to make
 // hygiene MORE precise, not weaker:
 //
-//   - Documentation that names an env var (`SUPABASE_SERVICE_ROLE_KEY`,
+//   - Documentation that names an env var (`DATABASE_URL`,
 //     `GITHUB_STATUS_TOKEN`) is NOT a leak. Env var NAMES are public.
 //   - A disclaimer that says "no call to api.github.com is performed"
 //     is NOT a leak. URL strings inside honest text must not trip

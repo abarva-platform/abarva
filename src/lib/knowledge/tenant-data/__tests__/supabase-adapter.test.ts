@@ -26,8 +26,12 @@
 
 const fromMock = jest.fn<unknown, [string]>();
 
-jest.mock('@supabase/supabase-js', () => ({
-  createClient: jest.fn(() => ({ from: fromMock })),
+jest.mock('@/lib/supabase-server', () => ({
+  getServerSupabase: jest.fn(() => ({
+    from: fromMock,
+    schema: jest.fn(() => ({ from: fromMock })),
+    storage: { from: jest.fn() },
+  })),
 }));
 
 jest.mock('pg', () => {
@@ -36,8 +40,8 @@ jest.mock('pg', () => {
   return { Pool, __mockPgQuery: query };
 });
 
-import { createClient } from '@supabase/supabase-js';
 import { Pool as mockPgPoolImport } from 'pg';
+import { getServerSupabase } from '@/lib/supabase-server';
 
 import {
   SupabaseTenantDataAdapter,
@@ -1005,41 +1009,29 @@ describe('SupabaseTenantDataAdapter.hasPersistedData', () => {
 // ── Singleton wiring ──────────────────────────────────────────────────
 
 describe('getSupabaseTenantDataAdapter() singleton', () => {
-  const realUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const realKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
-  afterEach(() => {
-    if (realUrl === undefined) {
-      delete process.env.NEXT_PUBLIC_SUPABASE_URL;
-    } else {
-      process.env.NEXT_PUBLIC_SUPABASE_URL = realUrl;
-    }
-    if (realKey === undefined) {
-      delete process.env.SUPABASE_SERVICE_ROLE_KEY;
-    } else {
-      process.env.SUPABASE_SERVICE_ROLE_KEY = realKey;
-    }
+  beforeEach(() => {
     __resetSupabaseTenantDataAdapterForTests();
-    (createClient as jest.Mock).mockClear();
+    (getServerSupabase as jest.Mock).mockClear();
   });
 
-  it('returns null when env vars are unset', () => {
-    delete process.env.NEXT_PUBLIC_SUPABASE_URL;
-    delete process.env.SUPABASE_SERVICE_ROLE_KEY;
+  afterEach(() => {
     __resetSupabaseTenantDataAdapterForTests();
-    expect(getSupabaseTenantDataAdapter()).toBeNull();
+    (getServerSupabase as jest.Mock).mockClear();
+  });
+
+  it('returns an adapter without legacy Supabase env vars', () => {
+    __resetSupabaseTenantDataAdapterForTests();
+    expect(getSupabaseTenantDataAdapter()).not.toBeNull();
+    expect(getServerSupabase).toHaveBeenCalledTimes(1);
   });
 
   it('caches the adapter instance across calls', () => {
-    process.env.NEXT_PUBLIC_SUPABASE_URL = 'https://example.supabase.co';
-    process.env.SUPABASE_SERVICE_ROLE_KEY = 'service-role-key';
     __resetSupabaseTenantDataAdapterForTests();
     const a = getSupabaseTenantDataAdapter();
     const b = getSupabaseTenantDataAdapter();
     expect(a).not.toBeNull();
     expect(a).toBe(b);
-    // createClient was called exactly once across both getters.
-    expect((createClient as jest.Mock).mock.calls.length).toBe(1);
+    expect(getServerSupabase).toHaveBeenCalledTimes(1);
   });
 });
 

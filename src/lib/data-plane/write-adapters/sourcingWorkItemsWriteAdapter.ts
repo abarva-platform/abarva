@@ -12,7 +12,7 @@
 // Every write is audit-stamped — `created_by` carries the acting user, so a
 // VP (and an auditor) can see who served notice and when.
 
-import type { SupabaseClient } from '@supabase/supabase-js';
+import type { PostgresCompatClient as SupabaseClient } from '@/lib/supabase-server';
 import { getServerSupabase } from '@/lib/supabase-server';
 import { canonicalTenantKey } from '@/lib/tenant-keys';
 import type {

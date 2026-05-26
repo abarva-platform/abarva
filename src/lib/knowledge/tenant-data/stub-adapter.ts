@@ -53,9 +53,9 @@ export const TENANT_DATA_STUB: TenantDataAdapter = {
 };
 
 /**
- * Adapter selection. TD-2 prefers the Supabase-backed adapter when the
- * service-role env vars are set; otherwise it falls back silently to the
- * stub so that unit tests / CI runs without DB credentials still work.
+ * Adapter selection. TD-2 prefers the Postgres-backed adapter when the
+ * database URL is set; otherwise it falls back silently to the stub so
+ * that unit tests / CI runs without DB credentials still work.
  *
  * The fallback path logs once per process so the silent degradation does
  * not become invisible. The warning is suppressed when `JEST_WORKER_ID`
@@ -69,8 +69,8 @@ export function getTenantDataAdapter(): TenantDataAdapter {
   if (!warnedAboutMissingEnv && !process.env.JEST_WORKER_ID) {
     warnedAboutMissingEnv = true;
     console.warn(
-      '[tenant-data] NEXT_PUBLIC_SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY not set; ' +
-        'falling back to TENANT_DATA_STUB. Set both to enable real reads.',
+      '[tenant-data] DATABASE_URL not set; falling back to TENANT_DATA_STUB. ' +
+        'Set DATABASE_URL to enable real reads.',
     );
   }
   return TENANT_DATA_STUB;

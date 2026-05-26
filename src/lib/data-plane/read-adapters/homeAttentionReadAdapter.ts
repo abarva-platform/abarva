@@ -18,7 +18,7 @@
 // `loadHomeAttention` signature and `HomeAttention` return shape are
 // byte-identical and the caller keeps working unchanged.
 
-import type { SupabaseClient } from '@supabase/supabase-js';
+import type { PostgresCompatClient as SupabaseClient } from '@/lib/supabase-server';
 import { getServerSupabase } from '@/lib/supabase-server';
 import { createDefaultSession, type SessionRunner } from './azureSession';
 import { resolveDataPlane } from './resolveDataPlane';

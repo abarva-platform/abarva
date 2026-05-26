@@ -43,10 +43,10 @@ async function deliveredTaskKeys(tenantKey: string): Promise<Set<string>> {
   if (error) return new Set();
 
   return new Set(
-    (data ?? [])
-      .map((row) => {
-        const id = String((row as Record<string, unknown>).notification_event_id ?? '');
-        const email = String((row as Record<string, unknown>).recipient_email ?? '').toLowerCase();
+    ((data ?? []) as Array<Record<string, unknown>>)
+      .map((row: Record<string, unknown>) => {
+        const id = String(row.notification_event_id ?? '');
+        const email = String(row.recipient_email ?? '').toLowerCase();
         return id && email ? `${id}:email_now:${email}` : null;
       })
       .filter((key): key is string => Boolean(key)),
