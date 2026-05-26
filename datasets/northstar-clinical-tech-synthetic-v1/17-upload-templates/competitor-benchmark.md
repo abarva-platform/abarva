@@ -1,0 +1,1 @@
+Northstar competitor benchmark upload template. Required fields are documented in NORTHSTAR_CONTEXT_LAYER_TEMPLATE_CATALOG.md.

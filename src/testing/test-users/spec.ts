@@ -1,6 +1,6 @@
 export type ProvisioningMembershipRole = 'maestro' | 'client_viewer' | 'observer';
 export type ProvisioningAppRole = 'client' | 'investor' | 'external';
-export type ProvisioningClientKey = 'meridian' | 'arcturus' | 'apexretail' | 'keystone';
+export type ProvisioningClientKey = 'meridian' | 'arcturus' | 'apexretail' | 'northstar' | 'keystone';
 export type ProvisioningAccessLevel =
   | 'client_admin'
   | 'program_member'
@@ -112,6 +112,13 @@ const CLIENTS = {
     name: 'First Capital',
     emailDomain: 'firstcapital.example.com',
     organization: 'First Capital',
+  },
+  northstar: {
+    key: 'northstar',
+    clientId: 'northstar',
+    name: 'Northstar Clinical Technologies',
+    emailDomain: 'northstar-clinical.example.com',
+    organization: 'Northstar Clinical Technologies',
   },
 } as const satisfies Record<string, CanonicalClientFixture>;
 
@@ -575,5 +582,58 @@ export const TEST_USER_SPECS: TestUserSpec[] = [
     role: 'Head of Commercial Banking',
     graphNodeId: 'person:firstcapital:kevin-walsh',
     assignedExistingSourceEvents: false,
+  }),
+
+  adminUser({
+    client: CLIENTS.northstar,
+    key: 'northstar-admin-maya-rangan',
+    localPart: 'ceo',
+    firstName: 'Maya',
+    lastName: 'Rangan',
+    name: 'Maya Rangan',
+    role: 'Chief Executive Officer',
+    graphNodeId: 'person:northstar:maya-rangan',
+  }),
+  adminUser({
+    client: CLIENTS.northstar,
+    key: 'northstar-admin-daniel-okafor',
+    localPart: 'cfo',
+    firstName: 'Daniel',
+    lastName: 'Okafor',
+    name: 'Daniel Okafor',
+    role: 'Chief Financial Officer',
+    graphNodeId: 'person:northstar:daniel-okafor',
+  }),
+  adminUser({
+    client: CLIENTS.northstar,
+    key: 'northstar-admin-priya-mehta',
+    localPart: 'cio',
+    firstName: 'Priya',
+    lastName: 'Mehta',
+    name: 'Priya Mehta',
+    role: 'Chief Information Officer',
+    graphNodeId: 'person:northstar:priya-mehta',
+  }),
+  programsUser({
+    client: CLIENTS.northstar,
+    key: 'northstar-programs-elena-kovacs',
+    localPart: 'cqo',
+    firstName: 'Elena',
+    lastName: 'Kovacs',
+    name: 'Elena Kovacs',
+    role: 'Chief Quality Officer',
+    graphNodeId: 'person:northstar:elena-kovacs',
+    assignedExistingPrograms: true,
+  }),
+  sourceUser({
+    client: CLIENTS.northstar,
+    key: 'northstar-source-marcus-lee',
+    localPart: 'evp-his',
+    firstName: 'Marcus',
+    lastName: 'Lee',
+    name: 'Marcus Lee',
+    role: 'EVP Health Information Systems',
+    graphNodeId: 'person:northstar:marcus-lee',
+    assignedExistingSourceEvents: true,
   }),
 ];
