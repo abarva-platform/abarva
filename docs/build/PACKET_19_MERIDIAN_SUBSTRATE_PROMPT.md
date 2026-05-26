@@ -331,7 +331,7 @@ The pack lands in two phases:
 - Release record `docs/releases/2026-05-25-p19-meridian-data-pack-scaffold.md`
 - Verification: `npm run verify:meridian-data-pack`
 
-**Phase B — ingestion into Supabase (parallels later Apex PRs):**
+**Phase B — ingestion into Azure Postgres / runtime Postgres (parallels later Apex PRs):**
 - Loader script `scripts/seed/meridian-substrate.ts` writes 140 apps, 380
   edges, 28 active initiatives, 14 closed, 16 teams, ~1,650 roles, 50
   vendor contracts, 18 AI tools, 320 corpus chunks
