@@ -64,4 +64,45 @@ describe('release ledger parser', () => {
     expect(record.rollbackPlan).toContain('Revert the PR');
     expect(record.knownGaps).toContain('No live deployment telemetry');
   });
+
+  it('redacts legacy demo tenant names from markdown-backed release records', () => {
+    const record = parseReleaseRecord(
+      '2026-05-24-legacy-tenant.md',
+      `# Arcturus remediation note
+
+## Release ID
+
+\`2026-05-24-legacy-tenant\`
+
+## Status
+
+\`released\`
+
+## Plain-English Summary
+
+Removes Arcturus, Brindlemark, Heliara, and Keystone copy from tenant-visible surfaces.
+
+## Client Applicability
+
+- Arcturus: shell-only tenant.
+- Heliara Health: archived healthcare tenant.
+
+## Known Gaps
+
+Keystone Energy references still exist in archived docs.
+`,
+    );
+
+    const renderedText = [
+      record.title,
+      record.summary,
+      ...record.clientApplicability,
+      record.knownGaps,
+    ].join('\n');
+
+    expect(renderedText).not.toMatch(/Arcturus|Brindlemark|Heliara|Keystone/i);
+    expect(renderedText).toContain('legacy financial-services demo tenant');
+    expect(renderedText).toContain('legacy healthcare demo tenant');
+    expect(renderedText).toContain('legacy energy demo tenant');
+  });
 });
