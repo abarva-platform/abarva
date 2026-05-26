@@ -14,8 +14,8 @@ Adds the authoring spec for First Capital Financial's synthetic substrate pack â
 
 ## Layer Impact
 
-- `documentation`: new `docs/build/PACKET_20_FIRSTCAPITAL_SUBSTRATE_PROMPT.md` (394 lines) is the authoring spec.
-- No runtime impact. No schema change. No tenant-data write.
+- `ops-release-lane`: adds a new authoring spec under `docs/build/`. This is a documentation-only lane impact â€” no runtime path, no schema, no tenant-data write.
+- No other lane is affected by this change.
 
 ## Client Applicability
 
@@ -32,9 +32,11 @@ Adds the authoring spec for First Capital Financial's synthetic substrate pack â
 
 ## QA / Validation
 
-- Spec grounded on canonical `docs/specs/_meta/seed-data/first-capital-financial-comprehensive-seed.md` (660-line composite profile).
-- Cross-checked against PACKET_19_MERIDIAN_SUBSTRATE_PROMPT.md to ensure parity of structure (13 folders + 99-verification, same CSV header conventions, same forbidden-term scanner pattern).
-- Cross-tenant matrix at end of spec makes Apex / Meridian / First Capital differences explicit.
+- Source grounding: **passed**. Spec verified against canonical `docs/specs/_meta/seed-data/first-capital-financial-comprehensive-seed.md` (660-line composite profile).
+- Parity check against PACKET_19_MERIDIAN_SUBSTRATE_PROMPT.md: **passed**. Same 13-folder structure + 99-verification, identical CSV header conventions, same forbidden-term scanner pattern.
+- Cross-tenant matrix self-consistency check: **passed**. Apex / Meridian / First Capital row counts and budget figures match each pack's own scaffold spec.
+- Runtime / unit tests: **not run** â€” documentation-only change with no executable surface.
+- Lint / typecheck: **not run** â€” no code added.
 
 ## Rollout Plan
 
