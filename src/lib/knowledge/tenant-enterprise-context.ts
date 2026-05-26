@@ -6,7 +6,10 @@ import {
   type GraphNode,
   type SegmentId,
 } from '@/lib/knowledge/tenant-data';
-import { getServerSupabase } from '@/lib/supabase-server';
+import {
+  createDefaultSession,
+  type SqlRunner,
+} from '@/lib/data-plane/read-adapters/azureSession';
 
 export interface TenantEnterpriseSource {
   type: 'TENANT';
@@ -41,6 +44,8 @@ const SEGMENT_LIMITS: Partial<Record<SegmentId, number>> = {
   it_landscape: 32,
   program_inventory: 12,
 };
+
+const structuredFactSession = createDefaultSession('tenant-enterprise-structured-facts');
 
 const STOPWORDS = new Set([
   'about',
@@ -234,16 +239,17 @@ async function retrieveStructuredTenantSources(
   if (!wantsProfile && !wantsApps && !wantsVendors && !wantsInitiatives) return [];
 
   try {
-    const sb = getServerSupabase();
-    const clientId = await resolveClientIdForTenantKey(sb, tenantKey);
-    if (!clientId) return [];
-    const results = await Promise.all([
-      wantsProfile ? readClientProfileSource(sb, tenantKey, clientId) : Promise.resolve(null),
-      wantsApps ? readApplicationPortfolioSource(sb, tenantKey, clientId) : Promise.resolve(null),
-      wantsVendors ? readVendorContractsSource(sb, tenantKey, clientId) : Promise.resolve(null),
-      wantsInitiatives ? readInitiativesSource(sb, tenantKey, clientId) : Promise.resolve(null),
-    ]);
-    return results.filter((source): source is TenantEnterpriseSource => Boolean(source));
+    return await structuredFactSession(async (run) => {
+      const clientId = await resolveClientIdForTenantKey(run, tenantKey);
+      if (!clientId) return [];
+      const results = await Promise.all([
+        wantsProfile ? readClientProfileSource(run, tenantKey, clientId) : Promise.resolve(null),
+        wantsApps ? readApplicationPortfolioSource(run, tenantKey, clientId) : Promise.resolve(null),
+        wantsVendors ? readVendorContractsSource(run, tenantKey, clientId) : Promise.resolve(null),
+        wantsInitiatives ? readInitiativesSource(run, tenantKey, clientId) : Promise.resolve(null),
+      ]);
+      return results.filter((source): source is TenantEnterpriseSource => Boolean(source));
+    });
   } catch {
     return [];
   }
@@ -268,54 +274,56 @@ export async function retrieveTenantStructuredFacts(
   }
 
   try {
-    const sb = getServerSupabase();
-    const clientId = await resolveClientIdForTenantKey(sb, tenantKey);
-    if (!clientId) return [];
-    const sources: TenantStructuredSource[] = [];
-    if (wantsTopApps) {
-      const source = await readStructuredTopApplicationsSource(sb, tenantKey, clientId);
-      if (source) sources.push(source);
-    }
-    if (wantsRetiringApps) {
-      const source = await readStructuredRetiringApplicationsSource(sb, tenantKey, clientId);
-      if (source) sources.push(source);
-    }
-    if (wantsTopVendors) {
-      const source = await readStructuredTopVendorsSource(sb, tenantKey, clientId);
-      if (source) sources.push(source);
-    }
-    if (wantsVendorRenewals) {
-      const source = await readStructuredVendorRenewalsSource(sb, tenantKey, clientId);
-      if (source) sources.push(source);
-    }
-    if (wantsActiveInitiatives || wantsInitiativesByStage || wantsKillInitiatives) {
-      const source = await readStructuredInitiativesSource(sb, tenantKey, clientId, {
-        byStage: wantsInitiativesByStage,
-        killOnly: wantsKillInitiatives,
-      });
-      if (source) sources.push(source);
-    }
-    return sources;
+    return await structuredFactSession(async (run) => {
+      const clientId = await resolveClientIdForTenantKey(run, tenantKey);
+      if (!clientId) return [];
+      const sources: TenantStructuredSource[] = [];
+      if (wantsTopApps) {
+        const source = await readStructuredTopApplicationsSource(run, tenantKey, clientId);
+        if (source) sources.push(source);
+      }
+      if (wantsRetiringApps) {
+        const source = await readStructuredRetiringApplicationsSource(run, tenantKey, clientId);
+        if (source) sources.push(source);
+      }
+      if (wantsTopVendors) {
+        const source = await readStructuredTopVendorsSource(run, tenantKey, clientId);
+        if (source) sources.push(source);
+      }
+      if (wantsVendorRenewals) {
+        const source = await readStructuredVendorRenewalsSource(run, tenantKey, clientId);
+        if (source) sources.push(source);
+      }
+      if (wantsActiveInitiatives || wantsInitiativesByStage || wantsKillInitiatives) {
+        const source = await readStructuredInitiativesSource(run, tenantKey, clientId, {
+          byStage: wantsInitiativesByStage,
+          killOnly: wantsKillInitiatives,
+        });
+        if (source) sources.push(source);
+      }
+      return sources;
+    });
   } catch {
     return [];
   }
 }
 
 async function readStructuredTopApplicationsSource(
-  sb: ReturnType<typeof getServerSupabase>,
+  run: SqlRunner,
   tenantKey: string,
   clientId: string,
 ): Promise<TenantStructuredSource | null> {
-  const { data, error } = await sb
-    .from('applications')
-    .select('id,name,vendor,business_function,deployment_model,criticality,status,annual_cost_usd')
-    .eq('client_id', clientId)
-    .order('criticality', { ascending: true })
-    .order('annual_cost_usd', { ascending: false, nullsFirst: false })
-    .limit(10);
-  if (error || !data || data.length === 0) return null;
+  const data = await run<ApplicationRow>(
+    `SELECT id, name, vendor, business_function, deployment_model, criticality, status, annual_cost_usd
+       FROM applications
+      WHERE client_id = $1
+      ORDER BY criticality ASC NULLS LAST, annual_cost_usd DESC NULLS LAST
+      LIMIT 10`,
+    [clientId],
+  );
+  if (data.length === 0) return null;
   const prefix = tenantRecordPrefix(tenantKey);
-  const rows = (data as ApplicationRow[]).filter((row) => ['tier1', 'tier2', 'tier3'].includes(String(row.criticality ?? '').toLowerCase()));
+  const rows = data.filter((row) => ['tier1', 'tier2', 'tier3'].includes(String(row.criticality ?? '').toLowerCase()));
   if (rows.length === 0) return null;
   return {
     type: 'TENANT',
@@ -334,19 +342,20 @@ async function readStructuredTopApplicationsSource(
 }
 
 async function readStructuredRetiringApplicationsSource(
-  sb: ReturnType<typeof getServerSupabase>,
+  run: SqlRunner,
   tenantKey: string,
   clientId: string,
 ): Promise<TenantStructuredSource | null> {
-  const { data, error } = await sb
-    .from('applications')
-    .select('id,name,vendor,business_function,deployment_model,criticality,status,annual_cost_usd')
-    .eq('client_id', clientId)
-    .order('annual_cost_usd', { ascending: false, nullsFirst: false })
-    .limit(80);
-  if (error || !data) return null;
+  const data = await run<ApplicationRow>(
+    `SELECT id, name, vendor, business_function, deployment_model, criticality, status, annual_cost_usd
+       FROM applications
+      WHERE client_id = $1
+      ORDER BY annual_cost_usd DESC NULLS LAST
+      LIMIT 80`,
+    [clientId],
+  );
   const prefix = tenantRecordPrefix(tenantKey);
-  const rows = (data as ApplicationRow[]).filter((row) => /retir|sunset|decommission/i.test(String(row.status ?? ''))).slice(0, 12);
+  const rows = data.filter((row) => /retir|sunset|decommission/i.test(String(row.status ?? ''))).slice(0, 12);
   if (rows.length === 0) return null;
   return {
     type: 'TENANT',
@@ -361,18 +370,20 @@ async function readStructuredRetiringApplicationsSource(
 }
 
 async function readStructuredTopVendorsSource(
-  sb: ReturnType<typeof getServerSupabase>,
+  run: SqlRunner,
   tenantKey: string,
   clientId: string,
 ): Promise<TenantStructuredSource | null> {
-  const { data, error } = await sb
-    .from('vendor_contracts')
-    .select('vendor_id,vendor_name,contract_category,annual_contract_value_usd,renewal_date,exit_terms_jsonb,ai_usage_clauses,indemnity_provided,concentration_pct')
-    .eq('client_id', clientId)
-    .order('annual_contract_value_usd', { ascending: false, nullsFirst: false })
-    .limit(10);
-  if (error || !data || data.length === 0) return null;
-  const rows = data as VendorContractRow[];
+  const rows = await run<VendorContractRow>(
+    `SELECT vendor_id, vendor_name, contract_category, annual_contract_value_usd, renewal_date,
+            exit_terms_jsonb, ai_usage_clauses, indemnity_provided, concentration_pct
+       FROM vendor_contracts
+      WHERE client_id = $1
+      ORDER BY annual_contract_value_usd DESC NULLS LAST
+      LIMIT 10`,
+    [clientId],
+  );
+  if (rows.length === 0) return null;
   return {
     type: 'TENANT',
     name: `Structured fact · top vendors by annual spend (${tenantKey})`,
@@ -386,20 +397,22 @@ async function readStructuredTopVendorsSource(
 }
 
 async function readStructuredVendorRenewalsSource(
-  sb: ReturnType<typeof getServerSupabase>,
+  run: SqlRunner,
   tenantKey: string,
   clientId: string,
 ): Promise<TenantStructuredSource | null> {
-  const { data, error } = await sb
-    .from('vendor_contracts')
-    .select('vendor_id,vendor_name,contract_category,annual_contract_value_usd,renewal_date,exit_terms_jsonb,ai_usage_clauses,indemnity_provided,concentration_pct')
-    .eq('client_id', clientId)
-    .order('renewal_date', { ascending: true, nullsFirst: false })
-    .limit(90);
-  if (error || !data) return null;
+  const data = await run<VendorContractRow>(
+    `SELECT vendor_id, vendor_name, contract_category, annual_contract_value_usd, renewal_date,
+            exit_terms_jsonb, ai_usage_clauses, indemnity_provided, concentration_pct
+       FROM vendor_contracts
+      WHERE client_id = $1
+      ORDER BY renewal_date ASC NULLS LAST
+      LIMIT 90`,
+    [clientId],
+  );
   const now = Date.now();
   const sixMonths = now + 183 * 24 * 60 * 60 * 1000;
-  const rows = (data as VendorContractRow[])
+  const rows = data
     .filter((row) => {
       if (!row.renewal_date) return false;
       const renewal = new Date(row.renewal_date).getTime();
@@ -423,19 +436,21 @@ async function readStructuredVendorRenewalsSource(
 }
 
 async function readStructuredInitiativesSource(
-  sb: ReturnType<typeof getServerSupabase>,
+  run: SqlRunner,
   tenantKey: string,
   clientId: string,
   opts: { byStage?: boolean; killOnly?: boolean } = {},
 ): Promise<TenantStructuredSource | null> {
-  const { data, error } = await sb
-    .from('ai_initiatives')
-    .select('initiative_id,display_id,name,stage,status_flag,committed_total_usd,measured_value_usd,status_summary,metadata')
-    .eq('client_id', clientId)
-    .order('committed_total_usd', { ascending: false, nullsFirst: false })
-    .limit(80);
-  if (error || !data) return null;
-  const activeRows = (data as InitiativeRow[])
+  const data = await run<InitiativeRow>(
+    `SELECT initiative_id, display_id, name, stage, status_flag, committed_total_usd,
+            measured_value_usd, status_summary, metadata
+       FROM ai_initiatives
+      WHERE client_id = $1
+      ORDER BY committed_total_usd DESC NULLS LAST
+      LIMIT 80`,
+    [clientId],
+  );
+  const activeRows = data
     .filter((row) => !/closed|sunset|archived/i.test(`${row.initiative_id ?? ''} ${row.status_flag ?? ''} ${row.stage ?? ''}`));
   const rows = (opts.killOnly ? activeRows.filter((row) => initiativePriority(row) === 0) : activeRows)
     .sort((a, b) => {
@@ -487,35 +502,35 @@ function formatInitiativeStructuredLine(row: InitiativeRow): string {
 }
 
 async function resolveClientIdForTenantKey(
-  sb: ReturnType<typeof getServerSupabase>,
+  run: SqlRunner,
   tenantKey: string,
 ): Promise<string | null> {
   const aliases = TENANT_KEY_ALIASES[tenantKey.toLowerCase()] ?? [tenantKey.toLowerCase()];
-  const orClause = aliases
-    .flatMap((alias) => [`tenant_key.eq.${alias}`, `slug.eq.${alias}`])
-    .join(',');
-  const { data, error } = await sb
-    .from('clients')
-    .select('id')
-    .or(orClause)
-    .limit(1)
-    .maybeSingle();
-  if (error || !data) return null;
-  return typeof (data as { id?: unknown }).id === 'string' ? (data as { id: string }).id : null;
+  const rows = await run<{ id: string }>(
+    `SELECT id
+       FROM clients
+      WHERE tenant_key = ANY($1::text[]) OR slug = ANY($1::text[])
+      LIMIT 1`,
+    [aliases],
+  );
+  return rows[0]?.id ?? null;
 }
 
 async function readClientProfileSource(
-  sb: ReturnType<typeof getServerSupabase>,
+  run: SqlRunner,
   tenantKey: string,
   clientId: string,
 ): Promise<TenantEnterpriseSource | null> {
-  const { data, error } = await sb
-    .from('clients')
-    .select('id,name,legal_name,tenant_key,slug,annual_revenue_usd,it_budget_usd,ai_budget_usd,employee_count,operational_units,business_description')
-    .eq('id', clientId)
-    .maybeSingle();
-  if (error || !data) return null;
-  const row = data as ClientProfileRow;
+  const rows = await run<ClientProfileRow>(
+    `SELECT id, name, legal_name, tenant_key, slug, annual_revenue_usd, it_budget_usd,
+            ai_budget_usd, employee_count, operational_units, business_description
+       FROM clients
+      WHERE id = $1
+      LIMIT 1`,
+    [clientId],
+  );
+  const row = rows[0];
+  if (!row) return null;
   const revenue = formatUsd(row.annual_revenue_usd);
   const itBudget = formatUsd(row.it_budget_usd);
   const aiBudget = formatUsd(row.ai_budget_usd);
@@ -540,19 +555,19 @@ async function readClientProfileSource(
 }
 
 async function readApplicationPortfolioSource(
-  sb: ReturnType<typeof getServerSupabase>,
+  run: SqlRunner,
   tenantKey: string,
   clientId: string,
 ): Promise<TenantEnterpriseSource | null> {
-  const { data, error } = await sb
-    .from('applications')
-    .select('id,name,vendor,business_function,deployment_model,criticality,status,annual_cost_usd')
-    .eq('client_id', clientId)
-    .order('criticality', { ascending: true })
-    .order('annual_cost_usd', { ascending: false, nullsFirst: false })
-    .limit(15);
-  if (error || !data || data.length === 0) return null;
-  const rows = data as ApplicationRow[];
+  const rows = await run<ApplicationRow>(
+    `SELECT id, name, vendor, business_function, deployment_model, criticality, status, annual_cost_usd
+       FROM applications
+      WHERE client_id = $1
+      ORDER BY criticality ASC NULLS LAST, annual_cost_usd DESC NULLS LAST
+      LIMIT 15`,
+    [clientId],
+  );
+  if (rows.length === 0) return null;
   const prefix = tenantRecordPrefix(tenantKey);
   return {
     type: 'TENANT',
@@ -571,18 +586,20 @@ async function readApplicationPortfolioSource(
 }
 
 async function readVendorContractsSource(
-  sb: ReturnType<typeof getServerSupabase>,
+  run: SqlRunner,
   tenantKey: string,
   clientId: string,
 ): Promise<TenantEnterpriseSource | null> {
-  const { data, error } = await sb
-    .from('vendor_contracts')
-    .select('vendor_id,vendor_name,contract_category,annual_contract_value_usd,renewal_date,exit_terms_jsonb,ai_usage_clauses,indemnity_provided,concentration_pct')
-    .eq('client_id', clientId)
-    .order('annual_contract_value_usd', { ascending: false, nullsFirst: false })
-    .limit(15);
-  if (error || !data || data.length === 0) return null;
-  const rows = data as VendorContractRow[];
+  const rows = await run<VendorContractRow>(
+    `SELECT vendor_id, vendor_name, contract_category, annual_contract_value_usd, renewal_date,
+            exit_terms_jsonb, ai_usage_clauses, indemnity_provided, concentration_pct
+       FROM vendor_contracts
+      WHERE client_id = $1
+      ORDER BY annual_contract_value_usd DESC NULLS LAST
+      LIMIT 15`,
+    [clientId],
+  );
+  if (rows.length === 0) return null;
   return {
     type: 'TENANT',
     name: `Structured vendor contracts (${tenantKey})`,
@@ -600,18 +617,21 @@ async function readVendorContractsSource(
 }
 
 async function readInitiativesSource(
-  sb: ReturnType<typeof getServerSupabase>,
+  run: SqlRunner,
   tenantKey: string,
   clientId: string,
 ): Promise<TenantEnterpriseSource | null> {
-  const { data, error } = await sb
-    .from('ai_initiatives')
-    .select('initiative_id,display_id,name,stage,status_flag,committed_total_usd,measured_value_usd,status_summary,metadata')
-    .eq('client_id', clientId)
-    .order('committed_total_usd', { ascending: false, nullsFirst: false })
-    .limit(80);
-  if (error || !data || data.length === 0) return null;
-  const rows = (data as InitiativeRow[])
+  const data = await run<InitiativeRow>(
+    `SELECT initiative_id, display_id, name, stage, status_flag, committed_total_usd,
+            measured_value_usd, status_summary, metadata
+       FROM ai_initiatives
+      WHERE client_id = $1
+      ORDER BY committed_total_usd DESC NULLS LAST
+      LIMIT 80`,
+    [clientId],
+  );
+  if (data.length === 0) return null;
+  const rows = data
     .sort((a, b) => initiativePriority(a) - initiativePriority(b))
     .slice(0, 18);
   return {

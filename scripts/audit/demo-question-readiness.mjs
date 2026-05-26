@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { config as loadEnv } from 'dotenv';
-import { createClient } from '@supabase/supabase-js';
+import pg from 'pg';
 
 const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 loadEnv({ path: fs.existsSync(path.join(REPO_ROOT, '.env.local')) ? path.join(REPO_ROOT, '.env.local') : '/Users/anand/Projects/nexus/.env.local' });
@@ -34,17 +34,28 @@ const questions = [
 ];
 
 const tenant = readArg('--tenant') ?? process.env.TENANT_KEY ?? 'northstar';
-const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
-if (!url || !key) {
-  console.error('Missing NEXT_PUBLIC_SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY');
+const databaseUrl = process.env.ABARVA_AZURE_DATABASE_URL || process.env.DATABASE_URL;
+if (!databaseUrl) {
+  console.error('Missing ABARVA_AZURE_DATABASE_URL or DATABASE_URL');
   process.exit(2);
 }
 
-const sb = createClient(url, key, { auth: { persistSession: false } });
+const db = new pg.Client({
+  connectionString: databaseUrl,
+  application_name: 'demo-question-readiness',
+  ssl: disableSsl(databaseUrl) ? false : { rejectUnauthorized: false },
+});
+try {
+  await db.connect();
+} catch (error) {
+  const message = error instanceof Error ? error.message : String(error);
+  console.error(`Postgres connection failed: ${message}`);
+  process.exit(2);
+}
 const client = await resolveClient(tenant);
 if (!client) {
   console.error(`No client row found for tenant ${tenant}`);
+  await db.end().catch(() => undefined);
   process.exit(2);
 }
 
@@ -56,6 +67,17 @@ const hallucinated = rows.filter((row) => row.status === 'HALLUCINATED').length;
 const grounded = rows.filter((row) => row.status === 'GROUNDED').length;
 if (hallucinated > 0) process.exit(1);
 if (grounded < 7) process.exit(1);
+await db.end().catch(() => undefined);
+
+function disableSsl(connectionString) {
+  try {
+    const parsed = new URL(connectionString);
+    if (parsed.searchParams.get('sslmode')?.toLowerCase() === 'disable') return true;
+    return ['localhost', '127.0.0.1', '::1'].includes(parsed.hostname);
+  } catch {
+    return false;
+  }
+}
 
 function readArg(name) {
   const index = process.argv.indexOf(name);
@@ -64,33 +86,30 @@ function readArg(name) {
 
 async function resolveClient(tenantKey) {
   const aliases = TENANT_ALIASES[tenantKey] ?? [tenantKey];
-  const orClause = aliases.flatMap((alias) => [`tenant_key.eq.${alias}`, `slug.eq.${alias}`]).join(',');
-  const { data, error } = await sb
-    .from('clients')
-    .select('id,name,tenant_key,slug,annual_revenue_usd,it_budget_usd,employee_count,operational_units,business_description')
-    .or(orClause)
-    .limit(1)
-    .maybeSingle();
-  if (error) throw new Error(error.message);
-  return data;
+  const { rows } = await db.query(
+    `SELECT id, name, tenant_key, slug, annual_revenue_usd, it_budget_usd,
+            employee_count, operational_units, business_description
+       FROM clients
+      WHERE tenant_key = ANY($1::text[]) OR slug = ANY($1::text[])
+      LIMIT 1`,
+    [aliases],
+  );
+  return rows[0] ?? null;
 }
 
 async function loadFacts(clientId) {
   const [apps, vendors, initiatives, chunks] = await Promise.all([
-    sb.from('applications').select('id,name,vendor,criticality,annual_cost_usd,business_function,deployment_model,status').eq('client_id', clientId).limit(300),
-    sb.from('vendor_contracts').select('vendor_id,vendor_name,annual_contract_value_usd,renewal_date,contract_category,exit_terms_jsonb').eq('client_id', clientId).limit(150),
-    sb.from('ai_initiatives').select('initiative_id,name,stage,status_flag,committed_total_usd,measured_value_usd,status_summary,metadata').eq('client_id', clientId).limit(150),
-    sb.from('enterprise_context_chunks').select('chunk_id,chunk_text,source_segment_id').eq('client_id', clientId).limit(1200),
+    db.query('SELECT id, name, vendor, criticality, annual_cost_usd, business_function, deployment_model, status FROM applications WHERE client_id = $1 LIMIT 300', [clientId]),
+    db.query('SELECT vendor_id, vendor_name, annual_contract_value_usd, renewal_date, contract_category, exit_terms_jsonb FROM vendor_contracts WHERE client_id = $1 LIMIT 150', [clientId]),
+    db.query('SELECT initiative_id, name, stage, status_flag, committed_total_usd, measured_value_usd, status_summary, metadata FROM ai_initiatives WHERE client_id = $1 LIMIT 150', [clientId]),
+    db.query('SELECT chunk_id, chunk_text, source_segment_id FROM enterprise_context_chunks WHERE client_id = $1 LIMIT 1200', [clientId]),
   ]);
-  for (const result of [apps, vendors, initiatives, chunks]) {
-    if (result.error) throw new Error(result.error.message);
-  }
   return {
-    apps: apps.data ?? [],
-    vendors: vendors.data ?? [],
-    initiatives: initiatives.data ?? [],
-    chunks: chunks.data ?? [],
-    text: (chunks.data ?? []).map((chunk) => chunk.chunk_text ?? '').join('\\n'),
+    apps: apps.rows ?? [],
+    vendors: vendors.rows ?? [],
+    initiatives: initiatives.rows ?? [],
+    chunks: chunks.rows ?? [],
+    text: (chunks.rows ?? []).map((chunk) => chunk.chunk_text ?? '').join('\\n'),
   };
 }
 

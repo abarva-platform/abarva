@@ -15,23 +15,7 @@ import type {
 } from '@/lib/knowledge/tenant-data';
 
 let fakeAdapter: TenantDataAdapter;
-type MockSupabaseClient = {
-  from: (table: string) => {
-    select: () => MockSupabaseQuery;
-  };
-};
-
-type MockSupabaseQuery = {
-  select: () => MockSupabaseQuery;
-  eq: () => MockSupabaseQuery;
-  or: () => MockSupabaseQuery;
-  order: () => MockSupabaseQuery;
-  limit: (limit: number) => MockSupabaseQuery;
-  maybeSingle: () => Promise<{ data: unknown | null; error: null }>;
-  then: (resolve: (value: { data: unknown[]; error: null }) => void) => void;
-};
-
-let fakeSupabase: MockSupabaseClient | null = null;
+let fakeTables: Record<string, unknown[]> | null = null;
 
 jest.mock('@/lib/knowledge/tenant-data', () => {
   const actual = jest.requireActual('@/lib/knowledge/tenant-data');
@@ -41,12 +25,25 @@ jest.mock('@/lib/knowledge/tenant-data', () => {
   };
 });
 
-jest.mock('@/lib/supabase-server', () => ({
-  getServerSupabase: () => {
-    if (!fakeSupabase) throw new Error('Supabase test client not configured');
-    return fakeSupabase;
+jest.mock('@/lib/data-plane/read-adapters/azureSession', () => ({
+  createDefaultSession: () => async (fn: (run: (sql: string, params: unknown[]) => Promise<unknown[]>) => Promise<unknown>) => {
+    if (!fakeTables) throw new Error('Postgres test tables not configured');
+    const run = async (sql: string): Promise<unknown[]> => {
+      const table = tableFromSql(sql);
+      let rows = [...(fakeTables?.[table] ?? (table === 'clients' ? [{ id: 'northstar-client' }] : []))];
+      const limit = Number(sql.match(/LIMIT\s+(\d+)/i)?.[1] ?? rows.length);
+      rows = rows.slice(0, limit);
+      return rows;
+    };
+    return fn(run);
   },
 }));
+
+function tableFromSql(sql: string): string {
+  const match = sql.match(/\bFROM\s+([a-z_]+)/i);
+  if (!match) throw new Error(`No table in SQL: ${sql}`);
+  return match[1]!;
+}
 
 function makeEmptyAdapter(): TenantDataAdapter {
   return {
@@ -91,27 +88,10 @@ function person(nodeId: string, title: string, payload: Record<string, unknown> 
   };
 }
 
-function mockSupabaseTables(tables: Record<string, unknown[]>): MockSupabaseClient {
-  return {
-    from: (table: string) => {
-      const rows = tables[table] ?? (table === 'clients' ? [{ id: 'northstar-client' }] : []);
-      let cap = rows.length;
-      const builder: MockSupabaseQuery = {
-        select: () => builder,
-        eq: () => builder,
-        or: () => builder,
-        order: () => builder,
-        limit: (limit: number) => {
-          cap = limit;
-          return builder;
-        },
-        maybeSingle: () => Promise.resolve({ data: rows[0] ?? null, error: null }),
-        then: (resolve: (value: { data: unknown[]; error: null }) => void) => {
-          resolve({ data: rows.slice(0, cap), error: null });
-        },
-      };
-      return builder;
-    },
+function mockPostgresTables(tables: Record<string, unknown[]>): void {
+  fakeTables = {
+    clients: [{ id: 'northstar-client' }],
+    ...tables,
   };
 }
 
@@ -127,7 +107,7 @@ function reportsTo(fromNodeId: string, toNodeId: string): GraphEdge {
 
 describe('tenant enterprise context retrieval', () => {
   beforeEach(() => {
-    fakeSupabase = null;
+    fakeTables = null;
     const chunks = [
       chunk(
         'enterprise_profile',
@@ -355,7 +335,7 @@ describe('tenant enterprise context retrieval', () => {
   });
 
   it('adds Northstar structured application rows before Sentinel reaches for industry-typical clinical systems', async () => {
-    fakeSupabase = mockSupabaseTables({
+    mockPostgresTables({
       applications: [
         {
           id: 'app-row-234',
@@ -394,7 +374,7 @@ describe('tenant enterprise context retrieval', () => {
   });
 
   it('adds Northstar structured vendor contract rows with renewal and exit terms', async () => {
-    fakeSupabase = mockSupabaseTables({
+    mockPostgresTables({
       vendor_contracts: [
         {
           vendor_id: 'NST-VEND-090',
@@ -423,7 +403,7 @@ describe('tenant enterprise context retrieval', () => {
   });
 
   it('adds Northstar structured initiative rows for kill-list questions', async () => {
-    fakeSupabase = mockSupabaseTables({
+    mockPostgresTables({
       ai_initiatives: [
         {
           initiative_id: 'NST-INIT-AS400-REBATES',
@@ -452,7 +432,7 @@ describe('tenant enterprise context retrieval', () => {
   });
 
   it('returns explicit 0.99 structured facts for top-app criticality questions', async () => {
-    fakeSupabase = mockSupabaseTables({
+    mockPostgresTables({
       applications: [
         {
           id: 'app-row-234',
@@ -476,7 +456,7 @@ describe('tenant enterprise context retrieval', () => {
   });
 
   it('returns explicit 0.99 structured facts for vendor renewals in the next six months', async () => {
-    fakeSupabase = mockSupabaseTables({
+    mockPostgresTables({
       vendor_contracts: [
         {
           vendor_id: 'NST-VEND-090',
@@ -512,7 +492,7 @@ describe('tenant enterprise context retrieval', () => {
   });
 
   it('returns explicit 0.99 structured facts for active initiatives and excludes closed records', async () => {
-    fakeSupabase = mockSupabaseTables({
+    mockPostgresTables({
       ai_initiatives: [
         {
           initiative_id: 'NST-INIT-CODING-AI',
@@ -548,7 +528,7 @@ describe('tenant enterprise context retrieval', () => {
   });
 
   it('does not fabricate structured rows for no-match queries', async () => {
-    fakeSupabase = mockSupabaseTables({
+    mockPostgresTables({
       applications: [
         {
           id: 'app-row-234',
@@ -593,7 +573,7 @@ describe('tenant enterprise context retrieval', () => {
   });
 
   it('routes SAP S/4 Wave 0 binary questions to active initiative context', async () => {
-    fakeSupabase = mockSupabaseTables({
+    mockPostgresTables({
       ai_initiatives: [
         {
           initiative_id: 'NST-INIT-S4-WAVE0',
