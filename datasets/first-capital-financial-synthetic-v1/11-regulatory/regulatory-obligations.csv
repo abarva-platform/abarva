@@ -1,0 +1,5 @@
+reg_id,regulator,obligation,affected_apps,evidence_required
+FCF-REG-OCC-MRA-001,OCC,Remediate core data-lineage MRA,FCF-APP-FIS-HORIZON|FCF-APP-SNOWFLAKE,lineage attestation and control testing
+FCF-REG-BSA-AML-001,FinCEN/OCC,BSA AML case management remediation,FCF-APP-NICE-ACTIMIZE|FCF-APP-FENERGO-KYC,"case quality, alert tuning and staffing evidence"
+FCF-REG-SR117-001,Federal Reserve,Model-risk management for AI-assisted decisions,FCF-APP-DATABRICKS|FCF-APP-NICE-ACTIMIZE,"model inventory, validation and monitoring"
+FCF-REG-GLBA-001,Federal banking regulators,GLBA safeguarding of customer information,FCF-APP-MOBILE-BANKING|FCF-APP-SALESFORCE-FSC,"access, encryption and vendor controls"

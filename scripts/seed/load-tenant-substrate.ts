@@ -8,6 +8,7 @@
 //   TENANT_KEY=northstar npx tsx scripts/seed/load-tenant-substrate.ts
 //   TENANT_KEY=northstar npx tsx scripts/seed/load-tenant-substrate.ts --dry-run
 //   TENANT_KEY=northstar npx tsx scripts/seed/load-tenant-substrate.ts --only-chunks
+//   TENANT_KEY=northstar npx tsx scripts/seed/load-tenant-substrate.ts --only-tables
 //
 // Phases:
 //   PHASE 1 — enterprise_context_source_files  (no embedding, fast)
@@ -20,10 +21,15 @@
 // Defensive — schema mismatches per phase are reported, not fatal.
 
 import path from 'node:path';
-import { config as loadEnv } from 'dotenv';
-loadEnv({ path: '/Users/anand/Projects/nexus/.env.local' });
-
+import { fileURLToPath } from 'node:url';
 import fs from 'node:fs';
+import { config as loadEnv } from 'dotenv';
+
+const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
+const LOCAL_ENV = path.join(REPO_ROOT, '.env.local');
+const DEFAULT_ENV = '/Users/anand/Projects/nexus/.env.local';
+loadEnv({ path: fs.existsSync(LOCAL_ENV) ? LOCAL_ENV : DEFAULT_ENV });
+
 import crypto from 'node:crypto';
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import Papa from 'papaparse';
@@ -173,6 +179,42 @@ const TENANTS: Record<string, TenantConfig> = {
     initiativesClosedCsv: '01-portfolio/initiatives-closed.csv',
     vendorContractsCsv: '04-vendors/vendor-contracts.csv',
   },
+  firstcapital: {
+    key: 'firstcapital',
+    clientId: 'a75687bf-71b9-4524-ab4e-68ae3f28d200',
+    tenantKey: 'first-capital',
+    datasetRoot: 'datasets/first-capital-financial-synthetic-v1',
+    sourceFilesDir: '13-context/source-files',
+    corpusJsonl: '13-context/client-data-corpus.jsonl',
+    appPortfolioCsv: '01-portfolio/application-portfolio.csv',
+    initiativesActiveCsv: '01-portfolio/initiatives-active.csv',
+    initiativesClosedCsv: '01-portfolio/initiatives-closed.csv',
+    vendorContractsCsv: '04-vendors/vendor-contracts.csv',
+  },
+  'first-capital': {
+    key: 'firstcapital',
+    clientId: 'a75687bf-71b9-4524-ab4e-68ae3f28d200',
+    tenantKey: 'first-capital',
+    datasetRoot: 'datasets/first-capital-financial-synthetic-v1',
+    sourceFilesDir: '13-context/source-files',
+    corpusJsonl: '13-context/client-data-corpus.jsonl',
+    appPortfolioCsv: '01-portfolio/application-portfolio.csv',
+    initiativesActiveCsv: '01-portfolio/initiatives-active.csv',
+    initiativesClosedCsv: '01-portfolio/initiatives-closed.csv',
+    vendorContractsCsv: '04-vendors/vendor-contracts.csv',
+  },
+  arcturus: {
+    key: 'firstcapital',
+    clientId: 'a75687bf-71b9-4524-ab4e-68ae3f28d200',
+    tenantKey: 'first-capital',
+    datasetRoot: 'datasets/first-capital-financial-synthetic-v1',
+    sourceFilesDir: '13-context/source-files',
+    corpusJsonl: '13-context/client-data-corpus.jsonl',
+    appPortfolioCsv: '01-portfolio/application-portfolio.csv',
+    initiativesActiveCsv: '01-portfolio/initiatives-active.csv',
+    initiativesClosedCsv: '01-portfolio/initiatives-closed.csv',
+    vendorContractsCsv: '04-vendors/vendor-contracts.csv',
+  },
 };
 
 // ─── CLI ────────────────────────────────────────────────────────────────────
@@ -180,6 +222,7 @@ const TENANTS: Record<string, TenantConfig> = {
 const args = process.argv.slice(2);
 const DRY_RUN = args.includes('--dry-run');
 const ONLY_CHUNKS = args.includes('--only-chunks');
+const ONLY_TABLES = args.includes('--only-tables');
 const SKIP_TABLES = args.includes('--skip-tables');
 const CONCURRENCY = Number(args.find((a) => a.startsWith('--concurrency='))?.split('=')[1] ?? 6);
 
@@ -187,8 +230,6 @@ const TENANT_KEY = process.env.TENANT_KEY;
 if (!TENANT_KEY) throw new Error('TENANT_KEY env var required (e.g. TENANT_KEY=northstar)');
 const TENANT = TENANTS[TENANT_KEY];
 if (!TENANT) throw new Error(`Unknown TENANT_KEY=${TENANT_KEY}. Known: ${Object.keys(TENANTS).join(', ')}`);
-
-const REPO_ROOT = '/Users/anand/Projects/nexus';
 
 // ─── Supabase client ────────────────────────────────────────────────────────
 
@@ -299,6 +340,8 @@ function buildChunkText(chunk: Record<string, unknown>): string {
   }
   // Otherwise synthesize from Northstar-style fields (claim/evidence_basis/etc.)
   const parts: string[] = [];
+  if (chunk.title) parts.push(`TITLE: ${chunk.title}`);
+  if (chunk.text) parts.push(String(chunk.text));
   if (chunk.claim) parts.push(`CLAIM: ${chunk.claim}`);
   if (chunk.evidence_basis) parts.push(`EVIDENCE: ${chunk.evidence_basis}`);
   if (chunk.use_case) parts.push(`USE CASE: ${chunk.use_case}`);
@@ -331,8 +374,7 @@ async function phase2ChunksAndEmbeddings(): Promise<{ rows: number; embedded: nu
   // If chunks land outside this list, the retriever returns 0 rows and
   // Sentinel can't ground in tenant facts — that was the 2026-05-26
   // retrieval-wiring P0 found mid-session.
-  const RETRIEVAL_SEGMENTS = ['program_inventory', 'it_landscape', 'it_financials', 'org_structure', 'enterprise_profile'];
-  function mapChunkToSegment(chunk: Record<string, unknown>, index: number, total: number): string {
+  function mapChunkToSegment(chunk: Record<string, unknown>): string {
     const useCase = String(chunk.use_case ?? '').toLowerCase();
     const industry = String(chunk.industry ?? '').toLowerCase();
     if (/budget|cost|financial|spend|p&l|capex|opex/.test(useCase + ' ' + industry)) return 'it_financials';
@@ -348,12 +390,12 @@ async function phase2ChunksAndEmbeddings(): Promise<{ rows: number; embedded: nu
     const chunk = JSON.parse(lines[i]);
     const chunkText = buildChunkText(chunk);
     const chunkId = getChunkId(chunk, i);
-    const sourceFileId: string = (chunk.source_file_id as string) ?? chunkId;
+    const sourceFileId: string = String(chunk.source_file_id ?? chunk.source_id ?? chunkId);
     rows.push({
       client_id: TENANT.clientId,
       tenant_key: TENANT.tenantKey,
       chunk_id: chunkId,
-      source_segment_id: mapChunkToSegment(chunk, i, lines.length),
+      source_segment_id: mapChunkToSegment(chunk),
       source_record_id: sourceFileId,
       source_doc: sourceFileId,
       source_path: `${TENANT.datasetRoot}/${TENANT.corpusJsonl}#${chunkId}`,
@@ -496,7 +538,12 @@ async function phase2ChunksAndEmbeddings(): Promise<{ rows: number; embedded: nu
   return { rows: inserted, embedded, failed };
 }
 
-// ─── PHASES 3-5 (deferred — focus on chunks for demo-critical path) ─────────
+// ─── PHASES 3-5 — structured tables used by Source/Tower/Sentinel ──────────
+
+function stableUuid(seed: string): string {
+  const hex = crypto.createHash('sha256').update(seed).digest('hex');
+  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-4${hex.slice(13, 16)}-${((parseInt(hex.slice(16, 18), 16) & 0x3f) | 0x80).toString(16)}${hex.slice(18, 20)}-${hex.slice(20, 32)}`;
+}
 
 async function phase3Applications(): Promise<{ inserted: number; errors: number }> {
   console.log('\n━━ PHASE 3 · applications ━━');
@@ -517,8 +564,7 @@ async function phase3Applications(): Promise<{ inserted: number; errors: number 
     const norm = (raw ?? '').toLowerCase().trim();
     if (['p0', 'critical', 'tier1', 'tier 1', 'tier-1'].includes(norm)) return 'tier1';
     if (['p1', 'high', 'tier2', 'tier 2', 'tier-2'].includes(norm)) return 'tier2';
-    if (['p2', 'medium', 'tier3', 'tier 3', 'tier-3'].includes(norm)) return 'tier3';
-    if (['p3', 'low', 'tier4', 'tier 4', 'tier-4'].includes(norm)) return 'tier4';
+    if (['p2', 'medium', 'tier3', 'tier 3', 'tier-3', 'p3', 'low', 'tier4', 'tier 4', 'tier-4'].includes(norm)) return 'tier3';
     return 'tier3';
   }
 
@@ -531,11 +577,8 @@ async function phase3Applications(): Promise<{ inserted: number; errors: number 
   }
 
   function mapStatus(timeClass: string | undefined): string {
-    // applications.status CHECK accepts ONLY 'active'. Probed empirically.
-    // Other dataset values (retire/sunset/decommission/planning) all map to
-    // 'active' and the lifecycle nuance lives in the chunk_metadata or in
-    // adjacent fields like is_demo_data.
-    void timeClass;
+    const norm = (timeClass ?? '').toLowerCase().trim();
+    if (norm === 'retire' || norm === 'retiring' || norm === 'sunset') return 'sunsetting';
     return 'active';
   }
 
@@ -548,7 +591,7 @@ async function phase3Applications(): Promise<{ inserted: number; errors: number 
       deployment_model: mapDeploymentModel(r.stack_era),
       business_function: r.business_unit_id || null,
       user_count: null,
-      annual_cost_usd: r.annual_run_cost_usd ? Number(r.annual_run_cost_usd) : null,
+      annual_cost_usd: r.annual_run_cost_usd || r.run_cost_fy25_usd ? Number(r.annual_run_cost_usd || r.run_cost_fy25_usd) : null,
       criticality: mapCriticality(r.criticality),
       status: mapStatus(r.time_classification),
       ai_enabled: false,
@@ -580,6 +623,151 @@ async function phase3Applications(): Promise<{ inserted: number; errors: number 
   return { inserted, errors };
 }
 
+async function phase4Initiatives(): Promise<{ inserted: number; errors: number }> {
+  console.log('\n━━ PHASE 4 · ai_initiatives ━━');
+  const csvPaths = [TENANT.initiativesActiveCsv, TENANT.initiativesClosedCsv]
+    .filter(Boolean)
+    .map((rel) => path.join(REPO_ROOT, TENANT.datasetRoot, rel as string));
+  if (csvPaths.length === 0) {
+    console.log('  No initiative CSVs configured for tenant');
+    return { inserted: 0, errors: 0 };
+  }
+
+  const records: Array<Record<string, string>> = [];
+  for (const csvPath of csvPaths) {
+    if (!fs.existsSync(csvPath)) {
+      console.log(`  missing: ${csvPath}`);
+      return { inserted: 0, errors: 1 };
+    }
+    const parsed = Papa.parse<Record<string, string>>(fs.readFileSync(csvPath, 'utf8'), { header: true, skipEmptyLines: true });
+    records.push(...parsed.data);
+  }
+  console.log(`  Found ${records.length} initiatives`);
+
+  const now = new Date().toISOString();
+  const rows = records
+    .filter((r) => r.initiative_id && r.title)
+    .map((r) => {
+      const posture = (r.sentinel_posture || 'Healthy').toLowerCase();
+      const committed = Number(r.committed_usd || 0);
+      const projected = Number(r.projected_value_usd || 0);
+      return {
+        initiative_id: r.initiative_id,
+        client_id: TENANT.clientId,
+        display_id: r.initiative_id.replace(/^FCF-INIT-/, 'FCF-').replace(/^FCF-CLOSED-/, 'FCF-C-').slice(0, 20),
+        name: r.title,
+        description: r.evidence_note || `${r.title} seeded by ${TENANT.key} substrate pack.`,
+        primary_category_id: posture.includes('kill') ? 'CAT-02' : posture.includes('hold') ? 'CAT-06' : posture.includes('aml') || posture.includes('risk') ? 'CAT-08' : 'CAT-03',
+        secondary_category_id: posture.includes('restructure') ? 'CAT-04' : null,
+        primary_goal_id: posture.includes('kill') ? 'FCF-GOAL-04' : posture.includes('hold') ? 'FCF-GOAL-02' : projected > committed ? 'FCF-GOAL-03' : 'FCF-GOAL-01',
+        stage: (r.status || '').toLowerCase() === 'closed' ? 'sunset' : posture.includes('hold') ? 'multi_year_strategic_bet' : (r.stage || '').toLowerCase() === 'scale' ? 'scaled' : (r.stage || '').toLowerCase() === 'run' ? 'scaled' : 'pilot',
+        stage_detail: r.status || null,
+        owner_name: r.accountable || 'CIO',
+        owner_title: r.accountable || 'CIO',
+        owner_function: r.accountable || 'Technology',
+        committed_annual_usd: committed,
+        committed_total_usd: committed,
+        measured_value_usd: projected,
+        status_flag: posture.includes('kill') ? 'stalled' : posture.includes('watch') || posture.includes('hold') || posture.includes('restructure') ? 'value_lag' : 'healthy',
+        status_summary: r.evidence_note || r.sentinel_posture || 'Seeded initiative context',
+        confidence_level: posture.includes('kill') ? 'HIGH' : 'MED',
+        aligned_callout: !posture.includes('kill'),
+        aligned_rationale: r.evidence_note || null,
+        loaded_via_template: `${TENANT.key}-substrate-v1`,
+        created_at: now,
+        updated_at: now,
+        metadata: { loader: 'packet-24', vendors: r.vendors, sentinel_posture: r.sentinel_posture, source_status: r.status },
+      };
+    });
+
+  if (DRY_RUN) {
+    console.log(`  [DRY-RUN] Would upsert ${rows.length} initiatives`);
+    return { inserted: rows.length, errors: 0 };
+  }
+
+  await sb.from('ai_initiatives').delete().eq('client_id', TENANT.clientId).eq('loaded_via_template', `${TENANT.key}-substrate-v1`);
+  let inserted = 0;
+  let errors = 0;
+  for (let i = 0; i < rows.length; i += 100) {
+    const batch = rows.slice(i, i + 100);
+    const { error, data } = await sb.from('ai_initiatives').insert(batch).select('initiative_id');
+    if (error) {
+      console.log(`  [ERR] initiatives batch ${i}: ${error.message}`);
+      errors += batch.length;
+    } else {
+      inserted += data?.length ?? batch.length;
+    }
+  }
+  console.log(`  Inserted ${inserted}; errors ${errors}`);
+  return { inserted, errors };
+}
+
+async function phase5VendorContracts(): Promise<{ inserted: number; errors: number }> {
+  console.log('\n━━ PHASE 5 · vendor_contracts ━━');
+  if (!TENANT.vendorContractsCsv) {
+    console.log('  No vendor contracts CSV configured for tenant');
+    return { inserted: 0, errors: 0 };
+  }
+  const csvPath = path.join(REPO_ROOT, TENANT.datasetRoot, TENANT.vendorContractsCsv);
+  if (!fs.existsSync(csvPath)) {
+    console.log(`  missing: ${csvPath}`);
+    return { inserted: 0, errors: 1 };
+  }
+  const parsed = Papa.parse<Record<string, string>>(fs.readFileSync(csvPath, 'utf8'), { header: true, skipEmptyLines: true });
+  console.log(`  Found ${parsed.data.length} vendor contracts`);
+
+  const now = new Date().toISOString();
+  const totalAnnual = parsed.data.reduce((sum, r) => sum + Number(r.annual_usd || 0), 0) || 1;
+  const rows = parsed.data
+    .filter((r) => r.vendor)
+    .map((r, idx) => ({
+      id: stableUuid(`${TENANT.clientId}:vendor:${r.vendor}:${idx}`),
+      client_id: TENANT.clientId,
+      vendor_id: `FCF-VEND-${String(idx + 1).padStart(3, '0')}`,
+      vendor_name: r.vendor,
+      contract_name: `${r.vendor} ${r.type || 'contract'}`,
+      contract_category: r.type || 'vendor',
+      scope_summary: r.notes || `${r.vendor} First Capital vendor contract.`,
+      owner_id: null,
+      annual_contract_value_usd: Number(r.annual_usd || 0),
+      start_date: '2023-01-01',
+      end_date: r.renewal_date || null,
+      renewal_date: r.renewal_date || null,
+      ai_usage_clauses: Boolean(r.ai_usage_clauses && !/standard/i.test(r.ai_usage_clauses)),
+      indemnity_provided: /indemnity/i.test(r.ai_usage_clauses || ''),
+      exit_terms_jsonb: { summary: r.exit_terms || 'standard renewal notice', source: `${TENANT.datasetRoot}/${TENANT.vendorContractsCsv}` },
+      concentration_pct: Number(((Number(r.annual_usd || 0) / totalAnnual) * 100).toFixed(2)),
+      rate_card_vintage: '2025-01-01',
+      outcome_based: /outcome/i.test(`${r.notes} ${r.exit_terms} ${r.ai_usage_clauses}`),
+      created_at: now,
+      updated_at: now,
+      created_by: 'substrate-loader',
+      updated_by: 'substrate-loader',
+      deleted_at: null,
+    }));
+
+  if (DRY_RUN) {
+    console.log(`  [DRY-RUN] Would upsert ${rows.length} vendor contracts`);
+    return { inserted: rows.length, errors: 0 };
+  }
+
+  await sb.from('vendor_contracts').delete().eq('client_id', TENANT.clientId).eq('created_by', 'substrate-loader');
+  let inserted = 0;
+  let errors = 0;
+  for (let i = 0; i < rows.length; i += 100) {
+    const batch = rows.slice(i, i + 100);
+    const { error, data } = await sb.from('vendor_contracts').insert(batch).select('id');
+    if (error) {
+      console.log(`  [ERR] vendor contracts batch ${i}: ${error.message}`);
+      errors += batch.length;
+    } else {
+      inserted += data?.length ?? batch.length;
+    }
+  }
+  console.log(`  Inserted ${inserted}; errors ${errors}`);
+  return { inserted, errors };
+}
+
 // ─── MAIN ───────────────────────────────────────────────────────────────────
 
 async function main() {
@@ -590,13 +778,18 @@ async function main() {
   console.log(`  tenant_key: ${TENANT.tenantKey}`);
   console.log(`  dataset:    ${TENANT.datasetRoot}`);
   console.log(`  only-chunks: ${ONLY_CHUNKS}`);
+  console.log(`  only-tables: ${ONLY_TABLES}`);
   console.log(`  skip-tables: ${SKIP_TABLES}`);
 
-  const p1 = await phase1SourceFiles();
-  const p2 = await phase2ChunksAndEmbeddings();
+  const p1 = ONLY_TABLES ? { inserted: 0, skipped: 0, errors: 0 } : await phase1SourceFiles();
+  const p2 = ONLY_TABLES ? { rows: 0, embedded: 0, failed: 0 } : await phase2ChunksAndEmbeddings();
   let p3: { inserted: number; errors: number } | null = null;
+  let p4: { inserted: number; errors: number } | null = null;
+  let p5: { inserted: number; errors: number } | null = null;
   if (!ONLY_CHUNKS && !SKIP_TABLES) {
     p3 = await phase3Applications();
+    p4 = await phase4Initiatives();
+    p5 = await phase5VendorContracts();
   }
 
   console.log('\n═══════════════════════════════════════════════════════════════');
@@ -605,9 +798,11 @@ async function main() {
   console.log(`  Phase 1 source files:  inserted=${p1.inserted}, errors=${p1.errors}`);
   console.log(`  Phase 2 chunks:        upserted=${p2.rows}, embedded=${p2.embedded}, failed=${p2.failed}`);
   if (p3) console.log(`  Phase 3 applications:  inserted=${p3.inserted}, errors=${p3.errors}`);
+  if (p4) console.log(`  Phase 4 initiatives:   inserted=${p4.inserted}, errors=${p4.errors}`);
+  if (p5) console.log(`  Phase 5 vendors:       inserted=${p5.inserted}, errors=${p5.errors}`);
   console.log('\nDone. Re-run `node scripts/audit/db-substrate-audit.mjs` to verify.');
 
-  const hardErrors = p1.errors + p2.failed + (p3?.errors ?? 0);
+  const hardErrors = p1.errors + p2.failed + (p3?.errors ?? 0) + (p4?.errors ?? 0) + (p5?.errors ?? 0);
   process.exit(hardErrors > 50 ? 1 : 0);
 }
 
