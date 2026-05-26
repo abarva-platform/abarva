@@ -6,6 +6,7 @@ import {
   type GraphNode,
   type SegmentId,
 } from '@/lib/knowledge/tenant-data';
+import { getServerSupabase } from '@/lib/supabase-server';
 
 export interface TenantEnterpriseSource {
   type: 'TENANT';
@@ -16,7 +17,7 @@ export interface TenantEnterpriseSource {
 }
 
 const ENTERPRISE_QUERY_RE =
-  /\b(profile|company|enterprise|tenant|organization|organisation|org|structure|leadership|leaders?|executive|executives|business|function\s+leads?|c[-\s]?level|cxo|cio|cdio|cto|cmio|cmo|cno|coo|ceo|cfo|svp|vp|director|direct\s+reports?|reports?|reports?\s+to|owner|sponsor|budget|spend|financials?|capex|opex|capital|funding|approval|approver|authority|fy\s*26|fy2026|current\s+state|what\s+do\s+you\s+know)\b/i;
+  /\b(profile|company|enterprise|tenant|organization|organisation|org|structure|leadership|leaders?|executive|executives|business|function\s+leads?|c[-\s]?level|cxo|cio|cdio|cto|cmio|cmo|cno|coo|ceo|cfo|svp|vp|director|direct\s+reports?|reports?|reports?\s+to|owner|sponsor|budget|spend|financials?|capex|opex|capital|funding|approval|approver|authority|fy\s*26|fy2026|current\s+state|what\s+do\s+you\s+know|application|applications|apps?|systems?|portfolio|criticality|vendor|vendors?|supplier|suppliers?|contract|contracts?|renewal|renewals?|initiative|initiatives?|moves?|kill|replatform|dependency|dependencies|blocks?|blocked|blockers?)\b/i;
 
 const OFF_DOMAIN_GENERAL_KNOWLEDGE_RE =
   /^\s*(?:what|where)\s+(?:is|are)\s+the\s+capital\s+of\b/i;
@@ -87,10 +88,10 @@ export function selectTenantEnterpriseSegments(query: string): SegmentId[] {
   if (/\b(budget|spend|financials?|capex|opex|capital|funding|approval|approver|authority|fy\s*26|fy2026|run|change|transform)\b/.test(normalized)) {
     segments.push('it_financials');
   }
-  if (/\b(technology|tech|system|platform|cloud|data|analytics|warehouse|lakehouse|bi|ml|ai|vendor|application)\b/.test(normalized)) {
+  if (/\b(technology|tech|system|systems|platform|cloud|data|analytics|warehouse|lakehouse|bi|ml|ai|vendor|vendors?|supplier|suppliers?|contract|contracts?|renewal|renewals?|application|applications|apps?|criticality|portfolio)\b/.test(normalized)) {
     segments.push('it_landscape');
   }
-  if (/\b(program|initiative|move|in[-\s]?flight|portfolio|roadmap)\b/.test(normalized)) {
+  if (/\b(program|initiative|initiatives|move|moves|in[-\s]?flight|portfolio|roadmap|kill|fund|pause|accelerate|restructure)\b/.test(normalized)) {
     segments.push('program_inventory');
   }
 
@@ -118,9 +119,10 @@ export async function retrieveTenantEnterpriseSources(
 
   try {
     const adapter = getTenantDataAdapter();
-    const [directReportSource, cLevelSource, grouped] = await Promise.all([
+    const [directReportSource, cLevelSource, structuredSources, grouped] = await Promise.all([
       retrieveDirectReportsSource(tenantKey, query, opts),
       retrieveCLevelLeaderSource(tenantKey, query),
+      retrieveStructuredTenantSources(tenantKey, query),
       Promise.all(segments.map(async (segmentId) => {
         const chunks = await adapter.listContextChunks(tenantKey, {
           segmentIds: [segmentId],
@@ -147,11 +149,253 @@ export async function retrieveTenantEnterpriseSources(
         confidence: 0.94,
       }));
 
-    return [directReportSource, cLevelSource, ...segmentSources]
+    return [directReportSource, cLevelSource, ...structuredSources, ...segmentSources]
       .filter((source): source is TenantEnterpriseSource => Boolean(source));
   } catch {
     return [];
   }
+}
+
+interface ClientProfileRow {
+  id: string;
+  name: string | null;
+  legal_name: string | null;
+  tenant_key: string | null;
+  slug: string | null;
+  annual_revenue_usd: number | string | null;
+  it_budget_usd: number | string | null;
+  ai_budget_usd: number | string | null;
+  employee_count: number | string | null;
+  operational_units: number | string | null;
+  business_description: string | null;
+}
+
+interface ApplicationRow {
+  id: string;
+  name: string;
+  vendor: string | null;
+  business_function: string | null;
+  deployment_model: string | null;
+  criticality: string | null;
+  status: string | null;
+  annual_cost_usd: number | string | null;
+}
+
+interface InitiativeRow {
+  initiative_id: string;
+  display_id: string | null;
+  name: string;
+  stage: string | null;
+  status_flag: string | null;
+  committed_total_usd: number | string | null;
+  measured_value_usd: number | string | null;
+  status_summary: string | null;
+  metadata: Record<string, unknown> | null;
+}
+
+interface VendorContractRow {
+  vendor_id: string | null;
+  vendor_name: string;
+  contract_category: string | null;
+  annual_contract_value_usd: number | string | null;
+  renewal_date: string | null;
+  exit_terms_jsonb: Record<string, unknown> | null;
+  ai_usage_clauses: boolean | null;
+  indemnity_provided: boolean | null;
+  concentration_pct: number | string | null;
+}
+
+const TENANT_KEY_ALIASES: Record<string, string[]> = {
+  apex: ['apex-retail', 'apexretail'],
+  'apex-retail': ['apex-retail', 'apexretail'],
+  meridian: ['meridian-health', 'meridian'],
+  'meridian-health': ['meridian-health', 'meridian'],
+  northstar: ['northstar-medtech', 'northstar'],
+  'northstar-medtech': ['northstar-medtech', 'northstar'],
+  firstcapital: ['first-capital', 'firstcapital'],
+  'first-capital': ['first-capital', 'firstcapital'],
+  'first-capital-financial': ['first-capital', 'firstcapital'],
+  arcturus: ['first-capital', 'firstcapital'],
+};
+
+async function retrieveStructuredTenantSources(
+  tenantKey: string,
+  query: string,
+): Promise<TenantEnterpriseSource[]> {
+  const normalized = query.toLowerCase();
+  const wantsProfile = /\b(profile|company|enterprise|tenant|what\s+do\s+you\s+know|who\s+are\s+we|budget|spend|financials?|revenue|employees?)\b/.test(normalized);
+  const wantsApps = /\b(application|applications|apps?|systems?|portfolio|criticality|replatform|legacy|erp|sap|as\/?400|mainframe)\b/.test(normalized);
+  const wantsVendors = /\b(vendor|vendors?|supplier|suppliers?|contract|contracts?|renewal|renewals?|ams|bafo|rfi|rfp|sourcing|source)\b/.test(normalized);
+  const wantsInitiatives = /\b(initiative|initiatives|move|moves|program|programs|kill|fund|pause|accelerate|restructure|roadmap)\b/.test(normalized);
+  if (!wantsProfile && !wantsApps && !wantsVendors && !wantsInitiatives) return [];
+
+  try {
+    const sb = getServerSupabase();
+    const clientId = await resolveClientIdForTenantKey(sb, tenantKey);
+    if (!clientId) return [];
+    const results = await Promise.all([
+      wantsProfile ? readClientProfileSource(sb, tenantKey, clientId) : Promise.resolve(null),
+      wantsApps ? readApplicationPortfolioSource(sb, tenantKey, clientId) : Promise.resolve(null),
+      wantsVendors ? readVendorContractsSource(sb, tenantKey, clientId) : Promise.resolve(null),
+      wantsInitiatives ? readInitiativesSource(sb, tenantKey, clientId) : Promise.resolve(null),
+    ]);
+    return results.filter((source): source is TenantEnterpriseSource => Boolean(source));
+  } catch {
+    return [];
+  }
+}
+
+async function resolveClientIdForTenantKey(
+  sb: ReturnType<typeof getServerSupabase>,
+  tenantKey: string,
+): Promise<string | null> {
+  const aliases = TENANT_KEY_ALIASES[tenantKey.toLowerCase()] ?? [tenantKey.toLowerCase()];
+  const orClause = aliases
+    .flatMap((alias) => [`tenant_key.eq.${alias}`, `slug.eq.${alias}`])
+    .join(',');
+  const { data, error } = await sb
+    .from('clients')
+    .select('id')
+    .or(orClause)
+    .limit(1)
+    .maybeSingle();
+  if (error || !data) return null;
+  return typeof (data as { id?: unknown }).id === 'string' ? (data as { id: string }).id : null;
+}
+
+async function readClientProfileSource(
+  sb: ReturnType<typeof getServerSupabase>,
+  tenantKey: string,
+  clientId: string,
+): Promise<TenantEnterpriseSource | null> {
+  const { data, error } = await sb
+    .from('clients')
+    .select('id,name,legal_name,tenant_key,slug,annual_revenue_usd,it_budget_usd,ai_budget_usd,employee_count,operational_units,business_description')
+    .eq('id', clientId)
+    .maybeSingle();
+  if (error || !data) return null;
+  const row = data as ClientProfileRow;
+  const revenue = formatUsd(row.annual_revenue_usd);
+  const itBudget = formatUsd(row.it_budget_usd);
+  const aiBudget = formatUsd(row.ai_budget_usd);
+  return {
+    type: 'TENANT',
+    name: `Structured client profile (${tenantKey})`,
+    id: `${tenantKey}:structured:client_profile:${clientId}`,
+    detail: [
+      `clients[${clientId}] structured profile.`,
+      row.name ? `Name: ${row.name}.` : null,
+      row.legal_name ? `Legal name: ${row.legal_name}.` : null,
+      revenue ? `Annual revenue: ${revenue}.` : null,
+      itBudget ? `IT budget: ${itBudget}.` : null,
+      aiBudget ? `AI budget: ${aiBudget}.` : null,
+      row.employee_count != null ? `Employees: ${Number(row.employee_count).toLocaleString('en-US')}.` : null,
+      row.operational_units != null ? `Operational units/plants/stores: ${Number(row.operational_units).toLocaleString('en-US')}.` : null,
+      row.business_description ? `Business description: ${row.business_description}.` : null,
+      'Use this row before saying tenant scale, annual IT spend, or company profile is unavailable.',
+    ].filter(Boolean).join('\n- '),
+    confidence: 0.98,
+  };
+}
+
+async function readApplicationPortfolioSource(
+  sb: ReturnType<typeof getServerSupabase>,
+  tenantKey: string,
+  clientId: string,
+): Promise<TenantEnterpriseSource | null> {
+  const { data, error } = await sb
+    .from('applications')
+    .select('id,name,vendor,business_function,deployment_model,criticality,status,annual_cost_usd')
+    .eq('client_id', clientId)
+    .order('criticality', { ascending: true })
+    .order('annual_cost_usd', { ascending: false, nullsFirst: false })
+    .limit(15);
+  if (error || !data || data.length === 0) return null;
+  const rows = data as ApplicationRow[];
+  const prefix = tenantRecordPrefix(tenantKey);
+  return {
+    type: 'TENANT',
+    name: `Structured application portfolio (${tenantKey})`,
+    id: `${tenantKey}:structured:applications`,
+    detail: [
+      `Top critical applications from public.applications for ${tenantKey}.`,
+      'Answer app-portfolio and criticality questions from these rows before using generic industry systems.',
+      ...rows.map((row) => {
+        const appRef = deriveAppRef(prefix, row.name, row.id);
+        return `${appRef} ${row.name} — criticality ${row.criticality ?? 'unknown'}, status ${row.status ?? 'unknown'}, vendor/AMS ${row.vendor ?? 'unknown'}, business_unit ${row.business_function ?? 'unknown'}, deployment ${row.deployment_model ?? 'unknown'}, annual_run_cost ${formatUsd(row.annual_cost_usd) ?? 'unknown'}`;
+      }),
+    ].join('\n- '),
+    confidence: 0.97,
+  };
+}
+
+async function readVendorContractsSource(
+  sb: ReturnType<typeof getServerSupabase>,
+  tenantKey: string,
+  clientId: string,
+): Promise<TenantEnterpriseSource | null> {
+  const { data, error } = await sb
+    .from('vendor_contracts')
+    .select('vendor_id,vendor_name,contract_category,annual_contract_value_usd,renewal_date,exit_terms_jsonb,ai_usage_clauses,indemnity_provided,concentration_pct')
+    .eq('client_id', clientId)
+    .order('annual_contract_value_usd', { ascending: false, nullsFirst: false })
+    .limit(15);
+  if (error || !data || data.length === 0) return null;
+  const rows = data as VendorContractRow[];
+  return {
+    type: 'TENANT',
+    name: `Structured vendor contracts (${tenantKey})`,
+    id: `${tenantKey}:structured:vendor_contracts`,
+    detail: [
+      `Largest vendor contracts from public.vendor_contracts for ${tenantKey}.`,
+      'Use these exact vendor_id, annual value, renewal, exit terms, and AI-clause fields for vendor concentration and sourcing questions.',
+      ...rows.map((row) => {
+        const exitTerms = typeof row.exit_terms_jsonb?.summary === 'string' ? row.exit_terms_jsonb.summary : 'not specified';
+        return `${row.vendor_id ?? 'vendor_contract'} ${row.vendor_name} — ${row.contract_category ?? 'contract'}, annual_value ${formatUsd(row.annual_contract_value_usd) ?? 'unknown'}, renewal ${formatDate(row.renewal_date) ?? 'unknown'}, exit_terms "${exitTerms}", AI clauses ${row.ai_usage_clauses ? 'yes' : 'no'}, indemnity ${row.indemnity_provided ? 'yes' : 'no'}, concentration ${formatPct(row.concentration_pct) ?? 'unknown'}`;
+      }),
+    ].join('\n- '),
+    confidence: 0.97,
+  };
+}
+
+async function readInitiativesSource(
+  sb: ReturnType<typeof getServerSupabase>,
+  tenantKey: string,
+  clientId: string,
+): Promise<TenantEnterpriseSource | null> {
+  const { data, error } = await sb
+    .from('ai_initiatives')
+    .select('initiative_id,display_id,name,stage,status_flag,committed_total_usd,measured_value_usd,status_summary,metadata')
+    .eq('client_id', clientId)
+    .order('committed_total_usd', { ascending: false, nullsFirst: false })
+    .limit(80);
+  if (error || !data || data.length === 0) return null;
+  const rows = (data as InitiativeRow[])
+    .sort((a, b) => initiativePriority(a) - initiativePriority(b))
+    .slice(0, 18);
+  return {
+    type: 'TENANT',
+    name: `Structured initiatives (${tenantKey})`,
+    id: `${tenantKey}:structured:ai_initiatives`,
+    detail: [
+      `Active initiative portfolio from public.ai_initiatives for ${tenantKey}.`,
+      'Use initiative_id/status_flag/status_summary for kill, restructure, accelerate, and funding questions.',
+      ...rows.map((row) => {
+        const posture = typeof row.metadata?.sentinel_posture === 'string' ? row.metadata.sentinel_posture : row.status_summary;
+        return `${row.initiative_id} (${row.display_id ?? row.initiative_id}) ${row.name} — stage ${row.stage ?? 'unknown'}, status_flag ${row.status_flag ?? 'unknown'}, Sentinel posture ${posture ?? 'unknown'}, committed ${formatUsd(row.committed_total_usd) ?? 'unknown'}, measured/projected value ${formatUsd(row.measured_value_usd) ?? 'unknown'}`;
+      }),
+    ].join('\n- '),
+    confidence: 0.97,
+  };
+}
+
+function initiativePriority(row: InitiativeRow): number {
+  const posture = `${row.status_summary ?? ''} ${typeof row.metadata?.sentinel_posture === 'string' ? row.metadata.sentinel_posture : ''} ${row.status_flag ?? ''}`.toLowerCase();
+  if (posture.includes('kill') || posture.includes('stalled')) return 0;
+  if (posture.includes('restructure')) return 1;
+  if (posture.includes('hold') || posture.includes('value_lag')) return 2;
+  if (posture.includes('warning')) return 3;
+  return 4;
 }
 
 function isDirectReportsQuestion(query: string): boolean {
@@ -399,6 +643,45 @@ function readStringPayload(node: GraphNode, key: string): string | null {
 
 function normalizeName(value: string): string {
   return value.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+}
+
+function tenantRecordPrefix(tenantKey: string): string {
+  const normalized = tenantKey.toLowerCase();
+  if (normalized.includes('northstar')) return 'NST';
+  if (normalized.includes('apex')) return 'APX';
+  if (normalized.includes('meridian')) return 'MR';
+  if (normalized.includes('first') || normalized.includes('arcturus')) return 'FCF';
+  return normalized.replace(/[^a-z0-9]/g, '').slice(0, 3).toUpperCase() || 'TEN';
+}
+
+function deriveAppRef(prefix: string, name: string, fallbackId: string): string {
+  const match = name.match(/\bCapability\s+(\d+)\b/i);
+  if (match) return `${prefix}-APP-${match[1].padStart(3, '0')}`;
+  return `${prefix}-APP-${fallbackId.slice(0, 8)}`;
+}
+
+function formatUsd(value: number | string | null | undefined): string | null {
+  if (value == null) return null;
+  const numeric = typeof value === 'number' ? value : Number(value);
+  if (!Number.isFinite(numeric)) return null;
+  if (Math.abs(numeric) >= 1_000_000_000) return `$${(numeric / 1_000_000_000).toFixed(1)}B`;
+  if (Math.abs(numeric) >= 1_000_000) return `$${(numeric / 1_000_000).toFixed(1)}M`;
+  if (Math.abs(numeric) >= 1_000) return `$${(numeric / 1_000).toFixed(1)}K`;
+  return `$${numeric.toLocaleString('en-US')}`;
+}
+
+function formatPct(value: number | string | null | undefined): string | null {
+  if (value == null) return null;
+  const numeric = typeof value === 'number' ? value : Number(value);
+  if (!Number.isFinite(numeric)) return null;
+  return `${numeric.toFixed(2)}%`;
+}
+
+function formatDate(value: string | null | undefined): string | null {
+  if (!value) return null;
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return date.toISOString().slice(0, 10);
 }
 
 function rankChunks(chunks: ContextChunk[], query: string, segmentId: SegmentId): ContextChunk[] {

@@ -11,6 +11,7 @@
 //   TENANT_KEY=northstar npx tsx scripts/seed/load-tenant-substrate.ts --only-tables
 //
 // Phases:
+//   PHASE 0 — clients profile reconciliation      (fast)
 //   PHASE 1 — enterprise_context_source_files  (no embedding, fast)
 //   PHASE 2 — enterprise_context_chunks        (embeds via AI Egress, slowest)
 //   PHASE 3 — applications                     (flat insert) [--skip-tables to skip]
@@ -133,6 +134,7 @@ interface TenantConfig {
   clientId: string;
   tenantKey: string; // for enterprise_context_chunks.tenant_key column
   datasetRoot: string;
+  profileYaml?: string;
   // file paths inside datasetRoot
   sourceFilesDir: string; // .md files
   corpusJsonl: string;    // chunks
@@ -148,6 +150,7 @@ const TENANTS: Record<string, TenantConfig> = {
     clientId: '2702b525-4c6a-4fbe-973d-99a8480d8318',
     tenantKey: 'northstar-medtech',
     datasetRoot: 'datasets/northstar-clinical-tech-synthetic-v1',
+    profileYaml: '00-profile/enterprise-profile.yaml',
     sourceFilesDir: '16-market-corpus/source-files',
     corpusJsonl: '16-market-corpus/client-data-corpus.jsonl',
     appPortfolioCsv: '07-application-portfolio/application-portfolio.csv',
@@ -160,6 +163,7 @@ const TENANTS: Record<string, TenantConfig> = {
     clientId: 'a20ecef5-f0ea-4890-b9d5-7375fab223ff',
     tenantKey: 'meridian-health',
     datasetRoot: 'datasets/meridian-health-synthetic-v1',
+    profileYaml: '00-profile/enterprise-profile.yaml',
     sourceFilesDir: '13-context/source-files',
     corpusJsonl: '13-context/client-data-corpus.jsonl',
     appPortfolioCsv: '01-portfolio/application-portfolio.csv',
@@ -172,6 +176,7 @@ const TENANTS: Record<string, TenantConfig> = {
     clientId: 'bb8ed961-a049-4d0c-a38f-f8912138fceb',
     tenantKey: 'apex-retail',
     datasetRoot: 'datasets/apex-retail-synthetic-v1',
+    profileYaml: '00-profile/enterprise-profile.yaml',
     sourceFilesDir: '13-context/source-files',
     corpusJsonl: '13-context/client-data-corpus.jsonl',
     appPortfolioCsv: '01-portfolio/application-portfolio.csv',
@@ -184,6 +189,7 @@ const TENANTS: Record<string, TenantConfig> = {
     clientId: 'a75687bf-71b9-4524-ab4e-68ae3f28d200',
     tenantKey: 'first-capital',
     datasetRoot: 'datasets/first-capital-financial-synthetic-v1',
+    profileYaml: '00-profile/enterprise-profile.yaml',
     sourceFilesDir: '13-context/source-files',
     corpusJsonl: '13-context/client-data-corpus.jsonl',
     appPortfolioCsv: '01-portfolio/application-portfolio.csv',
@@ -196,6 +202,7 @@ const TENANTS: Record<string, TenantConfig> = {
     clientId: 'a75687bf-71b9-4524-ab4e-68ae3f28d200',
     tenantKey: 'first-capital',
     datasetRoot: 'datasets/first-capital-financial-synthetic-v1',
+    profileYaml: '00-profile/enterprise-profile.yaml',
     sourceFilesDir: '13-context/source-files',
     corpusJsonl: '13-context/client-data-corpus.jsonl',
     appPortfolioCsv: '01-portfolio/application-portfolio.csv',
@@ -208,6 +215,7 @@ const TENANTS: Record<string, TenantConfig> = {
     clientId: 'a75687bf-71b9-4524-ab4e-68ae3f28d200',
     tenantKey: 'first-capital',
     datasetRoot: 'datasets/first-capital-financial-synthetic-v1',
+    profileYaml: '00-profile/enterprise-profile.yaml',
     sourceFilesDir: '13-context/source-files',
     corpusJsonl: '13-context/client-data-corpus.jsonl',
     appPortfolioCsv: '01-portfolio/application-portfolio.csv',
@@ -241,6 +249,82 @@ function makeSupabase(): SupabaseClient {
 }
 
 const sb = makeSupabase();
+
+// ─── PHASE 0 — clients profile reconciliation ──────────────────────────────
+
+function readProfileYaml(): Record<string, string> {
+  if (!TENANT.profileYaml) return {};
+  const filePath = path.join(REPO_ROOT, TENANT.datasetRoot, TENANT.profileYaml);
+  if (!fs.existsSync(filePath)) return {};
+  const profile: Record<string, string> = {};
+  for (const rawLine of fs.readFileSync(filePath, 'utf8').split('\n')) {
+    const line = rawLine.trim();
+    if (!line || line.startsWith('#') || line.startsWith('- ')) continue;
+    const match = line.match(/^([A-Za-z0-9_]+):\s*(.*)$/);
+    if (!match) continue;
+    profile[match[1]] = match[2].trim().replace(/^["']|["']$/g, '');
+  }
+  return profile;
+}
+
+function optionalNumber(value: string | undefined): number | null {
+  if (!value) return null;
+  const parsed = Number(value.replace(/[$,]/g, ''));
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+async function phase0ClientProfile(): Promise<{ updated: number; errors: number }> {
+  console.log('\n━━ PHASE 0 · clients profile ━━');
+  const profile = readProfileYaml();
+  if (Object.keys(profile).length === 0) {
+    console.log('  No enterprise profile YAML configured or found');
+    return { updated: 0, errors: 0 };
+  }
+
+  const revenueUsd = optionalNumber(profile.revenue_usd);
+  const itBudgetUsd = optionalNumber(profile.it_budget_usd);
+  const employees = optionalNumber(profile.employees);
+  const plants = optionalNumber(profile.plants);
+  const name = profile.name || null;
+  const businessDescription = [
+    name ? `${name} synthetic enterprise tenant` : `${TENANT.key} synthetic enterprise tenant`,
+    revenueUsd ? `$${(revenueUsd / 1_000_000_000).toFixed(1)}B revenue` : null,
+    employees ? `${employees.toLocaleString('en-US')} employees` : null,
+    plants ? `${plants} plants` : null,
+    profile.countries ? `${profile.countries} countries` : null,
+    profile.strategic_posture ? `strategic posture: ${profile.strategic_posture}` : null,
+  ].filter(Boolean).join('; ');
+
+  const patch: Record<string, unknown> = {
+    updated_at: new Date().toISOString(),
+  };
+  if (name) {
+    patch.name = name;
+    patch.legal_name = name;
+  }
+  if (revenueUsd != null) {
+    patch.annual_revenue_usd = revenueUsd;
+    patch.revenue = `$${(revenueUsd / 1_000_000_000).toFixed(1)}B`;
+  }
+  if (itBudgetUsd != null) patch.it_budget_usd = itBudgetUsd;
+  if (employees != null) patch.employee_count = employees;
+  if (plants != null) patch.operational_units = plants;
+  if (businessDescription) patch.business_description = businessDescription;
+  patch.tenant_key = TENANT.tenantKey;
+
+  if (DRY_RUN) {
+    console.log(`  [DRY-RUN] Would update clients row ${TENANT.clientId} with ${Object.keys(patch).length} profile fields`);
+    return { updated: 1, errors: 0 };
+  }
+
+  const { error } = await sb.from('clients').update(patch).eq('id', TENANT.clientId);
+  if (error) {
+    console.log(`  [ERR] clients profile update: ${error.message}`);
+    return { updated: 0, errors: 1 };
+  }
+  console.log(`  Updated clients profile for ${TENANT.clientId}`);
+  return { updated: 1, errors: 0 };
+}
 
 // ─── PHASE 1 — enterprise_context_source_files ──────────────────────────────
 
@@ -645,6 +729,7 @@ async function phase4Initiatives(): Promise<{ inserted: number; errors: number }
   console.log(`  Found ${records.length} initiatives`);
 
   const now = new Date().toISOString();
+  const goalIds = await ensureBusinessGoals();
   const rows = records
     .filter((r) => r.initiative_id && r.title)
     .map((r) => {
@@ -654,17 +739,17 @@ async function phase4Initiatives(): Promise<{ inserted: number; errors: number }
       return {
         initiative_id: r.initiative_id,
         client_id: TENANT.clientId,
-        display_id: r.initiative_id.replace(/^FCF-INIT-/, 'FCF-').replace(/^FCF-CLOSED-/, 'FCF-C-').slice(0, 20),
+        display_id: buildDisplayId(r.initiative_id),
         name: r.title,
         description: r.evidence_note || `${r.title} seeded by ${TENANT.key} substrate pack.`,
         primary_category_id: posture.includes('kill') ? 'CAT-02' : posture.includes('hold') ? 'CAT-06' : posture.includes('aml') || posture.includes('risk') ? 'CAT-08' : 'CAT-03',
         secondary_category_id: posture.includes('restructure') ? 'CAT-04' : null,
-        primary_goal_id: posture.includes('kill') ? 'FCF-GOAL-04' : posture.includes('hold') ? 'FCF-GOAL-02' : projected > committed ? 'FCF-GOAL-03' : 'FCF-GOAL-01',
+        primary_goal_id: posture.includes('kill') ? goalIds.productivity : posture.includes('hold') ? goalIds.governance : projected > committed ? goalIds.value : goalIds.risk,
         stage: (r.status || '').toLowerCase() === 'closed' ? 'sunset' : posture.includes('hold') ? 'multi_year_strategic_bet' : (r.stage || '').toLowerCase() === 'scale' ? 'scaled' : (r.stage || '').toLowerCase() === 'run' ? 'scaled' : 'pilot',
         stage_detail: r.status || null,
-        owner_name: r.accountable || 'CIO',
-        owner_title: r.accountable || 'CIO',
-        owner_function: r.accountable || 'Technology',
+        owner_name: r.accountable || r.sponsor_role || 'CIO',
+        owner_title: r.accountable || r.sponsor_role || 'CIO',
+        owner_function: r.accountable || r.sponsor_role || 'Technology',
         committed_annual_usd: committed,
         committed_total_usd: committed,
         measured_value_usd: projected,
@@ -702,6 +787,84 @@ async function phase4Initiatives(): Promise<{ inserted: number; errors: number }
   return { inserted, errors };
 }
 
+function tenantPrefix(): string {
+  if (TENANT.key === 'northstar') return 'NST';
+  if (TENANT.key === 'meridian') return 'MR';
+  if (TENANT.key === 'apex') return 'APX';
+  if (TENANT.key === 'firstcapital') return 'FCF';
+  return TENANT.key.slice(0, 3).toUpperCase();
+}
+
+function buildDisplayId(initiativeId: string): string {
+  const prefix = tenantPrefix();
+  return initiativeId
+    .replace(new RegExp(`^${prefix}-INIT-`), `${prefix}-`)
+    .replace(new RegExp(`^${prefix}-CLOSED-`), `${prefix}-C-`)
+    .slice(0, 20);
+}
+
+async function ensureBusinessGoals(): Promise<{ value: string; governance: string; risk: string; productivity: string }> {
+  const prefix = tenantPrefix();
+  const goals = {
+    value: `${prefix}-GOAL-01`,
+    governance: `${prefix}-GOAL-02`,
+    risk: `${prefix}-GOAL-03`,
+    productivity: `${prefix}-GOAL-04`,
+  };
+  const rows = [
+    {
+      goal_id: goals.value,
+      client_id: TENANT.clientId,
+      name: `${TENANT.key} value realization`,
+      strategic_context: `Synthetic ${TENANT.key} substrate goal for measurable value realization.`,
+      display_order: 1,
+      loaded_via_template: `${TENANT.key}-substrate-v1`,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    },
+    {
+      goal_id: goals.governance,
+      client_id: TENANT.clientId,
+      name: `${TENANT.key} governance and platform foundation`,
+      strategic_context: `Synthetic ${TENANT.key} substrate goal for platform decisions, regulatory posture, and operating-model foundations.`,
+      display_order: 2,
+      loaded_via_template: `${TENANT.key}-substrate-v1`,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    },
+    {
+      goal_id: goals.risk,
+      client_id: TENANT.clientId,
+      name: `${TENANT.key} risk reduction`,
+      strategic_context: `Synthetic ${TENANT.key} substrate goal for operational, regulatory, vendor, and delivery risk reduction.`,
+      display_order: 3,
+      loaded_via_template: `${TENANT.key}-substrate-v1`,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    },
+    {
+      goal_id: goals.productivity,
+      client_id: TENANT.clientId,
+      name: `${TENANT.key} productivity and simplification`,
+      strategic_context: `Synthetic ${TENANT.key} substrate goal for run-cost reduction, simplification, and productivity.`,
+      display_order: 4,
+      loaded_via_template: `${TENANT.key}-substrate-v1`,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    },
+  ];
+
+  if (DRY_RUN) return goals;
+
+  const { error } = await sb
+    .from('ai_business_goals')
+    .upsert(rows, { onConflict: 'goal_id' });
+  if (error) {
+    console.log(`  [WARN] business goals upsert failed: ${error.message}`);
+  }
+  return goals;
+}
+
 async function phase5VendorContracts(): Promise<{ inserted: number; errors: number }> {
   console.log('\n━━ PHASE 5 · vendor_contracts ━━');
   if (!TENANT.vendorContractsCsv) {
@@ -717,34 +880,40 @@ async function phase5VendorContracts(): Promise<{ inserted: number; errors: numb
   console.log(`  Found ${parsed.data.length} vendor contracts`);
 
   const now = new Date().toISOString();
-  const totalAnnual = parsed.data.reduce((sum, r) => sum + Number(r.annual_usd || 0), 0) || 1;
+  const totalAnnual = parsed.data.reduce((sum, r) => sum + Number(r.annual_usd || r.annual_value_usd || 0), 0) || 1;
   const rows = parsed.data
-    .filter((r) => r.vendor)
-    .map((r, idx) => ({
-      id: stableUuid(`${TENANT.clientId}:vendor:${r.vendor}:${idx}`),
+    .filter((r) => r.vendor || r.vendor_name)
+    .map((r, idx) => {
+      const vendorName = r.vendor || r.vendor_name;
+      const vendorId = r.vendor_id || `${tenantPrefix()}-VEND-${String(idx + 1).padStart(3, '0')}`;
+      const annualUsd = Number(r.annual_usd || r.annual_value_usd || 0);
+      const type = r.type || r.category || 'vendor';
+      return ({
+      id: stableUuid(`${TENANT.clientId}:vendor:${vendorName}:${idx}`),
       client_id: TENANT.clientId,
-      vendor_id: `FCF-VEND-${String(idx + 1).padStart(3, '0')}`,
-      vendor_name: r.vendor,
-      contract_name: `${r.vendor} ${r.type || 'contract'}`,
-      contract_category: r.type || 'vendor',
-      scope_summary: r.notes || `${r.vendor} First Capital vendor contract.`,
+      vendor_id: vendorId,
+      vendor_name: vendorName,
+      contract_name: `${vendorName} ${type}`,
+      contract_category: type,
+      scope_summary: r.notes || `${vendorName} ${TENANT.key} vendor contract.`,
       owner_id: null,
-      annual_contract_value_usd: Number(r.annual_usd || 0),
+      annual_contract_value_usd: annualUsd,
       start_date: '2023-01-01',
       end_date: r.renewal_date || null,
       renewal_date: r.renewal_date || null,
-      ai_usage_clauses: Boolean(r.ai_usage_clauses && !/standard/i.test(r.ai_usage_clauses)),
-      indemnity_provided: /indemnity/i.test(r.ai_usage_clauses || ''),
-      exit_terms_jsonb: { summary: r.exit_terms || 'standard renewal notice', source: `${TENANT.datasetRoot}/${TENANT.vendorContractsCsv}` },
-      concentration_pct: Number(((Number(r.annual_usd || 0) / totalAnnual) * 100).toFixed(2)),
+      ai_usage_clauses: Boolean((r.ai_usage_clauses || r.ai_clauses) && !/standard|not negotiated/i.test(r.ai_usage_clauses || r.ai_clauses || '')),
+      indemnity_provided: /indemnity/i.test(r.ai_usage_clauses || r.ai_clauses || ''),
+      exit_terms_jsonb: { summary: r.exit_terms || 'standard renewal notice', data_rights: r.data_rights || null, source: `${TENANT.datasetRoot}/${TENANT.vendorContractsCsv}` },
+      concentration_pct: Number(((annualUsd / totalAnnual) * 100).toFixed(2)),
       rate_card_vintage: '2025-01-01',
-      outcome_based: /outcome/i.test(`${r.notes} ${r.exit_terms} ${r.ai_usage_clauses}`),
+      outcome_based: /outcome/i.test(`${r.notes} ${r.exit_terms} ${r.ai_usage_clauses} ${r.ai_clauses}`),
       created_at: now,
       updated_at: now,
       created_by: 'substrate-loader',
       updated_by: 'substrate-loader',
       deleted_at: null,
-    }));
+    });
+  });
 
   if (DRY_RUN) {
     console.log(`  [DRY-RUN] Would upsert ${rows.length} vendor contracts`);
@@ -781,6 +950,7 @@ async function main() {
   console.log(`  only-tables: ${ONLY_TABLES}`);
   console.log(`  skip-tables: ${SKIP_TABLES}`);
 
+  const p0 = await phase0ClientProfile();
   const p1 = ONLY_TABLES ? { inserted: 0, skipped: 0, errors: 0 } : await phase1SourceFiles();
   const p2 = ONLY_TABLES ? { rows: 0, embedded: 0, failed: 0 } : await phase2ChunksAndEmbeddings();
   let p3: { inserted: number; errors: number } | null = null;
@@ -795,6 +965,7 @@ async function main() {
   console.log('\n═══════════════════════════════════════════════════════════════');
   console.log('Summary');
   console.log('═══════════════════════════════════════════════════════════════');
+  console.log(`  Phase 0 client:        updated=${p0.updated}, errors=${p0.errors}`);
   console.log(`  Phase 1 source files:  inserted=${p1.inserted}, errors=${p1.errors}`);
   console.log(`  Phase 2 chunks:        upserted=${p2.rows}, embedded=${p2.embedded}, failed=${p2.failed}`);
   if (p3) console.log(`  Phase 3 applications:  inserted=${p3.inserted}, errors=${p3.errors}`);
