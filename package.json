@@ -30,6 +30,7 @@
     "smoke:foundation-fix-1-retrieval-wiring": "NODE_OPTIONS='--require ./src/scripts/_mock-server-only-preload.cjs' npx tsx scripts/smoke/foundation-fix-1-retrieval-wiring.spec.ts",
     "smoke:sentinel-tenant-pin": "npx tsx scripts/smoke/sentinel-tenant-pin.spec.ts",
     "smoke:northstar-context-ingestion": "npx tsx scripts/smoke/northstar-context-ingestion.spec.ts",
+    "smoke:northstar-context-layer-live-data": "npx tsx scripts/smoke/northstar-context-layer-live-data.spec.ts",
     "smoke:p20-board-pack-generator": "NODE_OPTIONS='--require ./src/scripts/_mock-server-only-preload.cjs' npx tsx scripts/smoke/p20-board-pack-generator.spec.ts",
     "smoke:p22-decision-dossier": "NODE_OPTIONS='--require ./src/scripts/_mock-server-only-preload.cjs' npx tsx scripts/smoke/p22-decision-dossier.spec.ts",
     "smoke:p23-source-value-proof": "NODE_OPTIONS='--require ./src/scripts/_mock-server-only-preload.cjs' npx tsx scripts/smoke/p23-source-value-proof.spec.ts",

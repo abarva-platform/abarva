@@ -1,42 +1,74 @@
-import { runNorthstarContextIngestion } from '@/lib/context-ingestion/sync-runner';
+import Link from 'next/link';
+
+import { getActiveClientRow } from '@/lib/active-client';
+import { getTenantSourceFiles } from '@/lib/context-ingestion/tenant-context-read-model';
 
 export const metadata = { title: 'Context Uploads | AbarVa Setup' };
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
-const sampleCsv = [
-  'app_id,name,criticality,owner_role,system_of_record,time_classification,annual_value_usd',
-  'NST-CMDB-001,SAP ECC Finance,P0,VP ERP,true,migrate,42000000',
-  'NST-CMDB-002,JD Edwards Dental,P1,VP Dental IT,true,retire,8400000',
-  'NST-CMDB-BAD,Legacy rebate engine,P1,,true,invalid-time,not-a-number',
-].join('\n');
+function formatDate(value: string): string {
+  if (!value) return 'Not recorded';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return date.toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' });
+}
 
-export default function ContextUploadsPage() {
-  const result = runNorthstarContextIngestion({
-    fileName: 'ServiceNow_CMDB_Export.csv',
-    text: sampleCsv,
-  });
+export default async function ContextUploadsPage() {
+  const activeClient = await getActiveClientRow(null);
+  const sourceFiles = activeClient
+    ? await getTenantSourceFiles(activeClient.id, { limit: 50 })
+    : [];
 
   return (
     <main style={{ background: '#F8F7F4', minHeight: '100vh', padding: 32 }}>
-      <section style={{ maxWidth: 1060, margin: '0 auto', display: 'grid', gap: 18 }}>
-        <h1 style={{ fontFamily: 'Georgia, serif', fontSize: 42 }}>Upload classification preview</h1>
-        <div style={{ background: '#fffdf8', border: '1px solid #d8d2c4', borderRadius: 8, padding: 18, fontFamily: 'DM Sans, sans-serif' }}>
-          <p><strong>File:</strong> {result.run.file.fileName}</p>
-          <p><strong>Classification:</strong> {result.run.classification.templateType} · {result.run.classification.dimension}</p>
-          <p><strong>Extraction:</strong> {result.run.classification.extractionStrategy} · confidence {result.run.classification.confidence}</p>
-          <p><strong>Facts:</strong> {result.run.facts.length} extracted · {result.run.validationFindings.length} validation findings · {result.run.committedFactIds.length} committed after approval</p>
+      <section style={{ maxWidth: 1120, margin: '0 auto', display: 'grid', gap: 18 }}>
+        <div>
+          <p style={{ fontFamily: 'DM Sans, sans-serif', fontSize: 12, letterSpacing: 0, textTransform: 'uppercase' }}>
+            Setup · Context uploads
+          </p>
+          <h1 style={{ fontFamily: 'Georgia, serif', fontSize: 42, margin: 0 }}>
+            {activeClient ? `${activeClient.name} source files` : 'Context uploads'}
+          </h1>
         </div>
-        <div style={{ background: '#fffdf8', border: '1px solid #d8d2c4', borderRadius: 8, padding: 18 }}>
-          <h2 style={{ fontFamily: 'Georgia, serif', marginTop: 0 }}>Validation findings</h2>
-          <ul style={{ fontFamily: 'DM Sans, sans-serif', lineHeight: 1.8 }}>
-            {result.run.validationFindings.map((finding) => (
-              <li key={`${finding.code}-${finding.row}-${finding.field}`}>
-                <strong>{finding.severity}</strong> · row {finding.row ?? '-'} · {finding.field ?? '-'} · {finding.message}
-              </li>
-            ))}
-          </ul>
-        </div>
+
+        {!activeClient ? (
+          <p style={{ fontFamily: 'DM Sans, sans-serif', lineHeight: 1.6 }}>
+            No active client row is available for this session.
+          </p>
+        ) : sourceFiles.length === 0 ? (
+          <div style={{ background: '#fffdf8', border: '1px solid #d8d2c4', borderRadius: 8, padding: 18, fontFamily: 'DM Sans, sans-serif' }}>
+            No source files are loaded for this tenant yet.
+          </div>
+        ) : (
+          <table style={{ width: '100%', borderCollapse: 'collapse', background: '#fffdf8', fontFamily: 'DM Sans, sans-serif' }}>
+            <thead>
+              <tr>
+                {['Source document', 'Chunks', 'First loaded', 'Sample chunk', 'Evidence'].map((head) => (
+                  <th key={head} style={{ padding: 10, borderBottom: '1px solid #d8d2c4', textAlign: 'left' }}>{head}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {sourceFiles.map((file) => (
+                <tr key={file.source_doc}>
+                  <td style={{ padding: 10, borderBottom: '1px solid #eee7d8' }}>{file.source_doc}</td>
+                  <td style={{ padding: 10, borderBottom: '1px solid #eee7d8' }}>{file.chunk_count.toLocaleString()}</td>
+                  <td style={{ padding: 10, borderBottom: '1px solid #eee7d8' }}>{formatDate(file.first_loaded_at)}</td>
+                  <td style={{ padding: 10, borderBottom: '1px solid #eee7d8' }}>{file.sample_chunk_id}</td>
+                  <td style={{ padding: 10, borderBottom: '1px solid #eee7d8' }}>
+                    <Link
+                      href={`/admin/context-layer/evidence-map?source_doc=${encodeURIComponent(file.source_doc)}`}
+                      style={{ color: '#171717' }}
+                    >
+                      View chunks
+                    </Link>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
       </section>
     </main>
   );
