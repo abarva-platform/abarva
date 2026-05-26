@@ -38,9 +38,8 @@ jobs:
           ::warning::New migration files detected in this PR:
           ${{ steps.list.outputs.added }}
 
-          Post-merge action required · one of:
-            1. Paste each .sql in Supabase SQL editor (quick, one-off)
-            2. npm run db:migrate (after DATABASE_URL set in .env.local)
+          Post-merge action required:
+            1. npm run db:migrate (after DATABASE_URL points at the target Postgres data plane)
 
           Nightly drift check (Tier 3) will fail until applied on prod.
           EOF

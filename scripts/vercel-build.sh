@@ -2,7 +2,7 @@
 # Vercel deploy entry point.
 #
 # Invoked by the buildCommand declared in vercel.ts. Decides — based on
-# $VERCEL_ENV — whether to apply pending Supabase migrations before
+# $VERCEL_ENV — whether to apply pending Postgres migrations before
 # running `next build`. See docs/deployment/migrations.md for the full
 # rationale.
 #
@@ -20,7 +20,7 @@ set -euo pipefail
 
 case "${VERCEL_ENV:-unset}" in
   production)
-    echo "[vercel-build] Production deploy detected — applying pending Supabase migrations"
+    echo "[vercel-build] Production deploy detected — applying pending Postgres migrations"
     npm run db:migrate -- --ci
     ;;
   *)
