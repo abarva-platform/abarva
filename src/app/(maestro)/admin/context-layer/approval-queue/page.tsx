@@ -1,42 +1,66 @@
-import { approveValidFacts, stageFactsForApproval } from '@/lib/context-ingestion/approval-queue';
-import { runNorthstarContextIngestion } from '@/lib/context-ingestion/sync-runner';
+import { getActiveClientRow } from '@/lib/active-client';
+import { getTenantPendingChunks } from '@/lib/context-ingestion/tenant-context-read-model';
 
 export const metadata = { title: 'Context Approval Queue | AbarVa Setup' };
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
-export default function ContextApprovalQueuePage() {
-  const result = runNorthstarContextIngestion({
-    fileName: 'ERP_Landscape_Workbook.csv',
-    text: [
-      'erp_object_id,platform,process_area,owner_role,business_unit,annual_value_usd',
-      'ERP-001,SAP ECC,Global finance,CIO ERP Transformation,Corporate,78000000',
-      'ERP-002,JD Edwards,Dental manufacturing,VP Dental IT,Dental Solutions,13000000',
-      'ERP-003,AS/400,Distributor rebates,,Dental Solutions,not-a-number',
-    ].join('\n'),
-  });
-  const staged = stageFactsForApproval(result.run.facts);
-  const reviewed = approveValidFacts(staged);
+function formatDate(value: string | null): string {
+  if (!value) return 'Not attempted';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return date.toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' });
+}
+
+export default async function ContextApprovalQueuePage() {
+  const activeClient = await getActiveClientRow(null);
+  const pendingChunks = activeClient
+    ? await getTenantPendingChunks(activeClient.id, { limit: 100 })
+    : [];
 
   return (
     <main style={{ background: '#F8F7F4', minHeight: '100vh', padding: 32 }}>
-      <section style={{ maxWidth: 1120, margin: '0 auto' }}>
-        <h1 style={{ fontFamily: 'Georgia, serif', fontSize: 42 }}>Approval queue</h1>
-        <table style={{ width: '100%', borderCollapse: 'collapse', background: '#fffdf8', fontFamily: 'DM Sans, sans-serif' }}>
-          <thead>
-            <tr>{['Fact', 'Reviewer', 'State', 'Reason'].map((head) => <th key={head} style={{ padding: 10, borderBottom: '1px solid #d8d2c4', textAlign: 'left' }}>{head}</th>)}</tr>
-          </thead>
-          <tbody>
-            {reviewed.slice(0, 18).map((item) => (
-              <tr key={item.approvalId}>
-                <td style={{ padding: 10, borderBottom: '1px solid #eee7d8' }}>{item.fact.entityKey}.{item.fact.field}</td>
-                <td style={{ padding: 10, borderBottom: '1px solid #eee7d8' }}>{item.reviewerRole}</td>
-                <td style={{ padding: 10, borderBottom: '1px solid #eee7d8' }}>{item.state}</td>
-                <td style={{ padding: 10, borderBottom: '1px solid #eee7d8' }}>{item.reason ?? 'Ready for context commit'}</td>
+      <section style={{ maxWidth: 1120, margin: '0 auto', display: 'grid', gap: 18 }}>
+        <div>
+          <p style={{ fontFamily: 'DM Sans, sans-serif', fontSize: 12, letterSpacing: 0, textTransform: 'uppercase' }}>
+            Setup · Approval queue
+          </p>
+          <h1 style={{ fontFamily: 'Georgia, serif', fontSize: 42, margin: 0 }}>
+            {activeClient ? `${activeClient.name} approval queue` : 'Approval queue'}
+          </h1>
+        </div>
+
+        {!activeClient ? (
+          <p style={{ fontFamily: 'DM Sans, sans-serif', lineHeight: 1.6 }}>
+            No active client row is available for this session.
+          </p>
+        ) : pendingChunks.length === 0 ? (
+          <div style={{ background: '#fffdf8', border: '1px solid #d8d2c4', borderRadius: 8, padding: 18, fontFamily: 'DM Sans, sans-serif' }}>
+            All loaded facts have been approved and embedded. No items in queue.
+          </div>
+        ) : (
+          <table style={{ width: '100%', borderCollapse: 'collapse', background: '#fffdf8', fontFamily: 'DM Sans, sans-serif' }}>
+            <thead>
+              <tr>
+                {['Chunk', 'Source document', 'Index', 'State', 'Last attempt', 'Error'].map((head) => (
+                  <th key={head} style={{ padding: 10, borderBottom: '1px solid #d8d2c4', textAlign: 'left' }}>{head}</th>
+                ))}
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {pendingChunks.map((item) => (
+                <tr key={item.chunk_id}>
+                  <td style={{ padding: 10, borderBottom: '1px solid #eee7d8' }}>{item.chunk_id}</td>
+                  <td style={{ padding: 10, borderBottom: '1px solid #eee7d8' }}>{item.source_doc}</td>
+                  <td style={{ padding: 10, borderBottom: '1px solid #eee7d8' }}>{item.chunk_index}</td>
+                  <td style={{ padding: 10, borderBottom: '1px solid #eee7d8' }}>{item.embedding_status}</td>
+                  <td style={{ padding: 10, borderBottom: '1px solid #eee7d8' }}>{formatDate(item.last_attempt_at)}</td>
+                  <td style={{ padding: 10, borderBottom: '1px solid #eee7d8' }}>{item.error_message ?? 'Awaiting embedding'}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
       </section>
     </main>
   );
