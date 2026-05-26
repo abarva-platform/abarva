@@ -149,6 +149,30 @@ const TENANTS: Record<string, TenantConfig> = {
     initiativesClosedCsv: '10-initiatives/initiatives-closed.csv',
     vendorContractsCsv: '09-vendors-contracts/vendor-contracts.csv',
   },
+  meridian: {
+    key: 'meridian',
+    clientId: 'a20ecef5-f0ea-4890-b9d5-7375fab223ff',
+    tenantKey: 'meridian-health',
+    datasetRoot: 'datasets/meridian-health-synthetic-v1',
+    sourceFilesDir: '13-context/source-files',
+    corpusJsonl: '13-context/client-data-corpus.jsonl',
+    appPortfolioCsv: '01-portfolio/application-portfolio.csv',
+    initiativesActiveCsv: '01-portfolio/initiatives-active.csv',
+    initiativesClosedCsv: '01-portfolio/initiatives-closed.csv',
+    vendorContractsCsv: '04-vendors/vendor-contracts.csv',
+  },
+  apex: {
+    key: 'apex',
+    clientId: 'bb8ed961-a049-4d0c-a38f-f8912138fceb',
+    tenantKey: 'apex-retail',
+    datasetRoot: 'datasets/apex-retail-synthetic-v1',
+    sourceFilesDir: '13-context/source-files',
+    corpusJsonl: '13-context/client-data-corpus.jsonl',
+    appPortfolioCsv: '01-portfolio/application-portfolio.csv',
+    initiativesActiveCsv: '01-portfolio/initiatives-active.csv',
+    initiativesClosedCsv: '01-portfolio/initiatives-closed.csv',
+    vendorContractsCsv: '04-vendors/vendor-contracts.csv',
+  },
 };
 
 // ─── CLI ────────────────────────────────────────────────────────────────────
@@ -268,6 +292,12 @@ interface ChunkRow {
 }
 
 function buildChunkText(chunk: Record<string, unknown>): string {
+  // If the chunk already has a `text` field (Meridian / First Capital style),
+  // use it directly with a title prefix.
+  if (typeof chunk.text === 'string' && chunk.text.length > 0) {
+    return chunk.title ? `${chunk.title}\n${chunk.text}` : (chunk.text as string);
+  }
+  // Otherwise synthesize from Northstar-style fields (claim/evidence_basis/etc.)
   const parts: string[] = [];
   if (chunk.claim) parts.push(`CLAIM: ${chunk.claim}`);
   if (chunk.evidence_basis) parts.push(`EVIDENCE: ${chunk.evidence_basis}`);
@@ -275,6 +305,11 @@ function buildChunkText(chunk: Record<string, unknown>): string {
   if (chunk.industry) parts.push(`INDUSTRY: ${chunk.industry}`);
   if (chunk.do_not_overclaim_notes) parts.push(`CAVEAT: ${chunk.do_not_overclaim_notes}`);
   return parts.join('\n');
+}
+
+// Normalize the chunk_id field — Meridian uses `id`, Northstar uses `chunk_id`.
+function getChunkId(chunk: Record<string, unknown>, fallbackIndex: number): string {
+  return (chunk.chunk_id as string) ?? (chunk.id as string) ?? `chunk-${fallbackIndex}`;
 }
 
 async function phase2ChunksAndEmbeddings(): Promise<{ rows: number; embedded: number; failed: number }> {
@@ -312,27 +347,30 @@ async function phase2ChunksAndEmbeddings(): Promise<{ rows: number; embedded: nu
   for (let i = 0; i < lines.length; i++) {
     const chunk = JSON.parse(lines[i]);
     const chunkText = buildChunkText(chunk);
-    const sourceFileId: string = chunk.source_file_id ?? chunk.chunk_id;
+    const chunkId = getChunkId(chunk, i);
+    const sourceFileId: string = (chunk.source_file_id as string) ?? chunkId;
     rows.push({
       client_id: TENANT.clientId,
       tenant_key: TENANT.tenantKey,
-      chunk_id: chunk.chunk_id,
+      chunk_id: chunkId,
       source_segment_id: mapChunkToSegment(chunk, i, lines.length),
       source_record_id: sourceFileId,
       source_doc: sourceFileId,
-      source_path: `${TENANT.datasetRoot}/${TENANT.corpusJsonl}#${chunk.chunk_id}`,
+      source_path: `${TENANT.datasetRoot}/${TENANT.corpusJsonl}#${chunkId}`,
       chunk_index: i,
       chunk_text: chunkText,
       token_count: Math.ceil(chunkText.length / 4),
       embedding_status: 'pending',
       embedding_model: null,
-      provenance: { ...chunk, loader: 'packet-24', pattern_id: chunk.pattern_id },
+      provenance: { ...chunk, loader: 'packet-24', pattern_id: chunk.pattern_id ?? null },
       chunk_metadata: {
         industry: chunk.industry,
         use_case: chunk.use_case,
         pattern_id: chunk.pattern_id,
         tenant_applicability: chunk.tenant_applicability,
         confidence: chunk.confidence,
+        title: chunk.title,
+        dataclass: chunk.dataclass,
       },
     });
   }
