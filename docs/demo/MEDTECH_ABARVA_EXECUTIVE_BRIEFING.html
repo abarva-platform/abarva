@@ -38,7 +38,7 @@
     a { color: inherit; text-decoration: none; }
     .page {
       display: grid;
-      grid-template-columns: 292px minmax(0, 1fr);
+      grid-template-columns: 284px minmax(0, 1fr);
       min-height: 100vh;
     }
 
@@ -54,9 +54,10 @@
     }
 
     .brand-lockup {
-      width: 152px;
+      width: 142px;
+      height: auto;
       display: block;
-      margin-bottom: 26px;
+      margin-bottom: 28px;
     }
 
     .side-kicker {
@@ -71,8 +72,8 @@
 
     .side-title {
       font-family: var(--serif);
-      font-size: 24px;
-      line-height: 1.05;
+      font-size: 22px;
+      line-height: 1.12;
       margin: 0 0 14px;
       letter-spacing: 0;
     }
@@ -116,15 +117,16 @@
     }
 
     section {
-      padding: 76px min(6vw, 80px);
+      padding: 68px min(5.4vw, 72px);
       border-bottom: 1px solid var(--line);
     }
 
     .hero {
-      min-height: 96vh;
+      min-height: 92vh;
       display: grid;
       align-items: center;
-      padding-top: 36px;
+      padding-top: 34px;
+      padding-bottom: 42px;
       background:
         linear-gradient(120deg, rgba(219, 233, 247, 0.65), rgba(248, 247, 244, 0) 42%),
         radial-gradient(circle at 90% 12%, rgba(11, 74, 145, 0.12), rgba(248, 247, 244, 0) 34%);
@@ -132,8 +134,8 @@
 
     .hero-grid {
       display: grid;
-      grid-template-columns: minmax(0, 0.96fr) minmax(360px, 0.72fr);
-      gap: 56px;
+      grid-template-columns: minmax(0, 0.98fr) minmax(360px, 0.66fr);
+      gap: 44px;
       align-items: center;
       max-width: 1280px;
     }
@@ -160,41 +162,99 @@
 
     h1, h2, h3 {
       font-family: var(--serif);
+      font-weight: 500;
       letter-spacing: 0;
       color: var(--ink);
     }
 
     h1 {
       margin: 0;
-      font-size: clamp(44px, 6.6vw, 88px);
-      line-height: 0.95;
-      max-width: 980px;
+      font-size: clamp(40px, 4.3vw, 58px);
+      line-height: 1.04;
+      max-width: 820px;
     }
 
     h2 {
       margin: 0 0 18px;
-      font-size: clamp(34px, 4vw, 62px);
-      line-height: 0.96;
+      font-size: clamp(30px, 2.8vw, 44px);
+      line-height: 1.03;
+      max-width: 940px;
     }
 
     h3 {
       margin: 0 0 8px;
-      font-size: 25px;
-      line-height: 1.08;
+      font-size: 21px;
+      font-weight: 600;
+      line-height: 1.14;
     }
 
     p {
-      font-size: 16px;
+      font-size: 15px;
       color: var(--muted);
       margin: 0;
     }
 
     .lede {
-      margin-top: 24px;
-      font-size: clamp(18px, 1.6vw, 24px);
+      margin-top: 20px;
+      font-size: clamp(18px, 1.25vw, 21px);
       line-height: 1.4;
-      max-width: 820px;
+      max-width: 780px;
       color: #383631;
+    }
+
+    .plain-definition {
+      margin-top: 22px;
+      background: var(--white);
+      border: 1px solid var(--line);
+      border-left: 5px solid var(--blue);
+      border-radius: 8px;
+      padding: 18px 20px;
+      max-width: 820px;
+      box-shadow: 0 12px 34px rgba(17, 17, 15, 0.05);
+    }
+
+    .plain-definition strong {
+      display: block;
+      color: var(--ink);
+      font-size: 14px;
+      text-transform: uppercase;
+      letter-spacing: 0.11em;
+      margin-bottom: 8px;
+    }
+
+    .plain-definition p {
+      font-size: 17px;
+      line-height: 1.45;
+      color: #302f2b;
+    }
+
+    .outcome-strip {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 22px;
+      max-width: 860px;
+    }
+
+    .outcome {
+      background: rgba(255, 253, 248, 0.82);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 14px;
+    }
+
+    .outcome strong {
+      display: block;
+      color: var(--ink);
+      font-size: 13px;
+      margin-bottom: 4px;
+    }
+
+    .outcome span {
+      display: block;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.35;
     }
 
     .hero-actions {
@@ -235,7 +295,7 @@
 
     .private-card {
       align-self: stretch;
-      min-height: 560px;
+      min-height: 520px;
       display: flex;
       flex-direction: column;
     }
@@ -272,14 +332,14 @@
     .hero-stack {
       padding: 22px;
       display: grid;
-      gap: 12px;
+      gap: 10px;
       flex: 1;
     }
 
     .stack-row {
       border: 1px solid var(--line);
       border-radius: 8px;
-      padding: 14px;
+      padding: 13px;
       background: #fff;
       display: grid;
       grid-template-columns: 34px 1fr;
@@ -296,7 +356,8 @@
 
     .stack-row span {
       color: var(--muted);
-      font-size: 12px;
+      font-size: 12.5px;
+      line-height: 1.35;
     }
 
     .num {
@@ -357,7 +418,7 @@
 
     .metric .value {
       font-family: var(--serif);
-      font-size: 38px;
+      font-size: 34px;
       line-height: 1;
       color: var(--ink);
       margin-bottom: 10px;
@@ -714,10 +775,6 @@
       border-color: rgba(255, 253, 248, 0.16);
     }
 
-    .logo-svg text {
-      font-family: "Cormorant Garamond", Georgia, "Times New Roman", serif;
-    }
-
     .mini-logo {
       width: 92px;
       height: auto;
@@ -740,7 +797,7 @@
       }
       .hero-grid, .section-grid { grid-template-columns: 1fr; }
       .agent-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-      .module-map, .metric-grid, .timeline { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .module-map, .metric-grid, .timeline, .outcome-strip { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .workflow { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .journey-board { grid-template-columns: 1fr; }
       .journey-lane { grid-template-columns: 1fr; }
@@ -750,44 +807,34 @@
 
     @media (max-width: 680px) {
       section { padding: 52px 22px; }
-      .nav, .agent-grid, .module-map, .metric-grid, .timeline, .workflow, .value-areas, .case-examples {
+      .sidebar { padding: 24px 22px; }
+      .brand-lockup { width: 138px; margin-bottom: 22px; }
+      .side-title { font-size: 21px; max-width: 300px; }
+      .nav { display: none; }
+      h1 { font-size: 34px; }
+      h2 { font-size: 30px; }
+      .nav, .agent-grid, .module-map, .metric-grid, .timeline, .workflow, .value-areas, .case-examples, .outcome-strip {
         grid-template-columns: 1fr;
       }
       .layer { grid-template-columns: 1fr; }
       .layer-chip { justify-self: start; }
       .private-card { min-height: auto; }
+      .table {
+        display: block;
+        max-width: 100%;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+      }
     }
   </style>
 </head>
 <body>
   <div class="page">
     <aside class="sidebar">
-      <svg class="brand-lockup logo-svg" viewBox="90 95 820 285" role="img" aria-label="AbarVa logo">
-        <rect width="1600" height="520" fill="transparent"/>
-        <g transform="translate(152 158) scale(0.658)" fill="none" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M104 1 L111 18 L128 25 L111 32 L104 49 L97 32 L80 25 L97 18 Z" fill="#0b4a91" stroke="none"/>
-          <path d="M12 118 H50" stroke="#070707" stroke-width="6"/>
-          <path d="M166 118 H201" stroke="#070707" stroke-width="6"/>
-          <circle cx="214" cy="118" r="14" stroke="#070707" stroke-width="6" fill="#fffdf7"/>
-          <path d="M230 118 H250" stroke="#070707" stroke-width="6"/>
-          <path d="M52 121 C50 68 91 33 144 42" stroke="#070707" stroke-width="8"/>
-          <path d="M174 74 C202 124 169 181 112 190" stroke="#070707" stroke-width="8"/>
-          <path d="M63 173 C37 133 48 82 88 58" stroke="#070707" stroke-width="5" opacity="0.95"/>
-          <path d="M156 51 C195 75 211 125 188 166" stroke="#070707" stroke-width="5" opacity="0.95"/>
-          <circle cx="112" cy="118" r="68" stroke="#070707" stroke-width="8"/>
-          <circle cx="112" cy="118" r="42" stroke="#070707" stroke-width="8"/>
-          <circle cx="112" cy="118" r="18" fill="#0b4a91" stroke="none"/>
-        </g>
-        <g transform="translate(350 299)">
-          <text x="0" y="0" font-size="168" letter-spacing="-8" font-weight="700" fill="#070707">A</text>
-          <text x="104" y="0" font-size="168" letter-spacing="-8" font-weight="400" fill="#070707">bar</text>
-          <text x="318" y="0" font-size="168" letter-spacing="-9" font-weight="700" fill="#0b4a91">V</text>
-          <text x="416" y="0" font-size="168" letter-spacing="-9" font-weight="400" fill="#0b4a91">a</text>
-        </g>
-      </svg>
+      <img class="brand-lockup" src="../../public/brand/abarva-logo.svg" alt="AbarVa" />
       <div class="side-kicker">Private executive briefing</div>
       <h2 class="side-title">For medtech technology and transformation leaders</h2>
-      <p class="side-note">A product-logic story: architecture, agents, modules, workflows, metrics, and the first 90 days of value.</p>
+      <p class="side-note">What AbarVa is, how it works, where value shows up, and how the first 90 days can unfold.</p>
       <nav class="nav" aria-label="Briefing sections">
         <a href="#what"><span>01</span><span>What it is</span></a>
         <a href="#why"><span>02</span><span>Why now</span></a>
@@ -810,13 +857,27 @@
       <section class="hero" id="what">
         <div class="hero-grid">
           <div>
-            <div class="eyebrow">Enterprise context and decision layer</div>
-            <h1>From scattered evidence to board-ready decisions.</h1>
+            <div class="eyebrow">Enterprise AI decision platform</div>
+            <h1>AbarVa turns enterprise context into evidence-backed decisions.</h1>
             <p class="lede">
-              A large medtech enterprise does not lack data. It lacks a living decision substrate:
-              one place where systems, strategy, finance, vendors, quality, regulatory evidence,
-              org ownership, and transformation work become usable by trusted agents.
+              It connects scattered systems, documents, strategy, finance, vendors, quality evidence,
+              org ownership, and transformation work into one trusted context layer that agents can
+              reason over and leaders can act on.
             </p>
+            <div class="plain-definition">
+              <strong>In plain English</strong>
+              <p>
+                AbarVa is the operating layer between enterprise data and executive action:
+                upload or sync the context, ask hard questions, shape Strategic Moves, create Source
+                events, and track dollar outcomes with evidence. It is pattern-grounded,
+                tenant-overlaid, and agent-collaborative by design.
+              </p>
+            </div>
+            <div class="outcome-strip" aria-label="Early value outcomes">
+              <div class="outcome"><strong>First 30 days</strong><span>Context map, evidence gaps, upload approvals, and CXO questions that reveal where decisions are ready.</span></div>
+              <div class="outcome"><strong>First 60 days</strong><span>2-3 Strategic Moves and 1-2 Source events shaped from evidence, not opinion.</span></div>
+              <div class="outcome"><strong>First 90 days</strong><span>Spend under review, risk avoided, kill/restructure candidates, and board-ready value proof.</span></div>
+            </div>
             <div class="hero-actions">
               <a class="button" href="#architecture">See the architecture</a>
               <a class="button secondary" href="#case-study">View the journey map</a>
@@ -827,17 +888,17 @@
             <div class="private-card-top">
               <div>
                 <span class="tag">Private briefing</span>
-                <h3 style="margin-top: 14px;">The product logic</h3>
-                <p>Every answer, Move, Source event, Dossier, and Board Pack depends on the same context foundation.</p>
+                <h3 style="margin-top: 14px;">What leaders get</h3>
+                <p>One product loop for context, intelligence, action, procurement leverage, and outcome proof.</p>
               </div>
               <span class="tag green">Medtech-ready</span>
             </div>
             <div class="hero-stack">
-              <div class="stack-row"><span class="num">1</span><div><strong>Load broad enterprise context</strong><span>CMDB, SAP/ERP, app portfolio, contracts, org, strategy, financials, QMS, risk, KPIs, incidents, board material.</span></div></div>
-              <div class="stack-row"><span class="num">2</span><div><strong>Normalize into a context graph</strong><span>Entities, owners, relationships, dependencies, confidence, freshness, evidence gaps, and source lineage.</span></div></div>
-              <div class="stack-row"><span class="num">3</span><div><strong>Ask agents hard questions</strong><span>Sentinel, Nexus, Source, Steward, and Atlas reason over tenant context plus industry corpus.</span></div></div>
-              <div class="stack-row"><span class="num">4</span><div><strong>Turn answers into workflows</strong><span>Strategic Moves, Source events, Dossiers, Board Packs, Tower value tracking, and evidence-led decisions.</span></div></div>
-              <div class="stack-row"><span class="num">5</span><div><strong>Improve with every upload and outcome</strong><span>The more evidence the system sees, the more grounded future answers, artifacts, and value proof become.</span></div></div>
+              <div class="stack-row"><span class="num">1</span><div><strong>Context layer</strong><span>CMDB, SAP/ERP, app portfolio, contracts, org, strategy, financials, QMS, risk, KPIs, incidents, and board material.</span></div></div>
+              <div class="stack-row"><span class="num">2</span><div><strong>Trusted evidence</strong><span>Every extracted fact carries owner, confidence, freshness, source lineage, and gap status.</span></div></div>
+              <div class="stack-row"><span class="num">3</span><div><strong>Agent intelligence</strong><span>Sentinel, Nexus, Source, Steward, and Atlas answer hard questions and route work into modules.</span></div></div>
+              <div class="stack-row"><span class="num">4</span><div><strong>Decision workflows</strong><span>Strategic Moves, Source events, Dossiers, Board Packs, Tower tracking, and governance gates.</span></div></div>
+              <div class="stack-row"><span class="num">5</span><div><strong>Value outcomes</strong><span>Spend under review, risk avoided, initiatives killed or restructured, and evidence-backed executive readouts.</span></div></div>
             </div>
           </article>
         </div>
@@ -873,8 +934,8 @@
       <section id="architecture">
         <div class="wide">
           <div class="eyebrow">Architecture</div>
-          <h2>The end-to-end product architecture</h2>
-          <p class="lede">The system is intentionally layered. Each layer adds trust, continuity, and actionability.</p>
+          <h2>Architecture, not magic: eleven planes, five stores, specialized agents.</h2>
+          <p class="lede">The system is intentionally layered. Identity, tenant boundary, workflow, knowledge, synthesis, agents, data, evidence, and audit each have a job so executive answers can be trusted.</p>
           <div class="architecture">
             <div class="layer"><div class="layer-title">1 · Intake Layer</div><div class="layer-copy">Uploads, templates, connectors, document parsing, CMDB snapshots, ERP extracts, HRIS, finance, sourcing, service management, quality, and risk inputs.</div><div class="layer-chip">Files + systems</div></div>
             <div class="layer"><div class="layer-title">2 · Context Layer</div><div class="layer-copy">Normalized enterprise substrate: applications, vendors, contracts, products, plants, initiatives, org roles, KPIs, dependencies, risks, controls, evidence, and gaps.</div><div class="layer-chip">Enterprise graph</div></div>
@@ -1212,16 +1273,7 @@
 
       <section id="next" class="closing">
         <div class="wide">
-          <svg class="brand-lockup logo-svg" viewBox="90 95 820 285" role="img" aria-label="AbarVa logo" style="filter: invert(1); margin-bottom: 28px;">
-            <rect width="1600" height="520" fill="transparent"/>
-            <g transform="translate(152 158) scale(0.658)" fill="none" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M104 1 L111 18 L128 25 L111 32 L104 49 L97 32 L80 25 L97 18 Z" fill="#0b4a91" stroke="none"/>
-              <path d="M12 118 H50" stroke="#070707" stroke-width="6"/><path d="M166 118 H201" stroke="#070707" stroke-width="6"/><circle cx="214" cy="118" r="14" stroke="#070707" stroke-width="6" fill="#fffdf7"/><path d="M230 118 H250" stroke="#070707" stroke-width="6"/>
-              <path d="M52 121 C50 68 91 33 144 42" stroke="#070707" stroke-width="8"/><path d="M174 74 C202 124 169 181 112 190" stroke="#070707" stroke-width="8"/><path d="M63 173 C37 133 48 82 88 58" stroke="#070707" stroke-width="5" opacity="0.95"/><path d="M156 51 C195 75 211 125 188 166" stroke="#070707" stroke-width="5" opacity="0.95"/>
-              <circle cx="112" cy="118" r="68" stroke="#070707" stroke-width="8"/><circle cx="112" cy="118" r="42" stroke="#070707" stroke-width="8"/><circle cx="112" cy="118" r="18" fill="#0b4a91" stroke="none"/>
-            </g>
-            <g transform="translate(350 299)"><text x="0" y="0" font-size="168" letter-spacing="-8" font-weight="700" fill="#070707">A</text><text x="104" y="0" font-size="168" letter-spacing="-8" font-weight="400" fill="#070707">bar</text><text x="318" y="0" font-size="168" letter-spacing="-9" font-weight="700" fill="#0b4a91">V</text><text x="416" y="0" font-size="168" letter-spacing="-9" font-weight="400" fill="#0b4a91">a</text></g>
-          </svg>
+          <img class="brand-lockup" src="../../public/brand/abarva-logo-inverse.svg" alt="AbarVa" style="margin-bottom: 28px;" />
           <div class="eyebrow" style="color: #9ec9f4;">What to show first</div>
           <h2>A low-friction executive working session</h2>
           <p class="lede">
