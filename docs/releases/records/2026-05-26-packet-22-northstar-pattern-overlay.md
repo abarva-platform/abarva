@@ -63,4 +63,5 @@ Revert the merge commit. No runtime, no schema, no policy change.
 
 - Packet 22 is a pattern + business-case spec only. The actual seed data, ingestion harness, and stress-test wiring all happen through Packet 21 + Codex Phase A/B and the existing parameterized runner.
 - Pattern catalog in Part 4 specifies eight named patterns (AMS rebid, SBOM/clause-gap, tariff scenario, multi-vendor benchmark, renewal pressure, shadow-SaaS, TBM cost transparency, IT/ERP transition). Implementing each as a first-class object in the Source module is a downstream product workstream — Packet 22 specifies the contract, not the implementation.
+- Part 13 (consulting + SI displacement reframe) added in a later commit on the same branch. The displacement levers ($5–15M/yr strategy-consulting avoidance + 20–30% on $50–100M/yr SI execution) reset the conservative case past 50x without depending on any single lever performing at the aggressive end. The CXO 30-second pitch now leads with displacement, not procurement.
 - Tasks #17 remains open and is not in scope here.

@@ -17,11 +17,16 @@
 >
 > **What it is.** AbarVa is a context-aware decision-OS for the C-suite. Three integrated agents — Sentinel (procurement / vendor / RFP intelligence), Atlas (program & regulatory intelligence), Maestro (board-grade synthesis) — sit on top of our ServiceNow CMDB, Workday/Coupa contracts, Anaplan demand plan, Veeva QMS, and supplier master. We have ~1,000 systems mid-migration off 3M, a $100–120M tariff headwind disclosed for 2026, and a 1,000+ supplier rebuild already booked. AbarVa makes that backlog answer board-level questions in minutes instead of weeks.
 >
-> **What 10x looks like.** $7.5M of measured year-1 savings on a $750K spend.
-> - **AMS / SaaS rebid** of the post-separation contracting pipeline (~$200M flowing through new agreements in the next 18 months). Industry-standard first-pass rationalization recovers 10–20%. We need **4% measured = $8M** to clear 10x. This is the single most defensible path.
+> **The simplest framing — what AbarVa replaces.**
+> - **The McKinsey check we'd write for "AI strategy."** A typical Tier-1 firm engagement to define an AI strategy and roadmap for a Northstar-class medtech is $3–8M for one cycle. AbarVa does the equivalent work — segment strategy, opportunity prioritization, business cases, target architecture, sequencing — inside the platform with our own data. **One avoided engagement = $3–8M / 4x–11x ROI on year one before any other lever.**
+> - **The Accenture/Deloitte execution invoice.** A separation-era medtech runs $50–200M/year of SI execution. AbarVa cuts 20–30% off that by right-sizing scope, killing over-engineered architectures, sharpening estimates, and orchestrating the right human + AI agent mix on each workstream. **At 20% on a $50M execution wave = $10M / 13x. At 30% on $100M = $30M / 40x.**
+> - These two displacements alone clear 50x at the bull case. The patterns below are how the platform earns the right to do this work.
+>
+> **What 10x looks like, even on the conservative case.** $7.5M of measured year-1 savings on a $750K spend.
+> - **AMS / SaaS rebid** of the post-separation contracting pipeline (~$200M flowing through new agreements in the next 18 months). Industry-standard first-pass rationalization recovers 10–20%. We need **4% measured = $8M** to clear 10x. This is the single most defensible procurement path.
 > - **Engineering productivity** uplift across the 800-person SaMD + HIS engineering organization. Forrester TEI on Copilot-class deployments shows up to 376% ROI and 15% measured productivity recapture; at 5% measured = **$7.2M/yr**.
 >
-> **What 50x looks like.** $37.5M. Adds:
+> **What 50x looks like.** $37.5M. Stack the displacement levers with:
 > - **Tariff scenario AI** that mitigates 20% of the disclosed $100–120M 2026 tariff headwind = $20–24M. Done by routing the BoM × country-of-origin × HTS-code model through Sentinel and feeding the dual-source acceleration plan into procurement decisions before contracts land.
 > - **Regulatory cycle compression** on the next 5–10 510(k) / CER / PCCP submissions; McKinsey-Merck CSR pilot shows 50% drafting compression and 40% end-to-end cycle reduction. Conservatively $3–6M of value pull-forward per year.
 >
@@ -310,6 +315,82 @@ The CXO's 30-second pitch to their leadership becomes:
 - Application-portfolio rationalization (AWS/NorthBay — assessment 50% faster, $23M savings example): https://aws.amazon.com/blogs/apn/application-portfolio-rationalization-using-generative-ai-with-northbay-solutions/
 - Zylo 2025 SaaS waste benchmark (53% of licenses unused)
 - Gartner 2025 worldwide IT spending forecast (9.8% growth, $6T+): https://www.gartner.com/en/newsroom/press-releases/2025-10-22-gartner-forecasts-worldwide-it-spending-to-grow-9-point-8-percent-in-2026-exceeding-6-trillion-dollars
+
+---
+
+## Part 13 — Consulting + SI displacement (the simplest CXO story)
+
+The procurement / tariff / engineering-productivity argument is technically defensible but it's an *operator* argument. For a VP or CXO defending the spend to their leadership, there's a simpler, more intuitive frame that lands harder: **AbarVa replaces or substantially reduces the spend on management consultants and Systems Integrators that we'd otherwise sign for the same work.**
+
+### 13.1 — Strategy consulting displacement (the McKinsey/BCG/Bain line item)
+
+**What we'd otherwise buy.** A Tier-1 management consulting engagement to define an "AI strategy and roadmap" for a Northstar-class medtech ($8B revenue, mid-separation, three segments, regulated-SaMD product portfolio) lands in the $3–8M range for a single 12–20-week engagement. Add 1–2 follow-on engagements per year (segment-specific deep-dives, board-prep work, M&A AI due diligence) and the steady-state line item is **$5–15M/year**.
+
+**What that engagement actually produces** — and what AbarVa replaces:
+
+| Consultant deliverable | What it actually is | AbarVa equivalent |
+|---|---|---|
+| AI opportunity assessment / heatmap | 30–50 use cases scored on impact × feasibility | Atlas pattern catalog rendered against Northstar's actual substrate (apps, contracts, BoM, regulatory landscape) |
+| Target operating model | Org-design + governance for AI investment decisions | Maestro decision-OS — every AI investment goes through the same evidence-graded workflow with citation trail |
+| Reference architecture | Vendor-agnostic technology stack recommendations | Sentinel benchmarks + clause-extraction pattern; surfaces what peers actually buy with real rate cards |
+| Business cases for top initiatives | 5–10 use-case NPV / ROI / payback models | Atlas program-intel pattern — every Move has a live business case linked to current substrate |
+| Implementation roadmap | 18-month plan with phases, dependencies, investment | Sequencing engine across the Source / Moves / Tower modules with dependency-graph reasoning |
+| Change-management playbook | Org-readiness, training, incentives | Atlas adoption-tracking pattern on Copilot-class rollouts (the Forrester TEI work feeds straight in) |
+
+**Year-one displacement.** Avoiding **one** $5M McKinsey AI-strategy engagement and **one** $2M follow-on segment dive is enough to clear **9x payback on $750K** before any other lever. Steady-state ($5–15M/year of consulting-fee avoidance) puts displacement alone at **7x–20x**.
+
+**Where consultants still earn their fee** — and where AbarVa doesn't try to replace them:
+- Board / activist / regulatory negotiation (people work, not platform work).
+- M&A due diligence on a specific target where confidentiality of the target matters more than evidence rigor.
+- Industry-wide trend reports that don't need tenant-specific grounding.
+- Crisis interventions (consent order, FDA warning letter, supply-chain rupture) where speed and senior-partner-by-the-hour beats platform.
+
+The defensible AbarVa frame: **we replace the strategy work that should have been built on your own data anyway, not the relationship work that consultants are actually best at.**
+
+### 13.2 — Systems Integrator execution displacement (the Accenture/Deloitte/Wipro/Cognizant line item)
+
+**What we'd otherwise pay.** A separation-era medtech runs **$50–200M/year** of SI execution across (a) ERP cutover (we just heard the Feb 2026 APAC + EU rollout — Solventum is mid-program), (b) AMS for the legacy app portfolio, (c) AI/data platform builds, (d) cyber + identity programs, (e) regulatory-systems modernization. At a typical large medtech, this line is the single biggest discretionary IT cost.
+
+**Where AbarVa cuts 20–30% off that line:**
+
+| SI cost-driver | What's wrong today | AbarVa fix |
+|---|---|---|
+| **Scope inflation.** SI proposes 80-FTE engagement; only 50 are needed. | No independent counterfactual exists. | Sentinel multi-vendor benchmark + similar-scope pattern surfaces what peers actually paid + staffed for equivalent scope. Procurement gets a defensible counter-offer. |
+| **Over-engineered architecture.** Reference architecture is built to maximize SI burn, not customer outcome. | No tenant-specific benchmark of "what worked." | Atlas architecture-pattern catalog surfaces 3–5 production-proven architectures from the corpus, each with a build cost band and a known-failure list. The SI's reference architecture becomes one option, not the only option. |
+| **Underestimated complexity.** Estimate misses 30% of the actual work; the change-orders consume 25–40% of the original contract value. | Estimate is built once at proposal time; nobody re-grounds it as the work progresses. | Atlas estimate-tracking pattern — every milestone gets re-estimated against the current substrate; deviation > 10% triggers a re-plan event, not a change order. |
+| **Wrong agent/human mix.** SI staffs a 30-FTE pyramid because that's their billing model. 12 FTE + AbarVa agents would do the same work. | No platform alternative for the "thinking" work (architecture, design, testing, regulatory artifacts, change management). | Maestro orchestrates the agent + human mix on each workstream. The SI's billable hours drop because the platform absorbs the routine decision-making and document generation. |
+| **Vendor lock-in via implementation choices.** Architecture decisions favor the SI's preferred technology partner. | Procurement doesn't see those choices until the contract amendment lands. | Sentinel clause-extraction pattern flags lock-in language at design time, before the SOW is signed. |
+
+**Year-one math.** Assume Northstar is signing one $50M SI execution wave in the pilot window (conservative — they're mid-ERP-rollout and mid-system-migration). **20% reduction = $10M / 13x payback** on $750K. **30% reduction = $15M / 20x.** Across the full $100M+ steady-state SI envelope, the displacement compounds.
+
+**Where the math is most live for Northstar specifically:** the 90% TSA-exit target for end-2026, which forces ~$30–50M of net-new SI commitments in the pilot window. Sentinel scope-and-architecture review on each new SOW is the most-defensible single application of AbarVa during the pilot.
+
+### 13.3 — Solution-engineering quality (the failure-avoidance lever, reframed)
+
+The first version of this packet led with "failure avoidance" (80% of AI projects fail to reach production). The user feedback: lead with cost-offset instead, because failure-avoidance is intangible until it happens to you, while consulting/SI bills are visible to the CFO every month.
+
+Reframed as cost-offset: **AbarVa ensures the AI strategy decision, target architecture, business case, and implementation plan are all built on the same grounded substrate** — your apps, your contracts, your suppliers, your regulatory exposure, your existing in-flight programs. That alignment is the actual source of the 20–30% execution cost reduction. The SI can't pad the estimate when the platform already knows the historical run-rate. The architecture review can't recommend an over-engineered stack when the platform already shows what 3 peers shipped. The business case can't be inflated when every NPV input traces to a citation.
+
+In other words: **the "right approach, solution, estimate, architecture, business case" outcome is the cost-offset outcome.** They're the same lever stated two different ways. For the CXO pitch, lead with the cost-offset framing.
+
+### 13.4 — Updated 10x–50x stack with displacement as the lead
+
+| Lever | Conservative year-1 | Aggressive | Best evidence |
+|---|---|---|---|
+| **Strategy-consulting displacement** (avoid 1–2 Tier-1 engagements/year) | **$5M / 7x** | **$15M / 20x** | Typical Tier-1 medtech AI-strategy engagement $3–8M per cycle; 1–2 cycles/year |
+| **SI execution displacement** (20–30% on $50–100M of SI commitments in pilot window) | **$10M / 13x** | **$30M / 40x** | Industry-standard 20–30% scope/architecture/estimate compression on enterprise programs |
+| AMS / SaaS rebid on $200M post-separation pipeline | $8M / 11x | $30M / 40x | Zylo 53% SaaS-unused; AWS/NorthBay app-rat 50% faster |
+| Engineering productivity on 800-engineer SaMD org | $7.2M / 10x | $21M / 28x | Forrester TEI Copilot 376% ROI |
+| Tariff scenario AI on disclosed $100-120M 2026 headwind | $5–6M / 7x | $20–24M / 30x | Solventum FY26 guide |
+| Regulatory cycle compression on next 5–10 submissions | $3–6M / 5x | $6–12M / 14x | McKinsey-Merck CSR 40% compression |
+| **Combined floor** | **$38M ≈ 51x** | | |
+| **Combined stretch** | | **$122M ≈ 163x** | |
+
+The combined floor now passes 50x **on its own**, without any single lever needing to perform at its aggressive case. That's the point. We don't need every lever to fire — we need any two of the displacement levers plus one operational lever to clear 50x.
+
+### 13.5 — Updated CXO 30-second pitch with displacement lead
+
+> "We're putting $225K on a 90-day pilot. The first question we answer is whether AbarVa lets us avoid the next $5M McKinsey AI-strategy check — it almost certainly does, because the deliverable they'd produce is exactly what the platform produces against our own data. The second question is whether it lets us cut 20–30% off the next $50M wave of SI execution we're already committed to — also almost certainly, because the platform surfaces scope inflation, over-engineered architecture, and lock-in clauses before the SOW is signed. If we land on either of those two, we've already cleared 10x. If we land on both, we've cleared 50x. The $750K commit is roughly half a McKinsey week."
 
 ---
 
