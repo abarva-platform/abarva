@@ -309,12 +309,12 @@ const SECURITY_CONTROL_FAMILIES: ReadonlyArray<SecurityControlFamily> = [
         controlId: 'sec-C2-client-bundle-audit',
         label: 'Client Bundle Secret Audit',
         description:
-          'Production bundle does not contain server-side secrets. No SUPABASE_SERVICE_ROLE_KEY or similar in client JS.',
+          'Production bundle does not contain server-side secrets. No DATABASE_URL or similar in client JS.',
         threatCategory: 'secrets-management',
         maturity: 'partial',
         riskIfMissing: 'critical',
         mitigationGuidance:
-          'Audit next build output with bundle-analyzer. Assert SUPABASE_SERVICE_ROLE_KEY not present in client chunk.',
+          'Audit next build output with bundle-analyzer. Assert DATABASE_URL is not present in client chunks.',
         pilotBlocker: true,
         requiredMaturity: 'implemented',
       },

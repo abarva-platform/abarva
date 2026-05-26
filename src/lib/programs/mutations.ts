@@ -5,7 +5,7 @@
 
 import { getServerSupabase } from '@/lib/supabase-server';
 import { industryCodeForClientName } from '@/lib/client-config';
-import type { SupabaseClient } from '@supabase/supabase-js';
+import type { PostgresCompatClient as SupabaseClient } from '@/lib/supabase-server';
 import type {
   MilestoneStatus,
   ModuleStatus,

@@ -23,7 +23,7 @@
 // `queries.ts` consumed pre-seam (`SELECT *`) — so every helper signature
 // and return shape is byte-identical and all callers keep working unchanged.
 
-import type { SupabaseClient } from '@supabase/supabase-js';
+import type { PostgresCompatClient as SupabaseClient } from '@/lib/supabase-server';
 import { getServerSupabase } from '@/lib/supabase-server';
 import type {
   SourceEventArtifactStateRow,

@@ -4,7 +4,7 @@
 // its filter. This wrapper gives us a single place to enforce that
 // invariant plus a hook for telemetry.
 
-import type { SupabaseClient } from '@supabase/supabase-js';
+import type { PostgresCompatClient as SupabaseClient } from '@/lib/supabase-server';
 import { getServerSupabase } from '@/lib/supabase-server';
 import type { TenancyCtx } from '../types';
 

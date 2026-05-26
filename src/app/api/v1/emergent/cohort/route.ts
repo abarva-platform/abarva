@@ -3,8 +3,8 @@
 // Cohort minimum n=3 enforced at DB + API layer. Source client IDs NEVER
 // returned — only hashes + aggregates per spec §4.7 + §7.8 call #3.
 //
-// Auth: requires x-service-auth header matching SERVICE_AUTH_TOKEN env
-// (or SUPABASE_SERVICE_ROLE_KEY in dev). NOT user-facing.
+// Auth: requires x-service-auth header matching SERVICE_AUTH_TOKEN env.
+// NOT user-facing.
 
 import { NextRequest } from 'next/server';
 import { findEmergentPattern } from '@/lib/intelligence/db/emergentRepository';

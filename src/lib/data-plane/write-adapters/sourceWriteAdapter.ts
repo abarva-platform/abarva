@@ -26,7 +26,7 @@
 // (commitSourceEvent tool, artifacts/upload route). Migrating them is a
 // follow-up so a shared-helper change does not collide with parallel slices.
 
-import type { SupabaseClient } from '@supabase/supabase-js';
+import type { PostgresCompatClient as SupabaseClient } from '@/lib/supabase-server';
 import { getServerSupabase } from '@/lib/supabase-server';
 import { canonicalTenantKey } from '@/lib/tenant-keys';
 import { createTxSession, type TxSessionRunner } from '../read-adapters/azureSession';

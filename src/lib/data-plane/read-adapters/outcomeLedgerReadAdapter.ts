@@ -12,7 +12,7 @@
 // Reads are tenant-scoped and current-view only (`is_current`); the
 // ledger's append-only history rows are not surfaced here.
 
-import type { SupabaseClient } from '@supabase/supabase-js';
+import type { PostgresCompatClient as SupabaseClient } from '@/lib/supabase-server';
 import { getServerSupabase } from '@/lib/supabase-server';
 import type {
   OutcomeLedgerRow,

@@ -14,7 +14,7 @@
 // degrades to an empty list rather than throwing, so the cockpit and the
 // queue keep rendering.
 
-import type { SupabaseClient } from '@supabase/supabase-js';
+import type { PostgresCompatClient as SupabaseClient } from '@/lib/supabase-server';
 import { getServerSupabase } from '@/lib/supabase-server';
 import { canonicalTenantKey } from '@/lib/tenant-keys';
 import type {

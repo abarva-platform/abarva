@@ -11,8 +11,8 @@ describe('agent-quality Supabase violation backend', () => {
   beforeEach(() => {
     jest.resetModules();
     getServerSupabase.mockReset();
-    delete process.env.NEXT_PUBLIC_SUPABASE_URL;
-    delete process.env.SUPABASE_SERVICE_ROLE_KEY;
+    delete process.env.ABARVA_AZURE_DATABASE_URL;
+    delete process.env.DATABASE_URL;
   });
 
   it('maps recorder events to the durable telemetry table', async () => {
@@ -125,11 +125,10 @@ describe('agent-quality Supabase violation backend', () => {
     ]);
   });
 
-  it('detects whether Supabase persistence can be enabled', async () => {
+  it('detects whether Postgres persistence can be enabled', async () => {
     const { canUseSupabaseViolationBackend } = await import('../violationsSupabaseBackend');
     expect(canUseSupabaseViolationBackend()).toBe(false);
-    process.env.NEXT_PUBLIC_SUPABASE_URL = 'https://example.supabase.co';
-    process.env.SUPABASE_SERVICE_ROLE_KEY = 'service-role';
+    process.env.DATABASE_URL = 'postgresql://user:pass@localhost:5432/abarva';
     expect(canUseSupabaseViolationBackend()).toBe(true);
   });
 });

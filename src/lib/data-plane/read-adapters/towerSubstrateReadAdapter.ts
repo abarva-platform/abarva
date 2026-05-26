@@ -8,7 +8,7 @@
 //
 // Selected by the same `ABARVA_DATA_PLANE` switch as Slice 1.
 
-import type { SupabaseClient } from '@supabase/supabase-js';
+import type { PostgresCompatClient as SupabaseClient } from '@/lib/supabase-server';
 import { getServerSupabase } from '@/lib/supabase-server';
 import { CLIENT_KEY_TO_DB_NAME, type ClientKey } from '@/lib/client-config';
 import { createDefaultSession, type SessionRunner } from './azureSession';

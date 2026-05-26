@@ -24,7 +24,7 @@
 // `idempotency_key`). `appendAudit` surfaces a unique-violation as
 // `reason:'idempotent_replay'` rather than throwing.
 
-import type { SupabaseClient } from '@supabase/supabase-js';
+import type { PostgresCompatClient as SupabaseClient } from '@/lib/supabase-server';
 import { getServerSupabase } from '@/lib/supabase-server';
 import { canonicalTenantKey } from '@/lib/tenant-keys';
 import type {

@@ -8,7 +8,7 @@ import {
   createSupabaseProgramsReadAdapter,
   selectProgramsReadAdapter,
 } from '@/lib/data-plane/read-adapters/programsReadAdapter';
-import type { SupabaseClient } from '@supabase/supabase-js';
+import type { PostgresCompatClient as SupabaseClient } from '@/lib/supabase-server';
 import type {
   FounderApprovalRequestRow,
   MaestroFlag,

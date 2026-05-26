@@ -26,7 +26,7 @@
 // logic too, which is out of scope for a read-adapter slice. It remains
 // a Supabase-direct read; see DATA-ACCESS-ADAPTER-VIP-SLICE.md.
 
-import type { SupabaseClient } from '@supabase/supabase-js';
+import type { PostgresCompatClient as SupabaseClient } from '@/lib/supabase-server';
 import { getServerSupabase } from '@/lib/supabase-server';
 import { createDefaultSession, type SessionRunner } from './azureSession';
 import { resolveDataPlane } from './resolveDataPlane';

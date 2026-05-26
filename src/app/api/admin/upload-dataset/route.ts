@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
 import {
   looksLikeTenantMetricUpload,
   parseTenantMetricCsv,
@@ -48,7 +47,7 @@ export async function POST(request: NextRequest) {
   }
 
   const today = new Date().toISOString().split("T")[0];
-  let storageUrl: string | null = null;
+  const storageUrl: string | null = null;
   let metricIngestion: ReturnType<typeof parseTenantMetricCsv> | null = null;
   let metricPersistence: Awaited<
     ReturnType<typeof persistTenantMetricUpload>
@@ -79,39 +78,9 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const supabaseKey =
-    process.env.SUPABASE_SERVICE_ROLE_KEY ||
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-
-  if (supabaseUrl && supabaseKey) {
-    try {
-      const supabase = createClient(supabaseUrl, supabaseKey);
-      const BUCKET = "datasets";
-
-      // Create bucket if it doesn't exist
-      await supabase.storage
-        .createBucket(BUCKET, { public: false })
-        .catch(() => {});
-
-      const path = `${clientId}/${Date.now()}-${file.name}`;
-      const { data, error } = await supabase.storage
-        .from(BUCKET)
-        .upload(path, bytes, {
-          contentType: file.type || "application/octet-stream",
-          upsert: false,
-        });
-
-      if (!error && data) {
-        const { data: urlData } = supabase.storage
-          .from(BUCKET)
-          .getPublicUrl(path);
-        storageUrl = urlData.publicUrl;
-      }
-    } catch {
-      // Storage unavailable — proceed without URL
-    }
-  }
+  // Dataset parsing and metric persistence now run against the Postgres data
+  // plane. Object-storage archival is handled by the upload artifact pipeline,
+  // so this legacy admin endpoint no longer opens a direct storage client.
 
   if (metricIngestion) {
     try {

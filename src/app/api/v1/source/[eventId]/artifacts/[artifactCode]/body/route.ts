@@ -205,6 +205,12 @@ export async function PATCH(req: NextRequest, { params }: RouteCtx) {
         { status: 500 },
       );
     }
+    if (!updatedRow) {
+      return Response.json(
+        { error: 'update_failed', detail: 'No artifact row returned after update.' },
+        { status: 500 },
+      );
+    }
 
     const view: SourceEventArtifactState = artifactStateRowToView(updatedRow);
     return Response.json({ ok: true, artifact: view });

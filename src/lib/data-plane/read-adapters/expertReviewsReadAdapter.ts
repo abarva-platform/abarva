@@ -15,7 +15,7 @@
 // until the founder runs db:migrate) degrades to an empty list rather than
 // throwing, so the console keeps rendering the kernel case with zero reviews.
 
-import type { SupabaseClient } from '@supabase/supabase-js';
+import type { PostgresCompatClient as SupabaseClient } from '@/lib/supabase-server';
 import { getServerSupabase } from '@/lib/supabase-server';
 import { canonicalTenantKey } from '@/lib/tenant-keys';
 import type {

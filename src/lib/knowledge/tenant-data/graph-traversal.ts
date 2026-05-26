@@ -1,7 +1,5 @@
 import 'server-only';
 
-import type { SupabaseClient } from '@supabase/supabase-js';
-
 import { getServerSupabase } from '@/lib/supabase-server';
 import { getPrivateDataPlaneResource } from '@/lib/knowledge/private-data-plane/registry';
 import type {
@@ -128,12 +126,14 @@ function edgeKey(edge: GraphEdge): string {
   return edge.edgeId;
 }
 
-/** The Supabase getter we depend on. Defaulted; tests inject a mock. */
-export type SupabaseClientGetter = () => SupabaseClient;
+type DbClient = ReturnType<typeof getServerSupabase>;
+
+/** The Postgres-compatible getter we depend on. Defaulted; tests inject a mock. */
+export type SupabaseClientGetter = () => DbClient;
 export type SupabaseTableResolver = (
   tenantKey: string,
   tableName: string,
-) => ReturnType<SupabaseClient['from']>;
+) => ReturnType<DbClient['from']>;
 
 const defaultClientGetter: SupabaseClientGetter = () => getServerSupabase();
 
@@ -156,13 +156,13 @@ export class GraphTraversal {
     this.getTable = getTable;
   }
 
-  private table(tenantKey: string, tableName: string): ReturnType<SupabaseClient['from']> {
+  private table(tenantKey: string, tableName: string): ReturnType<DbClient['from']> {
     if (this.getTable) return this.getTable(tenantKey, tableName);
     const sb = this.getClient();
     const resource = getPrivateDataPlaneResource(tenantKey);
     const schemaClient =
       resource?.privateSchema && typeof (sb as { schema?: unknown }).schema === 'function'
-        ? (sb as unknown as { schema(schemaName: string): SupabaseClient }).schema(
+        ? (sb as unknown as { schema(schemaName: string): DbClient }).schema(
             resource.privateSchema,
           )
         : sb;
@@ -245,11 +245,12 @@ export class GraphTraversal {
       .eq('tenant_key', tenantKey)
       .eq('node_id', rootId)
       .limit(1);
-    if (rootResult.error || !rootResult.data || rootResult.data.length === 0) {
+    const rootRows = (rootResult.data ?? []) as GraphNodeRow[];
+    if (rootResult.error || rootRows.length === 0) {
       return { rootId, nodes: [], edges: [], depth: 0 };
     }
 
-    const rootNode = mapNode((rootResult.data as GraphNodeRow[])[0]);
+    const rootNode = mapNode(rootRows[0]!);
 
     const nodesById = new Map<string, GraphNode>();
     nodesById.set(rootNode.nodeId, rootNode);

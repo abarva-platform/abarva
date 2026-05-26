@@ -45,11 +45,10 @@ export function tenancyErrorResponse(err: unknown): Response {
 
 /**
  * Service-to-service auth for /emergent/cohort. Checks x-service-auth
- * header against SERVICE_AUTH_TOKEN. Prod MUST set this env; dev falls
- * back to the service role key.
+ * header against SERVICE_AUTH_TOKEN.
  */
 export function requireServiceAuth(req: Request): Response | null {
-  const expected = process.env.SERVICE_AUTH_TOKEN ?? process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const expected = process.env.SERVICE_AUTH_TOKEN;
   const presented = req.headers.get('x-service-auth');
   if (!expected || presented !== expected) {
     return Response.json({ error: 'forbidden', detail: 'Service auth required' }, { status: 403 });
