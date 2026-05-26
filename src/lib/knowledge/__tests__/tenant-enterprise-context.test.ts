@@ -565,4 +565,58 @@ describe('tenant enterprise context retrieval', () => {
 
     await expect(retrieveTenantStructuredFacts('northstar-medtech', 'How should we think about AI strategy?')).resolves.toEqual([]);
   });
+
+  it('routes Northstar regulatory exposure questions to tenant enterprise context', async () => {
+    fakeAdapter = {
+      ...makeEmptyAdapter(),
+      listContextChunks: (_tenantKey, opts) => {
+        const requested = new Set(opts?.segmentIds ?? []);
+        if (!requested.has('enterprise_profile')) return Promise.resolve([]);
+        return Promise.resolve([
+          chunk(
+            'enterprise_profile',
+            'EU AI Act Annex I exposure becomes material by August 2027; FDA PCCP, FDA 524B, SBOM, MDR, IVDR, ISO 13485, and GxP obligations constrain regulated AI workflows.',
+            'named-entity-facts.jsonl',
+          ),
+        ]);
+      },
+    };
+
+    const sources = await retrieveTenantEnterpriseSources(
+      'northstar-medtech',
+      'Where are we exposed on EU AI Act and FDA AI/ML expectations?',
+    );
+    const detail = sources.map((source) => source.detail).join('\n');
+
+    expect(detail).toContain('EU AI Act Annex I');
+    expect(detail).toContain('FDA 524B');
+  });
+
+  it('routes SAP S/4 Wave 0 binary questions to active initiative context', async () => {
+    fakeSupabase = mockSupabaseTables({
+      ai_initiatives: [
+        {
+          initiative_id: 'NST-INIT-S4-WAVE0',
+          display_id: 'NST-S4-WAVE0',
+          name: 'SAP S/4 Global Consolidation Wave 0',
+          stage: 'multi_year_strategic_bet',
+          status_flag: 'value_lag',
+          committed_total_usd: 68000000,
+          measured_value_usd: 204000000,
+          status_summary: 'hold_contested',
+          metadata: { sentinel_posture: 'hold_contested' },
+        },
+      ],
+    });
+
+    const sources = await retrieveTenantStructuredFacts(
+      'northstar-medtech',
+      'Just yes or no: should we accelerate SAP S/4 Wave 0 right now?',
+    );
+    const detail = sources.map((source) => source.detail).join('\n');
+
+    expect(detail).toContain('NST-INIT-S4-WAVE0');
+    expect(detail).toContain('SAP S/4 Global Consolidation Wave 0');
+    expect(detail).toContain('committed $68.0M');
+  });
 });
