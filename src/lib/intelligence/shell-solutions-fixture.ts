@@ -67,7 +67,11 @@ export const SOLUTIONS_INDEX_VIEW: SolutionsIndexView = {
       maturity: 'emerging',
     },
   ],
-  agentQuote: 'Five solution archetypes in scope for Apex Retail. CDP Activation and Demand Forecasting are proven — three and two programs respectively running against them. Loyalty Intelligence is gaining evidence fast; Contact Center AI is active. AI Governance is experimental — T1-F02 must be validated before this archetype can anchor a production program.',
+  // Tenant-agnostic phrasing — this fixture renders the same content to any
+  // signed-in client. The previous wording hardcoded "Apex Retail" by name,
+  // which surfaced cross-tenant content to Meridian and First Capital users
+  // during the 2026-05-25 and 2026-05-26 stress runs (STRESS-P0-007).
+  agentQuote: 'Five solution archetypes in this catalogue. CDP Activation and Demand Forecasting are proven — three and two programs respectively running against them. Loyalty Intelligence is gaining evidence fast; Contact Center AI is active. AI Governance is experimental — T1-F02 must be validated before this archetype can anchor a production program.',
   agentContext: 'Sentinel · Solution Archetypes · 5 archetypes · Apr 27 2026',
   actions: [
     { letter: 'A' as const, text: 'View CDP Activation detail', detail: 'Open the full archetype blueprint for CDP Activation' },

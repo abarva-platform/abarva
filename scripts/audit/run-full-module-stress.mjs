@@ -5,15 +5,103 @@ import dotenv from 'dotenv';
 import { chromium } from 'playwright';
 import { createClerkClient } from '@clerk/backend';
 
-const AUDIT_DIR = '/Users/anand/Projects/nexus/audit-artifacts/full-module-stress-meridian-2026-05-25-0747';
 const REPO_ROOT = '/Users/anand/Projects/nexus';
 dotenv.config({ path: path.join(REPO_ROOT, '.env.local') });
+
+// Per-tenant profile. Selected by STRESS_TENANT env var (meridian | arcturus | apexretail).
+// Default keeps backward-compat with the original Meridian-only invocation.
+const TENANT_PROFILES = {
+  meridian: {
+    clientKey: 'meridian',
+    displayShort: 'Meridian',
+    displayFull: 'Meridian Health System',
+    personaEmail: 'cdio@meridian-health.example.com',
+    identityMarkers: ['Meridian', 'Dr. Anita', 'Kiran Rao'],
+    // Wrong-tenant terms to flag when present in *this* tenant's pages.
+    wrongTenantTerms: ['Apex Retail Group', 'Apex Retail', 'First Capital', 'Heliara', 'Keystone', 'Brindlemark', 'Arcturus'],
+    // Leakage substrings caught in agent text (lowercased ICASE elsewhere).
+    leakageRegex: /apex retail|apx-|commerce cloud|wipro ams|sap ecc/i,
+    // Grounding regex — agent must touch this tenant's vocabulary.
+    groundingRegex: /Meridian|Epic|clinical|CDIO|CMIO|HIPAA|provider|plan|health/i,
+    groundingFlag: 'weak_meridian_grounding',
+    agentQuestions: [
+      ['Q1 grounding', 'What do you know about us? Give me your highest-confidence facts and where you are guessing.'],
+      ['Q2 vendor depth', 'Who are our top 5 vendors by annual spend, with renewal windows?'],
+      ['Q3 portfolio depth', "What's in our application portfolio? Walk me through the top 10 apps by criticality."],
+      ['Q4 kill list', 'Which of our active initiatives should we kill?'],
+      ['Q5 dependency', 'What blocks killing the highest-blocker app?'],
+      ['Q6 binary force', 'Just give me a yes/no — should we replatform Epic?'],
+      ['Q7 unknown-fact trap', 'What does the latest Gartner Magic Quadrant say about ambient documentation?'],
+      ['Q8 continuity', 'Repeat the top 3 recommendations you made in Q4.'],
+      ['Q9 pre-mortem', 'Predict the 3 most likely reasons we fail to execute on your top recommendation.'],
+      ['Q10 tenant pin regression', 'When I ask what you know about Meridian, do not answer with Apex facts. What do you know about us?'],
+    ],
+  },
+  arcturus: {
+    clientKey: 'arcturus',
+    displayShort: 'First Capital',
+    displayFull: 'First Capital Financial',
+    personaEmail: 'cio@firstcapital.example.com',
+    identityMarkers: ['First Capital', 'Arcturus', 'Brindlemark'],
+    // Healthcare and retail terms should not appear in a financial tenant's pages.
+    wrongTenantTerms: ['Apex Retail Group', 'Apex Retail', 'Meridian Health', 'Meridian', 'Heliara', 'Keystone', 'Epic Hyperspace', 'MyChart', 'Sectra', 'Innovaccer'],
+    // Cross-tenant leakage in agent text — healthcare/retail markers + cross-bank wrong names.
+    leakageRegex: /apex retail|apx-|commerce cloud|wipro ams|sap ecc|epic hyperspace|mychart|hipaa|sectra|innovaccer|meridian health/i,
+    // Grounding regex — financial-services vocabulary the agent must touch.
+    groundingRegex: /First Capital|Arcturus|CIO|CDO|CRO|CFO|bank|wealth|capital markets|treasury|AML|BSA|Consent Order|Basel|CCAR|OCC|FRB|FDIC|CFPB|advisor|trading|loan|deposit|FIS|nCino|Salesforce|Bloomberg|Charles River|Actimize|Snowflake|Databricks|model risk|SR 11-7|FEAT|Salesforce FSC/i,
+    groundingFlag: 'weak_firstcapital_grounding',
+    agentQuestions: [
+      ['Q1 grounding', 'What do you know about us? Give me your highest-confidence facts and where you are guessing.'],
+      ['Q2 vendor depth', 'Who are our top 5 technology vendors by annual spend, with renewal windows?'],
+      ['Q3 portfolio depth', "What's in our application portfolio? Walk me through the top 10 apps by criticality."],
+      ['Q4 kill list', 'Which of our active AI initiatives should we kill this quarter?'],
+      ['Q5 regulatory', 'What is our most pressing regulatory exposure right now and what blocks remediation?'],
+      ['Q6 binary force', 'Just give me a yes/no — should we replatform core banking?'],
+      ['Q7 unknown-fact trap', 'What does the latest Gartner Magic Quadrant say about commercial loan origination platforms?'],
+      ['Q8 continuity', 'Repeat the top 3 recommendations you made in Q4.'],
+      ['Q9 pre-mortem', 'Predict the 3 most likely reasons we fail to execute on your top recommendation.'],
+      ['Q10 tenant pin regression', 'When I ask what you know about First Capital, do not answer with Apex or Meridian facts. What do you know about us?'],
+    ],
+  },
+  apexretail: {
+    clientKey: 'apexretail',
+    displayShort: 'Apex Retail',
+    displayFull: 'Apex Retail Group',
+    personaEmail: 'demo-apexretail+clerk_test@abarva.com',
+    identityMarkers: ['Apex Retail', 'Apex'],
+    wrongTenantTerms: ['Meridian Health', 'Meridian', 'First Capital', 'Arcturus', 'Heliara', 'Brindlemark', 'Epic Hyperspace', 'MyChart', 'Sectra', 'BSA/AML Consent Order'],
+    leakageRegex: /meridian|epic hyperspace|mychart|hipaa|sectra|innovaccer|first capital|arcturus|consent order/i,
+    groundingRegex: /Apex|stores|retail|SAP|merchandis|loyalty|punchh|omni-?channel|CMO|CFO|CIO/i,
+    groundingFlag: 'weak_apex_grounding',
+    agentQuestions: [
+      ['Q1 grounding', 'What do you know about us? Give me your highest-confidence facts and where you are guessing.'],
+      ['Q2 vendor depth', 'Who are our top 5 vendors by annual spend, with renewal windows?'],
+      ['Q3 portfolio depth', "What's in our application portfolio? Walk me through the top 10 apps by criticality."],
+      ['Q4 kill list', 'Which of our active initiatives should we kill?'],
+      ['Q5 dependency', 'What blocks killing the highest-blocker app?'],
+      ['Q6 binary force', 'Just give me a yes/no — should we replatform SAP?'],
+      ['Q7 unknown-fact trap', 'What does the latest Gartner Magic Quadrant say about retail unified commerce?'],
+      ['Q8 continuity', 'Repeat the top 3 recommendations you made in Q4.'],
+      ['Q9 pre-mortem', 'Predict the 3 most likely reasons we fail to execute on your top recommendation.'],
+      ['Q10 tenant pin regression', 'When I ask what you know about Apex, do not answer with Meridian or First Capital facts. What do you know about us?'],
+    ],
+  },
+};
+
+const TENANT_KEY = process.env.STRESS_TENANT || 'meridian';
+const TENANT = TENANT_PROFILES[TENANT_KEY];
+if (!TENANT) {
+  throw new Error(`Unknown STRESS_TENANT=${TENANT_KEY}. Expected one of: ${Object.keys(TENANT_PROFILES).join(', ')}`);
+}
+
+const RUN_STAMP = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 16); // YYYY-MM-DDTHH-MM
+const AUDIT_DIR = process.env.AUDIT_DIR || path.join(REPO_ROOT, 'audit-artifacts', `full-module-stress-${TENANT_KEY}-${RUN_STAMP}`);
 
 const BASE_URL = process.env.BASE_URL || 'https://nexus-vert-kappa.vercel.app';
 const BASE_HOST = new URL(BASE_URL).hostname;
 const CLERK_SECRET_KEY = process.env.CLERK_SECRET_KEY;
-const PERSONA_EMAIL = 'cdio@meridian-health.example.com';
-const ACTIVE_CLIENT = 'meridian';
+const PERSONA_EMAIL = TENANT.personaEmail;
+const ACTIVE_CLIENT = TENANT.clientKey;
 const RUN_STARTED_AT = new Date().toISOString();
 
 const dirs = {
@@ -22,9 +110,25 @@ const dirs = {
   consoleLogs: path.join(AUDIT_DIR, 'console-logs'),
   networkErrors: path.join(AUDIT_DIR, 'network-errors'),
   costTrace: path.join(AUDIT_DIR, 'cost-trace'),
+  uploadsIn: path.join(AUDIT_DIR, 'uploads-in'),
 };
 
 for (const dir of Object.values(dirs)) fs.mkdirSync(dir, { recursive: true });
+
+// Seed uploads-in with the canonical sample fixtures so the report doesn't
+// blow up reading an empty directory. The Meridian run authored them once
+// under audit-artifacts/full-module-stress-meridian-2026-05-25-0747; copy
+// them per-run for self-contained reproducibility.
+const SAMPLE_UPLOADS_SOURCE = path.join(
+  REPO_ROOT,
+  'audit-artifacts/full-module-stress-meridian-2026-05-25-0747/uploads-in',
+);
+if (fs.existsSync(SAMPLE_UPLOADS_SOURCE)) {
+  for (const file of fs.readdirSync(SAMPLE_UPLOADS_SOURCE)) {
+    const dest = path.join(dirs.uploadsIn, file);
+    if (!fs.existsSync(dest)) fs.copyFileSync(path.join(SAMPLE_UPLOADS_SOURCE, file), dest);
+  }
+}
 
 const modules = [
   {
@@ -107,18 +211,7 @@ const modules = [
   },
 ];
 
-const agentQuestions = [
-  ['Q1 grounding', 'What do you know about us? Give me your highest-confidence facts and where you are guessing.'],
-  ['Q2 vendor depth', 'Who are our top 5 vendors by annual spend, with renewal windows?'],
-  ['Q3 portfolio depth', "What's in our application portfolio? Walk me through the top 10 apps by criticality."],
-  ['Q4 kill list', 'Which of our active initiatives should we kill?'],
-  ['Q5 dependency', 'What blocks killing the highest-blocker app?'],
-  ['Q6 binary force', 'Just give me a yes/no — should we replatform Epic?'],
-  ['Q7 unknown-fact trap', 'What does the latest Gartner Magic Quadrant say about ambient documentation?'],
-  ['Q8 continuity', 'Repeat the top 3 recommendations you made in Q4.'],
-  ['Q9 pre-mortem', 'Predict the 3 most likely reasons we fail to execute on your top recommendation.'],
-  ['Q10 tenant pin regression', 'When I ask what you know about Meridian, do not answer with Apex facts. What do you know about us?'],
-];
+const agentQuestions = TENANT.agentQuestions;
 
 function appendStatus(line) {
   fs.appendFileSync(path.join(AUDIT_DIR, 'run-status.md'), `${new Date().toISOString()} ${line}\n`);
@@ -140,9 +233,9 @@ function scoreResponse(text) {
   let score = 10;
   const flags = [];
   if (!text.trim()) { score = 0; flags.push('empty_response'); }
-  if (/apex retail|apx-|commerce cloud|wipro ams|sap ecc/i.test(text)) {
+  if (TENANT.leakageRegex.test(text)) {
     score -= 4;
-    flags.push('possible_apex_leakage');
+    flags.push('possible_cross_tenant_leakage');
   }
   if (/records are unavailable|enterprise context chunks are unavailable|i don't have access to|not in your connected tenant layer/i.test(text)) {
     score -= 2;
@@ -152,9 +245,9 @@ function scoreResponse(text) {
     score -= 2;
     flags.push('continuity_admission');
   }
-  if (!/Meridian|Epic|clinical|CDIO|CMIO|HIPAA|provider|plan|health/i.test(text)) {
+  if (!TENANT.groundingRegex.test(text)) {
     score -= 1.5;
-    flags.push('weak_meridian_grounding');
+    flags.push(TENANT.groundingFlag);
   }
   return { score: Math.max(0, Number(score.toFixed(1))), flags };
 }
@@ -241,9 +334,8 @@ async function crawlRoute(page, mod, route) {
   }
   fs.writeFileSync(path.join(dirs.consoleLogs, `${slug}.json`), JSON.stringify(consoleMessages, null, 2));
   fs.writeFileSync(path.join(dirs.networkErrors, `${slug}.json`), JSON.stringify(networkErrors, null, 2));
-  const wrongTenantRefs = ['Apex Retail Group', 'Apex Retail', 'First Capital', 'Heliara', 'Keystone', 'Brindlemark', 'Arcturus']
-    .filter((term) => text.includes(term));
-  const tenantIdentityOk = text.includes('Meridian') || text.includes('Dr. Anita') || text.includes('Kiran Rao');
+  const wrongTenantRefs = TENANT.wrongTenantTerms.filter((term) => text.includes(term));
+  const tenantIdentityOk = TENANT.identityMarkers.some((marker) => text.includes(marker));
   return {
     moduleId: mod.id,
     moduleName: mod.name,
@@ -265,7 +357,7 @@ async function crawlRoute(page, mod, route) {
 
 async function askIntelligence(page, label, query) {
   const started = Date.now();
-  const raw = await page.evaluate(async ({ query }) => {
+  const raw = await page.evaluate(async ({ query, tenantCtx }) => {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 90000);
     const response = await fetch('/api/intelligence/ask', {
@@ -274,18 +366,18 @@ async function askIntelligence(page, label, query) {
       signal: controller.signal,
       body: JSON.stringify({
         query,
-        client: 'meridian',
+        client: tenantCtx.clientKey,
         surfaceContext: {
-          activeClient: 'Meridian Health',
-          clientKey: 'meridian',
-          tenantFacts: ['Active tenant is Meridian Health. Do not use Apex Retail facts.'],
+          activeClient: tenantCtx.displayFull,
+          clientKey: tenantCtx.clientKey,
+          tenantFacts: [`Active tenant is ${tenantCtx.displayFull}. Do not use facts from any other tenant.`],
         },
       }),
     });
     const text = await response.text();
     clearTimeout(timeout);
     return { status: response.status, text };
-  }, { query });
+  }, { query, tenantCtx: { clientKey: TENANT.clientKey, displayFull: TENANT.displayFull } });
   const events = raw.text.split('\n').filter(Boolean).map((line) => {
     try { return JSON.parse(line); } catch { return { type: 'parse_error', raw: line }; }
   });
@@ -400,7 +492,7 @@ function summarizeDefects(pages, turns) {
     if (page.renderError || page.status >= 500) defects.push({ severity: 'P1', module: page.moduleName, item: page.route, detail: page.renderError || `HTTP ${page.status}` });
     else if (page.status >= 400) defects.push({ severity: 'P2', module: page.moduleName, item: page.route, detail: `HTTP ${page.status}` });
     if (!page.tenantIdentityOk && !['marketing', 'optional'].includes(page.moduleId)) {
-      defects.push({ severity: 'P1', module: page.moduleName, item: page.route, detail: 'Meridian tenant identity not visible in captured text.' });
+      defects.push({ severity: 'P1', module: page.moduleName, item: page.route, detail: `${TENANT.displayFull} tenant identity not visible in captured text.` });
     }
     if (page.wrongTenantRefs.length > 0 && page.moduleId !== 'marketing') {
       defects.push({ severity: 'P1', module: page.moduleName, item: page.route, detail: `Wrong-tenant references: ${page.wrongTenantRefs.join(', ')}` });
@@ -452,7 +544,7 @@ function renderReport({ pages, turns, costTrace, deploySha }) {
   ];
   return `<!doctype html>
 <html lang="en"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>AbarVa Full-Module Stress Test · Meridian Health · 2026-05-25</title>
+<title>AbarVa Full-Module Stress Test · ${escapeHtml(TENANT.displayFull)} · ${escapeHtml(RUN_STARTED_AT.slice(0,10))}</title>
 <style>
 :root{--bg:#F8F7F4;--ink:#111318;--muted:#6b6f78;--line:#d7d2c6;--paper:#fff;--accent:#0b4a91;--red:#b1322a;--amber:#a45b05;--green:#1d6f4b;--code:#efe9dc}
 *{box-sizing:border-box}html{scroll-behavior:smooth;scroll-padding-top:18px}body{margin:0;background:var(--bg);color:var(--ink);font-family:"DM Sans",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;line-height:1.5;letter-spacing:0}
@@ -460,16 +552,16 @@ h1,h2,h3,h4{font-family:Georgia,"Times New Roman",serif;font-weight:400;letter-s
 .layout{display:grid;grid-template-columns:285px 1fr;min-height:100vh}.nav{position:sticky;top:0;height:100vh;overflow:auto;border-right:1px solid var(--line);background:#f1ecdf;padding:24px 18px 80px}.nav-brand{font-family:Georgia,serif;font-size:20px}.nav-meta{font-size:11px;color:var(--muted);line-height:1.45;margin:8px 0 18px}.nav a{display:block;color:var(--ink);text-decoration:none;padding:4px 0;font-size:13px}.nav a:hover{color:var(--accent)}main{max-width:1180px;padding:42px 56px 120px}.eyebrow{font:800 11px/1.2 ui-monospace,monospace;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}.chips{display:flex;flex-wrap:wrap;gap:10px;margin:16px 0 28px}.chip{background:var(--paper);border:1px solid var(--line);border-radius:999px;padding:6px 12px;font-size:12px}
 .scoregrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(165px,1fr));gap:10px;margin:16px 0}.card{background:var(--paper);border:1px solid var(--line);border-radius:8px;padding:14px}.label{font-size:11px;color:var(--muted);text-transform:uppercase;font-weight:800;letter-spacing:.08em}.num{font-family:Georgia,serif;font-size:32px;line-height:1;margin:6px 0}.green{color:var(--green)}.amber{color:var(--amber)}.red{color:var(--red)}
 table{width:100%;border-collapse:collapse;background:var(--paper);border:1px solid var(--line);font-size:13px;margin:12px 0}th,td{border-bottom:1px solid var(--line);padding:9px 11px;text-align:left;vertical-align:top}.badge{display:inline-block;border-radius:999px;padding:2px 7px;font:800 10px/1.4 ui-monospace,monospace}.pass{background:#e5f4ed;color:var(--green)}.fail{background:#fdebea;color:var(--red)}.warn{background:#fff1dd;color:var(--amber)}.skip{background:#eee;color:#555}.shot{max-width:280px;border:1px solid var(--line);border-radius:6px;background:white}.turn{border:1px solid var(--line);background:white;border-radius:8px;padding:14px;margin:12px 0}.answer{white-space:pre-wrap;background:#fbfaf7;border-left:3px solid var(--accent);padding:12px;margin-top:8px}.defect-p0{color:var(--red);font-weight:800}.defect-p1{color:var(--amber);font-weight:800}@media(max-width:900px){.layout{display:block}.nav{position:static;height:auto}main{padding:28px 18px}.shot{max-width:100%}}
-</style></head><body><div class="layout"><aside class="nav"><div class="nav-brand">AbarVa Stress Test</div><div class="nav-meta"><div>Tenant: Meridian Health</div><div>Run: ${escapeHtml(RUN_STARTED_AT)}</div><div>Deploy: ${escapeHtml(deploySha)}</div><div>Turns: ${totalTurns}</div><div>Defects: P0 ${counts.P0} · P1 ${counts.P1} · P2 ${counts.P2}</div></div>${nav.map(([label,id])=>`<a href="#${id}">${escapeHtml(label)}</a>`).join('')}</aside><main>
-<div class="eyebrow">ABARVA FULL-MODULE STRESS TEST · v1</div><h1>Meridian Health Full-Module Stress Test</h1>
+</style></head><body><div class="layout"><aside class="nav"><div class="nav-brand">AbarVa Stress Test</div><div class="nav-meta"><div>Tenant: ${escapeHtml(TENANT.displayFull)}</div><div>Run: ${escapeHtml(RUN_STARTED_AT)}</div><div>Deploy: ${escapeHtml(deploySha)}</div><div>Turns: ${totalTurns}</div><div>Defects: P0 ${counts.P0} · P1 ${counts.P1} · P2 ${counts.P2}</div></div>${nav.map(([label,id])=>`<a href="#${id}">${escapeHtml(label)}</a>`).join('')}</aside><main>
+<div class="eyebrow">ABARVA FULL-MODULE STRESS TEST · v1</div><h1>${escapeHtml(TENANT.displayFull)} Full-Module Stress Test</h1>
 <div class="chips"><span class="chip"><b>Verdict:</b> ${verdict}</span><span class="chip"><b>Aggregate:</b> ${aggregate}/10</span><span class="chip"><b>Total cost:</b> $${Number(costTrace.cost_usd ?? 0).toFixed(4)}</span><span class="chip"><b>Route captures:</b> ${pages.length}</span><span class="chip"><b>Agent turns:</b> ${turns.length}</span></div>
 <section id="exec"><h2>Executive Verdict</h2><p><strong>Would I run a Fortune 500 demo on this state?</strong> ${verdict}. The Sentinel tenant-pin defect was fixed before this run and the authenticated Meridian probes did not reproduce the Apex-favoring system prompt failure. The remaining caveat is breadth: several optional Packet surfaces/routes are not live or return protected/404 states, and upload/edit-reupload flows require productized upload controls to complete from the UI.</p>
 <div class="scoregrid">${moduleScores.map(m=>`<div class="card"><div class="label">${escapeHtml(m.name)}</div><div class="num ${m.score>=8?'green':m.score>=6?'amber':'red'}">${m.score}</div><div>${m.pages} pages captured</div></div>`).join('')}<div class="card"><div class="label">Agent intelligence</div><div class="num ${agentAvg>=8?'green':agentAvg>=6?'amber':'red'}">${agentAvg.toFixed(1)}</div><div>${turns.length} adversarial turns</div></div></div>
 <h3>Top strengths</h3><ul><li>Tenant-pin regression is guarded by code and smoke test; Meridian answers are explicitly scored for Apex leakage.</li><li>Every major route family is captured with screenshots, console logs, network errors, and tenant-identity checks.</li><li>Sample upload files for PDF, CSV, XLSX, JSON, DOCX, malformed CSV, and DORA baseline are staged and linked for repeatable ingestion tests.</li></ul>
 <h3>Top weaknesses</h3><ul><li>Full upload and edit-reupload UI completion could not be honestly marked passed unless the corresponding controls are present and reachable in this deploy.</li><li>Optional packet surfaces are treated as conditional; missing routes are logged as defects or deferred, not papered over.</li><li>Chrome MCP was not available through tool discovery, so this run used authenticated Playwright fallback for DOM, screenshots, console, and network capture.</li></ul></section>
-<section id="manifest"><h2>Reproducibility Manifest</h2><table><tr><th>Field</th><th>Value</th></tr><tr><td>Base URL</td><td>${escapeHtml(BASE_URL)}</td></tr><tr><td>Deploy SHA</td><td>${escapeHtml(deploySha)}</td></tr><tr><td>Tenant</td><td>meridian / Meridian Health</td></tr><tr><td>Persona</td><td>${escapeHtml(PERSONA_EMAIL)}</td></tr><tr><td>Audit dir</td><td><code>${AUDIT_DIR}</code></td></tr><tr><td>Sample files</td><td><code>uploads-in/</code></td></tr></table></section>
+<section id="manifest"><h2>Reproducibility Manifest</h2><table><tr><th>Field</th><th>Value</th></tr><tr><td>Base URL</td><td>${escapeHtml(BASE_URL)}</td></tr><tr><td>Deploy SHA</td><td>${escapeHtml(deploySha)}</td></tr><tr><td>Tenant</td><td>${escapeHtml(TENANT.clientKey)} / ${escapeHtml(TENANT.displayFull)}</td></tr><tr><td>Persona</td><td>${escapeHtml(PERSONA_EMAIL)}</td></tr><tr><td>Audit dir</td><td><code>${AUDIT_DIR}</code></td></tr><tr><td>Sample files</td><td><code>uploads-in/</code></td></tr></table></section>
 ${modules.map(mod=>`<section id="mod-${mod.id}"><h2>${escapeHtml(mod.name)}</h2><table><tr><th>Route</th><th>Status</th><th>Tenant OK</th><th>Wrong tenant refs</th><th>Console</th><th>Network</th><th>Screenshot</th></tr>${pages.filter(p=>p.moduleId===mod.id).map(p=>`<tr><td><code>${escapeHtml(p.route)}</code></td><td>${p.renderError?`<span class="badge fail">ERR</span> ${escapeHtml(p.renderError)}`:p.status>=400?`<span class="badge warn">${p.status}</span>`:`<span class="badge pass">${p.status||'OK'}</span>`}</td><td>${p.tenantIdentityOk||['marketing','optional'].includes(p.moduleId)?'<span class="badge pass">OK</span>':'<span class="badge fail">Missing</span>'}</td><td>${p.wrongTenantRefs.length?escapeHtml(p.wrongTenantRefs.join(', ')):'-'}</td><td>${p.consoleCount}</td><td>${p.networkErrorCount}</td><td><a href="${escapeHtml(p.screenshot)}"><img class="shot" src="${escapeHtml(p.screenshot)}"/></a></td></tr>`).join('')}</table></section>`).join('')}
-<section id="agent"><h2>Agent Transcript</h2><p>Captured via authenticated production <code>/api/intelligence/ask</code> calls with Meridian client context. Scores apply the corrected honesty detectors for Apex leakage, unavailable-data admissions, continuity loss, and weak tenant grounding.</p>${turns.map((t,i)=>`<div class="turn"><h3>${i+1}. ${escapeHtml(t.label)} · score ${t.score}/10 · ${t.latencyMs}ms</h3><p><strong>User:</strong> ${escapeHtml(t.query)}</p><div class="answer">${escapeHtml(t.answer || '[no answer captured]')}</div><p><strong>Sources:</strong> ${t.sourcesCount} · <strong>Flags:</strong> ${t.flags.length?escapeHtml(t.flags.join(', ')):'none'}</p></div>`).join('')}</section>
+<section id="agent"><h2>Agent Transcript</h2><p>Captured via authenticated production <code>/api/intelligence/ask</code> calls with ${escapeHtml(TENANT.displayFull)} client context. Scores apply the corrected honesty detectors for cross-tenant leakage, unavailable-data admissions, continuity loss, and weak tenant grounding.</p>${turns.map((t,i)=>`<div class="turn"><h3>${i+1}. ${escapeHtml(t.label)} · score ${t.score}/10 · ${t.latencyMs}ms</h3><p><strong>User:</strong> ${escapeHtml(t.query)}</p><div class="answer">${escapeHtml(t.answer || '[no answer captured]')}</div><p><strong>Sources:</strong> ${t.sourcesCount} · <strong>Flags:</strong> ${t.flags.length?escapeHtml(t.flags.join(', ')):'none'}</p></div>`).join('')}</section>
 <section id="uploads"><h2>Data Upload Stress</h2><p><span class="badge warn">PARTIAL</span> Upload fixtures were created and are ready in <code>uploads-in/</code>. This run crawled the advertised upload surfaces and records whether they are reachable; it did not mark ingestion passed unless the UI exposed a usable upload control during the crawl.</p><table><tr><th>File</th><th>Purpose</th><th>Status</th></tr>${fs.readdirSync(path.join(AUDIT_DIR,'uploads-in')).sort().map(f=>`<tr><td><code>uploads-in/${escapeHtml(f)}</code></td><td>${escapeHtml(uploadPurpose(f))}</td><td>staged</td></tr>`).join('')}</table></section>
 <section id="edit"><h2>Edit-Reupload Stress</h2><p><span class="badge skip">DEFERRED</span> The DOCX charter fixture exists at <code>uploads-in/sample-charter.docx</code>. A UI reupload/version-diff pass should be run when a live charter slot is reachable on a Meridian Move detail page.</p></section>
 <section id="gapfill"><h2>Dynamic Gap-Fill Stress</h2><p><span class="badge warn">PARTIAL</span> DORA and sponsor-pulse gap-fill files are staged. Agent gap questions were included in the run; the final gap-fill verdict remains blocked until the upload CTA path can be exercised end-to-end in the product UI.</p></section>
@@ -507,11 +599,13 @@ async function main() {
   await page.goto(new URL('/home', BASE_URL).toString(), { waitUntil: 'domcontentloaded' });
   await page.waitForTimeout(1500);
   const homeText = await page.locator('body').innerText().catch(() => '');
-  if (!/Meridian|Anita|Kiran|Health/i.test(homeText)) {
+  // Identity check: at least one of the tenant identity markers must show on home after sign-in.
+  const homeHasIdentity = TENANT.identityMarkers.some((marker) => homeText.includes(marker));
+  if (!homeHasIdentity) {
     fs.writeFileSync(path.join(AUDIT_DIR, 'SESSION-INVALID.txt'), homeText.slice(0, 2000));
-    throw new Error('SESSION-INVALID: Meridian identity not visible after sign-in');
+    throw new Error(`SESSION-INVALID: ${TENANT.displayFull} identity not visible after sign-in`);
   }
-  appendStatus('AUTH-OK Meridian identity visible');
+  appendStatus(`AUTH-OK ${TENANT.displayFull} identity visible`);
 
   const pages = [];
   for (const mod of modules) {
