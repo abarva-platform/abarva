@@ -141,6 +141,10 @@ describe('clientKeyToBrokerTenantKey · PR-INT-G Apex tenant key split', () => {
     expect(clientKeyToInventorySubstrateKey('arcturus')).toBe('first-capital');
     expect(clientKeyToInventorySubstrateKey('firstcapital')).toBe('first-capital');
     expect(clientKeyToInventorySubstrateKey('first-capital')).toBe('first-capital');
+    // STRESS-P0-010 regression — chunks have tenant_key='northstar-medtech'
+    // to match clients.tenant_key; resolver must map app key → that value
+    expect(clientKeyToInventorySubstrateKey('northstar')).toBe('northstar-medtech');
+    expect(clientKeyToInventorySubstrateKey('northstar-clinical-tech')).toBe('northstar-medtech');
     expect(clientKeyToInventorySubstrateKey('keystone')).toBe('keystone');
   });
 

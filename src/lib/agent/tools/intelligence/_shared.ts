@@ -81,6 +81,14 @@ export function clientKeyToInventorySubstrateKey(
   if (clientKey === 'arcturus' || clientKey === 'firstcapital' || clientKey === 'first-capital') {
     return 'first-capital';
   }
+  // STRESS-P0-010 (2026-05-26): Northstar was missing from this resolver, so
+  // the Sentinel tenant-enterprise retriever queried tenant_key='northstar' on
+  // enterprise_context_chunks but the rows have tenant_key='northstar-medtech'
+  // (matching clients.tenant_key). 0 rows returned → agent confessed
+  // "substrate hasn't populated in this exchange" despite 720 chunks loaded.
+  if (clientKey === 'northstar' || clientKey === 'northstar-clinical-tech') {
+    return 'northstar-medtech';
+  }
   return clientKey;
 }
 
