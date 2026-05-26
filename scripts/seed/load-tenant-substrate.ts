@@ -138,6 +138,7 @@ interface TenantConfig {
   // file paths inside datasetRoot
   sourceFilesDir: string; // .md files
   corpusJsonl: string;    // chunks
+  extraCorpusJsonl?: string[]; // additional chunk overlays loaded with the main corpus
   appPortfolioCsv?: string;
   initiativesActiveCsv?: string;
   initiativesClosedCsv?: string;
@@ -153,6 +154,10 @@ const TENANTS: Record<string, TenantConfig> = {
     profileYaml: '00-profile/enterprise-profile.yaml',
     sourceFilesDir: '16-market-corpus/source-files',
     corpusJsonl: '16-market-corpus/client-data-corpus.jsonl',
+    extraCorpusJsonl: [
+      '16-market-corpus/demo-critical-facts.jsonl',
+      '16-market-corpus/named-entity-facts.jsonl',
+    ],
     appPortfolioCsv: '07-application-portfolio/application-portfolio.csv',
     initiativesActiveCsv: '10-initiatives/initiatives-active.csv',
     initiativesClosedCsv: '10-initiatives/initiatives-closed.csv',
@@ -441,13 +446,34 @@ function getChunkId(chunk: Record<string, unknown>, fallbackIndex: number): stri
 
 async function phase2ChunksAndEmbeddings(): Promise<{ rows: number; embedded: number; failed: number }> {
   console.log('\n━━ PHASE 2 · enterprise_context_chunks + embeddings ━━');
-  const jsonlPath = path.join(REPO_ROOT, TENANT.datasetRoot, TENANT.corpusJsonl);
-  if (!fs.existsSync(jsonlPath)) {
-    console.log(`  corpus jsonl missing: ${jsonlPath}`);
-    return { rows: 0, embedded: 0, failed: 1 };
+  const corpusFiles = [TENANT.corpusJsonl, ...(TENANT.extraCorpusJsonl ?? [])];
+  const parsedChunks: Array<{
+    chunk: Record<string, unknown>;
+    sourcePath: string;
+    ordinal: number;
+  }> = [];
+  for (const corpusJsonl of corpusFiles) {
+    const jsonlPath = path.join(REPO_ROOT, TENANT.datasetRoot, corpusJsonl);
+    if (!fs.existsSync(jsonlPath)) {
+      if (corpusJsonl === TENANT.corpusJsonl) {
+        console.log(`  corpus jsonl missing: ${jsonlPath}`);
+        return { rows: 0, embedded: 0, failed: 1 };
+      }
+      console.log(`  optional corpus overlay missing: ${jsonlPath}`);
+      continue;
+    }
+    const lines = fs.readFileSync(jsonlPath, 'utf8').split('\n').filter(Boolean);
+    const baseIndex = parsedChunks.length;
+    for (let i = 0; i < lines.length; i++) {
+      parsedChunks.push({
+        chunk: JSON.parse(lines[i]) as Record<string, unknown>,
+        sourcePath: `${TENANT.datasetRoot}/${corpusJsonl}`,
+        ordinal: baseIndex + i,
+      });
+    }
+    console.log(`  Found ${lines.length} chunks in ${corpusJsonl}`);
   }
-  const lines = fs.readFileSync(jsonlPath, 'utf8').split('\n').filter(Boolean);
-  console.log(`  Found ${lines.length} chunks`);
+  console.log(`  Found ${parsedChunks.length} chunks total`);
 
   // Map each chunk to one of the canonical retrieval segment IDs the
   // Sentinel tenant-enterprise retriever knows about
@@ -459,6 +485,10 @@ async function phase2ChunksAndEmbeddings(): Promise<{ rows: number; embedded: nu
   // Sentinel can't ground in tenant facts — that was the 2026-05-26
   // retrieval-wiring P0 found mid-session.
   function mapChunkToSegment(chunk: Record<string, unknown>): string {
+    const explicit = String(chunk.source_segment_id ?? chunk.segment_id ?? '').trim();
+    if (explicit && ['enterprise_profile', 'org_structure', 'it_financials', 'it_landscape', 'program_inventory'].includes(explicit)) {
+      return explicit;
+    }
     const useCase = String(chunk.use_case ?? '').toLowerCase();
     const industry = String(chunk.industry ?? '').toLowerCase();
     if (/budget|cost|financial|spend|p&l|capex|opex/.test(useCase + ' ' + industry)) return 'it_financials';
@@ -470,10 +500,10 @@ async function phase2ChunksAndEmbeddings(): Promise<{ rows: number; embedded: nu
   }
 
   const rows: ChunkRow[] = [];
-  for (let i = 0; i < lines.length; i++) {
-    const chunk = JSON.parse(lines[i]);
+  for (let i = 0; i < parsedChunks.length; i++) {
+    const { chunk, sourcePath, ordinal } = parsedChunks[i]!;
     const chunkText = buildChunkText(chunk);
-    const chunkId = getChunkId(chunk, i);
+    const chunkId = getChunkId(chunk, ordinal);
     const sourceFileId: string = String(chunk.source_file_id ?? chunk.source_id ?? chunkId);
     rows.push({
       client_id: TENANT.clientId,
@@ -482,8 +512,8 @@ async function phase2ChunksAndEmbeddings(): Promise<{ rows: number; embedded: nu
       source_segment_id: mapChunkToSegment(chunk),
       source_record_id: sourceFileId,
       source_doc: sourceFileId,
-      source_path: `${TENANT.datasetRoot}/${TENANT.corpusJsonl}#${chunkId}`,
-      chunk_index: i,
+      source_path: `${sourcePath}#${chunkId}`,
+      chunk_index: ordinal,
       chunk_text: chunkText,
       token_count: Math.ceil(chunkText.length / 4),
       embedding_status: 'pending',

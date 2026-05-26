@@ -2,6 +2,7 @@ jest.mock('server-only', () => ({}));
 
 import {
   retrieveTenantEnterpriseSources,
+  retrieveTenantStructuredFacts,
   selectTenantEnterpriseSegments,
 } from '@/lib/knowledge/tenant-enterprise-context';
 import type {
@@ -448,5 +449,120 @@ describe('tenant enterprise context retrieval', () => {
     expect(detail).toContain('AS/400 Distributor Rebates Retirement');
     expect(detail).toContain('Sentinel posture kill');
     expect(detail).toContain('committed $7.2M');
+  });
+
+  it('returns explicit 0.99 structured facts for top-app criticality questions', async () => {
+    fakeSupabase = mockSupabaseTables({
+      applications: [
+        {
+          id: 'app-row-234',
+          name: 'Java legacy Capability 234',
+          vendor: 'SAP',
+          business_function: 'BU-HIS',
+          deployment_model: 'on_prem',
+          criticality: 'tier1',
+          status: 'active',
+          annual_cost_usd: 17298000,
+        },
+      ],
+    });
+
+    const sources = await retrieveTenantStructuredFacts('northstar-medtech', 'Top 5 apps by criticality, name them');
+
+    expect(sources).toHaveLength(1);
+    expect(sources[0]?.confidence).toBe(0.99);
+    expect(sources[0]?.detail).toContain('NST-APP-234');
+    expect(sources[0]?.detail).toContain('Do not substitute industry-typical provider EHR');
+  });
+
+  it('returns explicit 0.99 structured facts for vendor renewals in the next six months', async () => {
+    fakeSupabase = mockSupabaseTables({
+      vendor_contracts: [
+        {
+          vendor_id: 'NST-VEND-090',
+          vendor_name: 'SAP Program 90',
+          contract_category: 'PLM',
+          annual_contract_value_usd: 31200000,
+          renewal_date: '2026-07-15T05:00:00.000Z',
+          exit_terms_jsonb: { summary: 'annual renewal window' },
+          ai_usage_clauses: true,
+          indemnity_provided: true,
+          concentration_pct: 2.1,
+        },
+        {
+          vendor_id: 'NST-VEND-001',
+          vendor_name: 'Oracle',
+          contract_category: 'QMS',
+          annual_contract_value_usd: 940000,
+          renewal_date: '2027-02-15T05:00:00.000Z',
+          exit_terms_jsonb: { summary: 'annual renewal window' },
+          ai_usage_clauses: false,
+          indemnity_provided: false,
+          concentration_pct: 0.1,
+        },
+      ],
+    });
+
+    const sources = await retrieveTenantStructuredFacts('northstar-medtech', 'Name 3 most-exposed vendor renewals in the next 6 months');
+    const detail = sources.map((source) => source.detail).join('\n');
+
+    expect(sources[0]?.confidence).toBe(0.99);
+    expect(detail).toContain('NST-VEND-090');
+    expect(detail).not.toContain('NST-VEND-001');
+  });
+
+  it('returns explicit 0.99 structured facts for active initiatives and excludes closed records', async () => {
+    fakeSupabase = mockSupabaseTables({
+      ai_initiatives: [
+        {
+          initiative_id: 'NST-INIT-CODING-AI',
+          display_id: 'NST-CODING-AI',
+          name: 'Clinical Coding AI Modernization',
+          stage: 'pilot',
+          status_flag: 'healthy',
+          committed_total_usd: 42000000,
+          measured_value_usd: 126000000,
+          status_summary: 'accelerate',
+          metadata: { sentinel_posture: 'accelerate_with_guardrails' },
+        },
+        {
+          initiative_id: 'NST-CLOSED-LEGACY',
+          display_id: 'NST-C-LEGACY',
+          name: 'Closed Legacy Program',
+          stage: 'sunset',
+          status_flag: 'closed',
+          committed_total_usd: 1000000,
+          measured_value_usd: 0,
+          status_summary: 'closed',
+          metadata: { sentinel_posture: 'closed' },
+        },
+      ],
+    });
+
+    const sources = await retrieveTenantStructuredFacts('northstar-medtech', 'Active initiatives by stage');
+    const detail = sources.map((source) => source.detail).join('\n');
+
+    expect(sources[0]?.confidence).toBe(0.99);
+    expect(detail).toContain('NST-INIT-CODING-AI');
+    expect(detail).not.toContain('NST-CLOSED-LEGACY');
+  });
+
+  it('does not fabricate structured rows for no-match queries', async () => {
+    fakeSupabase = mockSupabaseTables({
+      applications: [
+        {
+          id: 'app-row-234',
+          name: 'Java legacy Capability 234',
+          vendor: 'SAP',
+          business_function: 'BU-HIS',
+          deployment_model: 'on_prem',
+          criticality: 'tier1',
+          status: 'active',
+          annual_cost_usd: 17298000,
+        },
+      ],
+    });
+
+    await expect(retrieveTenantStructuredFacts('northstar-medtech', 'How should we think about AI strategy?')).resolves.toEqual([]);
   });
 });
