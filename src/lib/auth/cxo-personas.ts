@@ -35,15 +35,15 @@ export interface CxoPersona {
    * Canonical app ClientKey — matches src/lib/client-config.ts.
    * Used for active-client resolution and Supabase clients-table
    * lookup (clients.name LIKE: Apex Retail / Meridian / Arcturus or
-   * First Capital). MUST be one of: apexretail · meridian · arcturus.
+   * First Capital). MUST be one of: apexretail · meridian · arcturus · northstar.
    */
-  clientKey: 'apexretail' | 'meridian' | 'arcturus';
+  clientKey: 'apexretail' | 'meridian' | 'arcturus' | 'northstar';
   /**
    * Tenant key used by the data-room / broker layer — a parallel
    * namespace per project memory ("App ClientKey is `apexretail`;
    * broker is `apex-retail`"). Kept for chrome rendering.
    */
-  tenantKey: 'apex-retail' | 'meridian-health' | 'firstcapital';
+  tenantKey: 'apex-retail' | 'meridian-health' | 'firstcapital' | 'northstar-clinical-tech';
   /** Graph node id used by persons.graph_node_id (Supabase). */
   graphNodeId: string;
   /** Monogram background — tenant theme color (NOT brand chrome). */
@@ -266,6 +266,111 @@ export const CXO_PERSONAS: ReadonlyArray<CxoPersona> = [
       "Michael runs Finance, Treasury, FP&A (under SVP Jules Bernhardt as Treasurer), Investor Relations, Tax/Regulatory Reporting, and Procurement (under CPO Nadia Rahman) at First Capital. He is the gating CFO signature in the three-way CFO+CIO+CRO joint approval that gates every IT capital line between $5M and $25M — a tighter authority structure than retail or healthcare because of bank regulatory risk. FY2026 priorities: earnings stability, CCAR readiness, capital allocation discipline against a 9.2%-of-revenue IT spend (highest in peer group, 34% compliance share), and AI program ROI scrutiny.",
     workspaceTeaser:
       'Your workspace shows the FY2026 IT capital plan with three-signature decisions live, the CCAR submission cycle, the cost-to-income progression vs. peers, and the FY2026 vendor-renewal calendar with renegotiation flags on Adenza/AxiomSL and NICE Actimize.',
+  },
+  {
+    slug: 'ceo-northstar',
+    email: 'ceo@northstar-clinical.example.com',
+    shortLabel: 'ceo@northstar',
+    firstName: 'Maya',
+    lastName: 'Rangan',
+    personaName: 'Maya Rangan',
+    monogram: 'MR',
+    titleShort: 'CEO',
+    titleFull: 'Chief Executive Officer',
+    tenant: 'Northstar Clinical Technologies',
+    clientKey: 'northstar',
+    tenantKey: 'northstar-clinical-tech',
+    graphNodeId: 'person:northstar:maya-rangan',
+    monogramBg: '#0F766E',
+    bioShort: 'CEO. Leading a $22.6B post-carveout clinical technology company through margin expansion.',
+    bioLong:
+      'Maya Rangan leads Northstar Clinical Technologies through its post-carveout operating model, TSA exit, ERP simplification, and regulated AI product modernization agenda. Her board narrative centers on proving Northstar can run independently while protecting FDA, EU MDR, SOX, and HIPAA-adjacent evidence chains.',
+    workspaceTeaser:
+      'Your workspace shows the Northstar context layer, the board priority map, the $250M margin-expansion plan, and the decision threads connecting ERP, QMS, product portfolio, Source, and Tower value views.',
+  },
+  {
+    slug: 'cfo-northstar',
+    email: 'cfo@northstar-clinical.example.com',
+    shortLabel: 'cfo@northstar',
+    firstName: 'Daniel',
+    lastName: 'Okafor',
+    personaName: 'Daniel Okafor',
+    monogram: 'DO',
+    titleShort: 'CFO',
+    titleFull: 'Chief Financial Officer',
+    tenant: 'Northstar Clinical Technologies',
+    clientKey: 'northstar',
+    tenantKey: 'northstar-clinical-tech',
+    graphNodeId: 'person:northstar:daniel-okafor',
+    monogramBg: '#0F766E',
+    bioShort: 'CFO. Owns $250M margin expansion, TSA cost removal, and board-grade value proof.',
+    bioLong:
+      'Daniel Okafor runs finance, FP&A, treasury, investor relations, procurement, and SOX controls for Northstar. He is the sponsor who asks whether the new context layer can prove savings from ERP simplification, vendor renegotiation, product rationalization, and quality automation without confusing projected value with realized value.',
+    workspaceTeaser:
+      'Your workspace shows annual and quarterly reporting fixtures, segment P&L, vendor contracts, margin opportunities, approval queues, and evidence traces for CFO-signable value claims.',
+  },
+  {
+    slug: 'cio-northstar',
+    email: 'cio@northstar-clinical.example.com',
+    shortLabel: 'cio@northstar',
+    firstName: 'Priya',
+    lastName: 'Mehta',
+    personaName: 'Priya Mehta',
+    monogram: 'PM',
+    titleShort: 'CIO',
+    titleFull: 'Chief Information Officer',
+    tenant: 'Northstar Clinical Technologies',
+    clientKey: 'northstar',
+    tenantKey: 'northstar-clinical-tech',
+    graphNodeId: 'person:northstar:priya-mehta',
+    monogramBg: '#0F766E',
+    bioShort: 'CIO. Owns ERP/TSA sequencing, CMDB truth, integration topology, and AI-ready IT estate.',
+    bioLong:
+      'Priya Mehta owns the Northstar technology estate: SAP ECC, S/4 Wave 0, Oracle EBS, JD Edwards, Infor LN, Dynamics AX, AS/400, mainframe batch, plant edge, cloud, security, and data platforms. Her pilot lens is whether AbarVa can ingest messy enterprise uploads, route them to the right context dimensions, and make Sentinel stop guessing.',
+    workspaceTeaser:
+      'Your workspace shows the 240-application portfolio, 820 integration edges, ERP landscape, org/team topology, DORA telemetry, upload templates, rejected facts, and the agent-ready evidence map.',
+  },
+  {
+    slug: 'cqo-northstar',
+    email: 'cqo@northstar-clinical.example.com',
+    shortLabel: 'cqo@northstar',
+    firstName: 'Elena',
+    lastName: 'Kovacs',
+    personaName: 'Elena Kovacs',
+    monogram: 'EK',
+    titleShort: 'CQO',
+    titleFull: 'Chief Quality Officer',
+    tenant: 'Northstar Clinical Technologies',
+    clientKey: 'northstar',
+    tenantKey: 'northstar-clinical-tech',
+    graphNodeId: 'person:northstar:elena-kovacs',
+    monogramBg: '#0F766E',
+    bioShort: 'CQO. Protects QMS, CAPA, complaint, audit, and regulated-AI evidence chains.',
+    bioLong:
+      'Elena Kovacs owns Northstar quality systems, regulatory readiness, CAPA, complaint analytics, audit responses, and the evidence posture behind AI-enabled regulated workflows. Her pilot bar is whether every recommendation can name its QMS basis, owner, freshness, and confidence.',
+    workspaceTeaser:
+      'Your workspace shows QMS events, regulatory artifacts, AI tooling risk flags, model inventory context, evidence gaps, and upload/approval flows for quality-controlled facts.',
+  },
+  {
+    slug: 'evp-his-northstar',
+    email: 'evp-his@northstar-clinical.example.com',
+    shortLabel: 'evp-his@northstar',
+    firstName: 'Marcus',
+    lastName: 'Lee',
+    personaName: 'Marcus Lee',
+    monogram: 'ML',
+    titleShort: 'EVP HIS',
+    titleFull: 'EVP Health Information Systems',
+    tenant: 'Northstar Clinical Technologies',
+    clientKey: 'northstar',
+    tenantKey: 'northstar-clinical-tech',
+    graphNodeId: 'person:northstar:marcus-lee',
+    monogramBg: '#0F766E',
+    bioShort: 'EVP HIS. Owns clinical coding/CDI software modernization and regulated AI product economics.',
+    bioLong:
+      'Marcus Lee runs the Health Information Systems business, including clinical coding, CDI, audit, analytics, and customer-facing software modernization. He is the executive who tests whether AbarVa can connect product strategy, engineering execution, QMS constraints, Source events, and board-grade value artifacts.',
+    workspaceTeaser:
+      'Your workspace shows the clinical coding AI modernization move, HIS product families, QMS dependencies, Source vendor choices, and Tower value views for product-software outcomes.',
   },
 ];
 

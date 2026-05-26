@@ -1,0 +1,302 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Northstar Context Layer Execution Report</title>
+    <style>
+      :root {
+        --bg: #f8f7f4;
+        --ink: #171717;
+        --muted: #5f5a50;
+        --line: #d8d2c4;
+        --panel: #fffdf8;
+        --accent: #0f766e;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--ink);
+        font-family: "DM Sans", Arial, sans-serif;
+      }
+      .layout {
+        display: grid;
+        grid-template-columns: 280px minmax(0, 1fr);
+        min-height: 100vh;
+      }
+      aside {
+        position: sticky;
+        top: 0;
+        height: 100vh;
+        border-right: 1px solid var(--line);
+        padding: 28px 20px;
+        background: #fbfaf7;
+        overflow: auto;
+      }
+      main { padding: 40px; }
+      h1, h2, h3 {
+        font-family: Georgia, "Times New Roman", serif;
+        letter-spacing: 0;
+      }
+      h1 { font-size: 44px; line-height: 1.05; margin: 0 0 12px; }
+      h2 { font-size: 30px; margin: 0 0 14px; }
+      h3 { font-size: 22px; margin: 0 0 10px; }
+      p, li, td, th { line-height: 1.55; }
+      a { color: var(--ink); text-decoration: none; }
+      .eyebrow {
+        text-transform: uppercase;
+        font-size: 12px;
+        letter-spacing: 0;
+        color: var(--muted);
+      }
+      .nav-title {
+        font-family: Georgia, "Times New Roman", serif;
+        font-size: 24px;
+        margin-bottom: 8px;
+      }
+      .nav-link {
+        display: block;
+        padding: 9px 0;
+        border-bottom: 1px solid #ece7dc;
+        font-size: 14px;
+      }
+      .section {
+        max-width: 1180px;
+        border-bottom: 1px solid var(--line);
+        padding: 34px 0;
+      }
+      .hero {
+        padding-top: 0;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 12px;
+      }
+      .two {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 16px;
+      }
+      .card {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel);
+        padding: 16px;
+      }
+      .metric-label {
+        color: var(--muted);
+        font-size: 12px;
+      }
+      .metric-value {
+        font-family: Georgia, "Times New Roman", serif;
+        font-size: 28px;
+        margin-top: 6px;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        background: var(--panel);
+        border: 1px solid var(--line);
+      }
+      th, td {
+        padding: 10px 12px;
+        border-bottom: 1px solid #ebe6da;
+        text-align: left;
+        vertical-align: top;
+      }
+      th { font-size: 12px; text-transform: uppercase; color: var(--muted); }
+      code {
+        background: #eee9dd;
+        border-radius: 4px;
+        padding: 2px 5px;
+      }
+      .pill {
+        display: inline-block;
+        border: 1px solid var(--accent);
+        color: var(--accent);
+        border-radius: 999px;
+        padding: 4px 9px;
+        font-size: 12px;
+        margin: 3px 4px 3px 0;
+      }
+      .flow {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 10px;
+      }
+      .flow .card strong { display: block; margin-bottom: 6px; }
+      @media (max-width: 900px) {
+        .layout { grid-template-columns: 1fr; }
+        aside { position: relative; height: auto; }
+        main { padding: 24px; }
+        .grid, .two, .flow { grid-template-columns: 1fr; }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="layout">
+      <aside>
+        <div class="eyebrow">Execution report</div>
+        <div class="nav-title">Northstar Context Layer</div>
+        <p style="color: var(--muted); font-size: 13px;">Synthetic pilot substrate for a $22.6B clinical technology enterprise.</p>
+        <a class="nav-link" href="#verdict">Executive Verdict</a>
+        <a class="nav-link" href="#profile">Company Profile</a>
+        <a class="nav-link" href="#story">Pilot Story</a>
+        <a class="nav-link" href="#templates">Context Templates</a>
+        <a class="nav-link" href="#dataset">Generated Dataset</a>
+        <a class="nav-link" href="#org">CXO + Org Chart</a>
+        <a class="nav-link" href="#ingestion">Upload / Approval / Sync</a>
+        <a class="nav-link" href="#agent">Agent Use Cases</a>
+        <a class="nav-link" href="#qa">QA Evidence</a>
+        <a class="nav-link" href="#gaps">Known Gaps</a>
+      </aside>
+      <main>
+        <section class="section hero" id="verdict">
+          <div class="eyebrow">Northstar Clinical Technologies</div>
+          <h1>Context layer pilot scaffold is ready for review.</h1>
+          <p>
+            This packet creates a comprehensive synthetic Northstar substrate and a deterministic ingestion scaffold that shows how uploaded files are classified,
+            parsed, validated, approved, committed, and made available to agents. It is designed as a high-fidelity pilot narrative for a large clinical technology
+            company with ERP complexity, regulated QMS obligations, financial pressure, and AI product modernization.
+          </p>
+          <div class="grid">
+            <div class="card"><div class="metric-label">Revenue anchor</div><div class="metric-value">$22.6B</div></div>
+            <div class="card"><div class="metric-label">Employees</div><div class="metric-value">58,000</div></div>
+            <div class="card"><div class="metric-label">Synthetic files</div><div class="metric-value">228</div></div>
+            <div class="card"><div class="metric-label">Approved facts story</div><div class="metric-value">7,636</div></div>
+          </div>
+        </section>
+
+        <section class="section" id="profile">
+          <h2>Company Profile</h2>
+          <div class="two">
+            <div class="card">
+              <h3>Scale</h3>
+              <p>Northstar is modeled as a newly independent global clinical technology company with 85-country reach, 42 plants, 14 R&D hubs, 6 business units, and a $1.15B IT budget.</p>
+              <span class="pill">FDA QSR</span><span class="pill">ISO 13485</span><span class="pill">EU MDR</span><span class="pill">SOX</span><span class="pill">GxP</span><span class="pill">HIPAA-adjacent</span>
+            </div>
+            <div class="card">
+              <h3>Why This Pilot Matters</h3>
+              <p>The business story is deliberately hard: prove a post-carveout operating model, exit TSAs, sequence SAP/ERP modernization, protect QMS evidence, rationalize product complexity, and make regulated AI product modernization board-defensible.</p>
+            </div>
+          </div>
+        </section>
+
+        <section class="section" id="story">
+          <h2>Pilot Story</h2>
+          <p>The demonstration is not "we loaded a spreadsheet." It is a visual story: Northstar uploads real enterprise artifacts, AbarVa maps them into a governed context layer, stewards approve or reject facts, and agents start answering with source locators instead of generic prose.</p>
+          <div class="flow">
+            <div class="card"><strong>1. Upload</strong>CMDB, ERP workbook, financial reports, QMS events, strategy memos, vendor contracts, and org exports.</div>
+            <div class="card"><strong>2. Parse + Map</strong>Classifier picks a context dimension and extraction strategy, then maps fields to canonical facts.</div>
+            <div class="card"><strong>3. Approve + Sync</strong>Validation findings route facts to owner approval before they become agent-available.</div>
+            <div class="card"><strong>4. Reason</strong>Sentinel, Source, Moves, and Tower can cite uploaded facts, freshness, confidence, and owner role.</div>
+          </div>
+        </section>
+
+        <section class="section" id="templates">
+          <h2>Context Templates</h2>
+          <p>The catalog covers 18 dimensions and 25 upload templates. The full catalog lives at <code>docs/build/northstar/NORTHSTAR_CONTEXT_LAYER_TEMPLATE_CATALOG.md</code>.</p>
+          <table>
+            <thead><tr><th>Dimension</th><th>Example Inputs</th><th>Primary Steward</th><th>Questions Unlocked</th></tr></thead>
+            <tbody>
+              <tr><td>Financial KPIs</td><td>Annual report, QBR, segment P&L</td><td>CFO / FP&A</td><td>Where is the fastest path to $250M margin expansion?</td></tr>
+              <tr><td>ERP Landscape</td><td>SAP ECC, S/4, Oracle EBS, JDE, Infor, Dynamics AX, AS/400</td><td>CIO ERP Transformation</td><td>Should Northstar accelerate or hold S/4 Wave 0?</td></tr>
+              <tr><td>CMDB / Application Portfolio</td><td>ServiceNow export, systems inventory</td><td>VP Enterprise Architecture</td><td>Which apps are critical, duplicate, stale, or retirement-blocked?</td></tr>
+              <tr><td>Integration Topology</td><td>Graph JSON, EDI/API/file/batch edges</td><td>VP Enterprise Architecture</td><td>What blocks retiring AS/400 rebate systems?</td></tr>
+              <tr><td>QMS / Regulatory Risk</td><td>CAPA, complaints, FDA 483, audit artifacts</td><td>Chief Quality Officer</td><td>Which AI or ERP decisions create regulated evidence risk?</td></tr>
+              <tr><td>Org / Roles / Teams</td><td>Workday hierarchy, team topology, role inventory</td><td>CHRO</td><td>Who owns decisions, blockers, approvals, and escalation paths?</td></tr>
+            </tbody>
+          </table>
+        </section>
+
+        <section class="section" id="dataset">
+          <h2>Generated Dataset</h2>
+          <div class="grid">
+            <div class="card"><div class="metric-label">Applications</div><div class="metric-value">240</div></div>
+            <div class="card"><div class="metric-label">Integration edges</div><div class="metric-value">820</div></div>
+            <div class="card"><div class="metric-label">Initiatives</div><div class="metric-value">80</div></div>
+            <div class="card"><div class="metric-label">Vendor contracts</div><div class="metric-value">90</div></div>
+            <div class="card"><div class="metric-label">ERP objects</div><div class="metric-value">152</div></div>
+            <div class="card"><div class="metric-label">QMS records</div><div class="metric-value">120</div></div>
+            <div class="card"><div class="metric-label">Corpus chunks</div><div class="metric-value">720</div></div>
+            <div class="card"><div class="metric-label">Canonical Qs</div><div class="metric-value">36</div></div>
+          </div>
+          <p>Pack root: <code>datasets/northstar-clinical-tech-synthetic-v1/</code>. The pack intentionally avoids using the real Solventum name while preserving the kind of business complexity a comparable enterprise pilot would require.</p>
+        </section>
+
+        <section class="section" id="org">
+          <h2>CXO + Deep Org Chart</h2>
+          <p>The org model includes a named CXO layer and explicit leadership chains through EVP, SVP, VP, Senior Director, Director, Manager, and IC levels. Detailed artifacts are in <code>11-org-roles/org-roles.csv</code> and <code>11-org-roles/executive-org-chart.json</code>.</p>
+          <table>
+            <thead><tr><th>Login</th><th>Name</th><th>Role</th><th>Pilot Lens</th></tr></thead>
+            <tbody>
+              <tr><td><code>ceo@northstar-clinical.example.com</code></td><td>Maya Rangan</td><td>CEO</td><td>Independent operating model and board narrative.</td></tr>
+              <tr><td><code>cfo@northstar-clinical.example.com</code></td><td>Daniel Okafor</td><td>CFO</td><td>$250M margin expansion and realized value proof.</td></tr>
+              <tr><td><code>cio@northstar-clinical.example.com</code></td><td>Priya Mehta</td><td>CIO</td><td>ERP/TSA sequencing, CMDB truth, and integration blockers.</td></tr>
+              <tr><td><code>cqo@northstar-clinical.example.com</code></td><td>Elena Kovacs</td><td>Chief Quality Officer</td><td>QMS, CAPA, complaints, audit evidence, and regulated AI controls.</td></tr>
+              <tr><td><code>evp-his@northstar-clinical.example.com</code></td><td>Marcus Lee</td><td>EVP Health Information Systems</td><td>Clinical coding AI and product-software modernization.</td></tr>
+            </tbody>
+          </table>
+          <p>Shared demo password in the fixture pack: <code>Demo2026!</code>. Production provisioning remains controlled by the existing Clerk/Supabase scripts and should be run in dry-run mode first.</p>
+        </section>
+
+        <section class="section" id="ingestion">
+          <h2>Upload / Approval / Sync</h2>
+          <p>The scaffold includes deterministic ingestion primitives under <code>src/lib/context-ingestion/</code> plus a route at <code>/api/context-ingestion/northstar</code>.</p>
+          <table>
+            <thead><tr><th>Stage</th><th>Behavior</th><th>Proof in This Packet</th></tr></thead>
+            <tbody>
+              <tr><td>Classify</td><td>Uses file extension and filename semantics to choose context dimension and extraction strategy.</td><td>CMDB CSV maps to <code>application_portfolio</code>; strategy PDF maps to <code>c_suite_strategy</code>.</td></tr>
+              <tr><td>Extract</td><td>Structured CSV/JSON use deterministic row extraction; PDF/DOCX/PPTX are marked as hybrid / LLM-needed.</td><td>Smoke asserts row/page source locators and confidence values.</td></tr>
+              <tr><td>Validate</td><td>Required fields, numeric fields, time-classification enums, and owner gaps produce findings.</td><td>Malformed CMDB row flags invalid enum and invalid number.</td></tr>
+              <tr><td>Approve</td><td>Valid facts are approved; validation-error facts remain uncommitted.</td><td>Smoke asserts approved fact count equals committed fact count.</td></tr>
+              <tr><td>Commit</td><td>Committed facts build evidence rows and become available to agents.</td><td>API smoke returns committed facts and evidence rows.</td></tr>
+            </tbody>
+          </table>
+        </section>
+
+        <section class="section" id="agent">
+          <h2>Agent Use Cases</h2>
+          <p>The verification target includes 36 canonical questions. Examples include:</p>
+          <ul>
+            <li>What do you know about Northstar?</li>
+            <li>Where is the fastest path to $250M margin expansion?</li>
+            <li>Should we accelerate global SAP S/4 consolidation?</li>
+            <li>What blocks shutting down JD Edwards in Dental?</li>
+            <li>Which vendor contracts should Source renegotiate first?</li>
+            <li>Which VP or director chain blocks plant MES harmonization?</li>
+            <li>How did AbarVa ingest Northstar data?</li>
+            <li>Which uploaded facts were rejected?</li>
+          </ul>
+        </section>
+
+        <section class="section" id="qa">
+          <h2>QA Evidence</h2>
+          <table>
+            <thead><tr><th>Check</th><th>Status</th><th>What It Proves</th></tr></thead>
+            <tbody>
+              <tr><td><code>node scripts/seed/generate-northstar-context-layer.mjs</code></td><td>PASS</td><td>Regenerates the full pack deterministically.</td></tr>
+              <tr><td><code>npm run verify:northstar-context-layer</code></td><td>PASS</td><td>Counts, ERP platforms, org depth, personas, scenarios, and forbidden real-name scanner pass.</td></tr>
+              <tr><td><code>npm run smoke:northstar-context-ingestion</code></td><td>PASS</td><td>Upload classification, extraction, validation, approval, commit, and evidence rows work.</td></tr>
+              <tr><td><code>npx tsc --noEmit --pretty false</code></td><td>PASS</td><td>Full TypeScript check is green after isolated dependency install.</td></tr>
+              <tr><td><code>npm run build</code></td><td>PASS</td><td>Next.js 16 production build compiles and includes the new routes.</td></tr>
+              <tr><td>Local browser</td><td>PARTIAL</td><td>Anonymous browser correctly hit the admin restriction screen; inner admin content requires admin session.</td></tr>
+            </tbody>
+          </table>
+        </section>
+
+        <section class="section" id="gaps">
+          <h2>Known Gaps</h2>
+          <ul>
+            <li>The Northstar data is file-backed and verified; loading it into Azure Postgres as durable tenant rows is a follow-up.</li>
+            <li>The ingestion scaffold marks PDF/DOCX/PPTX as hybrid / LLM-needed; production OCR and AI extraction should route through the egress wrapper in a hardening slice.</li>
+            <li>The admin pages are visual process/read-model surfaces; full storage-backed upload/versioning UX is not included in this scaffold.</li>
+            <li>Actual Clerk user creation is intentionally not run during this code change; the five personas are wired for provisioning through existing scripts.</li>
+          </ul>
+        </section>
+      </main>
+    </div>
+  </body>
+</html>

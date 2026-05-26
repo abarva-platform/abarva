@@ -74,6 +74,7 @@ async function loadClientsByKey(sb: SupabaseClient): Promise<Map<string, ClientR
     if (/Meridian/i.test(row.name)) byKey.set('meridian', row);
     if (/Arcturus|First Capital|Brindlemark/i.test(row.name)) byKey.set('arcturus', row);
     if (/Apex Retail/i.test(row.name)) byKey.set('apexretail', row);
+    if (/Northstar/i.test(row.name)) byKey.set('northstar', row);
   }
   return byKey;
 }

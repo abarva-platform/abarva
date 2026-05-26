@@ -28,6 +28,13 @@ export const ALL_CLIENTS: ClientOption[] = [
     color: '#818CF8',
     vertical: 'Financial Services',
   },
+  {
+    id: 'northstar',
+    name: 'Northstar Clinical Technologies',
+    shortName: 'Northstar',
+    color: '#0F766E',
+    vertical: 'Clinical Technology',
+  },
 ] as const;
 
 export type ClientKey = (typeof ALL_CLIENTS)[number]['id'];
@@ -42,12 +49,14 @@ export const CLIENT_KEY_TO_DB_NAME: Record<ClientKey, string[]> = {
   meridian: ['Meridian Health', 'Meridian Health System', 'Heliara Health', 'Heliara Health Alliance', 'Heliara'],
   arcturus: ['Brindlemark Financial', 'Brindlemark Financial Group', 'Brindlemark', 'Arcturus Financial', 'Arcturus Financial Group', 'First Capital Financial', 'First Capital'],
   apexretail: ['Apex Retail', 'Apex Retail Group'],
+  northstar: ['Northstar Clinical Technologies', 'Northstar MedTech', 'Northstar MedTech Group', 'Northstar'],
 };
 
 export const CLIENT_KEY_TO_INDUSTRY_CODE: Record<ClientKey, string> = {
   meridian: 'HEALTHCARE_IDN',
   arcturus: 'FINSERV',
   apexretail: 'RETAIL',
+  northstar: 'MEDTECH',
 };
 
 export function industryCodeForClientName(name: string | null | undefined): string | null {
@@ -119,6 +128,17 @@ export function canonicalClientDisplayName(args: {
     return 'First Capital Financial';
   }
 
+  if (
+    key === 'northstar' ||
+    key === 'northstar-clinical-tech' ||
+    normalizedName === 'northstar clinical technologies' ||
+    normalizedName === 'northstar medtech' ||
+    normalizedName === 'northstar medtech group' ||
+    normalizedName === 'northstar'
+  ) {
+    return 'Northstar Clinical Technologies';
+  }
+
   if (name) return name;
   const option = getClientOption(args.key);
   return option?.name ?? null;
@@ -141,6 +161,8 @@ const EMAIL_DOMAIN_TO_CLIENT_KEY: ReadonlyArray<readonly [string, ClientKey]> = 
   ['apex-retail.example.com', 'apexretail'],
   ['meridian-health.example.com', 'meridian'],
   ['firstcapital.example.com', 'arcturus'],
+  ['northstar-clinical.example.com', 'northstar'],
+  ['northstar-medtech.example.com', 'northstar'],
   // Founder backdoor (`anand.sundaram@thesundaram.com`) lands on Meridian
   // by inference. Documented in demo_accounts memory. Anyone uncomfortable
   // with this should remove the entry and add the email to Clerk metadata
@@ -160,14 +182,17 @@ const LEGACY_LOCALPART_TO_CLIENT_KEY: ReadonlyArray<readonly [string, ClientKey]
   ['+apex', 'apexretail'],
   ['+meridian', 'meridian'],
   ['+firstcapital', 'arcturus'],
+  ['+northstar', 'northstar'],
   // Demo-prefix pattern: demo-apexretail+clerk_test@abarva.com (retired)
   ['demo-apexretail+', 'apexretail'],
   ['demo-meridian+', 'meridian'],
   ['demo-firstcapital+', 'arcturus'],
+  ['demo-northstar+', 'northstar'],
   // Legacy short prefixes
   ['apex+', 'apexretail'],
   ['mh+', 'meridian'],
   ['af+', 'arcturus'],
+  ['ns+', 'northstar'],
 ];
 
 export function inferClientKeyFromEmail(email: string | null | undefined): ClientKey | null {
