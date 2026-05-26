@@ -243,6 +243,7 @@ export async function* synthesizeStream(args: {
   userId?: string | null;
   userContextBlock?: string;
   conversationContextBlock?: string;
+  factAvailabilityBlock?: string;
   /**
    * Average source confidence. The synthesizer used to lead with a "Limited
    * indexed data — confidence is moderate" prefix when this dropped below
@@ -273,6 +274,7 @@ export async function* synthesizeStream(args: {
 
   const contextBlocks = [
     tenantIdentityPin,
+    args.factAvailabilityBlock?.trim() ?? '',
     args.userContextBlock?.trim() ?? '',
     args.conversationContextBlock?.trim() ?? '',
   ].filter(Boolean);

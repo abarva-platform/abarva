@@ -4,8 +4,15 @@ import { synthesizeStream } from './synthesizer';
 import { generateFollowups } from './followups';
 import { retrieveWorldview } from './retrievers/worldview';
 import { retrieveSurfaceContextSources } from './retrievers/surface-context';
-import { retrieveTenantEnterpriseSources } from '@/lib/knowledge/tenant-enterprise-context';
+import {
+  retrieveTenantEnterpriseSources,
+  retrieveTenantStructuredFacts,
+} from '@/lib/knowledge/tenant-enterprise-context';
 import { retrieveTenantTechnologySources } from '@/lib/knowledge/tenant-technology-context';
+import {
+  formatTenantFactAvailabilityBlock,
+  getTenantFactFingerprint,
+} from './tenant-fact-fingerprint';
 import type { AskSource, IntentClassification, AskSurfaceContext } from './types';
 import {
   buildCurrentStateAdvisory,
@@ -84,18 +91,32 @@ export async function* askIntelligence(query: string, opts: AskOptions = {}): As
     yield { type: 'classified', classification };
 
     const surfaceContext = retrieveSurfaceContextSources(opts.surfaceContext, trimmed);
-    const [tenantEnterprise, tenantTechnology, routed, worldview] = await Promise.all([
+    const [
+      tenantEnterprise,
+      tenantStructuredFacts,
+      tenantTechnology,
+      routed,
+      worldview,
+      factFingerprint,
+    ] = await Promise.all([
       retrieveTenantEnterpriseSources(opts.tenantInventoryKey, trimmed, {
         activePersonGraphNodeId: opts.activePersonGraphNodeId,
         activePersonDisplayName: opts.activePersonDisplayName,
         userContextBlock: opts.userContextBlock,
       }),
+      retrieveTenantStructuredFacts(opts.tenantInventoryKey, trimmed),
       retrieveTenantTechnologySources(opts.tenantInventoryKey, trimmed),
       route(classification.intent, classification.entities),
       retrieveWorldview(trimmed, 3, { tenantId: opts.tenantId, userId: opts.userId }),
+      getTenantFactFingerprint({
+        tenantId: opts.tenantId,
+        tenantInventoryKey: opts.tenantInventoryKey,
+      }),
     ]);
+    const factAvailabilityBlock = formatTenantFactAvailabilityBlock(factFingerprint);
     const sources: AskSource[] = [
       ...surfaceContext,
+      ...tenantStructuredFacts,
       ...tenantEnterprise,
       ...tenantTechnology,
       ...routed.sources,
@@ -154,6 +175,7 @@ export async function* askIntelligence(query: string, opts: AskOptions = {}): As
       userId: opts.userId,
       userContextBlock: opts.userContextBlock,
       conversationContextBlock: opts.conversationContextBlock,
+      factAvailabilityBlock,
       averageConfidence,
     })) {
       answer += delta;

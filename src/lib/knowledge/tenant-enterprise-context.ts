@@ -16,6 +16,10 @@ export interface TenantEnterpriseSource {
   confidence: number;
 }
 
+export type TenantStructuredSource = TenantEnterpriseSource & {
+  confidence: 0.99;
+};
+
 const ENTERPRISE_QUERY_RE =
   /\b(profile|company|enterprise|tenant|organization|organisation|org|structure|leadership|leaders?|executive|executives|business|function\s+leads?|c[-\s]?level|cxo|cio|cdio|cto|cmio|cmo|cno|coo|ceo|cfo|svp|vp|director|direct\s+reports?|reports?|reports?\s+to|owner|sponsor|budget|spend|financials?|capex|opex|capital|funding|approval|approver|authority|fy\s*26|fy2026|current\s+state|what\s+do\s+you\s+know|application|applications|apps?|systems?|portfolio|criticality|vendor|vendors?|supplier|suppliers?|contract|contracts?|renewal|renewals?|initiative|initiatives?|moves?|kill|replatform|dependency|dependencies|blocks?|blocked|blockers?)\b/i;
 
@@ -243,6 +247,243 @@ async function retrieveStructuredTenantSources(
   } catch {
     return [];
   }
+}
+
+export async function retrieveTenantStructuredFacts(
+  tenantKey: string | null | undefined,
+  query: string,
+): Promise<TenantStructuredSource[]> {
+  if (!tenantKey) return [];
+  const normalized = query.toLowerCase();
+  const wantsTopApps = /top\s+\d+\s+(?:apps?|applications?)\s+by\s+criticality|(?:application|app)\s+portfolio.*criticality/.test(normalized);
+  const wantsRetiringApps = /(?:which\s+)?(?:applications?|apps?).*(?:retiring|retire|decommission|sunset)/.test(normalized);
+  const wantsTopVendors = /(?:top|biggest|largest)\s+vendors?|vendor.*\b(?:spend|cost|annual)\b/.test(normalized);
+  const wantsVendorRenewals = /vendor\s+renewal|renewing|renewals?\s+(?:window|date)|renewals?.*(?:next|6\s+months|six\s+months|exposed)/.test(normalized);
+  const wantsActiveInitiatives = /active\s+initiatives?|in[-\s]?flight\s+initiatives?|biggest\s+in[-\s]?flight\s+initiative/.test(normalized);
+  const wantsInitiativesByStage = /initiatives?\s+by\s+(?:stage|phase)/.test(normalized);
+  const wantsKillInitiatives = /(?:which\s+)?(?:initiatives?|moves?).*(?:kill|stop|pause|cut)/.test(normalized);
+
+  if (!wantsTopApps && !wantsRetiringApps && !wantsTopVendors && !wantsVendorRenewals && !wantsActiveInitiatives && !wantsInitiativesByStage && !wantsKillInitiatives) {
+    return [];
+  }
+
+  try {
+    const sb = getServerSupabase();
+    const clientId = await resolveClientIdForTenantKey(sb, tenantKey);
+    if (!clientId) return [];
+    const sources: TenantStructuredSource[] = [];
+    if (wantsTopApps) {
+      const source = await readStructuredTopApplicationsSource(sb, tenantKey, clientId);
+      if (source) sources.push(source);
+    }
+    if (wantsRetiringApps) {
+      const source = await readStructuredRetiringApplicationsSource(sb, tenantKey, clientId);
+      if (source) sources.push(source);
+    }
+    if (wantsTopVendors) {
+      const source = await readStructuredTopVendorsSource(sb, tenantKey, clientId);
+      if (source) sources.push(source);
+    }
+    if (wantsVendorRenewals) {
+      const source = await readStructuredVendorRenewalsSource(sb, tenantKey, clientId);
+      if (source) sources.push(source);
+    }
+    if (wantsActiveInitiatives || wantsInitiativesByStage || wantsKillInitiatives) {
+      const source = await readStructuredInitiativesSource(sb, tenantKey, clientId, {
+        byStage: wantsInitiativesByStage,
+        killOnly: wantsKillInitiatives,
+      });
+      if (source) sources.push(source);
+    }
+    return sources;
+  } catch {
+    return [];
+  }
+}
+
+async function readStructuredTopApplicationsSource(
+  sb: ReturnType<typeof getServerSupabase>,
+  tenantKey: string,
+  clientId: string,
+): Promise<TenantStructuredSource | null> {
+  const { data, error } = await sb
+    .from('applications')
+    .select('id,name,vendor,business_function,deployment_model,criticality,status,annual_cost_usd')
+    .eq('client_id', clientId)
+    .order('criticality', { ascending: true })
+    .order('annual_cost_usd', { ascending: false, nullsFirst: false })
+    .limit(10);
+  if (error || !data || data.length === 0) return null;
+  const prefix = tenantRecordPrefix(tenantKey);
+  const rows = (data as ApplicationRow[]).filter((row) => ['tier1', 'tier2', 'tier3'].includes(String(row.criticality ?? '').toLowerCase()));
+  if (rows.length === 0) return null;
+  return {
+    type: 'TENANT',
+    name: `Structured fact · top applications by criticality (${tenantKey})`,
+    id: `${tenantKey}:structured-fact:top-applications`,
+    detail: [
+      `Top ${rows.length} applications by criticality from public.applications for ${tenantKey}.`,
+      ...rows.map((row) => {
+        const appRef = deriveAppRef(prefix, row.name, row.id);
+        return `${appRef} · ${row.name} · ${row.criticality ?? 'unknown'} · ${formatUsd(row.annual_cost_usd) ?? 'unknown'}/yr · ${row.vendor ?? 'unknown'} · ${row.deployment_model ?? 'unknown'} · ${row.business_function ?? 'unknown'}-owned`;
+      }),
+      'Do not substitute industry-typical provider EHR or interoperability systems unless they appear in these tenant rows.',
+    ].join('\n- '),
+    confidence: 0.99,
+  };
+}
+
+async function readStructuredRetiringApplicationsSource(
+  sb: ReturnType<typeof getServerSupabase>,
+  tenantKey: string,
+  clientId: string,
+): Promise<TenantStructuredSource | null> {
+  const { data, error } = await sb
+    .from('applications')
+    .select('id,name,vendor,business_function,deployment_model,criticality,status,annual_cost_usd')
+    .eq('client_id', clientId)
+    .order('annual_cost_usd', { ascending: false, nullsFirst: false })
+    .limit(80);
+  if (error || !data) return null;
+  const prefix = tenantRecordPrefix(tenantKey);
+  const rows = (data as ApplicationRow[]).filter((row) => /retir|sunset|decommission/i.test(String(row.status ?? ''))).slice(0, 12);
+  if (rows.length === 0) return null;
+  return {
+    type: 'TENANT',
+    name: `Structured fact · retiring applications (${tenantKey})`,
+    id: `${tenantKey}:structured-fact:retiring-applications`,
+    detail: [
+      `Applications marked retiring/sunset/decommission from public.applications for ${tenantKey}.`,
+      ...rows.map((row) => `${deriveAppRef(prefix, row.name, row.id)} · ${row.name} · status ${row.status ?? 'unknown'} · criticality ${row.criticality ?? 'unknown'} · ${formatUsd(row.annual_cost_usd) ?? 'unknown'}/yr`),
+    ].join('\n- '),
+    confidence: 0.99,
+  };
+}
+
+async function readStructuredTopVendorsSource(
+  sb: ReturnType<typeof getServerSupabase>,
+  tenantKey: string,
+  clientId: string,
+): Promise<TenantStructuredSource | null> {
+  const { data, error } = await sb
+    .from('vendor_contracts')
+    .select('vendor_id,vendor_name,contract_category,annual_contract_value_usd,renewal_date,exit_terms_jsonb,ai_usage_clauses,indemnity_provided,concentration_pct')
+    .eq('client_id', clientId)
+    .order('annual_contract_value_usd', { ascending: false, nullsFirst: false })
+    .limit(10);
+  if (error || !data || data.length === 0) return null;
+  const rows = data as VendorContractRow[];
+  return {
+    type: 'TENANT',
+    name: `Structured fact · top vendors by annual spend (${tenantKey})`,
+    id: `${tenantKey}:structured-fact:top-vendors`,
+    detail: [
+      `Top ${rows.length} vendors by annual contract value from public.vendor_contracts for ${tenantKey}.`,
+      ...rows.map((row) => `${row.vendor_id ?? 'vendor_contract'} · ${row.vendor_name} · ${formatUsd(row.annual_contract_value_usd) ?? 'unknown'}/yr · renewal ${formatDate(row.renewal_date) ?? 'unknown'} · category ${row.contract_category ?? 'unknown'} · concentration ${formatPct(row.concentration_pct) ?? 'unknown'}`),
+    ].join('\n- '),
+    confidence: 0.99,
+  };
+}
+
+async function readStructuredVendorRenewalsSource(
+  sb: ReturnType<typeof getServerSupabase>,
+  tenantKey: string,
+  clientId: string,
+): Promise<TenantStructuredSource | null> {
+  const { data, error } = await sb
+    .from('vendor_contracts')
+    .select('vendor_id,vendor_name,contract_category,annual_contract_value_usd,renewal_date,exit_terms_jsonb,ai_usage_clauses,indemnity_provided,concentration_pct')
+    .eq('client_id', clientId)
+    .order('renewal_date', { ascending: true, nullsFirst: false })
+    .limit(90);
+  if (error || !data) return null;
+  const now = Date.now();
+  const sixMonths = now + 183 * 24 * 60 * 60 * 1000;
+  const rows = (data as VendorContractRow[])
+    .filter((row) => {
+      if (!row.renewal_date) return false;
+      const renewal = new Date(row.renewal_date).getTime();
+      return Number.isFinite(renewal) && renewal >= now && renewal <= sixMonths;
+    })
+    .slice(0, 10);
+  if (rows.length === 0) return null;
+  return {
+    type: 'TENANT',
+    name: `Structured fact · vendor renewals next 6 months (${tenantKey})`,
+    id: `${tenantKey}:structured-fact:vendor-renewals-6mo`,
+    detail: [
+      `Vendor renewals in the next six months from public.vendor_contracts for ${tenantKey}.`,
+      ...rows.map((row) => {
+        const exitTerms = typeof row.exit_terms_jsonb?.summary === 'string' ? row.exit_terms_jsonb.summary : 'not specified';
+        return `${row.vendor_id ?? 'vendor_contract'} · ${row.vendor_name} · renewal ${formatDate(row.renewal_date) ?? 'unknown'} · ${formatUsd(row.annual_contract_value_usd) ?? 'unknown'}/yr · exit terms ${exitTerms} · AI clauses ${row.ai_usage_clauses ? 'yes' : 'no'} · indemnity ${row.indemnity_provided ? 'yes' : 'no'}`;
+      }),
+    ].join('\n- '),
+    confidence: 0.99,
+  };
+}
+
+async function readStructuredInitiativesSource(
+  sb: ReturnType<typeof getServerSupabase>,
+  tenantKey: string,
+  clientId: string,
+  opts: { byStage?: boolean; killOnly?: boolean } = {},
+): Promise<TenantStructuredSource | null> {
+  const { data, error } = await sb
+    .from('ai_initiatives')
+    .select('initiative_id,display_id,name,stage,status_flag,committed_total_usd,measured_value_usd,status_summary,metadata')
+    .eq('client_id', clientId)
+    .order('committed_total_usd', { ascending: false, nullsFirst: false })
+    .limit(80);
+  if (error || !data) return null;
+  const activeRows = (data as InitiativeRow[])
+    .filter((row) => !/closed|sunset|archived/i.test(`${row.initiative_id ?? ''} ${row.status_flag ?? ''} ${row.stage ?? ''}`));
+  const rows = (opts.killOnly ? activeRows.filter((row) => initiativePriority(row) === 0) : activeRows)
+    .sort((a, b) => {
+      const priorityDelta = initiativePriority(a) - initiativePriority(b);
+      if (priorityDelta !== 0) return priorityDelta;
+      return Number(b.committed_total_usd ?? 0) - Number(a.committed_total_usd ?? 0);
+    })
+    .slice(0, 12);
+  if (rows.length === 0) return null;
+  if (opts.byStage) {
+    const counts = rows.reduce<Record<string, number>>((acc, row) => {
+      const stage = row.stage ?? 'unknown';
+      acc[stage] = (acc[stage] ?? 0) + 1;
+      return acc;
+    }, {});
+    return {
+      type: 'TENANT',
+      name: `Structured fact · active initiatives by stage (${tenantKey})`,
+      id: `${tenantKey}:structured-fact:initiatives-by-stage`,
+      detail: [
+        `Active initiatives by stage from public.ai_initiatives for ${tenantKey}.`,
+        ...Object.entries(counts).map(([stage, count]) => `${stage}: ${count}`),
+        ...rows.map((row) => formatInitiativeStructuredLine(row)),
+      ].join('\n- '),
+      confidence: 0.99,
+    };
+  }
+  return {
+    type: 'TENANT',
+    name: opts.killOnly
+      ? `Structured fact · kill-candidate initiatives (${tenantKey})`
+      : `Structured fact · active initiatives (${tenantKey})`,
+    id: opts.killOnly
+      ? `${tenantKey}:structured-fact:kill-initiatives`
+      : `${tenantKey}:structured-fact:active-initiatives`,
+    detail: [
+      opts.killOnly
+        ? `Active kill/stalled initiative candidates from public.ai_initiatives for ${tenantKey}.`
+        : `Active initiatives from public.ai_initiatives for ${tenantKey}.`,
+      ...rows.map(formatInitiativeStructuredLine),
+    ].join('\n- '),
+    confidence: 0.99,
+  };
+}
+
+function formatInitiativeStructuredLine(row: InitiativeRow): string {
+  const posture = typeof row.metadata?.sentinel_posture === 'string' ? row.metadata.sentinel_posture : row.status_summary;
+  return `${row.initiative_id} · ${row.name} · stage ${row.stage ?? 'unknown'} · status ${row.status_flag ?? 'unknown'} · posture ${posture ?? 'unknown'} · committed ${formatUsd(row.committed_total_usd) ?? 'unknown'} · value ${formatUsd(row.measured_value_usd) ?? 'unknown'}`;
 }
 
 async function resolveClientIdForTenantKey(

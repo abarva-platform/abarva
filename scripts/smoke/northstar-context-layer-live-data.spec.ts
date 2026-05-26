@@ -30,8 +30,8 @@ async function main(): Promise<void> {
   assert.ok(client, 'Expected Northstar MedTech client row');
 
   const summary = await getTenantContextSummary(client.id as string);
-  assert.ok(summary.chunksCount >= 720, 'Northstar context layer should expose at least 720 live substrate chunks');
-  assert.ok(summary.chunksEmbedded >= 718, 'Northstar context layer should expose the embedded substrate floor');
+  assert.ok(summary.chunksCount >= 878, 'Northstar context layer should expose the 720 base chunks plus 8 demo facts and 150 named-entity facts');
+  assert.ok(summary.chunksEmbedded >= 878, 'Northstar context layer should expose the embedded Packet 27 substrate floor');
   assert.equal(summary.chunksFailed, 0, 'Northstar context layer should have no failed chunks');
   assert.ok(summary.embeddingModels.length > 0, 'Expected at least one embedding model in live summary');
 
@@ -42,6 +42,14 @@ async function main(): Promise<void> {
     .like('chunk_id', 'NST-DEMO-FACT-%');
   if (demoFactError) throw new Error(`Northstar demo fact lookup failed: ${demoFactError.message}`);
   assert.equal(demoFactCount, 8, 'Northstar demo-critical fact overlay should expose 8 named-fact chunks');
+
+  const { count: namedFactCount, error: namedFactError } = await supabase
+    .from('enterprise_context_chunks')
+    .select('id', { count: 'exact', head: true })
+    .eq('client_id', client.id)
+    .like('chunk_id', 'NST-FACT-%');
+  if (namedFactError) throw new Error(`Northstar named fact lookup failed: ${namedFactError.message}`);
+  assert.equal(namedFactCount, 150, 'Northstar Packet 27 named-entity fact layer should expose 150 chunks');
 
   console.log('northstar-context-layer-live-data smoke passed');
 }
