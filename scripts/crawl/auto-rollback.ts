@@ -11,7 +11,15 @@ async function main() {
   const file = valueAfter(args, '--result') ?? 'audit-artifacts/post-deploy-crawl/latest.json';
   const execute = args.includes('--execute') || process.env.CRAWL_ENABLE_AUTO_ROLLBACK === 'true';
   const target = valueAfter(args, '--target') ?? process.env.VERCEL_ROLLBACK_TARGET;
-  const payload = JSON.parse(await fs.readFile(file, 'utf8')) as Payload;
+  const raw = await fs.readFile(file, 'utf8').catch((error: NodeJS.ErrnoException) => {
+    if (error.code === 'ENOENT') {
+      console.log(`No crawl result found at ${file}. Rollback skipped because the crawl did not produce a comparison artifact.`);
+      return null;
+    }
+    throw error;
+  });
+  if (!raw) return;
+  const payload = JSON.parse(raw) as Payload;
 
   if (!hasP0(payload.comparison)) {
     console.log('No P0 findings. Rollback skipped.');

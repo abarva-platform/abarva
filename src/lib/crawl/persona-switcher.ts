@@ -109,7 +109,24 @@ export async function signInPersona(page: Page, persona: CrawlPersona, options: 
   await typeCredential(page, /name@company\.com|enter your email address/i, email);
   await typeCredential(page, /password from invite|enter your password/i, password);
   await typeCredential(page, /6-digit code|access code/i, code);
-  await page.getByRole('button', { name: /sign in|continue/i }).click();
+  const submit = page.getByRole('button', { name: /sign in|continue/i });
+  await submit.waitFor({ state: 'visible', timeout: 10_000 });
+  await page.waitForFunction(() => {
+    return Array.from(document.querySelectorAll('button')).some((button) =>
+      /sign in|continue/i.test(button.textContent ?? '') && !button.disabled,
+    );
+  }, null, { timeout: 10_000 }).catch(async () => {
+    const formState = await page.evaluate(() => {
+      return Array.from(document.querySelectorAll('input')).map((input) => ({
+        id: input.id,
+        placeholder: input.placeholder,
+        valueLength: input.value.length,
+        disabled: input.disabled,
+      }));
+    }).catch(() => []);
+    throw new Error(`crawl_sign_in_form_disabled:${JSON.stringify(formState)}`);
+  });
+  await submit.click();
 
   const outcome = await waitForSignInOutcome(page);
   if (outcome.type === 'alert') {
@@ -165,10 +182,13 @@ function firstPresent(...values: Array<string | undefined>): string {
 }
 
 async function typeCredential(page: Page, placeholder: RegExp, value: string): Promise<void> {
-  const field = page.getByPlaceholder(placeholder);
-  await field.fill('');
-  await field.click();
-  await page.keyboard.type(value, { delay: 4 });
+  const field = page.getByPlaceholder(placeholder).first();
+  await field.waitFor({ state: 'visible', timeout: 10_000 });
+  await field.fill(value);
+  const actual = await field.inputValue();
+  if (actual !== value) {
+    throw new Error(`crawl_sign_in_field_not_filled:${String(placeholder)}:${actual.length}`);
+  }
 }
 
 async function waitForSignInOutcome(page: Page): Promise<
