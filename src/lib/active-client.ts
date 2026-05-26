@@ -27,6 +27,14 @@ const CLIENT_KEY_TO_DB_SLUGS: Record<ClientKey, string[]> = {
   meridian: ['meridian', 'meridian-health'],
   arcturus: ['arcturus', 'first-capital', 'first-capital-financial'],
   apexretail: ['apexretail', 'apex-retail'],
+  // STRESS-P0-008 (2026-05-26): Northstar was added to ClientKey + email
+  // domain resolver + CLIENT_KEY_TO_DB_NAME but NOT here, so the prod ask
+  // route resolved tenantId=null for Northstar users and every Sentinel
+  // turn returned the "Sentinel synthesis is not configured" canned error.
+  // First Northstar stress run (2026-05-26T06-54) scored every turn 10/10
+  // on that canned message because the scorer's grounding regex falsely
+  // matched "this" against \bHIS\b. Both bugs fixed.
+  northstar: ['northstar', 'northstar-medtech', 'northstar-clinical-tech'],
 };
 
 type SessionClientContext = {
