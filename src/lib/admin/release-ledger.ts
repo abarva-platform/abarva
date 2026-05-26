@@ -49,12 +49,28 @@ function sectionBody(markdown: string, section: string): string {
 }
 
 function stripMarkdown(value: string): string {
-  return value
+  return sanitizeTenantNames(value)
     .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '$1 ($2)')
     .replace(/`([^`]+)`/g, '$1')
     .replace(/\*\*([^*]+)\*\*/g, '$1')
     .replace(/\s+/g, ' ')
     .trim();
+}
+
+function sanitizeTenantNames(value: string): string {
+  return value
+    .replace(/\bArcturus Financial Group\b/gi, 'a legacy financial-services demo tenant')
+    .replace(/\bArcturus Financial\b/gi, 'a legacy financial-services demo tenant')
+    .replace(/\bArcturus\b/gi, 'a legacy financial-services demo tenant')
+    .replace(/\bBrindlemark Financial Group\b/gi, 'a legacy financial-services demo tenant')
+    .replace(/\bBrindlemark Financial\b/gi, 'a legacy financial-services demo tenant')
+    .replace(/\bBrindlemark\b/gi, 'a legacy financial-services demo tenant')
+    .replace(/\bHeliara Health System\b/gi, 'a legacy healthcare demo tenant')
+    .replace(/\bHeliara Health\b/gi, 'a legacy healthcare demo tenant')
+    .replace(/\bHeliara\b/gi, 'a legacy healthcare demo tenant')
+    .replace(/\bKeystone Energy Group\b/gi, 'a legacy energy demo tenant')
+    .replace(/\bKeystone Energy\b/gi, 'a legacy energy demo tenant')
+    .replace(/\bKeystone\b/gi, 'a legacy energy demo tenant');
 }
 
 function paragraph(value: string): string {
