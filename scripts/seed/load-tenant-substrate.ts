@@ -287,6 +287,27 @@ async function phase2ChunksAndEmbeddings(): Promise<{ rows: number; embedded: nu
   const lines = fs.readFileSync(jsonlPath, 'utf8').split('\n').filter(Boolean);
   console.log(`  Found ${lines.length} chunks`);
 
+  // Map each chunk to one of the canonical retrieval segment IDs the
+  // Sentinel tenant-enterprise retriever knows about
+  // (src/lib/knowledge/tenant-enterprise-context.ts SEGMENT_LABELS):
+  //   enterprise_profile, org_structure, it_financials, it_landscape,
+  //   program_inventory
+  //
+  // If chunks land outside this list, the retriever returns 0 rows and
+  // Sentinel can't ground in tenant facts — that was the 2026-05-26
+  // retrieval-wiring P0 found mid-session.
+  const RETRIEVAL_SEGMENTS = ['program_inventory', 'it_landscape', 'it_financials', 'org_structure', 'enterprise_profile'];
+  function mapChunkToSegment(chunk: Record<string, unknown>, index: number, total: number): string {
+    const useCase = String(chunk.use_case ?? '').toLowerCase();
+    const industry = String(chunk.industry ?? '').toLowerCase();
+    if (/budget|cost|financial|spend|p&l|capex|opex/.test(useCase + ' ' + industry)) return 'it_financials';
+    if (/org|leadership|reporting|management|executive|cxo|cmo|cfo|cio|hr/.test(useCase + ' ' + industry)) return 'org_structure';
+    if (/erp|system|platform|application|integration|mainframe|legacy|technology stack|infrastructure/.test(useCase + ' ' + industry)) return 'it_landscape';
+    if (/strategy|profile|vision|mission|values|enterprise|company overview/.test(useCase + ' ' + industry)) return 'enterprise_profile';
+    // Default to program_inventory (initiatives, patterns, plays)
+    return 'program_inventory';
+  }
+
   const rows: ChunkRow[] = [];
   for (let i = 0; i < lines.length; i++) {
     const chunk = JSON.parse(lines[i]);
@@ -296,7 +317,7 @@ async function phase2ChunksAndEmbeddings(): Promise<{ rows: number; embedded: nu
       client_id: TENANT.clientId,
       tenant_key: TENANT.tenantKey,
       chunk_id: chunk.chunk_id,
-      source_segment_id: chunk.pattern_id ?? `seg-${i}`,
+      source_segment_id: mapChunkToSegment(chunk, i, lines.length),
       source_record_id: sourceFileId,
       source_doc: sourceFileId,
       source_path: `${TENANT.datasetRoot}/${TENANT.corpusJsonl}#${chunk.chunk_id}`,
@@ -305,7 +326,7 @@ async function phase2ChunksAndEmbeddings(): Promise<{ rows: number; embedded: nu
       token_count: Math.ceil(chunkText.length / 4),
       embedding_status: 'pending',
       embedding_model: null,
-      provenance: { ...chunk, loader: 'packet-24' },
+      provenance: { ...chunk, loader: 'packet-24', pattern_id: chunk.pattern_id },
       chunk_metadata: {
         industry: chunk.industry,
         use_case: chunk.use_case,
@@ -454,15 +475,27 @@ async function phase3Applications(): Promise<{ inserted: number; errors: number 
   const parsed = Papa.parse<Record<string, string>>(csv, { header: true, skipEmptyLines: true });
   console.log(`  Found ${parsed.data.length} apps`);
 
-  // Map dataset criticality strings to the applications.criticality CHECK
-  // constraint. The DB accepts tier1/tier2/tier3/tier4.
   function mapCriticality(raw: string | undefined): string {
     const norm = (raw ?? '').toLowerCase().trim();
     if (['p0', 'critical', 'tier1', 'tier 1', 'tier-1'].includes(norm)) return 'tier1';
     if (['p1', 'high', 'tier2', 'tier 2', 'tier-2'].includes(norm)) return 'tier2';
     if (['p2', 'medium', 'tier3', 'tier 3', 'tier-3'].includes(norm)) return 'tier3';
     if (['p3', 'low', 'tier4', 'tier 4', 'tier-4'].includes(norm)) return 'tier4';
-    return 'tier3'; // default
+    return 'tier3';
+  }
+
+  // applications.deployment_model CHECK accepts saas / on_prem / hybrid only.
+  function mapDeploymentModel(stackEra: string | undefined): string {
+    const norm = (stackEra ?? '').toLowerCase().trim();
+    if (['saas', 'cloud-native', 'cloud native', 'modern', 'cloud'].includes(norm)) return 'saas';
+    if (['hybrid', 'containerized', 'containers', 'cloud-hybrid'].includes(norm)) return 'hybrid';
+    return 'on_prem';
+  }
+
+  function mapStatus(timeClass: string | undefined): string {
+    const norm = (timeClass ?? '').toLowerCase().trim();
+    if (norm === 'retire' || norm === 'retiring' || norm === 'sunset') return 'retiring';
+    return 'active';
   }
 
   const rows = parsed.data
@@ -471,12 +504,12 @@ async function phase3Applications(): Promise<{ inserted: number; errors: number 
       client_id: TENANT.clientId,
       name: r.name,
       vendor: r.ams_vendor || 'Unknown',
-      deployment_model: r.stack_era || 'unknown',
+      deployment_model: mapDeploymentModel(r.stack_era),
       business_function: r.business_unit_id || null,
       user_count: null,
       annual_cost_usd: r.annual_run_cost_usd ? Number(r.annual_run_cost_usd) : null,
       criticality: mapCriticality(r.criticality),
-      status: r.time_classification === 'retire' ? 'retiring' : 'active',
+      status: mapStatus(r.time_classification),
       ai_enabled: false,
       is_demo_data: true,
     }));
