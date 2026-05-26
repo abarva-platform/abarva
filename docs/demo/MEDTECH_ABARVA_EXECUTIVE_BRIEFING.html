@@ -495,6 +495,93 @@
       padding: 16px;
     }
 
+    .journey-board {
+      display: grid;
+      grid-template-columns: 300px minmax(0, 1fr);
+      gap: 18px;
+      margin-top: 30px;
+      align-items: start;
+    }
+
+    .persona-card {
+      background: var(--ink);
+      color: var(--white);
+      border-radius: 8px;
+      padding: 22px;
+      min-height: 100%;
+    }
+
+    .persona-card h3 {
+      color: var(--white);
+      margin-top: 12px;
+    }
+
+    .persona-card p,
+    .persona-card li {
+      color: rgba(255, 253, 248, 0.78);
+      font-size: 14px;
+    }
+
+    .persona-card ul {
+      margin: 18px 0 0;
+      padding-left: 18px;
+    }
+
+    .journey-lanes {
+      display: grid;
+      gap: 12px;
+    }
+
+    .journey-lane {
+      display: grid;
+      grid-template-columns: 170px repeat(5, minmax(0, 1fr));
+      gap: 10px;
+      align-items: stretch;
+    }
+
+    .lane-label {
+      background: var(--paper-2);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 14px;
+      font-size: 12px;
+      font-weight: 900;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--ink);
+      display: flex;
+      align-items: center;
+    }
+
+    .journey-node {
+      background: var(--white);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 14px;
+      min-height: 120px;
+    }
+
+    .journey-node strong {
+      display: block;
+      color: var(--ink);
+      font-size: 14px;
+      margin-bottom: 7px;
+    }
+
+    .journey-node span {
+      display: block;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.42;
+    }
+
+    .case-examples {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 16px;
+      margin-top: 18px;
+    }
+
     .step small {
       display: block;
       color: var(--blue);
@@ -655,12 +742,15 @@
       .agent-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .module-map, .metric-grid, .timeline { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .workflow { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .journey-board { grid-template-columns: 1fr; }
+      .journey-lane { grid-template-columns: 1fr; }
       .cards, .evidence-strip { grid-template-columns: 1fr; }
+      .case-examples { grid-template-columns: 1fr; }
     }
 
     @media (max-width: 680px) {
       section { padding: 52px 22px; }
-      .nav, .agent-grid, .module-map, .metric-grid, .timeline, .workflow, .value-areas {
+      .nav, .agent-grid, .module-map, .metric-grid, .timeline, .workflow, .value-areas, .case-examples {
         grid-template-columns: 1fr;
       }
       .layer { grid-template-columns: 1fr; }
@@ -706,12 +796,13 @@
         <a href="#agents"><span>05</span><span>Agents</span></a>
         <a href="#modules"><span>06</span><span>Modules</span></a>
         <a href="#workflow"><span>07</span><span>Workflow</span></a>
-        <a href="#journey"><span>08</span><span>90 days</span></a>
-        <a href="#value"><span>09</span><span>Value areas</span></a>
-        <a href="#metrics"><span>10</span><span>Metrics</span></a>
-        <a href="#compound"><span>11</span><span>Compounding</span></a>
-        <a href="#pilot"><span>12</span><span>Pilot partnership</span></a>
-        <a href="#next"><span>13</span><span>Next step</span></a>
+        <a href="#case-study"><span>08</span><span>Journey map</span></a>
+        <a href="#journey"><span>09</span><span>90 days</span></a>
+        <a href="#value"><span>10</span><span>Value areas</span></a>
+        <a href="#metrics"><span>11</span><span>Metrics</span></a>
+        <a href="#compound"><span>12</span><span>Compounding</span></a>
+        <a href="#pilot"><span>13</span><span>Pilot partnership</span></a>
+        <a href="#next"><span>14</span><span>Next step</span></a>
       </nav>
     </aside>
 
@@ -728,7 +819,7 @@
             </p>
             <div class="hero-actions">
               <a class="button" href="#architecture">See the architecture</a>
-              <a class="button secondary" href="#journey">View the 90-day path</a>
+              <a class="button secondary" href="#case-study">View the journey map</a>
             </div>
           </div>
 
@@ -900,6 +991,88 @@
             <div class="step"><small>APPROVE</small><h3>Keep humans accountable</h3><p>Stewards approve or correct extracted facts before they become trusted context.</p></div>
             <div class="step"><small>REASON</small><h3>Ask with context</h3><p>Agents answer with evidence, confidence, dissent, and explicit not-enough-data behavior.</p></div>
             <div class="step"><small>ACT</small><h3>Create decision artifacts</h3><p>Moves, Source events, Dossiers, Board Packs, and Tower metrics turn insight into action.</p></div>
+          </div>
+        </div>
+      </section>
+
+      <section id="case-study">
+        <div class="wide">
+          <div class="eyebrow">Journey map</div>
+          <h2>Walk into the product as a CIO or VP with a real decision to make.</h2>
+          <p class="lede">
+            The strongest first conversation is not a generic AI demo. It is a practical case study:
+            load enough context, ask the hard executive question, turn the answer into a Move, create a
+            Source path where commercial leverage exists, and then watch Tower show whether the work is
+            becoming measurable value.
+          </p>
+
+          <div class="journey-board" aria-label="AbarVa executive journey map">
+            <aside class="persona-card">
+              <span class="tag">Example seat</span>
+              <h3>CIO / VP Technology</h3>
+              <p>
+                "We are carrying multiple ERP, legacy-app, cloud, data, and vendor modernization efforts.
+                Where do we focus first, what should wait, and what procurement leverage do we have?"
+              </p>
+              <ul>
+                <li>Context loaded: systems, ERP, CMDB, contracts, spend, org, KPIs, risks, strategy.</li>
+                <li>Decision target: sequence work, avoid unsafe funding, expose vendor leverage.</li>
+                <li>Output: Move, Source event, Dossier, Tower value readout, and evidence gaps.</li>
+              </ul>
+            </aside>
+
+            <div class="journey-lanes">
+              <div class="journey-lane">
+                <div class="lane-label">Setup / Data Trust</div>
+                <div class="journey-node"><strong>Collect</strong><span>Upload or sync CMDB exports, SAP/ERP extracts, contracts, org files, KPI workbooks, QMS records, and board materials.</span></div>
+                <div class="journey-node"><strong>Parse</strong><span>Extract entities, dates, owners, dollars, renewal windows, dependencies, risks, and evidence quotes.</span></div>
+                <div class="journey-node"><strong>Approve</strong><span>Stewards correct field-level facts before they become trusted tenant context.</span></div>
+                <div class="journey-node"><strong>Map</strong><span>The context layer links systems, vendors, teams, initiatives, spend, controls, and outcomes.</span></div>
+                <div class="journey-node"><strong>Gap-fill</strong><span>The product shows what is missing and which upload or integration would raise confidence.</span></div>
+              </div>
+
+              <div class="journey-lane">
+                <div class="lane-label">Intelligence</div>
+                <div class="journey-node"><strong>Ask</strong><span>"Which modernization bets should we kill, restructure, accelerate, or wait on?"</span></div>
+                <div class="journey-node"><strong>Ground</strong><span>Sentinel answers with cited tenant facts, confidence, dissent, and not-enough-data flags.</span></div>
+                <div class="journey-node"><strong>Challenge</strong><span>Leaders pressure-test yes/no traps, vendor claims, sponsor overrides, and unknown external facts.</span></div>
+                <div class="journey-node"><strong>Rank</strong><span>The system separates decision-ready opportunities from topics that need more evidence.</span></div>
+                <div class="journey-node"><strong>Shape</strong><span>The best-backed recommendation becomes a Strategic Move instead of another slide note.</span></div>
+              </div>
+
+              <div class="journey-lane">
+                <div class="lane-label">Moves</div>
+                <div class="journey-node"><strong>Originate</strong><span>Nexus captures sponsor, scope, value hypothesis, gates, risks, and unsafe-to-fund conditions.</span></div>
+                <div class="journey-node"><strong>Connect</strong><span>The Move is linked to the originating Intelligence session and related sibling work.</span></div>
+                <div class="journey-node"><strong>Govern</strong><span>Stage gates, RACI, dependencies, and kill criteria make the decision operational.</span></div>
+                <div class="journey-node"><strong>Dossier</strong><span>A single decision thread preserves rationale, evidence, Source path, and Tower measurement.</span></div>
+                <div class="journey-node"><strong>Board artifact</strong><span>The team can generate a board-ready narrative pack from the same evidence chain.</span></div>
+              </div>
+
+              <div class="journey-lane">
+                <div class="lane-label">Source</div>
+                <div class="journey-node"><strong>Create event</strong><span>Turn vendor leverage into a sourcing event tied to the upstream Move.</span></div>
+                <div class="journey-node"><strong>Scope</strong><span>Use context to identify in-scope apps, clauses, service towers, exit windows, and constraints.</span></div>
+                <div class="journey-node"><strong>RFI / RFP</strong><span>Generate questions that force vendors to respond to the enterprise's actual facts.</span></div>
+                <div class="journey-node"><strong>BAFO</strong><span>Counter vendor positions with dependency, spend, exit, and risk evidence.</span></div>
+                <div class="journey-node"><strong>Value proof</strong><span>Track baseline exposure, intervention, negotiated outcome, and realized value.</span></div>
+              </div>
+
+              <div class="journey-lane">
+                <div class="lane-label">Tower</div>
+                <div class="journey-node"><strong>Portfolio</strong><span>See where the new Move sits against active initiatives, dependencies, risks, and ownership.</span></div>
+                <div class="journey-node"><strong>Watchlist</strong><span>Surface kill, restructure, and warning signals with evidence instead of opinion.</span></div>
+                <div class="journey-node"><strong>Dependencies</strong><span>Show what blocks the decision: systems, contracts, teams, data, controls, or funding.</span></div>
+                <div class="journey-node"><strong>Outcomes</strong><span>Move from projected to tracked to verified value with CFO-ready evidence.</span></div>
+                <div class="journey-node"><strong>Readout</strong><span>Leaders get the executive view: what changed, what is blocked, what is worth acting on next.</span></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="case-examples">
+            <div class="card"><span class="tag">CIO / VP IT</span><h3>ERP and app rationalization</h3><p>Example output: a sequencing recommendation that names which legacy apps block simplification, which integrations create risk, and which Move should be shaped first.</p></div>
+            <div class="card"><span class="tag green">VP Procurement</span><h3>AMS / SI renegotiation</h3><p>Example output: a Source event with RFI questions, BAFO levers, exit-clause pressure points, and a value-proof chain tied to actual application scope.</p></div>
+            <div class="card"><span class="tag amber">CFO / Transformation</span><h3>Portfolio value proof</h3><p>Example output: a watchlist of kill or restructure candidates, a decision Dossier, and Tower metrics showing spend under review and evidence gaps to close.</p></div>
           </div>
         </div>
       </section>
