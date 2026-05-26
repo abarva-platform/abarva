@@ -1,0 +1,1072 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>AbarVa Executive Briefing for Solventum</title>
+  <style>
+    :root {
+      --paper: #f8f7f4;
+      --paper-2: #efede6;
+      --ink: #11110f;
+      --muted: #62605a;
+      --line: rgba(17, 17, 15, 0.14);
+      --blue: #0b4a91;
+      --blue-2: #dbe9f7;
+      --green: #1f7a55;
+      --green-2: #dff0e8;
+      --amber: #a76300;
+      --amber-2: #f3e4c7;
+      --red: #a44132;
+      --red-2: #f1d8d3;
+      --white: #fffdf8;
+      --shadow: 0 20px 70px rgba(17, 17, 15, 0.08);
+      --serif: Georgia, "Times New Roman", serif;
+      --sans: "DM Sans", Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      background: var(--paper);
+      color: var(--ink);
+      font-family: var(--sans);
+      line-height: 1.5;
+    }
+
+    a { color: inherit; text-decoration: none; }
+    .page {
+      display: grid;
+      grid-template-columns: 292px minmax(0, 1fr);
+      min-height: 100vh;
+    }
+
+    .sidebar {
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      padding: 28px 24px;
+      border-right: 1px solid var(--line);
+      background: rgba(248, 247, 244, 0.92);
+      backdrop-filter: blur(18px);
+      overflow: auto;
+    }
+
+    .brand-lockup {
+      width: 152px;
+      display: block;
+      margin-bottom: 26px;
+    }
+
+    .side-kicker {
+      font-size: 11px;
+      line-height: 1.2;
+      text-transform: uppercase;
+      letter-spacing: 0.16em;
+      color: var(--muted);
+      margin-bottom: 8px;
+      font-weight: 800;
+    }
+
+    .side-title {
+      font-family: var(--serif);
+      font-size: 24px;
+      line-height: 1.05;
+      margin: 0 0 14px;
+      letter-spacing: 0;
+    }
+
+    .side-note {
+      font-size: 13px;
+      color: var(--muted);
+      margin: 0 0 24px;
+    }
+
+    .nav {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      border-top: 1px solid var(--line);
+      padding-top: 14px;
+    }
+
+    .nav a {
+      display: grid;
+      grid-template-columns: 32px 1fr;
+      gap: 10px;
+      align-items: center;
+      min-height: 38px;
+      border-radius: 8px;
+      padding: 8px;
+      color: #302f2b;
+      font-size: 13px;
+    }
+
+    .nav a:hover { background: var(--paper-2); }
+    .nav span:first-child {
+      font-size: 10px;
+      color: var(--muted);
+      font-weight: 800;
+      letter-spacing: 0.08em;
+    }
+
+    .main {
+      min-width: 0;
+    }
+
+    section {
+      padding: 76px min(6vw, 80px);
+      border-bottom: 1px solid var(--line);
+    }
+
+    .hero {
+      min-height: 96vh;
+      display: grid;
+      align-items: center;
+      padding-top: 36px;
+      background:
+        linear-gradient(120deg, rgba(219, 233, 247, 0.65), rgba(248, 247, 244, 0) 42%),
+        radial-gradient(circle at 90% 12%, rgba(11, 74, 145, 0.12), rgba(248, 247, 244, 0) 34%);
+    }
+
+    .hero-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 0.96fr) minmax(360px, 0.72fr);
+      gap: 56px;
+      align-items: center;
+      max-width: 1280px;
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 11px;
+      font-weight: 900;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--blue);
+      margin-bottom: 18px;
+    }
+
+    .eyebrow::before {
+      content: "";
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--blue);
+    }
+
+    h1, h2, h3 {
+      font-family: var(--serif);
+      letter-spacing: 0;
+      color: var(--ink);
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(44px, 6.6vw, 88px);
+      line-height: 0.95;
+      max-width: 980px;
+    }
+
+    h2 {
+      margin: 0 0 18px;
+      font-size: clamp(34px, 4vw, 62px);
+      line-height: 0.96;
+    }
+
+    h3 {
+      margin: 0 0 8px;
+      font-size: 25px;
+      line-height: 1.08;
+    }
+
+    p {
+      font-size: 16px;
+      color: var(--muted);
+      margin: 0;
+    }
+
+    .lede {
+      margin-top: 24px;
+      font-size: clamp(18px, 1.6vw, 24px);
+      line-height: 1.4;
+      max-width: 820px;
+      color: #383631;
+    }
+
+    .hero-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 32px;
+    }
+
+    .button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 44px;
+      border-radius: 8px;
+      padding: 0 18px;
+      border: 1px solid var(--ink);
+      background: var(--ink);
+      color: var(--white);
+      font-weight: 800;
+      font-size: 13px;
+    }
+
+    .button.secondary {
+      background: transparent;
+      color: var(--ink);
+    }
+
+    .panel {
+      background: var(--white);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .panel-pad { padding: 22px; }
+
+    .private-card {
+      align-self: stretch;
+      min-height: 560px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .private-card-top {
+      padding: 22px;
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      align-items: flex-start;
+    }
+
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      min-height: 26px;
+      border-radius: 999px;
+      padding: 0 10px;
+      font-size: 11px;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      background: var(--blue-2);
+      color: var(--blue);
+      white-space: nowrap;
+    }
+
+    .tag.green { background: var(--green-2); color: var(--green); }
+    .tag.amber { background: var(--amber-2); color: var(--amber); }
+    .tag.red { background: var(--red-2); color: var(--red); }
+    .tag.gray { background: var(--paper-2); color: var(--muted); }
+
+    .hero-stack {
+      padding: 22px;
+      display: grid;
+      gap: 12px;
+      flex: 1;
+    }
+
+    .stack-row {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 14px;
+      background: #fff;
+      display: grid;
+      grid-template-columns: 34px 1fr;
+      gap: 12px;
+      align-items: start;
+    }
+
+    .stack-row strong {
+      display: block;
+      font-size: 14px;
+      color: var(--ink);
+      margin-bottom: 2px;
+    }
+
+    .stack-row span {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .num {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--ink);
+      color: var(--white);
+      font-size: 12px;
+      font-weight: 900;
+    }
+
+    .section-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 0.84fr) minmax(320px, 0.62fr);
+      gap: 44px;
+      align-items: start;
+      max-width: 1260px;
+    }
+
+    .wide {
+      max-width: 1280px;
+    }
+
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 16px;
+      margin-top: 26px;
+    }
+
+    .card {
+      background: var(--white);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 20px;
+    }
+
+    .card p { font-size: 14px; }
+
+    .metric-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 14px;
+      margin-top: 24px;
+    }
+
+    .metric {
+      background: var(--white);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 18px;
+      min-height: 132px;
+    }
+
+    .metric .value {
+      font-family: var(--serif);
+      font-size: 38px;
+      line-height: 1;
+      color: var(--ink);
+      margin-bottom: 10px;
+    }
+
+    .metric .label {
+      font-size: 12px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      font-weight: 900;
+    }
+
+    .architecture {
+      display: grid;
+      gap: 12px;
+      margin-top: 28px;
+    }
+
+    .layer {
+      display: grid;
+      grid-template-columns: 210px 1fr 150px;
+      gap: 16px;
+      align-items: center;
+      padding: 16px;
+      background: var(--white);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+    }
+
+    .layer-title {
+      font-weight: 900;
+      color: var(--ink);
+      font-size: 14px;
+    }
+
+    .layer-copy {
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .layer-chip {
+      justify-self: end;
+      background: var(--paper-2);
+      border-radius: 999px;
+      padding: 7px 10px;
+      font-size: 11px;
+      color: var(--muted);
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .flow-svg, .orbit-svg {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+
+    .agent-grid {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 14px;
+      margin-top: 28px;
+    }
+
+    .agent {
+      min-height: 234px;
+      background: var(--white);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .agent-icon {
+      width: 46px;
+      height: 46px;
+      border-radius: 50%;
+      background: var(--blue-2);
+      color: var(--blue);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 900;
+      font-family: var(--serif);
+      font-size: 22px;
+    }
+
+    .agent ul, .phase ul, .value-area ul, .artifact-list {
+      margin: 0;
+      padding-left: 18px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .agent li, .phase li, .value-area li, .artifact-list li { margin: 5px 0; }
+
+    .module-map {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 14px;
+      margin-top: 28px;
+    }
+
+    .module {
+      background: var(--white);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 18px;
+      min-height: 166px;
+    }
+
+    .module .path {
+      color: var(--blue);
+      font-size: 12px;
+      font-weight: 900;
+      margin-bottom: 10px;
+    }
+
+    .workflow {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 28px;
+    }
+
+    .step {
+      position: relative;
+      min-height: 148px;
+      background: var(--white);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 16px;
+    }
+
+    .step small {
+      display: block;
+      color: var(--blue);
+      font-weight: 900;
+      font-size: 11px;
+      margin-bottom: 9px;
+      letter-spacing: 0.08em;
+    }
+
+    .timeline {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 16px;
+      margin-top: 28px;
+    }
+
+    .phase {
+      background: var(--white);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 20px;
+      min-height: 320px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .phase::before {
+      content: "";
+      position: absolute;
+      inset: 0 0 auto;
+      height: 5px;
+      background: var(--blue);
+    }
+
+    .phase:nth-child(2)::before { background: var(--green); }
+    .phase:nth-child(3)::before { background: var(--amber); }
+    .phase:nth-child(4)::before { background: var(--ink); }
+
+    .phase-days {
+      color: var(--blue);
+      font-size: 12px;
+      font-weight: 900;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      margin-bottom: 12px;
+    }
+
+    .value-areas {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
+      margin-top: 28px;
+    }
+
+    .value-area {
+      background: var(--white);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 20px;
+      min-height: 210px;
+    }
+
+    .evidence-strip {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 16px;
+      margin-top: 28px;
+    }
+
+    .quote {
+      background: var(--ink);
+      color: var(--white);
+      border-radius: 8px;
+      padding: 26px;
+      min-height: 230px;
+    }
+
+    .quote p {
+      color: rgba(255, 253, 248, 0.82);
+      font-size: 15px;
+    }
+
+    .quote strong {
+      display: block;
+      color: var(--white);
+      font-family: var(--serif);
+      font-size: 28px;
+      line-height: 1.08;
+      margin-bottom: 14px;
+    }
+
+    .table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 24px;
+      background: var(--white);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow: hidden;
+      display: table;
+    }
+
+    .table th, .table td {
+      border-bottom: 1px solid var(--line);
+      padding: 14px;
+      text-align: left;
+      vertical-align: top;
+      font-size: 14px;
+    }
+
+    .table th {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--muted);
+      background: var(--paper-2);
+    }
+
+    .table tr:last-child td { border-bottom: 0; }
+
+    .closing {
+      background: var(--ink);
+      color: var(--white);
+    }
+
+    .closing h2, .closing h3 { color: var(--white); }
+    .closing p, .closing li { color: rgba(255, 253, 248, 0.78); }
+    .closing .card {
+      background: rgba(255, 253, 248, 0.08);
+      border-color: rgba(255, 253, 248, 0.16);
+    }
+
+    .logo-svg text {
+      font-family: "Cormorant Garamond", Georgia, "Times New Roman", serif;
+    }
+
+    .mini-logo {
+      width: 92px;
+      height: auto;
+      vertical-align: middle;
+      display: inline-block;
+      transform: translateY(8px);
+    }
+
+    @media (max-width: 1120px) {
+      .page { grid-template-columns: 1fr; }
+      .sidebar {
+        position: relative;
+        height: auto;
+        border-right: 0;
+        border-bottom: 1px solid var(--line);
+      }
+      .nav {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+      .hero-grid, .section-grid { grid-template-columns: 1fr; }
+      .agent-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .module-map, .metric-grid, .timeline { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .workflow { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .cards, .evidence-strip { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 680px) {
+      section { padding: 52px 22px; }
+      .nav, .agent-grid, .module-map, .metric-grid, .timeline, .workflow, .value-areas {
+        grid-template-columns: 1fr;
+      }
+      .layer { grid-template-columns: 1fr; }
+      .layer-chip { justify-self: start; }
+      .private-card { min-height: auto; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <aside class="sidebar">
+      <svg class="brand-lockup logo-svg" viewBox="90 95 820 285" role="img" aria-label="AbarVa logo">
+        <rect width="1600" height="520" fill="transparent"/>
+        <g transform="translate(152 158) scale(0.658)" fill="none" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M104 1 L111 18 L128 25 L111 32 L104 49 L97 32 L80 25 L97 18 Z" fill="#0b4a91" stroke="none"/>
+          <path d="M12 118 H50" stroke="#070707" stroke-width="6"/>
+          <path d="M166 118 H201" stroke="#070707" stroke-width="6"/>
+          <circle cx="214" cy="118" r="14" stroke="#070707" stroke-width="6" fill="#fffdf7"/>
+          <path d="M230 118 H250" stroke="#070707" stroke-width="6"/>
+          <path d="M52 121 C50 68 91 33 144 42" stroke="#070707" stroke-width="8"/>
+          <path d="M174 74 C202 124 169 181 112 190" stroke="#070707" stroke-width="8"/>
+          <path d="M63 173 C37 133 48 82 88 58" stroke="#070707" stroke-width="5" opacity="0.95"/>
+          <path d="M156 51 C195 75 211 125 188 166" stroke="#070707" stroke-width="5" opacity="0.95"/>
+          <circle cx="112" cy="118" r="68" stroke="#070707" stroke-width="8"/>
+          <circle cx="112" cy="118" r="42" stroke="#070707" stroke-width="8"/>
+          <circle cx="112" cy="118" r="18" fill="#0b4a91" stroke="none"/>
+        </g>
+        <g transform="translate(350 299)">
+          <text x="0" y="0" font-size="168" letter-spacing="-8" font-weight="700" fill="#070707">A</text>
+          <text x="104" y="0" font-size="168" letter-spacing="-8" font-weight="400" fill="#070707">bar</text>
+          <text x="318" y="0" font-size="168" letter-spacing="-9" font-weight="700" fill="#0b4a91">V</text>
+          <text x="416" y="0" font-size="168" letter-spacing="-9" font-weight="400" fill="#0b4a91">a</text>
+        </g>
+      </svg>
+      <div class="side-kicker">Private executive briefing</div>
+      <h2 class="side-title">For Bala and the Solventum technology leadership conversation</h2>
+      <p class="side-note">A product-logic story: architecture, agents, modules, workflows, metrics, and the first 90 days of value.</p>
+      <nav class="nav" aria-label="Briefing sections">
+        <a href="#what"><span>01</span><span>What it is</span></a>
+        <a href="#why"><span>02</span><span>Why now</span></a>
+        <a href="#architecture"><span>03</span><span>Architecture</span></a>
+        <a href="#context"><span>04</span><span>Context layer</span></a>
+        <a href="#agents"><span>05</span><span>Agents</span></a>
+        <a href="#modules"><span>06</span><span>Modules</span></a>
+        <a href="#workflow"><span>07</span><span>Workflow</span></a>
+        <a href="#journey"><span>08</span><span>90 days</span></a>
+        <a href="#value"><span>09</span><span>Value areas</span></a>
+        <a href="#metrics"><span>10</span><span>Metrics</span></a>
+        <a href="#compound"><span>11</span><span>Compounding</span></a>
+        <a href="#pilot"><span>12</span><span>Pilot partnership</span></a>
+        <a href="#next"><span>13</span><span>Next step</span></a>
+      </nav>
+    </aside>
+
+    <main class="main">
+      <section class="hero" id="what">
+        <div class="hero-grid">
+          <div>
+            <div class="eyebrow">Enterprise context and decision layer</div>
+            <h1>From scattered evidence to board-ready decisions.</h1>
+            <p class="lede">
+              A large medtech enterprise does not lack data. It lacks a living decision substrate:
+              one place where systems, strategy, finance, vendors, quality, regulatory evidence,
+              org ownership, and transformation work become usable by trusted agents.
+            </p>
+            <div class="hero-actions">
+              <a class="button" href="#architecture">See the architecture</a>
+              <a class="button secondary" href="#journey">View the 90-day path</a>
+            </div>
+          </div>
+
+          <article class="panel private-card" aria-label="Executive product logic summary">
+            <div class="private-card-top">
+              <div>
+                <span class="tag">Private briefing</span>
+                <h3 style="margin-top: 14px;">The product logic</h3>
+                <p>Every answer, Move, Source event, Dossier, and Board Pack depends on the same context foundation.</p>
+              </div>
+              <span class="tag green">Medtech-ready</span>
+            </div>
+            <div class="hero-stack">
+              <div class="stack-row"><span class="num">1</span><div><strong>Load broad enterprise context</strong><span>CMDB, SAP/ERP, app portfolio, contracts, org, strategy, financials, QMS, risk, KPIs, incidents, board material.</span></div></div>
+              <div class="stack-row"><span class="num">2</span><div><strong>Normalize into a context graph</strong><span>Entities, owners, relationships, dependencies, confidence, freshness, evidence gaps, and source lineage.</span></div></div>
+              <div class="stack-row"><span class="num">3</span><div><strong>Ask agents hard questions</strong><span>Sentinel, Nexus, Source, Steward, and Atlas reason over tenant context plus industry corpus.</span></div></div>
+              <div class="stack-row"><span class="num">4</span><div><strong>Turn answers into workflows</strong><span>Strategic Moves, Source events, Dossiers, Board Packs, Tower value tracking, and evidence-led decisions.</span></div></div>
+              <div class="stack-row"><span class="num">5</span><div><strong>Improve with every upload and outcome</strong><span>The more evidence the system sees, the more grounded future answers, artifacts, and value proof become.</span></div></div>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section id="why">
+        <div class="section-grid">
+          <div>
+            <div class="eyebrow">Why this matters</div>
+            <h2>Transformation decisions are increasingly cross-functional, but the evidence is trapped in silos.</h2>
+            <p class="lede">
+              ERP modernization affects manufacturing, quality, finance, commercial operations, product data,
+              sourcing, cybersecurity, and regulatory posture. AI productivity affects delivery operating model,
+              vendor contracts, engineering governance, and risk. Procurement decisions depend on app retirement
+              plans and business outcome evidence. The platform exists to connect those threads before leaders
+              make expensive decisions.
+            </p>
+          </div>
+          <div class="panel panel-pad">
+            <h3>Common medtech decision friction</h3>
+            <ul class="artifact-list">
+              <li>SAP, Oracle, JDE, Infor, and plant systems coexist for years.</li>
+              <li>Quality and regulatory evidence lives outside the IT decision flow.</li>
+              <li>AMS and SI contracts outlive the systems they support.</li>
+              <li>Initiatives are funded before evidence strength is clear.</li>
+              <li>AI adoption creates pressure faster than governance and context mature.</li>
+              <li>Board updates compress messy evidence into oversimplified status slides.</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <section id="architecture">
+        <div class="wide">
+          <div class="eyebrow">Architecture</div>
+          <h2>The end-to-end product architecture</h2>
+          <p class="lede">The system is intentionally layered. Each layer adds trust, continuity, and actionability.</p>
+          <div class="architecture">
+            <div class="layer"><div class="layer-title">1 · Intake Layer</div><div class="layer-copy">Uploads, templates, connectors, document parsing, CMDB snapshots, ERP extracts, HRIS, finance, sourcing, service management, quality, and risk inputs.</div><div class="layer-chip">Files + systems</div></div>
+            <div class="layer"><div class="layer-title">2 · Context Layer</div><div class="layer-copy">Normalized enterprise substrate: applications, vendors, contracts, products, plants, initiatives, org roles, KPIs, dependencies, risks, controls, evidence, and gaps.</div><div class="layer-chip">Enterprise graph</div></div>
+            <div class="layer"><div class="layer-title">3 · Industry Corpus</div><div class="layer-copy">Medtech, healthcare, manufacturing, sourcing, ERP, IT product development, AI governance, and regulatory patterns that give the agents judgment beyond retrieval.</div><div class="layer-chip">Pattern memory</div></div>
+            <div class="layer"><div class="layer-title">4 · Evidence Ledger</div><div class="layer-copy">Every material claim resolves to source, freshness, owner, confidence, and not-enough-data behavior instead of generic AI prose.</div><div class="layer-chip">Trust moat</div></div>
+            <div class="layer"><div class="layer-title">5 · Agent Reasoning</div><div class="layer-copy">Sentinel, Nexus, Source, Steward, and Atlas use context plus corpus to answer, challenge, shape, route, teach, and generate artifacts.</div><div class="layer-chip">Agent layer</div></div>
+            <div class="layer"><div class="layer-title">6 · Workflow Modules</div><div class="layer-copy">Home, Intelligence, Moves, Source, Tower, Admin/Data Trust, Evidence Ledger, Decision Dossier, and Board Pack generation.</div><div class="layer-chip">User surfaces</div></div>
+            <div class="layer"><div class="layer-title">7 · Outcome Layer</div><div class="layer-copy">Portfolio actions, sourcing leverage, value proof, decision dossiers, board artifacts, audit trails, and a production integration roadmap.</div><div class="layer-chip">Executive outputs</div></div>
+          </div>
+        </div>
+      </section>
+
+      <section id="context">
+        <div class="section-grid">
+          <div>
+            <div class="eyebrow">Context layer</div>
+            <h2>Start broad. Let the evidence map reveal where to focus.</h2>
+            <p class="lede">
+              The right first move is not to pre-select one narrow use case. Load the broadest practical context bundle,
+              even if imperfect. The platform maps what is known, what is missing, where confidence is high, and which
+              executive questions are ready to answer now.
+            </p>
+          </div>
+          <div class="panel panel-pad">
+            <h3>Example context dimensions</h3>
+            <p>These are not requirements to start. They are the categories that make the decision layer richer over time.</p>
+          </div>
+        </div>
+        <div class="cards">
+          <div class="card"><h3>Enterprise + strategy</h3><p>Business profile, board priorities, strategy memos, annual plans, operating model, executive narratives.</p></div>
+          <div class="card"><h3>ERP + systems</h3><p>SAP ECC/S/4, Oracle, JDE, Infor, CMDB, application portfolio, data domains, integrations, incident history.</p></div>
+          <div class="card"><h3>Finance + KPIs</h3><p>Annual and quarterly reports, budgets, run/grow/transform split, cost centers, initiative commitments, value targets.</p></div>
+          <div class="card"><h3>Vendor + sourcing</h3><p>Contracts, AMS/SI scope, renewals, SLAs, exit clauses, IP terms, productivity clauses, BAFO history.</p></div>
+          <div class="card"><h3>Quality + regulatory</h3><p>QMS records, CAPA trends, complaint signals, audit findings, validation evidence, control ownership.</p></div>
+          <div class="card"><h3>Org + ownership</h3><p>CXO, EVP, SVP, VP, director, product, engineering, quality, procurement, plant, and data stewardship roles.</p></div>
+        </div>
+      </section>
+
+      <section id="agents">
+        <div class="wide">
+          <div class="eyebrow">Agents</div>
+          <h2>Specialized agents, not one generic chatbot</h2>
+          <p class="lede">Each agent has a job, an operating posture, and a workflow destination.</p>
+          <div class="agent-grid">
+            <article class="agent"><span class="agent-icon">S</span><h3>Sentinel</h3><ul><li>Answers hard CXO questions.</li><li>Cites evidence and dissent.</li><li>Identifies kill, restructure, hold, and accelerate candidates.</li></ul></article>
+            <article class="agent"><span class="agent-icon">N</span><h3>Nexus</h3><ul><li>Shapes Strategic Moves.</li><li>Builds scope, sponsors, gates, risks, and value tri-state.</li><li>Connects initiatives to execution.</li></ul></article>
+            <article class="agent"><span class="agent-icon">So</span><h3>Source</h3><ul><li>Turns vendor questions into Source events.</li><li>Builds RFI/RFP/BAFO posture.</li><li>Tracks commercial leverage and value proof.</li></ul></article>
+            <article class="agent"><span class="agent-icon">St</span><h3>Steward</h3><ul><li>Monitors context quality.</li><li>Flags gaps and freshness risk.</li><li>Routes uploads, approvals, and sync health.</li></ul></article>
+            <article class="agent"><span class="agent-icon">A</span><h3>Atlas</h3><ul><li>Coaches users through the operating model.</li><li>Explains patterns and workflows.</li><li>Helps teams adopt the system consistently.</li></ul></article>
+          </div>
+        </div>
+      </section>
+
+      <section id="modules">
+        <div class="wide">
+          <div class="eyebrow">Modules</div>
+          <h2>The product surfaces executives and operators actually use</h2>
+          <div class="module-map">
+            <div class="module"><div class="path">/home</div><h3>Tenant Briefing</h3><p>What the system knows, what changed, and what needs attention.</p></div>
+            <div class="module"><div class="path">/intelligence</div><h3>Intelligence</h3><p>Hard questions, patterns, evidence gaps, contradictions, and opportunities.</p></div>
+            <div class="module"><div class="path">/moves</div><h3>Moves</h3><p>Strategic initiatives shaped from evidence into executable programs.</p></div>
+            <div class="module"><div class="path">/source</div><h3>Source</h3><p>Procurement intelligence, sourcing events, RFP questions, BAFO counters, value proof.</p></div>
+            <div class="module"><div class="path">/tower</div><h3>Tower</h3><p>Portfolio posture, dependencies, watchlist, risk, outcomes, and value tracking.</p></div>
+            <div class="module"><div class="path">/admin/data-trust</div><h3>Data Trust</h3><p>Upload, classify, validate, approve, sync, and inspect context quality.</p></div>
+            <div class="module"><div class="path">/evidence-ledger</div><h3>Evidence Ledger</h3><p>Claim-level provenance: source, owner, freshness, confidence, and gaps.</p></div>
+            <div class="module"><div class="path">/dossier</div><h3>Decision Dossier</h3><p>One decision thread from Intelligence to Move to Source to Tower to artifact.</p></div>
+          </div>
+        </div>
+      </section>
+
+      <section id="workflow">
+        <div class="wide">
+          <div class="eyebrow">Workflow</div>
+          <h2>The product loop from data to decision</h2>
+          <svg class="flow-svg" viewBox="0 0 1200 360" role="img" aria-label="Product workflow from upload to value proof">
+            <rect x="0" y="0" width="1200" height="360" rx="8" fill="#fffdf8" stroke="rgba(17,17,15,0.14)"/>
+            <g font-family="DM Sans, Arial, sans-serif">
+              <path d="M120 180 C220 80 320 80 420 180 S620 280 720 180 S920 80 1080 180" fill="none" stroke="#0b4a91" stroke-width="5"/>
+              <g>
+                <circle cx="120" cy="180" r="44" fill="#11110f"/><text x="120" y="185" text-anchor="middle" font-size="18" font-weight="800" fill="#fffdf8">01</text>
+                <text x="120" y="252" text-anchor="middle" font-size="17" font-weight="800" fill="#11110f">Upload / Sync</text>
+                <text x="120" y="278" text-anchor="middle" font-size="13" fill="#62605a">documents + systems</text>
+              </g>
+              <g>
+                <circle cx="300" cy="112" r="44" fill="#0b4a91"/><text x="300" y="117" text-anchor="middle" font-size="18" font-weight="800" fill="#fffdf8">02</text>
+                <text x="300" y="62" text-anchor="middle" font-size="17" font-weight="800" fill="#11110f">Extract</text>
+                <text x="300" y="85" text-anchor="middle" font-size="13" fill="#62605a">facts + fields</text>
+              </g>
+              <g>
+                <circle cx="480" cy="180" r="44" fill="#1f7a55"/><text x="480" y="185" text-anchor="middle" font-size="18" font-weight="800" fill="#fffdf8">03</text>
+                <text x="480" y="252" text-anchor="middle" font-size="17" font-weight="800" fill="#11110f">Validate / Approve</text>
+                <text x="480" y="278" text-anchor="middle" font-size="13" fill="#62605a">humans in the loop</text>
+              </g>
+              <g>
+                <circle cx="660" cy="248" r="44" fill="#a76300"/><text x="660" y="253" text-anchor="middle" font-size="18" font-weight="800" fill="#fffdf8">04</text>
+                <text x="660" y="316" text-anchor="middle" font-size="17" font-weight="800" fill="#11110f">Commit Context</text>
+                <text x="660" y="339" text-anchor="middle" font-size="13" fill="#62605a">entities + evidence</text>
+              </g>
+              <g>
+                <circle cx="840" cy="180" r="44" fill="#11110f"/><text x="840" y="185" text-anchor="middle" font-size="18" font-weight="800" fill="#fffdf8">05</text>
+                <text x="840" y="252" text-anchor="middle" font-size="17" font-weight="800" fill="#11110f">Agent Reasoning</text>
+                <text x="840" y="278" text-anchor="middle" font-size="13" fill="#62605a">answers + dissent</text>
+              </g>
+              <g>
+                <circle cx="1020" cy="112" r="44" fill="#0b4a91"/><text x="1020" y="117" text-anchor="middle" font-size="18" font-weight="800" fill="#fffdf8">06</text>
+                <text x="1020" y="62" text-anchor="middle" font-size="17" font-weight="800" fill="#11110f">Decision + Value</text>
+                <text x="1020" y="85" text-anchor="middle" font-size="13" fill="#62605a">moves, source, tower</text>
+              </g>
+            </g>
+          </svg>
+          <div class="workflow">
+            <div class="step"><small>UPLOAD</small><h3>Bring the messy truth</h3><p>Files and system exports do not need to be perfect. The platform classifies and stages what it can.</p></div>
+            <div class="step"><small>PARSE</small><h3>Extract structured facts</h3><p>Contracts, charters, KPI sheets, org files, CMDB exports, and ERP extracts become normalized records.</p></div>
+            <div class="step"><small>APPROVE</small><h3>Keep humans accountable</h3><p>Stewards approve or correct extracted facts before they become trusted context.</p></div>
+            <div class="step"><small>REASON</small><h3>Ask with context</h3><p>Agents answer with evidence, confidence, dissent, and explicit not-enough-data behavior.</p></div>
+            <div class="step"><small>ACT</small><h3>Create decision artifacts</h3><p>Moves, Source events, Dossiers, Board Packs, and Tower metrics turn insight into action.</p></div>
+          </div>
+        </div>
+      </section>
+
+      <section id="journey">
+        <div class="wide">
+          <div class="eyebrow">Typical 90-day path</div>
+          <h2>A practical path from broad context to executive value</h2>
+          <p class="lede">This is not a narrow prescribed pilot. It is a repeatable 90-day activation pattern that lets the strongest value areas emerge from the evidence.</p>
+          <div class="timeline">
+            <div class="phase"><div class="phase-days">Days 0-15</div><h3>Context foundation</h3><p>Load broad enterprise context and create the first data-trust map.</p><ul><li>Template inventory</li><li>Document and export intake</li><li>Classification and extraction</li><li>Validation queue</li><li>Evidence density dashboard</li></ul></div>
+            <div class="phase"><div class="phase-days">Days 16-30</div><h3>Questioning and gap map</h3><p>Run executive questions to see what is decision-ready and where the evidence is thin.</p><ul><li>10-20 hard questions</li><li>Confidence calibration</li><li>Gap-fill upload prompts</li><li>Opportunity heat map</li><li>First CXO briefing</li></ul></div>
+            <div class="phase"><div class="phase-days">Days 31-60</div><h3>Decision workflows</h3><p>Convert the best-backed opportunities into working decisions.</p><ul><li>2-3 Strategic Moves</li><li>1-2 Source events</li><li>Decision Dossier</li><li>Board Pack artifacts</li><li>Risk and dependency map</li></ul></div>
+            <div class="phase"><div class="phase-days">Days 61-90</div><h3>Value proof and roadmap</h3><p>Track outcomes and decide what to integrate next.</p><ul><li>Value proof summary</li><li>Vendor spend under review</li><li>Production integration roadmap</li><li>Executive readout</li><li>Next context expansion wave</li></ul></div>
+          </div>
+          <div class="cards">
+            <div class="card"><span class="tag">Parallel track</span><h3>Demo environment access</h3><p>While the actual enterprise context is being loaded, a selected user group can explore a safe demo environment to learn Home, Intelligence, Moves, Source, Tower, Data Trust, Dossiers, and Board Packs.</p></div>
+            <div class="card"><span class="tag green">Enablement</span><h3>Product fluency before real data</h3><p>Users can practice asking hard questions, shaping Moves, creating Source events, reviewing evidence, and reading Tower outcomes before production-context answers are expected.</p></div>
+            <div class="card"><span class="tag amber">Readiness</span><h3>Sharper first real-data session</h3><p>By the time the first context layer is approved, the team already understands the product workflows and can focus the conversation on evidence, decisions, and value.</p></div>
+          </div>
+        </div>
+      </section>
+
+      <section id="value">
+        <div class="wide">
+          <div class="eyebrow">Value categories</div>
+          <h2>Areas a medtech leader can quickly explore</h2>
+          <p class="lede">The point is not to guess the use case up front. The point is to load context, map evidence strength, and then apply the platform where the evidence and stakes are strongest.</p>
+          <div class="value-areas">
+            <div class="value-area"><span class="tag">ERP</span><h3>SAP / ERP modernization sequencing</h3><ul><li>What must move before ERP?</li><li>Which customizations or integrations create risk?</li><li>Where does finance, quality, or manufacturing dependency change the answer?</li></ul></div>
+            <div class="value-area"><span class="tag green">IT</span><h3>IT product development productivity</h3><ul><li>Where can AI tooling create measurable value?</li><li>Which teams have enough DORA and app context?</li><li>Where would productivity claims be unsafe?</li></ul></div>
+            <div class="value-area"><span class="tag amber">Source</span><h3>AMS / SI contract optimization</h3><ul><li>Which scopes are tied to sunset-planned apps?</li><li>Where are exit clauses weak?</li><li>What BAFO posture links to real app dependency data?</li></ul></div>
+            <div class="value-area"><span class="tag red">Quality</span><h3>QMS and regulatory evidence readiness</h3><ul><li>Where do quality records expose modernization risk?</li><li>Which decisions lack validation evidence?</li><li>What must be cited before leadership can act?</li></ul></div>
+            <div class="value-area"><span class="tag">Manufacturing</span><h3>Plant and supply-chain systems</h3><ul><li>Which plant systems depend on legacy ERP?</li><li>Where is supplier risk linked to product families?</li><li>Which integrations block simplification?</li></ul></div>
+            <div class="value-area"><span class="tag green">AI</span><h3>AI governance and adoption</h3><ul><li>Which AI bets have evidence?</li><li>Where is ownership unclear?</li><li>What should be stopped, restructured, or accelerated?</li></ul></div>
+          </div>
+        </div>
+      </section>
+
+      <section id="metrics">
+        <div class="wide">
+          <div class="eyebrow">Metrics that make progress visible</div>
+          <h2>The first readout should be quantitative, not hand-wavy</h2>
+          <div class="metric-grid">
+            <div class="metric"><div class="value">25+</div><div class="label">Context dimensions</div><p>Enterprise profile, apps, ERP, finance, vendors, org, QMS, risk, KPIs, products, plants, and more.</p></div>
+            <div class="metric"><div class="value">100-250</div><div class="label">Applications mapped</div><p>Enough scale to reason about criticality, ownership, run cost, dependencies, and rationalization.</p></div>
+            <div class="metric"><div class="value">50-100</div><div class="label">Contracts parsed</div><p>AMS, SI, SaaS, cloud, BPO, data, and niche vendor contracts with renewal and clause metadata.</p></div>
+            <div class="metric"><div class="value">500+</div><div class="label">Evidence chunks</div><p>Claims become traceable to fields, quotes, tables, uploads, corpus patterns, and freshness dates.</p></div>
+            <div class="metric"><div class="value">10-20</div><div class="label">Hard questions</div><p>CXO prompts designed to expose grounding, refusal behavior, sequencing, and adversarial resilience.</p></div>
+            <div class="metric"><div class="value">2-3</div><div class="label">Strategic Moves</div><p>Evidence-backed initiatives shaped with sponsors, gates, value states, risks, and failure modes.</p></div>
+            <div class="metric"><div class="value">1-2</div><div class="label">Source events</div><p>Procurement paths with RFI/RFP questions, BAFO leverage, commercial baseline, and value proof.</p></div>
+            <div class="metric"><div class="value">1</div><div class="label">Executive readout</div><p>A board-ready view of context quality, decision opportunities, evidence gaps, and next integration wave.</p></div>
+          </div>
+          <table class="table" aria-label="Quality metrics">
+            <thead><tr><th>Metric family</th><th>What it proves</th><th>Examples</th></tr></thead>
+            <tbody>
+              <tr><td>Context quality</td><td>The foundation is real enough to reason over.</td><td>Completeness by dimension, stale evidence rate, owner coverage, rejected upload rate.</td></tr>
+              <tr><td>Agent quality</td><td>Answers are grounded, calibrated, and resilient.</td><td>Citation density, not-enough-data rate, hard-question pass rate, tenant-leak checks.</td></tr>
+              <tr><td>Workflow throughput</td><td>Insight is becoming action.</td><td>Time from upload to context map, question to Move, Source intake to RFP posture, artifact generation time.</td></tr>
+              <tr><td>Business value</td><td>The system is finding decisions worth making.</td><td>Spend under review, initiatives killed or restructured, risk avoided, savings ranges, board decisions supported.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="compound">
+        <div class="section-grid">
+          <div>
+            <div class="eyebrow">Why it compounds</div>
+            <h2>The more context loaded, the better the decision layer becomes.</h2>
+            <p class="lede">
+              A first upload answers the first questions. A second upload closes gaps. A sourcing event adds commercial memory.
+              A Strategic Move adds execution memory. A value outcome teaches what actually worked. Over time, the platform
+              becomes the enterprise memory for why decisions were made and what evidence supported them.
+            </p>
+          </div>
+          <svg class="orbit-svg" viewBox="0 0 540 540" role="img" aria-label="Compounding loop diagram">
+            <rect width="540" height="540" rx="8" fill="#fffdf8" stroke="rgba(17,17,15,0.14)"/>
+            <circle cx="270" cy="270" r="164" fill="none" stroke="#0b4a91" stroke-width="3"/>
+            <circle cx="270" cy="270" r="104" fill="none" stroke="#11110f" stroke-width="3"/>
+            <circle cx="270" cy="270" r="42" fill="#0b4a91"/>
+            <text x="270" y="264" text-anchor="middle" font-family="Georgia, serif" font-size="20" fill="#fffdf8">Context</text>
+            <text x="270" y="288" text-anchor="middle" font-family="DM Sans, Arial" font-size="12" fill="#fffdf8">gets smarter</text>
+            <g font-family="DM Sans, Arial" font-size="13" font-weight="800" fill="#11110f">
+              <circle cx="270" cy="72" r="30" fill="#dbe9f7"/><text x="270" y="77" text-anchor="middle">Upload</text>
+              <circle cx="468" cy="270" r="30" fill="#dff0e8"/><text x="468" y="275" text-anchor="middle">Answer</text>
+              <circle cx="270" cy="468" r="30" fill="#f3e4c7"/><text x="270" y="473" text-anchor="middle">Act</text>
+              <circle cx="72" cy="270" r="30" fill="#efede6"/><text x="72" y="275" text-anchor="middle">Learn</text>
+            </g>
+            <path d="M319 90 C414 116 450 185 452 238" fill="none" stroke="#62605a" stroke-width="2" marker-end="url(#arrow)"/>
+            <path d="M450 302 C422 407 350 452 304 452" fill="none" stroke="#62605a" stroke-width="2" marker-end="url(#arrow)"/>
+            <path d="M238 452 C135 422 91 350 88 304" fill="none" stroke="#62605a" stroke-width="2" marker-end="url(#arrow)"/>
+            <path d="M88 238 C116 135 188 91 238 88" fill="none" stroke="#62605a" stroke-width="2" marker-end="url(#arrow)"/>
+            <defs><marker id="arrow" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#62605a"/></marker></defs>
+          </svg>
+        </div>
+        <div class="evidence-strip">
+          <div class="quote"><strong>Every upload adds evidence.</strong><p>A contract quote, KPI row, QMS record, org owner, or ERP extract becomes a future citation, not just a file in a folder.</p></div>
+          <div class="quote"><strong>Every decision adds memory.</strong><p>The system remembers what was recommended, what was challenged, what was approved, and what would change the view.</p></div>
+          <div class="quote"><strong>Every outcome improves value proof.</strong><p>Savings, avoided risk, delivery performance, and adoption signals turn from claims into trackable states.</p></div>
+        </div>
+      </section>
+
+      <section id="pilot">
+        <div class="section-grid">
+          <div>
+            <div class="eyebrow">Pilot partnership</div>
+            <h2>Early customers help shape the product while getting practical enhancements.</h2>
+            <p class="lede">
+              A pilot customer is not just a test account. It is a chance to make the product sharper against real
+              enterprise operating conditions: messy data, real approval paths, actual CXO questions, and workflow
+              patterns that matter in medtech. As appropriate, feedback from the pilot can become targeted product
+              enhancements, new templates, better upload flows, stronger evidence views, and sharper workflow logic.
+            </p>
+          </div>
+          <div class="panel panel-pad">
+            <h3>How the partnership works</h3>
+            <ul class="artifact-list">
+              <li>Selected users get demo-environment access while real context loading is underway.</li>
+              <li>Weekly feedback identifies friction in modules, language, workflows, and artifacts.</li>
+              <li>High-value gaps become candidate enhancements, not one-off custom work by default.</li>
+              <li>New templates and context dimensions can be added when they improve the product for the broader medtech pattern.</li>
+              <li>The customer gets early value and a voice in shaping a product category still being formed.</li>
+            </ul>
+          </div>
+        </div>
+        <table class="table" aria-label="Pilot partnership operating model">
+          <thead><tr><th>Track</th><th>What the customer does</th><th>What the product team learns</th><th>Likely output</th></tr></thead>
+          <tbody>
+            <tr><td>Demo environment</td><td>Use seeded workflows to learn modules before real context is ready.</td><td>Where navigation, terminology, and workflow expectations need tightening.</td><td>Enablement notes, walkthrough improvements, UX refinements.</td></tr>
+            <tr><td>Context loading</td><td>Provide broad artifacts and approve extracted facts.</td><td>Which templates, extractors, and validation rules matter most in medtech.</td><td>Better upload templates, stronger schema mapping, clearer data-trust views.</td></tr>
+            <tr><td>Executive questions</td><td>Ask the questions leadership actually asks, including adversarial ones.</td><td>Where agents need better reasoning, refusal, or evidence behavior.</td><td>Improved prompts, citations, confidence rules, and dossier structure.</td></tr>
+            <tr><td>Decision workflows</td><td>Shape candidate Moves, Source events, and Board Packs.</td><td>Where workflow handoffs and artifacts need to be more executive-grade.</td><td>Enhancements to Moves, Source, Tower, Dossiers, and Board Pack generation.</td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section id="next" class="closing">
+        <div class="wide">
+          <svg class="brand-lockup logo-svg" viewBox="90 95 820 285" role="img" aria-label="AbarVa logo" style="filter: invert(1); margin-bottom: 28px;">
+            <rect width="1600" height="520" fill="transparent"/>
+            <g transform="translate(152 158) scale(0.658)" fill="none" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M104 1 L111 18 L128 25 L111 32 L104 49 L97 32 L80 25 L97 18 Z" fill="#0b4a91" stroke="none"/>
+              <path d="M12 118 H50" stroke="#070707" stroke-width="6"/><path d="M166 118 H201" stroke="#070707" stroke-width="6"/><circle cx="214" cy="118" r="14" stroke="#070707" stroke-width="6" fill="#fffdf7"/><path d="M230 118 H250" stroke="#070707" stroke-width="6"/>
+              <path d="M52 121 C50 68 91 33 144 42" stroke="#070707" stroke-width="8"/><path d="M174 74 C202 124 169 181 112 190" stroke="#070707" stroke-width="8"/><path d="M63 173 C37 133 48 82 88 58" stroke="#070707" stroke-width="5" opacity="0.95"/><path d="M156 51 C195 75 211 125 188 166" stroke="#070707" stroke-width="5" opacity="0.95"/>
+              <circle cx="112" cy="118" r="68" stroke="#070707" stroke-width="8"/><circle cx="112" cy="118" r="42" stroke="#070707" stroke-width="8"/><circle cx="112" cy="118" r="18" fill="#0b4a91" stroke="none"/>
+            </g>
+            <g transform="translate(350 299)"><text x="0" y="0" font-size="168" letter-spacing="-8" font-weight="700" fill="#070707">A</text><text x="104" y="0" font-size="168" letter-spacing="-8" font-weight="400" fill="#070707">bar</text><text x="318" y="0" font-size="168" letter-spacing="-9" font-weight="700" fill="#0b4a91">V</text><text x="416" y="0" font-size="168" letter-spacing="-9" font-weight="400" fill="#0b4a91">a</text></g>
+          </svg>
+          <div class="eyebrow" style="color: #9ec9f4;">What to show first</div>
+          <h2>A low-friction executive working session</h2>
+          <p class="lede">
+            Bring a broad context bundle, even if imperfect. The platform will show what it can know,
+            what it cannot yet know, which evidence is strong, which value areas are promising, and
+            what targeted uploads would increase confidence next.
+          </p>
+          <div class="cards">
+            <div class="card"><h3>What Bala sees</h3><p>Context completeness, evidence gaps, agent answers, Move shaping, Source strategy, Dossier continuity, and board-ready output.</p></div>
+            <div class="card"><h3>What the team learns</h3><p>Where the enterprise has decision-ready evidence, where data is thin, and which categories deserve deeper exploration.</p></div>
+            <div class="card"><h3>What leadership gets</h3><p>A practical view of how a living context layer becomes the foundation for future AI-enabled decision work.</p></div>
+          </div>
+          <p style="margin-top: 34px; font-size: 13px; color: rgba(255,253,248,0.62);">
+            Note: examples in this briefing are medtech enterprise patterns and product capabilities, not assertions about Solventum internal systems or confidential data.
+          </p>
+        </div>
+      </section>
+    </main>
+  </div>
+</body>
+</html>
