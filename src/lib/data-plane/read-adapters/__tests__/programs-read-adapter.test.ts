@@ -7,7 +7,7 @@
 //   - the engagement row shape is stable across planes;
 //   - a missing/empty result yields [] rather than a throw.
 
-import type { SupabaseClient } from '@supabase/supabase-js';
+import type { PostgresCompatClient as SupabaseClient } from '@/lib/supabase-server';
 import type { SessionRunner } from '../azureSession';
 import {
   createAzureProgramsReadAdapter,

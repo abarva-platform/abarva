@@ -7,7 +7,7 @@
 //   - the route payload shape is stable;
 //   - a missing optional table yields zeros, never a thrown 500.
 
-import type { SupabaseClient } from '@supabase/supabase-js';
+import type { PostgresCompatClient as SupabaseClient } from '@/lib/supabase-server';
 import {
   buildInvariantPayload,
   resolveDataPlane,

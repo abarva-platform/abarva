@@ -6,7 +6,7 @@
 //     the metric reads when the tenant has no use cases;
 //   - both planes return the same bundle shape.
 
-import type { SupabaseClient } from '@supabase/supabase-js';
+import type { PostgresCompatClient as SupabaseClient } from '@/lib/supabase-server';
 import type { SessionRunner } from '../azureSession';
 import {
   createAzureTowerAggregateReadAdapter,

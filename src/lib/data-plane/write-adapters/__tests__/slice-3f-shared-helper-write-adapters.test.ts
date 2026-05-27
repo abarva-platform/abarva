@@ -13,7 +13,7 @@
 // units run in ONE transaction; a DB error is surfaced as `ok:false` (the
 // helper re-throws), never swallowed.
 
-import type { SupabaseClient } from '@supabase/supabase-js';
+import type { PostgresCompatClient as SupabaseClient } from '@/lib/supabase-server';
 import type { TxSessionRunner } from '../../read-adapters/azureSession';
 import {
   createAzureProgramsWriteAdapter,

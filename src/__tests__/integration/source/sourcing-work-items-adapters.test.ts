@@ -5,7 +5,7 @@
 //   - the read adapter degrades to [] (never throws) on a missing table;
 //   - default plane stays Supabase, Azure is selectable by env.
 
-import type { SupabaseClient } from '@supabase/supabase-js';
+import type { PostgresCompatClient as SupabaseClient } from '@/lib/supabase-server';
 import {
   createSupabaseSourcingWorkItemsWriteAdapter,
   selectSourcingWorkItemsWriteAdapter,

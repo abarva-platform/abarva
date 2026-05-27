@@ -6,7 +6,7 @@
 //   - a missing client yields a null entry, never a throw;
 //   - an initiatives-query failure surfaces as an `{ error }` counts object.
 
-import type { SupabaseClient } from '@supabase/supabase-js';
+import type { PostgresCompatClient as SupabaseClient } from '@/lib/supabase-server';
 import type { SessionRunner } from '../azureSession';
 import {
   createAzureTowerSubstrateReadAdapter,

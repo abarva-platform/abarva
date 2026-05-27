@@ -6,7 +6,7 @@
 //   - a missing row yields `null` (not a throw) on both planes;
 //   - the Azure adapter runs the equivalent `LIMIT 1` SQL read.
 
-import type { SupabaseClient } from '@supabase/supabase-js';
+import type { PostgresCompatClient as SupabaseClient } from '@/lib/supabase-server';
 import type { SessionRunner } from '../azureSession';
 import {
   createAzureStrategicMovesPreferencesReadAdapter,

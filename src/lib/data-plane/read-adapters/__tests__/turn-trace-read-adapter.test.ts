@@ -6,7 +6,7 @@
 //   - a cross-tenant or missing turn yields `not_found` (indistinguishable);
 //   - a query failure yields `error`, never an unhandled throw.
 
-import type { SupabaseClient } from '@supabase/supabase-js';
+import type { PostgresCompatClient as SupabaseClient } from '@/lib/supabase-server';
 import type { SessionRunner } from '../azureSession';
 import {
   createAzureTurnTraceReadAdapter,

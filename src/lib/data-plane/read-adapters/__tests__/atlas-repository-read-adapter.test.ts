@@ -7,7 +7,7 @@
 //     shape the Supabase PostgREST query returns;
 //   - `getMaxTurnIndex` returns `null` when a thread has no traces.
 
-import type { SupabaseClient } from '@supabase/supabase-js';
+import type { PostgresCompatClient as SupabaseClient } from '@/lib/supabase-server';
 import type { SessionRunner } from '../azureSession';
 import {
   createAzureAtlasRepositoryReadAdapter,

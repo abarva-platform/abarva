@@ -12,7 +12,7 @@
 // (Surface 1 scope)."
 
 import { NextRequest } from 'next/server';
-import { requireTenancy, tenancyErrorResponse } from '@/app/api/v1/programs/_auth';
+import { requireTenancy, TenancyError } from '@/app/api/v1/programs/_auth';
 import {
   getOpenDraft,
   saveDraft,
@@ -28,24 +28,30 @@ function badRequest(detail: string): Response {
   return Response.json({ error: 'bad_request', detail }, { status: 400 });
 }
 
+async function getDraftTenancy() {
+  try {
+    return await requireTenancy();
+  } catch (err) {
+    if (err instanceof TenancyError) return null;
+    throw err;
+  }
+}
+
 export async function GET(req: NextRequest) {
   const surface = req.nextUrl.searchParams.get('surface');
   if (!surface || !ALLOWED_SURFACES.has(surface)) {
     return badRequest('surface query param required and must be a recognized origination surface');
   }
-  let ctx;
   try {
-    ctx = await requireTenancy();
+    const ctx = await getDraftTenancy();
+    if (!ctx) return Response.json({ draft: null });
+    const draft = await getOpenDraft(ctx, surface);
+    return Response.json({ draft });
   } catch (err) {
-    try {
-      return tenancyErrorResponse(err);
-    } catch {
-      // fall through
-    }
+    const message = err instanceof Error ? err.message : String(err);
+    console.error('[origination-draft] GET failed', { message });
     return Response.json({ error: 'internal_error' }, { status: 500 });
   }
-  const draft = await getOpenDraft(ctx, surface);
-  return Response.json({ draft });
 }
 
 export async function POST(req: NextRequest) {
@@ -63,17 +69,14 @@ export async function POST(req: NextRequest) {
   if (!state || typeof state !== 'object') {
     return badRequest('state required (object)');
   }
-  let ctx;
   try {
-    ctx = await requireTenancy();
+    const ctx = await getDraftTenancy();
+    if (!ctx) return Response.json({ ok: true, persisted: false });
+    await saveDraft(ctx, surface, state);
+    return Response.json({ ok: true });
   } catch (err) {
-    try {
-      return tenancyErrorResponse(err);
-    } catch {
-      // fall through
-    }
+    const message = err instanceof Error ? err.message : String(err);
+    console.error('[origination-draft] POST failed', { message });
     return Response.json({ error: 'internal_error' }, { status: 500 });
   }
-  await saveDraft(ctx, surface, state);
-  return Response.json({ ok: true });
 }

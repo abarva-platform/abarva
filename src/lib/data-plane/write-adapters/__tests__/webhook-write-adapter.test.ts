@@ -11,7 +11,7 @@
 //     non-2xx and Stripe retries (idempotency / dedup itself is in route.ts
 //     and is not touched here).
 
-import type { SupabaseClient } from '@supabase/supabase-js';
+import type { PostgresCompatClient as SupabaseClient } from '@/lib/supabase-server';
 import {
   createSupabaseWebhookWriteDataSource,
   createAzureWebhookWriteDataSource,

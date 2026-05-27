@@ -7,7 +7,7 @@
 //     pre-seam `uploaded_files` `.insert()` / `.update()`;
 //   - the Azure implementation issues parameterized INSERT/UPDATE SQL.
 
-import type { SupabaseClient } from '@supabase/supabase-js';
+import type { PostgresCompatClient as SupabaseClient } from '@/lib/supabase-server';
 import type { TxSessionRunner } from '../../read-adapters/azureSession';
 import {
   createAzureUploadsWriteAdapter,

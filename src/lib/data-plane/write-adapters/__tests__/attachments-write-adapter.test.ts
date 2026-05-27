@@ -8,7 +8,7 @@
 //   - the agent-attachment soft-delete preserves tenant scoping + the
 //     already-deleted guard and returns null when no row is affected.
 
-import type { SupabaseClient } from '@supabase/supabase-js';
+import type { PostgresCompatClient as SupabaseClient } from '@/lib/supabase-server';
 import type { TxSessionRunner } from '../../read-adapters/azureSession';
 import {
   createAzureAttachmentsWriteAdapter,

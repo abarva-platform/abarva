@@ -9,7 +9,7 @@
 //   - the quarantine proof route's lifecycle write goes through the seam and
 //     produces the same row shape as the pre-seam Supabase implementation.
 
-import type { SupabaseClient } from '@supabase/supabase-js';
+import type { PostgresCompatClient as SupabaseClient } from '@/lib/supabase-server';
 import {
   resolveDataPlane,
   selectWriteAdapter,

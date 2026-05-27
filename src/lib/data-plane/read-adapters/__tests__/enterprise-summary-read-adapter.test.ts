@@ -5,7 +5,7 @@
 //     bundle shape;
 //   - the Azure adapter applies the snapshot-date ordering + 30-row cap.
 
-import type { SupabaseClient } from '@supabase/supabase-js';
+import type { PostgresCompatClient as SupabaseClient } from '@/lib/supabase-server';
 import type { SessionRunner } from '../azureSession';
 import {
   createAzureEnterpriseSummaryReadAdapter,

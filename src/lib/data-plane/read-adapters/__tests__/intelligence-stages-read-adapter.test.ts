@@ -7,7 +7,7 @@
 //   - both planes are fail-soft: a query error yields `[]`, never a throw;
 //   - the Azure adapter runs the equivalent `= ANY($1::text[])` SQL.
 
-import type { SupabaseClient } from '@supabase/supabase-js';
+import type { PostgresCompatClient as SupabaseClient } from '@/lib/supabase-server';
 import type { SessionRunner } from '../azureSession';
 import {
   createAzureIntelligenceStagesReadAdapter,
