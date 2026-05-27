@@ -3,7 +3,8 @@
 // Founder direction (2026-05-08):
 //   - Role-based usernames (role@<tenant>) instead of person names.
 //   - Each Clerk account is bound to a real persona from the existing
-//     tenant org charts (apex-data, meridian-data, firstcapital). This
+//     tenant org charts (apex-data, meridian-data, firstcapital, northstar,
+//     skyharbor). This
 //     gives every login rich corpus context: charters they signed,
 //     meetings they attended, programs they sponsor, decisions they
 //     made — all already threaded through the data.
@@ -21,6 +22,7 @@
 //   cdio@meridian-health.example.com → Dr. Anita Krishnamurthy (CDIO · Meridian)
 //   cdao@meridian-health.example.com → Kiran Rao (CDAO · Meridian)
 //   cio@firstcapital.example.com     → Patricia Huang (CIO · First Capital)
+//   cto@skyharbor-air.example.com    → Victor Hale (CTO · SkyHarbor)
 
 export const CANONICAL_AUTH_EMAILS = [
   // Apex Retail Group
@@ -33,6 +35,15 @@ export const CANONICAL_AUTH_EMAILS = [
 
   // First Capital
   'cio@firstcapital.example.com', // Patricia Huang · CIO
+
+  // SkyHarbor Air
+  'cto@skyharbor-air.example.com', // Victor Hale · CTO
+  'cio@skyharbor-air.example.com', // Amala Rao · CIO
+  'cfo@skyharbor-air.example.com', // Mara Chen · CFO
+  'coo@skyharbor-air.example.com', // Darius King · COO
+  'ciso@skyharbor-air.example.com', // Nadia Sethi · CISO
+  'maestro@skyharbor-air.example.com', // Rina Patel · AbarVa Maestro / Pilot Lead
+  'admin@skyharbor-air.example.com', // Owen Mercer · Tenant Admin / Context Layer Steward
 ] as const;
 
 export const CANONICAL_CLIENT_ADMIN_EMAILS = [
@@ -41,6 +52,8 @@ export const CANONICAL_CLIENT_ADMIN_EMAILS = [
   'cdio@meridian-health.example.com',
   'cdao@meridian-health.example.com',
   'cio@firstcapital.example.com',
+  'maestro@skyharbor-air.example.com',
+  'admin@skyharbor-air.example.com',
 ] as const;
 
 export type CanonicalAuthEmail = (typeof CANONICAL_AUTH_EMAILS)[number];

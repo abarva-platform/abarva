@@ -145,6 +145,8 @@ describe('clientKeyToBrokerTenantKey · PR-INT-G Apex tenant key split', () => {
     // to match clients.tenant_key; resolver must map app key → that value
     expect(clientKeyToInventorySubstrateKey('northstar')).toBe('northstar-medtech');
     expect(clientKeyToInventorySubstrateKey('northstar-clinical-tech')).toBe('northstar-medtech');
+    expect(clientKeyToInventorySubstrateKey('skyharbor')).toBe('skyharbor-air');
+    expect(clientKeyToInventorySubstrateKey('skyharbor-air')).toBe('skyharbor-air');
     expect(clientKeyToInventorySubstrateKey('keystone')).toBe('keystone');
   });
 
