@@ -55,6 +55,10 @@ const requiredFiles = [
   'verification/SUBSTRATE_QUALITY_REPORT.html',
   'verification/ground_truth_results.md',
   'verification/coverage_report.md',
+  'verification/airline_pattern_overlay_report.md',
+  'verification/airline_pattern_overlay_report.html',
+  '16-industry-pattern-overlay/airline-industry-pattern-overlay.jsonl',
+  '16-industry-pattern-overlay/airline-industry-pattern-chunks.jsonl',
   'source_uploads/mainframe_inventory_current_state.xlsx',
   'source_uploads/modernization_ledger_5yr.xlsx',
   'source_uploads/ibm_modernization_sow_summary.pdf',
@@ -144,6 +148,22 @@ for (const chunk of chunks) {
   if (!chunk.text || chunk.text.length < 180) fail(`chunk too thin: ${chunk.chunk_id || chunk.id}`);
   if (!['enterprise_profile', 'org_structure', 'it_financials', 'it_landscape', 'program_inventory'].includes(chunk.source_segment_id)) {
     fail(`chunk has non-retrievable source_segment_id: ${chunk.source_segment_id}`);
+  }
+}
+
+const overlayRecords = exists('16-industry-pattern-overlay/airline-industry-pattern-overlay.jsonl')
+  ? readJsonl(path.join(DATASET, '16-industry-pattern-overlay/airline-industry-pattern-overlay.jsonl'))
+  : [];
+const overlayChunks = exists('16-industry-pattern-overlay/airline-industry-pattern-chunks.jsonl')
+  ? readJsonl(path.join(DATASET, '16-industry-pattern-overlay/airline-industry-pattern-chunks.jsonl'))
+  : [];
+const overlayPacks = new Set(overlayRecords.map((row) => row.pack_id));
+if (overlayRecords.length !== 2760) fail(`expected 2760 airline overlay patterns, got ${overlayRecords.length}`);
+if (overlayChunks.length !== 2760) fail(`expected 2760 airline overlay chunks, got ${overlayChunks.length}`);
+if (overlayPacks.size !== 184) fail(`expected 184 airline overlay packs, got ${overlayPacks.size}`);
+for (const chunk of overlayChunks) {
+  if (!['enterprise_profile', 'org_structure', 'it_financials', 'it_landscape', 'program_inventory'].includes(chunk.source_segment_id)) {
+    fail(`overlay chunk has non-retrievable source_segment_id: ${chunk.source_segment_id}`);
   }
 }
 
