@@ -85,6 +85,22 @@ const TENANT_BRAND: Record<ClientKey, TenantBrand> = {
     industryLabel: 'Industry: Financial Services',
     tagline: 'Regional bank · $48B AUM · 142 branches',
   },
+  northstar: {
+    initials: 'NS',
+    bgColor: '#0F766E',
+    brandSoft: 'rgba(15,118,110,0.08)',
+    brandLine: 'rgba(15,118,110,0.20)',
+    industryLabel: 'Industry: Clinical Technology',
+    tagline: 'Clinical technology · $22.6B revenue · regulated AI products',
+  },
+  skyharbor: {
+    initials: 'SH',
+    bgColor: '#075985',
+    brandSoft: 'rgba(7,89,133,0.08)',
+    brandLine: 'rgba(7,89,133,0.20)',
+    industryLabel: 'Industry: Global Airline',
+    tagline: 'Global airline · $52.1B revenue · IBM Z to AWS modernization',
+  },
 };
 
 const FALLBACK_BRAND: TenantBrand = {

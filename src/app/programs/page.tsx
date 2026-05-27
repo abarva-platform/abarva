@@ -21,7 +21,7 @@ export const metadata = {
 
 export const dynamic = 'force-dynamic';
 
-const PROGRAM_TENANT_BY_CLIENT_KEY: Record<ClientKey, ProgramsIndexTenant> = {
+const PROGRAM_TENANT_BY_CLIENT_KEY: Partial<Record<ClientKey, ProgramsIndexTenant>> = {
   apexretail: 'apex-retail',
   meridian: 'meridian-health',
   arcturus: 'first-capital',
@@ -30,7 +30,7 @@ const PROGRAM_TENANT_BY_CLIENT_KEY: Record<ClientKey, ProgramsIndexTenant> = {
 export default async function ProgramsPage() {
   await requireProductModule('programs');
   const activeClient = await getActiveClientRow();
-  const tenant = activeClient ? PROGRAM_TENANT_BY_CLIENT_KEY[activeClient.key] : 'apex-retail';
+  const tenant = activeClient ? (PROGRAM_TENANT_BY_CLIENT_KEY[activeClient.key] ?? 'apex-retail') : 'apex-retail';
   const view = buildProgramsIndexView(tenant);
   let allowedProgramIds: Set<string> | null = null;
 

@@ -14,6 +14,7 @@ import { connection } from 'next/server';
 import { AdminCanonShellV2 } from '@/components/admin/AdminCanonShellV2';
 import { EditorialCanvas } from '@/components/admin/EditorialCanvas';
 import { AgentRail } from '@/components/admin/AgentRail';
+import { CANONICAL_CLIENT_ADMIN_EMAILS } from '@/lib/auth/canonical-auth-roster';
 import { requireTenancy } from '@/lib/auth/tenancy';
 import { loadUserProgramAccessPolicy } from '@/lib/auth/program-access-policy';
 
@@ -24,6 +25,7 @@ const ADMIN_EMAIL_ALLOWLIST: ReadonlySet<string> = new Set([
   'demo-apexretail+clerk_test@abarva.com',
   'demo-meridian+clerk_test@abarva.com',
   'demo-firstcapital+clerk_test@abarva.com',
+  ...CANONICAL_CLIENT_ADMIN_EMAILS,
 ]);
 
 export const dynamic = 'force-dynamic';

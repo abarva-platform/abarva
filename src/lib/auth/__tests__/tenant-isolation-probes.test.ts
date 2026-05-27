@@ -311,6 +311,12 @@ describe('Probe 5 · inferClientKeyFromEmail', () => {
     expect(inferClientKeyFromEmail('rachel.kim@firstcapital.example.com')).toBe('arcturus');
   });
 
+  it('infers skyharbor from canonical SkyHarbor client emails', () => {
+    expect(inferClientKeyFromEmail('cto@skyharbor-air.example.com')).toBe('skyharbor');
+    expect(inferClientKeyFromEmail('admin@skyharbor-air.example.com')).toBe('skyharbor');
+    expect(inferClientKeyFromEmail('anand+skyharbor@abarva.com')).toBe('skyharbor');
+  });
+
   it('infers keystone from retired Keystone demo emails', () => {
     expect(inferClientKeyFromEmail('retired-energy-demo@example.com')).toBeNull();
     expect(inferClientKeyFromEmail('retired-energy-alias@example.com')).toBeNull();
@@ -342,6 +348,7 @@ describe('Probe 5b · industryCodeForClientName', () => {
     expect(industryCodeForClientName('Meridian Health System')).toBe('HEALTHCARE_IDN');
     expect(industryCodeForClientName('First Capital')).toBe('FINSERV');
     expect(industryCodeForClientName('Arcturus Financial Group')).toBe('FINSERV');
+    expect(industryCodeForClientName('SkyHarbor Air')).toBe('AIRLINE');
   });
 
   it('returns null for unknown or empty client names', () => {

@@ -35,15 +35,17 @@ export interface CxoPersona {
    * Canonical app ClientKey — matches src/lib/client-config.ts.
    * Used for active-client resolution and Supabase clients-table
    * lookup (clients.name LIKE: Apex Retail / Meridian / Arcturus or
-   * First Capital). MUST be one of: apexretail · meridian · arcturus · northstar.
+   * First Capital). MUST be one of: apexretail · meridian · arcturus · northstar · skyharbor.
    */
-  clientKey: 'apexretail' | 'meridian' | 'arcturus' | 'northstar';
+  clientKey: 'apexretail' | 'meridian' | 'arcturus' | 'northstar' | 'skyharbor';
   /**
    * Tenant key used by the data-room / broker layer — a parallel
    * namespace per project memory ("App ClientKey is `apexretail`;
    * broker is `apex-retail`"). Kept for chrome rendering.
    */
-  tenantKey: 'apex-retail' | 'meridian-health' | 'firstcapital' | 'northstar-clinical-tech';
+  tenantKey: 'apex-retail' | 'meridian-health' | 'firstcapital' | 'northstar-clinical-tech' | 'skyharbor-air';
+  /** Clerk publicMetadata.role override for demo operations accounts. */
+  authRole?: 'maestro' | 'admin';
   /** Graph node id used by persons.graph_node_id (Supabase). */
   graphNodeId: string;
   /** Monogram background — tenant theme color (NOT brand chrome). */
@@ -371,6 +373,155 @@ export const CXO_PERSONAS: ReadonlyArray<CxoPersona> = [
       'Marcus Lee runs the Health Information Systems business, including clinical coding, CDI, audit, analytics, and customer-facing software modernization. He is the executive who tests whether AbarVa can connect product strategy, engineering execution, QMS constraints, Source events, and board-grade value artifacts.',
     workspaceTeaser:
       'Your workspace shows the clinical coding AI modernization move, HIS product families, QMS dependencies, Source vendor choices, and Tower value views for product-software outcomes.',
+  },
+  {
+    slug: 'cto-skyharbor',
+    email: 'cto@skyharbor-air.example.com',
+    shortLabel: 'cto@skyharbor',
+    firstName: 'Victor',
+    lastName: 'Hale',
+    personaName: 'Victor Hale',
+    monogram: 'VH',
+    titleShort: 'CTO',
+    titleFull: 'Chief Technology Officer',
+    tenant: 'SkyHarbor Air',
+    clientKey: 'skyharbor',
+    tenantKey: 'skyharbor-air',
+    graphNodeId: 'person:skyharbor:victor-hale',
+    monogramBg: '#075985',
+    bioShort: 'CTO. Five-year IBM Z to AWS modernization sponsor; defending progress while accelerating the next wave.',
+    bioLong:
+      'Victor Hale sponsored SkyHarbor Air\'s five-year IBM mainframe to AWS modernization program. He owns the defensible progress narrative, the IBM relationship, the modernization factory, and the board-facing roadmap for what to peel next from Z without disrupting airline operations.',
+    workspaceTeaser:
+      'Your workspace shows the five-year modernization ledger, remaining IBM Z workloads, AWS-native extracts, IBM engagement profile, AI-powered SDLC opportunities, GCC ramp constraints, and the next-wave modernization move candidates.',
+  },
+  {
+    slug: 'cio-skyharbor',
+    email: 'cio@skyharbor-air.example.com',
+    shortLabel: 'cio@skyharbor',
+    firstName: 'Amala',
+    lastName: 'Rao',
+    personaName: 'Amala Rao',
+    monogram: 'AR',
+    titleShort: 'CIO',
+    titleFull: 'Chief Information Officer',
+    tenant: 'SkyHarbor Air',
+    clientKey: 'skyharbor',
+    tenantKey: 'skyharbor-air',
+    graphNodeId: 'person:skyharbor:amala-rao',
+    monogramBg: '#075985',
+    bioShort: 'CIO. New challenge voice asking where modernization must speed up, stop, or change governance.',
+    bioLong:
+      'Amala Rao is the new CIO challenging the pace and shape of SkyHarbor\'s mature modernization program. Her lens is evidence-led acceleration: what has really worked, where duplicate complexity is accumulating, and how to rebalance IBM, AWS, internal engineering, and GCC capacity.',
+    workspaceTeaser:
+      'Your workspace shows modernization reversals, duplicate-complexity flags, active initiatives by stage, DORA gradients, GCC capability gaps, and the decision map separating real gaps from perception gaps.',
+  },
+  {
+    slug: 'cfo-skyharbor',
+    email: 'cfo@skyharbor-air.example.com',
+    shortLabel: 'cfo@skyharbor',
+    firstName: 'Mara',
+    lastName: 'Chen',
+    personaName: 'Mara Chen',
+    monogram: 'MC',
+    titleShort: 'CFO',
+    titleFull: 'Chief Financial Officer',
+    tenant: 'SkyHarbor Air',
+    clientKey: 'skyharbor',
+    tenantKey: 'skyharbor-air',
+    graphNodeId: 'person:skyharbor:mara-chen',
+    monogramBg: '#075985',
+    bioShort: 'CFO. Scrutinizes $3.2B IT spend, $2.4B modernization spend, and realized-vs-promised value.',
+    bioLong:
+      'Mara Chen owns finance, FP&A, procurement governance, and value realization for SkyHarbor Air. She pressures the modernization portfolio to separate promised value from validated savings, quantify disputed benefits, and surface sourcing leverage before the IBM and AWS renewal windows.',
+    workspaceTeaser:
+      'Your workspace shows the IT spend envelope, modernization value ledger, disputed savings, vendor-renewal pipeline, IBM productivity guarantee history, and Source events with CFO-defensible negotiation levers.',
+  },
+  {
+    slug: 'coo-skyharbor',
+    email: 'coo@skyharbor-air.example.com',
+    shortLabel: 'coo@skyharbor',
+    firstName: 'Darius',
+    lastName: 'King',
+    personaName: 'Darius King',
+    monogram: 'DK',
+    titleShort: 'COO',
+    titleFull: 'Chief Operating Officer',
+    tenant: 'SkyHarbor Air',
+    clientKey: 'skyharbor',
+    tenantKey: 'skyharbor-air',
+    graphNodeId: 'person:skyharbor:darius-king',
+    monogramBg: '#075985',
+    bioShort: 'COO. Protects IROPs, crew, airport operations, baggage, and fleet reliability during extraction waves.',
+    bioLong:
+      'Darius King runs airline operations across hubs, crew, airport operations, cargo, maintenance interfaces, and disruption recovery. He supports modernization only when it lowers operational fragility and does not jeopardize passenger service, crew legality, or IROPs resilience.',
+    workspaceTeaser:
+      'Your workspace shows the operational KPI map, IROPs and crew dependency graph, modernization-blocker integrations, operational-risk gates, and Move pre-mortems for extraction candidates.',
+  },
+  {
+    slug: 'ciso-skyharbor',
+    email: 'ciso@skyharbor-air.example.com',
+    shortLabel: 'ciso@skyharbor',
+    firstName: 'Nadia',
+    lastName: 'Sethi',
+    personaName: 'Nadia Sethi',
+    monogram: 'NS',
+    titleShort: 'CISO',
+    titleFull: 'Chief Information Security Officer',
+    tenant: 'SkyHarbor Air',
+    clientKey: 'skyharbor',
+    tenantKey: 'skyharbor-air',
+    graphNodeId: 'person:skyharbor:nadia-sethi',
+    monogramBg: '#075985',
+    bioShort: 'CISO. Controls cloud sprawl, AI SDLC risk, privileged access, and safety-critical code safeguards.',
+    bioLong:
+      'Nadia Sethi owns cybersecurity, cloud governance, identity, third-party risk, and AI SDLC guardrails for SkyHarbor Air. Her bar is explicit: every acceleration proposal must name security controls, operational blast radius, model-code risk, and evidence needed before funding.',
+    workspaceTeaser:
+      'Your workspace shows cloud control-plane exposure, AI SDLC opportunity risk classes, vendor security posture, privileged-access concerns, and governance gates for modernization moves.',
+  },
+  {
+    slug: 'maestro-skyharbor',
+    email: 'maestro@skyharbor-air.example.com',
+    shortLabel: 'maestro@skyharbor',
+    firstName: 'Rina',
+    lastName: 'Patel',
+    personaName: 'Rina Patel',
+    monogram: 'RP',
+    titleShort: 'Maestro',
+    titleFull: 'AbarVa Maestro / Pilot Lead',
+    tenant: 'SkyHarbor Air',
+    clientKey: 'skyharbor',
+    tenantKey: 'skyharbor-air',
+    graphNodeId: 'person:skyharbor:rina-patel',
+    monogramBg: '#075985',
+    authRole: 'maestro',
+    bioShort: 'Maestro. Runs demo workflow orchestration, context-layer QA, and executive walkthrough readiness.',
+    bioLong:
+      'Rina Patel is the SkyHarbor pilot Maestro persona. She coordinates context-layer readiness, tenant setup, Intelligence prompts, Moves creation, Source event rehearsal, Tower continuity checks, and executive-demo QA.',
+    workspaceTeaser:
+      'Your workspace opens all demo-critical modules for SkyHarbor: Setup, Intelligence, Moves, Source, Tower, context-layer QA, and evidence traces for the airline modernization walkthrough.',
+  },
+  {
+    slug: 'admin-skyharbor',
+    email: 'admin@skyharbor-air.example.com',
+    shortLabel: 'admin@skyharbor',
+    firstName: 'Owen',
+    lastName: 'Mercer',
+    personaName: 'Owen Mercer',
+    monogram: 'OM',
+    titleShort: 'Admin',
+    titleFull: 'Tenant Admin / Context Layer Steward',
+    tenant: 'SkyHarbor Air',
+    clientKey: 'skyharbor',
+    tenantKey: 'skyharbor-air',
+    graphNodeId: 'person:skyharbor:owen-mercer',
+    monogramBg: '#075985',
+    authRole: 'admin',
+    bioShort: 'Tenant admin. Owns user access, upload approvals, sync checks, and context-layer stewardship.',
+    bioLong:
+      'Owen Mercer is the SkyHarbor tenant-admin persona for setup and stewardship. He owns user access, upload approval workflows, rejected-fact review, template governance, ingestion sync status, and context-layer audit trails.',
+    workspaceTeaser:
+      'Your workspace includes Setup/Admin, user access, context-layer uploads, ingestion history, approval queues, source-file provenance, and cross-module continuity checks.',
   },
 ];
 

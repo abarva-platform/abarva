@@ -1,6 +1,6 @@
 // scripts/provision-cxo-personas.ts
 //
-// Provisions the four canonical CXO Clerk users AND their Supabase
+// Provisions the canonical CXO/tenant-demo Clerk users AND their Supabase
 // person + person_client_memberships rows so the active-client
 // resolver can find them. Disables every other *.example.com demo
 // account.
@@ -8,6 +8,7 @@
 // Run:
 //   npx tsx scripts/provision-cxo-personas.ts --dry-run        # default
 //   npx tsx scripts/provision-cxo-personas.ts --apply           # mutate
+//   npx tsx scripts/provision-cxo-personas.ts --apply --skip-ban # mutate only canonical users
 //
 // Requires in .env.local:
 //   CLERK_SECRET_KEY
@@ -57,7 +58,10 @@ function makeSupabase(): SupabaseClient {
 
 function parseArgs() {
   const args = new Set(process.argv.slice(2));
-  return { apply: args.has('--apply') };
+  return {
+    apply: args.has('--apply'),
+    skipBan: args.has('--skip-ban'),
+  };
 }
 
 interface ClientRow {
@@ -65,18 +69,65 @@ interface ClientRow {
   name: string;
 }
 
+const CLIENT_SEED_FALLBACKS: Record<string, {
+  id: string;
+  name: string;
+  legal_name: string;
+  industry_code: string;
+  tenant_key: string;
+  slug: string;
+}> = {
+  skyharbor: {
+    id: '6f3c8d21-9b45-4f12-8d61-4b8f7c2a9301',
+    name: 'SkyHarbor Air',
+    legal_name: 'SkyHarbor Air',
+    industry_code: 'AIRLINE',
+    tenant_key: 'skyharbor-air',
+    slug: 'skyharbor-air',
+  },
+};
+
 async function loadClientsByKey(sb: SupabaseClient): Promise<Map<string, ClientRow>> {
-  const { data, error } = await sb.from('clients').select('id, name');
+  const { data, error } = await sb.from('clients').select('id, name, tenant_key');
   if (error) throw error;
 
   const byKey = new Map<string, ClientRow>();
-  for (const row of (data as ClientRow[] | null) ?? []) {
-    if (/Meridian/i.test(row.name)) byKey.set('meridian', row);
-    if (/Arcturus|First Capital/i.test(row.name)) byKey.set('arcturus', row);
-    if (/Apex Retail/i.test(row.name)) byKey.set('apexretail', row);
-    if (/Northstar/i.test(row.name)) byKey.set('northstar', row);
+  for (const row of (data as Array<ClientRow & { tenant_key?: string | null }> | null) ?? []) {
+    if (/Meridian/i.test(row.name) || row.tenant_key === 'meridian-health') byKey.set('meridian', row);
+    if (/Arcturus|First Capital/i.test(row.name) || row.tenant_key === 'first-capital') byKey.set('arcturus', row);
+    if (/Apex Retail/i.test(row.name) || row.tenant_key === 'apex-retail') byKey.set('apexretail', row);
+    if (/Northstar/i.test(row.name) || row.tenant_key === 'northstar-medtech') byKey.set('northstar', row);
+    if (/SkyHarbor/i.test(row.name) || row.tenant_key === 'skyharbor-air') byKey.set('skyharbor', row);
   }
   return byKey;
+}
+
+async function ensureSeedClients(
+  sb: SupabaseClient,
+  clients: Map<string, ClientRow>,
+  apply: boolean,
+): Promise<void> {
+  for (const [key, seed] of Object.entries(CLIENT_SEED_FALLBACKS)) {
+    if (clients.has(key)) continue;
+
+    if (!apply) {
+      console.log(`  [CLIENT] would create ${seed.name} (${seed.tenant_key})`);
+      clients.set(key, { id: seed.id, name: seed.name });
+      continue;
+    }
+
+    const { data, error } = await sb
+      .from('clients')
+      .upsert({
+        ...seed,
+        updated_at: new Date().toISOString(),
+      }, { onConflict: 'id' })
+      .select('id, name')
+      .single();
+    if (error) throw error;
+    clients.set(key, data as ClientRow);
+    console.log(`  [CLIENT] created/updated ${seed.name} (${seed.tenant_key})`);
+  }
 }
 
 async function findUserByEmail(clerk: ReturnType<typeof createClerkClient>, email: string) {
@@ -107,7 +158,7 @@ async function provisionPersona(
   // reads `clientId` (canonical app key) — this is the field that was
   // missing in the v1 script. Other fields are persona surface data.
   const publicMetadata = {
-    role: 'maestro',
+    role: persona.authRole ?? 'maestro',
     clientId: persona.clientKey, // ← critical: drives getActiveClientKey()
     tenantKey: persona.tenantKey, // broker-namespace (separate)
     personaName: persona.personaName,
@@ -259,7 +310,7 @@ async function listAllUsers(clerk: ReturnType<typeof createClerkClient>) {
 }
 
 async function main() {
-  const { apply } = parseArgs();
+  const { apply, skipBan } = parseArgs();
 
   console.log('━'.repeat(70));
   console.log(`AbarVa CXO persona provisioning · ${apply ? 'APPLY MODE' : 'DRY-RUN'}`);
@@ -274,9 +325,10 @@ async function main() {
   const clerk = makeClerk();
   const sb = makeSupabase();
   const clients = await loadClientsByKey(sb);
+  await ensureSeedClients(sb, clients, apply);
 
-  // ── Phase 1 · provision the 4 CXO personas ─────────────────────
-  console.log('Phase 1 · Provision CXO personas (Clerk + Supabase)');
+  // ── Phase 1 · provision canonical personas ─────────────────────
+  console.log('Phase 1 · Provision canonical personas (Clerk + Supabase)');
   console.log('─'.repeat(70));
   for (const persona of CXO_PERSONAS) {
     const clientRow = clients.get(persona.clientKey);
@@ -294,10 +346,15 @@ async function main() {
   // ── Phase 2 · ban every other *.example.com demo user ─────────
   console.log('Phase 2 · Disable legacy *.example.com demo accounts');
   console.log('─'.repeat(70));
-  const allUsers = await listAllUsers(clerk);
-  const toBan = allUsers.filter(
-    (u) => u.email.endsWith('.example.com') && !KEEP_EMAILS.has(u.email) && !u.banned,
-  );
+  const toBan: Array<{ id: string; email: string; banned: boolean }> = [];
+  if (skipBan) {
+    console.log('  [SKIP] --skip-ban supplied; no legacy demo accounts will be disabled.\n');
+  } else {
+    const allUsers = await listAllUsers(clerk);
+    toBan.push(...allUsers.filter(
+      (u) => u.email.endsWith('.example.com') && !KEEP_EMAILS.has(u.email) && !u.banned,
+    ));
+  }
 
   if (toBan.length === 0) {
     console.log('  (no eligible demo accounts to ban)\n');

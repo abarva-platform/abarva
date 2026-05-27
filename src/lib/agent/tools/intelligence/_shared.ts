@@ -89,6 +89,9 @@ export function clientKeyToInventorySubstrateKey(
   if (clientKey === 'northstar' || clientKey === 'northstar-clinical-tech') {
     return 'northstar-medtech';
   }
+  if (clientKey === 'skyharbor' || clientKey === 'skyharbor-air') {
+    return 'skyharbor-air';
+  }
   return clientKey;
 }
 

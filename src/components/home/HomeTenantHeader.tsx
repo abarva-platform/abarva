@@ -37,6 +37,16 @@ const TENANT_BRAND: Record<ClientKey, TenantBrand> = {
     bgColor: '#1E3A8A', // navy — financial services
     tagline: 'Regional bank · $48B AUM · 142 branches',
   },
+  northstar: {
+    initials: 'NS',
+    bgColor: '#0F766E',
+    tagline: 'Clinical technology · $22.6B revenue · regulated AI products',
+  },
+  skyharbor: {
+    initials: 'SH',
+    bgColor: '#075985',
+    tagline: 'Global airline · $52.1B revenue · IBM Z to AWS modernization',
+  },
 };
 
 const FALLBACK_BRAND: TenantBrand = {

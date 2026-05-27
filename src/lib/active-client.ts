@@ -35,6 +35,7 @@ const CLIENT_KEY_TO_DB_SLUGS: Record<ClientKey, string[]> = {
   // on that canned message because the scorer's grounding regex falsely
   // matched "this" against \bHIS\b. Both bugs fixed.
   northstar: ['northstar', 'northstar-medtech', 'northstar-clinical-tech'],
+  skyharbor: ['skyharbor', 'skyharbor-air'],
 };
 
 type SessionClientContext = {
