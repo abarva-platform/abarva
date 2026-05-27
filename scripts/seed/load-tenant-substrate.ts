@@ -231,6 +231,32 @@ const TENANTS: Record<string, TenantConfig> = {
     initiativesClosedCsv: '01-portfolio/initiatives-closed.csv',
     vendorContractsCsv: '04-vendors/vendor-contracts.csv',
   },
+  skyharbor: {
+    key: 'skyharbor',
+    clientId: '6f3c8d21-9b45-4f12-8d61-4b8f7c2a9301',
+    tenantKey: 'skyharbor-air',
+    datasetRoot: 'datasets/skyharbor-air-synthetic-v1',
+    profileYaml: '00-profile/enterprise-profile.yaml',
+    sourceFilesDir: '13-context/source-files',
+    corpusJsonl: '13-context/client-data-corpus.jsonl',
+    appPortfolioCsv: '07-application-portfolio/application-portfolio.csv',
+    initiativesActiveCsv: '10-initiatives/initiatives-active.csv',
+    initiativesClosedCsv: '10-initiatives/initiatives-closed.csv',
+    vendorContractsCsv: '09-vendors-contracts/vendor-contracts.csv',
+  },
+  'skyharbor-air': {
+    key: 'skyharbor',
+    clientId: '6f3c8d21-9b45-4f12-8d61-4b8f7c2a9301',
+    tenantKey: 'skyharbor-air',
+    datasetRoot: 'datasets/skyharbor-air-synthetic-v1',
+    profileYaml: '00-profile/enterprise-profile.yaml',
+    sourceFilesDir: '13-context/source-files',
+    corpusJsonl: '13-context/client-data-corpus.jsonl',
+    appPortfolioCsv: '07-application-portfolio/application-portfolio.csv',
+    initiativesActiveCsv: '10-initiatives/initiatives-active.csv',
+    initiativesClosedCsv: '10-initiatives/initiatives-closed.csv',
+    vendorContractsCsv: '09-vendors-contracts/vendor-contracts.csv',
+  },
 };
 
 // ─── CLI ────────────────────────────────────────────────────────────────────
@@ -446,7 +472,30 @@ async function phase0ClientProfile(): Promise<{ updated: number; errors: number 
   }
 
   try {
-    await db.updateEq('clients', patch, { id: TENANT.clientId });
+    const updated = await db.updateEq('clients', patch, { id: TENANT.clientId });
+    if (updated === 0) {
+      try {
+        await db.insertRows('clients', [{
+          id: TENANT.clientId,
+          name: name ?? TENANT.tenantKey,
+          legal_name: name ?? TENANT.tenantKey,
+          industry_code: profile.industry || 'global_network_airline',
+          tenant_key: TENANT.tenantKey,
+          annual_revenue_usd: revenueUsd,
+          it_budget_usd: itBudgetUsd,
+          employee_count: employees,
+          operational_units: optionalNumber(profile.aircraft),
+          business_description: businessDescription,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        }]);
+        console.log(`  Inserted clients row for ${TENANT.clientId}`);
+      } catch (insertError) {
+        const message = insertError instanceof Error ? insertError.message : String(insertError);
+        console.log(`  [ERR] clients profile insert: ${message}`);
+        return { updated: 0, errors: 1 };
+      }
+    }
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     console.log(`  [ERR] clients profile update: ${message}`);
@@ -939,6 +988,7 @@ function tenantPrefix(): string {
   if (TENANT.key === 'meridian') return 'MR';
   if (TENANT.key === 'apex') return 'APX';
   if (TENANT.key === 'firstcapital') return 'FCF';
+  if (TENANT.key === 'skyharbor') return 'SHA';
   return TENANT.key.slice(0, 3).toUpperCase();
 }
 
