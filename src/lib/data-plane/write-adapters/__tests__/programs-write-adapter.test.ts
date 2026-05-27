@@ -9,7 +9,7 @@
 //     the routes keep their pre-seam best-effort posture;
 //   - the engagement phase update issues the same column set on both planes.
 
-import type { SupabaseClient } from '@supabase/supabase-js';
+import type { PostgresCompatClient as SupabaseClient } from '@/lib/supabase-server';
 import type { TxSessionRunner } from '../../read-adapters/azureSession';
 import {
   createAzureProgramsWriteAdapter,

@@ -10,7 +10,7 @@
 //     statements on Azure so they are atomic;
 //   - best-effort writes (linkAttachments) never throw.
 
-import type { SupabaseClient } from '@supabase/supabase-js';
+import type { PostgresCompatClient as SupabaseClient } from '@/lib/supabase-server';
 import type { TxSessionRunner } from '../../read-adapters/azureSession';
 import {
   createSupabaseSourceWriteAdapter,

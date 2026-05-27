@@ -11,6 +11,8 @@ const tenancyErrorResponse = jest.fn();
 const getProgramsRouteSupabase = jest.fn();
 const classifyOrigination = jest.fn();
 const classifierMatchToViewModel = jest.fn();
+const getOpenDraft = jest.fn();
+const saveDraft = jest.fn();
 
 jest.mock('@/app/api/v1/programs/_auth', () => ({
   TenancyError,
@@ -30,6 +32,11 @@ jest.mock('@/lib/programs/transformers', () => ({
   classifierMatchToViewModel,
 }));
 
+jest.mock('@/lib/programs/origination-drafts', () => ({
+  getOpenDraft,
+  saveDraft,
+}));
+
 const CTX = { clientId: 'client_meridian', userId: 'person_1', role: 'client_admin' };
 
 function makePost(body: unknown): NextRequest {
@@ -38,6 +45,14 @@ function makePost(body: unknown): NextRequest {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
   }) as unknown as NextRequest;
+}
+
+function makeDraftGet(surface = '/programs/new'): NextRequest {
+  return {
+    nextUrl: new URL(
+      `http://localhost/api/programs/origination-draft?surface=${encodeURIComponent(surface)}`,
+    ),
+  } as unknown as NextRequest;
 }
 
 function makeEngagementTopicsSupabase(topics: Array<Record<string, unknown>> = []) {
@@ -136,6 +151,8 @@ beforeEach(() => {
     deploymentCount: 1,
     preloadDepthPct: 60,
   });
+  getOpenDraft.mockResolvedValue(null);
+  saveDraft.mockResolvedValue(undefined);
 });
 
 describe('POST /api/v1/programs/originate', () => {
@@ -281,5 +298,71 @@ describe('GET /api/v1/programs/patterns', () => {
     const res = await invoke();
     expect(res.status).toBe(403);
     await expect(res.json()).resolves.toEqual({ error: 'no_client' });
+  });
+});
+
+describe('/api/programs/origination-draft', () => {
+  const routePath = '@/app/api/programs/origination-draft/route';
+
+  async function invokeGet(surface = '/programs/new') {
+    const mod = await import(routePath);
+    return mod.GET(makeDraftGet(surface));
+  }
+
+  async function invokePost(body: Record<string, unknown>) {
+    const mod = await import(routePath);
+    return mod.POST(makePost(body));
+  }
+
+  const state = {
+    turns: [],
+    brief: null,
+    patternMatch: null,
+  };
+
+  it('hydrates own-tenant drafts through tenancy context', async () => {
+    getOpenDraft.mockResolvedValueOnce({
+      id: 'draft_1',
+      surface: '/programs/new',
+      state,
+      committed_engagement_id: null,
+      updated_at: '2026-05-27T00:00:00.000Z',
+    });
+
+    const res = await invokeGet();
+
+    expect(res.status).toBe(200);
+    expect(getOpenDraft).toHaveBeenCalledWith(CTX, '/programs/new');
+    await expect(res.json()).resolves.toEqual({
+      draft: expect.objectContaining({ id: 'draft_1' }),
+    });
+  });
+
+  it('soft-skips draft hydration when tenancy is unavailable', async () => {
+    requireTenancy.mockRejectedValueOnce(new TenancyError('no_client'));
+
+    const res = await invokeGet();
+
+    expect(res.status).toBe(200);
+    expect(getOpenDraft).not.toHaveBeenCalled();
+    await expect(res.json()).resolves.toEqual({ draft: null });
+  });
+
+  it('persists own-tenant draft snapshots through tenancy context', async () => {
+    const res = await invokePost({ surface: '/programs/new', state });
+
+    expect(res.status).toBe(200);
+    expect(saveDraft).toHaveBeenCalledWith(CTX, '/programs/new', state);
+    await expect(res.json()).resolves.toEqual({ ok: true });
+  });
+
+  it('soft-skips best-effort draft persistence when tenancy is unavailable', async () => {
+    requireTenancy.mockRejectedValueOnce(new TenancyError('no_client'));
+
+    const res = await invokePost({ surface: '/programs/new', state });
+
+    expect(res.status).toBe(200);
+    expect(saveDraft).not.toHaveBeenCalled();
+    await expect(res.json()).resolves.toEqual({ ok: true, persisted: false });
   });
 });

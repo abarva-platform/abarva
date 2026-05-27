@@ -6,7 +6,7 @@
 //   - a Supabase error on any corpus read throws (pre-seam parity);
 //   - the Azure adapter runs the equivalent SQL and maps rows verbatim.
 
-import type { SupabaseClient } from '@supabase/supabase-js';
+import type { PostgresCompatClient as SupabaseClient } from '@/lib/supabase-server';
 import type { SessionRunner } from '../azureSession';
 import {
   createAzureIntelligenceCorpusReadAdapter,

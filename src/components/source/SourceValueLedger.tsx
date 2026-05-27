@@ -189,9 +189,11 @@ function buildAssumptions(snapshot: SourceValueLedgerSnapshot): string[] {
 export function SourceValueLedger({
   snapshot,
   canViewFinancialValues = true,
+  isDegraded = false,
 }: {
   snapshot: SourceValueLedgerSnapshot;
   canViewFinancialValues?: boolean;
+  isDegraded?: boolean;
 }) {
   const rollup = getLedgerRollup(snapshot);
   const { rows, projected, committed, measuring, realized } = deriveRows(snapshot);
@@ -219,6 +221,12 @@ export function SourceValueLedger({
             Deterministic seeded input only.
           </div>
         </div>
+
+        {isDegraded ? (
+          <div style={{ ...TEXT_SMALL, border: '1px solid #E6B36A', borderRadius: 8, padding: '10px 12px', background: '#FFF8ED', color: '#7A4B11' }}>
+            Source value data is temporarily unavailable. Atlas is showing a degraded empty ledger rather than inventing value.
+          </div>
+        ) : null}
 
         <div style={SUMMARY_PANEL}>
           <article style={PANEL_CARD}>
@@ -271,7 +279,15 @@ export function SourceValueLedger({
                 </tr>
               </thead>
               <tbody>
-                {rows.map((row, index) => (
+                {rows.length === 0 ? (
+                  <tr>
+                    <td style={SOURCE_TABLE_CELL} colSpan={7}>
+                      <span style={{ ...TEXT_SMALL, color: '#576074' }}>
+                        No value ledger rows are available for this tenant right now.
+                      </span>
+                    </td>
+                  </tr>
+                ) : rows.map((row, index) => (
                   <tr key={`${row.entry.id}-${row.perspective}-${index}`}>
                     <td style={SOURCE_TABLE_CELL}>{toPerspectiveLabel(row.perspective)}</td>
                     <td style={SOURCE_TABLE_CELL}>{row.entry.eventName}</td>

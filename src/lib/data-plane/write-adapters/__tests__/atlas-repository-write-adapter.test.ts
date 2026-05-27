@@ -6,7 +6,7 @@
 //   - a write error is surfaced as `ok:false` with the message, never a throw;
 //   - the Azure path runs each write inside one transaction.
 
-import type { SupabaseClient } from '@supabase/supabase-js';
+import type { PostgresCompatClient as SupabaseClient } from '@/lib/supabase-server';
 import type { TxSessionRunner } from '../../read-adapters/azureSession';
 import {
   createAzureAtlasRepositoryWriteAdapter,

@@ -31,6 +31,7 @@
     "verify:skyharbor-overlay": "node scripts/skyharbor/verify-airline-pattern-overlay.mjs",
     "load:skyharbor-substrate:dry": "TENANT_KEY=skyharbor npx tsx scripts/seed/load-tenant-substrate.ts --dry-run",
     "load:skyharbor-substrate": "TENANT_KEY=skyharbor npx tsx scripts/seed/load-tenant-substrate.ts",
+    "demo:skyharbor:capture": "node scripts/demo/skyharbor-demo-capture.mjs",
     "verify:apex-sentinel-canonical": "node scripts/verify/apex-sentinel-canonical.mjs",
     "smoke:p19-evidence-ledger": "NODE_OPTIONS='--require ./src/scripts/_mock-server-only-preload.cjs' npx tsx scripts/smoke/p19-evidence-ledger.spec.ts",
     "smoke:foundation-fix-1-retrieval-wiring": "NODE_OPTIONS='--require ./src/scripts/_mock-server-only-preload.cjs' npx tsx scripts/smoke/foundation-fix-1-retrieval-wiring.spec.ts",

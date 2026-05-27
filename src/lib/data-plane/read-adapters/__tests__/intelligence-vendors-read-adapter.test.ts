@@ -7,7 +7,7 @@
 //   - the Azure adapter runs the equivalent INNER JOIN and maps the flat
 //     `i_*` projection back into the shared `initiative` shape.
 
-import type { SupabaseClient } from '@supabase/supabase-js';
+import type { PostgresCompatClient as SupabaseClient } from '@/lib/supabase-server';
 import type { SessionRunner } from '../azureSession';
 import {
   createAzureIntelligenceVendorsReadAdapter,

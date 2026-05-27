@@ -6,7 +6,7 @@
 //   - a query failure degrades to nulls, never an unhandled throw —
 //     matching the pre-seam route, which discarded Supabase errors.
 
-import type { SupabaseClient } from '@supabase/supabase-js';
+import type { PostgresCompatClient as SupabaseClient } from '@/lib/supabase-server';
 import type { SessionRunner } from '../azureSession';
 import {
   createAzureVipProfileReadAdapter,

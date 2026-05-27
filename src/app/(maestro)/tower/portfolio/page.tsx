@@ -5,6 +5,7 @@ import {
   type TowerPortfolioMove,
   type TowerPortfolioValueRollup,
 } from '@/lib/tower/value-states';
+import type { TenancyCtx } from '@/lib/programs/types.db';
 
 export const metadata = { title: 'Tower Portfolio Value · AbarVa' };
 export const dynamic = 'force-dynamic';
@@ -67,7 +68,7 @@ function MoveRow({ move }: { move: TowerPortfolioMove }) {
   );
 }
 
-function emptyPortfolio(ctx: Awaited<ReturnType<typeof requireTenancy>>): TowerPortfolioValueRollup {
+function emptyPortfolio(ctx: Pick<TenancyCtx, 'clientId'>): TowerPortfolioValueRollup {
   return {
     clientId: ctx.clientId,
     moves: [],
@@ -83,9 +84,28 @@ function emptyPortfolio(ctx: Awaited<ReturnType<typeof requireTenancy>>): TowerP
   };
 }
 
+async function loadPortfolioValueRollup(): Promise<{
+  portfolio: TowerPortfolioValueRollup;
+  isDegraded: boolean;
+}> {
+  const ctx = await requireTenancy().catch(() => null);
+  if (!ctx) {
+    return {
+      portfolio: emptyPortfolio({ clientId: 'unavailable' }),
+      isDegraded: true,
+    };
+  }
+
+  return getPortfolioValueRollup(ctx)
+    .then((portfolio) => ({ portfolio, isDegraded: false }))
+    .catch(() => ({
+      portfolio: emptyPortfolio(ctx),
+      isDegraded: true,
+    }));
+}
+
 export default async function TowerPortfolioValuePage() {
-  const ctx = await requireTenancy();
-  const portfolio = await getPortfolioValueRollup(ctx).catch(() => emptyPortfolio(ctx));
+  const { portfolio, isDegraded } = await loadPortfolioValueRollup();
 
   return (
     <main style={{ minHeight: '100vh', background: '#F8F7F4', color: '#111827', padding: '32px 28px 54px' }}>
@@ -102,6 +122,7 @@ export default async function TowerPortfolioValuePage() {
               <StatusPill>{portfolio.totals.activeMoveCount} active Moves</StatusPill>
               <StatusPill>{portfolio.totals.activeSourceWorkflowCount} Source workflows</StatusPill>
               <StatusPill>{portfolio.p10Source === 'move_dependencies' ? 'P10 DAG arrows' : 'DAG fallback'}</StatusPill>
+              {isDegraded ? <StatusPill>Live data unavailable</StatusPill> : null}
             </div>
           </div>
           <div style={{ border: '1px solid #111827', borderRadius: 8, padding: 18, background: '#111827', color: '#fff', minWidth: 260 }}>
@@ -147,7 +168,9 @@ export default async function TowerPortfolioValuePage() {
           <div style={{ display: 'grid', gap: 10 }}>
             {portfolio.moves.length === 0 ? (
               <div style={{ border: '1px solid #d7d2c6', borderRadius: 8, padding: 18, background: '#fff', color: '#6b7280' }}>
-                Portfolio value data is not available yet for this tenant. Tower is showing an empty state rather than inventing value.
+                {isDegraded
+                  ? 'Portfolio value data is temporarily unavailable. Tower is showing a degraded empty state rather than inventing value.'
+                  : 'Portfolio value data is not available yet for this tenant. Tower is showing an empty state rather than inventing value.'}
               </div>
             ) : portfolio.moves.map((move) => <MoveRow key={move.moveId} move={move} />)}
           </div>

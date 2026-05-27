@@ -4,7 +4,7 @@
 //   - row mapping coerces snake_case columns + unknown enums safely;
 //   - both adapters degrade to [] (never throw) on a read failure.
 
-import type { SupabaseClient } from '@supabase/supabase-js';
+import type { PostgresCompatClient as SupabaseClient } from '@/lib/supabase-server';
 import type { SessionRunner } from '../azureSession';
 import {
   createAzureOutcomeLedgerReadAdapter,

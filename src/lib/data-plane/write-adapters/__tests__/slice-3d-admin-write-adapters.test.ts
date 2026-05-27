@@ -14,7 +14,7 @@
 //     `.insert()` / `.upsert()` calls in `@/lib/db/turn` and the route;
 //   - the Azure path issues real transactional SQL (INSERT / ON CONFLICT).
 
-import type { SupabaseClient } from '@supabase/supabase-js';
+import type { PostgresCompatClient as SupabaseClient } from '@/lib/supabase-server';
 import type { TxSessionRunner } from '../../read-adapters/azureSession';
 import {
   createSupabaseEngageTurnWriteAdapter,

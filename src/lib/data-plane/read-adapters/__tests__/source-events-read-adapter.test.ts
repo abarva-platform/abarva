@@ -6,7 +6,7 @@
 //   - a Supabase error logs and degrades to [] / null (pre-seam behavior);
 //   - the Azure adapter runs the equivalent SQL with the same predicates.
 
-import type { SupabaseClient } from '@supabase/supabase-js';
+import type { PostgresCompatClient as SupabaseClient } from '@/lib/supabase-server';
 import type { SessionRunner } from '../azureSession';
 import {
   createAzureSourceEventsReadAdapter,

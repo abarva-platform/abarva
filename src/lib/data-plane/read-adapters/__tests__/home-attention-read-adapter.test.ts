@@ -7,7 +7,7 @@
 //   - the Azure adapter runs the equivalent SQL and rebuilds the `client`
 //     embed from the `LEFT JOIN` projection.
 
-import type { SupabaseClient } from '@supabase/supabase-js';
+import type { PostgresCompatClient as SupabaseClient } from '@/lib/supabase-server';
 import type { SessionRunner } from '../azureSession';
 import {
   createAzureHomeAttentionReadAdapter,

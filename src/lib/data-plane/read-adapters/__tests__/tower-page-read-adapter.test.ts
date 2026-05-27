@@ -8,7 +8,7 @@
 //     present, omitted when `null` — the access-policy DECISION stays in the
 //     page, the adapter only executes the read it is told to.
 
-import type { SupabaseClient } from '@supabase/supabase-js';
+import type { PostgresCompatClient as SupabaseClient } from '@/lib/supabase-server';
 import type { SessionRunner } from '../azureSession';
 import {
   createAzureTowerPageReadAdapter,

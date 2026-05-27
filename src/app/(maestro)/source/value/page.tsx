@@ -9,12 +9,33 @@ import { requireTenancy } from '@/lib/auth/tenancy';
 import { loadUserSourceAccessPolicy } from '@/lib/auth/source-access-policy';
 import { redactSourceFinancialText } from '@/lib/source/financial-display';
 import { canonicalClientDisplayName } from '@/lib/client-config';
+import type { SourceValueLedgerSnapshot } from '@/lib/source/types';
 
 export const dynamic = 'force-dynamic';
 
+function emptySourceValueLedgerSnapshot(): SourceValueLedgerSnapshot {
+  return {
+    updatedAt: 'temporarily unavailable',
+    projected: [],
+    realized: [],
+  };
+}
+
+async function loadSourceValueLedgerSnapshot(): Promise<{
+  snapshot: SourceValueLedgerSnapshot;
+  isDegraded: boolean;
+}> {
+  return getSourceValueLedger()
+    .then((snapshot) => ({ snapshot, isDegraded: false }))
+    .catch(() => ({
+      snapshot: emptySourceValueLedgerSnapshot(),
+      isDegraded: true,
+    }));
+}
+
 export default async function SourceValuePage() {
-  const [snapshot, activeClient, tenancy] = await Promise.all([
-    getSourceValueLedger(),
+  const [ledger, activeClient, tenancy] = await Promise.all([
+    loadSourceValueLedgerSnapshot(),
     getActiveClientRow().catch(() => null),
     requireTenancy().catch(() => null),
   ]);
@@ -51,8 +72,9 @@ export default async function SourceValuePage() {
       />
       <SourceWorkingPane>
         <SourceValueLedger
-          snapshot={snapshot}
+          snapshot={ledger.snapshot}
           canViewFinancialValues={canViewFinancialValues}
+          isDegraded={ledger.isDegraded}
         />
       </SourceWorkingPane>
     </AppShell>
