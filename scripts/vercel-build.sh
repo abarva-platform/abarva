@@ -21,7 +21,18 @@ set -euo pipefail
 case "${VERCEL_ENV:-unset}" in
   production)
     echo "[vercel-build] Production deploy detected — applying pending Postgres migrations"
-    npm run db:migrate -- --ci
+    migrate_attempt=1
+    migrate_max_attempts="${DB_MIGRATE_MAX_ATTEMPTS:-5}"
+    until npm run db:migrate -- --ci; do
+      if [ "${migrate_attempt}" -ge "${migrate_max_attempts}" ]; then
+        echo "[vercel-build] Postgres migration failed after ${migrate_attempt} attempt(s)"
+        exit 1
+      fi
+      sleep_seconds=$((migrate_attempt * 10))
+      echo "[vercel-build] Postgres migration attempt ${migrate_attempt} failed; retrying in ${sleep_seconds}s"
+      sleep "${sleep_seconds}"
+      migrate_attempt=$((migrate_attempt + 1))
+    done
     ;;
   *)
     echo "[vercel-build] Skipping migrations (VERCEL_ENV=${VERCEL_ENV:-unset}, prod-only)"
