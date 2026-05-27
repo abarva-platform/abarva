@@ -239,6 +239,9 @@ const TENANTS: Record<string, TenantConfig> = {
     profileYaml: '00-profile/enterprise-profile.yaml',
     sourceFilesDir: '13-context/source-files',
     corpusJsonl: '13-context/client-data-corpus.jsonl',
+    extraCorpusJsonl: [
+      '16-industry-pattern-overlay/airline-industry-pattern-chunks.jsonl',
+    ],
     appPortfolioCsv: '07-application-portfolio/application-portfolio.csv',
     initiativesActiveCsv: '10-initiatives/initiatives-active.csv',
     initiativesClosedCsv: '10-initiatives/initiatives-closed.csv',
@@ -252,6 +255,9 @@ const TENANTS: Record<string, TenantConfig> = {
     profileYaml: '00-profile/enterprise-profile.yaml',
     sourceFilesDir: '13-context/source-files',
     corpusJsonl: '13-context/client-data-corpus.jsonl',
+    extraCorpusJsonl: [
+      '16-industry-pattern-overlay/airline-industry-pattern-chunks.jsonl',
+    ],
     appPortfolioCsv: '07-application-portfolio/application-portfolio.csv',
     initiativesActiveCsv: '10-initiatives/initiatives-active.csv',
     initiativesClosedCsv: '10-initiatives/initiatives-closed.csv',
