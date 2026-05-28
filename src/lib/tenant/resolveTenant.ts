@@ -7,6 +7,7 @@ import {
   isClientKey,
   type ClientKey,
 } from '@/lib/client-config';
+import { azureRead } from '@/lib/data-plane/azureRead';
 import type { CanonicalTenant, TenantResolutionSource } from './CanonicalTenant';
 import { TenantResolutionError } from './CanonicalTenant';
 import {
@@ -77,38 +78,33 @@ async function resolveClientRow(
   appClientKey: ClientKey,
 ): Promise<{ id: string; name: string | null; industry_code: string | null } | null> {
   try {
-    const { getServerSupabase } = await import('@/lib/supabase-server');
-    const sb = getServerSupabase();
     const aliases = tenantAliasesFor(appClientKey);
 
     for (const alias of aliases) {
-      const { data } = await sb
-        .from('clients')
-        .select('id, name, industry_code')
-        .eq('tenant_key', alias)
-        .limit(1)
-        .maybeSingle();
-      if (data) return data as { id: string; name: string | null; industry_code: string | null };
+      const data = await azureRead.maybeSingle<{ id: string; name: string | null; industry_code: string | null }>({
+        table: 'clients',
+        columns: ['id', 'name', 'industry_code'],
+        where: { tenant_key: alias },
+      });
+      if (data) return data;
     }
 
     for (const alias of aliases) {
-      const { data } = await sb
-        .from('clients')
-        .select('id, name, industry_code')
-        .eq('slug', alias)
-        .limit(1)
-        .maybeSingle();
-      if (data) return data as { id: string; name: string | null; industry_code: string | null };
+      const data = await azureRead.maybeSingle<{ id: string; name: string | null; industry_code: string | null }>({
+        table: 'clients',
+        columns: ['id', 'name', 'industry_code'],
+        where: { slug: alias },
+      });
+      if (data) return data;
     }
 
     for (const alias of aliases) {
-      const { data } = await sb
-        .from('clients')
-        .select('id, name, industry_code')
-        .ilike('name', alias)
-        .limit(1)
-        .maybeSingle();
-      if (data) return data as { id: string; name: string | null; industry_code: string | null };
+      const data = await azureRead.maybeSingle<{ id: string; name: string | null; industry_code: string | null }>({
+        table: 'clients',
+        columns: ['id', 'name', 'industry_code'],
+        where: { name: { op: 'ilike', value: alias } },
+      });
+      if (data) return data;
     }
   } catch {
     return null;

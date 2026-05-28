@@ -9,7 +9,7 @@ import {
 
 const currentUserMock = jest.fn();
 const cookiesMock = jest.fn();
-const getServerSupabaseMock = jest.fn();
+const azureReadMaybeSingleMock = jest.fn();
 
 jest.mock('@clerk/nextjs/server', () => ({
   currentUser: () => currentUserMock(),
@@ -19,8 +19,10 @@ jest.mock('next/headers', () => ({
   cookies: () => cookiesMock(),
 }));
 
-jest.mock('@/lib/supabase-server', () => ({
-  getServerSupabase: () => getServerSupabaseMock(),
+jest.mock('@/lib/data-plane/azureRead', () => ({
+  azureRead: {
+    maybeSingle: (...args: unknown[]) => azureReadMaybeSingleMock(...args),
+  },
 }));
 
 function mockCookie(value: string | null): void {
@@ -30,13 +32,7 @@ function mockCookie(value: string | null): void {
 }
 
 function mockClientRow(row: { id: string; name: string; industry_code: string | null } | null): void {
-  const maybeSingle = jest.fn(async () => ({ data: row }));
-  const limit = jest.fn(() => ({ maybeSingle }));
-  const eq = jest.fn(() => ({ limit }));
-  const ilike = jest.fn(() => ({ limit }));
-  const select = jest.fn(() => ({ eq, ilike }));
-  const from = jest.fn(() => ({ select }));
-  getServerSupabaseMock.mockReturnValue({ from });
+  azureReadMaybeSingleMock.mockResolvedValue(row);
 }
 
 describe('canonical tenant aliases', () => {
@@ -58,7 +54,7 @@ describe('resolveTenant', () => {
   beforeEach(() => {
     currentUserMock.mockReset();
     cookiesMock.mockReset();
-    getServerSupabaseMock.mockReset();
+    azureReadMaybeSingleMock.mockReset();
     mockClientRow(null);
   });
 
@@ -82,6 +78,10 @@ describe('resolveTenant', () => {
       clientId: 'client-skyharbor',
       source: 'email',
     });
+    expect(azureReadMaybeSingleMock).toHaveBeenCalledWith(expect.objectContaining({
+      table: 'clients',
+      where: { tenant_key: 'skyharbor' },
+    }));
   });
 
   it('lets an unlocked request body select the tenant when no explicit persona pin exists', async () => {
