@@ -67,6 +67,7 @@ const BASE_HOST = new URL(BASE_URL).hostname;
 const CLERK_SECRET_KEY = process.env.CLERK_SECRET_KEY;
 const HEADLESS = process.env.HEADLESS !== 'false';
 const RUN_STAMP = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 16);
+const RUN_TAB_ID = `skyharbor-ground-truth-${RUN_STAMP}`;
 const OUT_DIR = path.join(REPO_ROOT, 'audit-artifacts', `skyharbor-ground-truth-${RUN_STAMP}`);
 const RAW_DIR = path.join(OUT_DIR, 'raw-events');
 const EXPLICIT_MD_PATH = args.get('output')
@@ -278,6 +279,20 @@ async function signIn(page) {
   }]);
 }
 
+async function createAuthenticatedCookieJar(browser) {
+  const context = await browser.newContext({ viewport: { width: 1440, height: 900 } });
+  const page = await context.newPage();
+  try {
+    await signIn(page);
+    await page.goto(new URL('/intelligence/ask', BASE_URL).toString(), { waitUntil: 'domcontentloaded' });
+    await page.waitForTimeout(1000);
+    const cookies = await context.cookies(BASE_URL);
+    return new CookieJar(cookies);
+  } finally {
+    await context.close();
+  }
+}
+
 function parseStream(text) {
   const events = [];
   for (const line of text.split('\n').filter(Boolean)) {
@@ -371,9 +386,42 @@ function scoreAnswer({ status, answer, sources, required }) {
   };
 }
 
-async function ask(page, item) {
+class CookieJar {
+  constructor(cookies = []) {
+    this.cookies = new Map(cookies.map((cookie) => [cookie.name, cookie.value]));
+  }
+
+  header() {
+    return [...this.cookies.entries()].map(([name, value]) => `${name}=${value}`).join('; ');
+  }
+
+  applySetCookie(headers) {
+    const setCookies = typeof headers.getSetCookie === 'function'
+      ? headers.getSetCookie()
+      : splitSetCookieHeader(headers.get('set-cookie'));
+    for (const setCookie of setCookies) {
+      const [pair] = setCookie.split(';');
+      const equalsIndex = pair.indexOf('=');
+      if (equalsIndex <= 0) continue;
+      const name = pair.slice(0, equalsIndex).trim();
+      const value = pair.slice(equalsIndex + 1).trim();
+      if (value) {
+        this.cookies.set(name, value);
+      } else {
+        this.cookies.delete(name);
+      }
+    }
+  }
+}
+
+function splitSetCookieHeader(value) {
+  if (!value) return [];
+  return value.split(/,(?=\s*[^;,=\s]+=[^;,]+)/g).map((entry) => entry.trim()).filter(Boolean);
+}
+
+async function ask(auth, item) {
   const started = Date.now();
-  const raw = await fetchAskWithRetry(page, item.question);
+  const raw = await fetchAskWithRetry(auth, item.question);
 
   const parsed = parseStream(raw.text);
   const scored = scoreAnswer({ status: raw.status, answer: parsed.answer, sources: parsed.sources, required: item.required });
@@ -390,42 +438,59 @@ async function ask(page, item) {
   };
 }
 
-async function fetchAskWithRetry(page, question) {
+async function fetchAskWithRetry(auth, question) {
   let lastError = null;
-  for (let attempt = 1; attempt <= 2; attempt += 1) {
+  for (let attempt = 1; attempt <= 3; attempt += 1) {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 120000);
     try {
-      return await page.evaluate(async ({ question: prompt }) => {
-        const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 120000);
-        try {
-          const response = await fetch('/api/intelligence/ask', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            signal: controller.signal,
-            body: JSON.stringify({
-              query: `${prompt}\n\nCite the SkyHarbor source segments, records, or evidence you used. If you are using an airline industry pattern rather than a SkyHarbor tenant fact, label it as pattern-based.`,
-              client: 'skyharbor',
-              surfaceContext: {
-                activeClient: 'SkyHarbor Air',
-                clientKey: 'skyharbor',
-                tenantFacts: [
-                  'Active tenant is SkyHarbor Air. Do not use facts from any other tenant.',
-                  'This is a CTO verification run. Prefer SkyHarbor tenant facts and visible citations.',
-                ],
-              },
-            }),
-          });
-          return { status: response.status, text: await response.text() };
-        } finally {
-          clearTimeout(timeout);
+      const response = await fetch(new URL('/api/intelligence/ask', BASE_URL), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/x-ndjson',
+          Cookie: auth.cookieJar.header(),
+        },
+        signal: controller.signal,
+        body: JSON.stringify({
+          query: `${question}\n\nCite the SkyHarbor source segments, records, or evidence you used. If you are using an airline industry pattern rather than a SkyHarbor tenant fact, label it as pattern-based.`,
+          client: 'skyharbor',
+          tabId: RUN_TAB_ID,
+          surfaceContext: {
+            activeClient: 'SkyHarbor Air',
+            clientKey: 'skyharbor',
+            tenantFacts: [
+              'Active tenant is SkyHarbor Air. Do not use facts from any other tenant.',
+              'This is a CTO verification run. Prefer SkyHarbor tenant facts and visible citations.',
+            ],
+          },
+        }),
+      });
+      auth.cookieJar.applySetCookie(response.headers);
+      const text = await response.text();
+      const contentType = response.headers.get('content-type') ?? '';
+      if (looksLikeHtmlResponse(contentType, text)) {
+        lastError = `non-ndjson response from ask endpoint: status=${response.status} content-type=${contentType}`;
+        if (attempt < 3) {
+          auth.cookieJar = await createAuthenticatedCookieJar(auth.browser);
+          await sleep(2500);
+          continue;
         }
-      }, { question });
+        return {
+          status: response.status,
+          text: JSON.stringify({ type: 'error', error: lastError }) + '\n',
+          error: lastError,
+        };
+      }
+      return { status: response.status, text };
     } catch (error) {
       lastError = error instanceof Error ? error.message : String(error);
-      if (attempt === 1) {
-        await page.waitForTimeout(2500);
+      if (attempt < 3) {
+        await sleep(2500);
         continue;
       }
+    } finally {
+      clearTimeout(timeout);
     }
   }
 
@@ -434,6 +499,16 @@ async function fetchAskWithRetry(page, question) {
     text: JSON.stringify({ type: 'error', error: lastError ?? 'fetch failed' }) + '\n',
     error: lastError ?? 'fetch failed',
   };
+}
+
+function looksLikeHtmlResponse(contentType, text) {
+  return /\btext\/html\b/i.test(contentType) || /^\s*<!doctype html/i.test(text) || /^\s*<html[\s>]/i.test(text);
+}
+
+function sleep(ms) {
+  return new Promise((resolve) => {
+    setTimeout(resolve, ms);
+  });
 }
 
 function escapeMarkdown(value) {
@@ -502,18 +577,17 @@ async function main() {
   console.log(`Output: ${OUT_DIR}`);
 
   const browser = await chromium.launch({ headless: HEADLESS });
-  const context = await browser.newContext({ viewport: { width: 1440, height: 900 } });
-  const page = await context.newPage();
   const results = [];
 
   try {
-    await signIn(page);
-    await page.goto(new URL('/intelligence/ask', BASE_URL).toString(), { waitUntil: 'domcontentloaded' });
-    await page.waitForTimeout(1000);
+    const auth = {
+      browser,
+      cookieJar: await createAuthenticatedCookieJar(browser),
+    };
 
     for (const item of QUESTIONS) {
       process.stdout.write(`${item.id} ... `);
-      const result = await ask(page, item);
+      const result = await ask(auth, item);
       results.push(result);
       fs.writeFileSync(path.join(RAW_DIR, `${item.id}.json`), JSON.stringify(result.rawEvents, null, 2));
       console.log(`${result.score}/5 ${result.pass ? 'PASS' : 'REVIEW'} (${result.latencyMs}ms)`);
