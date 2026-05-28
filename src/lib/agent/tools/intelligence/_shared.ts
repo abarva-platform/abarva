@@ -17,6 +17,7 @@
 
 import { getActiveClientRow } from '@/lib/active-client';
 import type { ClientKey } from '@/lib/client-config';
+import { brokerTenantKey, canonicalTenantKey } from '@/lib/tenant/aliases';
 import {
   getPatternManifestEntries,
   getPatternManifestEntry,
@@ -58,9 +59,7 @@ export function clientKeyToBrokerTenantKey(clientKey: ClientKey | string): strin
   // `data_inventory_*` tables use a different key for Meridian
   // (`meridian-health`); see `clientKeyToInventorySubstrateKey`
   // for that mapping.
-  if (clientKey === 'apexretail') return 'apex-retail';
-  if (clientKey === 'arcturus' || clientKey === 'firstcapital') return 'first-capital';
-  return clientKey;
+  return brokerTenantKey(clientKey) ?? clientKey;
 }
 
 /**
@@ -76,23 +75,7 @@ export function clientKeyToBrokerTenantKey(clientKey: ClientKey | string): strin
 export function clientKeyToInventorySubstrateKey(
   clientKey: ClientKey | string,
 ): string {
-  if (clientKey === 'apexretail') return 'apex-retail';
-  if (clientKey === 'meridian') return 'meridian-health';
-  if (clientKey === 'arcturus' || clientKey === 'firstcapital' || clientKey === 'first-capital') {
-    return 'first-capital';
-  }
-  // STRESS-P0-010 (2026-05-26): Northstar was missing from this resolver, so
-  // the Sentinel tenant-enterprise retriever queried tenant_key='northstar' on
-  // enterprise_context_chunks but the rows have tenant_key='northstar-medtech'
-  // (matching clients.tenant_key). 0 rows returned → agent confessed
-  // "substrate hasn't populated in this exchange" despite 720 chunks loaded.
-  if (clientKey === 'northstar' || clientKey === 'northstar-clinical-tech') {
-    return 'northstar-medtech';
-  }
-  if (clientKey === 'skyharbor' || clientKey === 'skyharbor-air') {
-    return 'skyharbor-air';
-  }
-  return clientKey;
+  return canonicalTenantKey(clientKey);
 }
 
 /**

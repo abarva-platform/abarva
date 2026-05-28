@@ -14,6 +14,7 @@ import {
   getTenantFactFingerprint,
 } from './tenant-fact-fingerprint';
 import type { AskSource, IntentClassification, AskSurfaceContext } from './types';
+import type { CanonicalTenant } from '@/lib/tenant/CanonicalTenant';
 import {
   buildCurrentStateAdvisory,
   chunkAskText,
@@ -37,6 +38,7 @@ export interface AskOptions {
   conversationContextBlock?: string;
   tenantId?: string | null;
   tenantClientKey?: string | null;
+  tenant?: CanonicalTenant | null;
   userId?: string | null;
   tenantInventoryKey?: string | null;
   surfaceContext?: AskSurfaceContext | null;
@@ -99,12 +101,12 @@ export async function* askIntelligence(query: string, opts: AskOptions = {}): As
       worldview,
       factFingerprint,
     ] = await Promise.all([
-      retrieveTenantEnterpriseSources(opts.tenantInventoryKey, trimmed, {
+      retrieveTenantEnterpriseSources(opts.tenant ?? opts.tenantInventoryKey, trimmed, {
         activePersonGraphNodeId: opts.activePersonGraphNodeId,
         activePersonDisplayName: opts.activePersonDisplayName,
         userContextBlock: opts.userContextBlock,
       }),
-      retrieveTenantStructuredFacts(opts.tenantInventoryKey, trimmed),
+      retrieveTenantStructuredFacts(opts.tenant ?? opts.tenantInventoryKey, trimmed),
       retrieveTenantTechnologySources(opts.tenantInventoryKey, trimmed),
       route(classification.intent, classification.entities),
       retrieveWorldview(trimmed, 3, { tenantId: opts.tenantId, userId: opts.userId }),

@@ -10,6 +10,11 @@ import {
   createDefaultSession,
   type SqlRunner,
 } from '@/lib/data-plane/read-adapters/azureSession';
+import {
+  canonicalTenantKey,
+  tenantAliasesFor,
+} from '@/lib/tenant/aliases';
+import type { CanonicalTenant } from '@/lib/tenant/CanonicalTenant';
 
 export interface TenantEnterpriseSource {
   type: 'TENANT';
@@ -22,6 +27,8 @@ export interface TenantEnterpriseSource {
 export type TenantStructuredSource = TenantEnterpriseSource & {
   confidence: 0.99;
 };
+
+type TenantLookupInput = string | CanonicalTenant | null | undefined;
 
 const ENTERPRISE_QUERY_RE =
   /\b(profile|company|enterprise|tenant|organization|organisation|org|structure|leadership|leaders?|executive|executives|business|function\s+leads?|c[-\s]?level|cxo|cio|cdio|cto|cmio|cmo|cno|coo|ceo|cfo|svp|vp|director|direct\s+reports?|reports?|reports?\s+to|owner|sponsor|budget|spend|financials?|capex|opex|capital|funding|approval|approver|authority|fy\s*26|fy2026|current\s+state|what\s+do\s+you\s+know|application|applications|apps?|systems?|portfolio|criticality|vendor|vendors?|supplier|suppliers?|contract|contracts?|renewal|renewals?|initiative|initiatives?|moves?|kill|accelerate|hold|restructure|replatform|dependency|dependencies|blocks?|blocked|blockers?|regulatory|regulation|fda|eu\s+ai\s+act|annex|mdr|ivdr|sbom|gxp|iso\s*13485|sap|s\/4|s4|wave|airline|skyharbor|ibm|mainframe|aws|z\s+workloads?|mips|modernization|amala|cio\s+challenge|pressure|value\s+ledger|duplicate\s+complexity|gcc|global\s+capability|dora|mttr|lead\s+time|deploy\s+frequency|change\s+failure|engineering\s+productivity|operating\s+model|target\s+operating\s+model|\btom\b|sdlc|cobol|edp|true[-\s]?up|snowflake|databricks|cyber|security\s+stack|ai\s+tooling|sourcing\s+events?)\b/i;
@@ -112,7 +119,7 @@ export function selectTenantEnterpriseSegments(query: string): SegmentId[] {
 }
 
 export async function retrieveTenantEnterpriseSources(
-  tenantKey: string | null | undefined,
+  tenantKey: TenantLookupInput,
   query: string,
   opts: {
     perSegment?: number;
@@ -123,6 +130,7 @@ export async function retrieveTenantEnterpriseSources(
 ): Promise<TenantEnterpriseSource[]> {
   if (!tenantKey || !isTenantEnterpriseQuestion(query)) return [];
   const canonicalTenantKey = normalizeTenantEnterpriseKey(tenantKey);
+  if (!canonicalTenantKey) return [];
 
   const segments = selectTenantEnterpriseSegments(query);
   if (segments.length === 0) return [];
@@ -222,24 +230,10 @@ interface EnterpriseContextChunkRow {
   source_doc: string | null;
 }
 
-const TENANT_KEY_ALIASES: Record<string, string[]> = {
-  apex: ['apex-retail', 'apexretail'],
-  'apex-retail': ['apex-retail', 'apexretail'],
-  meridian: ['meridian-health', 'meridian'],
-  'meridian-health': ['meridian-health', 'meridian'],
-  northstar: ['northstar-medtech', 'northstar'],
-  'northstar-medtech': ['northstar-medtech', 'northstar'],
-  firstcapital: ['first-capital', 'firstcapital'],
-  'first-capital': ['first-capital', 'firstcapital'],
-  'first-capital-financial': ['first-capital', 'firstcapital'],
-  arcturus: ['first-capital', 'firstcapital'],
-  skyharbor: ['skyharbor-air', 'skyharbor'],
-  'skyharbor-air': ['skyharbor-air', 'skyharbor'],
-};
-
-function normalizeTenantEnterpriseKey(tenantKey: string): string {
-  const normalized = tenantKey.trim().toLowerCase();
-  return TENANT_KEY_ALIASES[normalized]?.[0] ?? normalized;
+function normalizeTenantEnterpriseKey(tenant: TenantLookupInput): string | null {
+  if (!tenant) return null;
+  if (typeof tenant === 'object') return tenant.canonicalKey;
+  return canonicalTenantKey(tenant.trim().toLowerCase());
 }
 
 async function retrieveStructuredTenantSources(
@@ -360,11 +354,12 @@ function parseDoraScorecard(text: string): DoraScorecard | null {
 }
 
 export async function retrieveTenantStructuredFacts(
-  tenantKey: string | null | undefined,
+  tenantKey: TenantLookupInput,
   query: string,
 ): Promise<TenantStructuredSource[]> {
   if (!tenantKey) return [];
   const canonicalTenantKey = normalizeTenantEnterpriseKey(tenantKey);
+  if (!canonicalTenantKey) return [];
   const normalized = query.toLowerCase();
   const wantsTopApps = /top\s+\d+\s+(?:apps?|applications?)\s+by\s+criticality|(?:application|app)\s+portfolio.*criticality/.test(normalized);
   const wantsRetiringApps = /(?:which\s+)?(?:applications?|apps?).*(?:retiring|retire|decommission|sunset)/.test(normalized);
@@ -610,7 +605,7 @@ async function resolveClientIdForTenantKey(
   run: SqlRunner,
   tenantKey: string,
 ): Promise<string | null> {
-  const aliases = TENANT_KEY_ALIASES[tenantKey.toLowerCase()] ?? [tenantKey.toLowerCase()];
+  const aliases = tenantAliasesFor(tenantKey.toLowerCase());
   const rows = await run<{ id: string }>(
     `SELECT id
        FROM clients

@@ -1,5 +1,5 @@
-import { clientKeyToInventorySubstrateKey } from '@/lib/agent/tools/intelligence/_shared';
 import { isClientKey, type ClientKey } from '@/lib/client-config';
+import { canonicalTenantKey } from '@/lib/tenant/aliases';
 import type { AskSurfaceContext } from './types';
 
 export interface AskTenantKeyFallback {
@@ -19,7 +19,7 @@ export function resolveAskTenantKeyFallback(
   return {
     requestedClientKey,
     tenantInventoryKey: requestedClientKey
-      ? clientKeyToInventorySubstrateKey(requestedClientKey)
+      ? canonicalTenantKey(requestedClientKey)
       : null,
   };
 }
