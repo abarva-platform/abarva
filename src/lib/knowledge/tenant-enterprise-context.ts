@@ -24,7 +24,7 @@ export type TenantStructuredSource = TenantEnterpriseSource & {
 };
 
 const ENTERPRISE_QUERY_RE =
-  /\b(profile|company|enterprise|tenant|organization|organisation|org|structure|leadership|leaders?|executive|executives|business|function\s+leads?|c[-\s]?level|cxo|cio|cdio|cto|cmio|cmo|cno|coo|ceo|cfo|svp|vp|director|direct\s+reports?|reports?|reports?\s+to|owner|sponsor|budget|spend|financials?|capex|opex|capital|funding|approval|approver|authority|fy\s*26|fy2026|current\s+state|what\s+do\s+you\s+know|application|applications|apps?|systems?|portfolio|criticality|vendor|vendors?|supplier|suppliers?|contract|contracts?|renewal|renewals?|initiative|initiatives?|moves?|kill|accelerate|hold|restructure|replatform|dependency|dependencies|blocks?|blocked|blockers?|regulatory|regulation|fda|eu\s+ai\s+act|annex|mdr|ivdr|sbom|gxp|iso\s*13485|sap|s\/4|s4|wave)\b/i;
+  /\b(profile|company|enterprise|tenant|organization|organisation|org|structure|leadership|leaders?|executive|executives|business|function\s+leads?|c[-\s]?level|cxo|cio|cdio|cto|cmio|cmo|cno|coo|ceo|cfo|svp|vp|director|direct\s+reports?|reports?|reports?\s+to|owner|sponsor|budget|spend|financials?|capex|opex|capital|funding|approval|approver|authority|fy\s*26|fy2026|current\s+state|what\s+do\s+you\s+know|application|applications|apps?|systems?|portfolio|criticality|vendor|vendors?|supplier|suppliers?|contract|contracts?|renewal|renewals?|initiative|initiatives?|moves?|kill|accelerate|hold|restructure|replatform|dependency|dependencies|blocks?|blocked|blockers?|regulatory|regulation|fda|eu\s+ai\s+act|annex|mdr|ivdr|sbom|gxp|iso\s*13485|sap|s\/4|s4|wave|airline|skyharbor|ibm|mainframe|aws|z\s+workloads?|mips|modernization|amala|cio\s+challenge|pressure|value\s+ledger|duplicate\s+complexity|gcc)\b/i;
 
 const OFF_DOMAIN_GENERAL_KNOWLEDGE_RE =
   /^\s*(?:what|where)\s+(?:is|are)\s+the\s+capital\s+of\b/i;
@@ -88,19 +88,19 @@ export function selectTenantEnterpriseSegments(query: string): SegmentId[] {
   const normalized = query.toLowerCase();
   const segments: SegmentId[] = [];
 
-  if (/\b(profile|company|enterprise|tenant|organization|organisation|who are we|what do you know|regulatory|regulation|fda|eu\s+ai\s+act|annex|mdr|ivdr|sbom|gxp|iso\s*13485)\b/.test(normalized)) {
+  if (/\b(profile|company|enterprise|tenant|organization|organisation|who are we|what do you know|regulatory|regulation|fda|eu\s+ai\s+act|annex|mdr|ivdr|sbom|gxp|iso\s*13485|airline|skyharbor|modernization|ibm|mainframe|aws|duplicate\s+complexity|pressure)\b/.test(normalized)) {
     segments.push('enterprise_profile');
   }
-  if (/\b(org|organization|organisation|structure|leadership|leaders?|executive|executives|business|function\s+leads?|c[-\s]?level|team|cxo|cio|cdio|cto|cmio|cmo|cno|coo|ceo|cfo|svp|vp|director|reports?\s+to|owner|sponsor|who)\b/.test(normalized)) {
+  if (/\b(org|organization|organisation|structure|leadership|leaders?|executive|executives|business|function\s+leads?|c[-\s]?level|team|cxo|cio|cdio|cto|cmio|cmo|cno|coo|ceo|cfo|svp|vp|director|reports?\s+to|owner|sponsor|who|amala|cio\s+challenge|pressure)\b/.test(normalized)) {
     segments.push('org_structure');
   }
-  if (/\b(budget|spend|financials?|capex|opex|capital|funding|approval|approver|authority|fy\s*26|fy2026|run|change|transform)\b/.test(normalized)) {
+  if (/\b(budget|spend|financials?|capex|opex|capital|funding|approval|approver|authority|fy\s*26|fy2026|run|change|transform|value\s+ledger|promised|realized|disputed|ibm|mips)\b/.test(normalized)) {
     segments.push('it_financials');
   }
-  if (/\b(technology|tech|system|systems|platform|cloud|data|analytics|warehouse|lakehouse|bi|ml|ai|vendor|vendors?|supplier|suppliers?|contract|contracts?|renewal|renewals?|application|applications|apps?|criticality|portfolio|sap|s\/4|s4|erp)\b/.test(normalized)) {
+  if (/\b(technology|tech|system|systems|platform|cloud|data|analytics|warehouse|lakehouse|bi|ml|ai|vendor|vendors?|supplier|suppliers?|contract|contracts?|renewal|renewals?|application|applications|apps?|criticality|portfolio|sap|s\/4|s4|erp|ibm|mainframe|aws|z\s+workloads?|departure|crew|irops|revenue\s+accounting|baggage|cargo)\b/.test(normalized)) {
     segments.push('it_landscape');
   }
-  if (/\b(program|initiative|initiatives|move|moves|in[-\s]?flight|portfolio|roadmap|kill|fund|pause|hold|accelerate|restructure|sap|s\/4|s4|wave)\b/.test(normalized)) {
+  if (/\b(program|initiative|initiatives|move|moves|in[-\s]?flight|portfolio|roadmap|kill|fund|pause|hold|accelerate|restructure|sap|s\/4|s4|wave|modernization|dependency|dependencies|blocks?|blocked|blockers?|ibm|mainframe|aws|value\s+ledger|through-line|pressure)\b/.test(normalized)) {
     segments.push('program_inventory');
   }
 
@@ -225,6 +225,8 @@ const TENANT_KEY_ALIASES: Record<string, string[]> = {
   'first-capital': ['first-capital', 'firstcapital'],
   'first-capital-financial': ['first-capital', 'firstcapital'],
   arcturus: ['first-capital', 'firstcapital'],
+  skyharbor: ['skyharbor-air', 'skyharbor'],
+  'skyharbor-air': ['skyharbor-air', 'skyharbor'],
 };
 
 async function retrieveStructuredTenantSources(
