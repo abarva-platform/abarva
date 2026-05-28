@@ -7,6 +7,7 @@ import { getActiveClientRow } from '@/lib/active-client';
 import { assembleUserContextBlock } from '@/lib/agent/prompts/_shared/user-context';
 import { clientKeyToInventorySubstrateKey } from '@/lib/agent/tools/intelligence/_shared';
 import type { AskSurfaceContext } from '@/lib/intelligence/ask';
+import { resolveAskTenantKeyFallback } from '@/lib/intelligence/ask/tenant-key-resolution';
 import {
   appendAskSessionTurn,
   normalizeAskTabId,
@@ -51,6 +52,8 @@ async function handleAsk(payload: AskPayload) {
     surfaceContext?.clientKey ??
     surfaceContext?.activeClient ??
     null;
+  const { requestedClientKey, tenantInventoryKey: fallbackTenantInventoryKey } =
+    resolveAskTenantKeyFallback(requestedClient, surfaceContext);
   let sentinelClientId: string = requestedOrSurfaceClient ?? 'unknown-active-tenant';
   let sessionUserId: string | null = null;
   let activePersonGraphNodeId: string | null = null;
@@ -65,10 +68,10 @@ async function handleAsk(payload: AskPayload) {
     const resolvedClient = requestedOrSurfaceClient || clerkUser || person ? client : null;
     tenantInventoryKey = resolvedClient?.key
       ? clientKeyToInventorySubstrateKey(resolvedClient.key)
-      : null;
-    tenantClientKey = resolvedClient?.key ?? null;
+      : fallbackTenantInventoryKey;
+    tenantClientKey = resolvedClient?.key ?? requestedClientKey;
     tenantId = resolvedClient?.id ?? null;
-    sentinelClientId = resolvedClient?.id ?? tenantInventoryKey ?? requestedOrSurfaceClient ?? 'unknown-active-tenant';
+    sentinelClientId = resolvedClient?.id ?? tenantInventoryKey ?? requestedClientKey ?? requestedOrSurfaceClient ?? 'unknown-active-tenant';
     if (person) {
       userId = person.id;
       activePersonGraphNodeId = person.graph_node_id;

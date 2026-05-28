@@ -27,12 +27,36 @@ const REPO_ROOT = path.resolve(path.dirname(new URL(import.meta.url).pathname), 
 dotenv.config({ path: path.join(REPO_ROOT, '.env.local') });
 dotenv.config({ path: '/Users/anand/Projects/nexus/.env.local', override: false });
 
-const args = new Map(
-  process.argv.slice(2).map((arg) => {
-    const [key, value = 'true'] = arg.replace(/^--/, '').split('=');
-    return [key, value];
-  }),
-);
+function parseArgs(argv) {
+  const parsed = new Map();
+
+  for (let index = 0; index < argv.length; index += 1) {
+    const raw = argv[index];
+    if (!raw.startsWith('--')) continue;
+
+    const withoutPrefix = raw.slice(2);
+    const equalsIndex = withoutPrefix.indexOf('=');
+
+    if (equalsIndex >= 0) {
+      const key = withoutPrefix.slice(0, equalsIndex);
+      const value = withoutPrefix.slice(equalsIndex + 1) || 'true';
+      parsed.set(key, value);
+      continue;
+    }
+
+    const next = argv[index + 1];
+    if (next && !next.startsWith('--')) {
+      parsed.set(withoutPrefix, next);
+      index += 1;
+    } else {
+      parsed.set(withoutPrefix, 'true');
+    }
+  }
+
+  return parsed;
+}
+
+const args = parseArgs(process.argv.slice(2));
 
 const PERSONA = args.get('persona') || 'cto';
 const PERSONA_EMAIL =

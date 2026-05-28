@@ -32,6 +32,8 @@ This release fixes the SkyHarbor Intelligence retrieval path after diagnostics p
 - `src/lib/supabase-server.ts` adds ordered connection candidates and connection-level fallback from `ABARVA_AZURE_DATABASE_URL` to `DATABASE_URL`.
 - `src/lib/data-plane/read-adapters/azureSession.ts` adds the same fallback behavior for shared read and transaction sessions.
 - `src/lib/knowledge/tenant-enterprise-context.ts` canonicalizes tenant keys at the retrieval entry point so `skyharbor` becomes `skyharbor-air` before chunk and structured-fact lookup.
+- `src/app/api/intelligence/ask/route.ts` keeps a safe app-client-key fallback so intermittent client-row resolution failures no longer drop `tenantInventoryKey` from the ask request.
+- `src/lib/intelligence/ask/tenant-key-resolution.ts` centralizes the pure fallback mapping used by the ask route.
 - `scripts/skyharbor/stages/07_verify/ground_truth_runner.mjs` honors `--output verification/TIER_1_GROUND_TRUTH_RESULTS.md` and applies the Packet 29 pass gate.
 - Focused tests were added for DB fallback, Azure session fallback, and SkyHarbor alias enterprise retrieval.
 
@@ -41,12 +43,14 @@ Passed locally:
 
 ```text
 npx jest src/lib/__tests__/supabase-server.test.ts src/lib/data-plane/read-adapters/__tests__/azure-session.test.ts src/lib/knowledge/__tests__/tenant-enterprise-context.test.ts --runInBand
+npx jest src/lib/intelligence/ask/__tests__/tenant-key-resolution.test.ts src/lib/__tests__/supabase-server.test.ts src/lib/data-plane/read-adapters/__tests__/azure-session.test.ts src/lib/knowledge/__tests__/tenant-enterprise-context.test.ts --runInBand
 npx eslint src/lib/supabase-server.ts src/lib/data-plane/read-adapters/azureSession.ts src/lib/__tests__/supabase-server.test.ts src/lib/data-plane/read-adapters/__tests__/azure-session.test.ts src/lib/knowledge/tenant-enterprise-context.ts src/lib/knowledge/__tests__/tenant-enterprise-context.test.ts scripts/skyharbor/stages/07_verify/ground_truth_runner.mjs scripts/skyharbor/07_verify/ground_truth_runner.mjs
+node --check scripts/skyharbor/stages/07_verify/ground_truth_runner.mjs
 npx tsc --noEmit --pretty false
 git diff --check
 ```
 
-Standalone retriever diagnostics passed with `ABARVA_AZURE_DATABASE_URL` still present: `retrieveTenantEnterpriseSources('skyharbor-air', IBM/Amala/value-ledger query)` returned 5 enterprise sources with IBM and value-ledger evidence; alias `skyharbor` returned the same 5 canonical `skyharbor-air` sources; `retrieveTenantStructuredFacts('skyharbor', 'Top 5 apps by criticality')` returned actual SkyHarbor application rows from `public.applications`.
+Standalone retriever diagnostics passed with `ABARVA_AZURE_DATABASE_URL` still present, and route fallback unit tests passed: `retrieveTenantEnterpriseSources('skyharbor-air', IBM/Amala/value-ledger query)` returned 5 enterprise sources with IBM and value-ledger evidence; alias `skyharbor` returned the same 5 canonical `skyharbor-air` sources; `retrieveTenantStructuredFacts('skyharbor', 'Top 5 apps by criticality')` returned actual SkyHarbor application rows from `public.applications`.
 
 Direct DB validation confirmed `enterprise_context_chunks` contains 3,240 rows for `tenant_key='skyharbor-air'`, including 807 enterprise profile, 486 IT financial, 954 IT landscape, 160 org structure, and 833 program inventory chunks.
 
