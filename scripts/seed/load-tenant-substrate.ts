@@ -330,6 +330,10 @@ class PostgresDb {
     return (await this.client.query<R>(sql, params)).rows;
   }
 
+  async execute(sql: string, params: unknown[] = []): Promise<void> {
+    await this.client.query(sql, params);
+  }
+
   async updateEq(table: string, patch: Record<string, unknown>, where: Record<string, unknown>): Promise<number> {
     const setEntries = Object.entries(patch);
     const whereEntries = Object.entries(where);
@@ -409,6 +413,80 @@ class PostgresDb {
 }
 
 const db = new PostgresDb();
+
+async function ensureLoaderSchema(): Promise<void> {
+  await db.execute(`
+    CREATE EXTENSION IF NOT EXISTS pgcrypto;
+
+    ALTER TABLE clients ADD COLUMN IF NOT EXISTS name TEXT;
+    ALTER TABLE clients ADD COLUMN IF NOT EXISTS industry_code TEXT;
+    ALTER TABLE clients ADD COLUMN IF NOT EXISTS legal_name TEXT;
+    ALTER TABLE clients ADD COLUMN IF NOT EXISTS tenant_key TEXT;
+    ALTER TABLE clients ADD COLUMN IF NOT EXISTS annual_revenue_usd NUMERIC;
+    ALTER TABLE clients ADD COLUMN IF NOT EXISTS revenue TEXT;
+    ALTER TABLE clients ADD COLUMN IF NOT EXISTS it_budget_usd NUMERIC;
+    ALTER TABLE clients ADD COLUMN IF NOT EXISTS employee_count NUMERIC;
+    ALTER TABLE clients ADD COLUMN IF NOT EXISTS operational_units NUMERIC;
+    ALTER TABLE clients ADD COLUMN IF NOT EXISTS business_description TEXT;
+    ALTER TABLE clients ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ NOT NULL DEFAULT now();
+    ALTER TABLE clients ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ NOT NULL DEFAULT now();
+
+    CREATE TABLE IF NOT EXISTS enterprise_context_chunks (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      client_id UUID REFERENCES clients(id) ON DELETE CASCADE,
+      tenant_key TEXT NOT NULL,
+      chunk_id TEXT NOT NULL,
+      source_segment_id TEXT NOT NULL,
+      source_record_id TEXT NOT NULL,
+      source_doc TEXT NOT NULL,
+      source_path TEXT NOT NULL,
+      chunk_index INTEGER NOT NULL DEFAULT 0,
+      chunk_text TEXT NOT NULL,
+      token_count INTEGER,
+      embedding_status TEXT NOT NULL DEFAULT 'pending',
+      embedding_model TEXT,
+      embedded_at TIMESTAMPTZ,
+      embedding JSONB,
+      embedding_dim INTEGER,
+      embedding_error TEXT,
+      provenance JSONB NOT NULL DEFAULT '{}'::jsonb,
+      chunk_metadata JSONB NOT NULL DEFAULT '{}'::jsonb,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+      UNIQUE (tenant_key, chunk_id)
+    );
+    ALTER TABLE enterprise_context_chunks ADD COLUMN IF NOT EXISTS client_id UUID REFERENCES clients(id) ON DELETE CASCADE;
+    ALTER TABLE enterprise_context_chunks ADD COLUMN IF NOT EXISTS tenant_key TEXT;
+    ALTER TABLE enterprise_context_chunks ADD COLUMN IF NOT EXISTS chunk_id TEXT;
+    ALTER TABLE enterprise_context_chunks ADD COLUMN IF NOT EXISTS source_segment_id TEXT;
+    ALTER TABLE enterprise_context_chunks ADD COLUMN IF NOT EXISTS source_record_id TEXT;
+    ALTER TABLE enterprise_context_chunks ADD COLUMN IF NOT EXISTS source_doc TEXT;
+    ALTER TABLE enterprise_context_chunks ADD COLUMN IF NOT EXISTS source_path TEXT;
+    ALTER TABLE enterprise_context_chunks ADD COLUMN IF NOT EXISTS chunk_index INTEGER NOT NULL DEFAULT 0;
+    ALTER TABLE enterprise_context_chunks ADD COLUMN IF NOT EXISTS chunk_text TEXT;
+    ALTER TABLE enterprise_context_chunks ADD COLUMN IF NOT EXISTS token_count INTEGER;
+    ALTER TABLE enterprise_context_chunks ADD COLUMN IF NOT EXISTS embedding_status TEXT NOT NULL DEFAULT 'pending';
+    ALTER TABLE enterprise_context_chunks ADD COLUMN IF NOT EXISTS embedding_model TEXT;
+    ALTER TABLE enterprise_context_chunks ADD COLUMN IF NOT EXISTS embedded_at TIMESTAMPTZ;
+    ALTER TABLE enterprise_context_chunks ADD COLUMN IF NOT EXISTS embedding JSONB;
+    ALTER TABLE enterprise_context_chunks ADD COLUMN IF NOT EXISTS embedding_dim INTEGER;
+    ALTER TABLE enterprise_context_chunks ADD COLUMN IF NOT EXISTS embedding_error TEXT;
+    ALTER TABLE enterprise_context_chunks ADD COLUMN IF NOT EXISTS provenance JSONB NOT NULL DEFAULT '{}'::jsonb;
+    ALTER TABLE enterprise_context_chunks ADD COLUMN IF NOT EXISTS chunk_metadata JSONB NOT NULL DEFAULT '{}'::jsonb;
+    ALTER TABLE enterprise_context_chunks ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ NOT NULL DEFAULT now();
+    ALTER TABLE enterprise_context_chunks ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ NOT NULL DEFAULT now();
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_enterprise_context_chunks_tenant_chunk
+      ON enterprise_context_chunks(tenant_key, chunk_id);
+    CREATE INDEX IF NOT EXISTS idx_enterprise_context_chunks_client
+      ON enterprise_context_chunks(client_id);
+    CREATE INDEX IF NOT EXISTS idx_enterprise_context_chunks_tenant_segment
+      ON enterprise_context_chunks(tenant_key, source_segment_id);
+    CREATE INDEX IF NOT EXISTS idx_enterprise_context_chunks_embedding_status
+      ON enterprise_context_chunks(tenant_key, embedding_status);
+
+    ALTER TABLE ai_initiatives ADD COLUMN IF NOT EXISTS metadata JSONB NOT NULL DEFAULT '{}'::jsonb;
+  `);
+}
 
 // ─── PHASE 0 — clients profile reconciliation ──────────────────────────────
 
@@ -781,14 +859,14 @@ async function phase2ChunksAndEmbeddings(): Promise<{ rows: number; embedded: nu
 
       await db.query(
         `UPDATE enterprise_context_chunks
-            SET embedding = $1::vector,
+            SET embedding = $1::jsonb,
                 embedding_dim = $2,
                 embedding_model = $3,
                 embedded_at = $4,
                 embedding_status = 'embedded',
                 embedding_error = NULL
           WHERE id = $5`,
-        [`[${embedding.join(',')}]`, embedding.length, model, new Date().toISOString(), row.id],
+        [JSON.stringify(embedding), embedding.length, model, new Date().toISOString(), row.id],
       );
       embedded++;
     } catch (err) {
@@ -1145,6 +1223,7 @@ async function phase5VendorContracts(): Promise<{ inserted: number; errors: numb
 
 async function main() {
   if (!DRY_RUN) await db.connect();
+  if (!DRY_RUN) await ensureLoaderSchema();
   console.log('═══════════════════════════════════════════════════════════════');
   console.log(`Packet 24 Substrate Loader · tenant=${TENANT.key} · ${DRY_RUN ? 'DRY-RUN' : 'APPLY'}`);
   console.log('═══════════════════════════════════════════════════════════════');
