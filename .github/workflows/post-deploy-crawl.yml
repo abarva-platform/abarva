@@ -13,7 +13,7 @@ on:
 jobs:
   crawl:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 60
     env:
       CRAWL_BASE_URL: ${{ inputs.base_url || vars.PRODUCTION_URL || 'https://app.abarva.ai' }}
       CRAWL_DEMO_PASSWORD: ${{ secrets.CRAWL_DEMO_PASSWORD }}
@@ -25,7 +25,16 @@ jobs:
           node-version: 24
           cache: npm
       - run: npm ci
-      - run: npx playwright install chromium --with-deps
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+          restore-keys: |
+            playwright-${{ runner.os }}-
+      - name: Install Playwright Chromium
+        timeout-minutes: 25
+        run: npx playwright install chromium --with-deps
       - name: Wait briefly for production alias
         run: sleep 60
       - name: Run authenticated crawl
