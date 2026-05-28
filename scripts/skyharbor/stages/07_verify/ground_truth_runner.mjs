@@ -373,29 +373,7 @@ function scoreAnswer({ status, answer, sources, required }) {
 
 async function ask(page, item) {
   const started = Date.now();
-  const raw = await page.evaluate(async ({ question }) => {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 120000);
-    const response = await fetch('/api/intelligence/ask', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      signal: controller.signal,
-      body: JSON.stringify({
-        query: `${question}\n\nCite the SkyHarbor source segments, records, or evidence you used. If you are using an airline industry pattern rather than a SkyHarbor tenant fact, label it as pattern-based.`,
-        client: 'skyharbor',
-        surfaceContext: {
-          activeClient: 'SkyHarbor Air',
-          clientKey: 'skyharbor',
-          tenantFacts: [
-            'Active tenant is SkyHarbor Air. Do not use facts from any other tenant.',
-            'This is a CTO verification run. Prefer SkyHarbor tenant facts and visible citations.',
-          ],
-        },
-      }),
-    });
-    clearTimeout(timeout);
-    return { status: response.status, text: await response.text() };
-  }, { question: item.question });
+  const raw = await fetchAskWithRetry(page, item.question);
 
   const parsed = parseStream(raw.text);
   const scored = scoreAnswer({ status: raw.status, answer: parsed.answer, sources: parsed.sources, required: item.required });
@@ -407,7 +385,54 @@ async function ask(page, item) {
     rawText: raw.text,
     rawEvents: parsed.events,
     sources: parsed.sources,
+    fetchError: raw.error ?? null,
     ...scored,
+  };
+}
+
+async function fetchAskWithRetry(page, question) {
+  let lastError = null;
+  for (let attempt = 1; attempt <= 2; attempt += 1) {
+    try {
+      return await page.evaluate(async ({ question: prompt }) => {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 120000);
+        try {
+          const response = await fetch('/api/intelligence/ask', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            signal: controller.signal,
+            body: JSON.stringify({
+              query: `${prompt}\n\nCite the SkyHarbor source segments, records, or evidence you used. If you are using an airline industry pattern rather than a SkyHarbor tenant fact, label it as pattern-based.`,
+              client: 'skyharbor',
+              surfaceContext: {
+                activeClient: 'SkyHarbor Air',
+                clientKey: 'skyharbor',
+                tenantFacts: [
+                  'Active tenant is SkyHarbor Air. Do not use facts from any other tenant.',
+                  'This is a CTO verification run. Prefer SkyHarbor tenant facts and visible citations.',
+                ],
+              },
+            }),
+          });
+          return { status: response.status, text: await response.text() };
+        } finally {
+          clearTimeout(timeout);
+        }
+      }, { question });
+    } catch (error) {
+      lastError = error instanceof Error ? error.message : String(error);
+      if (attempt === 1) {
+        await page.waitForTimeout(2500);
+        continue;
+      }
+    }
+  }
+
+  return {
+    status: 0,
+    text: JSON.stringify({ type: 'error', error: lastError ?? 'fetch failed' }) + '\n',
+    error: lastError ?? 'fetch failed',
   };
 }
 
