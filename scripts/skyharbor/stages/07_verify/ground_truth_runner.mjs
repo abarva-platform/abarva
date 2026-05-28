@@ -421,7 +421,7 @@ function splitSetCookieHeader(value) {
 
 async function ask(auth, item) {
   const started = Date.now();
-  const raw = await fetchAskWithRetry(auth, item.question);
+  const raw = await fetchAskWithRetry(auth, item);
 
   const parsed = parseStream(raw.text);
   const scored = scoreAnswer({ status: raw.status, answer: parsed.answer, sources: parsed.sources, required: item.required });
@@ -438,8 +438,9 @@ async function ask(auth, item) {
   };
 }
 
-async function fetchAskWithRetry(auth, question) {
+async function fetchAskWithRetry(auth, item) {
   let lastError = null;
+  const questionTabId = `${RUN_TAB_ID}-${item.id.toLowerCase()}`;
   for (let attempt = 1; attempt <= 3; attempt += 1) {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 120000);
@@ -453,9 +454,12 @@ async function fetchAskWithRetry(auth, question) {
         },
         signal: controller.signal,
         body: JSON.stringify({
-          query: `${question}\n\nCite the SkyHarbor source segments, records, or evidence you used. If you are using an airline industry pattern rather than a SkyHarbor tenant fact, label it as pattern-based.`,
+          query: `${item.question}\n\nCite the SkyHarbor source segments, records, or evidence you used. If you are using an airline industry pattern rather than a SkyHarbor tenant fact, label it as pattern-based.`,
           client: 'skyharbor',
-          tabId: RUN_TAB_ID,
+          // Packet 29 is a ground-truth replay, not a continuity test. Keep
+          // each CTO scrutiny question isolated so the ask-session memory
+          // table cannot grow the model prompt across all 25 questions.
+          tabId: questionTabId,
           surfaceContext: {
             activeClient: 'SkyHarbor Air',
             clientKey: 'skyharbor',
