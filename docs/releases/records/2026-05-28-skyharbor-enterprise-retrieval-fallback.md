@@ -33,6 +33,7 @@ This release fixes the SkyHarbor Intelligence retrieval path after diagnostics p
 - `src/lib/data-plane/read-adapters/azureSession.ts` adds the same fallback behavior for shared read and transaction sessions.
 - `src/lib/knowledge/tenant-enterprise-context.ts` canonicalizes tenant keys at the retrieval entry point so `skyharbor` becomes `skyharbor-air` before chunk and structured-fact lookup.
 - `src/app/api/intelligence/ask/route.ts` keeps a safe app-client-key fallback so intermittent client-row resolution failures no longer drop `tenantInventoryKey` from the ask request.
+- `src/app/api/intelligence/ask/route.ts` initializes that fallback before user/context lookups, so a thrown Clerk/person/client lookup cannot erase the request-body tenant key.
 - `src/lib/intelligence/ask/tenant-key-resolution.ts` centralizes the pure fallback mapping used by the ask route.
 - `scripts/skyharbor/stages/07_verify/ground_truth_runner.mjs` honors `--output verification/TIER_1_GROUND_TRUTH_RESULTS.md` and applies the Packet 29 pass gate.
 - Focused tests were added for DB fallback, Azure session fallback, and SkyHarbor alias enterprise retrieval.

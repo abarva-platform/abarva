@@ -54,7 +54,10 @@ async function handleAsk(payload: AskPayload) {
     null;
   const { requestedClientKey, tenantInventoryKey: fallbackTenantInventoryKey } =
     resolveAskTenantKeyFallback(requestedClient, surfaceContext);
-  let sentinelClientId: string = requestedOrSurfaceClient ?? 'unknown-active-tenant';
+  tenantInventoryKey = fallbackTenantInventoryKey;
+  tenantClientKey = requestedClientKey;
+  let sentinelClientId: string =
+    tenantInventoryKey ?? requestedClientKey ?? requestedOrSurfaceClient ?? 'unknown-active-tenant';
   let sessionUserId: string | null = null;
   let activePersonGraphNodeId: string | null = null;
   let activePersonDisplayName: string | null = null;
