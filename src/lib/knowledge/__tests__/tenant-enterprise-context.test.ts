@@ -461,6 +461,36 @@ describe('tenant enterprise context retrieval', () => {
     expect(detail).toContain('committed $7.2M');
   });
 
+  it('adds SkyHarbor DORA scorecard rows for engineering productivity questions', async () => {
+    mockPostgresTables({
+      enterprise_context_chunks: [
+        {
+          chunk_id: 'SHA-CHUNK-0282',
+          source_segment_id: 'enterprise_profile',
+          source_doc: 'source_uploads/dora_productivity_baseline.csv',
+          chunk_text: 'SkyHarbor record in S09_ENGINEERING_PRODUCTIVITY. Key facts: scorecard_id=SHA-DORA-001; lead_time_for_change_hours=8; deploy_frequency_per_week=25; MTTR_hours=1.5; change_failure_rate_pct=4.',
+        },
+        {
+          chunk_id: 'SHA-CHUNK-0284',
+          source_segment_id: 'enterprise_profile',
+          source_doc: 'source_uploads/dora_productivity_baseline.csv',
+          chunk_text: 'SkyHarbor record in S09_ENGINEERING_PRODUCTIVITY. Key facts: scorecard_id=SHA-DORA-003; lead_time_for_change_hours=80; deploy_frequency_per_week=3; MTTR_hours=12; change_failure_rate_pct=18.',
+        },
+      ],
+    });
+
+    const sources = await retrieveTenantEnterpriseSources(
+      'skyharbor',
+      "How are we performing on DORA metrics by domain, and where's the modernization correlation?",
+    );
+    const detail = sources.map((source) => source.detail).join('\n');
+
+    expect(sources.map((source) => source.id)).toContain('skyharbor-air:structured:engineering_productivity');
+    expect(detail).toContain('SHA-DORA-001 · Mobile Digital · lead_time 8h · deploy_frequency 25/week');
+    expect(detail).toContain('SHA-DORA-003 · Mainframe Core · lead_time 80h · deploy_frequency 3/week');
+    expect(detail).toContain('Use these exact scorecard IDs and metrics before saying DORA');
+  });
+
   it('returns explicit 0.99 structured facts for top-app criticality questions', async () => {
     mockPostgresTables({
       applications: [

@@ -215,6 +215,13 @@ interface VendorContractRow {
   concentration_pct: number | string | null;
 }
 
+interface EnterpriseContextChunkRow {
+  chunk_id: string | null;
+  chunk_text: string | null;
+  source_segment_id: string | null;
+  source_doc: string | null;
+}
+
 const TENANT_KEY_ALIASES: Record<string, string[]> = {
   apex: ['apex-retail', 'apexretail'],
   'apex-retail': ['apex-retail', 'apexretail'],
@@ -244,7 +251,8 @@ async function retrieveStructuredTenantSources(
   const wantsApps = /\b(application|applications|apps?|systems?|portfolio|criticality|replatform|legacy|erp|sap|as\/?400|mainframe|z\s+workloads?|workloads?|extract|extraction|cobol|safety[-\s]?critical|duplicate\s+complexity)\b/.test(normalized);
   const wantsVendors = /\b(vendor|vendors?|supplier|suppliers?|contract|contracts?|renewal|renewals?|ams|bafo|rfi|rfp|sourcing|source|ibm|aws|edp|true[-\s]?up|snowflake|databricks|cyber|security\s+stack|ai\s+tooling)\b/.test(normalized);
   const wantsInitiatives = /\b(initiative|initiatives|move|moves|program|programs|kill|fund|pause|hold|accelerate|restructure|roadmap|sap|s\/4|s4|wave|modernization|operating\s+model|target\s+operating\s+model|\btom\b|sdlc|cobol|gcc|global\s+capability|90\s+days?|board)\b/.test(normalized);
-  if (!wantsProfile && !wantsApps && !wantsVendors && !wantsInitiatives) return [];
+  const wantsEngineeringProductivity = /\b(dora|mttr|lead\s+time|deploy\s+frequency|deployment\s+frequency|change\s+failure|engineering\s+productivity|modernization\s+correlation|factory\s+throughput)\b/.test(normalized);
+  if (!wantsProfile && !wantsApps && !wantsVendors && !wantsInitiatives && !wantsEngineeringProductivity) return [];
 
   try {
     return await structuredFactSession(async (run) => {
@@ -255,12 +263,100 @@ async function retrieveStructuredTenantSources(
         wantsApps ? readApplicationPortfolioSource(run, tenantKey, clientId) : Promise.resolve(null),
         wantsVendors ? readVendorContractsSource(run, tenantKey, clientId) : Promise.resolve(null),
         wantsInitiatives ? readInitiativesSource(run, tenantKey, clientId) : Promise.resolve(null),
+        wantsEngineeringProductivity ? readEngineeringProductivitySource(run, tenantKey, clientId) : Promise.resolve(null),
       ]);
       return results.filter((source): source is TenantEnterpriseSource => Boolean(source));
     });
   } catch {
     return [];
   }
+}
+
+const SKYHARBOR_DORA_DOMAINS = [
+  'Mobile Digital',
+  'Web Booking',
+  'Mainframe Core',
+  'Crew Systems',
+  'Airport Ops',
+  'Baggage',
+  'Loyalty',
+  'Revenue Accounting',
+  'AWS Platform',
+  'Data Platform',
+  'Security Engineering',
+  'Contact Center',
+  'MRO Tech',
+  'Cargo',
+  'Finance IT',
+  'GCC Delivery',
+  'Modernization Factory',
+  'DevEx Tooling',
+];
+
+async function readEngineeringProductivitySource(
+  run: SqlRunner,
+  tenantKey: string,
+  clientId: string,
+): Promise<TenantEnterpriseSource | null> {
+  const rows = await run<EnterpriseContextChunkRow>(
+    `SELECT chunk_id, chunk_text, source_segment_id, source_doc
+       FROM enterprise_context_chunks
+      WHERE client_id = $1
+        AND chunk_text ILIKE '%S09_ENGINEERING_PRODUCTIVITY%'
+      ORDER BY chunk_id ASC
+      LIMIT 60`,
+    [clientId],
+  );
+  const scorecards = rows
+    .map((row) => parseDoraScorecard(row.chunk_text ?? ''))
+    .filter((row): row is DoraScorecard => Boolean(row))
+    .filter((row) => row.scorecardId.startsWith(`${tenantRecordPrefix(tenantKey)}-DORA-`))
+    .slice(0, 18);
+  if (scorecards.length === 0) return null;
+
+  const fast = scorecards.filter((row) => row.deployFrequencyPerWeek >= 8 && row.leadTimeHours <= 36);
+  const constrained = scorecards.filter((row) => row.deployFrequencyPerWeek <= 3 || row.leadTimeHours >= 72);
+  return {
+    type: 'TENANT',
+    name: `Structured engineering productivity / DORA baseline (${tenantKey})`,
+    id: `${tenantKey}:structured:engineering_productivity`,
+    detail: [
+      `DORA scorecards from S09_ENGINEERING_PRODUCTIVITY for ${tenantKey}.`,
+      'Use these exact scorecard IDs and metrics before saying DORA, lead time, deployment frequency, MTTR, change failure, or modernization correlation is unavailable.',
+      `Modernization correlation: cloud-native/customer domains are faster (${fast.map((row) => row.domain).slice(0, 4).join(', ') || 'none surfaced'}); mainframe-adjacent or operations domains are constrained (${constrained.map((row) => row.domain).slice(0, 6).join(', ') || 'none surfaced'}).`,
+      ...scorecards.map((row) => `${row.scorecardId} · ${row.domain} · lead_time ${row.leadTimeHours}h · deploy_frequency ${row.deployFrequencyPerWeek}/week · MTTR ${row.mttrHours}h · change_failure ${row.changeFailurePct}%`),
+    ].join('\n- '),
+    confidence: 0.98,
+  };
+}
+
+interface DoraScorecard {
+  scorecardId: string;
+  domain: string;
+  leadTimeHours: number;
+  deployFrequencyPerWeek: number;
+  mttrHours: number;
+  changeFailurePct: number;
+}
+
+function parseDoraScorecard(text: string): DoraScorecard | null {
+  const scorecardId = text.match(/scorecard_id=([A-Z]+-DORA-\d{3})/)?.[1];
+  const index = Number(scorecardId?.match(/(\d{3})$/)?.[1] ?? 0);
+  const leadTimeHours = Number(text.match(/lead_time_for_change_hours=([0-9.]+)/)?.[1]);
+  const deployFrequencyPerWeek = Number(text.match(/deploy_frequency_per_week=([0-9.]+)/)?.[1]);
+  const mttrHours = Number(text.match(/MTTR_hours=([0-9.]+)/)?.[1]);
+  const changeFailurePct = Number(text.match(/change_failure_rate_pct=([0-9.]+)/)?.[1]);
+  if (!scorecardId || !index || !Number.isFinite(leadTimeHours) || !Number.isFinite(deployFrequencyPerWeek) || !Number.isFinite(mttrHours) || !Number.isFinite(changeFailurePct)) {
+    return null;
+  }
+  return {
+    scorecardId,
+    domain: SKYHARBOR_DORA_DOMAINS[index - 1] ?? `Domain ${index}`,
+    leadTimeHours,
+    deployFrequencyPerWeek,
+    mttrHours,
+    changeFailurePct,
+  };
 }
 
 export async function retrieveTenantStructuredFacts(
@@ -921,6 +1017,7 @@ function tenantRecordPrefix(tenantKey: string): string {
   if (normalized.includes('apex')) return 'APX';
   if (normalized.includes('meridian')) return 'MR';
   if (normalized.includes('first') || normalized.includes('arcturus')) return 'FCF';
+  if (normalized.includes('skyharbor')) return 'SHA';
   return normalized.replace(/[^a-z0-9]/g, '').slice(0, 3).toUpperCase() || 'TEN';
 }
 
