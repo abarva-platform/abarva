@@ -130,14 +130,14 @@ export async function retrieveTenantEnterpriseSources(
   try {
     const adapter = getTenantDataAdapter();
     const [directReportSource, cLevelSource, structuredSources, grouped] = await Promise.all([
-      retrieveDirectReportsSource(canonicalTenantKey, query, opts),
-      retrieveCLevelLeaderSource(canonicalTenantKey, query),
-      retrieveStructuredTenantSources(canonicalTenantKey, query),
+      retrieveDirectReportsSource(canonicalTenantKey, query, opts).catch(() => null),
+      retrieveCLevelLeaderSource(canonicalTenantKey, query).catch(() => null),
+      retrieveStructuredTenantSources(canonicalTenantKey, query).catch(() => []),
       Promise.all(segments.map(async (segmentId) => {
         const chunks = await adapter.listContextChunks(canonicalTenantKey, {
           segmentIds: [segmentId],
           limit: SEGMENT_LIMITS[segmentId] ?? 24,
-        });
+        }).catch(() => []);
         return {
           segmentId,
           chunks: rankChunks(chunks, query, segmentId).slice(0, opts.perSegment ?? 4),
@@ -272,8 +272,8 @@ export async function retrieveTenantStructuredFacts(
   const normalized = query.toLowerCase();
   const wantsTopApps = /top\s+\d+\s+(?:apps?|applications?)\s+by\s+criticality|(?:application|app)\s+portfolio.*criticality/.test(normalized);
   const wantsRetiringApps = /(?:which\s+)?(?:applications?|apps?).*(?:retiring|retire|decommission|sunset)/.test(normalized);
-  const wantsTopVendors = /(?:top|biggest|largest)\s+vendors?|vendor.*\b(?:spend|cost|annual)\b/.test(normalized);
-  const wantsVendorRenewals = /vendor\s+renewal|renewing|renewals?\s+(?:window|date)|renewals?.*(?:next|6\s+months|six\s+months|exposed)/.test(normalized);
+  const wantsTopVendors = /(?:top|biggest|largest)\s+vendors?|vendor.*\b(?:spend|cost|annual)\b|\b(?:ibm|aws|edp|true[-\s]?up|snowflake|databricks|cyber|security\s+stack|ai\s+tooling|tooling\s+stack|sourcing\s+events?)\b/.test(normalized);
+  const wantsVendorRenewals = /vendor\s+renewal|renewing|renewals?\s+(?:window|date)|renewals?.*(?:next|6\s+months|six\s+months|exposed)|sourcing\s+events?|restructure\s+window|contract\s+restructure|edp|true[-\s]?up/.test(normalized);
   const wantsActiveInitiatives = /active\s+initiatives?|in[-\s]?flight\s+initiatives?|biggest\s+in[-\s]?flight\s+initiative|\b(?:sap|s\/4|s4)\b.*\bwave\b|\bwave\s*0\b|operating\s+model|target\s+operating\s+model|\btom\b|modernization\s+moves?|90\s+days?|ai\s+tooling|sdlc|cobol|gcc|global\s+capability|value\s+stuck|projected/.test(normalized);
   const wantsInitiativesByStage = /initiatives?\s+by\s+(?:stage|phase)/.test(normalized);
   const wantsKillInitiatives = /(?:which\s+)?(?:initiatives?|moves?).*(?:kill|stop|pause|cut)/.test(normalized);
