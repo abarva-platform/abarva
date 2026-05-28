@@ -86,6 +86,7 @@
     "azure:postgres:set-url-secrets": "node scripts/azure/set-postgres-database-url-secrets.mjs",
     "azure:postgres:set-source-url-secret": "node scripts/azure/set-source-database-url-secret.mjs",
     "audit:planes": "npx tsx src/scripts/audit/audit-tenant-data-planes.ts",
+    "audit:runtime-supabase-imports": "node scripts/audit/runtime-supabase-import-census.mjs",
     "audit:financial": "npx tsx src/scripts/audit/audit-financial-kpis.ts",
     "audit:sanity": "npx tsx src/scripts/audit/audit-numbers-sanity.ts",
     "audit:categories": "npx tsx src/scripts/audit/audit-steward-categories.ts",
