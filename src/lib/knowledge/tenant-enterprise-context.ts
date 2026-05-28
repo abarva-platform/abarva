@@ -122,6 +122,7 @@ export async function retrieveTenantEnterpriseSources(
   } = {},
 ): Promise<TenantEnterpriseSource[]> {
   if (!tenantKey || !isTenantEnterpriseQuestion(query)) return [];
+  const canonicalTenantKey = normalizeTenantEnterpriseKey(tenantKey);
 
   const segments = selectTenantEnterpriseSegments(query);
   if (segments.length === 0) return [];
@@ -129,11 +130,11 @@ export async function retrieveTenantEnterpriseSources(
   try {
     const adapter = getTenantDataAdapter();
     const [directReportSource, cLevelSource, structuredSources, grouped] = await Promise.all([
-      retrieveDirectReportsSource(tenantKey, query, opts),
-      retrieveCLevelLeaderSource(tenantKey, query),
-      retrieveStructuredTenantSources(tenantKey, query),
+      retrieveDirectReportsSource(canonicalTenantKey, query, opts),
+      retrieveCLevelLeaderSource(canonicalTenantKey, query),
+      retrieveStructuredTenantSources(canonicalTenantKey, query),
       Promise.all(segments.map(async (segmentId) => {
-        const chunks = await adapter.listContextChunks(tenantKey, {
+        const chunks = await adapter.listContextChunks(canonicalTenantKey, {
           segmentIds: [segmentId],
           limit: SEGMENT_LIMITS[segmentId] ?? 24,
         });
@@ -148,10 +149,10 @@ export async function retrieveTenantEnterpriseSources(
       .filter((group) => group.chunks.length > 0)
       .map((group) => ({
         type: 'TENANT' as const,
-        name: `${SEGMENT_LABELS[group.segmentId] ?? group.segmentId} (${tenantKey})`,
-        id: `${tenantKey}:${group.segmentId}`,
+        name: `${SEGMENT_LABELS[group.segmentId] ?? group.segmentId} (${canonicalTenantKey})`,
+        id: `${canonicalTenantKey}:${group.segmentId}`,
         detail: [
-          `${SEGMENT_LABELS[group.segmentId] ?? group.segmentId} records for ${tenantKey}.`,
+          `${SEGMENT_LABELS[group.segmentId] ?? group.segmentId} records for ${canonicalTenantKey}.`,
           'Use these persisted setup-data chunks before saying tenant profile, org structure, budget, or system context is unavailable.',
           ...group.chunks.map(formatChunk),
         ].join('\n- '),
@@ -229,6 +230,11 @@ const TENANT_KEY_ALIASES: Record<string, string[]> = {
   'skyharbor-air': ['skyharbor-air', 'skyharbor'],
 };
 
+function normalizeTenantEnterpriseKey(tenantKey: string): string {
+  const normalized = tenantKey.trim().toLowerCase();
+  return TENANT_KEY_ALIASES[normalized]?.[0] ?? normalized;
+}
+
 async function retrieveStructuredTenantSources(
   tenantKey: string,
   query: string,
@@ -262,6 +268,7 @@ export async function retrieveTenantStructuredFacts(
   query: string,
 ): Promise<TenantStructuredSource[]> {
   if (!tenantKey) return [];
+  const canonicalTenantKey = normalizeTenantEnterpriseKey(tenantKey);
   const normalized = query.toLowerCase();
   const wantsTopApps = /top\s+\d+\s+(?:apps?|applications?)\s+by\s+criticality|(?:application|app)\s+portfolio.*criticality/.test(normalized);
   const wantsRetiringApps = /(?:which\s+)?(?:applications?|apps?).*(?:retiring|retire|decommission|sunset)/.test(normalized);
@@ -277,27 +284,27 @@ export async function retrieveTenantStructuredFacts(
 
   try {
     return await structuredFactSession(async (run) => {
-      const clientId = await resolveClientIdForTenantKey(run, tenantKey);
+      const clientId = await resolveClientIdForTenantKey(run, canonicalTenantKey);
       if (!clientId) return [];
       const sources: TenantStructuredSource[] = [];
       if (wantsTopApps) {
-        const source = await readStructuredTopApplicationsSource(run, tenantKey, clientId);
+        const source = await readStructuredTopApplicationsSource(run, canonicalTenantKey, clientId);
         if (source) sources.push(source);
       }
       if (wantsRetiringApps) {
-        const source = await readStructuredRetiringApplicationsSource(run, tenantKey, clientId);
+        const source = await readStructuredRetiringApplicationsSource(run, canonicalTenantKey, clientId);
         if (source) sources.push(source);
       }
       if (wantsTopVendors) {
-        const source = await readStructuredTopVendorsSource(run, tenantKey, clientId);
+        const source = await readStructuredTopVendorsSource(run, canonicalTenantKey, clientId);
         if (source) sources.push(source);
       }
       if (wantsVendorRenewals) {
-        const source = await readStructuredVendorRenewalsSource(run, tenantKey, clientId);
+        const source = await readStructuredVendorRenewalsSource(run, canonicalTenantKey, clientId);
         if (source) sources.push(source);
       }
       if (wantsActiveInitiatives || wantsInitiativesByStage || wantsKillInitiatives) {
-        const source = await readStructuredInitiativesSource(run, tenantKey, clientId, {
+        const source = await readStructuredInitiativesSource(run, canonicalTenantKey, clientId, {
           byStage: wantsInitiativesByStage,
           killOnly: wantsKillInitiatives,
         });

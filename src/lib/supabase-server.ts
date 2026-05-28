@@ -22,13 +22,32 @@ interface QueryResult<T = any[]> {
   count?: number | null;
 }
 
-let pool: import('pg').Pool | null = null;
+const pools = new Map<string, import('pg').Pool>();
+let activeConnectionString: string | null = null;
 let client: PostgresCompatClient | null = null;
 
-function resolveDatabaseUrl(): string {
-  const url = process.env.ABARVA_AZURE_DATABASE_URL?.trim() || process.env.DATABASE_URL?.trim();
-  if (!url) throw new Error('Missing ABARVA_AZURE_DATABASE_URL or DATABASE_URL');
-  return url;
+export function resolveDatabaseUrlCandidates(env: NodeJS.ProcessEnv = process.env): string[] {
+  const candidates = [
+    env.ABARVA_AZURE_DATABASE_URL?.trim(),
+    env.DATABASE_URL?.trim(),
+  ].filter((value): value is string => Boolean(value));
+  return [...new Set(candidates)];
+}
+
+function resolveDatabaseUrls(): string[] {
+  const urls = resolveDatabaseUrlCandidates();
+  if (urls.length === 0) throw new Error('Missing ABARVA_AZURE_DATABASE_URL or DATABASE_URL');
+  return urls;
+}
+
+export function isConnectionFallbackError(error: unknown): boolean {
+  const record = error as { code?: unknown; message?: unknown };
+  const code = typeof record?.code === 'string' ? record.code : '';
+  const message = typeof record?.message === 'string' ? record.message : String(error ?? '');
+  return (
+    ['ENOTFOUND', 'EAI_AGAIN', 'ETIMEDOUT', 'ECONNREFUSED', 'ECONNRESET'].includes(code) ||
+    /getaddrinfo|connect\s+etimedout|connection\s+timeout|connection\s+terminated|econnrefused|enotfound/i.test(message)
+  );
 }
 
 function disableSsl(connectionString: string): boolean {
@@ -41,14 +60,18 @@ function disableSsl(connectionString: string): boolean {
   }
 }
 
-async function getPool(): Promise<import('pg').Pool> {
-  if (pool) return pool;
-  const connectionString = resolveDatabaseUrl();
+async function loadPg(): Promise<typeof import('pg')> {
   const loadPg = new Function('specifier', 'return import(specifier)') as (
     specifier: string,
   ) => Promise<typeof import('pg')>;
-  const { Pool } = await loadPg('pg');
-  pool = new Pool({
+  return loadPg('pg');
+}
+
+async function getPool(connectionString: string): Promise<import('pg').Pool> {
+  const existing = pools.get(connectionString);
+  if (existing) return existing;
+  const { Pool } = await loadPg();
+  const pool = new Pool({
     connectionString,
     application_name: 'abarva-postgres-compat',
     max: 10,
@@ -56,7 +79,42 @@ async function getPool(): Promise<import('pg').Pool> {
     connectionTimeoutMillis: 10_000,
     ssl: disableSsl(connectionString) ? false : { rejectUnauthorized: false },
   });
+  pools.set(connectionString, pool);
   return pool;
+}
+
+async function queryWithFallback<R extends import('pg').QueryResultRow>(
+  sql: string,
+  params: unknown[],
+): Promise<import('pg').QueryResult<R>> {
+  const candidates = resolveDatabaseUrls();
+  const ordered = activeConnectionString
+    ? [activeConnectionString, ...candidates.filter((url) => url !== activeConnectionString)]
+    : candidates;
+  let lastError: unknown = null;
+
+  for (let index = 0; index < ordered.length; index++) {
+    const connectionString = ordered[index]!;
+    const pool = await getPool(connectionString);
+    try {
+      const result = await pool.query<R>(sql, params);
+      activeConnectionString = connectionString;
+      return result;
+    } catch (error) {
+      lastError = error;
+      const canFallback = index < ordered.length - 1 && isConnectionFallbackError(error);
+      if (!canFallback) throw error;
+      pools.delete(connectionString);
+      if (activeConnectionString === connectionString) activeConnectionString = null;
+      await pool.end().catch(() => undefined);
+      console.warn('[postgres-compat] primary database connection failed; trying fallback DATABASE_URL', {
+        code: (error as { code?: unknown })?.code,
+        message: error instanceof Error ? error.message : String(error),
+      });
+    }
+  }
+
+  throw lastError;
 }
 
 function quoteIdent(identifier: string): string {
@@ -289,7 +347,7 @@ class PostgresCompatQuery<T = any[]> implements PromiseLike<QueryResult<T>> {
     const params: unknown[] = [];
     const where = this.buildWhere(params);
     if (this.countMode === 'exact' && this.headOnly) {
-      const { rows } = await (await getPool()).query<{ n: number }>(
+      const { rows } = await queryWithFallback<{ n: number }>(
         `SELECT count(*)::int AS n FROM ${quoteIdent(this.table)}${where}`,
         params,
       );
@@ -300,7 +358,7 @@ class PostgresCompatQuery<T = any[]> implements PromiseLike<QueryResult<T>> {
       this.buildOrder(),
       this.buildLimit(params),
     ].filter(Boolean).join(' ');
-    const { rows } = await (await getPool()).query(sql, params);
+    const { rows } = await queryWithFallback(sql, params);
     const count = this.countMode === 'exact' ? rows.length : null;
     return this.formatRows(rows as T[], count);
   }
@@ -316,7 +374,7 @@ class PostgresCompatQuery<T = any[]> implements PromiseLike<QueryResult<T>> {
     }).join(', ')})`);
     const returning = this.shouldReturnRows ? ` RETURNING ${parseSelect(this.selectText)}` : '';
     const sql = `INSERT INTO ${quoteIdent(this.table)} (${columns.map(quoteIdent).join(', ')}) VALUES ${valuesSql.join(', ')}${returning}`;
-    const { rows: returnedRows, rowCount } = await (await getPool()).query(sql, params);
+    const { rows: returnedRows, rowCount } = await queryWithFallback(sql, params);
     return this.shouldReturnRows ? this.formatRows(returnedRows as T[], rowCount ?? null) : { data: null, error: null, count: rowCount ?? null };
   }
 
@@ -327,7 +385,7 @@ class PostgresCompatQuery<T = any[]> implements PromiseLike<QueryResult<T>> {
     const setSql = columns.map((column, index) => `${quoteIdent(column)} = $${index + 1}`).join(', ');
     const where = this.buildWhere(params);
     const returning = this.shouldReturnRows ? ` RETURNING ${parseSelect(this.selectText)}` : '';
-    const { rows, rowCount } = await (await getPool()).query(
+    const { rows, rowCount } = await queryWithFallback(
       `UPDATE ${quoteIdent(this.table)} SET ${setSql}${where}${returning}`,
       params,
     );
@@ -338,7 +396,7 @@ class PostgresCompatQuery<T = any[]> implements PromiseLike<QueryResult<T>> {
     const params: unknown[] = [];
     const where = this.buildWhere(params);
     const returning = this.shouldReturnRows ? ` RETURNING ${parseSelect(this.selectText)}` : '';
-    const { rows, rowCount } = await (await getPool()).query(
+    const { rows, rowCount } = await queryWithFallback(
       `DELETE FROM ${quoteIdent(this.table)}${where}${returning}`,
       params,
     );
@@ -363,7 +421,7 @@ class PostgresCompatQuery<T = any[]> implements PromiseLike<QueryResult<T>> {
       ? `DO UPDATE SET ${updateColumns.map((column) => `${quoteIdent(column)} = EXCLUDED.${quoteIdent(column)}`).join(', ')}`
       : 'DO NOTHING';
     const returning = this.shouldReturnRows ? ` RETURNING ${parseSelect(this.selectText)}` : '';
-    const { rows: returnedRows, rowCount } = await (await getPool()).query(
+    const { rows: returnedRows, rowCount } = await queryWithFallback(
       `INSERT INTO ${quoteIdent(this.table)} (${columns.map(quoteIdent).join(', ')}) VALUES ${valuesSql.join(', ')}
        ON CONFLICT (${conflictSql}) ${updateSql}${returning}`,
       params,

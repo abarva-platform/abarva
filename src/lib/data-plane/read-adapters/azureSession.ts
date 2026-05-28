@@ -43,6 +43,32 @@ export function resolveAzureUrl(): string | null {
   );
 }
 
+export function resolveAzureUrlCandidates(env: NodeJS.ProcessEnv = process.env): string[] {
+  const candidates = [
+    env.ABARVA_AZURE_DATABASE_URL?.trim(),
+    env.DATABASE_URL?.trim(),
+  ].filter((value): value is string => Boolean(value));
+  return [...new Set(candidates)];
+}
+
+export function isAzureSessionFallbackError(error: unknown): boolean {
+  const record = error as { code?: unknown; message?: unknown };
+  const code = typeof record?.code === 'string' ? record.code : '';
+  const message = typeof record?.message === 'string' ? record.message : String(error ?? '');
+  return (
+    ['ENOTFOUND', 'EAI_AGAIN', 'ETIMEDOUT', 'ECONNREFUSED', 'ECONNRESET'].includes(code) ||
+    /getaddrinfo|connect\s+etimedout|connection\s+timeout|connection\s+terminated|econnrefused|enotfound/i.test(message)
+  );
+}
+
+function clientConfig(connectionString: string, applicationName: string): ClientConfig {
+  return {
+    connectionString,
+    application_name: applicationName,
+    ssl: disableSsl(connectionString) ? false : { rejectUnauthorized: false },
+  };
+}
+
 /**
  * Default session runner — opens one `pg` connection for the whole call and
  * tears it down afterward. `applicationName` tags the connection for easier
@@ -50,26 +76,36 @@ export function resolveAzureUrl(): string | null {
  */
 export function createDefaultSession(applicationName: string): SessionRunner {
   return async (fn) => {
-    const url = resolveAzureUrl();
-    if (!url) {
+    const urls = resolveAzureUrlCandidates();
+    if (urls.length === 0) {
       throw new Error(
         'azure_read_adapter_no_connection: set ABARVA_AZURE_DATABASE_URL or DATABASE_URL',
       );
     }
-    const config: ClientConfig = {
-      connectionString: url,
-      application_name: applicationName,
-      ssl: disableSsl(url) ? false : { rejectUnauthorized: false },
-    };
-    const client = new Client(config);
-    await client.connect();
-    try {
-      const run: SqlRunner = async <R>(sql: string, params: unknown[]) =>
-        (await client.query(sql, params)).rows as R[];
-      return await fn(run);
-    } finally {
-      await client.end();
+
+    let lastError: unknown = null;
+    for (let index = 0; index < urls.length; index++) {
+      const url = urls[index]!;
+      const client = new Client(clientConfig(url, applicationName));
+      try {
+        await client.connect();
+        const run: SqlRunner = async <R>(sql: string, params: unknown[]) =>
+          (await client.query(sql, params)).rows as R[];
+        return await fn(run);
+      } catch (error) {
+        lastError = error;
+        const canFallback = index < urls.length - 1 && isAzureSessionFallbackError(error);
+        if (!canFallback) throw error;
+        console.warn('[azure-session] primary database connection failed; trying fallback DATABASE_URL', {
+          code: (error as { code?: unknown })?.code,
+          message: error instanceof Error ? error.message : String(error),
+        });
+      } finally {
+        await client.end().catch(() => undefined);
+      }
     }
+
+    throw lastError;
   };
 }
 
@@ -84,35 +120,43 @@ export type TxSessionRunner = <T>(fn: (run: SqlRunner) => Promise<T>) => Promise
  */
 export function createTxSession(applicationName: string): TxSessionRunner {
   return async (fn) => {
-    const url = resolveAzureUrl();
-    if (!url) {
+    const urls = resolveAzureUrlCandidates();
+    if (urls.length === 0) {
       throw new Error(
         'azure_write_adapter_no_connection: set ABARVA_AZURE_DATABASE_URL or DATABASE_URL',
       );
     }
-    const config: ClientConfig = {
-      connectionString: url,
-      application_name: applicationName,
-      ssl: disableSsl(url) ? false : { rejectUnauthorized: false },
-    };
-    const client = new Client(config);
-    await client.connect();
-    const run: SqlRunner = async <R>(sql: string, params: unknown[]) =>
-      (await client.query(sql, params)).rows as R[];
-    try {
-      await client.query('BEGIN');
-      const result = await fn(run);
-      await client.query('COMMIT');
-      return result;
-    } catch (err) {
+
+    let lastError: unknown = null;
+    for (let index = 0; index < urls.length; index++) {
+      const url = urls[index]!;
+      const client = new Client(clientConfig(url, applicationName));
       try {
-        await client.query('ROLLBACK');
-      } catch {
-        // The connection is being torn down regardless; swallow rollback noise.
+        await client.connect();
+        const run: SqlRunner = async <R>(sql: string, params: unknown[]) =>
+          (await client.query(sql, params)).rows as R[];
+        await client.query('BEGIN');
+        const result = await fn(run);
+        await client.query('COMMIT');
+        return result;
+      } catch (error) {
+        try {
+          await client.query('ROLLBACK');
+        } catch {
+          // The connection is being torn down regardless; swallow rollback noise.
+        }
+        lastError = error;
+        const canFallback = index < urls.length - 1 && isAzureSessionFallbackError(error);
+        if (!canFallback) throw error;
+        console.warn('[azure-session] primary database connection failed; trying fallback DATABASE_URL', {
+          code: (error as { code?: unknown })?.code,
+          message: error instanceof Error ? error.message : String(error),
+        });
+      } finally {
+        await client.end().catch(() => undefined);
       }
-      throw err;
-    } finally {
-      await client.end();
     }
+
+    throw lastError;
   };
 }

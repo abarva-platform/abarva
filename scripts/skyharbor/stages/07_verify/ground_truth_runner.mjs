@@ -8,6 +8,7 @@
  *
  * Usage:
  *   node scripts/skyharbor/stages/07_verify/ground_truth_runner.mjs --persona=cto
+ *   node scripts/skyharbor/07_verify/ground_truth_runner.mjs --persona=cto --output verification/TIER_1_GROUND_TRUTH_RESULTS.md
  *
  * Optional env:
  *   BASE_URL=https://app.abarva.ai
@@ -44,7 +45,11 @@ const HEADLESS = process.env.HEADLESS !== 'false';
 const RUN_STAMP = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 16);
 const OUT_DIR = path.join(REPO_ROOT, 'audit-artifacts', `skyharbor-ground-truth-${RUN_STAMP}`);
 const RAW_DIR = path.join(OUT_DIR, 'raw-events');
+const EXPLICIT_MD_PATH = args.get('output')
+  ? path.resolve(REPO_ROOT, args.get('output'))
+  : null;
 fs.mkdirSync(RAW_DIR, { recursive: true });
+if (EXPLICIT_MD_PATH) fs.mkdirSync(path.dirname(EXPLICIT_MD_PATH), { recursive: true });
 
 const WRONG_TENANT_TERMS = [
   'Apex Retail',
@@ -388,8 +393,10 @@ function escapeMarkdown(value) {
 
 function renderMarkdown(results) {
   const passed = results.filter((result) => result.pass).length;
+  const perfect = results.filter((result) => result.score >= 5).length;
   const avg = results.reduce((sum, result) => sum + result.score, 0) / Math.max(results.length, 1);
   const failures = results.filter((result) => !result.pass);
+  const meetsPacket29Gate = passed >= 23 && perfect >= 18;
   const lines = [
     '# SkyHarbor Packet 29 Section 8 Ground Truth Replay',
     '',
@@ -399,8 +406,9 @@ function renderMarkdown(results) {
     `Questions: ${results.length}`,
     `Pass threshold: score >= 4/5 with visible grounding/citation signal`,
     `Passed: ${passed}/${results.length}`,
+    `Score 5/5: ${perfect}/${results.length}`,
     `Average score: ${avg.toFixed(2)}/5`,
-    `Result: ${passed === results.length ? 'PASS' : 'REVIEW REQUIRED'}`,
+    `Packet 29 Section 8 gate: ${meetsPacket29Gate ? 'PASS' : 'REVIEW REQUIRED'} (requires >=23 scored >=4 and >=18 scored 5)`,
     '',
     '## Score Table',
     '',
@@ -465,8 +473,10 @@ async function main() {
     await browser.close();
   }
 
-  const jsonPath = path.join(OUT_DIR, 'ground_truth_results.json');
-  const mdPath = path.join(OUT_DIR, 'GROUND_TRUTH_RESULTS.md');
+  const mdPath = EXPLICIT_MD_PATH ?? path.join(OUT_DIR, 'GROUND_TRUTH_RESULTS.md');
+  const jsonPath = EXPLICIT_MD_PATH
+    ? path.join(path.dirname(EXPLICIT_MD_PATH), `${path.basename(EXPLICIT_MD_PATH, path.extname(EXPLICIT_MD_PATH))}.json`)
+    : path.join(OUT_DIR, 'ground_truth_results.json');
   fs.writeFileSync(jsonPath, JSON.stringify({
     baseUrl: BASE_URL,
     persona: PERSONA,
@@ -477,13 +487,14 @@ async function main() {
   fs.writeFileSync(mdPath, renderMarkdown(results));
 
   const passed = results.filter((result) => result.pass).length;
+  const perfect = results.filter((result) => result.score >= 5).length;
   const avg = results.reduce((sum, result) => sum + result.score, 0) / Math.max(results.length, 1);
   console.log('');
-  console.log(`Passed ${passed}/${results.length}; average ${avg.toFixed(2)}/5`);
+  console.log(`Passed ${passed}/${results.length}; score 5/5 ${perfect}/${results.length}; average ${avg.toFixed(2)}/5`);
   console.log(`Markdown: ${mdPath}`);
   console.log(`JSON: ${jsonPath}`);
 
-  if (passed < results.length) {
+  if (passed < 23 || perfect < 18) {
     process.exitCode = 1;
   }
 }
