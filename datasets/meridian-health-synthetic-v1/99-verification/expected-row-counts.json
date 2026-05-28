@@ -21,6 +21,8 @@
   "hipaa_controls": 54,
   "context_source_files": 48,
   "context_chunks": 320,
+  "upload_templates": 26,
+  "upload_scenarios": 8,
   "contract_pdfs": 32,
   "charter_pdfs": 12,
   "expected_sentinel_questions": 14,

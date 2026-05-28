@@ -24,6 +24,7 @@
     "release:check": "node scripts/release-check.mjs",
     "verify:apex-data-pack": "node scripts/verify/apex-data-pack-scaffold.mjs",
     "verify:meridian-data-pack": "node scripts/verify/meridian-data-pack-scaffold.mjs",
+    "verify:meridian-context-showcase": "node scripts/verify/meridian-context-showcase.mjs",
     "verify:northstar-context-layer": "node scripts/verify/northstar-context-layer-scaffold.mjs",
     "generate:skyharbor-substrate": "node scripts/skyharbor/generate-skyharbor-substrate.mjs",
     "generate:skyharbor-overlay": "node scripts/skyharbor/generate-airline-pattern-overlay.mjs",
