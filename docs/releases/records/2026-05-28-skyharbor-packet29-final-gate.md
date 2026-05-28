@@ -10,7 +10,7 @@
 
 ## Plain-English Summary
 
-This release closes the last SkyHarbor Packet 29 verifier gaps found after the Azure data-plane load. Sentinel now receives a structured engineering-productivity source for SkyHarbor DORA questions and is instructed to answer from loaded tenant evidence instead of turning partial detail gaps into broad missing-data admissions.
+This release closes the last SkyHarbor Packet 29 verifier gaps found after the Azure data-plane load. Sentinel now receives a structured engineering-productivity source for SkyHarbor DORA questions and is instructed to answer from loaded tenant evidence instead of turning partial detail gaps into broad missing-data admissions. The Packet 29 verifier also isolates each CTO scrutiny question in its own ask session so memory from earlier questions cannot inflate later prompts or hide runtime failures.
 
 ## Layer Impact
 
@@ -19,6 +19,8 @@ Application lane: Sentinel Intelligence retrieval now adds a SkyHarbor DORA / en
 Agent reasoning lane: the synthesis prompt now tells Sentinel to lead sourcing, EDP, DORA, cyber, AI-tooling, and operating-model answers with concrete tenant facts when TENANT sources are present.
 
 QA lane: the Packet 29 ground-truth verifier is rerun after production deployment to confirm the CTO scrutiny gate.
+
+Verification tooling lane: the Packet 29 runner now uses a per-question `tabId`, because the replay is a 25-question ground-truth suite rather than a conversation-continuity test.
 
 ## Client Applicability
 
@@ -33,12 +35,14 @@ QA lane: the Packet 29 ground-truth verifier is rerun after production deploymen
 - PR #2390 closes the final Packet 29 verifier gaps.
 - `src/lib/knowledge/tenant-enterprise-context.ts` adds SkyHarbor SHA record-prefix mapping and DORA scorecard source construction.
 - `src/lib/intelligence/ask/synthesizer.ts` tightens partial-evidence answer discipline.
+- `scripts/skyharbor/stages/07_verify/ground_truth_runner.mjs` isolates each question in a separate ask session to avoid accumulated session-memory prompts.
 - `src/lib/knowledge/__tests__/tenant-enterprise-context.test.ts` adds a regression test for the exact DORA / modernization-correlation question.
 
 ## QA / Validation
 
 - `npx jest src/lib/knowledge/__tests__/tenant-enterprise-context.test.ts --runInBand` passed locally.
 - `npx eslint src/lib/knowledge/tenant-enterprise-context.ts src/lib/knowledge/__tests__/tenant-enterprise-context.test.ts src/lib/intelligence/ask/synthesizer.ts` passed locally.
+- `node --check scripts/skyharbor/stages/07_verify/ground_truth_runner.mjs` passed locally.
 - `npx tsc --noEmit --pretty false` passed locally.
 - Packet 29 Section 8 full verifier will be rerun against production after merge and deploy; candidate status remains until that result is captured.
 
