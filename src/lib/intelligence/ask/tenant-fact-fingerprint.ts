@@ -1,6 +1,9 @@
 import 'server-only';
 
-import { getServerSupabase } from '@/lib/supabase-server';
+import {
+  createDefaultSession,
+  type SqlRunner,
+} from '@/lib/data-plane/read-adapters/azureSession';
 
 export interface TenantFactFingerprint {
   hasExecutiveBios: boolean;
@@ -16,37 +19,39 @@ export async function getTenantFactFingerprint(args: {
   tenantId?: string | null;
   tenantInventoryKey?: string | null;
 }): Promise<TenantFactFingerprint | null> {
-  if (!args.tenantId) return null;
-
   try {
-    const sb = getServerSupabase();
-    const [
-      executiveChunks,
-      applicationCount,
-      vendorCount,
-      initiativeCount,
-      financialProfile,
-      financialChunks,
-      boardChunks,
-    ] = await Promise.all([
-      countContextChunks(sb, args.tenantId, ['org_structure'], 'cfo|ceo|cio|chief|executive|Maya|Daniel|Priya|Elena|Marcus'),
-      countRows(sb, 'applications', args.tenantId),
-      countRows(sb, 'vendor_contracts', args.tenantId),
-      countRows(sb, 'ai_initiatives', args.tenantId),
-      readClientFinancialPresence(sb, args.tenantId),
-      countContextChunks(sb, args.tenantId, ['it_financials'], '$|budget|spend|financial|FY26|FY2026'),
-      countContextChunks(sb, args.tenantId, ['enterprise_profile'], 'board|activist|capital markets|earnings|margin target'),
-    ]);
+    const clientId = await resolveFingerprintClientId(args);
+    if (!clientId) return null;
 
-    const fingerprint: TenantFactFingerprint = {
-      hasExecutiveBios: executiveChunks > 0,
-      hasApplicationPortfolio: applicationCount > 0,
-      hasVendorContracts: vendorCount > 0,
-      hasInitiatives: initiativeCount > 0,
-      hasFinancials: financialProfile || financialChunks > 0,
-      hasBoardMinutes: boardChunks > 0,
-      namedEntityClasses: [],
-    };
+    const fingerprint = await fingerprintSession(async (run) => {
+      const [
+        executiveChunks,
+        applicationCount,
+        vendorCount,
+        initiativeCount,
+        financialProfile,
+        financialChunks,
+        boardChunks,
+      ] = await Promise.all([
+        countContextChunks(run, clientId, ['org_structure'], 'cfo|ceo|cio|chief|executive|Maya|Daniel|Priya|Elena|Marcus|Amala'),
+        countRows(run, 'applications', clientId),
+        countRows(run, 'vendor_contracts', clientId),
+        countRows(run, 'ai_initiatives', clientId),
+        readClientFinancialPresence(run, clientId),
+        countContextChunks(run, clientId, ['it_financials'], '\\$|budget|spend|financial|FY26|FY2026|value|realized|disputed'),
+        countContextChunks(run, clientId, ['enterprise_profile'], 'board|activist|capital markets|earnings|margin target|modernization'),
+      ]);
+
+      return {
+        hasExecutiveBios: executiveChunks > 0,
+        hasApplicationPortfolio: applicationCount > 0,
+        hasVendorContracts: vendorCount > 0,
+        hasInitiatives: initiativeCount > 0,
+        hasFinancials: financialProfile || financialChunks > 0,
+        hasBoardMinutes: boardChunks > 0,
+        namedEntityClasses: [] as string[],
+      } satisfies TenantFactFingerprint;
+    });
     if (fingerprint.hasExecutiveBios) fingerprint.namedEntityClasses.push('executives');
     if (fingerprint.hasApplicationPortfolio) fingerprint.namedEntityClasses.push('apps');
     if (fingerprint.hasVendorContracts) fingerprint.namedEntityClasses.push('vendors');
@@ -54,6 +59,49 @@ export async function getTenantFactFingerprint(args: {
     if (fingerprint.hasFinancials) fingerprint.namedEntityClasses.push('financials');
     if (fingerprint.hasBoardMinutes) fingerprint.namedEntityClasses.push('board');
     return fingerprint;
+  } catch {
+    return null;
+  }
+}
+
+const fingerprintSession = createDefaultSession('tenant-fact-fingerprint');
+
+const TENANT_KEY_ALIASES: Record<string, string[]> = {
+  apex: ['apex-retail', 'apexretail'],
+  'apex-retail': ['apex-retail', 'apexretail'],
+  meridian: ['meridian-health', 'meridian'],
+  'meridian-health': ['meridian-health', 'meridian'],
+  northstar: ['northstar-medtech', 'northstar'],
+  'northstar-medtech': ['northstar-medtech', 'northstar'],
+  firstcapital: ['first-capital', 'firstcapital'],
+  'first-capital': ['first-capital', 'firstcapital'],
+  'first-capital-financial': ['first-capital', 'firstcapital'],
+  arcturus: ['first-capital', 'firstcapital'],
+  skyharbor: ['skyharbor-air', 'skyharbor'],
+  'skyharbor-air': ['skyharbor-air', 'skyharbor'],
+};
+
+async function resolveFingerprintClientId(args: {
+  tenantId?: string | null;
+  tenantInventoryKey?: string | null;
+}): Promise<string | null> {
+  const tenantId = args.tenantId?.trim();
+  if (tenantId) return tenantId;
+
+  const key = args.tenantInventoryKey?.trim().toLowerCase();
+  if (!key) return null;
+  const aliases = TENANT_KEY_ALIASES[key] ?? [key];
+  try {
+    return await fingerprintSession(async (run) => {
+      const rows = await run<{ id: string }>(
+        `SELECT id
+           FROM clients
+          WHERE tenant_key = ANY($1::text[]) OR slug = ANY($1::text[])
+          LIMIT 1`,
+        [aliases],
+      );
+      return rows[0]?.id ?? null;
+    });
   } catch {
     return null;
   }
@@ -79,45 +127,62 @@ export function formatTenantFactAvailabilityBlock(fingerprint: TenantFactFingerp
 }
 
 async function countRows(
-  sb: ReturnType<typeof getServerSupabase>,
+  run: SqlRunner,
   table: string,
   tenantId: string,
 ): Promise<number> {
-  const { count, error } = await sb
-    .from(table)
-    .select('id', { count: 'exact', head: true })
-    .eq('client_id', tenantId);
-  if (error) return 0;
-  return count ?? 0;
+  try {
+    const rows = await run<{ count: number | string }>(
+      `SELECT count(*)::int AS count FROM ${table} WHERE client_id = $1`,
+      [tenantId],
+    );
+    return Number(rows[0]?.count ?? 0);
+  } catch {
+    return 0;
+  }
 }
 
 async function countContextChunks(
-  sb: ReturnType<typeof getServerSupabase>,
+  run: SqlRunner,
   tenantId: string,
   segments: string[],
   queryRegex: string,
 ): Promise<number> {
-  const { data, error } = await sb
-    .from('enterprise_context_chunks')
-    .select('chunk_id,chunk_text,source_segment_id')
-    .eq('client_id', tenantId)
-    .in('source_segment_id', segments)
-    .limit(120);
-  if (error || !data) return 0;
-  const re = new RegExp(queryRegex, 'i');
-  return (data as Array<{ chunk_text?: string | null }>).filter((row) => re.test(row.chunk_text ?? '')).length;
+  try {
+    const rows = await run<{ chunk_text: string | null }>(
+      `SELECT chunk_text
+         FROM enterprise_context_chunks
+        WHERE client_id = $1
+          AND source_segment_id = ANY($2::text[])
+        LIMIT 180`,
+      [tenantId, segments],
+    );
+    const re = new RegExp(queryRegex, 'i');
+    return rows.filter((row) => re.test(row.chunk_text ?? '')).length;
+  } catch {
+    return 0;
+  }
 }
 
 async function readClientFinancialPresence(
-  sb: ReturnType<typeof getServerSupabase>,
+  run: SqlRunner,
   tenantId: string,
 ): Promise<boolean> {
-  const { data, error } = await sb
-    .from('clients')
-    .select('annual_revenue_usd,it_budget_usd,ai_budget_usd')
-    .eq('id', tenantId)
-    .maybeSingle();
-  if (error || !data) return false;
-  const row = data as Record<string, unknown>;
-  return row.annual_revenue_usd != null || row.it_budget_usd != null || row.ai_budget_usd != null;
+  try {
+    const rows = await run<{
+      annual_revenue_usd: number | string | null;
+      it_budget_usd: number | string | null;
+      ai_budget_usd: number | string | null;
+    }>(
+      `SELECT annual_revenue_usd, it_budget_usd, ai_budget_usd
+         FROM clients
+        WHERE id = $1
+        LIMIT 1`,
+      [tenantId],
+    );
+    const row = rows[0];
+    return Boolean(row && (row.annual_revenue_usd != null || row.it_budget_usd != null || row.ai_budget_usd != null));
+  } catch {
+    return false;
+  }
 }

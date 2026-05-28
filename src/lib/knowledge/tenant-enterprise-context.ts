@@ -24,7 +24,7 @@ export type TenantStructuredSource = TenantEnterpriseSource & {
 };
 
 const ENTERPRISE_QUERY_RE =
-  /\b(profile|company|enterprise|tenant|organization|organisation|org|structure|leadership|leaders?|executive|executives|business|function\s+leads?|c[-\s]?level|cxo|cio|cdio|cto|cmio|cmo|cno|coo|ceo|cfo|svp|vp|director|direct\s+reports?|reports?|reports?\s+to|owner|sponsor|budget|spend|financials?|capex|opex|capital|funding|approval|approver|authority|fy\s*26|fy2026|current\s+state|what\s+do\s+you\s+know|application|applications|apps?|systems?|portfolio|criticality|vendor|vendors?|supplier|suppliers?|contract|contracts?|renewal|renewals?|initiative|initiatives?|moves?|kill|accelerate|hold|restructure|replatform|dependency|dependencies|blocks?|blocked|blockers?|regulatory|regulation|fda|eu\s+ai\s+act|annex|mdr|ivdr|sbom|gxp|iso\s*13485|sap|s\/4|s4|wave|airline|skyharbor|ibm|mainframe|aws|z\s+workloads?|mips|modernization|amala|cio\s+challenge|pressure|value\s+ledger|duplicate\s+complexity|gcc)\b/i;
+  /\b(profile|company|enterprise|tenant|organization|organisation|org|structure|leadership|leaders?|executive|executives|business|function\s+leads?|c[-\s]?level|cxo|cio|cdio|cto|cmio|cmo|cno|coo|ceo|cfo|svp|vp|director|direct\s+reports?|reports?|reports?\s+to|owner|sponsor|budget|spend|financials?|capex|opex|capital|funding|approval|approver|authority|fy\s*26|fy2026|current\s+state|what\s+do\s+you\s+know|application|applications|apps?|systems?|portfolio|criticality|vendor|vendors?|supplier|suppliers?|contract|contracts?|renewal|renewals?|initiative|initiatives?|moves?|kill|accelerate|hold|restructure|replatform|dependency|dependencies|blocks?|blocked|blockers?|regulatory|regulation|fda|eu\s+ai\s+act|annex|mdr|ivdr|sbom|gxp|iso\s*13485|sap|s\/4|s4|wave|airline|skyharbor|ibm|mainframe|aws|z\s+workloads?|mips|modernization|amala|cio\s+challenge|pressure|value\s+ledger|duplicate\s+complexity|gcc|global\s+capability|dora|mttr|lead\s+time|deploy\s+frequency|change\s+failure|engineering\s+productivity|operating\s+model|target\s+operating\s+model|\btom\b|sdlc|cobol|edp|true[-\s]?up|snowflake|databricks|cyber|security\s+stack|ai\s+tooling|sourcing\s+events?)\b/i;
 
 const OFF_DOMAIN_GENERAL_KNOWLEDGE_RE =
   /^\s*(?:what|where)\s+(?:is|are)\s+the\s+capital\s+of\b/i;
@@ -88,19 +88,19 @@ export function selectTenantEnterpriseSegments(query: string): SegmentId[] {
   const normalized = query.toLowerCase();
   const segments: SegmentId[] = [];
 
-  if (/\b(profile|company|enterprise|tenant|organization|organisation|who are we|what do you know|regulatory|regulation|fda|eu\s+ai\s+act|annex|mdr|ivdr|sbom|gxp|iso\s*13485|airline|skyharbor|modernization|ibm|mainframe|aws|duplicate\s+complexity|pressure)\b/.test(normalized)) {
+  if (/\b(profile|company|enterprise|tenant|organization|organisation|who are we|what do you know|regulatory|regulation|fda|eu\s+ai\s+act|annex|mdr|ivdr|sbom|gxp|iso\s*13485|airline|skyharbor|modernization|ibm|mainframe|aws|duplicate\s+complexity|pressure|operating\s+model|target\s+operating\s+model|\btom\b|dora|engineering\s+productivity|sdlc|cobol|edp|true[-\s]?up|snowflake|databricks|cyber|security\s+stack|ai\s+tooling)\b/.test(normalized)) {
     segments.push('enterprise_profile');
   }
   if (/\b(org|organization|organisation|structure|leadership|leaders?|executive|executives|business|function\s+leads?|c[-\s]?level|team|cxo|cio|cdio|cto|cmio|cmo|cno|coo|ceo|cfo|svp|vp|director|reports?\s+to|owner|sponsor|who|amala|cio\s+challenge|pressure)\b/.test(normalized)) {
     segments.push('org_structure');
   }
-  if (/\b(budget|spend|financials?|capex|opex|capital|funding|approval|approver|authority|fy\s*26|fy2026|run|change|transform|value\s+ledger|promised|realized|disputed|ibm|mips)\b/.test(normalized)) {
+  if (/\b(budget|spend|financials?|capex|opex|capital|funding|approval|approver|authority|fy\s*26|fy2026|run|change|transform|value\s+ledger|promised|realized|disputed|projected|value\s+stuck|ibm|mips|dora|mttr|lead\s+time|deploy\s+frequency|change\s+failure|edp|true[-\s]?up)\b/.test(normalized)) {
     segments.push('it_financials');
   }
-  if (/\b(technology|tech|system|systems|platform|cloud|data|analytics|warehouse|lakehouse|bi|ml|ai|vendor|vendors?|supplier|suppliers?|contract|contracts?|renewal|renewals?|application|applications|apps?|criticality|portfolio|sap|s\/4|s4|erp|ibm|mainframe|aws|z\s+workloads?|departure|crew|irops|revenue\s+accounting|baggage|cargo)\b/.test(normalized)) {
+  if (/\b(technology|tech|system|systems|platform|cloud|data|analytics|warehouse|lakehouse|bi|ml|ai|vendor|vendors?|supplier|suppliers?|contract|contracts?|renewal|renewals?|application|applications|apps?|criticality|portfolio|sap|s\/4|s4|erp|ibm|mainframe|aws|z\s+workloads?|departure|crew|irops|revenue\s+accounting|baggage|cargo|dora|mttr|lead\s+time|deploy\s+frequency|change\s+failure|sdlc|cobol|edp|snowflake|databricks|cyber|security\s+stack|ai\s+tooling)\b/.test(normalized)) {
     segments.push('it_landscape');
   }
-  if (/\b(program|initiative|initiatives|move|moves|in[-\s]?flight|portfolio|roadmap|kill|fund|pause|hold|accelerate|restructure|sap|s\/4|s4|wave|modernization|dependency|dependencies|blocks?|blocked|blockers?|ibm|mainframe|aws|value\s+ledger|through-line|pressure)\b/.test(normalized)) {
+  if (/\b(program|initiative|initiatives|move|moves|in[-\s]?flight|portfolio|roadmap|kill|fund|pause|hold|accelerate|restructure|sap|s\/4|s4|wave|modernization|dependency|dependencies|blocks?|blocked|blockers?|ibm|mainframe|aws|value\s+ledger|through-line|pressure|operating\s+model|target\s+operating\s+model|\btom\b|gcc|global\s+capability|dora|engineering\s+productivity|sdlc|cobol|edp|true[-\s]?up|snowflake|databricks|cyber|security\s+stack|ai\s+tooling|sourcing\s+events?)\b/.test(normalized)) {
     segments.push('program_inventory');
   }
 
@@ -240,10 +240,10 @@ async function retrieveStructuredTenantSources(
   query: string,
 ): Promise<TenantEnterpriseSource[]> {
   const normalized = query.toLowerCase();
-  const wantsProfile = /\b(profile|company|enterprise|tenant|what\s+do\s+you\s+know|who\s+are\s+we|budget|spend|financials?|revenue|employees?)\b/.test(normalized);
-  const wantsApps = /\b(application|applications|apps?|systems?|portfolio|criticality|replatform|legacy|erp|sap|as\/?400|mainframe)\b/.test(normalized);
-  const wantsVendors = /\b(vendor|vendors?|supplier|suppliers?|contract|contracts?|renewal|renewals?|ams|bafo|rfi|rfp|sourcing|source)\b/.test(normalized);
-  const wantsInitiatives = /\b(initiative|initiatives|move|moves|program|programs|kill|fund|pause|hold|accelerate|restructure|roadmap|sap|s\/4|s4|wave)\b/.test(normalized);
+  const wantsProfile = /\b(profile|company|enterprise|tenant|what\s+do\s+you\s+know|who\s+are\s+we|budget|spend|financials?|revenue|employees?|five\s+years?|progress|operating\s+model|target\s+operating\s+model|\btom\b|gcc|global\s+capability|dora|engineering\s+productivity)\b/.test(normalized);
+  const wantsApps = /\b(application|applications|apps?|systems?|portfolio|criticality|replatform|legacy|erp|sap|as\/?400|mainframe|z\s+workloads?|workloads?|extract|extraction|cobol|safety[-\s]?critical|duplicate\s+complexity)\b/.test(normalized);
+  const wantsVendors = /\b(vendor|vendors?|supplier|suppliers?|contract|contracts?|renewal|renewals?|ams|bafo|rfi|rfp|sourcing|source|ibm|aws|edp|true[-\s]?up|snowflake|databricks|cyber|security\s+stack|ai\s+tooling)\b/.test(normalized);
+  const wantsInitiatives = /\b(initiative|initiatives|move|moves|program|programs|kill|fund|pause|hold|accelerate|restructure|roadmap|sap|s\/4|s4|wave|modernization|operating\s+model|target\s+operating\s+model|\btom\b|sdlc|cobol|gcc|global\s+capability|90\s+days?|board)\b/.test(normalized);
   if (!wantsProfile && !wantsApps && !wantsVendors && !wantsInitiatives) return [];
 
   try {
@@ -274,7 +274,7 @@ export async function retrieveTenantStructuredFacts(
   const wantsRetiringApps = /(?:which\s+)?(?:applications?|apps?).*(?:retiring|retire|decommission|sunset)/.test(normalized);
   const wantsTopVendors = /(?:top|biggest|largest)\s+vendors?|vendor.*\b(?:spend|cost|annual)\b/.test(normalized);
   const wantsVendorRenewals = /vendor\s+renewal|renewing|renewals?\s+(?:window|date)|renewals?.*(?:next|6\s+months|six\s+months|exposed)/.test(normalized);
-  const wantsActiveInitiatives = /active\s+initiatives?|in[-\s]?flight\s+initiatives?|biggest\s+in[-\s]?flight\s+initiative|\b(?:sap|s\/4|s4)\b.*\bwave\b|\bwave\s*0\b/.test(normalized);
+  const wantsActiveInitiatives = /active\s+initiatives?|in[-\s]?flight\s+initiatives?|biggest\s+in[-\s]?flight\s+initiative|\b(?:sap|s\/4|s4)\b.*\bwave\b|\bwave\s*0\b|operating\s+model|target\s+operating\s+model|\btom\b|modernization\s+moves?|90\s+days?|ai\s+tooling|sdlc|cobol|gcc|global\s+capability|value\s+stuck|projected/.test(normalized);
   const wantsInitiativesByStage = /initiatives?\s+by\s+(?:stage|phase)/.test(normalized);
   const wantsKillInitiatives = /(?:which\s+)?(?:initiatives?|moves?).*(?:kill|stop|pause|cut)/.test(normalized);
 
