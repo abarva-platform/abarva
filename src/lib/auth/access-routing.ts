@@ -12,16 +12,21 @@ function normalizeEmail(email: string | null | undefined): string {
   return email?.trim().toLowerCase() ?? '';
 }
 
-function hasExplicitTenantAlias(email: string | null | undefined): boolean {
+export function hasExplicitTenantAlias(email: string | null | undefined): boolean {
   const normalized = normalizeEmail(email);
   if (!normalized) return false;
   return (
     normalized.endsWith('@meridian-health.example.com') ||
     normalized.endsWith('@apex-retail.example.com') ||
     normalized.endsWith('@firstcapital.example.com') ||
+    normalized.endsWith('@northstar-clinical.example.com') ||
+    normalized.endsWith('@northstar-medtech.example.com') ||
+    normalized.endsWith('@skyharbor-air.example.com') ||
     normalized.includes('+apex@abarva.com') ||
     normalized.includes('+meridian@abarva.com') ||
-    normalized.includes('+firstcapital@abarva.com')
+    normalized.includes('+firstcapital@abarva.com') ||
+    normalized.includes('+northstar@abarva.com') ||
+    normalized.includes('+skyharbor@abarva.com')
   );
 }
 
@@ -38,9 +43,14 @@ export function inferSessionRoleFromEmail(email: string | null | undefined): App
     normalized.endsWith('@meridian-health.example.com') ||
     normalized.endsWith('@apex-retail.example.com') ||
     normalized.endsWith('@firstcapital.example.com') ||
+    normalized.endsWith('@northstar-clinical.example.com') ||
+    normalized.endsWith('@northstar-medtech.example.com') ||
+    normalized.endsWith('@skyharbor-air.example.com') ||
     normalized.includes('+apex@abarva.com') ||
     normalized.includes('+meridian@abarva.com') ||
-    normalized.includes('+firstcapital@abarva.com')
+    normalized.includes('+firstcapital@abarva.com') ||
+    normalized.includes('+northstar@abarva.com') ||
+    normalized.includes('+skyharbor@abarva.com')
   ) {
     return 'client';
   }

@@ -3,16 +3,15 @@ import { currentUser } from '@clerk/nextjs/server';
 import { askIntelligence } from '@/lib/intelligence/ask';
 import { classifySentinelIntent, runSentinelReasoning } from '@/lib/agents/sentinel-reasoning';
 import { getCurrentPerson } from '@/lib/auth/maestro';
-import { getActiveClientRow } from '@/lib/active-client';
 import { assembleUserContextBlock } from '@/lib/agent/prompts/_shared/user-context';
-import { clientKeyToInventorySubstrateKey } from '@/lib/agent/tools/intelligence/_shared';
 import type { AskSurfaceContext } from '@/lib/intelligence/ask';
-import { resolveAskTenantKeyFallback } from '@/lib/intelligence/ask/tenant-key-resolution';
 import {
   appendAskSessionTurn,
   normalizeAskTabId,
   prepareAskSessionMemory,
 } from '@/lib/intelligence/ask/session-memory';
+import { resolveTenant } from '@/lib/tenant/resolveTenant';
+import type { CanonicalTenant } from '@/lib/tenant/CanonicalTenant';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -47,17 +46,14 @@ async function handleAsk(payload: AskPayload) {
   let userId: string | null = null;
   let tenantInventoryKey: string | null = null;
   let tenantClientKey: string | null = null;
+  let tenant: CanonicalTenant | null = null;
   const requestedOrSurfaceClient =
     requestedClient ??
     surfaceContext?.clientKey ??
     surfaceContext?.activeClient ??
     null;
-  const { requestedClientKey, tenantInventoryKey: fallbackTenantInventoryKey } =
-    resolveAskTenantKeyFallback(requestedClient, surfaceContext);
-  tenantInventoryKey = fallbackTenantInventoryKey;
-  tenantClientKey = requestedClientKey;
   let sentinelClientId: string =
-    tenantInventoryKey ?? requestedClientKey ?? requestedOrSurfaceClient ?? 'unknown-active-tenant';
+    requestedOrSurfaceClient ?? 'unknown-active-tenant';
   let sessionUserId: string | null = null;
   let activePersonGraphNodeId: string | null = null;
   let activePersonDisplayName: string | null = null;
@@ -65,16 +61,19 @@ async function handleAsk(payload: AskPayload) {
     const [person, clerkUser, client] = await Promise.all([
       getCurrentPerson(),
       currentUser().catch(() => null),
-      getActiveClientRow(requestedOrSurfaceClient).catch(() => null),
+      resolveTenant({
+        requestedClient,
+        surfaceClientKey: surfaceContext?.clientKey,
+        surfaceActiveClient: surfaceContext?.activeClient,
+      }).catch(() => null),
     ]);
+    tenant = client;
     sessionUserId = clerkUser?.id ?? null;
-    const resolvedClient = requestedOrSurfaceClient || clerkUser || person ? client : null;
-    tenantInventoryKey = resolvedClient?.key
-      ? clientKeyToInventorySubstrateKey(resolvedClient.key)
-      : fallbackTenantInventoryKey;
-    tenantClientKey = resolvedClient?.key ?? requestedClientKey;
-    tenantId = resolvedClient?.id ?? null;
-    sentinelClientId = resolvedClient?.id ?? tenantInventoryKey ?? requestedClientKey ?? requestedOrSurfaceClient ?? 'unknown-active-tenant';
+    const resolvedClient = client;
+    tenantInventoryKey = resolvedClient?.canonicalKey ?? null;
+    tenantClientKey = resolvedClient?.appClientKey ?? null;
+    tenantId = resolvedClient?.clientId ?? null;
+    sentinelClientId = resolvedClient?.clientId ?? tenantInventoryKey ?? tenantClientKey ?? requestedOrSurfaceClient ?? 'unknown-active-tenant';
     if (person) {
       userId = person.id;
       activePersonGraphNodeId = person.graph_node_id;
@@ -82,7 +81,7 @@ async function handleAsk(payload: AskPayload) {
       userContextBlock = await assembleUserContextBlock({
         personId: person.id,
         displayName: person.name,
-        activeTenantDisplayName: resolvedClient?.name ?? null,
+        activeTenantDisplayName: resolvedClient?.displayName ?? null,
       });
     }
     userId = sessionUserId ?? userId;
@@ -165,6 +164,7 @@ async function handleAsk(payload: AskPayload) {
           userContextBlock,
           tenantId,
           tenantClientKey,
+          tenant,
           userId,
           tenantInventoryKey,
           surfaceContext,

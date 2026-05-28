@@ -1,0 +1,173 @@
+import { resolveTenant } from '@/lib/tenant/resolveTenant';
+import { TenantResolutionError } from '@/lib/tenant/CanonicalTenant';
+import {
+  appClientKeyForTenant,
+  brokerTenantKey,
+  canonicalTenantKey,
+  tenantAliasesFor,
+} from '@/lib/tenant/aliases';
+
+const currentUserMock = jest.fn();
+const cookiesMock = jest.fn();
+const getServerSupabaseMock = jest.fn();
+
+jest.mock('@clerk/nextjs/server', () => ({
+  currentUser: () => currentUserMock(),
+}));
+
+jest.mock('next/headers', () => ({
+  cookies: () => cookiesMock(),
+}));
+
+jest.mock('@/lib/supabase-server', () => ({
+  getServerSupabase: () => getServerSupabaseMock(),
+}));
+
+function mockCookie(value: string | null): void {
+  cookiesMock.mockResolvedValue({
+    get: () => value ? { value } : null,
+  });
+}
+
+function mockClientRow(row: { id: string; name: string; industry_code: string | null } | null): void {
+  const maybeSingle = jest.fn(async () => ({ data: row }));
+  const limit = jest.fn(() => ({ maybeSingle }));
+  const eq = jest.fn(() => ({ limit }));
+  const ilike = jest.fn(() => ({ limit }));
+  const select = jest.fn(() => ({ eq, ilike }));
+  const from = jest.fn(() => ({ select }));
+  getServerSupabaseMock.mockReturnValue({ from });
+}
+
+describe('canonical tenant aliases', () => {
+  it('normalizes app keys, substrate keys, and legacy names through one map', () => {
+    expect(canonicalTenantKey('skyharbor')).toBe('skyharbor-air');
+    expect(canonicalTenantKey('skyharbor-air')).toBe('skyharbor-air');
+    expect(canonicalTenantKey('northstar')).toBe('northstar-medtech');
+    expect(canonicalTenantKey('northstar-clinical-tech')).toBe('northstar-medtech');
+    expect(canonicalTenantKey('apexretail')).toBe('apex-retail');
+    expect(canonicalTenantKey('meridian')).toBe('meridian-health');
+    expect(canonicalTenantKey('arcturus')).toBe('first-capital');
+    expect(appClientKeyForTenant('first-capital')).toBe('arcturus');
+    expect(brokerTenantKey('meridian')).toBe('meridian');
+    expect(tenantAliasesFor('skyharbor')).toEqual(expect.arrayContaining(['skyharbor', 'skyharbor-air']));
+  });
+});
+
+describe('resolveTenant', () => {
+  beforeEach(() => {
+    currentUserMock.mockReset();
+    cookiesMock.mockReset();
+    getServerSupabaseMock.mockReset();
+    mockClientRow(null);
+  });
+
+  it('pins explicit SkyHarbor email personas before stale active-client cookies', async () => {
+    currentUserMock.mockResolvedValue({
+      publicMetadata: { role: 'admin' },
+      primaryEmailAddress: { emailAddress: 'cto@skyharbor-air.example.com' },
+      emailAddresses: [],
+    });
+    mockCookie('apexretail');
+    mockClientRow({
+      id: 'client-skyharbor',
+      name: 'SkyHarbor Air',
+      industry_code: 'AIRLINE',
+    });
+
+    await expect(resolveTenant()).resolves.toMatchObject({
+      appClientKey: 'skyharbor',
+      canonicalKey: 'skyharbor-air',
+      brokerKey: 'skyharbor-air',
+      clientId: 'client-skyharbor',
+      source: 'email',
+    });
+  });
+
+  it('lets an unlocked request body select the tenant when no explicit persona pin exists', async () => {
+    currentUserMock.mockResolvedValue({
+      publicMetadata: { role: 'admin' },
+      primaryEmailAddress: { emailAddress: 'ops@example.com' },
+      emailAddresses: [],
+    });
+    mockCookie('meridian');
+
+    await expect(resolveTenant({ requestedClient: 'northstar' })).resolves.toMatchObject({
+      appClientKey: 'northstar',
+      canonicalKey: 'northstar-medtech',
+      source: 'body',
+    });
+  });
+
+  it('resolves from the active-client cookie when request and session do not name a tenant', async () => {
+    currentUserMock.mockResolvedValue({
+      publicMetadata: {},
+      primaryEmailAddress: { emailAddress: 'ops@example.com' },
+      emailAddresses: [],
+    });
+    mockCookie('skyharbor-air');
+
+    await expect(resolveTenant()).resolves.toMatchObject({
+      appClientKey: 'skyharbor',
+      canonicalKey: 'skyharbor-air',
+      source: 'cookie',
+    });
+  });
+
+  it('resolves from surface client context when the body omits client', async () => {
+    currentUserMock.mockResolvedValue(null);
+    mockCookie(null);
+
+    await expect(resolveTenant({ surfaceClientKey: 'northstar' })).resolves.toMatchObject({
+      appClientKey: 'northstar',
+      canonicalKey: 'northstar-medtech',
+      source: 'body',
+    });
+  });
+
+  it('does not let locked client roles switch tenants through requested client ids', async () => {
+    currentUserMock.mockResolvedValue({
+      publicMetadata: { role: 'client', clientId: 'meridian' },
+      primaryEmailAddress: { emailAddress: 'external.cdao@example.com' },
+      emailAddresses: [],
+    });
+    mockCookie('apexretail');
+
+    await expect(resolveTenant({ requestedClient: 'skyharbor' })).resolves.toMatchObject({
+      appClientKey: 'meridian',
+      canonicalKey: 'meridian-health',
+      source: 'session',
+    });
+  });
+
+  it('falls back gracefully to the requested tenant when Clerk is unavailable', async () => {
+    currentUserMock.mockRejectedValue(new Error('Clerk unavailable'));
+    mockCookie(null);
+
+    await expect(resolveTenant({ requestedClient: 'meridian' })).resolves.toMatchObject({
+      appClientKey: 'meridian',
+      canonicalKey: 'meridian-health',
+      source: 'body',
+    });
+  });
+
+  it('throws instead of falling back when strict resolution is requested', async () => {
+    currentUserMock.mockResolvedValue(null);
+    mockCookie(null);
+
+    await expect(resolveTenant({ allowFallback: false })).rejects.toMatchObject({
+      name: 'TenantResolutionError',
+      code: 'missing_tenant',
+    } satisfies Partial<TenantResolutionError>);
+  });
+
+  it('throws a distinct unknown-tenant error for strict unknown request aliases', async () => {
+    currentUserMock.mockResolvedValue(null);
+    mockCookie(null);
+
+    await expect(resolveTenant({ requestedClient: 'unknown-air', allowFallback: false })).rejects.toMatchObject({
+      name: 'TenantResolutionError',
+      code: 'unknown_tenant',
+    } satisfies Partial<TenantResolutionError>);
+  });
+});
