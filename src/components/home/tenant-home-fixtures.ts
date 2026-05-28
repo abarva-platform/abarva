@@ -86,7 +86,7 @@ export interface NavGroup {
 }
 
 export interface TenantHomeData {
-  key: 'meridian' | 'apex' | 'firstcap';
+  key: 'meridian' | 'apex' | 'firstcap' | 'skyharbor';
   monogram: string;
   title: string;
   tagline: string;
@@ -666,6 +666,149 @@ export const FIRSTCAP_HOME: TenantHomeData = {
   panels: SHARED_PANELS,
 };
 
+// ─── SkyHarbor Air ───────────────────────────────────────────────
+
+export const SKYHARBOR_HOME: TenantHomeData = {
+  key: 'skyharbor',
+  monogram: 'SH',
+  title: 'SkyHarbor Air',
+  tagline:
+    '$52.1B global network carrier · 95,000 employees · 950 aircraft · 8 US hubs · IBM Z modernization to AWS · 110M loyalty members',
+  theme: {
+    tenant: '#075985',
+    tenantSoft: 'rgba(7,89,133,0.08)',
+    tenantLine: 'rgba(7,89,133,0.22)',
+  },
+  pills: [
+    { label: 'Industry: Global Airline', tone: 'tenant' },
+    { label: '15 segments loaded', tone: 'navy' },
+    { label: '645 records', tone: 'navy' },
+    { label: '3.2k reasoning chunks', tone: 'teal' },
+    { label: 'IBM / AWS modernization', tone: 'amber' },
+    { label: 'Demo tenant', tone: 'muted' },
+  ],
+  navGroups: SHARED_NAV,
+  navFootLines: ['Tenant data plane', 'skyharbor-air · demo', '', 'Substrate v1.0', 'Airline overlay v1'],
+  readiness: [
+    {
+      module: 'Module 01',
+      name: 'Tower',
+      pct: 74,
+      tone: 'amber',
+      note: 'Modernization ledger, value posture, and dependency pressure visible.',
+      href: '/tower/portfolio',
+    },
+    {
+      module: 'Module 02',
+      name: 'Source',
+      pct: 78,
+      tone: 'teal',
+      note: 'IBM restructure, AWS true-up, and sourcing pipeline surfaced.',
+      href: '/source/value',
+    },
+    {
+      module: 'Module 03',
+      name: 'Intelligence',
+      pct: 76,
+      tone: 'amber',
+      note: '480 tenant facts plus 2,760 airline patterns available for reasoning.',
+      href: '/intelligence/ask',
+    },
+    {
+      module: 'Module 04',
+      name: 'Strategic Moves',
+      pct: 70,
+      tone: 'amber',
+      note: 'Mainframe extraction and AI SDLC moves ready for shaping.',
+      href: '/strategic-moves',
+    },
+  ],
+  steward: {
+    headline:
+      "SkyHarbor's substrate simulates a mature airline modernization program: five years in, real progress made, with IBM dependency, AWS extraction choices, GCC scale, and AI SDLC acceleration still contested.",
+    loaded: [
+      { code: 'S02', label: '5-year modernization ledger', qty: '60 events' },
+      { code: 'S03', label: 'Mainframe workload inventory', qty: '28 workloads' },
+      { code: 'S05', label: 'Integration topology', qty: '95 edges' },
+      { code: 'S08', label: 'Vendor portfolio', qty: '52 contracts' },
+      { code: 'S11', label: 'AI SDLC opportunity map', qty: '22 tiles' },
+    ],
+    missing: [
+      { code: 'LIVE', label: 'Production customer exports', qty: 'not connected' },
+      { code: 'RLS', label: 'Private-lane load proof', qty: 'pending operator run' },
+      { code: 'GTQ', label: '25 CTO questions', qty: 'requires live load verification' },
+    ],
+    nextLoad:
+      'Run the Azure private-lane loader to hydrate the live data plane with all 3,240 SkyHarbor chunks, applications, initiatives, and vendor contracts.',
+  },
+  actions: [
+    {
+      num: '01',
+      title: 'Review next mainframe extractions by value-to-risk ratio',
+      meta: 'MODERNIZATION · 28 workloads remain on Z · 6 extractions in flight',
+      time: 'TODAY',
+      primary: true,
+      href: '/intelligence/ask',
+    },
+    {
+      num: '02',
+      title: 'Shape AI-powered SDLC acceleration for COBOL-heavy domains',
+      meta: 'MOVE · test generation, dependency mining, refactor assistance',
+      time: 'THIS WEEK',
+      href: '/programs/new',
+    },
+    {
+      num: '03',
+      title: 'Prepare IBM FY2027 restructure leverage map',
+      meta: 'SOURCE · $280M/yr engagement · productivity guarantees contested',
+      time: 'THIS WEEK',
+      href: '/source/value',
+    },
+    {
+      num: '04',
+      title: 'Validate GCC ramp model from 1,000 to peer-range scale',
+      meta: 'OPERATING MODEL · Bangalore + Hyderabad · 24-month target model',
+      time: '2 WEEKS',
+      href: '/tower/portfolio',
+    },
+  ],
+  activity: [
+    {
+      time: 'TODAY',
+      actor: 'system (substrate_generator)',
+      verb: 'segment_verified',
+      target: 'SkyHarbor tenant substrate',
+      context: '645 records · 480 tenant chunks · 259 graph edges',
+      isRecent: true,
+    },
+    {
+      time: 'TODAY',
+      actor: 'system (overlay_generator)',
+      verb: 'industry_overlay_loaded',
+      target: 'Airline industry pattern overlay',
+      context: '184 packs · 2,760 patterns · 2,760 chunks',
+      isRecent: true,
+    },
+    {
+      time: 'TODAY',
+      actor: 'release-control',
+      verb: 'p0_surface_fix_deployed',
+      target: 'Move origination, Tower portfolio, Source value',
+      context: 'PR #2379 · production deployment ready',
+      isRecent: true,
+    },
+    {
+      time: 'PENDING',
+      actor: 'operator',
+      verb: 'azure_private_load_required',
+      target: 'Live data plane hydration',
+      context: 'Run from VNet with ABARVA_AZURE_DATABASE_URL',
+      isRecent: false,
+    },
+  ],
+  panels: SHARED_PANELS,
+};
+
 export const TENANT_HOME_BY_KEY: Record<string, TenantHomeData> = {
   meridian: MERIDIAN_HOME,
   meridianhealth: MERIDIAN_HOME,
@@ -678,6 +821,9 @@ export const TENANT_HOME_BY_KEY: Record<string, TenantHomeData> = {
   'first-capital': FIRSTCAP_HOME,
   arcturus: FIRSTCAP_HOME,
   brindlemark: FIRSTCAP_HOME,
+  skyharbor: SKYHARBOR_HOME,
+  'skyharbor-air': SKYHARBOR_HOME,
+  skyharborair: SKYHARBOR_HOME,
 };
 
 export function resolveTenantHome(clientKey: string | null | undefined): TenantHomeData {
