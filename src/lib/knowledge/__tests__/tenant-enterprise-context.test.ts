@@ -176,6 +176,36 @@ describe('tenant enterprise context retrieval', () => {
     expect(detail).toContain('Use these persisted setup-data chunks before saying tenant profile, org structure, budget, or system context is unavailable.');
   });
 
+  it('normalizes SkyHarbor app aliases to the loaded skyharbor-air tenant key before chunk lookup', async () => {
+    const seenTenantKeys: string[] = [];
+    fakeAdapter = {
+      ...makeEmptyAdapter(),
+      listContextChunks: (tenantKey, opts) => {
+        seenTenantKeys.push(tenantKey);
+        const requested = new Set(opts?.segmentIds ?? []);
+        if (tenantKey !== 'skyharbor-air' || !requested.has('it_financials')) return Promise.resolve([]);
+        return Promise.resolve([
+          chunk(
+            'it_financials',
+            'Pattern AIR-M-011-10: IBM Restructure Leverage AWS EDP True Up. The value ledger shows promised vs realized modernization value is disputed.',
+            'AIRLINE_INDUSTRY_PATTERN_OVERLAY_v1.md',
+          ),
+        ]);
+      },
+    };
+
+    const sources = await retrieveTenantEnterpriseSources(
+      'skyharbor',
+      "Where is the through-line between our IBM dependency and Amala's modernization pressure?",
+    );
+    const detail = sources.map((source) => source.detail).join('\n');
+
+    expect(seenTenantKeys).toContain('skyharbor-air');
+    expect(sources.map((source) => source.id)).toContain('skyharbor-air:it_financials');
+    expect(detail).toContain('AIR-M-011-10');
+    expect(detail).toContain('value ledger');
+  });
+
   it('adds a graph-backed direct-reports source for the active profile across clients', async () => {
     const active = person('person:meridian:anita-krishnamurthy', 'Dr. Anita Krishnamurthy', {
       title: 'EVP, Chief Digital and Information Officer',
