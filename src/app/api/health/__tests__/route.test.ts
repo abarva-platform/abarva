@@ -50,6 +50,24 @@ describe('GET /api/health read plane', () => {
     expect(mockAzureRead.query).toHaveBeenCalledWith('SELECT id FROM engagements LIMIT 1');
     expect(getGraphDriverIfEnabled).not.toHaveBeenCalled();
   });
+
+  it('keeps health green when direct Postgres succeeds and the read adapter is degraded', async () => {
+    process.env.DATABASE_URL = 'postgres://health.example/db';
+    mockAzureRead.query.mockRejectedValueOnce(new Error('read adapter degraded'));
+
+    const { GET } = await import('@/app/api/health/route');
+    const res = await GET();
+
+    expect(res.status).toBe(200);
+    await expect(res.json()).resolves.toMatchObject({
+      ok: true,
+      checks: {
+        postgres: false,
+        direct_postgres: true,
+        neo4j: 'skipped',
+      },
+    });
+  });
 });
 
 export {};
