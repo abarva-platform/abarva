@@ -1,4 +1,4 @@
-import { getServerSupabase } from '@/lib/supabase-server';
+import { azureRead, type AzureReadSelect } from '@/lib/data-plane/azureRead';
 
 export interface KpiRow {
   id: string;
@@ -110,16 +110,52 @@ export interface KpiDetailBundle {
   benchmarkCohort: BenchmarkCohortRow | null;
 }
 
-export async function loadKpiDetail(kpiId: string, clientId: string): Promise<KpiDetailBundle | null> {
-  const sb = getServerSupabase();
-  const { data: row } = await sb
-    .from('kpis')
-    .select('*')
-    .eq('id', kpiId)
-    .eq('client_id', clientId)
-    .maybeSingle();
+async function safeMaybeSingle<R>(
+  request: AzureReadSelect,
+  label: string,
+): Promise<R | null> {
+  try {
+    return await azureRead.maybeSingle<R>({ ...request, missingTable: 'empty' });
+  } catch (error) {
+    console.warn(`[${label}]`, error instanceof Error ? error.message : error);
+    return null;
+  }
+}
 
-  const kpi = (row as KpiRow | null) ?? null;
+async function safeSelect<R>(
+  request: AzureReadSelect,
+  label: string,
+): Promise<R[]> {
+  try {
+    return await azureRead.select<R>({ ...request, missingTable: 'empty' });
+  } catch (error) {
+    console.warn(`[${label}]`, error instanceof Error ? error.message : error);
+    return [];
+  }
+}
+
+async function safeQuery<R>(
+  sql: string,
+  params: readonly unknown[],
+  label: string,
+): Promise<R[]> {
+  try {
+    return await azureRead.query<R>(sql, params, { missingTable: 'empty' });
+  } catch (error) {
+    console.warn(`[${label}]`, error instanceof Error ? error.message : error);
+    return [];
+  }
+}
+
+export async function loadKpiDetail(kpiId: string, clientId: string): Promise<KpiDetailBundle | null> {
+  const kpi = await safeMaybeSingle<KpiRow>({
+    table: 'kpis',
+    columns: '*',
+    where: {
+      id: kpiId,
+      client_id: clientId,
+    },
+  }, 'loadKpiDetail.kpi');
   if (!kpi) return null;
 
   const relatedIds = Array.from(
@@ -130,59 +166,78 @@ export async function loadKpiDetail(kpiId: string, clientId: string): Promise<Kp
     ]),
   );
 
-  const [evidenceQ, telemetryQ, patternsQ, relatedQ, benchmarkQ] = await Promise.all([
-    sb
-      .from('evidence')
-      .select('id, title, summary, evidence_type, observed_at, methodology_notes, confidence_level, evidence_payload')
-      .eq('client_id', clientId)
-      .eq('related_entity_type', 'kpi')
-      .eq('related_entity_id', kpi.id)
-      .order('observed_at', { ascending: false }),
-    sb
-      .from('telemetry_sources')
-      .select('id, name, description, modality, connector_type, refresh_schedule, scope_description, data_format, residency_mode, compliance_tags, regulatory_notes, confidence_level, last_refreshed_at')
-      .eq('client_id', clientId)
-      .overlaps('kpi_ids_populated', [kpi.id]),
+  const [evidence, telemetrySources, patterns, relatedKpis, benchmarkCohort] = await Promise.all([
+    safeSelect<KpiEvidenceRow>({
+      table: 'evidence',
+      columns: [
+        'id',
+        'title',
+        'summary',
+        'evidence_type',
+        'observed_at',
+        'methodology_notes',
+        'confidence_level',
+        'evidence_payload',
+      ],
+      where: {
+        client_id: clientId,
+        related_entity_type: 'kpi',
+        related_entity_id: kpi.id,
+      },
+      orderBy: { column: 'observed_at', direction: 'desc' },
+    }, 'loadKpiDetail.evidence'),
+    safeQuery<TelemetrySourceRow>(
+      `SELECT id, name, description, modality, connector_type, refresh_schedule,
+              scope_description, data_format, residency_mode, compliance_tags,
+              regulatory_notes, confidence_level, last_refreshed_at
+         FROM telemetry_sources
+        WHERE client_id = $1 AND kpi_ids_populated && $2::text[]`,
+      [clientId, [kpi.id]],
+      'loadKpiDetail.telemetrySources',
+    ),
     kpi.linked_pattern_ids.length > 0
-      ? sb
-          .from('pattern_packs')
-          .select('id, name, short_description, confidence_level')
-          .eq('client_id', clientId)
-          .in('id', kpi.linked_pattern_ids)
-      : Promise.resolve({ data: [] as PatternAssociationRow[] }),
+      ? safeSelect<PatternAssociationRow>({
+          table: 'pattern_packs',
+          columns: ['id', 'name', 'short_description', 'confidence_level'],
+          where: {
+            client_id: clientId,
+            id: { op: 'in', value: kpi.linked_pattern_ids },
+          },
+        }, 'loadKpiDetail.patterns')
+      : Promise.resolve([] as PatternAssociationRow[]),
     relatedIds.length > 0
-      ? sb
-          .from('kpis')
-          .select('id, name, category, current_value, current_unit')
-          .eq('client_id', clientId)
-          .in('id', relatedIds)
-      : Promise.resolve({ data: [] as RelatedKpiRow[] }),
+      ? safeSelect<RelatedKpiRow>({
+          table: 'kpis',
+          columns: ['id', 'name', 'category', 'current_value', 'current_unit'],
+          where: {
+            client_id: clientId,
+            id: { op: 'in', value: relatedIds },
+          },
+        }, 'loadKpiDetail.relatedKpis')
+      : Promise.resolve([] as RelatedKpiRow[]),
     kpi.benchmark_peer_cohort_id
-      ? sb
-          .from('benchmark_cohorts')
-          .select('id, cohort_name, sector, subsector')
-          .eq('id', kpi.benchmark_peer_cohort_id)
-          .maybeSingle()
-      : Promise.resolve({ data: null as BenchmarkCohortRow | null }),
+      ? safeMaybeSingle<BenchmarkCohortRow>({
+          table: 'benchmark_cohorts',
+          columns: ['id', 'cohort_name', 'sector', 'subsector'],
+          where: { id: kpi.benchmark_peer_cohort_id },
+        }, 'loadKpiDetail.benchmarkCohort')
+      : Promise.resolve(null),
   ]);
 
   return {
     kpi,
-    evidence: ((evidenceQ.data ?? []) as KpiEvidenceRow[]),
-    telemetrySources: ((telemetryQ.data ?? []) as TelemetrySourceRow[]),
-    patterns: ((patternsQ.data ?? []) as PatternAssociationRow[]),
-    relatedKpis: ((relatedQ.data ?? []) as RelatedKpiRow[]),
-    benchmarkCohort: (benchmarkQ.data as BenchmarkCohortRow | null) ?? null,
+    evidence,
+    telemetrySources,
+    patterns,
+    relatedKpis,
+    benchmarkCohort,
   };
 }
 
 export async function loadKpiIndex(clientId: string): Promise<KpiRow[]> {
-  const sb = getServerSupabase();
-  const { data } = await sb
-    .from('kpis')
-    .select('*')
-    .eq('client_id', clientId)
-    .order('category', { ascending: true })
-    .order('name', { ascending: true });
-  return (data ?? []) as KpiRow[];
+  return safeQuery<KpiRow>(
+    'SELECT * FROM kpis WHERE client_id = $1 ORDER BY category ASC, name ASC',
+    [clientId],
+    'loadKpiIndex',
+  );
 }

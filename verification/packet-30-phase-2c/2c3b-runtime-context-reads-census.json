@@ -1,0 +1,28 @@
+{
+  "generatedAt": "2026-05-29T19:21:35.040Z",
+  "slice": "2c3b-runtime-context-reads",
+  "before": {
+    "filesWithImportMatches": 148,
+    "importMatches": 608,
+    "filesWithBroadMatches": 301,
+    "broadMatches": 1426
+  },
+  "after": {
+    "filesWithImportMatches": 144,
+    "importMatches": 594,
+    "filesWithBroadMatches": 298,
+    "broadMatches": 1401
+  },
+  "delta": {
+    "filesWithImportMatches": -4,
+    "importMatches": -14,
+    "filesWithBroadMatches": -3,
+    "broadMatches": -25
+  },
+  "changedRuntimeFiles": [
+    "src/lib/agent/retrieval.ts",
+    "src/lib/enterprise-context/retrieval.ts",
+    "src/lib/evidence/citations.ts",
+    "src/lib/intelligence/loadKpiDetail.ts"
+  ]
+}
