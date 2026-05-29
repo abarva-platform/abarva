@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { searchCorpus } from '@/lib/corpus/retrieval';
+import { allowedCorpusIndustryScopes } from '@/lib/corpus/industry-scope';
 import type { CorpusSearchHit } from '@/lib/corpus/types';
 import { callSentinelModel } from './model';
 import { persistReasoningStage, readVersionPins, safeRows } from './db';
@@ -251,12 +252,13 @@ function uniqueCitations(citations: SentinelCitation[]): SentinelCitation[] {
   }).slice(0, 8);
 }
 
-async function corpus(query: string, input: SentinelReasoningInput, limit = 6): Promise<CorpusSearchHit[]> {
+async function corpus(query: string, input: SentinelReasoningInput, context: ClientContext, limit = 6): Promise<CorpusSearchHit[]> {
   try {
     return await searchCorpus(query, {
       clientId: input.clientId,
       userId: input.userId ?? undefined,
       category: 'it-productivity',
+      verticalOverlays: allowedCorpusIndustryScopes({ tenantKey: context.tenantKey, clientKey: input.clientId }),
       minDepthScore: 8,
       limit,
     });
@@ -671,9 +673,9 @@ export async function* runSentinelReasoning(input: SentinelReasoningInput): Asyn
   const { corpusVersionPinned, templateVersionPinned } = await readVersionPins();
   const clientContext = await resolveClientContext(input.clientId);
   const [corePatterns, governancePatterns, tomPatterns, templatesRaw, portfolio, org, tools, initiatives, integrationEdges] = await Promise.all([
-    corpus(`${input.query} P-IT-18 P-IT-19 TIME AI fit DORA`, input, 6),
-    corpus('ai governance model allowlist retention indemnity tooling', input, 5),
-    corpus('target operating model AI platform knowledge engineer fluency coach DevEx', input, 5),
+    corpus(`${input.query} P-IT-18 P-IT-19 TIME AI fit DORA`, input, clientContext, 6),
+    corpus('ai governance model allowlist retention indemnity tooling', input, clientContext, 5),
+    corpus('target operating model AI platform knowledge engineer fluency coach DevEx', input, clientContext, 5),
     loadTemplates(),
     loadPortfolio(clientContext),
     loadOrg(clientContext),

@@ -1,5 +1,10 @@
 import { azureRead } from '@/lib/data-plane/azureRead';
 import { searchCorpus } from '@/lib/corpus/retrieval';
+import {
+  allowedCorpusIndustryScopes,
+  hasAllowedCorpusIndustryScope,
+  normalizeCorpusIndustryScope,
+} from '@/lib/corpus/industry-scope';
 import type { CorpusSearchHit } from '@/lib/corpus/types';
 import type { AskSource, AskSurfaceContext, RetrievalResult } from '../types';
 
@@ -51,29 +56,35 @@ export interface PatternRetrievalOptions {
   surfaceContext?: AskSurfaceContext | null;
 }
 
-function inferIndustry(opts: PatternRetrievalOptions): string | null {
-  const haystack = [
-    opts.tenantInventoryKey,
-    opts.surfaceContext?.clientKey,
-    opts.surfaceContext?.activeClient,
-    ...(opts.surfaceContext?.facts ?? []),
-    ...(opts.surfaceContext?.tenantFacts ?? []),
-  ]
-    .filter((item): item is string => Boolean(item))
-    .join(' ')
-    .toLowerCase();
-  if (/\b(apex|retail|merchandising|store|loyalty|inventory|assortment|sku)\b/.test(haystack)) return 'retail';
-  if (/\b(meridian|northstar|helix|health|healthcare|clinical|patient|payer|provider|epic|ehr|medtech|med-tech)\b/.test(haystack)) return 'healthcare';
-  if (/\b(first[- ]?capital|brindlemark|arcturus|financial|bank|wealth|aml|kyc|underwriting|fraud)\b/.test(haystack)) return 'financial_services';
-  if (/\b(keystone|energy|utility|utilities|grid)\b/.test(haystack)) return 'energy';
-  if (/\b(skyharbor|airline|aviation|air)\b/.test(haystack)) return 'airline';
-  return null;
+function allowedIndustryScopes(opts: PatternRetrievalOptions): string[] | undefined {
+  return allowedCorpusIndustryScopes({
+    tenantKey: opts.tenantInventoryKey,
+    clientKey: opts.surfaceContext?.clientKey,
+    activeClient: opts.surfaceContext?.activeClient,
+    facts: [...(opts.surfaceContext?.facts ?? []), ...(opts.surfaceContext?.tenantFacts ?? [])],
+  });
 }
 
 function corpusVerticalOverlays(opts: PatternRetrievalOptions): string[] | undefined {
-  const industry = inferIndustry(opts);
-  if (!industry) return undefined;
-  return Array.from(new Set([industry, 'cross_industry']));
+  return allowedIndustryScopes(opts);
+}
+
+function normalizedScopes(values: string[]): Set<string> {
+  return new Set(values.map(normalizeCorpusIndustryScope));
+}
+
+function corpusHitMatchesTenant(hit: CorpusSearchHit, allowedScopes: string[] | undefined): boolean {
+  return hasAllowedCorpusIndustryScope(hit.verticalOverlays, allowedScopes);
+}
+
+function patternRowMatchesTenant(row: PatternRow, allowedScopes: string[] | undefined): boolean {
+  if (!allowedScopes) return true;
+  if (!row.vertical) return true;
+  const allowed = normalizedScopes(allowedScopes);
+  for (const scope of normalizedScopes([row.vertical])) {
+    if (allowed.has(scope)) return true;
+  }
+  return false;
 }
 
 function buildCorpusSource(hit: CorpusSearchHit): AskSource {
@@ -117,7 +128,7 @@ async function retrieveCorpusFallback(
       minDepthScore: 0,
       limit: 5,
     }).catch(() => []);
-    for (const hit of hits) {
+    for (const hit of hits.filter((candidate) => corpusHitMatchesTenant(candidate, verticalOverlays))) {
       const key = hit.slug || hit.id;
       if (seen.has(key)) continue;
       seen.add(key);
@@ -133,6 +144,7 @@ export async function retrievePattern(entities: string[], opts: PatternRetrieval
 
   const sources: AskSource[] = [];
   const seen = new Set<string>();
+  const allowedScopes = allowedIndustryScopes(opts);
   let shouldTryCanonicalFallback = false;
 
   for (const entity of entities.slice(0, 3)) {
@@ -151,7 +163,7 @@ export async function retrievePattern(entities: string[], opts: PatternRetrieval
         return [];
       });
       const data = rows[0] ?? null;
-      if (data) {
+      if (data && patternRowMatchesTenant(data, allowedScopes)) {
         const key = String(data.code ?? data.id);
         if (!seen.has(key)) { seen.add(key); sources.push(buildSource(data as PatternRow, 0.95)); }
       }
@@ -172,7 +184,7 @@ export async function retrievePattern(entities: string[], opts: PatternRetrieval
       shouldTryCanonicalFallback = true;
       return [];
     });
-    for (const row of (ftsRows ?? [])) {
+    for (const row of (ftsRows ?? []).filter((candidate) => patternRowMatchesTenant(candidate, allowedScopes))) {
       const key = String(row.code ?? row.id);
       if (!seen.has(key)) { seen.add(key); sources.push(buildSource(row as PatternRow, 0.85)); }
     }
@@ -191,7 +203,7 @@ export async function retrievePattern(entities: string[], opts: PatternRetrieval
         shouldTryCanonicalFallback = true;
         return [];
       });
-      for (const row of (tagRows ?? [])) {
+      for (const row of (tagRows ?? []).filter((candidate) => patternRowMatchesTenant(candidate, allowedScopes))) {
         const key = String(row.code ?? row.id);
         if (!seen.has(key)) { seen.add(key); sources.push(buildSource(row as PatternRow, 0.70)); }
       }

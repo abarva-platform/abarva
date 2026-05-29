@@ -15,6 +15,44 @@ jest.mock('@/lib/corpus/retrieval', () => ({
 const mockAzureRead = jest.mocked(azureRead);
 const mockSearchCorpus = jest.mocked(searchCorpus);
 
+function corpusHit(args: {
+  slug: string;
+  title: string;
+  verticalOverlays: string[];
+}) {
+  return {
+    id: args.slug,
+    slug: args.slug,
+    title: args.title,
+    category: 'industry-pattern',
+    status: 'published' as const,
+    confidence: 0.84,
+    version: 1,
+    parentVersionId: null,
+    primaryAuthorId: 'abarva-corpus',
+    approvedById: null,
+    publishedAt: '2026-05-29T00:00:00.000Z',
+    retiredAt: null,
+    searchDocId: null,
+    depthScore: 8.2,
+    verticalOverlays: args.verticalOverlays,
+    regionOverlays: [],
+    applicableHorizons: ['diagnose_discover', 'design'],
+    markdownBody: `${args.title} industry corpus pattern.`,
+    claims: [],
+    evidence: [],
+    counterarguments: [],
+    synthesis: {
+      source_basis: 'inferred_from_patterns',
+      provenance: { source: 'migrated_from_canonical_industry_ai_patterns' },
+    },
+    createdAt: '2026-05-29T00:00:00.000Z',
+    updatedAt: '2026-05-29T00:00:00.000Z',
+    score: 0.74,
+    source: 'postgres' as const,
+  };
+}
+
 describe('retrievePattern', () => {
   beforeEach(() => {
     jest.clearAllMocks();
@@ -22,37 +60,13 @@ describe('retrievePattern', () => {
 
   it('falls back to corpus_patterns when genome_patterns has no matches', async () => {
     mockAzureRead.query.mockResolvedValue([]);
-    mockSearchCorpus.mockResolvedValue([{
-        id: 'pattern-1',
+    mockSearchCorpus.mockResolvedValue([
+      corpusHit({
         slug: 'aip-healthcare-prior-auth-agentic-workflow',
         title: 'Prior Authorization Agentic Workflow',
-        category: 'utilization_management',
-        status: 'published',
-        confidence: 0.84,
-        version: 1,
-        parentVersionId: null,
-        primaryAuthorId: 'abarva-corpus',
-        approvedById: null,
-        publishedAt: '2026-05-29T00:00:00.000Z',
-        retiredAt: null,
-        searchDocId: null,
-        depthScore: 8.2,
         verticalOverlays: ['healthcare', 'cross_industry'],
-        regionOverlays: [],
-        applicableHorizons: ['diagnose_discover', 'design'],
-        markdownBody: 'Coordinate payer prior authorization intake, evidence checks, and escalation.',
-        claims: [],
-        evidence: [],
-        counterarguments: [],
-        synthesis: {
-          source_basis: 'inferred_from_patterns',
-          provenance: { source: 'migrated_from_canonical_industry_ai_patterns' },
-        },
-        createdAt: '2026-05-29T00:00:00.000Z',
-        updatedAt: '2026-05-29T00:00:00.000Z',
-        score: 0.74,
-        source: 'postgres',
-    }]);
+      }),
+    ]);
 
     const result = await retrievePattern(['prior auth agentic workflow'], {
       tenantInventoryKey: 'meridian-health',
@@ -66,7 +80,7 @@ describe('retrievePattern', () => {
     );
     expect(mockSearchCorpus).toHaveBeenCalledWith('prior auth agentic workflow', {
       clientId: 'meridian-health',
-      verticalOverlays: ['healthcare', 'cross_industry'],
+      verticalOverlays: ['healthcare', 'healthcare_provider', 'healthcare_payer', 'healthcare_idn', 'cross_industry'],
       minConfidence: 0,
       minDepthScore: 0,
       limit: 5,
@@ -79,5 +93,99 @@ describe('retrievePattern', () => {
       detail: expect.stringContaining('industry_scope=healthcare, cross_industry'),
     })]);
     expect(result.averageConfidence).toBe(0.74);
+  });
+
+  it('enforces I9 industry isolation across five query classes for every seeded tenant', async () => {
+    const allIndustryHits = [
+      corpusHit({ slug: 'retail-pattern', title: 'Retail OMS Pattern', verticalOverlays: ['retail'] }),
+      corpusHit({ slug: 'healthcare-provider-pattern', title: 'Healthcare Prior Auth Pattern', verticalOverlays: ['healthcare_provider'] }),
+      corpusHit({ slug: 'healthcare-pattern', title: 'Healthcare RCM Pattern', verticalOverlays: ['healthcare'] }),
+      corpusHit({ slug: 'financial-pattern', title: 'Financial Services Model Risk Pattern', verticalOverlays: ['financial_services_banking'] }),
+      corpusHit({ slug: 'energy-pattern', title: 'Energy Grid Reliability Pattern', verticalOverlays: ['energy'] }),
+      corpusHit({ slug: 'airline-pattern', title: 'Airline Modernization Pattern', verticalOverlays: ['airline'] }),
+      corpusHit({ slug: 'cross-pattern', title: 'Cross Industry Governance Pattern', verticalOverlays: ['cross_industry'] }),
+    ];
+    const tenants = [
+      {
+        tenantInventoryKey: 'apex-retail',
+        activeClient: 'Apex Retail',
+        allowed: new Set(['retail-pattern', 'cross-pattern']),
+        expectedScopes: ['retail', 'cross_industry'],
+      },
+      {
+        tenantInventoryKey: 'meridian-health',
+        activeClient: 'Meridian Health',
+        allowed: new Set(['healthcare-provider-pattern', 'healthcare-pattern', 'cross-pattern']),
+        expectedScopes: ['healthcare', 'healthcare_provider', 'healthcare_payer', 'healthcare_idn', 'cross_industry'],
+      },
+      {
+        tenantInventoryKey: 'northstar-medtech',
+        activeClient: 'Northstar Clinical Technologies',
+        allowed: new Set(['healthcare-provider-pattern', 'healthcare-pattern', 'cross-pattern']),
+        expectedScopes: ['healthcare', 'healthcare_provider', 'healthcare_payer', 'healthcare_idn', 'cross_industry'],
+      },
+      {
+        tenantInventoryKey: 'helix-therapeutics',
+        activeClient: 'Helix Therapeutics',
+        allowed: new Set(['healthcare-provider-pattern', 'healthcare-pattern', 'cross-pattern']),
+        expectedScopes: ['healthcare', 'healthcare_provider', 'healthcare_payer', 'healthcare_idn', 'cross_industry'],
+      },
+      {
+        tenantInventoryKey: 'first-capital',
+        activeClient: 'First Capital',
+        allowed: new Set(['financial-pattern', 'cross-pattern']),
+        expectedScopes: ['financial_services', 'financial_services_banking', 'financial_services_insurance', 'finserv', 'cross_industry'],
+      },
+      {
+        tenantInventoryKey: 'brindlemark-financial',
+        activeClient: 'Brindlemark Financial',
+        allowed: new Set(['financial-pattern', 'cross-pattern']),
+        expectedScopes: ['financial_services', 'financial_services_banking', 'financial_services_insurance', 'finserv', 'cross_industry'],
+      },
+      {
+        tenantInventoryKey: 'keystone-energy',
+        activeClient: 'Keystone Energy',
+        allowed: new Set(['energy-pattern', 'cross-pattern']),
+        expectedScopes: ['energy', 'cross_industry'],
+      },
+      {
+        tenantInventoryKey: 'skyharbor-air',
+        activeClient: 'SkyHarbor Air',
+        allowed: new Set(['airline-pattern', 'cross-pattern']),
+        expectedScopes: ['airline', 'global_network_airline', 'aviation', 'cross_industry'],
+      },
+    ];
+    const queries = [
+      'modern omnichannel OMS vendor landscape',
+      'prior authorization agentic workflow',
+      'model risk validation controls',
+      'grid reliability AI operations',
+      'airline mainframe modernization sequencing',
+    ];
+
+    mockAzureRead.query.mockResolvedValue([]);
+    mockSearchCorpus.mockResolvedValue(allIndustryHits);
+
+    for (const tenant of tenants) {
+      for (const query of queries) {
+        const result = await retrievePattern([query], {
+          query,
+          tenantInventoryKey: tenant.tenantInventoryKey,
+          surfaceContext: { activeClient: tenant.activeClient },
+        });
+
+        expect(mockSearchCorpus).toHaveBeenLastCalledWith(query, expect.objectContaining({
+          clientId: tenant.tenantInventoryKey,
+          verticalOverlays: tenant.expectedScopes,
+        }));
+        expect(result.sources.length).toBeGreaterThan(0);
+        expect(result.sources.map((source) => source.id)).toEqual(
+          expect.arrayContaining(['cross-pattern']),
+        );
+        for (const source of result.sources) {
+          expect(tenant.allowed.has(String(source.id))).toBe(true);
+        }
+      }
+    }
   });
 });

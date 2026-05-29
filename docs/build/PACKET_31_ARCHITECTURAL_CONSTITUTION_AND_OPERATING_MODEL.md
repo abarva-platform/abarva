@@ -66,7 +66,7 @@ Every part of AbarVa belongs to exactly one of these layers. **Calls go down, no
 - `src/lib/data-plane/` imports from `src/lib/agents/`
 - Any `src/app/api/**/route.ts` contains more than 50 lines of business logic (forces extraction to `src/lib/`)
 
-### 1.2 The Eight Architectural Invariants
+### 1.2 The Nine Architectural Invariants
 
 These are non-negotiable. Violation = automatic CI failure. **Period.**
 
@@ -80,6 +80,7 @@ These are non-negotiable. Violation = automatic CI failure. **Period.**
 | **I6** | Every AI egress call writes to `ai_egress_audit` with tenant context | Lint rule: ModelClient.call() must have audit context parameter |
 | **I7** | Every Tier-1 question category maps to required substrate segments (coverage contract) | `coverage.test.ts` asserts every category has ≥3 required segments |
 | **I8** | Every public-facing change has a release record with `## Audit Evidence` section | Release-control gate (already implemented) |
+| **I9** | Pattern retrieval is industry-isolated: tenants may retrieve only their allowed industry overlays plus `cross_industry` | `retrievePattern` tenant matrix test covers five query classes across Apex, Meridian, Northstar, Helix, First Capital, Brindlemark, Keystone, and SkyHarbor; ESLint blocks new Ask callsites that bypass the scoped retriever |
 
 ### 1.3 The Six Tenant-as-First-Class-Citizen Rules
 
@@ -144,7 +145,7 @@ This is the question PHS will force you to answer commercially within 60 days.
 
 > *"The same `git main` branch deploys to every tier. The differences live in configuration, not code."*
 
-If T3 needs different code than T2, the abstraction is wrong and must be fixed at I1–I8 invariant level.
+If T3 needs different code than T2, the abstraction is wrong and must be fixed at I1–I9 invariant level.
 
 **The deployment matrix:**
 
@@ -372,7 +373,7 @@ Every change has a risk classification. Authority depends on classification.
 | **B — Routine refactor** | Extract function, rename within scope, add test | Auto-merge after CI + lint + typecheck green | No |
 | **C — Bug fix (single file)** | Fix identified bug, contained change, has regression test | Auto-merge after CI green + release record | No |
 | **D — Feature (within architecture)** | New feature respecting invariants, behind flag | PR open, human reviews within 24h before merge | Yes |
-| **E — Architecture-affecting** | Touches I1–I8 invariants, new module in `src/lib/`, new connector | ADR required, human approval before code starts | Yes |
+| **E — Architecture-affecting** | Touches I1–I9 invariants, new module in `src/lib/`, new connector | ADR required, human approval before code starts | Yes |
 | **F — Cross-tenant impacting** | Changes to RLS, tenant resolution, isolation guards | ADR + threat model + human approval + on-call notification | Yes |
 | **G — Production impact** | Database migration, schema change, public API change | Maintenance window + rollback rehearsal + human approval | Yes |
 
@@ -426,7 +427,7 @@ Standard PR flow:
    - ESLint
    - Typecheck (broad)
    - Focused tests
-   - Architecture invariant guards (I1-I8)
+   - Architecture invariant guards (I1-I9)
    - Coverage check (no decrease)
    - Bundle size check
    - Release record gate
@@ -443,6 +444,8 @@ Standard PR flow:
 7. If class D and gates green → flag for human review with 24h SLA
 8. If class E/F/G → block merge until human approval
 ```
+
+Industry-class or tenant-class bugs must be verified across all tenants in the affected class before merge. The tenant that exposed the bug is the smoke test; the other tenants are the verification matrix.
 
 ### 4.5 Documentation discipline
 
@@ -567,6 +570,7 @@ For change authority, refer to Section 4.3 trust tiers.
 - I6: All AI egress audited
 - I7: Coverage contract for all Tier-1 categories
 - I8: Release record with Audit Evidence
+- I9: Pattern retrieval returns only tenant industry + cross_industry overlays
 ```
 
 Add to user memory:
@@ -577,7 +581,7 @@ Add to user memory:
 Add to Packet 30 §6 acceptance gates:
 
 ```
-- [ ] All Packet 31 invariants I1-I8 enforced by CI guards
+- [ ] All Packet 31 invariants I1-I9 enforced by CI guards
 - [ ] Packet 31 §3.1 decision tree referenced in PR review for any new customer features
 ```
 

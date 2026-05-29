@@ -128,6 +128,8 @@ async function handleAsk(payload: AskPayload) {
         const sentinelIntent = await classifySentinelIntent({
           query,
           clientId: sentinelClientId,
+          tenantKey: tenantInventoryKey ?? tenantClientKey,
+          activeClient: surfaceContext?.activeClient,
           userId,
         });
         classificationForMemory = {
