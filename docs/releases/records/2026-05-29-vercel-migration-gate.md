@@ -6,7 +6,7 @@
 
 ## Status
 
-`candidate`
+`deployed`
 
 ## Plain-English Summary
 
@@ -37,7 +37,12 @@ Control lane: release discipline is unchanged. Migration commits still run the g
 - PASS: `bash -n scripts/vercel-build.sh`
 - PASS: `git diff --check`
 - PASS: `npm run release:check -- --base origin/main --head HEAD`
-- PENDING: production deploy from this hotfix commit.
+- PASS: production deploy from hotfix commit `a142ffd`.
+- PASS: Vercel build logs show `No migration files changed in this deploy commit; skipping Postgres migrations`.
+- PASS: main `Reasoning Layer Guard`.
+- PASS: main `Post-deploy crawl`.
+- PASS: `https://app.abarva.ai` returned HTTP 200.
+- PASS: `https://www.abarva.ai` returned HTTP 200.
 
 ## Rollout Plan
 
@@ -50,6 +55,7 @@ Revert this PR to restore migration attempts on every production deploy. If roll
 ## Audit Evidence
 
 - Vercel deployment failure on commit `8bf680f`: both Vercel projects attempted `db:migrate` concurrently and Supabase returned `EMAXCONNSESSION`.
+- Vercel deployments on commit `a142ffd`: both projects skipped migration execution and completed successfully.
 
 ## Known Gaps
 
