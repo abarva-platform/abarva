@@ -4,25 +4,25 @@ Read-only inventory. No runtime code was modified by this artifact.
 
 ## Summary
 
-- Generated at: `2026-05-29T17:48:33.288Z`
-- Total files in inventory: `305`
-- Files with import-helper matches: `153`
-- Import-helper matches: `626`
-- Files with broad matches: `305`
-- Broad matches: `1456`
+- Generated at: `2026-05-29T18:01:45.265Z`
+- Total files in inventory: `304`
+- Files with import-helper matches: `152`
+- Import-helper matches: `620`
+- Files with broad matches: `304`
+- Broad matches: `1445`
 
 ## Classification Counts
 
 - `DEFER_MANUAL`: 126
 - `MIXED_READ_WRITE`: 82
 - `MUTATION_WRITE`: 1
-- `READ_ONLY_SELECT`: 92
+- `READ_ONLY_SELECT`: 91
 - `READ_WITH_STORAGE`: 4
 
 ## Group Counts
 
 - `admin`: 2
-- `api_routes`: 35
+- `api_routes`: 34
 - `app_routes`: 12
 - `db`: 5
 - `intelligence`: 31
@@ -254,7 +254,6 @@ Read-only inventory. No runtime code was modified by this artifact.
 | src/lib/tower/ingest-portfolio.ts | MIXED_READ_WRITE | tower | 3 | 4 | use_cases | - |
 | src/lib/tower/outcome-context-writeback/persist.ts | MIXED_READ_WRITE | tower | 3 | 4 | - | no static table names detected |
 | src/lib/supabase-server.ts | MUTATION_WRITE | other_lib | 1 | 1 | - | no static table names detected; delete method present; may be Array.delete or Supabase delete |
-| src/app/api/v1/programs/[programId]/generate/route.ts | READ_ONLY_SELECT | api_routes | 6 | 11 | deliverables_v2, engagement_topics, engagements, pattern_match_logs, persons | - |
 | src/app/api/admin/users/provision/route.ts | READ_ONLY_SELECT | api_routes | 4 | 6 | engagement_participants, engagements | - |
 | src/app/api/knowledge/chunk/route.ts | READ_ONLY_SELECT | api_routes | 3 | 6 | knowledge_chunks, knowledge_sources | - |
 | src/app/api/programs/[id]/deliverables/[deliverableId]/content-export/route.ts | READ_ONLY_SELECT | api_routes | 3 | 5 | deliverable_versions, deliverables_v2 | - |

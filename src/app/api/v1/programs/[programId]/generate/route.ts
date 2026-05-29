@@ -25,8 +25,7 @@
 import 'server-only';
 import { requireTenancy, tenancyErrorResponse } from '../../_auth';
 import { getProgramById, getModuleState } from '@/lib/programs/queries';
-import { getProgramsRouteSupabase } from '@/lib/programs/programs-auth-mode-server';
-import { getServerSupabase } from '@/lib/supabase-server';
+import { azureRead } from '@/lib/data-plane/azureRead';
 import { getPhasePackV2 } from '@/lib/programs/phase-packs';
 import { formatPhasePackV2ForPrompt } from '@/lib/programs/phase-packs/format-v2';
 import { buildTenantContextBlock } from '@/lib/intelligence/persistence';
@@ -52,41 +51,77 @@ const PHASE_LABEL: Record<number, string> = {
   5: 'P5 Mobilize & Handoff',
 };
 
+type PriorPhaseContentRow = {
+  deliverable_type_key: string;
+  title: string | null;
+  status: string;
+  content: string | null;
+  version: number;
+};
+
+type EngagementGenerationRow = {
+  id: string;
+  name: string | null;
+  status: string | null;
+  lifecycle_state: string | null;
+  current_phase: number | null;
+  program_archetype: string | null;
+  maestro_oversight_level: string | null;
+  sponsor_person_id: string | null;
+  maestro_person_id: string | null;
+  charter: Record<string, unknown> | null;
+};
+
+type ProgramMilestonePromptRow = {
+  id: string;
+  name: string;
+  status: string;
+  target_date: string | null;
+};
+
+type ProgramRiskPromptRow = {
+  id: string;
+  title: string;
+  likelihood: string;
+  impact: string;
+  status: string;
+};
+
 // ── Context assembly ──────────────────────────────────────────────────────────
 
 async function fetchPriorPhaseContent(programId: string): Promise<string> {
-  const sb = getServerSupabase();
-  const { data } = await sb
-    .from('deliverables_v2')
-    .select(`
-      deliverable_type_key,
-      title,
-      status,
-      deliverable_versions!inner(content, version)
-    `)
-    .eq('engagement_id', programId)
-    .order('updated_at', { ascending: false });
+  const rows = await azureRead.query<PriorPhaseContentRow>(
+    `
+      SELECT
+        d.deliverable_type_key,
+        d.title,
+        d.status,
+        v.content,
+        v.version
+      FROM deliverables_v2 d
+      JOIN LATERAL (
+        SELECT content, version
+        FROM deliverable_versions
+        WHERE deliverable_id = d.id
+        ORDER BY version DESC
+        LIMIT 1
+      ) v ON TRUE
+      WHERE d.engagement_id = $1
+      ORDER BY d.updated_at DESC NULLS LAST
+    `,
+    [programId],
+  );
 
-  if (!data || data.length === 0) return '';
+  if (rows.length === 0) return '';
 
   const lines: string[] = ['--- PRIOR PHASE DELIVERABLES ---'];
 
-  for (const row of data as Array<{
-    deliverable_type_key: string;
-    title: string | null;
-    status: string;
-    deliverable_versions: Array<{ content: string | null; version: number }>;
-  }>) {
-    const versions = row.deliverable_versions ?? [];
-    const latest = versions.reduce(
-      (best, v) => (v.version > (best?.version ?? -1) ? v : best),
-      null as { content: string | null; version: number } | null,
-    );
-    if (!latest?.content?.trim()) continue;
+  for (const row of rows) {
+    if (!row.content?.trim()) continue;
 
     const title = row.title || row.deliverable_type_key;
     lines.push(`\n## ${title} (${row.deliverable_type_key}, status: ${row.status})`);
-    lines.push(latest.content.trim());
+    lines.push(row.content.trim());
   }
 
   lines.push('--- END PRIOR DELIVERABLES ---');
@@ -94,35 +129,58 @@ async function fetchPriorPhaseContent(programId: string): Promise<string> {
 }
 
 async function fetchEngagementDetail(programId: string) {
-  const sb = getServerSupabase();
-  const { data } = await sb
-    .from('engagements')
-    .select(`
-      id, name, status, lifecycle_state, current_phase,
-      program_archetype, maestro_oversight_level,
-      sponsor_person_id, maestro_person_id, charter,
-      program_milestones(id, name, status, target_date),
-      program_risks(id, title, likelihood, impact, status)
-    `)
-    .eq('id', programId)
-    .maybeSingle();
+  const data = await azureRead.maybeSingle<EngagementGenerationRow>({
+    table: 'engagements',
+    columns: [
+      'id',
+      'name',
+      'status',
+      'lifecycle_state',
+      'current_phase',
+      'program_archetype',
+      'maestro_oversight_level',
+      'sponsor_person_id',
+      'maestro_person_id',
+      'charter',
+    ],
+    where: { id: programId },
+  });
 
   if (!data) return null;
 
-  const eng = data as Record<string, unknown>;
+  const [milestones, risks] = await Promise.all([
+    azureRead.select<ProgramMilestonePromptRow>({
+      table: 'program_milestones',
+      columns: ['id', 'name', 'status', 'target_date'],
+      where: { engagement_id: programId },
+      orderBy: { column: 'target_date', direction: 'asc', nulls: 'last' },
+    }),
+    azureRead.select<ProgramRiskPromptRow>({
+      table: 'program_risks',
+      columns: ['id', 'title', 'likelihood', 'impact', 'status'],
+      where: { engagement_id: programId },
+      orderBy: { column: 'created_at', direction: 'desc' },
+    }),
+  ]);
+
+  const eng: Record<string, unknown> = {
+    ...data,
+    program_milestones: milestones,
+    program_risks: risks,
+  };
   const personIds = [eng.sponsor_person_id, eng.maestro_person_id].filter(Boolean) as string[];
   let sponsorName = '';
   let sponsorRole = '';
   let leadName = '';
 
   if (personIds.length > 0) {
-    const { data: people } = await getServerSupabase()
-      .from('persons')
-      .select('id, name, role')
-      .in('id', personIds);
+    const people = await azureRead.select<{ id: string; name: string; role: string | null }>({
+      table: 'persons',
+      columns: ['id', 'name', 'role'],
+      where: { id: { op: 'in', value: personIds } },
+    });
     const personMap = new Map(
-      ((people as Array<{ id: string; name: string; role: string | null }>) ?? [])
-        .map((p) => [p.id, p]),
+      people.map((p) => [p.id, p]),
     );
     const sponsor = personMap.get(eng.sponsor_person_id as string);
     const lead = personMap.get(eng.maestro_person_id as string);
@@ -259,9 +317,8 @@ export async function POST(
   }
 
   const { programId } = await params;
-  const { supabase } = await getProgramsRouteSupabase('mutation');
 
-  const program = await getProgramById(ctx, programId, { supabase });
+  const program = await getProgramById(ctx, programId);
   if (!program) return Response.json({ error: 'not_found' }, { status: 404 });
 
   let body: { phase?: number; deliverableTypeKey?: string; title?: string };
@@ -311,27 +368,35 @@ export async function POST(
 
   const [tenantContext, modules] = await Promise.all([
     buildTenantContextBlock(tenantInventoryKey).catch(() => null),
-    getModuleState(ctx, programId, { supabase }).catch(() => []),
+    getModuleState(ctx, programId).catch(() => []),
   ]);
 
   // Matched pattern from engagement topics
-  const sb = getServerSupabase();
-  const { data: patternMatch } = await sb
-    .from('pattern_match_logs')
-    .select('pattern_key')
-    .eq('engagement_id', programId)
-    .eq('acted_upon', true)
-    .order('acted_upon_at', { ascending: false })
-    .limit(1)
-    .maybeSingle();
+  const patternMatch = await azureRead.maybeSingle<{ pattern_key: string | null }>({
+    table: 'pattern_match_logs',
+    columns: ['pattern_key'],
+    where: {
+      engagement_id: programId,
+      acted_upon: true,
+    },
+    orderBy: { column: 'acted_upon_at', direction: 'desc' },
+  });
 
   let patternContext = '';
   if ((patternMatch as { pattern_key?: string } | null)?.pattern_key) {
-    const { data: topic } = await sb
-      .from('engagement_topics')
-      .select('topic_key, title, canonical_shape_json, phase_playbook, diagnostic_questions, success_signals, failure_modes')
-      .eq('topic_key', (patternMatch as { pattern_key: string }).pattern_key)
-      .maybeSingle();
+    const topic = await azureRead.maybeSingle<Record<string, unknown>>({
+      table: 'engagement_topics',
+      columns: [
+        'topic_key',
+        'title',
+        'canonical_shape_json',
+        'phase_playbook',
+        'diagnostic_questions',
+        'success_signals',
+        'failure_modes',
+      ],
+      where: { topic_key: (patternMatch as { pattern_key: string }).pattern_key },
+    });
     if (topic) {
       const t = topic as Record<string, unknown>;
       patternContext = [
