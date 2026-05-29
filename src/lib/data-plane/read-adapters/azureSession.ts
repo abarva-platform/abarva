@@ -13,7 +13,7 @@
 //
 // All consumers run read-only queries. The session guarantees teardown.
 
-import { Client, type ClientConfig } from 'pg';
+import { Pool, type PoolClient, type PoolConfig } from 'pg';
 
 /** A parameterized query runner bound to a live connection. */
 export type SqlRunner = <R = Record<string, unknown>>(
@@ -61,12 +61,47 @@ export function isAzureSessionFallbackError(error: unknown): boolean {
   );
 }
 
-function clientConfig(connectionString: string, applicationName: string): ClientConfig {
+const pools = new Map<string, Pool>();
+
+export function resolveAzurePoolMax(env: NodeJS.ProcessEnv = process.env): number {
+  const raw = env.ABARVA_PG_POOL_MAX?.trim() || env.PGPOOL_MAX?.trim();
+  if (!raw) return 1;
+  const parsed = Number.parseInt(raw, 10);
+  if (!Number.isFinite(parsed) || parsed < 1) return 1;
+  return Math.min(parsed, 5);
+}
+
+function clientConfig(connectionString: string, applicationName: string): PoolConfig {
   return {
     connectionString,
     application_name: applicationName,
+    max: resolveAzurePoolMax(),
+    idleTimeoutMillis: 5_000,
+    connectionTimeoutMillis: 5_000,
+    allowExitOnIdle: true,
     ssl: disableSsl(connectionString) ? false : { rejectUnauthorized: false },
   };
+}
+
+function poolKey(connectionString: string): string {
+  return connectionString;
+}
+
+function getPool(connectionString: string, applicationName: string): Pool {
+  const key = poolKey(connectionString);
+  const existing = pools.get(key);
+  if (existing) return existing;
+  const pool = new Pool(clientConfig(connectionString, applicationName));
+  pools.set(key, pool);
+  return pool;
+}
+
+async function retirePool(connectionString: string): Promise<void> {
+  const key = poolKey(connectionString);
+  const pool = pools.get(key);
+  if (!pool) return;
+  pools.delete(key);
+  await pool.end().catch(() => undefined);
 }
 
 /**
@@ -86,22 +121,26 @@ export function createDefaultSession(applicationName: string): SessionRunner {
     let lastError: unknown = null;
     for (let index = 0; index < urls.length; index++) {
       const url = urls[index]!;
-      const client = new Client(clientConfig(url, applicationName));
+      const pool = getPool(url, applicationName);
+      let client: PoolClient | null = null;
+      let shouldRetirePool = false;
       try {
-        await client.connect();
+        client = await pool.connect();
         const run: SqlRunner = async <R>(sql: string, params: unknown[]) =>
-          (await client.query(sql, params)).rows as R[];
+          (await client!.query(sql, params)).rows as R[];
         return await fn(run);
       } catch (error) {
         lastError = error;
         const canFallback = index < urls.length - 1 && isAzureSessionFallbackError(error);
         if (!canFallback) throw error;
+        shouldRetirePool = true;
         console.warn('[azure-session] primary database connection failed; trying fallback DATABASE_URL', {
           code: (error as { code?: unknown })?.code,
           message: error instanceof Error ? error.message : String(error),
         });
       } finally {
-        await client.end().catch(() => undefined);
+        client?.release();
+        if (shouldRetirePool) await retirePool(url);
       }
     }
 
@@ -130,30 +169,34 @@ export function createTxSession(applicationName: string): TxSessionRunner {
     let lastError: unknown = null;
     for (let index = 0; index < urls.length; index++) {
       const url = urls[index]!;
-      const client = new Client(clientConfig(url, applicationName));
+      const pool = getPool(url, applicationName);
+      let client: PoolClient | null = null;
+      let shouldRetirePool = false;
       try {
-        await client.connect();
+        client = await pool.connect();
         const run: SqlRunner = async <R>(sql: string, params: unknown[]) =>
-          (await client.query(sql, params)).rows as R[];
+          (await client!.query(sql, params)).rows as R[];
         await client.query('BEGIN');
         const result = await fn(run);
         await client.query('COMMIT');
         return result;
       } catch (error) {
         try {
-          await client.query('ROLLBACK');
+          if (client) await client.query('ROLLBACK');
         } catch {
           // The connection is being torn down regardless; swallow rollback noise.
         }
         lastError = error;
         const canFallback = index < urls.length - 1 && isAzureSessionFallbackError(error);
         if (!canFallback) throw error;
+        shouldRetirePool = true;
         console.warn('[azure-session] primary database connection failed; trying fallback DATABASE_URL', {
           code: (error as { code?: unknown })?.code,
           message: error instanceof Error ? error.message : String(error),
         });
       } finally {
-        await client.end().catch(() => undefined);
+        client?.release();
+        if (shouldRetirePool) await retirePool(url);
       }
     }
 

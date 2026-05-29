@@ -67,6 +67,14 @@ async function loadPg(): Promise<typeof import('pg')> {
   return loadPg('pg');
 }
 
+export function resolvePostgresPoolMax(env: NodeJS.ProcessEnv = process.env): number {
+  const raw = env.ABARVA_PG_POOL_MAX?.trim() || env.PGPOOL_MAX?.trim();
+  if (!raw) return 1;
+  const parsed = Number.parseInt(raw, 10);
+  if (!Number.isFinite(parsed) || parsed < 1) return 1;
+  return Math.min(parsed, 5);
+}
+
 async function getPool(connectionString: string): Promise<import('pg').Pool> {
   const existing = pools.get(connectionString);
   if (existing) return existing;
@@ -74,9 +82,10 @@ async function getPool(connectionString: string): Promise<import('pg').Pool> {
   const pool = new Pool({
     connectionString,
     application_name: 'abarva-postgres-compat',
-    max: 10,
-    idleTimeoutMillis: 30_000,
-    connectionTimeoutMillis: 10_000,
+    max: resolvePostgresPoolMax(),
+    idleTimeoutMillis: 5_000,
+    connectionTimeoutMillis: 5_000,
+    allowExitOnIdle: true,
     ssl: disableSsl(connectionString) ? false : { rejectUnauthorized: false },
   });
   pools.set(connectionString, pool);
