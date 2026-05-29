@@ -11,7 +11,7 @@
 //                      (no direct engagement_id on phase_approvals table)
 //   phase_snapshots  : uses engagement_id + approval_status (from queries.ts)
 
-import { getServerSupabase } from '@/lib/supabase-server';
+import { azureRead } from '@/lib/data-plane/azureRead';
 import { canReadProgram } from '@/lib/auth/program-access-policy';
 import type { TenancyCtx } from '@/lib/programs/types.db';
 
@@ -93,6 +93,13 @@ export interface EngagementPhaseData {
   }>;
 }
 
+type EngagementRow = Omit<
+  EngagementPhaseData['engagement'],
+  'sponsor' | 'lead' | 'program_milestones' | 'program_risks'
+> & {
+  client_id: string;
+};
+
 /**
  * Returns real engagement record merged with phase-level data.
  * Returns null if the engagement is not found or any critical query fails.
@@ -110,34 +117,45 @@ export async function getEngagementWithPhaseData(
     if (tenancy && !(await canReadProgram(tenancy, engagementId))) {
       return null;
     }
-    const supabase = getServerSupabase();
+    const [engagement, milestones, risks] = await Promise.all([
+      azureRead.maybeSingle<EngagementRow>({
+        table: 'engagements',
+        columns: [
+          'id',
+          'client_id',
+          'name',
+          'status',
+          'lifecycle_state',
+          'current_phase',
+          'program_archetype',
+          'maestro_oversight_level',
+          'sponsor_person_id',
+          'maestro_person_id',
+          'charter',
+        ],
+        where: {
+          id: engagementId,
+          ...(clientUUID ? { client_id: clientUUID } : {}),
+        },
+      }),
+      azureRead.select<EngagementPhaseData['engagement']['program_milestones'][number]>({
+        table: 'program_milestones',
+        columns: ['id', 'name', 'status', 'target_date', 'phase_number'],
+        where: { engagement_id: engagementId },
+      }),
+      azureRead.select<EngagementPhaseData['engagement']['program_risks'][number]>({
+        table: 'program_risks',
+        columns: ['id', 'title', 'likelihood', 'impact', 'status', 'phase_number'],
+        where: { engagement_id: engagementId },
+      }),
+    ]);
 
-    // Core engagement with milestones and risks via FK relations
-    let query = supabase
-      .from('engagements')
-      .select(`
-        id,
-        client_id,
-        name,
-        status,
-        lifecycle_state,
-        current_phase,
-        program_archetype,
-        maestro_oversight_level,
-        sponsor_person_id,
-        maestro_person_id,
-        charter,
-        program_milestones(id, name, status, target_date, phase_number),
-        program_risks(id, title, likelihood, impact, status, phase_number)
-      `)
-      .eq('id', engagementId);
-    if (clientUUID) query = query.eq('client_id', clientUUID);
-    const { data: engagement, error: engError } = await query.single();
-
-    if (engError || !engagement) return null;
+    if (!engagement) return null;
 
     const engagementRow: EngagementPhaseData['engagement'] = {
-      ...(engagement as Omit<EngagementPhaseData['engagement'], 'sponsor' | 'lead'>),
+      ...engagement,
+      program_milestones: milestones,
+      program_risks: risks,
       sponsor: null,
       lead: null,
     };
@@ -147,13 +165,13 @@ export async function getEngagementWithPhaseData(
     ].filter((value): value is string => Boolean(value));
     let peopleById = new Map<string, { name: string; role: string | null }>();
     if (personIds.length > 0) {
-      const { data: people } = await supabase
-        .from('persons')
-        .select('id, name, role')
-        .in('id', personIds);
+      const people = await azureRead.select<{ id: string; name: string; role: string | null }>({
+        table: 'persons',
+        columns: ['id', 'name', 'role'],
+        where: { id: { op: 'in', value: personIds } },
+      });
       peopleById = new Map(
-        ((people as Array<{ id: string; name: string; role: string | null }> | null) ?? [])
-          .map((person) => [person.id, { name: person.name, role: person.role }]),
+        people.map((person) => [person.id, { name: person.name, role: person.role }]),
       );
     }
     engagementRow.sponsor = engagementRow.sponsor_person_id
@@ -164,70 +182,74 @@ export async function getEngagementWithPhaseData(
       : null;
 
     // Evidence linked by related_entity_id — this is the real schema shape
-    const { data: evidence } = await supabase
-      .from('evidence')
-      .select('id, summary, evidence_type, confidence_level, observed_at, created_at')
-      .eq('related_entity_id', engagementId)
-      .eq('related_entity_type', 'engagement')
-      .order('created_at', { ascending: false })
-      .limit(10);
+    const evidence = await azureRead.select<EngagementPhaseData['evidence'][number]>({
+      table: 'evidence',
+      columns: ['id', 'summary', 'evidence_type', 'confidence_level', 'observed_at', 'created_at'],
+      where: { related_entity_id: engagementId, related_entity_type: 'engagement' },
+      orderBy: { column: 'created_at', direction: 'desc' },
+      limit: 10,
+    });
 
     // Phase approvals via engagement_phases join
     // phase_approvals doesn't have a direct engagement_id column; join through
     // engagement_phases which does.
-    const { data: phases } = await supabase
-      .from('engagement_phases')
-      .select('id')
-      .eq('engagement_id', engagementId);
+    const phases = await azureRead.select<{ id: string }>({
+      table: 'engagement_phases',
+      columns: ['id'],
+      where: { engagement_id: engagementId },
+    });
 
     let gateApprovals: EngagementPhaseData['gateApprovals'] = [];
     if (phases && phases.length > 0) {
-      const phaseIds = phases.map((p: { id: string }) => p.id);
-      const { data: approvals } = await supabase
-        .from('phase_approvals')
-        .select('id, action, actor_name, created_at')
-        .in('phase_id', phaseIds)
-        .order('created_at', { ascending: false });
-      gateApprovals = (approvals as EngagementPhaseData['gateApprovals'] | null) ?? [];
+      const phaseIds = phases.map((p) => p.id);
+      gateApprovals = await azureRead.select<EngagementPhaseData['gateApprovals'][number]>({
+        table: 'phase_approvals',
+        columns: ['id', 'action', 'actor_name', 'created_at'],
+        where: { phase_id: { op: 'in', value: phaseIds } },
+        orderBy: { column: 'created_at', direction: 'desc' },
+      });
     }
 
     // Module status
-    const { data: modules } = await supabase
-      .from('program_modules')
-      .select('module_key, status')
-      .eq('engagement_id', engagementId);
+    const modules = await azureRead.select<EngagementPhaseData['modules'][number]>({
+      table: 'program_modules',
+      columns: ['module_key', 'status'],
+      where: { engagement_id: engagementId },
+    });
 
-    const [{ data: programEvidenceItems }, { data: deliverables }, { data: auditLogs }] =
+    const [programEvidenceItems, deliverables, auditLogs] =
       await Promise.all([
-        supabase
-          .from('program_evidence_items')
-          .select('id, phase, evidence_type, title, summary, confidence, created_at')
-          .eq('program_id', engagementId)
-          .order('created_at', { ascending: false })
-          .limit(20),
-        supabase
-          .from('deliverables_v2')
-          .select('id, deliverable_type_key, title, status, updated_at')
-          .eq('engagement_id', engagementId)
-          .order('updated_at', { ascending: false })
-          .limit(20),
-        supabase
-          .from('program_audit_log')
-          .select('id, action, from_state, to_state, rationale, created_at')
-          .eq('engagement_id', engagementId)
-          .order('created_at', { ascending: false })
-          .limit(20),
+        azureRead.select<EngagementPhaseData['programEvidenceItems'][number]>({
+          table: 'program_evidence_items',
+          columns: ['id', 'phase', 'evidence_type', 'title', 'summary', 'confidence', 'created_at'],
+          where: { program_id: engagementId },
+          orderBy: { column: 'created_at', direction: 'desc' },
+          limit: 20,
+        }),
+        azureRead.select<EngagementPhaseData['deliverables'][number]>({
+          table: 'deliverables_v2',
+          columns: ['id', 'deliverable_type_key', 'title', 'status', 'updated_at'],
+          where: { engagement_id: engagementId },
+          orderBy: { column: 'updated_at', direction: 'desc' },
+          limit: 20,
+        }),
+        azureRead.select<EngagementPhaseData['auditLogs'][number]>({
+          table: 'program_audit_log',
+          columns: ['id', 'action', 'from_state', 'to_state', 'rationale', 'created_at'],
+          where: { engagement_id: engagementId },
+          orderBy: { column: 'created_at', direction: 'desc' },
+          limit: 20,
+        }),
       ]);
 
     return {
       engagement: engagementRow,
-      evidence: (evidence as EngagementPhaseData['evidence'] | null) ?? [],
-      programEvidenceItems:
-        (programEvidenceItems as EngagementPhaseData['programEvidenceItems'] | null) ?? [],
-      deliverables: (deliverables as EngagementPhaseData['deliverables'] | null) ?? [],
-      auditLogs: (auditLogs as EngagementPhaseData['auditLogs'] | null) ?? [],
+      evidence,
+      programEvidenceItems,
+      deliverables,
+      auditLogs,
       gateApprovals,
-      modules: (modules as EngagementPhaseData['modules'] | null) ?? [],
+      modules,
     };
   } catch {
     return null;

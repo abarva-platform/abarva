@@ -1,0 +1,77 @@
+{
+  "slice": "packet-30-phase-2c-program-helper-reads",
+  "generatedAt": "2026-05-29T16:37:17.097Z",
+  "runtimeSupabaseCensus": {
+    "mode": "warn",
+    "startOfSlice": {
+      "filesWithImportMatches": 160,
+      "importMatches": 661,
+      "filesWithBroadMatches": 314,
+      "broadMatches": 1544
+    },
+    "endOfSlice": {
+      "filesWithImportMatches": 156,
+      "importMatches": 649,
+      "filesWithBroadMatches": 311,
+      "broadMatches": 1519
+    },
+    "delta": {
+      "filesWithImportMatches": -4,
+      "importMatches": -12,
+      "filesWithBroadMatches": -3,
+      "broadMatches": -25
+    }
+  },
+  "phase2CBaseline": {
+    "filesWithImportMatches": 176,
+    "importMatches": 725
+  },
+  "phase2CToDateDelta": {
+    "filesWithImportMatches": -20,
+    "importMatches": -76
+  },
+  "codemodInventory": {
+    "totalFiles": 311,
+    "filesWithImportMatches": 156,
+    "importMatches": 649,
+    "filesWithBroadMatches": 311,
+    "broadMatches": 1519,
+    "classificationCounts": {
+      "DEFER_MANUAL": 125,
+      "MIXED_READ_WRITE": 82,
+      "MUTATION_WRITE": 1,
+      "READ_ONLY_SELECT": 99,
+      "READ_WITH_STORAGE": 4
+    },
+    "groupCounts": {
+      "admin": 2,
+      "api_routes": 41,
+      "app_routes": 12,
+      "db": 5,
+      "intelligence": 31,
+      "knowledge": 5,
+      "other_lib": 143,
+      "programs": 36,
+      "source": 34,
+      "tower": 2
+    }
+  },
+  "deferredProgramsResidue": [
+    {
+      "file": "src/lib/programs/transformers.ts",
+      "reason": "large high-density transformer module; migrate as a dedicated parity slice"
+    },
+    {
+      "file": "src/app/api/v1/programs/**",
+      "reason": "route handlers need route-level parity and Next.js route validation"
+    },
+    {
+      "file": "src/app/api/programs/**",
+      "reason": "route handlers include storage/upload or export semantics"
+    },
+    {
+      "file": "src/lib/programs/*mutation* and write-adjacent modules",
+      "reason": "mixed read/write phase only"
+    }
+  ]
+}

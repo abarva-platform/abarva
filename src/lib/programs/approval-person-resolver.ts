@@ -1,6 +1,6 @@
 import 'server-only';
 
-import { getServerSupabase } from '@/lib/supabase-server';
+import { azureRead } from '@/lib/data-plane/azureRead';
 import { formatApprovalPersonDisplay } from '@/lib/programs/approval-display';
 
 interface PersonRow {
@@ -22,12 +22,14 @@ export async function loadApprovalPersonDisplayMap(
 
   if (ids.length === 0) return new Map();
 
-  const { data, error } = await getServerSupabase()
-    .from('persons')
-    .select('id, name, role')
-    .in('id', ids);
-
-  if (error) {
+  let rows: PersonRow[];
+  try {
+    rows = await azureRead.select<PersonRow>({
+      table: 'persons',
+      columns: ['id', 'name', 'role'],
+      where: { id: { op: 'in', value: ids } },
+    });
+  } catch (error) {
     console.error('[programs/approval-person-resolver] person query failed', {
       ids,
       error,
@@ -36,7 +38,7 @@ export async function loadApprovalPersonDisplayMap(
   }
 
   const out = new Map<string, string>();
-  for (const row of (data ?? []) as PersonRow[]) {
+  for (const row of rows) {
     const display = formatApprovalPersonDisplay({
       name: row.name ?? '',
       role: row.role,

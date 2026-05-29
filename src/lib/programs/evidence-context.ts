@@ -1,7 +1,7 @@
 import 'server-only';
 
 import { canReadProgram } from '@/lib/auth/program-access-policy';
-import { getServerSupabase } from '@/lib/supabase-server';
+import { azureRead } from '@/lib/data-plane/azureRead';
 import type { TenancyCtx } from './types.db';
 
 export interface ProgramEvidencePromptItem {
@@ -35,16 +35,14 @@ export async function listProgramEvidenceForPrompt(
   limit = 8,
 ): Promise<ProgramEvidencePromptItem[]> {
   if (!programId || !(await canReadProgram(ctx, programId))) return [];
-  const sb = getServerSupabase();
-  const { data, error } = await sb
-    .from('program_evidence_items')
-    .select('id, title, evidence_type, summary, extracted_text, extracted_structured, created_at')
-    .eq('program_id', programId)
-    .order('created_at', { ascending: false })
-    .limit(limit);
-
-  if (error) throw error;
-  return ((data as Array<Record<string, unknown>> | null) ?? []).map((row) => ({
+  const rows = await azureRead.select<Record<string, unknown>>({
+    table: 'program_evidence_items',
+    columns: ['id', 'title', 'evidence_type', 'summary', 'extracted_text', 'extracted_structured', 'created_at'],
+    where: { program_id: programId },
+    orderBy: { column: 'created_at', direction: 'desc' },
+    limit,
+  });
+  return rows.map((row) => ({
     id: String(row.id),
     title: asString(row.title) ?? 'Untitled evidence',
     evidenceType: asString(row.evidence_type) ?? 'evidence',
