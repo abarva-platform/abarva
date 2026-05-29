@@ -1,6 +1,6 @@
 # ADR-0001 — Canonical Pattern Storage
 
-**Status:** Proposed
+**Status:** Accepted
 **Date:** 2026-05-29
 **Author:** AbarVa Founder + Claude (drafting)
 **Decision required by:** Codex execution start of Packet 35 Phase 0
