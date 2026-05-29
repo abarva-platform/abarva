@@ -18,8 +18,10 @@
 // `loadHomeAttention` signature and `HomeAttention` return shape are
 // byte-identical and the caller keeps working unchanged.
 
-import type { PostgresCompatClient as SupabaseClient } from '@/lib/supabase-server';
-import { getServerSupabase } from '@/lib/supabase-server';
+import {
+  getAzureReadFluentClient,
+  type PostgresCompatClient as SupabaseClient,
+} from '@/lib/data-plane/postgresCompat';
 import { createDefaultSession, type SessionRunner } from './azureSession';
 import { resolveDataPlane } from './resolveDataPlane';
 import type { DataPlane } from './types';
@@ -100,7 +102,7 @@ export type SupabaseFactory = () => SupabaseClient;
  * chain `loadHomeAttention` ran pre-seam, so returned rows are byte-identical.
  */
 export function createSupabaseHomeAttentionReadAdapter(
-  getClient: SupabaseFactory = getServerSupabase,
+  getClient: SupabaseFactory = getAzureReadFluentClient,
 ): HomeAttentionReadAdapter {
   return {
     name: 'supabase',

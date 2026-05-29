@@ -15,8 +15,10 @@
 // The adapter returns the exact flat row projections `loadEnterpriseSummary`
 // consumed pre-seam, so the `EnterpriseSummary` return shape is byte-identical.
 
-import type { PostgresCompatClient as SupabaseClient } from '@/lib/supabase-server';
-import { getServerSupabase } from '@/lib/supabase-server';
+import {
+  getAzureReadFluentClient,
+  type PostgresCompatClient as SupabaseClient,
+} from '@/lib/data-plane/postgresCompat';
 import { createDefaultSession, type SessionRunner } from './azureSession';
 import { resolveDataPlane } from './resolveDataPlane';
 import type { DataPlane } from './types';
@@ -89,7 +91,7 @@ export type SupabaseFactory = () => SupabaseClient;
  * the pre-seam helper ran in `Promise.all`, so the rows are byte-identical.
  */
 export function createSupabaseEnterpriseSummaryReadAdapter(
-  getClient: SupabaseFactory = getServerSupabase,
+  getClient: SupabaseFactory = getAzureReadFluentClient,
 ): EnterpriseSummaryReadAdapter {
   return {
     name: 'supabase',

@@ -17,8 +17,10 @@
 // consumed, so the repository's public function signatures and return shapes
 // are byte-identical and every caller keeps working unchanged.
 
-import type { PostgresCompatClient as SupabaseClient } from '@/lib/supabase-server';
-import { getServerSupabase } from '@/lib/supabase-server';
+import {
+  getAzureReadFluentClient,
+  type PostgresCompatClient as SupabaseClient,
+} from '@/lib/data-plane/postgresCompat';
 import { createDefaultSession, type SessionRunner } from './azureSession';
 import { resolveDataPlane } from './resolveDataPlane';
 import type { DataPlane } from './types';
@@ -208,7 +210,7 @@ export type SupabaseFactory = () => SupabaseClient;
  * rows are byte-identical.
  */
 export function createSupabaseAtlasRepositoryReadAdapter(
-  getClient: SupabaseFactory = getServerSupabase,
+  getClient: SupabaseFactory = getAzureReadFluentClient,
 ): AtlasRepositoryReadAdapter {
   return {
     name: 'supabase',

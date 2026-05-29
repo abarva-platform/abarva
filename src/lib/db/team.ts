@@ -1,4 +1,4 @@
-import { getServerSupabase } from '@/lib/supabase-server';
+import { getAzureReadFluentClient } from '@/lib/data-plane/postgresCompat';
 
 export interface TeamRow {
   id: string;
@@ -18,7 +18,7 @@ export interface TeamMembership {
 export async function getTeamsForPerson(
   personId: string,
 ): Promise<Array<{ team: TeamRow; role: TeamMembership['role'] }>> {
-  const { data, error } = await getServerSupabase()
+  const { data, error } = await getAzureReadFluentClient()
     .from('team_memberships')
     .select('role, teams(*)')
     .eq('person_id', personId);
@@ -36,7 +36,7 @@ export async function getTeamsForPerson(
 }
 
 export async function getEngagementIdsForPerson(personId: string): Promise<string[]> {
-  const sb = getServerSupabase();
+  const sb = getAzureReadFluentClient();
   const { data: memberships, error: mErr } = await sb
     .from('team_memberships')
     .select('team_id')
@@ -63,7 +63,7 @@ export async function getEngagementIdsForPerson(personId: string): Promise<strin
 }
 
 export async function personIsAdminAnywhere(personId: string): Promise<boolean> {
-  const { data, error } = await getServerSupabase()
+  const { data, error } = await getAzureReadFluentClient()
     .from('team_memberships')
     .select('id')
     .eq('person_id', personId)

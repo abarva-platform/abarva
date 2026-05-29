@@ -1,7 +1,7 @@
+import { getAzureReadFluentClient } from '@/lib/data-plane/postgresCompat';
 import 'server-only';
 
 import { CANONICAL_CLIENT_ADMIN_EMAILS } from '@/lib/auth/canonical-auth-roster';
-import { getServerSupabase } from '@/lib/supabase-server';
 import type { TenancyCtx } from '@/lib/programs/types.db';
 
 export type SourceAccessLevel =
@@ -106,7 +106,7 @@ async function loadClientMembership(ctx: TenancyCtx): Promise<ClientMembershipRo
   if (!isUuidLike(ctx.userId)) return null;
   const baseSelect = 'role, access_level, financial_visibility, can_admin_users, can_create_programs, can_approve_gates';
   const sourceSelect = `${baseSelect}, can_create_source_events, can_approve_source_stages, can_approve_award, can_upload_source_artifacts, can_generate_sourcing_artifacts, can_publish_sourcing_artifacts`;
-  const query = (select: string) => getServerSupabase()
+  const query = (select: string) => getAzureReadFluentClient()
     .from('person_client_memberships')
     .select(select)
     .eq('person_id', ctx.userId)
@@ -123,7 +123,7 @@ async function loadClientMembership(ctx: TenancyCtx): Promise<ClientMembershipRo
 
 async function loadSourceParticipants(ctx: TenancyCtx, activeClientKey: string): Promise<SourceParticipantRow[]> {
   if (!isUuidLike(ctx.userId)) return [];
-  const { data, error } = await getServerSupabase()
+  const { data, error } = await getAzureReadFluentClient()
     .from('source_event_participants')
     .select('source_event_id, client_key, approval_authority, source_access_level, can_view_financial, can_upload_source_artifacts, can_generate_sourcing_artifacts, can_publish_sourcing_artifacts, can_approve_source_stages, can_approve_award')
     .eq('user_id', ctx.userId)

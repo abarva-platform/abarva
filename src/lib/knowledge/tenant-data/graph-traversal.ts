@@ -1,6 +1,5 @@
+import { getAzureReadFluentClient } from '@/lib/data-plane/postgresCompat';
 import 'server-only';
-
-import { getServerSupabase } from '@/lib/supabase-server';
 import { getPrivateDataPlaneResource } from '@/lib/knowledge/private-data-plane/registry';
 import type {
   GraphEdge,
@@ -126,7 +125,7 @@ function edgeKey(edge: GraphEdge): string {
   return edge.edgeId;
 }
 
-type DbClient = ReturnType<typeof getServerSupabase>;
+type DbClient = ReturnType<typeof getAzureReadFluentClient>;
 
 /** The Postgres-compatible getter we depend on. Defaulted; tests inject a mock. */
 export type SupabaseClientGetter = () => DbClient;
@@ -135,7 +134,7 @@ export type SupabaseTableResolver = (
   tableName: string,
 ) => ReturnType<DbClient['from']>;
 
-const defaultClientGetter: SupabaseClientGetter = () => getServerSupabase();
+const defaultClientGetter: SupabaseClientGetter = () => getAzureReadFluentClient();
 
 /**
  * Pure-data graph traversal. The class holds no per-call state — every

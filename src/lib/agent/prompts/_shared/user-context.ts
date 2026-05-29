@@ -1,4 +1,5 @@
-import { getServerSupabase } from '@/lib/supabase-server';
+
+import { getAzureReadFluentClient } from '@/lib/data-plane/postgresCompat';
 import {
   assembleExecutiveUserContextBlock,
   loadExecutiveGreetingData,
@@ -80,7 +81,7 @@ export async function loadVipGreetingData(args: UserProfileArgs): Promise<VipGre
 
 async function loadProfile(args: UserProfileArgs): Promise<VipProfileRow | null> {
   if (!args.personId && !args.displayName) return null;
-  const sb = getServerSupabase();
+  const sb = getAzureReadFluentClient();
   let row: VipProfileRow | null = null;
   let matchPath: 'person_id' | 'display_name_exact' | 'display_name_ilike' | 'miss' = 'miss';
 

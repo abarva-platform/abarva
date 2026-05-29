@@ -28,8 +28,10 @@
 //   ABARVA_DATA_PLANE=supabase        -> Supabase PostgREST reads (DEFAULT)
 //   ABARVA_DATA_PLANE=azure-postgres  -> Azure Postgres SQL reads (opt-in)
 
-import type { PostgresCompatClient as SupabaseClient } from '@/lib/supabase-server';
-import { getServerSupabase } from '@/lib/supabase-server';
+import {
+  getAzureReadFluentClient,
+  type PostgresCompatClient as SupabaseClient,
+} from '@/lib/data-plane/postgresCompat';
 import { createDefaultSession, type SessionRunner } from './azureSession';
 import { resolveDataPlane } from './resolveDataPlane';
 import type { DataPlane } from './types';
@@ -126,7 +128,7 @@ export type SupabaseFactory = () => SupabaseClient;
  * are byte-identical.
  */
 export function createSupabaseTowerPageReadAdapter(
-  getClient: SupabaseFactory = getServerSupabase,
+  getClient: SupabaseFactory = getAzureReadFluentClient,
 ): TowerPageReadAdapter {
   return {
     name: 'supabase',

@@ -14,8 +14,10 @@
 // pre-seam, so `TowerClient[]` / `TowerViewModel` return shapes — and every
 // caller — keep working unchanged.
 
-import type { PostgresCompatClient as SupabaseClient } from '@/lib/supabase-server';
-import { getServerSupabase } from '@/lib/supabase-server';
+import {
+  getAzureReadFluentClient,
+  type PostgresCompatClient as SupabaseClient,
+} from '@/lib/data-plane/postgresCompat';
 import { createDefaultSession, type SessionRunner } from './azureSession';
 import { resolveDataPlane } from './resolveDataPlane';
 import type { DataPlane } from './types';
@@ -103,7 +105,7 @@ export type SupabaseFactory = () => SupabaseClient;
  * returned rows are byte-identical.
  */
 export function createSupabaseTowerAggregateReadAdapter(
-  getClient: SupabaseFactory = getServerSupabase,
+  getClient: SupabaseFactory = getAzureReadFluentClient,
 ): TowerAggregateReadAdapter {
   return {
     name: 'supabase',

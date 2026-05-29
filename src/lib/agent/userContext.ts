@@ -9,10 +9,10 @@
 // user-activity log exists in the schema; building it would violate the
 // schema-without-data anti-pattern in §13).
 
+import { getAzureReadFluentClient } from '@/lib/data-plane/postgresCompat';
 import { currentUser } from '@clerk/nextjs/server';
 import { getCurrentPerson } from '@/lib/auth/maestro';
 import { getActiveClientRow } from '@/lib/active-client';
-import { getServerSupabase } from '@/lib/supabase-server';
 import { PHASE_LABEL_MAP } from '@/lib/programs/programs-fixture';
 import type { ProgramPhaseId } from '@/lib/programs/programs-types';
 
@@ -95,7 +95,7 @@ export async function getUserContext(): Promise<UserContext | null> {
   const client = await getActiveClientRow();
   if (!client) return null;
 
-  const sb = getServerSupabase();
+  const sb = getAzureReadFluentClient();
   const personId = person?.id ?? null;
   const { data: rows, error } = person
     ? await sb

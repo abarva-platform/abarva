@@ -17,8 +17,10 @@
 // `apex-retail-live.ts` consumed pre-seam, so helper signatures and the
 // `ApexRetailIntelligenceData` return shape are byte-identical.
 
-import type { PostgresCompatClient as SupabaseClient } from '@/lib/supabase-server';
-import { getServerSupabase } from '@/lib/supabase-server';
+import {
+  getAzureReadFluentClient,
+  type PostgresCompatClient as SupabaseClient,
+} from '@/lib/data-plane/postgresCompat';
 import { createDefaultSession, type SessionRunner } from './azureSession';
 import { resolveDataPlane } from './resolveDataPlane';
 import type { DataPlane } from './types';
@@ -138,7 +140,7 @@ export type SupabaseFactory = () => SupabaseClient;
  * byte-identical.
  */
 export function createSupabaseIntelligenceCorpusReadAdapter(
-  getClient: SupabaseFactory = getServerSupabase,
+  getClient: SupabaseFactory = getAzureReadFluentClient,
 ): IntelligenceCorpusReadAdapter {
   return {
     name: 'supabase',

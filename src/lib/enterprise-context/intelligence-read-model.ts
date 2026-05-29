@@ -1,5 +1,6 @@
-import { getServerSupabase } from '@/lib/supabase-server';
 
+
+import { getAzureReadFluentClient } from '@/lib/data-plane/postgresCompat';
 export interface EnterpriseContextRecordRow {
   record_type: string;
   title: string;
@@ -279,7 +280,7 @@ async function countEnterpriseContextRows(tenantKey: string): Promise<Enterprise
 }
 
 async function countRows(table: string, tenantKey: string): Promise<number> {
-  const sb = getServerSupabase();
+  const sb = getAzureReadFluentClient();
   const { count, error } = await sb
     .from(table)
     .select('id', { count: 'exact', head: true })
@@ -293,7 +294,7 @@ async function fetchTenantRows<T extends object>(
   tenantKey: string,
   columns: string,
 ): Promise<T[]> {
-  const sb = getServerSupabase();
+  const sb = getAzureReadFluentClient();
   const rows: T[] = [];
   const pageSize = 1000;
   for (let from = 0; ; from += pageSize) {

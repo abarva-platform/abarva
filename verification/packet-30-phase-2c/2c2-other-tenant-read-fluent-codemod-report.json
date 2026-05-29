@@ -1,0 +1,168 @@
+{
+  "dryRun": false,
+  "groups": [],
+  "files": [],
+  "maxFiles": 100,
+  "candidateCount": 39,
+  "appliedCount": 38,
+  "skippedCount": 1,
+  "results": [
+    {
+      "file": "src/lib/db/team.ts",
+      "status": "applied"
+    },
+    {
+      "file": "src/lib/intelligence/library.ts",
+      "status": "applied"
+    },
+    {
+      "file": "src/lib/intelligence/canonical/runtime-pattern-index.ts",
+      "status": "applied"
+    },
+    {
+      "file": "src/lib/knowledge/tenant-data/supabase-adapter.ts",
+      "status": "applied"
+    },
+    {
+      "file": "src/lib/knowledge/tenant-data/graph-traversal.ts",
+      "status": "applied"
+    },
+    {
+      "file": "src/lib/data-plane/read-adapters/atlasRepositoryReadAdapter.ts",
+      "status": "applied"
+    },
+    {
+      "file": "src/lib/executive-profiles/loadExecutiveProfile.ts",
+      "status": "applied"
+    },
+    {
+      "file": "src/lib/data-plane/read-adapters/towerAggregateReadAdapter.ts",
+      "status": "applied"
+    },
+    {
+      "file": "src/lib/data-plane/read-adapters/intelligenceCorpusReadAdapter.ts",
+      "status": "applied"
+    },
+    {
+      "file": "src/lib/atlas/tower-grounding.ts",
+      "status": "applied"
+    },
+    {
+      "file": "src/lib/data-plane/read-adapters/enterpriseSummaryReadAdapter.ts",
+      "status": "applied"
+    },
+    {
+      "file": "src/lib/data-plane/read-adapters/sourceEventsReadAdapter.ts",
+      "status": "applied"
+    },
+    {
+      "file": "src/lib/data-plane/read-adapters/towerPageReadAdapter.ts",
+      "status": "applied"
+    },
+    {
+      "file": "src/lib/data-plane/read-adapters/towerSubstrateReadAdapter.ts",
+      "status": "applied"
+    },
+    {
+      "file": "src/lib/data-plane/read-adapters/intelligenceStagesReadAdapter.ts",
+      "status": "applied"
+    },
+    {
+      "file": "src/lib/data-plane/read-adapters/sourceCanvasSubstrateReadAdapter.ts",
+      "status": "applied"
+    },
+    {
+      "file": "src/lib/data-plane/read-adapters/supabaseReadAdapter.ts",
+      "status": "applied"
+    },
+    {
+      "file": "src/lib/graph/cross-client.ts",
+      "status": "applied"
+    },
+    {
+      "file": "src/lib/auth/maestro.ts",
+      "status": "applied"
+    },
+    {
+      "file": "src/lib/auth/program-access-policy.ts",
+      "status": "applied"
+    },
+    {
+      "file": "src/lib/auth/source-access-policy.ts",
+      "status": "applied"
+    },
+    {
+      "file": "src/lib/data-plane/read-adapters/homeAttentionReadAdapter.ts",
+      "status": "applied"
+    },
+    {
+      "file": "src/lib/data-plane/read-adapters/sourcingWorkItemsReadAdapter.ts",
+      "status": "applied"
+    },
+    {
+      "file": "src/lib/data-plane/read-adapters/vipProfileReadAdapter.ts",
+      "status": "applied"
+    },
+    {
+      "file": "src/lib/data-plane/read-adapters/intelligenceVendorsReadAdapter.ts",
+      "status": "applied"
+    },
+    {
+      "file": "src/lib/data-plane/read-adapters/programsReadAdapter.ts",
+      "status": "applied"
+    },
+    {
+      "file": "src/lib/data-plane/read-adapters/strategicMovesPreferencesReadAdapter.ts",
+      "status": "applied"
+    },
+    {
+      "file": "src/lib/enterprise-context/intelligence-read-model.ts",
+      "status": "applied"
+    },
+    {
+      "file": "src/lib/data-plane/read-adapters/expertReviewsReadAdapter.ts",
+      "status": "applied"
+    },
+    {
+      "file": "src/lib/data-plane/read-adapters/outcomeLedgerReadAdapter.ts",
+      "status": "applied"
+    },
+    {
+      "file": "src/lib/data-plane/read-adapters/turnTraceReadAdapter.ts",
+      "status": "applied"
+    },
+    {
+      "file": "src/lib/engagements/list-summary.ts",
+      "status": "applied"
+    },
+    {
+      "file": "src/lib/nexus/sessionContext.ts",
+      "status": "applied"
+    },
+    {
+      "file": "src/lib/agent/prompts/_shared/user-context.ts",
+      "status": "applied"
+    },
+    {
+      "file": "src/lib/auth/current-user.ts",
+      "status": "applied"
+    },
+    {
+      "file": "src/lib/data-plane/read-adapters/sourceDecisionQueueReadAdapter.ts",
+      "status": "applied"
+    },
+    {
+      "file": "src/lib/nexus/specialists/value.ts",
+      "status": "applied"
+    },
+    {
+      "file": "src/lib/agent/userContext.ts",
+      "status": "applied"
+    },
+    {
+      "file": "src/lib/programs/queries.ts",
+      "status": "skipped",
+      "reason": "no legacy helper import"
+    }
+  ]
+}

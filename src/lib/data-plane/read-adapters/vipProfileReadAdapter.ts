@@ -26,8 +26,10 @@
 // logic too, which is out of scope for a read-adapter slice. It remains
 // a Supabase-direct read; see DATA-ACCESS-ADAPTER-VIP-SLICE.md.
 
-import type { PostgresCompatClient as SupabaseClient } from '@/lib/supabase-server';
-import { getServerSupabase } from '@/lib/supabase-server';
+import {
+  getAzureReadFluentClient,
+  type PostgresCompatClient as SupabaseClient,
+} from '@/lib/data-plane/postgresCompat';
 import { createDefaultSession, type SessionRunner } from './azureSession';
 import { resolveDataPlane } from './resolveDataPlane';
 import type { DataPlane } from './types';
@@ -101,7 +103,7 @@ export type SupabaseFactory = () => SupabaseClient;
  * verbatim from `/api/debug/vip` so the response is byte-identical.
  */
 export function createSupabaseVipProfileReadAdapter(
-  getClient: SupabaseFactory = getServerSupabase,
+  getClient: SupabaseFactory = getAzureReadFluentClient,
 ): VipProfileReadAdapter {
   return {
     name: 'supabase',

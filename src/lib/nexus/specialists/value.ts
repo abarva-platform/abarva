@@ -1,9 +1,5 @@
-// Value specialist · quantifies economic impact for Mode 2/3 turns.
-// Pulls from structured retrieval (spend_breakdown, applications,
-// tech_projects) and emergent cohort aggregates to frame $ opportunity
-// + risk. Output feeds the hero sentence + crux condition evaluation.
 
-import { getServerSupabase } from '@/lib/supabase-server';
+import { getAzureReadFluentClient } from '@/lib/data-plane/postgresCompat';
 import type { TenancyCtx } from '@/lib/intelligence/types';
 import type { EvidenceClaim } from './evidence';
 
@@ -21,7 +17,7 @@ export interface ValueOutput {
 }
 
 export async function runValue(ctx: TenancyCtx, claims: EvidenceClaim[]): Promise<ValueOutput> {
-  const sb = getServerSupabase();
+  const sb = getAzureReadFluentClient();
   const signals: ValueSignal[] = [];
 
   try {

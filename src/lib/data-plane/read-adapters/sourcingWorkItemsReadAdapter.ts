@@ -14,8 +14,10 @@
 // degrades to an empty list rather than throwing, so the cockpit and the
 // queue keep rendering.
 
-import type { PostgresCompatClient as SupabaseClient } from '@/lib/supabase-server';
-import { getServerSupabase } from '@/lib/supabase-server';
+import {
+  getAzureReadFluentClient,
+  type PostgresCompatClient as SupabaseClient,
+} from '@/lib/data-plane/postgresCompat';
 import { canonicalTenantKey } from '@/lib/tenant-keys';
 import type {
   SourcingWorkItem,
@@ -168,7 +170,7 @@ export interface SourcingWorkItemsReadAdapter {
 export type SupabaseFactory = () => SupabaseClient;
 
 export function createSupabaseSourcingWorkItemsReadAdapter(
-  getClient: SupabaseFactory = getServerSupabase,
+  getClient: SupabaseFactory = getAzureReadFluentClient,
 ): SourcingWorkItemsReadAdapter {
   /** Normalize a Supabase query outcome into mapped rows, fail-soft. */
   function settle(result: {

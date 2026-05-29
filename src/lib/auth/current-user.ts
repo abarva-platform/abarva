@@ -1,7 +1,7 @@
+import { getAzureReadFluentClient } from '@/lib/data-plane/postgresCompat';
 import { auth, currentUser as clerkCurrentUser } from '@clerk/nextjs/server';
 import { resolveSessionRole } from '@/lib/auth/access-routing';
 import { getCurrentPerson } from '@/lib/auth/maestro';
-import { getServerSupabase } from '@/lib/supabase-server';
 
 export type UserRole = 'maestro' | 'client_viewer' | 'observer';
 
@@ -101,7 +101,7 @@ export async function getCurrentUser(): Promise<CurrentUser | null> {
     };
   }
 
-  const sb = getServerSupabase();
+  const sb = getAzureReadFluentClient();
 
   const { data: person } = await sb
     .from('persons')

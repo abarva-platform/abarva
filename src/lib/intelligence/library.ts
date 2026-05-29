@@ -1,4 +1,5 @@
-import { getServerSupabase } from '@/lib/supabase-server';
+
+import { getAzureReadFluentClient } from '@/lib/data-plane/postgresCompat';
 import { getAllGenomePatterns } from '@/lib/graph/retrieval';
 import { VENDOR_CATALOG } from '@/lib/config/vendor-catalog';
 import { getPatternManifestEntries, patternMatchesIndustry } from '@/lib/intelligence/pattern-manifest';
@@ -96,7 +97,7 @@ function shouldIncludeIndustry(
 }
 
 export async function loadLibraryCatalog(options: LibraryCatalogOptions = {}): Promise<LibraryCatalog> {
-  const sb = getServerSupabase();
+  const sb = getAzureReadFluentClient();
   const entries: LibraryEntry[] = [];
   const counts = emptyCounts();
   const industrySet = new Set<string>();

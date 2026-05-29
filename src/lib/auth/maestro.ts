@@ -1,5 +1,5 @@
+import { getAzureReadFluentClient } from '@/lib/data-plane/postgresCompat';
 import { currentUser } from '@clerk/nextjs/server';
-import { getServerSupabase } from '@/lib/supabase-server';
 import type { PersonRow } from '@/lib/db/person';
 
 type CacheEntry = { key: string; person: PersonRow; expires: number };
@@ -42,7 +42,7 @@ export function personMatchesClerkEmail(
 }
 
 async function getPersonById(personId: string): Promise<PersonRow | null> {
-  const { data, error } = await getServerSupabase()
+  const { data, error } = await getAzureReadFluentClient()
     .from('persons')
     .select('*')
     .eq('id', personId)
@@ -55,7 +55,7 @@ async function getPersonById(personId: string): Promise<PersonRow | null> {
 async function getPersonByEmailCandidates(emailCandidates: string[]): Promise<PersonRow | null> {
   if (emailCandidates.length === 0) return null;
 
-  const { data, error } = await getServerSupabase()
+  const { data, error } = await getAzureReadFluentClient()
     .from('persons')
     .select('*')
     .in('email', emailCandidates)

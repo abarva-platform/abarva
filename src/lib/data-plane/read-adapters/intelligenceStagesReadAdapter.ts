@@ -22,8 +22,10 @@
 // exact projections `stages-data.ts` consumed pre-seam, so helper signatures
 // and return shapes are byte-identical and every caller keeps working.
 
-import type { PostgresCompatClient as SupabaseClient } from '@/lib/supabase-server';
-import { getServerSupabase } from '@/lib/supabase-server';
+import {
+  getAzureReadFluentClient,
+  type PostgresCompatClient as SupabaseClient,
+} from '@/lib/data-plane/postgresCompat';
 import { createDefaultSession, type SessionRunner } from './azureSession';
 import { resolveDataPlane } from './resolveDataPlane';
 import type { DataPlane } from './types';
@@ -95,7 +97,7 @@ const KPIS_SELECT =
  * ran, so the returned rows are byte-identical.
  */
 export function createSupabaseIntelligenceStagesReadAdapter(
-  getClient: SupabaseFactory = getServerSupabase,
+  getClient: SupabaseFactory = getAzureReadFluentClient,
 ): IntelligenceStagesReadAdapter {
   return {
     name: 'supabase',

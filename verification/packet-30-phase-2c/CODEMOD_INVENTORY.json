@@ -1,15 +1,15 @@
 {
   "summary": {
-    "generatedAt": "2026-05-29T21:20:48.411Z",
+    "generatedAt": "2026-05-29T22:02:37.042Z",
     "scannedDirs": [
       "src/app",
       "src/lib"
     ],
     "totalFiles": 294,
-    "filesWithImportMatches": 123,
-    "importMatches": 530,
+    "filesWithImportMatches": 85,
+    "importMatches": 386,
     "filesWithBroadMatches": 294,
-    "broadMatches": 1331,
+    "broadMatches": 1187,
     "classificationCounts": {
       "DEFER_MANUAL": 129,
       "MIXED_READ_WRITE": 82,
@@ -9878,14 +9878,10 @@
       "group": "db",
       "sourceKind": "runtime",
       "classification": "READ_ONLY_SELECT",
-      "importMatches": 5,
-      "broadMatches": 11,
-      "imports": [
-        "@/lib/supabase-server"
-      ],
-      "helperRefs": [
-        "getServerSupabase"
-      ],
+      "importMatches": 0,
+      "broadMatches": 6,
+      "imports": [],
+      "helperRefs": [],
       "tableNames": [
         "engagements",
         "team_memberships"
@@ -9922,14 +9918,10 @@
       "group": "intelligence",
       "sourceKind": "runtime",
       "classification": "READ_ONLY_SELECT",
-      "importMatches": 3,
-      "broadMatches": 8,
-      "imports": [
-        "@/lib/supabase-server"
-      ],
-      "helperRefs": [
-        "getServerSupabase"
-      ],
+      "importMatches": 0,
+      "broadMatches": 5,
+      "imports": [],
+      "helperRefs": [],
       "tableNames": [
         "clients",
         "engagement_topics",
@@ -9976,73 +9968,6 @@
       "storageAccesses": 0,
       "rpcCalls": 0,
       "notes": []
-    },
-    {
-      "file": "src/lib/intelligence/canonical/runtime-pattern-index.ts",
-      "group": "intelligence",
-      "sourceKind": "runtime",
-      "classification": "READ_ONLY_SELECT",
-      "importMatches": 3,
-      "broadMatches": 4,
-      "imports": [
-        "@/lib/supabase-server"
-      ],
-      "helperRefs": [
-        "getServerSupabase"
-      ],
-      "tableNames": [],
-      "methodNames": [
-        "clear",
-        "contains",
-        "eq",
-        "filter",
-        "from",
-        "get",
-        "includes",
-        "isFinite",
-        "join",
-        "keys",
-        "limit",
-        "map",
-        "max",
-        "min",
-        "neq",
-        "or",
-        "order",
-        "push",
-        "reduce",
-        "replace",
-        "select",
-        "set",
-        "slice",
-        "some",
-        "sort",
-        "split",
-        "startsWith",
-        "stringify",
-        "toFixed",
-        "toLowerCase",
-        "trim",
-        "trunc"
-      ],
-      "readMethods": [
-        "contains",
-        "eq",
-        "limit",
-        "neq",
-        "order",
-        "select"
-      ],
-      "writeMethods": [],
-      "storageReadMethods": [],
-      "storageWriteMethods": [],
-      "supabaseFromCalls": 1,
-      "arrayFromCalls": 0,
-      "storageAccesses": 0,
-      "rpcCalls": 0,
-      "notes": [
-        "no static table names detected"
-      ]
     },
     {
       "file": "src/lib/intelligence/retrieval/structuredRetriever.ts",
@@ -10205,6 +10130,69 @@
       "notes": []
     },
     {
+      "file": "src/lib/intelligence/canonical/runtime-pattern-index.ts",
+      "group": "intelligence",
+      "sourceKind": "runtime",
+      "classification": "READ_ONLY_SELECT",
+      "importMatches": 0,
+      "broadMatches": 1,
+      "imports": [],
+      "helperRefs": [],
+      "tableNames": [],
+      "methodNames": [
+        "clear",
+        "contains",
+        "eq",
+        "filter",
+        "from",
+        "get",
+        "includes",
+        "isFinite",
+        "join",
+        "keys",
+        "limit",
+        "map",
+        "max",
+        "min",
+        "neq",
+        "or",
+        "order",
+        "push",
+        "reduce",
+        "replace",
+        "select",
+        "set",
+        "slice",
+        "some",
+        "sort",
+        "split",
+        "startsWith",
+        "stringify",
+        "toFixed",
+        "toLowerCase",
+        "trim",
+        "trunc"
+      ],
+      "readMethods": [
+        "contains",
+        "eq",
+        "limit",
+        "neq",
+        "order",
+        "select"
+      ],
+      "writeMethods": [],
+      "storageReadMethods": [],
+      "storageWriteMethods": [],
+      "supabaseFromCalls": 1,
+      "arrayFromCalls": 0,
+      "storageAccesses": 0,
+      "rpcCalls": 0,
+      "notes": [
+        "no static table names detected"
+      ]
+    },
+    {
       "file": "src/lib/intelligence/persistence.ts",
       "group": "intelligence",
       "sourceKind": "runtime",
@@ -10252,14 +10240,10 @@
       "group": "knowledge",
       "sourceKind": "runtime",
       "classification": "READ_ONLY_SELECT",
-      "importMatches": 4,
-      "broadMatches": 9,
-      "imports": [
-        "@/lib/supabase-server"
-      ],
-      "helperRefs": [
-        "getServerSupabase"
-      ],
+      "importMatches": 0,
+      "broadMatches": 5,
+      "imports": [],
+      "helperRefs": [],
       "tableNames": [
         "data_inventory_records",
         "enterprise_context_chunks"
@@ -10322,14 +10306,10 @@
       "group": "knowledge",
       "sourceKind": "runtime",
       "classification": "READ_ONLY_SELECT",
-      "importMatches": 4,
-      "broadMatches": 8,
-      "imports": [
-        "@/lib/supabase-server"
-      ],
-      "helperRefs": [
-        "getServerSupabase"
-      ],
+      "importMatches": 0,
+      "broadMatches": 4,
+      "imports": [],
+      "helperRefs": [],
       "tableNames": [],
       "methodNames": [
         "add",
@@ -10379,15 +10359,10 @@
       "group": "other_lib",
       "sourceKind": "runtime",
       "classification": "READ_ONLY_SELECT",
-      "importMatches": 4,
-      "broadMatches": 18,
-      "imports": [
-        "@/lib/supabase-server",
-        "@/lib/supabase-server"
-      ],
-      "helperRefs": [
-        "getServerSupabase"
-      ],
+      "importMatches": 0,
+      "broadMatches": 14,
+      "imports": [],
+      "helperRefs": [],
       "tableNames": [
         "applications",
         "atlas_message_traces",
@@ -10430,1169 +10405,14 @@
       "notes": []
     },
     {
-      "file": "src/lib/executive-profiles/loadExecutiveProfile.ts",
-      "group": "other_lib",
-      "sourceKind": "runtime",
-      "classification": "READ_ONLY_SELECT",
-      "importMatches": 4,
-      "broadMatches": 13,
-      "imports": [
-        "@/lib/supabase-server"
-      ],
-      "helperRefs": [
-        "getServerSupabase"
-      ],
-      "tableNames": [
-        "executive_career_history",
-        "executive_demo_persona_overrides",
-        "executive_interaction_log",
-        "executive_profiles",
-        "executive_public_statements",
-        "executive_relationships"
-      ],
-      "methodNames": [
-        "all",
-        "eq",
-        "filter",
-        "from",
-        "get",
-        "ilike",
-        "in",
-        "join",
-        "map",
-        "maybeSingle",
-        "order",
-        "push",
-        "select",
-        "set",
-        "slice",
-        "split",
-        "trim",
-        "warn"
-      ],
-      "readMethods": [
-        "eq",
-        "ilike",
-        "in",
-        "maybeSingle",
-        "order",
-        "select"
-      ],
-      "writeMethods": [],
-      "storageReadMethods": [],
-      "storageWriteMethods": [],
-      "supabaseFromCalls": 9,
-      "arrayFromCalls": 0,
-      "storageAccesses": 0,
-      "rpcCalls": 0,
-      "notes": []
-    },
-    {
-      "file": "src/lib/data-plane/read-adapters/towerAggregateReadAdapter.ts",
-      "group": "other_lib",
-      "sourceKind": "runtime",
-      "classification": "READ_ONLY_SELECT",
-      "importMatches": 4,
-      "broadMatches": 12,
-      "imports": [
-        "@/lib/supabase-server",
-        "@/lib/supabase-server"
-      ],
-      "helperRefs": [
-        "getServerSupabase"
-      ],
-      "tableNames": [
-        "clients",
-        "contradictions",
-        "use_case_cost_metrics",
-        "use_case_risk",
-        "use_case_usage_metrics",
-        "use_case_value_metrics",
-        "use_cases"
-      ],
-      "methodNames": [
-        "eq",
-        "from",
-        "in",
-        "is",
-        "map",
-        "order",
-        "select"
-      ],
-      "readMethods": [
-        "eq",
-        "in",
-        "is",
-        "order",
-        "select"
-      ],
-      "writeMethods": [],
-      "storageReadMethods": [],
-      "storageWriteMethods": [],
-      "supabaseFromCalls": 7,
-      "arrayFromCalls": 0,
-      "storageAccesses": 0,
-      "rpcCalls": 0,
-      "notes": []
-    },
-    {
-      "file": "src/lib/data-plane/read-adapters/intelligenceCorpusReadAdapter.ts",
-      "group": "other_lib",
-      "sourceKind": "runtime",
-      "classification": "READ_ONLY_SELECT",
-      "importMatches": 4,
-      "broadMatches": 10,
-      "imports": [
-        "@/lib/supabase-server",
-        "@/lib/supabase-server"
-      ],
-      "helperRefs": [
-        "getServerSupabase"
-      ],
-      "tableNames": [
-        "clients",
-        "contradictions",
-        "genome_patterns",
-        "intelligence_graph_edges",
-        "knowledge_sources",
-        "use_cases"
-      ],
-      "methodNames": [
-        "all",
-        "eq",
-        "from",
-        "gte",
-        "in",
-        "is",
-        "like",
-        "limit",
-        "lte",
-        "maybeSingle",
-        "order",
-        "select"
-      ],
-      "readMethods": [
-        "eq",
-        "gte",
-        "in",
-        "is",
-        "like",
-        "limit",
-        "lte",
-        "maybeSingle",
-        "order",
-        "select"
-      ],
-      "writeMethods": [],
-      "storageReadMethods": [],
-      "storageWriteMethods": [],
-      "supabaseFromCalls": 6,
-      "arrayFromCalls": 0,
-      "storageAccesses": 0,
-      "rpcCalls": 0,
-      "notes": []
-    },
-    {
-      "file": "src/lib/atlas/tower-grounding.ts",
-      "group": "other_lib",
-      "sourceKind": "runtime",
-      "classification": "READ_ONLY_SELECT",
-      "importMatches": 4,
-      "broadMatches": 9,
-      "imports": [
-        "@/lib/supabase-server"
-      ],
-      "helperRefs": [
-        "getServerSupabase"
-      ],
-      "tableNames": [
-        "ai_initiative_decisions",
-        "ai_initiative_kpis",
-        "ai_initiative_scenarios",
-        "ai_initiative_stakeholder_notes",
-        "clients"
-      ],
-      "methodNames": [
-        "abs",
-        "all",
-        "eq",
-        "filter",
-        "from",
-        "get",
-        "in",
-        "includes",
-        "isArray",
-        "isFinite",
-        "join",
-        "limit",
-        "map",
-        "maybeSingle",
-        "order",
-        "padStart",
-        "resolve",
-        "round",
-        "select",
-        "slice",
-        "toFixed",
-        "toUpperCase"
-      ],
-      "readMethods": [
-        "eq",
-        "in",
-        "limit",
-        "maybeSingle",
-        "order",
-        "select"
-      ],
-      "writeMethods": [],
-      "storageReadMethods": [],
-      "storageWriteMethods": [],
-      "supabaseFromCalls": 5,
-      "arrayFromCalls": 0,
-      "storageAccesses": 0,
-      "rpcCalls": 0,
-      "notes": []
-    },
-    {
-      "file": "src/lib/data-plane/read-adapters/enterpriseSummaryReadAdapter.ts",
-      "group": "other_lib",
-      "sourceKind": "runtime",
-      "classification": "READ_ONLY_SELECT",
-      "importMatches": 4,
-      "broadMatches": 9,
-      "imports": [
-        "@/lib/supabase-server",
-        "@/lib/supabase-server"
-      ],
-      "helperRefs": [
-        "getServerSupabase"
-      ],
-      "tableNames": [
-        "staff_augmentation",
-        "tech_projects",
-        "tech_stack_items",
-        "volumetrics_snapshots"
-      ],
-      "methodNames": [
-        "all",
-        "eq",
-        "from",
-        "limit",
-        "order",
-        "select"
-      ],
-      "readMethods": [
-        "eq",
-        "limit",
-        "order",
-        "select"
-      ],
-      "writeMethods": [],
-      "storageReadMethods": [],
-      "storageWriteMethods": [],
-      "supabaseFromCalls": 4,
-      "arrayFromCalls": 0,
-      "storageAccesses": 0,
-      "rpcCalls": 0,
-      "notes": []
-    },
-    {
-      "file": "src/lib/data-plane/read-adapters/sourceEventsReadAdapter.ts",
-      "group": "other_lib",
-      "sourceKind": "runtime",
-      "classification": "READ_ONLY_SELECT",
-      "importMatches": 4,
-      "broadMatches": 9,
-      "imports": [
-        "@/lib/supabase-server",
-        "@/lib/supabase-server"
-      ],
-      "helperRefs": [
-        "getServerSupabase"
-      ],
-      "tableNames": [
-        "source_events"
-      ],
-      "methodNames": [
-        "eq",
-        "error",
-        "from",
-        "limit",
-        "maybeSingle",
-        "neq",
-        "order",
-        "select"
-      ],
-      "readMethods": [
-        "eq",
-        "limit",
-        "maybeSingle",
-        "neq",
-        "order",
-        "select"
-      ],
-      "writeMethods": [],
-      "storageReadMethods": [],
-      "storageWriteMethods": [],
-      "supabaseFromCalls": 4,
-      "arrayFromCalls": 0,
-      "storageAccesses": 0,
-      "rpcCalls": 0,
-      "notes": []
-    },
-    {
-      "file": "src/lib/data-plane/read-adapters/towerPageReadAdapter.ts",
-      "group": "other_lib",
-      "sourceKind": "runtime",
-      "classification": "READ_ONLY_SELECT",
-      "importMatches": 4,
-      "broadMatches": 9,
-      "imports": [
-        "@/lib/supabase-server",
-        "@/lib/supabase-server"
-      ],
-      "helperRefs": [
-        "getServerSupabase"
-      ],
-      "tableNames": [
-        "ai_initiatives",
-        "engagements",
-        "source_events"
-      ],
-      "methodNames": [
-        "eq",
-        "from",
-        "has",
-        "in",
-        "is",
-        "limit",
-        "order",
-        "push",
-        "select"
-      ],
-      "readMethods": [
-        "eq",
-        "in",
-        "is",
-        "limit",
-        "order",
-        "select"
-      ],
-      "writeMethods": [],
-      "storageReadMethods": [],
-      "storageWriteMethods": [],
-      "supabaseFromCalls": 4,
-      "arrayFromCalls": 0,
-      "storageAccesses": 0,
-      "rpcCalls": 0,
-      "notes": []
-    },
-    {
-      "file": "src/lib/data-plane/read-adapters/towerSubstrateReadAdapter.ts",
-      "group": "other_lib",
-      "sourceKind": "runtime",
-      "classification": "READ_ONLY_SELECT",
-      "importMatches": 4,
-      "broadMatches": 9,
-      "imports": [
-        "@/lib/supabase-server",
-        "@/lib/supabase-server"
-      ],
-      "helperRefs": [
-        "getServerSupabase"
-      ],
-      "tableNames": [
-        "ai_initiatives",
-        "clients"
-      ],
-      "methodNames": [
-        "eq",
-        "from",
-        "has",
-        "ilike",
-        "in",
-        "limit",
-        "map",
-        "push",
-        "select"
-      ],
-      "readMethods": [
-        "eq",
-        "ilike",
-        "in",
-        "limit",
-        "select"
-      ],
-      "writeMethods": [],
-      "storageReadMethods": [],
-      "storageWriteMethods": [],
-      "supabaseFromCalls": 5,
-      "arrayFromCalls": 0,
-      "storageAccesses": 0,
-      "rpcCalls": 0,
-      "notes": []
-    },
-    {
-      "file": "src/lib/data-plane/read-adapters/intelligenceStagesReadAdapter.ts",
-      "group": "other_lib",
-      "sourceKind": "runtime",
-      "classification": "READ_ONLY_SELECT",
-      "importMatches": 4,
-      "broadMatches": 8,
-      "imports": [
-        "@/lib/supabase-server",
-        "@/lib/supabase-server"
-      ],
-      "helperRefs": [
-        "getServerSupabase"
-      ],
-      "tableNames": [
-        "ai_initiative_decisions",
-        "ai_initiative_kpis",
-        "ai_initiative_vendors"
-      ],
-      "methodNames": [
-        "from",
-        "in",
-        "not",
-        "select"
-      ],
-      "readMethods": [
-        "in",
-        "not",
-        "select"
-      ],
-      "writeMethods": [],
-      "storageReadMethods": [],
-      "storageWriteMethods": [],
-      "supabaseFromCalls": 3,
-      "arrayFromCalls": 0,
-      "storageAccesses": 0,
-      "rpcCalls": 0,
-      "notes": []
-    },
-    {
-      "file": "src/lib/data-plane/read-adapters/sourceCanvasSubstrateReadAdapter.ts",
-      "group": "other_lib",
-      "sourceKind": "runtime",
-      "classification": "READ_ONLY_SELECT",
-      "importMatches": 4,
-      "broadMatches": 8,
-      "imports": [
-        "@/lib/supabase-server",
-        "@/lib/supabase-server"
-      ],
-      "helperRefs": [
-        "getServerSupabase"
-      ],
-      "tableNames": [
-        "source_event_artifact_states",
-        "source_event_evidence_states",
-        "source_event_gate_criterion_states"
-      ],
-      "methodNames": [
-        "eq",
-        "from",
-        "order",
-        "select"
-      ],
-      "readMethods": [
-        "eq",
-        "order",
-        "select"
-      ],
-      "writeMethods": [],
-      "storageReadMethods": [],
-      "storageWriteMethods": [],
-      "supabaseFromCalls": 3,
-      "arrayFromCalls": 0,
-      "storageAccesses": 0,
-      "rpcCalls": 0,
-      "notes": []
-    },
-    {
-      "file": "src/lib/data-plane/read-adapters/supabaseReadAdapter.ts",
-      "group": "other_lib",
-      "sourceKind": "runtime",
-      "classification": "READ_ONLY_SELECT",
-      "importMatches": 4,
-      "broadMatches": 8,
-      "imports": [
-        "@/lib/supabase-server",
-        "@/lib/supabase-server"
-      ],
-      "helperRefs": [
-        "getServerSupabase"
-      ],
-      "tableNames": [
-        "clients",
-        "engagements"
-      ],
-      "methodNames": [
-        "all",
-        "eq",
-        "filter",
-        "from",
-        "fromEntries",
-        "is",
-        "keys",
-        "limit",
-        "map",
-        "maybeSingle",
-        "order",
-        "resolve",
-        "select"
-      ],
-      "readMethods": [
-        "eq",
-        "is",
-        "limit",
-        "maybeSingle",
-        "order",
-        "select"
-      ],
-      "writeMethods": [],
-      "storageReadMethods": [],
-      "storageWriteMethods": [],
-      "supabaseFromCalls": 4,
-      "arrayFromCalls": 0,
-      "storageAccesses": 0,
-      "rpcCalls": 0,
-      "notes": []
-    },
-    {
-      "file": "src/lib/graph/cross-client.ts",
-      "group": "other_lib",
-      "sourceKind": "runtime",
-      "classification": "READ_ONLY_SELECT",
-      "importMatches": 4,
-      "broadMatches": 8,
-      "imports": [
-        "@/lib/supabase-server"
-      ],
-      "helperRefs": [
-        "getServerSupabase"
-      ],
-      "tableNames": [
-        "client_partnerships",
-        "tech_stack_items"
-      ],
-      "methodNames": [
-        "all",
-        "entries",
-        "eq",
-        "filter",
-        "from",
-        "get",
-        "in",
-        "join",
-        "map",
-        "push",
-        "select",
-        "set",
-        "sort",
-        "stringify",
-        "toFixed"
-      ],
-      "readMethods": [
-        "eq",
-        "in",
-        "select"
-      ],
-      "writeMethods": [],
-      "storageReadMethods": [],
-      "storageWriteMethods": [],
-      "supabaseFromCalls": 4,
-      "arrayFromCalls": 0,
-      "storageAccesses": 0,
-      "rpcCalls": 0,
-      "notes": []
-    },
-    {
-      "file": "src/lib/auth/maestro.ts",
-      "group": "other_lib",
-      "sourceKind": "runtime",
-      "classification": "READ_ONLY_SELECT",
-      "importMatches": 4,
-      "broadMatches": 7,
-      "imports": [
-        "@/lib/supabase-server"
-      ],
-      "helperRefs": [
-        "getServerSupabase"
-      ],
-      "tableNames": [
-        "persons"
-      ],
-      "methodNames": [
-        "eq",
-        "find",
-        "from",
-        "in",
-        "includes",
-        "indexOf",
-        "limit",
-        "maybeSingle",
-        "now",
-        "push",
-        "select",
-        "slice",
-        "toLowerCase",
-        "trim"
-      ],
-      "readMethods": [
-        "eq",
-        "in",
-        "limit",
-        "maybeSingle",
-        "select"
-      ],
-      "writeMethods": [],
-      "storageReadMethods": [],
-      "storageWriteMethods": [],
-      "supabaseFromCalls": 2,
-      "arrayFromCalls": 1,
-      "storageAccesses": 0,
-      "rpcCalls": 0,
-      "notes": []
-    },
-    {
-      "file": "src/lib/auth/program-access-policy.ts",
-      "group": "other_lib",
-      "sourceKind": "runtime",
-      "classification": "READ_ONLY_SELECT",
-      "importMatches": 4,
-      "broadMatches": 7,
-      "imports": [
-        "@/lib/supabase-server"
-      ],
-      "helperRefs": [
-        "getServerSupabase"
-      ],
-      "tableNames": [
-        "engagement_participants",
-        "person_client_memberships"
-      ],
-      "methodNames": [
-        "all",
-        "eq",
-        "filter",
-        "from",
-        "includes",
-        "is",
-        "join",
-        "map",
-        "maybeSingle",
-        "push",
-        "select",
-        "some",
-        "test"
-      ],
-      "readMethods": [
-        "eq",
-        "is",
-        "maybeSingle",
-        "select"
-      ],
-      "writeMethods": [],
-      "storageReadMethods": [],
-      "storageWriteMethods": [],
-      "supabaseFromCalls": 2,
-      "arrayFromCalls": 1,
-      "storageAccesses": 0,
-      "rpcCalls": 0,
-      "notes": []
-    },
-    {
-      "file": "src/lib/auth/source-access-policy.ts",
-      "group": "other_lib",
-      "sourceKind": "runtime",
-      "classification": "READ_ONLY_SELECT",
-      "importMatches": 4,
-      "broadMatches": 7,
-      "imports": [
-        "@/lib/supabase-server"
-      ],
-      "helperRefs": [
-        "getServerSupabase"
-      ],
-      "tableNames": [
-        "person_client_memberships",
-        "source_event_participants"
-      ],
-      "methodNames": [
-        "all",
-        "eq",
-        "filter",
-        "from",
-        "includes",
-        "join",
-        "map",
-        "maybeSingle",
-        "push",
-        "select",
-        "some",
-        "test",
-        "toLowerCase",
-        "trim",
-        "warn"
-      ],
-      "readMethods": [
-        "eq",
-        "maybeSingle",
-        "select"
-      ],
-      "writeMethods": [],
-      "storageReadMethods": [],
-      "storageWriteMethods": [],
-      "supabaseFromCalls": 2,
-      "arrayFromCalls": 1,
-      "storageAccesses": 0,
-      "rpcCalls": 0,
-      "notes": []
-    },
-    {
-      "file": "src/lib/data-plane/read-adapters/homeAttentionReadAdapter.ts",
-      "group": "other_lib",
-      "sourceKind": "runtime",
-      "classification": "READ_ONLY_SELECT",
-      "importMatches": 4,
-      "broadMatches": 7,
-      "imports": [
-        "@/lib/supabase-server",
-        "@/lib/supabase-server"
-      ],
-      "helperRefs": [
-        "getServerSupabase"
-      ],
-      "tableNames": [
-        "contradictions",
-        "engagements",
-        "turns"
-      ],
-      "methodNames": [
-        "eq",
-        "from",
-        "in",
-        "is",
-        "limit",
-        "map",
-        "order",
-        "select"
-      ],
-      "readMethods": [
-        "eq",
-        "in",
-        "is",
-        "limit",
-        "order",
-        "select"
-      ],
-      "writeMethods": [],
-      "storageReadMethods": [],
-      "storageWriteMethods": [],
-      "supabaseFromCalls": 3,
-      "arrayFromCalls": 0,
-      "storageAccesses": 0,
-      "rpcCalls": 0,
-      "notes": []
-    },
-    {
-      "file": "src/lib/data-plane/read-adapters/sourcingWorkItemsReadAdapter.ts",
-      "group": "other_lib",
-      "sourceKind": "runtime",
-      "classification": "READ_ONLY_SELECT",
-      "importMatches": 4,
-      "broadMatches": 7,
-      "imports": [
-        "@/lib/supabase-server",
-        "@/lib/supabase-server"
-      ],
-      "helperRefs": [
-        "getServerSupabase"
-      ],
-      "tableNames": [
-        "sourcing_work_items"
-      ],
-      "methodNames": [
-        "entries",
-        "eq",
-        "from",
-        "includes",
-        "join",
-        "map",
-        "order",
-        "select",
-        "test"
-      ],
-      "readMethods": [
-        "eq",
-        "order",
-        "select"
-      ],
-      "writeMethods": [],
-      "storageReadMethods": [],
-      "storageWriteMethods": [],
-      "supabaseFromCalls": 3,
-      "arrayFromCalls": 0,
-      "storageAccesses": 0,
-      "rpcCalls": 0,
-      "notes": []
-    },
-    {
-      "file": "src/lib/data-plane/read-adapters/vipProfileReadAdapter.ts",
-      "group": "other_lib",
-      "sourceKind": "runtime",
-      "classification": "READ_ONLY_SELECT",
-      "importMatches": 4,
-      "broadMatches": 7,
-      "imports": [
-        "@/lib/supabase-server",
-        "@/lib/supabase-server"
-      ],
-      "helperRefs": [
-        "getServerSupabase"
-      ],
-      "tableNames": [
-        "vip_profiles"
-      ],
-      "methodNames": [
-        "eq",
-        "filter",
-        "from",
-        "ilike",
-        "maybeSingle",
-        "select",
-        "split",
-        "trim"
-      ],
-      "readMethods": [
-        "eq",
-        "ilike",
-        "maybeSingle",
-        "select"
-      ],
-      "writeMethods": [],
-      "storageReadMethods": [],
-      "storageWriteMethods": [],
-      "supabaseFromCalls": 3,
-      "arrayFromCalls": 0,
-      "storageAccesses": 0,
-      "rpcCalls": 0,
-      "notes": []
-    },
-    {
-      "file": "src/lib/data-plane/read-adapters/intelligenceVendorsReadAdapter.ts",
-      "group": "other_lib",
-      "sourceKind": "runtime",
-      "classification": "READ_ONLY_SELECT",
-      "importMatches": 4,
-      "broadMatches": 6,
-      "imports": [
-        "@/lib/supabase-server",
-        "@/lib/supabase-server"
-      ],
-      "helperRefs": [
-        "getServerSupabase"
-      ],
-      "tableNames": [
-        "ai_initiative_vendors"
-      ],
-      "methodNames": [
-        "eq",
-        "from",
-        "map",
-        "select"
-      ],
-      "readMethods": [
-        "eq",
-        "select"
-      ],
-      "writeMethods": [],
-      "storageReadMethods": [],
-      "storageWriteMethods": [],
-      "supabaseFromCalls": 1,
-      "arrayFromCalls": 0,
-      "storageAccesses": 0,
-      "rpcCalls": 0,
-      "notes": []
-    },
-    {
-      "file": "src/lib/data-plane/read-adapters/programsReadAdapter.ts",
-      "group": "other_lib",
-      "sourceKind": "runtime",
-      "classification": "READ_ONLY_SELECT",
-      "importMatches": 4,
-      "broadMatches": 6,
-      "imports": [
-        "@/lib/supabase-server",
-        "@/lib/supabase-server"
-      ],
-      "helperRefs": [
-        "getServerSupabase"
-      ],
-      "tableNames": [
-        "engagements"
-      ],
-      "methodNames": [
-        "eq",
-        "from",
-        "in",
-        "is",
-        "limit",
-        "maybeSingle",
-        "order",
-        "push",
-        "select"
-      ],
-      "readMethods": [
-        "eq",
-        "in",
-        "is",
-        "limit",
-        "maybeSingle",
-        "order",
-        "select"
-      ],
-      "writeMethods": [],
-      "storageReadMethods": [],
-      "storageWriteMethods": [],
-      "supabaseFromCalls": 2,
-      "arrayFromCalls": 0,
-      "storageAccesses": 0,
-      "rpcCalls": 0,
-      "notes": []
-    },
-    {
-      "file": "src/lib/data-plane/read-adapters/strategicMovesPreferencesReadAdapter.ts",
-      "group": "other_lib",
-      "sourceKind": "runtime",
-      "classification": "READ_ONLY_SELECT",
-      "importMatches": 4,
-      "broadMatches": 6,
-      "imports": [
-        "@/lib/supabase-server",
-        "@/lib/supabase-server"
-      ],
-      "helperRefs": [
-        "getServerSupabase"
-      ],
-      "tableNames": [
-        "tower_user_preferences"
-      ],
-      "methodNames": [
-        "eq",
-        "from",
-        "maybeSingle",
-        "select"
-      ],
-      "readMethods": [
-        "eq",
-        "maybeSingle",
-        "select"
-      ],
-      "writeMethods": [],
-      "storageReadMethods": [],
-      "storageWriteMethods": [],
-      "supabaseFromCalls": 1,
-      "arrayFromCalls": 0,
-      "storageAccesses": 0,
-      "rpcCalls": 0,
-      "notes": []
-    },
-    {
-      "file": "src/lib/enterprise-context/intelligence-read-model.ts",
-      "group": "other_lib",
-      "sourceKind": "runtime",
-      "classification": "READ_ONLY_SELECT",
-      "importMatches": 4,
-      "broadMatches": 6,
-      "imports": [
-        "@/lib/supabase-server"
-      ],
-      "helperRefs": [
-        "getServerSupabase"
-      ],
-      "tableNames": [],
-      "methodNames": [
-        "all",
-        "entries",
-        "eq",
-        "filter",
-        "from",
-        "fromEntries",
-        "get",
-        "includes",
-        "isFinite",
-        "map",
-        "push",
-        "range",
-        "reduce",
-        "replace",
-        "round",
-        "select",
-        "set",
-        "slice",
-        "sort",
-        "toFixed",
-        "toLowerCase",
-        "trim",
-        "values",
-        "warn"
-      ],
-      "readMethods": [
-        "eq",
-        "range",
-        "select"
-      ],
-      "writeMethods": [],
-      "storageReadMethods": [],
-      "storageWriteMethods": [],
-      "supabaseFromCalls": 2,
-      "arrayFromCalls": 0,
-      "storageAccesses": 0,
-      "rpcCalls": 0,
-      "notes": [
-        "no static table names detected"
-      ]
-    },
-    {
-      "file": "src/lib/data-plane/read-adapters/expertReviewsReadAdapter.ts",
-      "group": "other_lib",
-      "sourceKind": "runtime",
-      "classification": "READ_ONLY_SELECT",
-      "importMatches": 4,
-      "broadMatches": 5,
-      "imports": [
-        "@/lib/supabase-server",
-        "@/lib/supabase-server"
-      ],
-      "helperRefs": [
-        "getServerSupabase"
-      ],
-      "tableNames": [
-        "expert_reviews"
-      ],
-      "methodNames": [
-        "eq",
-        "from",
-        "includes",
-        "join",
-        "map",
-        "order",
-        "select",
-        "test"
-      ],
-      "readMethods": [
-        "eq",
-        "order",
-        "select"
-      ],
-      "writeMethods": [],
-      "storageReadMethods": [],
-      "storageWriteMethods": [],
-      "supabaseFromCalls": 1,
-      "arrayFromCalls": 0,
-      "storageAccesses": 0,
-      "rpcCalls": 0,
-      "notes": []
-    },
-    {
-      "file": "src/lib/data-plane/read-adapters/outcomeLedgerReadAdapter.ts",
-      "group": "other_lib",
-      "sourceKind": "runtime",
-      "classification": "READ_ONLY_SELECT",
-      "importMatches": 4,
-      "broadMatches": 5,
-      "imports": [
-        "@/lib/supabase-server",
-        "@/lib/supabase-server"
-      ],
-      "helperRefs": [
-        "getServerSupabase"
-      ],
-      "tableNames": [
-        "outcome_ledger"
-      ],
-      "methodNames": [
-        "eq",
-        "filter",
-        "from",
-        "includes",
-        "isArray",
-        "isFinite",
-        "join",
-        "map",
-        "order",
-        "select"
-      ],
-      "readMethods": [
-        "eq",
-        "order",
-        "select"
-      ],
-      "writeMethods": [],
-      "storageReadMethods": [],
-      "storageWriteMethods": [],
-      "supabaseFromCalls": 1,
-      "arrayFromCalls": 0,
-      "storageAccesses": 0,
-      "rpcCalls": 0,
-      "notes": []
-    },
-    {
-      "file": "src/lib/data-plane/read-adapters/turnTraceReadAdapter.ts",
-      "group": "other_lib",
-      "sourceKind": "runtime",
-      "classification": "READ_ONLY_SELECT",
-      "importMatches": 4,
-      "broadMatches": 5,
-      "imports": [
-        "@/lib/supabase-server",
-        "@/lib/supabase-server"
-      ],
-      "helperRefs": [
-        "getServerSupabase"
-      ],
-      "tableNames": [
-        "turn_traces"
-      ],
-      "methodNames": [
-        "eq",
-        "from",
-        "join",
-        "map",
-        "maybeSingle",
-        "select",
-        "split"
-      ],
-      "readMethods": [
-        "eq",
-        "maybeSingle",
-        "select"
-      ],
-      "writeMethods": [],
-      "storageReadMethods": [],
-      "storageWriteMethods": [],
-      "supabaseFromCalls": 1,
-      "arrayFromCalls": 0,
-      "storageAccesses": 0,
-      "rpcCalls": 0,
-      "notes": []
-    },
-    {
       "file": "src/lib/engagements/list-summary.ts",
       "group": "other_lib",
       "sourceKind": "runtime",
       "classification": "READ_ONLY_SELECT",
-      "importMatches": 3,
-      "broadMatches": 14,
-      "imports": [
-        "@/lib/supabase-server"
-      ],
-      "helperRefs": [
-        "getServerSupabase"
-      ],
+      "importMatches": 0,
+      "broadMatches": 11,
+      "imports": [],
+      "helperRefs": [],
       "tableNames": [
         "clients",
         "contradictions",
@@ -11647,18 +10467,536 @@
       "notes": []
     },
     {
+      "file": "src/lib/executive-profiles/loadExecutiveProfile.ts",
+      "group": "other_lib",
+      "sourceKind": "runtime",
+      "classification": "READ_ONLY_SELECT",
+      "importMatches": 0,
+      "broadMatches": 9,
+      "imports": [],
+      "helperRefs": [],
+      "tableNames": [
+        "executive_career_history",
+        "executive_demo_persona_overrides",
+        "executive_interaction_log",
+        "executive_profiles",
+        "executive_public_statements",
+        "executive_relationships"
+      ],
+      "methodNames": [
+        "all",
+        "eq",
+        "filter",
+        "from",
+        "get",
+        "ilike",
+        "in",
+        "join",
+        "map",
+        "maybeSingle",
+        "order",
+        "push",
+        "select",
+        "set",
+        "slice",
+        "split",
+        "trim",
+        "warn"
+      ],
+      "readMethods": [
+        "eq",
+        "ilike",
+        "in",
+        "maybeSingle",
+        "order",
+        "select"
+      ],
+      "writeMethods": [],
+      "storageReadMethods": [],
+      "storageWriteMethods": [],
+      "supabaseFromCalls": 9,
+      "arrayFromCalls": 0,
+      "storageAccesses": 0,
+      "rpcCalls": 0,
+      "notes": []
+    },
+    {
+      "file": "src/lib/data-plane/read-adapters/towerAggregateReadAdapter.ts",
+      "group": "other_lib",
+      "sourceKind": "runtime",
+      "classification": "READ_ONLY_SELECT",
+      "importMatches": 0,
+      "broadMatches": 8,
+      "imports": [],
+      "helperRefs": [],
+      "tableNames": [
+        "clients",
+        "contradictions",
+        "use_case_cost_metrics",
+        "use_case_risk",
+        "use_case_usage_metrics",
+        "use_case_value_metrics",
+        "use_cases"
+      ],
+      "methodNames": [
+        "eq",
+        "from",
+        "in",
+        "is",
+        "map",
+        "order",
+        "select"
+      ],
+      "readMethods": [
+        "eq",
+        "in",
+        "is",
+        "order",
+        "select"
+      ],
+      "writeMethods": [],
+      "storageReadMethods": [],
+      "storageWriteMethods": [],
+      "supabaseFromCalls": 7,
+      "arrayFromCalls": 0,
+      "storageAccesses": 0,
+      "rpcCalls": 0,
+      "notes": []
+    },
+    {
+      "file": "src/lib/data-plane/read-adapters/intelligenceCorpusReadAdapter.ts",
+      "group": "other_lib",
+      "sourceKind": "runtime",
+      "classification": "READ_ONLY_SELECT",
+      "importMatches": 0,
+      "broadMatches": 6,
+      "imports": [],
+      "helperRefs": [],
+      "tableNames": [
+        "clients",
+        "contradictions",
+        "genome_patterns",
+        "intelligence_graph_edges",
+        "knowledge_sources",
+        "use_cases"
+      ],
+      "methodNames": [
+        "all",
+        "eq",
+        "from",
+        "gte",
+        "in",
+        "is",
+        "like",
+        "limit",
+        "lte",
+        "maybeSingle",
+        "order",
+        "select"
+      ],
+      "readMethods": [
+        "eq",
+        "gte",
+        "in",
+        "is",
+        "like",
+        "limit",
+        "lte",
+        "maybeSingle",
+        "order",
+        "select"
+      ],
+      "writeMethods": [],
+      "storageReadMethods": [],
+      "storageWriteMethods": [],
+      "supabaseFromCalls": 6,
+      "arrayFromCalls": 0,
+      "storageAccesses": 0,
+      "rpcCalls": 0,
+      "notes": []
+    },
+    {
+      "file": "src/lib/atlas/tower-grounding.ts",
+      "group": "other_lib",
+      "sourceKind": "runtime",
+      "classification": "READ_ONLY_SELECT",
+      "importMatches": 0,
+      "broadMatches": 5,
+      "imports": [],
+      "helperRefs": [],
+      "tableNames": [
+        "ai_initiative_decisions",
+        "ai_initiative_kpis",
+        "ai_initiative_scenarios",
+        "ai_initiative_stakeholder_notes",
+        "clients"
+      ],
+      "methodNames": [
+        "abs",
+        "all",
+        "eq",
+        "filter",
+        "from",
+        "get",
+        "in",
+        "includes",
+        "isArray",
+        "isFinite",
+        "join",
+        "limit",
+        "map",
+        "maybeSingle",
+        "order",
+        "padStart",
+        "resolve",
+        "round",
+        "select",
+        "slice",
+        "toFixed",
+        "toUpperCase"
+      ],
+      "readMethods": [
+        "eq",
+        "in",
+        "limit",
+        "maybeSingle",
+        "order",
+        "select"
+      ],
+      "writeMethods": [],
+      "storageReadMethods": [],
+      "storageWriteMethods": [],
+      "supabaseFromCalls": 5,
+      "arrayFromCalls": 0,
+      "storageAccesses": 0,
+      "rpcCalls": 0,
+      "notes": []
+    },
+    {
+      "file": "src/lib/data-plane/read-adapters/enterpriseSummaryReadAdapter.ts",
+      "group": "other_lib",
+      "sourceKind": "runtime",
+      "classification": "READ_ONLY_SELECT",
+      "importMatches": 0,
+      "broadMatches": 5,
+      "imports": [],
+      "helperRefs": [],
+      "tableNames": [
+        "staff_augmentation",
+        "tech_projects",
+        "tech_stack_items",
+        "volumetrics_snapshots"
+      ],
+      "methodNames": [
+        "all",
+        "eq",
+        "from",
+        "limit",
+        "order",
+        "select"
+      ],
+      "readMethods": [
+        "eq",
+        "limit",
+        "order",
+        "select"
+      ],
+      "writeMethods": [],
+      "storageReadMethods": [],
+      "storageWriteMethods": [],
+      "supabaseFromCalls": 4,
+      "arrayFromCalls": 0,
+      "storageAccesses": 0,
+      "rpcCalls": 0,
+      "notes": []
+    },
+    {
+      "file": "src/lib/data-plane/read-adapters/sourceEventsReadAdapter.ts",
+      "group": "other_lib",
+      "sourceKind": "runtime",
+      "classification": "READ_ONLY_SELECT",
+      "importMatches": 0,
+      "broadMatches": 5,
+      "imports": [],
+      "helperRefs": [],
+      "tableNames": [
+        "source_events"
+      ],
+      "methodNames": [
+        "eq",
+        "error",
+        "from",
+        "limit",
+        "maybeSingle",
+        "neq",
+        "order",
+        "select"
+      ],
+      "readMethods": [
+        "eq",
+        "limit",
+        "maybeSingle",
+        "neq",
+        "order",
+        "select"
+      ],
+      "writeMethods": [],
+      "storageReadMethods": [],
+      "storageWriteMethods": [],
+      "supabaseFromCalls": 4,
+      "arrayFromCalls": 0,
+      "storageAccesses": 0,
+      "rpcCalls": 0,
+      "notes": []
+    },
+    {
+      "file": "src/lib/data-plane/read-adapters/towerPageReadAdapter.ts",
+      "group": "other_lib",
+      "sourceKind": "runtime",
+      "classification": "READ_ONLY_SELECT",
+      "importMatches": 0,
+      "broadMatches": 5,
+      "imports": [],
+      "helperRefs": [],
+      "tableNames": [
+        "ai_initiatives",
+        "engagements",
+        "source_events"
+      ],
+      "methodNames": [
+        "eq",
+        "from",
+        "has",
+        "in",
+        "is",
+        "limit",
+        "order",
+        "push",
+        "select"
+      ],
+      "readMethods": [
+        "eq",
+        "in",
+        "is",
+        "limit",
+        "order",
+        "select"
+      ],
+      "writeMethods": [],
+      "storageReadMethods": [],
+      "storageWriteMethods": [],
+      "supabaseFromCalls": 4,
+      "arrayFromCalls": 0,
+      "storageAccesses": 0,
+      "rpcCalls": 0,
+      "notes": []
+    },
+    {
+      "file": "src/lib/data-plane/read-adapters/towerSubstrateReadAdapter.ts",
+      "group": "other_lib",
+      "sourceKind": "runtime",
+      "classification": "READ_ONLY_SELECT",
+      "importMatches": 0,
+      "broadMatches": 5,
+      "imports": [],
+      "helperRefs": [],
+      "tableNames": [
+        "ai_initiatives",
+        "clients"
+      ],
+      "methodNames": [
+        "eq",
+        "from",
+        "has",
+        "ilike",
+        "in",
+        "limit",
+        "map",
+        "push",
+        "select"
+      ],
+      "readMethods": [
+        "eq",
+        "ilike",
+        "in",
+        "limit",
+        "select"
+      ],
+      "writeMethods": [],
+      "storageReadMethods": [],
+      "storageWriteMethods": [],
+      "supabaseFromCalls": 5,
+      "arrayFromCalls": 0,
+      "storageAccesses": 0,
+      "rpcCalls": 0,
+      "notes": []
+    },
+    {
+      "file": "src/lib/data-plane/read-adapters/intelligenceStagesReadAdapter.ts",
+      "group": "other_lib",
+      "sourceKind": "runtime",
+      "classification": "READ_ONLY_SELECT",
+      "importMatches": 0,
+      "broadMatches": 4,
+      "imports": [],
+      "helperRefs": [],
+      "tableNames": [
+        "ai_initiative_decisions",
+        "ai_initiative_kpis",
+        "ai_initiative_vendors"
+      ],
+      "methodNames": [
+        "from",
+        "in",
+        "not",
+        "select"
+      ],
+      "readMethods": [
+        "in",
+        "not",
+        "select"
+      ],
+      "writeMethods": [],
+      "storageReadMethods": [],
+      "storageWriteMethods": [],
+      "supabaseFromCalls": 3,
+      "arrayFromCalls": 0,
+      "storageAccesses": 0,
+      "rpcCalls": 0,
+      "notes": []
+    },
+    {
+      "file": "src/lib/data-plane/read-adapters/sourceCanvasSubstrateReadAdapter.ts",
+      "group": "other_lib",
+      "sourceKind": "runtime",
+      "classification": "READ_ONLY_SELECT",
+      "importMatches": 0,
+      "broadMatches": 4,
+      "imports": [],
+      "helperRefs": [],
+      "tableNames": [
+        "source_event_artifact_states",
+        "source_event_evidence_states",
+        "source_event_gate_criterion_states"
+      ],
+      "methodNames": [
+        "eq",
+        "from",
+        "order",
+        "select"
+      ],
+      "readMethods": [
+        "eq",
+        "order",
+        "select"
+      ],
+      "writeMethods": [],
+      "storageReadMethods": [],
+      "storageWriteMethods": [],
+      "supabaseFromCalls": 3,
+      "arrayFromCalls": 0,
+      "storageAccesses": 0,
+      "rpcCalls": 0,
+      "notes": []
+    },
+    {
+      "file": "src/lib/data-plane/read-adapters/supabaseReadAdapter.ts",
+      "group": "other_lib",
+      "sourceKind": "runtime",
+      "classification": "READ_ONLY_SELECT",
+      "importMatches": 0,
+      "broadMatches": 4,
+      "imports": [],
+      "helperRefs": [],
+      "tableNames": [
+        "clients",
+        "engagements"
+      ],
+      "methodNames": [
+        "all",
+        "eq",
+        "filter",
+        "from",
+        "fromEntries",
+        "is",
+        "keys",
+        "limit",
+        "map",
+        "maybeSingle",
+        "order",
+        "resolve",
+        "select"
+      ],
+      "readMethods": [
+        "eq",
+        "is",
+        "limit",
+        "maybeSingle",
+        "order",
+        "select"
+      ],
+      "writeMethods": [],
+      "storageReadMethods": [],
+      "storageWriteMethods": [],
+      "supabaseFromCalls": 4,
+      "arrayFromCalls": 0,
+      "storageAccesses": 0,
+      "rpcCalls": 0,
+      "notes": []
+    },
+    {
+      "file": "src/lib/graph/cross-client.ts",
+      "group": "other_lib",
+      "sourceKind": "runtime",
+      "classification": "READ_ONLY_SELECT",
+      "importMatches": 0,
+      "broadMatches": 4,
+      "imports": [],
+      "helperRefs": [],
+      "tableNames": [
+        "client_partnerships",
+        "tech_stack_items"
+      ],
+      "methodNames": [
+        "all",
+        "entries",
+        "eq",
+        "filter",
+        "from",
+        "get",
+        "in",
+        "join",
+        "map",
+        "push",
+        "select",
+        "set",
+        "sort",
+        "stringify",
+        "toFixed"
+      ],
+      "readMethods": [
+        "eq",
+        "in",
+        "select"
+      ],
+      "writeMethods": [],
+      "storageReadMethods": [],
+      "storageWriteMethods": [],
+      "supabaseFromCalls": 4,
+      "arrayFromCalls": 0,
+      "storageAccesses": 0,
+      "rpcCalls": 0,
+      "notes": []
+    },
+    {
       "file": "src/lib/nexus/sessionContext.ts",
       "group": "other_lib",
       "sourceKind": "runtime",
       "classification": "READ_ONLY_SELECT",
-      "importMatches": 3,
-      "broadMatches": 7,
-      "imports": [
-        "@/lib/supabase-server"
-      ],
-      "helperRefs": [
-        "getServerSupabase"
-      ],
+      "importMatches": 0,
+      "broadMatches": 4,
+      "imports": [],
+      "helperRefs": [],
       "tableNames": [
         "clients",
         "engagements",
@@ -11701,14 +11039,10 @@
       "group": "other_lib",
       "sourceKind": "runtime",
       "classification": "READ_ONLY_SELECT",
-      "importMatches": 3,
-      "broadMatches": 6,
-      "imports": [
-        "@/lib/supabase-server"
-      ],
-      "helperRefs": [
-        "getServerSupabase"
-      ],
+      "importMatches": 0,
+      "broadMatches": 3,
+      "imports": [],
+      "helperRefs": [],
       "tableNames": [
         "vip_profiles"
       ],
@@ -11752,14 +11086,10 @@
       "group": "other_lib",
       "sourceKind": "runtime",
       "classification": "READ_ONLY_SELECT",
-      "importMatches": 3,
-      "broadMatches": 6,
-      "imports": [
-        "@/lib/supabase-server"
-      ],
-      "helperRefs": [
-        "getServerSupabase"
-      ],
+      "importMatches": 0,
+      "broadMatches": 3,
+      "imports": [],
+      "helperRefs": [],
       "tableNames": [
         "clients",
         "person_client_memberships",
@@ -11792,18 +11122,186 @@
       "notes": []
     },
     {
+      "file": "src/lib/auth/maestro.ts",
+      "group": "other_lib",
+      "sourceKind": "runtime",
+      "classification": "READ_ONLY_SELECT",
+      "importMatches": 0,
+      "broadMatches": 3,
+      "imports": [],
+      "helperRefs": [],
+      "tableNames": [
+        "persons"
+      ],
+      "methodNames": [
+        "eq",
+        "find",
+        "from",
+        "in",
+        "includes",
+        "indexOf",
+        "limit",
+        "maybeSingle",
+        "now",
+        "push",
+        "select",
+        "slice",
+        "toLowerCase",
+        "trim"
+      ],
+      "readMethods": [
+        "eq",
+        "in",
+        "limit",
+        "maybeSingle",
+        "select"
+      ],
+      "writeMethods": [],
+      "storageReadMethods": [],
+      "storageWriteMethods": [],
+      "supabaseFromCalls": 2,
+      "arrayFromCalls": 1,
+      "storageAccesses": 0,
+      "rpcCalls": 0,
+      "notes": []
+    },
+    {
+      "file": "src/lib/auth/program-access-policy.ts",
+      "group": "other_lib",
+      "sourceKind": "runtime",
+      "classification": "READ_ONLY_SELECT",
+      "importMatches": 0,
+      "broadMatches": 3,
+      "imports": [],
+      "helperRefs": [],
+      "tableNames": [
+        "engagement_participants",
+        "person_client_memberships"
+      ],
+      "methodNames": [
+        "all",
+        "eq",
+        "filter",
+        "from",
+        "includes",
+        "is",
+        "join",
+        "map",
+        "maybeSingle",
+        "push",
+        "select",
+        "some",
+        "test"
+      ],
+      "readMethods": [
+        "eq",
+        "is",
+        "maybeSingle",
+        "select"
+      ],
+      "writeMethods": [],
+      "storageReadMethods": [],
+      "storageWriteMethods": [],
+      "supabaseFromCalls": 2,
+      "arrayFromCalls": 1,
+      "storageAccesses": 0,
+      "rpcCalls": 0,
+      "notes": []
+    },
+    {
+      "file": "src/lib/auth/source-access-policy.ts",
+      "group": "other_lib",
+      "sourceKind": "runtime",
+      "classification": "READ_ONLY_SELECT",
+      "importMatches": 0,
+      "broadMatches": 3,
+      "imports": [],
+      "helperRefs": [],
+      "tableNames": [
+        "person_client_memberships",
+        "source_event_participants"
+      ],
+      "methodNames": [
+        "all",
+        "eq",
+        "filter",
+        "from",
+        "includes",
+        "join",
+        "map",
+        "maybeSingle",
+        "push",
+        "select",
+        "some",
+        "test",
+        "toLowerCase",
+        "trim",
+        "warn"
+      ],
+      "readMethods": [
+        "eq",
+        "maybeSingle",
+        "select"
+      ],
+      "writeMethods": [],
+      "storageReadMethods": [],
+      "storageWriteMethods": [],
+      "supabaseFromCalls": 2,
+      "arrayFromCalls": 1,
+      "storageAccesses": 0,
+      "rpcCalls": 0,
+      "notes": []
+    },
+    {
+      "file": "src/lib/data-plane/read-adapters/homeAttentionReadAdapter.ts",
+      "group": "other_lib",
+      "sourceKind": "runtime",
+      "classification": "READ_ONLY_SELECT",
+      "importMatches": 0,
+      "broadMatches": 3,
+      "imports": [],
+      "helperRefs": [],
+      "tableNames": [
+        "contradictions",
+        "engagements",
+        "turns"
+      ],
+      "methodNames": [
+        "eq",
+        "from",
+        "in",
+        "is",
+        "limit",
+        "map",
+        "order",
+        "select"
+      ],
+      "readMethods": [
+        "eq",
+        "in",
+        "is",
+        "limit",
+        "order",
+        "select"
+      ],
+      "writeMethods": [],
+      "storageReadMethods": [],
+      "storageWriteMethods": [],
+      "supabaseFromCalls": 3,
+      "arrayFromCalls": 0,
+      "storageAccesses": 0,
+      "rpcCalls": 0,
+      "notes": []
+    },
+    {
       "file": "src/lib/data-plane/read-adapters/sourceDecisionQueueReadAdapter.ts",
       "group": "other_lib",
       "sourceKind": "runtime",
       "classification": "READ_ONLY_SELECT",
-      "importMatches": 3,
-      "broadMatches": 6,
-      "imports": [
-        "@/lib/supabase-server"
-      ],
-      "helperRefs": [
-        "getServerSupabase"
-      ],
+      "importMatches": 0,
+      "broadMatches": 3,
+      "imports": [],
+      "helperRefs": [],
       "tableNames": [
         "data_inventory_records",
         "data_inventory_segments"
@@ -11836,18 +11334,244 @@
       "notes": []
     },
     {
+      "file": "src/lib/data-plane/read-adapters/sourcingWorkItemsReadAdapter.ts",
+      "group": "other_lib",
+      "sourceKind": "runtime",
+      "classification": "READ_ONLY_SELECT",
+      "importMatches": 0,
+      "broadMatches": 3,
+      "imports": [],
+      "helperRefs": [],
+      "tableNames": [
+        "sourcing_work_items"
+      ],
+      "methodNames": [
+        "entries",
+        "eq",
+        "from",
+        "includes",
+        "join",
+        "map",
+        "order",
+        "select",
+        "test"
+      ],
+      "readMethods": [
+        "eq",
+        "order",
+        "select"
+      ],
+      "writeMethods": [],
+      "storageReadMethods": [],
+      "storageWriteMethods": [],
+      "supabaseFromCalls": 3,
+      "arrayFromCalls": 0,
+      "storageAccesses": 0,
+      "rpcCalls": 0,
+      "notes": []
+    },
+    {
+      "file": "src/lib/data-plane/read-adapters/vipProfileReadAdapter.ts",
+      "group": "other_lib",
+      "sourceKind": "runtime",
+      "classification": "READ_ONLY_SELECT",
+      "importMatches": 0,
+      "broadMatches": 3,
+      "imports": [],
+      "helperRefs": [],
+      "tableNames": [
+        "vip_profiles"
+      ],
+      "methodNames": [
+        "eq",
+        "filter",
+        "from",
+        "ilike",
+        "maybeSingle",
+        "select",
+        "split",
+        "trim"
+      ],
+      "readMethods": [
+        "eq",
+        "ilike",
+        "maybeSingle",
+        "select"
+      ],
+      "writeMethods": [],
+      "storageReadMethods": [],
+      "storageWriteMethods": [],
+      "supabaseFromCalls": 3,
+      "arrayFromCalls": 0,
+      "storageAccesses": 0,
+      "rpcCalls": 0,
+      "notes": []
+    },
+    {
+      "file": "src/lib/data-plane/read-adapters/intelligenceVendorsReadAdapter.ts",
+      "group": "other_lib",
+      "sourceKind": "runtime",
+      "classification": "READ_ONLY_SELECT",
+      "importMatches": 0,
+      "broadMatches": 2,
+      "imports": [],
+      "helperRefs": [],
+      "tableNames": [
+        "ai_initiative_vendors"
+      ],
+      "methodNames": [
+        "eq",
+        "from",
+        "map",
+        "select"
+      ],
+      "readMethods": [
+        "eq",
+        "select"
+      ],
+      "writeMethods": [],
+      "storageReadMethods": [],
+      "storageWriteMethods": [],
+      "supabaseFromCalls": 1,
+      "arrayFromCalls": 0,
+      "storageAccesses": 0,
+      "rpcCalls": 0,
+      "notes": []
+    },
+    {
+      "file": "src/lib/data-plane/read-adapters/programsReadAdapter.ts",
+      "group": "other_lib",
+      "sourceKind": "runtime",
+      "classification": "READ_ONLY_SELECT",
+      "importMatches": 0,
+      "broadMatches": 2,
+      "imports": [],
+      "helperRefs": [],
+      "tableNames": [
+        "engagements"
+      ],
+      "methodNames": [
+        "eq",
+        "from",
+        "in",
+        "is",
+        "limit",
+        "maybeSingle",
+        "order",
+        "push",
+        "select"
+      ],
+      "readMethods": [
+        "eq",
+        "in",
+        "is",
+        "limit",
+        "maybeSingle",
+        "order",
+        "select"
+      ],
+      "writeMethods": [],
+      "storageReadMethods": [],
+      "storageWriteMethods": [],
+      "supabaseFromCalls": 2,
+      "arrayFromCalls": 0,
+      "storageAccesses": 0,
+      "rpcCalls": 0,
+      "notes": []
+    },
+    {
+      "file": "src/lib/data-plane/read-adapters/strategicMovesPreferencesReadAdapter.ts",
+      "group": "other_lib",
+      "sourceKind": "runtime",
+      "classification": "READ_ONLY_SELECT",
+      "importMatches": 0,
+      "broadMatches": 2,
+      "imports": [],
+      "helperRefs": [],
+      "tableNames": [
+        "tower_user_preferences"
+      ],
+      "methodNames": [
+        "eq",
+        "from",
+        "maybeSingle",
+        "select"
+      ],
+      "readMethods": [
+        "eq",
+        "maybeSingle",
+        "select"
+      ],
+      "writeMethods": [],
+      "storageReadMethods": [],
+      "storageWriteMethods": [],
+      "supabaseFromCalls": 1,
+      "arrayFromCalls": 0,
+      "storageAccesses": 0,
+      "rpcCalls": 0,
+      "notes": []
+    },
+    {
+      "file": "src/lib/enterprise-context/intelligence-read-model.ts",
+      "group": "other_lib",
+      "sourceKind": "runtime",
+      "classification": "READ_ONLY_SELECT",
+      "importMatches": 0,
+      "broadMatches": 2,
+      "imports": [],
+      "helperRefs": [],
+      "tableNames": [],
+      "methodNames": [
+        "all",
+        "entries",
+        "eq",
+        "filter",
+        "from",
+        "fromEntries",
+        "get",
+        "includes",
+        "isFinite",
+        "map",
+        "push",
+        "range",
+        "reduce",
+        "replace",
+        "round",
+        "select",
+        "set",
+        "slice",
+        "sort",
+        "toFixed",
+        "toLowerCase",
+        "trim",
+        "values",
+        "warn"
+      ],
+      "readMethods": [
+        "eq",
+        "range",
+        "select"
+      ],
+      "writeMethods": [],
+      "storageReadMethods": [],
+      "storageWriteMethods": [],
+      "supabaseFromCalls": 2,
+      "arrayFromCalls": 0,
+      "storageAccesses": 0,
+      "rpcCalls": 0,
+      "notes": [
+        "no static table names detected"
+      ]
+    },
+    {
       "file": "src/lib/nexus/specialists/value.ts",
       "group": "other_lib",
       "sourceKind": "runtime",
       "classification": "READ_ONLY_SELECT",
-      "importMatches": 3,
-      "broadMatches": 5,
-      "imports": [
-        "@/lib/supabase-server"
-      ],
-      "helperRefs": [
-        "getServerSupabase"
-      ],
+      "importMatches": 0,
+      "broadMatches": 2,
+      "imports": [],
+      "helperRefs": [],
       "tableNames": [
         "spend_breakdown",
         "tech_projects"
@@ -11887,14 +11611,10 @@
       "group": "other_lib",
       "sourceKind": "runtime",
       "classification": "READ_ONLY_SELECT",
-      "importMatches": 3,
-      "broadMatches": 4,
-      "imports": [
-        "@/lib/supabase-server"
-      ],
-      "helperRefs": [
-        "getServerSupabase"
-      ],
+      "importMatches": 0,
+      "broadMatches": 1,
+      "imports": [],
+      "helperRefs": [],
       "tableNames": [
         "engagements"
       ],
@@ -12033,6 +11753,115 @@
       "notes": [
         "no static table names detected"
       ]
+    },
+    {
+      "file": "src/lib/data-plane/read-adapters/expertReviewsReadAdapter.ts",
+      "group": "other_lib",
+      "sourceKind": "runtime",
+      "classification": "READ_ONLY_SELECT",
+      "importMatches": 0,
+      "broadMatches": 1,
+      "imports": [],
+      "helperRefs": [],
+      "tableNames": [
+        "expert_reviews"
+      ],
+      "methodNames": [
+        "eq",
+        "from",
+        "includes",
+        "join",
+        "map",
+        "order",
+        "select",
+        "test"
+      ],
+      "readMethods": [
+        "eq",
+        "order",
+        "select"
+      ],
+      "writeMethods": [],
+      "storageReadMethods": [],
+      "storageWriteMethods": [],
+      "supabaseFromCalls": 1,
+      "arrayFromCalls": 0,
+      "storageAccesses": 0,
+      "rpcCalls": 0,
+      "notes": []
+    },
+    {
+      "file": "src/lib/data-plane/read-adapters/outcomeLedgerReadAdapter.ts",
+      "group": "other_lib",
+      "sourceKind": "runtime",
+      "classification": "READ_ONLY_SELECT",
+      "importMatches": 0,
+      "broadMatches": 1,
+      "imports": [],
+      "helperRefs": [],
+      "tableNames": [
+        "outcome_ledger"
+      ],
+      "methodNames": [
+        "eq",
+        "filter",
+        "from",
+        "includes",
+        "isArray",
+        "isFinite",
+        "join",
+        "map",
+        "order",
+        "select"
+      ],
+      "readMethods": [
+        "eq",
+        "order",
+        "select"
+      ],
+      "writeMethods": [],
+      "storageReadMethods": [],
+      "storageWriteMethods": [],
+      "supabaseFromCalls": 1,
+      "arrayFromCalls": 0,
+      "storageAccesses": 0,
+      "rpcCalls": 0,
+      "notes": []
+    },
+    {
+      "file": "src/lib/data-plane/read-adapters/turnTraceReadAdapter.ts",
+      "group": "other_lib",
+      "sourceKind": "runtime",
+      "classification": "READ_ONLY_SELECT",
+      "importMatches": 0,
+      "broadMatches": 1,
+      "imports": [],
+      "helperRefs": [],
+      "tableNames": [
+        "turn_traces"
+      ],
+      "methodNames": [
+        "eq",
+        "from",
+        "join",
+        "map",
+        "maybeSingle",
+        "select",
+        "split"
+      ],
+      "readMethods": [
+        "eq",
+        "maybeSingle",
+        "select"
+      ],
+      "writeMethods": [],
+      "storageReadMethods": [],
+      "storageWriteMethods": [],
+      "supabaseFromCalls": 1,
+      "arrayFromCalls": 0,
+      "storageAccesses": 0,
+      "rpcCalls": 0,
+      "notes": []
     },
     {
       "file": "src/lib/programs/queries.ts",

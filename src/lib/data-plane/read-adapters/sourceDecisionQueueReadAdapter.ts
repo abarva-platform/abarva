@@ -21,8 +21,8 @@
 // truth for that map — every tenant must be canonicalized before a read or
 // the queries split between the alias and canonical key and return empty.
 
+import { getAzureReadFluentClient } from '@/lib/data-plane/postgresCompat';
 import 'server-only';
-import { getServerSupabase } from '@/lib/supabase-server';
 import { canonicalTenantKey } from '@/lib/tenant-keys';
 import type { ContextSourceType } from '@/lib/context-trust/freshness-model';
 import type { RawTenantRecord } from '@/lib/source/decision-queue/projection';
@@ -75,7 +75,7 @@ export async function readSourceDecisionQueueData(
   const freshnessBySegment = new Map<string, string | null>();
 
   try {
-    const sb = getServerSupabase();
+    const sb = getAzureReadFluentClient();
 
     const [contractsRes, financialsRes, segmentsRes] = await Promise.all([
       sb
