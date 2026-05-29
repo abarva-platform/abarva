@@ -10,6 +10,7 @@ import {
   getEnterpriseContextOverviewForTenant,
   type EnterpriseContextOverview,
 } from '@/lib/enterprise-context/intelligence-read-model';
+import { getAzureReadFluentClient } from '@/lib/data-plane/postgresCompat';
 import { getRecentViolations, type SynthesisViolationEvent } from '@/lib/intelligence/synthesis/violationsRecorder';
 import { stubQuarantineAuditDataSource } from '@/lib/security/quarantine-audit-types';
 import type {
@@ -172,8 +173,7 @@ export async function loadEngagementAndHeadline(args: {
   let qualitySample: TurnSample[] = [];
 
   try {
-    const { getServerSupabase } = await import('@/lib/supabase-server');
-    const sb = getServerSupabase();
+    const sb = getAzureReadFluentClient();
     const since = new Date(Date.now() - 7 * 86_400_000).toISOString();
 
     // Pull recent turns for this tenant. Join through engagements so

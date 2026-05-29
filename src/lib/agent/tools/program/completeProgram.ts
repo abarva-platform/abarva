@@ -10,7 +10,7 @@
 import type { AgentTool, ToolResult } from '../registry';
 import { registerTool } from '../registry';
 import { requireTenancy, TenancyError } from '@/app/api/v1/programs/_auth';
-import { getServerSupabase } from '@/lib/supabase-server';
+import { getAzureWriteFluentClient } from '@/lib/data-plane/postgresCompat';
 import { writeProgramAuditLogBestEffort } from '@/lib/programs/audit-log';
 import { loadUserProgramAccessPolicy } from '@/lib/auth/program-access-policy';
 
@@ -70,7 +70,7 @@ export const completeProgramTool: AgentTool<CompleteProgramInput> = {
       };
     }
 
-    const sb = getServerSupabase();
+    const sb = getAzureWriteFluentClient();
     const now = new Date().toISOString();
 
     const { error } = await sb

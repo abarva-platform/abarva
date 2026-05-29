@@ -22,7 +22,7 @@ import type { AgentTool, ToolResult } from '../registry';
 import { registerTool } from '../registry';
 import { requireTenancy, TenancyError } from '@/app/api/v1/programs/_auth';
 import { getActiveClientRow } from '@/lib/active-client';
-import { getServerSupabase } from '@/lib/supabase-server';
+import { getAzureWriteFluentClient } from '@/lib/data-plane/postgresCompat';
 
 interface RegisterPlaceholderPersonInput {
   /** Full name of the placeholder person, e.g. "Martin Steward". */
@@ -113,7 +113,7 @@ export const registerPlaceholderPersonTool: AgentTool<RegisterPlaceholderPersonI
     const organization = (input.organization ?? client.name).trim();
     const role = input.role?.trim() || null;
 
-    const sb = getServerSupabase();
+    const sb = getAzureWriteFluentClient();
     const { data, error } = await sb
       .from('persons')
       .insert({

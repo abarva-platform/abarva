@@ -25,6 +25,7 @@ import {
   SOURCE_STAGE_LABELS,
   SOURCE_STAGE_ORDER,
 } from './constants';
+import { getAzureWriteFluentClient } from '@/lib/data-plane/postgresCompat';
 import { getServerSupabase } from '@/lib/supabase-server';
 import { getActiveClientRow } from '@/lib/active-client';
 import { getCurrentUser } from '@/lib/auth/current-user';
@@ -122,7 +123,7 @@ export async function getPendingSourceEvents(clientKey: string): Promise<SourceE
 }
 
 export async function createSourcingEvent(input: CreateSourcingEventInput): Promise<SourceEventRow> {
-  const supabase = getServerSupabase();
+  const supabase = getAzureWriteFluentClient();
   const eventCode = generateEventCode(input.clientKey, input.eventName);
   const nowIso = new Date().toISOString();
 
@@ -177,7 +178,7 @@ export async function scaffoldNewEventSubstrate(
   sourceEventId: string,
   tenantKey: string,
 ): Promise<void> {
-  const supabase = getServerSupabase();
+  const supabase = getAzureWriteFluentClient();
   const { artifactStates, gateCriterionStates, evidenceStates } = buildEventScaffold({
     sourceEventId,
     tenantKey,

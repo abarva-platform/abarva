@@ -6,7 +6,7 @@ import {
 } from '@/lib/db/engagement';
 import { getRecentTurns } from '@/lib/db/turn';
 import { getActivePatterns, getPeerDecisionsForPhase } from '@/lib/graph/retrieval';
-import { getServerSupabase } from '@/lib/supabase-server';
+import { getAzureWriteFluentClient } from '@/lib/data-plane/postgresCompat';
 import { generateDeliverable as generateDeliverableV2 } from './v2-generator';
 
 export interface EngagementCharter {
@@ -125,7 +125,7 @@ async function syncLegacyArtifacts(args: {
     updates.phase_4_completed_at = new Date().toISOString();
   }
 
-  await getServerSupabase()
+  await getAzureWriteFluentClient()
     .from('engagements')
     .update(updates)
     .eq('id', args.engagementId);
@@ -349,7 +349,7 @@ function parseJsonFromResponse(text: string): Record<string, unknown> | null {
 }
 
 async function loadEngagementClientId(engagementId: string): Promise<string | null> {
-  const { data, error } = await getServerSupabase()
+  const { data, error } = await getAzureWriteFluentClient()
     .from('engagements')
     .select('client_id')
     .eq('id', engagementId)
@@ -410,7 +410,7 @@ async function generateLegacyDeliverableForPhase(engagementId: string, phase: nu
       metadata: { engagementId, phase, deliverableType: 'engagement_charter' },
     });
     if (deliverable) {
-      await getServerSupabase()
+      await getAzureWriteFluentClient()
         .from('engagements')
         .update({ charter: deliverable })
         .eq('id', engagementId);
@@ -460,7 +460,7 @@ async function generateLegacyDeliverableForPhase(engagementId: string, phase: nu
     // Also mirror baseline_metrics_proposed into engagements.baseline_metrics
     if (deliverable && Array.isArray((deliverable as { baseline_metrics_proposed?: unknown[] }).baseline_metrics_proposed)) {
       const items = (deliverable as { baseline_metrics_proposed: Array<Record<string, unknown>> }).baseline_metrics_proposed;
-      await getServerSupabase()
+      await getAzureWriteFluentClient()
         .from('engagements')
         .update({ baseline_metrics: { items, captured_at: new Date().toISOString() } })
         .eq('id', engagementId);
@@ -511,7 +511,7 @@ async function generateLegacyDeliverableForPhase(engagementId: string, phase: nu
     });
     // On successful generation, transition to completed + fee approved
     if (deliverable) {
-      await getServerSupabase()
+      await getAzureWriteFluentClient()
         .from('engagements')
         .update({
           status: 'completed',
@@ -526,7 +526,7 @@ async function generateLegacyDeliverableForPhase(engagementId: string, phase: nu
 
   if (!deliverable) return;
 
-  const sb = getServerSupabase();
+  const sb = getAzureWriteFluentClient();
   const { data: current } = await sb
     .from('engagements')
     .select('deliverables')

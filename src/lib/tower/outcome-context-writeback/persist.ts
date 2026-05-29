@@ -17,7 +17,7 @@
 // module performs the write on the service role from application code,
 // the same posture as the 3.1 / 3.6 ledger writes.
 
-import { getServerSupabase } from '@/lib/supabase-server';
+import { getAzureWriteFluentClient } from '@/lib/data-plane/postgresCompat';
 import { canonicalTenantKey } from '@/lib/tenant-keys';
 import type { OutcomeLedgerRow } from '@/lib/tower/outcome-ledger';
 import { buildOutcomeContextWriteback } from './build-writeback';
@@ -51,7 +51,7 @@ const ON_CONFLICT = 'tenant_key,canonical_record_id';
 function supabaseContextWritebackStore(): ContextWritebackStore {
   return {
     async upsertOutcomeLearning(table, row, onConflict) {
-      const { error } = await getServerSupabase()
+      const { error } = await getAzureWriteFluentClient()
         .from(table)
         .upsert(row, { onConflict });
       return error ? { ok: false, error: error.message } : { ok: true };

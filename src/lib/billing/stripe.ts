@@ -1,5 +1,5 @@
 import Stripe from 'stripe';
-import { getServerSupabase } from '@/lib/supabase-server';
+import { getAzureWriteFluentClient } from '@/lib/data-plane/postgresCompat';
 import { getEngagementById } from '@/lib/db/engagement';
 
 let client: Stripe | null = null;
@@ -17,7 +17,7 @@ export function isStripeConfigured(): boolean {
 }
 
 export async function ensureStripeCustomerForClient(clientId: string): Promise<string> {
-  const sb = getServerSupabase();
+  const sb = getAzureWriteFluentClient();
   const { data: clientRow, error } = await sb.from('clients').select('*').eq('id', clientId).single();
   if (error || !clientRow) throw new Error('Client not found');
   if (clientRow.stripe_customer_id) return clientRow.stripe_customer_id as string;
@@ -70,7 +70,7 @@ export async function createOutcomeFeeInvoice(
     await stripe.invoices.finalizeInvoice(stripeInvoice.id);
   }
 
-  const sb = getServerSupabase();
+  const sb = getAzureWriteFluentClient();
   const { data: inserted, error: insErr } = await sb
     .from('invoices')
     .insert({

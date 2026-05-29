@@ -15,7 +15,7 @@
 import type { AgentTool, ToolResult } from '../registry';
 import { registerTool } from '../registry';
 import { requireTenancy, TenancyError } from '@/app/api/v1/programs/_auth';
-import { getServerSupabase } from '@/lib/supabase-server';
+import { getAzureWriteFluentClient } from '@/lib/data-plane/postgresCompat';
 
 interface CompleteModuleInput {
   program_id: string;
@@ -81,7 +81,7 @@ export const completeModuleTool: AgentTool<CompleteModuleInput> = {
       throw err;
     }
 
-    const sb = getServerSupabase();
+    const sb = getAzureWriteFluentClient();
     const now = new Date().toISOString();
     const phaseNumber = input.phase_number ?? MODULE_PHASE_MAP[input.module_key] ?? 0;
     const moduleName = input.module_name ?? input.module_key.replace(/_/g, ' ');

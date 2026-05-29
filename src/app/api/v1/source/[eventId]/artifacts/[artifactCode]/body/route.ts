@@ -17,7 +17,7 @@ import { getActiveClientRow } from '@/lib/active-client';
 import { getCurrentUser } from '@/lib/auth/current-user';
 import { CANONICAL_CLIENT_ADMIN_EMAILS } from '@/lib/auth/canonical-auth-roster';
 import { loadUserSourceAccessPolicy } from '@/lib/auth/source-access-policy';
-import { getServerSupabase } from '@/lib/supabase-server';
+import { getAzureWriteFluentClient } from '@/lib/data-plane/postgresCompat';
 import { inferClientKeyFromEmail, isClientKey } from '@/lib/client-config';
 import {
   artifactStateRowToView,
@@ -84,7 +84,7 @@ export async function PATCH(req: NextRequest, { params }: RouteCtx) {
     }
     const format: AllowedFormat = isAllowedFormat(payload?.format) ? payload.format : 'markdown';
 
-    const supabase = getServerSupabase();
+    const supabase = getAzureWriteFluentClient();
     const { data: persistedEvent, error: fetchError } = await supabase
       .from('source_events')
       .select('id, client_key')

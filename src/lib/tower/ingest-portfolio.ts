@@ -1,5 +1,5 @@
 import Papa from 'papaparse';
-import { getServerSupabase } from '@/lib/supabase-server';
+import { getAzureWriteFluentClient } from '@/lib/data-plane/postgresCompat';
 
 const VALID_STAGES = [
   'idea',
@@ -62,7 +62,7 @@ export async function ingestPortfolioCsv(args: {
     notes.push(`csv errors: ${parsed.errors.slice(0, 3).map((e) => e.message).join('; ')}`);
   }
 
-  const sb = getServerSupabase();
+  const sb = getAzureWriteFluentClient();
   let ingested = 0;
   let failed = 0;
 

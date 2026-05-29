@@ -6,7 +6,7 @@
 //
 // All queries are tenant-scoped via RLS — the caller does not need to add
 // tenant predicates manually. Authentication context is handled by the
-// supabase client returned by getServerSupabase().
+// supabase client returned by getAzureWriteFluentClient().
 
 import { selectSourceCanvasSubstrateReadAdapter } from '@/lib/data-plane/read-adapters/sourceCanvasSubstrateReadAdapter';
 import {

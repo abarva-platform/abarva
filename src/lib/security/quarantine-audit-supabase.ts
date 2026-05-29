@@ -7,7 +7,7 @@
 // migration is applied (`npm run db:migrate`), a one-line page edit
 // activates real data.
 
-import { getServerSupabase } from '@/lib/supabase-server';
+import { getAzureWriteFluentClient } from '@/lib/data-plane/postgresCompat';
 import {
   type AuditQuery,
   type QuarantineAuditDataSource,
@@ -74,7 +74,7 @@ function rowFromDb(row: DbRow): SensitiveUploadAuditRow {
  */
 export const supabaseQuarantineAuditDataSource: QuarantineAuditDataSource = {
   async list(query: AuditQuery): Promise<ReadonlyArray<SensitiveUploadAuditRow>> {
-    const sb = getServerSupabase();
+    const sb = getAzureWriteFluentClient();
     let q = sb
       .from('sensitive_upload_audit')
       .select(
@@ -103,7 +103,7 @@ export const supabaseQuarantineAuditDataSource: QuarantineAuditDataSource = {
   },
 
   async release({ id, reviewerUserId, note }): Promise<void> {
-    const sb = getServerSupabase();
+    const sb = getAzureWriteFluentClient();
     // Look up the parent so we can copy tenant/tier/etc. into the
     // lifecycle row (denormalized; makes the dashboard query cheap).
     const { data: parent, error: lookupErr } = await sb
@@ -150,7 +150,7 @@ export const supabaseQuarantineAuditDataSource: QuarantineAuditDataSource = {
   },
 
   async hardDelete({ id, reviewerUserId, note }): Promise<void> {
-    const sb = getServerSupabase();
+    const sb = getAzureWriteFluentClient();
     const { data: parent, error: lookupErr } = await sb
       .from('sensitive_upload_audit')
       .select('tenant_client_key, ingestion_tier, filename, mime_type, size_bytes, sha256, purview_reached, purview_labels, storage_path')

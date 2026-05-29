@@ -1,4 +1,4 @@
-import { getServerSupabase } from '@/lib/supabase-server';
+import { getAzureWriteFluentClient } from '@/lib/data-plane/postgresCompat';
 
 export interface TraceStep {
   label: string;
@@ -78,7 +78,7 @@ export class TurnTrace {
 
   async persist(): Promise<void> {
     if (!this.turnId) return;
-    const sb = getServerSupabase();
+    const sb = getAzureWriteFluentClient();
     await sb.from('turn_traces').upsert(
       {
         turn_id: this.turnId,

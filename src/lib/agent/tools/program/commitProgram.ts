@@ -64,7 +64,7 @@ import { requireTenancy, TenancyError } from '@/app/api/v1/programs/_auth';
 import { submitForApproval } from '@/lib/programs/approval';
 import type { ArchetypeKey, OriginationForm } from '@/lib/programs/types.ui';
 import type { OriginSource } from '@/lib/programs/types.db';
-import { getServerSupabase } from '@/lib/supabase-server';
+import { getAzureWriteFluentClient } from '@/lib/data-plane/postgresCompat';
 import { getActiveClientRow } from '@/lib/active-client';
 import { CLIENT_KEY_TO_INDUSTRY_CODE } from '@/lib/client-config';
 import { markDraftCommitted } from '@/lib/programs/origination-drafts';
@@ -203,7 +203,7 @@ function briefProgressArtifact(input: {
  */
 async function rollbackEngagement(programId: string): Promise<void> {
   try {
-    const sb = getServerSupabase();
+    const sb = getAzureWriteFluentClient();
     await sb.from('engagements').delete().eq('id', programId);
   } catch (cleanupErr) {
     // We log but don't rethrow — the original error from
@@ -217,7 +217,7 @@ async function rollbackEngagement(programId: string): Promise<void> {
 }
 
 async function resolvePersonName(personId: string): Promise<string> {
-  const sb = getServerSupabase();
+  const sb = getAzureWriteFluentClient();
   const { data } = await sb
     .from('persons')
     .select('name')
@@ -232,7 +232,7 @@ async function insertParticipant(input: {
   role: string;
   approvalAuthority: 'sponsor' | 'contributor';
 }): Promise<void> {
-  const sb = getServerSupabase();
+  const sb = getAzureWriteFluentClient();
   const userName = await resolvePersonName(input.personId);
   const basePayload = {
     engagement_id: input.programId,
@@ -425,7 +425,7 @@ export const commitProgramTool: AgentTool<CommitProgramInput> = {
     // twice in the same conversation. (We also short-circuit for an
     // already-pending approval request on that engagement so we don't
     // double-queue.)
-    const sb = getServerSupabase();
+    const sb = getAzureWriteFluentClient();
     try {
       const fiveMinutesAgo = new Date(Date.now() - 5 * 60_000).toISOString();
       const { data: existing } = await sb

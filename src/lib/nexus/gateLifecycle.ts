@@ -10,7 +10,7 @@
 // act on the signal (auto-advance in the creation flow vs. deliberate
 // approval in the program console).
 
-import { getServerSupabase } from '@/lib/supabase-server';
+import { getAzureWriteFluentClient } from '@/lib/data-plane/postgresCompat';
 import type { GateSignal } from './orchestrator';
 import { bindMoveFunctionPack } from '@/lib/programs/move-function-binding';
 import { buildMoveBusinessCase } from '@/lib/programs/move-business-case';
@@ -159,7 +159,7 @@ export function resolveMovePackContext(
 }
 
 async function loadPhaseEntryContext(engagementId: string): Promise<PhaseEntryContext> {
-  const sb = getServerSupabase();
+  const sb = getAzureWriteFluentClient();
   const { data: engagement } = await sb
     .from('engagements')
     .select(
@@ -227,7 +227,7 @@ async function loadPhaseEntryContext(engagementId: string): Promise<PhaseEntryCo
 }
 
 async function ensureDeliverableTypeExists(spec: PhaseEntryDeliverableSpec): Promise<void> {
-  const sb = getServerSupabase();
+  const sb = getAzureWriteFluentClient();
   const { data: existing } = await sb
     .from('deliverable_types')
     .select('type_key')
@@ -258,7 +258,7 @@ async function ensurePhaseEntryDeliverable(args: {
   ctx: PhaseEntryContext;
   phaseTransition: string;
 }): Promise<string> {
-  const sb = getServerSupabase();
+  const sb = getAzureWriteFluentClient();
   await ensureDeliverableTypeExists(args.spec);
 
   const { data: existing } = await sb
@@ -702,7 +702,7 @@ export async function applyGateSignal(input: GateLifecycleInput): Promise<GateLi
     return { applied: false, fromPhase: null, toPhase: null };
   }
 
-  const sb = getServerSupabase();
+  const sb = getAzureWriteFluentClient();
 
   // Determine from/to phases · prefer payload, fall back to current_phase + 1
   let fromPhase = signal.fromPhase ?? null;

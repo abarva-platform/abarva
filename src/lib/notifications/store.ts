@@ -1,8 +1,8 @@
-import type { PostgresCompatClient as SupabaseClient } from '@/lib/supabase-server';
+import type { PostgresCompatClient as SupabaseClient } from '@/lib/data-plane/postgresCompat';
 import { createTxSession, type TxSessionRunner } from '@/lib/data-plane/read-adapters/azureSession';
 import { resolveDataPlane } from '@/lib/data-plane/read-adapters/resolveDataPlane';
 import type { DataPlane } from '@/lib/data-plane/write-adapters/types';
-import { getServerSupabase } from '@/lib/supabase-server';
+import { getAzureWriteFluentClient } from '@/lib/data-plane/postgresCompat';
 import { canonicalTenantKey } from '@/lib/tenant-keys';
 import { routeNotification } from './policy';
 import type {
@@ -228,7 +228,7 @@ export function fromPlatformNotificationRow(row: Record<string, unknown>): Notif
 export type SupabaseFactory = () => SupabaseClient;
 
 export function createSupabaseNotificationStoreAdapter(
-  getClient: SupabaseFactory = getServerSupabase,
+  getClient: SupabaseFactory = getAzureWriteFluentClient,
 ): NotificationStoreAdapter {
   return {
     name: 'supabase',

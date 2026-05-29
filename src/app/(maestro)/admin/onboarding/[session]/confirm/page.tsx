@@ -1,6 +1,6 @@
 import { requireTenancy } from '@/lib/auth/tenancy';
 import { asOnboardingSupabaseClient, getOnboardingSession } from '@/lib/onboarding/apex-p18-pack-ingestion';
-import { getServerSupabase } from '@/lib/supabase-server';
+import { getAzureWriteFluentClient } from '@/lib/data-plane/postgresCompat';
 
 import { ConfirmCommitButton } from './ConfirmCommitButton';
 
@@ -23,7 +23,7 @@ function Stat({ label, value, tone = 'default' }: { label: string; value: string
 export default async function ConfirmOnboardingSessionPage({ params }: PageProps) {
   await requireTenancy();
   const { session: sessionId } = await params;
-  const session = await getOnboardingSession(asOnboardingSupabaseClient(getServerSupabase()), sessionId);
+  const session = await getOnboardingSession(asOnboardingSupabaseClient(getAzureWriteFluentClient()), sessionId);
 
   if (!session) {
     return (

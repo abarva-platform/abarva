@@ -1,6 +1,6 @@
 import 'server-only';
 
-import { getServerSupabase } from '@/lib/supabase-server';
+import { getAzureWriteFluentClient } from '@/lib/data-plane/postgresCompat';
 import type { BoardPackRenderInput, BoardPackRenderResult } from './types';
 import { renderBoardPack } from './render-engine';
 
@@ -44,7 +44,7 @@ export async function saveGeneratedArtifact(
   input: BoardPackRenderInput,
   rendered: BoardPackRenderResult,
 ): Promise<GeneratedArtifactRecord> {
-  const { data, error } = await getServerSupabase()
+  const { data, error } = await getAzureWriteFluentClient()
     .from('generated_artifacts')
     .insert({
       client_id: input.clientId,

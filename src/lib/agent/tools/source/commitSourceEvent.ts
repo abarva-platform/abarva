@@ -17,7 +17,7 @@
 import type { AgentTool, ToolResult } from '../registry';
 import { registerTool } from '../registry';
 import { createSourcingEvent } from '@/lib/source/queries';
-import { getServerSupabase } from '@/lib/supabase-server';
+import { getAzureWriteFluentClient } from '@/lib/data-plane/postgresCompat';
 
 interface CommitSourceEventInput {
   event_name: string;
@@ -102,7 +102,7 @@ export const commitSourceEventTool: AgentTool<CommitSourceEventInput> = {
       });
 
       if (ctx.userId) {
-        const { error: participantError } = await getServerSupabase()
+        const { error: participantError } = await getAzureWriteFluentClient()
           .from('source_event_participants')
           .insert({
             client_key: clientKey,

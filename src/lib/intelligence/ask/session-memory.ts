@@ -1,6 +1,6 @@
 import 'server-only';
 
-import { getServerSupabase } from '@/lib/supabase-server';
+import { getAzureWriteFluentClient } from '@/lib/data-plane/postgresCompat';
 
 const RECENT_TURN_LIMIT = 10;
 const MAX_CONTEXT_CHARS = 8_000;
@@ -84,7 +84,7 @@ function formatConversationContext(summary: string | null, turns: AskTurnRow[]):
 }
 
 async function readSessionTurns(sessionId: string): Promise<AskTurnRow[]> {
-  const { data, error } = await getServerSupabase()
+  const { data, error } = await getAzureWriteFluentClient()
     .from('intelligence_ask_turns')
     .select('role, content, created_at')
     .eq('session_id', sessionId)
@@ -99,7 +99,7 @@ async function maybeRefreshSummary(sessionId: string): Promise<string | null> {
   const older = turns.slice(0, Math.max(0, turns.length - RECENT_TURN_LIMIT));
   const summary = summarizeTurns(older);
   if (!summary) return null;
-  await getServerSupabase()
+  await getAzureWriteFluentClient()
     .from('intelligence_ask_sessions')
     .update({ summary, updated_at: new Date().toISOString() })
     .eq('id', sessionId);
@@ -123,7 +123,7 @@ export async function prepareAskSessionMemory(input: {
     updated_at: now,
     last_turn_at: now,
   };
-  const { data, error } = await getServerSupabase()
+  const { data, error } = await getAzureWriteFluentClient()
     .from('intelligence_ask_sessions')
     .upsert(row, { onConflict: 'tenant_id,user_id,tab_id' })
     .select('id, summary')
@@ -157,7 +157,7 @@ export async function appendAskSessionTurn(input: {
   const content = input.content.trim();
   if (!input.sessionId || !input.tenantId || !input.userId || !content) return;
   const now = new Date().toISOString();
-  await getServerSupabase()
+  await getAzureWriteFluentClient()
     .from('intelligence_ask_turns')
     .insert({
       session_id: input.sessionId,
@@ -168,7 +168,7 @@ export async function appendAskSessionTurn(input: {
       metadata_jsonb: input.metadata ?? {},
       created_at: now,
     });
-  await getServerSupabase()
+  await getAzureWriteFluentClient()
     .from('intelligence_ask_sessions')
     .update({ updated_at: now, last_turn_at: now })
     .eq('id', input.sessionId);
@@ -182,12 +182,12 @@ export async function linkAskSessionToMove(input: {
 }): Promise<void> {
   if (!input.sessionId) return;
   const now = new Date().toISOString();
-  await getServerSupabase()
+  await getAzureWriteFluentClient()
     .from('intelligence_ask_sessions')
     .update({ linked_move_id: input.moveId, updated_at: now })
     .eq('id', input.sessionId)
     .eq('tenant_id', input.tenantId);
-  await getServerSupabase()
+  await getAzureWriteFluentClient()
     .from('move_instances')
     .update({ originating_intelligence_session_id: input.sessionId, updated_at: now })
     .eq('client_id', input.tenantId)
@@ -198,7 +198,7 @@ export async function getAskSessionForMove(input: {
   tenantId: string;
   moveId: string;
 }): Promise<{ sessionId: string; contextBlock: string } | null> {
-  const { data: direct } = await getServerSupabase()
+  const { data: direct } = await getAzureWriteFluentClient()
     .from('intelligence_ask_sessions')
     .select('id, summary')
     .eq('tenant_id', input.tenantId)
@@ -209,7 +209,7 @@ export async function getAskSessionForMove(input: {
 
   let session = direct as AskSessionRow | null;
   if (!session) {
-    const { data: instance } = await getServerSupabase()
+    const { data: instance } = await getAzureWriteFluentClient()
       .from('move_instances')
       .select('originating_intelligence_session_id')
       .eq('client_id', input.tenantId)
@@ -220,7 +220,7 @@ export async function getAskSessionForMove(input: {
       .maybeSingle();
     const sessionId = (instance as { originating_intelligence_session_id?: string } | null)?.originating_intelligence_session_id;
     if (sessionId) {
-      const { data } = await getServerSupabase()
+      const { data } = await getAzureWriteFluentClient()
         .from('intelligence_ask_sessions')
         .select('id, summary')
         .eq('tenant_id', input.tenantId)
@@ -242,7 +242,7 @@ export async function getAskSessionContextById(input: {
   tenantId: string;
   sessionId: string;
 }): Promise<{ sessionId: string; contextBlock: string } | null> {
-  const { data } = await getServerSupabase()
+  const { data } = await getAzureWriteFluentClient()
     .from('intelligence_ask_sessions')
     .select('id, summary')
     .eq('tenant_id', input.tenantId)

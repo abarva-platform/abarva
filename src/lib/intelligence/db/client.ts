@@ -4,12 +4,12 @@
 // its filter. This wrapper gives us a single place to enforce that
 // invariant plus a hook for telemetry.
 
-import type { PostgresCompatClient as SupabaseClient } from '@/lib/supabase-server';
-import { getServerSupabase } from '@/lib/supabase-server';
+import type { PostgresCompatClient as SupabaseClient } from '@/lib/data-plane/postgresCompat';
+import { getAzureWriteFluentClient } from '@/lib/data-plane/postgresCompat';
 import type { TenancyCtx } from '../types';
 
 export function getIntelSupabase(): SupabaseClient {
-  return getServerSupabase();
+  return getAzureWriteFluentClient();
 }
 
 export function assertTenancy(ctx: TenancyCtx): asserts ctx is TenancyCtx {

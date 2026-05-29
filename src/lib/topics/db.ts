@@ -1,4 +1,4 @@
-import { getServerSupabase } from '@/lib/supabase-server';
+import { getAzureWriteFluentClient } from '@/lib/data-plane/postgresCompat';
 
 // Schema aligns with Pack L spec · engagement_topics is the catalog,
 // engagement_topics_map is the join with composite PK (engagement_id, topic_key).
@@ -125,7 +125,7 @@ export function recommendTopics(args: {
 }
 
 export async function listAllTopics(): Promise<TopicRow[]> {
-  const { data, error } = await getServerSupabase()
+  const { data, error } = await getAzureWriteFluentClient()
     .from('engagement_topics')
     .select('*')
     .order('title', { ascending: true });
@@ -139,7 +139,7 @@ export async function listAllTopics(): Promise<TopicRow[]> {
 }
 
 export async function listEngagementTopics(engagementId: string): Promise<EngagementTopicMapRow[]> {
-  const { data, error } = await getServerSupabase()
+  const { data, error } = await getAzureWriteFluentClient()
     .from('engagement_topics_map')
     .select('*')
     .eq('engagement_id', engagementId)
@@ -157,7 +157,7 @@ export async function assignTopic(args: {
   assignedBy: string | null;
   isPrimary?: boolean;
 }): Promise<void> {
-  const { error } = await getServerSupabase()
+  const { error } = await getAzureWriteFluentClient()
     .from('engagement_topics_map')
     .insert({
       engagement_id: args.engagementId,
@@ -173,7 +173,7 @@ export async function unassignTopic(args: {
   engagementId: string;
   topicKey: string;
 }): Promise<void> {
-  const { error } = await getServerSupabase()
+  const { error } = await getAzureWriteFluentClient()
     .from('engagement_topics_map')
     .delete()
     .eq('engagement_id', args.engagementId)
@@ -186,7 +186,7 @@ export async function setTopicPrimary(args: {
   topicKey: string;
   isPrimary: boolean;
 }): Promise<void> {
-  const sb = getServerSupabase();
+  const sb = getAzureWriteFluentClient();
   if (args.isPrimary) {
     // Spec models engagement_topics_map.is_primary as nullable — one engagement
     // can have many primaries, but a clear single primary is the typical case.
@@ -212,7 +212,7 @@ export async function toggleQuestionDone(args: {
   questionId: string;
   done: boolean;
 }): Promise<void> {
-  const sb = getServerSupabase();
+  const sb = getAzureWriteFluentClient();
   const { data } = await sb
     .from('engagement_topics_map')
     .select('progress')

@@ -10,7 +10,7 @@
 import type { AgentTool, ToolResult } from '../registry';
 import { registerTool } from '../registry';
 import { requireTenancy, TenancyError } from '@/app/api/v1/programs/_auth';
-import { getServerSupabase } from '@/lib/supabase-server';
+import { getAzureWriteFluentClient } from '@/lib/data-plane/postgresCompat';
 
 interface AssignSponsorInput {
   program_id: string;
@@ -58,7 +58,7 @@ export const assignSponsorTool: AgentTool<AssignSponsorInput> = {
       throw err;
     }
 
-    const sb = getServerSupabase();
+    const sb = getAzureWriteFluentClient();
 
     // Check if this person is already a participant
     const { data: existing } = await sb

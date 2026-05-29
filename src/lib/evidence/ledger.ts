@@ -1,7 +1,7 @@
 import 'server-only';
 
 import { randomUUID } from 'crypto';
-import { getServerSupabase } from '@/lib/supabase-server';
+import { getAzureWriteFluentClient } from '@/lib/data-plane/postgresCompat';
 
 export type EvidenceSurface = 'intelligence' | 'moves' | 'source' | 'tower' | 'watchlist';
 export type EvidenceArtifactType = 'recommendation' | 'claim' | 'metric' | 'citation' | 'value_state' | 'kill_signal';
@@ -70,7 +70,7 @@ export interface EvidenceProofPointCount {
 
 export async function recordEvidence(input: RecordEvidenceInput): Promise<string> {
   const row = normalizeRecordEvidenceInput(input);
-  const { data, error } = await getServerSupabase()
+  const { data, error } = await getAzureWriteFluentClient()
     .from('evidence_ledger')
     .insert(row)
     .select('id')
@@ -88,7 +88,7 @@ export async function getEvidenceForArtifact(
   artifactRef: string,
   clientId?: string,
 ): Promise<EvidenceLedgerRow[]> {
-  let query = getServerSupabase()
+  let query = getAzureWriteFluentClient()
     .from('evidence_ledger')
     .select('*')
     .eq('surface', surface)
@@ -106,7 +106,7 @@ export async function getEvidenceProofPointCount(
   artifactRef: string,
   clientId?: string,
 ): Promise<EvidenceProofPointCount> {
-  let query = getServerSupabase()
+  let query = getAzureWriteFluentClient()
     .from('evidence_ledger')
     .select('source_type, not_enough_data_flag')
     .eq('artifact_ref', artifactRef);
@@ -122,7 +122,7 @@ export async function searchEvidenceByClaim(
   clientId: string,
   claimSubstring: string,
 ): Promise<EvidenceLedgerRow[]> {
-  const { data, error } = await getServerSupabase()
+  const { data, error } = await getAzureWriteFluentClient()
     .from('evidence_ledger')
     .select('*')
     .eq('client_id', clientId)
