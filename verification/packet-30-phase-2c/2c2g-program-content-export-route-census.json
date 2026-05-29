@@ -1,0 +1,50 @@
+{
+  "slice": "2c2g-program-content-export-route",
+  "generatedAt": "2026-05-29T18:16:36Z",
+  "runtimeSupabaseImportCensus": {
+    "before": {
+      "filesWithImportMatches": 152,
+      "importMatches": 620,
+      "filesWithBroadMatches": 304,
+      "broadMatches": 1445
+    },
+    "after": {
+      "filesWithImportMatches": 151,
+      "importMatches": 617,
+      "filesWithBroadMatches": 303,
+      "broadMatches": 1440
+    },
+    "delta": {
+      "filesWithImportMatches": -1,
+      "importMatches": -3,
+      "filesWithBroadMatches": -1,
+      "broadMatches": -5
+    }
+  },
+  "codemodInventory": {
+    "before": {
+      "totalFiles": 304,
+      "readOnlySelect": 91,
+      "apiRoutes": 34
+    },
+    "after": {
+      "totalFiles": 303,
+      "readOnlySelect": 90,
+      "apiRoutes": 33
+    },
+    "delta": {
+      "totalFiles": -1,
+      "readOnlySelect": -1,
+      "apiRoutes": -1
+    }
+  },
+  "targetFilesRemovedFromInventory": [
+    "src/app/api/programs/[id]/deliverables/[deliverableId]/content-export/route.ts"
+  ],
+  "validation": {
+    "focusedJest": "pass: 1 suite / 2 tests",
+    "focusedEslint": "pass",
+    "runtimeSupabaseImportCensus": "pass/warn: expected warn mode, import-helper delta -1 file / -3 matches",
+    "phase2cInventory": "pass: READ_ONLY_SELECT 91 -> 90"
+  }
+}

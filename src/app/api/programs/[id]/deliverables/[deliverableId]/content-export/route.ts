@@ -22,12 +22,25 @@ import 'server-only';
 import ExcelJS from 'exceljs';
 import { Document, Packer, Paragraph, TextRun, HeadingLevel, AlignmentType } from 'docx';
 import { requireTenancy, tenancyErrorResponse } from '@/app/api/v1/programs/_auth';
-import { getServerSupabase } from '@/lib/supabase-server';
+import { azureRead } from '@/lib/data-plane/azureRead';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 type Format = 'html' | 'docx' | 'xlsx';
+
+type ExportDeliverableRow = {
+  id: string;
+  engagement_id: string;
+  deliverable_type_key: string;
+  title: string | null;
+};
+
+type ExportDeliverableVersionRow = {
+  content: string | null;
+  version: number;
+  generated_at: string;
+};
 
 function jsonError(status: number, code: string, detail?: string): Response {
   return Response.json({ error: code, ...(detail ? { detail } : {}) }, { status });
@@ -219,25 +232,18 @@ function markdownToDocx(md: string, title: string): Promise<Uint8Array> {
     }),
   );
 
-  let inBulletList = false;
-
   for (const rawLine of lines) {
     const line = rawLine.trimEnd();
 
     if (/^# /.test(line)) {
-      inBulletList = false;
       paragraphs.push(new Paragraph({ children: textRuns(line.slice(2)), heading: HeadingLevel.HEADING_1, spacing: { before: 240, after: 120 } }));
     } else if (/^## /.test(line)) {
-      inBulletList = false;
       paragraphs.push(new Paragraph({ children: textRuns(line.slice(3)), heading: HeadingLevel.HEADING_2, spacing: { before: 200, after: 80 } }));
     } else if (/^### /.test(line)) {
-      inBulletList = false;
       paragraphs.push(new Paragraph({ children: textRuns(line.slice(4)), heading: HeadingLevel.HEADING_3, spacing: { before: 160, after: 60 } }));
     } else if (/^[-*] /.test(line)) {
-      inBulletList = true;
       paragraphs.push(new Paragraph({ children: textRuns(line.slice(2)), bullet: { level: 0 }, spacing: { after: 60 } }));
     } else if (/^> /.test(line)) {
-      inBulletList = false;
       paragraphs.push(
         new Paragraph({
           children: textRuns(line.slice(2)),
@@ -247,13 +253,10 @@ function markdownToDocx(md: string, title: string): Promise<Uint8Array> {
         }),
       );
     } else if (/^---+$/.test(line)) {
-      inBulletList = false;
       // Blank spacer paragraph as section separator
       paragraphs.push(new Paragraph({ text: '', spacing: { after: 200, before: 200 } }));
     } else if (line.trim() === '') {
-      inBulletList = false;
     } else {
-      inBulletList = false;
       paragraphs.push(new Paragraph({ children: textRuns(line), spacing: { after: 100 } }));
     }
   }
@@ -465,37 +468,34 @@ export async function GET(
   }
   const format: Format = formatParam;
 
-  const sb = getServerSupabase();
-
   // Fetch deliverable row — must belong to this program
-  const { data: delivRow, error: delivErr } = await sb
-    .from('deliverables_v2')
-    .select('id, engagement_id, deliverable_type_key, title')
-    .eq('id', deliverableId)
-    .eq('engagement_id', programId)
-    .maybeSingle();
-  if (delivErr) {
-    console.error('[content-export] deliverable fetch error', delivErr);
+  let deliverable: ExportDeliverableRow | null;
+  try {
+    deliverable = await azureRead.maybeSingle<ExportDeliverableRow>({
+      table: 'deliverables_v2',
+      columns: ['id', 'engagement_id', 'deliverable_type_key', 'title'],
+      where: { id: deliverableId, engagement_id: programId },
+    });
+  } catch (err) {
+    console.error('[content-export] deliverable fetch error', err);
     return jsonError(500, 'db_error');
   }
-  if (!delivRow) return jsonError(404, 'deliverable_not_found');
-
-  const deliverable = delivRow as { id: string; engagement_id: string; deliverable_type_key: string; title: string | null };
+  if (!deliverable) return jsonError(404, 'deliverable_not_found');
 
   // Fetch latest version content
-  const { data: vRow, error: vErr } = await sb
-    .from('deliverable_versions')
-    .select('content, version, generated_at')
-    .eq('deliverable_id', deliverableId)
-    .order('version', { ascending: false })
-    .limit(1)
-    .maybeSingle();
-  if (vErr) {
-    console.error('[content-export] version fetch error', vErr);
+  let version: ExportDeliverableVersionRow | null;
+  try {
+    version = await azureRead.maybeSingle<ExportDeliverableVersionRow>({
+      table: 'deliverable_versions',
+      columns: ['content', 'version', 'generated_at'],
+      where: { deliverable_id: deliverableId },
+      orderBy: { column: 'version', direction: 'desc' },
+    });
+  } catch (err) {
+    console.error('[content-export] version fetch error', err);
     return jsonError(500, 'db_error');
   }
 
-  const version = vRow as { content: string | null; version: number; generated_at: string } | null;
   const content = version?.content ?? null;
   if (!content || content.trim().length === 0) {
     return jsonError(404, 'no_content', 'This deliverable has no content yet. Generate it in the phase workspace first.');
