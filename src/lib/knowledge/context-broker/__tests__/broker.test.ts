@@ -34,6 +34,9 @@ import type {
 } from '@/lib/knowledge/tenant-data/types';
 
 jest.mock('server-only', () => ({}));
+jest.mock('@/lib/azure-search/tenant-context-retriever', () => ({
+  queryTenantContext: jest.fn(),
+}));
 
 const EMBED_DIM = 1536;
 
@@ -256,11 +259,19 @@ describe('DefaultContextBroker.assemble — corpus mode', () => {
       'cross_industry',
     ]);
     expect(Array.from(allowedPatternIndustriesForTenant('meridian') ?? [])).toEqual([
-      'healthcare',
+      'healthcare_provider',
+      'cross_industry',
+    ]);
+    expect(Array.from(allowedPatternIndustriesForTenant('northstar-clinical') ?? [])).toEqual([
+      'healthcare_medtech',
       'cross_industry',
     ]);
     expect(Array.from(allowedPatternIndustriesForTenant('first-capital') ?? [])).toEqual([
-      'financial_services',
+      'financial_services_banking',
+      'cross_industry',
+    ]);
+    expect(Array.from(allowedPatternIndustriesForTenant('skyharbor-air') ?? [])).toEqual([
+      'airline',
       'cross_industry',
     ]);
   });
@@ -819,7 +830,7 @@ describe('DefaultContextBroker.assemble — full mode', () => {
 
   it('filters canonical corpus patterns to the active tenant industry in full mode', async () => {
     const retail = patternHit('AIP-RETAIL-ASSORTMENT-001', ['retail'], 'Retail assortment');
-    const financial = patternHit('AIP-FINSERV-MODEL-RISK-001', ['financial_services'], 'Model risk controls');
+    const financial = patternHit('AIP-FINSERV-MODEL-RISK-001', ['financial_services_banking'], 'Model risk controls');
     const cross = patternHit('AIP-X-AI-GOVERNANCE-001', ['cross_industry'], 'AI governance');
     const patternRetriever = jest.fn().mockResolvedValue(makePatternResult({
       status: 'ready',

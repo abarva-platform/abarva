@@ -75,14 +75,24 @@ export function normalizeCanonicalIndustry(
 ): CanonicalIndustry | undefined {
   if (!industryCode) return undefined;
   const normalized = industryCode.trim().toLowerCase().replace(/-/g, '_');
-  if (normalized === 'health' || normalized === 'healthcare_idn') return 'healthcare';
+  if (normalized === 'health' || normalized === 'healthcare_idn' || normalized === 'hc') return 'healthcare_provider';
+  if (
+    normalized === 'healthcare_medtech'
+    || normalized === 'medtech'
+    || normalized === 'medical_device'
+    || normalized === 'clinical_technologies'
+  ) return 'healthcare_medtech';
   if (normalized === 'retail_omni' || normalized === 'retail_cpg') return 'retail';
-  if (normalized === 'finserv' || normalized === 'finance' || normalized === 'banking') return 'financial_services';
+  if (normalized === 'finserv' || normalized === 'finance' || normalized === 'banking') return 'financial_services_banking';
   if (normalized === 'cross_sector' || normalized === 'cross_industry') return 'cross_industry';
   if (
     normalized === 'retail'
     || normalized === 'healthcare'
+    || normalized === 'healthcare_provider'
+    || normalized === 'healthcare_medtech'
     || normalized === 'financial_services'
+    || normalized === 'financial_services_banking'
+    || normalized === 'airline'
     || normalized === 'energy'
     || normalized === 'public_sector'
   ) {

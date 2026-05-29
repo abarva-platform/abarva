@@ -7,7 +7,7 @@ const assembleContext = jest.fn();
 const touchThread = jest.fn();
 const runProgramsNexusTurn = jest.fn();
 const buildProgramsNexusCanonicalPatternQuery = jest.fn();
-const searchCanonicalPatternIndex = jest.fn();
+const searchIndustryScopedCorpusPatternIndex = jest.fn();
 const getProgramsRouteSupabase = jest.fn();
 const getProgramById = jest.fn();
 
@@ -39,8 +39,8 @@ jest.mock('@/lib/programs/nexus-free-text', () => ({
   buildProgramsNexusCanonicalPatternQuery,
 }));
 
-jest.mock('@/lib/intelligence/canonical/runtime-pattern-index', () => ({
-  searchCanonicalPatternIndex,
+jest.mock('@/lib/intelligence/canonical/scoped-corpus-pattern-index', () => ({
+  searchIndustryScopedCorpusPatternIndex,
 }));
 
 jest.mock('@/lib/programs/programs-auth-mode-server', () => ({
@@ -104,7 +104,7 @@ describe('POST /api/v1/programs/[programId]/nexus/ask', () => {
       query: 'What assumptions are load-bearing?',
       limit: 3,
     });
-    searchCanonicalPatternIndex.mockResolvedValue({
+    searchIndustryScopedCorpusPatternIndex.mockResolvedValue({
       source: 'persisted_canonical_corpus',
       status: 'no_match',
       patterns: [],
@@ -203,10 +203,19 @@ describe('POST /api/v1/programs/[programId]/nexus/ask', () => {
         canonicalPatternIndex: expect.objectContaining({ status: 'no_match' }),
       }),
     );
-    expect(searchCanonicalPatternIndex).toHaveBeenCalledWith(expect.objectContaining({
-      industry: 'retail',
-      strategic_move_phase: 'diagnose_discover',
-    }));
+    expect(searchIndustryScopedCorpusPatternIndex).toHaveBeenCalledWith(
+      expect.objectContaining({
+        industry: 'retail',
+        strategic_move_phase: 'diagnose_discover',
+      }),
+      expect.objectContaining({
+        scope: expect.objectContaining({
+          tenantKey: 'apex-retail',
+          activeClient: 'Apex Retail',
+          facts: ['retail'],
+        }),
+      }),
+    );
     expect(events.at(-1)?.data).toMatchObject({
       threadId: 'thread_program_1',
       routeType: 'manifest_fallback',

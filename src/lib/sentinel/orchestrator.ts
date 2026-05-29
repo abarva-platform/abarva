@@ -8,7 +8,7 @@ import {
   getPatternManifestEntriesWithMetrics,
   patternMatchesIndustry,
 } from '@/lib/intelligence/pattern-manifest';
-import { searchCanonicalPatternIndex } from '@/lib/intelligence/canonical/runtime-pattern-index';
+import { searchIndustryScopedCorpusPatternIndex } from '@/lib/intelligence/canonical/scoped-corpus-pattern-index';
 import {
   buildSentinelGroundingDisclosure,
   buildSentinelGroundingSummary,
@@ -295,7 +295,7 @@ export async function runSentinelTurn(args: {
   ctx: SentinelTenancyCtx;
   message: string;
   activePatternSlug?: string | null;
-  canonicalPatternSearch?: typeof searchCanonicalPatternIndex;
+  canonicalPatternSearch?: typeof searchIndustryScopedCorpusPatternIndex;
 }): Promise<SentinelQueryResponse> {
   const patterns = getPatternManifestEntriesWithMetrics(args.ctx.clientKey)
     .filter((pattern) => patternMatchesIndustry(pattern, args.ctx.industryCode));
@@ -319,12 +319,18 @@ export async function runSentinelTurn(args: {
     rankedPatterns,
     activeClientName: args.ctx.clientName,
   });
-  const canonicalPatternSearch = args.canonicalPatternSearch ?? searchCanonicalPatternIndex;
+  const canonicalPatternSearch = args.canonicalPatternSearch ?? searchIndustryScopedCorpusPatternIndex;
   const canonicalResult = await canonicalPatternSearch({
     tenant_key: args.ctx.clientKey,
     industry: normalizeCanonicalIndustry(args.ctx.industryCode),
     query: rankedPatterns[0]?.pattern.name ?? args.message,
     limit: 3,
+  }, {
+    scope: {
+      tenantKey: args.ctx.clientKey,
+      activeClient: args.ctx.clientName,
+      facts: [args.ctx.industryCode ?? ''],
+    },
   });
   const grounding = buildSentinelGroundingSummary({
     canonicalResult,

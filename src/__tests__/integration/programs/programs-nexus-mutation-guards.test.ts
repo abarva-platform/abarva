@@ -14,7 +14,7 @@ const getProgramById = jest.fn();
 const getActiveClientRow = jest.fn();
 const runProgramsNexusTurn = jest.fn();
 const buildProgramsNexusCanonicalPatternQuery = jest.fn();
-const searchCanonicalPatternIndex = jest.fn();
+const searchIndustryScopedCorpusPatternIndex = jest.fn();
 const assembleContext = jest.fn();
 const describePendingComposerCall = jest.fn();
 const createThread = jest.fn();
@@ -50,8 +50,8 @@ jest.mock('@/lib/programs/nexus-free-text', () => ({
   buildProgramsNexusCanonicalPatternQuery,
 }));
 
-jest.mock('@/lib/intelligence/canonical/runtime-pattern-index', () => ({
-  searchCanonicalPatternIndex,
+jest.mock('@/lib/intelligence/canonical/scoped-corpus-pattern-index', () => ({
+  searchIndustryScopedCorpusPatternIndex,
 }));
 
 jest.mock('@/lib/programs/nexus', () => ({
@@ -130,7 +130,7 @@ beforeEach(() => {
     query: 'How do we modernize analytics?',
     limit: 3,
   });
-  searchCanonicalPatternIndex.mockResolvedValue({
+  searchIndustryScopedCorpusPatternIndex.mockResolvedValue({
     source: 'persisted_canonical_corpus',
     status: 'no_match',
     patterns: [],

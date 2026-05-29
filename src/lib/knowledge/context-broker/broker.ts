@@ -41,13 +41,13 @@ import {
 import { isFeatureEnabled } from '@/lib/features/is-feature-enabled';
 import { queryTenantContext } from '@/lib/azure-search/tenant-context-retriever';
 import {
-  searchCanonicalPatternIndex,
   WARNING_CANONICAL_CORPUS_EMPTY,
   WARNING_CANONICAL_CORPUS_READ_FAILED,
   WARNING_CANONICAL_PATTERN_NO_MATCH,
   type CanonicalPatternIndexHit,
   type CanonicalPatternIndexResult,
 } from '@/lib/intelligence/canonical/runtime-pattern-index';
+import { searchIndustryScopedCorpusPatternIndex } from '@/lib/intelligence/canonical/scoped-corpus-pattern-index';
 import type { CanonicalIndustry } from '@/lib/intelligence/canonical/industry-ai-pattern';
 import type { TenantDataAdapter } from '@/lib/knowledge/tenant-data';
 import type {
@@ -184,11 +184,19 @@ const TENANT_INDUSTRY_ALLOWLISTS: ReadonlyArray<{
   },
   {
     pattern: /\b(?:meridian|health|heliara)\b/i,
-    industries: new Set<CanonicalIndustry>(['healthcare', 'cross_industry']),
+    industries: new Set<CanonicalIndustry>(['healthcare_provider', 'cross_industry']),
+  },
+  {
+    pattern: /\b(?:northstar|medtech|clinical[-_]?technologies|solventum)\b/i,
+    industries: new Set<CanonicalIndustry>(['healthcare_medtech', 'cross_industry']),
   },
   {
     pattern: /\b(?:first[-_]?capital|firstcapital|fcfi|arcturus|financial)\b/i,
-    industries: new Set<CanonicalIndustry>(['financial_services', 'cross_industry']),
+    industries: new Set<CanonicalIndustry>(['financial_services_banking', 'cross_industry']),
+  },
+  {
+    pattern: /\b(?:skyharbor|airline|aviation)\b/i,
+    industries: new Set<CanonicalIndustry>(['airline', 'cross_industry']),
   },
 ];
 
@@ -687,10 +695,12 @@ async function defaultCorpusPatternRetriever(
   input: ContextAssembleInput,
   tenantKey: string | null,
 ): Promise<CanonicalPatternIndexResult> {
-  return searchCanonicalPatternIndex({
+  return searchIndustryScopedCorpusPatternIndex({
     query: input.query,
     tenant_key: tenantKey ?? undefined,
     limit: 8,
+  }, {
+    scope: { tenantKey },
   });
 }
 

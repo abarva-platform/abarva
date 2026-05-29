@@ -196,7 +196,7 @@ export async function searchCorpus(query: string, opts: CorpusSearchOptions): Pr
           clientId: opts.clientId,
           userId: opts.userId,
         });
-        return queryCorpusSearch({
+        return await queryCorpusSearch({
           query: normalizedQuery,
           clientId: opts.clientId,
           includePrivate: opts.includePrivate,
@@ -206,7 +206,7 @@ export async function searchCorpus(query: string, opts: CorpusSearchOptions): Pr
         });
       } catch {
         try {
-          return queryCorpusSearch({
+          return await queryCorpusSearch({
             query: normalizedQuery,
             clientId: opts.clientId,
             includePrivate: opts.includePrivate,
