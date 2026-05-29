@@ -1,30 +1,19 @@
 import { retrievePattern } from './pattern';
-import { getServerSupabase } from '@/lib/supabase-server';
+import { azureRead } from '@/lib/data-plane/azureRead';
 import { searchCanonicalPatternIndex } from '@/lib/intelligence/canonical/runtime-pattern-index';
 
 jest.mock('server-only', () => ({}));
-jest.mock('@/lib/supabase-server', () => ({
-  getServerSupabase: jest.fn(),
+jest.mock('@/lib/data-plane/azureRead', () => ({
+  azureRead: {
+    query: jest.fn(),
+  },
 }));
 jest.mock('@/lib/intelligence/canonical/runtime-pattern-index', () => ({
   searchCanonicalPatternIndex: jest.fn(),
 }));
 
-const mockGetServerSupabase = jest.mocked(getServerSupabase);
+const mockAzureRead = jest.mocked(azureRead);
 const mockSearchCanonicalPatternIndex = jest.mocked(searchCanonicalPatternIndex);
-
-function emptyGenomeSupabase() {
-  return {
-    from: jest.fn(() => ({
-      select: jest.fn().mockReturnThis(),
-      eq: jest.fn().mockReturnThis(),
-      textSearch: jest.fn().mockReturnThis(),
-      or: jest.fn().mockReturnThis(),
-      limit: jest.fn().mockResolvedValue({ data: [], error: null }),
-      maybeSingle: jest.fn().mockResolvedValue({ data: null, error: null }),
-    })),
-  };
-}
 
 describe('retrievePattern', () => {
   beforeEach(() => {
@@ -32,7 +21,7 @@ describe('retrievePattern', () => {
   });
 
   it('falls back to persisted canonical corpus when genome_patterns has no matches', async () => {
-    mockGetServerSupabase.mockReturnValue(emptyGenomeSupabase() as never);
+    mockAzureRead.query.mockResolvedValue([]);
     mockSearchCanonicalPatternIndex.mockResolvedValue({
       source: 'persisted_canonical_corpus',
       status: 'ready',
@@ -73,6 +62,11 @@ describe('retrievePattern', () => {
 
     const result = await retrievePattern(['prior auth agentic workflow']);
 
+    expect(mockAzureRead.query).toHaveBeenCalledWith(
+      expect.stringContaining('FROM genome_patterns'),
+      ['prior auth agentic workflow'],
+      { missingTable: 'empty' },
+    );
     expect(mockSearchCanonicalPatternIndex).toHaveBeenCalledWith({
       query: 'prior auth agentic workflow',
       limit: 5,

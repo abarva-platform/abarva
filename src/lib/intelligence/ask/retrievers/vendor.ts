@@ -1,22 +1,42 @@
-import { getServerSupabase } from '@/lib/supabase-server';
+import { azureRead } from '@/lib/data-plane/azureRead';
 import type { RetrievalResult, AskSource } from '../types';
+
+type VendorDeploymentRow = {
+  vendor_name: string;
+  category: string;
+  product_name: string | null;
+  deployment_model: string | null;
+  annual_spend_usd: number | string | null;
+  touches_ai: boolean | null;
+  seat_count: number | string | null;
+  industry_code: string | null;
+};
 
 export async function retrieveVendor(entities: string[]): Promise<RetrievalResult> {
   if (entities.length === 0) return { sources: [], averageConfidence: 0 };
 
-  const sb = getServerSupabase();
   const sources: AskSource[] = [];
 
   for (const entity of entities.slice(0, 3)) {
     // Pull all tech_stack_items that match this vendor name (case-insensitive).
     // Aggregate deployment + spend across clients; never leak client names.
-    const { data: rows } = await sb
-      .from('tech_stack_items')
-      .select('vendor_name, category, product_name, deployment_model, annual_spend_usd, touches_ai, seat_count, client:clients(industry_code)')
-      .ilike('vendor_name', `%${entity}%`)
-      .limit(40);
-
-    const items = ((rows as Array<{ vendor_name: string; category: string; product_name: string | null; deployment_model: string | null; annual_spend_usd: number | null; touches_ai: boolean | null; seat_count: number | null; client: { industry_code: string | null } | null }> | null) ?? []);
+    const items = await azureRead.query<VendorDeploymentRow>(
+      `SELECT
+         t.vendor_name,
+         t.category,
+         t.product_name,
+         t.deployment_model,
+         t.annual_spend_usd,
+         t.touches_ai,
+         t.seat_count,
+         c.industry_code
+       FROM tech_stack_items t
+       LEFT JOIN clients c ON c.id = t.client_id
+       WHERE t.vendor_name ILIKE $1
+       LIMIT 40`,
+      [`%${entity}%`],
+      { missingTable: 'empty' },
+    );
     if (items.length === 0) continue;
 
     // Group by vendor_name exactly (aggregated).
@@ -29,7 +49,7 @@ export async function retrieveVendor(entities: string[]): Promise<RetrievalResul
 
     for (const [vendorName, deployments] of byVendor) {
       const totalSpend = deployments.reduce((s, d) => s + Number(d.annual_spend_usd ?? 0), 0);
-      const industries = new Set(deployments.map((d) => d.client?.industry_code).filter(Boolean));
+      const industries = new Set(deployments.map((d) => d.industry_code).filter(Boolean));
       const categories = new Set(deployments.map((d) => d.category));
       const aiFlag = deployments.some((d) => d.touches_ai);
       const totalSeats = deployments.reduce((s, d) => s + Number(d.seat_count ?? 0), 0);
