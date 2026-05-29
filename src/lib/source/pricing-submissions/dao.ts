@@ -14,6 +14,7 @@
 
 import 'server-only';
 
+import { azureRead } from '@/lib/data-plane/azureRead';
 import { getServerSupabase } from '@/lib/supabase-server';
 import type {
   AssumptionDeviation,
@@ -71,45 +72,44 @@ function rowToView(row: DbRow): VendorPricingSubmissionRow {
 export async function listActiveSubmissionsForEvent(
   sourceEventId: string,
 ): Promise<VendorPricingSubmissionRow[]> {
-  let supabase;
   try {
-    supabase = getServerSupabase();
-  } catch {
+    const rows = await azureRead.query<DbRow>(
+      `SELECT * FROM source_event_pricing_submissions
+        WHERE source_event_id = $1 AND superseded_by IS NULL
+        ORDER BY vendor_name ASC`,
+      [sourceEventId],
+      { missingTable: 'empty' },
+    );
+    return rows.map(rowToView);
+  } catch (error) {
+    console.error(
+      '[listActiveSubmissionsForEvent]',
+      error instanceof Error ? error.message : error,
+    );
     return [];
   }
-  const { data, error } = await supabase
-    .from('source_event_pricing_submissions')
-    .select('*')
-    .eq('source_event_id', sourceEventId)
-    .is('superseded_by', null)
-    .order('vendor_name', { ascending: true });
-  if (error) {
-    console.error('[listActiveSubmissionsForEvent]', error.message);
-    return [];
-  }
-  return ((data as DbRow[] | null) ?? []).map(rowToView);
 }
 
 /** Full history including superseded rows. For audit / debugging. */
 export async function listAllSubmissionsForEvent(
   sourceEventId: string,
 ): Promise<VendorPricingSubmissionRow[]> {
-  let supabase;
   try {
-    supabase = getServerSupabase();
-  } catch {
+    const rows = await azureRead.query<DbRow>(
+      `SELECT * FROM source_event_pricing_submissions
+        WHERE source_event_id = $1
+        ORDER BY submitted_at DESC`,
+      [sourceEventId],
+      { missingTable: 'empty' },
+    );
+    return rows.map(rowToView);
+  } catch (error) {
+    console.error(
+      '[listAllSubmissionsForEvent]',
+      error instanceof Error ? error.message : error,
+    );
     return [];
   }
-  const { data, error } = await supabase
-    .from('source_event_pricing_submissions')
-    .select('*')
-    .eq('source_event_id', sourceEventId)
-    .order('submitted_at', { ascending: false });
-  if (error) {
-    console.error('[listAllSubmissionsForEvent]', error.message);
-    return [];
-  }
-  return ((data as DbRow[] | null) ?? []).map(rowToView);
 }
 
 // ── Writes ─────────────────────────────────────────────────────────────────
