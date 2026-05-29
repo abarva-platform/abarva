@@ -4,25 +4,25 @@ Read-only inventory. No runtime code was modified by this artifact.
 
 ## Summary
 
-- Generated at: `2026-05-29T17:26:52.079Z`
-- Total files in inventory: `306`
-- Files with import-helper matches: `154`
-- Import-helper matches: `628`
-- Files with broad matches: `306`
-- Broad matches: `1459`
+- Generated at: `2026-05-29T17:48:33.288Z`
+- Total files in inventory: `305`
+- Files with import-helper matches: `153`
+- Import-helper matches: `626`
+- Files with broad matches: `305`
+- Broad matches: `1456`
 
 ## Classification Counts
 
 - `DEFER_MANUAL`: 126
 - `MIXED_READ_WRITE`: 82
 - `MUTATION_WRITE`: 1
-- `READ_ONLY_SELECT`: 93
+- `READ_ONLY_SELECT`: 92
 - `READ_WITH_STORAGE`: 4
 
 ## Group Counts
 
 - `admin`: 2
-- `api_routes`: 36
+- `api_routes`: 35
 - `app_routes`: 12
 - `db`: 5
 - `intelligence`: 31
@@ -269,7 +269,6 @@ Read-only inventory. No runtime code was modified by this artifact.
 | src/app/api/v1/source/[eventId]/artifacts/[artifactCode]/generate-from-claude/route.ts | READ_ONLY_SELECT | api_routes | 3 | 4 | source_event_artifact_states | - |
 | src/app/api/v1/source/[eventId]/stage/route.ts | READ_ONLY_SELECT | api_routes | 3 | 4 | source_events | - |
 | src/app/api/v1/source/events/[eventId]/approve/route.ts | READ_ONLY_SELECT | api_routes | 3 | 4 | source_events | - |
-| src/app/api/v1/programs/[programId]/nexus/ask/route.ts | READ_ONLY_SELECT | api_routes | 2 | 3 | program_threads | - |
 | src/app/api/admin/parallel-run-invariants/route.ts | READ_ONLY_SELECT | api_routes | 0 | 2 | - | no static table names detected |
 | src/app/api/v1/intelligence/brief/render-pdf/route.ts | READ_ONLY_SELECT | api_routes | 0 | 1 | - | no static table names detected |
 | src/app/api/v1/programs/[programId]/advance/route.ts | READ_ONLY_SELECT | api_routes | 0 | 1 | founder_approval_requests | - |

@@ -10,6 +10,13 @@ const requireTenancy = jest.fn();
 const tenancyErrorResponse = jest.fn();
 const getProgramsRouteSupabase = jest.fn();
 const getProgramById = jest.fn();
+const mockAzureRead = {
+  query: jest.fn(),
+  select: jest.fn(),
+  maybeSingle: jest.fn(),
+  count: jest.fn(),
+  withSession: jest.fn(),
+};
 
 const getActiveClientRow = jest.fn();
 const runProgramsNexusTurn = jest.fn();
@@ -39,6 +46,10 @@ jest.mock('@/lib/programs/programs-auth-mode-server', () => ({
 
 jest.mock('@/lib/programs/queries', () => ({
   getProgramById,
+}));
+
+jest.mock('@/lib/data-plane/azureRead', () => ({
+  azureRead: mockAzureRead,
 }));
 
 jest.mock('@/lib/active-client', () => ({
@@ -88,21 +99,6 @@ function makePost(body: unknown): NextRequest {
   }) as unknown as NextRequest;
 }
 
-function makeThreadLookupSupabase(thread: { id: string; engagement_id: string; user_id: string } | null) {
-  return {
-    from: (table: string) => {
-      if (table !== 'program_threads') throw new Error(`unexpected table: ${table}`);
-      return {
-        select: () => ({
-          eq: () => ({
-            maybeSingle: async () => ({ data: thread, error: null }),
-          }),
-        }),
-      };
-    },
-  };
-}
-
 beforeEach(() => {
   jest.clearAllMocks();
   requireTenancy.mockResolvedValue(CTX);
@@ -116,6 +112,11 @@ beforeEach(() => {
   getProgramById.mockImplementation((_ctx, programId) =>
     programId === OWN_PROGRAM ? Promise.resolve({ id: OWN_PROGRAM, name: 'Move 1', currentPhase: 1 }) : Promise.resolve(null),
   );
+  mockAzureRead.query.mockResolvedValue([]);
+  mockAzureRead.select.mockResolvedValue([]);
+  mockAzureRead.maybeSingle.mockResolvedValue(null);
+  mockAzureRead.count.mockResolvedValue(0);
+  mockAzureRead.withSession.mockImplementation(async (fn) => fn(jest.fn()));
 
   getActiveClientRow.mockResolvedValue({
     key: 'meridian-health',
@@ -206,7 +207,7 @@ describe('POST /api/v1/programs/[programId]/nexus/ask', () => {
   it('allows own-tenant ask turns', async () => {
     const res = await invoke(OWN_PROGRAM);
     expect(res.status).toBe(200);
-    expect(getProgramsRouteSupabase).toHaveBeenCalledWith('mutation');
+    expect(getProgramsRouteSupabase).not.toHaveBeenCalled();
   });
 
   it('returns 404 for foreign-tenant program id', async () => {
@@ -215,13 +216,14 @@ describe('POST /api/v1/programs/[programId]/nexus/ask', () => {
   });
 
   it('denies cross-tenant thread writes for foreign thread ownership', async () => {
-    getProgramsRouteSupabase.mockResolvedValueOnce({
-      mode: 'service_role',
-      supabase: makeThreadLookupSupabase({ id: 'thread_x', engagement_id: 'eng_other', user_id: CTX.userId }),
-    });
+    mockAzureRead.maybeSingle.mockResolvedValueOnce(null);
     const res = await invoke(OWN_PROGRAM, { query: 'continue', threadId: 'thread_x' });
     expect(res.status).toBe(404);
     await expect(res.json()).resolves.toEqual({ error: 'thread_not_found' });
+    expect(mockAzureRead.maybeSingle).toHaveBeenCalledWith(expect.objectContaining({
+      table: 'program_threads',
+      where: { id: 'thread_x', engagement_id: OWN_PROGRAM },
+    }));
   });
 
   it('denies users without tenant membership', async () => {

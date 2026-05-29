@@ -1,0 +1,50 @@
+{
+  "slice": "2c2e-program-nexus-ask-route",
+  "generatedAt": "2026-05-29T17:48:33.288Z",
+  "runtimeSupabaseImportCensus": {
+    "before": {
+      "filesWithImportMatches": 154,
+      "importMatches": 628,
+      "filesWithBroadMatches": 306,
+      "broadMatches": 1459
+    },
+    "after": {
+      "filesWithImportMatches": 153,
+      "importMatches": 626,
+      "filesWithBroadMatches": 305,
+      "broadMatches": 1456
+    },
+    "delta": {
+      "filesWithImportMatches": -1,
+      "importMatches": -2,
+      "filesWithBroadMatches": -1,
+      "broadMatches": -3
+    }
+  },
+  "codemodInventory": {
+    "before": {
+      "totalFiles": 306,
+      "readOnlySelect": 93,
+      "apiRoutes": 36
+    },
+    "after": {
+      "totalFiles": 305,
+      "readOnlySelect": 92,
+      "apiRoutes": 35
+    },
+    "delta": {
+      "totalFiles": -1,
+      "readOnlySelect": -1,
+      "apiRoutes": -1
+    }
+  },
+  "targetFilesRemovedFromInventory": [
+    "src/app/api/v1/programs/[programId]/nexus/ask/route.ts"
+  ],
+  "validation": {
+    "focusedJest": "pass: 3 suites / 45 tests",
+    "focusedEslint": "pass",
+    "runtimeSupabaseImportCensus": "pass/warn: expected warn mode, import-helper delta -1 file / -2 matches",
+    "phase2cInventory": "pass: READ_ONLY_SELECT 93 -> 92"
+  }
+}

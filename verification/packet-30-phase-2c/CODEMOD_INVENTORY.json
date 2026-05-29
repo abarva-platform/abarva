@@ -1,25 +1,25 @@
 {
   "summary": {
-    "generatedAt": "2026-05-29T17:26:52.079Z",
+    "generatedAt": "2026-05-29T17:48:33.288Z",
     "scannedDirs": [
       "src/app",
       "src/lib"
     ],
-    "totalFiles": 306,
-    "filesWithImportMatches": 154,
-    "importMatches": 628,
-    "filesWithBroadMatches": 306,
-    "broadMatches": 1459,
+    "totalFiles": 305,
+    "filesWithImportMatches": 153,
+    "importMatches": 626,
+    "filesWithBroadMatches": 305,
+    "broadMatches": 1456,
     "classificationCounts": {
       "DEFER_MANUAL": 126,
       "MIXED_READ_WRITE": 82,
       "MUTATION_WRITE": 1,
-      "READ_ONLY_SELECT": 93,
+      "READ_ONLY_SELECT": 92,
       "READ_WITH_STORAGE": 4
     },
     "groupCounts": {
       "admin": 2,
-      "api_routes": 36,
+      "api_routes": 35,
       "app_routes": 12,
       "intelligence": 31,
       "knowledge": 5,
@@ -9566,56 +9566,6 @@
         "eq",
         "select",
         "single"
-      ],
-      "writeMethods": [],
-      "storageReadMethods": [],
-      "storageWriteMethods": [],
-      "supabaseFromCalls": 1,
-      "arrayFromCalls": 0,
-      "storageAccesses": 0,
-      "rpcCalls": 0,
-      "notes": []
-    },
-    {
-      "file": "src/app/api/v1/programs/[programId]/nexus/ask/route.ts",
-      "group": "api_routes",
-      "sourceKind": "runtime",
-      "classification": "READ_ONLY_SELECT",
-      "importMatches": 2,
-      "broadMatches": 3,
-      "imports": [],
-      "helperRefs": [
-        "getServerSupabase"
-      ],
-      "tableNames": [
-        "program_threads"
-      ],
-      "methodNames": [
-        "catch",
-        "close",
-        "encode",
-        "endsWith",
-        "enqueue",
-        "eq",
-        "filter",
-        "flatMap",
-        "from",
-        "json",
-        "map",
-        "match",
-        "maybeSingle",
-        "now",
-        "replace",
-        "select",
-        "slice",
-        "split",
-        "stringify",
-        "trim"
-      ],
-      "readMethods": [
-        "eq",
-        "maybeSingle",
-        "select"
       ],
       "writeMethods": [],
       "storageReadMethods": [],
