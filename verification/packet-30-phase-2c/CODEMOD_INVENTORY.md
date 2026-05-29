@@ -4,19 +4,19 @@ Read-only inventory. No runtime code was modified by this artifact.
 
 ## Summary
 
-- Generated at: `2026-05-29T16:21:38.244Z`
-- Total files in inventory: `314`
-- Files with import-helper matches: `160`
-- Import-helper matches: `661`
-- Files with broad matches: `314`
-- Broad matches: `1544`
+- Generated at: `2026-05-29T16:37:17.097Z`
+- Total files in inventory: `311`
+- Files with import-helper matches: `156`
+- Import-helper matches: `649`
+- Files with broad matches: `311`
+- Broad matches: `1519`
 
 ## Classification Counts
 
-- `DEFER_MANUAL`: 124
+- `DEFER_MANUAL`: 125
 - `MIXED_READ_WRITE`: 82
 - `MUTATION_WRITE`: 1
-- `READ_ONLY_SELECT`: 103
+- `READ_ONLY_SELECT`: 99
 - `READ_WITH_STORAGE`: 4
 
 ## Group Counts
@@ -28,7 +28,7 @@ Read-only inventory. No runtime code was modified by this artifact.
 - `intelligence`: 31
 - `knowledge`: 5
 - `other_lib`: 143
-- `programs`: 39
+- `programs`: 36
 - `source`: 34
 - `tower`: 2
 
@@ -131,6 +131,7 @@ Read-only inventory. No runtime code was modified by this artifact.
 | src/lib/reasoning/weekly-digest.ts | DEFER_MANUAL | other_lib | 0 | 1 | - | broad-only match; usually Array.from or unrelated .from usage |
 | src/lib/sentinel/canonical-grounding.ts | DEFER_MANUAL | other_lib | 0 | 1 | - | broad-only match; usually Array.from or unrelated .from usage |
 | src/lib/programs/programs-auth-mode-server.ts | DEFER_MANUAL | programs | 4 | 4 | - | no static table names detected |
+| src/lib/programs/approval-person-resolver.ts | DEFER_MANUAL | programs | 0 | 2 | - | broad-only match; usually Array.from or unrelated .from usage |
 | src/lib/programs/deliverable-evidence-trace.ts | DEFER_MANUAL | programs | 0 | 2 | - | broad-only match; usually Array.from or unrelated .from usage |
 | src/lib/programs/phase-gate-advancement-flow.ts | DEFER_MANUAL | programs | 0 | 2 | - | broad-only match; usually Array.from or unrelated .from usage |
 | src/lib/programs/workshop-readiness.ts | DEFER_MANUAL | programs | 0 | 2 | - | broad-only match; usually Array.from or unrelated .from usage |
@@ -342,10 +343,6 @@ Read-only inventory. No runtime code was modified by this artifact.
 | src/lib/azure-search/tenant-context-backfill.ts | READ_ONLY_SELECT | other_lib | 0 | 1 | - | no static table names detected |
 | src/lib/corpus/azure-search.ts | READ_ONLY_SELECT | other_lib | 0 | 1 | - | no static table names detected |
 | src/lib/programs/transformers.ts | READ_ONLY_SELECT | programs | 18 | 51 | clients, deliverable_versions, deliverables_v2, engagement_participants, engagement_topics, evidence, founder_approval_requests, maestro_oversight_flags, module_state_log, move_artifact_index, pattern_match_logs, persons, phase_snapshots, program_audit_log, program_milestones, program_threads | - |
-| src/lib/programs/db-phase-queries.ts | READ_ONLY_SELECT | programs | 3 | 12 | deliverables_v2, engagement_phases, engagements, evidence, persons, phase_approvals, program_audit_log, program_evidence_items, program_modules | - |
-| src/lib/programs/approval-person-resolver.ts | READ_ONLY_SELECT | programs | 3 | 6 | persons | - |
-| src/lib/programs/board-artifacts/load-move-business-case-input.ts | READ_ONLY_SELECT | programs | 3 | 5 | clients, engagements | - |
-| src/lib/programs/evidence-context.ts | READ_ONLY_SELECT | programs | 3 | 4 | program_evidence_items | - |
 | src/lib/programs/queries.ts | READ_ONLY_SELECT | programs | 1 | 7 | founder_approval_requests, maestro_oversight_flags, program_milestones, program_modules, program_risks, program_work_items | - |
 | src/lib/programs/expert-kernel/exports/board-grade/pptx-renderer.ts | READ_ONLY_SELECT | programs | 0 | 1 | - | no static table names detected |
 | src/lib/programs/expert-kernel/exports/board-grade/svg-raster.ts | READ_ONLY_SELECT | programs | 0 | 1 | - | no static table names detected |

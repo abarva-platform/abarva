@@ -1,20 +1,20 @@
 {
   "summary": {
-    "generatedAt": "2026-05-29T16:21:38.244Z",
+    "generatedAt": "2026-05-29T16:37:17.097Z",
     "scannedDirs": [
       "src/app",
       "src/lib"
     ],
-    "totalFiles": 314,
-    "filesWithImportMatches": 160,
-    "importMatches": 661,
-    "filesWithBroadMatches": 314,
-    "broadMatches": 1544,
+    "totalFiles": 311,
+    "filesWithImportMatches": 156,
+    "importMatches": 649,
+    "filesWithBroadMatches": 311,
+    "broadMatches": 1519,
     "classificationCounts": {
-      "DEFER_MANUAL": 124,
+      "DEFER_MANUAL": 125,
       "MIXED_READ_WRITE": 82,
       "MUTATION_WRITE": 1,
-      "READ_ONLY_SELECT": 103,
+      "READ_ONLY_SELECT": 99,
       "READ_WITH_STORAGE": 4
     },
     "groupCounts": {
@@ -24,7 +24,7 @@
       "intelligence": 31,
       "knowledge": 5,
       "other_lib": 143,
-      "programs": 39,
+      "programs": 36,
       "source": 34,
       "db": 5,
       "tower": 2
@@ -3170,6 +3170,39 @@
       "rpcCalls": 0,
       "notes": [
         "no static table names detected"
+      ]
+    },
+    {
+      "file": "src/lib/programs/approval-person-resolver.ts",
+      "group": "programs",
+      "sourceKind": "runtime",
+      "classification": "DEFER_MANUAL",
+      "importMatches": 0,
+      "broadMatches": 2,
+      "imports": [],
+      "helperRefs": [],
+      "tableNames": [],
+      "methodNames": [
+        "error",
+        "filter",
+        "from",
+        "map",
+        "select",
+        "set",
+        "trim"
+      ],
+      "readMethods": [
+        "select"
+      ],
+      "writeMethods": [],
+      "storageReadMethods": [],
+      "storageWriteMethods": [],
+      "supabaseFromCalls": 0,
+      "arrayFromCalls": 2,
+      "storageAccesses": 0,
+      "rpcCalls": 0,
+      "notes": [
+        "broad-only match; usually Array.from or unrelated .from usage"
       ]
     },
     {
@@ -12966,182 +12999,6 @@
       "storageWriteMethods": [],
       "supabaseFromCalls": 31,
       "arrayFromCalls": 2,
-      "storageAccesses": 0,
-      "rpcCalls": 0,
-      "notes": []
-    },
-    {
-      "file": "src/lib/programs/db-phase-queries.ts",
-      "group": "programs",
-      "sourceKind": "runtime",
-      "classification": "READ_ONLY_SELECT",
-      "importMatches": 3,
-      "broadMatches": 12,
-      "imports": [
-        "@/lib/supabase-server"
-      ],
-      "helperRefs": [
-        "getServerSupabase"
-      ],
-      "tableNames": [
-        "deliverables_v2",
-        "engagement_phases",
-        "engagements",
-        "evidence",
-        "persons",
-        "phase_approvals",
-        "program_audit_log",
-        "program_evidence_items",
-        "program_modules"
-      ],
-      "methodNames": [
-        "all",
-        "eq",
-        "filter",
-        "from",
-        "get",
-        "in",
-        "limit",
-        "map",
-        "order",
-        "select",
-        "single"
-      ],
-      "readMethods": [
-        "eq",
-        "in",
-        "limit",
-        "order",
-        "select",
-        "single"
-      ],
-      "writeMethods": [],
-      "storageReadMethods": [],
-      "storageWriteMethods": [],
-      "supabaseFromCalls": 9,
-      "arrayFromCalls": 0,
-      "storageAccesses": 0,
-      "rpcCalls": 0,
-      "notes": []
-    },
-    {
-      "file": "src/lib/programs/approval-person-resolver.ts",
-      "group": "programs",
-      "sourceKind": "runtime",
-      "classification": "READ_ONLY_SELECT",
-      "importMatches": 3,
-      "broadMatches": 6,
-      "imports": [
-        "@/lib/supabase-server"
-      ],
-      "helperRefs": [
-        "getServerSupabase"
-      ],
-      "tableNames": [
-        "persons"
-      ],
-      "methodNames": [
-        "error",
-        "filter",
-        "from",
-        "in",
-        "map",
-        "select",
-        "set",
-        "trim"
-      ],
-      "readMethods": [
-        "in",
-        "select"
-      ],
-      "writeMethods": [],
-      "storageReadMethods": [],
-      "storageWriteMethods": [],
-      "supabaseFromCalls": 1,
-      "arrayFromCalls": 2,
-      "storageAccesses": 0,
-      "rpcCalls": 0,
-      "notes": []
-    },
-    {
-      "file": "src/lib/programs/board-artifacts/load-move-business-case-input.ts",
-      "group": "programs",
-      "sourceKind": "runtime",
-      "classification": "READ_ONLY_SELECT",
-      "importMatches": 3,
-      "broadMatches": 5,
-      "imports": [
-        "@/lib/supabase-server"
-      ],
-      "helperRefs": [
-        "getServerSupabase"
-      ],
-      "tableNames": [
-        "clients",
-        "engagements"
-      ],
-      "methodNames": [
-        "eq",
-        "from",
-        "isArray",
-        "maybeSingle",
-        "select",
-        "trim"
-      ],
-      "readMethods": [
-        "eq",
-        "maybeSingle",
-        "select"
-      ],
-      "writeMethods": [],
-      "storageReadMethods": [],
-      "storageWriteMethods": [],
-      "supabaseFromCalls": 2,
-      "arrayFromCalls": 0,
-      "storageAccesses": 0,
-      "rpcCalls": 0,
-      "notes": []
-    },
-    {
-      "file": "src/lib/programs/evidence-context.ts",
-      "group": "programs",
-      "sourceKind": "runtime",
-      "classification": "READ_ONLY_SELECT",
-      "importMatches": 3,
-      "broadMatches": 4,
-      "imports": [
-        "@/lib/supabase-server"
-      ],
-      "helperRefs": [
-        "getServerSupabase"
-      ],
-      "tableNames": [
-        "program_evidence_items"
-      ],
-      "methodNames": [
-        "eq",
-        "from",
-        "join",
-        "limit",
-        "map",
-        "order",
-        "push",
-        "replace",
-        "select",
-        "slice",
-        "trim"
-      ],
-      "readMethods": [
-        "eq",
-        "limit",
-        "order",
-        "select"
-      ],
-      "writeMethods": [],
-      "storageReadMethods": [],
-      "storageWriteMethods": [],
-      "supabaseFromCalls": 1,
-      "arrayFromCalls": 0,
       "storageAccesses": 0,
       "rpcCalls": 0,
       "notes": []

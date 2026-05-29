@@ -1,25 +1,14 @@
 const canReadProgramMock = jest.fn();
-const queryState: { rows: Array<Record<string, unknown>> | null; error: null | { message: string } } = {
-  rows: null,
-  error: null,
-};
+const mockAzureSelect = jest.fn();
 
 jest.mock('@/lib/auth/program-access-policy', () => ({
   canReadProgram: (...args: unknown[]) => canReadProgramMock(...args),
 }));
 
-jest.mock('@/lib/supabase-server', () => ({
-  getServerSupabase: () => ({
-    from: () => ({
-      select: () => ({
-        eq: () => ({
-          order: () => ({
-            limit: async () => ({ data: queryState.rows, error: queryState.error }),
-          }),
-        }),
-      }),
-    }),
-  }),
+jest.mock('@/lib/data-plane/azureRead', () => ({
+  azureRead: {
+    select: (...args: unknown[]) => mockAzureSelect(...args),
+  },
 }));
 
 import {
@@ -31,12 +20,12 @@ describe('program evidence context prompt block', () => {
   beforeEach(() => {
     canReadProgramMock.mockReset();
     canReadProgramMock.mockResolvedValue(true);
-    queryState.rows = null;
-    queryState.error = null;
+    mockAzureSelect.mockReset();
+    mockAzureSelect.mockResolvedValue([]);
   });
 
   it('lists captured program evidence only after access is allowed', async () => {
-    queryState.rows = [
+    mockAzureSelect.mockResolvedValue([
       {
         id: 'evidence-1',
         title: 'pasted-workshop-notes-2026-05-02.txt',
@@ -46,7 +35,7 @@ describe('program evidence context prompt block', () => {
         extracted_structured: { parse_method: 'text-line-parser' },
         created_at: '2026-05-02T03:36:02.000Z',
       },
-    ];
+    ]);
 
     const items = await listProgramEvidenceForPrompt(
       { clientId: 'client-1', userId: 'user-1', role: 'program_user' },
@@ -63,6 +52,12 @@ describe('program evidence context prompt block', () => {
         parseMethod: 'text-line-parser',
       }),
     ]);
+    expect(mockAzureSelect).toHaveBeenCalledWith(expect.objectContaining({
+      table: 'program_evidence_items',
+      where: { program_id: 'program-1' },
+      orderBy: { column: 'created_at', direction: 'desc' },
+      limit: 8,
+    }));
   });
 
   it('formats evidence so Nexus cannot call the ledger empty', () => {

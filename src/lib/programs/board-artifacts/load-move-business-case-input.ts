@@ -17,7 +17,7 @@
 // Returns `null` honestly when the Move is not accessible — the route falls
 // back to its reference deck rather than rendering a wrong-tenant Move.
 
-import { getServerSupabase } from '@/lib/supabase-server';
+import { azureRead } from '@/lib/data-plane/azureRead';
 import { requireTenancy } from '@/lib/auth/tenancy';
 import { getProgramById } from '../queries';
 import type { MoveBusinessCaseInput } from '../move-business-case';
@@ -40,18 +40,16 @@ export async function loadMoveBusinessCaseInput(
   if (!program) return null;
   if (program.archivedAt || program.deletedAt) return null;
 
-  const sb = getServerSupabase();
-
   // Industry code, tenant key, and tenant display name — all from the program's
   // client. The program already passed the tenancy check, so its client is the
   // caller's tenant. Tenant key/name are threaded so the board-grade renderer
   // can label the deck with the canonical tenant display name (P1-3) instead
   // of the industry slug ("retail").
-  const { data: clientRow } = await sb
-    .from('clients')
-    .select('key, name, industry_code')
-    .eq('id', program.clientId)
-    .maybeSingle();
+  const clientRow = await azureRead.maybeSingle<{ key: string | null; name: string | null; industry_code: string | null }>({
+    table: 'clients',
+    columns: ['key', 'name', 'industry_code'],
+    where: { id: program.clientId },
+  }).catch(() => null);
   const industryCode =
     typeof (clientRow as { industry_code?: unknown } | null)?.industry_code ===
     'string'
@@ -69,11 +67,11 @@ export async function loadMoveBusinessCaseInput(
   // Recorded baseline metrics — the `engagements.baseline_metrics` JSONB
   // array. Defensively narrowed: the column is untyped JSONB, so a non-array
   // value is treated as absent rather than trusted.
-  const { data: engagementRow } = await sb
-    .from('engagements')
-    .select('baseline_metrics')
-    .eq('id', moveId)
-    .maybeSingle();
+  const engagementRow = await azureRead.maybeSingle<{ baseline_metrics?: unknown }>({
+    table: 'engagements',
+    columns: ['baseline_metrics'],
+    where: { id: moveId },
+  }).catch(() => null);
   const rawBaseline = (engagementRow as { baseline_metrics?: unknown } | null)
     ?.baseline_metrics;
   const baselineMetrics = Array.isArray(rawBaseline)
