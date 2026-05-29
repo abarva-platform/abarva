@@ -1,19 +1,18 @@
 {
   "summary": {
-    "generatedAt": "2026-05-29T19:34:21.258Z",
+    "generatedAt": "2026-05-29T21:20:48.411Z",
     "scannedDirs": [
       "src/app",
       "src/lib"
     ],
     "totalFiles": 294,
-    "filesWithImportMatches": 140,
-    "importMatches": 582,
+    "filesWithImportMatches": 123,
+    "importMatches": 530,
     "filesWithBroadMatches": 294,
-    "broadMatches": 1383,
+    "broadMatches": 1331,
     "classificationCounts": {
-      "DEFER_MANUAL": 128,
+      "DEFER_MANUAL": 129,
       "MIXED_READ_WRITE": 82,
-      "MUTATION_WRITE": 1,
       "READ_ONLY_SELECT": 79,
       "READ_WITH_STORAGE": 4
     },
@@ -1095,6 +1094,31 @@
       "rpcCalls": 0,
       "notes": [
         "broad-only match; usually Array.from or unrelated .from usage"
+      ]
+    },
+    {
+      "file": "src/lib/supabase-server.ts",
+      "group": "other_lib",
+      "sourceKind": "runtime",
+      "classification": "DEFER_MANUAL",
+      "importMatches": 1,
+      "broadMatches": 1,
+      "imports": [],
+      "helperRefs": [
+        "getServerSupabase"
+      ],
+      "tableNames": [],
+      "methodNames": [],
+      "readMethods": [],
+      "writeMethods": [],
+      "storageReadMethods": [],
+      "storageWriteMethods": [],
+      "supabaseFromCalls": 0,
+      "arrayFromCalls": 0,
+      "storageAccesses": 0,
+      "rpcCalls": 0,
+      "notes": [
+        "no static table names detected"
       ]
     },
     {
@@ -8858,67 +8882,33 @@
       ]
     },
     {
-      "file": "src/lib/supabase-server.ts",
-      "group": "other_lib",
+      "file": "src/app/api/admin/parallel-run-invariants/route.ts",
+      "group": "api_routes",
       "sourceKind": "runtime",
-      "classification": "MUTATION_WRITE",
-      "importMatches": 1,
-      "broadMatches": 1,
+      "classification": "READ_ONLY_SELECT",
+      "importMatches": 0,
+      "broadMatches": 2,
       "imports": [],
-      "helperRefs": [
-        "getServerSupabase"
-      ],
+      "helperRefs": [],
       "tableNames": [],
       "methodNames": [
-        "addFilter",
-        "buildLimit",
-        "buildOrder",
-        "buildWhere",
-        "catch",
-        "delete",
-        "end",
-        "execute",
-        "executeDelete",
-        "executeInsert",
-        "executeSelect",
-        "executeUpdate",
-        "executeUpsert",
-        "filter",
-        "filterToSql",
-        "formatRows",
+        "exec",
+        "from",
         "get",
-        "includes",
-        "isArray",
-        "join",
-        "keys",
-        "map",
-        "match",
-        "max",
-        "push",
-        "query",
-        "set",
-        "split",
-        "stringify",
-        "test",
-        "then",
-        "toLowerCase",
-        "toUpperCase",
-        "trim",
-        "warn"
+        "getTenantInvariants",
+        "json",
+        "trim"
       ],
       "readMethods": [],
-      "writeMethods": [
-        "delete"
-      ],
+      "writeMethods": [],
       "storageReadMethods": [],
       "storageWriteMethods": [],
-      "supabaseFromCalls": 0,
+      "supabaseFromCalls": 2,
       "arrayFromCalls": 0,
       "storageAccesses": 0,
       "rpcCalls": 0,
       "notes": [
-        "no static table names detected",
-        "delete method present; may be Array.delete or Supabase delete"
+        "no static table names detected"
       ]
     },
     {
@@ -8926,14 +8916,10 @@
       "group": "api_routes",
       "sourceKind": "runtime",
       "classification": "READ_ONLY_SELECT",
-      "importMatches": 4,
-      "broadMatches": 6,
-      "imports": [
-        "@/lib/supabase-server"
-      ],
-      "helperRefs": [
-        "getServerSupabase"
-      ],
+      "importMatches": 0,
+      "broadMatches": 2,
+      "imports": [],
+      "helperRefs": [],
       "tableNames": [
         "engagement_participants",
         "engagements"
@@ -8978,14 +8964,10 @@
       "group": "api_routes",
       "sourceKind": "runtime",
       "classification": "READ_ONLY_SELECT",
-      "importMatches": 3,
-      "broadMatches": 5,
-      "imports": [
-        "@/lib/supabase-server"
-      ],
-      "helperRefs": [
-        "getServerSupabase"
-      ],
+      "importMatches": 0,
+      "broadMatches": 2,
+      "imports": [],
+      "helperRefs": [],
       "tableNames": [
         "source_event_artifact_states",
         "source_events"
@@ -9025,14 +9007,10 @@
       "group": "api_routes",
       "sourceKind": "runtime",
       "classification": "READ_ONLY_SELECT",
-      "importMatches": 3,
-      "broadMatches": 5,
-      "imports": [
-        "@/lib/supabase-server"
-      ],
-      "helperRefs": [
-        "getServerSupabase"
-      ],
+      "importMatches": 0,
+      "broadMatches": 2,
+      "imports": [],
+      "helperRefs": [],
       "tableNames": [
         "source_event_gate_criterion_states",
         "source_events"
@@ -9072,14 +9050,10 @@
       "group": "api_routes",
       "sourceKind": "runtime",
       "classification": "READ_ONLY_SELECT",
-      "importMatches": 3,
-      "broadMatches": 4,
-      "imports": [
-        "@/lib/supabase-server"
-      ],
-      "helperRefs": [
-        "getServerSupabase"
-      ],
+      "importMatches": 0,
+      "broadMatches": 1,
+      "imports": [],
+      "helperRefs": [],
       "tableNames": [
         "sensitive_upload_audit"
       ],
@@ -9112,14 +9086,10 @@
       "group": "api_routes",
       "sourceKind": "runtime",
       "classification": "READ_ONLY_SELECT",
-      "importMatches": 3,
-      "broadMatches": 4,
-      "imports": [
-        "@/lib/supabase-server"
-      ],
-      "helperRefs": [
-        "getServerSupabase"
-      ],
+      "importMatches": 0,
+      "broadMatches": 1,
+      "imports": [],
+      "helperRefs": [],
       "tableNames": [
         "sensitive_upload_audit"
       ],
@@ -9152,14 +9122,10 @@
       "group": "api_routes",
       "sourceKind": "runtime",
       "classification": "READ_ONLY_SELECT",
-      "importMatches": 3,
-      "broadMatches": 4,
-      "imports": [
-        "@/lib/supabase-server"
-      ],
-      "helperRefs": [
-        "getServerSupabase"
-      ],
+      "importMatches": 0,
+      "broadMatches": 1,
+      "imports": [],
+      "helperRefs": [],
       "tableNames": [
         "persons"
       ],
@@ -9196,14 +9162,10 @@
       "group": "api_routes",
       "sourceKind": "runtime",
       "classification": "READ_ONLY_SELECT",
-      "importMatches": 3,
-      "broadMatches": 4,
-      "imports": [
-        "@/lib/supabase-server"
-      ],
-      "helperRefs": [
-        "getServerSupabase"
-      ],
+      "importMatches": 0,
+      "broadMatches": 1,
+      "imports": [],
+      "helperRefs": [],
       "tableNames": [
         "engagements"
       ],
@@ -9251,172 +9213,6 @@
       "storageAccesses": 0,
       "rpcCalls": 0,
       "notes": []
-    },
-    {
-      "file": "src/app/api/v1/source/[eventId]/artifacts/[artifactCode]/generate-from-claude/route.ts",
-      "group": "api_routes",
-      "sourceKind": "runtime",
-      "classification": "READ_ONLY_SELECT",
-      "importMatches": 3,
-      "broadMatches": 4,
-      "imports": [
-        "@/lib/supabase-server"
-      ],
-      "helperRefs": [
-        "getServerSupabase"
-      ],
-      "tableNames": [
-        "source_event_artifact_states"
-      ],
-      "methodNames": [
-        "all",
-        "buildUserMessage",
-        "catch",
-        "eq",
-        "error",
-        "finalMessage",
-        "from",
-        "includes",
-        "join",
-        "json",
-        "keys",
-        "maybeSingle",
-        "now",
-        "select",
-        "stream",
-        "toISOString",
-        "toLowerCase",
-        "trim",
-        "updateArtifactBody"
-      ],
-      "readMethods": [
-        "eq",
-        "maybeSingle",
-        "select"
-      ],
-      "writeMethods": [],
-      "storageReadMethods": [],
-      "storageWriteMethods": [],
-      "supabaseFromCalls": 1,
-      "arrayFromCalls": 0,
-      "storageAccesses": 0,
-      "rpcCalls": 0,
-      "notes": []
-    },
-    {
-      "file": "src/app/api/v1/source/[eventId]/stage/route.ts",
-      "group": "api_routes",
-      "sourceKind": "runtime",
-      "classification": "READ_ONLY_SELECT",
-      "importMatches": 3,
-      "broadMatches": 4,
-      "imports": [
-        "@/lib/supabase-server"
-      ],
-      "helperRefs": [
-        "getServerSupabase"
-      ],
-      "tableNames": [
-        "source_events"
-      ],
-      "methodNames": [
-        "all",
-        "catch",
-        "eq",
-        "error",
-        "from",
-        "includes",
-        "join",
-        "json",
-        "maybeSingle",
-        "select",
-        "toISOString",
-        "toLowerCase",
-        "trim",
-        "updateStage"
-      ],
-      "readMethods": [
-        "eq",
-        "maybeSingle",
-        "select"
-      ],
-      "writeMethods": [],
-      "storageReadMethods": [],
-      "storageWriteMethods": [],
-      "supabaseFromCalls": 1,
-      "arrayFromCalls": 0,
-      "storageAccesses": 0,
-      "rpcCalls": 0,
-      "notes": []
-    },
-    {
-      "file": "src/app/api/v1/source/events/[eventId]/approve/route.ts",
-      "group": "api_routes",
-      "sourceKind": "runtime",
-      "classification": "READ_ONLY_SELECT",
-      "importMatches": 3,
-      "broadMatches": 4,
-      "imports": [
-        "@/lib/supabase-server"
-      ],
-      "helperRefs": [
-        "getServerSupabase"
-      ],
-      "tableNames": [
-        "source_events"
-      ],
-      "methodNames": [
-        "applyApproval",
-        "catch",
-        "eq",
-        "from",
-        "json",
-        "select",
-        "single"
-      ],
-      "readMethods": [
-        "eq",
-        "select",
-        "single"
-      ],
-      "writeMethods": [],
-      "storageReadMethods": [],
-      "storageWriteMethods": [],
-      "supabaseFromCalls": 1,
-      "arrayFromCalls": 0,
-      "storageAccesses": 0,
-      "rpcCalls": 0,
-      "notes": []
-    },
-    {
-      "file": "src/app/api/admin/parallel-run-invariants/route.ts",
-      "group": "api_routes",
-      "sourceKind": "runtime",
-      "classification": "READ_ONLY_SELECT",
-      "importMatches": 0,
-      "broadMatches": 2,
-      "imports": [],
-      "helperRefs": [],
-      "tableNames": [],
-      "methodNames": [
-        "exec",
-        "from",
-        "get",
-        "getTenantInvariants",
-        "json",
-        "trim"
-      ],
-      "readMethods": [],
-      "writeMethods": [],
-      "storageReadMethods": [],
-      "storageWriteMethods": [],
-      "supabaseFromCalls": 2,
-      "arrayFromCalls": 0,
-      "storageAccesses": 0,
-      "rpcCalls": 0,
-      "notes": [
-        "no static table names detected"
-      ]
     },
     {
       "file": "src/app/api/v1/intelligence/brief/render-pdf/route.ts",
@@ -9475,6 +9271,53 @@
         "map",
         "maybeSingle",
         "select"
+      ],
+      "readMethods": [
+        "eq",
+        "maybeSingle",
+        "select"
+      ],
+      "writeMethods": [],
+      "storageReadMethods": [],
+      "storageWriteMethods": [],
+      "supabaseFromCalls": 1,
+      "arrayFromCalls": 0,
+      "storageAccesses": 0,
+      "rpcCalls": 0,
+      "notes": []
+    },
+    {
+      "file": "src/app/api/v1/source/[eventId]/artifacts/[artifactCode]/generate-from-claude/route.ts",
+      "group": "api_routes",
+      "sourceKind": "runtime",
+      "classification": "READ_ONLY_SELECT",
+      "importMatches": 0,
+      "broadMatches": 1,
+      "imports": [],
+      "helperRefs": [],
+      "tableNames": [
+        "source_event_artifact_states"
+      ],
+      "methodNames": [
+        "all",
+        "buildUserMessage",
+        "catch",
+        "eq",
+        "error",
+        "finalMessage",
+        "from",
+        "includes",
+        "join",
+        "json",
+        "keys",
+        "maybeSingle",
+        "now",
+        "select",
+        "stream",
+        "toISOString",
+        "toLowerCase",
+        "trim",
+        "updateArtifactBody"
       ],
       "readMethods": [
         "eq",
@@ -9600,18 +9443,91 @@
       ]
     },
     {
+      "file": "src/app/api/v1/source/[eventId]/stage/route.ts",
+      "group": "api_routes",
+      "sourceKind": "runtime",
+      "classification": "READ_ONLY_SELECT",
+      "importMatches": 0,
+      "broadMatches": 1,
+      "imports": [],
+      "helperRefs": [],
+      "tableNames": [
+        "source_events"
+      ],
+      "methodNames": [
+        "all",
+        "catch",
+        "eq",
+        "error",
+        "from",
+        "includes",
+        "join",
+        "json",
+        "maybeSingle",
+        "select",
+        "toISOString",
+        "toLowerCase",
+        "trim",
+        "updateStage"
+      ],
+      "readMethods": [
+        "eq",
+        "maybeSingle",
+        "select"
+      ],
+      "writeMethods": [],
+      "storageReadMethods": [],
+      "storageWriteMethods": [],
+      "supabaseFromCalls": 1,
+      "arrayFromCalls": 0,
+      "storageAccesses": 0,
+      "rpcCalls": 0,
+      "notes": []
+    },
+    {
+      "file": "src/app/api/v1/source/events/[eventId]/approve/route.ts",
+      "group": "api_routes",
+      "sourceKind": "runtime",
+      "classification": "READ_ONLY_SELECT",
+      "importMatches": 0,
+      "broadMatches": 1,
+      "imports": [],
+      "helperRefs": [],
+      "tableNames": [
+        "source_events"
+      ],
+      "methodNames": [
+        "applyApproval",
+        "catch",
+        "eq",
+        "from",
+        "json",
+        "select",
+        "single"
+      ],
+      "readMethods": [
+        "eq",
+        "select",
+        "single"
+      ],
+      "writeMethods": [],
+      "storageReadMethods": [],
+      "storageWriteMethods": [],
+      "supabaseFromCalls": 1,
+      "arrayFromCalls": 0,
+      "storageAccesses": 0,
+      "rpcCalls": 0,
+      "notes": []
+    },
+    {
       "file": "src/app/(maestro)/engagements/[engagementId]/page.tsx",
       "group": "app_routes",
       "sourceKind": "runtime",
       "classification": "READ_ONLY_SELECT",
-      "importMatches": 3,
-      "broadMatches": 7,
-      "imports": [
-        "@/lib/supabase-server"
-      ],
-      "helperRefs": [
-        "getServerSupabase"
-      ],
+      "importMatches": 0,
+      "broadMatches": 4,
+      "imports": [],
+      "helperRefs": [],
       "tableNames": [
         "contradictions",
         "deliverables_v2",
@@ -9667,14 +9583,10 @@
       "group": "app_routes",
       "sourceKind": "runtime",
       "classification": "READ_ONLY_SELECT",
-      "importMatches": 3,
-      "broadMatches": 6,
-      "imports": [
-        "@/lib/supabase-server"
-      ],
-      "helperRefs": [
-        "getServerSupabase"
-      ],
+      "importMatches": 0,
+      "broadMatches": 3,
+      "imports": [],
+      "helperRefs": [],
       "tableNames": [
         "deliverable_types",
         "deliverable_versions",
@@ -9717,14 +9629,10 @@
       "group": "app_routes",
       "sourceKind": "runtime",
       "classification": "READ_ONLY_SELECT",
-      "importMatches": 3,
-      "broadMatches": 5,
-      "imports": [
-        "@/lib/supabase-server"
-      ],
-      "helperRefs": [
-        "getServerSupabase"
-      ],
+      "importMatches": 0,
+      "broadMatches": 2,
+      "imports": [],
+      "helperRefs": [],
       "tableNames": [
         "deliverable_versions",
         "deliverables_v2"
@@ -9761,14 +9669,10 @@
       "group": "app_routes",
       "sourceKind": "runtime",
       "classification": "READ_ONLY_SELECT",
-      "importMatches": 3,
-      "broadMatches": 5,
-      "imports": [
-        "@/lib/supabase-server"
-      ],
-      "helperRefs": [
-        "getServerSupabase"
-      ],
+      "importMatches": 0,
+      "broadMatches": 2,
+      "imports": [],
+      "helperRefs": [],
       "tableNames": [
         "deliverable_versions",
         "deliverables_v2"
@@ -9818,14 +9722,10 @@
       "group": "app_routes",
       "sourceKind": "runtime",
       "classification": "READ_ONLY_SELECT",
-      "importMatches": 3,
-      "broadMatches": 4,
-      "imports": [
-        "@/lib/supabase-server"
-      ],
-      "helperRefs": [
-        "getServerSupabase"
-      ],
+      "importMatches": 0,
+      "broadMatches": 1,
+      "imports": [],
+      "helperRefs": [],
       "tableNames": [
         "turns"
       ],
@@ -9866,14 +9766,10 @@
       "group": "app_routes",
       "sourceKind": "runtime",
       "classification": "READ_ONLY_SELECT",
-      "importMatches": 3,
-      "broadMatches": 4,
-      "imports": [
-        "@/lib/supabase-server"
-      ],
-      "helperRefs": [
-        "getServerSupabase"
-      ],
+      "importMatches": 0,
+      "broadMatches": 1,
+      "imports": [],
+      "helperRefs": [],
       "tableNames": [
         "evidence_ledger"
       ],
@@ -9896,43 +9792,6 @@
         "gte",
         "limit",
         "lt",
-        "order",
-        "select"
-      ],
-      "writeMethods": [],
-      "storageReadMethods": [],
-      "storageWriteMethods": [],
-      "supabaseFromCalls": 1,
-      "arrayFromCalls": 0,
-      "storageAccesses": 0,
-      "rpcCalls": 0,
-      "notes": []
-    },
-    {
-      "file": "src/app/sponsor/page.tsx",
-      "group": "app_routes",
-      "sourceKind": "runtime",
-      "classification": "READ_ONLY_SELECT",
-      "importMatches": 3,
-      "broadMatches": 4,
-      "imports": [
-        "@/lib/supabase-server"
-      ],
-      "helperRefs": [
-        "getServerSupabase"
-      ],
-      "tableNames": [
-        "engagements"
-      ],
-      "methodNames": [
-        "eq",
-        "from",
-        "map",
-        "order",
-        "select"
-      ],
-      "readMethods": [
-        "eq",
         "order",
         "select"
       ],
@@ -9980,6 +9839,39 @@
       "notes": [
         "no static table names detected"
       ]
+    },
+    {
+      "file": "src/app/sponsor/page.tsx",
+      "group": "app_routes",
+      "sourceKind": "runtime",
+      "classification": "READ_ONLY_SELECT",
+      "importMatches": 0,
+      "broadMatches": 1,
+      "imports": [],
+      "helperRefs": [],
+      "tableNames": [
+        "engagements"
+      ],
+      "methodNames": [
+        "eq",
+        "from",
+        "map",
+        "order",
+        "select"
+      ],
+      "readMethods": [
+        "eq",
+        "order",
+        "select"
+      ],
+      "writeMethods": [],
+      "storageReadMethods": [],
+      "storageWriteMethods": [],
+      "supabaseFromCalls": 1,
+      "arrayFromCalls": 0,
+      "storageAccesses": 0,
+      "rpcCalls": 0,
+      "notes": []
     },
     {
       "file": "src/lib/db/team.ts",

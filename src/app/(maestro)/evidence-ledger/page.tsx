@@ -1,6 +1,6 @@
+import { getAzureReadFluentClient } from '@/lib/data-plane/postgresCompat';
 import { connection } from 'next/server';
 import Link from 'next/link';
-import { getServerSupabase } from '@/lib/supabase-server';
 import type { EvidenceLedgerRow, EvidenceSurface } from '@/lib/evidence/ledger';
 import { resolveCitationRow } from '@/lib/evidence/citations';
 
@@ -118,7 +118,7 @@ export default async function EvidenceLedgerPage({
 
 async function loadEvidenceRows(params: Search): Promise<{ rows: EvidenceLedgerRow[]; error?: string }> {
   try {
-    let query = getServerSupabase()
+    let query = getAzureReadFluentClient()
       .from('evidence_ledger')
       .select('*')
       .order('created_at', { ascending: false })

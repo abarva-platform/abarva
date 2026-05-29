@@ -1,7 +1,7 @@
+import { getAzureReadFluentClient } from '@/lib/data-plane/postgresCompat';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { getEngagementByGraphId } from '@/lib/db/engagement';
-import { getServerSupabase } from '@/lib/supabase-server';
 
 export const dynamic = 'force-dynamic';
 
@@ -30,7 +30,7 @@ async function searchTurns(args: {
   sender: 'agent' | 'user' | null;
   limit: number;
 }): Promise<TurnRow[]> {
-  let query = getServerSupabase()
+  let query = getAzureReadFluentClient()
     .from('turns')
     .select('id, phase, sender, text, mode_label, created_at')
     .eq('engagement_id', args.engagementId)

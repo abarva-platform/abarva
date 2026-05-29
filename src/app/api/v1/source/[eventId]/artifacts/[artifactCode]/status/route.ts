@@ -16,13 +16,13 @@
 // complete is a strictly weaker action than gate approval, so we use
 // the same upload-rights gate.
 
+import { getAzureReadFluentClient } from '@/lib/data-plane/postgresCompat';
 import type { NextRequest } from 'next/server';
 import { requireTenancy, tenancyErrorResponse } from '@/lib/auth/tenancy';
 import { getActiveClientRow } from '@/lib/active-client';
 import { getCurrentUser } from '@/lib/auth/current-user';
 import { CANONICAL_CLIENT_ADMIN_EMAILS } from '@/lib/auth/canonical-auth-roster';
 import { loadUserSourceAccessPolicy } from '@/lib/auth/source-access-policy';
-import { getServerSupabase } from '@/lib/supabase-server';
 import { selectSourceWriteAdapter } from '@/lib/data-plane/write-adapters/sourceWriteAdapter';
 import { inferClientKeyFromEmail, isClientKey } from '@/lib/client-config';
 import {
@@ -85,7 +85,7 @@ export async function PATCH(req: NextRequest, { params }: RouteCtx) {
       );
     }
 
-    const supabase = getServerSupabase();
+    const supabase = getAzureReadFluentClient();
     const { data: persistedEvent, error: fetchError } = await supabase
       .from('source_events')
       .select('id, client_key')

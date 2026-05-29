@@ -4,18 +4,17 @@ Read-only inventory. No runtime code was modified by this artifact.
 
 ## Summary
 
-- Generated at: `2026-05-29T19:34:21.258Z`
+- Generated at: `2026-05-29T21:20:48.411Z`
 - Total files in inventory: `294`
-- Files with import-helper matches: `140`
-- Import-helper matches: `582`
+- Files with import-helper matches: `123`
+- Import-helper matches: `530`
 - Files with broad matches: `294`
-- Broad matches: `1383`
+- Broad matches: `1331`
 
 ## Classification Counts
 
-- `DEFER_MANUAL`: 128
+- `DEFER_MANUAL`: 129
 - `MIXED_READ_WRITE`: 82
-- `MUTATION_WRITE`: 1
 - `READ_ONLY_SELECT`: 79
 - `READ_WITH_STORAGE`: 4
 
@@ -74,6 +73,7 @@ Read-only inventory. No runtime code was modified by this artifact.
 | src/lib/knowledge/agent-context-broker.ts | DEFER_MANUAL | knowledge | 0 | 1 | - | broad-only match; usually Array.from or unrelated .from usage |
 | src/lib/knowledge/context-broker/broker.ts | DEFER_MANUAL | knowledge | 0 | 1 | - | broad-only match; usually Array.from or unrelated .from usage |
 | src/lib/knowledge/enterprise-data-room-persistence.ts | DEFER_MANUAL | knowledge | 0 | 1 | - | broad-only match; usually Array.from or unrelated .from usage |
+| src/lib/supabase-server.ts | DEFER_MANUAL | other_lib | 1 | 1 | - | no static table names detected |
 | src/lib/agent/voice-doctrine/sentinel.ts | DEFER_MANUAL | other_lib | 0 | 5 | - | broad-only match; usually Array.from or unrelated .from usage |
 | src/lib/solutions/ai-failure-modes-solution-map.ts | DEFER_MANUAL | other_lib | 0 | 5 | - | broad-only match; usually Array.from or unrelated .from usage |
 | src/lib/deliverables/evidence-registry.ts | DEFER_MANUAL | other_lib | 0 | 4 | - | broad-only match; usually Array.from or unrelated .from usage |
@@ -255,31 +255,30 @@ Read-only inventory. No runtime code was modified by this artifact.
 | src/lib/source/artifact-registry/text-parser.ts | MIXED_READ_WRITE | source | 3 | 9 | source_artifact_chunks, source_artifact_facts, source_meeting_outcomes, source_pricing_components, source_requirements, source_vendor_commitments | - |
 | src/lib/tower/ingest-portfolio.ts | MIXED_READ_WRITE | tower | 3 | 4 | use_cases | - |
 | src/lib/tower/outcome-context-writeback/persist.ts | MIXED_READ_WRITE | tower | 3 | 4 | - | no static table names detected |
-| src/lib/supabase-server.ts | MUTATION_WRITE | other_lib | 1 | 1 | - | no static table names detected; delete method present; may be Array.delete or Supabase delete |
-| src/app/api/admin/users/provision/route.ts | READ_ONLY_SELECT | api_routes | 4 | 6 | engagement_participants, engagements | - |
-| src/app/api/v1/source/[eventId]/artifacts/[artifactCode]/status/route.ts | READ_ONLY_SELECT | api_routes | 3 | 5 | source_event_artifact_states, source_events | - |
-| src/app/api/v1/source/[eventId]/gate-criteria/[criterionId]/state/route.ts | READ_ONLY_SELECT | api_routes | 3 | 5 | source_event_gate_criterion_states, source_events | - |
-| src/app/api/admin/quarantine/[id]/hard-delete/route.ts | READ_ONLY_SELECT | api_routes | 3 | 4 | sensitive_upload_audit | - |
-| src/app/api/admin/quarantine/[id]/release/route.ts | READ_ONLY_SELECT | api_routes | 3 | 4 | sensitive_upload_audit | - |
-| src/app/api/admin/seed-clerk-metadata/route.ts | READ_ONLY_SELECT | api_routes | 3 | 4 | persons | - |
-| src/app/api/engage/[engagementId]/turn/route.ts | READ_ONLY_SELECT | api_routes | 3 | 4 | engagements | - |
-| src/app/api/v1/source/[eventId]/artifacts/[artifactCode]/generate-from-claude/route.ts | READ_ONLY_SELECT | api_routes | 3 | 4 | source_event_artifact_states | - |
-| src/app/api/v1/source/[eventId]/stage/route.ts | READ_ONLY_SELECT | api_routes | 3 | 4 | source_events | - |
-| src/app/api/v1/source/events/[eventId]/approve/route.ts | READ_ONLY_SELECT | api_routes | 3 | 4 | source_events | - |
 | src/app/api/admin/parallel-run-invariants/route.ts | READ_ONLY_SELECT | api_routes | 0 | 2 | - | no static table names detected |
+| src/app/api/admin/users/provision/route.ts | READ_ONLY_SELECT | api_routes | 0 | 2 | engagement_participants, engagements | - |
+| src/app/api/v1/source/[eventId]/artifacts/[artifactCode]/status/route.ts | READ_ONLY_SELECT | api_routes | 0 | 2 | source_event_artifact_states, source_events | - |
+| src/app/api/v1/source/[eventId]/gate-criteria/[criterionId]/state/route.ts | READ_ONLY_SELECT | api_routes | 0 | 2 | source_event_gate_criterion_states, source_events | - |
+| src/app/api/admin/quarantine/[id]/hard-delete/route.ts | READ_ONLY_SELECT | api_routes | 0 | 1 | sensitive_upload_audit | - |
+| src/app/api/admin/quarantine/[id]/release/route.ts | READ_ONLY_SELECT | api_routes | 0 | 1 | sensitive_upload_audit | - |
+| src/app/api/admin/seed-clerk-metadata/route.ts | READ_ONLY_SELECT | api_routes | 0 | 1 | persons | - |
+| src/app/api/engage/[engagementId]/turn/route.ts | READ_ONLY_SELECT | api_routes | 0 | 1 | engagements | - |
 | src/app/api/v1/intelligence/brief/render-pdf/route.ts | READ_ONLY_SELECT | api_routes | 0 | 1 | - | no static table names detected |
 | src/app/api/v1/programs/[programId]/advance/route.ts | READ_ONLY_SELECT | api_routes | 0 | 1 | founder_approval_requests | - |
+| src/app/api/v1/source/[eventId]/artifacts/[artifactCode]/generate-from-claude/route.ts | READ_ONLY_SELECT | api_routes | 0 | 1 | source_event_artifact_states | - |
 | src/app/api/v1/source/[eventId]/artifacts/[artifactCode]/render-pdf/route.ts | READ_ONLY_SELECT | api_routes | 0 | 1 | - | no static table names detected |
 | src/app/api/v1/source/[eventId]/cxo-report/route.ts | READ_ONLY_SELECT | api_routes | 0 | 1 | - | no static table names detected |
 | src/app/api/v1/source/[eventId]/deal-pack/route.ts | READ_ONLY_SELECT | api_routes | 0 | 1 | - | no static table names detected |
-| src/app/(maestro)/engagements/[engagementId]/page.tsx | READ_ONLY_SELECT | app_routes | 3 | 7 | contradictions, deliverables_v2, engagements | - |
-| src/app/(maestro)/engagements/[engagementId]/deliverables/[deliverableId]/page.tsx | READ_ONLY_SELECT | app_routes | 3 | 6 | deliverable_types, deliverable_versions, deliverables_v2 | - |
-| src/app/(maestro)/engagements/[engagementId]/charter/page.tsx | READ_ONLY_SELECT | app_routes | 3 | 5 | deliverable_versions, deliverables_v2 | - |
-| src/app/(maestro)/engagements/[engagementId]/deliverables/page.tsx | READ_ONLY_SELECT | app_routes | 3 | 5 | deliverable_versions, deliverables_v2 | - |
-| src/app/(maestro)/engagements/[engagementId]/turns/page.tsx | READ_ONLY_SELECT | app_routes | 3 | 4 | turns | - |
-| src/app/(maestro)/evidence-ledger/page.tsx | READ_ONLY_SELECT | app_routes | 3 | 4 | evidence_ledger | - |
-| src/app/sponsor/page.tsx | READ_ONLY_SELECT | app_routes | 3 | 4 | engagements | - |
+| src/app/api/v1/source/[eventId]/stage/route.ts | READ_ONLY_SELECT | api_routes | 0 | 1 | source_events | - |
+| src/app/api/v1/source/events/[eventId]/approve/route.ts | READ_ONLY_SELECT | api_routes | 0 | 1 | source_events | - |
+| src/app/(maestro)/engagements/[engagementId]/page.tsx | READ_ONLY_SELECT | app_routes | 0 | 4 | contradictions, deliverables_v2, engagements | - |
+| src/app/(maestro)/engagements/[engagementId]/deliverables/[deliverableId]/page.tsx | READ_ONLY_SELECT | app_routes | 0 | 3 | deliverable_types, deliverable_versions, deliverables_v2 | - |
+| src/app/(maestro)/engagements/[engagementId]/charter/page.tsx | READ_ONLY_SELECT | app_routes | 0 | 2 | deliverable_versions, deliverables_v2 | - |
+| src/app/(maestro)/engagements/[engagementId]/deliverables/page.tsx | READ_ONLY_SELECT | app_routes | 0 | 2 | deliverable_versions, deliverables_v2 | - |
+| src/app/(maestro)/engagements/[engagementId]/turns/page.tsx | READ_ONLY_SELECT | app_routes | 0 | 1 | turns | - |
+| src/app/(maestro)/evidence-ledger/page.tsx | READ_ONLY_SELECT | app_routes | 0 | 1 | evidence_ledger | - |
 | src/app/programs/expert-kernel/expert-review/export/route.ts | READ_ONLY_SELECT | app_routes | 0 | 1 | - | no static table names detected |
+| src/app/sponsor/page.tsx | READ_ONLY_SELECT | app_routes | 0 | 1 | engagements | - |
 | src/lib/db/team.ts | READ_ONLY_SELECT | db | 5 | 11 | engagements, team_memberships | - |
 | src/lib/intelligence/library.ts | READ_ONLY_SELECT | intelligence | 3 | 8 | clients, engagement_topics, knowledge_sources | - |
 | src/lib/intelligence/canonical/runtime-pattern-index.ts | READ_ONLY_SELECT | intelligence | 3 | 4 | - | no static table names detected |

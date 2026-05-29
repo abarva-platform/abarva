@@ -1,9 +1,9 @@
+import { getAzureReadFluentClient } from '@/lib/data-plane/postgresCompat';
 import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
 import { getActiveClientKey } from '@/lib/active-client';
 import { getEngagementByGraphId } from '@/lib/db/engagement';
 import { resolveSeedProgramPath } from '@/lib/deliverables/legacy-route-resolver';
-import { getServerSupabase } from '@/lib/supabase-server';
 
 export const dynamic = 'force-dynamic';
 
@@ -70,7 +70,7 @@ interface V2Deliverable {
 }
 
 async function loadV2Deliverables(engagementId: string): Promise<V2Deliverable[]> {
-  const sb = getServerSupabase();
+  const sb = getAzureReadFluentClient();
   try {
     const { data } = await sb
       .from('deliverables_v2')

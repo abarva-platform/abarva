@@ -1,9 +1,9 @@
+import { getAzureReadFluentClient } from '@/lib/data-plane/postgresCompat';
 import { NextRequest, NextResponse } from 'next/server';
 import { clerkClient } from '@clerk/nextjs/server';
 
 import { requireTenancy, tenancyErrorResponse } from '@/app/api/v1/programs/_auth';
 import { loadUserProgramAccessPolicy } from '@/lib/auth/program-access-policy';
-import { getServerSupabase } from '@/lib/supabase-server';
 import { writeProgramAuditLogBestEffort } from '@/lib/programs/audit-log';
 import { getActiveClientRow } from '@/lib/active-client';
 import { selectAdminWriteAdapter } from '@/lib/data-plane/write-adapters/adminWriteAdapter';
@@ -29,7 +29,7 @@ interface ProvisionUserBody {
 }
 
 interface ProgramAssignmentInput {
-  sb: ReturnType<typeof getServerSupabase>;
+  sb: ReturnType<typeof getAzureReadFluentClient>;
   writeAdapter: AdminWriteAdapter;
   clientId: string;
   programId: string;
@@ -171,7 +171,7 @@ export async function POST(req: NextRequest) {
   const canPublishDeliverables = accessLevel === 'client_admin' || boolValue(body.canPublishDeliverables, false);
   const sendInvite = boolValue(body.sendInvite, false);
 
-  const sb = getServerSupabase();
+  const sb = getAzureReadFluentClient();
   // DB writes route through the data-plane write seam (Slice 3d); auth, RBAC,
   // body validation and Clerk calls stay route-side. `supabase` by default.
   const writeAdapter = selectAdminWriteAdapter();

@@ -1,0 +1,29 @@
+{
+  "slice": "packet-30-phase-2c-1-admin-app-route-reads",
+  "generatedAt": "2026-05-29T21:20:48.411Z",
+  "baseline": {
+    "filesWithImportMatches": 140,
+    "importMatches": 582,
+    "filesWithBroadMatches": 294,
+    "broadMatches": 1383
+  },
+  "after": {
+    "filesWithImportMatches": 123,
+    "importMatches": 530,
+    "filesWithBroadMatches": 294,
+    "broadMatches": 1331
+  },
+  "delta": {
+    "filesWithImportMatches": -17,
+    "importMatches": -52,
+    "filesWithBroadMatches": 0,
+    "broadMatches": -52
+  },
+  "bulkAcceptanceProgress": {
+    "targetImportMatches": 30,
+    "remainingImportMatches": 530,
+    "reductionNeededFromBulkBaseline": 553,
+    "reducedThisSlice": 52,
+    "bulkPercentComplete": 9.4
+  }
+}
