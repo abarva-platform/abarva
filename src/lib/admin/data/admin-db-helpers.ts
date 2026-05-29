@@ -1,9 +1,9 @@
 /**
  * DATA11 — Shared DB helpers for admin adapters.
- * Server-only: calls getServerSupabase().
+ * Server-only: calls Azure read plane.
  */
 
-import { getServerSupabase } from '@/lib/supabase-server';
+import { azureRead } from '@/lib/data-plane/azureRead';
 import type { AdminDatasetRung } from './admin-datasets-adapter-types';
 import type { AdminConnectorKind } from './admin-connectors-adapter-types';
 import type { AdminSetupStepId } from './admin-setup-progress-adapter-types';
@@ -13,13 +13,12 @@ import type { AdminSetupStepId } from './admin-setup-progress-adapter-types';
  * Falls back to name-based lookup for resilience.
  */
 export async function resolveClientId(tenantSlug: string): Promise<string | null> {
-  const supabase = getServerSupabase();
   // First try slug column
-  const { data: bySlug } = await supabase
-    .from('clients')
-    .select('id')
-    .eq('slug', tenantSlug)
-    .maybeSingle();
+  const bySlug = await azureRead.maybeSingle<{ id: string }>({
+    table: 'clients',
+    columns: ['id'],
+    where: { slug: tenantSlug },
+  });
   if (bySlug?.id) return bySlug.id;
 
   // Fallback: derive name from slug
@@ -27,11 +26,11 @@ export async function resolveClientId(tenantSlug: string): Promise<string | null
     .split('-')
     .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
     .join(' ');
-  const { data: byName } = await supabase
-    .from('clients')
-    .select('id')
-    .ilike('name', `${name}%`)
-    .maybeSingle();
+  const byName = await azureRead.maybeSingle<{ id: string }>({
+    table: 'clients',
+    columns: ['id'],
+    where: { name: { op: 'ilike', value: `${name}%` } },
+  });
   return byName?.id ?? null;
 }
 

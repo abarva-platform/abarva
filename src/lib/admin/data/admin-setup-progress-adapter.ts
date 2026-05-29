@@ -1,6 +1,6 @@
 /**
  * ADMIN-DATA2 — Admin setup-progress adapter.
- * DATA11 — Live path wired to Supabase.
+ * DATA11 — Live path wired to Azure read plane.
  */
 
 import type {
@@ -12,7 +12,7 @@ import {
   isFixtureMode,
 } from './admin-data-mode';
 import { adminSetupProgressFixture } from './fixtures/admin-setup-progress-fixture';
-import { getServerSupabase } from '@/lib/supabase-server';
+import { azureRead } from '@/lib/data-plane/azureRead';
 import { requireClientId, SETUP_STEP_LABELS } from './admin-db-helpers';
 
 export async function getAdminSetupProgress(
@@ -21,14 +21,18 @@ export async function getAdminSetupProgress(
   if (isFixtureMode()) return adminSetupProgressFixture(tenantSlug);
 
   const clientId = await requireClientId(tenantSlug);
-  const supabase = getServerSupabase();
-  const { data, error } = await supabase
-    .from('admin_setup_progress')
-    .select('step_id, status, description, computed_at')
-    .eq('client_id', clientId)
-    .order('step_id');
-  if (error) throw error;
-  return (data ?? []).map((row) => ({
+  const rows = await azureRead.select<{
+    step_id: string;
+    status: string;
+    description: string;
+    computed_at: string;
+  }>({
+    table: 'admin_setup_progress',
+    columns: ['step_id', 'status', 'description', 'computed_at'],
+    where: { client_id: clientId },
+    orderBy: { column: 'step_id' },
+  });
+  return rows.map((row) => ({
     id: row.step_id as AdminSetupStepId,
     label: SETUP_STEP_LABELS[row.step_id as AdminSetupStepId] ?? row.step_id,
     status: row.status as AdminSetupStepStatus,

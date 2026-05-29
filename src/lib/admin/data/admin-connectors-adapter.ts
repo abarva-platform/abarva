@@ -1,6 +1,6 @@
 /**
  * ADMIN-DATA2 — Admin connectors adapter.
- * DATA11 — Live path wired to Supabase.
+ * DATA11 — Live path wired to Azure read plane.
  */
 
 import type {
@@ -17,7 +17,7 @@ import {
   adminConnectorPilotBlockersFixture,
   adminConnectorsFixture,
 } from './fixtures/admin-connectors-fixture';
-import { getServerSupabase } from '@/lib/supabase-server';
+import { azureRead } from '@/lib/data-plane/azureRead';
 import { mapDbConnectorKind, requireClientId } from './admin-db-helpers';
 
 export async function getAdminConnectors(
@@ -28,14 +28,13 @@ export async function getAdminConnectors(
   throw new AdminDataMigrationPendingError('admin_connectors');
 
   const clientId = await requireClientId(tenantSlug); // unreachable until DATA10
-  const supabase = getServerSupabase();
-  const { data, error } = await supabase
-    .from('admin_connectors')
-    .select('id, kind, vendor, label, status, required_for_pilot, required_for_production, blocker_reason, steward_guidance, last_sync_attempt, updated_at')
-    .eq('client_id', clientId)
-    .order('label');
-  if (error) throw error;
-  return (data ?? []).map((row) => ({
+  const rows = await azureRead.select<AdminConnectorDbRow>({
+    table: 'admin_connectors',
+    columns: ADMIN_CONNECTOR_COLUMNS,
+    where: { client_id: clientId },
+    orderBy: { column: 'label' },
+  });
+  return rows.map((row) => ({
     id: row.id,
     tenantSlug,
     kind: mapDbConnectorKind(row.kind),
@@ -66,14 +65,13 @@ export async function getAdminConnectorDetail(
   if (isFixtureMode()) return adminConnectorDetailFixture(tenantSlug, connectorId);
 
   const clientId = await requireClientId(tenantSlug);
-  const supabase = getServerSupabase();
-  const { data, error } = await supabase
-    .from('admin_connectors')
-    .select('id, kind, vendor, label, status, required_for_pilot, required_for_production, blocker_reason, steward_guidance, last_sync_attempt, updated_at, config_schema')
-    .eq('client_id', clientId)
-    .eq('id', connectorId)
-    .maybeSingle();
-  if (error) throw error;
+  const data = await azureRead.maybeSingle<AdminConnectorDbRow & {
+    config_schema: Record<string, unknown> | null;
+  }>({
+    table: 'admin_connectors',
+    columns: [...ADMIN_CONNECTOR_COLUMNS, 'config_schema'],
+    where: { client_id: clientId, id: connectorId },
+  });
   if (!data) return null;
   return {
     id: data.id,
@@ -100,16 +98,17 @@ export async function getAdminConnectorPilotBlockers(
   if (isFixtureMode()) return adminConnectorPilotBlockersFixture(tenantSlug);
 
   const clientId = await requireClientId(tenantSlug);
-  const supabase = getServerSupabase();
-  const { data, error } = await supabase
-    .from('admin_connectors')
-    .select('id, kind, vendor, label, status, required_for_pilot, required_for_production, blocker_reason, steward_guidance, last_sync_attempt, updated_at')
-    .eq('client_id', clientId)
-    .eq('required_for_pilot', true)
-    .neq('status', 'active')
-    .order('label');
-  if (error) throw error;
-  return (data ?? []).map((row) => ({
+  const rows = await azureRead.select<AdminConnectorDbRow>({
+    table: 'admin_connectors',
+    columns: ADMIN_CONNECTOR_COLUMNS,
+    where: {
+      client_id: clientId,
+      required_for_pilot: true,
+      status: { op: 'neq', value: 'active' },
+    },
+    orderBy: { column: 'label' },
+  });
+  return rows.map((row) => ({
     id: row.id,
     tenantSlug,
     kind: mapDbConnectorKind(row.kind),
@@ -129,4 +128,32 @@ export function getAdminConnectorsFixture(
   tenantSlug: string = 'apex-retail',
 ): ReadonlyArray<AdminConnectorRow> {
   return adminConnectorsFixture(tenantSlug);
+}
+
+const ADMIN_CONNECTOR_COLUMNS = [
+  'id',
+  'kind',
+  'vendor',
+  'label',
+  'status',
+  'required_for_pilot',
+  'required_for_production',
+  'blocker_reason',
+  'steward_guidance',
+  'last_sync_attempt',
+  'updated_at',
+] as const;
+
+interface AdminConnectorDbRow {
+  id: string;
+  kind: string;
+  vendor: string | null;
+  label: string;
+  status: string;
+  required_for_pilot: boolean;
+  required_for_production: boolean;
+  blocker_reason: string | null;
+  steward_guidance: string | null;
+  last_sync_attempt: string | null;
+  updated_at: string;
 }

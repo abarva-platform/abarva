@@ -1,6 +1,6 @@
 import type { EvidenceStrength } from '@/components/admin/EvidenceStrengthPill';
 import type { ContextLiveStatus } from '@/components/admin/ContextBar';
-import { buildAgentContextAsync } from '@/lib/agent/context-bundle';
+import { buildAgentContextAsync } from '@/lib/agent/context-bundle-live';
 import {
   computeAllPostures,
   type AgentPosture as AgentFoundationPosture,

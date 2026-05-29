@@ -1,6 +1,6 @@
 /**
  * ADMIN-DATA2 — Admin production-readiness adapter.
- * DATA11 — Live path wired to Supabase (derived from admin_blockers).
+ * DATA11 — Live path wired to Azure read plane (derived from admin_blockers).
  */
 
 import type {
@@ -20,7 +20,7 @@ import {
   isFixtureMode,
 } from './admin-data-mode';
 import { adminProductionReadinessFixture } from './fixtures/admin-production-readiness-fixture';
-import { getServerSupabase } from '@/lib/supabase-server';
+import { azureRead } from '@/lib/data-plane/azureRead';
 import { requireClientId } from './admin-db-helpers';
 
 export async function getAdminProductionReadiness(
@@ -29,15 +29,27 @@ export async function getAdminProductionReadiness(
   if (isFixtureMode()) return adminProductionReadinessFixture(tenantSlug);
 
   const clientId = await requireClientId(tenantSlug);
-  const supabase = getServerSupabase();
-  const { data, error } = await supabase
-    .from('admin_blockers')
-    .select('id, title, severity, affected_scope, status, owner_agent, blocker_reason, unblock_steps, opened_at, resolved_at')
-    .eq('client_id', clientId)
-    .order('opened_at', { ascending: false });
-  if (error) throw error;
+  const rows = await azureRead.query<{
+    id: string;
+    title: string;
+    severity: string;
+    affected_scope: string;
+    status: string;
+    owner_agent: string;
+    blocker_reason: string;
+    unblock_steps: unknown;
+    opened_at: string;
+    resolved_at: string | null;
+  }>(
+    `SELECT id, title, severity, affected_scope, status, owner_agent,
+            blocker_reason, unblock_steps, opened_at, resolved_at
+       FROM admin_blockers
+      WHERE client_id = $1
+      ORDER BY opened_at DESC`,
+    [clientId],
+  );
 
-  const blockers: AdminBlockerRow[] = (data ?? []).map((row) => ({
+  const blockers: AdminBlockerRow[] = rows.map((row) => ({
     id: row.id,
     title: row.title,
     description: row.blocker_reason,
