@@ -1,5 +1,6 @@
 import { NextRequest } from 'next/server';
 import { searchCorpus } from '@/lib/corpus/retrieval';
+import { allowedCorpusIndustryScopes, intersectCorpusIndustryScopes } from '@/lib/corpus/industry-scope';
 import { errorResponse, ok, requireCorpusCtx } from '../_route-utils';
 
 export const runtime = 'nodejs';
@@ -15,12 +16,13 @@ export async function GET(request: NextRequest) {
   if (ctx instanceof Response) return ctx;
   const url = new URL(request.url);
   const query = url.searchParams.get('q') ?? '';
+  const allowedVerticalOverlays = allowedCorpusIndustryScopes({ tenantKey: ctx.clientKey, clientKey: ctx.clientId });
   try {
     const hits = await searchCorpus(query, {
       clientId: ctx.clientId,
       userId: ctx.userId,
       category: url.searchParams.get('category') ?? undefined,
-      verticalOverlays: csv(url.searchParams.get('verticalOverlays')),
+      verticalOverlays: intersectCorpusIndustryScopes(csv(url.searchParams.get('verticalOverlays')), allowedVerticalOverlays),
       regionOverlays: csv(url.searchParams.get('regionOverlays')),
       minConfidence: url.searchParams.has('minConfidence') ? Number(url.searchParams.get('minConfidence')) : undefined,
       minDepthScore: url.searchParams.has('minDepthScore') ? Number(url.searchParams.get('minDepthScore')) : undefined,

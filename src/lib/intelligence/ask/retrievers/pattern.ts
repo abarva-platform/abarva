@@ -1,9 +1,12 @@
 import { azureRead } from '@/lib/data-plane/azureRead';
+import { searchCorpus } from '@/lib/corpus/retrieval';
 import {
-  searchCanonicalPatternIndex,
-  type CanonicalPatternIndexHit,
-} from '@/lib/intelligence/canonical/runtime-pattern-index';
-import type { RetrievalResult, AskSource } from '../types';
+  allowedCorpusIndustryScopes,
+  hasAllowedCorpusIndustryScope,
+  normalizeCorpusIndustryScope,
+} from '@/lib/corpus/industry-scope';
+import type { CorpusSearchHit } from '@/lib/corpus/types';
+import type { AskSource, AskSurfaceContext, RetrievalResult } from '../types';
 
 // GP-1 · Supabase-native pattern retriever.
 //
@@ -47,49 +50,101 @@ function buildSource(row: PatternRow, confidence: number): AskSource {
   };
 }
 
-function buildCanonicalSource(hit: CanonicalPatternIndexHit): AskSource {
-  const kpis = [...hit.primary_kpis, ...hit.secondary_kpis].slice(0, 4);
+export interface PatternRetrievalOptions {
+  query?: string;
+  tenantInventoryKey?: string | null;
+  surfaceContext?: AskSurfaceContext | null;
+}
+
+function allowedIndustryScopes(opts: PatternRetrievalOptions): string[] | undefined {
+  return allowedCorpusIndustryScopes({
+    tenantKey: opts.tenantInventoryKey,
+    clientKey: opts.surfaceContext?.clientKey,
+    activeClient: opts.surfaceContext?.activeClient,
+    facts: [...(opts.surfaceContext?.facts ?? []), ...(opts.surfaceContext?.tenantFacts ?? [])],
+  });
+}
+
+function corpusVerticalOverlays(opts: PatternRetrievalOptions): string[] | undefined {
+  return allowedIndustryScopes(opts);
+}
+
+function normalizedScopes(values: string[]): Set<string> {
+  return new Set(values.map(normalizeCorpusIndustryScope));
+}
+
+function corpusHitMatchesTenant(hit: CorpusSearchHit, allowedScopes: string[] | undefined): boolean {
+  return hasAllowedCorpusIndustryScope(hit.verticalOverlays, allowedScopes);
+}
+
+function patternRowMatchesTenant(row: PatternRow, allowedScopes: string[] | undefined): boolean {
+  if (!allowedScopes) return true;
+  if (!row.vertical) return true;
+  const allowed = normalizedScopes(allowedScopes);
+  for (const scope of normalizedScopes([row.vertical])) {
+    if (allowed.has(scope)) return true;
+  }
+  return false;
+}
+
+function buildCorpusSource(hit: CorpusSearchHit): AskSource {
+  const provenance = hit.synthesis?.provenance && typeof hit.synthesis.provenance === 'object'
+    ? hit.synthesis.provenance as Record<string, unknown>
+    : null;
+  const source = typeof provenance?.source === 'string' ? provenance.source : null;
+  const sourceBasis = typeof hit.synthesis?.source_basis === 'string' ? hit.synthesis.source_basis : source;
   const detailParts = [
-    hit.summary,
-    hit.source_basis ? `source_basis=${hit.source_basis}` : null,
-    hit.confidence_level ? `confidence=${hit.confidence_level}` : null,
-    kpis.length > 0 ? `KPIs: ${kpis.join(', ')}` : null,
+    hit.category ? `category=${hit.category}` : null,
+    hit.verticalOverlays.length > 0 ? `industry_scope=${hit.verticalOverlays.join(', ')}` : null,
+    sourceBasis ? `source_basis=${sourceBasis}` : null,
+    `depth_score=${hit.depthScore.toFixed(1)}`,
+    hit.markdownBody ? hit.markdownBody.replace(/\s+/g, ' ').slice(0, 280) : null,
   ].filter((part): part is string => Boolean(part));
   return {
     type: 'PATTERN',
     name: hit.title,
-    id: hit.canonical_id,
+    id: hit.slug,
     detail: detailParts.join(' · '),
-    confidence: hit.score,
+    confidence: Math.max(0, Math.min(1, hit.score || hit.confidence)),
   };
 }
 
-async function retrieveCanonicalFallback(
+async function retrieveCorpusFallback(
   entities: string[],
   seen: Set<string>,
+  opts: PatternRetrievalOptions,
 ): Promise<AskSource[]> {
   const sources: AskSource[] = [];
-  for (const entity of entities.slice(0, 3)) {
-    const result = await searchCanonicalPatternIndex({
-      query: entity,
+  const queries = Array.from(new Set([
+    opts.query?.trim(),
+    ...entities.slice(0, 3).map((entity) => entity.trim()),
+  ].filter((query): query is string => Boolean(query))));
+  const verticalOverlays = corpusVerticalOverlays(opts);
+  for (const query of queries) {
+    const hits = await searchCorpus(query, {
+      clientId: opts.tenantInventoryKey ?? opts.surfaceContext?.clientKey ?? 'global',
+      verticalOverlays,
+      minConfidence: 0,
+      minDepthScore: 0,
       limit: 5,
-    }, { useCache: false });
-    for (const hit of result.patterns) {
-      const key = hit.canonical_id;
+    }).catch(() => []);
+    for (const hit of hits.filter((candidate) => corpusHitMatchesTenant(candidate, verticalOverlays))) {
+      const key = hit.slug || hit.id;
       if (seen.has(key)) continue;
       seen.add(key);
-      sources.push(buildCanonicalSource(hit));
+      sources.push(buildCorpusSource(hit));
       if (sources.length >= 8) return sources;
     }
   }
   return sources;
 }
 
-export async function retrievePattern(entities: string[]): Promise<RetrievalResult> {
+export async function retrievePattern(entities: string[], opts: PatternRetrievalOptions = {}): Promise<RetrievalResult> {
   if (entities.length === 0) return { sources: [], averageConfidence: 0 };
 
   const sources: AskSource[] = [];
   const seen = new Set<string>();
+  const allowedScopes = allowedIndustryScopes(opts);
   let shouldTryCanonicalFallback = false;
 
   for (const entity of entities.slice(0, 3)) {
@@ -108,7 +163,7 @@ export async function retrievePattern(entities: string[]): Promise<RetrievalResu
         return [];
       });
       const data = rows[0] ?? null;
-      if (data) {
+      if (data && patternRowMatchesTenant(data, allowedScopes)) {
         const key = String(data.code ?? data.id);
         if (!seen.has(key)) { seen.add(key); sources.push(buildSource(data as PatternRow, 0.95)); }
       }
@@ -129,7 +184,7 @@ export async function retrievePattern(entities: string[]): Promise<RetrievalResu
       shouldTryCanonicalFallback = true;
       return [];
     });
-    for (const row of (ftsRows ?? [])) {
+    for (const row of (ftsRows ?? []).filter((candidate) => patternRowMatchesTenant(candidate, allowedScopes))) {
       const key = String(row.code ?? row.id);
       if (!seen.has(key)) { seen.add(key); sources.push(buildSource(row as PatternRow, 0.85)); }
     }
@@ -148,14 +203,14 @@ export async function retrievePattern(entities: string[]): Promise<RetrievalResu
         shouldTryCanonicalFallback = true;
         return [];
       });
-      for (const row of (tagRows ?? [])) {
+      for (const row of (tagRows ?? []).filter((candidate) => patternRowMatchesTenant(candidate, allowedScopes))) {
         const key = String(row.code ?? row.id);
         if (!seen.has(key)) { seen.add(key); sources.push(buildSource(row as PatternRow, 0.70)); }
       }
     }
   }
   if (shouldTryCanonicalFallback || sources.length === 0) {
-    const fallbackSources = await retrieveCanonicalFallback(entities, seen);
+    const fallbackSources = await retrieveCorpusFallback(entities, seen, opts);
     sources.push(...fallbackSources);
   }
 

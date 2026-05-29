@@ -123,6 +123,32 @@ const eslintConfig = defineConfig([
       ],
     },
   },
+  // I9: Ask surfaces must not bypass the tenant-scoped pattern retriever.
+  // Direct corpus retrieval is allowed only in the scoped retriever and corpus
+  // API boundary, where tenant industry overlays are intersected before search.
+  {
+    files: ["src/lib/intelligence/ask/**/*.{ts,tsx}"],
+    ignores: [
+      "src/lib/intelligence/ask/retrievers/pattern.ts",
+      "src/lib/intelligence/ask/**/*.test.ts",
+      "src/lib/intelligence/ask/**/__tests__/**",
+    ],
+    rules: {
+      "no-restricted-syntax": [
+        "error",
+        {
+          selector: "ImportDeclaration[source.value='@/lib/corpus/retrieval']",
+          message:
+            "I9: Ask surfaces must use retrievePattern(), which applies tenant industry + cross_industry scoping before returning corpus patterns.",
+        },
+        {
+          selector: "ImportDeclaration[source.value='@/lib/intelligence/canonical/runtime-pattern-index']",
+          message:
+            "I9: canonical_industry_ai_patterns is deprecated for Ask fallback; use the tenant-scoped corpus_patterns retriever.",
+        },
+      ],
+    },
+  },
   // Override default ignores of eslint-config-next.
   globalIgnores([
     // Default ignores of eslint-config-next:

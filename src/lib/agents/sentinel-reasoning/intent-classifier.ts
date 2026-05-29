@@ -1,4 +1,5 @@
 import { searchCorpus } from '@/lib/corpus/retrieval';
+import { allowedCorpusIndustryScopes } from '@/lib/corpus/industry-scope';
 import type { CorpusSearchHit } from '@/lib/corpus/types';
 import { callSentinelModel } from './model';
 import type { SentinelCitation, SentinelIntentClassification } from './types';
@@ -55,6 +56,8 @@ function keywordScore(query: string): number {
 export async function classifySentinelIntent(args: {
   query: string;
   clientId: string;
+  tenantKey?: string | null;
+  activeClient?: string | null;
   userId?: string | null;
 }): Promise<SentinelIntentClassification> {
   const query = args.query.trim();
@@ -65,6 +68,11 @@ export async function classifySentinelIntent(args: {
       clientId: args.clientId,
       userId: args.userId ?? undefined,
       category: 'it-productivity',
+      verticalOverlays: allowedCorpusIndustryScopes({
+        tenantKey: args.tenantKey ?? args.clientId,
+        clientKey: args.clientId,
+        activeClient: args.activeClient,
+      }),
       minDepthScore: 8,
       limit: 5,
     });
