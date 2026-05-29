@@ -1,6 +1,7 @@
 import 'server-only';
 
 import type { PoolClient } from 'pg';
+import { azureRead } from '@/lib/data-plane/azureRead';
 import type { TenancyCtx } from '@/lib/programs/types.db';
 import {
   buildLayerState,
@@ -10,7 +11,7 @@ import {
   sumLayerUsd,
   type TowerValueTelemetry,
 } from './calculations';
-import { firstRow, toRecord, withValueStateClient, withValueStateTransaction } from './db';
+import { firstRow, toRecord, withValueStateTransaction } from './db';
 import {
   VALUE_LAYER_DEFINITIONS,
   VALUE_STATE_LAYERS,
@@ -59,6 +60,67 @@ type ArrowRow = {
   relation_type: string;
   note: string | null;
 };
+
+const PORTFOLIO_ROWS_SQL = `
+      SELECT
+        e.id,
+        e.name,
+        e.status,
+        e.lifecycle_state,
+        e.current_phase,
+        mi.current_gate,
+        mt.kind AS template_kind,
+        mt.slug AS template_slug,
+        mt.name AS template_name,
+        COALESCE((vs.projected_jsonb->>'value')::numeric, e.value_projected_high_usd, e.value_projected_low_usd, 0)::text AS projected_usd,
+        COALESCE((vs.tracked_jsonb->>'value')::numeric, 0)::text AS tracked_usd,
+        COALESCE((vs.verified_jsonb->>'value')::numeric, e.value_verified_usd, 0)::text AS verified_usd
+      FROM public.engagements e
+      LEFT JOIN public.move_instances mi
+        ON mi.engagement_id = e.id
+       AND mi.client_id = e.client_id
+       AND mi.deleted_at IS NULL
+      LEFT JOIN public.move_templates mt
+        ON mt.id = mi.template_id
+      LEFT JOIN public.value_states vs
+        ON vs.client_id = e.client_id
+       AND vs.move_id = e.id
+       AND vs.layer_type = 'realized_value_usd'
+       AND vs.deleted_at IS NULL
+      WHERE e.client_id = $1
+        AND e.deleted_at IS NULL
+        AND COALESCE(e.status, 'active') NOT IN ('archived', 'deleted', 'retired')
+      ORDER BY mt.kind NULLS LAST, e.name ASC
+    `;
+
+const SOURCE_PROJECTED_USD_SQL = `
+        SELECT COALESCE(SUM(svl.projected_amount), 0)::text AS projected_usd
+        FROM public.source_value_lines svl
+        JOIN public.engagements e ON e.id = svl.program_id
+        WHERE e.client_id = $1
+          AND e.deleted_at IS NULL
+          AND svl.value_unit = 'usd'
+      `;
+
+function p10ArrowsSql(hasMoveFilter: boolean): string {
+  return `
+      SELECT
+        md.id,
+        md.from_move_id,
+        from_move.name AS from_move_name,
+        md.to_move_id,
+        to_move.name AS to_move_name,
+        md.relation_type::text,
+        md.note
+      FROM public.move_dependencies md
+      JOIN public.engagements from_move ON from_move.id = md.from_move_id
+      JOIN public.engagements to_move ON to_move.id = md.to_move_id
+      WHERE md.client_id = $1
+        AND md.deleted_at IS NULL
+        ${hasMoveFilter ? 'AND (md.from_move_id = ANY($2::uuid[]) OR md.to_move_id = ANY($2::uuid[]))' : ''}
+      ORDER BY from_move.name ASC, to_move.name ASC
+    `;
+}
 
 function asNumber(value: unknown): number {
   if (typeof value === 'number' && Number.isFinite(value)) return value;
@@ -371,30 +433,9 @@ function rowsToLayers(
 
 async function loadP10Arrows(client: PoolClient, clientId: string, moveIds?: string[]): Promise<TowerPortfolioArrow[]> {
   const params: unknown[] = [clientId];
-  const idFilter = moveIds && moveIds.length > 0
-    ? 'AND (md.from_move_id = ANY($2::uuid[]) OR md.to_move_id = ANY($2::uuid[]))'
-    : '';
-  if (moveIds && moveIds.length > 0) params.push(moveIds);
-  const rows = (await client.query<ArrowRow>(
-    `
-      SELECT
-        md.id,
-        md.from_move_id,
-        from_move.name AS from_move_name,
-        md.to_move_id,
-        to_move.name AS to_move_name,
-        md.relation_type::text,
-        md.note
-      FROM public.move_dependencies md
-      JOIN public.engagements from_move ON from_move.id = md.from_move_id
-      JOIN public.engagements to_move ON to_move.id = md.to_move_id
-      WHERE md.client_id = $1
-        AND md.deleted_at IS NULL
-        ${idFilter}
-      ORDER BY from_move.name ASC, to_move.name ASC
-    `,
-    params,
-  )).rows;
+  const hasMoveFilter = Boolean(moveIds && moveIds.length > 0);
+  if (hasMoveFilter) params.push(moveIds);
+  const rows = (await client.query<ArrowRow>(p10ArrowsSql(hasMoveFilter), params)).rows;
   return rows.map((row) => ({
     id: row.id,
     fromMoveId: row.from_move_id,
@@ -618,60 +659,44 @@ export async function attestValueLayer(
   });
 }
 
-async function listPortfolioRows(client: PoolClient, clientId: string): Promise<PortfolioMoveRow[]> {
-  return (await client.query<PortfolioMoveRow>(
-    `
-      SELECT
-        e.id,
-        e.name,
-        e.status,
-        e.lifecycle_state,
-        e.current_phase,
-        mi.current_gate,
-        mt.kind AS template_kind,
-        mt.slug AS template_slug,
-        mt.name AS template_name,
-        COALESCE((vs.projected_jsonb->>'value')::numeric, e.value_projected_high_usd, e.value_projected_low_usd, 0)::text AS projected_usd,
-        COALESCE((vs.tracked_jsonb->>'value')::numeric, 0)::text AS tracked_usd,
-        COALESCE((vs.verified_jsonb->>'value')::numeric, e.value_verified_usd, 0)::text AS verified_usd
-      FROM public.engagements e
-      LEFT JOIN public.move_instances mi
-        ON mi.engagement_id = e.id
-       AND mi.client_id = e.client_id
-       AND mi.deleted_at IS NULL
-      LEFT JOIN public.move_templates mt
-        ON mt.id = mi.template_id
-      LEFT JOIN public.value_states vs
-        ON vs.client_id = e.client_id
-       AND vs.move_id = e.id
-       AND vs.layer_type = 'realized_value_usd'
-       AND vs.deleted_at IS NULL
-      WHERE e.client_id = $1
-        AND e.deleted_at IS NULL
-        AND COALESCE(e.status, 'active') NOT IN ('archived', 'deleted', 'retired')
-      ORDER BY mt.kind NULLS LAST, e.name ASC
-    `,
-    [clientId],
-  )).rows;
+async function listPortfolioRowsViaAzure(clientId: string): Promise<PortfolioMoveRow[]> {
+  return azureRead.query<PortfolioMoveRow>(PORTFOLIO_ROWS_SQL, [clientId], {
+    missingTable: 'throw',
+  });
 }
 
-async function sourceProjectedUsd(client: PoolClient, clientId: string): Promise<number> {
+async function sourceProjectedUsdViaAzure(clientId: string): Promise<number> {
   try {
-    const result = await client.query<{ projected_usd: string | null }>(
-      `
-        SELECT COALESCE(SUM(svl.projected_amount), 0)::text AS projected_usd
-        FROM public.source_value_lines svl
-        JOIN public.engagements e ON e.id = svl.program_id
-        WHERE e.client_id = $1
-          AND e.deleted_at IS NULL
-          AND svl.value_unit = 'usd'
-      `,
+    const rows = await azureRead.query<{ projected_usd: string | null }>(
+      SOURCE_PROJECTED_USD_SQL,
       [clientId],
+      { missingTable: 'throw' },
     );
-    return asNumber(firstRow(result.rows)?.projected_usd);
+    return asNumber(firstRow(rows)?.projected_usd);
   } catch {
     return 0;
   }
+}
+
+async function loadP10ArrowsViaAzure(
+  clientId: string,
+  moveIds?: string[],
+): Promise<TowerPortfolioArrow[]> {
+  const hasMoveFilter = Boolean(moveIds && moveIds.length > 0);
+  const params: unknown[] = [clientId];
+  if (hasMoveFilter) params.push(moveIds);
+  const rows = await azureRead.query<ArrowRow>(p10ArrowsSql(hasMoveFilter), params, {
+    missingTable: 'throw',
+  });
+  return rows.map((row) => ({
+    id: row.id,
+    fromMoveId: row.from_move_id,
+    fromMoveName: row.from_move_name,
+    toMoveId: row.to_move_id,
+    toMoveName: row.to_move_name,
+    relationType: row.relation_type,
+    note: row.note,
+  }));
 }
 
 function rowToPortfolioMove(row: PortfolioMoveRow): TowerPortfolioMove {
@@ -690,35 +715,33 @@ function rowToPortfolioMove(row: PortfolioMoveRow): TowerPortfolioMove {
 }
 
 export async function getPortfolioValueRollup(ctx: TenancyCtx): Promise<TowerPortfolioValueRollup> {
-  return withValueStateClient(async (client) => {
-    const rows = await listPortfolioRows(client, ctx.clientId);
-    const moves = rows.map(rowToPortfolioMove);
-    const sourceProjected = await sourceProjectedUsd(client, ctx.clientId);
-    const arrows = await loadP10Arrows(client, ctx.clientId, moves.map((move) => move.moveId));
-    const fallbackArrows = arrows.length > 0
-      ? []
-      : rows.flatMap((row) => buildFallbackArrow(row));
+  const rows = await listPortfolioRowsViaAzure(ctx.clientId);
+  const moves = rows.map(rowToPortfolioMove);
+  const sourceProjected = await sourceProjectedUsdViaAzure(ctx.clientId);
+  const arrows = await loadP10ArrowsViaAzure(ctx.clientId, moves.map((move) => move.moveId));
+  const fallbackArrows = arrows.length > 0
+    ? []
+    : rows.flatMap((row) => buildFallbackArrow(row));
 
-    const activeSourceWorkflowCount = moves.filter((move) => move.templateKind === 'SourceWorkflow').length;
-    const activeMoveCount = moves.filter((move) => move.templateKind !== 'SourceWorkflow').length;
-    const projectedFromMoves = moves.reduce((sum, move) => sum + move.projectedUsd, 0);
-    const trackedUsd = moves.reduce((sum, move) => sum + move.trackedUsd, 0);
-    const verifiedUsd = moves.reduce((sum, move) => sum + move.verifiedUsd, 0);
+  const activeSourceWorkflowCount = moves.filter((move) => move.templateKind === 'SourceWorkflow').length;
+  const activeMoveCount = moves.filter((move) => move.templateKind !== 'SourceWorkflow').length;
+  const projectedFromMoves = moves.reduce((sum, move) => sum + move.projectedUsd, 0);
+  const trackedUsd = moves.reduce((sum, move) => sum + move.trackedUsd, 0);
+  const verifiedUsd = moves.reduce((sum, move) => sum + move.verifiedUsd, 0);
 
-    return {
-      clientId: ctx.clientId,
-      moves,
-      arrows: arrows.length > 0 ? arrows : fallbackArrows,
-      p10Source: arrows.length > 0 ? 'move_dependencies' : 'fallback',
-      totals: {
-        projectedUsd: projectedFromMoves + sourceProjected,
-        trackedUsd,
-        verifiedUsd,
-        activeMoveCount,
-        activeSourceWorkflowCount,
-      },
-    };
-  });
+  return {
+    clientId: ctx.clientId,
+    moves,
+    arrows: arrows.length > 0 ? arrows : fallbackArrows,
+    p10Source: arrows.length > 0 ? 'move_dependencies' : 'fallback',
+    totals: {
+      projectedUsd: projectedFromMoves + sourceProjected,
+      trackedUsd,
+      verifiedUsd,
+      activeMoveCount,
+      activeSourceWorkflowCount,
+    },
+  };
 }
 
 export function errorCode(error: unknown): { code: string; message: string; status: number } {
