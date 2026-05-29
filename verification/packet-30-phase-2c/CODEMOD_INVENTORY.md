@@ -4,25 +4,25 @@ Read-only inventory. No runtime code was modified by this artifact.
 
 ## Summary
 
-- Generated at: `2026-05-29T18:01:45.265Z`
-- Total files in inventory: `304`
-- Files with import-helper matches: `152`
-- Import-helper matches: `620`
-- Files with broad matches: `304`
-- Broad matches: `1445`
+- Generated at: `2026-05-29T18:16:36.479Z`
+- Total files in inventory: `303`
+- Files with import-helper matches: `151`
+- Import-helper matches: `617`
+- Files with broad matches: `303`
+- Broad matches: `1440`
 
 ## Classification Counts
 
 - `DEFER_MANUAL`: 126
 - `MIXED_READ_WRITE`: 82
 - `MUTATION_WRITE`: 1
-- `READ_ONLY_SELECT`: 91
+- `READ_ONLY_SELECT`: 90
 - `READ_WITH_STORAGE`: 4
 
 ## Group Counts
 
 - `admin`: 2
-- `api_routes`: 34
+- `api_routes`: 33
 - `app_routes`: 12
 - `db`: 5
 - `intelligence`: 31
@@ -256,7 +256,6 @@ Read-only inventory. No runtime code was modified by this artifact.
 | src/lib/supabase-server.ts | MUTATION_WRITE | other_lib | 1 | 1 | - | no static table names detected; delete method present; may be Array.delete or Supabase delete |
 | src/app/api/admin/users/provision/route.ts | READ_ONLY_SELECT | api_routes | 4 | 6 | engagement_participants, engagements | - |
 | src/app/api/knowledge/chunk/route.ts | READ_ONLY_SELECT | api_routes | 3 | 6 | knowledge_chunks, knowledge_sources | - |
-| src/app/api/programs/[id]/deliverables/[deliverableId]/content-export/route.ts | READ_ONLY_SELECT | api_routes | 3 | 5 | deliverable_versions, deliverables_v2 | - |
 | src/app/api/programs/phase-gate/route.ts | READ_ONLY_SELECT | api_routes | 3 | 5 | engagements | - |
 | src/app/api/v1/source/[eventId]/artifacts/[artifactCode]/status/route.ts | READ_ONLY_SELECT | api_routes | 3 | 5 | source_event_artifact_states, source_events | - |
 | src/app/api/v1/source/[eventId]/gate-criteria/[criterionId]/state/route.ts | READ_ONLY_SELECT | api_routes | 3 | 5 | source_event_gate_criterion_states, source_events | - |
