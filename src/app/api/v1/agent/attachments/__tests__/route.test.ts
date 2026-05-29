@@ -4,8 +4,8 @@
 
 // /api/v1/agent/attachments · POST tests
 //
-// We mock Clerk currentUser, getActiveClientRow, getServerSupabase
-// (storage + .from()), and the text-extraction helper so the route
+// We mock Clerk currentUser, getActiveClientRow, object storage,
+// and the text-extraction helper so the route
 // runs end-to-end without a live Supabase or Clerk session.
 
 const currentUserMock = jest.fn();
@@ -29,31 +29,32 @@ jest.mock('@/lib/agent/attachments', () => {
   };
 });
 
-type UploadArgs = [string, unknown, unknown];
+type UploadArgs = [string, string, unknown, unknown];
 const storageUploadMock = jest.fn<
-  Promise<{ error: null | { message: string } }>,
+  Promise<void>,
   UploadArgs
->(async () => ({ error: null }));
+>(async () => undefined);
 const storageRemoveMock = jest.fn<
-  Promise<{ data: null; error: null }>,
-  [string[]]
->(async () => ({ data: null, error: null }));
+  Promise<void>,
+  [string, string[]]
+>(async () => undefined);
 const insertMock = jest.fn<
   Promise<{ error: null | { message: string } }>,
   [Record<string, unknown>]
 >(async () => ({ error: null }));
 
-jest.mock('@/lib/supabase-server', () => ({
-  getServerSupabase: () => ({
-    storage: {
-      from: () => ({
-        upload: (path: string, body: unknown, opts: unknown) =>
-          storageUploadMock(path, body, opts),
-        remove: (paths: string[]) => storageRemoveMock(paths),
-      }),
-    },
-    from: () => ({
-      insert: (row: Record<string, unknown>) => insertMock(row),
+jest.mock('@/lib/data-plane/objectStorage', () => ({
+  getObjectStorageAdapter: () => ({
+    upload: (bucket: string, path: string, body: unknown, opts: unknown) =>
+      storageUploadMock(bucket, path, body, opts),
+    remove: (bucket: string, paths: string[]) => storageRemoveMock(bucket, paths),
+  }),
+}));
+
+jest.mock('@/lib/data-plane/write-adapters/attachmentsWriteAdapter', () => ({
+  selectAttachmentsWriteAdapter: () => ({
+    insertAgentAttachment: (row: Record<string, unknown>) => insertMock(row).then((result) => {
+      if (result.error) throw new Error(result.error.message);
     }),
   }),
 }));
@@ -93,7 +94,7 @@ beforeEach(() => {
     key: 'apexretail',
   });
   extractAgentAttachmentTextMock.mockResolvedValue('extracted text');
-  storageUploadMock.mockResolvedValue({ error: null });
+  storageUploadMock.mockResolvedValue(undefined);
   insertMock.mockResolvedValue({ error: null });
 });
 

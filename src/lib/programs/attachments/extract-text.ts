@@ -17,7 +17,7 @@
 
 import 'server-only';
 
-import { getServerSupabase } from '@/lib/supabase-server';
+import { getObjectStorageAdapter } from '@/lib/data-plane/objectStorage';
 import type { AttachmentRecord } from './index';
 
 const STORAGE_BUCKET = 'program-attachments';
@@ -87,17 +87,22 @@ function snipToBoundary(
  * `storagePath`, which was assigned server-side at upload time.
  */
 async function fetchAttachmentBytes(attachment: AttachmentRecord): Promise<Buffer> {
-  const sb = getServerSupabase();
-  const { data, error } = await sb.storage
-    .from(STORAGE_BUCKET)
-    .createSignedUrl(attachment.storagePath, SIGNED_URL_TTL_SECONDS);
-  if (error || !data?.signedUrl) {
+  let signedUrl: string;
+  try {
+    signedUrl = await getObjectStorageAdapter().createSignedUrl(
+      STORAGE_BUCKET,
+      attachment.storagePath,
+      SIGNED_URL_TTL_SECONDS,
+    );
+  } catch (error) {
     throw new Error(
-      `[attachments/extract-text] signed_url_failed: ${error?.message ?? 'no signed url'}`,
+      `[attachments/extract-text] signed_url_failed: ${
+        error instanceof Error ? error.message : 'object storage signed URL failed'
+      }`,
     );
   }
 
-  const res = await fetch(data.signedUrl);
+  const res = await fetch(signedUrl);
   if (!res.ok) {
     throw new Error(
       `[attachments/extract-text] storage_fetch_failed: status ${res.status}`,

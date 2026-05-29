@@ -26,7 +26,7 @@ import {
   SOURCE_STAGE_ORDER,
 } from './constants';
 import { getAzureWriteFluentClient } from '@/lib/data-plane/postgresCompat';
-import { getServerSupabase } from '@/lib/supabase-server';
+import { getObjectStorageAdapter } from '@/lib/data-plane/objectStorage';
 import { getActiveClientRow } from '@/lib/active-client';
 import { getCurrentUser } from '@/lib/auth/current-user';
 import { CANONICAL_CLIENT_ADMIN_EMAILS } from '@/lib/auth/canonical-auth-roster';
@@ -783,12 +783,12 @@ function splitSourceArtifactMarkdownSections(
 async function readSourceArtifactBlobText(record: SourceArtifactRegistryRecord): Promise<string | null> {
   if (!/text\/|markdown|json/i.test(record.mimeType)) return null;
 
-  const supabase = getServerSupabase();
-  const { data, error } = await supabase.storage.from('source-artifacts').download(record.blobUri);
-  if (error || !data) return null;
-
-  const text = await data.text();
-  return text.slice(0, 30_000);
+  try {
+    const bytes = await getObjectStorageAdapter().download('source-artifacts', record.blobUri);
+    return bytes.toString('utf8').slice(0, 30_000);
+  } catch {
+    return null;
+  }
 }
 
 async function sourceArtifactRegistryRecordToDetail(

@@ -10,7 +10,7 @@
 // is the simplest in-conversation chip we can render. JSON would force
 // the chat-message renderer to do its own fetch + redirect dance.
 
-import { getServerSupabase } from '@/lib/supabase-server';
+import { getObjectStorageAdapter } from '@/lib/data-plane/objectStorage';
 import { getProgramById } from '@/lib/programs/queries';
 import { getAttachment } from '@/lib/programs/attachments';
 import { requireTenancy, tenancyErrorResponse } from '@/app/api/v1/programs/_auth';
@@ -74,19 +74,27 @@ export async function GET(
     return jsonError(403, 'forbidden');
   }
 
-  const sb = getServerSupabase();
-  const { data, error } = await sb.storage
-    .from(STORAGE_BUCKET)
-    .createSignedUrl(attachment.storagePath, SIGNED_URL_TTL_SECONDS, {
+  let signedUrl: string;
+  try {
+    signedUrl = await getObjectStorageAdapter().createSignedUrl(
+      STORAGE_BUCKET,
+      attachment.storagePath,
+      SIGNED_URL_TTL_SECONDS,
+      {
       download: attachment.originalName,
-    });
-  if (error || !data?.signedUrl) {
+      },
+    );
+  } catch (error) {
     console.error('[GET /api/programs/:id/attachments/:attachmentId] signed_url_failed', {
       storagePath: attachment.storagePath,
-      message: error?.message,
+      message: error instanceof Error ? error.message : String(error),
     });
-    return jsonError(500, 'signed_url_failed', error?.message);
+    return jsonError(
+      500,
+      'signed_url_failed',
+      error instanceof Error ? error.message : 'object storage signed URL failed',
+    );
   }
 
-  return Response.redirect(data.signedUrl, 302);
+  return Response.redirect(signedUrl, 302);
 }

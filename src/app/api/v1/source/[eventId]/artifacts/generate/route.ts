@@ -12,7 +12,7 @@ import { getActiveClientRow } from '@/lib/active-client';
 import { loadUserSourceAccessPolicy } from '@/lib/auth/source-access-policy';
 import { clientKeyToInventorySubstrateKey } from '@/lib/agent/tools/intelligence/_shared';
 import { getAzureReadFluentClient } from '@/lib/data-plane/postgresCompat';
-import { getServerSupabase } from '@/lib/supabase-server';
+import { getObjectStorageAdapter } from '@/lib/data-plane/objectStorage';
 import { normalizeSourceStageKey, SOURCE_STAGE_ORDER } from '@/lib/source/constants';
 import { getSourcingEvent, type SourceEventRow } from '@/lib/source/queries';
 import type { SourceStageKey } from '@/lib/source/types';
@@ -231,19 +231,24 @@ export async function POST(request: Request, { params }: GenerateRouteContext) {
   ].join('\n');
   const buffer = Buffer.from(markdown, 'utf8');
   const sha256 = createHash('sha256').update(buffer).digest('hex');
-  const supabase = getServerSupabase();
+  const storage = getObjectStorageAdapter();
 
-  const { error: uploadError } = await supabase.storage.from(STORAGE_BUCKET).upload(blobUri, buffer, {
-    contentType: GENERATED_MIME,
-    cacheControl: 'private, max-age=0',
-    upsert: false,
-  });
-  if (uploadError) {
+  try {
+    await storage.upload(STORAGE_BUCKET, blobUri, buffer, {
+      contentType: GENERATED_MIME,
+      cacheControl: 'private, max-age=0',
+      upsert: false,
+    });
+  } catch (uploadError) {
     console.error('[POST /api/v1/source/:eventId/artifacts/generate] storage_upload_failed', {
       blobUri,
-      message: uploadError.message,
+      message: uploadError instanceof Error ? uploadError.message : String(uploadError),
     });
-    return jsonError(500, 'storage_upload_failed', uploadError.message);
+    return jsonError(
+      500,
+      'storage_upload_failed',
+      uploadError instanceof Error ? uploadError.message : 'object storage upload failed',
+    );
   }
 
   try {
@@ -279,7 +284,7 @@ export async function POST(request: Request, { params }: GenerateRouteContext) {
       },
     }, { status: 200 });
   } catch (error) {
-    await supabase.storage.from(STORAGE_BUCKET).remove([blobUri]).catch(() => undefined);
+    await storage.remove(STORAGE_BUCKET, [blobUri]).catch(() => undefined);
     console.error('[POST /api/v1/source/:eventId/artifacts/generate] metadata_insert_failed', error);
     return jsonError(
       500,

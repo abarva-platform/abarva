@@ -22,7 +22,7 @@ import { currentUser } from '@clerk/nextjs/server';
 import { NextRequest } from 'next/server';
 import { randomUUID } from 'node:crypto';
 import { getActiveClientRow } from '@/lib/active-client';
-import { getServerSupabase } from '@/lib/supabase-server';
+import { getObjectStorageAdapter } from '@/lib/data-plane/objectStorage';
 import {
   AGENT_ATTACHMENT_BUCKET,
   AGENT_ATTACHMENT_MAX_BYTES,
@@ -98,16 +98,18 @@ export async function POST(req: NextRequest) {
   const buffer = Buffer.from(arrayBuffer);
 
   // Upload blob first — if metadata insert later fails we'll roll back.
-  const sb = getServerSupabase();
-  const uploadResult = await sb.storage
-    .from(AGENT_ATTACHMENT_BUCKET)
-    .upload(storagePath, buffer, {
+  const storage = getObjectStorageAdapter();
+  try {
+    await storage.upload(AGENT_ATTACHMENT_BUCKET, storagePath, buffer, {
       contentType: file.type,
       upsert: false,
     });
-  if (uploadResult.error) {
+  } catch (uploadError) {
     return Response.json(
-      { error: 'upload_failed', detail: uploadResult.error.message },
+      {
+        error: 'upload_failed',
+        detail: uploadError instanceof Error ? uploadError.message : 'object storage upload failed',
+      },
       { status: 500 },
     );
   }
@@ -138,10 +140,7 @@ export async function POST(req: NextRequest) {
     });
   } catch (insertError) {
     // Roll back the blob — orphan storage objects are toxic to ops.
-    await sb.storage
-      .from(AGENT_ATTACHMENT_BUCKET)
-      .remove([storagePath])
-      .catch(() => undefined);
+    await storage.remove(AGENT_ATTACHMENT_BUCKET, [storagePath]).catch(() => undefined);
     return Response.json(
       {
         error: 'persist_failed',

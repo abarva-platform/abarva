@@ -28,7 +28,7 @@
 // Section B.4 (file uploads) and Part G (slice OV2-4b).
 
 import { createHash, randomUUID } from 'node:crypto';
-import { getServerSupabase } from '@/lib/supabase-server';
+import { getObjectStorageAdapter } from '@/lib/data-plane/objectStorage';
 import { getProgramById } from '@/lib/programs/queries';
 import {
   buildStoragePath,
@@ -222,20 +222,23 @@ export async function POST(
   }
 
   // Upload bytes — service role bypasses RLS at storage layer.
-  const sb = getServerSupabase();
-  const { error: uploadError } = await sb.storage
-    .from(STORAGE_BUCKET)
-    .upload(storagePath, buffer, {
+  const storage = getObjectStorageAdapter();
+  try {
+    await storage.upload(STORAGE_BUCKET, storagePath, buffer, {
       contentType: mimeType,
       cacheControl: 'private, max-age=0',
       upsert: false,
     });
-  if (uploadError) {
+  } catch (uploadError) {
     console.error('[POST /api/programs/:id/attachments/upload] storage_upload_failed', {
       storagePath,
-      message: uploadError.message,
+      message: uploadError instanceof Error ? uploadError.message : String(uploadError),
     });
-    return jsonError(500, 'storage_upload_failed', uploadError.message);
+    return jsonError(
+      500,
+      'storage_upload_failed',
+      uploadError instanceof Error ? uploadError.message : 'object storage upload failed',
+    );
   }
 
   const synchronousEvidence = SYNCHRONOUS_EVIDENCE_MIME_TYPES.has(mimeType);
@@ -268,7 +271,7 @@ export async function POST(
       scanFindings: initialScanFindings,
     });
   } catch (err) {
-    await sb.storage.from(STORAGE_BUCKET).remove([storagePath]).catch(() => undefined);
+    await storage.remove(STORAGE_BUCKET, [storagePath]).catch(() => undefined);
     console.error('[POST /api/programs/:id/attachments/upload] metadata_insert_failed', err);
     return jsonError(
       500,

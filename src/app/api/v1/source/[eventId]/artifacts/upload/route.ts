@@ -9,7 +9,8 @@ import { createHash, randomUUID } from 'node:crypto';
 import { requireTenancy, tenancyErrorResponse } from '@/app/api/v1/_intel-auth';
 import { getActiveClientRow } from '@/lib/active-client';
 import { clientKeyToInventorySubstrateKey } from '@/lib/agent/tools/intelligence/_shared';
-import { getServerSupabase } from '@/lib/supabase-server';
+import { getObjectStorageAdapter } from '@/lib/data-plane/objectStorage';
+import { getAzureReadFluentClient } from '@/lib/data-plane/postgresCompat';
 import { normalizeSourceStageKey, SOURCE_STAGE_ORDER } from '@/lib/source/constants';
 import { getSourcingEvent, type SourceEventRow } from '@/lib/source/queries';
 import type { SourceStageKey } from '@/lib/source/types';
@@ -90,8 +91,7 @@ async function getPersistedSourceEventRow(
   clientKey: string,
   eventId: string,
 ): Promise<SourceEventRow | null> {
-  const sb = getServerSupabase();
-  const { data, error } = await sb
+  const { data, error } = await getAzureReadFluentClient()
     .from('source_events')
     .select('*')
     .eq('id', eventId)
@@ -204,19 +204,24 @@ export async function POST(request: Request, { params }: SourceUploadRouteContex
   }
 
   const sha256 = createHash('sha256').update(buffer).digest('hex');
-  const sb = getServerSupabase();
+  const storage = getObjectStorageAdapter();
 
-  const { error: uploadError } = await sb.storage.from(STORAGE_BUCKET).upload(blobUri, buffer, {
-    contentType: mimeType,
-    cacheControl: 'private, max-age=0',
-    upsert: false,
-  });
-  if (uploadError) {
+  try {
+    await storage.upload(STORAGE_BUCKET, blobUri, buffer, {
+      contentType: mimeType,
+      cacheControl: 'private, max-age=0',
+      upsert: false,
+    });
+  } catch (uploadError) {
     console.error('[POST /api/v1/source/:eventId/artifacts/upload] storage_upload_failed', {
       blobUri,
-      message: uploadError.message,
+      message: uploadError instanceof Error ? uploadError.message : String(uploadError),
     });
-    return jsonError(500, 'storage_upload_failed', uploadError.message);
+    return jsonError(
+      500,
+      'storage_upload_failed',
+      uploadError instanceof Error ? uploadError.message : 'object storage upload failed',
+    );
   }
 
   try {
@@ -284,7 +289,7 @@ export async function POST(request: Request, { params }: SourceUploadRouteContex
       { status: 200 },
     );
   } catch (error) {
-    await sb.storage.from(STORAGE_BUCKET).remove([blobUri]).catch(() => undefined);
+    await storage.remove(STORAGE_BUCKET, [blobUri]).catch(() => undefined);
     console.error('[POST /api/v1/source/:eventId/artifacts/upload] metadata_insert_failed', error);
     return jsonError(
       500,

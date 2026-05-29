@@ -5,7 +5,7 @@
 // /api/programs/[id]/attachments/upload · OV2-4b smoke tests
 //
 // Narrow checks against the route handler — we mock requireTenancy,
-// getActiveClientRow, getProgramById, getServerSupabase, and
+// getActiveClientRow, getProgramById, object storage, and
 // recordAttachmentUpload so the route can run end-to-end without a
 // live Supabase or Clerk session. We're not unit-testing the helpers
 // here (they're already covered) — we're confirming the route's
@@ -118,23 +118,17 @@ jest.mock('@/lib/programs/evidence-ingestion', () => ({
   recordProgramEvidence: (...args: unknown[]) => recordProgramEvidenceMock(...args),
 }));
 
-type UploadArgs = [string, unknown, unknown];
-const storageUploadMock = jest.fn<Promise<{ error: null }>, UploadArgs>(async () => ({
-  error: null,
-}));
+type UploadArgs = [string, string, unknown, unknown];
+const storageUploadMock = jest.fn<Promise<void>, UploadArgs>(async () => undefined);
 const storageRemoveMock = jest.fn<
-  Promise<{ data: null; error: null }>,
-  [string[]]
->(async () => ({ data: null, error: null }));
-jest.mock('@/lib/supabase-server', () => ({
-  getServerSupabase: () => ({
-    storage: {
-      from: () => ({
-        upload: (path: string, body: unknown, opts: unknown) =>
-          storageUploadMock(path, body, opts),
-        remove: (paths: string[]) => storageRemoveMock(paths),
-      }),
-    },
+  Promise<void>,
+  [string, string[]]
+>(async () => undefined);
+jest.mock('@/lib/data-plane/objectStorage', () => ({
+  getObjectStorageAdapter: () => ({
+    upload: (bucket: string, path: string, body: unknown, opts: unknown) =>
+      storageUploadMock(bucket, path, body, opts),
+    remove: (bucket: string, paths: string[]) => storageRemoveMock(bucket, paths),
   }),
 }));
 
