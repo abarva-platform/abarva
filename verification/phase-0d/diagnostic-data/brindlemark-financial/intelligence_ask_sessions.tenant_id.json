@@ -1,0 +1,26 @@
+[
+  {
+    "id": "4ea14cf9-cac5-404d-8586-571d174742e2",
+    "tenant_id": "a75687bf-71b9-4524-ab4e-68ae3f28d200",
+    "user_id": "user_3DT3Bf3GBRwYC51ecVrxht8PzhU",
+    "tab_id": "ask_mplx9djv_884f4de7-3b3f-4931-aa55-5aa368109ef5",
+    "title": "When I ask what you know about First Capital ... [middle omitted] ... When I ask what you know about First Capital, do not answer with Apex or Meridian facts. What do you know about us?",
+    "summary": "user: What do you know about us? Give me your highest-confidence facts and where you are guessing.\nassistant: Here's what I have with high confidence, and where I'm working with less: High confidence — you are First Capital Financi ... [middle omitted] ...  services patterns, peer evidence, and the regulatory dynamics of your industry. The advice gets sharper and more specific the moment you give me context about what you're working on. So — what's the actual question you're trying to answer?\nuser: Who are our top 5 technology vendors by annual spend, with renewal windows?\nassistant: I don't have your vendor contract data in what's been surfaced to me this session — the tenant layer that would carry you ... [middle omitted] ... ndors you're working with, I can give you a calibrated view on each — financial health, strategic trajectory, where you likely have negotiating leverage, and any signals I'd flag heading into a renewal. Which would be more useful right now?\nuser: What's in our application portfolio? Walk me through the top 10 apps by criticality.\nassistant: I don't have your systems inventory loaded in what's been surfaced to me this session — the tenant layer that would carry ... [middle omitted] ... or, cloud footprint, data platforms — I can give you a calibrated read on each: strategic trajectory, technical debt signals, renewal leverage, and where AI integration is realistic versus aspirational. Which would be more useful right now?\nuser: Which of our active AI initiatives should we kill this quarter?\nassistant: Honest answer: I don't have your active AI program inventory loaded in what's been surfaced to me this session. The tenan ... [middle omitted] ... f program failure than any technical metric. If you can share your current initiative list — even informally — I can give you a sharper read on each. Which of those three failure modes do you suspect is most live at First Capital right now?\nuser: What is our most pressing regulatory exposure right now ",
+    "linked_move_id": null,
+    "created_at": "2026-05-26T00:53:45.913Z",
+    "updated_at": "2026-05-26T00:56:04.697Z",
+    "last_turn_at": "2026-05-26T00:56:04.570Z"
+  },
+  {
+    "id": "53f23ae2-920f-4c07-95a2-ee650d1dfacb",
+    "tenant_id": "a75687bf-71b9-4524-ab4e-68ae3f28d200",
+    "user_id": "user_3DT3Bf3GBRwYC51ecVrxht8PzhU",
+    "tab_id": "ask_mply0mnn_36a62de7-0c66-4b79-ad23-4bb42bc563e9",
+    "title": "When I ask what you know about First Capital ... [middle omitted] ... When I ask what you know about First Capital, do not answer with Apex or Meridian facts. What do you know about us?",
+    "summary": "user: What do you know about us? Give me your highest-confidence facts and where you are guessing.\nassistant: Here's what I have on First Capital Financial, with confidence flagged honestly. High confidence — your active strategic  ... [middle omitted] ... ing — I don't have your exact asset size, geographic footprint, named executive bench, IT capex envelope, or vendor stack in front of me right now. I also don't have your in-flight AI programs specifically, only the broader initiative list.\nuser: Who are our top 5 technology vendors by annual spend, with renewal windows?\nassistant: I don't have your vendor contract and spend data surfaced in this session — the IT landscape and vendor scorecard rows th ... [middle omitted] ... uilt in. Want me to flag which vendor relationships would be strategically worth scrutinizing given your in-flight programs — Core Banking Modernization and the CDP in particular tend to concentrate vendor risk in ways worth stress-testing?\nuser: What's in our application portfolio? Walk me through the top 10 apps by criticality.\nassistant: The connected tenant layer doesn't have your full application inventory surfaced in this session — I'm not seeing the nam ... [middle omitted] ... nization work. If AbarVa's Source agent has your IT landscape rows loaded, that's the right place to pull a ranked, annotated view. Want me to flag which criticality tiers are most relevant to your current program portfolio in the meantime?\nuser: Which of our active AI initiatives should we kill this quarter?\nassistant: Honest answer: I don't have your full AI initiative inventory surfaced in this session — the program rows that would let  ... [middle omitted] ... atus against target. I'd expect at least one initiative in your portfolio to fail all three tests — and that's your kill candidate this quarter. Want me to work through this against your actual program list if we can get that data surfaced?\nuser: What is our most pressing regulatory exposure right now ",
+    "linked_move_id": null,
+    "created_at": "2026-05-26T01:14:57.192Z",
+    "updated_at": "2026-05-26T01:17:20.738Z",
+    "last_turn_at": "2026-05-26T01:17:20.611Z"
+  }
+]

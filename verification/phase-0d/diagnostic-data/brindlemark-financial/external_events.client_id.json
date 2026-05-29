@@ -1,0 +1,196 @@
+[
+  {
+    "id": "firstcap_event_shadow_ai_fs_gap",
+    "client_id": "a75687bf-71b9-4524-ab4e-68ae3f28d200",
+    "source_id": "firstcap_ext_source_analyst_research",
+    "title": "Shadow AI governance exposure surfaced across lending and customer operations",
+    "summary": "Composite synthesis identified 12 AI tools, including credit-adjacent and customer-facing use cases ahead of current governance coverage.",
+    "event_type": "internal_signal",
+    "event_date": "2026-04-10T05:00:00.000Z",
+    "entities": [
+      "Jasmine Taylor-Vance",
+      "Angela Okafor-Hill",
+      "First Capital Financial"
+    ],
+    "topics": [
+      "AI governance",
+      "shadow AI",
+      "fair lending risk"
+    ],
+    "geography": [
+      "United States"
+    ],
+    "significance": "high",
+    "reasoning_scope_id": "firstcap_scope_broad",
+    "disclosure_scope_id": "firstcap_scope_broad",
+    "as_of_date": "2026-04-21T05:00:00.000Z",
+    "confidence_level": "high",
+    "last_verified_at": "2026-04-21T00:00:00.000Z",
+    "event_payload": {
+      "source_note": "Brindlemark overlay pattern 3.3"
+    },
+    "created_at": "2026-04-21T22:13:45.328Z",
+    "updated_at": "2026-05-09T17:13:33.261Z"
+  },
+  {
+    "id": "firstcap_event_peer_wealth_push",
+    "client_id": "a75687bf-71b9-4524-ab4e-68ae3f28d200",
+    "source_id": "firstcap_ext_source_banking_trade_press",
+    "title": "Peer super-regionals accelerated wealth and cross-franchise relationship plays",
+    "summary": "Peer announcements raised the bar on using consumer and commercial relationships to drive advisor-led AUM growth and fee mix improvement.",
+    "event_type": "peer_move",
+    "event_date": "2026-04-16T05:00:00.000Z",
+    "entities": [
+      "Sophia Delaney",
+      "First Capital Financial"
+    ],
+    "topics": [
+      "wealth management",
+      "cross-franchise growth",
+      "fee income"
+    ],
+    "geography": [
+      "United States"
+    ],
+    "significance": "medium",
+    "reasoning_scope_id": "firstcap_scope_broad",
+    "disclosure_scope_id": "firstcap_scope_broad",
+    "as_of_date": "2026-04-21T05:00:00.000Z",
+    "confidence_level": "medium",
+    "last_verified_at": "2026-04-21T00:00:00.000Z",
+    "event_payload": {
+      "source_note": "Brindlemark wealth and digital peer envelope"
+    },
+    "created_at": "2026-04-21T22:13:45.328Z",
+    "updated_at": "2026-05-09T17:13:33.261Z"
+  },
+  {
+    "id": "firstcap_event_rate_env_pressure",
+    "client_id": "a75687bf-71b9-4524-ab4e-68ae3f28d200",
+    "source_id": "firstcap_ext_source_earnings_transcripts",
+    "title": "Rate-cycle pressure sharpened scrutiny on deposit cost and NIM durability",
+    "summary": "Recent earnings cycles reinforced how deposit competition and mix shift are pressuring franchise economics across super-regionals, including Brindlemark.",
+    "event_type": "market_shift",
+    "event_date": "2026-01-24T06:00:00.000Z",
+    "entities": [
+      "Elaine Burakovsky-Park",
+      "First Capital Financial"
+    ],
+    "topics": [
+      "NIM",
+      "deposit competition",
+      "margin protection"
+    ],
+    "geography": [
+      "United States"
+    ],
+    "significance": "high",
+    "reasoning_scope_id": "firstcap_scope_broad",
+    "disclosure_scope_id": "firstcap_scope_broad",
+    "as_of_date": "2026-04-21T05:00:00.000Z",
+    "confidence_level": "high",
+    "last_verified_at": "2026-04-21T00:00:00.000Z",
+    "event_payload": {
+      "source_note": "Brindlemark earnings and external-rate context"
+    },
+    "created_at": "2026-04-21T22:13:45.328Z",
+    "updated_at": "2026-05-09T17:13:33.261Z"
+  },
+  {
+    "id": "firstcap_event_cre_regulatory_attention",
+    "client_id": "a75687bf-71b9-4524-ab4e-68ae3f28d200",
+    "source_id": "firstcap_ext_source_regulatory_and_risk_watch",
+    "title": "Commercial real-estate concentration drew heavier supervisory attention",
+    "summary": "Regulators increased scrutiny on concentration management across the peer set, keeping Brindlemark’s 268% CRE concentration in focus.",
+    "event_type": "regulatory_action",
+    "event_date": "2026-03-03T06:00:00.000Z",
+    "entities": [
+      "Dr. Vikram Shah",
+      "First Capital Financial"
+    ],
+    "topics": [
+      "CRE concentration",
+      "risk management",
+      "supervisory pressure"
+    ],
+    "geography": [
+      "United States"
+    ],
+    "significance": "high",
+    "reasoning_scope_id": "firstcap_scope_broad",
+    "disclosure_scope_id": "firstcap_scope_program_scoped",
+    "as_of_date": "2026-04-21T05:00:00.000Z",
+    "confidence_level": "medium",
+    "last_verified_at": "2026-04-21T00:00:00.000Z",
+    "event_payload": {
+      "source_note": "Brindlemark credit and concentration context"
+    },
+    "created_at": "2026-04-21T22:13:45.328Z",
+    "updated_at": "2026-05-09T17:13:33.261Z"
+  },
+  {
+    "id": "firstcap_event_cfo_transition_elaine",
+    "client_id": "a75687bf-71b9-4524-ab4e-68ae3f28d200",
+    "source_id": "firstcap_ext_source_sec_filings",
+    "title": "Elaine Burakovsky-Park joined as CFO with explicit margin and capital mandate",
+    "summary": "Brindlemark installed Elaine Burakovsky-Park as CFO in 2025 to tighten financial discipline, capital allocation, and investor communication.",
+    "event_type": "executive_move",
+    "event_date": "2025-05-01T05:00:00.000Z",
+    "entities": [
+      "Elaine Burakovsky-Park",
+      "First Capital Financial"
+    ],
+    "topics": [
+      "margin protection",
+      "capital allocation",
+      "finance transformation"
+    ],
+    "geography": [
+      "United States"
+    ],
+    "significance": "high",
+    "reasoning_scope_id": "firstcap_scope_broad",
+    "disclosure_scope_id": "firstcap_scope_broad",
+    "as_of_date": "2026-04-21T05:00:00.000Z",
+    "confidence_level": "high",
+    "last_verified_at": "2026-04-21T00:00:00.000Z",
+    "event_payload": {
+      "source_note": "Brindlemark base seed Part 2 / Part 4"
+    },
+    "created_at": "2026-04-21T22:13:45.328Z",
+    "updated_at": "2026-05-09T17:13:33.261Z"
+  },
+  {
+    "id": "firstcap_event_consent_order_context",
+    "client_id": "a75687bf-71b9-4524-ab4e-68ae3f28d200",
+    "source_id": "firstcap_ext_source_regulatory_and_risk_watch",
+    "title": "Consent-order remediation remains the defining regulatory operating context",
+    "summary": "BSA/AML modernization, exam cadence, and regulator-facing timelines continue to anchor Brindlemark’s highest-sensitivity operating work.",
+    "event_type": "regulatory_action",
+    "event_date": "2026-02-07T06:00:00.000Z",
+    "entities": [
+      "Marcus Blythe",
+      "Dr. Vikram Shah",
+      "First Capital Financial"
+    ],
+    "topics": [
+      "BSA/AML",
+      "consent order",
+      "regulatory remediation"
+    ],
+    "geography": [
+      "United States"
+    ],
+    "significance": "high",
+    "reasoning_scope_id": "firstcap_scope_program_scoped_bsa_aml_modernization_compliance_legal_executive_advisory",
+    "disclosure_scope_id": "firstcap_scope_program_scoped_legal_privileged",
+    "as_of_date": "2026-04-21T05:00:00.000Z",
+    "confidence_level": "high",
+    "last_verified_at": "2026-04-21T00:00:00.000Z",
+    "event_payload": {
+      "source_note": "Brindlemark overlay legal-privileged context"
+    },
+    "created_at": "2026-04-21T22:13:45.328Z",
+    "updated_at": "2026-05-09T17:13:33.261Z"
+  }
+]

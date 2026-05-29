@@ -1,0 +1,637 @@
+[
+  {
+    "id": "firstcap_pattern_digital_customer_acquisition_gap",
+    "client_id": "a75687bf-71b9-4524-ab4e-68ae3f28d200",
+    "ordinal_ref": "3.6",
+    "name": "Digital Customer Acquisition Gap",
+    "short_description": "Financial-services-specific pattern.",
+    "long_description": "Financial-services-specific pattern.",
+    "category": null,
+    "sector_applicability": [
+      "financial_services"
+    ],
+    "cross_industry": false,
+    "variant_of": null,
+    "trigger_symptoms": [
+      "Digital account opening % <50%",
+      "mobile adoption trailing peers",
+      "net new primary household growth insufficient",
+      "CAC-LTV ratio unfavorable"
+    ],
+    "detection_signals": [
+      "Digital account opening % <50%",
+      "mobile adoption trailing peers",
+      "net new primary household growth insufficient",
+      "CAC-LTV ratio unfavorable"
+    ],
+    "diagnostic_questions": [],
+    "evidence_requirements": [],
+    "likely_root_causes": [],
+    "common_adjacent_contradictions": [],
+    "benchmark_signatures": [],
+    "intervention_options": [],
+    "anti_patterns": [],
+    "common_failure_modes": [],
+    "phase_1_deliverables": [
+      "Digital account opening % <50%",
+      "mobile adoption trailing peers",
+      "net new primary household growth insufficient"
+    ],
+    "phase_2_deliverables": [],
+    "phase_3_deliverables": [
+      "Decision package with sponsor tradeoffs",
+      "Sequenced roadmap with KPI guardrails",
+      "Operating model and ownership alignment"
+    ],
+    "phase_4_deliverables": [
+      "Execution plan and workstream mobilization",
+      "Change management and adoption tracking",
+      "KPI instrumentation and cadence reviews"
+    ],
+    "expected_time_to_value": {},
+    "success_metrics": [],
+    "leading_indicators": [],
+    "required_sponsor_profile": {},
+    "required_capabilities": [],
+    "typical_stakeholders": [],
+    "common_objections": [],
+    "applicable_company_scales": [],
+    "cross_pattern_links": [],
+    "linked_kpi_ids": [
+      "firstcap_digital_account_opening_pct",
+      "firstcap_mobile_mau_growth",
+      "firstcap_net_new_primary_households",
+      "firstcap_digital_adoption_consumer"
+    ],
+    "evidence_summary": "42% digital account opening vs 68% target · mobile MAU growth 4% vs 12% target · 14K net new primary households vs 35K target",
+    "confidence_level": "high",
+    "last_updated": "2026-04-21T05:00:00.000Z",
+    "version": "1.0",
+    "author": "AbarVa North Star overlay",
+    "reasoning_scope_id": "firstcap_scope_broad",
+    "disclosure_scope_id": "firstcap_scope_broad",
+    "source_id": null,
+    "as_of_date": "2026-04-21T05:00:00.000Z",
+    "last_verified_at": "2026-04-21T00:00:00.000Z",
+    "raw_markdown": "### 3.6 · Digital Customer Acquisition Gap\n\nFinancial-services-specific pattern.\n\n**Detection signals.** Digital account opening % <50% · mobile adoption trailing peers · net new primary household growth insufficient · CAC-LTV ratio unfavorable\n\n**Brindlemark evidence.** 42% digital account opening vs 68% target · mobile MAU growth 4% vs 12% target · 14K net new primary households vs 35K target\n\n**Linked KPIs.** Digital Account Opening (2.7.5), Mobile MAU Growth (2.7.2), Net New Primary Households (2.7.4), Digital Adoption (2.7.1)",
+    "metadata": {
+      "classification": null,
+      "linked_kpi_names": [
+        "Digital Account Opening %",
+        "Mobile Active User Growth",
+        "Net New Primary Households (Consumer)",
+        "Digital Adoption (Consumer)"
+      ],
+      "linked_kpis_text": "Digital Account Opening (2.7.5), Mobile MAU Growth (2.7.2), Net New Primary Households (2.7.4), Digital Adoption (2.7.1)",
+      "expected_outcomes": [],
+      "required_sponsor_profile": null
+    },
+    "created_at": "2026-04-21T22:13:45.597Z",
+    "updated_at": "2026-05-09T17:13:43.200Z"
+  },
+  {
+    "id": "firstcap_pattern_cross_franchise_relationship_deepening_gap",
+    "client_id": "a75687bf-71b9-4524-ab4e-68ae3f28d200",
+    "ordinal_ref": "3.7",
+    "name": "Cross-Franchise Relationship Deepening Gap",
+    "short_description": "Foundational pattern pack #16 — financial-services-specific (primary franchise-model banks).",
+    "long_description": "Foundational pattern pack #16 — financial-services-specific (primary franchise-model banks).",
+    "category": "Franchise Integration — Customer Deepening",
+    "sector_applicability": [
+      "super-regional banks, universal banks"
+    ],
+    "cross_industry": false,
+    "variant_of": null,
+    "trigger_symptoms": [
+      "Wealth-bank cross-sell rate <5%\n- Commercial-wealth cross-sell rate <15%\n- Net new primary household growth below industry\n- Wealth AUM growth below organic peer benchmark\n- Referral program productivity low\n- Franchise-integration technology incomplete"
+    ],
+    "detection_signals": [
+      "Wealth-bank cross-sell rate <5%\n- Commercial-wealth cross-sell rate <15%\n- Net new primary household growth below industry\n- Wealth AUM growth below organic peer benchmark\n- Referral program productivity low\n- Franchise-integration technology incomplete"
+    ],
+    "diagnostic_questions": [],
+    "evidence_requirements": [],
+    "likely_root_causes": [
+      "Franchise silos (legacy of M&A integration)",
+      "compensation alignment absent across franchises",
+      "technology platform separation preventing 360-view",
+      "referral processes manual",
+      "brand positioning not unified"
+    ],
+    "common_adjacent_contradictions": [],
+    "benchmark_signatures": [],
+    "intervention_options": [
+      "Cross-franchise technology platform (unified customer 360)\n- Compensation realignment\n- Referral process automation\n- Integrated brand architecture\n- Unified client experience design"
+    ],
+    "anti_patterns": [],
+    "common_failure_modes": [],
+    "phase_1_deliverables": [
+      "Wealth-bank cross-sell rate <5%\n- Commercial-wealth cross-sell rate <15%\n- Net new primary household growth below industry\n- Wealth AUM growth below organic peer benchmark\n- Referral program productivity low\n- Franchise-integration technology incomplete"
+    ],
+    "phase_2_deliverables": [
+      "Cross-franchise technology platform (unified customer 360)\n- Compensation realignment\n- Referral process automation\n- Integrated brand architecture\n- Unified client experience design"
+    ],
+    "phase_3_deliverables": [
+      "Decision package with sponsor tradeoffs",
+      "Sequenced roadmap with KPI guardrails",
+      "Operating model and ownership alignment"
+    ],
+    "phase_4_deliverables": [
+      "Execution plan and workstream mobilization",
+      "Change management and adoption tracking",
+      "KPI instrumentation and cadence reviews"
+    ],
+    "expected_time_to_value": {},
+    "success_metrics": [],
+    "leading_indicators": [],
+    "required_sponsor_profile": {},
+    "required_capabilities": [],
+    "typical_stakeholders": [],
+    "common_objections": [],
+    "applicable_company_scales": [],
+    "cross_pattern_links": [],
+    "linked_kpi_ids": [
+      "firstcap_aum_growth",
+      "firstcap_wealth_net_new_households",
+      "firstcap_net_new_primary_households"
+    ],
+    "evidence_summary": "4.2% AUM growth vs 8% target · 1.8K net new wealth households vs 3.5K target · cross-franchise cross-sell rate at 3% · legacy franchise platform separation",
+    "confidence_level": "high",
+    "last_updated": "2026-04-21T05:00:00.000Z",
+    "version": "1.0",
+    "author": "AbarVa North Star overlay",
+    "reasoning_scope_id": "firstcap_scope_broad",
+    "disclosure_scope_id": "firstcap_scope_broad",
+    "source_id": null,
+    "as_of_date": "2026-04-21T05:00:00.000Z",
+    "last_verified_at": "2026-04-21T00:00:00.000Z",
+    "raw_markdown": "### 3.7 · Cross-Franchise Relationship Deepening Gap\n\nFoundational pattern pack #16 — financial-services-specific (primary franchise-model banks).\n\n**Classification.** Category: Franchise Integration — Customer Deepening · Sector applicability: super-regional banks, universal banks\n\n**Detection signals.**\n- Wealth-bank cross-sell rate <5%\n- Commercial-wealth cross-sell rate <15%\n- Net new primary household growth below industry\n- Wealth AUM growth below organic peer benchmark\n- Referral program productivity low\n- Franchise-integration technology incomplete\n\n**Likely root causes.** Franchise silos (legacy of M&A integration) · compensation alignment absent across franchises · technology platform separation preventing 360-view · referral processes manual · brand positioning not unified\n\n**Intervention options.**\n- Cross-franchise technology platform (unified customer 360)\n- Compensation realignment\n- Referral process automation\n- Integrated brand architecture\n- Unified client experience design\n\n**Linked KPIs.** AUM Growth (2.6.1), Net New Households Wealth (2.6.3), Net New Primary Households Consumer (2.7.4)\n\n**Brindlemark evidence.** 4.2% AUM growth vs 8% target · 1.8K net new wealth households vs 3.5K target · cross-franchise cross-sell rate at 3% · legacy franchise platform separation\n\n---",
+    "metadata": {
+      "classification": "Category: Franchise Integration — Customer Deepening · Sector applicability: super-regional banks, universal banks",
+      "linked_kpi_names": [
+        "AUM Growth",
+        "Net New Households (Wealth)",
+        "Net New Primary Households (Consumer)"
+      ],
+      "linked_kpis_text": "AUM Growth (2.6.1), Net New Households Wealth (2.6.3), Net New Primary Households Consumer (2.7.4)",
+      "expected_outcomes": [],
+      "required_sponsor_profile": null
+    },
+    "created_at": "2026-04-21T22:13:45.597Z",
+    "updated_at": "2026-05-09T17:13:43.200Z"
+  },
+  {
+    "id": "firstcap_pattern_aml_bsa_compliance_modernization",
+    "client_id": "a75687bf-71b9-4524-ab4e-68ae3f28d200",
+    "ordinal_ref": "3.1",
+    "name": "AML/BSA Compliance Modernization",
+    "short_description": "Foundational pattern pack #15 — financial-services-specific.",
+    "long_description": "Foundational pattern pack #15 — financial-services-specific.",
+    "category": "Regulatory Compliance — Financial Crimes",
+    "sector_applicability": [
+      "financial services (all depository institutions, broker-dealers, crypto)"
+    ],
+    "cross_industry": false,
+    "variant_of": null,
+    "trigger_symptoms": [
+      "False positive rate >90% on AML alerts\n- Alert-to-SAR ratio heavily skewed to false positives\n- Investigator workload exceeding benchmark productivity\n- Open MRA or consent order related to BSA/AML\n- Legacy monitoring platform age >5 years\n- Minimal machine learning adoption in transaction monitoring"
+    ],
+    "detection_signals": [
+      "False positive rate >90% on AML alerts\n- Alert-to-SAR ratio heavily skewed to false positives\n- Investigator workload exceeding benchmark productivity\n- Open MRA or consent order related to BSA/AML\n- Legacy monitoring platform age >5 years\n- Minimal machine learning adoption in transaction monitoring"
+    ],
+    "diagnostic_questions": [],
+    "evidence_requirements": [],
+    "likely_root_causes": [
+      "Legacy rule-based monitoring with excessive false positives",
+      "investigator capacity constrained",
+      "machine learning adoption blocked by model risk management process",
+      "regulatory scrutiny following prior findings",
+      "data integration gaps across banking systems"
+    ],
+    "common_adjacent_contradictions": [],
+    "benchmark_signatures": [],
+    "intervention_options": [
+      "Machine learning model deployment for alert prioritization (MRM-compliant)\n- Investigator workflow automation\n- Platform modernization (typically 24-36 month program)\n- Data integration across transaction sources\n- Regulatory constructive engagement on modernization roadmap"
+    ],
+    "anti_patterns": [],
+    "common_failure_modes": [],
+    "phase_1_deliverables": [
+      "Current state audit",
+      "consent order/MRA mapping",
+      "platform assessment",
+      "benchmark analysis",
+      "regulator relationship mapping"
+    ],
+    "phase_2_deliverables": [
+      "Platform options",
+      "ML governance options",
+      "workflow automation opportunities",
+      "regulatory engagement plan"
+    ],
+    "phase_3_deliverables": [
+      "Platform decision",
+      "implementation roadmap",
+      "MRM integration plan",
+      "regulator engagement strategy"
+    ],
+    "phase_4_deliverables": [
+      "Platform build",
+      "model deployment",
+      "workflow rollout",
+      "regulatory milestone tracking"
+    ],
+    "expected_time_to_value": {},
+    "success_metrics": [],
+    "leading_indicators": [],
+    "required_sponsor_profile": {},
+    "required_capabilities": [],
+    "typical_stakeholders": [],
+    "common_objections": [],
+    "applicable_company_scales": [],
+    "cross_pattern_links": [],
+    "linked_kpi_ids": [
+      "firstcap_aml_alert_volume",
+      "firstcap_aml_false_positive_rate",
+      "firstcap_sar_filings_monthly",
+      "firstcap_regulatory_exam_findings_open",
+      "firstcap_efficiency_ratio"
+    ],
+    "evidence_summary": "Active consent order context (per base seed) · 96% false positive rate vs 85% target · investigator productivity below peer · regulatory remediation commitments outstanding",
+    "confidence_level": "high",
+    "last_updated": "2026-04-21T05:00:00.000Z",
+    "version": "1.0",
+    "author": "AbarVa North Star overlay",
+    "reasoning_scope_id": "firstcap_scope_broad",
+    "disclosure_scope_id": "firstcap_scope_broad",
+    "source_id": null,
+    "as_of_date": "2026-04-21T05:00:00.000Z",
+    "last_verified_at": "2026-04-21T00:00:00.000Z",
+    "raw_markdown": "### 3.1 · AML/BSA Compliance Modernization\n\nFoundational pattern pack #15 — financial-services-specific.\n\n**Classification.** Category: Regulatory Compliance — Financial Crimes · Sector applicability: financial services (all depository institutions, broker-dealers, crypto)\n\n**Detection signals.**\n- False positive rate >90% on AML alerts\n- Alert-to-SAR ratio heavily skewed to false positives\n- Investigator workload exceeding benchmark productivity\n- Open MRA or consent order related to BSA/AML\n- Legacy monitoring platform age >5 years\n- Minimal machine learning adoption in transaction monitoring\n\n**Likely root causes.** Legacy rule-based monitoring with excessive false positives · investigator capacity constrained · machine learning adoption blocked by model risk management process · regulatory scrutiny following prior findings · data integration gaps across banking systems\n\n**Intervention options.**\n- Machine learning model deployment for alert prioritization (MRM-compliant)\n- Investigator workflow automation\n- Platform modernization (typically 24-36 month program)\n- Data integration across transaction sources\n- Regulatory constructive engagement on modernization roadmap\n\n**Phase-mapped deliverables.**\n\n*Phase 1.* Current state audit · consent order/MRA mapping · platform assessment · benchmark analysis · regulator relationship mapping\n\n*Phase 2.* Platform options · ML governance options · workflow automation opportunities · regulatory engagement plan\n\n*Phase 3.* Platform decision · implementation roadmap · MRM integration plan · regulator engagement strategy\n\n*Phase 4.* Platform build · model deployment · workflow rollout · regulatory milestone tracking\n\n**Expected outcomes.** False positive rate reduction 20-30 points within 18 months · investigator productivity up 40%+ · consent order/MRA path to closure · efficiency ratio improvement 30-50 bps\n\n**Required sponsor profile.** Chief Compliance Officer with CFO + Chief Risk Officer partnership · enterprise scope · high political capital given regulatory context\n\n**Linked KPIs.** AML Alert Volume (2.8.1), AML False Positive Rate (2.8.2), SAR Filings (2.8.3), Regulatory Exam Findings (2.8.4), Efficiency Ratio (2.1.2)\n\n**Brindlemark evidence.** Active consent order context (per base seed) · 96% false positive rate vs 85% target · investigator productivity below peer · regulatory remediation commitments outstanding\n\n**Sensitivity.** All Brindlemark AML-related work carries **legal-privileged** material handling. Reasoning scope is program-scoped; disclosure scope is strictly program-scoped with external communication prohibited.",
+    "metadata": {
+      "classification": "Category: Regulatory Compliance — Financial Crimes · Sector applicability: financial services (all depository institutions, broker-dealers, crypto)",
+      "linked_kpi_names": [
+        "BSA/AML Alert Volume",
+        "AML False Positive Rate",
+        "SAR Filings (Monthly Average)",
+        "Regulatory Exam Findings (Open)",
+        "Efficiency Ratio"
+      ],
+      "linked_kpis_text": "AML Alert Volume (2.8.1), AML False Positive Rate (2.8.2), SAR Filings (2.8.3), Regulatory Exam Findings (2.8.4), Efficiency Ratio (2.1.2)",
+      "expected_outcomes": [
+        "False positive rate reduction 20-30 points within 18 months",
+        "investigator productivity up 40%+",
+        "consent order/MRA path to closure",
+        "efficiency ratio improvement 30-50 bps"
+      ],
+      "required_sponsor_profile": "Chief Compliance Officer with CFO + Chief Risk Officer partnership · enterprise scope · high political capital given regulatory context"
+    },
+    "created_at": "2026-04-21T22:13:45.597Z",
+    "updated_at": "2026-05-09T17:13:43.200Z"
+  },
+  {
+    "id": "firstcap_pattern_deposit_cost_and_franchise_value_erosion",
+    "client_id": "a75687bf-71b9-4524-ab4e-68ae3f28d200",
+    "ordinal_ref": "3.2",
+    "name": "Deposit Cost and Franchise Value Erosion",
+    "short_description": "Foundational pattern pack — financial-services-specific.",
+    "long_description": "Foundational pattern pack — financial-services-specific.",
+    "category": "Balance Sheet Management — Deposit Franchise",
+    "sector_applicability": [
+      "banking"
+    ],
+    "cross_industry": false,
+    "variant_of": null,
+    "trigger_symptoms": [
+      "Deposit growth negative while industry flat-to-positive\n- Non-interest-bearing deposit % declining materially\n- Cost of deposits increasing faster than Fed Funds rate\n- Deposit attrition concentrated in specific customer segments\n- Franchise value (deposit premium implied in market cap) contracting"
+    ],
+    "detection_signals": [
+      "Deposit growth negative while industry flat-to-positive\n- Non-interest-bearing deposit % declining materially\n- Cost of deposits increasing faster than Fed Funds rate\n- Deposit attrition concentrated in specific customer segments\n- Franchise value (deposit premium implied in market cap) contracting"
+    ],
+    "diagnostic_questions": [],
+    "evidence_requirements": [],
+    "likely_root_causes": [
+      "Rate environment + competitive response",
+      "digital-native competition",
+      "wealth-adjacent customers moving to money market funds",
+      "commercial customer liquidity management",
+      "branch network vs digital experience asymmetry",
+      "loyalty/relationship depth insufficient to resist rate shopping"
+    ],
+    "common_adjacent_contradictions": [],
+    "benchmark_signatures": [],
+    "intervention_options": [
+      "Deposit pricing strategy refinement (segmented approach)\n- Primary-relationship depth increase (cross-franchise pattern)\n- Digital experience competitiveness acceleration\n- Treasury services expansion for commercial deposits\n- Branch network rationalization with digital substitution"
+    ],
+    "anti_patterns": [],
+    "common_failure_modes": [],
+    "phase_1_deliverables": [
+      "Deposit growth negative while industry flat-to-positive\n- Non-interest-bearing deposit % declining materially\n- Cost of deposits increasing faster than Fed Funds rate\n- Deposit attrition concentrated in specific customer segments\n- Franchise value (deposit premium implied in market cap) contracting"
+    ],
+    "phase_2_deliverables": [
+      "Deposit pricing strategy refinement (segmented approach)\n- Primary-relationship depth increase (cross-franchise pattern)\n- Digital experience competitiveness acceleration\n- Treasury services expansion for commercial deposits\n- Branch network rationalization with digital substitution"
+    ],
+    "phase_3_deliverables": [
+      "Decision package with sponsor tradeoffs",
+      "Sequenced roadmap with KPI guardrails",
+      "Operating model and ownership alignment"
+    ],
+    "phase_4_deliverables": [
+      "Execution plan and workstream mobilization",
+      "Change management and adoption tracking",
+      "KPI instrumentation and cadence reviews"
+    ],
+    "expected_time_to_value": {},
+    "success_metrics": [],
+    "leading_indicators": [],
+    "required_sponsor_profile": {},
+    "required_capabilities": [],
+    "typical_stakeholders": [],
+    "common_objections": [],
+    "applicable_company_scales": [],
+    "cross_pattern_links": [],
+    "linked_kpi_ids": [
+      "firstcap_deposit_growth",
+      "firstcap_cost_of_deposits",
+      "firstcap_nib_deposit_pct",
+      "firstcap_deposit_attrition",
+      "firstcap_nim"
+    ],
+    "evidence_summary": "-2.1% deposit growth · 248 bps cost of deposits up 82 bps · NIB % declining · NIM compression 18 bps YoY",
+    "confidence_level": "high",
+    "last_updated": "2026-04-21T05:00:00.000Z",
+    "version": "1.0",
+    "author": "AbarVa North Star overlay",
+    "reasoning_scope_id": "firstcap_scope_broad",
+    "disclosure_scope_id": "firstcap_scope_broad",
+    "source_id": null,
+    "as_of_date": "2026-04-21T05:00:00.000Z",
+    "last_verified_at": "2026-04-21T00:00:00.000Z",
+    "raw_markdown": "### 3.2 · Deposit Cost and Franchise Value Erosion\n\nFoundational pattern pack — financial-services-specific.\n\n**Classification.** Category: Balance Sheet Management — Deposit Franchise · Sector applicability: banking\n\n**Detection signals.**\n- Deposit growth negative while industry flat-to-positive\n- Non-interest-bearing deposit % declining materially\n- Cost of deposits increasing faster than Fed Funds rate\n- Deposit attrition concentrated in specific customer segments\n- Franchise value (deposit premium implied in market cap) contracting\n\n**Likely root causes.** Rate environment + competitive response · digital-native competition · wealth-adjacent customers moving to money market funds · commercial customer liquidity management · branch network vs digital experience asymmetry · loyalty/relationship depth insufficient to resist rate shopping\n\n**Intervention options.**\n- Deposit pricing strategy refinement (segmented approach)\n- Primary-relationship depth increase (cross-franchise pattern)\n- Digital experience competitiveness acceleration\n- Treasury services expansion for commercial deposits\n- Branch network rationalization with digital substitution\n\n**Linked KPIs.** Deposit Growth (2.4.1), Cost of Deposits (2.4.2), NIB Deposit % (2.4.3), Deposit Attrition (2.4.4), NIM (2.1.1)\n\n**Brindlemark evidence.** -2.1% deposit growth · 248 bps cost of deposits up 82 bps · NIB % declining · NIM compression 18 bps YoY",
+    "metadata": {
+      "classification": "Category: Balance Sheet Management — Deposit Franchise · Sector applicability: banking",
+      "linked_kpi_names": [
+        "Deposit Growth",
+        "Cost of Deposits",
+        "Non-Interest-Bearing Deposit %",
+        "Deposit Attrition Rate",
+        "Net Interest Margin"
+      ],
+      "linked_kpis_text": "Deposit Growth (2.4.1), Cost of Deposits (2.4.2), NIB Deposit % (2.4.3), Deposit Attrition (2.4.4), NIM (2.1.1)",
+      "expected_outcomes": [],
+      "required_sponsor_profile": null
+    },
+    "created_at": "2026-04-21T22:13:45.597Z",
+    "updated_at": "2026-05-09T17:13:43.200Z"
+  },
+  {
+    "id": "firstcap_pattern_shadow_ai_in_lending_and_customer_operations",
+    "client_id": "a75687bf-71b9-4524-ab4e-68ae3f28d200",
+    "ordinal_ref": "3.3",
+    "name": "Shadow AI in Lending and Customer Operations",
+    "short_description": "Financial-services variant of cross-sector Shadow AI Governance pattern.",
+    "long_description": "Financial-services variant of cross-sector Shadow AI Governance pattern.",
+    "category": null,
+    "sector_applicability": [
+      "financial_services"
+    ],
+    "cross_industry": false,
+    "variant_of": null,
+    "trigger_symptoms": [],
+    "detection_signals": [],
+    "diagnostic_questions": [],
+    "evidence_requirements": [],
+    "likely_root_causes": [],
+    "common_adjacent_contradictions": [],
+    "benchmark_signatures": [],
+    "intervention_options": [],
+    "anti_patterns": [],
+    "common_failure_modes": [],
+    "phase_1_deliverables": [],
+    "phase_2_deliverables": [],
+    "phase_3_deliverables": [
+      "Decision package with sponsor tradeoffs",
+      "Sequenced roadmap with KPI guardrails",
+      "Operating model and ownership alignment"
+    ],
+    "phase_4_deliverables": [
+      "Execution plan and workstream mobilization",
+      "Change management and adoption tracking",
+      "KPI instrumentation and cadence reviews"
+    ],
+    "expected_time_to_value": {},
+    "success_metrics": [],
+    "leading_indicators": [],
+    "required_sponsor_profile": {},
+    "required_capabilities": [],
+    "typical_stakeholders": [],
+    "common_objections": [],
+    "applicable_company_scales": [],
+    "cross_pattern_links": [],
+    "linked_kpi_ids": [
+      "firstcap_ai_governance_maturity",
+      "firstcap_mrm_maturity",
+      "firstcap_cybersecurity_maturity_cat"
+    ],
+    "evidence_summary": "12 AI tools identified · 7 below governance threshold · 3 in credit-adjacent workflows (fair lending risk) · 2 customer-facing without model governance",
+    "confidence_level": "high",
+    "last_updated": "2026-04-21T05:00:00.000Z",
+    "version": "1.0",
+    "author": "AbarVa North Star overlay",
+    "reasoning_scope_id": "firstcap_scope_broad",
+    "disclosure_scope_id": "firstcap_scope_broad",
+    "source_id": null,
+    "as_of_date": "2026-04-21T05:00:00.000Z",
+    "last_verified_at": "2026-04-21T00:00:00.000Z",
+    "raw_markdown": "### 3.3 · Shadow AI in Lending and Customer Operations\n\nFinancial-services variant of cross-sector Shadow AI Governance pattern.\n\n**Financial-sector-specific sensitivities.** Fair lending implications (model discrimination risk) · model risk management non-compliance · regulatory scrutiny on AI in credit decisioning · customer-facing AI without fair-treatment oversight\n\n**Brindlemark evidence.** 12 AI tools identified · 7 below governance threshold · 3 in credit-adjacent workflows (fair lending risk) · 2 customer-facing without model governance\n\n**Linked KPIs.** AI Governance Maturity (2.9.2), Model Risk Management Maturity (2.9.3), Cybersecurity Maturity (2.9.1)",
+    "metadata": {
+      "classification": null,
+      "linked_kpi_names": [
+        "AI Governance Maturity",
+        "Model Risk Management Maturity (SR 11-7)",
+        "Cybersecurity Maturity (FFIEC CAT)"
+      ],
+      "linked_kpis_text": "AI Governance Maturity (2.9.2), Model Risk Management Maturity (2.9.3), Cybersecurity Maturity (2.9.1)",
+      "expected_outcomes": [],
+      "required_sponsor_profile": null
+    },
+    "created_at": "2026-04-21T22:13:45.597Z",
+    "updated_at": "2026-05-09T17:13:43.200Z"
+  },
+  {
+    "id": "firstcap_pattern_portfolio_concentration_risk_management",
+    "client_id": "a75687bf-71b9-4524-ab4e-68ae3f28d200",
+    "ordinal_ref": "3.4",
+    "name": "Portfolio Concentration Risk Management",
+    "short_description": "Financial-services-specific pattern.",
+    "long_description": "Financial-services-specific pattern.",
+    "category": null,
+    "sector_applicability": [
+      "financial_services"
+    ],
+    "cross_industry": false,
+    "variant_of": null,
+    "trigger_symptoms": [
+      "Commercial real estate concentration >250% of capital",
+      "commercial concentration (top 25) >15% of deposits",
+      "geographic concentration in specific markets",
+      "industry sector concentration",
+      "regulatory concentration flag triggers"
+    ],
+    "detection_signals": [
+      "Commercial real estate concentration >250% of capital",
+      "commercial concentration (top 25) >15% of deposits",
+      "geographic concentration in specific markets",
+      "industry sector concentration",
+      "regulatory concentration flag triggers"
+    ],
+    "diagnostic_questions": [],
+    "evidence_requirements": [],
+    "likely_root_causes": [],
+    "common_adjacent_contradictions": [],
+    "benchmark_signatures": [],
+    "intervention_options": [],
+    "anti_patterns": [],
+    "common_failure_modes": [],
+    "phase_1_deliverables": [
+      "Commercial real estate concentration >250% of capital",
+      "commercial concentration (top 25) >15% of deposits",
+      "geographic concentration in specific markets"
+    ],
+    "phase_2_deliverables": [],
+    "phase_3_deliverables": [
+      "Decision package with sponsor tradeoffs",
+      "Sequenced roadmap with KPI guardrails",
+      "Operating model and ownership alignment"
+    ],
+    "phase_4_deliverables": [
+      "Execution plan and workstream mobilization",
+      "Change management and adoption tracking",
+      "KPI instrumentation and cadence reviews"
+    ],
+    "expected_time_to_value": {},
+    "success_metrics": [],
+    "leading_indicators": [],
+    "required_sponsor_profile": {},
+    "required_capabilities": [],
+    "typical_stakeholders": [],
+    "common_objections": [],
+    "applicable_company_scales": [],
+    "cross_pattern_links": [],
+    "linked_kpi_ids": [
+      "firstcap_cre_concentration",
+      "firstcap_commercial_concentration_top25",
+      "firstcap_nco_rate",
+      "firstcap_npl_ratio"
+    ],
+    "evidence_summary": "268% CRE concentration (regulatory threshold 300%) · 18% top-25 commercial concentration · geographic concentration in primary banking markets",
+    "confidence_level": "high",
+    "last_updated": "2026-04-21T05:00:00.000Z",
+    "version": "1.0",
+    "author": "AbarVa North Star overlay",
+    "reasoning_scope_id": "firstcap_scope_broad",
+    "disclosure_scope_id": "firstcap_scope_broad",
+    "source_id": null,
+    "as_of_date": "2026-04-21T05:00:00.000Z",
+    "last_verified_at": "2026-04-21T00:00:00.000Z",
+    "raw_markdown": "### 3.4 · Portfolio Concentration Risk Management\n\nFinancial-services-specific pattern.\n\n**Detection signals.** Commercial real estate concentration >250% of capital · commercial concentration (top 25) >15% of deposits · geographic concentration in specific markets · industry sector concentration · regulatory concentration flag triggers\n\n**Brindlemark evidence.** 268% CRE concentration (regulatory threshold 300%) · 18% top-25 commercial concentration · geographic concentration in primary banking markets\n\n**Linked KPIs.** CRE Concentration (2.2.4), Commercial Concentration Top 25 (2.4.5), Net Charge-Off Rate (2.2.1), NPL Ratio (2.2.2)",
+    "metadata": {
+      "classification": null,
+      "linked_kpi_names": [
+        "Commercial Real Estate Concentration",
+        "Commercial Deposit Concentration (Top 25)",
+        "Net Charge-Off Rate",
+        "Non-Performing Loan Ratio"
+      ],
+      "linked_kpis_text": "CRE Concentration (2.2.4), Commercial Concentration Top 25 (2.4.5), Net Charge-Off Rate (2.2.1), NPL Ratio (2.2.2)",
+      "expected_outcomes": [],
+      "required_sponsor_profile": null
+    },
+    "created_at": "2026-04-21T22:13:45.597Z",
+    "updated_at": "2026-05-09T17:13:43.200Z"
+  },
+  {
+    "id": "firstcap_pattern_operating_model_efficiency_gap",
+    "client_id": "a75687bf-71b9-4524-ab4e-68ae3f28d200",
+    "ordinal_ref": "3.5",
+    "name": "Operating Model Efficiency Gap",
+    "short_description": "Foundational cross-sector pattern — financial-services application.",
+    "long_description": "Foundational cross-sector pattern — financial-services application.",
+    "category": null,
+    "sector_applicability": [
+      "financial_services"
+    ],
+    "cross_industry": false,
+    "variant_of": null,
+    "trigger_symptoms": [
+      "Efficiency ratio >58%",
+      "peer efficiency variance",
+      "technology debt constraining productivity",
+      "operating model fragmentation across business units"
+    ],
+    "detection_signals": [
+      "Efficiency ratio >58%",
+      "peer efficiency variance",
+      "technology debt constraining productivity",
+      "operating model fragmentation across business units"
+    ],
+    "diagnostic_questions": [],
+    "evidence_requirements": [],
+    "likely_root_causes": [],
+    "common_adjacent_contradictions": [],
+    "benchmark_signatures": [],
+    "intervention_options": [],
+    "anti_patterns": [],
+    "common_failure_modes": [],
+    "phase_1_deliverables": [
+      "Efficiency ratio >58%",
+      "peer efficiency variance",
+      "technology debt constraining productivity"
+    ],
+    "phase_2_deliverables": [],
+    "phase_3_deliverables": [
+      "Decision package with sponsor tradeoffs",
+      "Sequenced roadmap with KPI guardrails",
+      "Operating model and ownership alignment"
+    ],
+    "phase_4_deliverables": [
+      "Execution plan and workstream mobilization",
+      "Change management and adoption tracking",
+      "KPI instrumentation and cadence reviews"
+    ],
+    "expected_time_to_value": {},
+    "success_metrics": [],
+    "leading_indicators": [],
+    "required_sponsor_profile": {},
+    "required_capabilities": [],
+    "typical_stakeholders": [],
+    "common_objections": [],
+    "applicable_company_scales": [],
+    "cross_pattern_links": [],
+    "linked_kpi_ids": [
+      "firstcap_efficiency_ratio",
+      "firstcap_op_risk_losses_12mo"
+    ],
+    "evidence_summary": "59.4% efficiency ratio · productivity variance across franchise segments · technology platform fragmentation (legacy core + acquired platforms)",
+    "confidence_level": "high",
+    "last_updated": "2026-04-21T05:00:00.000Z",
+    "version": "1.0",
+    "author": "AbarVa North Star overlay",
+    "reasoning_scope_id": "firstcap_scope_broad",
+    "disclosure_scope_id": "firstcap_scope_broad",
+    "source_id": null,
+    "as_of_date": "2026-04-21T05:00:00.000Z",
+    "last_verified_at": "2026-04-21T00:00:00.000Z",
+    "raw_markdown": "### 3.5 · Operating Model Efficiency Gap\n\nFoundational cross-sector pattern — financial-services application.\n\n**Detection signals.** Efficiency ratio >58% · peer efficiency variance · technology debt constraining productivity · operating model fragmentation across business units\n\n**Brindlemark evidence.** 59.4% efficiency ratio · productivity variance across franchise segments · technology platform fragmentation (legacy core + acquired platforms)\n\n**Linked KPIs.** Efficiency Ratio (2.1.2), Operating Risk Losses (2.8.5)",
+    "metadata": {
+      "classification": null,
+      "linked_kpi_names": [
+        "Efficiency Ratio",
+        "Operational Risk Losses (12-Month)"
+      ],
+      "linked_kpis_text": "Efficiency Ratio (2.1.2), Operating Risk Losses (2.8.5)",
+      "expected_outcomes": [],
+      "required_sponsor_profile": null
+    },
+    "created_at": "2026-04-21T22:13:45.597Z",
+    "updated_at": "2026-05-09T17:13:43.200Z"
+  }
+]

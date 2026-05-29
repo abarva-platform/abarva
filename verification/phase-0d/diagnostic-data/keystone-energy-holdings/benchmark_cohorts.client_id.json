@@ -1,0 +1,113 @@
+[
+  {
+    "id": "keystone_primary_peer_cohort",
+    "client_id": "63931f84-4fc8-4d13-baac-aa16b035bff2",
+    "name": "Primary regulated T&D utility peers",
+    "sector": "utility",
+    "subsector": "regulated transmission and distribution",
+    "size_band": "$15B-$35B revenue",
+    "geography": "United States / PJM and adjacent jurisdictions",
+    "business_model": "regulated utility holding company",
+    "maturity": "incumbent",
+    "peer_count": 9,
+    "is_primary": true,
+    "peer_companies": [
+      "Exelon",
+      "Xcel Energy",
+      "PPL",
+      "DTE Energy",
+      "Ameren",
+      "ConEd",
+      "Eversource",
+      "NiSource",
+      "WEC Energy Group"
+    ],
+    "methodology_notes": "Primary peer cohort drawn from Keystone base seed Part 10 with tight comparable utility holding companies.",
+    "source_id": null,
+    "as_of_date": "2026-04-21T05:00:00.000Z",
+    "confidence_level": "high",
+    "last_verified_at": "2026-04-21T00:00:00.000Z",
+    "metadata": {
+      "source": "Keystone base seed Part 10",
+      "cohort_kind": "primary"
+    },
+    "created_at": "2026-04-21T20:54:13.386Z",
+    "updated_at": "2026-04-21T20:54:13.386Z"
+  },
+  {
+    "id": "keystone_extended_grid_modernization_cohort",
+    "client_id": "63931f84-4fc8-4d13-baac-aa16b035bff2",
+    "name": "Extended grid modernization peers",
+    "sector": "utility",
+    "subsector": "regulated utility with large capital programs",
+    "size_band": "$15B-$50B revenue",
+    "geography": "United States",
+    "business_model": "regulated utility / hybrid utility",
+    "maturity": "incumbent",
+    "peer_count": 14,
+    "is_primary": false,
+    "peer_companies": [
+      "Exelon",
+      "Xcel Energy",
+      "PPL",
+      "DTE Energy",
+      "Ameren",
+      "ConEd",
+      "Eversource",
+      "NiSource",
+      "WEC Energy Group",
+      "Duke Energy",
+      "Southern Company",
+      "Dominion Energy",
+      "American Electric Power",
+      "Edison International"
+    ],
+    "methodology_notes": "Extended comparison set for grid modernization, capital recovery, and clean energy transition dimensions.",
+    "source_id": null,
+    "as_of_date": "2026-04-21T05:00:00.000Z",
+    "confidence_level": "medium",
+    "last_verified_at": "2026-04-21T00:00:00.000Z",
+    "metadata": {
+      "dimension": "grid_modernization",
+      "cohort_kind": "extended"
+    },
+    "created_at": "2026-04-21T20:54:13.386Z",
+    "updated_at": "2026-04-21T20:54:13.386Z"
+  },
+  {
+    "id": "keystone_customer_experience_cohort",
+    "client_id": "63931f84-4fc8-4d13-baac-aa16b035bff2",
+    "name": "Utility customer-experience peers",
+    "sector": "utility",
+    "subsector": "regulated customer operations",
+    "size_band": "$10B-$35B revenue",
+    "geography": "United States",
+    "business_model": "regulated distribution utility",
+    "maturity": "incumbent",
+    "peer_count": 10,
+    "is_primary": false,
+    "peer_companies": [
+      "Exelon",
+      "DTE Energy",
+      "Ameren",
+      "ConEd",
+      "Eversource",
+      "NiSource",
+      "WEC Energy Group",
+      "Duke Energy",
+      "Southern Company",
+      "Dominion Energy"
+    ],
+    "methodology_notes": "Customer-experience cohort used for JD Power, first-call resolution, and self-service comparisons.",
+    "source_id": null,
+    "as_of_date": "2026-04-21T05:00:00.000Z",
+    "confidence_level": "medium",
+    "last_verified_at": "2026-04-21T00:00:00.000Z",
+    "metadata": {
+      "dimension": "customer_experience",
+      "cohort_kind": "dimension_specific"
+    },
+    "created_at": "2026-04-21T20:54:13.386Z",
+    "updated_at": "2026-04-21T20:54:13.386Z"
+  }
+]

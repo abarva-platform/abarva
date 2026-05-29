@@ -1,0 +1,19 @@
+[
+  {
+    "id": "c82ee624-42a8-4335-a42f-48e2f29aeeb7",
+    "person_id": "435ce745-63f2-4444-98d1-1965fc971ccd",
+    "client_id": "a75687bf-71b9-4524-ab4e-68ae3f28d200",
+    "dashboard_variant": "cio",
+    "default_surface": "dashboard",
+    "default_filters": {
+      "strategic_moves": {
+        "sort": "value",
+        "listView": "kanban"
+      }
+    },
+    "atlas_panel_state": "expanded",
+    "mobile_summary_enabled": true,
+    "created_at": "2026-05-07T11:32:13.713Z",
+    "updated_at": "2026-05-07T11:32:18.903Z"
+  }
+]

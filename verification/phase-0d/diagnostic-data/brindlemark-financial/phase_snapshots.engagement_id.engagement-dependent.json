@@ -1,0 +1,180 @@
+[
+  {
+    "id": "bbc699f7-37b6-46da-9a0c-6f07d158d88f",
+    "engagement_id": "6f2f57c8-f608-4aec-ac2b-0d3991d357d2",
+    "phase_number": 0,
+    "phase_name": null,
+    "snapshot_jsonb": {
+      "rationale": "P0 seed package signed off: sponsor candidate (Priya Mehta, CPO) named with authority shape, value hypothesis seed with mechanism recorded, program classification set (Analytics Modernization / AI Operating Model), first cohort named (payments + product analytics teams), baseline evidence plan defined, regulatory risks documented (SR 11-7, SOX, FFIEC), Discovery stop conditions written, and P1 entry criteria confirmed. All three hard gates satisfied. Two soft gates (Discovery capacity envelope and evidence family) addressed in the seed package. Advancing to P1 Discovery.",
+      "advancedAt": "2026-05-02T15:35:34.429Z",
+      "self_approved": true
+    },
+    "locked_by_user_id": "435ce745-63f2-4444-98d1-1965fc971ccd",
+    "locked_at": "2026-05-02T15:35:34.526Z",
+    "approval_status": "approved",
+    "created_at": "2026-05-02T15:35:34.545Z"
+  },
+  {
+    "id": "eed828db-5b79-4518-82e6-6ce016c3a4a8",
+    "engagement_id": "6f2f57c8-f608-4aec-ac2b-0d3991d357d2",
+    "phase_number": 1,
+    "phase_name": null,
+    "snapshot_jsonb": {
+      "rationale": "All P1 hard gates met: P0 seed ingested, validated problem statement with four-domain severity and explicit boundary, four OKR baselines attested with source/grain/method/owner by Rachel Kim, Kevin Walsh, Nadia Rahman (v2 addendum 2026-05-02), named stakeholder map with sponsor, four business owners, dissenter, and security owner gap flagged. Priya Mehta issued explicit PROCEED decision in the v2 baseline attestation addendum.",
+      "advancedAt": "2026-05-02T15:59:28.859Z",
+      "self_approved": true
+    },
+    "locked_by_user_id": "435ce745-63f2-4444-98d1-1965fc971ccd",
+    "locked_at": "2026-05-02T15:59:28.995Z",
+    "approval_status": "approved",
+    "created_at": "2026-05-02T15:59:29.014Z"
+  },
+  {
+    "id": "fdbeb5b7-14a7-4276-8ecb-fdfff5ba2e01",
+    "engagement_id": "6f2f57c8-f608-4aec-ac2b-0d3991d357d2",
+    "phase_number": 2,
+    "phase_name": null,
+    "snapshot_jsonb": {
+      "rationale": "Charter signed off (deliverables_v2 charter row, status=signed_off). Sponsor Priya Mehta assigned with approval_authority=sponsor per P1 Baseline Attestation Addendum v2 (2026-05-02). Synthesis Options Memo with three options and explicit crossover conditions saved and signed off. Facilitator Guide saved. Two soft-gate items open (succession owner, named architecture reviewer) — flagged in charter and facilitator guide for resolution before P3 Design advances.",
+      "advancedAt": "2026-05-02T16:02:10.597Z",
+      "self_approved": true
+    },
+    "locked_by_user_id": "435ce745-63f2-4444-98d1-1965fc971ccd",
+    "locked_at": "2026-05-02T16:02:10.755Z",
+    "approval_status": "approved",
+    "created_at": "2026-05-02T16:02:10.774Z"
+  },
+  {
+    "id": "57cf8bd8-37b2-42ba-a13e-616081465c08",
+    "engagement_id": "6f2f57c8-f608-4aec-ac2b-0d3991d357d2",
+    "phase_number": 3,
+    "phase_name": null,
+    "snapshot_jsonb": {
+      "rationale": "All eight P3 hard gates met: P2 target-state path carried forward; design_spec signed off by all named architecture, data, risk, and business owners; build architecture complete with interface owners; pilot cohort named with inclusion/exclusion logic (13 users, fraud + payments); success criteria locked against P2 baseline KPIs and sources with pass/fail decision rule; sponsor commitment and decision cadence confirmed; scope boundary preserved; kill criterion translated into operational stop rule. Named dissenter (Kevin Walsh) resolved. Two soft gaps (phase_3_findings module, cxo_interview module) noted for P4 early action.",
+      "advancedAt": "2026-05-02T16:15:07.716Z",
+      "self_approved": true
+    },
+    "locked_by_user_id": "435ce745-63f2-4444-98d1-1965fc971ccd",
+    "locked_at": "2026-05-02T16:15:07.827Z",
+    "approval_status": "approved",
+    "created_at": "2026-05-02T16:15:07.848Z"
+  },
+  {
+    "id": "358fbc6b-3a26-40d4-92a1-9448930ead2a",
+    "engagement_id": "6f2f57c8-f608-4aec-ac2b-0d3991d357d2",
+    "phase_number": 4,
+    "phase_name": null,
+    "snapshot_jsonb": {
+      "rationale": "All P4 hard and soft gate criteria met: signed execution roadmap with six workstreams and owners, seven structured milestone rows with decisions and evidence sources, success criteria tied to P1 baselines across all four execution phases, estimate range with assumptions, technology gap manifest (G1–G5), responsibility matrix, governance cadence with escalation rules, and five Tower monitoring feeds with baselines and thresholds. Execution boundary to external tools clearly established. Financial values restricted. Baseline values preserved exactly from P1 Attestation v2.",
+      "advancedAt": "2026-05-02T16:31:20.492Z",
+      "self_approved": true
+    },
+    "locked_by_user_id": "435ce745-63f2-4444-98d1-1965fc971ccd",
+    "locked_at": "2026-05-02T16:31:20.613Z",
+    "approval_status": "approved",
+    "created_at": "2026-05-02T16:31:20.634Z"
+  },
+  {
+    "id": "ae204086-ffa7-47fe-ad5b-a18a7cd7b77a",
+    "engagement_id": "6f2f57c8-f608-4aec-ac2b-0d3991d357d2",
+    "phase_number": 5,
+    "phase_name": null,
+    "snapshot_jsonb": {
+      "rationale": "All five P5 deliverables signed off: business_case, funding_approval, sponsor_alignment, readiness_and_change_plan, tower_handoff_plan. All four hard gates met. Priya Mehta confirmed mobilization approval (condition: risk committee model-risk evidence path). Execution owner named (Lena Ortiz). Tower handoff plan accepted with five feeds, P1 baselines, escalation path, and P6 prerequisites defined.",
+      "advancedAt": "2026-05-02T16:35:43.742Z",
+      "self_approved": true
+    },
+    "locked_by_user_id": "435ce745-63f2-4444-98d1-1965fc971ccd",
+    "locked_at": "2026-05-02T16:35:43.842Z",
+    "approval_status": "approved",
+    "created_at": "2026-05-02T16:35:43.862Z"
+  },
+  {
+    "id": "4a7697cd-f461-43ee-bd14-1370c43d34a1",
+    "engagement_id": "3da05bec-73df-4c34-9d3a-f1053280fbca",
+    "phase_number": 0,
+    "phase_name": null,
+    "snapshot_jsonb": {
+      "rationale": "All P0 hard gates satisfied: (1) Program seed recorded with classification (Digital Banking Risk Controls Modernization, risk/compliance domain, AI-augmented controls automation pattern); (2) Value hypothesis seed names cohort (digital banking risk/compliance function, three control domains), current pain (manual attestations, audit-finding backlog, fragmented KYC/AML evidence), value direction (materially reduced remediation cycles and audit-finding closure time), and causal mechanism (automated evidence-linked controls replacing point-in-time manual attestations); (3) Named sponsor with authority confirmed — Ethan Brooks, Director IT Sourcing, with budget and vendor/policy decision rights, bi-weekly cadence on calendar. Soft gates satisfied: Discovery capacity confirmed with named owners (Lena Ortiz, Rachel Kim, Priya Mehta, Nadia Rahman); scope boundary names three specific control domains; P1 evidence family is defined (four day-one evidence requests). Stop condition and falsifier documented.",
+      "advancedAt": "2026-05-02T22:16:00.516Z",
+      "self_approved": true
+    },
+    "locked_by_user_id": "435ce745-63f2-4444-98d1-1965fc971ccd",
+    "locked_at": "2026-05-02T22:16:00.627Z",
+    "approval_status": "approved",
+    "created_at": "2026-05-02T22:16:00.646Z"
+  },
+  {
+    "id": "2db42034-aa63-45eb-b423-20b805407710",
+    "engagement_id": "3da05bec-73df-4c34-9d3a-f1053280fbca",
+    "phase_number": 1,
+    "phase_name": null,
+    "snapshot_jsonb": {
+      "requested_from": "program_detail_phase_advance_button"
+    },
+    "locked_by_user_id": "435ce745-63f2-4444-98d1-1965fc971ccd",
+    "locked_at": "2026-05-02T22:34:56.178Z",
+    "approval_status": "approved",
+    "created_at": "2026-05-02T22:34:56.200Z"
+  },
+  {
+    "id": "c78753b4-32d7-43c1-a7ad-d4b1b1317571",
+    "engagement_id": "3da05bec-73df-4c34-9d3a-f1053280fbca",
+    "phase_number": 2,
+    "phase_name": null,
+    "snapshot_jsonb": {
+      "rationale": "All P2 hard gates satisfied: charter signed off by sponsor Ethan Brooks, sponsor assigned with approval authority. All soft gates satisfied: three options compared with trade-offs and crossover conditions, architecture reviewed by James Park (2025-07-15) with substantive pushback, four P1-anchored baseline KPIs with sources and methods, value hypothesis with causal mechanism, scope boundary, named dissenter, kill criterion, succession owner. Model-risk owner (Priya Mehta) and compliance liaison (Nadia Rahman) locked as P3 entry conditions. P3 Entry Conditions Checklist signed off.",
+      "advancedAt": "2026-05-02T22:37:14.595Z",
+      "self_approved": true
+    },
+    "locked_by_user_id": "435ce745-63f2-4444-98d1-1965fc971ccd",
+    "locked_at": "2026-05-02T22:37:14.719Z",
+    "approval_status": "approved",
+    "created_at": "2026-05-02T22:37:14.735Z"
+  },
+  {
+    "id": "08ffd4e1-9018-4fbe-8e3a-c8d8c71c3da8",
+    "engagement_id": "3da05bec-73df-4c34-9d3a-f1053280fbca",
+    "phase_number": 3,
+    "phase_name": null,
+    "snapshot_jsonb": {
+      "rationale": "All P3 hard gates met: design_spec and requirements_traceability signed off; pilot thresholds locked with numeric baselines; dissenter Kevin Walsh resolved and sponsor decision recorded; Nadia Rahman compliance approvals obtained; CXO interview completed; sponsor cadence confirmed bi-weekly Tuesday with Ethan Brooks; James Park architecture constraint and Priya Mehta model-risk trigger carried forward. P4 can plan execution without reopening design questions.",
+      "advancedAt": "2026-05-02T22:40:50.667Z",
+      "self_approved": true
+    },
+    "locked_by_user_id": "435ce745-63f2-4444-98d1-1965fc971ccd",
+    "locked_at": "2026-05-02T22:40:50.757Z",
+    "approval_status": "approved",
+    "created_at": "2026-05-02T22:40:50.770Z"
+  },
+  {
+    "id": "c8f77989-930d-447c-af97-77e7385cfd85",
+    "engagement_id": "3da05bec-73df-4c34-9d3a-f1053280fbca",
+    "phase_number": 4,
+    "phase_name": null,
+    "snapshot_jsonb": {
+      "rationale": "All P4 hard gates met: execution roadmap signed off with workstreams, execution phases, critical milestones with owners and dependencies, qualitative estimate range with assumptions, technology gap manifest, RACI, governance cadence, Tower monitoring requirements, success criteria by phase tied to P3/P2 promise contract baselines, and benefits realization plan. 8 structured milestone rows persisted. Sponsor Ethan Brooks requested sign-off and advance.",
+      "advancedAt": "2026-05-02T22:42:27.466Z",
+      "self_approved": true
+    },
+    "locked_by_user_id": "435ce745-63f2-4444-98d1-1965fc971ccd",
+    "locked_at": "2026-05-02T22:42:27.573Z",
+    "approval_status": "approved",
+    "created_at": "2026-05-02T22:42:27.591Z"
+  },
+  {
+    "id": "4566e583-f446-4650-a158-01601711535e",
+    "engagement_id": "3da05bec-73df-4c34-9d3a-f1053280fbca",
+    "phase_number": 5,
+    "phase_name": null,
+    "snapshot_jsonb": {
+      "rationale": "All P5 hard gates met: business case approved (qualitative, financials redacted), sponsor alignment confirmed by Ethan Brooks personally, readiness and change plan signed off with named owners and exceptions, Tower handoff plan accepted with KPIs, thresholds, escalation path, and benefits cadence. Funding approval record complete. All five required P5 deliverables signed off in deliverables_v2.",
+      "advancedAt": "2026-05-02T22:44:39.701Z",
+      "self_approved": true
+    },
+    "locked_by_user_id": "435ce745-63f2-4444-98d1-1965fc971ccd",
+    "locked_at": "2026-05-02T22:44:39.792Z",
+    "approval_status": "approved",
+    "created_at": "2026-05-02T22:44:39.804Z"
+  }
+]

@@ -1,0 +1,42 @@
+[
+  {
+    "goal_id": "FCF-GOAL-01",
+    "client_id": "a75687bf-71b9-4524-ab4e-68ae3f28d200",
+    "name": "Defend NIM through better risk-adjusted pricing",
+    "strategic_context": "NIM compression accelerating (14bp/quarter, 3 consecutive quarters). Need to price better, not chase volume.",
+    "display_order": 1,
+    "loaded_via_template": "first-capital-financial/full_load.json v1.1.0-tower-agent-depth",
+    "created_at": "2026-05-07T21:26:05.955Z",
+    "updated_at": "2026-05-09T14:56:33.551Z"
+  },
+  {
+    "goal_id": "FCF-GOAL-02",
+    "client_id": "a75687bf-71b9-4524-ab4e-68ae3f28d200",
+    "name": "Achieve regulatory posture for AI",
+    "strategic_context": "SR 11-7 + FFIEC AI guidance + OCC bulletins tightening. Must demonstrate model risk maturity to examiners.",
+    "display_order": 2,
+    "loaded_via_template": "first-capital-financial/full_load.json v1.1.0-tower-agent-depth",
+    "created_at": "2026-05-07T21:26:05.955Z",
+    "updated_at": "2026-05-09T14:56:33.551Z"
+  },
+  {
+    "goal_id": "FCF-GOAL-03",
+    "client_id": "a75687bf-71b9-4524-ab4e-68ae3f28d200",
+    "name": "Reduce loss + protect customer experience",
+    "strategic_context": "Fraud rising in digital channels. False positives damaging customer experience.",
+    "display_order": 3,
+    "loaded_via_template": "first-capital-financial/full_load.json v1.1.0-tower-agent-depth",
+    "created_at": "2026-05-07T21:26:05.955Z",
+    "updated_at": "2026-05-09T14:56:33.551Z"
+  },
+  {
+    "goal_id": "FCF-GOAL-04",
+    "client_id": "a75687bf-71b9-4524-ab4e-68ae3f28d200",
+    "name": "Productivity uplift in middle/back office",
+    "strategic_context": "Cost-to-income ratio above peer median. Need productivity gains.",
+    "display_order": 4,
+    "loaded_via_template": "first-capital-financial/full_load.json v1.1.0-tower-agent-depth",
+    "created_at": "2026-05-07T21:26:05.955Z",
+    "updated_at": "2026-05-09T14:56:33.551Z"
+  }
+]

@@ -1,0 +1,447 @@
+[
+  {
+    "id": "firstcap_cfo_scorecard",
+    "client_id": "a75687bf-71b9-4524-ab4e-68ae3f28d200",
+    "name": "CFO Weekly Scorecard (Power BI)",
+    "description": "CFO Weekly Scorecard (Power BI)",
+    "modality": "api",
+    "connector_type": null,
+    "source_location": null,
+    "credentials_reference": null,
+    "refresh_schedule": "weekly",
+    "kpi_ids_populated": [
+      "firstcap_nim",
+      "firstcap_efficiency_ratio",
+      "firstcap_roa",
+      "firstcap_rotce",
+      "firstcap_ppnr",
+      "firstcap_non_interest_income_ratio",
+      "firstcap_tier1_capital_ratio",
+      "firstcap_cet1_ratio",
+      "firstcap_lcr",
+      "firstcap_nsfr",
+      "firstcap_loan_to_deposit"
+    ],
+    "scope_description": "2.1.1-2.1.6 (financial), 2.3.1-2.3.5 (capital and liquidity), treasury metrics",
+    "data_format": null,
+    "residency_mode": "client_owned_client_hosted (MNPI + regulatory reporting basis)",
+    "retention_policy": "Client-governed per north star Part 9",
+    "compliance_tags": [
+      "SOX",
+      "MNPI",
+      "SEC disclosure",
+      "FFIEC regulatory reporting"
+    ],
+    "regulatory_notes": null,
+    "reasoning_scope_id": "firstcap_scope_finance_transformation_executive_advisory",
+    "disclosure_scope_id": "firstcap_scope_finance_full_executive_advisory_full_others_reasoning_only_specific_values_never_disclosed",
+    "onboarded_at": "2026-04-21T00:00:00.000Z",
+    "onboarded_by_person_id": null,
+    "program_association": [
+      "executive_advisory",
+      "finance_transformation"
+    ],
+    "sunset_policy": "Re-evaluate at program completion per north star Part 9.8",
+    "access_log_reference": "audit://firstcap_cfo_scorecard",
+    "last_accessed_at": null,
+    "last_refreshed_at": "2026-04-21T00:00:00.000Z",
+    "source_id": null,
+    "as_of_date": "2026-04-21T05:00:00.000Z",
+    "confidence_level": "high",
+    "last_verified_at": "2026-04-21T00:00:00.000Z",
+    "raw_markdown": "### 5.1 · CFO Weekly Scorecard (Power BI)\n\n- **ID:** `firstcap_cfo_scorecard`\n- **Modality:** API · weekly\n- **KPIs:** 2.1.1-2.1.6 (financial), 2.3.1-2.3.5 (capital and liquidity), treasury metrics\n- **Residency:** client_owned_client_hosted (MNPI + regulatory reporting basis)\n- **Compliance:** SOX, MNPI, SEC disclosure, FFIEC regulatory reporting\n- **Reasoning scope:** Finance Transformation, Executive Advisory\n- **Disclosure scope:** Finance (full) · Executive Advisory (full) · others (reasoning-only; specific values never disclosed externally to programs)",
+    "metadata": {
+      "kpis_text": "2.1.1-2.1.6 (financial), 2.3.1-2.3.5 (capital and liquidity), treasury metrics",
+      "modality_text": "API · weekly"
+    },
+    "created_at": "2026-04-21T22:13:45.682Z",
+    "updated_at": "2026-04-21T22:13:45.682Z"
+  },
+  {
+    "id": "firstcap_credit_risk_dashboard",
+    "client_id": "a75687bf-71b9-4524-ab4e-68ae3f28d200",
+    "name": "Credit Risk Dashboard",
+    "description": "Credit Risk Dashboard",
+    "modality": "api",
+    "connector_type": null,
+    "source_location": null,
+    "credentials_reference": null,
+    "refresh_schedule": "daily",
+    "kpi_ids_populated": [
+      "firstcap_nco_rate",
+      "firstcap_npl_ratio",
+      "firstcap_alll_to_loans",
+      "firstcap_cre_concentration",
+      "firstcap_ci_delinquency"
+    ],
+    "scope_description": "2.2.1-2.2.5 (credit quality), portfolio segmentation",
+    "data_format": null,
+    "residency_mode": "client_owned_client_hosted (regulatory-sensitive, MNPI)",
+    "retention_policy": "Client-governed per north star Part 9",
+    "compliance_tags": [
+      "SR 11-7 (model risk)",
+      "CCAR",
+      "Basel III reporting"
+    ],
+    "regulatory_notes": null,
+    "reasoning_scope_id": "firstcap_scope_credit_risk_executive_advisory_risk_management",
+    "disclosure_scope_id": "firstcap_scope_program_specific_with_regulatory_commentary_treatment",
+    "onboarded_at": "2026-04-21T00:00:00.000Z",
+    "onboarded_by_person_id": null,
+    "program_association": [
+      "executive_advisory",
+      "risk_management"
+    ],
+    "sunset_policy": "Re-evaluate at program completion per north star Part 9.8",
+    "access_log_reference": "audit://firstcap_credit_risk_dashboard",
+    "last_accessed_at": null,
+    "last_refreshed_at": "2026-04-21T00:00:00.000Z",
+    "source_id": null,
+    "as_of_date": "2026-04-21T05:00:00.000Z",
+    "confidence_level": "high",
+    "last_verified_at": "2026-04-21T00:00:00.000Z",
+    "raw_markdown": "### 5.2 · Credit Risk Dashboard\n\n- **ID:** `firstcap_credit_risk_dashboard`\n- **Modality:** API · daily\n- **KPIs:** 2.2.1-2.2.5 (credit quality), portfolio segmentation\n- **Residency:** client_owned_client_hosted (regulatory-sensitive, MNPI)\n- **Compliance:** SR 11-7 (model risk), CCAR, Basel III reporting\n- **Reasoning scope:** Credit Risk, Executive Advisory, Risk Management\n- **Disclosure scope:** program-specific with regulatory-commentary treatment",
+    "metadata": {
+      "kpis_text": "2.2.1-2.2.5 (credit quality), portfolio segmentation",
+      "modality_text": "API · daily"
+    },
+    "created_at": "2026-04-21T22:13:45.682Z",
+    "updated_at": "2026-04-21T22:13:45.682Z"
+  },
+  {
+    "id": "firstcap_bsa_aml_dashboard",
+    "client_id": "a75687bf-71b9-4524-ab4e-68ae3f28d200",
+    "name": "BSA/AML Operations Dashboard",
+    "description": "BSA/AML Operations Dashboard",
+    "modality": "api",
+    "connector_type": null,
+    "source_location": null,
+    "credentials_reference": null,
+    "refresh_schedule": "daily",
+    "kpi_ids_populated": [
+      "firstcap_aml_alert_volume",
+      "firstcap_aml_false_positive_rate",
+      "firstcap_sar_filings_monthly"
+    ],
+    "scope_description": "2.8.1-2.8.3 (AML operations)",
+    "data_format": null,
+    "residency_mode": "client_owned_client_hosted (legal-privileged + BSA/AML sensitivity)",
+    "retention_policy": "Client-governed per north star Part 9",
+    "compliance_tags": [
+      "BSA/AML",
+      "FinCEN, legal-privileged material (consent order context)"
+    ],
+    "regulatory_notes": "**program-scoped + legal-privileged** (extreme constraint); BSA/AML program disclosable internally; cross-program reasoning-only with specific values never surfaced outside program",
+    "reasoning_scope_id": "firstcap_scope_bsa_aml_modernization_program_compliance_legal_executive_advisory_limited",
+    "disclosure_scope_id": "firstcap_scope_program_scoped_legal_privileged_extreme_constraint_bsa_aml_program_disclosable_internally_",
+    "onboarded_at": "2026-04-21T00:00:00.000Z",
+    "onboarded_by_person_id": null,
+    "program_association": [
+      "executive_advisory",
+      "bsa_aml_modernization"
+    ],
+    "sunset_policy": "Re-evaluate at program completion per north star Part 9.8",
+    "access_log_reference": "audit://firstcap_bsa_aml_dashboard",
+    "last_accessed_at": null,
+    "last_refreshed_at": "2026-04-21T00:00:00.000Z",
+    "source_id": null,
+    "as_of_date": "2026-04-21T05:00:00.000Z",
+    "confidence_level": "high",
+    "last_verified_at": "2026-04-21T00:00:00.000Z",
+    "raw_markdown": "### 5.3 · BSA/AML Operations Dashboard\n\n- **ID:** `firstcap_bsa_aml_dashboard`\n- **Modality:** API · daily\n- **KPIs:** 2.8.1-2.8.3 (AML operations)\n- **Residency:** client_owned_client_hosted (legal-privileged + BSA/AML sensitivity)\n- **Compliance:** BSA/AML, FinCEN, legal-privileged material (consent order context)\n- **Reasoning scope:** BSA/AML Modernization program, Compliance, Legal, Executive Advisory (limited)\n- **Disclosure scope:** **program-scoped + legal-privileged** (extreme constraint); BSA/AML program disclosable internally; cross-program reasoning-only with specific values never surfaced outside program",
+    "metadata": {
+      "kpis_text": "2.8.1-2.8.3 (AML operations)",
+      "modality_text": "API · daily"
+    },
+    "created_at": "2026-04-21T22:13:45.682Z",
+    "updated_at": "2026-04-21T22:13:45.682Z"
+  },
+  {
+    "id": "firstcap_deposit_balance_sheet_tracker",
+    "client_id": "a75687bf-71b9-4524-ab4e-68ae3f28d200",
+    "name": "Deposit and Balance Sheet Tracker",
+    "description": "Deposit and Balance Sheet Tracker",
+    "modality": "api",
+    "connector_type": null,
+    "source_location": null,
+    "credentials_reference": null,
+    "refresh_schedule": "daily",
+    "kpi_ids_populated": [
+      "firstcap_deposit_growth",
+      "firstcap_cost_of_deposits",
+      "firstcap_nib_deposit_pct",
+      "firstcap_deposit_attrition",
+      "firstcap_commercial_concentration_top25"
+    ],
+    "scope_description": "2.4.1-2.4.5 (deposits)",
+    "data_format": null,
+    "residency_mode": "client_owned_client_hosted",
+    "retention_policy": "Client-governed per north star Part 9",
+    "compliance_tags": [
+      "FFIEC reporting",
+      "MNPI"
+    ],
+    "regulatory_notes": null,
+    "reasoning_scope_id": "firstcap_scope_treasury_finance_consumer_banking_commercial_banking_executive_advisory",
+    "disclosure_scope_id": "firstcap_scope_program_specific",
+    "onboarded_at": "2026-04-21T00:00:00.000Z",
+    "onboarded_by_person_id": null,
+    "program_association": [
+      "executive_advisory",
+      "commercial_banking",
+      "consumer_banking"
+    ],
+    "sunset_policy": "Re-evaluate at program completion per north star Part 9.8",
+    "access_log_reference": "audit://firstcap_deposit_balance_sheet_tracker",
+    "last_accessed_at": null,
+    "last_refreshed_at": "2026-04-21T00:00:00.000Z",
+    "source_id": null,
+    "as_of_date": "2026-04-21T05:00:00.000Z",
+    "confidence_level": "high",
+    "last_verified_at": "2026-04-21T00:00:00.000Z",
+    "raw_markdown": "### 5.4 · Deposit and Balance Sheet Tracker\n\n- **ID:** `firstcap_deposit_balance_sheet_tracker`\n- **Modality:** API · daily\n- **KPIs:** 2.4.1-2.4.5 (deposits)\n- **Residency:** client_owned_client_hosted\n- **Compliance:** FFIEC reporting, MNPI\n- **Reasoning scope:** Treasury, Finance, Consumer Banking, Commercial Banking, Executive Advisory\n- **Disclosure scope:** program-specific",
+    "metadata": {
+      "kpis_text": "2.4.1-2.4.5 (deposits)",
+      "modality_text": "API · daily"
+    },
+    "created_at": "2026-04-21T22:13:45.682Z",
+    "updated_at": "2026-04-21T22:13:45.682Z"
+  },
+  {
+    "id": "firstcap_wealth_dashboard",
+    "client_id": "a75687bf-71b9-4524-ab4e-68ae3f28d200",
+    "name": "Wealth Management Platform Dashboard",
+    "description": "Wealth Management Platform Dashboard",
+    "modality": "api",
+    "connector_type": null,
+    "source_location": null,
+    "credentials_reference": null,
+    "refresh_schedule": "daily",
+    "kpi_ids_populated": [
+      "firstcap_aum_growth",
+      "firstcap_wealth_client_retention",
+      "firstcap_wealth_net_new_households",
+      "firstcap_advisor_productivity",
+      "firstcap_fee_to_aum"
+    ],
+    "scope_description": "2.6.1-2.6.5 (wealth)",
+    "data_format": null,
+    "residency_mode": "client_owned_abarva_hosted (client-level data de-identified); client_owned_client_hosted (advisor-level and client-level detail)",
+    "retention_policy": "Client-governed per north star Part 9",
+    "compliance_tags": [
+      "SEC (investment adviser)",
+      "FINRA, state securities, fiduciary standards"
+    ],
+    "regulatory_notes": null,
+    "reasoning_scope_id": "firstcap_scope_wealth_programs_cross_franchise_programs_executive_advisory",
+    "disclosure_scope_id": "firstcap_scope_tightly_scoped_client_specific_never_disclosed_advisor_specific_program_scoped",
+    "onboarded_at": "2026-04-21T00:00:00.000Z",
+    "onboarded_by_person_id": null,
+    "program_association": [
+      "executive_advisory"
+    ],
+    "sunset_policy": "Re-evaluate at program completion per north star Part 9.8",
+    "access_log_reference": "audit://firstcap_wealth_dashboard",
+    "last_accessed_at": null,
+    "last_refreshed_at": "2026-04-21T00:00:00.000Z",
+    "source_id": null,
+    "as_of_date": "2026-04-21T05:00:00.000Z",
+    "confidence_level": "high",
+    "last_verified_at": "2026-04-21T00:00:00.000Z",
+    "raw_markdown": "### 5.5 · Wealth Management Platform Dashboard\n\n- **ID:** `firstcap_wealth_dashboard`\n- **Modality:** API · daily\n- **KPIs:** 2.6.1-2.6.5 (wealth)\n- **Residency:** client_owned_abarva_hosted (client-level data de-identified); client_owned_client_hosted (advisor-level and client-level detail)\n- **Compliance:** SEC (investment adviser), FINRA, state securities, fiduciary standards\n- **Reasoning scope:** Wealth programs, Cross-Franchise programs, Executive Advisory\n- **Disclosure scope:** tightly scoped; client-specific never disclosed; advisor-specific program-scoped",
+    "metadata": {
+      "kpis_text": "2.6.1-2.6.5 (wealth)",
+      "modality_text": "API · daily"
+    },
+    "created_at": "2026-04-21T22:13:45.682Z",
+    "updated_at": "2026-04-21T22:13:45.682Z"
+  },
+  {
+    "id": "firstcap_consumer_banking_dashboard",
+    "client_id": "a75687bf-71b9-4524-ab4e-68ae3f28d200",
+    "name": "Consumer Banking Performance Dashboard",
+    "description": "Consumer Banking Performance Dashboard",
+    "modality": "api",
+    "connector_type": null,
+    "source_location": null,
+    "credentials_reference": null,
+    "refresh_schedule": "daily",
+    "kpi_ids_populated": [
+      "firstcap_digital_adoption_consumer",
+      "firstcap_mobile_mau_growth",
+      "firstcap_jdpower_retail_csat",
+      "firstcap_net_new_primary_households",
+      "firstcap_digital_account_opening_pct"
+    ],
+    "scope_description": "2.7.1-2.7.5 (digital and customer)",
+    "data_format": null,
+    "residency_mode": "client_owned_abarva_hosted",
+    "retention_policy": "Client-governed per north star Part 9",
+    "compliance_tags": [
+      "GLBA, state privacy",
+      "CFPB-relevant consumer protection"
+    ],
+    "regulatory_notes": null,
+    "reasoning_scope_id": "firstcap_scope_consumer_banking_programs_digital_transformation_executive_advisory",
+    "disclosure_scope_id": "firstcap_scope_program_specific_aggregate_customer_specific_never_disclosed",
+    "onboarded_at": "2026-04-21T00:00:00.000Z",
+    "onboarded_by_person_id": null,
+    "program_association": [
+      "executive_advisory",
+      "consumer_banking",
+      "digital_transformation"
+    ],
+    "sunset_policy": "Re-evaluate at program completion per north star Part 9.8",
+    "access_log_reference": "audit://firstcap_consumer_banking_dashboard",
+    "last_accessed_at": null,
+    "last_refreshed_at": "2026-04-21T00:00:00.000Z",
+    "source_id": null,
+    "as_of_date": "2026-04-21T05:00:00.000Z",
+    "confidence_level": "high",
+    "last_verified_at": "2026-04-21T00:00:00.000Z",
+    "raw_markdown": "### 5.6 · Consumer Banking Performance Dashboard\n\n- **ID:** `firstcap_consumer_banking_dashboard`\n- **Modality:** API · daily\n- **KPIs:** 2.7.1-2.7.5 (digital and customer)\n- **Residency:** client_owned_abarva_hosted\n- **Compliance:** GLBA, state privacy, CFPB-relevant consumer protection\n- **Reasoning scope:** Consumer Banking programs, Digital Transformation, Executive Advisory\n- **Disclosure scope:** program-specific aggregate; customer-specific never disclosed",
+    "metadata": {
+      "kpis_text": "2.7.1-2.7.5 (digital and customer)",
+      "modality_text": "API · daily"
+    },
+    "created_at": "2026-04-21T22:13:45.682Z",
+    "updated_at": "2026-04-21T22:13:45.682Z"
+  },
+  {
+    "id": "firstcap_commercial_banking_tracker",
+    "client_id": "a75687bf-71b9-4524-ab4e-68ae3f28d200",
+    "name": "Commercial Banking Relationship Tracker",
+    "description": "Commercial Banking Relationship Tracker",
+    "modality": "api",
+    "connector_type": null,
+    "source_location": null,
+    "credentials_reference": null,
+    "refresh_schedule": "weekly",
+    "kpi_ids_populated": [],
+    "scope_description": "Commercial loan metrics, commercial deposit concentration, relationship depth",
+    "data_format": null,
+    "residency_mode": "client_owned_client_hosted (commercial-client sensitivity + competitive)",
+    "retention_policy": "Client-governed per north star Part 9",
+    "compliance_tags": [
+      "commercial-banking confidentiality (NDA)",
+      "GLBA business-customer provisions"
+    ],
+    "regulatory_notes": null,
+    "reasoning_scope_id": "firstcap_scope_commercial_banking_programs_treasury_executive_advisory",
+    "disclosure_scope_id": "firstcap_scope_program_specific_specific_commercial_relationships_never_disclosed_cross_program",
+    "onboarded_at": "2026-04-21T00:00:00.000Z",
+    "onboarded_by_person_id": null,
+    "program_association": [
+      "executive_advisory",
+      "commercial_banking"
+    ],
+    "sunset_policy": "Re-evaluate at program completion per north star Part 9.8",
+    "access_log_reference": "audit://firstcap_commercial_banking_tracker",
+    "last_accessed_at": null,
+    "last_refreshed_at": "2026-04-21T00:00:00.000Z",
+    "source_id": null,
+    "as_of_date": "2026-04-21T05:00:00.000Z",
+    "confidence_level": "high",
+    "last_verified_at": "2026-04-21T00:00:00.000Z",
+    "raw_markdown": "### 5.7 · Commercial Banking Relationship Tracker\n\n- **ID:** `firstcap_commercial_banking_tracker`\n- **Modality:** API · weekly\n- **KPIs:** Commercial loan metrics, commercial deposit concentration, relationship depth\n- **Residency:** client_owned_client_hosted (commercial-client sensitivity + competitive)\n- **Compliance:** commercial-banking confidentiality (NDA), GLBA business-customer provisions\n- **Reasoning scope:** Commercial Banking programs, Treasury, Executive Advisory\n- **Disclosure scope:** program-specific; specific commercial relationships never disclosed cross-program",
+    "metadata": {
+      "kpis_text": "Commercial loan metrics, commercial deposit concentration, relationship depth",
+      "modality_text": "API · weekly"
+    },
+    "created_at": "2026-04-21T22:13:45.682Z",
+    "updated_at": "2026-04-21T22:13:45.682Z"
+  },
+  {
+    "id": "firstcap_regulatory_exam_tracker",
+    "client_id": "a75687bf-71b9-4524-ab4e-68ae3f28d200",
+    "name": "Regulatory Examination and Audit Tracker",
+    "description": "Regulatory Examination and Audit Tracker",
+    "modality": "api",
+    "connector_type": null,
+    "source_location": null,
+    "credentials_reference": null,
+    "refresh_schedule": "weekly + event-driven",
+    "kpi_ids_populated": [
+      "firstcap_regulatory_exam_findings_open",
+      "firstcap_op_risk_losses_12mo"
+    ],
+    "scope_description": "2.8.4 (exam findings), 2.8.5 (op risk losses), exam cycle status by regulator",
+    "data_format": null,
+    "residency_mode": "client_owned_client_hosted (legal-privileged + regulatory-sensitive)",
+    "retention_policy": "Client-governed per north star Part 9",
+    "compliance_tags": [
+      "legal-privileged material, regulatory confidentiality"
+    ],
+    "regulatory_notes": "**program-scoped + legal-privileged** (extreme constraint); affected-program-only; external disclosure prohibited",
+    "reasoning_scope_id": "firstcap_scope_compliance_programs_legal_executive_advisory_risk_management",
+    "disclosure_scope_id": "firstcap_scope_program_scoped_legal_privileged_extreme_constraint_affected_program_only_external_disclosu",
+    "onboarded_at": "2026-04-21T00:00:00.000Z",
+    "onboarded_by_person_id": null,
+    "program_association": [
+      "executive_advisory",
+      "risk_management"
+    ],
+    "sunset_policy": "Re-evaluate at program completion per north star Part 9.8",
+    "access_log_reference": "audit://firstcap_regulatory_exam_tracker",
+    "last_accessed_at": null,
+    "last_refreshed_at": "2026-04-21T00:00:00.000Z",
+    "source_id": null,
+    "as_of_date": "2026-04-21T05:00:00.000Z",
+    "confidence_level": "high",
+    "last_verified_at": "2026-04-21T00:00:00.000Z",
+    "raw_markdown": "### 5.8 · Regulatory Examination and Audit Tracker\n\n- **ID:** `firstcap_regulatory_exam_tracker`\n- **Modality:** API · weekly + event-driven\n- **KPIs:** 2.8.4 (exam findings), 2.8.5 (op risk losses), exam cycle status by regulator\n- **Residency:** client_owned_client_hosted (legal-privileged + regulatory-sensitive)\n- **Compliance:** legal-privileged material, regulatory confidentiality\n- **Reasoning scope:** Compliance programs, Legal, Executive Advisory, Risk Management\n- **Disclosure scope:** **program-scoped + legal-privileged** (extreme constraint); affected-program-only; external disclosure prohibited",
+    "metadata": {
+      "kpis_text": "2.8.4 (exam findings), 2.8.5 (op risk losses), exam cycle status by regulator",
+      "modality_text": "API · weekly + event-driven"
+    },
+    "created_at": "2026-04-21T22:13:45.682Z",
+    "updated_at": "2026-04-21T22:13:45.682Z"
+  },
+  {
+    "id": "firstcap_tech_security_tracker",
+    "client_id": "a75687bf-71b9-4524-ab4e-68ae3f28d200",
+    "name": "Technology and Security Posture Tracker",
+    "description": "Technology and Security Posture Tracker",
+    "modality": "share_link",
+    "connector_type": "monthly",
+    "source_location": null,
+    "credentials_reference": null,
+    "refresh_schedule": null,
+    "kpi_ids_populated": [
+      "firstcap_cybersecurity_maturity_cat",
+      "firstcap_ai_governance_maturity",
+      "firstcap_mrm_maturity"
+    ],
+    "scope_description": "2.9.1-2.9.3 (cross-functional technology)",
+    "data_format": "monthly",
+    "residency_mode": "client_owned_abarva_hosted",
+    "retention_policy": "Client-governed per north star Part 9",
+    "compliance_tags": [
+      "FFIEC cybersecurity assessment tool (CAT)",
+      "GLBA Safeguards Rule, regulatory reporting on significant incidents"
+    ],
+    "regulatory_notes": "Cybersecurity specifics tightly restricted (critical-infrastructure-sensitive for banking)",
+    "reasoning_scope_id": "firstcap_scope_technology_cybersecurity_ai_platform_programs_executive_advisory",
+    "disclosure_scope_id": "firstcap_scope_cybersecurity_specifics_tightly_restricted_critical_infrastructure_sensitive_for_banking",
+    "onboarded_at": "2026-04-21T00:00:00.000Z",
+    "onboarded_by_person_id": null,
+    "program_association": [
+      "executive_advisory"
+    ],
+    "sunset_policy": "Re-evaluate at program completion per north star Part 9.8",
+    "access_log_reference": "audit://firstcap_tech_security_tracker",
+    "last_accessed_at": null,
+    "last_refreshed_at": "2026-04-21T00:00:00.000Z",
+    "source_id": null,
+    "as_of_date": "2026-04-21T05:00:00.000Z",
+    "confidence_level": "high",
+    "last_verified_at": "2026-04-21T00:00:00.000Z",
+    "raw_markdown": "### 5.9 · Technology and Security Posture Tracker\n\n- **ID:** `firstcap_tech_security_tracker`\n- **Modality:** Export (monthly) + share-link architecture\n- **KPIs:** 2.9.1-2.9.3 (cross-functional technology)\n- **Residency:** client_owned_abarva_hosted\n- **Compliance:** FFIEC cybersecurity assessment tool (CAT), GLBA Safeguards Rule, regulatory reporting on significant incidents\n- **Reasoning scope:** Technology, Cybersecurity, AI Platform programs, Executive Advisory\n- **Disclosure scope:** Cybersecurity specifics tightly restricted (critical-infrastructure-sensitive for banking)",
+    "metadata": {
+      "kpis_text": "2.9.1-2.9.3 (cross-functional technology)",
+      "modality_text": "Export (monthly) + share-link architecture"
+    },
+    "created_at": "2026-04-21T22:13:45.682Z",
+    "updated_at": "2026-04-21T22:13:45.682Z"
+  }
+]

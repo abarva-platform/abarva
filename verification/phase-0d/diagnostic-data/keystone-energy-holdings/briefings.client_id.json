@@ -1,0 +1,32 @@
+[
+  {
+    "id": "00000000-0000-0000-0000-00000000a002",
+    "client_id": "63931f84-4fc8-4d13-baac-aa16b035bff2",
+    "user_id": "a9477509-cb22-4ab6-b691-ec19e3f1135b",
+    "generated_at": "2026-04-21T08:05:00.000Z",
+    "last_user_touchpoint_at": "2026-04-19T18:00:00.000Z",
+    "next_scheduled_refresh_at": "2026-04-21T08:05:00.000Z",
+    "composition_mode": "full_briefing",
+    "target_reading_time_seconds": 240,
+    "estimated_reading_time_seconds": 210,
+    "opening_line": "Morning, Jonathan. Three items this morning, two operational and one regulatory. The regulatory one matters most.",
+    "closing_recommendation": "Start with the FERC implication and use it to sharpen the next operating-model decision, not to delay it.",
+    "voice_profile_applied": "Jonathan Aldridge",
+    "user_viewed_at": null,
+    "user_dwell_time_seconds": null,
+    "user_clicked_sections": [],
+    "user_followup_queries": [],
+    "user_dismissed_items": [],
+    "user_feedback": null,
+    "source_entities_considered": 39,
+    "source_events_considered": 13,
+    "ranking_model_version": "wave2-v1",
+    "personalization_model_version": "wave2-v1",
+    "metadata": {
+      "source_spec": "whats-changed-briefing-engine.md",
+      "seeded_example": true
+    },
+    "created_at": "2026-04-21T22:07:19.236Z",
+    "updated_at": "2026-04-21T22:13:51.087Z"
+  }
+]

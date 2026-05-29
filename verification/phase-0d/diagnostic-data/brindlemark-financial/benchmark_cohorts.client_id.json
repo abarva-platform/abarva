@@ -1,0 +1,103 @@
+[
+  {
+    "id": "firstcap_credit_and_capital_cohort",
+    "client_id": "a75687bf-71b9-4524-ab4e-68ae3f28d200",
+    "name": "Credit, capital, and regulatory-risk peers",
+    "sector": "financial_services",
+    "subsector": "regulated bank risk and balance-sheet peers",
+    "size_band": "$100B-$600B assets",
+    "geography": "United States",
+    "business_model": "prudentially supervised banks with material CRE and treasury exposure",
+    "maturity": "incumbent",
+    "peer_count": 8,
+    "is_primary": false,
+    "peer_companies": [
+      "Truist",
+      "PNC",
+      "Citizens",
+      "M&T Bank",
+      "Regions",
+      "KeyCorp",
+      "Huntington",
+      "Comerica"
+    ],
+    "methodology_notes": "Used for CRE concentration, NCO, CET1, LCR, and deposit-franchise comparisons.",
+    "source_id": null,
+    "as_of_date": "2026-04-21T05:00:00.000Z",
+    "confidence_level": "medium",
+    "last_verified_at": "2026-04-21T00:00:00.000Z",
+    "metadata": {
+      "dimension": "credit_capital",
+      "cohort_kind": "dimension_specific"
+    },
+    "created_at": "2026-04-21T22:13:45.148Z",
+    "updated_at": "2026-04-21T22:13:45.148Z"
+  },
+  {
+    "id": "firstcap_wealth_and_digital_cohort",
+    "client_id": "a75687bf-71b9-4524-ab4e-68ae3f28d200",
+    "name": "Wealth and digital-customer peers",
+    "sector": "financial_services",
+    "subsector": "wealth-enabled regional banks",
+    "size_band": "$50B-$600B assets",
+    "geography": "United States",
+    "business_model": "regional banks with strong advisor and digital-acquisition channels",
+    "maturity": "incumbent",
+    "peer_count": 9,
+    "is_primary": false,
+    "peer_companies": [
+      "PNC",
+      "Truist",
+      "Citizens",
+      "Fifth Third",
+      "U.S. Bank",
+      "KeyCorp",
+      "M&T Bank",
+      "Regions",
+      "Huntington"
+    ],
+    "methodology_notes": "Used for AUM growth, advisor productivity, digital adoption, CSAT, and household-growth comparisons.",
+    "source_id": null,
+    "as_of_date": "2026-04-21T05:00:00.000Z",
+    "confidence_level": "medium",
+    "last_verified_at": "2026-04-21T00:00:00.000Z",
+    "metadata": {
+      "dimension": "wealth_digital",
+      "cohort_kind": "dimension_specific"
+    },
+    "created_at": "2026-04-21T22:13:45.148Z",
+    "updated_at": "2026-04-21T22:13:45.148Z"
+  },
+  {
+    "id": "firstcap_primary_peer_cohort",
+    "client_id": "a75687bf-71b9-4524-ab4e-68ae3f28d200",
+    "name": "Super-regional bank primary peer cohort",
+    "sector": "financial_services",
+    "subsector": "super-regional banking",
+    "size_band": "$150B-$600B assets",
+    "geography": "United States",
+    "business_model": "diversified regional bank with consumer, commercial, and wealth franchises",
+    "maturity": "incumbent",
+    "peer_count": 6,
+    "is_primary": true,
+    "peer_companies": [
+      "Truist",
+      "PNC",
+      "Fifth Third",
+      "Citizens",
+      "KeyCorp",
+      "Regions"
+    ],
+    "methodology_notes": "Primary cohort for NIM, efficiency, credit, capital, deposit, and digital-banking comparisons.",
+    "source_id": null,
+    "as_of_date": "2026-04-21T05:00:00.000Z",
+    "confidence_level": "high",
+    "last_verified_at": "2026-04-21T00:00:00.000Z",
+    "metadata": {
+      "source": "Brindlemark overlay Part 2 + banking benchmarks",
+      "cohort_kind": "primary"
+    },
+    "created_at": "2026-04-21T22:13:45.148Z",
+    "updated_at": "2026-05-09T17:13:00.880Z"
+  }
+]

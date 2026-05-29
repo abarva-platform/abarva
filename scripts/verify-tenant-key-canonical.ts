@@ -27,8 +27,10 @@ import path from 'node:path';
 
 import { LEGACY_TENANT_ALIASES } from '../src/lib/tenant-keys';
 
-loadEnv({ path: path.resolve(process.cwd(), '.env.local') });
-loadEnv();
+loadEnv({ path: '/Users/anand/Projects/nexus/.env.local', quiet: true });
+loadEnv({ path: '/Users/anand/Projects/nexus/.env', quiet: true });
+loadEnv({ path: path.resolve(process.cwd(), '.env.local'), quiet: true });
+loadEnv({ path: path.resolve(process.cwd(), '.env'), quiet: true });
 
 type TableCheck = {
   schema: string;

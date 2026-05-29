@@ -1,0 +1,76 @@
+[
+  {
+    "id": "firstcap_legal_ctx_bsa_aml_consent_order",
+    "client_id": "a75687bf-71b9-4524-ab4e-68ae3f28d200",
+    "context_description": "BSA/AML consent-order remediation material, including dashboard metrics and regulator-facing operating context.",
+    "privilege_type": "regulatory_examination",
+    "duration": "active",
+    "related_entities": [
+      "firstcap_bsa_aml_dashboard",
+      "firstcap_pattern_aml_bsa_compliance_modernization",
+      "firstcap_aml_alert_volume",
+      "firstcap_aml_false_positive_rate"
+    ],
+    "access_scope_id": "firstcap_scope_program_scoped_legal_privileged",
+    "metadata": {
+      "sensitivity": "extreme",
+      "source_spec": "first-capital-intelligence-layer-overlay.md"
+    },
+    "created_at": "2026-04-21T22:13:45.962Z",
+    "updated_at": "2026-04-21T22:13:45.962Z"
+  },
+  {
+    "id": "firstcap_legal_ctx_regulatory_exam_tracker",
+    "client_id": "a75687bf-71b9-4524-ab4e-68ae3f28d200",
+    "context_description": "Regulatory examination and audit tracker content subject to legal-privileged and regulator-confidential handling.",
+    "privilege_type": "regulatory_examination",
+    "duration": "active",
+    "related_entities": [
+      "firstcap_regulatory_exam_tracker",
+      "firstcap_regulatory_exam_findings_open"
+    ],
+    "access_scope_id": "firstcap_scope_program_scoped_legal_privileged",
+    "metadata": {
+      "sensitivity": "extreme",
+      "source_spec": "first-capital-intelligence-layer-overlay.md"
+    },
+    "created_at": "2026-04-21T22:13:45.962Z",
+    "updated_at": "2026-04-21T22:13:45.962Z"
+  },
+  {
+    "id": "firstcap_legal_ctx_fair_lending_model_risk",
+    "client_id": "a75687bf-71b9-4524-ab4e-68ae3f28d200",
+    "context_description": "Fair-lending and model-risk material associated with AI-enabled decisioning in customer and lending workflows.",
+    "privilege_type": "work_product",
+    "duration": "active",
+    "related_entities": [
+      "firstcap_pattern_shadow_ai_in_lending_and_customer_operations",
+      "firstcap_pattern_digital_customer_acquisition_gap"
+    ],
+    "access_scope_id": "firstcap_scope_program_scoped",
+    "metadata": {
+      "sensitivity": "high",
+      "source_spec": "first-capital-intelligence-layer-overlay.md"
+    },
+    "created_at": "2026-04-21T22:13:45.962Z",
+    "updated_at": "2026-04-21T22:13:45.962Z"
+  },
+  {
+    "id": "firstcap_legal_ctx_historical_exam_archive",
+    "client_id": "a75687bf-71b9-4524-ab4e-68ae3f28d200",
+    "context_description": "Historical exam and remediation archive retained for future comparative reasoning with disclosure constraints still attached.",
+    "privilege_type": "regulatory_examination",
+    "duration": "historical",
+    "related_entities": [
+      "firstcap_pattern_operating_model_efficiency_gap",
+      "firstcap_pattern_portfolio_concentration_risk_management"
+    ],
+    "access_scope_id": "firstcap_scope_program_scoped_legal_privileged",
+    "metadata": {
+      "sensitivity": "high",
+      "source_spec": "first-capital-intelligence-layer-overlay.md"
+    },
+    "created_at": "2026-04-21T22:13:45.962Z",
+    "updated_at": "2026-04-21T22:13:45.962Z"
+  }
+]

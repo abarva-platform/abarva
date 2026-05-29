@@ -1,0 +1,205 @@
+[
+  {
+    "id": "7c5254e5-c03f-4943-ad1d-0defd443f4c2",
+    "tenant_key": "first-capital",
+    "program_id": "6f2f57c8-f608-4aec-ac2b-0d3991d357d2",
+    "attachment_id": "7b8c40ac-8deb-46e9-808a-5fa31e9dee30",
+    "phase": 3,
+    "step_id": null,
+    "evidence_type": "meeting_notes",
+    "title": "pasted-workshop-notes-2026-05-02.txt",
+    "summary": "P3 Solution Design Review Notes - 2026-05-02 Program: Core Banking AI Operating Model & Analytics Modernization Phase: P3 Solution / Program Design Attendees: Ethan Brooks, Priya Mehta, Lena Ortiz, Rachel Kim, Nadia Rahman, James Park, Kevin Walsh, enterprise architect, servicing operations lead.",
+    "extracted_text": "P3 Solution Design Review Notes - 2026-05-02\nProgram: Core Banking AI Operating Model & Analytics Modernization\nPhase: P3 Solution / Program Design\nAttendees: Ethan Brooks, Priya Mehta, Lena Ortiz, Rachel Kim, Nadia Rahman, James Park, Kevin Walsh, enterprise architect, servicing operations lead.\nIntent: approve target-state analytics operating model and requirements traceability before roadmap.\nDecisions:\n- Select product analytics operating model with governed core-banking/customer/account data product layer.\n- Exclude core replacement execution; Programs owns strategy/readiness, Tower observes after handoff.\n- Require model-risk governance checkpoint before P4 roadmap approval.\n- Payments/fraud signal latency feed must be in Tower monitoring plan.\nRequirements:\n- R1 reduce request-to-insight cycle time.\n- R2 improve lineage completeness for customer/account/product fields.\n- R3 reduce payments/fraud signal latency.\n- R4 reduce reopened analytics requests due to disputed definitions.\n- R5 model-risk governance evidence visible before mobilization.\nOutcomes:\n- O1 faster digital banking product analytics delivery.\n- O2 improved data trust for fraud and servicing signals.\n- O3 fundable roadmap and mobilization package before execution outside AbarVa.\nSign-off:\n- Priya Mehta approves target-state design for roadmap planning.\n- Rachel Kim approves data-product direction.\n- Nadia Rahman approves model-risk review path with one open item: evidence reproducibility check.\nActions:\n- Lena to finalize traceability matrix.\n- Rachel to confirm lineage feed mapping.\nRisks:\n- Program could drift into core replacement; maintain strict boundary.",
+    "extracted_structured": {
+      "risks": [
+        "Program could drift into core replacement; maintain strict boundary."
+      ],
+      "warnings": [],
+      "attendees": [
+        "Ethan Brooks",
+        "Priya Mehta",
+        "Lena Ortiz",
+        "Rachel Kim",
+        "Nadia Rahman",
+        "James Park",
+        "Kevin Walsh",
+        "enterprise architect",
+        "servicing operations lead."
+      ],
+      "decisions": [
+        "Select product analytics operating model with governed core-banking/customer/account data product layer.",
+        "Exclude core replacement execution; Programs owns strategy/readiness, Tower observes after handoff.",
+        "Require model-risk governance checkpoint before P4 roadmap approval.",
+        "Payments/fraud signal latency feed must be in Tower monitoring plan."
+      ],
+      "action_items": [
+        "Lena to finalize traceability matrix.",
+        "Rachel to confirm lineage feed mapping."
+      ],
+      "parse_method": "text-line-parser",
+      "baseline_candidates": []
+    },
+    "confidence": "0.78",
+    "created_by_user_id": "435ce745-63f2-4444-98d1-1965fc971ccd",
+    "created_at": "2026-05-02T16:13:06.993Z"
+  },
+  {
+    "id": "2eec8411-ffff-44e3-8df6-60856bba3c11",
+    "tenant_key": "first-capital",
+    "program_id": "6f2f57c8-f608-4aec-ac2b-0d3991d357d2",
+    "attachment_id": "23255e42-c00a-4821-8f53-caac14872b45",
+    "phase": 1,
+    "step_id": null,
+    "evidence_type": "meeting_notes",
+    "title": "pasted-workshop-notes-2026-05-02.txt",
+    "summary": "P1 Discovery Workshop Notes - 2026-05-02 Program: Core Banking AI Operating Model & Analytics Modernization Phase: P1 Discovery Attendees: Ethan Brooks, Priya Mehta (Chief Product Officer sponsor), Lena Ortiz (program lead), Rachel Kim (data/product analytics), Nadia Rahman (risk/compliance), James Park (payments), Kevin Walsh (fraud operations), servicing operations lead.",
+    "extracted_text": "P1 Discovery Workshop Notes - 2026-05-02\nProgram: Core Banking AI Operating Model & Analytics Modernization\nPhase: P1 Discovery\nAttendees: Ethan Brooks, Priya Mehta (Chief Product Officer sponsor), Lena Ortiz (program lead), Rachel Kim (data/product analytics), Nadia Rahman (risk/compliance), James Park (payments), Kevin Walsh (fraud operations), servicing operations lead.\nIntent: validate analytics modernization baseline and define evidence needed before synthesis.\nDecisions:\n- Scope first cohort to digital banking product analytics, payments/fraud signal latency, servicing insight adoption, and core banking customer/account data lineage.\n- Do not include core replacement execution in this program; execution happens outside AbarVa after P5 approval.\n- Priya Mehta accepted weekly sponsor cadence through P2 and P3.\nBaseline candidates:\n- Analytics request-to-insight cycle time.\n- Data lineage completeness for customer/account/product fields.\n- Model deployment lead time.\n- Payments/fraud signal latency.\n- Servicing insight adoption rate.\n- Rework rate caused by disputed data definitions.\nEvidence captured:\n- Product teams dispute customer/account joins between core banking, payments, and servicing.\n- Fraud signal latency is treated as an operating risk and product-experience risk.\n- Compliance wants model-risk governance and data lineage visible before P2 charter.\nActions:\n- Rachel Kim to provide analytics cycle-time and lineage extract.\n- James Park to provide payments/fraud signal latency sample.\n- Kevin Walsh to provide fraud operations rework examples.\n- Nadia Rahman to confirm model-risk governance entry criteria.\nRisks:\n- Program could drift into core replacement; keep it strategy-to-funding and roadmap only.\n- Exact financial impact remains restricted.",
+    "extracted_structured": {
+      "risks": [],
+      "warnings": [],
+      "attendees": [
+        "Ethan Brooks",
+        "Priya Mehta (Chief Product Officer sponsor)",
+        "Lena Ortiz (program lead)",
+        "Rachel Kim (data/product analytics)",
+        "Nadia Rahman (risk/compliance)",
+        "James Park (payments)",
+        "Kevin Walsh (fraud operations)",
+        "servicing operations lead."
+      ],
+      "decisions": [],
+      "action_items": [],
+      "parse_method": "text-line-parser",
+      "baseline_candidates": []
+    },
+    "confidence": "0.78",
+    "created_by_user_id": "435ce745-63f2-4444-98d1-1965fc971ccd",
+    "created_at": "2026-05-02T15:37:10.790Z"
+  },
+  {
+    "id": "dc01ac0d-be70-4430-8702-7bee6d7dbd9a",
+    "tenant_key": "first-capital",
+    "program_id": "6f2f57c8-f608-4aec-ac2b-0d3991d357d2",
+    "attachment_id": "e15d84ec-07f7-4b56-8c17-02e75cff20a4",
+    "phase": 1,
+    "step_id": null,
+    "evidence_type": "meeting_notes",
+    "title": "pasted-workshop-notes-2026-05-02.txt",
+    "summary": "P1 Baseline Attestation and Stakeholder Owner Addendum - 2026-05-02 Program: Core Banking AI Operating Model & Analytics Modernization Phase: P1 Discovery Attendees: Ethan Brooks, Priya Mehta, Lena Ortiz, Rachel Kim, Nadia Rahman, James Park, Kevin Walsh, servicing operations lead.",
+    "extracted_text": "P1 Baseline Attestation and Stakeholder Owner Addendum - 2026-05-02\nProgram: Core Banking AI Operating Model & Analytics Modernization\nPhase: P1 Discovery\nAttendees: Ethan Brooks, Priya Mehta, Lena Ortiz, Rachel Kim, Nadia Rahman, James Park, Kevin Walsh, servicing operations lead.\nSponsor decision:\n- Priya Mehta approves PROCEED to P2 Synthesis once this addendum is saved with the Discovery Report.\nAttested baseline metrics:\n- Analytics request-to-insight cycle time: 21 business days current baseline. Source: Product analytics intake tracker FC-ANALYTICS-Q1FY26. Grain: request by product squad and domain. Method: submitted-to-published elapsed business days. Owner attestation: Rachel Kim.\n- Data lineage completeness for customer/account/product fields: 62% current baseline. Source: data catalog lineage audit FC-LINEAGE-2026-05. Grain: field by source system and consuming report/model. Owner attestation: Rachel Kim.\n- Payments/fraud signal latency: 47 minutes current baseline for selected events. Source: payments/fraud event sample FC-FRAUD-LATENCY-Q1FY26. Grain: event type by channel. Owner attestation: James Park and Kevin Walsh.\n- Rework rate from disputed definitions: 14% of analytics requests reopened. Source: analytics QA/reopen tracker FC-REWORK-Q1FY26. Owner attestation: Lena Ortiz.\nStakeholder map:\n- Sponsor: Priya Mehta, Chief Product Officer, Digital Banking.\n- Program lead: Lena Ortiz, Director, Payments Program Management.\n- Data/product analytics owner: Rachel Kim.\n- Risk/compliance owner: Nadia Rahman.\n- Payments owner: James Park.\n- Fraud operations owner: Kevin Walsh.\n- Adoption owner: servicing operations lead.\n- Approver: Priya Mehta.\n- Dissenter/blocker: Nadia Rahman, concerned model-risk evidence may be incomplete before charter.\nDiscovery recommendation:\n- Proceed to P2 Synthesis with options including governance overlay, core-banking data-product layer, and hybrid product analytics operating model.\n- Kill criterion: if lineage and model-risk evidence cannot be reproduced from source systems during P2, stop and return to Discovery.\nRisks:\n- Do not drift into core replacement execution.\n- Exact financial values stay restricted.",
+    "extracted_structured": {
+      "risks": [
+        "Do not drift into core replacement execution.",
+        "Exact financial values stay restricted."
+      ],
+      "warnings": [],
+      "attendees": [
+        "Ethan Brooks",
+        "Priya Mehta",
+        "Lena Ortiz",
+        "Rachel Kim",
+        "Nadia Rahman",
+        "James Park",
+        "Kevin Walsh",
+        "servicing operations lead."
+      ],
+      "decisions": [],
+      "action_items": [],
+      "parse_method": "text-line-parser",
+      "baseline_candidates": []
+    },
+    "confidence": "0.78",
+    "created_by_user_id": "435ce745-63f2-4444-98d1-1965fc971ccd",
+    "created_at": "2026-05-02T15:49:00.995Z"
+  },
+  {
+    "id": "0c521ec1-bf79-4387-9928-e940518bec97",
+    "tenant_key": "first-capital",
+    "program_id": "6f2f57c8-f608-4aec-ac2b-0d3991d357d2",
+    "attachment_id": "72620fb9-976c-444d-b72f-d14b24fa8568",
+    "phase": 1,
+    "step_id": null,
+    "evidence_type": "meeting_notes",
+    "title": "pasted-workshop-notes-2026-05-02.txt",
+    "summary": "P1 Baseline Attestation and Stakeholder Owner Addendum v2 - 2026-05-02 Program: Core Banking AI Operating Model & Analytics Modernization Phase: P1 Discovery Attendees: Ethan Brooks, Priya Mehta, Lena Ortiz, Rachel Kim, Nadia Rahman, James Park, Kevin Walsh, servicing operations lead.",
+    "extracted_text": "P1 Baseline Attestation and Stakeholder Owner Addendum v2 - 2026-05-02\nProgram: Core Banking AI Operating Model & Analytics Modernization\nPhase: P1 Discovery\nAttendees: Ethan Brooks, Priya Mehta, Lena Ortiz, Rachel Kim, Nadia Rahman, James Park, Kevin Walsh, servicing operations lead.\nSponsor decision:\n- Priya Mehta approves PROCEED to P2 Synthesis once this addendum is saved with the Discovery Report.\nAttested baseline metrics:\n- Analytics request-to-insight cycle time: 21 business days current baseline. Source: Product analytics intake tracker FC-ANALYTICS-Q1FY26. Grain: request by product squad and domain. Method: submitted-to-published elapsed business days. Owner attestation: Rachel Kim.\n- Data lineage completeness for customer/account/product fields: 62% current baseline. Source: data catalog lineage audit FC-LINEAGE-2026-05. Grain: field by source system and consuming report/model. Owner attestation: Rachel Kim.\n- Payments/fraud signal latency: 47 minutes current baseline for selected events. Source: payments/fraud event sample FC-FRAUD-LATENCY-Q1FY26. Grain: event type by channel. Owner attestation: James Park and Kevin Walsh.\n- Rework rate from disputed definitions: 14% of analytics requests reopened. Source: analytics QA/reopen tracker FC-REWORK-Q1FY26. Owner attestation: Lena Ortiz.\nRisks:\n- Do not drift into core replacement execution.\n- Exact financial values stay restricted.\nActions:\n- Rachel Kim to attach lineage feed mapping before P2 charter sign-off.\n- Nadia Rahman to confirm model-risk evidence reproducibility path before P3 design.",
+    "extracted_structured": {
+      "risks": [
+        "Do not drift into core replacement execution.",
+        "Exact financial values stay restricted."
+      ],
+      "warnings": [],
+      "attendees": [
+        "Ethan Brooks",
+        "Priya Mehta",
+        "Lena Ortiz",
+        "Rachel Kim",
+        "Nadia Rahman",
+        "James Park",
+        "Kevin Walsh",
+        "servicing operations lead."
+      ],
+      "decisions": [
+        "Priya Mehta approves PROCEED to P2 Synthesis once this addendum is saved with the Discovery Report."
+      ],
+      "action_items": [
+        "Rachel Kim to attach lineage feed mapping before P2 charter sign-off.",
+        "Nadia Rahman to confirm model-risk evidence reproducibility path before P3 design."
+      ],
+      "parse_method": "text-line-parser",
+      "baseline_candidates": [
+        "Analytics request-to-insight cycle time: 21 business days current baseline. Source: Product analytics intake tracker FC-ANALYTICS-Q1FY26. Grain: request by product squad and domain. Method: submitted-to-published elapsed business days. Owner attestation: Rachel Kim.",
+        "Data lineage completeness for customer/account/product fields: 62% current baseline. Source: data catalog lineage audit FC-LINEAGE-2026-05. Grain: field by source system and consuming report/model. Owner attestation: Rachel Kim.",
+        "Payments/fraud signal latency: 47 minutes current baseline for selected events. Source: payments/fraud event sample FC-FRAUD-LATENCY-Q1FY26. Grain: event type by channel. Owner attestation: James Park and Kevin Walsh.",
+        "Rework rate from disputed definitions: 14% of analytics requests reopened. Source: analytics QA/reopen tracker FC-REWORK-Q1FY26. Owner attestation: Lena Ortiz."
+      ]
+    },
+    "confidence": "0.78",
+    "created_by_user_id": "435ce745-63f2-4444-98d1-1965fc971ccd",
+    "created_at": "2026-05-02T15:58:00.305Z"
+  },
+  {
+    "id": "a1b607ea-55fb-41df-854a-718bd1cfa665",
+    "tenant_key": "first-capital",
+    "program_id": "6f2f57c8-f608-4aec-ac2b-0d3991d357d2",
+    "attachment_id": "cc599fd7-03a8-470c-a463-68cb036f37b2",
+    "phase": 5,
+    "step_id": null,
+    "evidence_type": "meeting_notes",
+    "title": "pasted-workshop-notes-2026-05-02.txt",
+    "summary": "P5 Approval and Mobilization Notes - 2026-05-02 Program: Core Banking AI Operating Model & Analytics Modernization Phase: P5 Approval & Mobilization Attendees: Ethan Brooks, Priya Mehta, Lena Ortiz, Rachel Kim, Nadia Rahman, James Park, Kevin Walsh, finance delegate, risk committee delegate.",
+    "extracted_text": "P5 Approval and Mobilization Notes - 2026-05-02\nProgram: Core Banking AI Operating Model & Analytics Modernization\nPhase: P5 Approval & Mobilization\nAttendees: Ethan Brooks, Priya Mehta, Lena Ortiz, Rachel Kim, Nadia Rahman, James Park, Kevin Walsh, finance delegate, risk committee delegate.\nDecision:\n- Priya Mehta approves mobilization into external execution after risk committee confirms model-risk evidence path.\n- Finance delegate accepts qualitative funding envelope and confirms exact values remain restricted for non-finance users.\n- Lena Ortiz is execution owner; Ethan Brooks remains Tower observer.\nReadiness:\n- Model-risk review path accepted with one open item: reproducibility evidence sample.\n- Change communications owner: servicing operations lead.\n- Weekly Tower feed accepted: analytics cycle time, lineage completeness, model deployment lead time, fraud signal latency, reopened analytics requests, risk-control evidence status.\nArtifacts approved:\n- Business case: qualitative value model, baseline-to-target method, no exact spend values for this role.\n- Funding/capacity approval: approved as restricted financial artifact.\n- Sponsor alignment: Priya Mehta confirmed sponsor authority and cadence.\n- Readiness/change plan: servicing operations lead accountable.\n- Tower handoff plan: accepted for P6 setup.\nActions:\n- Nadia to confirm model-risk evidence sample by Friday.\n- Rachel to confirm lineage feed mapping.\nRisks:\n- If risk committee review slips more than 10 business days, sponsor review required.\n- If exact spend values are requested by non-finance users, redact and route to finance-authorized approver.",
+    "extracted_structured": {
+      "risks": [
+        "If risk committee review slips more than 10 business days, sponsor review required.",
+        "If exact spend values are requested by non-finance users, redact and route to finance-authorized approver."
+      ],
+      "warnings": [],
+      "attendees": [
+        "Ethan Brooks",
+        "Priya Mehta",
+        "Lena Ortiz",
+        "Rachel Kim",
+        "Nadia Rahman",
+        "James Park",
+        "Kevin Walsh",
+        "finance delegate",
+        "risk committee delegate."
+      ],
+      "decisions": [
+        "Priya Mehta approves mobilization into external execution after risk committee confirms model-risk evidence path.",
+        "Finance delegate accepts qualitative funding envelope and confirms exact values remain restricted for non-finance users.",
+        "Lena Ortiz is execution owner; Ethan Brooks remains Tower observer."
+      ],
+      "action_items": [
+        "Nadia to confirm model-risk evidence sample by Friday.",
+        "Rachel to confirm lineage feed mapping."
+      ],
+      "parse_method": "text-line-parser",
+      "baseline_candidates": []
+    },
+    "confidence": "0.78",
+    "created_by_user_id": "435ce745-63f2-4444-98d1-1965fc971ccd",
+    "created_at": "2026-05-02T16:33:44.245Z"
+  }
+]

@@ -1,0 +1,969 @@
+[
+  {
+    "id": "keystone_scope_contradictions_executive_sponsor",
+    "client_id": "63931f84-4fc8-4d13-baac-aa16b035bff2",
+    "summary": "Keystone Energy Holdings contradiction disclosure scope - executive sponsor only",
+    "scope_type": "role",
+    "program_ids": [],
+    "role_filter": [
+      "executive_sponsor",
+      "ceo",
+      "cfo",
+      "program_sponsor"
+    ],
+    "maestro_filter": [
+      "Atlas"
+    ],
+    "output_mode_filter": "both",
+    "regulatory_constraints": [
+      "named_individual_sensitivity"
+    ],
+    "conditions": [
+      {
+        "audience": "executive_sponsor",
+        "condition": "severe_sensitivity"
+      }
+    ],
+    "audit_required": true,
+    "expiry_date": null,
+    "scope_payload": {
+      "pillar": "candor",
+      "audience": "executive_sponsor_only"
+    },
+    "created_at": "2026-04-21T20:55:26.407Z",
+    "updated_at": "2026-04-21T20:56:38.512Z"
+  },
+  {
+    "id": "keystone_scope_contradictions_reasoning_broad",
+    "client_id": "63931f84-4fc8-4d13-baac-aa16b035bff2",
+    "summary": "Keystone Energy Holdings contradiction reasoning scope",
+    "scope_type": "broad",
+    "program_ids": [],
+    "role_filter": [],
+    "maestro_filter": [
+      "Atlas",
+      "Nexus",
+      "Sentinel"
+    ],
+    "output_mode_filter": "both",
+    "regulatory_constraints": [],
+    "conditions": [
+      {
+        "audience": "internal",
+        "condition": "contradiction_reasoning_allowed"
+      }
+    ],
+    "audit_required": true,
+    "expiry_date": null,
+    "scope_payload": {
+      "pillar": "candor",
+      "audience": "internal_reasoning"
+    },
+    "created_at": "2026-04-21T20:55:26.407Z",
+    "updated_at": "2026-04-21T20:56:38.512Z"
+  },
+  {
+    "id": "keystone_scope_contradictions_program_leadership",
+    "client_id": "63931f84-4fc8-4d13-baac-aa16b035bff2",
+    "summary": "Keystone Energy Holdings contradiction disclosure scope - program leadership",
+    "scope_type": "role",
+    "program_ids": [],
+    "role_filter": [
+      "program_lead",
+      "sponsor",
+      "executive_advisory"
+    ],
+    "maestro_filter": [
+      "Atlas",
+      "Nexus"
+    ],
+    "output_mode_filter": "both",
+    "regulatory_constraints": [],
+    "conditions": [
+      {
+        "audience": "program_leadership",
+        "condition": "leadership_only_when_high_sensitivity"
+      }
+    ],
+    "audit_required": true,
+    "expiry_date": null,
+    "scope_payload": {
+      "pillar": "candor",
+      "audience": "program_leadership"
+    },
+    "created_at": "2026-04-21T20:55:26.407Z",
+    "updated_at": "2026-04-21T20:56:38.512Z"
+  },
+  {
+    "id": "keystone_scope_contradictions_reasoning_only",
+    "client_id": "63931f84-4fc8-4d13-baac-aa16b035bff2",
+    "summary": "Keystone Energy Holdings contradiction reasoning-only disclosure guard",
+    "scope_type": "regulatory_restricted",
+    "program_ids": [],
+    "role_filter": [],
+    "maestro_filter": [
+      "Atlas",
+      "Nexus",
+      "Sentinel"
+    ],
+    "output_mode_filter": "reasoning_only",
+    "regulatory_constraints": [
+      "reasoning_only"
+    ],
+    "conditions": [
+      {
+        "audience": "reasoning_only",
+        "condition": "no_surface_disclosure"
+      }
+    ],
+    "audit_required": true,
+    "expiry_date": null,
+    "scope_payload": {
+      "pillar": "candor",
+      "audience": "reasoning_only"
+    },
+    "created_at": "2026-04-21T20:55:26.407Z",
+    "updated_at": "2026-04-21T20:56:38.512Z"
+  },
+  {
+    "id": "keystone_scope_program_scoped_hr_strategy_workforce_transformation_capital_plan_execution_disclosable_oth",
+    "client_id": "63931f84-4fc8-4d13-baac-aa16b035bff2",
+    "summary": "program-scoped (HR Strategy, Workforce Transformation, Capital Plan Execution — disclosable; others reasoning-only to avoid talent poaching signal amplification)",
+    "scope_type": "program",
+    "program_ids": [
+      "hr_strategy",
+      "workforce_transformation"
+    ],
+    "role_filter": [],
+    "maestro_filter": [],
+    "output_mode_filter": "reasoning_only",
+    "regulatory_constraints": [],
+    "conditions": [
+      "reasoning_only_boundary"
+    ],
+    "audit_required": true,
+    "expiry_date": null,
+    "scope_payload": {
+      "program_ids": [
+        "hr_strategy",
+        "workforce_transformation"
+      ],
+      "raw_summary": "program-scoped (HR Strategy, Workforce Transformation, Capital Plan Execution — disclosable; others reasoning-only to avoid talent poaching signal amplification)",
+      "role_filter": [],
+      "regulatory_constraints": []
+    },
+    "created_at": "2026-04-21T20:54:13.235Z",
+    "updated_at": "2026-04-21T20:54:13.235Z"
+  },
+  {
+    "id": "keystone_scope_broad_all_maestros_at_tenant",
+    "client_id": "63931f84-4fc8-4d13-baac-aa16b035bff2",
+    "summary": "broad (all maestros at tenant)",
+    "scope_type": "broad",
+    "program_ids": [],
+    "role_filter": [],
+    "maestro_filter": [
+      "program_maestro"
+    ],
+    "output_mode_filter": "both",
+    "regulatory_constraints": [],
+    "conditions": [],
+    "audit_required": true,
+    "expiry_date": null,
+    "scope_payload": {
+      "program_ids": [],
+      "raw_summary": "broad (all maestros at tenant)",
+      "role_filter": [],
+      "regulatory_constraints": []
+    },
+    "created_at": "2026-04-21T20:54:13.235Z",
+    "updated_at": "2026-04-21T20:54:13.235Z"
+  },
+  {
+    "id": "keystone_scope_broad",
+    "client_id": "63931f84-4fc8-4d13-baac-aa16b035bff2",
+    "summary": "broad",
+    "scope_type": "broad",
+    "program_ids": [],
+    "role_filter": [],
+    "maestro_filter": [],
+    "output_mode_filter": "both",
+    "regulatory_constraints": [],
+    "conditions": [],
+    "audit_required": true,
+    "expiry_date": null,
+    "scope_payload": {
+      "program_ids": [],
+      "raw_summary": "broad",
+      "role_filter": [],
+      "regulatory_constraints": []
+    },
+    "created_at": "2026-04-21T20:54:13.235Z",
+    "updated_at": "2026-04-21T20:54:13.235Z"
+  },
+  {
+    "id": "keystone_scope_program_scoped_regulatory_strategy_transmission_capital_programs_disclosable_other_program",
+    "client_id": "63931f84-4fc8-4d13-baac-aa16b035bff2",
+    "summary": "program-scoped (Regulatory Strategy, Transmission Capital programs — disclosable; other programs reasoning-only)",
+    "scope_type": "program",
+    "program_ids": [
+      "regulatory_strategy",
+      "transmission_capital"
+    ],
+    "role_filter": [],
+    "maestro_filter": [],
+    "output_mode_filter": "reasoning_only",
+    "regulatory_constraints": [],
+    "conditions": [
+      "reasoning_only_boundary"
+    ],
+    "audit_required": true,
+    "expiry_date": null,
+    "scope_payload": {
+      "program_ids": [
+        "regulatory_strategy",
+        "transmission_capital"
+      ],
+      "raw_summary": "program-scoped (Regulatory Strategy, Transmission Capital programs — disclosable; other programs reasoning-only)",
+      "role_filter": [],
+      "regulatory_constraints": []
+    },
+    "created_at": "2026-04-21T20:54:13.235Z",
+    "updated_at": "2026-04-21T20:54:13.235Z"
+  },
+  {
+    "id": "keystone_scope_broad_public_financial_metric",
+    "client_id": "63931f84-4fc8-4d13-baac-aa16b035bff2",
+    "summary": "broad (public financial metric)",
+    "scope_type": "broad",
+    "program_ids": [],
+    "role_filter": [],
+    "maestro_filter": [],
+    "output_mode_filter": "both",
+    "regulatory_constraints": [],
+    "conditions": [],
+    "audit_required": true,
+    "expiry_date": null,
+    "scope_payload": {
+      "program_ids": [],
+      "raw_summary": "broad (public financial metric)",
+      "role_filter": [],
+      "regulatory_constraints": []
+    },
+    "created_at": "2026-04-21T20:54:13.235Z",
+    "updated_at": "2026-04-21T20:54:13.235Z"
+  },
+  {
+    "id": "keystone_scope_broad_public",
+    "client_id": "63931f84-4fc8-4d13-baac-aa16b035bff2",
+    "summary": "broad (public)",
+    "scope_type": "broad",
+    "program_ids": [],
+    "role_filter": [],
+    "maestro_filter": [],
+    "output_mode_filter": "both",
+    "regulatory_constraints": [],
+    "conditions": [],
+    "audit_required": true,
+    "expiry_date": null,
+    "scope_payload": {
+      "program_ids": [],
+      "raw_summary": "broad (public)",
+      "role_filter": [],
+      "regulatory_constraints": []
+    },
+    "created_at": "2026-04-21T20:54:13.235Z",
+    "updated_at": "2026-04-21T20:54:13.235Z"
+  },
+  {
+    "id": "keystone_scope_broad_public_records",
+    "client_id": "63931f84-4fc8-4d13-baac-aa16b035bff2",
+    "summary": "broad (public records)",
+    "scope_type": "broad",
+    "program_ids": [],
+    "role_filter": [],
+    "maestro_filter": [],
+    "output_mode_filter": "both",
+    "regulatory_constraints": [],
+    "conditions": [],
+    "audit_required": true,
+    "expiry_date": null,
+    "scope_payload": {
+      "program_ids": [],
+      "raw_summary": "broad (public records)",
+      "role_filter": [],
+      "regulatory_constraints": []
+    },
+    "created_at": "2026-04-21T20:54:13.235Z",
+    "updated_at": "2026-04-21T20:54:13.235Z"
+  },
+  {
+    "id": "keystone_scope_program_scoped_finance_programs_customer_affordability_programs_disclosable_other_programs",
+    "client_id": "63931f84-4fc8-4d13-baac-aa16b035bff2",
+    "summary": "program-scoped (Finance programs, Customer Affordability programs — disclosable; other programs reasoning-only given sensitivity about customer hardship signaling)",
+    "scope_type": "program",
+    "program_ids": [
+      "customer_affordability"
+    ],
+    "role_filter": [],
+    "maestro_filter": [],
+    "output_mode_filter": "reasoning_only",
+    "regulatory_constraints": [],
+    "conditions": [
+      "reasoning_only_boundary"
+    ],
+    "audit_required": true,
+    "expiry_date": null,
+    "scope_payload": {
+      "program_ids": [
+        "customer_affordability"
+      ],
+      "raw_summary": "program-scoped (Finance programs, Customer Affordability programs — disclosable; other programs reasoning-only given sensitivity about customer hardship signaling)",
+      "role_filter": [],
+      "regulatory_constraints": []
+    },
+    "created_at": "2026-04-21T20:54:13.235Z",
+    "updated_at": "2026-04-21T20:54:13.235Z"
+  },
+  {
+    "id": "keystone_scope_program_scoped_with_nerc_cip_consideration_aggregate_disclosable_specific_substation_data_",
+    "client_id": "63931f84-4fc8-4d13-baac-aa16b035bff2",
+    "summary": "program-scoped with NERC CIP consideration (aggregate disclosable; specific substation data NERC CIP critical infrastructure — reasoning-only for most programs)",
+    "scope_type": "regulatory_restricted",
+    "program_ids": [],
+    "role_filter": [],
+    "maestro_filter": [],
+    "output_mode_filter": "reasoning_only",
+    "regulatory_constraints": [
+      "NERC CIP"
+    ],
+    "conditions": [
+      "reasoning_only_boundary"
+    ],
+    "audit_required": true,
+    "expiry_date": null,
+    "scope_payload": {
+      "program_ids": [],
+      "raw_summary": "program-scoped with NERC CIP consideration (aggregate disclosable; specific substation data NERC CIP critical infrastructure — reasoning-only for most programs)",
+      "role_filter": [],
+      "regulatory_constraints": [
+        "NERC CIP"
+      ]
+    },
+    "created_at": "2026-04-21T20:54:13.235Z",
+    "updated_at": "2026-04-21T20:54:13.235Z"
+  },
+  {
+    "id": "keystone_scope_broad_publicly_reported",
+    "client_id": "63931f84-4fc8-4d13-baac-aa16b035bff2",
+    "summary": "broad (publicly reported)",
+    "scope_type": "broad",
+    "program_ids": [],
+    "role_filter": [],
+    "maestro_filter": [],
+    "output_mode_filter": "both",
+    "regulatory_constraints": [],
+    "conditions": [],
+    "audit_required": true,
+    "expiry_date": null,
+    "scope_payload": {
+      "program_ids": [],
+      "raw_summary": "broad (publicly reported)",
+      "role_filter": [],
+      "regulatory_constraints": []
+    },
+    "created_at": "2026-04-21T20:54:13.235Z",
+    "updated_at": "2026-04-21T20:54:13.235Z"
+  },
+  {
+    "id": "keystone_scope_program_scoped_safety_programs_executive_advisory_broad_disclosure_other_programs_reasonin",
+    "client_id": "63931f84-4fc8-4d13-baac-aa16b035bff2",
+    "summary": "program-scoped (Safety programs, Executive Advisory — broad disclosure; other programs reasoning-only on specific incidents, aggregate disclosable)",
+    "scope_type": "program",
+    "program_ids": [
+      "executive_advisory",
+      "safety"
+    ],
+    "role_filter": [],
+    "maestro_filter": [],
+    "output_mode_filter": "reasoning_only",
+    "regulatory_constraints": [],
+    "conditions": [
+      "reasoning_only_boundary"
+    ],
+    "audit_required": true,
+    "expiry_date": null,
+    "scope_payload": {
+      "program_ids": [
+        "executive_advisory",
+        "safety"
+      ],
+      "raw_summary": "program-scoped (Safety programs, Executive Advisory — broad disclosure; other programs reasoning-only on specific incidents, aggregate disclosable)",
+      "role_filter": [],
+      "regulatory_constraints": []
+    },
+    "created_at": "2026-04-21T20:54:13.235Z",
+    "updated_at": "2026-04-21T20:54:13.235Z"
+  },
+  {
+    "id": "keystone_scope_tightly_scoped_cybersecurity_programs_disclosable_other_programs_reasoning_only_given_crit",
+    "client_id": "63931f84-4fc8-4d13-baac-aa16b035bff2",
+    "summary": "tightly scoped (Cybersecurity programs disclosable; other programs reasoning-only given critical infrastructure sensitivity)",
+    "scope_type": "program",
+    "program_ids": [],
+    "role_filter": [],
+    "maestro_filter": [],
+    "output_mode_filter": "reasoning_only",
+    "regulatory_constraints": [],
+    "conditions": [
+      "reasoning_only_boundary"
+    ],
+    "audit_required": true,
+    "expiry_date": null,
+    "scope_payload": {
+      "program_ids": [],
+      "raw_summary": "tightly scoped (Cybersecurity programs disclosable; other programs reasoning-only given critical infrastructure sensitivity)",
+      "role_filter": [],
+      "regulatory_constraints": []
+    },
+    "created_at": "2026-04-21T20:54:13.235Z",
+    "updated_at": "2026-04-21T20:54:13.235Z"
+  },
+  {
+    "id": "keystone_scope_program_scoped_capital_strategy_executive_advisory_disclosable_others_reasoning_only",
+    "client_id": "63931f84-4fc8-4d13-baac-aa16b035bff2",
+    "summary": "program-scoped (Capital Strategy, Executive Advisory disclosable; others reasoning-only)",
+    "scope_type": "program",
+    "program_ids": [
+      "executive_advisory"
+    ],
+    "role_filter": [],
+    "maestro_filter": [],
+    "output_mode_filter": "reasoning_only",
+    "regulatory_constraints": [],
+    "conditions": [
+      "reasoning_only_boundary"
+    ],
+    "audit_required": true,
+    "expiry_date": null,
+    "scope_payload": {
+      "program_ids": [
+        "executive_advisory"
+      ],
+      "raw_summary": "program-scoped (Capital Strategy, Executive Advisory disclosable; others reasoning-only)",
+      "role_filter": [],
+      "regulatory_constraints": []
+    },
+    "created_at": "2026-04-21T20:54:13.235Z",
+    "updated_at": "2026-04-21T20:54:13.235Z"
+  },
+  {
+    "id": "keystone_scope_executive_advisory_program_all_cross_functional_transformation_programs",
+    "client_id": "63931f84-4fc8-4d13-baac-aa16b035bff2",
+    "summary": "Executive Advisory program + all cross-functional transformation programs",
+    "scope_type": "program",
+    "program_ids": [
+      "executive_advisory"
+    ],
+    "role_filter": [],
+    "maestro_filter": [],
+    "output_mode_filter": "both",
+    "regulatory_constraints": [],
+    "conditions": [],
+    "audit_required": true,
+    "expiry_date": null,
+    "scope_payload": {
+      "program_ids": [
+        "executive_advisory"
+      ],
+      "raw_summary": "Executive Advisory program + all cross-functional transformation programs",
+      "role_filter": [],
+      "regulatory_constraints": []
+    },
+    "created_at": "2026-04-21T20:54:13.235Z",
+    "updated_at": "2026-04-21T20:54:13.235Z"
+  },
+  {
+    "id": "keystone_scope_executive_advisory_full_transformation_programs_relevant_subset_other_programs_reasoning_o",
+    "client_id": "63931f84-4fc8-4d13-baac-aa16b035bff2",
+    "summary": "Executive Advisory (full) · transformation programs (relevant subset) · other programs (reasoning-only for leading indicators)",
+    "scope_type": "program",
+    "program_ids": [
+      "executive_advisory"
+    ],
+    "role_filter": [],
+    "maestro_filter": [],
+    "output_mode_filter": "reasoning_only",
+    "regulatory_constraints": [],
+    "conditions": [
+      "reasoning_only_boundary"
+    ],
+    "audit_required": true,
+    "expiry_date": null,
+    "scope_payload": {
+      "program_ids": [
+        "executive_advisory"
+      ],
+      "raw_summary": "Executive Advisory (full) · transformation programs (relevant subset) · other programs (reasoning-only for leading indicators)",
+      "role_filter": [],
+      "regulatory_constraints": []
+    },
+    "created_at": "2026-04-21T20:54:13.235Z",
+    "updated_at": "2026-04-21T20:54:13.235Z"
+  },
+  {
+    "id": "keystone_scope_finance_transformation_program_executive_advisory_program",
+    "client_id": "63931f84-4fc8-4d13-baac-aa16b035bff2",
+    "summary": "Finance Transformation program, Executive Advisory program",
+    "scope_type": "program",
+    "program_ids": [
+      "executive_advisory",
+      "finance_transformation"
+    ],
+    "role_filter": [],
+    "maestro_filter": [],
+    "output_mode_filter": "both",
+    "regulatory_constraints": [],
+    "conditions": [],
+    "audit_required": true,
+    "expiry_date": null,
+    "scope_payload": {
+      "program_ids": [
+        "executive_advisory",
+        "finance_transformation"
+      ],
+      "raw_summary": "Finance Transformation program, Executive Advisory program",
+      "role_filter": [],
+      "regulatory_constraints": []
+    },
+    "created_at": "2026-04-21T20:54:13.235Z",
+    "updated_at": "2026-04-21T20:54:13.235Z"
+  },
+  {
+    "id": "keystone_scope_finance_transformation_full_executive_advisory_full_others_reasoning_only_specific_values_",
+    "client_id": "63931f84-4fc8-4d13-baac-aa16b035bff2",
+    "summary": "Finance Transformation (full) · Executive Advisory (full) · others (reasoning-only; specific values never disclosed)",
+    "scope_type": "program",
+    "program_ids": [
+      "executive_advisory",
+      "finance_transformation"
+    ],
+    "role_filter": [],
+    "maestro_filter": [],
+    "output_mode_filter": "reasoning_only",
+    "regulatory_constraints": [],
+    "conditions": [
+      "reasoning_only_boundary",
+      "specific_values_never_disclosed"
+    ],
+    "audit_required": true,
+    "expiry_date": null,
+    "scope_payload": {
+      "program_ids": [
+        "executive_advisory",
+        "finance_transformation"
+      ],
+      "raw_summary": "Finance Transformation (full) · Executive Advisory (full) · others (reasoning-only; specific values never disclosed)",
+      "role_filter": [],
+      "regulatory_constraints": []
+    },
+    "created_at": "2026-04-21T20:54:13.235Z",
+    "updated_at": "2026-04-21T20:54:13.235Z"
+  },
+  {
+    "id": "keystone_scope_all_transformation_programs_at_tenant",
+    "client_id": "63931f84-4fc8-4d13-baac-aa16b035bff2",
+    "summary": "all transformation programs at tenant",
+    "scope_type": "program",
+    "program_ids": [],
+    "role_filter": [],
+    "maestro_filter": [],
+    "output_mode_filter": "both",
+    "regulatory_constraints": [],
+    "conditions": [],
+    "audit_required": true,
+    "expiry_date": null,
+    "scope_payload": {
+      "program_ids": [],
+      "raw_summary": "all transformation programs at tenant",
+      "role_filter": [],
+      "regulatory_constraints": []
+    },
+    "created_at": "2026-04-21T20:54:13.235Z",
+    "updated_at": "2026-04-21T20:54:13.235Z"
+  },
+  {
+    "id": "keystone_scope_per_initiative_initiative_specific_programs_can_disclose_others_reasoning_only",
+    "client_id": "63931f84-4fc8-4d13-baac-aa16b035bff2",
+    "summary": "per initiative — initiative-specific programs can disclose; others reasoning-only",
+    "scope_type": "program",
+    "program_ids": [],
+    "role_filter": [],
+    "maestro_filter": [],
+    "output_mode_filter": "reasoning_only",
+    "regulatory_constraints": [],
+    "conditions": [
+      "reasoning_only_boundary"
+    ],
+    "audit_required": true,
+    "expiry_date": null,
+    "scope_payload": {
+      "program_ids": [],
+      "raw_summary": "per initiative — initiative-specific programs can disclose; others reasoning-only",
+      "role_filter": [],
+      "regulatory_constraints": []
+    },
+    "created_at": "2026-04-21T20:54:13.235Z",
+    "updated_at": "2026-04-21T20:54:13.235Z"
+  },
+  {
+    "id": "keystone_scope_customer_experience_transformation_program_jonathan_aldridge_s_executive_advisory",
+    "client_id": "63931f84-4fc8-4d13-baac-aa16b035bff2",
+    "summary": "Customer Experience Transformation program, Jonathan Aldridge's Executive Advisory",
+    "scope_type": "program",
+    "program_ids": [
+      "executive_advisory",
+      "customer_experience_transformation"
+    ],
+    "role_filter": [],
+    "maestro_filter": [],
+    "output_mode_filter": "both",
+    "regulatory_constraints": [],
+    "conditions": [],
+    "audit_required": true,
+    "expiry_date": null,
+    "scope_payload": {
+      "program_ids": [
+        "executive_advisory",
+        "customer_experience_transformation"
+      ],
+      "raw_summary": "Customer Experience Transformation program, Jonathan Aldridge's Executive Advisory",
+      "role_filter": [],
+      "regulatory_constraints": []
+    },
+    "created_at": "2026-04-21T20:54:13.235Z",
+    "updated_at": "2026-04-21T20:54:13.235Z"
+  },
+  {
+    "id": "keystone_scope_cx_transformation_full_executive_advisory_full_others_aggregate_metrics_disclosable_custom",
+    "client_id": "63931f84-4fc8-4d13-baac-aa16b035bff2",
+    "summary": "CX Transformation (full) · Executive Advisory (full) · others (aggregate metrics disclosable, customer-level data never disclosable)",
+    "scope_type": "program",
+    "program_ids": [
+      "executive_advisory"
+    ],
+    "role_filter": [],
+    "maestro_filter": [],
+    "output_mode_filter": "both",
+    "regulatory_constraints": [],
+    "conditions": [
+      "aggregate_only_disclosure"
+    ],
+    "audit_required": true,
+    "expiry_date": null,
+    "scope_payload": {
+      "program_ids": [
+        "executive_advisory"
+      ],
+      "raw_summary": "CX Transformation (full) · Executive Advisory (full) · others (aggregate metrics disclosable, customer-level data never disclosable)",
+      "role_filter": [],
+      "regulatory_constraints": []
+    },
+    "created_at": "2026-04-21T20:54:13.235Z",
+    "updated_at": "2026-04-21T20:54:13.235Z"
+  },
+  {
+    "id": "keystone_scope_operational_excellence_programs_storm_response_coordination_program_executive_advisory",
+    "client_id": "63931f84-4fc8-4d13-baac-aa16b035bff2",
+    "summary": "Operational Excellence programs, Storm Response Coordination program, Executive Advisory",
+    "scope_type": "program",
+    "program_ids": [
+      "executive_advisory",
+      "operational_excellence",
+      "storm_response_coordination"
+    ],
+    "role_filter": [],
+    "maestro_filter": [],
+    "output_mode_filter": "both",
+    "regulatory_constraints": [],
+    "conditions": [],
+    "audit_required": true,
+    "expiry_date": null,
+    "scope_payload": {
+      "program_ids": [
+        "executive_advisory",
+        "operational_excellence",
+        "storm_response_coordination"
+      ],
+      "raw_summary": "Operational Excellence programs, Storm Response Coordination program, Executive Advisory",
+      "role_filter": [],
+      "regulatory_constraints": []
+    },
+    "created_at": "2026-04-21T20:54:13.235Z",
+    "updated_at": "2026-04-21T20:54:13.235Z"
+  },
+  {
+    "id": "keystone_scope_operational_excellence_programs_aggregate_full_specific_substation_reasoning_only_due_to_n",
+    "client_id": "63931f84-4fc8-4d13-baac-aa16b035bff2",
+    "summary": "Operational Excellence programs (aggregate full; specific substation reasoning-only due to NERC CIP) · Storm Response (relevant subset) · Executive Advisory (aggregate) · others (public-level metrics only)",
+    "scope_type": "regulatory_restricted",
+    "program_ids": [
+      "executive_advisory",
+      "operational_excellence"
+    ],
+    "role_filter": [],
+    "maestro_filter": [],
+    "output_mode_filter": "reasoning_only",
+    "regulatory_constraints": [
+      "NERC CIP"
+    ],
+    "conditions": [
+      "reasoning_only_boundary"
+    ],
+    "audit_required": true,
+    "expiry_date": null,
+    "scope_payload": {
+      "program_ids": [
+        "executive_advisory",
+        "operational_excellence"
+      ],
+      "raw_summary": "Operational Excellence programs (aggregate full; specific substation reasoning-only due to NERC CIP) · Storm Response (relevant subset) · Executive Advisory (aggregate) · others (public-level metrics only)",
+      "role_filter": [],
+      "regulatory_constraints": [
+        "NERC CIP"
+      ]
+    },
+    "created_at": "2026-04-21T20:54:13.235Z",
+    "updated_at": "2026-04-21T20:54:13.235Z"
+  },
+  {
+    "id": "keystone_scope_cloud_migration_program_cybersecurity_modernization_program_ai_platform_program_executive_",
+    "client_id": "63931f84-4fc8-4d13-baac-aa16b035bff2",
+    "summary": "Cloud Migration program, Cybersecurity Modernization program, AI Platform program, Executive Advisory",
+    "scope_type": "program",
+    "program_ids": [
+      "executive_advisory",
+      "cloud_migration",
+      "cybersecurity_modernization",
+      "ai_platform"
+    ],
+    "role_filter": [],
+    "maestro_filter": [],
+    "output_mode_filter": "both",
+    "regulatory_constraints": [],
+    "conditions": [],
+    "audit_required": true,
+    "expiry_date": null,
+    "scope_payload": {
+      "program_ids": [
+        "executive_advisory",
+        "cloud_migration",
+        "cybersecurity_modernization",
+        "ai_platform"
+      ],
+      "raw_summary": "Cloud Migration program, Cybersecurity Modernization program, AI Platform program, Executive Advisory",
+      "role_filter": [],
+      "regulatory_constraints": []
+    },
+    "created_at": "2026-04-21T20:54:13.235Z",
+    "updated_at": "2026-04-21T20:54:13.235Z"
+  },
+  {
+    "id": "keystone_scope_per_program_scope_aligned_cybersecurity_specifics_tightly_controlled",
+    "client_id": "63931f84-4fc8-4d13-baac-aa16b035bff2",
+    "summary": "per-program scope aligned · cybersecurity specifics tightly controlled",
+    "scope_type": "program",
+    "program_ids": [],
+    "role_filter": [],
+    "maestro_filter": [],
+    "output_mode_filter": "both",
+    "regulatory_constraints": [],
+    "conditions": [],
+    "audit_required": true,
+    "expiry_date": null,
+    "scope_payload": {
+      "program_ids": [],
+      "raw_summary": "per-program scope aligned · cybersecurity specifics tightly controlled",
+      "role_filter": [],
+      "regulatory_constraints": []
+    },
+    "created_at": "2026-04-21T20:54:13.235Z",
+    "updated_at": "2026-04-21T20:54:13.235Z"
+  },
+  {
+    "id": "keystone_scope_safety_programs_executive_advisory",
+    "client_id": "63931f84-4fc8-4d13-baac-aa16b035bff2",
+    "summary": "Safety programs, Executive Advisory",
+    "scope_type": "program",
+    "program_ids": [
+      "executive_advisory",
+      "safety"
+    ],
+    "role_filter": [],
+    "maestro_filter": [],
+    "output_mode_filter": "both",
+    "regulatory_constraints": [],
+    "conditions": [],
+    "audit_required": true,
+    "expiry_date": null,
+    "scope_payload": {
+      "program_ids": [
+        "executive_advisory",
+        "safety"
+      ],
+      "raw_summary": "Safety programs, Executive Advisory",
+      "role_filter": [],
+      "regulatory_constraints": []
+    },
+    "created_at": "2026-04-21T20:54:13.235Z",
+    "updated_at": "2026-04-21T20:54:13.235Z"
+  },
+  {
+    "id": "keystone_scope_safety_programs_full_executive_advisory_full_aggregate_publicly_disclosable_specific_incid",
+    "client_id": "63931f84-4fc8-4d13-baac-aa16b035bff2",
+    "summary": "Safety programs (full) · Executive Advisory (full) · aggregate publicly disclosable; specific incident details program-scoped",
+    "scope_type": "program",
+    "program_ids": [
+      "executive_advisory",
+      "safety"
+    ],
+    "role_filter": [],
+    "maestro_filter": [],
+    "output_mode_filter": "both",
+    "regulatory_constraints": [],
+    "conditions": [],
+    "audit_required": true,
+    "expiry_date": null,
+    "scope_payload": {
+      "program_ids": [
+        "executive_advisory",
+        "safety"
+      ],
+      "raw_summary": "Safety programs (full) · Executive Advisory (full) · aggregate publicly disclosable; specific incident details program-scoped",
+      "role_filter": [],
+      "regulatory_constraints": []
+    },
+    "created_at": "2026-04-21T20:54:13.235Z",
+    "updated_at": "2026-04-21T20:54:13.235Z"
+  },
+  {
+    "id": "keystone_scope_rate_case_strategy_program_regulatory_affairs_programs_executive_advisory",
+    "client_id": "63931f84-4fc8-4d13-baac-aa16b035bff2",
+    "summary": "Rate Case Strategy program, Regulatory Affairs programs, Executive Advisory",
+    "scope_type": "program",
+    "program_ids": [
+      "executive_advisory",
+      "rate_case_strategy",
+      "regulatory_affairs"
+    ],
+    "role_filter": [],
+    "maestro_filter": [],
+    "output_mode_filter": "both",
+    "regulatory_constraints": [],
+    "conditions": [],
+    "audit_required": true,
+    "expiry_date": null,
+    "scope_payload": {
+      "program_ids": [
+        "executive_advisory",
+        "rate_case_strategy",
+        "regulatory_affairs"
+      ],
+      "raw_summary": "Rate Case Strategy program, Regulatory Affairs programs, Executive Advisory",
+      "role_filter": [],
+      "regulatory_constraints": []
+    },
+    "created_at": "2026-04-21T20:54:13.235Z",
+    "updated_at": "2026-04-21T20:54:13.235Z"
+  },
+  {
+    "id": "keystone_scope_rate_case_programs_full_including_privileged_in_appropriate_context_regulatory_affairs_ful",
+    "client_id": "63931f84-4fc8-4d13-baac-aa16b035bff2",
+    "summary": "Rate Case programs (full, including privileged in appropriate context) · Regulatory Affairs (full) · Executive Advisory (procedural full, strategy program-scoped) · other programs (public-record information only)",
+    "scope_type": "program",
+    "program_ids": [
+      "executive_advisory",
+      "regulatory_affairs"
+    ],
+    "role_filter": [],
+    "maestro_filter": [],
+    "output_mode_filter": "both",
+    "regulatory_constraints": [],
+    "conditions": [],
+    "audit_required": true,
+    "expiry_date": null,
+    "scope_payload": {
+      "program_ids": [
+        "executive_advisory",
+        "regulatory_affairs"
+      ],
+      "raw_summary": "Rate Case programs (full, including privileged in appropriate context) · Regulatory Affairs (full) · Executive Advisory (procedural full, strategy program-scoped) · other programs (public-record information only)",
+      "role_filter": [],
+      "regulatory_constraints": []
+    },
+    "created_at": "2026-04-21T20:54:13.235Z",
+    "updated_at": "2026-04-21T20:54:13.235Z"
+  },
+  {
+    "id": "keystone_scope_hr_strategy_program_workforce_transformation_program_executive_advisory",
+    "client_id": "63931f84-4fc8-4d13-baac-aa16b035bff2",
+    "summary": "HR Strategy program, Workforce Transformation program, Executive Advisory",
+    "scope_type": "program",
+    "program_ids": [
+      "executive_advisory",
+      "hr_strategy",
+      "workforce_transformation"
+    ],
+    "role_filter": [],
+    "maestro_filter": [],
+    "output_mode_filter": "both",
+    "regulatory_constraints": [],
+    "conditions": [],
+    "audit_required": true,
+    "expiry_date": null,
+    "scope_payload": {
+      "program_ids": [
+        "executive_advisory",
+        "hr_strategy",
+        "workforce_transformation"
+      ],
+      "raw_summary": "HR Strategy program, Workforce Transformation program, Executive Advisory",
+      "role_filter": [],
+      "regulatory_constraints": []
+    },
+    "created_at": "2026-04-21T20:54:13.235Z",
+    "updated_at": "2026-04-21T20:54:13.235Z"
+  },
+  {
+    "id": "keystone_scope_hr_strategy_aggregate_full_employee_specific_reasoning_only_workforce_transformation_aggre",
+    "client_id": "63931f84-4fc8-4d13-baac-aa16b035bff2",
+    "summary": "HR Strategy (aggregate full; employee-specific reasoning-only) · Workforce Transformation (aggregate full) · Executive Advisory (aggregate) · other programs (aggregate metrics only, no individual employee data)",
+    "scope_type": "program",
+    "program_ids": [
+      "executive_advisory",
+      "hr_strategy",
+      "workforce_transformation"
+    ],
+    "role_filter": [],
+    "maestro_filter": [],
+    "output_mode_filter": "reasoning_only",
+    "regulatory_constraints": [],
+    "conditions": [
+      "reasoning_only_boundary"
+    ],
+    "audit_required": true,
+    "expiry_date": null,
+    "scope_payload": {
+      "program_ids": [
+        "executive_advisory",
+        "hr_strategy",
+        "workforce_transformation"
+      ],
+      "raw_summary": "HR Strategy (aggregate full; employee-specific reasoning-only) · Workforce Transformation (aggregate full) · Executive Advisory (aggregate) · other programs (aggregate metrics only, no individual employee data)",
+      "role_filter": [],
+      "regulatory_constraints": []
+    },
+    "created_at": "2026-04-21T20:54:13.235Z",
+    "updated_at": "2026-04-21T20:54:13.235Z"
+  }
+]

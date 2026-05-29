@@ -1,0 +1,820 @@
+[
+  {
+    "id": "300d16c8-f502-47fe-8d77-9d9a057c6edd",
+    "engagement_id": "6f2f57c8-f608-4aec-ac2b-0d3991d357d2",
+    "module_key": "origination",
+    "previous_state": null,
+    "new_state": "submitted_for_approval",
+    "changed_by_user_id": "435ce745-63f2-4444-98d1-1965fc971ccd",
+    "changed_by_agent": null,
+    "notes": null,
+    "context_jsonb": {
+      "origin": "maestro_console",
+      "pattern_key": null,
+      "approval_request_id": "e23158ac-1493-45c0-9474-fa79f30398c4"
+    },
+    "created_at": "2026-05-02T15:30:17.686Z"
+  },
+  {
+    "id": "1f85d6d1-bdce-4fd9-8aa9-6203056689ca",
+    "engagement_id": "6f2f57c8-f608-4aec-ac2b-0d3991d357d2",
+    "module_key": "discovery_report",
+    "previous_state": null,
+    "new_state": "signed_off",
+    "changed_by_user_id": "435ce745-63f2-4444-98d1-1965fc971ccd",
+    "changed_by_agent": null,
+    "notes": "Core Banking AI Operating Model & Analytics Modernization — P0 Seed Package signed off by Nexus tool",
+    "context_jsonb": {
+      "version_id": "af67a2d5-f212-4448-9045-969e71947150",
+      "deliverable_id": "0a20c960-4635-4e03-af1f-0bfc7a8109f5",
+      "deliverable_type_key": "discovery_report"
+    },
+    "created_at": "2026-05-02T15:35:22.071Z"
+  },
+  {
+    "id": "6f2f6017-467d-4ae7-b9fa-7cde7d6db83c",
+    "engagement_id": "6f2f57c8-f608-4aec-ac2b-0d3991d357d2",
+    "module_key": "phase_0",
+    "previous_state": "in_progress",
+    "new_state": "completed",
+    "changed_by_user_id": "435ce745-63f2-4444-98d1-1965fc971ccd",
+    "changed_by_agent": null,
+    "notes": "Advanced 0 → 1",
+    "context_jsonb": {
+      "approved_by": "435ce745-63f2-4444-98d1-1965fc971ccd",
+      "bypass_gate": false
+    },
+    "created_at": "2026-05-02T15:35:34.639Z"
+  },
+  {
+    "id": "d127af84-f299-4f48-accd-1930c52fc2f1",
+    "engagement_id": "6f2f57c8-f608-4aec-ac2b-0d3991d357d2",
+    "module_key": "discovery_report",
+    "previous_state": null,
+    "new_state": "signed_off",
+    "changed_by_user_id": "435ce745-63f2-4444-98d1-1965fc971ccd",
+    "changed_by_agent": null,
+    "notes": "P1 Discovery Synthesis Report — Core Banking AI Operating Model & Analytics Modernization signed off by Nexus tool",
+    "context_jsonb": {
+      "version_id": "462ee23a-2edb-41d6-bb2f-9d0589e1f04d",
+      "deliverable_id": "0a20c960-4635-4e03-af1f-0bfc7a8109f5",
+      "deliverable_type_key": "discovery_report"
+    },
+    "created_at": "2026-05-02T15:59:12.483Z"
+  },
+  {
+    "id": "3982cb58-c6a2-4921-aac6-f82005352116",
+    "engagement_id": "6f2f57c8-f608-4aec-ac2b-0d3991d357d2",
+    "module_key": "phase_1",
+    "previous_state": "in_progress",
+    "new_state": "completed",
+    "changed_by_user_id": "435ce745-63f2-4444-98d1-1965fc971ccd",
+    "changed_by_agent": null,
+    "notes": "Advanced 1 → 2",
+    "context_jsonb": {
+      "approved_by": "435ce745-63f2-4444-98d1-1965fc971ccd",
+      "bypass_gate": false
+    },
+    "created_at": "2026-05-02T15:59:29.107Z"
+  },
+  {
+    "id": "a2cd165d-ae1e-4aba-8f4c-e6d0c990bdaa",
+    "engagement_id": "6f2f57c8-f608-4aec-ac2b-0d3991d357d2",
+    "module_key": "design_spec",
+    "previous_state": null,
+    "new_state": "signed_off",
+    "changed_by_user_id": "435ce745-63f2-4444-98d1-1965fc971ccd",
+    "changed_by_agent": null,
+    "notes": "P2 Synthesis Options Memo — Core Banking AI Operating Model & Analytics Modernization signed off by Nexus tool",
+    "context_jsonb": {
+      "version_id": "da24b698-8d07-4790-b94c-35692f02d93a",
+      "deliverable_id": "fa53784a-b563-4e61-aa4d-0f790482bd94",
+      "deliverable_type_key": "design_spec"
+    },
+    "created_at": "2026-05-02T16:01:09.606Z"
+  },
+  {
+    "id": "74684586-4a8b-4398-9d20-02934a0ab67e",
+    "engagement_id": "6f2f57c8-f608-4aec-ac2b-0d3991d357d2",
+    "module_key": "charter",
+    "previous_state": null,
+    "new_state": "signed_off",
+    "changed_by_user_id": "435ce745-63f2-4444-98d1-1965fc971ccd",
+    "changed_by_agent": null,
+    "notes": "Program Charter — Core Banking AI Operating Model & Analytics Modernization signed off by Nexus tool",
+    "context_jsonb": {
+      "version_id": "c8b92780-ae30-41e6-bb7c-da8773bff205",
+      "deliverable_id": "c104fbf1-1c38-4e39-b7c0-c4e4cea4256c",
+      "deliverable_type_key": "charter"
+    },
+    "created_at": "2026-05-02T16:01:37.676Z"
+  },
+  {
+    "id": "397911f0-53fa-4a67-8038-302203b9ebef",
+    "engagement_id": "6f2f57c8-f608-4aec-ac2b-0d3991d357d2",
+    "module_key": "requirements_traceability",
+    "previous_state": null,
+    "new_state": "signed_off",
+    "changed_by_user_id": "435ce745-63f2-4444-98d1-1965fc971ccd",
+    "changed_by_agent": null,
+    "notes": "Tradeoff Workshop Facilitator Guide — Option Decision Workshop (Lena Ortiz) signed off by Nexus tool",
+    "context_jsonb": {
+      "version_id": "f14b0917-a043-4ecd-aa58-1e8038200612",
+      "deliverable_id": "d6ab6ad4-e064-4977-8216-4c703b4c8390",
+      "deliverable_type_key": "requirements_traceability"
+    },
+    "created_at": "2026-05-02T16:02:03.737Z"
+  },
+  {
+    "id": "34118511-9b08-4429-9f06-c5d613ecb833",
+    "engagement_id": "6f2f57c8-f608-4aec-ac2b-0d3991d357d2",
+    "module_key": "phase_2",
+    "previous_state": "in_progress",
+    "new_state": "completed",
+    "changed_by_user_id": "435ce745-63f2-4444-98d1-1965fc971ccd",
+    "changed_by_agent": null,
+    "notes": "Advanced 2 → 3",
+    "context_jsonb": {
+      "approved_by": "435ce745-63f2-4444-98d1-1965fc971ccd",
+      "bypass_gate": false
+    },
+    "created_at": "2026-05-02T16:02:10.879Z"
+  },
+  {
+    "id": "a230cf3f-0121-4a6d-8ec7-47d4aa420d05",
+    "engagement_id": "6f2f57c8-f608-4aec-ac2b-0d3991d357d2",
+    "module_key": "design_spec",
+    "previous_state": null,
+    "new_state": "signed_off",
+    "changed_by_user_id": "435ce745-63f2-4444-98d1-1965fc971ccd",
+    "changed_by_agent": null,
+    "notes": "Core Banking AI Operating Model & Analytics Modernization — P3 Solution Design Specification signed off by Nexus tool",
+    "context_jsonb": {
+      "version_id": "3cd51e37-66f4-4ecb-8949-5d17c14c7e10",
+      "deliverable_id": "fa53784a-b563-4e61-aa4d-0f790482bd94",
+      "deliverable_type_key": "design_spec"
+    },
+    "created_at": "2026-05-02T16:14:34.811Z"
+  },
+  {
+    "id": "61a0d5e4-6d20-49d2-8c19-783e48356119",
+    "engagement_id": "6f2f57c8-f608-4aec-ac2b-0d3991d357d2",
+    "module_key": "requirements_traceability",
+    "previous_state": null,
+    "new_state": "signed_off",
+    "changed_by_user_id": "435ce745-63f2-4444-98d1-1965fc971ccd",
+    "changed_by_agent": null,
+    "notes": "Core Banking AI Operating Model & Analytics Modernization — Requirements-to-Design-to-Outcomes Traceability Matrix signed off by Nexus tool",
+    "context_jsonb": {
+      "version_id": "b9204d07-f549-47ce-a498-bc693b77642a",
+      "deliverable_id": "d6ab6ad4-e064-4977-8216-4c703b4c8390",
+      "deliverable_type_key": "requirements_traceability"
+    },
+    "created_at": "2026-05-02T16:14:36.079Z"
+  },
+  {
+    "id": "0fd88293-23bb-4afc-84db-d8cc95610318",
+    "engagement_id": "6f2f57c8-f608-4aec-ac2b-0d3991d357d2",
+    "module_key": "phase_3",
+    "previous_state": "in_progress",
+    "new_state": "completed",
+    "changed_by_user_id": "435ce745-63f2-4444-98d1-1965fc971ccd",
+    "changed_by_agent": null,
+    "notes": "Advanced 3 → 4",
+    "context_jsonb": {
+      "approved_by": "435ce745-63f2-4444-98d1-1965fc971ccd",
+      "bypass_gate": false
+    },
+    "created_at": "2026-05-02T16:15:07.942Z"
+  },
+  {
+    "id": "8d1536a7-f380-44c1-a93f-0b2529090094",
+    "engagement_id": "6f2f57c8-f608-4aec-ac2b-0d3991d357d2",
+    "module_key": "design_spec",
+    "previous_state": null,
+    "new_state": "signed_off",
+    "changed_by_user_id": "435ce745-63f2-4444-98d1-1965fc971ccd",
+    "changed_by_agent": null,
+    "notes": "P3 Solution Design Specification v2 — Core Banking AI Operating Model & Analytics Modernization signed off by Nexus tool",
+    "context_jsonb": {
+      "version_id": "5e472f16-0fb1-4f7b-b8ff-e00a4dd51794",
+      "deliverable_id": "fa53784a-b563-4e61-aa4d-0f790482bd94",
+      "deliverable_type_key": "design_spec"
+    },
+    "created_at": "2026-05-02T16:27:56.049Z"
+  },
+  {
+    "id": "82ff4881-67a5-48fc-a878-d7099c63bef6",
+    "engagement_id": "6f2f57c8-f608-4aec-ac2b-0d3991d357d2",
+    "module_key": "requirements_traceability",
+    "previous_state": null,
+    "new_state": "signed_off",
+    "changed_by_user_id": "435ce745-63f2-4444-98d1-1965fc971ccd",
+    "changed_by_agent": null,
+    "notes": "P3 Requirements-to-Design-to-Outcomes Traceability Matrix v2 — Core Banking AI Operating Model & Analytics Modernization signed off by Nexus tool",
+    "context_jsonb": {
+      "version_id": "c82cff1f-d5b4-45f8-8e1f-a2cf9f724d5f",
+      "deliverable_id": "d6ab6ad4-e064-4977-8216-4c703b4c8390",
+      "deliverable_type_key": "requirements_traceability"
+    },
+    "created_at": "2026-05-02T16:27:57.402Z"
+  },
+  {
+    "id": "f27ef320-79ad-4af1-994b-7ae227757b2f",
+    "engagement_id": "6f2f57c8-f608-4aec-ac2b-0d3991d357d2",
+    "module_key": "design_spec",
+    "previous_state": null,
+    "new_state": "signed_off",
+    "changed_by_user_id": "435ce745-63f2-4444-98d1-1965fc971ccd",
+    "changed_by_agent": null,
+    "notes": "P3 Solution Design Spec v3 — Baseline-Controlled signed off by Nexus tool",
+    "context_jsonb": {
+      "version_id": "c94b8d4c-1c64-41eb-8ec6-71ee70767222",
+      "deliverable_id": "fa53784a-b563-4e61-aa4d-0f790482bd94",
+      "deliverable_type_key": "design_spec"
+    },
+    "created_at": "2026-05-02T16:29:16.864Z"
+  },
+  {
+    "id": "57482847-09d7-46e5-bcac-7429b5029dd4",
+    "engagement_id": "6f2f57c8-f608-4aec-ac2b-0d3991d357d2",
+    "module_key": "requirements_traceability",
+    "previous_state": null,
+    "new_state": "signed_off",
+    "changed_by_user_id": "435ce745-63f2-4444-98d1-1965fc971ccd",
+    "changed_by_agent": null,
+    "notes": "P3 Requirements-to-Design-to-Outcomes Traceability Matrix v3 — Baseline-Controlled signed off by Nexus tool",
+    "context_jsonb": {
+      "version_id": "7b4fc4bb-a744-4438-b42f-9f88a231e92e",
+      "deliverable_id": "d6ab6ad4-e064-4977-8216-4c703b4c8390",
+      "deliverable_type_key": "requirements_traceability"
+    },
+    "created_at": "2026-05-02T16:29:17.451Z"
+  },
+  {
+    "id": "028ec868-b346-476b-b9ac-18894c38fcc4",
+    "engagement_id": "6f2f57c8-f608-4aec-ac2b-0d3991d357d2",
+    "module_key": "execution_roadmap",
+    "previous_state": null,
+    "new_state": "signed_off",
+    "changed_by_user_id": "435ce745-63f2-4444-98d1-1965fc971ccd",
+    "changed_by_agent": null,
+    "notes": "Core Banking AI Operating Model & Analytics Modernization — Execution Roadmap v1 signed off by Nexus tool",
+    "context_jsonb": {
+      "version_id": "27767b0e-0762-40e4-bfbc-b5e36039f194",
+      "deliverable_id": "f4a1c8d6-70e4-437c-83d7-d01e2d16fd8e",
+      "deliverable_type_key": "execution_roadmap"
+    },
+    "created_at": "2026-05-02T16:30:40.676Z"
+  },
+  {
+    "id": "aa3f1a29-6cf3-4d01-9d86-42b08840ba58",
+    "engagement_id": "6f2f57c8-f608-4aec-ac2b-0d3991d357d2",
+    "module_key": "phase_4",
+    "previous_state": "in_progress",
+    "new_state": "completed",
+    "changed_by_user_id": "435ce745-63f2-4444-98d1-1965fc971ccd",
+    "changed_by_agent": null,
+    "notes": "Advanced 4 → 5",
+    "context_jsonb": {
+      "approved_by": "435ce745-63f2-4444-98d1-1965fc971ccd",
+      "bypass_gate": false
+    },
+    "created_at": "2026-05-02T16:31:20.718Z"
+  },
+  {
+    "id": "946ec5cc-b299-4856-baf8-16082c23e39b",
+    "engagement_id": "6f2f57c8-f608-4aec-ac2b-0d3991d357d2",
+    "module_key": "business_case",
+    "previous_state": null,
+    "new_state": "signed_off",
+    "changed_by_user_id": "435ce745-63f2-4444-98d1-1965fc971ccd",
+    "changed_by_agent": null,
+    "notes": "Core Banking AI Operating Model & Analytics Modernization — Business Case v1 signed off by Nexus tool",
+    "context_jsonb": {
+      "version_id": "d0525306-9f70-47ca-87ea-0d060e9fd6c9",
+      "deliverable_id": "e2c300ad-5c17-4638-9328-f67ac3cde295",
+      "deliverable_type_key": "business_case"
+    },
+    "created_at": "2026-05-02T16:35:18.653Z"
+  },
+  {
+    "id": "57ec9159-645c-4102-8258-990ec53d8797",
+    "engagement_id": "6f2f57c8-f608-4aec-ac2b-0d3991d357d2",
+    "module_key": "funding_approval",
+    "previous_state": null,
+    "new_state": "signed_off",
+    "changed_by_user_id": "435ce745-63f2-4444-98d1-1965fc971ccd",
+    "changed_by_agent": null,
+    "notes": "Core Banking AI — Funding & Authority Decision Memo v1 signed off by Nexus tool",
+    "context_jsonb": {
+      "version_id": "012eef6c-0458-487e-a2cd-e752399c8867",
+      "deliverable_id": "2d584389-74cc-4f84-b324-11432739010c",
+      "deliverable_type_key": "funding_approval"
+    },
+    "created_at": "2026-05-02T16:35:19.387Z"
+  },
+  {
+    "id": "f3886eae-1c15-4be7-837c-1004b170b2d9",
+    "engagement_id": "6f2f57c8-f608-4aec-ac2b-0d3991d357d2",
+    "module_key": "sponsor_alignment",
+    "previous_state": null,
+    "new_state": "signed_off",
+    "changed_by_user_id": "435ce745-63f2-4444-98d1-1965fc971ccd",
+    "changed_by_agent": null,
+    "notes": "Core Banking AI — Sponsor & Stakeholder Alignment Record v1 signed off by Nexus tool",
+    "context_jsonb": {
+      "version_id": "3d12c189-95ae-479d-8d53-24be1e4a950a",
+      "deliverable_id": "47e443f7-e83b-40bf-b286-971e255eee1a",
+      "deliverable_type_key": "sponsor_alignment"
+    },
+    "created_at": "2026-05-02T16:35:20.085Z"
+  },
+  {
+    "id": "70db9b50-8ecf-4d8b-ad11-4454efde39b4",
+    "engagement_id": "6f2f57c8-f608-4aec-ac2b-0d3991d357d2",
+    "module_key": "readiness_and_change_plan",
+    "previous_state": null,
+    "new_state": "signed_off",
+    "changed_by_user_id": "435ce745-63f2-4444-98d1-1965fc971ccd",
+    "changed_by_agent": null,
+    "notes": "Core Banking AI — Readiness, Change & Communications Plan v1 signed off by Nexus tool",
+    "context_jsonb": {
+      "version_id": "dc98b55e-d848-4043-b261-8db629240ca8",
+      "deliverable_id": "98b8be0f-4547-4178-b505-83b4cedff096",
+      "deliverable_type_key": "readiness_and_change_plan"
+    },
+    "created_at": "2026-05-02T16:35:20.845Z"
+  },
+  {
+    "id": "bb039473-b093-4d84-a91f-b467728b3d9f",
+    "engagement_id": "6f2f57c8-f608-4aec-ac2b-0d3991d357d2",
+    "module_key": "tower_handoff_plan",
+    "previous_state": null,
+    "new_state": "signed_off",
+    "changed_by_user_id": "435ce745-63f2-4444-98d1-1965fc971ccd",
+    "changed_by_agent": null,
+    "notes": "Core Banking AI — Tower Handoff Plan v1 signed off by Nexus tool",
+    "context_jsonb": {
+      "version_id": "3808f826-39fc-45d5-8240-f319874b732a",
+      "deliverable_id": "15b29ee8-5606-4547-934d-8bba922865c1",
+      "deliverable_type_key": "tower_handoff_plan"
+    },
+    "created_at": "2026-05-02T16:35:21.574Z"
+  },
+  {
+    "id": "61c2b213-585c-48fd-93cd-517c3dca5bac",
+    "engagement_id": "6f2f57c8-f608-4aec-ac2b-0d3991d357d2",
+    "module_key": "phase_5",
+    "previous_state": "in_progress",
+    "new_state": "completed",
+    "changed_by_user_id": "435ce745-63f2-4444-98d1-1965fc971ccd",
+    "changed_by_agent": null,
+    "notes": "Advanced 5 → 6",
+    "context_jsonb": {
+      "approved_by": "435ce745-63f2-4444-98d1-1965fc971ccd",
+      "bypass_gate": false
+    },
+    "created_at": "2026-05-02T16:35:43.969Z"
+  },
+  {
+    "id": "e95c7318-15e3-40e5-8468-264289ace2ec",
+    "engagement_id": "6f2f57c8-f608-4aec-ac2b-0d3991d357d2",
+    "module_key": "tower_handoff_plan",
+    "previous_state": null,
+    "new_state": "signed_off",
+    "changed_by_user_id": "435ce745-63f2-4444-98d1-1965fc971ccd",
+    "changed_by_agent": null,
+    "notes": "Tower Execution Tracking Contract & Handoff Completion Package v1 signed off by Nexus tool",
+    "context_jsonb": {
+      "version_id": "107af969-6547-47da-9cc8-98e35e9591f3",
+      "deliverable_id": "15b29ee8-5606-4547-934d-8bba922865c1",
+      "deliverable_type_key": "tower_handoff_plan"
+    },
+    "created_at": "2026-05-02T16:36:57.941Z"
+  },
+  {
+    "id": "4771e092-02e3-4486-8d08-c4453935dcc2",
+    "engagement_id": "6f2f57c8-f608-4aec-ac2b-0d3991d357d2",
+    "module_key": "program_completion",
+    "previous_state": "phase_5",
+    "new_state": "completed",
+    "changed_by_user_id": "435ce745-63f2-4444-98d1-1965fc971ccd",
+    "changed_by_agent": null,
+    "notes": null,
+    "context_jsonb": {
+      "completed_at": "2026-05-02T16:37:03.192Z",
+      "completion_notes": "P6 Tower Handoff complete. Execution tracking contract signed. Execution owner: Lena Ortiz. Sponsor escalation: Priya Mehta. Tower observer: Ethan Brooks. All seven P6 definition-of-done items addressed. Execution now happens outside AbarVa; Tower observes, detects drift, and escalates decisions. P1 baselines preserved: 21 bd cycle time, 62% lineage completeness, 47 min fraud latency, 14% rework rate. First weekly status intake due Week 1 Phase A. Risk committee model-risk condition owner: Nadia Rahman. Pattern harvest due at closeout."
+    },
+    "created_at": "2026-05-02T16:37:03.262Z"
+  },
+  {
+    "id": "ec1e4e2c-e87d-4e27-872d-db5bbcb4fcf6",
+    "engagement_id": "6f2f57c8-f608-4aec-ac2b-0d3991d357d2",
+    "module_key": "tower_handoff_plan",
+    "previous_state": null,
+    "new_state": "signed_off",
+    "changed_by_user_id": "435ce745-63f2-4444-98d1-1965fc971ccd",
+    "changed_by_agent": null,
+    "notes": "Tower Execution Tracking Contract v2 — Retrieval Hygiene Revision signed off by Nexus tool",
+    "context_jsonb": {
+      "version_id": "cb1d065a-9baf-4fdd-b166-af18bb67b131",
+      "deliverable_id": "15b29ee8-5606-4547-934d-8bba922865c1",
+      "deliverable_type_key": "tower_handoff_plan"
+    },
+    "created_at": "2026-05-02T16:38:11.297Z"
+  },
+  {
+    "id": "9492f9d4-3f13-4d24-9901-858ff9459de5",
+    "engagement_id": "6f2f57c8-f608-4aec-ac2b-0d3991d357d2",
+    "module_key": "tower_handoff_plan",
+    "previous_state": null,
+    "new_state": "signed_off",
+    "changed_by_user_id": "435ce745-63f2-4444-98d1-1965fc971ccd",
+    "changed_by_agent": null,
+    "notes": "Tower Execution Tracking Contract v3 signed off by Nexus tool",
+    "context_jsonb": {
+      "version_id": "d790107c-c7a0-4400-9e31-427e59d76753",
+      "deliverable_id": "15b29ee8-5606-4547-934d-8bba922865c1",
+      "deliverable_type_key": "tower_handoff_plan"
+    },
+    "created_at": "2026-05-02T16:39:39.665Z"
+  },
+  {
+    "id": "513c229f-91d4-47db-9154-b69aee49a9ec",
+    "engagement_id": "3da05bec-73df-4c34-9d3a-f1053280fbca",
+    "module_key": "phase_0",
+    "previous_state": "in_progress",
+    "new_state": "completed",
+    "changed_by_user_id": "435ce745-63f2-4444-98d1-1965fc971ccd",
+    "changed_by_agent": null,
+    "notes": "Advanced 0 → 1",
+    "context_jsonb": {
+      "approved_by": "435ce745-63f2-4444-98d1-1965fc971ccd",
+      "bypass_gate": false
+    },
+    "created_at": "2026-05-02T22:16:00.744Z"
+  },
+  {
+    "id": "7c8709cf-4b4c-4a0e-a535-aeef10dd58a1",
+    "engagement_id": "3da05bec-73df-4c34-9d3a-f1053280fbca",
+    "module_key": "phase_1",
+    "previous_state": "in_progress",
+    "new_state": "completed",
+    "changed_by_user_id": "435ce745-63f2-4444-98d1-1965fc971ccd",
+    "changed_by_agent": null,
+    "notes": "Advanced 1 → 2",
+    "context_jsonb": {
+      "approved_by": "435ce745-63f2-4444-98d1-1965fc971ccd",
+      "bypass_gate": false
+    },
+    "created_at": "2026-05-02T22:34:56.300Z"
+  },
+  {
+    "id": "62d1c08e-1486-4447-a9ee-fd900f472ec5",
+    "engagement_id": "3da05bec-73df-4c34-9d3a-f1053280fbca",
+    "module_key": "requirements_traceability",
+    "previous_state": null,
+    "new_state": "signed_off",
+    "changed_by_user_id": "435ce745-63f2-4444-98d1-1965fc971ccd",
+    "changed_by_agent": null,
+    "notes": "P3 Entry Conditions Checklist — Risk Controls Modernization signed off by Nexus tool",
+    "context_jsonb": {
+      "version_id": "6e3daed4-4974-4aee-a8ef-3a5566c1f35b",
+      "deliverable_id": "2102a981-9970-4ff4-a166-fbbd616976a8",
+      "deliverable_type_key": "requirements_traceability"
+    },
+    "created_at": "2026-05-02T22:37:08.735Z"
+  },
+  {
+    "id": "88146bb4-2240-4a2c-a3ab-3c7ca3973492",
+    "engagement_id": "3da05bec-73df-4c34-9d3a-f1053280fbca",
+    "module_key": "phase_2",
+    "previous_state": "in_progress",
+    "new_state": "completed",
+    "changed_by_user_id": "435ce745-63f2-4444-98d1-1965fc971ccd",
+    "changed_by_agent": null,
+    "notes": "Advanced 2 → 3",
+    "context_jsonb": {
+      "approved_by": "435ce745-63f2-4444-98d1-1965fc971ccd",
+      "bypass_gate": false
+    },
+    "created_at": "2026-05-02T22:37:14.827Z"
+  },
+  {
+    "id": "d35f6a6d-992f-4f07-8d7c-f24d0742971a",
+    "engagement_id": "3da05bec-73df-4c34-9d3a-f1053280fbca",
+    "module_key": "charter",
+    "previous_state": null,
+    "new_state": "signed_off",
+    "changed_by_user_id": "435ce745-63f2-4444-98d1-1965fc971ccd",
+    "changed_by_agent": null,
+    "notes": "P3 Exit Record — Design Phase Closure signed off by Nexus tool",
+    "context_jsonb": {
+      "version_id": "b7f5ab7b-6e90-4b67-88fc-52b4189bf5a8",
+      "deliverable_id": "ce327328-ef46-4311-9bb0-a14e8ad42910",
+      "deliverable_type_key": "charter"
+    },
+    "created_at": "2026-05-02T22:40:36.986Z"
+  },
+  {
+    "id": "3675bb6a-ab98-4614-80c6-6d4f5aed3b04",
+    "engagement_id": "3da05bec-73df-4c34-9d3a-f1053280fbca",
+    "module_key": "design_spec",
+    "previous_state": null,
+    "new_state": "signed_off",
+    "changed_by_user_id": "435ce745-63f2-4444-98d1-1965fc971ccd",
+    "changed_by_agent": null,
+    "notes": "Design Spec Amendment — Locked Pilot Thresholds and Dissenter Record signed off by Nexus tool",
+    "context_jsonb": {
+      "version_id": "2810fde8-ced7-47e5-b69a-8da3fa96a4bf",
+      "deliverable_id": "af6e2410-ed40-4f4d-8667-0db5506fa33e",
+      "deliverable_type_key": "design_spec"
+    },
+    "created_at": "2026-05-02T22:40:37.717Z"
+  },
+  {
+    "id": "97f5f960-ab47-4fc4-99e9-1281e35a256a",
+    "engagement_id": "3da05bec-73df-4c34-9d3a-f1053280fbca",
+    "module_key": "phase_3",
+    "previous_state": "in_progress",
+    "new_state": "completed",
+    "changed_by_user_id": "435ce745-63f2-4444-98d1-1965fc971ccd",
+    "changed_by_agent": null,
+    "notes": "Advanced 3 → 4",
+    "context_jsonb": {
+      "approved_by": "435ce745-63f2-4444-98d1-1965fc971ccd",
+      "bypass_gate": false
+    },
+    "created_at": "2026-05-02T22:40:51.533Z"
+  },
+  {
+    "id": "3ef9f5cb-b1f6-4ae7-8612-75d58270ea5c",
+    "engagement_id": "3da05bec-73df-4c34-9d3a-f1053280fbca",
+    "module_key": "phase_4",
+    "previous_state": "in_progress",
+    "new_state": "completed",
+    "changed_by_user_id": "435ce745-63f2-4444-98d1-1965fc971ccd",
+    "changed_by_agent": null,
+    "notes": "Advanced 4 → 5",
+    "context_jsonb": {
+      "approved_by": "435ce745-63f2-4444-98d1-1965fc971ccd",
+      "bypass_gate": false
+    },
+    "created_at": "2026-05-02T22:42:27.700Z"
+  },
+  {
+    "id": "004265bc-7ef5-4979-afd8-cde7641e19fe",
+    "engagement_id": "3da05bec-73df-4c34-9d3a-f1053280fbca",
+    "module_key": "phase_5",
+    "previous_state": "in_progress",
+    "new_state": "completed",
+    "changed_by_user_id": "435ce745-63f2-4444-98d1-1965fc971ccd",
+    "changed_by_agent": null,
+    "notes": "Advanced 5 → 6",
+    "context_jsonb": {
+      "approved_by": "435ce745-63f2-4444-98d1-1965fc971ccd",
+      "bypass_gate": false
+    },
+    "created_at": "2026-05-02T22:44:39.893Z"
+  },
+  {
+    "id": "057cb63e-884e-4b89-8c86-929ea2f3da39",
+    "engagement_id": "3da05bec-73df-4c34-9d3a-f1053280fbca",
+    "module_key": "program_completion",
+    "previous_state": "phase_5",
+    "new_state": "completed",
+    "changed_by_user_id": "435ce745-63f2-4444-98d1-1965fc971ccd",
+    "changed_by_agent": null,
+    "notes": null,
+    "context_jsonb": {
+      "completed_at": "2026-05-02T22:46:08.310Z",
+      "completion_notes": "P6 Tower Handoff complete. Execution tracking contract signed off. Rachel Kim named Tower monitoring owner; Lena Ortiz accountable for feed integrity; Ethan Brooks escalation sponsor. Weekly feeds defined across all seven domains plus ServiceNow/SI PMO. Tower thresholds, escalation rules, benefits cadence, kill/rebaseline criteria, and first weekly status intake path all specified. Nexus coaching lifecycle closed; execution proceeds externally under Tower observation."
+    },
+    "created_at": "2026-05-02T22:46:08.379Z"
+  },
+  {
+    "id": "2259ec64-a131-48be-a40b-7cae9e98e9bf",
+    "engagement_id": "3da05bec-73df-4c34-9d3a-f1053280fbca",
+    "module_key": "origination_brief",
+    "previous_state": null,
+    "new_state": "signed_off",
+    "changed_by_user_id": "435ce745-63f2-4444-98d1-1965fc971ccd",
+    "changed_by_agent": null,
+    "notes": "Brindlemark Digital Banking Risk Controls Modernization — P0 Origination Seed Brief signed off by Nexus tool",
+    "context_jsonb": {
+      "version_id": "63e6352c-b6e7-4961-b6a3-b80bcee0c14f",
+      "deliverable_id": "bce17a62-2617-4b43-9079-2767eea19543",
+      "deliverable_type_key": "origination_brief"
+    },
+    "created_at": "2026-05-02T22:15:52.542Z"
+  },
+  {
+    "id": "0727d051-37e9-4a68-8e48-cb3673461c5b",
+    "engagement_id": "3da05bec-73df-4c34-9d3a-f1053280fbca",
+    "module_key": "discovery_report",
+    "previous_state": null,
+    "new_state": "signed_off",
+    "changed_by_user_id": "435ce745-63f2-4444-98d1-1965fc971ccd",
+    "changed_by_agent": null,
+    "notes": "Brindlemark Digital Banking Risk Controls Modernization — P1 Discovery Report signed off by Nexus tool",
+    "context_jsonb": {
+      "version_id": "d53f5ed0-8488-4711-8333-594c26988036",
+      "deliverable_id": "f3f198f5-7619-42ee-93ef-97495bab97c9",
+      "deliverable_type_key": "discovery_report"
+    },
+    "created_at": "2026-05-02T22:17:15.307Z"
+  },
+  {
+    "id": "5327fb3c-6c8b-4a9e-85bc-2ce0a74155e9",
+    "engagement_id": "3da05bec-73df-4c34-9d3a-f1053280fbca",
+    "module_key": "charter",
+    "previous_state": null,
+    "new_state": "signed_off",
+    "changed_by_user_id": "435ce745-63f2-4444-98d1-1965fc971ccd",
+    "changed_by_agent": null,
+    "notes": "Brindlemark Digital Banking Risk Controls Modernization — Program Charter v1 signed off by Nexus tool",
+    "context_jsonb": {
+      "version_id": "72d6b976-a79f-491f-8083-f162e4192c8c",
+      "deliverable_id": "ce327328-ef46-4311-9bb0-a14e8ad42910",
+      "deliverable_type_key": "charter"
+    },
+    "created_at": "2026-05-02T22:36:06.213Z"
+  },
+  {
+    "id": "c45dbe74-968d-474c-9310-6a4761ab3249",
+    "engagement_id": "3da05bec-73df-4c34-9d3a-f1053280fbca",
+    "module_key": "charter",
+    "previous_state": null,
+    "new_state": "signed_off",
+    "changed_by_user_id": "435ce745-63f2-4444-98d1-1965fc971ccd",
+    "changed_by_agent": null,
+    "notes": "Brindlemark Digital Banking Risk Controls Modernization — Program Charter v1 signed off by Nexus tool",
+    "context_jsonb": {
+      "version_id": "b023806d-dfe9-428a-ac4b-1c6a8d3dbd93",
+      "deliverable_id": "ce327328-ef46-4311-9bb0-a14e8ad42910",
+      "deliverable_type_key": "charter"
+    },
+    "created_at": "2026-05-02T22:37:07.965Z"
+  },
+  {
+    "id": "a8345b39-6218-483b-844a-0adfc043a5f0",
+    "engagement_id": "3da05bec-73df-4c34-9d3a-f1053280fbca",
+    "module_key": "design_spec",
+    "previous_state": null,
+    "new_state": "signed_off",
+    "changed_by_user_id": "435ce745-63f2-4444-98d1-1965fc971ccd",
+    "changed_by_agent": null,
+    "notes": "Brindlemark Digital Banking Risk Controls Modernization — Solution & Program Design Package v1 signed off by Nexus tool",
+    "context_jsonb": {
+      "version_id": "206130bd-f017-49d4-8bfb-c7239f2813cb",
+      "deliverable_id": "af6e2410-ed40-4f4d-8667-0db5506fa33e",
+      "deliverable_type_key": "design_spec"
+    },
+    "created_at": "2026-05-02T22:38:54.339Z"
+  },
+  {
+    "id": "da44fa3d-49bf-49af-b47c-5247c1c5696f",
+    "engagement_id": "3da05bec-73df-4c34-9d3a-f1053280fbca",
+    "module_key": "requirements_traceability",
+    "previous_state": null,
+    "new_state": "signed_off",
+    "changed_by_user_id": "435ce745-63f2-4444-98d1-1965fc971ccd",
+    "changed_by_agent": null,
+    "notes": "Brindlemark Digital Banking Risk Controls Modernization — Requirements-to-Design-to-Outcomes Traceability Matrix v1 signed off by Nexus tool",
+    "context_jsonb": {
+      "version_id": "3bc55e14-1579-42e1-a83c-c9bb2cb2a2ea",
+      "deliverable_id": "2102a981-9970-4ff4-a166-fbbd616976a8",
+      "deliverable_type_key": "requirements_traceability"
+    },
+    "created_at": "2026-05-02T22:39:14.621Z"
+  },
+  {
+    "id": "133801d6-6f61-43ce-85da-38b1c23b2608",
+    "engagement_id": "3da05bec-73df-4c34-9d3a-f1053280fbca",
+    "module_key": "execution_roadmap",
+    "previous_state": null,
+    "new_state": "signed_off",
+    "changed_by_user_id": "435ce745-63f2-4444-98d1-1965fc971ccd",
+    "changed_by_agent": null,
+    "notes": "Brindlemark Digital Banking Risk Controls Modernization — Execution Roadmap v1 signed off by Nexus tool",
+    "context_jsonb": {
+      "version_id": "5082c666-b25e-4fc0-be52-10891b2df9f6",
+      "deliverable_id": "4599ec91-c3ad-4236-b972-0d54da175be9",
+      "deliverable_type_key": "execution_roadmap"
+    },
+    "created_at": "2026-05-02T22:42:08.724Z"
+  },
+  {
+    "id": "747eecdb-702b-41b3-8c8b-e661592dd4e8",
+    "engagement_id": "3da05bec-73df-4c34-9d3a-f1053280fbca",
+    "module_key": "business_case",
+    "previous_state": null,
+    "new_state": "signed_off",
+    "changed_by_user_id": "435ce745-63f2-4444-98d1-1965fc971ccd",
+    "changed_by_agent": null,
+    "notes": "Brindlemark Digital Banking Risk Controls Modernization — Business Case v1 signed off by Nexus tool",
+    "context_jsonb": {
+      "version_id": "c9448a98-f815-4d2d-9aa5-7f53debf0c55",
+      "deliverable_id": "707fe6f0-9cc5-49a5-aabd-828f9f0ee851",
+      "deliverable_type_key": "business_case"
+    },
+    "created_at": "2026-05-02T22:43:43.296Z"
+  },
+  {
+    "id": "37d946f7-6547-4357-b4fa-85d04090bc46",
+    "engagement_id": "3da05bec-73df-4c34-9d3a-f1053280fbca",
+    "module_key": "funding_approval",
+    "previous_state": null,
+    "new_state": "signed_off",
+    "changed_by_user_id": "435ce745-63f2-4444-98d1-1965fc971ccd",
+    "changed_by_agent": null,
+    "notes": "Brindlemark Risk Controls Modernization — Funding Approval Record signed off by Nexus tool",
+    "context_jsonb": {
+      "version_id": "ffc43f78-c74a-486e-963e-412a4fbbdb32",
+      "deliverable_id": "1289323e-e937-4810-950d-daa9858b5a0a",
+      "deliverable_type_key": "funding_approval"
+    },
+    "created_at": "2026-05-02T22:44:23.126Z"
+  },
+  {
+    "id": "153bfcf9-0ce0-49fe-93b7-1ea8b388a205",
+    "engagement_id": "3da05bec-73df-4c34-9d3a-f1053280fbca",
+    "module_key": "sponsor_alignment",
+    "previous_state": null,
+    "new_state": "signed_off",
+    "changed_by_user_id": "435ce745-63f2-4444-98d1-1965fc971ccd",
+    "changed_by_agent": null,
+    "notes": "Brindlemark Risk Controls Modernization — Sponsor Alignment Record signed off by Nexus tool",
+    "context_jsonb": {
+      "version_id": "4094593f-3206-4cb8-9e37-921a26f4add8",
+      "deliverable_id": "ab7b70f4-f9ec-408f-b3ad-cea13abddcce",
+      "deliverable_type_key": "sponsor_alignment"
+    },
+    "created_at": "2026-05-02T22:44:23.771Z"
+  },
+  {
+    "id": "be579e35-03e0-4414-acf3-eca22e257612",
+    "engagement_id": "3da05bec-73df-4c34-9d3a-f1053280fbca",
+    "module_key": "stakeholder_alignment",
+    "previous_state": null,
+    "new_state": "signed_off",
+    "changed_by_user_id": "435ce745-63f2-4444-98d1-1965fc971ccd",
+    "changed_by_agent": null,
+    "notes": "Brindlemark Risk Controls Modernization — Stakeholder Alignment Record signed off by Nexus tool",
+    "context_jsonb": {
+      "version_id": "b79b3e60-2868-424d-9d7f-fd915f7e1462",
+      "deliverable_id": "6bc01c94-20af-4281-a670-a3eaf5187308",
+      "deliverable_type_key": "stakeholder_alignment"
+    },
+    "created_at": "2026-05-02T22:44:24.363Z"
+  },
+  {
+    "id": "f6cbd497-9916-48a8-b92c-d414cd811740",
+    "engagement_id": "3da05bec-73df-4c34-9d3a-f1053280fbca",
+    "module_key": "readiness_and_change_plan",
+    "previous_state": null,
+    "new_state": "signed_off",
+    "changed_by_user_id": "435ce745-63f2-4444-98d1-1965fc971ccd",
+    "changed_by_agent": null,
+    "notes": "Brindlemark Risk Controls Modernization — Readiness Assessment, Change & Communications Plan signed off by Nexus tool",
+    "context_jsonb": {
+      "version_id": "2c41ab14-51e4-4907-bbcf-7d6fa5b23c8d",
+      "deliverable_id": "231dd517-e81c-4d85-8bb8-1de0aa582810",
+      "deliverable_type_key": "readiness_and_change_plan"
+    },
+    "created_at": "2026-05-02T22:44:25.077Z"
+  },
+  {
+    "id": "a143a1eb-c2e3-41da-b0d1-9b18d0c7205e",
+    "engagement_id": "3da05bec-73df-4c34-9d3a-f1053280fbca",
+    "module_key": "tower_handoff_plan",
+    "previous_state": null,
+    "new_state": "signed_off",
+    "changed_by_user_id": "435ce745-63f2-4444-98d1-1965fc971ccd",
+    "changed_by_agent": null,
+    "notes": "Brindlemark Risk Controls Modernization — Tower Handoff Plan signed off by Nexus tool",
+    "context_jsonb": {
+      "version_id": "bf37e436-c8d1-43d6-90bd-705a79de2708",
+      "deliverable_id": "5115f008-35da-4a53-b117-293df033ba31",
+      "deliverable_type_key": "tower_handoff_plan"
+    },
+    "created_at": "2026-05-02T22:44:25.749Z"
+  },
+  {
+    "id": "dba5b8be-38a1-4742-8b39-8821ab3ff293",
+    "engagement_id": "3da05bec-73df-4c34-9d3a-f1053280fbca",
+    "module_key": "tower_handoff_plan",
+    "previous_state": null,
+    "new_state": "signed_off",
+    "changed_by_user_id": "435ce745-63f2-4444-98d1-1965fc971ccd",
+    "changed_by_agent": null,
+    "notes": "Brindlemark Digital Banking Risk Controls Modernization — Tower Execution Tracking Contract v1 signed off by Nexus tool",
+    "context_jsonb": {
+      "version_id": "f3659f67-c620-4e9e-a295-0ad173f5c982",
+      "deliverable_id": "5115f008-35da-4a53-b117-293df033ba31",
+      "deliverable_type_key": "tower_handoff_plan"
+    },
+    "created_at": "2026-05-02T22:45:59.417Z"
+  }
+]

@@ -1,0 +1,32 @@
+[
+  {
+    "id": "00000000-0000-0000-0000-00000000a004",
+    "client_id": "a75687bf-71b9-4524-ab4e-68ae3f28d200",
+    "user_id": "5bb89228-492a-4daa-a16b-8288e9701452",
+    "generated_at": "2026-04-21T08:15:00.000Z",
+    "last_user_touchpoint_at": "2026-04-18T17:00:00.000Z",
+    "next_scheduled_refresh_at": "2026-04-21T08:15:00.000Z",
+    "composition_mode": "full_briefing",
+    "target_reading_time_seconds": 240,
+    "estimated_reading_time_seconds": 220,
+    "opening_line": "Good morning, Elaine. Three items this morning: one balance-sheet, one franchise, and one I can only frame carefully.",
+    "closing_recommendation": "Start with the deposit-cost math, then decide how much cross-franchise capacity you want to preserve for the AML path.",
+    "voice_profile_applied": "Elaine Burakovsky-Park",
+    "user_viewed_at": null,
+    "user_dwell_time_seconds": null,
+    "user_clicked_sections": [],
+    "user_followup_queries": [],
+    "user_dismissed_items": [],
+    "user_feedback": null,
+    "source_entities_considered": 46,
+    "source_events_considered": 12,
+    "ranking_model_version": "wave2-v1",
+    "personalization_model_version": "wave2-v1",
+    "metadata": {
+      "source_spec": "whats-changed-briefing-engine.md",
+      "seeded_example": true
+    },
+    "created_at": "2026-04-21T22:07:19.236Z",
+    "updated_at": "2026-04-21T22:13:51.087Z"
+  }
+]

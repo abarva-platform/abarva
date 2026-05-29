@@ -1,0 +1,642 @@
+[
+  {
+    "id": "keystone_pattern_shadow_ai_in_customer_operations_and_grid_analytics",
+    "client_id": "63931f84-4fc8-4d13-baac-aa16b035bff2",
+    "ordinal_ref": "3.1",
+    "name": "Shadow AI in Customer Operations and Grid Analytics",
+    "short_description": "Extends base pattern 7.1. Utility-specific instantiation of the cross-industry Shadow AI Governance foundational pattern pack (#1 in north star top 20).",
+    "long_description": "Extends base pattern 7.1. Utility-specific instantiation of the cross-industry Shadow AI Governance foundational pattern pack (#1 in north star top 20).",
+    "category": "AI Governance",
+    "sector_applicability": [
+      "utility"
+    ],
+    "cross_industry": true,
+    "variant_of": "Shadow AI Governance",
+    "trigger_symptoms": [
+      "AI tool procurement below governance threshold (>5 AI-adjacent tool purchases under $150K review threshold within 12 months)\n- AI governance policy vs practice contradiction (stated policy contradicted by documented decentralized procurement)"
+    ],
+    "detection_signals": [
+      "AI tool procurement below governance threshold (>5 AI-adjacent tool purchases under $150K review threshold within 12 months)\n- AI governance policy vs practice contradiction (stated policy contradicted by documented decentralized procurement)"
+    ],
+    "diagnostic_questions": [],
+    "evidence_requirements": [],
+    "likely_root_causes": [
+      "Decentralized procurement under central review thresholds",
+      "individual team pressure to adopt AI",
+      "governance established but enforcement absent",
+      "prior approval philosophy too slow"
+    ],
+    "common_adjacent_contradictions": [],
+    "benchmark_signatures": [],
+    "intervention_options": [
+      "Enterprise AI platform with sanctioned access\n- AI governance framework with procurement integration\n- Tool consolidation leveraging enterprise contracts\n- Employee AI literacy and sanctioned-use training"
+    ],
+    "anti_patterns": [],
+    "common_failure_modes": [],
+    "phase_1_deliverables": [
+      "AI tool inventory audit",
+      "spend and contract posture analysis",
+      "governance-vs-practice contradiction documentation",
+      "critical infrastructure data exposure assessment (utility-specific)"
+    ],
+    "phase_2_deliverables": [
+      "Root cause analysis",
+      "enterprise AI platform options assessment",
+      "governance framework options",
+      "tool consolidation targets"
+    ],
+    "phase_3_deliverables": [
+      "Enterprise AI platform commitment",
+      "governance framework finalization with enforcement design",
+      "tool consolidation roadmap",
+      "migration and sunset plan"
+    ],
+    "phase_4_deliverables": [
+      "Platform deployment",
+      "governance operationalization",
+      "tool consolidation execution",
+      "AI governance maturity KPI tracking (2.8.1)"
+    ],
+    "expected_time_to_value": {},
+    "success_metrics": [],
+    "leading_indicators": [],
+    "required_sponsor_profile": {},
+    "required_capabilities": [],
+    "typical_stakeholders": [],
+    "common_objections": [],
+    "applicable_company_scales": [],
+    "cross_pattern_links": [],
+    "linked_kpi_ids": [
+      "keystone_ai_governance_maturity",
+      "keystone_cybersecurity_maturity",
+      "keystone_fcr_rate",
+      "keystone_complaint_rate"
+    ],
+    "evidence_summary": "11 tools, $1.6M annualized, 17 teams, 7/11 with auto-renewal, 4/11 with unreviewed data sharing (NERC CIP implications)",
+    "confidence_level": "high",
+    "last_updated": "2026-04-21T05:00:00.000Z",
+    "version": "1.0",
+    "author": "AbarVa North Star overlay",
+    "reasoning_scope_id": "keystone_scope_broad",
+    "disclosure_scope_id": "keystone_scope_broad",
+    "source_id": null,
+    "as_of_date": "2026-04-21T05:00:00.000Z",
+    "last_verified_at": "2026-04-21T00:00:00.000Z",
+    "raw_markdown": "### 3.1 · Shadow AI in Customer Operations and Grid Analytics\n\nExtends base pattern 7.1. Utility-specific instantiation of the cross-industry Shadow AI Governance foundational pattern pack (#1 in north star top 20).\n\n**Classification.** Category: AI Governance · Variant of: Shadow AI Governance · Cross-industry: yes · Sector applicability: utility\n\n**Detection signals.**\n- AI tool procurement below governance threshold (>5 AI-adjacent tool purchases under $150K review threshold within 12 months)\n- AI governance policy vs practice contradiction (stated policy contradicted by documented decentralized procurement)\n\n**Likely root causes.** Decentralized procurement under central review thresholds · individual team pressure to adopt AI · governance established but enforcement absent · prior approval philosophy too slow\n\n**Intervention options.**\n- Enterprise AI platform with sanctioned access\n- AI governance framework with procurement integration\n- Tool consolidation leveraging enterprise contracts\n- Employee AI literacy and sanctioned-use training\n\n**Phase-mapped deliverables.**\n\n*Phase 1 — Intake.* AI tool inventory audit · spend and contract posture analysis · governance-vs-practice contradiction documentation · critical infrastructure data exposure assessment (utility-specific)\n\n*Phase 2 — Diagnosis.* Root cause analysis · enterprise AI platform options assessment · governance framework options · tool consolidation targets\n\n*Phase 3 — Decision.* Enterprise AI platform commitment · governance framework finalization with enforcement design · tool consolidation roadmap · migration and sunset plan\n\n*Phase 4 — Execution.* Platform deployment · governance operationalization · tool consolidation execution · AI governance maturity KPI tracking (2.8.1)\n\n**Expected outcomes.** Shadow AI spend reduction 40-60% within 12 months · AI governance maturity up one stage within 18 months · 80%+ contract risk remediated within 9 months\n\n**Required sponsor profile.** CIO, CCTO, or CDO · cross-functional enterprise scope · medium political capital\n\n**Linked KPIs (degrades direction).** AI Governance Maturity (2.8.1), Cybersecurity Maturity (2.8.2), First Call Resolution (2.2.2), Customer Complaint Rate (2.2.4)\n\n**Keystone evidence.** 11 tools, $1.6M annualized, 17 teams, 7/11 with auto-renewal, 4/11 with unreviewed data sharing (NERC CIP implications)",
+    "metadata": {
+      "classification": "Category: AI Governance · Variant of: Shadow AI Governance · Cross-industry: yes · Sector applicability: utility",
+      "linked_kpi_names": [
+        "AI Governance Maturity Score",
+        "Cybersecurity Maturity Score",
+        "First Call Resolution Rate",
+        "Customer Complaint Rate per 1,000 Customers"
+      ],
+      "linked_kpis_text": "AI Governance Maturity (2.8.1), Cybersecurity Maturity (2.8.2), First Call Resolution (2.2.2), Customer Complaint Rate (2.2.4)",
+      "expected_outcomes": [
+        "Shadow AI spend reduction 40-60% within 12 months",
+        "AI governance maturity up one stage within 18 months",
+        "80%+ contract risk remediated within 9 months"
+      ],
+      "required_sponsor_profile": "CIO, CCTO, or CDO · cross-functional enterprise scope · medium political capital"
+    },
+    "created_at": "2026-04-21T20:54:14.049Z",
+    "updated_at": "2026-04-21T20:54:14.049Z"
+  },
+  {
+    "id": "keystone_pattern_data_center_load_interconnection_queue_bottleneck",
+    "client_id": "63931f84-4fc8-4d13-baac-aa16b035bff2",
+    "ordinal_ref": "3.2",
+    "name": "Data Center Load Interconnection Queue Bottleneck",
+    "short_description": "Extends base pattern 7.2. New foundational pattern pack (#17 in north star top 20) — utility-specific.",
+    "long_description": "Extends base pattern 7.2. New foundational pattern pack (#17 in north star top 20) — utility-specific.",
+    "category": "Growth Management — Regulated Infrastructure",
+    "sector_applicability": [
+      "utility (electric)"
+    ],
+    "cross_industry": false,
+    "variant_of": null,
+    "trigger_symptoms": [
+      "Interconnection queue growth >50% YoY\n- Study-phase duration >12 months\n- Transmission engineering capacity <70% of needed"
+    ],
+    "detection_signals": [
+      "Interconnection queue growth >50% YoY\n- Study-phase duration >12 months\n- Transmission engineering capacity <70% of needed"
+    ],
+    "diagnostic_questions": [],
+    "evidence_requirements": [],
+    "likely_root_causes": [
+      "Rapid load growth outpacing engineering capacity",
+      "study process designed for smaller loads",
+      "cost allocation frameworks not designed for large-load economics",
+      "regulatory uncertainty on tariff design",
+      "federal-state jurisdictional friction (post-DOE Section 403 Oct 2025)"
+    ],
+    "common_adjacent_contradictions": [],
+    "benchmark_signatures": [],
+    "intervention_options": [
+      "Study process modernization and engineering capacity expansion\n- Large-load tariff filings across jurisdictions\n- Co-location and flexible load arrangements\n- Transmission expansion capital plan recalibration\n- Engagement with FERC/PJM on large-load rulemaking"
+    ],
+    "anti_patterns": [],
+    "common_failure_modes": [],
+    "phase_1_deliverables": [
+      "Queue analysis and forecast",
+      "engineering capacity assessment",
+      "regulatory posture across jurisdictions",
+      "customer mix economic analysis"
+    ],
+    "phase_2_deliverables": [
+      "Root cause deep-dive",
+      "peer benchmarking on queue management",
+      "tariff design options",
+      "cost allocation frameworks",
+      "stakeholder mapping (developers, regulators, ratepayer advocates)"
+    ],
+    "phase_3_deliverables": [
+      "Tariff filing strategy",
+      "engineering capacity build plan",
+      "cost allocation framework",
+      "co-location policy",
+      "regulatory engagement strategy"
+    ],
+    "phase_4_deliverables": [
+      "Tariff filings",
+      "engineering hiring and reorganization",
+      "regulatory proceedings",
+      "ongoing pipeline management"
+    ],
+    "expected_time_to_value": {},
+    "success_metrics": [],
+    "leading_indicators": [],
+    "required_sponsor_profile": {},
+    "required_capabilities": [],
+    "typical_stakeholders": [],
+    "common_objections": [],
+    "applicable_company_scales": [],
+    "cross_pattern_links": [],
+    "linked_kpi_ids": [
+      "keystone_interconnection_queue_duration",
+      "keystone_rate_base_growth",
+      "keystone_capital_per_customer",
+      "keystone_rate_case_cycle_time"
+    ],
+    "evidence_summary": "32 GW pending (from 14 GW in early 2024) · 18-month study duration vs 9-month target · $1.4B delayed revenue · $340M accelerated transmission investment · 4-6% projected residential rate increase if not large-load-allocated",
+    "confidence_level": "high",
+    "last_updated": "2026-04-21T05:00:00.000Z",
+    "version": "1.0",
+    "author": "AbarVa North Star overlay",
+    "reasoning_scope_id": "keystone_scope_broad",
+    "disclosure_scope_id": "keystone_scope_broad",
+    "source_id": null,
+    "as_of_date": "2026-04-21T05:00:00.000Z",
+    "last_verified_at": "2026-04-21T00:00:00.000Z",
+    "raw_markdown": "### 3.2 · Data Center Load Interconnection Queue Bottleneck\n\nExtends base pattern 7.2. New foundational pattern pack (#17 in north star top 20) — utility-specific.\n\n**Classification.** Category: Growth Management — Regulated Infrastructure · Cross-industry: no · Sector applicability: utility (electric)\n\n**Detection signals.**\n- Interconnection queue growth >50% YoY\n- Study-phase duration >12 months\n- Transmission engineering capacity <70% of needed\n\n**Likely root causes.** Rapid load growth outpacing engineering capacity · study process designed for smaller loads · cost allocation frameworks not designed for large-load economics · regulatory uncertainty on tariff design · federal-state jurisdictional friction (post-DOE Section 403 Oct 2025)\n\n**Intervention options.**\n- Study process modernization and engineering capacity expansion\n- Large-load tariff filings across jurisdictions\n- Co-location and flexible load arrangements\n- Transmission expansion capital plan recalibration\n- Engagement with FERC/PJM on large-load rulemaking\n\n**Phase-mapped deliverables.**\n\n*Phase 1 — Intake.* Queue analysis and forecast · engineering capacity assessment · regulatory posture across jurisdictions · customer mix economic analysis\n\n*Phase 2 — Diagnosis.* Root cause deep-dive · peer benchmarking on queue management · tariff design options · cost allocation frameworks · stakeholder mapping (developers, regulators, ratepayer advocates)\n\n*Phase 3 — Decision.* Tariff filing strategy · engineering capacity build plan · cost allocation framework · co-location policy · regulatory engagement strategy\n\n*Phase 4 — Execution.* Tariff filings · engineering hiring and reorganization · regulatory proceedings · ongoing pipeline management\n\n**Expected outcomes.** Queue time reduction from 18 to <12 months within 18 months · clear cost allocation signed off by state PUCs within 12 months · transmission engineering capacity to 90%+ of demand within 24 months\n\n**Required sponsor profile.** Chief Regulatory Officer, Chief Customer and Technology Officer, or CEO · enterprise scope · high political capital · extensive time commitment\n\n**Linked KPIs.** Interconnection Queue Duration (2.1.5), Rate Base Growth (2.3.1), Capital Deployed per Customer (2.3.4), Rate Case Cycle Time (2.3.3)\n\n**Keystone evidence.** 32 GW pending (from 14 GW in early 2024) · 18-month study duration vs 9-month target · $1.4B delayed revenue · $340M accelerated transmission investment · 4-6% projected residential rate increase if not large-load-allocated",
+    "metadata": {
+      "classification": "Category: Growth Management — Regulated Infrastructure · Cross-industry: no · Sector applicability: utility (electric)",
+      "linked_kpi_names": [
+        "Interconnection Queue Duration",
+        "Rate Base Growth",
+        "Capital Deployed per Customer",
+        "Rate Case Cycle Time"
+      ],
+      "linked_kpis_text": "Interconnection Queue Duration (2.1.5), Rate Base Growth (2.3.1), Capital Deployed per Customer (2.3.4), Rate Case Cycle Time (2.3.3)",
+      "expected_outcomes": [
+        "Queue time reduction from 18 to <12 months within 18 months",
+        "clear cost allocation signed off by state PUCs within 12 months",
+        "transmission engineering capacity to 90%+ of demand within 24 months"
+      ],
+      "required_sponsor_profile": "Chief Regulatory Officer, Chief Customer and Technology Officer, or CEO · enterprise scope · high political capital · extensive time commitment"
+    },
+    "created_at": "2026-04-21T20:54:14.049Z",
+    "updated_at": "2026-04-21T20:54:14.049Z"
+  },
+  {
+    "id": "keystone_pattern_storm_response_coordination_fragmentation",
+    "client_id": "63931f84-4fc8-4d13-baac-aa16b035bff2",
+    "ordinal_ref": "3.3",
+    "name": "Storm Response Coordination Fragmentation",
+    "short_description": "Extends base pattern 7.3. Foundational pattern pack (#18) — utility-specific.",
+    "long_description": "Extends base pattern 7.3. Foundational pattern pack (#18) — utility-specific.",
+    "category": "Operational Excellence — Multi-Entity Coordination",
+    "sector_applicability": [
+      "utility"
+    ],
+    "cross_industry": false,
+    "variant_of": null,
+    "trigger_symptoms": [
+      "Multiple OMS platforms across operating units (≥3 distinct platforms)\n- Post-major-event coordination failures recurring\n- Customer notification lag during events (>30 minutes average)\n- Mutual assistance onboarding delays (>4 hours)"
+    ],
+    "detection_signals": [
+      "Multiple OMS platforms across operating units (≥3 distinct platforms)\n- Post-major-event coordination failures recurring\n- Customer notification lag during events (>30 minutes average)\n- Mutual assistance onboarding delays (>4 hours)"
+    ],
+    "diagnostic_questions": [],
+    "evidence_requirements": [],
+    "likely_root_causes": [
+      "Historical M&A/separation created OMS fragmentation",
+      "legacy customer service platforms with distinct IVR/notification scripts",
+      "cross-subsidiary handoffs not platform-enabled",
+      "mutual assistance coordination processes manual",
+      "data synchronization lag during high-velocity events"
+    ],
+    "common_adjacent_contradictions": [],
+    "benchmark_signatures": [],
+    "intervention_options": [
+      "Unified storm response platform with cross-OpCo visibility\n- OMS rationalization (costly, long-horizon)\n- Communications orchestration layer above OMS fragmentation (faster)\n- Crew coordination workflow modernization\n- Generative AI storm impact prediction\n- Customer communication script unification"
+    ],
+    "anti_patterns": [],
+    "common_failure_modes": [],
+    "phase_1_deliverables": [
+      "Storm event history analysis",
+      "coordination failure mode documentation",
+      "cross-OpCo handoff mapping",
+      "customer communication audit"
+    ],
+    "phase_2_deliverables": [
+      "Platform options (unified new build, orchestration layer over existing",
+      "OMS rationalization)",
+      "AI prediction capability assessment",
+      "workflow modernization options"
+    ],
+    "phase_3_deliverables": [
+      "Platform decision and architecture",
+      "communication orchestration design",
+      "AI integration approach",
+      "rollout sequencing"
+    ],
+    "phase_4_deliverables": [
+      "Platform deployment",
+      "workflow operationalization",
+      "training and readiness",
+      "measurement via reliability KPIs"
+    ],
+    "expected_time_to_value": {},
+    "success_metrics": [],
+    "leading_indicators": [],
+    "required_sponsor_profile": {},
+    "required_capabilities": [],
+    "typical_stakeholders": [],
+    "common_objections": [],
+    "applicable_company_scales": [],
+    "cross_pattern_links": [],
+    "linked_kpi_ids": [
+      "keystone_saidi_enterprise",
+      "keystone_saifi_enterprise",
+      "keystone_caidi_enterprise",
+      "keystone_outage_notification_timeliness",
+      "keystone_jdpower_residential_csat",
+      "keystone_storm_restoration_p95"
+    ],
+    "evidence_summary": "Dec 2024 ice storm after-action: 14 inter-company handoffs · 34-minute average notification lag · 7 recurring coordination failure modes · 4 distinct OMS platforms across 6 subsidiaries",
+    "confidence_level": "high",
+    "last_updated": "2026-04-21T05:00:00.000Z",
+    "version": "1.0",
+    "author": "AbarVa North Star overlay",
+    "reasoning_scope_id": "keystone_scope_broad",
+    "disclosure_scope_id": "keystone_scope_broad",
+    "source_id": null,
+    "as_of_date": "2026-04-21T05:00:00.000Z",
+    "last_verified_at": "2026-04-21T00:00:00.000Z",
+    "raw_markdown": "### 3.3 · Storm Response Coordination Fragmentation\n\nExtends base pattern 7.3. Foundational pattern pack (#18) — utility-specific.\n\n**Classification.** Category: Operational Excellence — Multi-Entity Coordination · Sector applicability: utility\n\n**Detection signals.**\n- Multiple OMS platforms across operating units (≥3 distinct platforms)\n- Post-major-event coordination failures recurring\n- Customer notification lag during events (>30 minutes average)\n- Mutual assistance onboarding delays (>4 hours)\n\n**Likely root causes.** Historical M&A/separation created OMS fragmentation · legacy customer service platforms with distinct IVR/notification scripts · cross-subsidiary handoffs not platform-enabled · mutual assistance coordination processes manual · data synchronization lag during high-velocity events\n\n**Intervention options.**\n- Unified storm response platform with cross-OpCo visibility\n- OMS rationalization (costly, long-horizon)\n- Communications orchestration layer above OMS fragmentation (faster)\n- Crew coordination workflow modernization\n- Generative AI storm impact prediction\n- Customer communication script unification\n\n**Phase-mapped deliverables.**\n\n*Phase 1.* Storm event history analysis · coordination failure mode documentation · cross-OpCo handoff mapping · customer communication audit\n\n*Phase 2.* Platform options (unified new build, orchestration layer over existing, OMS rationalization) · AI prediction capability assessment · workflow modernization options\n\n*Phase 3.* Platform decision and architecture · communication orchestration design · AI integration approach · rollout sequencing\n\n*Phase 4.* Platform deployment · workflow operationalization · training and readiness · measurement via reliability KPIs\n\n**Expected outcomes.** Customer notification timeliness from 67% to 94% within 18 months · storm restoration 95th percentile from 78 to 48 hours within 24 months · coordination failure modes reduced 70%+ within 12 months\n\n**Required sponsor profile.** COO with CCTO partnership · enterprise scope · high political capital (OpCo presidents must align)\n\n**Linked KPIs.** SAIDI (2.1.1), SAIFI (2.1.2), CAIDI (2.1.3), Outage Notification Timeliness (2.2.5), Customer Satisfaction (2.2.1), Storm Restoration P95 (2.4.4)\n\n**Keystone evidence.** Dec 2024 ice storm after-action: 14 inter-company handoffs · 34-minute average notification lag · 7 recurring coordination failure modes · 4 distinct OMS platforms across 6 subsidiaries",
+    "metadata": {
+      "classification": "Category: Operational Excellence — Multi-Entity Coordination · Sector applicability: utility",
+      "linked_kpi_names": [
+        "SAIDI (System Average Interruption Duration Index)",
+        "SAIFI (System Average Interruption Frequency Index)",
+        "CAIDI (Customer Average Interruption Duration Index)",
+        "Outage Notification Timeliness",
+        "J.D. Power Residential Customer Satisfaction",
+        "Storm Restoration 95th Percentile Time"
+      ],
+      "linked_kpis_text": "SAIDI (2.1.1), SAIFI (2.1.2), CAIDI (2.1.3), Outage Notification Timeliness (2.2.5), Customer Satisfaction (2.2.1), Storm Restoration P95 (2.4.4)",
+      "expected_outcomes": [
+        "Customer notification timeliness from 67% to 94% within 18 months",
+        "storm restoration 95th percentile from 78 to 48 hours within 24 months",
+        "coordination failure modes reduced 70%+ within 12 months"
+      ],
+      "required_sponsor_profile": "COO with CCTO partnership · enterprise scope · high political capital (OpCo presidents must align)"
+    },
+    "created_at": "2026-04-21T20:54:14.049Z",
+    "updated_at": "2026-04-21T20:54:14.049Z"
+  },
+  {
+    "id": "keystone_pattern_grid_modernization_capital_vs_rate_recovery_gap",
+    "client_id": "63931f84-4fc8-4d13-baac-aa16b035bff2",
+    "ordinal_ref": "3.4",
+    "name": "Grid Modernization Capital vs Rate Recovery Gap",
+    "short_description": "Extends base pattern 7.4. Foundational pattern pack (#19) — utility-specific.",
+    "long_description": "Extends base pattern 7.4. Foundational pattern pack (#19) — utility-specific.",
+    "category": "Regulatory Strategy — Capital Recovery",
+    "sector_applicability": [
+      "utility (regulated)"
+    ],
+    "cross_industry": false,
+    "variant_of": null,
+    "trigger_symptoms": [
+      "Deployed capital vs recognized rate base gap >$500M\n- Regulatory lag >12 months\n- Financing cost of carry on lag capital >$50M annualized\n- Credit agency commentary noting deployment pace concern\n- Multiple concurrent rate case filings"
+    ],
+    "detection_signals": [
+      "Deployed capital vs recognized rate base gap >$500M\n- Regulatory lag >12 months\n- Financing cost of carry on lag capital >$50M annualized\n- Credit agency commentary noting deployment pace concern\n- Multiple concurrent rate case filings"
+    ],
+    "diagnostic_questions": [],
+    "evidence_requirements": [],
+    "likely_root_causes": [
+      "Capital deployment accelerating ahead of regulatory recovery",
+      "rate case cycle time longer than capital cycle",
+      "regulatory philosophy in some jurisdictions less constructive on pace",
+      "customer affordability concerns constraining ROE",
+      "multi-jurisdictional variance complicating coordinated strategy"
+    ],
+    "common_adjacent_contradictions": [],
+    "benchmark_signatures": [],
+    "intervention_options": [
+      "Rate case strategy optimization (filing cadence, settlement vs litigation",
+      "ROE targeting)\n- Capital deployment pace recalibration\n- Rider and tracker recovery mechanisms where available\n- Regulatory constructive engagement programs\n- Financing strategy adjustment (debt/equity mix)"
+    ],
+    "anti_patterns": [],
+    "common_failure_modes": [],
+    "phase_1_deliverables": [
+      "Capital deployment vs rate base gap analysis",
+      "regulatory lag quantification",
+      "financing cost of carry",
+      "jurisdictional variance analysis"
+    ],
+    "phase_2_deliverables": [
+      "Rate case strategy options",
+      "capital pace scenarios",
+      "financing strategy options",
+      "stakeholder engagement options"
+    ],
+    "phase_3_deliverables": [
+      "Rate case strategy decisions",
+      "capital pace commitments",
+      "financing strategy",
+      "regulatory engagement plan"
+    ],
+    "phase_4_deliverables": [
+      "Rate case execution",
+      "financing execution",
+      "regulatory engagement operationalization",
+      "outcome tracking"
+    ],
+    "expected_time_to_value": {},
+    "success_metrics": [],
+    "leading_indicators": [],
+    "required_sponsor_profile": {},
+    "required_capabilities": [],
+    "typical_stakeholders": [],
+    "common_objections": [],
+    "applicable_company_scales": [],
+    "cross_pattern_links": [],
+    "linked_kpi_ids": [
+      "keystone_rate_base_growth",
+      "keystone_allowed_roe_wtd_avg",
+      "keystone_rate_case_cycle_time",
+      "keystone_capital_per_customer"
+    ],
+    "evidence_summary": "$1.8B deployed capital in regulatory lag · $92M annualized cost of carry · credit agency commentary on deployment pace · four concurrent rate cases with expected outcomes Q2-Q4 2026",
+    "confidence_level": "high",
+    "last_updated": "2026-04-21T05:00:00.000Z",
+    "version": "1.0",
+    "author": "AbarVa North Star overlay",
+    "reasoning_scope_id": "keystone_scope_broad",
+    "disclosure_scope_id": "keystone_scope_broad",
+    "source_id": null,
+    "as_of_date": "2026-04-21T05:00:00.000Z",
+    "last_verified_at": "2026-04-21T00:00:00.000Z",
+    "raw_markdown": "### 3.4 · Grid Modernization Capital vs Rate Recovery Gap\n\nExtends base pattern 7.4. Foundational pattern pack (#19) — utility-specific.\n\n**Classification.** Category: Regulatory Strategy — Capital Recovery · Sector applicability: utility (regulated)\n\n**Detection signals.**\n- Deployed capital vs recognized rate base gap >$500M\n- Regulatory lag >12 months\n- Financing cost of carry on lag capital >$50M annualized\n- Credit agency commentary noting deployment pace concern\n- Multiple concurrent rate case filings\n\n**Likely root causes.** Capital deployment accelerating ahead of regulatory recovery · rate case cycle time longer than capital cycle · regulatory philosophy in some jurisdictions less constructive on pace · customer affordability concerns constraining ROE · multi-jurisdictional variance complicating coordinated strategy\n\n**Intervention options.**\n- Rate case strategy optimization (filing cadence, settlement vs litigation, ROE targeting)\n- Capital deployment pace recalibration\n- Rider and tracker recovery mechanisms where available\n- Regulatory constructive engagement programs\n- Financing strategy adjustment (debt/equity mix)\n\n**Phase-mapped deliverables.**\n\n*Phase 1.* Capital deployment vs rate base gap analysis · regulatory lag quantification · financing cost of carry · jurisdictional variance analysis\n\n*Phase 2.* Rate case strategy options · capital pace scenarios · financing strategy options · stakeholder engagement options\n\n*Phase 3.* Rate case strategy decisions · capital pace commitments · financing strategy · regulatory engagement plan\n\n*Phase 4.* Rate case execution · financing execution · regulatory engagement operationalization · outcome tracking\n\n**Expected outcomes.** Regulatory lag reduction to <10 months within 18 months · deployed-to-recognized gap reduction by 40%+ within 18 months · constructive ROE outcomes in active cases\n\n**Required sponsor profile.** CFO with Chief Regulatory Officer partnership · cross-functional scope · high political capital\n\n**Linked KPIs.** Rate Base Growth (2.3.1), Allowed ROE (2.3.2), Rate Case Cycle Time (2.3.3), Capital Deployed per Customer (2.3.4)\n\n**Keystone evidence.** $1.8B deployed capital in regulatory lag · $92M annualized cost of carry · credit agency commentary on deployment pace · four concurrent rate cases with expected outcomes Q2-Q4 2026",
+    "metadata": {
+      "classification": "Category: Regulatory Strategy — Capital Recovery · Sector applicability: utility (regulated)",
+      "linked_kpi_names": [
+        "Rate Base Growth",
+        "Allowed ROE Weighted Average",
+        "Rate Case Cycle Time",
+        "Capital Deployed per Customer"
+      ],
+      "linked_kpis_text": "Rate Base Growth (2.3.1), Allowed ROE (2.3.2), Rate Case Cycle Time (2.3.3), Capital Deployed per Customer (2.3.4)",
+      "expected_outcomes": [
+        "Regulatory lag reduction to <10 months within 18 months",
+        "deployed-to-recognized gap reduction by 40%+ within 18 months",
+        "constructive ROE outcomes in active cases"
+      ],
+      "required_sponsor_profile": "CFO with Chief Regulatory Officer partnership · cross-functional scope · high political capital"
+    },
+    "created_at": "2026-04-21T20:54:14.049Z",
+    "updated_at": "2026-04-21T20:54:14.049Z"
+  },
+  {
+    "id": "keystone_pattern_ami_data_underutilization",
+    "client_id": "63931f84-4fc8-4d13-baac-aa16b035bff2",
+    "ordinal_ref": "3.5",
+    "name": "AMI Data Underutilization",
+    "short_description": "Extends base pattern 7.5. Variant of Analytics Modernization foundational pattern pack (#2).",
+    "long_description": "Extends base pattern 7.5. Variant of Analytics Modernization foundational pattern pack (#2).",
+    "category": "Analytics Modernization — Utility Specific",
+    "sector_applicability": [
+      "utility (electric, gas)"
+    ],
+    "cross_industry": false,
+    "variant_of": "Analytics Modernization foundational pack",
+    "trigger_symptoms": [
+      "AMI data utilization <20% of available data\n- Use case inventory with majority unimplemented\n- AMI 2.0 deployment with data platform not scaled\n- Analytical capacity concentration in small team"
+    ],
+    "detection_signals": [
+      "AMI data utilization <20% of available data\n- Use case inventory with majority unimplemented\n- AMI 2.0 deployment with data platform not scaled\n- Analytical capacity concentration in small team"
+    ],
+    "diagnostic_questions": [],
+    "evidence_requirements": [],
+    "likely_root_causes": [
+      "AMI deployed for operational/billing use, not broader analytics",
+      "data platform not architected for AMI data volume",
+      "analytics capacity limited relative to use case inventory",
+      "customer-facing features require upstream data work not prioritized",
+      "DER integration use cases emerging faster than analytical capability"
+    ],
+    "common_adjacent_contradictions": [],
+    "benchmark_signatures": [],
+    "intervention_options": [
+      "Enterprise data platform scaling\n- Use case prioritization against strategic priorities\n- Analytics capability expansion (talent and tooling)\n- Customer-facing feature rollout coordination\n- DER integration analytical workstream"
+    ],
+    "anti_patterns": [],
+    "common_failure_modes": [],
+    "phase_1_deliverables": [],
+    "phase_2_deliverables": [],
+    "phase_3_deliverables": [],
+    "phase_4_deliverables": [],
+    "expected_time_to_value": {},
+    "success_metrics": [],
+    "leading_indicators": [],
+    "required_sponsor_profile": {},
+    "required_capabilities": [],
+    "typical_stakeholders": [],
+    "common_objections": [],
+    "applicable_company_scales": [],
+    "cross_pattern_links": [],
+    "linked_kpi_ids": [
+      "keystone_ami_data_utilization",
+      "keystone_der_interconnection_throughput",
+      "keystone_ai_governance_maturity"
+    ],
+    "evidence_summary": "18 TB annual AMI data · 12% utilization · 34 use cases identified, 7 production, 11 piloted, 16 unimplemented · AMI 2.0 will multiply data volume 4-6x",
+    "confidence_level": "high",
+    "last_updated": "2026-04-21T05:00:00.000Z",
+    "version": "1.0",
+    "author": "AbarVa North Star overlay",
+    "reasoning_scope_id": "keystone_scope_broad",
+    "disclosure_scope_id": "keystone_scope_broad",
+    "source_id": null,
+    "as_of_date": "2026-04-21T05:00:00.000Z",
+    "last_verified_at": "2026-04-21T00:00:00.000Z",
+    "raw_markdown": "### 3.5 · AMI Data Underutilization\n\nExtends base pattern 7.5. Variant of Analytics Modernization foundational pattern pack (#2).\n\n**Classification.** Category: Analytics Modernization — Utility Specific · Variant of: Analytics Modernization foundational pack · Sector applicability: utility (electric, gas)\n\n**Detection signals.**\n- AMI data utilization <20% of available data\n- Use case inventory with majority unimplemented\n- AMI 2.0 deployment with data platform not scaled\n- Analytical capacity concentration in small team\n\n**Likely root causes.** AMI deployed for operational/billing use, not broader analytics · data platform not architected for AMI data volume · analytics capacity limited relative to use case inventory · customer-facing features require upstream data work not prioritized · DER integration use cases emerging faster than analytical capability\n\n**Intervention options.**\n- Enterprise data platform scaling\n- Use case prioritization against strategic priorities\n- Analytics capability expansion (talent and tooling)\n- Customer-facing feature rollout coordination\n- DER integration analytical workstream\n\n**Linked KPIs.** AMI Data Utilization (2.4.5), DER Interconnection Throughput (2.4.6), AI Governance Maturity (2.8.1)\n\n**Keystone evidence.** 18 TB annual AMI data · 12% utilization · 34 use cases identified, 7 production, 11 piloted, 16 unimplemented · AMI 2.0 will multiply data volume 4-6x",
+    "metadata": {
+      "classification": "Category: Analytics Modernization — Utility Specific · Variant of: Analytics Modernization foundational pack · Sector applicability: utility (electric, gas)",
+      "linked_kpi_names": [
+        "AMI Data Utilization Rate",
+        "DER Interconnection Throughput",
+        "AI Governance Maturity Score"
+      ],
+      "linked_kpis_text": "AMI Data Utilization (2.4.5), DER Interconnection Throughput (2.4.6), AI Governance Maturity (2.8.1)",
+      "expected_outcomes": [],
+      "required_sponsor_profile": null
+    },
+    "created_at": "2026-04-21T20:54:14.049Z",
+    "updated_at": "2026-04-21T20:54:14.049Z"
+  },
+  {
+    "id": "keystone_pattern_workforce_attrition_in_specialized_grid_operations",
+    "client_id": "63931f84-4fc8-4d13-baac-aa16b035bff2",
+    "ordinal_ref": "3.6",
+    "name": "Workforce Attrition in Specialized Grid Operations",
+    "short_description": "Extends base pattern 7.6. Foundational pattern pack (#20) — cross-sector with utility variant.",
+    "long_description": "Extends base pattern 7.6. Foundational pattern pack (#20) — cross-sector with utility variant.",
+    "category": "Workforce Strategy — Specialized Technical Roles",
+    "sector_applicability": [
+      "all"
+    ],
+    "cross_industry": true,
+    "variant_of": null,
+    "trigger_symptoms": [
+      "Specialized role turnover >2x enterprise average\n- Experience-band concentration in departures (8-15 year tenure band >40% of departures)\n- Destination concentration (peer competitors or adjacent industries)\n- Compensation below market in specific roles\n- Replacement time >12 months to full productivity"
+    ],
+    "detection_signals": [
+      "Specialized role turnover >2x enterprise average\n- Experience-band concentration in departures (8-15 year tenure band >40% of departures)\n- Destination concentration (peer competitors or adjacent industries)\n- Compensation below market in specific roles\n- Replacement time >12 months to full productivity"
+    ],
+    "diagnostic_questions": [],
+    "evidence_requirements": [],
+    "likely_root_causes": [],
+    "common_adjacent_contradictions": [],
+    "benchmark_signatures": [],
+    "intervention_options": [],
+    "anti_patterns": [],
+    "common_failure_modes": [],
+    "phase_1_deliverables": [],
+    "phase_2_deliverables": [],
+    "phase_3_deliverables": [],
+    "phase_4_deliverables": [],
+    "expected_time_to_value": {},
+    "success_metrics": [],
+    "leading_indicators": [],
+    "required_sponsor_profile": {},
+    "required_capabilities": [],
+    "typical_stakeholders": [],
+    "common_objections": [],
+    "applicable_company_scales": [],
+    "cross_pattern_links": [],
+    "linked_kpi_ids": [
+      "keystone_transmission_engineering_turnover",
+      "keystone_apprenticeship_completion",
+      "keystone_turnover_enterprise"
+    ],
+    "evidence_summary": "27% transmission engineering turnover vs 14% target · 43% of departures in 8-15 year band · 58% moving to renewable developers/IPPs · 18-month replacement time",
+    "confidence_level": "high",
+    "last_updated": "2026-04-21T05:00:00.000Z",
+    "version": "1.0",
+    "author": "AbarVa North Star overlay",
+    "reasoning_scope_id": "keystone_scope_broad",
+    "disclosure_scope_id": "keystone_scope_broad",
+    "source_id": null,
+    "as_of_date": "2026-04-21T05:00:00.000Z",
+    "last_verified_at": "2026-04-21T00:00:00.000Z",
+    "raw_markdown": "### 3.6 · Workforce Attrition in Specialized Grid Operations\n\nExtends base pattern 7.6. Foundational pattern pack (#20) — cross-sector with utility variant.\n\n**Classification.** Category: Workforce Strategy — Specialized Technical Roles · Cross-industry: yes (applies to healthcare nursing, financial services quantitative roles, utility grid engineering) · Sector applicability: all\n\n**Detection signals.**\n- Specialized role turnover >2x enterprise average\n- Experience-band concentration in departures (8-15 year tenure band >40% of departures)\n- Destination concentration (peer competitors or adjacent industries)\n- Compensation below market in specific roles\n- Replacement time >12 months to full productivity\n\n**Keystone evidence.** 27% transmission engineering turnover vs 14% target · 43% of departures in 8-15 year band · 58% moving to renewable developers/IPPs · 18-month replacement time\n\n**Linked KPIs.** Transmission Engineering Turnover (2.6.3), Apprenticeship Completion (2.6.4), Enterprise Turnover (2.6.2)",
+    "metadata": {
+      "classification": "Category: Workforce Strategy — Specialized Technical Roles · Cross-industry: yes (applies to healthcare nursing, financial services quantitative roles, utility grid engineering) · Sector applicability: all",
+      "linked_kpi_names": [
+        "Transmission Engineering Turnover Rate",
+        "Apprenticeship Program Completion Rate",
+        "Turnover Rate (Enterprise)"
+      ],
+      "linked_kpis_text": "Transmission Engineering Turnover (2.6.3), Apprenticeship Completion (2.6.4), Enterprise Turnover (2.6.2)",
+      "expected_outcomes": [],
+      "required_sponsor_profile": null
+    },
+    "created_at": "2026-04-21T20:54:14.049Z",
+    "updated_at": "2026-04-21T20:54:14.049Z"
+  },
+  {
+    "id": "keystone_pattern_cross_jurisdictional_regulatory_coordination_gap",
+    "client_id": "63931f84-4fc8-4d13-baac-aa16b035bff2",
+    "ordinal_ref": "3.7",
+    "name": "Cross-Jurisdictional Regulatory Coordination Gap",
+    "short_description": "Extends base pattern 7.7. Utility-specific (financial services variant #15 on Cross-Franchise regulatory).",
+    "long_description": "Extends base pattern 7.7. Utility-specific (financial services variant #15 on Cross-Franchise regulatory).",
+    "category": "Regulatory Strategy — Multi-Jurisdiction",
+    "sector_applicability": [
+      "utility (multi-state regulated)"
+    ],
+    "cross_industry": false,
+    "variant_of": null,
+    "trigger_symptoms": [
+      "Multi-state operations with 5+ PUCs\n- Filing cycle misalignment across subsidiaries\n- ROE variance across jurisdictions >75 bps\n- Rate case strategy subsidiary-by-subsidiary vs enterprise-coordinated\n- Intervenor coalition overlap across cases"
+    ],
+    "detection_signals": [
+      "Multi-state operations with 5+ PUCs\n- Filing cycle misalignment across subsidiaries\n- ROE variance across jurisdictions >75 bps\n- Rate case strategy subsidiary-by-subsidiary vs enterprise-coordinated\n- Intervenor coalition overlap across cases"
+    ],
+    "diagnostic_questions": [],
+    "evidence_requirements": [],
+    "likely_root_causes": [],
+    "common_adjacent_contradictions": [],
+    "benchmark_signatures": [],
+    "intervention_options": [],
+    "anti_patterns": [],
+    "common_failure_modes": [],
+    "phase_1_deliverables": [],
+    "phase_2_deliverables": [],
+    "phase_3_deliverables": [],
+    "phase_4_deliverables": [],
+    "expected_time_to_value": {},
+    "success_metrics": [],
+    "leading_indicators": [],
+    "required_sponsor_profile": {},
+    "required_capabilities": [],
+    "typical_stakeholders": [],
+    "common_objections": [],
+    "applicable_company_scales": [],
+    "cross_pattern_links": [],
+    "linked_kpi_ids": [
+      "keystone_allowed_roe_wtd_avg",
+      "keystone_rate_case_cycle_time",
+      "keystone_decision_latency_capital"
+    ],
+    "evidence_summary": "5 state PUCs + DC PSC + FERC + NERC + PJM · ROE range 9.25% (MD) to 10.10% (PA) · subsidiary-level regulatory teams with limited enterprise coordination · four concurrent rate cases",
+    "confidence_level": "high",
+    "last_updated": "2026-04-21T05:00:00.000Z",
+    "version": "1.0",
+    "author": "AbarVa North Star overlay",
+    "reasoning_scope_id": "keystone_scope_broad",
+    "disclosure_scope_id": "keystone_scope_broad",
+    "source_id": null,
+    "as_of_date": "2026-04-21T05:00:00.000Z",
+    "last_verified_at": "2026-04-21T00:00:00.000Z",
+    "raw_markdown": "### 3.7 · Cross-Jurisdictional Regulatory Coordination Gap\n\nExtends base pattern 7.7. Utility-specific (financial services variant #15 on Cross-Franchise regulatory).\n\n**Classification.** Category: Regulatory Strategy — Multi-Jurisdiction · Sector applicability: utility (multi-state regulated) · Cross-industry: partial (financial services parallel pattern)\n\n**Detection signals.**\n- Multi-state operations with 5+ PUCs\n- Filing cycle misalignment across subsidiaries\n- ROE variance across jurisdictions >75 bps\n- Rate case strategy subsidiary-by-subsidiary vs enterprise-coordinated\n- Intervenor coalition overlap across cases\n\n**Keystone evidence.** 5 state PUCs + DC PSC + FERC + NERC + PJM · ROE range 9.25% (MD) to 10.10% (PA) · subsidiary-level regulatory teams with limited enterprise coordination · four concurrent rate cases\n\n**Linked KPIs.** Allowed ROE Weighted Average (2.3.2), Rate Case Cycle Time (2.3.3), Decision Latency — Capital Planning (2.8.3)\n\n---",
+    "metadata": {
+      "classification": "Category: Regulatory Strategy — Multi-Jurisdiction · Sector applicability: utility (multi-state regulated) · Cross-industry: partial (financial services parallel pattern)",
+      "linked_kpi_names": [
+        "Allowed ROE Weighted Average",
+        "Rate Case Cycle Time",
+        "Decision Latency — Capital Planning"
+      ],
+      "linked_kpis_text": "Allowed ROE Weighted Average (2.3.2), Rate Case Cycle Time (2.3.3), Decision Latency — Capital Planning (2.8.3)",
+      "expected_outcomes": [],
+      "required_sponsor_profile": null
+    },
+    "created_at": "2026-04-21T20:54:14.049Z",
+    "updated_at": "2026-04-21T20:54:14.049Z"
+  }
+]

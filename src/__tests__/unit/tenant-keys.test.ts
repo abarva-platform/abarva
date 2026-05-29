@@ -7,14 +7,35 @@ import {
 } from '@/lib/tenant-keys';
 
 describe('canonicalTenantKey', () => {
-  // The alias map is the source of truth that the SQL migration is derived
-  // from. If anyone reorders or adds aliases here, the migration needs an
-  // updated companion test — pin it.
-  it('exposes exactly the three documented aliases', () => {
+  // The alias map is the source of truth that the SQL migration and I10
+  // canonical tenant guard are derived from. If anyone adds aliases here,
+  // the migration/guard needs a matching update.
+  it('exposes the documented five-tenant alias map', () => {
     expect(TENANT_KEY_ALIASES).toEqual({
+      apex: 'apex-retail',
+      'apex retail': 'apex-retail',
+      'apex retail group': 'apex-retail',
       apexretail: 'apex-retail',
-      meridian: 'meridian-health',
       arcturus: 'first-capital',
+      brindlemark: 'first-capital',
+      'brindlemark financial': 'first-capital',
+      'first capital': 'first-capital',
+      'first capital financial': 'first-capital',
+      'first-capital-financial': 'first-capital',
+      firstcapital: 'first-capital',
+      heliara: 'meridian-health',
+      'heliara health': 'meridian-health',
+      meridian: 'meridian-health',
+      'meridian health': 'meridian-health',
+      'meridian health system': 'meridian-health',
+      northstar: 'northstar-clinical',
+      'northstar clinical technologies': 'northstar-clinical',
+      'northstar medtech': 'northstar-clinical',
+      'northstar-clinical-tech': 'northstar-clinical',
+      'northstar-medtech': 'northstar-clinical',
+      skyharbor: 'skyharbor-air',
+      'skyharbor air': 'skyharbor-air',
+      'skyharbor airlines': 'skyharbor-air',
     });
   });
 
@@ -22,6 +43,8 @@ describe('canonicalTenantKey', () => {
     expect(canonicalTenantKey('apexretail')).toBe('apex-retail');
     expect(canonicalTenantKey('meridian')).toBe('meridian-health');
     expect(canonicalTenantKey('arcturus')).toBe('first-capital');
+    expect(canonicalTenantKey('northstar-medtech')).toBe('northstar-clinical');
+    expect(canonicalTenantKey('skyharbor')).toBe('skyharbor-air');
   });
 
   it('is idempotent — canonical values pass through unchanged', () => {
@@ -46,11 +69,9 @@ describe('canonicalTenantKey', () => {
     expect(canonicalTenantKey(undefined)).toBeUndefined();
   });
 
-  it('is case-sensitive (matches DB column semantics)', () => {
-    // Postgres text equality is case-sensitive, so an uppercased alias is
-    // NOT recognized — better to surface as a no-op than silently rewrite.
-    expect(canonicalTenantKey('APEXRETAIL')).toBe('APEXRETAIL');
-    expect(canonicalTenantKey('Meridian')).toBe('Meridian');
+  it('normalizes alias casing before lookup', () => {
+    expect(canonicalTenantKey('APEXRETAIL')).toBe('apex-retail');
+    expect(canonicalTenantKey('Meridian')).toBe('meridian-health');
   });
 });
 
